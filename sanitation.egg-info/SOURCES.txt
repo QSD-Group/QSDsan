@@ -1,8 +1,0 @@
-README.md
-setup.py
-sanitation/__init__.py
-sanitation/_component.py
-sanitation.egg-info/PKG-INFO
-sanitation.egg-info/SOURCES.txt
-sanitation.egg-info/dependency_links.txt
-sanitation.egg-info/top_level.txt
