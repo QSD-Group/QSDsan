@@ -1,6 +1,6 @@
-===================================================================================================
-The sanitation project is under the University of Illinois/NCSA Open Source License
-===================================================================================================
+============================================================================================
+The Sanitation Explorer project is under the University of Illinois/NCSA Open Source License
+============================================================================================
 
 University of Illinois/NCSA Open Source License
 

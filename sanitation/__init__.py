@@ -7,6 +7,12 @@ Created on Thu Oct  8 16:07:43 2020
 """
 
 from . import _component
-from ._component import *
+from . import _waste_stream
 
-__all__ = (*_component.__all__,)
+from ._component import *
+from ._waste_stream import *
+
+__all__ = (
+    *_component.__all__,
+    *_waste_stream.__all__,
+           )

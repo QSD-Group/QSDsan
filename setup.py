@@ -6,21 +6,23 @@ Created on Fri Oct 16 07:07:41 2020
 @author: yalinli_cabbi
 """
 
-import setuptools
+from distutils.core import setup
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
-
-setuptools.setup(
+setup(
     name='sanitation',
+    packages=['sanitation'],
     version='0.0.1',
-    author='SanitationDevelopmentGroup',
-    author_email='author@example.com',
-    description='Module for sanitation unit design and simulation',
-    long_description=long_description,
-    long_description_content_type="text/markdown",
+    license='University of Illinois/NCSA Open Source License',
+    author='Sanitation Explorer Group',
+    description='Module for sustainable design of non-sewered sanitation technologies',
+    long_description=open('README.rst').read(),
     url="https://github.com/codesciencewater/sanitation",
-    packages=setuptools.find_packages(),
+    install_requires=['biosteam>=2.20.21'],
+    package_data=
+        {'sanitation': ['systems/*',
+                        'units/*',
+                        ]},
+    platforms=['Windows', 'Mac', 'Linux'],
     classifiers=['License :: OSI Approved :: University of Illinois/NCSA Open Source License',
                  'Environment :: Console',
                  'Topic :: Education',
@@ -42,6 +44,5 @@ setuptools.setup(
                  'Programming Language :: Python :: 3.7',
                  'Programming Language :: Python :: 3.8',
                  ],
-    keywords=['WAter, Sanitation and Hygiene (WASH)', 'single-unit reinvented toilets (SURT)', 'single-unit reinvented toilets (MURT)', 'resource recovery', 'mass and energy balance'],
-    python_requires='>=3.6',
+    keywords=['WAter, Sanitation and Hygiene (WASH)', 'single-unit reinvented toilets (SURTs)', 'single-unit reinvented toilets (MURTs)', 'omni processors (OPs)', 'resource recovery', 'mass and energy balance'],
 )
