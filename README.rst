@@ -1,18 +1,24 @@
-=====================================================================
-sanitation: Sustainable design of non-sewered sanitation technologies
-=====================================================================
-
-.. figure:: https://lucid.app/publicSegments/view/ac755b6d-1bd6-464c-8e47-9e21e762d888/image.png
+==============================================================================
+Sanitation Explorer: Sustainable design of non-sewered sanitation technologies
+==============================================================================
 
 .. figure:: ./images/various_configurations.png
 
 
 .. contents::
 
-What is sanitation?
--------------------
+What is Sanitation Explorer?
+----------------------------
 
-Sanitation is a package for the sustainable design of non-sewered sanitation technologies that are affordable and appropriate in low-income, resource-limited settings leveraging the structure and modules developed in BioSTEAM [1]_. As an open-source and impact-driven platform, sanitation aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (life cycle assessment and techno-economic analysis under uncertainty). 
+**Sanitation Explorer** is a package for the sustainable design of non-sewered sanitation technologies that are affordable and appropriate in low-income, resource-limited settings leveraging the structure and modules developed in BioSTEAM [1]_. As an open-source and impact-driven platform, **Sanitation Explorer** aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (life cycle assessment and techno-economic analysis under uncertainty). 
+
+
+Interacting with other packages
+-------------------------------
+
+.. figure:: https://lucid.app/publicSegments/view/ac755b6d-1bd6-464c-8e47-9e21e762d888/image.png
+
+*Unified Modeling Language (UML) diagram of the package and its dependencies*.
 
 
 License information
@@ -24,7 +30,7 @@ of this software, and a DISCLAIMER OF ALL WARRANTIES.
 
 About the authors
 -----------------
-Development and maintenance of the package is supported by the Sanitation Development Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. 
+Development and maintenance of the package is supported by the Sanitation Explorer Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. 
 
 
 References
