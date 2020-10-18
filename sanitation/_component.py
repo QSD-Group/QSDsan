@@ -39,7 +39,6 @@ component_units_of_measure = {
     # #!!! This is just the mass, might not need this
     # 'i_mass': AbsoluteUnitsOfMeasure('kg component/(measure unit)'),
     # 'i_charge': AbsoluteUnitsOfMeasure('mol +/(measure unit)')
-    
     'i_C': AbsoluteUnitsOfMeasure('kg C/kg'),
     'i_N': AbsoluteUnitsOfMeasure('kg N/kg'),
     'i_P': AbsoluteUnitsOfMeasure('kg P/kg'),
@@ -51,14 +50,14 @@ component_units_of_measure = {
 # %%
 
 # =============================================================================
-# Component Class
+# Define the Component class
 # =============================================================================
 
 # Component should not exist in the chemical database, otherwise should just use
 # that chemical
 class Component(tmo.Chemical):
     '''
-    Creates a Component object as the basis for constructing waste streams in wastewater application
+    A subclass of the Chemical object in the thermosteam package with additional attributes and methods for waste treatment
     '''
 
     #!!! Some of the properties should be calculable
@@ -244,7 +243,8 @@ class Component(tmo.Chemical):
 
     @classmethod
     def load_default_components(cls):
-        '''Create and return a CompiledChemical object that contains all default components'''
+        '''Create and return a Chemicals object that contains all default components,
+            note that the Chemicals object needs to be compiled before using in simulation'''
         path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), 'default_components.xlsx')
         # path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'default_components.xlsx')
         
