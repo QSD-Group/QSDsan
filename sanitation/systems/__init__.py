@@ -6,10 +6,10 @@ Created on Thu Oct  8 16:07:43 2020
 @author: yalinli_cabbi
 """
 
-# from sanitation import demo
+#from . import demo
 
-# from sanitation.demo import *
+#from .demo import *
 
-# __all__ = (
-#     *demo.__all__,
-#            )
+#__all__ = (
+#    *demo.__all__,
+#           )

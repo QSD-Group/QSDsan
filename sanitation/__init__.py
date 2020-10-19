@@ -6,13 +6,19 @@ Created on Thu Oct  8 16:07:43 2020
 @author: yalinli_cabbi
 """
 
-from sanitation import _component
-from sanitation import _waste_stream
+from . import _component
+from . import _waste_stream
+#from . import systems
+from . import utils
 
-from sanitation._component import *
-from sanitation._waste_stream import *
+from ._component import *
+from ._waste_stream import *
+#from .systems import *
+from .utils import *
 
 __all__ = (
     *_component.__all__,
     *_waste_stream.__all__,
+#    *systems.__all__,
+    *utils.__all__,
            )

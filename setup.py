@@ -6,12 +6,13 @@ Created on Fri Oct 16 07:07:41 2020
 @author: yalinli_cabbi
 """
 
-from distutils.core import setup
+# from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='sanitation',
     packages=['sanitation'],
-    version='0.0.1',
+    version='0.0.5',
     license='University of Illinois/NCSA Open Source License',
     author='Sanitation Explorer Group',
     description='Module for sustainable design of non-sewered sanitation technologies',
@@ -20,7 +21,7 @@ setup(
     install_requires=['biosteam>=2.20.21'],
     package_data=
         {'sanitation': ['systems/*',
-                        'units/*',
+                        'utils/*',
                         ]},
     platforms=['Windows', 'Mac', 'Linux'],
     classifiers=['License :: OSI Approved :: University of Illinois/NCSA Open Source License',

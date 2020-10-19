@@ -6,7 +6,6 @@ Created on Sun Oct 18 16:52:05 2020
 @author: yalinli_cabbi
 """
 
-import thermosteam as tmo
 import biosteam as bst
 from sanitation import Component, WasteStream
 
@@ -29,14 +28,14 @@ for i in components:
 Excel_components = Component.load_components_from_excel(
     '/Users/yalinli_cabbi/OneDrive/Coding/sanitation/sanitation/utils/components.xlsx')
 
-components.extend((tmo.Chemical('CH4', phase='g'),
-                   tmo.Chemical('O2', phase='g'),
-                   tmo.Chemical('CO2', phase='g')))
+components.extend((Component('CH4', search_ID='CH4',phase='g'),
+                   Component('O2', search_ID='O2', phase='g'),
+                   Component('CO2', search_ID='CO2', phase='g')))
 
 components.compile()
-tmo.settings.set_thermo(components)
+bst.settings.set_thermo(components)
 
-ws1 = tmo.Stream('ws1', N_tot=5, H2O=1000, units='kg/hr')
+ws1 = WasteStream('ws1', N_tot=5, H2O=1000, units='kg/hr')
 ws1.show()
 ws2 = WasteStream('ws2', P_tot=10, H2O=1000, units='kg/hr')
 ws2.show(flow='kg/hr')

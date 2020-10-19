@@ -7,7 +7,7 @@ Created on Thu Oct  8 08:33:29 2020
 """
 
 import thermosteam as tmo
-from sanitation._component import Component
+from .._component import Component
 
 # A Chemicals object containing waste treatment-relevant characteristics,
 # note that this component has not been compiled to allow for addition of
