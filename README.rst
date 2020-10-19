@@ -5,6 +5,8 @@ Sanitation Explorer: Sustainable design of non-sewered sanitation technologies
 .. figure:: ./images/various_configurations.png
 
 
+
+
 .. contents::
 
 What is Sanitation Explorer?
