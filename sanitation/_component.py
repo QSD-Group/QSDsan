@@ -10,16 +10,16 @@ TODO:
 
 @author: yalinli_cabbi
 """
-import os
-import sys
-import pandas as pd
+
 import thermosteam as tmo
 
+__all__ = ('Component',)
+
 _chemical_fields = tmo._chemical._chemical_fields
+_checked_properties = tmo._chemical._checked_properties
 display_asfunctor = tmo._chemical.display_asfunctor
 chemical_units_of_measure = tmo._chemical.chemical_units_of_measure
-
-__all__ = ('Component',)
+copy_maybe = tmo.utils.copy_maybe
 
 
 # %%
@@ -37,8 +37,13 @@ def component_identity(component, pretty=False):
 
 
 # Component-related properties
-_component_fields = ('i_charge', 'description', 'particle_size', 'degradability',
-                     'organic',)
+_component_properties = ('i_charge', 'description', 'particle_size',
+                         'degradability', 'organic',)
+
+# Fields that cannot be left as None
+_key_component_properties = ('i_charge', 'particle_size', 'degradability', 'organic',)
+
+_checked_properties = (*_checked_properties, *_key_component_properties)
 
 AbsoluteUnitsOfMeasure = tmo.units_of_measure.AbsoluteUnitsOfMeasure
 component_units_of_measure = {
@@ -48,6 +53,20 @@ component_units_of_measure = {
 
 # %%
 
+allowed_values = {
+    'particle_size': ('Dissolved gas', 'Soluble', 'Colloidal', 'Particulate'),
+    'degradability': ('Biological', 'Chemical', 'Undegradable'),
+    'organic': (True, False)
+    }
+
+def check_property(name, value):
+    if name in ('i_charge', ):
+        try: float(value)
+        except: raise TypeError(f'{name} must be a number, not a {type(value).__name__}')
+    elif name in allowed_values.values():
+        assert value in allowed_values[name], \
+            f'{name} must be in {allowed_values[name]}'
+
 # =============================================================================
 # Define the Component class
 # =============================================================================
@@ -55,14 +74,11 @@ component_units_of_measure = {
 # Component should not exist in the chemical database, otherwise should just use
 # that chemical
 class Component(tmo.Chemical):
-    '''
-    A subclass of the Chemical object in the thermosteam package with additional attributes and methods for waste treatment
-    '''
+    '''A subclass of the Chemical object in the thermosteam package with additional attributes and methods for waste treatment'''
 
     def __new__(cls, ID, formula=None, search_ID=None, phase='l', 
                 i_charge=None, description=None, particle_size=None, 
-                degradability=None, organic=None,
-                **chemical_properties):
+                degradability=None, organic=None, **chemical_properties):
         if search_ID:
             self = super().__new__(cls, ID=ID, search_ID=search_ID,
                                    search_db=True, **chemical_properties)
@@ -72,15 +88,11 @@ class Component(tmo.Chemical):
                 self._formula = formula
         self._ID = ID
         tmo._chemical.lock_phase(self, phase)
+        
         self._i_charge = i_charge
         self._description = description
-        assert particle_size in ('Dissolved gas', 'Soluble', 'Colloidal', 'Particulate'), \
-            "particle_size must be 'Dissolved gas', 'Soluble', 'Colloidal', or 'Particulate'"
         self._particle_size = particle_size
-        assert degradability in ('Biological', 'Chemical', 'Undegradable'), \
-            "degradability must be 'Biological', 'Chemical', or 'Undegradable'"
         self._degradability = degradability
-        assert organic.__class__ is bool, "organic must be True or False"
         self._organic = organic
         return self
 
@@ -91,6 +103,7 @@ class Component(tmo.Chemical):
         return self._i_charge
     @i_charge.setter
     def i_charge(self, i_charge):
+        check_property('i_charge', i_charge)
         self._i_charge = float(i_charge)
 
     @property
@@ -107,6 +120,7 @@ class Component(tmo.Chemical):
         return self._particle_size
     @particle_size.setter
     def particle_size(self, particle_size):
+        check_property('particle_size', particle_size)
         self._particle_size = particle_size
 
     @property
@@ -115,6 +129,7 @@ class Component(tmo.Chemical):
         return self._degradability
     @degradability.setter
     def degradability(self, degradability):
+        check_property('degradability', degradability)
         self._degradability = degradability
 
     @property
@@ -123,13 +138,14 @@ class Component(tmo.Chemical):
         return self._organic
     @organic.setter
     def organic(self, organic):
+        check_property('organic', organic)
         self._organic = organic
 
 
-    def show(self, chemical_specifications=False):
-        '''Print all properties'''
+    def show(self, chemical_info=False):
+        '''Show Component properties'''
         info = component_identity(self, pretty=True)
-        if chemical_specifications:
+        if chemical_info:
             for header, fields in _chemical_fields.items():
                 section = []
                 for field in fields:
@@ -154,7 +170,7 @@ class Component(tmo.Chemical):
         info += '\nComponent-specific properties:\n'
         header = '[Others] '
         section = []
-        for field in _component_fields:
+        for field in _component_properties:
             value = getattr(self, field)
             field = field.lstrip('_')
             if value is None:
@@ -176,27 +192,33 @@ class Component(tmo.Chemical):
         
     _ipython_display_ = show
 
+    def get_missing_properties(self, properties=None):
+        return [i for i in (properties or _checked_properties) if not getattr(self, i)]
 
     @classmethod
-    def load_components_from_excel(cls, path=None):
-        '''
-        Create Component objects based on properties defined in an Excel spreadsheet,
-        return a Chemicals object that contains all created Component objects,
-        note that the Chemicals object needs to be compiled before using in simulation'''
-        if not path:
-            path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), 'components.xlsx')
-            # path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'components.xlsx')
+    def from_chemical(cls, ID, chemical, i_charge=None, description=None, 
+                      particle_size=None, degradability=None, organic=None,
+                      **data):
+        '''Make a new Component from Chemical'''
+        new = cls.__new__(cls, ID=ID)
+        for field in chemical.__slots__: 
+            value = getattr(chemical, field)
+            setattr(new, field, copy_maybe(value))
+        new._ID = ID
+        new._locked_state = new._locked_state
+        new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Tm,
+                           new.Tb, new.eos, new.eos_1atm, new.phase_ref)
+        new._label_handles()
         
-        data = pd.read_excel(path, sheet_name='components')
-        components = tmo.Chemicals(())
-        for i in range(data.shape[0]):
-            component = Component.__new__(cls, ID=data['ID'][i])
-            for j in _component_fields:
-                field = '_' + j
-                if pd.isna(data[j][i]): continue
-                setattr(component, field, data[j][i])
-            components.append(component)
-        return components
+        # TODO: add other properties
+        new.i_charge = i_charge
+        new.description = description
+        new.particle_size = particle_size
+        new.degradability = degradability
+        new.organic = organic
+        for i,j in data.items(): setattr(new, i , j)
+        return new
+
 
 
 

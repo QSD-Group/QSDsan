@@ -6,10 +6,10 @@ Created on Thu Oct  8 16:07:43 2020
 @author: yalinli_cabbi
 """
 
-from . import _default_components
+from . import loading
 
-from ._default_components import *
+from .loading import *
 
 __all__ = (
-    *_default_components.__all__,
-           )
+    *loading.__all__,
+            )
