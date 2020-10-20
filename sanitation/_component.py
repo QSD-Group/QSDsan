@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 """
 Created on Thu Oct  8 08:33:29 2020
 
@@ -14,6 +15,10 @@ import sys
 import pandas as pd
 import thermosteam as tmo
 
+_chemical_fields = tmo._chemical._chemical_fields
+display_asfunctor = tmo._chemical.display_asfunctor
+chemical_units_of_measure = tmo._chemical.chemical_units_of_measure
+
 __all__ = ('Component',)
 
 
@@ -23,13 +28,21 @@ __all__ = ('Component',)
 # Representation
 # =============================================================================
 
+def component_identity(component, pretty=False):
+    typeheader = f"{type(component).__name__}:"
+    full_ID = f"{typeheader} {component.ID} (phase_ref={repr(component.phase_ref)})"
+    phase = component.locked_state
+    state = ' at ' + f"phase={repr(phase)}" if phase else ""
+    return full_ID + state
+
+
 # Component-related properties
-_component_fields = ('charge', 'description', 'particle_size', 'degradability',
+_component_fields = ('i_charge', 'description', 'particle_size', 'degradability',
                      'organic',)
 
 AbsoluteUnitsOfMeasure = tmo.units_of_measure.AbsoluteUnitsOfMeasure
 component_units_of_measure = {
-    'charge': AbsoluteUnitsOfMeasure('mol/mol')
+    'i_charge': AbsoluteUnitsOfMeasure('mol/mol')
     }
 
 
@@ -47,8 +60,8 @@ class Component(tmo.Chemical):
     '''
 
     def __new__(cls, ID, formula=None, search_ID=None, phase='l', 
-                charge=0, description=None, particle_size='Soluble', 
-                degradability='Undegradable', organic=False,
+                i_charge=None, description=None, particle_size=None, 
+                degradability=None, organic=None,
                 **chemical_properties):
         if search_ID:
             self = super().__new__(cls, ID=ID, search_ID=search_ID,
@@ -59,7 +72,7 @@ class Component(tmo.Chemical):
                 self._formula = formula
         self._ID = ID
         tmo._chemical.lock_phase(self, phase)
-        self._charge = charge
+        self._i_charge = i_charge
         self._description = description
         assert particle_size in ('Dissolved gas', 'Soluble', 'Colloidal', 'Particulate'), \
             "particle_size must be 'Dissolved gas', 'Soluble', 'Colloidal', or 'Particulate'"
@@ -67,18 +80,18 @@ class Component(tmo.Chemical):
         assert degradability in ('Biological', 'Chemical', 'Undegradable'), \
             "degradability must be 'Biological', 'Chemical', or 'Undegradable'"
         self._degradability = degradability
-        assert organic.__class__ is bool, "organic must be 'True' or 'False'"
+        assert organic.__class__ is bool, "organic must be True or False"
         self._organic = organic
         return self
 
 
     @property
-    def charge(self):
-        '''Charge content of the Component, [mol +/mol]'''
-        return self._charge
-    @charge.setter
-    def charge(self, charge):
-        self._charge = float(charge)
+    def i_charge(self):
+        '''Charge content of the Component, [mol +/mol], negative values indicate anions'''
+        return self._i_charge
+    @i_charge.setter
+    def i_charge(self, i_charge):
+        self._i_charge = float(i_charge)
 
     @property
     def description(self):
@@ -112,13 +125,33 @@ class Component(tmo.Chemical):
     def organic(self, organic):
         self._organic = organic
 
-    # TODO: in the future only show Component-related info, not chemical ones
-    # If it's a Chemcial, then it should be defined as a Chemical rather than Component
-    def show(self, chemical_specifications=True):
+
+    def show(self, chemical_specifications=False):
         '''Print all properties'''
+        info = component_identity(self, pretty=True)
         if chemical_specifications:
-            super().show()
-        info = str()
+            for header, fields in _chemical_fields.items():
+                section = []
+                for field in fields:
+                    value = getattr(self, field)
+                    field = field.lstrip('_')
+                    if value is None:
+                        line = f"{field}: None"
+                    if callable(value):
+                        line = f"{display_asfunctor(value, name=field, var=field, show_var=False)}"
+                    else:
+                        if isinstance(value, (int, float)):
+                            line = f"{field}: {value:.5g}"
+                            units = chemical_units_of_measure.get(field, "")
+                            if units: line += f' {units}'
+                        else:
+                            value = str(value)
+                            line = f"{field}: {value}"
+                            if len(line) > 27: line = line[:27] + '...'
+                    section.append(line)
+                if section:
+                    info += header + ("\n" + 9*" ").join(section)
+        info += '\nComponent-specific properties:\n'
         header = '[Others] '
         section = []
         for field in _component_fields:
@@ -158,8 +191,7 @@ class Component(tmo.Chemical):
         components = tmo.Chemicals(())
         for i in range(data.shape[0]):
             component = Component.__new__(cls, ID=data['ID'][i])
-            for j in {'ID', 'formula', 'phase', 'charge', 'description',
-                      'particle_size', 'organic', 'degradability'}:
+            for j in _component_fields:
                 field = '_' + j
                 if pd.isna(data[j][i]): continue
                 setattr(component, field, data[j][i])

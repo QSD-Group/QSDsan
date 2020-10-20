@@ -6,7 +6,6 @@ Created on Fri Oct 16 07:07:41 2020
 @author: yalinli_cabbi
 """
 
-# from distutils.core import setup
 from setuptools import setup
 
 setup(
