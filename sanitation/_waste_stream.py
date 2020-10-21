@@ -28,7 +28,6 @@ class WasteStream(Stream):
              stream_info=True):
         '''Show WasteStream information'''        
         info = ''
-
         # Stream-related specifications
         if stream_info:
             super().show(T, P, flow, composition, N)
@@ -38,25 +37,30 @@ class WasteStream(Stream):
             T_units = T or display_units.T
             P_units = P or display_units.P
             info += self._info_phaseTP(self.phase, T_units, P_units)
-        
-        # Component-related properties
-        info += '\n Component-specific properties:\n'
-        info += f'  TC      : {self.TC:.1f} g C/hr\n'
-        info += f'  TN      : {self.TN:.1f} g N/hr\n'
-        info += f'  TP      : {self.TP:.1f} g P/hr\n'
-        info += f'  TK      : {self.TK:.1f} g K/hr\n'
-        #!!! This display is definitely weired
-        info += f'  charge  : {self.charge:.1f} mol/hr\n'
-        info += f'  COD     : {self.COD:.1f} g O2/hr\n'
-        info += f'  BOD5    : {self.BOD5:.1f} g O2/hr\n'
-        info += f'  uBOD    : {self.uBOD:.1f} g O2/hr\n'
-        info += f'  Totmass : {self.Totmass:.1f} g/hr\n'
-        info += f'  Vmass   : {self.Vmass:.1f} g/hr\n'
-        
+
+        info += self._component_info()
         print(info)
         
     _ipython_display_ = show
     
+    # Component-related properties
+    #!!! This can be done more elegantly
+    def _component_info(self):
+        _ws_info = ''
+        _ws_info += '\n Component-specific properties:\n'
+        _ws_info += f'  TC      : {self.TC:.1f} g C/hr\n'
+        _ws_info += f'  TN      : {self.TN:.1f} g N/hr\n'
+        _ws_info += f'  TP      : {self.TP:.1f} g P/hr\n'
+        _ws_info += f'  TK      : {self.TK:.1f} g K/hr\n'
+        #!!! This display is definitely weired
+        _ws_info += f'  charge  : {self.charge:.1f} mol/hr\n'
+        _ws_info += f'  COD     : {self.COD:.1f} g O2/hr\n'
+        _ws_info += f'  BOD5    : {self.BOD5:.1f} g O2/hr\n'
+        _ws_info += f'  uBOD    : {self.uBOD:.1f} g O2/hr\n'
+        _ws_info += f'  Totmass : {self.Totmass:.1f} g/hr\n'
+        _ws_info += f'  Vmass   : {self.Vmass:.1f} g/hr\n'
+        return _ws_info
+        
     @property
     def components(self):
         return self._thermo.chemicals

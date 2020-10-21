@@ -32,3 +32,53 @@ class SanUnit(bst.Unit, isabstract=True):
         
     def _init_outs(self, outs):
         self._outs = WSOuts(self, self._N_outs, outs, self._thermo, self._outs_size_is_fixed)
+
+    def _info(self, T, P, flow, composition, N, _stream_info):
+        """Information on unit."""
+        if self.ID:
+            info = f'{type(self).__name__}: {self.ID}\n'
+        else:
+            info = f'{type(self).__name__}\n'
+        info += 'ins...\n'
+        i = 0
+        for stream in self.ins:
+            if not stream:
+                info += f'[{i}] {stream}\n'
+                i += 1
+                continue
+            if _stream_info:
+                stream_info = stream._info(T, P, flow, composition, N) + \
+                    '\n' + stream._component_info()
+            else:
+                stream_info = stream._component_info()
+            unit = stream._source
+            index = stream_info.index('\n')
+            source_info = f'  from  {type(unit).__name__}-{unit}\n' if unit else '\n'
+            info += f'[{i}] {stream.ID}' + source_info + stream_info[index+1:] + '\n'
+            i += 1
+        info += 'outs...\n'
+        i = 0
+        for stream in self.outs:
+            if not stream:
+                info += f'[{i}] {stream}\n'
+                i += 1
+                continue
+            if _stream_info:
+                stream_info = stream._info(T, P, flow, composition, N) + \
+                    '\n' + stream._component_info()
+            else:
+                stream_info = stream._component_info()
+            unit = stream._sink
+            index = stream_info.index('\n')
+            sink_info = f'  to  {type(unit).__name__}-{unit}\n' if unit else '\n'
+            info += f'[{i}] {stream.ID}' + sink_info + stream_info[index+1:] + '\n'
+            i += 1
+        info = info.replace('\n ', '\n    ')
+        return info[:-1]
+        
+    def show(self, T=None, P=None, flow='kg/hr', composition=None, N=None, stream_info=True):
+        """Print information on unit"""
+        print(self._info(T, P, flow, composition, N, stream_info))
+        
+
+
