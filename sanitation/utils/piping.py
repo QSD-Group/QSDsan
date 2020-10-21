@@ -6,7 +6,7 @@ Created on Tue Oct 20 21:47:27 2020
 @author: yalinli_cabbi
 """
 
-from biosteam.utils import MissingStream, StreamSequence
+from biosteam.utils.piping import MissingStream, StreamSequence
 from .. import WasteStream as WS
 
 # from biosteam.utils import piping
