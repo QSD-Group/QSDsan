@@ -46,10 +46,30 @@ class WasteStream(Stream):
     _ipython_display_ = show
     
     @property
+    def components(self):
+        return self._thermo.chemicals
+
+    @property
     def charge(self):
         '''[float] Total charge of the stream in + mol/hr'''
-        return (self.chemicals.i_charge * self.mol).sum()
-    
-    
+        return (self._thermo.chemicals.i_charge * self.mol).sum()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
     

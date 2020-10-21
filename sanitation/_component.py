@@ -96,7 +96,6 @@ class Component(tmo.Chemical):
         self._organic = organic
         return self
 
-
     @property
     def i_charge(self):
         '''Charge content of the Component, [mol +/mol], negative values indicate anions'''
