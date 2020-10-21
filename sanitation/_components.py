@@ -41,15 +41,15 @@ class Components(Chemicals):
                 setattr(self, component.ID, component)
             else:
                 if isinstance(component, Chemical):
-                    raise TypeError(f'{component} is a Chemical object, use <Component>.from_chemical to define a Component object')
+                    raise TypeError(f'{component} is a Chemical object, use Component.from_chemical to define a Component object')
                 raise TypeError(f'Only Component objects can be included, not a {type(component).__name__} object')
         return self
     
     def __setattr__(self, ID, component):
-        raise TypeError("Cannot set attribute; use <Components>.append instead")
+        raise TypeError("Cannot set attribute; use {self.ID}.append instead")
     
     def __setitem__(self, ID, component):
-        raise TypeError("Cannot set item; use <Components>.append instead")
+        raise TypeError("Cannot set item; use {self.ID}.append instead")
     
     def __getitem__(self, key):
         '''Return a Component object or a list of Component objects'''
@@ -74,7 +74,7 @@ class Components(Chemicals):
         '''Append a Component'''
         if not isinstance(component, Component):
             if isinstance(component, Chemical):
-                raise TypeError(f'{component} is a Chemical object, use <Component>.from_chemical to define a Component object')
+                raise TypeError(f'{component} is a Chemical object, use Component.from_chemical to define a Component object')
             else:
                 raise TypeError("only 'Component' objects can be appended, "
                                f"not '{type(component).__name__}'")
