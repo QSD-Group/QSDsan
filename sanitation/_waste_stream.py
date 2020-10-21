@@ -51,6 +51,13 @@ class WasteStream(Stream):
     def components(self):
         return self._thermo.chemicals
 
+    #!!! Suspect many of the units below aren't correct
+    # double-check using self.mass or self.mol
+    @property
+    def TC(self):
+        '''[float] Total carbon content of the stream in + g C/hr'''
+        return (self._thermo.chemicals.i_C * self.mass).sum()
+
     @property
     def charge(self):
         '''[float] Total charge of the stream in + mol/hr'''

@@ -37,16 +37,17 @@ def component_identity(component, pretty=False):
     return full_ID + state
 
 
-# Component-related properties
-_component_properties = ('description', 'measure_unit', 'particle_size',
-                         'degradability', 'organic',
-                         'i_C', 'i_N', 'i_P', 'i_K', 'i_mass', 'i_charge', 
-                         'f_BOD5_COD', 'f_uBOD_COD', 'f_Vmass_Totmass',)
+# Will stored as an array when compiled
+_num_component_properties = ('i_C', 'i_N', 'i_P', 'i_K', 'i_mass', 'i_charge',
+                             'f_BOD5_COD', 'f_uBOD_COD', 'f_Vmass_Totmass', )
 
 # Fields that cannot be left as None
-_key_component_properties = ('i_C', 'i_N', 'i_P', 'i_K', 'i_mass', 'i_charge',
-                             'f_BOD5_COD', 'f_uBOD_COD', 'f_Vmass_Totmass', 
+_key_component_properties = (*_num_component_properties,
                              'particle_size', 'degradability', 'organic',)
+
+# All Component-related properties
+_component_properties = (*_key_component_properties,
+                         'description', 'measure_unit')
 
 _checked_properties = (*_checked_properties, *_key_component_properties)
 
@@ -89,7 +90,6 @@ def check_property(name, value):
 # Define the Component class
 # =============================================================================
 
-
 class Component(tmo.Chemical):
     '''A subclass of the Chemical object in the thermosteam package with additional attributes and methods for waste treatment'''
 
@@ -109,9 +109,6 @@ class Component(tmo.Chemical):
         
         self._ID = ID
         tmo._chemical.lock_phase(self, phase)
-        # self._measure_unit = AbsoluteUnitsOfMeasure(measure_unit)
-        self._measure_unit = measure_unit
-        
         self._i_C = i_C
         self._i_N = i_N
         self._i_P = i_P
@@ -123,10 +120,14 @@ class Component(tmo.Chemical):
         self._f_uBOD_COD = f_uBOD_COD
         self._f_Vmass_Totmass = f_Vmass_Totmass
         
-        self._description = description
+        
         self._particle_size = particle_size
         self._degradability = degradability
         self._organic = organic
+        
+        # self._measure_unit = AbsoluteUnitsOfMeasure(measure_unit)
+        self._measure_unit = measure_unit
+        self._description = description
         return self
 
     @property
@@ -200,7 +201,7 @@ class Component(tmo.Chemical):
     def f_uBOD_COD(self, f):
         check_property('f_uBOD_COD', f)
         if f < self.f_BOD5_COD:
-            raise ValueError(f'f_uBOD_COD cannot be less than f_BOD5_COD')
+            raise ValueError('f_uBOD_COD cannot be less than f_BOD5_COD')
         self._f_uBOD_COD = float(f)
 
     @property
@@ -258,29 +259,11 @@ class Component(tmo.Chemical):
 
     def show(self, chemical_info=False):
         '''Show Component properties'''
-        info = component_identity(self, pretty=True)
+        info = ''
         if chemical_info:
-            for header, fields in _chemical_fields.items():
-                section = []
-                for field in fields:
-                    value = getattr(self, field)
-                    field = field.lstrip('_')
-                    if value is None:
-                        line = f"{field}: None"
-                    if callable(value):
-                        line = f"{display_asfunctor(value, name=field, var=field, show_var=False)}"
-                    else:
-                        if isinstance(value, (int, float)):
-                            line = f"{field}: {value:.5g}"
-                            units = chemical_units_of_measure.get(field, "")
-                            if units: line += f' {units}'
-                        else:
-                            value = str(value)
-                            line = f"{field}: {value}"
-                            if len(line) > 27: line = line[:27] + '...'
-                    section.append(line)
-                if section:
-                    info += header + ("\n" + 9*" ").join(section)
+            super().show()
+        else:
+            info = component_identity(self, pretty=True)
         info += '\nComponent-specific properties:\n'
         header = '[Others] '
         section = []
@@ -310,7 +293,15 @@ class Component(tmo.Chemical):
     _ipython_display_ = show
 
     def get_missing_properties(self, properties=None):
-        return [i for i in (properties or _checked_properties) if not getattr(self, i)]
+        missing = []
+        for i in (properties or _checked_properties):
+            if getattr(self, i) == 0:
+                continue
+            elif str(getattr(self, i)) in ('True', 'False'):
+                continue
+            elif not getattr(self, i):
+                missing.append(i)
+        return missing
 
     @classmethod
     def from_chemical(cls, ID, chemical, measure_unit='g', 

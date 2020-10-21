@@ -18,7 +18,10 @@ components = load_components_from_excel(
     )
 
 H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
-                              i_charge=0, particle_size='Soluble',
+                              i_C=0, i_N=0, i_P=0, i_K=0, i_mass=1,
+                              i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
+                              f_Vmass_Totmass=0,
+                              particle_size='Soluble',
                               degradability='Undegradable', organic=False)
 components.append(H2O)
 

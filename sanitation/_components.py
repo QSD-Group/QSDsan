@@ -15,6 +15,7 @@ __all__ = ('Components', 'CompiledComponents')
 
 utils = tmo.utils
 Component = _component.Component
+_num_component_properties = _component._num_component_properties
 _key_component_properties = _component._key_component_properties
 setattr = object.__setattr__
 
@@ -117,8 +118,9 @@ class CompiledComponents(CompiledChemicals):
         super().refresh_constants()
         dct = self.__dict__
         components = self.tuple
-        dct['charge'] = chemical_data_array([i.charge for i in components])
-        # TODO: add C, N, contents, etc.
+        for i in _num_component_properties:
+            for component in components:
+               dct[i] = component_data_array(components, i)
 
     def _compile(self):
         dct = self.__dict__
@@ -129,18 +131,11 @@ class CompiledComponents(CompiledChemicals):
         for component in components:
             missing_properties = component.get_missing_properties(_key_component_properties)
             if not missing_properties: continue
-            if 'i_charge' in missing_properties:
-                if getattr(component, 'i_charge') == 0:
-                    continue
-            if 'organic' in missing_properties:
-                if str(getattr(component, 'organic')) in ('True', 'False'):
-                    continue
             missing = utils.repr_listed_values(missing_properties)
             raise RuntimeError(f'{component} is missing key Component-related properties ({missing})')
-        
-        # TODO: add other ones
-        dct['i_charge'] = component_data_array(components, 'i_charge')
 
+        for i in _num_component_properties:
+            dct[i] = component_data_array(components, i)
     
     def subgroup(self, IDs):
         '''Create a new subgroup of Component objects'''
