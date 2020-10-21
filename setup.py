@@ -19,8 +19,9 @@ setup(
     url="https://github.com/codesciencewater/sanitation",
     install_requires=['biosteam>=2.20.21'],
     package_data=
-        {'sanitation': ['systems/*',
-                        'utils/*',
+        {'sanitation': ['utils/*',
+                        'units/*',
+                        'systems/*',
                         ]},
     platforms=['Windows', 'Mac', 'Linux'],
     classifiers=['License :: OSI Approved :: University of Illinois/NCSA Open Source License',

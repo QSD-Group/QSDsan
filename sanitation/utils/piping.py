@@ -13,8 +13,10 @@ from .. import WasteStream as WS
 # MissingStream = piping.MissingStream
 # StreamSequence = piping.StreamSequence
 # __sub__ = piping.__sub__
+# __rsub__ = piping.__rsub__
+# pipe_info = piping.pipe_info
 
-__all__ = ('MissingWS', 'Ins', 'Outs', 'as_ws')
+__all__ = ('MissingWS', 'WSIns', 'WSOuts', 'as_ws')
 
 
 # %%
@@ -76,10 +78,10 @@ class WSSequence(StreamSequence):
         dock = self._dock
         redock = self._redock
         if ws == ():
-                self._streams = [dock(WS(thermo=thermo)) for i in range(size)]
+            self._streams = [dock(WS(thermo=thermo)) for i in range(size)]
         else:
             if fixed_size:
-                self._initialize_missing_ws()
+                self._initialize_missing_streams()
                 if ws:
                     if isinstance(ws, str):
                         self._streams[0] = dock(WS(ws, thermo=thermo))
@@ -102,9 +104,16 @@ class WSSequence(StreamSequence):
                                          for i in ws]
                 else:
                     self._initialize_missing_streams()
-    
+
     def _create_missing_stream(self):
+        MissingWS(None, None).show()
         return MissingWS(None, None)
+    
+    def _create_N_missing_streams(self, N):
+        return [self._create_missing_stream() for i in range(N)]
+    
+    def _initialize_missing_streams(self):
+        self._streams = self._create_N_missing_streams(self._size)
 
     def __setitem__(self, index, item):
         if isinstance(index, int):
@@ -132,13 +141,13 @@ class WSSequence(StreamSequence):
 
 
 
-class Ins(WSSequence):
+class WSIns(WSSequence):
     '''Create an Ins object which serves as input streams for a Unit object'''
     __slots__ = ('_sink', '_fixed_size')
     
     def __init__(self, sink, size, ws, thermo, fixed_size=True):
         self._sink = sink
-        super(WSSequence, self).__init__(size, ws, thermo, fixed_size)
+        super().__init__(size, ws, thermo, fixed_size)
     
     @property
     def sink(self):
@@ -166,13 +175,13 @@ class Ins(WSSequence):
         ws._sink = None
 
 
-class Outs(WSSequence):
+class WSOuts(WSSequence):
     '''Create an Outs object which serves as output streams for a Unit object'''
     __slots__ = ('_source',)
     
     def __init__(self, source, size, ws, thermo, fixed_size=True):
         self._source = source
-        super(WSSequence, self).__init__(size, ws, thermo, fixed_size)
+        super().__init__(size, ws, thermo, fixed_size)
     
     @property
     def source(self):

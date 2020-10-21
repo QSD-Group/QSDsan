@@ -15,7 +15,7 @@ __all__ = ('load_components_from_excel',)
 
 # %%
 
-def load_components_from_excel(path):
+def load_components_from_excel(path=None):
     '''
     Create Component objects based on properties defined in an Excel spreadsheet,
     return a Components object that contains all created Component objects,
@@ -25,10 +25,7 @@ def load_components_from_excel(path):
     if not path:
         path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'default_components.xlsx')
         # path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), 'default_components.xlsx')
-    
     data = pd.read_excel(path, sheet_name='components')
-    del os
-    # del sys
     components = sanitation.Components(())
     for i in range(data.shape[0]):
         component = sanitation.Component(ID=data['ID'][i])
@@ -37,6 +34,8 @@ def load_components_from_excel(path):
             if pd.isna(data[j][i]): continue
             setattr(component, field, data[j][i])
         components.append(component)
+    del data, os
+    # del sys
     return components
 
 

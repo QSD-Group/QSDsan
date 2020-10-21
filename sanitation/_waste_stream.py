@@ -8,7 +8,7 @@ Created on Sat Oct 17 07:48:41 2020
 
 
 # import thermosteam as tmo
-from thermosteam import Stream
+from thermosteam import Stream, utils
 
 
 __all__ = ('WasteStream',)
@@ -20,25 +20,27 @@ __all__ = ('WasteStream',)
 # Define the WasteStream class
 # =============================================================================
 
+@utils.registered(ticket_name='ws')
 class WasteStream(Stream):
     '''A subclass of the Stream object in the thermosteam package with additional attributes and methods for waste treatment    '''
     
-    def show(self, T=None, P=None, flow=None, composition=None, N=None,
+    def show(self, T=None, P=None, flow='kg/hr', composition=None, N=None,
              stream_info=True):
-        '''Show WasteStream information'''
-        
+        '''Show WasteStream information'''        
+        info = ''
+
         # Stream-related specifications
         if stream_info:
             super().show(T, P, flow, composition, N)
         else:
-            print(self._basic_info())
+            info += self._basic_info()
             display_units = self.display_units
             T_units = T or display_units.T
             P_units = P or display_units.P
-            print(self._info_phaseTP(self.phase, T_units, P_units))
+            info += self._info_phaseTP(self.phase, T_units, P_units)
         
         # Component-related properties
-        info = '\n Component-specific properties:\n'
+        info += '\n Component-specific properties:\n'
         info += f'  charge: {self.charge} mol/hr\n'
         
         print(info)
