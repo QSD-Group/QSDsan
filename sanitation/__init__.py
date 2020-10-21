@@ -6,13 +6,24 @@ Created on Thu Oct  8 16:07:43 2020
 @author: yalinli_cabbi
 """
 
-from . import _component
-from . import _waste_stream
+from ._component import Component
+from ._components import Components, CompiledComponents
+from ._waste_stream import WasteStream
+from ._unit import SanUnit
 
-from ._component import *
-from ._waste_stream import *
+from . import utils
+from . import units
+#from . import systems
+
+from .units import *
+# from .systems import *
 
 __all__ = (
-    *_component.__all__,
-    *_waste_stream.__all__,
+    'Component',
+    'Components', 'CompiledComponents',
+    'WasteStream',
+    'Unit',
+    *utils.__all__,
+    *units.__all__,
+#   *systems.__all__,
            )
