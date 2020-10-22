@@ -12,7 +12,7 @@ from . import piping
 from .loading import *
 from .piping import *
 
-__all__ = (#'load_components_from_excel', 'MissingWS', 'Ins', 'Outs', 'as_ws',
+__all__ = (
     *loading.__all__,
     *piping.__all__,
             )
