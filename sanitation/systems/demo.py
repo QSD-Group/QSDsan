@@ -3,7 +3,7 @@
 """
 Created on Sun Oct 18 16:52:05 2020
 
-@author: yalinli_cabbi
+@author: yalinli_cabbi, joy_c
 """
 
 import os
@@ -14,7 +14,7 @@ import thermosteam as tmo
 from sanitation import Component, WasteStream, units
 from sanitation.utils import load_components_from_excel
 
-components = load_components_from_excel("sanitation/utils/default_components.xlsx")
+components = load_components("sanitation/utils/default_components.csv")
 
 H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
                               i_C=0, i_N=0, i_P=0, i_K=0, i_mass=1,
@@ -26,7 +26,9 @@ components.append(H2O)
 
 for i in components:
     i.default()
-    i.copy_models_from(components.H2O, ['sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu'])
+    for j in ['sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu']:
+        if len(getattr(i, j).models) > 0: continue
+        i.copy_models_from(components.H2O, j)
 
 components.compile()
 bst.settings.set_thermo(components)

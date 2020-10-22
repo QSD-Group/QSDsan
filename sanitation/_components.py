@@ -189,9 +189,3 @@ class CompiledComponents(CompiledChemicals):
             return False
     
     
-    
-    
-    
-    
-    
-    

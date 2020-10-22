@@ -5,46 +5,48 @@ Created on Thu Oct  8 08:33:29 2020
 
 @author: yalinli_cabbi
 """
-
+import os
 import pandas as pd
 import sanitation
 from sanitation._component import _component_properties
 
-__all__ = ('load_components_from_excel',)
+__all__ = ('load_components',)
 
 
 # %%
 
-def load_components_from_excel(path=None):
+def load_components(path=None):
     '''
-    Create Component objects based on properties defined in an Excel spreadsheet,
+    Create Component objects based on properties defined in a .csv file,
     return a Components object that contains all created Component objects,
     note that the Components object needs to be compiled before using in simulation'''
-    import os
     # import sys
     if not path:
-        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'default_components.xlsx')
-        # path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), 'default_components.xlsx')
-    data = pd.read_excel(path, sheet_name='components')
+        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'default_components.csv')
+    data = pd.read_csv(path)
     components = sanitation.Components(())
-    for i in range(data.shape[0]):
-        component = sanitation.Component(ID=data['ID'][i])
+    for i, cmp in data.iterrows():
+        if pd.isna(cmp.measured_as):
+            cmp.measured_as = None
+        if not pd.isna(cmp.CAS):
+            component = sanitation.Component(ID = cmp.ID, 
+                                             search_ID = str(cmp.CAS), 
+                                             measured_as = cmp.measured_as)
+        elif not pd.isna(cmp.PubChem):
+            component = sanitation.Component(ID = cmp.ID, 
+                                             search_ID = 'PubChem='+str(int(cmp.PubChem)), 
+                                             measured_as = cmp.measured_as) 
+        elif not pd.isna(cmp.formula):
+            component = sanitation.Component(ID = cmp.ID, 
+                                             formula = cmp.formula, 
+                                             measured_as = cmp.measured_as)            
+        else:
+            component = sanitation.Component(ID = cmp.ID, 
+                                             measured_as = cmp.measured_as)
         for j in _component_properties:
             field = '_' + j
-            if pd.isna(data[j][i]): continue
-            setattr(component, field, data[j][i])
+            if pd.isna(cmp[j]): continue
+            setattr(component, field, cmp[j])
         components.append(component)
     del data, os
     # del sys
-    return components
-
-
-
-
-
-
-
-
-
-
-
