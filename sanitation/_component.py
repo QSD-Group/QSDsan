@@ -43,11 +43,11 @@ _num_component_properties = ('i_C', 'i_N', 'i_P', 'i_K', 'i_mass', 'i_charge',
 
 # Fields that cannot be left as None
 _key_component_properties = (*_num_component_properties,
-                             'particle_size', 'degradability', 'organic',)
+                             'particle_size', 'degradability', 'organic', 'measure_unit')
 
 # All Component-related properties
 _component_properties = (*_key_component_properties,
-                         'description', 'measure_unit')
+                         'description', )
 
 _checked_properties = (*_checked_properties, *_key_component_properties)
 
@@ -321,7 +321,6 @@ class Component(tmo.Chemical):
                            new.Tb, new.eos, new.eos_1atm, new.phase_ref)
         new._label_handles()
         
-        # TODO: add other properties
         new.i_C = i_C
         new.i_N = i_N
         new.i_P = i_P
@@ -335,6 +334,8 @@ class Component(tmo.Chemical):
         new.particle_size = particle_size
         new.degradability = degradability
         new.organic = organic
+        new.measure_unit = measure_unit
+        
         for i,j in data.items(): setattr(new, i , j)
         return new
 

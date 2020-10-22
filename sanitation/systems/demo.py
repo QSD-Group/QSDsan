@@ -6,16 +6,15 @@ Created on Sun Oct 18 16:52:05 2020
 @author: yalinli_cabbi
 """
 
-
+import os
+os.chdir("C:/Users/joy_c/Dropbox/PhD/Research/QSD/codes_developing/QSD-for-WaSH/sanitation")
 
 import biosteam as bst
 import thermosteam as tmo
 from sanitation import Component, WasteStream, units
 from sanitation.utils import load_components_from_excel
 
-components = load_components_from_excel(
-    # '/Users/yalinli_cabbi/OneDrive/Coding/sanitation/sanitation/utils/default_components.xlsx'
-    )
+components = load_components_from_excel("sanitation/utils/default_components.xlsx")
 
 H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
                               i_C=0, i_N=0, i_P=0, i_K=0, i_mass=1,
