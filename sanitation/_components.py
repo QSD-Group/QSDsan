@@ -115,14 +115,31 @@ def component_data_array(components, attr):
 class CompiledComponents(CompiledChemicals):
     ''' A subclass of the CompiledChemicals object in the thermosteam package, contains Component objects as attributes'''
     
+    _cache = {}
+    
+    def __new__(cls, components, cache=None):
+        isa = isinstance
+        components = tuple([cmp if isa(cmp, Component) else Component(cmp, cache)
+                           for cmp in components])        
+        cache = cls._cache
+        if components in cache:
+            self = cache[components]
+        else:
+            self = object.__new__(cls)
+            setfield = setattr
+            for cmp in components:
+                setfield(self, cmp.ID, cmp)
+            self._compile()
+            cache[components] = self
+        return self    
+    
     def refresh_constants(self):
         '''Refresh constant arrays of Components, including all Chemical and Component-specific properties'''
         super().refresh_constants()
         dct = self.__dict__
         components = self.tuple
         for i in _num_component_properties:
-            for component in components:
-               dct[i] = component_data_array(components, i)
+            dct[i] = component_data_array(components, i)
 
     def _compile(self):
         dct = self.__dict__
