@@ -37,11 +37,13 @@ class Components(Chemicals):
     
     def __new__(cls, components, cache=False):
         self = super(Chemicals, cls).__new__(cls)
+        isa = isinstance
+        setfield = setattr
         for component in components:
-            if isinstance(component, Component):
-                setattr(self, component.ID, component)
+            if isa(component, Component):
+                setfield(self, component.ID, component)
             else:
-                if isinstance(component, Chemical):
+                if isa(component, Chemical):
                     raise TypeError(f'{component} is a Chemical object, use Component.from_chemical to define a Component object')
                 raise TypeError(f'Only Component objects can be included, not a {type(component).__name__} object')
         return self

@@ -43,7 +43,7 @@ _num_component_properties = ('i_C', 'i_N', 'i_P', 'i_K', 'i_mass', 'i_charge',
 
 # Fields that cannot be left as None
 _key_component_properties = (*_num_component_properties,
-                             'particle_size', 'degradability', 'organic', 'measure_unit')
+                             'particle_size', 'degradability', 'organic', 'measured_as')
 
 # All Component-related properties
 _component_properties = (*_key_component_properties,
@@ -53,10 +53,10 @@ _checked_properties = (*_checked_properties, *_key_component_properties)
 
 AbsoluteUnitsOfMeasure = tmo.units_of_measure.AbsoluteUnitsOfMeasure
 component_units_of_measure = {
-    'i_C': AbsoluteUnitsOfMeasure('g C'), 
-    'i_N': AbsoluteUnitsOfMeasure('g N'), 
-    'i_P': AbsoluteUnitsOfMeasure('g P'), 
-    'i_K': AbsoluteUnitsOfMeasure('g K'), 
+    'i_C': AbsoluteUnitsOfMeasure('g'), 
+    'i_N': AbsoluteUnitsOfMeasure('g'), 
+    'i_P': AbsoluteUnitsOfMeasure('g'), 
+    'i_K': AbsoluteUnitsOfMeasure('g'), 
     'i_mass': AbsoluteUnitsOfMeasure('g'), 
     'i_charge': AbsoluteUnitsOfMeasure('mol'),
     # 'f_BOD5_COD': AbsoluteUnitsOfMeasure(''), 
@@ -93,7 +93,7 @@ def check_property(name, value):
 class Component(tmo.Chemical):
     '''A subclass of the Chemical object in the thermosteam package with additional attributes and methods for waste treatment'''
 
-    def __new__(cls, ID, formula=None, search_ID=None, phase='l', measure_unit='g COD', 
+    def __new__(cls, ID, formula=None, search_ID=None, phase='l', measured_as=None, 
                 i_C=None, i_N=None, i_P=None, i_K=None, i_mass=None, i_charge=None, 
                 f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
                 description=None, particle_size=None, 
@@ -106,6 +106,11 @@ class Component(tmo.Chemical):
             self = super().__new__(cls, ID=ID, search_db=False, **chemical_properties)
             if formula:
                 self._formula = formula
+        
+        if measured_as:
+            if measured_as == 'COD': self._MW = tmo.Chemical('O').MW
+            elif measured_as == 'N': self._MW = tmo.Chemical('N').MW
+            elif measured_as == 'P': self._MW = tmo.Chemical('P').MW
         
         self._ID = ID
         tmo._chemical.lock_phase(self, phase)
@@ -125,8 +130,7 @@ class Component(tmo.Chemical):
         self._degradability = degradability
         self._organic = organic
         
-        # self._measure_unit = AbsoluteUnitsOfMeasure(measure_unit)
-        self._measure_unit = measure_unit
+        self._measured_as = measured_as
         self._description = description
         return self
 
@@ -215,20 +219,19 @@ class Component(tmo.Chemical):
         
     @property
     def description(self):
-        '''[str] Description of the Component'''
+        '''[str] Description of the Component.'''
         return self._description
     @description.setter
     def description(self, description):
         self._description = description
 
     @property
-    def measure_unit(self):
-        '''[str] The measuring unit of the Component'''
-        return self._measure_unit
-    @measure_unit.setter
-    def measure_unit(self, measure_unit):
-        self._measure_unit = measure_unit
-        # self._measure_unit = AbsoluteUnitsOfMeasure(measure_unit)
+    def measured_as(self):
+        '''[str] The unit as which the Component is measured.'''
+        return self._measured_as
+    @measured_as.setter
+    def measure_unit(self, measured_as):
+        self._measured_as = measured_as
         
     @property
     def particle_size(self):
@@ -279,8 +282,11 @@ class Component(tmo.Chemical):
                     line = f"{field}: {value:.5g}"
                     units = component_units_of_measure.get(field, '')
                     if units: 
-                        if field in ('i_C', 'i_N', 'i_P', 'i_K', 'i_mass', 'i_charge',):
-                            line += f' {units}/{self._measure_unit}'
+                        if field.startswith('i_'):
+                            if self._measured_as: denom = self._measured_as
+                            else: denom = ''
+                            if field == 'i_charge': line += f' {units} +/g {denom}'
+                            else: line += f' {units} {field[2:]}/g {denom}'
                         else: line += f' {units}'
                 else:
                     value = str(value)
@@ -304,7 +310,7 @@ class Component(tmo.Chemical):
         return missing
 
     @classmethod
-    def from_chemical(cls, ID, chemical, measure_unit='g', 
+    def from_chemical(cls, ID, chemical, measured_as=None, 
                       i_C=None, i_N=None, i_P=None, i_K=None, i_mass=None, 
                       i_charge=None, f_BOD5_COD=None, f_uBOD_COD=None, 
                       f_Vmass_Totmass=None, description=None, 
@@ -334,7 +340,7 @@ class Component(tmo.Chemical):
         new.particle_size = particle_size
         new.degradability = degradability
         new.organic = organic
-        new.measure_unit = measure_unit
+        new.measured_as = measured_as
         
         for i,j in data.items(): setattr(new, i , j)
         return new

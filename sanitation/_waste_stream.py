@@ -24,6 +24,8 @@ __all__ = ('WasteStream',)
 class WasteStream(Stream):
     '''A subclass of the Stream object in the thermosteam package with additional attributes and methods for waste treatment    '''
     
+    
+    
     def show(self, T=None, P=None, flow='kg/hr', composition=None, N=None,
              stream_info=True):
         '''Show WasteStream information'''        
@@ -64,8 +66,9 @@ class WasteStream(Stream):
         return (self._thermo.chemicals.i_charge * self.mol).sum()
 
 
-
-
+    @classmethod
+    def from_composite_measures(cls):
+        
 
 
 
