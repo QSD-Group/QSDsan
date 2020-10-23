@@ -43,11 +43,11 @@ _num_component_properties = ('i_C', 'i_N', 'i_P', 'i_K', 'i_mass', 'i_charge',
 
 # Fields that cannot be left as None
 _key_component_properties = (*_num_component_properties,
-                             'particle_size', 'degradability', 'organic', 'measured_as')
+                             'particle_size', 'degradability', 'organic')
 
 # All Component-related properties
 _component_properties = (*_key_component_properties,
-                         'description', )
+                         'description', 'measured_as', )
 
 _checked_properties = (*_checked_properties, *_key_component_properties)
 
@@ -230,8 +230,12 @@ class Component(tmo.Chemical):
         '''[str] The unit as which the Component is measured.'''
         return self._measured_as
     @measured_as.setter
-    def measure_unit(self, measured_as):
+    def measured_as(self, measured_as):
         self._measured_as = measured_as
+        if measured_as:
+            if measured_as == 'COD': self._MW = tmo.Chemical('O').MW
+            elif measured_as == 'N': self._MW = tmo.Chemical('N').MW
+            elif measured_as == 'P': self._MW = tmo.Chemical('P').MW
         
     @property
     def particle_size(self):

@@ -28,25 +28,29 @@ def load_components(path=None):
     for i, cmp in data.iterrows():
         if pd.isna(cmp.measured_as):
             cmp.measured_as = None
-        if not pd.isna(cmp.CAS):
+        try:
             component = sanitation.Component(ID = cmp.ID, 
                                              search_ID = str(cmp.CAS), 
                                              measured_as = cmp.measured_as)
-        elif not pd.isna(cmp.PubChem):
-            component = sanitation.Component(ID = cmp.ID, 
-                                             search_ID = 'PubChem='+str(int(cmp.PubChem)), 
-                                             measured_as = cmp.measured_as) 
-        elif not pd.isna(cmp.formula):
-            component = sanitation.Component(ID = cmp.ID, 
-                                             formula = cmp.formula, 
-                                             measured_as = cmp.measured_as)            
-        else:
-            component = sanitation.Component(ID = cmp.ID, 
-                                             measured_as = cmp.measured_as)
+        except LookupError:
+            try:
+                component = sanitation.Component(ID = cmp.ID, 
+                                                 search_ID = 'PubChem='+str(int(cmp.PubChem)), 
+                                                 measured_as = cmp.measured_as) 
+            except:
+                if not pd.isna(cmp.formula):
+                    component = sanitation.Component(ID = cmp.ID, 
+                                                     formula = cmp.formula, 
+                                                     measured_as = cmp.measured_as)            
+                else:
+                    component = sanitation.Component(ID = cmp.ID, 
+                                                     measured_as = cmp.measured_as)
         for j in _component_properties:
             field = '_' + j
             if pd.isna(cmp[j]): continue
             setattr(component, field, cmp[j])
         components.append(component)
-    del data, os
-    # del sys
+    
+    del data
+    return components
+    # del sys, os

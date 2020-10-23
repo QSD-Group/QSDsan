@@ -12,7 +12,7 @@ os.chdir("C:/Users/joy_c/Dropbox/PhD/Research/QSD/codes_developing/QSD-for-WaSH/
 import biosteam as bst
 import thermosteam as tmo
 from sanitation import Component, WasteStream, units
-from sanitation.utils import load_components_from_excel
+from sanitation.utils import load_components
 
 components = load_components("sanitation/utils/default_components.csv")
 
@@ -24,11 +24,12 @@ H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
                               degradability='Undegradable', organic=False)
 components.append(H2O)
 
+TMH = tmo.base.thermo_model_handle.ThermoModelHandle
 for i in components:
     i.default()
-    for j in ['sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu']:
-        if len(getattr(i, j).models) > 0: continue
-        i.copy_models_from(components.H2O, j)
+    for j in ('sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu'):
+        if isinstance(getattr(i, j), TMH) and len(getattr(i, j).models) > 0: continue
+        i.copy_models_from(components.H2O, names=(j,))
 
 components.compile()
 bst.settings.set_thermo(components)
