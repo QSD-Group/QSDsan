@@ -36,7 +36,7 @@ bst.settings.set_thermo(components)
 
 
 ins1 = WasteStream('ins1', SAc=5, H2O=1000, units='kg/hr')
-ins2 = WasteStream('ins2', SHAc=10, H2O=1000, units='kg/hr')
+ins2 = WasteStream('ins2', SF=10, H2O=1000, units='kg/hr')
 
 M1 = units.Mixer('M1', ins=(ins1, ins2, ''), outs='mixture')
 M1.simulate()
@@ -45,7 +45,7 @@ M1.diagram()
 
 S1 = units.Splitter('S1', ins=M1-0, outs=('', ''), split=0.2)
 
-ins3 = WasteStream('ins3', SHCO3=7, H2O=1000, units='kg/hr')
+ins3 = WasteStream('ins3', SNO3=7, H2O=1000, units='kg/hr')
 P1 = units.Pump('P1', ins=ins3)
 
 M2 = units.MixTank('M2', ins=(S1-0, P1-0), tau=2)

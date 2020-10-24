@@ -47,7 +47,7 @@ _key_component_properties = (*_num_component_properties,
 
 # All Component-related properties
 _component_properties = (*_key_component_properties,
-                         'description', 'measured_as', )
+                         'measured_as', 'description', )
 
 _checked_properties = (*_checked_properties, *_key_component_properties)
 
@@ -58,10 +58,7 @@ component_units_of_measure = {
     'i_P': AbsoluteUnitsOfMeasure('g'), 
     'i_K': AbsoluteUnitsOfMeasure('g'), 
     'i_mass': AbsoluteUnitsOfMeasure('g'), 
-    'i_charge': AbsoluteUnitsOfMeasure('mol'),
-    # 'f_BOD5_COD': AbsoluteUnitsOfMeasure(''), 
-    # 'f_uBOD_COD': AbsoluteUnitsOfMeasure(''), 
-    # 'f_Vmass_Totmass': AbsoluteUnitsOfMeasure('')
+    'i_charge': AbsoluteUnitsOfMeasure('mol')
     }
 
 
@@ -74,10 +71,10 @@ allowed_values = {
     }
 
 def check_property(name, value):
-    if name in ('i_C', 'i_N', 'i_P', 'i_K', 'i_mass', 'i_charge',):
+    if name.startswith('i_'):
         try: float(value)
         except: raise TypeError(f'{name} must be a number, not a {type(value).__name__}')
-    elif name in ('f_BOD5_COD', 'f_uBOD_COD', 'f_Vmass_Totmass',):
+    elif name.startswith('f_'):
         try: float(value)
         except: raise TypeError(f'{name} must be a number, not a {type(value).__name__}')        
         if value>1 or value<0:

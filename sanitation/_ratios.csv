@@ -1,0 +1,31 @@
+Variable,Description,Default
+fAc_TotCOD,acetate (+ acetic acid) fraction of total COD,0
+fCB_XCB,colloidal fraction of slowly biodegradable COD,0.15
+fSUInf_TotCOD,"undegradable/inert soluble fraction of total COD, originating from the influent",0.05
+fSCH3OH_TotCOD,methanol fraction of total COD,0
+fProp_TotCOD,propionate (+ propionic acid) fraction of total COD,0
+fSF_TotCOD,fermentable soluble OM fraction of total COD,0.2
+fBAP_CB,biomass-associated product fraction of total biodegradable colloidal COD,0
+fUAP_CB,utilization-associated product fraction of total biodegradable colloidal COD,0
+fXOHO_TotCOD,heterotrophic biomass fraction of total COD,0
+fXAOO_TotCOD,ammonia oxidizer biomass fraction of total COD,0
+fXNOO_TotCOD,nitrite oxidixer biomass fraction of total COD,0
+fXAMO_TotCOD,anammox biomass fraction of total COD,0
+fXPAO_TotCOD,phosphate accumulating biomass fraction of total COD,0
+fXMEOLO_TotCOD,methylotrophic biomass fraction of total COD,0
+fXACO_TotCOD,acetoclastic methanogenic biomass fract. of total COD,0
+fXHMO_TotCOD,hydrogenotrophic methanogenic biomass fract. of total COD,0
+fXPRO_TotCOD,propionic acetogenic biomass fraction of total COD,0
+fXOHOPHA_TotCOD,poly-hydroxy alkanoates in OHO fraction of total COD,0
+fXGAOPHA_TotCOD,poly-hydroxy alkanoates in GAO fraction of total COD,0
+fXPAOPHA_TotCOD,poly-hydroxy alkanoates in PAO fraction of total COD,0
+fXPAOGly_TotCOD,glycogen in PAO fraction of total COD,0
+fXGAOGly_TotCOD,glycogen in GAO fraction of total COD,0
+fXCUInf_TotCOD,"undegradable particulate and colloidal fraction of total COD, originating from the influent",0.13
+fXUOHOE_TotCOD,fraction of undegradable cell products of ordinary heterotrophic organisms in total COD,0
+fXUPAOE_TotCOD,fraction of undegradable cell products of phosphorus accumulating organisms in total COD,0
+fSUE_TotCOD,"undegradable soluble fraction of total COD, endogenous",0
+fCUInf_XCUInf,"colloidal fraction of undegradable particulate and colloidal COD, originating from the influent",0
+fHi_XPAOPP,high molecular weight fraction of poly-phosphate in PAO,0.5
+fSNH4_STKN,ammonium fraction of soluble TKN,0.9
+iVSS_TSS,"VSS/TSS ratio, gVSS/gTSS",0.75
