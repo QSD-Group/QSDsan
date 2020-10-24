@@ -6,7 +6,7 @@ Created on Mon Oct 19 21:12:51 2020
 
 @author: yalinli_cabbi
 """
-
+import numpy as np
 import thermosteam as tmo
 from thermosteam import Chemical, Chemicals, CompiledChemicals
 from . import _component
@@ -155,6 +155,12 @@ class CompiledComponents(CompiledChemicals):
 
         for i in _num_component_properties:
             dct[i] = component_data_array(components, i)
+        
+        dct['s'] = np.asarray([1 if cmp.particle_size == 'Soluble' else 0 for cmp in components])
+        dct['c'] = np.asarray([1 if cmp.particle_size == 'Colloidal' else 0 for cmp in components])
+        dct['x'] = np.asarray([1 if cmp.particle_size == 'Particulate' else 0 for cmp in components])
+        dct['b'] = np.asarray([1 if cmp.degradability != 'Undegradable' else 0 for cmp in components])
+        dct['org'] = np.asarray([int(cmp.organic) for cmp in components])
     
     def subgroup(self, IDs):
         '''Create a new subgroup of Component objects'''

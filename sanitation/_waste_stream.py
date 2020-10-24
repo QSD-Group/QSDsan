@@ -168,7 +168,6 @@ class WasteStream(Stream):
         
         cmp_dct['XB_Subst'] = XCB - CB - XBio - XStor
         
-        # TODO: add dummy variables to the compile() method to represent particle size, degradability, and organic
         cmp_c = np.asarray([v for v in cmp_dct.values()])
         VSS = sum(cmp_c * cmps.i_mass * cmps.f_Vmass_Totmass * cmps.x * cmps.org)
         TSS = VSS/r['iVSS_TSS']
@@ -201,7 +200,7 @@ class WasteStream(Stream):
             SN = sum(cmp_c * cmps.i_N * cmps.s)
             SF_N = cmp_dct['SF'] * cmps.SF.i_N
             SNOx_N = SNO2 * cmps.SNO2.i_N + SNO3 * cmps.SNO3.i_N
-            other_stkn = SN - SF_N - SNOx_N - SN2 * cmps.SN2.i_N
+            other_stkn = SN - SF_N - SNOx_N - SN2*cmps.SN2.i_N
             SF_N = STKN - other_stkn
             
             if SF_N < 0:
