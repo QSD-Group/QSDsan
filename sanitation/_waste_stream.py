@@ -18,7 +18,18 @@ from sanitation.utils import load_components
 
 __all__ = ('WasteStream',)
 
+_defined_composite_vars = ('COD', 'BOD5', 'BOD', 'uBOD', 'C',
+                           'N', 'P', 'K', 'Solids', 'Charge')
 
+_specific_groups = {'SVFA': ('SAc', 'SProp'),
+                    'XStor': ('XOHO_PHA', 'XGAO_PHA', 'XPAO_PHA', 
+                              'XGAO_Gly', 'XPAO_Gly'),
+                    'XANO': ('XAOO', 'XNOO'),
+                    'XBio': ('XOHO', 'XAOO', 'XNOO', 'XAMO', 'XPAO', 
+                             'XMEOLO', 'XACO', 'XHMO', 'XPRO'),
+                    'SNOx': ('SNO2', 'SNO3'),
+                    'XPAO_PP': ('XPAO_PP_Lo', 'XPAO_PP_Hi'),
+                    'TKN': (-'SNO2', -'SNO3')}
 # %%
 
 # =============================================================================
@@ -74,7 +85,158 @@ class WasteStream(Stream):
     #     '''[float] Total charge of the stream in + mol/hr'''
     #     return (self._thermo.chemicals.i_charge * self.mol).sum()
 
+    def composite(self, variable, subgroup=None, particle_size=None, 
+                  degradability=None, organic=None, volatile=None,
+                  specification=None):
+        """
+        calculate any composite variable by specifications
 
+        Parameters
+        ----------
+        variable : str
+            The composite variable to calculate. 
+            One of ('COD', 'BOD5', 'BOD', 'uBOD', 'C', 'N', 'P', 'K', 'Solids', 'Charge').
+        subgroup=None: CompiledComponents, optional
+            A subgroup of CompiledComponents. The default is None.
+        particle_size=None: 'g', 's', 'c', or 'x', optional 
+            Dissolved gas ('g'), soluble ('s'), colloidal ('c'), particulate ('x'). 
+            The default is None.
+        degradability=None: 'b' or 'u', optional
+            Either degradable ('b') or undegradable ('u'). The default is None.
+        organic=None: bool, optional
+            Organic (True) or inorganic (False). The default is None.
+        volatile=None: bool, optional
+            Volatile (True) or involatile (False). The default is None.
+        specification=None: str, optional
+            One of ('SVFA', 'XStor', 'XANO', 'XBio', 'SNOx', 'XPAO_PP','TKN'). 
+            The default is None.
+
+
+        Returns
+        -------
+        float
+            The estimated value of the composite variable.
+
+        """
+        
+        if variable not in _defined_composite_vars:
+            raise KeyError(f"Undefined composite variable {variable}."
+                           f"Must be one of {_defined_composite_vars}")            
+        
+        #!!! assuming it's a liquid WasteStream
+        #TODO: deal with units
+        if subgroup:
+            cmps = subgroup
+        else:
+            cmps = self.components
+
+        IDs = list(cmps.IDs)            
+        if 'H2O' in IDs: IDs.remove('H2O')
+
+        if specification:
+            if specification == 'TKN': 
+                IDs = [ID for ID in IDs if ID not in _specific_groups['SNOx']]
+            elif specification not in _specific_groups.keys():
+                raise KeyError(f"Undefined specification {specification}."
+                               f"Must be one of _specific_groups.keys()."
+                               f"Or, try defining 'subgroup'.")
+            else: 
+                IDs = [ID for ID in IDs if ID in _specific_groups[specification]]
+                
+        cmps = cmps.subgroup(IDs)
+        cmp_c = self.imass[IDs]/self.ivol['H2O']*1e3      #[mg/L]
+        
+        if variable == 'COD':
+            var = cmp_c
+            if organic == None: organic = True
+        elif variable in ('BOD5', 'BOD'):
+            var = cmps.f_BOD5_COD * cmp_c
+            if organic == None: organic = True
+        elif variable == 'uBOD':
+            var = cmps.f_uBOD_COD * cmp_c
+            if organic == None: organic = True
+        elif variable == 'C':
+            var = cmps.i_C * cmp_c
+        elif variable == 'N':
+            var = cmps.i_N * cmp_c
+        elif variable == 'P':
+            var = cmps.i_P * cmp_c
+        elif variable == 'K':
+            var = cmps.i_K * cmp_c
+        elif variable == 'Solids':
+            var = cmps.i_mass * cmp_c
+            if volatile != None:
+                if volatile: var *= cmps.f_Vmass_Totmass
+                else: var *= 1-cmps.f_Vmass_Totmass
+        else:
+            var = cmps.i_charge * cmp_c
+        
+        dummy = np.ones(len(cmp_c))
+        if particle_size:
+            if particle_size == 'g': 
+                dummy *= 1-getattr(cmps, 's')-getattr(cmps, 'c')-getattr(cmps, 'x')
+            else:
+                dummy *= getattr(cmps, particle_size)
+        
+        if degradability:
+            if degradability == 'u': dummy *= 1-getattr(cmps, 'b')
+            else: dummy *= getattr(cmps, 'b')
+        
+        if organic != None:
+            if organic: dummy *= getattr(cmps, 'org')
+            else: dummy *= 1-getattr(cmps, 'org')
+        
+        return sum(dummy*var)
+    
+    @property
+    def COD(self):
+        return self.composite('COD')
+
+    @property    
+    def BOD(self):
+        return self.composite('BOD')
+    
+    @property
+    def TC(self):
+        return self.composite('C')
+    
+    @property
+    def TOC(self):
+        return self.composite('C', organic=True)
+        
+    @property
+    def TN(self):
+        return self.composite('N')
+    
+    @property
+    def TKN(self):
+        return self.composite('N', specification='TKN')
+    
+    @property
+    def TP(self):
+        return self.composite('P')
+    
+    def TDS(self, include_colloidal=False):
+        TDS = self.composite('Solids', particle_size='s')
+        if include_colloidal:
+            TDS += self.composite('Solids', particle_size='c')
+        return TDS
+    
+    def TSS(self, include_colloidal=True):
+        TSS = self.composite('Solids', particle_size='x')
+        if include_colloidal:
+            TSS += self.composite('Solids', particle_size='c')        
+        return TSS
+    
+    def VSS(self, include_colloidal=True):
+        VSS = self.composite('Solids', particle_size='x', volatile=True)
+        if include_colloidal:
+            VSS += self.composite('Solids', particle_size='c', volatile=True)        
+        return VSS        
+    
+    def ISS(self):
+        return self.composite('Solids', particle_size='x', volatile=False)
+    
     @classmethod
     def from_composite_measures(cls, ID= '', flow_tot=0., phase='l', T=298.15, P=101325.,
                                 units=('L/hr', 'mg/L'), price=0., thermo=None, pH=7., C_Alk=150., COD=430.,
@@ -169,9 +331,9 @@ class WasteStream(Stream):
         cmp_dct['XB_Subst'] = XCB - CB - XBio - XStor
         
         cmp_c = np.asarray([v for v in cmp_dct.values()])
-        VSS = sum(cmp_c * cmps.i_mass * cmps.f_Vmass_Totmass * cmps.x * cmps.org)
+        VSS = (cmp_c * cmps.i_mass * cmps.f_Vmass_Totmass * cmps.x * cmps.org).sum()
         TSS = VSS/r['iVSS_TSS']
-        XOrg_ISS = sum(cmp_c * cmps.i_mass * (1-cmps.f_Vmass_Totmass) * cmps.x * cmps.org)
+        XOrg_ISS = (cmp_c * cmps.i_mass * (1-cmps.f_Vmass_Totmass) * cmps.x * cmps.org).sum()
 
         del SOrg, XCU_Inf, XBio, XStor, XU_E, XCB, CB
         
@@ -181,7 +343,7 @@ class WasteStream(Stream):
         
         ISS = TSS - VSS
         cmp_c = np.asarray([v for v in cmp_dct.values()])
-        other_ig_iss = sum(cmp_c * cmps.i_mass * cmps.x * (1-cmps.org))
+        other_ig_iss = (cmp_c * cmps.i_mass * cmps.x * (1-cmps.org)).sum()
         cmp_dct['XIg_ISS'] = ISS - XOrg_ISS - other_ig_iss
         
         del ISS, VSS, TSS, XOrg_ISS, other_ig_iss, cmp_c
@@ -197,7 +359,7 @@ class WasteStream(Stream):
         if SNH4 > 0 and cmp_dct['SF'] > 0:
             STKN = SNH4/r['fSNH4_STKN']
             cmp_c = np.asarray([v for v in cmp_dct.values()])
-            SN = sum(cmp_c * cmps.i_N * cmps.s)
+            SN = (cmp_c * cmps.i_N * cmps.s).sum()
             SF_N = cmp_dct['SF'] * cmps.SF.i_N
             SNOx_N = SNO2 * cmps.SNO2.i_N + SNO3 * cmps.SNO3.i_N
             other_stkn = SN - SF_N - SNOx_N - SN2*cmps.SN2.i_N
@@ -210,13 +372,13 @@ class WasteStream(Stream):
             
             del STKN, SN, SF_N, other_stkn
             
-        other_tkn = sum(cmp_c*cmps.i_N) - SNOx_N - SN2*cmps.SN2.i_N - cmp_dct['XB_Subst']*cmps.XB_Subst.i_N                
+        other_tkn = (cmp_c*cmps.i_N).sum() - SNOx_N - SN2*cmps.SN2.i_N - cmp_dct['XB_Subst']*cmps.XB_Subst.i_N                
         XB_Subst_N = TKN - other_tkn
         if XB_Subst_N < 0:
             raise ValueError(f"negative N content for XB_Subst was estimated.")            
         cmps.XB_Subst.i_N = XB_Subst_N/cmp_dct['XB_Subst']
         
-        other_p = sum(cmp_c*cmps.i_P) - cmp_dct['XB_Subst']*cmps.XB_Subst.i_P
+        other_p = (cmp_c*cmps.i_P).sum() - cmp_dct['XB_Subst']*cmps.XB_Subst.i_P
         XB_Subst_P = TP - other_p
         if XB_Subst_P < 0:
             raise ValueError(f"negative P content for XB_Subst was estimated.")    
