@@ -45,6 +45,15 @@ class WasteStream(Stream):
     _ratios = dict(zip(_ratios.Variable, _ratios.Default))
 
     # TODO: add other state variables to initiation (pH, SAlk, SCAT, SAN)
+    def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
+                 units='kg/hr', price=0., thermo=None, pH=7., SAlk=None,
+                 **chemical_flows):
+        
+        self = super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P, 
+                                units=units, price=price, thermo=thermo, 
+                                **chemical_flows)
+        self._pH = pH
+        self._SAlk = SAlk
     
     def show(self, T=None, P=None, flow='kg/hr', composition=None, N=None,
              stream_info=True):
@@ -61,9 +70,11 @@ class WasteStream(Stream):
             P_units = P or display_units.P
             info += self._info_phaseTP(self.phase, T_units, P_units)
         
-        # # Component-related properties
-        # info += '\n Component-specific properties:\n'
-        # info += f'  charge: {self.charge} mol/hr\n'
+        #TODO: unit and definition for alkalinity
+        # Component-related properties
+        info += '\n WasteStream-specific properties:\n'
+        info += f'  pH: {self._pH} mol/hr\n'
+        info += f'  Alkalinity: {self._SAlk} [unit]\n'
         
         print(info)
         
@@ -73,17 +84,6 @@ class WasteStream(Stream):
     def components(self):
         return self._thermo.chemicals
 
-    #!!! Suspect many of the units below aren't correct
-    # double-check using self.mass or self.mol
-    # @property
-    # def TC(self):
-    #     '''[float] Total carbon content of the stream in + g C/hr'''
-    #     return (self._thermo.chemicals.i_C * self.mass).sum()
-
-    # @property
-    # def charge(self):
-    #     '''[float] Total charge of the stream in + mol/hr'''
-    #     return (self._thermo.chemicals.i_charge * self.mol).sum()
 
     def composite(self, variable, subgroup=None, particle_size=None, 
                   degradability=None, organic=None, volatile=None,
@@ -146,15 +146,13 @@ class WasteStream(Stream):
         cmps = cmps.subgroup(IDs)
         cmp_c = self.imass[IDs]/self.ivol['H2O']*1e3      #[mg/L]
         
-        if variable == 'COD':
-            var = cmp_c
-            if organic == None: organic = True
-        elif variable in ('BOD5', 'BOD'):
-            var = cmps.f_BOD5_COD * cmp_c
-            if organic == None: organic = True
-        elif variable == 'uBOD':
-            var = cmps.f_uBOD_COD * cmp_c
-            if organic == None: organic = True
+        if variable in ('COD', 'BOD5', 'BOD', 'uBOD'):
+            if organic == False: var = 0.
+            else: 
+                organic = True
+                if variable == 'COD': var = cmp_c
+                elif variable == 'uBOD': var = cmps.f_uBOD_COD * cmp_c
+                else: var = cmps.f_BOD5_COD * cmp_c
         elif variable == 'C':
             var = cmps.i_C * cmp_c
         elif variable == 'N':
@@ -216,19 +214,23 @@ class WasteStream(Stream):
     def TP(self):
         return self.composite('P')
     
-    def TDS(self, include_colloidal=False):
+    @property
+    def charge(self):
+        return self.composite('Charge')
+    
+    def TDS(self, include_colloidal=True):
         TDS = self.composite('Solids', particle_size='s')
         if include_colloidal:
             TDS += self.composite('Solids', particle_size='c')
         return TDS
     
-    def TSS(self, include_colloidal=True):
+    def TSS(self, include_colloidal=False):
         TSS = self.composite('Solids', particle_size='x')
         if include_colloidal:
             TSS += self.composite('Solids', particle_size='c')        
         return TSS
     
-    def VSS(self, include_colloidal=True):
+    def VSS(self, include_colloidal=False):
         VSS = self.composite('Solids', particle_size='x', volatile=True)
         if include_colloidal:
             VSS += self.composite('Solids', particle_size='c', volatile=True)        
@@ -282,6 +284,8 @@ class WasteStream(Stream):
         cmp_dct['XHDP'] = XHDP
         cmp_dct['XMeP'] = XMeP
         cmp_dct['XMeOH'] = XMeOH
+        cmp_dct['SCAT'] = SCAT
+        cmp_dct['SAN'] = SAN
         
         #************ organic components **************
         cmp_dct['SCH3OH'] = COD * r['fSCH3OH_TotCOD']
@@ -393,6 +397,6 @@ class WasteStream(Stream):
         
         new = cls.__init__(ID=ID, phase=phase, T=T, P=P, units='kg/hr', 
                            price=price, thermo=thermo, pH=pH, SAlk=C_Alk, 
-                           SCAT=SCAT, SAN=SAN, **cmp_dct)
+                           **cmp_dct)
         
         return new

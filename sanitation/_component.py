@@ -104,6 +104,8 @@ class Component(tmo.Chemical):
             if formula:
                 self._formula = formula
         
+        if not self._MW: self._MW = 1.
+        
         if measured_as:
             if measured_as == 'COD': self._MW = tmo.Chemical('O').MW
             elif measured_as == 'N': self._MW = tmo.Chemical('N').MW
@@ -121,8 +123,7 @@ class Component(tmo.Chemical):
         self._f_BOD5_COD = f_BOD5_COD
         self._f_uBOD_COD = f_uBOD_COD
         self._f_Vmass_Totmass = f_Vmass_Totmass
-        
-        
+                
         self._particle_size = particle_size
         self._degradability = degradability
         self._organic = organic
