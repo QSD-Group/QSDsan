@@ -16,10 +16,15 @@ components = Components.load_default()
 components.compile()
 bst.settings.set_thermo(components)
 
-ws1 = WasteStream.from_composite_measures('ws1', components, 10)
-
 ins1 = WasteStream('ins1', SAc=5, H2O=1000, units='kg/hr')
 ins2 = WasteStream('ins2', SF=10, H2O=1000, units='kg/hr')
+
+
+ws1 = WasteStream.from_composite_measures('ws1', 1000)
+ws2 = WasteStream.from_composite_measures('ws2', 1000, SNO3=3)
+
+new_r = {'fSF_TotCOD': .3, 'fSNH4_STKN': .85}
+ws2 = WasteStream.from_composite_measures('ws2', 10, ratios=new_r)
 
 M1 = units.Mixer('M1', ins=(ins1, ins2, ''), outs='mixture')
 M1.simulate()

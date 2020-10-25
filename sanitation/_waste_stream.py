@@ -9,11 +9,9 @@ Created on Sat Oct 17 07:48:41 2020
 import pandas as pd
 import numpy as np
 import os
-# import thermosteam as tmo
 import biosteam as bst
 from thermosteam import Stream, utils
 from sanitation import Components
-# from sanitation.utils import load_components
 
 
 
@@ -79,7 +77,7 @@ class WasteStream(Stream):
         #TODO: unit and definition for alkalinity
         # Component-related properties
         info += '\n WasteStream-specific properties:\n'
-        info += f'  pH: {self._pH} mol/hr\n'
+        info += f'  pH: {self._pH}\n'
         info += f'  Alkalinity: {self._SAlk} [unit]\n'
         
         print(info)
@@ -152,6 +150,7 @@ class WasteStream(Stream):
             else: 
                 IDs = [ID for ID in IDs if ID in _specific_groups[specification]]
                 
+        IDs = tuple(IDs)
         cmps = cmps.subgroup(IDs)
         cmp_c = self.imass[IDs]/self.ivol['H2O']*1e3      #[mg/L]
         
@@ -393,9 +392,8 @@ class WasteStream(Stream):
         cmp_dct = {k:v*flow_tot*1e-6 for k,v in cmp_dct.items()}       # [mg/L]*[L/hr]*1e-6[kg/mg] = [kg/hr]
         cmp_dct['H2O'] = flow_tot                                      # [L/hr]*1[kg/L] = [kg/hr]
         
-        new = cls.__init__(ID=ID, phase=phase, T=T, P=P, units='kg/hr', 
-                           price=price, thermo=thermo, pH=pH, SAlk=SAlk, 
-                           **cmp_dct)
+        new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
+                  thermo=thermo, pH=pH, SAlk=SAlk, **cmp_dct)
         new._ratios = r        
         return new
 

@@ -111,7 +111,7 @@ class Components(Chemicals):
         if not path:
             path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'default_components.csv')
         data = pd.read_csv(path)
-        new = cls.Components(())
+        new = cls(())
         
         for i, cmp in data.iterrows():
             if pd.isna(cmp.measured_as):
