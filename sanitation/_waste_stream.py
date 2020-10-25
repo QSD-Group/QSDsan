@@ -12,7 +12,7 @@ import os
 # import thermosteam as tmo
 import biosteam as bst
 from thermosteam import Stream, utils
-# from sanitation import Component
+from sanitation import Components
 # from sanitation.utils import load_components
 
 
@@ -31,6 +31,13 @@ _specific_groups = {'SVFA': ('SAc', 'SProp'),
                     'SNOx': ('SNO2', 'SNO3'),
                     'XPAO_PP': ('XPAO_PP_Lo', 'XPAO_PP_Hi'),
                     'TKN': ()}
+
+path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '_ratios.csv')
+_default_ratios = pd.read_csv(path)
+_default_ratios = dict(zip(_default_ratios.Variable, _default_ratios.Default))
+
+del path
+
 # %%
 
 # =============================================================================
@@ -41,11 +48,8 @@ _specific_groups = {'SVFA': ('SAc', 'SProp'),
 class WasteStream(Stream):
     '''A subclass of the Stream object in the thermosteam package with additional attributes and methods for waste treatment    '''
     
-    # TODO: add class attribute - default ratios
-    path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '_ratios.csv')
-    _ratios = pd.read_csv(path)
-    _ratios = dict(zip(_ratios.Variable, _ratios.Default))
-
+    _ratios = tuple(_default_ratios.keys())
+    
     # TODO: add other state variables to initiation (pH, SAlk, SCAT, SAN)
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None, pH=7., SAlk=None,
@@ -55,6 +59,7 @@ class WasteStream(Stream):
                          units=units, price=price, thermo=thermo, **chemical_flows)
         self._pH = pH
         self._SAlk = SAlk
+        self._ratios = None
     
     def show(self, T=None, P=None, flow='kg/hr', composition=None, N=None,
              stream_info=True):
@@ -85,6 +90,9 @@ class WasteStream(Stream):
     def components(self):
         return self._thermo.chemicals
 
+    @property
+    def ratios(self):
+        return self._ratios
 
     def composite(self, variable, subgroup=None, particle_size=None, 
                   degradability=None, organic=None, volatile=None,
@@ -241,33 +249,21 @@ class WasteStream(Stream):
         return self.composite('Solids', particle_size='x', volatile=False)
     
     @classmethod
-    def from_composite_measures(cls, ID, components, flow_tot=0., phase='l', T=298.15, P=101325.,
-                                units=('L/hr', 'mg/L'), price=0., thermo=None, pH=7., C_Alk=150., COD=430.,
-                                TKN=40., TP=10., SNH4=25., SNO2=0., SNO3=0., SPO4=8., XPAO_PP=0.,
-                                SCa=140., SMg=50., SK=28., XMeP=0., XMeOH=0., XMAP=0., XHAP=0., 
-                                XHDP=0., DO=0., SH2=0., SN2=18., SCH4=0., SCAT=3., SAN=12.):
-        
-        # cmps = load_components("sanitation/utils/default_components.csv")
-        # H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
-        #                               i_C=0, i_N=0, i_P=0, i_K=0, i_mass=1,
-        #                               i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
-        #                               f_Vmass_Totmass=0,
-        #                               particle_size='Soluble',
-        #                               degradability='Undegradable', organic=False)
-        # cmps.append(H2O)
-        # TMH = tmo.base.thermo_model_handle.ThermoModelHandle
-        # for i in cmps:
-        #     i.default()
-        #     for j in ('sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu'):
-        #         if isinstance(getattr(i, j), TMH) and len(getattr(i, j).models) > 0: continue
-        #         i.copy_models_from(cmps.H2O, names=(j,))
-        
-        cmps = components
+    def from_composite_measures(cls, ID, flow_tot=0., phase='l', T=298.15, P=101325., 
+                                units=('L/hr', 'mg/L'), price=0., thermo=None, 
+                                pH=7., SAlk=150., ratios=None, COD=430., TKN=40., TP=10., 
+                                SNH4=25., SNO2=0., SNO3=0., SPO4=8., SCa=140., SMg=50., 
+                                SK=28., XMeP=0., XMeOH=0., XMAP=0., XHAP=0., XHDP=0., 
+                                XPAO_PP=0., DO=0., SH2=0., SN2=18., SCH4=0., SCAT=3., SAN=12.):
+                
+        cmps = Components.load_default()
         cmps.compile()
         bst.settings.set_thermo(cmps)
         
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
-        r = WasteStream._ratios
+        if ratios:
+            r = _set_ratios(ratios)
+        else: r = _default_ratios
 
         #************ user-defined values **************        
         cmp_dct['SH2'] = SH2
@@ -398,7 +394,21 @@ class WasteStream(Stream):
         cmp_dct['H2O'] = flow_tot                                      # [L/hr]*1[kg/L] = [kg/hr]
         
         new = cls.__init__(ID=ID, phase=phase, T=T, P=P, units='kg/hr', 
-                           price=price, thermo=thermo, pH=pH, SAlk=C_Alk, 
+                           price=price, thermo=thermo, pH=pH, SAlk=SAlk, 
                            **cmp_dct)
-        
+        new._ratios = r        
         return new
+
+#%% FUNCTIONS
+
+def _set_ratios(new_ratios):
+    """allows user to specify ratios for composition characterization."""        
+    r = _default_ratios
+    for name, ratio in new_ratios.items():
+        if name not in r.keys():
+            raise ValueError(f"Cannot identify ratio named '{name}'."
+                             f"Must be one of {r.keys()}")
+        elif ratio > 1 or ratio < 0:
+            raise ValueError(f"ratio {name}: {ratio} is out of range [0,1].")
+        r[name] = ratio
+    return r
