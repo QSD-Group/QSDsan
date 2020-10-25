@@ -8,11 +8,12 @@ Created on Sat Oct 17 07:48:41 2020
 
 import pandas as pd
 import numpy as np
-import thermosteam as tmo
-from biosteam.settings import set_thermo
+import os
+# import thermosteam as tmo
+import biosteam as bst
 from thermosteam import Stream, utils
-from sanitation import Component
-from sanitation.utils import load_components
+# from sanitation import Component
+# from sanitation.utils import load_components
 
 
 
@@ -29,7 +30,7 @@ _specific_groups = {'SVFA': ('SAc', 'SProp'),
                              'XMEOLO', 'XACO', 'XHMO', 'XPRO'),
                     'SNOx': ('SNO2', 'SNO3'),
                     'XPAO_PP': ('XPAO_PP_Lo', 'XPAO_PP_Hi'),
-                    'TKN': (-'SNO2', -'SNO3')}
+                    'TKN': ()}
 # %%
 
 # =============================================================================
@@ -41,7 +42,8 @@ class WasteStream(Stream):
     '''A subclass of the Stream object in the thermosteam package with additional attributes and methods for waste treatment    '''
     
     # TODO: add class attribute - default ratios
-    _ratios = pd.read_csv("_ratios.csv")
+    path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '_ratios.csv')
+    _ratios = pd.read_csv(path)
     _ratios = dict(zip(_ratios.Variable, _ratios.Default))
 
     # TODO: add other state variables to initiation (pH, SAlk, SCAT, SAN)
@@ -49,9 +51,8 @@ class WasteStream(Stream):
                  units='kg/hr', price=0., thermo=None, pH=7., SAlk=None,
                  **chemical_flows):
         
-        self = super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P, 
-                                units=units, price=price, thermo=thermo, 
-                                **chemical_flows)
+        super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
+                         units=units, price=price, thermo=thermo, **chemical_flows)
         self._pH = pH
         self._SAlk = SAlk
     
@@ -240,29 +241,30 @@ class WasteStream(Stream):
         return self.composite('Solids', particle_size='x', volatile=False)
     
     @classmethod
-    def from_composite_measures(cls, ID= '', flow_tot=0., phase='l', T=298.15, P=101325.,
+    def from_composite_measures(cls, ID, components, flow_tot=0., phase='l', T=298.15, P=101325.,
                                 units=('L/hr', 'mg/L'), price=0., thermo=None, pH=7., C_Alk=150., COD=430.,
                                 TKN=40., TP=10., SNH4=25., SNO2=0., SNO3=0., SPO4=8., XPAO_PP=0.,
                                 SCa=140., SMg=50., SK=28., XMeP=0., XMeOH=0., XMAP=0., XHAP=0., 
                                 XHDP=0., DO=0., SH2=0., SN2=18., SCH4=0., SCAT=3., SAN=12.):
         
-        cmps = load_components("sanitation/utils/default_components.csv")
-        H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
-                                      i_C=0, i_N=0, i_P=0, i_K=0, i_mass=1,
-                                      i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
-                                      f_Vmass_Totmass=0,
-                                      particle_size='Soluble',
-                                      degradability='Undegradable', organic=False)
-        cmps.append(H2O)
-        TMH = tmo.base.thermo_model_handle.ThermoModelHandle
-        for i in cmps:
-            i.default()
-            for j in ('sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu'):
-                if isinstance(getattr(i, j), TMH) and len(getattr(i, j).models) > 0: continue
-                i.copy_models_from(cmps.H2O, names=(j,))
+        # cmps = load_components("sanitation/utils/default_components.csv")
+        # H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
+        #                               i_C=0, i_N=0, i_P=0, i_K=0, i_mass=1,
+        #                               i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
+        #                               f_Vmass_Totmass=0,
+        #                               particle_size='Soluble',
+        #                               degradability='Undegradable', organic=False)
+        # cmps.append(H2O)
+        # TMH = tmo.base.thermo_model_handle.ThermoModelHandle
+        # for i in cmps:
+        #     i.default()
+        #     for j in ('sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu'):
+        #         if isinstance(getattr(i, j), TMH) and len(getattr(i, j).models) > 0: continue
+        #         i.copy_models_from(cmps.H2O, names=(j,))
         
+        cmps = components
         cmps.compile()
-        set_thermo(cmps)
+        bst.settings.set_thermo(cmps)
         
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
         r = WasteStream._ratios
