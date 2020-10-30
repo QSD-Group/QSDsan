@@ -2,7 +2,7 @@ pyyaml
 pytest-cov
 coveralls
 biosteam==2.20.26
-thermosteam==2.20.30
+thermosteam==0.20.30
 sympy
 pint>=0.9
 chemicals>=0.1.4
