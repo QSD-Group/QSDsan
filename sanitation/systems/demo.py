@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Oct 18 16:52:05 2020
 
-@author: yalinli_cabbi, joy_c
-"""
+'''
+Sanitation Explorer: Sustainable design of non-sewered sanitation technologies
+Copyright (C) 2020, Sanitation Explorer Development Group
+
+This module is developed by:
+    Yalin Li <zoe.yalin.li@gmail.com>
+    Joy Cheung
+
+This module is under the UIUC open-source license. See 
+https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
+for license details.
+'''
 
 import os
-os.chdir("C:/Users/joy_c/Dropbox/PhD/Research/QSD/codes_developing/QSD-for-WaSH/sanitation")
+os.chdir("/Users/yalinli_cabbi/OneDrive/Coding/sanitation_root/")
 
 import biosteam as bst
 from sanitation import Components, WasteStream, units

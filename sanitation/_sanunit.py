@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Oct 21 07:46:34 2020
 
-@author: yalinli_cabbi
-"""
+'''
+Sanitation Explorer: Sustainable design of non-sewered sanitation technologies
+Copyright (C) 2020, Sanitation Explorer Development Group
+
+This module is developed by:
+    Yalin Li <zoe.yalin.li@gmail.com>
+
+This module is under the UIUC open-source license. See 
+https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
+for license details.
+'''
 
 import biosteam as bst
 from biosteam import utils
@@ -15,7 +22,7 @@ __all__ = ('SanUnit',)
 
 @utils.registered(ticket_name='SU')
 class SanUnit(bst.Unit, isabstract=True):
-    '''Subclass of Unit in biosteam, is initialized with WasteStream rather than Stream'''
+    '''Subclass of Unit in biosteam, is initialized with WasteStream rather than Stream.'''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None):
         self._specification = None
@@ -34,7 +41,7 @@ class SanUnit(bst.Unit, isabstract=True):
         self._outs = WSOuts(self, self._N_outs, outs, self._thermo, self._outs_size_is_fixed)
 
     def _info(self, T, P, flow, composition, N, _stream_info):
-        """Information on unit."""
+        """Information of the unit."""
         if self.ID:
             info = f'{type(self).__name__}: {self.ID}\n'
         else:
@@ -48,9 +55,9 @@ class SanUnit(bst.Unit, isabstract=True):
                 continue
             if _stream_info:
                 stream_info = stream._info(T, P, flow, composition, N) + \
-                    '\n' + stream._component_info()
+                    '\n' + stream._wastestream_info()
             else:
-                stream_info = stream._component_info()
+                stream_info = stream._wastestream_info()
             unit = stream._source
             index = stream_info.index('\n')
             source_info = f'  from  {type(unit).__name__}-{unit}\n' if unit else '\n'
@@ -65,9 +72,9 @@ class SanUnit(bst.Unit, isabstract=True):
                 continue
             if _stream_info:
                 stream_info = stream._info(T, P, flow, composition, N) + \
-                    '\n' + stream._component_info()
+                    '\n' + stream._wastestream_info()
             else:
-                stream_info = stream._component_info()
+                stream_info = stream._wastestream_info()
             unit = stream._sink
             index = stream_info.index('\n')
             sink_info = f'  to  {type(unit).__name__}-{unit}\n' if unit else '\n'
@@ -77,7 +84,7 @@ class SanUnit(bst.Unit, isabstract=True):
         return info[:-1]
         
     def show(self, T=None, P=None, flow='kg/hr', composition=None, N=None, stream_info=True):
-        """Print information on unit"""
+        """Print information of the unit, including WasteStream-specific information"""
         print(self._info(T, P, flow, composition, N, stream_info))
         
 

@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Oct 22 09:20:36 2020
 
-@author: yalinli_cabbi
-"""
+'''
+Sanitation Explorer: Sustainable design of non-sewered sanitation technologies
+Copyright (C) 2020, Sanitation Explorer Development Group
+
+This module is developed by:
+    Yalin Li <zoe.yalin.li@gmail.com>
+
+This module is under the UIUC open-source license. See 
+https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
+for license details.
+'''
 
 import pytest
 
 def test_component():
     import thermosteam as tmo
-    from sanitation import Component, utils
-    components = utils.load_components_from_excel()
+    from sanitation import Component, Components
+    components = Components.load_default(default_compile=False)
     with pytest.raises(TypeError):
         H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'))
     H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
@@ -20,13 +27,9 @@ def test_component():
                                   f_Vmass_Totmass=0,
                                   particle_size='Soluble',
                                   degradability='Undegradable', organic=False)
-
-    components.append(H2O)
-    for i in components:
-        i.default()
-        i.copy_models_from(components.H2O, ['sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu'])
-    
-    components.compile()
+    with pytest.raises(ValueError):
+        components.append(H2O)
+    components = Components.load_default()
     tmo.settings.set_thermo(components)
     
 # This just means that if pytest runs this module, it calls the test_component function

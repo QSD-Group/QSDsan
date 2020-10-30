@@ -1,6 +1,7 @@
 build
 dist
 sanitation.egg-info
+__pycache__
 **/__pycache__
 *.pyc
 *.pyo
@@ -12,7 +13,6 @@ MANIFEST
 htmlcov
 _build
 .cache
-__pycache__
 prof
 *Pyreverse*
 monkeytype.sqlite3
@@ -36,6 +36,7 @@ docs/_templates/*
 *.o
 *.so
 *.idea
+
  # Packages #
 #############
 # it's better to unpack these files and commit the raw source

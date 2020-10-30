@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Oct 16 07:07:41 2020
 
-@author: yalinli_cabbi
-"""
+'''
+Sanitation Explorer: Sustainable design of non-sewered sanitation technologies
+Copyright (C) 2020, Sanitation Explorer Development Group
+
+This module is developed by:
+    Yalin Li <zoe.yalin.li@gmail.com>
+
+This module is under the UIUC open-source license. See 
+https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
+for license details.
+'''
 
 from setuptools import setup
 
@@ -13,13 +20,15 @@ setup(
     packages=['sanitation'],
     version='0.0.5',
     license='University of Illinois/NCSA Open Source License',
-    author='Sanitation Explorer Group',
+    author='Sanitation Explorer Development Group',
     description='Module for sustainable design of non-sewered sanitation technologies',
     long_description=open('README.rst').read(),
     url="https://github.com/codesciencewater/sanitation",
     install_requires=['biosteam>=2.20.21'],
     package_data=
-        {'sanitation': ['utils/*',
+        {'sanitation': [
+                        'default_data/*',
+                        'utils/*',
                         'units/*',
                         'systems/*',
                         ]},

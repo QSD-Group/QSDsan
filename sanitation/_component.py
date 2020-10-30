@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""
-Created on Thu Oct  8 08:33:29 2020
-Modified on Wed Oct 21 2020
+'''
+Sanitation Explorer: Sustainable design of non-sewered sanitation technologies
+Copyright (C) 2020, Sanitation Explorer Development Group
 
-TODO:
-    Need to define measure unit
+This module is developed by:
+    Yalin Li <zoe.yalin.li@gmail.com>
+    Joy Cheung
 
+This module is under the UIUC open-source license. See 
+https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
+for license details.
+'''
 
-@author: yalinli_cabbi, joy_c
-"""
 
 import thermosteam as tmo
 
@@ -73,15 +76,15 @@ allowed_values = {
 def check_property(name, value):
     if name.startswith('i_'):
         try: float(value)
-        except: raise TypeError(f'{name} must be a number, not a {type(value).__name__}')
+        except: raise TypeError(f'{name} must be a number, not a {type(value).__name__}.')
     elif name.startswith('f_'):
         try: float(value)
-        except: raise TypeError(f'{name} must be a number, not a {type(value).__name__}')        
+        except: raise TypeError(f'{name} must be a number, not a {type(value).__name__}.')        
         if value>1 or value<0:
             raise ValueError(f'{name} must be within [0,1].')
     elif name in allowed_values.keys():
         assert value in allowed_values[name], \
-            f'{name} must be in {allowed_values[name]}'
+            f'{name} must be in {allowed_values[name]}.'
 
 # =============================================================================
 # Define the Component class
@@ -134,7 +137,13 @@ class Component(tmo.Chemical):
 
     @property
     def i_C(self):
-        '''Carbon content of the Component, [g C/(measure unit)].'''
+        '''
+        [float] Carbon content of the Component, [g C/g measure unit].
+
+        Notes
+        -------
+        Must be within [0,1].
+        '''
         return self._i_C
     @i_C.setter
     def i_C(self, i):
@@ -143,7 +152,14 @@ class Component(tmo.Chemical):
 
     @property
     def i_N(self):
-        '''Nitrogen content of the Component, [g N/(measure unit)].'''
+        '''
+        [float] Nitrogen content of the Component, [g N/g measure unit].
+
+        Notes
+        -------
+        [1] Must be within [0,1].
+        [2] If the Component is measured as N, then i_N is 1.
+        '''
         return self._i_N
     @i_N.setter
     def i_N(self, i):
@@ -152,7 +168,14 @@ class Component(tmo.Chemical):
 
     @property
     def i_P(self):
-        '''Phosphorus content of the Component, [g P/(measure unit)].'''
+        '''
+        [float] Phosphorus content of the Component, [g P/g measure unit].
+
+        Notes
+        -------
+        [1] Must be within [0,1].
+        [2] If the Component is measured as P, then i_P is 1.
+        '''
         return self._i_P
     @i_P.setter
     def i_P(self, i):
@@ -161,7 +184,13 @@ class Component(tmo.Chemical):
 
     @property
     def i_K(self):
-        '''Potassium content of the Component, [g K/(measure unit)].'''
+        '''
+        [float] Potassium content of the Component, [g K/g measure unit].
+
+        Notes
+        -------
+        Must be within [0,1].
+        '''
         return self._i_K
     @i_K.setter
     def i_K(self, i):
@@ -170,7 +199,7 @@ class Component(tmo.Chemical):
 
     @property
     def i_mass(self):
-        '''Mass content of the Component, [g component/(measure unit)].'''
+        '''[float] Mass content of the Component, [g Component/g measure unit].'''
         return self._i_mass
     @i_mass.setter
     def i_mass(self, i):
@@ -179,7 +208,13 @@ class Component(tmo.Chemical):
         
     @property
     def i_charge(self):
-        '''Charge content of the Component, [mol +/(measure unit)], negative values indicate anions'''
+        '''
+        [float] Charge content of the Component, [mol +/g measure unit].
+
+        Notes
+        -------
+        Positive values indicate cations and negative values indicate anions.
+        '''
         return self._i_charge
     @i_charge.setter
     def i_charge(self, i):
@@ -188,7 +223,14 @@ class Component(tmo.Chemical):
 
     @property
     def f_BOD5_COD(self):
-        '''BOD5 fraction in COD of the Component, unitless.'''
+        '''
+        BOD5 fraction in COD of the Component, unitless.
+
+        Notes
+        -------
+        [1] Must be within [0,1].
+        [2] Must be smaller or equal to f_uBOD_COD.
+        '''
         return self._f_BOD5_COD
     @f_BOD5_COD.setter
     def f_BOD5_COD(self, f):
@@ -197,18 +239,31 @@ class Component(tmo.Chemical):
 
     @property
     def f_uBOD_COD(self):
-        '''ultimate BOD fraction in COD of the Component, unitless.'''
+        '''
+        [fload] Ultimate BOD fraction in COD of the Component, unitless.
+
+        Notes
+        -------
+        [1] Must be within [0,1].
+        [2] Must be larger or equal to f_BOD5_COD.
+        '''
         return self._f_uBOD_COD
     @f_uBOD_COD.setter
     def f_uBOD_COD(self, f):
         check_property('f_uBOD_COD', f)
         if f < self.f_BOD5_COD:
-            raise ValueError('f_uBOD_COD cannot be less than f_BOD5_COD')
+            raise ValueError('f_uBOD_COD cannot be less than f_BOD5_COD.')
         self._f_uBOD_COD = float(f)
 
     @property
     def f_Vmass_Totmass(self):
-        '''Volatile fraction of the mass of the Component, unitless.'''
+        '''
+        [fload] Volatile fraction of the mass of the Component, unitless.
+
+        Notes
+        -------
+        Must be within [0,1].
+        '''
         return self._f_Vmass_Totmass
     @f_Vmass_Totmass.setter
     def f_Vmass_Totmass(self, f):
@@ -225,7 +280,13 @@ class Component(tmo.Chemical):
 
     @property
     def measured_as(self):
-        '''[str] The unit as which the Component is measured.'''
+        '''
+        [str] The unit as which the Component is measured.
+
+        Notes
+        -------
+        Can be left as blank or chosen from 'COD', 'N', or 'P'.
+        '''
         return self._measured_as
     @measured_as.setter
     def measured_as(self, measured_as):
@@ -237,7 +298,13 @@ class Component(tmo.Chemical):
         
     @property
     def particle_size(self):
-        '''[str] Dissolved gas, Soluble, Colloidal, or Particulate'''
+        '''
+        [str] Size of the Component based on the type.
+
+        Notes
+        -------
+        Must be chosen from 'Dissolved gas', 'Soluble', 'Colloidal', or 'Particulate'.
+        '''
         return self._particle_size
     @particle_size.setter
     def particle_size(self, particle_size):
@@ -246,7 +313,13 @@ class Component(tmo.Chemical):
 
     @property
     def degradability(self):
-        '''[str] Biological (counted in BOD), Chemical (counted in COD), or Undegradable'''
+        '''
+        [str] Degradability of the Component.
+
+        Notes
+        -------
+        Must be chosen from 'Biological', 'Chemical', or 'Undegradable'.
+        '''
         return self._degradability
     @degradability.setter
     def degradability(self, degradability):
@@ -263,7 +336,15 @@ class Component(tmo.Chemical):
         self._organic = organic
 
     def show(self, chemical_info=False):
-        '''Show Component properties'''
+        '''
+        Show Component properties.
+
+        Parameters
+        ----------
+        chemical_info : [bool]
+            Whether to show properties associated with the corresponding
+            Chemical object of the Component. The default is False.
+        '''
         info = ''
         if chemical_info:
             super().show()
@@ -318,7 +399,7 @@ class Component(tmo.Chemical):
                       f_Vmass_Totmass=None, description=None, 
                       particle_size=None, degradability=None, organic=None, 
                       **data):
-        '''Make a new Component from Chemical'''
+        '''Return a new Component from Chemical'''
         new = cls.__new__(cls, ID=ID)
         for field in chemical.__slots__: 
             value = getattr(chemical, field)

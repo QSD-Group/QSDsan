@@ -52,10 +52,22 @@ class MissingWS(MissingStream):
 
     # TODO: add others
     @property
+    def COD(self):
+        return 0.
+    @property
+    def BOD(self):
+        return 0.
+    @property
     def TC(self):
         return 0.
     @property
+    def TOC(self):
+        return 0.
+    @property
     def TN(self):
+        return 0.
+    @property
+    def TKN(self):
         return 0.
     @property
     def TP(self):
@@ -65,21 +77,6 @@ class MissingWS(MissingStream):
         return 0.
     @property
     def charge(self):
-        return 0.  
-    @property
-    def COD(self):
-        return 0.
-    @property
-    def BOD5(self):
-        return 0.
-    @property
-    def uBOD(self):
-        return 0.
-    @property
-    def Totmass(self):
-        return 0. 
-    @property
-    def Vmass(self):
         return 0.
 
     def __repr__(self):
