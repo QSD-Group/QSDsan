@@ -6,6 +6,7 @@ Created on Tue Oct 20 21:47:27 2020
 @author: yalinli_cabbi
 """
 
+from warnings import warn
 from biosteam.utils.piping import MissingStream, StreamSequence
 from .. import WasteStream as WS
 
@@ -96,7 +97,7 @@ def n_missing(ub, N):
 class WSSequence(StreamSequence):
     '''Abstract class for a sequence of waste streams, subclass of StreamSequence in biosteam'''
     
-    def __init__(self, size, ws, thermo, fixed_size):
+    def __init__(self, size, ws, thermo, fixed_size, stacklevel):
         self._size = size
         self._fixed_size = fixed_size
         dock = self._dock
@@ -110,20 +111,20 @@ class WSSequence(StreamSequence):
                     if isinstance(ws, str):
                         self._streams[0] = dock(WS(ws, thermo=thermo))
                     elif isinstance(ws, WS):
-                        self._streams[0] = redock(ws)
+                        self._streams[0] = redock(ws, stacklevel)
                     else:
                         N = len(ws)
                         n_missing(size, N) # Assert size is not too big
-                        self._streams[:N] = [redock(i) if isinstance(i, WS)
+                        self._streams[:N] = [redock(i, stacklevel+1) if isinstance(i, WS)
                                              else dock(WS(i, thermo=thermo)) for i in ws]
             else:
                 if ws:
                     if isinstance(ws, str):
                         self._streams = [dock(WS(ws, thermo=thermo))]
                     elif isinstance(ws, WS):
-                        self._streams = [redock(ws)]
+                        self._streams = [redock(ws, stacklevel)]
                     else:
-                        self._streams = [redock(i) if isinstance(i, WS)
+                        self._streams = [redock(i, stacklevel+1) if isinstance(i, WS)
                                          else dock(WS(i, thermo=thermo))
                                          for i in ws]
                 else:
@@ -147,7 +148,7 @@ class WSSequence(StreamSequence):
                     f"'WasteStream' objects; not '{type(item).__name__}'")
             elif not isinstance(item, MissingWS):
                 item = self._create_missing_stream()
-            self._set_stream(index, item)
+            self._set_stream(index, item, 3)
         elif isinstance(index, slice):
             wastestreams = []
             for ws in item:
@@ -158,7 +159,7 @@ class WSSequence(StreamSequence):
                 elif not isinstance(ws, MissingWS):
                     ws = self._create_missing_stream()
                 wastestreams.append(ws)
-            self._set_streams(index, item)
+            self._set_streams(index, item, 3)
         else:
             raise TypeError("Only intergers and slices are valid "
                            f"indices for '{type(self).__name__}' objects")
@@ -169,9 +170,9 @@ class WSIns(WSSequence):
     '''Create an Ins object which serves as input streams for a Unit object'''
     __slots__ = ('_sink', '_fixed_size')
     
-    def __init__(self, sink, size, ws, thermo, fixed_size=True):
+    def __init__(self, sink, size, ws, thermo, fixed_size, stacklevel):
         self._sink = sink
-        super().__init__(size, ws, thermo, fixed_size)
+        super().__init__(size, ws, thermo, fixed_size, stacklevel)
     
     @property
     def sink(self):
@@ -184,13 +185,17 @@ class WSIns(WSSequence):
         ws._sink = self._sink
         return ws
 
-    def _redock(self, ws): 
+    def _redock(self, ws, stacklevel): 
         sink = ws._sink
         if sink:
             ins = sink._ins
             if ins is not self:
                 ins.remove(ws)
-                ws._sink = self._sink
+                ws._sink = new_sink = self._sink
+                if sink._ID and new_sink:
+                    warn(f"undocked inlet wastestream {ws} from unit {sink}; "
+                         "{ws} is now docked at {self._sink}", 
+                         RuntimeWarning, stacklevel)
         else:
             ws._sink = self._sink
         return ws
@@ -203,9 +208,9 @@ class WSOuts(WSSequence):
     '''Create an Outs object which serves as output streams for a Unit object'''
     __slots__ = ('_source',)
     
-    def __init__(self, source, size, ws, thermo, fixed_size=True):
+    def __init__(self, source, size, ws, thermo, fixed_size, stacklevel):
         self._source = source
-        super().__init__(size, ws, thermo, fixed_size)
+        super().__init__(size, ws, thermo, fixed_size, stacklevel)
     
     @property
     def source(self):
@@ -218,14 +223,18 @@ class WSOuts(WSSequence):
         ws._source = self._source
         return ws
 
-    def _redock(self, ws): 
+    def _redock(self, ws, stacklevel): 
         source = ws._source
         if source:
             outs = source._outs
             if outs is not self:
                 # Remove from source
                 outs.remove(ws)
-                ws._source = self._source
+                ws._source = new_source = self._source
+                if source._ID and new_source:
+                    warn(f"undocked outlet wastestream {ws} from unit {source}; "
+                         "{stream} is now docked at {self._source}", 
+                         RuntimeWarning, stacklevel)
         else:
             ws._source = self._source
         return ws

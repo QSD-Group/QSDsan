@@ -406,7 +406,7 @@ class Component(tmo.Chemical):
             setattr(new, field, copy_maybe(value))
         new._ID = ID
         new._locked_state = new._locked_state
-        new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Tm,
+        new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus, new.Tm,
                            new.Tb, new.eos, new.eos_1atm, new.phase_ref)
         new._label_handles()
         

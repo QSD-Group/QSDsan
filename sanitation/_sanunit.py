@@ -35,10 +35,12 @@ class SanUnit(bst.Unit, isabstract=True):
         self._register(ID)
     
     def _init_ins(self, ins):
-        self._ins = WSIns(self, self._N_ins, ins, self._thermo, self._ins_size_is_fixed)
+        self._ins = WSIns(self, self._N_ins, ins, self._thermo,
+                          self._ins_size_is_fixed, self._stacklevel)
         
     def _init_outs(self, outs):
-        self._outs = WSOuts(self, self._N_outs, outs, self._thermo, self._outs_size_is_fixed)
+        self._outs = WSOuts(self, self._N_outs, outs, self._thermo,
+                            self._outs_size_is_fixed, self._stacklevel)
 
     def _info(self, T, P, flow, composition, N, _stream_info):
         """Information of the unit."""

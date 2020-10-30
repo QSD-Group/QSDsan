@@ -1,5 +1,5 @@
-biosteam>=2.20.21
-thermosteam>=2.20.26
+biosteam==2.20.26
+thermosteam==2.20.30
 IPython>=7.9.0
 colorpalette>=0.3.0
 chaospy>=3.0.11
