@@ -25,6 +25,7 @@ class SanUnit(bst.Unit, isabstract=True):
     '''Subclass of Unit in biosteam, is initialized with WasteStream rather than Stream.'''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None):
+        self._register(ID)
         self._specification = None
         self._load_thermo(thermo)
         self._init_ins(ins)
@@ -32,7 +33,7 @@ class SanUnit(bst.Unit, isabstract=True):
         self._init_utils()
         self._init_results()
         self._assert_compatible_property_package()
-        self._register(ID)
+
     
     def _init_ins(self, ins):
         self._ins = WSIns(self, self._N_ins, ins, self._thermo,
