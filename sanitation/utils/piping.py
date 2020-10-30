@@ -194,7 +194,7 @@ class WSIns(WSSequence):
                 ws._sink = new_sink = self._sink
                 if sink._ID and new_sink:
                     warn(f"undocked inlet wastestream {ws} from unit {sink}; "
-                         "{ws} is now docked at {self._sink}", 
+                         f"{ws} is now docked at {self._sink}", 
                          RuntimeWarning, stacklevel)
         else:
             ws._sink = self._sink
@@ -233,7 +233,7 @@ class WSOuts(WSSequence):
                 ws._source = new_source = self._source
                 if source._ID and new_source:
                     warn(f"undocked outlet wastestream {ws} from unit {source}; "
-                         "{stream} is now docked at {self._source}", 
+                         f"{ws} is now docked at {self._source}", 
                          RuntimeWarning, stacklevel)
         else:
             ws._source = self._source
