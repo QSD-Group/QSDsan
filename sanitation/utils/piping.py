@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Oct 20 21:47:27 2020
 
-@author: yalinli_cabbi
-"""
+'''
+Sanitation Explorer: Sustainable design of non-sewered sanitation technologies
+Copyright (C) 2020, Sanitation Explorer Development Group
+
+This module is developed by:
+    Yalin Li <zoe.yalin.li@gmail.com>
+
+This module is under the UIUC open-source license. Please refer to 
+https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
+for license details.
+'''
 
 from warnings import warn
 from biosteam.utils.piping import MissingStream, StreamSequence
@@ -37,7 +44,7 @@ class MissingWS(MissingStream):
     object that acts as a dummy in Ins and Outs objects until replaced by an
     actual WasteStream object
     '''
-    
+
     def materialize_connection(self, ID=''):
         '''
         Disconnect this MissingWS from any unit operations and replace
@@ -148,7 +155,7 @@ class WSSequence(StreamSequence):
                     f"'WasteStream' objects; not '{type(item).__name__}'")
             elif not isinstance(item, MissingWS):
                 item = self._create_missing_stream()
-            self._set_stream(index, item, 3)
+            self._set_stream(int=index, stream=item, stacklevel=3)
         elif isinstance(index, slice):
             wastestreams = []
             for ws in item:
@@ -159,11 +166,31 @@ class WSSequence(StreamSequence):
                 elif not isinstance(ws, MissingWS):
                     ws = self._create_missing_stream()
                 wastestreams.append(ws)
-            self._set_streams(index, item, 3)
+            self._set_streams(slice=index, streams=item, stacklevel=3)
         else:
             raise TypeError("Only intergers and slices are valid "
                            f"indices for '{type(self).__name__}' objects")
 
+
+    # Below shouldn't be needed for newer biosteam
+    def _set_streams(self, slice, streams, stacklevel):
+        all_streams = self._streams
+        for stream in all_streams[slice]: self._undock(stream)
+        all_streams[slice] = streams
+        for stream in all_streams:
+            self._redock(stream, stacklevel)
+        if self._fixed_size:
+            size = self._size
+            N_streams = len(all_streams)
+            if N_streams < size:
+                N_missing = n_missing(size, N_streams)
+                if N_missing:
+                    all_streams[N_streams: size] = self._create_N_missing_streams(N_missing)
+
+    def _set_stream(self, int, stream, stacklevel):
+        self._undock(self._streams[int])
+        self._redock(stream, stacklevel)
+        self._streams[int] = stream
 
 
 class WSIns(WSSequence):

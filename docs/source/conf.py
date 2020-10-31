@@ -17,9 +17,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'sanplorer'
-copyright = '2020, Yalin Li'
-author = 'Yalin Li'
+project = 'Sanitation Explorer'
+copyright = '2020, Sanitation Explorer Development Group'
+author = 'Sanitation Explorer Development Group'
 
 # The full version, including alpha/beta/rc tags
 release = '0.0.1'
@@ -31,6 +31,7 @@ release = '0.0.1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+'nbsphinx'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

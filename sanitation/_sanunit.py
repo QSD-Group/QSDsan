@@ -8,7 +8,7 @@ Copyright (C) 2020, Sanitation Explorer Development Group
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
-This module is under the UIUC open-source license. See 
+This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
 '''
@@ -24,6 +24,8 @@ __all__ = ('SanUnit',)
 class SanUnit(bst.Unit, isabstract=True):
     '''Subclass of Unit in biosteam, is initialized with WasteStream rather than Stream.'''
 
+    _stacklevel = 7
+    
     def __init__(self, ID='', ins=None, outs=(), thermo=None):
         self._register(ID)
         self._specification = None

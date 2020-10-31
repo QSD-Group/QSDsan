@@ -9,7 +9,7 @@ This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
     Joy Cheung
 
-This module is under the UIUC open-source license. See 
+This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
 '''
