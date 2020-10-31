@@ -24,6 +24,8 @@ __all__ = ('SanUnit',)
 class SanUnit(bst.Unit, isabstract=True):
     '''Subclass of Unit in biosteam, is initialized with WasteStream rather than Stream.'''
 
+    _stacklevel = 7
+    
     def __init__(self, ID='', ins=None, outs=(), thermo=None):
         self._register(ID)
         self._specification = None

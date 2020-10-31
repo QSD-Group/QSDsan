@@ -15,7 +15,7 @@ for license details.
 '''
 
 import os
-os.chdir("/Users/yalinli_cabbi/OneDrive/Coding/sanitation_root/")
+os.chdir("/Users/yalinli_cabbi/OneDrive/Coding/sanitation_Yalin/")
 
 import biosteam as bst
 from sanitation import Components, WasteStream, units
