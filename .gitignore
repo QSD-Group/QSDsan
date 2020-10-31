@@ -21,6 +21,7 @@ monkeytype.sqlite3
 # Docs #
 ########
 # No need to save these files
+**/_demo.py
 **/.ipynb_checkpoints
 **/.pylint.d
 docs/tutorial/.ipynb_checkpoints
