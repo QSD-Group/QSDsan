@@ -44,7 +44,7 @@ class MissingWS(MissingStream):
     object that acts as a dummy in Ins and Outs objects until replaced by an
     actual WasteStream object
     '''
-    
+
     def materialize_connection(self, ID=''):
         '''
         Disconnect this MissingWS from any unit operations and replace
@@ -155,7 +155,7 @@ class WSSequence(StreamSequence):
                     f"'WasteStream' objects; not '{type(item).__name__}'")
             elif not isinstance(item, MissingWS):
                 item = self._create_missing_stream()
-            self._set_stream(index, item, 3)
+            self._set_stream(slice=index, streams=item, stacklevel=3)
         elif isinstance(index, slice):
             wastestreams = []
             for ws in item:
@@ -166,7 +166,7 @@ class WSSequence(StreamSequence):
                 elif not isinstance(ws, MissingWS):
                     ws = self._create_missing_stream()
                 wastestreams.append(ws)
-            self._set_streams(index, item, 3)
+            self._set_streams(slice=index, streams=item, stacklevel=3)
         else:
             raise TypeError("Only intergers and slices are valid "
                            f"indices for '{type(self).__name__}' objects")
