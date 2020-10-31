@@ -172,6 +172,26 @@ class WSSequence(StreamSequence):
                            f"indices for '{type(self).__name__}' objects")
 
 
+    # Below shouldn't be needed for newer biosteam
+    def _set_streams(self, slice, streams, stacklevel):
+        all_streams = self._streams
+        for stream in all_streams[slice]: self._undock(stream)
+        all_streams[slice] = streams
+        for stream in all_streams:
+            self._redock(stream, stacklevel)
+        if self._fixed_size:
+            size = self._size
+            N_streams = len(all_streams)
+            if N_streams < size:
+                N_missing = n_missing(size, N_streams)
+                if N_missing:
+                    all_streams[N_streams: size] = self._create_N_missing_streams(N_missing)
+
+    def _set_stream(self, int, stream, stacklevel):
+        self._undock(self._streams[int])
+        self._redock(stream, stacklevel)
+        self._streams[int] = stream
+
 
 class WSIns(WSSequence):
     '''Create an Ins object which serves as input streams for a Unit object'''
