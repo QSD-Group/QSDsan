@@ -155,7 +155,7 @@ class WSSequence(StreamSequence):
                     f"'WasteStream' objects; not '{type(item).__name__}'")
             elif not isinstance(item, MissingWS):
                 item = self._create_missing_stream()
-            self._set_stream(slice=index, streams=item, stacklevel=3)
+            self._set_stream(int=index, stream=item, stacklevel=3)
         elif isinstance(index, slice):
             wastestreams = []
             for ws in item:
