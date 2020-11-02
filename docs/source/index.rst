@@ -1,7 +1,8 @@
 Sanitation Explorer: Exploring Sustainable Sanitation Technologies
 ==================================================================
 .. figure:: ./images/various_configurations.png
-:caption: Collage of sanitation units inclucded in Sanitation Explorer
+   
+   Collage of sanitation units inclucded in Sanitation Explorer
 
 What is Sanitation Explorer?
 ----------------------------
@@ -50,9 +51,9 @@ In particular, Sanitation Explorer introduces:
    Component
    Components
    WasteStream
-   Process
    SanUnit
-   units
+.. Process # TO BE ADDED
+.. unitss # TO BE ADDED
 
 
 More resources

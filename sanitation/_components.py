@@ -185,8 +185,9 @@ class Components(Chemicals):
         A Components or CompiledComponents object with default Component objects.
     
         Notes
-        -------
+        -----
         [1] Component-specific properties are defined in ./default_data/_component.cvs.
+
         [2] When default_compile is True, all essential Chemical-specific properties 
             that are missing will be defaulted to those of water.
     
