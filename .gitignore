@@ -27,8 +27,6 @@ monkeytype.sqlite3
 docs/tutorial/.ipynb_checkpoints
 docs/.ipynb_checkpoints
 docs/build/*
-docs/source/_static/*
-docs/source/_templates/*
 
 # Compiled source #
 ###################
