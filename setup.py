@@ -24,7 +24,7 @@ setup(
     description='Module for sustainable design of non-sewered sanitation technologies',
     long_description=open('README.rst').read(),
     url="https://github.com/codesciencewater/sanitation",
-    install_requires=['biosteam>=2.20.21'],
+    install_requires=['biosteam>=2.20.26'],
     package_data=
         {'sanitation': [
                         'default_data/*',
