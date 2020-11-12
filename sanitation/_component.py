@@ -51,6 +51,8 @@ _key_component_properties = (*_num_component_properties,
 # All Component-related properties
 _component_properties = (*_key_component_properties,
                          'measured_as', 'description', )
+_component_slots = (*tmo.Chemical.__slots__,
+                    *tuple('_'+i for i in _component_properties))
 
 _checked_properties = (*_checked_properties, *_key_component_properties)
 
@@ -91,7 +93,9 @@ def check_property(name, value):
 # =============================================================================
 
 class Component(tmo.Chemical):
-    '''A subclass of the Chemical object in the thermosteam package with additional attributes and methods for waste treatment'''
+    '''A subclass of the Chemical object in the thermosteam package with additional attributes and methods for waste treatment'''         
+
+    __slots__ = _component_slots
 
     def __new__(cls, ID, formula=None, search_ID=None, phase='l', measured_as=None, 
                 i_C=None, i_N=None, i_P=None, i_K=None, i_mass=None, i_charge=None, 
@@ -392,20 +396,36 @@ class Component(tmo.Chemical):
                 missing.append(i)
         return missing
 
+    def copy(self, ID, **data):
+        new = self.__class__.__new__(cls=self.__class__, ID=ID)
+
+        for field in self.__slots__:
+            if field == '_CAS': continue
+            value = getattr(self, field)
+            setattr(new, field, copy_maybe(value))
+        new._ID = ID
+        new._locked_state = self._locked_state
+        new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus, new.Tm,
+                           new.Tb, new.eos, new.eos_1atm, new.phase_ref)
+        new._label_handles()
+        for i,j in data.items(): setattr(new, i , j)
+        return new
+    __copy__ = copy
+
     @classmethod
-    def from_chemical(cls, ID, chemical, measured_as=None, 
+    def from_chemical(cls, ID, chemical, phase='l', measured_as=None, 
                       i_C=None, i_N=None, i_P=None, i_K=None, i_mass=None, 
                       i_charge=None, f_BOD5_COD=None, f_uBOD_COD=None, 
                       f_Vmass_Totmass=None, description=None, 
                       particle_size=None, degradability=None, organic=None, 
                       **data):
         '''Return a new Component from Chemical'''
-        new = cls.__new__(cls, ID=ID)
-        for field in chemical.__slots__: 
+        new = cls.__new__(cls, ID=ID, phase=phase)
+        for field in chemical.__slots__:
             value = getattr(chemical, field)
             setattr(new, field, copy_maybe(value))
         new._ID = ID
-        new._locked_state = new._locked_state
+        new._locked_state = phase
         new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus, new.Tm,
                            new.Tb, new.eos, new.eos_1atm, new.phase_ref)
         new._label_handles()

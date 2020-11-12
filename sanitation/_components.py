@@ -111,17 +111,15 @@ class Components(Chemicals):
         
     
     @classmethod
-    def load_from_file(cls, file_type='', path=''):
+    def load_from_file(cls, path=''):
         '''
         Create Component objects based on properties defined in a cvs or an Excel file,
         return a Components object that contains all created Component objects.
     
         Parameters
         ----------
-        file_type : [str]
-            File type, 'cvs' or 'Excel'.
         path : [str]
-            File path.
+            File path, the file should end with '.cvs', '.xls', or 'xlsx'
     
         Returns
         -------
@@ -132,12 +130,12 @@ class Components(Chemicals):
         The Components object needs to be compiled before it is used in simulation
     
         '''
-        if file_type=='cvs':
+        if path[-4:] == '.cvs':
             data = pd.read_csv(path)
-        elif file_type in ('Excel', 'excel'):
+        elif path[-4:] == '.xls' or path[-4:] == 'xlsx':
             data = pd.read_excel(path)
         else:
-            raise ValueError(f"file_type can only be 'cvs' or 'Excel', not {file_type}.")
+            raise ValueError('Only be cvs or Excel files can be used.')
         new = cls(())
 
         for i, cmp in data.iterrows():
@@ -186,14 +184,14 @@ class Components(Chemicals):
     
         Notes
         -----
-        [1] Component-specific properties are defined in ./default_data/_component.cvs.
+        [1] Component-specific properties are defined in ./data/component.cvs.
 
         [2] When default_compile is True, all essential Chemical-specific properties 
             that are missing will be defaulted to those of water.
     
         '''
         import os
-        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'default_data/_components.csv')
+        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/components.csv')
         new = cls.load_from_file(file_type='cvs', path=path)
 
         H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),

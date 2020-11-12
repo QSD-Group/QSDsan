@@ -30,7 +30,6 @@ setup(
                         'default_data/*',
                         'utils/*',
                         'units/*',
-                        'systems/*',
                         ]},
     platforms=['Windows', 'Mac', 'Linux'],
     classifiers=['License :: OSI Approved :: University of Illinois/NCSA Open Source License',

@@ -17,20 +17,20 @@ from ._component import Component
 from ._components import Components, CompiledComponents
 from ._waste_stream import WasteStream
 from ._sanunit import SanUnit
+from ._lca import LCA
 
 from . import utils
 from . import units
-#from . import systems
+from . import systems
 
 from .units import *
-# from .systems import *
 
 __all__ = (
     'Component',
     'Components', 'CompiledComponents',
     'WasteStream',
     'SanUnit',
+    'LCA',
     *utils.__all__,
     *units.__all__,
-#   *systems.__all__,
            )

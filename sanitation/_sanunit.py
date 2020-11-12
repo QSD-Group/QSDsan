@@ -21,7 +21,7 @@ from .utils.piping import WSIns, WSOuts
 __all__ = ('SanUnit',)
 
 @utils.registered(ticket_name='SU')
-class SanUnit(bst.Unit, isabstract=True):
+class SanUnit(bst.Unit, isabstract=True):    
     '''Subclass of Unit in biosteam, is initialized with WasteStream rather than Stream.'''
 
     _stacklevel = 7
@@ -35,6 +35,7 @@ class SanUnit(bst.Unit, isabstract=True):
         self._init_utils()
         self._init_results()
         self._assert_compatible_property_package()
+        self._construction_materials = None
 
     
     def _init_ins(self, ins):
@@ -44,6 +45,10 @@ class SanUnit(bst.Unit, isabstract=True):
     def _init_outs(self, outs):
         self._outs = WSOuts(self, self._N_outs, outs, self._thermo,
                             self._outs_size_is_fixed, self._stacklevel)
+
+    def _init_results(self):
+        super()._init_results()
+        self._materials = {}
 
     def _info(self, T, P, flow, composition, N, _stream_info):
         """Information of the unit."""
@@ -92,5 +97,55 @@ class SanUnit(bst.Unit, isabstract=True):
         """Print information of the unit, including WasteStream-specific information"""
         print(self._info(T, P, flow, composition, N, stream_info))
         
+    def get_ws_inv(self):
+        ws_inv = (i for i in self.ins if not (i._source and i.CFs is None))
+        ws_inv += (i for i in self.outs if not (i._sink and i.CFs is None))
+        return ws_inv
+    
+    @property
+    def construction_materials(self):
+        '''
+        [dict] Materials used in unit construction, will be used in LCA.
+
+        Notes
+        -----
+        Method for calculating materials used in a `SanUnit` should be included
+        in the `_design` method
+
+        '''
+        return self._construction_materials
+    
+    @property
+    def _if_LCA(self):
+        '''
+        If this `SanUnit` is included in LCA. `False` if:
+            - All ins and outs have sink and source (i.e., no chemical inputs or emissions).
+            - No `HeatUtility` and `PowerUtility` objects.
+            - self.construction_materials is `None`.
+
+        '''
+        inputs = tuple(i for i in self.ins if not i._source)
+        if bool(inputs): return True
+        emissions = tuple(i for i in self.outs if not i._sink)
+        if bool(emissions): return True
+        if bool(self.heat_utilities): return True
+        if bool(self.power_utility): return True
+        if bool(self.construction_materials): return True
+        return False
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

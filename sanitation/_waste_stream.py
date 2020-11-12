@@ -40,7 +40,7 @@ _specific_groups = {'SVFA': ('SAc', 'SProp'),
                     'XPAO_PP': ('XPAO_PP_Lo', 'XPAO_PP_Hi'),
                     'TKN': ()}
 
-path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'default_data/_ratios.csv')
+path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/ratios.csv')
 _default_ratios = pd.read_csv(path)
 _default_ratios = dict(zip(_default_ratios.Variable, _default_ratios.Default))
 
@@ -65,13 +65,17 @@ class WasteStream(Stream):
     # TODO: add other state variables to initiation (pH, SAlk, SCAT, SAN)
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None, pH=7., SAlk=None,
-                 **chemical_flows):
+                 ratios=None, CFs=None, **chemical_flows):
         
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
                          units=units, price=price, thermo=thermo, **chemical_flows)
+        self._init_ws(pH, SAlk, ratios, CFs)
+
+    def _init_ws(self, pH=7., SAlk=None, ratios=None, CFs=None):
         self._pH = pH
         self._SAlk = SAlk
         self._ratios = None
+        self._CFs = None
     
     def show(self, T='K', P='Pa', flow='kg/hr', composition=False, N=7,
              stream_info=True, details=True):
@@ -115,7 +119,7 @@ class WasteStream(Stream):
         
     _ipython_display_ = show
     
-    #!!! Need reviewing
+    
     def _wastestream_info(self, details=True):
         _ws_info = '\n WasteStream-specific properties:'
         if self.F_mass == 0:
@@ -254,7 +258,6 @@ class WasteStream(Stream):
         if degradability:
             if degradability == 'u': dummy *= 1-getattr(cmps, 'b')
             else: dummy *= getattr(cmps, 'b')
-        
         if organic != None:
             if organic: dummy *= getattr(cmps, 'org')
             else: dummy *= 1-getattr(cmps, 'org')
@@ -304,6 +307,30 @@ class WasteStream(Stream):
     @property
     def charge(self):
         return self.composite('Charge')
+    
+    @property
+    def CFs (self):
+        '''
+        [dict] Characterization factors for different impact categories,
+        the function unit is 1 kg of the `WasteStream`.
+
+        Notes
+        -----
+        The value should be negative for credits, e.g., -1 for global warming
+        potential if the `WasteStream` is 1 kg/hr CO2 as inputs.
+
+        '''
+        return self._CFs
+    @CFs.setter
+    def CFs(self, i):
+        self._CFs = i
+    
+    def copy(self, ID=None):
+        new = super().copy(ID=ID)
+        new._init_ws()
+        return new
+    __copy__ = copy
+
     
     # Below are funtions, not properties (i.e., need to be called), so changed names accordingly
     def get_TDS(self, include_colloidal=True):
