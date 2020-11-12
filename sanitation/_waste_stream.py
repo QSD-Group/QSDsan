@@ -27,8 +27,12 @@ from . import Components
 
 __all__ = ('WasteStream',)
 
-_defined_composite_vars = ('COD', 'BOD5', 'BOD', 'uBOD', 'C',
-                           'N', 'P', 'K', 'Solids', 'Charge')
+_defined_composite_vars = ('COD', 'BOD5', 'BOD', 'uBOD', 'TC',
+                           'TN', 'TP', 'TK', 'solids', 'charge')
+
+_ws_specific_slots = (*tuple('_'+i for i in _defined_composite_vars),
+                      '_TOC', '_TKN',
+                      '_pH', '_SAlk', '_ratios', '_CFs')
 
 _specific_groups = {'SVFA': ('SAc', 'SProp'),
                     'XStor': ('XOHO_PHA', 'XGAO_PHA', 'XPAO_PHA', 
@@ -60,22 +64,40 @@ class WasteStream(Stream):
     attributes and methods for waste treatment.
     '''
     
+    __slots__ = (*Stream.__slots__, *_ws_specific_slots)
     _default_ratios = _default_ratios
     
     # TODO: add other state variables to initiation (pH, SAlk, SCAT, SAN)
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
-                 units='kg/hr', price=0., thermo=None, pH=7., SAlk=None,
-                 ratios=None, CFs=None, **chemical_flows):
+                 units='kg/hr', price=0., thermo=None, CFs=None,
+                 pH=7., SAlk=None, COD=None, BOD=None, BOD5=None, uBOD=None,
+                 TC=None, TOC=None, TN=None, TKN=None, TP=None, TK=None,
+                 solids=None, charge=None, ratios=None, **chemical_flows):
         
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
                          units=units, price=price, thermo=thermo, **chemical_flows)
-        self._init_ws(pH, SAlk, ratios, CFs)
+        self._init_ws(CFs, pH, SAlk, COD, BOD, BOD5, uBOD, TC, TOC, TN, TKN,
+                       TP, TK, solids, charge, ratios)
 
-    def _init_ws(self, pH=7., SAlk=None, ratios=None, CFs=None):
+    def _init_ws(self, CFs, pH, SAlk, COD, BOD, BOD5, uBOD, TC, TOC, TN, TKN,
+                 TP, TK, solids, charge, ratios):
+        self._CFs = CFs
         self._pH = pH
         self._SAlk = SAlk
-        self._ratios = None
-        self._CFs = None
+        self._COD = COD
+        self._BOD = BOD
+        self._BOD5 = BOD5
+        self._uBOD = uBOD
+        self._TC = TC
+        self._TOC = TOC
+        self._TN = TN
+        self._TKN = TKN
+        self._TP = TP
+        self._TK = TK
+        self._solids = solids
+        self._charge = charge
+        self._ratios = ratios
+
     
     def show(self, T='K', P='Pa', flow='kg/hr', composition=False, N=7,
              stream_info=True, details=True):
@@ -174,7 +196,7 @@ class WasteStream(Stream):
         ----------
         variable : [str]
             The composite variable to calculate. 
-            One of ('COD', 'BOD5', 'BOD', 'uBOD', 'C', 'N', 'P', 'K', 'Solids', 'Charge').
+            One of ('COD', 'BOD5', 'BOD', 'uBOD', 'TC', 'TN', 'TP', 'TK', 'solids', 'charge').
         subgroup : CompiledComponents, optional
             A subgroup of CompiledComponents. The default is None.
         particle_size : 'g', 's', 'c', or 'x', optional 
@@ -232,15 +254,15 @@ class WasteStream(Stream):
                 if variable == 'COD': var = cmp_c
                 elif variable == 'uBOD': var = cmps.f_uBOD_COD * cmp_c
                 else: var = cmps.f_BOD5_COD * cmp_c
-        elif variable == 'C':
+        elif variable == 'TC':
             var = cmps.i_C * cmp_c
-        elif variable == 'N':
+        elif variable == 'TN':
             var = cmps.i_N * cmp_c
-        elif variable == 'P':
+        elif variable == 'TP':
             var = cmps.i_P * cmp_c
-        elif variable == 'K':
+        elif variable == 'TK':
             var = cmps.i_K * cmp_c
-        elif variable == 'Solids':
+        elif variable == 'solids':
             var = cmps.i_mass * cmp_c
             if volatile != None:
                 if volatile: var *= cmps.f_Vmass_Totmass
@@ -263,50 +285,7 @@ class WasteStream(Stream):
             else: dummy *= 1-getattr(cmps, 'org')
         
         return sum(dummy*var)
-    
-    @property
-    def pH(self):
-        return self._pH or 7.
 
-    @property
-    def SAlk(self):
-        return self._SAlk or 0.
-
-    @property
-    def COD(self):
-        return self.composite('COD')
-
-    @property    
-    def BOD(self):
-        return self.composite('BOD')
-    
-    @property
-    def TC(self):
-        return self.composite('C')
-    
-    @property
-    def TOC(self):
-        return self.composite('C', organic=True)
-        
-    @property
-    def TN(self):
-        return self.composite('N')
-    
-    @property
-    def TKN(self):
-        return self.composite('N', specification='TKN')
-    
-    @property
-    def TP(self):
-        return self.composite('P')
-    
-    @property
-    def TK(self):
-        return self.composite('K')
-    
-    @property
-    def charge(self):
-        return self.composite('Charge')
     
     @property
     def CFs (self):
@@ -325,34 +304,83 @@ class WasteStream(Stream):
     def CFs(self, i):
         self._CFs = i
     
-    def copy(self, ID=None):
+    @property
+    def pH(self):
+        return self._pH or 7.
+
+    @property
+    def SAlk(self):
+        return self._SAlk or 0.
+
+    @property
+    def COD(self):
+        return self._COD or self.composite('COD')
+
+    @property    
+    def BOD(self):
+        return self._BOD or self.composite('BOD')
+    
+    @property
+    def TC(self):
+        return self._TC or self.composite('TC')
+    
+    @property
+    def TOC(self):
+        return self._TOC or self.composite('TC', organic=True)
+        
+    @property
+    def TN(self):
+        return self._TN or self.composite('TN')
+    
+    @property
+    def TKN(self):
+        return self._TKN or self.composite('TN', specification='TKN')
+    
+    @property
+    def TP(self):
+        return self._TP or self.composite('TP')
+    
+    @property
+    def TK(self):
+        return self._TK or self.composite('TK')
+    
+    @property
+    def charge(self):
+        return self._charge or self.composite('charge')
+
+
+    def copy(self, ID, **data):
         new = super().copy(ID=ID)
         new._init_ws()
+        for field in _ws_specific_slots:
+            value = getattr(self, field)
+            setattr(new, field, utils.copy_maybe(value))
+        for i,j in data.items(): setattr(new, i , j)
         return new
     __copy__ = copy
 
     
     # Below are funtions, not properties (i.e., need to be called), so changed names accordingly
     def get_TDS(self, include_colloidal=True):
-        TDS = self.composite('Solids', particle_size='s')
+        TDS = self.composite('solids', particle_size='s')
         if include_colloidal:
-            TDS += self.composite('Solids', particle_size='c')
+            TDS += self.composite('solids', particle_size='c')
         return TDS
     
     def get_TSS(self, include_colloidal=False):
-        TSS = self.composite('Solids', particle_size='x')
+        TSS = self.composite('solids', particle_size='x')
         if include_colloidal:
-            TSS += self.composite('Solids', particle_size='c')        
+            TSS += self.composite('solids', particle_size='c')        
         return TSS
     
     def get_VSS(self, include_colloidal=False):
-        VSS = self.composite('Solids', particle_size='x', volatile=True)
+        VSS = self.composite('solids', particle_size='x', volatile=True)
         if include_colloidal:
-            VSS += self.composite('Solids', particle_size='c', volatile=True)        
+            VSS += self.composite('solids', particle_size='c', volatile=True)        
         return VSS        
     
     def get_ISS(self):
-        return self.composite('Solids', particle_size='x', volatile=False)
+        return self.composite('solids', particle_size='x', volatile=False)
     
     @classmethod
     def from_composite_measures(cls, ID, flow_tot=0., phase='l', T=298.15, P=101325., 
