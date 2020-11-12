@@ -62,9 +62,8 @@ class WasteStream(Stream):
     
     _default_ratios = _default_ratios
     
-    # TODO: add other state variables to initiation (pH, SAlk, SCAT, SAN)
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
-                 units='kg/hr', price=0., thermo=None, pH=7., SAlk=None,
+                 units='kg/hr', price=0., thermo=None, pH=7., SAlk=2.5,
                  **chemical_flows):
         
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
@@ -124,18 +123,18 @@ class WasteStream(Stream):
             _ws_info += '\n'
             _ws_info += f'  pH         : {self.pH:.1f}\n'
             #TODO: unit and definition for following properties
-            _ws_info += f'  Alkalinity : {self.SAlk:.1f} [unit]\n'
+            _ws_info += f'  Alkalinity : {self.SAlk:.1f} mmol/L\n'
             # Or we can just print all...
             if details:
-                _ws_info += f'  COD        : {self.COD:.1f} [unit]\n'
-                _ws_info += f'  BOD        : {self.BOD:.1f} [unit]\n'
-                _ws_info += f'  TC         : {self.TC:.1f} [unit]\n'
-                _ws_info += f'  TOC        : {self.TOC:.1f} [unit]\n'
-                _ws_info += f'  TN         : {self.TN:.1f} [unit]\n'
-                _ws_info += f'  TKN        : {self.TKN:.1f} [unit]\n'
-                _ws_info += f'  TP         : {self.TP:.1f} [unit]\n'
-                _ws_info += f'  TK         : {self.TK:.1f} [unit]\n'
-                _ws_info += f'  charge     : {self.charge:.1f} [unit]\n'
+                _ws_info += f'  COD        : {self.COD:.1f} mg/L\n'
+                _ws_info += f'  BOD        : {self.BOD:.1f} mg/L\n'
+                _ws_info += f'  TC         : {self.TC:.1f} mg/L\n'
+                _ws_info += f'  TOC        : {self.TOC:.1f} mg/L\n'
+                _ws_info += f'  TN         : {self.TN:.1f} mg/L\n'
+                _ws_info += f'  TKN        : {self.TKN:.1f} mg/L\n'
+                _ws_info += f'  TP         : {self.TP:.1f} mg/L\n'
+                _ws_info += f'  TK         : {self.TK:.1f} mg/L\n'
+                _ws_info += f'  charge     : {self.charge:.1f} mg/L\n'
             else:
                 _ws_info += '  ...\n'
             
@@ -147,10 +146,15 @@ class WasteStream(Stream):
 
     @property
     def ratios(self):
-        return self._ratios or self._default_ratios
+        '''
+        The ratios used for estimating WasteStream composition based on user input upon initialization.
+        Only meaningful for creating a WasteStream object from scratch.
+        If not used or specified, default as None.
+        '''
+        return self._ratios
     @ratios.setter
     def ratios(self, ratios):
-        r = self._default_ratios
+        r = self._ratios or WasteStream._default_ratios
         for name, ratio in ratios.items():
             if name not in r.keys():
                 raise ValueError(f"Cannot identify ratio named '{name}'."
@@ -201,6 +205,7 @@ class WasteStream(Stream):
         #TODO: deal with units
         if subgroup:
             cmps = subgroup
+            
         else:
             cmps = self.components
 
@@ -221,13 +226,14 @@ class WasteStream(Stream):
         cmps = cmps.subgroup(IDs)
         cmp_c = self.imass[IDs]/self.F_vol*1e3      #[mg/L]
         
-        if variable in ('COD', 'BOD5', 'BOD', 'uBOD'):
+        if variable in ('COD', 'BOD5', 'BOD', 'uBOD'):            
             if organic == False: var = 0.
             else: 
                 organic = True
-                if variable == 'COD': var = cmp_c
-                elif variable == 'uBOD': var = cmps.f_uBOD_COD * cmp_c
-                else: var = cmps.f_BOD5_COD * cmp_c
+                exclude_gas = getattr(cmps, 's')+getattr(cmps, 'c')+getattr(cmps, 'x')
+                if variable == 'COD': var = cmp_c * exclude_gas
+                elif variable == 'uBOD': var = cmps.f_uBOD_COD * cmp_c * exclude_gas
+                else: var = cmps.f_BOD5_COD * cmp_c * exclude_gas
         elif variable == 'C':
             var = cmps.i_C * cmp_c
         elif variable == 'N':
@@ -263,11 +269,11 @@ class WasteStream(Stream):
     
     @property
     def pH(self):
-        return self._pH or 7.
+        return self._pH
 
     @property
     def SAlk(self):
-        return self._SAlk or 0.
+        return self._SAlk
 
     @property
     def COD(self):
@@ -342,11 +348,11 @@ class WasteStream(Stream):
 
         new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
                   thermo=thermo, pH=pH, SAlk=SAlk)
-        r = new.ratios
+
         if ratios:
-            r.update(ratios)
-            # new._ratios
-        # else: r = new._default_ratios
+            new.ratios = ratios
+            r = new._ratios
+        else: r = WasteStream._default_ratios
 
         #************ user-defined values **************        
         cmp_dct['SH2'] = SH2
@@ -474,12 +480,12 @@ class WasteStream(Stream):
         #************ convert concentrations to flow rates *************
         # TODO: other unit options
         cmp_dct = {k:v*flow_tot*1e-6 for k,v in cmp_dct.items()}       # [mg/L]*[L/hr]*1e-6[kg/mg] = [kg/hr]
-        cmp_dct['H2O'] = flow_tot                                      # [L/hr]*1[kg/L] = [kg/hr]
+        cmp_dct['H2O'] = flow_tot - sum(cmp_dct.values())              # [L/hr]*1[kg/L] = [kg/hr], assuming raw WW density = 1kg/L
         
         new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
                   thermo=thermo, pH=pH, SAlk=SAlk, **cmp_dct)
-        for i, j in cmp_dct.items():
-            setattr(new, i, j)
+        # for i, j in cmp_dct.items():
+        #     setattr(new, i, j)
         return new
 
 

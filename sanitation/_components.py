@@ -103,7 +103,7 @@ class Components(Chemicals):
             self.__dict__.update(components.__dict__)
         else:
             for component in components: self.append(component)
-    
+        
     def compile(self):
         '''Cast as a CompiledComponents object.'''
         CompiledComponents._compile(self)
@@ -203,15 +203,26 @@ class Components(Chemicals):
                           particle_size='Soluble',
                           degradability='Undegradable', organic=False)
         new.append(H2O)
-        
+                
         if default_compile:
             TMH = tmo.base.thermo_model_handle.ThermoModelHandle
+            PH = tmo.base.phase_handle.PhaseHandle
             for i in new:
                 i.default()
-                for j in ('sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu'):
-                    if isinstance(getattr(i, j), TMH) and len(getattr(i, j).models) > 0: continue
+                if not ((isinstance(i.V, TMH) and len(i.V.models)>0) or (isinstance(i.V, PH) and len(i.V.l.models)>0)): 
+                    if i.particle_size == 'Soluble': 
+                        i.V.copy_models_from(tmo.Chemical('urea'), names=('V',))                        
+                    elif i.particle_size in ('Particulate', 'Colloidal'):
+                        i.V.add_model(1.2e-5)               # m^3/mol
+                    else:
+                        i.V.copy_models_from(tmo.Chemical('N2'), names=('V',))
+                    
+                for j in ('sigma', 'epsilon', 'kappa', 'Cn', 'mu'):
+                    if isinstance(getattr(i, j), TMH) and len(getattr(i,j).models) > 0: continue
+                    elif isinstance(getattr(i, j), PH) and len(getattr(i,j).l.models) > 0: continue
                     i.copy_models_from(H2O, names=(j,))
-        
+            new.compile()
+            
         return new        
 
 
@@ -292,6 +303,9 @@ class CompiledComponents(CompiledChemicals):
                 try: new.set_synonym(i, j)
                 except: pass
         return new
+
+    #TODO: allow to subgroup by exclusion of some components.
+    #TODO: allow to un-compile?
     
     def index(self, ID):
         '''Return index of specified Component.'''

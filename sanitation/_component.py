@@ -93,7 +93,7 @@ def check_property(name, value):
 class Component(tmo.Chemical):
     '''A subclass of the Chemical object in the thermosteam package with additional attributes and methods for waste treatment'''
 
-    def __new__(cls, ID, formula=None, search_ID=None, phase='l', measured_as=None, 
+    def __new__(cls, ID, formula=None, search_ID=None, phase=None, measured_as=None, 
                 i_C=None, i_N=None, i_P=None, i_K=None, i_mass=None, i_charge=None, 
                 f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
                 description=None, particle_size=None, 
@@ -114,8 +114,9 @@ class Component(tmo.Chemical):
             elif measured_as == 'N': self._MW = tmo.Chemical('N').MW
             elif measured_as == 'P': self._MW = tmo.Chemical('P').MW
         
-        self._ID = ID
-        tmo._chemical.lock_phase(self, phase)
+        if phase: tmo._chemical.lock_phase(self, phase)
+        
+        self._ID = ID        
         self._i_C = i_C
         self._i_N = i_N
         self._i_P = i_P
@@ -137,13 +138,7 @@ class Component(tmo.Chemical):
 
     @property
     def i_C(self):
-        '''
-        [float] Carbon content of the Component, [g C/g measure unit].
-
-        Notes
-        -------
-        Must be within [0,1].
-        '''
+        '''[float] Carbon content of the Component, [g C/g measure unit].'''
         return self._i_C
     @i_C.setter
     def i_C(self, i):
@@ -157,8 +152,7 @@ class Component(tmo.Chemical):
 
         Notes
         -------
-        [1] Must be within [0,1].
-        [2] If the Component is measured as N, then i_N is 1.
+        [1] If the Component is measured as N, then i_N is 1.
         '''
         return self._i_N
     @i_N.setter
@@ -173,8 +167,7 @@ class Component(tmo.Chemical):
 
         Notes
         -------
-        [1] Must be within [0,1].
-        [2] If the Component is measured as P, then i_P is 1.
+        [1] If the Component is measured as P, then i_P is 1.
         '''
         return self._i_P
     @i_P.setter
@@ -184,13 +177,7 @@ class Component(tmo.Chemical):
 
     @property
     def i_K(self):
-        '''
-        [float] Potassium content of the Component, [g K/g measure unit].
-
-        Notes
-        -------
-        Must be within [0,1].
-        '''
+        '''[float] Potassium content of the Component, [g K/g measure unit].'''
         return self._i_K
     @i_K.setter
     def i_K(self, i):
@@ -229,7 +216,7 @@ class Component(tmo.Chemical):
         Notes
         -------
         [1] Must be within [0,1].
-        [2] Must be smaller or equal to f_uBOD_COD.
+        [2] Must be less than or equal to f_uBOD_COD.
         '''
         return self._f_BOD5_COD
     @f_BOD5_COD.setter
@@ -245,7 +232,7 @@ class Component(tmo.Chemical):
         Notes
         -------
         [1] Must be within [0,1].
-        [2] Must be larger or equal to f_BOD5_COD.
+        [2] Must be greater than or equal to f_BOD5_COD.
         '''
         return self._f_uBOD_COD
     @f_uBOD_COD.setter
