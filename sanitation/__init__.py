@@ -21,7 +21,6 @@ from ._lca import LCA
 
 from . import utils
 from . import units
-from . import systems
 
 from .units import *
 

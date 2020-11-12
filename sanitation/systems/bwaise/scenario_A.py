@@ -14,16 +14,27 @@ for license details.
 '''
 
 import biosteam as bst
-# from sanitation import WasteStream
-from sanitation.systems import bwaise
+from sanitation import WasteStream as WS
+
+import bwaise
 cmps = bwaise._cmps.cmps
 units = bwaise._units
 
 bst.settings.set_thermo(cmps)
 
 
+# %%
+
+# =============================================================================
+# Human inputs and user-interface
+# =============================================================================
+
+toilet_paper = WS('toilet_paper')
+
+
+
 U1 = units.Excretion('U1', outs=('urine', 'feces'))
-U1.simulate()
+
 
 
 
