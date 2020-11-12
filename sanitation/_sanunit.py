@@ -93,7 +93,7 @@ class SanUnit(bst.Unit, isabstract=True):
         info = info.replace('\n ', '\n    ')
         return info[:-1]
         
-    def show(self, T=None, P=None, flow='kg/hr', composition=None, N=None, stream_info=True):
+    def show(self, T=None, P=None, flow='kg/hr', composition=None, N=15, stream_info=True):
         """Print information of the unit, including WasteStream-specific information"""
         print(self._info(T, P, flow, composition, N, stream_info))
         

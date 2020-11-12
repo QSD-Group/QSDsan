@@ -13,73 +13,71 @@ https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
 '''
 
-import biosteam as bst
+import thermosteam as tmo
 from sanitation import Component, Components
 
 __all__ = ('cmps', )
 
-kcal = Component('kcal', HHV=4184, # 1 kcal is 4184 J
-                 phase='l', i_C=0, i_N=0, i_P=0, i_K=0,
-                 i_mass=1, i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
-                 f_Vmass_Totmass=0, particle_size='Soluble',
-                 degradability='Biological', organic=True)
-
-
-NH3 = Component.from_chemical('NH3', bst.Chemical('NH3'), measured_as='N',
-                              phase='l', i_C=0, i_N=1, i_P=0, i_K=0,
-                              i_mass=1, i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
-                              f_Vmass_Totmass=0, particle_size='Soluble',
+NH3 = Component.from_chemical('NH3', tmo.Chemical('NH3'), measured_as='N',
+                              phase='l', i_N=1, i_mass=1, particle_size='Soluble',
                               degradability='Undegradable', organic=False)
 
-nonNH3 = Component.from_chemical('nonNH3', bst.Chemical('N'), measured_as='N',
-                                 phase='l', i_C=0, i_N=1, i_P=0, i_K=0,
-                                 i_mass=1, i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
-                                 f_Vmass_Totmass=0, particle_size='Soluble',
+NonNH3 = Component.from_chemical('NonNH3', tmo.Chemical('N'), measured_as='N',
+                                 phase='l', i_N=1, particle_size='Soluble',
                                  degradability='Undegradable', organic=False,
                                  description='Non-NH3 nitrogen')
 
-P = Component.from_chemical('P', bst.Chemical('P'),
-                            phase='l', i_C=0, i_N=0, i_P=1, i_K=0,
-                            i_mass=1, i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
-                            f_Vmass_Totmass=0, particle_size='Soluble',
+P = Component.from_chemical('P', tmo.Chemical('P'),
+                            phase='l', i_P=1, particle_size='Soluble',
                             degradability='Undegradable', organic=False)
 
-K = Component.from_chemical('K', bst.Chemical('K'),
-                            phase='l', i_C=0, i_N=0, i_P=0, i_K=1,
-                            i_mass=1, i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
-                            f_Vmass_Totmass=0, particle_size='Soluble',
+K = Component.from_chemical('K', tmo.Chemical('K'),
+                            phase='l', i_K=1, particle_size='Soluble',
                             degradability='Undegradable', organic=False)
 
-Mg = Component.from_chemical('Mg', bst.Chemical('Mg'),
-                             phase='l', i_C=0, i_N=0, i_P=0, i_K=0,
-                             i_mass=1, i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
-                             f_Vmass_Totmass=0, particle_size='Soluble',
+Mg = Component.from_chemical('Mg', tmo.Chemical('Mg'),
+                             phase='l', i_Mg=1, particle_size='Soluble',
                              degradability='Undegradable', organic=False)
 
-Ca = Component.from_chemical('Ca', bst.Chemical('Ca'),
-                             phase='l', i_C=0, i_N=0, i_P=0, i_K=0,
-                             i_mass=1, i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
-                             f_Vmass_Totmass=0, particle_size='Soluble',
+Ca = Component.from_chemical('Ca', tmo.Chemical('Ca'),
+                             phase='l', i_Ca=0, particle_size='Soluble',
                              degradability='Undegradable', organic=False)
 
-H2O = Component.from_chemical('H2O', bst.Chemical('H2O'),
-                              phase='l', i_C=0, i_N=0, i_P=0, i_K=0,
-                              i_mass=1, i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
-                              f_Vmass_Totmass=0, particle_size='Soluble',
+H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
+                              phase='l', particle_size='Soluble',
                               degradability='Undegradable', organic=False)
 
+Other_SS = Component('Other_SS', phase='l', particle_size='Soluble',
+                     degradability='Undegradable', organic=False,
+                     description='Unspecified soluble solids')
 
-for cmp in (kcal, nonNH3, P, K, Mg, Ca):
+for cmp in (NonNH3, P, K, Mg, Ca, Other_SS):
     cmp.default()
     cmp.copy_models_from(H2O, ('sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu'))
 
-others = kcal.copy('others', HHV=0, degradability='Undegradable', organic=False,
-                    description='Fillter Component for unspecified mass')
+Tissue = Component('Tissue', MW=1, phase='s', particle_size='Particulate',
+                    degradability='Undegradable', organic=False,
+                    description='Tissue for toilet paper')
+# 375 kg/m3 is the average of 250-500 for tissue from
+# https://paperonweb.com/density.htm (accessed 2020-11-12)
+V_model = tmo.functional.rho_to_V(375, Tissue.MW)
+Tissue.V.add_model(V_model)
 
-cmps = Components((kcal, NH3, nonNH3, P, K, Mg, Ca, H2O, others))
+WoodAsh = Component('WoodAsh', MW=1, phase='s', i_Mg=0.0224, i_Ca=0.3034,
+                    particle_size='Particulate', degradability='Undegradable',
+                    organic=False, description='Wood ash for desiccant')
+V_model = tmo.functional.rho_to_V(760, WoodAsh.MW)
+WoodAsh.V.add_model(V_model)
+
+for i in (Tissue, WoodAsh):
+    i.copy_models_from(tmo.Chemical('Glucose'), ('Cn', 'mu'))
+    
+    
+
+cmps = Components((NH3, NonNH3, P, K, Mg, Ca, H2O, Other_SS, Tissue, WoodAsh))
 cmps.compile()
 
-
+cmps.set_synonym('H2O', 'Water')
 
 
 

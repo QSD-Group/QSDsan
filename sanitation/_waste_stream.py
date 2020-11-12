@@ -28,7 +28,7 @@ from . import Components
 __all__ = ('WasteStream',)
 
 _defined_composite_vars = ('COD', 'BOD5', 'BOD', 'uBOD', 'TC',
-                           'TN', 'TP', 'TK', 'solids', 'charge')
+                           'TN', 'TP', 'TK', 'TMg', 'TCa', 'solids', 'charge')
 
 _ws_specific_slots = (*tuple('_'+i for i in _defined_composite_vars),
                       '_TOC', '_TKN',
@@ -72,15 +72,16 @@ class WasteStream(Stream):
                  units='kg/hr', price=0., thermo=None, CFs=None,
                  pH=7., SAlk=None, COD=None, BOD=None, BOD5=None, uBOD=None,
                  TC=None, TOC=None, TN=None, TKN=None, TP=None, TK=None,
-                 solids=None, charge=None, ratios=None, **chemical_flows):
+                 TMg=None, TCa=None, solids=None, charge=None, ratios=None,
+                 **chemical_flows):
         
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
                          units=units, price=price, thermo=thermo, **chemical_flows)
         self._init_ws(CFs, pH, SAlk, COD, BOD, BOD5, uBOD, TC, TOC, TN, TKN,
-                       TP, TK, solids, charge, ratios)
+                       TP, TK, TMg, TCa, solids, charge, ratios)
 
     def _init_ws(self, CFs, pH, SAlk, COD, BOD, BOD5, uBOD, TC, TOC, TN, TKN,
-                 TP, TK, solids, charge, ratios):
+                 TP, TK, TMg, TCa, solids, charge, ratios):
         self._CFs = CFs
         self._pH = pH
         self._SAlk = SAlk
@@ -94,12 +95,14 @@ class WasteStream(Stream):
         self._TKN = TKN
         self._TP = TP
         self._TK = TK
+        self._TMg = TMg
+        self._TCa = TCa
         self._solids = solids
         self._charge = charge
         self._ratios = ratios
 
     
-    def show(self, T='K', P='Pa', flow='kg/hr', composition=False, N=7,
+    def show(self, T='K', P='Pa', flow='kg/hr', composition=False, N=15,
              stream_info=True, details=True):
         '''
         Print WasteStream information.
@@ -262,6 +265,10 @@ class WasteStream(Stream):
             var = cmps.i_P * cmp_c
         elif variable == 'TK':
             var = cmps.i_K * cmp_c
+        elif variable == 'TMg':
+            var = cmps.i_Mg * cmp_c
+        elif variable == 'TCa':
+            var = cmps.i_Ca * cmp_c
         elif variable == 'solids':
             var = cmps.i_mass * cmp_c
             if volatile != None:
@@ -314,6 +321,7 @@ class WasteStream(Stream):
 
     @property
     def COD(self):
+        '''[float] Chemical oxygen demand in mg/L.'''
         return self._COD or self.composite('COD')
 
     @property    
@@ -343,6 +351,14 @@ class WasteStream(Stream):
     @property
     def TK(self):
         return self._TK or self.composite('TK')
+    
+    @property
+    def TMg(self):
+        return self._TMg or self.composite('TMg')
+    
+    @property
+    def TCa(self):
+        return self._TCa or self.composite('TCa')
     
     @property
     def charge(self):

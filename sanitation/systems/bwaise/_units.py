@@ -24,7 +24,7 @@ ParallelRxn = tmo.reaction.ParallelReaction
 
 
 class Excretion(SanUnit):
-    '''Estimation of N, P, K, and COD in urine and feces based on dietary intake'''
+    '''Estimation of N, P, K, and COD in urine and feces based on dietary intake.'''
     
     _N_ins = 0
     _N_outs = 2
@@ -63,28 +63,32 @@ class Excretion(SanUnit):
         ur_N = (self.p_veg+self.p_anim)*factor*self.N_prot \
            * self.N_exc*self.N_ur
         ur.imass['NH3'] = ur_N * self.N_ur_NH3
-        ur.imass['nonNH3'] = ur_N - ur.imass['NH3']
+        ur.imass['NonNH3'] = ur_N - ur.imass['NH3']
         ur.imass['P'] = (self.p_veg*self.P_prot_v+self.p_anim*self.P_prot_a)*factor \
             * self.P_exc*self.P_ur
         ur.imass['K'] = e_cal/1e3 * self.K_cal/1e3 * self.K_exc*self.K_ur
         ur.imass['Mg'] = self.Mg_ur * factor
         ur.imass['Ca'] = self.Ca_ur * factor
         ur.imass['H2O'] = self.ur_moi * ur_exc
-        ur.imass['others'] = ur_exc - ur.F_mass
+        ur.imass['Other_SS'] = ur_exc - ur.F_mass
         
         fec_exc = self.fec_exc * factor
         fec_N = (1-self.N_ur)/self.N_ur * ur_N
         fec.imass['NH3'] = fec_N * self.N_fec_NH3   
-        ur.imass['nonNH3'] = fec_N - fec.imass['NH3']
+        fec.imass['NonNH3'] = fec_N - fec.imass['NH3']
         fec.imass['P'] = (1-self.P_ur)/self.P_ur * ur.imass['P']
         fec.imass['K'] = (1-self.K_ur)/self.K_ur * ur.imass['K']
         fec.imass['Mg'] = self.Mg_fec * factor
         fec.imass['Ca'] = self.Ca_fec * factor
         fec.imass['H2O'] = self.fec_moi * fec_exc
-        fec.imass['others'] = fec_exc - fec.F_mass
+        fec.imass['Other_SS'] = fec_exc - fec.F_mass
         
-        ur.imass['kcal'] = e_cal * self.e_exc * (1-self.e_fec)
-        fec.imass['kcal'] = e_cal * self.e_exc - ur.imass['kcal']
+        # 14 kJ/g COD, the average lower heating value of excreta,
+        # 239 to convert it to kcal/kg COD
+        tot_COD = e_cal*self.e_exc / (14*239) # in kg COD/hr
+        ur._COD = tot_COD*(1-self.e_fec) / (ur.F_vol/1e3) # in mg/L
+        fec._COD = tot_COD*self.e_exc / (fec.F_vol/1e3) # in mg/L
+        
 
     @property
     def N_ppl(self):
@@ -293,6 +297,47 @@ class Excretion(SanUnit):
     @Ca_fec.setter
     def Ca_fec(self, i):
         self._Ca_fec = float(i)
+
+
+
+class PitLatrine(SanUnit):
+    
+    toilet_paper = 12.4*545/1e6 / 24 # kg/cap/hr
+    flushing_water = 10 / 24 # kg/cap/hr
+    cleaning_water = 1 / 24 # kg/cap/hr
+    
+    def __init__(self, ID='', ins=None, outs=(), N_ppl=1,
+                 if_toilet_paper=True, if_flushing=True, if_cleaning=False):                
+        SanUnit.__init__(self, ID, ins, outs)
+        self._N_ppl = N_ppl
+        self.if_toilet_paper = if_toilet_paper
+        self.if_flushing = if_flushing
+        self.if_cleaning = if_cleaning
+    
+    _N_ins = 5
+    _N_outs = 1
+    
+    def _run(self):
+        ur, fecs, tp, fw, cw = self.ins
+        mixture, = self.outs
+        
+        N_ppl = self.N_ppl
+        tp.imass['Tissue'] = int(self.if_toilet_paper)*self.toilet_paper * N_ppl
+        fw.imass['H2O'] = int(self.if_flushing)*self.flushing_water * N_ppl
+        cw.imass['H2O'] = int(self.if_cleaning)*self.cleaning_water * N_ppl
+        
+        mixture.mix_from(self.ins)        
+        
+
+    @property
+    def N_ppl(self):
+        '''[float] Number of people that uses the toilet per hour.'''
+        return self._N_ppl
+    @N_ppl.setter
+    def N_ppl(self, i):
+        self._N_ppl = float(i)
+
+
 
 
 

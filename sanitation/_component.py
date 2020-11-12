@@ -41,7 +41,8 @@ def component_identity(component, pretty=False):
 
 
 # Will stored as an array when compiled
-_num_component_properties = ('i_C', 'i_N', 'i_P', 'i_K', 'i_mass', 'i_charge',
+_num_component_properties = ('i_C', 'i_N', 'i_P', 'i_K', 'i_Mg', 'i_Ca',
+                             'i_mass', 'i_charge',
                              'f_BOD5_COD', 'f_uBOD_COD', 'f_Vmass_Totmass', )
 
 # Fields that cannot be left as None
@@ -62,6 +63,8 @@ component_units_of_measure = {
     'i_N': AbsoluteUnitsOfMeasure('g'), 
     'i_P': AbsoluteUnitsOfMeasure('g'), 
     'i_K': AbsoluteUnitsOfMeasure('g'), 
+    'i_Mg': AbsoluteUnitsOfMeasure('g'), 
+    'i_Ca': AbsoluteUnitsOfMeasure('g'), 
     'i_mass': AbsoluteUnitsOfMeasure('g'), 
     'i_charge': AbsoluteUnitsOfMeasure('mol')
     }
@@ -76,10 +79,7 @@ allowed_values = {
     }
 
 def check_property(name, value):
-    if name.startswith('i_'):
-        try: float(value)
-        except: raise TypeError(f'{name} must be a number, not a {type(value).__name__}.')
-    elif name.startswith('f_'):
+    if name.startswith('i_') or name.startswith('f_'):
         try: float(value)
         except: raise TypeError(f'{name} must be a number, not a {type(value).__name__}.')        
         if value>1 or value<0:
@@ -98,8 +98,8 @@ class Component(tmo.Chemical):
     __slots__ = _component_slots
 
     def __new__(cls, ID, formula=None, search_ID=None, phase='l', measured_as=None, 
-                i_C=None, i_N=None, i_P=None, i_K=None, i_mass=None, i_charge=None, 
-                f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
+                i_C=0, i_N=0, i_P=0, i_K=0, i_Mg=0, i_Ca=0, i_mass=1, i_charge=0, 
+                f_BOD5_COD=0, f_uBOD_COD=0, f_Vmass_Totmass=0,
                 description=None, particle_size=None, 
                 degradability=None, organic=None, **chemical_properties):
         
@@ -124,6 +124,8 @@ class Component(tmo.Chemical):
         self._i_N = i_N
         self._i_P = i_P
         self._i_K = i_K
+        self._i_Mg = i_Mg
+        self._i_Ca = i_Ca
         self._i_mass = i_mass
         self._i_charge = i_charge
         
@@ -200,6 +202,36 @@ class Component(tmo.Chemical):
     def i_K(self, i):
         check_property('i_K', i)
         self._i_K = float(i)
+
+    @property
+    def i_Mg(self):
+        '''
+        [float] Magnesium content of the Component, [g Mg/g measure unit].
+
+        Notes
+        -------
+        Must be within [0,1].
+        '''
+        return self._i_Mg
+    @i_Mg.setter
+    def i_Mg(self, i):
+        check_property('i_Mg', i)
+        self._i_Mg = float(i)
+        
+    @property
+    def i_Ca(self):
+        '''
+        [float] Calcium content of the Component, [g Ca/g measure unit].
+
+        Notes
+        -------
+        Must be within [0,1].
+        '''
+        return self._i_Ca
+    @i_Ca.setter
+    def i_Ca(self, i):
+        check_property('i_Ca', i)
+        self._i_Ca = float(i)
 
     @property
     def i_mass(self):
@@ -414,9 +446,9 @@ class Component(tmo.Chemical):
 
     @classmethod
     def from_chemical(cls, ID, chemical, phase='l', measured_as=None, 
-                      i_C=None, i_N=None, i_P=None, i_K=None, i_mass=None, 
-                      i_charge=None, f_BOD5_COD=None, f_uBOD_COD=None, 
-                      f_Vmass_Totmass=None, description=None, 
+                      i_C=0, i_N=0, i_P=0, i_K=0, i_Mg=0, i_Ca=0,
+                      i_mass=1, i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0, 
+                      f_Vmass_Totmass=0, description=None, 
                       particle_size=None, degradability=None, organic=None, 
                       **data):
         '''Return a new Component from Chemical'''
@@ -434,6 +466,8 @@ class Component(tmo.Chemical):
         new.i_N = i_N
         new.i_P = i_P
         new.i_K = i_K
+        new.i_Mg = i_Mg
+        new.i_Ca = i_Ca
         new.i_mass = i_mass
         new.i_charge = i_charge
         new.f_BOD5_COD = f_BOD5_COD

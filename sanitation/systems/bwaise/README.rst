@@ -4,7 +4,7 @@ bwaise: Sanitation Alternatives in Bwaise, Uganda (In Development)
 
 Scenario summary and flows
 --------------------------
-.. figure:: ./figures/scenarios.png
+.. figure:: ./figures/scenarios.jpg
 
     Figure created by John Trimmer for [1]_.
 

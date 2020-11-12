@@ -26,19 +26,23 @@ bst.settings.set_thermo(cmps)
 # %%
 
 # =============================================================================
-# Human inputs and user-interface
+# Human inputs, user-interface, and storage
 # =============================================================================
 
-toilet_paper = WS('toilet_paper')
+N_ppl = 16 # four people per household, four households per toilet
+
+
+U1 = units.Excretion('U1', outs=('urine', 'feces'), N_ppl=N_ppl)
+
+U2 = units.PitLatrine('U2', ins=(U1-0, U1-1, 'toilet_paper', 'flushing_water',
+                                 'cleaning_water'),
+                      outs='mixed_waste',  N_ppl=N_ppl)
 
 
 
-U1 = units.Excretion('U1', outs=('urine', 'feces'))
+SceA = bst.System('SceA', path=(U1, U2))
 
-
-
-
-
+SceA.simulate()
 
 
 
