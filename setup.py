@@ -23,8 +23,8 @@ setup(
     author='Sanitation Explorer Development Group',
     description='Module for sustainable design of non-sewered sanitation technologies',
     long_description=open('README.rst').read(),
-    url="https://github.com/codesciencewater/sanitation",
-    install_requires=['biosteam>=2.20.26'],
+    url="https://github.com/QSD-for-WaSH/sanitation",
+    install_requires=['biosteam'],
     package_data=
         {'sanitation': [
                         'default_data/*',
@@ -53,5 +53,5 @@ setup(
                  'Programming Language :: Python :: 3.7',
                  'Programming Language :: Python :: 3.8',
                  ],
-    keywords=['WAter, Sanitation and Hygiene (WASH)', 'single-unit reinvented toilets (SURTs)', 'single-unit reinvented toilets (MURTs)', 'omni processors (OPs)', 'resource recovery', 'mass and energy balance'],
+    keywords=['WAter, Sanitation and Hygiene (WaSH)', 'single-unit reinvented toilets (SURTs)', 'single-unit reinvented toilets (MURTs)', 'omni processors (OPs)', 'resource recovery', 'mass and energy balance'],
 )

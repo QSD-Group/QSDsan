@@ -130,12 +130,12 @@ class Components(Chemicals):
         The Components object needs to be compiled before it is used in simulation
     
         '''
-        if path[-4:] == '.cvs':
+        if path[-4:] == '.csv':
             data = pd.read_csv(path)
         elif path[-4:] == '.xls' or path[-4:] == 'xlsx':
             data = pd.read_excel(path)
         else:
-            raise ValueError('Only be cvs or Excel files can be used.')
+            raise ValueError('Only be csv or Excel files can be used.')
         new = cls(())
 
         for i, cmp in data.iterrows():
@@ -192,7 +192,7 @@ class Components(Chemicals):
         '''
         import os
         path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/components.csv')
-        new = cls.load_from_file(file_type='cvs', path=path)
+        new = cls.load_from_file(path=path)
 
         H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
                           i_C=0, i_N=0, i_P=0, i_K=0, i_mass=1,
