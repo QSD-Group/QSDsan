@@ -27,7 +27,8 @@ setup(
     install_requires=['biosteam'],
     package_data=
         {'sanitation': [
-                        'default_data/*',
+                        'data/*',
+                        'systems/*',
                         'utils/*',
                         'units/*',
                         ]},
