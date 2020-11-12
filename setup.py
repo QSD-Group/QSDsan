@@ -28,7 +28,6 @@ setup(
     package_data=
         {'sanitation': [
                         'data/*',
-                        'systems/*',
                         'utils/*',
                         'units/*',
                         ]},
