@@ -35,6 +35,7 @@ class SanUnit(bst.Unit, isabstract=True):
         self._init_utils()
         self._init_results()
         self._assert_compatible_property_package()
+        self._OPEX = None
         self._construction_materials = None
 
     
@@ -110,10 +111,15 @@ class SanUnit(bst.Unit, isabstract=True):
         Notes
         -----
         Method for calculating materials used in a `SanUnit` should be included
-        in the `_design` method
+        in the `_design` method.
 
         '''
         return self._construction_materials
+
+    @property
+    def OPEX(self):
+        '''[float] Total operating expense, [USD/hr].'''
+        return self._OPEX or self.utility_cost
     
     @property
     def _if_LCA(self):
@@ -134,7 +140,7 @@ class SanUnit(bst.Unit, isabstract=True):
         return False
 
 
-
+    
 
 
 

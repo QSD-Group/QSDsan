@@ -6,7 +6,8 @@ Scenario summary and flows
 --------------------------
 .. figure:: ./figures/scenarios.jpg
 
-    Figure created by John Trimmer for [1]_.
+   Figure created by John Trimmer for [1]_.
+
 
 Systems included in this modules are based on Scenarios A-C as described in
 Trimmer et al. [1]_. Previous scripts developed for modeling and analyses of

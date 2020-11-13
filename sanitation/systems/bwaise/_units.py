@@ -24,25 +24,33 @@ ParallelRxn = tmo.reaction.ParallelReaction
 
 
 class Excretion(SanUnit):
-    '''Estimation of N, P, K, and COD in urine and feces based on dietary intake.'''
+    '''
+    Estimation of N, P, K, and COD in urine and feces based on dietary intake.
+
+    Parameters
+    ----------
+    N_user : [float]
+        Number of people that uses the toilet per hour.
+
+    '''
     
     _N_ins = 0
     _N_outs = 2
     
-    def __init__(self, ID='', ins=None, outs=(), load_defaults=True, N_ppl=1, **kwargs):                
+    def __init__(self, ID='', ins=None, outs=(), load_defaults=True, N_user=1, **kwargs):                
         SanUnit.__init__(self, ID, ins, outs)
         if load_defaults:
             self.load_data()
-        self._N_ppl = N_ppl
+        self.N_user = N_user
         for attr, value in kwargs:
             setattr(self, attr, value)
             
     def load_data(self, path=None):
         if not path:
             path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'inputs/defaults.xlsx')
-            data = pd.read_excel(path, sheet_name='excretion', index_col=0)
+            data = pd.read_excel(path, sheet_name='Excretion', index_col=0)
         elif path[-4:] == 'xlsx' or path[-4:] == '.xls':
-            try: data = pd.read_excel(path, sheet_name='excretion', index_col=0)
+            try: data = pd.read_excel(path, sheet_name='Excretion', index_col=0)
             except: data = pd.read_excel(path, index_col=0)
         elif path[-4:] == '.csv':
             data = pd.read_csv(path, index_col=0)
@@ -57,8 +65,8 @@ class Excretion(SanUnit):
         ur.empty()
         fec.empty()
         # From g per person per day to kg per hour        
-        factor = self.N_ppl / 24 / 1e3
-        e_cal = self.e_cal * self.N_ppl / 24
+        factor = self.N_user / 24 / 1e3
+        e_cal = self.e_cal * self.N_user / 24
         ur_exc = self.ur_exc * factor
         ur_N = (self.p_veg+self.p_anim)*factor*self.N_prot \
            * self.N_exc*self.N_ur
@@ -89,14 +97,6 @@ class Excretion(SanUnit):
         ur._COD = tot_COD*(1-self.e_fec) / (ur.F_vol/1e3) # in mg/L
         fec._COD = tot_COD*self.e_exc / (fec.F_vol/1e3) # in mg/L
         
-
-    @property
-    def N_ppl(self):
-        '''[float] Number of people that uses the toilet per hour.'''
-        return self._N_ppl
-    @N_ppl.setter
-    def N_ppl(self, i):
-        self._N_ppl = float(i)
 
     @property
     def e_cal(self):
@@ -302,43 +302,80 @@ class Excretion(SanUnit):
 
 class PitLatrine(SanUnit):
     
+    pit_depth = 4.57 # m
+    pit_area = 0.8 # m2
     toilet_paper = 12.4*545/1e6 / 24 # kg/cap/hr
     flushing_water = 10 / 24 # kg/cap/hr
     cleaning_water = 1 / 24 # kg/cap/hr
     
-    def __init__(self, ID='', ins=None, outs=(), N_ppl=1,
-                 if_toilet_paper=True, if_flushing=True, if_cleaning=False):                
+    def __init__(self, ID='', ins=None, outs=(), N_user=1, life_time=8,
+                 if_toilet_paper=True, if_flushing=True, if_cleaning=False,
+                 OPEX_over_CAPEX=0.05):
+        '''
+        Pit latrine.
+
+        Parameters
+        ----------
+        N_user : [float]
+            Number of people that use the toilet per hour.
+        life_time : [float]
+            Life time of the toilet in year.
+        if_toilet_paper : [bool]
+        if_flushing : [bool]
+        if_cleaning : [bool]
+        opex_over_capex : [float]
+            Fraction of annual operating cost over total capital cost
+
+        '''
+
         SanUnit.__init__(self, ID, ins, outs)
-        self._N_ppl = N_ppl
+        self.N_user = N_user
+        self.life_time = life_time
         self.if_toilet_paper = if_toilet_paper
         self.if_flushing = if_flushing
         self.if_cleaning = if_cleaning
+        self.OPEX_over_CAPEX = OPEX_over_CAPEX
     
     _N_ins = 5
     _N_outs = 1
-    
+    _units = {
+        'Cement': 'kg',
+        'Sand': 'kg',
+        'Gravel': 'kg',
+        'Bricks': 'kg',
+        'Plastic': 'kg',
+        'Steel': 'kg',        
+        'Wood': 'm3',
+        'Excavation': 'm3'
+        }
+    _BM = {'Toilet': 1}
+
     def _run(self):
         ur, fecs, tp, fw, cw = self.ins
         mixture, = self.outs
         
-        N_ppl = self.N_ppl
-        tp.imass['Tissue'] = int(self.if_toilet_paper)*self.toilet_paper * N_ppl
-        fw.imass['H2O'] = int(self.if_flushing)*self.flushing_water * N_ppl
-        cw.imass['H2O'] = int(self.if_cleaning)*self.cleaning_water * N_ppl
+        N_user = self.N_user
+        tp.imass['Tissue'] = int(self.if_toilet_paper)*self.toilet_paper * N_user
+        fw.imass['H2O'] = int(self.if_flushing)*self.flushing_water * N_user
+        cw.imass['H2O'] = int(self.if_cleaning)*self.cleaning_water * N_user
         
         mixture.mix_from(self.ins)        
+
+    def _design(self):
+        design = self.design_results
+        design['Cement'] = 700
+        design['Sand'] = 2.2 * 1442
+        design['Gravel'] = 0.8 * 1600
+        design['Bricks'] = 54 * 0.0024 * 1750
+        design['Plastic'] = 16 * 0.63
+        design['Steel'] = 0.00425  * 7900
+        design['Wood'] = 0.19
+        design['Excavation'] = self.pit_depth * self.pit_area
         
-
-    @property
-    def N_ppl(self):
-        '''[float] Number of people that uses the toilet per hour.'''
-        return self._N_ppl
-    @N_ppl.setter
-    def N_ppl(self, i):
-        self._N_ppl = float(i)
-
-
-
+        
+    def _cost(self):
+        self.purchase_costs['Toilet'] = 449
+        self._OPEX = self.purchase_costs['Toilet'] * self.OPEX_over_CAPEX
 
 
 

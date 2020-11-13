@@ -4,6 +4,7 @@ Sanitation Explorer: Exploring Sustainable Sanitation Technologies
    
    Collage of sanitation units inclucded in Sanitation Explorer
 
+
 What is Sanitation Explorer?
 ----------------------------
 **Sanitation Explorer** is a package for the sustainable design of non-sewered sanitation technologies that are affordable and appropriate in low-income, resource-limited settings leveraging the structure and modules developed in BioSTEAM [1]_. As an open-source and impact-driven platform, Sanitation Explorer aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment under uncertainty).
