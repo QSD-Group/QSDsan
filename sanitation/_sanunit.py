@@ -21,7 +21,7 @@ from .utils.piping import WSIns, WSOuts
 __all__ = ('SanUnit',)
 
 @utils.registered(ticket_name='SU')
-class SanUnit(bst.Unit, isabstract=True):    
+class SanUnit(bst.Unit, isabstract=True):
     '''Subclass of Unit in biosteam, is initialized with WasteStream rather than Stream.'''
 
     _stacklevel = 7
