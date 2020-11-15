@@ -42,7 +42,7 @@ def get_decay_k(tau_deg=2, log_deg=3):
     k = (-1/tau_deg)*math.log(10**-log_deg)
     return k
 
-
+max_CH4_emission = 0.25
 
 # =============================================================================
 # Scenario A: existing system
@@ -52,9 +52,10 @@ U1 = units.Excretion('U1', outs=('urine', 'feces'), N_user=N_user)
 
 U2 = units.PitLatrine('U2', ins=(U1-0, U1-1, 'toilet_paper', 'flushing_water',
                                  'cleaning_water', 'desiccant'),
-                      outs='mixed_waste',
+                      outs=('mixed_waste', 'leachate', 'CH4', 'N2O'),
                       N_user=N_user, OPEX_over_CAPEX=0.05,
-                      decay_k=get_decay_k(tau_deg, log_deg))
+                      decay_k=get_decay_k(tau_deg, log_deg),
+                      max_CH4_emission=max_CH4_emission)
 
 
 

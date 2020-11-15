@@ -11,7 +11,18 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
+
+Ref:
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+        https://doi.org/10.1021/acs.est.0c03296.
+
+
 '''
+
+# %%
+
 
 import os
 path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -29,6 +40,8 @@ from bwaise._utils import load_data
 Rxn = tmo.reaction.Reaction
 ParallelRxn = tmo.reaction.ParallelReaction
 
+
+# %%
 
 class Excretion(SanUnit):
     '''
@@ -73,7 +86,7 @@ class Excretion(SanUnit):
         ur.imass['Mg'] = self.Mg_ur * factor
         ur.imass['Ca'] = self.Ca_ur * factor
         ur.imass['H2O'] = self.ur_moi * ur_exc
-        ur.imass['Other_SS'] = ur_exc - ur.F_mass
+        ur.imass['OtherSS'] = ur_exc - ur.F_mass
         
         fec_exc = self.fec_exc * factor
         fec_N = (1-self.N_ur)/self.N_ur * ur_N
@@ -84,7 +97,7 @@ class Excretion(SanUnit):
         fec.imass['Mg'] = self.Mg_fec * factor
         fec.imass['Ca'] = self.Ca_fec * factor
         fec.imass['H2O'] = self.fec_moi * fec_exc
-        fec.imass['Other_SS'] = fec_exc - fec.F_mass
+        fec.imass['OtherSS'] = fec_exc - fec.F_mass
         
         # 14 kJ/g COD, the average lower heating value of excreta,
         # 239 to convert it to kcal/kg COD
@@ -355,6 +368,7 @@ class Toilet(SanUnit, isabstract=True):
         self._empty_ratio = 0.59
         # Assuming tau_deg is 2 yr and log_deg is 3
         self._decay_k = (-1/2)*math.log(10**-3)
+        self._max_CH4_emission = 0.25
         
     _N_ins = 6
     _outs_size_is_fixed = False
@@ -379,6 +393,63 @@ class Toilet(SanUnit, isabstract=True):
         fw.imass['H2O'] = int(self.if_flushing)*self.flushing_water * N_user
         cw.imass['H2O'] = int(self.if_cleansing)*self.cleansing_water * N_user
         des.imass['WoodAsh'] = int(self.if_desiccant)*self.desiccant * N_user
+        
+    @staticmethod
+    def get_degradation_loss(k, t, max_removal, tot=1):
+        '''
+        To calculate first-order degradation loss.
+
+        Parameters
+        ----------
+        k : [float]
+            Degradation rate constant.
+        t : [float]
+            Degradation time.
+        max_removal : [float]
+            Maximum removal ratio.
+        tot : [float], optional
+            Total degradable amount.
+            If set to 1 (default), the return is the relative ratio (i.e., loss/tot).
+
+        Returns
+        -------
+        loss : [float]
+            Amount lost due to degradation.
+
+        '''
+
+        max_deg = tot * max_removal
+        after = max_deg/(k*t) * (1-math.exp(-k*t))
+        loss = max_deg - after
+        return loss
+
+    @staticmethod    
+    def _allocate_N_reduction(tot_red, NH3):
+        '''
+        Allocate the total amount of N removal to NH3 and non-NH3 Components.
+        NH3 will be firstly removed before non-NH3.
+
+        Parameters
+        ----------
+        tot_red : [float]
+            Total amount of N to be removed.
+        NH3 : [float]
+            Current NH3 content.
+
+        Returns
+        -------
+        [float]
+            Amount of NH3 to be removed.
+        [float]
+            Amount of non-NH3 to be removed.
+
+        '''
+        if not NH3 > 0:
+            return 0, tot_red
+        elif NH3 > tot_red:
+            return tot_red, 0
+        else:
+            return NH3, tot_red-NH3
         
     @property
     def toilet_paper(self):
@@ -459,20 +530,20 @@ class Toilet(SanUnit, isabstract=True):
         self._empty_ratio = float(i)
 
     @property
-    def COD_removal(self):
-        '''[float] Fraction of COD removed during storage.'''
-        return self._COD_removal
-    @COD_removal.setter
-    def COD_removal(self, i):
-        self._COD_removal = float(i)
+    def COD_max_removal(self):
+        '''[float] Maximum raction of COD removed during storage given sufficient time.'''
+        return self._COD_max_removal
+    @COD_max_removal.setter
+    def COD_max_removal(self, i):
+        self._COD_max_removal = float(i)
 
     @property
-    def N_removal(self):
-        '''[float] Fraction of N removed through denitrification during storage.'''
-        return self._N_removal
-    @N_removal.setter
-    def N_removal(self, i):
-        self._N_removal = float(i)
+    def N_max_removal(self):
+        '''[float] Maximumraction of N removed through denitrification during storage given sufficient time.'''
+        return self._N_max_removal
+    @N_max_removal.setter
+    def N_max_removal(self, i):
+        self._N_max_removal = float(i)
 
     @property
     def MCF_aq(self):
@@ -492,11 +563,20 @@ class Toilet(SanUnit, isabstract=True):
 
     @property
     def decay_k(self):
-        '''[float] Rate constant for COD and N decay.'''
+        '''[float] Rate constant for COD and N decay, [/yr].'''
         return self._decay_k
     @decay_k.setter
     def decay_k(self, i):
         self._decay_k = i
+
+    @property
+    def max_CH4_emission(self):
+        '''[float] Maximum methane emssion as a fraction of degraded COD.'''
+        return self._max_CH4_emission
+    @max_CH4_emission.setter
+    def max_CH4_emission(self, i):
+        self._max_CH4_emission = i
+
 
 
 
@@ -507,12 +587,12 @@ class PitLatrine(Toilet):
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True, 
                  OPEX_over_CAPEX=0.05,
-                 if_infiltration=True, if_shared=True,
+                 if_leaching=True, if_shared=True,
                  if_pit_above_water_table=True, **kwargs):
 
         '''
 
-        if_infiltration : [bool]
+        if_leaching : [bool]
             If infiltration to soil occurs
             (i.e., if the pit walls and floors are permeable).
         if_pit_above_water_table : [bool]
@@ -524,50 +604,98 @@ class PitLatrine(Toilet):
                         if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
                         if_air_emission, if_ideal_emptying, OPEX_over_CAPEX)
     
-        self.if_infiltration = if_infiltration
+        self.if_leaching = if_leaching
         self.if_pit_above_water_table = if_pit_above_water_table
         self.if_shared = if_shared
         data = load_data(path=path, sheet='PitLatrine')
         for para in data.index:
-            if para in ('MCF', 'N2O_EF'):
+            if para in ('MCF_loss', 'N2O_EF_loss'):
                 setattr(self, '_'+para, eval(data.loc[para]['expected']))
             setattr(self, '_'+para, data.loc[para]['expected'])
         del data
         self._pit_depth = 4.57 # m
         self._pit_area = 0.8 # m2
+        self._liq_leaching = None
         for attr, value in kwargs.items():
             setattr(self, attr, value)
         
     __init__.__doc__ = __doc__ + Toilet.__init__.__doc__ + __init__.__doc__
     __doc__ = __init__.__doc__
 
-    _N_outs = 1
+    _N_outs = 4
 
     def _run(self):
         Toilet._run(self)
+        waste, leachate, CH4, N2O = self.outs
+        CH4.phase = 'g'
+        N2O.phase = 'g'
 
         mixed = WasteStream()
         mixed.mix_from(self.ins)
         
         # All composite variables in mg/L
         # Leaching
-        if self.if_infiltration:
-            mixed.imass['NH3'] -= min(mixed.imass['NH3'],
-                                      mixed.TN/1e6*self.N_leaching)
-            mixed.imass['P'] *= 1 - self.P_leaching
-            mixed.imass['K'] *= 1 - self.K_leaching
+        # Here COD change leaching not considered
+        if self.if_leaching:
+            # Additional assumption not in ref [1]
+            leachate.imass['H2O'] = mixed.imass['H2O'] * self.liq_leaching
+            leachate.imass['NH3'], leachate.imass['NonNH3'] = \
+                self._allocate_N_reduction(mixed.TN/1e6*self.N_leaching,
+                                           mixed.imass['NH3'])
+            leachate.imass['P'] = mixed.imass['P'] * self.P_leaching
+            leachate.imass['K'] = mixed.imass['K'] * self.K_leaching
+            mixed.mass -= leachate.mass
         
         # Air emission
+        #!!! Based on the logic, COD won't degrade without air emission?
         if self.if_air_emission:
-            mixed.imass['NH3'] -= min(mixed.imass['NH3'],
-                                      mixed.TN/1e6*self.N_vol)
+            NH3_rmd, NonNH3_rmd = \
+                self._allocate_N_reduction(mixed.TN/1e6*self.N_vol,
+                                           mixed.imass['NH3'])
+            mixed.imass ['NH3'] -= NH3_rmd
+            mixed.imass['NonNH3'] -= NonNH3_rmd
+            
+            COD_loss = self.get_degradation_loss(k=self.decay_k,
+                                                 t=self.emptying_period,
+                                                 max_removal=self.COD_max_removal)
+            CH4.imass['CH4'] = mixed.COD/1e3*mixed.F_vol*self.MCF_loss # COD in mg/L (g/m3)
+            mixed._COD *= 1 - COD_loss
+            mixed.imass['OtherSS'] *= 1 - COD_loss
+
+            N_loss = self.get_degradation_loss(k=self.decay_k,
+                                               t=self.emptying_period,
+                                               max_removal=self.N_max_removal)
+            N_loss_tot = mixed.TN/1e6*N_loss
+            NH3_rmd, NonNH3_rmd = \
+                self._allocate_N_reduction(N_loss_tot,
+                                           mixed.imass['NH3'])
+            mixed.imass ['NH3'] -= NH3_rmd
+            mixed.imass['NonNH3'] -= NonNH3_rmd
+            N2O.imass['N2O'] = N_loss_tot * 44/28
+        else:
+            CH4.empty()
+            N2O.empty()
+
+        # Aquatic emission when not ideally emptied
+        if not self.if_ideal_emptying:
+            COD_rmd = mixed.COD*(1-self.empty_ratio)/1e3*mixed.F_vol
+            CH4.imass['CH4'] += COD_rmd * \
+                self.COD_max_removal*self.MCF_aq*self.max_CH4_emission
+            mixed._COD *= self.empty_ratio
+            
+            N2O.imass['N2O'] += COD_rmd * self.N2O_EF_loss * 44/28
+            mixed.mass *= self.empty_ratio
         
-        COD_deg = mixed.COD/1e3 # COD is in mg/L
+        # Drain extra water
+        sludge = self.sludge_accum_rate*self.N_user/24/365 # Assume density of water
+        diff = mixed.F_mass - sludge
+        if diff > 0:
+            mixed.imass['H2O'] -= diff
+            mixed.imass['H2O'] = max(0, mixed.imass['H2O'])
         
-        
-        
-        
-        self.outs[0].copy_like(mixed)        
+        waste.copy_like(mixed)
+
+
 
     def _design(self):
         design = self.design_results
@@ -617,10 +745,23 @@ class PitLatrine(Toilet):
         self._sludge_accum_rate = float(i)
 
     @property
+    def liq_leaching(self):
+        '''
+        [float] Fraction of input water that leaches to the soil
+        (if if_leaching is True). If not set, then return the maximum of
+        fraction of N, P, K leaching
+        '''
+        return self._liq_leaching or \
+            max(self.N_leaching, self.P_leaching, self.K_leaching)
+    @liq_leaching.setter
+    def liq_leaching(self, i):
+        self._liq_leaching = float(i)
+
+    @property
     def N_leaching(self):
         '''
         [float] Fraction of input N that leaches to the soil
-        (if if_infiltration is True).
+        (if if_leaching is True).
         '''
         return self._N_leaching
     @N_leaching.setter
@@ -631,7 +772,7 @@ class PitLatrine(Toilet):
     def P_leaching(self):
         '''
         [float] Fraction of input P that leaches to the soil
-        (if if_infiltration is True).
+        (if if_leaching is True).
         '''
         return self._P_leaching
     @P_leaching.setter
@@ -642,7 +783,7 @@ class PitLatrine(Toilet):
     def K_leaching(self):
         '''
         [float] Fraction of input K that leaches to the soil
-        (if if_infiltration is True).
+        (if if_leaching is True).
         '''
         return self._K_leaching
     @K_leaching.setter
@@ -662,18 +803,18 @@ class PitLatrine(Toilet):
     @property
     def MCF_loss(self):
         '''[float] Methane correction factor for COD degraded during storage.'''
-        return self._MCF_loss[self._return_EF_num()]
+        return float(self._MCF_loss[self._return_EF_num()])
     @MCF_loss.setter
     def MCF_loss(self, i):
-        self._MCF_loss[self._return_EF_num()]= float(i)
+        self._MCF_loss[self._return_EF_num()] = float(i)
 
     @property
     def N2O_EF_loss(self):
         '''[float] Fraction of N emitted as N2O during storage.'''
-        return self._N2O_EF_loss[self._return_EF_num()]
+        return float(self._N2O_EF_loss[self._return_EF_num()])
     @N2O_EF_loss.setter
     def N2O_EF_loss(self, i):
-        self._N2O_EF_loss[self._return_EF_num()]= float(i)
+        self._N2O_EF_loss[self._return_EF_num()] = float(i)
 
 
 
@@ -726,9 +867,14 @@ class UDDT(Toilet):
     _N_outs = 2
 
     def _run(self):
-        ur, fec = self.outs
         Toilet._run(self)
-        self.outs[0].mix_from(self.ins)
+        ur = self.ins[0]
+        fec = self.ins[1]
+        
+        mixed = WasteStream()
+        mixed.mix_from(self.ins)
+        
+        
 
     def _design(self):
         design = self.design_results
@@ -743,7 +889,7 @@ class UDDT(Toilet):
         
     def _cost(self):
         self.purchase_costs['Toilet'] = 553
-        #!!! What is operating hours is different, maybe better to make this in TEA
+        #!!! What if operating hours is different, maybe better to make this in TEA
         self._OPEX = self.purchase_costs['Toilet']*self.OPEX_over_CAPEX/365/24
 
     @property

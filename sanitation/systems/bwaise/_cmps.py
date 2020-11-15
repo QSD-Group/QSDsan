@@ -47,11 +47,19 @@ H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
                               phase='l', particle_size='Soluble',
                               degradability='Undegradable', organic=False)
 
-Other_SS = Component('Other_SS', phase='l', particle_size='Soluble',
-                     degradability='Undegradable', organic=False,
-                     description='Unspecified soluble solids')
+OtherSS = Component('OtherSS', phase='l', particle_size='Soluble',
+                    degradability='Undegradable', organic=False,
+                    description='Unspecified soluble solids')
 
-for cmp in (NonNH3, P, K, Mg, Ca, Other_SS):
+N2O = Component.from_chemical('N2O', tmo.Chemical('N2O'),
+                              phase='g', i_N=28/44, particle_size='Dissolved gas',
+                              degradability='Undegradable', organic=False)
+
+CH4 = Component.from_chemical('CH4', tmo.Chemical('CH4'),
+                              phase='g', i_C=12/16, particle_size='Dissolved gas',
+                              degradability='Biological', organic=True)
+
+for cmp in (NonNH3, P, K, Mg, Ca, OtherSS):
     cmp.default()
     cmp.copy_models_from(H2O, ('sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu'))
 
@@ -74,7 +82,8 @@ for i in (Tissue, WoodAsh):
     
     
 
-cmps = Components((NH3, NonNH3, P, K, Mg, Ca, H2O, Other_SS, Tissue, WoodAsh))
+cmps = Components((NH3, NonNH3, P, K, Mg, Ca, H2O, OtherSS, N2O, CH4,
+                   Tissue, WoodAsh))
 cmps.compile()
 
 cmps.set_synonym('H2O', 'Water')
