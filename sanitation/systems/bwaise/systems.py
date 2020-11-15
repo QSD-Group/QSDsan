@@ -13,6 +13,7 @@ https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
 '''
 
+import math
 import biosteam as bst
 from sanitation import WasteStream as WS
 
@@ -26,17 +27,34 @@ bst.settings.set_thermo(cmps)
 # %%
 
 # =============================================================================
-# Human inputs, user-interface, and storage
+# Assumptions
 # =============================================================================
 
 N_user = 16 # four people per household, four households per toilet
 
+# Time take for full degradation, [yr]
+tau_deg = 2
+# Log reduction at full degradation
+log_deg = 3
+# Get reduction rate constant k for COD and N, use a function so that k can be
+# changed during uncertainty analysis
+def get_decay_k(tau_deg=2, log_deg=3):
+    k = (-1/tau_deg)*math.log(10**-log_deg)
+    return k
+
+
+
+# =============================================================================
+# Scenario A: existing system
+# =============================================================================
 
 U1 = units.Excretion('U1', outs=('urine', 'feces'), N_user=N_user)
 
 U2 = units.PitLatrine('U2', ins=(U1-0, U1-1, 'toilet_paper', 'flushing_water',
                                  'cleaning_water', 'desiccant'),
-                      outs='mixed_waste',  N_user=N_user, OPEX_over_CAPEX=0.05)
+                      outs='mixed_waste',
+                      N_user=N_user, OPEX_over_CAPEX=0.05,
+                      decay_k=get_decay_k(tau_deg, log_deg))
 
 
 
@@ -44,7 +62,7 @@ SceA = bst.System('SceA', path=(U1, U2))
 
 SceA.simulate()
 
-
+U2.show()
 
 
 

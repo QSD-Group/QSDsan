@@ -20,7 +20,7 @@ import pandas as pd
 import numpy as np
 import os
 import biosteam as bst
-from thermosteam import Stream, utils
+from thermosteam import Stream, MultiStream, utils
 from . import Components
 
 
@@ -30,9 +30,11 @@ __all__ = ('WasteStream',)
 _defined_composite_vars = ('COD', 'BOD5', 'BOD', 'uBOD', 'TC',
                            'TN', 'TP', 'TK', 'TMg', 'TCa', 'solids', 'charge')
 
-_ws_specific_slots = (*tuple('_'+i for i in _defined_composite_vars),
-                      '_TOC', '_TKN',
-                      '_pH', '_SAlk', '_ratios', '_CFs')
+_copied_slots = (*tuple('_'+i for i in _defined_composite_vars),
+                 '_TOC', '_TKN', '_SAlk')
+
+_ws_specific_slots = (*_copied_slots,
+                      '_pH', '_ratios', '_CFs')
 
 _specific_groups = {'SVFA': ('SAc', 'SProp'),
                     'XStor': ('XOHO_PHA', 'XGAO_PHA', 'XPAO_PHA', 
@@ -80,8 +82,10 @@ class WasteStream(Stream):
         self._init_ws(CFs, pH, SAlk, COD, BOD, BOD5, uBOD, TC, TOC, TN, TKN,
                        TP, TK, TMg, TCa, solids, charge, ratios)
 
-    def _init_ws(self, CFs, pH, SAlk, COD, BOD, BOD5, uBOD, TC, TOC, TN, TKN,
-                 TP, TK, TMg, TCa, solids, charge, ratios):
+    def _init_ws(self, CFs=None, pH=7., SAlk=None, COD=None, BOD=None,
+                 BOD5=None, uBOD=None, TC=None, TOC=None, TN=None, TKN=None,
+                 TP=None, TK=None, TMg=None, TCa=None, solids=None, charge=None,
+                 ratios=None):
         self._CFs = CFs
         self._pH = pH
         self._SAlk = SAlk
@@ -102,7 +106,7 @@ class WasteStream(Stream):
         self._ratios = ratios
 
     
-    def show(self, T='K', P='Pa', flow='kg/hr', composition=False, N=15,
+    def show(self, T='K', P='Pa', flow='g/hr', composition=False, N=15,
              stream_info=True, details=True):
         '''
         Print WasteStream information.
@@ -361,21 +365,68 @@ class WasteStream(Stream):
         return self._TCa or self.composite('TCa')
     
     @property
+    def solids(self):
+        return self._solids or self.composite('solids')
+    
+    @property
     def charge(self):
         return self._charge or self.composite('charge')
 
 
-    def copy(self, ID, **data):
-        new = super().copy(ID=ID)
+    def copy(self, ID=None):
+        new = super().copy()
         new._init_ws()
-        for field in _ws_specific_slots:
-            value = getattr(self, field)
-            setattr(new, field, utils.copy_maybe(value))
-        for i,j in data.items(): setattr(new, i , j)
+        for slot in _ws_specific_slots:
+            if slot == 'CFs': continue
+            value = getattr(self, slot)
+            setattr(new, slot, utils.copy_maybe(value))
         return new
     __copy__ = copy
-
     
+    def copy_like(self, other):
+        Stream.copy_like(self, other)
+        for slot in _ws_specific_slots:
+            if slot == 'CFs': continue
+            value = getattr(other, slot)
+            setattr(self, slot, value)
+    
+    def copy_flow(self, other, IDs=..., *, remove=False, exclude=False, if_copy_ws=False):
+        #!!! How to inherit the Stream copy_flow function?
+        # Stream.copy_flow(self, other, IDs, remove, exclude)
+
+        chemicals = self.chemicals
+        mol = other.mol
+        if exclude:
+            IDs = chemicals.get_index(IDs)
+            index = np.ones(chemicals.size, dtype=bool)
+            index[IDs] = False
+        else:
+            index = chemicals.get_index(IDs)
+        
+        self.mol[index] = mol[index]
+        if remove: 
+            if isinstance(other, MultiStream):
+                other.imol.data[:, index] = 0
+            else:
+                mol[index] = 0
+
+        if if_copy_ws:
+            for slot in _ws_specific_slots:
+                if slot == 'CFs': continue
+                value = getattr(other, slot)
+                setattr(self, slot, value)
+
+    def mix_from(self, others):
+        Stream.mix_from(self, others)
+        for slot in _ws_specific_slots:
+            try: tot = sum(float(getattr(i, slot) or 0)*i.F_vol for i in others)
+            except: continue
+            if tot == 0.:
+                setattr(self, slot, None)
+            else:
+                setattr(self, slot, tot/self.F_vol)
+
+
     # Below are funtions, not properties (i.e., need to be called), so changed names accordingly
     def get_TDS(self, include_colloidal=True):
         TDS = self.composite('solids', particle_size='s')

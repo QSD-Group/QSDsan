@@ -18,11 +18,12 @@ path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                     'inputs/units.xlsx')
 del os
 
+import math
 import pandas as pd
 import thermosteam as tmo
 from warnings import warn
 from biosteam.units.decorators import cost
-from sanitation import SanUnit
+from sanitation import WasteStream, SanUnit
 from bwaise._utils import load_data
 
 Rxn = tmo.reaction.Reaction
@@ -50,7 +51,7 @@ class Excretion(SanUnit):
         for para in data.index:
             setattr(self, '_'+para, data.loc[para]['expected'])
         del data
-        for attr, value in kwargs:
+        for attr, value in kwargs.items():
             setattr(self, attr, value)
 
     def _run(self):
@@ -342,6 +343,7 @@ class Toilet(SanUnit, isabstract=True):
         self.if_air_emission = if_air_emission
         self.if_ideal_emptying = if_ideal_emptying
         self.OPEX_over_CAPEX = OPEX_over_CAPEX
+
         data = load_data(path=path, sheet='Toilet')
         for para in data.index:
             if para in ('desiccant_V', 'desiccant_rho'):
@@ -351,6 +353,8 @@ class Toilet(SanUnit, isabstract=True):
         del data
         
         self._empty_ratio = 0.59
+        # Assuming tau_deg is 2 yr and log_deg is 3
+        self._decay_k = (-1/2)*math.log(10**-3)
         
     _N_ins = 6
     _outs_size_is_fixed = False
@@ -484,9 +488,15 @@ class Toilet(SanUnit, isabstract=True):
         return self._N2O_EF_aq
     @N2O_EF_aq.setter
     def N2O_EF_aq(self, i):
-        '''[float] Fraction of N emitted as N2O due to inappropriate emptying.'''
         self._N2O_EF_aq = i
 
+    @property
+    def decay_k(self):
+        '''[float] Rate constant for COD and N decay.'''
+        return self._decay_k
+    @decay_k.setter
+    def decay_k(self, i):
+        self._decay_k = i
 
 
 
@@ -525,7 +535,7 @@ class PitLatrine(Toilet):
         del data
         self._pit_depth = 4.57 # m
         self._pit_area = 0.8 # m2
-        for attr, value in kwargs:
+        for attr, value in kwargs.items():
             setattr(self, attr, value)
         
     __init__.__doc__ = __doc__ + Toilet.__init__.__doc__ + __init__.__doc__
@@ -536,8 +546,28 @@ class PitLatrine(Toilet):
     def _run(self):
         Toilet._run(self)
 
-        N_leaching = int(self.if_infiltration)*self.N_leaching
+        mixed = WasteStream()
+        mixed.mix_from(self.ins)
         
+        # All composite variables in mg/L
+        # Leaching
+        if self.if_infiltration:
+            mixed.imass['NH3'] -= min(mixed.imass['NH3'],
+                                      mixed.TN/1e6*self.N_leaching)
+            mixed.imass['P'] *= 1 - self.P_leaching
+            mixed.imass['K'] *= 1 - self.K_leaching
+        
+        # Air emission
+        if self.if_air_emission:
+            mixed.imass['NH3'] -= min(mixed.imass['NH3'],
+                                      mixed.TN/1e6*self.N_vol)
+        
+        COD_deg = mixed.COD/1e3 # COD is in mg/L
+        
+        
+        
+        
+        self.outs[0].copy_like(mixed)        
 
     def _design(self):
         design = self.design_results
@@ -687,7 +717,7 @@ class UDDT(Toilet):
             setattr(self, '_'+para, data.loc[para]['expected'])
         del data
         self._tank_V = 60/1e3 # m3
-        for attr, value in kwargs:
+        for attr, value in kwargs.items():
             setattr(self, attr, value)
     
     __init__.__doc__ = __doc__ + Toilet.__init__.__doc__ + __init__.__doc__
