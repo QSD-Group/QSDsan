@@ -15,12 +15,9 @@ for license details.
 '''
 
 # %%
-
-# import pandas as pd
 import numpy as np
-# import os
 import biosteam as bst
-from thermosteam import Stream, utils
+from thermosteam import Stream, utils, units_of_measure
 from . import Components
 
 
@@ -49,7 +46,8 @@ _default_ratios = {'iHi_XPAOPP': 0.5,
                    'iCUInf_XCUInf': 0.,}
 
 # del os, path
-
+vol_unit = units_of_measure.AbsoluteUnitsOfMeasure('L/hr')
+conc_unit = units_of_measure.AbsoluteUnitsOfMeasure('mg/L')
 
 # %%
 
@@ -498,8 +496,9 @@ class WasteStream(Stream):
 
 
     @classmethod
-    def codstates_inf_model(cls, ID, flow_tot=0., phase='l', T=298.15, P=101325., 
-                            price=0., thermo=None, pH=7., SAlk=10., ratios=None, 
+    def codstates_inf_model(cls, ID, flow_tot=0., units = ('L/hr', 'mg/L'), 
+                            phase='l', T=298.15, P=101325., price=0., thermo=None, 
+                            pH=7., SAlk=10., ratios=None, 
                             COD=430., TKN=40., TP=10., iVSS_TSS=0.75, iSNH_STKN=0.9,
                             SNH4=25., SNO2=0., SNO3=0., SPO4=8., 
                             SCa=140., SMg=50., SK=28., SCAT=3., SAN=12., SN2=18., 
@@ -512,7 +511,8 @@ class WasteStream(Stream):
                             XFePO4=0., XAlPO4=0., XFeOH=0., XAlOH=0., 
                             XMAP=0., XHAP=0., XHDP=0., XPAO_PP=0., 
                             XMgCO3=0., XCaCO3=0., DO=0., SH2=0., SCH4=0.):
-                
+        
+           
         cmps = Components.load_default(default_compile=True)
         bst.settings.set_thermo(cmps)
         
@@ -622,7 +622,7 @@ class WasteStream(Stream):
             raise ValueError(f"The following state variable(s) was found negative: {bad_vars}.")
         
         del bad_vars
-
+        
         #************ calibrate XB_subst, SF's N, P content *************
         if SNH4 > 0 and cmp_dct['SF'] > 0:
             STKN = SNH4/iSNH_STKN
@@ -655,8 +655,10 @@ class WasteStream(Stream):
         del other_tkn, XB_Subst_N, other_p, XB_Subst_P, cmp_c
         
         #************ convert concentrations to flow rates *************
-        # TODO: other unit options
-        cmp_dct = {k:v*flow_tot*1e-6 for k,v in cmp_dct.items()}       # [mg/L]*[L/hr]*1e-6[kg/mg] = [kg/hr]
+        f1 = vol_unit.conversion_factor(units[0])
+        f2 = conc_unit.conversion_factor(units[1])
+            
+        cmp_dct = {k:v/f2*flow_tot/f1*1e-6 for k,v in cmp_dct.items()}       # [mg/L]*[L/hr]*1e-6[kg/mg] = [kg/hr]
         dwt = sum(cmp_dct.values())
         
         den = 1
