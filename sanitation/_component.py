@@ -69,8 +69,9 @@ component_units_of_measure = {
 
 allowed_values = {
     'particle_size': ('Dissolved gas', 'Soluble', 'Colloidal', 'Particulate'),
-    'degradability': ('Biological', 'Chemical', 'Undegradable'),
-    'organic': (True, False)
+    'degradability': ('Readily', 'Slowly', 'Undegradable'),
+    'organic': (True, False),
+    'measured_as': (None, 'COD', 'C', 'N', 'P'),
     }
 
 def check_property(name, value):
@@ -113,6 +114,7 @@ class Component(tmo.Chemical):
             if measured_as == 'COD': self._MW = tmo.Chemical('O').MW
             elif measured_as == 'N': self._MW = tmo.Chemical('N').MW
             elif measured_as == 'P': self._MW = tmo.Chemical('P').MW
+            elif measured_as == 'C': self._MW = tmo.Chemical('C').MW
         
         if phase: tmo._chemical.lock_phase(self, phase)
         
@@ -305,7 +307,7 @@ class Component(tmo.Chemical):
 
         Notes
         -------
-        Must be chosen from 'Biological', 'Chemical', or 'Undegradable'.
+        Must be chosen from 'Readily', 'Slowly', or 'Undegradable'.
         '''
         return self._degradability
     @degradability.setter
