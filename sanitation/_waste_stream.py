@@ -32,7 +32,7 @@ _specific_groups = {'SVFA': ('SAc', 'SProp'),
                               'XGAO_Gly', 'XPAO_Gly'),
                     'XANO': ('XAOO', 'XNOO'),
                     'XBio': ('XOHO', 'XAOO', 'XNOO', 'XAMO', 'XPAO', 
-                             'XMEOLO', 'XACO', 'XHMO', 'XPRO'),
+                             'XMEOLO', 'XACO', 'XHMO', 'XPRO', 'XFO'),
                     'SNOx': ('SNO2', 'SNO3'),
                     'XPAO_PP': ('XPAO_PP_Lo', 'XPAO_PP_Hi'),
                     'TKN': ()}
@@ -163,7 +163,7 @@ class WasteStream(Stream):
             if name not in r.keys():
                 raise ValueError(f"Cannot identify ratio named '{name}'."
                                  f"Must be one of {r.keys()}")
-            elif ratio > 1 or ratio < 0:
+            elif isinstance(ratio, (int, float)) and (ratio > 1 or ratio < 0):
                 raise ValueError(f"ratio {name}: {ratio} is out of range [0,1].")
             r[name] = ratio
         self._ratios = r
@@ -1003,7 +1003,7 @@ class WasteStream(Stream):
             SN = (cmp_c * cmps.i_N * cmps.s).sum()
             SF_N = cmp_dct['SF'] * cmps.SF.i_N
             SNOx_N = SNO2 * cmps.SNO2.i_N + SNO3 * cmps.SNO3.i_N
-            other_stkn = SN - SF_N - SNOx_N - SN2*cmps.SN2.i_N
+            other_stkn = SN - SF_N - SNOx_N
             SF_N = STKN - other_stkn
             
             if SF_N < 0:
@@ -1025,7 +1025,7 @@ class WasteStream(Stream):
             raise ValueError("Negative P content for XB_Subst was estimated.")    
         cmps.XB_Subst.i_P = XB_Subst_P/cmp_dct['XB_Subst']
         
-        del other_tkn, XB_Subst_N, other_p, XB_Subst_P, cmp_c
+        del other_tkn, XB_Subst_N, other_p, XB_Subst_P
         
         sub_IDs = ('XB_Subst', 'XOHO_PHA', 'XGAO_PHA', 'XPAO_PHA', 'XGAO_Gly', 'XPAO_Gly')
         c_sub = np.asarray([v for k,v in cmp_dct.items() if k in sub_IDs])
@@ -1034,7 +1034,7 @@ class WasteStream(Stream):
         fbodtocod_sub = (BOD - other_BOD)/c_sub.sum()
         for i in sub_IDs: cmps[i].f_BOD5_COD = fbodtocod_sub
         
-        del BOD, sub_IDs, c_sub, XB_sub, other_BOD, fbodtocod_sub
+        del BOD, sub_IDs, c_sub, XB_sub, other_BOD, fbodtocod_sub, cmp_c
         
         #************ convert concentrations to flow rates *************
         flow_tot /= vol_unit.conversion_factor(units[0])
@@ -1068,7 +1068,7 @@ class WasteStream(Stream):
                          frCB_scCOD=0.1, frSU_scCOD=0.8, 
                          SCa=140., SMg=50., SK=28., SCAT=3., SAN=12., SN2=18.,
                          frXACO_VSS=0., frXHMO_VSS=0., frXPRO_VSS=0., frXFO_VSS=0.,
-                         frXMEOLO_VSS=0., frAMO_VSS=0., 
+                         frXMEOLO_VSS=0., frXAMO_VSS=0., 
                          frXOHO_PHA_VSS=0., frXGAO_PHA_VSS=0., frXPAO_PHA_VSS=0., 
                          frXGAO_Gly_VSS=0., frXPAO_Gly_VSS=0., 
                          frSCH3OH_scCOD=0., frSAc_scCOD=0., frSProp_scCOD=0.,
@@ -1130,7 +1130,7 @@ class WasteStream(Stream):
         cmp_dct['XNOO'] = frXNOO_VSS * VSS
         cmp_dct['XAMO'] = frXAMO_VSS * VSS
         cmp_dct['XPAO'] = frXPAO_VSS * VSS
-        cmp_dct['XACO'] = frXOHO_VSS * VSS
+        cmp_dct['XACO'] = frXACO_VSS * VSS
         cmp_dct['XHMO'] = frXHMO_VSS * VSS
         cmp_dct['XPRO'] = frXPRO_VSS * VSS
         cmp_dct['XMEOLO'] = frXMEOLO_VSS * VSS
@@ -1170,15 +1170,15 @@ class WasteStream(Stream):
         cmp_dct['SU_Inf'] = frSU_scCOD * scCOD * r['iSUInf_SU']
         cmp_dct['SU_E'] = frSU_scCOD * scCOD - cmp_dct['SU_Inf']
         
-        CB = frCB_scCOD * scBOD
+        CB = frCB_scCOD * scCOD
         cmp_dct['CB_BAP'] = CB * r['iBAP_CB']
         cmp_dct['CB_UAP'] = CB * r['iUAP_CB']
         cmp_dct['CB_Subst'] = CB - cmp_dct['CB_BAP'] - cmp_dct['CB_UAP']        
-        cmp_dct['CU_Inf'] = XU_Inf * r['iCUInf_XCUInf'] / (1-r['iCUInf_XCUInf'])
+        cmp_dct['CU_Inf'] = cmp_dct['XU_Inf'] * r['iCUInf_XCUInf'] / (1-r['iCUInf_XCUInf'])
         
         cmp_c = np.asarray([v for v in cmp_dct.values()])
         cmp_dct['SF'] = scCOD - (cmp_c * (cmps.s + cmps.c) * cmps.org).sum()
-        
+                
         # TODO: calibrate pH, SAlk, SCAT, SAN
         bad_vars = {k:v for k,v in cmp_dct.items() if v<0}
         if len(bad_vars) > 0:
@@ -1193,7 +1193,7 @@ class WasteStream(Stream):
             SN = (cmp_c * cmps.i_N * cmps.s).sum()
             SF_N = cmp_dct['SF'] * cmps.SF.i_N
             SNOx_N = SNO2 * cmps.SNO2.i_N + SNO3 * cmps.SNO3.i_N
-            other_stkn = SN - SF_N - SNOx_N - SN2*cmps.SN2.i_N
+            other_stkn = SN - SF_N - SNOx_N
             SF_N = STKN - other_stkn
             
             if SF_N < 0:
