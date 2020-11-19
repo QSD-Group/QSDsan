@@ -534,7 +534,7 @@ class WasteStream(Stream):
         cmp_dct['SNO2'] = SNO2
         cmp_dct['SNO3'] = SNO3
         cmp_dct['SPO4'] = SPO4
-        cmp_dct['SCO3'] = SAlk * 12              # 1 meq/L SAlk ~ 1 mmol/L HCO3- ~ 12 mg C/L (12 mg C/mmol HCO3-)
+        cmp_dct['SCO3'] = SAlk * 12 * conc_unit.conversion_factor(units[1])             # 1 meq/L SAlk ~ 1 mmol/L HCO3- ~ 12 mg C/L (12 mg C/mmol HCO3-)
         cmp_dct['SCa'] = SCa
         cmp_dct['SMg'] = SMg
         cmp_dct['SK'] = SK
@@ -655,10 +655,10 @@ class WasteStream(Stream):
         del other_tkn, XB_Subst_N, other_p, XB_Subst_P, cmp_c
         
         #************ convert concentrations to flow rates *************
-        f1 = vol_unit.conversion_factor(units[0])
-        f2 = conc_unit.conversion_factor(units[1])
+        flow_tot /= vol_unit.conversion_factor(units[0])
+        factor = conc_unit.conversion_factor(units[1])
             
-        cmp_dct = {k:v/f2*flow_tot/f1*1e-6 for k,v in cmp_dct.items()}       # [mg/L]*[L/hr]*1e-6[kg/mg] = [kg/hr]
+        cmp_dct = {k:v/factor*flow_tot*1e-6 for k,v in cmp_dct.items()}       # [mg/L]*[L/hr]*1e-6[kg/mg] = [kg/hr]
         dwt = sum(cmp_dct.values())
         
         den = 1

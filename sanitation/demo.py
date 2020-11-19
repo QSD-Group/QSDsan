@@ -26,4 +26,5 @@ H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
 cmps.append(H2O)
 
 cmps = Components.load_default(default_compile=True)
-raw_ww = WasteStream.codstates_inf_model('raw_ww', flow_tot=1e5)
+ws1 = WasteStream.codstates_inf_model('ws1', flow_tot=1e5)
+ws2 = WasteStream.codstates_inf_model('ws2', flow_tot=6.34e5, units=('gal/d', 'g/m3'))
