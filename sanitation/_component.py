@@ -83,8 +83,8 @@ allowed_values = {
     }
 
 def check_return_property(name, value):
-    if not value: return None
-    elif name.startswith('i_') or name.startswith('f_'):
+    if name.startswith('i_') or name.startswith('f_'):
+        if not value: return None
         try: return float(value)
         except: raise TypeError(f'{name} must be a number, not a {type(value).__name__}.')        
         if value>1 or value<0:
@@ -118,6 +118,7 @@ class Component(tmo.Chemical):
 
         self._ID = ID
         if formula:
+            self._formula = None
             self.formula = formula
         tmo._chemical.lock_phase(self, phase)
         self.measured_as = measured_as
@@ -132,9 +133,9 @@ class Component(tmo.Chemical):
         self.f_BOD5_COD = f_BOD5_COD
         self.f_uBOD_COD = f_uBOD_COD
         self.f_Vmass_Totmass = f_Vmass_Totmass                
-        self.particle_size = particle_size
-        self.degradability = degradability
-        self.organic = organic
+        self._particle_size = particle_size
+        self._degradability = degradability
+        self._organic = organic
         self.description = description
         if not self.MW and not self.formula: self.MW = 1.
         return self
@@ -492,8 +493,10 @@ class Component(tmo.Chemical):
         new.particle_size = particle_size
         new.degradability = degradability
         new.organic = organic
-        
-        for i,j in data.items(): setattr(new, i , j)
+        for i,j in data.items():
+            if i == 'formula':
+                new._formula = j
+            else: setattr(new, i , j)
         return new
 
 

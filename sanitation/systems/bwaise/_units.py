@@ -29,11 +29,11 @@ path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                     'inputs/units.xlsx')
 del os
 
-import math
+import numpy as np
 import pandas as pd
 import thermosteam as tmo
 from warnings import warn
-from biosteam.units.decorators import cost
+# from biosteam.units.decorators import cost
 from sanitation import WasteStream, SanUnit
 from bwaise._utils import load_data
 
@@ -367,7 +367,7 @@ class Toilet(SanUnit, isabstract=True):
         
         self._empty_ratio = 0.59
         # Assuming tau_deg is 2 yr and log_deg is 3
-        self._decay_k = (-1/2)*math.log(10**-3)
+        self._decay_k = (-1/2)*np.log(10**-3)
         self._max_CH4_emission = 0.25
         
     _N_ins = 6
@@ -393,37 +393,8 @@ class Toilet(SanUnit, isabstract=True):
         fw.imass['H2O'] = int(self.if_flushing)*self.flushing_water * N_user
         cw.imass['H2O'] = int(self.if_cleansing)*self.cleansing_water * N_user
         des.imass['WoodAsh'] = int(self.if_desiccant)*self.desiccant * N_user
-        
+      
     @staticmethod
-    def get_degradation_loss(k, t, max_removal, tot=1):
-        '''
-        To calculate first-order degradation loss.
-
-        Parameters
-        ----------
-        k : [float]
-            Degradation rate constant.
-        t : [float]
-            Degradation time.
-        max_removal : [float]
-            Maximum removal ratio.
-        tot : [float], optional
-            Total degradable amount.
-            If set to 1 (default), the return is the relative ratio (i.e., loss/tot).
-
-        Returns
-        -------
-        loss : [float]
-            Amount lost due to degradation.
-
-        '''
-
-        max_deg = tot * max_removal
-        after = max_deg/(k*t) * (1-math.exp(-k*t))
-        loss = max_deg - after
-        return loss
-
-    @staticmethod    
     def _allocate_N_reduction(tot_red, NH3):
         '''
         Allocate the total amount of N removal to NH3 and non-NH3 Components.
@@ -449,8 +420,74 @@ class Toilet(SanUnit, isabstract=True):
         elif NH3 > tot_red:
             return tot_red, 0
         else:
-            return NH3, tot_red-NH3
-        
+            return NH3, tot_red-NH3  
+      
+    @staticmethod
+    def get_degradation_loss(k, t, max_removal, tot=1):
+        '''
+        To calculate first-order degradation loss.
+
+        Parameters
+        ----------
+        k : [float]
+            Degradation rate constant.
+        t : [float]
+            Degradation time.
+        max_removal : [float]
+            Maximum removal ratio.
+        tot : [float], optional
+            Total degradable amount.
+            If set to 1 (default), the return is the relative ratio (i.e., loss/tot).
+
+        Returns
+        -------
+        loss : [float]
+            Amount lost due to degradation.
+
+        '''
+
+        max_deg = tot * max_removal
+        after = max_deg/(k*t) * (1-np.exp(-k*t))
+        loss = max_deg - after
+        return loss
+
+    @staticmethod
+    def get_emptying_emission(waste, CH4, N2O, app_ratio, CH4_factor, N2O_factor):
+        '''
+        Calculate emissions due to non-ideal emptying.
+
+        Parameters
+        ----------
+        stream : WasteStream
+            Excreta stream that is not appropriately empited (before emptying).
+        CH4 : WasteStream
+            Fugitive CH4 gas (before emptying).
+        N2O : WasteStream
+            Fugitive N2O gas (before emptying).
+        app_ratio : [float]
+            Fraction of excreta that is appropriately emptied..
+        CH4_factor : [float]
+            Factor to convert COD removal to CH4 emission.
+        N2O_factor : [float]
+            Factor to convert COD removal to N2O emission.
+
+        Returns
+        -------
+        stream : WasteStream
+            Excreta stream that is not appropriately empited (before emptying).
+        CH4 : WasteStream
+            Fugitive CH4 gas (before emptying).
+        N2O : WasteStream
+            Fugitive N2O gas (before emptying).
+
+        '''
+        COD_rmd = waste.COD*(1-app_ratio)/1e3*waste.F_vol
+        CH4.imass['CH4'] += COD_rmd * CH4_factor
+        waste._COD *= app_ratio
+        N2O.imass['N2O'] += COD_rmd * N2O_factor
+        waste.mass *= app_ratio
+        return waste, CH4, N2O
+
     @property
     def toilet_paper(self):
         '''
@@ -598,6 +635,17 @@ class PitLatrine(Toilet):
         if_pit_above_water_table : [bool]
             If the pit is above local water table.
             
+        Returns
+        -------
+        waste : WasteStream
+            Recyclable mixed excreta.
+        leachate : WasteStream
+            Leached to soil.
+        CH4 : WasteStream
+            Fugitive CH4.
+        N2O : WasteStream
+            Fugitive N2O.
+            
         '''
 
         Toilet.__init__(self, ID, ins, outs, N_user, life_time,
@@ -649,16 +697,18 @@ class PitLatrine(Toilet):
         # Air emission
         #!!! Based on the logic, COD won't degrade without air emission?
         if self.if_air_emission:
+            # N loss due to ammonia volatilization
             NH3_rmd, NonNH3_rmd = \
                 self._allocate_N_reduction(mixed.TN/1e6*self.N_vol,
                                            mixed.imass['NH3'])
             mixed.imass ['NH3'] -= NH3_rmd
             mixed.imass['NonNH3'] -= NonNH3_rmd
-            
+            # Energy/N loss due to degradation
             COD_loss = self.get_degradation_loss(k=self.decay_k,
                                                  t=self.emptying_period,
                                                  max_removal=self.COD_max_removal)
-            CH4.imass['CH4'] = mixed.COD/1e3*mixed.F_vol*self.MCF_loss # COD in mg/L (g/m3)
+            CH4.imass['CH4'] = mixed.COD/1e3*mixed.F_vol*COD_loss * \
+                self.max_CH4_emission*self.MCF_loss # COD in mg/L (g/m3)
             mixed._COD *= 1 - COD_loss
             mixed.imass['OtherSS'] *= 1 - COD_loss
 
@@ -671,20 +721,25 @@ class PitLatrine(Toilet):
                                            mixed.imass['NH3'])
             mixed.imass ['NH3'] -= NH3_rmd
             mixed.imass['NonNH3'] -= NonNH3_rmd
-            N2O.imass['N2O'] = N_loss_tot * 44/28
+            N2O.imass['N2O'] = N_loss_tot * self.N2O_EF_loss * 44/28
         else:
             CH4.empty()
             N2O.empty()
 
-        # Aquatic emission when not ideally emptied
+        # Aquatic emission when not ideally emptied        
         if not self.if_ideal_emptying:
-            COD_rmd = mixed.COD*(1-self.empty_ratio)/1e3*mixed.F_vol
-            CH4.imass['CH4'] += COD_rmd * \
-                self.COD_max_removal*self.MCF_aq*self.max_CH4_emission
-            mixed._COD *= self.empty_ratio
+            mixed, CH4, N2O = self.get_emptying_emission(
+                waste=mixed, CH4=CH4, N2O=N2O,
+                app_ratio=self.empty_ratio,
+                CH4_factor=self.COD_max_removal*self.MCF_aq*self.max_CH4_emission,
+                N2O_factor=self.N2O_EF_loss*44/28)
+            # COD_rmd = mixed.COD*(1-self.empty_ratio)/1e3*mixed.F_vol
+            # CH4.imass['CH4'] += COD_rmd * \
+            #     self.COD_max_removal*self.MCF_aq*self.max_CH4_emission
+            # mixed._COD *= self.empty_ratio
             
-            N2O.imass['N2O'] += COD_rmd * self.N2O_EF_loss * 44/28
-            mixed.mass *= self.empty_ratio
+            # N2O.imass['N2O'] += COD_rmd * self.N2O_EF_loss * 44/28
+            # mixed.mass *= self.empty_ratio
         
         # Drain extra water
         sludge = self.sludge_accum_rate*self.N_user/24/365 # Assume density of water
@@ -694,7 +749,6 @@ class PitLatrine(Toilet):
             mixed.imass['H2O'] = max(0, mixed.imass['H2O'])
         
         waste.copy_like(mixed)
-
 
 
     def _design(self):
@@ -819,10 +873,8 @@ class PitLatrine(Toilet):
 
 
 class UDDT(Toilet):
-    '''
-    Urine-diverting dry toilet with liquid storage tank and dehydration vault
-    for urine and feces storage, respectively.
-    '''
+    '''Urine-diverting dry toilet with liquid storage tank and dehydration vault '''\
+    '''for urine and feces storage, respectively.'''
     
     def __init__(self, ID='', ins=None, outs=(), N_user=1, life_time=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
@@ -842,6 +894,21 @@ class UDDT(Toilet):
             If has onsite treatment.
         if_pit_above_water_table : [bool]
             If the pit is above local water table.
+            
+        Returns
+        -------
+        liq : WasteStream
+            Recyclable liquid urine.
+        sol : WasteStream
+            Recyclable solid feces.
+        struvite : WasteStream
+            Struvite scaling (irrecoverable).
+        HAP : WasteStream
+            Hydroxyapatite scaling (irrecoverable).
+        CH4 : WasteStream
+            Fugitive CH4.
+        N2O : WasteStream
+            Fugitive N2O.
             
         '''
 
@@ -864,25 +931,131 @@ class UDDT(Toilet):
     __init__.__doc__ = __doc__ + Toilet.__init__.__doc__ + __init__.__doc__
     __doc__ = __init__.__doc__
     
-    _N_outs = 2
+    _N_outs = 6
 
     def _run(self):
         Toilet._run(self)
-        ur = self.ins[0]
-        fec = self.ins[1]
+        liq, sol, struvite, HAP, CH4, N2O = self.outs
+        liq.copy_like(self.ins[0])
+        sol.copy_like(self.ins[1])
+        struvite.phase = 's'
+        HAP.phase = 's'
+        CH4.phase = 'g'
+        N2O.phase = 'g'
         
-        # N loss due to ammonia volatilization
-        NH3_rmd, NonNH3_rmd = \
-            self._allocate_N_reduction(ur.TN/1e6*self.N_vol,
-                                       ur.imass['NH3'])
-        ur.imass ['NH3'] -= NH3_rmd
-        ur.imass['NonNH3'] -= NonNH3_rmd
-        
+        #!!! Modified from ref [1], assume this only happens when air emission occurs
+        if self.if_air_emission:
+            # N loss due to ammonia volatilization
+            NH3_rmd, NonNH3_rmd = \
+                self._allocate_N_reduction(liq.TN/1e6*self.N_vol,
+                                           liq.imass['NH3'])
+            liq.imass ['NH3'] -= NH3_rmd
+            liq.imass['NonNH3'] -= NonNH3_rmd
+            # Energy/N loss due to degradation
+            COD_loss = self.get_degradation_loss(k=self.decay_k,
+                                                 t=self.collection_period/365,
+                                                 max_removal=self.COD_max_removal)
+            CH4.imass['CH4'] = sol.COD/1e3*sol.F_vol*COD_loss * \
+                self.max_CH4_emission*self.MCF_loss # COD in mg/L (g/m3)
+            sol._COD *= 1 - COD_loss
+            sol.imass['OtherSS'] *= 1 - COD_loss
+
+            N_loss = self.get_degradation_loss(k=self.decay_k,
+                                               t=self.collection_period/365,
+                                               max_removal=self.N_max_removal)
+            N_loss_tot = sol.TN/1e6*N_loss
+            NH3_rmd, NonNH3_rmd = \
+                self._allocate_N_reduction(N_loss_tot,
+                                           sol.imass['NH3'])
+            sol.imass ['NH3'] -= NH3_rmd
+            sol.imass['NonNH3'] -= NonNH3_rmd
+            N2O.imass['N2O'] = N_loss_tot * self.N2O_EF_loss * 44/28
+        else:
+            CH4.empty()
+            N2O.empty()
+            
         # N and P losses due to struvite and hydroxyapatite (HAp)
         if self.if_prep_loss:
-            pass
+            # Struvite
+            NH3_mol = liq.imol['NH3']
+            P_mol = liq.imol['P']
+            Mg_mol = liq.imol['Mg']
+            Ksp = 10**(-self.struvite_pKsp)
+            # Ksp = (initial N - struvite)(initial P - struvite)(initial Mg - struvite)
+            coeff = [1, -(NH3_mol+P_mol+Mg_mol),
+                     (NH3_mol*P_mol + P_mol*Mg_mol + Mg_mol*NH3_mol),
+                     (Ksp - NH3_mol*P_mol*Mg_mol)]
+            struvite_mol = 0
+            for i in np.roots(coeff):
+                if i < min(NH3_mol, P_mol, Mg_mol):
+                    struvite_mol = i
+            struvite.imol['Struvite'] = \
+                max(0, min(NH3_mol, P_mol, Mg_mol, struvite_mol))
+            liq.imol['NH3'] -= struvite_mol
+            liq.imol['P'] -= struvite_mol
+            liq.imol['Mg'] -= struvite_mol
+            # HAP
+            left_P = liq.imol['P'] - 3*(liq.imol['Ca']/5)
+            # Remaining P enough to precipitate all Ca as HAP
+            if left_P > 0:
+                HAP.imol['HAP'] = liq.imol['Ca']/5
+                liq.imol['P'] = left_P
+                liq.imol['Ca'] = 0
+            else:
+                HAP.imol['HAP'] = liq.imol['P']/3
+                liq.imol['Ca'] -= 5*(liq.imol['P']/3)
+                liq.imol['P'] = 0
+        else:
+            struvite.empty()
+            HAP.empty()
         
+        # Onsite treatment
+        if self.if_treatment:
+            NH3_mmol = liq.imol['NH3'] * 1e3
+            ur_DM = 1 - liq.imass['H2O']/liq.F_mass
+            pKa = 0.09018 + (2729.92/self.T)
+            f_NH3_Emerson = 1 / (10**(pKa-self.ur_pH)+1)
+            alpha = 0.82 - 0.011*np.sqrt(NH3_mmol+1700*ur_DM)
+            beta = 1.17 + 0.02 * np.sqrt(NH3_mmol+1100*ur_DM)
+            f_NH3_Pitzer = f_NH3_Emerson * \
+                (alpha + ((1-alpha)*(f_NH3_Emerson**beta)))
+            NH3_conc = NH3_mmol * f_NH3_Pitzer
+
+            #!!! Shouldn't the collectino period and design be affected by this as well?            
+            # Time (in days) to reach desired inactivation level
+            self.treatment_tau = ((3.2 + self.log_removal) \
+                             / (10**(-3.7+0.062*(self.T-273.15)) * (NH3_conc**0.7))) \
+                        * 1.14*self.safety_factor
+            # Total volume in m3
+            self.treatment_V = self.treatment_tau * liq.F_vol*24
+        else:
+            self.treatment_tau = self.treatment_V = 0
+
+        # Feces water loss if desiccant is added
+        if self.if_desiccant:
+            MC_min = self.fec_moi_min
+            r = self.fec_moi_red_rate
+            t = self.collection_period
+            fec_moi_int = self.ins[1].imass['H2O']/self.ins[1]
+            fec_moi = MC_min + (fec_moi_int-MC_min)/(r*t)*(1-np.exp(-r*t))
+            sol.imass['H2O'] = sol.F_mass * fec_moi
         
+        #!!! Maybe don't need this, only add this to the design_results dict,
+        # remove setter if shouldn't be set
+        self.vault_V = sol.F_vol/1e3*self.collection_period*24 # in day
+
+        # Non-ideal emptying of urine tank
+        if not self.if_ideal_emptying:
+            liq, CH4, N2O = self.get_emptying_emission(
+                waste=liq, CH4=CH4, N2O=N2O,
+                app_ratio=self.empty_ratio,
+                CH4_factor=self.COD_max_removal*self.MCF_aq*self.max_CH4_emission,
+                N2O_factor=self.N2O_EF_loss*44/28)
+            sol, CH4, N2O = self.get_emptying_emission(
+                waste=sol, CH4=CH4, N2O=N2O,
+                app_ratio=self.empty_ratio,
+                CH4_factor=self.COD_max_removal*self.MCF_aq*self.max_CH4_emission,
+                N2O_factor=self.N2O_EF_loss*44/28)
 
     def _design(self):
         design = self.design_results
@@ -918,12 +1091,36 @@ class UDDT(Toilet):
         self._collection_period = float(i)
 
     @property
+    def treatment_tau(self):
+        '''[float] Time for onsite treatment (if treating), [d].'''
+        return self._treatment_tau
+    @treatment_tau.setter
+    def treatment_tau(self, i):
+        self._treatment_tau = float(i)
+
+    @property
+    def treatment_V(self):
+        '''[float] Volume needed to achieve treatment target (if treating), [d].'''
+        return self._treatment_V
+    @treatment_V.setter
+    def treatment_V(self, i):
+        self._treatment_V = float(i)
+
+    @property
     def tank_V(self):
-        '''[float] Tank volume, [m3].'''
+        '''[float] Volume of the urine storage tank, [m3].'''
         return self._tank_V
     @tank_V.setter
     def tank_V(self, i):
         self._tank_V = float(i)
+        
+    @property
+    def vault_V(self):
+        '''[float] Volume of the feces dehydration vault, [m3].'''
+        return self._vault_V
+    @vault_V.setter
+    def vault_V(self, i):
+        self._vault_V = float(i)
 
     @property
     def struvite_pKsp(self):
@@ -974,23 +1171,23 @@ class UDDT(Toilet):
         return self._N2O_EF_loss
     @N2O_EF_loss.setter
     def N2O_EF_loss(self, i):
-        self._N2O_EF_loss= float(i)
+        self._N2O_EF_loss = float(i)
 
     @property
-    def moi_min(self):
+    def fec_moi_min(self):
         '''[float] Minimum moisture content of feces.'''
-        return self._moi_min
-    @moi_min.setter
-    def moi_min(self, i):
-        self._moi_min= float(i)
+        return self._fec_moi_min
+    @fec_moi_min.setter
+    def fec_moi_min(self, i):
+        self._fec_moi_min = float(i)
 
     @property
-    def moi_red_rate(self):
+    def fec_moi_red_rate(self):
         '''[float] Exponential reduction rate of feces moisture.'''
-        return self._moi_red_rate
-    @moi_red_rate.setter
-    def moi_red_rate(self, i):
-        self._moi_red_rate= float(i)
+        return self._fec_moi_red_rate
+    @fec_moi_red_rate.setter
+    def fec_moi_red_rate(self, i):
+        self._fec_moi_red_rate = float(i)
 
 
 
