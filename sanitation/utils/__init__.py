@@ -14,9 +14,9 @@ for license details.
 '''
 
 from . import piping
-
-from .piping import *
+from . import loading
 
 __all__ = (
     *piping.__all__,
+    *loading.__all__,
             )

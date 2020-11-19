@@ -63,31 +63,42 @@ for cmp in (NonNH3, P, K, Mg, Ca, OtherSS):
     cmp.default()
     cmp.copy_models_from(H2O, ('sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu'))
 
+def add_V_from_rho(cmp, rho):
+    V_model = tmo.functional.rho_to_V(rho, cmp.MW)
+    try: cmp.V.add_model(V_model)
+    except:
+        handle = getattr(cmp.V, cmp.locked_state)
+        handle.add_model(V_model)
+
 Tissue = Component('Tissue', MW=1, phase='s', particle_size='Particulate',
                     degradability='Undegradable', organic=False,
                     description='Tissue for toilet paper')
 # 375 kg/m3 is the average of 250-500 for tissue from
 # https://paperonweb.com/density.htm (accessed 2020-11-12)
-V_model = tmo.functional.rho_to_V(375, Tissue.MW)
-Tissue.V.add_model(V_model)
+add_V_from_rho(Tissue, 375)
 
 WoodAsh = Component('WoodAsh', MW=1, phase='s', i_Mg=0.0224, i_Ca=0.3034,
                     particle_size='Particulate', degradability='Undegradable',
                     organic=False, description='Wood ash for desiccant')
-V_model = tmo.functional.rho_to_V(760, WoodAsh.MW)
-WoodAsh.V.add_model(V_model)
+add_V_from_rho(WoodAsh, 760)
 
 for i in (Tissue, WoodAsh):
     i.copy_models_from(tmo.Chemical('Glucose'), ('Cn', 'mu'))
-    
 
-Struvite = Component('Struvite', formula='NH4MgPO4·H12O6',
-                     phase='s', particle_size='Particulate',
-                     degradability='Undegradable', organic=False)
+Struvite = Component.from_chemical('Struvite',
+                                   tmo.Chemical('MagnesiumAmmoniumPhosphate'),
+                                   formula='NH4MgPO4·H12O6',
+                                   phase='s', particle_size='Particulate',
+                                   degradability='Undegradable', organic=False)
+# http://www.chemspider.com/Chemical-Structure.8396003.html (accessed 2020-11-19)
+add_V_from_rho(Struvite, 1711)
     
 HAP = Component.from_chemical('HAP', tmo.Chemical('Hydroxyapatite'),
                               phase='s', particle_size='Particulate',
-                              degradability='Undegradable', organic=False)    
+                              degradability='Undegradable', organic=False)
+# Taking the average of 3.1-3.2 g/cm3 from
+# https://pubchem.ncbi.nlm.nih.gov/compound/Hydroxyapatite (accessed 2020-11-19)
+add_V_from_rho(HAP, 3150)
 
 cmps = Components((NH3, NonNH3, P, K, Mg, Ca, H2O, OtherSS, N2O, CH4,
                    Tissue, WoodAsh, Struvite, HAP))

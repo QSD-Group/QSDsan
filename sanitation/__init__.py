@@ -22,8 +22,6 @@ from ._lca import LCA
 from . import utils
 from . import units
 
-from .units import *
-
 __all__ = (
     'Component',
     'Components', 'CompiledComponents',

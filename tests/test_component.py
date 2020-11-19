@@ -19,6 +19,8 @@ def test_component():
     import thermosteam as tmo
     from sanitation import Component, Components
     components = Components.load_default(default_compile=False)
+    with pytest.raises(AssertionError):
+        H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'))
     H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
                                   particle_size='Soluble',
                                   degradability='Undegradable', organic=False)

@@ -13,10 +13,27 @@ https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
 '''
 
-from ._bst_units import *
-
 from . import _bst_units
+from . import _excretion
+from . import _toilet
+from . import _pit_latrine
+from . import _uddt
+
+from ._bst_units import (
+    Mixer,
+    Splitter, FakeSplitter, ReversedSplitter,
+    Pump,
+    Tank, StorageTank, MixTank
+    )
+from ._excretion import Excretion
+from ._toilet import Toilet
+from ._pit_latrine import PitLatrine
+from ._uddt import UDDT
 
 __all__ = (
     *_bst_units.__all__,
+    *_excretion.__all__,
+    *_toilet.__all__,
+    *_pit_latrine.__all__,
+    *_uddt.__all__,
            )
