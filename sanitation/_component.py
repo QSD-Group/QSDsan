@@ -103,7 +103,7 @@ class Component(tmo.Chemical):
 
     __slots__ = _component_slots
 
-    def __new__(cls, ID, formula=None, search_ID=None, phase='l', measured_as=None, 
+    def __new__(cls, ID='', search_ID=None, formula=None, phase='l', measured_as=None, 
                 i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
                 i_mass=None, i_charge=None, f_BOD5_COD=None, f_uBOD_COD=None,
                 f_Vmass_Totmass=None,
@@ -115,10 +115,10 @@ class Component(tmo.Chemical):
                                    search_db=True, **chemical_properties)
         else:
             self = super().__new__(cls, ID=ID, search_db=False, **chemical_properties)
-            if formula:
-                self._formula = formula
-        if not self._MW: self._MW = 1.
+
         self._ID = ID
+        if formula:
+            self.formula = formula
         tmo._chemical.lock_phase(self, phase)
         self.measured_as = measured_as
         self.i_C = i_C
@@ -136,13 +136,14 @@ class Component(tmo.Chemical):
         self.degradability = degradability
         self.organic = organic
         self.description = description
+        if not self.MW and not self.formula: self.MW = 1.
         return self
 
     @staticmethod
     def _atom_frac_setter(cmp, atom=None, frac=None):
-        if cmp._formula:
+        if cmp.formula:
             if frac:
-                raise AttributeError('This Component has formual, '
+                raise AttributeError('This Component has formula, '
                                      f'i_{atom} calculated based on formula, '
                                      'cannot be set.')
             else:
@@ -150,8 +151,7 @@ class Component(tmo.Chemical):
                     return get_mass_frac(cmp.atoms)[atom]
                 return 0. # does not have this atom
         else:
-            frac = check_return_property(f'i_{atom}', frac)
-            setattr(cmp, '_i_'+atom, frac)
+            return check_return_property(f'i_{atom}', frac)
 
     @property
     def i_C(self):

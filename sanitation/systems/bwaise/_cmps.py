@@ -59,10 +59,6 @@ CH4 = Component.from_chemical('CH4', tmo.Chemical('CH4'),
                               phase='g', particle_size='Dissolved gas',
                               degradability='Biological', organic=True)
 
-Struvite = Component('Struvite', formula='MgNH4PO4·6(H2O)',
-                     phase='s', particle_size='Particulate',
-                     degradability='Undegradable', organic=False)
-
 for cmp in (NonNH3, P, K, Mg, Ca, OtherSS):
     cmp.default()
     cmp.copy_models_from(H2O, ('sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu'))
@@ -84,10 +80,17 @@ WoodAsh.V.add_model(V_model)
 for i in (Tissue, WoodAsh):
     i.copy_models_from(tmo.Chemical('Glucose'), ('Cn', 'mu'))
     
+
+Struvite = Component('Struvite', formula='NH4MgPO4·H12O6',
+                     phase='s', particle_size='Particulate',
+                     degradability='Undegradable', organic=False)
     
+HAP = Component.from_chemical('HAP', tmo.Chemical('Hydroxyapatite'),
+                              phase='s', particle_size='Particulate',
+                              degradability='Undegradable', organic=False)    
 
 cmps = Components((NH3, NonNH3, P, K, Mg, Ca, H2O, OtherSS, N2O, CH4,
-                   Tissue, WoodAsh))
+                   Tissue, WoodAsh, Struvite, HAP))
 cmps.compile()
 
 cmps.set_synonym('H2O', 'Water')

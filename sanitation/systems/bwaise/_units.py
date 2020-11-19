@@ -879,8 +879,8 @@ class UDDT(Toilet):
         ur.imass['NonNH3'] -= NonNH3_rmd
         
         # N and P losses due to struvite and hydroxyapatite (HAp)
-        if if_prep_loss:
-            
+        if self.if_prep_loss:
+            pass
         
         
 
