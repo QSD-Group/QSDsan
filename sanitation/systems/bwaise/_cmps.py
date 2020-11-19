@@ -19,28 +19,28 @@ from sanitation import Component, Components
 __all__ = ('cmps', )
 
 NH3 = Component.from_chemical('NH3', tmo.Chemical('NH3'), measured_as='N',
-                              phase='l', i_N=1, i_mass=1, particle_size='Soluble',
+                              phase='l', particle_size='Soluble',
                               degradability='Undegradable', organic=False)
 
 NonNH3 = Component.from_chemical('NonNH3', tmo.Chemical('N'), measured_as='N',
-                                 phase='l', i_N=1, particle_size='Soluble',
+                                 phase='l', particle_size='Soluble',
                                  degradability='Undegradable', organic=False,
                                  description='Non-NH3 nitrogen')
 
 P = Component.from_chemical('P', tmo.Chemical('P'),
-                            phase='l', i_P=1, particle_size='Soluble',
+                            phase='l', particle_size='Soluble',
                             degradability='Undegradable', organic=False)
 
 K = Component.from_chemical('K', tmo.Chemical('K'),
-                            phase='l', i_K=1, particle_size='Soluble',
+                            phase='l', particle_size='Soluble',
                             degradability='Undegradable', organic=False)
 
 Mg = Component.from_chemical('Mg', tmo.Chemical('Mg'),
-                             phase='l', i_Mg=1, particle_size='Soluble',
+                             phase='l', particle_size='Soluble',
                              degradability='Undegradable', organic=False)
 
 Ca = Component.from_chemical('Ca', tmo.Chemical('Ca'),
-                             phase='l', i_Ca=0, particle_size='Soluble',
+                             phase='l', particle_size='Soluble',
                              degradability='Undegradable', organic=False)
 
 H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
@@ -52,12 +52,16 @@ OtherSS = Component('OtherSS', phase='l', particle_size='Soluble',
                     description='Unspecified soluble solids')
 
 N2O = Component.from_chemical('N2O', tmo.Chemical('N2O'),
-                              phase='g', i_N=28/44, particle_size='Dissolved gas',
+                              phase='g', particle_size='Dissolved gas',
                               degradability='Undegradable', organic=False)
 
 CH4 = Component.from_chemical('CH4', tmo.Chemical('CH4'),
-                              phase='g', i_C=12/16, particle_size='Dissolved gas',
+                              phase='g', particle_size='Dissolved gas',
                               degradability='Biological', organic=True)
+
+Struvite = Component('Struvite', formula='MgNH4PO4·6(H2O)',
+                     phase='s', particle_size='Particulate',
+                     degradability='Undegradable', organic=False)
 
 for cmp in (NonNH3, P, K, Mg, Ca, OtherSS):
     cmp.default()

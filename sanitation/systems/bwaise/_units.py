@@ -871,8 +871,16 @@ class UDDT(Toilet):
         ur = self.ins[0]
         fec = self.ins[1]
         
-        mixed = WasteStream()
-        mixed.mix_from(self.ins)
+        # N loss due to ammonia volatilization
+        NH3_rmd, NonNH3_rmd = \
+            self._allocate_N_reduction(ur.TN/1e6*self.N_vol,
+                                       ur.imass['NH3'])
+        ur.imass ['NH3'] -= NH3_rmd
+        ur.imass['NonNH3'] -= NonNH3_rmd
+        
+        # N and P losses due to struvite and hydroxyapatite (HAp)
+        if if_prep_loss:
+            
         
         
 
