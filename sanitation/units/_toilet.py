@@ -289,8 +289,6 @@ class Toilet(SanUnit, isabstract=True):
         if self.if_ideal_emptying:
             msg = f'if_ideal_emptying is True, the set value {i} is ignored.'
             warn(msg, source=self)
-            # raise ValueError('if_ideal_emptying is True, empty_ratio should be 1,'
-            #                  f'the set value {i} is ignored.')
         self._empty_ratio = float(i)
 
     @property
