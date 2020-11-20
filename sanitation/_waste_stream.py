@@ -142,7 +142,6 @@ class WasteStream(Stream):
             T_units = T or display_units.T
             P_units = P or display_units.P
             info += self._info_phaseTP(self.phase, T_units, P_units)
-
         info += self._wastestream_info(details=details)
         print(info)
         
@@ -151,8 +150,11 @@ class WasteStream(Stream):
     
     def _wastestream_info(self, details=True):
         _ws_info = '\n WasteStream-specific properties:'
-        if self.F_mass == 0:
-            _ws_info += ' None'
+        # Wastewater-related properties are not relevant for gas or solids
+        if self.phase != 'l':
+            _ws_info += ' None for non-liquid WasteStreams'
+        elif self.F_mass == 0:
+            _ws_info += ' None for empty WasteStreams'
         else:
             _ws_info += '\n'
             _ws_info += f'  pH         : {self.pH:.1f}\n'

@@ -203,6 +203,13 @@ class PitLatrine(Toilet):
     @pit_area.setter
     def pit_area(self, i):
         self._pit_area = float(i)
+    
+    #!!! Should add some contraints, maybe in _run, to make sure the pit is big
+    # enough for the amount of excreta
+    @property
+    def pit_V(self):
+        '''[float] Volume of the pit, [m3].'''
+        return self.pit_area*self.pit_depth     
 
     @property
     def emptying_period(self):

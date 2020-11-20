@@ -34,7 +34,8 @@ setattr = object.__setattr__
 
 class UndefinedComponent(AttributeError):
     '''AttributeError regarding undefined Component objects.'''
-    def __init__(self, ID): super(Chemical, self).__init__(repr(ID))
+    def __init__(self, ID):
+        super().__init__(repr(ID))
 
 # =============================================================================
 # Define the Components class

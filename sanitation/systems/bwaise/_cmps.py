@@ -59,6 +59,24 @@ CH4 = Component.from_chemical('CH4', tmo.Chemical('CH4'),
                               phase='g', particle_size='Dissolved gas',
                               degradability='Biological', organic=True)
 
+# Below three are for combustion reactions
+O2 = Component.from_chemical('O2', tmo.Chemical('O2'),
+                             phase='g', particle_size='Dissolved gas',
+                             degradability='Undegradable', organic=False)
+
+N2 = Component.from_chemical('N2', tmo.Chemical('N2'),
+                             phase='g', particle_size='Dissolved gas',
+                             degradability='Undegradable', organic=False)
+
+CO2 = Component.from_chemical('CO2', tmo.Chemical('CO2'),
+                              phase='g', particle_size='Dissolved gas',
+                              degradability='Undegradable', organic=False)
+
+P4O10 = Component.from_chemical('P4O10', tmo.Chemical('P4O10'),
+                                phase='s', particle_size='Particulate',
+                                degradability='Undegradable', organic=False)
+
+
 for cmp in (NonNH3, P, K, Mg, Ca, OtherSS):
     cmp.default()
     cmp.copy_models_from(H2O, ('sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu'))
@@ -100,8 +118,8 @@ HAP = Component.from_chemical('HAP', tmo.Chemical('Hydroxyapatite'),
 # https://pubchem.ncbi.nlm.nih.gov/compound/Hydroxyapatite (accessed 2020-11-19)
 add_V_from_rho(HAP, 3150)
 
-cmps = Components((NH3, NonNH3, P, K, Mg, Ca, H2O, OtherSS, N2O, CH4,
-                   Tissue, WoodAsh, Struvite, HAP))
+cmps = Components((NH3, NonNH3, P, K, Mg, Ca, H2O, OtherSS, N2O, CH4, O2, N2,
+                   CO2, P4O10, Tissue, WoodAsh, Struvite, HAP))
 cmps.compile()
 
 cmps.set_synonym('H2O', 'Water')
