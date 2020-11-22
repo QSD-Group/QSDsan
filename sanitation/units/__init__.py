@@ -39,7 +39,6 @@ from ._biogas_combustion import BiogasCombustion
 from ._crop_application import CropApplication
 
 
-
 __all__ = (
     *_bst_units.__all__,
     *_excretion.__all__,

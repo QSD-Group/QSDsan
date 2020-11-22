@@ -166,7 +166,7 @@ class Transportation(SanUnit):
             Set state variable values (e.g., COD) will be retained if the loss
             ratio is a single number (treated like the loss stream is split
             from the original stream), but not when the ratio is a dict.
-            
+
         '''
         return self._loss_ratio
     @loss_ratio.setter

@@ -23,7 +23,6 @@ Ref:
 import numpy as np
 import biosteam as bst
 from sanitation import units, WasteStream
-
 import bwaise
 cmps = bwaise._cmps.cmps
 
@@ -55,12 +54,6 @@ max_CH4_emission = 0.25
 # Nutrient loss during applciation
 app_loss = dict.fromkeys(('NH3', 'NonNH3', 'P', 'K', 'Mg', 'Ca'), 0.02)
 app_loss['NH3'] = 0.05
-
-
-
-
-
-
 
 
 
@@ -99,6 +92,7 @@ A3 = units.Transportation('A3', ins=A2-0, outs=('transported', 'loss'),
                           transport_cost=0,
                           emptying_cost=truck_cost[truck]/period,
                           loss_ratio=0.02)
+
 
 AX = units.CropApplication('AX', ins=WasteStream(), loss_ratio=app_loss)
 def adjust_NH3_loss():
@@ -166,6 +160,7 @@ C4 = units.Transportation('C4', ins=C2-1, outs=('transported_s', 'loss_s'),
                           transport_cost=truck_cost[truck]/5, # convert to per km 
                           emptying_cost=0.01*N_user/24, # 0.01 USD/cap/d
                           loss_ratio=0.02)
+
 
 CX = units.CropApplication('CX', ins=WasteStream(), loss_ratio=app_loss)
 def adjust_NH3_loss():
