@@ -72,6 +72,7 @@ A2 = units.PitLatrine('A2', ins=(A1-0, A1-1,
                       decay_k=get_decay_k(tau_deg, log_deg),
                       max_CH4_emission=max_CH4_emission)
 
+#!!! Power law originally used in costing
 truck_cost = {
     'TankerTruck1': 8e4/exchange_rate*1.15, # additional fee for tanker trucks
     'TankerTruck2': 12e4/exchange_rate*1.15,

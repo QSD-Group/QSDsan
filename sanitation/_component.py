@@ -26,7 +26,6 @@ __all__ = ('Component',)
 _chemical_fields = tmo._chemical._chemical_fields
 _checked_properties = tmo._chemical._checked_properties
 display_asfunctor = tmo._chemical.display_asfunctor
-chemical_units_of_measure = tmo._chemical.chemical_units_of_measure
 copy_maybe = tmo.utils.copy_maybe
 
 

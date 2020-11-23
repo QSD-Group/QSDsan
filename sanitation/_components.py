@@ -127,7 +127,7 @@ class Components(Chemicals):
         A Components object that contains all created Component objects.
             
         Notes
-        -------
+        -----
         The Components object needs to be compiled before it is used in simulation
     
         '''

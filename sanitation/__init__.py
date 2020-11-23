@@ -18,6 +18,7 @@ from ._components import Components, CompiledComponents
 from ._waste_stream import WasteStream
 from ._sanunit import SanUnit
 from ._lca import LCA
+from ._materials import Material, ConstructionMaterial
 
 from . import utils
 from . import units
@@ -28,6 +29,8 @@ __all__ = (
     'WasteStream',
     'SanUnit',
     'LCA',
+    'Material',
+    'ConstructionMaterial',
     *utils.__all__,
     *units.__all__,
            )

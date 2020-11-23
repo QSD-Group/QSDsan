@@ -11,7 +11,17 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
+
+Ref:
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+        https://doi.org/10.1021/acs.est.0c03296.
+
 '''
+
+
+# %%
 
 import thermosteam as tmo
 from sanitation import Component, Components
