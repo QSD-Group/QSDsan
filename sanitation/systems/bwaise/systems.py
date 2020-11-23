@@ -18,6 +18,10 @@ Ref:
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
 
+TODO:
+    [1] Use consistent units for retention time, concentration, etc.
+
+
 '''
 
 import numpy as np
@@ -55,8 +59,29 @@ max_CH4_emission = 0.25
 app_loss = dict.fromkeys(('NH3', 'NonNH3', 'P', 'K', 'Mg', 'Ca'), 0.02)
 app_loss['NH3'] = 0.05
 
+#!!! Power law originally used in costing
+truck_cost = {
+    'TankerTruck1': 8e4/exchange_rate*1.15, # additional fee for tanker trucks
+    'TankerTruck2': 12e4/exchange_rate*1.15,
+    'TankerTruck3': 2e5/exchange_rate*1.15,
+    'TankerTruck4': 25e4/exchange_rate*1.15,
+    'HandcartAndTruck': 23e3/exchange_rate # per m3
+    }
+V = (3, 4.5, 8, 15, 1)
+truck_V = dict.fromkeys(truck_cost.keys())
+for i, j in zip(truck_V.keys(), V):
+    truck_V[i] = j
+
+bst.PowerUtility.price = 0.17
 
 
+N_AD_rx = 3
+
+
+
+
+
+# %%
 
 # =============================================================================
 # Scenario A: existing system
@@ -72,18 +97,7 @@ A2 = units.PitLatrine('A2', ins=(A1-0, A1-1,
                       decay_k=get_decay_k(tau_deg, log_deg),
                       max_CH4_emission=max_CH4_emission)
 
-#!!! Power law originally used in costing
-truck_cost = {
-    'TankerTruck1': 8e4/exchange_rate*1.15, # additional fee for tanker trucks
-    'TankerTruck2': 12e4/exchange_rate*1.15,
-    'TankerTruck3': 2e5/exchange_rate*1.15,
-    'TankerTruck4': 25e4/exchange_rate*1.15,
-    'HandcartAndTruck': 23e3/exchange_rate # per m3
-    }
-V = (3, 4.5, 8, 15, 1)
-truck_V = dict.fromkeys(truck_cost.keys())
-for i, j in zip(truck_V.keys(), V):
-    truck_V[i] = j
+
 
 truck = 'TankerTruck1' # assumed
 period = (A2.emptying_period*365*24*truck_V[truck])/A2.pit_V
@@ -120,14 +134,41 @@ SceA.simulate()
 #!!! Note that before application, the COD is set, but after, is calculated based
 # on an assumed ratio
 
+# %%
 
+waste = A2.outs[0].copy()
+A4 = units.AnaerobicDigestion('A4', ins=waste,
+                              outs=('treated', 'CH4', 'N2O'),
+                              tau_previous=A2.emptying_period*365,
+                              decay_k_N=get_decay_k(tau_deg, log_deg),)
+A4.simulate()
+A4.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# %%
 
 # =============================================================================
 # Scenario B: anaerobic treatment with existing latrines and conveyance
 # =============================================================================
 
 
-
+# %%
 
 # =============================================================================
 # Scenario C: containaer-based sanitation with existing treatment

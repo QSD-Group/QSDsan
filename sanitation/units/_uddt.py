@@ -102,10 +102,8 @@ class UDDT(Toilet):
         liq, sol, struvite, HAP, CH4, N2O = self.outs
         liq.copy_like(self.ins[0])
         sol.copy_like(self.ins[1])
-        struvite.phase = 's'
-        HAP.phase = 's'
-        CH4.phase = 'g'
-        N2O.phase = 'g'
+        struvite.phase = HAP.phase = 's'
+        CH4.phase = N2O.phase = 'g'
         
         #!!! Modified from ref [1], assume this only happens when air emission occurs
         if self.if_air_emission:

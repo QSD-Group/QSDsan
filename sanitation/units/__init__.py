@@ -19,7 +19,13 @@ from . import _toilet
 from . import _pit_latrine
 from . import _uddt
 from . import _transportation
-# from . import _crop_application
+from . import _anaerobic_digestion
+
+
+
+
+
+
 from . import _biogas_combustion
 from . import _crop_application
 
@@ -34,7 +40,14 @@ from ._toilet import Toilet
 from ._pit_latrine import PitLatrine
 from ._uddt import UDDT
 from ._transportation import Transportation
-# from ._crop_application import CropApplication
+from ._anaerobic_digestion import AnaerobicDigestion
+
+
+
+
+
+
+
 from ._biogas_combustion import BiogasCombustion
 from ._crop_application import CropApplication
 
@@ -46,7 +59,13 @@ __all__ = (
     *_pit_latrine.__all__,
     *_uddt.__all__,
     *_transportation.__all__,
-    # *_crop_application.__all__,
+    *_anaerobic_digestion.__all__,
+    
+    
+    
+    
+    
+    
     *_biogas_combustion.__all__,
     *_crop_application.__all__,
            )

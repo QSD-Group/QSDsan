@@ -96,8 +96,7 @@ class PitLatrine(Toilet):
     def _run(self):
         Toilet._run(self)
         waste, leachate, CH4, N2O = self.outs
-        CH4.phase = 'g'
-        N2O.phase = 'g'
+        CH4.phase = N2O.phase = 'g'
 
         mixed = WasteStream()
         mixed.mix_from(self.ins)

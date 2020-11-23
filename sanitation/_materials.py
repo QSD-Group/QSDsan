@@ -87,7 +87,8 @@ class Material:
     #!!! Temporary, units will be taken care of separately
     supported_units = {
         'mass': ('kg',),
-        'volume': ('m3', )
+        'area': ('m2',),
+        'volume': ('m3',)
         }
     
     @property

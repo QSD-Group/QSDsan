@@ -201,11 +201,11 @@ class Toilet(SanUnit, isabstract=True):
         Returns
         -------
         stream : WasteStream
-            Excreta stream that is not appropriately empited (before emptying).
+            Excreta stream that is not appropriately empited (after emptying).
         CH4 : WasteStream
-            Fugitive CH4 gas (before emptying).
+            Fugitive CH4 gas (after emptying).
         N2O : WasteStream
-            Fugitive N2O gas (before emptying).
+            Fugitive N2O gas (after emptying).
 
         '''
         COD_rmd = waste.COD*(1-app_ratio)/1e3*waste.F_vol
@@ -292,8 +292,16 @@ class Toilet(SanUnit, isabstract=True):
         self._empty_ratio = float(i)
 
     @property
+    def max_CH4_emission(self):
+        '''[float] Maximum methane emssion as a fraction of degraded COD, [g CH4/g COD].'''
+        return self._max_CH4_emission
+    @max_CH4_emission.setter
+    def max_CH4_emission(self, i):
+        self._max_CH4_emission = float(i)
+
+    @property
     def COD_max_removal(self):
-        '''[float] Maximum raction of COD removed during storage given sufficient time.'''
+        '''[float] Maximum fraction of COD removed during storage given sufficient time.'''
         return self._COD_max_removal
     @COD_max_removal.setter
     def COD_max_removal(self, i):
@@ -301,7 +309,7 @@ class Toilet(SanUnit, isabstract=True):
 
     @property
     def N_max_removal(self):
-        '''[float] Maximumraction of N removed through denitrification during storage given sufficient time.'''
+        '''[float] Maximum fraction of N removed through denitrification during storage given sufficient time.'''
         return self._N_max_removal
     @N_max_removal.setter
     def N_max_removal(self, i):
@@ -313,7 +321,7 @@ class Toilet(SanUnit, isabstract=True):
         return self._MCF_aq
     @MCF_aq.setter
     def MCF_aq(self, i):
-        self._MCF_aq = i
+        self._MCF_aq = float(i)
 
     @property
     def N2O_EF_aq(self):
@@ -321,7 +329,7 @@ class Toilet(SanUnit, isabstract=True):
         return self._N2O_EF_aq
     @N2O_EF_aq.setter
     def N2O_EF_aq(self, i):
-        self._N2O_EF_aq = i
+        self._N2O_EF_aq = float(i)
 
     @property
     def decay_k(self):
@@ -329,15 +337,9 @@ class Toilet(SanUnit, isabstract=True):
         return self._decay_k
     @decay_k.setter
     def decay_k(self, i):
-        self._decay_k = i
+        self._decay_k = float(i)
 
-    @property
-    def max_CH4_emission(self):
-        '''[float] Maximum methane emssion as a fraction of degraded COD.'''
-        return self._max_CH4_emission
-    @max_CH4_emission.setter
-    def max_CH4_emission(self, i):
-        self._max_CH4_emission = i
+
 
 
 
