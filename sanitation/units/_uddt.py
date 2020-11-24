@@ -148,7 +148,7 @@ class UDDT(Toilet):
                      (Ksp - NH3_mol*P_mol*Mg_mol)]
             struvite_mol = 0
             for i in np.roots(coeff):
-                if i < min(NH3_mol, P_mol, Mg_mol):
+                if 0 < i < min(NH3_mol, P_mol, Mg_mol):
                     struvite_mol = i
             struvite.imol['Struvite'] = \
                 max(0, min(NH3_mol, P_mol, Mg_mol, struvite_mol))

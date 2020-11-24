@@ -90,8 +90,8 @@ print('\n----------Scenario A----------\n')
 A1 = units.Excretion('A1', outs=('urine', 'feces'), N_user=N_user)
 
 A2 = units.PitLatrine('A2', ins=(A1-0, A1-1,
-                                 'toilet_paper', 'flushing_water',
-                                 'cleaning_water', 'desiccant'),
+                                  'toilet_paper', 'flushing_water',
+                                  'cleaning_water', 'desiccant'),
                       outs=('mixed_waste', 'leachate', 'CH4', 'N2O'),
                       N_user=N_user, OPEX_over_CAPEX=0.05,
                       decay_k_COD=get_decay_k(tau_deg, log_deg),
@@ -110,6 +110,8 @@ A3 = units.Transportation('A3', ins=A2-0, outs=('transported', 'loss'),
                           loss_ratio=0.02)
 
 
+#!!! Note that before crop application, the COD is set, but after, is calculated
+# based on the assumed ratio
 AX = units.CropApplication('AX', ins=WasteStream(), loss_ratio=app_loss)
 def adjust_NH3_loss():
     AX._run()
@@ -122,9 +124,9 @@ AX.specification = adjust_NH3_loss
 
 biogas = WasteStream('biogas', CH4=1)
 AX2 = units.BiogasCombustion('AX2', ins=(biogas, 'air'),
-                             outs=('used', 'lost', 'wasted'),
-                             if_combustion=True,
-                             biogas_loss=0.1, biogas_eff=0.55)
+                              outs=('used', 'lost', 'wasted'),
+                              if_combustion=True,
+                              biogas_loss=0.1, biogas_eff=0.55)
 
 
 SceA = bst.System('SceA', path=(A1, A2, A3, AX, AX2))
@@ -132,8 +134,7 @@ SceA = bst.System('SceA', path=(A1, A2, A3, AX, AX2))
 SceA.simulate()
 
 
-#!!! Note that before application, the COD is set, but after, is calculated based
-# on an assumed ratio
+
 
 # %%
 
@@ -142,22 +143,26 @@ A4 = units.AnaerobicDigestion('A4', ins=ws1,
                               outs=('treated', 'CH4', 'N2O'),
                               # tau_previous=A2.emptying_period*365,
                               decay_k_N=get_decay_k(tau_deg, log_deg),
-                              max_CH4_emission=max_CH4_emission)
+                                max_CH4_emission=max_CH4_emission)
 A4.simulate()
 # A4.show()
 
 ws2 = A2.outs[0].copy('ws2')
-A5 = units.Sedimentation('A5', ins=ws2,
-                         outs=('liq', 'sol', 'CH4', 'N2O'),
-                         # tau_previous=A2.emptying_period*365,
-                         decay_k_COD=get_decay_k(tau_deg, log_deg),
-                         decay_k_N=get_decay_k(tau_deg, log_deg),
-                         max_CH4_emission=max_CH4_emission)
+A5 = units.SludgeSeparator('A5', ins=ws2, outs=('liq', 'sol'))
 
 A5.simulate()
 # A5.show()
 
+ws3 = A2.outs[0].copy('ws3')
+A6 = units.Sedimentation('A6', ins=ws3,
+                          outs=('liq', 'sol', 'CH4', 'N2O'),
+                          # tau_previous=A2.emptying_period*365,
+                          decay_k_COD=get_decay_k(tau_deg, log_deg),
+                          decay_k_N=get_decay_k(tau_deg, log_deg),
+                          max_CH4_emission=max_CH4_emission)
 
+A6.simulate()
+# A6.show()
 
 
 
@@ -194,6 +199,8 @@ C2 = units.UDDT('C2', ins=(C1-0, C1-1,
                 decay_k_COD=get_decay_k(tau_deg, log_deg),
                 decay_k_N=get_decay_k(tau_deg, log_deg),
                 max_CH4_emission=max_CH4_emission)
+C1.simulate()
+C2.simulate()
 
 truck = 'HandcartAndTruck'
 # Liquid waste

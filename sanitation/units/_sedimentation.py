@@ -25,8 +25,8 @@ Ref:
 
 import numpy as np
 from warnings import warn
-from .. import SanUnit
 from ._decay import Decay
+from ._sludge_separator import SludgeSeparator
 from ..utils.loading import load_data, data_path
 
 __all__ = ('Sedimentation',)
@@ -34,11 +34,11 @@ __all__ = ('Sedimentation',)
 data_path += 'unit_data/Sedimentation.csv'
 
 
-class Sedimentation(SanUnit, Decay):
+class Sedimentation(SludgeSeparator, Decay):
     '''Sedimentation of wastes into liquid and solid phases.'''
     
-    def __init__(self, ID='', ins=None, outs=(), if_N_degradation=True,
-                 **kwargs):
+    def __init__(self, ID='', ins=None, outs=(), split=None, settled_frac=None,
+                 if_N_degradation=True, **kwargs):
         
         '''
 
@@ -48,22 +48,24 @@ class Sedimentation(SanUnit, Decay):
             Waste for treatment.
         outs : WasteStream
             Drained liquid, settled solids, fugitive CH4, and fugitive N2O.
+        split : [float] or [dict]
+            Fractions of material retention in the settled solids.
+            Default values will be used if not given.
+        settled_frac : [float]
+            Fraction of influent that settles as solids.
+            The default value will be used if not given.
         if_N_degradation : [bool]
             If N degradation and N2O emission occur during treatment.
 
         '''        
         
-        SanUnit.__init__(self, ID, ins, outs)
+        SludgeSeparator.__init__(self, ID, ins, outs, split, settled_frac)
         self.if_N_degradation = if_N_degradation
 
         data = load_data(path=data_path)
         for para in data.index:
-            if para == 'split':
-                value = eval(data.loc[para]['expected'])
-                setattr(self, para, value)
-            else:
-                value = float(data.loc[para]['expected'])
-                setattr(self, '_'+para, value)
+            value = float(data.loc[para]['expected'])
+            setattr(self, '_'+para, value)
         del data
         
         for attr, value in kwargs.items():
@@ -78,29 +80,7 @@ class Sedimentation(SanUnit, Decay):
         CH4.phase = N2O.phase = 'g'
         
         # Retention in the settled solids
-        split = self.split
-        if self._split_type == 'float':
-            liq.copy_like(waste)
-            sol.copy_like(waste)
-            sol.mass *= self.split
-            liq.mass -= sol.mass
-        else:
-            for var in self.split.keys():
-                #!!! In the future this should be best by changing the state variable
-                if var == 'TS':
-                    sol.imass['OtherSS'] = split[var] * waste.imass['OtherSS']
-                elif var == 'COD':
-                    sol._COD = split[var] * waste._COD
-                    liq._COD = waste._COD - sol._COD
-                elif var == 'N':
-                    N_sol = split[var]*(waste.imass['NH3']+waste.imass['NonNH3'])
-                    NonNH3_rmd, NH3_rmd = \
-                        self.allocate_N_removal(N_sol, waste.imass['NonNH3'])
-                    sol.imass ['NonNH3'] = NonNH3_rmd
-                    sol.imass ['NH3'] = NH3_rmd
-                else:
-                    sol.imass[var] = split[var] * waste.imass[var]
-            liq.mass = waste.mass - sol.mass
+        SludgeSeparator._run(self)
             
         # COD degradation in settled solids
         COD_loss = self.first_order_decay(k=self.decay_k_COD,
@@ -109,7 +89,7 @@ class Sedimentation(SanUnit, Decay):
 
         sol._COD *= 1 - COD_loss
         sol.imass['OtherSS'] *= 1 - COD_loss
-        sol.imass['H2O'] = waste.F_mass * self.setted_frac - sol.F_mass
+        sol.imass['H2O'] = waste.F_mass * self.settled_frac - sol.F_mass
         if sol.imass['H2O'] < 0:
             sol.imass['H2O'] = 0
             msg = 'Negative water content calcualted for settled solids' \
@@ -166,41 +146,6 @@ class Sedimentation(SanUnit, Decay):
     @tau.setter
     def tau(self, i):
         self._tau = float(i)
-
-    @property
-    def split(self):
-        '''
-        [float] or [dict] Fractions of material retention in the settled solids
-        before degradation. If a single number is provided, then it is assumed
-        that retentions of all Components in the WasteStream are the same.
-        
-        Note
-        ----
-            Set state variable values (e.g., COD) will be retained if the retention
-            ratio is a single number (treated like the loss stream is split
-            from the original stream), but not when the ratio is a dict.
-
-        '''
-        return self._split
-    @split.setter
-    def split(self, i):
-        try:
-            self._split = float(i)
-            self._split_type = 'float'
-        except:
-            if isinstance(i, dict):
-                self._split = i
-                self._split_type = 'dict'
-            else:
-                raise TypeError(f'Only float or dict allowed, not {type(i).__name__}.')
-
-    @property
-    def setted_frac(self):
-        '''[float] Fraction of influent that settles as solids.'''
-        return self._setted_frac
-    @setted_frac.setter
-    def setted_frac(self, i):
-        self._setted_frac = float(i)
 
     @property
     def tank_V(self):
