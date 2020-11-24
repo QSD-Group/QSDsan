@@ -26,11 +26,11 @@ Ref:
 
 import pandas as pd
 from .utils.loading import data_path
-data_path += 'lca_data/materials.xlsx'
+data_path += 'lca_data/construction.xlsx'
 
-class Material:
+class Construction:
     '''
-    A class containing different types of materials.
+    A class containing different types of construction materials and activities.
     
     '''
     
@@ -46,10 +46,10 @@ class Material:
     
     # This makes sure it won't be shown as memory location of the object
     def __repr__(self):
-        return f"Material('{self}')"
+        return f"Construction('{self}')"
     
     def show(self):
-        info = f'Material: {self.ID} [per {self.functional_unit}]'
+        info = f'Construction: {self.ID} [per {self.functional_unit}]'
         info += f'\n price: {self.price}'
         info += '\n CFs:'
         CFs = self.CFs
@@ -137,16 +137,17 @@ class Material:
     
     
     
-class ConstructionMaterial:
-    '''
-    A class to calculate the cost and environmental impacts associated with construction materials.
+# class ConstructionMaterial:
+#     '''
+#     A class to calculate the cost and environmental impacts associated with
+#     construction materials.
     
-    '''
+#     '''
 
-    __slots__ = ('quantity',)
+#     __slots__ = ('quantity',)
     
-    def __init__(self):
-        self.quantity = 0.
+#     def __init__(self):
+#         self.quantity = 0.
 
 
 

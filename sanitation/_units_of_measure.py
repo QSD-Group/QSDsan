@@ -23,7 +23,7 @@ for license details.
 # from pint import UnitRegistry
 # ureg = UnitRegistry()
 
-from ..utils.loading import data_path
+from .utils.loading import data_path
 data_path += 'units_of_measure.txt'
 
 from thermosteam import units_of_measure as uom
@@ -31,7 +31,7 @@ ureg = uom.ureg
 ureg.load_definitions(data_path)
 
 AbsoluteUnitsOfMeasure = uom.AbsoluteUnitsOfMeasure
-material_units_of_measure = {
+construction_units_of_measure = {
     'mass': AbsoluteUnitsOfMeasure('kg'),
     'volume': AbsoluteUnitsOfMeasure('m3'),
     }
