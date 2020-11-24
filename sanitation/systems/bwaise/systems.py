@@ -137,18 +137,25 @@ SceA.simulate()
 
 # %%
 
-waste = A2.outs[0].copy()
-A4 = units.AnaerobicDigestion('A4', ins=waste,
+ws1 = A2.outs[0].copy('ws1')
+A4 = units.AnaerobicDigestion('A4', ins=ws1,
                               outs=('treated', 'CH4', 'N2O'),
                               # tau_previous=A2.emptying_period*365,
                               decay_k_N=get_decay_k(tau_deg, log_deg),
                               max_CH4_emission=max_CH4_emission)
 A4.simulate()
-A4.show()
+# A4.show()
 
+ws2 = A2.outs[0].copy('ws2')
+A5 = units.Sedimentation('A5', ins=ws2,
+                         outs=('liq', 'sol', 'CH4', 'N2O'),
+                         # tau_previous=A2.emptying_period*365,
+                         decay_k_COD=get_decay_k(tau_deg, log_deg),
+                         decay_k_N=get_decay_k(tau_deg, log_deg),
+                         max_CH4_emission=max_CH4_emission)
 
-
-
+A5.simulate()
+# A5.show()
 
 
 

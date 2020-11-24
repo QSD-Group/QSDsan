@@ -21,7 +21,7 @@ from . import _pit_latrine
 from . import _uddt
 from . import _transportation
 from . import _anaerobic_digestion
-
+from . import _sedimentation
 
 
 
@@ -43,7 +43,7 @@ from ._pit_latrine import PitLatrine
 from ._uddt import UDDT
 from ._transportation import Transportation
 from ._anaerobic_digestion import AnaerobicDigestion
-
+from ._sedimentation import Sedimentation
 
 
 
@@ -63,7 +63,7 @@ __all__ = (
     *_uddt.__all__,
     *_transportation.__all__,
     *_anaerobic_digestion.__all__,
-    
+    *_sedimentation.__all__,    
     
     
     

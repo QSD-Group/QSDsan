@@ -111,26 +111,28 @@ class AnaerobicDigestion(SanUnit, Decay):
             N2O.empty()
 
     def _design(self):
-        D = self.design_results
-        D['Flow rate'] = Q = self.ins[0].F_vol
-        D['Reactor number'] = N = self.N_reactor
+        design = self.design_results
+        design['Flow rate'] = Q = self.ins[0].F_vol
+        design['Reactor number'] = N = self.N_reactor
         V_tot = Q * self.tau*24
         # one extra as a backup
-        D['Single reactor volume'] = V_single = V_tot/(1-self.headspace_frac)/(N-1)
+        design['Single reactor volume'] = V_single = V_tot/(1-self.headspace_frac)/(N-1)
         # Rx modeled as a cylinder
-        D['Reactor diameter'] = dia = (4*V_single*self.aspect_ratio/np.pi)**(1/3)
-        D['Reactor height'] = h = self.aspect_ratio * dia
-        D['Reactor thickness'] = thick = self.rx_thickness
-        D['Total concrete volume'] = V_concrete = N*thick*(2*np.pi/4*(dia**2)+np.pi*dia*h)
-        D['Total excavation volume'] = V_tot
+        design['Reactor diameter'] = D = (4*V_single*self.aspect_ratio/np.pi)**(1/3)
+        design['Reactor height'] = H = self.aspect_ratio * D
+        design['Reactor thickness'] = thick = self.rx_thickness
+        design['Total concrete volume'] = N*thick*(2*np.pi/4*(D**2)+np.pi*D*H)
+        design['Total excavation volume'] = V_tot
         #!!! Excavation is an activity, not material, maybe change the name to "construction"?
         
-    # #!!! No opex assumption in ref [1]
-    # # Use the Material/Construction class
-    # def _cost(self):
-    #     self.purchase_cost['Concrete'] = self.design_results['Total concrete volume']
+    #!!! No opex assumption in ref [1]
+    # Use the Material/Construction class
+    def _cost(self):
+        pass
+        # self.purchase_cost['Concrete'] = self.design_results['Total concrete volume']
         
-        
+    
+    #!!! Maybe do not need this tau_previous
     @property
     def tau_previous(self):
         '''[float] Time between the waste production and anaerobic digestion, [d].'''
@@ -149,7 +151,7 @@ class AnaerobicDigestion(SanUnit, Decay):
 
     @property
     def COD_removal(self):
-        '''[float] Fraction of COD removed during anaerobic digestion.'''
+        '''[float] Fraction of COD removed during treatment.'''
         return self._COD_removal
     @COD_removal.setter
     def COD_removal(self, i):
@@ -157,7 +159,7 @@ class AnaerobicDigestion(SanUnit, Decay):
 
     @property
     def N_reactor(self):
-        '''[int] Number of reactors, non-integer will be converted to the smallest integer.'''
+        '''[int] Number of reactors, float will be converted to the smallest integer.'''
         return self._N_reactor
     @N_reactor.setter
     def N_reactor(self, i):

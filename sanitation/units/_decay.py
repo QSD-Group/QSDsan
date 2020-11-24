@@ -43,32 +43,31 @@ class Decay:
         self._N2O_EF_decay = None
 
     @staticmethod
-    def allocate_N_removal(tot_red, NH3):
+    def allocate_N_removal(tot_red, preferred_N):
         '''
         Allocate the total amount of N removal to NH3 and non-NH3 Components.
-        NH3 will be firstly removed before non-NH3.
 
         Parameters
         ----------
         tot_red : [float]
             Total amount of N to be removed.
-        NH3 : [float]
-            Current NH3 content.
+        preferred_N : [float]
+            Current content of the N that will be removed first.
 
         Returns
         -------
         [float]
-            Amount of NH3 to be removed.
+            Amount of preferred N to be removed.
         [float]
-            Amount of non-NH3 to be removed.
+            Amount of other N to be removed.
 
         '''
-        if not NH3 > 0:
+        if not preferred_N > 0:
             return 0, tot_red
-        elif NH3 > tot_red:
+        elif preferred_N > tot_red:
             return tot_red, 0
         else:
-            return NH3, tot_red-NH3  
+            return preferred_N, tot_red-preferred_N  
       
     @staticmethod
     def first_order_decay(k, t, max_removal, t0=0, tot=1):
