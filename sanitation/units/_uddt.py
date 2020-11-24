@@ -25,7 +25,7 @@ Ref:
 # %%
 
 import numpy as np
-from ..units._toilet import Toilet
+from ._toilet import Toilet
 from ..utils.loading import load_data, data_path
 
 __all__ = ('UDDT',)
@@ -109,29 +109,28 @@ class UDDT(Toilet):
         if self.if_air_emission:
             # N loss due to ammonia volatilization
             NH3_rmd, NonNH3_rmd = \
-                self._allocate_N_reduction(liq.TN/1e6*self.N_vol,
-                                           liq.imass['NH3'])
+                self.allocate_N_removal(liq.TN/1e3*liq.F_vol*self.N_vol,
+                                        liq.imass['NH3'])
             liq.imass ['NH3'] -= NH3_rmd
             liq.imass['NonNH3'] -= NonNH3_rmd
             # Energy/N loss due to degradation
-            COD_loss = self.get_degradation_loss(k=self.decay_k,
-                                                 t=self.collection_period/365,
-                                                 max_removal=self.COD_max_removal)
+            COD_loss = self.first_order_decay(k=self.decay_k_COD,
+                                              t=self.collection_period/365,
+                                              max_removal=self.COD_max_removal)
             CH4.imass['CH4'] = sol.COD/1e3*sol.F_vol*COD_loss * \
-                self.max_CH4_emission*self.MCF_loss # COD in mg/L (g/m3)
+                self.max_CH4_emission*self.MCF_decay # COD in mg/L (g/m3)
             sol._COD *= 1 - COD_loss
             sol.imass['OtherSS'] *= 1 - COD_loss
 
-            N_loss = self.get_degradation_loss(k=self.decay_k,
-                                               t=self.collection_period/365,
-                                               max_removal=self.N_max_removal)
-            N_loss_tot = sol.TN/1e6*N_loss
+            N_loss = self.first_order_decay(k=self.decay_k_N,
+                                            t=self.collection_period/365,
+                                            max_removal=self.N_max_removal)
+            N_loss_tot = sol.TN/1e3*sol.F_vol*N_loss
             NH3_rmd, NonNH3_rmd = \
-                self._allocate_N_reduction(N_loss_tot,
-                                           sol.imass['NH3'])
+                self.allocate_N_removal(N_loss_tot, sol.imass['NH3'])
             sol.imass ['NH3'] -= NH3_rmd
             sol.imass['NonNH3'] -= NonNH3_rmd
-            N2O.imass['N2O'] = N_loss_tot * self.N2O_EF_loss * 44/28
+            N2O.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44/28
         else:
             CH4.empty()
             N2O.empty()
@@ -212,12 +211,12 @@ class UDDT(Toilet):
                 waste=liq, CH4=CH4, N2O=N2O,
                 app_ratio=self.empty_ratio,
                 CH4_factor=self.COD_max_removal*self.MCF_aq*self.max_CH4_emission,
-                N2O_factor=self.N2O_EF_loss*44/28)
+                N2O_factor=self.N2O_EF_decay*44/28)
             sol, CH4, N2O = self.get_emptying_emission(
                 waste=sol, CH4=CH4, N2O=N2O,
                 app_ratio=self.empty_ratio,
                 CH4_factor=self.COD_max_removal*self.MCF_aq*self.max_CH4_emission,
-                N2O_factor=self.N2O_EF_loss*44/28)
+                N2O_factor=self.N2O_EF_decay*44/28)
 
     def _design(self):
         design = self.design_results
@@ -318,22 +317,6 @@ class UDDT(Toilet):
     @ur_pH.setter
     def ur_pH(self, i):
         self._ur_pH = float(i)
-
-    @property
-    def MCF_loss(self):
-        '''[float] Methane correction factor for COD degraded during storage.'''
-        return self._MCF_loss
-    @MCF_loss.setter
-    def MCF_loss(self, i):
-        self._MCF_loss = float(i)
-
-    @property
-    def N2O_EF_loss(self):
-        '''[float] Fraction of N emitted as N2O during storage.'''
-        return self._N2O_EF_loss
-    @N2O_EF_loss.setter
-    def N2O_EF_loss(self, i):
-        self._N2O_EF_loss = float(i)
 
     @property
     def fec_moi_min(self):

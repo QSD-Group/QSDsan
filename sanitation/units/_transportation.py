@@ -36,7 +36,7 @@ class Transportation(SanUnit):
                  capacity, distance, period,
                  transport_cost=0, emptying_cost=0,
                  transport_impacts={}, emptying_impacts={},
-                 if_material_loss=True, loss_ratio=None):
+                 if_material_loss=True, loss_ratio=0.02):
         '''
 
         Parameters

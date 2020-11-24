@@ -28,39 +28,41 @@ TODO:
 
 import numpy as np
 from .. import SanUnit
+from ._decay import Decay
 from ..utils.loading import load_data, data_path
 
 __all__ = ('AnaerobicDigestion',)
 
 data_path += 'unit_data/AnaerobicDigestion.csv'
 
-#!!! Potentially make these a Process, or make a Treatment class
-from ._toilet import Toilet
-_allocate_N_reduction = Toilet._allocate_N_reduction
-
 
 # @cost(basis, CE, cost, n)
-class AnaerobicDigestion(SanUnit):
+class AnaerobicDigestion(SanUnit, Decay):
     '''Anaerobic digestion of wastes with production of biogas.'''
     
     def __init__(self, ID='', ins=None, outs=(),
                  if_CH4_captured=True, if_N_degradation=True,
                  **kwargs):
+        
         '''
 
         Parameters
         ----------
+        ins : WasteStream
+            Waste for treatment.
+        outs : WasteStream
+            Treated waste, fugitive CH4, and fugitive N2O.
         if_CH4_captured : [bool]
             If the generated CH4 is captured.
         if_N_degradation : [bool]
             If N degradation and N2O emission occur during treatment.
 
         '''
+        
         SanUnit.__init__(self, ID, ins, outs)
         self.if_CH4_captured = if_CH4_captured
         self.if_N_degradation = if_N_degradation
         self._tau_previous = 0.
-        self._max_CH4_emission = 0.25
     
         data = load_data(path=data_path)
         for para in data.index:
@@ -70,6 +72,9 @@ class AnaerobicDigestion(SanUnit):
         
         for attr, value in kwargs.items():
             setattr(self, attr, value)
+    
+    __doc__ += __init__.__doc__
+    __init__.__doc__ = __doc__
     
     _N_ins = 1
     _N_outs = 3
@@ -84,28 +89,24 @@ class AnaerobicDigestion(SanUnit):
         COD_deg = treated._COD*treated.F_vol/1e3*self.COD_removal # kg/hr
         treated._COD *= (1-self.COD_removal)
         treated.mass *= (1-self.COD_removal)
-        CH4_prd = COD_deg*self.MCF*self.max_CH4_emission
+        CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
         if self.if_CH4_captured:
             CH4.empty()
         else:
-            CH4.imass['CH4'] = CH4_prd
+            CH4.imass['CH4'] = CH4_prcd
 
         #!!! Check with Hannah about this algorithm, previous storage time,
         # additional storage time, etc.
-        # Maybe allow tau_previous = 0, otherwise add ValueError
         if self.if_N_degradation:
-            N_deg = waste.TN*self.N_max_removal
-            k = self.decay_k_N
-            t0 = self.tau_previous/365
-            t = self.tau/365
-            N0 = N_deg*k*t0/(1-np.exp(-k*t0)) #!!! This definitely isn't correct
-            N1 = N_deg*np.exp(-k*(t0+t))
-            N_loss = N0 - N1
-            N2O.imass['N2O'] = N_loss*waste.F_vol/1e3*self.N2O_EF*44/28
+            N_loss = self.first_order_decay(k=self.decay_k_N,
+                                            t=self.tau/365,
+                                            max_removal=self.N_max_removal)
+            N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol
             NH3_rmd, NonNH3_rmd = \
-                _allocate_N_reduction(N_loss*waste.F_vol/1e3, waste.imass['NH3'])
+                self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
             treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
             treated.imass['NonNH3'] = waste.imass['NonNH3'] - NonNH3_rmd
+            N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
         else:
             N2O.empty()
 
@@ -130,40 +131,6 @@ class AnaerobicDigestion(SanUnit):
     #     self.purchase_cost['Concrete'] = self.design_results['Total concrete volume']
         
         
-        
-
-    @property
-    def COD_removal(self):
-        '''[float] Fraction of COD removed during anaerobic digestion.'''
-        return self._COD_removal
-    @COD_removal.setter
-    def COD_removal(self, i):
-        self._COD_removal = float(i)
-
-    @property
-    def max_CH4_emission(self):
-        '''[float] Maximum methane emssion as a fraction of degraded COD, [g CH4/g COD].'''
-        return self._max_CH4_emission
-    @max_CH4_emission.setter
-    def max_CH4_emission(self, i):
-        self._max_CH4_emission = float(i)
-
-    @property
-    def MCF(self):
-        '''[float] Methane correction factor for COD during treatment.'''
-        return self._MCF
-    @MCF.setter
-    def MCF(self, i):
-        self._MCF = float(i)
-
-    @property
-    def N_max_removal(self):
-        '''[float] Maximum fraction of N removed through denitrification during storage given sufficient time.'''
-        return self._N_max_removal
-    @N_max_removal.setter
-    def N_max_removal(self, i):
-        self._N_max_removal = float(i)
-
     @property
     def tau_previous(self):
         '''[float] Time between the waste production and anaerobic digestion, [d].'''
@@ -174,27 +141,19 @@ class AnaerobicDigestion(SanUnit):
 
     @property
     def tau(self):
-        '''[float] Storage time of the waste prior to anaerobic digestion, [d].'''
+        '''[float] Residence time, [d].'''
         return self._tau
     @tau.setter
     def tau(self, i):
         self._tau = float(i)
 
     @property
-    def N2O_EF(self):
-        '''[float] Fraction of N emitted as N2O.'''
-        return self._N2O_EF
-    @N2O_EF.setter
-    def N2O_EF(self, i):
-        self._N2O_EF = float(i)
-
-    @property
-    def decay_k_N(self):
-        '''[float] Rate constant for N decay, [/yr].'''
-        return self._decay_k_N
-    @decay_k_N.setter
-    def decay_k_N(self, i):
-        self._decay_k_N = float(i)
+    def COD_removal(self):
+        '''[float] Fraction of COD removed during anaerobic digestion.'''
+        return self._COD_removal
+    @COD_removal.setter
+    def COD_removal(self, i):
+        self._COD_removal = float(i)
 
     @property
     def N_reactor(self):

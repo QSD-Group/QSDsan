@@ -15,6 +15,7 @@ for license details.
 
 from . import _bst_units
 from . import _excretion
+from . import _decay
 from . import _toilet
 from . import _pit_latrine
 from . import _uddt
@@ -36,6 +37,7 @@ from ._bst_units import (
     Tank, StorageTank, MixTank
     )
 from ._excretion import Excretion
+from ._decay import Decay
 from ._toilet import Toilet
 from ._pit_latrine import PitLatrine
 from ._uddt import UDDT
@@ -55,6 +57,7 @@ from ._crop_application import CropApplication
 __all__ = (
     *_bst_units.__all__,
     *_excretion.__all__,
+    *_decay.__all__,
     *_toilet.__all__,
     *_pit_latrine.__all__,
     *_uddt.__all__,

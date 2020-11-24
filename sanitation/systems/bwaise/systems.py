@@ -94,7 +94,8 @@ A2 = units.PitLatrine('A2', ins=(A1-0, A1-1,
                                  'cleaning_water', 'desiccant'),
                       outs=('mixed_waste', 'leachate', 'CH4', 'N2O'),
                       N_user=N_user, OPEX_over_CAPEX=0.05,
-                      decay_k=get_decay_k(tau_deg, log_deg),
+                      decay_k_COD=get_decay_k(tau_deg, log_deg),
+                      decay_k_N=get_decay_k(tau_deg, log_deg),
                       max_CH4_emission=max_CH4_emission)
 
 
@@ -139,8 +140,9 @@ SceA.simulate()
 waste = A2.outs[0].copy()
 A4 = units.AnaerobicDigestion('A4', ins=waste,
                               outs=('treated', 'CH4', 'N2O'),
-                              tau_previous=A2.emptying_period*365,
-                              decay_k_N=get_decay_k(tau_deg, log_deg),)
+                              # tau_previous=A2.emptying_period*365,
+                              decay_k_N=get_decay_k(tau_deg, log_deg),
+                              max_CH4_emission=max_CH4_emission)
 A4.simulate()
 A4.show()
 
@@ -182,7 +184,8 @@ C2 = units.UDDT('C2', ins=(C1-0, C1-1,
                 outs=('liquid_waste', 'solid_waste',
                       'struvite', 'HAP', 'CH4', 'N2O'),
                 N_user=N_user, OPEX_over_CAPEX=0.1,
-                decay_k=get_decay_k(tau_deg, log_deg),
+                decay_k_COD=get_decay_k(tau_deg, log_deg),
+                decay_k_N=get_decay_k(tau_deg, log_deg),
                 max_CH4_emission=max_CH4_emission)
 
 truck = 'HandcartAndTruck'

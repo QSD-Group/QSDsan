@@ -24,9 +24,9 @@ Ref:
 
 # %%
 
-import numpy as np
 from warnings import warn
 from .. import SanUnit
+from ._decay import Decay
 from ..utils.loading import load_data, data_path
 
 __all__ = ('Toilet',)
@@ -36,7 +36,7 @@ data_path += 'unit_data/Toilet.csv'
 
 # %%
 
-class Toilet(SanUnit, isabstract=True):
+class Toilet(SanUnit, Decay, isabstract=True):
     '''
     Abstract class to hold common parameters for PitLatrine and UDDT
     (urine-diverting dry toliet).
@@ -93,9 +93,6 @@ class Toilet(SanUnit, isabstract=True):
         del data
         
         self._empty_ratio = 0.59
-        # Assuming tau_deg is 2 yr and log_deg is 3
-        self._decay_k = (-1/2)*np.log(10**-3)
-        self._max_CH4_emission = 0.25
         
     _N_ins = 6
     _outs_size_is_fixed = False
@@ -121,62 +118,6 @@ class Toilet(SanUnit, isabstract=True):
         cw.imass['H2O'] = int(self.if_cleansing)*self.cleansing_water * N_user
         des.imass['WoodAsh'] = int(self.if_desiccant)*self.desiccant * N_user
       
-    @staticmethod
-    def _allocate_N_reduction(tot_red, NH3):
-        '''
-        Allocate the total amount of N removal to NH3 and non-NH3 Components.
-        NH3 will be firstly removed before non-NH3.
-
-        Parameters
-        ----------
-        tot_red : [float]
-            Total amount of N to be removed.
-        NH3 : [float]
-            Current NH3 content.
-
-        Returns
-        -------
-        [float]
-            Amount of NH3 to be removed.
-        [float]
-            Amount of non-NH3 to be removed.
-
-        '''
-        if not NH3 > 0:
-            return 0, tot_red
-        elif NH3 > tot_red:
-            return tot_red, 0
-        else:
-            return NH3, tot_red-NH3  
-      
-    @staticmethod
-    def get_degradation_loss(k, t, max_removal, tot=1):
-        '''
-        To calculate first-order degradation loss.
-
-        Parameters
-        ----------
-        k : [float]
-            Degradation rate constant.
-        t : [float]
-            Degradation time.
-        max_removal : [float]
-            Maximum removal ratio.
-        tot : [float], optional
-            Total degradable amount.
-            If set to 1 (default), the return is the relative ratio (i.e., loss/tot).
-
-        Returns
-        -------
-        loss : [float]
-            Amount lost due to degradation.
-
-        '''
-
-        max_deg = tot * max_removal
-        after = max_deg/(k*t) * (1-np.exp(-k*t))
-        loss = max_deg - after
-        return loss
 
     @staticmethod
     def get_emptying_emission(waste, CH4, N2O, app_ratio, CH4_factor, N2O_factor):
@@ -292,30 +233,6 @@ class Toilet(SanUnit, isabstract=True):
         self._empty_ratio = float(i)
 
     @property
-    def max_CH4_emission(self):
-        '''[float] Maximum methane emssion as a fraction of degraded COD, [g CH4/g COD].'''
-        return self._max_CH4_emission
-    @max_CH4_emission.setter
-    def max_CH4_emission(self, i):
-        self._max_CH4_emission = float(i)
-
-    @property
-    def COD_max_removal(self):
-        '''[float] Maximum fraction of COD removed during storage given sufficient time.'''
-        return self._COD_max_removal
-    @COD_max_removal.setter
-    def COD_max_removal(self, i):
-        self._COD_max_removal = float(i)
-
-    @property
-    def N_max_removal(self):
-        '''[float] Maximum fraction of N removed through denitrification during storage given sufficient time.'''
-        return self._N_max_removal
-    @N_max_removal.setter
-    def N_max_removal(self, i):
-        self._N_max_removal = float(i)
-
-    @property
     def MCF_aq(self):
         '''[float] Methane correction factor for COD lost due to inappropriate emptying.'''
         return self._MCF_aq
@@ -330,14 +247,6 @@ class Toilet(SanUnit, isabstract=True):
     @N2O_EF_aq.setter
     def N2O_EF_aq(self, i):
         self._N2O_EF_aq = float(i)
-
-    @property
-    def decay_k(self):
-        '''[float] Rate constant for COD and N decay, [/yr].'''
-        return self._decay_k
-    @decay_k.setter
-    def decay_k(self, i):
-        self._decay_k = float(i)
 
 
 
