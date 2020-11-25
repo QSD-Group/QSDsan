@@ -313,9 +313,6 @@ class CompiledComponents(CompiledChemicals):
                 try: new.set_synonym(i, j)
                 except: pass
         return new
-
-    #TODO: allow to subgroup by exclusion of some components.
-    #TODO: allow to un-compile?
     
     def index(self, ID):
         '''Return index of specified Component.'''
