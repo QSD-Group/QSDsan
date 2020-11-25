@@ -29,15 +29,13 @@ from .. import SanUnit
 from ._decay import Decay
 from ..utils.loading import load_data, data_path
 
-__all__ = ('AnaerobicLagoon',)
-
-data_path += 'unit_data/AnaerobicLagoon.csv'
+__all__ = ('Lagoon',)
 
 
-class AnaerobicLagoon(SanUnit, Decay):
-    '''Anaerobic lagoon with fixed COD and N removal.'''
+class Lagoon(SanUnit, Decay):
+    '''Anaerobic and facultive lagoon treatment systems.'''
     
-    def __init__(self, ID='', ins=None, outs=(),
+    def __init__(self, ID='', ins=None, outs=(), lagoon_type='Anaerobic',
                  if_N2O_emission=True, **kwargs):
         
         '''
@@ -48,26 +46,32 @@ class AnaerobicLagoon(SanUnit, Decay):
             Waste for treatment.
         outs : WasteStream
             Treated waste, fugitive CH4, and fugitive N2O.
+        lagoon_type : [str]
+            Can choose from ('Anaerobic', 'Facultive').
         if_N2O_emission : [bool]
             If consider N2O emission from N degradation the process.
 
         '''        
         
         SanUnit.__init__(self, ID, ins, outs)
-        self.if_N2O_emission = if_N2O_emission
-
         self._tau = None
-        data = load_data(path=data_path)
-        for para in data.index:
-            value = float(data.loc[para]['expected'])
-            setattr(self, '_'+para, value)
-        del data
+        self._P_removal = 0.
+        
+        anaerobic_path = data_path + 'unit_data/AnaerobicLagoon.csv'
+        self._anaerobic_defaults = load_data(path=anaerobic_path)
+        facultive_path = data_path + 'unit_data/FacultiveLagoon.csv'
+        self._facultive_defaults = load_data(path=facultive_path)
+        
+        self._lagoon_type = None
+        self.lagoon_type = lagoon_type
+        self.if_N2O_emission = if_N2O_emission
         
         for attr, value in kwargs.items():
             setattr(self, attr, value)
     
     __doc__ += __init__.__doc__
     __init__.__doc__ = __doc__
+        
     
     _N_ins = 1
     _N_outs = 3
@@ -79,8 +83,8 @@ class AnaerobicLagoon(SanUnit, Decay):
 
         treated.copy_like(waste)
         removed_frac = self.COD_removal*self.COD_degradation
-        treated._COD *= removed_frac
-        treated.imass['OtherSS'] *= removed_frac
+        treated._COD *= 1 - self.COD_removal
+        treated.imass['OtherSS'] *= 1 - self.COD_removal
         
         CH4.imass['CH4'] = \
             removed_frac*waste.F_vol/1e3*self.MCF_decay*self.max_CH4_emission
@@ -97,8 +101,8 @@ class AnaerobicLagoon(SanUnit, Decay):
             N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
         else:
             N2O.empty()
-        
 
+        treated.imass['P'] *= 1 - self.P_removal
 
     def _cost(self):
         design = self.design_results
@@ -111,6 +115,26 @@ class AnaerobicLagoon(SanUnit, Decay):
         liner_A = (L*W + 2*depth*(L+W)) * N
         design['Total liner'] = liner_A * self.liner_mass
     
+    @property
+    def lagoon_type(self):
+        '''[str] Lagoon type, can be either 'Anaerobic' or 'Facultive'.'''
+        return self._lagoon_type
+    @lagoon_type.setter
+    def lagoon_type(self, i):
+        if i == self._lagoon_type: pass
+        else:
+            if i == 'Anaerobic':
+                data = self._anaerobic_defaults
+            elif i == 'Facultive':
+                data = self._facultive_defaults
+            else:
+                raise ValueError(f"Lagoon type can only be 'Anaerobic' or 'Facultive',"
+                                 f'not {i}.')
+            for para in data.index:
+                value = float(data.loc[para]['expected'])
+                setattr(self, para, value)
+        self._lagoon_type = i
+
     @property
     def COD_removal(self):
         '''[float] Fraction of COD removed during treatment.'''
@@ -126,6 +150,14 @@ class AnaerobicLagoon(SanUnit, Decay):
     @COD_degradation.setter
     def COD_degradation(self, i):
         self._COD_degradation = float(i)
+        
+    @property
+    def P_removal(self):
+        '''[float] Fraction of P removed during treatment.'''
+        return self._P_removal
+    @P_removal.setter
+    def P_removal(self, i):
+        self._P_removal = float(i)
         
     @property
     def N_lagoon(self):
@@ -189,7 +221,6 @@ class AnaerobicLagoon(SanUnit, Decay):
     def liner_mass(self, i):
         self._liner_mass = float(i)
 
-        
 
 
 

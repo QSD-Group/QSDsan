@@ -165,10 +165,10 @@ SceA.simulate()
 # A6.show()
 
 ws4 = A2.outs[0].copy('ws4')
-A7 = units.AnaerobicLagoon('A7', ins=ws4,
-                           outs=('treated', 'CH4', 'N2O'),
-                           decay_k_N=get_decay_k(tau_deg, log_deg),
-                           max_CH4_emission=max_CH4_emission)
+A7 = units.Lagoon('A7', ins=ws4, outs=('treated', 'CH4', 'N2O'),
+                  lagoon_type='Anaerobic',
+                  decay_k_N=get_decay_k(tau_deg, log_deg),
+                  max_CH4_emission=max_CH4_emission)
 
 A7.simulate()
 

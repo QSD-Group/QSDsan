@@ -37,10 +37,7 @@ data_path += 'unit_data/Toilet.csv'
 # %%
 
 class Toilet(SanUnit, Decay, isabstract=True):
-    '''
-    Abstract class to hold common parameters for PitLatrine and UDDT
-    (urine-diverting dry toliet).
-    '''
+    '''Abstract class containing common parameters and design algorithms for toilets.'''
     
     def __init__(self, ID='', ins=None, outs=(), N_user=1, life_time=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
