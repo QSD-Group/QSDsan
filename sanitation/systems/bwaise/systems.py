@@ -138,33 +138,39 @@ SceA.simulate()
 
 # %%
 
-ws1 = A2.outs[0].copy('ws1')
-A4 = units.AnaerobicDigestion('A4', ins=ws1,
-                              outs=('treated', 'CH4', 'N2O'),
-                              # tau_previous=A2.emptying_period*365,
-                              decay_k_N=get_decay_k(tau_deg, log_deg),
-                                max_CH4_emission=max_CH4_emission)
-A4.simulate()
-# A4.show()
+# ws1 = A2.outs[0].copy('ws1')
+# A4 = units.AnaerobicDigestion('A4', ins=ws1,
+#                               outs=('treated', 'CH4', 'N2O'),
+#                               # tau_previous=A2.emptying_period*365,
+#                               decay_k_N=get_decay_k(tau_deg, log_deg),
+#                                 max_CH4_emission=max_CH4_emission)
+# A4.simulate()
+# # A4.show()
 
-ws2 = A2.outs[0].copy('ws2')
-A5 = units.SludgeSeparator('A5', ins=ws2, outs=('liq', 'sol'))
+# ws2 = A2.outs[0].copy('ws2')
+# A5 = units.SludgeSeparator('A5', ins=ws2, outs=('liq', 'sol'))
 
-A5.simulate()
+# A5.simulate()
 # A5.show()
 
-ws3 = A2.outs[0].copy('ws3')
-A6 = units.Sedimentation('A6', ins=ws3,
-                          outs=('liq', 'sol', 'CH4', 'N2O'),
-                          # tau_previous=A2.emptying_period*365,
-                          decay_k_COD=get_decay_k(tau_deg, log_deg),
-                          decay_k_N=get_decay_k(tau_deg, log_deg),
-                          max_CH4_emission=max_CH4_emission)
+# ws3 = A2.outs[0].copy('ws3')
+# A6 = units.SedimentationTank('A6', ins=ws3,
+#                              outs=('liq', 'sol', 'CH4', 'N2O'),
+#                              # tau_previous=A2.emptying_period*365,
+#                              decay_k_COD=get_decay_k(tau_deg, log_deg),
+#                              decay_k_N=get_decay_k(tau_deg, log_deg),
+#                              max_CH4_emission=max_CH4_emission)
 
-A6.simulate()
+# A6.simulate()
 # A6.show()
 
+ws4 = A2.outs[0].copy('ws4')
+A7 = units.AnaerobicLagoon('A7', ins=ws4,
+                           outs=('treated', 'CH4', 'N2O'),
+                           decay_k_N=get_decay_k(tau_deg, log_deg),
+                           max_CH4_emission=max_CH4_emission)
 
+A7.simulate()
 
 
 
@@ -188,49 +194,49 @@ A6.simulate()
 # Scenario C: containaer-based sanitation with existing treatment
 # =============================================================================
 
-print('\n----------Scenario C----------\n')
-C1 = units.Excretion('C1', outs=('urine', 'feces'), N_user=N_user)
-C2 = units.UDDT('C2', ins=(C1-0, C1-1,
-                           'toilet_paper', 'flushing_water',
-                           'cleaning_water', 'desiccant'),
-                outs=('liquid_waste', 'solid_waste',
-                      'struvite', 'HAP', 'CH4', 'N2O'),
-                N_user=N_user, OPEX_over_CAPEX=0.1,
-                decay_k_COD=get_decay_k(tau_deg, log_deg),
-                decay_k_N=get_decay_k(tau_deg, log_deg),
-                max_CH4_emission=max_CH4_emission)
-C1.simulate()
-C2.simulate()
+# print('\n----------Scenario C----------\n')
+# C1 = units.Excretion('C1', outs=('urine', 'feces'), N_user=N_user)
+# C2 = units.UDDT('C2', ins=(C1-0, C1-1,
+#                            'toilet_paper', 'flushing_water',
+#                            'cleaning_water', 'desiccant'),
+#                 outs=('liquid_waste', 'solid_waste',
+#                       'struvite', 'HAP', 'CH4', 'N2O'),
+#                 N_user=N_user, OPEX_over_CAPEX=0.1,
+#                 decay_k_COD=get_decay_k(tau_deg, log_deg),
+#                 decay_k_N=get_decay_k(tau_deg, log_deg),
+#                 max_CH4_emission=max_CH4_emission)
+# C1.simulate()
+# C2.simulate()
 
-truck = 'HandcartAndTruck'
-# Liquid waste
-period = (C2.collection_period*24*truck_V[truck])/C2.tank_V
-C3 = units.Transportation('C3', ins=C2-0, outs=('transported_l', 'loss_l'),
-                          capacity=truck_V[truck], distance=5,
-                          period=period,
-                          transport_cost=truck_cost[truck]/5, # convert to per km 
-                          emptying_cost=0.01*N_user/24, # 0.01 USD/cap/d
-                          loss_ratio=0.02)
-# Solid waste
-period = (C2.collection_period*24*truck_V[truck])/C2.tank_V
-C4 = units.Transportation('C4', ins=C2-1, outs=('transported_s', 'loss_s'),
-                          capacity=truck_V[truck], distance=5,
-                          period=period,
-                          transport_cost=truck_cost[truck]/5, # convert to per km 
-                          emptying_cost=0.01*N_user/24, # 0.01 USD/cap/d
-                          loss_ratio=0.02)
-
-
-CX = units.CropApplication('CX', ins=WasteStream(), loss_ratio=app_loss)
-def adjust_NH3_loss():
-    CX._run()
-    CX.outs[0]._COD = CX.outs[1]._COD = CX.ins[0]._COD
-CX.specification = adjust_NH3_loss
+# truck = 'HandcartAndTruck'
+# # Liquid waste
+# period = (C2.collection_period*24*truck_V[truck])/C2.tank_V
+# C3 = units.Transportation('C3', ins=C2-0, outs=('transported_l', 'loss_l'),
+#                           capacity=truck_V[truck], distance=5,
+#                           period=period,
+#                           transport_cost=truck_cost[truck]/5, # convert to per km 
+#                           emptying_cost=0.01*N_user/24, # 0.01 USD/cap/d
+#                           loss_ratio=0.02)
+# # Solid waste
+# period = (C2.collection_period*24*truck_V[truck])/C2.tank_V
+# C4 = units.Transportation('C4', ins=C2-1, outs=('transported_s', 'loss_s'),
+#                           capacity=truck_V[truck], distance=5,
+#                           period=period,
+#                           transport_cost=truck_cost[truck]/5, # convert to per km 
+#                           emptying_cost=0.01*N_user/24, # 0.01 USD/cap/d
+#                           loss_ratio=0.02)
 
 
-SceC = bst.System('SceC', path=(C1, C2, C3, C4, CX))
+# CX = units.CropApplication('CX', ins=WasteStream(), loss_ratio=app_loss)
+# def adjust_NH3_loss():
+#     CX._run()
+#     CX.outs[0]._COD = CX.outs[1]._COD = CX.ins[0]._COD
+# CX.specification = adjust_NH3_loss
 
-SceC.simulate()
+
+# SceC = bst.System('SceC', path=(C1, C2, C3, C4, CX))
+
+# SceC.simulate()
 
 
 

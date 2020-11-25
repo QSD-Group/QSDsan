@@ -24,21 +24,20 @@ Ref:
 # %%
 
 import numpy as np
-from warnings import warn
 from ._decay import Decay
 from ._sludge_separator import SludgeSeparator
 from ..utils.loading import load_data, data_path
 
-__all__ = ('Sedimentation',)
+__all__ = ('SedimentationTank',)
 
-data_path += 'unit_data/Sedimentation.csv'
+data_path += 'unit_data/SedimentationTank.csv'
 
 
-class Sedimentation(SludgeSeparator, Decay):
+class SedimentationTank(SludgeSeparator, Decay):
     '''Sedimentation of wastes into liquid and solid phases.'''
     
     def __init__(self, ID='', ins=None, outs=(), split=None, settled_frac=None,
-                 if_N_degradation=True, **kwargs):
+                 if_N2O_emission=True, **kwargs):
         
         '''
 
@@ -47,20 +46,20 @@ class Sedimentation(SludgeSeparator, Decay):
         ins : WasteStream
             Waste for treatment.
         outs : WasteStream
-            Drained liquid, settled solids, fugitive CH4, and fugitive N2O.
+            Liquid, settled solids, fugitive CH4, and fugitive N2O.
         split : [float] or [dict]
             Fractions of material retention in the settled solids.
             Default values will be used if not given.
         settled_frac : [float]
             Fraction of influent that settles as solids.
             The default value will be used if not given.
-        if_N_degradation : [bool]
-            If N degradation and N2O emission occur during treatment.
+        if_N2O_emission : [bool]
+            If consider N2O emission from N degradation the process.
 
         '''        
         
         SludgeSeparator.__init__(self, ID, ins, outs, split, settled_frac)
-        self.if_N_degradation = if_N_degradation
+        self.if_N2O_emission = if_N2O_emission
 
         data = load_data(path=data_path)
         for para in data.index:
@@ -70,6 +69,9 @@ class Sedimentation(SludgeSeparator, Decay):
         
         for attr, value in kwargs.items():
             setattr(self, attr, value)
+    
+    __doc__ += __init__.__doc__
+    __init__.__doc__ = __doc__
     
     _N_ins = 1
     _N_outs = 4
@@ -89,18 +91,15 @@ class Sedimentation(SludgeSeparator, Decay):
 
         sol._COD *= 1 - COD_loss
         sol.imass['OtherSS'] *= 1 - COD_loss
-        sol.imass['H2O'] = waste.F_mass * self.settled_frac - sol.F_mass
-        if sol.imass['H2O'] < 0:
-            sol.imass['H2O'] = 0
-            msg = 'Negative water content calcualted for settled solids' \
-                'try smaller split or larger settled_frac.'
-            warn(msg, source=self)
-        liq.imass['H2O'] = waste.imass['H2O'] - sol.imass['H2O']
+        
+        # Adjust total mass of of the settled solids by changing water content
+        liq, sol = self._adjust_solid_water(waste, liq, sol, self.settled_frac)
+        
         CH4.imass['CH4'] = sol.COD/1e3*sol.F_vol*COD_loss * \
             self.max_CH4_emission*self.MCF_decay # COD in mg/L (g/m3)
 
         # N degradation
-        if self.if_N_degradation:
+        if self.if_N2O_emission:
             N_loss = self.first_order_decay(k=self.decay_k_N,
                                             t=self.tau/365,
                                             max_removal=self.N_max_removal)
@@ -109,8 +108,9 @@ class Sedimentation(SludgeSeparator, Decay):
                 self.allocate_N_removal(N_loss_tot, sol.imass['NH3'])
             sol.imass ['NH3'] -=  NH3_rmd
             sol.imass['NonNH3'] -= NonNH3_rmd
-
-        N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
+            N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
+        else:
+            N2O.empty()
     
     
     def _design(self):

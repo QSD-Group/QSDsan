@@ -23,6 +23,7 @@ Ref:
 
 # %%
 
+from warnings import warn
 from .. import SanUnit
 from ._decay import Decay
 from ..utils.loading import load_data, data_path
@@ -45,7 +46,7 @@ class SludgeSeparator(SanUnit):
         ins : WasteStream
             Waste for treatment.
         outs : WasteStream
-            Drained liquid, settled solids.
+            Liquid, settled solids.
         split : [float] or [dict]
             Fractions of material retention in the settled solids.
             Default values will be used if not given.
@@ -64,10 +65,24 @@ class SludgeSeparator(SanUnit):
             value = float(data.loc['settled_frac']['expected'])
             setattr(self, 'settled_frac', value)
         del data
-        
+    
+    __doc__ += __init__.__doc__
+    __init__.__doc__ = __doc__
+    
     _N_ins = 1
     _outs_size_is_fixed = False
     
+    def _adjust_solid_water(self, influent, liq, sol, sol_frac):
+        sol.imass['H2O'] = 0
+        sol.imass['H2O'] = influent.F_mass * sol_frac - sol.F_mass
+        if sol.imass['H2O'] < 0:
+            sol.imass['H2O'] = 0
+            msg = 'Negative water content calcualted for settled solids' \
+                'try smaller split or larger settled_frac.'
+            warn(msg, source=self)
+        liq.imass['H2O'] = influent.imass['H2O'] - sol.imass['H2O']
+        return liq, sol
+        
     def _run(self):
         waste = self.ins[0]
         liq, sol = self.outs[0], self.outs[1]
@@ -96,8 +111,9 @@ class SludgeSeparator(SanUnit):
                 else:
                     sol.imass[var] = split[var] * waste.imass[var]
             liq.mass = waste.mass - sol.mass
-            
-
+        
+        # Adjust total mass of of the settled solids by changing water content.
+        liq, sol = self._adjust_solid_water(waste, liq, sol, self.settled_frac)
 
     @property
     def split(self):

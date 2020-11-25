@@ -328,7 +328,7 @@ class WasteStream(Stream):
     
     @property
     def pH(self):
-        return self._liq_only_properties('pH', 7.)
+        return self._liq_sol_properties('pH', 7.)
         # if self.phase == 'l':
         #     return self._pH or 7.
         # else:
@@ -336,7 +336,7 @@ class WasteStream(Stream):
 
     @property
     def SAlk(self):
-        return self._liq_only_properties('SAlk', 0.)
+        return self._liq_sol_properties('SAlk', 0.)
         # if self.phase == 'l':
         #     return self._SAlk or 0.
         # else:
@@ -345,14 +345,14 @@ class WasteStream(Stream):
     @property
     def COD(self):
         '''[float] Chemical oxygen demand in mg/L.'''
-        return self._liq_only_properties('COD', self.composite('COD'))
+        return self._liq_sol_properties('COD', self.composite('COD'))
         # return self._COD or self.composite('COD')
         # else:
         #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
 
     @property    
     def BOD(self):
-        return self._liq_only_properties('BOD', self.composite('BOD'))
+        return self._liq_sol_properties('BOD', self.composite('BOD'))
         # return self._BOD or self.composite('BOD')
         # else:
         #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
@@ -361,35 +361,35 @@ class WasteStream(Stream):
     # Or a function to calculate it?
     @property
     def TC(self):
-        return self._liq_only_properties('TC', self.composite('TC'))
+        return self._liq_sol_properties('TC', self.composite('TC'))
         # return self._TC or self.composite('TC')
         # else:
         #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
     
     @property
     def TOC(self):
-        return self._liq_only_properties('TOC', self.composite('TC', organic=True))
+        return self._liq_sol_properties('TOC', self.composite('TC', organic=True))
         # return self._TOC or self.composite('TC', organic=True)
         # else:
         #     return None
         
     @property
     def TN(self):
-        return self._liq_only_properties('TN', self.composite('TN'))
+        return self._liq_sol_properties('TN', self.composite('TN'))
         # return self._TN or self.composite('TN')
         # else:
         #     return None
     
     @property
     def TKN(self):
-        return self._liq_only_properties('TKN', self.composite('TN', specification='TKN'))
+        return self._liq_sol_properties('TKN', self.composite('TN', specification='TKN'))
         # return self._TKN or self.composite('TN', specification='TKN')
         # else:
         #     return None
     
     @property
     def TP(self):
-        return self._liq_only_properties('TP', self.composite('TP'))
+        return self._liq_sol_properties('TP', self.composite('TP'))
         # return self._TP or self.composite('TP')
         # else:
         #     return None
@@ -397,35 +397,35 @@ class WasteStream(Stream):
     #!!! Are there methods to calculate TK, TMg, TCa in self.composite?
     @property
     def TK(self):
-        return self._liq_only_properties('TK', self.composite('TK'))
+        return self._liq_sol_properties('TK', self.composite('TK'))
         # return self._TK or self.composite('TK')
         # else:
         #     return None
     
     @property
     def TMg(self):
-        return self._liq_only_properties('TMg', self.composite('TMg'))
+        return self._liq_sol_properties('TMg', self.composite('TMg'))
         # return self._TMg or self.composite('TMg')
         # else:
         #     return None
     
     @property
     def TCa(self):
-        return self._liq_only_properties('TCa', self.composite('TCa'))
+        return self._liq_sol_properties('TCa', self.composite('TCa'))
         # return self._TCa or self.composite('TCa')
         # else:
         #     return None
     
     @property
     def solids(self):
-        return self._liq_only_properties('solids', self.composite('solids'))
+        return self._liq_sol_properties('solids', self.composite('solids'))
         # return self._solids or self.composite('solids')
         # else:
         #     return None
     
     @property
     def charge(self):
-        return self._liq_only_properties('charge', self.composite('charge'))
+        return self._liq_sol_properties('charge', self.composite('charge'))
         # return self._charge or self.composite('charge')
         # else:
         #     return None

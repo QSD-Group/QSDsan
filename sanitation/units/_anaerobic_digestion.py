@@ -41,7 +41,7 @@ class AnaerobicDigestion(SanUnit, Decay):
     '''Anaerobic digestion of wastes with production of biogas.'''
     
     def __init__(self, ID='', ins=None, outs=(),
-                 if_CH4_captured=True, if_N_degradation=True,
+                 if_CH4_captured=True, if_N2O_emission=True,
                  **kwargs):
         
         '''
@@ -54,14 +54,14 @@ class AnaerobicDigestion(SanUnit, Decay):
             Treated waste, fugitive CH4, and fugitive N2O.
         if_CH4_captured : [bool]
             If the generated CH4 is captured.
-        if_N_degradation : [bool]
-            If N degradation and N2O emission occur during treatment.
+        if_N2O_emission : [bool]
+            If consider N2O emission from N degradation the process.
 
         '''
         
         SanUnit.__init__(self, ID, ins, outs)
         self.if_CH4_captured = if_CH4_captured
-        self.if_N_degradation = if_N_degradation
+        self.if_N2O_emission = if_N2O_emission
         self._tau_previous = 0.
     
         data = load_data(path=data_path)
@@ -97,7 +97,7 @@ class AnaerobicDigestion(SanUnit, Decay):
 
         #!!! Check with Hannah about this algorithm, previous storage time,
         # additional storage time, etc.
-        if self.if_N_degradation:
+        if self.if_N2O_emission:
             N_loss = self.first_order_decay(k=self.decay_k_N,
                                             t=self.tau/365,
                                             max_removal=self.N_max_removal)

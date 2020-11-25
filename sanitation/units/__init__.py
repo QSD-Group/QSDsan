@@ -20,13 +20,10 @@ from . import _toilet
 from . import _pit_latrine
 from . import _uddt
 from . import _transportation
+from . import _anaerobic_lagoon
 from . import _anaerobic_digestion
 from . import _sludge_separator
-from . import _sedimentation
-
-
-
-
+from . import _sedimentation_tank
 from . import _biogas_combustion
 from . import _crop_application
 
@@ -42,15 +39,10 @@ from ._toilet import Toilet
 from ._pit_latrine import PitLatrine
 from ._uddt import UDDT
 from ._transportation import Transportation
+from ._anaerobic_lagoon import AnaerobicLagoon
 from ._anaerobic_digestion import AnaerobicDigestion
 from ._sludge_separator import SludgeSeparator
-from ._sedimentation import Sedimentation
-
-
-
-
-
-
+from ._sedimentation_tank import SedimentationTank
 from ._biogas_combustion import BiogasCombustion
 from ._crop_application import CropApplication
 
@@ -63,14 +55,10 @@ __all__ = (
     *_pit_latrine.__all__,
     *_uddt.__all__,
     *_transportation.__all__,
+    *_anaerobic_lagoon.__all__,
     *_anaerobic_digestion.__all__,
     *_sludge_separator.__all__,
-    *_sedimentation.__all__,
-    
-    
-    
-    
-    
+    *_sedimentation_tank.__all__,
     *_biogas_combustion.__all__,
     *_crop_application.__all__,
            )
