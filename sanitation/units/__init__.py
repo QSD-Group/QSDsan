@@ -24,6 +24,7 @@ from . import _anaerobic_digestion
 from . import _sludge_separator
 from . import _sedimentation_tank
 from . import _lagoon
+from . import _drying_bed
 from . import _biogas_combustion
 from . import _crop_application
 
@@ -43,6 +44,7 @@ from ._anaerobic_digestion import AnaerobicDigestion
 from ._sludge_separator import SludgeSeparator
 from ._sedimentation_tank import SedimentationTank
 from ._lagoon import Lagoon
+from ._drying_bed import DryingBed
 from ._biogas_combustion import BiogasCombustion
 from ._crop_application import CropApplication
 
@@ -59,6 +61,7 @@ __all__ = (
     *_sludge_separator.__all__,
     *_sedimentation_tank.__all__,
     *_lagoon.__all__,
+    *_drying_bed.__all__,
     *_biogas_combustion.__all__,
     *_crop_application.__all__,
            )

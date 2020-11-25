@@ -5,9 +5,21 @@ N_leaching,,fraction of N input,0.13,0.01,0.5,uniform,"Jacks et al., 1999; Lager
 P_leaching,,fraction of P input,0.18,0,0.37,uniform,"Nyenje et al., 2013 (0-1%); Orner and Mihelcic, 2017; Phillips and Burton, 2005 (30-37%)"
 K_leaching,,fraction of K input,0.21,0.11,0.31,uniform,"Phillips and Burton, 2005 (note this source is for leachate through soil, not from a latrine)"
 N_vol,N_pit_volatilization,fraction of N input,0.005,0,0.01,uniform,"Jacks et al., 1999; Orner and Mihelcic, 2017; Nyenje et al., 2013 minor due to neutral pH)"
-MCF_decay,"MCF_single_above_water,
-MCF_communal_above_water,
-MCF_below_water",fraction of anaerobic conversion of degraded COD,"(0, 0, 0)","(0, 0, 0)","(0.001, 0.001, 0.001)",triangular,triangular
-N2O_EF_decay,"N2O_EF_single_above_water,
-N2O_EF_communal_above_water,
-N2O_EF_below_water",fraction of N emitted as N2O,"(0.1, 0.5, 0.7)","(0.05, 0.4, 0.7)","(0.15, 0.6, 1)",uniform,"IPCC, 2019"
+MCF_decay,"MCF_single_above_water;
+MCF_communal_above_water;
+MCF_below_water",fraction of anaerobic conversion of degraded COD,"{'single_above_water': 0,
+ 'communal_above_water': 0,
+ 'below_water': 0}","{'single_above_water': 0,
+ 'communal_above_water': 0,
+ 'below_water': 0}","{'single_above_water': 0.001,
+ 'communal_above_water': 0.001,
+ 'below_water': 0.001}",triangular,triangular
+N2O_EF_decay,"N2O_EF_single_above_water;
+N2O_EF_communal_above_water;
+N2O_EF_below_water",fraction of N emitted as N2O,"{'single_above_water': 0.1,
+ 'communal_above_water': 0.5,
+ 'below_water': 0.7}","{'single_above_water': 0.05,
+ 'communal_above_water': 0.4,
+ 'below_water': 0.7}","{'single_above_water': 0.15,
+ 'communal_above_water': 0.6,
+ 'below_water': 1}",uniform,"IPCC, 2019"

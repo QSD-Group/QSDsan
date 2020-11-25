@@ -166,13 +166,20 @@ SceA.simulate()
 
 ws4 = A2.outs[0].copy('ws4')
 A7 = units.Lagoon('A7', ins=ws4, outs=('treated', 'CH4', 'N2O'),
-                  lagoon_type='Anaerobic',
+                  design_type='anaerobic',
                   decay_k_N=get_decay_k(tau_deg, log_deg),
                   max_CH4_emission=max_CH4_emission)
 
 A7.simulate()
 
+ws5 = A2.outs[0].copy('ws5')
+A8 = units.DryingBed('A8', ins=ws5, outs=('solid', 'evaporated', 'CH4', 'N2O'),
+                     design_type='unplanted',
+                     decay_k_COD=get_decay_k(tau_deg, log_deg),
+                     decay_k_N=get_decay_k(tau_deg, log_deg),
+                     max_CH4_emission=max_CH4_emission)
 
+A8.simulate()
 
 
 

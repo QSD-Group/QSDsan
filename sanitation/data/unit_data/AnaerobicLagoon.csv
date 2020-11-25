@@ -8,4 +8,4 @@ N_lagoon,number_anaerobic_lagoons,-,3,,,uniform,Lubigi process diagram
 lagoon_V,volume_anaerobic_lagoon,m3,4640,,,uniform,Lubigi process diagram
 lagoon_L,length_anaerobic_lagoon,m,65,,,uniform,Lubigi process diagram
 lagoon_W,width_anaerobic_lagoon,m,30,,,uniform,Lubigi process diagram
-liner_mass,liner_mass,kg/m2,0.63,0.31,1.24,uniform,Colorado Lining International
+liner_unit_mass,liner_mass,kg/m2,0.63,0.31,1.24,uniform,Colorado Lining International

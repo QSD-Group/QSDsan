@@ -9,4 +9,4 @@ N_lagoon,number_facultative_lagoons,-,2,,,constant,Lubigi process diagram
 lagoon_V,volume_facultative_lagoon,m3,11530,,,constant,Lubigi process diagram
 lagoon_L,length_facultative_lagoon,m,170,,,constant,Lubigi process diagram
 lagoon_W,width_facultative_lagoon,m,50,,,constant,Lubigi process diagram
-liner_mass,liner_mass,kg/m2,0.63,0.31,1.24,uniform,Colorado Lining International
+liner_unit_mass,liner_mass,kg/m2,0.63,0.31,1.24,uniform,Colorado Lining International

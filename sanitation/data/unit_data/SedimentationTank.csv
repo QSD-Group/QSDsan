@@ -9,6 +9,6 @@ tank_L_to_W,length_width_ratio_sedimentation,length/width,3.3,3,3.5,uniform,Lubi
 tank_W_to_H,width_height_ratio_sedimentation,width/height (average),3.6,3.3,3.8,uniform,Lubigi photos
 N_tank,number_sedimentation_tanks,-,2,,,constant,Lubigi process diagram
 column_per_side,columns_per_side_sedimentation,-,12,,,constant,Lubigi photos
-tank_thickness,concrete_thickness,m,0.3,0.15,0.45,uniform,assumption
+concrete_thickness,concrete_thickness,m,0.3,0.15,0.45,uniform,assumption
 roof_slope,,degrees,20,10,30,uniform,assumption
-roof_mass,roof_mass,kg/m2,2.64,2.26,3.58,uniform,Home Depot
+roof_unit_mass,roof_mass,kg/m2,2.64,2.26,3.58,uniform,Home Depot

@@ -209,12 +209,12 @@ class UDDT(Toilet):
         if not self.if_ideal_emptying:
             liq, CH4, N2O = self.get_emptying_emission(
                 waste=liq, CH4=CH4, N2O=N2O,
-                app_ratio=self.empty_ratio,
+                empty_ratio=self.empty_ratio,
                 CH4_factor=self.COD_max_removal*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
             sol, CH4, N2O = self.get_emptying_emission(
                 waste=sol, CH4=CH4, N2O=N2O,
-                app_ratio=self.empty_ratio,
+                empty_ratio=self.empty_ratio,
                 CH4_factor=self.COD_max_removal*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
 
@@ -230,6 +230,7 @@ class UDDT(Toilet):
         design['Wood'] = 0.222
         
     def _cost(self):
+        #!!! Consider scaling this up based on the number of users
         self.purchase_costs['Toilet'] = 553
         #!!! What if operating hours is different, maybe better to make this in TEA
         self._OPEX = self.purchase_costs['Toilet']*self.OPEX_over_CAPEX/365/24

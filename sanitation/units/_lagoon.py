@@ -33,9 +33,9 @@ __all__ = ('Lagoon',)
 
 
 class Lagoon(SanUnit, Decay):
-    '''Anaerobic and facultive lagoon treatment systems.'''
+    '''Anaerobic and facultive lagoon treatment.'''
     
-    def __init__(self, ID='', ins=None, outs=(), lagoon_type='Anaerobic',
+    def __init__(self, ID='', ins=None, outs=(), design_type='anaerobic',
                  if_N2O_emission=True, **kwargs):
         
         '''
@@ -46,8 +46,8 @@ class Lagoon(SanUnit, Decay):
             Waste for treatment.
         outs : WasteStream
             Treated waste, fugitive CH4, and fugitive N2O.
-        lagoon_type : [str]
-            Can choose from ('Anaerobic', 'Facultive').
+        design_type : [str]
+            Can be 'anaerobic' or 'facultive'.
         if_N2O_emission : [bool]
             If consider N2O emission from N degradation the process.
 
@@ -62,8 +62,8 @@ class Lagoon(SanUnit, Decay):
         facultive_path = data_path + 'unit_data/FacultiveLagoon.csv'
         self._facultive_defaults = load_data(path=facultive_path)
         
-        self._lagoon_type = None
-        self.lagoon_type = lagoon_type
+        self._design_type = None
+        self.design_type = design_type
         self.if_N2O_emission = if_N2O_emission
         
         for attr, value in kwargs.items():
@@ -113,27 +113,27 @@ class Lagoon(SanUnit, Decay):
         design['Lagoon depth'] = depth = V / (L*W)
         design['Total excavation'] = V * N
         liner_A = (L*W + 2*depth*(L+W)) * N
-        design['Total liner'] = liner_A * self.liner_mass
+        design['Total liner'] = liner_A * self.liner_unit_mass
     
     @property
-    def lagoon_type(self):
-        '''[str] Lagoon type, can be either 'Anaerobic' or 'Facultive'.'''
-        return self._lagoon_type
-    @lagoon_type.setter
-    def lagoon_type(self, i):
-        if i == self._lagoon_type: pass
+    def design_type(self):
+        '''[str] Lagoon type, can be either 'anaerobic' or 'facultive'.'''
+        return self._design_type
+    @design_type.setter
+    def design_type(self, i):
+        if i == self._design_type: pass
         else:
-            if i == 'Anaerobic':
+            if i == 'anaerobic':
                 data = self._anaerobic_defaults
-            elif i == 'Facultive':
+            elif i == 'facultive':
                 data = self._facultive_defaults
             else:
-                raise ValueError(f"Lagoon type can only be 'Anaerobic' or 'Facultive',"
+                raise ValueError("design_type can only be 'anaerobic' or 'facultive',"
                                  f'not {i}.')
             for para in data.index:
                 value = float(data.loc[para]['expected'])
                 setattr(self, para, value)
-        self._lagoon_type = i
+        self._design_type = i
 
     @property
     def COD_removal(self):
@@ -214,12 +214,12 @@ class Lagoon(SanUnit, Decay):
         self._lagoon_W = float(i)
 
     @property
-    def liner_mass(self):
-        '''[float] Mass of the lagoon liner, [kg/m2].'''
-        return self._liner_mass
-    @liner_mass.setter
-    def liner_mass(self, i):
-        self._liner_mass = float(i)
+    def liner_unit_mass(self):
+        '''[float] Unit mass of the lagoon liner, [kg/m2].'''
+        return self._liner_unit_mass
+    @liner_unit_mass.setter
+    def liner_unit_mass(self, i):
+        self._liner_unit_mass = float(i)
 
 
 

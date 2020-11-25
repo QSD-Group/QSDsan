@@ -117,7 +117,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
       
 
     @staticmethod
-    def get_emptying_emission(waste, CH4, N2O, app_ratio, CH4_factor, N2O_factor):
+    def get_emptying_emission(waste, CH4, N2O, empty_ratio, CH4_factor, N2O_factor):
         '''
         Calculate emissions due to non-ideal emptying.
 
@@ -129,7 +129,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
             Fugitive CH4 gas (before emptying).
         N2O : WasteStream
             Fugitive N2O gas (before emptying).
-        app_ratio : [float]
+        empty_ratio : [float]
             Fraction of excreta that is appropriately emptied..
         CH4_factor : [float]
             Factor to convert COD removal to CH4 emission.
@@ -146,11 +146,11 @@ class Toilet(SanUnit, Decay, isabstract=True):
             Fugitive N2O gas (after emptying).
 
         '''
-        COD_rmd = waste.COD*(1-app_ratio)/1e3*waste.F_vol
+        COD_rmd = waste.COD*(1-empty_ratio)/1e3*waste.F_vol
         CH4.imass['CH4'] += COD_rmd * CH4_factor
-        waste._COD *= app_ratio
+        waste._COD *= empty_ratio
         N2O.imass['N2O'] += COD_rmd * N2O_factor
-        waste.mass *= app_ratio
+        waste.mass *= empty_ratio
         return waste, CH4, N2O
 
     @property

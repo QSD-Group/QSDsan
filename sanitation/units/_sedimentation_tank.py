@@ -124,7 +124,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         design['Tank width'] = W = H * W2H
         design['Tank length'] = L = W * L2W
         # Concrete
-        thick = self.tank_thickness
+        thick = self.concrete_thickness
         side_concrete = N*thick*(L*W+2*W*H+2*L*H)
         column_concrete = N*(thick**2)*H*self.column_per_side*2
         design['Concrete volume'] = side_concrete + column_concrete
@@ -188,12 +188,12 @@ class SedimentationTank(SludgeSeparator, Decay):
         self._column_per_side = np.ceil(i)
 
     @property
-    def tank_thickness(self):
+    def concrete_thickness(self):
         '''[float] Wall thickness of the concrete tank.'''
-        return self._tank_thickness
-    @tank_thickness.setter
-    def tank_thickness(self, i):
-        self._tank_thickness = float(i)
+        return self._concrete_thickness
+    @concrete_thickness.setter
+    def concrete_thickness(self, i):
+        self._concrete_thickness = float(i)
 
     @property
     def roof_slope(self):
@@ -204,12 +204,12 @@ class SedimentationTank(SludgeSeparator, Decay):
         self._roof_slope = float(i)
 
     @property
-    def roof_mass(self):
-        '''[float] Mass of the tank roof, [kg/m2].'''
-        return self._roof_mass
-    @roof_mass.setter
-    def roof_mass(self, i):
-        self._roof_mass = float(i)
+    def roof_unit_mass(self):
+        '''[float] Unit mass of the tank roof, [kg/m2].'''
+        return self._roof_unit_mass
+    @roof_unit_mass.setter
+    def roof_unit_mass(self, i):
+        self._roof_unit_mass = float(i)
 
 
 
