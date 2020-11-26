@@ -77,8 +77,9 @@ component_units_of_measure = {
 
 allowed_values = {
     'particle_size': ('Dissolved gas', 'Soluble', 'Colloidal', 'Particulate'),
-    'degradability': ('Biological', 'Chemical', 'Undegradable'),
-    'organic': (True, False)
+    'degradability': ('Readily', 'Slowly', 'Undegradable'),
+    'organic': (True, False),
+    'measured_as': (None, 'COD', 'C', 'N', 'P'),
     }
 
 def check_return_property(name, value):
@@ -102,7 +103,7 @@ class Component(tmo.Chemical):
 
     __slots__ = _component_slots
 
-    def __new__(cls, ID='', search_ID=None, formula=None, phase='l', measured_as=None, 
+    def __new__(cls, ID='', search_ID=None, formula=None, phase=None, measured_as=None, 
                 i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
                 i_mass=None, i_charge=None, f_BOD5_COD=None, f_uBOD_COD=None,
                 f_Vmass_Totmass=None,
@@ -119,7 +120,7 @@ class Component(tmo.Chemical):
         if formula:
             self._formula = None
             self.formula = formula
-        tmo._chemical.lock_phase(self, phase)
+        if phase: tmo._chemical.lock_phase(self, phase)
         self.measured_as = measured_as
         self.i_C = i_C
         self.i_N = i_N
@@ -131,7 +132,15 @@ class Component(tmo.Chemical):
         self.i_charge = i_charge        
         self.f_BOD5_COD = f_BOD5_COD
         self.f_uBOD_COD = f_uBOD_COD
-        self.f_Vmass_Totmass = f_Vmass_Totmass                
+        self.f_Vmass_Totmass = f_Vmass_Totmass
+        
+        # #!!! Need to check if this works
+        # if measured_as:
+        #     if measured_as == 'COD': self._MW = tmo.Chemical('O').MW
+        #     elif measured_as == 'N': self._MW = tmo.Chemical('N').MW
+        #     elif measured_as == 'P': self._MW = tmo.Chemical('P').MW
+        #     elif measured_as == 'C': self._MW = tmo.Chemical('C').MW
+
         self._particle_size = particle_size
         self._degradability = degradability
         self._organic = organic
@@ -139,6 +148,7 @@ class Component(tmo.Chemical):
         if not self.MW and not self.formula: self.MW = 1.
         return self
 
+    #!!! use i_mass
     @staticmethod
     def _atom_frac_setter(cmp, atom=None, frac=None):
         if cmp.formula:
@@ -276,7 +286,7 @@ class Component(tmo.Chemical):
         Notes
         -------
         [1] Must be within [0,1].
-        [2] Must be smaller or equal to f_uBOD_COD.
+        [2] Must be less than or equal to f_uBOD_COD.
         '''
         return self._f_BOD5_COD or 0.
     @f_BOD5_COD.setter
@@ -291,7 +301,7 @@ class Component(tmo.Chemical):
         Notes
         -------
         [1] Must be within [0,1].
-        [2] Must be larger or equal to f_BOD5_COD.
+        [2] Must be greater than or equal to f_BOD5_COD.
         '''
         return self._f_uBOD_COD or 0.
     @f_uBOD_COD.setter
@@ -371,7 +381,7 @@ class Component(tmo.Chemical):
 
         Notes
         -------
-        Must be chosen from 'Biological', 'Chemical', or 'Undegradable'.
+        Must be chosen from 'Readily', 'Slowly', or 'Undegradable'.
         '''
         return self._degradability
     @degradability.setter

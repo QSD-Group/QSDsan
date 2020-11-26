@@ -28,6 +28,8 @@ _component_properties = _component._component_properties
 _num_component_properties = _component._num_component_properties
 _key_component_properties = _component._key_component_properties
 setattr = object.__setattr__
+_TMH = tmo.base.thermo_model_handle.ThermoModelHandle
+_PH = tmo.base.phase_handle.PhaseHandle
 
 
 # %%
@@ -104,7 +106,7 @@ class Components(Chemicals):
             self.__dict__.update(components.__dict__)
         else:
             for component in components: self.append(component)
-    
+        
     def compile(self):
         '''Cast as a CompiledComponents object.'''
         CompiledComponents._compile(self)
@@ -202,15 +204,34 @@ class Components(Chemicals):
                           particle_size='Soluble',
                           degradability='Undegradable', organic=False)
         new.append(H2O)
-        
+                
         if default_compile:
-            TMH = tmo.base.thermo_model_handle.ThermoModelHandle
+            
             for i in new:
                 i.default()
-                for j in ('sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu'):
-                    if isinstance(getattr(i, j), TMH) and len(getattr(i, j).models) > 0: continue
+                
+                if not i.Tb:
+                    if i.particle_size == 'Soluble': i.Tb = tmo.Chemical('urea').Tb
+                    elif i.particle_size == 'Dissolved gas': i.Tb = tmo.Chemical('N2').Tb
+                    else: i.Tb = tmo.Chemical('NaCl').Tb
+                
+                if (isinstance(i.V, _TMH) and len(i.V.models)==0) or (isinstance(i.V, _PH) and len(i.V.l.models)==0): 
+                    if i.particle_size == 'Soluble': 
+                        i.copy_models_from(tmo.Chemical('urea'), names=('V',))                        
+                    elif i.particle_size in ('Particulate', 'Colloidal'):
+                        try: i.V.add_model(1.2e-5)
+                        except AttributeError: 
+                            i.V.l.add_model(1.2e-5)    # m^3/mol
+                            i.V.s.add_model(1.2e-5)
+                    else:
+                        i.copy_models_from(tmo.Chemical('N2'), names=('V',))
+                    
+                for j in ('sigma', 'epsilon', 'kappa', 'Cn', 'mu', 'Psat', 'Hvap'):
+                    if isinstance(getattr(i, j), _TMH) and len(getattr(i,j).models) > 0: continue
+                    elif isinstance(getattr(i, j), _PH) and len(getattr(i,j).l.models) > 0: continue
                     i.copy_models_from(H2O, names=(j,))
-        
+            
+            new.compile()
         return new        
 
 
@@ -279,6 +300,7 @@ class CompiledComponents(CompiledChemicals):
         dct['c'] = np.asarray([1 if cmp.particle_size == 'Colloidal' else 0 for cmp in components])
         dct['x'] = np.asarray([1 if cmp.particle_size == 'Particulate' else 0 for cmp in components])
         dct['b'] = np.asarray([1 if cmp.degradability != 'Undegradable' else 0 for cmp in components])
+        dct['rb'] = np.asarray([1 if cmp.degradability == 'Readily' else 0 for cmp in components])
         dct['org'] = np.asarray([int(cmp.organic) for cmp in components])
     
     def subgroup(self, IDs):
