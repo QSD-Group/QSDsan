@@ -31,7 +31,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('Sedimentation',)
 
-data_path += 'unit_data/Sedimentation.csv'
+data_path += 'unit_data/_sedimentation.csv'
 
 
 class Sedimentation(SanUnit, Decay):

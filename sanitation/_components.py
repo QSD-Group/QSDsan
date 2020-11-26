@@ -194,7 +194,7 @@ class Components(Chemicals):
     
         '''
         import os
-        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/components.csv')
+        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/_components.csv')
         new = cls.load_from_file(path=path)
 
         H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),

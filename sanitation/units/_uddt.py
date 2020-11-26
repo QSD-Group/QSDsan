@@ -30,7 +30,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('UDDT',)
 
-data_path += 'unit_data/UDDT.csv'
+data_path += 'unit_data/_uddt.csv'
 
 
 # %%

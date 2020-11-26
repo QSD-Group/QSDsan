@@ -33,7 +33,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('AnaerobicDigestion',)
 
-data_path += 'unit_data/AnaerobicDigestion.csv'
+data_path += 'unit_data/_anaerobic_digestion.csv'
 
 
 # @cost(basis, CE, cost, n)

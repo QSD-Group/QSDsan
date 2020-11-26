@@ -31,7 +31,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('Toilet',)
 
-data_path += 'unit_data/Toilet.csv'
+data_path += 'unit_data/_toilet.csv'
 
 
 # %%
