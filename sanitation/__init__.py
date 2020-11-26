@@ -13,24 +13,32 @@ https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
 '''
 
-from ._component import Component
-from ._components import Components, CompiledComponents
-from ._waste_stream import WasteStream
-from ._sanunit import SanUnit
-from ._lca import LCA
-from ._construction import Construction#, ConstructionMaterial
 
-from . import utils
-from . import units
+from ._component import *
+from ._components import *
+from ._waste_stream import *
+from ._sanunit import *
+from ._construction import *
+from ._lca import *
+
+from . import (
+    _component,
+    _components,
+    _waste_stream,
+    _sanunit,
+    _construction,
+    _lca,
+    utils,
+    units,
+    )
 
 __all__ = (
-    'Component',
-    'Components', 'CompiledComponents',
-    'WasteStream',
-    'SanUnit',
-    'LCA',
-    'Construction',
-    # 'ConstructionMaterial',
+    *_component.__all__,
+    *_components.__all__,
+    *_waste_stream.__all__,
+    *_sanunit.__all__,
+    *_construction.__all__,
+    *_lca.__all__,
     *utils.__all__,
     *units.__all__,
            )

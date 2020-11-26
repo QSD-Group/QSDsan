@@ -35,7 +35,7 @@ data_path += 'unit_data/_drying_bed.csv'
 
 
 class DryingBed(SanUnit, Decay):
-    '''Unplanted and planted solid drying bed.'''
+    '''Unplanted and planted drying bed for solids.'''
     
     def __init__(self, ID='', ins=None, outs=(), design_type='unplanted',
                  **kwargs):
@@ -251,7 +251,7 @@ class DryingBed(SanUnit, Decay):
 
     @property
     def concrete_thickness(self):
-        '''[float] Wall thickness of the concrete tank.'''
+        '''[float] Thickness of the concrete wall.'''
         return self._concrete_thickness
     @concrete_thickness.setter
     def concrete_thickness(self, i):

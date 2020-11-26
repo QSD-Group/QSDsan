@@ -28,6 +28,9 @@ import pandas as pd
 from .utils.loading import data_path
 data_path += 'lca_data/_construction.xlsx'
 
+__all__ = ('Construction',)
+
+
 class Construction:
     '''
     A class containing different types of construction materials and activities.

@@ -13,43 +13,41 @@ https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
 '''
 
-from . import _bst_units
-from . import _excretion
-from . import _decay
-from . import _toilet
-from . import _pit_latrine
-from . import _uddt
-from . import _transportation
-from . import _anaerobic_digestion
-from . import _sludge_separator
-from . import _sedimentation_tank
-from . import _lagoon
-from . import _anaerobic_baffled_reactor
-from . import _drying_bed
-from . import _biogas_combustion
-from . import _crop_application
+from ._bst_units import *
+from ._excretion import *
+from ._decay import *
+from ._toilet import *
+from ._pit_latrine import *
+from ._uddt import *
+from ._transportation import *
+from ._anaerobic_digestion import *
+from ._sludge_separator import *
+from ._sedimentation_tank import *
+from ._lagoon import *
+from ._anaerobic_baffled_reactor import *
+from ._liquid_treatment_bed import *
+from ._drying_bed import *
+from ._biogas_combustion import *
+from ._crop_application import *
 
-from ._bst_units import (
-    Mixer,
-    Splitter, FakeSplitter, ReversedSplitter,
-    Pump,
-    Tank, StorageTank, MixTank
+from . import (
+    _bst_units,
+    _excretion,
+    _decay,
+    _toilet,
+    _pit_latrine,
+    _uddt,
+    _transportation,
+    _anaerobic_digestion,
+    _sludge_separator,
+    _sedimentation_tank,
+    _lagoon,
+    _anaerobic_baffled_reactor,
+    _liquid_treatment_bed,
+    _drying_bed,
+    _biogas_combustion,
+    _crop_application,
     )
-from ._excretion import Excretion
-from ._decay import Decay
-from ._toilet import Toilet
-from ._pit_latrine import PitLatrine
-from ._uddt import UDDT
-from ._transportation import Transportation
-from ._anaerobic_digestion import AnaerobicDigestion
-from ._sludge_separator import SludgeSeparator
-from ._sedimentation_tank import SedimentationTank
-from ._lagoon import Lagoon
-from ._anaerobic_baffled_reactor import AnaerobicBaffledReactor
-from ._drying_bed import DryingBed
-from ._biogas_combustion import BiogasCombustion
-from ._crop_application import CropApplication
-
 
 __all__ = (
     *_bst_units.__all__,
@@ -64,6 +62,7 @@ __all__ = (
     *_sedimentation_tank.__all__,
     *_lagoon.__all__,
     *_anaerobic_baffled_reactor.__all__,
+    *_liquid_treatment_bed.__all__,    
     *_drying_bed.__all__,
     *_biogas_combustion.__all__,
     *_crop_application.__all__,

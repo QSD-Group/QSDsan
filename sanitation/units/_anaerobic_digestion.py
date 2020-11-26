@@ -175,7 +175,7 @@ class AnaerobicDigestion(SanUnit, Decay):
 
     @property
     def concrete_thickness(self):
-        '''[float] Wall thickness of the concrete reactor.'''
+        '''[float] Thickness of the concrete wall.'''
         return self._concrete_thickness
     @concrete_thickness.setter
     def concrete_thickness(self, i):

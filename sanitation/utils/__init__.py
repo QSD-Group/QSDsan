@@ -13,8 +13,10 @@ https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
 '''
 
-from . import piping
-from . import loading
+from . import (
+    piping,
+    loading,
+    )
 
 __all__ = (
     *piping.__all__,

@@ -183,13 +183,21 @@ A8.simulate()
 # A8.show()
 
 ws6 = A2.outs[0].copy('ws6')
-A9 = units.AnaerobicBaffledReactor('A9', ins=ws5, outs=('treated', 'CH4', 'N2O'),
+A9 = units.AnaerobicBaffledReactor('A9', ins=ws6, outs=('treated', 'CH4', 'N2O'),
                                    decay_k_COD=get_decay_k(tau_deg, log_deg),
                                    max_CH4_emission=max_CH4_emission)
 
 A9.simulate()
-A9.show()
+# A9.show()
 
+ws7 = A2.outs[0].copy('ws7')
+A10 = units.LiquidTreatmentBed('A10', ins=ws7, outs=('treated', 'CH4', 'N2O'),
+                               decay_k_COD=get_decay_k(tau_deg, log_deg),
+                               decay_k_N=get_decay_k(tau_deg, log_deg),
+                               max_CH4_emission=max_CH4_emission)
+
+A10.simulate()
+A10.show()
 
 
 
