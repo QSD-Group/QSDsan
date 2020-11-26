@@ -32,7 +32,7 @@ def test_sanunit():
     M2-0-2-M1
     System = bst.System('System', path=(M1, S1, P1, M2), recycle=M2-0)
     System.simulate()
-    assert_allclose(M2.installed_cost, 65735.21240525639, rtol=1e-3)
+    assert_allclose(M2.installed_cost, 65519.00446342958, rtol=1e-3)
 
 
 # This just means that if pytest runs this module, it calls the test_sanunit function

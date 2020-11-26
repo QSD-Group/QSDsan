@@ -24,7 +24,7 @@ from .. import WasteStream as WS
 # __rsub__ = piping.__rsub__
 # pipe_info = piping.pipe_info
 
-__all__ = ('MissingWS', 'WSIns', 'WSOuts', 'as_ws')
+__all__ = ('MissingWS', 'WSIns', 'WSOuts')
 
 
 # %%

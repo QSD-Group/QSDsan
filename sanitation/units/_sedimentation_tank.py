@@ -24,21 +24,21 @@ Ref:
 # %%
 
 import numpy as np
-from warnings import warn
-from .. import SanUnit
 from ._decay import Decay
+from ._sludge_separator import SludgeSeparator
 from ..utils.loading import load_data, data_path
 
-__all__ = ('Sedimentation',)
-
-data_path += 'unit_data/_sedimentation.csv'
+__all__ = ('SedimentationTank',)
 
 
-class Sedimentation(SanUnit, Decay):
+data_path += 'unit_data/_sedimentation_tank.csv'
+
+
+class SedimentationTank(SludgeSeparator, Decay):
     '''Sedimentation of wastes into liquid and solid phases.'''
     
-    def __init__(self, ID='', ins=None, outs=(), if_N_degradation=True,
-                 **kwargs):
+    def __init__(self, ID='', ins=None, outs=(), split=None, settled_frac=None,
+                 if_N2O_emission=True, **kwargs):
         
         '''
 
@@ -47,27 +47,32 @@ class Sedimentation(SanUnit, Decay):
         ins : WasteStream
             Waste for treatment.
         outs : WasteStream
-            Drained liquid, settled solids, fugitive CH4, and fugitive N2O.
-        if_N_degradation : [bool]
-            If N degradation and N2O emission occur during treatment.
+            Liquid, settled solids, fugitive CH4, and fugitive N2O.
+        split : [float] or [dict]
+            Fractions of material retention in the settled solids.
+            Default values will be used if not given.
+        settled_frac : [float]
+            Fraction of influent that settles as solids.
+            The default value will be used if not given.
+        if_N2O_emission : [bool]
+            If consider N2O emission from N degradation the process.
 
         '''        
         
-        SanUnit.__init__(self, ID, ins, outs)
-        self.if_N_degradation = if_N_degradation
+        SludgeSeparator.__init__(self, ID, ins, outs, split, settled_frac)
+        self.if_N2O_emission = if_N2O_emission
 
         data = load_data(path=data_path)
         for para in data.index:
-            if para == 'split':
-                value = eval(data.loc[para]['expected'])
-                setattr(self, para, value)
-            else:
-                value = float(data.loc[para]['expected'])
-                setattr(self, '_'+para, value)
+            value = float(data.loc[para]['expected'])
+            setattr(self, '_'+para, value)
         del data
         
         for attr, value in kwargs.items():
             setattr(self, attr, value)
+    
+    __doc__ += __init__.__doc__
+    __init__.__doc__ = __doc__
     
     _N_ins = 1
     _N_outs = 4
@@ -78,59 +83,35 @@ class Sedimentation(SanUnit, Decay):
         CH4.phase = N2O.phase = 'g'
         
         # Retention in the settled solids
-        split = self.split
-        if self._split_type == 'float':
-            liq.copy_like(waste)
-            sol.copy_like(waste)
-            sol.mass *= self.split
-            liq.mass -= sol.mass
-        else:
-            for var in self.split.keys():
-                #!!! In the future this should be best by changing the state variable
-                if var == 'TS':
-                    sol.imass['OtherSS'] = split[var] * waste.imass['OtherSS']
-                elif var == 'COD':
-                    sol._COD = split[var] * waste._COD
-                    liq._COD = waste._COD - sol._COD
-                elif var == 'N':
-                    N_sol = split[var]*(waste.imass['NH3']+waste.imass['NonNH3'])
-                    NonNH3_rmd, NH3_rmd = \
-                        self.allocate_N_removal(N_sol, waste.imass['NonNH3'])
-                    sol.imass ['NonNH3'] = NonNH3_rmd
-                    sol.imass ['NH3'] = NH3_rmd
-                else:
-                    sol.imass[var] = split[var] * waste.imass[var]
-            liq.mass = waste.mass - sol.mass
+        SludgeSeparator._run(self)
             
         # COD degradation in settled solids
         COD_loss = self.first_order_decay(k=self.decay_k_COD,
                                           t=self.tau/365,
-                                          max_removal=self.COD_max_removal)
+                                          max_decay=self.COD_max_decay)
 
         sol._COD *= 1 - COD_loss
         sol.imass['OtherSS'] *= 1 - COD_loss
-        sol.imass['H2O'] = waste.F_mass * self.setted_frac - sol.F_mass
-        if sol.imass['H2O'] < 0:
-            sol.imass['H2O'] = 0
-            msg = 'Negative water content calcualted for settled solids' \
-                'try smaller split or larger settled_frac.'
-            warn(msg, source=self)
-        liq.imass['H2O'] = waste.imass['H2O'] - sol.imass['H2O']
+        
+        # Adjust total mass of of the settled solids by changing water content
+        liq, sol = self._adjust_solid_water(waste, liq, sol, self.settled_frac)
+        
         CH4.imass['CH4'] = sol.COD/1e3*sol.F_vol*COD_loss * \
             self.max_CH4_emission*self.MCF_decay # COD in mg/L (g/m3)
 
         # N degradation
-        if self.if_N_degradation:
+        if self.if_N2O_emission:
             N_loss = self.first_order_decay(k=self.decay_k_N,
                                             t=self.tau/365,
-                                            max_removal=self.N_max_removal)
+                                            max_decay=self.N_max_decay)
             N_loss_tot = N_loss*sol.TN/1e3*sol.F_vol
             NH3_rmd, NonNH3_rmd = \
                 self.allocate_N_removal(N_loss_tot, sol.imass['NH3'])
             sol.imass ['NH3'] -=  NH3_rmd
             sol.imass['NonNH3'] -= NonNH3_rmd
-
-        N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
+            N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
+        else:
+            N2O.empty()
     
     
     def _design(self):
@@ -144,7 +125,7 @@ class Sedimentation(SanUnit, Decay):
         design['Tank width'] = W = H * W2H
         design['Tank length'] = L = W * L2W
         # Concrete
-        thick = self.tank_thickness
+        thick = self.concrete_thickness
         side_concrete = N*thick*(L*W+2*W*H+2*L*H)
         column_concrete = N*(thick**2)*H*self.column_per_side*2
         design['Concrete volume'] = side_concrete + column_concrete
@@ -166,41 +147,6 @@ class Sedimentation(SanUnit, Decay):
     @tau.setter
     def tau(self, i):
         self._tau = float(i)
-
-    @property
-    def split(self):
-        '''
-        [float] or [dict] Fractions of material retention in the settled solids
-        before degradation. If a single number is provided, then it is assumed
-        that retentions of all Components in the WasteStream are the same.
-        
-        Note
-        ----
-            Set state variable values (e.g., COD) will be retained if the retention
-            ratio is a single number (treated like the loss stream is split
-            from the original stream), but not when the ratio is a dict.
-
-        '''
-        return self._split
-    @split.setter
-    def split(self, i):
-        try:
-            self._split = float(i)
-            self._split_type = 'float'
-        except:
-            if isinstance(i, dict):
-                self._split = i
-                self._split_type = 'dict'
-            else:
-                raise TypeError(f'Only float or dict allowed, not {type(i).__name__}.')
-
-    @property
-    def setted_frac(self):
-        '''[float] Fraction of influent that settles as solids.'''
-        return self._setted_frac
-    @setted_frac.setter
-    def setted_frac(self, i):
-        self._setted_frac = float(i)
 
     @property
     def tank_V(self):
@@ -232,7 +178,7 @@ class Sedimentation(SanUnit, Decay):
         return self._N_tank
     @N_tank.setter
     def N_tank(self, i):
-        self._N_tank = np.ceil(i)
+        self._N_tank = int(np.ceil(i))
 
     @property
     def column_per_side(self):
@@ -240,15 +186,15 @@ class Sedimentation(SanUnit, Decay):
         return self._column_per_side
     @column_per_side.setter
     def column_per_side(self, i):
-        self._column_per_side = np.ceil(i)
+        self._column_per_side = int(np.ceil(i))
 
     @property
-    def tank_thickness(self):
-        '''[float] Wall thickness of the concrete tank.'''
-        return self._tank_thickness
-    @tank_thickness.setter
-    def tank_thickness(self, i):
-        self._tank_thickness = float(i)
+    def concrete_thickness(self):
+        '''[float] Thickness of the concrete wall.'''
+        return self._concrete_thickness
+    @concrete_thickness.setter
+    def concrete_thickness(self, i):
+        self._concrete_thickness = float(i)
 
     @property
     def roof_slope(self):
@@ -259,12 +205,12 @@ class Sedimentation(SanUnit, Decay):
         self._roof_slope = float(i)
 
     @property
-    def roof_mass(self):
-        '''[float] Mass of the tank roof, [kg/m2].'''
-        return self._roof_mass
-    @roof_mass.setter
-    def roof_mass(self, i):
-        self._roof_mass = float(i)
+    def roof_unit_mass(self):
+        '''[float] Unit mass of the tank roof, [kg/m2].'''
+        return self._roof_unit_mass
+    @roof_unit_mass.setter
+    def roof_unit_mass(self, i):
+        self._roof_unit_mass = float(i)
 
 
 

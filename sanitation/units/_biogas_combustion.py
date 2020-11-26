@@ -50,6 +50,9 @@ class BiogasCombustion(SanUnit):
         self.if_combustion = if_combustion
         self._biogas_loss = biogas_loss
         self._biogas_eff = biogas_eff
+        
+    __doc__ += __init__.__doc__
+    __init__.__doc__ = __doc__
     
     _N_ins = 2
     _N_outs = 3

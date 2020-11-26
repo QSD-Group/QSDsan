@@ -109,14 +109,14 @@ class UDDT(Toilet):
         if self.if_air_emission:
             # N loss due to ammonia volatilization
             NH3_rmd, NonNH3_rmd = \
-                self.allocate_N_removal(liq.TN/1e3*liq.F_vol*self.N_vol,
+                self.allocate_N_removal(liq.TN/1e3*liq.F_vol*self.N_volatilization,
                                         liq.imass['NH3'])
             liq.imass ['NH3'] -= NH3_rmd
             liq.imass['NonNH3'] -= NonNH3_rmd
             # Energy/N loss due to degradation
             COD_loss = self.first_order_decay(k=self.decay_k_COD,
                                               t=self.collection_period/365,
-                                              max_removal=self.COD_max_removal)
+                                              max_decay=self.COD_max_decay)
             CH4.imass['CH4'] = sol.COD/1e3*sol.F_vol*COD_loss * \
                 self.max_CH4_emission*self.MCF_decay # COD in mg/L (g/m3)
             sol._COD *= 1 - COD_loss
@@ -124,7 +124,7 @@ class UDDT(Toilet):
 
             N_loss = self.first_order_decay(k=self.decay_k_N,
                                             t=self.collection_period/365,
-                                            max_removal=self.N_max_removal)
+                                            max_decay=self.N_max_decay)
             N_loss_tot = sol.TN/1e3*sol.F_vol*N_loss
             NH3_rmd, NonNH3_rmd = \
                 self.allocate_N_removal(N_loss_tot, sol.imass['NH3'])
@@ -148,7 +148,7 @@ class UDDT(Toilet):
                      (Ksp - NH3_mol*P_mol*Mg_mol)]
             struvite_mol = 0
             for i in np.roots(coeff):
-                if i < min(NH3_mol, P_mol, Mg_mol):
+                if 0 < i < min(NH3_mol, P_mol, Mg_mol):
                     struvite_mol = i
             struvite.imol['Struvite'] = \
                 max(0, min(NH3_mol, P_mol, Mg_mol, struvite_mol))
@@ -209,13 +209,13 @@ class UDDT(Toilet):
         if not self.if_ideal_emptying:
             liq, CH4, N2O = self.get_emptying_emission(
                 waste=liq, CH4=CH4, N2O=N2O,
-                app_ratio=self.empty_ratio,
-                CH4_factor=self.COD_max_removal*self.MCF_aq*self.max_CH4_emission,
+                empty_ratio=self.empty_ratio,
+                CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
             sol, CH4, N2O = self.get_emptying_emission(
                 waste=sol, CH4=CH4, N2O=N2O,
-                app_ratio=self.empty_ratio,
-                CH4_factor=self.COD_max_removal*self.MCF_aq*self.max_CH4_emission,
+                empty_ratio=self.empty_ratio,
+                CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
 
     def _design(self):
@@ -230,6 +230,7 @@ class UDDT(Toilet):
         design['Wood'] = 0.222
         
     def _cost(self):
+        #!!! Consider scaling this up based on the number of users
         self.purchase_costs['Toilet'] = 553
         #!!! What if operating hours is different, maybe better to make this in TEA
         self._OPEX = self.purchase_costs['Toilet']*self.OPEX_over_CAPEX/365/24

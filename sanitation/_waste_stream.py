@@ -128,7 +128,7 @@ class WasteStream(Stream):
             the WasteStream as a percentage. The default is False.
         N : [int], optional
             Number of Component objects to print out, when left as None,
-            the number depends on the default of thermosteam. The default is None.
+            the number depends on the default of thermosteam. The default is 15.
         stream_info : [bool], optional
             Whether to print Stream-specific information. The default is True.
         details : [bool], optional
@@ -161,20 +161,20 @@ class WasteStream(Stream):
             _ws_info += ' None for empty WasteStreams'
         else:
             _ws_info += '\n'
-            _ws_info += f'  pH         : {self.pH:.1f}\n'
+            # Only non-zero properties are shown
+            _ws_info += int(bool(self.pH))*f'  pH         : {self.pH:.1f}\n'
             #TODO: unit and definition for following properties
-            _ws_info += f'  Alkalinity : {self.SAlk:.1f} mmol/L\n'
-            # Or we can just print all...
+            _ws_info += int(bool(self.SAlk))*f'  Alkalinity : {self.SAlk:.1f} [unit]\n'
             if details:
-                _ws_info += f'  COD        : {self.COD:.1f} mg/L\n'
-                _ws_info += f'  BOD        : {self.BOD:.1f} mg/L\n'
-                _ws_info += f'  TC         : {self.TC:.1f} mg/L\n'
-                _ws_info += f'  TOC        : {self.TOC:.1f} mg/L\n'
-                _ws_info += f'  TN         : {self.TN:.1f} mg/L\n'
-                _ws_info += f'  TKN        : {self.TKN:.1f} mg/L\n'
-                _ws_info += f'  TP         : {self.TP:.1f} mg/L\n'
-                _ws_info += f'  TK         : {self.TK:.1f} mg/L\n'
-                # _ws_info += f'  charge     : {self.charge:.1f} mmol/L\n'
+                _ws_info += int(bool(self.COD))   *f'  COD        : {self.COD:.1f} [unit]\n'
+                _ws_info += int(bool(self.BOD))   *f'  BOD        : {self.BOD:.1f} [unit]\n'
+                _ws_info += int(bool(self.TC))    *f'  TC         : {self.TC:.1f} [unit]\n'
+                _ws_info += int(bool(self.TOC))   *f'  TOC        : {self.TOC:.1f} [unit]\n'
+                _ws_info += int(bool(self.TN))    *f'  TN         : {self.TN:.1f} [unit]\n'
+                _ws_info += int(bool(self.TKN))   *f'  TKN        : {self.TKN:.1f} [unit]\n'
+                _ws_info += int(bool(self.TP))    *f'  TP         : {self.TP:.1f} [unit]\n'
+                _ws_info += int(bool(self.TK))    *f'  TK         : {self.TK:.1f} [unit]\n'
+                # _ws_info += int(bool(self.charge))*f'  charge     : {self.charge:.1f} [unit]\n'
             else:
                 _ws_info += '  ...\n'
             
@@ -237,6 +237,8 @@ class WasteStream(Stream):
             The estimated value of the composite variable, in [mg/L] or [mmol/L] (for "Charge").
 
         """
+        if self.F_vol == 0.:
+            return 0.
         
         if variable not in _defined_composite_vars:
             raise KeyError(f"Undefined composite variable {variable},"
@@ -332,64 +334,116 @@ class WasteStream(Stream):
     def CFs(self, i):
         self._CFs = i
     
+    def _liq_sol_properties(self, prop, value):
+        if self.phase != 'g':
+            return getattr(self, '_'+prop) or value
+        else:
+            raise AttributeError(f'{self.phase} phase WasteStream does not have {prop}.')
+    
     @property
     def pH(self):
-        return self._pH
+        return self._liq_sol_properties('pH', 7.)
+        # if self.phase == 'l':
+        #     return self._pH or 7.
+        # else:
+        #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
 
     @property
     def SAlk(self):
-        return self._SAlk
+        return self._liq_sol_properties('SAlk', 0.)
+        # if self.phase == 'l':
+        #     return self._SAlk or 0.
+        # else:
+        #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
 
     @property
     def COD(self):
         '''[float] Chemical oxygen demand in mg/L.'''
-        return self._COD or self.composite('COD')
+        return self._liq_sol_properties('COD', self.composite('COD'))
+        # return self._COD or self.composite('COD')
+        # else:
+        #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
 
     @property    
     def BOD(self):
-        return self._BOD or self.composite('BOD')
+        return self._liq_sol_properties('BOD', self.composite('BOD'))
+        # return self._BOD or self.composite('BOD')
+        # else:
+        #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
     
+    #!!! Maybe include C_frac, etc. to calculate C_mass/F_mass - valid for all phases
+    # Or a function to calculate it?
     @property
     def TC(self):
-        return self._TC or self.composite('TC')
+        return self._liq_sol_properties('TC', self.composite('TC'))
+        # return self._TC or self.composite('TC')
+        # else:
+        #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
     
     @property
     def TOC(self):
-        return self._TOC or self.composite('TC', organic=True)
+        return self._liq_sol_properties('TOC', self.composite('TC', organic=True))
+        # return self._TOC or self.composite('TC', organic=True)
+        # else:
+        #     return None
         
     @property
     def TN(self):
-        return self._TN or self.composite('TN')
+        return self._liq_sol_properties('TN', self.composite('TN'))
+        # return self._TN or self.composite('TN')
+        # else:
+        #     return None
     
     @property
     def TKN(self):
-        return self._TKN or self.composite('TN', specification='TKN')
+        return self._liq_sol_properties('TKN', self.composite('TN', specification='TKN'))
+        # return self._TKN or self.composite('TN', specification='TKN')
+        # else:
+        #     return None
     
     @property
     def TP(self):
-        return self._TP or self.composite('TP')
+        return self._liq_sol_properties('TP', self.composite('TP'))
+        # return self._TP or self.composite('TP')
+        # else:
+        #     return None
     
+    #!!! Are there methods to calculate TK, TMg, TCa in self.composite?
     @property
     def TK(self):
-        return self._TK or self.composite('TK')
+        return self._liq_sol_properties('TK', self.composite('TK'))
+        # return self._TK or self.composite('TK')
+        # else:
+        #     return None
     
     @property
     def TMg(self):
-        return self._TMg or self.composite('TMg')
+        return self._liq_sol_properties('TMg', self.composite('TMg'))
+        # return self._TMg or self.composite('TMg')
+        # else:
+        #     return None
     
     @property
     def TCa(self):
-        return self._TCa or self.composite('TCa')
+        return self._liq_sol_properties('TCa', self.composite('TCa'))
+        # return self._TCa or self.composite('TCa')
+        # else:
+        #     return None
     
     @property
     def solids(self):
-        return self._solids or self.composite('solids')
+        return self._liq_sol_properties('solids', self.composite('solids'))
+        # return self._solids or self.composite('solids')
+        # else:
+        #     return None
     
+
     # TODO: calibrate Charge when weak acids are involved
     # @property
     # def charge(self):
-    #     return self._charge or self.composite('charge')
+    #     return self._liq_sol_properties('charge', self.composite('charge'))
     
+
     def copy(self, ID=None):
         new = super().copy()
         new._init_ws()

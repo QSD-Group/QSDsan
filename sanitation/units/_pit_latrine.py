@@ -122,14 +122,14 @@ class PitLatrine(Toilet):
         if self.if_air_emission:
             # N loss due to ammonia volatilization
             NH3_rmd, NonNH3_rmd = \
-                self.allocate_N_removal(mixed.TN/1e3*mixed.F_vol*self.N_vol,
+                self.allocate_N_removal(mixed.TN/1e3*mixed.F_vol*self.N_volatilization,
                                         mixed.imass['NH3'])
             mixed.imass ['NH3'] -= NH3_rmd
             mixed.imass['NonNH3'] -= NonNH3_rmd
             # Energy/N loss due to degradation
             COD_loss = self.first_order_decay(k=self.decay_k_COD,
                                               t=self.emptying_period,
-                                              max_removal=self.COD_max_removal)
+                                              max_decay=self.COD_max_decay)
             CH4.imass['CH4'] = mixed.COD/1e3*mixed.F_vol*COD_loss * \
                 self.max_CH4_emission*self.MCF_decay # COD in mg/L (g/m3)
             mixed._COD *= 1 - COD_loss
@@ -137,7 +137,7 @@ class PitLatrine(Toilet):
 
             N_loss = self.first_order_decay(k=self.decay_k_N,
                                             t=self.emptying_period,
-                                            max_removal=self.N_max_removal)
+                                            max_decay=self.N_max_decay)
             N_loss_tot = mixed.TN/1e3*mixed.F_vol*N_loss
             NH3_rmd, NonNH3_rmd = \
                 self.allocate_N_removal(N_loss_tot,
@@ -153,8 +153,8 @@ class PitLatrine(Toilet):
         if not self.if_ideal_emptying:
             mixed, CH4, N2O = self.get_emptying_emission(
                 waste=mixed, CH4=CH4, N2O=N2O,
-                app_ratio=self.empty_ratio,
-                CH4_factor=self.COD_max_removal*self.MCF_aq*self.max_CH4_emission,
+                empty_ratio=self.empty_ratio,
+                CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
         
         # Drain extra water
@@ -267,28 +267,34 @@ class PitLatrine(Toilet):
     def K_leaching(self, i):
         self._K_leaching = float(i)
 
-    def _return_EF_num(self):
-        # self._MCF and self._N2O_EF are tuples for
+    def _return_MCF_EF(self):
+        # self._MCF and self._N2O_EF are dict for
         # single_above_water, communal_above_water, below_water
-        if not self.if_pit_above_water_table:
-            return 2
-        elif self.if_shared:
-            return 1
+        if self.if_pit_above_water_table:
+            if not self.if_shared:
+                return 'single_above_water'
+            else:
+                return 'communal_above_water'
         else:
-            return 0
+            return 'below_water'
 
     @property
     def MCF_decay(self):
         '''[float] Methane correction factor for COD degraded during storage.'''
-        return float(self._MCF_decay[self._return_EF_num()])
+        return float(self._MCF_decay[self._return_MCF_EF()])
     @MCF_decay.setter
     def MCF_decay(self, i):
-        self._MCF_decay[self._return_EF_num()] = float(i)
+        self._MCF_decay[self._return_MCF_EF()] = float(i)
 
     @property
     def N2O_EF_decay(self):
         '''[float] Fraction of N emitted as N2O during storage.'''
-        return float(self._N2O_EF_decay[self._return_EF_num()])
+        return float(self._N2O_EF_decay[self._return_MCF_EF()])
     @N2O_EF_decay.setter
     def N2O_EF_decay(self, i):
-        self._N2O_EF_decay[self._return_EF_num()] = float(i)
+        self._N2O_EF_decay[self._return_MCF_EF()] = float(i)
+
+
+
+
+

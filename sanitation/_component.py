@@ -16,10 +16,7 @@ for license details.
 
 
 import thermosteam as tmo
-from chemicals.elements import (
-    mass_fractions as get_mass_frac,
-    molecular_weight as get_MW
-    )
+from chemicals.elements import mass_fractions as get_mass_frac
 
 __all__ = ('Component',)
 
@@ -75,6 +72,8 @@ component_units_of_measure = {
 
 # %%
 
+#!!! What should the gas/solid-phase Component value (e.g., CH4 in biogas)
+# for particle_size and degradability? Can we put None or NA?
 allowed_values = {
     'particle_size': ('Dissolved gas', 'Soluble', 'Colloidal', 'Particulate'),
     'degradability': ('Readily', 'Slowly', 'Undegradable'),
@@ -137,9 +136,9 @@ class Component(tmo.Chemical):
         # #!!! Need to check if this works
         # if measured_as:
         #     if measured_as == 'COD': self._MW = tmo.Chemical('O').MW
+        #     elif measured_as == 'C': self._MW = tmo.Chemical('C').MW
         #     elif measured_as == 'N': self._MW = tmo.Chemical('N').MW
         #     elif measured_as == 'P': self._MW = tmo.Chemical('P').MW
-        #     elif measured_as == 'C': self._MW = tmo.Chemical('C').MW
 
         self._particle_size = particle_size
         self._degradability = degradability
@@ -149,15 +148,21 @@ class Component(tmo.Chemical):
         return self
 
     #!!! use i_mass
-    @staticmethod
-    def _atom_frac_setter(cmp, atom=None, frac=None):
+    def _atom_frac_setter(self, cmp, atom=None, frac=None):
         if cmp.formula:
             if frac:
                 raise AttributeError('This Component has formula, '
-                                     f'i_{atom} calculated based on formula, '
+                                     f'i_{atom} is calculated based on formula, '
                                      'cannot be set.')
             else:
                 if atom in cmp.atoms.keys():
+                    if self.measured_as:
+                        if atom == self.measured_as:
+                            return 1.0
+                        elif atom =='O' and self.measured_as == 'COD':
+                            return 1.0
+                        else:
+                            return 0.
                     return get_mass_frac(cmp.atoms)[atom]
                 return 0. # does not have this atom
         else:
@@ -259,9 +264,17 @@ class Component(tmo.Chemical):
     @property
     def i_mass(self):
         '''[float] Mass content of the Component, [g Component/g measure unit].'''
+        if self.measured_as:
+            if self.measured_as != 'COD':
+                return 1/get_mass_frac(self.atoms)[self.measured_as]
         return self._i_mass or 1.
     @i_mass.setter
     def i_mass(self, i):
+        if i and self.measured_as and self.formula:
+            if self.measured_as != 'COD':
+                raise AttributeError(f'This Component is measured as {self.measured_as} '
+                                     f'and has formula, i_mass is calculated, '
+                                     'cannot be set.')
         self._i_mass = check_return_property('i_mass', i)
         
     @property
@@ -333,8 +346,6 @@ class Component(tmo.Chemical):
     def description(self, description):
         self._description = description
 
-    #!!! Do we need this? Why not just set the formula of this Component to be
-    # the repsective element?
     @property
     def measured_as(self):
         '''
@@ -342,22 +353,11 @@ class Component(tmo.Chemical):
 
         Notes
         -------
-        Can be left as blank or chosen from 'COD', 'N', or 'P'.
+        Can be left as blank or chosen from 'COD', 'C', 'N', or 'P'.
         '''
         return self._measured_as
     @measured_as.setter
     def measured_as(self, measured_as):
-        #!!! This will cause problems in calculating total mass
-        # Might be better to create an 'i_COD' for this purpose
-        if measured_as == 'COD':
-            self._formula = 'O'
-            self._MW = get_MW(self.atoms)
-        elif measured_as == 'N':
-            self._formula = 'N'
-            self._MW = get_MW(self.atoms)
-        elif measured_as == 'P':
-            self._formula = 'P'
-            self._MW = get_MW(self.atoms)
         self._measured_as = measured_as
         
     @property

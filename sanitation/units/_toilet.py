@@ -37,10 +37,7 @@ data_path += 'unit_data/_toilet.csv'
 # %%
 
 class Toilet(SanUnit, Decay, isabstract=True):
-    '''
-    Abstract class to hold common parameters for PitLatrine and UDDT
-    (urine-diverting dry toliet).
-    '''
+    '''Abstract class containing common parameters and design algorithms for toilets.'''
     
     def __init__(self, ID='', ins=None, outs=(), N_user=1, life_time=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
@@ -120,7 +117,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
       
 
     @staticmethod
-    def get_emptying_emission(waste, CH4, N2O, app_ratio, CH4_factor, N2O_factor):
+    def get_emptying_emission(waste, CH4, N2O, empty_ratio, CH4_factor, N2O_factor):
         '''
         Calculate emissions due to non-ideal emptying.
 
@@ -132,7 +129,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
             Fugitive CH4 gas (before emptying).
         N2O : WasteStream
             Fugitive N2O gas (before emptying).
-        app_ratio : [float]
+        empty_ratio : [float]
             Fraction of excreta that is appropriately emptied..
         CH4_factor : [float]
             Factor to convert COD removal to CH4 emission.
@@ -149,11 +146,11 @@ class Toilet(SanUnit, Decay, isabstract=True):
             Fugitive N2O gas (after emptying).
 
         '''
-        COD_rmd = waste.COD*(1-app_ratio)/1e3*waste.F_vol
+        COD_rmd = waste.COD*(1-empty_ratio)/1e3*waste.F_vol
         CH4.imass['CH4'] += COD_rmd * CH4_factor
-        waste._COD *= app_ratio
+        waste._COD *= empty_ratio
         N2O.imass['N2O'] += COD_rmd * N2O_factor
-        waste.mass *= app_ratio
+        waste.mass *= empty_ratio
         return waste, CH4, N2O
 
     @property
@@ -202,15 +199,15 @@ class Toilet(SanUnit, Decay, isabstract=True):
         return self.desiccant_V*self.desiccant_rho
 
     @property
-    def N_vol(self):
+    def N_volatilization(self):
         '''
         [float] Fraction of input N that volatizes to the air
         (if if_air_emission is True).
         '''
-        return self._N_vol
-    @N_vol.setter
-    def N_vol(self, i):
-        self._N_vol = float(i)
+        return self._N_volatilization
+    @N_volatilization.setter
+    def N_volatilization(self, i):
+        self._N_volatilization = float(i)
 
     @property
     def empty_ratio(self):
