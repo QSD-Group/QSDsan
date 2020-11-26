@@ -67,7 +67,7 @@ N2O = Component.from_chemical('N2O', tmo.Chemical('N2O'),
 
 CH4 = Component.from_chemical('CH4', tmo.Chemical('CH4'),
                               phase='g', particle_size='Dissolved gas',
-                              degradability='Biological', organic=True)
+                              degradability='Slowly', organic=True)
 
 # Below three are for combustion reactions
 O2 = Component.from_chemical('O2', tmo.Chemical('O2'),
