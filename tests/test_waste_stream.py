@@ -28,7 +28,7 @@ def test_waste_stream():
     assert_allclose(ws3.F_mass, 2015.0)
     # TODO: After updating the default component properties,
     # add in tests here to make sure COD, etc. are calculated correctly
-    assert_allclose(ws3.COD, 7424.7, rtol=1e-3)
+    assert_allclose(ws3.COD, 7376.364267945231, rtol=1e-3)
     
     # Make sure below attributes are calculated based on flow info, cannot be set
     with pytest.raises(AttributeError):
