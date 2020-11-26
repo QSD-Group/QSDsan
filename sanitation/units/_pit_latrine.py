@@ -93,6 +93,8 @@ class PitLatrine(Toilet):
 
     _N_outs = 4
 
+
+        
     def _run(self):
         Toilet._run(self)
         waste, leachate, CH4, N2O = self.outs
