@@ -30,7 +30,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('SedimentationTank',)
 
-data_path += 'unit_data/SedimentationTank.csv'
+data_path += 'unit_data/_sedimentation_tank.csv'
 
 
 class SedimentationTank(SludgeSeparator, Decay):
@@ -87,7 +87,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         # COD degradation in settled solids
         COD_loss = self.first_order_decay(k=self.decay_k_COD,
                                           t=self.tau/365,
-                                          max_removal=self.COD_max_removal)
+                                          max_decay=self.COD_max_decay)
 
         sol._COD *= 1 - COD_loss
         sol.imass['OtherSS'] *= 1 - COD_loss
@@ -102,7 +102,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         if self.if_N2O_emission:
             N_loss = self.first_order_decay(k=self.decay_k_N,
                                             t=self.tau/365,
-                                            max_removal=self.N_max_removal)
+                                            max_decay=self.N_max_decay)
             N_loss_tot = N_loss*sol.TN/1e3*sol.F_vol
             NH3_rmd, NonNH3_rmd = \
                 self.allocate_N_removal(N_loss_tot, sol.imass['NH3'])
@@ -177,7 +177,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         return self._N_tank
     @N_tank.setter
     def N_tank(self, i):
-        self._N_tank = np.ceil(i)
+        self._N_tank = int(np.ceil(i))
 
     @property
     def column_per_side(self):
@@ -185,7 +185,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         return self._column_per_side
     @column_per_side.setter
     def column_per_side(self, i):
-        self._column_per_side = np.ceil(i)
+        self._column_per_side = int(np.ceil(i))
 
     @property
     def concrete_thickness(self):

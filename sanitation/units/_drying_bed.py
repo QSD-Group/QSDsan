@@ -31,7 +31,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('DryingBed',)
 
-data_path += 'unit_data/DryingBed.csv'
+data_path += 'unit_data/_drying_bed.csv'
 
 
 class DryingBed(SanUnit, Decay):
@@ -96,7 +96,7 @@ class DryingBed(SanUnit, Decay):
         # COD degradation in settled solids
         COD_loss = self.first_order_decay(k=self.decay_k_COD,
                                           t=self.tau/365,
-                                          max_removal=self.COD_max_removal)
+                                          max_decay=self.COD_max_decay)
 
         sol._COD *= 1 - COD_loss
         sol.imass['OtherSS'] *= 1 - COD_loss
@@ -106,7 +106,7 @@ class DryingBed(SanUnit, Decay):
         # N degradation
         N_loss = self.first_order_decay(k=self.decay_k_N,
                                         t=self.tau/365,
-                                        max_removal=self.N_max_removal)
+                                        max_decay=self.N_max_decay)
         N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol
         NH3_rmd, NonNH3_rmd = \
             self.allocate_N_removal(N_loss_tot, sol.imass['NH3'])
@@ -195,7 +195,7 @@ class DryingBed(SanUnit, Decay):
         '''
         #!!! Think of a better way to do this
         for i, j in self._N_bed.items():
-            self._N_bed[i] = np.ceil(j)
+            self._N_bed[i] = int(np.ceil(j))
         return self._N_bed
     @N_bed.setter
     def N_bed(self, i):
@@ -239,7 +239,7 @@ class DryingBed(SanUnit, Decay):
         return self._column_per_side
     @column_per_side.setter
     def column_per_side(self, i):
-        self._column_per_side = np.ceil(i)
+        self._column_per_side = int(np.ceil(i))
 
     @property
     def column_unit_mass(self):

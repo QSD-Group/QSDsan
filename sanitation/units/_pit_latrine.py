@@ -30,7 +30,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('PitLatrine',)
 
-data_path += 'unit_data/PitLatrine.csv'
+data_path += 'unit_data/_pit_latrine.csv'
 
 
 # %%
@@ -120,14 +120,14 @@ class PitLatrine(Toilet):
         if self.if_air_emission:
             # N loss due to ammonia volatilization
             NH3_rmd, NonNH3_rmd = \
-                self.allocate_N_removal(mixed.TN/1e3*mixed.F_vol*self.N_vol,
+                self.allocate_N_removal(mixed.TN/1e3*mixed.F_vol*self.N_volatilization,
                                         mixed.imass['NH3'])
             mixed.imass ['NH3'] -= NH3_rmd
             mixed.imass['NonNH3'] -= NonNH3_rmd
             # Energy/N loss due to degradation
             COD_loss = self.first_order_decay(k=self.decay_k_COD,
                                               t=self.emptying_period,
-                                              max_removal=self.COD_max_removal)
+                                              max_decay=self.COD_max_decay)
             CH4.imass['CH4'] = mixed.COD/1e3*mixed.F_vol*COD_loss * \
                 self.max_CH4_emission*self.MCF_decay # COD in mg/L (g/m3)
             mixed._COD *= 1 - COD_loss
@@ -135,7 +135,7 @@ class PitLatrine(Toilet):
 
             N_loss = self.first_order_decay(k=self.decay_k_N,
                                             t=self.emptying_period,
-                                            max_removal=self.N_max_removal)
+                                            max_decay=self.N_max_decay)
             N_loss_tot = mixed.TN/1e3*mixed.F_vol*N_loss
             NH3_rmd, NonNH3_rmd = \
                 self.allocate_N_removal(N_loss_tot,
@@ -152,7 +152,7 @@ class PitLatrine(Toilet):
             mixed, CH4, N2O = self.get_emptying_emission(
                 waste=mixed, CH4=CH4, N2O=N2O,
                 empty_ratio=self.empty_ratio,
-                CH4_factor=self.COD_max_removal*self.MCF_aq*self.max_CH4_emission,
+                CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
         
         # Drain extra water

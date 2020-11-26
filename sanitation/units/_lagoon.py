@@ -57,9 +57,9 @@ class Lagoon(SanUnit, Decay):
         self._tau = None
         self._P_removal = 0.
         
-        anaerobic_path = data_path + 'unit_data/AnaerobicLagoon.csv'
+        anaerobic_path = data_path + 'unit_data/_anaerobic_lagoon.csv'
         self._anaerobic_defaults = load_data(path=anaerobic_path)
-        facultive_path = data_path + 'unit_data/FacultiveLagoon.csv'
+        facultive_path = data_path + 'unit_data/_facultive_lagoon.csv'
         self._facultive_defaults = load_data(path=facultive_path)
         
         self._design_type = None
@@ -82,7 +82,7 @@ class Lagoon(SanUnit, Decay):
         CH4.phase = N2O.phase = 'g'
 
         treated.copy_like(waste)
-        removed_frac = self.COD_removal*self.COD_degradation
+        removed_frac = self.COD_removal*self.COD_decay
         treated._COD *= 1 - self.COD_removal
         treated.imass['OtherSS'] *= 1 - self.COD_removal
         
@@ -92,7 +92,7 @@ class Lagoon(SanUnit, Decay):
         if self.if_N2O_emission:
             N_loss = self.first_order_decay(k=self.decay_k_N,
                                             t=self.tau/365,
-                                            max_removal=self.N_max_removal)
+                                            max_decay=self.N_max_decay)
             N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol
             NH3_rmd, NonNH3_rmd = \
                 self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
@@ -144,12 +144,12 @@ class Lagoon(SanUnit, Decay):
         self._COD_removal = float(i)
     
     @property
-    def COD_degradation(self):
-        '''[float] Fraction of removed COD that degrades.'''
-        return self._COD_degradation
-    @COD_degradation.setter
-    def COD_degradation(self, i):
-        self._COD_degradation = float(i)
+    def COD_decay(self):
+        '''[float] Fraction of removed COD that decays.'''
+        return self._COD_decay
+    @COD_decay.setter
+    def COD_decay(self, i):
+        self._COD_decay = float(i)
         
     @property
     def P_removal(self):
@@ -165,7 +165,7 @@ class Lagoon(SanUnit, Decay):
         return self._N_lagoon
     @N_lagoon.setter
     def N_lagoon(self, i):
-        self._N_lagoon = np.ceil(i)    
+        self._N_lagoon = int(np.ceil(i))
 
     @property
     def tau(self):

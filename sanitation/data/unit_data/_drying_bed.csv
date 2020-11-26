@@ -4,9 +4,9 @@ sol_frac,final_solids_content_drying_bed,fraction,"{'unplanted': 0.35,
 'planted': 0.55}","{'unplanted': 0.3,
 'planted': 0.4}","{'unplanted': 0.4,
 'planted': 0.7}",uniform,"Lubigi; EAWAG, 2014"
-COD_max_removal,COD_degradation_drying_bed,fraction of total COD,0.7,0.6,0.8,triangular,"Leeds; Orner and Mihelcic, 2017"
+COD_max_decay,COD_degradation_drying_bed,fraction of total COD,0.7,0.6,0.8,triangular,"Leeds; Orner and Mihelcic, 2017"
 MCF_decay,MCF_drying_bed,fraction of anaerobic conversion of degraded COD,0.2,0,0.3,triangular,"IPCC, 2006"
-N_max_removal,N_max_denitrification_drying_bed,fraction of N removal,0.8,0.7,0.9,triangular,"Orner and Mihelcic, 2017"
+N_max_decay,N_max_denitrification_drying_bed,fraction of N removal,0.8,0.7,0.9,triangular,"Orner and Mihelcic, 2017"
 N2O_EF_decay,N2O_EF_drying_bed,fraction of degraded N emitted as N2O,0.005,0,0.011,triangular,"IPCC, 2006"
 N_bed,"number_covered_drying_beds;
 number_uncovered_drying_beds;

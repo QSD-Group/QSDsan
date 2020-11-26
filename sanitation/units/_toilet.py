@@ -31,7 +31,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('Toilet',)
 
-data_path += 'unit_data/Toilet.csv'
+data_path += 'unit_data/_toilet.csv'
 
 
 # %%
@@ -199,15 +199,15 @@ class Toilet(SanUnit, Decay, isabstract=True):
         return self.desiccant_V*self.desiccant_rho
 
     @property
-    def N_vol(self):
+    def N_volatilization(self):
         '''
         [float] Fraction of input N that volatizes to the air
         (if if_air_emission is True).
         '''
-        return self._N_vol
-    @N_vol.setter
-    def N_vol(self, i):
-        self._N_vol = float(i)
+        return self._N_volatilization
+    @N_volatilization.setter
+    def N_volatilization(self, i):
+        self._N_volatilization = float(i)
 
     @property
     def empty_ratio(self):

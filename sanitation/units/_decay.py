@@ -34,11 +34,11 @@ class Decay:
     '''For non-steady state degradation.'''
 
     def __init__(self):
-        self._COD_max_removal = None
+        self._COD_max_decay = None
         self._decay_k_COD = None
         self._MCF_decay = None
         self._max_CH4_emission = None
-        self._N_max_removal = None
+        self._N_max_decay = None
         self._decay_k_N = None
         self._N2O_EF_decay = None
 
@@ -70,12 +70,12 @@ class Decay:
             return preferred_N, tot_red-preferred_N  
       
     @staticmethod
-    def first_order_decay(k, t, max_removal, t0=0, tot=1):
+    def first_order_decay(k, t, max_decay, t0=0, tot=1):
         '''
         Calculate first-order degradation loss based on ref [1].
         
         .. math::
-            C_0 = tot * max_removal
+            C_0 = tot * max_decay
             C_avg = C_0/(k*t) * (e^{-k*t_0}-e^{-k*t_f})
             loss = C_0 - C_avg
 
@@ -87,7 +87,7 @@ class Decay:
             Degradation time prior to current process.
         t : [float]
             Degradation time in current process.
-        max_removal : [float]
+        max_decay : [float]
             Maximum removal ratio.
         tot : [float], optional
             Total degradable amount.
@@ -100,19 +100,19 @@ class Decay:
 
         '''
 
-        C0 = tot * max_removal
+        C0 = tot * max_decay
         Cavg = C0/(k*t) * (np.exp(-k*t0)-np.exp(-k*(t0+t)))
         loss = C0 - Cavg
         return loss
 
 
     @property
-    def COD_max_removal(self):
+    def COD_max_decay(self):
         '''[float] Maximum fraction of COD removed during storage given sufficient time.'''
-        return self._COD_max_removal
-    @COD_max_removal.setter
-    def COD_max_removal(self, i):
-        self._COD_max_removal = float(i)
+        return self._COD_max_decay
+    @COD_max_decay.setter
+    def COD_max_decay(self, i):
+        self._COD_max_decay = float(i)
 
     @property
     def decay_k_COD(self):
@@ -139,12 +139,12 @@ class Decay:
         self._max_CH4_emission = float(i)
 
     @property
-    def N_max_removal(self):
-        '''[float] Maximum fraction of N removed through denitrification during storage given sufficient time.'''
-        return self._N_max_removal
-    @N_max_removal.setter
-    def N_max_removal(self, i):
-        self._N_max_removal = float(i)
+    def N_max_decay(self):
+        '''[float] Maximum fraction of N degraded through denitrification during storage given sufficient time.'''
+        return self._N_max_decay
+    @N_max_decay.setter
+    def N_max_decay(self, i):
+        self._N_max_decay = float(i)
 
     @property
     def decay_k_N(self):

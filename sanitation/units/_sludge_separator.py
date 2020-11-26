@@ -30,7 +30,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('SludgeSeparator',)
 
-data_path += 'unit_data/SludgeSeparator.csv'
+data_path += 'unit_data/_sludge_separator.csv'
 
 allocate_N_removal = Decay.allocate_N_removal
 

@@ -26,7 +26,7 @@ Ref:
 
 import pandas as pd
 from .utils.loading import data_path
-data_path += 'lca_data/construction.xlsx'
+data_path += 'lca_data/_construction.xlsx'
 
 class Construction:
     '''
