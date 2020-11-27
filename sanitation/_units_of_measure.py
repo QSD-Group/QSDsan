@@ -28,14 +28,16 @@ data_path += 'units_of_measure.txt'
 
 from thermosteam import units_of_measure as uom
 ureg = uom.ureg
-ureg.load_definitions(data_path)
+# ureg.load_definitions(data_path)
 
 AbsoluteUnitsOfMeasure = uom.AbsoluteUnitsOfMeasure
-construction_units_of_measure = {
-    'mass': AbsoluteUnitsOfMeasure('kg'),
-    'volume': AbsoluteUnitsOfMeasure('m3'),
-    }
+RelativeUnitsOfMeasure = uom.RelativeUnitsOfMeasure
+
+# construction_units_of_measure = {
+#     'mass': AbsoluteUnitsOfMeasure('kg'),
+#     'volume': AbsoluteUnitsOfMeasure('m3'),
+#     }
 
 
-definitions = uom.definitions
-definitions['GWP'] = 'Global warming potential'
+# definitions = uom.definitions
+# definitions['GWP'] = 'Global warming potential'

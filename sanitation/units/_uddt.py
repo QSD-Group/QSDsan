@@ -83,11 +83,13 @@ class UDDT(Toilet):
         self._safety_factor = safety_factor
         self.if_prep_loss = if_prep_loss
         self.if_treatment = if_treatment
+
         data = load_data(path=data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)
         del data
+
         self._tank_V = 60/1e3 # m3
         for attr, value in kwargs.items():
             setattr(self, attr, value)

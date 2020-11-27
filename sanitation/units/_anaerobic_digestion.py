@@ -39,6 +39,8 @@ data_path += 'unit_data/_anaerobic_digestion.csv'
 class AnaerobicDigestion(SanUnit, Decay):
     '''Anaerobic digestion of wastes with the production of biogas.'''
     
+    _default_data = None
+    
     def __init__(self, ID='', ins=None, outs=(), if_N2O_emission=True, **kwargs):
         
         '''
