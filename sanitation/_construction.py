@@ -97,7 +97,9 @@ class ConstructionItem:
     #!!! Are the values GWP100 from ref [1]?
     @classmethod
     def load_default_items(cls, path=data_path):
-        data_file = cls._default_data or pd.ExcelFile(data_path)
+        if cls._default_data is not None:
+            data_file = cls._default_data
+        else: data_file = pd.ExcelFile(data_path)
         items = {}
         for sheet in data_file.sheet_names:
             data = data_file.parse(sheet, index_col=0)
@@ -144,10 +146,6 @@ class ConstructionItem:
     def CFs(self):
         '''[dict] Characterization factors of the material or activity for different impact indicators.'''
         return self._CFs
-    # @CFs.setter
-    # def CFs(self, indicator, CF):
-    #     self._CFs = self
-
 
 
 
@@ -179,7 +177,7 @@ class Construction:
 
 
 
-
+ConstructionItem.load_default_items()
 
 
 

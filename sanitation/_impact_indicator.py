@@ -100,7 +100,9 @@ class ImpactIndicator:
 
     @classmethod
     def load_default_indicators(cls):
-        data = cls._default_data or load_data(path=data_path)
+        if cls._default_data is not None:
+            data = cls._default_data
+        else: data = load_data(path=data_path)
         for indicator in data.index:
             if indicator in cls.indicators.keys():
                 continue
