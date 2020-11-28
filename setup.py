@@ -27,6 +27,7 @@ setup(
     install_requires=['biosteam'],
     package_data=
         {'sanitation': [
+                        'units_of_measure.txt',
                         'data/*',
                         'data/lca_data/*',
                         'data/unit_data/*',
