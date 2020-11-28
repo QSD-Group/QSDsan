@@ -28,6 +28,8 @@ setup(
     package_data=
         {'sanitation': [
                         'data/*',
+                        'data/lca_data/*',
+                        'data/unit_data/*',
                         'utils/*',
                         'units/*',
                         ]},

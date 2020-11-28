@@ -18,7 +18,6 @@ for license details.
 
 # %%
 
-# import pandas as pd
 from ._units_of_measure import ureg
 from .utils.loading import load_data, data_path
 data_path += 'lca_data/_impact_indicator.csv'

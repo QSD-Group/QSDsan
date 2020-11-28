@@ -45,3 +45,6 @@ __all__ = (
     *utils.__all__,
     *units.__all__,
            )
+
+ImpactIndicator.load_default_indicators()
+ConstructionItem.load_default_items()
