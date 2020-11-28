@@ -11,16 +11,20 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
+
 '''
 
-from . import (
-    piping,
-    loading,
-    formatting,
-    )
 
-__all__ = (
-    *piping.__all__,
-    *loading.__all__,
-    *formatting.__all__,
-            )
+# %%
+
+__all__ = ('format_number', )
+
+
+def format_number(number):
+    number = float(number)
+    if number > 1e6 or number < 1e-4:
+        return str(f'{number:.2E}')
+    elif number == int(number):
+        return str(int(number))
+    else:
+        return str(round(number, 4))

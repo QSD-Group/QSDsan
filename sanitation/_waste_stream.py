@@ -17,8 +17,8 @@ for license details.
 # %%
 import numpy as np
 import biosteam as bst
-from thermosteam import Stream, MultiStream, utils, units_of_measure
-from . import Components
+from thermosteam import Stream, MultiStream, utils
+from . import Components, AbsoluteUnitsOfMeasure
 
 
 
@@ -55,8 +55,8 @@ _default_ratios = {'iHi_XPAOPP': 0.5,
                    'iXUOHOE_XUE': None,}
 
 
-vol_unit = units_of_measure.AbsoluteUnitsOfMeasure('L/hr')
-conc_unit = units_of_measure.AbsoluteUnitsOfMeasure('mg/L')
+vol_unit = AbsoluteUnitsOfMeasure('L/hr')
+conc_unit = AbsoluteUnitsOfMeasure('mg/L')
 
 
 # %%
@@ -208,6 +208,7 @@ class WasteStream(Stream):
     def composite(self, variable, subgroup=None, particle_size=None, 
                   degradability=None, organic=None, volatile=None,
                   specification=None):
+        
         """
         Calculate any composite variable by specifications.
 

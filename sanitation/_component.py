@@ -309,7 +309,7 @@ class Component(tmo.Chemical):
     @property
     def f_uBOD_COD(self):
         '''
-        [fload] Ultimate BOD fraction in COD of the Component, unitless.
+        [float] Ultimate BOD fraction in COD of the Component, unitless.
 
         Notes
         -------
@@ -327,7 +327,7 @@ class Component(tmo.Chemical):
     @property
     def f_Vmass_Totmass(self):
         '''
-        [fload] Volatile fraction of the mass of the Component, unitless.
+        [float] Volatile fraction of the mass of the Component, unitless.
 
         Notes
         -------

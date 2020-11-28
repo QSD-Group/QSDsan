@@ -36,7 +36,7 @@ class LCA:
     @property
     def CFs (self):
         '''
-        [pd.DataFrame] Characterization factors for different impact categories,
+        [pandas.DataFrame] Characterization factors for different impact categories,
         the function unit is 1 kg for `SanUnit` construction materials,
         1 kJ for `HeatUtility`, and 1 kWh for `PowerUtility`.
 

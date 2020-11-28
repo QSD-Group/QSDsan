@@ -13,7 +13,7 @@ https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
 '''
 
-
+from ._units_of_measure import *
 from ._component import *
 from ._components import *
 from ._waste_stream import *
@@ -23,6 +23,7 @@ from ._construction import *
 from ._lca import *
 
 from . import (
+    _units_of_measure,
     _component,
     _components,
     _waste_stream,
@@ -35,6 +36,7 @@ from . import (
     )
 
 __all__ = (
+    *_units_of_measure.__all__,
     *_component.__all__,
     *_components.__all__,
     *_waste_stream.__all__,

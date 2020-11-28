@@ -15,12 +15,11 @@ for license details.
 '''
 
 
-
 # %%
 
 from ._units_of_measure import ureg
 from .utils.loading import load_data, data_path
-data_path += 'lca_data/_impact_indicator.csv'
+data_path += '_impact_indicator.csv'
 
 __all__ = ('ImpactIndicator', )
 
@@ -28,23 +27,23 @@ __all__ = ('ImpactIndicator', )
 class ImpactIndicator:
     '''A simple class to handle the different impact indicators in life cycle assessment.'''
     
-    indicators = {}
+    _indicators = {}
     _default_data = None
     
     __slots__ = ('_ID', '_synonym', '_method', '_category', '_unit', '_ureg_unit',
                  '_unit_remaining', '_description')
     
     def __new__(cls, ID, synonym='', method='', category='', unit='', description=''):
-        if ID in cls.indicators.keys():
-            raise ValueError(f'The indicator {ID} currently in use by {cls.indicators[ID]}')
+        if ID in cls._indicators.keys():
+            raise ValueError(f'The ID {ID} currently in use by {cls._indicators[ID]}')
         self = super().__new__(cls)
         self._ID = ID
-        self._unit = unit
+        self._unit = str(unit)
         self._ureg_unit, self._unit_remaining = cls._parse_unit(unit)
         self._method = method
         self._category = category
         self._description = description
-        cls.indicators[ID] = self
+        cls._indicators[ID] = self
         if synonym and str(synonym) != 'nan':
             self.set_synonym(synonym)
         return self
@@ -71,7 +70,7 @@ class ImpactIndicator:
 
     
     def __repr__(self):
-        return f'<ImpactIndicator: {self.ID}>'
+        return f'<ImpactIndicator: {self.ID} as {self.unit}>'
 
     
     def set_synonym(self, synonym):
@@ -86,15 +85,15 @@ class ImpactIndicator:
             New synonym of the indicator.
 
         '''
-        dct = ImpactIndicator.indicators
+        dct = ImpactIndicator._indicators
         if synonym in dct.keys() and dct[synonym] is not self:
-            raise ValueError(f"The synonym '{synonym}' already in use by {repr(dct[synonym])}")
+            raise ValueError(f"The synonym '{synonym}' already in use by {dct[synonym]}")
         else:
             dct[synonym] = self
     
     def get_synonym(self):
         '''Return all synonyms of the indicator as a list.'''
-        return [i for i, j in ImpactIndicator.indicators.items() if j==self]
+        return [i for i, j in ImpactIndicator._indicators.items() if j==self]
 
 
     @classmethod
@@ -103,7 +102,7 @@ class ImpactIndicator:
             data = cls._default_data
         else: data = load_data(path=data_path)
         for indicator in data.index:
-            if indicator in cls.indicators.keys():
+            if indicator in cls._indicators.keys():
                 continue
             else:
                 new = cls.__new__(cls, ID=indicator,
@@ -112,12 +111,12 @@ class ImpactIndicator:
                                   method=data.loc[indicator]['method'],
                                   category=data.loc[indicator]['category'],
                                   description=data.loc[indicator]['description'])
-                cls.indicators[indicator] = new
+                cls._indicators[indicator] = new
         cls._default_data = data
 
     @classmethod
     def get_all_indicators(cls):
-        return set([i for i in ImpactIndicator.indicators.values()])
+        return set([i for i in ImpactIndicator._indicators.values()])
 
 
     @property
