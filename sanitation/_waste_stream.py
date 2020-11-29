@@ -18,8 +18,8 @@ for license details.
 import numpy as np
 import biosteam as bst
 from thermosteam import Stream, MultiStream, utils
-from . import Components, AbsoluteUnitsOfMeasure
-
+from . import Components
+from ._units_of_measure import auom
 
 
 __all__ = ('WasteStream',)
@@ -55,8 +55,8 @@ _default_ratios = {'iHi_XPAOPP': 0.5,
                    'iXUOHOE_XUE': None,}
 
 
-vol_unit = AbsoluteUnitsOfMeasure('L/hr')
-conc_unit = AbsoluteUnitsOfMeasure('mg/L')
+vol_unit = auom('L/hr')
+conc_unit = auom('mg/L')
 
 
 # %%

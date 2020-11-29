@@ -17,7 +17,7 @@ for license details.
 
 # %%
 
-from ._units_of_measure import ureg
+from ._units_of_measure import parse_unit
 from .utils.loading import load_data, data_path
 data_path += '_impact_indicator.csv'
 
@@ -25,7 +25,7 @@ __all__ = ('ImpactIndicator', )
 
 
 class ImpactIndicator:
-    '''A simple class to handle the different impact indicators in life cycle assessment.'''
+    '''To handle the different impact indicators in life cycle assessment.'''
     
     _indicators = {}
     _default_data = None
@@ -39,7 +39,7 @@ class ImpactIndicator:
         self = super().__new__(cls)
         self._ID = ID
         self._unit = str(unit)
-        self._ureg_unit, self._unit_remaining = cls._parse_unit(unit)
+        self._ureg_unit, self._unit_remaining = parse_unit(unit)
         self._method = method
         self._category = category
         self._description = description
@@ -47,26 +47,6 @@ class ImpactIndicator:
         if synonym and str(synonym) != 'nan':
             self.set_synonym(synonym)
         return self
-    
-    @staticmethod
-    def _parse_unit(value):
-        str_list = value.split(' ') # for something like kg CO2-eq
-        if len(str_list) > 1:
-            unit = str_list[0]
-            others = ' '.join(str_list.pop(0))
-            try: return getattr(ureg, unit), others
-            except: pass
-        str_list = value.split('-') # for something like MJ-eq
-        if len(str_list) > 1:
-            unit = str_list[0]
-            others = '-'.join(str_list.pop(0))
-            try: return getattr(ureg, unit), others
-            except: pass
-        # For something like MJ, not at the start as something like 'kg N' will
-        # be misinterpreted
-        try: return getattr(ureg, unit), others
-        except: pass
-        return None, value
 
     
     def __repr__(self):
@@ -128,6 +108,10 @@ class ImpactIndicator:
     def unit(self):
         '''Unit of the impact indicator.'''    
         return self._unit
+    @unit.setter
+    def unit(self, i):
+        self._unit = str(i)
+        self._ureg_unit, self._unit_remaining = parse_unit(i)
 
     @property
     def method(self):

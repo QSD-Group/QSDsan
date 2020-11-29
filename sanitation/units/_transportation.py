@@ -18,13 +18,12 @@ Ref:
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
 
-
 '''
 
 # %%
 
 from warnings import warn
-from .. import SanUnit
+from .. import SanUnit, Construction
 
 __all__ = ('Transportation',)
 
@@ -35,7 +34,6 @@ class Transportation(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), *,
                  capacity, distance, period,
                  transport_cost=0, emptying_cost=0,
-                 transport_impacts={}, emptying_impacts={},
                  if_material_loss=True, loss_ratio=0.02):
         '''
 
@@ -51,10 +49,6 @@ class Transportation(SanUnit):
             Cost of transportation in USD/km.
         emptying_cost : [float]
             Cost of emptying the vehicle/container in USD/emptying.
-        transport_impacts : [dict]
-            Environmental impacts of transportation per km.
-        emptying_impacts : [dict]
-            Environmental impacts of emptying the vehicle/container each time.
         if_material_loss : [bool]
             If material loss occurs during transportation.
         loss_ratio : [float] or [dict]
@@ -68,8 +62,6 @@ class Transportation(SanUnit):
         self.period = period
         self.transport_cost = transport_cost
         self.emptying_cost = emptying_cost
-        self.transport_impacts = transport_impacts
-        self.emptying_impacts = emptying_impacts
         self.if_material_loss = if_material_loss
         self.loss_ratio = loss_ratio
 
@@ -93,7 +85,11 @@ class Transportation(SanUnit):
                     transported.imass[cmp] *= 1 - ratio
                     loss.imass[cmp] = self.ins[0].imass[cmp] - transported.imass[cmp]
 
-        
+    def _design(self):
+        self.construction = (
+            Construction(item='Trucking', quantity=self.distance, quantity_unit='tonne*km'), # quantity in km/hr
+            )
+
     def _cost(self):
         self._OPEX = (self.transport_cost*self.distance+self.emptying_cost)/self.period
 

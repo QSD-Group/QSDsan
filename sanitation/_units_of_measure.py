@@ -16,20 +16,42 @@ for license details.
 
 # %%
 
-__all__ = ('ureg', 'AbsoluteUnitsOfMeasure', 'RelativeUnitsOfMeasure')
+__all__ = ('ureg', 'auom', 'ruom', 'parse_unit')
 
 #!!! Make sure all units are defined in a single registry (same as thermosteam)
 #!!! Move Component/WasteStream ones here as well
 
-from thermosteam import units_of_measure as uom
-ureg = uom.ureg
+from thermosteam.units_of_measure import ureg, AbsoluteUnitsOfMeasure, RelativeUnitsOfMeasure
+auom = AbsoluteUnitsOfMeasure
+ruom = RelativeUnitsOfMeasure
 
 import os
 ureg.load_definitions(os.path.dirname(os.path.realpath(__file__)) + '/units_of_measure.txt')
 del os
 
-AbsoluteUnitsOfMeasure = uom.AbsoluteUnitsOfMeasure
-RelativeUnitsOfMeasure = uom.RelativeUnitsOfMeasure
+
+def parse_unit(value):
+    str_list = value.split(' ') # for something like 'kg CO2-eq'
+    if len(str_list) > 1:
+        unit = str_list[0]
+        others = ' '.join(str_list.pop(0))
+        try: return auom(unit), others
+        except: pass
+    str_list = value.split('-') # for something like 'MJ-eq'
+    if len(str_list) > 1:
+        unit = str_list[0]
+        others = '-'.join(str_list.pop(0))
+        try: return auom(unit), others
+        except: pass
+    # For something like 'MJ' or 'tonne*km', not at the start as something like 'kg N' will
+    # be misinterpreted
+    try: return auom(value), ''
+    except: pass
+    return None, value
+
+
+
+
 
 # construction_units_of_measure = {
 #     'mass': AbsoluteUnitsOfMeasure('kg'),
@@ -39,3 +61,4 @@ RelativeUnitsOfMeasure = uom.RelativeUnitsOfMeasure
 
 # definitions = uom.definitions
 # definitions['GWP'] = 'Global warming potential'
+

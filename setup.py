@@ -29,7 +29,6 @@ setup(
         {'sanitation': [
                         'units_of_measure.txt',
                         'data/*',
-                        'data/lca_data/*',
                         'data/unit_data/*',
                         'utils/*',
                         'units/*',

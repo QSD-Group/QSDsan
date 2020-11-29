@@ -25,7 +25,7 @@ Ref:
 
 import numpy as np
 from warnings import warn
-from .. import SanUnit
+from .. import SanUnit, Construction
 from ._decay import Decay
 from ..utils.loading import load_data, data_path
 
@@ -127,6 +127,14 @@ class DryingBed(SanUnit, Decay):
             sol.imass['H2O'] = (sol.F_mass-sol.imass['H2O'])/set_sol_frac
             evaporated.imass['H2O'] = waste.imass['H2O'] - sol.imass['H2O']
 
+    _units = {
+        'Single covered bed volume': 'm3',
+        'Single uncovered bed volume': 'm3',
+        'Single storage bed volume': 'm3',
+        'Single planted bed volume': 'm3',
+        'Total cover area': 'm2',
+        'Total column length': 'm'
+        }
 
     def _design(self):
         design = self.design_results
@@ -140,16 +148,23 @@ class DryingBed(SanUnit, Decay):
         for n, i in enumerate(N_bed.keys()):
             design[f'Number of {i} bed'] = N_bed[i]
             design[f'Single {i} bed volume'] = V[n]
-        # Concrete
-        design['Total concrete'] = (N*self.concrete_thickness*(L*W+2*L*H+2*W*H)).sum()
-        # Steel
         cover_array = np.array((1, 0, 1, 0)) # covered, uncovered, storage, planted
         design['Total cover area'] = tot_cover_area = \
             (cover_array*N*L*W/(np.cos(self.cover_slope/180*np.pi))).sum()
         design['Total column length'] = tot_column_length = \
             (cover_array*N*2*self.column_per_side*self.column_H).sum()
-        design['Total steel'] = tot_cover_area*self.cover_unit_mass + \
+        
+        concrete = (N*self.concrete_thickness*(L*W+2*L*H+2*W*H)).sum()
+        steel = tot_cover_area*self.cover_unit_mass + \
             tot_column_length*self.column_unit_mass
+        self.construction = (
+            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
+            Construction(item='Steel', quantity=steel, quantity_unit='kg'),
+            )
+        self.add_construction()
+        
+    def _cost(self):
+        pass
 
 
     @property

@@ -95,7 +95,18 @@ class SanUnit(bst.Unit, isabstract=True):
             i += 1
         info = info.replace('\n ', '\n    ')
         return info[:-1]
-        
+    
+    
+    _impact = utils.NotImplementedMethod
+
+
+    def _summary(self):
+        '''After system converges, design unit and calculate cost and environmental impacts'''
+        self._design()
+        self._cost()
+        self._impact()
+    
+    
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, stream_info=True):
         """Print information of the unit, including WasteStream-specific information"""
         print(self._info(T, P, flow, composition, N, stream_info))
@@ -104,6 +115,12 @@ class SanUnit(bst.Unit, isabstract=True):
         ws_inv = (i for i in self.ins if not (i._source and i.CFs is None))
         ws_inv += (i for i in self.outs if not (i._sink and i.CFs is None))
         return ws_inv
+    
+    def add_construction(self):
+        '''Add construction materials and activities to design and result dict'''
+        for i in self.construction:
+            self.design_results[i.item.ID] = i.quantity
+            self._units[i.item.ID] = i.unit
     
     @property
     def construction(self):
@@ -123,16 +140,17 @@ class SanUnit(bst.Unit, isabstract=True):
 
     @property
     def OPEX(self):
-        '''[float] Total operating expense, [USD/hr].'''
+        '''[float] Total operating expense per hour.'''
         return self._OPEX or self.utility_cost
     
+    #!!! Maybe can just check the _impact results
     @property
     def _if_LCA(self):
         '''
-        If this `SanUnit` is included in LCA. `False` if:
+        If this SanUnit is included in LCA. False if:
             - All ins and outs have sink and source (i.e., no chemical inputs or emissions).
-            - No `HeatUtility` and `PowerUtility` objects.
-            - self.construction is `None`.
+            - No HeatUtility and PowerUtility objects.
+            - self.construction is empty.
 
         '''
         inputs = tuple(i for i in self.ins if not i._source)

@@ -23,7 +23,7 @@ __all__ = ('LCA',)
 
 class LCA:
     '''
-    For life cycle assessment (LCA) of a `System`.
+    For life cycle assessment (LCA) of a System.
 
     '''
     
@@ -37,8 +37,8 @@ class LCA:
     def CFs (self):
         '''
         [pandas.DataFrame] Characterization factors for different impact categories,
-        the function unit is 1 kg for `SanUnit` construction materials,
-        1 kJ for `HeatUtility`, and 1 kWh for `PowerUtility`.
+        the function unit is 1 kg for SanUnit construction materials,
+        1 kJ for HeatUtility, and 1 kWh for PowerUtility.
 
         Notes
         -----
@@ -175,18 +175,18 @@ class LCA:
     @staticmethod
     def like(system, model_lca):
         '''
-        Create an LCA object for the system based on assumptions in `model_lca` 
+        Create an LCA object for the system based on assumptions in model_lca
 
         Parameters
         ----------
-        system : `System`
+        system : System
             New system for which the LCA will be peformed.
-        model_lca : `LCA`
+        model_lca : LCA
             Model LCA object.
 
         Returns
         -------
-        new_lca : `LCA`.
+        new_lca : LCA.
             A new LCA object for the given system.
 
         '''

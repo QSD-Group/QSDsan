@@ -115,6 +115,7 @@ class SludgeSeparator(SanUnit):
         # Adjust total mass of of the settled solids by changing water content.
         liq, sol = self._adjust_solid_water(waste, liq, sol, self.settled_frac)
 
+
     @property
     def split(self):
         '''

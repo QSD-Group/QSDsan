@@ -25,7 +25,6 @@ Ref:
 # %%
 
 from .. import WasteStream, Construction
-from .. import ConstructionItem as CI
 from ._toilet import Toilet
 from ..utils.loading import load_data, data_path
 
@@ -167,22 +166,32 @@ class PitLatrine(Toilet):
         
         waste.copy_like(mixed)
 
+    _units = {
+        'Emptying period': 'yr',
+        'Pit volume': 'm3',
+        'Pit area': 'm2',
+        'Pit depth': 'm'
+        }
 
     def _design(self):
-        self.construction = constr = (
-            Construction(item='Cement', quantity=700, unit='kg'),
-            Construction(item='Sand', quantity=2.2*1442, unit='kg'),
-            Construction(item='Gravel', quantity=0.8*1600, unit='kg'),
-            Construction(item='Brick', quantity=54*0.0024*1750, unit='kg'),
-            Construction(item='Plastic', quantity=16*0.63, unit='kg'),
-            Construction(item='Steel', quantity=0.00425*7900, unit='kg'),
-            Construction(item='Wood', quantity=0.19, unit='m3'),
-            Construction(item='Excavation', quantity=self.pit_V, unit='m3'),
+        design = self.design_results
+        design['Emptying period'] = self.emptying_period
+        design['Pit volume'] = self.pit_V
+        design['Pit area'] = self.pit_area
+        design['Pit depth'] = self.pit_depth
+        
+        self.construction = (
+            Construction(item='Cement', quantity=700, quantity_unit='kg'),
+            Construction(item='Sand', quantity=2.2*1442, quantity_unit='kg'),
+            Construction(item='Gravel', quantity=0.8*1600, quantity_unit='kg'),
+            Construction(item='Brick', quantity=54*0.0024*1750, quantity_unit='kg'),
+            Construction(item='Plastic', quantity=16*0.63, quantity_unit='kg'),
+            Construction(item='Steel', quantity=0.00425*7900, quantity_unit='kg'),
+            Construction(item='Wood', quantity=0.19, quantity_unit='m3'),
+            Construction(item='Excavation', quantity=self.pit_V, quantity_unit='m3'),
             )
 
-        for i in constr:
-            self.design_results[i.item.ID] = i.quantity
-            self._units[i.item.ID] = i.unit
+        self.add_construction()
 
         
     def _cost(self):

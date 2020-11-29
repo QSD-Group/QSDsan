@@ -17,16 +17,15 @@ for license details.
 
 # %%
 
-__all__ = ('format_number', )
+from . import ImpactIndicator, ImpactItem
+from ._units_of_measure import auom
+from .utils.formatting import format_number as f_num
+
+indicators = ImpactIndicator._indicators
+
+__all__ = ('Transportation',)
 
 
-def format_number(number):
-    number = float(number)
-    if abs(number) == 0 or str(number) == 'nan':
-        return '0'
-    elif abs(number) > 1e6 or abs(number) < 1e-4:
-        return str(f'{number:.2E}')
-    elif number == int(number):
-        return str(int(number))
-    else:
-        return str(round(number, 4))
+class Transportation:
+    '''Transportation cost and environmental impacts.'''
+    '''TO BE ADDED'''

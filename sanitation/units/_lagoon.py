@@ -25,7 +25,7 @@ Ref:
 
 import numpy as np
 from warnings import warn
-from .. import SanUnit
+from .. import SanUnit, Construction
 from ._decay import Decay
 from ..utils.loading import load_data, data_path
 
@@ -104,6 +104,14 @@ class Lagoon(SanUnit, Decay):
 
         treated.imass['P'] *= 1 - self.P_removal
 
+
+    _units = {
+        'Single lagoon volume': 'm3',
+        'Lagoon length': 'm',
+        'Lagoon width': 'm',
+        'Lagoon depth': 'm'
+        }
+
     def _cost(self):
         design = self.design_results
         design['Lagoon number'] = N = self.N_lagoon
@@ -111,9 +119,13 @@ class Lagoon(SanUnit, Decay):
         design['Lagoon length'] = L = self.lagoon_L
         design['Lagoon width'] = W = self.lagoon_W
         design['Lagoon depth'] = depth = V / (L*W)
-        design['Total excavation'] = V * N
-        liner_A = (L*W + 2*depth*(L+W)) * N
-        design['Total liner'] = liner_A * self.liner_unit_mass
+        
+        liner = (L*W + 2*depth*(L+W)) * N * self.liner_unit_mass
+        self.construction = (
+            Construction(item='Plastic', quantity=liner, quantity_unit='kg'),
+            Construction(item='Excavation', quantity=N*V, quantity_unit='m3'),
+            )
+        self.add_construction()
     
     @property
     def design_type(self):

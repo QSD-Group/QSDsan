@@ -24,7 +24,7 @@ Ref:
 # %%
 
 import numpy as np
-from .. import SanUnit
+from .. import SanUnit, Construction
 from ._decay import Decay
 from ..utils.loading import load_data, data_path
 
@@ -100,7 +100,14 @@ class LiquidTreatmentBed(SanUnit, Decay):
             N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
         else:
             N2O.empty()
-        
+    
+    _units = {
+        'Residence time': 'd',
+        'Bed length': 'm',
+        'Bed width': 'm',
+        'Bed height': 'm',
+        'Single bed volume': 'm3'
+        }
 
     def _design(self):
         design = self.design_results
@@ -109,8 +116,13 @@ class LiquidTreatmentBed(SanUnit, Decay):
         design['Bed length'] = L = self.bed_L
         design['Bed width'] = W = self.bed_W
         design['Bed height'] = H = self.bed_H
-        design['Single reactor volume'] = L*W*H
-        design['Total concrete'] = N*self.concrete_thickness*(L*W+2*L*H+2*W*H)
+        design['Single bed volume'] = L*W*H
+        
+        concrete = N*self.concrete_thickness*(L*W+2*L*H+2*W*H)
+        self.construction = (
+            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
+            )
+        self.add_construction()
 
 
     def _cost(self):

@@ -24,7 +24,7 @@ Ref:
 # %%
 
 import numpy as np
-from .. import SanUnit
+from .. import SanUnit, Construction
 from ._decay import Decay
 from ..utils.loading import load_data, data_path
 
@@ -97,6 +97,13 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         else:
             N2O.empty()
 
+    _units = {
+        'Residence time': 'd',
+        'Reactor length': 'm',
+        'Reactor width': 'm',
+        'Reactor height': 'm',
+        'Single reactor volume': 'm3'
+        }
 
     def _design(self):
         design = self.design_results
@@ -107,22 +114,18 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         design['Reactor width'] = W = self.reactor_W
         design['Reactor height'] = H = self.reactor_H
         design['Single reactor volume'] = V = L*W*H
-        design['Total concrete'] = N*self.concrete_thickness* \
-            (2*L*W+2*L*H+(2+N_b)*W*H)*self.add_concrete
-        design['Total gravel'] = N*V/(N_b+1) #*gravel_density
-        design['Total excavation'] = N*V
-
-
+        concrete = N*self.concrete_thickness*(2*L*W+2*L*H+(2+N_b)*W*H)*self.add_concrete
+        self.construction = (
+            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
+            #!!! Uncertainty on gravel density not included
+            Construction(item='Gravel', quantity= N*V/(N_b+1)*1600, quantity_unit='kg'),
+            Construction(item='Excavation', quantity=N*V, quantity_unit='m3'),
+            )
+        self.add_construction()
 
 
     def _cost(self):
         pass
-
-
-
-
-
-
 
 
 
