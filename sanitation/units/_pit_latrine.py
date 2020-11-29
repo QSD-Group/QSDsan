@@ -24,7 +24,8 @@ Ref:
 
 # %%
 
-from .. import WasteStream
+from .. import WasteStream, Construction
+from .. import ConstructionItem as CI
 from ._toilet import Toilet
 from ..utils.loading import load_data, data_path
 
@@ -168,15 +169,21 @@ class PitLatrine(Toilet):
 
 
     def _design(self):
-        design = self.design_results
-        design['Cement'] = 700
-        design['Sand'] = 2.2 * 1442
-        design['Gravel'] = 0.8 * 1600
-        design['Bricks'] = 54 * 0.0024 * 1750
-        design['Plastic'] = 16 * 0.63
-        design['Steel'] = 0.00425  * 7900
-        design['Wood'] = 0.19
-        design['Excavation'] = self.pit_depth * self.pit_area
+        self.construction = constr = (
+            Construction(item='Cement', quantity=700, unit='kg'),
+            Construction(item='Sand', quantity=2.2*1442, unit='kg'),
+            Construction(item='Gravel', quantity=0.8*1600, unit='kg'),
+            Construction(item='Brick', quantity=54*0.0024*1750, unit='kg'),
+            Construction(item='Plastic', quantity=16*0.63, unit='kg'),
+            Construction(item='Steel', quantity=0.00425*7900, unit='kg'),
+            Construction(item='Wood', quantity=0.19, unit='m3'),
+            Construction(item='Excavation', quantity=self.pit_V, unit='m3'),
+            )
+
+        for i in constr:
+            self.design_results[i.item.ID] = i.quantity
+            self._units[i.item.ID] = i.unit
+
         
     def _cost(self):
         self.purchase_costs['Toilet'] = 449

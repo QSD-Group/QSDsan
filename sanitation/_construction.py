@@ -81,7 +81,7 @@ class ConstructionItem:
     def show(self):
         info = f'ConstructionItem: {self.ID} [per {self.functional_unit}]'
         #!!! Make it possible to customerize price unit
-        info += f'\n price: {f_num(self.price)} [self.price_unit]'
+        info += f'\n price: {f_num(self.price)} {self.price_unit}'
         info += '\n CFs:'
         CFs = self.CFs
         if len(CFs) == 0:
@@ -219,7 +219,9 @@ class Construction:
     __slots__ = ('_item', '_quantity',)
     
     def __init__(self, item=None, quantity=0., unit=''):
-        self._item = item
+        # if item is str:
+        #     item = ConstructionItem._items['item']
+        self.item = item
         self._quantity = quantity
         self._update_quantity(quantity, unit)
 
@@ -263,8 +265,10 @@ class Construction:
         return self._item
     @item.setter
     def item(self, i):
-        if i is not ConstructionItem:
-            raise TypeError('Only <ConstructionItem> can be set as item, '
+        if isinstance(i, str):
+            i = ConstructionItem._items[i]
+        elif i is not ConstructionItem:
+            raise TypeError('Only <ConstructionItem> or  <ConstructionItem>.ID can be set, '
                             f'not {type(i).__name__}.')
         self._item = i
   

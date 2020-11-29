@@ -15,6 +15,7 @@ for license details.
 
 import biosteam as bst
 from biosteam import utils
+from . import Construction
 from .utils.piping import WSIns, WSOuts
 
 
@@ -37,7 +38,7 @@ class SanUnit(bst.Unit, isabstract=True):
         self._init_results()
         self._assert_compatible_property_package()
         self._OPEX = None
-        self._construction_materials = None
+        self._construction = ()
 
     
     def _init_ins(self, ins):
@@ -105,17 +106,20 @@ class SanUnit(bst.Unit, isabstract=True):
         return ws_inv
     
     @property
-    def construction_materials(self):
-        '''
-        [dict] Materials used in unit construction, will be used in LCA.
-
-        Notes
-        -----
-        Method for calculating materials used in a `SanUnit` should be included
-        in the `_design` method.
-
-        '''
-        return self._construction_materials
+    def construction(self):
+        '''[tuple] Contains construction information.'''
+        return self._construction
+    @construction.setter
+    def construction(self, i):
+        if isinstance(i, Construction):
+            i = (i,)
+        else:
+            if not iter(i):
+                raise TypeError('Only <Construction> can be included, not {type(i).__name__}.')
+            for j in i:
+                if not isinstance(j, Construction):
+                    raise TypeError('Only <Construction> can be included, not {type(j).__name__}.')
+        self._construction = i
 
     @property
     def OPEX(self):
@@ -128,7 +132,7 @@ class SanUnit(bst.Unit, isabstract=True):
         If this `SanUnit` is included in LCA. `False` if:
             - All ins and outs have sink and source (i.e., no chemical inputs or emissions).
             - No `HeatUtility` and `PowerUtility` objects.
-            - self.construction_materials is `None`.
+            - self.construction is `None`.
 
         '''
         inputs = tuple(i for i in self.ins if not i._source)
@@ -137,7 +141,7 @@ class SanUnit(bst.Unit, isabstract=True):
         if bool(emissions): return True
         if bool(self.heat_utilities): return True
         if bool(self.power_utility): return True
-        if bool(self.construction_materials): return True
+        if bool(self.construction): return True
         return False
 
 

@@ -8,3 +8,4 @@ yr = year = yr = y
 hr = hour = hr = h
 d = day
 USD = usd
+ea = _ = each

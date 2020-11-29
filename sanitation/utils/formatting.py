@@ -22,7 +22,9 @@ __all__ = ('format_number', )
 
 def format_number(number):
     number = float(number)
-    if number > 1e6 or number < 1e-4:
+    if abs(number) == 0:
+        return '0'
+    elif abs(number) > 1e6 or abs(number) < 1e-4:
         return str(f'{number:.2E}')
     elif number == int(number):
         return str(int(number))

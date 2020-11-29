@@ -17,9 +17,9 @@ from ._units_of_measure import *
 from ._component import *
 from ._components import *
 from ._waste_stream import *
-from ._sanunit import *
 from ._impact_indicator import *
 from ._construction import *
+from ._sanunit import *
 from ._lca import *
 
 from . import (
@@ -27,9 +27,9 @@ from . import (
     _component,
     _components,
     _waste_stream,
-    _sanunit,
     _impact_indicator,
     _construction,
+    _sanunit,
     _lca,
     utils,
     units,
@@ -40,9 +40,9 @@ __all__ = (
     *_component.__all__,
     *_components.__all__,
     *_waste_stream.__all__,
-    *_sanunit.__all__,
     *_impact_indicator.__all__,
     *_construction.__all__,
+    *_sanunit.__all__,
     *_lca.__all__,
     *utils.__all__,
     *units.__all__,
