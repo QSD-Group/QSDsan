@@ -3,7 +3,7 @@ pytest-cov
 coveralls
 biosteam
 thermosteam
-sympy
+sympy>=1.7
 pint>=0.9
 chemicals>=0.1.4
 colorpalette>=0.3.1 
