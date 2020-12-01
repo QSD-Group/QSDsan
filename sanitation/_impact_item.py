@@ -36,7 +36,7 @@ class ImpactItem:
     _items = {}
     _default_data = None
     
-    __slots__ = ('_ID', '_kind', '_functional_unit', '_CFs', '_CF_values')
+    __slots__ = ('_ID', '_kind', '_functional_unit', '_CFs')
  
     def __new__(cls, ID, kind='material', functional_unit='kg', **indicator_CFs):
         if ID in cls._items.keys():
@@ -46,7 +46,6 @@ class ImpactItem:
         self._kind = str(kind)
         self._functional_unit = auom(functional_unit)
         self._CFs = {}
-        self._CF_values = {}
         for CF, value in indicator_CFs.items():
             try:
                 CF_value, CF_unit = value # unit provided for CF
@@ -90,8 +89,7 @@ class ImpactItem:
             except:
                 raise ValueError(f'Conversion of the given unit {CF_unit} to '
                                  f'the defaut unit {indicator.unit} is not supported.')
-        self._CFs[indicator] = CF_value
-        self._CF_values[indicator.ID] = CF_value
+        self._CFs[indicator.ID] = CF_value
 
     
     #!!! Are the values GWP100 from ref [1]?
@@ -122,7 +120,7 @@ class ImpactItem:
     
     @classmethod
     def get_all_items(cls):
-        return set(i for i in cls._items.values())
+        return tuple(set(i for i in cls._items.values()))
     
     @property
     def ID(self):
@@ -138,25 +136,16 @@ class ImpactItem:
         self._functional_unit = auom(i)
     
     @property
+    def indicators(self):
+        ''' [tuple] ImpactIndicators associated with the item with non-zero CF values.'''
+        return tuple(indicators[i] for i in self.CFs.keys())
+    
+    @property
     def CFs(self):
-        '''
-        [dict] Characterization factors of the item for different impact indicators,
-        dict keys are ImpactIndicator objects.
-        '''
+        '''[dict] Characterization factors of the item for different impact indicators.'''
         return self._CFs
     @CFs.setter
     def CFs(self, indicator, CF_value, CF_unit=''):
-        self.add_indicator_CF(indicator, CF_value, CF_unit)
-
-    @property
-    def CF_values(self):
-        '''
-        [dict] Characterization factors of the item for different impact indicators,
-        dict keys are the IDs of ImpactIndicator objects.
-        '''
-        return self._CF_values
-    @CF_values.setter
-    def CF_values(self, indicator, CF_value, CF_unit=''):
         self.add_indicator_CF(indicator, CF_value, CF_unit)
 
 

@@ -191,7 +191,7 @@ class Transportation:
         '''[dict] Total impacts of this construction item.'''
         impacts = {}
         for indicator, CF in self.item.CFs.items():
-            impacts[indicator.ID] = self.quantity*CF
+            impacts[indicator] = self.quantity*CF
         return impacts
 
 

@@ -54,7 +54,7 @@ class ImpactIndicator:
 
     def show(self):
         info = f'ImpactIndicator: {self.ID} as {self.unit}'
-        line = '\n Synonyms : '
+        line =   '\n Synonyms   : '
         synonyms = self.get_synonym()
         if synonyms:
             for synonym in synonyms[:-1]:
@@ -91,7 +91,8 @@ class ImpactIndicator:
     
     def get_synonym(self):
         '''Return all synonyms of the indicator as a list.'''
-        return [i for i, j in ImpactIndicator._indicators.items() if j==self]
+        return tuple(i for i, j in ImpactIndicator._indicators.items()
+                     if j==self and i != self.ID)
 
 
     @classmethod
@@ -114,7 +115,7 @@ class ImpactIndicator:
 
     @classmethod
     def get_all_indicators(cls):
-        return set([i for i in ImpactIndicator._indicators.values()])
+        return tuple(i for i in set([i for i in ImpactIndicator._indicators.values()]))
 
 
     @property
