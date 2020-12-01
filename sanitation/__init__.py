@@ -25,6 +25,7 @@ from ._waste_stream import *
 from ._impact_indicator import *
 from ._impact_item import *
 from ._construction import *
+from ._transportation import *
 from ._sanunit import *
 from ._lca import *
 
@@ -36,6 +37,7 @@ from . import (
     _impact_indicator,
     _impact_item,
     _construction,
+    _transportation,
     _sanunit,
     _lca,
     utils,
@@ -49,6 +51,7 @@ __all__ = (
     *_impact_indicator.__all__,
     *_impact_item.__all__,
     *_construction.__all__,
+    *_transportation.__all__,
     *_sanunit.__all__,
     *_lca.__all__,
     *utils.__all__,
@@ -57,3 +60,9 @@ __all__ = (
 
 ImpactIndicator.load_default_indicators()
 ImpactItem.load_default_items()
+
+
+
+
+
+

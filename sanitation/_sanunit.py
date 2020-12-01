@@ -11,11 +11,12 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
+
 '''
 
 import biosteam as bst
 from biosteam import utils
-from . import Construction
+from . import Construction, Transportation
 from .utils.piping import WSIns, WSOuts
 
 
@@ -39,6 +40,7 @@ class SanUnit(bst.Unit, isabstract=True):
         self._assert_compatible_property_package()
         self._OPEX = None
         self._construction = ()
+        self._transportation = ()
 
     
     def _init_ins(self, ins):
@@ -120,7 +122,7 @@ class SanUnit(bst.Unit, isabstract=True):
         '''Add construction materials and activities to design and result dict'''
         for i in self.construction:
             self.design_results[i.item.ID] = i.quantity
-            self._units[i.item.ID] = i.unit
+            self._units[i.item.ID] = i.item.functional_unit
     
     @property
     def construction(self):
@@ -132,11 +134,27 @@ class SanUnit(bst.Unit, isabstract=True):
             i = (i,)
         else:
             if not iter(i):
-                raise TypeError('Only <Construction> can be included, not {type(i).__name__}.')
+                raise TypeError(f'Only <Construction> can be included, not {type(i).__name__}.')
             for j in i:
                 if not isinstance(j, Construction):
-                    raise TypeError('Only <Construction> can be included, not {type(j).__name__}.')
+                    raise TypeError(f'Only <Construction> can be included, not {type(j).__name__}.')
         self._construction = i
+
+    @property
+    def transportation(self):
+        '''[tuple] Contains transportation information.'''
+        return self._transportation
+    @transportation.setter
+    def transportation(self, i):
+        if isinstance(i, Transportation):
+            i = (i,)
+        else:
+            if not iter(i):
+                raise TypeError(f'Only <Transportation> can be included, not {type(i).__name__}.')
+            for j in i:
+                if not isinstance(j, Transportation):
+                    raise TypeError(f'Only <Transportation> can be included, not {type(j).__name__}.')
+        self._transportation = i
 
     @property
     def OPEX(self):

@@ -52,6 +52,24 @@ class ImpactIndicator:
     def __repr__(self):
         return f'<ImpactIndicator: {self.ID} as {self.unit}>'
 
+    def show(self):
+        info = f'ImpactIndicator: {self.ID} as {self.unit}'
+        line = '\n Synonyms : '
+        synonyms = self.get_synonym()
+        if synonyms:
+            for synonym in synonyms[:-1]:
+                line += synonym + '; '
+            line += synonyms[-1]
+            if len(line) > 40: line = line[:40] + '...'
+            info += line
+        info += f'\n Method     : {self.method}'
+        info += f'\n Category   : {self.category}'
+        line =  f'\n Description: {self.description}'
+        if len(line) > 40: line = line[:40] + '...'
+        info += line
+        print(info)
+    
+    _ipython_display_ = show
     
     def set_synonym(self, synonym):
         '''
