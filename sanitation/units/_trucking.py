@@ -67,7 +67,7 @@ class Trucking(SanUnit):
                            load_type=load_type, load=load, load_unit=load_unit,
                            distance=distance, distance_unit=distance_unit,
                            interval=interval, interval_unit=interval_unit,
-                           fee=fee), 
+                           fee=fee),
             )
 
         self.if_material_loss = if_material_loss

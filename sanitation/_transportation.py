@@ -194,13 +194,6 @@ class Transportation:
             impacts[indicator.ID] = self.quantity*CF
         return impacts
 
-    # @property
-    # def simulated_in(self):
-    #     '''[str] ID of the SanUnit associated with this Transportation object.'''
-    #     return self._simulated_in
-    # @simulated_in.setter
-    # def simulated_in(self, i):
-    #     self._simulated_in = i
 
 
 
