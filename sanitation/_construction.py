@@ -31,9 +31,8 @@ class Construction:
 
     __slots__ = ('_item', '_quantity', '_price')
     
-    def __init__(self, item=None, quantity=0., quantity_unit='', price=0., price_unit='USD'):
+    def __init__(self, item=None, quantity=0., quantity_unit='', price=0., price_unit=currency):
         self.item = item
-        self._quantity = quantity
         self._update_quantity(quantity, quantity_unit)
         self._update_price(price, price_unit)
 
@@ -55,8 +54,8 @@ class Construction:
         item = self.item
         impacts = self.impacts
         info = f'Construction: {item.ID}'
-        info += f'\n Quantity    : {f_num(self.quantity)} {self.unit}'
-        info += f'\n Total cost  : {f_num(self.cost)} {currency}'
+        info += f'\n Quantity     : {f_num(self.quantity)} {self.item.functional_unit}'
+        info += f'\n Total cost   : {f_num(self.cost)} {currency}'
         info += '\n Total impacts:'
         if len(impacts) == 0:
             info += ' None'        
@@ -66,14 +65,6 @@ class Construction:
                 unit = indicators[indicator].unit
                 info += f'\n     {indicator}: {formated} {unit}'
         return info
-
-    @property
-    def quantity(self):
-        '''[float] Quantity of the construction item.'''
-        return self._quantity
-    @quantity.setter
-    def quantity(self, quantity, unit=''):
-        self._update_quantity(quantity, unit)
         
     @property
     def item(self):
@@ -87,11 +78,14 @@ class Construction:
             raise TypeError('Only <ImpactItem> or  <ImpactItem>.ID can be set, '
                             f'not {type(i).__name__}.')
         self._item = i
-  
+
     @property
-    def unit(self):
-        '''[str] Unit of the construction, the same as the functional unit of the ImpactItem.'''
-        return self.item.functional_unit
+    def quantity(self):
+        '''[float] Quantity of this construction item.'''
+        return self._quantity
+    @quantity.setter
+    def quantity(self, quantity, unit=''):
+        self._update_quantity(quantity, unit)
 
     @property
     def price(self):
@@ -103,12 +97,12 @@ class Construction:
 
     @property
     def cost(self):
-        '''[float] Total cost of the item during construction.'''
+        '''[float] Total cost of this construction item.'''
         return self.quantity*self.price
 
     @property
     def impacts(self):
-        '''[dict] Unit of the construction, the same as the functional unit of the ImpactItem.'''
+        '''[dict] Total impacts of this construction item.'''
         impacts = {}
         for indicator, CF in self.item.CFs.items():
             impacts[indicator.ID] = self.quantity*CF
