@@ -1,5 +1,5 @@
-pyyaml
-pytest-cov
+pyyaml>=5.3.1
+pytest-cov>=2.10.0
 coveralls
 biosteam
 thermosteam
