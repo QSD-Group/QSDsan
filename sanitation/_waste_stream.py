@@ -31,7 +31,7 @@ _copied_slots = (*tuple('_'+i for i in _defined_composite_vars),
                  '_TOC', '_TKN', '_SAlk')
 
 _ws_specific_slots = (*_copied_slots,
-                      '_pH', '_ratios', '_CFs')
+                      '_pH', '_ratios', '_impact_item')
 
 _specific_groups = {'SVFA': ('SAc', 'SProp'),
                     'XStor': ('XOHO_PHA', 'XGAO_PHA', 'XPAO_PHA', 
@@ -76,7 +76,7 @@ class WasteStream(Stream):
     _default_ratios = _default_ratios
     
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
-                 units='kg/hr', price=0., thermo=None, CFs=None,
+                 units='kg/hr', price=0., thermo=None,
                  pH=7., SAlk=2.5, COD=None, BOD=None, BOD5=None, uBOD=None,
                  TC=None, TOC=None, TN=None, TKN=None, TP=None, TK=None,
                  TMg=None, TCa=None, solids=None, charge=None, ratios=None,
@@ -84,14 +84,14 @@ class WasteStream(Stream):
         
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
                          units=units, price=price, thermo=thermo, **chemical_flows)
-        self._init_ws(CFs, pH, SAlk, COD, BOD, BOD5, uBOD, TC, TOC, TN, TKN,
-                       TP, TK, TMg, TCa, solids, charge, ratios)
+        self._init_ws(pH, SAlk, COD, BOD, BOD5, uBOD, TC, TOC, TN, TKN,
+                      TP, TK, TMg, TCa, solids, charge, ratios)
 
-    def _init_ws(self, CFs=None, pH=7., SAlk=None, COD=None, BOD=None,
+    def _init_ws(self, pH=7., SAlk=None, COD=None, BOD=None,
                  BOD5=None, uBOD=None, TC=None, TOC=None, TN=None, TKN=None,
                  TP=None, TK=None, TMg=None, TCa=None, solids=None, charge=None,
                  ratios=None):
-        self._CFs = CFs
+        self._impact_item = None
         self._pH = pH
         self._SAlk = SAlk
         self._COD = COD
@@ -320,21 +320,14 @@ class WasteStream(Stream):
 
     
     @property
-    def CFs (self):
-        '''
-        [dict] Characterization factors for different impact categories,
-        the function unit is 1 kg of the `WasteStream`.
+    def impact_item(self):
+        '''[StreamImpactItem] StreamImpactItem this WasteStream is linked to.'''
+        return self._impact_item
+    @impact_item.setter
+    def impact_item(self, i):
+        raise AttributeError('Cannot set attribute, set linked_ws of the linked ImpactItem '
+                             'to None to unlink this WasteStream.')
 
-        Notes
-        -----
-        The value should be negative for credits, e.g., -1 for global warming
-        potential if the `WasteStream` is 1 kg/hr CO2 as inputs.
-
-        '''
-        return self._CFs
-    @CFs.setter
-    def CFs(self, i):
-        self._CFs = i
     
     def _liq_sol_properties(self, prop, value):
         if self.phase != 'g':
@@ -409,7 +402,6 @@ class WasteStream(Stream):
         new = super().copy()
         new._init_ws()
         for slot in _ws_specific_slots:
-            if slot == 'CFs': continue
             value = getattr(self, slot)
             setattr(new, slot, utils.copy_maybe(value))
         return new
@@ -418,7 +410,6 @@ class WasteStream(Stream):
     def copy_like(self, other):
         Stream.copy_like(self, other)
         for slot in _ws_specific_slots:
-            if slot == 'CFs': continue
             value = getattr(other, slot)
             setattr(self, slot, value)
     
@@ -444,7 +435,6 @@ class WasteStream(Stream):
 
         if if_copy_ws:
             for slot in _ws_specific_slots:
-                if slot == 'CFs': continue
                 value = getattr(other, slot)
                 setattr(self, slot, value)
 

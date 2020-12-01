@@ -30,7 +30,7 @@ class Transportation:
     '''Transportation cost and environmental impacts.'''
 
     __slots__ = ('_item', '_load_type', '_load', '_distance', '_interval',
-                 '_fee', '_default_units', '_simulated_in')
+                 '_fee', '_default_units')
     
     def __init__(self, item=None,
                  load_type='mass', load=1., load_unit='kg',
@@ -79,7 +79,7 @@ class Transportation:
         item = self.item
         impacts = self.impacts
         du = self._default_units
-        info = f'Transportation: {item.ID}'
+        info = f'Transportation: {item.ID} [per trip]'
         info += f"\n Load         : {f_num(self.load)} {du['load']}"
         info += f"\n Distance     : {f_num(self.distance)} {du['distance']}"
         info += f"\n Interval     : {f_num(self.interval)} {du['interval']}"

@@ -15,11 +15,11 @@ for license details.
 '''
 
 
-
 # %%
 
 import pandas as pd
-from . import ImpactIndicator
+from thermosteam import Stream
+from . import WasteStream, ImpactIndicator
 from ._units_of_measure import auom, parse_unit
 from .utils.loading import data_path
 from .utils.formatting import format_number as f_num
@@ -27,7 +27,7 @@ from .utils.formatting import format_number as f_num
 indicators = ImpactIndicator._indicators
 data_path += '_impact_item.xlsx'
 
-__all__ = ('ImpactItem',)
+__all__ = ('ImpactItem', 'StreamImpactItem')
 
 
 class ImpactItem:
@@ -36,14 +36,27 @@ class ImpactItem:
     _items = {}
     _default_data = None
     
-    __slots__ = ('_ID', '_kind', '_functional_unit', '_CFs')
+    __slots__ = ('_ID', '_functional_unit', '_CFs')
  
-    def __new__(cls, ID, kind='material', functional_unit='kg', **indicator_CFs):
+    def __new__(cls, ID, functional_unit='kg', **indicator_CFs):
+        '''
+        
+
+        Parameters
+        ----------
+        ID : [str]
+            ID of the ImpactItem. 
+        functional_unit : [str]
+            Functional unit of the ImpactItem.
+        **indicator_CFs : kwargs
+            ImpactIndicators and their characteriziation factors.
+
+        '''
+        
         if ID in cls._items.keys():
             raise ValueError(f'The ID {ID} is in use by {cls._items[ID]}')
         self = super().__new__(cls)
-        self._ID = str(ID)
-        self._kind = str(kind)
+        self._ID = ID
         self._functional_unit = auom(functional_unit)
         self._CFs = {}
         for CF, value in indicator_CFs.items():
@@ -55,6 +68,9 @@ class ImpactItem:
         
         cls._items[ID] = self
         return self
+    
+    __doc__ += __new__.__doc__
+    __new__.__doc__ = __doc__
     
     # This makes sure it won't be shown as memory location of the object
     def __repr__(self):
@@ -69,9 +85,10 @@ class ImpactItem:
         if len(CFs) == 0:
             info += ' None'
         else:
-            for indicator in self.CFs.keys():
+            for i in self.CFs.keys():
+                indicator = indicators[i]
                 #!!! Currently Eutrofication values are fake
-                info += f'\n     {indicator.ID}: {f_num(CFs[indicator])} {indicator.unit}'
+                info += f'\n     {indicator.ID}: {f_num(CFs[i])} {indicator.unit}'
         print(info)    
     
     _ipython_display_ = show
@@ -107,7 +124,6 @@ class ImpactItem:
                         items[item] = cls._items[item]
                     else:
                         new = cls.__new__(cls, ID=item,
-                                          kind=data.loc[item]['kind'],
                                           functional_unit=data.loc[item]['functional_unit'])
                         items[item] = new
             else:
@@ -149,7 +165,95 @@ class ImpactItem:
         self.add_indicator_CF(indicator, CF_value, CF_unit)
 
 
-ImpactItem.load_default_items()
+class StreamImpactItem(ImpactItem):
+    '''A class for calculation of environmental impacts associated with WasteStreams.'''
+
+    __slots__ = ('_ID', '_linked_ws', '_functional_unit', '_CFs')
+ 
+    def __new__(cls, linked_ws, **indicator_CFs):
+        '''
+        
+
+        Parameters
+        ----------
+        linked_ws : [WasteStream] or [str]
+            The associated WasteStream for environmental impact calculation.
+        **indicator_CFs : kwargs
+            ImpactIndicators and their characteriziation factors.
+
+        '''
+        self = super().__new__(cls, ID='temp')
+        self._linked_ws = None
+        self.linked_ws = linked_ws
+        ID = self.linked_ws.ID + '_item'
+        if ID in ImpactItem._items.keys():
+            raise ValueError(f'The ID {ID} is in use by {ImpactItem._items[ID]}')
+        self._ID = ID
+        self._functional_unit = auom('kg/hr')
+        self._CFs = {}
+        for CF, value in indicator_CFs.items():
+            try:
+                CF_value, CF_unit = value # unit provided for CF
+                self.add_indicator_CF(CF, CF_value, CF_unit)
+            except:
+                self.add_indicator_CF(CF, value)
+        
+        ImpactItem._items[ID] = self
+        return self
+    
+    __doc__ += __new__.__doc__
+    __new__.__doc__ = __doc__
+
+
+    def __repr__(self):
+        return f'<StreamImpactItem: for WasteStream {self.linked_ws}>'
+
+    
+    #TODO (maybe): DataFrame can make it look nicer
+    def show(self):
+        info = f'StreamImpactItem: {self.ID} [per {self.functional_unit}]'
+        info += f'\n Linked to: {self.linked_ws}'
+        info += '\n Characterization factors:'
+        CFs = self.CFs
+        if len(CFs) == 0:
+            info += ' None'
+        else:
+            for i in self.CFs.keys():
+                indicator = indicators[i]
+                #!!! Currently Eutrofication values are fake
+                info += f'\n     {indicator.ID}: {f_num(CFs[i])} {indicator.unit}'
+        print(info)    
+    
+    _ipython_display_ = show
+
+    @property
+    def linked_ws(self):
+        '''[WasteStream] or [str] The associated WasteStream for environmental impact calculation.'''
+        return self._linked_ws
+    @linked_ws.setter
+    def linked_ws(self, i):
+        if self._linked_ws:
+            old_ws = self._linked_ws
+            old_ws._impact_item = None
+        if not isinstance(i, WasteStream) and not isinstance(i, Stream) and i is not None:
+            if isinstance(i, str):
+                try: i = getattr(WasteStream.registry, i)
+                except:
+                    raise ValueError(f'The WasteStream ID {i} not '
+                                     'found in <WasteStream>.registry')
+            else:
+                raise TypeError('linked_ws must be a WasteStream or '
+                                f'the ID of WasteStream, not {type(i).__name__}.')
+        if i is not None:
+            i._impact_item = self
+        self._linked_ws = i
+
+
+    @property
+    def functional_unit(self):
+        '''[str] Functional unit of the item, set to 'kg/hr'.'''
+        return self._functional_unit.units
+
 
 
 

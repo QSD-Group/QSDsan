@@ -54,8 +54,6 @@ __all__ = (
     *_transportation.__all__,
     *_sanunit.__all__,
     *_lca.__all__,
-    *utils.__all__,
-    *units.__all__,
            )
 
 ImpactIndicator.load_default_indicators()

@@ -91,7 +91,7 @@ A1 = units.Excretion('A1', outs=('urine', 'feces'), N_user=N_user)
 
 A2 = units.PitLatrine('A2', ins=(A1-0, A1-1,
                                   'toilet_paper', 'flushing_water',
-                                  'cleaning_water', 'desiccant'),
+                                  'cleansing_water', 'desiccant'),
                       outs=('mixed_waste', 'leachate', 'CH4', 'N2O'),
                       N_user=N_user, OPEX_over_CAPEX=0.05,
                       decay_k_COD=get_decay_k(tau_deg, log_deg),

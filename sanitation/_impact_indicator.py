@@ -34,6 +34,26 @@ class ImpactIndicator:
                  '_unit_remaining', '_description')
     
     def __new__(cls, ID, synonym='', method='', category='', unit='', description=''):
+        '''
+        
+
+        Parameters
+        ----------
+        ID : [str]
+            ID of the ImpactIndicator.
+        synonym : [str]
+            Alternative ID of the ImpactIndicator.
+        method : [str]
+            Impact assessment method, e.g., 'TRACI'.
+        category : [str]
+            Category of the ImpactIndicator, e.g., 'human healt'.
+        unit : [str]
+            Unit of the ImpactIndicator, e.g., 'kg CO2-eq'.
+        description : [str]
+            Supplementary explanation.
+
+        '''
+        
         if ID in cls._indicators.keys():
             raise ValueError(f'The ID {ID} currently in use by {cls._indicators[ID]}')
         self = super().__new__(cls)
@@ -48,12 +68,19 @@ class ImpactIndicator:
             self.set_synonym(synonym)
         return self
 
+    __doc__ += __new__.__doc__
+    __new__.__doc__ = __doc__
     
     def __repr__(self):
-        return f'<ImpactIndicator: {self.ID} as {self.unit}>'
+        if self.unit:
+            return f'<ImpactIndicator: {self.ID} as {self.unit}>'
+        return f'<ImpactIndicator: {self.ID}>'
 
     def show(self):
-        info = f'ImpactIndicator: {self.ID} as {self.unit}'
+        if self.unit:
+            info = f'ImpactIndicator: {self.ID} as {self.unit}'
+        else:
+            info = f'ImpactIndicator: {self.ID}'
         line =   '\n Synonyms   : '
         synonyms = self.get_synonym()
         if synonyms:
@@ -62,9 +89,9 @@ class ImpactIndicator:
             line += synonyms[-1]
             if len(line) > 40: line = line[:40] + '...'
             info += line
-        info += f'\n Method     : {self.method}'
-        info += f'\n Category   : {self.category}'
-        line =  f'\n Description: {self.description}'
+        info += f'\n Method     : {self.method or None}'
+        info += f'\n Category   : {self.category or None}'
+        line =  f'\n Description: {self.description or None}'
         if len(line) > 40: line = line[:40] + '...'
         info += line
         print(info)
@@ -156,9 +183,6 @@ class ImpactIndicator:
     def description(self, i):
         self._description = i
 
-
-
-ImpactIndicator.load_default_indicators()
 
 
 
