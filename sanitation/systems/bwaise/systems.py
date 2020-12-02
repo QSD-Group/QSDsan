@@ -26,7 +26,7 @@ TODO:
 
 import numpy as np
 import biosteam as bst
-from sanitation import units, WasteStream
+from sanitation import units, WasteStream, LCA
 import bwaise
 cmps = bwaise._cmps.cmps
 
@@ -133,7 +133,7 @@ SceA = bst.System('SceA', path=(A1, A2, A3, AX, AX2))
 
 SceA.simulate()
 
-
+SceA_lca = LCA(SceA, life_time=8, life_time_unit='yr')
 
 
 # %%

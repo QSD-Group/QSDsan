@@ -17,7 +17,9 @@ for license details.
 
 # %%
 
+
 import pandas as pd
+from warnings import warn
 from thermosteam import Stream
 from . import WasteStream, ImpactIndicator
 from ._units_of_measure import auom, parse_unit
@@ -65,7 +67,6 @@ class ImpactItem:
                 self.add_indicator_CF(CF, CF_value, CF_unit)
             except:
                 self.add_indicator_CF(CF, value)
-        
         cls._items[ID] = self
         return self
     
@@ -153,7 +154,7 @@ class ImpactItem:
     
     @property
     def indicators(self):
-        ''' [tuple] ImpactIndicators associated with the item with non-zero CF values.'''
+        ''' [tuple] ImpactIndicators associated with the item.'''
         return tuple(indicators[i] for i in self.CFs.keys())
     
     @property
@@ -182,14 +183,14 @@ class StreamImpactItem(ImpactItem):
             ImpactIndicators and their characteriziation factors.
 
         '''
-        self = super().__new__(cls, ID='temp')
+        self = object.__new__(cls) # ImpactItem.__mro__
         self._linked_ws = None
         self.linked_ws = linked_ws
         ID = self.linked_ws.ID + '_item'
-        if ID in ImpactItem._items.keys():
-            raise ValueError(f'The ID {ID} is in use by {ImpactItem._items[ID]}')
+        # if ID in ImpactItem._items.keys():
+        #     raise ValueError(f'The ID {ID} is in use by {ImpactItem._items[ID]}')
         self._ID = ID
-        self._functional_unit = auom('kg/hr')
+        self._functional_unit = auom('kg')
         self._CFs = {}
         for CF, value in indicator_CFs.items():
             try:
@@ -206,12 +207,11 @@ class StreamImpactItem(ImpactItem):
 
 
     def __repr__(self):
-        return f'<StreamImpactItem: for WasteStream {self.linked_ws}>'
+        return f'<StreamImpactItem: WasteStream {self.linked_ws}>'
 
-    
-    #TODO (maybe): DataFrame can make it look nicer
+
     def show(self):
-        info = f'StreamImpactItem: {self.ID} [per {self.functional_unit}]'
+        info = f'StreamImpactItem: [per {self.functional_unit}]'
         info += f'\n Linked to: {self.linked_ws}'
         info += '\n Characterization factors:'
         CFs = self.CFs
@@ -226,6 +226,7 @@ class StreamImpactItem(ImpactItem):
     
     _ipython_display_ = show
 
+
     @property
     def linked_ws(self):
         '''[WasteStream] or [str] The associated WasteStream for environmental impact calculation.'''
@@ -233,11 +234,11 @@ class StreamImpactItem(ImpactItem):
     @linked_ws.setter
     def linked_ws(self, i):
         if self._linked_ws:
-            old_ws = self._linked_ws
-            old_ws._impact_item = None
+            self._linked_ws._impact_item = None
         if not isinstance(i, WasteStream) and not isinstance(i, Stream) and i is not None:
             if isinstance(i, str):
-                try: i = getattr(WasteStream.registry, i)
+                try:
+                    i = getattr(WasteStream.registry, i)
                 except:
                     raise ValueError(f'The WasteStream ID {i} not '
                                      'found in <WasteStream>.registry')
@@ -245,18 +246,23 @@ class StreamImpactItem(ImpactItem):
                 raise TypeError('linked_ws must be a WasteStream or '
                                 f'the ID of WasteStream, not {type(i).__name__}.')
         if i is not None:
+            if i.impact_item:
+                msg = f'The origin StreamImpactItem linked to WasteStream {i} ' \
+                    'is replaced with the current one.'
+                warn(message=msg, stacklevel=3)
+                i.impact_item.linked_ws = None
             i._impact_item = self
         self._linked_ws = i
 
 
     @property
     def functional_unit(self):
-        '''[str] Functional unit of the item, set to 'kg/hr'.'''
+        '''[str] Functional unit of the item, set to 'kg'.'''
         return self._functional_unit.units
 
 
 
-
+ImpactItem.load_default_items()
 
 
 

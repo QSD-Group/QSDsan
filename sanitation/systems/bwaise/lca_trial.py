@@ -13,8 +13,7 @@ Created on Tue Dec  1 10:33:17 2020
 # =============================================================================
 
 import biosteam as bst
-from sanitation import Component, Components, WasteStream, ImpactIndicator, \
-    ImpactItem, StreamImpactItem
+from sanitation import *
 
 H2SO4 = Component('H2SO4', search_ID='H2SO4', phase='l',
                   particle_size='Soluble', degradability='Undegradable', organic=False)
@@ -29,11 +28,12 @@ cmps2.set_synonym('H2O', 'Water')
 bst.settings.set_thermo(cmps2)
 
 sulfuric_acid = WasteStream('sulfuric_acid', H2SO4=10, H2O=1000, units='kg/hr')
+sulfuric_acid2 = WasteStream('sulfuric_acid2', H2SO4=20, H2O=2000, units='kg/hr')
 
 CEDf = ImpactIndicator(ID='CEDf', unit='MJ', method='Cumulative energy demand',
                        category='Fossil')
 
 item_sulfuric_acid = StreamImpactItem(sulfuric_acid, CEDf=5, GWP=100, Eutrophication=1)
 
-
+item_sulfuric_acid2 = StreamImpactItem(sulfuric_acid2, CEDf=15, GWP=1100, Eutrophication=21)
 

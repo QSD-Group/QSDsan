@@ -37,7 +37,7 @@ class Construction:
         self._update_price(price, price_unit)
 
     def _update_quantity(self, quantity=0., unit=''):
-        if not unit or unit == self.item._functional_unit:
+        if not unit or unit == self.item.functional_unit:
             self._quantity = float(quantity)
         else:
             converted = auom(unit).convert(float(quantity), self.item.functional_unit)
@@ -69,7 +69,7 @@ class Construction:
                 info += f'\n     {indicator}: {formated} {unit}'
         print(info)
         
-    _ipython_display = show
+    _ipython_display_ = show
         
     
     @property
@@ -84,6 +84,11 @@ class Construction:
             raise TypeError('Only <ImpactItem> or  <ImpactItem>.ID can be set, '
                             f'not {type(i).__name__}.')
         self._item = i
+
+    @property
+    def indicators(self):
+        ''' [tuple] ImpactIndicators associated with the construction item.'''
+        return self.item.indicators
 
     @property
     def quantity(self):

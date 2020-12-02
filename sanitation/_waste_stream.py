@@ -325,8 +325,9 @@ class WasteStream(Stream):
         return self._impact_item
     @impact_item.setter
     def impact_item(self, i):
-        raise AttributeError('Cannot set attribute, set linked_ws of the linked ImpactItem '
-                             'to None to unlink this WasteStream.')
+        raise AttributeError('Cannot set attribute, if want to unlink the '
+                             'StreamImpactItem, set linked_ws of the StreamImpactItem '
+                             'to None.')
 
     
     def _liq_sol_properties(self, prop, value):

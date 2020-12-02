@@ -35,12 +35,12 @@ class Transportation:
     def __init__(self, item=None,
                  load_type='mass', load=1., load_unit='kg',
                  distance=1., distance_unit='km',
-                 interval=1., interval_unit='day',
+                 interval=1., interval_unit='hr',
                  fee=0., fee_unit=currency):
         self.item = item
         self._default_units = {
             'distance': 'km',
-            'interval': 'day',
+            'interval': 'hr',
             'fee': currency
             }
         if load_type == 'mass':
@@ -69,7 +69,7 @@ class Transportation:
         if not unit or unit == default_unit:
             setattr(self, '_'+var, value)
         else:
-            converted = auom(unit).convert(float(value), unit)
+            converted = auom(unit).convert(float(value), default_unit)
             setattr(self, '_'+var, converted)
 
     def __repr__(self):
@@ -94,7 +94,8 @@ class Transportation:
                 info += f'\n     {indicator}: {formated} {unit}'
         print(info)
 
-    _ipython_display_ = show
+    _ipython_display_ = show # fun that _ipython_display_ and _ipython_display behave differently
+
 
     @property
     def item(self):
@@ -125,6 +126,11 @@ class Transportation:
             raise ValueError("load_type can only be 'mass' or 'volume', "
                              f'not {i}.')
         self._load_type = i
+        
+    @property
+    def indicators(self):
+        ''' [tuple] ImpactIndicators associated with the transportation item.'''
+        return self.item.indicators
 
     @property
     def load(self):

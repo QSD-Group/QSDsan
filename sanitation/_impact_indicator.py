@@ -72,8 +72,6 @@ class ImpactIndicator:
     __new__.__doc__ = __doc__
     
     def __repr__(self):
-        if self.unit:
-            return f'<ImpactIndicator: {self.ID} as {self.unit}>'
         return f'<ImpactIndicator: {self.ID}>'
 
     def show(self):
@@ -184,6 +182,9 @@ class ImpactIndicator:
         self._description = i
 
 
+
+
+ImpactIndicator.load_default_indicators()
 
 
 

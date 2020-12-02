@@ -141,6 +141,19 @@ class SanUnit(bst.Unit, isabstract=True):
         self._construction = i
 
     @property
+    def construction_impacts(self):
+        '''[dict] Total impacts associated with this SanUnit.'''
+        impacts = {}
+        if not self.construction:
+            return impacts
+        for i in self.construction:
+            impact = i.impacts
+            for i, j in impact.items():
+                try: impacts[i] += j
+                except: impacts[i] = j
+        return impacts
+
+    @property
     def transportation(self):
         '''[tuple] Contains transportation information.'''
         return self._transportation
@@ -161,7 +174,6 @@ class SanUnit(bst.Unit, isabstract=True):
         '''[float] Total operating expense per hour.'''
         return self._OPEX or self.utility_cost
     
-    #!!! Maybe can just check the _impact results
     @property
     def _if_LCA(self):
         '''
