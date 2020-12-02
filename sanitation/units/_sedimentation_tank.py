@@ -24,6 +24,7 @@ Ref:
 # %%
 
 import numpy as np
+from .. import Construction
 from ._decay import Decay
 from ._sludge_separator import SludgeSeparator
 from ..utils.loading import load_data, data_path
@@ -113,6 +114,13 @@ class SedimentationTank(SludgeSeparator, Decay):
         else:
             N2O.empty()
     
+    _units = {
+        'Single tank volume': 'm3',
+        'Tank height': 'm',
+        'Tank width': 'm',
+        'Tank length': 'm',
+        'Roof area': 'm2'
+        }
     
     def _design(self):
         design = self.design_results
@@ -124,16 +132,20 @@ class SedimentationTank(SludgeSeparator, Decay):
         design['Tank height'] = H = (V_single/(L2W*(W2H**2)))**(1/3)
         design['Tank width'] = W = H * W2H
         design['Tank length'] = L = W * L2W
+        design['Roof area'] = N*L*W/(np.cos(self.roof_slope/180*np.pi))
+        side_area = N*2*(L*H + W*H)
+
         # Concrete
         thick = self.concrete_thickness
         side_concrete = N*thick*(L*W+2*W*H+2*L*H)
         column_concrete = N*(thick**2)*H*self.column_per_side*2
-        design['Concrete volume'] = side_concrete + column_concrete
-        # Steel
-        design['Roof area'] = N*L*W/(np.cos(self.roof_slope/180*np.pi))
-        side_area = N*2*(L*H + W*H)
-        design['Steel'] = design['Roof area'] + side_area
-        
+
+        self.construction = (
+            Construction(item='Concrete', quantity=side_concrete+column_concrete, quantity_unit='m3'),
+            Construction(item='Excavation', quantity=design['Roof area']+side_area, quantity_unit='m3'),
+            )
+        self.add_construction()
+    
     
     def _cost(self):
         pass

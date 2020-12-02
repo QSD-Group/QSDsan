@@ -26,7 +26,7 @@ TODO:
 
 import numpy as np
 import biosteam as bst
-from sanitation import units, WasteStream
+from sanitation import units, WasteStream, LCA
 import bwaise
 cmps = bwaise._cmps.cmps
 
@@ -91,7 +91,7 @@ A1 = units.Excretion('A1', outs=('urine', 'feces'), N_user=N_user)
 
 A2 = units.PitLatrine('A2', ins=(A1-0, A1-1,
                                   'toilet_paper', 'flushing_water',
-                                  'cleaning_water', 'desiccant'),
+                                  'cleansing_water', 'desiccant'),
                       outs=('mixed_waste', 'leachate', 'CH4', 'N2O'),
                       N_user=N_user, OPEX_over_CAPEX=0.05,
                       decay_k_COD=get_decay_k(tau_deg, log_deg),
@@ -99,15 +99,15 @@ A2 = units.PitLatrine('A2', ins=(A1-0, A1-1,
                       max_CH4_emission=max_CH4_emission)
 
 
-
+#!!! RECHECK ALL TRANSPORTATION
 truck = 'TankerTruck1' # assumed
-period = (A2.emptying_period*365*24*truck_V[truck])/A2.pit_V
-A3 = units.Transportation('A3', ins=A2-0, outs=('transported', 'loss'),
-                          capacity=truck_V[truck], distance=5,
-                          period=period,
-                          transport_cost=0,
-                          emptying_cost=truck_cost[truck]/period,
-                          loss_ratio=0.02)
+interval = (A2.emptying_period*365*truck_V[truck])/A2.pit_V
+A3 = units.Trucking('A3', ins=A2-0, outs=('transported', 'loss'),
+                    load_type='mass', load=truck_V[truck], load_unit='tonne',
+                    distance=5, distance_unit='km',
+                    interval=interval, interval_unit='day',
+                    fee=truck_cost[truck]/interval,
+                    loss_ratio=0.02)
 
 
 #!!! Note that before crop application, the COD is set, but after, is calculated
@@ -133,7 +133,7 @@ SceA = bst.System('SceA', path=(A1, A2, A3, AX, AX2))
 
 SceA.simulate()
 
-
+SceA_lca = LCA(SceA, life_time=8, life_time_unit='yr')
 
 
 # %%
@@ -233,21 +233,22 @@ C2.simulate()
 
 truck = 'HandcartAndTruck'
 # Liquid waste
-period = (C2.collection_period*24*truck_V[truck])/C2.tank_V
-C3 = units.Transportation('C3', ins=C2-0, outs=('transported_l', 'loss_l'),
-                          capacity=truck_V[truck], distance=5,
-                          period=period,
-                          transport_cost=truck_cost[truck]/5, # convert to per km 
-                          emptying_cost=0.01*N_user/24, # 0.01 USD/cap/d
-                          loss_ratio=0.02)
+interval = (C2.collection_period*truck_V[truck])/C2.tank_V
+C3 = units.Trucking('C3', ins=C2-0, outs=('transported_l', 'loss_l'),
+                    load_type='mass', load=truck_V[truck], load_unit='tonne',
+                    distance=5, distance_unit='km',
+                    interval=interval, interval_unit='day',
+                    fee=truck_cost[truck]/5/truck_V[truck]+0.01*N_user,
+                    loss_ratio=0.02)
+
 # Solid waste
-period = (C2.collection_period*24*truck_V[truck])/C2.tank_V
-C4 = units.Transportation('C4', ins=C2-1, outs=('transported_s', 'loss_s'),
-                          capacity=truck_V[truck], distance=5,
-                          period=period,
-                          transport_cost=truck_cost[truck]/5, # convert to per km 
-                          emptying_cost=0.01*N_user/24, # 0.01 USD/cap/d
-                          loss_ratio=0.02)
+interval = (C2.collection_period*truck_V[truck])/C2.tank_V
+C4 = units.Trucking('C4', ins=C2-1, outs=('transported_s', 'loss_s'),
+                    load_type='mass', load=truck_V[truck], load_unit='tonne',
+                    distance=5, distance_unit='km',
+                    interval=interval, interval_unit='day',
+                    fee=truck_cost[truck]/5/truck_V[truck]+0.01*N_user,
+                    loss_ratio=0.02)
 
 
 CX = units.CropApplication('CX', ins=WasteStream(), loss_ratio=app_loss)

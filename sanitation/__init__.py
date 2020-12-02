@@ -13,20 +13,32 @@ https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
 '''
 
+import biosteam as bst
+CEPCI = bst.CE # Chemical Engineering Plant Cost Index
+CEPCI_by_year = bst.units.design_tools.CEPCI_by_year
+del bst
+currency = 'USD'
 
 from ._component import *
 from ._components import *
 from ._waste_stream import *
-from ._sanunit import *
+from ._impact_indicator import *
+from ._impact_item import *
 from ._construction import *
+from ._transportation import *
+from ._sanunit import *
 from ._lca import *
 
 from . import (
+    _units_of_measure, # if not included here, then need to add to setup.py
     _component,
     _components,
     _waste_stream,
-    _sanunit,
+    _impact_indicator,
+    _impact_item,
     _construction,
+    _transportation,
+    _sanunit,
     _lca,
     utils,
     units,
@@ -36,9 +48,16 @@ __all__ = (
     *_component.__all__,
     *_components.__all__,
     *_waste_stream.__all__,
-    *_sanunit.__all__,
+    *_impact_indicator.__all__,
+    *_impact_item.__all__,
     *_construction.__all__,
+    *_transportation.__all__,
+    *_sanunit.__all__,
     *_lca.__all__,
-    *utils.__all__,
-    *units.__all__,
            )
+
+
+
+
+
+

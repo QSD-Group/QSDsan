@@ -7,3 +7,5 @@ ft3 = ft**3 = ft3 = cu_ft = cf
 yr = year = yr = y
 hr = hour = hr = h
 d = day
+USD = usd
+ea = _ = each

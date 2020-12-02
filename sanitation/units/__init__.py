@@ -19,7 +19,7 @@ from ._decay import *
 from ._toilet import *
 from ._pit_latrine import *
 from ._uddt import *
-from ._transportation import *
+from ._trucking import *
 from ._anaerobic_digestion import *
 from ._sludge_separator import *
 from ._sedimentation_tank import *
@@ -37,7 +37,7 @@ from . import (
     _toilet,
     _pit_latrine,
     _uddt,
-    _transportation,
+    _trucking,
     _anaerobic_digestion,
     _sludge_separator,
     _sedimentation_tank,
@@ -56,7 +56,7 @@ __all__ = (
     *_toilet.__all__,
     *_pit_latrine.__all__,
     *_uddt.__all__,
-    *_transportation.__all__,
+    *_trucking.__all__,
     *_anaerobic_digestion.__all__,
     *_sludge_separator.__all__,
     *_sedimentation_tank.__all__,

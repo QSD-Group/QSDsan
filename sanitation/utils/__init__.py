@@ -16,9 +16,11 @@ for license details.
 from . import (
     piping,
     loading,
+    formatting,
     )
 
 __all__ = (
     *piping.__all__,
     *loading.__all__,
+    *formatting.__all__,
             )

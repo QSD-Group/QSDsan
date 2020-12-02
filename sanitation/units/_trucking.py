@@ -18,43 +18,43 @@ Ref:
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
 
-
 '''
 
 # %%
 
 from warnings import warn
-from .. import SanUnit
+from .. import SanUnit, Transportation
 
-__all__ = ('Transportation',)
+__all__ = ('Trucking',)
 
 
-class Transportation(SanUnit):
+class Trucking(SanUnit):
     '''For transportation of materials with considerations on material loss.'''
     
-    def __init__(self, ID='', ins=None, outs=(), *,
-                 capacity, distance, period,
-                 transport_cost=0, emptying_cost=0,
-                 transport_impacts={}, emptying_impacts={},
+    def __init__(self, ID='', ins=None, outs=(),
+                 load_type='mass', load=1., load_unit='m3',
+                 distance=1., distance_unit='km',
+                 interval=1., interval_unit='day',
+                 fee=0.,
                  if_material_loss=True, loss_ratio=0.02):
         '''
 
         Parameters
         ----------
-        capacity : [float]
-            Capacity of the transportation vehicle in m3.
+        load_type : [str]
+            Either 'mass' or 'm3'.
+        load : [float]
+            Transportation load per trip.
+        load_unit : [str]
+            Unit of the load.
         distance : [float]
-            Transportation distance in km.
-        period : [float]
-            Transportation time interval in hr.
-        transport_cost : [float]
-            Cost of transportation in USD/km.
-        emptying_cost : [float]
-            Cost of emptying the vehicle/container in USD/emptying.
-        transport_impacts : [dict]
-            Environmental impacts of transportation per km.
-        emptying_impacts : [dict]
-            Environmental impacts of emptying the vehicle/container each time.
+            Transportation distance per trip.
+        distance_unit : [float]
+            Unit of the distance.
+        interval : [float]
+            Time interval between trips.
+        fee : [float]
+            Transportation fee.
         if_material_loss : [bool]
             If material loss occurs during transportation.
         loss_ratio : [float] or [dict]
@@ -62,14 +62,14 @@ class Transportation(SanUnit):
 
         '''
         SanUnit.__init__(self, ID, ins, outs)
-        
-        self.capacity = capacity
-        self.distance = distance
-        self.period = period
-        self.transport_cost = transport_cost
-        self.emptying_cost = emptying_cost
-        self.transport_impacts = transport_impacts
-        self.emptying_impacts = emptying_impacts
+        self.transportation = (
+            Transportation(item='Trucking',
+                           load_type=load_type, load=load, load_unit=load_unit,
+                           distance=distance, distance_unit=distance_unit,
+                           interval=interval, interval_unit=interval_unit,
+                           fee=fee),
+            )
+
         self.if_material_loss = if_material_loss
         self.loss_ratio = loss_ratio
 
@@ -93,66 +93,69 @@ class Transportation(SanUnit):
                     transported.imass[cmp] *= 1 - ratio
                     loss.imass[cmp] = self.ins[0].imass[cmp] - transported.imass[cmp]
 
-        
+    def _design(self):
+        pass
+
     def _cost(self):
-        self._OPEX = (self.transport_cost*self.distance+self.emptying_cost)/self.period
+        trucking = self.transportation[0]
+        self._OPEX = trucking.cost/trucking.interval/24
 
             
-    @property
-    def capacity(self):
-        '''[float] Capacity of the transportation vehicle, [m3].'''
-        return self._capacity
-    @capacity.setter
-    def capacity(self, i):
-        self._capacity = float(i)
+    # @property
+    # def capacity(self):
+    #     '''[float] Capacity of the transportation vehicle, [m3].'''
+    #     return self._capacity
+    # @capacity.setter
+    # def capacity(self, i):
+    #     self._capacity = float(i)
 
-    @property
-    def distance(self):
-        '''[float] Transportation distance, [km].'''
-        return self._distance
-    @distance.setter
-    def distance(self, i):
-        self._distance = float(i)
+    # @property
+    # def distance(self):
+    #     '''[float] Transportation distance, [km].'''
+    #     return self._distance
+    # @distance.setter
+    # def distance(self, i):
+    #     self._distance = float(i)
 
-    @property
-    def period(self):
-        '''[float] Transportation time interval, [hr].'''
-        return self._period
-    @period.setter
-    def period(self, i):
-        self._period = float(i)
+    # @property
+    # def period(self):
+    #     '''[float] Transportation time interval, [hr].'''
+    #     return self._period
+    # @period.setter
+    # def period(self, i):
+    #     self._period = float(i)
 
-    @property
-    def transport_cost(self):
-        '''[float] Cost of transportation, [USD/km].'''
-        return self._transport_cost
-    @transport_cost.setter
-    def transport_cost(self, i):
-        self._transport_cost = float(i)
+    # @property
+    # def transport_cost(self):
+    #     '''[float] Cost of transportation, [USD/km].'''
+    #     return self._transport_cost
+    # @transport_cost.setter
+    # def transport_cost(self, i):
+    #     self._transport_cost = float(i)
         
-    @property
-    def emptying_cost(self):
-        '''[float] Cost of emptying the vehicle/container, [USD/emptying].'''
-        return self._emptying_cost
-    @emptying_cost.setter
-    def emptying_cost(self, i):
-        self._emptying_cost = float(i)
+    # @property
+    # def emptying_cost(self):
+    #     '''[float] Cost of emptying the vehicle/container, [USD/emptying].'''
+    #     return self._emptying_cost
+    # @emptying_cost.setter
+    # def emptying_cost(self, i):
+    #     self._emptying_cost = float(i)
 
-    @property
-    def transport_impacts(self):
-        '''[dict] Environmental impacts of transportation per km.'''
-        return self._transport_impacts
-    @transport_impacts.setter
-    def transport_impacts(self, i):
-        self._transport_impacts = i
+    # @property
+    # def transport_impacts(self):
+    #     '''[dict] Environmental impacts of transportation per km.'''
+    #     return self._transport_impacts
+    # @transport_impacts.setter
+    # def transport_impacts(self, i):
+    #     self._transport_impacts = i
 
-    @property
-    def emptying_impacts(self):
-        '''[dict] Environmental impacts of emptying the vehicle/container each time.'''
-        return self._emptying_impacts
-    @emptying_impacts.setter
-    def emptying_impacts(self, i):
-        self._emptying_impacts = i
+    # @property
+    # def emptying_impacts(self):
+    #     '''[dict] Environmental impacts of emptying the vehicle/container each time.'''
+    #     return self._emptying_impacts
+    # @emptying_impacts.setter
+    # def emptying_impacts(self, i):
+    #     self._emptying_impacts = i
         
     @property
     def loss_ratio(self):

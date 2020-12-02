@@ -17,9 +17,9 @@ for license details.
 # %%
 import numpy as np
 import biosteam as bst
-from thermosteam import Stream, MultiStream, utils, units_of_measure
+from thermosteam import Stream, MultiStream, utils
 from . import Components
-
+from ._units_of_measure import auom
 
 
 __all__ = ('WasteStream',)
@@ -31,7 +31,7 @@ _copied_slots = (*tuple('_'+i for i in _defined_composite_vars),
                  '_TOC', '_TKN', '_SAlk')
 
 _ws_specific_slots = (*_copied_slots,
-                      '_pH', '_ratios', '_CFs')
+                      '_pH', '_ratios', '_impact_item')
 
 _specific_groups = {'SVFA': ('SAc', 'SProp'),
                     'XStor': ('XOHO_PHA', 'XGAO_PHA', 'XPAO_PHA', 
@@ -55,8 +55,9 @@ _default_ratios = {'iHi_XPAOPP': 0.5,
                    'iXUOHOE_XUE': None,}
 
 
-vol_unit = units_of_measure.AbsoluteUnitsOfMeasure('L/hr')
-conc_unit = units_of_measure.AbsoluteUnitsOfMeasure('mg/L')
+vol_unit = auom('L/hr')
+conc_unit = auom('mg/L')
+
 
 # %%
 
@@ -75,7 +76,7 @@ class WasteStream(Stream):
     _default_ratios = _default_ratios
     
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
-                 units='kg/hr', price=0., thermo=None, CFs=None,
+                 units='kg/hr', price=0., thermo=None,
                  pH=7., SAlk=2.5, COD=None, BOD=None, BOD5=None, uBOD=None,
                  TC=None, TOC=None, TN=None, TKN=None, TP=None, TK=None,
                  TMg=None, TCa=None, solids=None, charge=None, ratios=None,
@@ -83,14 +84,14 @@ class WasteStream(Stream):
         
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
                          units=units, price=price, thermo=thermo, **chemical_flows)
-        self._init_ws(CFs, pH, SAlk, COD, BOD, BOD5, uBOD, TC, TOC, TN, TKN,
-                       TP, TK, TMg, TCa, solids, charge, ratios)
+        self._init_ws(pH, SAlk, COD, BOD, BOD5, uBOD, TC, TOC, TN, TKN,
+                      TP, TK, TMg, TCa, solids, charge, ratios)
 
-    def _init_ws(self, CFs=None, pH=7., SAlk=None, COD=None, BOD=None,
+    def _init_ws(self, pH=7., SAlk=None, COD=None, BOD=None,
                  BOD5=None, uBOD=None, TC=None, TOC=None, TN=None, TKN=None,
                  TP=None, TK=None, TMg=None, TCa=None, solids=None, charge=None,
                  ratios=None):
-        self._CFs = CFs
+        self._impact_item = None
         self._pH = pH
         self._SAlk = SAlk
         self._COD = COD
@@ -207,6 +208,7 @@ class WasteStream(Stream):
     def composite(self, variable, subgroup=None, particle_size=None, 
                   degradability=None, organic=None, volatile=None,
                   specification=None):
+        
         """
         Calculate any composite variable by specifications.
 
@@ -318,21 +320,15 @@ class WasteStream(Stream):
 
     
     @property
-    def CFs (self):
-        '''
-        [dict] Characterization factors for different impact categories,
-        the function unit is 1 kg of the `WasteStream`.
+    def impact_item(self):
+        '''[StreamImpactItem] StreamImpactItem this WasteStream is linked to.'''
+        return self._impact_item
+    @impact_item.setter
+    def impact_item(self, i):
+        raise AttributeError('Cannot set attribute, if want to unlink the '
+                             'StreamImpactItem, set linked_ws of the StreamImpactItem '
+                             'to None.')
 
-        Notes
-        -----
-        The value should be negative for credits, e.g., -1 for global warming
-        potential if the `WasteStream` is 1 kg/hr CO2 as inputs.
-
-        '''
-        return self._CFs
-    @CFs.setter
-    def CFs(self, i):
-        self._CFs = i
     
     def _liq_sol_properties(self, prop, value):
         if self.phase != 'g':
@@ -343,99 +339,58 @@ class WasteStream(Stream):
     @property
     def pH(self):
         return self._liq_sol_properties('pH', 7.)
-        # if self.phase == 'l':
-        #     return self._pH or 7.
-        # else:
-        #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
 
     @property
     def SAlk(self):
         return self._liq_sol_properties('SAlk', 0.)
-        # if self.phase == 'l':
-        #     return self._SAlk or 0.
-        # else:
-        #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
 
     @property
     def COD(self):
         '''[float] Chemical oxygen demand in mg/L.'''
         return self._liq_sol_properties('COD', self.composite('COD'))
-        # return self._COD or self.composite('COD')
-        # else:
-        #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
 
     @property    
     def BOD(self):
         return self._liq_sol_properties('BOD', self.composite('BOD'))
-        # return self._BOD or self.composite('BOD')
-        # else:
-        #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
     
     #!!! Maybe include C_frac, etc. to calculate C_mass/F_mass - valid for all phases
     # Or a function to calculate it?
     @property
     def TC(self):
         return self._liq_sol_properties('TC', self.composite('TC'))
-        # return self._TC or self.composite('TC')
-        # else:
-        #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
     
     @property
     def TOC(self):
         return self._liq_sol_properties('TOC', self.composite('TC', organic=True))
-        # return self._TOC or self.composite('TC', organic=True)
-        # else:
-        #     return None
         
     @property
     def TN(self):
         return self._liq_sol_properties('TN', self.composite('TN'))
-        # return self._TN or self.composite('TN')
-        # else:
-        #     return None
     
     @property
     def TKN(self):
         return self._liq_sol_properties('TKN', self.composite('TN', specification='TKN'))
-        # return self._TKN or self.composite('TN', specification='TKN')
-        # else:
-        #     return None
     
     @property
     def TP(self):
         return self._liq_sol_properties('TP', self.composite('TP'))
-        # return self._TP or self.composite('TP')
-        # else:
-        #     return None
     
     #!!! Are there methods to calculate TK, TMg, TCa in self.composite?
     @property
     def TK(self):
         return self._liq_sol_properties('TK', self.composite('TK'))
-        # return self._TK or self.composite('TK')
-        # else:
-        #     return None
     
     @property
     def TMg(self):
         return self._liq_sol_properties('TMg', self.composite('TMg'))
-        # return self._TMg or self.composite('TMg')
-        # else:
-        #     return None
     
     @property
     def TCa(self):
         return self._liq_sol_properties('TCa', self.composite('TCa'))
-        # return self._TCa or self.composite('TCa')
-        # else:
-        #     return None
     
     @property
     def solids(self):
         return self._liq_sol_properties('solids', self.composite('solids'))
-        # return self._solids or self.composite('solids')
-        # else:
-        #     return None
     
 
     # TODO: calibrate Charge when weak acids are involved
@@ -448,7 +403,6 @@ class WasteStream(Stream):
         new = super().copy()
         new._init_ws()
         for slot in _ws_specific_slots:
-            if slot == 'CFs': continue
             value = getattr(self, slot)
             setattr(new, slot, utils.copy_maybe(value))
         return new
@@ -457,7 +411,6 @@ class WasteStream(Stream):
     def copy_like(self, other):
         Stream.copy_like(self, other)
         for slot in _ws_specific_slots:
-            if slot == 'CFs': continue
             value = getattr(other, slot)
             setattr(self, slot, value)
     
@@ -483,7 +436,6 @@ class WasteStream(Stream):
 
         if if_copy_ws:
             for slot in _ws_specific_slots:
-                if slot == 'CFs': continue
                 value = getattr(other, slot)
                 setattr(self, slot, value)
 

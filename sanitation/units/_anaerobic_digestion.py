@@ -27,7 +27,7 @@ TODO:
 # %%
 
 import numpy as np
-from .. import SanUnit
+from .. import SanUnit, Construction
 from ._decay import Decay
 from ..utils.loading import load_data, data_path
 
@@ -38,6 +38,8 @@ data_path += 'unit_data/_anaerobic_digestion.csv'
 
 class AnaerobicDigestion(SanUnit, Decay):
     '''Anaerobic digestion of wastes with the production of biogas.'''
+    
+    _default_data = None
     
     def __init__(self, ID='', ins=None, outs=(), if_N2O_emission=True, **kwargs):
         
@@ -101,9 +103,17 @@ class AnaerobicDigestion(SanUnit, Decay):
         else:
             N2O.empty()
 
+    _units = {
+        'Volumetric flow rate': 'm3/hr',
+        'Residence time': 'd',
+        'Single reactor volume': 'm3',
+        'Reactor diameter': 'm',
+        'Reactor height': 'm'
+        }
+
     def _design(self):
         design = self.design_results
-        design['Flow rate'] = Q = self.ins[0].F_vol
+        design['Volumetric flow rate'] = Q = self.ins[0].F_vol
         design['Residence time'] = tau = self.tau
         design['Reactor number'] = N = self.N_reactor
         V_tot = Q * tau*24
@@ -112,10 +122,12 @@ class AnaerobicDigestion(SanUnit, Decay):
         # Rx modeled as a cylinder
         design['Reactor diameter'] = D = (4*V_single*self.aspect_ratio/np.pi)**(1/3)
         design['Reactor height'] = H = self.aspect_ratio * D
-        design['Total concrete'] = \
-            N*self.concrete_thickness*(2*np.pi/4*(D**2)+np.pi*D*H)
-        design['Total excavation'] = V_tot
-        #!!! Excavation is an activity, not material, maybe change the name to "construction"?
+        concrete =  N*self.concrete_thickness*(2*np.pi/4*(D**2)+np.pi*D*H)
+        self.construction = (
+            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
+            Construction(item='Excavation', quantity=V_tot, quantity_unit='m3'),
+            )
+        self.add_construction()
         
     #!!! No opex assumption in ref [1]
     # Use the Material/Construction class

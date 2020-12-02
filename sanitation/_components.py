@@ -113,8 +113,10 @@ class Components(Chemicals):
         setattr(self, '__class__', CompiledComponents)
         
     
+    _default_data = None
+    
     @classmethod
-    def load_from_file(cls, path=''):
+    def load_from_file(cls, path='', use_default_data=False, store_data=False):
         '''
         Create Component objects based on properties defined in a cvs or an Excel file,
         return a Components object that contains all created Component objects.
@@ -133,12 +135,16 @@ class Components(Chemicals):
         The Components object needs to be compiled before it is used in simulation
     
         '''
-        if path[-4:] == '.csv':
-            data = pd.read_csv(path)
-        elif path[-4:] == '.xls' or path[-4:] == 'xlsx':
-            data = pd.read_excel(path)
+        if use_default_data and cls._default_data is not None:
+            data = cls._default_data
         else:
-            raise ValueError('Only be csv or Excel files can be used.')
+            if path[-4:] == '.csv':
+                data = pd.read_csv(path)
+            elif path[-4:] == '.xls' or path[-4:] == 'xlsx':
+                data = pd.read_excel(path)
+            else:
+                raise ValueError('Only be csv or Excel files can be used.')
+        
         new = cls(())
 
         for i, cmp in data.iterrows():
@@ -167,17 +173,22 @@ class Components(Chemicals):
                 setattr(component, field, cmp[j])
             new.append(component)
 
-        del data
+        if store_data:
+            cls._default_data = data
         return new
     
     
     @classmethod
-    def load_default(cls, default_compile=True):
+    def load_default(cls, use_default_data=True, sotre_data=True, default_compile=True):
         '''
         Create a Components object containing default Component objects.
     
         Parameters
         ----------
+        use_default_data : [bool], optional
+            Whether to use default cache data. The default is True.
+        sotre_data : [bool], optional
+            Whether to store the default data as cache. The default is True.
         default_compile : [bool], optional
             Whether to compile the default Components. The default is True.
     
@@ -195,7 +206,8 @@ class Components(Chemicals):
         '''
         import os
         path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/_components.csv')
-        new = cls.load_from_file(path=path)
+        del os
+        new = cls.load_from_file(path=path, use_default_data=True, store_data=True)
 
         H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
                           i_C=0, i_N=0, i_P=0, i_K=0, i_mass=1,

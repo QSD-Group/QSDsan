@@ -11,10 +11,12 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
+
 '''
 
 import biosteam as bst
 from biosteam import utils
+from . import Construction, Transportation
 from .utils.piping import WSIns, WSOuts
 
 
@@ -37,7 +39,8 @@ class SanUnit(bst.Unit, isabstract=True):
         self._init_results()
         self._assert_compatible_property_package()
         self._OPEX = None
-        self._construction_materials = None
+        self._construction = ()
+        self._transportation = ()
 
     
     def _init_ins(self, ins):
@@ -94,7 +97,18 @@ class SanUnit(bst.Unit, isabstract=True):
             i += 1
         info = info.replace('\n ', '\n    ')
         return info[:-1]
-        
+    
+    
+    _impact = utils.NotImplementedMethod
+
+
+    def _summary(self):
+        '''After system converges, design unit and calculate cost and environmental impacts'''
+        self._design()
+        self._cost()
+        self._impact()
+    
+    
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, stream_info=True):
         """Print information of the unit, including WasteStream-specific information"""
         print(self._info(T, P, flow, composition, N, stream_info))
@@ -104,31 +118,69 @@ class SanUnit(bst.Unit, isabstract=True):
         ws_inv += (i for i in self.outs if not (i._sink and i.CFs is None))
         return ws_inv
     
+    def add_construction(self):
+        '''Add construction materials and activities to design and result dict'''
+        for i in self.construction:
+            self.design_results[i.item.ID] = i.quantity
+            self._units[i.item.ID] = i.item.functional_unit
+    
     @property
-    def construction_materials(self):
-        '''
-        [dict] Materials used in unit construction, will be used in LCA.
+    def construction(self):
+        '''[tuple] Contains construction information.'''
+        return self._construction
+    @construction.setter
+    def construction(self, i):
+        if isinstance(i, Construction):
+            i = (i,)
+        else:
+            if not iter(i):
+                raise TypeError(f'Only <Construction> can be included, not {type(i).__name__}.')
+            for j in i:
+                if not isinstance(j, Construction):
+                    raise TypeError(f'Only <Construction> can be included, not {type(j).__name__}.')
+        self._construction = i
 
-        Notes
-        -----
-        Method for calculating materials used in a `SanUnit` should be included
-        in the `_design` method.
+    @property
+    def construction_impacts(self):
+        '''[dict] Total impacts associated with this SanUnit.'''
+        impacts = {}
+        if not self.construction:
+            return impacts
+        for i in self.construction:
+            impact = i.impacts
+            for i, j in impact.items():
+                try: impacts[i] += j
+                except: impacts[i] = j
+        return impacts
 
-        '''
-        return self._construction_materials
+    @property
+    def transportation(self):
+        '''[tuple] Contains transportation information.'''
+        return self._transportation
+    @transportation.setter
+    def transportation(self, i):
+        if isinstance(i, Transportation):
+            i = (i,)
+        else:
+            if not iter(i):
+                raise TypeError(f'Only <Transportation> can be included, not {type(i).__name__}.')
+            for j in i:
+                if not isinstance(j, Transportation):
+                    raise TypeError(f'Only <Transportation> can be included, not {type(j).__name__}.')
+        self._transportation = i
 
     @property
     def OPEX(self):
-        '''[float] Total operating expense, [USD/hr].'''
+        '''[float] Total operating expense per hour.'''
         return self._OPEX or self.utility_cost
     
     @property
     def _if_LCA(self):
         '''
-        If this `SanUnit` is included in LCA. `False` if:
+        If this SanUnit is included in LCA. False if:
             - All ins and outs have sink and source (i.e., no chemical inputs or emissions).
-            - No `HeatUtility` and `PowerUtility` objects.
-            - self.construction_materials is `None`.
+            - No HeatUtility and PowerUtility objects.
+            - self.construction is empty.
 
         '''
         inputs = tuple(i for i in self.ins if not i._source)
@@ -137,7 +189,7 @@ class SanUnit(bst.Unit, isabstract=True):
         if bool(emissions): return True
         if bool(self.heat_utilities): return True
         if bool(self.power_utility): return True
-        if bool(self.construction_materials): return True
+        if bool(self.construction): return True
         return False
 
 

@@ -93,17 +93,8 @@ class Toilet(SanUnit, Decay, isabstract=True):
         
     _N_ins = 6
     _outs_size_is_fixed = False
-    _units = {
-        'Cement': 'kg',
-        'Sand': 'kg',
-        'Gravel': 'kg',
-        'Bricks': 'kg',
-        'Plastic': 'kg',
-        'Steel': 'kg',
-        'Stainless steel sheet': 'kg',
-        'Wood': 'm3',
-        'Excavation': 'm3'
-        }
+    
+    #!!! This BM needs updating
     _BM = {'Toilet': 1}
 
     def _run(self):

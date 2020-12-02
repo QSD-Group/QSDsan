@@ -24,7 +24,7 @@ Ref:
 
 # %%
 
-from .. import WasteStream
+from .. import WasteStream, Construction
 from ._toilet import Toilet
 from ..utils.loading import load_data, data_path
 
@@ -166,17 +166,33 @@ class PitLatrine(Toilet):
         
         waste.copy_like(mixed)
 
+    _units = {
+        'Emptying period': 'yr',
+        'Pit volume': 'm3',
+        'Pit area': 'm2',
+        'Pit depth': 'm'
+        }
 
     def _design(self):
         design = self.design_results
-        design['Cement'] = 700
-        design['Sand'] = 2.2 * 1442
-        design['Gravel'] = 0.8 * 1600
-        design['Bricks'] = 54 * 0.0024 * 1750
-        design['Plastic'] = 16 * 0.63
-        design['Steel'] = 0.00425  * 7900
-        design['Wood'] = 0.19
-        design['Excavation'] = self.pit_depth * self.pit_area
+        design['Emptying period'] = self.emptying_period
+        design['Pit volume'] = self.pit_V
+        design['Pit area'] = self.pit_area
+        design['Pit depth'] = self.pit_depth
+        
+        self.construction = (
+            Construction(item='Cement', quantity=700, quantity_unit='kg'),
+            Construction(item='Sand', quantity=2.2*1442, quantity_unit='kg'),
+            Construction(item='Gravel', quantity=0.8*1600, quantity_unit='kg'),
+            Construction(item='Brick', quantity=54*0.0024*1750, quantity_unit='kg'),
+            Construction(item='Plastic', quantity=16*0.63, quantity_unit='kg'),
+            Construction(item='Steel', quantity=0.00425*7900, quantity_unit='kg'),
+            Construction(item='Wood', quantity=0.19, quantity_unit='m3'),
+            Construction(item='Excavation', quantity=self.pit_V, quantity_unit='m3'),
+            )
+
+        self.add_construction()
+
         
     def _cost(self):
         self.purchase_costs['Toilet'] = 449

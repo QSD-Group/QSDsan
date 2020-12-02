@@ -25,6 +25,7 @@ Ref:
 # %%
 
 import numpy as np
+from .. import Construction
 from ._toilet import Toilet
 from ..utils.loading import load_data, data_path
 
@@ -83,11 +84,13 @@ class UDDT(Toilet):
         self._safety_factor = safety_factor
         self.if_prep_loss = if_prep_loss
         self.if_treatment = if_treatment
+
         data = load_data(path=data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)
         del data
+
         self._tank_V = 60/1e3 # m3
         for attr, value in kwargs.items():
             setattr(self, attr, value)
@@ -218,16 +221,35 @@ class UDDT(Toilet):
                 CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
 
+    _units = {
+        'Collection period': 'd',
+        'Tank volume': 'm3',
+        'Vault volume': 'm3',
+        'Treatment time': 'd',
+        'Treatment volume': 'm3'
+        }
+
     def _design(self):
         design = self.design_results
-        design['Cement'] = 200
-        design['Sand'] = 0.6 * 1442
-        design['Gravel'] = 0.2 * 1600
-        design['Bricks'] = 682 * 0.0024 * 1750
-        design['Plastic'] = 4 * 0.63
-        design['Steel'] = 0.00351 * 7900
-        design['Stainless steel sheet'] = 28.05 * 2.64
-        design['Wood'] = 0.222
+        design['Collection period'] = self.collection_period
+        design['Tank volume'] = self.tank_V
+        design['Vault volume'] = self.vault_V
+        design['Treatment time'] = self.treatment_tau
+        design['Treatment volume'] = self.treatment_V
+
+        self.construction = (
+            Construction(item='Cement', quantity=200, quantity_unit='kg'),
+            Construction(item='Sand', quantity=0.6*1442, quantity_unit='kg'),
+            Construction(item='Gravel', quantity=0.2*1600, quantity_unit='kg'),
+            Construction(item='Brick', quantity=682*0.0024*1750, quantity_unit='kg'),
+            Construction(item='Plastic', quantity=4*0.63, quantity_unit='kg'),
+            Construction(item='Steel', quantity=0.00351*7900, quantity_unit='kg'),
+            Construction(item='StainlessSteelSheet', quantity=28.05*2.64, quantity_unit='kg'),
+            Construction(item='Wood', quantity=0.222, quantity_unit='m3'),
+            )
+
+        self.add_construction()
+
         
     def _cost(self):
         #!!! Consider scaling this up based on the number of users
