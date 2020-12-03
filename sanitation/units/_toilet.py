@@ -39,7 +39,7 @@ data_path += 'unit_data/_toilet.csv'
 class Toilet(SanUnit, Decay, isabstract=True):
     '''Abstract class containing common parameters and design algorithms for toilets.'''
     
-    def __init__(self, ID='', ins=None, outs=(), N_user=1, life_time=8,
+    def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, life_time=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True,
                  OPEX_over_CAPEX=None):
@@ -48,7 +48,9 @@ class Toilet(SanUnit, Decay, isabstract=True):
         Parameters
         ----------
         N_user : [float]
-            Number of people that use the toilet per hour.
+            Number of people that share this toilet.
+        N_toilet : [float]
+            Number of paralle toilets.
         life_time : [float]
             Life time of the toilet in year.
         if_toilet_paper : [bool]
@@ -70,7 +72,10 @@ class Toilet(SanUnit, Decay, isabstract=True):
         '''
 
         SanUnit.__init__(self, ID, ins, outs)
+        self._N_user = 1
+        self._N_toilet = 1
         self.N_user = N_user
+        self.N_toilet = N_toilet
         self.life_time = life_time       
         self.if_toilet_paper = if_toilet_paper       
         self.if_flushing = if_flushing       
@@ -93,14 +98,13 @@ class Toilet(SanUnit, Decay, isabstract=True):
         
     _N_ins = 6
     _outs_size_is_fixed = False
-    
-    #!!! This BM needs updating
-    _BM = {'Toilet': 1}
 
     def _run(self):
-        ur, fecs, tp, fw, cw, des = self.ins
+        ur, fec, tp, fw, cw, des = self.ins
         
         N_user = self.N_user
+        ur.F_mass *= N_user
+        fec.F_mass *= N_user
         tp.imass['Tissue'] = int(self.if_toilet_paper)*self.toilet_paper * N_user
         fw.imass['H2O'] = int(self.if_flushing)*self.flushing_water * N_user
         cw.imass['H2O'] = int(self.if_cleansing)*self.cleansing_water * N_user
@@ -143,6 +147,22 @@ class Toilet(SanUnit, Decay, isabstract=True):
         N2O.imass['N2O'] += COD_rmd * N2O_factor
         waste.mass *= empty_ratio
         return waste, CH4, N2O
+
+    @property
+    def N_user(self):
+        '''[float] Number of people that use the toilet per hour.'''
+        return self._N_user
+    @N_user.setter
+    def N_user(self, i):
+        self._N_user = float(i)
+        
+    @property
+    def N_toilet(self):
+        '''[float] Number of parallel toilets.'''
+        return self._N_toilet
+    @N_toilet.setter
+    def N_toilet(self, i):
+        self._N_toilet = float(i)
 
     @property
     def toilet_paper(self):

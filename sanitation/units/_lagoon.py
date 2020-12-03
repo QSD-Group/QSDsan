@@ -33,7 +33,7 @@ __all__ = ('Lagoon',)
 
 
 class Lagoon(SanUnit, Decay):
-    '''Anaerobic and facultive lagoon treatment.'''
+    '''Anaerobic and facultative lagoon treatment.'''
     
     def __init__(self, ID='', ins=None, outs=(), design_type='anaerobic',
                  if_N2O_emission=True, **kwargs):
@@ -47,7 +47,7 @@ class Lagoon(SanUnit, Decay):
         outs : WasteStream
             Treated waste, fugitive CH4, and fugitive N2O.
         design_type : [str]
-            Can be 'anaerobic' or 'facultive'.
+            Can be 'anaerobic' or 'facultative'.
         if_N2O_emission : [bool]
             If consider N2O emission from N degradation the process.
 
@@ -59,8 +59,8 @@ class Lagoon(SanUnit, Decay):
         
         anaerobic_path = data_path + 'unit_data/_anaerobic_lagoon.csv'
         self._anaerobic_defaults = load_data(path=anaerobic_path)
-        facultive_path = data_path + 'unit_data/_facultive_lagoon.csv'
-        self._facultive_defaults = load_data(path=facultive_path)
+        facultative_path = data_path + 'unit_data/_facultative_lagoon.csv'
+        self._facultative_defaults = load_data(path=facultative_path)
         
         self._design_type = None
         self.design_type = design_type
@@ -122,14 +122,14 @@ class Lagoon(SanUnit, Decay):
         
         liner = (L*W + 2*depth*(L+W)) * N * self.liner_unit_mass
         self.construction = (
-            Construction(item='Plastic', quantity=liner, quantity_unit='kg'),
-            Construction(item='Excavation', quantity=N*V, quantity_unit='m3'),
+            Construction(item='Plastic', quantity=liner, unit='kg'),
+            Construction(item='Excavation', quantity=N*V, unit='m3'),
             )
         self.add_construction()
     
     @property
     def design_type(self):
-        '''[str] Lagoon type, can be either 'anaerobic' or 'facultive'.'''
+        '''[str] Lagoon type, can be either 'anaerobic' or 'facultative'.'''
         return self._design_type
     @design_type.setter
     def design_type(self, i):
@@ -137,10 +137,12 @@ class Lagoon(SanUnit, Decay):
         else:
             if i == 'anaerobic':
                 data = self._anaerobic_defaults
-            elif i == 'facultive':
-                data = self._facultive_defaults
+                self.line = 'Anaerobic lagoon'
+            elif i == 'facultative':
+                data = self._facultative_defaults
+                self.line = 'Facultative lagoon'
             else:
-                raise ValueError("design_type can only be 'anaerobic' or 'facultive',"
+                raise ValueError("design_type can only be 'anaerobic' or 'facultative',"
                                  f'not {i}.')
             for para in data.index:
                 value = float(data.loc[para]['expected'])

@@ -38,7 +38,7 @@ data_path += 'unit_data/_pit_latrine.csv'
 class PitLatrine(Toilet):
     '''Single pit latrine.'''
 
-    def __init__(self, ID='', ins=None, outs=(), N_user=1, life_time=8,
+    def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, life_time=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True, 
                  OPEX_over_CAPEX=0.05,
@@ -66,7 +66,7 @@ class PitLatrine(Toilet):
             
         '''
 
-        Toilet.__init__(self, ID, ins, outs, N_user, life_time,
+        Toilet.__init__(self, ID, ins, outs, N_user, N_toilet, life_time,
                         if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
                         if_air_emission, if_ideal_emptying, OPEX_over_CAPEX)
     
@@ -165,38 +165,46 @@ class PitLatrine(Toilet):
             mixed.imass['H2O'] = max(0, mixed.imass['H2O'])
         
         waste.copy_like(mixed)
+        
+        # Scale up the effluent based on the number of toilets
+        for i in self.outs:
+            if not i.F_mass == 0:
+                i.F_mass *= self.N_toilet
 
     _units = {
         'Emptying period': 'yr',
-        'Pit volume': 'm3',
-        'Pit area': 'm2',
-        'Pit depth': 'm'
+        'Single pit volume': 'm3',
+        'Single pit area': 'm2',
+        'Singple pit depth': 'm'
         }
 
     def _design(self):
         design = self.design_results
+        design['Number of users per toilet'] = self.N_user
+        design['Number of toilets'] = N = self.N_toilet
         design['Emptying period'] = self.emptying_period
-        design['Pit volume'] = self.pit_V
-        design['Pit area'] = self.pit_area
-        design['Pit depth'] = self.pit_depth
+        design['Single pit volume'] = self.pit_V
+        design['Single pit area'] = self.pit_area
+        design['Single pit depth'] = self.pit_depth
         
         self.construction = (
-            Construction(item='Cement', quantity=700, quantity_unit='kg'),
-            Construction(item='Sand', quantity=2.2*1442, quantity_unit='kg'),
-            Construction(item='Gravel', quantity=0.8*1600, quantity_unit='kg'),
-            Construction(item='Brick', quantity=54*0.0024*1750, quantity_unit='kg'),
-            Construction(item='Plastic', quantity=16*0.63, quantity_unit='kg'),
-            Construction(item='Steel', quantity=0.00425*7900, quantity_unit='kg'),
-            Construction(item='Wood', quantity=0.19, quantity_unit='m3'),
-            Construction(item='Excavation', quantity=self.pit_V, quantity_unit='m3'),
+            Construction(item='Cement', quantity=700*N, unit='kg'),
+            Construction(item='Sand', quantity=2.2*1442*N, unit='kg'),
+            Construction(item='Gravel', quantity=0.8*1600*N, unit='kg'),
+            Construction(item='Brick', quantity=54*0.0024*1750*N, unit='kg'),
+            Construction(item='Plastic', quantity=16*0.63*N, unit='kg'),
+            Construction(item='Steel', quantity=0.00425*7900*N, unit='kg'),
+            Construction(item='Wood', quantity=0.19*N, unit='m3'),
+            Construction(item='Excavation', quantity=self.pit_V*N, unit='m3'),
             )
 
         self.add_construction()
 
+    _BM = {'Total toilets': 1}
         
     def _cost(self):
-        self.purchase_costs['Toilet'] = 449
-        self._OPEX = self.purchase_costs['Toilet']*self.OPEX_over_CAPEX/365/24
+        self.purchase_costs['Total toilets'] = 449 * self.N_toilet
+        self._OPEX = self.purchase_costs['Total toilets']*self.OPEX_over_CAPEX/365/24
 
     @property
     def pit_depth(self):

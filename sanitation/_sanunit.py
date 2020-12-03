@@ -19,7 +19,7 @@ for license details.
 
 import biosteam as bst
 from biosteam import utils
-from . import Construction, Transportation
+from . import currency, Construction, Transportation
 from .utils.piping import WSIns, WSOuts
 
 
@@ -27,11 +27,30 @@ __all__ = ('SanUnit',)
 
 @utils.registered(ticket_name='SU')
 class SanUnit(bst.Unit, isabstract=True):
-    '''Subclass of Unit in biosteam, is initialized with WasteStream rather than Stream.'''
 
+    '''
+    Subclass of Unit in biosteam, is initialized with WasteStream rather than Stream.
+    
+    Additional attributes
+    --------------------
+    construction : [tuple]
+        Contains construction information.
+    construction_impacts : [dict]
+        Total impacts associated with this SanUnit.
+    transportation : [tuple]
+        Contains construction information.
+    OPEX : [float]
+        Lumped total operating expense per hour (assuming 100% operating time).
+    uptime_ratio : [float]
+        Uptime of the unit to adjust OPEX, should be in [0,1] (i.e., a unit that is always operating).
+    
+    biosteam document
+    -----------------
+
+    '''
+    
     _stacklevel = 7
 
-    #!!! TODO: write a generic doc for SanUnit and let subclasses inherit it    
     def __init__(self, ID='', ins=None, outs=(), thermo=None):
         self._register(ID)
         self._specification = None
@@ -42,10 +61,12 @@ class SanUnit(bst.Unit, isabstract=True):
         self._init_results()
         self._assert_compatible_property_package()
         self._OPEX = None
-        self._construction = ()
-        self._transportation = ()
+        self._uptime_ratio = 1.
 
-    
+    __doc__ += bst.Unit.__doc__
+    __init__.__doc__ = __doc__    
+
+
     def _init_ins(self, ins):
         self._ins = WSIns(self, self._N_ins, ins, self._thermo,
                           self._ins_size_is_fixed, self._stacklevel)
@@ -56,7 +77,8 @@ class SanUnit(bst.Unit, isabstract=True):
 
     def _init_results(self):
         super()._init_results()
-        self._materials = {}
+        self._construction = ()
+        self._transportation = ()
 
     def _info(self, T, P, flow, composition, N, _stream_info):
         """Information of the unit."""
@@ -116,10 +138,11 @@ class SanUnit(bst.Unit, isabstract=True):
         """Print information of the unit, including WasteStream-specific information"""
         print(self._info(T, P, flow, composition, N, stream_info))
         
-    def get_ws_inv(self):
-        ws_inv = (i for i in self.ins if not (i._source and i.CFs is None))
-        ws_inv += (i for i in self.outs if not (i._sink and i.CFs is None))
-        return ws_inv
+    # # Shouldn't be needed
+    # def get_ws_inv(self):
+    #     ws_inv = (i for i in self.ins if not (i._source and i.CFs is None))
+    #     ws_inv += (i for i in self.outs if not (i._sink and i.CFs is None))
+    #     return ws_inv
     
     def add_construction(self):
         '''Add construction materials and activities to design and result dict'''
@@ -174,12 +197,44 @@ class SanUnit(bst.Unit, isabstract=True):
 
     @property
     def OPEX(self):
-        '''[float] Total operating expense per hour.'''
-        return self._OPEX or self.utility_cost
+        '''
+        [float] Lumped total operating expense per hour (assuming 100% operating time).
+        
+        Note
+        ----
+            If OPEX is given, then <SanUnit>.utility_cost will be ignored.
+        '''
+        return self._OPEX
     
+    @property
+    def utility_cost(self):
+        """Total utility (heating, cooling, power) cost per hour, will be ignored if OPEX given."""
+        if self._OPEX:
+            return 0.
+        return sum([i.cost for i in self.heat_utilities]) + self.power_utility.cost    
 
-    
+    def results(self, with_units=True, include_utilities=True,
+                include_total_cost=True, include_installed_cost=False):
+        results = super().results(with_units, include_utilities,
+                                  include_total_cost, include_installed_cost)
+        if self._OPEX:
+            results.rename(index={'Utility cost': 'OPEX'}, inplace=True)
+            if with_units:
+                results.rename(index={'Utility cost': 'OPEX'}, inplace=True)
+                results.loc[('OPEX', '')] = ('USD/hr', self.OPEX)
+                results.replace({'USD': f'{currency}', 'USD/hr': f'{currency}/hr'}, inplace=True)
+            else:
+                results.loc[('OPEX', '')] = self.OPEX
+        return results
 
+    @property
+    def uptime_ratio(self):
+        '''[float] Uptime of the unit to adjust OPEX, should be in [0,1] (i.e., a unit that is always operating).'''
+        return self._uptime_ratio
+    @uptime_ratio.setter
+    def uptime_ratio(self, i):
+        assert 0 <= i <= 1, f'Uptime must be between 0 and 1 (100%), not {i}.'
+        self._uptime_ratio = float(i)
 
 
 

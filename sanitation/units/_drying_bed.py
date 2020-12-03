@@ -158,8 +158,8 @@ class DryingBed(SanUnit, Decay):
         steel = tot_cover_area*self.cover_unit_mass + \
             tot_column_length*self.column_unit_mass
         self.construction = (
-            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
-            Construction(item='Steel', quantity=steel, quantity_unit='kg'),
+            Construction(item='Concrete', quantity=concrete, unit='m3'),
+            Construction(item='Steel', quantity=steel, unit='kg'),
             )
         self.add_construction()
         
@@ -191,6 +191,7 @@ class DryingBed(SanUnit, Decay):
     def design_type(self, i):
         if i in ('unplanted', 'planted'):
             self._design_type = i
+            self.line = i.capitalize() + 'bed'
         else:
             raise ValueError(f"design_type can only be 'unplanted' or 'planted', not {i}.")
 

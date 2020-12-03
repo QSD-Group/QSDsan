@@ -18,6 +18,7 @@ for license details.
 # %%
 
 import pandas as pd
+from thermosteam.utils import copy_maybe
 from . import currency, ImpactIndicator, ImpactItem
 from ._units_of_measure import auom
 from .utils.formatting import format_number as f_num
@@ -30,12 +31,11 @@ __all__ = ('Construction',)
 class Construction:
     '''Construction cost and environmental impacts'''
 
-    __slots__ = ('_item', '_quantity', '_price')
+    __slots__ = ('_item', '_quantity')
     
-    def __init__(self, item=None, quantity=0., quantity_unit='', price=0., price_unit=currency):
+    def __init__(self, item=None, quantity=0., unit=''):
         self.item = item
-        self._update_quantity(quantity, quantity_unit)
-        self._update_price(price, price_unit)
+        self._update_quantity(quantity, unit)
 
     def _update_quantity(self, quantity=0., unit=''):
         if not unit or unit == self.item.functional_unit:
@@ -43,13 +43,6 @@ class Construction:
         else:
             converted = auom(unit).convert(float(quantity), self.item.functional_unit)
             self._quantity = converted
-
-    def _update_price(self, price=0., unit=''):
-        if not unit or unit == currency:
-            self._price = float(price)
-        else:
-            converted = auom(unit).convert(float(price), currency)
-            self._price = converted
            
     def __repr__(self):
         return f'<Construction: {self.item.ID}>'
@@ -74,7 +67,15 @@ class Construction:
             print(df.to_string())
         
     _ipython_display_ = show
-        
+    
+    def copy(self):
+        new = Construction.__new__(Construction)
+        for slot in Construction.__slots__:
+            value = getattr(self, slot)
+            #!!! Not sure if this will cause problem because two objects pointing to the same one
+            setattr(new, slot, copy_maybe(value))
+        return new
+    __copy__ = copy
     
     @property
     def item(self):
@@ -105,10 +106,7 @@ class Construction:
     @property
     def price(self):
         '''[float] Unit price of the item.'''
-        return self._price
-    @price.setter
-    def price(self, price, unit=''):
-        self._update_price(price, unit)
+        return self.item.price
 
     @property
     def cost(self):

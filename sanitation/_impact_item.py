@@ -28,7 +28,8 @@ Ref (default item CFs):
 import pandas as pd
 from warnings import warn
 from thermosteam import Stream
-from . import WasteStream, ImpactIndicator
+from thermosteam.utils import copy_maybe
+from . import currency, WasteStream, ImpactIndicator
 from ._units_of_measure import auom, parse_unit
 from .utils.loading import data_path
 
@@ -44,9 +45,9 @@ class ImpactItem:
     _items = {}
     _default_data = None
     
-    __slots__ = ('_ID', '_functional_unit', '_CFs')
+    __slots__ = ('_ID', '_functional_unit', '_price', '_CFs')
     
-    def __init__(self, ID, functional_unit='kg', **indicator_CFs):
+    def __init__(self, ID, functional_unit='kg', price=0., price_unit='', **indicator_CFs):
         '''
         
 
@@ -56,6 +57,10 @@ class ImpactItem:
             ID of the ImpactItem. 
         functional_unit : [str]
             Functional unit of the ImpactItem.
+        price : [float]
+            Price of the item per functional unit.
+        price_unit : [str]
+            Unit of the price.
         **indicator_CFs : kwargs, [ImpactIndicator] or [str] = [float] or ([float], [unit])
             ImpactIndicators and their characteriziation factors.
 
@@ -65,6 +70,7 @@ class ImpactItem:
             raise ValueError(f'The ID {ID} is in use by {ImpactItem._items[ID]}')
         self._ID = ID
         self._functional_unit = auom(functional_unit)
+        self._update_price(price, price_unit)
         self._CFs = {}
         for CF, value in indicator_CFs.items():
             try:
@@ -83,7 +89,8 @@ class ImpactItem:
         return f'<ImpactItem: {self.ID}>'
 
     def show(self):
-        info = f'ImpactItem: {self.ID} [per {self.functional_unit}]'
+        info = f'ImpactItem      : {self.ID} [per {self.functional_unit}]'
+        info += f'\nPrice           : {self.price} {currency}'
         info += '\nImpactIndicators:'
         print(info)
         if len(self.CFs) == 0:
@@ -94,10 +101,17 @@ class ImpactItem:
                 'Characterization factors': tuple(self.CFs.values())
                 },
                 index=index)
-            print('\n'+df.to_string())
+            print(df.to_string())
         
     _ipython_display_ = show
 
+
+    def _update_price(self, price=0., unit=''):
+        if not unit or unit == currency:
+            self._price = float(price)
+        else:
+            converted = auom(unit).convert(float(price), currency)
+            self._price = converted
 
     def add_indicator_CF(self, indicator, CF_value, CF_unit=''):
         if isinstance(indicator, str):
@@ -113,6 +127,14 @@ class ImpactItem:
                                  f'the defaut unit {indicator.unit} is not supported.')
         self._CFs[indicator.ID] = CF_value
 
+    def copy(self):
+        new = ImpactItem.__new__(ImpactItem)
+        for slot in ImpactItem.__slots__:
+            value = getattr(self, slot)
+            #!!! Not sure if this will cause problem because two objects pointing to the same one
+            setattr(new, slot, copy_maybe(value))
+        return new
+    __copy__ = copy
     
     #!!! Are the values GWP100 from ref [1]?
     @classmethod
@@ -161,6 +183,14 @@ class ImpactItem:
     def indicators(self):
         ''' [tuple] ImpactIndicators associated with the item.'''
         return tuple(indicators[i] for i in self.CFs.keys())
+    
+    @property
+    def price(self):
+        '''Price of the item per functional unit.'''
+        return self._price
+    @price.setter
+    def price(self, price, unit=''):
+        self._update_price(price, unit)
     
     @property
     def CFs(self):
@@ -214,8 +244,9 @@ class StreamImpactItem(ImpactItem):
 
 
     def show(self):
-        info = f'StreamImpactItem: [per {self.functional_unit}]'
+        info = f'StreamImpactItem: [per {self.functional_unit}]'        
         info += f'\nLinked to     : {self.linked_ws}'
+        info += f'\nPrice           : {self.price} {currency}'
         info += '\nImpactIndicators:'
         print(info)
         if len(self.CFs) == 0:
@@ -227,10 +258,21 @@ class StreamImpactItem(ImpactItem):
                 },
                 index=index)
             # print(' '*18+df.to_string().replace('\n', '\n'+' '*18))
-            print('\n'+df.to_string())
+            print(df.to_string())
 
     
     _ipython_display_ = show
+
+    def copy(self, new_ws):
+        new = StreamImpactItem.__new__(StreamImpactItem)
+        for slot in StreamImpactItem.__slots__:
+            if slot == '_linked_ws': continue
+            value = getattr(self, slot)
+            #!!! Not sure if this will cause problem because two objects pointing to the same one
+            setattr(new, slot, copy_maybe(value))
+        new.linked_ws = new_ws
+        return new
+    __copy__ = copy
 
 
     @property
@@ -265,6 +307,13 @@ class StreamImpactItem(ImpactItem):
     def functional_unit(self):
         '''[str] Functional unit of the item, set to 'kg'.'''
         return self._functional_unit.units
+    
+    @property
+    def price(self):
+        '''Price of the linked WasteStream.'''
+        if self.linked_ws:
+            return self.linked_ws.price
+        else: return 0.
 
 
 

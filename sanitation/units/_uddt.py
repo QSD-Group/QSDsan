@@ -40,7 +40,7 @@ class UDDT(Toilet):
     '''Urine-diverting dry toilet with liquid storage tank and dehydration vault '''\
     '''for urine and feces storage, respectively.'''
     
-    def __init__(self, ID='', ins=None, outs=(), N_user=1, life_time=8,
+    def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, life_time=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True,
                  OPEX_over_CAPEX=0.1,
@@ -76,7 +76,7 @@ class UDDT(Toilet):
             
         '''
 
-        Toilet.__init__(self, ID, ins, outs, N_user, life_time,
+        Toilet.__init__(self, ID, ins, outs, N_user, N_toilet, life_time,
                         if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
                         if_air_emission, if_ideal_emptying, OPEX_over_CAPEX)
     
@@ -221,39 +221,45 @@ class UDDT(Toilet):
                 CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
 
+        # Scale up the effluent based on the number of toilets
+        for i in self.outs:
+            i.F_mass *= self.N_toilet
+
     _units = {
         'Collection period': 'd',
-        'Tank volume': 'm3',
-        'Vault volume': 'm3',
+        'Single tank volume': 'm3',
+        'Single vault volume': 'm3',
         'Treatment time': 'd',
         'Treatment volume': 'm3'
         }
 
     def _design(self):
         design = self.design_results
+        design['Number of users per toilet'] = self.N_user
+        design['Number of toilets'] = N = self.N_toilet
         design['Collection period'] = self.collection_period
-        design['Tank volume'] = self.tank_V
-        design['Vault volume'] = self.vault_V
+        design['Single tank volume'] = self.tank_V
+        design['Single vault volume'] = self.vault_V
         design['Treatment time'] = self.treatment_tau
         design['Treatment volume'] = self.treatment_V
 
         self.construction = (
-            Construction(item='Cement', quantity=200, quantity_unit='kg'),
-            Construction(item='Sand', quantity=0.6*1442, quantity_unit='kg'),
-            Construction(item='Gravel', quantity=0.2*1600, quantity_unit='kg'),
-            Construction(item='Brick', quantity=682*0.0024*1750, quantity_unit='kg'),
-            Construction(item='Plastic', quantity=4*0.63, quantity_unit='kg'),
-            Construction(item='Steel', quantity=0.00351*7900, quantity_unit='kg'),
-            Construction(item='StainlessSteelSheet', quantity=28.05*2.64, quantity_unit='kg'),
-            Construction(item='Wood', quantity=0.222, quantity_unit='m3'),
+            Construction(item='Cement', quantity=200*N, unit='kg'),
+            Construction(item='Sand', quantity=0.6*1442*N, unit='kg'),
+            Construction(item='Gravel', quantity=0.2*1600*N, unit='kg'),
+            Construction(item='Brick', quantity=682*0.0024*1750*N, unit='kg'),
+            Construction(item='Plastic', quantity=4*0.63*N, unit='kg'),
+            Construction(item='Steel', quantity=0.00351*7900*N, unit='kg'),
+            Construction(item='StainlessSteelSheet', quantity=28.05*2.64*N, unit='kg'),
+            Construction(item='Wood', quantity=0.222*N, unit='m3'),
             )
 
         self.add_construction()
 
-        
+    _BM = {'Total toilets': 1}
+                
     def _cost(self):
-        #!!! Consider scaling this up based on the number of users
-        self.purchase_costs['Toilet'] = 553
+        self.purchase_costs['Toilet'] = 553 * self.N_toilet
         #!!! What if operating hours is different, maybe better to make this in TEA
         self._OPEX = self.purchase_costs['Toilet']*self.OPEX_over_CAPEX/365/24
 

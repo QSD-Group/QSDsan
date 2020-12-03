@@ -116,10 +116,10 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         design['Single reactor volume'] = V = L*W*H
         concrete = N*self.concrete_thickness*(2*L*W+2*L*H+(2+N_b)*W*H)*self.add_concrete
         self.construction = (
-            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
+            Construction(item='Concrete', quantity=concrete, unit='m3'),
             #!!! Uncertainty on gravel density not included
-            Construction(item='Gravel', quantity= N*V/(N_b+1)*1600, quantity_unit='kg'),
-            Construction(item='Excavation', quantity=N*V, quantity_unit='m3'),
+            Construction(item='Gravel', quantity= N*V/(N_b+1)*1600, unit='kg'),
+            Construction(item='Excavation', quantity=N*V, unit='m3'),
             )
         self.add_construction()
 

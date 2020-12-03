@@ -116,10 +116,10 @@ class SedimentationTank(SludgeSeparator, Decay):
     
     _units = {
         'Single tank volume': 'm3',
-        'Tank height': 'm',
-        'Tank width': 'm',
-        'Tank length': 'm',
-        'Roof area': 'm2'
+        'Single tank height': 'm',
+        'Single tank width': 'm',
+        'Single tank length': 'm',
+        'Single roof area': 'm2'
         }
     
     def _design(self):
@@ -129,10 +129,10 @@ class SedimentationTank(SludgeSeparator, Decay):
         design['Single tank volume'] = V_single = self.tank_V
         L2W = self.tank_L_to_W
         W2H = self.tank_W_to_H
-        design['Tank height'] = H = (V_single/(L2W*(W2H**2)))**(1/3)
-        design['Tank width'] = W = H * W2H
-        design['Tank length'] = L = W * L2W
-        design['Roof area'] = N*L*W/(np.cos(self.roof_slope/180*np.pi))
+        design['Single tank height'] = H = (V_single/(L2W*(W2H**2)))**(1/3)
+        design['Single tank width'] = W = H * W2H
+        design['Single tank length'] = L = W * L2W
+        design['Single roof area'] = N*L*W/(np.cos(self.roof_slope/180*np.pi))
         side_area = N*2*(L*H + W*H)
 
         # Concrete
@@ -141,15 +141,20 @@ class SedimentationTank(SludgeSeparator, Decay):
         column_concrete = N*(thick**2)*H*self.column_per_side*2
 
         self.construction = (
-            Construction(item='Concrete', quantity=side_concrete+column_concrete, quantity_unit='m3'),
-            Construction(item='Excavation', quantity=design['Roof area']+side_area, quantity_unit='m3'),
+            Construction(item='Concrete', quantity=side_concrete+column_concrete, unit='m3'),
+            Construction(item='Excavation', quantity=design['Single roof area']+side_area, unit='m3'),
             )
         self.add_construction()
     
+    #!!! Maybe don't need this if lang_factor is provided
+    _BM = {
+        'Concrete': 1,
+        'Excavation': 1        
+        }
     
     def _cost(self):
-        pass
-    
+        for i in self.construction:
+            self.purchase_costs[i.item.ID] = i.cost
     
 
     @property

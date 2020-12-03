@@ -18,6 +18,7 @@ for license details.
 # %%
 
 import pandas as pd
+from thermosteam.utils import copy_maybe
 from . import currency, ImpactIndicator, ImpactItem
 from ._units_of_measure import auom
 from .utils.formatting import format_number as f_num
@@ -31,19 +32,18 @@ class Transportation:
     '''Transportation cost and environmental impacts.'''
 
     __slots__ = ('_item', '_load_type', '_load', '_distance', '_interval',
-                 '_fee', '_default_units')
+                 '_default_units')
     
     def __init__(self, item=None,
                  load_type='mass', load=1., load_unit='kg',
                  distance=1., distance_unit='km',
-                 interval=1., interval_unit='hr',
-                 fee=0., fee_unit=currency):
+                 interval=1., interval_unit='hr'):
         self.item = item
         self._default_units = {
             'distance': 'km',
             'interval': 'hr',
-            'fee': currency
             }
+        self._load_type = load_type
         if load_type == 'mass':
             self._default_units['load'] = 'kg'
             self._default_units['quantity'] = 'kg*km'
@@ -56,7 +56,6 @@ class Transportation:
         self._update_value('load', load, load_unit)
         self._update_value('distance', distance, distance_unit)
         self._update_value('interval', interval, interval_unit)
-        self._update_value('fee', fee, fee_unit)
 
         try:
             auom(str(load_unit)+'*'+str(distance_unit)).convert(1, self.item.functional_unit)
@@ -100,6 +99,15 @@ class Transportation:
 
     _ipython_display_ = show # funny that _ipython_display_ and _ipython_display behave differently
 
+    def copy(self):
+        new = Transportation.__new__(Transportation)
+        for slot in Transportation.__slots__:
+            value = getattr(self, slot)
+            #!!! Not sure if this will cause problem because two objects pointing to the same one
+            setattr(new, slot, copy_maybe(value))
+        return new
+    __copy__ = copy
+
 
     @property
     def item(self):
@@ -116,7 +124,7 @@ class Transportation:
 
     @property
     def load_type(self):
-        '''[str] Either 'mass' or 'm3'.'''
+        '''[str] Either 'mass' or 'volume'.'''
         return self._load_type
     @load_type.setter
     def load_type(self, i):
@@ -144,7 +152,7 @@ class Transportation:
         Note
         ----
             Set this to 1 and let the load_unit match the functional unit of the item
-            if load does not affect fee and impacts.
+            if load does not affect price and impacts.
 
         '''
         return self._load
@@ -160,7 +168,7 @@ class Transportation:
         Note
         ----
             Set this to 1 and let the distance_unit match the functional unit of the item
-            if distance does not affect fee and impacts.
+            if distance does not affect price and impacts.
 
         '''
         return self._distance
@@ -184,17 +192,14 @@ class Transportation:
         self._update_value('interval', interval, unit)
 
     @property
-    def fee(self):
-        '''[float] Fee per functional unit of the item.'''
-        return self._fee
-    @fee.setter
-    def fee(self, fee, unit=''):
-        self._update_value('fee', fee, unit)
+    def price(self):
+        '''[float] Unit price of the item.'''
+        return self.item.price
 
     @property
     def cost(self):
         '''[float] Total cost per trip.'''
-        return self.fee*self.quantity
+        return self.price*self.quantity
 
     @property
     def impacts(self):

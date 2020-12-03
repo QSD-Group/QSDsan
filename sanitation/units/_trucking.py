@@ -23,7 +23,8 @@ Ref:
 # %%
 
 from warnings import warn
-from .. import SanUnit, Transportation
+from .. import currency, SanUnit, Transportation
+from .._units_of_measure import auom
 
 __all__ = ('Trucking',)
 
@@ -32,17 +33,17 @@ class Trucking(SanUnit):
     '''For transportation of materials with considerations on material loss.'''
     
     def __init__(self, ID='', ins=None, outs=(),
-                 load_type='mass', load=1., load_unit='m3',
+                 load_type='mass', load=1., load_unit='tonne',
                  distance=1., distance_unit='km',
                  interval=1., interval_unit='day',
-                 fee=0.,
+                 fee=0., fee_unit=currency,
                  if_material_loss=True, loss_ratio=0.02):
         '''
 
         Parameters
         ----------
         load_type : [str]
-            Either 'mass' or 'm3'.
+            Either 'mass' or 'volume'.
         load : [float]
             Transportation load per trip.
         load_unit : [str]
@@ -54,7 +55,9 @@ class Trucking(SanUnit):
         interval : [float]
             Time interval between trips.
         fee : [float]
-            Transportation fee.
+            Transportation fee per trip.
+        fee : [float]
+            Transportation fee per trip.
         if_material_loss : [bool]
             If material loss occurs during transportation.
         loss_ratio : [float] or [dict]
@@ -62,14 +65,13 @@ class Trucking(SanUnit):
 
         '''
         SanUnit.__init__(self, ID, ins, outs)
-        self.transportation = (
+        self.single_truck = \
             Transportation(item='Trucking',
                            load_type=load_type, load=load, load_unit=load_unit,
                            distance=distance, distance_unit=distance_unit,
-                           interval=interval, interval_unit=interval_unit,
-                           fee=fee),
-            )
-
+                           interval=interval, interval_unit=interval_unit)
+        self.total_truck = self.single_truck.copy()
+        self._update_fee(fee, fee_unit)
         self.if_material_loss = if_material_loss
         self.loss_ratio = loss_ratio
 
@@ -78,6 +80,13 @@ class Trucking(SanUnit):
     
     _N_ins = 1
     _N_outs = 2
+
+    def _update_fee(self, fee=0., unit=''):
+        if not unit or unit == currency:
+            self._fee = float(fee)
+        else:
+            converted = auom(unit).convert(float(fee), currency)
+            self._fee = converted
 
     def _run(self):
         transported, loss = self.outs
@@ -93,21 +102,26 @@ class Trucking(SanUnit):
                     transported.imass[cmp] *= 1 - ratio
                     loss.imass[cmp] = self.ins[0].imass[cmp] - transported.imass[cmp]
 
-    def _design(self):
-        pass
 
-    def _cost(self):
-        trucking = self.transportation[0]
-        self._OPEX = trucking.cost/trucking.interval/24
+    def _design(self):        
+        self.transportation = (trans,) = (self.total_truck,)
+        if trans.load_type == 'volume':        
+            trans._update_value('load', self.F_vol_in*trans.interval*24)
+        else:
+            trans.load_type == 'mass'
+            trans._update_value('load', self.F_mass_in*trans.interval*24)
+        self.design_results['Number of truck trips'] = N = \
+            self.total_truck.load / self.single_truck.load
+        self._OPEX = N*self.fee/trans.interval/24
 
             
-    # @property
-    # def capacity(self):
-    #     '''[float] Capacity of the transportation vehicle, [m3].'''
-    #     return self._capacity
-    # @capacity.setter
-    # def capacity(self, i):
-    #     self._capacity = float(i)
+    @property
+    def fee(self):
+        '''[float] Transportation fee per trip.'''
+        return self._fee
+    @fee.setter
+    def fee(self, fee, unit=''):
+        self._update_fee(fee, unit)
 
     # @property
     # def distance(self):
@@ -156,7 +170,7 @@ class Trucking(SanUnit):
     # @emptying_impacts.setter
     # def emptying_impacts(self, i):
     #     self._emptying_impacts = i
-        
+    
     @property
     def loss_ratio(self):
         '''

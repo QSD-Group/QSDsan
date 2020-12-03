@@ -31,8 +31,8 @@ class Mixer(SanUnit, bst.units.Mixer):
     '''
     Similar to the Mixer unit in biosteam, but takes WasteStreams.
     
-    biosteam documents
-    ------------------
+    biosteam document
+    -----------------
 
     '''
     __init__ = bst.units.Mixer.__init__
@@ -43,8 +43,8 @@ class Splitter(SanUnit, bst.units.Splitter):
     '''
     Similar to the Splitter unit in biosteam, but takes WasteStreams.
 
-    biosteam documents
-    ------------------
+    biosteam document
+    -----------------
 
     '''
     __init__ = bst.units.Splitter.__init__
@@ -55,8 +55,8 @@ class FakeSplitter(SanUnit, bst.units.FakeSplitter):
     '''
     Similar to the FakeSplitter unit in biosteam, but takes WasteStreams.
     
-    biosteam documents
-    ------------------
+    biosteam document
+    -----------------
 
     '''
     __init__ = bst.units.FakeSplitter.__init__
@@ -67,8 +67,8 @@ class ReversedSplitter(SanUnit, bst.units.ReversedSplitter):
     '''
     Similar to the ReversedSplitter unit in biosteam, but takes WasteStreams.
     
-    biosteam documents
-    ------------------
+    biosteam document
+    -----------------
 
     '''
     __init__ = bst.units.ReversedSplitter.__init__
@@ -79,8 +79,8 @@ class Pump(SanUnit, bst.units.Pump):
     '''
     Similar to the Pump unit in biosteam, but takes WasteStreams.
     
-    biosteam documents
-    ------------------
+    biosteam document
+    -----------------
 
     '''
     __init__ = bst.units.Pump.__init__
@@ -91,8 +91,8 @@ class Tank(SanUnit, bst.units.Tank, isabstract=True):
     '''
     Similar to the Tank unit in biosteam, but takes WasteStreams.
     
-    biosteam documents
-    ------------------
+    biosteam document
+    -----------------
 
     '''
     __init__ = bst.units.Tank.__init__
@@ -103,8 +103,8 @@ class StorageTank(SanUnit, bst.units.StorageTank):
     '''
     Similar to the MixTank unit in biosteam, but takes WasteStreams.
     
-    biosteam documents
-    ------------------
+    biosteam document
+    -----------------
 
     '''
     __init__ = bst.units.StorageTank.__init__
@@ -115,8 +115,8 @@ class MixTank(SanUnit, bst.units.MixTank):
     '''
     Similar to the MixTank unit in biosteam, but takes WasteStreams.
     
-    biosteam documents
-    ------------------
+    biosteam document
+    -----------------
 
     '''
     __init__ = bst.units.MixTank.__init__

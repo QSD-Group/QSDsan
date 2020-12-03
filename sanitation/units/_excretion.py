@@ -34,22 +34,13 @@ data_path += 'unit_data/_excretion.csv'
 # %%
 
 class Excretion(SanUnit):
-    '''
-    Estimation of N, P, K, and COD in urine and feces based on dietary intake.
-
-    Parameters
-    ----------
-    N_user : [float]
-        Number of people that uses the toilet per hour.
-
-    '''
+    '''Estimation of N, P, K, and COD in urine and feces based on dietary intake for one person.'''
     
     _N_ins = 0
     _N_outs = 2
     
-    def __init__(self, ID='', ins=None, outs=(), N_user=1, **kwargs):                
+    def __init__(self, ID='', ins=None, outs=(), **kwargs):                
         SanUnit.__init__(self, ID, ins, outs)
-        self.N_user = N_user
         data = load_data(path=data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
@@ -66,29 +57,29 @@ class Excretion(SanUnit):
         ur.empty()
         fec.empty()
         # From g per person per day to kg per hour        
-        factor = self.N_user / 24 / 1e3
-        e_cal = self.e_cal * self.N_user / 24
-        ur_exc = self.ur_exc * factor
-        ur_N = (self.p_veg+self.p_anim)*factor*self.N_prot \
+        factor = 24 * 1e3
+        e_cal = self.e_cal / 24
+        ur_exc = self.ur_exc / factor
+        ur_N = (self.p_veg+self.p_anim)/factor*self.N_prot \
            * self.N_exc*self.N_ur
         ur.imass['NH3'] = ur_N * self.N_ur_NH3
         ur.imass['NonNH3'] = ur_N - ur.imass['NH3']
-        ur.imass['P'] = (self.p_veg*self.P_prot_v+self.p_anim*self.P_prot_a)*factor \
+        ur.imass['P'] = (self.p_veg*self.P_prot_v+self.p_anim*self.P_prot_a)/factor \
             * self.P_exc*self.P_ur
         ur.imass['K'] = e_cal/1e3 * self.K_cal/1e3 * self.K_exc*self.K_ur
-        ur.imass['Mg'] = self.Mg_ur * factor
-        ur.imass['Ca'] = self.Ca_ur * factor
+        ur.imass['Mg'] = self.Mg_ur / factor
+        ur.imass['Ca'] = self.Ca_ur / factor
         ur.imass['H2O'] = self.ur_moi * ur_exc
         ur.imass['OtherSS'] = ur_exc - ur.F_mass
         
-        fec_exc = self.fec_exc * factor
+        fec_exc = self.fec_exc / factor
         fec_N = (1-self.N_ur)/self.N_ur * ur_N
         fec.imass['NH3'] = fec_N * self.N_fec_NH3   
         fec.imass['NonNH3'] = fec_N - fec.imass['NH3']
         fec.imass['P'] = (1-self.P_ur)/self.P_ur * ur.imass['P']
         fec.imass['K'] = (1-self.K_ur)/self.K_ur * ur.imass['K']
-        fec.imass['Mg'] = self.Mg_fec * factor
-        fec.imass['Ca'] = self.Ca_fec * factor
+        fec.imass['Mg'] = self.Mg_fec / factor
+        fec.imass['Ca'] = self.Ca_fec / factor
         fec.imass['H2O'] = self.fec_moi * fec_exc
         fec.imass['OtherSS'] = fec_exc - fec.F_mass
         
