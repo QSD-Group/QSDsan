@@ -17,6 +17,7 @@ for license details.
 
 # %%
 
+import pandas as pd
 from . import currency, ImpactIndicator, ImpactItem
 from ._units_of_measure import auom
 from .utils.formatting import format_number as f_num
@@ -80,21 +81,24 @@ class Transportation:
         impacts = self.impacts
         du = self._default_units
         info = f'Transportation: {item.ID} [per trip]'
-        info += f"\n Load         : {f_num(self.load)} {du['load']}"
-        info += f"\n Distance     : {f_num(self.distance)} {du['distance']}"
-        info += f"\n Interval     : {f_num(self.interval)} {du['interval']}"
-        info += f'\n Total cost   : {f_num(self.cost)} {currency}'
-        info += '\n Total impacts:'
-        if len(impacts) == 0:
-            info += ' None'        
-        else:
-            for indicator in impacts.keys():
-                formated = f_num(impacts[indicator])
-                unit = indicators[indicator].unit
-                info += f'\n     {indicator}: {formated} {unit}'
+        info += f"\nLoad          : {f_num(self.load)} {du['load']}"
+        info += f"\nDistance      : {f_num(self.distance)} {du['distance']}"
+        info += f"\nInterval      : {f_num(self.interval)} {du['interval']}"
+        info += f'\nTotal cost    : {f_num(self.cost)} {currency}'
+        info += '\nTotal impacts :'
         print(info)
+        if len(impacts) == 0:
+            print(' None')
+        else:
+            index = pd.Index((i.ID+' ('+i.unit+')' for i in self.indicators))
+            df = pd.DataFrame({
+                'Impacts': tuple(self.impacts.values())
+                },
+                index=index)
+            # print(' '*16+df.to_string().replace('\n', '\n'+' '*16))
+            print(df.to_string())
 
-    _ipython_display_ = show # fun that _ipython_display_ and _ipython_display behave differently
+    _ipython_display_ = show # funny that _ipython_display_ and _ipython_display behave differently
 
 
     @property

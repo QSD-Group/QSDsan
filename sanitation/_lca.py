@@ -11,11 +11,21 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
+
+TODO:
+    Add a function to save LCA details.
+
 '''
 
+
+# %%
+
 import pandas as pd
+from . import ImpactItem
 from ._units_of_measure import auom
 from .utils.formatting import format_number as f_num
+
+items = ImpactItem._items
 
 __all__ = ('LCA',)
 
@@ -24,16 +34,42 @@ class LCA:
     '''For life cycle assessment (LCA) of a System.'''
     
     __slots__ = ('_system', '_construction_units', '_transportation_units',
-                 '_lca_waste_streams', '_impact_indicators',
-                 '_life_time')
+                 '_lca_waste_streams', '_impact_indicators', '_life_time',
+                 '_other_items')
     
     
-    def __init__(self, system, life_time, life_time_unit='hr'):
+    def __init__(self, system, life_time, life_time_unit='hr', **item_quantities):
+        '''
+        
+
+        Parameters
+        ----------
+        system : [biosteam.System]
+            System for which this LCA is conducted for.
+        life_time : [float]
+            Life time of the LCA.
+        life_time_unit : [str]
+            Unit of life time.
+        **item_quantities : kwargs, [ImpactItem] or [str] = [float] or ([float], [unit])
+            Other ImpactItems (e.g., electricity) and their quantities.
+
+        '''
+        
         self._construction_units = set()
         self._transportation_units = set()
         self._lca_waste_streams = set()
         self._update_system(system)
         self._update_life_time(life_time, life_time_unit)
+        self._other_items = {}
+        for item, quantity in item_quantities.items():
+            try:
+                q_number, q_unit = quantity # unit provided for the quantity
+                self.add_other_item(item, q_number, q_unit)
+            except:
+                self.add_other_item(item, quantity)
+    
+    __doc__ += __init__.__doc__
+    __init__.__doc__ = __doc__
     
     def _update_system(self, system):
         for unit in system.units:
@@ -54,21 +90,40 @@ class LCA:
             converted = auom(unit).convert(float(life_time), 'hr')
             self._life_time = converted
     
+    def add_other_item(self, item, quantity, unit=''):
+        if isinstance(item, str):
+            item = items[item]
+        fu = item.functional_unit
+        if unit and unit != fu:
+            try:
+                quantity = auom(unit).convert(quantity, fu)
+            except:
+                raise ValueError(f'Conversion of the given unit {unit} to '
+                                 f'item functional unit {fu} is not supported.')
+        self.other_items[item.ID] = quantity
+      
     def __repr__(self):
         return f'<LCA: {self.system}>'
 
     def show(self, life_time_unit='yr'):
         life_time = auom('hr').convert(self.life_time, life_time_unit)
-        print(f'LCA: {self.system} (life time {f_num(life_time)} {life_time_unit})')
-        index = pd.Index((i.ID+' ('+i.unit+')' for i in self.indicators))
-        df = pd.DataFrame({
-            'Construction': tuple(self.construction_impacts.values()),
-            'Transportation': tuple(self.transportation_impacts.values()),
-            'WasteStream': tuple(self.waste_stream_impacts.values()),
-            'Total': tuple(self.total_impacts.values())
-            },
-            index=index)
-        print(df)
+        info = f'LCA: {self.system} (life time {f_num(life_time)} {life_time_unit})'
+        info += '\nImpacts:'
+        print(info)
+        if len(self.indicators) == 0:
+            print(' None')
+        else:
+            index = pd.Index((i.ID+' ('+i.unit+')' for i in self.indicators))
+            df = pd.DataFrame({
+                'Construction': tuple(self.construction_impacts.values()),
+                'Transportation': tuple(self.transportation_impacts.values()),
+                'WasteStream': tuple(self.waste_stream_impacts.values()),
+                'Others': tuple(self.other_impacts.values()),
+                'Total': tuple(self.total_impacts.values())
+                },
+                index=index)
+            # print(' '*9+df.to_string().replace('\n', '\n'+' '*9))
+            print(df.to_string())
     
     _ipython_display_ = show
     
@@ -88,7 +143,8 @@ class LCA:
         ws_impacts = self._get_ws_impacts(exclude)
         for i in (self.construction_impacts,
                   self.transportation_impacts,
-                  ws_impacts):
+                  ws_impacts,
+                  self.other_impacts):
             for m, n in i.items():
                 impacts[m] += n
         return impacts
@@ -125,7 +181,8 @@ class LCA:
         constr = set(sum((i.indicators for i in self.construction_inventory), ()))
         trans = set(sum((i.indicators for i in self.transportation_inventory), ()))
         ws = set(sum((i.indicators for i in self.waste_stream_inventory), ()))
-        return constr.union(trans, ws)
+        add = set(sum((items[i].indicators for i in self.other_items.keys()), ()))
+        return constr.union(trans, ws, add)
     
     @property
     def construction_units(self):
@@ -182,6 +239,24 @@ class LCA:
     def waste_stream_impacts(self):
         '''[dict] Total impacts associated with WasteStreams (e.g., chemicals, emissions).'''
         return self._get_ws_impacts()
+        
+    @property
+    def other_items (self):
+        '''[dict] Other ImpactItems (e.g., electricity) and their quantities.'''
+        return self._other_items
+    @other_items.setter
+    def other_items(self, item, quantity, unit=''):
+        self.add_other_item(item, quantity, unit)
+        
+    @property
+    def other_impacts(self):
+        '''[dict] Total impacts associated with other ImpactItems (e.g., electricity).'''
+        impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
+        for j, k in self.other_items.items():
+            item = items[j]
+            for m, n in item.CFs.items():
+                impacts[m] += n*k
+        return impacts
     
     @property
     def total_impacts(self):

@@ -17,6 +17,7 @@ for license details.
 
 # %%
 
+import pandas as pd
 from . import currency, ImpactIndicator, ImpactItem
 from ._units_of_measure import auom
 from .utils.formatting import format_number as f_num
@@ -56,18 +57,21 @@ class Construction:
     def show(self):
         item = self.item
         impacts = self.impacts
-        info = f'Construction: {item.ID}'
-        info += f'\n Quantity     : {f_num(self.quantity)} {self.item.functional_unit}'
-        info += f'\n Total cost   : {f_num(self.cost)} {currency}'
-        info += '\n Total impacts:'
-        if len(impacts) == 0:
-            info += ' None'        
-        else:
-            for indicator in impacts.keys():
-                formated = f_num(impacts[indicator])
-                unit = indicators[indicator].unit
-                info += f'\n     {indicator}: {formated} {unit}'
+        info = f'Construction : {item.ID}'
+        info += f'\nQuantity     : {f_num(self.quantity)} {self.item.functional_unit}'
+        info += f'\nTotal cost   : {f_num(self.cost)} {currency}'
+        info += '\nTotal impacts:'
         print(info)
+        if len(impacts) == 0:
+            print(' None')
+        else:
+            index = pd.Index((i.ID+' ('+i.unit+')' for i in self.indicators))
+            df = pd.DataFrame({
+                'Impacts': tuple(self.impacts.values())
+                },
+                index=index)
+            # print(' '*15+df.to_string().replace('\n', '\n'+' '*15))
+            print(df.to_string())
         
     _ipython_display_ = show
         

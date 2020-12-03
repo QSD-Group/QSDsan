@@ -14,6 +14,9 @@ for license details.
 
 '''
 
+
+# %%
+
 import biosteam as bst
 from biosteam import utils
 from . import Construction, Transportation
@@ -174,24 +177,6 @@ class SanUnit(bst.Unit, isabstract=True):
         '''[float] Total operating expense per hour.'''
         return self._OPEX or self.utility_cost
     
-    @property
-    def _if_LCA(self):
-        '''
-        If this SanUnit is included in LCA. False if:
-            - All ins and outs have sink and source (i.e., no chemical inputs or emissions).
-            - No HeatUtility and PowerUtility objects.
-            - self.construction is empty.
-
-        '''
-        inputs = tuple(i for i in self.ins if not i._source)
-        if bool(inputs): return True
-        emissions = tuple(i for i in self.outs if not i._sink)
-        if bool(emissions): return True
-        if bool(self.heat_utilities): return True
-        if bool(self.power_utility): return True
-        if bool(self.construction): return True
-        return False
-
 
     
 

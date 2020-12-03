@@ -32,8 +32,8 @@ class ImpactIndicator:
     
     __slots__ = ('_ID', '_synonym', '_method', '_category', '_unit', '_ureg_unit',
                  '_unit_remaining', '_description')
-    
-    def __new__(cls, ID, synonym='', method='', category='', unit='', description=''):
+
+    def __init__(self, ID, synonym='', method='', category='', unit='', description=''):
         '''
         
 
@@ -54,23 +54,22 @@ class ImpactIndicator:
 
         '''
         
-        if ID in cls._indicators.keys():
-            raise ValueError(f'The ID {ID} currently in use by {cls._indicators[ID]}')
-        self = super().__new__(cls)
+        if ID in ImpactIndicator._indicators.keys():
+            raise ValueError(f'The ID {ID} currently in use by {ImpactIndicator._indicators[ID]}')
         self._ID = ID
         self._unit = str(unit)
         self._ureg_unit, self._unit_remaining = parse_unit(unit)
         self._method = method
         self._category = category
         self._description = description
-        cls._indicators[ID] = self
+        ImpactIndicator._indicators[ID] = self
         if synonym and str(synonym) != 'nan':
             self.set_synonym(synonym)
-        return self
 
-    __doc__ += __new__.__doc__
-    __new__.__doc__ = __doc__
-    
+    __doc__ += __init__.__doc__
+    __init__.__doc__ = __doc__
+
+
     def __repr__(self):
         return f'<ImpactIndicator: {self.ID}>'
 
@@ -129,12 +128,13 @@ class ImpactIndicator:
             if indicator in cls._indicators.keys():
                 continue
             else:
-                new = cls.__new__(cls, ID=indicator,
-                                  synonym=data.loc[indicator]['synonym'],
-                                  unit=data.loc[indicator]['unit'],
-                                  method=data.loc[indicator]['method'],
-                                  category=data.loc[indicator]['category'],
-                                  description=data.loc[indicator]['description'])
+                new = cls.__new__(cls)
+                new.__init__(ID=indicator,
+                             synonym=data.loc[indicator]['synonym'],
+                             unit=data.loc[indicator]['unit'],
+                             method=data.loc[indicator]['method'],
+                             category=data.loc[indicator]['category'],
+                             description=data.loc[indicator]['description'])
                 cls._indicators[indicator] = new
         cls._default_data = data
 

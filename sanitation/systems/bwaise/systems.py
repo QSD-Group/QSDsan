@@ -21,12 +21,15 @@ Ref:
 TODO:
     [1] Use consistent units for retention time, concentration, etc.
 
-
 '''
+
+
+# %%
 
 import numpy as np
 import biosteam as bst
 from sanitation import units, WasteStream, LCA
+from sanitation import *
 import bwaise
 cmps = bwaise._cmps.cmps
 
@@ -133,7 +136,11 @@ SceA = bst.System('SceA', path=(A1, A2, A3, AX, AX2))
 
 SceA.simulate()
 
-SceA_lca = LCA(SceA, life_time=8, life_time_unit='yr')
+
+e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=20)
+
+SceA_lca = LCA(SceA, life_time=8, life_time_unit='yr',
+               e_item=(5000, 'Wh'))
 
 
 # %%
@@ -200,8 +207,36 @@ A10.simulate()
 A10.show()
 
 
+# %%
 
+# # =============================================================================
+# # Try out impact-related classes
+# # =============================================================================
 
+# import biosteam as bst
+# from sanitation import *
+
+# H2SO4 = Component('H2SO4', search_ID='H2SO4', phase='l',
+#                   particle_size='Soluble', degradability='Undegradable', organic=False)
+# H2O = Component('H2O', search_ID='H2O', phase='l',
+#                 particle_size='Soluble', degradability='Undegradable', organic=False)
+
+# cmps2 = Components((H2SO4, H2O))
+# cmps2.compile()
+# cmps2.set_synonym('H2SO4', 'SulfuricAcid')
+# cmps2.set_synonym('H2O', 'Water')
+
+# bst.settings.set_thermo(cmps2)
+
+# sulfuric_acid = WasteStream('sulfuric_acid', H2SO4=10, H2O=1000, units='kg/hr')
+# sulfuric_acid2 = WasteStream('sulfuric_acid2', H2SO4=20, H2O=2000, units='kg/hr')
+
+# CEDf = ImpactIndicator(ID='CEDf', unit='MJ', method='Cumulative energy demand',
+#                         category='Fossil')
+
+# item_sulfuric_acid = StreamImpactItem(sulfuric_acid, CEDf=5, GWP=100, Eutrophication=1)
+
+# item_sulfuric_acid2 = StreamImpactItem(sulfuric_acid2, CEDf=15, GWP=1100, Eutrophication=21)
 
 
 # %%

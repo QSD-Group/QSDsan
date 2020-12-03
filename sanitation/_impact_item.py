@@ -12,11 +12,18 @@ This module is under the UIUC open-source license. Please refer to
 https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
 
+Ref (default item CFs):
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+        https://doi.org/10.1021/acs.est.0c03296.
+
+    #!!! Currently eutrophication data are made up!
+
 '''
 
 
 # %%
-
 
 import pandas as pd
 from warnings import warn
@@ -24,7 +31,6 @@ from thermosteam import Stream
 from . import WasteStream, ImpactIndicator
 from ._units_of_measure import auom, parse_unit
 from .utils.loading import data_path
-from .utils.formatting import format_number as f_num
 
 indicators = ImpactIndicator._indicators
 data_path += '_impact_item.xlsx'
@@ -39,8 +45,8 @@ class ImpactItem:
     _default_data = None
     
     __slots__ = ('_ID', '_functional_unit', '_CFs')
- 
-    def __new__(cls, ID, functional_unit='kg', **indicator_CFs):
+    
+    def __init__(self, ID, functional_unit='kg', **indicator_CFs):
         '''
         
 
@@ -50,14 +56,13 @@ class ImpactItem:
             ID of the ImpactItem. 
         functional_unit : [str]
             Functional unit of the ImpactItem.
-        **indicator_CFs : kwargs
+        **indicator_CFs : kwargs, [ImpactIndicator] or [str] = [float] or ([float], [unit])
             ImpactIndicators and their characteriziation factors.
 
         '''
         
-        if ID in cls._items.keys():
-            raise ValueError(f'The ID {ID} is in use by {cls._items[ID]}')
-        self = super().__new__(cls)
+        if ID in ImpactItem._items.keys():
+            raise ValueError(f'The ID {ID} is in use by {ImpactItem._items[ID]}')
         self._ID = ID
         self._functional_unit = auom(functional_unit)
         self._CFs = {}
@@ -67,36 +72,35 @@ class ImpactItem:
                 self.add_indicator_CF(CF, CF_value, CF_unit)
             except:
                 self.add_indicator_CF(CF, value)
-        cls._items[ID] = self
-        return self
+        ImpactItem._items[ID] = self
     
-    __doc__ += __new__.__doc__
-    __new__.__doc__ = __doc__
+    __doc__ += __init__.__doc__
+    __init__.__doc__ = __doc__
+    
     
     # This makes sure it won't be shown as memory location of the object
     def __repr__(self):
         return f'<ImpactItem: {self.ID}>'
 
-    
-    #TODO (maybe): DataFrame can make it look nicer
     def show(self):
         info = f'ImpactItem: {self.ID} [per {self.functional_unit}]'
-        info += '\n Characterization factors:'
-        CFs = self.CFs
-        if len(CFs) == 0:
-            info += ' None'
+        info += '\nImpactIndicators:'
+        print(info)
+        if len(self.CFs) == 0:
+            print(' None')
         else:
-            for i in self.CFs.keys():
-                indicator = indicators[i]
-                #!!! Currently Eutrofication values are fake
-                info += f'\n     {indicator.ID}: {f_num(CFs[i])} {indicator.unit}'
-        print(info)    
-    
+            index = pd.Index((i.ID+' ('+i.unit+')' for i in self.indicators))
+            df = pd.DataFrame({
+                'Characterization factors': tuple(self.CFs.values())
+                },
+                index=index)
+            print('\n'+df.to_string())
+        
     _ipython_display_ = show
 
 
     def add_indicator_CF(self, indicator, CF_value, CF_unit=''):
-        if type(indicator) is str:
+        if isinstance(indicator, str):
             indicator = indicators[indicator]
         try: CF_unit2 = CF_unit.replace(' eq', '-eq')
         except: pass
@@ -124,8 +128,9 @@ class ImpactItem:
                     if item in cls._items.keys():
                         items[item] = cls._items[item]
                     else:
-                        new = cls.__new__(cls, ID=item,
-                                          functional_unit=data.loc[item]['functional_unit'])
+                        new = cls.__new__(cls)
+                        new.__init__(ID=item,
+                                     functional_unit=data.loc[item]['functional_unit'])
                         items[item] = new
             else:
                 for item in data.index:
@@ -166,12 +171,14 @@ class ImpactItem:
         self.add_indicator_CF(indicator, CF_value, CF_unit)
 
 
+# %%
+
 class StreamImpactItem(ImpactItem):
     '''A class for calculation of environmental impacts associated with WasteStreams.'''
 
     __slots__ = ('_ID', '_linked_ws', '_functional_unit', '_CFs')
- 
-    def __new__(cls, linked_ws, **indicator_CFs):
+
+    def __init__(self, linked_ws, **indicator_CFs):
         '''
         
 
@@ -183,12 +190,9 @@ class StreamImpactItem(ImpactItem):
             ImpactIndicators and their characteriziation factors.
 
         '''
-        self = object.__new__(cls) # ImpactItem.__mro__
         self._linked_ws = None
         self.linked_ws = linked_ws
         ID = self.linked_ws.ID + '_item'
-        # if ID in ImpactItem._items.keys():
-        #     raise ValueError(f'The ID {ID} is in use by {ImpactItem._items[ID]}')
         self._ID = ID
         self._functional_unit = auom('kg')
         self._CFs = {}
@@ -200,10 +204,9 @@ class StreamImpactItem(ImpactItem):
                 self.add_indicator_CF(CF, value)
         
         ImpactItem._items[ID] = self
-        return self
     
-    __doc__ += __new__.__doc__
-    __new__.__doc__ = __doc__
+    __doc__ += __init__.__doc__
+    __init__.__doc__ = __doc__
 
 
     def __repr__(self):
@@ -212,17 +215,20 @@ class StreamImpactItem(ImpactItem):
 
     def show(self):
         info = f'StreamImpactItem: [per {self.functional_unit}]'
-        info += f'\n Linked to: {self.linked_ws}'
-        info += '\n Characterization factors:'
-        CFs = self.CFs
-        if len(CFs) == 0:
-            info += ' None'
+        info += f'\nLinked to     : {self.linked_ws}'
+        info += '\nImpactIndicators:'
+        print(info)
+        if len(self.CFs) == 0:
+            print(' None')
         else:
-            for i in self.CFs.keys():
-                indicator = indicators[i]
-                #!!! Currently Eutrofication values are fake
-                info += f'\n     {indicator.ID}: {f_num(CFs[i])} {indicator.unit}'
-        print(info)    
+            index = pd.Index((i.ID+' ('+i.unit+')' for i in self.indicators))
+            df = pd.DataFrame({
+                'Characterization factors': tuple(self.CFs.values())
+                },
+                index=index)
+            # print(' '*18+df.to_string().replace('\n', '\n'+' '*18))
+            print('\n'+df.to_string())
+
     
     _ipython_display_ = show
 
