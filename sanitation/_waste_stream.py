@@ -24,8 +24,8 @@ from . import Components
 
 __all__ = ('WasteStream',)
 
-_defined_composite_vars = ('COD', 'BOD5', 'BOD', 'uBOD', 'TC',
-                           'TN', 'TP', 'TK', 'TMg', 'TCa', 'solids', 'charge')
+_defined_composite_vars = ('COD', 'BOD5', 'BOD', 'uBOD', 'C',
+                           'N', 'P', 'K', 'Mg', 'Ca', 'solids', 'charge')
 
 _copied_slots = (*tuple('_'+i for i in _defined_composite_vars),
                  '_TOC', '_TKN', '_SAlk')
@@ -214,7 +214,7 @@ class WasteStream(Stream):
         ----------
         variable : [str]
             The composite variable to calculate. 
-            One of ('COD', 'BOD5', 'BOD', 'uBOD', 'TC', 'TN', 'TP', 'TK', 'solids', 'charge').
+            One of ('COD', 'BOD5', 'BOD', 'uBOD', 'C', 'N', 'P', 'K', 'Mg', 'Ca', 'solids', 'charge').
         subgroup : CompiledComponents, optional
             A subgroup of CompiledComponents. The default is None.
         particle_size : 'g', 's', 'c', or 'x', optional 
@@ -228,13 +228,13 @@ class WasteStream(Stream):
         volatile : [bool], optional
             Volatile (True) or involatile (False). The default is None.
         specification : [str], optional
-            One of ('SVFA', 'XStor', 'XANO', 'XBio', 'SNOx', 'XPAO_PP','TKN'). 
+            One of ('SVFA', 'XStor', 'XANO', 'XBio', 'SNOx', 'XPAO_PP', 'TKN'). 
             The default is None.
 
         Returns
         -------
         [float]
-            The estimated value of the composite variable, in [mg/L] or [mmol/L] (for "Charge").
+            The estimated value of the composite variable, in [mg/L] (or [mmol/L] for "Charge").
 
         """
         if self.F_vol == 0.:
@@ -274,20 +274,20 @@ class WasteStream(Stream):
             if organic == False: var = 0.
             else: 
                 organic = True
-                if variable == 'COD': var = cmp_c * exclude_gas
-                elif variable == 'uBOD': var = cmps.f_uBOD_COD * cmp_c * exclude_gas
-                else: var = cmps.f_BOD5_COD * cmp_c * exclude_gas
-        elif variable == 'TC':
+                if variable == 'COD': var = cmps.i_COD * cmp_c * exclude_gas
+                elif variable == 'uBOD': var = cmps.i_COD * cmps.f_uBOD_COD * cmp_c * exclude_gas
+                else: var = cmps.i_COD * cmps.f_BOD5_COD * cmp_c * exclude_gas
+        elif variable == 'C':
             var = cmps.i_C * cmp_c
-        elif variable == 'TN':
+        elif variable == 'N':
             var = cmps.i_N * cmp_c * exclude_gas
-        elif variable == 'TP': # using TP, as P reserved for pressure
+        elif variable == 'P': # I don't see how it'd be confused with 'P' for pressure.
             var = cmps.i_P * cmp_c
-        elif variable == 'TK':
+        elif variable == 'K':
             var = cmps.i_K * cmp_c
-        elif variable == 'TMg':
+        elif variable == 'Mg':
             var = cmps.i_Mg * cmp_c
-        elif variable == 'TCa':
+        elif variable == 'Ca':
             var = cmps.i_Ca * cmp_c
         elif variable == 'solids':
             var = cmps.i_mass * cmp_c
@@ -300,7 +300,7 @@ class WasteStream(Stream):
         dummy = np.ones(len(cmp_c))
         if particle_size:
             if particle_size == 'g': 
-                dummy *= 1-getattr(cmps, 's')-getattr(cmps, 'c')-getattr(cmps, 'x')
+                dummy *= 1-exclude_gas
             else:
                 dummy *= getattr(cmps, particle_size)
         
@@ -519,161 +519,6 @@ class WasteStream(Stream):
     
     def get_ISS(self):
         return self.composite('solids', particle_size='x', volatile=False)
-    
-    # @classmethod
-    # def from_composite_measures(cls, ID, flow_tot=0., phase='l', T=298.15, P=101325., 
-    #                             units=('L/hr', 'mg/L'), price=0., thermo=None, 
-    #                             pH=7., SAlk=150., ratios=None, COD=430., TKN=40., TP=10., 
-    #                             SNH4=25., SNO2=0., SNO3=0., SPO4=8., SCa=140., SMg=50., 
-    #                             SK=28., XMeP=0., XMeOH=0., XMAP=0., XHAP=0., XHDP=0., 
-    #                             XPAO_PP=0., DO=0., SH2=0., SN2=18., SCH4=0., SCAT=3., SAN=12.):
-                
-    #     cmps = Components.load_default(default_compile=True)
-    #     bst.settings.set_thermo(cmps)
-        
-    #     cmp_dct = dict.fromkeys(cmps.IDs, 0.)
-
-    #     new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
-    #               thermo=thermo, pH=pH, SAlk=SAlk)
-
-    #     if ratios:
-    #         new.ratios = ratios
-    #         r = new._ratios
-    #     else: r = WasteStream._default_ratios
-
-    #     #************ user-defined values **************        
-    #     cmp_dct['SH2'] = SH2
-    #     cmp_dct['SCH4'] = SCH4
-    #     cmp_dct['SN2'] = SN2
-    #     cmp_dct['SO2'] = DO
-    #     cmp_dct['SNH4'] = SNH4
-    #     cmp_dct['SNO2'] = SNO2
-    #     cmp_dct['SNO3'] = SNO3
-    #     cmp_dct['SPO4'] = SPO4
-    #     cmp_dct['SCa'] = SCa
-    #     cmp_dct['SMg'] = SMg
-    #     cmp_dct['SK'] = SK
-    #     cmp_dct['XMAP'] = XMAP
-    #     cmp_dct['XHAP'] = XHAP
-    #     cmp_dct['XHDP'] = XHDP
-    #     # cmp_dct['XMeP'] = XMeP
-    #     # cmp_dct['XMeOH'] = XMeOH
-    #     cmp_dct['SCAT'] = SCAT
-    #     cmp_dct['SAN'] = SAN
-        
-    #     #************ organic components **************
-    #     cmp_dct['SCH3OH'] = COD * r['fSCH3OH_TotCOD']
-    #     cmp_dct['SAc'] = COD * r['fSAc_TotCOD']
-    #     cmp_dct['SProp'] = COD * r['fSProp_TotCOD']
-    #     cmp_dct['SF'] = COD * r['fSF_TotCOD']
-    #     cmp_dct['SU_Inf'] = COD * r['fSUInf_TotCOD']
-    #     cmp_dct['SU_E'] = COD * r['fSUE_TotCOD']
-        
-    #     SOrg = sum([v for k,v in cmp_dct.items() if k in ('SCH3OH','SAc','SProp','SF','SU_Inf','SU_E')])
-        
-    #     XCU_Inf = COD * r['fXCUInf_TotCOD']
-    #     cmp_dct['CU_Inf'] = XCU_Inf * r['fCUInf_XCUInf']
-    #     cmp_dct['XU_Inf'] = XCU_Inf * (1 - r['fCUInf_XCUInf'])
-        
-    #     cmp_dct['XOHO'] = COD * r['fXOHO_TotCOD']
-    #     cmp_dct['XAOO'] = COD * r['fXAOO_TotCOD']
-    #     cmp_dct['XNOO'] = COD * r['fXNOO_TotCOD']
-    #     cmp_dct['XAMO'] = COD * r['fXAMO_TotCOD']
-    #     cmp_dct['XPAO'] = COD * r['fXPAO_TotCOD']
-    #     cmp_dct['XACO'] = COD * r['fXACO_TotCOD']
-    #     cmp_dct['XHMO'] = COD * r['fXHMO_TotCOD']
-    #     cmp_dct['XPRO'] = COD * r['fXPRO_TotCOD']
-    #     cmp_dct['XMEOLO'] = COD * r['fXMEOLO_TotCOD']
-        
-    #     XBio = sum([v for k,v in cmp_dct.items() if k.startswith('x') and k.endswith('O')])
-        
-    #     cmp_dct['XOHO_PHA'] = COD * r['fXOHOPHA_TotCOD']
-    #     cmp_dct['XGAO_PHA'] = COD * r['fXGAOPHA_TotCOD']
-    #     cmp_dct['XPAO_PHA'] = COD * r['fXPAOPHA_TotCOD']
-    #     cmp_dct['XGAO_Gly'] = COD * r['fXGAOGly_TotCOD']
-    #     cmp_dct['XPAO_Gly'] = COD * r['fXPAOGly_TotCOD']
-        
-    #     XStor = sum([v for k,v in cmp_dct.items() if k.endswith(('PHA','Gly'))])
-        
-    #     cmp_dct['XU_OHO_E'] = COD * r['fXUOHOE_TotCOD']
-    #     cmp_dct['XU_PAO_E'] = COD * r['fXUPAOE_TotCOD']
-        
-    #     XU_E = cmp_dct['XU_OHO_E'] + cmp_dct['XU_PAO_E']
-        
-    #     XCB = COD - SOrg - XCU_Inf - XU_E
-    #     CB = XCB * r['fCB_XCB']
-    #     cmp_dct['CB_BAP'] = CB * r['fBAP_CB']
-    #     cmp_dct['CB_UAP'] = CB * r['fUAP_CB']
-    #     cmp_dct['CB_Subst'] = CB - cmp_dct['CB_BAP'] - cmp_dct['CB_UAP']
-        
-    #     cmp_dct['XB_Subst'] = XCB - CB - XBio - XStor
-        
-    #     cmp_c = np.asarray([v for v in cmp_dct.values()])
-    #     VSS = (cmp_c * cmps.i_mass * cmps.f_Vmass_Totmass * cmps.x * cmps.org).sum()
-    #     TSS = VSS/r['iVSS_TSS']
-    #     XOrg_ISS = (cmp_c * cmps.i_mass * (1-cmps.f_Vmass_Totmass) * cmps.x * cmps.org).sum()
-
-    #     del SOrg, XCU_Inf, XBio, XStor, XU_E, XCB, CB
-        
-    #     #************ inorganic components **************
-    #     cmp_dct['XPAO_PP_Hi'] = XPAO_PP * r['fHi_XPAOPP']
-    #     cmp_dct['XPAO_PP_Lo'] = XPAO_PP * (1 - r['fHi_XPAOPP'])
-        
-    #     ISS = TSS - VSS
-    #     cmp_c = np.asarray([v for v in cmp_dct.values()])
-    #     other_ig_iss = (cmp_c * cmps.i_mass * cmps.x * (1-cmps.org)).sum()
-    #     cmp_dct['XIg_ISS'] = ISS - XOrg_ISS - other_ig_iss
-        
-    #     del ISS, VSS, TSS, XOrg_ISS, other_ig_iss, cmp_c
-        
-    #     # TODO: calibrate pH, SAlk, SCAT, SAN
-    #     bad_vars = {k:v for k,v in cmp_dct.items() if v<0}
-    #     if len(bad_vars) > 0:            
-    #         raise ValueError(f"The following state variable(s) was found negative: {bad_vars}.")
-        
-    #     del bad_vars
-
-    #     #************ calibrate XB_subst, SF's N, P content *************
-    #     if SNH4 > 0 and cmp_dct['SF'] > 0:
-    #         STKN = SNH4/r['fSNH4_STKN']
-    #         cmp_c = np.asarray([v for v in cmp_dct.values()])
-    #         SN = (cmp_c * cmps.i_N * cmps.s).sum()
-    #         SF_N = cmp_dct['SF'] * cmps.SF.i_N
-    #         SNOx_N = SNO2 * cmps.SNO2.i_N + SNO3 * cmps.SNO3.i_N
-    #         other_stkn = SN - SF_N - SNOx_N - SN2*cmps.SN2.i_N
-    #         SF_N = STKN - other_stkn
-            
-    #         if SF_N < 0:
-    #             raise ValueError("Negative N content for SF was estimated.")            
-            
-    #         cmps.SF.i_N = SF_N/cmp_dct['SF']
-            
-    #         del STKN, SN, SF_N, other_stkn
-            
-    #     other_tkn = (cmp_c*cmps.i_N).sum() - SNOx_N - SN2*cmps.SN2.i_N - cmp_dct['XB_Subst']*cmps.XB_Subst.i_N                
-    #     XB_Subst_N = TKN - other_tkn
-    #     if XB_Subst_N < 0:
-    #         raise ValueError("Negative N content for XB_Subst was estimated.")            
-    #     cmps.XB_Subst.i_N = XB_Subst_N/cmp_dct['XB_Subst']
-        
-    #     other_p = (cmp_c*cmps.i_P).sum() - cmp_dct['XB_Subst']*cmps.XB_Subst.i_P
-    #     XB_Subst_P = TP - other_p
-    #     if XB_Subst_P < 0:
-    #         raise ValueError("Negative P content for XB_Subst was estimated.")    
-    #     cmps.XB_Subst.i_P = XB_Subst_P/cmp_dct['XB_Subst']
-        
-    #     del other_tkn, XB_Subst_N, other_p, XB_Subst_P, cmp_c
-        
-    #     #************ convert concentrations to flow rates *************
-    #     # TODO: other unit options
-    #     cmp_dct = {k:v*flow_tot*1e-6 for k,v in cmp_dct.items()}       # [mg/L]*[L/hr]*1e-6[kg/mg] = [kg/hr]
-    #     cmp_dct['H2O'] = flow_tot - sum(cmp_dct.values())              # [L/hr]*1[kg/L] = [kg/hr], assuming raw WW density = 1kg/L
-        
-    #     new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
-    #               thermo=thermo, pH=pH, SAlk=SAlk, **cmp_dct)
-    #     # for i, j in cmp_dct.items():
-    #     #     setattr(new, i, j)
-    #     return new
 
 
     @classmethod

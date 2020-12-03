@@ -163,8 +163,8 @@ class Components(Chemicals):
                                               measured_as = cmp.measured_as)
             for j in _component_properties:
                 field = '_' + j
-                if pd.isna(cmp[j]): continue
-                setattr(component, field, cmp[j])
+                if pd.isna(cmp[j]): setattr(component, j, None)
+                else: setattr(component, field, cmp[j])
             new.append(component)
 
         del data

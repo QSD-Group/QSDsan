@@ -42,16 +42,17 @@ def component_identity(component, pretty=False):
 
 # Will stored as an array when compiled
 _num_component_properties = ('i_C', 'i_N', 'i_P', 'i_K', 'i_Mg', 'i_Ca',
-                             'i_mass', 'i_charge',
+                             'i_mass', 'i_charge', 'i_COD',
                              'f_BOD5_COD', 'f_uBOD_COD', 'f_Vmass_Totmass', )
 
 # Fields that cannot be left as None
-_key_component_properties = (*_num_component_properties,
-                             'particle_size', 'degradability', 'organic')
+_key_component_properties = ('particle_size', 'degradability', 'organic',
+                             *_num_component_properties)
 
 # All Component-related properties
-_component_properties = (*_key_component_properties,
-                         'measured_as', 'description', )
+_component_properties = ('measured_as', 'description', 
+                         *_key_component_properties)
+                         
 _component_slots = (*tmo.Chemical.__slots__,
                     *tuple('_'+i for i in _component_properties))
 
@@ -66,7 +67,8 @@ component_units_of_measure = {
     'i_Mg': AbsoluteUnitsOfMeasure('g'), 
     'i_Ca': AbsoluteUnitsOfMeasure('g'), 
     'i_mass': AbsoluteUnitsOfMeasure('g'), 
-    'i_charge': AbsoluteUnitsOfMeasure('mol')
+    'i_charge': AbsoluteUnitsOfMeasure('mol'),
+    'i_COD': AbsoluteUnitsOfMeasure('g'),
     }
 
 
@@ -78,7 +80,7 @@ allowed_values = {
     'particle_size': ('Dissolved gas', 'Soluble', 'Colloidal', 'Particulate'),
     'degradability': ('Readily', 'Slowly', 'Undegradable'),
     'organic': (True, False),
-    'measured_as': (None, 'COD', 'C', 'N', 'P'),
+    # 'measured_as': (None, 'COD', 'C', 'N', 'P'),
     }
 
 def check_return_property(name, value):
@@ -104,8 +106,8 @@ class Component(tmo.Chemical):
 
     def __new__(cls, ID='', search_ID=None, formula=None, phase=None, measured_as=None, 
                 i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
-                i_mass=None, i_charge=None, f_BOD5_COD=None, f_uBOD_COD=None,
-                f_Vmass_Totmass=None,
+                i_mass=None, i_charge=None, i_COD=None, 
+                f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
                 description=None, particle_size=None,
                 degradability=None, organic=None, **chemical_properties):
         
@@ -146,6 +148,9 @@ class Component(tmo.Chemical):
         self._organic = organic
         self.description = description
         if not self.MW and not self.formula: self.MW = 1.
+        
+        self.i_COD = i_COD
+        
         return self
 
     #!!! use i_mass
@@ -264,9 +269,13 @@ class Component(tmo.Chemical):
         if self.measured_as:
             if self.measured_as in self.atoms.keys():
                 return 1/get_mass_frac(self.atoms)[self.measured_as]
-            else:                 
-                if not self._i_mass: raise ValueError(f"Must specify i_mass for Component {self.ID} "
-                                                      f"measured as {self.measured_as}.")
+            elif not self._i_mass:                 
+                if self.measured_as == 'COD' and self.combustion:
+                    chem_MW = tmo.Chemical(self.ID, search_ID=self.CAS).MW
+                    i = -chem_MW/self.combustion['O2'] * tmo.Chemical('O2').MW
+                    return check_return_property('i_mass', i)
+                else: raise ValueError(f"Must specify i_mass for Component {self.ID} "
+                                       f"measured as {self.measured_as}.")
         return self._i_mass or 1.
     @i_mass.setter
     def i_mass(self, i):
@@ -397,6 +406,25 @@ class Component(tmo.Chemical):
     def organic(self, organic):
         self._organic = bool(check_return_property('organic', organic))
 
+    @property
+    def i_COD(self):
+        '''[float] COD content, calculated based on measured_as, organic and formula.'''
+        return self._i_COD
+
+    @i_COD.setter
+    def i_COD(self, i):
+        if i: self._i_COD = check_return_property('i_COD', i)
+        else: 
+            if self.organic: 
+                if self.measured_as == 'COD': self._i_COD = 1.
+                elif self.measured_as == None: 
+                    self._i_COD = -self.combustion['O2'] * tmo.Chemical('O2').MW/self.MW
+                else:
+                    chem_MW = tmo.Chemical(self.ID, search_ID=self.CAS).MW
+                    self._i_COD = -self.combustion['O2'] * tmo.Chemical('O2').MW/chem_MW * self.i_mass 
+            else: self._i_COD = 0.
+       
+
     def show(self, chemical_info=False):
         '''
         Show Component properties.
@@ -471,30 +499,30 @@ class Component(tmo.Chemical):
     __copy__ = copy
 
     @classmethod
-    def from_chemical(cls, ID, chemical, phase='l', measured_as=None, 
+    def from_chemical(cls, ID, chemical, phase=None, measured_as=None, 
                       i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
-                      i_mass=None, i_charge=None, f_BOD5_COD=None, f_uBOD_COD=None,
-                      f_Vmass_Totmass=None, description=None, 
-                      particle_size=None, degradability=None, organic=None, 
-                      **data):
+                      i_mass=None, i_charge=None, i_COD=None,
+                      f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None, 
+                      description=None, particle_size=None, degradability=None, 
+                      organic=None, **data):
         '''Return a new Component from Chemical'''
         new = cls.__new__(cls, ID=ID, phase=phase)
         for field in chemical.__slots__:
             value = getattr(chemical, field)
             setattr(new, field, copy_maybe(value))
         new._ID = ID
-        new._locked_state = phase
+        if phase: new._locked_state = phase
         new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus, new.Tm,
                            new.Tb, new.eos, new.eos_1atm, new.phase_ref)
         new._label_handles()
         new.measured_as = measured_as        
+        new.i_mass = i_mass
         new.i_C = i_C
         new.i_N = i_N
         new.i_P = i_P
         new.i_K = i_K
         new.i_Mg = i_Mg
         new.i_Ca = i_Ca
-        new.i_mass = i_mass
         new.i_charge = i_charge
         new.f_BOD5_COD = f_BOD5_COD
         new.f_uBOD_COD = f_uBOD_COD
@@ -503,6 +531,7 @@ class Component(tmo.Chemical):
         new.particle_size = particle_size
         new.degradability = degradability
         new.organic = organic
+        new.i_COD = i_COD
         for i,j in data.items():
             if i == 'formula':
                 new._formula = j
