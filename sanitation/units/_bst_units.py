@@ -27,37 +27,101 @@ __all__ = (
 # Units subclassed from biosteam
 # =============================================================================
 
-class Mixer(SanUnit, bst.Mixer):
-    '''Similar to the Mixer unit in biosteam, but takes WasteStreams'''
-    __init__ = bst.Mixer.__init__
+class Mixer(SanUnit, bst.units.Mixer):
+    '''
+    Similar to the Mixer unit in biosteam, but takes WasteStreams.
     
-class Splitter(SanUnit, bst.Splitter):
-    '''Similar to the Splitter unit in biosteam, but takes WasteStreams'''
-    __init__ = bst.Splitter.__init__
+    biosteam documents
+    ------------------
 
-class FakeSplitter(SanUnit, bst.FakeSplitter):
-    '''Similar to the FakeSplitter unit in biosteam, but takes WasteStreams'''
-    __init__ = bst.FakeSplitter.__init__
+    '''
+    __init__ = bst.units.Mixer.__init__
+    __doc__ += bst.units.Mixer.__doc__
+    __init__.__doc__ = __doc__
 
-class ReversedSplitter(SanUnit, bst.ReversedSplitter):
-    '''Similar to the ReversedSplitter unit in biosteam, but takes WasteStreams'''
-    __init__ = bst.ReversedSplitter.__init__
+class Splitter(SanUnit, bst.units.Splitter):
+    '''
+    Similar to the Splitter unit in biosteam, but takes WasteStreams.
 
-class Pump(SanUnit, bst.Pump):
-    '''Similar to the Pump unit in biosteam, but takes WasteStreams'''
-    __init__ = bst.Pump.__init__
+    biosteam documents
+    ------------------
+
+    '''
+    __init__ = bst.units.Splitter.__init__
+    __doc__ += bst.units.Splitter.__doc__
+    __init__.__doc__ = __doc__
+
+class FakeSplitter(SanUnit, bst.units.FakeSplitter):
+    '''
+    Similar to the FakeSplitter unit in biosteam, but takes WasteStreams.
     
-class Tank(SanUnit, bst.Tank, isabstract=True):
-    '''Similar to the Tank unit in biosteam, but takes WasteStreams'''
-    __init__ = bst.Tank.__init__
+    biosteam documents
+    ------------------
+
+    '''
+    __init__ = bst.units.FakeSplitter.__init__
+    __doc__ += bst.units.FakeSplitter.__doc__
+    __init__.__doc__ = __doc__
+
+class ReversedSplitter(SanUnit, bst.units.ReversedSplitter):
+    '''
+    Similar to the ReversedSplitter unit in biosteam, but takes WasteStreams.
     
-class StorageTank(SanUnit, bst.StorageTank):
-    '''Similar to the MixTank unit in biosteam, but takes WasteStreams'''
-    __init__ = bst.StorageTank.__init__
+    biosteam documents
+    ------------------
+
+    '''
+    __init__ = bst.units.ReversedSplitter.__init__
+    __doc__ += bst.units.ReversedSplitter.__doc__
+    __init__.__doc__ = __doc__
     
-class MixTank(SanUnit, bst.MixTank):
-    '''Similar to the MixTank unit in biosteam, but takes WasteStreams'''
-    __init__ = bst.MixTank.__init__
+class Pump(SanUnit, bst.units.Pump):
+    '''
+    Similar to the Pump unit in biosteam, but takes WasteStreams.
+    
+    biosteam documents
+    ------------------
+
+    '''
+    __init__ = bst.units.Pump.__init__
+    __doc__ += bst.units.Pump.__doc__
+    __init__.__doc__ = __doc__
+    
+class Tank(SanUnit, bst.units.Tank, isabstract=True):
+    '''
+    Similar to the Tank unit in biosteam, but takes WasteStreams.
+    
+    biosteam documents
+    ------------------
+
+    '''
+    __init__ = bst.units.Tank.__init__
+    __doc__ += bst.units.Tank.__doc__
+    __init__.__doc__ = __doc__
+    
+class StorageTank(SanUnit, bst.units.StorageTank):
+    '''
+    Similar to the MixTank unit in biosteam, but takes WasteStreams.
+    
+    biosteam documents
+    ------------------
+
+    '''
+    __init__ = bst.units.StorageTank.__init__
+    __doc__ += bst.units.StorageTank.__doc__
+    __init__.__doc__ = __doc__
+    
+class MixTank(SanUnit, bst.units.MixTank):
+    '''
+    Similar to the MixTank unit in biosteam, but takes WasteStreams.
+    
+    biosteam documents
+    ------------------
+
+    '''
+    __init__ = bst.units.MixTank.__init__
+    __doc__ += bst.units.MixTank.__doc__
+    __init__.__doc__ = __doc__
     _run = Mixer._run
     
     
