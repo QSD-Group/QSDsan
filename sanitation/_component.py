@@ -86,7 +86,7 @@ def check_return_property(name, value):
         if not value: return None
         try: return float(value)
         except: raise TypeError(f'{name} must be a number, not a {type(value).__name__}.')        
-        if value>1 or value<0:
+        if name.startswith('f_') and (value>1 or value<0):
             raise ValueError(f'{name} must be within [0,1].')
     elif name in allowed_values.keys():
         assert value in allowed_values[name], \
@@ -121,24 +121,25 @@ class Component(tmo.Chemical):
             self.formula = formula
         if phase: tmo._chemical.lock_phase(self, phase)
         self.measured_as = measured_as
+        self.i_mass = i_mass
         self.i_C = i_C
         self.i_N = i_N
         self.i_P = i_P
         self.i_K = i_K
         self.i_Mg = i_Mg
         self.i_Ca = i_Ca
-        self.i_mass = i_mass
         self.i_charge = i_charge        
         self.f_BOD5_COD = f_BOD5_COD
         self.f_uBOD_COD = f_uBOD_COD
         self.f_Vmass_Totmass = f_Vmass_Totmass
         
-        # #!!! Need to check if this works
-        # if measured_as:
-        #     if measured_as == 'COD': self._MW = tmo.Chemical('O').MW
-        #     elif measured_as == 'C': self._MW = tmo.Chemical('C').MW
-        #     elif measured_as == 'N': self._MW = tmo.Chemical('N').MW
-        #     elif measured_as == 'P': self._MW = tmo.Chemical('P').MW
+        #!!! Need to check if this works
+        #!!! This is necessary for correct molar flow calculation.
+        if measured_as:
+            if measured_as == 'COD': self._MW = tmo.Chemical('O').MW
+            else:
+                try: self._MW = tmo.Chemical(measured_as).MW
+                except LookupError: raise LookupError(f"measure unit {measured_as} not recognized")
 
         self._particle_size = particle_size
         self._degradability = degradability
@@ -148,26 +149,28 @@ class Component(tmo.Chemical):
         return self
 
     #!!! use i_mass
-    def _atom_frac_setter(self, cmp, atom=None, frac=None):
-        if cmp.formula:
+    def _atom_frac_setter(self, atom=None, frac=None):
+        if self.formula:
             if frac:
                 raise AttributeError('This Component has formula, '
                                      f'i_{atom} is calculated based on formula, '
                                      'cannot be set.')
             else:
-                if atom in cmp.atoms.keys():
-                    if self.measured_as:
-                        if atom == self.measured_as:
-                            return 1.0
-                        elif atom =='O' and self.measured_as == 'COD':
-                            return 1.0
-                        else:
-                            return 0.
-                    return get_mass_frac(cmp.atoms)[atom]
+                if atom in self.atoms.keys():
+                    # if self.measured_as:
+                    #     if atom == self.measured_as:
+                    #         return 1.0
+                    #     elif atom =='O' and self.measured_as == 'COD':
+                    #         return 1.0  #!!! this is not true.
+                    #     else:
+                    #         return 0.
+                    try: return get_mass_frac(self.atoms)[atom] * self.i_mass
+                    except: return None
                 return 0. # does not have this atom
         else:
             return check_return_property(f'i_{atom}', frac)
 
+    #!!! i_{} does not have to be within [0,1].
     @property
     def i_C(self):
         '''
@@ -175,13 +178,12 @@ class Component(tmo.Chemical):
 
         Notes
         -------
-        [1] Must be within [0,1].
-        [2] Will be calculated based on formula if given.
+        Will be calculated based on formula and measured_as if given.
         '''
         return self._i_C or 0.
     @i_C.setter
     def i_C(self, i):
-        self._i_C = self._atom_frac_setter(self, 'C', i)
+        self._i_C = self._atom_frac_setter('C', i)
 
 
     @property
@@ -191,14 +193,13 @@ class Component(tmo.Chemical):
 
         Notes
         -------
-        [1] Must be within [0,1].
-        [2] If the Component is measured as N, then i_N is 1.
-        [3] Will be calculated based on formula if given.
+        [1] If the Component is measured as N, then i_N is 1.
+        [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_N or 0.
     @i_N.setter
     def i_N(self, i):
-        self._i_N = self._atom_frac_setter(self, 'N', i)
+        self._i_N = self._atom_frac_setter('N', i)
 
     @property
     def i_P(self):
@@ -207,14 +208,13 @@ class Component(tmo.Chemical):
 
         Notes
         -------
-        [1] Must be within [0,1].
-        [2] If the Component is measured as P, then i_P is 1.
-        [3] Will be calculated based on formula if given.
+        [1] If the Component is measured as P, then i_P is 1.
+        [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_P or 0.
     @i_P.setter
     def i_P(self, i):
-        self._i_P = self._atom_frac_setter(self, 'P', i)
+        self._i_P = self._atom_frac_setter('P', i)
 
     @property
     def i_K(self):
@@ -223,13 +223,12 @@ class Component(tmo.Chemical):
 
         Notes
         -------
-        [1] Must be within [0,1].
-        [2] Will be calculated based on formula if given.
+        Will be calculated based on formula and measured_as if given.
         '''
         return self._i_K or 0.
     @i_K.setter
     def i_K(self, i):
-        self._i_K = self._atom_frac_setter(self, 'K', i)
+        self._i_K = self._atom_frac_setter('K', i)
 
     @property
     def i_Mg(self):
@@ -238,13 +237,12 @@ class Component(tmo.Chemical):
 
         Notes
         -------
-        [1] Must be within [0,1].
-        [2] Will be calculated based on formula if given.
+        Will be calculated based on formula and measured_as if given.
         '''
         return self._i_Mg or 0.
     @i_Mg.setter
     def i_Mg(self, i):
-        self._i_Mg = self._atom_frac_setter(self, 'Mg', i)
+        self._i_Mg = self._atom_frac_setter('Mg', i)
         
     @property
     def i_Ca(self):
@@ -253,20 +251,22 @@ class Component(tmo.Chemical):
 
         Notes
         -------
-        [1] Must be within [0,1].
-        [2] Will be calculated based on formula if given.
+        Will be calculated based on formula and measured_as if given.
         '''
         return self._i_Ca or 0.
     @i_Ca.setter
     def i_Ca(self, i):
-        self._i_Ca = self._atom_frac_setter(self, 'Ca', i)
+        self._i_Ca = self._atom_frac_setter('Ca', i)
 
     @property
     def i_mass(self):
         '''[float] Mass content of the Component, [g Component/g measure unit].'''
         if self.measured_as:
-            if self.measured_as != 'COD':
+            if self.measured_as in self.atoms.keys():
                 return 1/get_mass_frac(self.atoms)[self.measured_as]
+            else:                 
+                if not self._i_mass: raise ValueError(f"Must specify i_mass for Component {self.ID} "
+                                                      f"measured as {self.measured_as}.")
         return self._i_mass or 1.
     @i_mass.setter
     def i_mass(self, i):
@@ -353,7 +353,8 @@ class Component(tmo.Chemical):
 
         Notes
         -------
-        Can be left as blank or chosen from 'COD', 'C', 'N', or 'P'.
+        Can be left as blank or chosen from 'COD', 'C', 'N', 'P' 
+        or a chemical element of the Component.
         '''
         return self._measured_as
     @measured_as.setter
