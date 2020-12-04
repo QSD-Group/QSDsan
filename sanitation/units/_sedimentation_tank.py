@@ -151,10 +151,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         'Concrete': 1,
         'Excavation': 1        
         }
-    
-    def _cost(self):
-        for i in self.construction:
-            self.purchase_costs[i.item.ID] = i.cost
+
     
 
     @property

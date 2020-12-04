@@ -191,9 +191,13 @@ class DryingBed(SanUnit, Decay):
     def design_type(self, i):
         if i in ('unplanted', 'planted'):
             self._design_type = i
-            self.line = i.capitalize() + 'bed'
+            self.line =f'{i.capitalize()} drying bed'
         else:
-            raise ValueError(f"design_type can only be 'unplanted' or 'planted', not {i}.")
+            if i is None:
+                self.line = 'Drying bed'
+            else:
+                raise ValueError(f"design_type can only be 'unplanted', 'planted', "
+                                 f"or 'None', not {i}.")
 
     @staticmethod
     def _set_bed_prop(prop, value):

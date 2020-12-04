@@ -16,4 +16,4 @@ for license details.
 __all__ = []
 
 from lazypkg import LazyPkg
-LazyPkg(__name__, ['_cmps', '_utils', '_units', 'systems', ])
+LazyPkg(__name__, ['_cmps', '_utils', 'systems', ])

@@ -39,10 +39,10 @@ class SanUnit(bst.Unit, isabstract=True):
         Total impacts associated with this SanUnit.
     transportation : [tuple]
         Contains construction information.
-    OPEX : [float]
-        Lumped total operating expense per hour (assuming 100% operating time).
+    add_OPEX : [float]
+        Operating expense per hour in addition to utility cost (assuming 100% uptime).
     uptime_ratio : [float]
-        Uptime of the unit to adjust OPEX, should be in [0,1] (i.e., a unit that is always operating).
+        Uptime of the unit to adjust add_OPEX, should be in [0,1] (i.e., a unit that is always operating).
     
     biosteam document
     -----------------
@@ -60,7 +60,7 @@ class SanUnit(bst.Unit, isabstract=True):
         self._init_utils()
         self._init_results()
         self._assert_compatible_property_package()
-        self._OPEX = None
+        self._add_OPEX = 0.
         self._uptime_ratio = 1.
 
     __doc__ += bst.Unit.__doc__
@@ -145,10 +145,11 @@ class SanUnit(bst.Unit, isabstract=True):
     #     return ws_inv
     
     def add_construction(self):
-        '''Add construction materials and activities to design and result dict'''
+        '''Add construction designs and costs'''
         for i in self.construction:
             self.design_results[i.item.ID] = i.quantity
             self._units[i.item.ID] = i.item.functional_unit
+            self.purchase_costs[i.item.ID] = i.cost
     
     @property
     def construction(self):
@@ -196,40 +197,24 @@ class SanUnit(bst.Unit, isabstract=True):
         self._transportation = i
 
     @property
-    def OPEX(self):
-        '''
-        [float] Lumped total operating expense per hour (assuming 100% operating time).
-        
-        Note
-        ----
-            If OPEX is given, then <SanUnit>.utility_cost will be ignored.
-        '''
-        return self._OPEX
-    
-    @property
-    def utility_cost(self):
-        """Total utility (heating, cooling, power) cost per hour, will be ignored if OPEX given."""
-        if self._OPEX:
-            return 0.
-        return sum([i.cost for i in self.heat_utilities]) + self.power_utility.cost    
+    def add_OPEX(self):
+        '''[float] Operating expense per hour in addition to utility cost (assuming 100% operating time).'''
+        return self._add_OPEX
 
     def results(self, with_units=True, include_utilities=True,
                 include_total_cost=True, include_installed_cost=False):
         results = super().results(with_units, include_utilities,
                                   include_total_cost, include_installed_cost)
-        if self._OPEX:
-            results.rename(index={'Utility cost': 'OPEX'}, inplace=True)
-            if with_units:
-                results.rename(index={'Utility cost': 'OPEX'}, inplace=True)
-                results.loc[('OPEX', '')] = ('USD/hr', self.OPEX)
-                results.replace({'USD': f'{currency}', 'USD/hr': f'{currency}/hr'}, inplace=True)
-            else:
-                results.loc[('OPEX', '')] = self.OPEX
+        if with_units:
+            results.loc[('Additional OPEX', ''), :] = ('USD/hr', self.OPEX)
+            results.replace({'USD': f'{currency}', 'USD/hr': f'{currency}/hr'}, inplace=True)
+        else:
+            results.loc[('Additional OPEX', ''), :] = self.OPEX
         return results
 
     @property
     def uptime_ratio(self):
-        '''[float] Uptime of the unit to adjust OPEX, should be in [0,1] (i.e., a unit that is always operating).'''
+        '''[float] Uptime of the unit to adjust add_OPEX, should be in [0,1] (i.e., a unit that is always operating).'''
         return self._uptime_ratio
     @uptime_ratio.setter
     def uptime_ratio(self, i):

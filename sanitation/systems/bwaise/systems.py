@@ -30,7 +30,7 @@ TODO:
 import numpy as np
 import biosteam as bst
 # from sklearn.linear_model import LinearRegression
-from sanitation import units, WasteStream, ImpactItem, LCA
+from sanitation import units, WasteStream, ImpactItem, SimpleTEA, LCA
 # from sanitation import *
 import bwaise
 cmps = bwaise._cmps.cmps
@@ -145,15 +145,21 @@ A6 = units.Lagoon('A6', ins=A5-0, outs=('facultative_treated', 'CH4', 'N2O'),
                   decay_k_N=get_decay_k(tau_deg, log_deg),
                   max_CH4_emission=max_CH4_emission)
 
-A7 = units.DryingBed('A7', ins=A4-1, outs=('solid', 'evaporated', 'CH4', 'N2O'),
+A7 = units.DryingBed('A7', ins=A4-1, outs=('dried_sludge', 'evaporated', 'CH4', 'N2O'),
                      design_type='unplanted',
                      decay_k_COD=get_decay_k(tau_deg, log_deg),
                      decay_k_N=get_decay_k(tau_deg, log_deg),
                      max_CH4_emission=max_CH4_emission)
 
-#!!! Note that before crop application, the COD is set, but after, is calculated
-# based on the assumed ratio
-A8 = units.CropApplication('A8', ins=A6-0, loss_ratio=app_loss)
+A8 = units.CropApplication('A8', ins=A6-0, outs=('liquid_fertilizer', 'loss'),
+                           loss_ratio=app_loss)
+
+A9 = units.Mixer('A9', ins=(A2-2, A4-2, A5-1, A6-1, A7-2),
+                 outs='fugitive_CH4')
+
+A10 = units.Mixer('A10', ins=(A2-3, A4-3, A5-2, A6-2, A7-3),
+                 outs='fugitive_N2O')
+
 def adjust_NH3_loss():
     A8._run()
     # Assume the slight higher loss of NH3 does not affect COD,
@@ -161,56 +167,14 @@ def adjust_NH3_loss():
     A8.outs[0]._COD = A8.outs[1]._COD = A8.ins[0]._COD
 A8.specification = adjust_NH3_loss
 
-SceA = bst.System('SceA', path=(A1, A2, A3, A4, A5, A6, A7, A8))
+SceA = bst.System('SceA', path=(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10))
 SceA.simulate()
 
 
-# %%
-
-ws1 = A2.outs[0].copy('ws1')
-A4 = units.AnaerobicDigestion('A4', ins=ws1,
-                              outs=('treated', 'CH4', 'N2O'),
-                              # tau_previous=A2.emptying_period*365,
-                              decay_k_N=get_decay_k(tau_deg, log_deg),
-                                max_CH4_emission=max_CH4_emission)
-A4.simulate()
-# A4.show()
-
-ws2 = A2.outs[0].copy('ws2')
-A5 = units.SludgeSeparator('A5', ins=ws2, outs=('liq', 'sol'))
-
-A5.simulate()
-# A5.show()
-
-
-
-
-ws5 = A2.outs[0].copy('ws5')
-A8 = units.DryingBed('A8', ins=ws5, outs=('solid', 'evaporated', 'CH4', 'N2O'),
-                     design_type='unplanted',
-                     decay_k_COD=get_decay_k(tau_deg, log_deg),
-                     decay_k_N=get_decay_k(tau_deg, log_deg),
-                     max_CH4_emission=max_CH4_emission)
-
-A8.simulate()
-# A8.show()
-
-ws6 = A2.outs[0].copy('ws6')
-A9 = units.AnaerobicBaffledReactor('A9', ins=ws6, outs=('treated', 'CH4', 'N2O'),
-                                   decay_k_COD=get_decay_k(tau_deg, log_deg),
-                                   max_CH4_emission=max_CH4_emission)
-
-A9.simulate()
-# A9.show()
-
-ws7 = A2.outs[0].copy('ws7')
-A10 = units.LiquidTreatmentBed('A10', ins=ws7, outs=('treated', 'CH4', 'N2O'),
-                               decay_k_COD=get_decay_k(tau_deg, log_deg),
-                               decay_k_N=get_decay_k(tau_deg, log_deg),
-                               max_CH4_emission=max_CH4_emission)
-
-A10.simulate()
-A10.show()
+SceA_tea = SimpleTEA(system=SceA, discount_rate=discount_rate, start_year=2020,
+                     life_time=8, uptime_ratio=1, CAPEX=18606700, lang_factor=None,
+                     annual_maintenance=0, annual_labor=12*3e6*12/exchange_rate,
+                     construction_schedule=None)
 
 
 
@@ -219,83 +183,147 @@ A10.show()
 
 
 
-biogas = WasteStream('biogas', CH4=1)
-AX2 = units.BiogasCombustion('AX2', ins=(biogas, 'air'),
-                              outs=('used', 'lost', 'wasted'),
-                              if_combustion=True,
-                              biogas_loss=0.1, biogas_eff=0.55)
 
 
 
-SceA = bst.System('SceA', path=(A1, A2, A3, AX, AX2))
-
-SceA.simulate()
 
 
-e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=20)
 
-SceA_lca = LCA(SceA, life_time=8, life_time_unit='yr',
-               e_item=(5000, 'Wh'))
+
 
 
 
 # %%
 
-# =============================================================================
-# Scenario B: anaerobic treatment with existing latrines and conveyance
-# =============================================================================
+# ws1 = A2.outs[0].copy('ws1')
+# A4 = units.AnaerobicDigestion('A4', ins=ws1,
+#                               outs=('treated', 'CH4', 'N2O'),
+#                               # tau_previous=A2.emptying_period*365,
+#                               decay_k_N=get_decay_k(tau_deg, log_deg),
+#                                 max_CH4_emission=max_CH4_emission)
+# A4.simulate()
+# # A4.show()
+
+# ws2 = A2.outs[0].copy('ws2')
+# A5 = units.SludgeSeparator('A5', ins=ws2, outs=('liq', 'sol'))
+
+# A5.simulate()
+# # A5.show()
 
 
-# %%
-
-# =============================================================================
-# Scenario C: containaer-based sanitation with existing treatment
-# =============================================================================
-
-print('\n----------Scenario C----------\n')
-C1 = units.Excretion('C1', outs=('urine', 'feces'), N_user=toilet_user)
-C2 = units.UDDT('C2', ins=(C1-0, C1-1,
-                            'toilet_paper', 'flushing_water',
-                            'cleaning_water', 'desiccant'),
-                outs=('liquid_waste', 'solid_waste',
-                      'struvite', 'HAP', 'CH4', 'N2O'),
-                N_user=toilet_user, OPEX_over_CAPEX=0.1,
-                decay_k_COD=get_decay_k(tau_deg, log_deg),
-                decay_k_N=get_decay_k(tau_deg, log_deg),
-                max_CH4_emission=max_CH4_emission)
-C1.simulate()
-C2.simulate()
-
-truck = 'HandcartAndTruck'
-# Liquid waste
-interval = (C2.collection_period*truck_V[truck])/C2.tank_V
-C3 = units.Trucking('C3', ins=C2-0, outs=('transported_l', 'loss_l'),
-                    load_type='mass', load=truck_V[truck], load_unit='tonne',
-                    distance=5, distance_unit='km',
-                    interval=interval, interval_unit='day',
-                    fee=truck_cost[truck]/truck_V[truck]+0.01*ppl_alternative*interval,
-                    loss_ratio=0.02)
-
-# Solid waste
-interval = (C2.collection_period*truck_V[truck])/C2.tank_V
-C4 = units.Trucking('C4', ins=C2-1, outs=('transported_s', 'loss_s'),
-                    load_type='mass', load=truck_V[truck], load_unit='tonne',
-                    distance=5, distance_unit='km',
-                    interval=interval, interval_unit='day',
-                    fee=truck_cost[truck]/truck_V[truck]+0.01*ppl_alternative*interval,
-                    loss_ratio=0.02)
 
 
-CX = units.CropApplication('CX', ins=WasteStream(), loss_ratio=app_loss)
-def adjust_NH3_loss():
-    CX._run()
-    CX.outs[0]._COD = CX.outs[1]._COD = CX.ins[0]._COD
-CX.specification = adjust_NH3_loss
+# ws5 = A2.outs[0].copy('ws5')
+# A8 = units.DryingBed('A8', ins=ws5, outs=('solid', 'evaporated', 'CH4', 'N2O'),
+#                      design_type='unplanted',
+#                      decay_k_COD=get_decay_k(tau_deg, log_deg),
+#                      decay_k_N=get_decay_k(tau_deg, log_deg),
+#                      max_CH4_emission=max_CH4_emission)
+
+# A8.simulate()
+# # A8.show()
+
+# ws6 = A2.outs[0].copy('ws6')
+# A9 = units.AnaerobicBaffledReactor('A9', ins=ws6, outs=('treated', 'CH4', 'N2O'),
+#                                    decay_k_COD=get_decay_k(tau_deg, log_deg),
+#                                    max_CH4_emission=max_CH4_emission)
+
+# A9.simulate()
+# # A9.show()
+
+# ws7 = A2.outs[0].copy('ws7')
+# A10 = units.LiquidTreatmentBed('A10', ins=ws7, outs=('treated', 'CH4', 'N2O'),
+#                                decay_k_COD=get_decay_k(tau_deg, log_deg),
+#                                decay_k_N=get_decay_k(tau_deg, log_deg),
+#                                max_CH4_emission=max_CH4_emission)
+
+# A10.simulate()
+# A10.show()
 
 
-SceC = bst.System('SceC', path=(C1, C2, C3, C4, CX))
 
-SceC.simulate()
+
+
+
+
+
+# biogas = WasteStream('biogas', CH4=1)
+# AX2 = units.BiogasCombustion('AX2', ins=(biogas, 'air'),
+#                               outs=('used', 'lost', 'wasted'),
+#                               if_combustion=True,
+#                               biogas_loss=0.1, biogas_eff=0.55)
+
+
+
+# SceA = bst.System('SceA', path=(A1, A2, A3, AX, AX2))
+
+# SceA.simulate()
+
+
+# e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=20)
+
+# SceA_lca = LCA(SceA, life_time=8, life_time_unit='yr',
+#                e_item=(5000, 'Wh'))
+
+
+
+# # %%
+
+# # =============================================================================
+# # Scenario B: anaerobic treatment with existing latrines and conveyance
+# # =============================================================================
+
+
+# # %%
+
+# # =============================================================================
+# # Scenario C: containaer-based sanitation with existing treatment
+# # =============================================================================
+
+# print('\n----------Scenario C----------\n')
+# C1 = units.Excretion('C1', outs=('urine', 'feces'), N_user=toilet_user)
+# C2 = units.UDDT('C2', ins=(C1-0, C1-1,
+#                             'toilet_paper', 'flushing_water',
+#                             'cleaning_water', 'desiccant'),
+#                 outs=('liquid_waste', 'solid_waste',
+#                       'struvite', 'HAP', 'CH4', 'N2O'),
+#                 N_user=toilet_user, OPEX_over_CAPEX=0.1,
+#                 decay_k_COD=get_decay_k(tau_deg, log_deg),
+#                 decay_k_N=get_decay_k(tau_deg, log_deg),
+#                 max_CH4_emission=max_CH4_emission)
+# C1.simulate()
+# C2.simulate()
+
+# truck = 'HandcartAndTruck'
+# # Liquid waste
+# interval = (C2.collection_period*truck_V[truck])/C2.tank_V
+# C3 = units.Trucking('C3', ins=C2-0, outs=('transported_l', 'loss_l'),
+#                     load_type='mass', load=truck_V[truck], load_unit='tonne',
+#                     distance=5, distance_unit='km',
+#                     interval=interval, interval_unit='day',
+#                     fee=truck_cost[truck]/truck_V[truck]+0.01*ppl_alternative*interval,
+#                     loss_ratio=0.02)
+
+# # Solid waste
+# interval = (C2.collection_period*truck_V[truck])/C2.tank_V
+# C4 = units.Trucking('C4', ins=C2-1, outs=('transported_s', 'loss_s'),
+#                     load_type='mass', load=truck_V[truck], load_unit='tonne',
+#                     distance=5, distance_unit='km',
+#                     interval=interval, interval_unit='day',
+#                     fee=truck_cost[truck]/truck_V[truck]+0.01*ppl_alternative*interval,
+#                     loss_ratio=0.02)
+
+
+# CX = units.CropApplication('CX', ins=WasteStream(), loss_ratio=app_loss)
+# def adjust_NH3_loss():
+#     CX._run()
+#     CX.outs[0]._COD = CX.outs[1]._COD = CX.ins[0]._COD
+# CX.specification = adjust_NH3_loss
+
+
+# SceC = bst.System('SceC', path=(C1, C2, C3, C4, CX))
+
+# SceC.simulate()
 
 
 

@@ -77,9 +77,15 @@ class LCA:
                 self._construction_units.add(unit)
             if unit.transportation:
                 self._transportation_units.add(unit)
+        self._construction_units = sorted(self._construction_units,
+                                          key=lambda i: type(i).__name__)
+        self._transportation_units = sorted(self._transportation_units,
+                                            key=lambda i: type(i).__name__)
         for ws in system.streams:
             if ws.impact_item:
                 self._lca_waste_streams.add(ws)
+        self._lca_waste_streams = sorted(self._lca_waste_streams,
+                                         key=lambda i: i.ID)
         self._system = system
         
     

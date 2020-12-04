@@ -27,6 +27,7 @@ from ._impact_item import *
 from ._construction import *
 from ._transportation import *
 from ._sanunit import *
+from ._simple_tea import *
 from ._lca import *
 
 from . import (
@@ -39,6 +40,7 @@ from . import (
     _construction,
     _transportation,
     _sanunit,
+    _simple_tea,
     _lca,
     utils,
     units,
@@ -53,6 +55,7 @@ __all__ = (
     *_construction.__all__,
     *_transportation.__all__,
     *_sanunit.__all__,
+    *_simple_tea.__all__,
     *_lca.__all__,
            )
 

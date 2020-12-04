@@ -112,7 +112,7 @@ class Lagoon(SanUnit, Decay):
         'Lagoon depth': 'm'
         }
 
-    def _cost(self):
+    def _design(self):
         design = self.design_results
         design['Lagoon number'] = N = self.N_lagoon
         design['Single lagoon volume'] = V = self.lagoon_V
