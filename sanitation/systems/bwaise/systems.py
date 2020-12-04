@@ -21,6 +21,8 @@ Ref:
 TODO:
     [1] Use consistent units for retention time, concentration, etc.
     [2] Lang factor for TEA
+    [3] Add AOC-product for TEA
+    [4] Streamline electricity
 
 '''
 
@@ -30,7 +32,8 @@ TODO:
 import numpy as np
 import biosteam as bst
 # from sklearn.linear_model import LinearRegression
-from sanitation import units, WasteStream, ImpactItem, SimpleTEA, LCA
+from sanitation import units, WasteStream, ImpactItem, StreamImpactItem, \
+    SimpleTEA, LCA
 # from sanitation import *
 import bwaise
 cmps = bwaise._cmps.cmps
@@ -107,6 +110,15 @@ app_loss['NH3'] = 0.05
 # =============================================================================
 # Scenario A: existing system
 # =============================================================================
+fugitive_CH4 = WasteStream('fugitive_CH4', phase='g')
+fugitive_N2O = WasteStream('fugitive_N2O', phase='g')
+N_fertilizer = WasteStream('N_fertilizer', price=1.507)
+P_fertilizer = WasteStream('P_fertilizer', price=3.983)
+K_fertilizer = WasteStream('K_fertilizer', price=1.333)
+N_item = StreamImpactItem(N_fertilizer, GWP=-5.4)
+P_item = StreamImpactItem(P_fertilizer, GWP=-4.9)
+K_item = StreamImpactItem(K_fertilizer, GWP=-1.5)
+
 print('\n----------Scenario A----------\n')
 A1 = units.Excretion('A1', outs=('urine', 'feces'))
 
@@ -155,10 +167,16 @@ A8 = units.CropApplication('A8', ins=A6-0, outs=('liquid_fertilizer', 'loss'),
                            loss_ratio=app_loss)
 
 A9 = units.Mixer('A9', ins=(A2-2, A4-2, A5-1, A6-1, A7-2),
-                 outs='fugitive_CH4')
+                 outs=fugitive_CH4)
 
 A10 = units.Mixer('A10', ins=(A2-3, A4-3, A5-2, A6-2, A7-3),
-                 outs='fugitive_N2O')
+                 outs=fugitive_N2O)
+
+A11 = units.ComponentSplitter('A11', ins=A8-0,
+                              outs=(N_fertilizer, P_fertilizer, K_fertilizer,
+                                    'non_fertilizers'),
+                              splits=(('NH3', 'NonNH3'), 'P', 'K'))
+
 
 def adjust_NH3_loss():
     A8._run()
@@ -167,7 +185,7 @@ def adjust_NH3_loss():
     A8.outs[0]._COD = A8.outs[1]._COD = A8.ins[0]._COD
 A8.specification = adjust_NH3_loss
 
-SceA = bst.System('SceA', path=(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10))
+SceA = bst.System('SceA', path=(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11))
 SceA.simulate()
 
 
@@ -177,9 +195,13 @@ SceA_tea = SimpleTEA(system=SceA, discount_rate=discount_rate, start_year=2020,
                      construction_schedule=None)
 
 
+e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=0.15)
 
+SceA_lca = LCA(system=SceA, life_time=8, life_time_unit='yr',
+               # assuming all additional OPEX from electricity
+               e_item=(SceA_tea.add_OPEX/bst.PowerUtility.price+57120)*8)
 
-
+# ADD ELECTRICITY COST TO A STANDALONE UNIT?
 
 
 
@@ -354,9 +376,7 @@ SceA_tea = SimpleTEA(system=SceA, discount_rate=discount_rate, start_year=2020,
 # CEDf = ImpactIndicator(ID='CEDf', unit='MJ', method='Cumulative energy demand',
 #                         category='Fossil')
 
-# item_sulfuric_acid = StreamImpactItem(sulfuric_acid, CEDf=5, GWP=100, Eutrophication=1)
 
-# item_sulfuric_acid2 = StreamImpactItem(sulfuric_acid2, CEDf=15, GWP=1100, Eutrophication=21)
 
 
 

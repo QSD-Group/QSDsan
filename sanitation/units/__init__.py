@@ -29,6 +29,7 @@ from ._liquid_treatment_bed import *
 from ._drying_bed import *
 from ._biogas_combustion import *
 from ._crop_application import *
+from ._component_splitter import *
 
 from . import (
     _bst_units,
@@ -47,6 +48,7 @@ from . import (
     _drying_bed,
     _biogas_combustion,
     _crop_application,
+    _component_splitter,
     )
 
 __all__ = (
@@ -66,4 +68,5 @@ __all__ = (
     *_drying_bed.__all__,
     *_biogas_combustion.__all__,
     *_crop_application.__all__,
+    *_component_splitter.__all__,
            )

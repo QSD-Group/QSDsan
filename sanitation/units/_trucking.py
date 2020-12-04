@@ -112,9 +112,8 @@ class Trucking(SanUnit):
             trans._update_value('load', self.F_mass_in*trans.interval*24)
         self.design_results['Number of truck trips'] = N = \
             self.total_truck.load / self.single_truck.load
-        self._OPEX = N*self.fee/trans.interval/24
+        self._add_OPEX = N*self.fee/trans.interval/24
 
-            
     @property
     def fee(self):
         '''[float] Transportation fee per trip.'''
@@ -123,54 +122,6 @@ class Trucking(SanUnit):
     def fee(self, fee, unit=''):
         self._update_fee(fee, unit)
 
-    # @property
-    # def distance(self):
-    #     '''[float] Transportation distance, [km].'''
-    #     return self._distance
-    # @distance.setter
-    # def distance(self, i):
-    #     self._distance = float(i)
-
-    # @property
-    # def period(self):
-    #     '''[float] Transportation time interval, [hr].'''
-    #     return self._period
-    # @period.setter
-    # def period(self, i):
-    #     self._period = float(i)
-
-    # @property
-    # def transport_cost(self):
-    #     '''[float] Cost of transportation, [USD/km].'''
-    #     return self._transport_cost
-    # @transport_cost.setter
-    # def transport_cost(self, i):
-    #     self._transport_cost = float(i)
-        
-    # @property
-    # def emptying_cost(self):
-    #     '''[float] Cost of emptying the vehicle/container, [USD/emptying].'''
-    #     return self._emptying_cost
-    # @emptying_cost.setter
-    # def emptying_cost(self, i):
-    #     self._emptying_cost = float(i)
-
-    # @property
-    # def transport_impacts(self):
-    #     '''[dict] Environmental impacts of transportation per km.'''
-    #     return self._transport_impacts
-    # @transport_impacts.setter
-    # def transport_impacts(self, i):
-    #     self._transport_impacts = i
-
-    # @property
-    # def emptying_impacts(self):
-    #     '''[dict] Environmental impacts of emptying the vehicle/container each time.'''
-    #     return self._emptying_impacts
-    # @emptying_impacts.setter
-    # def emptying_impacts(self, i):
-    #     self._emptying_impacts = i
-    
     @property
     def loss_ratio(self):
         '''

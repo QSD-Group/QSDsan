@@ -204,7 +204,7 @@ class PitLatrine(Toilet):
         
     def _cost(self):
         self.purchase_costs['Total toilets'] = 449 * self.N_toilet
-        self._OPEX = self.purchase_costs['Total toilets']*self.OPEX_over_CAPEX/365/24
+        self._add_OPEX = self.purchase_costs['Total toilets']*self.OPEX_over_CAPEX/365/24
 
     @property
     def pit_depth(self):

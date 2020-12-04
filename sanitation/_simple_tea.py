@@ -34,44 +34,40 @@ class SimpleTEA(TEA):
     Calculate an annualized cost for simple economic analysis that does not
     include loan payment (i.e., 100% equity) and taxes [1]_.
 
+    def __init__(self, system, discount_rate=0.05,
+                 start_year=2020, life_time=10, uptime_ratio=1., 
+                 CAPEX=0., lang_factor=None, 
+                 annual_maintenance=0., annual_labor=0.,
+                 construction_schedule=None, currency=currency):
+
+
     Parameters
     ----------
-    system : System
-        Should contain feed and product streams.
-    IRR : float
-        Internal rate of return (fraction).
-    duration : tuple[int, int]
-        Start and end year of venture (e.g. (2018, 2038)).
-    depreciation : str
-        'MACRS' + number of years (e.g. 'MACRS7').
-    operating_days : float
-        Number of operating days per year.
-    income_tax : float
-        Combined federal and state income tax rate (fraction).
-    lang_factor : float
-        Lang factor for getting fixed capital investment from
-        total purchase cost. If no lang factor, estimate capital investment
-        using bare module factors.
-    startup_schedule : tuple[float]
-        Startup investment fractions per year
-        (e.g. (0.5, 0.5) for 50% capital investment in the first year and 50%
-        investment in the second).
-    WC_over_FCI : float
-        Working capital as a fraction of fixed capital investment.
-    labor_cost : float
-        Total labor cost (USD/yr).
-    fringe_benefits : float
-        Cost of fringe benefits as a fraction of labor cost.
-    property_tax : float
-        Fee as a fraction of fixed capital investment.
-    property_insurance : float
-        Fee as a fraction of fixed capital investment.
-    supplies : float
-        Yearly fee as a fraction of labor cost.
-    maintenance : float
-        Yearly fee as a fraction of fixed capital investment.
-    administration : float
-        Yearly fee as a fraction of fixed capital investment.
+    system : [biosteam.System]
+        The System this TEA is conducted for.
+    discount_rate : [float]
+        Interest rate used in discounted cash flow analysis.
+    start_year : [int]
+        Start year of the plant.
+    life_time : [int]   
+        Total life time of the plant, [yr]. Currently biosteam only supports int.
+    uptime_ratio : [float]   
+        Fraction of time that the plant is operating.
+    CAPEX : [float]   
+        Capital expenditure, if not provided, is set to be the same as installed_equipment_cost.
+    lang_factor : [float] or None
+        A factor to estimate the total installation cost based on equipment purchase cost,
+        leave as None if providing CAPEX. If neither CAPEX nor lang_factor is provided,
+        installed_equipment_cost will be calculated using the bare module factor
+        for each equipment according to the SanUnit._BM dict of each unit.
+    annual_maintenance : [float]   
+        Annual maintenance cost as a fraction of fixed capital investment.
+    annual_labor : [float]   
+        Annual labor cost.
+    construction_schedule : [tuple] or None
+        Construction progress, must sum up to 1, leave as None will assume the plant finishes within one year.
+    currency : [str]
+        TEA currency, should be consistent with all prices and costs provided for chemicals, materials, units, etc.
 
     References
     ----------

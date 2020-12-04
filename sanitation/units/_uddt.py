@@ -260,8 +260,7 @@ class UDDT(Toilet):
                 
     def _cost(self):
         self.purchase_costs['Toilet'] = 553 * self.N_toilet
-        #!!! What if operating hours is different, maybe better to make this in TEA
-        self._OPEX = self.purchase_costs['Toilet']*self.OPEX_over_CAPEX/365/24
+        self._add_OPEX = self.purchase_costs['Toilet']*self.OPEX_over_CAPEX/365/24
 
     @property
     def safety_factor(self):
