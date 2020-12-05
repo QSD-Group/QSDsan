@@ -161,7 +161,8 @@ class DryingBed(SanUnit, Decay):
             Construction(item='Concrete', quantity=concrete, unit='m3'),
             Construction(item='Steel', quantity=steel, unit='kg'),
             )
-        self.add_construction()
+        for i in self.construction:
+            self._BM[i.item.ID] = 1
         
     def _cost(self):
         pass

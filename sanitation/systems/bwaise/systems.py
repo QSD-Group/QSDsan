@@ -19,10 +19,7 @@ Ref:
         https://doi.org/10.1021/acs.est.0c03296.
 
 TODO:
-    [1] Use consistent units for retention time, concentration, etc.
-    [2] Lang factor for TEA
-    [3] Add AOC-product for TEA
-    [4] Streamline electricity
+    [1] Recheck unit consistency, power law degradation, truck
 
 '''
 
@@ -31,15 +28,18 @@ TODO:
 
 import numpy as np
 import biosteam as bst
+import sanitation # import sanplorer as sp
 # from sklearn.linear_model import LinearRegression
 from sanitation import units, WasteStream, ImpactItem, StreamImpactItem, \
     SimpleTEA, LCA
-# from sanitation import *
 import bwaise
 cmps = bwaise._cmps.cmps
 
 bst.settings.set_thermo(cmps)
-bst.PowerUtility.price = 0.17
+bst.units.Mixer._graphics.edge_in *= 2
+e = bst.PowerUtility
+e.price = 0.17
+sanitation.CEPCI = sanitation.CEPCI_by_year[2018]
 items = ImpactItem._items
 
 
@@ -110,14 +110,27 @@ app_loss['NH3'] = 0.05
 # =============================================================================
 # Scenario A: existing system
 # =============================================================================
+
 fugitive_CH4 = WasteStream('fugitive_CH4', phase='g')
 fugitive_N2O = WasteStream('fugitive_N2O', phase='g')
-N_fertilizer = WasteStream('N_fertilizer', price=1.507)
-P_fertilizer = WasteStream('P_fertilizer', price=3.983)
-K_fertilizer = WasteStream('K_fertilizer', price=1.333)
-N_item = StreamImpactItem(N_fertilizer, GWP=-5.4)
-P_item = StreamImpactItem(P_fertilizer, GWP=-4.9)
-K_item = StreamImpactItem(K_fertilizer, GWP=-1.5)
+# The product is actually liquid fertilizer, but separated here to be solids
+# just to avoid showing WasteStream related properties
+liq_N = WasteStream('liq_N', phase='s', price=1.507)
+sol_N = WasteStream('sol_N', phase='s', price=1.507)
+liq_P = WasteStream('liq_P', phase='s', price=3.983)
+sol_P = WasteStream('sol_P', phase='s', price=3.983)
+liq_K = WasteStream('liq_K', phase='s', price=1.333)
+sol_K = WasteStream('sol_K', phase='s', price=1.333)
+
+# Emissions and product credits
+CH4_item = StreamImpactItem(fugitive_CH4, GWP=265)
+N2O_item = StreamImpactItem(fugitive_N2O, GWP=28)
+liq_N_item = StreamImpactItem(liq_N, GWP=-5.4)
+sol_N_item = StreamImpactItem(sol_N, GWP=-5.4)
+liq_P_item = StreamImpactItem(liq_P, GWP=-4.9)
+sol_P_item = StreamImpactItem(sol_P, GWP=-4.9)
+liq_K_item = StreamImpactItem(liq_K, GWP=-1.5)
+sol_K_item = StreamImpactItem(sol_K, GWP=-1.5)
 
 print('\n----------Scenario A----------\n')
 A1 = units.Excretion('A1', outs=('urine', 'feces'))
@@ -125,7 +138,7 @@ A1 = units.Excretion('A1', outs=('urine', 'feces'))
 A2 = units.PitLatrine('A2', ins=(A1-0, A1-1,
                                   'toilet_paper', 'flushing_water',
                                   'cleansing_water', 'desiccant'),
-                      outs=('mixed_waste', 'leachate', 'CH4', 'N2O'),
+                      outs=('mixed_waste', 'leachate', '', ''),
                       N_user=toilet_user, N_toilet=ppl_existing/toilet_user,
                       OPEX_over_CAPEX=0.05,
                       decay_k_COD=get_decay_k(tau_deg, log_deg),
@@ -142,22 +155,22 @@ A3 = units.Trucking('A3', ins=A2-0, outs=('transported', 'loss'),
                     loss_ratio=0.02)
 
 A4 = units.SedimentationTank('A4', ins=A3-0,
-                              outs=('liq', 'sol', 'CH4', 'N2O'),
+                              outs=('liq', 'sol', '', ''),
                               decay_k_COD=get_decay_k(tau_deg, log_deg),
                               decay_k_N=get_decay_k(tau_deg, log_deg),
                               max_CH4_emission=max_CH4_emission)
 
-A5 = units.Lagoon('A5', ins=A4-0, outs=('anaerobic_treated', 'CH4', 'N2O'),
+A5 = units.Lagoon('A5', ins=A4-0, outs=('anaerobic_treated', '', ''),
                   design_type='anaerobic',
                   decay_k_N=get_decay_k(tau_deg, log_deg),
                   max_CH4_emission=max_CH4_emission)
 
-A6 = units.Lagoon('A6', ins=A5-0, outs=('facultative_treated', 'CH4', 'N2O'),
+A6 = units.Lagoon('A6', ins=A5-0, outs=('facultative_treated', '', ''),
                   design_type='facultative',
                   decay_k_N=get_decay_k(tau_deg, log_deg),
                   max_CH4_emission=max_CH4_emission)
 
-A7 = units.DryingBed('A7', ins=A4-1, outs=('dried_sludge', 'evaporated', 'CH4', 'N2O'),
+A7 = units.DryingBed('A7', ins=A4-1, outs=('dried_sludge', 'evaporated', '', ''),
                      design_type='unplanted',
                      decay_k_COD=get_decay_k(tau_deg, log_deg),
                      decay_k_N=get_decay_k(tau_deg, log_deg),
@@ -168,13 +181,19 @@ A8 = units.CropApplication('A8', ins=A6-0, outs=('liquid_fertilizer', 'loss'),
 
 A9 = units.Mixer('A9', ins=(A2-2, A4-2, A5-1, A6-1, A7-2),
                  outs=fugitive_CH4)
+A9.line = 'CH4 mixer'
 
 A10 = units.Mixer('A10', ins=(A2-3, A4-3, A5-2, A6-2, A7-3),
                  outs=fugitive_N2O)
+A9.line = 'N2O mixer'
 
-A11 = units.ComponentSplitter('A11', ins=A8-0,
-                              outs=(N_fertilizer, P_fertilizer, K_fertilizer,
-                                    'non_fertilizers'),
+
+A11 = units.ComponentSplitter('A11', ins=A7-0,
+                              outs=(sol_N, sol_P, sol_K, 'sol_non_fertilizers'),
+                              splits=(('NH3', 'NonNH3'), 'P', 'K'))
+
+A12 = units.ComponentSplitter('A12', ins=A8-0,
+                              outs=(liq_N, liq_P, liq_K, 'liq_non_fertilizers'),
                               splits=(('NH3', 'NonNH3'), 'P', 'K'))
 
 
@@ -185,33 +204,65 @@ def adjust_NH3_loss():
     A8.outs[0]._COD = A8.outs[1]._COD = A8.ins[0]._COD
 A8.specification = adjust_NH3_loss
 
-SceA = bst.System('SceA', path=(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11))
+SceA = bst.System('SceA', path=(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12))
 SceA.simulate()
 
 
-SceA_tea = SimpleTEA(system=SceA, discount_rate=discount_rate, start_year=2020,
+SceA_tea = SimpleTEA(system=SceA, discount_rate=discount_rate, start_year=2018,
                      life_time=8, uptime_ratio=1, CAPEX=18606700, lang_factor=None,
                      annual_maintenance=0, annual_labor=12*3e6*12/exchange_rate,
+                     system_add_OPEX=57120*e.price,
                      construction_schedule=None)
-
+SceA_tea.show()
+print('\n')
 
 e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=0.15)
+get_e_price = lambda: e.price
+# 57120 is the annual electricity usage for the whole treatment plant
+get_annual_e = lambda: SceA_tea.unit_add_OPEX/get_e_price()+57120
 
 SceA_lca = LCA(system=SceA, life_time=8, life_time_unit='yr',
                # assuming all additional OPEX from electricity
-               e_item=(SceA_tea.add_OPEX/bst.PowerUtility.price+57120)*8)
+               e_item=get_annual_e()*8)
+SceA_lca.show()
+print('\n')
 
-# ADD ELECTRICITY COST TO A STANDALONE UNIT?
+get_total_N = lambda: \
+    (A1.outs[0].imass['NH3', 'NonNH3']+A1.outs[1].imass['NH3', 'NonNH3']).sum()
+get_liq_N_recovery = lambda: liq_N.F_mass/ppl_existing/get_total_N()
+get_sol_N_recovery = lambda: sol_N.F_mass/ppl_existing/get_total_N()
+get_N_recovery = lambda: get_liq_N_recovery()+get_sol_N_recovery()
 
+get_total_P = lambda: \
+    (A1.outs[0].imass['P']+A1.outs[1].imass['P']).sum()
+get_liq_P_recovery = lambda: liq_P.F_mass/ppl_existing/get_total_P()
+get_sol_P_recovery = lambda: sol_P.F_mass/ppl_existing/get_total_P()
+get_P_recovery = lambda: get_liq_P_recovery()+get_sol_P_recovery()
 
+get_total_K = lambda: \
+    (A1.outs[0].imass['K']+A1.outs[1].imass['K']).sum()
+get_liq_K_recovery = lambda: liq_K.F_mass/ppl_existing/get_total_K()
+get_sol_K_recovery = lambda: sol_K.F_mass/ppl_existing/get_total_K()
+get_K_recovery = lambda: get_liq_K_recovery()+get_sol_K_recovery()
 
+get_COD = lambda stream: stream.COD*stream.F_vol/1e3
+get_total_COD = lambda: get_COD(A1.outs[0])+get_COD(A1.outs[1])
+get_liq_COD_recovery = lambda: get_COD(A12.ins[0])/ppl_existing/get_total_COD()
+get_sol_COD_recovery = lambda: get_COD(A11.ins[0])/ppl_existing/get_total_COD()
+get_COD_recovery = lambda: get_liq_COD_recovery()+get_sol_COD_recovery()
 
-
-
-
-
-
-
+print(f'Total N recovery is {get_N_recovery():.1%}, '
+      f'{get_liq_N_recovery():.1%} in liquid, '
+      f'{get_sol_N_recovery():.1%} in solid.')
+print(f'Total P recovery is {get_P_recovery():.1%}, '
+      f'{get_liq_P_recovery():.1%} in liquid, '
+      f'{get_sol_P_recovery():.1%} in solid.')
+print(f'Total K recovery is {get_K_recovery():.1%}, '
+      f'{get_liq_K_recovery():.1%} in liquid, '
+      f'{get_sol_K_recovery():.1%} in solid.')
+print(f'Total COD recovery is {get_COD_recovery():.1%}, '
+      f'{get_liq_COD_recovery():.1%} in liquid, '
+      f'{get_sol_COD_recovery():.1%} in solid.')
 
 
 

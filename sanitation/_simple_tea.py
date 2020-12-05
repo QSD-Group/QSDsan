@@ -12,13 +12,6 @@ This module is under the UIUC open-source license. Please refer to
 https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
 for license details.
 
-Ref:
-    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
-
-
 '''
 
 # %%
@@ -34,13 +27,6 @@ class SimpleTEA(TEA):
     Calculate an annualized cost for simple economic analysis that does not
     include loan payment (i.e., 100% equity) and taxes [1]_.
 
-    def __init__(self, system, discount_rate=0.05,
-                 start_year=2020, life_time=10, uptime_ratio=1., 
-                 CAPEX=0., lang_factor=None, 
-                 annual_maintenance=0., annual_labor=0.,
-                 construction_schedule=None, currency=currency):
-
-
     Parameters
     ----------
     system : [biosteam.System]
@@ -49,11 +35,11 @@ class SimpleTEA(TEA):
         Interest rate used in discounted cash flow analysis.
     start_year : [int]
         Start year of the plant.
-    life_time : [int]   
+    life_time : [int]
         Total life time of the plant, [yr]. Currently biosteam only supports int.
     uptime_ratio : [float]   
         Fraction of time that the plant is operating.
-    CAPEX : [float]   
+    CAPEX : [float]
         Capital expenditure, if not provided, is set to be the same as installed_equipment_cost.
     lang_factor : [float] or None
         A factor to estimate the total installation cost based on equipment purchase cost,
@@ -62,8 +48,10 @@ class SimpleTEA(TEA):
         for each equipment according to the SanUnit._BM dict of each unit.
     annual_maintenance : [float]   
         Annual maintenance cost as a fraction of fixed capital investment.
-    annual_labor : [float]   
+    annual_labor : [float]
         Annual labor cost.
+    system_add_OPEX : [float]
+        Annual additional system-wise operating expenditure (on top of the add_OPEX of each unit).
     construction_schedule : [tuple] or None
         Construction progress, must sum up to 1, leave as None will assume the plant finishes within one year.
     currency : [str]
@@ -81,12 +69,13 @@ class SimpleTEA(TEA):
     __slots__ = (*(i for i in TEA.__slots__ if i !='lang_factor'),
                  '_discount_rate', '_start_year', '_life_time',
                  '_uptime_ratio', '_CAPEX', '_lang_factor',
-                 '_annual_maintenance', '_annual_labor', '_currency')
+                 '_annual_maintenance', '_annual_labor', '_system_add_OPEX',
+                 '_currency')
     
     def __init__(self, system, discount_rate=0.05,
-                 start_year=2020, life_time=10, uptime_ratio=1., 
-                 CAPEX=0., lang_factor=None, 
-                 annual_maintenance=0., annual_labor=0.,
+                 start_year=2018, life_time=10, uptime_ratio=1., 
+                 CAPEX=0., lang_factor=None,
+                 annual_maintenance=0., annual_labor=0., system_add_OPEX=0.,
                  construction_schedule=None, currency=currency):
         
         self.system = system
@@ -99,11 +88,13 @@ class SimpleTEA(TEA):
         self._sales = 0 # guess cost for solve_price method
         self.start_year = start_year
         self.life_time = life_time
+        self._duration = self.duration
         self.uptime_ratio = 1.
         self._CAPEX = CAPEX
         self.lang_factor = lang_factor
-        self._annual_maintenance = annual_maintenance
+        self.annual_maintenance = annual_maintenance
         self.annual_labor = annual_labor
+        self.system_add_OPEX = system_add_OPEX
         if not construction_schedule:
             construction_schedule = (1,)
         self.construction_schedule = construction_schedule
@@ -130,10 +121,12 @@ class SimpleTEA(TEA):
         return f'<{type(self).__name__}: {self.system.ID}>'
     
     def show(self):
+        c = self.currency
         info = f'{type(self).__name__}: {self.system.ID}'
-        info += f'\nNPV  : {self.NPV:,.0f} {self.currency} at {self.discount_rate:.1%} discount rate'
-        info += f'\nCAPEX: {self.CAPEX:,.0f} {self.currency}'
-        info += f'\nAOC  : {self.AOC:,.0f} {self.currency}/yr'
+        info += f'\nNPV  : {self.NPV:,.0f} {c} at {self.discount_rate:.1%} discount rate'
+        info += f'\nCAPEX: {self.CAPEX:,.0f} {c} (annualized to {self.annualized_CAPEX:,.0f} {c}/yr)'
+        info += f'\nAOC  : {self.AOC:,.0f} {c}/yr'
+        info += f'\nEAC  : {self.EAC:,.0f} {c}/yr'
         print(info)
 
     _ipython_display_ = show
@@ -149,7 +142,7 @@ class SimpleTEA(TEA):
         return TDC
 
     def _FOC(self, FCI):
-        return FCI*self.annual_maintenance+self.annual_labor+self.add_OPEX
+        return FCI*self.annual_maintenance+self.annual_labor+self.total_add_OPEX
 
     @property
     def discount_rate(self):
@@ -209,7 +202,10 @@ class SimpleTEA(TEA):
     def lang_factor(self, i):
         if self.CAPEX:
             if i is not None:
-                raise AttributeError('CAPEX provided, lang_factor cannot be set.')
+                raise AttributeError('CAPEX provided, lang_factor cannot be set. '
+                                     'The calculated lang_factor is '
+                                     f'{self.installed_equipment_cost/self.purchase_cost:.1f}.')
+            else: self._lang_factor = None
         elif i >=1:
             self._lang_factor = float(i)
         else: raise ValueError('lang_factor must >= 1.')
@@ -276,9 +272,22 @@ class SimpleTEA(TEA):
         self._annual_labor = float(i)
 
     @property
-    def add_OPEX(self):
+    def unit_add_OPEX(self):
         '''[float] Sum of add_OPEX for all units in the system.'''
         return sum([i.add_OPEX*i.uptime_ratio/self.uptime_ratio for i in self.units])*self._operating_hours
+
+    @property
+    def system_add_OPEX(self):
+        '''[float] Annual additional system-wise operating expenditure (on top of the add_OPEX of each unit).'''
+        return self._system_add_OPEX
+    @system_add_OPEX.setter
+    def system_add_OPEX(self, i):
+        self._system_add_OPEX = float(i)
+
+    @property
+    def total_add_OPEX(self):
+        '''[float] Sum of unit_add_OPEX and system_add_OPEX.'''
+        return self.unit_add_OPEX+self.system_add_OPEX
 
     @property
     def FOC(self):

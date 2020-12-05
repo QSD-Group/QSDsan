@@ -169,7 +169,7 @@ class PitLatrine(Toilet):
         # Scale up the effluent based on the number of toilets
         for i in self.outs:
             if not i.F_mass == 0:
-                i.F_mass *= self.N_toilet
+                i.F_mass *= self.N_user*self.N_toilet
 
     _units = {
         'Emptying period': 'yr',
@@ -198,7 +198,7 @@ class PitLatrine(Toilet):
             Construction(item='Excavation', quantity=self.pit_V*N, unit='m3'),
             )
 
-        self.add_construction()
+        self.add_construction(add_cost=False)
 
     _BM = {'Total toilets': 1}
         

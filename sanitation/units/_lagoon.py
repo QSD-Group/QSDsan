@@ -112,6 +112,11 @@ class Lagoon(SanUnit, Decay):
         'Lagoon depth': 'm'
         }
 
+    # _BM = {
+    #     'Plastic': 1,
+    #     'Excavation': 1
+    #     }
+
     def _design(self):
         design = self.design_results
         design['Lagoon number'] = N = self.N_lagoon
@@ -125,7 +130,7 @@ class Lagoon(SanUnit, Decay):
             Construction(item='Plastic', quantity=liner, unit='kg'),
             Construction(item='Excavation', quantity=N*V, unit='m3'),
             )
-        self.add_construction()
+        self.add_construction(add_cost=False)
     
     @property
     def design_type(self):

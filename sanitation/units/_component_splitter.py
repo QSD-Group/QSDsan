@@ -22,6 +22,7 @@ Ref:
 
 # %%
 
+from biosteam._graphics import splitter_graphics
 from .. import SanUnit
 
 __all__ = ('ComponentSplitter',)
@@ -33,13 +34,14 @@ class ComponentSplitter(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), splits=()):
         
         SanUnit.__init__(self, ID, ins, outs)
-        self._splits = splits
+        self.splits = splits
 
     # __doc__ += __init__.__doc__
     # __init__.__doc__ = __doc__
     
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False
+    _graphics = splitter_graphics
 
     def _run(self):
         last = self.outs[-1]
@@ -79,9 +81,8 @@ class ComponentSplitter(SanUnit):
         '''
         return self._splits
     @splits.setter
-    def splits(self, i):
+    def splits(self, i):        
         self._splits = i
-
 
 
 

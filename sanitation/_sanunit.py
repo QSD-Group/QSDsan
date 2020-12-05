@@ -137,19 +137,16 @@ class SanUnit(bst.Unit, isabstract=True):
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, stream_info=True):
         """Print information of the unit, including WasteStream-specific information"""
         print(self._info(T, P, flow, composition, N, stream_info))
-        
-    # # Shouldn't be needed
-    # def get_ws_inv(self):
-    #     ws_inv = (i for i in self.ins if not (i._source and i.CFs is None))
-    #     ws_inv += (i for i in self.outs if not (i._sink and i.CFs is None))
-    #     return ws_inv
     
-    def add_construction(self):
-        '''Add construction designs and costs'''
+    def add_construction(self, add_unit=True, add_design=True, add_cost=True):
+        '''Batch-adding construction unit, designs, and costs.'''
         for i in self.construction:
-            self.design_results[i.item.ID] = i.quantity
-            self._units[i.item.ID] = i.item.functional_unit
-            self.purchase_costs[i.item.ID] = i.cost
+            if add_unit:
+                self._units[i.item.ID] = i.item.functional_unit
+            if add_design:
+                self.design_results[i.item.ID] = i.quantity
+            if add_cost:
+                self.purchase_costs[i.item.ID] = i.cost
     
     @property
     def construction(self):

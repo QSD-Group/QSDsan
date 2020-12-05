@@ -223,7 +223,7 @@ class UDDT(Toilet):
 
         # Scale up the effluent based on the number of toilets
         for i in self.outs:
-            i.F_mass *= self.N_toilet
+            i.F_mass *= self.N_user*self.N_toilet
 
     _units = {
         'Collection period': 'd',
@@ -254,9 +254,7 @@ class UDDT(Toilet):
             Construction(item='Wood', quantity=0.222*N, unit='m3'),
             )
 
-        self.add_construction()
-
-    _BM = {'Total toilets': 1}
+        self.add_construction(add_cost=False)
                 
     def _cost(self):
         self.purchase_costs['Toilet'] = 553 * self.N_toilet
