@@ -41,7 +41,7 @@ class AnaerobicDigestion(SanUnit, Decay):
     
     _default_data = None
     
-    def __init__(self, ID='', ins=None, outs=(), if_N2O_emission=True, **kwargs):
+    def __init__(self, ID='', ins=None, outs=(), if_N2O_emission=False, **kwargs):
         
         '''
 

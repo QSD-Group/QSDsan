@@ -33,12 +33,14 @@ __all__ = ('LCA',)
 class LCA:
     '''For life cycle assessment (LCA) of a System.'''
     
-    __slots__ = ('_system', '_construction_units', '_transportation_units',
-                 '_lca_waste_streams', '_impact_indicators', '_life_time',
-                 '_other_items')
+    __slots__ = ('_system',  '_life_time', '_uptime_ratio',
+                 '_construction_units', '_transportation_units',
+                 '_lca_waste_streams',
+                 '_impact_indicators', '_other_items')
     
     
-    def __init__(self, system, life_time, life_time_unit='hr', **item_quantities):
+    def __init__(self, system, life_time, life_time_unit='yr', uptime_ratio=1,
+                 **item_quantities):
         '''
         
 
@@ -50,6 +52,8 @@ class LCA:
             Life time of the LCA.
         life_time_unit : [str]
             Unit of life time.
+        uptime_ratio : [float]
+            Fraction of time that the plant is operating.
         **item_quantities : kwargs, [ImpactItem] or [str] = [float] or ([float], [unit])
             Other ImpactItems (e.g., electricity) and their quantities.
 
@@ -60,6 +64,7 @@ class LCA:
         self._lca_waste_streams = set()
         self._update_system(system)
         self._update_life_time(life_time, life_time_unit)
+        self.uptime_ratio = uptime_ratio
         self._other_items = {}
         for item, quantity in item_quantities.items():
             try:
@@ -89,11 +94,11 @@ class LCA:
         self._system = system
         
     
-    def _update_life_time(self, life_time=0., unit='hr'):
-        if not unit or unit == 'hr':
+    def _update_life_time(self, life_time=0., unit='yr'):
+        if not unit or unit == 'yr':
             self._life_time = float(life_time)
         else:
-            converted = auom(unit).convert(float(life_time), 'hr')
+            converted = auom(unit).convert(float(life_time), 'yr')
             self._life_time = converted
     
     def add_other_item(self, item, quantity, unit=''):
@@ -112,7 +117,7 @@ class LCA:
         return f'<LCA: {self.system}>'
 
     def show(self, life_time_unit='yr'):
-        life_time = auom('hr').convert(self.life_time, life_time_unit)
+        life_time = auom('yr').convert(self.life_time, life_time_unit)
         info = f'LCA: {self.system} (life time {f_num(life_time)} {life_time_unit})'
         info += '\nImpacts:'
         print(info)
@@ -136,7 +141,7 @@ class LCA:
     
     def _get_ws_impacts(self, exclude=None):
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-        hr = self.life_time
+        hr = self.life_time*365*24*self.uptime_ratio
         for j in self.waste_stream_inventory:
             ws = j.linked_ws
             if ws is exclude: continue
@@ -175,11 +180,22 @@ class LCA:
     
     @property
     def life_time (self):
-        '''[float] Life time of the system, [hr].'''
+        '''[float] Life time of the system, [yr].'''
         return self._life_time
     @life_time.setter
-    def life_time(self, life_time, unit='hr'):
+    def life_time(self, life_time, unit='yr'):
         self._update_life_time(life_time, unit)
+    
+    @property
+    def uptime_ratio (self):
+        '''[float] Fraction of time that the plant is operating.'''
+        return self._uptime_ratio
+    @uptime_ratio.setter
+    def uptime_ratio(self, i):
+        if 0 <= i <= 1:
+            self._uptime_ratio = float(i)
+        else:
+            raise ValueError('uptime_ratio must be in [0,1].')
     
     @property
     def indicators(self):
@@ -224,7 +240,7 @@ class LCA:
     def transportation_impacts(self):
         '''[dict] Total impacts associated with transportation activities.'''
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-        hr = self.life_time
+        hr = self.life_time*365*24*self.uptime_ratio
         for j in self.transportation_inventory:
             impact = j.impacts
             for m, n in impact.items():

@@ -39,7 +39,7 @@ class SedimentationTank(SludgeSeparator, Decay):
     '''Sedimentation of wastes into liquid and solid phases.'''
     
     def __init__(self, ID='', ins=None, outs=(), split=None, settled_frac=None,
-                 if_N2O_emission=True, **kwargs):
+                 if_N2O_emission=False, **kwargs):
         
         '''
 

@@ -203,10 +203,10 @@ class SanUnit(bst.Unit, isabstract=True):
         results = super().results(with_units, include_utilities,
                                   include_total_cost, include_installed_cost)
         if with_units:
-            results.loc[('Additional OPEX', ''), :] = ('USD/hr', self.OPEX)
+            results.loc[('Additional OPEX', ''), :] = ('USD/hr', self.add_OPEX)
             results.replace({'USD': f'{currency}', 'USD/hr': f'{currency}/hr'}, inplace=True)
         else:
-            results.loc[('Additional OPEX', ''), :] = self.OPEX
+            results.loc[('Additional OPEX', ''), :] = self.add_OPEX
         return results
 
     @property

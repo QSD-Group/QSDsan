@@ -36,7 +36,7 @@ class Lagoon(SanUnit, Decay):
     '''Anaerobic and facultative lagoon treatment.'''
     
     def __init__(self, ID='', ins=None, outs=(), design_type='anaerobic',
-                 if_N2O_emission=True, **kwargs):
+                 if_N2O_emission=False, **kwargs):
         
         '''
 

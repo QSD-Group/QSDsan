@@ -7,19 +7,19 @@ K_leaching,,fraction of K input,0.21,0.11,0.31,uniform,"Phillips and Burton, 200
 N_volatilization,N_pit_volatilization,fraction of N input,0.005,0,0.01,uniform,"Jacks et al., 1999; Orner and Mihelcic, 2017; Nyenje et al., 2013 minor due to neutral pH)"
 MCF_decay,"MCF_single_above_water;
 MCF_communal_above_water;
-MCF_below_water",fraction of anaerobic conversion of degraded COD,"{'single_above_water': 0,
- 'communal_above_water': 0,
- 'below_water': 0}","{'single_above_water': 0,
- 'communal_above_water': 0,
- 'below_water': 0}","{'single_above_water': 0.001,
- 'communal_above_water': 0.001,
- 'below_water': 0.001}",triangular,triangular
-N2O_EF_decay,"N2O_EF_single_above_water;
-N2O_EF_communal_above_water;
-N2O_EF_below_water",fraction of N emitted as N2O,"{'single_above_water': 0.1,
+MCF_below_water",fraction of anaerobic conversion of degraded COD,"{'single_above_water': 0.1,
  'communal_above_water': 0.5,
  'below_water': 0.7}","{'single_above_water': 0.05,
  'communal_above_water': 0.4,
  'below_water': 0.7}","{'single_above_water': 0.15,
  'communal_above_water': 0.6,
- 'below_water': 1}",uniform,"IPCC, 2019"
+ 'below_water': 1}",triangular,"IPCC, 2006"
+N2O_EF_decay,"N2O_EF_single_above_water;
+N2O_EF_communal_above_water;
+N2O_EF_below_water",fraction of N emitted as N2O,"{'single_above_water': 0,
+ 'communal_above_water': 0,
+ 'below_water': 0}","{'single_above_water': 0,
+ 'communal_above_water': 0,
+ 'below_water': 0}","{'single_above_water': 0.001,
+ 'communal_above_water': 0.001,
+ 'below_water': 0.001}",triangular,"IPCC, 2019"

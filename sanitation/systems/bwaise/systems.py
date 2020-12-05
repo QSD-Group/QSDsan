@@ -36,11 +36,12 @@ import bwaise
 cmps = bwaise._cmps.cmps
 
 bst.settings.set_thermo(cmps)
-bst.units.Mixer._graphics.edge_in *= 2
 e = bst.PowerUtility
 e.price = 0.17
+currency = sanitation.currency = 'USD'
 sanitation.CEPCI = sanitation.CEPCI_by_year[2018]
 items = ImpactItem._items
+GWP = sanitation.ImpactIndicator._indicators['GWP']
 
 
 # %%
@@ -122,16 +123,6 @@ sol_P = WasteStream('sol_P', phase='s', price=3.983)
 liq_K = WasteStream('liq_K', phase='s', price=1.333)
 sol_K = WasteStream('sol_K', phase='s', price=1.333)
 
-# Emissions and product credits
-CH4_item = StreamImpactItem(fugitive_CH4, GWP=265)
-N2O_item = StreamImpactItem(fugitive_N2O, GWP=28)
-liq_N_item = StreamImpactItem(liq_N, GWP=-5.4)
-sol_N_item = StreamImpactItem(sol_N, GWP=-5.4)
-liq_P_item = StreamImpactItem(liq_P, GWP=-4.9)
-sol_P_item = StreamImpactItem(sol_P, GWP=-4.9)
-liq_K_item = StreamImpactItem(liq_K, GWP=-1.5)
-sol_K_item = StreamImpactItem(sol_K, GWP=-1.5)
-
 print('\n----------Scenario A----------\n')
 A1 = units.Excretion('A1', outs=('urine', 'feces'))
 
@@ -207,6 +198,16 @@ A8.specification = adjust_NH3_loss
 SceA = bst.System('SceA', path=(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12))
 SceA.simulate()
 
+# Emissions and product credits
+#!! The linked_ws will be flushed out after simulation
+CH4_item = StreamImpactItem(fugitive_CH4, GWP=28)
+N2O_item = StreamImpactItem(fugitive_N2O, GWP=265)
+liq_N_item = StreamImpactItem(liq_N, GWP=-5.4)
+sol_N_item = StreamImpactItem(sol_N, GWP=-5.4)
+liq_P_item = StreamImpactItem(liq_P, GWP=-4.9)
+sol_P_item = StreamImpactItem(sol_P, GWP=-4.9)
+liq_K_item = StreamImpactItem(liq_K, GWP=-1.5)
+sol_K_item = StreamImpactItem(sol_K, GWP=-1.5)
 
 SceA_tea = SimpleTEA(system=SceA, discount_rate=discount_rate, start_year=2018,
                      life_time=8, uptime_ratio=1, CAPEX=18606700, lang_factor=None,
@@ -219,47 +220,61 @@ print('\n')
 e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=0.15)
 get_e_price = lambda: e.price
 # 57120 is the annual electricity usage for the whole treatment plant
-get_annual_e = lambda: SceA_tea.unit_add_OPEX/get_e_price()+57120
+get_annual_e = lambda: A2.add_OPEX/get_e_price()+57120
 
-SceA_lca = LCA(system=SceA, life_time=8, life_time_unit='yr',
+SceA_lca = LCA(system=SceA, life_time=8, life_time_unit='yr', uptime_ratio=1,
                # assuming all additional OPEX from electricity
                e_item=get_annual_e()*8)
 SceA_lca.show()
 print('\n')
+
+
+# %%
+
+# =============================================================================
+# Summaries
+# =============================================================================
+
+get_AOC_cap = lambda: SceA_tea.AOC/ppl_existing
+get_EAC_cap = lambda: SceA_tea.EAC/ppl_existing
+print(f'Without CAPEX, the net cost is {get_AOC_cap():.1f} {currency}/cap/yr.')
+print(f'With CAPEX, the net cost is {get_EAC_cap():.1f} {currency}/cap/yr.')
+
+get_GWP = lambda: SceA_lca.total_impacts['GlobalWarming']/8/ppl_existing
+print(f'Net emission is {get_GWP():.1f} {GWP.unit}/cap/yr.')
 
 get_total_N = lambda: \
     (A1.outs[0].imass['NH3', 'NonNH3']+A1.outs[1].imass['NH3', 'NonNH3']).sum()
 get_liq_N_recovery = lambda: liq_N.F_mass/ppl_existing/get_total_N()
 get_sol_N_recovery = lambda: sol_N.F_mass/ppl_existing/get_total_N()
 get_N_recovery = lambda: get_liq_N_recovery()+get_sol_N_recovery()
+print(f'Total N recovery is {get_N_recovery():.1%}, '
+      f'{get_liq_N_recovery():.1%} in liquid, '
+      f'{get_sol_N_recovery():.1%} in solid.')
 
 get_total_P = lambda: \
     (A1.outs[0].imass['P']+A1.outs[1].imass['P']).sum()
 get_liq_P_recovery = lambda: liq_P.F_mass/ppl_existing/get_total_P()
 get_sol_P_recovery = lambda: sol_P.F_mass/ppl_existing/get_total_P()
 get_P_recovery = lambda: get_liq_P_recovery()+get_sol_P_recovery()
+print(f'Total P recovery is {get_P_recovery():.1%}, '
+      f'{get_liq_P_recovery():.1%} in liquid, '
+      f'{get_sol_P_recovery():.1%} in solid.')
 
 get_total_K = lambda: \
     (A1.outs[0].imass['K']+A1.outs[1].imass['K']).sum()
 get_liq_K_recovery = lambda: liq_K.F_mass/ppl_existing/get_total_K()
 get_sol_K_recovery = lambda: sol_K.F_mass/ppl_existing/get_total_K()
 get_K_recovery = lambda: get_liq_K_recovery()+get_sol_K_recovery()
+print(f'Total K recovery is {get_K_recovery():.1%}, '
+      f'{get_liq_K_recovery():.1%} in liquid, '
+      f'{get_sol_K_recovery():.1%} in solid.')
 
 get_COD = lambda stream: stream.COD*stream.F_vol/1e3
 get_total_COD = lambda: get_COD(A1.outs[0])+get_COD(A1.outs[1])
 get_liq_COD_recovery = lambda: get_COD(A12.ins[0])/ppl_existing/get_total_COD()
 get_sol_COD_recovery = lambda: get_COD(A11.ins[0])/ppl_existing/get_total_COD()
 get_COD_recovery = lambda: get_liq_COD_recovery()+get_sol_COD_recovery()
-
-print(f'Total N recovery is {get_N_recovery():.1%}, '
-      f'{get_liq_N_recovery():.1%} in liquid, '
-      f'{get_sol_N_recovery():.1%} in solid.')
-print(f'Total P recovery is {get_P_recovery():.1%}, '
-      f'{get_liq_P_recovery():.1%} in liquid, '
-      f'{get_sol_P_recovery():.1%} in solid.')
-print(f'Total K recovery is {get_K_recovery():.1%}, '
-      f'{get_liq_K_recovery():.1%} in liquid, '
-      f'{get_sol_K_recovery():.1%} in solid.')
 print(f'Total COD recovery is {get_COD_recovery():.1%}, '
       f'{get_liq_COD_recovery():.1%} in liquid, '
       f'{get_sol_COD_recovery():.1%} in solid.')

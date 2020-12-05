@@ -106,13 +106,13 @@ class Trucking(SanUnit):
     def _design(self):        
         self.transportation = (trans,) = (self.total_truck,)
         if trans.load_type == 'volume':        
-            trans._update_value('load', self.F_vol_in*trans.interval*24)
+            trans._update_value('load', self.F_vol_in*trans.interval) # interval in hr
         else:
             trans.load_type == 'mass'
-            trans._update_value('load', self.F_mass_in*trans.interval*24)
-        self.design_results['Number of truck trips'] = N = \
+            trans._update_value('load', self.F_mass_in*trans.interval)
+        self.design_results['Paralle trucks'] = N = \
             self.total_truck.load / self.single_truck.load
-        self._add_OPEX = N*self.fee/trans.interval/24
+        self._add_OPEX = N*self.fee/trans.interval/24 # add_OPEX in hr
 
     @property
     def fee(self):

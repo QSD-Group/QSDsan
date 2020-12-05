@@ -145,6 +145,7 @@ class PitLatrine(Toilet):
             mixed.imass ['NH3'] -= NH3_rmd
             mixed.imass['NonNH3'] -= NonNH3_rmd
             N2O.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44/28
+            N2O.show()
         else:
             CH4.empty()
             N2O.empty()
@@ -181,7 +182,7 @@ class PitLatrine(Toilet):
     def _design(self):
         design = self.design_results
         design['Number of users per toilet'] = self.N_user
-        design['Number of toilets'] = N = self.N_toilet
+        design['Paralle toilets'] = N = self.N_toilet
         design['Emptying period'] = self.emptying_period
         design['Single pit volume'] = self.pit_V
         design['Single pit area'] = self.pit_area
