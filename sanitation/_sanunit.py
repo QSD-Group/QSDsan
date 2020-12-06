@@ -199,9 +199,11 @@ class SanUnit(bst.Unit, isabstract=True):
         return self._add_OPEX
 
     def results(self, with_units=True, include_utilities=True,
-                include_total_cost=True, include_installed_cost=False):
+                include_total_cost=True, include_installed_cost=False,
+                include_zeros=True, external_utilities=(), key_hook=None):
         results = super().results(with_units, include_utilities,
-                                  include_total_cost, include_installed_cost)
+                                  include_total_cost, include_installed_cost,
+                                  include_zeros, external_utilities, key_hook)
         if with_units:
             results.loc[('Additional OPEX', ''), :] = ('USD/hr', self.add_OPEX)
             results.replace({'USD': f'{currency}', 'USD/hr': f'{currency}/hr'}, inplace=True)

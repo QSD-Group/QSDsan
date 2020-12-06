@@ -176,7 +176,7 @@ A9.line = 'CH4 mixer'
 
 A10 = units.Mixer('A10', ins=(A2-3, A4-3, A5-2, A6-2, A7-3),
                  outs=fugitive_N2O)
-A9.line = 'N2O mixer'
+A10.line = 'N2O mixer'
 
 
 A11 = units.ComponentSplitter('A11', ins=A7-0,
