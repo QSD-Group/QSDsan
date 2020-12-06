@@ -146,7 +146,7 @@ class SanUnit(bst.Unit, isabstract=True):
             if add_design:
                 self.design_results[i.item.ID] = i.quantity
             if add_cost:
-                self.purchase_costs[i.item.ID] = i.cost
+                self.purchase_costs[i.item.ID] = i.cost 
     
     @property
     def construction(self):
@@ -219,7 +219,6 @@ class SanUnit(bst.Unit, isabstract=True):
     def uptime_ratio(self, i):
         assert 0 <= i <= 1, f'Uptime must be between 0 and 1 (100%), not {i}.'
         self._uptime_ratio = float(i)
-
 
 
 

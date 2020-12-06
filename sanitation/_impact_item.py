@@ -294,7 +294,7 @@ class StreamImpactItem(ImpactItem):
                 raise TypeError('linked_ws must be a WasteStream or '
                                 f'the ID of WasteStream, not {type(i).__name__}.')
         if i is not None:
-            if i.impact_item:
+            if i.impact_item and i.impact_item is not i:
                 msg = f'The origin StreamImpactItem linked to WasteStream {i} ' \
                     'is replaced with the current one.'
                 warn(message=msg, stacklevel=3)

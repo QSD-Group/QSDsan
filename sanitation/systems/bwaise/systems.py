@@ -199,7 +199,6 @@ SceA = bst.System('SceA', path=(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A1
 SceA.simulate()
 
 # Emissions and product credits
-#!! The linked_ws will be flushed out after simulation
 CH4_item = StreamImpactItem(fugitive_CH4, GWP=28)
 N2O_item = StreamImpactItem(fugitive_N2O, GWP=265)
 liq_N_item = StreamImpactItem(liq_N, GWP=-5.4)

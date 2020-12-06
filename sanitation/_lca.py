@@ -21,7 +21,7 @@ TODO:
 # %%
 
 import pandas as pd
-from . import ImpactItem
+from . import ImpactItem, StreamImpactItem
 from ._units_of_measure import auom
 from .utils.formatting import format_number as f_num
 
@@ -90,8 +90,20 @@ class LCA:
             if ws.impact_item:
                 self._lca_waste_streams.add(ws)
         self._lca_waste_streams = sorted(self._lca_waste_streams,
-                                         key=lambda i: i.ID)
+                                          key=lambda i: i.ID)
         self._system = system
+    
+    def _refresh_ws_items(self, system=None):
+        if not system:
+            system = self.system
+        for item in items.values():
+            if isinstance(item, StreamImpactItem):
+                ws = item.linked_ws
+                ws._impact_item = item
+                if ws in system.streams and ws not in self._lca_waste_streams:
+                    self._lca_waste_streams.add(ws)
+        self._lca_waste_streams = sorted(self._lca_waste_streams,
+                                          key=lambda i: i.ID)
         
     
     def _update_life_time(self, life_time=0., unit='yr'):
@@ -101,7 +113,7 @@ class LCA:
             converted = auom(unit).convert(float(life_time), 'yr')
             self._life_time = converted
     
-    def add_other_item(self, item, quantity, unit=''):
+    def add_other_item(self, item, quantity, unit='', return_dict=None):
         if isinstance(item, str):
             item = items[item]
         fu = item.functional_unit
@@ -111,7 +123,11 @@ class LCA:
             except:
                 raise ValueError(f'Conversion of the given unit {unit} to '
                                  f'item functional unit {fu} is not supported.')
-        self.other_items[item.ID] = quantity
+        if not return_dict:
+            self.other_items[item.ID] = quantity
+        else:
+            return_dict[item.ID] = quantity
+            return return_dict
       
     def __repr__(self):
         return f'<LCA: {self.system}>'
@@ -139,14 +155,47 @@ class LCA:
     _ipython_display_ = show
     
     
-    def _get_ws_impacts(self, exclude=None):
+    def _get_constr_impacts(self, iterable):
+        impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
+        for i in iterable:
+            for j in i.construction:
+                impact = j.impacts
+                for m, n in impact.items():
+                    impacts[m] += n
+        return impacts
+    
+    def _get_trans_impacts(self, iterable):
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         hr = self.life_time*365*24*self.uptime_ratio
-        for j in self.waste_stream_inventory:
+        for i in iterable:
+            for j in i.transportation:
+                impact = j.impacts
+                for m, n in impact.items():
+                    impacts[m] += n*hr/j.interval
+        return impacts
+    
+    
+    def _get_ws_impacts(self, iterable=None, exclude=None):
+        impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
+        hr = self.life_time*365*24*self.uptime_ratio
+        if not iterable:
+            iterable = self.waste_stream_inventory
+        if None in iterable:
+            self._refresh_ws_items()
+        for j in iterable:
             ws = j.linked_ws
             if ws is exclude: continue
             for m, n in j.CFs.items():
                 impacts[m] += n*hr*ws.F_mass
+        return impacts
+    
+    def _get_add_impacts(self, **item_quantities):
+        impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
+        for j, k in item_quantities.items():
+            if isinstance(j, str):
+                item = items[j]
+            for m, n in item.CFs.items():
+                impacts[m] += n*k
         return impacts
     
     def _get_total_impacts(self, exclude=None):
@@ -168,7 +217,21 @@ class LCA:
         for i in impacts.values():
             i /= waste_stream.F_mass
         return impacts
-        
+    
+    def get_units_impacts(self, units, exclude=None, **item_quantities):
+        try: iter(units)
+        except: units = (units,)
+        constr = self._get_constr_impacts(units)
+        trans = self._get_trans_impacts(units)
+        ws_list = set()
+        for i in (unit.ins+unit.outs for unit in units):
+            if i in self._lca_waste_streams:
+                ws_list.add(i)
+        ws = self._get_ws_impacts(iterable=ws_list, exclude=exclude)
+        add = self._get_add_impacts(**item_quantities)
+        for m, n in constr.items():
+            n += trans[m] + ws[m] + add[m]
+        return constr
     
     @property
     def system(self):
@@ -179,7 +242,7 @@ class LCA:
         self._update_system(i)
     
     @property
-    def life_time (self):
+    def life_time(self):
         '''[float] Life time of the system, [yr].'''
         return self._life_time
     @life_time.setter
@@ -187,7 +250,7 @@ class LCA:
         self._update_life_time(life_time, unit)
     
     @property
-    def uptime_ratio (self):
+    def uptime_ratio(self):
         '''[float] Fraction of time that the plant is operating.'''
         return self._uptime_ratio
     @uptime_ratio.setter
@@ -200,10 +263,25 @@ class LCA:
     @property
     def indicators(self):
         '''[set] All ImpactIndicators associated with this LCA.'''
-        constr = set(sum((i.indicators for i in self.construction_inventory), ()))
-        trans = set(sum((i.indicators for i in self.transportation_inventory), ()))
-        ws = set(sum((i.indicators for i in self.waste_stream_inventory), ()))
-        add = set(sum((items[i].indicators for i in self.other_items.keys()), ()))
+        if not self.construction_inventory:
+            constr = set()
+        else:
+            constr = set(sum((i.indicators for i in self.construction_inventory
+                              if i is not None), ()))
+        if not self.transportation_inventory:
+            trans = set()
+        else:
+            trans = set(sum((i.indicators for i in self.transportation_inventory
+                             if i is not None), ()))
+        if not self.waste_stream_inventory:
+            ws = set()
+        else:
+            ws = set(sum((i.indicators for i in self.waste_stream_inventory
+                          if i is not None), ()))
+        if not self.other_items:
+            add = set()
+        else:
+            add = set(sum((items[i].indicators for i in self.other_items.keys()), ()))
         return constr.union(trans, ws, add)
     
     @property
@@ -219,12 +297,7 @@ class LCA:
     @property
     def construction_impacts(self):
         '''[dict] Total impacts associated with construction activities.'''
-        impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-        for j in self.construction_inventory:
-            impact = j.impacts
-            for m, n in impact.items():
-                impacts[m] += n
-        return impacts
+        return self._get_constr_impacts(self.construction_units)
     
     @property
     def transportation_units(self):
@@ -239,13 +312,7 @@ class LCA:
     @property
     def transportation_impacts(self):
         '''[dict] Total impacts associated with transportation activities.'''
-        impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-        hr = self.life_time*365*24*self.uptime_ratio
-        for j in self.transportation_inventory:
-            impact = j.impacts
-            for m, n in impact.items():
-                impacts[m] += n*hr/j.interval
-        return impacts
+        return self._get_trans_impacts(self.transportation_units)
     
     @property
     def lca_waste_streams(self):
@@ -273,12 +340,7 @@ class LCA:
     @property
     def other_impacts(self):
         '''[dict] Total impacts associated with other ImpactItems (e.g., electricity).'''
-        impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-        for j, k in self.other_items.items():
-            item = items[j]
-            for m, n in item.CFs.items():
-                impacts[m] += n*k
-        return impacts
+        return self._get_add_impacts(**self.other_items)
     
     @property
     def total_impacts(self):
