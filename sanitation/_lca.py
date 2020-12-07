@@ -182,7 +182,9 @@ class LCA:
             iterable = self.waste_stream_inventory
         if None in iterable:
             self._refresh_ws_items()
+            iterable = self.waste_stream_inventory
         for j in iterable:
+            # breakpoint()
             ws = j.linked_ws
             if ws is exclude: continue
             for m, n in j.CFs.items():

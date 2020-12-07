@@ -77,7 +77,6 @@ class PitLatrine(Toilet):
         for para in data.index:
             if para in ('MCF_decay', 'N2O_EF_decay'):
                 value = eval(data.loc[para]['expected'])
-                # setattr(self, '_'+para, eval(data.loc[para]['expected']))
             else:
                 value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)

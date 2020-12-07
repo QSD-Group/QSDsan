@@ -66,7 +66,7 @@ class ImpactItem:
 
         '''
         
-        if ID in ImpactItem._items.keys():
+        if ID in ImpactItem._items.keys() and ImpactItem._items[ID] is not self:
             raise ValueError(f'The ID {ID} is in use by {ImpactItem._items[ID]}')
         self._ID = ID
         self._functional_unit = auom(functional_unit)

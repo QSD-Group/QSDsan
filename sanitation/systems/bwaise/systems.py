@@ -51,7 +51,7 @@ GWP = sanitation.ImpactIndicator._indicators['GWP']
 # =============================================================================
 
 toilet_user = 16 # four people per household, four households per toilet
-ppl_existing = 4e4 # number of people served by the existing plant (SceA and SceC)
+ppl_existing = 4e4 # number of people served by the existing plant (sysA and SceC)
 ppl_alternative = 5e4 # number of people served by the alternative plant (SceB)
 
 exchange_rate = 3700 # UGX per USD, triangular of 3600, 3700, 3900
@@ -85,13 +85,6 @@ truck_V = dict.fromkeys(truck_cost.keys())
 for i, j in zip(truck_V.keys(), V):
     truck_V[i] = j
 
-# Trucking = items['Trucking']
-# for i, j in truck_cost.items():
-#     new = Trucking.copy()
-#     new.price = j
-#     new.functional_unit = 'm3'
-#     setattr(new, 'ID', i)
-
 items['Concrete'].price = 194
 items['Steel'].price = 2.665
 
@@ -99,6 +92,7 @@ N_AD_rx = 3
 
 
 # Nutrient loss during applciation
+#!!! Maybe the loss shouldn't be taken into account in cost and emission?
 app_loss = dict.fromkeys(('NH3', 'NonNH3', 'P', 'K', 'Mg', 'Ca'), 0.02)
 app_loss['NH3'] = 0.05
 
@@ -169,6 +163,12 @@ A7 = units.DryingBed('A7', ins=A4-1, outs=('dried_sludge', 'evaporated', '', '')
 
 A8 = units.CropApplication('A8', ins=A6-0, outs=('liquid_fertilizer', 'loss'),
                            loss_ratio=app_loss)
+def adjust_NH3_loss():
+    A8._run()
+    # Assume the slight higher loss of NH3 does not affect COD,
+    # does not matter much since COD not considered in crop application
+    A8.outs[0]._COD = A8.outs[1]._COD = A8.ins[0]._COD
+A8.specification = adjust_NH3_loss
 
 A9 = units.Mixer('A9', ins=(A2-2, A4-2, A5-1, A6-1, A7-2),
                  outs=fugitive_CH4)
@@ -178,7 +178,6 @@ A10 = units.Mixer('A10', ins=(A2-3, A4-3, A5-2, A6-2, A7-3),
                  outs=fugitive_N2O)
 A10.line = 'N2O mixer'
 
-
 A11 = units.ComponentSplitter('A11', ins=A7-0,
                               outs=(sol_N, sol_P, sol_K, 'sol_non_fertilizers'),
                               splits=(('NH3', 'NonNH3'), 'P', 'K'))
@@ -187,16 +186,9 @@ A12 = units.ComponentSplitter('A12', ins=A8-0,
                               outs=(liq_N, liq_P, liq_K, 'liq_non_fertilizers'),
                               splits=(('NH3', 'NonNH3'), 'P', 'K'))
 
-
-def adjust_NH3_loss():
-    A8._run()
-    # Assume the slight higher loss of NH3 does not affect COD,
-    # does not matter much since COD not considered in crop application
-    A8.outs[0]._COD = A8.outs[1]._COD = A8.ins[0]._COD
-A8.specification = adjust_NH3_loss
-
-SceA = bst.System('SceA', path=(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12))
-SceA.simulate()
+sysA = bst.System('sysA', path=(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12))
+sysA.simulate()
+# sysA.save_report('results/sysA.xlsx')
 
 # Emissions and product credits
 CH4_item = StreamImpactItem(fugitive_CH4, GWP=28)
@@ -208,12 +200,12 @@ sol_P_item = StreamImpactItem(sol_P, GWP=-4.9)
 liq_K_item = StreamImpactItem(liq_K, GWP=-1.5)
 sol_K_item = StreamImpactItem(sol_K, GWP=-1.5)
 
-SceA_tea = SimpleTEA(system=SceA, discount_rate=discount_rate, start_year=2018,
-                     life_time=8, uptime_ratio=1, CAPEX=18606700, lang_factor=None,
-                     annual_maintenance=0, annual_labor=12*3e6*12/exchange_rate,
-                     system_add_OPEX=57120*e.price,
-                     construction_schedule=None)
-SceA_tea.show()
+teaA = SimpleTEA(system=sysA, discount_rate=discount_rate, start_year=2018,
+                 life_time=8, uptime_ratio=1, CAPEX=18606700, lang_factor=None,
+                 annual_maintenance=0, annual_labor=12*3e6*12/exchange_rate,
+                 system_add_OPEX=57120*e.price,
+                 construction_schedule=None)
+teaA.show()
 print('\n')
 
 e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=0.15)
@@ -221,10 +213,10 @@ get_e_price = lambda: e.price
 # 57120 is the annual electricity usage for the whole treatment plant
 get_annual_e = lambda: A2.add_OPEX/get_e_price()+57120
 
-SceA_lca = LCA(system=SceA, life_time=8, life_time_unit='yr', uptime_ratio=1,
-               # assuming all additional OPEX from electricity
-               e_item=get_annual_e()*8)
-SceA_lca.show()
+lcaA = LCA(system=sysA, life_time=8, life_time_unit='yr', uptime_ratio=1,
+           # Assuming all additional OPEX from electricity
+           e_item=get_annual_e()*8)
+lcaA.show()
 print('\n')
 
 
@@ -234,12 +226,12 @@ print('\n')
 # Summaries
 # =============================================================================
 
-get_AOC_cap = lambda: SceA_tea.AOC/ppl_existing
-get_EAC_cap = lambda: SceA_tea.EAC/ppl_existing
+get_AOC_cap = lambda: teaA.AOC/ppl_existing
+get_EAC_cap = lambda: teaA.EAC/ppl_existing
 print(f'Without CAPEX, the net cost is {get_AOC_cap():.1f} {currency}/cap/yr.')
 print(f'With CAPEX, the net cost is {get_EAC_cap():.1f} {currency}/cap/yr.')
 
-get_GWP = lambda: SceA_lca.total_impacts['GlobalWarming']/8/ppl_existing
+get_GWP = lambda: lcaA.total_impacts['GlobalWarming']/8/ppl_existing
 print(f'Net emission is {get_GWP():.1f} {GWP.unit}/cap/yr.')
 
 get_total_N = lambda: \
@@ -342,14 +334,14 @@ print(f'Total COD recovery is {get_COD_recovery():.1%}, '
 
 
 
-# SceA = bst.System('SceA', path=(A1, A2, A3, AX, AX2))
+# sysA = bst.System('sysA', path=(A1, A2, A3, AX, AX2))
 
-# SceA.simulate()
+# sysA.simulate()
 
 
 # e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=20)
 
-# SceA_lca = LCA(SceA, life_time=8, life_time_unit='yr',
+# lcaA = LCA(sysA, life_time=8, life_time_unit='yr',
 #                e_item=(5000, 'Wh'))
 
 
@@ -420,26 +412,8 @@ print(f'Total COD recovery is {get_COD_recovery():.1%}, '
 # # Try out impact-related classes
 # # =============================================================================
 
-# import biosteam as bst
-# from sanitation import *
-
-# H2SO4 = Component('H2SO4', search_ID='H2SO4', phase='l',
-#                   particle_size='Soluble', degradability='Undegradable', organic=False)
-# H2O = Component('H2O', search_ID='H2O', phase='l',
-#                 particle_size='Soluble', degradability='Undegradable', organic=False)
-
-# cmps2 = Components((H2SO4, H2O))
-# cmps2.compile()
-# cmps2.set_synonym('H2SO4', 'SulfuricAcid')
-# cmps2.set_synonym('H2O', 'Water')
-
-# bst.settings.set_thermo(cmps2)
-
-# sulfuric_acid = WasteStream('sulfuric_acid', H2SO4=10, H2O=1000, units='kg/hr')
-# sulfuric_acid2 = WasteStream('sulfuric_acid2', H2SO4=20, H2O=2000, units='kg/hr')
-
 # CEDf = ImpactIndicator(ID='CEDf', unit='MJ', method='Cumulative energy demand',
-#                         category='Fossil')
+#                        category='Fossil')
 
 
 

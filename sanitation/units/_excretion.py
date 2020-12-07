@@ -44,8 +44,6 @@ class Excretion(SanUnit):
         data = load_data(path=data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
-            # try: setattr(self, '_'+para, eval(data.loc[para]['expected']))
-            # except: breakpoint()
             setattr(self, '_'+para, value)
         del data
         for attr, value in kwargs.items():
