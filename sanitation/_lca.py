@@ -33,13 +33,13 @@ __all__ = ('LCA',)
 class LCA:
     '''For life cycle assessment (LCA) of a System.'''
     
-    __slots__ = ('_system',  '_life_time', '_uptime_ratio',
+    __slots__ = ('_system',  '_lifetime', '_uptime_ratio',
                  '_construction_units', '_transportation_units',
                  '_lca_waste_streams',
                  '_impact_indicators', '_other_items')
     
     
-    def __init__(self, system, life_time, life_time_unit='yr', uptime_ratio=1,
+    def __init__(self, system, lifetime, lifetime_unit='yr', uptime_ratio=1,
                  **item_quantities):
         '''
         
@@ -48,10 +48,10 @@ class LCA:
         ----------
         system : [biosteam.System]
             System for which this LCA is conducted for.
-        life_time : [float]
-            Life time of the LCA.
-        life_time_unit : [str]
-            Unit of life time.
+        lifetime : [float]
+            Lifetime of the LCA.
+        lifetime_unit : [str]
+            Unit of lifetime.
         uptime_ratio : [float]
             Fraction of time that the plant is operating.
         **item_quantities : kwargs, [ImpactItem] or [str] = [float] or ([float], [unit])
@@ -63,7 +63,7 @@ class LCA:
         self._transportation_units = set()
         self._lca_waste_streams = set()
         self._update_system(system)
-        self._update_life_time(life_time, life_time_unit)
+        self._update_lifetime(lifetime, lifetime_unit)
         self.uptime_ratio = uptime_ratio
         self._other_items = {}
         for item, quantity in item_quantities.items():
@@ -106,12 +106,12 @@ class LCA:
                                           key=lambda i: i.ID)
         
     
-    def _update_life_time(self, life_time=0., unit='yr'):
+    def _update_lifetime(self, lifetime=0., unit='yr'):
         if not unit or unit == 'yr':
-            self._life_time = float(life_time)
+            self._lifetime = float(lifetime)
         else:
-            converted = auom(unit).convert(float(life_time), 'yr')
-            self._life_time = converted
+            converted = auom(unit).convert(float(lifetime), 'yr')
+            self._lifetime = converted
     
     def add_other_item(self, item, quantity, unit='', return_dict=None):
         if isinstance(item, str):
@@ -132,9 +132,9 @@ class LCA:
     def __repr__(self):
         return f'<LCA: {self.system}>'
 
-    def show(self, life_time_unit='yr'):
-        life_time = auom('yr').convert(self.life_time, life_time_unit)
-        info = f'LCA: {self.system} (life time {f_num(life_time)} {life_time_unit})'
+    def show(self, lifetime_unit='yr'):
+        lifetime = auom('yr').convert(self.lifetime, lifetime_unit)
+        info = f'LCA: {self.system} (lifetime {f_num(lifetime)} {lifetime_unit})'
         info += '\nImpacts:'
         print(info)
         if len(self.indicators) == 0:
@@ -166,7 +166,7 @@ class LCA:
     
     def _get_trans_impacts(self, iterable):
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-        hr = self.life_time*365*24*self.uptime_ratio
+        hr = self.lifetime*365*24*self.uptime_ratio
         for i in iterable:
             for j in i.transportation:
                 impact = j.impacts
@@ -177,7 +177,7 @@ class LCA:
     
     def _get_ws_impacts(self, iterable=None, exclude=None):
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-        hr = self.life_time*365*24*self.uptime_ratio
+        hr = self.lifetime*365*24*self.uptime_ratio
         if not iterable:
             iterable = self.waste_stream_inventory
         if None in iterable:
@@ -244,12 +244,12 @@ class LCA:
         self._update_system(i)
     
     @property
-    def life_time(self):
-        '''[float] Life time of the system, [yr].'''
-        return self._life_time
-    @life_time.setter
-    def life_time(self, life_time, unit='yr'):
-        self._update_life_time(life_time, unit)
+    def lifetime(self):
+        '''[float] Lifetime of the system, [yr].'''
+        return self._lifetime
+    @lifetime.setter
+    def lifetime(self, lifetime, unit='yr'):
+        self._update_lifetime(lifetime, unit)
     
     @property
     def uptime_ratio(self):

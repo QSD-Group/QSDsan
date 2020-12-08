@@ -55,7 +55,7 @@ ppl_existing = 4e4 # number of people served by the existing plant (sysA and Sce
 ppl_alternative = 5e4 # number of people served by the alternative plant (SceB)
 
 exchange_rate = 3700 # UGX per USD, triangular of 3600, 3700, 3900
-discount_rate = 0.05 # uniform of 0.03-0.06
+get_exchange_rate = lambda: exchange_rate
 
 # Time take for full degradation, [yr]
 tau_deg = 2
@@ -71,12 +71,12 @@ max_CH4_emission = 0.25
 
 #!!! How this was selected? 
 truck_cost = {
-    'TankerTruck1': 8e4/exchange_rate*1.15, # 15% additional, per m3
-    'TankerTruck2': 12e4/exchange_rate*1.15, # 15% additional, per m3
-    'TankerTruck3': 2e5/exchange_rate*1.15, # 15% additional, per m3
-    'TankerTruck4': 25e4/exchange_rate*1.15, # 15% additional, per m3
+    'TankerTruck1': 8e4/get_exchange_rate()*1.15, # 15% additional, per m3
+    'TankerTruck2': 12e4/get_exchange_rate()*1.15, # 15% additional, per m3
+    'TankerTruck3': 2e5/get_exchange_rate()*1.15, # 15% additional, per m3
+    'TankerTruck4': 25e4/get_exchange_rate()*1.15, # 15% additional, per m3
     'HandCart': 0.01, # per cap/d
-    'CBSTruck': 23e3/exchange_rate # per m3
+    'CBSTruck': 23e3/get_exchange_rate() # per m3
     }
 
 # Assume density is 1 tonne/m3 (as water)
@@ -190,6 +190,7 @@ sysA = bst.System('sysA', path=(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A1
 sysA.simulate()
 # sysA.save_report('results/sysA.xlsx')
 
+
 # Emissions and product credits
 CH4_item = StreamImpactItem(fugitive_CH4, GWP=28)
 N2O_item = StreamImpactItem(fugitive_N2O, GWP=265)
@@ -200,9 +201,9 @@ sol_P_item = StreamImpactItem(sol_P, GWP=-4.9)
 liq_K_item = StreamImpactItem(liq_K, GWP=-1.5)
 sol_K_item = StreamImpactItem(sol_K, GWP=-1.5)
 
-teaA = SimpleTEA(system=sysA, discount_rate=discount_rate, start_year=2018,
-                 life_time=8, uptime_ratio=1, CAPEX=18606700, lang_factor=None,
-                 annual_maintenance=0, annual_labor=12*3e6*12/exchange_rate,
+teaA = SimpleTEA(system=sysA, discount_rate=0.05, start_year=2018,
+                 lifetime=8, uptime_ratio=1, CAPEX=18606700, lang_factor=None,
+                 annual_maintenance=0, annual_labor=12*3e6*12/get_exchange_rate(),
                  system_add_OPEX=57120*e.price,
                  construction_schedule=None)
 teaA.show()
@@ -213,7 +214,7 @@ get_e_price = lambda: e.price
 # 57120 is the annual electricity usage for the whole treatment plant
 get_annual_e = lambda: A2.add_OPEX/get_e_price()+57120
 
-lcaA = LCA(system=sysA, life_time=8, life_time_unit='yr', uptime_ratio=1,
+lcaA = LCA(system=sysA, lifetime=8, lifetime_unit='yr', uptime_ratio=1,
            # Assuming all additional OPEX from electricity
            e_item=get_annual_e()*8)
 lcaA.show()
@@ -341,7 +342,7 @@ print(f'Total COD recovery is {get_COD_recovery():.1%}, '
 
 # e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=20)
 
-# lcaA = LCA(sysA, life_time=8, life_time_unit='yr',
+# lcaA = LCA(sysA, lifetime=8, lifetime_unit='yr',
 #                e_item=(5000, 'Wh'))
 
 

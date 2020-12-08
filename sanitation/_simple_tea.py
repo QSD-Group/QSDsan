@@ -35,8 +35,8 @@ class SimpleTEA(TEA):
         Interest rate used in discounted cash flow analysis.
     start_year : [int]
         Start year of the plant.
-    life_time : [int]
-        Total life time of the plant, [yr]. Currently biosteam only supports int.
+    lifetime : [int]
+        Total lifetime of the plant, [yr]. Currently biosteam only supports int.
     uptime_ratio : [float]   
         Fraction of time that the plant is operating.
     CAPEX : [float]
@@ -67,13 +67,13 @@ class SimpleTEA(TEA):
     '''
     
     __slots__ = (*(i for i in TEA.__slots__ if i !='lang_factor'),
-                 '_discount_rate', '_start_year', '_life_time',
+                 '_discount_rate', '_start_year', '_lifetime',
                  '_uptime_ratio', '_CAPEX', '_lang_factor',
                  '_annual_maintenance', '_annual_labor', '_system_add_OPEX',
                  '_currency')
     
     def __init__(self, system, discount_rate=0.05,
-                 start_year=2018, life_time=10, uptime_ratio=1., 
+                 start_year=2018, lifetime=10, uptime_ratio=1., 
                  CAPEX=0., lang_factor=None,
                  annual_maintenance=0., annual_labor=0., system_add_OPEX=0.,
                  construction_schedule=None, currency=currency):
@@ -87,7 +87,7 @@ class SimpleTEA(TEA):
         self._IRR = discount_rate # guess IRR for solve_IRR method
         self._sales = 0 # guess cost for solve_price method
         self.start_year = start_year
-        self.life_time = life_time
+        self.lifetime = lifetime
         self._duration = self.duration
         self.uptime_ratio = 1.
         self._CAPEX = CAPEX
@@ -103,7 +103,7 @@ class SimpleTEA(TEA):
         ########### Not relevant to SimpleTEA but required by TEA ###########
         # From U.S. IRS for tax purpose, won't matter when tax set to 0
         # Based on IRS Publication 946 (2019), MACRS15 should be used for
-        # municipal wastewater treatment plant, but the plant life time is
+        # municipal wastewater treatment plant, but the plant lifetime is
         # just 10 yrs or shorter, so changed to a shorter one
         self.depreciation = 'MACRS7'
         self.income_tax = 0.
@@ -164,17 +164,17 @@ class SimpleTEA(TEA):
         self._start_year = i
     
     @property
-    def life_time(self):
-        '''[int] Total life time of the plant, [yr]. Currently biosteam only supports int.'''
-        return self._life_time
-    @life_time.setter
-    def life_time(self, i):
-        self._life_time = self._years = i
+    def lifetime(self):
+        '''[int] Total lifetime of the plant, [yr]. Currently biosteam only supports int.'''
+        return self._lifetime
+    @lifetime.setter
+    def lifetime(self, i):
+        self._lifetime = self._years = i
         
     @property
     def duration(self):
-        '''[int] Duration of the plant based on start_year and life_time.'''
-        return (self.start_year, self.start_year+self.life_time)
+        '''[int] Duration of the plant based on start_year and lifetime.'''
+        return (self.start_year, self.start_year+self.lifetime)
     
     @property
     def uptime_ratio(self):
@@ -300,7 +300,7 @@ class SimpleTEA(TEA):
     @property
     def annualized_CAPEX(self):
         '''[float] Annualized capital expenditure.'''
-        return self.CAPEX*self.discount_rate/(1-(1+self.discount_rate)**(-self.life_time))
+        return self.CAPEX*self.discount_rate/(1-(1+self.discount_rate)**(-self.lifetime))
 
     
     @property

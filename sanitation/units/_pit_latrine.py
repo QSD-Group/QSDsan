@@ -144,7 +144,6 @@ class PitLatrine(Toilet):
             mixed.imass ['NH3'] -= NH3_rmd
             mixed.imass['NonNH3'] -= NonNH3_rmd
             N2O.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44/28
-            N2O.show()
         else:
             CH4.empty()
             N2O.empty()
