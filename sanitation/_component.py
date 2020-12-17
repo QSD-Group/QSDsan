@@ -82,7 +82,6 @@ allowed_values = {
     'particle_size': ('Dissolved gas', 'Soluble', 'Colloidal', 'Particulate'),
     'degradability': ('Readily', 'Slowly', 'Undegradable'),
     'organic': (True, False),
-    # 'measured_as': (None, 'COD', 'C', 'N', 'P'),
     }
 
 def check_return_property(name, value):
@@ -291,6 +290,13 @@ class Component(tmo.Chemical):
     @i_charge.setter
     def i_charge(self, i):
         self._i_charge = check_return_property('i_charge', i)
+        if not self._i_charge:
+            if self.formula:
+                charge = charge_from_formula(self.formula)
+                chem_MW = molecular_weight(self.atoms)
+                i = charge/chem_MW * self.i_mass
+                self._i_charge = check_return_property('i_charge', i)
+            else: self._i_charge = 0.
 
     @property
     def f_BOD5_COD(self):
