@@ -16,7 +16,9 @@ for license details.
 
 
 import thermosteam as tmo
+from chemicals.elements import molecular_weight, charge_from_formula
 from chemicals.elements import mass_fractions as get_mass_frac
+from ._cod import cod_test_stoichiometry
 
 __all__ = ('Component',)
 
@@ -134,15 +136,6 @@ class Component(tmo.Chemical):
         self.f_BOD5_COD = f_BOD5_COD
         self.f_uBOD_COD = f_uBOD_COD
         self.f_Vmass_Totmass = f_Vmass_Totmass
-        
-        #!!! Need to check if this works
-        #!!! This is necessary for correct molar flow calculation.
-        if measured_as:
-            if measured_as == 'COD': self._MW = tmo.Chemical('O').MW
-            else:
-                try: self._MW = tmo.Chemical(measured_as).MW
-                except LookupError: raise LookupError(f"measure unit {measured_as} not recognized")
-
         self._particle_size = particle_size
         self._degradability = degradability
         self._organic = organic
@@ -162,13 +155,6 @@ class Component(tmo.Chemical):
                                      'cannot be set.')
             else:
                 if atom in self.atoms.keys():
-                    # if self.measured_as:
-                    #     if atom == self.measured_as:
-                    #         return 1.0
-                    #     elif atom =='O' and self.measured_as == 'COD':
-                    #         return 1.0  #!!! this is not true.
-                    #     else:
-                    #         return 0.
                     try: return get_mass_frac(self.atoms)[atom] * self.i_mass
                     except: return None
                 return 0. # does not have this atom
@@ -266,26 +252,32 @@ class Component(tmo.Chemical):
     @property
     def i_mass(self):
         '''[float] Mass content of the Component, [g Component/g measure unit].'''
-        if self.measured_as:
-            if self.measured_as in self.atoms.keys():
-                return 1/get_mass_frac(self.atoms)[self.measured_as]
-            elif not self._i_mass:                 
-                if self.measured_as == 'COD' and self.combustion:
-                    chem_MW = tmo.Chemical(self.ID, search_ID=self.CAS).MW
-                    i = -chem_MW/self.combustion['O2'] * tmo.Chemical('O2').MW
-                    return check_return_property('i_mass', i)
-                else: raise ValueError(f"Must specify i_mass for Component {self.ID} "
-                                       f"measured as {self.measured_as}.")
         return self._i_mass or 1.
     @i_mass.setter
     def i_mass(self, i):
-        if i and self.measured_as and self.formula:
-            if self.measured_as != 'COD':
-                raise AttributeError(f'This Component is measured as {self.measured_as} '
-                                     f'and has formula, i_mass is calculated, '
-                                     'cannot be set.')
+        if self.atoms:
+            if i: raise AttributeError(f'Component {self.ID} has formula, i_mass '
+                                       f'is calculated, cannot be set.')
+            else:
+                if self.measured_as in self.atoms:
+                    i = 1/get_mass_frac(self.atoms)[self.measured_as]
+                elif self.measured_as == 'COD':                 
+                    chem_MW = molecular_weight(self.atoms)
+                    chem_charge = charge_from_formula(self.formula)
+                    Cr2O7 = - cod_test_stoichiometry(self.atoms, chem_charge)['Cr2O7-2']
+                    cod = Cr2O7 * 1.5 * molecular_weight({'O':2})
+                    i = chem_MW/cod
+                elif self.measured_as:
+                    raise AttributeError(f'Must specify i_mass for Component {self.ID} '
+                                         f'measured as {self.measured_as}.')
+        if self.measured_as == None:
+            if i and i != 1: 
+                raise AttributeError(f'Component {self.ID} is measured as itself, '
+                                     f'i_mass cannot be set to values other than 1.')
+            i = 1
         self._i_mass = check_return_property('i_mass', i)
-        
+    
+    #!!! need to enable calculation from formula and water chemistry equilibria    
     @property
     def i_charge(self):
         '''
@@ -362,13 +354,24 @@ class Component(tmo.Chemical):
 
         Notes
         -------
-        Can be left as blank or chosen from 'COD', 'C', 'N', 'P' 
-        or a chemical element of the Component.
+        Can be left as blank or chosen from 'COD', or a constituent 
+        element of the Component.
         '''
         return self._measured_as
     @measured_as.setter
     def measured_as(self, measured_as):
+        #!!! Need to check if this works
+        #!!! This is necessary for correct molar flow calculation.
         self._measured_as = measured_as
+        if measured_as:
+            if measured_as == 'COD': 
+                self._MW = molecular_weight({'O':2})
+            elif measured_as in self.atoms:
+                self._MW = molecular_weight({measured_as:1})
+            else:
+                raise AttributeError(f"Component {self.ID} must be measured as "
+                                     f"either COD or one of its constituent atoms, "
+                                     f"if not as itself.")        
         
     @property
     def particle_size(self):
@@ -409,21 +412,23 @@ class Component(tmo.Chemical):
     @property
     def i_COD(self):
         '''[float] COD content, calculated based on measured_as, organic and formula.'''
-        return self._i_COD
-
+        return self._i_COD or 0.
     @i_COD.setter
     def i_COD(self, i):
         if i: self._i_COD = check_return_property('i_COD', i)
-        else: 
+        else:             
             if self.organic: 
                 if self.measured_as == 'COD': self._i_COD = 1.
-                elif self.measured_as == None: 
-                    self._i_COD = -self.combustion['O2'] * tmo.Chemical('O2').MW/self.MW
+                elif not self.atoms:
+                    raise AttributeError(f"Must specify i_COD for organic component {self.ID}, "
+                                         f"which is not measured as COD and has no formula.")
                 else:
-                    chem_MW = tmo.Chemical(self.ID, search_ID=self.CAS).MW
-                    self._i_COD = -self.combustion['O2'] * tmo.Chemical('O2').MW/chem_MW * self.i_mass 
-            else: self._i_COD = 0.
-       
+                    chem_MW = molecular_weight(self.atoms) 
+                    chem_charge = charge_from_formula(self.formula)
+                    Cr2O7 = - cod_test_stoichiometry(self.atoms, chem_charge)['Cr2O7-2']
+                    cod = Cr2O7 * 1.5 * molecular_weight({'O':2})
+                    self._i_COD = check_return_property('i_COD', cod/chem_MW * self.i_mass)
+            else: self._i_COD = 0. 
 
     def show(self, chemical_info=False):
         '''

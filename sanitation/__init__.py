@@ -20,6 +20,7 @@ from ._waste_stream import *
 from ._sanunit import *
 from ._construction import *
 from ._lca import *
+from ._cod import *
 
 from . import (
     _component,
@@ -28,6 +29,7 @@ from . import (
     _sanunit,
     _construction,
     _lca,
+    _cod,
     utils,
     units,
     )
@@ -39,6 +41,7 @@ __all__ = (
     *_sanunit.__all__,
     *_construction.__all__,
     *_lca.__all__,
+    *_cod.__all__,
     *utils.__all__,
     *units.__all__,
            )

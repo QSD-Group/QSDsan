@@ -27,11 +27,12 @@ __all__ = ('WasteStream',)
 _defined_composite_vars = ('COD', 'BOD5', 'BOD', 'uBOD', 'C',
                            'N', 'P', 'K', 'Mg', 'Ca', 'solids', 'charge')
 
-_copied_slots = (*tuple('_'+i for i in _defined_composite_vars),
-                 '_TOC', '_TKN', '_SAlk')
+_common_composite_vars = ('_COD', '_BOD', '_uBOD', '_TC', '_TOC', '_TN', 
+                          '_TKN', '_TP', '_TK', '_TMg', '_TCa', 
+                          '_dry_mass', '_charge')
 
-_ws_specific_slots = (*_copied_slots,
-                      '_pH', '_ratios', '_CFs')
+_ws_specific_slots = (*_common_composite_vars,
+                      '_pH', '_SAlk', '_ratios', '_CFs')
 
 _specific_groups = {'SVFA': ('SAc', 'SProp'),
                     'XStor': ('XOHO_PHA', 'XGAO_PHA', 'XPAO_PHA', 
@@ -76,26 +77,25 @@ class WasteStream(Stream):
     
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None, CFs=None,
-                 pH=7., SAlk=2.5, COD=None, BOD=None, BOD5=None, uBOD=None,
+                 pH=7., SAlk=2.5, COD=None, BOD=None, uBOD=None,
                  TC=None, TOC=None, TN=None, TKN=None, TP=None, TK=None,
-                 TMg=None, TCa=None, solids=None, charge=None, ratios=None,
+                 TMg=None, TCa=None, dry_mass=None, charge=None, ratios=None,
                  **chemical_flows):
         
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
                          units=units, price=price, thermo=thermo, **chemical_flows)
-        self._init_ws(CFs, pH, SAlk, COD, BOD, BOD5, uBOD, TC, TOC, TN, TKN,
-                       TP, TK, TMg, TCa, solids, charge, ratios)
+        self._init_ws(CFs, pH, SAlk, COD, BOD, uBOD, TC, TOC, TN, TKN,
+                      TP, TK, TMg, TCa, dry_mass, charge, ratios)
 
     def _init_ws(self, CFs=None, pH=7., SAlk=None, COD=None, BOD=None,
-                 BOD5=None, uBOD=None, TC=None, TOC=None, TN=None, TKN=None,
-                 TP=None, TK=None, TMg=None, TCa=None, solids=None, charge=None,
-                 ratios=None):
+                  uBOD=None, TC=None, TOC=None, TN=None, TKN=None,
+                  TP=None, TK=None, TMg=None, TCa=None, dry_mass=None, charge=None,
+                  ratios=None):
         self._CFs = CFs
         self._pH = pH
         self._SAlk = SAlk
         self._COD = COD
         self._BOD = BOD
-        self._BOD5 = BOD5
         self._uBOD = uBOD
         self._TC = TC
         self._TOC = TOC
@@ -105,7 +105,7 @@ class WasteStream(Stream):
         self._TK = TK
         self._TMg = TMg
         self._TCa = TCa
-        self._solids = solids
+        self._dry_mass = dry_mass
         self._charge = charge
         self._ratios = ratios
 
@@ -290,7 +290,7 @@ class WasteStream(Stream):
         elif variable == 'Ca':
             var = cmps.i_Ca * cmp_c
         elif variable == 'solids':
-            var = cmps.i_mass * cmp_c
+            var = cmps.i_mass * cmp_c * exclude_gas
             if volatile != None:
                 if volatile: var *= cmps.f_Vmass_Totmass
                 else: var *= 1-cmps.f_Vmass_Totmass
@@ -343,107 +343,68 @@ class WasteStream(Stream):
     @property
     def pH(self):
         return self._liq_sol_properties('pH', 7.)
-        # if self.phase == 'l':
-        #     return self._pH or 7.
-        # else:
-        #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
 
     @property
     def SAlk(self):
         return self._liq_sol_properties('SAlk', 0.)
-        # if self.phase == 'l':
-        #     return self._SAlk or 0.
-        # else:
-        #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
 
     @property
     def COD(self):
         '''[float] Chemical oxygen demand in mg/L.'''
         return self._liq_sol_properties('COD', self.composite('COD'))
-        # return self._COD or self.composite('COD')
-        # else:
-        #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
 
     @property    
     def BOD(self):
         return self._liq_sol_properties('BOD', self.composite('BOD'))
-        # return self._BOD or self.composite('BOD')
-        # else:
-        #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
-    
+
+    @property    
+    def BOD5(self):
+        return self.BOD
+
     #!!! Maybe include C_frac, etc. to calculate C_mass/F_mass - valid for all phases
     # Or a function to calculate it?
     @property
     def TC(self):
-        return self._liq_sol_properties('TC', self.composite('TC'))
-        # return self._TC or self.composite('TC')
-        # else:
-        #     raise AttributeError(f'{self.phase} phase WasteStream does note have pH.')
+        return self._liq_sol_properties('TC', self.composite('C'))
     
     @property
     def TOC(self):
-        return self._liq_sol_properties('TOC', self.composite('TC', organic=True))
-        # return self._TOC or self.composite('TC', organic=True)
-        # else:
-        #     return None
+        return self._liq_sol_properties('TOC', self.composite('C', organic=True))
         
     @property
     def TN(self):
-        return self._liq_sol_properties('TN', self.composite('TN'))
-        # return self._TN or self.composite('TN')
-        # else:
-        #     return None
+        return self._liq_sol_properties('TN', self.composite('N'))
     
     @property
     def TKN(self):
-        return self._liq_sol_properties('TKN', self.composite('TN', specification='TKN'))
-        # return self._TKN or self.composite('TN', specification='TKN')
-        # else:
-        #     return None
+        return self._liq_sol_properties('TKN', self.composite('N', specification='TKN'))
     
     @property
     def TP(self):
-        return self._liq_sol_properties('TP', self.composite('TP'))
-        # return self._TP or self.composite('TP')
-        # else:
-        #     return None
+        return self._liq_sol_properties('TP', self.composite('P'))
     
-    #!!! Are there methods to calculate TK, TMg, TCa in self.composite?
     @property
     def TK(self):
-        return self._liq_sol_properties('TK', self.composite('TK'))
-        # return self._TK or self.composite('TK')
-        # else:
-        #     return None
+        return self._liq_sol_properties('TK', self.composite('K'))
     
     @property
     def TMg(self):
-        return self._liq_sol_properties('TMg', self.composite('TMg'))
-        # return self._TMg or self.composite('TMg')
-        # else:
-        #     return None
+        return self._liq_sol_properties('TMg', self.composite('Mg'))
     
     @property
     def TCa(self):
-        return self._liq_sol_properties('TCa', self.composite('TCa'))
-        # return self._TCa or self.composite('TCa')
-        # else:
-        #     return None
+        return self._liq_sol_properties('TCa', self.composite('Ca'))
     
     @property
-    def solids(self):
+    def dry_mass(self):
         return self._liq_sol_properties('solids', self.composite('solids'))
-        # return self._solids or self.composite('solids')
-        # else:
-        #     return None
-    
 
+    
     # TODO: calibrate Charge when weak acids are involved
     # @property
     # def charge(self):
     #     return self._liq_sol_properties('charge', self.composite('charge'))
     
-
     def copy(self, ID=None):
         new = super().copy()
         new._init_ws()
