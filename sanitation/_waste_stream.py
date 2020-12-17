@@ -237,6 +237,7 @@ class WasteStream(Stream):
             The estimated value of the composite variable, in [mg/L] (or [mmol/L] for "Charge").
 
         """
+        _get = getattr
         if self.F_vol == 0.:
             return 0.
         
@@ -268,7 +269,7 @@ class WasteStream(Stream):
         IDs = tuple(IDs)
         cmps = cmps.subgroup(IDs)
         cmp_c = self.imass[IDs]/self.F_vol*1e3      #[mg/L]
-        exclude_gas = getattr(cmps, 's')+getattr(cmps, 'c')+getattr(cmps, 'x')        
+        exclude_gas = _get(cmps, 's')+_get(cmps, 'c')+_get(cmps, 'x')        
         
         if variable in ('COD', 'BOD5', 'BOD', 'uBOD'):            
             if organic == False: var = 0.
@@ -281,7 +282,7 @@ class WasteStream(Stream):
             var = cmps.i_C * cmp_c
         elif variable == 'N':
             var = cmps.i_N * cmp_c * exclude_gas
-        elif variable == 'P': # I don't see how it'd be confused with 'P' for pressure.
+        elif variable == 'P':
             var = cmps.i_P * cmp_c
         elif variable == 'K':
             var = cmps.i_K * cmp_c
@@ -302,19 +303,19 @@ class WasteStream(Stream):
             if particle_size == 'g': 
                 dummy *= 1-exclude_gas
             else:
-                dummy *= getattr(cmps, particle_size)
+                dummy *= _get(cmps, particle_size)
         
         if degradability:
-            if degradability == 'u': dummy *= 1-getattr(cmps, 'b')
-            elif degradability == 'b': dummy *= getattr(cmps, 'b')
-            elif degradability == 'rb': dummy *= getattr(cmps, 'rb')
-            else: dummy *= getattr(cmps, 'b')-getattr(cmps, 'rb')
+            if degradability == 'u': dummy *= 1-_get(cmps, 'b')
+            elif degradability == 'b': dummy *= _get(cmps, 'b')
+            elif degradability == 'rb': dummy *= _get(cmps, 'rb')
+            else: dummy *= _get(cmps, 'b')-_get(cmps, 'rb')
 
         if organic != None:
-            if organic: dummy *= getattr(cmps, 'org')
-            else: dummy *= 1-getattr(cmps, 'org')
+            if organic: dummy *= _get(cmps, 'org')
+            else: dummy *= 1-_get(cmps, 'org')
         
-        return sum(dummy*var)
+        return (dummy*var).sum()
 
     
     @property
