@@ -1,6 +1,6 @@
 build
 dist
-sanitation.egg-info
+qsdsan.egg-info
 __pycache__
 **/__pycache__
 *.pyc
@@ -72,3 +72,4 @@ surfaces
 ##################
 **/_superseded
 sanitation/demo.py
+qsdsan/demo.py

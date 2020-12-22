@@ -48,7 +48,7 @@ In particular, QSDsan introduces:
 
 .. toctree::
    :maxdepth: 1
-   :caption: QSDsan APIs
+   :caption: QSDsan API
 
    Component
    Components
