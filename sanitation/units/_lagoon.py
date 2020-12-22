@@ -34,6 +34,7 @@ __all__ = ('Lagoon',)
 
 class Lagoon(SanUnit, Decay):
     '''Anaerobic and facultative lagoon treatment.'''
+
     
     def __init__(self, ID='', ins=None, outs=(), design_type='anaerobic',
                  if_N2O_emission=False, **kwargs):
@@ -81,7 +82,7 @@ class Lagoon(SanUnit, Decay):
         treated, CH4, N2O = self.outs
         CH4.phase = N2O.phase = 'g'
 
-        treated.copy_like(waste)
+        treated.copy_like(waste)        
         removed_frac = self.COD_removal*self.COD_decay
         treated._COD *= 1 - self.COD_removal
         treated.imass['OtherSS'] *= 1 - self.COD_removal
