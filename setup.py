@@ -9,14 +9,14 @@ This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
 This module is under the UIUC open-source license. Please refer to
-https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
+https://github.com/QSD-Group/sanitation/blob/master/LICENSE.txt
 for license details.
 '''
 
 from setuptools import setup
 
 setup(
-    name='sanitation',
+    name='QSDsan',
     packages=['sanitation'],
     version='0.0.5',
     license='University of Illinois/NCSA Open Source License',
