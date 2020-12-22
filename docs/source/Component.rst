@@ -1,5 +1,5 @@
 Component
 =========
 
-.. autoclass:: sanitation.Component
+.. autoclass:: qsdsan.Component
    :members:

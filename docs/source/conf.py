@@ -19,9 +19,9 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'Sanitation Explorer'
-copyright = '2020, Sanitation Explorer Development Group'
-author = 'Sanitation Explorer Development Group'
+project = 'QSDsan'
+copyright = '2020, Quantitative Sustainable Design Group'
+author = 'Quantitative Sustainable Design Group'
 
 # The full version, including alpha/beta/rc tags
 release = '0.0.1'

@@ -6,9 +6,14 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
-    Author <email address (optional)>
+    Yalin Li <zoe.yalin.li@gmail.com>
 
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
+
+__all__ = []
+
+from lazypkg import LazyPkg
+LazyPkg(__name__, ['_cmps', '_utils', 'systems', ])
