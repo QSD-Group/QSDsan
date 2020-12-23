@@ -50,15 +50,15 @@ class ImpactItem:
 
         Parameters
         ----------
-        ID : [str]
+        ID : str
             ID of the ImpactItem. 
-        functional_unit : [str]
+        functional_unit : str
             Functional unit of the ImpactItem.
-        price : [float]
+        price : float
             Price of the item per functional unit.
-        price_unit : [str]
+        price_unit : str
             Unit of the price.
-        **indicator_CFs : kwargs, [ImpactIndicator] or [str] = [float] or ([float], [unit])
+        **indicator_CFs : kwargs, ImpactIndicator or str = float or (float, unit)
             ImpactIndicators and their characteriziation factors.
 
         '''
@@ -211,7 +211,7 @@ class StreamImpactItem(ImpactItem):
 
         Parameters
         ----------
-        linked_ws : [WasteStream] or [str]
+        linked_ws : WasteStream or str
             The associated WasteStream for environmental impact calculation.
         **indicator_CFs : kwargs
             ImpactIndicators and their characteriziation factors.
@@ -307,7 +307,7 @@ class StreamImpactItem(ImpactItem):
     
     @property
     def price(self):
-        '''Price of the linked WasteStream.'''
+        '''[float] Price of the linked WasteStream.'''
         if self.linked_ws:
             return self.linked_ws.price
         else: return 0.

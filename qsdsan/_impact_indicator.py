@@ -38,17 +38,17 @@ class ImpactIndicator:
 
         Parameters
         ----------
-        ID : [str]
+        ID : str
             ID of the ImpactIndicator.
-        synonym : [str]
+        synonym : str
             Alternative ID of the ImpactIndicator.
-        method : [str]
+        method : str
             Impact assessment method, e.g., 'TRACI'.
-        category : [str]
+        category : str
             Category of the ImpactIndicator, e.g., 'human healt'.
-        unit : [str]
+        unit : str
             Unit of the ImpactIndicator, e.g., 'kg CO2-eq'.
-        description : [str]
+        description : str
             Supplementary explanation.
 
         '''

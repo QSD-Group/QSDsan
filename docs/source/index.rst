@@ -48,15 +48,22 @@ In particular, QSDsan introduces:
 
 .. toctree::
    :maxdepth: 1
-   :caption: QSDsan API
+   :caption: API
 
    Component
    Components
-   WasteStream
+   Construction
+   ImpactIndicator
+   ImpactItem
+   LCA
    SanUnit
-.. Process # TO BE ADDED
-.. units # TO BE ADDED
+   SimpleTEA
+   Transportation
+   WasteStream
+   sanunits/sanunits
 
+.. Process # TO BE ADDED
+   
 
 More resources
 --------------
@@ -66,8 +73,8 @@ To get the full value of QSDsan, we highly recommend reading through the documen
  - `chemicals docs <https://chemicals.readthedocs.io/en/latest/>`_
 
 
-About the authors
------------------
+About the developers
+--------------------
 Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_.  Core contributors include:
 
 **Code development**

@@ -28,32 +28,32 @@ class SimpleTEA(TEA):
 
     Parameters
     ----------
-    system : [biosteam.System]
+    system : biosteam.System
         The System this TEA is conducted for.
-    discount_rate : [float]
+    discount_rate : float
         Interest rate used in discounted cash flow analysis.
-    start_year : [int]
+    start_year : int
         Start year of the plant.
-    lifetime : [int]
+    lifetime : int
         Total lifetime of the plant, [yr]. Currently biosteam only supports int.
-    uptime_ratio : [float]   
+    uptime_ratio : float
         Fraction of time that the plant is operating.
-    CAPEX : [float]
+    CAPEX : float
         Capital expenditure, if not provided, is set to be the same as installed_equipment_cost.
-    lang_factor : [float] or None
+    lang_factor : float or None
         A factor to estimate the total installation cost based on equipment purchase cost,
         leave as None if providing CAPEX. If neither CAPEX nor lang_factor is provided,
         installed_equipment_cost will be calculated using the bare module factor
         for each equipment according to the SanUnit._BM dict of each unit.
-    annual_maintenance : [float]   
+    annual_maintenance : float
         Annual maintenance cost as a fraction of fixed capital investment.
-    annual_labor : [float]
+    annual_labor : float
         Annual labor cost.
-    system_add_OPEX : [float]
+    system_add_OPEX : float
         Annual additional system-wise operating expenditure (on top of the add_OPEX of each unit).
-    construction_schedule : [tuple] or None
+    construction_schedule : tuple or None
         Construction progress, must sum up to 1, leave as None will assume the plant finishes within one year.
-    currency : [str]
+    currency : str
         TEA currency, should be consistent with all prices and costs provided for chemicals, materials, units, etc.
 
     References
@@ -99,7 +99,7 @@ class SimpleTEA(TEA):
         self.construction_schedule = construction_schedule
         self._currency = currency
         
-        ########### Not relevant to SimpleTEA but required by TEA ###########
+        ########## Not relevant to SimpleTEA but required by TEA ##########
         # From U.S. IRS for tax purpose, won't matter when tax set to 0
         # Based on IRS Publication 946 (2019), MACRS15 should be used for
         # municipal wastewater treatment plant, but the plant lifetime is

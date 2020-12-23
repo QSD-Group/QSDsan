@@ -31,7 +31,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('UDDT',)
 
-data_path += 'unit_data/_uddt.csv'
+data_path += 'sanunit_data/_uddt.csv'
 
 
 # %%
@@ -49,14 +49,14 @@ class UDDT(Toilet):
 
         '''
 
-        T : [float]
+        T : float
             Temperature, [K].
-        safety_factor : [float]
+        safety_factor : float
             Safety factor for pathogen removal during onsite treatment,
             must be larger than 1.            
-        if_treatment : [bool]
+        if_treatment : bool
             If has onsite treatment.
-        if_pit_above_water_table : [bool]
+        if_pit_above_water_table : bool
             If the pit is above local water table.
             
         Returns

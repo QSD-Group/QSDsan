@@ -33,10 +33,10 @@ class Mixer(SanUnit, bst.units.Mixer):
     
     biosteam document
     -----------------
+    `biosteam.units.Mixer <https://biosteam.readthedocs.io/en/latest/units/Mixer.html>`_
 
     '''
     __init__ = bst.units.Mixer.__init__
-    __doc__ += bst.units.Mixer.__doc__
     __init__.__doc__ = __doc__
 
 class Splitter(SanUnit, bst.units.Splitter):
@@ -45,10 +45,10 @@ class Splitter(SanUnit, bst.units.Splitter):
 
     biosteam document
     -----------------
+    `biosteam.units.Splitter <https://biosteam.readthedocs.io/en/latest/units/Splitter.html>`_
 
     '''
     __init__ = bst.units.Splitter.__init__
-    __doc__ += bst.units.Splitter.__doc__
     __init__.__doc__ = __doc__
 
 class FakeSplitter(SanUnit, bst.units.FakeSplitter):
@@ -57,10 +57,10 @@ class FakeSplitter(SanUnit, bst.units.FakeSplitter):
     
     biosteam document
     -----------------
+    biosteam.units.FakeSplitter
 
     '''
     __init__ = bst.units.FakeSplitter.__init__
-    __doc__ += bst.units.FakeSplitter.__doc__
     __init__.__doc__ = __doc__
 
 class ReversedSplitter(SanUnit, bst.units.ReversedSplitter):
@@ -69,10 +69,10 @@ class ReversedSplitter(SanUnit, bst.units.ReversedSplitter):
     
     biosteam document
     -----------------
+    biosteam.units.FakeSplitter
 
     '''
     __init__ = bst.units.ReversedSplitter.__init__
-    __doc__ += bst.units.ReversedSplitter.__doc__
     __init__.__doc__ = __doc__
     
 class Pump(SanUnit, bst.units.Pump):
@@ -81,10 +81,10 @@ class Pump(SanUnit, bst.units.Pump):
     
     biosteam document
     -----------------
+    `biosteam.units.Pump <https://biosteam.readthedocs.io/en/latest/units/Pump.html>`_
 
     '''
     __init__ = bst.units.Pump.__init__
-    __doc__ += bst.units.Pump.__doc__
     __init__.__doc__ = __doc__
     
 class Tank(SanUnit, bst.units.Tank, isabstract=True):
@@ -93,22 +93,22 @@ class Tank(SanUnit, bst.units.Tank, isabstract=True):
     
     biosteam document
     -----------------
+    `biosteam.units.Tank <https://biosteam.readthedocs.io/en/latest/units/Tank.html>`_
 
     '''
     __init__ = bst.units.Tank.__init__
-    __doc__ += bst.units.Tank.__doc__
     __init__.__doc__ = __doc__
     
 class StorageTank(SanUnit, bst.units.StorageTank):
     '''
-    Similar to the MixTank unit in biosteam, but takes WasteStreams.
+    Similar to the StorageTank unit in biosteam, but takes WasteStreams.
     
     biosteam document
     -----------------
+    `biosteam.units.StorageTank <https://biosteam.readthedocs.io/en/latest/units/StorageTank.html>`_
 
     '''
     __init__ = bst.units.StorageTank.__init__
-    __doc__ += bst.units.StorageTank.__doc__
     __init__.__doc__ = __doc__
     
 class MixTank(SanUnit, bst.units.MixTank):
@@ -117,10 +117,10 @@ class MixTank(SanUnit, bst.units.MixTank):
     
     biosteam document
     -----------------
+    `biosteam.units.MixTank <https://biosteam.readthedocs.io/en/latest/units/MixTank.html>`_
 
     '''
     __init__ = bst.units.MixTank.__init__
-    __doc__ += bst.units.MixTank.__doc__
     __init__.__doc__ = __doc__
     _run = Mixer._run
     

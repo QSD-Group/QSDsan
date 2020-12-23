@@ -30,7 +30,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('SludgeSeparator',)
 
-data_path += 'unit_data/_sludge_separator.csv'
+data_path += 'sanunit_data/_sludge_separator.csv'
 
 allocate_N_removal = Decay.allocate_N_removal
 
@@ -47,10 +47,10 @@ class SludgeSeparator(SanUnit):
             Waste for treatment.
         outs : WasteStream
             Liquid, settled solids.
-        split : [float] or [dict]
+        split : float or dict
             Fractions of material retention in the settled solids.
             Default values will be used if not given.
-        settled_frac : [float]
+        settled_frac : float
             Fraction of influent that settles as solids.
             The default value will be used if not given.
 

@@ -29,9 +29,9 @@ from chaospy import distributions as shape
 from biosteam import plots, PowerUtility
 from biosteam.evaluation import Model, Metric
 
-from qsdsab import ImpactItem
-from qsdsab.utils.loading import load_data, data_path
-from qsdsab.utils.setter import Setter, DictAttrSetter
+from qsdsan import ImpactItem
+from qsdsan.utils.loading import load_data, data_path
+from qsdsan.utils.setter import Setter, DictAttrSetter
 from bwaise import systems
 
 np.random.seed(3221)

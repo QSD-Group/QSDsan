@@ -30,7 +30,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('PitLatrine',)
 
-data_path += 'unit_data/_pit_latrine.csv'
+data_path += 'sanunit_data/_pit_latrine.csv'
 
 
 # %%
@@ -47,10 +47,10 @@ class PitLatrine(Toilet):
 
         '''
 
-        if_leaching : [bool]
+        if_leaching : bool
             If infiltration to soil occurs
             (i.e., if the pit walls and floors are permeable).
-        if_pit_above_water_table : [bool]
+        if_pit_above_water_table : bool
             If the pit is above local water table.
             
         Returns

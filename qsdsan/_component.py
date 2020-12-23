@@ -98,7 +98,14 @@ def check_return_property(name, value):
 # =============================================================================
 
 class Component(tmo.Chemical):
-    '''A subclass of the Chemical object in the thermosteam package with additional attributes and methods for waste treatment'''         
+    '''
+    A subclass of the Chemical object in the thermosteam package with additional attributes and methods for waste treatment.
+    
+    thermosteam document
+    --------------------
+    `thermosteam.Chemical <https://thermosteam.readthedocs.io/en/latest/Chemical.html>`_
+    
+    '''         
 
     __slots__ = _component_slots
 
@@ -174,7 +181,7 @@ class Component(tmo.Chemical):
         [float] Carbon content of the Component, [g C/g measure unit].
 
         Notes
-        -------
+        -----
         [1] Must be within [0,1].
         [2] Will be calculated based on formula if given.
         '''
@@ -190,7 +197,7 @@ class Component(tmo.Chemical):
         [float] Nitrogen content of the Component, [g N/g measure unit].
 
         Notes
-        -------
+        -----
         [1] Must be within [0,1].
         [2] If the Component is measured as N, then i_N is 1.
         [3] Will be calculated based on formula if given.
@@ -206,7 +213,7 @@ class Component(tmo.Chemical):
         [float] Phosphorus content of the Component, [g P/g measure unit].
 
         Notes
-        -------
+        -----
         [1] Must be within [0,1].
         [2] If the Component is measured as P, then i_P is 1.
         [3] Will be calculated based on formula if given.
@@ -222,7 +229,7 @@ class Component(tmo.Chemical):
         [float] Potassium content of the Component, [g K/g measure unit].
 
         Notes
-        -------
+        -----
         [1] Must be within [0,1].
         [2] Will be calculated based on formula if given.
         '''
@@ -237,7 +244,7 @@ class Component(tmo.Chemical):
         [float] Magnesium content of the Component, [g Mg/g measure unit].
 
         Notes
-        -------
+        -----
         [1] Must be within [0,1].
         [2] Will be calculated based on formula if given.
         '''
@@ -252,7 +259,7 @@ class Component(tmo.Chemical):
         [float] Calcium content of the Component, [g Ca/g measure unit].
 
         Notes
-        -------
+        -----
         [1] Must be within [0,1].
         [2] Will be calculated based on formula if given.
         '''
@@ -283,7 +290,7 @@ class Component(tmo.Chemical):
         [float] Charge content of the Component, [mol +/g measure unit].
 
         Notes
-        -------
+        -----
         Positive values indicate cations and negative values indicate anions.
         '''
         return self._i_charge or 0.
@@ -297,7 +304,7 @@ class Component(tmo.Chemical):
         BOD5 fraction in COD of the Component, unitless.
 
         Notes
-        -------
+        -----
         [1] Must be within [0,1].
         [2] Must be less than or equal to f_uBOD_COD.
         '''
@@ -312,7 +319,7 @@ class Component(tmo.Chemical):
         [float] Ultimate BOD fraction in COD of the Component, unitless.
 
         Notes
-        -------
+        -----
         [1] Must be within [0,1].
         [2] Must be greater than or equal to f_BOD5_COD.
         '''
@@ -330,7 +337,7 @@ class Component(tmo.Chemical):
         [float] Volatile fraction of the mass of the Component, unitless.
 
         Notes
-        -------
+        -----
         Must be within [0,1].
         '''
         return self._f_Vmass_Totmass or 0.
@@ -352,7 +359,7 @@ class Component(tmo.Chemical):
         [str] The unit as which the Component is measured.
 
         Notes
-        -------
+        -----
         Can be left as blank or chosen from 'COD', 'C', 'N', or 'P'.
         '''
         return self._measured_as
@@ -366,7 +373,7 @@ class Component(tmo.Chemical):
         [str] Size of the Component based on the type.
 
         Notes
-        -------
+        -----
         Must be chosen from 'Dissolved gas', 'Soluble', 'Colloidal', or 'Particulate'.
         '''
         return self._particle_size
@@ -380,7 +387,7 @@ class Component(tmo.Chemical):
         [str] Degradability of the Component.
 
         Notes
-        -------
+        -----
         Must be chosen from 'Readily', 'Slowly', or 'Undegradable'.
         '''
         return self._degradability
@@ -402,7 +409,7 @@ class Component(tmo.Chemical):
 
         Parameters
         ----------
-        chemical_info : [bool]
+        chemical_info : bool
             Whether to show properties associated with the corresponding
             Chemical object of the Component. The default is False.
         '''

@@ -18,9 +18,6 @@ Ref:
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
 
-TODO:
-    [1] Incorporate ADM, or change this to SimpleAD or something
-
 '''
 
 
@@ -31,18 +28,16 @@ from .. import SanUnit, Construction
 from ._decay import Decay
 from ..utils.loading import load_data, data_path
 
-__all__ = ('AnaerobicDigestion',)
+__all__ = ('AnaerobicBaffledReactor',)
 
-data_path += 'unit_data/_anaerobic_digestion.csv'
+data_path += 'sanunit_data/_anaerobic_baffled_reactor.csv'
 
 
-class AnaerobicDigestion(SanUnit, Decay):
-    '''Anaerobic digestion of wastes with the production of biogas.'''
-    
-    _default_data = None
+class AnaerobicBaffledReactor(SanUnit, Decay):
+    '''Anaerobic baffled reactor with the production of biogas.'''
     
     def __init__(self, ID='', ins=None, outs=(), if_N2O_emission=False, **kwargs):
-        
+
         '''
 
         Parameters
@@ -51,14 +46,13 @@ class AnaerobicDigestion(SanUnit, Decay):
             Waste for treatment.
         outs : WasteStream
             Treated waste, biogas, and fugitive N2O.
-        if_N2O_emission : [bool]
+        if_N2O_emission : bool
             If consider N2O emission from N degradation the process.
 
         '''
-        
+
         SanUnit.__init__(self, ID, ins, outs)
         self.if_N2O_emission = if_N2O_emission
-        # self._tau_previous = 0.
     
         data = load_data(path=data_path)
         for para in data.index:
@@ -82,7 +76,7 @@ class AnaerobicDigestion(SanUnit, Decay):
         CH4.phase = N2O.phase = 'g'
         
         # COD removal
-        COD_deg = treated._COD*treated.F_vol/1e3*self.COD_removal # kg/hr
+        COD_deg = waste._COD*waste.F_vol/1e3*self.COD_removal # kg/hr
         treated._COD *= (1-self.COD_removal)
         #!!! Which assumption is better?
         treated.imass['OtherSS'] *= (1-self.COD_removal)
@@ -94,7 +88,7 @@ class AnaerobicDigestion(SanUnit, Decay):
             N_loss = self.first_order_decay(k=self.decay_k_N,
                                             t=self.tau/365,
                                             max_decay=self.N_max_decay)
-            N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol
+            N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol*self.N_removal
             NH3_rmd, NonNH3_rmd = \
                 self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
             treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
@@ -104,46 +98,36 @@ class AnaerobicDigestion(SanUnit, Decay):
             N2O.empty()
 
     _units = {
-        'Volumetric flow rate': 'm3/hr',
         'Residence time': 'd',
-        'Single reactor volume': 'm3',
-        'Reactor diameter': 'm',
-        'Reactor height': 'm'
+        'Reactor length': 'm',
+        'Reactor width': 'm',
+        'Reactor height': 'm',
+        'Single reactor volume': 'm3'
         }
 
     def _design(self):
         design = self.design_results
-        design['Volumetric flow rate'] = Q = self.ins[0].F_vol
-        design['Residence time'] = tau = self.tau
+        design['Residence time'] = self.tau
         design['Reactor number'] = N = self.N_reactor
-        V_tot = Q * tau*24
-        # one extra as a backup
-        design['Single reactor volume'] = V_single = V_tot/(1-self.headspace_frac)/(N-1)
-        # Rx modeled as a cylinder
-        design['Reactor diameter'] = D = (4*V_single*self.aspect_ratio/np.pi)**(1/3)
-        design['Reactor height'] = H = self.aspect_ratio * D
-        concrete =  N*self.concrete_thickness*(2*np.pi/4*(D**2)+np.pi*D*H)
+        design['Baffle number'] = N_b = self.N_baffle
+        design['Reactor length'] = L = self.reactor_L
+        design['Reactor width'] = W = self.reactor_W
+        design['Reactor height'] = H = self.reactor_H
+        design['Single reactor volume'] = V = L*W*H
+        concrete = N*self.concrete_thickness*(2*L*W+2*L*H+(2+N_b)*W*H)*self.add_concrete
         self.construction = (
             Construction(item='Concrete', quantity=concrete, unit='m3'),
-            Construction(item='Excavation', quantity=V_tot, unit='m3'),
+            #!!! Uncertainty on gravel density not included
+            Construction(item='Gravel', quantity= N*V/(N_b+1)*1600, unit='kg'),
+            Construction(item='Excavation', quantity=N*V, unit='m3'),
             )
         self.add_construction()
-        
-    #!!! No opex assumption in ref [1]
-    # Use the Material/Construction class
+
+
     def _cost(self):
         pass
-        # self.purchase_cost['Concrete'] = self.design_results['Total concrete volume']
-        
-    
-    # #!!! Maybe do not need this tau_previous
-    # @property
-    # def tau_previous(self):
-    #     '''[float] Time between the waste production and anaerobic digestion, [d].'''
-    #     return self._tau_previous
-    # @tau_previous.setter
-    # def tau_previous(self, i):
-    #     self._tau_previous = float(i)
+
+
 
     @property
     def tau(self):
@@ -162,6 +146,14 @@ class AnaerobicDigestion(SanUnit, Decay):
         self._COD_removal = float(i)
 
     @property
+    def N_removal(self):
+        '''[float] Fraction of N removed during treatment.'''
+        return self._N_removal
+    @N_removal.setter
+    def N_removal(self, i):
+        self._N_removal = float(i)
+
+    @property
     def N_reactor(self):
         '''[int] Number of reactors, float will be converted to the smallest integer.'''
         return self._N_reactor
@@ -170,20 +162,47 @@ class AnaerobicDigestion(SanUnit, Decay):
         self._N_reactor = int(np.ceil(i))
 
     @property
-    def aspect_ratio(self):
-        '''[float] Diameter-to-height ratio of the reactor.'''
-        return self._aspect_ratio
-    @aspect_ratio.setter
-    def aspect_ratio(self, i):
-        self._aspect_ratio = float(i)
+    def reactor_L(self):
+        '''[float] Reactor length, [m].'''
+        return self._reactor_L
+    @reactor_L.setter
+    def reactor_L(self, i):
+        self._reactor_L = float(i)
 
     @property
-    def headspace_frac(self):
-        '''[float] Fraction of the reactor volume for headspace gas.'''
-        return self._headspace_frac
-    @headspace_frac.setter
-    def headspace_frac(self, i):
-        self._headspace_frac = float(i)
+    def reactor_W(self):
+        '''[float] Reactor width, [m].'''
+        return self._reactor_W
+    @reactor_W.setter
+    def reactor_W(self, i):
+        self._reactor_W = float(i)
+
+    @property
+    def reactor_H(self):
+        '''[float] Reactor height, [m].'''
+        return self._reactor_H
+    @reactor_H.setter
+    def reactor_H(self, i):
+        self._reactor_H = float(i)
+
+    @property
+    def N_baffle(self):
+        '''[int] Number of reactors, float will be converted to the smallest integer.'''
+        return self._N_baffle
+    @N_baffle.setter
+    def N_baffle(self, i):
+        self._N_baffle = int(np.ceil(i))
+
+    @property
+    def add_concrete(self):
+        '''
+        [float] Additional concrete as a fraction of the reactor concrete usage
+        to account for receiving basin and biogas tank.
+        '''
+        return self._add_concrete
+    @add_concrete.setter
+    def add_concrete(self, i):
+        self._add_concrete = float(i)
 
     @property
     def concrete_thickness(self):
@@ -192,6 +211,8 @@ class AnaerobicDigestion(SanUnit, Decay):
     @concrete_thickness.setter
     def concrete_thickness(self, i):
         self._concrete_thickness = float(i)
+
+
 
 
 

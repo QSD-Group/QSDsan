@@ -49,17 +49,15 @@ class Decay:
 
         Parameters
         ----------
-        tot_red : [float]
+        tot_red : float
             Total amount of N to be removed.
         preferred_N : [float]
             Current content of the N that will be removed first.
 
         Returns
         -------
-        [float]
-            Amount of preferred N to be removed.
-        [float]
-            Amount of other N to be removed.
+        N removal: tuple
+            Amount of preferred N to be removed, amount of other N to be removed.            
 
         '''
         if not preferred_N > 0:
@@ -81,21 +79,21 @@ class Decay:
 
         Parameters
         ----------
-        k : [float]
+        k : float
             Degradation rate constant.
-        t0 : [float]
+        t0 : float
             Degradation time prior to current process.
-        t : [float]
+        t : float
             Degradation time in current process.
-        max_decay : [float]
+        max_decay : float
             Maximum removal ratio.
-        tot : [float], optional
+        tot : float, optional
             Total degradable amount.
             If set to 1 (default), the return is the relative ratio (i.e., loss/tot).
 
         Returns
         -------
-        loss : [float]
+        loss : float
             Amount lost due to degradation.
 
         '''

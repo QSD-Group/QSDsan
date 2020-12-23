@@ -47,9 +47,9 @@ class Lagoon(SanUnit, Decay):
             Waste for treatment.
         outs : WasteStream
             Treated waste, fugitive CH4, and fugitive N2O.
-        design_type : [str]
+        design_type : str
             Can be 'anaerobic' or 'facultative'.
-        if_N2O_emission : [bool]
+        if_N2O_emission : bool
             If consider N2O emission from N degradation the process.
 
         '''        
@@ -58,9 +58,9 @@ class Lagoon(SanUnit, Decay):
         self._tau = None
         self._P_removal = 0.
         
-        anaerobic_path = data_path + 'unit_data/_anaerobic_lagoon.csv'
+        anaerobic_path = data_path + 'sanunit_data/_anaerobic_lagoon.csv'
         self._anaerobic_defaults = load_data(path=anaerobic_path)
-        facultative_path = data_path + 'unit_data/_facultative_lagoon.csv'
+        facultative_path = data_path + 'sanunit_data/_facultative_lagoon.csv'
         self._facultative_defaults = load_data(path=facultative_path)
         
         self._design_type = None

@@ -32,7 +32,7 @@ from ..utils.loading import load_data, data_path
 __all__ = ('SedimentationTank',)
 
 
-data_path += 'unit_data/_sedimentation_tank.csv'
+data_path += 'sanunit_data/_sedimentation_tank.csv'
 
 
 class SedimentationTank(SludgeSeparator, Decay):
@@ -49,13 +49,13 @@ class SedimentationTank(SludgeSeparator, Decay):
             Waste for treatment.
         outs : WasteStream
             Liquid, settled solids, fugitive CH4, and fugitive N2O.
-        split : [float] or [dict]
+        split : float or dict
             Fractions of material retention in the settled solids.
             Default values will be used if not given.
-        settled_frac : [float]
+        settled_frac : float
             Fraction of influent that settles as solids.
             The default value will be used if not given.
-        if_N2O_emission : [bool]
+        if_N2O_emission : bool
             If consider N2O emission from N degradation the process.
 
         '''        

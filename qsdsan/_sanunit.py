@@ -25,26 +25,27 @@ from .utils.piping import WSIns, WSOuts
 __all__ = ('SanUnit',)
 
 @utils.registered(ticket_name='SU')
-class SanUnit(bst.Unit, isabstract=True):
+class SanUnit(bst.Unit, isabstract=True):    
 
     '''
     Subclass of Unit in biosteam, is initialized with WasteStream rather than Stream.
     
-    Additional attributes
-    --------------------
-    construction : [tuple]
-        Contains construction information.
-    construction_impacts : [dict]
-        Total impacts associated with this SanUnit.
-    transportation : [tuple]
-        Contains construction information.
-    add_OPEX : [float]
-        Operating expense per hour in addition to utility cost (assuming 100% uptime).
-    uptime_ratio : [float]
-        Uptime of the unit to adjust add_OPEX, should be in [0,1] (i.e., a unit that is always operating).
-    
     biosteam document
     -----------------
+    `biosteam.Unit <https://biosteam.readthedocs.io/en/latest/Unit.html>`_
+    
+    Additional attributes
+    ---------------------
+    construction : tuple
+        Contains construction information.
+    construction_impacts : dict
+        Total impacts associated with this SanUnit.
+    transportation : tuple
+        Contains construction information.
+    add_OPEX : float
+        Operating expense per hour in addition to utility cost (assuming 100% uptime).
+    uptime_ratio : float
+        Uptime of the unit to adjust add_OPEX, should be in [0,1] (i.e., a unit that is always operating).
 
     '''
     
@@ -62,7 +63,6 @@ class SanUnit(bst.Unit, isabstract=True):
         self._add_OPEX = 0.
         self._uptime_ratio = 1.
 
-    __doc__ += bst.Unit.__doc__
     __init__.__doc__ = __doc__    
 
 

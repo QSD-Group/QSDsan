@@ -45,8 +45,12 @@ class UndefinedComponent(AttributeError):
 
 class Components(Chemicals):
     '''
-    A subclass of the Chemicals object in the thermosteam package,
-    contains Component objects as attributes.
+    A subclass of the Chemicals object in the thermosteam package, contains Component objects as attributes.
+    
+    thermosteam document
+    --------------------
+    `thermosteam.Chemicals <https://thermosteam.readthedocs.io/en/latest/Chemicals.html>`_
+    
     '''
     
     def __new__(cls, components, cache=False):
@@ -123,7 +127,7 @@ class Components(Chemicals):
     
         Parameters
         ----------
-        path : [str]
+        path : str
             File path, the file should end with '.cvs', '.xls', or 'xlsx'
     
         Returns
@@ -185,11 +189,11 @@ class Components(Chemicals):
     
         Parameters
         ----------
-        use_default_data : [bool], optional
+        use_default_data : bool, optional
             Whether to use default cache data. The default is True.
-        sotre_data : [bool], optional
+        sotre_data : bool, optional
             Whether to store the default data as cache. The default is True.
-        default_compile : [bool], optional
+        default_compile : bool, optional
             Whether to compile the default Components. The default is True.
     
         Returns
@@ -200,8 +204,8 @@ class Components(Chemicals):
         -----
         [1] Component-specific properties are defined in ./data/component.cvs.
 
-        [2] When default_compile is True, all essential Chemical-specific properties 
-            that are missing will be defaulted to those of water.
+        [2] When default_compile is True, all essential Chemical-specific properties
+        that are missing will be defaulted to those of water.
     
         '''
         import os
@@ -262,7 +266,13 @@ def component_data_array(components, attr):
 class CompiledComponents(CompiledChemicals):
     '''
     A subclass of the CompiledChemicals object in the thermosteam package,
-    contains Component objects as attributes.'''
+    contains Component objects as attributes.
+    
+    thermosteam document
+    --------------------
+    `thermosteam.CompiledChemicals <https://thermosteam.readthedocs.io/en/latest/Chemicals.html>`_
+    
+    '''
     
     _cache = {}
     

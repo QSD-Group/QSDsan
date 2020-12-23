@@ -45,15 +45,15 @@ class LCA:
 
         Parameters
         ----------
-        system : [biosteam.System]
+        system : biosteam.System
             System for which this LCA is conducted for.
-        lifetime : [float]
+        lifetime : float
             Lifetime of the LCA.
-        lifetime_unit : [str]
+        lifetime_unit : str
             Unit of lifetime.
-        uptime_ratio : [float]
+        uptime_ratio : float
             Fraction of time that the plant is operating.
-        **item_quantities : kwargs, [ImpactItem] or [str] = [float] or ([float], [unit])
+        **item_quantities : kwargs, ImpactItem or str = float or (float, unit)
             Other ImpactItems (e.g., electricity) and their quantities.
 
         '''

@@ -43,7 +43,7 @@ from . import (
     _simple_tea,
     _lca,
     utils,
-    units,
+    sanunits,
     )
 
 __all__ = (

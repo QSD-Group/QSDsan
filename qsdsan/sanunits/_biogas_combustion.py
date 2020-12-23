@@ -38,11 +38,11 @@ class BiogasCombustion(SanUnit):
 
         Parameters
         ----------
-        if_combustion : [bool]
+        if_combustion : bool
             If include combusion reaction during simulation.
-        biogas_loss : [float]
+        biogas_loss : float
             Fraction of biogas loss.
-        biogas_eff : [float]
+        biogas_eff : float
             Combustion efficiency of biogas as a fraction of CH4.
 
         '''

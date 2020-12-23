@@ -28,7 +28,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('Excretion',)
 
-data_path += 'unit_data/_excretion.csv'
+data_path += 'sanunit_data/_excretion.csv'
 
 
 # %%

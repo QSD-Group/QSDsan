@@ -27,11 +27,11 @@ setup(
     install_requires=['biosteam'],
     package_data=
         {'qsdsan': [
-                    'units_of_measure.txt',
                     'data/*',
-                    'data/unit_data/*',
+                    'data/sanunit_data/*',
+                    'sanunits/*',
+                    'units_of_measure.txt',
                     'utils/*',
-                    'units/*',
                     ]},
     platforms=['Windows', 'Mac', 'Linux'],
     classifiers=['License :: OSI Approved :: University of Illinois/NCSA Open Source License',

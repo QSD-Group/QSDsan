@@ -70,6 +70,11 @@ class WasteStream(Stream):
     '''
     A subclass of the Stream object in the thermosteam package with additional
     attributes and methods for waste treatment.
+    
+    thermosteam document
+    --------------------
+    `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
+    
     '''
     
     __slots__ = (*Stream.__slots__, *_ws_specific_slots)
@@ -118,21 +123,21 @@ class WasteStream(Stream):
 
         Parameters
         ----------
-        T : [str], optional
+        T : str, optional
             The unit for temperature. The default is 'K'.
-        P : [float], optional
+        P : float, optional
             The unit for pressure. The default is 'Pa'.
-        flow : [str], optional
+        flow : str, optional
             The unit for the flow. The default is 'kg/hr'.
-        composition : [bool], optional
+        composition : bool, optional
             Whether to show flow information of different Component objects in
             the WasteStream as a percentage. The default is False.
-        N : [int], optional
+        N : int, optional
             Number of Component objects to print out, when left as None,
             the number depends on the default of thermosteam. The default is 15.
-        stream_info : [bool], optional
+        stream_info : bool, optional
             Whether to print Stream-specific information. The default is True.
-        details : [bool], optional
+        details : bool, optional
             Whether to show the all composite variables of the WasteStream. The default is True.
 
         '''
@@ -214,7 +219,7 @@ class WasteStream(Stream):
 
         Parameters
         ----------
-        variable : [str]
+        variable : str
             The composite variable to calculate. 
             One of ('COD', 'BOD5', 'BOD', 'uBOD', 'TC', 'TN', 'TP', 'TK', 'solids', 'charge').
         subgroup : CompiledComponents, optional
@@ -225,11 +230,11 @@ class WasteStream(Stream):
         degradability : 'rb', 'sb', 'b' or 'u', optional
             Readily biodegradable ('rb'), slowly biodegradable ('sb'), 
             biodegradable ('b'), or undegradable ('u'). The default is None.
-        organic : [bool], optional
+        organic : bool, optional
             Organic (True) or inorganic (False). The default is None.
-        volatile : [bool], optional
+        volatile : bool, optional
             Volatile (True) or involatile (False). The default is None.
-        specification : [str], optional
+        specification : str, optional
             One of ('SVFA', 'XStor', 'XANO', 'XBio', 'SNOx', 'XPAO_PP','TKN'). 
             The default is None.
 

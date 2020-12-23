@@ -28,9 +28,10 @@ TODO:
 
 import numpy as np
 import biosteam as bst
-import sanitation # import sanplorer as sp
+import qsdsan as qs
 # from sklearn.linear_model import LinearRegression
-from sanitation import units, WasteStream, ImpactItem, StreamImpactItem, \
+from qsdsan import sanunits as su
+from qsdsan import WasteStream, ImpactItem, StreamImpactItem, \
     SimpleTEA, LCA
 import bwaise
 cmps = bwaise._cmps.cmps
@@ -38,10 +39,10 @@ cmps = bwaise._cmps.cmps
 bst.settings.set_thermo(cmps)
 e = bst.PowerUtility
 e.price = 0.17
-currency = sanitation.currency = 'USD'
-sanitation.CEPCI = sanitation.CEPCI_by_year[2018]
+currency = qs.currency = 'USD'
+qs.CEPCI = qs.CEPCI_by_year[2018]
 items = ImpactItem._items
-GWP = sanitation.ImpactIndicator._indicators['GWP']
+GWP = qs.ImpactIndicator._indicators['GWP']
 
 
 # %%
@@ -118,9 +119,9 @@ liq_K = WasteStream('liq_K', phase='s', price=1.333)
 sol_K = WasteStream('sol_K', phase='s', price=1.333)
 
 print('\n----------Scenario A----------\n')
-A1 = units.Excretion('A1', outs=('urine', 'feces'))
+A1 = su.Excretion('A1', outs=('urine', 'feces'))
 
-A2 = units.PitLatrine('A2', ins=(A1-0, A1-1,
+A2 = su.PitLatrine('A2', ins=(A1-0, A1-1,
                                   'toilet_paper', 'flushing_water',
                                   'cleansing_water', 'desiccant'),
                       outs=('mixed_waste', 'leachate', '', ''),
@@ -132,36 +133,36 @@ A2 = units.PitLatrine('A2', ins=(A1-0, A1-1,
 
 truck = 'TankerTruck1' # assumed
 interval = (A2.emptying_period*365*truck_V[truck])/A2.pit_V
-A3 = units.Trucking('A3', ins=A2-0, outs=('transported', 'loss'),
+A3 = su.Trucking('A3', ins=A2-0, outs=('transported', 'loss'),
                     load_type='mass', load=truck_V[truck], load_unit='tonne',
                     distance=5, distance_unit='km',
                     interval=interval, interval_unit='day',
                     fee=truck_cost[truck],
                     loss_ratio=0.02)
 
-A4 = units.SedimentationTank('A4', ins=A3-0,
+A4 = su.SedimentationTank('A4', ins=A3-0,
                               outs=('liq', 'sol', '', ''),
                               decay_k_COD=get_decay_k(tau_deg, log_deg),
                               decay_k_N=get_decay_k(tau_deg, log_deg),
                               max_CH4_emission=max_CH4_emission)
 
-A5 = units.Lagoon('A5', ins=A4-0, outs=('anaerobic_treated', '', ''),
+A5 = su.Lagoon('A5', ins=A4-0, outs=('anaerobic_treated', '', ''),
                   design_type='anaerobic',
                   decay_k_N=get_decay_k(tau_deg, log_deg),
                   max_CH4_emission=max_CH4_emission)
 
-A6 = units.Lagoon('A6', ins=A5-0, outs=('facultative_treated', '', ''),
+A6 = su.Lagoon('A6', ins=A5-0, outs=('facultative_treated', '', ''),
                   design_type='facultative',
                   decay_k_N=get_decay_k(tau_deg, log_deg),
                   max_CH4_emission=max_CH4_emission)
 
-A7 = units.DryingBed('A7', ins=A4-1, outs=('dried_sludge', 'evaporated', '', ''),
+A7 = su.DryingBed('A7', ins=A4-1, outs=('dried_sludge', 'evaporated', '', ''),
                      design_type='unplanted',
                      decay_k_COD=get_decay_k(tau_deg, log_deg),
                      decay_k_N=get_decay_k(tau_deg, log_deg),
                      max_CH4_emission=max_CH4_emission)
 
-A8 = units.CropApplication('A8', ins=A6-0, outs=('liquid_fertilizer', 'loss'),
+A8 = su.CropApplication('A8', ins=A6-0, outs=('liquid_fertilizer', 'loss'),
                            loss_ratio=app_loss)
 def adjust_NH3_loss():
     A8._run()
@@ -170,19 +171,19 @@ def adjust_NH3_loss():
     A8.outs[0]._COD = A8.outs[1]._COD = A8.ins[0]._COD
 A8.specification = adjust_NH3_loss
 
-A9 = units.Mixer('A9', ins=(A2-2, A4-2, A5-1, A6-1, A7-2),
+A9 = su.Mixer('A9', ins=(A2-2, A4-2, A5-1, A6-1, A7-2),
                  outs=fugitive_CH4)
 A9.line = 'CH4 mixer'
 
-A10 = units.Mixer('A10', ins=(A2-3, A4-3, A5-2, A6-2, A7-3),
+A10 = su.Mixer('A10', ins=(A2-3, A4-3, A5-2, A6-2, A7-3),
                  outs=fugitive_N2O)
 A10.line = 'N2O mixer'
 
-A11 = units.ComponentSplitter('A11', ins=A7-0,
+A11 = su.ComponentSplitter('A11', ins=A7-0,
                               outs=(sol_N, sol_P, sol_K, 'sol_non_fertilizers'),
                               splits=(('NH3', 'NonNH3'), 'P', 'K'))
 
-A12 = units.ComponentSplitter('A12', ins=A8-0,
+A12 = su.ComponentSplitter('A12', ins=A8-0,
                               outs=(liq_N, liq_P, liq_K, 'liq_non_fertilizers'),
                               splits=(('NH3', 'NonNH3'), 'P', 'K'))
 
@@ -276,7 +277,7 @@ print(f'Total COD recovery is {get_COD_recovery():.1%}, '
 # %%
 
 # ws1 = A2.outs[0].copy('ws1')
-# A4 = units.AnaerobicDigestion('A4', ins=ws1,
+# A4 = su.AnaerobicDigestion('A4', ins=ws1,
 #                               outs=('treated', 'CH4', 'N2O'),
 #                               # tau_previous=A2.emptying_period*365,
 #                               decay_k_N=get_decay_k(tau_deg, log_deg),
@@ -285,7 +286,7 @@ print(f'Total COD recovery is {get_COD_recovery():.1%}, '
 # # A4.show()
 
 # ws2 = A2.outs[0].copy('ws2')
-# A5 = units.SludgeSeparator('A5', ins=ws2, outs=('liq', 'sol'))
+# A5 = su.SludgeSeparator('A5', ins=ws2, outs=('liq', 'sol'))
 
 # A5.simulate()
 # # A5.show()
@@ -294,7 +295,7 @@ print(f'Total COD recovery is {get_COD_recovery():.1%}, '
 
 
 # ws5 = A2.outs[0].copy('ws5')
-# A8 = units.DryingBed('A8', ins=ws5, outs=('solid', 'evaporated', 'CH4', 'N2O'),
+# A8 = su.DryingBed('A8', ins=ws5, outs=('solid', 'evaporated', 'CH4', 'N2O'),
 #                      design_type='unplanted',
 #                      decay_k_COD=get_decay_k(tau_deg, log_deg),
 #                      decay_k_N=get_decay_k(tau_deg, log_deg),
@@ -304,7 +305,7 @@ print(f'Total COD recovery is {get_COD_recovery():.1%}, '
 # # A8.show()
 
 # ws6 = A2.outs[0].copy('ws6')
-# A9 = units.AnaerobicBaffledReactor('A9', ins=ws6, outs=('treated', 'CH4', 'N2O'),
+# A9 = su.AnaerobicBaffledReactor('A9', ins=ws6, outs=('treated', 'CH4', 'N2O'),
 #                                    decay_k_COD=get_decay_k(tau_deg, log_deg),
 #                                    max_CH4_emission=max_CH4_emission)
 
@@ -312,7 +313,7 @@ print(f'Total COD recovery is {get_COD_recovery():.1%}, '
 # # A9.show()
 
 # ws7 = A2.outs[0].copy('ws7')
-# A10 = units.LiquidTreatmentBed('A10', ins=ws7, outs=('treated', 'CH4', 'N2O'),
+# A10 = su.LiquidTreatmentBed('A10', ins=ws7, outs=('treated', 'CH4', 'N2O'),
 #                                decay_k_COD=get_decay_k(tau_deg, log_deg),
 #                                decay_k_N=get_decay_k(tau_deg, log_deg),
 #                                max_CH4_emission=max_CH4_emission)
@@ -328,7 +329,7 @@ print(f'Total COD recovery is {get_COD_recovery():.1%}, '
 
 
 # biogas = WasteStream('biogas', CH4=1)
-# AX2 = units.BiogasCombustion('AX2', ins=(biogas, 'air'),
+# AX2 = su.BiogasCombustion('AX2', ins=(biogas, 'air'),
 #                               outs=('used', 'lost', 'wasted'),
 #                               if_combustion=True,
 #                               biogas_loss=0.1, biogas_eff=0.55)
@@ -361,8 +362,8 @@ print(f'Total COD recovery is {get_COD_recovery():.1%}, '
 # # =============================================================================
 
 # print('\n----------Scenario C----------\n')
-# C1 = units.Excretion('C1', outs=('urine', 'feces'), N_user=toilet_user)
-# C2 = units.UDDT('C2', ins=(C1-0, C1-1,
+# C1 = su.Excretion('C1', outs=('urine', 'feces'), N_user=toilet_user)
+# C2 = su.UDDT('C2', ins=(C1-0, C1-1,
 #                             'toilet_paper', 'flushing_water',
 #                             'cleaning_water', 'desiccant'),
 #                 outs=('liquid_waste', 'solid_waste',
@@ -377,7 +378,7 @@ print(f'Total COD recovery is {get_COD_recovery():.1%}, '
 # truck = 'HandcartAndTruck'
 # # Liquid waste
 # interval = (C2.collection_period*truck_V[truck])/C2.tank_V
-# C3 = units.Trucking('C3', ins=C2-0, outs=('transported_l', 'loss_l'),
+# C3 = su.Trucking('C3', ins=C2-0, outs=('transported_l', 'loss_l'),
 #                     load_type='mass', load=truck_V[truck], load_unit='tonne',
 #                     distance=5, distance_unit='km',
 #                     interval=interval, interval_unit='day',
@@ -386,7 +387,7 @@ print(f'Total COD recovery is {get_COD_recovery():.1%}, '
 
 # # Solid waste
 # interval = (C2.collection_period*truck_V[truck])/C2.tank_V
-# C4 = units.Trucking('C4', ins=C2-1, outs=('transported_s', 'loss_s'),
+# C4 = su.Trucking('C4', ins=C2-1, outs=('transported_s', 'loss_s'),
 #                     load_type='mass', load=truck_V[truck], load_unit='tonne',
 #                     distance=5, distance_unit='km',
 #                     interval=interval, interval_unit='day',
@@ -394,7 +395,7 @@ print(f'Total COD recovery is {get_COD_recovery():.1%}, '
 #                     loss_ratio=0.02)
 
 
-# CX = units.CropApplication('CX', ins=WasteStream(), loss_ratio=app_loss)
+# CX = su.CropApplication('CX', ins=WasteStream(), loss_ratio=app_loss)
 # def adjust_NH3_loss():
 #     CX._run()
 #     CX.outs[0]._COD = CX.outs[1]._COD = CX.ins[0]._COD

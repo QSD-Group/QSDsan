@@ -31,7 +31,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('Toilet',)
 
-data_path += 'unit_data/_toilet.csv'
+data_path += 'sanunit_data/_toilet.csv'
 
 
 # %%
@@ -47,27 +47,27 @@ class Toilet(SanUnit, Decay, isabstract=True):
         
         Parameters
         ----------
-        N_user : [float]
+        N_user : float
             Number of people that share this toilet.
-        N_toilet : [float]
+        N_toilet : float
             Number of paralle toilets.
-        life_time : [float]
+        life_time : float
             Life time of the toilet in year.
-        if_toilet_paper : [bool]
+        if_toilet_paper : bool
             If toilet paper is used.
-        if_flushing : [bool]
+        if_flushing : bool
             If water is used for flushing.
-        if_cleansing : [bool]
+        if_cleansing : bool
             If water is used for cleansing.
-        if_desiccant : [bool]
+        if_desiccant : bool
             If desiccant is used for moisture and odor control.
-        if_air_emission : [bool]
+        if_air_emission : bool
             If emission to air occurs
             (i.e., if the pit is completely sealed off from the atmosphere).
-        if_ideal_emptying : [bool]
+        if_ideal_emptying : bool
             If the toilet appropriately emptied to avoid contamination to the
             environmental.
-        OPEX_over_CAPEX : [float]
+        OPEX_over_CAPEX : float
             Fraction of annual operating cost over total capital cost.
         '''
 
@@ -122,11 +122,11 @@ class Toilet(SanUnit, Decay, isabstract=True):
             Fugitive CH4 gas (before emptying).
         N2O : WasteStream
             Fugitive N2O gas (before emptying).
-        empty_ratio : [float]
+        empty_ratio : float
             Fraction of excreta that is appropriately emptied..
-        CH4_factor : [float]
+        CH4_factor : float
             Factor to convert COD removal to CH4 emission.
-        N2O_factor : [float]
+        N2O_factor : float
             Factor to convert COD removal to N2O emission.
 
         Returns

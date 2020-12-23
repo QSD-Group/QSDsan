@@ -18,6 +18,9 @@ Ref:
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
 
+TODO:
+    [1] Incorporate ADM, or change this to SimpleAD or something
+
 '''
 
 
@@ -28,16 +31,18 @@ from .. import SanUnit, Construction
 from ._decay import Decay
 from ..utils.loading import load_data, data_path
 
-__all__ = ('LiquidTreatmentBed',)
+__all__ = ('AnaerobicDigestion',)
 
-data_path += 'unit_data/_liquid_treatment_bed.csv'
+data_path += 'sanunit_data/_anaerobic_digestion.csv'
 
 
-class LiquidTreatmentBed(SanUnit, Decay):
-    '''For secondary treatment of liquid.'''
+class AnaerobicDigestion(SanUnit, Decay):
+    '''Anaerobic digestion of wastes with the production of biogas.'''
+    
+    _default_data = None
     
     def __init__(self, ID='', ins=None, outs=(), if_N2O_emission=False, **kwargs):
-
+        
         '''
 
         Parameters
@@ -45,14 +50,15 @@ class LiquidTreatmentBed(SanUnit, Decay):
         ins : WasteStream
             Waste for treatment.
         outs : WasteStream
-            Treated waste, fugitive CH4, and fugitive N2O.
-        if_N2O_emission : [bool]
+            Treated waste, biogas, and fugitive N2O.
+        if_N2O_emission : bool
             If consider N2O emission from N degradation the process.
 
         '''
-
+        
         SanUnit.__init__(self, ID, ins, outs)
         self.if_N2O_emission = if_N2O_emission
+        # self._tau_previous = 0.
     
         data = load_data(path=data_path)
         for para in data.index:
@@ -76,16 +82,12 @@ class LiquidTreatmentBed(SanUnit, Decay):
         CH4.phase = N2O.phase = 'g'
         
         # COD removal
-        COD_loss = self.first_order_decay(k=self.decay_k_COD,
-                                          t=self.tau/365,
-                                          max_decay=self.COD_max_decay)
-        COD_loss_tot = COD_loss*waste.COD/1e3*waste.F_vol
-        
-        treated._COD *= (1-COD_loss)
+        COD_deg = treated._COD*treated.F_vol/1e3*self.COD_removal # kg/hr
+        treated._COD *= (1-self.COD_removal)
         #!!! Which assumption is better?
-        treated.imass['OtherSS'] *= (1-COD_loss)
-        # treated.mass *= (1-COD_loss)
-        CH4_prcd = COD_loss_tot*self.MCF_decay*self.max_CH4_emission
+        treated.imass['OtherSS'] *= (1-self.COD_removal)
+        # treated.mass *= (1-self.COD_removal)
+        CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
         CH4.imass['CH4'] = CH4_prcd
 
         if self.if_N2O_emission:
@@ -100,34 +102,48 @@ class LiquidTreatmentBed(SanUnit, Decay):
             N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
         else:
             N2O.empty()
-    
+
     _units = {
+        'Volumetric flow rate': 'm3/hr',
         'Residence time': 'd',
-        'Bed length': 'm',
-        'Bed width': 'm',
-        'Bed height': 'm',
-        'Single bed volume': 'm3'
+        'Single reactor volume': 'm3',
+        'Reactor diameter': 'm',
+        'Reactor height': 'm'
         }
 
     def _design(self):
         design = self.design_results
-        design['Residence time'] = self.tau
-        design['Bed number'] = N = self.N_bed
-        design['Bed length'] = L = self.bed_L
-        design['Bed width'] = W = self.bed_W
-        design['Bed height'] = H = self.bed_H
-        design['Single bed volume'] = L*W*H
-        
-        concrete = N*self.concrete_thickness*(L*W+2*L*H+2*W*H)
+        design['Volumetric flow rate'] = Q = self.ins[0].F_vol
+        design['Residence time'] = tau = self.tau
+        design['Reactor number'] = N = self.N_reactor
+        V_tot = Q * tau*24
+        # one extra as a backup
+        design['Single reactor volume'] = V_single = V_tot/(1-self.headspace_frac)/(N-1)
+        # Rx modeled as a cylinder
+        design['Reactor diameter'] = D = (4*V_single*self.aspect_ratio/np.pi)**(1/3)
+        design['Reactor height'] = H = self.aspect_ratio * D
+        concrete =  N*self.concrete_thickness*(2*np.pi/4*(D**2)+np.pi*D*H)
         self.construction = (
             Construction(item='Concrete', quantity=concrete, unit='m3'),
+            Construction(item='Excavation', quantity=V_tot, unit='m3'),
             )
         self.add_construction()
-
-
+        
+    #!!! No opex assumption in ref [1]
+    # Use the Material/Construction class
     def _cost(self):
         pass
-
+        # self.purchase_cost['Concrete'] = self.design_results['Total concrete volume']
+        
+    
+    # #!!! Maybe do not need this tau_previous
+    # @property
+    # def tau_previous(self):
+    #     '''[float] Time between the waste production and anaerobic digestion, [d].'''
+    #     return self._tau_previous
+    # @tau_previous.setter
+    # def tau_previous(self, i):
+    #     self._tau_previous = float(i)
 
     @property
     def tau(self):
@@ -138,36 +154,36 @@ class LiquidTreatmentBed(SanUnit, Decay):
         self._tau = float(i)
 
     @property
-    def N_bed(self):
-        '''[int] Number of treatment beds, float will be converted to the smallest integer.'''
-        return self._N_bed
-    @N_bed.setter
-    def N_bed(self, i):
-        self._N_bed = int(np.ceil(i))
+    def COD_removal(self):
+        '''[float] Fraction of COD removed during treatment.'''
+        return self._COD_removal
+    @COD_removal.setter
+    def COD_removal(self, i):
+        self._COD_removal = float(i)
 
     @property
-    def bed_L(self):
-        '''[float] Bed length, [m].'''
-        return self._bed_L
-    @bed_L.setter
-    def bed_L(self, i):
-        self._bed_L = float(i)
+    def N_reactor(self):
+        '''[int] Number of reactors, float will be converted to the smallest integer.'''
+        return self._N_reactor
+    @N_reactor.setter
+    def N_reactor(self, i):
+        self._N_reactor = int(np.ceil(i))
 
     @property
-    def bed_W(self):
-        '''[float] Bed width, [m].'''
-        return self._bed_W
-    @bed_W.setter
-    def bed_W(self, i):
-        self._bed_W = float(i)
+    def aspect_ratio(self):
+        '''[float] Diameter-to-height ratio of the reactor.'''
+        return self._aspect_ratio
+    @aspect_ratio.setter
+    def aspect_ratio(self, i):
+        self._aspect_ratio = float(i)
 
     @property
-    def bed_H(self):
-        '''[float] Bed height, [m].'''
-        return self._bed_H
-    @bed_H.setter
-    def bed_H(self, i):
-        self._bed_H = float(i)
+    def headspace_frac(self):
+        '''[float] Fraction of the reactor volume for headspace gas.'''
+        return self._headspace_frac
+    @headspace_frac.setter
+    def headspace_frac(self, i):
+        self._headspace_frac = float(i)
 
     @property
     def concrete_thickness(self):
@@ -176,6 +192,10 @@ class LiquidTreatmentBed(SanUnit, Decay):
     @concrete_thickness.setter
     def concrete_thickness(self, i):
         self._concrete_thickness = float(i)
+
+
+
+
 
 
 

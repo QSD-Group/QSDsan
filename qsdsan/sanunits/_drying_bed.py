@@ -31,7 +31,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('DryingBed',)
 
-data_path += 'unit_data/_drying_bed.csv'
+data_path += 'sanunit_data/_drying_bed.csv'
 
 
 class DryingBed(SanUnit, Decay):
@@ -48,7 +48,7 @@ class DryingBed(SanUnit, Decay):
             Solid for drying.
         outs : WasteStream
             Dried solids, evaporated water, fugitive CH4, and fugitive N2O.
-        design_type : [str]
+        design_type : str
             Can be 'unplanted' or 'planted'. The default 'unplanted' process has
             a number of 'covered', 'uncovered', and 'storage' beds. The 'storage'
             bed is similar to the 'covered' bed, but with higher wall height.

@@ -38,9 +38,9 @@ class CropApplication(SanUnit):
 
         Parameters
         ----------
-        if_material_loss : [bool] or [dict]
+        if_material_loss : bool or dict
             If material loss occurs during application.
-        loss_ratio : [float] or [dict]
+        loss_ratio : float or dict
             Fractions of material losses during application (if if_materiloass is True).
 
         '''

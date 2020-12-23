@@ -42,25 +42,25 @@ class Trucking(SanUnit):
 
         Parameters
         ----------
-        load_type : [str]
+        load_type : str
             Either 'mass' or 'volume'.
-        load : [float]
+        load : float
             Transportation load per trip.
-        load_unit : [str]
+        load_unit : str
             Unit of the load.
-        distance : [float]
+        distance : float
             Transportation distance per trip.
-        distance_unit : [float]
+        distance_unit : float
             Unit of the distance.
-        interval : [float]
+        interval : float
             Time interval between trips.
-        fee : [float]
+        fee : float
             Transportation fee per trip.
-        fee : [float]
+        fee : float
             Transportation fee per trip.
-        if_material_loss : [bool]
+        if_material_loss : bool
             If material loss occurs during transportation.
-        loss_ratio : [float] or [dict]
+        loss_ratio : float or dict
             Fractions of material losses due to transportation.
 
         '''
