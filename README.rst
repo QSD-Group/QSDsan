@@ -7,12 +7,25 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 What is QSDsan?
 ----------------------------
-**QSDsan** is a package for the quantitative sustainable design of sanitation and resource recovery systems leveraging the structure and modules developed in BioSTEAM [1]_. As an open-source and impact-driven platform, **QSDsan** aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
+**QSDsan** is a package for the quantitative sustainable design of sanitation and resource recovery systems leveraging the structure and modules developed in BioSTEAM [1]_. As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
+
+
+Documentation
+-------------
+First install the package at `PyPI <https://pypi.org/>`_. If you use pip, simply ``pip install qsdsan``.
+
+
+Documentation
+-------------
+You can find tutorials and documents at:
+ - `QSDsan <https://qsdsan.readthedocs.io/en/latest/>`_ for the `main version on root repository <https://github.com/QSD-Group/QSDsan>`_.
+ - `QSDsan-beta <https://qsdsan-beta.readthedocs.io/en/latest/>`_ for the test version on `Yalin's fork <https://github.com/yalinli2/QSDsan>`_.
 
 
 Interacting with other packages
 -------------------------------
-.. figure:: https://lucid.app/publicSegments/view/ac755b6d-1bd6-464c-8e47-9e21e762d888/image.png
+.. figure:: https://github.com/QSD-Group/QSDsan/blob/master/images/QSDsan_UML.png
+.. https://lucid.app/publicSegments/view/ac755b6d-1bd6-464c-8e47-9e21e762d888/image.png # needs updating
 
 *Unified Modeling Language (UML) diagram of the package and its dependencies*.
 

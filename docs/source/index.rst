@@ -8,14 +8,14 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 What is QSDsan?
 ----------------------------
 
-**QSDsan** is a package for the quantitative sustainable design of sanitation and resource recovery systems leveraging the structure and modules developed in BioSTEAM [1]_. As an open-source and impact-driven platform, **QSDsan** aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
+**QSDsan** is a package for the quantitative sustainable design of sanitation and resource recovery systems leveraging the structure and modules developed in BioSTEAM [1]_. As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
 
 All systems developed with QSDsan will be included in another repository in the future.
 
 
 Getting Started
 ---------------
-Want to try out QSDsan? First install the package at `PyPI <https://pypi.org/>`_. If you use pip, simply ``pip install qsdsan`` *Note: NOT READY YET*.
+First install the package at `PyPI <https://pypi.org/>`_. If you use pip, simply ``pip install qsdsan``.
 
 
 Follow the tutorial to get started!
@@ -62,7 +62,7 @@ In particular, QSDsan introduces:
    Transportation
    WasteStream
 .. Process # TO BE ADDED
-   
+
 
 More resources
 --------------
@@ -74,7 +74,7 @@ To get the full value of QSDsan, we highly recommend reading through the documen
 
 About the developers
 --------------------
-Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors include:
+Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_.
 
 **Code development**
  - `Yalin Li <zoe.yalin.li@gmail.com>`_
