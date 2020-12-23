@@ -37,24 +37,30 @@ data_path += 'sanunit_data/_anaerobic_digestion.csv'
 
 
 class AnaerobicDigestion(SanUnit, Decay):
-    '''Anaerobic digestion of wastes with the production of biogas.'''
+    '''
+    Anaerobic digestion of wastes with the production of biogas based on Trimmer et al. [1]_
+
+    Parameters
+    ----------
+    ins : WasteStream
+        Waste for treatment.
+    outs : WasteStream
+        Treated waste, biogas, and fugitive N2O.
+    if_N2O_emission : bool
+        If consider N2O emission from N degradation the process.
+        
+    References
+    ----------
+    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+        https://doi.org/10.1021/acs.est.0c03296.
+    
+    '''
     
     _default_data = None
     
     def __init__(self, ID='', ins=None, outs=(), if_N2O_emission=False, **kwargs):
-        
-        '''
-
-        Parameters
-        ----------
-        ins : WasteStream
-            Waste for treatment.
-        outs : WasteStream
-            Treated waste, biogas, and fugitive N2O.
-        if_N2O_emission : bool
-            If consider N2O emission from N degradation the process.
-
-        '''
         
         SanUnit.__init__(self, ID, ins, outs)
         self.if_N2O_emission = if_N2O_emission
@@ -68,9 +74,6 @@ class AnaerobicDigestion(SanUnit, Decay):
         
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-    
-    __doc__ += __init__.__doc__
-    __init__.__doc__ = __doc__
     
     _N_ins = 1
     _N_outs = 3

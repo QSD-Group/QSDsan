@@ -37,7 +37,7 @@ class Mixer(SanUnit, bst.units.Mixer):
 
     '''
     __init__ = bst.units.Mixer.__init__
-    __init__.__doc__ = __doc__
+
 
 class Splitter(SanUnit, bst.units.Splitter):
     '''
@@ -49,7 +49,7 @@ class Splitter(SanUnit, bst.units.Splitter):
 
     '''
     __init__ = bst.units.Splitter.__init__
-    __init__.__doc__ = __doc__
+
 
 class FakeSplitter(SanUnit, bst.units.FakeSplitter):
     '''
@@ -61,7 +61,7 @@ class FakeSplitter(SanUnit, bst.units.FakeSplitter):
 
     '''
     __init__ = bst.units.FakeSplitter.__init__
-    __init__.__doc__ = __doc__
+
 
 class ReversedSplitter(SanUnit, bst.units.ReversedSplitter):
     '''
@@ -73,7 +73,7 @@ class ReversedSplitter(SanUnit, bst.units.ReversedSplitter):
 
     '''
     __init__ = bst.units.ReversedSplitter.__init__
-    __init__.__doc__ = __doc__
+
     
 class Pump(SanUnit, bst.units.Pump):
     '''
@@ -85,7 +85,7 @@ class Pump(SanUnit, bst.units.Pump):
 
     '''
     __init__ = bst.units.Pump.__init__
-    __init__.__doc__ = __doc__
+
     
 class Tank(SanUnit, bst.units.Tank, isabstract=True):
     '''
@@ -97,7 +97,7 @@ class Tank(SanUnit, bst.units.Tank, isabstract=True):
 
     '''
     __init__ = bst.units.Tank.__init__
-    __init__.__doc__ = __doc__
+
     
 class StorageTank(SanUnit, bst.units.StorageTank):
     '''
@@ -109,7 +109,7 @@ class StorageTank(SanUnit, bst.units.StorageTank):
 
     '''
     __init__ = bst.units.StorageTank.__init__
-    __init__.__doc__ = __doc__
+
     
 class MixTank(SanUnit, bst.units.MixTank):
     '''
@@ -121,7 +121,6 @@ class MixTank(SanUnit, bst.units.MixTank):
 
     '''
     __init__ = bst.units.MixTank.__init__
-    __init__.__doc__ = __doc__
     _run = Mixer._run
     
     

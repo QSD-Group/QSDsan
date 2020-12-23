@@ -11,14 +11,6 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
-
-Ref:
-    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
-
-
 '''
 
 
@@ -30,26 +22,31 @@ from .. import SanUnit
 __all__ = ('CropApplication',)
 
 class CropApplication(SanUnit):
-    '''Recovery nutrients in the recycled excreta (energy not recovered).'''
+    '''
+    Recovery nutrients in the recycled excreta (energy not recovered) based on Trimmer et al. [1]_
+
+    Parameters
+    ----------
+    if_material_loss : bool or dict
+        If material loss occurs during application.
+    loss_ratio : float or dict
+        Fractions of material losses during application (if if_materiloass is True).
+        
+    References
+    ----------
+    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+        https://doi.org/10.1021/acs.est.0c03296. 
+ 
+    '''
     
     def __init__(self, ID='', ins=None, outs=(),
                  if_material_loss=True, loss_ratio=0.02):
-        '''
 
-        Parameters
-        ----------
-        if_material_loss : bool or dict
-            If material loss occurs during application.
-        loss_ratio : float or dict
-            Fractions of material losses during application (if if_materiloass is True).
-
-        '''
         SanUnit.__init__(self, ID, ins, outs)
         self.if_material_loss = if_material_loss
         self.loss_ratio = loss_ratio
-
-    __doc__ += __init__.__doc__
-    __init__.__doc__ = __doc__
     
     _N_ins = 1
     _N_outs = 2

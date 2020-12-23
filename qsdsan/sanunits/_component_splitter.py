@@ -11,13 +11,6 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
-
-Ref:
-    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
-
 '''
 
 # %%
@@ -35,9 +28,6 @@ class ComponentSplitter(SanUnit):
         
         SanUnit.__init__(self, ID, ins, outs)
         self.splits = splits
-
-    # __doc__ += __init__.__doc__
-    # __init__.__doc__ = __doc__
     
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False

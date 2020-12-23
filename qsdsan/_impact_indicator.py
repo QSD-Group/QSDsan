@@ -24,7 +24,25 @@ __all__ = ('ImpactIndicator', )
 
 
 class ImpactIndicator:
-    '''To handle the different impact indicators in life cycle assessment.'''
+    '''
+    To handle the different impact indicators in life cycle assessment.
+    
+    Parameters
+    ----------
+    ID : str
+        ID of the ImpactIndicator.
+    synonym : str
+        Alternative ID of the ImpactIndicator.
+    method : str
+        Impact assessment method, e.g., 'TRACI'.
+    category : str
+        Category of the ImpactIndicator, e.g., 'human healt'.
+    unit : str
+        Unit of the ImpactIndicator, e.g., 'kg CO2-eq'.
+    description : str
+        Supplementary explanation.
+        
+    '''
     
     _indicators = {}
     _default_data = None
@@ -33,25 +51,6 @@ class ImpactIndicator:
                  '_unit_remaining', '_description')
 
     def __init__(self, ID, synonym='', method='', category='', unit='', description=''):
-        '''
-        
-
-        Parameters
-        ----------
-        ID : str
-            ID of the ImpactIndicator.
-        synonym : str
-            Alternative ID of the ImpactIndicator.
-        method : str
-            Impact assessment method, e.g., 'TRACI'.
-        category : str
-            Category of the ImpactIndicator, e.g., 'human healt'.
-        unit : str
-            Unit of the ImpactIndicator, e.g., 'kg CO2-eq'.
-        description : str
-            Supplementary explanation.
-
-        '''
         
         if ID in ImpactIndicator._indicators.keys():
             raise ValueError(f'The ID {ID} currently in use by {ImpactIndicator._indicators[ID]}')
@@ -64,10 +63,6 @@ class ImpactIndicator:
         ImpactIndicator._indicators[ID] = self
         if synonym and str(synonym) != 'nan':
             self.set_synonym(synonym)
-
-    __doc__ += __init__.__doc__
-    __init__.__doc__ = __doc__
-
 
     def __repr__(self):
         return f'<ImpactIndicator: {self.ID}>'

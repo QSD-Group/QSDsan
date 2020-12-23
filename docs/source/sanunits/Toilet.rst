@@ -1,3 +1,5 @@
+.. _sanunits_Toilet:
+
 Toilet
 ======
 

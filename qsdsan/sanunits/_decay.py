@@ -11,13 +11,6 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
-
-Ref:
-    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
-
 '''
 
 # %%
@@ -51,7 +44,7 @@ class Decay:
         ----------
         tot_red : float
             Total amount of N to be removed.
-        preferred_N : [float]
+        preferred_N : float
             Current content of the N that will be removed first.
 
         Returns
@@ -70,13 +63,13 @@ class Decay:
     @staticmethod
     def first_order_decay(k, t, max_decay, t0=0, tot=1):
         '''
-        Calculate first-order degradation loss based on ref [1].
+        Calculate first-order degradation loss based on Trimmer et al. [1]_
         
-        .. math::
-            C_0 = tot * max_decay
-            C_avg = C_0/(k*t) * (e^{-k*t_0}-e^{-k*t_f})
-            loss = C_0 - C_avg
-
+        .. math:: C_0 = tot * max_decay
+        .. math:: C_avg = C_0/(k*t) * (e^{-k*t_0}-e^{-k*t_f})
+        .. math::  loss = C_0 - C_avg
+        
+        
         Parameters
         ----------
         k : float
@@ -95,6 +88,13 @@ class Decay:
         -------
         loss : float
             Amount lost due to degradation.
+
+        References
+        ----------
+        .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+            Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+            Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+            https://doi.org/10.1021/acs.est.0c03296.
 
         '''
 

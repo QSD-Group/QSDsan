@@ -22,9 +22,8 @@ __all__ = ('SimpleTEA',)
 
 class SimpleTEA(TEA):    
     '''
-    
     Calculate an annualized cost for simple economic analysis that does not
-    include loan payment (i.e., 100% equity) and taxes [1]_.
+    include loan payment (i.e., 100% equity) and taxes.
 
     Parameters
     ----------
@@ -55,13 +54,6 @@ class SimpleTEA(TEA):
         Construction progress, must sum up to 1, leave as None will assume the plant finishes within one year.
     currency : str
         TEA currency, should be consistent with all prices and costs provided for chemicals, materials, units, etc.
-
-    References
-    ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
 
     '''
     

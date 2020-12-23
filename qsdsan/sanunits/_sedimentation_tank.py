@@ -11,13 +11,6 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
-
-Ref:
-    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
-
 '''
 
 
@@ -36,29 +29,35 @@ data_path += 'sanunit_data/_sedimentation_tank.csv'
 
 
 class SedimentationTank(SludgeSeparator, Decay):
-    '''Sedimentation of wastes into liquid and solid phases.'''
+    '''
+    Sedimentation of wastes into liquid and solid phases based on Trimmer et al. [1]_
+    
+    Parameters
+    ----------
+    ins : WasteStream
+        Waste for treatment.
+    outs : WasteStream
+        Liquid, settled solids, fugitive CH4, and fugitive N2O.
+    split : float or dict
+        Fractions of material retention in the settled solids.
+        Default values will be used if not given.
+    settled_frac : float
+        Fraction of influent that settles as solids.
+        The default value will be used if not given.
+    if_N2O_emission : bool
+        If consider N2O emission from N degradation the process.
+        
+    References
+    ----------
+    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+        https://doi.org/10.1021/acs.est.0c03296.
+    
+    '''
     
     def __init__(self, ID='', ins=None, outs=(), split=None, settled_frac=None,
-                 if_N2O_emission=False, **kwargs):
-        
-        '''
-
-        Parameters
-        ----------
-        ins : WasteStream
-            Waste for treatment.
-        outs : WasteStream
-            Liquid, settled solids, fugitive CH4, and fugitive N2O.
-        split : float or dict
-            Fractions of material retention in the settled solids.
-            Default values will be used if not given.
-        settled_frac : float
-            Fraction of influent that settles as solids.
-            The default value will be used if not given.
-        if_N2O_emission : bool
-            If consider N2O emission from N degradation the process.
-
-        '''        
+                 if_N2O_emission=False, **kwargs):    
         
         SludgeSeparator.__init__(self, ID, ins, outs, split, settled_frac)
         self.if_N2O_emission = if_N2O_emission
@@ -71,9 +70,6 @@ class SedimentationTank(SludgeSeparator, Decay):
         
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-    
-    __doc__ += __init__.__doc__
-    __init__.__doc__ = __doc__
     
     _N_ins = 1
     _N_outs = 4

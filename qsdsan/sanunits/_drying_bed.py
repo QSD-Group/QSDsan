@@ -11,13 +11,6 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
-
-Ref:
-    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
-
 '''
 
 
@@ -35,26 +28,25 @@ data_path += 'sanunit_data/_drying_bed.csv'
 
 
 class DryingBed(SanUnit, Decay):
-    '''Unplanted and planted drying bed for solids.'''
+    '''
+    Unplanted and planted drying bed for solids based on Trimmer et al. [1]_
+    
+    Parameters
+    ----------
+    ins : WasteStream
+        Solid for drying.
+    outs : WasteStream
+        Dried solids, evaporated water, fugitive CH4, and fugitive N2O.
+    design_type : str
+        Can be 'unplanted' or 'planted'. The default 'unplanted' process has
+        a number of 'covered', 'uncovered', and 'storage' beds. The 'storage'
+        bed is similar to the 'covered' bed, but with higher wall height.
+    
+    '''
     
     def __init__(self, ID='', ins=None, outs=(), design_type='unplanted',
                  **kwargs):
-        
-        '''
 
-        Parameters
-        ----------
-        ins : WasteStream
-            Solid for drying.
-        outs : WasteStream
-            Dried solids, evaporated water, fugitive CH4, and fugitive N2O.
-        design_type : str
-            Can be 'unplanted' or 'planted'. The default 'unplanted' process has
-            a number of 'covered', 'uncovered', and 'storage' beds. The 'storage'
-            bed is similar to the 'covered' bed, but with higher wall height.
-
-        '''        
-        
         SanUnit.__init__(self, ID, ins, outs)
         N_unplanted = {'covered': 19,
                        'uncovered': 30,
@@ -80,9 +72,6 @@ class DryingBed(SanUnit, Decay):
         
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-
-    __doc__ += __init__.__doc__
-    __init__.__doc__ = __doc__
         
     _N_ins = 1
     _N_outs = 4

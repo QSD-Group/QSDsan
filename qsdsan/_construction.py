@@ -28,7 +28,7 @@ __all__ = ('Construction',)
 
 
 class Construction:
-    '''Construction cost and environmental impacts'''
+    '''Construction cost and environmental impacts.'''
 
     __slots__ = ('_item', '_quantity')
     

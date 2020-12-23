@@ -30,7 +30,23 @@ __all__ = ('LCA',)
 
 
 class LCA:
-    '''For life cycle assessment (LCA) of a System.'''
+    '''
+    For life cycle assessment (LCA) of a System.
+    
+    Parameters
+    ----------
+    system : biosteam.System
+        System for which this LCA is conducted for.
+    lifetime : float
+        Lifetime of the LCA.
+    lifetime_unit : str
+        Unit of lifetime.
+    uptime_ratio : float
+        Fraction of time that the plant is operating.
+    **item_quantities : kwargs, ImpactItem or str = float or (float, unit)
+        Other ImpactItems (e.g., electricity) and their quantities.
+    
+    '''
     
     __slots__ = ('_system',  '_lifetime', '_uptime_ratio',
                  '_construction_units', '_transportation_units',
@@ -40,24 +56,7 @@ class LCA:
     
     def __init__(self, system, lifetime, lifetime_unit='yr', uptime_ratio=1,
                  **item_quantities):
-        '''
-        
 
-        Parameters
-        ----------
-        system : biosteam.System
-            System for which this LCA is conducted for.
-        lifetime : float
-            Lifetime of the LCA.
-        lifetime_unit : str
-            Unit of lifetime.
-        uptime_ratio : float
-            Fraction of time that the plant is operating.
-        **item_quantities : kwargs, ImpactItem or str = float or (float, unit)
-            Other ImpactItems (e.g., electricity) and their quantities.
-
-        '''
-        
         self._construction_units = set()
         self._transportation_units = set()
         self._lca_waste_streams = set()
@@ -71,9 +70,7 @@ class LCA:
                 self.add_other_item(item, q_number, q_unit)
             except:
                 self.add_other_item(item, quantity)
-    
-    __doc__ += __init__.__doc__
-    __init__.__doc__ = __doc__
+                
     
     def _update_system(self, system):
         for unit in system.units:

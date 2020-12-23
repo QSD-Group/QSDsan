@@ -47,7 +47,7 @@ In particular, QSDsan introduces:
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: API
 
    Component
@@ -57,11 +57,10 @@ In particular, QSDsan introduces:
    ImpactItem
    LCA
    SanUnit
+   sanunits/sanunits
    SimpleTEA
    Transportation
    WasteStream
-   sanunits/sanunits
-
 .. Process # TO BE ADDED
    
 

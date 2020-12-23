@@ -11,13 +11,6 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
-
-Ref:
-    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
-
 '''
 
 
@@ -35,26 +28,33 @@ data_path += 'sanunit_data/_sludge_separator.csv'
 allocate_N_removal = Decay.allocate_N_removal
 
 class SludgeSeparator(SanUnit):
-    '''For sludge separation, note that no default cost or environmental impacts are included.'''
+    '''
+    For sludge separation based on Trimmer et al. [1]_, note that no default
+    cost or environmental impacts are included.
     
-    def __init__(self, ID='', ins=None, outs=(), split=None, settled_frac=None):
+    Parameters
+    ----------
+    ins : WasteStream
+        Waste for treatment.
+    outs : WasteStream
+        Liquid, settled solids.
+    split : float or dict
+        Fractions of material retention in the settled solids.
+        Default values will be used if not given.
+    settled_frac : float
+        Fraction of influent that settles as solids.
+        The default value will be used if not given.
         
-        '''
-
-        Parameters
-        ----------
-        ins : WasteStream
-            Waste for treatment.
-        outs : WasteStream
-            Liquid, settled solids.
-        split : float or dict
-            Fractions of material retention in the settled solids.
-            Default values will be used if not given.
-        settled_frac : float
-            Fraction of influent that settles as solids.
-            The default value will be used if not given.
-
-        '''        
+    References
+    ----------
+    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+        https://doi.org/10.1021/acs.est.0c03296.
+    
+    '''
+    
+    def __init__(self, ID='', ins=None, outs=(), split=None, settled_frac=None):    
         
         SanUnit.__init__(self, ID, ins, outs)
         data = load_data(path=data_path)
@@ -65,9 +65,6 @@ class SludgeSeparator(SanUnit):
             value = float(data.loc['settled_frac']['expected'])
             setattr(self, 'settled_frac', value)
         del data
-    
-    __doc__ += __init__.__doc__
-    __init__.__doc__ = __doc__
     
     _N_ins = 1
     _outs_size_is_fixed = False

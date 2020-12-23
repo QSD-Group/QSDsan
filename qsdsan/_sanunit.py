@@ -30,8 +30,8 @@ class SanUnit(bst.Unit, isabstract=True):
     '''
     Subclass of Unit in biosteam, is initialized with WasteStream rather than Stream.
     
-    biosteam document
-    -----------------
+    Reference documents
+    -------------------
     `biosteam.Unit <https://biosteam.readthedocs.io/en/latest/Unit.html>`_
     
     Additional attributes
@@ -62,9 +62,6 @@ class SanUnit(bst.Unit, isabstract=True):
         self._assert_compatible_property_package()
         self._add_OPEX = 0.
         self._uptime_ratio = 1.
-
-    __init__.__doc__ = __doc__    
-
 
     def _init_ins(self, ins):
         self._ins = WSIns(self, self._N_ins, ins, self._thermo,

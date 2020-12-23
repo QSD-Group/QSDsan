@@ -11,14 +11,6 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
-
-Ref:
-    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
-
-
 '''
 
 
@@ -37,39 +29,48 @@ data_path += 'sanunit_data/_toilet.csv'
 # %%
 
 class Toilet(SanUnit, Decay, isabstract=True):
-    '''Abstract class containing common parameters and design algorithms for toilets.'''
+    '''
+    Abstract class containing common parameters and design algorithms for toilets
+    based on Trimmer et al. [1]_
+    
+    Parameters
+    ----------
+    N_user : float
+        Number of people that share this toilet.
+    N_toilet : float
+        Number of paralle toilets.
+    life_time : float
+        Life time of the toilet in year.
+    if_toilet_paper : bool
+        If toilet paper is used.
+    if_flushing : bool
+        If water is used for flushing.
+    if_cleansing : bool
+        If water is used for cleansing.
+    if_desiccant : bool
+        If desiccant is used for moisture and odor control.
+    if_air_emission : bool
+        If emission to air occurs
+        (i.e., if the pit is completely sealed off from the atmosphere).
+    if_ideal_emptying : bool
+        If the toilet appropriately emptied to avoid contamination to the
+        environmental.
+    OPEX_over_CAPEX : float
+        Fraction of annual operating cost over total capital cost.
+    
+    References
+    ----------
+    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+        https://doi.org/10.1021/acs.est.0c03296.
+    
+    '''
     
     def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, life_time=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True,
                  OPEX_over_CAPEX=None):
-        '''
-        
-        Parameters
-        ----------
-        N_user : float
-            Number of people that share this toilet.
-        N_toilet : float
-            Number of paralle toilets.
-        life_time : float
-            Life time of the toilet in year.
-        if_toilet_paper : bool
-            If toilet paper is used.
-        if_flushing : bool
-            If water is used for flushing.
-        if_cleansing : bool
-            If water is used for cleansing.
-        if_desiccant : bool
-            If desiccant is used for moisture and odor control.
-        if_air_emission : bool
-            If emission to air occurs
-            (i.e., if the pit is completely sealed off from the atmosphere).
-        if_ideal_emptying : bool
-            If the toilet appropriately emptied to avoid contamination to the
-            environmental.
-        OPEX_over_CAPEX : float
-            Fraction of annual operating cost over total capital cost.
-        '''
 
         SanUnit.__init__(self, ID, ins, outs)
         self._N_user = 1
@@ -112,7 +113,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     @staticmethod
     def get_emptying_emission(waste, CH4, N2O, empty_ratio, CH4_factor, N2O_factor):
         '''
-        Calculate emissions due to non-ideal emptying.
+        Calculate emissions due to non-ideal emptying based on Trimmer et al. [1]_
 
         Parameters
         ----------

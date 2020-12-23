@@ -11,14 +11,6 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
-
-Ref:
-    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
-
-
 '''
 
 # %%
@@ -34,7 +26,18 @@ data_path += 'sanunit_data/_excretion.csv'
 # %%
 
 class Excretion(SanUnit):
-    '''Estimation of N, P, K, and COD in urine and feces based on dietary intake for one person.'''
+    '''
+    Estimation of N, P, K, and COD in urine and feces based on dietary intake
+    for one person based on Trimmer et al. [1]_
+    
+    References
+    ----------
+    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+        https://doi.org/10.1021/acs.est.0c03296.
+    
+    '''
     
     _N_ins = 0
     _N_outs = 2

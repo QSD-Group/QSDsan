@@ -37,7 +37,23 @@ __all__ = ('ImpactItem', 'StreamImpactItem')
 
 
 class ImpactItem:
-    '''A class for calculation of environmental impacts.'''
+    '''
+    A class for calculation of environmental impacts.
+    
+    Parameters
+    ----------
+    ID : str
+        ID of the ImpactItem. 
+    functional_unit : str
+        Functional unit of the ImpactItem.
+    price : float
+        Price of the item per functional unit.
+    price_unit : str
+        Unit of the price.
+    **indicator_CFs : kwargs, ImpactIndicator or str = float or (float, unit)
+        ImpactIndicators and their characteriziation factors.
+    
+    '''
     
     _items = {}
     _default_data = None
@@ -45,23 +61,6 @@ class ImpactItem:
     __slots__ = ('_ID', '_functional_unit', '_price', '_CFs')
     
     def __init__(self, ID, functional_unit='kg', price=0., price_unit='', **indicator_CFs):
-        '''
-        
-
-        Parameters
-        ----------
-        ID : str
-            ID of the ImpactItem. 
-        functional_unit : str
-            Functional unit of the ImpactItem.
-        price : float
-            Price of the item per functional unit.
-        price_unit : str
-            Unit of the price.
-        **indicator_CFs : kwargs, ImpactIndicator or str = float or (float, unit)
-            ImpactIndicators and their characteriziation factors.
-
-        '''
         
         if ID in ImpactItem._items.keys() and ImpactItem._items[ID] is not self:
             raise ValueError(f'The ID {ID} is in use by {ImpactItem._items[ID]}')
@@ -76,9 +75,6 @@ class ImpactItem:
             except:
                 self.add_indicator_CF(CF, value)
         ImpactItem._items[ID] = self
-    
-    __doc__ += __init__.__doc__
-    __init__.__doc__ = __doc__
     
     
     # This makes sure it won't be shown as memory location of the object
@@ -201,22 +197,22 @@ class ImpactItem:
 # %%
 
 class StreamImpactItem(ImpactItem):
-    '''A class for calculation of environmental impacts associated with WasteStreams.'''
+    '''
+    A class for calculation of environmental impacts associated with WasteStreams.
+    
+    Parameters
+    ----------
+    linked_ws : WasteStream or str
+        The associated WasteStream for environmental impact calculation.
+    **indicator_CFs : kwargs
+        ImpactIndicators and their characteriziation factors.
+    
+    '''
 
     __slots__ = ('_ID', '_linked_ws', '_functional_unit', '_CFs')
 
     def __init__(self, linked_ws, **indicator_CFs):
-        '''
         
-
-        Parameters
-        ----------
-        linked_ws : WasteStream or str
-            The associated WasteStream for environmental impact calculation.
-        **indicator_CFs : kwargs
-            ImpactIndicators and their characteriziation factors.
-
-        '''
         self._linked_ws = None
         self.linked_ws = linked_ws
         ID = self.linked_ws.ID + '_item'
@@ -231,9 +227,6 @@ class StreamImpactItem(ImpactItem):
                 self.add_indicator_CF(CF, value)
         
         ImpactItem._items[ID] = self
-    
-    __doc__ += __init__.__doc__
-    __init__.__doc__ = __doc__
 
 
     def __repr__(self):

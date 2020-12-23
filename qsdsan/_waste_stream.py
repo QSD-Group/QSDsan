@@ -71,8 +71,8 @@ class WasteStream(Stream):
     A subclass of the Stream object in the thermosteam package with additional
     attributes and methods for waste treatment.
     
-    thermosteam document
-    --------------------
+    Reference documents
+    -------------------
     `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
     
     '''

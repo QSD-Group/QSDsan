@@ -33,9 +33,11 @@ release = '0.0.1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-'sphinx.ext.autodoc',
-'sphinx.ext.napoleon',
 'nbsphinx',
+'sphinx.ext.autodoc',
+'sphinx.ext.intersphinx',
+'sphinx.ext.mathjax',
+'sphinx.ext.napoleon',
 ]
 
 # Allow exceptions to occur in notebooks
@@ -64,5 +66,7 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 # html_static_path = ['_static']
 
-# -- Napoleon settings -------------------------------------------------------
-napoleon_custom_sections = ['Additional attributes', 'biosteam document', 'thermosteam document']
+# -- Extension settings -------------------------------------------------------
+napoleon_custom_sections = [
+'Additional attributes',
+'Reference documents']

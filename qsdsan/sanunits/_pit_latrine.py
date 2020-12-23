@@ -11,14 +11,6 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
-
-Ref:
-    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
-
-
 '''
 
 
@@ -36,7 +28,40 @@ data_path += 'sanunit_data/_pit_latrine.csv'
 # %%
 
 class PitLatrine(Toilet):
-    '''Single pit latrine.'''
+    '''
+    Single pit latrine based on Trimmer et al. [1]_, a subclass of qsdsan.sanunits.Toilet.
+    
+    Reference documents
+    -------------------
+    :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
+    
+    Parameters
+    ----------
+    if_leaching : bool
+        If infiltration to soil occurs
+        (i.e., if the pit walls and floors are permeable).
+    if_pit_above_water_table : bool
+        If the pit is above local water table.
+        
+    Returns
+    -------
+    waste : WasteStream
+        Recyclable mixed excreta.
+    leachate : WasteStream
+        Leached to soil.
+    CH4 : WasteStream
+        Fugitive CH4.
+    N2O : WasteStream
+        Fugitive N2O.
+    
+    References
+    ----------
+    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+        https://doi.org/10.1021/acs.est.0c03296.
+    
+    '''
 
     def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, life_time=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
@@ -44,27 +69,6 @@ class PitLatrine(Toilet):
                  OPEX_over_CAPEX=0.05,
                  if_leaching=True, if_shared=True,
                  if_pit_above_water_table=True, **kwargs):
-
-        '''
-
-        if_leaching : bool
-            If infiltration to soil occurs
-            (i.e., if the pit walls and floors are permeable).
-        if_pit_above_water_table : bool
-            If the pit is above local water table.
-            
-        Returns
-        -------
-        waste : WasteStream
-            Recyclable mixed excreta.
-        leachate : WasteStream
-            Leached to soil.
-        CH4 : WasteStream
-            Fugitive CH4.
-        N2O : WasteStream
-            Fugitive N2O.
-            
-        '''
 
         Toilet.__init__(self, ID, ins, outs, N_user, N_toilet, life_time,
                         if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
@@ -86,13 +90,9 @@ class PitLatrine(Toilet):
         self._liq_leaching = None
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-        
-    __init__.__doc__ = __doc__ + Toilet.__init__.__doc__ + __init__.__doc__
-    __doc__ = __init__.__doc__
+
 
     _N_outs = 4
-
-
         
     def _run(self):
         Toilet._run(self)

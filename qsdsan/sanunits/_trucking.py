@@ -11,13 +11,6 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
-
-Ref:
-    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
-
 '''
 
 # %%
@@ -30,7 +23,41 @@ __all__ = ('Trucking',)
 
 
 class Trucking(SanUnit):
-    '''For transportation of materials with considerations on material loss.'''
+    '''
+    For transportation of materials with considerations on material loss 
+    based on Trimmer et al. [1]_
+
+    Parameters
+    ----------
+    load_type : str
+        Either 'mass' or 'volume'.
+    load : float
+        Transportation load per trip.
+    load_unit : str
+        Unit of the load.
+    distance : float
+        Transportation distance per trip.
+    distance_unit : float
+        Unit of the distance.
+    interval : float
+        Time interval between trips.
+    fee : float
+        Transportation fee per trip.
+    fee : float
+        Transportation fee per trip.
+    if_material_loss : bool
+        If material loss occurs during transportation.
+    loss_ratio : float or dict
+        Fractions of material losses due to transportation.
+        
+    References
+    ----------
+    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+        https://doi.org/10.1021/acs.est.0c03296.
+    
+    '''
     
     def __init__(self, ID='', ins=None, outs=(),
                  load_type='mass', load=1., load_unit='tonne',
@@ -40,28 +67,6 @@ class Trucking(SanUnit):
                  if_material_loss=True, loss_ratio=0.02):
         '''
 
-        Parameters
-        ----------
-        load_type : str
-            Either 'mass' or 'volume'.
-        load : float
-            Transportation load per trip.
-        load_unit : str
-            Unit of the load.
-        distance : float
-            Transportation distance per trip.
-        distance_unit : float
-            Unit of the distance.
-        interval : float
-            Time interval between trips.
-        fee : float
-            Transportation fee per trip.
-        fee : float
-            Transportation fee per trip.
-        if_material_loss : bool
-            If material loss occurs during transportation.
-        loss_ratio : float or dict
-            Fractions of material losses due to transportation.
 
         '''
         SanUnit.__init__(self, ID, ins, outs)
@@ -74,9 +79,6 @@ class Trucking(SanUnit):
         self._update_fee(fee, fee_unit)
         self.if_material_loss = if_material_loss
         self.loss_ratio = loss_ratio
-
-    __doc__ += __init__.__doc__
-    __init__.__doc__ = __doc__
     
     _N_ins = 1
     _N_outs = 2

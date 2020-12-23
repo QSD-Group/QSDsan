@@ -47,8 +47,8 @@ class Components(Chemicals):
     '''
     A subclass of the Chemicals object in the thermosteam package, contains Component objects as attributes.
     
-    thermosteam document
-    --------------------
+    Reference documents
+    -------------------
     `thermosteam.Chemicals <https://thermosteam.readthedocs.io/en/latest/Chemicals.html>`_
     
     '''
@@ -268,8 +268,8 @@ class CompiledComponents(CompiledChemicals):
     A subclass of the CompiledChemicals object in the thermosteam package,
     contains Component objects as attributes.
     
-    thermosteam document
-    --------------------
+    Reference documents
+    -------------------
     `thermosteam.CompiledChemicals <https://thermosteam.readthedocs.io/en/latest/Chemicals.html>`_
     
     '''

@@ -101,8 +101,8 @@ class Component(tmo.Chemical):
     '''
     A subclass of the Chemical object in the thermosteam package with additional attributes and methods for waste treatment.
     
-    thermosteam document
-    --------------------
+    Reference documents
+    -------------------
     `thermosteam.Chemical <https://thermosteam.readthedocs.io/en/latest/Chemical.html>`_
     
     '''         
