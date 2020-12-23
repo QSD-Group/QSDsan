@@ -1,8 +1,6 @@
 ====================================================================================
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 ====================================================================================
-.. figure:: https://github.com/QSD-Group/QSDsan/blob/master/images/various_configurations.png
-
 .. contents::
 
 What is QSDsan?
@@ -18,16 +16,8 @@ First install the package at `PyPI <https://pypi.org/>`_. If you use pip, simply
 Documentation
 -------------
 You can find tutorials and documents at:
- - `QSDsan <https://qsdsan.readthedocs.io/en/latest/>`_ for the `main version on root repository <https://github.com/QSD-Group/QSDsan>`_.
- - `QSDsan-beta <https://qsdsan-beta.readthedocs.io/en/latest/>`_ for the test version on `Yalin's fork <https://github.com/yalinli2/QSDsan>`_.
-
-
-Interacting with other packages
--------------------------------
-.. figure:: https://github.com/QSD-Group/QSDsan/blob/master/images/QSDsan_UML.png
-.. https://lucid.app/publicSegments/view/ac755b6d-1bd6-464c-8e47-9e21e762d888/image.png # needs updating
-
-*Unified Modeling Language (UML) diagram of the package and its dependencies*.
+ - `Main version <https://qsdsan.readthedocs.io/en/latest/>`_ on `root repository <https://github.com/QSD-Group/QSDsan>`_.
+ - `Beta version <https://qsdsan-beta.readthedocs.io/en/latest/>`_ on `Yalin's fork <https://github.com/yalinli2/QSDsan>`_.
 
 
 License information

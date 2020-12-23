@@ -32,6 +32,7 @@ Follow the tutorial to get started!
 
 How does QSDsan work?
 ---------------------
+.. https://lucid.app/publicSegments/view/ac755b6d-1bd6-464c-8e47-9e21e762d888/image.png # needs updating
 .. figure:: ./images/QSDsan_UML.png
 
 QSDsan follows the structure of `BioSTEAM <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_, a fast and flexible package for the design, simulation, and techno-economic analysis of biorefineries under uncertainty, but QSDsan is enhanced with features geared toward quantitative sustainable design of sanitation systems.
