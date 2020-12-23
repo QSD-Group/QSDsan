@@ -74,7 +74,7 @@ To get the full value of QSDsan, we highly recommend reading through the documen
 
 About the developers
 --------------------
-Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_.  Core contributors include:
+Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors include:
 
 **Code development**
  - `Yalin Li <zoe.yalin.li@gmail.com>`_

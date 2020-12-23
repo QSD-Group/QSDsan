@@ -1,23 +1,17 @@
 ====================================================================================
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 ====================================================================================
-
-.. figure:: ./images/various_configurations.png
-
-
-
+.. figure:: https://github.com/QSD-Group/QSDsan/blob/master/images/various_configurations.png
 
 .. contents::
 
 What is QSDsan?
 ----------------------------
-
 **QSDsan** is a package for the quantitative sustainable design of sanitation and resource recovery systems leveraging the structure and modules developed in BioSTEAM [1]_. As an open-source and impact-driven platform, **QSDsan** aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
 
 
 Interacting with other packages
 -------------------------------
-
 .. figure:: https://lucid.app/publicSegments/view/ac755b6d-1bd6-464c-8e47-9e21e762d888/image.png
 
 *Unified Modeling Language (UML) diagram of the package and its dependencies*.
@@ -25,14 +19,25 @@ Interacting with other packages
 
 License information
 -------------------
-
 See ``LICENSE.txt`` for information on the terms & conditions for usage
 of this software, and a DISCLAIMER OF ALL WARRANTIES.
 
 
 About the authors
 -----------------
-Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. 
+Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_.
+
+**Code development**
+ - `Yalin Li <zoe.yalin.li@gmail.com>`_
+ - Joy Cheung
+
+**Unit design**
+ - `Yalin Li <zoe.yalin.li@gmail.com>`_
+ - Joy Cheung
+ - Stetson Rowles
+
+**Project conception & funding support**
+ - `Jeremy Guest <jsguest@illinois.edu>`_
 
 
 References
