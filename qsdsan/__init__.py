@@ -19,6 +19,7 @@ CEPCI_by_year = bst.units.design_tools.CEPCI_by_year
 del bst
 currency = 'USD'
 
+from .utils import descriptors
 from ._component import *
 from ._components import *
 from ._waste_stream import *
@@ -45,6 +46,8 @@ from . import (
     utils,
     sanunits,
     )
+
+utils.secondary_importing()
 
 __all__ = (
     *_component.__all__,

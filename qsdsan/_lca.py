@@ -11,9 +11,6 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
-
-TODO:
-    Add a function to save LCA details.
 '''
 
 
@@ -21,7 +18,6 @@ TODO:
 
 import numpy as np
 import pandas as pd
-from biosteam.report.table import tables_to_excel
 from . import ImpactItem, StreamImpactItem
 from ._units_of_measure import auom
 from .utils.formatting import format_number as f_num

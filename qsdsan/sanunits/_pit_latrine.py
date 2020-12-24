@@ -19,6 +19,7 @@ for license details.
 from .. import WasteStream, Construction
 from ._toilet import Toilet
 from ..utils.loading import load_data, data_path
+from ..utils.descriptors import Fraction as Frac
 
 __all__ = ('PitLatrine',)
 
@@ -62,6 +63,8 @@ class PitLatrine(Toilet):
         https://doi.org/10.1021/acs.est.0c03296.
     
     '''
+
+    _N_leaching = Frac(name='N_leaching')
 
     def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, life_time=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,

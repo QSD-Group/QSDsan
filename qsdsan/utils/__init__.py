@@ -13,16 +13,27 @@ https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-from . import (
-    piping,
-    loading,
-    formatting,
-    setter,
-    )
+# This tiered importing is because some modules in utils need to be imported
+# before the the main modules (e.g., _component) since the main modules depend
+# on them, while other modules in utils depend on the main modules
 
-__all__ = (
-    *piping.__all__,
-    *loading.__all__,
-    *formatting.__all__,
-    *setter.__all__,
-            )
+from . import descriptors
+
+__all__ = descriptors.__all__
+
+def secondary_importing():
+    global __all__
+    from . import (
+        piping,
+        loading,
+        formatting,
+        setters,
+        )
+    
+    __all__ = (
+        *__all__,
+        *piping.__all__,
+        *loading.__all__,
+        *formatting.__all__,
+        *setters.__all__,
+                )

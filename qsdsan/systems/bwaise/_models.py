@@ -31,7 +31,7 @@ from biosteam.evaluation import Model, Metric
 
 from qsdsan import ImpactItem
 from qsdsan.utils.loading import load_data, data_path
-from qsdsan.utils.setter import Setter, DictAttrSetter
+from qsdsan.utils.setters import Setter, DictAttrSetter
 from bwaise import systems
 
 np.random.seed(3221)
