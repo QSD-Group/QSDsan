@@ -19,7 +19,9 @@ TODO:
 
 # %%
 
+import numpy as np
 import pandas as pd
+from biosteam.report.table import tables_to_excel
 from . import ImpactItem, StreamImpactItem
 from ._units_of_measure import auom
 from .utils.formatting import format_number as f_num
@@ -49,7 +51,7 @@ class LCA:
     '''
     
     __slots__ = ('_system',  '_lifetime', '_uptime_ratio',
-                 '_construction_units', '_transportation_units',
+                 '_construction_sanunits', '_transportation_sanunits',
                  '_lca_waste_streams',
                  '_impact_indicators', '_other_items')
     
@@ -57,8 +59,8 @@ class LCA:
     def __init__(self, system, lifetime, lifetime_unit='yr', uptime_ratio=1,
                  **item_quantities):
 
-        self._construction_units = set()
-        self._transportation_units = set()
+        self._construction_sanunits = set()
+        self._transportation_sanunits = set()
         self._lca_waste_streams = set()
         self._update_system(system)
         self._update_lifetime(lifetime, lifetime_unit)
@@ -73,20 +75,20 @@ class LCA:
                 
     
     def _update_system(self, system):
-        for unit in system.units:
-            if unit.construction:
-                self._construction_units.add(unit)
-            if unit.transportation:
-                self._transportation_units.add(unit)
-        self._construction_units = sorted(self._construction_units,
-                                          key=lambda i: type(i).__name__)
-        self._transportation_units = sorted(self._transportation_units,
-                                            key=lambda i: type(i).__name__)
+        for su in system.units:
+            if su.construction:
+                self._construction_sanunits.add(su)
+            if su.transportation:
+                self._transportation_sanunits.add(su)
+        self._construction_sanunits = sorted(self._construction_sanunits,
+                                             key=lambda su: su.ID)
+        self._transportation_sanunits = sorted(self._transportation_sanunits,
+                                               key=lambda su: su.ID)
         for ws in system.streams:
             if ws.impact_item:
                 self._lca_waste_streams.add(ws)
         self._lca_waste_streams = sorted(self._lca_waste_streams,
-                                          key=lambda i: i.ID)
+                                         key=lambda ws: ws.ID)
         self._system = system
     
     def _refresh_ws_items(self, system=None):
@@ -99,7 +101,7 @@ class LCA:
                 if ws in system.streams and ws not in self._lca_waste_streams:
                     self._lca_waste_streams.add(ws)
         self._lca_waste_streams = sorted(self._lca_waste_streams,
-                                          key=lambda i: i.ID)
+                                         key=lambda ws: ws.ID)
         
     
     def _update_lifetime(self, lifetime=0., unit='yr'):
@@ -120,9 +122,9 @@ class LCA:
                 raise ValueError(f'Conversion of the given unit {unit} to '
                                  f'item functional unit {fu} is not supported.')
         if not return_dict:
-            self.other_items[item.ID] = quantity
+            self.other_items[item.ID] = {'item':item, 'quantity':quantity}
         else:
-            return_dict[item.ID] = quantity
+            return_dict[item.ID] = {'item':item, 'quantity':quantity}
             return return_dict
       
     def __repr__(self):
@@ -138,10 +140,10 @@ class LCA:
         else:
             index = pd.Index((i.ID+' ('+i.unit+')' for i in self.indicators))
             df = pd.DataFrame({
-                'Construction': tuple(self.construction_impacts.values()),
-                'Transportation': tuple(self.transportation_impacts.values()),
-                'WasteStream': tuple(self.waste_stream_impacts.values()),
-                'Others': tuple(self.other_impacts.values()),
+                'Construction': tuple(self.total_construction_impacts.values()),
+                'Transportation': tuple(self.total_transportation_impacts.values()),
+                'WasteStream': tuple(self.total_waste_stream_impacts.values()),
+                'Others': tuple(self.total_other_impacts.values()),
                 'Total': tuple(self.total_impacts.values())
                 },
                 index=index)
@@ -151,43 +153,55 @@ class LCA:
     _ipython_display_ = show
     
     
-    def _get_constr_impacts(self, iterable):
+    def get_construction_impacts(self, iterable, time=None, time_unit='hr'):
+        if not time:
+            ratio = 1
+        else:
+            converted = auom(time_unit).convert(float(time), 'hr')
+            ratio = converted/self.lifetime_hr
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         for i in iterable:
             for j in i.construction:
                 impact = j.impacts
                 for m, n in impact.items():
-                    impacts[m] += n
+                    impacts[m] += n*ratio
         return impacts
     
-    def _get_trans_impacts(self, iterable):
+    def get_transportation_impacts(self, iterable, time=None, time_unit='hr'):
+        if not time:
+            time = self.lifetime_hr
+        else:
+            time = auom(time_unit).convert(float(time), 'hr')
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-        hr = self.lifetime*365*24*self.uptime_ratio
         for i in iterable:
             for j in i.transportation:
                 impact = j.impacts
                 for m, n in impact.items():
-                    impacts[m] += n*hr/j.interval
+                    impacts[m] += n*time/j.interval
         return impacts
     
     
-    def _get_ws_impacts(self, iterable=None, exclude=None):
+    def get_waste_stream_impacts(self, iterable=None, exclude=None, time=None, time_unit='hr'):
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-        hr = self.lifetime*365*24*self.uptime_ratio
+        if not time:
+            time = self.lifetime_hr
+        else:
+            time = auom(time_unit).convert(float(time), 'hr')
         if not iterable:
             iterable = self.waste_stream_inventory
         if None in iterable:
             self._refresh_ws_items()
             iterable = self.waste_stream_inventory
         for j in iterable:
-            # breakpoint()
             ws = j.linked_ws
             if ws is exclude: continue
             for m, n in j.CFs.items():
-                impacts[m] += n*hr*ws.F_mass
+                impacts[m] += n*time*ws.F_mass
         return impacts
     
-    def _get_add_impacts(self, **item_quantities):
+    def get_other_impacts(self, **item_quantities):
+        if not item_quantities:
+            return self.total_other_impacts
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         for j, k in item_quantities.items():
             if isinstance(j, str):
@@ -196,13 +210,13 @@ class LCA:
                 impacts[m] += n*k
         return impacts
     
-    def _get_total_impacts(self, exclude=None):
+    def get_total_impacts(self, exclude=None, time=None, time_unit='hr'):
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-        ws_impacts = self._get_ws_impacts(exclude)
-        for i in (self.construction_impacts,
-                  self.transportation_impacts,
+        ws_impacts = self.get_waste_stream_impacts(exclude=exclude, time=time, time_unit=time_unit)
+        for i in (self.total_construction_impacts,
+                  self.total_transportation_impacts,
                   ws_impacts,
-                  self.other_impacts):
+                  self.total_other_impacts):
             for m, n in i.items():
                 impacts[m] += n
         return impacts
@@ -211,26 +225,149 @@ class LCA:
         '''[dict] Normalize all impacts based on the mass flow of a WasteStream.'''
         assert waste_stream in self.system.streams, \
                f'WasteStream {waste_stream} not in the System {self.system}.'
-        impacts = self._get_total_impacts(exclude=waste_stream)
+        impacts = self.get_total_impacts(exclude=waste_stream)
         for i in impacts.values():
             i /= waste_stream.F_mass
         return impacts
     
-    def get_units_impacts(self, units, exclude=None, **item_quantities):
+    def get_sanunits_impacts(self, units, exclude=None, **item_quantities):
         try: iter(units)
         except: units = (units,)
-        constr = self._get_constr_impacts(units)
-        trans = self._get_trans_impacts(units)
+        constr = self.get_construction_impacts(units)
+        trans = self.get_transportation_impacts(units)
         ws_list = set()
         for i in (unit.ins+unit.outs for unit in units):
             if i in self._lca_waste_streams:
                 ws_list.add(i)
-        ws = self._get_ws_impacts(iterable=ws_list, exclude=exclude)
-        add = self._get_add_impacts(**item_quantities)
-        for m, n in constr.items():
-            n += trans[m] + ws[m] + add[m]
-        return constr
+        ws = self.get_waste_stream_impacts(iterable=ws_list, exclude=exclude)
+        other = self.get_other_impacts(**item_quantities)
+        tot = constr.copy()
+        for m, n in tot.items():
+            n += trans[m] + ws[m] + other[m]
+        return tot
     
+    def _append_cat_sum(self, cat_table, cat, tot):
+        num = len(cat_table)
+        cat_table.loc[num] = ''
+        for i in self.indicators:
+            cat_table[f'{i.ID} [{i.unit}]'][num] = tot[i.ID]
+            cat_table[f'Total {i.ID} Ratio'][num] = 1
+        if cat in ('construction', 'transportation'):        
+            cat_table.rename(index={num: ('Sum', 'All')}, inplace=True)
+            cat_table.index = \
+                pd.MultiIndex.from_tuples(cat_table.index,
+                                          names=[cat.capitalize(), 'SanUnit'])
+        else:
+            cat_table.rename(index={num: 'Sum'}, inplace=True)
+        return cat_table
+    
+    def get_impact_table(self, category=None, time=None, time_unit='hr'):
+        if not time:
+            time = self.lifetime_hr
+        else:
+            time = auom(time_unit).convert(float(time), 'hr')
+        
+        if category in ('Construction', 'Other'):
+            time = time/self.lifetime_hr
+        
+        cat = category.lower()
+        if cat == 'wastestream': cat = 'waste_stream'
+        tot = getattr(self, f'total_{cat}_impacts')
+        if category in ('Construction', 'Transportation'):
+            cat = category.lower()
+            sanunits = sorted(getattr(self, f'_{cat}_sanunits'),
+                              key=(lambda su: su.ID))
+            items = sorted(set(i.item for i in getattr(self,  f'{cat}_inventory')),
+                           key=(lambda item: item.ID))
+            if len(items) == 0:
+                return f'No {cat}-related impacts.'
+
+            # Note that item_dct = dict.fromkeys([item.ID for item in items], []) won't work
+            item_dct = dict.fromkeys([item.ID for item in items])
+            for item_ID in item_dct.keys():
+                item_dct[item_ID] = dict(SanUnit=[], Quantity=[])
+            for su in sanunits:
+                for i in getattr(su, cat):
+                    item_dct[i.item.ID]['SanUnit'].append(su.ID)
+                    item_dct[i.item.ID]['Quantity'].append(i.quantity*time)
+                    if cat == 'transportation':
+                        item_dct[i.item.ID]['Quantity'][-1] /= i.interval
+            dfs = []
+            for item in items:
+                dct = item_dct[item.ID]
+                dct['SanUnit'].append('Total')
+                dct['Quantity'] = np.array(dct['Quantity'])
+                dct['Quantity'] = np.append(dct['Quantity'], dct['Quantity'].sum())
+                dct['Item Ratio'] = dct['Quantity']/dct['Quantity'].sum()*2
+                for i in self.indicators:
+                    dct[f'{i.ID} [{i.unit}]'] = impact = dct['Quantity']*item.CFs[i.ID]
+                    dct[f'Total {i.ID} Ratio'] = impact/tot[i.ID]
+                df = pd.DataFrame.from_dict(dct)
+                index0 = f'{item.ID} [{item.functional_unit}]'
+                df.set_index([pd.MultiIndex.from_arrays(
+                    [(index0,)*len(dct['SanUnit'])], names=(category,)),
+                    'SanUnit'],
+                    inplace=True)
+                dfs.append(df)
+            table = pd.concat(dfs)
+            return self._append_cat_sum(table, cat, tot)
+        
+        ind_head = sum(([f'{i.ID} [{i.unit}]',
+                         f'Total {i.ID} Ratio'] for i in self.indicators), [])
+        
+        if category == 'WasteStream':
+            headings = ['WasteStream', 'Mass [kg]', *ind_head]
+            item_dct = dict.fromkeys(headings)
+            for key in item_dct.keys():
+                item_dct[key] = []
+            for ws_item in self.waste_stream_inventory:
+                ws = ws_item.linked_ws
+                item_dct['WasteStream'].append(ws.ID)
+                mass = ws.F_mass * time
+                item_dct['Mass [kg]'].append(mass)
+                for ind in self.indicators:
+                    impact = ws_item.CFs[ind.ID]*mass
+                    item_dct[f'{ind.ID} [{ind.unit}]'].append(impact)
+                    item_dct[f'Total {ind.ID} Ratio'].append(impact/tot[ind.ID])
+            table = pd.DataFrame.from_dict(item_dct)
+            table.set_index(['WasteStream'], inplace=True)
+            return self._append_cat_sum(table, cat, tot)
+
+        elif category == 'Other':
+            headings = ['Other', 'Quantity', *ind_head]
+            item_dct = dict.fromkeys(headings)
+            for key in item_dct.keys():
+                item_dct[key] = []
+            for other_ID in self.other_items.keys():
+                other = self.other_items[other_ID]['item']
+                item_dct['Other'].append(f'{other_ID} [{other.functional_unit}]')
+                quantity = self.other_items[other_ID]['quantity'] * time
+                item_dct['Quantity'].append(quantity)
+                for ind in self.indicators:
+                    impact = other.CFs[ind.ID]*quantity
+                    item_dct[f'{ind.ID} [{ind.unit}]'].append(impact)
+                    item_dct[f'Total {ind.ID} Ratio'].append(impact/tot[ind.ID])
+            table = pd.DataFrame.from_dict(item_dct)
+            table.set_index(['Other'], inplace=True)
+            return self._append_cat_sum(table, cat, tot)
+        
+        else:
+            raise ValueError(
+                "category can only be 'Construction', 'Transportation', 'WasteStream', or 'Other', " \
+                f'not {category}.')
+
+    def save_lca_report(self, file='lca_report.xlsx', sheet_name='LCA',
+                        time=None, time_unit='hr',
+                        n_row=0, row_space=2):
+        
+        tables = [self.get_impact_table(cat, time, time_unit)
+                  for cat in ('Construction', 'Transportation',
+                              'WasteStream', 'Other')]
+        with pd.ExcelWriter(file) as writer:
+            for table in tables:
+                table.to_excel(writer, sheet_name=sheet_name, startrow=n_row)
+                n_row += table.shape[0] + row_space + 1 # one extra line for the heading
+
     @property
     def system(self):
         '''[biosteam.System] The System linked to this LCA.'''
@@ -246,6 +383,11 @@ class LCA:
     @lifetime.setter
     def lifetime(self, lifetime, unit='yr'):
         self._update_lifetime(lifetime, unit)
+        
+    @property
+    def lifetime_hr(self):
+        '''[float] Lifetime of the system in hours, [hr].'''
+        return self._lifetime*365*24*self.uptime_ratio
     
     @property
     def uptime_ratio(self):
@@ -277,40 +419,43 @@ class LCA:
             ws = set(sum((i.indicators for i in self.waste_stream_inventory
                           if i is not None), ()))
         if not self.other_items:
-            add = set()
+            other = set()
         else:
-            add = set(sum((items[i].indicators for i in self.other_items.keys()), ()))
-        return constr.union(trans, ws, add)
+            other = set(sum((items[i].indicators for i in self.other_items.keys()), ()))
+        tot = constr.union(trans, ws, other)
+        if len(tot) == 0:
+            raise ValueError('No ImpactIndicators have been added.')
+        return tot
     
     @property
-    def construction_units(self):
-        '''[set] All units in the linked System with constrution activity.'''
-        return self._construction_units
+    def construction_sanunits(self):
+        '''[set] All SanUnits in the linked System with constrution activity.'''
+        return self._construction_sanunits
     
     @property
     def construction_inventory(self):
         '''[tuple] All construction activities.'''
-        return sum((i.construction for i in self.construction_units), ())
+        return sum((i.construction for i in self.construction_sanunits), ())
     
     @property
-    def construction_impacts(self):
+    def total_construction_impacts(self):
         '''[dict] Total impacts associated with construction activities.'''
-        return self._get_constr_impacts(self.construction_units)
+        return self.get_construction_impacts(self.construction_sanunits)
     
     @property
-    def transportation_units(self):
-        '''[set] All units in the linked System with transportation activity.'''
-        return self._transportation_units
+    def transportation_sanunits(self):
+        '''[set] All SanUnits in the linked System with transportation activity.'''
+        return self._transportation_sanunits
     
     @property
     def transportation_inventory(self):
         '''[tuple] All transportation activities.'''
-        return sum((i.transportation for i in self.transportation_units), ())
+        return sum((i.transportation for i in self.transportation_sanunits), ())
     
     @property
-    def transportation_impacts(self):
+    def total_transportation_impacts(self):
         '''[dict] Total impacts associated with transportation activities.'''
-        return self._get_trans_impacts(self.transportation_units)
+        return self.get_transportation_impacts(self.transportation_sanunits)
     
     @property
     def lca_waste_streams(self):
@@ -323,9 +468,9 @@ class LCA:
         return tuple(i.impact_item for i in self.lca_waste_streams)
     
     @property
-    def waste_stream_impacts(self):
+    def total_waste_stream_impacts(self):
         '''[dict] Total impacts associated with WasteStreams (e.g., chemicals, emissions).'''
-        return self._get_ws_impacts()
+        return self.get_waste_stream_impacts()
         
     @property
     def other_items (self):
@@ -336,14 +481,16 @@ class LCA:
         self.add_other_item(item, quantity, unit)
         
     @property
-    def other_impacts(self):
+    def total_other_impacts(self):
         '''[dict] Total impacts associated with other ImpactItems (e.g., electricity).'''
-        return self._get_add_impacts(**self.other_items)
+        items = self.other_items.keys()
+        quantities = (self.other_items[i]['quantity'] for i in self.other_items.keys())
+        return self.get_other_impacts(**dict(zip(items, quantities)))
     
     @property
     def total_impacts(self):
         '''[dict] Total impacts of the entire system (construction, transportation, and wastestream).'''
-        return self._get_total_impacts()
+        return self.get_total_impacts()
 
 
 

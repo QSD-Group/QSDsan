@@ -18,7 +18,7 @@ from setuptools import setup
 setup(
     name='qsdsan',
     packages=['qsdsan'],
-    version='0.0.5',
+    version='0.0.1',
     license='University of Illinois/NCSA Open Source License',
     author='Quantitative Sustainable Design Group',
     description='Quantitative Sustainable Design for sanitation and resource recovery systems',

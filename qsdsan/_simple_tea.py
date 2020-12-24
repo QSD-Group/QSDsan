@@ -43,13 +43,13 @@ class SimpleTEA(TEA):
         A factor to estimate the total installation cost based on equipment purchase cost,
         leave as None if providing CAPEX. If neither CAPEX nor lang_factor is provided,
         installed_equipment_cost will be calculated using the bare module factor
-        for each equipment according to the SanUnit._BM dict of each unit.
+        for each equipment according to the SanUnit._BM dict of each SanUnit.
     annual_maintenance : float
         Annual maintenance cost as a fraction of fixed capital investment.
     annual_labor : float
         Annual labor cost.
     system_add_OPEX : float
-        Annual additional system-wise operating expenditure (on top of the add_OPEX of each unit).
+        Annual additional system-wise operating expenditure (on top of the add_OPEX of each SanUnit).
     construction_schedule : tuple or None
         Construction progress, must sum up to 1, leave as None will assume the plant finishes within one year.
     currency : str
@@ -269,7 +269,7 @@ class SimpleTEA(TEA):
 
     @property
     def system_add_OPEX(self):
-        '''[float] Annual additional system-wise operating expenditure (on top of the add_OPEX of each unit).'''
+        '''[float] Annual additional system-wise operating expenditure (on top of the add_OPEX of each SanUnit).'''
         return self._system_add_OPEX
     @system_add_OPEX.setter
     def system_add_OPEX(self, i):

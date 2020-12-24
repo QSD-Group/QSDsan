@@ -45,7 +45,8 @@ class SanUnit(bst.Unit, isabstract=True):
     add_OPEX : float
         Operating expense per hour in addition to utility cost (assuming 100% uptime).
     uptime_ratio : float
-        Uptime of the unit to adjust add_OPEX, should be in [0,1] (i.e., a unit that is always operating).
+        Uptime of the SanUnit to adjust add_OPEX, should be in [0,1]
+        (i.e., a SanUnit that is always operating).
 
     '''
     
@@ -77,7 +78,7 @@ class SanUnit(bst.Unit, isabstract=True):
         self._transportation = ()
 
     def _info(self, T, P, flow, composition, N, _stream_info):
-        """Information of the unit."""
+        """Information of the SanUnit."""
         if self.ID:
             info = f'{type(self).__name__}: {self.ID}\n'
         else:
@@ -94,9 +95,9 @@ class SanUnit(bst.Unit, isabstract=True):
                     '\n' + stream._wastestream_info()
             else:
                 stream_info = stream._wastestream_info()
-            unit = stream._source
+            su = stream._source
             index = stream_info.index('\n')
-            source_info = f'  from  {type(unit).__name__}-{unit}\n' if unit else '\n'
+            source_info = f'  from  {type(su).__name__}-{su}\n' if su else '\n'
             info += f'[{i}] {stream.ID}' + source_info + stream_info[index+1:] + '\n'
             i += 1
         info += 'outs...\n'
@@ -111,9 +112,9 @@ class SanUnit(bst.Unit, isabstract=True):
                     '\n' + stream._wastestream_info()
             else:
                 stream_info = stream._wastestream_info()
-            unit = stream._sink
+            su = stream._sink
             index = stream_info.index('\n')
-            sink_info = f'  to  {type(unit).__name__}-{unit}\n' if unit else '\n'
+            sink_info = f'  to  {type(su).__name__}-{su}\n' if su else '\n'
             info += f'[{i}] {stream.ID}' + sink_info + stream_info[index+1:] + '\n'
             i += 1
         info = info.replace('\n ', '\n    ')
@@ -124,14 +125,14 @@ class SanUnit(bst.Unit, isabstract=True):
 
 
     def _summary(self):
-        '''After system converges, design unit and calculate cost and environmental impacts'''
+        '''After system converges, design the SanUnit and calculate cost and environmental impacts'''
         self._design()
         self._cost()
         self._impact()
     
     
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, stream_info=True):
-        """Print information of the unit, including WasteStream-specific information"""
+        """Print information of the SanUnit, including WasteStream-specific information"""
         print(self._info(T, P, flow, composition, N, stream_info))
     
     def add_construction(self, add_unit=True, add_design=True, add_cost=True):
@@ -209,7 +210,10 @@ class SanUnit(bst.Unit, isabstract=True):
 
     @property
     def uptime_ratio(self):
-        '''[float] Uptime of the unit to adjust add_OPEX, should be in [0,1] (i.e., a unit that is always operating).'''
+        '''
+        [float] Uptime of the SanUnit to adjust add_OPEX, should be in [0,1]
+        (i.e., a SanUnit that is always operating).
+        '''
         return self._uptime_ratio
     @uptime_ratio.setter
     def uptime_ratio(self, i):
