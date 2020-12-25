@@ -17,9 +17,15 @@ for license details.
 # before the the main modules (e.g., _component) since the main modules depend
 # on them, while other modules in utils depend on the main modules
 
-from . import descriptors
+from . import (
+    checkers,
+    descriptors,
+    )
 
-__all__ = descriptors.__all__
+__all__ = (
+    *checkers.__all__,
+    *descriptors.__all__,
+    )
 
 def secondary_importing():
     global __all__

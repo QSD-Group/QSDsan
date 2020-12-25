@@ -13,19 +13,28 @@ https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-__all__ = ('Descriptor',)
 
 from weakref import WeakKeyDictionary
+
+__all__ = ('Descriptor', 'NonNegativeFloat', 'NonNgeativeInt', 'Fraction')
+
+
+# %%
 
 class Descriptor(object):
     '''
     Descriptors can be used to make resusable property logics,
     a great reference can be found online. [1]_
     
+    Notes
+    -----
+    Using Descriptors to check value properties is slightly slower than using
+    the decorators functions in qsdsan.utils.checkers.
+    
     References
     ----------
     .. [1] https://nbviewer.jupyter.org/urls/gist.github.com/ChrisBeaumont/5758381/raw/descriptor_writeup.ipynb
-        
+     
     '''
     
     __slots__ = ['default', 'name', 'instance', 'owner']
@@ -38,30 +47,45 @@ class Descriptor(object):
     def __get__(self, instance, owner):
         return self.data.get(instance, self.default)
 
+
 class NonNegativeFloat(Descriptor):
     '''For non-negative floats.'''
     
     def __set__(self, instance, value):
         if value < 0:
-            raise ValueError(f'Values for {self.name} cannot be negative.')
+            if self.name:
+                raise ValueError(f'Value for {self.name} cannot be negative.')
+            else:
+                raise ValueError('Value cannot be negative.')
         self.data[instance] = float(value)
 
-class NonNegativeInteger(Descriptor):
+
+class NonNgeativeInt(Descriptor):
     '''For non-negative integers.'''
     
     def __set__(self, instance, value):
         if value < 0:
-            raise ValueError(f'Values for {self.name} cannot be negative.')
+            if self.name:
+                raise ValueError(f'Value for {self.name} cannot be negative.')
+            else:
+                raise ValueError('Value cannot be negative.')
         self.data[instance] = int(value)
+
 
 class Fraction(Descriptor):
     '''For values in [0,1].'''
     
     def __set__(self, instance, value):
         if not 0 <= value <= 1:
-            raise ValueError(f'Values for {self.name} must be in [0,1].')
+            if self.name:
+                raise ValueError(f'Value for {self.name} must be in [0,1].')
+            else:
+                raise ValueError('Value must be in [0,1].')
         self.data[instance] = float(value)
         
+
+
+
         
         
     

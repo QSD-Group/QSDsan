@@ -19,7 +19,10 @@ for license details.
 from .. import WasteStream, Construction
 from ._toilet import Toilet
 from ..utils.loading import load_data, data_path
-from ..utils.descriptors import Fraction as Frac
+
+# Note that here two different methods are used to check the user-input values
+from ..utils.checkers import NonNegativeFloat as NNF_C
+from ..utils.descriptors import NonNegativeFloat as NNF_D
 
 __all__ = ('PitLatrine',)
 
@@ -64,7 +67,7 @@ class PitLatrine(Toilet):
     
     '''
 
-    _N_leaching = Frac(name='N_leaching')
+    _P_leaching = NNF_D(name='P_leaching')
 
     def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, life_time=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
@@ -110,7 +113,6 @@ class PitLatrine(Toilet):
         # Here COD change leaching not considered
         if self.if_leaching:
             # Additional assumption not in ref [1]
-            # breakpoint()
             leachate.imass['H2O'] = mixed.imass['H2O'] * self.liq_leaching
             leachate.imass['NH3'], leachate.imass['NonNH3'] = \
                 self.allocate_N_removal(mixed.TN/1e3*mixed.F_vol*self.N_leaching,
@@ -269,7 +271,8 @@ class PitLatrine(Toilet):
         return self._N_leaching
     @N_leaching.setter
     def N_leaching(self, i):
-        self._N_leaching = float(i)
+        @NNF_C(self)
+        def N_leaching(): return i
 
     @property
     def P_leaching(self):
@@ -290,7 +293,10 @@ class PitLatrine(Toilet):
         '''
         return self._K_leaching
     @K_leaching.setter
+    # This is faster than using descriptors or decorators, but (I think) less elegant
     def K_leaching(self, i):
+        if i < 0:
+            raise ValueError('Value for K_leaching cannot be negative')
         self._K_leaching = float(i)
 
     def _return_MCF_EF(self):
