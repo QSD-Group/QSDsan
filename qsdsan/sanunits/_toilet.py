@@ -102,12 +102,10 @@ class Toilet(SanUnit, Decay, isabstract=True):
 
     def _run(self):
         ur, fec, tp, fw, cw, des = self.ins
-        
-        N_user = self.N_user
-        tp.imass['Tissue'] = int(self.if_toilet_paper)*self.toilet_paper * N_user
-        fw.imass['H2O'] = int(self.if_flushing)*self.flushing_water * N_user
-        cw.imass['H2O'] = int(self.if_cleansing)*self.cleansing_water * N_user
-        des.imass['WoodAsh'] = int(self.if_desiccant)*self.desiccant * N_user
+        tp.imass['Tissue'] = int(self.if_toilet_paper)*self.toilet_paper
+        fw.imass['H2O'] = int(self.if_flushing)*self.flushing_water
+        cw.imass['H2O'] = int(self.if_cleansing)*self.cleansing_water
+        des.imass['WoodAsh'] = int(self.if_desiccant)*self.desiccant
       
 
     @staticmethod

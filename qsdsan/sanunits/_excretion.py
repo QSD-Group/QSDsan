@@ -57,7 +57,7 @@ class Excretion(SanUnit):
         ur, fec = self.outs
         ur.empty()
         fec.empty()
-        # From g per person per day to kg per hour        
+        # From g per person per day to kg per hour
         factor = 24 * 1e3
         e_cal = self.e_cal / 24
         ur_exc = self.ur_exc / factor
@@ -84,12 +84,10 @@ class Excretion(SanUnit):
         fec.imass['H2O'] = self.fec_moi * fec_exc
         fec.imass['OtherSS'] = fec_exc - fec.F_mass
         
-        # 14 kJ/g COD, the average lower heating value of excreta,
-        # 239 to convert it to kcal/kg COD
-        tot_COD = e_cal*self.e_exc / (14*239) # in kg COD/hr
+        # 14 kJ/g COD, the average lower heating value of excreta
+        tot_COD = e_cal*self.e_exc*4.184/14/1e3 # in kg COD/hr
         ur._COD = tot_COD*(1-self.e_fec) / (ur.F_vol/1e3) # in mg/L
-        fec._COD = tot_COD*self.e_exc / (fec.F_vol/1e3) # in mg/L
-        
+        fec._COD = tot_COD*self.e_fec / (fec.F_vol/1e3) # in mg/L        
 
     @property
     def e_cal(self):

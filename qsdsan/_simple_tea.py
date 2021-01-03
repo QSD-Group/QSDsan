@@ -81,6 +81,7 @@ class SimpleTEA(TEA):
         self.lifetime = lifetime
         self._duration = self.duration
         self.uptime_ratio = 1.
+        self._lang_factor = None
         self._CAPEX = CAPEX
         self.lang_factor = lang_factor
         self.annual_maintenance = annual_maintenance
@@ -135,6 +136,12 @@ class SimpleTEA(TEA):
     def _FOC(self, FCI):
         return FCI*self.annual_maintenance+self.annual_labor+self.total_add_OPEX
 
+    def get_unit_annualized_CAPEX(self, units):
+        try: iter(units)
+        except: units = (units, )
+        CAPEX = sum(i.installed_cost for i in units)
+        return CAPEX*self.discount_rate/(1-(1+self.discount_rate)**(-self.lifetime))
+
     @property
     def discount_rate(self):
         '''[float] Interest rate used in discounted cash flow analysis.'''
@@ -188,7 +195,7 @@ class SimpleTEA(TEA):
     @property
     def lang_factor(self):
         '''[float] A factor to estimate the total installation cost based on equipment purchase cost.'''
-        return self._lang_factor
+        return self._lang_factor or None
     @lang_factor.setter
     def lang_factor(self, i):
         if self.CAPEX:
@@ -196,10 +203,12 @@ class SimpleTEA(TEA):
                 raise AttributeError('CAPEX provided, lang_factor cannot be set. '
                                      'The calculated lang_factor is '
                                      f'{self.installed_equipment_cost/self.purchase_cost:.1f}.')
-            else: self._lang_factor = None
+            else:
+                self._lang_factor = None
         elif i >=1:
             self._lang_factor = float(i)
-        else: raise ValueError('lang_factor must >= 1.')
+        else:
+            raise ValueError('lang_factor must >= 1.')
 
     @property
     def currency(self):
@@ -291,7 +300,7 @@ class SimpleTEA(TEA):
     @property
     def annualized_CAPEX(self):
         '''[float] Annualized capital expenditure.'''
-        return self.CAPEX*self.discount_rate/(1-(1+self.discount_rate)**(-self.lifetime))
+        return self.get_unit_annualized_CAPEX(self.units)
 
     
     @property
@@ -299,7 +308,7 @@ class SimpleTEA(TEA):
         '''[float] Equivalent annual cost of the plant.'''
         return self.annualized_CAPEX+self.AOC
 
-
+    
 
 
 

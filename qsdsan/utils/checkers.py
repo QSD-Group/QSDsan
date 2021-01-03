@@ -48,7 +48,7 @@ def NonNgeativeInt(obj):
         attr = '_' + outer_setter.__name__
         if data < 0:
             raise ValueError(f'Value for {attr[1:]} cannot be negative.')
-        setattr(obj, attr, float(data))
+        setattr(obj, attr, int(data))
     return inner_setter
 
 
@@ -56,8 +56,8 @@ def Fraction(obj):
     def inner_setter(outer_setter):
         data = outer_setter()
         attr = '_' + outer_setter.__name__
-        if data < 0:
-            raise ValueError(f'Value for {attr[1:]} cannot be negative.')
+        if not 0 <=data <=1:
+            raise ValueError(f'Value for {attr[1:]} must be between [0, 1].')
         setattr(obj, attr, float(data))
     return inner_setter
 

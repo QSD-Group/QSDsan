@@ -29,9 +29,9 @@ TODO:
 import numpy as np
 import biosteam as bst
 import qsdsan as qs
-# from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression as LR
 from qsdsan import sanunits as su
-from qsdsan import WasteStream, ImpactItem, StreamImpactItem, \
+from qsdsan import WasteStream, SanUnit, ImpactItem, StreamImpactItem, \
     SimpleTEA, LCA
 import bwaise
 cmps = bwaise._cmps.cmps
@@ -43,6 +43,22 @@ currency = qs.currency = 'USD'
 qs.CEPCI = qs.CEPCI_by_year[2018]
 items = ImpactItem._items
 GWP = qs.ImpactIndicator._indicators['GWP']
+
+
+
+# %%
+
+class ExistingWWTPCost(SanUnit):
+    '''Lumped CAPEX and electricity cost of the wastewater treatment plant.'''
+    def _run(self):
+        self.outs[0].copy_like(self.ins[0])
+    
+    _BM = {'Wastewater treatment plant': 1}
+    
+    def _cost(self):
+        self.purchase_costs['Wastewater treatment plant'] = 18606700
+        self.power_utility(57120/(365*24)) #!!! Really? Only 6.5 kWh per hour?
+
 
 
 # %%
@@ -70,34 +86,33 @@ def get_decay_k(tau_deg=2, log_deg=3):
 
 max_CH4_emission = 0.25
 
-#!!! How this was selected? 
-truck_cost = {
-    'TankerTruck1': 8e4/get_exchange_rate()*1.15, # 15% additional, per m3
-    'TankerTruck2': 12e4/get_exchange_rate()*1.15, # 15% additional, per m3
-    'TankerTruck3': 2e5/get_exchange_rate()*1.15, # 15% additional, per m3
-    'TankerTruck4': 25e4/get_exchange_rate()*1.15, # 15% additional, per m3
-    'HandCart': 0.01, # per cap/d
-    'CBSTruck': 23e3/get_exchange_rate() # per m3
-    }
+#!!! How this was selected?
+# Model for tanker truck cost based on capacity (m3)
+# price = a*capacity**b -> ln(price) = ln(a) + bln(capacity)
+UGX_prices = np.array((8e4, 12e4, 20e4, 25e4))
+capacities = np.array((3, 4.5, 8, 15))
+def get_tanker_truck_model():
+    # Add 15% additional costs
+    prices = UGX_prices*1.15/get_exchange_rate()
+    ln_p = np.log(prices)
+    ln_cap = np.log(capacities)
+    model = LR().fit(ln_cap.reshape(-1,1), ln_p.reshape(-1,1))
+    [ln_a] = model.intercept_.tolist()
+    [[b]] = model.coef_.tolist()
+    return ln_a, b
 
-# Assume density is 1 tonne/m3 (as water)
-V = (3, 4.5, 8, 15, 1, 1)
-truck_V = dict.fromkeys(truck_cost.keys())
-for i, j in zip(truck_V.keys(), V):
-    truck_V[i] = j
+ln_a, b = get_tanker_truck_model()
+get_tanker_truck_cost = lambda cap: np.exp(ln_a+b*np.log(cap)) if cap != 0 else 1
 
 items['Concrete'].price = 194
 items['Steel'].price = 2.665
 
 N_AD_rx = 3
 
-
 # Nutrient loss during applciation
 #!!! Maybe the loss shouldn't be taken into account in cost and emission?
 app_loss = dict.fromkeys(('NH3', 'NonNH3', 'P', 'K', 'Mg', 'Ca'), 0.02)
 app_loss['NH3'] = 0.05
-
-
 
 
 
@@ -130,64 +145,81 @@ A2 = su.PitLatrine('A2', ins=(A1-0, A1-1,
                       decay_k_COD=get_decay_k(tau_deg, log_deg),
                       decay_k_N=get_decay_k(tau_deg, log_deg),
                       max_CH4_emission=max_CH4_emission)
+# def update_A3_param():
+#     A2._run()
+#     load = A2.emptying_period*A2.outs[0].F_mass/1e3
+#     A3.transportation[0].load = load
+#     A3.fee = get_tanker_truck_cost(load)
+# A2._specification = update_A3_param
 
-truck = 'TankerTruck1' # assumed
-interval = (A2.emptying_period*365*truck_V[truck])/A2.pit_V
+# get_load = lambda: \
+#     A2.emptying_period*A2.outs[0].F_mass if A2.outs[0].F_mass !=0 else 1
 A3 = su.Trucking('A3', ins=A2-0, outs=('transported', 'loss'),
-                    load_type='mass', load=truck_V[truck], load_unit='tonne',
+                    load_type='mass',
+                    # load=get_load(), load_unit='kg',
                     distance=5, distance_unit='km',
-                    interval=interval, interval_unit='day',
-                    fee=truck_cost[truck],
+                    interval=A2.emptying_period, interval_unit='yr',
+                    # # Assuming density of water
+                    # fee=get_tanker_truck_cost(get_load()/1e3),
                     loss_ratio=0.02)
+# def update_A3_fee():
+#     A3._run()
+#     A3.fee = get_tanker_truck_cost(load)
 
-A4 = su.SedimentationTank('A4', ins=A3-0,
-                              outs=('liq', 'sol', '', ''),
-                              decay_k_COD=get_decay_k(tau_deg, log_deg),
-                              decay_k_N=get_decay_k(tau_deg, log_deg),
-                              max_CH4_emission=max_CH4_emission)
+A4 = ExistingWWTPCost('A4', ins=A3-0)
 
-A5 = su.Lagoon('A5', ins=A4-0, outs=('anaerobic_treated', '', ''),
+A5 = su.SedimentationTank('A5', ins=A4-0,
+                          outs=('liq', 'sol', '', ''),
+                          decay_k_COD=get_decay_k(tau_deg, log_deg),
+                          decay_k_N=get_decay_k(tau_deg, log_deg),
+                          max_CH4_emission=max_CH4_emission)
+def A5_cost():
+    A5.purchase_costs.clear()
+A5._cost = A5_cost
+
+A6 = su.Lagoon('A6', ins=A5-0, outs=('anaerobic_treated', '', ''),
                   design_type='anaerobic',
                   decay_k_N=get_decay_k(tau_deg, log_deg),
                   max_CH4_emission=max_CH4_emission)
 
-A6 = su.Lagoon('A6', ins=A5-0, outs=('facultative_treated', '', ''),
+A7 = su.Lagoon('A7', ins=A6-0, outs=('facultative_treated', '', ''),
                   design_type='facultative',
                   decay_k_N=get_decay_k(tau_deg, log_deg),
                   max_CH4_emission=max_CH4_emission)
 
-A7 = su.DryingBed('A7', ins=A4-1, outs=('dried_sludge', 'evaporated', '', ''),
+A8 = su.DryingBed('A8', ins=A5-1, outs=('dried_sludge', 'evaporated', '', ''),
                      design_type='unplanted',
                      decay_k_COD=get_decay_k(tau_deg, log_deg),
                      decay_k_N=get_decay_k(tau_deg, log_deg),
                      max_CH4_emission=max_CH4_emission)
 
-A8 = su.CropApplication('A8', ins=A6-0, outs=('liquid_fertilizer', 'loss'),
-                           loss_ratio=app_loss)
+A9 = su.CropApplication('A8', ins=A7-0, outs=('liquid_fertilizer', 'loss'),
+                        loss_ratio=app_loss)
 def adjust_NH3_loss():
-    A8._run()
+    A9._run()
     # Assume the slight higher loss of NH3 does not affect COD,
     # does not matter much since COD not considered in crop application
-    A8.outs[0]._COD = A8.outs[1]._COD = A8.ins[0]._COD
-A8.specification = adjust_NH3_loss
+    A9.outs[0]._COD = A9.outs[1]._COD = A9.ins[0]._COD
+A9.specification = adjust_NH3_loss
 
-A9 = su.Mixer('A9', ins=(A2-2, A4-2, A5-1, A6-1, A7-2),
+A10 = su.Mixer('A10', ins=(A2-2, A5-2, A6-1, A7-1, A8-2),
                  outs=fugitive_CH4)
-A9.line = 'CH4 mixer'
+A10.line = 'CH4 mixer'
 
-A10 = su.Mixer('A10', ins=(A2-3, A4-3, A5-2, A6-2, A7-3),
+A11 = su.Mixer('A11', ins=(A2-3, A5-3, A6-2, A7-2, A8-3),
                  outs=fugitive_N2O)
-A10.line = 'N2O mixer'
+A11.line = 'N2O mixer'
 
-A11 = su.ComponentSplitter('A11', ins=A7-0,
+A12 = su.ComponentSplitter('A12', ins=A8-0,
                               outs=(sol_N, sol_P, sol_K, 'sol_non_fertilizers'),
                               splits=(('NH3', 'NonNH3'), 'P', 'K'))
 
-A12 = su.ComponentSplitter('A12', ins=A8-0,
+A13 = su.ComponentSplitter('A13', ins=A9-0,
                               outs=(liq_N, liq_P, liq_K, 'liq_non_fertilizers'),
                               splits=(('NH3', 'NonNH3'), 'P', 'K'))
 
-sysA = bst.System('sysA', path=(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12))
+sysA = bst.System('sysA',
+                  path=(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13))
 sysA.simulate()
 # sysA.save_report('results/sysA.xlsx')
 
@@ -203,21 +235,19 @@ liq_K_item = StreamImpactItem(liq_K, GWP=-1.5)
 sol_K_item = StreamImpactItem(sol_K, GWP=-1.5)
 
 teaA = SimpleTEA(system=sysA, discount_rate=0.05, start_year=2018,
-                 lifetime=8, uptime_ratio=1, CAPEX=18606700, lang_factor=None,
+                 lifetime=8, uptime_ratio=1, lang_factor=None,
                  annual_maintenance=0, annual_labor=12*3e6*12/get_exchange_rate(),
-                 system_add_OPEX=57120*e.price,
                  construction_schedule=None)
 teaA.show()
 print('\n')
 
 e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=0.15)
-get_e_price = lambda: e.price
 # 57120 is the annual electricity usage for the whole treatment plant
-get_annual_e = lambda: A2.add_OPEX/get_e_price()+57120
+get_annual_e = lambda: A2.add_OPEX/e.price+57120
 
 lcaA = LCA(system=sysA, lifetime=8, lifetime_unit='yr', uptime_ratio=1,
-           # Assuming all additional OPEX from electricity
-           e_item=get_annual_e()*8)
+            # Assuming all additional OPEX from electricity
+            e_item=get_annual_e()*8)
 lcaA.show()
 print('\n')
 
@@ -228,49 +258,99 @@ print('\n')
 # Summaries
 # =============================================================================
 
-get_AOC_cap = lambda: teaA.AOC/ppl_existing
-get_EAC_cap = lambda: teaA.EAC/ppl_existing
-print(f'Without CAPEX, the net cost is {get_AOC_cap():.1f} {currency}/cap/yr.')
-print(f'With CAPEX, the net cost is {get_EAC_cap():.1f} {currency}/cap/yr.')
+def get_total_inputs(unit):
+    if unit is A1:
+        ins = unit.outs
+    else:
+        ins = unit.ins
+    inputs = {}
+    inputs['COD'] = sum(i.COD*i.F_vol/1e3 for i in ins)
+    inputs['energy'] = inputs['COD'] * 14e3
+    inputs['N'] = sum(i.TN*i.F_vol/1e3 for i in ins)
+    inputs['NH3'] = sum(i.imass['NH3'] for i in ins)
+    inputs['P'] = sum(i.TP*i.F_vol/1e3 for i in ins)
+    inputs['K'] = sum(i.TK*i.F_vol/1e3 for i in ins)
+    inputs['Mg'] = sum(i.TMg*i.F_vol/1e3 for i in ins)
+    inputs['Ca'] = sum(i.TCa*i.F_vol/1e3 for i in ins)
+    for i, j in inputs.items():
+        inputs[i] = j*365*24
+    return inputs
 
-get_GWP = lambda: lcaA.total_impacts['GlobalWarming']/8/ppl_existing
-print(f'Net emission is {get_GWP():.1f} {GWP.unit}/cap/yr.')
+def get_recovery(unit_in=A1, outs=None, if_relative=True):
+    inputs = get_total_inputs(unit_in)
+    try: iter(outs)
+    except: outs = (outs,)
+    liq_sol = tuple(i for i in outs if i.phase != 'g')
+    recovery = {}
+    recovery['COD'] = sum(i.COD*i.F_vol/1e3 for i in liq_sol)
+    recovery['energy'] = recovery['COD'] * 14e3
+    recovery['N'] = sum(i.TN*i.F_vol/1e3 for i in liq_sol)
+    recovery['NH3'] = sum(i.imass['NH3'] for i in liq_sol)
+    recovery['P'] = sum(i.TP*i.F_vol/1e3 for i in liq_sol)
+    recovery['K'] = sum(i.TK*i.F_vol/1e3 for i in liq_sol)
+    recovery['Mg'] = sum(i.TMg*i.F_vol/1e3 for i in liq_sol)
+    recovery['Ca'] = sum(i.TCa*i.F_vol/1e3 for i in liq_sol)
+    for i, j in inputs.items():
+        if if_relative:
+            recovery[i] /= j/(365*24) * ppl_existing
+        else:
+            recovery[i] /= 1/(365*24) * ppl_existing
+    return recovery
 
-get_total_N = lambda: \
-    (A1.outs[0].imass['NH3', 'NonNH3']+A1.outs[1].imass['NH3', 'NonNH3']).sum()
-get_liq_N_recovery = lambda: liq_N.F_mass/ppl_existing/get_total_N()
-get_sol_N_recovery = lambda: sol_N.F_mass/ppl_existing/get_total_N()
-get_N_recovery = lambda: get_liq_N_recovery()+get_sol_N_recovery()
-print(f'Total N recovery is {get_N_recovery():.1%}, '
-      f'{get_liq_N_recovery():.1%} in liquid, '
-      f'{get_sol_N_recovery():.1%} in solid.')
+def get_emissions(outs):
+    try: iter(outs)
+    except: outs = (outs,)
+    gas = tuple(i for i in outs if i.phase == 'g')
+    emission = {}
+    emission['direct'] = \
+        sum((i.imass['CH4', 'N2O']*(28, 265)).sum() for i in gas)*365*24/ppl_existing
+    return emission
 
-get_total_P = lambda: \
-    (A1.outs[0].imass['P']+A1.outs[1].imass['P']).sum()
-get_liq_P_recovery = lambda: liq_P.F_mass/ppl_existing/get_total_P()
-get_sol_P_recovery = lambda: sol_P.F_mass/ppl_existing/get_total_P()
-get_P_recovery = lambda: get_liq_P_recovery()+get_sol_P_recovery()
-print(f'Total P recovery is {get_P_recovery():.1%}, '
-      f'{get_liq_P_recovery():.1%} in liquid, '
-      f'{get_sol_P_recovery():.1%} in solid.')
 
-get_total_K = lambda: \
-    (A1.outs[0].imass['K']+A1.outs[1].imass['K']).sum()
-get_liq_K_recovery = lambda: liq_K.F_mass/ppl_existing/get_total_K()
-get_sol_K_recovery = lambda: sol_K.F_mass/ppl_existing/get_total_K()
-get_K_recovery = lambda: get_liq_K_recovery()+get_sol_K_recovery()
-print(f'Total K recovery is {get_K_recovery():.1%}, '
-      f'{get_liq_K_recovery():.1%} in liquid, '
-      f'{get_sol_K_recovery():.1%} in solid.')
+def print_summaries():
+    get_AOC_cap = lambda: teaA.AOC/ppl_existing
+    get_EAC_cap = lambda: teaA.EAC/ppl_existing
+    print(f'Without CAPEX, the net cost is {get_AOC_cap():.1f} {currency}/cap/yr.')
+    print(f'With CAPEX, the net cost is {get_EAC_cap():.1f} {currency}/cap/yr.')
+    
+    get_GWP = lambda: lcaA.total_impacts['GlobalWarming']/8/ppl_existing
+    print(f'Net emission is {get_GWP():.1f} {GWP.unit}/cap/yr.')
 
-get_COD = lambda stream: stream.COD*stream.F_vol/1e3
-get_total_COD = lambda: get_COD(A1.outs[0])+get_COD(A1.outs[1])
-get_liq_COD_recovery = lambda: get_COD(A12.ins[0])/ppl_existing/get_total_COD()
-get_sol_COD_recovery = lambda: get_COD(A11.ins[0])/ppl_existing/get_total_COD()
-get_COD_recovery = lambda: get_liq_COD_recovery()+get_sol_COD_recovery()
-print(f'Total COD recovery is {get_COD_recovery():.1%}, '
-      f'{get_liq_COD_recovery():.1%} in liquid, '
-      f'{get_sol_COD_recovery():.1%} in solid.')
+    get_total_N = lambda: \
+        (A1.outs[0].imass['NH3', 'NonNH3']+A1.outs[1].imass['NH3', 'NonNH3']).sum()
+    get_liq_N_recovery = lambda: liq_N.F_mass/ppl_existing/get_total_N()
+    get_sol_N_recovery = lambda: sol_N.F_mass/ppl_existing/get_total_N()
+    get_N_recovery = lambda: get_liq_N_recovery()+get_sol_N_recovery()
+    print(f'Total N recovery is {get_N_recovery():.1%}, '
+          f'{get_liq_N_recovery():.1%} in liquid, '
+          f'{get_sol_N_recovery():.1%} in solid.')
+    
+    get_total_P = lambda: \
+        (A1.outs[0].imass['P']+A1.outs[1].imass['P']).sum()
+    get_liq_P_recovery = lambda: liq_P.F_mass/ppl_existing/get_total_P()
+    get_sol_P_recovery = lambda: sol_P.F_mass/ppl_existing/get_total_P()
+    get_P_recovery = lambda: get_liq_P_recovery()+get_sol_P_recovery()
+    print(f'Total P recovery is {get_P_recovery():.1%}, '
+          f'{get_liq_P_recovery():.1%} in liquid, '
+          f'{get_sol_P_recovery():.1%} in solid.')
+    
+    get_total_K = lambda: \
+        (A1.outs[0].imass['K']+A1.outs[1].imass['K']).sum()
+    get_liq_K_recovery = lambda: liq_K.F_mass/ppl_existing/get_total_K()
+    get_sol_K_recovery = lambda: sol_K.F_mass/ppl_existing/get_total_K()
+    get_K_recovery = lambda: get_liq_K_recovery()+get_sol_K_recovery()
+    print(f'Total K recovery is {get_K_recovery():.1%}, '
+          f'{get_liq_K_recovery():.1%} in liquid, '
+          f'{get_sol_K_recovery():.1%} in solid.')
+    
+    get_COD = lambda stream: stream.COD*stream.F_vol/1e3
+    get_total_COD = lambda: get_COD(A1.outs[0])+get_COD(A1.outs[1])
+    get_liq_COD_recovery = lambda: get_COD(A13.ins[0])/ppl_existing/get_total_COD()
+    get_sol_COD_recovery = lambda: get_COD(A12.ins[0])/ppl_existing/get_total_COD()
+    get_COD_recovery = lambda: get_liq_COD_recovery()+get_sol_COD_recovery()
+    print(f'Total COD recovery is {get_COD_recovery():.1%}, '
+          f'{get_liq_COD_recovery():.1%} in liquid, '
+          f'{get_sol_COD_recovery():.1%} in solid.')
 
 
 
@@ -374,6 +454,21 @@ print(f'Total COD recovery is {get_COD_recovery():.1%}, '
 #                 max_CH4_emission=max_CH4_emission)
 # C1.simulate()
 # C2.simulate()
+
+# truck_cost = {
+#     'TankerTruck1': 8e4/get_exchange_rate()*1.15, # 15% additional, per m3
+#     'TankerTruck2': 12e4/get_exchange_rate()*1.15, # 15% additional, per m3
+#     'TankerTruck3': 2e5/get_exchange_rate()*1.15, # 15% additional, per m3
+#     'TankerTruck4': 25e4/get_exchange_rate()*1.15, # 15% additional, per m3
+#     'HandCart': 0.01, # per cap/d
+#     'CBSTruck': 23e3/get_exchange_rate() # per m3
+#     }
+
+# # Assume density is 1 tonne/m3 (as water)
+# V = (3, 4.5, 8, 15, 1, 1)
+# truck_V = dict.fromkeys(truck_cost.keys())
+# for i, j in zip(truck_V.keys(), V):
+#     truck_V[i] = j
 
 # truck = 'HandcartAndTruck'
 # # Liquid waste

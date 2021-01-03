@@ -17,12 +17,3 @@ for license details.
 # import pandas as pd
 
 
-# def load_data(path=None, sheet=None):
-#     if path[-4:] == 'xlsx' or path[-4:] == '.xls':
-#         try: data = pd.read_excel(path, sheet_name=sheet, index_col=0)
-#         except: data = pd.read_excel(path, index_col=0)
-#     elif path[-4:] == '.csv':
-#         data = pd.read_csv(path, index_col=0)
-#     else:
-#         raise ValueError('Only csv or xlsx files can be loaded.')
-#     return data

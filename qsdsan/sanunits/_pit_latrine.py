@@ -21,8 +21,8 @@ from ._toilet import Toilet
 from ..utils.loading import load_data, data_path
 
 # Note that here two different methods are used to check the user-input values
-from ..utils.checkers import NonNegativeFloat as NNF_C
-from ..utils.descriptors import NonNegativeFloat as NNF_D
+from ..utils.checkers import Fraction as Frac_C
+from ..utils.descriptors import Fraction as Frac_D
 
 __all__ = ('PitLatrine',)
 
@@ -67,7 +67,7 @@ class PitLatrine(Toilet):
     
     '''
 
-    _P_leaching = NNF_D(name='P_leaching')
+    _P_leaching = Frac_D(name='P_leaching')
 
     def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, life_time=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
@@ -107,10 +107,11 @@ class PitLatrine(Toilet):
 
         mixed = WasteStream()
         mixed.mix_from(self.ins)
+        tot_COD_kg = sum(float(getattr(i, 'COD'))*i.F_vol for i in self.ins)/1e3
         
         # All composite variables in mg/L
         # Leaching
-        # Here COD change leaching not considered
+        # Here COD change due to leaching not considered
         if self.if_leaching:
             # Additional assumption not in ref [1]
             leachate.imass['H2O'] = mixed.imass['H2O'] * self.liq_leaching
@@ -134,9 +135,8 @@ class PitLatrine(Toilet):
             COD_loss = self.first_order_decay(k=self.decay_k_COD,
                                               t=self.emptying_period,
                                               max_decay=self.COD_max_decay)
-            CH4.imass['CH4'] = mixed.COD/1e3*mixed.F_vol*COD_loss * \
-                self.max_CH4_emission*self.MCF_decay # COD in mg/L (g/m3)
-            mixed._COD *= 1 - COD_loss
+            COD_loss_kg = tot_COD_kg * COD_loss
+            CH4.imass['CH4'] = COD_loss_kg * self.max_CH4_emission * self.MCF_decay
             mixed.imass['OtherSS'] *= 1 - COD_loss
 
             N_loss = self.first_order_decay(k=self.decay_k_N,
@@ -149,6 +149,7 @@ class PitLatrine(Toilet):
             mixed.imass ['NH3'] -= NH3_rmd
             mixed.imass['NonNH3'] -= NonNH3_rmd
             N2O.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44/28
+            mixed._COD = (tot_COD_kg-COD_loss_kg)*1e3/mixed.F_vol
         else:
             CH4.empty()
             N2O.empty()
@@ -160,9 +161,9 @@ class PitLatrine(Toilet):
                 empty_ratio=self.empty_ratio,
                 CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
-        
-        # Drain extra water
-        sludge = self.sludge_accum_rate*self.N_user/24/365 # Assume density of water
+
+        # Drain extra water, assume density of water (1 kg/L)
+        sludge = self.sludge_accum_rate/(365*24)
         diff = mixed.F_mass - sludge
         if diff > 0:
             mixed.imass['H2O'] -= diff
@@ -271,7 +272,7 @@ class PitLatrine(Toilet):
         return self._N_leaching
     @N_leaching.setter
     def N_leaching(self, i):
-        @NNF_C(self)
+        @Frac_C(self)
         def N_leaching(): return i
 
     @property

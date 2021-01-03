@@ -447,7 +447,9 @@ class WasteStream(Stream):
     def mix_from(self, others):
         Stream.mix_from(self, others)
         for slot in _ws_specific_slots:
-            try: tot = sum(float(getattr(i, slot) or 0)*i.F_vol for i in others)
+            #!!! This need reviewing, might not be good to calculate some
+            # attributes like pH
+            try: tot = sum(float(getattr(i, slot))*i.F_vol for i in others)
             except: continue
             if tot == 0.:
                 setattr(self, slot, None)

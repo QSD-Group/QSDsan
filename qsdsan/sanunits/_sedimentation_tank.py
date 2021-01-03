@@ -81,20 +81,20 @@ class SedimentationTank(SludgeSeparator, Decay):
         
         # Retention in the settled solids
         SludgeSeparator._run(self)
-            
+
         # COD degradation in settled solids
         COD_loss = self.first_order_decay(k=self.decay_k_COD,
                                           t=self.tau/365,
                                           max_decay=self.COD_max_decay)
-
-        sol._COD *= 1 - COD_loss
+        tot_COD_kg = sol._COD * sol.F_vol / 1e3
         sol.imass['OtherSS'] *= 1 - COD_loss
         
         # Adjust total mass of of the settled solids by changing water content
-        liq, sol = self._adjust_solid_water(waste, liq, sol, self.settled_frac)
+        liq, sol = self._adjust_solid_water(waste, liq, sol)
         
-        CH4.imass['CH4'] = sol.COD/1e3*sol.F_vol*COD_loss * \
-            self.max_CH4_emission*self.MCF_decay # COD in mg/L (g/m3)
+        COD_loss_kg = tot_COD_kg * COD_loss
+        CH4.imass['CH4'] = COD_loss_kg * self.max_CH4_emission * self.MCF_decay
+        sol._COD = tot_COD_kg*(1-COD_loss)/sol.F_vol
 
         # N degradation
         if self.if_N2O_emission:

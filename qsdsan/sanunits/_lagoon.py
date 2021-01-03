@@ -74,8 +74,8 @@ class Lagoon(SanUnit, Decay):
         treated._COD *= 1 - self.COD_removal
         treated.imass['OtherSS'] *= 1 - self.COD_removal
         
-        CH4.imass['CH4'] = \
-            removed_frac*waste.F_vol/1e3*self.MCF_decay*self.max_CH4_emission
+        CH4.imass['CH4'] = removed_frac*waste.COD*waste.F_vol/1e3 * \
+            self.MCF_decay*self.max_CH4_emission
         
         if self.if_N2O_emission:
             N_loss = self.first_order_decay(k=self.decay_k_N,
@@ -100,10 +100,6 @@ class Lagoon(SanUnit, Decay):
         'Lagoon depth': 'm'
         }
 
-    # _BM = {
-    #     'Plastic': 1,
-    #     'Excavation': 1
-    #     }
 
     def _design(self):
         design = self.design_results

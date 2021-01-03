@@ -62,8 +62,6 @@ class ImpactItem:
     
     def __init__(self, ID, functional_unit='kg', price=0., price_unit='', **indicator_CFs):
         
-        if ID in ImpactItem._items.keys() and ImpactItem._items[ID] is not self:
-            raise ValueError(f'The ID {ID} is in use by {ImpactItem._items[ID]}')
         self._ID = ID
         self._functional_unit = auom(functional_unit)
         self._update_price(price, price_unit)
@@ -74,7 +72,13 @@ class ImpactItem:
                 self.add_indicator_CF(CF, CF_value, CF_unit)
             except:
                 self.add_indicator_CF(CF, value)
-        ImpactItem._items[ID] = self
+        if ID in ImpactItem._items.keys():
+            old = ImpactItem._items[ID]
+            for i in old.__slots__:
+                if not getattr(old, i) == getattr(self, i):
+                    raise ValueError(f'The ID {ID} is in use by {ImpactItem._items[ID]}')
+        else:
+            ImpactItem._items[ID] = self
     
     
     # This makes sure it won't be shown as memory location of the object
@@ -202,20 +206,20 @@ class StreamImpactItem(ImpactItem):
     
     Parameters
     ----------
-    linked_ws : WasteStream or str
+    linked_stream : WasteStream or str
         The associated WasteStream for environmental impact calculation.
     **indicator_CFs : kwargs
         ImpactIndicators and their characteriziation factors.
     
     '''
 
-    __slots__ = ('_ID', '_linked_ws', '_functional_unit', '_CFs')
+    __slots__ = ('_ID', '_linked_stream', '_functional_unit', '_CFs')
 
-    def __init__(self, linked_ws, **indicator_CFs):
+    def __init__(self, linked_stream, **indicator_CFs):
         
-        self._linked_ws = None
-        self.linked_ws = linked_ws
-        ID = self.linked_ws.ID + '_item'
+        self._linked_stream = None
+        self.linked_stream = linked_stream
+        ID = self.linked_stream.ID + '_item'
         self._ID = ID
         self._functional_unit = auom('kg')
         self._CFs = {}
@@ -230,12 +234,12 @@ class StreamImpactItem(ImpactItem):
 
 
     def __repr__(self):
-        return f'<StreamImpactItem: WasteStream {self.linked_ws}>'
+        return f'<StreamImpactItem: WasteStream {self.linked_stream}>'
 
 
     def show(self):
         info = f'StreamImpactItem: [per {self.functional_unit}]'        
-        info += f'\nLinked to     : {self.linked_ws}'
+        info += f'\nLinked to     : {self.linked_stream}'
         info += f'\nPrice           : {self.price} {currency}'
         info += '\nImpactIndicators:'
         print(info)
@@ -253,26 +257,26 @@ class StreamImpactItem(ImpactItem):
     
     _ipython_display_ = show
 
-    def copy(self, new_ws):
+    def copy(self, new_stream):
         new = StreamImpactItem.__new__(StreamImpactItem)
         for slot in StreamImpactItem.__slots__:
-            if slot == '_linked_ws': continue
+            if slot == '_linked_stream': continue
             value = getattr(self, slot)
             #!!! Not sure if this will cause problem because two objects pointing to the same one
             setattr(new, slot, copy_maybe(value))
-        new.linked_ws = new_ws
+        new.linked_stream = new_stream
         return new
     __copy__ = copy
 
 
     @property
-    def linked_ws(self):
+    def linked_stream(self):
         '''[WasteStream] or [str] The associated WasteStream for environmental impact calculation.'''
-        return self._linked_ws
-    @linked_ws.setter
-    def linked_ws(self, i):
-        if self._linked_ws:
-            self._linked_ws._impact_item = None
+        return self._linked_stream
+    @linked_stream.setter
+    def linked_stream(self, i):
+        if self._linked_stream:
+            self._linked_stream._impact_item = None
         if not isinstance(i, WasteStream) and not isinstance(i, Stream) and i is not None:
             if isinstance(i, str):
                 try:
@@ -281,16 +285,16 @@ class StreamImpactItem(ImpactItem):
                     raise ValueError(f'The WasteStream ID {i} not '
                                      'found in <WasteStream>.registry')
             else:
-                raise TypeError('linked_ws must be a WasteStream or '
+                raise TypeError('linked_stream must be a WasteStream or '
                                 f'the ID of WasteStream, not {type(i).__name__}.')
         if i is not None:
             if i.impact_item and i.impact_item is not i:
                 msg = f'The origin StreamImpactItem linked to WasteStream {i} ' \
                     'is replaced with the current one.'
                 warn(message=msg, stacklevel=3)
-                i.impact_item.linked_ws = None
+                i.impact_item.linked_stream = None
             i._impact_item = self
-        self._linked_ws = i
+        self._linked_stream = i
 
 
     @property
@@ -301,8 +305,8 @@ class StreamImpactItem(ImpactItem):
     @property
     def price(self):
         '''[float] Price of the linked WasteStream.'''
-        if self.linked_ws:
-            return self.linked_ws.price
+        if self.linked_stream:
+            return self.linked_stream.price
         else: return 0.
 
 

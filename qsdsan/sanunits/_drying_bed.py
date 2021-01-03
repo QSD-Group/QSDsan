@@ -107,10 +107,10 @@ class DryingBed(SanUnit, Decay):
         set_sol_frac = self.sol_frac[self.design_type]
         solid_content = 1 - sol.imass['H2O']/sol.F_mass
         if solid_content > set_sol_frac:
-            msg = f'Solid content of the solid after COD removal is {solid_content},'\
-                'larger than the set sol_frac of {set_sol_frac} for the {self.design_type} ' \
+            msg = f'Solid content of the solid after COD removal is {solid_content:.2f}, '\
+                f'larger than the set sol_frac of {set_sol_frac} for the {self.design_type} ' \
                 'process type, the set value is ignored.'
-            warn(msg, source=self)
+            warn(msg, stacklevel=2)
             evaporated.empty()
         else:
             sol.imass['H2O'] = (sol.F_mass-sol.imass['H2O'])/set_sol_frac

@@ -62,12 +62,12 @@ class Decay:
       
     @staticmethod
     def first_order_decay(k, t, max_decay, t0=0, tot=1):
-        '''
+        r'''
         Calculate first-order degradation loss based on Trimmer et al. [1]_
         
-        .. math:: C_0 = tot * max_decay
-        .. math:: C_avg = C_0/(k*t) * (e^{-k*t_0}-e^{-k*t_f})
-        .. math::  loss = C_0 - C_avg
+        .. math:: C_0 = tot * max_{decay}
+        .. math:: C_{avg} = \frac{C_0}{k*t} * (e^{-k*t_0}-e^{-k*t_f})
+        .. math:: loss = C_0 - C_{avg}
         
         
         Parameters

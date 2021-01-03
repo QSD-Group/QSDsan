@@ -69,14 +69,15 @@ class SludgeSeparator(SanUnit):
     _N_ins = 1
     _outs_size_is_fixed = False
     
-    def _adjust_solid_water(self, influent, liq, sol, sol_frac):
+    def _adjust_solid_water(self, influent, liq, sol):
+        # breakpoint()
         sol.imass['H2O'] = 0
-        sol.imass['H2O'] = influent.F_mass * sol_frac - sol.F_mass
+        sol.imass['H2O'] = influent.F_mass * self.settled_frac - sol.F_mass
         if sol.imass['H2O'] < 0:
             sol.imass['H2O'] = 0
-            msg = 'Negative water content calcualted for settled solids' \
+            msg = 'Negative water content calcualted for settled solids, ' \
                 'try smaller split or larger settled_frac.'
-            warn(msg, source=self)
+            warn(msg, stacklevel=2)
         liq.imass['H2O'] = influent.imass['H2O'] - sol.imass['H2O']
         return liq, sol
         
@@ -97,20 +98,23 @@ class SludgeSeparator(SanUnit):
                 if var == 'TS':
                     sol.imass['OtherSS'] = split[var] * waste.imass['OtherSS']
                 elif var == 'COD':
-                    sol._COD = split[var] * waste._COD
-                    liq._COD = waste._COD - sol._COD
+                    sol_COD = split[var] * waste._COD * waste.F_vol
+                    liq_COD = waste._COD * waste.F_vol - sol_COD
                 elif var == 'N':
                     N_sol = split[var]*(waste.imass['NH3']+waste.imass['NonNH3'])
                     NonNH3_rmd, NH3_rmd = \
                         allocate_N_removal(N_sol, waste.imass['NonNH3'])
-                    sol.imass ['NonNH3'] = NonNH3_rmd
-                    sol.imass ['NH3'] = NH3_rmd
+                    sol.imass['NonNH3'] = NonNH3_rmd
+                    sol.imass['NH3'] = NH3_rmd
                 else:
                     sol.imass[var] = split[var] * waste.imass[var]
             liq.mass = waste.mass - sol.mass
+            # breakpoint()
         
         # Adjust total mass of of the settled solids by changing water content.
-        liq, sol = self._adjust_solid_water(waste, liq, sol, self.settled_frac)
+        liq, sol = self._adjust_solid_water(waste, liq, sol)
+        sol._COD = sol_COD / sol.F_vol
+        liq._COD = liq_COD / liq.F_vol
 
 
     @property

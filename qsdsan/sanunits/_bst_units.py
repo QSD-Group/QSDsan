@@ -33,7 +33,7 @@ class Mixer(SanUnit, bst.units.Mixer):
     
     biosteam document
     -----------------
-    `biosteam.units.Mixer <https://biosteam.readthedocs.io/en/latest/units/Mixer.html>`_
+    `biosteam.units.Mixer <https://biosteam.readthedocs.io/en/latest/units/mixing.html>`_
 
     '''
     __init__ = bst.units.Mixer.__init__
@@ -45,7 +45,7 @@ class Splitter(SanUnit, bst.units.Splitter):
 
     biosteam document
     -----------------
-    `biosteam.units.Splitter <https://biosteam.readthedocs.io/en/latest/units/Splitter.html>`_
+    `biosteam.units.Splitter <https://biosteam.readthedocs.io/en/latest/units/splitting.html>`_
 
     '''
     __init__ = bst.units.Splitter.__init__
@@ -57,7 +57,7 @@ class FakeSplitter(SanUnit, bst.units.FakeSplitter):
     
     biosteam document
     -----------------
-    biosteam.units.FakeSplitter
+    `biosteam.units.FakeSplitter <https://biosteam.readthedocs.io/en/latest/units/splitting.html>`_
 
     '''
     __init__ = bst.units.FakeSplitter.__init__
@@ -69,7 +69,7 @@ class ReversedSplitter(SanUnit, bst.units.ReversedSplitter):
     
     biosteam document
     -----------------
-    biosteam.units.FakeSplitter
+    `biosteam.units.ReversedSplitter <https://biosteam.readthedocs.io/en/latest/units/splitting.html>`_
 
     '''
     __init__ = bst.units.ReversedSplitter.__init__
@@ -105,7 +105,7 @@ class StorageTank(SanUnit, bst.units.StorageTank):
     
     biosteam document
     -----------------
-    `biosteam.units.StorageTank <https://biosteam.readthedocs.io/en/latest/units/StorageTank.html>`_
+    `biosteam.units.StorageTank <https://biosteam.readthedocs.io/en/latest/units/Tank.html>`_
 
     '''
     __init__ = bst.units.StorageTank.__init__
@@ -117,7 +117,7 @@ class MixTank(SanUnit, bst.units.MixTank):
     
     biosteam document
     -----------------
-    `biosteam.units.MixTank <https://biosteam.readthedocs.io/en/latest/units/MixTank.html>`_
+    `biosteam.units.MixTank <https://biosteam.readthedocs.io/en/latest/units/Tank.html>`_
 
     '''
     __init__ = bst.units.MixTank.__init__

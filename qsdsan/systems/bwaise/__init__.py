@@ -13,7 +13,10 @@ https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-__all__ = []
+from . import (
+    _cmps,
+    # _units,
+    # systems
+    )
 
-from lazypkg import LazyPkg
-LazyPkg(__name__, ['_cmps', '_utils', 'systems', ])
+from ._cmps import *
