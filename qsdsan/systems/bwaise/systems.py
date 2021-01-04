@@ -19,7 +19,8 @@ Ref:
         https://doi.org/10.1021/acs.est.0c03296.
 
 TODO:
-    [1] Recheck unit consistency, power law degradation, truck
+    [1] Recheck unit consistency, power law degradation
+    [2] Why existing plant has sewer and sludge population? 
 
 '''
 
@@ -68,7 +69,8 @@ class ExistingWWTPCost(SanUnit):
 # =============================================================================
 
 toilet_user = 16 # four people per household, four households per toilet
-ppl_existing = 4e4 # number of people served by the existing plant (sysA and SceC)
+# ppl_existing = 4e4 # number of people served by the existing plant (sysA and SceC)
+ppl_existing = 416667
 ppl_alternative = 5e4 # number of people served by the alternative plant (SceB)
 
 exchange_rate = 3700 # UGX per USD, triangular of 3600, 3700, 3900
@@ -86,23 +88,19 @@ def get_decay_k(tau_deg=2, log_deg=3):
 
 max_CH4_emission = 0.25
 
-#!!! How this was selected?
 # Model for tanker truck cost based on capacity (m3)
 # price = a*capacity**b -> ln(price) = ln(a) + bln(capacity)
 UGX_prices = np.array((8e4, 12e4, 20e4, 25e4))
 capacities = np.array((3, 4.5, 8, 15))
-def get_tanker_truck_model():
+def get_tanker_truck_cost(capacity):
     # Add 15% additional costs
     prices = UGX_prices*1.15/get_exchange_rate()
     ln_p = np.log(prices)
     ln_cap = np.log(capacities)
     model = LR().fit(ln_cap.reshape(-1,1), ln_p.reshape(-1,1))
-    [ln_a] = model.intercept_.tolist()
-    [[b]] = model.coef_.tolist()
-    return ln_a, b
-
-ln_a, b = get_tanker_truck_model()
-get_tanker_truck_cost = lambda cap: np.exp(ln_a+b*np.log(cap)) if cap != 0 else 1
+    [[predicted]] = model.predict(np.array((np.log(capacity))).reshape(1, -1)).tolist()
+    cost = np.exp(predicted)
+    return cost
 
 items['Concrete'].price = 194
 items['Steel'].price = 2.665
@@ -124,47 +122,42 @@ app_loss['NH3'] = 0.05
 
 fugitive_CH4 = WasteStream('fugitive_CH4', phase='g')
 fugitive_N2O = WasteStream('fugitive_N2O', phase='g')
-# The product is actually liquid fertilizer, but separated here to be solids
-# just to avoid showing WasteStream related properties
-liq_N = WasteStream('liq_N', phase='s', price=1.507)
-sol_N = WasteStream('sol_N', phase='s', price=1.507)
-liq_P = WasteStream('liq_P', phase='s', price=3.983)
-sol_P = WasteStream('sol_P', phase='s', price=3.983)
-liq_K = WasteStream('liq_K', phase='s', price=1.333)
-sol_K = WasteStream('sol_K', phase='s', price=1.333)
+# Recycled nutrients are sold at a lower price than commercial fertilizers
+price_factor = 0.25
+liq_N = WasteStream('liq_N', phase='l', price=1.507*price_factor)
+sol_N = WasteStream('sol_N', phase='l', price=1.507*price_factor)
+liq_P = WasteStream('liq_P', phase='l', price=3.983*price_factor)
+sol_P = WasteStream('sol_P', phase='l', price=3.983*price_factor)
+liq_K = WasteStream('liq_K', phase='l', price=1.333*price_factor)
+sol_K = WasteStream('sol_K', phase='l', price=1.333*price_factor)
+fertilizers = (liq_N, sol_N, liq_P, sol_P, liq_K, sol_K)
 
 print('\n----------Scenario A----------\n')
 A1 = su.Excretion('A1', outs=('urine', 'feces'))
 
 A2 = su.PitLatrine('A2', ins=(A1-0, A1-1,
-                                  'toilet_paper', 'flushing_water',
-                                  'cleansing_water', 'desiccant'),
+                              'toilet_paper', 'flushing_water',
+                              'cleansing_water', 'desiccant'),
                       outs=('mixed_waste', 'leachate', '', ''),
                       N_user=toilet_user, N_toilet=ppl_existing/toilet_user,
                       OPEX_over_CAPEX=0.05,
                       decay_k_COD=get_decay_k(tau_deg, log_deg),
                       decay_k_N=get_decay_k(tau_deg, log_deg),
                       max_CH4_emission=max_CH4_emission)
-# def update_A3_param():
-#     A2._run()
-#     load = A2.emptying_period*A2.outs[0].F_mass/1e3
-#     A3.transportation[0].load = load
-#     A3.fee = get_tanker_truck_cost(load)
-# A2._specification = update_A3_param
 
-# get_load = lambda: \
-#     A2.emptying_period*A2.outs[0].F_mass if A2.outs[0].F_mass !=0 else 1
 A3 = su.Trucking('A3', ins=A2-0, outs=('transported', 'loss'),
-                    load_type='mass',
-                    # load=get_load(), load_unit='kg',
-                    distance=5, distance_unit='km',
-                    interval=A2.emptying_period, interval_unit='yr',
-                    # # Assuming density of water
-                    # fee=get_tanker_truck_cost(get_load()/1e3),
-                    loss_ratio=0.02)
-# def update_A3_fee():
-#     A3._run()
-#     A3.fee = get_tanker_truck_cost(load)
+                 load_type='mass',
+                 distance=5, distance_unit='km',
+                 interval=A2.emptying_period, interval_unit='yr',
+                 loss_ratio=0.02)
+def update_A3_param():
+    A3._run()
+    truck = A3.single_truck
+    truck.load = A3.F_mass_in*A2.emptying_period*365*24/A2.N_toilet
+    vol = truck.load/1e3 # Assume the density of water
+    A3.fee = get_tanker_truck_cost(vol)
+A3._specification = update_A3_param
+
 
 A4 = ExistingWWTPCost('A4', ins=A3-0)
 
@@ -193,6 +186,9 @@ A8 = su.DryingBed('A8', ins=A5-1, outs=('dried_sludge', 'evaporated', '', ''),
                      decay_k_N=get_decay_k(tau_deg, log_deg),
                      max_CH4_emission=max_CH4_emission)
 
+treatA = bst.System('treatA', path=(A4, A5, A6, A7, A8))
+
+
 A9 = su.CropApplication('A8', ins=A7-0, outs=('liquid_fertilizer', 'loss'),
                         loss_ratio=app_loss)
 def adjust_NH3_loss():
@@ -219,7 +215,7 @@ A13 = su.ComponentSplitter('A13', ins=A9-0,
                               splits=(('NH3', 'NonNH3'), 'P', 'K'))
 
 sysA = bst.System('sysA',
-                  path=(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13))
+                  path=(A1, A2, A3, treatA, A9, A10, A11, A12, A13))
 sysA.simulate()
 # sysA.save_report('results/sysA.xlsx')
 
@@ -243,10 +239,10 @@ print('\n')
 
 e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=0.15)
 # 57120 is the annual electricity usage for the whole treatment plant
-get_annual_e = lambda: A2.add_OPEX/e.price+57120
+get_annual_e = lambda: A4.power_utility.rate*teaA._operating_hours
 
 lcaA = LCA(system=sysA, lifetime=8, lifetime_unit='yr', uptime_ratio=1,
-            # Assuming all additional OPEX from electricity
+            # Assuming all additional WWTP OPEX from electricity
             e_item=get_annual_e()*8)
 lcaA.show()
 print('\n')

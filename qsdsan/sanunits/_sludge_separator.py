@@ -109,7 +109,6 @@ class SludgeSeparator(SanUnit):
                 else:
                     sol.imass[var] = split[var] * waste.imass[var]
             liq.mass = waste.mass - sol.mass
-            # breakpoint()
         
         # Adjust total mass of of the settled solids by changing water content.
         liq, sol = self._adjust_solid_water(waste, liq, sol)

@@ -238,7 +238,7 @@ class UDDT(Toilet):
     def _design(self):
         design = self.design_results
         design['Number of users per toilet'] = self.N_user
-        design['Paralle toilets'] = N = self.N_toilet
+        design['Parallel toilets'] = N = self.N_toilet
         design['Collection period'] = self.collection_period
         design['Single tank volume'] = self.tank_V
         design['Single vault volume'] = self.vault_V

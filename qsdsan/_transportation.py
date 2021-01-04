@@ -31,24 +31,24 @@ class Transportation:
     '''Transportation cost and environmental impacts.'''
 
     __slots__ = ('_item', '_load_type', '_load', '_distance', '_interval',
-                 '_default_units')
+                 'default_units')
     
     def __init__(self, item=None,
                  load_type='mass', load=1., load_unit='kg',
                  distance=1., distance_unit='km',
                  interval=1., interval_unit='hr'):
         self.item = item
-        self._default_units = {
+        self.default_units = {
             'distance': 'km',
             'interval': 'hr',
             }
         self._load_type = load_type
         if load_type == 'mass':
-            self._default_units['load'] = 'kg'
-            self._default_units['quantity'] = 'kg*km'
+            self.default_units['load'] = 'kg'
+            self.default_units['quantity'] = 'kg*km'
         elif load_type == 'volume':
-            self._default_units['load'] = 'm3'
-            self._default_units['quantity'] = 'm3*km'
+            self.default_units['load'] = 'm3'
+            self.default_units['quantity'] = 'm3*km'
         else:
             raise ValueError("load_type can only be 'mass' or 'volume', "
                              f'not {load_type}.')
@@ -64,7 +64,7 @@ class Transportation:
         
     
     def _update_value(self, var, value, unit=''):
-        default_unit = self._default_units[var]
+        default_unit = self.default_units[var]
         if not unit or unit == default_unit:
             setattr(self, '_'+var, value)
         else:
@@ -77,7 +77,7 @@ class Transportation:
     def show(self):
         item = self.item
         impacts = self.impacts
-        du = self._default_units
+        du = self.default_units
         info = f'Transportation: {item.ID} [per trip]'
         info += f"\nLoad          : {f_num(self.load)} {du['load']}"
         info += f"\nDistance      : {f_num(self.distance)} {du['distance']}"
@@ -128,11 +128,11 @@ class Transportation:
     @load_type.setter
     def load_type(self, i):
         if i == 'mass':
-            self._default_units['load'] = 'kg'
-            self._default_units['quantity'] = 'kg*km'
+            self.default_units['load'] = 'kg'
+            self.default_units['quantity'] = 'kg*km'
         elif i == 'volume':
-            self._default_units['load'] = 'm3'
-            self._default_units['quantity'] = 'm3*km'
+            self.default_units['load'] = 'm3'
+            self.default_units['quantity'] = 'm3*km'
         else:
             raise ValueError("load_type can only be 'mass' or 'volume', "
                              f'not {i}.')
@@ -178,7 +178,7 @@ class Transportation:
     @property
     def quantity(self):
         '''[float] Quantity of item functional unit.'''
-        quantity = auom(self._default_units['quantity']). \
+        quantity = auom(self.default_units['quantity']). \
             convert(self.load*self.distance, self.item.functional_unit)
         return quantity
 
@@ -202,7 +202,7 @@ class Transportation:
 
     @property
     def impacts(self):
-        '''[dict] Total impacts of this construction item.'''
+        '''[dict] Total impacts of this transportation item.'''
         impacts = {}
         for indicator, CF in self.item.CFs.items():
             impacts[indicator] = self.quantity*CF

@@ -70,11 +70,11 @@ class Trucking(SanUnit):
 
         '''
         SanUnit.__init__(self, ID, ins, outs)
-        self.transportation = \
-            (Transportation(item='Trucking',
+        self.single_truck = \
+            Transportation(item='Trucking',
                            load_type=load_type, load=load, load_unit=load_unit,
                            distance=distance, distance_unit=distance_unit,
-                           interval=interval, interval_unit=interval_unit),)
+                           interval=interval, interval_unit=interval_unit)
         self._update_fee(fee, fee_unit)
         self.if_material_loss = if_material_loss
         self.loss_ratio = loss_ratio
@@ -104,14 +104,19 @@ class Trucking(SanUnit):
                     loss.imass[cmp] = self.ins[0].imass[cmp] - transported.imass[cmp]
 
 
-    def _design(self):        
-        truck = self.transportation[0]
-        if truck.load_type == 'volume':        
-            truck._update_value('load', self.F_vol_in*truck.interval, unit='m3') # interval in hr
+    def _design(self):
+        single = self.single_truck
+        if single.load_type == 'volume':
+            factor = auom('m3').conversion_factor(single.default_units['load'])
+            N = self.F_vol_in*factor*single.interval/single.load
         else:
-            truck.load_type == 'mass'
-            truck._update_value('load', self.F_mass_in*truck.interval, unit='kg')
-        self._add_OPEX = self.fee/truck.interval/24 # add_OPEX in hr
+            factor = auom('kg').conversion_factor(single.default_units['load'])
+            N = self.F_mass_in*factor*single.interval/single.load
+        self.design_results['Parallel trucks'] = N
+        total = single.copy()
+        total.load *= N
+        self.transportation = (total,)
+        self._add_OPEX = self.fee/total.interval*N
 
     @property
     def fee(self):

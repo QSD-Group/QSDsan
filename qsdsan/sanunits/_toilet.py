@@ -38,7 +38,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     N_user : float
         Number of people that share this toilet.
     N_toilet : float
-        Number of paralle toilets.
+        Number of parallel toilets.
     life_time : float
         Life time of the toilet in year.
     if_toilet_paper : bool

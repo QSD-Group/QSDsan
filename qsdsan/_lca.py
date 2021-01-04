@@ -228,7 +228,7 @@ class LCA:
         return impacts
         
     def get_normalized_impacts(self, stream):
-        '''[dict] Normalize all impacts based on the mass flow of a WasteStream.'''
+        '''[dict] Normalize all impacts based on the mass flow of a stream.'''
         assert stream in self.system.streams, \
                f'WasteStream {stream} not in the System {self.system}.'
         impacts = self.get_total_impacts(exclude=stream)
@@ -323,14 +323,14 @@ class LCA:
         ind_head = sum(([f'{i.ID} [{i.unit}]',
                          f'Category {i.ID} Ratio'] for i in self.indicators), [])
         
-        if category == 'WasteStream':
-            headings = ['WasteStream', 'Mass [kg]', *ind_head]
+        if category == 'Stream':
+            headings = ['Stream', 'Mass [kg]', *ind_head]
             item_dct = dict.fromkeys(headings)
             for key in item_dct.keys():
                 item_dct[key] = []
             for ws_item in self.stream_inventory:
                 ws = ws_item.linked_stream
-                item_dct['WasteStream'].append(ws.ID)
+                item_dct['Stream'].append(ws.ID)
                 mass = ws.F_mass * time
                 item_dct['Mass [kg]'].append(mass)
                 for ind in self.indicators:
@@ -338,7 +338,7 @@ class LCA:
                     item_dct[f'{ind.ID} [{ind.unit}]'].append(impact)
                     item_dct[f'Category {ind.ID} Ratio'].append(impact/tot[ind.ID])
             table = pd.DataFrame.from_dict(item_dct)
-            table.set_index(['WasteStream'], inplace=True)
+            table.set_index(['Stream'], inplace=True)
             return self._append_cat_sum(table, cat, tot)
 
         elif category == 'Other':
@@ -361,7 +361,7 @@ class LCA:
         
         else:
             raise ValueError(
-                "category can only be 'Construction', 'Transportation', 'WasteStream', or 'Other', " \
+                "category can only be 'Construction', 'Transportation', 'Stream', or 'Other', " \
                 f'not {category}.')
 
     def save_report(self, file='lca_report.xlsx', sheet_name='LCA',
@@ -370,7 +370,7 @@ class LCA:
         
         tables = [self.get_impact_table(cat, time, time_unit)
                   for cat in ('Construction', 'Transportation',
-                              'WasteStream', 'Other')]
+                              'Stream', 'Other')]
         with pd.ExcelWriter(file) as writer:
             for table in tables:
                 table.to_excel(writer, sheet_name=sheet_name, startrow=n_row)

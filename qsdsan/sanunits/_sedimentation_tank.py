@@ -94,7 +94,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         
         COD_loss_kg = tot_COD_kg * COD_loss
         CH4.imass['CH4'] = COD_loss_kg * self.max_CH4_emission * self.MCF_decay
-        sol._COD = tot_COD_kg*(1-COD_loss)/sol.F_vol
+        sol._COD = tot_COD_kg*(1-COD_loss)/sol.F_vol*1e3
 
         # N degradation
         if self.if_N2O_emission:
@@ -142,13 +142,10 @@ class SedimentationTank(SludgeSeparator, Decay):
             )
         self.add_construction()
     
-    #!!! Maybe don't need this if lang_factor is provided
     _BM = {
         'Concrete': 1,
         'Excavation': 1        
         }
-
-    
 
     @property
     def tau(self):

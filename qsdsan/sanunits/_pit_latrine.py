@@ -166,8 +166,10 @@ class PitLatrine(Toilet):
         sludge = self.sludge_accum_rate/(365*24)
         diff = mixed.F_mass - sludge
         if diff > 0:
+            mixed_COD = mixed._COD * mixed.F_vol
             mixed.imass['H2O'] -= diff
             mixed.imass['H2O'] = max(0, mixed.imass['H2O'])
+            mixed._COD = mixed_COD / mixed.F_vol
         
         waste.copy_like(mixed)
         
@@ -186,7 +188,7 @@ class PitLatrine(Toilet):
     def _design(self):
         design = self.design_results
         design['Number of users per toilet'] = self.N_user
-        design['Paralle toilets'] = N = self.N_toilet
+        design['Parallel toilets'] = N = self.N_toilet
         design['Emptying period'] = self.emptying_period
         design['Single pit volume'] = self.pit_V
         design['Single pit area'] = self.pit_area
