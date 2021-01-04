@@ -113,8 +113,9 @@ class Components(Chemicals):
         
     def compile(self):
         '''Cast as a CompiledComponents object.'''
-        CompiledComponents._compile(self)
         setattr(self, '__class__', CompiledComponents)
+        CompiledComponents._compile(self)
+        
         
     
     _default_data = None
