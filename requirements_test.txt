@@ -1,8 +1,8 @@
 pyyaml>=5.3.1
 pytest-cov>=2.0.1
 coveralls>=2.2.0
-biosteam>=2.21.6
-biorefineries>=2.16.1
+biosteam>=2.21.14
+biorefineries>=2.16.9
 sympy>=1.5.1
 pint>=0.12
 chemicals>=0.1.5

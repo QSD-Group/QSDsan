@@ -19,8 +19,8 @@ Ref:
         https://doi.org/10.1021/acs.est.0c03296.
 
 TODO:
-    [1] Recheck unit consistency, power law degradation
-    [2] Why existing plant has sewer and sludge population? 
+    [1] Why existing plant has sewer and sludge population?
+    [2] Add sysB and sysC, debugging
 
 '''
 

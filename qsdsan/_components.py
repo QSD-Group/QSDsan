@@ -305,7 +305,7 @@ class CompiledComponents(CompiledChemicals):
 
     def _compile(self):
         dct = self.__dict__
-        tuple_ = tuple # to differentiate it from dct['tuple']?
+        tuple_ = tuple # this speeds up the code
         components = tuple_(dct.values())
         CompiledChemicals._compile(self)
         
