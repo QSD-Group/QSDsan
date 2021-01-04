@@ -42,14 +42,16 @@ class LCA:
         Unit of lifetime.
     uptime_ratio : float
         Fraction of time that the plant is operating.
-    **item_quantities : kwargs, ImpactItem or str = float or (float, unit)
-        Other ImpactItems (e.g., electricity) and their quantities.
+    **item_quantities : kwargs, ImpactItem or str = float/callable or (float/callable, unit)
+        Other ImpactItems (e.g., electricity) and their quantities. Note that
+        callable functions are used so that quantity of items can be updated.
     
     '''
     
     __slots__ = ('_system',  '_lifetime', '_uptime_ratio',
                  '_construction_units', '_transportation_units',
-                 '_lca_streams', '_impact_indicators', '_other_items')
+                 '_lca_streams', '_impact_indicators',
+                 '_other_items', '_other_items_f')
     
     
     def __init__(self, system, lifetime, lifetime_unit='yr', uptime_ratio=1,
@@ -62,12 +64,16 @@ class LCA:
         self._update_lifetime(lifetime, lifetime_unit)
         self.uptime_ratio = uptime_ratio
         self._other_items = {}
-        for item, quantity in item_quantities.items():
+        self._other_items_f = {}
+        for item, val in item_quantities.items():
             try:
-                q_number, q_unit = quantity # unit provided for the quantity
-                self.add_other_item(item, q_number, q_unit)
+                f_quantity, unit = val # unit provided for the quantity
             except:
-                self.add_other_item(item, quantity)
+                f_quantity = val
+                unit = ''
+            if not callable(f_quantity):
+                f_quantity = lambda: f_quantity
+            self.add_other_item(item, f_quantity, unit)
                 
     
     def _update_system(self, system):
@@ -98,7 +104,6 @@ class LCA:
         self._lca_streams = sorted(self._lca_streams,
                                          key=lambda ws: ws.ID)
         
-    
     def _update_lifetime(self, lifetime=0., unit='yr'):
         if not unit or unit == 'yr':
             self._lifetime = float(lifetime)
@@ -106,24 +111,31 @@ class LCA:
             converted = auom(unit).convert(float(lifetime), 'yr')
             self._lifetime = converted
     
-    def add_other_item(self, item, quantity, unit='', return_dict=None):
+    def add_other_item(self, item, f_quantity, unit='', return_dict=None):
         if isinstance(item, str):
             item = items[item]
-        # if item.ID == 'e_item':
-        #     breakpoint()
         fu = item.functional_unit
+        quantity = f_quantity()
         if unit and unit != fu:
             try:
                 quantity = auom(unit).convert(quantity, fu)
             except:
                 raise ValueError(f'Conversion of the given unit {unit} to '
                                  f'item functional unit {fu} is not supported.')
+        self._other_items_f[item.ID] = {'item':item, 'f_quantity':f_quantity, 'unit':unit}
         if not return_dict:
             self.other_items[item.ID] = {'item':item, 'quantity':quantity}
         else:
             return_dict[item.ID] = {'item':item, 'quantity':quantity}
             return return_dict
-      
+    
+    def refresh_other_items(self):
+        '''Refresh quantities of other items using the given functions.'''
+        for item, record in self._other_items_f.keys():
+            item, quantity, unit = record.values()
+            self.add_other_item(item, quantity, unit)
+        
+        
     def __repr__(self):
         return f'<LCA: {self.system}>'
 
@@ -485,8 +497,8 @@ class LCA:
         '''[dict] Other ImpactItems (e.g., electricity) and their quantities.'''
         return self._other_items
     @other_items.setter
-    def other_items(self, item, quantity, unit=''):
-        self.add_other_item(item, quantity, unit)
+    def other_items(self, item, f_quantity, unit=''):
+        self.add_other_item(item, f_quantity, unit)
         
     @property
     def total_other_impacts(self):

@@ -127,7 +127,7 @@ class DryingBed(SanUnit, Decay):
 
     def _design(self):
         design = self.design_results
-        # Bed
+        
         L = np.fromiter(self.bed_L.values(), dtype=float)
         W = np.fromiter(self.bed_W.values(), dtype=float)
         H = np.fromiter(self.bed_H.values(), dtype=float)
@@ -152,10 +152,6 @@ class DryingBed(SanUnit, Decay):
             )
         for i in self.construction:
             self._BM[i.item.ID] = 1
-        
-    def _cost(self):
-        pass
-
 
     @property
     def tau(self):
@@ -183,11 +179,8 @@ class DryingBed(SanUnit, Decay):
             self._design_type = i
             self.line =f'{i.capitalize()} drying bed'
         else:
-            if i is None:
-                self.line = 'Drying bed'
-            else:
-                raise ValueError(f"design_type can only be 'unplanted', 'planted', "
-                                 f"or 'None', not {i}.")
+            raise ValueError(f"design_type can only be 'unplanted' or 'planted', "
+                             f"not {i}.")
 
     @staticmethod
     def _set_bed_prop(prop, value):

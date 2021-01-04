@@ -12,14 +12,8 @@ This module is under the UIUC open-source license. Please refer to
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 
-Ref:
-    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
-
-TODO:
-    [1] Incorporate ADM, or change this to SimpleAD or something
+TODO (maybe):
+    [1] Incorporating ADM as a Process, or change this to SimpleAD or something
 
 '''
 
@@ -46,6 +40,9 @@ class AnaerobicDigestion(SanUnit, Decay):
         Waste for treatment.
     outs : WasteStream
         Treated waste, biogas, and fugitive N2O.
+    if_capture_biogas : bool
+        If produced biogas will be captured, otherwise it will be treated
+        as fugative CH4.
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
         
@@ -58,13 +55,11 @@ class AnaerobicDigestion(SanUnit, Decay):
     
     '''
     
-    _default_data = None
-    
-    def __init__(self, ID='', ins=None, outs=(), if_N2O_emission=False, **kwargs):
-        
+    def __init__(self, ID='', ins=None, outs=(),
+                 if_capture_biogas=True, if_N2O_emission=False, **kwargs):
         SanUnit.__init__(self, ID, ins, outs)
+        self.if_capture_biogas = if_capture_biogas
         self.if_N2O_emission = if_N2O_emission
-        # self._tau_previous = 0.
     
         data = load_data(path=data_path)
         for para in data.index:
@@ -76,22 +71,29 @@ class AnaerobicDigestion(SanUnit, Decay):
             setattr(self, attr, value)
     
     _N_ins = 1
-    _N_outs = 3
+    _N_outs = 4
 
     def _run(self):
         waste = self.ins[0]
-        treated, CH4, N2O = self.outs
+        treated, biogas, CH4, N2O = self.outs
         treated.copy_like(self.ins[0])
-        CH4.phase = N2O.phase = 'g'
+        biogas.phase = CH4.phase = N2O.phase = 'g'
         
         # COD removal
         COD_deg = treated._COD*treated.F_vol/1e3*self.COD_removal # kg/hr
         treated._COD *= (1-self.COD_removal)
+        
         #!!! Which assumption is better?
         treated.imass['OtherSS'] *= (1-self.COD_removal)
         # treated.mass *= (1-self.COD_removal)
+        
         CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
-        CH4.imass['CH4'] = CH4_prcd
+        if self.if_capture_biogas:
+            biogas.imass['CH4'] = CH4_prcd
+            CH4.empty()
+        else:
+            CH4.imass['CH4'] = CH4_prcd
+            biogas.empty()
 
         if self.if_N2O_emission:
             N_loss = self.first_order_decay(k=self.decay_k_N,
@@ -132,21 +134,6 @@ class AnaerobicDigestion(SanUnit, Decay):
             )
         self.add_construction()
         
-    #!!! No opex assumption in ref [1]
-    # Use the Material/Construction class
-    def _cost(self):
-        pass
-        # self.purchase_cost['Concrete'] = self.design_results['Total concrete volume']
-        
-    
-    # #!!! Maybe do not need this tau_previous
-    # @property
-    # def tau_previous(self):
-    #     '''[float] Time between the waste production and anaerobic digestion, [d].'''
-    #     return self._tau_previous
-    # @tau_previous.setter
-    # def tau_previous(self, i):
-    #     self._tau_previous = float(i)
 
     @property
     def tau(self):

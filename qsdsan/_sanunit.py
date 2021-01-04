@@ -148,6 +148,10 @@ class SanUnit(bst.Unit, isabstract=True):
                 self.purchase_costs[i.item.ID] = i.cost 
     
     @property
+    def components(self):
+        return self.chemicals
+    
+    @property
     def construction(self):
         '''[tuple] Contains construction information.'''
         return self._construction
@@ -194,8 +198,11 @@ class SanUnit(bst.Unit, isabstract=True):
 
     @property
     def add_OPEX(self):
-        '''[float] Operating expense per hour in addition to utility cost (assuming 100% operating time).'''
+        '''[float] Operating expense per hour in addition to utility cost.'''
         return self._add_OPEX
+    @add_OPEX.setter
+    def add_OPEX(self, i):
+        self._add_OPEX = i
 
     def results(self, with_units=True, include_utilities=True,
                 include_total_cost=True, include_installed_cost=False,

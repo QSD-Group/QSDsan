@@ -35,7 +35,10 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
     ins : WasteStream
         Waste for treatment.
     outs : WasteStream
-        Treated waste, biogas, and fugitive N2O.
+        Treated waste, biogas, fugative CH4, and fugitive N2O.
+    if_capture_biogas : bool
+        If produced biogas will be captured, otherwise it will be treated
+        as fugative CH4.
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
         
@@ -48,9 +51,11 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
     
     '''
     
-    def __init__(self, ID='', ins=None, outs=(), if_N2O_emission=False, **kwargs):
+    def __init__(self, ID='', ins=None, outs=(),
+                 if_capture_biogas=True, if_N2O_emission=False, **kwargs):
         
         SanUnit.__init__(self, ID, ins, outs)
+        self.if_capture_biogas = if_capture_biogas
         self.if_N2O_emission = if_N2O_emission
     
         data = load_data(path=data_path)
@@ -63,22 +68,29 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
             setattr(self, attr, value)
     
     _N_ins = 1
-    _N_outs = 3
+    _N_outs = 4
 
     def _run(self):
         waste = self.ins[0]
-        treated, CH4, N2O = self.outs
+        treated, biogas, CH4, N2O = self.outs
         treated.copy_like(self.ins[0])
-        CH4.phase = N2O.phase = 'g'
+        biogas.phase = CH4.phase = N2O.phase = 'g'
         
         # COD removal
         COD_deg = waste._COD*waste.F_vol/1e3*self.COD_removal # kg/hr
         treated._COD *= (1-self.COD_removal)
+        
         #!!! Which assumption is better?
         treated.imass['OtherSS'] *= (1-self.COD_removal)
         # treated.mass *= (1-self.COD_removal)
+        
         CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
-        CH4.imass['CH4'] = CH4_prcd
+        if self.if_capture_biogas:
+            biogas.imass['CH4'] = CH4_prcd
+            CH4.empty()
+        else:
+            CH4.imass['CH4'] = CH4_prcd
+            biogas.empty()
 
         if self.if_N2O_emission:
             N_loss = self.first_order_decay(k=self.decay_k_N,
@@ -118,11 +130,6 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
             Construction(item='Excavation', quantity=N*V, unit='m3'),
             )
         self.add_construction()
-
-
-    def _cost(self):
-        pass
-
 
 
     @property

@@ -130,6 +130,10 @@ add_V_from_rho(HAP, 3150)
 
 cmps = Components((NH3, NonNH3, P, K, Mg, Ca, H2O, OtherSS, N2O, CH4, O2, N2,
                    CO2, P4O10, Tissue, WoodAsh, Struvite, HAP))
+for i in cmps:
+    if i.HHV is None: i.HHV = 0
+    if i.LHV is None: i.LHV = 0
+    if i.Hf is None: i.Hf = 0
 cmps.compile()
 
 cmps.set_synonym('H2O', 'Water')

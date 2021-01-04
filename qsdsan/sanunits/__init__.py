@@ -30,6 +30,7 @@ from ._drying_bed import *
 from ._biogas_combustion import *
 from ._crop_application import *
 from ._component_splitter import *
+from ._lumped_cost import *
 
 from . import (
     _bst_units,
@@ -49,6 +50,7 @@ from . import (
     _biogas_combustion,
     _crop_application,
     _component_splitter,
+    _lumped_cost,
     )
 
 __all__ = (
@@ -69,4 +71,5 @@ __all__ = (
     *_biogas_combustion.__all__,
     *_crop_application.__all__,
     *_component_splitter.__all__,
+    *_lumped_cost.__all__,
            )

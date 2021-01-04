@@ -29,6 +29,7 @@ from thermosteam.utils import copy_maybe
 from . import currency, WasteStream, ImpactIndicator
 from ._units_of_measure import auom, parse_unit
 from .utils.loading import data_path
+from .utils.formatting import format_number as f_num
 
 indicators = ImpactIndicator._indicators
 data_path += '_impact_item.xlsx'
@@ -87,7 +88,7 @@ class ImpactItem:
 
     def show(self):
         info = f'ImpactItem      : {self.ID} [per {self.functional_unit}]'
-        info += f'\nPrice           : {self.price} {currency}'
+        info += f'\nPrice           : {f_num(self.price)} {currency}'
         info += '\nImpactIndicators:'
         print(info)
         if len(self.CFs) == 0:
@@ -240,7 +241,7 @@ class StreamImpactItem(ImpactItem):
     def show(self):
         info = f'StreamImpactItem: [per {self.functional_unit}]'        
         info += f'\nLinked to     : {self.linked_stream}'
-        info += f'\nPrice           : {self.price} {currency}'
+        info += f'\nPrice           : {f_num(self.price)} {currency}'
         info += '\nImpactIndicators:'
         print(info)
         if len(self.CFs) == 0:
