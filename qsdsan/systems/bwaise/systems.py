@@ -19,8 +19,11 @@ Ref:
         https://doi.org/10.1021/acs.est.0c03296.
 
 TODO:
-    [1] Why existing plant has sewer and sludge population?
-    [2] Add sysB and sysC, debugging
+    [1] Add sysB and sysC, debugging
+
+#!!! Questions:
+    [1] WWTP power consumption very low, only 6.5/0.8 kWh per hour for
+        existing/alternative WWTP
 
 '''
 
@@ -34,44 +37,52 @@ from sklearn.linear_model import LinearRegression as LR
 from qsdsan import sanunits as su
 from qsdsan import WasteStream, SanUnit, ImpactItem, StreamImpactItem, \
     SimpleTEA, LCA
-import bwaise
-cmps = bwaise._cmps.cmps
+from bwaise import cmps
 
 bst.settings.set_thermo(cmps)
-e = bst.PowerUtility
-e.price = 0.17
-currency = qs.currency = 'USD'
-qs.CEPCI = qs.CEPCI_by_year[2018]
 items = ImpactItem._items
 GWP = qs.ImpactIndicator._indicators['GWP']
-
+currency = qs.currency = 'USD'
+qs.CEPCI = qs.CEPCI_by_year[2018]
 
 
 # %%
 
-class ExistingWWTPCost(SanUnit):
+# =============================================================================
+# 
+# =============================================================================
+
+class WWTPCost(SanUnit):
     '''Lumped CAPEX and electricity cost of the wastewater treatment plant.'''
+    
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+                 lumped_CAPEX=0., lumped_power=0.):
+        SanUnit.__init__(self, ID, ins, outs, thermo)
+        self.lumped_CAPEX = lumped_CAPEX
+        self.lumped_power = lumped_power
+    
     def _run(self):
         self.outs[0].copy_like(self.ins[0])
     
     _BM = {'Wastewater treatment plant': 1}
     
     def _cost(self):
-        self.purchase_costs['Wastewater treatment plant'] = 18606700
-        self.power_utility(57120/(365*24)) #!!! Really? Only 6.5 kWh per hour?
+        self.purchase_costs['Wastewater treatment plant'] = self.lumped_CAPEX
+        self.power_utility(self.lumped_power)
 
 
 
 # %%
 
 # =============================================================================
-# Assumptions
+# Unit Parameters
 # =============================================================================
 
 toilet_user = 16 # four people per household, four households per toilet
-# ppl_existing = 4e4 # number of people served by the existing plant (sysA and SceC)
-ppl_existing = 416667
-ppl_alternative = 5e4 # number of people served by the alternative plant (SceB)
+# Number of people served by the existing plant (sysA and SceC), sewer + sludge
+ppl_existing = 4e4 + 416667
+# Number of people served by the alternative plant (SceB)
+ppl_alternative = 5e4
 
 exchange_rate = 3700 # UGX per USD, triangular of 3600, 3700, 3900
 get_exchange_rate = lambda: exchange_rate
@@ -90,28 +101,54 @@ max_CH4_emission = 0.25
 
 # Model for tanker truck cost based on capacity (m3)
 # price = a*capacity**b -> ln(price) = ln(a) + bln(capacity)
-UGX_prices = np.array((8e4, 12e4, 20e4, 25e4))
+UGX_price_dct = np.array((8e4, 12e4, 20e4, 25e4))
 capacities = np.array((3, 4.5, 8, 15))
 def get_tanker_truck_cost(capacity):
     # Add 15% additional costs
-    prices = UGX_prices*1.15/get_exchange_rate()
-    ln_p = np.log(prices)
+    price_dct = UGX_price_dct*1.15/get_exchange_rate()
+    ln_p = np.log(price_dct)
     ln_cap = np.log(capacities)
     model = LR().fit(ln_cap.reshape(-1,1), ln_p.reshape(-1,1))
     [[predicted]] = model.predict(np.array((np.log(capacity))).reshape(1, -1)).tolist()
     cost = np.exp(predicted)
     return cost
 
-items['Concrete'].price = 194
-items['Steel'].price = 2.665
-
-N_AD_rx = 3
-
 # Nutrient loss during applciation
-#!!! Maybe the loss shouldn't be taken into account in cost and emission?
 app_loss = dict.fromkeys(('NH3', 'NonNH3', 'P', 'K', 'Mg', 'Ca'), 0.02)
 app_loss['NH3'] = 0.05
 
+
+# =============================================================================
+# price_dct and GWP CFs
+# =============================================================================
+
+# Recycled nutrients are sold at a lower price than commercial fertilizers
+price_factor = 0.25
+get_price_factor = lambda: price_factor
+
+price_dct = {
+    'Electricity': 0.17,
+    'Concrete': 194,
+    'Steel': 2.665,
+    'N': 1.507*get_price_factor(),
+    'P': 3.983*get_price_factor(),
+    'K': 1.333*get_price_factor()
+    }
+
+GWP_dct = {
+    'Electricity': 0.15,
+    'CH4': 28,
+    'N2O': 265,
+    'N': -5.4,
+    'P': -4.9,
+    'K': -1.5
+    }
+
+bst.PowerUtility.price = price_dct['Electricity']
+items['Concrete'].price = price_dct['Concrete']
+items['Steel'].price = price_dct['Steel']
+# This is universal to all scenarios
+e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=GWP_dct['Electricity'])
 
 
 # %%
@@ -120,21 +157,39 @@ app_loss['NH3'] = 0.05
 # Scenario A: existing system
 # =============================================================================
 
-fugitive_CH4 = WasteStream('fugitive_CH4', phase='g')
-fugitive_N2O = WasteStream('fugitive_N2O', phase='g')
-# Recycled nutrients are sold at a lower price than commercial fertilizers
-price_factor = 0.25
-liq_N = WasteStream('liq_N', phase='l', price=1.507*price_factor)
-sol_N = WasteStream('sol_N', phase='l', price=1.507*price_factor)
-liq_P = WasteStream('liq_P', phase='l', price=3.983*price_factor)
-sol_P = WasteStream('sol_P', phase='l', price=3.983*price_factor)
-liq_K = WasteStream('liq_K', phase='l', price=1.333*price_factor)
-sol_K = WasteStream('sol_K', phase='l', price=1.333*price_factor)
-fertilizers = (liq_N, sol_N, liq_P, sol_P, liq_K, sol_K)
+def batch_creating_streams(prefix):
+    stream_dct = {}
+    stream_dct['CH4'] = WasteStream(f'{prefix}_CH4', phase='g')
+    stream_dct['N2O'] = WasteStream(f'{prefix}_N2O', phase='g')
+    stream_dct['liq_N'] = WasteStream(f'{prefix}_liq_N', phase='l', price=price_dct['N'])
+    stream_dct['sol_N'] = WasteStream(f'{prefix}_sol_N', phase='l', price=price_dct['N'])
+    stream_dct['liq_P'] = WasteStream(f'{prefix}_liq_P', phase='l', price=price_dct['P'])
+    stream_dct['sol_P'] = WasteStream(f'{prefix}_sol_P', phase='l', price=price_dct['P'])
+    stream_dct['liq_K'] = WasteStream(f'{prefix}_liq_K', phase='l', price=price_dct['K'])
+    stream_dct['sol_K'] = WasteStream(f'{prefix}_sol_K', phase='l', price=price_dct['K'])
 
-print('\n----------Scenario A----------\n')
+    item_dct = {}
+    item_dct['CH4'] = StreamImpactItem(stream_dct['CH4'], GWP=GWP_dct['CH4'])
+    item_dct['N2O'] = StreamImpactItem(stream_dct['N2O'], GWP=GWP_dct['N2O'])
+    item_dct['liq_N'] = StreamImpactItem(stream_dct['liq_N'], GWP=GWP_dct['N'])
+    item_dct['sol_N'] = StreamImpactItem(stream_dct['sol_N'], GWP=GWP_dct['N'])
+    item_dct['liq_P'] = StreamImpactItem(stream_dct['liq_P'], GWP=GWP_dct['P'])
+    item_dct['sol_P'] = StreamImpactItem(stream_dct['sol_P'], GWP=GWP_dct['P'])
+    item_dct['liq_K'] = StreamImpactItem(stream_dct['liq_K'], GWP=GWP_dct['K'])
+    item_dct['sol_K'] = StreamImpactItem(stream_dct['sol_K'], GWP=GWP_dct['K'])
+    return stream_dct, item_dct
+
+streamsA, itemsA = batch_creating_streams('A')
+
+
+#################### Human Inputs ####################
 A1 = su.Excretion('A1', outs=('urine', 'feces'))
+def refresh_sysA_streams():
+    A_streams, A_items = batch_creating_streams('A')
+    A1._run()
+A1.specification = refresh_sysA_streams
 
+################### User Interface ###################
 A2 = su.PitLatrine('A2', ins=(A1-0, A1-1,
                               'toilet_paper', 'flushing_water',
                               'cleansing_water', 'desiccant'),
@@ -145,7 +200,8 @@ A2 = su.PitLatrine('A2', ins=(A1-0, A1-1,
                       decay_k_N=get_decay_k(tau_deg, log_deg),
                       max_CH4_emission=max_CH4_emission)
 
-A3 = su.Trucking('A3', ins=A2-0, outs=('transported', 'loss'),
+##################### Conveyance #####################
+A3 = su.Trucking('A3', ins=A2-0, outs=('transported', 'conveyance_loss'),
                  load_type='mass',
                  distance=5, distance_unit='km',
                  interval=A2.emptying_period, interval_unit='yr',
@@ -156,10 +212,10 @@ def update_A3_param():
     truck.load = A3.F_mass_in*A2.emptying_period*365*24/A2.N_toilet
     vol = truck.load/1e3 # Assume the density of water
     A3.fee = get_tanker_truck_cost(vol)
-A3._specification = update_A3_param
+A3.specification = update_A3_param
 
-
-A4 = ExistingWWTPCost('A4', ins=A3-0)
+###################### Treatment ######################
+A4 = WWTPCost('A4', ins=A3-0, lumped_CAPEX=18606700, lumped_power=57120/(365*24))
 
 A5 = su.SedimentationTank('A5', ins=A4-0,
                           outs=('liq', 'sol', '', ''),
@@ -188,8 +244,8 @@ A8 = su.DryingBed('A8', ins=A5-1, outs=('dried_sludge', 'evaporated', '', ''),
 
 treatA = bst.System('treatA', path=(A4, A5, A6, A7, A8))
 
-
-A9 = su.CropApplication('A8', ins=A7-0, outs=('liquid_fertilizer', 'loss'),
+################## Reuse or Disposal ##################
+A9 = su.CropApplication('A8', ins=A7-0, outs=('liquid_fertilizer', 'reuse_loss'),
                         loss_ratio=app_loss)
 def adjust_NH3_loss():
     A9._run()
@@ -198,159 +254,47 @@ def adjust_NH3_loss():
     A9.outs[0]._COD = A9.outs[1]._COD = A9.ins[0]._COD
 A9.specification = adjust_NH3_loss
 
-A10 = su.Mixer('A10', ins=(A2-2, A5-2, A6-1, A7-1, A8-2),
-                 outs=fugitive_CH4)
+A10 = su.Mixer('A10', ins=(A2-2, A5-2, A6-1, A7-1, A8-2), outs=streamsA['CH4'])
 A10.line = 'CH4 mixer'
 
-A11 = su.Mixer('A11', ins=(A2-3, A5-3, A6-2, A7-2, A8-3),
-                 outs=fugitive_N2O)
+A11 = su.Mixer('A11', ins=(A2-3, A5-3, A6-2, A7-2, A8-3), outs=streamsA['N2O'])
 A11.line = 'N2O mixer'
 
 A12 = su.ComponentSplitter('A12', ins=A8-0,
-                              outs=(sol_N, sol_P, sol_K, 'sol_non_fertilizers'),
-                              splits=(('NH3', 'NonNH3'), 'P', 'K'))
+                           outs=(streamsA['sol_N'], streamsA['sol_P'], streamsA['sol_K'],
+                                 'A_sol_non_fertilizers'),
+                           split_keys=(('NH3', 'NonNH3'), 'P', 'K'))
 
 A13 = su.ComponentSplitter('A13', ins=A9-0,
-                              outs=(liq_N, liq_P, liq_K, 'liq_non_fertilizers'),
-                              splits=(('NH3', 'NonNH3'), 'P', 'K'))
+                           outs=(streamsA['liq_N'], streamsA['liq_P'], streamsA['liq_K'],
+                                 'A_liq_non_fertilizers'),
+                           split_keys=(('NH3', 'NonNH3'), 'P', 'K'))
 
-sysA = bst.System('sysA',
-                  path=(A1, A2, A3, treatA, A9, A10, A11, A12, A13))
+############### Simulation, TEA, and LCA ###############
+sysA = bst.System('sysA', path=(A1, A2, A3, treatA, A9, A10, A11, A12, A13))
 sysA.simulate()
 # sysA.save_report('results/sysA.xlsx')
-
-
-# Emissions and product credits
-CH4_item = StreamImpactItem(fugitive_CH4, GWP=28)
-N2O_item = StreamImpactItem(fugitive_N2O, GWP=265)
-liq_N_item = StreamImpactItem(liq_N, GWP=-5.4)
-sol_N_item = StreamImpactItem(sol_N, GWP=-5.4)
-liq_P_item = StreamImpactItem(liq_P, GWP=-4.9)
-sol_P_item = StreamImpactItem(sol_P, GWP=-4.9)
-liq_K_item = StreamImpactItem(liq_K, GWP=-1.5)
-sol_K_item = StreamImpactItem(sol_K, GWP=-1.5)
 
 teaA = SimpleTEA(system=sysA, discount_rate=0.05, start_year=2018,
                  lifetime=8, uptime_ratio=1, lang_factor=None,
                  annual_maintenance=0, annual_labor=12*3e6*12/get_exchange_rate(),
                  construction_schedule=None)
-teaA.show()
-print('\n')
 
-e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=0.15)
 # 57120 is the annual electricity usage for the whole treatment plant
 get_annual_e = lambda: A4.power_utility.rate*teaA._operating_hours
 
 lcaA = LCA(system=sysA, lifetime=8, lifetime_unit='yr', uptime_ratio=1,
-            # Assuming all additional WWTP OPEX from electricity
-            e_item=get_annual_e()*8)
-lcaA.show()
-print('\n')
+           # Assuming all additional WWTP OPEX from electricity
+           e_item=get_annual_e()*8)
 
 
 # %%
 
 # =============================================================================
-# Summaries
+# Scenario B: anaerobic treatment with existing pit latrines and conveyance
 # =============================================================================
 
-def get_total_inputs(unit):
-    if unit is A1:
-        ins = unit.outs
-    else:
-        ins = unit.ins
-    inputs = {}
-    inputs['COD'] = sum(i.COD*i.F_vol/1e3 for i in ins)
-    inputs['energy'] = inputs['COD'] * 14e3
-    inputs['N'] = sum(i.TN*i.F_vol/1e3 for i in ins)
-    inputs['NH3'] = sum(i.imass['NH3'] for i in ins)
-    inputs['P'] = sum(i.TP*i.F_vol/1e3 for i in ins)
-    inputs['K'] = sum(i.TK*i.F_vol/1e3 for i in ins)
-    inputs['Mg'] = sum(i.TMg*i.F_vol/1e3 for i in ins)
-    inputs['Ca'] = sum(i.TCa*i.F_vol/1e3 for i in ins)
-    for i, j in inputs.items():
-        inputs[i] = j*365*24
-    return inputs
-
-def get_recovery(unit_in=A1, outs=None, if_relative=True):
-    inputs = get_total_inputs(unit_in)
-    try: iter(outs)
-    except: outs = (outs,)
-    liq_sol = tuple(i for i in outs if i.phase != 'g')
-    recovery = {}
-    recovery['COD'] = sum(i.COD*i.F_vol/1e3 for i in liq_sol)
-    recovery['energy'] = recovery['COD'] * 14e3
-    recovery['N'] = sum(i.TN*i.F_vol/1e3 for i in liq_sol)
-    recovery['NH3'] = sum(i.imass['NH3'] for i in liq_sol)
-    recovery['P'] = sum(i.TP*i.F_vol/1e3 for i in liq_sol)
-    recovery['K'] = sum(i.TK*i.F_vol/1e3 for i in liq_sol)
-    recovery['Mg'] = sum(i.TMg*i.F_vol/1e3 for i in liq_sol)
-    recovery['Ca'] = sum(i.TCa*i.F_vol/1e3 for i in liq_sol)
-    for i, j in inputs.items():
-        if if_relative:
-            recovery[i] /= j/(365*24) * ppl_existing
-        else:
-            recovery[i] /= 1/(365*24) * ppl_existing
-    return recovery
-
-def get_emissions(outs):
-    try: iter(outs)
-    except: outs = (outs,)
-    gas = tuple(i for i in outs if i.phase == 'g')
-    emission = {}
-    emission['direct'] = \
-        sum((i.imass['CH4', 'N2O']*(28, 265)).sum() for i in gas)*365*24/ppl_existing
-    return emission
-
-
-def print_summaries():
-    get_AOC_cap = lambda: teaA.AOC/ppl_existing
-    get_EAC_cap = lambda: teaA.EAC/ppl_existing
-    print(f'Without CAPEX, the net cost is {get_AOC_cap():.1f} {currency}/cap/yr.')
-    print(f'With CAPEX, the net cost is {get_EAC_cap():.1f} {currency}/cap/yr.')
-    
-    get_GWP = lambda: lcaA.total_impacts['GlobalWarming']/8/ppl_existing
-    print(f'Net emission is {get_GWP():.1f} {GWP.unit}/cap/yr.')
-
-    get_total_N = lambda: \
-        (A1.outs[0].imass['NH3', 'NonNH3']+A1.outs[1].imass['NH3', 'NonNH3']).sum()
-    get_liq_N_recovery = lambda: liq_N.F_mass/ppl_existing/get_total_N()
-    get_sol_N_recovery = lambda: sol_N.F_mass/ppl_existing/get_total_N()
-    get_N_recovery = lambda: get_liq_N_recovery()+get_sol_N_recovery()
-    print(f'Total N recovery is {get_N_recovery():.1%}, '
-          f'{get_liq_N_recovery():.1%} in liquid, '
-          f'{get_sol_N_recovery():.1%} in solid.')
-    
-    get_total_P = lambda: \
-        (A1.outs[0].imass['P']+A1.outs[1].imass['P']).sum()
-    get_liq_P_recovery = lambda: liq_P.F_mass/ppl_existing/get_total_P()
-    get_sol_P_recovery = lambda: sol_P.F_mass/ppl_existing/get_total_P()
-    get_P_recovery = lambda: get_liq_P_recovery()+get_sol_P_recovery()
-    print(f'Total P recovery is {get_P_recovery():.1%}, '
-          f'{get_liq_P_recovery():.1%} in liquid, '
-          f'{get_sol_P_recovery():.1%} in solid.')
-    
-    get_total_K = lambda: \
-        (A1.outs[0].imass['K']+A1.outs[1].imass['K']).sum()
-    get_liq_K_recovery = lambda: liq_K.F_mass/ppl_existing/get_total_K()
-    get_sol_K_recovery = lambda: sol_K.F_mass/ppl_existing/get_total_K()
-    get_K_recovery = lambda: get_liq_K_recovery()+get_sol_K_recovery()
-    print(f'Total K recovery is {get_K_recovery():.1%}, '
-          f'{get_liq_K_recovery():.1%} in liquid, '
-          f'{get_sol_K_recovery():.1%} in solid.')
-    
-    get_COD = lambda stream: stream.COD*stream.F_vol/1e3
-    get_total_COD = lambda: get_COD(A1.outs[0])+get_COD(A1.outs[1])
-    get_liq_COD_recovery = lambda: get_COD(A13.ins[0])/ppl_existing/get_total_COD()
-    get_sol_COD_recovery = lambda: get_COD(A12.ins[0])/ppl_existing/get_total_COD()
-    get_COD_recovery = lambda: get_liq_COD_recovery()+get_sol_COD_recovery()
-    print(f'Total COD recovery is {get_COD_recovery():.1%}, '
-          f'{get_liq_COD_recovery():.1%} in liquid, '
-          f'{get_sol_COD_recovery():.1%} in solid.')
-
-
-
-# %%
+# streamsB, itemsB = batch_creating_streams('B')
 
 # ws1 = A2.outs[0].copy('ws1')
 # A4 = su.AnaerobicDigestion('A4', ins=ws1,
@@ -372,37 +316,30 @@ def print_summaries():
 
 # ws5 = A2.outs[0].copy('ws5')
 # A8 = su.DryingBed('A8', ins=ws5, outs=('solid', 'evaporated', 'CH4', 'N2O'),
-#                      design_type='unplanted',
-#                      decay_k_COD=get_decay_k(tau_deg, log_deg),
-#                      decay_k_N=get_decay_k(tau_deg, log_deg),
-#                      max_CH4_emission=max_CH4_emission)
+#                       design_type='unplanted',
+#                       decay_k_COD=get_decay_k(tau_deg, log_deg),
+#                       decay_k_N=get_decay_k(tau_deg, log_deg),
+#                       max_CH4_emission=max_CH4_emission)
 
 # A8.simulate()
 # # A8.show()
 
 # ws6 = A2.outs[0].copy('ws6')
 # A9 = su.AnaerobicBaffledReactor('A9', ins=ws6, outs=('treated', 'CH4', 'N2O'),
-#                                    decay_k_COD=get_decay_k(tau_deg, log_deg),
-#                                    max_CH4_emission=max_CH4_emission)
+#                                     decay_k_COD=get_decay_k(tau_deg, log_deg),
+#                                     max_CH4_emission=max_CH4_emission)
 
 # A9.simulate()
 # # A9.show()
 
 # ws7 = A2.outs[0].copy('ws7')
 # A10 = su.LiquidTreatmentBed('A10', ins=ws7, outs=('treated', 'CH4', 'N2O'),
-#                                decay_k_COD=get_decay_k(tau_deg, log_deg),
-#                                decay_k_N=get_decay_k(tau_deg, log_deg),
-#                                max_CH4_emission=max_CH4_emission)
+#                                 decay_k_COD=get_decay_k(tau_deg, log_deg),
+#                                 decay_k_N=get_decay_k(tau_deg, log_deg),
+#                                 max_CH4_emission=max_CH4_emission)
 
 # A10.simulate()
 # A10.show()
-
-
-
-
-
-
-
 
 # biogas = WasteStream('biogas', CH4=1)
 # AX2 = su.BiogasCombustion('AX2', ins=(biogas, 'air'),
@@ -417,21 +354,133 @@ def print_summaries():
 # sysA.simulate()
 
 
-# e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=20)
 
 # lcaA = LCA(sysA, lifetime=8, lifetime_unit='yr',
-#                e_item=(5000, 'Wh'))
+#                 e_item=(5000, 'Wh'))
 
 
 
-# # %%
-
-# # =============================================================================
-# # Scenario B: anaerobic treatment with existing latrines and conveyance
-# # =============================================================================
 
 
-# # %%
+
+
+
+
+# %%
+
+# =============================================================================
+# Summarizing Functions
+# =============================================================================
+
+def get_total_inputs(unit):
+    if len(unit.ins) == 0: # Excretion units do not have ins
+        ins = unit.outs
+    else:
+        ins = unit.ins
+    inputs = {}
+    inputs['COD'] = sum(i.COD*i.F_vol/1e3 for i in ins)
+    inputs['energy'] = inputs['COD'] * 14e3
+    inputs['N'] = sum(i.TN*i.F_vol/1e3 for i in ins)
+    inputs['NH3'] = sum(i.imass['NH3'] for i in ins)
+    inputs['P'] = sum(i.TP*i.F_vol/1e3 for i in ins)
+    inputs['K'] = sum(i.TK*i.F_vol/1e3 for i in ins)
+    inputs['Mg'] = sum(i.TMg*i.F_vol/1e3 for i in ins)
+    inputs['Ca'] = sum(i.TCa*i.F_vol/1e3 for i in ins)
+    for i, j in inputs.items():
+        inputs[i] = j*365*24
+    return inputs
+
+def get_recovery(ins=None, outs=None, hours=365*24, ppl=1, if_relative=True):
+    try: iter(outs)
+    except: outs = (outs,)
+    non_g = tuple(i for i in outs if i.phase != 'g')
+    recovery = {}
+    recovery['COD'] = sum(i.COD*i.F_vol/1e3 for i in non_g)
+    recovery['energy'] = recovery['COD'] * 14e3
+    recovery['N'] = sum(i.TN*i.F_vol/1e3 for i in non_g)
+    recovery['NH3'] = sum(i.imass['NH3'] for i in non_g)
+    recovery['P'] = sum(i.TP*i.F_vol/1e3 for i in non_g)
+    recovery['K'] = sum(i.TK*i.F_vol/1e3 for i in non_g)
+    recovery['Mg'] = sum(i.TMg*i.F_vol/1e3 for i in non_g)
+    recovery['Ca'] = sum(i.TCa*i.F_vol/1e3 for i in non_g)
+    for i, j in recovery.items():
+        if if_relative:
+            inputs = get_total_inputs(ins)
+            recovery[i] /= inputs[i]/hours * ppl
+        else:
+            recovery[i] /= 1/hours * ppl
+    return recovery
+
+def get_direct_emissions(outs=None, hours=365*24, ppl=1):
+    try: iter(outs)
+    except: outs = (outs,)
+    gas = tuple(i for i in outs if i.phase == 'g')
+    emission = {}
+    emission['direct'] = \
+        sum((i.imass['CH4', 'N2O']*(GWP_dct['CH4'], GWP_dct['N2O'])).sum()
+            for i in gas)*hours/ppl
+    return emission
+
+sys_dct = {
+    #!!! UPDATE VALUES AFTER CREATING SYSB AND SYSC
+    'ppl': dict(sysA=ppl_existing, sysB=ppl_alternative, sysC=ppl_existing),
+    'input_unit': dict(sysA=A1, sysB=A1, sysC=A1),
+    'liq_unit': dict(sysA=A13, sysB=A13, sysC=A13),
+    'sol_unit': dict(sysA=A12, sysB=A12, sysC=A12),
+    'stream_dct': dict(sysA=streamsA, sysB=streamsA, sysC=streamsA),
+    'TEA': dict(sysA=teaA, sysB=teaA, sysC=teaA),
+    'LCA': dict(sysA=lcaA, sysB=lcaA, sysC=lcaA),
+    }
+
+def print_summaries(sys):
+    if isinstance(sys, bst.System):
+        sys = sys.ID
+    ppl = sys_dct['ppl'][sys]
+    print(f'\n---------- Summary for {sys} ----------\n')
+    tea = sys_dct['TEA'][sys]
+    tea.show()
+    print('\n')
+    lca = sys_dct['LCA'][sys]
+    lca.show()
+    print('\n')
+
+    print(f'Net cost is {tea.EAC/ppl:.1f} {currency}/cap/yr.')
+    print(f'Construction cost is {tea.annualized_CAPEX/ppl:.1f} {currency}/cap/yr.')
+    print(f'Operating cost is {tea.AOC/ppl:.1f} {currency}/cap/yr.')
+    print('\n')
+    
+    ind = 'GlobalWarming'
+    factor = lca.lifetime * ppl
+    total = lca.total_impacts[ind]/factor
+    constr = lca.total_construction_impacts[ind]/factor
+    trans = lca.total_transportation_impacts[ind]/factor
+    ws = lca.get_stream_impacts(stream_items=lca.stream_inventory)[ind]/factor
+    other = lca.total_other_impacts[ind]/factor
+    print(f'Net emission is {total:.1f} {GWP.unit}/cap/yr.')
+    print(f'Construction emission is {constr:.1f} {GWP.unit}/cap/yr.')
+    print(f'Transportation emission is {trans:.1f} {GWP.unit}/cap/yr.')
+    print(f'Stream emission is {ws:.1f} {GWP.unit}/cap/yr.')
+    print(f'Other emission is {other:.1} {GWP.unit}/cap/yr.')
+    print('\n')
+
+    input_unit = sys_dct['input_unit'][sys]
+    liq_unit = sys_dct['liq_unit'][sys]
+    sol_unit = sys_dct['sol_unit'][sys]
+    liq = get_recovery(ins=input_unit, outs=liq_unit.outs[:3], ppl=ppl)
+    sol = get_recovery(ins=input_unit, outs=sol_unit.outs[:3], ppl=ppl)
+    for i in ('N', 'P', 'K'):  
+        print(f'Total {i} recovery is {liq[i]+sol[i]:.1%}, '
+              f'{liq[i]:.1%} in liquid, '
+              f'{sol[i]:.1%} in solid.')
+    liq_COD = get_recovery(ins=input_unit, outs=liq_unit.ins, ppl=ppl)['COD']
+    sol_COD = get_recovery(ins=input_unit, outs=sol_unit.ins, ppl=ppl)['COD']
+    print(f'Total COD recovery is {liq_COD+sol_COD:.1%}, '
+          f'{liq_COD:.1%} in liquid, '
+          f'{sol_COD:.1%} in solid.')
+
+
+
+# %%
 
 # # =============================================================================
 # # Scenario C: containaer-based sanitation with existing treatment
@@ -496,19 +545,4 @@ def print_summaries():
 # SceC = bst.System('SceC', path=(C1, C2, C3, C4, CX))
 
 # SceC.simulate()
-
-
-
-# %%
-
-# # =============================================================================
-# # Try out impact-related classes
-# # =============================================================================
-
-# CEDf = ImpactIndicator(ID='CEDf', unit='MJ', method='Cumulative energy demand',
-#                        category='Fossil')
-
-
-
-
 

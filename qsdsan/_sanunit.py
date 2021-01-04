@@ -52,7 +52,7 @@ class SanUnit(bst.Unit, isabstract=True):
     
     _stacklevel = 7
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None):
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, **kwargs):
         self._register(ID)
         self._specification = None
         self._load_thermo(thermo)
@@ -63,6 +63,8 @@ class SanUnit(bst.Unit, isabstract=True):
         self._assert_compatible_property_package()
         self._add_OPEX = 0.
         self._uptime_ratio = 1.
+        for attr, val in kwargs.items():
+            setattr(self, attr, val)
 
     def _init_ins(self, ins):
         self._ins = WSIns(self, self._N_ins, ins, self._thermo,

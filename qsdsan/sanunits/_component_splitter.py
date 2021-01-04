@@ -24,10 +24,10 @@ __all__ = ('ComponentSplitter',)
 class ComponentSplitter(SanUnit):
     '''Split the influent into individual Components, the last effluent contains all remaining Components.'''
     
-    def __init__(self, ID='', ins=None, outs=(), splits=()):
+    def __init__(self, ID='', ins=None, outs=(), split_keys=()):
         
         SanUnit.__init__(self, ID, ins, outs)
-        self.splits = splits
+        self.split_keys = split_keys
     
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False
@@ -38,7 +38,7 @@ class ComponentSplitter(SanUnit):
         last.mix_from(self.ins)
         splitted = []
         num = 0
-        for cmps in self.splits:
+        for cmps in self.split_keys:
             if isinstance(cmps, str):
                 self.outs[num].imass[cmps] = last.imass[cmps]
                 last.imass[cmps] = 0
@@ -60,7 +60,7 @@ class ComponentSplitter(SanUnit):
             num += 1
 
     @property
-    def splits(self):
+    def split_keys(self):
         '''
         [iterable] An iterable containing IDs of Components to be splitted to
         different effluents. Element of the item in the iterable can be str of
@@ -69,10 +69,10 @@ class ComponentSplitter(SanUnit):
         effluent. Note that the split is 1 (i.e., all of the Component will be
         diverted to the effluent).
         '''
-        return self._splits
-    @splits.setter
-    def splits(self, i):        
-        self._splits = i
+        return self._split_keys
+    @split_keys.setter
+    def split_keys(self, i):        
+        self._split_keys = i
 
 
 
