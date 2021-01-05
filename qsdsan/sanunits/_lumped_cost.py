@@ -40,19 +40,21 @@ class LumpedCost(SanUnit):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  cost_item_name='Lumped cost',
-                 CAPEX=0., power=0., add_OPEX=0.):
+                 CAPEX=0., power=0., add_OPEX=0., **kwargs):
+        try: iter(ins)
+        except: ins = (ins,)
+        self._N_outs = self._N_ins = len(ins)
         SanUnit.__init__(self, ID, ins, outs, thermo)
         self._BM = {cost_item_name: 1}
         self.purchase_costs = {cost_item_name: CAPEX}
         self.power_utility(power)
         self._add_OPEX = add_OPEX
-    
-    _ins_size_is_fixed = False
-    _outs_size_is_fixed = False
+        for attr, val in kwargs.items():
+            setattr(self, attr, val)
     
     def _run(self):
-        for num, out in enumerate(self.outs):
-            out.copy_like(self.ins[num])
+        for num, stream in enumerate(self.ins):
+            self.outs[num].copy_like(stream)
 
 
 

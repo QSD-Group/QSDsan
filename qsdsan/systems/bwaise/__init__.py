@@ -15,8 +15,12 @@ for license details.
 
 from . import (
     _cmps,
-    # _units,
     # systems
     )
 
 from ._cmps import *
+
+__all__ = (
+	*_cmps.__all__,
+#	*systems.__all__,
+	)

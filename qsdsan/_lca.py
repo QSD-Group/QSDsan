@@ -172,10 +172,14 @@ class LCA:
             ratio = converted/self.lifetime_hr
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         for i in units:
+            if i.lifetime:
+                factor = self.lifetime/i.lifetime
+            else:
+                factor = 1
             for j in i.construction:
                 impact = j.impacts
                 for m, n in impact.items():
-                    impacts[m] += n*ratio
+                    impacts[m] += n*ratio*factor
         return impacts
     
     def get_transportation_impacts(self, units, time=None, time_unit='hr'):

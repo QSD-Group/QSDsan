@@ -74,17 +74,17 @@ class UDDT(Toilet):
     
     '''
     
-    def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, life_time=8,
+    def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, lifetime=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
-                 if_desiccant=False, if_air_emission=True, if_ideal_emptying=True,
+                 if_desiccant=True, if_air_emission=True, if_ideal_emptying=True,
                  OPEX_over_CAPEX=0.1,
                  T=273.15+24, safety_factor=1, if_prep_loss=True, if_treatment=False,
                  **kwargs):
 
-        Toilet.__init__(self, ID, ins, outs, N_user, N_toilet, life_time,
+        Toilet.__init__(self, ID, ins, outs, N_user, N_toilet,
                         if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
                         if_air_emission, if_ideal_emptying, OPEX_over_CAPEX)
-    
+        self.lifetime = lifetime
         self.T = T
         self._safety_factor = safety_factor
         self.if_prep_loss = if_prep_loss
@@ -202,7 +202,7 @@ class UDDT(Toilet):
             MC_min = self.fec_moi_min
             r = self.fec_moi_red_rate
             t = self.collection_period
-            fec_moi_int = self.ins[1].imass['H2O']/self.ins[1]
+            fec_moi_int = self.ins[1].imass['H2O']/self.ins[1].F_mass
             fec_moi = MC_min + (fec_moi_int-MC_min)/(r*t)*(1-np.exp(-r*t))
             sol.imass['H2O'] = sol.F_mass * fec_moi
         
@@ -223,9 +223,12 @@ class UDDT(Toilet):
                 CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
 
-        # Scale up the effluent based on the number of toilets
+        # Scale up the effluent based on the number of user per toilet and
+        # toilet number
+        tot_user = self.N_user * self.N_toilet
         for i in self.outs:
-            i.F_mass *= self.N_user*self.N_toilet
+            if not i.F_mass == 0:
+                i.F_mass *= tot_user
 
     _units = {
         'Collection period': 'd',
@@ -258,9 +261,11 @@ class UDDT(Toilet):
 
         self.add_construction(add_cost=False)
                 
+    _BM = {'Total toilets': 1}
+        
     def _cost(self):
-        self.purchase_costs['Toilet'] = 553 * self.N_toilet
-        self._add_OPEX = self.purchase_costs['Toilet']*self.OPEX_over_CAPEX/365/24
+        self.purchase_costs['Total toilets'] = 553 * self.N_toilet
+        self._add_OPEX = self.purchase_costs['Total toilets']*self.OPEX_over_CAPEX/365/24
 
     @property
     def safety_factor(self):

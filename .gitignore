@@ -76,3 +76,4 @@ qsdsan/demo.py
 qsdsan/systems/IC
 qsdsan/systems/Trimmer
 qsdsan/systems/ASM2d
+qsdsan/systems/Andrus

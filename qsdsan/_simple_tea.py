@@ -139,8 +139,12 @@ class SimpleTEA(TEA):
     def get_unit_annualized_CAPEX(self, units):
         try: iter(units)
         except: units = (units, )
-        CAPEX = sum(i.installed_cost for i in units)
-        return CAPEX*self.discount_rate/(1-(1+self.discount_rate)**(-self.lifetime))
+        CAPEX = 0
+        r = self.discount_rate
+        for unit in units:
+            lifetime = unit.lifetime or self.lifetime
+            CAPEX += unit.installed_cost*r/(1-(1+r)**(-lifetime))
+        return CAPEX
 
     @property
     def discount_rate(self):
@@ -198,7 +202,7 @@ class SimpleTEA(TEA):
         return self._lang_factor or None
     @lang_factor.setter
     def lang_factor(self, i):
-        if self.CAPEX:
+        if self.CAPEX is not None:
             if i is not None:
                 raise AttributeError('CAPEX provided, lang_factor cannot be set. '
                                      'The calculated lang_factor is '

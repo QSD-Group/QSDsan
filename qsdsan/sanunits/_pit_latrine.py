@@ -69,17 +69,17 @@ class PitLatrine(Toilet):
 
     _P_leaching = Frac_D(name='P_leaching')
 
-    def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, life_time=8,
+    def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, lifetime=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True, 
                  OPEX_over_CAPEX=0.05,
                  if_leaching=True, if_shared=True,
                  if_pit_above_water_table=True, **kwargs):
 
-        Toilet.__init__(self, ID, ins, outs, N_user, N_toilet, life_time,
+        Toilet.__init__(self, ID, ins, outs, N_user, N_toilet,
                         if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
                         if_air_emission, if_ideal_emptying, OPEX_over_CAPEX)
-    
+        self.lifetime = lifetime
         self.if_leaching = if_leaching
         self.if_pit_above_water_table = if_pit_above_water_table
         self.if_shared = if_shared
@@ -173,10 +173,12 @@ class PitLatrine(Toilet):
         
         waste.copy_like(mixed)
         
-        # Scale up the effluent based on the number of toilets
+        # Scale up the effluent based on the number of user per toilet and
+        # toilet number
+        tot_user = self.N_user * self.N_toilet
         for i in self.outs:
             if not i.F_mass == 0:
-                i.F_mass *= self.N_user*self.N_toilet
+                i.F_mass *= tot_user
 
     _units = {
         'Emptying period': 'yr',

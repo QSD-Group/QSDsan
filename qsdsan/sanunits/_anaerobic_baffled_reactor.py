@@ -30,6 +30,10 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
     '''
     Anaerobic baffled reactor with the production of biogas based on Trimmer et al. [1]_
     
+    Reference documents
+    -------------------
+    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    
     Parameters
     ----------
     ins : WasteStream

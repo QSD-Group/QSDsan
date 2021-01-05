@@ -33,14 +33,16 @@ class Toilet(SanUnit, Decay, isabstract=True):
     Abstract class containing common parameters and design algorithms for toilets
     based on Trimmer et al. [1]_
     
+    Reference documents
+    -------------------
+    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    
     Parameters
     ----------
     N_user : float
         Number of people that share this toilet.
     N_toilet : float
         Number of parallel toilets.
-    life_time : float
-        Life time of the toilet in year.
     if_toilet_paper : bool
         If toilet paper is used.
     if_flushing : bool
@@ -67,7 +69,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     
     '''
     
-    def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, life_time=8,
+    def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True,
                  OPEX_over_CAPEX=None):
@@ -77,7 +79,6 @@ class Toilet(SanUnit, Decay, isabstract=True):
         self._N_toilet = 1
         self.N_user = N_user
         self.N_toilet = N_toilet
-        self.life_time = life_time       
         self.if_toilet_paper = if_toilet_paper       
         self.if_flushing = if_flushing       
         self.if_cleansing = if_cleansing

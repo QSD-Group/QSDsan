@@ -33,6 +33,10 @@ data_path += 'sanunit_data/_anaerobic_digestion.csv'
 class AnaerobicDigestion(SanUnit, Decay):
     '''
     Anaerobic digestion of wastes with the production of biogas based on Trimmer et al. [1]_
+    
+    Reference documents
+    -------------------
+    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
 
     Parameters
     ----------

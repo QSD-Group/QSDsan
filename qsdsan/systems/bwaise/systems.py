@@ -19,9 +19,9 @@ Ref:
         https://doi.org/10.1021/acs.est.0c03296.
 
 TODO:
-    [1] Add sysB and sysC, debugging
+    [1] Add sysC, debugging
 
-#!!! Questions:
+Questions:
     [1] WWTP power consumption very low, only 6.5/0.8 kWh per hour for
         existing/alternative WWTP
 
@@ -74,8 +74,8 @@ max_CH4_emission = 0.25
 # price = a*capacity**b -> ln(price) = ln(a) + bln(capacity)
 UGX_price_dct = np.array((8e4, 12e4, 20e4, 25e4))
 capacities = np.array((3, 4.5, 8, 15))
-def get_tanker_truck_cost(capacity):
-    # Add 15% additional costs
+def get_tanker_truck_fee(capacity):
+    # Add 15% additional
     price_dct = UGX_price_dct*1.15/get_exchange_rate()
     ln_p = np.log(price_dct)
     ln_cap = np.log(capacities)
@@ -167,7 +167,7 @@ def adjust_NH3_loss(unit):
 # %%
 
 # =============================================================================
-# Scenario A: existing system
+# Scenario A (sysA): existing system
 # =============================================================================
 
 flowsheetA = bst.Flowsheet('sysA')
@@ -201,14 +201,17 @@ A3 = su.Trucking('A3', ins=A2-0, outs=('transported', 'conveyance_loss'),
 def update_A3_param():
     A3._run()
     truck = A3.single_truck
-    truck.load = A3.F_mass_in*A2.emptying_period*365*24/A2.N_toilet
+    truck.interval = A2.emptying_period*365*24    
+    truck.load = A3.F_mass_in*truck.interval/A2.N_toilet
     vol = truck.load/1e3 # Assume the density of water
-    A3.fee = get_tanker_truck_cost(vol)
+    A3.fee = get_tanker_truck_fee(vol)
+    A3._design()
 A3.specification = update_A3_param
 
 ###################### Treatment ######################
 A4 = su.LumpedCost('A4', ins=A3-0, cost_item_name='Lumped WWTP',
-                   CAPEX=18606700, power=57120/(365*24))
+                   CAPEX=18606700, power=57120/(365*24), lifetime=8)
+A4.line = 'Lumped WWTP cost'
 
 A5 = su.SedimentationTank('A5', ins=A4-0,
                           outs=('liq', 'sol', '', ''),
@@ -240,10 +243,10 @@ A9 = su.CropApplication('A9', ins=A7-0, outs=('liquid_fertilizer', 'reuse_loss')
 A9.specification = lambda: adjust_NH3_loss(A9)
 
 A10 = su.Mixer('A10', ins=(A2-2, A5-2, A6-1, A7-1, A8-2), outs=streamsA['CH4'])
-A10.line = 'CH4 mixer'
+A10.line = 'fugative CH4 mixer'
 
 A11 = su.Mixer('A11', ins=(A2-3, A5-3, A6-2, A7-2, A8-3), outs=streamsA['N2O'])
-A11.line = 'N2O mixer'
+A11.line = 'fugative N2O mixer'
 
 A12 = su.ComponentSplitter('A12', ins=A8-0,
                            outs=(streamsA['sol_N'], streamsA['sol_P'], streamsA['sol_K'],
@@ -274,7 +277,7 @@ lcaA = LCA(system=sysA, lifetime=8, lifetime_unit='yr', uptime_ratio=1,
 # %%
 
 # =============================================================================
-# Scenario B: anaerobic treatment with existing pit latrines and conveyance
+# Scenario B (sysB): anaerobic treatment with existing pit latrines and conveyance
 # =============================================================================
 
 flowsheetB = bst.Flowsheet('sysB')
@@ -287,6 +290,8 @@ items['biogas'] = StreamImpactItem(streamsB['biogas'], GWP=GWP_dct['Biogas'])
 B1 = su.Excretion('B1', outs=('urine', 'feces'))
 def refresh_sysB_streams():
     streamsB, itemsB = batch_creating_streams('B')
+    streamsB['biogas'] = WasteStream('B_biogas', phase='g', price=price_dct['Biogas'])
+    items['biogas'] = StreamImpactItem(streamsB['biogas'], GWP=GWP_dct['Biogas'])
     B1._run()
 B1.specification = refresh_sysB_streams
 
@@ -305,19 +310,22 @@ B2 = su.PitLatrine('B2', ins=(B1-0, B1-1,
 B3 = su.Trucking('B3', ins=B2-0, outs=('transported', 'conveyance_loss'),
                  load_type='mass',
                  distance=5, distance_unit='km',
-                 interval=A2.emptying_period, interval_unit='yr',
+                 interval=B2.emptying_period, interval_unit='yr',
                  loss_ratio=0.02)
 def update_B3_param():
     B3._run()
     truck = B3.single_truck
-    truck.load = B3.F_mass_in*B2.emptying_period*365*24/B2.N_toilet
+    truck.interval = B2.emptying_period*365*24
+    truck.load = B3.F_mass_in*truck.interval/B2.N_toilet
     vol = truck.load/1e3 # Assume the density of water
-    B3.fee = get_tanker_truck_cost(vol)
+    B3.fee = get_tanker_truck_fee(vol)
+    B3._design()
 B3.specification = update_B3_param
 
 ###################### Treatment ######################
 B4 = su.LumpedCost('B4', ins=B3-0, cost_item_name='Lumped WWTP',
-                   CAPEX=337140, power=6854/(365*24))
+                   CAPEX=337140, power=6854/(365*24), lifetime=10)
+B4.line = 'Lumped WWTP cost'
 
 B5 = su.AnaerobicBaffledReactor('B5', ins=B4-0, outs=('treated', 'biogas', '', ''),
                                 decay_k_COD=get_decay_k(tau_deg, log_deg),
@@ -345,10 +353,10 @@ B9 = su.CropApplication('B9', ins=B7-0, outs=('liquid_fertilizer', 'reuse_loss')
 B9.specification = lambda: adjust_NH3_loss(B9)
 
 B10 = su.Mixer('B10', ins=(B2-2, B5-2, B7-1, B8-2), outs=streamsB['CH4'])
-B10.line = 'CH4 mixer'
+B10.line = 'fugative CH4 mixer'
 
 B11 = su.Mixer('B11', ins=(B2-3, B5-3, B7-2, B8-3), outs=streamsB['N2O'])
-A11.line = 'N2O mixer'
+B11.line = 'fugative N2O mixer'
 
 B12 = su.ComponentSplitter('B12', ins=B8-0,
                             outs=(streamsB['sol_N'], streamsB['sol_P'], streamsB['sol_K'],
@@ -381,6 +389,121 @@ get_sysB_e = lambda: B4.power_utility.rate*(365*24)*10
 lcaB = LCA(system=sysB, lifetime=10, lifetime_unit='yr', uptime_ratio=1,
            # Assuming all additional WWTP OPEX from electricity
            e_item=get_sysB_e)
+
+
+# %%
+
+# =============================================================================
+# Scenario C (sysC): containaer-based sanitation with existing treatment
+# =============================================================================
+
+flowsheetC = bst.Flowsheet('sysC')
+bst.main_flowsheet.set_flowsheet(flowsheetC)
+streamsC, itemsC = batch_creating_streams('C')
+
+#################### Human Inputs ####################
+C1 = su.Excretion('C1', outs=('urine', 'feces'))
+def refresh_sysC_streams():
+    streamsC, itemsC = batch_creating_streams('C')
+    C1._run()
+C1.specification = refresh_sysC_streams
+
+################### User Interface ###################
+C2 = su.UDDT('C2', ins=(C1-0, C1-1,
+                        'toilet_paper', 'flushing_water',
+                        'cleaning_water', 'desiccant'),
+             outs=('liq_waste', 'sol_waste',
+                   'struvite', 'HAP', 'CH4', 'N2O'),
+             N_user=toilet_user, N_toilet=ppl_existing/toilet_user,
+             OPEX_over_CAPEX=0.1,
+             decay_k_COD=get_decay_k(tau_deg, log_deg),
+             decay_k_N=get_decay_k(tau_deg, log_deg),
+             max_CH4_emission=max_CH4_emission)
+
+##################### Conveyance #####################
+# Liquid waste
+get_handtruck_and_truck_fee = \
+    lambda vol, ppl: 23e3/get_exchange_rate()*vol+0.01*ppl*C2.collection_period
+C3 = su.Trucking('C3', ins=C2-0, outs=('transported_l', 'loss_l'),
+                 load_type='mass', load=1, load_unit='tonne',
+                 distance=5, distance_unit='km',
+                 loss_ratio=0.02)
+
+# Solid waste
+C4 = su.Trucking('C4', ins=C2-1, outs=('transported_s', 'loss_s'),
+                 load_type='mass', load=1, load_unit='tonne',
+                 distance=5, distance_unit='km',
+                 loss_ratio=0.02)
+def update_C3_C4_param():
+    C4._run()
+    truck3, truck4 = C3.single_truck, C4.single_truck
+    hr = truck3.interval = truck4.interval = C2.collection_period*24
+    # Assume density of water
+    ppl = ppl_existing / C2.N_toilet
+    vol3 = C3.F_mass_in/1e3 * hr / C2.N_toilet
+    vol4 = C4.F_mass_in/1e3 * hr / C2.N_toilet
+    C3.fee = get_handtruck_and_truck_fee(vol3, ppl)
+    C4.fee = get_handtruck_and_truck_fee(vol4, ppl)
+C4.specification = update_C3_C4_param
+
+###################### Treatment ######################
+C5 = su.LumpedCost('C5', ins=(C3-0, C4-0),
+                   cost_item_name='Lumped WWTP',
+                   CAPEX=18606700, power=57120/(365*24), lifetime=8)
+
+C6 = su.Lagoon('C6', ins=C5-0, outs=('anaerobic_treated', '', ''),
+               design_type='anaerobic',
+               decay_k_N=get_decay_k(tau_deg, log_deg),
+               max_CH4_emission=max_CH4_emission)
+
+C7 = su.Lagoon('C7', ins=C6-0, outs=('facultative_treated', '', ''),
+               design_type='facultative',
+               decay_k_N=get_decay_k(tau_deg, log_deg),
+               max_CH4_emission=max_CH4_emission)
+
+C8 = su.DryingBed('C8', ins=C5-1, outs=('dried_sludge', 'evaporated', '', ''),
+                 design_type='unplanted',
+                 decay_k_COD=get_decay_k(tau_deg, log_deg),
+                 decay_k_N=get_decay_k(tau_deg, log_deg),
+                 max_CH4_emission=max_CH4_emission)
+treatC = bst.System('treatC', path=(C5, C6, C7, C8))
+C8._cost = lambda: clear_unit_costs(treatC)
+
+################## Reuse or Disposal ##################
+C9 = su.CropApplication('C9', ins=C7-0, outs=('liquid_fertilizer', 'reuse_loss'),
+                        loss_ratio=app_loss)
+C9.specification = lambda: adjust_NH3_loss(C9)
+
+C10 = su.Mixer('C10', ins=(C2-4, C6-1, C7-1, C8-2), outs=streamsC['CH4'])
+C10.line = 'fugative CH4 mixer'
+
+C11 = su.Mixer('C11', ins=(C2-5, C6-2, C7-2, C8-3), outs=streamsC['N2O'])
+C11.line = 'fugative N2O mixer'
+
+C12 = su.ComponentSplitter('C12', ins=C8-0,
+                           outs=(streamsC['sol_N'], streamsC['sol_P'], streamsC['sol_K'],
+                                 'C_sol_non_fertilizers'),
+                           split_keys=(('NH3', 'NonNH3'), 'P', 'K'))
+
+C13 = su.ComponentSplitter('C13', ins=C9-0,
+                           outs=(streamsC['liq_N'], streamsC['liq_P'], streamsC['liq_K'],
+                                 'C_liq_non_fertilizers'),
+                           split_keys=(('NH3', 'NonNH3'), 'P', 'K'))
+
+############### Simulation, TEA, and LCA ###############
+sysC = bst.System('sysC', path=(C1, C2, C3, C4, treatC, C9, C10, C11, C12, C13))
+sysC.simulate()
+# sysC.save_report('results/sysC.xlsx')
+
+teaC = SimpleTEA(system=sysC, discount_rate=0.05, start_year=2018,
+                 lifetime=8, uptime_ratio=1, lang_factor=None,
+                 annual_maintenance=0, annual_labor=12*3e6*12/get_exchange_rate(),
+                 construction_schedule=None)
+
+get_sysC_e = lambda: C5.power_utility.rate*(365*24)*8
+lcaC = LCA(system=sysC, lifetime=8, lifetime_unit='yr', uptime_ratio=1,
+           # Assuming all additional WWTP OPEX from electricity
+           e_item=get_sysC_e)
 
 
 # %%
@@ -432,22 +555,20 @@ def get_direct_emissions(outs=None, hours=365*24, ppl=1):
     try: iter(outs)
     except: outs = (outs,)
     gas = tuple(i for i in outs if i.phase == 'g')
-    emission = {}
-    emission['direct'] = \
+    emission = \
         sum((i.imass['CH4', 'N2O']*(GWP_dct['CH4'], GWP_dct['N2O'])).sum()
             for i in gas)*hours/ppl
     return emission
 
 sys_dct = {
-    #!!! UPDATE VALUES AFTER CREATING SYSB AND SYSC
     'ppl': dict(sysA=ppl_existing, sysB=ppl_alternative, sysC=ppl_existing),
-    'input_unit': dict(sysA=A1, sysB=B1, sysC=A1),
-    'liq_unit': dict(sysA=A13, sysB=B13, sysC=A13),
-    'sol_unit': dict(sysA=A12, sysB=B12, sysC=A12),
+    'input_unit': dict(sysA=A1, sysB=B1, sysC=C1),
+    'liq_unit': dict(sysA=A13, sysB=B13, sysC=C13),
+    'sol_unit': dict(sysA=A12, sysB=B12, sysC=C12),
     'gas_unit': dict(sysA=None, sysB=B15, sysC=None),
-    'stream_dct': dict(sysA=streamsA, sysB=streamsB, sysC=streamsA),
-    'TEA': dict(sysA=teaA, sysB=teaB, sysC=teaA),
-    'LCA': dict(sysA=lcaA, sysB=lcaB, sysC=lcaA),
+    'stream_dct': dict(sysA=streamsA, sysB=streamsB, sysC=streamsC),
+    'TEA': dict(sysA=teaA, sysB=teaB, sysC=teaC),
+    'LCA': dict(sysA=lcaA, sysB=lcaB, sysC=lcaC),
     }
 
 def print_summaries(sys):
@@ -505,79 +626,5 @@ def print_summaries(sys):
 
 
 
-# %%
 
-# # =============================================================================
-# # Scenario C: containaer-based sanitation with existing treatment
-# # =============================================================================
-
-
-# print('\n----------Scenario C----------\n')
-# C1 = su.Excretion('C1', outs=('urine', 'feces'), N_user=toilet_user)
-# C2 = su.UDDT('C2', ins=(C1-0, C1-1,
-#                             'toilet_paper', 'flushing_water',
-#                             'cleaning_water', 'desiccant'),
-#                 outs=('liquid_waste', 'solid_waste',
-#                       'struvite', 'HAP', 'CH4', 'N2O'),
-#                 N_user=toilet_user, OPEX_over_CAPEX=0.1,
-#                 decay_k_COD=get_decay_k(tau_deg, log_deg),
-#                 decay_k_N=get_decay_k(tau_deg, log_deg),
-#                 max_CH4_emission=max_CH4_emission)
-# C1.simulate()
-# C2.simulate()
-
-# truck_cost = {
-#     'TankerTruck1': 8e4/get_exchange_rate()*1.15, # 15% additional, per m3
-#     'TankerTruck2': 12e4/get_exchange_rate()*1.15, # 15% additional, per m3
-#     'TankerTruck3': 2e5/get_exchange_rate()*1.15, # 15% additional, per m3
-#     'TankerTruck4': 25e4/get_exchange_rate()*1.15, # 15% additional, per m3
-#     'HandCart': 0.01, # per cap/d
-#     'CBSTruck': 23e3/get_exchange_rate() # per m3
-#     }
-
-# # Assume density is 1 tonne/m3 (as water)
-# V = (3, 4.5, 8, 15, 1, 1)
-# truck_V = dict.fromkeys(truck_cost.keys())
-# for i, j in zip(truck_V.keys(), V):
-#     truck_V[i] = j
-
-# truck = 'HandcartAndTruck'
-# # Liquid waste
-# interval = (C2.collection_period*truck_V[truck])/C2.tank_V
-# C3 = su.Trucking('C3', ins=C2-0, outs=('transported_l', 'loss_l'),
-#                     load_type='mass', load=truck_V[truck], load_unit='tonne',
-#                     distance=5, distance_unit='km',
-#                     interval=interval, interval_unit='day',
-#                     fee=truck_cost[truck]/truck_V[truck]+0.01*ppl_alternative*interval,
-#                     loss_ratio=0.02)
-
-# # Solid waste
-# interval = (C2.collection_period*truck_V[truck])/C2.tank_V
-# C4 = su.Trucking('C4', ins=C2-1, outs=('transported_s', 'loss_s'),
-#                     load_type='mass', load=truck_V[truck], load_unit='tonne',
-#                     distance=5, distance_unit='km',
-#                     interval=interval, interval_unit='day',
-#                     fee=truck_cost[truck]/truck_V[truck]+0.01*ppl_alternative*interval,
-#                     loss_ratio=0.02)
-
-# ws1 = A2.outs[0].copy('ws1')
-# A4 = su.AnaerobicDigestion('A4', ins=ws1,
-#                               outs=('treated', 'CH4', 'N2O'),
-#                               # tau_previous=A2.emptying_period*365,
-#                               decay_k_N=get_decay_k(tau_deg, log_deg),
-#                                 max_CH4_emission=max_CH4_emission)
-# A4.simulate()
-# # A4.show()
-
-
-# CX = su.CropApplication('CX', ins=WasteStream(), loss_ratio=app_loss)
-# def adjust_NH3_loss():
-#     CX._run()
-#     CX.outs[0]._COD = CX.outs[1]._COD = CX.ins[0]._COD
-# CX.specification = adjust_NH3_loss
-
-
-# SceC = bst.System('SceC', path=(C1, C2, C3, C4, CX))
-
-# SceC.simulate()
 

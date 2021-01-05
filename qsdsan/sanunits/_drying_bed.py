@@ -31,6 +31,10 @@ class DryingBed(SanUnit, Decay):
     '''
     Unplanted and planted drying bed for solids based on Trimmer et al. [1]_
     
+    Reference documents
+    -------------------
+    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    
     Parameters
     ----------
     ins : WasteStream

@@ -29,6 +29,10 @@ class Lagoon(SanUnit, Decay):
     '''
     Anaerobic and facultative lagoon treatment based on Trimmer et al. [1]_
     
+    Reference documents
+    -------------------
+    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    
     Parameters
     ----------
     ins : WasteStream

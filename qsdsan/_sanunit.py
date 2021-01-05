@@ -39,14 +39,19 @@ class SanUnit(bst.Unit, isabstract=True):
     construction : tuple
         Contains construction information.
     construction_impacts : dict
-        Total impacts associated with this SanUnit.
+        Total impacts associated with this unit.
     transportation : tuple
         Contains construction information.
     add_OPEX : float
         Operating expense per hour in addition to utility cost (assuming 100% uptime).
     uptime_ratio : float
-        Uptime of the SanUnit to adjust add_OPEX, should be in [0,1]
-        (i.e., a SanUnit that is always operating).
+        Uptime of the unit to adjust add_OPEX, should be in [0,1]
+        (i.e., a unit that is always operating has an uptime_ratio of 1).
+    lifetime : float
+        Lifetime of this unit in year.
+        It will be used to adjust cost and emission calculation in TEA and LCA.
+        If left as None, its lifetime will be assumed to be the same as the
+        TEA/LCA lifetime.
 
     '''
     
@@ -63,6 +68,7 @@ class SanUnit(bst.Unit, isabstract=True):
         self._assert_compatible_property_package()
         self._add_OPEX = 0.
         self._uptime_ratio = 1.
+        self._lifetime = None
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
@@ -80,7 +86,7 @@ class SanUnit(bst.Unit, isabstract=True):
         self._transportation = ()
 
     def _info(self, T, P, flow, composition, N, _stream_info):
-        """Information of the SanUnit."""
+        '''Information of the unit.'''
         if self.ID:
             info = f'{type(self).__name__}: {self.ID}\n'
         else:
@@ -127,14 +133,14 @@ class SanUnit(bst.Unit, isabstract=True):
 
 
     def _summary(self):
-        '''After system converges, design the SanUnit and calculate cost and environmental impacts'''
+        '''After system converges, design the unit and calculate cost and environmental impacts'''
         self._design()
         self._cost()
         self._impact()
     
     
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, stream_info=True):
-        """Print information of the SanUnit, including WasteStream-specific information"""
+        """Print information of the unit, including WasteStream-specific information"""
         print(self._info(T, P, flow, composition, N, stream_info))
     
     def add_construction(self, add_unit=True, add_design=True, add_cost=True):
@@ -169,7 +175,7 @@ class SanUnit(bst.Unit, isabstract=True):
 
     @property
     def construction_impacts(self):
-        '''[dict] Total impacts associated with this SanUnit.'''
+        '''[dict] Total impacts associated with this unit.'''
         impacts = {}
         if not self.construction:
             return impacts
@@ -220,8 +226,8 @@ class SanUnit(bst.Unit, isabstract=True):
     @property
     def uptime_ratio(self):
         '''
-        [float] Uptime of the SanUnit to adjust add_OPEX, should be in [0,1]
-        (i.e., a SanUnit that is always operating).
+        [float] Uptime of the unit to adjust add_OPEX, should be in [0,1]
+        (i.e., a unit that is always operating).
         '''
         return self._uptime_ratio
     @uptime_ratio.setter
@@ -229,7 +235,18 @@ class SanUnit(bst.Unit, isabstract=True):
         assert 0 <= i <= 1, f'Uptime must be between 0 and 1 (100%), not {i}.'
         self._uptime_ratio = float(i)
 
-
+    @property
+    def lifetime(self):
+        '''
+        [float] Lifetime of this unit in year.
+        It will be used to adjust cost and emission calculation in TEA and LCA.
+        If left as None, its lifetime will be assumed to be the same as the
+        TEA/LCA lifetime.
+        '''
+        return self._lifetime
+    @lifetime.setter
+    def lifetime(self, i):
+        self._lifetime = float(i)
 
 
 
