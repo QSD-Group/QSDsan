@@ -60,9 +60,9 @@ class Trucking(SanUnit):
     '''
     
     def __init__(self, ID='', ins=None, outs=(),
-                 load_type='mass', load=1., load_unit='tonne',
+                 load_type='mass', load=1., load_unit='kg',
                  distance=1., distance_unit='km',
-                 interval=1., interval_unit='day',
+                 interval=1., interval_unit='hr',
                  fee=0., fee_unit=currency,
                  if_material_loss=True, loss_ratio=0.02):
         '''

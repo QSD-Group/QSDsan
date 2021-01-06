@@ -315,7 +315,7 @@ results_percentiles = results.quantile(q=percentiles)
 spearman_results = modelA.spearman(modelA.get_parameters(), metrics)
 spearman_results.columns = pd.Index([i.name_with_units for i in metrics])
 
-with pd.ExcelWriter('results/analysis_sysA.xlsx') as writer:
+with pd.ExcelWriter('results/modelA.xlsx') as writer:
     p_df.to_excel(writer, sheet_name='Parameters')
     results.to_excel(writer, sheet_name='Uncertainty results')
     results_percentiles.to_excel(writer, sheet_name='Percentiles')

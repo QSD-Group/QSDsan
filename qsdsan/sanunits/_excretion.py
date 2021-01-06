@@ -87,7 +87,7 @@ class Excretion(SanUnit):
         # 14 kJ/g COD, the average lower heating value of excreta
         tot_COD = e_cal*self.e_exc*4.184/14/1e3 # in kg COD/hr
         ur._COD = tot_COD*(1-self.e_fec) / (ur.F_vol/1e3) # in mg/L
-        fec._COD = tot_COD*self.e_fec / (fec.F_vol/1e3) # in mg/L        
+        fec._COD = tot_COD*self.e_fec / (fec.F_vol/1e3) # in mg/L
 
     @property
     def e_cal(self):

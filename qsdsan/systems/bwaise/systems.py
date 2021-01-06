@@ -19,7 +19,7 @@ Ref:
         https://doi.org/10.1021/acs.est.0c03296.
 
 TODO:
-    [1] Add sysC, debugging
+    [1] Figure out reporting, etc.
 
 Questions:
     [1] WWTP power consumption very low, only 6.5/0.8 kWh per hour for
@@ -185,7 +185,7 @@ A1.specification = refresh_sysA_streams
 A2 = su.PitLatrine('A2', ins=(A1-0, A1-1,
                               'toilet_paper', 'flushing_water',
                               'cleansing_water', 'desiccant'),
-                   outs=('mixed_waste', 'leachate', '', ''),
+                   outs=('mixed_waste', 'leachate', 'A2_CH4', 'A2_N2O'),
                    N_user=toilet_user, N_toilet=ppl_existing/toilet_user,
                    OPEX_over_CAPEX=0.05,
                    decay_k_COD=get_decay_k(tau_deg, log_deg),
@@ -194,16 +194,16 @@ A2 = su.PitLatrine('A2', ins=(A1-0, A1-1,
 
 ##################### Conveyance #####################
 A3 = su.Trucking('A3', ins=A2-0, outs=('transported', 'conveyance_loss'),
-                 load_type='mass',
-                 distance=5, distance_unit='km',
+                 load_type='mass', distance=5, distance_unit='km',
                  interval=A2.emptying_period, interval_unit='yr',
                  loss_ratio=0.02)
 def update_A3_param():
     A3._run()
     truck = A3.single_truck
-    truck.interval = A2.emptying_period*365*24    
+    truck.interval = A2.emptying_period*365*24
     truck.load = A3.F_mass_in*truck.interval/A2.N_toilet
-    vol = truck.load/1e3 # Assume the density of water
+    rho = A3.F_mass_in/A3.F_vol_in
+    vol = truck.load/rho
     A3.fee = get_tanker_truck_fee(vol)
     A3._design()
 A3.specification = update_A3_param
@@ -214,26 +214,28 @@ A4 = su.LumpedCost('A4', ins=A3-0, cost_item_name='Lumped WWTP',
 A4.line = 'Lumped WWTP cost'
 
 A5 = su.SedimentationTank('A5', ins=A4-0,
-                          outs=('liq', 'sol', '', ''),
+                          outs=('liq', 'sol', 'A5_CH4', 'A5_N2O'),
                           decay_k_COD=get_decay_k(tau_deg, log_deg),
                           decay_k_N=get_decay_k(tau_deg, log_deg),
                           max_CH4_emission=max_CH4_emission)
 
-A6 = su.Lagoon('A6', ins=A5-0, outs=('anaerobic_treated', '', ''),
+A6 = su.Lagoon('A6', ins=A5-0, outs=('anaerobic_treated', 'A6_CH4', 'A6_N2O'),
                design_type='anaerobic',
                decay_k_N=get_decay_k(tau_deg, log_deg),
                max_CH4_emission=max_CH4_emission)
 
-A7 = su.Lagoon('A7', ins=A6-0, outs=('facultative_treated', '', ''),
+A7 = su.Lagoon('A7', ins=A6-0, outs=('facultative_treated', 'A7_CH4', 'A7_N2O'),
                design_type='facultative',
                decay_k_N=get_decay_k(tau_deg, log_deg),
-               max_CH4_emission=max_CH4_emission)
+               max_CH4_emission=max_CH4_emission,
+               if_N2O_emission=True)
 
-A8 = su.DryingBed('A8', ins=A5-1, outs=('dried_sludge', 'evaporated', '', ''),
-                 design_type='unplanted',
-                 decay_k_COD=get_decay_k(tau_deg, log_deg),
-                 decay_k_N=get_decay_k(tau_deg, log_deg),
-                 max_CH4_emission=max_CH4_emission)
+A8 = su.DryingBed('A8', ins=A5-1, outs=('dried_sludge', 'evaporated',
+                                        'A8_CH4', 'A8_N2O'),
+                  design_type='unplanted',
+                  decay_k_COD=get_decay_k(tau_deg, log_deg),
+                  decay_k_N=get_decay_k(tau_deg, log_deg),
+                  max_CH4_emission=max_CH4_emission)
 treatA = bst.System('treatA', path=(A4, A5, A6, A7, A8))
 A8._cost = lambda: clear_unit_costs(treatA)
 
@@ -261,7 +263,7 @@ A13 = su.ComponentSplitter('A13', ins=A9-0,
 ############### Simulation, TEA, and LCA ###############
 sysA = bst.System('sysA', path=(A1, A2, A3, treatA, A9, A10, A11, A12, A13))
 sysA.simulate()
-# sysA.save_report('results/sysA.xlsx')
+sysA.save_report('results/sysA.xlsx')
 
 teaA = SimpleTEA(system=sysA, discount_rate=0.05, start_year=2018,
                  lifetime=8, uptime_ratio=1, lang_factor=None,
@@ -272,6 +274,7 @@ get_sysA_e = lambda: A4.power_utility.rate*(365*24)*8
 lcaA = LCA(system=sysA, lifetime=8, lifetime_unit='yr', uptime_ratio=1,
            # Assuming all additional WWTP OPEX from electricity
            e_item=get_sysA_e)
+lcaA.save_report('results/lcaA.xlsx')
 
 
 # %%
@@ -299,7 +302,7 @@ B1.specification = refresh_sysB_streams
 B2 = su.PitLatrine('B2', ins=(B1-0, B1-1,
                               'toilet_paper', 'flushing_water',
                               'cleansing_water', 'desiccant'),
-                   outs=('mixed_waste', 'leachate', '', ''),
+                   outs=('mixed_waste', 'leachate', 'B2_CH4', 'B2_N2O'),
                    N_user=toilet_user, N_toilet=ppl_alternative/toilet_user,
                    OPEX_over_CAPEX=0.05,
                    decay_k_COD=get_decay_k(tau_deg, log_deg),
@@ -308,8 +311,7 @@ B2 = su.PitLatrine('B2', ins=(B1-0, B1-1,
 
 ##################### Conveyance #####################
 B3 = su.Trucking('B3', ins=B2-0, outs=('transported', 'conveyance_loss'),
-                 load_type='mass',
-                 distance=5, distance_unit='km',
+                 load_type='mass', distance=5, distance_unit='km',
                  interval=B2.emptying_period, interval_unit='yr',
                  loss_ratio=0.02)
 def update_B3_param():
@@ -317,7 +319,8 @@ def update_B3_param():
     truck = B3.single_truck
     truck.interval = B2.emptying_period*365*24
     truck.load = B3.F_mass_in*truck.interval/B2.N_toilet
-    vol = truck.load/1e3 # Assume the density of water
+    rho = B3.F_mass_in/B3.F_vol_in
+    vol = truck.load/rho
     B3.fee = get_tanker_truck_fee(vol)
     B3._design()
 B3.specification = update_B3_param
@@ -327,18 +330,20 @@ B4 = su.LumpedCost('B4', ins=B3-0, cost_item_name='Lumped WWTP',
                    CAPEX=337140, power=6854/(365*24), lifetime=10)
 B4.line = 'Lumped WWTP cost'
 
-B5 = su.AnaerobicBaffledReactor('B5', ins=B4-0, outs=('treated', 'biogas', '', ''),
+B5 = su.AnaerobicBaffledReactor('B5', ins=B4-0, outs=('treated', 'biogas',
+                                                      'B5_CH4', 'B5_N2O'),
                                 decay_k_COD=get_decay_k(tau_deg, log_deg),
                                 max_CH4_emission=max_CH4_emission)
 
 B6 = su.SludgeSeparator('B6', ins=B5-0, outs=('liq', 'sol'))
 
-B7 = su.LiquidTreatmentBed('B7', ins=B6-0, outs=('treated', '', ''),
+B7 = su.LiquidTreatmentBed('B7', ins=B6-0, outs=('treated', 'B7_CH4', 'B7_N2O'),
                            decay_k_COD=get_decay_k(tau_deg, log_deg),
                            decay_k_N=get_decay_k(tau_deg, log_deg),
                            max_CH4_emission=max_CH4_emission)
 
-B8 = su.DryingBed('B8', ins=B6-1, outs=('dried_sludge', 'evaporated', '', ''),
+B8 = su.DryingBed('B8', ins=B6-1, outs=('dried_sludge', 'evaporated',
+                                        'B8_CH4', 'B8_N2O'),
                   design_type='planted',
                   decay_k_COD=get_decay_k(tau_deg, log_deg),
                   decay_k_N=get_decay_k(tau_deg, log_deg),
@@ -377,7 +382,7 @@ B15 = su.Mixer('B15', ins=(B14-0, B14-2), outs=streamsB['biogas'])
 ############### Simulation, TEA, and LCA ###############
 sysB = bst.System('sysB', path=(B1, B2, B3, treatB, B9, B10, B11, B12, B13, B14, B15))
 sysB.simulate()
-# sysB.save_report('results/sysB.xlsx')
+sysB.save_report('results/sysB.xlsx')
 
 teaB = SimpleTEA(system=sysB, discount_rate=0.05, start_year=2018,
                   lifetime=10, uptime_ratio=1, lang_factor=None,
@@ -389,6 +394,7 @@ get_sysB_e = lambda: B4.power_utility.rate*(365*24)*10
 lcaB = LCA(system=sysB, lifetime=10, lifetime_unit='yr', uptime_ratio=1,
            # Assuming all additional WWTP OPEX from electricity
            e_item=get_sysB_e)
+lcaB.save_report('results/lcaB.xlsx')
 
 
 # %%
@@ -413,7 +419,7 @@ C2 = su.UDDT('C2', ins=(C1-0, C1-1,
                         'toilet_paper', 'flushing_water',
                         'cleaning_water', 'desiccant'),
              outs=('liq_waste', 'sol_waste',
-                   'struvite', 'HAP', 'CH4', 'N2O'),
+                   'struvite', 'HAP', 'C2_CH4', 'C2_N2O'),
              N_user=toilet_user, N_toilet=ppl_existing/toilet_user,
              OPEX_over_CAPEX=0.1,
              decay_k_COD=get_decay_k(tau_deg, log_deg),
@@ -425,8 +431,7 @@ C2 = su.UDDT('C2', ins=(C1-0, C1-1,
 get_handtruck_and_truck_fee = \
     lambda vol, ppl: 23e3/get_exchange_rate()*vol+0.01*ppl*C2.collection_period
 C3 = su.Trucking('C3', ins=C2-0, outs=('transported_l', 'loss_l'),
-                 load_type='mass', load=1, load_unit='tonne',
-                 distance=5, distance_unit='km',
+                 load_type='mass', distance=5, distance_unit='km',
                  loss_ratio=0.02)
 
 # Solid waste
@@ -438,12 +443,15 @@ def update_C3_C4_param():
     C4._run()
     truck3, truck4 = C3.single_truck, C4.single_truck
     hr = truck3.interval = truck4.interval = C2.collection_period*24
-    # Assume density of water
     ppl = ppl_existing / C2.N_toilet
-    vol3 = C3.F_mass_in/1e3 * hr / C2.N_toilet
-    vol4 = C4.F_mass_in/1e3 * hr / C2.N_toilet
-    C3.fee = get_handtruck_and_truck_fee(vol3, ppl)
-    C4.fee = get_handtruck_and_truck_fee(vol4, ppl)
+    truck3.load = C3.F_mass_in * hr / C2.N_toilet
+    truck4.load = C4.F_mass_in * hr / C2.N_toilet
+    rho3 = C3.F_mass_in/C3.F_vol_in
+    rho4 = C4.F_mass_in/C4.F_vol_in
+    C3.fee = get_handtruck_and_truck_fee(truck3.load/rho3, ppl)
+    C4.fee = get_handtruck_and_truck_fee(truck4.load/rho4, ppl)
+    C3._design()
+    C4._design()
 C4.specification = update_C3_C4_param
 
 ###################### Treatment ######################
@@ -451,17 +459,18 @@ C5 = su.LumpedCost('C5', ins=(C3-0, C4-0),
                    cost_item_name='Lumped WWTP',
                    CAPEX=18606700, power=57120/(365*24), lifetime=8)
 
-C6 = su.Lagoon('C6', ins=C5-0, outs=('anaerobic_treated', '', ''),
+C6 = su.Lagoon('C6', ins=C5-0, outs=('anaerobic_treated', 'C6_CH4', 'C6_N2O'),
                design_type='anaerobic',
                decay_k_N=get_decay_k(tau_deg, log_deg),
                max_CH4_emission=max_CH4_emission)
 
-C7 = su.Lagoon('C7', ins=C6-0, outs=('facultative_treated', '', ''),
+C7 = su.Lagoon('C7', ins=C6-0, outs=('facultative_treated', 'C7_CH4', 'C7_N2O'),
                design_type='facultative',
                decay_k_N=get_decay_k(tau_deg, log_deg),
-               max_CH4_emission=max_CH4_emission)
+               max_CH4_emission=max_CH4_emission,
+               if_N2O_emission=True)
 
-C8 = su.DryingBed('C8', ins=C5-1, outs=('dried_sludge', 'evaporated', '', ''),
+C8 = su.DryingBed('C8', ins=C5-1, outs=('dried_sludge', 'evaporated', 'C8_CH4', 'C8_N2O'),
                  design_type='unplanted',
                  decay_k_COD=get_decay_k(tau_deg, log_deg),
                  decay_k_N=get_decay_k(tau_deg, log_deg),
@@ -493,7 +502,7 @@ C13 = su.ComponentSplitter('C13', ins=C9-0,
 ############### Simulation, TEA, and LCA ###############
 sysC = bst.System('sysC', path=(C1, C2, C3, C4, treatC, C9, C10, C11, C12, C13))
 sysC.simulate()
-# sysC.save_report('results/sysC.xlsx')
+sysC.save_report('results/sysC.xlsx')
 
 teaC = SimpleTEA(system=sysC, discount_rate=0.05, start_year=2018,
                  lifetime=8, uptime_ratio=1, lang_factor=None,
@@ -504,6 +513,7 @@ get_sysC_e = lambda: C5.power_utility.rate*(365*24)*8
 lcaC = LCA(system=sysC, lifetime=8, lifetime_unit='yr', uptime_ratio=1,
            # Assuming all additional WWTP OPEX from electricity
            e_item=get_sysC_e)
+lcaC.save_report('results/lcaC.xlsx')
 
 
 # %%
@@ -526,11 +536,12 @@ def get_total_inputs(unit):
     inputs['K'] = sum(i.TK*i.F_vol/1e3 for i in ins)
     inputs['Mg'] = sum(i.TMg*i.F_vol/1e3 for i in ins)
     inputs['Ca'] = sum(i.TCa*i.F_vol/1e3 for i in ins)
+    hr = 365 * 24
     for i, j in inputs.items():
-        inputs[i] = j*365*24
+        inputs[i] = j * hr
     return inputs
 
-def get_recovery(ins=None, outs=None, hours=365*24, ppl=1, if_relative=True):
+def get_recovery(ins=None, outs=None, hr=365*24, ppl=1, if_relative=True):
     try: iter(outs)
     except: outs = (outs,)
     non_g = tuple(i for i in outs if i.phase != 'g')
@@ -546,18 +557,19 @@ def get_recovery(ins=None, outs=None, hours=365*24, ppl=1, if_relative=True):
     for i, j in recovery.items():
         if if_relative:
             inputs = get_total_inputs(ins)
-            recovery[i] /= inputs[i]/hours * ppl
+            recovery[i] /= inputs[i]/hr * ppl
         else:
-            recovery[i] /= 1/hours * ppl
+            recovery[i] /= 1/hr * ppl
     return recovery
 
-def get_direct_emissions(outs=None, hours=365*24, ppl=1):
-    try: iter(outs)
-    except: outs = (outs,)
-    gas = tuple(i for i in outs if i.phase == 'g')
-    emission = \
-        sum((i.imass['CH4', 'N2O']*(GWP_dct['CH4'], GWP_dct['N2O'])).sum()
-            for i in gas)*hours/ppl
+def get_stream_emissions(streams=None, hr=365*24, ppl=1):
+    try: iter(streams)
+    except: streams = (streams,)
+    emission = {}
+    factor = hr / ppl
+    for i in streams:
+        if not i.impact_item: continue
+        emission[f'{i.ID}'] = i.F_mass*i.impact_item.CFs['GlobalWarming']*factor
     return emission
 
 sys_dct = {

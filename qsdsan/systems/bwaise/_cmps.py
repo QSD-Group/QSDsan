@@ -86,11 +86,6 @@ P4O10 = Component.from_chemical('P4O10', tmo.Chemical('P4O10'),
                                 phase='s', particle_size='Particulate',
                                 degradability='Undegradable', organic=False)
 
-
-for cmp in (NonNH3, P, K, Mg, Ca, OtherSS):
-    cmp.default()
-    cmp.copy_models_from(H2O, ('sigma', 'epsilon', 'kappa', 'V', 'Cn', 'mu'))
-
 def add_V_from_rho(cmp, rho):
     V_model = tmo.functional.rho_to_V(rho, cmp.MW)
     try: cmp.V.add_model(V_model)
@@ -127,6 +122,11 @@ HAP = Component.from_chemical('HAP', tmo.Chemical('Hydroxyapatite'),
 # Taking the average of 3.1-3.2 g/cm3 from
 # https://pubchem.ncbi.nlm.nih.gov/compound/Hydroxyapatite (accessed 2020-11-19)
 add_V_from_rho(HAP, 3150)
+
+for cmp in (NonNH3, P, K, Mg, Ca, OtherSS):
+    cmp.default()
+    cmp.copy_models_from(H2O, ('sigma', 'epsilon', 'kappa', 'Cn', 'mu'))
+    add_V_from_rho(cmp, 1e3) # assume the same density as water
 
 cmps = Components((NH3, NonNH3, P, K, Mg, Ca, H2O, OtherSS, N2O, CH4, O2, N2,
                    CO2, P4O10, Tissue, WoodAsh, Struvite, HAP))

@@ -141,7 +141,6 @@ class Toilet(SanUnit, Decay, isabstract=True):
         '''
         COD_rmd = waste.COD*(1-empty_ratio)/1e3*waste.F_vol
         CH4.imass['CH4'] += COD_rmd * CH4_factor
-        waste._COD *= empty_ratio
         N2O.imass['N2O'] += COD_rmd * N2O_factor
         waste.mass *= empty_ratio
         return waste, CH4, N2O

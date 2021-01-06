@@ -106,7 +106,11 @@ class UDDT(Toilet):
         Toilet._run(self)
         liq, sol, struvite, HAP, CH4, N2O = self.outs
         liq.copy_like(self.ins[0])
-        sol.copy_like(self.ins[1])
+        # Assume all of additives (toilet paper and desiccant) and water 
+        # (cleansing and flushing) go to feces
+        sol_COD = self.ins[1]._COD*self.ins[1].F_vol/1e3
+        sol.mix_from(self.ins[1:])
+        sol._COD = sol_COD*1e3/sol.F_vol
         struvite.phase = HAP.phase = 's'
         CH4.phase = N2O.phase = 'g'
         
@@ -187,7 +191,7 @@ class UDDT(Toilet):
                 (alpha + ((1-alpha)*(f_NH3_Emerson**beta)))
             NH3_conc = NH3_mmol * f_NH3_Pitzer
 
-            #!!! Shouldn't the collectino period and design be affected by this as well?            
+            #!!! Shouldn't the collection period and design be affected by this as well?            
             # Time (in days) to reach desired inactivation level
             self.treatment_tau = ((3.2 + self.log_removal) \
                              / (10**(-3.7+0.062*(self.T-273.15)) * (NH3_conc**0.7))) \
@@ -199,18 +203,22 @@ class UDDT(Toilet):
 
         # Feces water loss if desiccant is added
         if self.if_desiccant:
+            sol_COD = sol._COD*sol.F_vol/1e3
             MC_min = self.fec_moi_min
             r = self.fec_moi_red_rate
             t = self.collection_period
-            fec_moi_int = self.ins[1].imass['H2O']/self.ins[1].F_mass
+            mixed = sol.copy()
+            mixed.mix_from(self.ins[1:])
+            fec_moi_int = mixed.imass['H2O']/mixed.F_mass
             fec_moi = MC_min + (fec_moi_int-MC_min)/(r*t)*(1-np.exp(-r*t))
-            sol.imass['H2O'] = sol.F_mass * fec_moi
+            sol.imass['H2O'] = (sol.F_mass-sol.imass['H2O']) / (1-fec_moi)
+            sol._COD = sol_COD*1e3/sol.F_vol
         
         #!!! Maybe don't need this, only add this to the design_results dict,
         # remove setter if shouldn't be set
-        self.vault_V = sol.F_vol/1e3*self.collection_period*24 # in day
+        self.vault_V = sol.F_vol*self.collection_period*24 # in day
 
-        # Non-ideal emptying of urine tank
+        # Non-ideal emptying
         if not self.if_ideal_emptying:
             liq, CH4, N2O = self.get_emptying_emission(
                 waste=liq, CH4=CH4, N2O=N2O,

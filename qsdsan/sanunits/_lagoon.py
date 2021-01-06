@@ -75,12 +75,11 @@ class Lagoon(SanUnit, Decay):
 
         treated.copy_like(waste)        
         removed_frac = self.COD_removal*self.COD_decay
-        treated._COD *= 1 - self.COD_removal
         treated.imass['OtherSS'] *= 1 - self.COD_removal
         
         CH4.imass['CH4'] = removed_frac*waste.COD*waste.F_vol/1e3 * \
             self.MCF_decay*self.max_CH4_emission
-        
+
         if self.if_N2O_emission:
             N_loss = self.first_order_decay(k=self.decay_k_N,
                                             t=self.tau/365,
@@ -93,9 +92,9 @@ class Lagoon(SanUnit, Decay):
             N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
         else:
             N2O.empty()
-
+            
         treated.imass['P'] *= 1 - self.P_removal
-
+        treated._COD = waste.COD*waste.F_vol*(1-self.COD_removal)/treated.F_vol
 
     _units = {
         'Single lagoon volume': 'm3',
@@ -103,7 +102,6 @@ class Lagoon(SanUnit, Decay):
         'Lagoon width': 'm',
         'Lagoon depth': 'm'
         }
-
 
     def _design(self):
         design = self.design_results
@@ -178,7 +176,7 @@ class Lagoon(SanUnit, Decay):
     def tau(self):
         '''[float] Residence time, [d].'''
         if self._lagoon_V:
-            return self._lagoon_V*self.N_lagoon/(self.F_mass_in*24)
+            return self._lagoon_V*self.N_lagoon/(self.F_vol_in*24)
         else:
             return self._tau
     @tau.setter
@@ -193,7 +191,7 @@ class Lagoon(SanUnit, Decay):
     def lagoon_V(self):
         '''[float] Volume of the lagoon, [m3].'''
         if self._tau:
-            return self._tau*self.F_mass_in*24/self.N_lagoon
+            return self._tau*(self.F_vol_in)*24/self.N_lagoon
         else:
             return self._lagoon_V
     @lagoon_V.setter

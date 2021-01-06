@@ -90,7 +90,6 @@ class DryingBed(SanUnit, Decay):
         COD_loss = self.first_order_decay(k=self.decay_k_COD,
                                           t=self.tau/365,
                                           max_decay=self.COD_max_decay)
-
         sol._COD *= 1 - COD_loss
         sol.imass['OtherSS'] *= 1 - COD_loss
         CH4.imass['CH4'] = waste.COD/1e3*waste.F_vol*COD_loss * \

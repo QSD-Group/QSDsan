@@ -7,5 +7,5 @@ log_removal,desired_pathogen_inactivation,log units,2,1,4,uniform,"desired level
 ur_pH,stored_urine_pH,pH units,9,8.9,9.1,uniform,Friedler et al. (2013); Trimmer et al. (2016); Wohlsager et al. (2010); Zhigang et al. (2008)
 MCF_decay,MCF_vault,fraction of anaerobic conversion of degraded COD,0.1,0.05,0.15,triangular,"IPCC, 2019"
 N2O_EF_decay,N2O_EF_vault,fraction of N emitted as N2O,0,0,0.001,uniform,"IPCC, 2019"
-fec_moi_min,minimum_moisture_content,fraction,10,7,13,uniform,estimated using data from Niwagaba et al. (2009)
+fec_moi_min,minimum_moisture_content,fraction,0.1,0.07,0.13,uniform,estimated using data from Niwagaba et al. (2009)
 fec_moi_red_rate,exponential_MC_decay,1/d,0.01,0.009,0.011,uniform,estimated using data from Niwagaba et al. (2009)
