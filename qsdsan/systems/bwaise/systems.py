@@ -12,16 +12,12 @@ This module is under the UIUC open-source license. Please refer to
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 
-Ref:
-    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+TODO
+----
+    [1] Recheck COD calculation acorss units once WasteStream is ready
 
-TODO:
-    [1] Figure out reporting, etc.
-
-Questions:
+Questions
+---------
     [1] WWTP power consumption very low, only 6.5/0.8 kWh per hour for
         existing/alternative WWTP
 
@@ -36,8 +32,10 @@ import qsdsan as qs
 from sklearn.linear_model import LinearRegression as LR
 from qsdsan import sanunits as su
 from qsdsan import WasteStream, ImpactItem, StreamImpactItem, SimpleTEA, LCA
-from bwaise import cmps
+from bwaise._cmps import cmps
 
+__all__ = ('sysA', 'sysB', 'sysC', 'teaA', 'teaB', 'teaC', 'lcaA', 'lcaB', 'lcaC',
+           'print_summaries', 'save_all_reports')
 
 # =============================================================================
 # Unit parameters
@@ -262,19 +260,15 @@ A13 = su.ComponentSplitter('A13', ins=A9-0,
 
 ############### Simulation, TEA, and LCA ###############
 sysA = bst.System('sysA', path=(A1, A2, A3, treatA, A9, A10, A11, A12, A13))
-sysA.simulate()
-sysA.save_report('results/sysA.xlsx')
 
 teaA = SimpleTEA(system=sysA, discount_rate=0.05, start_year=2018,
                  lifetime=8, uptime_ratio=1, lang_factor=None,
                  annual_maintenance=0, annual_labor=12*3e6*12/get_exchange_rate(),
                  construction_schedule=None)
 
-get_sysA_e = lambda: A4.power_utility.rate*(365*24)*8
 lcaA = LCA(system=sysA, lifetime=8, lifetime_unit='yr', uptime_ratio=1,
            # Assuming all additional WWTP OPEX from electricity
-           e_item=get_sysA_e)
-lcaA.save_report('results/lcaA.xlsx')
+           e_item=lambda: A4.power_utility.rate*(365*24)*8)
 
 
 # %%
@@ -381,8 +375,6 @@ B15 = su.Mixer('B15', ins=(B14-0, B14-2), outs=streamsB['biogas'])
 
 ############### Simulation, TEA, and LCA ###############
 sysB = bst.System('sysB', path=(B1, B2, B3, treatB, B9, B10, B11, B12, B13, B14, B15))
-sysB.simulate()
-sysB.save_report('results/sysB.xlsx')
 
 teaB = SimpleTEA(system=sysB, discount_rate=0.05, start_year=2018,
                   lifetime=10, uptime_ratio=1, lang_factor=None,
@@ -390,11 +382,9 @@ teaB = SimpleTEA(system=sysB, discount_rate=0.05, start_year=2018,
                   annual_labor=(5*5e6+5*75e4)*12/get_exchange_rate(),
                   construction_schedule=None)
 
-get_sysB_e = lambda: B4.power_utility.rate*(365*24)*10
 lcaB = LCA(system=sysB, lifetime=10, lifetime_unit='yr', uptime_ratio=1,
            # Assuming all additional WWTP OPEX from electricity
-           e_item=get_sysB_e)
-lcaB.save_report('results/lcaB.xlsx')
+           e_item=lambda: B4.power_utility.rate*(365*24)*10)
 
 
 # %%
@@ -501,19 +491,15 @@ C13 = su.ComponentSplitter('C13', ins=C9-0,
 
 ############### Simulation, TEA, and LCA ###############
 sysC = bst.System('sysC', path=(C1, C2, C3, C4, treatC, C9, C10, C11, C12, C13))
-sysC.simulate()
-sysC.save_report('results/sysC.xlsx')
 
 teaC = SimpleTEA(system=sysC, discount_rate=0.05, start_year=2018,
                  lifetime=8, uptime_ratio=1, lang_factor=None,
                  annual_maintenance=0, annual_labor=12*3e6*12/get_exchange_rate(),
                  construction_schedule=None)
 
-get_sysC_e = lambda: C5.power_utility.rate*(365*24)*8
 lcaC = LCA(system=sysC, lifetime=8, lifetime_unit='yr', uptime_ratio=1,
            # Assuming all additional WWTP OPEX from electricity
-           e_item=get_sysC_e)
-lcaC.save_report('results/lcaC.xlsx')
+           e_item=lambda: C5.power_utility.rate*(365*24)*8)
 
 
 # %%
@@ -583,59 +569,68 @@ sys_dct = {
     'LCA': dict(sysA=lcaA, sysB=lcaB, sysC=lcaC),
     }
 
-def print_summaries(sys):
-    if isinstance(sys, bst.System):
-        sys = sys.ID
-    ppl = sys_dct['ppl'][sys]
-    print(f'\n---------- Summary for {sys} ----------\n')
-    tea = sys_dct['TEA'][sys]
-    tea.show()
-    print('\n')
-    lca = sys_dct['LCA'][sys]
-    lca.show()
-    print('\n')
-
-    print(f'Net cost is {tea.EAC/ppl:.1f} {currency}/cap/yr.')
-    print(f'Construction cost is {tea.annualized_CAPEX/ppl:.1f} {currency}/cap/yr.')
-    print(f'Operating cost is {tea.AOC/ppl:.1f} {currency}/cap/yr.')
-    print('\n')
+def print_summaries(systems):
+    try: iter(systems)
+    except: systems = (systems, )
+    for sys in systems:
+        sys.simulate()
+        if isinstance(sys, bst.System):
+            sys = sys.ID
+        ppl = sys_dct['ppl'][sys]
+        print(f'\n---------- Summary for {sys} ----------\n')
+        tea = sys_dct['TEA'][sys]
+        tea.show()
+        print('\n')
+        lca = sys_dct['LCA'][sys]
+        lca.show()
+        print('\n')
     
-    ind = 'GlobalWarming'
-    factor = lca.lifetime * ppl
-    total = lca.total_impacts[ind]/factor
-    constr = lca.total_construction_impacts[ind]/factor
-    trans = lca.total_transportation_impacts[ind]/factor
-    ws = lca.get_stream_impacts(stream_items=lca.stream_inventory)[ind]/factor
-    other = lca.total_other_impacts[ind]/factor
-    print(f'Net emission is {total:.1f} {GWP.unit}/cap/yr.')
-    print(f'Construction emission is {constr:.1f} {GWP.unit}/cap/yr.')
-    print(f'Transportation emission is {trans:.1f} {GWP.unit}/cap/yr.')
-    print(f'Stream emission is {ws:.1f} {GWP.unit}/cap/yr.')
-    print(f'Other emission is {other:.1} {GWP.unit}/cap/yr.')
-    print('\n')
+        print(f'Net cost is {tea.EAC/ppl:.1f} {currency}/cap/yr.')
+        print(f'Construction cost is {tea.annualized_CAPEX/ppl:.1f} {currency}/cap/yr.')
+        print(f'Operating cost is {tea.AOC/ppl:.1f} {currency}/cap/yr.')
+        print('\n')
+        
+        ind = 'GlobalWarming'
+        factor = lca.lifetime * ppl
+        total = lca.total_impacts[ind]/factor
+        constr = lca.total_construction_impacts[ind]/factor
+        trans = lca.total_transportation_impacts[ind]/factor
+        ws = lca.get_stream_impacts(stream_items=lca.stream_inventory)[ind]/factor
+        other = lca.total_other_impacts[ind]/factor
+        print(f'Net emission is {total:.1f} {GWP.unit}/cap/yr.')
+        print(f'Construction emission is {constr:.1f} {GWP.unit}/cap/yr.')
+        print(f'Transportation emission is {trans:.1f} {GWP.unit}/cap/yr.')
+        print(f'Stream emission is {ws:.1f} {GWP.unit}/cap/yr.')
+        print(f'Other emission is {other:.1} {GWP.unit}/cap/yr.')
+        print('\n')
+    
+        input_unit = sys_dct['input_unit'][sys]
+        liq_unit = sys_dct['liq_unit'][sys]
+        sol_unit = sys_dct['sol_unit'][sys]
+        gas_unit = sys_dct['gas_unit'][sys]
+        liq = get_recovery(ins=input_unit, outs=liq_unit.outs[:3], ppl=ppl)
+        sol = get_recovery(ins=input_unit, outs=sol_unit.outs[:3], ppl=ppl)
+        for i in ('N', 'P', 'K'):  
+            print(f'Total {i} recovery is {liq[i]+sol[i]:.1%}, '
+                  f'{liq[i]:.1%} in liquid, '
+                  f'{sol[i]:.1%} in solid.')
+        tot_COD = get_total_inputs(input_unit)['COD']
+        liq_COD = get_recovery(ins=input_unit, outs=liq_unit.ins, ppl=ppl)['COD']
+        sol_COD = get_recovery(ins=input_unit, outs=sol_unit.ins, ppl=ppl)['COD']
+        if gas_unit:
+            gas_COD = -gas_unit.outs[0].HHV*365*24/14e3/ppl/tot_COD
+        else:
+            gas_COD = 0
+        print(f'Total COD recovery is {liq_COD+sol_COD+gas_COD:.1%}, '
+              f'{liq_COD:.1%} in liquid, '
+              f'{sol_COD:.1%} in solid, '
+              f'{gas_COD:.1%} in biogas.')
 
-    input_unit = sys_dct['input_unit'][sys]
-    liq_unit = sys_dct['liq_unit'][sys]
-    sol_unit = sys_dct['sol_unit'][sys]
-    gas_unit = sys_dct['gas_unit'][sys]
-    liq = get_recovery(ins=input_unit, outs=liq_unit.outs[:3], ppl=ppl)
-    sol = get_recovery(ins=input_unit, outs=sol_unit.outs[:3], ppl=ppl)
-    for i in ('N', 'P', 'K'):  
-        print(f'Total {i} recovery is {liq[i]+sol[i]:.1%}, '
-              f'{liq[i]:.1%} in liquid, '
-              f'{sol[i]:.1%} in solid.')
-    tot_COD = get_total_inputs(input_unit)['COD']
-    liq_COD = get_recovery(ins=input_unit, outs=liq_unit.ins, ppl=ppl)['COD']
-    sol_COD = get_recovery(ins=input_unit, outs=sol_unit.ins, ppl=ppl)['COD']
-    if gas_unit:
-        gas_COD = -gas_unit.outs[0].HHV*365*24/14e3/ppl/tot_COD
-    else:
-        gas_COD = 0
-    print(f'Total COD recovery is {liq_COD+sol_COD+gas_COD:.1%}, '
-          f'{liq_COD:.1%} in liquid, '
-          f'{sol_COD:.1%} in solid, '
-          f'{gas_COD:.1%} in biogas.')
-
+def save_all_reports():
+    for i in (sysA, sysB, sysC, lcaA, lcaB, lcaC):
+        if isinstance(i, bst.System):
+            i.simulate()
+        i.save_report(f'results/{i}.xlsx')
 
 
 

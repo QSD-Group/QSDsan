@@ -303,8 +303,8 @@ class LCA:
                               key=(lambda su: su.ID))
             items = sorted(set(i.item for i in getattr(self,  f'{cat}_inventory')),
                            key=(lambda item: item.ID))
-            # if len(items) == 0:
-            #     return f'No {cat}-related impacts.'
+            if len(items) == 0:
+                return f'No {cat}-related impacts.'
 
             # Note that item_dct = dict.fromkeys([item.ID for item in items], []) won't work
             item_dct = dict.fromkeys([item.ID for item in items])
@@ -333,6 +333,7 @@ class LCA:
                     'SanUnit'],
                     inplace=True)
                 dfs.append(df)
+
             table = pd.concat(dfs)
             return self._append_cat_sum(table, cat, tot)
         

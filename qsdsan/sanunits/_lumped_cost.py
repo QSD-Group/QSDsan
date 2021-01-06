@@ -16,6 +16,7 @@ for license details.
 
 # %%
 
+from biosteam._graphics import UnitGraphics
 from .. import SanUnit
 
 __all__ = ('LumpedCost',)
@@ -44,6 +45,7 @@ class LumpedCost(SanUnit):
         try: iter(ins)
         except: ins = (ins,)
         self._N_outs = self._N_ins = len(ins)
+        self._graphics = UnitGraphics.box(self._N_ins, self._N_outs)
         SanUnit.__init__(self, ID, ins, outs, thermo)
         self._BM = {cost_item_name: 1}
         self.purchase_costs = {cost_item_name: CAPEX}

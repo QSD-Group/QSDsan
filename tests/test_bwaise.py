@@ -13,15 +13,10 @@ https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-from . import (
-    _cmps,
-    systems
-    )
-
-from ._cmps import *
-from .systems import *
-
-__all__ = (
-	*_cmps.__all__,
-	*systems.__all__,
-	)
+def test_bwaise():
+    from qsdsan.systems import bwaise as bw
+    bw.print_summaries((bw.sysA, bw.sysB, bw.sysC))
+    
+# This just means that if pytest runs this module, it calls the test_bwaise function
+if __name__ == '__main__':
+    test_bwaise()
