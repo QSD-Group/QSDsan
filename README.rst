@@ -8,9 +8,11 @@ What is QSDsan?
 **QSDsan** is a package for the quantitative sustainable design of sanitation and resource recovery systems leveraging the structure and modules developed in BioSTEAM [1]_. As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
 
 
-Documentation
--------------
+Installation
+------------
 First install the package at `PyPI <https://pypi.org/>`_. If you use pip, simply ``pip install qsdsan``.
+
+Note that development of this package is currently under initial stage with limited backward compatibility, please free free to contact us with any questions regarding package upgrading.
 
 
 Documentation
@@ -22,8 +24,7 @@ You can find tutorials and documents at:
 
 License information
 -------------------
-See ``LICENSE.txt`` for information on the terms & conditions for usage
-of this software, and a DISCLAIMER OF ALL WARRANTIES.
+See ``LICENSE.txt`` for information on the terms & conditions for usage of this software, and a DISCLAIMER OF ALL WARRANTIES.
 
 
 About the authors

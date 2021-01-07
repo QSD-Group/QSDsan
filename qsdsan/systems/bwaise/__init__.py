@@ -13,10 +13,7 @@ https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-from . import (
-    _cmps,
-    systems
-    )
+from . import _cmps, systems, models
 
 from ._cmps import *
 from .systems import *

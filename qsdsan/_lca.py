@@ -56,7 +56,7 @@ class LCA:
     
     def __init__(self, system, lifetime, lifetime_unit='yr', uptime_ratio=1,
                  **item_quantities):
-
+        system.simulate()
         self._construction_units = set()
         self._transportation_units = set()
         self._lca_streams = set()
@@ -199,7 +199,7 @@ class LCA:
     
     
     def get_stream_impacts(self, stream_items=None, exclude=None,
-                                 time=None, time_unit='hr'):
+                           kind='all', time=None, time_unit='hr'):
         try: iter(stream_items)
         except: stream_items = (stream_items,)
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
@@ -219,6 +219,15 @@ class LCA:
                 ws = j.linked_stream
             if ws is exclude: continue
             for m, n in j.CFs.items():
+                if kind == 'all':
+                    pass
+                elif kind == 'direct_emission':
+                    n = max(n, 0)
+                elif kind == 'offset':
+                    n = min(n, 0)
+                else:
+                    raise ValueError('kind can only be "all", "direct_emission", or "offset", '
+                                     f'not {kind}.')
                 impacts[m] += n*time*ws.F_mass
         return impacts
     

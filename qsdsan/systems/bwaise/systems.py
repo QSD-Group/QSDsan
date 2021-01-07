@@ -12,12 +12,10 @@ This module is under the UIUC open-source license. Please refer to
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 
-TODO
-----
+TODOs:
     [1] Recheck COD calculation acorss units once WasteStream is ready
 
-Questions
----------
+Questions:
     [1] WWTP power consumption very low, only 6.5/0.8 kWh per hour for
         existing/alternative WWTP
 
@@ -32,10 +30,8 @@ import qsdsan as qs
 from sklearn.linear_model import LinearRegression as LR
 from qsdsan import sanunits as su
 from qsdsan import WasteStream, ImpactItem, StreamImpactItem, SimpleTEA, LCA
-from bwaise._cmps import cmps
+from qsdsan.systems.bwaise._cmps import cmps
 
-__all__ = ('sysA', 'sysB', 'sysC', 'teaA', 'teaB', 'teaC', 'lcaA', 'lcaB', 'lcaC',
-           'print_summaries', 'save_all_reports')
 
 # =============================================================================
 # Unit parameters
@@ -46,6 +42,7 @@ items = ImpactItem._items
 GWP = qs.ImpactIndicator._indicators['GWP']
 currency = qs.currency = 'USD'
 qs.CEPCI = qs.CEPCI_by_year[2018]
+bst.speed_up()
 
 toilet_user = 16 # four people per household, four households per toilet
 # Number of people served by the existing plant (sysA and SceC), sewer + sludge
@@ -55,6 +52,8 @@ ppl_alternative = 5e4
 
 exchange_rate = 3700 # UGX per USD, triangular of 3600, 3700, 3900
 get_exchange_rate = lambda: exchange_rate
+discount_rate = 0.05
+get_discount_rate = lambda: discount_rate
 
 # Time take for full degradation, [yr]
 tau_deg = 2
@@ -165,7 +164,7 @@ def adjust_NH3_loss(unit):
 # %%
 
 # =============================================================================
-# Scenario A (sysA): existing system
+# Scenario A (sysA): pit latrine with existing treatment system
 # =============================================================================
 
 flowsheetA = bst.Flowsheet('sysA')
@@ -261,7 +260,7 @@ A13 = su.ComponentSplitter('A13', ins=A9-0,
 ############### Simulation, TEA, and LCA ###############
 sysA = bst.System('sysA', path=(A1, A2, A3, treatA, A9, A10, A11, A12, A13))
 
-teaA = SimpleTEA(system=sysA, discount_rate=0.05, start_year=2018,
+teaA = SimpleTEA(system=sysA, discount_rate=get_discount_rate(), start_year=2018,
                  lifetime=8, uptime_ratio=1, lang_factor=None,
                  annual_maintenance=0, annual_labor=12*3e6*12/get_exchange_rate(),
                  construction_schedule=None)
@@ -274,7 +273,7 @@ lcaA = LCA(system=sysA, lifetime=8, lifetime_unit='yr', uptime_ratio=1,
 # %%
 
 # =============================================================================
-# Scenario B (sysB): anaerobic treatment with existing pit latrines and conveyance
+# Scenario B (sysB): pit latrine with anaerobic treatment
 # =============================================================================
 
 flowsheetB = bst.Flowsheet('sysB')
@@ -376,7 +375,7 @@ B15 = su.Mixer('B15', ins=(B14-0, B14-2), outs=streamsB['biogas'])
 ############### Simulation, TEA, and LCA ###############
 sysB = bst.System('sysB', path=(B1, B2, B3, treatB, B9, B10, B11, B12, B13, B14, B15))
 
-teaB = SimpleTEA(system=sysB, discount_rate=0.05, start_year=2018,
+teaB = SimpleTEA(system=sysB, discount_rate=get_discount_rate(), start_year=2018,
                   lifetime=10, uptime_ratio=1, lang_factor=None,
                   annual_maintenance=0,
                   annual_labor=(5*5e6+5*75e4)*12/get_exchange_rate(),
@@ -390,7 +389,7 @@ lcaB = LCA(system=sysB, lifetime=10, lifetime_unit='yr', uptime_ratio=1,
 # %%
 
 # =============================================================================
-# Scenario C (sysC): containaer-based sanitation with existing treatment
+# Scenario C (sysC): containaer-based sanitation with existing treatment system
 # =============================================================================
 
 flowsheetC = bst.Flowsheet('sysC')
@@ -492,7 +491,7 @@ C13 = su.ComponentSplitter('C13', ins=C9-0,
 ############### Simulation, TEA, and LCA ###############
 sysC = bst.System('sysC', path=(C1, C2, C3, C4, treatC, C9, C10, C11, C12, C13))
 
-teaC = SimpleTEA(system=sysC, discount_rate=0.05, start_year=2018,
+teaC = SimpleTEA(system=sysC, discount_rate=get_discount_rate(), start_year=2018,
                  lifetime=8, uptime_ratio=1, lang_factor=None,
                  annual_maintenance=0, annual_labor=12*3e6*12/get_exchange_rate(),
                  construction_schedule=None)
@@ -515,13 +514,10 @@ def get_total_inputs(unit):
         ins = unit.ins
     inputs = {}
     inputs['COD'] = sum(i.COD*i.F_vol/1e3 for i in ins)
-    inputs['energy'] = inputs['COD'] * 14e3
     inputs['N'] = sum(i.TN*i.F_vol/1e3 for i in ins)
     inputs['NH3'] = sum(i.imass['NH3'] for i in ins)
     inputs['P'] = sum(i.TP*i.F_vol/1e3 for i in ins)
     inputs['K'] = sum(i.TK*i.F_vol/1e3 for i in ins)
-    inputs['Mg'] = sum(i.TMg*i.F_vol/1e3 for i in ins)
-    inputs['Ca'] = sum(i.TCa*i.F_vol/1e3 for i in ins)
     hr = 365 * 24
     for i, j in inputs.items():
         inputs[i] = j * hr
@@ -533,13 +529,10 @@ def get_recovery(ins=None, outs=None, hr=365*24, ppl=1, if_relative=True):
     non_g = tuple(i for i in outs if i.phase != 'g')
     recovery = {}
     recovery['COD'] = sum(i.COD*i.F_vol/1e3 for i in non_g)
-    recovery['energy'] = recovery['COD'] * 14e3
     recovery['N'] = sum(i.TN*i.F_vol/1e3 for i in non_g)
     recovery['NH3'] = sum(i.imass['NH3'] for i in non_g)
     recovery['P'] = sum(i.TP*i.F_vol/1e3 for i in non_g)
     recovery['K'] = sum(i.TK*i.F_vol/1e3 for i in non_g)
-    recovery['Mg'] = sum(i.TMg*i.F_vol/1e3 for i in non_g)
-    recovery['Ca'] = sum(i.TCa*i.F_vol/1e3 for i in non_g)
     for i, j in recovery.items():
         if if_relative:
             inputs = get_total_inputs(ins)
@@ -567,70 +560,125 @@ sys_dct = {
     'stream_dct': dict(sysA=streamsA, sysB=streamsB, sysC=streamsC),
     'TEA': dict(sysA=teaA, sysB=teaB, sysC=teaC),
     'LCA': dict(sysA=lcaA, sysB=lcaB, sysC=lcaC),
+    'cache': dict(sysA={}, sysB={}, sysC={}),
     }
+
+def cache_recoveries(sys):
+    total_COD = get_total_inputs(sys_dct['input_unit'][sys.ID])['COD']
+    ppl = sys_dct['ppl'][sys.ID]
+    if sys_dct['gas_unit'][sys.ID]:
+        gas_COD = -sys_dct['gas_unit'][sys.ID].outs[0].HHV*365*24/14e3/ppl/total_COD
+    else:
+        gas_COD = 0
+    cache = {
+        'liq': get_recovery(ins=sys_dct['input_unit'][sys.ID],
+                            outs=sys_dct['liq_unit'][sys.ID].ins,
+                            ppl=ppl),
+        'sol': get_recovery(ins=sys_dct['input_unit'][sys.ID],
+                            outs=sys_dct['sol_unit'][sys.ID].ins,
+                            ppl=ppl),
+        'gas': dict(COD=gas_COD, N=0, P=0, K=0)
+        }
+    return cache
+
+def update_cache(sys):
+    last_u = sys.path[-1]
+    last_u._run()
+    sys_dct['cache'][sys.ID] = cache_recoveries(sys)
+
+A13.specification = lambda: update_cache(sysA)
+B15.specification = lambda: update_cache(sysB)
+C13.specification = lambda: update_cache(sysC)
+
+
+def get_summarizing_fuctions():
+    func_dct = {}
+    func_dct['get_annual_cost'] = lambda tea, ppl: tea.EAC/ppl
+    func_dct['get_annual_CAPEX'] = lambda tea, ppl: tea.annualized_CAPEX/ppl
+    func_dct['get_annual_OPEX'] = lambda tea, ppl: tea.AOC/ppl
+    ind = 'GlobalWarming'
+    func_dct['get_annual_GWP'] = \
+        lambda lca, ppl: lca.total_impacts[ind]/lca.lifetime/ppl
+    func_dct['get_constr_GWP'] = \
+        lambda lca, ppl: lca.total_construction_impacts[ind]/lca.lifetime/ppl
+    func_dct['get_trans_GWP'] = \
+        lambda lca, ppl: lca.total_transportation_impacts[ind]/lca.lifetime/ppl  
+    func_dct['get_direct_emission_GWP'] = \
+        lambda lca, ppl: lca.get_stream_impacts(stream_items=lca.stream_inventory, kind='direct_emission')[ind] \
+            /lca.lifetime/ppl
+    func_dct['get_offset_GWP'] = \
+        lambda lca, ppl: lca.get_stream_impacts(stream_items=lca.stream_inventory, kind='offset')[ind] \
+            /lca.lifetime/ppl
+    func_dct['get_other_GWP'] = \
+        lambda lca, ppl: lca.total_other_impacts[ind]/lca.lifetime/ppl
+    for i in ('COD', 'N', 'P', 'K'):
+        func_dct[f'get_liq_{i}_recovery'] = \
+            lambda sys, i: sys_dct['cache'][sys.ID]['liq'][i]
+        func_dct[f'get_sol_{i}_recovery'] = \
+            lambda sys, i: sys_dct['cache'][sys.ID]['sol'][i]
+        func_dct[f'get_gas_{i}_recovery'] = \
+            lambda sys, i: sys_dct['cache'][sys.ID]['gas'][i]
+        func_dct[f'get_tot_{i}_recovery'] = \
+            lambda sys, i: \
+                sys_dct['cache'][sys.ID]['liq'][i] + \
+                sys_dct['cache'][sys.ID]['sol'][i] + \
+                sys_dct['cache'][sys.ID]['gas'][i]
+    return func_dct
+
 
 def print_summaries(systems):
     try: iter(systems)
     except: systems = (systems, )
+    func = get_summarizing_fuctions()
     for sys in systems:
         sys.simulate()
-        if isinstance(sys, bst.System):
-            sys = sys.ID
-        ppl = sys_dct['ppl'][sys]
+        ppl = sys_dct['ppl'][sys.ID]
         print(f'\n---------- Summary for {sys} ----------\n')
-        tea = sys_dct['TEA'][sys]
+        tea = sys_dct['TEA'][sys.ID]
         tea.show()
         print('\n')
-        lca = sys_dct['LCA'][sys]
+        lca = sys_dct['LCA'][sys.ID]
         lca.show()
-        print('\n')
-    
-        print(f'Net cost is {tea.EAC/ppl:.1f} {currency}/cap/yr.')
-        print(f'Construction cost is {tea.annualized_CAPEX/ppl:.1f} {currency}/cap/yr.')
-        print(f'Operating cost is {tea.AOC/ppl:.1f} {currency}/cap/yr.')
-        print('\n')
         
-        ind = 'GlobalWarming'
-        factor = lca.lifetime * ppl
-        total = lca.total_impacts[ind]/factor
-        constr = lca.total_construction_impacts[ind]/factor
-        trans = lca.total_transportation_impacts[ind]/factor
-        ws = lca.get_stream_impacts(stream_items=lca.stream_inventory)[ind]/factor
-        other = lca.total_other_impacts[ind]/factor
-        print(f'Net emission is {total:.1f} {GWP.unit}/cap/yr.')
-        print(f'Construction emission is {constr:.1f} {GWP.unit}/cap/yr.')
-        print(f'Transportation emission is {trans:.1f} {GWP.unit}/cap/yr.')
-        print(f'Stream emission is {ws:.1f} {GWP.unit}/cap/yr.')
-        print(f'Other emission is {other:.1} {GWP.unit}/cap/yr.')
-        print('\n')
-    
-        input_unit = sys_dct['input_unit'][sys]
-        liq_unit = sys_dct['liq_unit'][sys]
-        sol_unit = sys_dct['sol_unit'][sys]
-        gas_unit = sys_dct['gas_unit'][sys]
-        liq = get_recovery(ins=input_unit, outs=liq_unit.outs[:3], ppl=ppl)
-        sol = get_recovery(ins=input_unit, outs=sol_unit.outs[:3], ppl=ppl)
-        for i in ('N', 'P', 'K'):  
-            print(f'Total {i} recovery is {liq[i]+sol[i]:.1%}, '
-                  f'{liq[i]:.1%} in liquid, '
-                  f'{sol[i]:.1%} in solid.')
-        tot_COD = get_total_inputs(input_unit)['COD']
-        liq_COD = get_recovery(ins=input_unit, outs=liq_unit.ins, ppl=ppl)['COD']
-        sol_COD = get_recovery(ins=input_unit, outs=sol_unit.ins, ppl=ppl)['COD']
-        if gas_unit:
-            gas_COD = -gas_unit.outs[0].HHV*365*24/14e3/ppl/tot_COD
-        else:
-            gas_COD = 0
-        print(f'Total COD recovery is {liq_COD+sol_COD+gas_COD:.1%}, '
-              f'{liq_COD:.1%} in liquid, '
-              f'{sol_COD:.1%} in solid, '
-              f'{gas_COD:.1%} in biogas.')
+        unit = f'{currency}/cap/yr'
+        print(f'\nNet cost: {func["get_annual_cost"](tea, ppl):.1f} {unit}.')
+        print(f'Capital: {func["get_annual_CAPEX"](tea, ppl):.1f} {unit}.')
+        print(f'Operating: {func["get_annual_OPEX"](tea, ppl):.1f} {unit}.')
+        
+        unit = f'{GWP.unit}/cap/yr'
+        print(f'\nNet emission: {func["get_annual_GWP"](lca, ppl):.1f} {unit}.')
+        print(f'Construction: {func["get_constr_GWP"](lca, ppl):.1f} {unit}.')
+        print(f'Transportation: {func["get_trans_GWP"](lca, ppl):.1f} {unit}.')
+        print(f'Direct emission: {func["get_direct_emission_GWP"](lca, ppl):.1f} {unit}.')
+        print(f'Offset: {func["get_offset_GWP"](lca, ppl):.1f} {unit}.')
+        print(f'Other: {func["get_other_GWP"](lca, ppl):.1} {unit}.\n')
+
+        for i in ('COD', 'N', 'P', 'K'):
+            print(f'Total {i} recovery is {func[f"get_tot_{i}_recovery"](sys, i):.1%}, '
+                  f'{func[f"get_liq_{i}_recovery"](sys, i):.1%} in liquid, '
+                  f'{func[f"get_sol_{i}_recovery"](sys, i):.1%} in solid, '
+                  f'{func[f"get_gas_{i}_recovery"](sys, i):.1%} in gas.')
 
 def save_all_reports():
+    import os
+    path = os.path.dirname(os.path.realpath(__file__))
+    del os
     for i in (sysA, sysB, sysC, lcaA, lcaB, lcaC):
         if isinstance(i, bst.System):
             i.simulate()
-        i.save_report(f'results/{i}.xlsx')
+            i.save_report(f'{path}/results/{i.ID}.xlsx')
+        else:
+            i.save_report(f'{path}/results/{i.system.ID}_lca.xlsx')
+
+__all__ = ('sysA', 'sysB', 'sysC', 'teaA', 'teaB', 'teaC', 'lcaA', 'lcaB', 'lcaC',
+           'print_summaries', 'save_all_reports',
+           *(i.ID for i in sysA.units),
+           *(i.ID for i in sysB.units),
+           *(i.ID for i in sysC.units),
+           )
+
+
+
 
 
 

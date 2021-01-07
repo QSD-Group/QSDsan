@@ -14,6 +14,7 @@ sanunits
    Excretion
    Lagoon
    LiquidTreatmentBed
+   LumpedCost
    Mixer
    MixTank
    PitLatrine

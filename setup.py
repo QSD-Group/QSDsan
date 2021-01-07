@@ -18,7 +18,7 @@ from setuptools import setup
 setup(
     name='qsdsan',
     packages=['qsdsan'],
-    version='0.0.1',
+    version='0.0.2',
     license='University of Illinois/NCSA Open Source License',
     author='Quantitative Sustainable Design Group',
     description='Quantitative Sustainable Design for sanitation and resource recovery systems',
@@ -32,7 +32,7 @@ setup(
                     'sanunits/*',
                     'units_of_measure.txt',
                     'utils/*',
-                    'systems/bwaise'
+                    'systems/bwaise/*'
                     ]},
     platforms=['Windows', 'Mac', 'Linux'],
     classifiers=['License :: OSI Approved :: University of Illinois/NCSA Open Source License',

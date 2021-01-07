@@ -1,10 +1,10 @@
 =========================================
-SanExpo: Exposition of Sanitation Systems
+ExpoSan: Exposition of Sanitation Systems
 =========================================
 
 Notes
 -----
-This module holds sanitation systems developed with the `sanitation` package,
-in the future, this module will be transfered to a standalone repository.
-
+This module contains sanitation systems developed with the `QSDsan` package.
+In the future and with more systems developed and published, this module will
+be transfered to a standalone repository.
 

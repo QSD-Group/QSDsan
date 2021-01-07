@@ -170,17 +170,17 @@ class WasteStream(Stream):
             # Only non-zero properties are shown
             _ws_info += int(bool(self.pH))*f'  pH         : {self.pH:.1f}\n'
             #TODO: unit and definition for following properties
-            _ws_info += int(bool(self.SAlk))*f'  Alkalinity : {self.SAlk:.1f} [unit]\n'
+            _ws_info += int(bool(self.SAlk))*f'  Alkalinity : {self.SAlk:.1f} mg/L\n'
             if details:
-                _ws_info += int(bool(self.COD))   *f'  COD        : {self.COD:.1f} [unit]\n'
-                _ws_info += int(bool(self.BOD))   *f'  BOD        : {self.BOD:.1f} [unit]\n'
-                _ws_info += int(bool(self.TC))    *f'  TC         : {self.TC:.1f} [unit]\n'
-                _ws_info += int(bool(self.TOC))   *f'  TOC        : {self.TOC:.1f} [unit]\n'
-                _ws_info += int(bool(self.TN))    *f'  TN         : {self.TN:.1f} [unit]\n'
-                _ws_info += int(bool(self.TKN))   *f'  TKN        : {self.TKN:.1f} [unit]\n'
-                _ws_info += int(bool(self.TP))    *f'  TP         : {self.TP:.1f} [unit]\n'
-                _ws_info += int(bool(self.TK))    *f'  TK         : {self.TK:.1f} [unit]\n'
-                # _ws_info += int(bool(self.charge))*f'  charge     : {self.charge:.1f} [unit]\n'
+                _ws_info += int(bool(self.COD))   *f'  COD        : {self.COD:.1f} mg/L\n'
+                _ws_info += int(bool(self.BOD))   *f'  BOD        : {self.BOD:.1f} mg/L\n'
+                _ws_info += int(bool(self.TC))    *f'  TC         : {self.TC:.1f} mg/L\n'
+                _ws_info += int(bool(self.TOC))   *f'  TOC        : {self.TOC:.1f} mg/L\n'
+                _ws_info += int(bool(self.TN))    *f'  TN         : {self.TN:.1f} mg/L\n'
+                _ws_info += int(bool(self.TKN))   *f'  TKN        : {self.TKN:.1f} mg/L\n'
+                _ws_info += int(bool(self.TP))    *f'  TP         : {self.TP:.1f} mg/L\n'
+                _ws_info += int(bool(self.TK))    *f'  TK         : {self.TK:.1f} mg/L\n'
+                # _ws_info += int(bool(self.charge))*f'  charge     : {self.charge:.1f} mmol/L\n'
             else:
                 _ws_info += '  ...\n'
             

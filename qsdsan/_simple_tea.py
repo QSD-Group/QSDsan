@@ -68,7 +68,7 @@ class SimpleTEA(TEA):
                  CAPEX=0., lang_factor=None,
                  annual_maintenance=0., annual_labor=0., system_add_OPEX=0.,
                  construction_schedule=None, currency=currency):
-        
+        system.simulate()
         self.system = system
         self.units = sorted(system._costunits, key=lambda x: x.line)
         system._TEA = self
@@ -116,9 +116,9 @@ class SimpleTEA(TEA):
         c = self.currency
         info = f'{type(self).__name__}: {self.system.ID}'
         info += f'\nNPV  : {self.NPV:,.0f} {c} at {self.discount_rate:.1%} discount rate'
+        info += f'\nEAC  : {self.EAC:,.0f} {c}/yr'
         info += f'\nCAPEX: {self.CAPEX:,.0f} {c} (annualized to {self.annualized_CAPEX:,.0f} {c}/yr)'
         info += f'\nAOC  : {self.AOC:,.0f} {c}/yr'
-        info += f'\nEAC  : {self.EAC:,.0f} {c}/yr'
         print(info)
 
     _ipython_display_ = show

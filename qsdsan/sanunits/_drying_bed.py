@@ -90,7 +90,7 @@ class DryingBed(SanUnit, Decay):
         COD_loss = self.first_order_decay(k=self.decay_k_COD,
                                           t=self.tau/365,
                                           max_decay=self.COD_max_decay)
-        sol._COD *= 1 - COD_loss
+        sol_COD = sol._COD/1e3*sol.F_vol * (1-COD_loss)
         sol.imass['OtherSS'] *= 1 - COD_loss
         CH4.imass['CH4'] = waste.COD/1e3*waste.F_vol*COD_loss * \
             self.max_CH4_emission*self.MCF_decay # COD in mg/L (g/m3)
@@ -107,17 +107,18 @@ class DryingBed(SanUnit, Decay):
         N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
 
         # Adjust water content in the dried solids
-        set_sol_frac = self.sol_frac[self.design_type]
+        sol_frac = self.sol_frac
         solid_content = 1 - sol.imass['H2O']/sol.F_mass
-        if solid_content > set_sol_frac:
+        if solid_content > sol_frac:
             msg = f'Solid content of the solid after COD removal is {solid_content:.2f}, '\
-                f'larger than the set sol_frac of {set_sol_frac} for the {self.design_type} ' \
+                f'larger than the set sol_frac of {sol_frac} for the {self.design_type} ' \
                 'process type, the set value is ignored.'
             warn(msg, stacklevel=2)
             evaporated.empty()
         else:
-            sol.imass['H2O'] = (sol.F_mass-sol.imass['H2O'])/set_sol_frac
+            sol.imass['H2O'] = (sol.F_mass-sol.imass['H2O'])/sol_frac
             evaporated.imass['H2O'] = waste.imass['H2O'] - sol.imass['H2O']
+        sol._COD = sol_COD*1e3/sol.F_vol
 
     _units = {
         'Single covered bed volume': 'm3',
@@ -167,10 +168,10 @@ class DryingBed(SanUnit, Decay):
     @property
     def sol_frac(self):
         '''[float] Final solid content of the dried solids.'''
-        return self._sol_frac
+        return self._sol_frac[self.design_type]
     @sol_frac.setter
     def sol_frac(self, i):
-        self._sol_frac = float(i)
+        self._sol_frac[self.design_type] = float(i)
 
     @property
     def design_type(self):
