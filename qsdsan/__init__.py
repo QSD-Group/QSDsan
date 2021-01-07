@@ -7,6 +7,10 @@ Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
+<<<<<<< HEAD
+=======
+    Joy Cheung
+>>>>>>> 642b6690d694ad53b832005dff17b0833e6a9705
 
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
@@ -30,9 +34,11 @@ from ._transportation import *
 from ._sanunit import *
 from ._simple_tea import *
 from ._lca import *
+from ._cod import *
 
 from . import (
     _units_of_measure, # if not included here, then need to add to setup.py
+    _cod,
     _component,
     _components,
     _waste_stream,
@@ -51,6 +57,7 @@ from . import (
 utils.secondary_importing()
 
 __all__ = (
+    *_cod.__all__,
     *_component.__all__,
     *_components.__all__,
     *_waste_stream.__all__,

@@ -174,8 +174,8 @@ class Components(Chemicals):
                                               measured_as = cmp.measured_as)
             for j in _component_properties:
                 field = '_' + j
-                if pd.isna(cmp[j]): continue
-                setattr(component, field, cmp[j])
+                if pd.isna(cmp[j]): setattr(component, j, None)
+                else: setattr(component, field, cmp[j])
             new.append(component)
 
         if store_data:
@@ -215,24 +215,23 @@ class Components(Chemicals):
         new = cls.load_from_file(path=path, use_default_data=True, store_data=True)
 
         H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
-                          i_C=0, i_N=0, i_P=0, i_K=0, i_mass=1,
-                          i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
-                          f_Vmass_Totmass=0,
-                          particle_size='Soluble',
-                          degradability='Undegradable', organic=False)
+                                      i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
+                                      f_Vmass_Totmass=0, description="Water",
+                                      particle_size='Soluble',
+                                      degradability='Undegradable', organic=False)
         new.append(H2O)
                 
         if default_compile:
-            
+            isa = isinstance
             for i in new:
                 i.default()
                 
                 if not i.Tb:
                     if i.particle_size == 'Soluble': i.Tb = tmo.Chemical('urea').Tb
-                    elif i.particle_size == 'Dissolved gas': i.Tb = tmo.Chemical('N2').Tb
+                    elif i.particle_size == 'Dissolved gas': i.Tb = tmo.Chemical('CO2').Tb
                     else: i.Tb = tmo.Chemical('NaCl').Tb
                 
-                if (isinstance(i.V, _TMH) and len(i.V.models)==0) or (isinstance(i.V, _PH) and len(i.V.l.models)==0): 
+                if (isa(i.V, _TMH) and (len(i.V.models)==0 or (i.V[0].Tmin > 298.15 or i.V[0].Tmax < 298.15))) or (isa(i.V, _PH) and (len(i.V.l.models)==0 or (i.V.l[0].Tmin > 298.15 or i.V.l[0].Tmax < 298.15))): 
                     if i.particle_size == 'Soluble': 
                         i.copy_models_from(tmo.Chemical('urea'), names=('V',))                        
                     elif i.particle_size in ('Particulate', 'Colloidal'):
@@ -241,11 +240,12 @@ class Components(Chemicals):
                             i.V.l.add_model(1.2e-5)    # m^3/mol
                             i.V.s.add_model(1.2e-5)
                     else:
-                        i.copy_models_from(tmo.Chemical('N2'), names=('V',))
+                        i.copy_models_from(tmo.Chemical('CO2'), names=('V',))
+                      
                     
                 for j in ('sigma', 'epsilon', 'kappa', 'Cn', 'mu', 'Psat', 'Hvap'):
-                    if isinstance(getattr(i, j), _TMH) and len(getattr(i,j).models) > 0: continue
-                    elif isinstance(getattr(i, j), _PH) and len(getattr(i,j).l.models) > 0: continue
+                    if isa(getattr(i, j), _TMH) and len(getattr(i,j).models) > 0: continue
+                    elif isa(getattr(i, j), _PH) and len(getattr(i,j).l.models) > 0: continue
                     i.copy_models_from(H2O, names=(j,))
             
             new.compile()
