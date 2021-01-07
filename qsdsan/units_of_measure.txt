@@ -1,0 +1,11 @@
+m2 = m**2 = m2 = sq_meter = sq_m
+m3 = m**3 = m3 = cu_meter = cu_m
+cm2 = (cm)**2 = cm2 = sq_centimeter = sq_cm
+cm3 = (cm)**3 = cm3 = cu_centimeter = cu_cm
+ft2 = ft**2 = ft2 = sq_ft
+ft3 = ft**3 = ft3 = cu_ft = cf
+yr = year = yr = y
+hr = hour = hr = h
+d = day
+USD = usd
+ea = _ = each

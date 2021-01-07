@@ -1,20 +1,21 @@
-Sanitation Explorer: Exploring Sustainable Sanitation Technologies
-==================================================================
+QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
+====================================================================================
 .. figure:: ./images/various_configurations.png
    
-   Collage of sanitation units inclucded in Sanitation Explorer
+   Collage of sanitation units inclucded in QSDsan
 
 
-What is Sanitation Explorer?
+What is QSDsan?
 ----------------------------
-**Sanitation Explorer** is a package for the sustainable design of non-sewered sanitation technologies that are affordable and appropriate in low-income, resource-limited settings leveraging the structure and modules developed in BioSTEAM [1]_. As an open-source and impact-driven platform, Sanitation Explorer aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment under uncertainty).
 
-All systems developed with the Sanitation Explorer package will be included in another repository in the future.
+**QSDsan** is a package for the quantitative sustainable design of sanitation and resource recovery systems leveraging the structure and modules developed in **BioSTEAM** [1]_. As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
+
+All systems developed with QSDsan will be included in another repository in the future.
 
 
 Getting Started
 ---------------
-Want to try out Sanitation Explorer? First install the package at `PyPI <https://pypi.org/>`_. If you use pip, simply ``pip install sanitation`` *Note: NOT READY YET*.
+First install the package at `PyPI <https://pypi.org/>`_. If you use pip, simply ``pip install qsdsan``.
 
 
 Follow the tutorial to get started!
@@ -29,15 +30,16 @@ Follow the tutorial to get started!
    tutorial/TEA_and_LCA
 
 
-How does Sanitation Explorer work?
-----------------------------------
-.. figure:: ./images/sanitation_UML.png
+How does QSDsan work?
+---------------------
+.. https://lucid.app/publicSegments/view/ac755b6d-1bd6-464c-8e47-9e21e762d888/image.png # needs updating
+.. figure:: ./images/QSDsan_UML.png
 
-Sanitation Explorer follows the structure of `BioSTEAM <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_, a fast and flexible package for the design, simulation, and techno-economic analysis of biorefineries under uncertainty, but Sanitation Explorer is enhanced with features geared toward quantitative sustainable design of sanitation systems.
+QSDsan follows the structure of `BioSTEAM <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_, a fast and flexible package for the design, simulation, and techno-economic analysis of biorefineries under uncertainty, but QSDsan is enhanced with features geared toward quantitative sustainable design of sanitation systems.
 
-The above Unified Modeling Language (UML) diagram of the package shows the relationship between Sanitation Explorer and its dependencies `biosteam <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_, `thermosteam <https://github.com/BioSTEAMDevelopmentGroup/thermosteam>`_, and `chemicals <https://github.com/CalebBell/chemicals>`_.
+The above Unified Modeling Language (UML) diagram of the package shows the relationship between QSDsan and its dependencies `biosteam <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_, `thermosteam <https://github.com/BioSTEAMDevelopmentGroup/thermosteam>`_, and `chemicals <https://github.com/CalebBell/chemicals>`_.
 
-In particular, Sanitation Explorer introduces:
+In particular, QSDsan introduces:
  - ``Component``, a subclass of ``Chemical`` in thermosteam, instance of this class does not necessarily corresponds to a specific chemical, but represents commonly used/modeled component such as biodegradable colloidal substrate.
 
  - ``WasteStream``, a sublcass of ``Stream`` in thermosteam, instance of this class has additional composite properties such as chemical oxygen demand (COD) that are widely used in sanitation systems.
@@ -46,28 +48,35 @@ In particular, Sanitation Explorer introduces:
 
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Inside Sanitation Explorer
+   :maxdepth: 2
+   :caption: API
 
    Component
    Components
-   WasteStream
+   CompiledComponents
+   Construction
+   ImpactIndicator
+   ImpactItem
+   LCA
    SanUnit
+   sanunits/sanunits
+   SimpleTEA
+   Transportation
+   WasteStream
 .. Process # TO BE ADDED
-.. unitss # TO BE ADDED
 
 
 More resources
 --------------
-To get the full value of Sanitation Explorer, we highly recommend reading through the documents of these packages:
+To get the full value of QSDsan, we highly recommend reading through the documents of these packages:
  - `biosteam docs <https://biosteam.readthedocs.io/en/latest/index.html>`_
  - `thermosteam docs <https://thermosteam.readthedocs.io/en/latest/index.html>`_
  - `chemicals docs <https://chemicals.readthedocs.io/en/latest/>`_
 
 
-About the authors
------------------
-Development and maintenance of the package is supported by the Sanitation Explorer Development Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors include:
+About the developers
+--------------------
+Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_.
 
 **Code development**
  - `Yalin Li <zoe.yalin.li@gmail.com>`_
@@ -84,7 +93,7 @@ Development and maintenance of the package is supported by the Sanitation Explor
 
 Join the community
 ------------------
-We would like to build an open and welcoming community, you can always post issues on our GitHub homepage or contact any of the Sanitation Explorer Development Group memebers. If you would like to contribute, please follow our contribution guide:
+We would like to build an open and welcoming community, you can always post issues on our GitHub homepage or contact any of the Quantitative Sustainable Design Group memebers. If you would like to contribute, please follow our contribution guide:
 
 .. toctree::
    :maxdepth: 1
@@ -95,7 +104,7 @@ We would like to build an open and welcoming community, you can always post issu
    for_developers/tutorial_template
 
    
-Sanitation Explorer is and will stay open source under University of Illinois/NCSA Open Source License, please refer to the `LICENSE <https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt>`_ for details.
+QSDsan is and will stay open source under University of Illinois/NCSA Open Source License, please refer to the `LICENSE <https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt>`_ for details.
 
 
 References

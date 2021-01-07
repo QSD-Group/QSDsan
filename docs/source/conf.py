@@ -15,13 +15,15 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('../../../tmo'))
+sys.path.insert(0, os.path.abspath('../../../bst'))
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'Sanitation Explorer'
-copyright = '2020, Sanitation Explorer Development Group'
-author = 'Sanitation Explorer Development Group'
+project = 'QSDsan'
+copyright = '2020, Quantitative Sustainable Design Group'
+author = 'Quantitative Sustainable Design Group'
 
 # The full version, including alpha/beta/rc tags
 release = '0.0.1'
@@ -35,6 +37,8 @@ release = '0.0.1'
 extensions = [
 'nbsphinx',
 'sphinx.ext.autodoc',
+'sphinx.ext.intersphinx',
+'sphinx.ext.mathjax',
 'sphinx.ext.napoleon',
 ]
 
@@ -63,3 +67,8 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 # html_static_path = ['_static']
+
+# -- Extension settings -------------------------------------------------------
+napoleon_custom_sections = [
+'Additional attributes',
+'Reference documents']

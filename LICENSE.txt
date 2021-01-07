@@ -1,12 +1,12 @@
-============================================================================================
-The Sanitation Explorer project is under the University of Illinois/NCSA Open Source License
-============================================================================================
+===============================================================================
+The QSDsan project is under the University of Illinois/NCSA Open Source License
+===============================================================================
 
 University of Illinois/NCSA Open Source License
 
-Copyright (c) [2020] Sanitation Explorer Development Group. All rights reserved.
+Copyright (c) [2020] Quantitative Sustainable Design Group. All rights reserved.
 
-Developed by: Sanitation Explorer Development Group
+Developed by: Quantitative Sustainable Design Group
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation files
@@ -23,7 +23,7 @@ subject to the following conditions:
   notice, this list of conditions and the following disclaimers in the
   documentation and/or other materials provided with the distribution.
 
-* Neither the name of Sanitation Explorer Development Group nor the names of its
+* Neither the name of Quantitative Sustainable Design Group nor the names of its
   contributors may be used to endorse or promote products derived from
   this Software without specific prior written permission.
 

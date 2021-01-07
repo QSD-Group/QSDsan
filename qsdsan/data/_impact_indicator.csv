@@ -1,0 +1,10 @@
+﻿ID,synonym,unit,method,category,description
+Eutrophication,,kg N,TRACI,environmental impact,Potential to cause eutrophication
+GlobalWarming,GWP,kg CO2-eq,TRACI,environmental impact,Potential global warming based on chemical?s radiative forcing and lifetime
+Ecotoxicity,,"kg 2,4-D-eq",TRACI,environmental impact,Potential of a chemical released into an evaluative environment to cause ecological harm
+NonCarcinogenics,,kg toluene-eq,TRACI,human health,Potential of a chemical released into an evaluative environment to cause human noncancer effects
+PhotochemicalOxidation,,kg NOx-eq,TRACI,environmental impact,Potential to cause photochemical smog
+Acidification,,mole H+-eq,TRACI,environmental impact,Potential to cause wet or dry acid deposition
+Carcinogenics,,kg benzene-eq,TRACI,human health,Potential of a chemical released into an evaluative environment to cause human cancer effects
+RespiratoryEffects,,kg PM2.5-eq,TRACI,human health,Exposure to elevated particulate matter less than 2.5 micrometers; average between mobile and point sources
+OzoneDepletion,,kg CFC-11-eq,TRACI,environmental impact,Potential to destroy ozone based on chemical?s reactivity and lifetime

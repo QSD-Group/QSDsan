@@ -1,5 +1,5 @@
-Contributing to Sanitation Explorer
-===================================
+Contributing to QSDsan
+======================
 
 NOT READY YET
 -------------
