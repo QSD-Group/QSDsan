@@ -16,7 +16,9 @@ for license details.
 
 
 import thermosteam as tmo
+from chemicals.elements import molecular_weight, charge_from_formula
 from chemicals.elements import mass_fractions as get_mass_frac
+from ._cod import cod_test_stoichiometry
 
 __all__ = ('Component',)
 
@@ -42,16 +44,17 @@ def component_identity(component, pretty=False):
 
 # Will stored as an array when compiled
 _num_component_properties = ('i_C', 'i_N', 'i_P', 'i_K', 'i_Mg', 'i_Ca',
-                             'i_mass', 'i_charge',
+                             'i_mass', 'i_charge', 'i_COD', 'i_NOD',
                              'f_BOD5_COD', 'f_uBOD_COD', 'f_Vmass_Totmass', )
 
 # Fields that cannot be left as None
-_key_component_properties = (*_num_component_properties,
-                             'particle_size', 'degradability', 'organic')
+_key_component_properties = ('particle_size', 'degradability', 'organic',
+                             *_num_component_properties)
 
 # All Component-related properties
-_component_properties = (*_key_component_properties,
-                         'measured_as', 'description', )
+_component_properties = ('measured_as', 'description', 
+                         *_key_component_properties)
+                         
 _component_slots = (*tmo.Chemical.__slots__,
                     *tuple('_'+i for i in _component_properties))
 
@@ -66,7 +69,9 @@ component_units_of_measure = {
     'i_Mg': AbsoluteUnitsOfMeasure('g'), 
     'i_Ca': AbsoluteUnitsOfMeasure('g'), 
     'i_mass': AbsoluteUnitsOfMeasure('g'), 
-    'i_charge': AbsoluteUnitsOfMeasure('mol')
+    'i_charge': AbsoluteUnitsOfMeasure('mol'),
+    'i_COD': AbsoluteUnitsOfMeasure('g'),
+    'i_NOD': AbsoluteUnitsOfMeasure('g'),
     }
 
 
@@ -78,7 +83,6 @@ allowed_values = {
     'particle_size': ('Dissolved gas', 'Soluble', 'Colloidal', 'Particulate'),
     'degradability': ('Readily', 'Slowly', 'Undegradable'),
     'organic': (True, False),
-    'measured_as': (None, 'COD', 'C', 'N', 'P'),
     }
 
 def check_return_property(name, value):
@@ -86,7 +90,7 @@ def check_return_property(name, value):
         if not value: return None
         try: return float(value)
         except: raise TypeError(f'{name} must be a number, not a {type(value).__name__}.')        
-        if value>1 or value<0:
+        if name.startswith('f_') and (value>1 or value<0):
             raise ValueError(f'{name} must be within [0,1].')
     elif name in allowed_values.keys():
         assert value in allowed_values[name], \
@@ -111,8 +115,8 @@ class Component(tmo.Chemical):
 
     def __new__(cls, ID='', search_ID=None, formula=None, phase=None, measured_as=None, 
                 i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
-                i_mass=None, i_charge=None, f_BOD5_COD=None, f_uBOD_COD=None,
-                f_Vmass_Totmass=None,
+                i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
+                f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
                 description=None, particle_size=None,
                 degradability=None, organic=None, **chemical_properties):
         
@@ -127,54 +131,44 @@ class Component(tmo.Chemical):
             self._formula = None
             self.formula = formula
         if phase: tmo._chemical.lock_phase(self, phase)
-        self.measured_as = measured_as
+
+        self._measured_as = measured_as
+        self.i_mass = i_mass
         self.i_C = i_C
         self.i_N = i_N
         self.i_P = i_P
         self.i_K = i_K
         self.i_Mg = i_Mg
         self.i_Ca = i_Ca
-        self.i_mass = i_mass
         self.i_charge = i_charge        
         self.f_BOD5_COD = f_BOD5_COD
         self.f_uBOD_COD = f_uBOD_COD
         self.f_Vmass_Totmass = f_Vmass_Totmass
-        
-        # #!!! Need to check if this works
-        # if measured_as:
-        #     if measured_as == 'COD': self._MW = tmo.Chemical('O').MW
-        #     elif measured_as == 'C': self._MW = tmo.Chemical('C').MW
-        #     elif measured_as == 'N': self._MW = tmo.Chemical('N').MW
-        #     elif measured_as == 'P': self._MW = tmo.Chemical('P').MW
-
         self._particle_size = particle_size
         self._degradability = degradability
         self._organic = organic
         self.description = description
         if not self.MW and not self.formula: self.MW = 1.
+        self.i_COD = i_COD
+        self.i_NOD = i_NOD
         return self
 
-    #!!! use i_mass
-    def _atom_frac_setter(self, cmp, atom=None, frac=None):
-        if cmp.formula:
+    def _atom_frac_setter(self, atom=None, frac=None):
+        if self.formula:
             if frac:
                 raise AttributeError('This component has formula, '
                                      f'i_{atom} is calculated based on formula, '
                                      'cannot be set.')
             else:
-                if atom in cmp.atoms.keys():
-                    if self.measured_as:
-                        if atom == self.measured_as:
-                            return 1.0
-                        elif atom =='O' and self.measured_as == 'COD':
-                            return 1.0
-                        else:
-                            return 0.
-                    return get_mass_frac(cmp.atoms)[atom]
+                if atom in self.atoms.keys():
+                    try: return get_mass_frac(self.atoms)[atom] * self.i_mass
+                    except: return None
                 return 0. # does not have this atom
         else:
             return check_return_property(f'i_{atom}', frac)
 
+
+    #!!! i_{} does not have to be within [0,1].
     @property
     def i_C(self):
         '''
@@ -182,15 +176,14 @@ class Component(tmo.Chemical):
 
         Note
         ----
-        [1] Must be within [0,1], if the component is measured as C, then i_C is 1.
+        [1] If the ``Component`` is measured as C, then i_C is 1.
         
-        [2] Will be calculated based on formula if given.
+        [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_C or 0.
     @i_C.setter
     def i_C(self, i):
-        self._i_C = self._atom_frac_setter(self, 'C', i)
-
+        self._i_C = self._atom_frac_setter('C', i)
 
     @property
     def i_N(self):
@@ -199,14 +192,14 @@ class Component(tmo.Chemical):
 
         Note
         ----
-        [1] Must be within [0,1], if the Component is measured as N, then i_N is 1.
+        [1] If the ``Component`` is measured as N, then i_N is 1.
         
-        [2] Will be calculated based on formula if given.
+        [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_N or 0.
     @i_N.setter
     def i_N(self, i):
-        self._i_N = self._atom_frac_setter(self, 'N', i)
+        self._i_N = self._atom_frac_setter('N', i)
 
     @property
     def i_P(self):
@@ -215,14 +208,14 @@ class Component(tmo.Chemical):
 
         Note
         ----
-        [1] Must be within [0,1], if the component is measured as P, then i_P is 1.
+        [1] If the ``Component`` is measured as P, then i_P is 1.
         
-        [2] Will be calculated based on formula if given.
+        [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_P or 0.
     @i_P.setter
     def i_P(self, i):
-        self._i_P = self._atom_frac_setter(self, 'P', i)
+        self._i_P = self._atom_frac_setter('P', i)
 
     @property
     def i_K(self):
@@ -231,14 +224,14 @@ class Component(tmo.Chemical):
 
         Note
         ----
-        [1] Must be within [0,1], if the component is measured as K, then i_K is 1.
+        [1] If the ``Component`` is measured as K, then i_K is 1.
         
-        [2] Will be calculated based on formula if given.
+        [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_K or 0.
     @i_K.setter
     def i_K(self, i):
-        self._i_K = self._atom_frac_setter(self, 'K', i)
+        self._i_K = self._atom_frac_setter('K', i)
 
     @property
     def i_Mg(self):
@@ -247,14 +240,14 @@ class Component(tmo.Chemical):
 
         Note
         ----
-        [1] Must be within [0,1], if the component is measured as Mg, then i_Mg is 1.
+        [1] If the ``Component`` is measured as Mg, then i_Mg is 1.
         
-        [2] Will be calculated based on formula if given.
+        [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_Mg or 0.
     @i_Mg.setter
     def i_Mg(self, i):
-        self._i_Mg = self._atom_frac_setter(self, 'Mg', i)
+        self._i_Mg = self._atom_frac_setter('Mg', i)
         
     @property
     def i_Ca(self):
@@ -263,38 +256,44 @@ class Component(tmo.Chemical):
 
         Note
         ----
-        [1] Must be within [0,1], if the component is measured as Ca, then i_Ca is 1.
+        [1] If the ``Component`` is measured as Ca, then i_Ca is 1.
         
-        [2] Will be calculated based on formula if given.
+        [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_Ca or 0.
     @i_Ca.setter
     def i_Ca(self, i):
-        self._i_Ca = self._atom_frac_setter(self, 'Ca', i)
+        self._i_Ca = self._atom_frac_setter('Ca', i)
 
     @property
     def i_mass(self):
-        '''
-        [float] Mass content of the component, [g component/g measure unit].
-        
-        Note
-        ----
-        If the component is measured as a certain element, then i_mass,
-        is calculated as MW_component/MW_element.
-        '''
-        if self.measured_as:
-            if self.measured_as != 'COD':
-                return 1/get_mass_frac(self.atoms)[self.measured_as]
+        '''[float] Mass content of the Component, [g Component/g measure unit].'''
         return self._i_mass or 1.
     @i_mass.setter
     def i_mass(self, i):
-        if i and self.measured_as and self.formula:
-            if self.measured_as != 'COD':
-                raise AttributeError(f'This component is measured as {self.measured_as} '
-                                     f'and has formula, i_mass is calculated, '
-                                     'cannot be set.')
+        if self.atoms:
+            if i: raise AttributeError(f'Component {self.ID} has formula, i_mass '
+                                       f'is calculated, cannot be set.')
+            else:
+                if self.measured_as in self.atoms:
+                    i = 1/get_mass_frac(self.atoms)[self.measured_as]
+                elif self.measured_as == 'COD':                 
+                    chem_MW = molecular_weight(self.atoms)
+                    chem_charge = charge_from_formula(self.formula)
+                    Cr2O7 = - cod_test_stoichiometry(self.atoms, chem_charge)['Cr2O7-2']
+                    cod = Cr2O7 * 1.5 * molecular_weight({'O':2})
+                    i = chem_MW/cod
+                elif self.measured_as:
+                    raise AttributeError(f'Must specify i_mass for Component {self.ID} '
+                                         f'measured as {self.measured_as}.')
+        if self.measured_as == None:
+            if i and i != 1: 
+                raise AttributeError(f'Component {self.ID} is measured as itself, '
+                                     f'i_mass cannot be set to values other than 1.')
+            i = 1
         self._i_mass = check_return_property('i_mass', i)
-        
+    
+    #!!! need to enable calculation from formula and water chemistry equilibria
     @property
     def i_charge(self):
         '''
@@ -308,6 +307,13 @@ class Component(tmo.Chemical):
     @i_charge.setter
     def i_charge(self, i):
         self._i_charge = check_return_property('i_charge', i)
+        if not self._i_charge:
+            if self.formula:
+                charge = charge_from_formula(self.formula)
+                chem_MW = molecular_weight(self.atoms)
+                i = charge/chem_MW * self.i_mass
+                self._i_charge = check_return_property('i_charge', i)
+            else: self._i_charge = 0.
 
     @property
     def f_BOD5_COD(self):
@@ -373,13 +379,53 @@ class Component(tmo.Chemical):
 
         Note
         ----
-        Can be left as blank or chosen from 'COD', 'C', 'N', or 'P'.
+        Can be left as blank or chosen from 'COD', or a constituent 
+        element of the Component.
         '''
         return self._measured_as
     @measured_as.setter
     def measured_as(self, measured_as):
+        '''
+        When measured_as is set to a different value, all i_{} values will 
+        be automatically updated.
+        '''
+        if measured_as:
+            if measured_as == 'COD': 
+                self._MW = molecular_weight({'O':2})
+            elif measured_as in self.atoms:
+                self._MW = molecular_weight({measured_as:1})
+            else:
+                raise AttributeError(f"Component {self.ID} must be measured as "
+                                     f"either COD or one of its constituent atoms, "
+                                     f"if not as itself.")        
+        
+        if self._measured_as != measured_as:
+            self._convert_i_attr(measured_as)
+            
         self._measured_as = measured_as
         
+    def _convert_i_attr(self, new):
+        if new == None:
+            denom = self._i_mass
+        elif new == 'COD':
+            denom = self._i_COD
+        elif new in self.atoms:
+            try: denom = getattr(self, '_i_'+new)
+            except AttributeError:
+                denom = get_mass_frac(self.atoms)[new] * self._i_mass
+        else:
+            raise AttributeError(f"Component {self.ID} must be measured as "
+                                 f"either COD or one of its constituent atoms, "
+                                 f"if not as itself.")
+        
+        if denom == 0:
+            raise ValueError(f'{self.ID} cannot be measured as {new}')
+        
+        for field in _num_component_properties:
+            if field.startswith('i_'):
+                new_i = getattr(self, '_'+field)/denom
+                setattr(self, '_'+field, new_i)            
+    
     @property
     def particle_size(self):
         '''
@@ -415,6 +461,44 @@ class Component(tmo.Chemical):
     @organic.setter
     def organic(self, organic):
         self._organic = bool(check_return_property('organic', organic))
+
+
+    @property
+    def i_COD(self):
+        '''[float] COD content, calculated based on measured_as, organic and formula.'''
+        return self._i_COD or 0.
+    @i_COD.setter
+    def i_COD(self, i):
+        if i: self._i_COD = check_return_property('i_COD', i)
+        else:             
+            if self.organic: 
+                if self.measured_as == 'COD': self._i_COD = 1.
+                elif not self.atoms:
+                    raise AttributeError(f"Must specify i_COD for organic component {self.ID}, "
+                                         f"which is not measured as COD and has no formula.")
+                else:
+                    chem_MW = molecular_weight(self.atoms) 
+                    chem_charge = charge_from_formula(self.formula)
+                    Cr2O7 = - cod_test_stoichiometry(self.atoms, chem_charge)['Cr2O7-2']
+                    cod = Cr2O7 * 1.5 * molecular_weight({'O':2})
+                    self._i_COD = check_return_property('i_COD', cod/chem_MW * self.i_mass)
+            else: self._i_COD = 0. 
+
+    @property
+    def i_NOD(self):
+        '''[float] Nitrogenous oxygen demand, calculated based on measured_as, organic and formula.'''
+        return self._i_NOD or 0.        
+    @i_NOD.setter
+    def i_NOD(self, i):
+        if not i:
+            if self.degradability in ('Readily', 'Slowly') or self.formula in ('H3N', 'NH4', 'NH3', 'NH4+'):
+                i = self.i_N * molecular_weight({'O':4}) / molecular_weight({'N':1})
+            elif self.formula in ('NO2-', 'HNO2'):
+                i = self.i_N * molecular_weight({'O':1}) / molecular_weight({'N':1})
+            else:
+                i = 0.
+        self._i_NOD = check_return_property('i_NOD', i)
+            
 
     def show(self, chemical_info=False):
         '''
@@ -495,30 +579,30 @@ class Component(tmo.Chemical):
     __copy__ = copy
 
     @classmethod
-    def from_chemical(cls, ID, chemical, phase='l', measured_as=None, 
+    def from_chemical(cls, ID, chemical, phase=None, measured_as=None, 
                       i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
-                      i_mass=None, i_charge=None, f_BOD5_COD=None, f_uBOD_COD=None,
-                      f_Vmass_Totmass=None, description=None, 
-                      particle_size=None, degradability=None, organic=None, 
-                      **data):
+                      i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
+                      f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None, 
+                      description=None, particle_size=None, degradability=None, 
+                      organic=None, **data):
         '''Return a new ``Component`` from a ``Chemical`` object.'''
         new = cls.__new__(cls, ID=ID, phase=phase)
         for field in chemical.__slots__:
             value = getattr(chemical, field)
             setattr(new, field, copy_maybe(value))
         new._ID = ID
-        new._locked_state = phase
+        if phase: new._locked_state = phase
         new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus, new.Tm,
                            new.Tb, new.eos, new.eos_1atm, new.phase_ref)
         new._label_handles()
-        new.measured_as = measured_as        
+        new._measured_as = measured_as        
+        new.i_mass = i_mass
         new.i_C = i_C
         new.i_N = i_N
         new.i_P = i_P
         new.i_K = i_K
         new.i_Mg = i_Mg
         new.i_Ca = i_Ca
-        new.i_mass = i_mass
         new.i_charge = i_charge
         new.f_BOD5_COD = f_BOD5_COD
         new.f_uBOD_COD = f_uBOD_COD
@@ -527,6 +611,8 @@ class Component(tmo.Chemical):
         new.particle_size = particle_size
         new.degradability = degradability
         new.organic = organic
+        new.i_COD = i_COD
+        new.i_NOD = i_NOD
         for i,j in data.items():
             if i == 'formula':
                 new._formula = j
