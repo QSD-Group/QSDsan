@@ -17,13 +17,6 @@ from warnings import warn
 from biosteam.utils.piping import MissingStream, StreamSequence
 from .. import WasteStream as WS
 
-# from biosteam.utils import piping
-# MissingStream = piping.MissingStream
-# StreamSequence = piping.StreamSequence
-# __sub__ = piping.__sub__
-# __rsub__ = piping.__rsub__
-# pipe_info = piping.pipe_info
-
 __all__ = ('MissingWS', 'WSIns', 'WSOuts')
 
 
@@ -40,15 +33,15 @@ def as_ws(ws):
 
 class MissingWS(MissingStream):
     '''
-    A subclass of MissingStream in biosteam, Create a MissingWS (MissingWasteStream)
-    object that acts as a dummy in Ins and Outs objects until replaced by an
-    actual WasteStream object
+    A subclass of ``MissingStream`` in ``biosteam``, Create a ``MissingWS`` (MissingWasteStream)
+    object that acts as a dummy in ``Ins`` and ``Outs`` objects until replaced by an
+    actual ``WasteStream`` object
     '''
 
     def materialize_connection(self, ID=''):
         '''
-        Disconnect this MissingWS from any unit operations and replace
-        it with an actual WasteStream
+        Disconnect this ``MissingWS`` from any unit operations and replace
+        it with an actual ``WasteStream``.
         '''
         source = self._source
         sink = self._sink
@@ -102,7 +95,7 @@ def n_missing(ub, N):
     return ub - N
 
 class WSSequence(StreamSequence):
-    '''Abstract class for a sequence of waste streams, subclass of StreamSequence in biosteam'''
+    '''Abstract class for a sequence of waste streams, subclass of ``StreamSequence`` in ``biosteam``.'''
     
     def __init__(self, size, ws, thermo, fixed_size, stacklevel):
         self._size = size
@@ -194,7 +187,7 @@ class WSSequence(StreamSequence):
 
 
 class WSIns(WSSequence):
-    '''Create an Ins object which serves as input streams for a Unit object'''
+    '''Create an ``Ins`` object which serves as input streams for a ``Unit`` object.'''
     __slots__ = ('_sink', '_fixed_size')
     
     def __init__(self, sink, size, ws, thermo, fixed_size, stacklevel):
@@ -232,7 +225,7 @@ class WSIns(WSSequence):
 
 
 class WSOuts(WSSequence):
-    '''Create an Outs object which serves as output streams for a Unit object'''
+    '''Create an ``Outs`` object which serves as output streams for a ``Unit`` object.'''
     __slots__ = ('_source',)
     
     def __init__(self, source, size, ws, thermo, fixed_size, stacklevel):
@@ -268,20 +261,6 @@ class WSOuts(WSSequence):
     
     def _undock(self, ws): 
         ws._source = None
-
-
-
-# WS.__pow__ = WS.__sub__ = __sub__  # Forward pipping
-# WS.__rpow__ = WS.__rsub__ = __rsub__ # Backward pipping    
-# WS.sink = property(lambda self: self._sink)
-# WS.source = property(lambda self: self._source)
-# WS._basic_info = lambda self: (f"{type(self).__name__}: {self.ID or ''}"
-#                                   f"{pipe_info(self._source, self._sink)}\n")
-
-
-
-
-
 
 
 

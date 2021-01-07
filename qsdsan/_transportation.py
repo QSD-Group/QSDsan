@@ -150,8 +150,8 @@ class Transportation:
 
         Note
         ----
-            Set this to 1 and let the load_unit match the functional unit of the item
-            if load does not affect price and impacts.
+        Set this to 1 and let the load_unit match the functional unit of the item
+        if load does not affect price and impacts.
 
         '''
         return self._load
@@ -166,8 +166,8 @@ class Transportation:
 
         Note
         ----
-            Set this to 1 and let the distance_unit match the functional unit of the item
-            if distance does not affect price and impacts.
+        Set this to 1 and let the distance_unit match the functional unit of the item
+        if distance does not affect price and impacts.
 
         '''
         return self._distance

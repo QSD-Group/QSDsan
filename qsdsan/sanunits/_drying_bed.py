@@ -45,6 +45,13 @@ class DryingBed(SanUnit, Decay):
         Can be 'unplanted' or 'planted'. The default 'unplanted' process has
         a number of 'covered', 'uncovered', and 'storage' beds. The 'storage'
         bed is similar to the 'covered' bed, but with higher wall height.
+        
+    References
+    ----------
+    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+        https://doi.org/10.1021/acs.est.0c03296.
     
     '''
     

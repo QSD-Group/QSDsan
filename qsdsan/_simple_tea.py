@@ -34,7 +34,7 @@ class SimpleTEA(TEA):
     start_year : int
         Start year of the plant.
     lifetime : int
-        Total lifetime of the plant, [yr]. Currently biosteam only supports int.
+        Total lifetime of the plant, [yr]. Currently ``biosteam`` only supports int.
     uptime_ratio : float
         Fraction of time that the plant is operating.
     CAPEX : float
@@ -167,7 +167,7 @@ class SimpleTEA(TEA):
     
     @property
     def lifetime(self):
-        '''[int] Total lifetime of the plant, [yr]. Currently biosteam only supports int.'''
+        '''[int] Total lifetime of the plant, [yr]. Currently ``biosteam`` only supports int.'''
         return self._lifetime
     @lifetime.setter
     def lifetime(self, i):

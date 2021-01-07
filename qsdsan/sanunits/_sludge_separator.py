@@ -70,7 +70,6 @@ class SludgeSeparator(SanUnit):
     _outs_size_is_fixed = False
     
     def _adjust_solid_water(self, influent, liq, sol):
-        # breakpoint()
         sol.imass['H2O'] = 0
         sol.imass['H2O'] = influent.F_mass * self.settled_frac - sol.F_mass
         if sol.imass['H2O'] < 0:
@@ -125,9 +124,9 @@ class SludgeSeparator(SanUnit):
         
         Note
         ----
-            Set state variable values (e.g., COD) will be retained if the retention
-            ratio is a single number (treated like the loss stream is split
-            from the original stream), but not when the ratio is a dict.
+        Set state variable values (e.g., COD) will be retained if the retention
+        ratio is a single number (treated like the loss stream is split
+        from the original stream), but not when the ratio is a dict.
 
         '''
         return self._split

@@ -22,7 +22,10 @@ __all__ = ('ComponentSplitter',)
 
 
 class ComponentSplitter(SanUnit):
-    '''Split the influent into individual Components, the last effluent contains all remaining Components.'''
+    '''
+    Split the influent into individual ``Component`` objects,
+    the last effluent contains all remaining ``Component`` objects.
+    '''
     
     def __init__(self, ID='', ins=None, outs=(), split_keys=()):
         

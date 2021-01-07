@@ -26,8 +26,8 @@ class Descriptor(object):
     Descriptors can be used to make resusable property logics,
     a great reference can be found online. [1]_
     
-    Notes
-    -----
+    Note
+    ----
     Using Descriptors to check value properties is slightly slower than using
     the decorators functions in qsdsan.utils.checkers.
     

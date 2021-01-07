@@ -112,6 +112,7 @@ class LCA:
             self._lifetime = converted
     
     def add_other_item(self, item, f_quantity, unit='', return_dict=None):
+        '''Add other ``ImpactItem`` in LCA.'''
         if isinstance(item, str):
             item = items[item]
         fu = item.functional_unit
@@ -140,6 +141,7 @@ class LCA:
         return f'<LCA: {self.system}>'
 
     def show(self, lifetime_unit='yr'):
+        '''Show basic information of this ``LCA`` object.'''
         lifetime = auom('yr').convert(self.lifetime, lifetime_unit)
         info = f'LCA: {self.system} (lifetime {f_num(lifetime)} {lifetime_unit})'
         info += '\nImpacts:'
@@ -163,6 +165,10 @@ class LCA:
     
     
     def get_construction_impacts(self, units, time=None, time_unit='hr'):
+        '''
+        Return all construction-related impacts for the given unit,
+        normalized to a certain time frame.
+        '''
         try: iter(units)
         except: units = (units,)
         if not time:
@@ -183,6 +189,10 @@ class LCA:
         return impacts
     
     def get_transportation_impacts(self, units, time=None, time_unit='hr'):
+        '''
+        Return all transportation-related impacts for the given unit,
+        normalized to a certain time frame.
+        '''
         try: iter(units)
         except: units = (units,)
         if not time:
@@ -200,6 +210,10 @@ class LCA:
     
     def get_stream_impacts(self, stream_items=None, exclude=None,
                            kind='all', time=None, time_unit='hr'):
+        '''
+        Return all stream-related impacts for the given unit,
+        normalized to a certain time frame.
+        '''
         try: iter(stream_items)
         except: stream_items = (stream_items,)
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
@@ -232,6 +246,10 @@ class LCA:
         return impacts
     
     def get_other_impacts(self, **item_quantities):
+        '''
+        Return all additional impacts from "other" ``ImpactItems`` objects,
+        based on defined quantity.
+        '''
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         for j, k in item_quantities.items():
             if isinstance(j, str):
@@ -241,6 +259,7 @@ class LCA:
         return impacts
     
     def get_total_impacts(self, exclude=None, time=None, time_unit='hr'):
+        '''Return total impacts, normalized to a certain time frame.'''
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         ws_impacts = self.get_stream_impacts(stream_items=self.stream_inventory,
                                                    exclude=exclude, time=time, time_unit=time_unit)
@@ -253,7 +272,7 @@ class LCA:
         return impacts
         
     def get_normalized_impacts(self, stream):
-        '''[dict] Normalize all impacts based on the mass flow of a stream.'''
+        '''Normalize all impacts based on the mass flow of a stream.'''
         assert stream in self.system.streams, \
                f'WasteStream {stream} not in the System {self.system}.'
         impacts = self.get_total_impacts(exclude=stream)
@@ -262,7 +281,8 @@ class LCA:
         return impacts
     
     def get_units_impacts(self, units, time=None, time_unit='hr',
-                             exclude=None, **item_quantities):
+                          exclude=None, **item_quantities):
+        '''Return total impacts with certain units, normalized to a certain time frame. '''
         try: iter(units)
         except: units = (units,)
         constr = self.get_construction_impacts(units, time, time_unit)
@@ -296,6 +316,10 @@ class LCA:
         return cat_table
     
     def get_impact_table(self, category=None, time=None, time_unit='hr'):
+        '''
+        Return a ``pandas.DataFrame`` table for the given impact category,
+        normalized to a certain time frame.
+        '''
         if not time:
             time = self.lifetime_hr
         else:
@@ -390,10 +414,12 @@ class LCA:
                 "category can only be 'Construction', 'Transportation', 'Stream', or 'Other', " \
                 f'not {category}.')
 
-    def save_report(self, file='lca_report.xlsx', sheet_name='LCA',
+    def save_report(self, file=None, sheet_name='LCA',
                     time=None, time_unit='hr',
                     n_row=0, row_space=2):
-        
+        '''Save all LCA tables as an Excel file.'''
+        if not file:
+            file = f'{self.system.ID}_lca.xlsx'
         tables = [self.get_impact_table(cat, time, time_unit)
                   for cat in ('Construction', 'Transportation',
                               'Stream', 'Other')]

@@ -99,11 +99,11 @@ def check_return_property(name, value):
 
 class Component(tmo.Chemical):
     '''
-    A subclass of the Chemical object in the thermosteam package with additional attributes and methods for waste treatment.
+    A subclass of the ``Chemical`` object in the thermosteam [1]_ package with additional attributes and methods for waste treatment.
     
     Reference documents
     -------------------
-    `thermosteam.Chemical <https://thermosteam.readthedocs.io/en/latest/Chemical.html>`_
+    .. [1] `thermosteam.Chemical <https://thermosteam.readthedocs.io/en/latest/Chemical.html>`_
     
     '''         
 
@@ -158,7 +158,7 @@ class Component(tmo.Chemical):
     def _atom_frac_setter(self, cmp, atom=None, frac=None):
         if cmp.formula:
             if frac:
-                raise AttributeError('This Component has formula, '
+                raise AttributeError('This component has formula, '
                                      f'i_{atom} is calculated based on formula, '
                                      'cannot be set.')
             else:
@@ -178,11 +178,12 @@ class Component(tmo.Chemical):
     @property
     def i_C(self):
         '''
-        [float] Carbon content of the Component, [g C/g measure unit].
+        [float] Carbon content of the component, [g C/g measure unit].
 
-        Notes
-        -----
-        [1] Must be within [0,1].
+        Note
+        ----
+        [1] Must be within [0,1], if the component is measured as C, then i_C is 1.
+        
         [2] Will be calculated based on formula if given.
         '''
         return self._i_C or 0.
@@ -194,13 +195,13 @@ class Component(tmo.Chemical):
     @property
     def i_N(self):
         '''
-        [float] Nitrogen content of the Component, [g N/g measure unit].
+        [float] Nitrogen content of the component, [g N/g measure unit].
 
-        Notes
-        -----
-        [1] Must be within [0,1].
-        [2] If the Component is measured as N, then i_N is 1.
-        [3] Will be calculated based on formula if given.
+        Note
+        ----
+        [1] Must be within [0,1], if the Component is measured as N, then i_N is 1.
+        
+        [2] Will be calculated based on formula if given.
         '''
         return self._i_N or 0.
     @i_N.setter
@@ -210,13 +211,13 @@ class Component(tmo.Chemical):
     @property
     def i_P(self):
         '''
-        [float] Phosphorus content of the Component, [g P/g measure unit].
+        [float] Phosphorus content of the component, [g P/g measure unit].
 
-        Notes
-        -----
-        [1] Must be within [0,1].
-        [2] If the Component is measured as P, then i_P is 1.
-        [3] Will be calculated based on formula if given.
+        Note
+        ----
+        [1] Must be within [0,1], if the component is measured as P, then i_P is 1.
+        
+        [2] Will be calculated based on formula if given.
         '''
         return self._i_P or 0.
     @i_P.setter
@@ -226,11 +227,12 @@ class Component(tmo.Chemical):
     @property
     def i_K(self):
         '''
-        [float] Potassium content of the Component, [g K/g measure unit].
+        [float] Potassium content of the component, [g K/g measure unit].
 
-        Notes
-        -----
-        [1] Must be within [0,1].
+        Note
+        ----
+        [1] Must be within [0,1], if the component is measured as K, then i_K is 1.
+        
         [2] Will be calculated based on formula if given.
         '''
         return self._i_K or 0.
@@ -241,11 +243,12 @@ class Component(tmo.Chemical):
     @property
     def i_Mg(self):
         '''
-        [float] Magnesium content of the Component, [g Mg/g measure unit].
+        [float] Magnesium content of the component, [g Mg/g measure unit].
 
-        Notes
-        -----
-        [1] Must be within [0,1].
+        Note
+        ----
+        [1] Must be within [0,1], if the component is measured as Mg, then i_Mg is 1.
+        
         [2] Will be calculated based on formula if given.
         '''
         return self._i_Mg or 0.
@@ -256,11 +259,12 @@ class Component(tmo.Chemical):
     @property
     def i_Ca(self):
         '''
-        [float] Calcium content of the Component, [g Ca/g measure unit].
+        [float] Calcium content of the component, [g Ca/g measure unit].
 
-        Notes
-        -----
-        [1] Must be within [0,1].
+        Note
+        ----
+        [1] Must be within [0,1], if the component is measured as Ca, then i_Ca is 1.
+        
         [2] Will be calculated based on formula if given.
         '''
         return self._i_Ca or 0.
@@ -270,7 +274,14 @@ class Component(tmo.Chemical):
 
     @property
     def i_mass(self):
-        '''[float] Mass content of the Component, [g Component/g measure unit].'''
+        '''
+        [float] Mass content of the component, [g component/g measure unit].
+        
+        Note
+        ----
+        If the component is measured as a certain element, then i_mass,
+        is calculated as MW_component/MW_element.
+        '''
         if self.measured_as:
             if self.measured_as != 'COD':
                 return 1/get_mass_frac(self.atoms)[self.measured_as]
@@ -279,7 +290,7 @@ class Component(tmo.Chemical):
     def i_mass(self, i):
         if i and self.measured_as and self.formula:
             if self.measured_as != 'COD':
-                raise AttributeError(f'This Component is measured as {self.measured_as} '
+                raise AttributeError(f'This component is measured as {self.measured_as} '
                                      f'and has formula, i_mass is calculated, '
                                      'cannot be set.')
         self._i_mass = check_return_property('i_mass', i)
@@ -287,10 +298,10 @@ class Component(tmo.Chemical):
     @property
     def i_charge(self):
         '''
-        [float] Charge content of the Component, [mol +/g measure unit].
+        [float] Charge content of the component, [mol +/g measure unit].
 
-        Notes
-        -----
+        Note
+        ----
         Positive values indicate cations and negative values indicate anions.
         '''
         return self._i_charge or 0.
@@ -301,11 +312,12 @@ class Component(tmo.Chemical):
     @property
     def f_BOD5_COD(self):
         '''
-        BOD5 fraction in COD of the Component, unitless.
+        BOD5 fraction in COD of the component, unitless.
 
-        Notes
-        -----
+        Note
+        ----
         [1] Must be within [0,1].
+        
         [2] Must be less than or equal to f_uBOD_COD.
         '''
         return self._f_BOD5_COD or 0.
@@ -316,11 +328,12 @@ class Component(tmo.Chemical):
     @property
     def f_uBOD_COD(self):
         '''
-        [float] Ultimate BOD fraction in COD of the Component, unitless.
+        [float] Ultimate BOD fraction in COD of the component, unitless.
 
-        Notes
-        -----
+        Note
+        ----
         [1] Must be within [0,1].
+        
         [2] Must be greater than or equal to f_BOD5_COD.
         '''
         return self._f_uBOD_COD or 0.
@@ -336,8 +349,8 @@ class Component(tmo.Chemical):
         '''
         [float] Volatile fraction of the mass of the Component, unitless.
 
-        Notes
-        -----
+        Note
+        ----
         Must be within [0,1].
         '''
         return self._f_Vmass_Totmass or 0.
@@ -358,8 +371,8 @@ class Component(tmo.Chemical):
         '''
         [str] The unit as which the Component is measured.
 
-        Notes
-        -----
+        Note
+        ----
         Can be left as blank or chosen from 'COD', 'C', 'N', or 'P'.
         '''
         return self._measured_as
@@ -372,8 +385,8 @@ class Component(tmo.Chemical):
         '''
         [str] Size of the Component based on the type.
 
-        Notes
-        -----
+        Note
+        ----
         Must be chosen from 'Dissolved gas', 'Soluble', 'Colloidal', or 'Particulate'.
         '''
         return self._particle_size
@@ -386,8 +399,8 @@ class Component(tmo.Chemical):
         '''
         [str] Degradability of the Component.
 
-        Notes
-        -----
+        Note
+        ----
         Must be chosen from 'Readily', 'Slowly', or 'Undegradable'.
         '''
         return self._degradability
@@ -450,6 +463,7 @@ class Component(tmo.Chemical):
     _ipython_display_ = show
 
     def get_missing_properties(self, properties=None):
+        '''Return a list of all missing thermodynamic properties.'''
         missing = []
         for i in (properties or _checked_properties):
             if getattr(self, i) == 0:
@@ -461,6 +475,10 @@ class Component(tmo.Chemical):
         return missing
 
     def copy(self, ID, **data):
+        '''
+        Return a new ``Component`` object with the same settings with
+        alternative data set by kwargs.
+        '''
         new = self.__class__.__new__(cls=self.__class__, ID=ID)
 
         for field in self.__slots__:
@@ -483,7 +501,7 @@ class Component(tmo.Chemical):
                       f_Vmass_Totmass=None, description=None, 
                       particle_size=None, degradability=None, organic=None, 
                       **data):
-        '''Return a new Component from Chemical'''
+        '''Return a new ``Component`` from a ``Chemical`` object.'''
         new = cls.__new__(cls, ID=ID, phase=phase)
         for field in chemical.__slots__:
             value = getattr(chemical, field)

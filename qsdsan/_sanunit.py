@@ -133,7 +133,7 @@ class SanUnit(bst.Unit, isabstract=True):
 
 
     def _summary(self):
-        '''After system converges, design the unit and calculate cost and environmental impacts'''
+        '''After system converges, design the unit and calculate cost and environmental impacts.'''
         self._design()
         self._cost()
         self._impact()
@@ -155,6 +155,7 @@ class SanUnit(bst.Unit, isabstract=True):
     
     @property
     def components(self):
+        '''[Components] The ``Components`` object associated with this unit.'''
         return self.chemicals
     
     @property

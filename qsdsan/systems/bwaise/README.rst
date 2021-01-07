@@ -11,15 +11,15 @@ the systems can be found in another `repository
 
 .. figure:: ./figures/sysA.png
 
-    Scenario A (sysA): pit latrine with existing treatment system
+    *Scenario A (sysA): pit latrine with existing treatment system*
 
 .. figure:: ./figures/sysB.png
     
-    Scenario B (sysB): pit latrine with anaerobic treatment
+    *Scenario B (sysB): pit latrine with anaerobic treatment*
 
 .. figure:: ./figures/sysC.png
     
-    Scenario C (sysC): containaer-based toilet with existing treatment system
+    *Scenario C (sysC): containaer-based toilet with existing treatment system*
 
 
 Loading systems
@@ -154,7 +154,7 @@ Results from the original paper [1]_ are saved in the "/results/original_results
     >>> bw.sysA.save_report('sysA.xlsx')
 
 
-Sensitivity and Uncertainty Analyses
+Uncertainty and sensitivity analyses
 ------------------------------------
 These analyses are performed through ``biosteam.Model`` objects, a demonstrative
 model (``modelA``) for ``sysA`` has been added, you can make changes (e.g.,
@@ -175,6 +175,12 @@ for other systems accordingly.
     >>> models.plot_cost_emission(models.modelA)
     >>> # You can change "COD" to any of "N", "P", or "K"
     >>> models.plot_recovery(models.modelA, 'COD')
+
+
+Coming soon
+-----------
+A figure will be added to compare the results (baseline and uncertainty/sensitivity)
+from ``QSDsan`` with those in [1]_ for all three scenarios.
 
 
 References

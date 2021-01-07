@@ -45,11 +45,11 @@ class UndefinedComponent(AttributeError):
 
 class Components(Chemicals):
     '''
-    A subclass of the Chemicals object in the thermosteam package, contains Component objects as attributes.
+    A subclass of the ``Chemicals`` object in the thermosteam [1]_ package, contains ``Component`` objects as attributes.
     
     Reference documents
     -------------------
-    `thermosteam.Chemicals <https://thermosteam.readthedocs.io/en/latest/Chemicals.html>`_
+    .. [1] `thermosteam.Chemicals <https://thermosteam.readthedocs.io/en/latest/Chemicals.html>`_
     
     '''
     
@@ -62,18 +62,18 @@ class Components(Chemicals):
                 setfield(self, component.ID, component)
             else:
                 if isa(component, Chemical):
-                    raise TypeError(f'{component} is a Chemical object, use Component.from_chemical to define a Component object.')
-                raise TypeError(f'Only Component objects can be included, not a {type(component).__name__} object.')
+                    raise TypeError(f'{component} is a ``Chemical`` object, use ``Component.from_chemical`` to define a ``Component`` object.')
+                raise TypeError(f'Only ``Component`` objects can be included, not a ``{type(component).__name__}`` object.')
         return self
     
     def __setattr__(self, ID, component):
-        raise TypeError("Cannot set attribute; use {self.ID}.append instead.")
+        raise TypeError("Cannot set attribute; use ``{self.ID}.append`` instead.")
     
     def __setitem__(self, ID, component):
-        raise TypeError("Cannot set item; use {self.ID}.append instead.")
+        raise TypeError("Cannot set item; use ``{self.ID}.append`` instead.")
     
     def __getitem__(self, key):
-        '''Return a Component object or a list of Component objects.'''
+        '''Return a ``Component`` object or a list of ``Component`` objects.'''
         dct = self.__dict__
         try:
             if isinstance(key, str):
@@ -95,24 +95,24 @@ class Components(Chemicals):
         '''Append a Component'''
         if not isinstance(component, Component):
             if isinstance(component, Chemical):
-                raise TypeError(f'{component} is a Chemical object, use Component.from_chemical to define a Component object.')
+                raise TypeError(f'{component} is a ``Chemical`` object, use ``Component.from_chemical`` to define a ``Component`` object.')
             else:
-                raise TypeError("only Component objects can be appended, "
-                               f"not {type(component).__name__} object.")
+                raise TypeError("only ``Component`` objects can be appended, "
+                               f"not ``{type(component).__name__}`` object.")
         ID = component.ID
         if ID in self.__dict__:
-            raise ValueError(f"{ID} already defined in Components.")
+            raise ValueError(f"{ID} already defined in ``Components``.")
         setattr(self, ID, component)
     
     def extend(self, components):
-        '''Extend with more Component objects.'''
+        '''Extend with more ``Component`` objects.'''
         if isinstance(components, Components):
             self.__dict__.update(components.__dict__)
         else:
             for component in components: self.append(component)
         
     def compile(self):
-        '''Cast as a CompiledComponents object.'''
+        '''Cast as a ``CompiledComponents`` object.'''
         setattr(self, '__class__', CompiledComponents)
         CompiledComponents._compile(self)
         
@@ -123,8 +123,8 @@ class Components(Chemicals):
     @classmethod
     def load_from_file(cls, path='', use_default_data=False, store_data=False):
         '''
-        Create Component objects based on properties defined in a cvs or an Excel file,
-        return a Components object that contains all created Component objects.
+        Create ``Component`` objects based on properties defined in a cvs or an Excel file,
+        return a ``Components`` object that contains all created ``Component`` objects.
     
         Parameters
         ----------
@@ -133,11 +133,11 @@ class Components(Chemicals):
     
         Returns
         -------
-        A Components object that contains all created Component objects.
+        A ``Components`` object that contains all created Component objects.
             
-        Notes
-        -----
-        The Components object needs to be compiled before it is used in simulation
+        Note
+        ----
+        The ``Components`` object needs to be compiled before it is used in simulation
     
         '''
         if use_default_data and cls._default_data is not None:
@@ -186,7 +186,7 @@ class Components(Chemicals):
     @classmethod
     def load_default(cls, use_default_data=True, sotre_data=True, default_compile=True):
         '''
-        Create a Components object containing default Component objects.
+        Create a ``Components`` object containing default ``Component`` objects.
     
         Parameters
         ----------
@@ -199,13 +199,13 @@ class Components(Chemicals):
     
         Returns
         -------
-        A Components or CompiledComponents object with default Component objects.
+        A ``Components`` or ``CompiledComponents`` object with default ``Component`` objects.
     
-        Notes
-        -----
+        Note
+        ----
         [1] Component-specific properties are defined in ./data/component.cvs.
 
-        [2] When default_compile is True, all essential Chemical-specific properties
+        [2] When default_compile is True, all essential chemical-specific properties
         that are missing will be defaulted to those of water.
     
         '''
@@ -266,12 +266,12 @@ def component_data_array(components, attr):
 
 class CompiledComponents(CompiledChemicals):
     '''
-    A subclass of the CompiledChemicals object in the thermosteam package,
-    contains Component objects as attributes.
+    A subclass of the ``CompiledChemicals`` object in the thermosteam [1]_ package,
+    contains ``Component`` objects as attributes.
     
     Reference documents
     -------------------
-    `thermosteam.CompiledChemicals <https://thermosteam.readthedocs.io/en/latest/Chemicals.html>`_
+    .. [1] `thermosteam.CompiledChemicals <https://thermosteam.readthedocs.io/en/latest/Chemicals.html>`_
     
     '''
     
@@ -295,8 +295,8 @@ class CompiledComponents(CompiledChemicals):
     
     def refresh_constants(self):
         '''
-        Refresh constant arrays of Components,
-        including all Chemical and Component-specific properties.
+        Refresh constant arrays of ``Components`` objects,
+        including all chemical and component-specific properties.
         '''
         super().refresh_constants()
         dct = self.__dict__
@@ -314,7 +314,7 @@ class CompiledComponents(CompiledChemicals):
             missing_properties = component.get_missing_properties(_key_component_properties)
             if not missing_properties: continue
             missing = utils.repr_listed_values(missing_properties)
-            raise RuntimeError(f'{component} is missing key Component-related properties ({missing}).')
+            raise RuntimeError(f'{component} is missing key component-related properties ({missing}).')
 
         for i in _num_component_properties:
             dct[i] = component_data_array(components, i)
@@ -327,7 +327,7 @@ class CompiledComponents(CompiledChemicals):
         dct['org'] = np.asarray([int(cmp.organic) for cmp in components])
     
     def subgroup(self, IDs):
-        '''Create a new subgroup of Component objects.'''
+        '''Create a new subgroup of ``Component`` objects.'''
         components = self[IDs]
         new = Components(components)
         new.compile()
@@ -338,12 +338,13 @@ class CompiledComponents(CompiledChemicals):
         return new
     
     def index(self, ID):
-        '''Return index of specified Component.'''
+        '''Return index of specified component.'''
         try: return self._index[ID]
         except KeyError:
             raise UndefinedComponent(ID)
 
     def indices(self, IDs):
+        '''Return indices of multiple components.'''
         try:
             dct = self._index
             return [dct[i] for i in IDs]

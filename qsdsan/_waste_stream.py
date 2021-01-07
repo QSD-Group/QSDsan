@@ -68,12 +68,12 @@ conc_unit = auom('mg/L')
 @utils.registered(ticket_name='ws')
 class WasteStream(Stream):
     '''
-    A subclass of the Stream object in the thermosteam package with additional
+    A subclass of the Stream object in the thermosteam [1]_ package with additional
     attributes and methods for waste treatment.
     
     Reference documents
     -------------------
-    `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
+    .. [1] `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
     
     '''
     
@@ -240,7 +240,7 @@ class WasteStream(Stream):
 
         Returns
         -------
-        [float]
+        value : float
             The estimated value of the composite variable, in [mg/L] or [mmol/L] (for "Charge").
 
         """
@@ -331,7 +331,7 @@ class WasteStream(Stream):
     @impact_item.setter
     def impact_item(self, i):
         raise AttributeError('Cannot set attribute, if want to unlink the '
-                             'StreamImpactItem, set linked_ws of the StreamImpactItem '
+                             '``StreamImpactItem``, set ``linked_ws`` of the ``StreamImpactItem`` '
                              'to None.')
 
     

@@ -11,12 +11,6 @@ This module is developed by:
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
-
-Ref (default item CFs):
-    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
 '''
 
 
@@ -87,6 +81,7 @@ class ImpactItem:
         return f'<ImpactItem: {self.ID}>'
 
     def show(self):
+        '''Show basic information of this ``ImpactItem`` object'''
         info = f'ImpactItem      : {self.ID} [per {self.functional_unit}]'
         info += f'\nPrice           : {f_num(self.price)} {currency}'
         info += '\nImpactIndicators:'
@@ -112,6 +107,7 @@ class ImpactItem:
             self._price = converted
 
     def add_indicator_CF(self, indicator, CF_value, CF_unit=''):
+        '''Add an indicator charactorization factor for this ``ImpactItem`` object.'''
         if isinstance(indicator, str):
             indicator = indicators[indicator]
         try: CF_unit2 = CF_unit.replace(' eq', '-eq')
@@ -126,6 +122,7 @@ class ImpactItem:
         self._CFs[indicator.ID] = CF_value
 
     def copy(self):
+        '''Return a new ``ImpactItem`` object with the same settings.'''        
         new = ImpactItem.__new__(ImpactItem)
         for slot in ImpactItem.__slots__:
             value = getattr(self, slot)
@@ -137,6 +134,17 @@ class ImpactItem:
     #!!! Are the values GWP100 from ref [1]?
     @classmethod
     def load_default_items(cls, path=data_path):
+        '''
+        Load all default indicators as in /data/_impact_item.xlsx from Trimmer et al. [1]_
+        
+        References
+        ----------
+        .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+            Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+            Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+            https://doi.org/10.1021/acs.est.0c03296.
+        
+        '''
         if cls._default_data is not None:
             data_file = cls._default_data
         else: data_file = pd.ExcelFile(data_path)
@@ -162,6 +170,7 @@ class ImpactItem:
     
     @classmethod
     def get_all_items(cls):
+        '''Get a tuple of all impact indicators'''
         return tuple(set(i for i in cls._items.values()))
     
     @property
@@ -239,6 +248,7 @@ class StreamImpactItem(ImpactItem):
 
 
     def show(self):
+        '''Show basic information about this ``StreamImpactItem`` object.'''
         info = f'StreamImpactItem: [per {self.functional_unit}]'        
         info += f'\nLinked to     : {self.linked_stream}'
         info += f'\nPrice           : {f_num(self.price)} {currency}'
@@ -259,6 +269,7 @@ class StreamImpactItem(ImpactItem):
     _ipython_display_ = show
 
     def copy(self, new_stream):
+        '''Return a new ``StreamImpactItem`` object with the same settings, but linked to another stream. '''
         new = StreamImpactItem.__new__(StreamImpactItem)
         for slot in StreamImpactItem.__slots__:
             if slot == '_linked_stream': continue

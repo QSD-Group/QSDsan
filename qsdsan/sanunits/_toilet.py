@@ -201,7 +201,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
 
         Note
         ----
-            Value set by desiccant_V and desiccant_rho.
+        Value set by desiccant_V and desiccant_rho.
 
         '''
         return self.desiccant_V*self.desiccant_rho
@@ -224,7 +224,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
 
         Note
         ----
-            Will be 1 (i.e., 100%) if if_ideal_emptying is True.
+        Will be 1 (i.e., 100%) if if_ideal_emptying is True.
 
         '''
         if self.if_ideal_emptying:

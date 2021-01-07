@@ -47,6 +47,7 @@ class Construction:
         return f'<Construction: {self.item.ID}>'
     
     def show(self):
+        '''Show basic information about this ``Construction`` object.'''
         item = self.item
         impacts = self.impacts
         info = f'Construction : {item.ID}'

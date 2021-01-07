@@ -25,7 +25,7 @@ __all__ = ('ImpactIndicator', )
 
 class ImpactIndicator:
     '''
-    To handle the different impact indicators in life cycle assessment.
+    To handle different impact indicators in life cycle assessment.
     
     Parameters
     ----------
@@ -53,7 +53,7 @@ class ImpactIndicator:
     def __init__(self, ID, synonym='', method='', category='', unit='', description=''):
         
         if ID in ImpactIndicator._indicators.keys():
-            raise ValueError(f'The ID {ID} currently in use by {ImpactIndicator._indicators[ID]}')
+            raise ValueError(f'The ID "{ID}" is currently in use.')
         self._ID = ID
         self._unit = str(unit)
         self._ureg_unit, self._unit_remaining = parse_unit(unit)
@@ -68,6 +68,7 @@ class ImpactIndicator:
         return f'<ImpactIndicator: {self.ID}>'
 
     def show(self):
+        '''Show basic information about this indicator.'''
         if self.unit:
             info = f'ImpactIndicator: {self.ID} as {self.unit}'
         else:
@@ -103,7 +104,7 @@ class ImpactIndicator:
         '''
         dct = ImpactIndicator._indicators
         if synonym in dct.keys() and dct[synonym] is not self:
-            raise ValueError(f"The synonym '{synonym}' already in use by {dct[synonym]}")
+            raise ValueError(f'The synonym "{synonym}" already in use.')
         else:
             dct[synonym] = self
     
@@ -115,6 +116,7 @@ class ImpactIndicator:
 
     @classmethod
     def load_default_indicators(cls):
+        '''Load all default indicators as in /data/_impact_indicator.xlsx.'''
         if cls._default_data is not None:
             data = cls._default_data
         else: data = load_data(path=data_path)
@@ -134,6 +136,7 @@ class ImpactIndicator:
 
     @classmethod
     def get_all_indicators(cls):
+        '''Get all defined indicators.'''
         return tuple(i for i in set([i for i in ImpactIndicator._indicators.values()]))
 
 

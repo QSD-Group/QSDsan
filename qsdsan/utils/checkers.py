@@ -21,8 +21,8 @@ __all__ = ('NonNegativeFloat', 'NonNgeativeInt', 'Fraction')
 Checkers are decorators to check if the given value satisfy a set of constrains,
 a great reference can be found online. [1]_
 
-Notes
------
+Note
+----
 Using these decorators are much slower than just adding the checks when defining
 them, but probably won't matter since it's still < 1 microseconds
 
