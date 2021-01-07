@@ -1,5 +1,5 @@
 SanUnit
 =======
 
-.. autoclass:: sanitation.SanUnit
+.. autoclass:: qsdsan.SanUnit
    :members:

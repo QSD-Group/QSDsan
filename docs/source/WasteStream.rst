@@ -1,5 +1,5 @@
 WasteStream
 ===========
 
-.. autoclass:: sanitation.WasteStream
+.. autoclass:: qsdsan.WasteStream
    :members:

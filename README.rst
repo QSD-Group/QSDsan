@@ -1,38 +1,48 @@
-==============================================================================
-Sanitation Explorer: Sustainable design of non-sewered sanitation technologies
-==============================================================================
-
-.. figure:: ./images/various_configurations.png
-
-
-
-
+====================================================================================
+QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
+====================================================================================
 .. contents::
 
-What is Sanitation Explorer?
+What is QSDsan?
 ----------------------------
+**QSDsan** is a package for the quantitative sustainable design of sanitation and resource recovery systems leveraging the structure and modules developed in BioSTEAM [1]_. As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
 
-**Sanitation Explorer** is a package for the sustainable design of non-sewered sanitation technologies that are affordable and appropriate in low-income, resource-limited settings leveraging the structure and modules developed in BioSTEAM [1]_. As an open-source and impact-driven platform, **Sanitation Explorer** aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (life cycle assessment and techno-economic analysis under uncertainty). 
+
+Installation
+------------
+First install the package at `PyPI <https://pypi.org/>`_. If you use pip, simply ``pip install qsdsan``.
+
+Note that development of this package is currently under initial stage with limited backward compatibility, please free free to contact us with any questions regarding package upgrading.
 
 
-Interacting with other packages
--------------------------------
+Documentation
+-------------
+You can find tutorials and documents at:
 
-.. figure:: https://lucid.app/publicSegments/view/ac755b6d-1bd6-464c-8e47-9e21e762d888/image.png
-
-*Unified Modeling Language (UML) diagram of the package and its dependencies*.
+ - `Main version <https://qsdsan.readthedocs.io/en/latest/>`_ on `root repository <https://github.com/QSD-Group/QSDsan>`_.
+ - `Beta version <https://qsdsan-beta.readthedocs.io/en/latest/>`_ on `Yalin's fork <https://github.com/yalinli2/QSDsan>`_.
 
 
 License information
 -------------------
-
-See ``LICENSE.txt`` for information on the terms & conditions for usage
-of this software, and a DISCLAIMER OF ALL WARRANTIES.
+See ``LICENSE.txt`` for information on the terms & conditions for usage of this software, and a DISCLAIMER OF ALL WARRANTIES.
 
 
 About the authors
 -----------------
-Development and maintenance of the package is supported by the Sanitation Explorer Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. 
+Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_.
+
+**Code development**
+ - `Yalin Li <zoe.yalin.li@gmail.com>`_
+ - Joy Cheung
+
+**Unit design**
+ - `Yalin Li <zoe.yalin.li@gmail.com>`_
+ - Joy Cheung
+ - Stetson Rowles
+
+**Project conception & funding support**
+ - `Jeremy Guest <jsguest@illinois.edu>`_
 
 
 References

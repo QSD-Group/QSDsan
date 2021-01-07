@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 '''
-Sanitation Explorer: Sustainable design of non-sewered sanitation technologies
-Copyright (C) 2020, Sanitation Explorer Development Group
+QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
+Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
 This module is under the UIUC open-source license. Please refer to 
-https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
+https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
@@ -18,7 +18,7 @@ from numpy.testing import assert_allclose
 
 def test_waste_stream():
     import thermosteam as tmo
-    from sanitation import Components, WasteStream
+    from qsdsan import Components, WasteStream
     components = Components.load_default()
     tmo.settings.set_thermo(components)
     ws1 = WasteStream(SAc=5, H2O=1000, units='kg/hr')

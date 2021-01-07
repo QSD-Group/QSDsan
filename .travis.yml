@@ -23,8 +23,8 @@ install:
   - source activate test-environment
   - pip install -r requirements_test.txt
   - python setup.py -q install
-  - rm -rf sanitation
+  - rm -rf qsdsan
 script:
-  - py.test . -v --cov-report html --cov=sanitation --cov-report term-missing -m "not slow"
+  - py.test . -v --cov-report html --cov=qsdsan --cov-report term-missing -m "not slow"
 after_success:
   - coveralls
