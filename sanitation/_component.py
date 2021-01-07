@@ -44,7 +44,7 @@ def component_identity(component, pretty=False):
 
 # Will stored as an array when compiled
 _num_component_properties = ('i_C', 'i_N', 'i_P', 'i_K', 'i_Mg', 'i_Ca',
-                             'i_mass', 'i_charge', 'i_COD',
+                             'i_mass', 'i_charge', 'i_COD', 'i_NOD',
                              'f_BOD5_COD', 'f_uBOD_COD', 'f_Vmass_Totmass', )
 
 # Fields that cannot be left as None
@@ -71,6 +71,7 @@ component_units_of_measure = {
     'i_mass': AbsoluteUnitsOfMeasure('g'), 
     'i_charge': AbsoluteUnitsOfMeasure('mol'),
     'i_COD': AbsoluteUnitsOfMeasure('g'),
+    'i_NOD': AbsoluteUnitsOfMeasure('g'),
     }
 
 
@@ -107,7 +108,7 @@ class Component(tmo.Chemical):
 
     def __new__(cls, ID='', search_ID=None, formula=None, phase=None, measured_as=None, 
                 i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
-                i_mass=None, i_charge=None, i_COD=None, 
+                i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
                 f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
                 description=None, particle_size=None,
                 degradability=None, organic=None, **chemical_properties):
@@ -123,7 +124,7 @@ class Component(tmo.Chemical):
             self._formula = None
             self.formula = formula
         if phase: tmo._chemical.lock_phase(self, phase)
-        self.measured_as = measured_as
+        self._measured_as = measured_as
         self.i_mass = i_mass
         self.i_C = i_C
         self.i_N = i_N
@@ -142,10 +143,10 @@ class Component(tmo.Chemical):
         if not self.MW and not self.formula: self.MW = 1.
         
         self.i_COD = i_COD
+        self.i_NOD = i_NOD
         
         return self
 
-    #!!! use i_mass
     def _atom_frac_setter(self, atom=None, frac=None):
         if self.formula:
             if frac:
@@ -366,9 +367,10 @@ class Component(tmo.Chemical):
         return self._measured_as
     @measured_as.setter
     def measured_as(self, measured_as):
-        #!!! Need to check if this works
-        #!!! This is necessary for correct molar flow calculation.
-        self._measured_as = measured_as
+        '''
+        When measured_as is set to a different value, all i_{} values will 
+        be automatically updated.
+        '''
         if measured_as:
             if measured_as == 'COD': 
                 self._MW = molecular_weight({'O':2})
@@ -379,6 +381,33 @@ class Component(tmo.Chemical):
                                      f"either COD or one of its constituent atoms, "
                                      f"if not as itself.")        
         
+        if self._measured_as != measured_as:
+            self._convert_i_attr(measured_as)
+            
+        self._measured_as = measured_as
+        
+    def _convert_i_attr(self, new):
+        if new == None:
+            denom = self._i_mass
+        elif new == 'COD':
+            denom = self._i_COD
+        elif new in self.atoms:
+            try: denom = getattr(self, '_i_'+new)
+            except AttributeError:
+                denom = get_mass_frac(self.atoms)[new] * self._i_mass
+        else:
+            raise AttributeError(f"Component {self.ID} must be measured as "
+                                 f"either COD or one of its constituent atoms, "
+                                 f"if not as itself.")
+        
+        if denom == 0:
+            raise ValueError(f'{self.ID} cannot be measured as {new}')
+        
+        for field in _num_component_properties:
+            if field.startswith('i_'):
+                new_i = getattr(self, '_'+field)/denom
+                setattr(self, '_'+field, new_i)            
+    
     @property
     def particle_size(self):
         '''
@@ -436,6 +465,21 @@ class Component(tmo.Chemical):
                     self._i_COD = check_return_property('i_COD', cod/chem_MW * self.i_mass)
             else: self._i_COD = 0. 
 
+    @property
+    def i_NOD(self):
+        '''[float] Nitrogenous oxygen demand, calculated based on measured_as, organic and formula.'''
+        return self._i_NOD or 0.        
+    @i_NOD.setter
+    def i_NOD(self, i):
+        if not i:
+            if self.degradability in ('Readily', 'Slowly') or self.formula in ('H3N', 'NH4', 'NH3', 'NH4+'):
+                i = self.i_N * molecular_weight({'O':4}) / molecular_weight({'N':1})
+            elif self.formula in ('NO2-', 'HNO2'):
+                i = self.i_N * molecular_weight({'O':1}) / molecular_weight({'N':1})
+            else:
+                i = 0.
+        self._i_NOD = check_return_property('i_NOD', i)
+            
     def show(self, chemical_info=False):
         '''
         Show Component properties.
