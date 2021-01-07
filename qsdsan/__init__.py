@@ -21,6 +21,7 @@ del bst
 currency = 'USD'
 
 from .utils import descriptors
+from ._cod import *
 from ._component import *
 from ._components import *
 from ._waste_stream import *
@@ -31,10 +32,10 @@ from ._transportation import *
 from ._sanunit import *
 from ._simple_tea import *
 from ._lca import *
-from ._cod import *
 
 from . import (
     _units_of_measure, # if not included here, then need to add to setup.py
+    _cod,
     _component,
     _components,
     _waste_stream,
@@ -45,7 +46,6 @@ from . import (
     _sanunit,
     _simple_tea,
     _lca,
-    _cod,
     utils,
     sanunits,
     systems,
@@ -54,6 +54,7 @@ from . import (
 utils.secondary_importing()
 
 __all__ = (
+    *_cod.__all__,
     *_component.__all__,
     *_components.__all__,
     *_waste_stream.__all__,
@@ -64,7 +65,6 @@ __all__ = (
     *_sanunit.__all__,
     *_simple_tea.__all__,
     *_lca.__all__,
-    *_cod.__all__,
            )
 
 
