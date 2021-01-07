@@ -103,7 +103,7 @@ Loading systems
 Techno-economic analysis and life cycle assessment (TEA/LCA)
 ------------------------------------------------------------
 TEA and LCA are performed through ``biosteam.TEA`` and ``qsdsan.LCA`` objects and named as "teaA", "lcaA", etc.
-Results from the original paper [1]_ are saved in the "/results/original_results" folder, results from ``QSDsan`` closely match those results.
+Results from the original paper [1]_ are saved in the "/results/original_results" folder for comparison.
 
 .. code-block:: python
 
@@ -167,7 +167,7 @@ for other systems accordingly.
     >>> models = bw.models
     >>> # Try use larger samples, here is just to get a quick demo result
     >>> models.run_uncertainty(models.modelA, N_sample=10)
-    >>> # Your results will be cached in ``results_dct['sysA']``
+    >>> # Your results will be cached in ``result_dct['sysA']``
     >>> # You can organize the results as you like,
     >>> # but you can also save them using the default organized data
     >>> models.save_uncertainty_results(models.modelA)
@@ -175,6 +175,11 @@ for other systems accordingly.
     >>> models.plot_cost_emission(models.modelA)
     >>> # You can change "COD" to any of "N", "P", or "K"
     >>> models.plot_recovery(models.modelA, 'COD')
+
+
+.. figure:: ./figures/modelA_cost_emission.png
+    
+    *Uncertainty plots from the demonstrative ``modelA``*
 
 
 Coming soon

@@ -18,6 +18,7 @@ Note that development of this package is currently under initial stage with limi
 Documentation
 -------------
 You can find tutorials and documents at:
+
  - `Main version <https://qsdsan.readthedocs.io/en/latest/>`_ on `root repository <https://github.com/QSD-Group/QSDsan>`_.
  - `Beta version <https://qsdsan-beta.readthedocs.io/en/latest/>`_ on `Yalin's fork <https://github.com/yalinli2/QSDsan>`_.
 

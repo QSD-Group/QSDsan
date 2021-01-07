@@ -300,11 +300,13 @@ for para in data.index:
 # Functions to run simulation and generate plots
 # =============================================================================
 
-results_dct = {
-    'sysA': dict.fromkeys(('parameters', 'data', 'percentiles', 'spearman')),
-    'sysB': dict.fromkeys(('parameters', 'data', 'percentiles', 'spearman')),
-    'sysC': dict.fromkeys(('parameters', 'data', 'percentiles', 'spearman')),
-    }
+try: result_dct
+except:
+    result_dct = {
+        'sysA': dict.fromkeys(('parameters', 'data', 'percentiles', 'spearman')),
+        'sysB': dict.fromkeys(('parameters', 'data', 'percentiles', 'spearman')),
+        'sysC': dict.fromkeys(('parameters', 'data', 'percentiles', 'spearman')),
+        }
 
 def run_uncertainty(model, N_sample=1000, seed=None,
                     percentiles=(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1),
@@ -316,7 +318,7 @@ def run_uncertainty(model, N_sample=1000, seed=None,
     samples = model.sample(N_sample, 'L')
     model.load_samples(samples)
     model.evaluate()
-    dct = results_dct[model._system.ID]
+    dct = result_dct[model._system.ID]
     # Data organization
     index_p = len(model.get_parameters())
     dct['parameters'] = model.table.iloc[:, :index_p].copy()
@@ -336,9 +338,9 @@ def save_uncertainty_results(model, path=None):
         path = os.path.dirname(os.path.realpath(__file__))
         path += f'/results/model{model._system.ID[-1]}.xlsx'
         del os
-    dct = results_dct[model._system.ID]
-    if len(dct['parameters']) == 0:
-        raise ValueError('No cached result, run model first.')
+    dct = result_dct[model._system.ID]
+    try: len(dct['parameters'])
+    except: raise ValueError('No cached result, run model first.')
     with pd.ExcelWriter(path) as writer:
         dct['parameters'].to_excel(writer, sheet_name='Parameters')
         dct['data'].to_excel(writer, sheet_name='Uncertainty results')
@@ -381,7 +383,7 @@ def plot_series_bp(title, dfs, light_color, dark_color, xlabels, ylabel, ylim):
 
 def plot_cost_emission(model):
     sys_ID = model._system.ID
-    data = results_dct[sys_ID]['data']
+    data = result_dct[sys_ID]['data']
     cost_df = data.iloc[:, 0]
     emission_df = data.iloc[:, 3:4]
     dfs = (cost_df, emission_df)
@@ -393,12 +395,12 @@ def plot_cost_emission(model):
 
 def plot_recovery(model, resource):
     sys_ID = model._system.ID
-    data = results_dct[sys_ID]['data']
+    data = result_dct[sys_ID]['data']
     resources = ('COD', 'N', 'P', 'K')
     try:
         index = (resources.index(resource)+2)*4+1
     except:
-        return f'resource can only be "COD", "N", "P", or "K", not {resource}.'
+        return f'resource can only be "COD", "N", "P", or "K", not "{resource}".'
     dfs = []
     for i in range(4):
         dfs.append(data.iloc[:, index+i:index+i+1])
