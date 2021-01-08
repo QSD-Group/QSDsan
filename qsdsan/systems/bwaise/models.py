@@ -23,7 +23,8 @@ from biosteam import PowerUtility
 from biosteam.evaluation import Model, Metric
 from qsdsan import currency, ImpactItem
 from qsdsan.utils.loading import load_data, data_path
-from qsdsan.utils.setters import Setter, DictAttrSetter
+from qsdsan.utils.setters import AttrSetter, DictAttrSetter
+from qsdsan.utils.getters import FuncGetter
 from qsdsan.systems import bwaise as bw
 
 
@@ -66,11 +67,17 @@ def make_metrics(system):
     for i in ('COD', 'N', 'P', 'K'):
         cat = f'{i} recovery'
         metrics.extend([
-            Metric(f'Liquid {i}', lambda: func[f'get_liq_{i}_recovery'](system, i), '', cat),
-            Metric(f'Solid {i}', lambda: func[f'get_sol_{i}_recovery'](system, i), '', cat),
-            Metric(f'Gas {i}', lambda: func[f'get_gas_{i}_recovery'](system, i), '', cat),
-            Metric(f'Total {i}', lambda: func[f'get_tot_{i}_recovery'](system, i), '', cat)
+            Metric(f'Liquid {i}', FuncGetter(func[f'get_liq_{i}_recovery'], (system, i)), '', cat),
+            Metric(f'Solid {i}', FuncGetter(func[f'get_sol_{i}_recovery'], (system, i)), '', cat),
+            Metric(f'Gas {i}', FuncGetter(func[f'get_gas_{i}_recovery'], (system, i)), '', cat),
+            Metric(f'Total {i}', FuncGetter(func[f'get_tot_{i}_recovery'], (system, i)), '', cat)
             ])
+        # metrics.extend([
+        #     Metric(f'Liquid {i}', lambda: func[f'get_liq_{i}_recovery'](system, i), '', cat),
+        #     Metric(f'Solid {i}', lambda: func[f'get_sol_{i}_recovery'](system, i), '', cat),
+        #     Metric(f'Gas {i}', lambda: func[f'get_gas_{i}_recovery'](system, i), '', cat),
+        #     Metric(f'Total {i}', lambda: func[f'get_tot_{i}_recovery'](system, i), '', cat)
+        #     ])
     return metrics
 
 
@@ -89,7 +96,7 @@ def batch_setting_unit_para(df, model, unit, exclude=()):
         else:
             raise ValueError(f'Distribution {dist} not recognized for unit {unit}.')     
         model.parameter(name=para,
-                        setter=Setter(unit, para),
+                        setter=AttrSetter(unit, para),
                         element=unit, kind='coupled', units=df.loc[para]['unit'],
                         baseline=b, distribution=D)
 
@@ -106,6 +113,7 @@ metricsA = make_metrics(sysA)
 modelA = Model(sysA, metricsA)
 paramA = modelA.parameter
 
+#!!! Make this a function
 # Assumptions
 A2 = systems.A2
 b = systems.tau_deg
@@ -300,17 +308,15 @@ for para in data.index:
 # Functions to run simulation and generate plots
 # =============================================================================
 
-try: result_dct
-except:
-    result_dct = {
+result_dct = {
         'sysA': dict.fromkeys(('parameters', 'data', 'percentiles', 'spearman')),
         'sysB': dict.fromkeys(('parameters', 'data', 'percentiles', 'spearman')),
         'sysC': dict.fromkeys(('parameters', 'data', 'percentiles', 'spearman')),
         }
 
 def run_uncertainty(model, N_sample=1000, seed=None,
-                    percentiles=(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1),
-                    return_dct=False):
+                    percentiles=(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1)):
+    global result_dct
     if seed:
         np.random.seed(seed)
     if model is not modelA:
@@ -318,8 +324,8 @@ def run_uncertainty(model, N_sample=1000, seed=None,
     samples = model.sample(N_sample, 'L')
     model.load_samples(samples)
     model.evaluate()
-    dct = result_dct[model._system.ID]
     # Data organization
+    dct = result_dct[model._system.ID]
     index_p = len(model.get_parameters())
     dct['parameters'] = model.table.iloc[:, :index_p].copy()
     dct['data'] = model.table.iloc[:, index_p:].copy()
@@ -329,8 +335,7 @@ def run_uncertainty(model, N_sample=1000, seed=None,
     spearman_results = model.spearman(modelA.get_parameters(), spearman_metrics)
     spearman_results.columns = pd.Index([i.name_with_units for i in spearman_metrics])
     dct['spearman'] = spearman_results
-    if return_dct:
-        return dct
+    return dct
 
 def save_uncertainty_results(model, path=None):
     if not path:
@@ -339,8 +344,8 @@ def save_uncertainty_results(model, path=None):
         path += f'/results/model{model._system.ID[-1]}.xlsx'
         del os
     dct = result_dct[model._system.ID]
-    try: len(dct['parameters'])
-    except: raise ValueError('No cached result, run model first.')
+    if dct['parameters'] is None:
+        raise ValueError('No cached result, run model first.')
     with pd.ExcelWriter(path) as writer:
         dct['parameters'].to_excel(writer, sheet_name='Parameters')
         dct['data'].to_excel(writer, sheet_name='Uncertainty results')

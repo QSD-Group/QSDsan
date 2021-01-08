@@ -16,12 +16,22 @@ for license details.
 
 # %%
 
-from biosteam.evaluation.evaluation_tools.parameter import Setter
+__all__ = ('AttrSetter', 'DictAttrSetter')
+
+setattr = setattr
+getattr = getattr
+
+class AttrSetter:
+    __slots__ = ('obj', 'attr')
+    def __init__(self, obj, attr):
+        self.obj = obj
+        self.attr = attr
+        
+    def __call__(self, value):
+        setattr(self.obj, self.attr, value)
 
 
-__all__ = ('DictAttrSetter',)
-
-class DictAttrSetter(Setter):
+class DictAttrSetter:
     __slots__ = ('obj', 'dict_attr', 'key')
     def __init__(self, obj, dict_attr, key):
         self.dict_attr = getattr(obj, dict_attr)
@@ -29,3 +39,4 @@ class DictAttrSetter(Setter):
 
     def __call__(self, value):
         self.dict_attr[self.key] = value
+
