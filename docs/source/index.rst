@@ -24,10 +24,10 @@ Follow the tutorial to get started!
    :maxdepth: 1
    :caption: Tutorial
 
-   tutorial/make_a_simple_System
-   tutorial/define_Component_and_WasteStream
-   tutorial/create_a_new_SanUnit
-   tutorial/TEA_and_LCA
+   tutorials/make_a_simple_System
+   tutorials/define_Component_and_WasteStream
+   tutorials/create_a_new_SanUnit
+   tutorials/TEA_and_LCA
 
 
 How does QSDsan work?
