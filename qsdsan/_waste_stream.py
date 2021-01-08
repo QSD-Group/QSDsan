@@ -88,18 +88,19 @@ class WasteStream(Stream):
                  pH=7., SAlk=2.5, COD=None, BOD=None, uBOD=None,
                  TC=None, TOC=None, TN=None, TKN=None, TP=None, TK=None,
                  TMg=None, TCa=None, dry_mass=None, charge=None, ratios=None,
-                 ThOD=None, cnBOD=None, **chemical_flows):
+                 ThOD=None, cnBOD=None, impact_item=None, **chemical_flows):
         
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
                          units=units, price=price, thermo=thermo, **chemical_flows)
         self._init_ws(pH, SAlk, COD, BOD, uBOD, TC, TOC, TN, TKN,
-                      TP, TK, TMg, TCa, ThOD, cnBOD, dry_mass, charge, ratios)
+                      TP, TK, TMg, TCa, ThOD, cnBOD, dry_mass, charge, ratios,
+                      impact_item)
 
     def _init_ws(self, pH=7., SAlk=None, COD=None, BOD=None,
                   uBOD=None, TC=None, TOC=None, TN=None, TKN=None,
                   TP=None, TK=None, TMg=None, TCa=None, ThOD=None, cnBOD=None,
-                  dry_mass=None, charge=None, ratios=None):
-        self._impact_item = None
+                  dry_mass=None, charge=None, ratios=None, impact_item=None):
+
         self._pH = pH
         self._SAlk = SAlk
         self._COD = COD
@@ -118,6 +119,9 @@ class WasteStream(Stream):
         self._dry_mass = dry_mass
         self._charge = charge
         self._ratios = ratios
+        if impact_item:
+            impact_item._linked_stream = self
+        self._impact_item = impact_item
 
     
     def show(self, T='K', P='Pa', flow='g/hr', composition=False, N=15,
@@ -183,7 +187,7 @@ class WasteStream(Stream):
                 _ws_info += int(bool(self.TKN))   *f'  TKN        : {self.TKN:.1f} mg/L\n'
                 _ws_info += int(bool(self.TP))    *f'  TP         : {self.TP:.1f} mg/L\n'
                 _ws_info += int(bool(self.TK))    *f'  TK         : {self.TK:.1f} mg/L\n'
-                _ws_info += int(bool(self.charge))*f'  charge     : {self.charge:.1f} mmol/L\n'
+                # _ws_info += int(bool(self.charge))*f'  charge     : {self.charge:.1f} mmol/L\n'
             else:
                 _ws_info += '  ...\n'
             
@@ -341,9 +345,10 @@ class WasteStream(Stream):
         return self._impact_item
     @impact_item.setter
     def impact_item(self, i):
-        raise AttributeError('Cannot set attribute, if want to unlink the '
-                             '``StreamImpactItem``, set ``linked_ws`` of the ``StreamImpactItem`` '
-                             'to None.')
+        self._impact_item = i
+        if i:
+            try: i.linked_stream = self
+            except: breakpoint()
 
     
     def _liq_sol_properties(self, prop, value):
@@ -435,7 +440,10 @@ class WasteStream(Stream):
         new._init_ws()
         for slot in _ws_specific_slots:
             value = getattr(self, slot)
-            setattr(new, slot, utils.copy_maybe(value))
+            if slot == '_impact_item' and value:
+                value.copy(new_stream=self)
+            else:
+                setattr(new, slot, utils.copy_maybe(value))
         return new
     __copy__ = copy
 

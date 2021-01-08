@@ -86,7 +86,7 @@ class LCA:
                                           key=lambda u: u.ID)
         self._transportation_units = sorted(self._transportation_units,
                                             key=lambda u: u.ID)
-        for s in system.streams:
+        for s in (i for i in system.feeds.union(system.products)):
             if s.impact_item:
                 self._lca_streams.add(s)
         self._lca_streams = sorted(self._lca_streams, key=lambda s: s.ID)
