@@ -7,10 +7,7 @@ Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
-<<<<<<< HEAD
-=======
     Joy Cheung
->>>>>>> 642b6690d694ad53b832005dff17b0833e6a9705
 
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
