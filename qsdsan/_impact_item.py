@@ -26,6 +26,8 @@ from .utils.formatting import format_number as f_num
 
 indicators = ImpactIndicator._indicators
 data_path += '_impact_item.xlsx'
+isinstance = isinstance
+getattr = getattr
 
 __all__ = ('ImpactItem', 'StreamImpactItem')
 
