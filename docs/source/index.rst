@@ -49,7 +49,7 @@ In particular, QSDsan introduces:
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: API
 
    Component
@@ -74,6 +74,13 @@ To get the full value of QSDsan, we highly recommend reading through the documen
  * `biosteam docs <https://biosteam.readthedocs.io/en/latest/index.html>`_
  * `thermosteam docs <https://thermosteam.readthedocs.io/en/latest/index.html>`_
  * `chemicals docs <https://chemicals.readthedocs.io/en/latest/>`_
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: What's new
+
+   CHANGELOG
 
 
 About the developers
