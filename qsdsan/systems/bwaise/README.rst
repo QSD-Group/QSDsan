@@ -180,26 +180,24 @@ accordingly.
     >>> models.plot_recovery(models.modelA, 'K')
 
     
-.. figure::
+.. figure:: ./figures/modelA_cost_emission.png
     
-    ./figures/modelA_cost_emission.png
-    
-    ./figures/modelA_COD_recovery.png
+.. figure:: ./figures/modelA_COD_recovery.png
 
-    ./figures/modelA_N_recovery.png
+.. figure:: ./figures/modelA_N_recovery.png
     
-    ./figures/modelA_P_recovery.png
+.. figure:: ./figures/modelA_P_recovery.png
     
-    ./figures/modelA_K_recovery.png
+.. figure:: ./figures/modelA_K_recovery.png
     
     *Uncertainty plots from ``modelA``*
 
 
 Coming soon
 -----------
- - Uncertainty models for ``sysB`` and ``sysC``.
+* Uncertainty models for ``sysB`` and ``sysC``.
 
- - Comparison figure for results between ``QSDsan`` and [1]_.
+* Comparison figure for results between ``QSDsan`` and [1]_.
 
 
 References
