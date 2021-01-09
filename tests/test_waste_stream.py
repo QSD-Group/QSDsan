@@ -15,10 +15,19 @@ for license details.
 
 import pytest
 from numpy.testing import assert_allclose
-
+from math import isclose
+    
 def test_waste_stream():
     import thermosteam as tmo
     from qsdsan import Components, WasteStream
+    
+    ws1 = WasteStream.codstates_inf_model('ws1', 1e5)
+    ws2 = WasteStream.codstates_inf_model('ws2', 1e5*24/1e3, units=('m3/d', 'g/m3'))
+    assert isclose(ws1.COD, 430, rel_tol=1e-3)
+    assert isclose(ws1.TKN, 40, rel_tol=1e-3)
+    assert isclose(ws1.TP, 10, rel_tol=1e-3)
+    assert isclose(ws1.F_vol, ws2.F_vol)
+    
     components = Components.load_default()
     tmo.settings.set_thermo(components)
     ws1 = WasteStream(SAc=5, H2O=1000, units='kg/hr')

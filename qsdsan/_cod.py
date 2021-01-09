@@ -104,7 +104,7 @@ def cod_test_stoichiometry(atoms, charge=0, MW=None, missing_handling='elemental
     if 'P' in atoms:
         nP = atoms['P']
     
-    if (nC <= 0 or nH <= 0):
+    if nC <= 0 or nH <= 0:
         if not (len(atoms) == 1 and nH == 2):
             return {'Cr2O7-2': 0.}
     
