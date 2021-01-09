@@ -40,11 +40,9 @@ The above Unified Modeling Language (UML) diagram of the package shows the relat
 
 In particular, QSDsan introduces:
 
- * ``Component``, a subclass of ``Chemical`` in thermosteam, instance of this class does not necessarily corresponds to a specific chemical, but represents commonly used/modeled component such as biodegradable colloidal substrate.
-
- * ``WasteStream``, a sublcass of ``Stream`` in thermosteam, instance of this class has additional composite properties such as chemical oxygen demand (COD) that are widely used in sanitation systems.
-
- * ``Process``, a new class that describes a certain biological, chemical, or physical process in a unit operation, it has some similarities with the ``reaction`` class in thermosteam, but has unique features and utilities.
+- ``Component``, a subclass of ``Chemical`` in thermosteam, instance of this class does not necessarily corresponds to a specific chemical, but represents commonly used/modeled component such as biodegradable colloidal substrate.
+- ``WasteStream``, a sublcass of ``Stream`` in thermosteam, instance of this class has additional composite properties such as chemical oxygen demand (COD) that are widely used in sanitation systems.
+- ``Process``, a new class that describes a certain biological, chemical, or physical process in a unit operation, it has some similarities with the ``reaction`` class in thermosteam, but has unique features and utilities.
 
 
 .. toctree::
@@ -70,9 +68,9 @@ More resources
 --------------
 To get the full value of QSDsan, we highly recommend reading through the documents of these packages:
 
- * `biosteam docs <https://biosteam.readthedocs.io/en/latest/index.html>`_
- * `thermosteam docs <https://thermosteam.readthedocs.io/en/latest/index.html>`_
- * `chemicals docs <https://chemicals.readthedocs.io/en/latest/>`_
+- `biosteam docs <https://biosteam.readthedocs.io/en/latest/index.html>`_
+- `thermosteam docs <https://thermosteam.readthedocs.io/en/latest/index.html>`_
+- `chemicals docs <https://chemicals.readthedocs.io/en/latest/>`_
 
 
 .. toctree::
@@ -86,17 +84,17 @@ About the developers
 --------------------
 Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_.
 
-**Code development**
- * `Yalin Li <zoe.yalin.li@gmail.com>`_
- * Joy Cheung
+**Code development:**
+   - `Yalin Li <zoe.yalin.li@gmail.com>`_
+   - Joy Cheung
 
-**Unit design**
- * `Yalin Li <zoe.yalin.li@gmail.com>`_
- * Joy Cheung
- * Stetson Rowles
+**Unit design:**
+   - `Yalin Li <zoe.yalin.li@gmail.com>`_
+   - Joy Cheung
+   - Stetson Rowles
 
-**Project conception & funding support**
- * `Jeremy Guest <jsguest@illinois.edu>`_
+**Project conception & funding support:**
+   - `Jeremy Guest <jsguest@illinois.edu>`_
 
 
 Join the community
