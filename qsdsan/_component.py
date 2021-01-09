@@ -86,10 +86,11 @@ allowed_values = {
     }
 
 def check_return_property(name, value):
-    if name.startswith('i_') or name.startswith('f_'):
-        if not value: return None
+    if name.startswith(('i_', 'f_')):
         try: return float(value)
-        except: raise TypeError(f'{name} must be a number, not a {type(value).__name__}.')        
+        except: 
+            if not value: return None            
+            raise TypeError(f'{name} must be a number, not a {type(value).__name__}.')        
         if name.startswith('f_') and (value>1 or value<0):
             raise ValueError(f'{name} must be within [0,1].')
     elif name in allowed_values.keys():
@@ -168,15 +169,16 @@ class Component(tmo.Chemical):
         else:
             return check_return_property(f'i_{atom}', frac)
 
-    #!!! i_{} does not have to be within [0,1].
     @property
     def i_C(self):
         '''
         [float] Carbon content of the component, [g C/g measure unit].
 
         Note
-        -------
-        Will be calculated based on formula and measured_as if given.
+        ----
+        [1] If the ``Component`` is measured as C, then i_C is 1.
+        
+        [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_C or 0.
     @i_C.setter
@@ -190,8 +192,9 @@ class Component(tmo.Chemical):
         [float] Nitrogen content of the component, [g N/g measure unit].
 
         Note
-        -------
-        [1] If the Component is measured as N, then i_N is 1.
+        ----
+        [1] If the ``Component`` is measured as N, then i_N is 1.
+        
         [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_N or 0.
@@ -205,8 +208,9 @@ class Component(tmo.Chemical):
         [float] Phosphorus content of the component, [g P/g measure unit].
 
         Note
-        -------
-        [1] If the Component is measured as P, then i_P is 1.
+        ----
+        [1] If the ``Component`` is measured as P, then i_P is 1.
+    
         [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_P or 0.
@@ -220,8 +224,10 @@ class Component(tmo.Chemical):
         [float] Potassium content of the component, [g K/g measure unit].
 
         Note
-        -------
-        Will be calculated based on formula and measured_as if given.
+        ----
+        [1] If the ``Component`` is measured as K, then i_K is 1.
+    
+        [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_K or 0.
     @i_K.setter
@@ -234,8 +240,10 @@ class Component(tmo.Chemical):
         [float] Magnesium content of the component, [g Mg/g measure unit].
 
         Note
-        -------
-        Will be calculated based on formula and measured_as if given.
+        ----
+        [1] If the ``Component`` is measured as Mg, then i_Mg is 1.
+    
+        [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_Mg or 0.
     @i_Mg.setter
@@ -248,8 +256,10 @@ class Component(tmo.Chemical):
         [float] Calcium content of the component, [g Ca/g measure unit].
 
         Note
-        -------
-        Will be calculated based on formula and measured_as if given.
+        ----
+        [1] If the ``Component`` is measured as Ca, then i_Ca is 1.
+    
+        [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_Ca or 0.
     @i_Ca.setter
@@ -461,7 +471,7 @@ class Component(tmo.Chemical):
     def i_COD(self, i):
         if i: self._i_COD = check_return_property('i_COD', i)
         else:             
-            if self.organic: 
+            if self.organic or self.formula == 'H2': 
                 if self.measured_as == 'COD': self._i_COD = 1.
                 elif not self.atoms:
                     raise AttributeError(f"Must specify i_COD for organic component {self.ID}, "
@@ -476,11 +486,11 @@ class Component(tmo.Chemical):
 
     @property
     def i_NOD(self):
-        '''[float] Nitrogenous oxygen demand, calculated based on measured_as, organic and formula.'''
+        '''[float] Nitrogenous oxygen demand, calculated based on measured_as, degradability and formula.'''
         return self._i_NOD or 0.        
     @i_NOD.setter
     def i_NOD(self, i):
-        if not i:
+        if i == None:
             if self.degradability in ('Readily', 'Slowly') or self.formula in ('H3N', 'NH4', 'NH3', 'NH4+'):
                 i = self.i_N * molecular_weight({'O':4}) / molecular_weight({'N':1})
             elif self.formula in ('NO2-', 'HNO2'):
