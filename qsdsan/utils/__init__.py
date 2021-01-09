@@ -33,6 +33,7 @@ def secondary_importing():
         piping,
         loading,
         formatting,
+        getters,
         setters,
         )
     
@@ -41,5 +42,6 @@ def secondary_importing():
         *piping.__all__,
         *loading.__all__,
         *formatting.__all__,
+        *getters.__all__,
         *setters.__all__,
                 )

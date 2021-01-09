@@ -117,34 +117,43 @@ GWP_dct = {
 bst.PowerUtility.price = price_dct['Electricity']
 items['Concrete'].price = price_dct['Concrete']
 items['Steel'].price = price_dct['Steel']
-# This is universal to all scenarios
-e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=GWP_dct['Electricity'])
 
 # =============================================================================
 # Universal units and functions
 # =============================================================================
 
+CH4_item = StreamImpactItem(ID='CH4_item', GWP=GWP_dct['CH4'])
+N2O_item = StreamImpactItem(ID='N2O_item', GWP=GWP_dct['N2O'])
+N_item = StreamImpactItem(ID='N_item', GWP=GWP_dct['N'])
+P_item = StreamImpactItem(ID='P_item', GWP=GWP_dct['P'])
+K_item = StreamImpactItem(ID='K_item', GWP=GWP_dct['K'])
+biogas_item = StreamImpactItem(ID='biogas_item', GWP=GWP_dct['Biogas'])
+e_item = ImpactItem(ID='e_item', functional_unit='kWh', GWP=GWP_dct['Electricity'])
+
 def batch_creating_streams(prefix):
     stream_dct = {}
-    stream_dct['CH4'] = WasteStream(f'{prefix}_CH4', phase='g')
-    stream_dct['N2O'] = WasteStream(f'{prefix}_N2O', phase='g')
-    stream_dct['liq_N'] = WasteStream(f'{prefix}_liq_N', phase='l', price=price_dct['N'])
-    stream_dct['sol_N'] = WasteStream(f'{prefix}_sol_N', phase='l', price=price_dct['N'])
-    stream_dct['liq_P'] = WasteStream(f'{prefix}_liq_P', phase='l', price=price_dct['P'])
-    stream_dct['sol_P'] = WasteStream(f'{prefix}_sol_P', phase='l', price=price_dct['P'])
-    stream_dct['liq_K'] = WasteStream(f'{prefix}_liq_K', phase='l', price=price_dct['K'])
-    stream_dct['sol_K'] = WasteStream(f'{prefix}_sol_K', phase='l', price=price_dct['K'])
-    item_dct = {}
-    item_dct['CH4'] = StreamImpactItem(stream_dct['CH4'], GWP=GWP_dct['CH4'])
-    item_dct['N2O'] = StreamImpactItem(stream_dct['N2O'], GWP=GWP_dct['N2O'])
-    item_dct['liq_N'] = StreamImpactItem(stream_dct['liq_N'], GWP=GWP_dct['N'])
-    item_dct['sol_N'] = StreamImpactItem(stream_dct['sol_N'], GWP=GWP_dct['N'])
-    item_dct['liq_P'] = StreamImpactItem(stream_dct['liq_P'], GWP=GWP_dct['P'])
-    item_dct['sol_P'] = StreamImpactItem(stream_dct['sol_P'], GWP=GWP_dct['P'])
-    item_dct['liq_K'] = StreamImpactItem(stream_dct['liq_K'], GWP=GWP_dct['K'])
-    item_dct['sol_K'] = StreamImpactItem(stream_dct['sol_K'], GWP=GWP_dct['K'])
-    return stream_dct, item_dct
+    stream_dct['CH4'] = WasteStream(f'{prefix}_CH4', phase='g',
+                                    impact_item=CH4_item.copy(set_as_source=True))
+    stream_dct['N2O'] = WasteStream(f'{prefix}_N2O', phase='g',
+                                    impact_item=N2O_item.copy(set_as_source=True))
+    stream_dct['liq_N'] = WasteStream(f'{prefix}_liq_N', phase='l', price=price_dct['N'],
+                                      impact_item=N_item.copy(set_as_source=True))
+    stream_dct['sol_N'] = WasteStream(f'{prefix}_sol_N', phase='l', price=price_dct['N'],
+                                      impact_item=N_item.copy(set_as_source=True))
+    stream_dct['liq_P'] = WasteStream(f'{prefix}_liq_P', phase='l', price=price_dct['P'],
+                                      impact_item=P_item.copy(set_as_source=True))
+    stream_dct['sol_P'] = WasteStream(f'{prefix}_sol_P', phase='l', price=price_dct['P'],
+                                      impact_item=P_item.copy(set_as_source=True))
+    stream_dct['liq_K'] = WasteStream(f'{prefix}_liq_K', phase='l', price=price_dct['K'],
+                                      impact_item=K_item.copy(set_as_source=True))
+    stream_dct['sol_K'] = WasteStream(f'{prefix}_sol_K', phase='l', price=price_dct['K'],
+                                      impact_item=K_item.copy(set_as_source=True))
+    return stream_dct
 
+def add_fugative_items(unit, item):
+    unit._run()
+    for i in unit.ins:
+        i.impact_item = item.copy(set_as_source=True)
 
 # Costs of WWTP units have been considered in the lumped unit
 def clear_unit_costs(sys):
@@ -169,14 +178,10 @@ def adjust_NH3_loss(unit):
 
 flowsheetA = bst.Flowsheet('sysA')
 bst.main_flowsheet.set_flowsheet(flowsheetA)
-streamsA, itemsA = batch_creating_streams('A')
+streamsA = batch_creating_streams('A')
 
 #################### Human Inputs ####################
 A1 = su.Excretion('A1', outs=('urine', 'feces'))
-def refresh_sysA_streams():
-    streamsA, itemsA = batch_creating_streams('A')
-    A1._run()
-A1.specification = refresh_sysA_streams
 
 ################### User Interface ###################
 A2 = su.PitLatrine('A2', ins=(A1-0, A1-1,
@@ -242,9 +247,11 @@ A9 = su.CropApplication('A9', ins=A7-0, outs=('liquid_fertilizer', 'reuse_loss')
 A9.specification = lambda: adjust_NH3_loss(A9)
 
 A10 = su.Mixer('A10', ins=(A2-2, A5-2, A6-1, A7-1, A8-2), outs=streamsA['CH4'])
-A10.line = 'fugative CH4 mixer'
-
+A10.specification = lambda: add_fugative_items(A10, CH4_item)
+A10.line = 'fugative CH4 mixer' 
+        
 A11 = su.Mixer('A11', ins=(A2-3, A5-3, A6-2, A7-2, A8-3), outs=streamsA['N2O'])
+A11.specification = lambda: add_fugative_items(A11, N2O_item)
 A11.line = 'fugative N2O mixer'
 
 A12 = su.ComponentSplitter('A12', ins=A8-0,
@@ -261,13 +268,13 @@ A13 = su.ComponentSplitter('A13', ins=A9-0,
 sysA = bst.System('sysA', path=(A1, A2, A3, treatA, A9, A10, A11, A12, A13))
 
 teaA = SimpleTEA(system=sysA, discount_rate=get_discount_rate(), start_year=2018,
-                 lifetime=8, uptime_ratio=1, lang_factor=None,
-                 annual_maintenance=0, annual_labor=12*3e6*12/get_exchange_rate(),
-                 construction_schedule=None)
+                  lifetime=8, uptime_ratio=1, lang_factor=None,
+                  annual_maintenance=0, annual_labor=12*3e6*12/get_exchange_rate(),
+                  construction_schedule=None)
 
 lcaA = LCA(system=sysA, lifetime=8, lifetime_unit='yr', uptime_ratio=1,
-           # Assuming all additional WWTP OPEX from electricity
-           e_item=lambda: A4.power_utility.rate*(365*24)*8)
+            # Assuming all additional WWTP OPEX from electricity
+            e_item=lambda: A4.power_utility.rate*(365*24)*8)
 
 
 # %%
@@ -278,18 +285,12 @@ lcaA = LCA(system=sysA, lifetime=8, lifetime_unit='yr', uptime_ratio=1,
 
 flowsheetB = bst.Flowsheet('sysB')
 bst.main_flowsheet.set_flowsheet(flowsheetB)
-streamsB, itemsB = batch_creating_streams('B')
-streamsB['biogas'] = WasteStream('B_biogas', phase='g', price=price_dct['Biogas'])
-items['biogas'] = StreamImpactItem(streamsB['biogas'], GWP=GWP_dct['Biogas'])
+streamsB = batch_creating_streams('B')
+streamsB['biogas'] = WasteStream('B_biogas', phase='g', price=price_dct['Biogas'],
+                                 impact_item=biogas_item.copy(set_as_source=True))
 
 #################### Human Inputs ####################
 B1 = su.Excretion('B1', outs=('urine', 'feces'))
-def refresh_sysB_streams():
-    streamsB, itemsB = batch_creating_streams('B')
-    streamsB['biogas'] = WasteStream('B_biogas', phase='g', price=price_dct['Biogas'])
-    items['biogas'] = StreamImpactItem(streamsB['biogas'], GWP=GWP_dct['Biogas'])
-    B1._run()
-B1.specification = refresh_sysB_streams
 
 ################### User Interface ###################
 B2 = su.PitLatrine('B2', ins=(B1-0, B1-1,
@@ -351,9 +352,11 @@ B9 = su.CropApplication('B9', ins=B7-0, outs=('liquid_fertilizer', 'reuse_loss')
 B9.specification = lambda: adjust_NH3_loss(B9)
 
 B10 = su.Mixer('B10', ins=(B2-2, B5-2, B7-1, B8-2), outs=streamsB['CH4'])
+B10.specification = lambda: add_fugative_items(B10, CH4_item)
 B10.line = 'fugative CH4 mixer'
 
 B11 = su.Mixer('B11', ins=(B2-3, B5-3, B7-2, B8-3), outs=streamsB['N2O'])
+B11.specification = lambda: add_fugative_items(B11, N2O_item)
 B11.line = 'fugative N2O mixer'
 
 B12 = su.ComponentSplitter('B12', ins=B8-0,
@@ -394,14 +397,10 @@ lcaB = LCA(system=sysB, lifetime=10, lifetime_unit='yr', uptime_ratio=1,
 
 flowsheetC = bst.Flowsheet('sysC')
 bst.main_flowsheet.set_flowsheet(flowsheetC)
-streamsC, itemsC = batch_creating_streams('C')
+streamsC = batch_creating_streams('C')
 
 #################### Human Inputs ####################
 C1 = su.Excretion('C1', outs=('urine', 'feces'))
-def refresh_sysC_streams():
-    streamsC, itemsC = batch_creating_streams('C')
-    C1._run()
-C1.specification = refresh_sysC_streams
 
 ################### User Interface ###################
 C2 = su.UDDT('C2', ins=(C1-0, C1-1,
@@ -473,9 +472,11 @@ C9 = su.CropApplication('C9', ins=C7-0, outs=('liquid_fertilizer', 'reuse_loss')
 C9.specification = lambda: adjust_NH3_loss(C9)
 
 C10 = su.Mixer('C10', ins=(C2-4, C6-1, C7-1, C8-2), outs=streamsC['CH4'])
+C10.specification = lambda: add_fugative_items(C10, CH4_item)
 C10.line = 'fugative CH4 mixer'
 
 C11 = su.Mixer('C11', ins=(C2-5, C6-2, C7-2, C8-3), outs=streamsC['N2O'])
+C11.specification = lambda: add_fugative_items(C11, N2O_item)
 C11.line = 'fugative N2O mixer'
 
 C12 = su.ComponentSplitter('C12', ins=C8-0,

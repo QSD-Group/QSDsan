@@ -156,10 +156,10 @@ Results from the original paper [1]_ are saved in the "/results/original_results
 
 Uncertainty and sensitivity analyses
 ------------------------------------
-These analyses are performed through ``biosteam.Model`` objects, a demonstrative
-model (``modelA``) for ``sysA`` has been added, you can make changes (e.g.,
-add or remove parameters, change uncertainty ranges) or construct similar models
-for other systems accordingly.
+These analyses are performed through ``biosteam.Model`` objects, ``modelA``
+for ``sysA`` has been added, you can make changes (e.g., add or remove parameters,
+change uncertainty ranges) or construct similar models for other systems
+accordingly.
 
 .. code-block:: python
 
@@ -175,17 +175,29 @@ for other systems accordingly.
     >>> models.plot_cost_emission(models.modelA)
     >>> # You can change "COD" to any of "N", "P", or "K"
     >>> models.plot_recovery(models.modelA, 'COD')
+    >>> models.plot_recovery(models.modelA, 'N')
+    >>> models.plot_recovery(models.modelA, 'P')
+    >>> models.plot_recovery(models.modelA, 'K')
 
-
+    
 .. figure:: ./figures/modelA_cost_emission.png
     
-    *Uncertainty plots from the demonstrative ``modelA``*
+.. figure:: ./figures/modelA_COD_recovery.png
+
+.. figure:: ./figures/modelA_N_recovery.png
+    
+.. figure:: ./figures/modelA_P_recovery.png
+    
+.. figure:: ./figures/modelA_K_recovery.png
+    
+    *Uncertainty plots from ``modelA``*
 
 
 Coming soon
 -----------
-A figure will be added to compare the results (baseline and uncertainty/sensitivity)
-from ``QSDsan`` with those in [1]_ for all three scenarios.
+* Uncertainty models for ``sysB`` and ``sysC``.
+
+* Comparison figure for results between ``QSDsan`` and [1]_.
 
 
 References

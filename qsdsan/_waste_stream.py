@@ -24,12 +24,17 @@ from ._units_of_measure import auom
 
 __all__ = ('WasteStream',)
 
+
 _defined_composite_vars = ('COD', 'BOD5', 'BOD', 'uBOD', 'NOD', 'ThOD', 'cnBOD',
                            'C', 'N', 'P', 'K', 'Mg', 'Ca', 'solids', 'charge')
 
 _common_composite_vars = ('_COD', '_BOD', '_uBOD', '_TC', '_TOC', '_TN', 
                           '_TKN', '_TP', '_TK', '_TMg', '_TCa', 
                           '_dry_mass', '_charge', '_ThOD', '_cnBOD')
+
+#!!! Just use _common_composite_vars
+# _copied_slots = (*tuple('_'+i for i in _defined_composite_vars),
+#                  '_TOC', '_TKN', '_SAlk')
 
 _ws_specific_slots = (*_common_composite_vars,
                       '_pH', '_SAlk', '_ratios', '_impact_item')
@@ -44,9 +49,6 @@ _specific_groups = {'SVFA': ('SAc', 'SProp'),
                     'XPAO_PP': ('XPAO_PP_Lo', 'XPAO_PP_Hi'),
                     'TKN': ()}
 
-# path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'default_data/_ratios.csv')
-# _default_ratios = pd.read_csv(path)
-# del os, path
 _default_ratios = {'iHi_XPAOPP': 0.5,
                    'iCB_XCB': 0.15,
                    'iBAP_CB': 0.,
@@ -80,25 +82,25 @@ class WasteStream(Stream):
     
     __slots__ = (*Stream.__slots__, *_ws_specific_slots)
     _default_ratios = _default_ratios
-
-
+    
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None, 
                  pH=7., SAlk=2.5, COD=None, BOD=None, uBOD=None,
                  TC=None, TOC=None, TN=None, TKN=None, TP=None, TK=None,
                  TMg=None, TCa=None, dry_mass=None, charge=None, ratios=None,
-                 ThOD=None, cnBOD=None, **chemical_flows):
+                 ThOD=None, cnBOD=None, impact_item=None, **chemical_flows):
         
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
                          units=units, price=price, thermo=thermo, **chemical_flows)
         self._init_ws(pH, SAlk, COD, BOD, uBOD, TC, TOC, TN, TKN,
-                      TP, TK, TMg, TCa, ThOD, cnBOD, dry_mass, charge, ratios)
+                      TP, TK, TMg, TCa, ThOD, cnBOD, dry_mass, charge, ratios,
+                      impact_item)
 
     def _init_ws(self, pH=7., SAlk=None, COD=None, BOD=None,
                   uBOD=None, TC=None, TOC=None, TN=None, TKN=None,
                   TP=None, TK=None, TMg=None, TCa=None, ThOD=None, cnBOD=None,
-                  dry_mass=None, charge=None, ratios=None):
-        self._impact_item = None
+                  dry_mass=None, charge=None, ratios=None, impact_item=None):
+
         self._pH = pH
         self._SAlk = SAlk
         self._COD = COD
@@ -117,6 +119,9 @@ class WasteStream(Stream):
         self._dry_mass = dry_mass
         self._charge = charge
         self._ratios = ratios
+        if impact_item:
+            impact_item._linked_stream = self
+        self._impact_item = impact_item
 
     
     def show(self, T='K', P='Pa', flow='g/hr', composition=False, N=15,
@@ -172,7 +177,6 @@ class WasteStream(Stream):
             _ws_info += '\n'
             # Only non-zero properties are shown
             _ws_info += int(bool(self.pH))*f'  pH         : {self.pH:.1f}\n'
-            #TODO: unit and definition for following properties
             _ws_info += int(bool(self.SAlk))*f'  Alkalinity : {self.SAlk:.1f} mg/L\n'
             if details:
                 _ws_info += int(bool(self.COD))   *f'  COD        : {self.COD:.1f} mg/L\n'
@@ -341,9 +345,10 @@ class WasteStream(Stream):
         return self._impact_item
     @impact_item.setter
     def impact_item(self, i):
-        raise AttributeError('Cannot set attribute, if want to unlink the '
-                             '``StreamImpactItem``, set ``linked_ws`` of the ``StreamImpactItem`` '
-                             'to None.')
+        self._impact_item = i
+        if i:
+            try: i.linked_stream = self
+            except: breakpoint()
 
     
     def _liq_sol_properties(self, prop, value):
@@ -352,6 +357,7 @@ class WasteStream(Stream):
         else:
             raise AttributeError(f'{self.phase} phase WasteStream does not have {prop}.')
     
+    #!!! Add some document
     @property
     def pH(self):
         return self._liq_sol_properties('pH', 7.)
@@ -443,12 +449,16 @@ class WasteStream(Stream):
     # def charge(self):
     #     return self._liq_sol_properties('charge', self.composite('charge'))
     
+
     def copy(self, ID=None):
         new = super().copy()
         new._init_ws()
         for slot in _ws_specific_slots:
             value = getattr(self, slot)
-            setattr(new, slot, utils.copy_maybe(value))
+            if slot == '_impact_item' and value:
+                value.copy(new_stream=self)
+            else:
+                setattr(new, slot, utils.copy_maybe(value))
         return new
     __copy__ = copy
 
@@ -1193,6 +1203,7 @@ class WasteStream(Stream):
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
         
+
         new.components.SF.i_N = SFi_N
         new.components.XB_Subst.i_N = XB_Substi_N
         new.components.XB_Subst.i_P = XB_Substi_P        
@@ -1238,3 +1249,4 @@ def _calib_XBsub_fBODCOD(components, concentrations, substrate_IDs, BOD):
     if fbodtocod_sub > 1 or fbodtocod_sub < 0:
         raise ValueError("BOD5-to-COD ratio for XB_Subst and XStor was estimated out of range [0,1].")
     return fbodtocod_sub
+

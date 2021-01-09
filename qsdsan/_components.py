@@ -222,7 +222,6 @@ class Components(Chemicals):
         new.append(H2O)
                 
         if default_compile:
-            
             isa = isinstance
             for i in new:
                 i.default()

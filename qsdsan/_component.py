@@ -132,6 +132,7 @@ class Component(tmo.Chemical):
             self._formula = None
             self.formula = formula
         if phase: tmo._chemical.lock_phase(self, phase)
+
         self._measured_as = measured_as
         self.i_mass = i_mass
         self.i_C = i_C
@@ -149,10 +150,8 @@ class Component(tmo.Chemical):
         self._organic = organic
         self.description = description
         if not self.MW and not self.formula: self.MW = 1.
-        
         self.i_COD = i_COD
         self.i_NOD = i_NOD
-        
         return self
 
     def _atom_frac_setter(self, atom=None, frac=None):
@@ -169,6 +168,7 @@ class Component(tmo.Chemical):
         else:
             return check_return_property(f'i_{atom}', frac)
 
+
     @property
     def i_C(self):
         '''
@@ -184,7 +184,6 @@ class Component(tmo.Chemical):
     @i_C.setter
     def i_C(self, i):
         self._i_C = self._atom_frac_setter('C', i)
-
 
     @property
     def i_N(self):
@@ -210,7 +209,7 @@ class Component(tmo.Chemical):
         Note
         ----
         [1] If the ``Component`` is measured as P, then i_P is 1.
-    
+        
         [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_P or 0.
@@ -226,7 +225,7 @@ class Component(tmo.Chemical):
         Note
         ----
         [1] If the ``Component`` is measured as K, then i_K is 1.
-    
+        
         [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_K or 0.
@@ -242,7 +241,7 @@ class Component(tmo.Chemical):
         Note
         ----
         [1] If the ``Component`` is measured as Mg, then i_Mg is 1.
-    
+        
         [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_Mg or 0.
@@ -258,7 +257,7 @@ class Component(tmo.Chemical):
         Note
         ----
         [1] If the ``Component`` is measured as Ca, then i_Ca is 1.
-    
+        
         [2] Will be calculated based on formula and measured_as if given.
         '''
         return self._i_Ca or 0.
@@ -294,7 +293,7 @@ class Component(tmo.Chemical):
             i = 1
         self._i_mass = check_return_property('i_mass', i)
     
-    #!!! need to enable calculation from formula and water chemistry equilibria    
+    #!!! need to enable calculation from formula and water chemistry equilibria
     @property
     def i_charge(self):
         '''
@@ -379,7 +378,7 @@ class Component(tmo.Chemical):
         [str] The unit as which the Component is measured.
 
         Note
-        -------
+        ----
         Can be left as blank or chosen from 'COD', or a constituent 
         element of the Component.
         '''
@@ -463,6 +462,7 @@ class Component(tmo.Chemical):
     def organic(self, organic):
         self._organic = bool(check_return_property('organic', organic))
 
+
     @property
     def i_COD(self):
         '''[float] COD content, calculated based on measured_as, organic and formula.'''
@@ -499,6 +499,7 @@ class Component(tmo.Chemical):
                 i = 0.
         self._i_NOD = check_return_property('i_NOD', i)
             
+
     def show(self, chemical_info=False):
         '''
         Show Component properties.
@@ -585,7 +586,6 @@ class Component(tmo.Chemical):
                       description=None, particle_size=None, degradability=None, 
                       organic=None, **data):
         '''Return a new ``Component`` from a ``Chemical`` object.'''
-
         new = cls.__new__(cls, ID=ID, phase=phase)
         for field in chemical.__slots__:
             value = getattr(chemical, field)

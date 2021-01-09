@@ -79,14 +79,13 @@ def cod_test_stoichiometry(atoms, charge=0, MW=None, missing_handling='elemental
     
     Examples
     --------
-    Acetate in COD test:
+    >>> # Acetate in COD test:
     >>> cod_test_stoichiometry({'C': 2, 'H':3, 'O':2}, -1)
     {'Cr2O7-2': -1.3333333333333333,
      'H+': -11.666666666666666,
      'Cr+3': 2.6666666666666665,
      'CO2': 2,
      'H2O': 7.333333333333332}
-    """
     '''
     products = {}
     nC, nH, nO, nN, nS, nP = 0., 0., 0., 0., 0., 0.

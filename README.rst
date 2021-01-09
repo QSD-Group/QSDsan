@@ -19,8 +19,8 @@ Documentation
 -------------
 You can find tutorials and documents at:
 
- - `Main version <https://qsdsan.readthedocs.io/en/latest/>`_ on `root repository <https://github.com/QSD-Group/QSDsan>`_.
- - `Beta version <https://qsdsan-beta.readthedocs.io/en/latest/>`_ on `Yalin's fork <https://github.com/yalinli2/QSDsan>`_.
+ * `Main version <https://qsdsan.readthedocs.io/en/latest/>`_ on `root repository <https://github.com/QSD-Group/QSDsan>`_.
+ * `Beta version <https://qsdsan-beta.readthedocs.io/en/latest/>`_ on `Yalin's fork <https://github.com/yalinli2/QSDsan>`_.
 
 
 License information
@@ -33,16 +33,16 @@ About the authors
 Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_.
 
 **Code development**
- - `Yalin Li <zoe.yalin.li@gmail.com>`_
- - Joy Cheung
+ * `Yalin Li <zoe.yalin.li@gmail.com>`_
+ * Joy Cheung
 
 **Unit design**
- - `Yalin Li <zoe.yalin.li@gmail.com>`_
- - Joy Cheung
- - Stetson Rowles
+ * `Yalin Li <zoe.yalin.li@gmail.com>`_
+ * Joy Cheung
+ * Stetson Rowles
 
 **Project conception & funding support**
- - `Jeremy Guest <jsguest@illinois.edu>`_
+ * `Jeremy Guest <jsguest@illinois.edu>`_
 
 
 References

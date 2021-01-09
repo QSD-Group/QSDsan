@@ -1,4 +1,4 @@
-﻿ID,description,formula,particle_size,degradability,organic,measured_as,i_C,i_N,i_P,i_K,i_Mg,i_Ca,i_mass,i_charge,i_COD,i_NOD,f_BOD5_COD,f_uBOD_COD,f_Vmass_Totmass,CAS,PubChem
+ID,description,formula,particle_size,degradability,organic,measured_as,i_C,i_N,i_P,i_K,i_Mg,i_Ca,i_mass,i_charge,i_COD,i_NOD,f_BOD5_COD,f_uBOD_COD,f_Vmass_Totmass,CAS,PubChem
 SH2,Dissolved dihydrogen gas,H2,Dissolved gas,Readily,FALSE,COD,0,0,0,0,0,0,0.125,0,,,0,0,1,1333-74-0,783
 SCH4,Dissolved Methane,CH4,Dissolved gas,Readily,TRUE,COD,0.186997444,0,0,0,0,0,0.25,0,,,0,0,1,74-82-8,297
 SCH3OH,Methanol,CH3OH,Soluble,Readily,TRUE,COD,0.249672305,0,0,0,0,0,0.666666667,0,,,0.717,0.862804,1,67-56-1,887

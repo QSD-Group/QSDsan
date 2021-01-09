@@ -18,12 +18,13 @@ for license details.
 
 import numpy as np
 import pandas as pd
-import qsdsan as qs
-from . import ImpactItem, StreamImpactItem
+from . import ImpactItem, StreamImpactItem, WasteStream
 from ._units_of_measure import auom
 from .utils.formatting import format_number as f_num
 
 items = ImpactItem._items
+isinstance = isinstance
+iter = iter
 
 __all__ = ('LCA',)
 
@@ -86,7 +87,7 @@ class LCA:
                                           key=lambda u: u.ID)
         self._transportation_units = sorted(self._transportation_units,
                                             key=lambda u: u.ID)
-        for s in system.streams:
+        for s in (i for i in system.feeds.union(system.products)):
             if s.impact_item:
                 self._lca_streams.add(s)
         self._lca_streams = sorted(self._lca_streams, key=lambda s: s.ID)
@@ -211,24 +212,26 @@ class LCA:
     def get_stream_impacts(self, stream_items=None, exclude=None,
                            kind='all', time=None, time_unit='hr'):
         '''
-        Return all stream-related impacts for the given unit,
+        Return all stream-related impacts for the given streams,
         normalized to a certain time frame.
         '''
         try: iter(stream_items)
         except: stream_items = (stream_items,)
+        if None in stream_items:
+            self._refresh_stream_items()
+            stream_items = self.stream_inventory
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         if not time:
             time = self.lifetime_hr
         else:
             time = auom(time_unit).convert(float(time), 'hr')
-        if None in stream_items:
-            self._refresh_stream_items()
-            stream_items = self.stream_inventory
         for j in stream_items:
             # In case that ws instead of the item is given
-            if isinstance(j, qs.WasteStream):
+            if isinstance(j, WasteStream):
                 ws = j
-                j = ws.impact_item
+                if j.impact_item:
+                    j = ws.impact_item
+                else: continue
             else:
                 ws = j.linked_stream
             if ws is exclude: continue
@@ -287,13 +290,12 @@ class LCA:
         except: units = (units,)
         constr = self.get_construction_impacts(units, time, time_unit)
         trans = self.get_transportation_impacts(units, time, time_unit)
-        ws_items = set()
-        for i in sum((tuple(unit.ins+unit.outs) for unit in units), ()):
-            if i in self._lca_streams:
-                ws_items.add(i.impact_item)
-        ws = self.get_stream_impacts(stream_items=ws_items,
-                                           exclude=exclude,
-                                           time=time, time_unit=time_unit)
+        ws_items = set(i for i in 
+                       sum((tuple(unit.ins+unit.outs) for unit in units), ())
+                       if i.impact_item)
+
+        ws = self.get_stream_impacts(stream_items=ws_items, exclude=exclude,
+                                     time=time, time_unit=time_unit)
         other = self.get_other_impacts(**item_quantities)
         tot = constr.copy()
         for m in tot.keys():
