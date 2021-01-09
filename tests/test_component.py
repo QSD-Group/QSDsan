@@ -37,7 +37,7 @@ def test_component():
     assert SAc.i_COD == 1
     SAc.measured_as = None
     assert SAc.i_mass == 1
-    assert SAc.i_COD == molecular_weight({'O':4})/molecular_weight({'C':2, 'H':4, 'O':2})
+    assert SAc.i_COD == molecular_weight({'O':4})/molecular_weight({'C':2, 'H':3, 'O':2})
     
     SHS = Component.from_chemical('SHS', tmo.Chemical('Hydrosulfide'), 
                                   particle_size="Soluble",
