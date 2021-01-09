@@ -4,20 +4,15 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 .. image:: https://img.shields.io/pypi/l/qsdsan?color=blue&logo=UIUC&style=flat
    :target: https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
-
 .. image:: https://img.shields.io/pypi/pyversions/qsdsan?style=flat
    :target: https://pypi.python.org/pypi/biosteam
-
 .. image:: https://img.shields.io/pypi/v/qsdsan?style=flat&color=blue
    :target: https://pypi.org/project/qsdsan/
-
 .. image:: https://img.shields.io/travis/com/qsd-group/qsdsan?style=flat
-
 .. image:: https://img.shields.io/badge/docs-stable-important?style=flat
    :target: https://qsdsan.readthedocs.io/en/latest/
-
 .. image:: https://img.shields.io/badge/docs-beta-important?style=flat
-   :target: https://qsdsan.readthedocs.io/en/latest/
+   :target: https://qsdsan-beta.readthedocs.io/en/latest/
 
 
 .. contents::
