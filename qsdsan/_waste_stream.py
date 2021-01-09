@@ -82,7 +82,7 @@ class WasteStream(Stream):
     
     __slots__ = (*Stream.__slots__, *_ws_specific_slots)
     _default_ratios = _default_ratios
-
+    
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None, 
                  pH=7., SAlk=2.5, COD=None, BOD=None, uBOD=None,
@@ -364,6 +364,7 @@ class WasteStream(Stream):
 
     @property
     def SAlk(self):
+        '''[float] Alkalinity in meq/L (or mmol HCO3-/L). Assumed to be mainly bicarbonate.'''
         return self._liq_sol_properties('SAlk', 0.)
 
     @property
@@ -373,60 +374,74 @@ class WasteStream(Stream):
 
     @property    
     def BOD(self):
+        '''[float] Biochemical oxygen demand in mg/L. Same as BOD5.'''
         return self._liq_sol_properties('BOD', self.composite('BOD'))
 
     @property    
     def BOD5(self):
+        '''[float] 5-day biochemical oxygen demand, in mg/L. Same as BOD.'''
         return self.BOD
 
     @property    
     def uBOD(self):
+        '''[float] Ultimate biochemical oxygen demand, in mg/L.'''
         return self._liq_sol_properties('uBOD', self.composite('uBOD'))
 
     @property    
     def cnBOD(self):
+        '''[float] Carbonaceous nitrogenous BOD, in mg/L. Biochemical oxygen demand including nitrification.'''
         return self._liq_sol_properties('cnBOD', self.composite('cnBOD'))
 
     @property    
     def ThOD(self):
+        '''[float] Theoretical oxygen demand, in mg/L.'''
         return self._liq_sol_properties('ThOD', self.composite('ThOD'))
     
     #!!! Maybe include C_frac, etc. to calculate C_mass/F_mass - valid for all phases
     # Or a function to calculate it?
     @property
     def TC(self):
+        '''[float] Total carbon, in mg/L.'''
         return self._liq_sol_properties('TC', self.composite('C'))
     
     @property
     def TOC(self):
+        '''[float] Total organic carbon, in mg/L.'''
         return self._liq_sol_properties('TOC', self.composite('C', organic=True))
         
     @property
     def TN(self):
+        '''[float] Total nitrogen, in mg/L.'''
         return self._liq_sol_properties('TN', self.composite('N'))
     
     @property
     def TKN(self):
+        '''[float] Total Kjeldahl nitrogen, in mg/L.'''
         return self._liq_sol_properties('TKN', self.composite('N', specification='TKN'))
     
     @property
     def TP(self):
+        '''[float] Total phosphorus, in mg/L.'''
         return self._liq_sol_properties('TP', self.composite('P'))
     
     @property
     def TK(self):
+        '''[float] Total potassium, in mg/L.'''
         return self._liq_sol_properties('TK', self.composite('K'))
     
     @property
     def TMg(self):
+        '''[float] Total magnesium, in mg/L.'''
         return self._liq_sol_properties('TMg', self.composite('Mg'))
     
     @property
     def TCa(self):
+        '''[float] Total calcium, in mg/L.'''
         return self._liq_sol_properties('TCa', self.composite('Ca'))
     
     @property
     def dry_mass(self):
+        '''[float] Total solids, dry mass of dissolved and suspended solids, in mg/L.'''
         return self._liq_sol_properties('solids', self.composite('solids'))
     
     # TODO: calibrate Charge when weak acids are involved
@@ -492,24 +507,54 @@ class WasteStream(Stream):
 
 
     def get_TDS(self, include_colloidal=True):
+        '''
+        Total dissolved solids (TDS).
+
+        Parameters
+        ----------
+        include_colloidal : bool, optional
+            Whether to include colloidal components as TDS. The default is True.
+
+        Returns
+        -------
+        TDS : float
+            In mg/L.
+
+        '''
         TDS = self.composite('solids', particle_size='s')
         if include_colloidal:
             TDS += self.composite('solids', particle_size='c')
         return TDS
     
     def get_TSS(self, include_colloidal=False):
+        '''
+        Total suspended solids (TSS).
+
+        Parameters
+        ----------
+        include_colloidal : bool, optional
+            Whether to include colloidal components as TSS. The default is False.
+
+        Returns
+        -------
+        TSS : float
+            In mg/L.
+
+        '''
         TSS = self.composite('solids', particle_size='x')
         if include_colloidal:
             TSS += self.composite('solids', particle_size='c')        
         return TSS
     
     def get_VSS(self, include_colloidal=False):
+        '''[float] Volatile suspended solids, in mg/L.'''
         VSS = self.composite('solids', particle_size='x', volatile=True)
         if include_colloidal:
             VSS += self.composite('solids', particle_size='c', volatile=True)        
         return VSS        
     
     def get_ISS(self):
+        '''[float] Inorganic/involatile suspended solids, in mg/L.'''
         return self.composite('solids', particle_size='x', volatile=False)
 
 
