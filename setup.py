@@ -8,7 +8,7 @@ Copyright (C) 2020, Quantitative Sustainable Design Group
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
-This module is under the UIUC open-source license. Please refer to
+This module is under the University of Illinois/NCSA Open Source License. Please refer to
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
@@ -18,13 +18,13 @@ from setuptools import setup
 setup(
     name='qsdsan',
     packages=['qsdsan'],
-    version='0.0.2',
-    license='University of Illinois/NCSA Open Source License',
+    version='0.0.3',
+    license='UIUC',
     author='Quantitative Sustainable Design Group',
     description='Quantitative Sustainable Design for sanitation and resource recovery systems',
     long_description=open('README.rst').read(),
     url="https://github.com/QSD-Group/QSDsan",
-    install_requires=['biosteam', 'scikit-learn'],
+    install_requires=['biosteam'==2.22.10, 'scikit-learn'],
     package_data=
         {'qsdsan': [
                     'data/*',

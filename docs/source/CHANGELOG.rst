@@ -6,16 +6,13 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 0.0.3 (Ongoing)
 ---------------
+- Add status badge to README.rst
 - Tutorial updates:
-
 	- New:
 		- ``TEA`` and ``LCA``
-
 	- Updated:
-
 		-  ``Component`` and ``WasteStream``
 		-  ``SanUnit`` and ``System``
-
 - More flexible setting of ``ImpactItem`` for ``WasteStream``.
 
 
@@ -25,11 +22,9 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 - Inclusion of GPX models for estimation of ``WasteStream`` properties.
 - Live documentation for the `stable package`_ and `beta version`_.
 - New classes:
-
     - All units in `Trimmer et al.`_
     - ``Descriptor`` and ``Checker`` decorators to check user-input values.
     - ``AttrSetter``, ``DictAttrSetter``, and ``FuncGetter`` for batch-setting of uncertainty analysis parameters.
-
 - Added ``save_report`` function to ``LCA`` class for report exporting.
 
 
