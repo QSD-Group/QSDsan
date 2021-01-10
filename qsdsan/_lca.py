@@ -25,6 +25,7 @@ from .utils.formatting import format_number as f_num
 items = ImpactItem._items
 isinstance = isinstance
 iter = iter
+callable = callable
 
 __all__ = ('LCA',)
 
@@ -72,10 +73,8 @@ class LCA:
             except:
                 f_quantity = val
                 unit = ''
-            if not callable(f_quantity):
-                f_quantity = lambda: f_quantity
             self.add_other_item(item, f_quantity, unit)
-                
+            
     
     def _update_system(self, system):
         for u in system.units:
@@ -93,17 +92,18 @@ class LCA:
         self._lca_streams = sorted(self._lca_streams, key=lambda s: s.ID)
         self._system = system
     
-    def _refresh_stream_items(self, system=None):
-        if not system:
-            system = self.system
-        for item in items.values():
-            if isinstance(item, StreamImpactItem):
-                ws = item.linked_stream
-                ws._impact_item = item
-                if ws in system.streams and ws not in self._lca_streams:
-                    self._lca_streams.add(ws)
-        self._lca_streams = sorted(self._lca_streams,
-                                         key=lambda ws: ws.ID)
+    # def _refresh_stream_items(self, system=None):
+    #     if not system:
+    #         system = self.system
+    #     for item in items.values():
+    #         if isinstance(item, StreamImpactItem):
+    #             ws = item.linked_stream
+    #             breakpoint()
+    #             ws._impact_item = item
+    #             if ws in system.streams and ws not in self._lca_streams:
+    #                 self._lca_streams.add(ws)
+    #     self._lca_streams = sorted(self._lca_streams,
+    #                                      key=lambda ws: ws.ID)
         
     def _update_lifetime(self, lifetime=0., unit='yr'):
         if not unit or unit == 'yr':
@@ -112,30 +112,31 @@ class LCA:
             converted = auom(unit).convert(float(lifetime), 'yr')
             self._lifetime = converted
     
-    def add_other_item(self, item, f_quantity, unit='', return_dict=None):
+    def add_other_item(self, item, f_quantity, unit=''):
         '''Add other ``ImpactItem`` in LCA.'''
         if isinstance(item, str):
             item = items[item]
         fu = item.functional_unit
-        quantity = f_quantity()
+        if not callable(f_quantity):
+            f = lambda: f_quantity
+        else:
+            f = f_quantity
+        quantity = f()
         if unit and unit != fu:
             try:
                 quantity = auom(unit).convert(quantity, fu)
             except:
                 raise ValueError(f'Conversion of the given unit {unit} to '
                                  f'item functional unit {fu} is not supported.')
-        self._other_items_f[item.ID] = {'item':item, 'f_quantity':f_quantity, 'unit':unit}
-        if not return_dict:
-            self.other_items[item.ID] = {'item':item, 'quantity':quantity}
-        else:
-            return_dict[item.ID] = {'item':item, 'quantity':quantity}
-            return return_dict
+        self._other_items_f[item.ID] = {'item':item, 'f_quantity':f, 'unit':unit}
+        self.other_items[item.ID] = {'item':item, 'quantity':quantity}
+        
     
     def refresh_other_items(self):
         '''Refresh quantities of other items using the given functions.'''
-        for item, record in self._other_items_f.keys():
-            item, quantity, unit = record.values()
-            self.add_other_item(item, quantity, unit)
+        for item_ID, record in self._other_items_f.items():
+            item, f_quantity, unit = record.values()
+            self.other_items[item_ID]['quantity'] = f_quantity()
         
         
     def __repr__(self):
@@ -217,8 +218,7 @@ class LCA:
         '''
         try: iter(stream_items)
         except: stream_items = (stream_items,)
-        if None in stream_items:
-            self._refresh_stream_items()
+        if stream_items == None:
             stream_items = self.stream_inventory
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         if not time:
@@ -248,17 +248,18 @@ class LCA:
                 impacts[m] += n*time*ws.F_mass
         return impacts
     
-    def get_other_impacts(self, **item_quantities):
+    def get_other_impacts(self):
         '''
         Return all additional impacts from "other" ``ImpactItems`` objects,
         based on defined quantity.
         '''
+        self.refresh_other_items()
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-        for j, k in item_quantities.items():
-            if isinstance(j, str):
-                item = items[j]
+        other_dct = self.other_items         
+        for i in other_dct.keys():
+            item = items[i]
             for m, n in item.CFs.items():
-                impacts[m] += n*k
+                impacts[m] += n*other_dct[i]['quantity']
         return impacts
     
     def get_total_impacts(self, exclude=None, time=None, time_unit='hr'):
@@ -284,7 +285,7 @@ class LCA:
         return impacts
     
     def get_units_impacts(self, units, time=None, time_unit='hr',
-                          exclude=None, **item_quantities):
+                          exclude=None):
         '''Return total impacts with certain units, normalized to a certain time frame. '''
         try: iter(units)
         except: units = (units,)
@@ -296,7 +297,7 @@ class LCA:
 
         ws = self.get_stream_impacts(stream_items=ws_items, exclude=exclude,
                                      time=time, time_unit=time_unit)
-        other = self.get_other_impacts(**item_quantities)
+        other = self.get_other_impacts()
         tot = constr.copy()
         for m in tot.keys():
             tot[m] += trans[m] + ws[m] + other[m]
@@ -359,8 +360,11 @@ class LCA:
                 dct['Quantity'] = np.append(dct['Quantity'], dct['Quantity'].sum())
                 dct['Item Ratio'] = dct['Quantity']/dct['Quantity'].sum()*2
                 for i in self.indicators:
-                    dct[f'{i.ID} [{i.unit}]'] = impact = dct['Quantity']*item.CFs[i.ID]
-                    dct[f'Category {i.ID} Ratio'] = impact/tot[i.ID]
+                    if i.ID in item.CFs:
+                        dct[f'{i.ID} [{i.unit}]'] = impact = dct['Quantity']*item.CFs[i.ID]
+                        dct[f'Category {i.ID} Ratio'] = impact/tot[i.ID]
+                    else:
+                        dct[f'{i.ID} [{i.unit}]'] = dct[f'Category {i.ID} Ratio'] = 0
                 df = pd.DataFrame.from_dict(dct)
                 index0 = f'{item.ID} [{item.functional_unit}]'
                 df.set_index([pd.MultiIndex.from_arrays(
@@ -386,9 +390,13 @@ class LCA:
                 mass = ws.F_mass * time
                 item_dct['Mass [kg]'].append(mass)
                 for ind in self.indicators:
-                    impact = ws_item.CFs[ind.ID]*mass
-                    item_dct[f'{ind.ID} [{ind.unit}]'].append(impact)
-                    item_dct[f'Category {ind.ID} Ratio'].append(impact/tot[ind.ID])
+                    if ind.ID in ws_item.CFs.keys():
+                        impact = ws_item.CFs[ind.ID]*mass
+                        item_dct[f'{ind.ID} [{ind.unit}]'].append(impact)
+                        item_dct[f'Category {ind.ID} Ratio'].append(impact/tot[ind.ID])
+                    else:
+                        item_dct[f'{ind.ID} [{ind.unit}]'].append(0)
+                        item_dct[f'Category {ind.ID} Ratio'].append(0)
             table = pd.DataFrame.from_dict(item_dct)
             table.set_index(['Stream'], inplace=True)
             return self._append_cat_sum(table, cat, tot)
@@ -404,9 +412,13 @@ class LCA:
                 quantity = self.other_items[other_ID]['quantity'] * time
                 item_dct['Quantity'].append(quantity)
                 for ind in self.indicators:
-                    impact = other.CFs[ind.ID]*quantity
-                    item_dct[f'{ind.ID} [{ind.unit}]'].append(impact)
-                    item_dct[f'Category {ind.ID} Ratio'].append(impact/tot[ind.ID])
+                    if ind.ID in other.CFs.keys():
+                        impact = other.CFs[ind.ID]*quantity
+                        item_dct[f'{ind.ID} [{ind.unit}]'].append(impact)
+                        item_dct[f'Category {ind.ID} Ratio'].append(impact/tot[ind.ID])
+                    else:
+                        item_dct[f'{ind.ID} [{ind.unit}]'].append(0)
+                        item_dct[f'Category {ind.ID} Ratio'].append(0)
             table = pd.DataFrame.from_dict(item_dct)
             table.set_index(['Other'], inplace=True)
             return self._append_cat_sum(table, cat, tot)
@@ -545,9 +557,7 @@ class LCA:
     @property
     def total_other_impacts(self):
         '''[dict] Total impacts associated with other ImpactItems (e.g., electricity).'''
-        items = self.other_items.keys()
-        quantities = (self.other_items[i]['quantity'] for i in self.other_items.keys())
-        return self.get_other_impacts(**dict(zip(items, quantities)))
+        return self.get_other_impacts()
     
     @property
     def total_impacts(self):

@@ -4,8 +4,8 @@ Change Log
 
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_.
 
-0.0.3 (Ongoing)
----------------
+0.0.3 (2021-01-10)
+------------------
 - More flexible setting of ``ImpactItem`` for ``WasteStream``.
 - Add status badge to README.rst
 - Add CHANGELOG.rst

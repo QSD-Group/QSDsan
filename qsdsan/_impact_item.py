@@ -408,10 +408,11 @@ class StreamImpactItem(ImpactItem):
             warn(f'ImpactItem {self.ID} is unlinked from {old_ws.ID} and ' \
                  f'linked to {new_ws.ID}.', stacklevel=2)
         if new_ws:
-            if new_ws.impact_item and new_ws.impact_item.ID != self.ID:
-                msg = f'The original StreamImpactItem linked to WasteStream {new_ws} ' \
-                    f'is replaced with {self}.'
-                warn(message=msg, stacklevel=2)
+            if hasattr(self, '_ID'):
+                if new_ws.impact_item and new_ws.impact_item.ID != self.ID:
+                    msg = f'The original StreamImpactItem linked to WasteStream {new_ws} ' \
+                        f'is replaced with {self}.'
+                    warn(message=msg, stacklevel=2)
             new_ws._impact_item = self
         self._linked_stream = new_ws
 

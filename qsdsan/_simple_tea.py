@@ -15,8 +15,8 @@ for license details.
 
 # %%
 
+import qsdsan as qs
 from biosteam import TEA
-from . import currency
 
 __all__ = ('SimpleTEA',)
 
@@ -213,9 +213,9 @@ class SimpleTEA(TEA):
     @property
     def currency(self):
         '''[str] TEA currency, same with ``qsdsan.currency``.'''
-        return currency
+        return qs.currency
     @currency.setter
-    def currency(self):
+    def currency(self, i):
         raise AttributeError('Currency can only be changed through ``qsdsan.currency``.')
 
     @property
