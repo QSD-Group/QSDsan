@@ -6,14 +6,15 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 0.0.3 (Ongoing)
 ---------------
+- More flexible setting of ``ImpactItem`` for ``WasteStream``.
 - Add status badge to README.rst
+- Add CHANGELOG.rst
 - Tutorial updates:
 	- New:
 		- ``TEA`` and ``LCA``
 	- Updated:
 		-  ``Component`` and ``WasteStream``
 		-  ``SanUnit`` and ``System``
-- More flexible setting of ``ImpactItem`` for ``WasteStream``.
 
 
 `0.0.2`_ (2021-01-07)

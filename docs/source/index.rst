@@ -86,12 +86,12 @@ Development and maintenance of the package is supported by the Quantitative Sust
 
 **Code development:**
    - `Yalin Li <zoe.yalin.li@gmail.com>`_
-   - Joy Cheung
+   - `Joy Cheung <joycheung1994@gmail.com>`_
 
 **Unit design:**
    - `Yalin Li <zoe.yalin.li@gmail.com>`_
-   - Joy Cheung
-   - Stetson Rowles
+   - `Joy Cheung <joycheung1994@gmail.com>`_
+   - `Stetson Rowles <lsr@illinois.edu>`_
 
 **Project conception & funding support:**
    - `Jeremy Guest <jsguest@illinois.edu>`_

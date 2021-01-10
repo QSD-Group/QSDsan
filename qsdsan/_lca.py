@@ -280,7 +280,7 @@ class LCA:
                f'WasteStream {stream} not in the System {self.system}.'
         impacts = self.get_total_impacts(exclude=stream)
         for i in impacts.values():
-            i /= stream.F_mass
+            i /= (stream.F_mass*self.lifetime_hr)
         return impacts
     
     def get_units_impacts(self, units, time=None, time_unit='hr',

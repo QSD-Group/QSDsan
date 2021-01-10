@@ -134,11 +134,16 @@ class ImpactIndicator:
                 cls._indicators[indicator] = new
         cls._default_data = data
 
+
+    @classmethod
+    def get_indicator(cls, ID):
+        '''Get an indicator by its ID.'''
+        return cls._indicators[ID]
+
     @classmethod
     def get_all_indicators(cls):
         '''Get all defined indicators.'''
         return tuple(i for i in set([i for i in ImpactIndicator._indicators.values()]))
-
 
     @property
     def ID(self):

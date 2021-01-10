@@ -196,8 +196,13 @@ class ImpactItem:
         cls._default_data = data_file
     
     @classmethod
+    def get_item(cls, ID):
+        '''Get an item by its ID.'''
+        return cls._items[ID]
+    
+    @classmethod
     def get_all_items(cls):
-        '''Get a tuple of all impact indicators'''
+        '''Get a tuple of all impact items'''
         return tuple(set(i for i in cls._items.values()))
     
     @property
