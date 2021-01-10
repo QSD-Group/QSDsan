@@ -8,15 +8,15 @@ Copyright (C) 2020, Quantitative Sustainable Design Group
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
-This module is under the UIUC open-source license. Please refer to 
-https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+This module is under the University of Illinois/NCSA Open Source License.
+Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
 # %%
 
+import qsdsan as qs
 from biosteam import TEA
-from . import currency
 
 __all__ = ('SimpleTEA',)
 
@@ -52,22 +52,19 @@ class SimpleTEA(TEA):
         Annual additional system-wise operating expenditure (on top of the add_OPEX of each SanUnit).
     construction_schedule : tuple or None
         Construction progress, must sum up to 1, leave as None will assume the plant finishes within one year.
-    currency : str
-        TEA currency, should be consistent with all prices and costs provided for chemicals, materials, units, etc.
 
     '''
     
     __slots__ = (*(i for i in TEA.__slots__ if i !='lang_factor'),
                  '_discount_rate', '_start_year', '_lifetime',
                  '_uptime_ratio', '_CAPEX', '_lang_factor',
-                 '_annual_maintenance', '_annual_labor', '_system_add_OPEX',
-                 '_currency')
+                 '_annual_maintenance', '_annual_labor', '_system_add_OPEX')
     
     def __init__(self, system, discount_rate=0.05,
                  start_year=2018, lifetime=10, uptime_ratio=1., 
                  CAPEX=0., lang_factor=None,
                  annual_maintenance=0., annual_labor=0., system_add_OPEX=0.,
-                 construction_schedule=None, currency=currency):
+                 construction_schedule=None):
         system.simulate()
         self.system = system
         self.units = sorted(system._costunits, key=lambda x: x.line)
@@ -90,7 +87,6 @@ class SimpleTEA(TEA):
         if not construction_schedule:
             construction_schedule = (1,)
         self.construction_schedule = construction_schedule
-        self._currency = currency
         
         ########## Not relevant to SimpleTEA but required by TEA ##########
         # From U.S. IRS for tax purpose, won't matter when tax set to 0
@@ -216,11 +212,11 @@ class SimpleTEA(TEA):
 
     @property
     def currency(self):
-        '''[str] TEA currency.'''
-        return self._currency
+        '''[str] TEA currency, same with ``qsdsan.currency``.'''
+        return qs.currency
     @currency.setter
     def currency(self, i):
-        self._currency = i
+        raise AttributeError('Currency can only be changed through ``qsdsan.currency``.')
 
     @property
     def installed_equipment_cost(self):
@@ -254,7 +250,7 @@ class SimpleTEA(TEA):
     @property
     def CAPEX(self):
         '''[float] Capital expenditure, if not provided, is set to be the same as installed_equipment_cost.'''
-        return self.FCI
+        return self.TCI
 
     @property
     def annual_maintenance(self):

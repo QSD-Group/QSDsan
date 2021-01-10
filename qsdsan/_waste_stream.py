@@ -6,11 +6,11 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
-    Joy Cheung
+    Joy Cheung <joycheung1994@gmail.com>
     Yalin Li <zoe.yalin.li@gmail.com>
 
-This module is under the UIUC open-source license. Please refer to 
-https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+This module is under the University of Illinois/NCSA Open Source License.
+Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
@@ -31,10 +31,6 @@ _defined_composite_vars = ('COD', 'BOD5', 'BOD', 'uBOD', 'NOD', 'ThOD', 'cnBOD',
 _common_composite_vars = ('_COD', '_BOD', '_uBOD', '_TC', '_TOC', '_TN', 
                           '_TKN', '_TP', '_TK', '_TMg', '_TCa', 
                           '_dry_mass', '_charge', '_ThOD', '_cnBOD')
-
-#!!! Just use _common_composite_vars
-# _copied_slots = (*tuple('_'+i for i in _defined_composite_vars),
-#                  '_TOC', '_TKN', '_SAlk')
 
 _ws_specific_slots = (*_common_composite_vars,
                       '_pH', '_SAlk', '_ratios', '_impact_item')
@@ -346,9 +342,7 @@ class WasteStream(Stream):
     @impact_item.setter
     def impact_item(self, i):
         self._impact_item = i
-        if i:
-            try: i.linked_stream = self
-            except: breakpoint()
+        i.linked_stream = self
 
     
     def _liq_sol_properties(self, prop, value):
@@ -456,7 +450,7 @@ class WasteStream(Stream):
         for slot in _ws_specific_slots:
             value = getattr(self, slot)
             if slot == '_impact_item' and value:
-                value.copy(new_stream=self)
+                value.copy(stream=new)
             else:
                 setattr(new, slot, utils.copy_maybe(value))
         return new
