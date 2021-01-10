@@ -1,29 +1,31 @@
 # Needed by qsdsan
 biosteam==2.22.10
 pint==0.12
-sympy==1.5.1
 numpy==1.19.2
-chemicals==0.1.5
-ipykernel==5.3.4
 scikit-learn==0.23.2
-scipy==1.5.2
+ipykernel==5.3.4
+
+# sympy==1.5.1
+# chemicals==0.1.5
+# scipy==1.5.2
 
 # Packages by others
-pyyaml==5.3.1
 pytest-cov>=2.0.1
 coveralls>=2.2.0
-six==1.15.0
-idna==2.10
-requests==2.25.0
-python-dateutil==2.8.1
+
+# pyyaml==5.3.1
+# six==1.15.0
+# idna==2.10
+# requests==2.25.0
+# python-dateutil==2.8.1
 
 # Related to biosteam
-pyglet==1.4.10
-biorefineries==2.17.3
-flexsolve==0.3.32
-free_properties==0.2.5
-colorpalette==0.3.1 
-matplotlib==3.3.2
-xlrd==1.2.0
-openpyxl==3.0.0
-numba==0.50.0
+# pyglet==1.4.10
+# biorefineries==2.17.3
+# flexsolve==0.3.32
+# free_properties==0.2.5
+# colorpalette==0.3.1 
+# matplotlib==3.3.2
+# xlrd==1.2.0
+# openpyxl==3.0.0
+# numba==0.50.0
