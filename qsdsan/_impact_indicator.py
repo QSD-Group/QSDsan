@@ -8,8 +8,8 @@ Copyright (C) 2020, Quantitative Sustainable Design Group
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
-This module is under the UIUC open-source license. Please refer to 
-https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+This module is under the University of Illinois/NCSA Open Source License.
+Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
@@ -134,11 +134,16 @@ class ImpactIndicator:
                 cls._indicators[indicator] = new
         cls._default_data = data
 
+
+    @classmethod
+    def get_indicator(cls, ID):
+        '''Get an indicator by its ID.'''
+        return cls._indicators[ID]
+
     @classmethod
     def get_all_indicators(cls):
         '''Get all defined indicators.'''
         return tuple(i for i in set([i for i in ImpactIndicator._indicators.values()]))
-
 
     @property
     def ID(self):

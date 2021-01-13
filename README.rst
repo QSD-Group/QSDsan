@@ -1,6 +1,21 @@
 ====================================================================================
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 ====================================================================================
+
+.. image:: https://img.shields.io/pypi/l/qsdsan?color=blue&logo=UIUC&style=flat
+   :target: https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+.. image:: https://img.shields.io/pypi/pyversions/qsdsan?style=flat
+   :target: https://pypi.python.org/pypi/qsdsan
+.. image:: https://img.shields.io/pypi/v/qsdsan?style=flat&color=blue
+   :target: https://pypi.org/project/qsdsan/
+.. image:: https://img.shields.io/travis/com/qsd-group/qsdsan?style=flat
+   :target: https://github.com/QSD-Group/QSDsan
+.. image:: https://img.shields.io/badge/docs-stable-important?style=flat
+   :target: https://qsdsan.readthedocs.io/en/latest/
+.. image:: https://img.shields.io/badge/docs-beta-important?style=flat
+   :target: https://qsdsan-beta.readthedocs.io/en/latest/
+
+
 .. contents::
 
 What is QSDsan?
@@ -19,8 +34,8 @@ Documentation
 -------------
 You can find tutorials and documents at:
 
- * `Main version <https://qsdsan.readthedocs.io/en/latest/>`_ on `root repository <https://github.com/QSD-Group/QSDsan>`_.
- * `Beta version <https://qsdsan-beta.readthedocs.io/en/latest/>`_ on `Yalin's fork <https://github.com/yalinli2/QSDsan>`_.
+- `Stable version <https://qsdsan.readthedocs.io/en/latest/>`_ on `root repository <https://github.com/QSD-Group/QSDsan>`_.
+- `Beta version <https://qsdsan-beta.readthedocs.io/en/latest/>`_ on `Yalin's fork <https://github.com/yalinli2/QSDsan>`_.
 
 
 License information
@@ -32,17 +47,17 @@ About the authors
 -----------------
 Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_.
 
-**Code development**
- * `Yalin Li <zoe.yalin.li@gmail.com>`_
- * Joy Cheung
+**Code development:**
+   - `Yalin Li <zoe.yalin.li@gmail.com>`_
+   - `Joy Cheung <joycheung1994@gmail.com>`_
 
-**Unit design**
- * `Yalin Li <zoe.yalin.li@gmail.com>`_
- * Joy Cheung
- * Stetson Rowles
+**Unit design:**
+   - `Yalin Li <zoe.yalin.li@gmail.com>`_
+   - `Joy Cheung <joycheung1994@gmail.com>`_
+   - `Stetson Rowles <lsr@illinois.edu>`_
 
-**Project conception & funding support**
- * `Jeremy Guest <jsguest@illinois.edu>`_
+**Project conception & funding support:**
+   - `Jeremy Guest <jsguest@illinois.edu>`_
 
 
 References

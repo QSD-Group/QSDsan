@@ -190,7 +190,7 @@ accordingly.
     
 .. figure:: ./figures/modelA_K_recovery.png
     
-    *Uncertainty plots from ``modelA``*
+    *Uncertainty plots from modelA*
 
 
 Coming soon

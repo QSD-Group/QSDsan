@@ -8,16 +8,15 @@ Copyright (C) 2020, Quantitative Sustainable Design Group
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
-This module is under the UIUC open-source license. Please refer to 
-https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+This module is under the University of Illinois/NCSA Open Source License.
+Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
 
 # %%
 
-import biosteam as bst
-from biosteam import utils
+from biosteam import Unit, utils
 from . import currency, Construction, Transportation
 from .utils.piping import WSIns, WSOuts
 
@@ -25,7 +24,7 @@ from .utils.piping import WSIns, WSOuts
 __all__ = ('SanUnit',)
 
 @utils.registered(ticket_name='SU')
-class SanUnit(bst.Unit, isabstract=True):    
+class SanUnit(Unit, isabstract=True):    
 
     '''
     Subclass of Unit in biosteam, is initialized with WasteStream rather than Stream.
@@ -66,9 +65,6 @@ class SanUnit(bst.Unit, isabstract=True):
         self._init_utils()
         self._init_results()
         self._assert_compatible_property_package()
-        self._add_OPEX = 0.
-        self._uptime_ratio = 1.
-        self._lifetime = None
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
@@ -82,8 +78,12 @@ class SanUnit(bst.Unit, isabstract=True):
 
     def _init_results(self):
         super()._init_results()
+        self._add_OPEX = 0.
+        self._uptime_ratio = 1.
+        self._lifetime = None
         self._construction = ()
         self._transportation = ()
+
 
     def _info(self, T, P, flow, composition, N, _stream_info):
         '''Information of the unit.'''
