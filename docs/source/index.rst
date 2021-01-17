@@ -31,7 +31,7 @@ Follow the tutorial to get started!
 
 How does QSDsan work?
 ---------------------
-.. figure:: https://lucid.app/publicSegments/view/574cc644-f59d-4770-8001-584e48cfe34e/image.png
+.. figure:: https://lucid.app/publicSegments/view/328e7bc3-8fbe-42b9-ae9f-0fde6a7de253/image.png
 
    Simplified unified modeling language (UML) diagram of QSDsan
 
