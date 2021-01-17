@@ -4,12 +4,19 @@ Change Log
 
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_.
 
+
+0.0.4 (ongoing)
+---------------
+- Updated UML diagram.
+
+
 0.0.3 (2021-01-10)
 ------------------
 - More flexible setting of ``ImpactItem`` for ``WasteStream``.
 - Add status badge to README.rst
 - Add CHANGELOG.rst
 - Tutorial updates:
+
 	- New:
 		- ``TEA`` and ``LCA``
 	- Updated:
@@ -23,9 +30,11 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 - Inclusion of GPX models for estimation of ``WasteStream`` properties.
 - Live documentation for the `stable package`_ and `beta version`_.
 - New classes:
+
     - All units in `Trimmer et al.`_
     - ``Descriptor`` and ``Checker`` decorators to check user-input values.
     - ``AttrSetter``, ``DictAttrSetter``, and ``FuncGetter`` for batch-setting of uncertainty analysis parameters.
+
 - Added ``save_report`` function to ``LCA`` class for report exporting.
 
 
