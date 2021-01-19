@@ -288,17 +288,17 @@ class WasteStream(Stream):
         exclude_gas = _get(cmps, 's')+_get(cmps, 'c')+_get(cmps, 'x')        
         
         if variable == 'COD': 
-            var = cmps.i_COD * cmp_c * exclude_gas
+            var = cmps.i_COD * cmp_c * exclude_gas * (cmps.i_COD >= 0)
         elif variable == 'uBOD': 
-            var = cmps.i_COD * cmps.f_uBOD_COD * cmp_c * exclude_gas
+            var = cmps.i_COD * cmps.f_uBOD_COD * cmp_c * exclude_gas * (cmps.i_COD >= 0)
         elif variable in ('BOD5', 'BOD'): 
-            var = cmps.i_COD * cmps.f_BOD5_COD * cmp_c * exclude_gas
+            var = cmps.i_COD * cmps.f_BOD5_COD * cmp_c * exclude_gas * (cmps.i_COD >= 0)
         elif variable == 'NOD':
             var = cmps.i_NOD * cmp_c * exclude_gas
         elif variable == 'ThOD':
-            var = (cmps.i_NOD + cmps.i_COD) * cmp_c
+            var = (cmps.i_NOD + cmps.i_COD * (cmps.i_COD >= 0)) * cmp_c
         elif variable == 'cnBOD':
-            var = (cmps.i_NOD + cmps.i_COD * cmps.f_BOD5_COD) * cmp_c * exclude_gas
+            var = (cmps.i_NOD + cmps.i_COD * cmps.f_BOD5_COD * (cmps.i_COD >= 0)) * cmp_c * exclude_gas
         elif variable == 'C':
             var = cmps.i_C * cmp_c
         elif variable == 'N':
