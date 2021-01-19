@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 '''
-Sanitation Explorer: Sustainable design of non-sewered sanitation technologies
-Copyright (C) 2020, Sanitation Explorer Development Group
+QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
+Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Joy Cheung <joycheung1994@gmail.com>
@@ -60,8 +60,8 @@ def cod_test_stoichiometry(atoms, charge=0, MW=None, missing_handling='elemental
         'Cr2O7-2' is always present, with negative values indicating dichromate is
         required/consumed. [-]
 
-    Notes
-    -----
+    Note
+    ----
     The stoichiometry is given by:
     .. math::
         C_n H_a O_b N_c S_d P_e^{f-} + xCr_2O_7^{2-} + (8x+c-2d-3e+f)H^{+} 
