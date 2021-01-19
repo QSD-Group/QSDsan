@@ -8,8 +8,8 @@ Copyright (C) 2020, Quantitative Sustainable Design Group
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
-This module is under the UIUC open-source license. Please refer to 
-https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+This module is under the University of Illinois/NCSA Open Source License.
+Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
@@ -26,14 +26,14 @@ __all__ = ('Decay',)
 class Decay:
     '''For non-steady state degradation.'''
 
-    def __init__(self):
-        self._COD_max_decay = None
-        self._decay_k_COD = None
-        self._MCF_decay = None
-        self._max_CH4_emission = None
-        self._N_max_decay = None
-        self._decay_k_N = None
-        self._N2O_EF_decay = None
+    # Put these as default class attributes
+    _COD_max_decay = None
+    _decay_k_COD = None
+    _MCF_decay = None
+    _max_CH4_emission = None
+    _N_max_decay = None
+    _decay_k_N = None
+    _N2O_EF_decay = None
 
     @staticmethod
     def allocate_N_removal(tot_red, preferred_N):

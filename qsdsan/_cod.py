@@ -8,8 +8,8 @@ Copyright (C) 2020, Sanitation Explorer Development Group
 This module is developed by:
     Joy Cheung <joycheung1994@gmail.com>
 
-This module is under the UIUC open-source license. Please refer to 
-https://github.com/QSD-for-WaSH/sanitation/blob/master/LICENSE.txt
+This module is under the University of Illinois/NCSA Open Source License.
+Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 from chemicals.elements import molecular_weight

@@ -8,8 +8,8 @@ Copyright (C) 2020, Quantitative Sustainable Design Group
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
-This module is under the UIUC open-source license. Please refer to 
-https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+This module is under the University of Illinois/NCSA Open Source License.
+Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
@@ -26,6 +26,8 @@ from .utils.formatting import format_number as f_num
 
 indicators = ImpactIndicator._indicators
 data_path += '_impact_item.xlsx'
+isinstance = isinstance
+getattr = getattr
 
 __all__ = ('ImpactItem', 'StreamImpactItem')
 
@@ -194,8 +196,13 @@ class ImpactItem:
         cls._default_data = data_file
     
     @classmethod
+    def get_item(cls, ID):
+        '''Get an item by its ID.'''
+        return cls._items[ID]
+    
+    @classmethod
     def get_all_items(cls):
-        '''Get a tuple of all impact indicators'''
+        '''Get a tuple of all impact items'''
         return tuple(set(i for i in cls._items.values()))
     
     @property
@@ -401,10 +408,11 @@ class StreamImpactItem(ImpactItem):
             warn(f'ImpactItem {self.ID} is unlinked from {old_ws.ID} and ' \
                  f'linked to {new_ws.ID}.', stacklevel=2)
         if new_ws:
-            if new_ws.impact_item and new_ws.impact_item.ID != self.ID:
-                msg = f'The original StreamImpactItem linked to WasteStream {new_ws} ' \
-                    f'is replaced with {self}.'
-                warn(message=msg, stacklevel=2)
+            if hasattr(self, '_ID'):
+                if new_ws.impact_item and new_ws.impact_item.ID != self.ID:
+                    msg = f'The original StreamImpactItem linked to WasteStream {new_ws} ' \
+                        f'is replaced with {self}.'
+                    warn(message=msg, stacklevel=2)
             new_ws._impact_item = self
         self._linked_stream = new_ws
 
