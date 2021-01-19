@@ -14,7 +14,7 @@ for license details.
 '''
 from chemicals.elements import molecular_weight
 
-__all__ = ('cod_test_stoichiometry',)
+__all__ = ('cod_test_stoichiometry', 'electron_acceptor_cod')
 
 
 
@@ -148,3 +148,13 @@ def cod_test_stoichiometry(atoms, charge=0, MW=None, missing_handling='elemental
     else:
         raise ValueError("Allowed values for `missing_handling` are 'elemental' and 'ash'.")
     return products
+
+def electron_acceptor_cod(atoms, charge=0):
+    if atoms == {'O':2}:
+        return -1
+    elif atoms == {'N':2}:
+        return -1.5
+    elif atoms == {'N':1, 'O':2} and charge == -1:
+        return -1.5
+    elif atoms == {'N':1, 'O':3} and charge == -1:
+        return -2

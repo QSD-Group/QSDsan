@@ -20,6 +20,7 @@ def test_component():
     import thermosteam as tmo
     from qsdsan import Component, Components
     from chemicals.elements import molecular_weight
+    from math import isclose
     
     SNH4 = Component('SNH4', formula='NH4+', measured_as='N', 
                  f_BOD5_COD=0, f_uBOD_COD=0, f_Vmass_Totmass=0,
@@ -57,6 +58,8 @@ def test_component():
     components = Components.load_default()
     assert components.SH2.measured_as == 'COD'
     assert components.SH2.i_COD == 1
+    assert isclose(components.SN2.i_COD, - molecular_weight({'O':1.5})/molecular_weight({'N':1}), rel_tol=1e-3)
+    assert isclose(components.SNO3.i_COD, - molecular_weight({'O':4})/molecular_weight({'N':1}), rel_tol=1e-3)
     tmo.settings.set_thermo(components)
     
 # This just means that if pytest runs this module, it calls the test_component function

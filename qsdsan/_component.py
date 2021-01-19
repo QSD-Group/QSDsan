@@ -18,7 +18,7 @@ for license details.
 import thermosteam as tmo
 from chemicals.elements import molecular_weight, charge_from_formula
 from chemicals.elements import mass_fractions as get_mass_frac
-from ._cod import cod_test_stoichiometry
+from ._cod import cod_test_stoichiometry, electron_acceptor_cod
 
 __all__ = ('Component',)
 
@@ -471,7 +471,7 @@ class Component(tmo.Chemical):
     def i_COD(self, i):
         if i: self._i_COD = check_return_property('i_COD', i)
         else:             
-            if self.organic or self.formula == 'H2': 
+            if self.organic or self.formula in ('H2', 'O2', 'N2', 'NO2-', 'NO3-'): 
                 if self.measured_as == 'COD': self._i_COD = 1.
                 elif not self.atoms:
                     raise AttributeError(f"Must specify i_COD for organic component {self.ID}, "
@@ -479,8 +479,11 @@ class Component(tmo.Chemical):
                 else:
                     chem_MW = molecular_weight(self.atoms) 
                     chem_charge = charge_from_formula(self.formula)
-                    Cr2O7 = - cod_test_stoichiometry(self.atoms, chem_charge)['Cr2O7-2']
-                    cod = Cr2O7 * 1.5 * molecular_weight({'O':2})
+                    if self.formula in ('O2', 'N2', 'NO2-', 'NO3-'):
+                        cod = electron_acceptor_cod(self.atoms, chem_charge) * molecular_weight({'O':2})
+                    else:
+                        Cr2O7 = - cod_test_stoichiometry(self.atoms, chem_charge)['Cr2O7-2']
+                        cod = Cr2O7 * 1.5 * molecular_weight({'O':2})
                     self._i_COD = check_return_property('i_COD', cod/chem_MW * self.i_mass)
             else: self._i_COD = 0. 
 
