@@ -31,12 +31,13 @@ Follow the tutorial to get started!
 
 How does QSDsan work?
 ---------------------
-.. https://lucid.app/publicSegments/view/ac755b6d-1bd6-464c-8e47-9e21e762d888/image.png # needs updating
-.. figure:: ./images/QSDsan_UML.png
+.. figure:: https://lucid.app/publicSegments/view/328e7bc3-8fbe-42b9-ae9f-0fde6a7de253/image.png
+
+   Simplified unified modeling language (UML) diagram of QSDsan
 
 QSDsan follows the structure of `BioSTEAM <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_, a fast and flexible package for the design, simulation, and techno-economic analysis of biorefineries under uncertainty, but QSDsan is enhanced with features geared toward quantitative sustainable design of sanitation systems.
 
-The above Unified Modeling Language (UML) diagram of the package shows the relationship between QSDsan and its dependencies `biosteam <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_, `thermosteam <https://github.com/BioSTEAMDevelopmentGroup/thermosteam>`_, and `chemicals <https://github.com/CalebBell/chemicals>`_.
+The above Unified Modeling Language (UML) diagram of the package shows the relationship between QSDsan and its dependencies `biosteam <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_ and `thermosteam <https://github.com/BioSTEAMDevelopmentGroup/thermosteam>`_.
 
 In particular, QSDsan introduces:
 
@@ -70,7 +71,7 @@ To get the full value of QSDsan, we highly recommend reading through the documen
 
 - `biosteam docs <https://biosteam.readthedocs.io/en/latest/index.html>`_
 - `thermosteam docs <https://thermosteam.readthedocs.io/en/latest/index.html>`_
-- `chemicals docs <https://chemicals.readthedocs.io/en/latest/>`_
+- `chemicals docs <https://chemicals.readthedocs.io/en/latest/>`_ (the thermodynamic property package for thermosteam)
 
 
 .. toctree::
