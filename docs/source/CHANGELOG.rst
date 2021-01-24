@@ -2,11 +2,12 @@
 Change Log
 ==========
 
-This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_.
+This document records notable changess to `QSDsan <https://github.com/QSD-Group/QSDsan>`_.
 
 
-0.0.4 (ongoing)
----------------
+Ongoing
+-------
+- `LCA.get_normalized_impacts` is replaced by `LCA.get_allocated_impacts` for flexible allocation options.
 - Updated UML diagram.
 
 

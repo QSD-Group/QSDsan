@@ -55,8 +55,8 @@ _key_component_properties = ('particle_size', 'degradability', 'organic',
 _component_properties = ('measured_as', 'description', 
                          *_key_component_properties)
                          
-_component_slots = (*tmo.Chemical.__slots__,
-                    *tuple('_'+i for i in _component_properties))
+# _component_slots = (*tmo.Chemical.__slots__,
+#                     *tuple('_'+i for i in _component_properties))
 
 _checked_properties = (*_checked_properties, *_key_component_properties)
 
@@ -112,7 +112,8 @@ class Component(tmo.Chemical):
     
     '''         
 
-    __slots__ = _component_slots
+    # Child class will inherit parent class's slots
+    __slots__ = tuple('_'+i for i in _component_properties)
 
     def __new__(cls, ID='', search_ID=None, formula=None, phase=None, measured_as=None, 
                 i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
