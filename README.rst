@@ -10,9 +10,9 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
    :target: https://pypi.org/project/qsdsan/
 .. image:: https://img.shields.io/travis/com/qsd-group/qsdsan?style=flat
    :target: https://github.com/QSD-Group/QSDsan
-.. image:: https://img.shields.io/badge/docs-stable-important?style=flat
+.. image:: https://img.shields.io/badge/docs-stable-brightgreen?style=flat
    :target: https://qsdsan.readthedocs.io/en/latest/
-.. image:: https://img.shields.io/badge/docs-beta-important?style=flat
+.. image:: https://img.shields.io/badge/docs-beta-brightgreen?style=flat
    :target: https://qsdsan-beta.readthedocs.io/en/latest/
 
 
