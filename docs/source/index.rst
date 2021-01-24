@@ -106,8 +106,8 @@ We would like to build an open and welcoming community, you can always post issu
    :maxdepth: 1
    :caption: How to contribute?
 
+   for_developers/CODE_OF_CONDUCT
    for_developers/contributing
-   for_developers/code_of_conduct
    for_developers/tutorial_template
 
    
