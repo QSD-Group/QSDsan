@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.abspath('../../../bst'))
 # -- Project information -----------------------------------------------------
 
 project = 'QSDsan'
-copyright = '2020, Quantitative Sustainable Design Group'
+copyright = '2020-2021, Quantitative Sustainable Design Group'
 author = 'Quantitative Sustainable Design Group'
 
 # The full version, including alpha/beta/rc tags

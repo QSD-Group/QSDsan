@@ -100,7 +100,9 @@ Development and maintenance of the package is supported by the Quantitative Sust
 
 Join the community
 ------------------
-We would like to build an open and welcoming community, you can always post issues on our GitHub homepage or contact any of the Quantitative Sustainable Design Group memebers. If you would like to contribute, please follow our contribution guide:
+We would like to build an open and welcoming community, you can always post issues on our `GitHub homepage <https://github.com/QSD-Group/QSDsan/issues>`_ or contact any of the Quantitative Sustainable Design Group memebers. We are always excited to have new members in our team.
+
+If you would like to contribute, please follow our contribution guide, thank you for making QSDsan better!
 
 .. toctree::
    :maxdepth: 1
@@ -110,7 +112,7 @@ We would like to build an open and welcoming community, you can always post issu
    for_developers/contributing
    for_developers/tutorial_template
 
-   
+
 QSDsan is and will stay open source under University of Illinois/NCSA Open Source License, please refer to the `LICENSE <https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt>`_ for details.
 
 
