@@ -63,11 +63,11 @@ GitHub has really detailed documentation on `forking <https://docs.github.com/en
 
 Developing Modules
 ------------------
-#. Adding/modifying modules locally
+#. Adding/modifying modules locally.
 
-#. `commit <https://git-scm.com/docs/git-commit>`_ your changes and concisely summarize your changes in the commit message
+#. `Commit <https://git-scm.com/docs/git-commit>`_ your changes and concisely summarize your changes in the commit message.
 
-	- You can have multiple `branches <https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging>`_ for different features
+	- You can have multiple `branches <https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging>`_ for different features.
 
 #. Push your local changes to your remote fork:
 
@@ -75,7 +75,7 @@ Developing Modules
 
 	    git push origin master
 
-	- As your develop your contributions, the root repository may update, you should merge these changes and resolve any conflicts before your final push
+	- As your develop your contributions, the root repository may update, you should merge these changes and resolve any conflicts before your final push.
 
 	.. code:: bash
 
@@ -86,7 +86,7 @@ Submitting Pull Request
 -----------------------
 #. Once you are satisfied with your changes and push all commits to your fork, go to you GitHub fork of QSDsan, and submit a `pull request <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request>`_.
 
-	- You can confirm that you have pulled all updates from the root repository if there's a message showing that your branch is X commits ahead of QSD-Group:master as shown (not X commits, Y commits behind)
+	- You can confirm that you have pulled all updates from the root repository if there's a message showing that your branch is X commits ahead of QSD-Group:master as shown (not X commits, Y commits behind).
 
 	.. image:: ./images/commit.png
 		:align: center
