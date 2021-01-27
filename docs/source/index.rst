@@ -15,7 +15,7 @@ All systems developed with ``QSDsan`` will be included in another repository in 
 
 Getting Started
 ---------------
-First install the package at `PyPI <https://pypi.org/>`_. If you use pip, simply
+First install the package at `PyPI <https://pypi.org/>`_. If you use pip:
 
 .. code:: bash
 
@@ -35,7 +35,7 @@ Follow the tutorial to get started!
 
 How does QSDsan work?
 ---------------------
-.. figure:: https://lucid.app/publicSegments/view/328e7bc3-8fbe-42b9-ae9f-0fde6a7de253/image.png
+.. figure:: https://lucid.app/publicSegments/view/c8de361f-7292-47e3-8870-d6f668691728/image.png
 
    Simplified unified modeling language (UML) diagram of ``QSDsan``
 

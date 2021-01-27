@@ -411,7 +411,7 @@ def plot_recovery(model, resource):
     plot_series_bp(f'{sys_ID} Uncertainty Results',
                    dfs, colors.brown_tint.RGBn, colors.brown_shade.RGBn,
                    ('Liquid', 'Solid', 'Gas', 'Total'),
-                   f'{resource} Recovery [%]',
+                   f'{resource} Recovery',
                    (0, 1))
 
 

@@ -8,6 +8,7 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 Ongoing
 -------
 - ``LCA.get_normalized_impacts`` was replaced by ``LCA.get_allocated_impacts`` for flexible allocation options.
+- Reformatted all documents, added instructions on documentation.
 - Added brief instructions on contributing and code of conduct.
 - Updated UML diagram.
 

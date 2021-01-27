@@ -54,7 +54,7 @@ templates_path = ['_templates']
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'tango'
+pygments_style = 'manni'
 # pygments_style = 'sphinx'
 
 # -- Options for HTML output -------------------------------------------------
