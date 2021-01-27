@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -32,10 +31,6 @@ class Toilet(SanUnit, Decay, isabstract=True):
     '''
     Abstract class containing common parameters and design algorithms for toilets
     based on Trimmer et al. [1]_
-    
-    Reference documents
-    -------------------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
     
     Parameters
     ----------
@@ -66,6 +61,10 @@ class Toilet(SanUnit, Decay, isabstract=True):
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
+        
+    See Also
+    --------
+    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
     
     '''
     
@@ -165,7 +164,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     def toilet_paper(self):
         '''
         [float] Amount of toilet paper used
-        (if if_toilet_paper is True), [kg/cap/hr].
+        (if `if_toilet_paper` is True), [kg/cap/hr].
         '''
         return self._toilet_paper
     @toilet_paper.setter
@@ -176,7 +175,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     def flushing_water(self):
         '''
         [float] Amount of water used for flushing
-        (if if_flushing_water is True), [kg/cap/hr].
+        (if `if_flushing_water` is True), [kg/cap/hr].
         '''
         return self._flushing_water
     @flushing_water.setter
@@ -187,7 +186,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     def cleansing_water(self):
         '''
         [float] Amount of water used for cleansing 
-        (if if_cleansing_water is True), [kg/cap/hr].
+        (if `if_cleansing_water` is True), [kg/cap/hr].
         '''
         return self._cleansing_water
     @cleansing_water.setter
@@ -197,11 +196,11 @@ class Toilet(SanUnit, Decay, isabstract=True):
     @property
     def desiccant(self):
         '''
-        [float] Amount of desiccant used (if if_desiccant is True), [kg/cap/hr].
+        [float] Amount of desiccant used (if `if_desiccant` is True), [kg/cap/hr].
 
-        Note
-        ----
-        Value set by desiccant_V and desiccant_rho.
+        .. note::
+            
+            Value set by `desiccant_V` and `desiccant_rho`.
 
         '''
         return self.desiccant_V*self.desiccant_rho
@@ -210,7 +209,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     def N_volatilization(self):
         '''
         [float] Fraction of input N that volatizes to the air
-        (if if_air_emission is True).
+        (if `if_air_emission` is True).
         '''
         return self._N_volatilization
     @N_volatilization.setter
@@ -222,9 +221,9 @@ class Toilet(SanUnit, Decay, isabstract=True):
         '''
         [float] Fraction of excreta that is appropriately emptied.
 
-        Note
-        ----
-        Will be 1 (i.e., 100%) if if_ideal_emptying is True.
+        .. note::
+            
+            Will be 1 (i.e., 100%) if `if_ideal_emptying` is True.
 
         '''
         if self.if_ideal_emptying:
@@ -233,7 +232,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     @empty_ratio.setter
     def empty_ratio(self, i):
         if self.if_ideal_emptying:
-            msg = f'if_ideal_emptying is True, the set value {i} is ignored.'
+            msg = f'`if_ideal_emptying` is True, the set value {i} is ignored.'
             warn(msg, source=self)
         self._empty_ratio = float(i)
 

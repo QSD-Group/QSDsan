@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -36,7 +35,7 @@ class LCA:
     
     Parameters
     ----------
-    system : biosteam.System
+    system : :class:`biosteam.System`
         System for which this LCA is conducted for.
     lifetime : float
         Lifetime of the LCA.
@@ -44,9 +43,9 @@ class LCA:
         Unit of lifetime.
     uptime_ratio : float
         Fraction of time that the plant is operating.
-    **item_quantities : kwargs, ImpactItem or str = float/callable or (float/callable, unit)
-        Other ImpactItems (e.g., electricity) and their quantities. Note that
-        callable functions are used so that quantity of items can be updated.
+    **item_quantities : kwargs, :class:`ImpactItem` or str = float/callable or (float/callable, unit)
+        Other :class:`ImpactItem` objects (e.g., electricity) and their quantities.
+        Note that callable functions are used so that quantity of items can be updated.
     
     '''
     
@@ -102,7 +101,7 @@ class LCA:
 
     
     def add_other_item(self, item, f_quantity, unit=''):
-        '''Add other ``ImpactItem`` in LCA.'''
+        '''Add other :class:`ImpactItem` in LCA.'''
         if isinstance(item, str):
             item = items[item]
         fu = item.functional_unit
@@ -132,7 +131,7 @@ class LCA:
         return f'<LCA: {self.system}>'
 
     def show(self, lifetime_unit='yr'):
-        '''Show basic information of this ``LCA`` object.'''
+        '''Show basic information of this :class:`LCA` object.'''
         lifetime = auom('yr').convert(self.lifetime, lifetime_unit)
         info = f'LCA: {self.system} (lifetime {f_num(lifetime)} {lifetime_unit})'
         info += '\nImpacts:'
@@ -241,7 +240,7 @@ class LCA:
     
     def get_other_impacts(self):
         '''
-        Return all additional impacts from "other" ``ImpactItems`` objects,
+        Return all additional impacts from "other" :class:`ImpactItems` objects,
         based on defined quantity.
         '''
         self.refresh_other_items()
@@ -272,21 +271,21 @@ class LCA:
         
         Parameters
         ----------
-        streams : qsdsan.WasteStream or iterable
+        streams : :class:`WasteStream` or iterable
             One of multiple streams. Note that impacts of these streams will be
             excluded in calculating the total impacts.
         allocate_by : str, iterable, or function to generate an iterable
-            If provided as a str, can be 'mass', 'energy', or 'value' to allocate
+            If provided as a str, can be "mass", "energy", or 'value' to allocate
             the impacts accordingly.
             If provided as an iterable (no need to normalize so that sum of the iterable is 1),
             will allocate impacts according to the iterable.
             If provided as a function,  will call the function to generate an
             iterable to allocate the impacts accordingly.
         
-        Note
-        ----
-        Energy of the stream will be calcuated as the sum of HHVs of all components
-        in the stream.
+        .. note::
+            
+            Energy of the stream will be calcuated as the sum of HHVs of all components
+            in the stream.
         
         '''
         try: iter(streams)
@@ -314,7 +313,7 @@ class LCA:
         ratios = ratios/ratios.sum()
         for n, ws in enumerate(streams):
             if not ws in self.system.streams:
-                raise ValueError(f'WasteStream {ws} not in the system.')
+                raise ValueError(f'`WasteStream` {ws} not in the system.')
             allocated[ws.ID] = dict.fromkeys(impact_dct.keys(),
                                              (ratios[n]*impact_vals).sum())
         return allocated
@@ -356,7 +355,7 @@ class LCA:
     
     def get_impact_table(self, category=None, time=None, time_unit='hr'):
         '''
-        Return a ``pandas.DataFrame`` table for the given impact category,
+        Return a :class:`pandas.DataFrame` table for the given impact category,
         normalized to a certain time frame.
         '''
         if not time:
@@ -461,7 +460,7 @@ class LCA:
         
         else:
             raise ValueError(
-                "category can only be 'Construction', 'Transportation', 'Stream', or 'Other', " \
+                'category can only be "Construction", "Transportation", "Stream", or "Other", ' \
                 f'not {category}.')
 
     def save_report(self, file=None, sheet_name='LCA',
@@ -480,7 +479,7 @@ class LCA:
 
     @property
     def system(self):
-        '''[biosteam.System] The System linked to this LCA.'''
+        '''[biosteam.System] The system linked to this LCA.'''
         return self._system
     @system.setter
     def system(self, i):
@@ -501,7 +500,7 @@ class LCA:
     
     @property
     def uptime_ratio(self):
-        '''[float] Fraction of time that the plant is operating.'''
+        '''[float] Fraction of time that the system is operating.'''
         return self._uptime_ratio
     @uptime_ratio.setter
     def uptime_ratio(self, i):
@@ -512,7 +511,7 @@ class LCA:
     
     @property
     def indicators(self):
-        '''[set] All ImpactIndicators associated with this LCA.'''
+        '''[set] All impact indicators associated with this LCA.'''
         if not self.construction_inventory:
             constr = set()
         else:
@@ -534,7 +533,7 @@ class LCA:
             other = set(sum((items[i].indicators for i in self.other_items.keys()), ()))
         tot = constr.union(trans, ws, other)
         if len(tot) == 0:
-            raise ValueError('No ImpactIndicators have been added.')
+            raise ValueError('No `ImpactIndicators` have been added.')
         return tot
     
     @property
@@ -579,12 +578,12 @@ class LCA:
     
     @property
     def total_stream_impacts(self):
-        '''[dict] Total impacts associated with WasteStreams (e.g., chemicals, emissions).'''
+        '''[dict] Total impacts associated with `WasteStreams` (e.g., chemicals, emissions).'''
         return self.get_stream_impacts(stream_items=self.stream_inventory)
         
     @property
     def other_items (self):
-        '''[dict] Other ImpactItems (e.g., electricity) and their quantities.'''
+        '''[dict] Other impact items (e.g., electricity) and their quantities.'''
         return self._other_items
     @other_items.setter
     def other_items(self, item, f_quantity, unit=''):

@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -33,10 +32,6 @@ data_path += 'sanunit_data/_anaerobic_digestion.csv'
 class AnaerobicDigestion(SanUnit, Decay):
     '''
     Anaerobic digestion of wastes with the production of biogas based on Trimmer et al. [1]_
-    
-    Reference documents
-    -------------------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
 
     Parameters
     ----------
@@ -56,6 +51,10 @@ class AnaerobicDigestion(SanUnit, Decay):
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
+        
+    See Also
+    --------
+    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
     
     '''
     

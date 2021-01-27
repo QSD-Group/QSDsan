@@ -195,9 +195,9 @@ accordingly.
 
 Coming soon
 -----------
-* Uncertainty models for ``sysB`` and ``sysC``.
+- Uncertainty models for ``sysB`` and ``sysC``.
 
-* Comparison figure for results between ``QSDsan`` and [1]_.
+- Comparison figure for results between ``QSDsan`` and [1]_.
 
 
 References

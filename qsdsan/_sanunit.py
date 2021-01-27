@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -27,14 +26,11 @@ __all__ = ('SanUnit',)
 class SanUnit(Unit, isabstract=True):    
 
     '''
-    Subclass of Unit in biosteam, is initialized with WasteStream rather than Stream.
+    Subclass of :class:`biosteam.Unit`, is initialized with :class:`WasteStream`
+    rather than :class:`biosteam.Stream`.
     
-    Reference documents
-    -------------------
-    `biosteam.Unit <https://biosteam.readthedocs.io/en/latest/Unit.html>`_
-    
-    Additional attributes
-    ---------------------
+    Parameters
+    ----------
     construction : tuple
         Contains construction information.
     construction_impacts : dict
@@ -51,6 +47,10 @@ class SanUnit(Unit, isabstract=True):
         It will be used to adjust cost and emission calculation in TEA and LCA.
         If left as None, its lifetime will be assumed to be the same as the
         TEA/LCA lifetime.
+    
+    See Also
+    --------
+    `biosteam.Unit <https://biosteam.readthedocs.io/en/latest/Unit.html>`_
 
     '''
     
@@ -140,7 +140,7 @@ class SanUnit(Unit, isabstract=True):
     
     
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, stream_info=True):
-        """Print information of the unit, including WasteStream-specific information"""
+        '''Print information of the unit, including waste stream-specific information.'''
         print(self._info(T, P, flow, composition, N, stream_info))
     
     def add_construction(self, add_unit=True, add_design=True, add_cost=True):
@@ -155,7 +155,7 @@ class SanUnit(Unit, isabstract=True):
     
     @property
     def components(self):
-        '''[Components] The ``Components`` object associated with this unit.'''
+        '''[Components] The :class:`Components` object associated with this unit.'''
         return self.chemicals
     
     @property
@@ -227,7 +227,7 @@ class SanUnit(Unit, isabstract=True):
     @property
     def uptime_ratio(self):
         '''
-        [float] Uptime of the unit to adjust add_OPEX, should be in [0,1]
+        [float] Uptime of the unit to adjust `add_OPEX`, should be in [0,1]
         (i.e., a unit that is always operating).
         '''
         return self._uptime_ratio

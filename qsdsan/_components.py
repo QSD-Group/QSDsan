@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -35,7 +34,7 @@ _PH = tmo.base.phase_handle.PhaseHandle
 # %%
 
 class UndefinedComponent(AttributeError):
-    '''AttributeError regarding undefined Component objects.'''
+    '''AttributeError regarding undefined :class:`Component` objects.'''
     def __init__(self, ID):
         super().__init__(repr(ID))
 
@@ -45,11 +44,12 @@ class UndefinedComponent(AttributeError):
 
 class Components(Chemicals):
     '''
-    A subclass of the ``Chemicals`` object in the thermosteam [1]_ package, contains ``Component`` objects as attributes.
+    A subclass of :class:`thermosteam.Chemicals`, contains :class:`Component`
+    objects as attributes.
     
-    Reference documents
-    -------------------
-    .. [1] `thermosteam.Chemicals <https://thermosteam.readthedocs.io/en/latest/Chemicals.html>`_
+    See Also
+    --------
+    `thermosteam.Chemicals <https://thermosteam.readthedocs.io/en/latest/Chemicals.html>`_
     
     '''
     
@@ -62,18 +62,19 @@ class Components(Chemicals):
                 setfield(self, component.ID, component)
             else:
                 if isa(component, Chemical):
-                    raise TypeError(f'{component} is a ``Chemical`` object, use ``Component.from_chemical`` to define a ``Component`` object.')
-                raise TypeError(f'Only ``Component`` objects can be included, not a ``{type(component).__name__}`` object.')
+                    raise TypeError(f'{component} is a `thermosteam.Chemical` object, '
+                                    'use `Component.from_chemical` to define a `Component` object.')
+                raise TypeError(f'Only `Component` objects can be included, not a `{type(component).__name__}` object.')
         return self
     
     def __setattr__(self, ID, component):
-        raise TypeError("Cannot set attribute; use ``{self.ID}.append`` instead.")
+        raise TypeError("Cannot set attribute; use `{self.ID}.append` instead.")
     
     def __setitem__(self, ID, component):
-        raise TypeError("Cannot set item; use ``{self.ID}.append`` instead.")
+        raise TypeError("Cannot set item; use `{self.ID}.append` instead.")
     
     def __getitem__(self, key):
-        '''Return a ``Component`` object or a list of ``Component`` objects.'''
+        '''Return a :class:`Component` object or a list of :class:`Component` objects.'''
         dct = self.__dict__
         try:
             if isinstance(key, str):
@@ -95,24 +96,25 @@ class Components(Chemicals):
         '''Append a Component'''
         if not isinstance(component, Component):
             if isinstance(component, Chemical):
-                raise TypeError(f'{component} is a ``Chemical`` object, use ``Component.from_chemical`` to define a ``Component`` object.')
+                raise TypeError(f'{component} is a `Chemical` object, '
+                                'use `Component.from_chemical` to define a `Component` object.')
             else:
-                raise TypeError("only ``Component`` objects can be appended, "
-                               f"not ``{type(component).__name__}`` object.")
+                raise TypeError("only `Component` objects can be appended, "
+                               f"not `{type(component).__name__}` object.")
         ID = component.ID
         if ID in self.__dict__:
-            raise ValueError(f"{ID} already defined in ``Components``.")
+            raise ValueError(f"{ID} already defined in this `Components` object.")
         setattr(self, ID, component)
     
     def extend(self, components):
-        '''Extend with more ``Component`` objects.'''
+        '''Extend with more :class:`Component` objects.'''
         if isinstance(components, Components):
             self.__dict__.update(components.__dict__)
         else:
             for component in components: self.append(component)
         
     def compile(self):
-        '''Cast as a ``CompiledComponents`` object.'''
+        '''Cast as a :class:`CompiledComponents` object.'''
         setattr(self, '__class__', CompiledComponents)
         CompiledComponents._compile(self)
         
@@ -123,21 +125,22 @@ class Components(Chemicals):
     @classmethod
     def load_from_file(cls, path='', use_default_data=False, store_data=False):
         '''
-        Create ``Component`` objects based on properties defined in a cvs or an Excel file,
-        return a ``Components`` object that contains all created ``Component`` objects.
+        Create and return a :class:`Components` objects based on properties
+        defined in a cvs or an Excel file.
     
         Parameters
         ----------
         path : str
-            File path, the file should end with '.cvs', '.xls', or 'xlsx'
+            File path, the file should end with ".cvs", ".xls", or "xlsx".
     
         Returns
         -------
-        A ``Components`` object that contains all created Component objects.
+        A :class:`Components` object that contains all created Component objects.
+
             
-        Note
-        ----
-        The ``Components`` object needs to be compiled before it is used in simulation
+        .. note::
+            
+            The :class:`Components` object needs to be compiled before it is used in simulation.
     
         '''
         if use_default_data and cls._default_data is not None:
@@ -186,7 +189,8 @@ class Components(Chemicals):
     @classmethod
     def load_default(cls, use_default_data=True, sotre_data=True, default_compile=True):
         '''
-        Create a ``Components`` object containing default ``Component`` objects.
+        Create and return a :class:`Components` or :class:`CompiledComponents`
+        object containing all default :class:`Component` objects.
     
         Parameters
         ----------
@@ -195,18 +199,20 @@ class Components(Chemicals):
         sotre_data : bool, optional
             Whether to store the default data as cache. The default is True.
         default_compile : bool, optional
-            Whether to compile the default Components. The default is True.
+            Whether to compile the default :class:`Components`. The default is True.
     
         Returns
         -------
-        A ``Components`` or ``CompiledComponents`` object with default ``Component`` objects.
-    
-        Note
-        ----
-        [1] Component-specific properties are defined in ./data/component.cvs.
+        A :class:`Components` or :class:`CompiledComponents` object with
+        default :class:`Component` objects.
 
-        [2] When default_compile is True, all essential chemical-specific properties
-        that are missing will be defaulted to those of water.
+
+        .. note::
+
+            [1] Component-specific properties are defined in ./data/component.cvs.
+    
+            [2] When `default_compile` is True, all essential chemical-specific properties
+            that are missing will be defaulted to those of water.
     
         '''
         import os
@@ -266,12 +272,11 @@ def component_data_array(components, attr):
 
 class CompiledComponents(CompiledChemicals):
     '''
-    A subclass of the ``CompiledChemicals`` object in the thermosteam [1]_ package,
-    contains ``Component`` objects as attributes.
+    A subclass of :class:`thermosteam.CompiledChemicals`, contains `Component` objects as attributes.
     
-    Reference documents
-    -------------------
-    .. [1] `thermosteam.CompiledChemicals <https://thermosteam.readthedocs.io/en/latest/Chemicals.html>`_
+    See Also
+    --------
+    `thermosteam.CompiledChemicals <https://thermosteam.readthedocs.io/en/latest/Chemicals.html>`_
     
     '''
     
@@ -295,7 +300,7 @@ class CompiledComponents(CompiledChemicals):
     
     def refresh_constants(self):
         '''
-        Refresh constant arrays of ``Components`` objects,
+        Refresh constant arrays of :class:`Components` objects,
         including all chemical and component-specific properties.
         '''
         super().refresh_constants()
@@ -327,7 +332,7 @@ class CompiledComponents(CompiledChemicals):
         dct['org'] = np.asarray([int(cmp.organic) for cmp in components])
     
     def subgroup(self, IDs):
-        '''Create a new subgroup of ``Component`` objects.'''
+        '''Create a new subgroup of :class:`Component` objects.'''
         components = self[IDs]
         new = Components(components)
         new.compile()

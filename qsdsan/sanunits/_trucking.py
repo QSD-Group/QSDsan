@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -144,7 +143,7 @@ class Trucking(SanUnit):
     @loss_ratio.setter
     def loss_ratio(self, i):
         if not self.if_material_loss:
-            msg = f'if_material_loss is False, the set value {i} is ignored.'
+            msg = f'`if_material_loss` is False, the set value {i} is ignored.'
             warn(msg, source=self)
         try:
             self._loss_ratio = float(i)

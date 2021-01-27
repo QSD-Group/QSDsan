@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -23,8 +22,8 @@ __all__ = ('ComponentSplitter',)
 
 class ComponentSplitter(SanUnit):
     '''
-    Split the influent into individual ``Component`` objects,
-    the last effluent contains all remaining ``Component`` objects.
+    Split the influent into individual components,
+    the last effluent contains all remaining components.
     '''
     
     def __init__(self, ID='', ins=None, outs=(), split_keys=()):
@@ -46,7 +45,7 @@ class ComponentSplitter(SanUnit):
                 self.outs[num].imass[cmps] = last.imass[cmps]
                 last.imass[cmps] = 0
                 if cmps in splitted:
-                    raise ValueError(f'The Component {cmps} appears more than once in split_dict')
+                    raise ValueError(f'The component {cmps} appears more than once in `split_dict`.')
                 splitted.append(cmps)
             else:
                 try: iter(cmps)
@@ -57,7 +56,7 @@ class ComponentSplitter(SanUnit):
                     self.outs[num].imass[cmp] = last.imass[cmp]
                     last.imass[cmp] = 0
                     if cmp in splitted:
-                        raise ValueError(f'The Component {cmps} appears more than once in split_dict')
+                        raise ValueError(f'The component {cmps} appears more than once in `split_dict`.')
                     splitted.append(cmp)
 
             num += 1
@@ -65,12 +64,12 @@ class ComponentSplitter(SanUnit):
     @property
     def split_keys(self):
         '''
-        [iterable] An iterable containing IDs of Components to be splitted to
+        [iterable] An iterable containing IDs of components to be splitted to
         different effluents. Element of the item in the iterable can be str of
-        another iterable containing Component IDs. If the item is also iterable,
-        all Components whose ID are in the iterable will be splitted to the same
-        effluent. Note that the split is 1 (i.e., all of the Component will be
-        diverted to the effluent).
+        another iterable containing component IDs. If the item is also iterable,
+        all components whose ID are in the iterable will be splitted to the same
+        effluent. Note that the split is 1 (i.e., all of the remaining components
+        will be diverted to the effluent).
         '''
         return self._split_keys
     @split_keys.setter

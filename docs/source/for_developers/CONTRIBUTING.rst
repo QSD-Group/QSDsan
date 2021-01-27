@@ -84,7 +84,7 @@ Developing Modules
 
 Submitting Pull Request
 -----------------------
-#. Once you are satisfied with your changes and push all commits to your fork, go to you GitHub fork of QSDsan, and submit a `pull request <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request>`_.
+#. Once you are satisfied with your changes and push all commits to your fork, go to you GitHub fork of ``QSDsan``, and submit a `pull request <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request>`_.
 
 	- You can confirm that you have pulled all updates from the root repository if there's a message showing that your branch is X commits ahead of QSD-Group:master as shown (not X commits, Y commits behind).
 
@@ -94,12 +94,44 @@ Submitting Pull Request
 #. One of the Quantitative Sustainable Design Group members will review your changes and accept or discuss with you if edits are needed.
 
 
-Documentation and Testing
--------------------------
-Whenever new modules or functions are added, concise and thorough documents should be added with examples for `doctest <https://docs.python.org/3/library/doctest.html>`_. A pull request will only be accepted when the branch has not conflicts with the root repository and all tests have been passed. More instructions on documentation and testing will be added.
+Documentation
+-------------
+Whenever new modules or functions are added, concise and thorough documents should be added with examples for `doctest <https://docs.python.org/3/library/doctest.html>`_. Please also include yourself (contact method is optional) to the list of contributors on the top of the module.
+
+``QSDsan`` uses `numpydoc docstring style <https://numpydoc.readthedocs.io/en/latest/format.html>`_ with some modifications for better rendering. Some important notes:
+
+- Both quotes ('') and double quotes ("") work.
+- If you want some notes in your docstring, use `directives <https://docutils.sourceforge.io/docs/ref/rst/directives.html>`_ so that it can be rendered in sphinx.
+	
+	.. code::
+
+		# This can be rendered by sphinx
+		.. note::
+
+			Something to notes
+
+		# This won't be rendered by sphinx
+		Notes
+		-----
+
+		# This can be rendered by sphinx but won't be recognized as numpydoc docstring
+		Note
+		----
+
+- Use directives like ``:class:`package.class``` and ``:func:`class.function``` to indicate classes and functions, this will automatically add links to the corresponding documents.
+
+	- Use single back ticks (``) in error messages and warnings since directives won't be rendered.
+
+- If you want to refer to documents of other internal modules or external packages, please include it in the "See Also" section (refer to :class:`sanunits.AnaerobicDigestion` and :class:`Component` as examples).
 
 
-Templates
----------
-Templates for code and tutorials are available `here <https://github.com/QSD-Group/QSDsan/tree/master/docs/source/for_developers>`_.
+Most of the documentations will be automatically generated through `sphinx's autodoc extension <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_. If your contribution involves new classes or modules, please add a new .rst file in docs/source/. and add it to the appropriate section in the ``index.rst`` file. You can refer to any of the existing files for examples.
+
+Tutorials are prepared in `Jupyter Notebook <https://jupyter.org/>`_ and potential contributors are encouraged to use the `templates <https://github.com/QSD-Group/QSDsan/tree/master/docs/source/for_developers>`_.
+
+
+Testing
+-------
+``QSDsan`` uses `Travis CI <https://travis-ci.com/>`_ for testing. A pull request will only be accepted when the branch has not conflicts with the root repository and all tests have been passed. More instructions on testing will be added.
+
 
