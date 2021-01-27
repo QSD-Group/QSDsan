@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -29,10 +28,6 @@ class Lagoon(SanUnit, Decay):
     '''
     Anaerobic and facultative lagoon treatment based on Trimmer et al. [1]_
     
-    Reference documents
-    -------------------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-    
     Parameters
     ----------
     ins : WasteStream
@@ -40,7 +35,7 @@ class Lagoon(SanUnit, Decay):
     outs : WasteStream
         Treated waste, fugitive CH4, and fugitive N2O.
     design_type : str
-        Can be 'anaerobic' or 'facultative'.
+        Can be "anaerobic" or "facultative".
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
         
@@ -50,6 +45,10 @@ class Lagoon(SanUnit, Decay):
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
+        
+    See Also
+    --------
+    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
 
     '''
     
@@ -127,7 +126,7 @@ class Lagoon(SanUnit, Decay):
     
     @property
     def design_type(self):
-        '''[str] Lagoon type, can be either 'anaerobic' or 'facultative'.'''
+        '''[str] Lagoon type, can be either "anaerobic" or "facultative".'''
         return self._design_type
     @design_type.setter
     def design_type(self, i):
@@ -140,7 +139,7 @@ class Lagoon(SanUnit, Decay):
                 data = self._facultative_defaults
                 self.line = 'Facultative lagoon'
             else:
-                raise ValueError("design_type can only be 'anaerobic' or 'facultative',"
+                raise ValueError('`design_type` can only be "anaerobic" or "facultative", '
                                  f'not {i}.')
             for para in data.index:
                 value = float(data.loc[para]['expected'])

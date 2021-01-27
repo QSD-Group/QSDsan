@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -47,7 +46,7 @@ class Construction:
         return f'<Construction: {self.item.ID}>'
     
     def show(self):
-        '''Show basic information about this ``Construction`` object.'''
+        '''Show basic information about this :class:`Construction` object.'''
         item = self.item
         impacts = self.impacts
         info = f'Construction : {item.ID}'
@@ -79,7 +78,7 @@ class Construction:
     
     @property
     def item(self):
-        '''[ImpactItem] Item associated with this construction.'''
+        '''[ImpactItem] Item associated with this construction activity.'''
         return self._item
     @item.setter
     def item(self, i):

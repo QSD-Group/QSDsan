@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -38,7 +37,7 @@ class Decay:
     @staticmethod
     def allocate_N_removal(tot_red, preferred_N):
         '''
-        Allocate the total amount of N removal to NH3 and non-NH3 Components.
+        Allocate the total amount of N removal to NH3 and non-NH3 components.
 
         Parameters
         ----------

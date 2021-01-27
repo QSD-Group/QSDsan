@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -43,19 +42,19 @@ class ImpactItem:
     Parameters
     ----------
     ID : str
-        ID of the ImpactItem. If no ID is provided, this item will not be
+        ID of the impact item. If no ID is provided, this item will not be
         saved in the ImpactItem dict.
     functional_unit : str
-        Functional unit of the ImpactItem.
+        Functional unit of the impact item.
     price : float
         Price of the item per functional unit.
     price_unit : str
         Unit of the price.
     source : ImpactItem
-        If provided, all attributions and properties of this ImpactItem will
+        If provided, all attributions and properties of this impact item will
         be copied from the provided source.
-    **indicator_CFs : kwargs, ImpactIndicator or str = float or (float, unit)
-        ImpactIndicators and their characteriziation factors.
+    **indicator_CFs : kwargs, :class:`ImpactIndicator` or str = float or (float, unit)
+        Impact indicators and their characteriziation factors.
     
     '''
     
@@ -124,7 +123,7 @@ class ImpactItem:
             self._price = converted
 
     def add_indicator_CF(self, indicator, CF_value, CF_unit=''):
-        '''Add an indicator charactorization factor for this ``ImpactItem`` object.'''
+        '''Add an indicator charactorization factor for this :class:`ImpactItem` object.'''
         check_source(self)
         if isinstance(indicator, str):
             indicator = indicators[indicator]
@@ -141,9 +140,9 @@ class ImpactItem:
 
     def copy(self, new_ID=None, set_as_source=False):
         '''
-        Return a new ``ImpactItem`` object with the same settings.
-        Set the original ``ImpactItem`` as the source for the new one if
-        set_as_source is True.
+        Return a new :class:`ImpactItem` object with the same settings.
+        Set the original :class:`ImpactItem` as the source for the new one if
+        `set_as_source` is True.
         '''        
         new = ImpactItem.__new__(ImpactItem)
         new.ID = new_ID
@@ -209,13 +208,13 @@ class ImpactItem:
     def source(self):
         '''
         [ImpactItem] If provided, all attributions and properties of this
-        ``ImpactItem`` will be copied from the provided source.
+        impact item will be copied from the provided source.
         '''
         return self._source
     @source.setter
     def source(self, i):
         if not isinstance(i, ImpactItem):
-            raise ValueError('source can only be an ImpactItem, '
+            raise ValueError('`source` can only be an `ImpactItem`, '
                              f'not {type(i).__name__}.')
         self._source = i
     
@@ -242,7 +241,7 @@ class ImpactItem:
     
     @property
     def indicators(self):
-        ''' [tuple] ``ImpactIndicator`` objects associated with the item.'''
+        ''' [tuple] :class:`ImpactIndicator` objects associated with the item.'''
         return tuple(indicators[i] for i in self.CFs.keys())
     
     @property
@@ -269,12 +268,13 @@ class ImpactItem:
 
 class StreamImpactItem(ImpactItem):
     '''
-    A class for calculation of environmental impacts associated with WasteStreams.
+    A class for calculation of environmental impacts associated with chemical
+    inputs and emissions.
     
     Parameters
     ----------
     linked_stream : WasteStream
-        The associated ``WasteStream`` for environmental impact calculation.
+        The associated :class:`WasteStream` for environmental impact calculation.
     **indicator_CFs : kwargs
         ImpactIndicators and their characteriziation factors.
     
@@ -312,7 +312,7 @@ class StreamImpactItem(ImpactItem):
             return '<StreamImpactItem: no linked WasteStream>'
 
     def show(self):
-        '''Show basic information about this ``StreamImpactItem`` object.'''
+        '''Show basic information about this :class:`StreamImpactItem` object.'''
         info = f'StreamImpactItem: [per {self.functional_unit}]'    
         if self.linked_stream:
             info += f'\nLinked to       : {self.linked_stream}'
@@ -340,10 +340,10 @@ class StreamImpactItem(ImpactItem):
 
     def copy(self, new_ID=None, stream=None, set_as_source=False):
         '''
-        Return a new ``StreamImpactItem`` object with the same settings,
-        link the new ``StreamImpactItem`` to the provided stream if given,
-        set the original ``StreamImpactItem`` as the source for the new one if
-        set_as_source is True.
+        Return a new :class:`StreamImpactItem` object with the same settings,
+        link the new :class:`StreamImpactItem` to the provided stream if given,
+        set the original :class:`StreamImpactItem` as the source for the new one if
+        `set_as_source` is True.
         '''
         new = StreamImpactItem.__new__(StreamImpactItem)
         new.ID = new_ID
@@ -366,12 +366,11 @@ class StreamImpactItem(ImpactItem):
     def source(self):
         '''
         [StreamImpactItem] If provided, all attributions and properties of this
-        ``StreamImpactItem`` will be copied from the provided source.
+        :class:`StreamImpactItem` will be copied from the provided source.
         
-        Note
-        ----
-        Since the price is copied from the price of the linked_stream, it
-        can be different form the source.
+        .. note::
+            Since the price is copied from the price of the `linked_stream`, it
+            can be different form the source.
         '''
         return self._source
     @source.setter
@@ -384,8 +383,8 @@ class StreamImpactItem(ImpactItem):
     @property
     def linked_stream(self):
         '''
-        [WasteStream] The associated ``WasteStream`` for environmental impact calculation,
-        can be set by either the ``WasteStream`` object or its ID
+        [WasteStream] The associated :class:`WasteStream` for environmental impact calculation,
+        can be set by either the :class:`WasteStream` object or its ID
         '''
         try: return self._linked_stream
         except: breakpoint()
@@ -397,20 +396,20 @@ class StreamImpactItem(ImpactItem):
                 try:
                     new_ws = getattr(WasteStream.registry, new_ws)
                 except:
-                    raise ValueError(f'The WasteStream ID {new_ws} not '
+                    raise ValueError(f'The ``WasteStream` ID {new_ws} not '
                                      'found in <WasteStream>.registry')
             else:
-                raise TypeError('linked_stream must be a WasteStream or '
-                                f'the ID of WasteStream, not {type(new_ws).__name__}.')
+                raise TypeError('`linked_stream` must be a `WasteStream` or '
+                                f'the ID of a `WasteStream`, not {type(new_ws).__name__}.')
         if self._linked_stream:
             old_ws = self._linked_stream
             self._linked_stream.impact_item = None
-            warn(f'ImpactItem {self.ID} is unlinked from {old_ws.ID} and ' \
+            warn(f'`ImpactItem` {self.ID} is unlinked from {old_ws.ID} and ' \
                  f'linked to {new_ws.ID}.', stacklevel=2)
         if new_ws:
             if hasattr(self, '_ID'):
                 if new_ws.impact_item and new_ws.impact_item.ID != self.ID:
-                    msg = f'The original StreamImpactItem linked to WasteStream {new_ws} ' \
+                    msg = f'The original `StreamImpactItem` linked to `WasteStream` {new_ws} ' \
                         f'is replaced with {self}.'
                     warn(message=msg, stacklevel=2)
             new_ws._impact_item = self
@@ -419,8 +418,8 @@ class StreamImpactItem(ImpactItem):
     @property
     def ID(self):
         '''
-        [str] ID of the item. If no ID is provided but its linked_stream is provided,
-        the ID will be set as ID of the linked_stream with a suffix '_item'.
+        [str] ID of the item. If no ID is provided but its `linked_stream` is provided,
+        the ID will be set as ID of the `linked_stream` with a suffix '_item'.
         '''
         return self._ID
     @ID.setter
@@ -434,7 +433,7 @@ class StreamImpactItem(ImpactItem):
     
     @property
     def price(self):
-        '''[float] Price of the linked WasteStream.'''
+        '''[float] Price of the linked `WasteStream`.'''
         if self.linked_stream:
             return self.linked_stream.price
         else: return 0.

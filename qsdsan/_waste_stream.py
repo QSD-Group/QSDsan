@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Joy Cheung <joycheung1994@gmail.com>
@@ -67,16 +66,18 @@ conc_unit = auom('mg/L')
 @utils.registered(ticket_name='ws')
 class WasteStream(Stream):
     '''
-    A subclass of the Stream object in the thermosteam [1]_ package with additional
-    attributes and methods for waste treatment.
+    A subclass of :class:`thermosteam.Stream` with additional attributes
+    and methods for waste treatment.
     
-    Reference documents
-    -------------------
-    .. [1] `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
+    See Also
+    --------
+    `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
     
     '''
     
-    __slots__ = (*Stream.__slots__, *_ws_specific_slots)
+    # Child class will inherit parent class's slots
+    __slots__ = _ws_specific_slots
+    # __slots__ = (*Stream.__slots__, *_ws_specific_slots)
     _default_ratios = _default_ratios
     
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
@@ -123,7 +124,7 @@ class WasteStream(Stream):
     def show(self, T='K', P='Pa', flow='g/hr', composition=False, N=15,
              stream_info=True, details=True):
         '''
-        Print WasteStream information.
+        Print waste stream information.
 
         Parameters
         ----------
@@ -134,15 +135,15 @@ class WasteStream(Stream):
         flow : str, optional
             The unit for the flow. The default is 'kg/hr'.
         composition : bool, optional
-            Whether to show flow information of different Component objects in
-            the WasteStream as a percentage. The default is False.
+            Whether to show flow information of different :class:`Component` objects in
+            this waste stream as a percentage. The default is False.
         N : int, optional
-            Number of Component objects to print out, when left as None,
-            the number depends on the default of thermosteam. The default is 15.
+            Number of components to print out, when left as None,
+            the number depends on the default of :class:`thermosteam`. The default is 15.
         stream_info : bool, optional
-            Whether to print Stream-specific information. The default is True.
+            Whether to print stream-specific information. The default is True.
         details : bool, optional
-            Whether to show the all composite variables of the WasteStream. The default is True.
+            Whether to show the all composite variables of this waste stream. The default is True.
 
         '''
 
@@ -196,8 +197,8 @@ class WasteStream(Stream):
     @property
     def ratios(self):
         '''
-        The ratios used for estimating WasteStream composition based on user input upon initialization.
-        Only meaningful for creating a WasteStream object from scratch.
+        The ratios used for estimating waste stream composition based on user input upon initialization.
+        Only meaningful for creating a :class:`WasteStream` object from scratch.
         If not used or specified, default as None.
         '''
         return self._ratios
@@ -206,8 +207,8 @@ class WasteStream(Stream):
         r = self._ratios or WasteStream._default_ratios
         for name, ratio in ratios.items():
             if name not in r.keys():
-                raise ValueError(f"Cannot identify ratio named '{name}'."
-                                 f"Must be one of {r.keys()}")
+                raise ValueError(f'Cannot identify ratio named "{name}".'
+                                 f'Must be one of {r.keys()}.')
             elif isinstance(ratio, (int, float)) and (ratio > 1 or ratio < 0):
                 raise ValueError(f"ratio {name}: {ratio} is out of range [0,1].")
             r[name] = ratio
@@ -224,23 +225,23 @@ class WasteStream(Stream):
         ----------
         variable : str
             The composite variable to calculate. One of the followings:
-                ('COD', 'BOD5', 'BOD', 'uBOD', 'NOD', 'ThOD', 'cnBOD',
-                'C', 'N', 'P', 'K', 'Mg', 'Ca', 
-                'solids', 'charge').
+                ("COD", "BOD5", "BOD", "uBOD", "NOD", "ThOD", "cnBOD",
+                "C", "N", "P", "K", "Mg", "Ca", 
+                "solids", "charge").
         subgroup : CompiledComponents, optional
-            A subgroup of CompiledComponents. The default is None.
-        particle_size : 'g', 's', 'c', or 'x', optional 
-            Dissolved gas ('g'), soluble ('s'), colloidal ('c'), particulate ('x'). 
+            A subgroup of :class:`CompiledComponents`. The default is None.
+        particle_size : "g", "s", "c", or "x", optional 
+            Dissolved gas ("g"), soluble ("s"), colloidal ("c"), particulate ("x"). 
             The default is None.
-        degradability : 'rb', 'sb', 'b' or 'u', optional
-            Readily biodegradable ('rb'), slowly biodegradable ('sb'), 
-            biodegradable ('b'), or undegradable ('u'). The default is None.
+        degradability : "rb", "sb", "b" or "u", optional
+            Readily biodegradable ("rb"), slowly biodegradable ("sb"), 
+            biodegradable ("b"), or undegradable ("u"). The default is None.
         organic : bool, optional
             Organic (True) or inorganic (False). The default is None.
         volatile : bool, optional
             Volatile (True) or involatile (False). The default is None.
         specification : str, optional
-            One of ('SVFA', 'XStor', 'XANO', 'XBio', 'SNOx', 'XPAO_PP', 'TKN'). 
+            One of ("SVFA", "XStor", "XANO", "XBio", "SNOx", "XPAO_PP", "TKN"). 
             The default is None.
 
         Returns
@@ -337,7 +338,7 @@ class WasteStream(Stream):
     
     @property
     def impact_item(self):
-        '''[StreamImpactItem] StreamImpactItem this WasteStream is linked to.'''
+        '''[StreamImpactItem] The :class:`StreamImpactItem` this waste stream is linked to.'''
         return self._impact_item
     @impact_item.setter
     def impact_item(self, i):
@@ -349,7 +350,7 @@ class WasteStream(Stream):
         if self.phase != 'g':
             return getattr(self, '_'+prop) or value
         else:
-            raise AttributeError(f'{self.phase} phase WasteStream does not have {prop}.')
+            raise AttributeError(f'{self.phase} phase waste stream does not have {prop}.')
     
     #!!! Add some document
     @property
@@ -1214,7 +1215,7 @@ def _calib_SF_iN(components, concentrations, STKN):
     other_stkn = SN - SF_N - SNOx_N
     SF_N = STKN - other_stkn           
     if SF_N < 0:
-        raise ValueError("Negative N content for SF was estimated.")                        
+        raise ValueError("Negative N content for `SF` was estimated.")                        
     return SF_N/concentrations['SF']
     
 def _calib_XBsub_iN(components, concentrations, XTKN):
@@ -1222,7 +1223,7 @@ def _calib_XBsub_iN(components, concentrations, XTKN):
     other_xtkn = (cmp_c * components.i_N * components.x).sum() - concentrations['XB_Subst'] * components.XB_Subst.i_N                
     XB_Subst_N = XTKN - other_xtkn
     if XB_Subst_N < 0:
-        raise ValueError("Negative N content for XB_Subst was estimated.")            
+        raise ValueError("Negative N content for `XB_Subst` was estimated.")            
     return XB_Subst_N/concentrations['XB_Subst']
     
 
@@ -1231,7 +1232,7 @@ def _calib_XBsub_iP(components, concentrations, TP):
     other_p = (cmp_c * components.i_P).sum() - concentrations['XB_Subst'] * components.XB_Subst.i_P
     XB_Subst_P = TP - other_p
     if XB_Subst_P < 0:
-        raise ValueError("Negative P content for XB_Subst was estimated.")    
+        raise ValueError("Negative P content for `XB_Subst` was estimated.")    
     return XB_Subst_P/concentrations['XB_Subst']
     
 def _calib_XBsub_fBODCOD(components, concentrations, substrate_IDs, BOD):
@@ -1241,6 +1242,6 @@ def _calib_XBsub_fBODCOD(components, concentrations, substrate_IDs, BOD):
     other_BOD = (cmp_c * (components.x + components.c + components.s) * components.f_BOD5_COD).sum() - (c_sub * XB_sub.f_BOD5_COD).sum()
     fbodtocod_sub = (BOD - other_BOD)/c_sub.sum()
     if fbodtocod_sub > 1 or fbodtocod_sub < 0:
-        raise ValueError("BOD5-to-COD ratio for XB_Subst and XStor was estimated out of range [0,1].")
+        raise ValueError("BOD5-to-COD ratio for `XB_Subst` and `XStor` was estimated out of range [0,1].")
     return fbodtocod_sub
 

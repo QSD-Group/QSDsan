@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -33,11 +32,7 @@ data_path += 'sanunit_data/_pit_latrine.csv'
 
 class PitLatrine(Toilet):
     '''
-    Single pit latrine based on Trimmer et al. [1]_, a subclass of qsdsan.sanunits.Toilet.
-    
-    Reference documents
-    -------------------
-    :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
+    Single pit latrine based on Trimmer et al. [1]_, a subclass of :class:`~.Toilet`.
     
     Parameters
     ----------
@@ -64,6 +59,10 @@ class PitLatrine(Toilet):
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
+    
+    See Also
+    --------
+    :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
     
     '''
 

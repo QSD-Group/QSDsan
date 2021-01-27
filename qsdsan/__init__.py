@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -13,6 +12,12 @@ This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
+
+import pkg_resources
+try:
+    __version__ = pkg_resources.get_distribution('qsdsan').version
+except pkg_resources.DistributionNotFound:  # pragma: no cover
+    __version__ = None
 
 import biosteam as bst
 CEPCI = bst.CE # Chemical Engineering Plant Cost Index

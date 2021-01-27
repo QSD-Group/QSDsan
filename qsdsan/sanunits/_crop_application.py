@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -30,7 +29,7 @@ class CropApplication(SanUnit):
     if_material_loss : bool or dict
         If material loss occurs during application.
     loss_ratio : float or dict
-        Fractions of material losses during application (if if_materiloass is True).
+        Fractions of material losses during application (if `if_materiloass` is True).
         
     References
     ----------
@@ -73,18 +72,18 @@ class CropApplication(SanUnit):
         If a single number is provided, then it is assumed that losses of
         all Components in the WasteStream are the same.
         
-        Note
-        ----
-        Set state variable values (e.g., COD) will be retained if the loss
-        ratio is a single number (treated like the loss stream is split
-        from the original stream), but not when the ratio is a dict.
+        .. note::
+            
+            Set state variable values (e.g., COD) will be retained if the loss
+            ratio is a single number (treated like the loss stream is split
+            from the original stream), but not when the ratio is a dict.
             
         '''
         return self._loss_ratio
     @loss_ratio.setter
     def loss_ratio(self, i):
         if not self.if_material_loss:
-            msg = f'if_material_loss is False, the set value {i} is ignored.'
+            msg = f'`if_material_loss` is False, the set value {i} is ignored.'
             warn(msg, source=self)
         else:
             try:

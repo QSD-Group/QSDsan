@@ -10,22 +10,26 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
    :target: https://pypi.org/project/qsdsan/
 .. image:: https://img.shields.io/travis/com/qsd-group/qsdsan?style=flat
    :target: https://github.com/QSD-Group/QSDsan
-.. image:: https://img.shields.io/badge/docs-stable-important?style=flat
+.. image:: https://img.shields.io/badge/docs-stable-brightgreen?style=flat
    :target: https://qsdsan.readthedocs.io/en/latest/
-.. image:: https://img.shields.io/badge/docs-beta-important?style=flat
+.. image:: https://img.shields.io/badge/docs-beta-brightgreen?style=flat
    :target: https://qsdsan-beta.readthedocs.io/en/latest/
 
 
 .. contents::
 
-What is QSDsan?
-----------------------------
-**QSDsan** is a package for the quantitative sustainable design of sanitation and resource recovery systems leveraging the structure and modules developed in BioSTEAM [1]_. As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
+What is ``QSDsan``?
+-------------------
+``QSDsan`` is a package for the quantitative sustainable design of sanitation and resource recovery systems leveraging the structure and modules developed in ``BioSTEAM`` [1]_. As an open-source and impact-driven platform, ``QSDsan`` aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
 
 
 Installation
 ------------
-First install the package at `PyPI <https://pypi.org/>`_. If you use pip, simply ``pip install qsdsan``.
+First install the package at `PyPI <https://pypi.org/>`_. If you use pip:
+
+.. code:: bash
+
+    pip install qsdsan
 
 Note that development of this package is currently under initial stage with limited backward compatibility, please free free to contact us with any questions regarding package upgrading.
 
