@@ -33,8 +33,8 @@ Follow the tutorial to get started!
    tutorials/TEA_and_LCA
 
 
-How does QSDsan work?
----------------------
+How does ``QSDsan`` work?
+-------------------------
 .. figure:: https://lucid.app/publicSegments/view/c8de361f-7292-47e3-8870-d6f668691728/image.png
 
    Simplified unified modeling language (UML) diagram of ``QSDsan``

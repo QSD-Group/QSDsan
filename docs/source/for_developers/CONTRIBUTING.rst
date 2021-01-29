@@ -100,7 +100,7 @@ Whenever new modules or functions are added, concise and thorough documents shou
 
 ``QSDsan`` uses `numpydoc docstring style <https://numpydoc.readthedocs.io/en/latest/format.html>`_ with some modifications for better rendering. Some important notes:
 
-- Both quotes ('') and double quotes ("") work.
+- Both quotes ('') and double quotes ("") are good.
 - If you want some notes in your docstring, use `directives <https://docutils.sourceforge.io/docs/ref/rst/directives.html>`_ so that it can be rendered in sphinx.
 	
 	.. code::
@@ -123,6 +123,7 @@ Whenever new modules or functions are added, concise and thorough documents shou
 	- Use single back ticks (``) in error messages and warnings since directives won't be rendered.
 
 - If you want to refer to documents of other internal modules or external packages, please include it in the "See Also" section (refer to :class:`sanunits.AnaerobicDigestion` and :class:`Component` as examples).
+- Here is a great `memo on reStructuredText and Sphinx <https://rest-sphinx-memo.readthedocs.io/en/latest/>`_.
 
 
 Most of the documentations will be automatically generated through `sphinx's autodoc extension <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_. If your contribution involves new classes or modules, please add a new .rst file in docs/source/. and add it to the appropriate section in the ``index.rst`` file. You can refer to any of the existing files for examples.
