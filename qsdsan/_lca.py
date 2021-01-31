@@ -475,7 +475,7 @@ class LCA:
         with pd.ExcelWriter(file) as writer:
             for table in tables:
                 table.to_excel(writer, sheet_name=sheet_name, startrow=n_row)
-                n_row += table.shape[0] + row_space + 1 # one extra line for the heading
+                n_row += table.shape[0] + row_space + len(table.columns.names) # extra lines for the heading
 
     @property
     def system(self):

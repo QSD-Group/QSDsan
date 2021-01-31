@@ -55,7 +55,6 @@ exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'manni'
-# pygments_style = 'sphinx'
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -74,3 +73,11 @@ html_css_files = ['css/qsdsan.css']
 # -- Extension settings -------------------------------------------------------
 # napoleon_custom_sections = [
 # 'Reference documents']
+
+# -- External mapping -------------------------------------------------------
+intersphinx_mapping = {
+	'BioSTEAM': ('https://biosteam.readthedocs.io/en/latest', None),
+	'Thermosteam': ('https://thermosteam.readthedocs.io/en/latest', None),
+	'chemicals': ('https://chemicals.readthedocs.io/en/latest', None),
+    'SALib': ('https://salib.readthedocs.io/en/latest', None),
+}
