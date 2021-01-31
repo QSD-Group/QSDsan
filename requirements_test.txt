@@ -2,8 +2,9 @@
 biosteam==2.22.10
 pint==0.12
 numpy==1.19.2
-scikit-learn==0.23.2
 ipykernel==5.3.4
+scikit-learn==0.23.2
+salib==1.4.0b0
 
 # Packages by others
 pytest-cov>=2.0.1
