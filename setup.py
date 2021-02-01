@@ -30,7 +30,6 @@ setup(
                     'data/*',
                     'data/sanunit_data/*',
                     'sanunits/*',
-                    'sensitivity/*',
                     'units_of_measure.txt',
                     'utils/*',
                     'systems/bwaise/*'

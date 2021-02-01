@@ -7,9 +7,11 @@ This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan
 
 Ongoing
 -------
-- Added global sensitivity analysis methods:
+- Added a ``stats`` module including:
 
-	- Sobol: :func:`qsdsan.sensitity.sobol_analysis`.
+	- Pearson and Spearman correlations: :func:`qsdsan.stats.get_correlation`.
+	- Morris One-at-A-Time (OAT) screening method: :func:`qsdsan.stats.morris_analysis`.
+	- Sobol sensitivity analysis: :func:`qsdsan.stats.sobol_analysis`.
 
 - :func:`LCA.get_normalized_impacts` was replaced by :func:`~.LCA.get_allocated_impacts` for :class:`~.LCA` to enable flexible allocation options.
 - Reformatted all documents, added instructions on documentation.

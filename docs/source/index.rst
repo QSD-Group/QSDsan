@@ -63,7 +63,7 @@ In particular, ``QSDsan`` introduces:
    LCA
    SanUnit
    sanunits/sanunits
-   sensitivity
+   stats
    SimpleTEA
    Transportation
    WasteStream
