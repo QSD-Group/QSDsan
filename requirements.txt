@@ -3,4 +3,6 @@ sphinx
 sphinx_rtd_theme
 nbsphinx
 scikit-learn
+scipy
 salib
+matplotlib

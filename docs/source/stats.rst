@@ -15,6 +15,7 @@ Input and sample preparation
 Morris
 ------
 .. automethod:: qsdsan.stats.morris_analysis
+.. automethod:: qsdsan.stats.plot_morris_results
 
 
 Sobol
