@@ -2,12 +2,21 @@
 Change Log
 ==========
 
-This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
+This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
 Ongoing
 -------
-- ``LCA.get_normalized_impacts`` was replaced by ``LCA.get_allocated_impacts`` for flexible allocation options.
+- Added a ``stats`` module including:
+
+	- Pearson and Spearman correlations: :func:`qsdsan.stats.get_correlation`.
+	- Morris One-at-A-Time (OAT) screening method: :func:`qsdsan.stats.morris_analysis`.
+
+		- Also add a function for plotting: :func:`qsdsan.stats.plot_morris_results`.
+
+	- Sobol sensitivity analysis: :func:`qsdsan.stats.sobol_analysis`.
+
+- :func:`LCA.get_normalized_impacts` was replaced by :func:`~.LCA.get_allocated_impacts` for :class:`~.LCA` to enable flexible allocation options.
 - Reformatted all documents, added instructions on documentation.
 - Added brief instructions on contributing and code of conduct.
 - Updated UML diagram.
@@ -15,30 +24,30 @@ Ongoing
 
 `0.0.3`_ (2021-01-10)
 ---------------------
-- More flexible setting of ``ImpactItem`` for ``WasteStream``.
+- More flexible setting of :class:`~.ImpactItem` for :class:`~.WasteStream`.
 - Add status badge to README.rst
 - Add CHANGELOG.rst
 - Tutorial updates:
 
 	- New:
-		- ``TEA`` and ``LCA``
+		- :class:`~.TEA` and :class:`~.LCA`
 	- Updated:
-		-  ``Component`` and ``WasteStream``
-		-  ``SanUnit`` and ``System``
+		-  :class:`~.Component` and :class:`~.WasteStream`
+		-  :class:`~.SanUnit` and :class:`~.System`
 
 
 `0.0.2`_ (2021-01-07)
 ---------------------
 - Added the all three sanitation scenarios as described in `Trimmer et al.`_, including uncertainty/sensitivity analyses with tutorial.
-- Inclusion of GPX models for estimation of ``WasteStream`` properties.
+- Inclusion of GPX models for estimation of :class:`~.WasteStream` properties.
 - Live documentation for the `stable package`_ and `beta version`_.
 - New classes:
 
     - All units in `Trimmer et al.`_
-    - ``Descriptor`` and ``Checker`` decorators to check user-input values.
-    - ``AttrSetter``, ``DictAttrSetter``, and ``FuncGetter`` for batch-setting of uncertainty analysis parameters.
+    - Added descriptors (``qsdsan.utils.descriptors``) and decorators (``qsdsan.utils.checkers``) to check user-input values.
+    - :class:`~.utils.setters.AttrSetter`, :class:`~.utils.setters.DictAttrSetter`, and :class:`~.utils.getters.FuncGetter` for batch-setting of uncertainty analysis parameters.
 
-- Added ``save_report`` function to ``LCA`` class for report exporting.
+- Added :func:`save_report` function to :class:`~.LCA` for report exporting.
 
 
 `0.0.1`_ (2020-12-23)

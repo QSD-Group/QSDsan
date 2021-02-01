@@ -55,7 +55,6 @@ exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'manni'
-# pygments_style = 'sphinx'
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -63,6 +62,8 @@ pygments_style = 'manni'
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
+html_static_path = ['_static']
+html_css_files = ['css/qsdsan.css']
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -72,3 +73,11 @@ html_theme = 'sphinx_rtd_theme'
 # -- Extension settings -------------------------------------------------------
 # napoleon_custom_sections = [
 # 'Reference documents']
+
+# -- External mapping -------------------------------------------------------
+intersphinx_mapping = {
+	'BioSTEAM': ('https://biosteam.readthedocs.io/en/latest', None),
+	'Thermosteam': ('https://thermosteam.readthedocs.io/en/latest', None),
+	'chemicals': ('https://chemicals.readthedocs.io/en/latest', None),
+    'SALib': ('https://salib.readthedocs.io/en/latest', None),
+}

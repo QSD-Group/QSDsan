@@ -33,20 +33,20 @@ Follow the tutorial to get started!
    tutorials/TEA_and_LCA
 
 
-How does QSDsan work?
----------------------
+How does ``QSDsan`` work?
+-------------------------
 .. figure:: https://lucid.app/publicSegments/view/c8de361f-7292-47e3-8870-d6f668691728/image.png
 
    Simplified unified modeling language (UML) diagram of ``QSDsan``
 
-``QSDsan`` follows the structure of `BioSTEAM <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_, a fast and flexible package for the design, simulation, and techno-economic analysis of biorefineries under uncertainty, but ``QSDsan`` is enhanced with features geared toward quantitative sustainable design of sanitation systems.
+``QSDsan`` follows the structure of `biosteam <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_, a fast and flexible package for the design, simulation, and techno-economic analysis of biorefineries under uncertainty, but ``QSDsan`` is enhanced with features geared toward quantitative sustainable design of sanitation systems.
 
 The above Unified Modeling Language (UML) diagram of the package shows the relationship between ``QSDsan`` and its dependencies `biosteam <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_ and `thermosteam <https://github.com/BioSTEAMDevelopmentGroup/thermosteam>`_.
 
 In particular, ``QSDsan`` introduces:
 
-- :class:`~.Component`, a subclass of :class:`thermosteam.Chemical`, instance of this class does not necessarily corresponds to a specific chemical, but represents commonly used/modeled component such as biodegradable colloidal substrate.
-- :class:`~.WasteStream`, a sublcass of :class:`thermosteam.Stream`, instance of this class has additional composite properties such as chemical oxygen demand (COD) that are widely used in sanitation systems.
+- :class:`Component`, a subclass of :class:`thermosteam.Chemical`, instance of this class does not necessarily corresponds to a specific chemical, but represents commonly used/modeled component such as biodegradable colloidal substrate.
+- :class:`WasteStream`, a sublcass of :class:`thermosteam.Stream`, instance of this class has additional composite properties such as chemical oxygen demand (COD) that are widely used in sanitation systems.
 - :class:`Process` (*under development*), a new class that describes a certain biological, chemical, or physical process in a unit operation, it has some similarities with :class:`thermosteam.reaction`, but has unique features and utilities.
 
 
@@ -63,6 +63,7 @@ In particular, ``QSDsan`` introduces:
    LCA
    SanUnit
    sanunits/sanunits
+   stats
    SimpleTEA
    Transportation
    WasteStream

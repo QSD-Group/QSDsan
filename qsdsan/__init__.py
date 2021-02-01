@@ -54,6 +54,7 @@ from . import (
     utils,
     sanunits,
     systems,
+    stats,
     )
 
 utils.secondary_importing()

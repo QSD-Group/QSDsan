@@ -28,7 +28,7 @@ Loading systems
 
     >>> # Import bwaise systems as modules
     >>> from qsdsan.systems import bwaise as bw
-    >>> # You can repeat these for ``sysB`` and ``sysC``
+    >>> # You can repeat these for `sysB` and `sysC`
     >>> bw.sysA.show()
     System: sysA
      path: (A1, A2, A3, treatA, A9, A10, A11,
@@ -102,12 +102,12 @@ Loading systems
 
 Techno-economic analysis and life cycle assessment (TEA/LCA)
 ------------------------------------------------------------
-TEA and LCA are performed through ``biosteam.TEA`` and ``qsdsan.LCA`` objects and named as "teaA", "lcaA", etc.
+TEA and LCA are performed through :class:`biosteam.TEA` and :class:`LCA` objects and named as "teaA", "lcaA", etc.
 Results from the original paper [1]_ are saved in the "/results/original_results" folder for comparison.
 
 .. code-block:: python
 
-    >>> # Check the results for ``sysA``
+    >>> # Check the results for `sysA`
     >>> bw.teaA.show()
     SimpleTEA: sysA
     NPV  : -22,846,600 USD at 5.0% discount rate
@@ -156,18 +156,18 @@ Results from the original paper [1]_ are saved in the "/results/original_results
 
 Uncertainty and sensitivity analyses
 ------------------------------------
-These analyses are performed through ``biosteam.Model`` objects, ``modelA``
+These analyses are performed through :class:`biosteam.Model` objects, ``modelA``
 for ``sysA`` has been added, you can make changes (e.g., add or remove parameters,
 change uncertainty ranges) or construct similar models for other systems
 accordingly.
 
 .. code-block:: python
 
-    >>> # Run the default model for ``sysA``
+    >>> # Run the default model for `sysA`
     >>> models = bw.models
     >>> # Try use larger samples, here is just to get a quick demo result
     >>> models.run_uncertainty(models.modelA, N_sample=10)
-    >>> # Your results will be cached in ``result_dct['sysA']``
+    >>> # Your results will be cached in `result_dct['sysA']`
     >>> # You can organize the results as you like,
     >>> # but you can also save them using the default organized data
     >>> models.save_uncertainty_results(models.modelA)
