@@ -66,7 +66,7 @@ class SimpleTEA(TEA):
                  construction_schedule=None):
         system.simulate()
         self.system = system
-        self.units = sorted(system._costunits, key=lambda x: x.line)
+        self.units = sorted(system.units, key=lambda x: x.line)
         system._TEA = self
         self.discount_rate = discount_rate
         # IRR (internal rate of return) is the discount rate when net present value is 0

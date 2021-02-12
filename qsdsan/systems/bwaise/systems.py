@@ -201,6 +201,7 @@ def adjust_NH3_loss(unit):
 
 flowsheetA = bst.Flowsheet('sysA')
 bst.main_flowsheet.set_flowsheet(flowsheetA)
+# breakpoint()
 streamsA = batch_create_streams('A')
 
 #################### Human Inputs ####################
@@ -351,14 +352,14 @@ B4 = su.LumpedCost('B4', ins=B3-0, cost_item_name='Lumped WWTP',
 B4.line = 'Lumped WWTP cost'
 get_B4_lifetime = lambda: B4.lifetime
 
-B5 = su.AnaerobicBaffledReactor('B5', ins=B4-0, outs=('treated', 'biogas',
+B5 = su.AnaerobicBaffledReactor('B5', ins=B4-0, outs=('ABR_treated', 'biogas',
                                                       'B5_CH4', 'B5_N2O'),
                                 decay_k_COD=get_decay_k(tau_deg, log_deg),
                                 max_CH4_emission=get_max_CH4_emission())
 
 B6 = su.SludgeSeparator('B6', ins=B5-0, outs=('liq', 'sol'))
 
-B7 = su.LiquidTreatmentBed('B7', ins=B6-0, outs=('treated', 'B7_CH4', 'B7_N2O'),
+B7 = su.LiquidTreatmentBed('B7', ins=B6-0, outs=('liquid_bed_treated', 'B7_CH4', 'B7_N2O'),
                            decay_k_COD=get_decay_k(tau_deg, log_deg),
                            decay_k_N=get_decay_k(tau_deg, log_deg),
                            max_CH4_emission=get_max_CH4_emission())

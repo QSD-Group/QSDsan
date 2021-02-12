@@ -18,13 +18,13 @@ from setuptools import setup
 setup(
     name='qsdsan',
     packages=['qsdsan'],
-    version='0.0.3',
+    version='0.1.0',
     license='UIUC',
     author='Quantitative Sustainable Design Group',
     description='Quantitative Sustainable Design for sanitation and resource recovery systems',
     long_description=open('README.rst').read(),
     url="https://github.com/QSD-Group/QSDsan",
-    install_requires=['biosteam==2.22.10', 'thermosteam==0.23.7', 'matplotlib>=3.3.2',
+    install_requires=['biosteam==2.24.1', 'thermosteam==0.24.0', 'matplotlib>=3.3.2',
                       'scikit-learn', 'scipy', 'SALib', 'matplotlib'],
     package_data=
         {'qsdsan': [
@@ -53,7 +53,6 @@ setup(
                  'Operating System :: POSIX :: BSD',
                  'Operating System :: POSIX :: Linux',
                  'Operating System :: Unix',
-                 'Programming Language :: Python :: 3.6',
                  'Programming Language :: Python :: 3.7',
                  'Programming Language :: Python :: 3.8',
                  ],

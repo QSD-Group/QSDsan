@@ -3,6 +3,7 @@ dist
 *.egg-info
 __pycache__
 **/__pycache__
+**/temp.py
 *.pyc
 *.pyo
 .pypirc

@@ -22,7 +22,6 @@ from .utils.piping import WSIns, WSOuts
 
 __all__ = ('SanUnit',)
 
-@utils.registered(ticket_name='SU')
 class SanUnit(Unit, isabstract=True):    
 
     '''

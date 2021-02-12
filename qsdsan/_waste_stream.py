@@ -63,7 +63,6 @@ conc_unit = auom('mg/L')
 # Define the WasteStream class
 # =============================================================================
 
-@utils.registered(ticket_name='ws')
 class WasteStream(Stream):
     '''
     A subclass of :class:`thermosteam.Stream` with additional attributes
@@ -77,7 +76,6 @@ class WasteStream(Stream):
     
     # Child class will inherit parent class's slots
     __slots__ = _ws_specific_slots
-    # __slots__ = (*Stream.__slots__, *_ws_specific_slots)
     _default_ratios = _default_ratios
     
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
