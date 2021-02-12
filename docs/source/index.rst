@@ -45,8 +45,8 @@ The above Unified Modeling Language (UML) diagram of the package shows the relat
 
 In particular, ``QSDsan`` introduces:
 
-- :class:`Component`, a subclass of :class:`thermosteam.Chemical`, instance of this class does not necessarily corresponds to a specific chemical, but represents commonly used/modeled component such as biodegradable colloidal substrate.
-- :class:`WasteStream`, a sublcass of :class:`thermosteam.Stream`, instance of this class has additional composite properties such as chemical oxygen demand (COD) that are widely used in sanitation systems.
+- :class:`~.Component`, a subclass of :class:`thermosteam.Chemical`, instance of this class does not necessarily corresponds to a specific chemical, but represents commonly used/modeled component such as biodegradable colloidal substrate.
+- :class:`~.WasteStream`, a sublcass of :class:`thermosteam.Stream`, instance of this class has additional composite properties such as chemical oxygen demand (COD) that are widely used in sanitation systems.
 - :class:`Process` (*under development*), a new class that describes a certain biological, chemical, or physical process in a unit operation, it has some similarities with :class:`thermosteam.reaction`, but has unique features and utilities.
 
 

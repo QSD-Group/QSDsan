@@ -3,13 +3,12 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
-This module is under the UIUC open-source license. Please refer to 
-https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+This module is under the University of Illinois/NCSA Open Source License.
+Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
@@ -23,6 +22,7 @@ def test_sanunit():
     ws1 = WasteStream(SAc=5, H2O=1000, units='kg/hr')
     ws2 = WasteStream(XNOO=10, H2O=1000, units='kg/hr')
     M1 = sanunits.Mixer('M1', ins=(ws1, ws2, ''), outs='mixture')
+    M1.show()
     assert type(M1.ins[0]).__name__ == 'WasteStream'
     
     S1 = sanunits.Splitter('S1', ins=M1-0, outs=('', ''), split=0.2)

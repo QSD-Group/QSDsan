@@ -85,7 +85,7 @@ class SanUnit(Unit, isabstract=True):
         self._transportation = ()
 
 
-    def _info(self, T, P, flow, composition, N, _stream_info):
+    def _info(self, T, P, flow, composition, N, IDs, _stream_info):
         '''Information of the unit.'''
         if self.ID:
             info = f'{type(self).__name__}: {self.ID}\n'
@@ -99,7 +99,8 @@ class SanUnit(Unit, isabstract=True):
                 i += 1
                 continue
             if _stream_info:
-                stream_info = stream._info(T, P, flow, composition, N) + \
+                # breakpoint()
+                stream_info = stream._info(T, P, flow, composition, N, IDs) + \
                     '\n' + stream._wastestream_info()
             else:
                 stream_info = stream._wastestream_info()
@@ -116,7 +117,7 @@ class SanUnit(Unit, isabstract=True):
                 i += 1
                 continue
             if _stream_info:
-                stream_info = stream._info(T, P, flow, composition, N) + \
+                stream_info = stream._info(T, P, flow, composition, N, IDs) + \
                     '\n' + stream._wastestream_info()
             else:
                 stream_info = stream._wastestream_info()
@@ -139,9 +140,9 @@ class SanUnit(Unit, isabstract=True):
         self._impact()
     
     
-    def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, stream_info=True):
+    def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, IDs=None, stream_info=True):
         '''Print information of the unit, including waste stream-specific information.'''
-        print(self._info(T, P, flow, composition, N, stream_info))
+        print(self._info(T, P, flow, composition, N, IDs, stream_info))
     
     def add_construction(self, add_unit=True, add_design=True, add_cost=True):
         '''Batch-adding construction unit, designs, and costs.'''

@@ -12,11 +12,12 @@ Ongoing
 	- Pearson and Spearman correlations: :func:`qsdsan.stats.get_correlation`.
 	- Morris One-at-A-Time (OAT) screening method: :func:`qsdsan.stats.morris_analysis`.
 
-		- Also add a function for plotting: :func:`qsdsan.stats.plot_morris_results`.
+		- Also added a function for plotting: :func:`qsdsan.stats.plot_morris_results`.
 
 	- Sobol sensitivity analysis: :func:`qsdsan.stats.sobol_analysis`.
 
-- :func:`LCA.get_normalized_impacts` was replaced by :func:`~.LCA.get_allocated_impacts` for :class:`~.LCA` to enable flexible allocation options.
+- Added all uncertainty parameters for all of the scenarios in the bwaise system.
+- :func:`LCA.get_normalized_impacts` was replaced by :func:`qsdsan.LCA.get_allocated_impacts` for :class:`~.LCA` to enable flexible allocation options.
 - Reformatted all documents, added instructions on documentation.
 - Added brief instructions on contributing and code of conduct.
 - Updated UML diagram.

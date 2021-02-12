@@ -52,6 +52,8 @@ class Toilet(SanUnit, Decay, isabstract=True):
     if_ideal_emptying : bool
         If the toilet appropriately emptied to avoid contamination to the
         environmental.
+    CAPEX : float
+        Capital cost of a single toilet.
     OPEX_over_CAPEX : float
         Fraction of annual operating cost over total capital cost.
     
@@ -71,7 +73,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True,
-                 OPEX_over_CAPEX=None):
+                 CAPEX=None, OPEX_over_CAPEX=None):
 
         SanUnit.__init__(self, ID, ins, outs)
         self._N_user = 1
@@ -84,6 +86,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         self.if_desiccant = if_desiccant
         self.if_air_emission = if_air_emission
         self.if_ideal_emptying = if_ideal_emptying
+        self.CAPEX = CAPEX
         self.OPEX_over_CAPEX = OPEX_over_CAPEX
 
         data = load_data(path=data_path)
@@ -106,7 +109,23 @@ class Toilet(SanUnit, Decay, isabstract=True):
         fw.imass['H2O'] = int(self.if_flushing)*self.flushing_water
         cw.imass['H2O'] = int(self.if_cleansing)*self.cleansing_water
         des.imass['WoodAsh'] = int(self.if_desiccant)*self.desiccant
-      
+
+    density_dct = {
+        'Sand': 1442,
+        'Gravel': 1600,        
+        'Brick': 1750,        
+        'Plastic': 0.63,
+        'Steel': 7900,
+        'StainlessSteelSheet': 2.64
+        }    
+
+    _BM = {'Single toilet': 1, 'Total toilets': 1}
+        
+    def _cost(self):
+        self.purchase_costs['Single toilet'] = self.CAPEX
+        self.purchase_costs['Total toilets'] = self.CAPEX * self.N_toilet
+        self._add_OPEX = self.purchase_costs['Total toilets']*self.OPEX_over_CAPEX/365/24
+
 
     @staticmethod
     def get_emptying_emission(waste, CH4, N2O, empty_ratio, CH4_factor, N2O_factor):

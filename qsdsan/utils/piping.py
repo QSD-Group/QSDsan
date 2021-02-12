@@ -215,7 +215,7 @@ class WSIns(WSSequence):
                 ins.remove(ws)
                 ws._sink = new_sink = self._sink
                 if sink._ID and new_sink:
-                    warn(f'Inlet wastestream {ws} is undocked from unit {sink}; '
+                    warn(f'Inlet waste stream {ws} is undocked from unit {sink}; '
                          f'{ws} is now docked at {self._sink}', 
                          RuntimeWarning, stacklevel)
         else:

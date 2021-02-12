@@ -42,8 +42,8 @@ class Trucking(SanUnit):
         Time interval between trips.
     fee : float
         Transportation fee per trip.
-    fee : float
-        Transportation fee per trip.
+    fee_unit : str
+        Currency of the fee.
     if_material_loss : bool
         If material loss occurs during transportation.
     loss_ratio : float or dict
@@ -64,10 +64,6 @@ class Trucking(SanUnit):
                  interval=1., interval_unit='hr',
                  fee=0., fee_unit=currency,
                  if_material_loss=True, loss_ratio=0.02):
-        '''
-
-
-        '''
         SanUnit.__init__(self, ID, ins, outs)
         self.single_truck = \
             Transportation(item='Trucking',

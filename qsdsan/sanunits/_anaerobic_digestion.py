@@ -12,7 +12,7 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 
 TODO (maybe):
-    [1] Incorporating ADM as a Process, or change this to SimpleAD or something
+    [1] Incorporating ADM as a Process, or change this to SimpleAD or similar
 
 '''
 
@@ -39,6 +39,9 @@ class AnaerobicDigestion(SanUnit, Decay):
         Waste for treatment.
     outs : WasteStream
         Treated waste, biogas, and fugitive N2O.
+    flow_rate : float
+        Total flow rate through the reactor (for sizing purpose), [m3/d].
+        If not provided, will use F_vol_in.
     if_capture_biogas : bool
         If produced biogas will be captured, otherwise it will be treated
         as fugative CH4.
@@ -58,9 +61,10 @@ class AnaerobicDigestion(SanUnit, Decay):
     
     '''
     
-    def __init__(self, ID='', ins=None, outs=(),
+    def __init__(self, ID='', ins=None, outs=(), flow_rate=None,
                  if_capture_biogas=True, if_N2O_emission=False, **kwargs):
         SanUnit.__init__(self, ID, ins, outs)
+        self._flow_rate = flow_rate
         self.if_capture_biogas = if_capture_biogas
         self.if_N2O_emission = if_N2O_emission
     
@@ -121,7 +125,7 @@ class AnaerobicDigestion(SanUnit, Decay):
 
     def _design(self):
         design = self.design_results
-        design['Volumetric flow rate'] = Q = self.ins[0].F_vol
+        design['Volumetric flow rate'] = Q = self.flow_rate
         design['Residence time'] = tau = self.tau
         design['Reactor number'] = N = self.N_reactor
         V_tot = Q * tau*24
@@ -137,6 +141,17 @@ class AnaerobicDigestion(SanUnit, Decay):
             )
         self.add_construction()
         
+
+    @property
+    def flow_rate(self):
+        '''
+        [float] Total flow rate through the reactor (for sizing purpose), [m3/d].
+        If not provided, will calculate based on F_vol_in.
+        '''
+        return self._flow_rate if self._flow_rate else self.F_vol_in*24
+    @flow_rate.setter
+    def flow_rate(self, i):
+        self._flow_rate = float(i)
 
     @property
     def tau(self):
