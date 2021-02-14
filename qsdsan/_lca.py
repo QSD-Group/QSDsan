@@ -85,7 +85,7 @@ class LCA:
                                           key=lambda u: u.ID)
         self._transportation_units = sorted(self._transportation_units,
                                             key=lambda u: u.ID)
-        for s in (i for i in system.feeds.union(system.products)):
+        for s in (i for i in system.feeds+system.products):
             if s.impact_item:
                 self._lca_streams.add(s)
         self._lca_streams = sorted(self._lca_streams, key=lambda s: s.ID)
@@ -159,8 +159,8 @@ class LCA:
         Return all construction-related impacts for the given unit,
         normalized to a certain time frame.
         '''
-        try: iter(units)
-        except: units = (units,)
+        if not (isinstance(units, tuple) or isinstance(units, list) or isinstance(units, set)):
+            units = (units,)
         if not time:
             ratio = 1
         else:
@@ -183,8 +183,9 @@ class LCA:
         Return all transportation-related impacts for the given unit,
         normalized to a certain time frame.
         '''
-        try: iter(units)
-        except: units = (units,)
+        if not (isinstance(units, tuple) or isinstance(units, list)
+                or isinstance(units, set)):
+            units = (units,)
         if not time:
             time = self.lifetime_hr
         else:
@@ -204,10 +205,12 @@ class LCA:
         Return all stream-related impacts for the given streams,
         normalized to a certain time frame.
         '''
-        try: iter(stream_items)
-        except: stream_items = (stream_items,)
-        try: iter(exclude)
-        except: exclude = (exclude,)
+        if not (isinstance(stream_items, tuple) or isinstance(stream_items, list)
+                or isinstance(stream_items, set)):
+            stream_items = (stream_items,)
+        if not (isinstance(exclude, tuple) or isinstance(exclude, list)
+                or isinstance(exclude, set)):
+            exclude = (exclude,)
         if stream_items == None:
             stream_items = self.stream_inventory
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
@@ -288,8 +291,9 @@ class LCA:
             in the stream.
         
         '''
-        try: iter(streams)
-        except: streams = (streams,)
+        if not (isinstance(streams, tuple) or isinstance(streams, list)
+                or isinstance(streams, set)):
+            streams = (streams,)
         impact_dct = self.get_total_impacts(exclude=streams)
         impact_vals = np.array([i for i in impact_dct.values()])
         allocated = {}
@@ -322,8 +326,9 @@ class LCA:
     def get_units_impacts(self, units, time=None, time_unit='hr',
                           exclude=None):
         '''Return total impacts with certain units, normalized to a certain time frame. '''
-        try: iter(units)
-        except: units = (units,)
+        if not (isinstance(units, tuple) or isinstance(units, list)
+                or isinstance(units, set)):
+            units = (units,)
         constr = self.get_construction_impacts(units, time, time_unit)
         trans = self.get_transportation_impacts(units, time, time_unit)
         ws_items = set(i for i in 

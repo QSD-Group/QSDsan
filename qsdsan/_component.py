@@ -529,7 +529,7 @@ class Component(tmo.Chemical):
         '''Return a new :class:`Component` from a :class:`thermosteam.Chemical` object.'''
         new = cls.__new__(cls, ID=ID, phase=phase)
         for field in chemical.__slots__:
-            value = getattr(chemical, field)
+            value = getattr(chemical, field, None)
             setattr(new, field, copy_maybe(value))
         new._ID = ID
         if phase: new._locked_state = phase

@@ -15,6 +15,7 @@ for license details.
 from warnings import warn
 from biosteam.utils.piping import MissingStream, StreamSequence
 from .. import WasteStream as WS
+import biosteam as bst
 
 __all__ = ('MissingWS', 'WSIns', 'WSOuts')
 
@@ -214,8 +215,11 @@ class WSIns(WSSequence):
             if ins is not self:
                 ins.remove(ws)
                 ws._sink = new_sink = self._sink
-                if sink._ID and new_sink:
-                    warn(f'Inlet wastestream {ws} is undocked from unit {sink}; '
+                DOCKING_WARNINGS = bst.utils.piping.DOCKING_WARNINGS
+                if (DOCKING_WARNINGS 
+                    and sink._ID and new_sink._ID
+                    and sink._ID != new_sink._ID):
+                    warn(f'Inlet waste stream {ws} is undocked from unit {sink}; '
                          f'{ws} is now docked at {self._sink}', 
                          RuntimeWarning, stacklevel)
         else:
@@ -253,7 +257,10 @@ class WSOuts(WSSequence):
                 # Remove from source
                 outs.remove(ws)
                 ws._source = new_source = self._source
-                if source._ID and new_source:
+                DOCKING_WARNINGS = bst.utils.piping.DOCKING_WARNINGS
+                if (DOCKING_WARNINGS 
+                    and source._ID and new_source._ID
+                    and source._ID != new_source._ID):
                     warn(f'Outlet waste stream {ws} is undocked from unit {source}; '
                          f'{ws} is now docked at {self._source}.', 
                          RuntimeWarning, stacklevel)

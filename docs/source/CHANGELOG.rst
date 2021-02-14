@@ -1,22 +1,22 @@
-==========
-Change Log
-==========
+CHANGELOG
+=========
 
 This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
-Ongoing
--------
+`0.1.0`_ (2021-02-14)
+---------------------
 - Added a ``stats`` module including:
 
 	- Pearson and Spearman correlations: :func:`qsdsan.stats.get_correlation`.
 	- Morris One-at-A-Time (OAT) screening method: :func:`qsdsan.stats.morris_analysis`.
 
-		- Also add a function for plotting: :func:`qsdsan.stats.plot_morris_results`.
+		- Also added a function for plotting: :func:`qsdsan.stats.plot_morris_results`.
 
 	- Sobol sensitivity analysis: :func:`qsdsan.stats.sobol_analysis`.
 
-- :func:`LCA.get_normalized_impacts` was replaced by :func:`~.LCA.get_allocated_impacts` for :class:`~.LCA` to enable flexible allocation options.
+- Added all uncertainty parameters for all of the scenarios in the bwaise system, also added demonstrative Morris and Sobol analysis.
+- :func:`LCA.get_normalized_impacts` was replaced by :func:`qsdsan.LCA.get_allocated_impacts` for :class:`~.LCA` to enable flexible allocation options.
 - Reformatted all documents, added instructions on documentation.
 - Added brief instructions on contributing and code of conduct.
 - Updated UML diagram.
@@ -61,6 +61,7 @@ Ongoing
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
+.. _0.1.0: https://github.com/yalinli2/QSDsan/commit/741342cece5d2f6c1ecbc96e891c2554e0efceb9
 .. _0.0.3: https://github.com/QSD-Group/QSDsan/commit/e20222caccc58d9ee414ca08d8ec55f3a44ffca7
 .. _0.0.2: https://github.com/QSD-Group/QSDsan/commit/84653f5979fbcd76a80ffb6b22ffec1c5ca2a084
 .. _0.0.1: https://github.com/yalinli2/QSDsan/commit/f95e6172780cfe24ab68cd27ba19837e010b3d99

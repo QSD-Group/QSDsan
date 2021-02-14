@@ -3,6 +3,7 @@ os:
   - linux
 compiler:
   - "3.7"
+  - "3.8"
 branches:
   only:
   - master

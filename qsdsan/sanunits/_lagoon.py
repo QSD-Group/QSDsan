@@ -36,6 +36,9 @@ class Lagoon(SanUnit, Decay):
         Treated waste, fugitive CH4, and fugitive N2O.
     design_type : str
         Can be "anaerobic" or "facultative".
+    flow_rate : float
+        Total flow rate through the lagoon (to calculate retention time), [m3/d].
+        If not provided, will use F_vol_in.
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
         
@@ -53,7 +56,7 @@ class Lagoon(SanUnit, Decay):
     '''
     
     def __init__(self, ID='', ins=None, outs=(), design_type='anaerobic',
-                 if_N2O_emission=False, **kwargs):    
+                 flow_rate=None, if_N2O_emission=False, **kwargs):    
         
         SanUnit.__init__(self, ID, ins, outs)
         self._tau = None
@@ -66,6 +69,7 @@ class Lagoon(SanUnit, Decay):
         
         self._design_type = None
         self.design_type = design_type
+        self._flow_rate = flow_rate
         self.if_N2O_emission = if_N2O_emission
         
         for attr, value in kwargs.items():
@@ -179,16 +183,27 @@ class Lagoon(SanUnit, Decay):
         self._N_lagoon = int(np.ceil(i))
 
     @property
+    def flow_rate(self):
+        '''
+        [float] Total flow rate through the lagoon (to calculate retention time), [m3/d].
+        If not provided, will calculate based on F_vol_in.
+        '''
+        return self._flow_rate if self._flow_rate else self.F_vol_in*24
+    @flow_rate.setter
+    def flow_rate(self, i):
+        self._flow_rate = float(i)
+
+    @property
     def tau(self):
         '''[float] Residence time, [d].'''
         if self._lagoon_V:
-            return self._lagoon_V*self.N_lagoon/(self.F_vol_in*24)
+            return self._lagoon_V*self.N_lagoon/self.flow_rate 
         else:
             return self._tau
     @tau.setter
     def tau(self, i):
         if self._lagoon_V:
-            msg = f'Residence time set, the original lagoon volume of {self._lagoon_V} m3 is ignored'
+            msg = f'Residence time set, the original lagoon volume of {self._lagoon_V} m3 is ignored.'
             warn(msg, source=self)
             self._lagoon_V = None
         self._tau = float(i)
@@ -203,7 +218,7 @@ class Lagoon(SanUnit, Decay):
     @lagoon_V.setter
     def lagoon_V(self, i):
         if self._tau:
-            msg = f'Lagoon volume set, the original residence time of {self._tau} d is ignored'
+            msg = f'Lagoon volume set, the original residence time of {self._tau} d is ignored.'
             warn(msg, source=self)
             self._tau = None
         self._lagoon_V = float(i)

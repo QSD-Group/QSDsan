@@ -45,8 +45,8 @@ The above Unified Modeling Language (UML) diagram of the package shows the relat
 
 In particular, ``QSDsan`` introduces:
 
-- :class:`Component`, a subclass of :class:`thermosteam.Chemical`, instance of this class does not necessarily corresponds to a specific chemical, but represents commonly used/modeled component such as biodegradable colloidal substrate.
-- :class:`WasteStream`, a sublcass of :class:`thermosteam.Stream`, instance of this class has additional composite properties such as chemical oxygen demand (COD) that are widely used in sanitation systems.
+- :class:`~.Component`, a subclass of :class:`thermosteam.Chemical`, instance of this class does not necessarily corresponds to a specific chemical, but represents commonly used/modeled component such as biodegradable colloidal substrate.
+- :class:`~.WasteStream`, a sublcass of :class:`thermosteam.Stream`, instance of this class has additional composite properties such as chemical oxygen demand (COD) that are widely used in sanitation systems.
 - :class:`Process` (*under development*), a new class that describes a certain biological, chemical, or physical process in a unit operation, it has some similarities with :class:`thermosteam.reaction`, but has unique features and utilities.
 
 
@@ -72,7 +72,13 @@ In particular, ``QSDsan`` introduces:
 
 More resources
 --------------
-To get the full value of ``QSDsan``, we highly recommend reading through the documents of these packages:
+.. toctree::
+   :maxdepth: 0
+   :caption: FAQ
+
+   FAQ.rst
+
+Additionally, to get the full value of ``QSDsan``, we highly recommend reading through the documents of these packages:
 
 - `biosteam docs <https://biosteam.readthedocs.io/en/latest/index.html>`_
 - `thermosteam docs <https://thermosteam.readthedocs.io/en/latest/index.html>`_
@@ -80,7 +86,7 @@ To get the full value of ``QSDsan``, we highly recommend reading through the doc
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 0
    :caption: What's new
 
    CHANGELOG

@@ -21,12 +21,13 @@ from . import _component
 
 __all__ = ('Components', 'CompiledComponents')
 
+setattr = object.__setattr__
+
 utils = tmo.utils
 Component = _component.Component
 _component_properties = _component._component_properties
 _num_component_properties = _component._num_component_properties
 _key_component_properties = _component._key_component_properties
-setattr = object.__setattr__
 _TMH = tmo.base.thermo_model_handle.ThermoModelHandle
 _PH = tmo.base.phase_handle.PhaseHandle
 
@@ -37,6 +38,11 @@ class UndefinedComponent(AttributeError):
     '''AttributeError regarding undefined :class:`Component` objects.'''
     def __init__(self, ID):
         super().__init__(repr(ID))
+
+def must_compile(*args, **kwargs): # pragma: no cover
+    raise TypeError('Method valid only for CompiledChemicals, '
+                    'run <Components>.compile() to compile first.')
+
 
 # =============================================================================
 # Define the Components class
@@ -57,21 +63,26 @@ class Components(Chemicals):
         self = super(Chemicals, cls).__new__(cls)
         isa = isinstance
         setfield = setattr
-        for component in components:
-            if isa(component, Component):
-                setfield(self, component.ID, component)
+        CASs = set()
+        for i in components:
+            if isa(i, Component):
+                CAS = i.CAS
+                if CAS in CASs: continue
+                CASs.add(CAS)
+                setfield(self, i.ID, i)
+            elif isa(i, Chemical):
+                raise TypeError(f'{i} is a `thermosteam.Chemical` object, '
+                                'use `Component.from_chemical` to define a `Component` object.')
             else:
-                if isa(component, Chemical):
-                    raise TypeError(f'{component} is a `thermosteam.Chemical` object, '
-                                    'use `Component.from_chemical` to define a `Component` object.')
-                raise TypeError(f'Only `Component` objects can be included, not a `{type(component).__name__}` object.')
+                raise TypeError(f'Only `Component` objects can be included, not a `{type(i).__name__}` object.')
+        
         return self
     
     def __setattr__(self, ID, component):
-        raise TypeError("Cannot set attribute; use `{self.ID}.append` instead.")
+        raise TypeError('Cannot set attribute; use `<Components>.append/extend` instead.')
     
     def __setitem__(self, ID, component):
-        raise TypeError("Cannot set item; use `{self.ID}.append` instead.")
+        raise TypeError('Cannot set item; use `<Components>.append/extend` instead.')
     
     def __getitem__(self, key):
         '''Return a :class:`Component` object or a list of :class:`Component` objects.'''
@@ -113,12 +124,17 @@ class Components(Chemicals):
         else:
             for component in components: self.append(component)
         
-    def compile(self):
+    def compile(self, skip_checks=False):
         '''Cast as a :class:`CompiledComponents` object.'''
+        components = tuple(self)
         setattr(self, '__class__', CompiledComponents)
-        CompiledComponents._compile(self)
-        
-        
+        try: self._compile(components, skip_checks)
+        except Exception as error:
+            setattr(self, '__class__', Chemicals)
+            setattr(self, '__dict__', {i.ID: i for i in components})
+            raise error
+
+    kwarray = array = index = indices = must_compile
     
     _default_data = None
     
@@ -309,12 +325,15 @@ class CompiledComponents(CompiledChemicals):
         for i in _num_component_properties:
             dct[i] = component_data_array(components, i)
 
-    def _compile(self):
+    def compile(self, skip_checks=False):
+        '''Skip, :class:`CompiledComponents` have already been compiled.'''
+        pass
+
+    def _compile(self, components, skip_checks=False):
         dct = self.__dict__
         tuple_ = tuple # this speeds up the code
         components = tuple_(dct.values())
-        CompiledChemicals._compile(self)
-        
+        CompiledChemicals._compile(self, components, skip_checks)
         for component in components:
             missing_properties = component.get_missing_properties(_key_component_properties)
             if not missing_properties: continue

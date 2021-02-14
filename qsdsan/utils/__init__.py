@@ -34,6 +34,7 @@ def secondary_importing():
         formatting,
         getters,
         setters,
+        decorators,
         )
     
     __all__ = (
@@ -43,4 +44,5 @@ def secondary_importing():
         *formatting.__all__,
         *getters.__all__,
         *setters.__all__,
+        *decorators.__all__,
                 )

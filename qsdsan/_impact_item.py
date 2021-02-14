@@ -173,7 +173,7 @@ class ImpactItem:
         '''
         if cls._default_data is not None:
             data_file = cls._default_data
-        else: data_file = pd.ExcelFile(data_path)
+        else: data_file = pd.ExcelFile(data_path, engine='openpyxl')
         items = {}
         for sheet in data_file.sheet_names:
             data = data_file.parse(sheet, index_col=0)

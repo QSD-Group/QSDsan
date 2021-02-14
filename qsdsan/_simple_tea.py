@@ -19,6 +19,8 @@ from biosteam import TEA
 
 __all__ = ('SimpleTEA',)
 
+conflict_slots = ('lang_factor', 'system', 'units', 'feeds', 'products')
+
 class SimpleTEA(TEA):    
     '''
     Calculate an annualized cost for simple economic analysis that does not
@@ -54,7 +56,8 @@ class SimpleTEA(TEA):
 
     '''
     
-    __slots__ = (*(i for i in TEA.__slots__ if i !='lang_factor'),
+    __slots__ = (*(i for i in TEA.__slots__ if i not in conflict_slots),
+                 '_system', '_units', '_feeds', '_products',
                  '_discount_rate', '_start_year', '_lifetime',
                  '_uptime_ratio', '_CAPEX', '_lang_factor',
                  '_annual_maintenance', '_annual_labor', '_system_add_OPEX')
@@ -66,7 +69,6 @@ class SimpleTEA(TEA):
                  construction_schedule=None):
         system.simulate()
         self.system = system
-        self.units = sorted(system._costunits, key=lambda x: x.line)
         system._TEA = self
         self.discount_rate = discount_rate
         # IRR (internal rate of return) is the discount rate when net present value is 0
@@ -75,7 +77,6 @@ class SimpleTEA(TEA):
         self._sales = 0 # guess cost for solve_price method
         self.start_year = start_year
         self.lifetime = lifetime
-        self._duration = self.duration
         self.uptime_ratio = 1.
         self._lang_factor = None
         self._CAPEX = CAPEX
@@ -100,8 +101,8 @@ class SimpleTEA(TEA):
         self.startup_salesfrac = 0.
         self.WC_over_FCI = 0.
         self.finance_interest = 0.
-        self.finance_years = 0.
-        self.finance_fraction = 0.
+        self.finance_years = 0
+        self.finance_fraction = 0
         
         
     def __repr__(self):
@@ -142,6 +143,34 @@ class SimpleTEA(TEA):
         return CAPEX
 
     @property
+    def system(self):
+        '''[:class:`biosteam.System`] The system this TEA is conducted for.'''
+        return self._system
+    @system.setter
+    def system(self, i):
+        if i:
+            self._system = i
+            self._units = sorted([j for j in i.units if j._design or j._cost],
+                                key=lambda x: x.line)
+            self._feeds = i.feeds
+            self._products = i.products
+
+    @property
+    def units(self):
+        '''[:class:`qsdsan.SanUnit`] Units in the system.'''
+        return self._units
+    
+    @property
+    def feeds(self):
+        '''[:class:`qsdsan.WasteStream`] System feed streams.'''
+        return self._feeds
+    
+    @property
+    def products(self):
+        '''[:class:`qsdsan.WasteStream`] System product streams.'''
+        return self._products
+
+    @property
     def discount_rate(self):
         '''[float] Interest rate used in discounted cash flow analysis.'''
         return self._discount_rate
@@ -163,15 +192,16 @@ class SimpleTEA(TEA):
     @property
     def lifetime(self):
         '''[int] Total lifetime of the system, [yr]. Currently `biosteam` only supports int.'''
-        return self._lifetime
+        return int(self._lifetime)
     @lifetime.setter
     def lifetime(self, i):
-        self._lifetime = self._years = i
-        
+        self._lifetime = self._years = int(i)
+        self._duration = (int(self.start_year), int(self.start_year+self.lifetime))
+
     @property
     def duration(self):
         '''[int] Duration of the system based on start_year and lifetime.'''
-        return (self.start_year, self.start_year+self.lifetime)
+        return self._duration
     
     @property
     def uptime_ratio(self):

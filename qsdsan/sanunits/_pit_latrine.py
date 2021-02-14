@@ -71,13 +71,13 @@ class PitLatrine(Toilet):
     def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, lifetime=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True, 
-                 OPEX_over_CAPEX=0.05,
+                 CAPEX=449, OPEX_over_CAPEX=0.05,
                  if_leaching=True, if_shared=True,
                  if_pit_above_water_table=True, **kwargs):
 
         Toilet.__init__(self, ID, ins, outs, N_user, N_toilet,
                         if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
-                        if_air_emission, if_ideal_emptying, OPEX_over_CAPEX)
+                        if_air_emission, if_ideal_emptying, CAPEX, OPEX_over_CAPEX)
         self.lifetime = lifetime
         self.if_leaching = if_leaching
         self.if_pit_above_water_table = if_pit_above_water_table
@@ -195,24 +195,20 @@ class PitLatrine(Toilet):
         design['Single pit area'] = self.pit_area
         design['Single pit depth'] = self.pit_depth
         
+        density = self.density_dct
         self.construction = (
             Construction(item='Cement', quantity=700*N, unit='kg'),
-            Construction(item='Sand', quantity=2.2*1442*N, unit='kg'),
-            Construction(item='Gravel', quantity=0.8*1600*N, unit='kg'),
-            Construction(item='Brick', quantity=54*0.0024*1750*N, unit='kg'),
-            Construction(item='Plastic', quantity=16*0.63*N, unit='kg'),
-            Construction(item='Steel', quantity=0.00425*7900*N, unit='kg'),
+            Construction(item='Sand', quantity=2.2*density['Sand']*N, unit='kg'),
+            Construction(item='Gravel', quantity=0.8*density['Gravel']*N, unit='kg'),
+            Construction(item='Brick', quantity=54*0.0024*density['Brick']*N, unit='kg'),
+            Construction(item='Plastic', quantity=16*density['Plastic']*N, unit='kg'),
+            Construction(item='Steel', quantity=0.00425*density['Steel']*N, unit='kg'),
             Construction(item='Wood', quantity=0.19*N, unit='m3'),
             Construction(item='Excavation', quantity=self.pit_V*N, unit='m3'),
             )
 
         self.add_construction(add_cost=False)
 
-    _BM = {'Total toilets': 1}
-        
-    def _cost(self):
-        self.purchase_costs['Total toilets'] = 449 * self.N_toilet
-        self._add_OPEX = self.purchase_costs['Total toilets']*self.OPEX_over_CAPEX/365/24
 
     @property
     def pit_depth(self):

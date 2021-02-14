@@ -58,7 +58,8 @@ Forking and Cloning
 
 Note
 ^^^^
-GitHub has really detailed documentation on `forking <https://docs.github.com/en/github/getting-started-with-github/fork-a-repo>`_ (and almost everything else).
+#. GitHub has really detailed documentation on `forking <https://docs.github.com/en/github/getting-started-with-github/fork-a-repo>`_ (and almost everything else).
+#. If you are new to command-line interface, `GitHub Desktop <https://desktop.github.com/>`_ is recommended.
 
 
 Developing Modules

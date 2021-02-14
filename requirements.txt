@@ -1,8 +1,9 @@
-biosteam
+biosteam==2.24.1
+thermosteam==0.24.0
 sphinx
 sphinx_rtd_theme
 nbsphinx
 scikit-learn
 scipy
-salib
+SALib
 matplotlib
