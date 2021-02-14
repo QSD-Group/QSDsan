@@ -54,6 +54,7 @@ class SanUnit(Unit, isabstract=True):
     '''
     
     _stacklevel = 7
+    ticket_name = 'SU'
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, **kwargs):
         self._register(ID)

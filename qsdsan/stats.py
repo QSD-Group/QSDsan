@@ -31,6 +31,7 @@ from scipy.stats import pearsonr, spearmanr
 from SALib.sample import (morris as morris_sampling, saltelli)
 from SALib.analyze import morris, sobol
 from matplotlib import pyplot as plt
+from .utils.decorators import time_printer
 
 isinstance = isinstance
 getattr = getattr
@@ -38,12 +39,12 @@ var_indices = bst.evaluation._model.var_indices
 indices_to_multiindex = bst.evaluation._model.indices_to_multiindex
 
 def _update_input(input_val, default_val):
-    if not input_val:
+    if input_val is None:
         return default_val
     else:
         try:
             iter(input_val)
-            return input_val
+            return input_val if not isinstance(input_val, str) else (input_val,)
         except:
             return (input_val,)
 
@@ -100,9 +101,9 @@ def get_correlation(model, input_x=None, input_y=None,
     `scipy.stats.spearmanr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.spearmanr.html>`_
     
     '''
+    table = model.table
     input_x = _update_input(input_x, model.get_parameters())
     input_y = _update_input(input_y, model.metrics)
-    table = model.table
     x_indices = var_indices(input_x)
     x_data = [table[i] for i in x_indices]
     y_indices = var_indices(input_y)
@@ -211,15 +212,17 @@ def generate_samples(inputs, kind, N, seed=None, **kwargs):
         raise ValueError('kind can only be "Morris" or "Saltelli", ' \
                          f'not "{kind}".')
 
+
 # %%
 
 # =============================================================================
 # Morris
 # =============================================================================
 
+@time_printer
 def morris_analysis(model, samples, inputs, metrics=None, nan_policy='propagate',
                     conf_level=0.95, print_to_console=False,
-                    file='', **kwargs):
+                    print_time=False, file='', **kwargs):
     '''
     Run Morris sensitivity analysis using ``SALib``.
     
@@ -243,6 +246,8 @@ def morris_analysis(model, samples, inputs, metrics=None, nan_policy='propagate'
         Confidence level of results.
     print_to_console : bool
         Whether to show results in the console.
+    print_time : bool
+        Whether to show simulation time in the console. 
     file : str
         If provided, the results will be saved as an Excel file.
     
@@ -279,7 +284,7 @@ def morris_analysis(model, samples, inputs, metrics=None, nan_policy='propagate'
 
 def plot_morris_results(morris_dct, metric, x_axis='mu_star',
                         k1=0.1, k2=0.5, k3=1, label_kind='number',
-                        single_color=False, return_axis=False, file=''):
+                        single_color=False, file=''):
     '''
     Visualize the results from Morris One-at-A-Time analysis.
     
@@ -305,8 +310,6 @@ def plot_morris_results(morris_dct, metric, x_axis='mu_star',
         of "name" (use index name of the result table).
     single_color : bool
         Whether to use a single color or not in plotting the points.
-    return_axis : bool
-        Whether to return the figure axis.
     file : str
         If provided, the generated figure will be saved as a png file.
         
@@ -330,7 +333,7 @@ def plot_morris_results(morris_dct, metric, x_axis='mu_star',
     plt.scatter(x_data, y_data, c=range(len(x_data)) if not single_color else None)
     for x, y, label in zip(x_data, y_data, labels):
         plt.annotate(label, (x, y), xytext=(10, 10), textcoords='offset points',
-                     ha='center')
+                      ha='center')
     xlim = plt.gca().get_xlim()
     ylim = plt.gca().get_ylim()
     x_range = np.arange(-1, np.ceil(xlim[1])+1)
@@ -342,15 +345,12 @@ def plot_morris_results(morris_dct, metric, x_axis='mu_star',
         ylim = (0, ylim[1])
     plt.xlim(xlim)
     plt.ylim(ylim)
-    plt.xlabel('$\mu^*$')
-    plt.ylabel('$\sigma$')
-    # plt.show()
+    plt.xlabel(r'$\mu^*$')
+    plt.ylabel(r'$\sigma$')
     fig = plt.gcf()
+    plt.close()
     if file:
         fig.savefig(file, dpi=300)
-    if return_axis:
-        axis = plt.gca()
-        return fig, axis
     return fig
     
 
@@ -361,9 +361,10 @@ def plot_morris_results(morris_dct, metric, x_axis='mu_star',
 # Sobol
 # =============================================================================
 
+@time_printer
 def sobol_analysis(model, samples, inputs, metrics=None, nan_policy='propagate',
                    calc_second_order=True, conf_level=0.95, print_to_console=False,
-                   file='', **kwargs):
+                   print_time=False, file='', **kwargs):
     '''
     Run Sobol sensitivity analysis using ``SALib``.
     
@@ -389,6 +390,8 @@ def sobol_analysis(model, samples, inputs, metrics=None, nan_policy='propagate',
         Confidence level of results.
     print_to_console : bool
         Whether to show results in the console.
+    print_time : bool
+        Whether to show simulation time in the console. 
     file : str
         If provided, the results will be saved as an Excel file.
 

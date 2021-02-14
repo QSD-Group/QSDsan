@@ -1,6 +1,5 @@
-==========
-Change Log
-==========
+CHANGELOG
+=========
 
 This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
@@ -16,7 +15,7 @@ Ongoing
 
 	- Sobol sensitivity analysis: :func:`qsdsan.stats.sobol_analysis`.
 
-- Added all uncertainty parameters for all of the scenarios in the bwaise system.
+- Added all uncertainty parameters for all of the scenarios in the bwaise system, also added demonstrative Morris and Sobol analysis.
 - :func:`LCA.get_normalized_impacts` was replaced by :func:`qsdsan.LCA.get_allocated_impacts` for :class:`~.LCA` to enable flexible allocation options.
 - Reformatted all documents, added instructions on documentation.
 - Added brief instructions on contributing and code of conduct.

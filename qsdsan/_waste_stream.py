@@ -77,6 +77,7 @@ class WasteStream(Stream):
     # Child class will inherit parent class's slots
     __slots__ = _ws_specific_slots
     _default_ratios = _default_ratios
+    ticket_name = 'ws'
     
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None, 

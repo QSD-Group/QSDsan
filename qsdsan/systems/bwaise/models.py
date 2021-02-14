@@ -31,6 +31,7 @@ from qsdsan import currency, ImpactItem
 from qsdsan.utils.loading import load_data, data_path
 from qsdsan.utils.setters import AttrSetter, AttrFuncSetter, DictAttrSetter
 from qsdsan.utils.getters import FuncGetter
+from qsdsan.utils.decorators import time_printer
 from qsdsan.systems import bwaise as bw
 
 getattr = getattr
@@ -550,7 +551,7 @@ facultative_lagoon_data = load_data(path)
 batch_setting_unit_params(facultative_lagoon_data, modelA, A7)
 modelA = add_lagoon_parameters(A7, modelA)
 
-full_params_A = modelA.get_parameters()
+all_paramsA = modelA.get_parameters()
 
 
 # %%
@@ -659,7 +660,7 @@ D = shape.Uniform(lower=2.93, upper=3.05)
 def set_LPG_CF(i):
     GWP_dct['Biogas'] = -i*get_biogas_factor()
 
-full_params_B = modelB.get_parameters()
+all_paramsB = modelB.get_parameters()
 
 
 # %%
@@ -764,7 +765,7 @@ C7 = systems.C7
 batch_setting_unit_params(facultative_lagoon_data, modelC, C7)
 modelC = add_lagoon_parameters(C7, modelC)
 
-full_params_C = modelC.get_parameters()
+all_paramsC = modelC.get_parameters()
 
 
 
@@ -780,14 +781,14 @@ result_dct = {
         'sysC': dict.fromkeys(('parameters', 'data', 'percentiles', 'spearman')),
         }
 
-def run_uncertainty(model, N_sample=1000, seed=None,
-                    percentiles=(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1)):
+@time_printer
+def run_uncertainty(model, seed=None, N_sample=1000, rule='L',
+                    percentiles=(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1),
+                    print_time=False):
     global result_dct
     if seed:
         np.random.seed(seed)
-    if model is not modelA:
-        return f'{model} has not been added.'
-    samples = model.sample(N_sample, 'L')
+    samples = model.sample(N_sample, rule)
     model.load_samples(samples)
     model.evaluate()
     # Data organization
@@ -795,7 +796,8 @@ def run_uncertainty(model, N_sample=1000, seed=None,
     index_p = len(model.get_parameters())
     dct['parameters'] = model.table.iloc[:, :index_p].copy()
     dct['data'] = model.table.iloc[:, index_p:].copy()
-    dct['percentiles'] = dct['data'].quantile(q=percentiles)
+    if percentiles:
+        dct['percentiles'] = dct['data'].quantile(q=percentiles)
     # Spearman's rank correlation
     spearman_metrics = [model.metrics[i] for i in (0, 3, 12, 16, 20, 24)]
     spearman_results = model.spearman(model.get_parameters(), spearman_metrics)
@@ -818,7 +820,8 @@ def save_uncertainty_results(model, path=None):
     with pd.ExcelWriter(path) as writer:
         dct['parameters'].to_excel(writer, sheet_name='Parameters')
         dct['data'].to_excel(writer, sheet_name='Uncertainty results')
-        dct['percentiles'].to_excel(writer, sheet_name='Percentiles')
+        if 'percentiles' in dct.keys():
+            dct['percentiles'].to_excel(writer, sheet_name='Percentiles')
         dct['spearman'].to_excel(writer, sheet_name='Spearman')
         model.table.to_excel(writer, sheet_name='Raw data')
 
@@ -834,11 +837,11 @@ light_color = colors.brown_tint.RGBn
 dark_color = colors.brown_shade.RGBn
 
 def plot_series_bp(title, dfs, light_color, dark_color, xlabels, ylabel, ylim):
-    fig, ax1 = plt.subplots(figsize=(len(dfs), 6))
+    fig, axis = plt.subplots(figsize=(len(dfs), 6))
     fig.canvas.set_window_title(title)
     fig.subplots_adjust(left=0.075, right=0.95, top=0.9, bottom=0.25)
     for i, df in enumerate(dfs):      
-        ax1.boxplot(x=df, positions=(i,), patch_artist=True,
+        axis.boxplot(x=df, positions=(i,), patch_artist=True,
                     widths=0.8, whis=[5, 95],
                     boxprops={'facecolor':light_color,
                               'edgecolor':dark_color},
@@ -849,27 +852,30 @@ def plot_series_bp(title, dfs, light_color, dark_color, xlabels, ylabel, ylim):
                                   'markeredgecolor': dark_color,
                                   'markersize':6})
     
-    ax1.set_xticklabels(xlabels, rotation=45, fontsize=12)
-    ax1.set_ylabel(ylabel, fontsize=12)
-    ax1.set_ylim(ylim)
-    return fig
+    axis.set_xticklabels(xlabels, rotation=45, fontsize=12)
+    axis.set_ylabel(ylabel, fontsize=12)
+    axis.set_ylim(ylim)
+    return fig, axis
 
 
-def plot_cost_emission(model):
+def plot_cost_emission(model, data=None):
     sys_ID = model._system.ID
-    data = result_dct[sys_ID]['data']
+    if data is None:
+        data = result_dct[sys_ID]['data']
     cost_df = data.iloc[:, 0]
     emission_df = data.iloc[:, 3:4]
     dfs = (cost_df, emission_df)
-    plot_series_bp(f'{sys_ID} Uncertainty Results',
-                   dfs, colors.brown_tint.RGBn, colors.brown_shade.RGBn,
-                   ('Net cost', 'Net GWP'),
-                   f'Costs and Emissions [{currency} or {GWP.unit}/cap/yr]',
-                   (0, 100))
+    fig, axis = plot_series_bp(f'{sys_ID} Uncertainty Results',
+                               dfs, colors.brown_tint.RGBn, colors.brown_shade.RGBn,
+                               ('Net cost', 'Net GWP'),
+                               f'Costs and Emissions [{currency} or {GWP.unit}/cap/yr]',
+                               (0, 100))
+    return fig, axis
 
-def plot_recovery(model, resource):
+def plot_recovery(model, resource, data=None):
     sys_ID = model._system.ID
-    data = result_dct[sys_ID]['data']
+    if data is None:
+        data = result_dct[sys_ID]['data']
     resources = ('COD', 'N', 'P', 'K')
     try:
         index = (resources.index(resource)+2)*4+1
@@ -878,11 +884,12 @@ def plot_recovery(model, resource):
     dfs = []
     for i in range(4):
         dfs.append(data.iloc[:, index+i:index+i+1])
-    plot_series_bp(f'{sys_ID} Uncertainty Results',
-                   dfs, colors.brown_tint.RGBn, colors.brown_shade.RGBn,
-                   ('Liquid', 'Solid', 'Gas', 'Total'),
-                   f'{resource} Recovery',
-                   (0, 1))
+    fig, axis = plot_series_bp(f'{sys_ID} Uncertainty Results',
+                               dfs, colors.brown_tint.RGBn, colors.brown_shade.RGBn,
+                               ('Liquid', 'Solid', 'Gas', 'Total'),
+                               f'{resource} Recovery',
+                               (0, 1))
+    return fig, axis
 
 
 
