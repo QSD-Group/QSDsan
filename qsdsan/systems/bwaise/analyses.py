@@ -75,12 +75,14 @@ modelA_dct = m.run_uncertainty(modelA, seed=3221, N_sample=100, rule='L',
 pearson_rA, pearson_pA = get_correlation(modelA, input_y=key_metrics,
                                          kind='Pearson',
                                          nan_policy='raise',
-                                         file=result_path+'PearsonA.xlsx')
+                                         # file=result_path+'PearsonA.xlsx'
+                                         )
 
 spearman_rhoA, spearman_pA = get_correlation(modelA, kind='Spearman',
                                              input_y=key_metrics,
                                              nan_policy='raise',
-                                             file=result_path+'SpearmanA.xlsx')
+                                             # file=result_path+'SpearmanA.xlsx'
+                                             )
 
 key_paramsA = filter_parameters(modelA, spearman_rhoA, 0.5)
 
@@ -101,7 +103,8 @@ morris_dctA = morris_analysis(modelA, morris_samples, inputs,
                               metrics=key_metrics,
                               nan_policy='fill_mean', seed=3221,
                               print_to_console=True,
-                              file=result_path+'MorrisA.xlsx')
+                              # file=result_path+'MorrisA.xlsx'
+                              )
 
 figs = []
 for metric in key_metrics:
@@ -127,7 +130,8 @@ sobol_dctA = sobol_analysis(modelA, saltelli_samples, inputs,
                             calc_second_order=True, conf_level=0.95,
                             print_to_console=True,
                             nan_policy='fill_mean',
-                            file=result_path+'SobolA.xlsx', seed=3221)
+                            # file=result_path+'SobolA.xlsx',
+                            seed=3221)
 
 
 
