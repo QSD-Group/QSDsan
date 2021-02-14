@@ -65,7 +65,7 @@ for alternative systems.
         
 
 import os
-result_path = os.path.dirname(os.path.realpath(__file__))
+result_path = os.path.dirname(os.path.realpath(__file__)) + '/results/'
 del os
 
 modelA_dct = m.run_uncertainty(modelA, seed=3221, N_sample=100, rule='L',
