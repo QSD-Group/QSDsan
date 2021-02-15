@@ -1,5 +1,5 @@
-CHANGELOG
-=========
+Change Log
+==========
 
 This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
@@ -61,7 +61,7 @@ This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
-.. _0.1.0: https://github.com/yalinli2/QSDsan/commit/741342cece5d2f6c1ecbc96e891c2554e0efceb9
+.. _0.1.0: https://github.com/yalinli2/QSDsan/commit/a3164b257d95889305aa94186bb072ad3d7b5f77
 .. _0.0.3: https://github.com/QSD-Group/QSDsan/commit/e20222caccc58d9ee414ca08d8ec55f3a44ffca7
 .. _0.0.2: https://github.com/QSD-Group/QSDsan/commit/84653f5979fbcd76a80ffb6b22ffec1c5ca2a084
 .. _0.0.1: https://github.com/yalinli2/QSDsan/commit/f95e6172780cfe24ab68cd27ba19837e010b3d99

@@ -811,7 +811,7 @@ def save_uncertainty_results(model, path=None):
         path = os.path.dirname(os.path.realpath(__file__))
         path += '/results'
         if not os.path.isdir(path):
-            os.path.mkdir(path)
+            os.mkdir(path)
         path += f'/model{model._system.ID[-1]}.xlsx'
         del os
     dct = result_dct[model._system.ID]

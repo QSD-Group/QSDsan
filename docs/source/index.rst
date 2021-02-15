@@ -86,7 +86,7 @@ Additionally, to get the full value of ``QSDsan``, we highly recommend reading t
 
 
 .. toctree::
-   :maxdepth: 0
+   :maxdepth: 1
    :caption: What's new
 
    CHANGELOG
