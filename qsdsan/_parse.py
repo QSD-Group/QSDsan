@@ -80,8 +80,8 @@ def get_ic(cmps, conservation_for):
     else: return None
 
 def symbolize(coeff_dct, components, conserved_for):
-    if '?' in coeff_dct.values() or '-(?)' in coeff_dct.values():
-        n = sum([v in ('?', '-(?)') for v in coeff_dct.values()])
+    n = sum([v in ('?', '-(?)') for v in coeff_dct.values()])
+    if n > 0:
         unknowns = symbols('unknown0:%s' % n)
         i = 0
         v_arr = []
@@ -93,11 +93,11 @@ def symbolize(coeff_dct, components, conserved_for):
             else: v_arr.append(coeff_dct[cmp])
         v = Matrix(sympify(v_arr, parameters))
         ic = get_ic(components.subgroup(IDs), conserved_for)
-        sol = simplify(solve(ic * v, unknowns))
-        coeff_dct = dict(zip(IDs, v.subs(sol)))
+        sol = solve(ic * v, unknowns)
+        coeff_dct = dict(zip(IDs, simplify(v.subs(sol))))
         del unknowns                    
     else:
-        coeff_dct = {k: parse_expr(v, local_dict=parameters) for k, v in coeff_dct.items()}
+        coeff_dct = {k: simplify(parse_expr(v, local_dict=parameters)) for k, v in coeff_dct.items()}
     return coeff_dct
     
 def get_stoichiometric_coeff(reaction, ref_component, components, conserved_for, parameters):
