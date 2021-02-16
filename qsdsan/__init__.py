@@ -32,6 +32,8 @@ from ._transportation import *
 from ._sanunit import *
 from ._simple_tea import *
 from ._lca import *
+from ._parse import *
+from ._process import *
 
 from . import (
     _units_of_measure, # if not included here, then need to add to setup.py
@@ -46,6 +48,8 @@ from . import (
     _sanunit,
     _simple_tea,
     _lca,
+    _parse,
+    _process,
     utils,
     sanunits,
     systems,
@@ -65,6 +69,8 @@ __all__ = (
     *_sanunit.__all__,
     *_simple_tea.__all__,
     *_lca.__all__,
+    *_parse.__all__,
+    *_process.__all__,
            )
 
 
