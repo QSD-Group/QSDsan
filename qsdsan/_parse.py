@@ -13,9 +13,14 @@ https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
+
 from sympy import symbols, sympify, simplify, Matrix, solve
 from sympy.parsing.sympy_parser import parse_expr
 import numpy as np
+
+__all__ = ('get_stoichiometric_coeff', )
+
+#%%
 
 def split_coefficient(nID, sign):
     if len(nID.split(']')) > 1:
@@ -79,7 +84,7 @@ def get_ic(cmps, conservation_for):
         return Matrix(arr.tolist())
     else: return None
 
-def symbolize(coeff_dct, components, conserved_for):
+def symbolize(coeff_dct, components, conserved_for, parameters):
     n = sum([v in ('?', '-(?)') for v in coeff_dct.values()])
     if n > 0:
         unknowns = symbols('unknown0:%s' % n)
@@ -124,7 +129,7 @@ def get_stoichiometric_coeff(reaction, ref_component, components, conserved_for,
         raise ValueError("reaction must be either a str or a dict or an array; "
                          f"not a '{type(reaction).__name__}' object")        
     if coeff_dct:
-        coeff_dct = symbolize(coeff_dct, components, conserved_for)
+        coeff_dct = symbolize(coeff_dct, components, conserved_for, parameters)
         coeff = dct2list(coeff_dct, components)
     if ref_component:
         normalize_factor = abs(coeff[components._index[ref_component]])
@@ -133,24 +138,24 @@ def get_stoichiometric_coeff(reaction, ref_component, components, conserved_for,
     return coeff
 
 #%%
-from qsdsan import Components
+# from qsdsan import Components
 
-# hydrolysis
-rxn = 'XB_Subst -> [1-fsi]SF + [fsi]SU_E + [?]SNH4 + [?]SPO4 + [?]SCO3'
-ref = 'XB_Subst'
-cmps = Components.load_default()
-conserved_for = ('COD', 'N', 'P', 'charge')
-parameters = {'fsi': symbols('fsi')}
-
-# anoxic growth on SF
-rxn = '[1/yh]SF + [(1-yh)/yh/2.86]SNO3 + [?]SPO4 + [?]SNH4 + [?]SCO3 -> [(1-yh)/yh/2.86]SN2 + XOHO'
-ref = 'XOHO'
+# # hydrolysis
+# rxn = 'XB_Subst -> [1-fsi]SF + [fsi]SU_E + [?]SNH4 + [?]SPO4 + [?]SCO3'
+# ref = 'XB_Subst'
 # cmps = Components.load_default()
 # conserved_for = ('COD', 'N', 'P', 'charge')
-parameters = {'yh': symbols('yh'),}
+# parameters = {'fsi': symbols('fsi')}
 
-stoichiometry = get_stoichiometric_coeff(rxn, ref, cmps, conserved_for, parameters)
-dict(zip(cmps.IDs, stoichiometry))
+# # anoxic growth on SF
+# rxn = '[1/yh]SF + [(1-yh)/yh/2.86]SNO3 + [?]SPO4 + [?]SNH4 + [?]SCO3 -> [(1-yh)/yh/2.86]SN2 + XOHO'
+# ref = 'XOHO'
+# # cmps = Components.load_default()
+# # conserved_for = ('COD', 'N', 'P', 'charge')
+# parameters = {'yh': symbols('yh'),}
+
+# stoichiometry = get_stoichiometric_coeff(rxn, ref, cmps, conserved_for, parameters)
+# dict(zip(cmps.IDs, stoichiometry))
 
 #%%
 # nID = '[1-fsi]SF'
