@@ -24,9 +24,10 @@ __all__ = ('Process',)
 @chemicals_user        
 class Process():
     
-    def __init__(self, reaction, ref_component, rate_equation=None, components=None, 
+    def __init__(self, ID, reaction, ref_component, rate_equation=None, components=None, 
                  conserved_for=('COD', 'N', 'P', 'charge'), parameters=None):
         
+        self._ID = ID
         self._stoichiometry = []
         self._components = self._load_chemicals(components)
         self._ref_component = ref_component
@@ -78,6 +79,10 @@ class Process():
             self._stoichiometry = [-v for v in self._stoichiometry]
         self._rate_equation = -self._rate_equation
         
+    @property
+    def ID(self):
+        return self._ID
+    
     @property
     def ref_component(self):
         return getattr(self._components, self._ref_component)    
@@ -133,3 +138,115 @@ class Process():
         factor = self._stoichiometry[self._components._index[new_ref]]
         self._rate_equation *= factor
 
+#%%
+setattr = object.__setattr__
+
+class Processes():
+    
+    def __new__(cls, processes):
+        self = super().__new__(cls)
+        #!!! add function to detect duplicated processes
+        setfield = setattr
+        for i in processes:
+            setfield(self, i.ID, i)
+        return self
+    
+    # def __getnewargs__(self):
+    #     return(tuple(self),)
+    
+    def __setattr__(self, ID, process):
+        raise TypeError("can't set attribute; use <Processes>.append instead")
+    
+    def __setitem__(self, ID, process):
+        raise TypeError("can't set attribute; use <Processes>.append instead")
+    
+    def __getitem__(self, key):
+        """
+        Return a ``Process`` or a list of ``Process``es.
+        
+        Parameters
+        ----------
+        key : Iterable[str] or str
+              Process IDs.
+        
+        """
+        dct = self.__dict__
+        try:
+            if isinstance(key, str):
+                return dct[key]
+            else:
+                return [dct[i] for i in key]
+        except KeyError:
+            raise KeyError(f"undefined process {key}")
+    
+    def copy(self):
+        """Return a copy."""
+        copy = object.__new__(Processes)
+        for proc in self: setattr(copy, proc.ID, proc)
+        return copy
+    
+    def append(self, process):
+        """Append a Process."""
+        if not isinstance(process, Process):
+            raise TypeError("only 'Process' objects can be appended, "
+                           f"not '{type(process).__name__}'")
+        ID = process.ID
+        if ID in self.__dict__:
+            raise ValueError(f"{ID} already defined in processes")
+        setattr(self, ID, process)
+    
+    def extend(self, processes):
+        """Extend with more Chemical objects."""
+        if isinstance(processes, Processes):
+            self.__dict__.update(processes.__dict__)
+        else:
+            for process in processes: self.append(process)
+    
+    def subgroup(self, IDs):
+        """
+        Create a new subgroup of processes.
+        
+        Parameters
+        ----------
+        IDs : Iterable[str]
+              Process IDs.
+              
+        """
+        return type(self)([getattr(self, i) for i in IDs])
+    
+    def compile(self):
+        setattr(self, __class__, CompiledProcesses)
+        self._compile(processes)
+        
+    # kwarray = array = index = indices = must_compile
+        
+    def show(self):
+        print(self)
+    _ipython_display_ = show
+    
+    def __len__(self):
+        return len(self.__dict__)
+    
+    def __contains__(self, process):
+        if isinstance(process, str):
+            return process in self.__dict__
+        elif isinstance(process, Process):
+            return process in self.__dict__.values()
+        else: # pragma: no cover
+            return False
+    
+    def __iter__(self):
+        yield from self.__dict__.values()
+    
+    def __repr__(self):
+        return f"{type(self).__name__}([{', '.join(self.__dict__)}])"
+
+            
+#%%
+@utils.read_only(methods=())
+class CompiledProcesses():
+    
+    _cache = {}
+    
+    def __new__(cls, processes, cache=None):
+        
