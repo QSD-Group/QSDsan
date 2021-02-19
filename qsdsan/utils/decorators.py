@@ -36,8 +36,8 @@ def time_printer(func):
     --------
     >>> from qsdsan.utils.decorators import time_printer
     >>> @time_printer
-    >>> def foo(a=1, print_time=False):
-    >>>    return a
+    ... def foo(a=1, print_time=False):
+    ...    return a
     >>> # This will not print run time
     >>> print(foo(a=5))
     5
