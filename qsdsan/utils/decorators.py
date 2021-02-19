@@ -47,7 +47,6 @@ def time_printer(func):
     5
     '''
     
-    
     def inner(*args, **kwargs):
         try: print_time = kwargs['print_time']
         except: print_time = False
@@ -59,5 +58,8 @@ def time_printer(func):
             time = str(timedelta(seconds=round(timer.elapsed_time)))
             print(f'\nTotal time: {time}.')
         return output
+    inner.__doc__ = func.__doc__
     return inner
+
+
 

@@ -4,6 +4,11 @@ Change Log
 This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
+Ongoing
+-------
+- Added Kendall's tau test to :func:`qsdsan.stats.get_correlation`.
+
+
 `0.1.0`_ (2021-02-14)
 ---------------------
 - Added a ``stats`` module including:

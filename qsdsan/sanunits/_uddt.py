@@ -257,15 +257,15 @@ class UDDT(Toilet):
         
         density = self.density_dct
         self.construction = (
-            Construction(item='Cement', quantity=200*N, unit='kg'),
-            Construction(item='Sand', quantity=0.6*density['Sand']*N, unit='kg'),
-            Construction(item='Gravel', quantity=0.2*density['Gravel']*N, unit='kg'),
-            Construction(item='Brick', quantity=682*0.0024*density['Brick']*N, unit='kg'),
-            Construction(item='Plastic', quantity=4*density['Plastic']*N, unit='kg'),
-            Construction(item='Steel', quantity=0.00351*density['Steel']*N, unit='kg'),
+            Construction(item='Cement', quantity=200*N, quantity_unit='kg'),
+            Construction(item='Sand', quantity=0.6*density['Sand']*N, quantity_unit='kg'),
+            Construction(item='Gravel', quantity=0.2*density['Gravel']*N, quantity_unit='kg'),
+            Construction(item='Brick', quantity=682*0.0024*density['Brick']*N, quantity_unit='kg'),
+            Construction(item='Plastic', quantity=4*density['Plastic']*N, quantity_unit='kg'),
+            Construction(item='Steel', quantity=0.00351*density['Steel']*N, quantity_unit='kg'),
             Construction(item='StainlessSteelSheet',
-                         quantity=28.05*density['StainlessSteelSheet']*N, unit='kg'),
-            Construction(item='Wood', quantity=0.222*N, unit='m3'),
+                         quantity=28.05*density['StainlessSteelSheet']*N, quantity_unit='kg'),
+            Construction(item='Wood', quantity=0.222*N, quantity_unit='m3'),
             )
 
         self.add_construction(add_cost=False)

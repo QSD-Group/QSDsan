@@ -140,8 +140,8 @@ class SedimentationTank(SludgeSeparator, Decay):
         column_concrete = N*(thick**2)*H*self.column_per_side*2
 
         self.construction = (
-            Construction(item='Concrete', quantity=side_concrete+column_concrete, unit='m3'),
-            Construction(item='Excavation', quantity=design['Single roof area']+side_area, unit='m3'),
+            Construction(item='Concrete', quantity=side_concrete+column_concrete, quantity_unit='m3'),
+            Construction(item='Excavation', quantity=design['Single roof area']+side_area, quantity_unit='m3'),
             )
         self.add_construction()
     

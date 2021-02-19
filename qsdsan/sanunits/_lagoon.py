@@ -123,8 +123,8 @@ class Lagoon(SanUnit, Decay):
         
         liner = (L*W + 2*depth*(L+W)) * N * self.liner_unit_mass
         self.construction = (
-            Construction(item='Plastic', quantity=liner, unit='kg'),
-            Construction(item='Excavation', quantity=N*V, unit='m3'),
+            Construction(item='Plastic', quantity=liner, quantity_unit='kg'),
+            Construction(item='Excavation', quantity=N*V, quantity_unit='m3'),
             )
         self.add_construction(add_cost=False)
     

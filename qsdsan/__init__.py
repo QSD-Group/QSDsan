@@ -34,6 +34,7 @@ from ._impact_indicator import *
 from ._impact_item import *
 from ._construction import *
 from ._transportation import *
+from ._equipment import *
 from ._sanunit import *
 from ._simple_tea import *
 from ._lca import *
@@ -48,6 +49,7 @@ from . import (
     _impact_item,
     _construction,
     _transportation,
+    _equipment,
     _sanunit,
     _simple_tea,
     _lca,
@@ -68,6 +70,7 @@ __all__ = (
     *_impact_item.__all__,
     *_construction.__all__,
     *_transportation.__all__,
+    *_equipment.__all__,
     *_sanunit.__all__,
     *_simple_tea.__all__,
     *_lca.__all__,

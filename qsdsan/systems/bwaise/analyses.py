@@ -16,8 +16,6 @@ for license details.
 
 import warnings
 warnings.filterwarnings(action='ignore')
-# # The warning is because of some outdated packages
-# warnings.filterwarnings(action='ignore', message='`should_run_async`')
 
 import pandas as pd
 from qsdsan.stats import define_inputs, generate_samples, \
@@ -83,6 +81,7 @@ spearman_rhoA, spearman_pA = get_correlation(modelA, kind='Spearman',
                                              nan_policy='raise',
                                              # file=result_path+'SpearmanA.xlsx'
                                              )
+
 
 key_paramsA = filter_parameters(modelA, spearman_rhoA, 0.5)
 

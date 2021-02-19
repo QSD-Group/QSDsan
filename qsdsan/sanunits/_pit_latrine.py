@@ -197,14 +197,14 @@ class PitLatrine(Toilet):
         
         density = self.density_dct
         self.construction = (
-            Construction(item='Cement', quantity=700*N, unit='kg'),
-            Construction(item='Sand', quantity=2.2*density['Sand']*N, unit='kg'),
-            Construction(item='Gravel', quantity=0.8*density['Gravel']*N, unit='kg'),
-            Construction(item='Brick', quantity=54*0.0024*density['Brick']*N, unit='kg'),
-            Construction(item='Plastic', quantity=16*density['Plastic']*N, unit='kg'),
-            Construction(item='Steel', quantity=0.00425*density['Steel']*N, unit='kg'),
-            Construction(item='Wood', quantity=0.19*N, unit='m3'),
-            Construction(item='Excavation', quantity=self.pit_V*N, unit='m3'),
+            Construction(item='Cement', quantity=700*N, quantity_unit='kg'),
+            Construction(item='Sand', quantity=2.2*density['Sand']*N, quantity_unit='kg'),
+            Construction(item='Gravel', quantity=0.8*density['Gravel']*N, quantity_unit='kg'),
+            Construction(item='Brick', quantity=54*0.0024*density['Brick']*N, quantity_unit='kg'),
+            Construction(item='Plastic', quantity=16*density['Plastic']*N, quantity_unit='kg'),
+            Construction(item='Steel', quantity=0.00425*density['Steel']*N, quantity_unit='kg'),
+            Construction(item='Wood', quantity=0.19*N, quantity_unit='m3'),
+            Construction(item='Excavation', quantity=self.pit_V*N, quantity_unit='m3'),
             )
 
         self.add_construction(add_cost=False)

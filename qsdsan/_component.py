@@ -107,7 +107,6 @@ class Component(tmo.Chemical):
     and methods for waste treatment.
 
     .. note::
-        
         [1] Element ratios like `i_C`, `i_N`, `i_P`, `i_K`, `i_Mg`, and `i_Ca` will
         be calculated based on `formula` and `measured_as` if given; and the ratio
         will be 1 if the component is measured as this element.

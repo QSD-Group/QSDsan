@@ -27,7 +27,7 @@ __all__ = ('get_correlation', 'define_inputs', 'generate_samples',
 import numpy as np
 import pandas as pd
 import biosteam as bst
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import pearsonr, spearmanr, kendalltau
 from SALib.sample import (morris as morris_sampling, saltelli)
 from SALib.analyze import morris, sobol
 from matplotlib import pyplot as plt
@@ -68,9 +68,10 @@ def _update_nan(df, nan_policy, legit=('propagate', 'raise', 'omit')):
 # %%
 
 def get_correlation(model, input_x=None, input_y=None,
-                    kind='Pearson', nan_policy='propagate', file=''):
+                    kind='Pearson', nan_policy='propagate', file='',
+                    **kwargs):
     '''
-    Get Pearson's r between two inputs using ``scipy``.
+    Get correlation coefficients between two inputs using ``scipy``.
     
     Parameters
     ----------
@@ -83,7 +84,8 @@ def get_correlation(model, input_x=None, input_y=None,
         Second set of input, can be single values or iteral,
         will be defaulted to all model parameters if not provided.
     kind : str
-        Can be "Pearson" for Pearson's r or "Spearman" for Spearman's rho
+        Can be "Pearson" for Pearson's r, "Spearman" for Spearman's rho,
+        or "Kendall" for Kendall's tau.
     nan_policy : str
         - "propagate": returns nan.
         - "raise": raise an error.
@@ -93,12 +95,14 @@ def get_correlation(model, input_x=None, input_y=None,
 
     Returns
     -------
-    Two :class:`pandas.DataFrame` containing Pearson'r or Spearman's rho and p-values.
+    Two :class:`pandas.DataFrame` containing Pearson'r, Spearman's rho, or Kendall's tau
+    and p-values.
     
     See Also
     --------
     `scipy.stats.pearsonr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.pearsonr.html>`_
     `scipy.stats.spearmanr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.spearmanr.html>`_
+    `scipy.stats.kendalltau <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.kendalltau.html>`_
     
     '''
     table = model.table
@@ -122,14 +126,17 @@ def get_correlation(model, input_x=None, input_y=None,
                 r, p = (np.nan, np.nan)
             else:
                 if kind.capitalize() == 'Pearson':
-                    r, p = pearsonr(df.iloc[:,0], df.iloc[:,1])
+                    r, p = pearsonr(df.iloc[:,0], df.iloc[:,1], **kwargs)
                     sheet_name = 'r'
                 elif kind.capitalize() == 'Spearman':
-                    r, p = spearmanr(df.iloc[:,0], df.iloc[:,1])
+                    r, p = spearmanr(df.iloc[:,0], df.iloc[:,1], **kwargs)
                     sheet_name = 'rho'
+                elif kind.capitalize() == 'Kendall':
+                    r, p = kendalltau(df.iloc[:,0], df.iloc[:,1], **kwargs)
+                    sheet_name = 'tau'
                 else:
-                    raise ValueError('kind can only be "Pearson" or "Spearman", ' \
-                                      f'not "{kind}".')
+                    raise ValueError('kind can only be "Pearson", "Spearman", ' \
+                                      f'or "Kendall", not "{kind}".')
             rs[-1].append(r)
             ps[-1].append(p)
     r_df = pd.DataFrame(rs, index=df_index, columns=df_column)

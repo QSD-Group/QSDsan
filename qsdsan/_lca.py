@@ -15,6 +15,7 @@ for license details.
 
 # %%
 
+import math
 import numpy as np
 import pandas as pd
 from . import ImpactItem, WasteStream
@@ -168,12 +169,12 @@ class LCA:
             ratio = converted/self.lifetime_hr
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         for i in units:
-            if i.lifetime:
-                factor = self.lifetime/i.lifetime
-            else:
-                factor = 1
             for j in i.construction:
                 impact = j.impacts
+                if j.lifetime is not None:
+                    factor = math.ceil(time/j.lifetime)
+                else:
+                    factor = 1.
                 for m, n in impact.items():
                     impacts[m] += n*ratio*factor
         return impacts
@@ -323,7 +324,7 @@ class LCA:
         return allocated
         
     
-    def get_units_impacts(self, units, time=None, time_unit='hr',
+    def get_unit_impacts(self, units, time=None, time_unit='hr',
                           exclude=None):
         '''Return total impacts with certain units, normalized to a certain time frame. '''
         if not (isinstance(units, tuple) or isinstance(units, list)

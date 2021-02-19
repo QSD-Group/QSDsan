@@ -1,8 +1,8 @@
-FAQ
-===
+Common Errors
+=============
 
-``graphviz`` Error
-------------------
+``graphviz``
+------------
 When using :func:`System.diagram`, If you run into a ``graphviz`` error similar to:
 
    .. code:: bash
