@@ -417,12 +417,12 @@ def sobol_analysis(model, samples, inputs, metrics=None, nan_policy='propagate',
                            calc_second_order=calc_second_order,
                            conf_level=conf_level, print_to_console=print_to_console,
                            **kwargs)
-        sobol_dct[metric.name] = si
+        sobol_dct[metric.name] = dict(zip(('ST', 'S1', 'S2'), si.to_df()))
     if file:
         writer = pd.ExcelWriter(file)
-        for name, si in sobol_dct.items():
+        for name, si_df in sobol_dct.items():
             n_row = 0
-            for df in si.to_df():
+            for df in si_df:
                 df.to_excel(writer, sheet_name=name, startrow=n_row)
                 n_row += len(df.index) + 2 + len(df.columns.names)
         writer.save()

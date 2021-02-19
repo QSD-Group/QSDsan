@@ -22,9 +22,32 @@ __all__ = ('time_printer',)
 
 # %%
 
+# =============================================================================
+# Allow functions to print execution time with a `print_time` kwargs
+# =============================================================================
+
 TicToc = bst.utils.TicToc
 
 def time_printer(func):
+    '''
+    Allow functions to print execution time with a `print_time` kwargs.
+    
+    Examples
+    --------
+    >>> from qsdsan.utils.decorators import time_printer
+    >>> @time_printer
+    >>> def foo(a=1, print_time=False):
+    >>>    return a
+    >>> # This will not print run time
+    >>> print(foo(a=5))
+    5
+    >>> # This will print run time
+    >>> print(foo(a=5, print_time=True))
+    Total time: 0:00:00.
+    5
+    '''
+    
+    
     def inner(*args, **kwargs):
         try: print_time = kwargs['print_time']
         except: print_time = False
@@ -38,6 +61,3 @@ def time_printer(func):
         return output
     return inner
 
-@time_printer
-def foo(a=1, print_time=False):
-    return a

@@ -1,5 +1,5 @@
-biosteam==2.24.1
-thermosteam==0.24.0
+biosteam==2.24.3
+thermosteam==0.24.1
 sphinx
 sphinx_rtd_theme
 nbsphinx
