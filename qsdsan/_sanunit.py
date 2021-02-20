@@ -15,14 +15,16 @@ for license details.
 
 # %%
 
-from biosteam import Unit, utils
+import biosteam as bst
 from . import currency, Construction, Transportation
 from .utils.piping import WSIns, WSOuts
 
+NotImplementedMethod = bst.utils.NotImplementedMethod
+format_title = bst.utils.misc.format_title
 
 __all__ = ('SanUnit',)
 
-class SanUnit(Unit, isabstract=True):    
+class SanUnit(bst.Unit, isabstract=True):    
 
     '''
     Subclass of :class:`biosteam.Unit`, is initialized with :class:`WasteStream`
@@ -67,9 +69,9 @@ class SanUnit(Unit, isabstract=True):
         self._init_utils()
         self._init_results()
         self._assert_compatible_property_package()
-        self.equipments = equipments
         for equip in equipments:
             equip._linked_unit = self
+        self.equipments = equipments
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
@@ -135,7 +137,7 @@ class SanUnit(Unit, isabstract=True):
         return info[:-1]
     
     
-    _impact = utils.NotImplementedMethod
+    _impact = NotImplementedMethod
 
 
     def _summary(self):
@@ -151,8 +153,8 @@ class SanUnit(Unit, isabstract=True):
     
     def add_equipment_design(self):
         for equip in self.equipments:
-            name = equip.name
-            self.design_results[name] = equip._design(self)
+            name = equip.name or format_title(type(equip).__name__)
+            self.design_results.update(equip._design())
             self._units.update(equip.design_units)
             self._BM[name] = equip.BM
             if equip.lifetime:
@@ -160,7 +162,8 @@ class SanUnit(Unit, isabstract=True):
     
     def add_equipment_cost(self):
         for equip in self.equipments:
-            self.purchase_cost[equip] = equip._cost(self)
+            name = equip.name or format_title(type(equip).__name__)
+            self.purchase_costs[name] = equip._cost()
     
     def add_construction(self, add_unit=True, add_design=True, add_cost=True,
                          add_lifetime=True):

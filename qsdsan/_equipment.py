@@ -16,7 +16,7 @@ for license details.
 # %%
 
 from biosteam.utils import NotImplementedMethod
-from biosteam.utils.misc import format_title
+from ._units_of_measure import auom
 
 __all__ = ('Equipment',)
 
@@ -54,29 +54,41 @@ class Equipment:
     Parameters
     ----------
     Name : str
-        Name of this equipment, if not provided, will use the formatted class name.
+        Name of this equipment, can be left as None.
     design_units: dict
         Unit (e.g., m, kg) of design parameters.
     BM: float
         Bare module factor of this equipment.
     lifetime: float
         Lifetime of this equipment.
+    lifetime_unit: str
+        Unit of the lifetime.
     '''    
+    
+    __slots__ = ('_linked_unit', 'name', 'design_units', 'BM', 'lifetime')
+    
     def __init_subclass__(self, isabstract=False):
         if isabstract: return
         for method in ('_design', '_cost'):
             if not hasattr(self, method):
                 raise NotImplementedError(
-                    f'Equipment subclasses must have a {method} method unless isabstract is True.')
+                    f'Equipment subclasses must have a {method} method unless `isabstract` is True.')
     
     _design = _cost = NotImplementedMethod
-    _linked_unit = None
     
-    def __init__(self, name=None, design_units=dict(), BM=1., lifetime=None):
-        self.name = name or format_title(type(self).__name__)
+    def __init__(self, name=None, design_units=dict(), BM=1.,
+                 lifetime=None, lifetime_unit='yr'):
+        self._linked_unit = None
+        self.name = name
         self.design_units = design_units
         self.BM = BM
-        self.lifetime = lifetime
+        self.lifetime = auom(lifetime_unit).convert(lifetime, 'yr')
+
+    def __repr__(self):
+        line = f'<{type(self).__name__}'
+        line += f': {self.name}' if self.name else ''
+        line += f' in {self.linked_unit}>' if self.linked_unit else '>'
+        return line
 
     @property
     def linked_unit(self):
