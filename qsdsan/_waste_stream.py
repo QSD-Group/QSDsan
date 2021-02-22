@@ -163,7 +163,7 @@ class WasteStream(Stream):
     
     
     def _wastestream_info(self, details=True):
-        _ws_info = '\n WasteStream-specific properties:'
+        _ws_info = ' WasteStream-specific properties:'
         # Wastewater-related properties are not relevant for gas or solids
         if self.phase != 'l':
             _ws_info += ' None for non-liquid WasteStreams'

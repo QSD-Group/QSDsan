@@ -91,6 +91,9 @@ class SanUnit(bst.Unit, isabstract=True):
         self._construction = ()
         self._transportation = ()
 
+    def __repr__(self):
+        return f'<{type(self).__name__}: {self.ID}>'
+
 
     def _info(self, T, P, flow, composition, N, IDs, _stream_info):
         '''Information of the unit.'''
@@ -114,7 +117,7 @@ class SanUnit(bst.Unit, isabstract=True):
             su = stream._source
             index = stream_info.index('\n')
             source_info = f'  from  {type(su).__name__}-{su}\n' if su else '\n'
-            info += f'[{i}] {stream.ID}' + source_info + stream_info[index+1:] + '\n'
+            info += f'[{i}] {stream.ID}' + source_info + stream_info[index+1:]
             i += 1
         info += 'outs...\n'
         i = 0
@@ -131,7 +134,7 @@ class SanUnit(bst.Unit, isabstract=True):
             su = stream._sink
             index = stream_info.index('\n')
             sink_info = f'  to  {type(su).__name__}-{su}\n' if su else '\n'
-            info += f'[{i}] {stream.ID}' + sink_info + stream_info[index+1:] + '\n'
+            info += f'[{i}] {stream.ID}' + sink_info + stream_info[index+1:]
             i += 1
         info = info.replace('\n ', '\n    ')
         return info[:-1]

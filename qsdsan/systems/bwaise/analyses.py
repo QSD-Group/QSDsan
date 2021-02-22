@@ -18,6 +18,7 @@ import warnings
 warnings.filterwarnings(action='ignore')
 
 import pandas as pd
+from matplotlib import pyplot as plt
 from qsdsan.stats import define_inputs, generate_samples, \
     get_correlation, morris_analysis, plot_morris_results, sobol_analysis
 from qsdsan.utils.decorators import time_printer
@@ -107,7 +108,7 @@ morris_dctA = morris_analysis(modelA, morris_samples, inputs,
 
 figs = []
 for metric in key_metrics:
-    fig = plot_morris_results(morris_dctA, metric=metric)
+    fig, ax = plot_morris_results(morris_dctA, metric=metric)
     fig.suptitle(metric.name)
     figs.append(fig)
     

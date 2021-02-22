@@ -20,6 +20,7 @@ setup(
     version='0.1.3',
     license='UIUC',
     author='Quantitative Sustainable Design Group',
+    author_email='zoe.yalin.li@gmail.com (Yalin Li)',
     description='Quantitative Sustainable Design for sanitation and resource recovery systems',
     long_description=open('README.rst').read(),
     url="https://github.com/QSD-Group/QSDsan",

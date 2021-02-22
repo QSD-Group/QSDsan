@@ -7,6 +7,7 @@ This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan
 Ongoing
 -------
 - Added an :class:`Equipment` class for design and costing of unit equipment.
+- Included a bar plot option for :func:`qsdsan.stats.plot_morris_results`.
 - Added Kendall's tau test to :func:`qsdsan.stats.get_correlation`.
 
 
