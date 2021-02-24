@@ -91,6 +91,12 @@ class Components(Chemicals):
         else: # pragma: no cover
             return False        
     
+    def copy(self):
+        '''Return a copy.'''
+        copy = object.__new__(Components)
+        for cmp in self: setattr(copy, cmp.ID, cmp)
+        return copy
+    
     def append(self, component):
         '''Append a Component'''
         if not isinstance(component, Component):
