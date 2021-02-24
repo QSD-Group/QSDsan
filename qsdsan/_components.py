@@ -190,7 +190,7 @@ class Components(Chemicals):
     
     
     @classmethod
-    def load_default(cls, use_default_data=True, sotre_data=True, default_compile=True):
+    def load_default(cls, use_default_data=True, store_data=True, default_compile=True):
         '''
         Create a ``Components`` object containing default ``Component`` objects.
     
@@ -198,7 +198,7 @@ class Components(Chemicals):
         ----------
         use_default_data : bool, optional
             Whether to use default cache data. The default is True.
-        sotre_data : bool, optional
+        store_data : bool, optional
             Whether to store the default data as cache. The default is True.
         default_compile : bool, optional
             Whether to compile the default Components. The default is True.
@@ -365,4 +365,8 @@ class CompiledComponents(CompiledChemicals):
         else: # pragma: no cover
             return False
     
-    
+    def copy(self):
+        '''Return a copy.'''
+        copy = Components(self)
+        copy.compile()
+        return copy
