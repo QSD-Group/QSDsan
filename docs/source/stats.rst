@@ -16,6 +16,8 @@ Morris
 ------
 .. automethod:: qsdsan.stats.morris_analysis
 .. automethod:: qsdsan.stats.plot_morris_results
+.. automethod:: qsdsan.stats.morris_till_convergence
+.. automethod:: qsdsan.stats.plot_morris_convergence
 
 
 Sobol

@@ -18,9 +18,7 @@ import warnings
 warnings.filterwarnings(action='ignore')
 
 import pandas as pd
-from matplotlib import pyplot as plt
-from qsdsan.stats import define_inputs, generate_samples, \
-    get_correlation, morris_analysis, plot_morris_results, sobol_analysis
+from qsdsan import stats as s
 from qsdsan.utils.decorators import time_printer
 from qsdsan.systems import bwaise as bw
 
@@ -44,6 +42,11 @@ def evaluate(model, samples, print_time=False):
     model.load_samples(samples)
     model.evaluate()
 
+import os
+result_path = os.path.dirname(os.path.realpath(__file__)) + '/results/'
+figure_path = os.path.dirname(os.path.realpath(__file__)) + '/figures/'
+del os
+
 
 # %%
 
@@ -61,29 +64,24 @@ for alternative systems.
 # rs = RandomState(MT19937(SeedSequence(3221)))
 # rs.seed(3221)
 # rs.random.sample(5)
-        
-
-import os
-result_path = os.path.dirname(os.path.realpath(__file__)) + '/results/'
-del os
 
 modelA_dct = m.run_uncertainty(modelA, seed=3221, N_sample=100, rule='L',
                                percentiles=(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1),
                                print_time=True)
 
-pearson_rA, pearson_pA = get_correlation(modelA, input_y=key_metrics,
-                                         kind='Pearson',
-                                         nan_policy='raise',
-                                         # file=result_path+'PearsonA.xlsx'
-                                         )
+pearson_rA, pearson_pA = s.get_correlation(modelA, input_y=key_metrics,
+                                           kind='Pearson',
+                                           nan_policy='raise',
+                                           # file=result_path+'PearsonA.xlsx'
+                                           )
 
-spearman_rhoA, spearman_pA = get_correlation(modelA, kind='Spearman',
-                                             input_y=key_metrics,
-                                             nan_policy='raise',
-                                             # file=result_path+'SpearmanA.xlsx'
-                                             )
+spearman_rhoA, spearman_pA = s.get_correlation(modelA, kind='Spearman',
+                                               input_y=key_metrics,
+                                               nan_policy='raise',
+                                               # file=result_path+'SpearmanA.xlsx'
+                                               )
 
-
+all_paramsA = modelA.get_parameters()
 key_paramsA = filter_parameters(modelA, spearman_rhoA, 0.5)
 
 
@@ -94,24 +92,38 @@ key_paramsA = filter_parameters(modelA, spearman_rhoA, 0.5)
 # =============================================================================
 
 modelA.set_parameters(key_paramsA)
-inputs = define_inputs(modelA)
-morris_samples = generate_samples(inputs, kind='Morris', N=5, seed=3221)
+inputs = s.define_inputs(modelA)
+morris_samples = s.generate_samples(inputs, kind='Morris', N=5, seed=3221)
 
 evaluate(modelA, morris_samples, print_time=True)
 
-morris_dctA = morris_analysis(modelA, morris_samples, inputs,
-                              metrics=key_metrics,
-                              nan_policy='fill_mean', seed=3221,
-                              print_to_console=True,
-                              # file=result_path+'MorrisA.xlsx'
-                              )
+morris_dctA = s.morris_analysis(modelA, morris_samples, inputs,
+                                  metrics=key_metrics,
+                                  nan_policy='fill_mean', seed=3221,
+                                  print_to_console=True,
+                                  # file=result_path+'MorrisA.xlsx'
+                                  )
 
 figs = []
 for metric in key_metrics:
-    fig, ax = plot_morris_results(morris_dctA, metric=metric)
+    fig, ax = s.plot_morris_results(morris_dctA, metric=metric)
     fig.suptitle(metric.name)
     figs.append(fig)
-    
+
+
+modelA.set_parameters(key_paramsA)
+inputs = s.define_inputs(modelA)
+cum_dct = s.morris_till_convergence(modelA, inputs, metrics=key_metrics,
+                                    N_max=100, print_time=True,
+                                    # file=result_path+'Morris_convergenecA.xlsx'
+                                    )
+
+from qsdsan import stats as s
+fig, ax = s.plot_morris_convergence(cum_dct, key_metrics[0],
+                                    parameters=list(key_paramsA)[0:5],
+                                    # file=figure_path+'Morris_convergenecA.png'
+                                    )
+
 
 
 # %%
@@ -120,18 +132,18 @@ for metric in key_metrics:
 # Sobol
 # =============================================================================
 
-saltelli_samples = generate_samples(inputs, kind='Saltelli', N=10,
-                                    calc_second_order=True)
+saltelli_samples = s.generate_samples(inputs, kind='Saltelli', N=10,
+                                      calc_second_order=True)
 
 evaluate(modelA, saltelli_samples, print_time=True)
 
-sobol_dctA = sobol_analysis(modelA, saltelli_samples, inputs,
-                            metrics=key_metrics,
-                            calc_second_order=True, conf_level=0.95,
-                            print_to_console=True,
-                            nan_policy='fill_mean',
-                            # file=result_path+'SobolA.xlsx',
-                            seed=3221)
+sobol_dctA = s.sobol_analysis(modelA, inputs,
+                              metrics=key_metrics,
+                              calc_second_order=True, conf_level=0.95,
+                              print_to_console=True,
+                              nan_policy='fill_mean',
+                              # file=result_path+'SobolA.xlsx',
+                              seed=3221)
 
 
 
