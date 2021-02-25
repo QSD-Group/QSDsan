@@ -21,6 +21,11 @@ import numpy as np
     
 __all__ = ('Process', 'Processes', 'CompiledProcesses', )
 
+class UndefinedProcess(AttributeError):
+    '''AttributeError regarding undefined Component objects.'''
+    def __init__(self, ID):
+        super().__init__(repr(ID))
+        
 #%%
 @chemicals_user        
 class Process():
@@ -212,16 +217,18 @@ class Processes():
               Process IDs.
               
         """
-        return type(self)([getattr(self, i) for i in IDs])
+        return Process([getattr(self, i) for i in IDs])
     
-    def compile(self):
-        setattr(self, __class__, CompiledProcesses)
-        self._compiled()
+    def mycompile(self):
+        '''Cast as a ``CompiledProcesses`` object.'''
+        setattr(self, '__class__', CompiledProcesses)
+        CompiledProcesses._compile(self)
         
     # kwarray = array = index = indices = must_compile
         
     def show(self):
         print(self)
+    
     _ipython_display_ = show
     
     def __len__(self):
@@ -274,7 +281,6 @@ class CompiledProcesses(Processes):
         dct = self.__dict__
         tuple_ = tuple # this speeds up the code
         processes = tuple_(dct.values())
-                
         IDs = tuple_([i.ID for i in processes])
         size = len(IDs)
         index = tuple_(range(size))
@@ -282,11 +288,9 @@ class CompiledProcesses(Processes):
         dct['size'] = size
         dct['IDs'] = IDs
         dct['_index'] = index = dict(zip(IDs, index))
-        
         cmps = Components([cmp for i in processes for cmp in i._components])
         cmps.compile()
         dct['_components'] = cmps
-        
         M_stch = []
         params = {}
         rate_eqs = tuple_([i._rate_equation for i in processes])
@@ -298,12 +302,9 @@ class CompiledProcesses(Processes):
             for cmp, coeff in i.stoichiometry.items():
                 stch[cmps._index[cmp]] = coeff
             M_stch.append(stch)
-        
         dct['_parameters'] = params
-
         if all_numeric: M_stch = np.asarray(M_stch)
         dct['_stoichiometry'] = M_stch
-        
         dct['_rate_equations'] = rate_eqs
         dct['_production_rates'] = Matrix(M_stch).T * Matrix(rate_eqs)
         
@@ -323,6 +324,40 @@ class CompiledProcesses(Processes):
     def production_rates(self):
         return dict(zip(self._components.IDs, self._production_rates))
     
+    def subgroup(self, IDs):
+        '''Create a new subgroup of ``CompiledProcesses`` objects.'''
+        processes = self[IDs]
+        new = Processes(processes)
+        new.compile()
+        return new
+    
+    def index(self, ID):
+        '''Return index of specified process.'''
+        try: return self._index[ID]
+        except KeyError:
+            raise UndefinedProcess(ID)
+
+    def indices(self, IDs):
+        '''Return indices of multiple components.'''
+        try:
+            dct = self._index
+            return [dct[i] for i in IDs]
+        except KeyError as key_error:
+            raise UndefinedProcess(key_error.args[0])
+    
+    def __contains__(self, process):
+        if isinstance(process, str):
+            return process in self.__dict__
+        elif isinstance(process, Process):
+            return process in self.tuple
+        else: # pragma: no cover
+            return False
+    
+    def copy(self):
+        '''Return a copy.'''
+        copy = Processes(self)
+        copy.mycompile()
+        return copy    
     
     # @classmethod
     # def from_matrix():
