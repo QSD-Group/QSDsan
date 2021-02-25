@@ -23,3 +23,4 @@ Morris
 Sobol
 -----
 .. automethod:: qsdsan.stats.sobol_analysis
+.. automethod:: qsdsan.stats.plot_sobol_results

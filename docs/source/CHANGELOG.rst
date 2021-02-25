@@ -11,6 +11,7 @@ Ongoing
 
 	- Included a bar plot option for :func:`qsdsan.stats.plot_morris_results`.
 	- Added :func:`qsdsan.stats.morris_till_convergence` to run Morris analysis until the results converge, and and :func:`qsdsan.stats.plot_morris_convergence` to plot :math:`{\mu^*}` against the number of trajectories.
+	- Added :func:`qsdsan.stats.plot_sobol_results` to for Sobol analysis visualization.
 	- Added Kendall's tau test to :func:`qsdsan.stats.get_correlation`.
 
 

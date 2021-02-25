@@ -35,7 +35,7 @@ def filter_parameters(model, df, threshold):
     filtered = new_df.dropna(how='all')
     param_dct = get_param_dct(model)
     parameters = set(param_dct[i[1]] for i in filtered.index)
-    return parameters
+    return list(parameters)
 
 @time_printer
 def evaluate(model, samples, print_time=False):
@@ -65,7 +65,7 @@ for alternative systems.
 # rs.seed(3221)
 # rs.random.sample(5)
 
-modelA_dct = m.run_uncertainty(modelA, seed=3221, N_sample=100, rule='L',
+modelA_dct = m.run_uncertainty(modelA, seed=3221, N_sample=10, rule='L',
                                percentiles=(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1),
                                print_time=True)
 
@@ -83,6 +83,7 @@ spearman_rhoA, spearman_pA = s.get_correlation(modelA, kind='Spearman',
 
 all_paramsA = modelA.get_parameters()
 key_paramsA = filter_parameters(modelA, spearman_rhoA, 0.5)
+modelA.set_parameters(key_paramsA)
 
 
 # %%
@@ -91,18 +92,17 @@ key_paramsA = filter_parameters(modelA, spearman_rhoA, 0.5)
 # Morris one-at-a-time
 # =============================================================================
 
-modelA.set_parameters(key_paramsA)
 inputs = s.define_inputs(modelA)
 morris_samples = s.generate_samples(inputs, kind='Morris', N=5, seed=3221)
 
 evaluate(modelA, morris_samples, print_time=True)
 
-morris_dctA = s.morris_analysis(modelA, morris_samples, inputs,
-                                  metrics=key_metrics,
-                                  nan_policy='fill_mean', seed=3221,
-                                  print_to_console=True,
-                                  # file=result_path+'MorrisA.xlsx'
-                                  )
+morris_dctA = s.morris_analysis(modelA, inputs,
+                                metrics=key_metrics,
+                                nan_policy='fill_mean', seed=3221,
+                                print_to_console=True,
+                                # file=result_path+'MorrisA.xlsx'
+                                )
 
 figs = []
 for metric in key_metrics:
@@ -111,19 +111,16 @@ for metric in key_metrics:
     figs.append(fig)
 
 
-modelA.set_parameters(key_paramsA)
-inputs = s.define_inputs(modelA)
 cum_dct = s.morris_till_convergence(modelA, inputs, metrics=key_metrics,
-                                    N_max=100, print_time=True,
+                                    N_max=10, print_time=True,
                                     # file=result_path+'Morris_convergenecA.xlsx'
                                     )
 
-from qsdsan import stats as s
 fig, ax = s.plot_morris_convergence(cum_dct, key_metrics[0],
                                     parameters=list(key_paramsA)[0:5],
+                                    plot_rank=True,
                                     # file=figure_path+'Morris_convergenecA.png'
                                     )
-
 
 
 # %%
@@ -132,6 +129,7 @@ fig, ax = s.plot_morris_convergence(cum_dct, key_metrics[0],
 # Sobol
 # =============================================================================
 
+# inputs = s.define_inputs(modelA)
 saltelli_samples = s.generate_samples(inputs, kind='Saltelli', N=10,
                                       calc_second_order=True)
 
@@ -140,27 +138,13 @@ evaluate(modelA, saltelli_samples, print_time=True)
 sobol_dctA = s.sobol_analysis(modelA, inputs,
                               metrics=key_metrics,
                               calc_second_order=True, conf_level=0.95,
-                              print_to_console=True,
+                              print_to_console=False,
                               nan_policy='fill_mean',
                               # file=result_path+'SobolA.xlsx',
                               seed=3221)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+fig, ax = s.plot_sobol_results(sobol_dctA, metric=key_metrics[0],
+                             error_bar=True, annotate_heatmap=False)
 
 
 
