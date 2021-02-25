@@ -74,8 +74,7 @@ def dct2list(dct, components):
 
 def get_ic(cmps, conservation_for):        
     '''
-    return conversion factors as a numpy ndarray to check conservation
-    or return them as a sympy matrix to solve for unknown stoichiometric coefficients.
+    return conversion factors as a sympy matrix to solve for unknown stoichiometric coefficients.
     '''
     if conservation_for:
         arr = getattr(cmps, 'i_'+conservation_for[0])

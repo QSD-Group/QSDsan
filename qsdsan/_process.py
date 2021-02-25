@@ -12,13 +12,14 @@ for license details.
 '''
 
 # import thermosteam as tmo
-from _parse import get_stoichiometric_coeff
-from thermosteam.utils import chemicals_user
+from ._parse import get_stoichiometric_coeff
+from . import Components
+from thermosteam.utils import chemicals_user, read_only
 from sympy import symbols, Matrix
 from sympy.parsing.sympy_parser import parse_expr
 import numpy as np
     
-__all__ = ('Process',)
+__all__ = ('Process', 'Processes', 'CompiledProcesses', )
 
 #%%
 @chemicals_user        
@@ -102,7 +103,7 @@ class Process():
     
     @property
     def parameters(self):
-        return sorted(self._parameters)
+        return tuple(sorted(self._parameters))
     
     def append_parameters(self, *new_pars):
         for p in new_pars:
@@ -112,7 +113,6 @@ class Process():
     def set_parameters(self):
         pass
     
-    #!!! only show non-zero coefficients
     @property
     def stoichiometry(self):
         allcmps = dict(zip(self._components.IDs, self._stoichiometry))
@@ -186,7 +186,7 @@ class Processes():
         return copy
     
     def append(self, process):
-        """Append a Process."""
+        """Append a ``Process``."""
         if not isinstance(process, Process):
             raise TypeError("only 'Process' objects can be appended, "
                            f"not '{type(process).__name__}'")
@@ -196,7 +196,7 @@ class Processes():
         setattr(self, ID, process)
     
     def extend(self, processes):
-        """Extend with more Chemical objects."""
+        """Extend with more ``Process`` objects."""
         if isinstance(processes, Processes):
             self.__dict__.update(processes.__dict__)
         else:
@@ -216,7 +216,7 @@ class Processes():
     
     def compile(self):
         setattr(self, __class__, CompiledProcesses)
-        self._compile(processes)
+        self._compiled()
         
     # kwarray = array = index = indices = must_compile
         
@@ -243,10 +243,91 @@ class Processes():
 
             
 #%%
-@utils.read_only(methods=())
-class CompiledProcesses():
+@read_only(methods=('append', 'extend', '__setitem__'))
+class CompiledProcesses(Processes):
     
     _cache = {}
     
-    def __new__(cls, processes, cache=None):
+    def __new__(cls, processes):
+        cache = cls._cache
+        processes = tuple(processes)
+        if processes in cache:
+            self = cache[processes]
+        else:
+            self = object.__new__(cls)
+            setfield = setattr
+            for i in processes:
+                setfield(self, i.ID, i)
+            self._compile()
+            cache[processes] = self
+        return self
+
+    # def __dir__(self):
+    #     pass
+    
+    def compile(self):
+        """Do nothing, ``CompiledProcesses`` objects are already compiled."""
+        pass
+    
+    def _compile(self):
+        isa = isinstance
+        dct = self.__dict__
+        tuple_ = tuple # this speeds up the code
+        processes = tuple_(dct.values())
+                
+        IDs = tuple_([i.ID for i in processes])
+        size = len(IDs)
+        index = tuple_(range(size))
+        dct['tuple'] = processes
+        dct['size'] = size
+        dct['IDs'] = IDs
+        dct['_index'] = index = dict(zip(IDs, index))
         
+        cmps = Components([cmp for i in processes for cmp in i._components])
+        cmps.compile()
+        dct['_components'] = cmps
+        
+        M_stch = []
+        params = {}
+        rate_eqs = tuple_([i._rate_equation for i in processes])
+        all_numeric = True
+        for i in processes:
+            stch = [0]*cmps.size
+            params.update(i._parameters)
+            if all_numeric and isa(i._stoichiometry, (list, tuple)): all_numeric = False
+            for cmp, coeff in i.stoichiometry.items():
+                stch[cmps._index[cmp]] = coeff
+            M_stch.append(stch)
+        
+        dct['_parameters'] = params
+
+        if all_numeric: M_stch = np.asarray(M_stch)
+        dct['_stoichiometry'] = M_stch
+        
+        dct['_rate_equations'] = rate_eqs
+        dct['_production_rates'] = Matrix(M_stch).T * Matrix(rate_eqs)
+        
+    @property
+    def parameters(self):
+        return tuple(sorted(self._parameters))
+    
+    @property
+    def stoichiometry(self):
+        return self._stoichiometry
+    
+    @property
+    def rate_equations(self):
+        return self._rate_equations
+    
+    @property
+    def production_rates(self):
+        return dict(zip(self._components.IDs, self._production_rates))
+    
+    
+    # @classmethod
+    # def from_matrix():
+    #     '''
+    #     Create ``CompiledProcesses`` object from matrix of stoichiometric 
+    #     coefficients and array of rate equations.
+    #     '''
+    #     pass
