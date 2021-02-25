@@ -45,7 +45,7 @@ _specific_groups = {'SVFA': ('SAc', 'SProp'),
                     'XPAO_PP': ('XPAO_PP_Lo', 'XPAO_PP_Hi'),
                     'TKN': ()}
 
-_default_ratios = {'iHi_XPAOPP': 0.5,
+_default_ratios = {'iHi_XPAOPP': 0,
                    'iCB_XCB': 0.15,
                    'iBAP_CB': 0.,
                    'iUAP_CB': 0.,
