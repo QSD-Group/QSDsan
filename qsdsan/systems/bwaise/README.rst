@@ -249,7 +249,7 @@ to these models or construct your own ones.
     >>> # Run the default model for `sysA`
     >>> models = bw.models
     >>> # Try use larger samples, here is just to get a quick demo result
-    >>> models.run_uncertainty(models.modelA, N_sample=10)
+    >>> models.run_uncertainty(models.modelA, N=10)
     >>> # Your results will be cached in `result_dct['sysA']`
     >>> # You can organize the results as you like,
     >>> # but you can also save them using the default organized data

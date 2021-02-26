@@ -14,7 +14,13 @@ for license details.
 
 '''
 TODO:
-    1. Add KS-test, FAST, eFAST, and RBD-FAST
+    1. Add FAST, eFAST, and RBD-FAST
+    2. Add correlation plotting, ideally can switch between bar (single metric)
+    and bubble (multiple metrics), may be add color
+        biosteam for box and bar
+        seaborn for bubble: https://seaborn.pydata.org/examples/heat_scatter.html
+        consider using seaborn to set the theme
+
 '''
 
 
@@ -29,7 +35,7 @@ import pandas as pd
 import seaborn as sns
 import biosteam as bst
 from warnings import warn
-from scipy.stats import pearsonr, spearmanr, kendalltau
+from scipy.stats import pearsonr, spearmanr, kendalltau, kstest
 from SALib.sample import (morris as morris_sampling, saltelli)
 from SALib.analyze import morris, sobol
 from SALib.plotting import morris as sa_plt_morris
@@ -92,7 +98,7 @@ def get_correlation(model, input_x=None, input_y=None,
         will be defaulted to all model parameters if not provided.
     kind : str
         Can be "Pearson" for Pearson's r, "Spearman" for Spearman's rho,
-        or "Kendall" for Kendall's tau.
+        "Kendall" for Kendall's tau, or "KS" for Kolmogorov–Smirnov's D.
     nan_policy : str
         - "propagate": returns nan.
         - "raise": raise an error.
@@ -102,8 +108,7 @@ def get_correlation(model, input_x=None, input_y=None,
 
     Returns
     -------
-    Two :class:`pandas.DataFrame` containing Pearson'r, Spearman's rho, or Kendall's tau
-    and p-values.
+    Two :class:`pandas.DataFrame` containing the test statistics and p-values.
     
     See Also
     --------
@@ -112,6 +117,8 @@ def get_correlation(model, input_x=None, input_y=None,
     `scipy.stats.spearmanr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.spearmanr.html>`_
     
     `scipy.stats.kendalltau <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.kendalltau.html>`_
+    
+    `scipy.stats.kstest <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.kstest.html>`_
     
     '''
     table = model.table.astype('float64')
@@ -134,18 +141,22 @@ def get_correlation(model, input_x=None, input_y=None,
             if isinstance(df, str):
                 r, p = (np.nan, np.nan)
             else:
-                if kind.capitalize() == 'Pearson':
+                kind = kind.capitalize()
+                if kind == 'Pearson':
                     r, p = pearsonr(df.iloc[:,0], df.iloc[:,1], **kwargs)
                     sheet_name = 'r'
-                elif kind.capitalize() == 'Spearman':
+                elif kind == 'Spearman':
                     r, p = spearmanr(df.iloc[:,0], df.iloc[:,1], **kwargs)
                     sheet_name = 'rho'
-                elif kind.capitalize() == 'Kendall':
+                elif kind == 'Kendall':
                     r, p = kendalltau(df.iloc[:,0], df.iloc[:,1], **kwargs)
                     sheet_name = 'tau'
+                elif kind.upper() == 'KS':
+                    r, p = kstest(df.iloc[:,0], df.iloc[:,1], **kwargs)
+                    sheet_name = 'D'
                 else:
                     raise ValueError('kind can only be "Pearson", "Spearman", ' \
-                                      f'or "Kendall", not "{kind}".')
+                                      f'"Kendall", or "KS", not "{kind}".')
             rs[-1].append(r)
             ps[-1].append(p)
     r_df = pd.DataFrame(rs, index=df_index, columns=df_column)
@@ -459,10 +470,12 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
     model = model.copy()
     model.metrics = metrics
     table = model.table.astype('float64')
+    
     df = pd.concat([table[metric.index] for metric in metrics], axis=1)
     results = _update_nan(df, nan_policy, legit=('propagate', 'raise', 'fill_mean'))
     if isinstance(results, str):
         results = df
+    
     for metric in metrics:
         result = results[metric.index]
         si = sobol.analyze(inputs, result.to_numpy(),
@@ -470,6 +483,7 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
                            conf_level=conf_level, print_to_console=print_to_console,
                            **kwargs)
         sobol_dct[metric.name] = dict(zip(('ST', 'S1', 'S2'), si.to_df()))
+    
     if file:
         writer = pd.ExcelWriter(file)
         for name, si_df in sobol_dct.items():
@@ -478,6 +492,7 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
                 df.to_excel(writer, sheet_name=name, startrow=n_row)
                 n_row += len(df.index) + 2 + len(df.columns.names)
         writer.save()
+    
     return sobol_dct
 
 
@@ -490,8 +505,10 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
 def _save_fig_return(fig, ax, file, close_fig):
     if file:
         fig.savefig(file, dpi=300)
+    
     if close_fig:
         plt.close()
+    
     return fig, ax
 
 # =============================================================================
@@ -557,12 +574,15 @@ def plot_morris_results(morris_dct, metric,
         labels = df.index.values
     else:
         raise ValueError(f'label_kind can only be "number" or "name", not "{label_kind}".')
+    
     ax = axis if axis else plt.subplot()
+    sns.set_theme(style='darkgrid')
+    
     if kind == 'scatter':
-        ax.scatter(x_data, y_data)
+        ax.scatter(x_data, y_data, color='k')
         for x, y, label in zip(x_data, y_data, labels):
             ax.annotate(label, (x, y), xytext=(10, 10), textcoords='offset points',
-                          ha='center')
+                        ha='center')
         x_range = np.arange(-1, np.ceil(ax.get_xlim()[1])+1)
         line1, = ax.plot(x_range, k1*x_range, color='black', linestyle='-.')
         line2, = ax.plot(x_range, k2*x_range, color='black', linestyle='--')
@@ -577,6 +597,7 @@ def plot_morris_results(morris_dct, metric,
         ax.set_xlabel(r'$\mu^*$')
         ax.set_ylabel(r'$\sigma$')
         fig = ax.figure
+    
     elif kind == 'bar':
         if x_axis == 'mu':
             raise ValueError('Bar plot can only be made for mu_star, not mu.')
@@ -642,6 +663,8 @@ def plot_morris_convergence(result_dct, metric, axis=None, parameters=(),
     else:
         ylabel = f'$\mu^*$ for {metric.name.lower()}'
         loc = 'best'
+    
+    sns.set_theme(style='darkgrid')
     for param in param_names:
         scatter = ax.scatter(df.index, df[param])
         ax.plot(df.index, df[param])
@@ -662,6 +685,7 @@ def plot_morris_convergence(result_dct, metric, axis=None, parameters=(),
 def _plot_sobol_bar(kind, df, error_bar, ax=None):
     ax = ax if ax else plt.subplot()
 
+    sns.set_theme(style='whitegrid')
     if 'ST' in kind:
         sns.set_color_codes('pastel')
         sns.barplot(x=df.ST, y=df.index, data=df,
@@ -685,29 +709,29 @@ def _plot_sobol_bar(kind, df, error_bar, ax=None):
 def _plot_sobol_heatmap(hmap_df, ax=None, annot=False, diagonal='', sts1_df=None,
                        default_cbar=True):
     ax = ax if ax else plt.subplot()
-    ax_cbar = ax.figure.add_axes([0.05, 0.3, 0.02, 0.4]) if not default_cbar else None
-    
+    ax_cbar = ax.figure.add_axes([0.03, 0.3, 0.02, 0.4]) if not default_cbar else None
+
     if diagonal:
-        from warnings import warn
-        warn('Function not yet implemented.')
-        # np.fill_diagonal(hmap_df.values, getattr(sts1_df, diagonal))
-        # k = -1
-        # title = 'Total/Interaction Effects' if diagonal=='ST' else 'Main/Interaction Effects'
-    # else:
-    hmap_df = hmap_df.fillna(0)
-    k = 0
-    title = 'Interaction Effects'
+        np.fill_diagonal(hmap_df.values, getattr(sts1_df, diagonal))
+        hmap_df = hmap_df.astype('float64')
+        k = -1
+        title = 'Total/Interaction Effects' if diagonal=='ST' else 'Main/Interaction Effects'
+    else:
+        hmap_df = hmap_df.fillna(0)
+        k = 0
+        title = 'Interaction Effects'
+    
     mask = np.tril(np.ones_like(hmap_df, dtype=bool), k)
     
     sns.set_theme(style='white')
     cmap = sns.diverging_palette(230, 20, as_cmap=True)
-    sns.heatmap(hmap_df, mask=mask, ax=ax, cmap=cmap, center=0, linewidths=.5,
-                annot=annot, cbar_kws={'shrink': 0.5}, cbar_ax=ax_cbar, robust=True)
+    sns.heatmap(hmap_df,
+                mask=mask,
+                ax=ax, cmap=cmap, center=0, linewidths=.5,
+                annot=annot, cbar_kws={'shrink': 0.5}, cbar_ax=ax_cbar)
     ax.set_title(title)
     
     return ax
-
-
 
 
 def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
@@ -756,9 +780,6 @@ def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
         Plot total or main effects in the diagonal of the interaction heat map,
         can be "ST", "S1", or "".
         This is applicable when kind is "STS2", "S1S2", or "all".
-        
-        .. note::
-            Not yet implemented, please leave as blank now.
     error_bar : bool
         Whether to include the confidence interval as error bars in the plot,
         this is only applicable for the bar plot.
@@ -837,7 +858,13 @@ def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
 
             ax_sts1 = _plot_sobol_bar(bar, sts1_df, error_bar, ax=ax_sts1)
             ax_sts1.yaxis.set_visible(False)
-            ax_sts1.set_title('Total/Main Effects')
+            if bar == 'ST':
+                ax_sts1_title = 'Total Effects'
+            elif bar == 'S1':
+                ax_sts1_title = 'Main Effects'
+            else:
+                ax_sts1_title = 'Total/Main Effects'
+            ax_sts1.set_title(ax_sts1_title)
             
             ax_s2 = _plot_sobol_heatmap(hmap_df, ax=ax_s2, annot=annotate_heatmap,
                                         diagonal=plot_in_diagonal,

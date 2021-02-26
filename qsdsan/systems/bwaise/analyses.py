@@ -24,6 +24,13 @@ from qsdsan.systems import bwaise as bw
 
 m = bw.models
 modelA = m.modelA
+modelB = m.modelB
+modelC = m.modelC
+
+import os
+result_path = os.path.dirname(os.path.realpath(__file__)) + '/results/'
+figure_path = os.path.dirname(os.path.realpath(__file__)) + '/figures/'
+del os
 
 # Net cost, net GWP, and total COD/N/P/K recovery
 key_metrics = [i for i in modelA.metrics if 'Net' in i.name or 'Total' in i.name]
@@ -41,11 +48,6 @@ def filter_parameters(model, df, threshold):
 def evaluate(model, samples, print_time=False):
     model.load_samples(samples)
     model.evaluate()
-
-import os
-result_path = os.path.dirname(os.path.realpath(__file__)) + '/results/'
-figure_path = os.path.dirname(os.path.realpath(__file__)) + '/figures/'
-del os
 
 
 # %%
@@ -65,26 +67,25 @@ for alternative systems.
 # rs.seed(3221)
 # rs.random.sample(5)
 
-def run_correlation():
-    modelA_dct = m.run_uncertainty(modelA, seed=3221, N_sample=10, rule='L',
-                                   percentiles=(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1),
-                                   print_time=True)
+def run_correlation(model, N, metrics=key_metrics, threshold=0.5,
+                    auto_filter_parameters=True, file=''):
+    if file == 'default':
+        file=f'{result_path}Spearman{model._system.ID[-1]}.xlsx'
+    corr_dct = m.run_uncertainty(model, seed=3221, N=N, rule='L',
+                                 percentiles=(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1),
+                                 print_time=True)
+
+    spearman_rho, spearman_p = s.get_correlation(model, kind='Spearman',
+                                                 input_y=metrics,
+                                                 nan_policy='raise',
+                                                 file=file)
+    all_params = model.get_parameters()
+    if auto_filter_parameters:
+        key_params = filter_parameters(model, spearman_rho, threshold)
+        if len(key_params) > 5:
+            model.set_parameters(key_params)
     
-    pearson_rA, pearson_pA = s.get_correlation(modelA, input_y=key_metrics,
-                                               kind='Pearson',
-                                               nan_policy='raise',
-                                               # file=result_path+'PearsonA.xlsx'
-                                               )
-    
-    spearman_rhoA, spearman_pA = s.get_correlation(modelA, kind='Spearman',
-                                                   input_y=key_metrics,
-                                                   nan_policy='raise',
-                                                   # file=result_path+'SpearmanA.xlsx'
-                                                   )
-    
-    all_paramsA = modelA.get_parameters()
-    key_paramsA = filter_parameters(modelA, spearman_rhoA, 0.5)
-    modelA.set_parameters(key_paramsA)
+    return (corr_dct, all_params)
 
 
 # %%
@@ -93,37 +94,38 @@ def run_correlation():
 # Morris one-at-a-time
 # =============================================================================
 
-inputs = s.define_inputs(modelA)
+def run_plot_morris(model, N, test_convergence=False, metrics=key_metrics,
+                    file_prefix=''):
+    inputs = s.define_inputs(model)
+    
+    suffix = model._system.ID[-1] if file_prefix=='default' else ''
+    if file_prefix=='default':
+        suffix = model._system.ID[-1]
+        dct_file = f'{result_path}Morris{suffix}.xlsx'
+        fig_file = f'{result_path}Morris{suffix}.png'
+    else:
+        dct_file = f'{file_prefix}.xlsx' if file_prefix else ''
+        fig_file = f'{file_prefix}.png' if file_prefix else ''
+    
+    if not test_convergence:
+        morris_samples = s.generate_samples(inputs, kind='Morris', N=N, seed=3221)        
+        evaluate(model, morris_samples, print_time=True)
 
-def run_morris():
-    morris_samples = s.generate_samples(inputs, kind='Morris', N=5, seed=3221)
-    
-    evaluate(modelA, morris_samples, print_time=True)
-    
-    morris_dctA = s.morris_analysis(modelA, inputs,
-                                    metrics=key_metrics,
-                                    nan_policy='fill_mean', seed=3221,
-                                    print_to_console=True,
-                                    # file=result_path+'MorrisA.xlsx'
-                                    )
-    
-    figs = []
-    for metric in key_metrics:
-        fig, ax = s.plot_morris_results(morris_dctA, metric=metric)
-        fig.suptitle(metric.name)
-        figs.append(fig)
-    
-    
-    cum_dct = s.morris_till_convergence(modelA, inputs, metrics=key_metrics,
-                                        N_max=10, print_time=True,
-                                        # file=result_path+'Morris_convergenecA.xlsx'
-                                        )
-    
-    fig, ax = s.plot_morris_convergence(cum_dct, key_metrics[0],
-                                        plot_rank=True,
-                                        # file=figure_path+'Morris_convergenecA.png'
-                                        )
+        dct = s.morris_analysis(model, inputs, metrics=metrics,
+                                nan_policy='fill_mean', seed=3221,
+                                file=dct_file)
+        fig, ax = s.plot_morris_results(dct, metric=metrics[0], file=fig_file)
+   
+    else:
+        dct = s.morris_till_convergence(model, inputs, metrics=metrics,
+                                        N_max=N, print_time=True,
+                                        file=dct_file)
+        
+        fig, ax = s.plot_morris_convergence(dct, metrics[0], plot_rank=True,
+                                            file=fig_file)
 
+    return (dct, fig, ax)
+    
 
 # %%
 
@@ -131,23 +133,58 @@ def run_morris():
 # Sobol
 # =============================================================================
 
-# inputs = s.define_inputs(modelA)
-def run_sobol():
-    saltelli_samples = s.generate_samples(inputs, kind='Saltelli', N=10,
+def run_plot_sobol(model, N, metrics=key_metrics, file_prefix=''):
+    inputs = s.define_inputs(model)
+    saltelli_samples = s.generate_samples(inputs, kind='Saltelli', N=N,
                                           calc_second_order=True)
+
+    evaluate(model, saltelli_samples, print_time=True)
+
+    if file_prefix=='default':
+        suffix = model._system.ID[-1]
+        dct_file = f'{result_path}Sobol{suffix}.xlsx'
+        fig_file = f'{result_path}Sobol{suffix}.png'
+    else:
+        dct_file = f'{file_prefix}.xlsx' if file_prefix else ''
+        fig_file = f'{file_prefix}.png' if file_prefix else ''
+
+    sobol_dct = s.sobol_analysis(model, inputs,
+                                 metrics=metrics,
+                                 calc_second_order=True, conf_level=0.95,
+                                 nan_policy='fill_mean', seed=3221,
+                                 file=dct_file)
     
-    evaluate(modelA, saltelli_samples, print_time=True)
-    
-    sobol_dctA = s.sobol_analysis(modelA, inputs,
-                                  metrics=key_metrics,
-                                  calc_second_order=True, conf_level=0.95,
-                                  print_to_console=False,
-                                  nan_policy='fill_mean',
-                                  # file=result_path+'SobolA.xlsx',
-                                  seed=3221)
-    
-    fig, ax = s.plot_sobol_results(sobol_dctA, metric=key_metrics[0],
-                                 error_bar=True, annotate_heatmap=False)
+    fig, ax = s.plot_sobol_results(sobol_dct, metric=metrics[0],
+                                   error_bar=True, annotate_heatmap=False,
+                                   file=fig_file)
+
+    return (sobol_dct, fig, ax)
+
+
+# %%
+
+# =============================================================================
+# Below are testing codes, please leave as commented
+# =============================================================================
+
+# uncertainty_outs = run_correlation(modelA, N=100)
+
+# morris_dct, fig, ax = run_plot_morris(modelA, 10, test_convergence=False)
+
+# morris_dct_conv, fig, ax = run_plot_morris(modelA, 10, test_convergence=True)
+
+# sobol_dct, fig, ax = run_plot_sobol(modelA, 10, file_prefix='')
+
+
+# fig, ax = s.plot_morris_results(morris_dct, key_metrics[0])
+
+# fig, ax = s.plot_morris_convergence(morris_dct_conv, key_metrics[0], plot_rank=True)
+
+
+# fig, ax = s.plot_sobol_results(sobol_dct, metric=key_metrics[0], plot_in_diagonal='ST')
+
+
+
 
 
 

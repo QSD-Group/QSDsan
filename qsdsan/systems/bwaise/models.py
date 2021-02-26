@@ -782,13 +782,13 @@ result_dct = {
         }
 
 @time_printer
-def run_uncertainty(model, seed=None, N_sample=1000, rule='L',
+def run_uncertainty(model, seed=None, N=1000, rule='L',
                     percentiles=(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1),
                     print_time=False):
     global result_dct
     if seed:
         np.random.seed(seed)
-    samples = model.sample(N_sample, rule)
+    samples = model.sample(N, rule)
     model.load_samples(samples)
     model.evaluate()
     # Data organization
