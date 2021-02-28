@@ -9,17 +9,25 @@ Ongoing
 - Added an :class:`Equipment` class for design and costing of unit equipment.
 - For the ``stats`` module:
 
-	- Included a bar plot option for :func:`qsdsan.stats.plot_morris_results`.
-	- Added :func:`qsdsan.stats.morris_till_convergence` to run Morris analysis until the results converge, and and :func:`qsdsan.stats.plot_morris_convergence` to plot :math:`{\mu^*}` against the number of trajectories.
-	- Added :func:`qsdsan.stats.plot_sobol_results` to for Sobol analysis visualization.
-	- Added Kendall's tau and Kolmogorov–Smirnov test to :func:`qsdsan.stats.get_correlation`.
+	- More statistical tests:
+
+		- :func:`qsdsan.stats.morris_till_convergence` to run Morris analysis until the results converge.
+		- Added Kendall's tau and Kolmogorov–Smirnov test to :func:`qsdsan.stats.get_correlations`.
+	
+	- Plotting functions to visualize all test results:
+
+		- :func:`qsdsan.stats.plot_uncertainties` for results from uncertainty analysis.
+		- :func:`qsdsan.stats.plot_correlations` for results from :func:`qsdsan.stats.get_correlation`.
+		- Bar plot option for :func:`qsdsan.stats.plot_morris_results`.
+		- :func:`qsdsan.stats.plot_morris_convergence` to plot :math:`{\mu^*}` against the number of trajectories.
+		- :func:`qsdsan.stats.plot_sobol_results` for Sobol analysis.
 
 
 `0.1.0`_ (2021-02-14)
 ---------------------
 - Added a ``stats`` module including:
 
-	- Pearson and Spearman correlations: :func:`qsdsan.stats.get_correlation`.
+	- Pearson and Spearman correlations: :func:`qsdsan.stats.get_correlations`.
 	- Morris One-at-A-Time (OAT) screening method: :func:`qsdsan.stats.morris_analysis`.
 
 		- Also added a function for plotting: :func:`qsdsan.stats.plot_morris_results`.

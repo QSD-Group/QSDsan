@@ -37,6 +37,9 @@ from qsdsan.systems import bwaise as bw
 getattr = getattr
 eval = eval
 
+__all__ = ('modelA', 'modelB', 'modelC', 'result_dct',
+           'run_uncertainty', 'save_uncertainty_results')
+
 
 # %%
 
@@ -829,67 +832,67 @@ def save_uncertainty_results(model, path=None):
 # %%
 
 # =============================================================================
-# Functions to make quick box plots
+# QSDsan now have better plotting functions
 # =============================================================================
 
-from biosteam.utils import colors
-light_color = colors.brown_tint.RGBn
-dark_color = colors.brown_shade.RGBn
+# from biosteam.utils import colors
+# light_color = colors.brown_tint.RGBn
+# dark_color = colors.brown_shade.RGBn
 
-def plot_series_bp(title, dfs, light_color, dark_color, xlabels, ylabel, ylim):
-    fig, axis = plt.subplots(figsize=(len(dfs), 6))
-    fig.canvas.set_window_title(title)
-    fig.subplots_adjust(left=0.075, right=0.95, top=0.9, bottom=0.25)
-    for i, df in enumerate(dfs):      
-        axis.boxplot(x=df, positions=(i,), patch_artist=True,
-                    widths=0.8, whis=[5, 95],
-                    boxprops={'facecolor':light_color,
-                              'edgecolor':dark_color},
-                    medianprops={'color':dark_color,
-                                  'linewidth':1.5},
-                    flierprops = {'marker':'D',
-                                  'markerfacecolor': light_color,
-                                  'markeredgecolor': dark_color,
-                                  'markersize':6})
+# def plot_series_bp(title, dfs, light_color, dark_color, xlabels, ylabel, ylim):
+#     fig, axis = plt.subplots(figsize=(len(dfs), 6))
+#     fig.canvas.set_window_title(title)
+#     fig.subplots_adjust(left=0.075, right=0.95, top=0.9, bottom=0.25)
+#     for i, df in enumerate(dfs):      
+#         axis.boxplot(x=df, positions=(i,), patch_artist=True,
+#                     widths=0.8, whis=[5, 95],
+#                     boxprops={'facecolor':light_color,
+#                               'edgecolor':dark_color},
+#                     medianprops={'color':dark_color,
+#                                   'linewidth':1.5},
+#                     flierprops = {'marker':'D',
+#                                   'markerfacecolor': light_color,
+#                                   'markeredgecolor': dark_color,
+#                                   'markersize':6})
     
-    axis.set_xticklabels(xlabels, rotation=45, fontsize=12)
-    axis.set_ylabel(ylabel, fontsize=12)
-    axis.set_ylim(ylim)
-    return fig, axis
+#     axis.set_xticklabels(xlabels, rotation=45, fontsize=12)
+#     axis.set_ylabel(ylabel, fontsize=12)
+#     axis.set_ylim(ylim)
+#     return fig, axis
 
 
-def plot_cost_emission(model, data=None):
-    sys_ID = model._system.ID
-    if data is None:
-        data = result_dct[sys_ID]['data']
-    cost_df = data.iloc[:, 0]
-    emission_df = data.iloc[:, 3:4]
-    dfs = (cost_df, emission_df)
-    fig, axis = plot_series_bp(f'{sys_ID} Uncertainty Results',
-                               dfs, colors.brown_tint.RGBn, colors.brown_shade.RGBn,
-                               ('Net cost', 'Net GWP'),
-                               f'Costs and Emissions [{currency} or {GWP.unit}/cap/yr]',
-                               (0, 100))
-    return fig, axis
+# def plot_cost_emission(model, data=None):
+#     sys_ID = model._system.ID
+#     if data is None:
+#         data = result_dct[sys_ID]['data']
+#     cost_df = data.iloc[:, 0]
+#     emission_df = data.iloc[:, 3:4]
+#     dfs = (cost_df, emission_df)
+#     fig, axis = plot_series_bp(f'{sys_ID} Uncertainty Results',
+#                                dfs, colors.brown_tint.RGBn, colors.brown_shade.RGBn,
+#                                ('Net cost', 'Net GWP'),
+#                                f'Costs and Emissions [{currency} or {GWP.unit}/cap/yr]',
+#                                (0, 100))
+#     return fig, axis
 
-def plot_recovery(model, resource, data=None):
-    sys_ID = model._system.ID
-    if data is None:
-        data = result_dct[sys_ID]['data']
-    resources = ('COD', 'N', 'P', 'K')
-    try:
-        index = (resources.index(resource)+2)*4+1
-    except:
-        return f'resource can only be "COD", "N", "P", or "K", not "{resource}".'
-    dfs = []
-    for i in range(4):
-        dfs.append(data.iloc[:, index+i:index+i+1])
-    fig, axis = plot_series_bp(f'{sys_ID} Uncertainty Results',
-                               dfs, colors.brown_tint.RGBn, colors.brown_shade.RGBn,
-                               ('Liquid', 'Solid', 'Gas', 'Total'),
-                               f'{resource} Recovery',
-                               (0, 1))
-    return fig, axis
+# def plot_recovery(model, resource, data=None):
+#     sys_ID = model._system.ID
+#     if data is None:
+#         data = result_dct[sys_ID]['data']
+#     resources = ('COD', 'N', 'P', 'K')
+#     try:
+#         index = (resources.index(resource)+2)*4+1
+#     except:
+#         return f'resource can only be "COD", "N", "P", or "K", not "{resource}".'
+#     dfs = []
+#     for i in range(4):
+#         dfs.append(data.iloc[:, index+i:index+i+1])
+#     fig, axis = plot_series_bp(f'{sys_ID} Uncertainty Results',
+#                                dfs, colors.brown_tint.RGBn, colors.brown_shade.RGBn,
+#                                ('Liquid', 'Solid', 'Gas', 'Total'),
+#                                f'{resource} Recovery',
+#                                (0, 1))
+#     return fig, axis
 
 
 

@@ -22,6 +22,12 @@ from qsdsan import stats as s
 from qsdsan.utils.decorators import time_printer
 from qsdsan.systems import bwaise as bw
 
+__all__ = ('run_plot_spearman', 'run_plot_morris', 'run_plot_sobol')
+
+
+# %%
+
+
 m = bw.models
 modelA = m.modelA
 modelB = m.modelB
@@ -67,25 +73,37 @@ for alternative systems.
 # rs.seed(3221)
 # rs.random.sample(5)
 
-def run_correlation(model, N, metrics=key_metrics, threshold=0.5,
-                    auto_filter_parameters=True, file=''):
-    if file == 'default':
-        file=f'{result_path}Spearman{model._system.ID[-1]}.xlsx'
-    corr_dct = m.run_uncertainty(model, seed=3221, N=N, rule='L',
-                                 percentiles=(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1),
-                                 print_time=True)
+def run_plot_spearman(model, N, metrics=key_metrics, threshold=0.5,
+                         auto_filter_parameters=True, file_prefix=''):
+    suffix = model._system.ID[-1] if file_prefix=='default' else ''
+    
+    if file_prefix=='default':
+        suffix = model._system.ID[-1]
+        dct_file = f'{result_path}Spearman{suffix}.xlsx'
+        fig_file = f'{result_path}Spearman{suffix}.png'
+    else:
+        dct_file = f'{file_prefix}.xlsx' if file_prefix else ''
+        fig_file = f'{file_prefix}.png' if file_prefix else ''
 
-    spearman_rho, spearman_p = s.get_correlation(model, kind='Spearman',
-                                                 input_y=metrics,
-                                                 nan_policy='raise',
-                                                 file=file)
+    m.run_uncertainty(model, seed=3221, N=N, rule='L',
+                      percentiles=(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1),
+                      print_time=True)
+
+    spearman_rho, spearman_p = s.get_correlations(model, kind='Spearman',
+                                                  input_y=metrics,
+                                                  nan_policy='raise',
+                                                  file=dct_file)
+    
     all_params = model.get_parameters()
     if auto_filter_parameters:
         key_params = filter_parameters(model, spearman_rho, threshold)
         if len(key_params) > 5:
             model.set_parameters(key_params)
     
-    return (corr_dct, all_params)
+    fig, ax = s.plot_correlations(spearman_rho, parameters=key_params,
+                                  metrics=key_metrics, file=fig_file)
+    
+    return spearman_rho, fig, ax, all_params
 
 
 # %%
@@ -167,27 +185,31 @@ def run_plot_sobol(model, N, metrics=key_metrics, file_prefix=''):
 # Below are testing codes, please leave as commented
 # =============================================================================
 
-# uncertainty_outs = run_correlation(modelA, N=100)
+# spearman_rho, fig, ax, all_params = run_plot_spearman(modelA, N=100)
 
 # morris_dct, fig, ax = run_plot_morris(modelA, 10, test_convergence=False)
 
-# morris_dct_conv, fig, ax = run_plot_morris(modelA, 10, test_convergence=True)
+# morris_dct_conv, fig, ax = run_plot_morris(modelA, 100, test_convergence=True)
 
 # sobol_dct, fig, ax = run_plot_sobol(modelA, 10, file_prefix='')
 
 
-# fig, ax = s.plot_morris_results(morris_dct, key_metrics[0])
+# fig, ax = s.plot_uncertainties(modelA, metrics=key_metrics)
 
-# fig, ax = s.plot_morris_convergence(morris_dct_conv, key_metrics[0], plot_rank=True)
+# fig, ax = s.plot_correlations(spearman_rho, parameters=modelA.get_parameters(),
+#                               metrics=key_metrics[0])
 
+# fig, ax = s.plot_correlations(spearman_rho, parameters=modelA.get_parameters(),
+#                               metrics=key_metrics)
 
-# fig, ax = s.plot_sobol_results(sobol_dct, metric=key_metrics[0], plot_in_diagonal='ST')
+# fig, ax = s.plot_morris_results(morris_dct, key_metrics[0], label_kind='name')
 
+# fig, ax = s.plot_morris_convergence(morris_dct_conv,
+#                                     parameters=modelA.get_parameters(),
+#                                     metric=key_metrics[0], plot_rank=True)
 
-
-
-
-
+# fig, ax = s.plot_sobol_results(sobol_dct, metric=key_metrics[0], kind='STS2',
+#                                plot_in_diagonal='ST')
 
 
 

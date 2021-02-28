@@ -254,27 +254,11 @@ to these models or construct your own ones.
     >>> # You can organize the results as you like,
     >>> # but you can also save them using the default organized data
     >>> models.save_uncertainty_results(models.modelA)
-    >>> # You can also ge quick box plots of uncertainty results
-    >>> models.plot_cost_emission(models.modelA)
-    >>> # You can change "COD" to any of "N", "P", or "K"
-    >>> models.plot_recovery(models.modelA, 'COD')
-    >>> models.plot_recovery(models.modelA, 'N')
-    >>> models.plot_recovery(models.modelA, 'P')
-    >>> models.plot_recovery(models.modelA, 'K')
 
-    
-.. figure:: ./figures/modelA_cost_emission.png
-    
-.. figure:: ./figures/modelA_COD_recovery.png
 
-.. figure:: ./figures/modelA_N_recovery.png
+``QSDsan`` also have built-in functions for advanced global sensitivity analyses
+and plotting functions, refer to the `stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_ module for examples.
     
-.. figure:: ./figures/modelA_P_recovery.png
-    
-.. figure:: ./figures/modelA_K_recovery.png
-    
-    *Uncertainty plots from modelA*
-
 
 Coming soon
 -----------

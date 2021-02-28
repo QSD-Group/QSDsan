@@ -15,19 +15,15 @@ for license details.
 '''
 TODO:
     1. Add FAST, eFAST, and RBD-FAST
-    2. Add correlation plotting, ideally can switch between bar (single metric)
-    and bubble (multiple metrics), may be add color
-        biosteam for box and bar
-        seaborn for bubble: https://seaborn.pydata.org/examples/heat_scatter.html
-        consider using seaborn to set the theme
 
 '''
 
 
 # %%
 
-__all__ = ('get_correlation', 'define_inputs', 'generate_samples',
+__all__ = ('get_correlations', 'define_inputs', 'generate_samples',
            'morris_analysis', 'morris_till_convergence', 'sobol_analysis',
+           'plot_uncertainties', 'plot_correlations',
            'plot_morris_results', 'plot_morris_convergence', 'plot_sobol_results')
 
 import numpy as np
@@ -36,10 +32,11 @@ import seaborn as sns
 import biosteam as bst
 from warnings import warn
 from scipy.stats import pearsonr, spearmanr, kendalltau, kstest
+from matplotlib import pyplot as plt
 from SALib.sample import (morris as morris_sampling, saltelli)
 from SALib.analyze import morris, sobol
 from SALib.plotting import morris as sa_plt_morris
-from matplotlib import pyplot as plt
+from biosteam.plots import plot_spearman
 from .utils.decorators import time_printer
 
 isinstance = isinstance
@@ -47,12 +44,21 @@ getattr = getattr
 var_indices = bst.evaluation._model.var_indices
 indices_to_multiindex = bst.evaluation._model.indices_to_multiindex
 
+
+# %%
+
+# =============================================================================
+# Utility functions
+# =============================================================================
+
 def _update_input(input_val, default_val):
     if input_val is None:
         return default_val
     else:
         try:
             iter(input_val)
+            if len(input_val)==0: # empty sequence
+                return default_val
             return input_val if not isinstance(input_val, str) else (input_val,)
         except:
             return (input_val,)
@@ -73,6 +79,34 @@ def _update_nan(df, nan_policy, legit=('propagate', 'raise', 'omit')):
     else:
         return df
     
+    
+def _update_df_names(df, columns=True, index=True):
+    new_df = df.copy()
+
+    if columns and not new_df.columns.empty:
+        try:
+            iter(new_df.columns)
+            new_df.columns = [i[-1].split(' [')[0] for i in new_df.columns]
+        except: pass
+
+    if index and not new_df.index.empty:
+        try:
+            iter(new_df.index)
+            new_df.index = [i[-1].split(' [')[0] for i in new_df.index]
+        except: pass        
+
+    return new_df
+    
+
+def _save_fig_return(fig, ax, file, close_fig):
+    if file:
+        fig.savefig(file, dpi=300)
+    
+    if close_fig:
+        plt.close()
+    
+    return fig, ax
+
 
 # %%
 
@@ -80,9 +114,9 @@ def _update_nan(df, nan_policy, legit=('propagate', 'raise', 'omit')):
 # Correlations
 # =============================================================================
 
-def get_correlation(model, input_x=None, input_y=None,
-                    kind='Pearson', nan_policy='propagate', file='',
-                    **kwargs):
+def get_correlations(model, input_x=None, input_y=None,
+                     kind='Pearson', nan_policy='propagate', file='',
+                     **kwargs):
     '''
     Get correlation coefficients between two inputs using ``scipy``.
     
@@ -93,7 +127,7 @@ def get_correlation(model, input_x=None, input_y=None,
     input_x : :class:`biosteam.Parameter` or :class:`biosteam.Metric`
         First set of input, can be single values or iteral,
         will be defaulted to all model parameters if not provided.
-    input_x : :class:`biosteam.Parameter` or :class:`biosteam.Metric`
+    input_y : :class:`biosteam.Parameter` or :class:`biosteam.Metric`
         Second set of input, can be single values or iteral,
         will be defaulted to all model parameters if not provided.
     kind : str
@@ -105,6 +139,8 @@ def get_correlation(model, input_x=None, input_y=None,
         - "omit": drop the pair from analysis.
     file : str
         If provided, the results will be saved as an Excel file.
+    kwargs : dict
+        Other kwargs that will be passed to ``scipy``.
 
     Returns
     -------
@@ -122,14 +158,17 @@ def get_correlation(model, input_x=None, input_y=None,
     
     '''
     table = model.table.astype('float64')
+    
     input_x = _update_input(input_x, model.get_parameters())
     input_y = _update_input(input_y, model.metrics)
     x_indices = var_indices(input_x)
     x_data = [table[i] for i in x_indices]
     y_indices = var_indices(input_y)
     y_data = [table[i] for i in y_indices]
+
     df_index = indices_to_multiindex(x_indices, ('Element', 'Input x'))
     df_column = indices_to_multiindex(y_indices, ('Element', 'Input y'))
+    
     rs, ps = [], []
     for x in x_data:
         rs.append([])
@@ -220,6 +259,8 @@ def generate_samples(inputs, kind, N, seed=None, **kwargs):
         The number of trajectories (Morris) or samples.
     seed : int
         Seed to generate random samples.
+    kwargs : dict
+        Other kwargs that will be passed to ``SALib``.
     
     Returns
     -------
@@ -275,6 +316,8 @@ def morris_analysis(model, inputs, metrics=None, nan_policy='propagate',
         Whether to show simulation time in the console. 
     file : str
         If provided, the results will be saved as an Excel file.
+    kwargs : dict
+        Other kwargs that will be passed to ``SALib``.
     
     Returns
     -------
@@ -353,6 +396,8 @@ def morris_till_convergence(model, inputs, metrics=None,
         Whether to show simulation time in the console. 
     file : str
         If provided, the results will be saved as an Excel file.
+    kwargs : dict
+        Other kwargs that will be passed to ``SALib``.
 
     See Also
     --------    
@@ -361,7 +406,8 @@ def morris_till_convergence(model, inputs, metrics=None,
     '''
     num_levels = kwargs['num_levels'] if 'num_levels' in kwargs.keys() else 4
     kwargs = {i:kwargs[i] for i in kwargs.keys() if i!='num_levels'}
-    samples = generate_samples(inputs=inputs, kind='Morris', N=N_max, seed=seed, num_levels=num_levels)
+    samples = generate_samples(inputs=inputs, kind='Morris', N=N_max,
+                               seed=seed, num_levels=num_levels)
     model.load_samples(samples)
     
     param_num = len(model.get_parameters())
@@ -381,7 +427,7 @@ def morris_till_convergence(model, inputs, metrics=None,
             df.loc[2] = data0.copy()
             cum_dct[idx][m.name] = df
     
-    for n in range(3, N_max):
+    for n in range(2, N_max):
         temp_model = model.copy()
         temp_model.load_samples(samples[n*(param_num+1): (n+1)*(param_num+1)])
         temp_model.evaluate()
@@ -394,8 +440,8 @@ def morris_till_convergence(model, inputs, metrics=None,
         for m in metrics:
             mu_star = temp_dct[m.name].mu_star
             mu_star_conf = temp_dct[m.name].mu_star_conf
-            cum_dct['mu_star'][m.name].loc[n] = mu_star
-            cum_dct['mu_star_conf'][m.name].loc[n] = mu_star_conf
+            cum_dct['mu_star'][m.name].loc[n+1] = mu_star
+            cum_dct['mu_star_conf'][m.name].loc[n+1] = mu_star_conf
             
             converged = False if (mu_star_conf/mu_star.max()>threshold).any() else True
             all_converged = all_converged & converged
@@ -454,6 +500,8 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
         Whether to show simulation time in the console. 
     file : str
         If provided, the results will be saved as an Excel file.
+    kwargs : dict
+        Other kwargs that will be passed to ``SALib``.
 
     Returns
     -------
@@ -499,24 +547,200 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
 # %%
 
 # =============================================================================
-# Plotting functions
+# Plot uncertainty analysis results
 # =============================================================================
 
-def _save_fig_return(fig, ax, file, close_fig):
-    if file:
-        fig.savefig(file, dpi=300)
+def plot_uncertainties(model, metrics=(), file='', close_fig=True, **kwargs):
+    '''
+    Visualize uncertainty analysis results as box plots.
     
-    if close_fig:
-        plt.close()
+    Parameters
+    ----------
+    model : :class:`biosteam.Model`
+        The model with uncertainty analysis (in <model.table>) results for plotting.
+    metrics : :class:`biosteam.Metric`
+        Metric(s) of interest for the plot, will be default to all metrics
+        included in the result table if not provided.
+    file : str
+        If provided, the generated figure will be saved as a png file.
+    close_fig : bool
+        Whether to close the figure
+        (if not close, new figure will be overlaid on the current figure).
+    kwargs : dict
+        Other kwargs that will be passed to :func:`seaborn.boxplot`.
+        
+    Returns
+    -------
+    figure : :class:`matplotlib.figure.Figure`
+        The generated figure.
+    axis : :class:`matplotlib.axes._subplots.AxesSubplot`
+        The generated figure axis.
+        
+    See Also
+    --------    
+    :func:`seaborn.boxplot` `example <https://seaborn.pydata.org/examples/grouped_boxplot.html>`_
+    
+    '''
+
+    table = model.table.astype('float64')
+    metrics = _update_input(metrics, model.metrics)
+    df = _update_df_names(table)
+    
+    new_df = pd.DataFrame()
+    for m in metrics:
+        temp_df = pd.DataFrame(columns=('metric', 'value'))
+        temp_df['value'] = df[m.name]
+        temp_df['metric'] = [m.name]*df.shape[0]
+        new_df = pd.concat((new_df, temp_df))
+    
+    sns.set_theme(style='ticks')
+    kwargs.setdefault('palette', 'pastel')
+    kwargs.setdefault('dodge', False)
+
+    ax = sns.boxplot(x='metric', y='value', hue='metric', data=new_df, **kwargs)
+    
+    ax.set_box_aspect(1)
+    ax.set(xlabel='', ylabel='Values')
+    ax.get_legend().set_title('')
+    
+    return _save_fig_return(ax.figure, ax, file, close_fig)
+
+
+# =============================================================================
+# Plot correlations
+# =============================================================================
+
+def _plot_corr_tornado(corr_df, top):
+    fig, ax = plot_spearman(corr_df.iloc[:,0], top=top)
+    
+    ax.set_xlabel(corr_df.columns[0])
+    
+    for ax in fig.axes:
+        for key in ax.spines.keys():
+            ax.spines[key].set(color='k', linewidth=0.5, visible=True)
+            ax.grid(False)
     
     return fig, ax
 
+
+def _plot_corr_bubble(corr_df, ratio, **kwargs):
+    sns.set_theme(style="whitegrid")
+
+    margin_x = kwargs['margin_x'] if 'margin_x' in kwargs.keys() else 0.1/ratio
+    margin_y = kwargs['margin_y'] if 'margin_y' in kwargs.keys() else 0.1
+    kwargs = {i: kwargs[i] for i in kwargs.keys() if 'margin' not in i}
+    
+    keys = ('height', 'palette', 'hue_norm', 'sizes', 'size_norm', 'edgecolor')
+    values = (5+ratio, 'vlag', (-1, 1), (0, 1000), (0, 2), '0.5')
+    
+    for num, k in enumerate(keys):
+        kwargs.setdefault(keys[num], values[num])
+    
+    g = sns.relplot(data=corr_df, x='metric', y='parameter',
+                    hue='correlation', size='size',  **kwargs)
+    
+    g.set(xlabel='', ylabel='', aspect=1)
+    g.ax.margins(x=margin_x, y=margin_y)
+    
+    for label in g.ax.get_xticklabels():
+        label.set_rotation(90)
+    
+    for artist in g.legend.legendHandles:
+        artist.set_edgecolor('0.5')
+    
+    for key in g.ax.spines.keys():
+        g.ax.spines[key].set(color='k', linewidth=0.5, visible=True)
+    
+    g.ax.grid(True, which='major', color='k',linestyle='--', linewidth=0.7)
+    g.tight_layout()
+    
+    return g
+    
+
+def plot_correlations(result_df, parameters=(), metrics=(), top=None,
+                      file='', close_fig=True, **kwargs):
+    '''
+    Visualize the correlations between model parameters and metric results
+    as tornado (single metric) or bubble plots (multiple metrics).
+    
+    Parameters
+    ----------
+    result_df : :class:`pandas.DataFrame`
+        Result table generated by :func:`get_correlations` containing
+        correlation indices.
+    parameters : :class:`biosteam.Parameter`
+        Metric(s) of interest for the plot, will be default to all parameters
+        included in ``corr_dct`` if not provided.
+    metrics : :class:`biosteam.Metric`
+        Metric(s) of interest for the plot, will be default to all metrics
+        included in ``corr_dct`` if not provided.
+    top : int
+        Plot the top X parameters with the highest absolute correlation indices,
+        this is only applicable for the case of just one metric.
+    file : str
+        If provided, the generated figure will be saved as a png file.
+    close_fig : bool
+        Whether to close the figure
+        (if not close, new figure will be overlaid on the current figure).
+    kwargs : dict
+        Other kwargs that will be passed to :func:`seaborn.relplot`.
+        
+    Returns
+    -------
+    figure : :class:`matplotlib.figure.Figure`
+        The generated figure.
+    axis : :class:`matplotlib.axes._subplots.AxesSubplot`
+        The generated figure axis.
+        
+    See Also
+    --------
+    :func:`biosteam.plots.plot_spearman`
+    
+    :func:`seaborn.relplot` and `scatter heat map <https://seaborn.pydata.org/examples/heat_scatter.html>`_
+    
+    '''
+    
+    df = _update_df_names(result_df)
+
+    param_names = _update_input(parameters, df.index)
+    param_names = param_names if isinstance(param_names[0], str) \
+                              else [p.name for p in param_names]
+
+    metric_names = _update_input(metrics, df.columns)    
+    metric_names = metric_names if isinstance(metric_names[0], str) \
+                                else [m.name for m in metric_names]
+    
+    df = df[metric_names].loc[param_names]
+    
+    if len(param_names)*len(metric_names) == 0:
+        raise ValueError('No correlation data for plotting.')
+    
+    elif len(metric_names) == 1: # one metric, tornado plot
+        fig, ax = _plot_corr_tornado(df, top)
+        return _save_fig_return(fig, ax, file, close_fig)
+    
+    else: # multiple metrics, bubble plot
+        corr_df = pd.DataFrame()
+        
+        for m in df.columns:
+            temp_df = pd.DataFrame(columns=('parameter', 'metric', 'correlation', 'size'))
+            temp_df['parameter'] = df.index
+            temp_df['metric'] = [m]*temp_df.shape[0]
+            temp_df['correlation'] = df[m].values
+            temp_df['size'] = np.abs(df[m].values)
+            corr_df = pd.concat((corr_df, temp_df))
+        
+        g = _plot_corr_bubble(corr_df, len(metric_names)/len(param_names), **kwargs)
+        
+        return _save_fig_return(g.fig, g.ax, file, close_fig)
+    
+
+
 # =============================================================================
-# Morris plotting
+# Plot Morris analysis results
 # =============================================================================
 
-def plot_morris_results(morris_dct, metric,
-                        axis=None, kind='scatter',
+def plot_morris_results(morris_dct, metric, kind='scatter',
                         x_axis='mu_star',
                         k1=0.1, k2=0.5, k3=1, label_kind='number',
                         file='', close_fig=True, **kwargs):
@@ -530,11 +754,9 @@ def plot_morris_results(morris_dct, metric,
     Parameters
     ----------
     morris_dct : dict
-        Results dict generated by :func:`morris_analysis`
+        Results dict generated by :func:`morris_analysis`.
     metric : :class:`biosteam.Metric`
         The metric of interest for the plot.
-    axis : :class:`matplotlib.axes._subplots.AxesSubplot`
-        Axis for the figure, a new axis will be created if not provided.
     kind : str
         Either "scatter" (:math:`{\sigma}`) vs. :math:`{\mu^*}` or "bar" (:math:`{\mu^*}` with confidence interval) plot.
     x_axis : str
@@ -554,7 +776,10 @@ def plot_morris_results(morris_dct, metric,
     file : str
         If provided, the generated figure will be saved as a png file.
     close_fig : bool
-        Whether to close the figure (if not close, new figure will be overlaid on the current figure).
+        Whether to close the figure
+        (if not close, new figure will be overlaid on the current figure).
+    kwargs : dict
+        Other kwargs that will be passed to :func:`morris.horizontal_bar_plot` in ``SALib.plotting``.
         
     Returns
     -------
@@ -575,8 +800,8 @@ def plot_morris_results(morris_dct, metric,
     else:
         raise ValueError(f'label_kind can only be "number" or "name", not "{label_kind}".')
     
-    ax = axis if axis else plt.subplot()
-    sns.set_theme(style='darkgrid')
+    ax = plt.subplot()
+    sns.set_theme(style='ticks')
     
     if kind == 'scatter':
         ax.scatter(x_data, y_data, color='k')
@@ -605,11 +830,16 @@ def plot_morris_results(morris_dct, metric,
         df['names'] = df.index
         fig = sa_plt_morris.horizontal_bar_plot(ax, df, opts=kwargs)
 
+    # for ax in fig.axes:
+    for key in ax.spines.keys():
+        ax.spines[key].set(color='k', linewidth=0.5, visible=True)
+        ax.grid(False)
+
     return _save_fig_return(fig, ax, file, close_fig)
 
 
-def plot_morris_convergence(result_dct, metric, axis=None, parameters=(),
-                            plot_rank=False, error_bar=True, file='', close_fig=True):
+def plot_morris_convergence(result_dct, metric, parameters=(), plot_rank=False,
+                            kind='line', error=True, palette='pastel', file='', close_fig=True):
     '''
     Plot the evolution of :math:`{\mu^*}` or its rank with the number of trajectories.
     
@@ -619,10 +849,8 @@ def plot_morris_convergence(result_dct, metric, axis=None, parameters=(),
         Result dictionary generated from :func:`qsdsan.stats.morris_till_convergence`
     metric : :class:`biosteam.Metric`
         The metric of interest for the plot.
-    axis : :class:`matplotlib.axes._subplots.AxesSubplot`
-        Axis for the figure, a new axis will be created if not provided.
     parameters : :class:`biosteam.Parameter`
-        Single or a collection of model parameters whose :math:`{\mu^*}` will be
+        Single or a sequence of model parameters whose :math:`{\mu^*}` will be
         included in the plot.
         Will be set to all parameters in retult_dct will be used if not provided.
     plot_rank : bool
@@ -630,12 +858,18 @@ def plot_morris_convergence(result_dct, metric, axis=None, parameters=(),
         
         .. note::
             If plot_rank is True, error bars will not be included.
-    error_bar : bool
-        Whether to include the confidence interval as error bars in the plot.
+    kind : str
+        Can be either 'line' or 'scatter'.
+    error : bool
+        Whether to include the confidence interval in the plot,
+        will be bars for scatter plot and bands for line plot.
+    error : string, list, dict, or :class:`matplotlib.colors.Colormap`
+        Will be passed on to :func:`seaborn.color_palette`.
     file : str
         If provided, the generated figure will be saved as a png file.
     close_fig : bool
-        Whether to close the figure (if not close, new figure will be overlaid on the current figure).
+        Whether to close the figure
+        (if not close, new figure will be overlaid on the current figure).
     
     Returns
     -------
@@ -645,16 +879,13 @@ def plot_morris_convergence(result_dct, metric, axis=None, parameters=(),
         The generated figure axis.
     
     '''
-    ax = axis if axis else plt.subplot()
-    df = result_dct['mu_star'][metric.name]
-    conf_df = result_dct['mu_star_conf'][metric.name]
+    ax = plt.subplot()
+    df = result_dct['mu_star'][metric.name].copy().astype('float64')
+    conf_df = result_dct['mu_star_conf'][metric.name].copy().astype('float64')
 
-    try: iter(parameters)
-    except: parameters = (parameters,)
-    if (parameters and not isinstance(parameters[0], str)):
-        param_names = [p.name for p in parameters]
-    else:
-        param_names = df.columns
+    param_names = _update_input(parameters, df.columns)    
+    param_names = param_names if isinstance(param_names[0], str) \
+                              else [p.name for p in param_names]
     
     if plot_rank:
         df = df.rank(axis=1)
@@ -664,28 +895,36 @@ def plot_morris_convergence(result_dct, metric, axis=None, parameters=(),
         ylabel = f'$\mu^*$ for {metric.name.lower()}'
         loc = 'best'
     
-    sns.set_theme(style='darkgrid')
-    for param in param_names:
-        scatter = ax.scatter(df.index, df[param])
-        ax.plot(df.index, df[param])
-        if not plot_rank and error_bar:
-            ax.errorbar(df.index, df[param], conf_df[param])
-    legend = ax.legend(scatter.legend_elements(), labels=param_names, loc=loc)
-    ax.add_artist(legend)
-    ax.set_xlabel('Number of trajectories')
-    ax.set_ylabel(ylabel)
+    palette = sns.color_palette('deep', n_colors=len(param_names))
+    sns.set_theme(style='ticks', palette=palette)
+    
+    for n, param in enumerate(param_names):
+        if kind == 'line':
+            ax.plot(df.index, df[param], color=palette[n], linewidth=1.5, label=param)
+            if not plot_rank and error:
+                ax.fill_between(df.index, df[param]-conf_df[param], df[param]+conf_df[param],
+                                color=palette[n], linewidth=0, alpha=0.2)
+        elif kind == 'scatter':
+            ax.scatter(df.index, df[param], color=palette[n], label=param)
+            if not plot_rank and error:
+                ax.errorbar(df.index, df[param], conf_df[param],
+                            color=palette[n], alpha=0.5)
+        else:
+            raise ValueError(f'kind can only be "line" or "scatter", not "{kind}".')
+    ax.legend(loc=loc)
+    ax.set(xlabel='Number of trajectories', ylabel=ylabel, ylim=(0, ax.get_ylim()[1]))
     
     return _save_fig_return(ax.figure, ax, file, close_fig)
     
 
 # =============================================================================
-# Sobol plotting
+# Plot Sobol variance breakdown
 # =============================================================================
 
 def _plot_sobol_bar(kind, df, error_bar, ax=None):
     ax = ax if ax else plt.subplot()
 
-    sns.set_theme(style='whitegrid')
+    sns.set_theme(style='white')
     if 'ST' in kind:
         sns.set_color_codes('pastel')
         sns.barplot(x=df.ST, y=df.index, data=df,
@@ -751,7 +990,7 @@ def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
     metric : :class:`biosteam.Metric`
         The metric of interest for the plot.
     parameters : :class:`biosteam.Parameter`
-        Single or a collection of model parameters whose :math:`{\mu^*}` will be
+        Single or a sequence of model parameters whose :math:`{\mu^*}` will be
         included in the plot.
         Will be set to all parameters in retult_dct will be used if not provided.
     kind : str
@@ -786,7 +1025,8 @@ def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
     file : str
         If provided, the generated figure will be saved as a png file.
     close_fig : bool
-        Whether to close the figure (if not close, new figure will be overlaid on the current figure).
+        Whether to close the figure
+        (if not close, new figure will be overlaid on the current figure).
     
     Returns
     -------
@@ -800,12 +1040,9 @@ def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
     '''
     ax_sts1 = ax_s2 = None
     
-    try: iter(parameters)
-    except: parameters = (parameters,)
-    if (parameters and not isinstance(parameters[0], str)):
-        param_names = [p.name for p in parameters]
-    else:
-        param_names = result_dct[metric.name]['ST'].index
+    param_names = _update_input(parameters, result_dct[metric.name]['ST'].index)    
+    param_names = param_names if isinstance(param_names[0], str) \
+                              else [p.name for p in param_names]
     
     st_df = result_dct[metric.name]['ST'].loc[[p for p in param_names]]
     s1_df = result_dct[metric.name]['S1'].loc[[p for p in param_names]]
@@ -870,7 +1107,7 @@ def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
                                         diagonal=plot_in_diagonal,
                                         sts1_df=sts1_df, default_cbar=False)
             
-            labels = [i if len(i)<=15 else i[0:15]+'...' for i in hmap_df.index]            
+            labels = [i if len(i)<=15 else i[0:15]+'...' for i in hmap_df.index]
             ax_s2.yaxis.set_label_position('right')
             ax_s2.yaxis.tick_right()
             ax_s2.set_yticklabels(labels, rotation=0, ha='center',
@@ -886,58 +1123,6 @@ def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
             fig.suptitle(f'Variance breakdown for {metric.name.lower()}')
 
         return _save_fig_return(fig, (ax_sts1, ax_s2), file, close_fig)
-
-
-    
-    
-
-
-    
-    
-
-    
-    
-    
-    
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
