@@ -22,7 +22,6 @@ TODO:
 
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
 from chaospy import distributions as shape
 from thermosteam.functional import V_to_rho, rho_to_V
 from biosteam import PowerUtility
@@ -794,6 +793,7 @@ def run_uncertainty(model, seed=None, N=1000, rule='L',
     samples = model.sample(N, rule)
     model.load_samples(samples)
     model.evaluate()
+    
     # Data organization
     dct = result_dct[model._system.ID]
     index_p = len(model.get_parameters())
@@ -801,6 +801,7 @@ def run_uncertainty(model, seed=None, N=1000, rule='L',
     dct['data'] = model.table.iloc[:, index_p:].copy()
     if percentiles:
         dct['percentiles'] = dct['data'].quantile(q=percentiles)
+        
     # Spearman's rank correlation
     spearman_metrics = [model.metrics[i] for i in (0, 3, 12, 16, 20, 24)]
     spearman_results = model.spearman(model.get_parameters(), spearman_metrics)

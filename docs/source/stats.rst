@@ -83,6 +83,9 @@ Examples
 	# here we use a small sample size for demonstrative purpose
 	morris_dct, fig, ax = analyses.run_plot_morris(modelA, 10, test_convergence=False)
 
+	# Note that we can get the figure from the `run_plot_morris` plot,
+	# but calling the actual plotting function is easier to customize
+	# (e.g., set `label_kind`)
 	fig, ax = s.plot_morris_results(morris_dct, key_metrics[0], label_kind='name')
 
 
@@ -93,11 +96,11 @@ Line plot with error bands for evolutionary of :math:`\mu^*`
 ************************************************************
 .. code:: bash
 	
-	# Test if :math:`\mu^*` can converge within 100 trajectories
-	# (spoiler: it cannot, and ``QSDsan`` will print a message) 
+	# Test if mu_star can converge within 100 trajectories
+	# (spoiler: it cannot, and you will get a message prompt) 
 	morris_dct_conv, fig, ax = analyses.run_plot_morris(modelA, 100, test_convergence=True)
 
-	# Look at :math:`\mu^*` values for two parameters
+	# Look at mu_star values for two parameters
 	fig, ax = s.plot_morris_convergence(morris_dct_conv,
 	                                    parameters=modelA.get_parameters()[0:2],
 	                                    metric=key_metrics[0], plot_rank=False)
@@ -110,13 +113,49 @@ Line plot for evolutionary of :math:`\mu^*` rank
 ************************************************
 .. code:: bash
 	
-	# Look at ranks of :math:`\mu^*` values for all parameters
+	# Look at ranks of mu_star values for all parameters
 	fig, ax = s.plot_morris_convergence(morris_dct_conv,
 	                                    parameters=modelA.get_parameters(),
 	                                    metric=key_metrics[0], plot_rank=True)
 
 
 .. figure:: ./images/plot_morris_conv_rank.png
+
+
+FAST
+------
+.. automethod:: qsdsan.stats.fast_analysis
+.. automethod:: qsdsan.stats.plot_fast_results
+
+Examples
+^^^^^^^^
+
+Bar plot for FAST
+*****************
+.. code:: bash
+	
+	# Total and main effects from FAST analysis,
+	# here we use a small sample size for demonstrative purpose
+	fast_dct, fig, ax = analyses.run_plot_fast(modelA, 'FAST', 100, M=4)
+	
+	fig.subplots_adjust(left=0.25)
+
+
+.. figure:: ./images/plot_fast.png
+
+
+Bar plot for RBD-FAST
+*********************
+.. code:: bash
+	
+	# Main effects from RBD-FAST analysis,
+	# here we use a small sample size for demonstrative purpose
+	rbd_dct, fig, ax = analyses.run_plot_fast(modelA, 'RBD', 100, M=10)
+	
+	fig.subplots_adjust(left=0.25)
+
+
+.. figure:: ./images/plot_rbd.png
 
 
 Sobol

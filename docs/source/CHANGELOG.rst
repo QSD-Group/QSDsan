@@ -11,6 +11,7 @@ Ongoing
 
 	- More statistical tests:
 
+		- :func:`qsdsan.stats.fast_analysis` for (extended) Fourier amplitude sensitivity test (FAST) and random balance design (RBD) FAST.
 		- :func:`qsdsan.stats.morris_till_convergence` to run Morris analysis until the results converge.
 		- Added Kendall's tau and Kolmogorov–Smirnov test to :func:`qsdsan.stats.get_correlations`.
 	
@@ -20,7 +21,8 @@ Ongoing
 		- :func:`qsdsan.stats.plot_correlations` for results from :func:`qsdsan.stats.get_correlation`.
 		- Bar plot option for :func:`qsdsan.stats.plot_morris_results`.
 		- :func:`qsdsan.stats.plot_morris_convergence` to plot :math:`{\mu^*}` against the number of trajectories.
-		- :func:`qsdsan.stats.plot_sobol_results` for Sobol analysis.
+		- :func:`qsdsan.stats.plot_fast_results` for results from FAST and/or RBD-FAST analyses.
+		- :func:`qsdsan.stats.plot_sobol_results` for results from Sobol analysis.
 
 
 `0.1.0`_ (2021-02-14)
