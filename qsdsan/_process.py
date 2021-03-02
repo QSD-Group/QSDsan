@@ -18,6 +18,7 @@ from thermosteam.utils import chemicals_user, read_only
 from sympy import symbols, Matrix
 from sympy.parsing.sympy_parser import parse_expr
 import numpy as np
+import pandas as pd
     
 __all__ = ('Process', 'Processes', 'CompiledProcesses', )
 
@@ -145,7 +146,7 @@ class Process():
 
 #%%
 setattr = object.__setattr__
-
+@chemicals_user
 class Processes():
     
     def __new__(cls, processes):
@@ -167,7 +168,7 @@ class Processes():
     
     def __getitem__(self, key):
         """
-        Return a ``Process`` or a list of ``Process``es.
+        Return a ``Process`` or a list of ``Process`` objects.
         
         Parameters
         ----------
@@ -247,7 +248,49 @@ class Processes():
     
     def __repr__(self):
         return f"{type(self).__name__}([{', '.join(self.__dict__)}])"
+    
+    _default_data = None
+    
+    @classmethod
+    def load_from_file(cls, path='', components=None, 
+                       conserved_for=('COD', 'N', 'P', 'charge'), parameters=None,
+                       use_default_data=False, store_data=False, compile=True):
+        '''
+        Create ``CompiledProcesses`` object from matrix of stoichiometric 
+        coefficients and array of rate equations.
+        '''
+        if use_default_data and cls._default_data is not None:
+            data = cls._default_data
+        else:
+            if path.endswith('.csv'): data = pd.read_csv(path, na_values=0)
+            elif path.endswith(('.xls', '.xlsx')): data = pd.read_excel(path, na_values=0)
+            else: raise ValueError('Only .csv or Excel files can be used.')
+        
+        cmp_IDs = data.columns[1:-1]
+        data.dropna(how='all', subset=cmp_IDs, inplace=True)
+        new = cls(())
+        for i, proc in data.iterrows():
+            ID = proc[1]
+            stoichio = proc[1:-1]
+            if pd.isna(proc[-1]): rate_eq = None
+            else: rate_eq = proc[-1]
+            ref = cmp_IDs[stoichio.isin((-1, 1))]
+            if len(ref) == 0: ref = cmp_IDs[-pd.isna(stoichio)][0]                
+            else: ref = ref[0]
+            stoichio = stoichio[-pd.isna(stoichio)]
+            process = Process(ID, stoichio.to_dict(), 
+                              ref_component=ref, 
+                              rate_equation=rate_eq,
+                              conserved_for=conserved_for,
+                              parameters=parameters)
+            new.append(process)
 
+        if store_data:
+            cls._default_data = data
+        
+        if compile: new.mycompile()
+        return new
+        
             
 #%%
 @read_only(methods=('append', 'extend', '__setitem__'))
@@ -314,15 +357,15 @@ class CompiledProcesses(Processes):
     
     @property
     def stoichiometry(self):
-        return self._stoichiometry
+        return pd.DataFrame(self._stoichiometry, index=self.IDs, columns=self._components.IDs)
     
     @property
     def rate_equations(self):
-        return self._rate_equations
-    
+        return pd.DataFrame(self._rate_equations, index=self.IDs, columns=('rate_equation',))
+        
     @property
     def production_rates(self):
-        return dict(zip(self._components.IDs, self._production_rates))
+        return pd.DataFrame(list(self._production_rates), index=self._components.IDs, columns=('rate_of_production',))
     
     def subgroup(self, IDs):
         '''Create a new subgroup of ``CompiledProcesses`` objects.'''
@@ -359,10 +402,3 @@ class CompiledProcesses(Processes):
         copy.mycompile()
         return copy    
     
-    # @classmethod
-    # def from_matrix():
-    #     '''
-    #     Create ``CompiledProcesses`` object from matrix of stoichiometric 
-    #     coefficients and array of rate equations.
-    #     '''
-    #     pass
