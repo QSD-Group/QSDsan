@@ -314,7 +314,7 @@ class CompiledComponents(CompiledChemicals):
         dct = self.__dict__
         tuple_ = tuple # this speeds up the code
         components = tuple_(dct.values())
-        CompiledChemicals._compile(self)
+        CompiledChemicals._compile(self, components)
         
         for component in components:
             missing_properties = component.get_missing_properties(_key_component_properties)

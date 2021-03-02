@@ -591,8 +591,10 @@ class Component(tmo.Chemical):
         '''Return a new ``Component`` from a ``Chemical`` object.'''
         new = cls.__new__(cls, ID=ID, phase=phase)
         for field in chemical.__slots__:
-            value = getattr(chemical, field)
-            setattr(new, field, copy_maybe(value))
+            try: 
+                value = getattr(chemical, field)
+                setattr(new, field, copy_maybe(value))
+            except AttributeError: continue
         new._ID = ID
         if phase: new._locked_state = phase
         new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus, new.Tm,
