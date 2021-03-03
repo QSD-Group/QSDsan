@@ -33,7 +33,41 @@ class Process():
     
     def __init__(self, ID, reaction, ref_component, rate_equation=None, components=None, 
                  conserved_for=('COD', 'N', 'P', 'charge'), parameters=None):
-        
+        """
+        Create a ``Process`` object which defines a stoichiometric process and its kinetics.
+        A ``Process`` object is capable of reacting the component flow rates of a ``WasteStream``
+        object.
+
+        Parameters
+        ----------
+        ID : str
+            A unique identification.
+        reaction : dict, str, or numpy.ndarray
+            A dictionary of stoichiometric coefficients with component IDs as 
+            keys, or a numeric array of stoichiometric coefficients, or a string 
+            of a stoichiometric equation written as: 
+            i1 R1 + ... + in Rn -> j1 P1 + ... + jm Pm.
+            Stoichiometric coefficients can be symbolic or numerical. 
+            Unknown stoichiometric coefficients to solve for should be expressed as '?'.
+        ref_component : str
+            ID of the reference ``Component`` object of the process rate.
+        rate_equation : str, optional
+            The kinetic rate equation of the process. The default is None.
+        components=None : ``CompiledComponents``, optional
+            Components corresponding to each entry in the stoichiometry array, 
+            defaults to thermosteam.settings.chemicals. 
+        conserved_for : tuple[str], optional
+            Materials subject to conservation rules, must be an 'i_' attribute of
+            the components. The default is ('COD', 'N', 'P', 'charge').
+        parameters : Iterable[str], optional
+            Symbolic parameters in stoichiometry coefficients and/or rate equation. 
+            The default is None.
+
+        Examples
+        --------
+        None.
+
+        """
         self._ID = ID
         self._stoichiometry = []
         self._components = self._load_chemicals(components)
@@ -46,8 +80,8 @@ class Process():
                 
     def get_conversion_factors(self, as_matrix=False):        
         '''
-        return conversion factors as a numpy ndarray to check conservation
-        or return them as a sympy matrix to solve for unknown stoichiometric coefficients.
+        return conversion factors (i.e., the 'i_' attributes of the components) 
+        as a numpy.ndarray or a SymPy Matrix.
         '''
         if self._conservation_for:
             cmps = self._components
@@ -59,7 +93,7 @@ class Process():
         else: return None
                     
     def check_conservation(self, tol=1e-8):
-        '''check conservation for given tuple of materials subject to conservation. '''
+        '''check conservation of materials given numerical stoichiometric coefficients. '''
         isa = isinstance
         if isa(self._stoichiometry, np.ndarray):
             ic = self.get_conversion_factors()
@@ -79,7 +113,7 @@ class Process():
                                "stoichiometric coefficients.")
     
     def reverse(self):
-        '''reverse the process as to flip the signs of all components.'''
+        '''reverse the process as to flip the signs of stoichiometric coefficients of all components.'''
         if isinstance(self._stoichiometry, np.ndarray):
             self._stoichiometry = -self._stoichiometry
         else:
@@ -88,10 +122,20 @@ class Process():
         
     @property
     def ID(self):
+        '''[str] A unique identification'''
         return self._ID
     
     @property
     def ref_component(self):
+        '''
+        [str] ID of the reference component
+        
+        Note
+        ----
+        When a new value is assigned, all stoichiometric coefficient will be 
+        normalized so that the new stoichiometric coefficient of the new reference
+        component is 1 or -1. The rate equation will also be updated automatically.
+        '''
         return getattr(self._components, self._ref_component)    
     @ref_component.setter
     def ref_component(self, ref_cmp):
@@ -102,6 +146,10 @@ class Process():
 
     @property
     def conserved_for(self):
+        '''
+        [tuple] Materials subject to conservation rules, must have corresponding 
+        'i_' attributes for the components
+        '''
         return self._conserved_for
     @conserved_for.setter
     def conserved_for(self, materials):
@@ -109,9 +157,11 @@ class Process():
     
     @property
     def parameters(self):
+        '''[list] Symbolic parameters in stoichiometric coefficients and rate equation.'''
         return tuple(sorted(self._parameters))
     
     def append_parameters(self, *new_pars):
+        '''append new symbolic parameters'''
         for p in new_pars:
             self._parameters[p] = symbols(p)
     
@@ -121,11 +171,16 @@ class Process():
     
     @property
     def stoichiometry(self):
+        '''[dict] Non-zero stoichiometric coefficients.'''
         allcmps = dict(zip(self._components.IDs, self._stoichiometry))
         return {k:v for k,v in allcmps.items() if v != 0}
         
     @property
     def rate_equation(self):
+        '''
+        [SymPy expression] Kinetic rate equation of the process. Also the rate in
+        which the reference component is reacted or produced in the process.
+        '''
         return self._rate_equation
     
     def _parse_rate_eq(self, eq):
@@ -150,6 +205,18 @@ setattr = object.__setattr__
 class Processes():
     
     def __new__(cls, processes):
+        """
+        Create a ``Processes`` object that contains ``Process`` objects as attributes.
+
+        Parameters
+        ----------
+        processes : Iterable[``Process``]
+
+        Examples
+        --------
+        None.
+
+        """
         self = super().__new__(cls)
         #!!! add function to detect duplicated processes
         setfield = setattr
@@ -255,10 +322,46 @@ class Processes():
     def load_from_file(cls, path='', components=None, 
                        conserved_for=('COD', 'N', 'P', 'charge'), parameters=None,
                        use_default_data=False, store_data=False, compile=True):
-        '''
-        Create ``CompiledProcesses`` object from matrix of stoichiometric 
-        coefficients and array of rate equations.
-        '''
+        """
+        Create ``CompiledProcesses`` object from a table of process IDs, stoichiometric 
+        coefficients, and rate equations stored in a .csv or Excel file. 
+
+        Parameters
+        ----------
+        path : str, optional
+            File path.
+        components : ``CompiledComponents``, optional
+            Components corresponding to the columns in the stoichiometry matrix, 
+            defaults to thermosteam.settings.chemicals. The default is None.
+        conserved_for : tuple[str], optional
+            Materials subject to conservation rules, must have corresponding 'i_' 
+            attributes for the components. The default is ('COD', 'N', 'P', 'charge').
+        parameters : Iterable[str], optional
+            Symbolic parameters in waste. The default is None.
+        use_default_data : bool, optional
+            Whether to use default data. The default is False.
+        store_data : bool, optional
+            Whether to store the file as default data. The default is False.
+        compile : bool, optional
+            Whether to compile processes. The default is True.
+
+        Note
+        ----
+        [1] First column of the table should be process IDs, followed by stoichiometric 
+            coefficient matrix with corresponding component IDs as column names, and rate 
+            equations as the last column. 
+        
+        [2] Entries of stoichiometric coefficients can be symbolic or numerical. 
+            Blank cells are considered zero.
+        
+        [3] Unknown stoichiometric coefficients to solve for using conservation 
+            rules should be uniformly written as '?'. 
+        
+        [4] For each process, the first component with stoichiometric coefficient
+            of -1 or 1 is considered the reference component. If none of the components
+            has -1 or 1 stoichiometric coefficient, the first component with non-zero
+            coefficient is considered the reference.
+        """
         if use_default_data and cls._default_data is not None:
             data = cls._default_data
         else:
@@ -299,6 +402,18 @@ class CompiledProcesses(Processes):
     _cache = {}
     
     def __new__(cls, processes):
+        """
+        Create a ``CompiledProcesses`` object that contains ``Process`` objects as attributes.
+
+        Parameters
+        ----------
+        processes : Iterable[``Process``]
+
+        Examples
+        --------
+        None.
+
+        """
         cache = cls._cache
         processes = tuple(processes)
         if processes in cache:
@@ -353,18 +468,22 @@ class CompiledProcesses(Processes):
         
     @property
     def parameters(self):
+        '''[tuple] All symbolic stoichiometric and kinetic parameters.'''
         return tuple(sorted(self._parameters))
     
     @property
     def stoichiometry(self):
+        '''[pandas.DataFrame] Stoichiometric coefficients.'''
         return pd.DataFrame(self._stoichiometry, index=self.IDs, columns=self._components.IDs)
     
     @property
     def rate_equations(self):
+        '''[pandas.DataFrame] Rate equations.'''
         return pd.DataFrame(self._rate_equations, index=self.IDs, columns=('rate_equation',))
         
     @property
     def production_rates(self):
+        '''[pandas.DataFrame] The rates of production of the components.'''
         return pd.DataFrame(list(self._production_rates), index=self._components.IDs, columns=('rate_of_production',))
     
     def subgroup(self, IDs):
@@ -381,7 +500,7 @@ class CompiledProcesses(Processes):
             raise UndefinedProcess(ID)
 
     def indices(self, IDs):
-        '''Return indices of multiple components.'''
+        '''Return indices of multiple processes.'''
         try:
             dct = self._index
             return [dct[i] for i in IDs]
