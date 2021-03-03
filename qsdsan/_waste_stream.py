@@ -16,8 +16,8 @@ for license details.
 
 # %%
 import numpy as np
-import biosteam as bst
-from thermosteam import Stream, MultiStream, utils
+# import biosteam as bst
+from thermosteam import Stream, MultiStream, utils, settings
 from . import Components
 from ._units_of_measure import auom
 
@@ -58,11 +58,56 @@ vol_unit = auom('L/hr')
 conc_unit = auom('mg/L')
 
 
+#%% functions for calibrations of N, P contents and BOD:COD ratio of certain components
+        
+def _calib_SF_iN(components, concentrations, STKN):    
+    cmp_c = np.asarray([v for v in concentrations.values()])
+    SN = (cmp_c * components.i_N * (components.s + components.c)).sum()
+    SF_N = concentrations['SF'] * components.SF.i_N
+    SNOx_N = concentrations['SNO2'] * components.SNO2.i_N + concentrations['SNO3'] * components.SNO3.i_N
+    other_stkn = SN - SF_N - SNOx_N
+    SF_N = STKN - other_stkn           
+    if SF_N < 0:
+        raise ValueError("Negative N content for SF was estimated.")                        
+    return SF_N/concentrations['SF']
+    
+def _calib_XBsub_iN(components, concentrations, XTKN):
+    cmp_c = np.asarray([v for v in concentrations.values()])        
+    other_xtkn = (cmp_c * components.i_N * components.x).sum() - concentrations['XB_Subst'] * components.XB_Subst.i_N                
+    XB_Subst_N = XTKN - other_xtkn
+    if XB_Subst_N < 0:
+        raise ValueError("Negative N content for XB_Subst was estimated.")            
+    return XB_Subst_N/concentrations['XB_Subst']
+    
+
+def _calib_XBsub_iP(components, concentrations, TP):
+    cmp_c = np.asarray([v for v in concentrations.values()])    
+    other_p = (cmp_c * components.i_P).sum() - concentrations['XB_Subst'] * components.XB_Subst.i_P
+    XB_Subst_P = TP - other_p
+    if XB_Subst_P < 0:
+        raise ValueError("Negative P content for XB_Subst was estimated.")    
+    return XB_Subst_P/concentrations['XB_Subst']
+    
+def _calib_XBsub_fBODCOD(components, concentrations, substrate_IDs, BOD):
+    cmp_c = np.asarray([v for v in concentrations.values()])
+    c_sub = np.asarray([v for k,v in concentrations.items() if k in substrate_IDs])
+    XB_sub = components.subgroup(substrate_IDs)
+    other_BOD = (cmp_c * (components.x + components.c + components.s) * components.f_BOD5_COD).sum() - (c_sub * XB_sub.f_BOD5_COD).sum()
+    fbodtocod_sub = (BOD - other_BOD)/c_sub.sum()
+    if fbodtocod_sub > 1 or fbodtocod_sub < 0:
+        raise ValueError("BOD5-to-COD ratio for XB_Subst and XStor was estimated out of range [0,1].")
+    return fbodtocod_sub
+
+
+
 # %%
 
 # =============================================================================
 # Define the WasteStream class
 # =============================================================================
+
+_load_components = settings.get_default_chemicals
+_set_thermo = settings.set_thermo
 
 @utils.registered(ticket_name='ws')
 class WasteStream(Stream):
@@ -351,9 +396,9 @@ class WasteStream(Stream):
         else:
             raise AttributeError(f'{self.phase} phase WasteStream does not have {prop}.')
     
-    #!!! Add some document
     @property
     def pH(self):
+        '''[float] pH, unitless.'''
         return self._liq_sol_properties('pH', 7.)
 
     @property
@@ -551,7 +596,6 @@ class WasteStream(Stream):
         '''[float] Inorganic/involatile suspended solids, in mg/L.'''
         return self.composite('solids', particle_size='x', volatile=False)
 
-
     @classmethod
     def codstates_inf_model(cls, ID, flow_tot=0., units = ('L/hr', 'mg/L'), 
                             phase='l', T=298.15, P=101325., price=0., thermo=None, 
@@ -569,10 +613,9 @@ class WasteStream(Stream):
                             XMAP=0., XHAP=0., XHDP=0., XPAO_PP=0., 
                             XMgCO3=0., XCaCO3=0., DO=0., SH2=0., SCH4=0.):
         
-           
-        cmps = Components.load_default(default_compile=True)
-        bst.settings.set_thermo(cmps)
-        
+        if thermo: cmps = thermo.chemicals
+        else: cmps = _load_components(None)
+                
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 
         new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
@@ -686,6 +729,13 @@ class WasteStream(Stream):
         XB_Substi_N = _calib_XBsub_iN(cmps, cmp_dct, TKN - SNH4/iSNH_STKN)
         XB_Substi_P = _calib_XBsub_iP(cmps, cmp_dct, TP)
         
+        cmps = Components(cmps)
+        if SNH4 > 0 and cmp_dct['SF'] > 0: cmps.SF.i_N = SFi_N
+        cmps.XB_Subst.i_N = XB_Substi_N
+        cmps.XB_Subst.i_P = XB_Substi_P
+        cmps.compile()
+        _set_thermo(cmps)
+        
         #************ convert concentrations to flow rates *************
         flow_tot /= vol_unit.conversion_factor(units[0])
         factor = conc_unit.conversion_factor(units[1])
@@ -705,10 +755,7 @@ class WasteStream(Stream):
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
         
-        new.components.SF.i_N = SFi_N
-        new.components.XB_Subst.i_N = XB_Substi_N
-        new.components.XB_Subst.i_P = XB_Substi_P
-        
+        new._ratio = r
         return new
 
 
@@ -730,8 +777,8 @@ class WasteStream(Stream):
                            XMgCO3=0., XCaCO3=0., DO=0., SH2=0., SCH4=0.):
         
            
-        cmps = Components.load_default(default_compile=True)
-        bst.settings.set_thermo(cmps)
+        if thermo: cmps = thermo.chemicals
+        else: cmps = _load_components(None)
         
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 
@@ -850,6 +897,14 @@ class WasteStream(Stream):
         sub_IDs = ('XB_Subst', 'XOHO_PHA', 'XGAO_PHA', 'XPAO_PHA', 'XGAO_Gly', 'XPAO_Gly')
         fbodtocod_sub = _calib_XBsub_fBODCOD(cmps, cmp_dct, sub_IDs, BOD)
         
+        cmps = Components(cmps)
+        if SNH4 > 0 and cmp_dct['SF'] > 0: cmps.SF.i_N = SFi_N
+        cmps.XB_Subst.i_N = XB_Substi_N
+        cmps.XB_Subst.i_P = XB_Substi_P
+        for i in sub_IDs: cmps[i].f_BOD5_COD = fbodtocod_sub
+        cmps.compile()
+        _set_thermo(cmps)
+        
         #************ convert concentrations to flow rates *************
         flow_tot /= vol_unit.conversion_factor(units[0])
         factor = conc_unit.conversion_factor(units[1])
@@ -869,10 +924,7 @@ class WasteStream(Stream):
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
 
-        new.components.SF.i_N = SFi_N
-        new.components.XB_Subst.i_N = XB_Substi_N
-        new.components.XB_Subst.i_P = XB_Substi_P
-        for i in sub_IDs: new.components[i].f_BOD5_COD = fbodtocod_sub
+        new._ratio = r        
         
         return new
 
@@ -895,8 +947,8 @@ class WasteStream(Stream):
                            XMgCO3=0., XCaCO3=0., DO=0., SH2=0., SCH4=0.):
         
            
-        cmps = Components.load_default(default_compile=True)
-        bst.settings.set_thermo(cmps)
+        if thermo: cmps = thermo.chemicals
+        else: cmps = _load_components(None)
         
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 
@@ -1016,6 +1068,14 @@ class WasteStream(Stream):
         sub_IDs = ('XB_Subst', 'XOHO_PHA', 'XGAO_PHA', 'XPAO_PHA', 'XGAO_Gly', 'XPAO_Gly')
         fbodtocod_sub = _calib_XBsub_fBODCOD(cmps, cmp_dct, sub_IDs, BOD)
         
+        cmps = Components(cmps)
+        if SNH4 > 0 and cmp_dct['SF'] > 0: cmps.SF.i_N = SFi_N
+        cmps.XB_Subst.i_N = XB_Substi_N
+        cmps.XB_Subst.i_P = XB_Substi_P
+        for i in sub_IDs: cmps[i].f_BOD5_COD = fbodtocod_sub
+        cmps.compile()
+        _set_thermo(cmps)
+
         #************ convert concentrations to flow rates *************
         flow_tot /= vol_unit.conversion_factor(units[0])
         factor = conc_unit.conversion_factor(units[1])
@@ -1035,11 +1095,8 @@ class WasteStream(Stream):
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
         
-        new.components.SF.i_N = SFi_N
-        new.components.XB_Subst.i_N = XB_Substi_N
-        new.components.XB_Subst.i_P = XB_Substi_P        
-        for i in sub_IDs: new.components[i].f_BOD5_COD = fbodtocod_sub
-
+        new._ratio = r
+        
         return new
 
 
@@ -1063,8 +1120,8 @@ class WasteStream(Stream):
                          XMgCO3=0., XCaCO3=0., DO=0., SH2=0., SCH4=0.):
         
         
-        cmps = Components.load_default(default_compile=True)
-        bst.settings.set_thermo(cmps)
+        if thermo: cmps = thermo.chemicals
+        else: cmps = _load_components(None)
         
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 
@@ -1177,6 +1234,13 @@ class WasteStream(Stream):
             SFi_N = _calib_SF_iN(cmps, cmp_dct, SNH4/iSNH_STKN)
         XB_Substi_N = _calib_XBsub_iN(cmps, cmp_dct, TKN - SNH4/iSNH_STKN)
         XB_Substi_P = _calib_XBsub_iP(cmps, cmp_dct, TP)
+        
+        cmps = Components(cmps)
+        if SNH4 > 0 and cmp_dct['SF'] > 0: cmps.SF.i_N = SFi_N
+        cmps.XB_Subst.i_N = XB_Substi_N
+        cmps.XB_Subst.i_P = XB_Substi_P
+        cmps.compile()
+        _set_thermo(cmps)
 
         #************ convert concentrations to flow rates *************
         flow_tot /= vol_unit.conversion_factor(units[0])
@@ -1197,50 +1261,8 @@ class WasteStream(Stream):
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
         
-
-        new.components.SF.i_N = SFi_N
-        new.components.XB_Subst.i_N = XB_Substi_N
-        new.components.XB_Subst.i_P = XB_Substi_P        
+        new._ratio = r
 
         return new
 
-#%% functions for calibrations of N, P contents and BOD:COD ratio of certain components
-        
-def _calib_SF_iN(components, concentrations, STKN):    
-    cmp_c = np.asarray([v for v in concentrations.values()])
-    SN = (cmp_c * components.i_N * (components.s + components.c)).sum()
-    SF_N = concentrations['SF'] * components.SF.i_N
-    SNOx_N = concentrations['SNO2'] * components.SNO2.i_N + concentrations['SNO3'] * components.SNO3.i_N
-    other_stkn = SN - SF_N - SNOx_N
-    SF_N = STKN - other_stkn           
-    if SF_N < 0:
-        raise ValueError("Negative N content for SF was estimated.")                        
-    return SF_N/concentrations['SF']
-    
-def _calib_XBsub_iN(components, concentrations, XTKN):
-    cmp_c = np.asarray([v for v in concentrations.values()])        
-    other_xtkn = (cmp_c * components.i_N * components.x).sum() - concentrations['XB_Subst'] * components.XB_Subst.i_N                
-    XB_Subst_N = XTKN - other_xtkn
-    if XB_Subst_N < 0:
-        raise ValueError("Negative N content for XB_Subst was estimated.")            
-    return XB_Subst_N/concentrations['XB_Subst']
-    
-
-def _calib_XBsub_iP(components, concentrations, TP):
-    cmp_c = np.asarray([v for v in concentrations.values()])    
-    other_p = (cmp_c * components.i_P).sum() - concentrations['XB_Subst'] * components.XB_Subst.i_P
-    XB_Subst_P = TP - other_p
-    if XB_Subst_P < 0:
-        raise ValueError("Negative P content for XB_Subst was estimated.")    
-    return XB_Subst_P/concentrations['XB_Subst']
-    
-def _calib_XBsub_fBODCOD(components, concentrations, substrate_IDs, BOD):
-    cmp_c = np.asarray([v for v in concentrations.values()])
-    c_sub = np.asarray([v for k,v in concentrations.items() if k in substrate_IDs])
-    XB_sub = components.subgroup(substrate_IDs)
-    other_BOD = (cmp_c * (components.x + components.c + components.s) * components.f_BOD5_COD).sum() - (c_sub * XB_sub.f_BOD5_COD).sum()
-    fbodtocod_sub = (BOD - other_BOD)/c_sub.sum()
-    if fbodtocod_sub > 1 or fbodtocod_sub < 0:
-        raise ValueError("BOD5-to-COD ratio for XB_Subst and XStor was estimated out of range [0,1].")
-    return fbodtocod_sub
 
