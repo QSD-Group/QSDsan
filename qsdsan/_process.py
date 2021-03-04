@@ -15,7 +15,7 @@ for license details.
 from ._parse import get_stoichiometric_coeff
 from . import Components
 from thermosteam.utils import chemicals_user, read_only
-from sympy import symbols, Matrix
+from sympy import symbols, Matrix, lambdify
 from sympy.parsing.sympy_parser import parse_expr
 import numpy as np
 import pandas as pd
@@ -157,17 +157,33 @@ class Process():
     
     @property
     def parameters(self):
-        '''[list] Symbolic parameters in stoichiometric coefficients and rate equation.'''
-        return tuple(sorted(self._parameters))
+        '''[dict] Symbolic parameters in stoichiometric coefficients and rate equation.'''
+        return self._parameters
     
     def append_parameters(self, *new_pars):
         '''append new symbolic parameters'''
         for p in new_pars:
             self._parameters[p] = symbols(p)
     
-    #TODO: set parameter values (and evaluate coefficients and rate??)
-    def set_parameters(self):
-        pass
+    def set_parameters(self, evaluate=True, **kwargs):
+        '''
+        Set values for symbolic stoichiometric and/or kinetic parameters.
+
+        Parameters
+        ----------
+        evaluate : bool, optional
+            Whether to evaluate stoichiometric coefficients and rate equation with assigned 
+            values of parameters. The default is True.
+        **kwargs : float, int, or str
+            Parameters and values.
+
+        '''
+        self._parameters.update(kwargs)
+        if evaluate:
+            self._rate_equation = self._rate_equation.subs(kwargs)
+            isa = isinstance
+            if isa(self._stoichiometry, list):
+                self._stoichiometry = [expr.subs(kwargs) for expr in self._stoichiometry]
     
     @property
     def stoichiometry(self):
@@ -424,6 +440,8 @@ class CompiledProcesses(Processes):
             for i in processes:
                 setfield(self, i.ID, i)
             self._compile()
+            self._rate_equations_function = None
+            self._production_rates_function = None
             cache[processes] = self
         return self
 
@@ -464,12 +482,12 @@ class CompiledProcesses(Processes):
         if all_numeric: M_stch = np.asarray(M_stch)
         dct['_stoichiometry'] = M_stch
         dct['_rate_equations'] = rate_eqs
-        dct['_production_rates'] = Matrix(M_stch).T * Matrix(rate_eqs)
+        dct['_production_rates'] = list(Matrix(M_stch).T * Matrix(rate_eqs))
         
     @property
     def parameters(self):
-        '''[tuple] All symbolic stoichiometric and kinetic parameters.'''
-        return tuple(sorted(self._parameters))
+        '''[dict] All symbolic stoichiometric and kinetic parameters.'''
+        return self._parameters
     
     @property
     def stoichiometry(self):
@@ -480,11 +498,27 @@ class CompiledProcesses(Processes):
     def rate_equations(self):
         '''[pandas.DataFrame] Rate equations.'''
         return pd.DataFrame(self._rate_equations, index=self.IDs, columns=('rate_equation',))
-        
+    
+    @property
+    def rate_equations_function(self):
+        '''
+        [function] A function object of the rate equations. When evaluated, 
+        returns a list of process rates.
+        '''
+        return self._rate_equations_function
+    
     @property
     def production_rates(self):
         '''[pandas.DataFrame] The rates of production of the components.'''
-        return pd.DataFrame(list(self._production_rates), index=self._components.IDs, columns=('rate_of_production',))
+        return pd.DataFrame(self._production_rates, index=self._components.IDs, columns=('rate_of_production',))
+    
+    @property
+    def production_rates_function(self):
+        '''
+        [function] A function object of the components' rates of production. 
+        When evaluated, returns a list of production rates.
+        '''
+        return self._production_rates_function
     
     def subgroup(self, IDs):
         '''Create a new subgroup of ``CompiledProcesses`` objects.'''
@@ -521,3 +555,49 @@ class CompiledProcesses(Processes):
         copy.mycompile()
         return copy    
     
+    def evaluate(self, eval_at, n_decimal=15, lambdify_eqs=True):
+        '''
+        Set values to all parameters to evaluate stoichiometric coefficients
+        and update process rate equations and component production rates.
+
+        Parameters
+        ----------
+        eval_at : dict
+            A dictionary of all parameter values.
+        n_decimal : int, optional
+            The number of digits the stoichiometric coefficients to br evaluated at.
+            The default is 15.
+        lambdify_eqs : bool, optional
+            Whether to generate functions of component concentrations for the rate 
+            equations and the component production rates. The default is True.
+        
+        Note
+        ----
+        Evaluation won't be initiated unless numerical values have been provided for
+        all parameters.
+        '''
+        self._parameters.update(eval_at)
+        eval_at = self._parameters        
+        for process in self._stoichiometry:
+            process = [v.evalf(n = n_decimal, subs = eval_at) for v in process]
+        self._rate_equations = [eq.subs(eval_at) for eq in self._rate_equations]
+        self._production_rates = [r.subs(eval_at) for r in self._production_rates]
+        if lambdify_eqs:
+            self.lambdify_equations()
+    
+    def lambdify_equations(self, with_parameters_as_args=False):
+        '''
+        Generate functions for the rate equations and the component production rates.
+        Updates property ``.rate_equations_function`` and property ``production_rates_function``.
+
+        Parameters
+        ----------
+        with_parameters_as_args : bool, optional
+            Whether to include some parameters as input variables. The default is False.
+
+        '''
+        args = symbols(self._components.IDs)
+        if with_parameters_as_args:
+            args = list(args) + list(symbols(self.parameters.keys()))
+        self.rate_equations_function = lambdify(args, self._rate_equations)
+        self.production_rates_function = lambdify(args, self._production_rates)
