@@ -137,7 +137,7 @@ def get_correlations(model, input_x=None, input_y=None,
         - "omit": drop the pair from analysis.
     file : str
         If provided, the results will be saved as an Excel file.
-    kwargs : dict
+    kwargs
         Other kwargs that will be passed to ``scipy``.
 
     Returns
@@ -178,17 +178,17 @@ def get_correlations(model, input_x=None, input_y=None,
             if isinstance(df, str):
                 r, p = (np.nan, np.nan)
             else:
-                kind = kind.capitalize()
-                if kind == 'Pearson':
+                kind_cap = kind.capitalize()
+                if kind_cap == 'Pearson':
                     r, p = pearsonr(df.iloc[:,0], df.iloc[:,1], **kwargs)
                     sheet_name = 'r'
-                elif kind == 'Spearman':
+                elif kind_cap == 'Spearman':
                     r, p = spearmanr(df.iloc[:,0], df.iloc[:,1], **kwargs)
                     sheet_name = 'rho'
-                elif kind == 'Kendall':
+                elif kind_cap == 'Kendall':
                     r, p = kendalltau(df.iloc[:,0], df.iloc[:,1], **kwargs)
                     sheet_name = 'tau'
-                elif kind.upper() == 'KS':
+                elif kind_cap.upper() == 'KS':
                     r, p = kstest(df.iloc[:,0], df.iloc[:,1], **kwargs)
                     sheet_name = 'D'
                 else:
@@ -261,7 +261,7 @@ def generate_samples(inputs, kind, N, seed=None, **kwargs):
         The number of samples or trajectories (Morris).
     seed : int
         Seed to generate random samples.
-    kwargs : dict
+    kwargs
         Other kwargs that will be passed to ``SALib``.
     
     Returns
@@ -322,7 +322,7 @@ def morris_analysis(model, inputs, metrics=None, nan_policy='propagate',
         Whether to show simulation time in the console. 
     file : str
         If provided, the results will be saved as an Excel file.
-    kwargs : dict
+    kwargs
         Other kwargs that will be passed to ``SALib``.
     
     Returns
@@ -406,7 +406,7 @@ def morris_till_convergence(model, inputs, metrics=None,
         Whether to show simulation time in the console. 
     file : str
         If provided, the results will be saved as an Excel file.
-    kwargs : dict
+    kwargs
         Other kwargs that will be passed to ``SALib``.
 
     See Also
@@ -511,7 +511,7 @@ def fast_analysis(model, inputs, kind, metrics=None, nan_policy='propagate',
         Whether to show simulation time in the console. 
     file : str
         If provided, the results will be saved as an Excel file.
-    kwargs : dict
+    kwargs
         Other kwargs that will be passed to ``SALib``.
     
     Returns
@@ -601,7 +601,7 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
         Whether to show simulation time in the console. 
     file : str
         If provided, the results will be saved as an Excel file.
-    kwargs : dict
+    kwargs
         Other kwargs that will be passed to ``SALib``.
 
     Returns
@@ -651,60 +651,198 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
 # Plot uncertainty analysis results
 # =============================================================================
 
-def plot_uncertainties(model, metrics=(), file='', close_fig=True, **kwargs):
+#    metrics : :class:`biosteam.Metric`
+#        Metric(s) of interest for the plot, will be default to all metrics
+#        included in the model result table if not provided.
+
+
+def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
+                       file='', close_fig=True, center_kws={}, margin_kws={}):
     '''
-    Visualize uncertainty analysis results as box plots.
+    Visualize uncertainty analysis results as one of the following depending on inputs:
     
+    +---------------------------------+-------------------------------------+
+    | input                           | returned plot                       |
+    +----------+----------+-----------+-------------+-----------+-----------+    
+    | x_axis   | y_axis   | kind      | orientation | center    | margin    |
+    +==========+==========+===========+=============+===========+===========+
+    | single   | None     | box       | horizontal  | box       | N/A       |
+    | or       |          +-----------+             +-----------+           +
+    | sequence |          | hist      |             | histogram |           |
+    |          |          +-----------+             +-----------+           +
+    |          |          | kde       |             | kde       |           |
+    +----------+----------+-----------+-------------+-----------+-----------+
+    | None     | single   | box       | vertical    | box       | N/A       |
+    |          | or       +-----------+             +-----------+           +
+    |          | sequence | hist      |             | histogram |           |
+    |          |          +-----------+             +-----------+           +
+    |          |          | kde       |             | kde       |           |
+    +----------+----------+-----------+-------------+-----------+-----------+
+    | single   | single   | hist-box  | both        | histogram | box       |
+    |          |          +-----------+             +           +-----------+
+    |          |          | hist-kde  |             |           | kde       |
+    |          |          +-----------+             +           +-----------+
+    |          |          | hist-hist |             |           | histogram |
+    |          |          +-----------+             +-----------+-----------+
+    |          |          | kde-box   |             | kde       | box       |
+    |          |          +-----------+             +           +-----------+
+    |          |          | kde-hist  |             |           | histogram |
+    |          |          +-----------+             +           +-----------+
+    |          |          | kde-kde   |             |           | kde       |
+    +----------+----------+-----------+-------------+-----------+-----------+ 
+
+    .. note::
+        When both x_axis and y_axis are not None (i.e., the figure is 2D),
+        for clarity reasons, this function requires len(x_axis) and len(y_axis) to be both 1.
+
+        If wanted, it is possible to use colors (``hue`` in ``seaborn``) to
+        differentiated the different parameters or metrics in either x_axis or
+        y_axis. To achieve this, please refer to the documentation of ``seaborn``.
+        
+        Similarly, there are other potential combinations of the center and
+        margin plots that are supported by ``seaborn`` but not included here.
+
     Parameters
     ----------
     model : :class:`biosteam.Model`
-        The model with uncertainty analysis (in <model.table>) results for plotting.
-    metrics : :class:`biosteam.Metric`
-        Metric(s) of interest for the plot, will be default to all metrics
-        included in the result table if not provided.
+        The model with uncertainty analysis (in <:class:`Model`.table>) results for plotting.
+    x_axis : :class:`biosteam.Parameter`, :class:`biosteam.Metric` or sequence
+        What to plot on the x-axis, can be parameters or metrics of the model,
+        default to all model metrics included in the model result table
+        if neither x nor y is provided.
+    y_axis : :class:`biosteam.Parameter`, :class:`biosteam.Metric` or sequence
+        What to plot on the y-axis, can be parameters or metrics of the model,
+        default to None.
+    kind : str
+        What kind of plot to be returned, refer to the summary table for valid inputs.
     file : str
         If provided, the generated figure will be saved as a png file.
     close_fig : bool
         Whether to close the figure
         (if not close, new figure will be overlaid on the current figure).
-    kwargs : dict
-        Other kwargs that will be passed to :func:`seaborn.boxplot`.
+    center_kws : dict
+        Will be passed to ``seaborn`` for the center plot.
+    margin_kws : dict
+        Will be passed to ``seaborn`` for the margin plots.
         
     Returns
     -------
     figure : :class:`matplotlib.figure.Figure`
         The generated figure.
-    axis : :class:`matplotlib.axes._subplots.AxesSubplot`
-        The generated figure axis.
+    axis : :class:`matplotlib.axes._subplots.AxesSubplot` or sequence
+        The generated figure axis (or axes for 2D figure).
         
     See Also
     --------    
-    :func:`seaborn.boxplot` `example <https://seaborn.pydata.org/examples/grouped_boxplot.html>`_
+    :func:`seaborn.jointplot` `docs <https://seaborn.pydata.org/generated/seaborn.jointplot.html>`_
     
     '''
-
+    #!!! PAUSED, FIGURE OUT NICER LABELING AND EXAMPLES
+    kind_lower = kind.lower()
     table = model.table.astype('float64')
-    metrics = _update_input(metrics, model.metrics)
     df = _update_df_names(table)
     
-    new_df = pd.DataFrame()
-    for m in metrics:
-        temp_df = pd.DataFrame(columns=('metric', 'value'))
-        temp_df['value'] = df[m.name]
-        temp_df['metric'] = [m.name]*df.shape[0]
-        new_df = pd.concat((new_df, temp_df))
+    twoD = False
+    x_df = y_df = None
+    sns_df = pd.DataFrame(columns=('x_group', 'x_data', 'y_group', 'y_data'))
     
-    sns.set_theme(style='ticks')
-    kwargs.setdefault('palette', 'pastel')
-    kwargs.setdefault('dodge', False)
+    dfs = []
+    if not y_axis: # no data provided or only x, 1D, horizontal
+        x_axis = _update_input(x_axis, model.metrics)
+        x_df = df[[i.name for i in x_axis]]
+        
+        for x in x_df.columns:
+            temp_df = sns_df.copy()
+            temp_df['x_data'] = x_df[x]
+            temp_df['x_group'] = x
+            dfs.append(temp_df)
 
-    ax = sns.boxplot(x='metric', y='value', hue='metric', data=new_df, **kwargs)
+        sns_df = pd.concat(dfs)
+
+    elif not x_axis: # only y, 1D, vertical
+        y_df = df[[i.name for i in y_axis]]
     
-    ax.set_box_aspect(1)
-    ax.set(xlabel='', ylabel='Values')
-    ax.get_legend().set_title('')
+        for y in y_df.columns:
+            temp_df = sns_df.copy()
+            temp_df['y_data'] = y_df[y]
+            temp_df['y_group'] = y
+            dfs.append(temp_df)
+        
+        sns_df = pd.concat(dfs)
     
-    return _save_fig_return(ax.figure, ax, file, close_fig)
+    else: # x and y, 2D
+        len_x = len_y = 1
+        try:
+            len_x = len(x_axis)
+        except:
+            try:
+                len_y = len(y_axis)
+            except:
+                pass
+        if not (len_x==1 and len_y==1):
+            raise ValueError('Only single input allowed when both x_axis and y_axis are provided.')
+        
+        twoD = True
+        x_name, y_name = x_axis.name, y_axis.name
+        sns_df = df[[x_name, y_name]]
+        
+    sns.set_theme(style='ticks')
+    if not twoD: # 1D plot
+        if kind_lower == 'box':
+            center_kws.setdefault('dodge', False)
+            
+            if x_df is not None: # horizontal box plot
+                ax = sns.boxplot(data=sns_df, x='x_group', y='x_data', hue='x_group',
+                                 **center_kws)
+                xlabel = ''
+                ylabel = 'Values'
+            else:
+                ax = sns.boxplot(data=sns_df, x='y_data', y='y_group', hue='y_group',
+                                 **center_kws)
+                xlabel = 'Values'
+                ylabel = ''
+
+            ax.set(xlabel=xlabel, ylabel=ylabel)
+                
+        elif kind_lower == 'hist':
+            if x_df is not None: # horizontal hist plot
+                ax = sns.histplot(data=sns_df, x='x_data', hue='x_group', **center_kws)
+                ax.set_xlabel('Values')
+            
+            else: # vertical hist plot
+                ax = sns.histplot(data=sns_df, y='y_data', hue='y_group', **center_kws)
+                ax.set_ylabel('Values')
+                
+        elif kind_lower == 'kde':
+            if x_df is not None: # horizontal kde plot
+                ax = sns.kdeplot(data=sns_df, x='x_data', hue='x_group', **center_kws)
+            else: # vertical kde plot
+                ax = sns.kdeplot(data=sns_df, y='y_data', hue='y_group', **center_kws)
+        
+        else:
+            raise ValueError('kind can only be "box", "kde", "hist", or "hist-kde", ' \
+                             f'for 1D plot, not "{kind}".')
+        
+        ax.get_legend().set_title('')
+        return _save_fig_return(ax.figure, ax, file, close_fig)
+        
+    else: # 2D plot
+        g = sns.JointGrid(data=sns_df, x=x_name, y=y_name)
+
+        kind_split = kind_lower.split('-')
+        if kind_split[0] in ('hist', 'kde'):
+            func = getattr(sns, f'{kind_split[0]}plot')
+            g.plot_joint(func, **center_kws)
+        else:
+            raise ValueError(f'The provided kind "{kind}" is not valid for 2D plot.')
+
+        if kind_split[1] in ('box', 'hist', 'kde'):
+            func = getattr(sns, f'{kind_split[1]}plot')
+            g.plot_marginals(func, **margin_kws)
+        else:
+            raise ValueError(f'The provided kind "{kind}" is not valid for 2D plot.')
+        
+        return _save_fig_return(g.fig, g.fig.axes, file, close_fig)
 
 
 # =============================================================================
@@ -783,7 +921,7 @@ def plot_correlations(result_df, parameters=(), metrics=(), top=None,
     close_fig : bool
         Whether to close the figure
         (if not close, new figure will be overlaid on the current figure).
-    kwargs : dict
+    kwargs
         Other kwargs that will be passed to :func:`seaborn.relplot`.
         
     Returns
@@ -879,7 +1017,7 @@ def plot_morris_results(morris_dct, metric, kind='scatter',
     close_fig : bool
         Whether to close the figure
         (if not close, new figure will be overlaid on the current figure).
-    kwargs : dict
+    kwargs
         Other kwargs that will be passed to :func:`morris.horizontal_bar_plot` in ``SALib.plotting``.
         
     Returns
@@ -1012,6 +1150,7 @@ def plot_morris_convergence(result_dct, metric, parameters=(), plot_rank=False,
                             color=palette[n], alpha=0.5)
         else:
             raise ValueError(f'kind can only be "line" or "scatter", not "{kind}".')
+    
     ax.legend(loc=loc)
     ax.set(xlabel='Number of trajectories', ylabel=ylabel, ylim=(0, ax.get_ylim()[1]))
     
@@ -1142,21 +1281,21 @@ def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
         Which sensitivity index or indices to plot:
             
         +------+---------------------------------------------------------------+
-        | kind | returned plot type                                            |
+        | kind | returned plot                                                 |
         +======+===============================================================+
-        |  ST  | total effects (bar).                                          |
+        | ST   | total effects (bar)                                           |
         +------+---------------------------------------------------------------+
-        |  S1  | main effects (bar).                                           |
+        | S1   | main effects (bar)                                            |
         +------+---------------------------------------------------------------+
-        |  S2  | interaction effects (heat map).                               |
+        | S2   | interaction effects (heat map)                                |
         +------+---------------------------------------------------------------+
-        | STS1 | total and main effects (bar).                                 |
+        | STS1 | total and main effects (bar)                                  |
         +------+---------------------------------------------------------------+
-        | STS2 | total and interaction effects (heat map or bar and heat map). |
+        | STS2 | total and interaction effects (heat map or bar and heat map)  |
         +------+---------------------------------------------------------------+
-        | S1S2 | main and interaction effects (heat map or bar and heat map).  |
+        | S1S2 | main and interaction effects (heat map or bar and heat map)   |
         +------+---------------------------------------------------------------+
-        | all  | all effects (bar and heat map).                               |
+        | all  | all effects (bar and heat map)                                |
         +------+---------------------------------------------------------------+
     annotate_heatmap : bool
         Whether to annotate the index values in the heat map.
@@ -1183,6 +1322,12 @@ def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
         for the respective plot.
     
     '''
+    kind_upper = kind.upper()
+    if kind_upper=='ALL' or set(kind_upper)==set('STS1S2'):
+        kind_upper = 'STS1S2'
+    elif not set(kind_upper).union(set('STS1S2'))==set('STS1S2'):
+        raise ValueError(f'The plot kind of "{kind}" is invalid.')
+    
     ax_sts1 = ax_s2 = None
     
     param_names = _update_input(parameters, result_dct[metric.name]['ST'].index)    
@@ -1193,14 +1338,8 @@ def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
     s1_df = result_dct[metric.name]['S1'].loc[[p for p in param_names]]
     sts1_df = pd.concat((st_df, s1_df), axis=1).sort_values('ST', ascending=False)
 
-    kind = kind.upper()
-    if kind=='ALL' or set(kind)==set('STS1S2'):
-        kind = 'STS1S2'
-    elif not set(kind).union(set('STS1S2'))==set('STS1S2'):
-        raise ValueError(f'The plot kind of "{kind}" is invalid.')
-
-    if kind in ('ST', 'S1', 'STS1', 'S1ST'): # no S2, bar plot only
-        ax_sts1 = _plot_bar(kind, sts1_df, error_bar)
+    if kind_upper in ('ST', 'S1', 'STS1', 'S1ST'): # no S2, bar plot only
+        ax_sts1 = _plot_bar(kind_upper, sts1_df, error_bar)
         return _save_fig_return(ax_sts1.figure, ax_sts1, file, close_fig)
     
     else: # has S2, need heat map
@@ -1211,12 +1350,12 @@ def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
                 continue
             hmap_df[p1][p2] = hmap_df[p2][p1] = s2_df.S2[(p1, p2)]
 
-        if kind == 'S2': # only S2, only heat map
+        if kind_upper == 'S2': # only S2, only heat map
             ax_s2 = _plot_heatmap(hmap_df, annot=annotate_heatmap)
             return _save_fig_return(ax_s2.figure, ax_s2, file, close_fig)
             
         else: # has S2, need heat map
-            not_s2 = ''.join(i for i in kind.split('S2')) # 'ST', 'S1', or 'STS1'
+            not_s2 = ''.join(i for i in kind_upper.split('S2')) # 'ST', 'S1', or 'STS1'
 
             plot_in_diagonal = plot_in_diagonal.upper()
             if not_s2 and not_s2 == plot_in_diagonal: # ST or S1 in heat map, only heat map

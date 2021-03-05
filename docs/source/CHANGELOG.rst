@@ -17,7 +17,7 @@ Ongoing
 	
 	- Plotting functions to visualize all test results:
 
-		- :func:`qsdsan.stats.plot_uncertainties` for results from uncertainty analysis.
+		- :func:`qsdsan.stats.plot_uncertainties` fpr results from uncertainty analysis as different 1D or 2D plots.
 		- :func:`qsdsan.stats.plot_correlations` for results from :func:`qsdsan.stats.get_correlation`.
 		- Bar plot option for :func:`qsdsan.stats.plot_morris_results`.
 		- :func:`qsdsan.stats.plot_morris_convergence` to plot :math:`{\mu^*}` against the number of trajectories.
