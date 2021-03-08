@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -23,18 +22,14 @@ from .utils.piping import WSIns, WSOuts
 
 __all__ = ('SanUnit',)
 
-@utils.registered(ticket_name='SU')
 class SanUnit(Unit, isabstract=True):    
 
     '''
-    Subclass of Unit in biosteam, is initialized with WasteStream rather than Stream.
+    Subclass of :class:`biosteam.Unit`, is initialized with :class:`WasteStream`
+    rather than :class:`biosteam.Stream`.
     
-    Reference documents
-    -------------------
-    `biosteam.Unit <https://biosteam.readthedocs.io/en/latest/Unit.html>`_
-    
-    Additional attributes
-    ---------------------
+    Parameters
+    ----------
     construction : tuple
         Contains construction information.
     construction_impacts : dict
@@ -51,10 +46,15 @@ class SanUnit(Unit, isabstract=True):
         It will be used to adjust cost and emission calculation in TEA and LCA.
         If left as None, its lifetime will be assumed to be the same as the
         TEA/LCA lifetime.
+    
+    See Also
+    --------
+    `biosteam.Unit <https://biosteam.readthedocs.io/en/latest/Unit.html>`_
 
     '''
     
     _stacklevel = 7
+    ticket_name = 'SU'
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, **kwargs):
         self._register(ID)
@@ -85,7 +85,7 @@ class SanUnit(Unit, isabstract=True):
         self._transportation = ()
 
 
-    def _info(self, T, P, flow, composition, N, _stream_info):
+    def _info(self, T, P, flow, composition, N, IDs, _stream_info):
         '''Information of the unit.'''
         if self.ID:
             info = f'{type(self).__name__}: {self.ID}\n'
@@ -99,7 +99,8 @@ class SanUnit(Unit, isabstract=True):
                 i += 1
                 continue
             if _stream_info:
-                stream_info = stream._info(T, P, flow, composition, N) + \
+                # breakpoint()
+                stream_info = stream._info(T, P, flow, composition, N, IDs) + \
                     '\n' + stream._wastestream_info()
             else:
                 stream_info = stream._wastestream_info()
@@ -116,7 +117,7 @@ class SanUnit(Unit, isabstract=True):
                 i += 1
                 continue
             if _stream_info:
-                stream_info = stream._info(T, P, flow, composition, N) + \
+                stream_info = stream._info(T, P, flow, composition, N, IDs) + \
                     '\n' + stream._wastestream_info()
             else:
                 stream_info = stream._wastestream_info()
@@ -139,9 +140,9 @@ class SanUnit(Unit, isabstract=True):
         self._impact()
     
     
-    def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, stream_info=True):
-        """Print information of the unit, including WasteStream-specific information"""
-        print(self._info(T, P, flow, composition, N, stream_info))
+    def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, IDs=None, stream_info=True):
+        '''Print information of the unit, including waste stream-specific information.'''
+        print(self._info(T, P, flow, composition, N, IDs, stream_info))
     
     def add_construction(self, add_unit=True, add_design=True, add_cost=True):
         '''Batch-adding construction unit, designs, and costs.'''
@@ -155,7 +156,7 @@ class SanUnit(Unit, isabstract=True):
     
     @property
     def components(self):
-        '''[Components] The ``Components`` object associated with this unit.'''
+        '''[Components] The :class:`Components` object associated with this unit.'''
         return self.chemicals
     
     @property
@@ -227,7 +228,7 @@ class SanUnit(Unit, isabstract=True):
     @property
     def uptime_ratio(self):
         '''
-        [float] Uptime of the unit to adjust add_OPEX, should be in [0,1]
+        [float] Uptime of the unit to adjust `add_OPEX`, should be in [0,1]
         (i.e., a unit that is always operating).
         '''
         return self._uptime_ratio

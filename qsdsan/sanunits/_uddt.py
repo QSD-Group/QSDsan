@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -33,10 +32,6 @@ class UDDT(Toilet):
     Urine-diverting dry toilet with liquid storage tank and dehydration vault 
     for urine and feces storage, respectively, based on Trimmer et al. [1]_,
     a subclass of qsdsan.sanunits.Toilet.
-    
-    Reference documents
-    -------------------
-    :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
     
     Parameters
     ----------
@@ -71,19 +66,23 @@ class UDDT(Toilet):
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
+        
+    See Also
+    --------
+    :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
     
     '''
     
     def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, lifetime=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=True, if_air_emission=True, if_ideal_emptying=True,
-                 OPEX_over_CAPEX=0.1,
+                 CAPEX=553, OPEX_over_CAPEX=0.1,
                  T=273.15+24, safety_factor=1, if_prep_loss=True, if_treatment=False,
                  **kwargs):
 
         Toilet.__init__(self, ID, ins, outs, N_user, N_toilet,
                         if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
-                        if_air_emission, if_ideal_emptying, OPEX_over_CAPEX)
+                        if_air_emission, if_ideal_emptying, CAPEX, OPEX_over_CAPEX)
         self.lifetime = lifetime
         self.T = T
         self._safety_factor = safety_factor
@@ -255,25 +254,22 @@ class UDDT(Toilet):
         design['Single vault volume'] = self.vault_V
         design['Treatment time'] = self.treatment_tau
         design['Treatment volume'] = self.treatment_V
-
+        
+        density = self.density_dct
         self.construction = (
             Construction(item='Cement', quantity=200*N, unit='kg'),
-            Construction(item='Sand', quantity=0.6*1442*N, unit='kg'),
-            Construction(item='Gravel', quantity=0.2*1600*N, unit='kg'),
-            Construction(item='Brick', quantity=682*0.0024*1750*N, unit='kg'),
-            Construction(item='Plastic', quantity=4*0.63*N, unit='kg'),
-            Construction(item='Steel', quantity=0.00351*7900*N, unit='kg'),
-            Construction(item='StainlessSteelSheet', quantity=28.05*2.64*N, unit='kg'),
+            Construction(item='Sand', quantity=0.6*density['Sand']*N, unit='kg'),
+            Construction(item='Gravel', quantity=0.2*density['Gravel']*N, unit='kg'),
+            Construction(item='Brick', quantity=682*0.0024*density['Brick']*N, unit='kg'),
+            Construction(item='Plastic', quantity=4*density['Plastic']*N, unit='kg'),
+            Construction(item='Steel', quantity=0.00351*density['Steel']*N, unit='kg'),
+            Construction(item='StainlessSteelSheet',
+                         quantity=28.05*density['StainlessSteelSheet']*N, unit='kg'),
             Construction(item='Wood', quantity=0.222*N, unit='m3'),
             )
 
         self.add_construction(add_cost=False)
-                
-    _BM = {'Total toilets': 1}
-        
-    def _cost(self):
-        self.purchase_costs['Total toilets'] = 553 * self.N_toilet
-        self._add_OPEX = self.purchase_costs['Total toilets']*self.OPEX_over_CAPEX/365/24
+
 
     @property
     def safety_factor(self):
@@ -281,7 +277,7 @@ class UDDT(Toilet):
     @safety_factor.setter
     def safety_factor(self, i):
         if i < 1:
-            raise ValueError(f'safety_factor must be larger than 1, not {i}')
+            raise ValueError(f'safety_factor must be larger than 1, not {i}.')
         self._safety_factor = float(i)
 
     @property

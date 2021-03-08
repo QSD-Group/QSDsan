@@ -11,23 +11,23 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 
-import os
-import sys
+import os, sys
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../..'))
 sys.path.insert(0, os.path.abspath('../../../tmo'))
 sys.path.insert(0, os.path.abspath('../../../bst'))
-
+del os, sys
 
 # -- Project information -----------------------------------------------------
 
+import time, qsdsan
+
 project = 'QSDsan'
-copyright = '2020, Quantitative Sustainable Design Group'
 author = 'Quantitative Sustainable Design Group'
-
+copyright = f'2020-{time.gmtime().tm_year}, Quantitative Sustainable Design Group'
+# version = qsdsan.__version__
 # The full version, including alpha/beta/rc tags
-release = '0.0.1'
-
+release = '0.0.1' if not qsdsan.__version__ else qsdsan.__version__
 
 # -- General configuration ---------------------------------------------------
 
@@ -54,7 +54,7 @@ templates_path = ['_templates']
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'manni'
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -62,6 +62,8 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
+html_static_path = ['_static']
+html_css_files = ['css/qsdsan.css']
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -69,6 +71,13 @@ html_theme = 'sphinx_rtd_theme'
 # html_static_path = ['_static']
 
 # -- Extension settings -------------------------------------------------------
-napoleon_custom_sections = [
-'Additional attributes',
-'Reference documents']
+# napoleon_custom_sections = [
+# 'Reference documents']
+
+# -- External mapping -------------------------------------------------------
+intersphinx_mapping = {
+	'BioSTEAM': ('https://biosteam.readthedocs.io/en/latest', None),
+	'Thermosteam': ('https://thermosteam.readthedocs.io/en/latest', None),
+	'chemicals': ('https://chemicals.readthedocs.io/en/latest', None),
+    'SALib': ('https://salib.readthedocs.io/en/latest', None),
+}

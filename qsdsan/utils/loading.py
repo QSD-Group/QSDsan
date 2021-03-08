@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -25,8 +24,8 @@ __all__ = ('load_data', 'data_path')
 
 def load_data(path=None, sheet=None):
     if path[-4:] == 'xlsx' or path[-4:] == '.xls':
-        try: data = pd.read_excel(path, sheet_name=sheet, index_col=0)
-        except: data = pd.read_excel(path, index_col=0)
+        try: data = pd.read_excel(path, sheet_name=sheet, index_col=0, engine='openpyxl')
+        except: data = pd.read_excel(path, index_col=0, engine='openpyxl')
     elif path[-4:] == '.csv':
         data = pd.read_csv(path, index_col=0)
     else:

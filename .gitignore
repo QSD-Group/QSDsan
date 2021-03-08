@@ -3,6 +3,7 @@ dist
 *.egg-info
 __pycache__
 **/__pycache__
+**/temp.py
 *.pyc
 *.pyo
 .pypirc
@@ -74,6 +75,7 @@ surfaces
 sanitation/demo.py
 qsdsan/demo.py
 qsdsan/systems/IC
-qsdsan/systems/Trimmer
-qsdsan/systems/ASM2d
 qsdsan/systems/Andrus
+qsdsan/systems/Rowles
+qsdsan/systems/Trimmer
+qsdsan/systems/Zhang

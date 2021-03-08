@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -35,6 +34,7 @@ def secondary_importing():
         formatting,
         getters,
         setters,
+        decorators,
         )
     
     __all__ = (
@@ -44,4 +44,5 @@ def secondary_importing():
         *formatting.__all__,
         *getters.__all__,
         *setters.__all__,
+        *decorators.__all__,
                 )

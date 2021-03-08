@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -59,8 +58,8 @@ class Transportation:
         try:
             auom(str(load_unit)+'*'+str(distance_unit)).convert(1, self.item.functional_unit)
         except:
-            raise ValueError(f'Units of load {load_unit} and distance {distance_unit} '
-                             f'do not match the item functional_unit {self.item.functional_unit}.')
+            raise ValueError(f'Units of `load` {load_unit} and `distance` {distance_unit} '
+                             f'do not match the item `functional_unit` {self.item.functional_unit}.')
         
     
     def _update_value(self, var, value, unit=''):
@@ -123,7 +122,7 @@ class Transportation:
 
     @property
     def load_type(self):
-        '''[str] Either 'mass' or 'volume'.'''
+        '''[str] Either "mass" or "volume".'''
         return self._load_type
     @load_type.setter
     def load_type(self, i):
@@ -134,13 +133,13 @@ class Transportation:
             self.default_units['load'] = 'm3'
             self.default_units['quantity'] = 'm3*km'
         else:
-            raise ValueError("load_type can only be 'mass' or 'volume', "
+            raise ValueError('load_type can only be "mass" or "volume", '
                              f'not {i}.')
         self._load_type = i
         
     @property
     def indicators(self):
-        ''' [tuple] ImpactIndicators associated with the transportation item.'''
+        ''' [tuple] Impact indicators associated with the transportation item.'''
         return self.item.indicators
 
     @property
@@ -148,10 +147,10 @@ class Transportation:
         '''
         [float] Transportation load each trip.
 
-        Note
-        ----
-        Set this to 1 and let the load_unit match the functional unit of the item
-        if load does not affect price and impacts.
+        .. note::
+            
+            Set this to 1 and let the load_unit match the functional unit of the item
+            if load does not affect price and impacts.
 
         '''
         return self._load
@@ -164,10 +163,10 @@ class Transportation:
         '''
         [float] Transportation distance each trip.
 
-        Note
-        ----
-        Set this to 1 and let the distance_unit match the functional unit of the item
-        if distance does not affect price and impacts.
+        .. note::
+            
+            Set this to 1 and let the `distance_unit` match the functional unit of the item
+            if distance does not affect price and impacts.
 
         '''
         return self._distance

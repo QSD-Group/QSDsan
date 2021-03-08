@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -21,10 +20,9 @@ __all__ = ('NonNegativeFloat', 'NonNgeativeInt', 'Fraction')
 Checkers are decorators to check if the given value satisfy a set of constrains,
 a great reference can be found online. [1]_
 
-Note
-----
-Using these decorators are much slower than just adding the checks when defining
-them, but probably won't matter since it's still < 1 microseconds
+.. note::
+    Using these decorators are much slower than just adding the checks when defining
+    them, but probably won't matter since it's still < 1 microseconds.
 
 References
 ----------

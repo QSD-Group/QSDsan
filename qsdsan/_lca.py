@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -18,7 +17,7 @@ for license details.
 
 import numpy as np
 import pandas as pd
-from . import ImpactItem, StreamImpactItem, WasteStream
+from . import ImpactItem, WasteStream
 from ._units_of_measure import auom
 from .utils.formatting import format_number as f_num
 
@@ -36,7 +35,7 @@ class LCA:
     
     Parameters
     ----------
-    system : biosteam.System
+    system : :class:`biosteam.System`
         System for which this LCA is conducted for.
     lifetime : float
         Lifetime of the LCA.
@@ -44,9 +43,9 @@ class LCA:
         Unit of lifetime.
     uptime_ratio : float
         Fraction of time that the plant is operating.
-    **item_quantities : kwargs, ImpactItem or str = float/callable or (float/callable, unit)
-        Other ImpactItems (e.g., electricity) and their quantities. Note that
-        callable functions are used so that quantity of items can be updated.
+    **item_quantities : kwargs, :class:`ImpactItem` or str = float/callable or (float/callable, unit)
+        Other :class:`ImpactItem` objects (e.g., electricity) and their quantities.
+        Note that callable functions are used so that quantity of items can be updated.
     
     '''
     
@@ -86,34 +85,23 @@ class LCA:
                                           key=lambda u: u.ID)
         self._transportation_units = sorted(self._transportation_units,
                                             key=lambda u: u.ID)
-        for s in (i for i in system.feeds.union(system.products)):
+        for s in (i for i in system.feeds+system.products):
             if s.impact_item:
                 self._lca_streams.add(s)
         self._lca_streams = sorted(self._lca_streams, key=lambda s: s.ID)
         self._system = system
-    
-    # def _refresh_stream_items(self, system=None):
-    #     if not system:
-    #         system = self.system
-    #     for item in items.values():
-    #         if isinstance(item, StreamImpactItem):
-    #             ws = item.linked_stream
-    #             breakpoint()
-    #             ws._impact_item = item
-    #             if ws in system.streams and ws not in self._lca_streams:
-    #                 self._lca_streams.add(ws)
-    #     self._lca_streams = sorted(self._lca_streams,
-    #                                      key=lambda ws: ws.ID)
-        
+
+
     def _update_lifetime(self, lifetime=0., unit='yr'):
         if not unit or unit == 'yr':
             self._lifetime = float(lifetime)
         else:
             converted = auom(unit).convert(float(lifetime), 'yr')
             self._lifetime = converted
+
     
     def add_other_item(self, item, f_quantity, unit=''):
-        '''Add other ``ImpactItem`` in LCA.'''
+        '''Add other :class:`ImpactItem` in LCA.'''
         if isinstance(item, str):
             item = items[item]
         fu = item.functional_unit
@@ -143,7 +131,7 @@ class LCA:
         return f'<LCA: {self.system}>'
 
     def show(self, lifetime_unit='yr'):
-        '''Show basic information of this ``LCA`` object.'''
+        '''Show basic information of this :class:`LCA` object.'''
         lifetime = auom('yr').convert(self.lifetime, lifetime_unit)
         info = f'LCA: {self.system} (lifetime {f_num(lifetime)} {lifetime_unit})'
         info += '\nImpacts:'
@@ -171,8 +159,8 @@ class LCA:
         Return all construction-related impacts for the given unit,
         normalized to a certain time frame.
         '''
-        try: iter(units)
-        except: units = (units,)
+        if not (isinstance(units, tuple) or isinstance(units, list) or isinstance(units, set)):
+            units = (units,)
         if not time:
             ratio = 1
         else:
@@ -195,8 +183,9 @@ class LCA:
         Return all transportation-related impacts for the given unit,
         normalized to a certain time frame.
         '''
-        try: iter(units)
-        except: units = (units,)
+        if not (isinstance(units, tuple) or isinstance(units, list)
+                or isinstance(units, set)):
+            units = (units,)
         if not time:
             time = self.lifetime_hr
         else:
@@ -216,8 +205,12 @@ class LCA:
         Return all stream-related impacts for the given streams,
         normalized to a certain time frame.
         '''
-        try: iter(stream_items)
-        except: stream_items = (stream_items,)
+        if not (isinstance(stream_items, tuple) or isinstance(stream_items, list)
+                or isinstance(stream_items, set)):
+            stream_items = (stream_items,)
+        if not (isinstance(exclude, tuple) or isinstance(exclude, list)
+                or isinstance(exclude, set)):
+            exclude = (exclude,)
         if stream_items == None:
             stream_items = self.stream_inventory
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
@@ -234,7 +227,7 @@ class LCA:
                 else: continue
             else:
                 ws = j.linked_stream
-            if ws is exclude: continue
+            if ws in exclude: continue
             for m, n in j.CFs.items():
                 if kind == 'all':
                     pass
@@ -250,7 +243,7 @@ class LCA:
     
     def get_other_impacts(self):
         '''
-        Return all additional impacts from "other" ``ImpactItems`` objects,
+        Return all additional impacts from "other" :class:`ImpactItems` objects,
         based on defined quantity.
         '''
         self.refresh_other_items()
@@ -266,7 +259,7 @@ class LCA:
         '''Return total impacts, normalized to a certain time frame.'''
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         ws_impacts = self.get_stream_impacts(stream_items=self.stream_inventory,
-                                                   exclude=exclude, time=time, time_unit=time_unit)
+                                             exclude=exclude, time=time, time_unit=time_unit)
         for i in (self.total_construction_impacts,
                   self.total_transportation_impacts,
                   ws_impacts,
@@ -274,21 +267,68 @@ class LCA:
             for m, n in i.items():
                 impacts[m] += n
         return impacts
+
+    def get_allocated_impacts(self, streams=(), allocate_by='mass'):
+        '''
+        Allocate total impacts to one or multiple streams.
         
-    def get_normalized_impacts(self, stream):
-        '''Normalize all impacts based on the mass flow of a stream.'''
-        assert stream in self.system.streams, \
-               f'WasteStream {stream} not in the System {self.system}.'
-        impacts = self.get_total_impacts(exclude=stream)
-        for i in impacts.values():
-            i /= (stream.F_mass*self.lifetime_hr)
-        return impacts
+        Parameters
+        ----------
+        streams : :class:`WasteStream` or iterable
+            One of multiple streams. Note that impacts of these streams will be
+            excluded in calculating the total impacts.
+        allocate_by : str, iterable, or function to generate an iterable
+            If provided as a str, can be "mass", "energy", or 'value' to allocate
+            the impacts accordingly.
+            If provided as an iterable (no need to normalize so that sum of the iterable is 1),
+            will allocate impacts according to the iterable.
+            If provided as a function,  will call the function to generate an
+            iterable to allocate the impacts accordingly.
+        
+        .. note::
+            
+            Energy of the stream will be calcuated as the sum of HHVs of all components
+            in the stream.
+        
+        '''
+        if not (isinstance(streams, tuple) or isinstance(streams, list)
+                or isinstance(streams, set)):
+            streams = (streams,)
+        impact_dct = self.get_total_impacts(exclude=streams)
+        impact_vals = np.array([i for i in impact_dct.values()])
+        allocated = {}
+        if len(streams) == 1:
+            return impact_dct
+        if allocate_by == 'mass':
+            ratios = np.array([i.F_mass for i in streams])
+        elif allocate_by == 'energy':
+            ratios = np.array([i.HHV for i in streams])
+        elif allocate_by == 'value':
+            ratios = np.array([i.F_mass*i.price for i in streams])
+        elif iter(allocate_by):
+            ratios = allocate_by
+        elif callable(allocate_by):
+            ratios = allocate_by()
+        else:
+            raise ValueError('allocate_by can only be "mass", "energy", "value", '
+                             'an iterable, or a function to generate an iterable.')
+        if ratios.sum() == 0:
+            raise ValueError('Calculated allocation ratios are all zero, cannot allocate.')
+        ratios = ratios/ratios.sum()
+        for n, ws in enumerate(streams):
+            if not ws in self.system.streams:
+                raise ValueError(f'`WasteStream` {ws} not in the system.')
+            allocated[ws.ID] = dict.fromkeys(impact_dct.keys(),
+                                             (ratios[n]*impact_vals).sum())
+        return allocated
+        
     
     def get_units_impacts(self, units, time=None, time_unit='hr',
                           exclude=None):
         '''Return total impacts with certain units, normalized to a certain time frame. '''
-        try: iter(units)
-        except: units = (units,)
+        if not (isinstance(units, tuple) or isinstance(units, list)
+                or isinstance(units, set)):
+            units = (units,)
         constr = self.get_construction_impacts(units, time, time_unit)
         trans = self.get_transportation_impacts(units, time, time_unit)
         ws_items = set(i for i in 
@@ -320,7 +360,7 @@ class LCA:
     
     def get_impact_table(self, category=None, time=None, time_unit='hr'):
         '''
-        Return a ``pandas.DataFrame`` table for the given impact category,
+        Return a :class:`pandas.DataFrame` table for the given impact category,
         normalized to a certain time frame.
         '''
         if not time:
@@ -425,7 +465,7 @@ class LCA:
         
         else:
             raise ValueError(
-                "category can only be 'Construction', 'Transportation', 'Stream', or 'Other', " \
+                'category can only be "Construction", "Transportation", "Stream", or "Other", ' \
                 f'not {category}.')
 
     def save_report(self, file=None, sheet_name='LCA',
@@ -440,11 +480,11 @@ class LCA:
         with pd.ExcelWriter(file) as writer:
             for table in tables:
                 table.to_excel(writer, sheet_name=sheet_name, startrow=n_row)
-                n_row += table.shape[0] + row_space + 1 # one extra line for the heading
+                n_row += table.shape[0] + row_space + len(table.columns.names) # extra lines for the heading
 
     @property
     def system(self):
-        '''[biosteam.System] The System linked to this LCA.'''
+        '''[biosteam.System] The system linked to this LCA.'''
         return self._system
     @system.setter
     def system(self, i):
@@ -465,7 +505,7 @@ class LCA:
     
     @property
     def uptime_ratio(self):
-        '''[float] Fraction of time that the plant is operating.'''
+        '''[float] Fraction of time that the system is operating.'''
         return self._uptime_ratio
     @uptime_ratio.setter
     def uptime_ratio(self, i):
@@ -476,7 +516,7 @@ class LCA:
     
     @property
     def indicators(self):
-        '''[set] All ImpactIndicators associated with this LCA.'''
+        '''[set] All impact indicators associated with this LCA.'''
         if not self.construction_inventory:
             constr = set()
         else:
@@ -498,7 +538,7 @@ class LCA:
             other = set(sum((items[i].indicators for i in self.other_items.keys()), ()))
         tot = constr.union(trans, ws, other)
         if len(tot) == 0:
-            raise ValueError('No ImpactIndicators have been added.')
+            raise ValueError('No `ImpactIndicators` have been added.')
         return tot
     
     @property
@@ -533,7 +573,7 @@ class LCA:
     
     @property
     def lca_streams(self):
-        '''[set] All streams in the linked system with StreamImpactItems.'''
+        '''[set] All streams in the linked system with impacts.'''
         return self._lca_streams
     
     @property
@@ -543,12 +583,12 @@ class LCA:
     
     @property
     def total_stream_impacts(self):
-        '''[dict] Total impacts associated with WasteStreams (e.g., chemicals, emissions).'''
+        '''[dict] Total impacts associated with `WasteStreams` (e.g., chemicals, emissions).'''
         return self.get_stream_impacts(stream_items=self.stream_inventory)
         
     @property
     def other_items (self):
-        '''[dict] Other ImpactItems (e.g., electricity) and their quantities.'''
+        '''[dict] Other impact items (e.g., electricity) and their quantities.'''
         return self._other_items
     @other_items.setter
     def other_items(self, item, f_quantity, unit=''):

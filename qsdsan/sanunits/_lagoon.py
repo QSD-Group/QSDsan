@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -29,10 +28,6 @@ class Lagoon(SanUnit, Decay):
     '''
     Anaerobic and facultative lagoon treatment based on Trimmer et al. [1]_
     
-    Reference documents
-    -------------------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-    
     Parameters
     ----------
     ins : WasteStream
@@ -40,7 +35,10 @@ class Lagoon(SanUnit, Decay):
     outs : WasteStream
         Treated waste, fugitive CH4, and fugitive N2O.
     design_type : str
-        Can be 'anaerobic' or 'facultative'.
+        Can be "anaerobic" or "facultative".
+    flow_rate : float
+        Total flow rate through the lagoon (to calculate retention time), [m3/d].
+        If not provided, will use F_vol_in.
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
         
@@ -50,11 +48,15 @@ class Lagoon(SanUnit, Decay):
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
+        
+    See Also
+    --------
+    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
 
     '''
     
     def __init__(self, ID='', ins=None, outs=(), design_type='anaerobic',
-                 if_N2O_emission=False, **kwargs):    
+                 flow_rate=None, if_N2O_emission=False, **kwargs):    
         
         SanUnit.__init__(self, ID, ins, outs)
         self._tau = None
@@ -67,6 +69,7 @@ class Lagoon(SanUnit, Decay):
         
         self._design_type = None
         self.design_type = design_type
+        self._flow_rate = flow_rate
         self.if_N2O_emission = if_N2O_emission
         
         for attr, value in kwargs.items():
@@ -127,7 +130,7 @@ class Lagoon(SanUnit, Decay):
     
     @property
     def design_type(self):
-        '''[str] Lagoon type, can be either 'anaerobic' or 'facultative'.'''
+        '''[str] Lagoon type, can be either "anaerobic" or "facultative".'''
         return self._design_type
     @design_type.setter
     def design_type(self, i):
@@ -140,7 +143,7 @@ class Lagoon(SanUnit, Decay):
                 data = self._facultative_defaults
                 self.line = 'Facultative lagoon'
             else:
-                raise ValueError("design_type can only be 'anaerobic' or 'facultative',"
+                raise ValueError('`design_type` can only be "anaerobic" or "facultative", '
                                  f'not {i}.')
             for para in data.index:
                 value = float(data.loc[para]['expected'])
@@ -180,16 +183,27 @@ class Lagoon(SanUnit, Decay):
         self._N_lagoon = int(np.ceil(i))
 
     @property
+    def flow_rate(self):
+        '''
+        [float] Total flow rate through the lagoon (to calculate retention time), [m3/d].
+        If not provided, will calculate based on F_vol_in.
+        '''
+        return self._flow_rate if self._flow_rate else self.F_vol_in*24
+    @flow_rate.setter
+    def flow_rate(self, i):
+        self._flow_rate = float(i)
+
+    @property
     def tau(self):
         '''[float] Residence time, [d].'''
         if self._lagoon_V:
-            return self._lagoon_V*self.N_lagoon/(self.F_vol_in*24)
+            return self._lagoon_V*self.N_lagoon/self.flow_rate 
         else:
             return self._tau
     @tau.setter
     def tau(self, i):
         if self._lagoon_V:
-            msg = f'Residence time set, the original lagoon volume of {self._lagoon_V} m3 is ignored'
+            msg = f'Residence time set, the original lagoon volume of {self._lagoon_V} m3 is ignored.'
             warn(msg, source=self)
             self._lagoon_V = None
         self._tau = float(i)
@@ -204,7 +218,7 @@ class Lagoon(SanUnit, Decay):
     @lagoon_V.setter
     def lagoon_V(self, i):
         if self._tau:
-            msg = f'Lagoon volume set, the original residence time of {self._tau} d is ignored'
+            msg = f'Lagoon volume set, the original residence time of {self._tau} d is ignored.'
             warn(msg, source=self)
             self._tau = None
         self._lagoon_V = float(i)

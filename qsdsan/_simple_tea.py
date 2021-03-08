@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -20,6 +19,8 @@ from biosteam import TEA
 
 __all__ = ('SimpleTEA',)
 
+conflict_slots = ('lang_factor', 'system', 'units', 'feeds', 'products')
+
 class SimpleTEA(TEA):    
     '''
     Calculate an annualized cost for simple economic analysis that does not
@@ -27,35 +28,36 @@ class SimpleTEA(TEA):
 
     Parameters
     ----------
-    system : biosteam.System
-        The System this TEA is conducted for.
+    system : :class:`biosteam.System`
+        The system this TEA is conducted for.
     discount_rate : float
         Interest rate used in discounted cash flow analysis.
     start_year : int
-        Start year of the plant.
+        Start year of the system.
     lifetime : int
-        Total lifetime of the plant, [yr]. Currently ``biosteam`` only supports int.
+        Total lifetime of the system, [yr]. Currently `biosteam` only supports int.
     uptime_ratio : float
-        Fraction of time that the plant is operating.
+        Fraction of time that the system is operating.
     CAPEX : float
-        Capital expenditure, if not provided, is set to be the same as installed_equipment_cost.
+        Capital expenditure, if not provided, is set to be the same as `installed_equipment_cost`.
     lang_factor : float or None
         A factor to estimate the total installation cost based on equipment purchase cost,
-        leave as None if providing CAPEX. If neither CAPEX nor lang_factor is provided,
-        installed_equipment_cost will be calculated using the bare module factor
-        for each equipment according to the SanUnit._BM dict of each SanUnit.
+        leave as `None` if providing `CAPEX`. If neither `CAPEX` nor `lang_factor` is provided,
+        `installed_equipment_cost` will be calculated using the bare module factor
+        for each equipment according to the `SanUnit._BM` dict of each unit.
     annual_maintenance : float
         Annual maintenance cost as a fraction of fixed capital investment.
     annual_labor : float
         Annual labor cost.
     system_add_OPEX : float
-        Annual additional system-wise operating expenditure (on top of the add_OPEX of each SanUnit).
+        Annual additional system-wise operating expenditure (on top of the `add_OPEX` of each unit).
     construction_schedule : tuple or None
-        Construction progress, must sum up to 1, leave as None will assume the plant finishes within one year.
+        Construction progress, must sum up to 1, leave as `None` will assume the system finishes within one year.
 
     '''
     
-    __slots__ = (*(i for i in TEA.__slots__ if i !='lang_factor'),
+    __slots__ = (*(i for i in TEA.__slots__ if i not in conflict_slots),
+                 '_system', '_units', '_feeds', '_products',
                  '_discount_rate', '_start_year', '_lifetime',
                  '_uptime_ratio', '_CAPEX', '_lang_factor',
                  '_annual_maintenance', '_annual_labor', '_system_add_OPEX')
@@ -67,7 +69,6 @@ class SimpleTEA(TEA):
                  construction_schedule=None):
         system.simulate()
         self.system = system
-        self.units = sorted(system._costunits, key=lambda x: x.line)
         system._TEA = self
         self.discount_rate = discount_rate
         # IRR (internal rate of return) is the discount rate when net present value is 0
@@ -76,7 +77,6 @@ class SimpleTEA(TEA):
         self._sales = 0 # guess cost for solve_price method
         self.start_year = start_year
         self.lifetime = lifetime
-        self._duration = self.duration
         self.uptime_ratio = 1.
         self._lang_factor = None
         self._CAPEX = CAPEX
@@ -91,7 +91,7 @@ class SimpleTEA(TEA):
         ########## Not relevant to SimpleTEA but required by TEA ##########
         # From U.S. IRS for tax purpose, won't matter when tax set to 0
         # Based on IRS Publication 946 (2019), MACRS15 should be used for
-        # municipal wastewater treatment plant, but the plant lifetime is
+        # municipal wastewater treatment plant, but the system lifetime is
         # just 10 yrs or shorter, so changed to a shorter one
         self.depreciation = 'MACRS7'
         self.income_tax = 0.
@@ -101,8 +101,8 @@ class SimpleTEA(TEA):
         self.startup_salesfrac = 0.
         self.WC_over_FCI = 0.
         self.finance_interest = 0.
-        self.finance_years = 0.
-        self.finance_fraction = 0.
+        self.finance_years = 0
+        self.finance_fraction = 0
         
         
     def __repr__(self):
@@ -143,6 +143,34 @@ class SimpleTEA(TEA):
         return CAPEX
 
     @property
+    def system(self):
+        '''[:class:`biosteam.System`] The system this TEA is conducted for.'''
+        return self._system
+    @system.setter
+    def system(self, i):
+        if i:
+            self._system = i
+            self._units = sorted([j for j in i.units if j._design or j._cost],
+                                key=lambda x: x.line)
+            self._feeds = i.feeds
+            self._products = i.products
+
+    @property
+    def units(self):
+        '''[:class:`qsdsan.SanUnit`] Units in the system.'''
+        return self._units
+    
+    @property
+    def feeds(self):
+        '''[:class:`qsdsan.WasteStream`] System feed streams.'''
+        return self._feeds
+    
+    @property
+    def products(self):
+        '''[:class:`qsdsan.WasteStream`] System product streams.'''
+        return self._products
+
+    @property
     def discount_rate(self):
         '''[float] Interest rate used in discounted cash flow analysis.'''
         return self._discount_rate
@@ -151,11 +179,11 @@ class SimpleTEA(TEA):
         if 0 <= i <= 1:
             self._discount_rate = float(i)
         else:
-            raise ValueError('discount_rate must be in [0,1].')
+            raise ValueError('`discount_rate` must be in [0,1].')
     
     @property
     def start_year(self):
-        '''[int] Start year of the plant.'''
+        '''[int] Start year of the system.'''
         return self._start_year
     @start_year.setter
     def start_year(self, i):
@@ -163,20 +191,21 @@ class SimpleTEA(TEA):
     
     @property
     def lifetime(self):
-        '''[int] Total lifetime of the plant, [yr]. Currently ``biosteam`` only supports int.'''
-        return self._lifetime
+        '''[int] Total lifetime of the system, [yr]. Currently `biosteam` only supports int.'''
+        return int(self._lifetime)
     @lifetime.setter
     def lifetime(self, i):
-        self._lifetime = self._years = i
-        
+        self._lifetime = self._years = int(i)
+        self._duration = (int(self.start_year), int(self.start_year+self.lifetime))
+
     @property
     def duration(self):
-        '''[int] Duration of the plant based on start_year and lifetime.'''
-        return (self.start_year, self.start_year+self.lifetime)
+        '''[int] Duration of the system based on start_year and lifetime.'''
+        return self._duration
     
     @property
     def uptime_ratio(self):
-        '''[float] Fraction of time that the plant is operating.'''
+        '''[float] Fraction of time that the system is operating.'''
         return self._uptime_ratio
     @uptime_ratio.setter
     def uptime_ratio(self, i):
@@ -185,11 +214,11 @@ class SimpleTEA(TEA):
             self._operating_days = 365*float(i)
             self._operating_hours = self._operating_days * 24
         else:
-            raise ValueError('uptime_ratio must be in [0,1].')
+            raise ValueError('`uptime_ratio` must be in [0,1].')
             
     @property
     def operating_days(self):
-        '''[float] Operating days calculated based on uptime_ratio.'''
+        '''[float] Operating days calculated based on `uptime_ratio`.'''
         return self._operating_days
     
     @property
@@ -200,27 +229,27 @@ class SimpleTEA(TEA):
     def lang_factor(self, i):
         if self.CAPEX is not None:
             if i is not None:
-                raise AttributeError('CAPEX provided, lang_factor cannot be set. '
-                                     'The calculated lang_factor is '
+                raise AttributeError('`CAPEX` provided, `lang_factor` cannot be set. '
+                                     'The calculated `lang_factor is` '
                                      f'{self.installed_equipment_cost/self.purchase_cost:.1f}.')
             else:
                 self._lang_factor = None
         elif i >=1:
             self._lang_factor = float(i)
         else:
-            raise ValueError('lang_factor must >= 1.')
+            raise ValueError('`lang_factor` must >= 1.')
 
     @property
     def currency(self):
-        '''[str] TEA currency, same with ``qsdsan.currency``.'''
+        '''[str] TEA currency, same with `qsdsan.currency`.'''
         return qs.currency
     @currency.setter
     def currency(self, i):
-        raise AttributeError('Currency can only be changed through ``qsdsan.currency``.')
+        raise AttributeError('Currency can only be changed through `qsdsan.currency`.')
 
     @property
     def installed_equipment_cost(self):
-        '''[float] Sum of installed cost of all units in the system, is the same as CAPEX if CAPEX is provided.'''
+        '''[float] Sum of installed cost of all units in the system, is the same as `CAPEX` if `CAPEX` is provided.'''
         if self._CAPEX:
             return self._CAPEX
         if self.lang_factor:
@@ -229,27 +258,27 @@ class SimpleTEA(TEA):
 
     @property
     def DPI(self):
-        '''[float] Direct permanent investment, same as installed_equipment_cost.'''
+        '''[float] Direct permanent investment, same as `installed_equipment_cost`.'''
         return self._DPI(self.installed_equipment_cost)
 
     @property
     def TDC(self):
-        '''[float] Total depreciable capital, same as installed_equipment_cost.'''
+        '''[float] Total depreciable capital, same as `installed_equipment_cost`.'''
         return self._TDC(self.DPI)
 
     @property
     def FCI(self):
-        '''[float] Fixed capital investment, same as installed_equipment_cost.'''
+        '''[float] Fixed capital investment, same as `installed_equipment_cost`.'''
         return self._FCI(self.TDC)
 
     @property
     def TCI(self):
-        '''[float] Total capital investment, same as installed_equipment_cost.'''
+        '''[float] Total capital investment, same as `installed_equipment_cost`.'''
         return self.FCI
 
     @property
     def CAPEX(self):
-        '''[float] Capital expenditure, if not provided, is set to be the same as installed_equipment_cost.'''
+        '''[float] Capital expenditure, if not provided, is set to be the same as `installed_equipment_cost`.'''
         return self.TCI
 
     @property
@@ -261,7 +290,7 @@ class SimpleTEA(TEA):
         if 0 <= i <= 1:
             self._annual_maintenance = float(i)
         else:
-            raise ValueError('annual_maintenance must be in [0,1].')
+            raise ValueError('`annual_maintenance` must be in [0,1].')
 
     @property
     def annual_labor(self):
@@ -273,12 +302,12 @@ class SimpleTEA(TEA):
 
     @property
     def unit_add_OPEX(self):
-        '''[float] Sum of add_OPEX for all units in the system.'''
+        '''[float] Sum of `add_OPEX` for all units in the system.'''
         return sum([i.add_OPEX*i.uptime_ratio/self.uptime_ratio for i in self.units])*self._operating_hours
 
     @property
     def system_add_OPEX(self):
-        '''[float] Annual additional system-wise operating expenditure (on top of the add_OPEX of each SanUnit).'''
+        '''[float] Annual additional system-wise operating expenditure (on top of the `add_OPEX` of each unit).'''
         return self._system_add_OPEX
     @system_add_OPEX.setter
     def system_add_OPEX(self, i):
@@ -286,7 +315,7 @@ class SimpleTEA(TEA):
 
     @property
     def total_add_OPEX(self):
-        '''[float] Sum of unit_add_OPEX and system_add_OPEX.'''
+        '''[float] Sum of `unit_add_OPEX` and `system_add_OPEX`.'''
         return self.unit_add_OPEX+self.system_add_OPEX
 
     @property
@@ -305,7 +334,7 @@ class SimpleTEA(TEA):
     
     @property
     def EAC(self):
-        '''[float] Equivalent annual cost of the plant.'''
+        '''[float] Equivalent annual cost of the system.'''
         return self.annualized_CAPEX+self.AOC
 
     

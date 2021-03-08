@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -31,10 +30,6 @@ class DryingBed(SanUnit, Decay):
     '''
     Unplanted and planted drying bed for solids based on Trimmer et al. [1]_
     
-    Reference documents
-    -------------------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-    
     Parameters
     ----------
     ins : WasteStream
@@ -42,9 +37,9 @@ class DryingBed(SanUnit, Decay):
     outs : WasteStream
         Dried solids, evaporated water, fugitive CH4, and fugitive N2O.
     design_type : str
-        Can be 'unplanted' or 'planted'. The default 'unplanted' process has
-        a number of 'covered', 'uncovered', and 'storage' beds. The 'storage'
-        bed is similar to the 'covered' bed, but with higher wall height.
+        Can be "unplanted" or "planted". The default unplanted process has
+        a number of "covered", "uncovered", and "storage" beds. The storage
+        bed is similar to the covered bed, but with higher wall height.
         
     References
     ----------
@@ -52,6 +47,10 @@ class DryingBed(SanUnit, Decay):
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
+        
+    See Also
+    --------
+    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
     
     '''
     
@@ -182,7 +181,7 @@ class DryingBed(SanUnit, Decay):
 
     @property
     def design_type(self):
-        '''[str] Drying bed type, can be either 'unplanted' or 'planted'.'''
+        '''[str] Drying bed type, can be either "unplanted" or "planted".'''
         return self._design_type
     @design_type.setter
     def design_type(self, i):
@@ -190,7 +189,7 @@ class DryingBed(SanUnit, Decay):
             self._design_type = i
             self.line =f'{i.capitalize()} drying bed'
         else:
-            raise ValueError(f"design_type can only be 'unplanted' or 'planted', "
+            raise ValueError(f'design_type can only be "unplanted" or "planted", '
                              f"not {i}.")
 
     @staticmethod

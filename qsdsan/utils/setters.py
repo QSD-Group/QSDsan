@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -16,27 +15,59 @@ for license details.
 
 # %%
 
-__all__ = ('AttrSetter', 'DictAttrSetter')
+__all__ = ('AttrSetter', 'AttrFuncSetter', 'DictAttrSetter')
 
 setattr = setattr
 getattr = getattr
+isinstance = isinstance
 
 class AttrSetter:
-    __slots__ = ('obj', 'attr')
-    def __init__(self, obj, attr):
+    __slots__ = ('obj', 'attrs')
+    def __init__(self, obj, attrs):
         self.obj = obj
-        self.attr = attr
+        if isinstance(attrs, str):
+            attrs = (attrs,)
+        self.attrs = attrs
         
     def __call__(self, value):
-        setattr(self.obj, self.attr, value)
+        for attr in self.attrs:
+            setattr(self.obj, attr, value)
 
+class AttrFuncSetter:
+    __slots__ = ('obj', 'attrs', 'funcs')
+    def __init__(self, obj, attrs, funcs):
+        self.obj = obj
+        if isinstance(attrs, str):
+            attrs = (attrs,)
+        if callable(funcs):
+            funcs = (funcs,)
+        self.attrs = attrs
+        self.funcs = funcs
+        
+    def __call__(self, value):
+        attrs = self.attrs
+        funcs = self.funcs
+        obj = self.obj
+        
+        if len(funcs) == 1:
+            func = funcs[0]
+            for attr in attrs:
+                setattr(obj, attr, func(value))
+        elif len(funcs) == len(attrs):
+            for num, func in enumerate(funcs):
+                setattr(obj, attrs[num], func(value))
+        else:
+            raise ValueError('Number of functions does not match number of attributes.')
 
 class DictAttrSetter:
-    __slots__ = ('obj', 'dict_attr', 'key')
-    def __init__(self, obj, dict_attr, key):
+    __slots__ = ('obj', 'dict_attr', 'keys')
+    def __init__(self, obj, dict_attr, keys):
         self.dict_attr = getattr(obj, dict_attr)
-        self.key = key
+        if isinstance(keys, str):
+            keys = (keys,)
+        self.keys = keys
 
     def __call__(self, value):
-        self.dict_attr[self.key] = value
+        for key in self.keys:
+            self.dict_attr[key] = value
 

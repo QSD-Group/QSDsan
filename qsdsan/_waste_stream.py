@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Joy Cheung <joycheung1994@gmail.com>
@@ -109,20 +108,21 @@ def _calib_XBsub_fBODCOD(components, concentrations, substrate_IDs, BOD):
 _load_components = settings.get_default_chemicals
 _set_thermo = settings.set_thermo
 
-@utils.registered(ticket_name='ws')
 class WasteStream(Stream):
     '''
-    A subclass of the Stream object in the thermosteam [1]_ package with additional
-    attributes and methods for waste treatment.
+    A subclass of :class:`thermosteam.Stream` with additional attributes
+    and methods for waste treatment.
     
-    Reference documents
-    -------------------
-    .. [1] `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
+    See Also
+    --------
+    `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
     
     '''
     
-    __slots__ = (*Stream.__slots__, *_ws_specific_slots)
+    # Child class will inherit parent class's slots
+    __slots__ = _ws_specific_slots
     _default_ratios = _default_ratios
+    ticket_name = 'ws'
     
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None, 
@@ -168,7 +168,7 @@ class WasteStream(Stream):
     def show(self, T='K', P='Pa', flow='g/hr', composition=False, N=15,
              stream_info=True, details=True):
         '''
-        Print WasteStream information.
+        Print waste stream information.
 
         Parameters
         ----------
@@ -179,15 +179,15 @@ class WasteStream(Stream):
         flow : str, optional
             The unit for the flow. The default is 'kg/hr'.
         composition : bool, optional
-            Whether to show flow information of different Component objects in
-            the WasteStream as a percentage. The default is False.
+            Whether to show flow information of different :class:`Component` objects in
+            this waste stream as a percentage. The default is False.
         N : int, optional
-            Number of Component objects to print out, when left as None,
-            the number depends on the default of thermosteam. The default is 15.
+            Number of components to print out, when left as None,
+            the number depends on the default of :class:`thermosteam`. The default is 15.
         stream_info : bool, optional
-            Whether to print Stream-specific information. The default is True.
+            Whether to print stream-specific information. The default is True.
         details : bool, optional
-            Whether to show the all composite variables of the WasteStream. The default is True.
+            Whether to show the all composite variables of this waste stream. The default is True.
 
         '''
 
@@ -241,8 +241,8 @@ class WasteStream(Stream):
     @property
     def ratios(self):
         '''
-        The ratios used for estimating WasteStream composition based on user input upon initialization.
-        Only meaningful for creating a WasteStream object from scratch.
+        The ratios used for estimating waste stream composition based on user input upon initialization.
+        Only meaningful for creating a :class:`WasteStream` object from scratch.
         If not used or specified, default as None.
         '''
         return self._ratios
@@ -251,8 +251,8 @@ class WasteStream(Stream):
         r = self._ratios or WasteStream._default_ratios
         for name, ratio in ratios.items():
             if name not in r.keys():
-                raise ValueError(f"Cannot identify ratio named '{name}'."
-                                 f"Must be one of {r.keys()}")
+                raise ValueError(f'Cannot identify ratio named "{name}".'
+                                 f'Must be one of {r.keys()}.')
             elif isinstance(ratio, (int, float)) and (ratio > 1 or ratio < 0):
                 raise ValueError(f"ratio {name}: {ratio} is out of range [0,1].")
             r[name] = ratio
@@ -269,23 +269,23 @@ class WasteStream(Stream):
         ----------
         variable : str
             The composite variable to calculate. One of the followings:
-                ('COD', 'BOD5', 'BOD', 'uBOD', 'NOD', 'ThOD', 'cnBOD',
-                'C', 'N', 'P', 'K', 'Mg', 'Ca', 
-                'solids', 'charge').
+                ("COD", "BOD5", "BOD", "uBOD", "NOD", "ThOD", "cnBOD",
+                "C", "N", "P", "K", "Mg", "Ca", 
+                "solids", "charge").
         subgroup : CompiledComponents, optional
-            A subgroup of CompiledComponents. The default is None.
-        particle_size : 'g', 's', 'c', or 'x', optional 
-            Dissolved gas ('g'), soluble ('s'), colloidal ('c'), particulate ('x'). 
+            A subgroup of :class:`CompiledComponents`. The default is None.
+        particle_size : "g", "s", "c", or "x", optional 
+            Dissolved gas ("g"), soluble ("s"), colloidal ("c"), particulate ("x"). 
             The default is None.
-        degradability : 'rb', 'sb', 'b' or 'u', optional
-            Readily biodegradable ('rb'), slowly biodegradable ('sb'), 
-            biodegradable ('b'), or undegradable ('u'). The default is None.
+        degradability : "rb", "sb", "b" or "u", optional
+            Readily biodegradable ("rb"), slowly biodegradable ("sb"), 
+            biodegradable ("b"), or undegradable ("u"). The default is None.
         organic : bool, optional
             Organic (True) or inorganic (False). The default is None.
         volatile : bool, optional
             Volatile (True) or involatile (False). The default is None.
         specification : str, optional
-            One of ('SVFA', 'XStor', 'XANO', 'XBio', 'SNOx', 'XPAO_PP', 'TKN'). 
+            One of ("SVFA", "XStor", "XANO", "XBio", "SNOx", "XPAO_PP", "TKN"). 
             The default is None.
 
         Returns
@@ -382,7 +382,7 @@ class WasteStream(Stream):
     
     @property
     def impact_item(self):
-        '''[StreamImpactItem] StreamImpactItem this WasteStream is linked to.'''
+        '''[StreamImpactItem] The :class:`StreamImpactItem` this waste stream is linked to.'''
         return self._impact_item
     @impact_item.setter
     def impact_item(self, i):
@@ -394,7 +394,7 @@ class WasteStream(Stream):
         if self.phase != 'g':
             return getattr(self, '_'+prop) or value
         else:
-            raise AttributeError(f'{self.phase} phase WasteStream does not have {prop}.')
+            raise AttributeError(f'{self.phase} phase waste stream does not have {prop}.')
     
     @property
     def pH(self):
@@ -755,7 +755,7 @@ class WasteStream(Stream):
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
         
-        new._ratio = r
+        new.ratio = r
         return new
 
 
@@ -924,7 +924,7 @@ class WasteStream(Stream):
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
 
-        new._ratio = r        
+        new.ratio = r        
         
         return new
 
@@ -1095,7 +1095,7 @@ class WasteStream(Stream):
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
         
-        new._ratio = r
+        new.ratio = r
         
         return new
 
@@ -1261,7 +1261,7 @@ class WasteStream(Stream):
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
         
-        new._ratio = r
+        new.ratio = r
 
         return new
 

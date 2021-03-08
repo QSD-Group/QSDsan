@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -43,8 +42,8 @@ class Trucking(SanUnit):
         Time interval between trips.
     fee : float
         Transportation fee per trip.
-    fee : float
-        Transportation fee per trip.
+    fee_unit : str
+        Currency of the fee.
     if_material_loss : bool
         If material loss occurs during transportation.
     loss_ratio : float or dict
@@ -65,10 +64,6 @@ class Trucking(SanUnit):
                  interval=1., interval_unit='hr',
                  fee=0., fee_unit=currency,
                  if_material_loss=True, loss_ratio=0.02):
-        '''
-
-
-        '''
         SanUnit.__init__(self, ID, ins, outs)
         self.single_truck = \
             Transportation(item='Trucking',
@@ -144,7 +139,7 @@ class Trucking(SanUnit):
     @loss_ratio.setter
     def loss_ratio(self, i):
         if not self.if_material_loss:
-            msg = f'if_material_loss is False, the set value {i} is ignored.'
+            msg = f'`if_material_loss` is False, the set value {i} is ignored.'
             warn(msg, source=self)
         try:
             self._loss_ratio = float(i)

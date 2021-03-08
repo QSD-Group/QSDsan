@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -33,10 +32,6 @@ class Toilet(SanUnit, Decay, isabstract=True):
     Abstract class containing common parameters and design algorithms for toilets
     based on Trimmer et al. [1]_
     
-    Reference documents
-    -------------------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-    
     Parameters
     ----------
     N_user : float
@@ -57,6 +52,8 @@ class Toilet(SanUnit, Decay, isabstract=True):
     if_ideal_emptying : bool
         If the toilet appropriately emptied to avoid contamination to the
         environmental.
+    CAPEX : float
+        Capital cost of a single toilet.
     OPEX_over_CAPEX : float
         Fraction of annual operating cost over total capital cost.
     
@@ -66,13 +63,17 @@ class Toilet(SanUnit, Decay, isabstract=True):
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
+        
+    See Also
+    --------
+    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
     
     '''
     
     def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True,
-                 OPEX_over_CAPEX=None):
+                 CAPEX=None, OPEX_over_CAPEX=None):
 
         SanUnit.__init__(self, ID, ins, outs)
         self._N_user = 1
@@ -85,6 +86,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         self.if_desiccant = if_desiccant
         self.if_air_emission = if_air_emission
         self.if_ideal_emptying = if_ideal_emptying
+        self.CAPEX = CAPEX
         self.OPEX_over_CAPEX = OPEX_over_CAPEX
 
         data = load_data(path=data_path)
@@ -107,7 +109,23 @@ class Toilet(SanUnit, Decay, isabstract=True):
         fw.imass['H2O'] = int(self.if_flushing)*self.flushing_water
         cw.imass['H2O'] = int(self.if_cleansing)*self.cleansing_water
         des.imass['WoodAsh'] = int(self.if_desiccant)*self.desiccant
-      
+
+    density_dct = {
+        'Sand': 1442,
+        'Gravel': 1600,        
+        'Brick': 1750,        
+        'Plastic': 0.63,
+        'Steel': 7900,
+        'StainlessSteelSheet': 2.64
+        }    
+
+    _BM = {'Single toilet': 1, 'Total toilets': 1}
+        
+    def _cost(self):
+        self.purchase_costs['Single toilet'] = self.CAPEX
+        self.purchase_costs['Total toilets'] = self.CAPEX * self.N_toilet
+        self._add_OPEX = self.purchase_costs['Total toilets']*self.OPEX_over_CAPEX/365/24
+
 
     @staticmethod
     def get_emptying_emission(waste, CH4, N2O, empty_ratio, CH4_factor, N2O_factor):
@@ -165,7 +183,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     def toilet_paper(self):
         '''
         [float] Amount of toilet paper used
-        (if if_toilet_paper is True), [kg/cap/hr].
+        (if `if_toilet_paper` is True), [kg/cap/hr].
         '''
         return self._toilet_paper
     @toilet_paper.setter
@@ -176,7 +194,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     def flushing_water(self):
         '''
         [float] Amount of water used for flushing
-        (if if_flushing_water is True), [kg/cap/hr].
+        (if `if_flushing_water` is True), [kg/cap/hr].
         '''
         return self._flushing_water
     @flushing_water.setter
@@ -187,7 +205,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     def cleansing_water(self):
         '''
         [float] Amount of water used for cleansing 
-        (if if_cleansing_water is True), [kg/cap/hr].
+        (if `if_cleansing_water` is True), [kg/cap/hr].
         '''
         return self._cleansing_water
     @cleansing_water.setter
@@ -197,11 +215,11 @@ class Toilet(SanUnit, Decay, isabstract=True):
     @property
     def desiccant(self):
         '''
-        [float] Amount of desiccant used (if if_desiccant is True), [kg/cap/hr].
+        [float] Amount of desiccant used (if `if_desiccant` is True), [kg/cap/hr].
 
-        Note
-        ----
-        Value set by desiccant_V and desiccant_rho.
+        .. note::
+            
+            Value set by `desiccant_V` and `desiccant_rho`.
 
         '''
         return self.desiccant_V*self.desiccant_rho
@@ -210,7 +228,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     def N_volatilization(self):
         '''
         [float] Fraction of input N that volatizes to the air
-        (if if_air_emission is True).
+        (if `if_air_emission` is True).
         '''
         return self._N_volatilization
     @N_volatilization.setter
@@ -222,9 +240,9 @@ class Toilet(SanUnit, Decay, isabstract=True):
         '''
         [float] Fraction of excreta that is appropriately emptied.
 
-        Note
-        ----
-        Will be 1 (i.e., 100%) if if_ideal_emptying is True.
+        .. note::
+            
+            Will be 1 (i.e., 100%) if `if_ideal_emptying` is True.
 
         '''
         if self.if_ideal_emptying:
@@ -233,7 +251,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     @empty_ratio.setter
     def empty_ratio(self, i):
         if self.if_ideal_emptying:
-            msg = f'if_ideal_emptying is True, the set value {i} is ignored.'
+            msg = f'`if_ideal_emptying` is True, the set value {i} is ignored.'
             warn(msg, source=self)
         self._empty_ratio = float(i)
 

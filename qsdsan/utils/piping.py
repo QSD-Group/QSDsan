@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
@@ -16,6 +15,7 @@ for license details.
 from warnings import warn
 from biosteam.utils.piping import MissingStream, StreamSequence
 from .. import WasteStream as WS
+import biosteam as bst
 
 __all__ = ('MissingWS', 'WSIns', 'WSOuts')
 
@@ -33,20 +33,20 @@ def as_ws(ws):
 
 class MissingWS(MissingStream):
     '''
-    A subclass of ``MissingStream`` in ``biosteam``, Create a ``MissingWS`` (MissingWasteStream)
-    object that acts as a dummy in ``Ins`` and ``Outs`` objects until replaced by an
-    actual ``WasteStream`` object
+    A subclass of :class:`biosteam.MissingStream`, create a special object
+    object that acts as a dummy in :class:`WSIns` and :class:`WSOuts` objects
+    until replaced by an actual :class:`WasteStream` object.
     '''
 
     def materialize_connection(self, ID=''):
         '''
-        Disconnect this ``MissingWS`` from any unit operations and replace
-        it with an actual ``WasteStream``.
+        Disconnect this missing waste stream from any unit operations and replace
+        it with an actual waste stream.
         '''
         source = self._source
         sink = self._sink
         assert source and sink, (
-            "both a source and a sink is required to materialize connection")
+            'both a source and a sink is required to materialize connection.')
         material_stream = WS(ID, thermo=source.thermo)
         source._outs.replace(self, material_stream)
         sink._ins.replace(self, material_stream)
@@ -91,11 +91,14 @@ class MissingWS(MissingStream):
 
 
 def n_missing(ub, N):
-    assert ub >= N, f"size of waste streams exceeds {ub}"
+    assert ub >= N, f'size of waste streams exceeds {ub}.'
     return ub - N
 
 class WSSequence(StreamSequence):
-    '''Abstract class for a sequence of waste streams, subclass of ``StreamSequence`` in ``biosteam``.'''
+    '''
+    Abstract class for a sequence of waste streams, subclass of
+    :class:`biosteam.StreamSequence`.
+    '''
     
     def __init__(self, size, ws, thermo, fixed_size, stacklevel):
         self._size = size
@@ -144,8 +147,8 @@ class WSSequence(StreamSequence):
         if isinstance(index, int):
             if item:
                 assert isinstance(item, WS), (
-                    f"'{type(self).__name__}' object can only contain "
-                    f"'WasteStream' objects; not '{type(item).__name__}'")
+                    f'`{type(self).__name__}` object can only contain '
+                    f'`WasteStream` objects; not {type(item).__name__}.')
             elif not isinstance(item, MissingWS):
                 item = self._create_missing_stream()
             self._set_stream(int=index, stream=item, stacklevel=3)
@@ -187,7 +190,7 @@ class WSSequence(StreamSequence):
 
 
 class WSIns(WSSequence):
-    '''Create an ``Ins`` object which serves as input streams for a ``Unit`` object.'''
+    '''Create an object to serve as an input stream for a :class:`SanUnit` object.'''
     __slots__ = ('_sink', '_fixed_size')
     
     def __init__(self, sink, size, ws, thermo, fixed_size, stacklevel):
@@ -212,9 +215,12 @@ class WSIns(WSSequence):
             if ins is not self:
                 ins.remove(ws)
                 ws._sink = new_sink = self._sink
-                if sink._ID and new_sink:
-                    warn(f"undocked inlet wastestream {ws} from unit {sink}; "
-                         f"{ws} is now docked at {self._sink}", 
+                DOCKING_WARNINGS = bst.utils.piping.DOCKING_WARNINGS
+                if (DOCKING_WARNINGS 
+                    and sink._ID and new_sink._ID
+                    and sink._ID != new_sink._ID):
+                    warn(f'Inlet waste stream {ws} is undocked from unit {sink}; '
+                         f'{ws} is now docked at {self._sink}', 
                          RuntimeWarning, stacklevel)
         else:
             ws._sink = self._sink
@@ -225,7 +231,7 @@ class WSIns(WSSequence):
 
 
 class WSOuts(WSSequence):
-    '''Create an ``Outs`` object which serves as output streams for a ``Unit`` object.'''
+    '''Create an object to serve as an output stream for a :class:`SanUnit` object.'''
     __slots__ = ('_source',)
     
     def __init__(self, source, size, ws, thermo, fixed_size, stacklevel):
@@ -251,9 +257,12 @@ class WSOuts(WSSequence):
                 # Remove from source
                 outs.remove(ws)
                 ws._source = new_source = self._source
-                if source._ID and new_source:
-                    warn(f"undocked outlet wastestream {ws} from unit {source}; "
-                         f"{ws} is now docked at {self._source}", 
+                DOCKING_WARNINGS = bst.utils.piping.DOCKING_WARNINGS
+                if (DOCKING_WARNINGS 
+                    and source._ID and new_source._ID
+                    and source._ID != new_source._ID):
+                    warn(f'Outlet waste stream {ws} is undocked from unit {source}; '
+                         f'{ws} is now docked at {self._source}.', 
                          RuntimeWarning, stacklevel)
         else:
             ws._source = self._source
