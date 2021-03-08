@@ -467,7 +467,7 @@ class CompiledProcesses(Processes):
                 missing_rate_proc.append(process.ID)
         if not skip_checks and len(missing_rate_proc) > 0: 
             raise RuntimeError(f"The following processes are missing rate equations:"
-                               f"{*missing_rate_proc}")        
+                               f"{missing_rate_proc}")        
         IDs = tuple_([i.ID for i in processes])
         size = len(IDs)
         index = tuple_(range(size))
