@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Joy Cheung <joycheung1994@gmail.com>
@@ -34,8 +33,8 @@ class Process():
     def __init__(self, ID, reaction, ref_component, rate_equation=None, components=None, 
                  conserved_for=('COD', 'N', 'P', 'charge'), parameters=None):
         """
-        Create a ``Process`` object which defines a stoichiometric process and its kinetics.
-        A ``Process`` object is capable of reacting the component flow rates of a ``WasteStream``
+        Create a :class:`Process`` object which defines a stoichiometric process and its kinetics.
+        A :class:`Process` object is capable of reacting the component flow rates of a :class:`WasteStream`
         object.
 
         Parameters
@@ -48,17 +47,17 @@ class Process():
             of a stoichiometric equation written as: 
             i1 R1 + ... + in Rn -> j1 P1 + ... + jm Pm.
             Stoichiometric coefficients can be symbolic or numerical. 
-            Unknown stoichiometric coefficients to solve for should be expressed as '?'.
+            Unknown stoichiometric coefficients to solve for should be expressed as "?".
         ref_component : str
-            ID of the reference ``Component`` object of the process rate.
+            ID of the reference :class:`Component` object of the process rate.
         rate_equation : str, optional
             The kinetic rate equation of the process. The default is None.
-        components=None : ``CompiledComponents``, optional
+        components=None : class:``CompiledComponents``, optional
             Components corresponding to each entry in the stoichiometry array, 
             defaults to thermosteam.settings.chemicals. 
         conserved_for : tuple[str], optional
             Materials subject to conservation rules, must be an 'i_' attribute of
-            the components. The default is ('COD', 'N', 'P', 'charge').
+            the components. The default is ("COD", "N", "P", "charge").
         parameters : Iterable[str], optional
             Symbolic parameters in stoichiometry coefficients and/or rate equation. 
             The default is None.
@@ -130,11 +129,11 @@ class Process():
         '''
         [str] ID of the reference component
         
-        Note
-        ----
-        When a new value is assigned, all stoichiometric coefficient will be 
-        normalized so that the new stoichiometric coefficient of the new reference
-        component is 1 or -1. The rate equation will also be updated automatically.
+        .. note::
+    
+            When a new value is assigned, all stoichiometric coefficient will be 
+            normalized so that the new stoichiometric coefficient of the new reference
+            component is 1 or -1. The rate equation will also be updated automatically.
         '''
         return getattr(self._components, self._ref_component)    
     @ref_component.setter
@@ -222,11 +221,11 @@ class Processes():
     
     def __new__(cls, processes):
         """
-        Create a ``Processes`` object that contains ``Process`` objects as attributes.
+        Create a :class:`Processes` object that contains :class:`Process` objects as attributes.
 
         Parameters
         ----------
-        processes : Iterable[``Process``]
+        processes : Iterable[:class:`Process`]
 
         Examples
         --------
@@ -244,14 +243,14 @@ class Processes():
     #     return(tuple(self),)
     
     def __setattr__(self, ID, process):
-        raise TypeError("can't set attribute; use <Processes>.append instead")
+        raise TypeError("can't set attribute; use <Processes>.append or <Processes>.extend instead")
     
     def __setitem__(self, ID, process):
-        raise TypeError("can't set attribute; use <Processes>.append instead")
+        raise TypeError("can't set attribute; use <Processes>.append or <Processes>.extend instead")
     
     def __getitem__(self, key):
         """
-        Return a ``Process`` or a list of ``Process`` objects.
+        Return a :class:`Process` object or a list of :class:`Process` objects.
         
         Parameters
         ----------
@@ -275,7 +274,7 @@ class Processes():
         return copy
     
     def append(self, process):
-        """Append a ``Process``."""
+        """Append a :class:`Process`."""
         if not isinstance(process, Process):
             raise TypeError("only 'Process' objects can be appended, "
                            f"not '{type(process).__name__}'")
@@ -285,7 +284,7 @@ class Processes():
         setattr(self, ID, process)
     
     def extend(self, processes):
-        """Extend with more ``Process`` objects."""
+        """Extend with more :class:`Process` objects."""
         if isinstance(processes, Processes):
             self.__dict__.update(processes.__dict__)
         else:
@@ -303,11 +302,16 @@ class Processes():
         """
         return Process([getattr(self, i) for i in IDs])
     
-    def mycompile(self):
-        '''Cast as a ``CompiledProcesses`` object.'''
+    def compile(self, skip_checks=False):
+        '''Cast as a :class:`CompiledProcesses` object.'''
+        processes = tuple(self)
         setattr(self, '__class__', CompiledProcesses)
-        CompiledProcesses._compile(self)
-        
+        try: self._compile(processes, skip_checks)
+        except Exception as error:
+            setattr(self, '__class__', Processes)
+            setattr(self, '__dict__', {i.ID: i for i in processes})
+            raise error
+            
     # kwarray = array = index = indices = must_compile
         
     def show(self):
@@ -361,22 +365,22 @@ class Processes():
         compile : bool, optional
             Whether to compile processes. The default is True.
 
-        Note
-        ----
-        [1] First column of the table should be process IDs, followed by stoichiometric 
-            coefficient matrix with corresponding component IDs as column names, and rate 
-            equations as the last column. 
-        
-        [2] Entries of stoichiometric coefficients can be symbolic or numerical. 
-            Blank cells are considered zero.
-        
-        [3] Unknown stoichiometric coefficients to solve for using conservation 
-            rules should be uniformly written as '?'. 
-        
-        [4] For each process, the first component with stoichiometric coefficient
-            of -1 or 1 is considered the reference component. If none of the components
-            has -1 or 1 stoichiometric coefficient, the first component with non-zero
-            coefficient is considered the reference.
+        .. note::
+    
+            [1] First column of the table should be process IDs, followed by stoichiometric 
+                coefficient matrix with corresponding component IDs as column names, and rate 
+                equations as the last column. 
+            
+            [2] Entries of stoichiometric coefficients can be symbolic or numerical. 
+                Blank cells are considered zero.
+            
+            [3] Unknown stoichiometric coefficients to solve for using conservation 
+                rules should be uniformly written as '?'. 
+            
+            [4] For each process, the first component with stoichiometric coefficient
+                of -1 or 1 is considered the reference component. If none of the components
+                has -1 or 1 stoichiometric coefficient, the first component with non-zero
+                coefficient is considered the reference.
         """
         if use_default_data and cls._default_data is not None:
             data = cls._default_data
@@ -407,7 +411,7 @@ class Processes():
         if store_data:
             cls._default_data = data
         
-        if compile: new.mycompile()
+        if compile: new.compile()
         return new
         
             
@@ -419,11 +423,11 @@ class CompiledProcesses(Processes):
     
     def __new__(cls, processes):
         """
-        Create a ``CompiledProcesses`` object that contains ``Process`` objects as attributes.
+        Create a :class:`CompiledProcesses` object that contains :class:`Process` objects as attributes.
 
         Parameters
         ----------
-        processes : Iterable[``Process``]
+        processes : Iterable[:class:`Process`]
 
         Examples
         --------
@@ -448,15 +452,22 @@ class CompiledProcesses(Processes):
     # def __dir__(self):
     #     pass
     
-    def compile(self):
-        """Do nothing, ``CompiledProcesses`` objects are already compiled."""
+    def compile(self, skip_checks=False):
+        """Do nothing, :class:`CompiledProcesses` objects are already compiled."""
         pass
     
-    def _compile(self):
-        isa = isinstance
+    def _compile(self, processes, skip_checks=False):
         dct = self.__dict__
-        tuple_ = tuple # this speeds up the code
-        processes = tuple_(dct.values())
+        isa = isinstance
+        tuple_ = tuple
+        # processes = tuple_(dct.values())
+        missing_rate_proc = []
+        for process in processes:
+            if process.rate_equation == None: 
+                missing_rate_proc.append(process.ID)
+        if not skip_checks and len(missing_rate_proc) > 0: 
+            raise RuntimeError(f"The following processes are missing rate equations:"
+                               f"{*missing_rate_proc}")        
         IDs = tuple_([i.ID for i in processes])
         size = len(IDs)
         index = tuple_(range(size))
@@ -552,7 +563,7 @@ class CompiledProcesses(Processes):
     def copy(self):
         '''Return a copy.'''
         copy = Processes(self)
-        copy.mycompile()
+        copy.compile()
         return copy    
     
     def evaluate(self, eval_at, n_decimal=15, lambdify_eqs=True):
@@ -571,10 +582,10 @@ class CompiledProcesses(Processes):
             Whether to generate functions of component concentrations for the rate 
             equations and the component production rates. The default is True.
         
-        Note
-        ----
-        Evaluation won't be initiated unless numerical values have been provided for
-        all parameters.
+        .. note::
+    
+            Evaluation won't be initiated unless numerical values have been provided for
+            all parameters.
         '''
         self._parameters.update(eval_at)
         eval_at = self._parameters        
