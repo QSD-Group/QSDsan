@@ -6,6 +6,9 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
+    
+Contributions made by:
+    Yoel Rene Cortes-Pena <yoelcortes@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
@@ -27,7 +30,7 @@ __all__ = ('get_correlation', 'define_inputs', 'generate_samples',
 import numpy as np
 import pandas as pd
 import biosteam as bst
-from scipy.stats import pearsonr, spearmanr
+from collections.abc import Iterable
 from SALib.sample import (morris as morris_sampling, saltelli)
 from SALib.analyze import morris, sobol
 from matplotlib import pyplot as plt
@@ -68,72 +71,73 @@ def _update_nan(df, nan_policy, legit=('propagate', 'raise', 'omit')):
 # %%
 
 def get_correlation(model, input_x=None, input_y=None,
-                    kind='Pearson', nan_policy='propagate', file=''):
+                    kind='Pearson', nan_policy='propagate', file='',
+                    **kwargs):
     '''
-    Get Pearson's r between two inputs using ``scipy``.
+    Get correlation coefficients between two inputs using ``scipy``.
     
     Parameters
     ----------
     model : :class:`biosteam.Model`
         Uncertainty model with defined paramters and metrics.
     input_x : :class:`biosteam.Parameter` or :class:`biosteam.Metric`
-        First set of input, can be single values or iteral,
+        First set of input, can be single values or an iterable,
         will be defaulted to all model parameters if not provided.
-    input_x : :class:`biosteam.Parameter` or :class:`biosteam.Metric`
-        Second set of input, can be single values or iteral,
+    input_y : :class:`biosteam.Parameter` or :class:`biosteam.Metric`
+        Second set of input, can be single values or an iterable,
         will be defaulted to all model parameters if not provided.
     kind : str
-        Can be "Pearson" for Pearson's r or "Spearman" for Spearman's rho
+        Can be "Pearson" for Pearson's r, "Spearman" for Spearman's rho,
+        "Kendall" for Kendall's tau, or "KS" for Kolmogorov–Smirnov's D.
     nan_policy : str
         - "propagate": returns nan.
         - "raise": raise an error.
         - "omit": drop the pair from analysis.
     file : str
         If provided, the results will be saved as an Excel file.
-
+    kwargs
+        Other kwargs that will be passed to ``scipy``.
+    
     Returns
     -------
-    Two :class:`pandas.DataFrame` containing Pearson'r or Spearman's rho and p-values.
+    Two :class:`pandas.DataFrame` containing the test statistics and p-values.
     
     See Also
     --------
-    `scipy.stats.pearsonr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.pearsonr.html>`_
-    `scipy.stats.spearmanr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.spearmanr.html>`_
+    :func:`scipy.stats.pearsonr`
+    
+    :func:`scipy.stats.spearmanr`
+    
+    :func:`scipy.stats.kendalltau`
+    
+    :func:`scipy.stats.kstest`
     
     '''
-    table = model.table
-    input_x = _update_input(input_x, model.get_parameters())
-    input_y = _update_input(input_y, model.metrics)
-    x_indices = var_indices(input_x)
-    x_data = [table[i] for i in x_indices]
-    y_indices = var_indices(input_y)
-    y_data = [table[i] for i in y_indices]
-    df_index = indices_to_multiindex(x_indices, ('Element', 'Input x'))
-    df_column = indices_to_multiindex(y_indices, ('Element', 'Input y'))
-    rs, ps = [], []
-    for x in x_data:
-        rs.append([])
-        ps.append([])
-        for y in y_data:
-            df = pd.concat((x, y), axis=1)
-            if True in df.isna().any().values:
-                df = _update_nan(df, nan_policy)
-            if isinstance(df, str):
-                r, p = (np.nan, np.nan)
-            else:
-                if kind.capitalize() == 'Pearson':
-                    r, p = pearsonr(df.iloc[:,0], df.iloc[:,1])
-                    sheet_name = 'r'
-                elif kind.capitalize() == 'Spearman':
-                    r, p = spearmanr(df.iloc[:,0], df.iloc[:,1])
-                    sheet_name = 'rho'
-                else:
-                    raise ValueError('kind can only be "Pearson" or "Spearman", ' \
-                                      f'not "{kind}".')
-            rs[-1].append(r)
-            ps[-1].append(p)
-    r_df = pd.DataFrame(rs, index=df_index, columns=df_column)
-    p_df = pd.DataFrame(ps, index=df_index, columns=df_column)
+    if not isinstance(input_x, Iterable): input_x = (input_x,)
+    if not isinstance(input_y, Iterable): input_y = (input_y,)
+    if nan_policy not in ('propagate', 'raise', 'omit'):
+        raise ValueError(f"invalid nan_policy '{nan_policy}'; valid names are: "
+                          "'omit', 'propagate', and 'raise'")
+    name = kind.lower()
+    if name == 'pearson':
+        correlation = model.pearson_r
+        sheet_name = 'r'
+    elif name == 'spearman':
+        correlation = model.spearman_r
+        sheet_name = 'rho'
+    elif name == 'kendall':
+        correlation = model.kendall_tau
+        sheet_name = 'tau'
+    elif name == 'ks':
+        correlation = model.kolmogorov_smirnov_d
+        sheet_name = 'D'
+    else:
+        raise ValueError('kind can only be "Pearson", "Spearman", ' 
+                        f'"Kendall", or "KS", not "{kind}".')
+    r_df, p_df = dfs = correlation(input_x, input_y, nan_policy + ' nan', **kwargs)
+    for df in dfs:
+        df.index.names = ('Element', 'Input x')
+        df.columns.names = ('Element', 'Input y')
     if file:
         with pd.ExcelWriter(file) as writer:
             r_df.to_excel(writer, sheet_name=sheet_name)
@@ -166,15 +170,7 @@ def define_inputs(model):
     `SALib Basics <https://salib.readthedocs.io/en/latest/basics.html#an-example>`_
 
     '''
-    params = model.get_parameters()
-    problem = {
-        'num_vars': len(params),
-        'names': [i.name for i in params],
-        'bounds': [i.bounds if i.bounds
-                   else (i.distribution.lower[0], i.distribution.upper[0])
-                   for i in params]
-        }
-    return problem
+    return model.problem()
 
 def generate_samples(inputs, kind, N, seed=None, **kwargs):
     '''
