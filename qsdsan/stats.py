@@ -177,7 +177,7 @@ def define_inputs(model):
     return problem
 
 # TODO: incorporate sampling from different distributions
-def generate_samples(model, inputs, kind, N, seed=None, **kwargs):
+def generate_samples(inputs, kind, N, seed=None, **kwargs):
     '''
     Generate samples for sensitivity analysis using ``SALib``.
     
