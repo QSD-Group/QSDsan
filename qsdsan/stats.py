@@ -113,8 +113,8 @@ def get_correlation(model, input_x=None, input_y=None,
     :func:`scipy.stats.kstest`
     
     '''
-    if not isinstance(input_x, Iterable): input_x = (input_x,)
-    if not isinstance(input_y, Iterable): input_y = (input_y,)
+    if input_x and not isinstance(input_x, Iterable): input_x = (input_x,)
+    if input_y and not isinstance(input_y, Iterable): input_y = (input_y,)
     if nan_policy not in ('propagate', 'raise', 'omit'):
         raise ValueError(f"invalid nan_policy '{nan_policy}'; valid names are: "
                           "'omit', 'propagate', and 'raise'")
