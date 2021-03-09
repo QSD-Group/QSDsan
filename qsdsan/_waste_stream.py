@@ -755,7 +755,7 @@ class WasteStream(Stream):
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
         
-        new.ratio = r
+        new.ratios = r
         return new
 
 
@@ -924,7 +924,7 @@ class WasteStream(Stream):
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
 
-        new.ratio = r        
+        new.ratios = r        
         
         return new
 
@@ -1095,7 +1095,7 @@ class WasteStream(Stream):
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
         
-        new.ratio = r
+        new.ratios = r
         
         return new
 
@@ -1261,7 +1261,7 @@ class WasteStream(Stream):
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
         
-        new.ratio = r
+        new.ratios = r
 
         return new
 
