@@ -126,24 +126,24 @@ class WasteStream(Stream):
     
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None, 
-                 pH=7., S_Alk=2.5, COD=None, BOD=None, uBOD=None,
+                 pH=7., SAlk=2.5, COD=None, BOD=None, uBOD=None,
                  TC=None, TOC=None, TN=None, TKN=None, TP=None, TK=None,
                  TMg=None, TCa=None, dry_mass=None, charge=None, ratios=None,
                  ThOD=None, cnBOD=None, impact_item=None, **chemical_flows):
         
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
                          units=units, price=price, thermo=thermo, **chemical_flows)
-        self._init_ws(pH, S_Alk, COD, BOD, uBOD, TC, TOC, TN, TKN,
+        self._init_ws(pH, SAlk, COD, BOD, uBOD, TC, TOC, TN, TKN,
                       TP, TK, TMg, TCa, ThOD, cnBOD, dry_mass, charge, ratios,
                       impact_item)
 
-    def _init_ws(self, pH=7., S_Alk=None, COD=None, BOD=None,
+    def _init_ws(self, pH=7., SAlk=None, COD=None, BOD=None,
                   uBOD=None, TC=None, TOC=None, TN=None, TKN=None,
                   TP=None, TK=None, TMg=None, TCa=None, ThOD=None, cnBOD=None,
                   dry_mass=None, charge=None, ratios=None, impact_item=None):
 
         self._pH = pH
-        self._S_Alk = S_Alk
+        self._SAlk = SAlk
         self._COD = COD
         self._BOD = BOD
         self._uBOD = uBOD
@@ -218,7 +218,7 @@ class WasteStream(Stream):
             _ws_info += '\n'
             # Only non-zero properties are shown
             _ws_info += int(bool(self.pH))*f'  pH         : {self.pH:.1f}\n'
-            _ws_info += int(bool(self.S_Alk))*f'  Alkalinity : {self.SAlk:.1f} mg/L\n'
+            _ws_info += int(bool(self.SAlk))*f'  Alkalinity : {self.SAlk:.1f} mg/L\n'
             if details:
                 _ws_info += int(bool(self.COD))   *f'  COD        : {self.COD:.1f} mg/L\n'
                 _ws_info += int(bool(self.BOD))   *f'  BOD        : {self.BOD:.1f} mg/L\n'
@@ -402,9 +402,9 @@ class WasteStream(Stream):
         return self._liq_sol_properties('pH', 7.)
 
     @property
-    def S_Alk(self):
+    def SAlk(self):
         '''[float] Alkalinity in meq/L (or mmol HCO3-/L). Assumed to be mainly bicarbonate.'''
-        return self._liq_sol_properties('S_Alk', 0.)
+        return self._liq_sol_properties('SAlk', 0.)
 
     @property
     def COD(self):
@@ -599,7 +599,7 @@ class WasteStream(Stream):
     @classmethod
     def codstates_inf_model(cls, ID, flow_tot=0., units = ('L/hr', 'mg/L'), 
                             phase='l', T=298.15, P=101325., price=0., thermo=None, 
-                            pH=7., S_Alk=10., ratios=None, 
+                            pH=7., SAlk=10., ratios=None, 
                             COD=430., TKN=40., TP=10., iVSS_TSS=0.75, iSNH_STKN=0.9,
                             S_NH4=25., S_NO2=0., S_NO3=0., S_PO4=8., 
                             S_Ca=140., S_Mg=50., S_K=28., S_CAT=3., S_AN=12., S_N2=18., 
@@ -619,7 +619,7 @@ class WasteStream(Stream):
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 
         new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
-                  thermo=thermo, pH=pH, S_Alk=S_Alk)
+                  thermo=thermo, pH=pH, SAlk=SAlk)
 
         if ratios: new.ratios = ratios
         else: new.ratios = WasteStream._default_ratios
@@ -634,7 +634,7 @@ class WasteStream(Stream):
         cmp_dct['S_NO2'] = S_NO2
         cmp_dct['S_NO3'] = S_NO3
         cmp_dct['S_PO4'] = S_PO4
-        cmp_dct['S_CO3'] = S_Alk * 12 * conc_unit.conversion_factor(units[1])             # 1 meq/L SAlk ~ 1 mmol/L HCO3- ~ 12 mg C/L (12 mg C/mmol HCO3-)
+        cmp_dct['S_CO3'] = SAlk * 12 * conc_unit.conversion_factor(units[1])             # 1 meq/L SAlk ~ 1 mmol/L HCO3- ~ 12 mg C/L (12 mg C/mmol HCO3-)
         cmp_dct['S_Ca'] = S_Ca
         cmp_dct['S_Mg'] = S_Mg
         cmp_dct['S_K'] = S_K
@@ -749,7 +749,7 @@ class WasteStream(Stream):
             den0 = den
             cmp_dct['H2O'] = flow_tot*den0 - dwt
             new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
-                      thermo=thermo, pH=pH, S_Alk=S_Alk, **cmp_dct)
+                      thermo=thermo, pH=pH, SAlk=SAlk, **cmp_dct)
             den = flow_tot*den0/(new.F_vol*1e3)            
             i += 1
             if abs(den-den0) <= 1e-3: break
@@ -762,7 +762,7 @@ class WasteStream(Stream):
     @classmethod
     def codbased_inf_model(cls, ID, flow_tot=0., units = ('L/hr', 'mg/L'), 
                            phase='l', T=298.15, P=101325., price=0., thermo=None, 
-                           pH=7., S_Alk=10., ratios=None, 
+                           pH=7., SAlk=10., ratios=None, 
                            COD=430., TKN=40., TP=10., iVSS_TSS=0.75, iSNH_STKN=0.9,
                            iSCOD_COD=0.25, iSBOD_SCOD=0.50, iBOD_COD=0.58,
                            S_NH4=25., S_NO2=0., S_NO3=0., S_PO4=8., 
@@ -783,7 +783,7 @@ class WasteStream(Stream):
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 
         new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
-                  thermo=thermo, pH=pH, S_Alk=S_Alk)
+                  thermo=thermo, pH=pH, SAlk=SAlk)
 
         if ratios: new.ratios = ratios
         else: new.ratios = WasteStream._default_ratios
@@ -798,7 +798,7 @@ class WasteStream(Stream):
         cmp_dct['S_NO2'] = S_NO2
         cmp_dct['S_NO3'] = S_NO3
         cmp_dct['S_PO4'] = S_PO4
-        cmp_dct['S_CO3'] = S_Alk * 12 * conc_unit.conversion_factor(units[1])       # 1 meq/L SAlk ~ 1 mmol/L HCO3- ~ 12 mg C/L (12 mg C/mmol HCO3-)
+        cmp_dct['S_CO3'] = SAlk * 12 * conc_unit.conversion_factor(units[1])       # 1 meq/L SAlk ~ 1 mmol/L HCO3- ~ 12 mg C/L (12 mg C/mmol HCO3-)
         cmp_dct['S_Ca'] = S_Ca
         cmp_dct['S_Mg'] = S_Mg
         cmp_dct['S_K'] = S_K
@@ -918,7 +918,7 @@ class WasteStream(Stream):
             den0 = den
             cmp_dct['H2O'] = flow_tot*den0 - dwt
             new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
-                      thermo=thermo, pH=pH, S_Alk=S_Alk, **cmp_dct)
+                      thermo=thermo, pH=pH, SAlk=SAlk, **cmp_dct)
             den = flow_tot*den0/(new.F_vol*1e3)            
             i += 1
             if abs(den-den0) <= 1e-3: break
@@ -932,7 +932,7 @@ class WasteStream(Stream):
     @classmethod
     def bodbased_inf_model(cls, ID, flow_tot=0., units = ('L/hr', 'mg/L'), 
                            phase='l', T=298.15, P=101325., price=0., thermo=None, 
-                           pH=7., S_Alk=10., ratios=None, 
+                           pH=7., SAlk=10., ratios=None, 
                            BOD=250., TKN=40., TP=10., iVSS_TSS=0.75, iSNH_STKN=0.9,
                            iSBOD_BOD=0.25, iSBOD_SCOD=0.50, iBOD_COD=0.58,
                            S_N2=18., S_NH4=25., S_NO2=0., S_NO3=0., S_PO4=8., 
@@ -953,7 +953,7 @@ class WasteStream(Stream):
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 
         new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
-                  thermo=thermo, pH=pH, S_Alk=S_Alk)
+                  thermo=thermo, pH=pH, SAlk=SAlk)
 
         if ratios: new.ratios = ratios
         else: new.ratios = WasteStream._default_ratios
@@ -968,7 +968,7 @@ class WasteStream(Stream):
         cmp_dct['S_NO2'] = S_NO2
         cmp_dct['S_NO3'] = S_NO3
         cmp_dct['S_PO4'] = S_PO4
-        cmp_dct['S_CO3'] = S_Alk * 12 * conc_unit.conversion_factor(units[1])       # 1 meq/L SAlk ~ 1 mmol/L HCO3- ~ 12 mg C/L (12 mg C/mmol HCO3-)
+        cmp_dct['S_CO3'] = SAlk * 12 * conc_unit.conversion_factor(units[1])       # 1 meq/L SAlk ~ 1 mmol/L HCO3- ~ 12 mg C/L (12 mg C/mmol HCO3-)
         cmp_dct['S_Ca'] = S_Ca
         cmp_dct['S_Mg'] = S_Mg
         cmp_dct['S_K'] = S_K
@@ -1089,7 +1089,7 @@ class WasteStream(Stream):
             den0 = den
             cmp_dct['H2O'] = flow_tot*den0 - dwt
             new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
-                      thermo=thermo, pH=pH, S_Alk=S_Alk, **cmp_dct)
+                      thermo=thermo, pH=pH, SAlk=SAlk, **cmp_dct)
             den = flow_tot*den0/(new.F_vol*1e3)            
             i += 1
             if abs(den-den0) <= 1e-3: break
@@ -1103,7 +1103,7 @@ class WasteStream(Stream):
     @classmethod
     def sludge_inf_model(cls, ID, flow_tot=0., units = ('L/hr', 'mg/L'), 
                          phase='l', T=298.15, P=101325., price=0., thermo=None, 
-                         pH=7., S_Alk=10., ratios=None, 
+                         pH=7., SAlk=10., ratios=None, 
                          TSS=1e4, TKN=750., TP=250., S_NH4=100., S_PO4=50., 
                          iVSS_TSS=0.65, iscCOD_COD=0.01, iSNH_STKN=0.9,
                          frXUInf_VSS=0.4, frXUE_VSS=0.3, frXOHO_VSS=0.2,  
@@ -1126,7 +1126,7 @@ class WasteStream(Stream):
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 
         new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
-                  thermo=thermo, pH=pH, S_Alk=S_Alk)
+                  thermo=thermo, pH=pH, SAlk=SAlk)
 
         if ratios: new.ratios = ratios
         else: new.ratios = WasteStream._default_ratios
@@ -1141,7 +1141,7 @@ class WasteStream(Stream):
         cmp_dct['S_NO2'] = S_NO2
         cmp_dct['S_NO3'] = S_NO3
         cmp_dct['S_PO4'] = S_PO4
-        cmp_dct['S_CO3'] = S_Alk * 12 * conc_unit.conversion_factor(units[1])       # 1 meq/L SAlk ~ 1 mmol/L HCO3- ~ 12 mg C/L (12 mg C/mmol HCO3-)
+        cmp_dct['S_CO3'] = SAlk * 12 * conc_unit.conversion_factor(units[1])       # 1 meq/L SAlk ~ 1 mmol/L HCO3- ~ 12 mg C/L (12 mg C/mmol HCO3-)
         cmp_dct['S_Ca'] = S_Ca
         cmp_dct['S_Mg'] = S_Mg
         cmp_dct['S_K'] = S_K
@@ -1255,7 +1255,7 @@ class WasteStream(Stream):
             den0 = den
             cmp_dct['H2O'] = flow_tot*den0 - dwt
             new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
-                      thermo=thermo, pH=pH, S_Alk=S_Alk, **cmp_dct)
+                      thermo=thermo, pH=pH, SAlk=SAlk, **cmp_dct)
             den = flow_tot*den0/(new.F_vol*1e3)            
             i += 1
             if abs(den-den0) <= 1e-3: break
