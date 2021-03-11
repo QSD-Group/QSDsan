@@ -32,8 +32,8 @@ def test_waste_stream():
     assert isclose(ws1.F_vol, ws2.F_vol)
     
 
-    ws1 = WasteStream(SAc=5, H2O=1000, units='kg/hr')
-    ws2 = WasteStream(XNOO=10, H2O=1000, units='kg/hr')
+    ws1 = WasteStream(S_Ac=5, H2O=1000, units='kg/hr')
+    ws2 = WasteStream(X_NOO=10, H2O=1000, units='kg/hr')
     ws3 = WasteStream()
     ws3.mix_from((ws1, ws2))
     assert_allclose(ws3.F_mass, 2015.0)
