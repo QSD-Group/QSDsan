@@ -387,15 +387,18 @@ class Processes():
         data.dropna(how='all', subset=cmp_IDs, inplace=True)
         new = cls(())
         for i, proc in data.iterrows():
-            ID = proc[1]
+            ID = proc[0]
             stoichio = proc[1:-1]
             if pd.isna(proc[-1]): rate_eq = None
             else: rate_eq = proc[-1]
-            ref = cmp_IDs[stoichio.isin((-1, 1))]
-            if len(ref) == 0: ref = cmp_IDs[-pd.isna(stoichio)][0]                
-            else: ref = ref[0]
-            stoichio = stoichio[-pd.isna(stoichio)]
-            process = Process(ID, stoichio.to_dict(), 
+            stoichio = stoichio[-pd.isna(stoichio)].to_dict()
+            for k,v in stoichio.items():
+                try: stoichio[k] = float(v)
+                except: continue
+            ref = [k for k,v in stoichio.items() if v in (-1, 1)]
+            if len(ref) == 0: ref = list(stoichio.keys())[0]                
+            else: ref = ref[0]            
+            process = Process(ID, stoichio, 
                               ref_component=ref, 
                               rate_equation=rate_eq,
                               conserved_for=conserved_for,
