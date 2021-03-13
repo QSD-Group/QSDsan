@@ -157,8 +157,8 @@ class DryingBed(SanUnit, Decay):
         steel = tot_cover_area*self.cover_unit_mass + \
             tot_column_length*self.column_unit_mass
         self.construction = (
-            Construction(item='Concrete', quantity=concrete, unit='m3'),
-            Construction(item='Steel', quantity=steel, unit='kg'),
+            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
+            Construction(item='Steel', quantity=steel, quantity_unit='kg'),
             )
         for i in self.construction:
             self._BM[i.item.ID] = 1

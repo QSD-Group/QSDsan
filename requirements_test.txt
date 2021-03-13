@@ -1,6 +1,6 @@
 # Needed by qsdsan
-biosteam==2.24.1
-thermosteam==0.24.0
+biosteam==2.24.3
+thermosteam==0.24.1
 pint==0.12
 numpy==1.19.2
 ipykernel==5.3.4

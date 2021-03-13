@@ -3,11 +3,10 @@ dist
 *.egg-info
 __pycache__
 **/__pycache__
-**/temp.py
+**/*temp*.py
 *.pyc
 *.pyo
 .pypirc
-dist
 MANIFEST
 .coverage
 .coveralls.yml

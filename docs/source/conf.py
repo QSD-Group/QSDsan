@@ -76,8 +76,7 @@ html_css_files = ['css/qsdsan.css']
 
 # -- External mapping -------------------------------------------------------
 intersphinx_mapping = {
-	'BioSTEAM': ('https://biosteam.readthedocs.io/en/latest', None),
-	'Thermosteam': ('https://thermosteam.readthedocs.io/en/latest', None),
-	'chemicals': ('https://chemicals.readthedocs.io/en/latest', None),
+	'biosteam': ('https://biosteam.readthedocs.io/en/latest', None),
+	'thermosteam': ('https://thermosteam.readthedocs.io/en/latest', None),
     'SALib': ('https://salib.readthedocs.io/en/latest', None),
 }

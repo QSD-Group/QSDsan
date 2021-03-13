@@ -58,15 +58,16 @@ In particular, ``QSDsan`` introduces:
    Components
    CompiledComponents
    Construction
+   Equipment
    ImpactIndicator
    ImpactItem
    LCA
    SanUnit
-   sanunits/sanunits
-   stats
    SimpleTEA
    Transportation
    WasteStream
+   sanunits/sanunits
+   stats
 .. Process # TO BE ADDED
 
 
@@ -86,7 +87,7 @@ Additionally, to get the full value of ``QSDsan``, we highly recommend reading t
 
 
 .. toctree::
-   :maxdepth: 0
+   :maxdepth: 1
    :caption: What's new
 
    CHANGELOG

@@ -15,6 +15,7 @@ for license details.
 
 # %%
 
+import math
 import numpy as np
 import pandas as pd
 from . import ImpactItem, WasteStream
@@ -168,12 +169,12 @@ class LCA:
             ratio = converted/self.lifetime_hr
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         for i in units:
-            if i.lifetime:
-                factor = self.lifetime/i.lifetime
-            else:
-                factor = 1
             for j in i.construction:
                 impact = j.impacts
+                if j.lifetime is not None:
+                    factor = math.ceil(time/j.lifetime)
+                else:
+                    factor = 1.
                 for m, n in impact.items():
                     impacts[m] += n*ratio*factor
         return impacts
@@ -274,16 +275,16 @@ class LCA:
         
         Parameters
         ----------
-        streams : :class:`WasteStream` or iterable
-            One of multiple streams. Note that impacts of these streams will be
+        streams : :class:`WasteStream` or sequence
+            One or a sequence of streams. Note that impacts of these streams will be
             excluded in calculating the total impacts.
-        allocate_by : str, iterable, or function to generate an iterable
+        allocate_by : str, sequence, or function to generate an sequence
             If provided as a str, can be "mass", "energy", or 'value' to allocate
             the impacts accordingly.
-            If provided as an iterable (no need to normalize so that sum of the iterable is 1),
-            will allocate impacts according to the iterable.
+            If provided as a sequence (no need to normalize so that sum of the sequence is 1),
+            will allocate impacts according to the sequence.
             If provided as a function,  will call the function to generate an
-            iterable to allocate the impacts accordingly.
+            sequence to allocate the impacts accordingly.
         
         .. note::
             
@@ -311,7 +312,7 @@ class LCA:
             ratios = allocate_by()
         else:
             raise ValueError('allocate_by can only be "mass", "energy", "value", '
-                             'an iterable, or a function to generate an iterable.')
+                             'a sequence, or a function to generate a sequence.')
         if ratios.sum() == 0:
             raise ValueError('Calculated allocation ratios are all zero, cannot allocate.')
         ratios = ratios/ratios.sum()
@@ -323,7 +324,7 @@ class LCA:
         return allocated
         
     
-    def get_units_impacts(self, units, time=None, time_unit='hr',
+    def get_unit_impacts(self, units, time=None, time_unit='hr',
                           exclude=None):
         '''Return total impacts with certain units, normalized to a certain time frame. '''
         if not (isinstance(units, tuple) or isinstance(units, list)

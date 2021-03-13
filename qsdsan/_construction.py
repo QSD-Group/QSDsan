@@ -27,19 +27,35 @@ __all__ = ('Construction',)
 
 
 class Construction:
-    '''Construction cost and environmental impacts.'''
-
-    __slots__ = ('_item', '_quantity')
+    '''
+    Construction activity for cost and environmental impact calculations.
     
-    def __init__(self, item=None, quantity=0., unit=''):
-        self.item = item
-        self._update_quantity(quantity, unit)
+    Parameters
+    ----------
+    item : :class:`ImpactItem`
+        Impact item associated with this consturction activity.
+    quantity : float
+        Quantity of the impact item involved in this construction activity.
+    lifetime : float
+        Lifetime of this construction activity.
+    
+    '''
 
-    def _update_quantity(self, quantity=0., unit=''):
-        if not unit or unit == self.item.functional_unit:
+    __slots__ = ('_item', '_quantity', '_lifetime')
+    
+    def __init__(self, item=None, quantity=0., quantity_unit='',
+                 lifetime=None, lifetime_unit='yr'):
+        self.item = item
+        self._update_quantity(quantity, quantity_unit)
+        self._lifetime = None
+        if lifetime:
+            self._lifetime = auom(lifetime_unit).convert(lifetime, 'yr')
+
+    def _update_quantity(self, quantity=0., quantity_unit=''):
+        if not quantity_unit or quantity_unit == self.item.functional_unit:
             self._quantity = float(quantity)
         else:
-            converted = auom(unit).convert(float(quantity), self.item.functional_unit)
+            converted = auom(quantity_unit).convert(float(quantity), self.item.functional_unit)
             self._quantity = converted
            
     def __repr__(self):
@@ -50,6 +66,7 @@ class Construction:
         item = self.item
         impacts = self.impacts
         info = f'Construction : {item.ID}'
+        info += f'\nLifetime     : {f_num(self.lifetime)} yr'
         info += f'\nQuantity     : {f_num(self.quantity)} {self.item.functional_unit}'
         info += f'\nTotal cost   : {f_num(self.cost)} {currency}'
         info += '\nTotal impacts:'
@@ -75,6 +92,17 @@ class Construction:
             setattr(new, slot, copy_maybe(value))
         return new
     __copy__ = copy
+    
+    @property
+    def lifetime(self):
+        '''[float] Lifetime of this construction activity.'''
+        return self._lifetime
+    @lifetime.setter
+    def lifetime(self, lifetime, unit='yr'):
+        if lifetime is None:
+            self.lifetime = lifetime
+        else:
+            self._lifetime = auom(unit).convert(lifetime, 'yr')
     
     @property
     def item(self):

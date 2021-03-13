@@ -12,12 +12,16 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-from . import _cmps, systems, models
+from . import _cmps, systems, models, analyses
 
 from ._cmps import *
 from .systems import *
+from .models import *
+from .analyses import *
 
 __all__ = (
 	*_cmps.__all__,
 	*systems.__all__,
+    *models.__all__,
+    *analyses.__all__,
 	)

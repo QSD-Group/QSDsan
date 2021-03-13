@@ -22,11 +22,11 @@ except pkg_resources.DistributionNotFound:  # pragma: no cover
 import biosteam as bst
 CEPCI = bst.CE # Chemical Engineering Plant Cost Index
 CEPCI_by_year = bst.units.design_tools.CEPCI_by_year
+set_thermo = bst.settings.set_thermo
 del bst
 currency = 'USD'
 
 from .utils import descriptors
-from ._cod import *
 from ._component import *
 from ._components import *
 from ._waste_stream import *
@@ -34,6 +34,7 @@ from ._impact_indicator import *
 from ._impact_item import *
 from ._construction import *
 from ._transportation import *
+from ._equipment import *
 from ._sanunit import *
 from ._simple_tea import *
 from ._lca import *
@@ -48,6 +49,7 @@ from . import (
     _impact_item,
     _construction,
     _transportation,
+    _equipment,
     _sanunit,
     _simple_tea,
     _lca,
@@ -60,7 +62,6 @@ from . import (
 utils.secondary_importing()
 
 __all__ = (
-    *_cod.__all__,
     *_component.__all__,
     *_components.__all__,
     *_waste_stream.__all__,
@@ -68,6 +69,7 @@ __all__ = (
     *_impact_item.__all__,
     *_construction.__all__,
     *_transportation.__all__,
+    *_equipment.__all__,
     *_sanunit.__all__,
     *_simple_tea.__all__,
     *_lca.__all__,

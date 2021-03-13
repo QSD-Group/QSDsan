@@ -14,6 +14,7 @@ for license details.
 
 # %%
 
+from datetime import date
 import qsdsan as qs
 from biosteam import TEA
 
@@ -63,7 +64,7 @@ class SimpleTEA(TEA):
                  '_annual_maintenance', '_annual_labor', '_system_add_OPEX')
     
     def __init__(self, system, discount_rate=0.05,
-                 start_year=2018, lifetime=10, uptime_ratio=1., 
+                 start_year=date.today().year, lifetime=10, uptime_ratio=1., 
                  CAPEX=0., lang_factor=None,
                  annual_maintenance=0., annual_labor=0., system_add_OPEX=0.,
                  construction_schedule=None):
@@ -139,7 +140,13 @@ class SimpleTEA(TEA):
         r = self.discount_rate
         for unit in units:
             lifetime = unit.lifetime or self.lifetime
-            CAPEX += unit.installed_cost*r/(1-(1+r)**(-lifetime))
+            if not unit._equipment_lifetime:
+                CAPEX += unit.installed_cost*r/(1-(1+r)**(-lifetime))
+            else:
+                lifetime_dct = dict.fromkeys(unit.purchase_costs.keys(), lifetime)
+                lifetime_dct.update(unit._equipment_lifetime)
+                for equip, cost in unit.purchase_costs.items():
+                    CAPEX += unit._BM[equip]*cost*r/(1-(1+r)**(-lifetime_dct[equip]))
         return CAPEX
 
     @property

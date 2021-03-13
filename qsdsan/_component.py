@@ -21,6 +21,8 @@ from ._cod import cod_test_stoichiometry, electron_acceptor_cod
 
 __all__ = ('Component',)
 
+isinstance = isinstance
+
 _chemical_fields = tmo._chemical._chemical_fields
 _checked_properties = tmo._chemical._checked_properties
 display_asfunctor = tmo._chemical.display_asfunctor
@@ -53,9 +55,6 @@ _key_component_properties = ('particle_size', 'degradability', 'organic',
 # All Component-related properties
 _component_properties = ('measured_as', 'description', 
                          *_key_component_properties)
-                         
-# _component_slots = (*tmo.Chemical.__slots__,
-#                     *tuple('_'+i for i in _component_properties))
 
 _checked_properties = (*_checked_properties, *_key_component_properties)
 
@@ -107,7 +106,6 @@ class Component(tmo.Chemical):
     and methods for waste treatment.
 
     .. note::
-        
         [1] Element ratios like `i_C`, `i_N`, `i_P`, `i_K`, `i_Mg`, and `i_Ca` will
         be calculated based on `formula` and `measured_as` if given; and the ratio
         will be 1 if the component is measured as this element.
@@ -254,7 +252,7 @@ class Component(tmo.Chemical):
             i = 1
         self._i_mass = check_return_property('i_mass', i)
     
-    #!!! need to enable calculation from formula and water chemistry equilibria
+    #!!! Need to enable calculation from formula and water chemistry equilibria
     @property
     def i_charge(self):
         '''
@@ -520,7 +518,7 @@ class Component(tmo.Chemical):
     __copy__ = copy
 
     @classmethod
-    def from_chemical(cls, ID, chemical, phase=None, measured_as=None, 
+    def from_chemical(cls, ID, chemical=None, phase=None, measured_as=None, 
                       i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
                       i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
                       f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None, 
@@ -528,6 +526,10 @@ class Component(tmo.Chemical):
                       organic=None, **data):
         '''Return a new :class:`Component` from a :class:`thermosteam.Chemical` object.'''
         new = cls.__new__(cls, ID=ID, phase=phase)
+        if chemical is None:
+            chemical = ID
+        if isinstance(chemical, str):
+            chemical = tmo.Chemical(chemical)
         for field in chemical.__slots__:
             value = getattr(chemical, field, None)
             setattr(new, field, copy_maybe(value))

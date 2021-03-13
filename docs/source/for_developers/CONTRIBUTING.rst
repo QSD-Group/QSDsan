@@ -102,20 +102,20 @@ Whenever new modules or functions are added, concise and thorough documents shou
 ``QSDsan`` uses `numpydoc docstring style <https://numpydoc.readthedocs.io/en/latest/format.html>`_ with some modifications for better rendering. Some important notes:
 
 - Both quotes ('') and double quotes ("") are good.
-- If you want some notes in your docstring, use `directives <https://docutils.sourceforge.io/docs/ref/rst/directives.html>`_ so that it can be rendered in sphinx.
+- If you want some notes in your docstring, use `directives <https://docutils.sourceforge.io/docs/ref/rst/directives.html>`_ so that it can be rendered by `Sphinx <https://www.sphinx-doc.org/en/master/>`_.
 	
 	.. code::
 
-		# This can be rendered by sphinx
+		# This can be rendered by Sphinx and as docstring
 		.. note::
 
 			Something to notes
 
-		# This won't be rendered by sphinx
+		# This won't be rendered by Sphinx
 		Notes
 		-----
 
-		# This can be rendered by sphinx but won't be recognized as numpydoc docstring
+		# This can be rendered by Sphinx but won't be recognized as docstring
 		Note
 		----
 
@@ -123,17 +123,17 @@ Whenever new modules or functions are added, concise and thorough documents shou
 
 	- Use single back ticks (``) in error messages and warnings since directives won't be rendered.
 
-- If you want to refer to documents of other internal modules or external packages, please include it in the "See Also" section (refer to :class:`sanunits.AnaerobicDigestion` and :class:`Component` as examples).
+- If you want to refer to documents of other internal modules or external packages, please include it in the "See Also" section (refer to :class:`qsdsan.sanunits.AnaerobicDigestion` and :class:`qsdsan.Component` as examples).
 - Here is a great `memo on reStructuredText and Sphinx <https://rest-sphinx-memo.readthedocs.io/en/latest/>`_.
 
 
-Most of the documentations will be automatically generated through `sphinx's autodoc extension <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_. If your contribution involves new classes or modules, please add a new .rst file in docs/source/. and add it to the appropriate section in the ``index.rst`` file. You can refer to any of the existing files for examples.
+Most of the documentations will be automatically generated through `Sphinx's autodoc extension <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_. If your contribution involves new classes or modules, please add a new .rst file in docs/source/. and add it to the appropriate section in the ``index.rst`` file. You can refer to any of the existing files for examples.
 
 Tutorials are prepared in `Jupyter Notebook <https://jupyter.org/>`_ and potential contributors are encouraged to use the `templates <https://github.com/QSD-Group/QSDsan/tree/master/docs/source/for_developers>`_.
 
 
 Testing
 -------
-``QSDsan`` uses `Travis CI <https://travis-ci.com/>`_ for testing. A pull request will only be accepted when the branch has not conflicts with the root repository and all tests have been passed. More instructions on testing will be added.
+``QSDsan`` uses `Travis CI <https://travis-ci.com/>`_ for testing. A pull request will only be accepted when the branch has no conflicts with the root repository and all tests have been passed. More instructions on testing will be added.
 
 
