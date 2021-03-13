@@ -3,6 +3,22 @@ Contributing to QSDsan
 
 Below are some brief instructions on how to contribute to QSDsan. If you have any questions regarding the process, feel free to `submit an issue on GitHub <https://github.com/QSD-Group/QSDsan/issues>`_. Thank you in advance for your contribution!
 
+Authorship
+----------
+The following guideline is adapted from `BioSTEAM <https://biosteam.readthedocs.io/en/latest/CONTRIBUTING.html#authorship>`_, we welcome inputs from the community for enhancement. If you feel that your contributions are not acknowledged or adequately acknowledged, please do contact us.
+
+#. Contributions must be acknowledged at the module-level with a short description for:
+
+	- Code development. The primary author is encouraged (but not required) to include contact info in the module.
+	- Module development (i.e., math algorithms, codes in other languages).
+	- Instrumental comments and suggestions through discussion.
+
+#. All contributors will be added to the `author list <https://qsdsan-beta.readthedocs.io/en/latest/for_developers/AUTHORS.html>`_.
+
+#. If any code or implementation was copied from a third party, it should be noted in the module-level documentation.
+
+#. Any third-party packages copied from ``QSDsan`` must be strictly open-source (not copy-left nor open-access). If license of the third-part package is different from ``QSDsan``, the module should add the third-party license as an option (i.e., dual licensing).
+
 
 Forking and Cloning
 -------------------
@@ -33,7 +49,7 @@ Forking and Cloning
 	    git clone https://github.com/<YOUR_USERNAME>/QSDsan.git --depth 1
 
 	- If you don't have ``git``, follow the `instructions <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_ to install it.
-	- The ``--depth-1`` flag is to tell ``git`` just clone the latest commit, you can change the depth number or just remove this flag completely, but then ``git`` will download more historical commits, which takes longer to clone and takes more space.
+	- The ``--depth-1`` flag is to tell ``git`` just clone the latest commit, you can change the depth number or just remove this flag completely, but then ``git`` will download more historical commits, which takes longer time to clone and needs more space.
 
 #. Add the root QSDsan as the upstream:
 

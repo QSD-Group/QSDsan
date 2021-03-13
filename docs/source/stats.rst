@@ -67,6 +67,7 @@ Kernel density plots
 	# Similar to histogram plots, kernel density plots can be 1D
 	fig, ax = s.plot_uncertainties(modelA, x_axis=key_metrics, kind='kde',
 	                               center_kws={'fill': True, 'log_scale': 2})
+	plot_uncer_kde.png	                              
 
 .. figure:: ./images/plot_uncer_kde.png
 
@@ -152,6 +153,7 @@ Examples
 	# but calling the actual plotting function is easier to customize
 	# (e.g., set `label_kind`)
 	fig, ax = s.plot_morris_results(morris_dct, key_metrics[0], label_kind='name')
+	fig.subplots_adjust(bottom=0.25)
 
 
 .. figure:: ./images/plot_morris.png

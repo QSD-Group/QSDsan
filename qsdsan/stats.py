@@ -6,7 +6,11 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
-
+    
+With contributions from:
+    Yoel Rene Cortés-Peña <yoelcortes@gmail.com>
+    Joy Cheung <joycheung1994@gmail.com>
+    
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
@@ -20,12 +24,12 @@ __all__ = ('get_correlations', 'define_inputs', 'generate_samples',
            'plot_uncertainties', 'plot_correlations',
            'plot_morris_results', 'plot_morris_convergence', 'plot_sobol_results')
 
+from collections.abc import Iterable
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import biosteam as bst
 from warnings import warn
-from scipy.stats import pearsonr, spearmanr, kendalltau, kstest
 from matplotlib import pyplot as plt
 from SALib.sample import (
     morris as morris_sampler,
@@ -77,7 +81,6 @@ def _update_nan(df, nan_policy, legit=('propagate', 'raise', 'omit')):
     else:
         return df
     
-    
 def _update_df_names(df, columns=True, index=True):
     new_df = df.copy()
 
@@ -123,10 +126,10 @@ def get_correlations(model, input_x=None, input_y=None,
     model : :class:`biosteam.Model`
         Uncertainty model with defined paramters and metrics.
     input_x : :class:`biosteam.Parameter` or :class:`biosteam.Metric`
-        First set of input, can be single values or iteral,
+        First set of input, can be single values or an iterable,
         will be defaulted to all model parameters if not provided.
     input_y : :class:`biosteam.Parameter` or :class:`biosteam.Metric`
-        Second set of input, can be single values or iteral,
+        Second set of input, can be single values or an iterable,
         will be defaulted to all model parameters if not provided.
     kind : str
         Can be "Pearson" for Pearson's r, "Spearman" for Spearman's rho,
@@ -145,60 +148,44 @@ def get_correlations(model, input_x=None, input_y=None,
     Two :class:`pandas.DataFrame` containing the test statistics and p-values.
     
     See Also
-    --------
-    `scipy.stats.pearsonr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.pearsonr.html>`_
+    --------    
+    :func:`scipy.stats.pearsonr`
     
-    `scipy.stats.spearmanr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.spearmanr.html>`_
+    :func:`scipy.stats.spearmanr`
     
-    `scipy.stats.kendalltau <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.kendalltau.html>`_
+    :func:`scipy.stats.kendalltau`
     
-    `scipy.stats.kstest <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.kstest.html>`_
+    :func:`scipy.stats.kstest`
     
     '''
-    table = model.table.astype('float64')
-    
-    input_x = _update_input(input_x, model.get_parameters())
-    input_y = _update_input(input_y, model.metrics)
-    x_indices = var_indices(input_x)
-    x_data = [table[i] for i in x_indices]
-    y_indices = var_indices(input_y)
-    y_data = [table[i] for i in y_indices]
 
-    df_index = indices_to_multiindex(x_indices, ('Element', 'Input x'))
-    df_column = indices_to_multiindex(y_indices, ('Element', 'Input y'))
-    
-    rs, ps = [], []
-    for x in x_data:
-        rs.append([])
-        ps.append([])
-        for y in y_data:
-            df = pd.concat((x, y), axis=1)
-            if True in df.isna().any().values:
-                df = _update_nan(df, nan_policy)
-            if isinstance(df, str):
-                r, p = (np.nan, np.nan)
-            else:
-                kind_cap = kind.capitalize()
-                if kind_cap == 'Pearson':
-                    r, p = pearsonr(df.iloc[:,0], df.iloc[:,1], **kwargs)
-                    sheet_name = 'r'
-                elif kind_cap == 'Spearman':
-                    r, p = spearmanr(df.iloc[:,0], df.iloc[:,1], **kwargs)
-                    sheet_name = 'rho'
-                elif kind_cap == 'Kendall':
-                    r, p = kendalltau(df.iloc[:,0], df.iloc[:,1], **kwargs)
-                    sheet_name = 'tau'
-                elif kind_cap.upper() == 'KS':
-                    r, p = kstest(df.iloc[:,0], df.iloc[:,1], **kwargs)
-                    sheet_name = 'D'
-                else:
-                    raise ValueError('kind can only be "Pearson", "Spearman", ' \
-                                      f'"Kendall", or "KS", not "{kind}".')
-            rs[-1].append(r)
-            ps[-1].append(p)
-    r_df = pd.DataFrame(rs, index=df_index, columns=df_column)
-    p_df = pd.DataFrame(ps, index=df_index, columns=df_column)
-    
+    if input_x and not isinstance(input_x, Iterable): input_x = (input_x,)
+    if input_y and not isinstance(input_y, Iterable): input_y = (input_y,)
+    if nan_policy not in ('propagate', 'raise', 'omit'):
+        raise ValueError(f'nan_policy can only be in ("omit", "propagate", "raise"), ' \
+                         f'not "{nan_policy}".')
+
+    name = kind.lower()
+    if name == 'pearson':
+        correlation = model.pearson_r
+        sheet_name = 'r'
+    elif name == 'spearman':
+        correlation = model.spearman_r
+        sheet_name = 'rho'
+    elif name == 'kendall':
+        correlation = model.kendall_tau
+        sheet_name = 'tau'
+    elif name == 'ks':
+        correlation = model.kolmogorov_smirnov_d
+        sheet_name = 'D'
+    else:
+        raise ValueError('kind can only be "Pearson", "Spearman", ' 
+                        f'"Kendall", or "KS", not "{kind}".')
+    r_df, p_df = dfs = correlation(input_x, input_y, nan_policy+' nan', **kwargs)
+    for df in dfs:
+        df.index.names = ('Element', 'Input x')
+        df.columns.names = ('Element', 'Input y')
+        
     if file:
         with pd.ExcelWriter(file) as writer:
             r_df.to_excel(writer, sheet_name=sheet_name)
@@ -228,18 +215,11 @@ def define_inputs(model):
 
     See Also
     --------
-    `SALib basics <https://salib.readthedocs.io/en/latest/basics.html#an-example>`_
+    `SALib Basics <https://salib.readthedocs.io/en/latest/basics.html#an-example>`_
 
     '''
-    params = model.get_parameters()
-    problem = {
-        'num_vars': len(params),
-        'names': [i.name for i in params],
-        'bounds': [i.bounds if i.bounds
-                   else (i.distribution.lower[0], i.distribution.upper[0])
-                   for i in params]
-        }
-    return problem
+    return model.problem()
+
 
 def generate_samples(inputs, kind, N, seed=None, **kwargs):
     '''
@@ -651,45 +631,40 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
 # Plot uncertainty analysis results
 # =============================================================================
 
-#    metrics : :class:`biosteam.Metric`
-#        Metric(s) of interest for the plot, will be default to all metrics
-#        included in the model result table if not provided.
-
-
 def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
                        file='', close_fig=True, center_kws={}, margin_kws={}):
     '''
     Visualize uncertainty analysis results as one of the following depending on inputs:
     
-    +---------------------------------+-------------------------------------+
-    | input                           | returned plot                       |
-    +----------+----------+-----------+-------------+-----------+-----------+    
-    | x_axis   | y_axis   | kind      | orientation | center    | margin    |
-    +==========+==========+===========+=============+===========+===========+
-    | single   | None     | box       | horizontal  | box       | N/A       |
-    | or       |          +-----------+             +-----------+           +
-    | sequence |          | hist      |             | histogram |           |
-    |          |          +-----------+             +-----------+           +
-    |          |          | kde       |             | kde       |           |
-    +----------+----------+-----------+-------------+-----------+-----------+
-    | None     | single   | box       | vertical    | box       | N/A       |
-    |          | or       +-----------+             +-----------+           +
-    |          | sequence | hist      |             | histogram |           |
-    |          |          +-----------+             +-----------+           +
-    |          |          | kde       |             | kde       |           |
-    +----------+----------+-----------+-------------+-----------+-----------+
-    | single   | single   | hist-box  | both        | histogram | box       |
-    |          |          +-----------+             +           +-----------+
-    |          |          | hist-kde  |             |           | kde       |
-    |          |          +-----------+             +           +-----------+
-    |          |          | hist-hist |             |           | histogram |
-    |          |          +-----------+             +-----------+-----------+
-    |          |          | kde-box   |             | kde       | box       |
-    |          |          +-----------+             +           +-----------+
-    |          |          | kde-hist  |             |           | histogram |
-    |          |          +-----------+             +           +-----------+
-    |          |          | kde-kde   |             |           | kde       |
-    +----------+----------+-----------+-------------+-----------+-----------+ 
+    +---------------------------------+------------------------------------------+
+    | input                           | returned plot                            |
+    +----------+----------+-----------+-------------+-----------+----------------+    
+    | x_axis   | y_axis   | kind      | orientation | center    | margin         |
+    +==========+==========+===========+=============+===========+================+
+    | single   | None     | box       | 1D          | box       | N/A            |
+    | or       |          +-----------+ horizontal  +-----------+                +
+    | sequence |          | hist      |             | histogram |                |
+    |          |          +-----------+             +-----------+                +
+    |          |          | kde       |             | kde       |                |
+    +----------+----------+-----------+-------------+-----------+----------------+
+    | None     | single   | box       | 1D          | box       | N/A            |
+    |          | or       +-----------+ vertical    +-----------+                +
+    |          | sequence | hist      |             | histogram |                |
+    |          |          +-----------+             +-----------+                +
+    |          |          | kde       |             | kde       |                |
+    +----------+----------+-----------+-------------+-----------+----------------+
+    | single   | single   | hist-box  | 2D          | histogram | box            |
+    |          |          +-----------+             +           +----------------+
+    |          |          | hist-kde  |             |           | kernel density |
+    |          |          +-----------+             +           +----------------+
+    |          |          | hist-hist |             |           | histogram      |
+    |          |          +-----------+             +-----------+----------------+
+    |          |          | kde-box   |             | kde       | box            |
+    |          |          +-----------+             +           +----------------+
+    |          |          | kde-hist  |             |           | histogram      |
+    |          |          +-----------+             +           +----------------+ 
+    |          |          | kde-kde   |             |           | kernel density |
+    +----------+----------+-----------+-------------+-----------+----------------+ 
 
     .. note::
         When both x_axis and y_axis are not None (i.e., the figure is 2D),
@@ -737,7 +712,7 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
     :func:`seaborn.jointplot` `docs <https://seaborn.pydata.org/generated/seaborn.jointplot.html>`_
     
     '''
-    #!!! PAUSED, FIGURE OUT NICER LABELING AND EXAMPLES
+
     kind_lower = kind.lower()
     table = model.table.astype('float64')
     df = _update_df_names(table)
@@ -1407,7 +1382,6 @@ def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
             fig.suptitle(f'Variance breakdown for {metric.name.lower()}')
 
         return _save_fig_return(fig, (ax_sts1, ax_s2), file, close_fig)
-
 
 
 

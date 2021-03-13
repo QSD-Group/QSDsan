@@ -44,7 +44,7 @@ class LCA:
         Unit of lifetime.
     uptime_ratio : float
         Fraction of time that the plant is operating.
-    **item_quantities : kwargs, :class:`ImpactItem` or str = float/callable or (float/callable, unit)
+    item_quantities : kwargs, :class:`ImpactItem` or str = float/callable or (float/callable, unit)
         Other :class:`ImpactItem` objects (e.g., electricity) and their quantities.
         Note that callable functions are used so that quantity of items can be updated.
     

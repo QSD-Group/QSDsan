@@ -8,6 +8,9 @@ This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
     Joy Cheung <joycheung1994@gmail.com>
 
+Part of the code is based on the thermosteam package:
+https://github.com/BioSTEAMDevelopmentGroup/thermosteam
+
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
@@ -106,6 +109,7 @@ class Component(tmo.Chemical):
     and methods for waste treatment.
 
     .. note::
+        
         [1] Element ratios like `i_C`, `i_N`, `i_P`, `i_K`, `i_Mg`, and `i_Ca` will
         be calculated based on `formula` and `measured_as` if given; and the ratio
         will be 1 if the component is measured as this element.
@@ -526,15 +530,20 @@ class Component(tmo.Chemical):
                       organic=None, **data):
         '''Return a new :class:`Component` from a :class:`thermosteam.Chemical` object.'''
         new = cls.__new__(cls, ID=ID, phase=phase)
+
         if chemical is None:
             chemical = ID
+
         if isinstance(chemical, str):
             chemical = tmo.Chemical(chemical)
+
         for field in chemical.__slots__:
             value = getattr(chemical, field, None)
             setattr(new, field, copy_maybe(value))
         new._ID = ID
+
         if phase: new._locked_state = phase
+
         new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus, new.Tm,
                            new.Tb, new.eos, new.eos_1atm, new.phase_ref)
         new._label_handles()

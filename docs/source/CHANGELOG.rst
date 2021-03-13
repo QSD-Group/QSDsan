@@ -24,6 +24,8 @@ Ongoing
 		- :func:`qsdsan.stats.plot_fast_results` for results from FAST and/or RBD-FAST analyses.
 		- :func:`qsdsan.stats.plot_sobol_results` for results from Sobol analysis.
 
+- More clear guideline for contribution acknowledgement and author list in the document.
+
 
 `0.1.0`_ (2021-02-14)
 ---------------------

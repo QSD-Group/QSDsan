@@ -7,6 +7,9 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
+Part of the code is based on the biosteam package:
+https://github.com/BioSTEAMDevelopmentGroup/biosteam
+
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
@@ -24,7 +27,7 @@ format_title = bst.utils.misc.format_title
 
 __all__ = ('SanUnit',)
 
-class SanUnit(bst.Unit, isabstract=True):    
+class SanUnit(bst.Unit, isabstract=True):
 
     '''
     Subclass of :class:`biosteam.Unit`, is initialized with :class:`WasteStream`
@@ -48,7 +51,7 @@ class SanUnit(bst.Unit, isabstract=True):
         (dict) in year.
         It will be used to adjust cost and emission calculation in TEA and LCA.
         Equipment without provided lifetime will be assumed to have the same
-        lifetime as the TEA/LCA.         
+        lifetime as the TEA/LCA.
     
     See Also
     --------
@@ -69,9 +72,11 @@ class SanUnit(bst.Unit, isabstract=True):
         self._init_utils()
         self._init_results()
         self._assert_compatible_property_package()
+
         for equip in equipments:
             equip._linked_unit = self
         self.equipments = equipments
+        
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
@@ -93,7 +98,6 @@ class SanUnit(bst.Unit, isabstract=True):
 
     def __repr__(self):
         return f'<{type(self).__name__}: {self.ID}>'
-
 
     def _info(self, T, P, flow, composition, N, IDs, _stream_info):
         '''Information of the unit.'''
@@ -139,9 +143,7 @@ class SanUnit(bst.Unit, isabstract=True):
         info = info.replace('\n ', '\n    ')
         return info[:-1]
     
-    
     _impact = NotImplementedMethod
-
 
     def _summary(self):
         '''After system converges, design the unit and calculate cost and environmental impacts.'''
@@ -154,6 +156,7 @@ class SanUnit(bst.Unit, isabstract=True):
         '''Print information of the unit, including waste stream-specific information.'''
         print(self._info(T, P, flow, composition, N, IDs, stream_info))
     
+
     def add_equipment_design(self):
         for equip in self.equipments:
             name = equip.name or format_title(type(equip).__name__)
@@ -179,7 +182,7 @@ class SanUnit(bst.Unit, isabstract=True):
             if add_cost:
                 self.purchase_costs[i.item.ID] = i.cost
             if add_lifetime and i.lifetime:
-                self._equipment_lifetime[i.item.ID] = i.lifetime             
+                self._equipment_lifetime[i.item.ID] = i.lifetime
     
     @property
     def components(self):

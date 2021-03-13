@@ -61,5 +61,3 @@ def time_printer(func):
     inner.__doc__ = func.__doc__
     return inner
 
-
-
