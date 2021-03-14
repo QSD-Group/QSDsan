@@ -207,7 +207,36 @@ class Process():
     def _normalize_rate_eq(self, new_ref):
         factor = self._stoichiometry[self._components._index[new_ref]]
         self._rate_equation *= factor
+    
+    def show(self):
+        info = f"Process: {self.ID}"
+        header = '\n[stoichiometry] '
+        section = []
+        for cmp, stoichio in tuple(zip(self._components.IDs, self._stoichiometry)):
+            if stoichio != 0:
+                if isinstance(stoichio, (int, float)): line = f"{cmp}: {stoichio:.3g}"
+                else: line = f"{cmp}: {stoichio.evalf(n=3)}"
+                section.append(line)
+        info += header + ("\n" + 16*" ").join(section)
+        info += '\n[reference]     ' + f"{self.ref_component.ID}"
+        line = '\n[rate equation] ' + f"{self._rate_equation}"
+        if len(line) > 47: line = line[:47] + '...'
+        info += line
+        header = '\n[parameters]    '
+        section = []
+        for k,v in self.parameters.items():
+            if isinstance(v, (int, float)): line = f"{k}: {v:.3g}"
+            else: line = f"{k}: {v}"
+            section.append(line)
+        info += header + ("\n" + 16*" ").join(section)
+        print(info)
 
+    _ipython_display_ = show
+        
+    # TODO: return a copy
+    def copy():
+        pass
+    
 #%%
 setattr = object.__setattr__
 @chemicals_user
@@ -565,6 +594,9 @@ class CompiledProcesses(Processes):
             return process in self.tuple
         else: # pragma: no cover
             return False
+    
+    def __len__(self):
+        return self.size
     
     def copy(self):
         '''Return a copy.'''
