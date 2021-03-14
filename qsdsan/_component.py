@@ -54,8 +54,8 @@ _key_component_properties = ('particle_size', 'degradability', 'organic',
 _component_properties = ('measured_as', 'description', 
                          *_key_component_properties)
                          
-# _component_slots = (*tmo.Chemical.__slots__,
-#                     *tuple('_'+i for i in _component_properties))
+_component_slots = (*tmo.Chemical.__slots__,
+                    *tuple('_'+i for i in _component_properties))
 
 _checked_properties = (*_checked_properties, *_key_component_properties)
 
@@ -121,7 +121,8 @@ class Component(tmo.Chemical):
     '''         
 
     # Child class will inherit parent class's slots
-    __slots__ = tuple('_'+i for i in _component_properties)
+    # __slots__ = tuple('_'+i for i in _component_properties)
+    __slots__ = _component_slots
 
     def __new__(cls, ID='', search_ID=None, formula=None, phase=None, measured_as=None, 
                 i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
@@ -508,8 +509,10 @@ class Component(tmo.Chemical):
 
         for field in self.__slots__:
             if field == '_CAS': continue
-            value = getattr(self, field)
-            setattr(new, field, copy_maybe(value))
+            try:
+                value = getattr(self, field)
+                setattr(new, field, copy_maybe(value))
+            except AttributeError: continue
         new._ID = ID
         new._locked_state = self._locked_state
         new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus, new.Tm,

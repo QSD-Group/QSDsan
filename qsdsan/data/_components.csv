@@ -40,12 +40,12 @@ X_FePO4,Iron phosphate,FePO4,Particulate,Undegradable,FALSE,,0,0,0.205543031,0,0
 X_AlPO4,Aluminum phosphate,AlPO4,Particulate,Undegradable,FALSE,,0,0,0.25395654,0,0,0,1,0,,,0,0,0,7784-30-7,64655
 X_AlOH,Aluminum hydroxide,Al(OH)3,Particulate,Undegradable,FALSE,,0,0,0,0,0,0,1,0,,,0,0,0,21645-51-2,10176082
 X_FeOH,Iron hydroxide,Fe(OH)3,Particulate,Undegradable,FALSE,,0,0,0,0,0,0,1,0,,,0,0,0,1309-33-7,445709
-X_PAO_PP_Lo,Low molecular weight poly-phosphate in phosphorus accumulating organisms,(K0.33Mg0.33PO3)n,Particulate,Undegradable,FALSE,P,0,0,1,0.419354839,0.080891255,0,3.230143011,0,,,0,0,0,,
-X_PAO_PP_Hi,High molecular weight poly-phosphate in phosphorus accumulating organisms,(K0.33Mg0.33PO3)n,Particulate,Undegradable,FALSE,P,0,0,1,0.419354839,0.080891255,0,3.230143011,0,,,0,0,0,,
+X_PAO_PP_Lo,Low molecular weight poly-phosphate in phosphorus accumulating organisms,(K0.33Mg0.33PO3)n,Particulate,Undegradable,FALSE,P,0,0,1,0.419354839,0.080891255,0,3.230143011,-0.032258065,,,0,0,0,,
+X_PAO_PP_Hi,High molecular weight poly-phosphate in phosphorus accumulating organisms,(K0.33Mg0.33PO3)n,Particulate,Undegradable,FALSE,P,0,0,1,0.419354839,0.080891255,0,3.230143011,-0.032258065,,,0,0,0,,
 S_NH4,Ammonia nitrogen,NH4+,Soluble,Undegradable,FALSE,N,0,1,0,0,0,0,1.2885,0.071428571,,,0,0,0,7664-41-7,222
 S_NO2,Nitrite,NO2-,Soluble,Undegradable,FALSE,N,0,1,0,0,0,0,3.286142857,-0.071428571,,,0,0,0,14797-65-0,946
 S_NO3,Nitrate,NO3-,Soluble,Undegradable,FALSE,N,0,1,0,0,0,0,4.428928571,-0.071428571,,,0,0,0,14797-55-8,943
-S_PO4,Orthophosphate,PO4,Soluble,Undegradable,FALSE,P,0,0,1,0,0,0,3.063580645,-0.096774194,,,0,0,0,14265-44-2,1061
+S_PO4,"Orthophosphate, assumed 50% H2PO4-, 50% HPO4-2",H3P2O8-3,Soluble,Undegradable,FALSE,P,0,0,1,0,0,0,3.115,-0.048,,,0,0,0,,
 S_K,Potassium,K+,Soluble,Undegradable,FALSE,,0,0,0,1,0,0,1,0.025641026,,,0,0,0,24203-36-9,813
 S_Ca,Calcium,Ca+2,Soluble,Undegradable,FALSE,,0,0,0,0,0,1,1,0.05,,,0,0,0,14127-61-8,271
 S_Mg,Magnesium ,Mg+2,Soluble,Undegradable,FALSE,,0,0,0,0,1,0,1,0.082287595,,,0,0,0,22537-22-0,888
