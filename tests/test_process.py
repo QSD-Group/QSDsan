@@ -11,6 +11,7 @@ for license details.
 '''
 
 import pytest
+import os
 from sympy import symbols, Eq
 from sympy.parsing.sympy_parser import parse_expr
 from math import isclose
