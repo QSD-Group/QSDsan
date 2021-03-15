@@ -11,7 +11,7 @@ for license details.
 '''
 
 import pytest
-from sympy import symbols
+from sympy import symbols, Eq
 from sympy.parsing.sympy_parser import parse_expr
 from math import isclose
 
@@ -74,8 +74,7 @@ def test_process():
     
     p1.set_parameters(f_SI = 0.0)
     assert p1.parameters['f_SI'] == 0.0
-    assert isclose(p1.stoichiometry['S_ALK'], 0.001*12, rel_tol=1e-3)
-    assert p1._stoichiometry['S_I'] == parse_expr('1*f_SI')
+    assert Eq(p1._stoichiometry[p1._components._index['S_I']], parse_expr('1*f_SI'))
     
     p12 = Process('anox_storage_PP',
                   'S_PO4 + [Y_PHA]X_PHA + [?]S_NO3 -> X_PP + [?]S_N2 + [?]S_NH4 + [?]S_ALK',
