@@ -67,8 +67,10 @@ def test_process():
                  parameters=('f_SI', 'K_h', 'K_O2', 'K_X'))
     
     f_SI = symbols('f_SI')
-    assert p1.stoichiometry['S_NH4']*S_NH4.i_N + (1 - f_SI)*S_F.i_N + f_SI*S_I.i_N == 1*X_S.i_N
-    assert p1.stoichiometry['S_PO4']*S_PO4.i_P + (1 - f_SI)*S_F.i_P + f_SI*S_I.i_P == 1*X_S.i_P
+    assert abs(sum(p1._stoichiometry * p1._components.i_N).subs({'f_SI':1})) < 1e-8
+    assert abs(sum(p1._stoichiometry * p1._components.i_N).subs({'f_SI':0})) < 1e-8
+    assert abs(sum(p1._stoichiometry * p1._components.i_P).subs({'f_SI':1})) < 1e-8
+    assert abs(sum(p1._stoichiometry * p1._components.i_charge).subs({'f_SI':1})) < 1e-8
     
     p1.set_parameters(f_SI = 0.0)
     assert p1.parameters['f_SI'] == 0.0
