@@ -55,10 +55,10 @@ def test_component():
     with pytest.raises(ValueError):
         components.append(H2O)
     components = Components.load_default()
-    assert components.SH2.measured_as == 'COD'
-    assert components.SH2.i_COD == 1
-    assert isclose(components.SN2.i_COD, - molecular_weight({'O':1.5})/molecular_weight({'N':1}), rel_tol=1e-3)
-    assert isclose(components.SNO3.i_COD, - molecular_weight({'O':4})/molecular_weight({'N':1}), rel_tol=1e-3)
+    assert components.S_H2.measured_as == 'COD'
+    assert components.S_H2.i_COD == 1
+    assert isclose(components.S_N2.i_COD, - molecular_weight({'O':1.5})/molecular_weight({'N':1}), rel_tol=1e-3)
+    assert isclose(components.S_NO3.i_COD, - molecular_weight({'O':4})/molecular_weight({'N':1}), rel_tol=1e-3)
     tmo.settings.set_thermo(components)
     
 # This just means that if pytest runs this module, it calls the test_component function

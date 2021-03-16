@@ -106,6 +106,12 @@ class Components(Chemicals):
         else: # pragma: no cover
             return False        
     
+    def copy(self):
+        '''Return a copy.'''
+        copy = object.__new__(Components)
+        for cmp in self: setattr(copy, cmp.ID, cmp)
+        return copy
+    
     def append(self, component):
         '''Append a Component'''
         if not isinstance(component, Component):
@@ -206,7 +212,7 @@ class Components(Chemicals):
     
     
     @classmethod
-    def load_default(cls, use_default_data=True, sotre_data=True, default_compile=True):
+    def load_default(cls, use_default_data=True, store_data=True, default_compile=True):
         '''
         Create and return a :class:`Components` or :class:`CompiledComponents`
         object containing all default :class:`Component` objects.
@@ -215,7 +221,7 @@ class Components(Chemicals):
         ----------
         use_default_data : bool, optional
             Whether to use default cache data. The default is True.
-        sotre_data : bool, optional
+        store_data : bool, optional
             Whether to store the default data as cache. The default is True.
         default_compile : bool, optional
             Whether to compile the default :class:`Components`. The default is True.
@@ -230,8 +236,18 @@ class Components(Chemicals):
 
             [1] Component-specific properties are defined in ./data/component.cvs.
     
-            [2] When `default_compile` is True, all essential chemical-specific properties
-            that are missing will be defaulted to those of water.
+            [2] When `default_compile` is True, all essential chemical-specific properties 
+            (except molar volume model and normal boiling temperature) that are missing will
+            be defaulted to those of water.
+            
+            [3] When `default_compile` is True, missing molar volume models will be defaulted
+            according to particle sizes: particulate or colloidal -> 1.2e-5 m3/mol, 
+            soluble -> copy from urea, dissolved gas -> copy from CO2.
+            
+            [4] When `default_compile` is True, missing normal boiling temoerature will be 
+            defaulted according to particle sizes: particulate or colloidal -> copy from NaCl, 
+            soluble -> copy from urea, dissolved gas -> copy from CO2.
+            
     
         '''
         import os
@@ -386,4 +402,8 @@ class CompiledComponents(CompiledChemicals):
         else: # pragma: no cover
             return False
     
-    
+    def copy(self):
+        '''Return a copy.'''
+        copy = Components(self)
+        copy.compile()
+        return copy

@@ -19,14 +19,14 @@ def test_sanunit():
     from qsdsan import Components, WasteStream, sanunits
     components = Components.load_default()
     bst.settings.set_thermo(components)
-    ws1 = WasteStream(SAc=5, H2O=1000, units='kg/hr')
-    ws2 = WasteStream(XNOO=10, H2O=1000, units='kg/hr')
+    ws1 = WasteStream(S_Ac=5, H2O=1000, units='kg/hr')
+    ws2 = WasteStream(X_NOO=10, H2O=1000, units='kg/hr')
     M1 = sanunits.Mixer('M1', ins=(ws1, ws2, ''), outs='mixture')
     M1.show()
     assert type(M1.ins[0]).__name__ == 'WasteStream'
     
     S1 = sanunits.Splitter('S1', ins=M1-0, outs=('', ''), split=0.2)
-    ins3 = WasteStream(SCH3OH=7, H2O=1000, units='kg/hr')
+    ins3 = WasteStream(S_CH3OH=7, H2O=1000, units='kg/hr')
     P1 = sanunits.Pump('P1', ins=ins3)    
     M2 = sanunits.MixTank('M2', ins=(S1-0, P1-0), tau=2)
     M2-0-2-M1
