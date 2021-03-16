@@ -116,7 +116,7 @@ def _save_fig_return(fig, ax, file, close_fig):
 # =============================================================================
 
 def get_correlations(model, input_x=None, input_y=None,
-                     kind='Pearson', nan_policy='propagate', file='',
+                     kind='Spearman', nan_policy='propagate', file='',
                      **kwargs):
     '''
     Get correlation coefficients between two inputs using ``scipy``.
@@ -132,7 +132,7 @@ def get_correlations(model, input_x=None, input_y=None,
         Second set of input, can be single values or an iterable,
         will be defaulted to all model parameters if not provided.
     kind : str
-        Can be "Pearson" for Pearson's r, "Spearman" for Spearman's rho,
+        Can be "Spearman" for Spearman's rho, "Pearson" for Pearson's r,
         "Kendall" for Kendall's tau, or "KS" for Kolmogorov–Smirnov's D.
     nan_policy : str
         - "propagate": returns nan.
@@ -149,9 +149,9 @@ def get_correlations(model, input_x=None, input_y=None,
     
     See Also
     --------    
-    :func:`scipy.stats.pearsonr`
-    
     :func:`scipy.stats.spearmanr`
+
+    :func:`scipy.stats.pearsonr`
     
     :func:`scipy.stats.kendalltau`
     
@@ -166,12 +166,12 @@ def get_correlations(model, input_x=None, input_y=None,
                          f'not "{nan_policy}".')
 
     name = kind.lower()
-    if name == 'pearson':
-        correlation = model.pearson_r
-        sheet_name = 'r'
-    elif name == 'spearman':
+    if name == 'spearman':
         correlation = model.spearman_r
         sheet_name = 'rho'
+    elif name == 'pearson':
+        correlation = model.pearson_r
+        sheet_name = 'r'
     elif name == 'kendall':
         correlation = model.kendall_tau
         sheet_name = 'tau'
@@ -179,7 +179,7 @@ def get_correlations(model, input_x=None, input_y=None,
         correlation = model.kolmogorov_smirnov_d
         sheet_name = 'D'
     else:
-        raise ValueError('kind can only be "Pearson", "Spearman", ' 
+        raise ValueError('kind can only be "Spearman", "Pearson", ' 
                         f'"Kendall", or "KS", not "{kind}".')
     r_df, p_df = dfs = correlation(input_x, input_y, nan_policy+' nan', **kwargs)
     for df in dfs:

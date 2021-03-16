@@ -1,6 +1,13 @@
 Authors
 =======
 
+Lead Developers & Organizers
+----------------------------
+- `Yalin Li <zoe.yalin.li@gmail.com>`_
+- `Joy Cheung <joycheung1994@gmail.com>`_
+- `Stetson Rowles <lsr@illinois.edu>`_
+
+
 Code Development
 ----------------
 - `Yalin Li <zoe.yalin.li@gmail.com>`_

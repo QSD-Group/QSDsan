@@ -222,7 +222,8 @@ class SimpleTEA(TEA):
             self._operating_hours = self._operating_days * 24
         else:
             raise ValueError('`uptime_ratio` must be in [0,1].')
-            
+    
+    #!!! Note ideal, replace it with operating hours
     @property
     def operating_days(self):
         '''[float] Operating days calculated based on `uptime_ratio`.'''
