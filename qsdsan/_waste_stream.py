@@ -8,6 +8,9 @@ This module is developed by:
     Joy Cheung <joycheung1994@gmail.com>
     Yalin Li <zoe.yalin.li@gmail.com>
 
+Part of the code is based on the thermosteam package:
+https://github.com/BioSTEAMDevelopmentGroup/thermosteam
+
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
@@ -208,7 +211,7 @@ class WasteStream(Stream):
     
     
     def _wastestream_info(self, details=True):
-        _ws_info = '\n WasteStream-specific properties:'
+        _ws_info = ' WasteStream-specific properties:'
         # Wastewater-related properties are not relevant for gas or solids
         if self.phase != 'l':
             _ws_info += ' None for non-liquid WasteStreams'

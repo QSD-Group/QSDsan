@@ -3,6 +3,22 @@ Contributing to QSDsan
 
 Below are some brief instructions on how to contribute to QSDsan. If you have any questions regarding the process, feel free to `submit an issue on GitHub <https://github.com/QSD-Group/QSDsan/issues>`_. Thank you in advance for your contribution!
 
+Authorship
+----------
+The following guideline is adapted from `BioSTEAM <https://biosteam.readthedocs.io/en/latest/CONTRIBUTING.html#authorship>`_, we welcome inputs from the community for enhancement. If you feel that your contributions are not acknowledged or adequately acknowledged, please do contact us.
+
+#. Contributions must be acknowledged at the module-level with a short description for:
+
+	- Code development. The primary author is encouraged (but not required) to include contact info in the module.
+	- Module development (i.e., math algorithms, codes in other languages).
+	- Instrumental comments and suggestions through discussion.
+
+#. All contributors will be added to the `author list <https://qsdsan-beta.readthedocs.io/en/latest/for_developers/AUTHORS.html>`_.
+
+#. If any code or implementation was copied from a third party, it should be noted in the module-level documentation.
+
+#. Any third-party packages copied from ``QSDsan`` must be strictly open-source (not copy-left nor open-access). If license of the third-part package is different from ``QSDsan``, the module should add the third-party license as an option (i.e., dual licensing).
+
 
 Forking and Cloning
 -------------------
@@ -33,7 +49,7 @@ Forking and Cloning
 	    git clone https://github.com/<YOUR_USERNAME>/QSDsan.git --depth 1
 
 	- If you don't have ``git``, follow the `instructions <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_ to install it.
-	- The ``--depth-1`` flag is to tell ``git`` just clone the latest commit, you can change the depth number or just remove this flag completely, but then ``git`` will download more historical commits, which takes longer to clone and takes more space.
+	- The ``--depth-1`` flag is to tell ``git`` just clone the latest commit, you can change the depth number or just remove this flag completely, but then ``git`` will download more historical commits, which takes longer time to clone and needs more space.
 
 #. Add the root QSDsan as the upstream:
 
@@ -102,20 +118,20 @@ Whenever new modules or functions are added, concise and thorough documents shou
 ``QSDsan`` uses `numpydoc docstring style <https://numpydoc.readthedocs.io/en/latest/format.html>`_ with some modifications for better rendering. Some important notes:
 
 - Both quotes ('') and double quotes ("") are good.
-- If you want some notes in your docstring, use `directives <https://docutils.sourceforge.io/docs/ref/rst/directives.html>`_ so that it can be rendered in sphinx.
+- If you want some notes in your docstring, use `directives <https://docutils.sourceforge.io/docs/ref/rst/directives.html>`_ so that it can be rendered by `Sphinx <https://www.sphinx-doc.org/en/master/>`_.
 	
 	.. code::
 
-		# This can be rendered by sphinx
+		# This can be rendered by Sphinx and as docstring
 		.. note::
 
 			Something to notes
 
-		# This won't be rendered by sphinx
+		# This won't be rendered by Sphinx
 		Notes
 		-----
 
-		# This can be rendered by sphinx but won't be recognized as numpydoc docstring
+		# This can be rendered by Sphinx but won't be recognized as docstring
 		Note
 		----
 
@@ -123,17 +139,17 @@ Whenever new modules or functions are added, concise and thorough documents shou
 
 	- Use single back ticks (``) in error messages and warnings since directives won't be rendered.
 
-- If you want to refer to documents of other internal modules or external packages, please include it in the "See Also" section (refer to :class:`sanunits.AnaerobicDigestion` and :class:`Component` as examples).
+- If you want to refer to documents of other internal modules or external packages, please include it in the "See Also" section (refer to :class:`qsdsan.sanunits.AnaerobicDigestion` and :class:`qsdsan.Component` as examples).
 - Here is a great `memo on reStructuredText and Sphinx <https://rest-sphinx-memo.readthedocs.io/en/latest/>`_.
 
 
-Most of the documentations will be automatically generated through `sphinx's autodoc extension <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_. If your contribution involves new classes or modules, please add a new .rst file in docs/source/. and add it to the appropriate section in the ``index.rst`` file. You can refer to any of the existing files for examples.
+Most of the documentations will be automatically generated through `Sphinx's autodoc extension <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_. If your contribution involves new classes or modules, please add a new .rst file in docs/source/. and add it to the appropriate section in the ``index.rst`` file. You can refer to any of the existing files for examples.
 
 Tutorials are prepared in `Jupyter Notebook <https://jupyter.org/>`_ and potential contributors are encouraged to use the `templates <https://github.com/QSD-Group/QSDsan/tree/master/docs/source/for_developers>`_.
 
 
 Testing
 -------
-``QSDsan`` uses `Travis CI <https://travis-ci.com/>`_ for testing. A pull request will only be accepted when the branch has not conflicts with the root repository and all tests have been passed. More instructions on testing will be added.
+``QSDsan`` uses `Travis CI <https://travis-ci.com/>`_ for testing. A pull request will only be accepted when the branch has no conflicts with the root repository and all tests have been passed. More instructions on testing will be added.
 
 

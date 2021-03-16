@@ -136,8 +136,8 @@ class AnaerobicDigestion(SanUnit, Decay):
         design['Reactor height'] = H = self.aspect_ratio * D
         concrete =  N*self.concrete_thickness*(2*np.pi/4*(D**2)+np.pi*D*H)
         self.construction = (
-            Construction(item='Concrete', quantity=concrete, unit='m3'),
-            Construction(item='Excavation', quantity=V_tot, unit='m3'),
+            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
+            Construction(item='Excavation', quantity=V_tot, quantity_unit='m3'),
             )
         self.add_construction()
         

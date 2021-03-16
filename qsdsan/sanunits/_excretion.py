@@ -48,6 +48,7 @@ class Excretion(SanUnit):
             value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)
         del data
+
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 

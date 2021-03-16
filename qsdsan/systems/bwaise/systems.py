@@ -36,7 +36,7 @@ from qsdsan.systems.bwaise._cmps import cmps
 # Unit parameters
 # =============================================================================
 
-bst.settings.set_thermo(cmps)
+qs.set_thermo(cmps)
 items = ImpactItem._items
 GWP = qs.ImpactIndicator._indicators['GWP']
 currency = qs.currency = 'USD'

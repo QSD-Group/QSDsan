@@ -1,14 +1,37 @@
-CHANGELOG
-=========
+Change Log
+==========
 
 This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
+
+
+Ongoing
+-------
+- Added an :class:`Equipment` class for design and costing of unit equipment.
+- For the ``stats`` module:
+
+	- More statistical tests:
+
+		- :func:`qsdsan.stats.fast_analysis` for (extended) Fourier amplitude sensitivity test (FAST) and random balance design (RBD) FAST.
+		- :func:`qsdsan.stats.morris_till_convergence` to run Morris analysis until the results converge.
+		- Added Kendall's tau and Kolmogorov–Smirnov test to :func:`qsdsan.stats.get_correlations`.
+	
+	- Plotting functions to visualize all test results:
+
+		- :func:`qsdsan.stats.plot_uncertainties` fpr results from uncertainty analysis as different 1D or 2D plots.
+		- :func:`qsdsan.stats.plot_correlations` for results from :func:`qsdsan.stats.get_correlation`.
+		- Bar plot option for :func:`qsdsan.stats.plot_morris_results`.
+		- :func:`qsdsan.stats.plot_morris_convergence` to plot :math:`{\mu^*}` against the number of trajectories.
+		- :func:`qsdsan.stats.plot_fast_results` for results from FAST and/or RBD-FAST analyses.
+		- :func:`qsdsan.stats.plot_sobol_results` for results from Sobol analysis.
+
+- More clear guideline for contribution acknowledgement and author list in the document.
 
 
 `0.1.0`_ (2021-02-14)
 ---------------------
 - Added a ``stats`` module including:
 
-	- Pearson and Spearman correlations: :func:`qsdsan.stats.get_correlation`.
+	- Pearson and Spearman correlations: :func:`qsdsan.stats.get_correlations`.
 	- Morris One-at-A-Time (OAT) screening method: :func:`qsdsan.stats.morris_analysis`.
 
 		- Also added a function for plotting: :func:`qsdsan.stats.plot_morris_results`.
@@ -61,7 +84,7 @@ This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
-.. _0.1.0: https://github.com/yalinli2/QSDsan/commit/741342cece5d2f6c1ecbc96e891c2554e0efceb9
+.. _0.1.0: https://github.com/yalinli2/QSDsan/commit/a3164b257d95889305aa94186bb072ad3d7b5f77
 .. _0.0.3: https://github.com/QSD-Group/QSDsan/commit/e20222caccc58d9ee414ca08d8ec55f3a44ffca7
 .. _0.0.2: https://github.com/QSD-Group/QSDsan/commit/84653f5979fbcd76a80ffb6b22ffec1c5ca2a084
 .. _0.0.1: https://github.com/yalinli2/QSDsan/commit/f95e6172780cfe24ab68cd27ba19837e010b3d99

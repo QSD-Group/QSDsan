@@ -7,6 +7,9 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
+Part of the code is based on the biosteam package:
+https://github.com/BioSTEAMDevelopmentGroup/biosteam
+
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
@@ -15,14 +18,16 @@ for license details.
 
 # %%
 
-from biosteam import Unit, utils
+import biosteam as bst
 from . import currency, Construction, Transportation
 from .utils.piping import WSIns, WSOuts
 
+NotImplementedMethod = bst.utils.NotImplementedMethod
+format_title = bst.utils.misc.format_title
 
 __all__ = ('SanUnit',)
 
-class SanUnit(Unit, isabstract=True):    
+class SanUnit(bst.Unit, isabstract=True):
 
     '''
     Subclass of :class:`biosteam.Unit`, is initialized with :class:`WasteStream`
@@ -41,11 +46,12 @@ class SanUnit(Unit, isabstract=True):
     uptime_ratio : float
         Uptime of the unit to adjust add_OPEX, should be in [0,1]
         (i.e., a unit that is always operating has an uptime_ratio of 1).
-    lifetime : float
-        Lifetime of this unit in year.
+    lifetime : float or dict
+        Lifetime of this unit (float) or individual equipment within this unit
+        (dict) in year.
         It will be used to adjust cost and emission calculation in TEA and LCA.
-        If left as None, its lifetime will be assumed to be the same as the
-        TEA/LCA lifetime.
+        Equipment without provided lifetime will be assumed to have the same
+        lifetime as the TEA/LCA.
     
     See Also
     --------
@@ -56,7 +62,8 @@ class SanUnit(Unit, isabstract=True):
     _stacklevel = 7
     ticket_name = 'SU'
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, **kwargs):
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, 
+                 equipments=(), **kwargs):
         self._register(ID)
         self._specification = None
         self._load_thermo(thermo)
@@ -65,6 +72,11 @@ class SanUnit(Unit, isabstract=True):
         self._init_utils()
         self._init_results()
         self._assert_compatible_property_package()
+
+        for equip in equipments:
+            equip._linked_unit = self
+        self.equipments = equipments
+        
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
@@ -84,6 +96,8 @@ class SanUnit(Unit, isabstract=True):
         self._construction = ()
         self._transportation = ()
 
+    def __repr__(self):
+        return f'<{type(self).__name__}: {self.ID}>'
 
     def _info(self, T, P, flow, composition, N, IDs, _stream_info):
         '''Information of the unit.'''
@@ -107,7 +121,7 @@ class SanUnit(Unit, isabstract=True):
             su = stream._source
             index = stream_info.index('\n')
             source_info = f'  from  {type(su).__name__}-{su}\n' if su else '\n'
-            info += f'[{i}] {stream.ID}' + source_info + stream_info[index+1:] + '\n'
+            info += f'[{i}] {stream.ID}' + source_info + stream_info[index+1:]
             i += 1
         info += 'outs...\n'
         i = 0
@@ -124,14 +138,12 @@ class SanUnit(Unit, isabstract=True):
             su = stream._sink
             index = stream_info.index('\n')
             sink_info = f'  to  {type(su).__name__}-{su}\n' if su else '\n'
-            info += f'[{i}] {stream.ID}' + sink_info + stream_info[index+1:] + '\n'
+            info += f'[{i}] {stream.ID}' + sink_info + stream_info[index+1:]
             i += 1
         info = info.replace('\n ', '\n    ')
         return info[:-1]
     
-    
-    _impact = utils.NotImplementedMethod
-
+    _impact = NotImplementedMethod
 
     def _summary(self):
         '''After system converges, design the unit and calculate cost and environmental impacts.'''
@@ -144,7 +156,23 @@ class SanUnit(Unit, isabstract=True):
         '''Print information of the unit, including waste stream-specific information.'''
         print(self._info(T, P, flow, composition, N, IDs, stream_info))
     
-    def add_construction(self, add_unit=True, add_design=True, add_cost=True):
+
+    def add_equipment_design(self):
+        for equip in self.equipments:
+            name = equip.name or format_title(type(equip).__name__)
+            self.design_results.update(equip._design())
+            self._units.update(equip.design_units)
+            self._BM[name] = equip.BM
+            if equip.lifetime:
+                self._equipment_lifetime[name] = equip.lifetime
+    
+    def add_equipment_cost(self):
+        for equip in self.equipments:
+            name = equip.name or format_title(type(equip).__name__)
+            self.purchase_costs[name] = equip._cost()
+    
+    def add_construction(self, add_unit=True, add_design=True, add_cost=True,
+                         add_lifetime=True):
         '''Batch-adding construction unit, designs, and costs.'''
         for i in self.construction:
             if add_unit:
@@ -152,7 +180,9 @@ class SanUnit(Unit, isabstract=True):
             if add_design:
                 self.design_results[i.item.ID] = i.quantity
             if add_cost:
-                self.purchase_costs[i.item.ID] = i.cost 
+                self.purchase_costs[i.item.ID] = i.cost
+            if add_lifetime and i.lifetime:
+                self._equipment_lifetime[i.item.ID] = i.lifetime
     
     @property
     def components(self):
@@ -240,12 +270,18 @@ class SanUnit(Unit, isabstract=True):
     @property
     def lifetime(self):
         '''
-        [float] Lifetime of this unit in year.
+        [float] or [dict] Lifetime of this unit (float) or individual equipment
+        within this unit (dict) in year.
         It will be used to adjust cost and emission calculation in TEA and LCA.
-        If left as None, its lifetime will be assumed to be the same as the
-        TEA/LCA lifetime.
+        Equipment without provided lifetime will be assumed to have the same
+        lifetime as the TEA/LCA. 
         '''
-        return self._lifetime
+        if self._lifetime is not None:
+            return self._lifetime
+        elif self._equipment_lifetime:
+            return self._equipment_lifetime
+        else:
+            return None
     @lifetime.setter
     def lifetime(self, i):
         self._lifetime = float(i)

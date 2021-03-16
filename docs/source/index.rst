@@ -58,16 +58,55 @@ In particular, ``QSDsan`` introduces:
    Components
    CompiledComponents
    Construction
+   Equipment
    ImpactIndicator
    ImpactItem
    LCA
    SanUnit
-   sanunits/sanunits
-   stats
    SimpleTEA
    Transportation
    WasteStream
+   sanunits/sanunits
+   stats
 .. Process # TO BE ADDED
+
+
+About the developers
+--------------------
+Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors are listed below, please refer to the :ref:`contributions` section for the full list of authors.
+
+**Code development:**
+   - `Yalin Li <zoe.yalin.li@gmail.com>`_
+   - `Joy Cheung <joycheung1994@gmail.com>`_
+
+**Module development:**
+   - `Yalin Li <zoe.yalin.li@gmail.com>`_
+   - `Joy Cheung <joycheung1994@gmail.com>`_
+   - `Stetson Rowles <lsr@illinois.edu>`_
+
+**Project conception & funding support:**
+   - `Jeremy Guest <jsguest@illinois.edu>`_
+
+
+Join the community
+------------------
+We would like to build an open and welcoming community, you can always post issues on our `GitHub homepage <https://github.com/QSD-Group/QSDsan/issues>`_ or contact any of the Quantitative Sustainable Design Group memebers. We are always excited to have new members in our team.
+
+If you would like to contribute, please follow our contribution guide, thank you for making ``QSDsan`` better!
+
+.. _contributions:
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Contributions
+
+   for_developers/CODE_OF_CONDUCT
+   for_developers/AUTHORS
+   for_developers/CONTRIBUTING
+   for_developers/tutorial_template
+
+
+``QSDsan`` is and will stay open source under University of Illinois/NCSA Open Source License, please refer to the `LICENSE <https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt>`_ for details.
 
 
 More resources
@@ -86,45 +125,10 @@ Additionally, to get the full value of ``QSDsan``, we highly recommend reading t
 
 
 .. toctree::
-   :maxdepth: 0
+   :maxdepth: 1
    :caption: What's new
 
    CHANGELOG
-
-
-About the developers
---------------------
-Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_.
-
-**Code development:**
-   - `Yalin Li <zoe.yalin.li@gmail.com>`_
-   - `Joy Cheung <joycheung1994@gmail.com>`_
-
-**Unit design:**
-   - `Yalin Li <zoe.yalin.li@gmail.com>`_
-   - `Joy Cheung <joycheung1994@gmail.com>`_
-   - `Stetson Rowles <lsr@illinois.edu>`_
-
-**Project conception & funding support:**
-   - `Jeremy Guest <jsguest@illinois.edu>`_
-
-
-Join the community
-------------------
-We would like to build an open and welcoming community, you can always post issues on our `GitHub homepage <https://github.com/QSD-Group/QSDsan/issues>`_ or contact any of the Quantitative Sustainable Design Group memebers. We are always excited to have new members in our team.
-
-If you would like to contribute, please follow our contribution guide, thank you for making ``QSDsan`` better!
-
-.. toctree::
-   :maxdepth: 1
-   :caption: How to contribute?
-
-   for_developers/CODE_OF_CONDUCT
-   for_developers/CONTRIBUTING
-   for_developers/tutorial_template
-
-
-``QSDsan`` is and will stay open source under University of Illinois/NCSA Open Source License, please refer to the `LICENSE <https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt>`_ for details.
 
 
 References

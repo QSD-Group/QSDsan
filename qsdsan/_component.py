@@ -8,6 +8,9 @@ This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
     Joy Cheung <joycheung1994@gmail.com>
 
+Part of the code is based on the thermosteam package:
+https://github.com/BioSTEAMDevelopmentGroup/thermosteam
+
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
@@ -20,6 +23,8 @@ from chemicals.elements import mass_fractions as get_mass_frac
 from ._cod import cod_test_stoichiometry, electron_acceptor_cod
 
 __all__ = ('Component',)
+
+isinstance = isinstance
 
 _chemical_fields = tmo._chemical._chemical_fields
 _checked_properties = tmo._chemical._checked_properties
@@ -54,8 +59,8 @@ _key_component_properties = ('particle_size', 'degradability', 'organic',
 _component_properties = ('measured_as', 'description', 
                          *_key_component_properties)
                          
-_component_slots = (*tmo.Chemical.__slots__,
-                    *tuple('_'+i for i in _component_properties))
+# _component_slots = (*tmo.Chemical.__slots__,
+#                     *tuple('_'+i for i in _component_properties))
 
 _checked_properties = (*_checked_properties, *_key_component_properties)
 
@@ -121,8 +126,8 @@ class Component(tmo.Chemical):
     '''         
 
     # Child class will inherit parent class's slots
-    # __slots__ = tuple('_'+i for i in _component_properties)
-    __slots__ = _component_slots
+    __slots__ = tuple('_'+i for i in _component_properties)
+    # __slots__ = _component_slots
 
     def __new__(cls, ID='', search_ID=None, formula=None, phase=None, measured_as=None, 
                 i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
@@ -255,7 +260,7 @@ class Component(tmo.Chemical):
             i = 1
         self._i_mass = check_return_property('i_mass', i)
     
-    #!!! need to enable calculation from formula and water chemistry equilibria
+    #!!! Need to enable calculation from formula and water chemistry equilibria
     @property
     def i_charge(self):
         '''
@@ -523,7 +528,7 @@ class Component(tmo.Chemical):
     __copy__ = copy
 
     @classmethod
-    def from_chemical(cls, ID, chemical, phase=None, measured_as=None, 
+    def from_chemical(cls, ID, chemical=None, phase=None, measured_as=None, 
                       i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
                       i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
                       f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None, 
@@ -531,11 +536,20 @@ class Component(tmo.Chemical):
                       organic=None, **data):
         '''Return a new :class:`Component` from a :class:`thermosteam.Chemical` object.'''
         new = cls.__new__(cls, ID=ID, phase=phase)
+
+        if chemical is None:
+            chemical = ID
+
+        if isinstance(chemical, str):
+            chemical = tmo.Chemical(chemical)
+
         for field in chemical.__slots__:
             value = getattr(chemical, field, None)
             setattr(new, field, copy_maybe(value))
         new._ID = ID
+
         if phase: new._locked_state = phase
+
         new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus, new.Tm,
                            new.Tb, new.eos, new.eos_1atm, new.phase_ref)
         new._label_handles()

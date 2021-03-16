@@ -31,7 +31,7 @@ class Mixer(SanUnit, bst.units.Mixer):
     Similar to :class:`biosteam.units.Mixer`, but takes :class:`qsdsan.WasteStream` objects.
     
     See Also
-    --------
+    --------    
     `biosteam.units.Mixer <https://biosteam.readthedocs.io/en/latest/units/mixing.html>`_
 
     '''

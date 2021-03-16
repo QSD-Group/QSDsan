@@ -1,5 +1,5 @@
-biosteam==2.24.1
-thermosteam==0.24.0
+biosteam==2.24.11
+thermosteam==0.24.6
 sphinx
 sphinx_rtd_theme
 nbsphinx
@@ -7,3 +7,4 @@ scikit-learn
 scipy
 SALib
 matplotlib
+seaborn

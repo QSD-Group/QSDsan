@@ -119,7 +119,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
         
         concrete = N*self.concrete_thickness*(L*W+2*L*H+2*W*H)
         self.construction = (
-            Construction(item='Concrete', quantity=concrete, unit='m3'),
+            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
             )
         self.add_construction()
 
