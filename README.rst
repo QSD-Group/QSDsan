@@ -49,13 +49,9 @@ See ``LICENSE.txt`` for information on the terms & conditions for usage of this 
 
 About the authors
 -----------------
-Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_.
+Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors are listed below, please refer to the `author page <https://qsdsan-beta.readthedocs.io/en/latest/for_developers/AUTHORS.html>`_ for the full list of authors.
 
-**Code development:**
-   - `Yalin Li <zoe.yalin.li@gmail.com>`_
-   - `Joy Cheung <joycheung1994@gmail.com>`_
-
-**Unit design:**
+**Lead developers:**
    - `Yalin Li <zoe.yalin.li@gmail.com>`_
    - `Joy Cheung <joycheung1994@gmail.com>`_
    - `Stetson Rowles <lsr@illinois.edu>`_

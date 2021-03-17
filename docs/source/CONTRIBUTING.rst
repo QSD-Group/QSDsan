@@ -13,7 +13,7 @@ The following guideline is adapted from `BioSTEAM <https://biosteam.readthedocs.
 	- Module development (i.e., math algorithms, codes in other languages).
 	- Instrumental comments and suggestions through discussion.
 
-#. All contributors will be added to the `author list <https://qsdsan.readthedocs.io/en/latest/for_developers/AUTHORS.html>`_.
+#. All contributors will be added to the `author list <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_.
 
 #. If any code or implementation was copied from a third party, it should be noted in the module-level documentation.
 

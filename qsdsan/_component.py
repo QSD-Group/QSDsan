@@ -511,7 +511,8 @@ class Component(tmo.Chemical):
         new = self.__class__.__new__(cls=self.__class__, ID=ID)
 
         for field in self.__slots__:
-            if field in ('_CAS', '_N_solutes'): continue
+            #!!! Take '_other_names' out after thermosteam is updated
+            if field in ('_CAS', '_N_solutes', '_other_names'): continue
             value = getattr(self, field)
             setattr(new, field, copy_maybe(value))
 
