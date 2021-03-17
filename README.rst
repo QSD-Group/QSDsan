@@ -10,10 +10,8 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
    :target: https://pypi.org/project/qsdsan/
 .. image:: https://img.shields.io/travis/com/qsd-group/qsdsan?style=flat
    :target: https://github.com/QSD-Group/QSDsan
-.. image:: https://img.shields.io/badge/docs-stable-brightgreen?style=flat
+.. image:: https://readthedocs.org/projects/qsdsan/badge/?version=latest
    :target: https://qsdsan.readthedocs.io/en/latest/
-.. image:: https://img.shields.io/badge/docs-beta-brightgreen?style=flat
-   :target: https://qsdsan-beta.readthedocs.io/en/latest/
 
 
 .. contents::
@@ -37,19 +35,12 @@ Note that development of this package is currently under initial stage with limi
 Documentation
 -------------
 You can find tutorials and documents at:
-
-- `Stable version <https://qsdsan.readthedocs.io/en/latest/>`_ on `root repository <https://github.com/QSD-Group/QSDsan>`_.
-- `Beta version <https://qsdsan-beta.readthedocs.io/en/latest/>`_ on `Yalin's fork <https://github.com/yalinli2/QSDsan>`_.
-
-
-License information
--------------------
-See ``LICENSE.txt`` for information on the terms & conditions for usage of this software, and a DISCLAIMER OF ALL WARRANTIES.
+   https://qsdsan.readthedocs.io
 
 
 About the authors
 -----------------
-Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors are listed below, please refer to the `author page <https://qsdsan-beta.readthedocs.io/en/latest/for_developers/AUTHORS.html>`_ for the full list of authors.
+Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors are listed below, please refer to the `author page <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_ for the full list of authors.
 
 **Lead developers:**
    - `Yalin Li <zoe.yalin.li@gmail.com>`_
@@ -59,7 +50,20 @@ Development and maintenance of the package is supported by the Quantitative Sust
 **Project conception & funding support:**
    - `Jeremy Guest <jsguest@illinois.edu>`_
 
+**Special acknowledgement:**
+   - Yoel Cortés-Peña for helping many of the ``QSDsan`` members get started on Python and package development.
+
+
+Contributing
+------------
+Please refer to the `Contributing to QSDsan <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ section of the documentation for instructions and guidelines.
+
+
+License information
+-------------------
+Please refer to the ``LICENSE.txt`` for information on the terms & conditions for usage of this software, and a DISCLAIMER OF ALL WARRANTIES.
+
 
 References
 ----------
-.. [1] Cortes-Peña, Y.; Kumar, D.; Singh, V.; Guest, J. S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020. https://doi.org/10.1021/acssuschemeng.9b07040.
+.. [1] Cortés-Peña, Y.; Kumar, D.; Singh, V.; Guest, J. S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020. https://doi.org/10.1021/acssuschemeng.9b07040.
