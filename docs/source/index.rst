@@ -56,19 +56,18 @@ In particular, ``QSDsan`` introduces:
 
    Component
    Components
-   CompiledComponents
    Construction
    Equipment
    ImpactIndicator
    ImpactItem
    LCA
+   Process
    SanUnit
    SimpleTEA
    Transportation
    WasteStream
    sanunits/sanunits
    stats
-.. Process # TO BE ADDED
 
 
 About the developers

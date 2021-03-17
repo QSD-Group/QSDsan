@@ -6,6 +6,7 @@ This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan
 
 Ongoing
 -------
+- Added :class:`Process`, :class:`Processes`, and :class:`CompiledProcesses` classes for stoichiometric process and its kinetics.
 - Added an :class:`Equipment` class for design and costing of unit equipment.
 - For the ``stats`` module:
 

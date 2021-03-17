@@ -30,44 +30,45 @@ class UndefinedProcess(AttributeError):
 #%%
 @chemicals_user        
 class Process():
-    
+    """
+    Create a :class:`Process`` object which defines a stoichiometric process and its kinetics.
+    A :class:`Process` object is capable of reacting the component flow rates of a :class:`WasteStream`
+    object.
+
+    Parameters
+    ----------
+    ID : str
+        A unique identification.
+    reaction : dict, str, or numpy.ndarray
+        A dictionary of stoichiometric coefficients with component IDs as 
+        keys, or a numeric array of stoichiometric coefficients, or a string 
+        of a stoichiometric equation written as: 
+        i1 R1 + ... + in Rn -> j1 P1 + ... + jm Pm.
+        Stoichiometric coefficients can be symbolic or numerical. 
+        Unknown stoichiometric coefficients to solve for should be expressed as "?".
+    ref_component : str
+        ID of the reference :class:`Component` object of the process rate.
+    rate_equation : str, optional
+        The kinetic rate equation of the process. The default is None.
+    components=None : class:`CompiledComponents`, optional
+        Components corresponding to each entry in the stoichiometry array, 
+        defaults to thermosteam.settings.chemicals. 
+    conserved_for : tuple[str], optional
+        Materials subject to conservation rules, must be an 'i\_' attribute of
+        the components. The default is ("COD", "N", "P", "charge").
+    parameters : Iterable[str], optional
+        Symbolic parameters in stoichiometry coefficients and/or rate equation. 
+        The default is None.
+
+    Examples
+    --------
+    None.
+
+    """
+
     def __init__(self, ID, reaction, ref_component, rate_equation=None, components=None, 
                  conserved_for=('COD', 'N', 'P', 'charge'), parameters=None):
-        """
-        Create a :class:`Process`` object which defines a stoichiometric process and its kinetics.
-        A :class:`Process` object is capable of reacting the component flow rates of a :class:`WasteStream`
-        object.
 
-        Parameters
-        ----------
-        ID : str
-            A unique identification.
-        reaction : dict, str, or numpy.ndarray
-            A dictionary of stoichiometric coefficients with component IDs as 
-            keys, or a numeric array of stoichiometric coefficients, or a string 
-            of a stoichiometric equation written as: 
-            i1 R1 + ... + in Rn -> j1 P1 + ... + jm Pm.
-            Stoichiometric coefficients can be symbolic or numerical. 
-            Unknown stoichiometric coefficients to solve for should be expressed as "?".
-        ref_component : str
-            ID of the reference :class:`Component` object of the process rate.
-        rate_equation : str, optional
-            The kinetic rate equation of the process. The default is None.
-        components=None : class:``CompiledComponents``, optional
-            Components corresponding to each entry in the stoichiometry array, 
-            defaults to thermosteam.settings.chemicals. 
-        conserved_for : tuple[str], optional
-            Materials subject to conservation rules, must be an 'i_' attribute of
-            the components. The default is ("COD", "N", "P", "charge").
-        parameters : Iterable[str], optional
-            Symbolic parameters in stoichiometry coefficients and/or rate equation. 
-            The default is None.
-
-        Examples
-        --------
-        None.
-
-        """
         self._ID = ID
         self._stoichiometry = []
         self._components = self._load_chemicals(components)
@@ -80,7 +81,7 @@ class Process():
                 
     def get_conversion_factors(self, as_matrix=False):        
         '''
-        return conversion factors (i.e., the 'i_' attributes of the components) 
+        return conversion factors (i.e., the 'i\_' attributes of the components) 
         as a numpy.ndarray or a SymPy Matrix.
         '''
         if self._conservation_for:
@@ -148,7 +149,7 @@ class Process():
     def conserved_for(self):
         '''
         [tuple] Materials subject to conservation rules, must have corresponding 
-        'i_' attributes for the components
+        'i\_' attributes for the components
         '''
         return self._conserved_for
     @conserved_for.setter
@@ -242,20 +243,21 @@ class Process():
 setattr = object.__setattr__
 @chemicals_user
 class Processes():
+    """
+    Create a :class:`Processes` object that contains :class:`Process` objects as attributes.
+
+    Parameters
+    ----------
+    processes : Iterable[:class:`Process`]
+
+    Examples
+    --------
+    None.
+
+    """
     
     def __new__(cls, processes):
-        """
-        Create a :class:`Processes` object that contains :class:`Process` objects as attributes.
 
-        Parameters
-        ----------
-        processes : Iterable[:class:`Process`]
-
-        Examples
-        --------
-        None.
-
-        """
         self = super().__new__(cls)
         #!!! add function to detect duplicated processes
         setfield = setattr
@@ -378,7 +380,7 @@ class Processes():
             Components corresponding to the columns in the stoichiometry matrix, 
             defaults to thermosteam.settings.chemicals. The default is None.
         conserved_for : tuple[str], optional
-            Materials subject to conservation rules, must have corresponding 'i_' 
+            Materials subject to conservation rules, must have corresponding 'i\_' 
             attributes for the components. The default is ('COD', 'N', 'P', 'charge').
         parameters : Iterable[str], optional
             Symbolic parameters in waste. The default is None.
@@ -443,22 +445,22 @@ class Processes():
 #%%
 @read_only(methods=('append', 'extend', '__setitem__'))
 class CompiledProcesses(Processes):
+    """
+    Create a :class:`CompiledProcesses` object that contains :class:`Process` objects as attributes.
+
+    Parameters
+    ----------
+    processes : Iterable[:class:`Process`]
+
+    Examples
+    --------
+    None.
+
+    """
     
     _cache = {}
     
     def __new__(cls, processes):
-        """
-        Create a :class:`CompiledProcesses` object that contains :class:`Process` objects as attributes.
-
-        Parameters
-        ----------
-        processes : Iterable[:class:`Process`]
-
-        Examples
-        --------
-        None.
-
-        """
         cache = cls._cache
         processes = tuple(processes)
         if processes in cache:
