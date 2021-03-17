@@ -25,7 +25,8 @@ This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan
 		- :func:`qsdsan.stats.plot_fast_results` for results from FAST and/or RBD-FAST analyses.
 		- :func:`qsdsan.stats.plot_sobol_results` for results from Sobol analysis.
 
-- More clear guideline for contribution acknowledgement and author list in the document.
+- Changed all .csv data files to .tsv so that they can be viewed on GitHub.
+- Added more clear guidelines on `contribution <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ and a `author list <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_ in the document.
 
 
 `0.1.0`_ (2021-02-14)
