@@ -22,7 +22,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('LiquidTreatmentBed',)
 
-data_path += 'sanunit_data/_liquid_treatment_bed.csv'
+data_path += 'sanunit_data/_liquid_treatment_bed.tsv'
 
 
 class LiquidTreatmentBed(SanUnit, Decay):

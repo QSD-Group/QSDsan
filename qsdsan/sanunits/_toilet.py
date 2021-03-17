@@ -22,7 +22,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('Toilet',)
 
-data_path += 'sanunit_data/_toilet.csv'
+data_path += 'sanunit_data/_toilet.tsv'
 
 
 # %%

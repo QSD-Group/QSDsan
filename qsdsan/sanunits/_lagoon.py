@@ -62,9 +62,9 @@ class Lagoon(SanUnit, Decay):
         self._tau = None
         self._P_removal = 0.
         
-        anaerobic_path = data_path + 'sanunit_data/_anaerobic_lagoon.csv'
+        anaerobic_path = data_path + 'sanunit_data/_anaerobic_lagoon.tsv'
         self._anaerobic_defaults = load_data(path=anaerobic_path)
-        facultative_path = data_path + 'sanunit_data/_facultative_lagoon.csv'
+        facultative_path = data_path + 'sanunit_data/_facultative_lagoon.tsv'
         self._facultative_defaults = load_data(path=facultative_path)
         
         self._design_type = None

@@ -21,6 +21,7 @@ import pandas as pd
 import thermosteam as tmo
 from thermosteam import Chemical, Chemicals, CompiledChemicals
 from . import _component
+from .utils.loading import load_data
 
 __all__ = ('Components', 'CompiledComponents')
 
@@ -171,12 +172,7 @@ class Components(Chemicals):
         if use_default_data and cls._default_data is not None:
             data = cls._default_data
         else:
-            if path[-4:] == '.csv':
-                data = pd.read_csv(path)
-            elif path[-4:] == '.xls' or path[-4:] == 'xlsx':
-                data = pd.read_excel(path)
-            else:
-                raise ValueError('Only be csv or Excel files can be used.')
+            data = load_data(path, index_col=None)
         
         new = cls(())
 
@@ -251,7 +247,7 @@ class Components(Chemicals):
     
         '''
         import os
-        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/_components.csv')
+        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/_components.tsv')
         del os
         new = cls.load_from_file(path=path, use_default_data=True, store_data=True)
 

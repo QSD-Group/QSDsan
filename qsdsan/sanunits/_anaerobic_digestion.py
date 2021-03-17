@@ -26,7 +26,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('AnaerobicDigestion',)
 
-data_path += 'sanunit_data/_anaerobic_digestion.csv'
+data_path += 'sanunit_data/_anaerobic_digestion.tsv'
 
 
 class AnaerobicDigestion(SanUnit, Decay):
@@ -44,7 +44,7 @@ class AnaerobicDigestion(SanUnit, Decay):
         If not provided, will use F_vol_in.
     if_capture_biogas : bool
         If produced biogas will be captured, otherwise it will be treated
-        as fugative CH4.
+        as fugitive CH4.
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
         

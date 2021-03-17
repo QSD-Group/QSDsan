@@ -1,0 +1,11 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+tau	retention_time_sec	days	3	1	5	uniform	"CIDI; EAWAG, 2014; Tchobanoglous et al., 2014"
+COD_max_decay	COD_degradation_sec	% of total COD	0.7	0.6	0.8	triangular	"Leeds; Orner and Mihelcic, 2017"
+MCF_decay	MCF_sec	% anaerobic conversion of degraded COD	0.8	0.8	1	triangular	"IPCC, 2006"
+N_max_decay	N_max_denitrification_sec	% N removal	0.8	0.7	0.9	triangular	"Orner and Mihelcic, 2017"
+N2O_EF_decay	N2O_EF_sec	% of degraded N emitted as N2O	0	0	0.001	uniform	"IPCC, 2006"
+N_bed	number_sec	-	1			constant	CIDI
+bed_L	length_sec	m	17.49			constant	CIDI
+bed_W	width_sec	m	12.415			constant	CIDI
+bed_H	height_sec	m	1.5	1.2	1.8	uniform	assumption
+concrete_thickness	concrete_thickness	m	0.3	0.15	0.45	uniform	assumption

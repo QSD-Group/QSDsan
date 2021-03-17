@@ -1,0 +1,10 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+tau	residence_time_AD	days	90			constant	CIDI
+COD_removal	COD_removal_AD	fraction of COD removal	0.7	0.6	0.8	uniform	"Tchobanoglous et al,. 2014 (EAWAG: 80-85fraction of BOD removal)"
+MCF_decay	MCF_AD	fraction of anaerobic conversion of degraded COD	1			constant	"IPCC, 2006"
+N_max_decay	N_max_denitrification_AD	fraction of N removal	0.8	0.7	0.9	triangular	"Orner and Mihelcic, 2017"
+N2O_EF_decay	N2O_EF_AD	fraction of of degraded N emitted as N2O	0.005	0.0005	0.006	triangular	"IPCC, 2006; Leeds"
+aspect_ratio	aspect_ratio_AD	diameter/height	2	1	3	uniform	assumption
+headspace_frac	headspace_AD	fraction of of total reactor volume	0.15	0.1	0.2	uniform	assumption
+N_reactor	number_AD	-	3			uniform	"assumption (2 in operation, one out for cleaning, solids removal, etc.)"
+concrete_thickness	concrete_thickness	m	0.3	0.15	0.45	uniform	assumption

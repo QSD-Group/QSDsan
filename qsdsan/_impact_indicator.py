@@ -17,7 +17,7 @@ for license details.
 
 from ._units_of_measure import parse_unit
 from .utils.loading import load_data, data_path
-data_path += '_impact_indicator.csv'
+data_path += '_impact_indicator.tsv'
 
 __all__ = ('ImpactIndicator', )
 

@@ -22,7 +22,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('UDDT',)
 
-data_path += 'sanunit_data/_uddt.csv'
+data_path += 'sanunit_data/_uddt.tsv'
 
 
 # %%

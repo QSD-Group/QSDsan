@@ -1,0 +1,26 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+e_cal	caloric_intake	kcal/cap/d	2130	1917	2343	uniform	"Uganda food/protein supply in 2013 (FAOSTAT, 2018), +/- 10fraction"
+p_veg	protein_vegetal_intake	g/cap/d	40.29	36.26	44.32	uniform	"Uganda food/protein supply in 2013 (FAOSTAT, 2018), +/- 10fraction"
+p_anim	protein_animal_intake	g/cap/d	12.39	11.15	13.63	uniform	"Uganda food/protein supply in 2013 (FAOSTAT, 2018), +/- 10fraction"
+N_prot	N_content_protein	fraction	0.13	0.13	0.19	uniform	Jonsson et al. (2004); FAO (2003)
+P_prot_v	P_content_protein_vegetal	fraction	0.022	0.004	0.048	triangular	Jonsson et al. (2004); USDA (2016)
+P_prot_a	P_content_protein_animal	fraction	0.011	0.002	0.032	triangular	Jonsson et al. (2004); USDA (2016)
+K_cal	K_content_caloric_intake	g K/1000 kcal	1.2	1.1	1.5	uniform	Holbrook et al (1984); Kodama et al. (2005)
+N_exc	N_excretion	fraction of intake	1	0.99	1	uniform	Rittman et al (2011); Richert et al. (2010)
+P_exc	P_excretion	fraction of intake	1	0.99	1	uniform	Rittman et al (2011); Richert et al. (2010)
+K_exc	K_excretion	fraction of intake	0.88	0.65	0.98	uniform	Holbrook et al (1984); Turban et al. (2008)
+e_exc	energy_excretion	fraction of intake	0.06	0.02	0.1	uniform	Friedler et al (2013); McCarty et al (2011); Hall et al (2012)
+N_ur	N_in_urine	fraction of total	0.88	0.74	0.93	triangular	Friedler et al. (2013); Rose et al. (2015)
+P_ur	P_in_urine	fraction of total	0.61	0.33	0.75	triangular	Friedler et al. (2013); Rose et al. (2015)
+K_ur	K_in_urine	fraction of total	0.74	0.53	0.93	triangular	Friedler et al. (2013); Rose et al. (2015)
+e_fec	energy_in_feces	fraction of total	0.81	0.69	0.9	triangular	Friedler et al. (2013); Rose et al. (2015)
+N_ur_NH3	N_reduced_inorganic_in_urine	fraction of total N in urine	0.85	0.75	0.9	uniform	Friedler et al. (2013); Rose et al. (2015); reduced inorganic N includes urea and ammonia
+N_fec_NH3	N_reduced_inorganic_in_feces	fraction of total N in feces	0.2	0.16	0.24	uniform	Friedler et al. (2013); Orner and Mihelcic (2018); +/- 20fraction
+ur_exc	urine_excretion	g/cap/d	1400	800	2500	triangular	Friedler et al. (2013); Rose et al. (2015)
+fec_exc	feces_excretion	g/cap/d	250	75	520	triangular	"expected value and range are for low-income countries, from Friedler et al. (2013); Rose et al. (2015)"
+ur_moi	urine_moisture_content	fraction	0.95	0.93	0.97	triangular	Friedler et al. (2013); Rose et al. (2015)
+fec_moi	feces_moisture_content	fraction	0.85	0.76	0.88	triangular	"expected value and range are for low-income countries, from Friedler et al. (2013); Rose et al. (2015)"
+Mg_ur	Mg_in_urine	g Mg/cap/d	0.2	0.12	0.21	uniform	Rose et al. (2015); Udert et al. (2003)
+Mg_fec	Mg_in_feces	g Mg/cap/d	0.25	0.15	0.34	uniform	Rose et al. (2015)
+Ca_ur	Ca_in_urine	g Ca/cap/d	0.28	0.057	0.5	uniform	Rose et al. (2015)
+Ca_fec	Ca_in_feces	g Ca/cap/d	1.9	0.1	3.6	uniform	Rose et al. (2015)

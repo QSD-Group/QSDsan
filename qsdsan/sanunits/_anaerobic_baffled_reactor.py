@@ -22,7 +22,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('AnaerobicBaffledReactor',)
 
-data_path += 'sanunit_data/_anaerobic_baffled_reactor.csv'
+data_path += 'sanunit_data/_anaerobic_baffled_reactor.tsv'
 
 
 class AnaerobicBaffledReactor(SanUnit, Decay):
@@ -34,10 +34,10 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
     ins : WasteStream
         Waste for treatment.
     outs : WasteStream
-        Treated waste, biogas, fugative CH4, and fugitive N2O.
+        Treated waste, biogas, fugitive CH4, and fugitive N2O.
     if_capture_biogas : bool
         If produced biogas will be captured, otherwise it will be treated
-        as fugative CH4.
+        as fugitive CH4.
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
         

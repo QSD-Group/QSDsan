@@ -1,0 +1,11 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+COD_removal	COD_removal_anaerobic_lagoon	fraction of total COD	0.7	0.6	0.8	triangular	"Lubigi, Mihelcic et al., 2009"
+COD_decay	COD_degradation_anaerobic_lagoon	fraction of retained COD	0.7	0.6	0.8	triangular	"Leeds; Orner and Mihelcic, 2017"
+MCF_decay	MCF_anaerobic_lagoon	fraction of anaerobic conversion of degraded COD	0.8	0.8	1	triangular	"IPCC, 2006"
+N_max_decay	N_max_denitrification_anaerobic_lagoon	fraction of N removal	0.8	0.7	0.9	triangular	"Orner and Mihelcic, 2017"
+N2O_EF_decay	N2O_EF_anaerobic_lagoon	fraction of of degraded N emitted as N2O	0	0	0.001	uniform	"IPCC, 2006"
+N_lagoon	number_anaerobic_lagoons	-	3			constant	Lubigi process diagram
+lagoon_V	volume_anaerobic_lagoon	m3	4640			constant	Lubigi process diagram
+lagoon_L	length_anaerobic_lagoon	m	65			constant	Lubigi process diagram
+lagoon_W	width_anaerobic_lagoon	m	30			constant	Lubigi process diagram
+liner_unit_mass	liner_mass	kg/m2	0.63	0.31	1.24	uniform	Colorado Lining International

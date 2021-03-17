@@ -25,7 +25,7 @@ from ..utils.descriptors import Fraction as Frac_D
 
 __all__ = ('PitLatrine',)
 
-data_path += 'sanunit_data/_pit_latrine.csv'
+data_path += 'sanunit_data/_pit_latrine.tsv'
 
 
 # %%

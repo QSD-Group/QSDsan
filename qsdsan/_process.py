@@ -11,8 +11,9 @@ for license details.
 '''
 
 # import thermosteam as tmo
-from ._parse import get_stoichiometric_coeff
 from . import Components
+from .utils.loading import load_data
+from .utils.parse import get_stoichiometric_coeff
 from thermosteam.utils import chemicals_user, read_only
 from sympy import symbols, Matrix, lambdify
 from sympy.parsing.sympy_parser import parse_expr
@@ -408,9 +409,7 @@ class Processes():
         if use_default_data and cls._default_data is not None:
             data = cls._default_data
         else:
-            if path.endswith('.csv'): data = pd.read_csv(path, na_values=0)
-            elif path.endswith(('.xls', '.xlsx')): data = pd.read_excel(path, na_values=0)
-            else: raise ValueError('Only .csv or Excel files can be used.')
+            data = load_data(path=path, index_col=None, na_values=0)
         
         cmp_IDs = data.columns[1:-1]
         data.dropna(how='all', subset=cmp_IDs, inplace=True)

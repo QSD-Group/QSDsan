@@ -17,16 +17,22 @@ for license details.
 # on them, while other modules in utils depend on the main modules
 
 from . import (
+    loading,
+    cod,
+    parse,
     checkers,
     descriptors,
     )
 
 __all__ = (
+    *loading.__all__,
+    *cod.__all__,
+    *parse.__all__,
     *checkers.__all__,
     *descriptors.__all__,
     )
 
-def secondary_importing():
+def _secondary_importing():
     global __all__
     from . import (
         piping,
@@ -40,7 +46,6 @@ def secondary_importing():
     __all__ = (
         *__all__,
         *piping.__all__,
-        *loading.__all__,
         *formatting.__all__,
         *getters.__all__,
         *setters.__all__,

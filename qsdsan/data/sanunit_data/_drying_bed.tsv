@@ -1,0 +1,48 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+tau	retention_time_drying_bed	days	180	180	270	triangular	Lubigi (>6 months in uncovered drying beds)
+sol_frac	final_solids_content_drying_bed	fraction	"{'unplanted': 0.35,
+'planted': 0.55}"	"{'unplanted': 0.3,
+'planted': 0.4}"	"{'unplanted': 0.4,
+'planted': 0.7}"	uniform	"Lubigi; EAWAG, 2014"
+COD_max_decay	COD_degradation_drying_bed	fraction of total COD	0.7	0.6	0.8	triangular	"Leeds; Orner and Mihelcic, 2017"
+MCF_decay	MCF_drying_bed	fraction of anaerobic conversion of degraded COD	0.2	0	0.3	triangular	"IPCC, 2006"
+N_max_decay	N_max_denitrification_drying_bed	fraction of N removal	0.8	0.7	0.9	triangular	"Orner and Mihelcic, 2017"
+N2O_EF_decay	N2O_EF_drying_bed	fraction of degraded N emitted as N2O	0.005	0	0.011	triangular	"IPCC, 2006"
+N_bed	"number_covered_drying_beds;
+number_uncovered_drying_beds;
+number_storage_beds;
+number_(un)planted_beds_alt"	-	"{'covered': 19,
+ 'uncovered': 30,
+ 'storage': 19,
+'planted': 2}"			constant	"covered', 'uncovered', and 'storage' for 'unplanted' type based on Lubigi process diagram;
+'planted' based on CIDI"
+bed_L	"covered_bed_length;
+uncovered_bed_length;
+(un)planted_bed_length_alt"	m	"{'covered': 34,
+ 'uncovered': 31,
+'storage': 34,
+'planted': 22.345}"			constant	Lubigi process diagram; CIDI
+bed_W	"covered_bed_width;
+uncovered_bed_width;
+(un)planted_bed_width_alt"	m	"{'covered': 7,
+ 'uncovered': 7,
+'storage': 7,
+'planted': 19.33}"			constant	Lubigi process diagram; CIDI
+bed_H	"drying_bed_wall_height;
+storage_wall_height;
+(un)planted_bed_wall_height_alt"	m	"{'covered': 0.6,
+'uncovered': 0.6,
+ 'storage': 1.5,
+'planted': 0.6}"	"{'covered': 0.45,
+'uncovered': 0.45,
+ 'storage': 1.2,
+'planted': 0.45}"	"{'covered': 0.75,
+'uncovered': 0.75,
+ 'storage': 1.8,
+'planted': 0.75}"	uniform	Lubigi photos; CIDI
+column_H	covered_column_height	m	2.75	2.5	3	uniform	Lubigi photos; CIDI
+column_per_side	covered_columns_per_side	-	7			constant	Lubigi photos; CIDI
+column_unit_mass	column_mass_per_meter	kg/m	30	23	37	uniform	Sandeep Steels
+concrete_thickness	concrete_thickness	m	0.3	0.15	0.45	uniform	assumption
+cover_slope		degrees	20	10	30	uniform	assumption
+cover_unit_mass	roof_mass	kg/m2	2.64	2.26	3.58	uniform	Home Depot

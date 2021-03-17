@@ -114,7 +114,7 @@ def batch_setting_unit_params(df, model, unit, exclude=()):
 # =============================================================================
 
 su_data_path = data_path + 'sanunit_data/'
-path = su_data_path + '_drying_bed.csv'
+path = su_data_path + '_drying_bed.tsv'
 drying_bed_data = load_data(path)
 get_exchange_rate = systems.get_exchange_rate
 
@@ -132,7 +132,7 @@ def add_shared_parameters(sys, model, drying_bed_unit, crop_application_unit):
     
     ########## Related to human input ##########
     # Diet and excretion
-    path = data_path + 'sanunit_data/_excretion.csv'
+    path = data_path + 'sanunit_data/_excretion.tsv'
     data = load_data(path)
     batch_setting_unit_params(data, model, unit)
     
@@ -370,9 +370,9 @@ def add_shared_parameters(sys, model, drying_bed_unit, crop_application_unit):
 # For the same processes in sysA and sysB
 # =============================================================================
 
-path = su_data_path + '_toilet.csv'
+path = su_data_path + '_toilet.tsv'
 toilet_data = load_data(path)
-path = su_data_path + '_pit_latrine.csv'
+path = su_data_path + '_pit_latrine.tsv'
 pit_latrine_data = load_data(path)
 MCF_lower_dct = eval(pit_latrine_data.loc['MCF_decay']['low'])
 MCF_upper_dct = eval(pit_latrine_data.loc['MCF_decay']['high'])
@@ -438,7 +438,7 @@ def add_pit_latrine_parameters(sys, model):
     
     return model
 
-path = su_data_path + '_sludge_separator.csv'
+path = su_data_path + '_sludge_separator.tsv'
 sludge_separator_data = load_data(path)
 split_lower_dct = eval(sludge_separator_data.loc['split']['low'])
 split_upper_dct = eval(sludge_separator_data.loc['split']['high'])
@@ -534,7 +534,7 @@ modelA = add_existing_plant_parameters(systems.A2, systems.A4, systems.teaA, mod
 
 # Sedimentation tank
 A5 = systems.A5
-path = su_data_path + '_sedimentation_tank.csv'
+path = su_data_path + '_sedimentation_tank.tsv'
 data = load_data(path)
 batch_setting_unit_params(data, modelA, A5)
 # The tank was based on a sludge separator
@@ -542,14 +542,14 @@ modelA = add_sludge_separator_parameters(A5, modelA)
 
 # Anaerobic lagoon
 A6 = systems.A6
-path = su_data_path + '_anaerobic_lagoon.csv'
+path = su_data_path + '_anaerobic_lagoon.tsv'
 anaerobic_lagoon_data = load_data(path)
 batch_setting_unit_params(anaerobic_lagoon_data, modelA, A6)
 modelA = add_lagoon_parameters(A6, modelA)
 
 # Facultative lagoon
 A7 = systems.A7
-path = su_data_path + '_facultative_lagoon.csv'
+path = su_data_path + '_facultative_lagoon.tsv'
 facultative_lagoon_data = load_data(path)
 batch_setting_unit_params(facultative_lagoon_data, modelA, A7)
 modelA = add_lagoon_parameters(A7, modelA)
@@ -583,7 +583,7 @@ def set_plant_ppl(i):
 
 # Anaerobic baffled reactor
 B5 = systems.B5
-path = su_data_path + '_anaerobic_baffled_reactor.csv'
+path = su_data_path + '_anaerobic_baffled_reactor.tsv'
 data = load_data(path)
 batch_setting_unit_params(data, modelB, B5)
 
@@ -630,7 +630,7 @@ modelB = add_sludge_separator_parameters(B6, modelB)
 
 # Liquid treatment bed
 B7 = systems.B7
-path = su_data_path + '_liquid_treatment_bed.csv'
+path = su_data_path + '_liquid_treatment_bed.tsv'
 data = load_data(path)
 batch_setting_unit_params(data, modelB, B7)
 
@@ -682,7 +682,7 @@ modelC = add_shared_parameters(sysC, modelC, systems.C8, systems.C9)
 
 # UDDT
 C2 = systems.C2
-path = su_data_path + '_uddt.csv'
+path = su_data_path + '_uddt.tsv'
 uddt_data = load_data(path)
 data = pd.concat((toilet_data, uddt_data))
 

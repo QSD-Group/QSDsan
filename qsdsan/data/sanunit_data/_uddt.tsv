@@ -1,0 +1,11 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+collection_period	CBS_collection_period	days	3.5	1	9	triangular	Schmit et al. (2017)
+N_volatilization	N_urine_volatilization	fraction of total N	0.05	0	0.07	uniform	"Wohlsager et al., 2010; Trimmer, 2015; Trimmer et al., 2017; Orner and Mihelcic, 2018"
+struvite_pKsp	struvite_cond_pKsp	-	7.57	7.3	8.1	uniform	"Ronteltap et al., 2007"
+prep_sludge	precipitate_sludge	fraction of total precipitate appearing as sludge that settles and can be removed	0.75	0.5	1	uniform	"Udert et al., 2003; Udert et al., 2006 (""most"" precipitates appear as sludge, remainder is a hard scale that attaches to walls)"
+log_removal	desired_pathogen_inactivation	log units	2	1	4	uniform	"desired level of pathogen inactivation (log units: e.g., 4 log units = 99.99% inactivation)"
+ur_pH	stored_urine_pH	pH units	9	8.9	9.1	uniform	Friedler et al. (2013); Trimmer et al. (2016); Wohlsager et al. (2010); Zhigang et al. (2008)
+MCF_decay	MCF_vault	fraction of anaerobic conversion of degraded COD	0.1	0.05	0.15	triangular	"IPCC, 2019"
+N2O_EF_decay	N2O_EF_vault	fraction of N emitted as N2O	0	0	0.001	uniform	"IPCC, 2019"
+fec_moi_min	minimum_moisture_content	fraction	0.1	0.07	0.13	uniform	estimated using data from Niwagaba et al. (2009)
+fec_moi_red_rate	exponential_MC_decay	1/d	0.01	0.009	0.011	uniform	estimated using data from Niwagaba et al. (2009)

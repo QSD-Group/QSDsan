@@ -17,7 +17,7 @@ from setuptools import setup
 setup(
     name='qsdsan',
     packages=['qsdsan'],
-    version='0.1.4',
+    version='0.2.0',
     license='UIUC',
     author='Quantitative Sustainable Design Group',
     author_email='zoe.yalin.li@gmail.com (Yalin Li)',
@@ -25,7 +25,7 @@ setup(
     long_description=open('README.rst').read(),
     url="https://github.com/QSD-Group/QSDsan",
     install_requires=['biosteam==2.24.11', 'thermosteam==0.24.6', 'matplotlib>=3.3.2',
-                      'scikit-learn', 'scipy', 'SALib', 'seaborn'],
+                      'scikit-learn', 'scipy', 'SALib>=1.4.0b0', 'seaborn', 'sympy'],
     package_data=
         {'qsdsan': [
                     'data/*',

@@ -1,0 +1,14 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+tau	residence_time_AD	days	45	30	60	uniform	Lubigi
+COD_max_decay	COD_degradation_sedimentation	fraction of retained COD	0.7	0.6	0.8	triangular	"Leeds; Orner and Mihelcic, 2017"
+MCF_decay	MCF_sedimentation	fraction of anaerobic conversion of degraded COD	0.8	0.8	1	triangular	"IPCC, 2006"
+N_max_decay	N_max_denitrification_sedimentation	fraction of N removal	0.8	0.7	0.9	triangular	"Orner and Mihelcic, 2017"
+N2O_EF_decay	N2O_EF_sedimentation	fraction of degraded N emitted as N2O	0	0	0.001	uniform	"IPCC, 2006"
+N_tank	number_sedimentation_tanks	-	2			constant	Lubigi process diagram
+tank_V	volume_sedimentation_tank	m3	1250			constant	Lubigi process diagram
+tank_L_to_W	length_width_ratio_sedimentation	length/width	3.3	3	3.5	uniform	Lubigi process diagram
+tank_W_to_H	width_height_ratio_sedimentation	width/height (average)	3.6	3.3	3.8	uniform	Lubigi photos
+column_per_side	columns_per_side_sedimentation	-	12			constant	Lubigi photos
+concrete_thickness	concrete_thickness	m	0.3	0.15	0.45	uniform	assumption
+roof_slope		degrees	20	10	30	uniform	assumption
+roof_unit_mass	roof_mass	kg/m2	2.64	2.26	3.58	uniform	Home Depot

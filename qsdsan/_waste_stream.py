@@ -17,8 +17,8 @@ for license details.
 '''
 
 # %%
+
 import numpy as np
-# import biosteam as bst
 from thermosteam import Stream, MultiStream, utils, settings
 from . import Components
 from ._units_of_measure import auom
@@ -136,6 +136,7 @@ class WasteStream(Stream):
         
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
                          units=units, price=price, thermo=thermo, **chemical_flows)
+        
         self._init_ws(pH, SAlk, COD, BOD, uBOD, TC, TOC, TN, TKN,
                       TP, TK, TMg, TCa, ThOD, cnBOD, dry_mass, charge, ratios,
                       impact_item)
@@ -751,14 +752,22 @@ class WasteStream(Stream):
         while True:
             den0 = den
             cmp_dct['H2O'] = flow_tot*den0 - dwt
-            new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
+
+            #---------- Yalin's comments ----------
+            # This is to avoid BioSTEAM showing the warning that this ID exists
+            # in the registry
+            #!!! But maybe there's a better way to deal with this?
+            # Also this appears in all of the four models, consider making this into a function
+            temp = cls(ID=ID+str(i), phase=phase, T=T, P=P, units='kg/hr', price=price, 
                       thermo=thermo, pH=pH, SAlk=SAlk, **cmp_dct)
-            den = flow_tot*den0/(new.F_vol*1e3)            
+            den = flow_tot*den0/(temp.F_vol*1e3)            
             i += 1
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
         
+        new.mass = temp.mass
         new.ratios = r
+        
         return new
 
 
@@ -920,14 +929,15 @@ class WasteStream(Stream):
         while True:
             den0 = den
             cmp_dct['H2O'] = flow_tot*den0 - dwt
-            new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
+            temp = cls(ID=ID+str(i), phase=phase, T=T, P=P, units='kg/hr', price=price, 
                       thermo=thermo, pH=pH, SAlk=SAlk, **cmp_dct)
-            den = flow_tot*den0/(new.F_vol*1e3)            
+            den = flow_tot*den0/(temp.F_vol*1e3)            
             i += 1
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
 
-        new.ratios = r        
+        new.mass = temp.mass
+        new.ratios = r
         
         return new
 
@@ -1091,13 +1101,14 @@ class WasteStream(Stream):
         while True:
             den0 = den
             cmp_dct['H2O'] = flow_tot*den0 - dwt
-            new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
+            temp = cls(ID=ID+str(i), phase=phase, T=T, P=P, units='kg/hr', price=price, 
                       thermo=thermo, pH=pH, SAlk=SAlk, **cmp_dct)
-            den = flow_tot*den0/(new.F_vol*1e3)            
+            den = flow_tot*den0/(temp.F_vol*1e3)            
             i += 1
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
         
+        new.mass = temp.mass
         new.ratios = r
         
         return new
@@ -1257,13 +1268,14 @@ class WasteStream(Stream):
         while True:
             den0 = den
             cmp_dct['H2O'] = flow_tot*den0 - dwt
-            new = cls(ID=ID, phase=phase, T=T, P=P, units='kg/hr', price=price, 
+            temp = cls(ID=ID+str(i), phase=phase, T=T, P=P, units='kg/hr', price=price, 
                       thermo=thermo, pH=pH, SAlk=SAlk, **cmp_dct)
-            den = flow_tot*den0/(new.F_vol*1e3)            
+            den = flow_tot*den0/(temp.F_vol*1e3)            
             i += 1
             if abs(den-den0) <= 1e-3: break
             if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
         
+        new.mass = temp.mass
         new.ratios = r
 
         return new

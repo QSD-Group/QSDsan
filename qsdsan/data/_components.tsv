@@ -1,0 +1,56 @@
+ID	description	formula	particle_size	degradability	organic	measured_as	i_C	i_N	i_P	i_K	i_Mg	i_Ca	i_mass	i_charge	i_COD	i_NOD	f_BOD5_COD	f_uBOD_COD	f_Vmass_Totmass	CAS	PubChem
+S_H2	Dissolved dihydrogen gas	H2	Dissolved gas	Readily	FALSE	COD	0	0	0	0	0	0	0.125	0			0	0	1	1333-74-0	783
+S_CH4	Dissolved Methane	CH4	Dissolved gas	Readily	TRUE	COD	0.186997444	0	0	0	0	0	0.25	0			0	0	1	74-82-8	297
+S_CH3OH	Methanol	CH3OH	Soluble	Readily	TRUE	COD	0.249672305	0	0	0	0	0	0.666666667	0			0.717	0.862804	1	67-56-1	887
+S_Ac	Acetate	CH3COO(-)	Soluble	Readily	TRUE	COD	0.375	0	0	0	0	0	0.9225	-0.015625			0.717	0.862804	1	64-19-7	176
+S_Prop	Propionate	C2H5COO-	Soluble	Readily	TRUE	COD	0.321428571	0	0	0	0	0	0.652410714	-0.008928571			0.717	0.862804	1	79-09-3	1032
+S_F	Fermentable soluble organic matters		Soluble	Readily	TRUE	COD	0.32	0.03	0.01	0	0	0	0.502512563	0			0.717	0.862804	1		
+S_U_Inf	Undegradable soluble compound originating from the influent		Soluble	Undegradable	TRUE	COD	0.32	0.05	0.01	0	0	0	0.5	0			0	0	1		
+S_U_E	Endogenous undegradable soluble product		Soluble	Undegradable	TRUE	COD	0.32	0.05	0.01	0	0	0	0.5	0			0	0	1		
+C_B_Subst	"Biodegradable colloidal substrate, assumed to be extracellular polymeric substances"		Colloidal	Slowly	TRUE	COD	0.32	0	0	0	0	0	0.793367347	0			0.717	0.862804	1		
+C_B_BAP	"Biomass-associated colloidal products, associated with biomass decay, assumed to be the hydrolysis products of extracellular polymeric substance"		Colloidal	Slowly	TRUE	COD	0.32	0	0	0	0	0	0.793367347	0			0.717	0.862804	1		
+C_B_UAP	"Utilization-associated colloidal products, associated with substrate metabolism and biomass growth, assumed to be"		Colloidal	Slowly	TRUE	COD	0.32	0	0	0	0	0	0.793367347	0			0.717	0.862804	1		
+C_U_Inf	Undegradable colloidal compound originating from the influent		Colloidal	Undegradable	TRUE	COD	0.32	0	0.01	0	0	0	0.75	0			0	0	1		
+X_B_Subst	Biodegradable particulate substrate		Particulate	Slowly	TRUE	COD	0.32	0.04	0.01	0	0	0	0.555555556	0			0.58	0.862804	1		
+X_OHO_PHA	Poly-β-hydroxyalkanoates in ordinary heterotrophic organisms		Particulate	Slowly	TRUE	COD	0.333333333	0	0	0	0	0	0.597222222	0			0.579876434	0.862804	1		
+X_GAO_PHA	Poly-β-hydroxyalkanoates in glycogen accumulating organisms		Particulate	Slowly	TRUE	COD	0.333333333	0	0	0	0	0	0.597222222	0			0.579876434	0.862804	1		
+X_PAO_PHA	Poly-β-hydroxyalkanoates in phosphorus accumulating organisms		Particulate	Slowly	TRUE	COD	0.333333333	0	0	0	0	0	0.597222222	0			0.579876434	0.862804	1		
+X_GAO_Gly	Glycogen in glycogen-accumulating organisms		Particulate	Slowly	TRUE	COD	0.375	0	0	0	0	0	0.84375	0			0.579876434	0.862804	1		
+X_PAO_Gly	Glycogen in phosphorus-accumulating organisms		Particulate	Slowly	TRUE	COD	0.375	0	0	0	0	0	0.84375	0			0.579876434	0.862804	1		
+X_OHO	Ordinary heterotrophic organisms		Particulate	Slowly	TRUE	COD	0.366	0.0683	0.019	0.004768	0.002964	0.0024	0.776638708	0			0.566639299	0.794	0.87		
+X_AOO	Ammonia oxidizing organisms		Particulate	Slowly	TRUE	COD	0.366	0.0683	0.019	0.004768	0.002964	0.0024	0.776638708	0			0.566639299	0.794	0.87		
+X_NOO	Nitrite oxidizing organisms		Particulate	Slowly	TRUE	COD	0.366	0.0683	0.019	0.004768	0.002964	0.0024	0.776638708	0			0.566639299	0.794	0.87		
+X_AMO	Anaerobic ammonia oxidizing organisms		Particulate	Slowly	TRUE	COD	0.341	0.05968	0.01762	0.004445	0.002763	0.002278	0.776638708	0			0.566639299	0.794	0.87		
+X_PAO	Phosphorus accumulating organisms		Particulate	Slowly	TRUE	COD	0.366	0.0683	0.019	0.004768	0.002964	0.0024	0.776638708	0			0.566639299	0.794	0.87		2.87879
+X_MEOLO	Methylotrophic organisms		Particulate	Slowly	TRUE	COD	0.366	0.0683	0.019	0.004768	0.002964	0.0024	0.776638708	0			0.566639299	0.794	0.87		
+X_FO	Fermenting organisms		Particulate	Slowly	TRUE	COD	0.366	0.0683	0.019	0.004768	0.002964	0.0024	0.776638708	0			0.566639299	0.794	0.87		
+X_ACO	Acetoclastic methanogenic organisms		Particulate	Slowly	TRUE	COD	0.366	0.0683	0.019	0.004768	0.002964	0.0024	0.776638708	0			0.566639299	0.794	0.87		
+X_HMO	Hydrogenotrophic methanogenic organisms		Particulate	Slowly	TRUE	COD	0.366	0.0683	0.019	0.004768	0.002964	0.0024	0.776638708	0			0.566639299	0.794	0.87		
+X_PRO	Propionic acetogenic organisms		Particulate	Slowly	TRUE	COD	0.366	0.0683	0.019	0.004768	0.002964	0.0024	0.776638708	0			0.566639299	0.794	0.87		
+X_U_Inf	Undegradable particulate compound originating from the influent		Particulate	Undegradable	TRUE	COD	0.32	0.05	0.01	0	0	0	0.555555556	0			0	0	1		
+X_U_OHO_E	Undegradable particulate cell product endogenous from ordinary heterotrophic organisms		Particulate	Undegradable	TRUE	COD	0.366697674	0.02	0.01	0.004778	0	0	0.75	0			0	0	0.868217054		
+X_U_PAO_E	Undegradable particulate cell product endogenous from phosphorus accumulating organisms		Particulate	Undegradable	TRUE	COD	0.366697674	0.02	0.01	0.004778	0	0	0.75	0			0	0	0.868217054		
+X_Ig_ISS	"Inorganic inert suspended solids, assumed to be X_ii"		Particulate	Undegradable	FALSE		0.14233187	0	0	0	0	0	1	0			0	0	0		
+X_MgCO3	Magnesium carbonate	MgCO3	Particulate	Undegradable	FALSE		0.14233187	0	0	0	0.288256228	0	1	0			0	0	0	546-93-0	11029
+X_CaCO3	Calcium carbonate	CaCO3	Particulate	Undegradable	FALSE		0.119892097	0	0	0	0	0.4	1	0			0	0	0	471-34-1	10112
+X_MAP	"Struvite, magnesium ammonium phosphate hexahydrate"	MgNH4PO4·6H2O	Particulate	Undegradable	FALSE		0	0.05704739	0.126319221	0	0.09901797	0	1	0			0	0	0	15490-91-2	10220511
+X_HAP	Hydroxyapatite	Ca5(PO4)3(OH)	Particulate	Undegradable	FALSE		0	0	0.185	0	0	0.079633685	1	0			0	0	0	1306-06-5	14781
+X_HDP	Hydroxy dicalcium phosphate	CaHPO4·2H2O	Particulate	Undegradable	FALSE		0	0	0.1801383	0	0	0.232436516	1	0			0	0	0	7789-77-7	104805
+X_FePO4	Iron phosphate	FePO4	Particulate	Undegradable	FALSE		0	0	0.205543031	0	0	0	1	0			0	0	0	10045-86-0	24861
+X_AlPO4	Aluminum phosphate	AlPO4	Particulate	Undegradable	FALSE		0	0	0.25395654	0	0	0	1	0			0	0	0	7784-30-7	64655
+X_AlOH	Aluminum hydroxide	Al(OH)3	Particulate	Undegradable	FALSE		0	0	0	0	0	0	1	0			0	0	0	21645-51-2	10176082
+X_FeOH	Iron hydroxide	Fe(OH)3	Particulate	Undegradable	FALSE		0	0	0	0	0	0	1	0			0	0	0	1309-33-7	445709
+X_PAO_PP_Lo	Low molecular weight poly-phosphate in phosphorus accumulating organisms	(K0.33Mg0.33PO3)n	Particulate	Undegradable	FALSE	P	0	0	1	0.419354839	0.080891255	0	3.230143011	-0.032258065			0	0	0		
+X_PAO_PP_Hi	High molecular weight poly-phosphate in phosphorus accumulating organisms	(K0.33Mg0.33PO3)n	Particulate	Undegradable	FALSE	P	0	0	1	0.419354839	0.080891255	0	3.230143011	-0.032258065			0	0	0		
+S_NH4	Ammonia nitrogen	NH4+	Soluble	Undegradable	FALSE	N	0	1	0	0	0	0	1.2885	0.071428571			0	0	0	7664-41-7	222
+S_NO2	Nitrite	NO2-	Soluble	Undegradable	FALSE	N	0	1	0	0	0	0	3.286142857	-0.071428571			0	0	0	14797-65-0	946
+S_NO3	Nitrate	NO3-	Soluble	Undegradable	FALSE	N	0	1	0	0	0	0	4.428928571	-0.071428571			0	0	0	14797-55-8	943
+S_PO4	"Orthophosphate, assumed 50% H2PO4-, 50% HPO4-2"	H3P2O8-3	Soluble	Undegradable	FALSE	P	0	0	1	0	0	0	3.115	-0.048			0	0	0		
+S_K	Potassium	K+	Soluble	Undegradable	FALSE		0	0	0	1	0	0	1	0.025641026			0	0	0	24203-36-9	813
+S_Ca	Calcium	Ca+2	Soluble	Undegradable	FALSE		0	0	0	0	0	1	1	0.05			0	0	0	14127-61-8	271
+S_Mg	Magnesium 	Mg+2	Soluble	Undegradable	FALSE		0	0	0	0	1	0	1	0.082287595			0	0	0	22537-22-0	888
+S_CO3	"dissolved inorganic carbon, CO3(2-), HCO3-, H2CO3"	HCO3-	Soluble	Undegradable	FALSE	C	1	0	0	0	0	0	5.083333333	-0.083333333			0	0	0	71-52-3	769
+S_N2	Dissolved dinitrogen gas	N2	Dissolved gas	Undegradable	FALSE	N	0	1	0	0	0	0	1	0			0	0	0	7727-37-9	947
+S_O2	Oxygen	O2	Dissolved gas	Undegradable	FALSE		0	0	0	0	0	0	1	0			0	0	0	7782-44-7	977
+S_CAT	Other cation		Soluble	Undegradable	FALSE		0	0	0	0	0	0	0	1			0	0	0		
+S_AN	Other anion		Soluble	Undegradable	FALSE		0	0	0	0	0	0	0	-1			0	0	0		

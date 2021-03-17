@@ -31,19 +31,18 @@ def test_waste_stream():
     assert isclose(ws1.TP, 10, rel_tol=1e-3)
     assert isclose(ws1.F_vol, ws2.F_vol)
     
-
-    ws1 = WasteStream(S_Ac=5, H2O=1000, units='kg/hr')
-    ws2 = WasteStream(X_NOO=10, H2O=1000, units='kg/hr')
-    ws3 = WasteStream()
-    ws3.mix_from((ws1, ws2))
-    assert_allclose(ws3.F_mass, 2015.0)
+    ws3 = WasteStream(S_Ac=5, H2O=1000, units='kg/hr')
+    ws4 = WasteStream(X_NOO=10, H2O=1000, units='kg/hr')
+    ws5 = WasteStream()
+    ws5.mix_from((ws3, ws4))
+    assert_allclose(ws5.F_mass, 2015.0)
     # TODO: After updating the default component properties,
     # add in tests here to make sure COD, etc. are calculated correctly
-    assert_allclose(ws3.COD, 7424.606289711915, rtol=1e-3)
+    assert_allclose(ws5.COD, 7424.606289711915, rtol=1e-3)
     
     # Make sure below attributes are calculated based on flow info, cannot be set
     with pytest.raises(AttributeError):
-        ws3.COD = 5
+        ws5.COD = 5
     
 # This just means that if pytest runs this module, it calls the test_waste_stream function
 if __name__ == '__main__':

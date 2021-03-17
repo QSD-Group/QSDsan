@@ -1,0 +1,14 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+tau	retention_time_ABR	days	3	1	5	uniform	"CIDI; EAWAG, 2014; Tchobanoglous et al., 2014"
+COD_removal	COD_removal_ABR	fraction of total COD	0.93	0.83	0.99	uniform	"EAWAG, 2014"
+MCF_decay	MCF_ABR	fraction of anaerobic conversion of degraded COD	1			constant	"IPCC, 2006"
+N_removal	N_removal_ABR	fraction of N removed	0.08	0	0.15	uniform	"EAWAG, 2014"
+N_max_decay	N_max_denitrification_ABR	fraction of N removal	0.8	0.7	0.9	triangular	"Orner and Mihelcic, 2017"
+N2O_EF_decay	N2O_EF_ABR	fraction of degraded N emitted as N2O	0	0	0.001	uniform	"IPCC, 2006"
+N_reactor	number_ABR	-	1			constant	CIDI
+reactor_L	length_ABR	m	17			constant	CIDI
+reactor_W	width_ABR	m	5			constant	CIDI
+reactor_H	height_ABR	m	2.5	2	3	uniform	CIDI
+N_baffle	baffles_ABR	-	2			constant	CIDI
+add_concrete	additional_concrete_ABR	fraction of total	0.25	0.2	0.3	uniform	assumption (to account for receiving basin and biogas tank)
+concrete_thickness	concrete_thickness	m	0.3	0.15	0.45	uniform	assumption

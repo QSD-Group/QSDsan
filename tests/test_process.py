@@ -103,8 +103,8 @@ def test_process():
               'b_PP', 'b_PHA', 'K_PS', 'K_PP', 'K_MAX', 'K_IPP', 'K_PHA',
               'mu_AUT', 'b_AUT', 'K_O2_AUT', 'K_NH4_AUT', 'K_ALK_2',
               'k_PRE', 'k_RED')
-
-    path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ASM2d_original.csv')
+    
+    path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ASM2d_original.tsv')
     asm2d = Processes.load_from_file(path,
                                      conserved_for=('COD', 'N', 'P', 'charge'),
                                      parameters=params,

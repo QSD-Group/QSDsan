@@ -30,7 +30,7 @@ Forking and Cloning
 
 	    https://github.com/<YOUR_USERNAME>/QSDsan.git
 
-	.. image:: ./images/code.png
+	.. image:: ./for_developers/images/code.png
 		:height: 200
 		:align: center
 
@@ -105,7 +105,7 @@ Submitting Pull Request
 
 	- You can confirm that you have pulled all updates from the root repository if there's a message showing that your branch is X commits ahead of QSD-Group:master as shown (not X commits, Y commits behind).
 
-	.. image:: ./images/commit.png
+	.. image:: ./for_developers/images/commit.png
 		:align: center
 
 #. One of the Quantitative Sustainable Design Group members will review your changes and accept or discuss with you if edits are needed.

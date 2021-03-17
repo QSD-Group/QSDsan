@@ -173,7 +173,7 @@ def batch_create_streams(prefix):
                                       impact_item=K_item.copy(set_as_source=True))
     return stream_dct
 
-def add_fugative_items(unit, item):
+def add_fugitive_items(unit, item):
     unit._run()
     for i in unit.ins:
         i.impact_item = item.copy(set_as_source=True)
@@ -274,12 +274,12 @@ A9 = su.CropApplication('A9', ins=A7-0, outs=('liquid_fertilizer', 'reuse_loss')
 A9.specification = lambda: adjust_NH3_loss(A9)
 
 A10 = su.Mixer('A10', ins=(A2-2, A5-2, A6-1, A7-1, A8-2), outs=streamsA['CH4'])
-A10.specification = lambda: add_fugative_items(A10, CH4_item)
-A10.line = 'fugative CH4 mixer' 
+A10.specification = lambda: add_fugitive_items(A10, CH4_item)
+A10.line = 'fugitive CH4 mixer' 
         
 A11 = su.Mixer('A11', ins=(A2-3, A5-3, A6-2, A7-2, A8-3), outs=streamsA['N2O'])
-A11.specification = lambda: add_fugative_items(A11, N2O_item)
-A11.line = 'fugative N2O mixer'
+A11.specification = lambda: add_fugitive_items(A11, N2O_item)
+A11.line = 'fugitive N2O mixer'
 
 A12 = su.ComponentSplitter('A12', ins=A8-0,
                            outs=(streamsA['sol_N'], streamsA['sol_P'], streamsA['sol_K'],
@@ -380,12 +380,12 @@ B9 = su.CropApplication('B9', ins=B7-0, outs=('liquid_fertilizer', 'reuse_loss')
 B9.specification = lambda: adjust_NH3_loss(B9)
 
 B10 = su.Mixer('B10', ins=(B2-2, B5-2, B7-1, B8-2), outs=streamsB['CH4'])
-B10.specification = lambda: add_fugative_items(B10, CH4_item)
-B10.line = 'fugative CH4 mixer'
+B10.specification = lambda: add_fugitive_items(B10, CH4_item)
+B10.line = 'fugitive CH4 mixer'
 
 B11 = su.Mixer('B11', ins=(B2-3, B5-3, B7-2, B8-3), outs=streamsB['N2O'])
-B11.specification = lambda: add_fugative_items(B11, N2O_item)
-B11.line = 'fugative N2O mixer'
+B11.specification = lambda: add_fugitive_items(B11, N2O_item)
+B11.line = 'fugitive N2O mixer'
 
 B12 = su.ComponentSplitter('B12', ins=B8-0,
                             outs=(streamsB['sol_N'], streamsB['sol_P'], streamsB['sol_K'],
@@ -514,12 +514,12 @@ C9 = su.CropApplication('C9', ins=C7-0, outs=('liquid_fertilizer', 'reuse_loss')
 C9.specification = lambda: adjust_NH3_loss(C9)
 
 C10 = su.Mixer('C10', ins=(C2-4, C6-1, C7-1, C8-2), outs=streamsC['CH4'])
-C10.specification = lambda: add_fugative_items(C10, CH4_item)
-C10.line = 'fugative CH4 mixer'
+C10.specification = lambda: add_fugitive_items(C10, CH4_item)
+C10.line = 'fugitive CH4 mixer'
 
 C11 = su.Mixer('C11', ins=(C2-5, C6-2, C7-2, C8-3), outs=streamsC['N2O'])
-C11.specification = lambda: add_fugative_items(C11, N2O_item)
-C11.line = 'fugative N2O mixer'
+C11.specification = lambda: add_fugitive_items(C11, N2O_item)
+C11.line = 'fugitive N2O mixer'
 
 C12 = su.ComponentSplitter('C12', ins=C8-0,
                            outs=(streamsC['sol_N'], streamsC['sol_P'], streamsC['sol_K'],

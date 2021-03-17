@@ -8,3 +8,4 @@ scipy
 SALib
 matplotlib
 seaborn
+sympy

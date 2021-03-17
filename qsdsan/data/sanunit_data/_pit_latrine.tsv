@@ -1,0 +1,25 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+emptying_period	pit_emptying_period	years	0.8	0.3	2.4	triangular	"Bwaise survey results (May, 2018); calculations"
+sludge_accum_rate	sludge_accumulation_rate	L/cap/yr	270	100	900	triangular	"Strande et al., 2017; Chowdhry & Kone, 2012 (Gates Foundation report)"
+N_leaching		fraction of N input	0.13	0.01	0.5	uniform	"Jacks et al., 1999; Lagerstedt et al., 1994; Orner and Mihelcic, 2017; Nyenje et al., 2013 (2-20%); Phillips and Burton, 2005 (26-43%)"
+P_leaching		fraction of P input	0.18	0	0.37	uniform	"Nyenje et al., 2013 (0-1%); Orner and Mihelcic, 2017; Phillips and Burton, 2005 (30-37%)"
+K_leaching		fraction of K input	0.21	0.11	0.31	uniform	"Phillips and Burton, 2005 (note this source is for leachate through soil, not from a latrine)"
+N_volatilization	N_pit_volatilization	fraction of N input	0.005	0	0.01	uniform	"Jacks et al., 1999; Orner and Mihelcic, 2017; Nyenje et al., 2013 minor due to neutral pH)"
+MCF_decay	"MCF_single_above_water;
+MCF_communal_above_water;
+MCF_below_water"	fraction of anaerobic conversion of degraded COD	"{'single_above_water': 0.1,
+ 'communal_above_water': 0.5,
+ 'below_water': 0.7}"	"{'single_above_water': 0.05,
+ 'communal_above_water': 0.4,
+ 'below_water': 0.7}"	"{'single_above_water': 0.15,
+ 'communal_above_water': 0.6,
+ 'below_water': 1}"	triangular	"IPCC, 2006"
+N2O_EF_decay	"N2O_EF_single_above_water;
+N2O_EF_communal_above_water;
+N2O_EF_below_water"	fraction of N emitted as N2O	"{'single_above_water': 0,
+ 'communal_above_water': 0,
+ 'below_water': 0}"	"{'single_above_water': 0,
+ 'communal_above_water': 0,
+ 'below_water': 0}"	"{'single_above_water': 0.001,
+ 'communal_above_water': 0.001,
+ 'below_water': 0.001}"	triangular	"IPCC, 2019"

@@ -21,30 +21,30 @@ def test_component():
     from chemicals.elements import molecular_weight
     from math import isclose
     
-    SNH4 = Component('SNH4', formula='NH4+', measured_as='N', 
+    S_NH4 = Component('S_NH4', formula='NH4+', measured_as='N', 
                  f_BOD5_COD=0, f_uBOD_COD=0, f_Vmass_Totmass=0,
                  description="Ammonium", particle_size="Soluble",
                  degradability="Undegradable", organic=False)
-    assert SNH4.i_N == 1
-    assert SNH4.i_NOD == molecular_weight({'O':4})/molecular_weight({'N':1})
-    SNH4.measured_as = None
-    assert SNH4.i_mass == 1
+    assert S_NH4.i_N == 1
+    assert S_NH4.i_NOD == molecular_weight({'O':4})/molecular_weight({'N':1})
+    S_NH4.measured_as = None
+    assert S_NH4.i_mass == 1
 
-    SAc = Component('SAc', formula='CH3COO-', measured_as='COD', f_BOD5_COD=0.717, 
+    S_Ac = Component('S_Ac', formula='CH3COO-', measured_as='COD', f_BOD5_COD=0.717, 
                     f_uBOD_COD=0.863, f_Vmass_Totmass=1,
                     description="Acetate", particle_size="Soluble",
                     degradability="Readily", organic=True) 
-    assert SAc.i_COD == 1
-    SAc.measured_as = None
-    assert SAc.i_mass == 1
-    assert SAc.i_COD == molecular_weight({'O':4})/molecular_weight({'C':2, 'H':3, 'O':2})
+    assert S_Ac.i_COD == 1
+    S_Ac.measured_as = None
+    assert S_Ac.i_mass == 1
+    assert S_Ac.i_COD == molecular_weight({'O':4})/molecular_weight({'C':2, 'H':3, 'O':2})
     
-    SHS = Component.from_chemical('SHS', tmo.Chemical('Hydrosulfide'), 
+    S_HS = Component.from_chemical('S_HS', tmo.Chemical('Hydrosulfide'), 
                                   particle_size="Soluble",
                                   degradability="Undegradable", organic=False)
-    assert SHS.i_charge < 0
-    SHS.measured_as = 'S'
-    assert SHS.i_mass > 1    
+    assert S_HS.i_charge < 0
+    S_HS.measured_as = 'S'
+    assert S_HS.i_mass > 1    
     
     components = Components.load_default(default_compile=False)
     with pytest.raises(AssertionError):

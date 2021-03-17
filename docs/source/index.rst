@@ -96,9 +96,9 @@ If you would like to contribute, please follow our contribution guide, thank you
    :maxdepth: 1
    :caption: Contributions
 
-   for_developers/CODE_OF_CONDUCT
-   for_developers/AUTHORS
-   for_developers/CONTRIBUTING
+   AUTHORS
+   CODE_OF_CONDUCT
+   CONTRIBUTING
    for_developers/tutorial_template
 
 

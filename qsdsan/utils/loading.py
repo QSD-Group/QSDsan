@@ -22,12 +22,16 @@ import pandas as pd
 __all__ = ('load_data', 'data_path')
  
 
-def load_data(path=None, sheet=None):
-    if path[-4:] == 'xlsx' or path[-4:] == '.xls':
-        try: data = pd.read_excel(path, sheet_name=sheet, index_col=0, engine='openpyxl')
-        except: data = pd.read_excel(path, index_col=0, engine='openpyxl')
-    elif path[-4:] == '.csv':
-        data = pd.read_csv(path, index_col=0)
+def load_data(path=None, sheet=None, **kwargs):
+    kwargs.setdefault('index_col', 0)
+    last_4 = path[-4:]
+    if last_4 == '.tsv':
+        data = pd.read_csv(path, sep='\t', **kwargs)
+    elif last_4 == '.csv':
+        data = pd.read_csv(path, **kwargs)
+    elif last_4 in ('xlsx', '.xls'):
+        try: data = pd.read_excel(path, sheet_name=sheet, engine='openpyxl', **kwargs)
+        except: data = pd.read_excel(path, engine='openpyxl', **kwargs)
     else:
-        raise ValueError('Only csv or xlsx files can be loaded.')
+        raise ValueError('Only tsv, csv, or xlsx files can be loaded.')
     return data

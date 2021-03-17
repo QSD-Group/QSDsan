@@ -5,8 +5,8 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
     Joy Cheung <joycheung1994@gmail.com>
+    Yalin Li <zoe.yalin.li@gmail.com>
 
 Part of the code is based on the thermosteam package:
 https://github.com/BioSTEAMDevelopmentGroup/thermosteam
@@ -20,7 +20,7 @@ for license details.
 import thermosteam as tmo
 from chemicals.elements import molecular_weight, charge_from_formula
 from chemicals.elements import mass_fractions as get_mass_frac
-from ._cod import cod_test_stoichiometry, electron_acceptor_cod
+from .utils.cod import cod_test_stoichiometry, electron_acceptor_cod
 
 __all__ = ('Component',)
 
@@ -125,8 +125,6 @@ class Component(tmo.Chemical):
     `thermosteam.Chemical <https://thermosteam.readthedocs.io/en/latest/Chemical.html>`_
     '''         
 
-    # Child class will inherit parent class's slots
-    # __slots__ = tuple('_'+i for i in _component_properties)
     __slots__ = _component_slots
 
     def __new__(cls, ID='', search_ID=None, formula=None, phase=None, measured_as=None, 
@@ -513,11 +511,10 @@ class Component(tmo.Chemical):
         new = self.__class__.__new__(cls=self.__class__, ID=ID)
 
         for field in self.__slots__:
-            if field == '_CAS': continue
-            try:
-                value = getattr(self, field)
-                setattr(new, field, copy_maybe(value))
-            except AttributeError: continue
+            if field in ('_CAS', '_N_solutes'): continue
+            value = getattr(self, field)
+            setattr(new, field, copy_maybe(value))
+
         new._ID = ID
         new._locked_state = self._locked_state
         new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus, new.Tm,

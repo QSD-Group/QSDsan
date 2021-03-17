@@ -24,7 +24,7 @@ from ..utils.loading import load_data, data_path
 __all__ = ('SedimentationTank',)
 
 
-data_path += 'sanunit_data/_sedimentation_tank.csv'
+data_path += 'sanunit_data/_sedimentation_tank.tsv'
 
 
 class SedimentationTank(SludgeSeparator, Decay):

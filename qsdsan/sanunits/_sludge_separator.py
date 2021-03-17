@@ -22,7 +22,7 @@ from ..utils.loading import load_data, data_path
 
 __all__ = ('SludgeSeparator',)
 
-data_path += 'sanunit_data/_sludge_separator.csv'
+data_path += 'sanunit_data/_sludge_separator.tsv'
 
 allocate_N_removal = Decay.allocate_N_removal
 
