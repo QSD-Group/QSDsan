@@ -51,7 +51,7 @@ Forking and Cloning
 	- If you don't have ``git``, follow the `instructions <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_ to install it.
 	- The ``--depth-1`` flag is to tell ``git`` just clone the latest commit, you can change the depth number or just remove this flag completely, but then ``git`` will download more historical commits, which takes longer time to clone and needs more space.
 
-#. Add the root QSDsan as the upstream:
+#. Add the root ``QSDsan`` as the upstream:
 
 	.. code:: bash
 
@@ -74,6 +74,7 @@ Forking and Cloning
 
 Note
 ^^^^
+#. We use fork as the default way for collaboration (i.e., for all first-time contributors). If you are a constant contributor and have independently made at least one successful and meaningful contribution through forking, you will be given the write access to ``QSDsan`` and you can use branch for easier code syncing. We will also jinvite you to join the ``QSDsan`` team.
 #. GitHub has really detailed documentation on `forking <https://docs.github.com/en/github/getting-started-with-github/fork-a-repo>`_ (and almost everything else).
 #. If you are new to command-line interface, `GitHub Desktop <https://desktop.github.com/>`_ is recommended.
 
@@ -125,7 +126,12 @@ Whenever new modules or functions are added, concise and thorough documents shou
 		# This can be rendered by Sphinx and as docstring
 		.. note::
 
-			Something to notes
+			Something to notes.
+
+			[1] If you need to have a numbered list, be careful about line-wrapping and indentation.
+			The start of the second line should align with the number, not the first character after the number. 
+
+			[2] Second point.
 
 		# This won't be rendered by Sphinx
 		Notes

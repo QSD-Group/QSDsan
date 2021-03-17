@@ -5,6 +5,9 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 This module is developed by:
     Joy Cheung <joycheung1994@gmail.com>
 
+Part of the code is based on the thermosteam package:
+https://github.com/BioSTEAMDevelopmentGroup/thermosteam
+
 This module is under the UIUC open-source license. Please refer to 
 https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
@@ -31,7 +34,7 @@ class UndefinedProcess(AttributeError):
 @chemicals_user        
 class Process():
     """
-    Create a :class:`Process`` object which defines a stoichiometric process and its kinetics.
+    Create a :class:`Process` object which defines a stoichiometric process and its kinetics.
     A :class:`Process` object is capable of reacting the component flow rates of a :class:`WasteStream`
     object.
 
@@ -369,14 +372,14 @@ class Processes():
                        conserved_for=('COD', 'N', 'P', 'charge'), parameters=None,
                        use_default_data=False, store_data=False, compile=True):
         """
-        Create ``CompiledProcesses`` object from a table of process IDs, stoichiometric 
-        coefficients, and rate equations stored in a .csv or Excel file. 
+        Create :class:`CompiledProcesses` object from a table of process IDs, stoichiometric 
+        coefficients, and rate equations stored in a .tsv, .csv, or Excel file. 
 
         Parameters
         ----------
         path : str, optional
             File path.
-        components : ``CompiledComponents``, optional
+        components : :class:`CompiledComponents`, optional
             Components corresponding to the columns in the stoichiometry matrix, 
             defaults to thermosteam.settings.chemicals. The default is None.
         conserved_for : tuple[str], optional
@@ -394,19 +397,19 @@ class Processes():
         .. note::
     
             [1] First column of the table should be process IDs, followed by stoichiometric 
-                coefficient matrix with corresponding component IDs as column names, and rate 
-                equations as the last column. 
+            coefficient matrix with corresponding component IDs as column names, and rate 
+            equations as the last column. 
             
             [2] Entries of stoichiometric coefficients can be symbolic or numerical. 
-                Blank cells are considered zero.
+            Blank cells are considered zero.
             
             [3] Unknown stoichiometric coefficients to solve for using conservation 
-                rules should be uniformly written as '?'. 
+            rules should be uniformly written as '?'. 
             
             [4] For each process, the first component with stoichiometric coefficient
-                of -1 or 1 is considered the reference component. If none of the components
-                has -1 or 1 stoichiometric coefficient, the first component with non-zero
-                coefficient is considered the reference.
+            of -1 or 1 is considered the reference component. If none of the components
+            has -1 or 1 stoichiometric coefficient, the first component with non-zero
+            coefficient is considered the reference.
         """
         if use_default_data and cls._default_data is not None:
             data = cls._default_data
@@ -568,7 +571,7 @@ class CompiledProcesses(Processes):
         return lambdify(args, self._production_rates)
     
     def subgroup(self, IDs):
-        '''Create a new subgroup of ``CompiledProcesses`` objects.'''
+        '''Create a new subgroup of :class:`CompiledProcesses` objects.'''
         processes = self[IDs]
         new = Processes(processes)
         new.compile()

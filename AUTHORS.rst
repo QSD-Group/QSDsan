@@ -37,3 +37,8 @@ Funding Support
 - `Jeremy Guest <jsguest@illinois.edu>`_
 - William Tarpeh
 - Roland Cusick
+
+
+Special Acknowledgement
+-----------------------
+- Yoel Cortés-Peña for helping many of the ``QSDsan`` members get started on Python and package development.

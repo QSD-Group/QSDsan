@@ -4,10 +4,10 @@ Change Log
 This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
-Ongoing
--------
-- Added :class:`Process`, :class:`Processes`, and :class:`CompiledProcesses` classes for stoichiometric process and its kinetics.
-- Added an :class:`Equipment` class for design and costing of unit equipment.
+0.2.0 (2021-03-17)
+------------------
+- Added :class:`~.Process`, :class:`~.Processes`, and :class:`~.CompiledProcesses` classes for stoichiometric process and its kinetics.
+- Added an :class:`~.Equipment` class for design and costing of unit equipment.
 - For the ``stats`` module:
 
 	- More statistical tests:

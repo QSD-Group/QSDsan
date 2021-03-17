@@ -1,3 +1,4 @@
+
 Common Errors
 =============
 
@@ -29,4 +30,14 @@ or
     .. code:: bash
 
        brew install graphviz # if you are using brew
+
+
+Tips
+====
+
+Upgrade Python
+--------------
+``QSDsan`` is currently compatible with and tested for Python 3.7 and 3.8. However, with ```BioSTEAM`` moving to Python 3.8 <https://github.com/BioSTEAMDevelopmentGroup/biosteam/issues/56>`_, qsdsan may be only compatible with Python 3.8 and higher in the future. 
+
+If you need to upgrade Python but having a lot of existing packages, creating a virtual environment may be the best way to avoid conflicts. If you are using ``Conda``, its has related documentations on `Python upgrading <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-python.html>`_.
 
