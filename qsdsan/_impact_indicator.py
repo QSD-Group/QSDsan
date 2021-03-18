@@ -185,7 +185,7 @@ class ImpactIndicator:
 
 
 
-ImpactIndicator.load_default_indicators()
+# ImpactIndicator.load_default_indicators()
 
 
 

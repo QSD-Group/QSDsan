@@ -177,11 +177,13 @@ class ImpactItem:
         items = {}
         for sheet in data_file.sheet_names:
             data = data_file.parse(sheet, index_col=0)
+
             if sheet == 'info':
                 for item in data.index:
                     if item in cls._items.keys():
                         items[item] = cls._items[item]
                     else:
+                        if 'ElectricMotor' in item: breakpoint()
                         new = cls.__new__(cls)
                         new.__init__(ID=item,
                                      functional_unit=data.loc[item]['functional_unit'])
@@ -440,10 +442,7 @@ class StreamImpactItem(ImpactItem):
 
 
 
-ImpactItem.load_default_items()
-
-
-
+# ImpactItem.load_default_items()
 
 
 

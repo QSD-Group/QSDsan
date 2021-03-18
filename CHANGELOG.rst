@@ -4,8 +4,8 @@ Change Log
 This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
-0.2.0 (2021-03-17)
-------------------
+`0.2.0`_ (2021-03-17)
+---------------------
 - Added :class:`~.Process`, :class:`~.Processes`, and :class:`~.CompiledProcesses` classes for stoichiometric process and its kinetics.
 - Added an :class:`~.Equipment` class for design and costing of unit equipment.
 - For the ``stats`` module:
@@ -65,7 +65,7 @@ This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan
 ---------------------
 - Added the all three sanitation scenarios as described in `Trimmer et al.`_, including uncertainty/sensitivity analyses with tutorial.
 - Inclusion of GPX models for estimation of :class:`~.WasteStream` properties.
-- Live documentation for the `stable package`_ and `beta version`_.
+- Live documentation for the `latest`_ and `beta`_ version.
 - New classes:
 
     - All units in `Trimmer et al.`_
@@ -81,13 +81,14 @@ This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan
 
 
 .. Other links
-.. _stable package: https://qsdsan.readthedocs.io/en/latest/
-.. _beta version: https://qsdsan-beta.readthedocs.io/en/latest/
+.. _latest: https://qsdsan.readthedocs.io/en/latest/
+.. _beta: https://qsdsan.readthedocs.io/en/beta/
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
-.. _0.1.0: https://github.com/yalinli2/QSDsan/commit/a3164b257d95889305aa94186bb072ad3d7b5f77
+.. _0.2.0: https://github.com/QSD-Group/QSDsan/commit/286943eb206ebd89f58e50b9fdd1bed486e894ae
+.. _0.1.0: https://github.com/QSD-Group/QSDsan/commit/1c3d11d9f72421c8b5dbdf6b537775ca35ec65c0
 .. _0.0.3: https://github.com/QSD-Group/QSDsan/commit/e20222caccc58d9ee414ca08d8ec55f3a44ffca7
 .. _0.0.2: https://github.com/QSD-Group/QSDsan/commit/84653f5979fbcd76a80ffb6b22ffec1c5ca2a084
-.. _0.0.1: https://github.com/yalinli2/QSDsan/commit/f95e6172780cfe24ab68cd27ba19837e010b3d99
+.. _0.0.1: https://github.com/QSD-Group/QSDsan/commit/f95e6172780cfe24ab68cd27ba19837e010b3d99
 

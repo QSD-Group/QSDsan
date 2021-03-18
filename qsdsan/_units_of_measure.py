@@ -28,7 +28,6 @@ import os
 ureg.load_definitions(os.path.dirname(os.path.realpath(__file__)) + '/units_of_measure.txt')
 del os
 
-
 def parse_unit(value):
     str_list = value.split(' ') # for something like 'kg CO2-eq'
     if len(str_list) > 1:
