@@ -96,7 +96,9 @@ If you would like to contribute, please follow our contribution guide, thank you
    :maxdepth: 1
    :caption: Contributions
 
-   include_contribution
+   AUTHORS
+   CODE_OF_CONDUCT
+   CONTRIBUTING
    for_developers/tutorial_template
 
 
@@ -122,7 +124,7 @@ Additionally, to get the full value of ``QSDsan``, we highly recommend reading t
    :maxdepth: 1
    :caption: What's new
 
-   include_changelog
+   CHANGELOG
 
 
 References
