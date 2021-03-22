@@ -561,14 +561,14 @@ class CompiledProcesses(Processes):
         rates = [r.subs(self._parameters) for r in self._production_rates]
         return pd.DataFrame(rates, index=self._components.IDs, columns=('rate_of_production',))
     
-    @property
-    def production_rates_function(self):
-        '''
-        [function] A function object of the components' rates of production. 
-        When evaluated, returns a list of production rates.
-        '''
-        args = list(symbols(self._components.IDs)) + [v for k,v in self._parameters.items() if k == str(v)]
-        return lambdify(args, self._production_rates)
+    # @property
+    # def production_rates_function(self):
+    #     '''
+    #     [function] A function object of the components' rates of production. 
+    #     When evaluated, returns a list of production rates.
+    #     '''
+    #     args = list(symbols(self._components.IDs)) + [v for k,v in self._parameters.items() if k == str(v)]
+    #     return [lambdify(args, r) for r in self._production_rates]
     
     def subgroup(self, IDs):
         '''Create a new subgroup of :class:`CompiledProcesses` objects.'''
