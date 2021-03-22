@@ -47,8 +47,11 @@ def test_component():
     assert S_HS.i_mass > 1    
     
     components = Components.load_default(default_compile=False)
-    with pytest.raises(AssertionError):
-        H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'))
+
+    #!!! Should we allow None for particle_size, degradability, and organic?
+    # with pytest.raises(AssertionError):
+    #     H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'))
+    
     H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
                                   particle_size='Soluble',
                                   degradability='Undegradable', organic=False)
