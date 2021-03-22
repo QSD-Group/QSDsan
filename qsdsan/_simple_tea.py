@@ -12,6 +12,7 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
+
 # %%
 
 from datetime import date
@@ -50,8 +51,10 @@ class SimpleTEA(TEA):
         Annual maintenance cost as a fraction of fixed capital investment.
     annual_labor : float
         Annual labor cost.
-    system_add_OPEX : float
+    system_add_OPEX : float or dict
         Annual additional system-wise operating expenditure (on top of the `add_OPEX` of each unit).
+        Float input will be automatically converted to a dict with the key being
+        "System additional OPEX".
     construction_schedule : tuple or None
         Construction progress, must sum up to 1, leave as `None` will assume the system finishes within one year.
 
@@ -66,7 +69,7 @@ class SimpleTEA(TEA):
     def __init__(self, system, discount_rate=0.05,
                  start_year=date.today().year, lifetime=10, uptime_ratio=1., 
                  CAPEX=0., lang_factor=None,
-                 annual_maintenance=0., annual_labor=0., system_add_OPEX=0.,
+                 annual_maintenance=0., annual_labor=0., system_add_OPEX={},
                  construction_schedule=None):
         system.simulate()
         self.system = system
@@ -222,12 +225,16 @@ class SimpleTEA(TEA):
             self._operating_hours = self._operating_days * 24
         else:
             raise ValueError('`uptime_ratio` must be in [0,1].')
-    
-    #!!! Note ideal, replace it with operating hours
+
     @property
     def operating_days(self):
-        '''[float] Operating days calculated based on `uptime_ratio`.'''
+        '''[float] Equivalent operating days calculated based on `uptime_ratio`.'''
         return self._operating_days
+
+    @property
+    def operating_hours(self):
+        '''[float] Equivalent operating hours calculated based on `uptime_ratio`.'''
+        return self._operating_hours
     
     @property
     def lang_factor(self):
@@ -311,20 +318,36 @@ class SimpleTEA(TEA):
     @property
     def unit_add_OPEX(self):
         '''[float] Sum of `add_OPEX` for all units in the system.'''
-        return sum([i.add_OPEX*i.uptime_ratio/self.uptime_ratio for i in self.units])*self._operating_hours
+        tot = 0
+        for u in self.units:
+            add_OPEX = sum(v for v in u.add_OPEX.values())
+            tot += add_OPEX*u.uptime_ratio/self.uptime_ratio*self._operating_hours
+        return tot
 
     @property
     def system_add_OPEX(self):
-        '''[float] Annual additional system-wise operating expenditure (on top of the `add_OPEX` of each unit).'''
+        '''
+        [dict] Annual additional system-wise operating expenditure
+        (on top of the `add_OPEX` of each unit).
+        Float input will be automatically converted to a dict with the key being
+        "System additional OPEX".
+        '''
+        return {'System dditional OPEX': self._system_add_OPEX} \
+               if isinstance(self._system_add_OPEX, float) else self._system_add_OPEX
         return self._system_add_OPEX
     @system_add_OPEX.setter
     def system_add_OPEX(self, i):
-        self._system_add_OPEX = float(i)
+        if isinstance(i, float):
+            i = {'System additional OPEX': i}
+        if not isinstance(i, dict):
+            raise TypeError('system_add_OPEX can only be float of dict, ' \
+                            f'not {type(i).__name__}.')
+        self._system_add_OPEX = i
 
     @property
     def total_add_OPEX(self):
         '''[float] Sum of `unit_add_OPEX` and `system_add_OPEX`.'''
-        return self.unit_add_OPEX+self.system_add_OPEX
+        return self.unit_add_OPEX+sum(v for v in self.system_add_OPEX.values())
 
     @property
     def FOC(self):

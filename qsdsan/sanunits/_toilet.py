@@ -124,7 +124,8 @@ class Toilet(SanUnit, Decay, isabstract=True):
     def _cost(self):
         self.purchase_costs['Single toilet'] = self.CAPEX
         self.purchase_costs['Total toilets'] = self.CAPEX * self.N_toilet
-        self._add_OPEX = self.purchase_costs['Total toilets']*self.OPEX_over_CAPEX/365/24
+        add_OPEX = self.purchase_costs['Total toilets']*self.OPEX_over_CAPEX/365/24
+        self._add_OPEX = {'Additional OPEX': add_OPEX}
 
 
     @staticmethod

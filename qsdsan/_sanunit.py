@@ -15,12 +15,6 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-'''
-TODO:
-    Add the _impact method, then unhide the _summary method
-'''
-
-
 
 # %%
 
@@ -28,7 +22,6 @@ import biosteam as bst
 from thermosteam import Stream
 from . import currency, SanStream, WasteStream, Construction, Transportation
 
-NotImplementedMethod = bst.utils.NotImplementedMethod
 format_title = bst.utils.misc.format_title
 
 __all__ = ('SanUnit',)
@@ -47,8 +40,10 @@ class SanUnit(bst.Unit, isabstract=True):
         Total impacts associated with this unit.
     transportation : tuple
         Contains construction information.
-    add_OPEX : float
+    add_OPEX : float or dict
         Operating expense per hour in addition to utility cost (assuming 100% uptime).
+        Float input will be automatically converted to a dict with the key being
+        "Additional OPEX".
     uptime_ratio : float
         Uptime of the unit to adjust add_OPEX, should be in [0,1]
         (i.e., a unit that is always operating has an uptime_ratio of 1).
@@ -66,11 +61,10 @@ class SanUnit(bst.Unit, isabstract=True):
 
     '''
     
-    # _stacklevel = 
-    # ticket_name = 'SU'
+    ticket_name = 'SU'
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 equipments=(), **kwargs):
+                 equipments=(), add_OPEX={}, uptime_ratio=1., lifetime=None, **kwargs):
         self._register(ID)
         self._specification = None
         self._load_thermo(thermo)
@@ -79,6 +73,10 @@ class SanUnit(bst.Unit, isabstract=True):
         self._init_utils()
         self._init_results()
         self._assert_compatible_property_package()
+        
+        self._add_OPEX = add_OPEX
+        self._uptime_ratio = 1.
+        self._lifetime = None
 
         for equip in equipments:
             equip._linked_unit = self
@@ -129,11 +127,9 @@ class SanUnit(bst.Unit, isabstract=True):
 
     def _init_results(self):
         super()._init_results()
-        self._add_OPEX = 0.
-        self._uptime_ratio = 1.
-        self._lifetime = None
         self._construction = ()
         self._transportation = ()
+
 
     def __repr__(self):
         return f'<{type(self).__name__}: {self.ID}>'
@@ -180,15 +176,13 @@ class SanUnit(bst.Unit, isabstract=True):
             i += 1
         info = info.replace('\n ', '\n    ')
         return info[:-1]
-    
-    _impact = NotImplementedMethod
+
 
     def _summary(self):
         '''After system converges, design the unit and calculate cost and environmental impacts.'''
         self._design()
         self._cost()
-        self._impact()
-    
+   
     
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, IDs=None, stream_info=True):
         '''Print information of the unit, including waste stream-specific information.'''
@@ -274,23 +268,34 @@ class SanUnit(bst.Unit, isabstract=True):
 
     @property
     def add_OPEX(self):
-        '''[float] Operating expense per hour in addition to utility cost.'''
-        return self._add_OPEX
+        '''
+        [dict] Operating expense per hour in addition to utility cost.
+        Float input will be automatically converted to a dict with the key being
+        "Additional OPEX".
+        '''
+        return {'Additional OPEX': self._add_OPEX} if isinstance(self._add_OPEX, float) \
+                                                   else self._add_OPEX
     @add_OPEX.setter
     def add_OPEX(self, i):
+        if isinstance(i, float):
+            i = {'Additional OPEX': i}
+        if not isinstance(i, dict):
+            raise TypeError(f'add_OPEX can only be float of dict, not {type(i).__name__}.')
         self._add_OPEX = i
 
     def results(self, with_units=True, include_utilities=True,
                 include_total_cost=True, include_installed_cost=False,
                 include_zeros=True, external_utilities=(), key_hook=None):
+
         results = super().results(with_units, include_utilities,
                                   include_total_cost, include_installed_cost,
                                   include_zeros, external_utilities, key_hook)
+
+        for k, v in self.add_OPEX.items():
+            results.loc[(k, ''), :] = ('USD/hr', v)
         if with_units:
-            results.loc[('Additional OPEX', ''), :] = ('USD/hr', self.add_OPEX)
-            results.replace({'USD': f'{currency}', 'USD/hr': f'{currency}/hr'}, inplace=True)
-        else:
-            results.loc[('Additional OPEX', ''), :] = self.add_OPEX
+            results.replace({'USD': f'{currency}', 'USD/hr': f'{currency}/hr'},
+                            inplace=True)
         return results
 
     @property

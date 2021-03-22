@@ -18,6 +18,7 @@ for license details.
 import math
 import numpy as np
 import pandas as pd
+from collections.abc import Iterable
 from . import ImpactItem, WasteStream
 from ._units_of_measure import auom
 from .utils.formatting import format_number as f_num
@@ -160,7 +161,7 @@ class LCA:
         Return all construction-related impacts for the given unit,
         normalized to a certain time frame.
         '''
-        if not (isinstance(units, tuple) or isinstance(units, list) or isinstance(units, set)):
+        if not isinstance(units, Iterable):
             units = (units,)
         if not time:
             ratio = 1

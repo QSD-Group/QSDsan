@@ -111,7 +111,7 @@ class Trucking(SanUnit):
         total = single.copy()
         total.load *= N
         self.transportation = (total,)
-        self._add_OPEX = self.fee/total.interval*N
+        self._add_OPEX = {'Total fee': self.fee/total.interval*N}
 
     @property
     def fee(self):
