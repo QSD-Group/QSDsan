@@ -35,6 +35,5 @@ def test_sanunit():
     assert_allclose(M2.installed_cost, 65519.00446342958, rtol=1e-3)
 
 
-# This just means that if pytest runs this module, it calls the test_sanunit function
 if __name__ == '__main__':
     test_sanunit()

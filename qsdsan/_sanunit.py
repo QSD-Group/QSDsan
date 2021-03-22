@@ -15,12 +15,18 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
+'''
+TODO:
+    Add the _impact method, then unhide the _summary method
+'''
+
+
 
 # %%
 
 import biosteam as bst
-from . import currency, Construction, Transportation
-from .utils.piping import WSIns, WSOuts
+from thermosteam import Stream
+from . import currency, SanStream, WasteStream, Construction, Transportation
 
 NotImplementedMethod = bst.utils.NotImplementedMethod
 format_title = bst.utils.misc.format_title
@@ -30,8 +36,8 @@ __all__ = ('SanUnit',)
 class SanUnit(bst.Unit, isabstract=True):
 
     '''
-    Subclass of :class:`biosteam.Unit`, is initialized with :class:`WasteStream`
-    rather than :class:`biosteam.Stream`.
+    Subclass of :class:`biosteam.Unit`, is initialized with :class:`~.SanStream`
+    rather than :class:`thermosteam.Stream`.
     
     Parameters
     ----------
@@ -56,19 +62,20 @@ class SanUnit(bst.Unit, isabstract=True):
     See Also
     --------
     `biosteam.Unit <https://biosteam.readthedocs.io/en/latest/Unit.html>`_
+    `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
 
     '''
     
-    _stacklevel = 7
-    ticket_name = 'SU'
+    # _stacklevel = 
+    # ticket_name = 'SU'
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, 
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  equipments=(), **kwargs):
         self._register(ID)
         self._specification = None
         self._load_thermo(thermo)
-        self._init_ins(ins)
-        self._init_outs(outs)
+        self._init_ins(ins, init_with)
+        self._init_outs(outs, init_with)
         self._init_utils()
         self._init_results()
         self._assert_compatible_property_package()
@@ -80,13 +87,45 @@ class SanUnit(bst.Unit, isabstract=True):
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
-    def _init_ins(self, ins):
-        self._ins = WSIns(self, self._N_ins, ins, self._thermo,
-                          self._ins_size_is_fixed, self._stacklevel)
+    @staticmethod
+    def _from_stream(streams, init_with):
+        if not streams:
+            return []
+
+        kind = init_with.lower()
+        if kind == 'stream':
+            return [streams]
+        elif not kind in ('sanstream', 'wastestream'):
+            raise ValueError('init_with can only be "Stream", "SanStream", or "WasteStream", ' \
+                             f'not "{init_with}".')
         
-    def _init_outs(self, outs):
-        self._outs = WSOuts(self, self._N_outs, outs, self._thermo,
-                            self._outs_size_is_fixed, self._stacklevel)
+        if kind == 'sanstream':
+            if isinstance(streams, Stream):
+                SanStream.from_stream(SanStream, streams)
+                return [streams]
+            converted = []
+            for s in streams:
+                converted.append(SanStream.from_stream(SanStream, s))
+
+        else:
+            if isinstance(streams, Stream):
+                WasteStream.from_stream(WasteStream. streams)
+                return [streams]
+            converted = []
+            for s in streams:
+                converted.append(WasteStream.from_stream(WasteStream, s))
+
+        return converted
+        
+
+    def _init_ins(self, ins, init_with):
+        super()._init_ins(ins)
+        self._ins = self._from_stream(self.ins, init_with)
+
+        
+    def _init_outs(self, outs, init_with):
+        super()._init_outs(outs)
+        self._outs = self._from_stream(self.outs, init_with)
 
     def _init_results(self):
         super()._init_results()
@@ -113,7 +152,6 @@ class SanUnit(bst.Unit, isabstract=True):
                 i += 1
                 continue
             if _stream_info:
-                # breakpoint()
                 stream_info = stream._info(T, P, flow, composition, N, IDs) + \
                     '\n' + stream._wastestream_info()
             else:

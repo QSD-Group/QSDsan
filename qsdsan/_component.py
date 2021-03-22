@@ -564,9 +564,9 @@ class Component(tmo.Chemical):
         new.f_uBOD_COD = f_uBOD_COD
         new.f_Vmass_Totmass = f_Vmass_Totmass
         new.description = description
-        new.particle_size = particle_size
-        new.degradability = degradability
-        new.organic = organic
+        new._particle_size = particle_size
+        new._degradability = degradability
+        new._organic = organic
         new.i_COD = i_COD
         new.i_NOD = i_NOD
         for i,j in data.items():

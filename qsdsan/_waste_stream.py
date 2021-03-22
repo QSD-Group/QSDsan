@@ -20,11 +20,10 @@ for license details.
 
 import numpy as np
 from thermosteam import Stream, MultiStream, utils, settings
-from . import Components
+from . import Components, SanStream, MissingSanStream
 from ._units_of_measure import auom
 
-
-__all__ = ('WasteStream',)
+__all__ = ('WasteStream', 'MissingWasteStream')
 
 
 _defined_composite_vars = ('COD', 'BOD5', 'BOD', 'uBOD', 'NOD', 'ThOD', 'cnBOD',
@@ -111,19 +110,14 @@ def _calib_XBsub_fBODCOD(components, concentrations, substrate_IDs, BOD):
 _load_components = settings.get_default_chemicals
 _set_thermo = settings.set_thermo
 
-class WasteStream(Stream):
+class WasteStream(SanStream):
     '''
-    A subclass of :class:`thermosteam.Stream` with additional attributes
-    and methods for waste treatment.
-    
-    See Also
-    --------
-    `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
+    A subclass of :class:`~.SanStream` with additional attributes and methods
+    for wastewater.
     
     '''
     
-    # Child class will inherit parent class's slots
-    __slots__ = _ws_specific_slots
+    __slots__ = SanStream.__slots__ + _ws_specific_slots
     _default_ratios = _default_ratios
     ticket_name = 'ws'
     
@@ -134,17 +128,17 @@ class WasteStream(Stream):
                  TMg=None, TCa=None, dry_mass=None, charge=None, ratios=None,
                  ThOD=None, cnBOD=None, impact_item=None, **chemical_flows):
         
-        super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
-                         units=units, price=price, thermo=thermo, **chemical_flows)
+        SanStream.__init__(self=self, ID=ID, flow=flow, phase=phase, T=T, P=P,
+                           units=units, price=price, thermo=thermo,
+                           impact_item=impact_item, **chemical_flows)
         
         self._init_ws(pH, SAlk, COD, BOD, uBOD, TC, TOC, TN, TKN,
-                      TP, TK, TMg, TCa, ThOD, cnBOD, dry_mass, charge, ratios,
-                      impact_item)
+                      TP, TK, TMg, TCa, ThOD, cnBOD, dry_mass, charge, ratios)
 
     def _init_ws(self, pH=7., SAlk=None, COD=None, BOD=None,
-                  uBOD=None, TC=None, TOC=None, TN=None, TKN=None,
-                  TP=None, TK=None, TMg=None, TCa=None, ThOD=None, cnBOD=None,
-                  dry_mass=None, charge=None, ratios=None, impact_item=None):
+                 uBOD=None, TC=None, TOC=None, TN=None, TKN=None,
+                 TP=None, TK=None, TMg=None, TCa=None, ThOD=None, cnBOD=None,
+                 dry_mass=None, charge=None, ratios=None):
 
         self._pH = pH
         self._SAlk = SAlk
@@ -164,9 +158,21 @@ class WasteStream(Stream):
         self._dry_mass = dry_mass
         self._charge = charge
         self._ratios = ratios
-        if impact_item:
-            impact_item._linked_stream = self
-        self._impact_item = impact_item
+
+    @staticmethod
+    def from_stream(cls, stream, **kwargs):
+        '''
+        Cast a :class:`thermosteam.Stream` or :class:`biosteam.utils.MissingStream`
+        to :class:`WasteStream` or :class:`MissingWasteStream`.
+        '''
+        new = super().from_stream(cls, stream, **kwargs)
+        
+        if isinstance(new, MissingSanStream):
+            setattr(new, '__class__', MissingWasteStream)
+        else:
+            new._init_ws()
+            
+        return new
 
     
     def show(self, T='K', P='Pa', flow='g/hr', composition=False, N=15,
@@ -215,9 +221,9 @@ class WasteStream(Stream):
         _ws_info = ' WasteStream-specific properties:'
         # Wastewater-related properties are not relevant for gas or solids
         if self.phase != 'l':
-            _ws_info += ' None for non-liquid WasteStreams'
+            _ws_info += ' None for non-liquid waste streams\n'
         elif self.F_mass == 0:
-            _ws_info += ' None for empty WasteStreams'
+            _ws_info += ' None for empty waste streams\n'
         else:
             _ws_info += '\n'
             # Only non-zero properties are shown
@@ -237,10 +243,6 @@ class WasteStream(Stream):
                 _ws_info += '  ...\n'
             
         return _ws_info
-
-    @property
-    def components(self):
-        return self.chemicals
 
     @property
     def ratios(self):
@@ -384,16 +386,6 @@ class WasteStream(Stream):
         return (dummy*var).sum()
 
     
-    @property
-    def impact_item(self):
-        '''[StreamImpactItem] The :class:`StreamImpactItem` this waste stream is linked to.'''
-        return self._impact_item
-    @impact_item.setter
-    def impact_item(self, i):
-        self._impact_item = i
-        i.linked_stream = self
-
-    
     def _liq_sol_properties(self, prop, value):
         if self.phase != 'g':
             return getattr(self, '_'+prop) or value
@@ -493,15 +485,16 @@ class WasteStream(Stream):
     #     return self._liq_sol_properties('charge', self.composite('charge'))
     
 
-    def copy(self, ID=None):
-        new = super().copy()
-        new._init_ws()
-        for slot in _ws_specific_slots:
-            value = getattr(self, slot)
-            if slot == '_impact_item' and value:
-                value.copy(stream=new)
-            else:
-                setattr(new, slot, utils.copy_maybe(value))
+    def copy(self, ID=None, ws_properties=True):
+        new = Stream.copy(self)
+        if ws_properties:
+            new._init_ws()
+            for slot in _ws_specific_slots:
+                value = getattr(self, slot)
+                if slot == '_impact_item' and value:
+                    value.copy(stream=new)
+                else:
+                    setattr(new, slot, utils.copy_maybe(value))
         return new
     __copy__ = copy
 
@@ -541,7 +534,9 @@ class WasteStream(Stream):
         for slot in _ws_specific_slots:
             #!!! This need reviewing, might not be good to calculate some
             # attributes like pH
-            try: tot = sum(float(getattr(i, slot))*i.F_vol for i in others)
+            try:
+                tot = sum(float(getattr(i, slot))*i.F_vol for i in others
+                          if hasattr(i, slot))
             except: continue
             if tot == 0.:
                 setattr(self, slot, None)
@@ -1279,5 +1274,112 @@ class WasteStream(Stream):
         new.ratios = r
 
         return new
+
+
+# %%
+
+class MissingWasteStream(MissingSanStream):
+    '''
+    A subclass of :class:`MissingSanStream`, create a special object
+    that acts as a dummy until replaced by an actual :class:`WasteStream`.
+    '''
+
+    # TODO: add others
+    @property
+    def pH(self):
+        '''[float] pH, unitless.'''
+        return 7.
+    
+    @property
+    def SAlk(self):
+        '''[float] Alkalinity.'''
+        return 0.
+    
+    @property
+    def COD(self):
+        '''[float] Chemical oxygen demand.'''
+        return 0.
+    
+    @property
+    def BOD(self):
+        '''[float] Biochemical oxygen demand, same as BOD5.'''
+        return 0.
+    
+    @property    
+    def BOD5(self):
+        '''[float] 5-day biochemical oxygen demand, same as BOD.'''
+        return self.BOD
+    
+    @property    
+    def uBOD(self):
+        '''[float] Ultimate biochemical oxygen demand.'''
+        return 0.
+    
+    @property    
+    def cnBOD(self):
+        '''[float] Carbonaceous nitrogenous BOD.'''
+        return 0.
+    
+    @property    
+    def ThOD(self):
+        '''[float] Theoretical oxygen demand.'''
+        return 0.
+    
+    @property
+    def TC(self):
+        '''[float] Total carbon.'''
+        return 0.
+    
+    @property
+    def TOC(self):
+        '''[float] Total organic carbon.'''
+        return 0.
+    
+    @property
+    def TN(self):
+        '''[float] Total nitrogen.'''
+        return 0.
+    
+    @property
+    def TKN(self):
+        '''[float] Total Kjeldahl nitrogen.'''
+        return 0.
+    
+    @property
+    def TP(self):
+        '''[float] Total phosphorus.'''
+        return 0.
+    
+    @property
+    def TK(self):
+        '''[float] Total potassium.'''
+        return 0.
+    
+    @property
+    def TMg(self):
+        '''[float] Total magnesium.'''
+        return 0.
+    
+    @property
+    def TCa(self):
+        '''[float] Total calcium.'''
+        return 0.
+    
+    @property
+    def dry_mass(self):
+        '''[float] Total solids.'''
+        return 0.
+    
+    #!!! Keep this up-to-date with WasteStream
+    # @property
+    # def charge(self):
+    #     return 0.
+
+    def __repr__(self):
+        return '<MissingWasteStream>'
+    
+    def __str__(self):
+        return 'missing waste stream'
+
 
 

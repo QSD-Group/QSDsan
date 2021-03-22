@@ -4,6 +4,16 @@ Change Log
 This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
+Ongoing
+-------
+- Updated :class:`SanUnit` so that it can be initialized with any of :class:`thermosteam.Stream`, :class:`~.SanStream`, or :class:`~.WasteStream`.
+
+	- These three classes can now be mixed.
+
+- Added :class:`~.SanStream` for non-waste streams (e.g., gases).
+- Split the ``systems`` module into an individual package `EXPOsan <https://github.com/QSD-Group/exposan>`_.
+
+
 `0.2.0`_ (2021-03-17)
 ---------------------
 - Added :class:`~.Process`, :class:`~.Processes`, and :class:`~.CompiledProcesses` classes for stoichiometric process and its kinetics.

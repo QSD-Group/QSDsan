@@ -44,6 +44,6 @@ def test_waste_stream():
     with pytest.raises(AttributeError):
         ws5.COD = 5
     
-# This just means that if pytest runs this module, it calls the test_waste_stream function
+
 if __name__ == '__main__':
     test_waste_stream()

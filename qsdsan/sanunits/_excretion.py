@@ -53,7 +53,6 @@ class Excretion(SanUnit):
             setattr(self, attr, value)
 
     def _run(self):
-        
         ur, fec = self.outs
         ur.empty()
         fec.empty()

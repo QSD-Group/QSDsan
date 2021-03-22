@@ -26,10 +26,10 @@ set_thermo = bst.settings.set_thermo
 del bst
 currency = 'USD'
 
-# from .utils import loading, checkers, descriptors
 from . import utils
 from ._component import *
 from ._components import *
+from ._sanstream import *
 from ._waste_stream import *
 from ._process import *
 from ._impact_indicator import *
@@ -46,6 +46,7 @@ from . import (
     _units_of_measure, # if not included here, then need to add to setup.py
     _component,
     _components,
+    _sanstream,
     _waste_stream,
     _impact_indicator,
     _impact_item,
@@ -66,6 +67,7 @@ utils._secondary_importing()
 __all__ = (
     *_component.__all__,
     *_components.__all__,
+    *_sanstream.__all__,
     *_waste_stream.__all__,
     *_process.__all__,
     *_impact_indicator.__all__,

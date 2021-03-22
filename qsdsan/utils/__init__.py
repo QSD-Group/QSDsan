@@ -35,7 +35,6 @@ __all__ = (
 def _secondary_importing():
     global __all__
     from . import (
-        piping,
         loading,
         formatting,
         getters,
@@ -45,7 +44,6 @@ def _secondary_importing():
     
     __all__ = (
         *__all__,
-        *piping.__all__,
         *formatting.__all__,
         *getters.__all__,
         *setters.__all__,

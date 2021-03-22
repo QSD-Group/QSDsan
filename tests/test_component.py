@@ -61,6 +61,6 @@ def test_component():
     assert isclose(components.S_NO3.i_COD, - molecular_weight({'O':4})/molecular_weight({'N':1}), rel_tol=1e-3)
     tmo.settings.set_thermo(components)
     
-# This just means that if pytest runs this module, it calls the test_component function
+
 if __name__ == '__main__':
     test_component()
