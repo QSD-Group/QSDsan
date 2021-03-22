@@ -24,15 +24,11 @@ Forking and Cloning
 -------------------
 #. Fork QSDsan by going to its `GitHub homepage <https://github.com/QSD-Group/QSDsan>`_ and click the "Fork" button at the top right corner.
 
-#. Copy the link to **your** fork of QSDsan (you can find it in the green "Code" button on your forked GitHub QSDsan page), it should be something like:
+#. Copy the link to **your** fork of QSDsan (you can find it in the green "Code" button on your forked GitHub ``QSDsa`` page), it should be something like:
 
 	.. code:: bash
 
 	    https://github.com/<YOUR_USERNAME>/QSDsan.git
-
-	.. image:: ./for_developers/images/code.png
-		:height: 200
-		:align: center
 
 
 #. In your command prompt, navigate to your preferred location by using ``cd``, e.g.,
@@ -104,10 +100,7 @@ Submitting Pull Request
 -----------------------
 #. Once you are satisfied with your changes and push all commits to your fork, go to you GitHub fork of ``QSDsan``, and submit a `pull request <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request>`_.
 
-	- You can confirm that you have pulled all updates from the root repository if there's a message showing that your branch is X commits ahead of QSD-Group:master as shown (not X commits, Y commits behind).
-
-	.. image:: ./for_developers/images/commit.png
-		:align: center
+	- You can confirm that you have pulled all updates from the root repository if there's a message showing that your branch is X commits ahead of QSD-Group:master (not X commits ahead, Y commits behind).
 
 #. One of the Quantitative Sustainable Design Group members will review your changes and accept or discuss with you if edits are needed.
 

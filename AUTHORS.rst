@@ -25,6 +25,8 @@ Module Development
 - Smiti Mittal
 - Anna Kogler
 - Samuel Aguiar
+- Taylor Stephen
+- Shion Watabe
 
 
 Project Conception

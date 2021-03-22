@@ -183,7 +183,6 @@ class ImpactItem:
                     if item in cls._items.keys():
                         items[item] = cls._items[item]
                     else:
-                        if 'ElectricMotor' in item: breakpoint()
                         new = cls.__new__(cls)
                         new.__init__(ID=item,
                                      functional_unit=data.loc[item]['functional_unit'])

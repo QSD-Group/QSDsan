@@ -1,9 +1,10 @@
+# General ones#
+###############
 build
 dist
 *.egg-info
 __pycache__
 **/__pycache__
-**/*temp*.py
 *.pyc
 *.pyo
 .pypirc
@@ -68,13 +69,9 @@ ehthumbs.db
 Thumbs.db
 surfaces
 
-# Other versions #
-##################
-**/_superseded
+# Others #
+##########
+*uploading*
+**/*temp*
 sanitation/demo.py
 qsdsan/demo.py
-qsdsan/systems/IC
-qsdsan/systems/Andrus
-qsdsan/systems/Rowles
-qsdsan/systems/Trimmer
-qsdsan/systems/Zhang

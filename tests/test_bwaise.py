@@ -13,7 +13,7 @@ for license details.
 '''
 
 def test_bwaise():
-    from qsdsan.systems import bwaise as bw
+    from exposan import bwaise as bw
     bw.print_summaries((bw.sysA, bw.sysB, bw.sysC))
     
 # This just means that if pytest runs this module, it calls the test_bwaise function

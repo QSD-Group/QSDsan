@@ -29,7 +29,7 @@ First install the package at `PyPI <https://pypi.org/>`_. If you use pip:
 
     pip install qsdsan
 
-Note that development of this package is currently under initial stage with limited backward compatibility, please free free to contact us with any questions regarding package upgrading.
+Note that development of this package is currently under initial stage with limited backward compatibility, please feel free to submit an issue for any questions regarding package upgrading.
 
 
 Documentation
