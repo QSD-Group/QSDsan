@@ -2,13 +2,13 @@
 biosteam==2.24.11
 thermosteam==0.24.6
 exposan
-pint==0.12
-numpy==1.19.2
-ipykernel==5.3.4
-scikit-learn==0.23.2
-SALib==1.4.0b0
-matplotlib==3.3.2
-sympy==1.7.1
+pint>=0.12
+numpy>=1.19.2
+ipykernel>=5.3.4
+scikit-learn>=0.23.2
+SALib>=1.4.0b0
+matplotlib>=3.3.2
+sympy>=1.7.1
 
 # Packages by others
 pytest-cov>=2.0.1
