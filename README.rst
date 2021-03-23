@@ -8,11 +8,17 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
    :target: https://pypi.python.org/pypi/qsdsan
 .. image:: https://img.shields.io/pypi/v/qsdsan?style=flat&color=blue
    :target: https://pypi.org/project/qsdsan/
-.. image:: https://img.shields.io/travis/com/qsd-group/qsdsan?style=flat
-   :target: https://github.com/QSD-Group/QSDsan
 .. image:: https://readthedocs.org/projects/qsdsan/badge/?version=latest
    :target: https://qsdsan.readthedocs.io/en/latest/
-
+.. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/master?label=master-build&logo=appveyor
+   :target: https://github.com/QSD-Group/QSDsan/tree/master
+.. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/beta?label=beta-build&logo=appveyor
+   :target: https://github.com/QSD-Group/QSDsan/tree/beta
+..
+   .. image:: https://img.shields.io/travis/com/qsd-group/qsdsan?style=flat&label=Travis
+      :target: https://github.com/QSD-Group/QSDsan
+   .. image:: https://img.shields.io/appveyor/build/QSD-group/qsdsan/dev-build?label=dev-build&logo=appveyor
+      :target: https://github.com/QSD-Group/QSDsan/tree/dev
 
 .. contents::
 
