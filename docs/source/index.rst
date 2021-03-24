@@ -7,10 +7,23 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 What is ``QSDsan``?
 -------------------
+``QSDsan`` is an open-source, community-led platform for quantitative sustainable design of sanitation and resource recovery systems. It leverages the structure and modules developed in the ``BioSTEAM`` platform [1]_ with additional functions tailored to sanitation processes.
 
-``QSDsan`` is a package for the quantitative sustainable design of sanitation and resource recovery systems leveraging the structure and modules developed in ``BioSTEAM`` [1]_. As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
+As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
 
-All systems developed with ``QSDsan`` will be included in another repository in the future.
+All systems developed with ``QSDsan`` are included in the package `exposan <https://github.com/QSD-Group/EXPOsan>`_ - exposition of sanitation and resource recovery systems.
+
+
+To capitalize, or not to capitalize?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+That is a good question. We prefer to use the capitalized version (e.g., ``QSDsan`` instead of ``qsdsan``) because:
+
+- It refers to the platform, not just the core package (i.e., it includes the entire ecosystem that supports the core package).
+- We style the name to convey the name's meaning (e.g., the "QSD" part stands for "quantitative sustainable design").
+
+But the name of the actual packages are all in lower cases per `PEP-8 <https://www.python.org/dev/peps/pep-0008/#package-and-module-names>`_:
+
+   *Modules should have short, all-lowercase names. Underscores can be used in the module name if it improves readability. Python packages should also have short, all-lowercase names, although the use of underscores is discouraged.*
 
 
 Getting Started
@@ -39,9 +52,11 @@ How does ``QSDsan`` work?
 
    Simplified unified modeling language (UML) diagram of ``QSDsan``
 
-``QSDsan`` follows the structure of `BioSTEAM <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_, a fast and flexible package for the design, simulation, and techno-economic analysis of biorefineries under uncertainty, but ``QSDsan`` is enhanced with features geared toward quantitative sustainable design of sanitation systems.
+The core package ``QSDsan`` follows the structure of `biosteam <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_, a rapid and agile package for the design, simulation, and techno-economic analysis of biorefineries under uncertainty, but ``QSDsan`` is enhanced with features geared toward quantitative sustainable design of sanitation systems.
 
-The above Unified Modeling Language (UML) diagram of the package shows the relationship between ``QSDsan`` and its dependencies `BioSTEAM <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_ and `Thermosteam <https://github.com/BioSTEAMDevelopmentGroup/thermosteam>`_.
+Work is also in progress to develop the package ``DMsan`` and connect ``QSDsan`` to ``DMsan`` for decision-making under different contexts.
+
+The above Unified Modeling Language (UML) diagram of the package shows the relationship between ``QSDsan`` and its dependencies.
 
 In particular, ``QSDsan`` introduces:
 
@@ -71,7 +86,7 @@ In particular, ``QSDsan`` introduces:
 
 About the developers
 --------------------
-Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors are listed below, please refer to the `author page <https://qsdsan-beta.readthedocs.io/en/latest/for_developers/AUTHORS.html>`_ for the full list of authors.
+Development and maintenance of the platform is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors are listed below, please refer to the `author page <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_ for the full list of authors.
 
 **Lead developers:**
    - `Yalin Li <zoe.yalin.li@gmail.com>`_

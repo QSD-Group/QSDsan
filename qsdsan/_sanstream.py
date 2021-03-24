@@ -47,7 +47,24 @@ class SanStream(Stream):
             impact_item._linked_stream = self
         self._impact_item = impact_item
 
-    def copy(self, ID=None):
+    def copy(self, ID=''):
+        '''
+        Copy the information of another stream.
+        
+        Parameters
+        ----------
+        ID : str
+            ID of the new stream, a default ID will be assigned if not provided.
+        
+        
+        .. note::
+            
+            [1] Price of the original stream is not copied.
+            
+            [2] If the original stream has an :class:`~.StreamImpactItem`,
+            then a new :class:`~.StreamImpactItem` will be created for the new stream
+            and the new impact item will be linked to the original impact item.
+        '''
         new = super().copy()
         if self.impact_item:
             self.impact_item.copy(stream=new)

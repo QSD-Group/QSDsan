@@ -24,7 +24,11 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 What is ``QSDsan``?
 -------------------
-``QSDsan`` is a package for the quantitative sustainable design of sanitation and resource recovery systems leveraging the structure and modules developed in ``BioSTEAM`` [1]_. As an open-source and impact-driven platform, ``QSDsan`` aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
+``QSDsan`` is an open-source, community-led platform for quantitative sustainable design of sanitation and resource recovery systems. It leverages the structure and modules developed in the ``BioSTEAM`` platform [1]_ with additional functions tailored to sanitation processes.
+
+As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
+
+All systems developed with ``QSDsan`` are included in the package `exposan <https://github.com/QSD-Group/EXPOsan>`_ - exposition of sanitation and resource recovery systems.
 
 
 Installation
@@ -41,6 +45,7 @@ Note that development of this package is currently under initial stage with limi
 Documentation
 -------------
 You can find tutorials and documents at:
+
    https://qsdsan.readthedocs.io
 
 

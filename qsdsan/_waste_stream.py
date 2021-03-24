@@ -485,7 +485,26 @@ class WasteStream(SanStream):
     #     return self._liq_sol_properties('charge', self.composite('charge'))
     
 
-    def copy(self, ID=None, ws_properties=True):
+    def copy(self, ID='', ws_properties=True):
+        '''
+        Copy the information of another stream.
+        
+        Parameters
+        ----------
+        ID : str
+            ID of the new stream, a default ID will be assigned if not provided.
+        ws_properties : bool
+            Whether to copy wastewater-related properties to the new stream.
+        
+        
+        .. note::
+            
+            [1] Price of the original stream is not copied.
+            
+            [2] If the original stream has an :class:`~.StreamImpactItem`,
+            then a new :class:`~.StreamImpactItem` will be created for the new stream
+            and the new impact item will be linked to the original impact item.
+        '''
         new = Stream.copy(self)
         if ws_properties:
             new._init_ws()
@@ -498,6 +517,7 @@ class WasteStream(SanStream):
         return new
     __copy__ = copy
 
+    # TODO: add documents for these functions, differentiate copy, copy_like, and copy_flow
     def copy_like(self, other):
         Stream.copy_like(self, other)
         for slot in _ws_specific_slots:

@@ -1,7 +1,7 @@
-Contributing to QSDsan
-======================
+Contributing to ``QSDsan``
+==========================
 
-Below are some brief instructions on how to contribute to QSDsan. If you have any questions regarding the process, feel free to `submit an issue on GitHub <https://github.com/QSD-Group/QSDsan/issues>`_. Thank you in advance for your contribution!
+Below are some brief instructions on how to contribute to ``QSDsan``. If you have any questions regarding the process, feel free to `submit an issue on GitHub <https://github.com/QSD-Group/QSDsan/issues>`_. Thank you in advance for your contribution!
 
 Authorship
 ----------
@@ -22,9 +22,9 @@ The following guideline is adapted from `BioSTEAM <https://biosteam.readthedocs.
 
 Forking and Cloning
 -------------------
-#. Fork QSDsan by going to its `GitHub homepage <https://github.com/QSD-Group/QSDsan>`_ and click the "Fork" button at the top right corner.
+#. Fork ``QSDsan`` by going to its `GitHub homepage <https://github.com/QSD-Group/QSDsan>`_ and click the "Fork" button at the top right corner.
 
-#. Copy the link to **your** fork of QSDsan (you can find it in the green "Code" button on your forked GitHub ``QSDsa`` page), it should be something like:
+#. Copy the link to **your** fork of ``QSDsan`` (you can find it in the green "Code" button on your forked GitHub ``QSDsan`` page), it should be something like:
 
 	.. code:: bash
 
@@ -38,7 +38,7 @@ Forking and Cloning
 	    cd research/coding
 
 
-#. Clone QSDsan to your local by (use your own link copied from step 2):
+#. Clone ``QSDsan`` to your local by (use your own link copied from step 2):
 
 	.. code:: bash
 

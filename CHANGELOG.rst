@@ -14,6 +14,7 @@ Ongoing
 - Updated the ``add_OPEX`` attribute of :class:`~.SanUnit` and ``system_add_OPEX`` attribute of :class:`~.SimpleTEA` so that they take :class:`dict` as the default to allow display of multiple additional operating expenses.
 - Split the ``systems`` module into an individual package `EXPOsan <https://github.com/QSD-Group/exposan>`_.
 - Added `AppVeyor CI <https://ci.appveyor.com/project/yalinli2/qsdsan>`_.
+- Renamed the ``master`` branch to ``main``.
 
 
 `0.2.0`_ (2021-03-17)

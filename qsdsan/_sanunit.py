@@ -55,18 +55,18 @@ add2list = lambda lst, item: lst.extend(item) if isinstance(item, Iterable) else
 class SanUnit(Unit, isabstract=True):
 
     '''
-    Subclass of :class:`biosteam.Unit`, is initialized with :class:`~.SanStream`
-    rather than :class:`thermosteam.Stream`.
+    Subclass of :class:`biosteam.Unit`, can be initialized with
+    :class:`thermosteam.Stream`, :class:`~.SanStream`, or :class:`~.WasteStream`.
 
     Parameters
     ----------
     init_with : str or dict
-        Which type of stream the :class:`SanUnit` will be initialized with,
+        Which class of stream the :class:`SanUnit` will be initialized with,
         can be "Stream" (shorthanded as "s"), "SanStream" ("ss"), or "WasteStream" ("ws").
-        When provided as a str, all streams will be of the same type;
+        When provided as a str, all streams will be of the same class;
         when provided as a dict, use "ins" or "outs" followed with the order number
         (i.e., ins0, outs-1) as keys; you can use ":" to denote a range (e.g., ins2:4);
-        you can also use "else" to specify the stream type for non-provided ones.        
+        you can also use "else" to specify the stream class for non-provided ones.        
     construction : :class:`~.Construction` or sequence
         Contains construction information.
     transportation : :class:`~.Transportation` or sequence
@@ -125,30 +125,30 @@ class SanUnit(Unit, isabstract=True):
             return []
 
         init_with = _check_init_with(init_with)
-        type_dct = dict(s=[], ss=[], ws=[])
+        cls_dct = dict(s=[], ss=[], ws=[])
         
         if len(init_with) == 1:
-            add2list(type_dct[init_with.popitem()[1]], streams)
+            add2list(cls_dct[init_with.popitem()[1]], streams)
 
         for k, v in init_with.items():
             if not ins_or_outs in k:
                 continue
             num = k.split(ins_or_outs)[1]
             strm = streams[num]
-            add2list(type_dct[v], strm)
+            add2list(cls_dct[v], strm)
 
-        assigned = sum((v for v in type_dct.values()), [])
+        assigned = sum((v for v in cls_dct.values()), [])
         diff = set(assigned).difference(set(streams))
         if diff:
             if not 'else' in init_with.keys():
                 raise ValueError(f'Type(s) for {tuple([s.ID for s in diff])} not specified.')
             else:
-                add2list(type_dct[init_with['else']], diff)
+                add2list(cls_dct[init_with['else']], diff)
 
-        converted = type_dct['s']
-        for ss in type_dct['ss']:
+        converted = cls_dct['s']
+        for ss in cls_dct['ss']:
             converted.append(SanStream.from_stream(SanStream, ss))
-        for ws in type_dct['ws']:
+        for ws in cls_dct['ws']:
             converted.append(WasteStream.from_stream(WasteStream, ws))
 
         return converted
