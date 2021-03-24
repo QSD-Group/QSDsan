@@ -19,7 +19,7 @@ import math
 import numpy as np
 import pandas as pd
 from collections.abc import Iterable
-from . import ImpactItem, WasteStream
+from . import ImpactItem, Stream, SanStream, SanUnit
 from ._units_of_measure import auom
 from .utils.formatting import format_number as f_num
 
@@ -79,6 +79,8 @@ class LCA:
     
     def _update_system(self, system):
         for u in system.units:
+            if not isinstance (u, SanUnit):
+                continue
             if u.construction:
                 self._construction_units.add(u)
             if u.transportation:
@@ -88,6 +90,8 @@ class LCA:
         self._transportation_units = sorted(self._transportation_units,
                                             key=lambda u: u.ID)
         for s in (i for i in system.feeds+system.products):
+            if not hasattr(s, 'impact_item'):
+                continue
             if s.impact_item:
                 self._lca_streams.add(s)
         self._lca_streams = sorted(self._lca_streams, key=lambda s: s.ID)
@@ -170,6 +174,8 @@ class LCA:
             ratio = converted/self.lifetime_hr
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         for i in units:
+            if not isinstance(i, SanUnit):
+                continue
             for j in i.construction:
                 impact = j.impacts
                 if j.lifetime is not None:
@@ -185,8 +191,7 @@ class LCA:
         Return all transportation-related impacts for the given unit,
         normalized to a certain time frame.
         '''
-        if not (isinstance(units, tuple) or isinstance(units, list)
-                or isinstance(units, set)):
+        if not isinstance(units, Iterable):
             units = (units,)
         if not time:
             time = self.lifetime_hr
@@ -194,6 +199,8 @@ class LCA:
             time = auom(time_unit).convert(float(time), 'hr')
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         for i in units:
+            if not isinstance(i, SanUnit):
+                continue
             for j in i.transportation:
                 impact = j.impacts
                 for m, n in impact.items():
@@ -207,11 +214,9 @@ class LCA:
         Return all stream-related impacts for the given streams,
         normalized to a certain time frame.
         '''
-        if not (isinstance(stream_items, tuple) or isinstance(stream_items, list)
-                or isinstance(stream_items, set)):
+        if not isinstance(stream_items, Iterable):
             stream_items = (stream_items,)
-        if not (isinstance(exclude, tuple) or isinstance(exclude, list)
-                or isinstance(exclude, set)):
+        if not isinstance(exclude, Iterable):
             exclude = (exclude,)
         if stream_items == None:
             stream_items = self.stream_inventory
@@ -222,7 +227,9 @@ class LCA:
             time = auom(time_unit).convert(float(time), 'hr')
         for j in stream_items:
             # In case that ws instead of the item is given
-            if isinstance(j, WasteStream):
+            if isinstance(j, Stream):
+                if not isinstance(j, SanStream):
+                    continue
                 ws = j
                 if j.impact_item:
                     j = ws.impact_item
@@ -293,13 +300,14 @@ class LCA:
             in the stream.
         
         '''
-        if not (isinstance(streams, tuple) or isinstance(streams, list)
-                or isinstance(streams, set)):
+        if not isinstance(streams, Iterable):
             streams = (streams,)
         impact_dct = self.get_total_impacts(exclude=streams)
         impact_vals = np.array([i for i in impact_dct.values()])
         allocated = {}
         if len(streams) == 1:
+            if not isinstance(streams[0], SanStream):
+                return None
             return impact_dct
         if allocate_by == 'mass':
             ratios = np.array([i.F_mass for i in streams])
@@ -317,32 +325,33 @@ class LCA:
         if ratios.sum() == 0:
             raise ValueError('Calculated allocation ratios are all zero, cannot allocate.')
         ratios = ratios/ratios.sum()
-        for n, ws in enumerate(streams):
-            if not ws in self.system.streams:
-                raise ValueError(f'`WasteStream` {ws} not in the system.')
-            allocated[ws.ID] = dict.fromkeys(impact_dct.keys(),
-                                             (ratios[n]*impact_vals).sum())
+        for n, s in enumerate(streams):
+            if not isinstance(s, SanStream):
+                continue
+            if not s in self.system.streams:
+                raise ValueError(f'`WasteStream` {s} not in the system.')
+            allocated[s.ID] = dict.fromkeys(impact_dct.keys(),
+                                            (ratios[n]*impact_vals).sum())
         return allocated
         
     
     def get_unit_impacts(self, units, time=None, time_unit='hr',
                           exclude=None):
         '''Return total impacts with certain units, normalized to a certain time frame. '''
-        if not (isinstance(units, tuple) or isinstance(units, list)
-                or isinstance(units, set)):
+        if not isinstance(units, Iterable):
             units = (units,)
         constr = self.get_construction_impacts(units, time, time_unit)
         trans = self.get_transportation_impacts(units, time, time_unit)
-        ws_items = set(i for i in 
+        stream_items = set(i for i in 
                        sum((tuple(unit.ins+unit.outs) for unit in units), ())
                        if i.impact_item)
 
-        ws = self.get_stream_impacts(stream_items=ws_items, exclude=exclude,
+        s = self.get_stream_impacts(stream_items=stream_items, exclude=exclude,
                                      time=time, time_unit=time_unit)
         other = self.get_other_impacts()
         tot = constr.copy()
         for m in tot.keys():
-            tot[m] += trans[m] + ws[m] + other[m]
+            tot[m] += trans[m] + s[m] + other[m]
         return tot
     
     def _append_cat_sum(self, cat_table, cat, tot):
@@ -389,11 +398,14 @@ class LCA:
             for item_ID in item_dct.keys():
                 item_dct[item_ID] = dict(SanUnit=[], Quantity=[])
             for su in units:
+                if not isinstance(su, SanUnit):
+                    continue
                 for i in getattr(su, cat):
                     item_dct[i.item.ID]['SanUnit'].append(su.ID)
                     item_dct[i.item.ID]['Quantity'].append(i.quantity*time)
                     if cat == 'transportation':
                         item_dct[i.item.ID]['Quantity'][-1] /= i.interval
+                        
             dfs = []
             for item in items:
                 dct = item_dct[item.ID]
@@ -461,14 +473,15 @@ class LCA:
                     else:
                         item_dct[f'{ind.ID} [{ind.unit}]'].append(0)
                         item_dct[f'Category {ind.ID} Ratio'].append(0)
+            
             table = pd.DataFrame.from_dict(item_dct)
             table.set_index(['Other'], inplace=True)
             return self._append_cat_sum(table, cat, tot)
         
-        else:
-            raise ValueError(
-                'category can only be "Construction", "Transportation", "Stream", or "Other", ' \
-                f'not {category}.')
+        raise ValueError(
+            'category can only be "Construction", "Transportation", "Stream", or "Other", ' \
+            f'not {category}.')
+
 
     def save_report(self, file=None, sheet_name='LCA',
                     time=None, time_unit='hr',
@@ -483,6 +496,7 @@ class LCA:
             for table in tables:
                 table.to_excel(writer, sheet_name=sheet_name, startrow=n_row)
                 n_row += table.shape[0] + row_space + len(table.columns.names) # extra lines for the heading
+
 
     @property
     def system(self):

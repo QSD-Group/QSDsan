@@ -19,8 +19,7 @@ for license details.
 import numpy as np
 import pandas as pd
 import thermosteam as tmo
-from thermosteam import Chemical, Chemicals, CompiledChemicals
-from . import _component
+from . import _component, Chemical, Chemicals, CompiledChemicals, Component
 from .utils.loading import load_data
 
 __all__ = ('Components', 'CompiledComponents')
@@ -28,7 +27,6 @@ __all__ = ('Components', 'CompiledComponents')
 setattr = object.__setattr__
 
 utils = tmo.utils
-Component = _component.Component
 _component_properties = _component._component_properties
 _num_component_properties = _component._num_component_properties
 _key_component_properties = _component._key_component_properties
@@ -251,7 +249,7 @@ class Components(Chemicals):
         del os
         new = cls.load_from_file(path=path, use_default_data=True, store_data=True)
 
-        H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
+        H2O = Component.from_chemical('H2O', Chemical('H2O'),
                                       i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
                                       f_Vmass_Totmass=0, description="Water",
                                       particle_size='Soluble',
@@ -264,20 +262,20 @@ class Components(Chemicals):
                 i.default()
                 
                 if not i.Tb:
-                    if i.particle_size == 'Soluble': i.Tb = tmo.Chemical('urea').Tb
-                    elif i.particle_size == 'Dissolved gas': i.Tb = tmo.Chemical('CO2').Tb
-                    else: i.Tb = tmo.Chemical('NaCl').Tb
+                    if i.particle_size == 'Soluble': i.Tb = Chemical('urea').Tb
+                    elif i.particle_size == 'Dissolved gas': i.Tb = Chemical('CO2').Tb
+                    else: i.Tb = Chemical('NaCl').Tb
                 
                 if (isa(i.V, _TMH) and (len(i.V.models)==0 or (i.V[0].Tmin > 298.15 or i.V[0].Tmax < 298.15))) or (isa(i.V, _PH) and (len(i.V.l.models)==0 or (i.V.l[0].Tmin > 298.15 or i.V.l[0].Tmax < 298.15))): 
                     if i.particle_size == 'Soluble': 
-                        i.copy_models_from(tmo.Chemical('urea'), names=('V',))                        
+                        i.copy_models_from(Chemical('urea'), names=('V',))                        
                     elif i.particle_size in ('Particulate', 'Colloidal'):
                         try: i.V.add_model(1.2e-5)
                         except AttributeError: 
                             i.V.l.add_model(1.2e-5)    # m^3/mol
                             i.V.s.add_model(1.2e-5)
                     else:
-                        i.copy_models_from(tmo.Chemical('CO2'), names=('V',))
+                        i.copy_models_from(Chemical('CO2'), names=('V',))
                       
                     
                 for j in ('sigma', 'epsilon', 'kappa', 'Cn', 'mu', 'Psat', 'Hvap'):

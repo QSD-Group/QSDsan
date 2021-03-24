@@ -14,7 +14,7 @@ for license details.
 
 # This tiered importing is because some modules in utils need to be imported
 # before the the main modules (e.g., _component) since the main modules depend
-# on them, while other modules in utils depend on the main modules
+# on them, while other modules in utils depend on the main modules.
 
 from . import (
     loading,

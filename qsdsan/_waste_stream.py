@@ -19,8 +19,9 @@ for license details.
 # %%
 
 import numpy as np
-from thermosteam import Stream, MultiStream, utils, settings
-from . import Components, SanStream, MissingSanStream
+from thermosteam import utils, settings
+from . import Components, Stream, MultiStream, SanStream, MissingSanStream, \
+    set_thermo
 from ._units_of_measure import auom
 
 __all__ = ('WasteStream', 'MissingWasteStream')
@@ -108,7 +109,6 @@ def _calib_XBsub_fBODCOD(components, concentrations, substrate_IDs, BOD):
 # =============================================================================
 
 _load_components = settings.get_default_chemicals
-_set_thermo = settings.set_thermo
 
 class WasteStream(SanStream):
     '''
@@ -733,7 +733,7 @@ class WasteStream(SanStream):
         cmps.X_B_Subst.i_N = XB_Substi_N
         cmps.X_B_Subst.i_P = XB_Substi_P
         cmps.compile()
-        _set_thermo(cmps)
+        set_thermo(cmps)
         
         #************ convert concentrations to flow rates *************
         flow_tot /= vol_unit.conversion_factor(units[0])
@@ -910,7 +910,7 @@ class WasteStream(SanStream):
         cmps.X_B_Subst.i_P = XB_Substi_P
         for i in sub_IDs: cmps[i].f_BOD5_COD = fbodtocod_sub
         cmps.compile()
-        _set_thermo(cmps)
+        set_thermo(cmps)
         
         #************ convert concentrations to flow rates *************
         flow_tot /= vol_unit.conversion_factor(units[0])
@@ -1082,7 +1082,7 @@ class WasteStream(SanStream):
         cmps.X_B_Subst.i_P = XB_Substi_P
         for i in sub_IDs: cmps[i].f_BOD5_COD = fbodtocod_sub
         cmps.compile()
-        _set_thermo(cmps)
+        set_thermo(cmps)
 
         #************ convert concentrations to flow rates *************
         flow_tot /= vol_unit.conversion_factor(units[0])
@@ -1249,7 +1249,7 @@ class WasteStream(SanStream):
         cmps.X_B_Subst.i_N = XB_Substi_N
         cmps.X_B_Subst.i_P = XB_Substi_P
         cmps.compile()
-        _set_thermo(cmps)
+        set_thermo(cmps)
 
         #************ convert concentrations to flow rates *************
         flow_tot /= vol_unit.conversion_factor(units[0])

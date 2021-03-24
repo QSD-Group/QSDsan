@@ -19,11 +19,21 @@ try:
 except pkg_resources.DistributionNotFound:  # pragma: no cover
     __version__ = None
 
+import thermosteam as tmo
 import biosteam as bst
+Chemical = tmo.Chemical
+Chemicals = tmo.Chemicals
+CompiledChemicals = tmo.CompiledChemicals
+Stream = tmo.Stream
+set_thermo = tmo.settings.set_thermo
+
+MultiStream = tmo.MultiStream
+Unit = bst.Unit
+System = bst.System
 CEPCI = bst.CE # Chemical Engineering Plant Cost Index
 CEPCI_by_year = bst.units.design_tools.CEPCI_by_year
-set_thermo = bst.settings.set_thermo
-del bst
+del tmo, bst
+
 currency = 'USD'
 
 from . import utils

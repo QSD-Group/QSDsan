@@ -20,6 +20,8 @@ for license details.
 import thermosteam as tmo
 from chemicals.elements import molecular_weight, charge_from_formula
 from chemicals.elements import mass_fractions as get_mass_frac
+from . import Chemical
+from ._units_of_measure import auom
 from .utils.cod import cod_test_stoichiometry, electron_acceptor_cod
 
 __all__ = ('Component',)
@@ -28,6 +30,7 @@ isinstance = isinstance
 
 _chemical_fields = tmo._chemical._chemical_fields
 _checked_properties = tmo._chemical._checked_properties
+lock_phase = tmo._chemical.lock_phase
 display_asfunctor = tmo._chemical.display_asfunctor
 copy_maybe = tmo.utils.copy_maybe
 
@@ -59,23 +62,22 @@ _key_component_properties = ('particle_size', 'degradability', 'organic',
 _component_properties = ('measured_as', 'description', 
                          *_key_component_properties)
                          
-_component_slots = (*tmo.Chemical.__slots__,
+_component_slots = (*Chemical.__slots__,
                     *tuple('_'+i for i in _component_properties))
 
 _checked_properties = (*_checked_properties, *_key_component_properties)
 
-AbsoluteUnitsOfMeasure = tmo.units_of_measure.AbsoluteUnitsOfMeasure
 component_units_of_measure = {
-    'i_C': AbsoluteUnitsOfMeasure('g'), 
-    'i_N': AbsoluteUnitsOfMeasure('g'), 
-    'i_P': AbsoluteUnitsOfMeasure('g'), 
-    'i_K': AbsoluteUnitsOfMeasure('g'), 
-    'i_Mg': AbsoluteUnitsOfMeasure('g'), 
-    'i_Ca': AbsoluteUnitsOfMeasure('g'), 
-    'i_mass': AbsoluteUnitsOfMeasure('g'), 
-    'i_charge': AbsoluteUnitsOfMeasure('mol'),
-    'i_COD': AbsoluteUnitsOfMeasure('g'),
-    'i_NOD': AbsoluteUnitsOfMeasure('g'),
+    'i_C': auom('g'), 
+    'i_N': auom('g'), 
+    'i_P': auom('g'), 
+    'i_K': auom('g'), 
+    'i_Mg': auom('g'), 
+    'i_Ca': auom('g'), 
+    'i_mass': auom('g'), 
+    'i_charge': auom('mol'),
+    'i_COD': auom('g'),
+    'i_NOD': auom('g'),
     }
 
 
@@ -106,7 +108,7 @@ def check_return_property(name, value):
 # Define the Component class
 # =============================================================================
 
-class Component(tmo.Chemical):
+class Component(Chemical):
     '''
     A subclass of :class:`thermosteam.Chemical` with additional attributes
     and methods for waste treatment.
@@ -144,7 +146,7 @@ class Component(tmo.Chemical):
         if formula:
             self._formula = None
             self.formula = formula
-        if phase: tmo._chemical.lock_phase(self, phase)
+        if phase: lock_phase(self, phase)
 
         self._measured_as = measured_as
         self.i_mass = i_mass
@@ -539,7 +541,7 @@ class Component(tmo.Chemical):
             chemical = ID
 
         if isinstance(chemical, str):
-            chemical = tmo.Chemical(chemical)
+            chemical = Chemical(chemical)
 
         for field in chemical.__slots__:
             value = getattr(chemical, field, None)

@@ -14,7 +14,7 @@ for license details.
 
 # %%
 
-from thermosteam import Stream
+from . import Stream
 from biosteam.utils import MissingStream
 
 __all__ = ('SanStream', 'MissingSanStream')
