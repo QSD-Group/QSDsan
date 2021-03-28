@@ -71,8 +71,7 @@ html_css_files = ['css/qsdsan.css']
 # html_static_path = ['_static']
 
 # -- Extension settings -------------------------------------------------------
-# napoleon_custom_sections = [
-# 'Reference documents']
+# napoleon_custom_sections = ['Tips']
 
 # -- External mapping -------------------------------------------------------
 intersphinx_mapping = {

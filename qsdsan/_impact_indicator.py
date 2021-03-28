@@ -155,8 +155,8 @@ class ImpactIndicator:
         path : str
             Complete path of the datasheet, currently support tsv, csv, and xls/xlsx.
         
-        Tips
-        ----
+        Tip
+        ---
         [1] tsv is preferred as it shows up on GitHub.
         
         [2] Refer to the `Bwaise system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise/data>`_

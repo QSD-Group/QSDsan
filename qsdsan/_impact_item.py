@@ -166,18 +166,19 @@ class ImpactItem:
         
         This Excel should have multiple sheets:
             
-            - The "info" sheet should have two columns: "ID" (e.g., Cement)
+            - The "info" sheet should have two columns: "ID" (e.g., Cement) \
             and "functional_unit" (e.g., kg) of different impact items.
             
-            - The remaining sheets should contain characterization factors of
+            - The remaining sheets should contain characterization factors of \
             impact indicators.
             
-                - Name of the sheet should be the ID (e.g., GlobalWarming) or
+                - Name of the sheet should be the ID (e.g., GlobalWarming) or \
                 alias (e.g., GWP) of the indicator.
-            
-                - Each sheet should have at least two columns: "unit" (e.g., kg CO2-eq)
+                
+                - Each sheet should have at least two columns: "unit" (e.g., kg CO2-eq) \
                 and "expected" (values) of the CF.
-                You can also have additional columns to be used for other purpose
+                
+                - You can also have additional columns to be used for other purpose \
                 (e.g., uncertainty analysis).
         
         .. note::
@@ -192,8 +193,8 @@ class ImpactItem:
         path : str
             Complete path of the Excel file.
 
-        Tips
-        ----
+        Tip
+        ---
         Refer to the `Bwaise system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise/data>`_
         in the ``Exposan`` repository for a sample file.
         '''

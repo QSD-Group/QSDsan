@@ -275,7 +275,7 @@ class SanUnit(Unit, isabstract=True):
     
     @property
     def installed_costs(self):
-        '''[dict] Installed costs of each equipment.'''
+        '''[dict] Installed cost of each equipment.'''
         BM = defaultdict(lambda:1)
         BM.update(self._BM)
         installed_costs = {i: BM[i]*j for i,j in self.purchase_costs.items()}
