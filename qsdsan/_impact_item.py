@@ -8,7 +8,7 @@ This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
-Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
@@ -18,13 +18,11 @@ for license details.
 import pandas as pd
 from warnings import warn
 from thermosteam.utils import copy_maybe
-from . import currency, WasteStream, ImpactIndicator
+from . import currency, SanStream, WasteStream, ImpactIndicator
 from ._units_of_measure import auom, parse_unit
-from .utils.loading import data_path
 from .utils.formatting import format_number as f_num
 
 indicators = ImpactIndicator._indicators
-data_path += '_impact_item.xlsx'
 isinstance = isinstance
 getattr = getattr
 
@@ -53,13 +51,12 @@ class ImpactItem:
     source : ImpactItem
         If provided, all attributions and properties of this impact item will
         be copied from the provided source.
-    **indicator_CFs : kwargs, :class:`ImpactIndicator` or str = float or (float, unit)
+    indicator_CFs : kwargs, :class:`ImpactIndicator` or str = float or (float, unit)
         Impact indicators and their characteriziation factors.
     
     '''
     
     _items = {}
-    _default_data = None
     
     __slots__ = ('_ID', '_functional_unit', '_price', '_CFs', '_source')
     
@@ -155,33 +152,63 @@ class ImpactItem:
         return new
     __copy__ = copy
 
+    def deregister(self):
+        '''Remove this :class:`ImpactItem` from the record.'''
+        ID = self.ID
+        self._items.pop(ID)
+        print(f'The impact item "{ID}" has been removed from the record.')
     
     
-    #!!! Are the values GWP100 from ref [1]?
     @classmethod
-    def load_default_items(cls, path=data_path):
+    def load_items_from_excel(cls, path):
         '''
-        Load all default indicators as in /data/_impact_item.xlsx from Trimmer et al. [1]_
+        Load impact items from an Excel file.
         
-        References
+        This Excel should have multiple sheets:
+            
+            - The "info" sheet should have two columns: "ID" (e.g., Cement)
+            and "functional_unit" (e.g., kg) of different impact items.
+            
+            - The remaining sheets should contain characterization factors of
+            impact indicators.
+            
+                - Name of the sheet should be the ID (e.g., GlobalWarming) or
+                alias (e.g., GWP) of the indicator.
+            
+                - Each sheet should have at least two columns: "unit" (e.g., kg CO2-eq)
+                and "expected" (values) of the CF.
+                You can also have additional columns to be used for other purpose
+                (e.g., uncertainty analysis).
+        
+        .. note::
+            
+            This function is just one way to batch-load impact items,
+            you can always write your own function that fits your datasheet format,
+            as long as it provides all the information to construct new impact items.
+        
+        
+        Parameters
         ----------
-        .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-            Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-            Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-            https://doi.org/10.1021/acs.est.0c03296.
-        
+        path : str
+            Complete path of the Excel file.
+
+        Tips
+        ----
+        Refer to the `Bwaise system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise/data>`_
+        in the ``Exposan`` repository for a sample file.
         '''
-        if cls._default_data is not None:
-            data_file = cls._default_data
-        else: data_file = pd.ExcelFile(data_path, engine='openpyxl')
-        items = {}
+        if not (path.endswith('.xls') or path.endswith('.xlsx')):
+            raise ValueError('Only Excel files ends with ".xlsx" or ".xls" can be interpreted.')
+        
+        data_file = pd.ExcelFile(path, engine='openpyxl')
+        items = cls._items
         for sheet in data_file.sheet_names:
             data = data_file.parse(sheet, index_col=0)
 
             if sheet == 'info':
                 for item in data.index:
-                    if item in cls._items.keys():
-                        items[item] = cls._items[item]
+                    if item in items.keys():
+                        raise ValueError(f'The impact item "{item}" has been added.')
                     else:
                         new = cls.__new__(cls)
                         new.__init__(ID=item,
@@ -193,7 +220,6 @@ class ImpactItem:
                     old.add_indicator_CF(indicator=sheet,
                                          CF_value=float(data.loc[item]['expected']),
                                          CF_unit=data.loc[item]['unit'])
-        cls._default_data = data_file
     
     @classmethod
     def get_item(cls, ID):
@@ -274,9 +300,12 @@ class StreamImpactItem(ImpactItem):
     
     Parameters
     ----------
-    linked_stream : WasteStream
-        The associated :class:`WasteStream` for environmental impact calculation.
-    **indicator_CFs : kwargs
+    linked_stream : :class:`SanStream`
+        The associated :class:`SanStream` for environmental impact calculation.
+    source : :class:`StreamImpactItem`
+        If provided, all attributions and properties of this
+        :class:`StreamImpactItem` will be copied from the provided source.
+    indicator_CFs : kwargs
         ImpactIndicators and their characteriziation factors.
     
     '''
@@ -308,9 +337,10 @@ class StreamImpactItem(ImpactItem):
 
     def __repr__(self):
         if self.linked_stream:
-            return f'<StreamImpactItem: WasteStream {self.linked_stream}>'
+            kind = type(self.linked_stream).__name__
+            return f'<StreamImpactItem: {kind} {self.linked_stream}>'
         else:
-            return '<StreamImpactItem: no linked WasteStream>'
+            return '<StreamImpactItem: no linked stream>'
 
     def show(self):
         '''Show basic information about this :class:`StreamImpactItem` object.'''
@@ -377,44 +407,46 @@ class StreamImpactItem(ImpactItem):
     @source.setter
     def source(self, i):
         if not isinstance(i, StreamImpactItem):
-            raise ValueError('source can only be a StreamImpactItem, '
+            raise ValueError('source can only be a StreamImpactItem, ' \
                              f'not a {type(i).__name__}.')
         self._source = i
 
     @property
     def linked_stream(self):
         '''
-        [WasteStream] The associated :class:`WasteStream` for environmental impact calculation,
-        can be set by either the :class:`WasteStream` object or its ID
+        [SanStream] The associated :class:`SanStream` for environmental impact calculation,
+        can be set by either the :class:`SanStream` object or its ID.
         '''
-        try: return self._linked_stream
-        except: breakpoint()
+        return self._linked_stream
+        
     @linked_stream.setter
-    def linked_stream(self, new_ws):
-        isa = isinstance
-        if new_ws and not isa(new_ws, WasteStream):
-            if isa(new_ws, str):
+    def linked_stream(self, new_s):
+        if new_s and not isinstance(new_s, SanStream):
+            if isinstance(new_s, str):
                 try:
-                    new_ws = getattr(WasteStream.registry, new_ws)
+                    new_s = getattr(SanStream.registry, new_s)
                 except:
-                    raise ValueError(f'The ``WasteStream` ID {new_ws} not '
-                                     'found in <WasteStream>.registry')
+                    try:
+                        new_s = getattr(WasteStream.registry, new_s)
+                    except:
+                        raise ValueError(f'The ID "{new_s}" not found in registry.')
             else:
-                raise TypeError('`linked_stream` must be a `WasteStream` or '
-                                f'the ID of a `WasteStream`, not {type(new_ws).__name__}.')
+                raise TypeError('`linked_stream` must be a `SanStream` or '
+                                f'the ID of a `SanStream`, not {type(new_s).__name__}.')
+        
         if self._linked_stream:
-            old_ws = self._linked_stream
+            old_s = self._linked_stream
             self._linked_stream.impact_item = None
-            warn(f'`ImpactItem` {self.ID} is unlinked from {old_ws.ID} and ' \
-                 f'linked to {new_ws.ID}.', stacklevel=2)
-        if new_ws:
+            warn(f'`ImpactItem` {self.ID} is unlinked from {old_s.ID} and ' \
+                 f'linked to {new_s.ID}.', stacklevel=2)
+        if new_s:
             if hasattr(self, '_ID'):
-                if new_ws.impact_item and new_ws.impact_item.ID != self.ID:
-                    msg = f'The original `StreamImpactItem` linked to `WasteStream` {new_ws} ' \
+                if new_s.impact_item and new_s.impact_item.ID != self.ID:
+                    msg = f'The original `StreamImpactItem` linked to stream {new_s} ' \
                         f'is replaced with {self}.'
                     warn(message=msg, stacklevel=2)
-            new_ws._impact_item = self
-        self._linked_stream = new_ws
+            new_s._impact_item = self
+        self._linked_stream = new_s
 
     @property
     def ID(self):
@@ -434,14 +466,12 @@ class StreamImpactItem(ImpactItem):
     
     @property
     def price(self):
-        '''[float] Price of the linked `WasteStream`.'''
+        '''[float] Price of the linked stream.'''
         if self.linked_stream:
             return self.linked_stream.price
         else: return 0.
 
 
-
-# ImpactItem.load_default_items()
 
 
 
