@@ -11,7 +11,7 @@ Part of this module is based on the biosteam package:
 https://github.com/BioSTEAMDevelopmentGroup/biosteam
 
 This module is under the University of Illinois/NCSA Open Source License.
-Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
