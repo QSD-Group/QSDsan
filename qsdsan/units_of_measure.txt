@@ -9,3 +9,6 @@ hr = hour = hr = h
 d = day
 USD = usd
 each = count = ea
+unit = count
+MMBTU = 1000000 * BTU = mmBTU
+MMBtu = 1000000 * BTU = mmBtu
