@@ -9,7 +9,7 @@ This module is developed by:
     Joy Cheung
 
 This module is under the University of Illinois/NCSA Open Source License.
-Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
@@ -89,11 +89,4 @@ __all__ = (
     *_simple_tea.__all__,
     *_lca.__all__,
            )
-
-
-ImpactIndicator.load_default_indicators()
-ImpactItem.load_default_items()
-
-
-
 

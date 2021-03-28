@@ -8,7 +8,7 @@ This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
-Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
@@ -16,8 +16,7 @@ for license details.
 # %%
 
 from ._units_of_measure import parse_unit
-from .utils.loading import load_data, data_path
-data_path += '_impact_indicator.tsv'
+from .utils.loading import load_data
 
 __all__ = ('ImpactIndicator', )
 
@@ -41,7 +40,7 @@ class ImpactIndicator:
     method : str
         Impact assessment method, e.g., 'TRACI'.
     category : str
-        Category of the ImpactIndicator, e.g., 'human healt'.
+        Category of the ImpactIndicator, e.g., 'human health'.
     unit : str
         Unit of the ImpactIndicator, e.g., 'kg CO2-eq'.
     description : str
@@ -49,7 +48,6 @@ class ImpactIndicator:
     '''
     
     _indicators = {}
-    _default_data = None
     
     __slots__ = ('_ID', '_alias', '_method', '_category', '_unit', '_ureg_unit',
                  '_unit_remaining', '_description')
@@ -66,12 +64,15 @@ class ImpactIndicator:
         self._category = category
         self._description = description
         ImpactIndicator._indicators[ID] = self
+
         if 'synonym' in kwargs.keys():
-            raise DeprecationWarning('`synonym` has been renamed as `alias`.')
-            if not alias:
-                alias = kwargs['synonym']
+            synonym = kwargs['synonym']
+            if (not alias or str(alias)=='nan'):
+                raise DeprecationWarning('`synonym` has been changed to `alias` for qsdsan v0.2.2 and above.')
+                alias = synonym
             else:
-                raise ValueError('`synonym` and `alias` are both provided.')
+                raise DeprecationWarning('`synonym` has been changed to `alias` for qsdsan v0.2.2 and above, ' \
+                                         f'the given `synonym` "{synonym}" is ignored as `alias` "{alias}" is provided.')
         
         if alias and str(alias) != 'nan':
             self.set_alias(alias)
@@ -85,7 +86,7 @@ class ImpactIndicator:
             info = f'ImpactIndicator: {self.ID} as {self.unit}'
         else:
             info = f'ImpactIndicator: {self.ID}'
-        line =   '\n alias(es)   : '
+        line =   '\n Alias(es)   : '
         aliases = self.get_alias()
         if aliases:
             for alias in aliases[:-1]:
@@ -108,33 +109,63 @@ class ImpactIndicator:
 
         Parameters
         ----------
-        ID : str
-            Original ID.
         alias : str
             New alias of the indicator.
 
         '''
         dct = ImpactIndicator._indicators
         if alias in dct.keys() and dct[alias] is not self:
-            raise ValueError(f'The alias "{alias}" already in use.')
+            raise ValueError(f'The alias "{alias}" is already in use.')
         else:
             dct[alias] = self
     
     def get_alias(self):
-        '''Return all alias(es) of the indicator as a list.'''
+        '''Return all aliases of the indicator as a list.'''
         return tuple(i for i, j in ImpactIndicator._indicators.items()
                      if j==self and i != self.ID)
 
+    def deregister(self):
+        '''Remove this indicator from the record.'''
+        ID = self.ID
+        self._indicators.pop(ID)
+        print(f'The indicator "{ID}" has been removed from the record.')
+
 
     @classmethod
-    def load_default_indicators(cls):
-        '''Load all default indicators as in /data/_impact_indicator.xlsx.'''
-        if cls._default_data is not None:
-            data = cls._default_data
-        else: data = load_data(path=data_path)
+    def load_indicators_from_file(cls, path):
+        '''
+        Load indicators from a datasheet.
+        
+        The first row of this datasheet should have "indicator" 
+        (must have value as it is used as the ID, e.g., GlobalWarming),
+        "alias" (e.g., GWP), "unit" (e.g., kg CO2-eq), "method" (e.g., TRACI),
+        "category" (e.g., environmental impact), and "description".
+        
+        Each row should be a data entry.
+        
+        .. note::
+            
+            This function is just one way to batch-load impact indicators,
+            you can always write your own function that fits your datasheet format,
+            as long as it provides all the information to construct the indicators.
+        
+        
+        Parameters
+        ----------
+        path : str
+            Complete path of the datasheet, currently support tsv, csv, and xls/xlsx.
+        
+        Tips
+        ----
+        [1] tsv is preferred as it shows up on GitHub.
+        
+        [2] Refer to the `Bwaise system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise/data>`_
+        in the ``Exposan`` repository for a sample file.
+        '''
+        data = load_data(path=path)
         for indicator in data.index:
             if indicator in cls._indicators.keys():
-                continue
+                raise ValueError(f'The indicator "{indicator}" has been added.')
             else:
                 new = cls.__new__(cls)
                 new.__init__(ID=indicator,
@@ -144,7 +175,6 @@ class ImpactIndicator:
                              category=data.loc[indicator]['category'],
                              description=data.loc[indicator]['description'])
                 cls._indicators[indicator] = new
-        cls._default_data = data
 
 
     @classmethod
@@ -196,9 +226,6 @@ class ImpactIndicator:
         self._description = i
 
 
-
-
-# ImpactIndicator.load_default_indicators()
 
 
 
