@@ -7,7 +7,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 What is ``QSDsan``?
 -------------------
-``QSDsan`` is an open-source, community-led platform for quantitative sustainable design of sanitation and resource recovery systems. It leverages the structure and modules developed in the ``BioSTEAM`` platform [1]_ with additional functions tailored to sanitation processes.
+``QSDsan`` is an open-source, community-led platform for quantitative sustainable design of sanitation and resource recovery systems. It leverages the structure and modules developed in the `BioSTEAM <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_ platform with additional functions tailored to sanitation processes.
 
 As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
 
@@ -26,8 +26,8 @@ But the name of the actual packages are all in lower cases per `PEP-8 <https://w
    *Modules should have short, all-lowercase names. Underscores can be used in the module name if it improves readability. Python packages should also have short, all-lowercase names, although the use of underscores is discouraged.*
 
 
-Getting Started
----------------
+Installation
+------------
 You can downlonw the package from `PyPI <https://pypi.org/project/qsdsan/>`_.
 
 If you use pip:
@@ -36,6 +36,11 @@ If you use pip:
 
     pip install qsdsan
 
+If you prefer the most recent version on GitHub, please follow the steps in the `Contributing to QSDsan <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ section of the documentation.
+
+
+Getting Started
+---------------
 
 Follow the tutorial to get started!
 
@@ -141,11 +146,6 @@ Additionally, to get the full value of ``QSDsan``, we highly recommend reading t
    :caption: What's new
 
    CHANGELOG
-
-
-References
-----------
-.. [1] Cortés-Peña, Y.; Kumar, D.; Singh, V.; Guest, J. S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020. https://doi.org/10.1021/acssuschemeng.9b07040.
 
 
 Indices and tables

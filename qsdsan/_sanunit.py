@@ -51,7 +51,8 @@ def _check_init_with(init_with):
     
     return init_with
 
-add2list = lambda lst, item: lst.extend(item) if isinstance(item, Iterable) else lst.append(lst)
+add2list = lambda lst, item: lst.extend(item) if isinstance(item, Iterable) \
+    else lst.append(lst)
 
 class SanUnit(Unit, isabstract=True):
 
@@ -106,7 +107,6 @@ class SanUnit(Unit, isabstract=True):
         self._init_utils()
         self._init_results()
         self._assert_compatible_property_package()
-        self._BM = defaultdict(lambda:1)
 
         self.construction = construction
         self.transportation = transportation
@@ -262,6 +262,28 @@ class SanUnit(Unit, isabstract=True):
         if not isinstance(i, dict):
             raise TypeError('BM must be a dict, not {type(i).__name__}.')
         self._BM.update(i)
+
+    @property
+    def installed_cost(self):
+        '''Total installed cost of the unit.'''
+        BM = defaultdict(lambda:1)
+        BM.update(self._BM)
+        installed_cost = sum(self.installed_costs.values())
+        
+        return sum([i.installed_cost for i in self.auxiliary_units],
+                   installed_cost)
+    
+    @property
+    def installed_costs(self):
+        '''[dict] Installed costs of each equipment.'''
+        BM = defaultdict(lambda:1)
+        BM.update(self._BM)
+        installed_costs = {i: BM[i]*j for i,j in self.purchase_costs.items()}
+
+        for i in self.auxiliary_unit_names:
+            installed_costs[i] = getattr(self, i).installed_cost
+        return installed_costs
+
 
     @property
     def construction(self):

@@ -1,5 +1,5 @@
-biosteam==2.24.11
-thermosteam==0.24.6
+biosteam==2.24.13
+thermosteam==0.24.7
 exposan
 sphinx
 sphinx_rtd_theme
