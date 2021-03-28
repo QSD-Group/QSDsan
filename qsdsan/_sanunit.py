@@ -7,7 +7,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
-Part of this module is based on the biosteam package:
+Part of this module is based on the BioSTEAM package:
 https://github.com/BioSTEAMDevelopmentGroup/biosteam
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -18,6 +18,7 @@ for license details.
 
 # %%
 
+from collections import defaultdict
 from collections.abc import Iterable
 from biosteam.utils.misc import format_title
 from . import currency, Unit, SanStream, WasteStream, Construction, Transportation
@@ -67,9 +68,9 @@ class SanUnit(Unit, isabstract=True):
         when provided as a dict, use "ins" or "outs" followed with the order number
         (i.e., ins0, outs-1) as keys; you can use ":" to denote a range (e.g., ins2:4);
         you can also use "else" to specify the stream class for non-provided ones.        
-    construction : :class:`~.Construction` or sequence
+    construction : :class:`~.Construction` or iterable
         Contains construction information.
-    transportation : :class:`~.Transportation` or sequence
+    transportation : :class:`~.Transportation` or iterable
         Contains construction information.
     add_OPEX : float or dict
         Operating expense per hour in addition to utility cost (assuming 100% uptime).
@@ -105,6 +106,7 @@ class SanUnit(Unit, isabstract=True):
         self._init_utils()
         self._init_results()
         self._assert_compatible_property_package()
+        self._BM = defaultdict(lambda:1)
 
         self.construction = construction
         self.transportation = transportation
@@ -252,8 +254,18 @@ class SanUnit(Unit, isabstract=True):
         return self.chemicals
 
     @property
+    def BM(self):
+        '''[dict] Bare module factors for all cost items, unspecified items will be set to one.'''
+        return self._BM
+    @BM.setter
+    def BM(self, i:dict):
+        if not isinstance(i, dict):
+            raise TypeError('BM must be a dict, not {type(i).__name__}.')
+        self._BM.update(i)
+
+    @property
     def construction(self):
-        '''[:class:`~.Construction` or sequence] Contains construction information.'''
+        '''[:class:`~.Construction` or iterable] Contains construction information.'''
         return self._construction
     @construction.setter
     def construction(self, i):
@@ -286,7 +298,7 @@ class SanUnit(Unit, isabstract=True):
 
     @property
     def transportation(self):
-        '''[:class:`~.Transportation` or sequence] Contains transportation information.'''
+        '''[:class:`~.Transportation` or iterable] Contains transportation information.'''
         return self._transportation
     @transportation.setter
     def transportation(self, i):

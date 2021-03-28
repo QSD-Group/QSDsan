@@ -28,7 +28,9 @@ But the name of the actual packages are all in lower cases per `PEP-8 <https://w
 
 Getting Started
 ---------------
-First install the package at `PyPI <https://pypi.org/>`_. If you use pip:
+You can downlonw the package from `PyPI <https://pypi.org/project/qsdsan/>`_.
+
+If you use pip:
 
 .. code:: bash
 

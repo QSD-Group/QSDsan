@@ -8,7 +8,7 @@ This module is developed by:
     Joy Cheung <joycheung1994@gmail.com>
     Yalin Li <zoe.yalin.li@gmail.com>
 
-Part of this module is based on the thermosteam package:
+Part of this module is based on the Thermosteam package:
 https://github.com/BioSTEAMDevelopmentGroup/thermosteam
 
 This module is under the University of Illinois/NCSA Open Source License.

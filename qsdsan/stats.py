@@ -59,7 +59,7 @@ def _update_input(input_val, default_val):
     else:
         try:
             iter(input_val)
-            if len(input_val)==0: # empty sequence
+            if len(input_val)==0: # empty iterable
                 return default_val
             return input_val if not isinstance(input_val, str) else (input_val,)
         except:
@@ -644,13 +644,13 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
     +==========+==========+===========+=============+===========+================+
     | single   | None     | box       | 1D          | box       | N/A            |
     | or       |          +-----------+ horizontal  +-----------+                +
-    | sequence |          | hist      |             | histogram |                |
+    | iterable |          | hist      |             | histogram |                |
     |          |          +-----------+             +-----------+                +
     |          |          | kde       |             | kde       |                |
     +----------+----------+-----------+-------------+-----------+----------------+
     | None     | single   | box       | 1D          | box       | N/A            |
     |          | or       +-----------+ vertical    +-----------+                +
-    |          | sequence | hist      |             | histogram |                |
+    |          | iterable | hist      |             | histogram |                |
     |          |          +-----------+             +-----------+                +
     |          |          | kde       |             | kde       |                |
     +----------+----------+-----------+-------------+-----------+----------------+
@@ -682,11 +682,11 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
     ----------
     model : :class:`biosteam.Model`
         The model with uncertainty analysis (in <:class:`Model`.table>) results for plotting.
-    x_axis : :class:`biosteam.Parameter`, :class:`biosteam.Metric` or sequence
+    x_axis : :class:`biosteam.Parameter`, :class:`biosteam.Metric` or iterable
         What to plot on the x-axis, can be parameters or metrics of the model,
         default to all model metrics included in the model result table
         if neither x nor y is provided.
-    y_axis : :class:`biosteam.Parameter`, :class:`biosteam.Metric` or sequence
+    y_axis : :class:`biosteam.Parameter`, :class:`biosteam.Metric` or iterable
         What to plot on the y-axis, can be parameters or metrics of the model,
         default to None.
     kind : str
@@ -705,7 +705,7 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
     -------
     figure : :class:`matplotlib.figure.Figure`
         The generated figure.
-    axis : :class:`matplotlib.axes._subplots.AxesSubplot` or sequence
+    axis : :class:`matplotlib.axes._subplots.AxesSubplot` or iterable
         The generated figure axis (or axes for 2D figure).
         
     See Also
@@ -1065,7 +1065,7 @@ def plot_morris_convergence(result_dct, metric, parameters=(), plot_rank=False,
     metric : :class:`biosteam.Metric`
         The metric of interest for the plot.
     parameters : :class:`biosteam.Parameter`
-        Single or a sequence of model parameters whose :math:`{\mu^*}` will be
+        Single or a iterable of model parameters whose :math:`{\mu^*}` will be
         included in the plot.
         Will be set to all parameters in retult_dct will be used if not provided.
     plot_rank : bool
@@ -1201,7 +1201,7 @@ def plot_fast_results(result_dct, metric, parameters=(), error_bar=True,
     metric : :class:`biosteam.Metric`
         The metric of interest for the plot.
     parameters : :class:`biosteam.Parameter`
-        Single or a sequence of model parameters whose :math:`{\mu^*}` will be
+        Single or a iterable of model parameters whose :math:`{\mu^*}` will be
         included in the plot.
         Will be set to all parameters in retult_dct will be used if not provided.
     error_bar : bool
@@ -1250,7 +1250,7 @@ def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
     metric : :class:`biosteam.Metric`
         The metric of interest for the plot.
     parameters : :class:`biosteam.Parameter`
-        Single or a sequence of model parameters whose :math:`{\mu^*}` will be
+        Single or a iterable of model parameters whose :math:`{\mu^*}` will be
         included in the plot.
         Will be set to all parameters in retult_dct will be used if not provided.
     kind : str

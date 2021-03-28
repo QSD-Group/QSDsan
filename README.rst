@@ -33,7 +33,9 @@ All systems developed with ``QSDsan`` are included in the package `exposan <http
 
 Installation
 ------------
-First install the package at `PyPI <https://pypi.org/>`_. If you use pip:
+You can downlonw the package from `PyPI <https://pypi.org/project/qsdsan/>`_.
+
+If you use pip:
 
 .. code:: bash
 
@@ -54,7 +56,7 @@ About the authors
 Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors are listed below, please refer to the `author page <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_ for the full list of authors.
 
 **Lead developers:**
-   - `Yalin Li <zoe.yalin.li@gmail.com>`_
+   - `Yalin Li <zoe.yalin.li@gmail.com>`_ (current maintainer)
    - `Joy Cheung <joycheung1994@gmail.com>`_
    - `Stetson Rowles <lsr@illinois.edu>`_
 

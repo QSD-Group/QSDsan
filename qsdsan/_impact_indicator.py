@@ -30,8 +30,14 @@ class ImpactIndicator:
     ----------
     ID : str
         ID of the ImpactIndicator.
-    synonym : str
+    alias : str
         Alternative ID of the ImpactIndicator.
+        
+        .. note::
+
+            "synonym" was used bfore v0.2.2 it is still supported but may be
+            deprecated in the future.
+
     method : str
         Impact assessment method, e.g., 'TRACI'.
     category : str
@@ -40,16 +46,16 @@ class ImpactIndicator:
         Unit of the ImpactIndicator, e.g., 'kg CO2-eq'.
     description : str
         Supplementary explanation.
-        
     '''
     
     _indicators = {}
     _default_data = None
     
-    __slots__ = ('_ID', '_synonym', '_method', '_category', '_unit', '_ureg_unit',
+    __slots__ = ('_ID', '_alias', '_method', '_category', '_unit', '_ureg_unit',
                  '_unit_remaining', '_description')
 
-    def __init__(self, ID, synonym='', method='', category='', unit='', description=''):
+    def __init__(self, ID, alias='', method='', category='', unit='', description='',
+                 **kwargs):
         
         if ID in ImpactIndicator._indicators.keys():
             raise ValueError(f'The ID "{ID}" is currently in use.')
@@ -60,8 +66,15 @@ class ImpactIndicator:
         self._category = category
         self._description = description
         ImpactIndicator._indicators[ID] = self
-        if synonym and str(synonym) != 'nan':
-            self.set_synonym(synonym)
+        if 'synonym' in kwargs.keys():
+            raise DeprecationWarning('`synonym` has been renamed as `alias`.')
+            if not alias:
+                alias = kwargs['synonym']
+            else:
+                raise ValueError('`synonym` and `alias` are both provided.')
+        
+        if alias and str(alias) != 'nan':
+            self.set_alias(alias)
 
     def __repr__(self):
         return f'<ImpactIndicator: {self.ID}>'
@@ -72,12 +85,12 @@ class ImpactIndicator:
             info = f'ImpactIndicator: {self.ID} as {self.unit}'
         else:
             info = f'ImpactIndicator: {self.ID}'
-        line =   '\n Synonyms   : '
-        synonyms = self.get_synonym()
-        if synonyms:
-            for synonym in synonyms[:-1]:
-                line += synonym + '; '
-            line += synonyms[-1]
+        line =   '\n alias(es)   : '
+        aliases = self.get_alias()
+        if aliases:
+            for alias in aliases[:-1]:
+                line += alias + '; '
+            line += aliases[-1]
             if len(line) > 40: line = line[:40] + '...'
             info += line
         info += f'\n Method     : {self.method or None}'
@@ -89,26 +102,26 @@ class ImpactIndicator:
     
     _ipython_display_ = show
     
-    def set_synonym(self, synonym):
+    def set_alias(self, alias):
         '''
-        Give the indicator a synonym.
+        Give the indicator an alias.
 
         Parameters
         ----------
         ID : str
             Original ID.
-        synonym : str
-            New synonym of the indicator.
+        alias : str
+            New alias of the indicator.
 
         '''
         dct = ImpactIndicator._indicators
-        if synonym in dct.keys() and dct[synonym] is not self:
-            raise ValueError(f'The synonym "{synonym}" already in use.')
+        if alias in dct.keys() and dct[alias] is not self:
+            raise ValueError(f'The alias "{alias}" already in use.')
         else:
-            dct[synonym] = self
+            dct[alias] = self
     
-    def get_synonym(self):
-        '''Return all synonyms of the indicator as a list.'''
+    def get_alias(self):
+        '''Return all alias(es) of the indicator as a list.'''
         return tuple(i for i, j in ImpactIndicator._indicators.items()
                      if j==self and i != self.ID)
 
@@ -125,7 +138,7 @@ class ImpactIndicator:
             else:
                 new = cls.__new__(cls)
                 new.__init__(ID=indicator,
-                             synonym=data.loc[indicator]['synonym'],
+                             alias=data.loc[indicator]['alias'],
                              unit=data.loc[indicator]['unit'],
                              method=data.loc[indicator]['method'],
                              category=data.loc[indicator]['category'],

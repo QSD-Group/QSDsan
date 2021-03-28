@@ -283,16 +283,16 @@ class LCA:
         
         Parameters
         ----------
-        streams : :class:`WasteStream` or sequence
-            One or a sequence of streams. Note that impacts of these streams will be
+        streams : :class:`WasteStream` or iterable
+            One or a iterable of streams. Note that impacts of these streams will be
             excluded in calculating the total impacts.
-        allocate_by : str, sequence, or function to generate an sequence
+        allocate_by : str, iterable, or function to generate an iterable
             If provided as a str, can be "mass", "energy", or 'value' to allocate
             the impacts accordingly.
-            If provided as a sequence (no need to normalize so that sum of the sequence is 1),
-            will allocate impacts according to the sequence.
+            If provided as an iterable (no need to normalize so that sum of the iterable is 1),
+            will allocate impacts according to the iterable.
             If provided as a function,  will call the function to generate an
-            sequence to allocate the impacts accordingly.
+            iterable to allocate the impacts accordingly.
         
         .. note::
             
@@ -321,7 +321,7 @@ class LCA:
             ratios = allocate_by()
         else:
             raise ValueError('allocate_by can only be "mass", "energy", "value", '
-                             'a sequence, or a function to generate a sequence.')
+                             'an iterable, or a function to generate an iterable.')
         if ratios.sum() == 0:
             raise ValueError('Calculated allocation ratios are all zero, cannot allocate.')
         ratios = ratios/ratios.sum()

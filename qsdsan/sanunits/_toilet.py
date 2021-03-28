@@ -118,8 +118,6 @@ class Toilet(SanUnit, Decay, isabstract=True):
         'Steel': 7900,
         'StainlessSteelSheet': 2.64
         }    
-
-    _BM = {'Single toilet': 1, 'Total toilets': 1}
         
     def _cost(self):
         self.purchase_costs['Single toilet'] = self.CAPEX
