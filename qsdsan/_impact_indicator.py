@@ -16,8 +16,7 @@ for license details.
 # %%
 
 from ._units_of_measure import parse_unit
-from .utils.loading import load_data, data_path
-data_path += '_impact_indicator.tsv'
+from .utils.loading import load_data
 
 __all__ = ('ImpactIndicator', )
 
@@ -135,21 +134,48 @@ class ImpactIndicator:
 
     @classmethod
     def load_indicators_from_file(cls, path):
-        '''Load all indicators in the given path.'''
+        '''
+        Load indicators from a datasheet.
+        
+        The first row of this datasheet should have "indicator" 
+        (must have value as it is used as the ID, e.g., GlobalWarming),
+        "alias" (e.g., GWP), "unit" (e.g., kg CO2-eq), "method" (e.g., TRACI),
+        "category" (e.g., environmental impact), and "description".
+        
+        Each row should be a data entry.
+        
+        .. note::
+            
+            This function is just one way to batch-load impact indicators,
+            you can always write your own function that fits your datasheet format,
+            as long as it provides all the information to construct the indicators.
+        
+        
+        Parameters
+        ----------
+        path : str
+            Complete path of the datasheet, currently support tsv, csv, and xls/xlsx.
+        
+        Tips
+        ----
+        [1] tsv is preferred as it shows up on GitHub.
+        
+        [2] Refer to the `Bwaise system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise/data>`_
+        in the ``Exposan`` repository for a sample file.
+        '''
         data = load_data(path=path)
         for indicator in data.index:
             if indicator in cls._indicators.keys():
                 raise ValueError(f'The indicator "{indicator}" has been added.')
             else:
                 new = cls.__new__(cls)
-                new.__init__(ID=data.loc[indicator]['indicator'],
+                new.__init__(ID=indicator,
                              alias=data.loc[indicator]['alias'],
                              unit=data.loc[indicator]['unit'],
                              method=data.loc[indicator]['method'],
                              category=data.loc[indicator]['category'],
                              description=data.loc[indicator]['description'])
                 cls._indicators[indicator] = new
-        cls._default_data = data
 
 
     @classmethod

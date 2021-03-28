@@ -6,6 +6,7 @@ This document records notable changes to `~ <https://github.com/QSD-Group/QSDsan
 
 Ongoing
 -------
+- Now LCA data can be imported from external databases using the newly made `BW2QSD <https://github.com/QSD-Group/BW2QSD>`_ package!
 - Updated :class:`SanUnit` so that it can be initialized with any of :class:`thermosteam.Stream`, :class:`~.SanStream`, or :class:`~.WasteStream`.
 
 	- These three classes can now be mixed.

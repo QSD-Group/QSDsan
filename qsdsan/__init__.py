@@ -90,10 +90,3 @@ __all__ = (
     *_lca.__all__,
            )
 
-
-ImpactIndicator.load_default_indicators()
-ImpactItem.load_default_items()
-
-
-
-
