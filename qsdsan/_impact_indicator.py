@@ -30,12 +30,18 @@ class ImpactIndicator:
     ----------
     ID : str
         ID of the ImpactIndicator.
-    synonym : str
+    alias : str
         Alternative ID of the ImpactIndicator.
+        
+        .. note::
+            
+            It replaces the previous `synonym`.
+
+            
     method : str
         Impact assessment method, e.g., 'TRACI'.
     category : str
-        Category of the ImpactIndicator, e.g., 'human healt'.
+        Category of the ImpactIndicator, e.g., 'human health'.
     unit : str
         Unit of the ImpactIndicator, e.g., 'kg CO2-eq'.
     description : str
@@ -44,12 +50,12 @@ class ImpactIndicator:
     '''
     
     _indicators = {}
-    _default_data = None
     
-    __slots__ = ('_ID', '_synonym', '_method', '_category', '_unit', '_ureg_unit',
+    __slots__ = ('_ID', '_alias', '_method', '_category', '_unit', '_ureg_unit',
                  '_unit_remaining', '_description')
 
-    def __init__(self, ID, synonym='', method='', category='', unit='', description=''):
+    def __init__(self, ID, alias='', method='', category='', unit='', description='',
+                 **kwargs):
         
         if ID in ImpactIndicator._indicators.keys():
             raise ValueError(f'The ID "{ID}" is currently in use.')
@@ -60,8 +66,18 @@ class ImpactIndicator:
         self._category = category
         self._description = description
         ImpactIndicator._indicators[ID] = self
-        if synonym and str(synonym) != 'nan':
-            self.set_synonym(synonym)
+        
+        if 'synonym' in kwargs.keys():
+            synonym = kwargs['synonym']
+            if (not alias or str(alias)=='nan'):
+                raise DeprecationWarning('`synonym` has been changed to `alias` for qsdsan v0.2.1 and above.')
+                alias = synonym
+            else:
+                raise DeprecationWarning('`synonym` has been changed to `alias` for qsdsan v0.2.1 and above, ' \
+                                         f'the given `synonym` "{synonym}" is ignored as `alias` "{alias}" is provided.')
+        
+        if alias and str(alias) != 'nan':
+            self.set_alias(alias)
 
     def __repr__(self):
         return f'<ImpactIndicator: {self.ID}>'
@@ -72,12 +88,12 @@ class ImpactIndicator:
             info = f'ImpactIndicator: {self.ID} as {self.unit}'
         else:
             info = f'ImpactIndicator: {self.ID}'
-        line =   '\n Synonyms   : '
-        synonyms = self.get_synonym()
-        if synonyms:
-            for synonym in synonyms[:-1]:
-                line += synonym + '; '
-            line += synonyms[-1]
+        line =   '\n Alias(es)   : '
+        aliases = self.get_alias()
+        if aliases:
+            for alias in aliases[:-1]:
+                line += alias + '; '
+            line += aliases[-1]
             if len(line) > 40: line = line[:40] + '...'
             info += line
         info += f'\n Method     : {self.method or None}'
@@ -89,43 +105,45 @@ class ImpactIndicator:
     
     _ipython_display_ = show
     
-    def set_synonym(self, synonym):
+    def set_alias(self, alias):
         '''
-        Give the indicator a synonym.
+        Give the indicator an alias.
 
         Parameters
         ----------
-        ID : str
-            Original ID.
-        synonym : str
-            New synonym of the indicator.
+        alias : str
+            New alias of the indicator.
 
         '''
         dct = ImpactIndicator._indicators
-        if synonym in dct.keys() and dct[synonym] is not self:
-            raise ValueError(f'The synonym "{synonym}" already in use.')
+        if alias in dct.keys() and dct[alias] is not self:
+            raise ValueError(f'The alias "{alias}" is already in use.')
         else:
-            dct[synonym] = self
+            dct[alias] = self
     
-    def get_synonym(self):
-        '''Return all synonyms of the indicator as a list.'''
+    def get_alias(self, na):
+        '''Return all aliases of the indicator as a list.'''
         return tuple(i for i, j in ImpactIndicator._indicators.items()
                      if j==self and i != self.ID)
 
+    def deregister(self):
+        '''Remove this indicator from the record.'''
+        ID = self.ID
+        self._indicators.pop(ID)
+        print(f'The indicator "{ID}" has been removed from the record.')
+
 
     @classmethod
-    def load_default_indicators(cls):
-        '''Load all default indicators as in /data/_impact_indicator.xlsx.'''
-        if cls._default_data is not None:
-            data = cls._default_data
-        else: data = load_data(path=data_path)
+    def load_indicators_from_file(cls, path):
+        '''Load all indicators in the given path.'''
+        data = load_data(path=path)
         for indicator in data.index:
             if indicator in cls._indicators.keys():
-                continue
+                raise ValueError(f'The indicator "{indicator}" has been added.')
             else:
                 new = cls.__new__(cls)
-                new.__init__(ID=indicator,
-                             synonym=data.loc[indicator]['synonym'],
+                new.__init__(ID=data.loc[indicator]['indicator'],
+                             alias=data.loc[indicator]['alias'],
                              unit=data.loc[indicator]['unit'],
                              method=data.loc[indicator]['method'],
                              category=data.loc[indicator]['category'],
@@ -183,9 +201,6 @@ class ImpactIndicator:
         self._description = i
 
 
-
-
-# ImpactIndicator.load_default_indicators()
 
 
 

@@ -18,13 +18,12 @@ for license details.
 import pandas as pd
 from warnings import warn
 from thermosteam.utils import copy_maybe
-from . import currency, WasteStream, ImpactIndicator
+from . import currency, SanStream, WasteStream, ImpactIndicator
 from ._units_of_measure import auom, parse_unit
 from .utils.loading import data_path
 from .utils.formatting import format_number as f_num
 
 indicators = ImpactIndicator._indicators
-data_path += '_impact_item.xlsx'
 isinstance = isinstance
 getattr = getattr
 
@@ -155,20 +154,19 @@ class ImpactItem:
         return new
     __copy__ = copy
 
+    def deregister(self):
+        '''Remove this impact item from the record.'''
+        ID = self.ID
+        self._items.pop(ID)
+        print(f'The impact item "{ID}" has been removed from the record.')
     
-    
-    #!!! Are the values GWP100 from ref [1]?
+
+    #!!! Need to update 
     @classmethod
-    def load_default_items(cls, path=data_path):
+    def load_items_from_file(cls, path):
         '''
         Load all default indicators as in /data/_impact_item.xlsx from Trimmer et al. [1]_
         
-        References
-        ----------
-        .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-            Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-            Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-            https://doi.org/10.1021/acs.est.0c03296.
         
         '''
         if cls._default_data is not None:
@@ -308,9 +306,10 @@ class StreamImpactItem(ImpactItem):
 
     def __repr__(self):
         if self.linked_stream:
-            return f'<StreamImpactItem: WasteStream {self.linked_stream}>'
+            kind = type(self.linked_stream).__name__
+            return f'<StreamImpactItem: {kind self.linked_stream}>'
         else:
-            return '<StreamImpactItem: no linked WasteStream>'
+            return '<StreamImpactItem: no linked stream>'
 
     def show(self):
         '''Show basic information about this :class:`StreamImpactItem` object.'''
@@ -384,37 +383,39 @@ class StreamImpactItem(ImpactItem):
     @property
     def linked_stream(self):
         '''
-        [WasteStream] The associated :class:`WasteStream` for environmental impact calculation,
-        can be set by either the :class:`WasteStream` object or its ID
+        [:class:`SanStream`] The associated :class:`SanStream` for environmental impact calculation,
+        can be set by either the :class:`SanStream` object or its ID.
         '''
-        try: return self._linked_stream
-        except: breakpoint()
+        return self._linked_stream
+        
     @linked_stream.setter
     def linked_stream(self, new_ws):
-        isa = isinstance
-        if new_ws and not isa(new_ws, WasteStream):
-            if isa(new_ws, str):
+        if new_s and not (isinstance(new_ws, SanStream) or isinstance(new_ws, WasteStream)):
+            if isinstance(new_s, str):
                 try:
-                    new_ws = getattr(WasteStream.registry, new_ws)
+                    new_s = getattr(SanStream.registry, new_s)
                 except:
-                    raise ValueError(f'The ``WasteStream` ID {new_ws} not '
-                                     'found in <WasteStream>.registry')
+                    try:
+                        new_s = getattr(WasteStream.registry, new_s)
+                    except:
+                        raise ValueError(f'The ID "{new_s}" not found in registry.')
             else:
-                raise TypeError('`linked_stream` must be a `WasteStream` or '
-                                f'the ID of a `WasteStream`, not {type(new_ws).__name__}.')
+                raise TypeError('`linked_stream` must be a `SanStream`/`WasteStream` or '
+                                f'the ID of a `SanStream`/`WasteStream`, not {type(new_ws).__name__}.')
+        
         if self._linked_stream:
-            old_ws = self._linked_stream
+            old_s = self._linked_stream
             self._linked_stream.impact_item = None
-            warn(f'`ImpactItem` {self.ID} is unlinked from {old_ws.ID} and ' \
-                 f'linked to {new_ws.ID}.', stacklevel=2)
-        if new_ws:
+            warn(f'`ImpactItem` {self.ID} is unlinked from {old_s.ID} and ' \
+                 f'linked to {new_s.ID}.', stacklevel=2)
+        if new_s:
             if hasattr(self, '_ID'):
-                if new_ws.impact_item and new_ws.impact_item.ID != self.ID:
-                    msg = f'The original `StreamImpactItem` linked to `WasteStream` {new_ws} ' \
+                if new_s.impact_item and new_s.impact_item.ID != self.ID:
+                    msg = f'The original `StreamImpactItem` linked to stream {new_s} ' \
                         f'is replaced with {self}.'
                     warn(message=msg, stacklevel=2)
-            new_ws._impact_item = self
-        self._linked_stream = new_ws
+            new_s._impact_item = self
+        self._linked_stream = new_s
 
     @property
     def ID(self):
@@ -434,14 +435,12 @@ class StreamImpactItem(ImpactItem):
     
     @property
     def price(self):
-        '''[float] Price of the linked `WasteStream`.'''
+        '''[float] Price of the linked stream.'''
         if self.linked_stream:
             return self.linked_stream.price
         else: return 0.
 
 
-
-# ImpactItem.load_default_items()
 
 
 
