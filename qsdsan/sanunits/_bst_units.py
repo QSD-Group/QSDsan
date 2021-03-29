@@ -51,7 +51,7 @@ class Splitter(SanUnit, bst.units.Splitter):
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *, split, order=None,
-                 init_with='WasteStream'):
+                 init_with='Stream'):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self._isplit = self.thermo.chemicals.isplit(split, order)
 
@@ -89,7 +89,7 @@ class Pump(SanUnit, bst.units.Pump):
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
                  P=101325, pump_type='Default', material='Cast iron',
-                 dP_design=405300, ignore_NPSH=True, init_with='WasteStream'):
+                 dP_design=405300, ignore_NPSH=True, init_with='Stream'):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.P = P
         self.pump_type = pump_type
@@ -110,7 +110,7 @@ class Tank(SanUnit, bst.units.Tank, isabstract=True):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
                  vessel_type=None, tau=None, V_wf=None, 
-                 vessel_material=None, kW_per_m3=0., init_with='WasteStream'):
+                 vessel_material=None, kW_per_m3=0., init_with='Stream'):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
 

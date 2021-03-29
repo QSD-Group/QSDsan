@@ -80,7 +80,13 @@ class SanStream(Stream):
         '''
         new = stream
         
-        if not isinstance(stream, cls):
+        #!!! Need to check if need to convert MissingStream to 
+        # MissingSanStream/MissingWasteStream...
+        if isinstance(stream, MissingStream):
+            return stream
+            # setattr(stream, '__class__', MissingSanStream)
+            
+        elif not isinstance(stream, cls):
             stream.registry.untrack((stream,))
             ID = '' if (stream.ID[0] == 's' and stream.ID[1:].isnumeric()) else stream.ID
             new = cls.__new__(cls, **kwargs)
@@ -96,10 +102,6 @@ class SanStream(Stream):
             new.impact_item = None
                 
             stream._link = stream._sink = stream._source = None
-
-        elif isinstance(stream, MissingStream):
-            setattr(stream, '__class__', MissingSanStream)
-            return stream
         
         return new
 

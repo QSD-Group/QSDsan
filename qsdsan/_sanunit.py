@@ -21,13 +21,14 @@ for license details.
 from collections import defaultdict
 from collections.abc import Iterable
 from biosteam.utils.misc import format_title
-from . import currency, Unit, SanStream, WasteStream, Construction, Transportation
+from . import currency, Unit, Stream, SanStream, WasteStream, \
+    Construction, Transportation
 
 __all__ = ('SanUnit',)
 
 isinstance = isinstance
 
-def _check_init_with(init_with):
+def _update_init_with(init_with):
     if isinstance(init_with, str):
         init_with = {'all': init_with}
     
@@ -48,7 +49,7 @@ def _check_init_with(init_with):
     
     if len(init_with) == 1 and 'else' in init_with.keys():
         init_with['all'] = init_with.pop['else']
-    
+
     return init_with
 
 add2list = lambda lst, item: lst.extend(item) if isinstance(item, Iterable) \
@@ -126,7 +127,7 @@ class SanUnit(Unit, isabstract=True):
         if not streams:
             return []
 
-        init_with = _check_init_with(init_with)
+        init_with = _update_init_with(init_with)
         cls_dct = dict(s=[], ss=[], ws=[])
         
         if len(init_with) == 1:
@@ -135,7 +136,7 @@ class SanUnit(Unit, isabstract=True):
         for k, v in init_with.items():
             if not ins_or_outs in k:
                 continue
-            num = k.split(ins_or_outs)[1]
+            num = k.split(ins_or_outs)[-1]
             strm = streams[num]
             add2list(cls_dct[v], strm)
 
@@ -154,13 +155,36 @@ class SanUnit(Unit, isabstract=True):
             converted.append(WasteStream.from_stream(WasteStream, ws))
 
         return converted
-
+       
+    
+    def _update_stream_init(self, streams, init_with, ins_or_outs):
+        if not streams:
+            return init_with
+        
+        streams = list(streams) if isinstance(streams, Iterable) else [streams]
+        init_with = dict.fromkeys([f'{ins_or_outs}{i}' for i in range(len(streams))],
+                                   init_with)
+        streams_updated = getattr(self, ins_or_outs)
+        
+        for n, s in enumerate(streams):
+            if isinstance(s, Stream):
+                if type(s).__name__ == type(streams_updated[n]).__name__:
+                    init_with[f'{ins_or_outs}{n}'] = type(s).__name__
+        
+        return init_with
+    
     def _init_ins(self, ins, init_with):
         super()._init_ins(ins)
+
+        init_with = self._update_stream_init(ins, init_with, 'ins')
+        
         self._ins = self._from_stream(self.ins, init_with, 'ins')
 
-    def _init_outs(self, outs, init_with):
+    def _init_outs(self, outs, init_with):            
         super()._init_outs(outs)
+        
+        init_with = self._update_stream_init(outs, init_with, 'outs')
+        
         self._outs = self._from_stream(self.outs, init_with, 'outs')
 
     def _init_results(self):

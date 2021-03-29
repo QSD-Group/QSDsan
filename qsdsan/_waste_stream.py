@@ -168,12 +168,14 @@ class WasteStream(SanStream):
         Cast a :class:`thermosteam.Stream` or :class:`biosteam.utils.MissingStream`
         to :class:`WasteStream` or :class:`MissingWasteStream`.
         '''
-        new = super().from_stream(cls, stream, **kwargs)
         
-        if isinstance(new, MissingSanStream):
-            setattr(new, '__class__', MissingWasteStream)
-        else:
-            new._init_ws()
+        new = SanStream.from_stream(cls, stream, **kwargs)
+        new._init_ws()
+        
+        # if isinstance(new, MissingSanStream):
+        #     setattr(new, '__class__', MissingWasteStream)
+        # else:
+        #     new._init_ws()
             
         return new
 
