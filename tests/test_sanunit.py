@@ -15,25 +15,48 @@ for license details.
 from numpy.testing import assert_allclose
 
 def test_sanunit():
-    import biosteam as bst
-    from qsdsan import Components, WasteStream, sanunits
-    components = Components.load_default()
-    bst.settings.set_thermo(components)
-    ws1 = WasteStream(S_Ac=5, H2O=1000, units='kg/hr')
-    ws2 = WasteStream(X_NOO=10, H2O=1000, units='kg/hr')
-    M1 = sanunits.Mixer('M1', ins=(ws1, ws2, ''), outs='mixture')
+    import qsdsan as qs
+    components = qs.Components.load_default()
+    qs.set_thermo(components)
+    
+    # Test unit initiation
+    ws1 = qs.WasteStream(S_Ac=5, H2O=1000, units='kg/hr')
+    ws2 = qs.WasteStream(X_NOO=10, H2O=1000, units='kg/hr')
+    M1 = qs.sanunits.Mixer('M1', ins=(ws1, ws2, ''), outs='mixture',
+                           init_with='WasteStream')
     M1.show()
     assert type(M1.ins[0]).__name__ == 'WasteStream'
     
-    S1 = sanunits.Splitter('S1', ins=M1-0, outs=('', ''), split=0.2)
-    ins3 = WasteStream(S_CH3OH=7, H2O=1000, units='kg/hr')
-    P1 = sanunits.Pump('P1', ins=ins3)    
-    M2 = sanunits.MixTank('M2', ins=(S1-0, P1-0), tau=2)
+    S1 = qs.sanunits.Splitter('S1', ins=M1-0, outs=('', ''), split=0.2)
+    ins3 = qs.WasteStream(S_CH3OH=7, H2O=1000, units='kg/hr')
+    P1 = qs.sanunits.Pump('P1', ins=ins3)    
+    M2 = qs.sanunits.MixTank('M2', ins=(S1-0, P1-0), tau=2)
     M2-0-2-M1
-    System = bst.System('System', path=(M1, S1, P1, M2), recycle=M2-0)
+    System = qs.System('System', path=(M1, S1, P1, M2), recycle=M2-0)
     System.simulate()
     assert_allclose(M2.installed_cost, 65521.31802925256, rtol=1e-3)
 
+    # Test mixing of different classes of streams
+    ss1 = qs.SanStream(H2O=100)
+    
+    # Test BM setting
+    M3 = qs.sanunits.MixTank('M3', ins=ss1, init_with='WasteStream')    
+    M4 = qs.sanunits.MixTank('M4')
+    default_BM = M2.get_BM()['Tanks']
+    M3.get_BM()['Tanks'] == 1 # this shouldn't update BM
+    assert M3.get_BM()['Tanks'] == default_BM
+    
+    M3.set_BM({'Tanks': 1}, update_class=False)
+    assert M3.get_BM()['Tanks'] == 1
+    assert M2.get_BM()['Tanks'] == default_BM
+    
+    M4.set_BM({'Tanks': 2}, update_class=True)
+    assert M2.get_BM()['Tanks'] == M4.get_BM()['Tanks'] == 2
+    assert M3.get_BM()['Tanks'] == 1
+    
+    M3.simulate()
+    M3.show()
+    assert type(M3.outs[0]).__name__ == 'WasteStream'
 
 if __name__ == '__main__':
     test_sanunit()

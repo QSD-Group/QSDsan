@@ -38,7 +38,6 @@ class SanStream(Stream):
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None, impact_item=None,
                  **chemical_flows):
-        
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
                          units=units, price=price, thermo=thermo,
                          **chemical_flows)
@@ -78,13 +77,9 @@ class SanStream(Stream):
         Cast a :class:`thermosteam.Stream` or :class:`biosteam.utils.MissingStream`
         to the designated equivalent.
         '''
-        new = stream
-        
-        #!!! Need to check if need to convert MissingStream to 
-        # MissingSanStream/MissingWasteStream...
         if isinstance(stream, MissingStream):
-            return stream
-            # setattr(stream, '__class__', MissingSanStream)
+            new = MissingSanStream.__new__(MissingSanStream)
+            return new
             
         elif not isinstance(stream, cls):
             stream.registry.untrack((stream,))
@@ -102,8 +97,11 @@ class SanStream(Stream):
             new.impact_item = None
                 
             stream._link = stream._sink = stream._source = None
-        
-        return new
+            return new        
+
+        else:
+            return stream
+
 
     @property
     def impact_item(self):

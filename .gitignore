@@ -71,7 +71,7 @@ surfaces
 
 # Others #
 ##########
-*uploading*
+*.sh
 **/*temp*
 sanitation/demo.py
 qsdsan/demo.py

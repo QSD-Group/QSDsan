@@ -13,21 +13,25 @@ for license details.
 '''
 
 
+from collections import defaultdict
 from weakref import WeakKeyDictionary
 
-__all__ = ('Descriptor', 'NonNegativeFloat', 'NonNgeativeInt', 'Fraction')
+__all__ = ('Validator', 'NonNegativeFloat', 'NonNgeativeInt', 'Fraction',
+           'BareModule')
 
 
 # %%
 
-class Descriptor(object):
+class Validator:
     '''
     Descriptors can be used to make resusable property logics,
     a great reference can be found online. [1]_
     
     .. note::
+        
         Using Descriptors to check value properties is slightly slower than using
         the decorators functions in qsdsan.utils.checkers.
+    
     
     References
     ----------
@@ -46,7 +50,7 @@ class Descriptor(object):
         return self.data.get(instance, self.default)
 
 
-class NonNegativeFloat(Descriptor):
+class NonNegativeFloat(Validator):
     '''For non-negative floats.'''
     
     def __set__(self, instance, value):
@@ -58,7 +62,7 @@ class NonNegativeFloat(Descriptor):
         self.data[instance] = float(value)
 
 
-class NonNgeativeInt(Descriptor):
+class NonNgeativeInt(Validator):
     '''For non-negative integers.'''
     
     def __set__(self, instance, value):
@@ -70,7 +74,7 @@ class NonNgeativeInt(Descriptor):
         self.data[instance] = int(value)
 
 
-class Fraction(Descriptor):
+class Fraction(Validator):
     '''For values in [0,1].'''
     
     def __set__(self, instance, value):
@@ -83,7 +87,46 @@ class Fraction(Descriptor):
         
 
 
-
+# # Not in use
+# class BareModule:
+#     '''For unit BM (bare module factors).'''
+    
+#     def __get__(self, obj, objtype=None):
+#         # Copy the _BM dict from the class attribute to prevent overwriting,
+#         # need to in both __get__ and __set__ as not sure which one will be called first
+#         if '_BM' not in obj.__dict__:
+#             _BM = defaultdict(lambda:1)
+#             _BM.update(obj._BM)
+#             obj._BM = _BM
         
+#         # If don't want defaults
+#         # if '_BM' not in obj.__dict__:
+#         #     obj._BM = obj._BM.copy()
+
+#         return obj._BM
+    
+#     def __set__(self, obj, BM:dict):
+#         # Copy the _BM dict from the class attribute to prevent overwriting,
+#         # need to in both __get__ and __set__ as not sure which one will be called first
+#         if '_BM' not in obj.__dict__:
+#             _BM = defaultdict(lambda:1)
+#             _BM.update(obj._BM)
+#             obj._BM = _BM
+        
+#         # If don't want defaults
+#         # if '_BM' not in obj.__dict__:
+#         #     obj._BM = obj._BM.copy()
+        
+#         # if not isinstance(BM, dict):
+#         #     raise TypeError('`BM` must be a dict, not {type(i).__name__}.')
+        
+#         # for i in self.BM.keys():
+#         #     if i not in self.purhcase_costs.keys():
+#         #         raise ValueError(f'The item "{i}" does not exist in `purchase_costs`.')
+
+#         obj._BM.update(BM)
+
+
+
         
     

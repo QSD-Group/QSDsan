@@ -23,37 +23,49 @@ from collections.abc import Iterable
 from biosteam.utils.misc import format_title
 from . import currency, Unit, Stream, SanStream, WasteStream, \
     Construction, Transportation
+# from .utils.descriptors import BareModule
 
 __all__ = ('SanUnit',)
 
 isinstance = isinstance
+hasattr = hasattr
+getattr = getattr
 
-def _update_init_with(init_with):
+def _update_init_with(init_with, ins_or_outs, size):
     if isinstance(init_with, str):
-        init_with = {'all': init_with}
+        init_with = dict.fromkeys([f'{ins_or_outs}{n}' for n in range(size)], init_with)
+        return init_with
+    
+    if len(init_with) == 1 and (('all' or 'All' or 'else' or 'Else') in init_with.keys()):
+        init_with = dict.fromkeys([f'{ins_or_outs}{n}' for n in range(size)], init_with)
+        return init_with
+    
+    if 'else' in init_with.keys():
+        new_init_with = dict.fromkeys([f'{ins_or_outs}{n}' for n in range(size)], init_with['else'])
+    elif 'Else' in init_with.keys():
+        new_init_with = dict.fromkeys([f'{ins_or_outs}{n}' for n in range(size)], init_with['Else'])
+    else:
+        new_init_with = {}
     
     for k, v in init_with.items():
-        if k == 'Else':
-            init_with['else'] = init_with.pop['Else']
+        if k in ('Else', 'else'):
+            continue
         v_lower = v.lower()
         if v_lower in ('stream', 's'):
-            init_with[k] = 's'
+            new_init_with[k] = 's'
         elif v_lower in ('sanstream', 'ss'):
-            init_with[k] = 'ss'
+            new_init_with[k] = 'ss'
         elif v_lower in ('wastestream', 'ws'):
-            init_with[k] = 'ws'
+            new_init_with[k] = 'ws'
         else:
             raise ValueError(f'Stream type for {k} is invalid, ' \
                              'valid values are "Stream" or "s", "SanStream" or "ss", ' \
                              'and "WasteStream" or "ws".')
-    
-    if len(init_with) == 1 and 'else' in init_with.keys():
-        init_with['all'] = init_with.pop['else']
 
-    return init_with
+    return new_init_with
 
 add2list = lambda lst, item: lst.extend(item) if isinstance(item, Iterable) \
-    else lst.append(lst)
+    else lst.append(item)
 
 class SanUnit(Unit, isabstract=True):
 
@@ -87,6 +99,8 @@ class SanUnit(Unit, isabstract=True):
         It will be used to adjust cost and emission calculation in TEA and LCA.
         Equipment without provided lifetime will be assumed to have the same
         lifetime as the TEA/LCA.
+    default_BM : float
+        If not None, all BM (bare module) factors will be default to the set value.
 
     See Also
     --------
@@ -97,9 +111,13 @@ class SanUnit(Unit, isabstract=True):
 
     ticket_name = 'SU'
 
+    # BM = BareModule()
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  construction=(), transportation=(), equipments=(),
-                 add_OPEX={}, uptime_ratio=1., lifetime=None, **kwargs):
+                 add_OPEX={}, uptime_ratio=1., lifetime=None, default_BM=None,
+                 **kwargs):
+
         self._register(ID)
         self._specification = None
         self._load_thermo(thermo)
@@ -118,74 +136,57 @@ class SanUnit(Unit, isabstract=True):
         self.add_OPEX = add_OPEX
         self.uptime_ratio = 1.
         self.lifetime = None
+        
+        if default_BM:
+            BM = self._BM
+            self._BM = defaultdict(lambda: default_BM)
+            self._BM.update(BM)
 
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
-    @staticmethod
-    def _from_stream(streams, init_with, ins_or_outs):
+
+    def _convert_stream(self, strm_inputs, streams, init_with, ins_or_outs):
         if not streams:
             return []
 
-        init_with = _update_init_with(init_with)
-        cls_dct = dict(s=[], ss=[], ws=[])
-        
-        if len(init_with) == 1:
-            add2list(cls_dct[init_with.popitem()[1]], streams)
-
-        for k, v in init_with.items():
-            if not ins_or_outs in k:
-                continue
-            num = k.split(ins_or_outs)[-1]
-            strm = streams[num]
-            add2list(cls_dct[v], strm)
-
-        assigned = sum((v for v in cls_dct.values()), [])
-        diff = set(assigned).difference(set(streams))
-        if diff:
-            if not 'else' in init_with.keys():
-                raise ValueError(f'Type(s) for {tuple([s.ID for s in diff])} not specified.')
-            else:
-                add2list(cls_dct[init_with['else']], diff)
-
-        converted = cls_dct['s']
-        for ss in cls_dct['ss']:
-            converted.append(SanStream.from_stream(SanStream, ss))
-        for ws in cls_dct['ws']:
-            converted.append(WasteStream.from_stream(WasteStream, ws))
-
-        return converted
-       
-    
-    def _update_stream_init(self, streams, init_with, ins_or_outs):
-        if not streams:
-            return init_with
-        
-        streams = list(streams) if isinstance(streams, Iterable) else [streams]
         init_with = dict.fromkeys([f'{ins_or_outs}{i}' for i in range(len(streams))],
                                    init_with)
-        streams_updated = getattr(self, ins_or_outs)
-        
-        for n, s in enumerate(streams):
-            if isinstance(s, Stream):
-                if type(s).__name__ == type(streams_updated[n]).__name__:
+
+        # Do not change pre-defined stream types
+        if isinstance(strm_inputs, Iterable) and not isinstance(strm_inputs, str):             
+            for n, s in enumerate(strm_inputs):
+                if isinstance(s, Stream):
                     init_with[f'{ins_or_outs}{n}'] = type(s).__name__
         
-        return init_with
+
+        init_with = _update_init_with(init_with, ins_or_outs, len(streams))
+        
+        converted = []
+        for k, v in init_with.items():
+            num = k.split(ins_or_outs)[-1]
+            s = streams[int(num)]
+            if v == 's':
+                converted.append(s)
+            elif v == 'ss':
+                converted.append(SanStream.from_stream(SanStream, s))
+            else:
+                converted.append(WasteStream.from_stream(WasteStream, s))
+
+        diff = len(converted) - len(streams)
+        if diff != 0:
+            raise ValueError(f'Type(s) of {diff} stream(s) has/have not been specified.')
+
+        return converted
+     
     
     def _init_ins(self, ins, init_with):
         super()._init_ins(ins)
-
-        init_with = self._update_stream_init(ins, init_with, 'ins')
-        
-        self._ins = self._from_stream(self.ins, init_with, 'ins')
+        self._ins = self._convert_stream(ins, self.ins, init_with, 'ins')
 
     def _init_outs(self, outs, init_with):            
         super()._init_outs(outs)
-        
-        init_with = self._update_stream_init(outs, init_with, 'outs')
-        
-        self._outs = self._from_stream(self.outs, init_with, 'outs')
+        self._outs = self._convert_stream(outs, self.outs, init_with, 'outs')
 
     def _init_results(self):
         super()._init_results()
@@ -193,46 +194,42 @@ class SanUnit(Unit, isabstract=True):
     def __repr__(self):
         return f'<{type(self).__name__}: {self.ID}>'
 
+    def _get_stream_info(self, info, ins_or_outs, _stream_info,
+                         T, P, flow, composition, N, IDs):
+        info += 'ins...\n' if ins_or_outs=='ins' else 'outs...\n'
+        i = 0
+        for stream in getattr(self, ins_or_outs):
+            if not stream:
+                info += f'[{i}] {stream}\n'
+                i += 1
+                continue
+            ws_info = stream._wastestream_info() if isinstance(stream, WasteStream) else ''
+            if _stream_info:
+                stream_info = stream._info(T, P, flow, composition, N, IDs) + \
+                    '\n'
+                stream_info += ('\n' + ws_info) if ws_info else ''
+            else:
+                stream_info = stream._wastestream_info()
+            su = stream._source if ins_or_outs=='ins' else stream._sink
+            index = stream_info.index('\n')
+            link_info = f'  from  {type(su).__name__}-{su}\n' if su else '\n'
+            info += f'[{i}] {stream.ID}' + link_info + stream_info[index+1:]
+            i += 1
+        return info
+        
+
     def _info(self, T, P, flow, composition, N, IDs, _stream_info):
         '''Information of the unit.'''
         if self.ID:
             info = f'{type(self).__name__}: {self.ID}\n'
         else:
             info = f'{type(self).__name__}\n'
-        info += 'ins...\n'
-        i = 0
-        for stream in self.ins:
-            if not stream:
-                info += f'[{i}] {stream}\n'
-                i += 1
-                continue
-            if _stream_info:
-                stream_info = stream._info(T, P, flow, composition, N, IDs) + \
-                    '\n' + stream._wastestream_info()
-            else:
-                stream_info = stream._wastestream_info()
-            su = stream._source
-            index = stream_info.index('\n')
-            source_info = f'  from  {type(su).__name__}-{su}\n' if su else '\n'
-            info += f'[{i}] {stream.ID}' + source_info + stream_info[index+1:]
-            i += 1
-        info += 'outs...\n'
-        i = 0
-        for stream in self.outs:
-            if not stream:
-                info += f'[{i}] {stream}\n'
-                i += 1
-                continue
-            if _stream_info:
-                stream_info = stream._info(T, P, flow, composition, N, IDs) + \
-                    '\n' + stream._wastestream_info()
-            else:
-                stream_info = stream._wastestream_info()
-            su = stream._sink
-            index = stream_info.index('\n')
-            sink_info = f'  to  {type(su).__name__}-{su}\n' if su else '\n'
-            info += f'[{i}] {stream.ID}' + sink_info + stream_info[index+1:]
-            i += 1
+        
+        info = self._get_stream_info(info, 'ins', _stream_info,
+                                     T, P, flow, composition, N, IDs)
+        
+        info = self._get_stream_info(info, 'outs', _stream_info,
+                                     T, P, flow, composition, N, IDs)
         info = info.replace('\n ', '\n    ')
         return info[:-1]
 
@@ -277,36 +274,84 @@ class SanUnit(Unit, isabstract=True):
         '''[Components] The :class:`Components` object associated with this unit.'''
         return self.chemicals
 
-    @property
-    def BM(self):
-        '''[dict] Bare module factors for all cost items, unspecified items will be set to one.'''
-        return self._BM
-    @BM.setter
-    def BM(self, i:dict):
-        if not isinstance(i, dict):
-            raise TypeError('BM must be a dict, not {type(i).__name__}.')
-        self._BM.update(i)
 
-    @property
-    def installed_cost(self):
-        '''Total installed cost of the unit.'''
-        BM = defaultdict(lambda:1)
-        BM.update(self._BM)
-        installed_cost = sum(self.installed_costs.values())
+    def get_BM(self):
+        '''
+        Get bare module factors for all cost items.
         
-        return sum([i.installed_cost for i in self.auxiliary_units],
-                   installed_cost)
-    
-    @property
-    def installed_costs(self):
-        '''[dict] Installed cost of each equipment.'''
-        BM = defaultdict(lambda:1)
-        BM.update(self._BM)
-        installed_costs = {i: BM[i]*j for i,j in self.purchase_costs.items()}
+        .. note::
+            
+            Using ``get_BM()[key] = value`` will NOT update the BM value,
+            use :func:`set_BM` to do so.
+        
+        '''
+        return self._BM.copy()
 
-        for i in self.auxiliary_unit_names:
-            installed_costs[i] = getattr(self, i).installed_cost
-        return installed_costs
+    def set_BM(self, BM:dict, update_class=False):
+        '''
+        Set are module factors for all cost items.
+        
+        Parameters
+        ----------
+        BM : dict
+            New BM dict.
+        update_class : bool
+            Whether to update BM values of the entire class.
+            
+            
+        .. note::
+            
+            Once `BM` of this unit is updated to be different from that of the
+            class, its `BM` cannot be updated through this function via another
+            instance of this class.
+            
+            E.g., assume `M1`, `M2`, `M3` are all instances of the :class:`~.sanunits.MixTank`
+            
+            .. code:: bash
+
+                M1.set_BM({Tanks: 1}, upldate_class=False)
+                M2.set_BM({Tanks: 2}, upldate_class=True)
+                
+                M1.get_BM()['Tanks'] # 1
+                M2.get_BM()['Tanks'] # 2
+                M3.get_BM()['Tanks'] # 2
+            
+
+        '''
+        if not isinstance(BM, dict):
+            raise TypeError(f'`BM` must be a dict, not {type(BM).__name__}.')
+        
+        if not update_class:        
+            if '_BM' not in self.__dict__:
+                self._BM = self._BM.copy()
+                self._BM = BM
+        else:
+            self._BM = self.__class__._BM = BM
+
+        
+    # def set_BM(self, BM):
+    #     if '_BM' not in self.__dict__: self._BM = self._BM.copy() # Prevent changing BM of all classes
+    #     for i in BM: # Prevent spelling errors
+    #         if i not in self._BM: raise ValueError(f"purchase item '{i}' does not exist")
+    #     self._BM.update(BM)
+
+    # @property
+    # def installed_cost(self):
+    #     '''Total installed cost of the unit.'''
+    #     installed_cost = sum(self.installed_costs.values())
+        
+    #     return sum([i.installed_cost for i in self.auxiliary_units],
+    #                installed_cost)
+    
+    # @property
+    # def installed_costs(self):
+    #     '''[dict] Installed cost of each equipment.'''
+    #     # diff = set(self.BM.keys()).difference(set(self.purchase_costs.keys()))
+    #     installed_costs = {i: self.BM[i]*j for i,j in self.purchase_costs.items()}
+
+    #     for i in self.auxiliary_unit_names:
+    #         installed_costs[i] = getattr(self, i).installed_cost
+    #     return installed_costs
 
 
     @property

@@ -170,6 +170,10 @@ class WasteStream(SanStream):
         '''
         
         new = SanStream.from_stream(cls, stream, **kwargs)
+        if isinstance(new, MissingSanStream):
+            missing_new = MissingWasteStream.__new__(MissingWasteStream)
+            return missing_new
+        
         new._init_ws()
         
         # if isinstance(new, MissingSanStream):
@@ -525,6 +529,10 @@ class WasteStream(SanStream):
     # TODO: add documents for these functions, differentiate copy, copy_like, and copy_flow
     def copy_like(self, other):
         Stream.copy_like(self, other)
+        
+        if not isinstance(other, WasteStream):
+            return
+
         for slot in _ws_specific_slots:
             value = getattr(other, slot)
             setattr(self, slot, value)
@@ -555,7 +563,10 @@ class WasteStream(SanStream):
                 setattr(self, slot, value)
 
     def mix_from(self, others):
+        others = [s for s in others if not 'Missing' in type(s).__name__]
         Stream.mix_from(self, others)
+
+
         for slot in _ws_specific_slots:
             #!!! This need reviewing, might not be good to calculate some
             # attributes like pH
@@ -567,6 +578,8 @@ class WasteStream(SanStream):
                 setattr(self, slot, None)
             else:
                 setattr(self, slot, tot/self.F_vol)
+
+
 
 
     def get_TDS(self, include_colloidal=True):

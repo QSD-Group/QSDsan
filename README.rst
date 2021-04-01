@@ -14,11 +14,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
    :target: https://github.com/QSD-Group/QSDsan/tree/master
 .. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/beta?label=build-beta&logo=appveyor
    :target: https://github.com/QSD-Group/QSDsan/tree/beta
-..
-   .. image:: https://img.shields.io/travis/com/qsd-group/qsdsan?style=flat&label=Travis
-      :target: https://github.com/QSD-Group/QSDsan
-   .. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/dev?label=build-dev&logo=appveyor
-      :target: https://github.com/QSD-Group/QSDsan/tree/dev
+
 
 .. contents::
 
