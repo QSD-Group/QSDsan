@@ -16,6 +16,13 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+'''
+TODO:
+    Check compatibility for multiphase for phase-equilibrium
+'''
+
+
+
 # %%
 
 import numpy as np

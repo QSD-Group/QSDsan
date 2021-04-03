@@ -30,6 +30,7 @@ set_thermo = tmo.settings.set_thermo
 MultiStream = tmo.MultiStream
 Unit = bst.Unit
 System = bst.System
+Flowsheet = bst.Flowsheet
 CEPCI = bst.CE # Chemical Engineering Plant Cost Index
 CEPCI_by_year = bst.units.design_tools.CEPCI_by_year
 del tmo, bst

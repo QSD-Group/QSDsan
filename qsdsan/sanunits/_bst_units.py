@@ -15,14 +15,17 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+
 import biosteam as bst
 from .. import SanUnit
+
 
 __all__ = (
     'Mixer',
     'Splitter', 'FakeSplitter', 'ReversedSplitter',
     'Pump',
     'Tank', 'StorageTank', 'MixTank',
+    'HXutility', 'HXprocess',
     )
 
 # =============================================================================
@@ -51,7 +54,7 @@ class Splitter(SanUnit, bst.units.Splitter):
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *, split, order=None,
-                 init_with='Stream'):
+                  init_with='Stream'):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self._isplit = self.thermo.chemicals.isplit(split, order)
 
@@ -88,8 +91,8 @@ class Pump(SanUnit, bst.units.Pump):
 
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
-                 P=101325, pump_type='Default', material='Cast iron',
-                 dP_design=405300, ignore_NPSH=True, init_with='Stream'):
+                  P=101325, pump_type='Default', material='Cast iron',
+                  dP_design=405300, ignore_NPSH=True, init_with='Stream'):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.P = P
         self.pump_type = pump_type
@@ -109,8 +112,8 @@ class Tank(SanUnit, bst.units.Tank, isabstract=True):
     '''
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
-                 vessel_type=None, tau=None, V_wf=None, 
-                 vessel_material=None, kW_per_m3=0., init_with='Stream'):
+                  vessel_type=None, tau=None, V_wf=None, 
+                  vessel_material=None, kW_per_m3=0., init_with='Stream'):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
 
@@ -141,7 +144,112 @@ class MixTank(Tank, bst.units.MixTank):
     `biosteam.units.MixTank <https://biosteam.readthedocs.io/en/latest/units/Tank.html>`_
 
     '''
-    
+
+
+class HXutility(SanUnit, bst.units.HXutility):
+    '''
+    Similar to :class:`biosteam.units.HXutility`, but can be initilized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
+
+    See Also
+    --------
+    `biosteam.units.HXutility <https://biosteam.readthedocs.io/en/latest/units/heat_exchange.html>`_
+
+    '''
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='Stream',
+                  *, T=None, V=None, rigorous=False, U=None, H=None,
+                  heat_exchanger_type="Floating head",
+                  material="Carbon steel/carbon steel",
+                  N_shells=2,
+                  ft=None):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        self.T = T #: [float] Temperature of outlet stream (K).
+        self.V = V #: [float] Vapor fraction of outlet stream.
+        self.H = H #: [float] Enthalpy of outlet stream.
+        
+        #: [bool] If true, calculate vapor liquid equilibrium
+        self.rigorous = rigorous
+        
+        #: [float] Enforced overall heat transfer coefficent (kW/m^2/K)
+        self.U = U
+        
+        #: [float] Total heat transfered.
+        self.Q = None
+        
+        #: Number of shells for LMTD correction factor method.
+        self.N_shells = N_shells
+        
+        #: User imposed correction factor.
+        self.ft = ft
+        
+        self.material = material
+        self.heat_exchanger_type = heat_exchanger_type
+
+
+class HXprocess(SanUnit, bst.units.HXprocess):
+    '''
+    Similar to :class:`biosteam.units.HXprocess`, but can be initilized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
+
+    See Also
+    --------
+    `biosteam.units.HXprocess <https://biosteam.readthedocs.io/en/latest/units/heat_exchange.html>`_
+
+    '''
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='Stream',
+                  *, U=None, dT=5., T_lim0=None, T_lim1=None,
+                  material="Carbon steel/carbon steel",
+                  heat_exchanger_type="Floating head",
+                  N_shells=2, ft=None, 
+                  phase0=None,
+                  phase1=None,
+                  H_lim0=None,
+                  H_lim1=None):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        
+        #: [float] Enforced overall heat transfer coefficent (kW/m^2/K)
+        self.U = U
+        
+        #: [float] Total heat transfered.
+        self.Q = None
+        
+        #: Number of shells for LMTD correction factor method.
+        self.N_shells = N_shells
+        
+        #: User imposed correction factor.
+        self.ft = ft
+        
+        #: [float] Pinch temperature difference.
+        self.dT = dT 
+        
+        #: [float] Temperature limit of outlet stream at index 0.
+        self.T_lim0 = T_lim0
+        
+        #: [float] Temperature limit of outlet stream at index 1.
+        self.T_lim1 = T_lim1
+        
+        #: [float] Temperature limit of outlet stream at index 0.
+        self.H_lim0 = H_lim0
+        
+        #: [float] Temperature limit of outlet stream at index 1.
+        self.H_lim1 = H_lim1
+        
+        #: Enforced phase of outlet at index 0
+        self.phase0 = phase0
+        
+        #: Enforced phase of outlet at index 1
+        self.phase1 = phase1
+        
+        self.material = material
+        self.heat_exchanger_type = heat_exchanger_type
+
+
+
+
+
+
+
+
     
     
     
