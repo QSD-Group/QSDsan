@@ -47,9 +47,13 @@ class Equipment:
             - It should only take the unit this equipment belongs to as the parameter.    
             - It should return a float that contains the total purchase cost of this
               equipment.
-            - Installed cost of this equipment will be caluculated by multiplying
-              the purchase cost by the attribute ``Equipment.BM``
-              (bare module factor, default to 1).
+            - Installed cost (math:`C_{BM}`) of this equipment will be caluculated
+            based on the purchase cost (math:`C_{Pb}`)
+            
+                .. math::
+                
+                   C_{BM} = C_{Pb} (F_{BM} + F_{D}F_{P}F_{M} - 1)
+
     
     Parameters
     ----------
@@ -57,15 +61,22 @@ class Equipment:
         Name of this equipment, can be left as None.
     design_units: dict
         Unit (e.g., m, kg) of design parameters.
-    BM: float
+    F_BM: float
         Bare module factor of this equipment.
+    F_D: float
+        Design factor of this equipment.
+    F_P: float
+        Pressure factor of this equipment.
+    F_M: float
+        Material factor of this equipment.
     lifetime: float
         Lifetime of this equipment.
     lifetime_unit: str
         Unit of the lifetime.
     '''    
     
-    __slots__ = ('_linked_unit', 'name', 'design_units', 'BM', 'lifetime')
+    __slots__ = ('_linked_unit', 'name', 'design_units', 'F_BM', 'F_D', 'F_P', 'F_M',
+                 'lifetime')
     
     def __init_subclass__(self, isabstract=False):
         if isabstract: return
@@ -76,12 +87,15 @@ class Equipment:
     
     _design = _cost = NotImplementedMethod
     
-    def __init__(self, name=None, design_units=dict(), BM=1.,
+    def __init__(self, name=None, design_units=dict(), F_BM=1., F_D=1., F_P=1., F_M=1.,
                  lifetime=None, lifetime_unit='yr'):
         self._linked_unit = None
         self.name = name
         self.design_units = design_units
-        self.BM = BM
+        self.F_BM = F_BM
+        self.F_D = F_D
+        self.F_P = F_P
+        self.F_M = F_M
         self.lifetime = auom(lifetime_unit).convert(lifetime, 'yr')
 
     def __repr__(self):
@@ -113,7 +127,7 @@ class Equipment:
     @property
     def installed_cost(self):
         '''[float] Total installed cost based on purchase cost and bare module factor.'''
-        return self.purchase_cost*self.BM
+        return self.purchase_cost*(self.F_BM+self.F_D*self.F_P*self.F_M-1)
     
     
     

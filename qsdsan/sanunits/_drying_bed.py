@@ -161,7 +161,7 @@ class DryingBed(SanUnit, Decay):
             Construction(item='Steel', quantity=steel, quantity_unit='kg'),
             )
         for i in self.construction:
-            self._BM[i.item.ID] = 1
+            self.F_BM[i.item.ID] = 1
 
     @property
     def tau(self):

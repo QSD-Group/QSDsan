@@ -50,17 +50,15 @@ def check_results(bst_unit, qs_unit):
     bst_unit.simulate()
     qs_unit.simulate()
     
-    try:
-        bst_s = bst_unit.ins + qs_unit.outs
-        qs_ws = qs_unit.ins + qs_unit.outs
-        for n, s in enumerate(bst_s):
-            assert_allclose(np.abs(s.mol-qs_ws[n].mol).sum(), 0, atol=1e-6)
-            
-        assert_allclose(bst_unit.installed_cost, qs_unit.installed_cost, atol=1e-6)
-        assert_allclose(bst_unit.utility_cost, qs_unit.utility_cost, atol=1e-6)
-        assert_allclose(bst_unit.power_utility.rate, qs_unit.power_utility.rate, atol=1e-6)
-    
-    except: breakpoint()
+    bst_s = bst_unit.ins + qs_unit.outs
+    qs_ws = qs_unit.ins + qs_unit.outs
+    for n, s in enumerate(bst_s):
+        assert_allclose(np.abs(s.mol-qs_ws[n].mol).sum(), 0, atol=1e-6)
+        
+    assert_allclose(bst_unit.installed_cost, qs_unit.installed_cost, atol=1e-6)
+    assert_allclose(bst_unit.utility_cost, qs_unit.utility_cost, atol=1e-6)
+    assert_allclose(bst_unit.power_utility.rate, qs_unit.power_utility.rate, atol=1e-6)
+
     
 
 # %%

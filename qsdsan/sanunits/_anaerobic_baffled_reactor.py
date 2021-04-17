@@ -57,7 +57,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
     def __init__(self, ID='', ins=None, outs=(),
                  if_capture_biogas=True, if_N2O_emission=False, **kwargs):
         
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         self.if_capture_biogas = if_capture_biogas
         self.if_N2O_emission = if_N2O_emission
     

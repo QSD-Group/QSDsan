@@ -140,6 +140,7 @@ class ImpactIndicator:
         (must have value as it is used as the ID, e.g., GlobalWarming),
         "alias" (e.g., GWP), "unit" (e.g., kg CO2-eq), "method" (e.g., TRACI),
         "category" (e.g., environmental impact), and "description".
+        Aside from "indicator", other information is optional.
         
         Each row should be a data entry.
         
@@ -168,12 +169,14 @@ class ImpactIndicator:
                 raise ValueError(f'The indicator "{indicator}" has been added.')
             else:
                 new = cls.__new__(cls)
-                new.__init__(ID=indicator,
-                             alias=data.loc[indicator]['alias'],
-                             unit=data.loc[indicator]['unit'],
-                             method=data.loc[indicator]['method'],
-                             category=data.loc[indicator]['category'],
-                             description=data.loc[indicator]['description'])
+                dct = {}
+                for k in ('alias', 'unit', 'method', 'category', 'description'):
+                    try:
+                        dct[k] = data.loc[indicator][k]
+                    except KeyError:
+                        dct[k] = ''
+
+                new.__init__(ID=indicator, **dct)
                 cls._indicators[indicator] = new
 
 

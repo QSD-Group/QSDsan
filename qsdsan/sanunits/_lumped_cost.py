@@ -46,8 +46,8 @@ class LumpedCost(SanUnit):
         self._N_outs = self._N_ins = len(ins)
         self._graphics = UnitGraphics.box(self._N_ins, self._N_outs)
         SanUnit.__init__(self, ID, ins, outs, thermo)
-        self._BM = {cost_item_name: 1}
-        self.purchase_costs = {cost_item_name: CAPEX}
+        self.F_BM = {cost_item_name: 1}
+        self.baseline_purchase_costs = {cost_item_name: CAPEX}
         self.power_utility(power)
         self._add_OPEX = add_OPEX
         for attr, val in kwargs.items():
@@ -57,7 +57,8 @@ class LumpedCost(SanUnit):
         for num, stream in enumerate(self.ins):
             self.outs[num].copy_like(stream)
 
-
+    def _setup(self):
+        pass
 
 
 

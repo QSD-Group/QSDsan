@@ -44,9 +44,10 @@ class SimpleTEA(TEA):
         Capital expenditure, if not provided, is set to be the same as `installed_equipment_cost`.
     lang_factor : float or None
         A factor to estimate the total installation cost based on equipment purchase cost,
-        leave as `None` if providing `CAPEX`. If neither `CAPEX` nor `lang_factor` is provided,
-        `installed_equipment_cost` will be calculated using the bare module factor
-        for each equipment according to the `SanUnit._BM` dict of each unit.
+        leave as ``None`` if providing ``CAPEX``.
+        If neither ``CAPEX`` nor ``lang_factor`` is provided,
+        ``installed_equipment_cost`` will be calculated as the sum of purchase costs
+        of all units within the system.
     annual_maintenance : float
         Annual maintenance cost as a fraction of fixed capital investment.
     annual_labor : float
@@ -63,7 +64,7 @@ class SimpleTEA(TEA):
     __slots__ = (*(i for i in TEA.__slots__ if i not in conflict_slots),
                  '_system', '_units', '_feeds', '_products',
                  '_discount_rate', '_start_year', '_lifetime',
-                 '_uptime_ratio', '_CAPEX', '_lang_factor',
+                 '_uptime_ratio', '_operating_hours', '_CAPEX', '_lang_factor',
                  '_annual_maintenance', '_annual_labor', '_system_add_OPEX')
     
     def __init__(self, system, discount_rate=0.05,
@@ -143,13 +144,15 @@ class SimpleTEA(TEA):
         r = self.discount_rate
         for unit in units:
             lifetime = unit.lifetime or self.lifetime
-            if not unit._equipment_lifetime:
+            if not unit._default_equipment_lifetime:
                 CAPEX += unit.installed_cost*r/(1-(1+r)**(-lifetime))
             else:
                 lifetime_dct = dict.fromkeys(unit.purchase_costs.keys(), lifetime)
-                lifetime_dct.update(unit._equipment_lifetime)
+                lifetime_dct.update(unit._default_equipment_lifetime)
                 for equip, cost in unit.purchase_costs.items():
-                    CAPEX += unit._BM[equip]*cost*r/(1-(1+r)**(-lifetime_dct[equip]))
+                    factor = unit.F_BM[equip]*\
+                        unit.F_D.get(equip, 1.)*unit.F_P.get(equip, 1.)*unit.F_M.get(equip, 1.)
+                    CAPEX += factor*cost*r/(1-(1+r)**(-lifetime_dct[equip]))
         return CAPEX
 
     @property

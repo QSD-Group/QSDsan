@@ -75,7 +75,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True,
                  CAPEX=None, OPEX_over_CAPEX=None):
 
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         self._N_user = 1
         self._N_toilet = 1
         self.N_user = N_user
@@ -102,7 +102,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         
     _N_ins = 6
     _outs_size_is_fixed = False
-    _BM = {'Total toilets': 1}
+    # F_BM = {'Total toilets': 1}
 
     def _run(self):
         ur, fec, tp, fw, cw, des = self.ins
@@ -118,12 +118,11 @@ class Toilet(SanUnit, Decay, isabstract=True):
         'Plastic': 0.63,
         'Steel': 7900,
         'StainlessSteelSheet': 2.64
-        }    
+        }
         
     def _cost(self):
-        # self.purchase_costs['Single toilet'] = self.CAPEX
-        self.purchase_costs['Total toilets'] = self.CAPEX * self.N_toilet
-        add_OPEX = self.purchase_costs['Total toilets']*self.OPEX_over_CAPEX/365/24
+        self.baseline_purchase_costs['Total toilets'] = self.CAPEX * self.N_toilet
+        add_OPEX = self.baseline_purchase_costs['Total toilets']*self.OPEX_over_CAPEX/365/24
         self._add_OPEX = {'Additional OPEX': add_OPEX}
 
 

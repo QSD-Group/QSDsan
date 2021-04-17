@@ -78,10 +78,12 @@ class PitLatrine(Toilet):
         Toilet.__init__(self, ID, ins, outs, N_user, N_toilet,
                         if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
                         if_air_emission, if_ideal_emptying, CAPEX, OPEX_over_CAPEX)
+
         self.lifetime = lifetime
         self.if_leaching = if_leaching
         self.if_pit_above_water_table = if_pit_above_water_table
         self.if_shared = if_shared
+
         data = load_data(path=data_path)
         for para in data.index:
             if para in ('MCF_decay', 'N2O_EF_decay'):
@@ -90,6 +92,7 @@ class PitLatrine(Toilet):
                 value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)
         del data
+
         self._pit_depth = 4.57 # m
         self._pit_area = 0.8 # m2
         self._liq_leaching = None

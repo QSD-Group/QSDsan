@@ -12,9 +12,19 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
+from numpy.testing import assert_allclose
+
 def test_bwaise():
     from exposan import bwaise as bw
-    bw.print_summaries((bw.sysA, bw.sysB, bw.sysC))
+    
+    assert_allclose(bw.teaA.NPV, -22732728.213841617, rtol=1e-3)
+    assert_allclose(bw.teaB.NPV, -2231960.180530765, rtol=1e-3)
+    assert_allclose(bw.teaC.NPV, -94340457.26937833, rtol=1e-3)
+
+    assert_allclose(bw.lcaA.total_impacts['GlobalWarming'], 146386354.786746, rtol=1e-3)
+    assert_allclose(bw.lcaB.total_impacts['GlobalWarming'], 8794967.822499081, rtol=1e-3)
+    assert_allclose(bw.lcaC.total_impacts['GlobalWarming'], 56832681.43125322, rtol=1e-3)
+    
     
 # If pytest runs this module, it calls the test_bwaise function and test exposan
 if __name__ == '__main__':

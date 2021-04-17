@@ -99,7 +99,7 @@ class SanUnit(Unit, isabstract=True):
         It will be used to adjust cost and emission calculation in TEA and LCA.
         Equipment without provided lifetime will be assumed to have the same
         lifetime as the TEA/LCA.
-    default_BM : float
+    F_BM_default : float
         If not None, all BM (bare module) factors will be default to the set value.
 
     See Also
@@ -115,7 +115,7 @@ class SanUnit(Unit, isabstract=True):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  construction=(), transportation=(), equipments=(),
-                 add_OPEX={}, uptime_ratio=1., lifetime=None, default_BM=None,
+                 add_OPEX={}, uptime_ratio=1., lifetime=None, F_BM_default=None,
                  **kwargs):
 
         self._register(ID)
@@ -135,12 +135,12 @@ class SanUnit(Unit, isabstract=True):
 
         self.add_OPEX = add_OPEX
         self.uptime_ratio = 1.
-        self.lifetime = None
+        self.lifetime = lifetime
         
-        if default_BM:
-            BM = self._BM
-            self._BM = defaultdict(lambda: default_BM)
-            self._BM.update(BM)
+        if F_BM_default:
+            F_BM = self.F_BM
+            self.F_BM = defaultdict(lambda: F_BM_default)
+            self.F_BM.update(F_BM)
 
         for attr, val in kwargs.items():
             setattr(self, attr, val)
@@ -205,7 +205,7 @@ class SanUnit(Unit, isabstract=True):
                 continue
             ws_info = stream._wastestream_info() if isinstance(stream, WasteStream) else ''
             if _stream_info:
-                stream_info = stream._info(T, P, flow, composition, N, IDs) + \
+                stream_info = stream._info(None, T, P, flow, composition, N, IDs) + \
                     '\n'
                 stream_info += ('\n' + ws_info) if ws_info else ''
             else:
@@ -233,10 +233,10 @@ class SanUnit(Unit, isabstract=True):
         info = info.replace('\n ', '\n    ')
         return info[:-1]
 
-    def _summary(self):
-        '''After system converges, design the unit and calculate cost and environmental impacts.'''
-        self._design()
-        self._cost()
+    # def _summary(self):
+    #     '''After system converges, design the unit and calculate cost and environmental impacts.'''
+    #     self._design()
+    #     self._cost()
 
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, IDs=None, stream_info=True):
         '''Print information of the unit, including waste stream-specific information.'''
@@ -247,14 +247,14 @@ class SanUnit(Unit, isabstract=True):
             name = equip.name or format_title(type(equip).__name__)
             self.design_results.update(equip._design())
             self._units.update(equip.design_units)
-            self._BM[name] = equip.BM
+            self.F_BM[name] = equip.BM
             if equip.lifetime:
-                self._equipment_lifetime[name] = equip.lifetime
+                self._default_equipment_lifetime[name] = equip.lifetime
 
     def add_equipment_cost(self):
         for equip in self.equipments:
             name = equip.name or format_title(type(equip).__name__)
-            self.purchase_costs[name] = equip._cost()
+            self.baseline_purchase_costs[name] = equip._cost()
 
     def add_construction(self, add_unit=True, add_design=True, add_cost=True,
                          add_lifetime=True):
@@ -265,9 +265,9 @@ class SanUnit(Unit, isabstract=True):
             if add_design:
                 self.design_results[i.item.ID] = i.quantity
             if add_cost:
-                self.purchase_costs[i.item.ID] = i.cost
+                self.baseline_purchase_costs[i.item.ID] = i.cost
             if add_lifetime and i.lifetime:
-                self._equipment_lifetime[i.item.ID] = i.lifetime
+                self._default_equipment_lifetime[i.item.ID] = i.lifetime
 
     @property
     def components(self):
@@ -275,58 +275,58 @@ class SanUnit(Unit, isabstract=True):
         return self.chemicals
 
 
-    def get_BM(self):
-        '''
-        Get bare module factors for all cost items.
+    # def get_BM(self):
+    #     '''
+    #     Get bare module factors for all cost items.
         
-        .. note::
+    #     .. note::
             
-            Using ``get_BM()[key] = value`` will NOT update the BM value,
-            use :func:`set_BM` to do so.
+    #         Using ``get_BM()[key] = value`` will NOT update the BM value,
+    #         use :func:`set_BM` to do so.
         
-        '''
-        return self._BM.copy()
+    #     '''
+    #     return self._BM.copy()
 
-    def set_BM(self, BM:dict, update_class=False):
-        '''
-        Set are module factors for all cost items.
+    # def set_BM(self, BM:dict, update_class=False):
+    #     '''
+    #     Set are module factors for all cost items.
         
-        Parameters
-        ----------
-        BM : dict
-            New BM dict.
-        update_class : bool
-            Whether to update BM values of the entire class.
+    #     Parameters
+    #     ----------
+    #     BM : dict
+    #         New BM dict.
+    #     update_class : bool
+    #         Whether to update BM values of the entire class.
             
             
-        .. note::
+    #     .. note::
             
-            Once `BM` of this unit is updated to be different from that of the
-            class, its `BM` cannot be updated through this function via another
-            instance of this class.
+    #         Once `BM` of this unit is updated to be different from that of the
+    #         class, its `BM` cannot be updated through this function via another
+    #         instance of this class.
             
-            E.g., assume `M1`, `M2`, `M3` are all instances of the :class:`~.sanunits.MixTank`
+    #         E.g., assume `M1`, `M2`, `M3` are all instances of the :class:`~.sanunits.MixTank`
             
-            .. code:: bash
+    #         .. code:: bash
 
-                M1.set_BM({Tanks: 1}, upldate_class=False)
-                M2.set_BM({Tanks: 2}, upldate_class=True)
+    #             M1.set_BM({Tanks: 1}, upldate_class=False)
+    #             M2.set_BM({Tanks: 2}, upldate_class=True)
                 
-                M1.get_BM()['Tanks'] # 1
-                M2.get_BM()['Tanks'] # 2
-                M3.get_BM()['Tanks'] # 2
+    #             M1.get_BM()['Tanks'] # 1
+    #             M2.get_BM()['Tanks'] # 2
+    #             M3.get_BM()['Tanks'] # 2
             
 
-        '''
-        if not isinstance(BM, dict):
-            raise TypeError(f'`BM` must be a dict, not {type(BM).__name__}.')
+    #     '''
+    #     if not isinstance(BM, dict):
+    #         raise TypeError(f'`BM` must be a dict, not {type(BM).__name__}.')
         
-        if not update_class:        
-            if '_BM' not in self.__dict__:
-                self._BM = self._BM.copy()
-                self._BM = BM
-        else:
-            self._BM = self.__class__._BM = BM
+    #     if not update_class:        
+    #         if '_BM' not in self.__dict__:
+    #             self._BM = self._BM.copy()
+    #             self._BM = BM
+    #     else:
+    #         self._BM = self.__class__._BM = BM
 
         
     # def set_BM(self, BM):
@@ -461,8 +461,8 @@ class SanUnit(Unit, isabstract=True):
         '''
         if self._lifetime is not None:
             return self._lifetime
-        elif self._equipment_lifetime:
-            return self._equipment_lifetime
+        elif self._default_equipment_lifetime:
+            return self._default_equipment_lifetime
         else:
             return None
     @lifetime.setter

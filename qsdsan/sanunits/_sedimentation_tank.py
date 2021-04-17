@@ -62,7 +62,8 @@ class SedimentationTank(SludgeSeparator, Decay):
     def __init__(self, ID='', ins=None, outs=(), split=None, settled_frac=None,
                  if_N2O_emission=False, **kwargs):    
         
-        SludgeSeparator.__init__(self, ID, ins, outs, split, settled_frac)
+        SludgeSeparator.__init__(self, ID, ins, outs, split, settled_frac,
+                                 F_BM_default=1)
         self.if_N2O_emission = if_N2O_emission
 
         data = load_data(path=data_path)
@@ -144,11 +145,6 @@ class SedimentationTank(SludgeSeparator, Decay):
             Construction(item='Excavation', quantity=design['Single roof area']+side_area, quantity_unit='m3'),
             )
         self.add_construction()
-    
-    _BM = {
-        'Concrete': 1,
-        'Excavation': 1        
-        }
 
     @property
     def tau(self):

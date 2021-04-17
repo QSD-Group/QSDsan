@@ -54,8 +54,9 @@ class Splitter(SanUnit, bst.units.Splitter):
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *, split, order=None,
-                  init_with='Stream'):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+                  init_with='Stream', F_BM_default=None):
+        SanUnit.__init__(self, ID, ins, outs, thermo,
+                         init_with=init_with, F_BM_default=F_BM_default)
         self._isplit = self.thermo.chemicals.isplit(split, order)
 
 
@@ -91,9 +92,11 @@ class Pump(SanUnit, bst.units.Pump):
 
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
-                  P=101325, pump_type='Default', material='Cast iron',
-                  dP_design=405300, ignore_NPSH=True, init_with='Stream'):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+                  P=None, pump_type='Default', material='Cast iron',
+                  dP_design=405300, ignore_NPSH=True,
+                  init_with='Stream', F_BM_default=None):
+        SanUnit.__init__(self, ID, ins, outs, thermo,
+                         init_with=init_with, F_BM_default=F_BM_default)
         self.P = P
         self.pump_type = pump_type
         self.material = material
@@ -113,9 +116,11 @@ class Tank(SanUnit, bst.units.Tank, isabstract=True):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
                   vessel_type=None, tau=None, V_wf=None, 
-                  vessel_material=None, kW_per_m3=0., init_with='Stream'):
+                  vessel_material=None, kW_per_m3=0.,
+                  init_with='Stream', F_BM_default=None):
 
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        SanUnit.__init__(self, ID, ins, outs, thermo,
+                         init_with=init_with, F_BM_default=F_BM_default)
 
         self.vessel_type = vessel_type or self._default_vessel_type
         self.tau = tau or self._default_tau
@@ -156,13 +161,14 @@ class HXutility(SanUnit, bst.units.HXutility):
 
     '''
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='Stream',
-                  *, T=None, V=None, rigorous=False, U=None, H=None,
-                  heat_exchanger_type="Floating head",
-                  material="Carbon steel/carbon steel",
-                  N_shells=2,
-                  ft=None):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+                 init_with='Stream', F_BM_default=None,
+                 *, T=None, V=None, rigorous=False, U=None, H=None,
+                 heat_exchanger_type="Floating head",
+                 material="Carbon steel/carbon steel",
+                 N_shells=2, ft=None):
+        SanUnit.__init__(self, ID, ins, outs, thermo,
+                         init_with=init_with, F_BM_default=F_BM_default)
         self.T = T #: [float] Temperature of outlet stream (K).
         self.V = V #: [float] Vapor fraction of outlet stream.
         self.H = H #: [float] Enthalpy of outlet stream.
@@ -196,16 +202,18 @@ class HXprocess(SanUnit, bst.units.HXprocess):
 
     '''
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='Stream',
-                  *, U=None, dT=5., T_lim0=None, T_lim1=None,
-                  material="Carbon steel/carbon steel",
-                  heat_exchanger_type="Floating head",
-                  N_shells=2, ft=None, 
-                  phase0=None,
-                  phase1=None,
-                  H_lim0=None,
-                  H_lim1=None):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+                 init_with='Stream', F_BM_default=None,
+                 *, U=None, dT=5., T_lim0=None, T_lim1=None,
+                 material="Carbon steel/carbon steel",
+                 heat_exchanger_type="Floating head",
+                 N_shells=2, ft=None, 
+                 phase0=None,
+                 phase1=None,
+                 H_lim0=None,
+                 H_lim1=None):
+        SanUnit.__init__(self, ID, ins, outs, thermo,
+                         init_with=init_with, F_BM_default=F_BM_default)
         
         #: [float] Enforced overall heat transfer coefficent (kW/m^2/K)
         self.U = U

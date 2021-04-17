@@ -53,7 +53,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
     
     def __init__(self, ID='', ins=None, outs=(), if_N2O_emission=False, **kwargs):
 
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         self.if_N2O_emission = if_N2O_emission
     
         data = load_data(path=data_path)

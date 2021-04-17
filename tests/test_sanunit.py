@@ -34,29 +34,27 @@ def test_sanunit():
     M2-0-2-M1
     System = qs.System('System', path=(M1, S1, P1, M2), recycle=M2-0)
     System.simulate()
-    assert_allclose(M2.installed_cost, 65521.31802925256, rtol=1e-3)
+    
+    assert_allclose(M2.installed_cost, 47004.423803594225, rtol=1e-3)
 
     # Test mixing of different classes of streams
     ss1 = qs.SanStream(H2O=100)
+    ss2 = ss1.copy()
     
     # Test BM setting
-    M3 = qs.sanunits.MixTank('M3', ins=ss1, init_with='WasteStream')    
-    M4 = qs.sanunits.MixTank('M4')
-    default_BM = M2.get_BM()['Tanks']
-    M3.get_BM()['Tanks'] == 1 # this shouldn't update BM
-    assert M3.get_BM()['Tanks'] == default_BM
-    
-    M3.set_BM({'Tanks': 1}, update_class=False)
-    assert M3.get_BM()['Tanks'] == 1
-    assert M2.get_BM()['Tanks'] == default_BM
-    
-    M4.set_BM({'Tanks': 2}, update_class=True)
-    assert M2.get_BM()['Tanks'] == M4.get_BM()['Tanks'] == 2
-    assert M3.get_BM()['Tanks'] == 1
-    
+    M3 = qs.sanunits.MixTank('M3', ins=ss1, init_with='WasteStream')
+    M3.F_BM['Tanks'] = 1
     M3.simulate()
     M3.show()
     assert type(M3.outs[0]).__name__ == 'WasteStream'
+    assert_allclose(M3.installed_cost, 4386.336513753271, rtol=1e-3)
+    
+    M4 = qs.sanunits.MixTank('M4', ins=ss2)
+    assert type(M4.outs[0]).__name__ == 'Stream'    
+    M4.simulate()
+    M4.show()
+    assert_allclose(M4.installed_cost, 7237.455247692897, rtol=1e-3)
+
 
 if __name__ == '__main__':
     test_sanunit()
