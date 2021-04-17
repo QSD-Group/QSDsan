@@ -30,7 +30,7 @@ class Equipment:
     
     A non-abstract instance of this class must have:
         
-        - A ``_design`` method for equipment design.
+        - A :func:`Equipment._design` method for equipment design.
         
             - This method should be called in the ``_design`` method of the unit
               the equipment belongs to using :func:`SanUnit.add_equipment_design`.
@@ -40,15 +40,15 @@ class Equipment:
             - Unit (e.g., m, kg) of the design parameters should be stored in
               the attribute ``Equipment._units``.
 
-        - A ``_cost`` method for equipment cost.
+        - A :func:`Equipment._cost` method for equipment cost.
         
             - This method should be called in the ``_cost`` method of the unit
               the equipment belongs to using :func:`SanUnit.add_equipment_cost`.
             - It should only take the unit this equipment belongs to as the parameter.    
             - It should return a float that contains the total purchase cost of this
               equipment.
-            - Installed cost (math:`C_{BM}`) of this equipment will be caluculated
-            based on the purchase cost (math:`C_{Pb}`)
+            - Installed cost (:math:`C_{BM}`) of this equipment will be caluculated \
+            based on the purchase cost (:math:`C_{Pb}`)
             
                 .. math::
                 
@@ -110,6 +110,7 @@ class Equipment:
         :class:`SanUnit` The unit that this equipment belongs to.
         
         .. note::
+            
             This property will be updated upon initiation of the unit.
         '''
         return self._linked_unit
