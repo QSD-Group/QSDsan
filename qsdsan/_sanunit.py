@@ -23,7 +23,6 @@ from collections.abc import Iterable
 from biosteam.utils.misc import format_title
 from . import currency, Unit, Stream, SanStream, WasteStream, \
     Construction, Transportation
-# from .utils.descriptors import BareModule
 
 __all__ = ('SanUnit',)
 
@@ -110,8 +109,6 @@ class SanUnit(Unit, isabstract=True):
     '''
 
     ticket_name = 'SU'
-
-    # BM = BareModule()
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  construction=(), transportation=(), equipments=(),
@@ -233,10 +230,6 @@ class SanUnit(Unit, isabstract=True):
         info = info.replace('\n ', '\n    ')
         return info[:-1]
 
-    # def _summary(self):
-    #     '''After system converges, design the unit and calculate cost and environmental impacts.'''
-    #     self._design()
-    #     self._cost()
 
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, IDs=None, stream_info=True):
         '''Print information of the unit, including waste stream-specific information.'''
@@ -273,85 +266,6 @@ class SanUnit(Unit, isabstract=True):
     def components(self):
         '''[Components] The :class:`Components` object associated with this unit.'''
         return self.chemicals
-
-
-    # def get_BM(self):
-    #     '''
-    #     Get bare module factors for all cost items.
-        
-    #     .. note::
-            
-    #         Using ``get_BM()[key] = value`` will NOT update the BM value,
-    #         use :func:`set_BM` to do so.
-        
-    #     '''
-    #     return self._BM.copy()
-
-    # def set_BM(self, BM:dict, update_class=False):
-    #     '''
-    #     Set are module factors for all cost items.
-        
-    #     Parameters
-    #     ----------
-    #     BM : dict
-    #         New BM dict.
-    #     update_class : bool
-    #         Whether to update BM values of the entire class.
-            
-            
-    #     .. note::
-            
-    #         Once `BM` of this unit is updated to be different from that of the
-    #         class, its `BM` cannot be updated through this function via another
-    #         instance of this class.
-            
-    #         E.g., assume `M1`, `M2`, `M3` are all instances of the :class:`~.sanunits.MixTank`
-            
-    #         .. code:: bash
-
-    #             M1.set_BM({Tanks: 1}, upldate_class=False)
-    #             M2.set_BM({Tanks: 2}, upldate_class=True)
-                
-    #             M1.get_BM()['Tanks'] # 1
-    #             M2.get_BM()['Tanks'] # 2
-    #             M3.get_BM()['Tanks'] # 2
-            
-
-    #     '''
-    #     if not isinstance(BM, dict):
-    #         raise TypeError(f'`BM` must be a dict, not {type(BM).__name__}.')
-        
-    #     if not update_class:        
-    #         if '_BM' not in self.__dict__:
-    #             self._BM = self._BM.copy()
-    #             self._BM = BM
-    #     else:
-    #         self._BM = self.__class__._BM = BM
-
-        
-    # def set_BM(self, BM):
-    #     if '_BM' not in self.__dict__: self._BM = self._BM.copy() # Prevent changing BM of all classes
-    #     for i in BM: # Prevent spelling errors
-    #         if i not in self._BM: raise ValueError(f"purchase item '{i}' does not exist")
-    #     self._BM.update(BM)
-
-    # @property
-    # def installed_cost(self):
-    #     '''Total installed cost of the unit.'''
-    #     installed_cost = sum(self.installed_costs.values())
-        
-    #     return sum([i.installed_cost for i in self.auxiliary_units],
-    #                installed_cost)
-    
-    # @property
-    # def installed_costs(self):
-    #     '''[dict] Installed cost of each equipment.'''
-    #     # diff = set(self.BM.keys()).difference(set(self.purchase_costs.keys()))
-    #     installed_costs = {i: self.BM[i]*j for i,j in self.purchase_costs.items()}
-
-    #     for i in self.auxiliary_unit_names:
-    #         installed_costs[i] = getattr(self, i).installed_cost
-    #     return installed_costs
 
 
     @property

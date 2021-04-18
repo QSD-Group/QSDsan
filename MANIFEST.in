@@ -1,6 +1,6 @@
 include LICENSE.txt CODE_OF_CONDUCT.md AUTHORS.rst README.rst CONTRIBUTING.rst CHANGELOG.rst pytest.ini 
-recursive-include qsdsan *
 recursive-include tests *
+global-exclude **/*temp*
 global-exclude .spyproject
 global-exclude tests/.spyproject/*
 global-exclude tests/.spyproject
