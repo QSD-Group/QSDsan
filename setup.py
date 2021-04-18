@@ -30,10 +30,10 @@ setup(
         {'qsdsan': [
                     'data/*',
                     'data/sanunit_data/*',
+                    'processes/*',
                     'sanunits/*',
                     'units_of_measure.txt',
                     'utils/*',
-                    'systems/bwaise/*'
                     ]},
     platforms=['Windows', 'Mac', 'Linux'],
     classifiers=['License :: OSI Approved :: University of Illinois/NCSA Open Source License',
