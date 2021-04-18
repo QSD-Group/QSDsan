@@ -31,7 +31,7 @@ copyright = f'2020-{time.gmtime().tm_year}, Quantitative Sustainable Design Grou
 # built documents.
 #
 # The short X.Y version.
-version = '0.0.1' if not qsdsan.__version__ else qsdsan.__version__
+version = '0.2.2'
 # The full version, including alpha/beta/rc tags.
 release = version
 
