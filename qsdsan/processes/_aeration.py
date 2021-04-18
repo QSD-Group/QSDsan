@@ -19,15 +19,15 @@ class DiffusedAeration(Process):
     """
     Create a :class:`DiffusedAeration` object by specifying oxygen mass transfer coefficient 
     at standard condition or air flow rate at field condition. :class:`DiffusedAeration` is a
-    subclass of :class:`Process`. A :class:`DiffusedAeration` object is capable of increasing
-    the oxygen flow rates of a :class:`WasteStream` object.
+    subclass of :class:`~.Process`. A :class:`DiffusedAeration` object is capable of increasing
+    the oxygen flow rates of a :class:`~.WasteStream` object.
 
     Parameters
     ----------
     ID : str
         A unique identification.
     DO_ID : str
-        The component ID of dissolved oxygen (DO) defined in the :class:`WasteStream` objects.
+        The component ID of dissolved oxygen (DO) defined in the :class:`~.WasteStream` objects.
     KLa_20 : float, optional
         Oxygen mass transfer coefficient at standard condition (20 degree C, 
         clean water, new diffuser), [1/d]. The default is None.

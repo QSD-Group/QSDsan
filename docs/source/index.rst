@@ -87,6 +87,7 @@ In particular, ``QSDsan`` introduces:
    SanUnit
    SimpleTEA
    Transportation
+   processes/processes
    sanunits/sanunits
    stats
 
