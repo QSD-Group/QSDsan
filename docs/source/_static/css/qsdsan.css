@@ -4,3 +4,14 @@ code.literal{
 	border: none;
 	padding: 0;
 }
+
+
+/* Side bar */
+.wy-nav-side p.caption {
+	color: #0366CC !important;
+}
+
+.wy-side-nav-search, .wy-nav-top {
+	background: #343131;
+  	color: #0366CC !important;
+}
