@@ -6,7 +6,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
-    Joy Cheung
+    Joy Cheung <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -46,8 +46,8 @@ from ._process import *
 from ._impact_indicator import *
 from ._impact_item import *
 from ._construction import *
-from ._transportation import *
 from ._equipment import *
+from ._transportation import *
 from ._sanunit import *
 from ._simple_tea import *
 from ._lca import *
@@ -59,16 +59,16 @@ from . import (
     _components,
     _sanstream,
     _waste_stream,
+    _process,
     _impact_indicator,
     _impact_item,
     _construction,
-    _transportation,
     _equipment,
+    _transportation,
     _sanunit,
     _simple_tea,
     _lca,
-    _process,
-    utils,
+    processes,
     sanunits,
     stats,
     )

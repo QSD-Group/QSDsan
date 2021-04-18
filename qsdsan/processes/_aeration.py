@@ -6,12 +6,12 @@ This module is developed by:
     Joy Cheung <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
-Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
 from math import exp
-from . import Process
+from .. import Process
 
 __all__ = ('DiffusedAeration',)
 
