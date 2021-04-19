@@ -121,7 +121,12 @@ class Component(Chemical):
         
         [2] For fractions including `f_BOD5_COD`, `f_uBOD_COD`, and `f_Vmass_Totmass`,
         their values must be within [0, 1].
-        
+    
+    Examples
+    --------
+    `Component and WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/Component_and_WasteStream.html>`_
+    
+    
     See Also
     --------
     `thermosteam.Chemical <https://thermosteam.readthedocs.io/en/latest/Chemical.html>`_
@@ -129,13 +134,13 @@ class Component(Chemical):
 
     __slots__ = _component_slots
 
-    def __new__(cls, ID='', search_ID=None, formula=None, phase=None, measured_as=None, 
+    # ID must be provided
+    def __new__(cls, ID, search_ID=None, formula=None, phase=None, measured_as=None, 
                 i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
                 i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
                 f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
                 description=None, particle_size=None,
                 degradability=None, organic=None, **chemical_properties):
-        
         if search_ID:
             self = super().__new__(cls, ID=ID, search_ID=search_ID,
                                    search_db=True, **chemical_properties)

@@ -73,6 +73,7 @@ class Equipment:
         Lifetime of this equipment.
     lifetime_unit: str
         Unit of the lifetime.
+        
     '''    
     
     __slots__ = ('_linked_unit', 'name', 'design_units', 'F_BM', 'F_D', 'F_P', 'F_M',
@@ -88,7 +89,12 @@ class Equipment:
     _design = _cost = NotImplementedMethod
     
     def __init__(self, name=None, design_units=dict(), F_BM=1., F_D=1., F_P=1., F_M=1.,
-                 lifetime=None, lifetime_unit='yr'):
+                 lifetime=None, lifetime_unit='yr', **kwargs):
+
+        if 'BM' in kwargs.keys():
+            raise DeprecationWarning('``BM`` has been depreciated, please use ' \
+                                     f'``F_BM`` for the Equipment {name}.')
+
         self._linked_unit = None
         self.name = name
         self.design_units = design_units
@@ -97,6 +103,7 @@ class Equipment:
         self.F_P = F_P
         self.F_M = F_M
         self.lifetime = auom(lifetime_unit).convert(lifetime, 'yr')
+        
 
     def __repr__(self):
         line = f'<{type(self).__name__}'

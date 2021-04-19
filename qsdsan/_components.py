@@ -55,6 +55,10 @@ class Components(Chemicals):
     A subclass of :class:`thermosteam.Chemicals`, contains :class:`Component`
     objects as attributes.
     
+    Examples
+    --------
+    `Component and WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/Component_and_WasteStream.html>`_
+    
     See Also
     --------
     `thermosteam.Chemicals <https://thermosteam.readthedocs.io/en/latest/Chemicals.html>`_

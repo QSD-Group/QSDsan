@@ -26,6 +26,9 @@ class SanStream(Stream):
     A subclass of :class:`thermosteam.Stream` with additional attributes
     for environmental impacts.
     
+    Examples
+    --------
+    
     See Also
     --------
     `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
@@ -64,6 +67,7 @@ class SanStream(Stream):
             then a new :class:`~.StreamImpactItem` will be created for the new stream
             and the new impact item will be linked to the original impact item.
         '''
+        
         new = super().copy()
         if self.impact_item:
             self.impact_item.copy(stream=new)
@@ -72,19 +76,52 @@ class SanStream(Stream):
     __copy__ = copy
 
     @staticmethod
-    def from_stream(cls, stream, **kwargs):
+    def from_stream(cls, stream, untrack_original=True, **kwargs):
         '''
         Cast a :class:`thermosteam.Stream` or :class:`biosteam.utils.MissingStream`
-        to the designated equivalent.
+        to :class:`SanStream` or :class:`MissingSanStream`.
+        
+        Parameters
+        ----------
+        cls : obj
+            class of the stream to be created.
+        stream : :class:`thermosteam.Stream`
+            The original stream.
+        untrack_original : bool
+            Whether to untrack the original stream in registry
+        kwargs
+            Additional properties of the new stream.
+        
+        Examples
+        --------
+        >>> import qsdsan as qs
+        >>> cmps = qs.Components.load_default()
+        >>> qs.set_thermo(cmps)
+        >>> s1 = qs.Stream(H2O=100, price=5)
+        >>> s1.show()
+        Stream: s1
+         phase: 'l', T: 298.15 K, P: 101325 Pa
+         flow (kmol/hr): H2O  100
+        >>> s1.price
+        5.0
+        >>> s2 = qs.SanStream.from_stream(qs.SanStream, s1, T=350, price=10)
+        >>> s2.show()
+        SanStream: ss1
+         phase: 'l', T: 350 K, P: 101325 Pa
+         flow (kmol/hr): H2O  100
+        >>> s2.price
+        10.0
         '''
+        
         if isinstance(stream, MissingStream):
             new = MissingSanStream.__new__(MissingSanStream)
             return new
             
         elif not isinstance(stream, cls):
-            stream.registry.untrack((stream,))
+            if untrack_original:
+                stream.registry.untrack((stream,))
             ID = '' if (stream.ID[0] == 's' and stream.ID[1:].isnumeric()) else stream.ID
-            new = cls.__new__(cls, **kwargs)
+            new = cls.__new__(cls)
             new.ID = ID
             new._link = None
             new._sink = stream._sink
@@ -95,12 +132,49 @@ class SanStream(Stream):
             new.reset_cache()
             new.price = 0
             new.impact_item = None
+            
+            for attr, val in kwargs.items():
+                setattr(new, attr, val)
                 
             stream._link = stream._sink = stream._source = None
             return new        
 
         else:
             return stream
+
+    def mix_from(self, others):
+        '''
+        Update this stream to be a mixture of other streams,
+        initial content of this stream will be ignored.
+        
+        Parameters
+        ----------
+        others : iterable
+            Can contain :class:`thermosteam.Stream`, :class:`SanStream`,
+            or :class:`~.WasteStream`
+        
+        .. note::
+            
+            Price and impact item are not included.
+            
+        Examples
+        --------
+        >>> import qsdsan as qs
+        >>> cmps = qs.Components.load_default()
+        >>> qs.set_thermo(cmps)
+        >>> s1 = qs.Stream(H2O=100, price=5, units='kg/hr')
+        >>> s2 = qs.SanStream(S_O2=100, units='kg/hr')
+        >>> s3 = qs.SanStream()
+        >>> s3.mix_from((s1, s2))
+        >>> s3.show()
+        SanStream: ss2
+         phase: 'l', T: 298.15 K, P: 101325 Pa
+         flow (kmol/hr): S_O2  3.13
+                         H2O   5.55
+        '''
+
+        others = [s for s in others if not 'Missing' in type(s).__name__]
+        Stream.mix_from(self, others)
 
 
     @property
@@ -124,6 +198,11 @@ class MissingSanStream(MissingStream):
     '''
     A subclass of :class:`biosteam.MissingStream`, create a special object
     that acts as a dummy until replaced by an actual :class:`SanStream`.
+    
+    .. note::
+        
+        Users usually do not need to interact with this class.
+        
     '''
 
     @property

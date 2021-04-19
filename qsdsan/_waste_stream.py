@@ -122,6 +122,10 @@ class WasteStream(SanStream):
     A subclass of :class:`~.SanStream` with additional attributes and methods
     for wastewater.
     
+    Examples
+    --------
+    `Component and WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/Component_and_WasteStream.html>`_
+    
     See Also
     --------
     `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
@@ -170,23 +174,56 @@ class WasteStream(SanStream):
         self._ratios = ratios
 
     @staticmethod
-    def from_stream(cls, stream, **kwargs):
+    def from_stream(cls, stream, untrack_original=True, **kwargs):
         '''
         Cast a :class:`thermosteam.Stream` or :class:`biosteam.utils.MissingStream`
         to :class:`WasteStream` or :class:`MissingWasteStream`.
+        
+        Parameters
+        ----------
+        cls : obj
+            class of the stream to be created.
+        stream : :class:`thermosteam.Stream`
+            The original stream.
+        untrack_original : bool
+            Whether to untrack the original stream in registry
+        kwargs
+            Additional properties of the new stream.
+            
+        Examples
+        --------
+        >>> import qsdsan as qs
+        >>> cmps = qs.Components.load_default()
+        >>> qs.set_thermo(cmps)
+        >>> s1 = qs.Stream(H2O=100, price=5)
+        >>> s1.show()
+        Stream: s1
+         phase: 'l', T: 298.15 K, P: 101325 Pa
+         flow (kmol/hr): H2O  100
+        >>> s1.price
+        5.0
+        >>> ws1 = qs.WasteStream.from_stream(qs.WasteStream, s1, False, ID='ws1',
+        ...                                  T=250, price=8)
+        >>> ws1.show()
+        WasteStream: ws1
+         phase: 'l', T: 250 K, P: 101325 Pa
+         flow (g/hr): H2O  1.8e+06
+         WasteStream-specific properties:
+          pH         : 7.0
+        >>> ws1.price
+        8.0
         '''
         
-        new = SanStream.from_stream(cls, stream, **kwargs)
+        new = SanStream.from_stream(cls, stream, untrack_original)
+        
         if isinstance(new, MissingSanStream):
             missing_new = MissingWasteStream.__new__(MissingWasteStream)
             return missing_new
+                    
+        for attr, val in kwargs.items():
+            setattr(new, attr, val)
         
         new._init_ws()
-        
-        # if isinstance(new, MissingSanStream):
-        #     setattr(new, '__class__', MissingWasteStream)
-        # else:
-        #     new._init_ws()
             
         return new
 
@@ -220,7 +257,7 @@ class WasteStream(SanStream):
         info = ''
         # Stream-related specifications
         if stream_info:
-            super().show(T, P, flow, composition, N)
+            super().show(None, T, P, flow, composition, N)
         else:
             info += self._basic_info()
             display_units = self.display_units
@@ -570,23 +607,55 @@ class WasteStream(SanStream):
                 setattr(self, slot, value)
 
     def mix_from(self, others):
+        '''
+        Update this stream to be a mixture of other streams,
+        initial content of this stream will be ignored.
+        
+        Parameters
+        ----------
+        others : iterable
+            Can contain :class:`thermosteam.Stream`, :class:`SanStream`,
+            or :class:`~.WasteStream`
+        
+        .. note::
+            
+            Price and impact item are not included.
+            
+        Examples
+        --------
+        >>> import qsdsan as qs
+        >>> cmps = qs.Components.load_default()
+        >>> qs.set_thermo(cmps)
+        >>> s1 = qs.Stream(H2O=100, price=5, units='kg/hr')
+        >>> s2 = qs.SanStream(S_O2=100, units='kg/hr')
+        >>> s3 = qs.WasteStream()
+        >>> s3.mix_from((s1, s2))
+        >>> s3.show()
+        WasteStream: ws1
+         phase: 'l', T: 298.15 K, P: 101325 Pa
+         flow (g/hr): S_O2  1e+05
+                      H2O   1e+05
+         WasteStream-specific properties:
+          pH         : 7.0
+        '''
+        
         others = [s for s in others if not 'Missing' in type(s).__name__]
         Stream.mix_from(self, others)
 
-
         for slot in _ws_specific_slots:
+            if not hasattr(self, slot):
+                continue
             #!!! This need reviewing, might not be good to calculate some
             # attributes like pH
             try:
                 tot = sum(float(getattr(i, slot))*i.F_vol for i in others
                           if hasattr(i, slot))
             except: continue
+            
             if tot == 0.:
                 setattr(self, slot, None)
             else:
                 setattr(self, slot, tot/self.F_vol)
-
-
 
 
     def get_TDS(self, include_colloidal=True):
@@ -1321,12 +1390,17 @@ class WasteStream(SanStream):
         return new
 
 
+
 # %%
 
 class MissingWasteStream(MissingSanStream):
     '''
     A subclass of :class:`MissingSanStream`, create a special object
     that acts as a dummy until replaced by an actual :class:`WasteStream`.
+    
+    .. note::
+        
+        Users usually do not need to interact with this class.
     '''
 
     # TODO: add others

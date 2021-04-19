@@ -1,8 +1,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 ====================================================================================
-.. figure:: ./images/homepage/various_configurations.png
-   
-   Collage of sanitation units inclucded in QSDsan
+
+.. figure:: ./_static/logo_light_full.png
+   :width: 500
+   :align: center
 
 
 What is ``QSDsan``?

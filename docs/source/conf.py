@@ -78,14 +78,14 @@ html_theme = 'sphinx_rtd_theme'
 
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
-# html_title = 'QSDsan v1.0.0'
+html_title = f'QSDsan {version}'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 html_short_title = 'QSDsan'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = '_static/logo.png'
+html_logo = '_static/logo_dark_small.png'
 
 # The name of an image file (relative to this directory) to use as a favicon of
 # the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32

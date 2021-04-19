@@ -8,8 +8,8 @@ This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
     
 With contributions from:
-    Yoel Rene Cortés-Peña <yoelcortes@gmail.com>
     Joy Cheung <joycheung1994@gmail.com>
+    Yoel Rene Cortés-Peña <yoelcortes@gmail.com>
     
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -147,6 +147,10 @@ def get_correlations(model, input_x=None, input_y=None,
     -------
     Two :class:`pandas.DataFrame` containing the test statistics and p-values.
     
+    Examples
+    --------
+    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    
     See Also
     --------    
     :func:`scipy.stats.spearmanr`
@@ -156,7 +160,6 @@ def get_correlations(model, input_x=None, input_y=None,
     :func:`scipy.stats.kendalltau`
     
     :func:`scipy.stats.kstest`
-    
     '''
 
     if input_x and not isinstance(input_x, Iterable): input_x = (input_x,)
@@ -213,10 +216,13 @@ def define_inputs(model):
     inputs : dict
         A dict containing model inputs for sampling by ``SALib``.
 
+    Examples
+    --------
+    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+
     See Also
     --------
     `SALib Basics <https://salib.readthedocs.io/en/latest/basics.html#an-example>`_
-
     '''
     return model.problem()
 
@@ -250,11 +256,15 @@ def generate_samples(inputs, kind, N, seed=None, **kwargs):
     samples: array
         Samples to be used for the indicated sensitivies analyses.
     
+    Examples
+    --------
+    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    
     See Also
     --------
     ``SALib`` `API <https://salib.readthedocs.io/en/latest/api.html>`_
-    
     '''
+
     lower = kind.lower()
     if lower == 'morris':
         return morris_sampler.sample(inputs, N=N, seed=seed, **kwargs)
@@ -311,11 +321,15 @@ def morris_analysis(model, inputs, metrics=None, nan_policy='propagate',
     morris_dct : dict
         A dict of Morris analysis results.
     
+    Examples
+    --------
+    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    
     See Also
     --------
     ``SALib`` `API <https://salib.readthedocs.io/en/latest/api.html>`_
-    
     '''
+
     morris_dct = {}
     model = model.copy()
     metrics = _update_input(metrics, model.metrics)
@@ -390,11 +404,15 @@ def morris_till_convergence(model, inputs, metrics=None,
     kwargs
         Other kwargs that will be passed to ``SALib``.
 
+    Examples
+    --------
+    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+
     See Also
     --------    
     :func:`qsdsan.stats.morris_analysis`
-    
     '''
+
     num_levels = kwargs['num_levels'] if 'num_levels' in kwargs.keys() else 4
     kwargs = {i:kwargs[i] for i in kwargs.keys() if i!='num_levels'}
     samples = generate_samples(inputs=inputs, kind='Morris', N=N_max,
@@ -500,11 +518,15 @@ def fast_analysis(model, inputs, kind, metrics=None, nan_policy='propagate',
     fast_dct : dict
         A dict of FAST analysis results.
     
+    Examples
+    --------
+    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    
     See Also
     --------
     ``SALib`` `API <https://salib.readthedocs.io/en/latest/api.html>`_
-    
     '''
+
     fast_dct = {}
     model = model.copy()
     metrics = _update_input(metrics, model.metrics)
@@ -590,11 +612,15 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
     si_dct : dict
         A dict of Sobol analysis results.    
 
+    Examples
+    --------
+    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+
     See Also
     --------
     ``SALib`` `API <https://salib.readthedocs.io/en/latest/api.html>`_
-    
     '''
+
     sobol_dct = {}
     metrics = _update_input(metrics, model.metrics)
     model = model.copy()
@@ -708,10 +734,13 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
     axis : :class:`matplotlib.axes._subplots.AxesSubplot` or iterable
         The generated figure axis (or axes for 2D figure).
         
+    Examples
+    --------
+    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+        
     See Also
     --------    
     :func:`seaborn.jointplot` `docs <https://seaborn.pydata.org/generated/seaborn.jointplot.html>`_
-    
     '''
 
     kind_lower = kind.lower()
@@ -906,13 +935,16 @@ def plot_correlations(result_df, parameters=(), metrics=(), top=None,
         The generated figure.
     axis : :class:`matplotlib.axes._subplots.AxesSubplot`
         The generated figure axis.
-        
+    
+    Examples
+    --------
+    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    
     See Also
     --------
     :func:`biosteam.plots.plot_spearman`
     
     :func:`seaborn.relplot` and `scatter heat map <https://seaborn.pydata.org/examples/heat_scatter.html>`_
-    
     '''
     
     df = _update_df_names(result_df)
@@ -1002,6 +1034,10 @@ def plot_morris_results(morris_dct, metric, kind='scatter',
         The generated figure.
     axis : :class:`matplotlib.axes._subplots.AxesSubplot`
         The generated figure axis.
+    
+    Examples
+    --------
+    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
     '''
     
     df = morris_dct[metric.name]
@@ -1093,7 +1129,11 @@ def plot_morris_convergence(result_dct, metric, parameters=(), plot_rank=False,
     axis : :class:`matplotlib.axes._subplots.AxesSubplot`
         The generated figure axis.
     
+    Examples
+    --------
+    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_    
     '''
+
     ax = plt.subplot()
     df = result_dct['mu_star'][metric.name].copy().astype('float64')
     conf_df = result_dct['mu_star_conf'][metric.name].copy().astype('float64')
@@ -1218,7 +1258,10 @@ def plot_fast_results(result_dct, metric, parameters=(), error_bar=True,
         The generated figure.
     axis : :class:`matplotlib.axes._subplots.AxesSubplot`
         The generated figure axis.
-        
+
+    Examples
+    --------
+    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_        
     '''
     
     param_names = _update_input(parameters, result_dct[metric.name]['S1'].index)    
@@ -1297,7 +1340,11 @@ def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
         If generating bar plot and heat map, a tuple of two axes will be returned
         for the respective plot.
     
+    Examples
+    --------
+    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
     '''
+
     kind_upper = kind.upper()
     if kind_upper=='ALL' or set(kind_upper)==set('STS1S2'):
         kind_upper = 'STS1S2'

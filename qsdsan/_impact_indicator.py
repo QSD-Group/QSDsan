@@ -45,6 +45,11 @@ class ImpactIndicator:
         Unit of the ImpactIndicator, e.g., 'kg CO2-eq'.
     description : str
         Supplementary explanation.
+        
+    Examples
+    --------
+    
+        
     '''
     
     _indicators = {}

@@ -99,7 +99,12 @@ class SanUnit(Unit, isabstract=True):
         Equipment without provided lifetime will be assumed to have the same
         lifetime as the TEA/LCA.
     F_BM_default : float
-        If not None, all BM (bare module) factors will be default to the set value.
+        If not None, all bare module factors will be default to the set value.
+        
+        .. note::
+            
+            Regardless of F_BM_default, design (F_D), pressure (F_P),
+            and material (F_M) factors are all defaulted to 0.
 
     See Also
     --------
@@ -240,7 +245,7 @@ class SanUnit(Unit, isabstract=True):
             name = equip.name or format_title(type(equip).__name__)
             self.design_results.update(equip._design())
             self._units.update(equip.design_units)
-            self.F_BM[name] = equip.BM
+            self.F_BM[name] = equip.F_BM
             if equip.lifetime:
                 self._default_equipment_lifetime[name] = equip.lifetime
 
