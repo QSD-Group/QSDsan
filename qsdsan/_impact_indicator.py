@@ -15,6 +15,7 @@ for license details.
 
 # %%
 
+from warnings import warn
 from ._units_of_measure import parse_unit
 from .utils.loading import load_data
 
@@ -45,6 +46,8 @@ class ImpactIndicator:
         Unit of the ImpactIndicator, e.g., 'kg CO2-eq'.
     description : str
         Supplementary explanation.
+    register : bool
+        Whether to add to the registry.
         
     Examples
     --------
@@ -71,33 +74,35 @@ class ImpactIndicator:
     >>> GWP.set_alias('GWP')
     >>> GWP.set_alias('GlobalWarmingPotential')
     >>> GWP.get_alias()
-    ('GWP', 'GlobalWarmingPotential')
+    ['GWP', 'GlobalWarmingPotential']
     >>> GWP.remove_alias('GlobalWarmingPotential')
     >>> GWP.get_alias()
-    ('GWP',)
-    
-    Get all indicators.
-    
-    >>> qs.ImpactIndicator.get_all_indicators()
-    (<ImpactIndicator: GlobalWarming>,)
-    
-    Remove the GWP indicator from record.
+    ['GWP']
+
+    Manage the registry.
+
     >>> GWP.deregister()
-    The indicator "GlobalWarming" has been removed from the record.
+    The indicator "GlobalWarming" has been removed from the registry.
     >>> qs.ImpactIndicator.get_all_indicators()
-    ()
+    []
+    >>> GWP.register()
+    The indicator "GlobalWarming" has been added to the registry.    
+    >>> qs.ImpactIndicator.get_all_indicators()
+    [<ImpactIndicator: GlobalWarming>,]
     '''
     
     _indicators = {}
     
     __slots__ = ('_ID', '_alias', '_method', '_category', '_unit', '_ureg_unit',
-                 '_unit_remaining', '_description')
+                 '_unit_remaining', '_description', '_registered')
 
     def __init__(self, ID, alias='', method='', category='', unit='', description='',
-                 **kwargs):
+                 register=True, **kwargs):
         
-        if ID in self._indicators.keys():
-            raise ValueError(f'The ID "{ID}" is currently in use.')
+        if register:
+            if ID in self._indicators.keys():
+                warn(f'The indicator "{ID}" is being replaced in the registry.')
+        
         self._ID = ID
         self._unit = str(unit)
         self._ureg_unit, self._unit_remaining = parse_unit(unit)
@@ -105,6 +110,7 @@ class ImpactIndicator:
         self._category = category
         self._description = description
         self._indicators[ID] = self
+        self._registered = True
 
         if 'synonym' in kwargs.keys():
             synonym = kwargs['synonym']
@@ -155,15 +161,17 @@ class ImpactIndicator:
         '''
         dct = self._indicators
         if alias in dct.keys() and dct[alias] is not self:
-            raise ValueError(f'The alias "{alias}" is already in use.')
+            warn(f'The alias "{alias}" is already in use.')
+            return
+
         else:
             dct[alias] = self
     
     def get_alias(self):
-        '''Return all aliases of the indicator as a tuple.'''
+        '''Return all aliases of the indicator as a list.'''
 
-        return tuple(i for i, j in self._indicators.items()
-                     if j==self and i != self.ID)
+        return sorted([i for i, j in self._indicators.items()
+                       if j==self and i != self.ID])
 
     def remove_alias(self, alias):
         '''
@@ -175,18 +183,34 @@ class ImpactIndicator:
             The alias of the indicator to be removed.
         '''
         if self._indicators[alias] is not self:
-            raise ValueError('"{alias}" is not the alias of {self.ID}.')
+            warn('"{alias}" is not the alias of {self.ID}.')
+            return
         else:
             self._indicators.pop(alias)
 
+    def register(self):
+        '''Add this indicator to the registry.'''
+        
+        ID = self.ID
+        if self._registered:
+            warn(f'The indicator "{ID}" is already in registry.')
+            return
+        else:
+            IDs = (ID, *self.get_alias())
+            for i in IDs:
+                self._indicators[ID] = self
+        
+        print(f'The indicator "{ID}" has been added to the registry.')
 
     def deregister(self):
-        '''Remove this indicator from the record.'''
+        '''Remove this indicator from the registry.'''
         ID = self.ID
         IDs = (ID, *self.get_alias())
         for i in IDs:
             self._indicators.pop(i)
-        print(f'The indicator "{ID}" has been removed from the record.')
+        self._registered = False
+            
+        print(f'The indicator "{ID}" has been removed from the registry.')
 
 
     @classmethod
@@ -245,8 +269,8 @@ class ImpactIndicator:
 
     @classmethod
     def get_all_indicators(cls):
-        '''Get all defined indicators.'''
-        return tuple(i for i in set([i for i in cls._indicators.values()]))
+        '''Get a list of all defined indicators.'''
+        return sorted(set([i for i in cls._indicators.values()]), key=lambda i: i.ID)
 
     @property
     def ID(self):
@@ -285,13 +309,16 @@ class ImpactIndicator:
 
     @property
     def description(self):
-        '''Description of the impact indicator.'''    
+        '''Description of the indicator.'''    
         return self._description
     @description.setter
     def description(self, i):
         self._description = i
 
-
+    @property
+    def registered(self):
+        '''[bool] If this indicator is registered in the records.'''
+        return self._registered
 
 
 

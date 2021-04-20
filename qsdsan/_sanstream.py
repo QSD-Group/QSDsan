@@ -49,13 +49,13 @@ class SanStream(Stream):
             impact_item._linked_stream = self
         self._impact_item = impact_item
 
-    def copy(self, ID=''):
+    def copy(self, new_ID=''):
         '''
         Copy the information of another stream.
         
         Parameters
         ----------
-        ID : str
+        new_ID : str
             ID of the new stream, a default ID will be assigned if not provided.
         
         
@@ -68,7 +68,7 @@ class SanStream(Stream):
             and the new impact item will be linked to the original impact item.
         '''
         
-        new = super().copy()
+        new = super().copy(ID=new_ID)
         if self.impact_item:
             self.impact_item.copy(stream=new)
         return new

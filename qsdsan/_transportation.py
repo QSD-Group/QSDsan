@@ -101,9 +101,9 @@ class Transportation:
         new = Transportation.__new__(Transportation)
         for slot in Transportation.__slots__:
             value = getattr(self, slot)
-            #!!! Not sure if this will cause problem because two objects pointing to the same one
             setattr(new, slot, copy_maybe(value))
         return new
+    
     __copy__ = copy
 
 

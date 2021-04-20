@@ -51,17 +51,84 @@ class ImpactItem:
     source : ImpactItem
         If provided, all attributions and properties of this impact item will
         be copied from the provided source.
-    indicator_CFs : kwargs, :class:`ImpactIndicator` or str = float or (float, unit)
-        Impact indicators and their characteriziation factors.
+    register : bool
+        Whether to add to the registry.
+    indicator_CFs : kwargs
+        Impact indicators and their characteriziation factors (CFs),
+        can be in the form of str=float or str=(float, unit).
     
+    Examples
+    --------
+    Firstly make impact indicators.
+    
+    >>> import qsdsan as qs
+    >>> GWP = qs.ImpactIndicator('GlobalWarming', alias='GWP', unit='kg CO2-eq')
+    >>> FEC = qs.ImpactIndicator('FossilEnergyConsumption', alias='FEC', unit='MJ')
+    
+    We can make impact items in different ways.
+    
+    >>> Steel = qs.ImpactItem('Steel', 'kg', GWP=2.55)
+    >>> Steel.show()
+    ImpactItem      : Steel [per kg]
+    Price           : 0 USD
+    ImpactIndicators:
+                               Characterization factors
+    GlobalWarming (kg CO2-eq)                      2.55
+    >>> # Unit will be automatically converted to match the unit of the impact indicator
+    >>> Electricity = qs.ImpactItem('Electricity', functional_unit='kWh',
+                                    GWP=(480, 'g CO2-eq'), FEC=(5926, 'kJ'))
+    >>> Electricity.show()
+    ImpactItem      : Electricity [per kWh]
+    Price           : 0 USD
+    ImpactIndicators:
+                                  Characterization factors
+    GlobalWarming (kg CO2-eq)                         0.48
+    FossilEnergyConsumption (MJ)                      5.93
+    >>> # Note that 5.93 appears instead of 5.926 is for nicer print
+    >>> Electricity.CFs
+    {'GlobalWarming': 0.48, 'FossilEnergyConsumption': 5.926}
+    >>> # Items without an ID won't be added to the registry.
+    >>> CO2 = qs.ImpactItem(functional_unit='kg', GWP=1)
+    [<ImpactItem: Electricity>, <ImpactItem: Steel>]
+
+    You can make copies of impact items and choose to link to the source or not.
+    
+    >>> Steel2 = Steel.copy('Steel2', set_as_source=True, register=True)
+    >>> Steel2.CFs['GlobalWarming']
+    2.55
+    >>> Steel3 = Steel.copy('Steel3', set_as_source=False, register=False)
+    >>> Steel3.CFs['GlobalWarming']
+    2.55
+    
+    Once linked, CFs of the copy will update with the source.
+    
+    >>> Steel.CFs['GlobalWarming'] = 2
+    >>> Steel.CFs['GlobalWarming']
+    2
+    >>> Steel2.CFs['GlobalWarming']
+    2
+    >>> Steel3.CFs['GlobalWarming']
+    2.55
+    
+    Manage the registry.
+    
+    >>> qs.ImpactItem.get_all_items()
+    [<ImpactItem: Electricity>, <ImpactItem: Steel>, <ImpactItem: Steel2>]
+    >>> Steel2.deregister()
+    The impact item "Steel2" has been removed from the registry.
+    >>> Steel3.register()
+    The impact item "Steel3" has been added to the registry.
+    >>> qs.ImpactItem.get_all_items()
+    [<ImpactItem: Electricity>, <ImpactItem: Steel>, <ImpactItem: Steel3>]
     '''
     
-    _items = {}
+    _items = {}    
     
-    __slots__ = ('_ID', '_functional_unit', '_price', '_CFs', '_source')
+    __slots__ = ('_ID', '_functional_unit', '_price', '_CFs', '_source',
+                 '_registered')
     
     def __init__(self, ID=None, functional_unit='kg', price=0., price_unit='',
-                 source=None, **indicator_CFs):
+                 source=None, register=True, **indicator_CFs):
         
         self._ID = ID
         if source:
@@ -71,28 +138,29 @@ class ImpactItem:
             self._functional_unit = auom(functional_unit)
             self._update_price(price, price_unit)
             self._CFs = {}
-            for CF, value in indicator_CFs.items():
+            for indicator, value in indicator_CFs.items():
                 try:
                     CF_value, CF_unit = value # unit provided for CF
-                    self.add_indicator_CF(CF, CF_value, CF_unit)
+                    self.add_indicator_CF(indicator, CF_value, CF_unit)
                 except:
-                    self.add_indicator_CF(CF, value)
+                    self.add_indicator_CF(indicator, value)
             if ID:
-                if ID in ImpactItem._items.keys():
-                    old = ImpactItem._items[ID]
-                    for i in old.__slots__:
-                        if not getattr(old, i) == getattr(self, i):
-                            raise ValueError(f'The ID {ID} is in use by {ImpactItem._items[ID]}, '\
-                                             'use another ID instead.')
-                else:
-                    ImpactItem._items[ID] = self
+                if register:
+                    if ID in self._items.keys():
+                        old = self._items[ID]
+                        for i in old.__slots__:
+                            if not getattr(old, i) == getattr(self, i):
+                                warn(f'The impact item "{ID}" is being replaced in the registry.')
+                    else:
+                        self._items[ID] = self
+                        self._registered = True
     
     # This makes sure it won't be shown as memory location of the object
     def __repr__(self):
         return f'<ImpactItem: {self.ID}>'
 
     def show(self):
-        '''Show basic information of this ``ImpactItem`` object'''
+        '''Show basic information of this impact item.'''
         info = f'ImpactItem      : {self.ID} [per {self.functional_unit}]'
         if self.source:
             info += f'\nSource          : {self.source.ID}'
@@ -135,11 +203,18 @@ class ImpactItem:
                                  f'the defaut unit {indicator.unit} is not supported.')
         self._CFs[indicator.ID] = CF_value
 
-    def copy(self, new_ID=None, set_as_source=False):
+    def copy(self, new_ID=None, set_as_source=False, register=True):
         '''
         Return a new :class:`ImpactItem` object with the same settings.
-        Set the original :class:`ImpactItem` as the source for the new one if
-        `set_as_source` is True.
+        
+        Parameters
+        ----------
+        new_ID : str
+            ID of the new impact item.
+        set_as_source : bool
+            Whether to set the original impact item as the source.
+        register : bool
+            Whether to register the new impact item.
         '''        
         new = ImpactItem.__new__(ImpactItem)
         new.ID = new_ID
@@ -147,16 +222,37 @@ class ImpactItem:
             new.source = self
         else:
             for slot in ImpactItem.__slots__:
+                if slot == '_ID':
+                    continue
                 value = getattr(self, slot)
                 setattr(new, slot, copy_maybe(value))
+        
+        if register:
+            self._items[new_ID] = new
+            new._registered = True
+        else:
+            new._registered = False
         return new
+
     __copy__ = copy
 
+    def register(self):
+        '''Add this impact item to the registry.'''
+        ID = self.ID
+        if self._registered:
+            warn(f'The impact item "{ID}" is already in registry.')
+            return
+        else:
+            self._items[ID] = self
+        
+        print(f'The impact item "{ID}" has been added to the registry.')
+
     def deregister(self):
-        '''Remove this :class:`ImpactItem` from the record.'''
+        '''Remove this impact item from the registry.'''
         ID = self.ID
         self._items.pop(ID)
-        print(f'The impact item "{ID}" has been removed from the record.')
+        self._registered = False
+        print(f'The impact item "{ID}" has been removed from the registry.')
     
     
     @classmethod
@@ -209,7 +305,7 @@ class ImpactItem:
             if sheet == 'info':
                 for item in data.index:
                     if item in items.keys():
-                        raise ValueError(f'The impact item "{item}" has been added.')
+                        warn(f'The impact item "{item}" has been added.')
                     else:
                         new = cls.__new__(cls)
                         new.__init__(ID=item,
@@ -229,8 +325,8 @@ class ImpactItem:
     
     @classmethod
     def get_all_items(cls):
-        '''Get a tuple of all impact items'''
-        return tuple(set(i for i in cls._items.values()))
+        '''Get a list of all impact items'''
+        return sorted(set(i for i in cls._items.values()), key=lambda i: i.ID)
     
     @property
     def source(self):
@@ -290,6 +386,11 @@ class ImpactItem:
     def CFs(self, indicator, CF_value, CF_unit=''):
         check_source(self)
         self.add_indicator_CF(indicator, CF_value, CF_unit)
+        
+    @property
+    def registered(self):
+        '''[bool] If this impact item is registered in the records.'''
+        return self._registered
 
 
 # %%
@@ -306,14 +407,17 @@ class StreamImpactItem(ImpactItem):
     source : :class:`StreamImpactItem`
         If provided, all attributions and properties of this
         :class:`StreamImpactItem` will be copied from the provided source.
+    register : bool
+        Whether to add to the registry.
     indicator_CFs : kwargs
-        ImpactIndicators and their characteriziation factors.
+        ImpactIndicators and their characteriziation factors (CFs).
     
     '''
 
-    __slots__ = ('_ID', '_linked_stream', '_functional_unit', '_CFs', '_source')
+    __slots__ = ('_ID', '_linked_stream', '_functional_unit', '_CFs', '_source',
+                 '_registered')
 
-    def __init__(self, ID=None, linked_stream=None, source=None,
+    def __init__(self, ID=None, linked_stream=None, source=None, register=False,
                  **indicator_CFs):
 
         self._linked_stream = None
@@ -333,7 +437,10 @@ class StreamImpactItem(ImpactItem):
                     self.add_indicator_CF(CF, CF_value, CF_unit)
                 except:
                     self.add_indicator_CF(CF, value)
-            ImpactItem._items[ID] = self
+        
+        if register:
+            self._items[ID] = self
+            self._registered = True
 
 
     def __repr__(self):

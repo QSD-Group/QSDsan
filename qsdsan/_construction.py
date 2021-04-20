@@ -88,9 +88,9 @@ class Construction:
         new = Construction.__new__(Construction)
         for slot in Construction.__slots__:
             value = getattr(self, slot)
-            #!!! Not sure if this will cause problem because two objects pointing to the same one
             setattr(new, slot, copy_maybe(value))
         return new
+
     __copy__ = copy
     
     @property

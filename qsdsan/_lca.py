@@ -49,6 +49,14 @@ class LCA:
         Other :class:`ImpactItem` objects (e.g., electricity) and their quantities.
         Note that callable functions are used so that quantity of items can be updated.
     
+
+    Examples
+    --------
+    Firstly make a system (refer to the `tutorial <https://qsdsan.readthedocs.io/en/latest/tutorials/SanUnit_and_System.html>`_)
+    for how to do so, here we import a pre-constructed one.
+    
+    >>> from exposan import bwaise as bw
+    >>> sysA = bw.sysA
     '''
     
     __slots__ = ('_system',  '_lifetime', '_uptime_ratio',

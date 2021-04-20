@@ -510,12 +510,12 @@ class Component(Chemical):
                 missing.append(i)
         return missing
 
-    def copy(self, ID, **data):
+    def copy(self, new_ID, **data):
         '''
         Return a new :class:`Component` object with the same settings with
         alternative data set by kwargs.
         '''
-        new = self.__class__.__new__(cls=self.__class__, ID=ID)
+        new = self.__class__.__new__(cls=self.__class__, ID=new_ID)
 
         for field in self.__slots__:
             #!!! Take '_other_names' out after thermosteam is updated
@@ -523,7 +523,7 @@ class Component(Chemical):
             value = getattr(self, field)
             setattr(new, field, copy_maybe(value))
 
-        new._ID = ID
+        new._ID = new_ID
         new._locked_state = self._locked_state
         new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus, new.Tm,
                            new.Tb, new.eos, new.eos_1atm, new.phase_ref)
