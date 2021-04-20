@@ -89,6 +89,7 @@ class ImpactItem:
     {'GlobalWarming': 0.48, 'FossilEnergyConsumption': 5.926}
     >>> # Items without an ID won't be added to the registry.
     >>> CO2 = qs.ImpactItem(functional_unit='kg', GWP=1)
+    >>> qs.ImpactItem.get_all_items()
     [<ImpactItem: Electricity>, <ImpactItem: Steel>]
 
     You can make copies of impact items and choose to link to the source or not.
