@@ -52,10 +52,10 @@ class ImpactIndicator:
     
     >>> import qsdsan as qs
     >>> GWP = qs.ImpactIndicator('GlobalWarming', method='TRACI',
-                                 category='environmental impact',
-                                 unit='kg CO2-eq',
-                                 description='Effect of climate change measured as \
-                                             global warming potential.')
+    ...                          category='environmental impact',
+    ...                          unit='kg CO2-eq',
+    ...                          description='Effect of climate change measured as \
+    ...                                      global warming potential.')
     
     See relevant information.
     
