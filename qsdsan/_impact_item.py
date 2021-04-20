@@ -76,7 +76,7 @@ class ImpactItem:
     GlobalWarming (kg CO2-eq)                      2.55
     >>> # Unit will be automatically converted to match the unit of the impact indicator
     >>> Electricity = qs.ImpactItem('Electricity', functional_unit='kWh',
-                                    GWP=(480, 'g CO2-eq'), FEC=(5926, 'kJ'))
+    ...                             GWP=(480, 'g CO2-eq'), FEC=(5926, 'kJ'))
     >>> Electricity.show()
     ImpactItem      : Electricity [per kWh]
     Price           : 0 USD
@@ -215,9 +215,11 @@ class ImpactItem:
             Whether to set the original impact item as the source.
         register : bool
             Whether to register the new impact item.
-        '''        
+        '''
+        
         new = ImpactItem.__new__(ImpactItem)
         new.ID = new_ID
+        
         if set_as_source:
             new.source = self
         else:
@@ -232,6 +234,7 @@ class ImpactItem:
             new._registered = True
         else:
             new._registered = False
+        
         return new
 
     __copy__ = copy
@@ -417,7 +420,7 @@ class StreamImpactItem(ImpactItem):
     __slots__ = ('_ID', '_linked_stream', '_functional_unit', '_CFs', '_source',
                  '_registered')
 
-    def __init__(self, ID=None, linked_stream=None, source=None, register=False,
+    def __init__(self, ID=None, linked_stream=None, source=None, register=True,
                  **indicator_CFs):
 
         self._linked_stream = None
@@ -477,28 +480,48 @@ class StreamImpactItem(ImpactItem):
     _ipython_display_ = show
 
 
-    def copy(self, new_ID=None, stream=None, set_as_source=False):
+    def copy(self, new_ID=None, stream=None, set_as_source=False, register=True):
         '''
-        Return a new :class:`StreamImpactItem` object with the same settings,
-        link the new :class:`StreamImpactItem` to the provided stream if given,
-        set the original :class:`StreamImpactItem` as the source for the new one if
-        `set_as_source` is True.
+        Return a new :class:`StreamImpactItem` object with the same settings.
+
+        Parameters
+        ----------
+        new_ID : str
+            ID of the new impact item.
+        stream : :class:`~.SanStream`
+            Linked stream to the copy.
+        set_as_source : bool
+            Whether to set the original impact item as the source.
+        register : bool
+            Whether to register the new impact item.
         '''
+        
         new = StreamImpactItem.__new__(StreamImpactItem)
         new.ID = new_ID
         new._linked_stream = None # initiate this attribute
+        
         if set_as_source:
             new.source = self
         else:
             for slot in StreamImpactItem.__slots__:
-                if slot == '_linked_stream': continue
+                if slot in ('_ID', '_linked_stream'):
+                    continue
                 value = getattr(self, slot)
                 setattr(new, slot, copy_maybe(value))
+        
         if stream:
             stream.impact_item = new
             if not new_ID:
                 new.ID = f'{stream.ID}_item'
+        
+        if register:
+            self._items[new.ID] = new
+            new._registered = True
+        else:
+            new._registered = False
+        
         return new
+    
     __copy__ = copy
 
     @property

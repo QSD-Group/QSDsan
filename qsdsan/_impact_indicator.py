@@ -88,7 +88,7 @@ class ImpactIndicator:
     >>> GWP.register()
     The indicator "GlobalWarming" has been added to the registry.    
     >>> qs.ImpactIndicator.get_all_indicators()
-    [<ImpactIndicator: GlobalWarming>,]
+    [<ImpactIndicator: GlobalWarming>]
     '''
     
     _indicators = {}
