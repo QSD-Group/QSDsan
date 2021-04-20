@@ -34,7 +34,7 @@ class ImpactIndicator:
         
         .. note::
 
-            "synonym" was used bfore v0.2.2 it is still supported but may be
+            "synonym" was used bfore v0.2.2 it is still supported, but may be
             deprecated in the future.
 
     method : str
@@ -48,8 +48,44 @@ class ImpactIndicator:
         
     Examples
     --------
+    Make an impact indicator for global warming potential.
     
-        
+    >>> import qsdsan as qs
+    >>> GWP = qs.ImpactIndicator('GlobalWarming', method='TRACI',
+                                 category='environmental impact',
+                                 unit='kg CO2-eq',
+                                 description='Effect of climate change measured as \
+                                             global warming potential.')
+    
+    See relevant information.
+    
+    >>> GWP.show()
+    ImpactIndicator: GlobalWarming as kg CO2-eq
+     Method     : TRACI
+     Category   : environmental impact
+     Description: Effect of climate change ...
+     
+    
+    Add, retrieve, and remove alias.
+    
+    >>> GWP.set_alias('GWP')
+    >>> GWP.set_alias('GlobalWarmingPotential')
+    >>> GWP.get_alias()
+    ('GWP', 'GlobalWarmingPotential')
+    >>> GWP.remove_alias('GlobalWarmingPotential')
+    >>> GWP.get_alias()
+    ('GWP',)
+    
+    Get all indicators.
+    
+    >>> qs.ImpactIndicator.get_all_indicators()
+    (<ImpactIndicator: GlobalWarming>,)
+    
+    Remove the GWP indicator from record.
+    >>> GWP.deregister()
+    The indicator "GlobalWarming" has been removed from the record.
+    >>> qs.ImpactIndicator.get_all_indicators()
+    ()
     '''
     
     _indicators = {}
@@ -60,7 +96,7 @@ class ImpactIndicator:
     def __init__(self, ID, alias='', method='', category='', unit='', description='',
                  **kwargs):
         
-        if ID in ImpactIndicator._indicators.keys():
+        if ID in self._indicators.keys():
             raise ValueError(f'The ID "{ID}" is currently in use.')
         self._ID = ID
         self._unit = str(unit)
@@ -68,7 +104,7 @@ class ImpactIndicator:
         self._method = method
         self._category = category
         self._description = description
-        ImpactIndicator._indicators[ID] = self
+        self._indicators[ID] = self
 
         if 'synonym' in kwargs.keys():
             synonym = kwargs['synonym']
@@ -91,7 +127,7 @@ class ImpactIndicator:
             info = f'ImpactIndicator: {self.ID} as {self.unit}'
         else:
             info = f'ImpactIndicator: {self.ID}'
-        line =   '\n Alias(es)   : '
+        line =   '\n Alias(es)  : '
         aliases = self.get_alias()
         if aliases:
             for alias in aliases[:-1]:
@@ -116,23 +152,40 @@ class ImpactIndicator:
         ----------
         alias : str
             New alias of the indicator.
-
         '''
-        dct = ImpactIndicator._indicators
+        dct = self._indicators
         if alias in dct.keys() and dct[alias] is not self:
             raise ValueError(f'The alias "{alias}" is already in use.')
         else:
             dct[alias] = self
     
     def get_alias(self):
-        '''Return all aliases of the indicator as a list.'''
-        return tuple(i for i, j in ImpactIndicator._indicators.items()
+        '''Return all aliases of the indicator as a tuple.'''
+
+        return tuple(i for i, j in self._indicators.items()
                      if j==self and i != self.ID)
+
+    def remove_alias(self, alias):
+        '''
+        Remove a certain alias.
+        
+        Parameters
+        ----------
+        alias : str
+            The alias of the indicator to be removed.
+        '''
+        if self._indicators[alias] is not self:
+            raise ValueError('"{alias}" is not the alias of {self.ID}.')
+        else:
+            self._indicators.pop(alias)
+
 
     def deregister(self):
         '''Remove this indicator from the record.'''
         ID = self.ID
-        self._indicators.pop(ID)
+        IDs = (ID, *self.get_alias())
+        for i in IDs:
+            self._indicators.pop(i)
         print(f'The indicator "{ID}" has been removed from the record.')
 
 
@@ -193,12 +246,17 @@ class ImpactIndicator:
     @classmethod
     def get_all_indicators(cls):
         '''Get all defined indicators.'''
-        return tuple(i for i in set([i for i in ImpactIndicator._indicators.values()]))
+        return tuple(i for i in set([i for i in cls._indicators.values()]))
 
     @property
     def ID(self):
         '''ID of the impact indicator.''' 
         return self._ID
+    @ID.setter
+    def ID(self, ID):
+        old_ID = self.ID
+        self._indicators[ID] = self._indicators.pop(old_ID)
+        self._ID = ID
 
     @property
     def unit(self):

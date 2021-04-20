@@ -174,7 +174,7 @@ class WasteStream(SanStream):
         self._ratios = ratios
 
     @staticmethod
-    def from_stream(cls, stream, untrack_original=True, **kwargs):
+    def from_stream(cls, stream, ID=None, **kwargs):
         '''
         Cast a :class:`thermosteam.Stream` or :class:`biosteam.utils.MissingStream`
         to :class:`WasteStream` or :class:`MissingWasteStream`.
@@ -185,8 +185,8 @@ class WasteStream(SanStream):
             class of the stream to be created.
         stream : :class:`thermosteam.Stream`
             The original stream.
-        untrack_original : bool
-            Whether to untrack the original stream in registry
+        ID : str
+            If not provided, will use the ID of the original stream.
         kwargs
             Additional properties of the new stream.
             
@@ -195,26 +195,26 @@ class WasteStream(SanStream):
         >>> import qsdsan as qs
         >>> cmps = qs.Components.load_default()
         >>> qs.set_thermo(cmps)
-        >>> s1 = qs.Stream(H2O=100, price=5)
-        >>> s1.show()
-        Stream: s1
+        >>> s = qs.Stream('s', H2O=100, price=5)
+        >>> s.show()
+        Stream: s
          phase: 'l', T: 298.15 K, P: 101325 Pa
          flow (kmol/hr): H2O  100
-        >>> s1.price
+        >>> s.price
         5.0
-        >>> ws1 = qs.WasteStream.from_stream(qs.WasteStream, s1, False, ID='ws1',
-        ...                                  T=250, price=8)
-        >>> ws1.show()
-        WasteStream: ws1
+        >>> ws = qs.WasteStream.from_stream(qs.WasteStream, s, ID='ws',
+        ...                                 T=250, price=8)
+        >>> ws.show()
+        WasteStream: ws
          phase: 'l', T: 250 K, P: 101325 Pa
          flow (g/hr): H2O  1.8e+06
          WasteStream-specific properties:
           pH         : 7.0
-        >>> ws1.price
+        >>> ws.price
         8.0
         '''
         
-        new = SanStream.from_stream(cls, stream, untrack_original)
+        new = SanStream.from_stream(cls, stream, ID)
         
         if isinstance(new, MissingSanStream):
             missing_new = MissingWasteStream.__new__(MissingWasteStream)
@@ -620,18 +620,19 @@ class WasteStream(SanStream):
         .. note::
             
             Price and impact item are not included.
+        
             
         Examples
         --------
         >>> import qsdsan as qs
         >>> cmps = qs.Components.load_default()
         >>> qs.set_thermo(cmps)
-        >>> s1 = qs.Stream(H2O=100, price=5, units='kg/hr')
-        >>> s2 = qs.SanStream(S_O2=100, units='kg/hr')
-        >>> s3 = qs.WasteStream()
-        >>> s3.mix_from((s1, s2))
-        >>> s3.show()
-        WasteStream: ws1
+        >>> s = qs.Stream('s', H2O=100, price=5, units='kg/hr')
+        >>> ss = qs.SanStream('ss', S_O2=100, units='kg/hr')
+        >>> ws = qs.WasteStream('ws')
+        >>> ws.mix_from((s, ss))
+        >>> ws.show()
+        WasteStream: ws
          phase: 'l', T: 298.15 K, P: 101325 Pa
          flow (g/hr): S_O2  1e+05
                       H2O   1e+05

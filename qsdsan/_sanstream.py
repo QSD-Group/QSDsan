@@ -76,7 +76,7 @@ class SanStream(Stream):
     __copy__ = copy
 
     @staticmethod
-    def from_stream(cls, stream, untrack_original=True, **kwargs):
+    def from_stream(cls, stream, ID=None, **kwargs):
         '''
         Cast a :class:`thermosteam.Stream` or :class:`biosteam.utils.MissingStream`
         to :class:`SanStream` or :class:`MissingSanStream`.
@@ -87,8 +87,8 @@ class SanStream(Stream):
             class of the stream to be created.
         stream : :class:`thermosteam.Stream`
             The original stream.
-        untrack_original : bool
-            Whether to untrack the original stream in registry
+        ID : str
+            If not provided, will use the ID of the original stream.
         kwargs
             Additional properties of the new stream.
         
@@ -97,19 +97,19 @@ class SanStream(Stream):
         >>> import qsdsan as qs
         >>> cmps = qs.Components.load_default()
         >>> qs.set_thermo(cmps)
-        >>> s1 = qs.Stream(H2O=100, price=5)
-        >>> s1.show()
-        Stream: s1
+        >>> s = qs.Stream('s', H2O=100, price=5)
+        >>> s.show()
+        Stream: s
          phase: 'l', T: 298.15 K, P: 101325 Pa
          flow (kmol/hr): H2O  100
-        >>> s1.price
+        >>> s.price
         5.0
-        >>> s2 = qs.SanStream.from_stream(qs.SanStream, s1, T=350, price=10)
-        >>> s2.show()
-        SanStream: ss1
+        >>> ss = qs.SanStream.from_stream(qs.SanStream, s, ID='ss', T=350, price=10)
+        >>> ss.show()
+        SanStream: ss
          phase: 'l', T: 350 K, P: 101325 Pa
          flow (kmol/hr): H2O  100
-        >>> s2.price
+        >>> ss.price
         10.0
         '''
         
@@ -118,11 +118,10 @@ class SanStream(Stream):
             return new
             
         elif not isinstance(stream, cls):
-            if untrack_original:
+            if not ID:
                 stream.registry.untrack((stream,))
-            ID = '' if (stream.ID[0] == 's' and stream.ID[1:].isnumeric()) else stream.ID
             new = cls.__new__(cls)
-            new.ID = ID
+            new.ID = stream.ID if not ID else ID
             new._link = None
             new._sink = stream._sink
             new._source = stream._source
@@ -156,6 +155,7 @@ class SanStream(Stream):
         .. note::
             
             Price and impact item are not included.
+        
             
         Examples
         --------

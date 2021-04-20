@@ -12,7 +12,7 @@ What is ``QSDsan``?
 
 As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
 
-All systems developed with ``QSDsan`` are included in the package `exposan <https://github.com/QSD-Group/EXPOsan>`_ - exposition of sanitation and resource recovery systems.
+All systems developed with ``QSDsan`` are included in the package `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ - exposition of sanitation and resource recovery systems.
 
 
 To capitalize, or not to capitalize?
