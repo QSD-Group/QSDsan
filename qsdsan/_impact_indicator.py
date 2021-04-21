@@ -82,11 +82,11 @@ class ImpactIndicator:
     Manage the registry.
 
     >>> GWP.deregister()
-    The indicator "GlobalWarming" has been removed from the registry.
+    The impact indicator "GlobalWarming" has been removed from the registry.
     >>> qs.ImpactIndicator.get_all_indicators()
     []
     >>> GWP.register()
-    The indicator "GlobalWarming" has been added to the registry.    
+    The impact indicator "GlobalWarming" has been added to the registry.    
     >>> qs.ImpactIndicator.get_all_indicators()
     [<ImpactIndicator: GlobalWarming>]
     '''
@@ -101,7 +101,7 @@ class ImpactIndicator:
         
         if register:
             if ID in self._indicators.keys():
-                warn(f'The indicator "{ID}" is being replaced in the registry.')
+                warn(f'The impact indicator "{ID}" is replaced in the registry.')
         
         self._ID = ID
         self._unit = str(unit)
@@ -128,7 +128,7 @@ class ImpactIndicator:
         return f'<ImpactIndicator: {self.ID}>'
 
     def show(self):
-        '''Show basic information about this indicator.'''
+        '''Show basic information about this impact indicator.'''
         if self.unit:
             info = f'ImpactIndicator: {self.ID} as {self.unit}'
         else:
@@ -152,12 +152,12 @@ class ImpactIndicator:
     
     def set_alias(self, alias):
         '''
-        Give the indicator an alias.
+        Give the impact indicator an alias.
 
         Parameters
         ----------
         alias : str
-            New alias of the indicator.
+            New alias of the impact indicator.
         '''
         dct = self._indicators
         if alias in dct.keys() and dct[alias] is not self:
@@ -168,7 +168,7 @@ class ImpactIndicator:
             dct[alias] = self
     
     def get_alias(self):
-        '''Return all aliases of the indicator as a list.'''
+        '''Return all aliases of the impact indicator as a list.'''
 
         return sorted([i for i, j in self._indicators.items()
                        if j==self and i != self.ID])
@@ -180,7 +180,7 @@ class ImpactIndicator:
         Parameters
         ----------
         alias : str
-            The alias of the indicator to be removed.
+            The alias of the impact indicator to be removed.
         '''
         if self._indicators[alias] is not self:
             warn('"{alias}" is not the alias of {self.ID}.')
@@ -189,34 +189,34 @@ class ImpactIndicator:
             self._indicators.pop(alias)
 
     def register(self):
-        '''Add this indicator to the registry.'''
+        '''Add this impact indicator to the registry.'''
         
         ID = self.ID
         if self._registered:
-            warn(f'The indicator "{ID}" is already in registry.')
+            warn(f'The impact indicator "{ID}" is already in registry.')
             return
         else:
             IDs = (ID, *self.get_alias())
             for i in IDs:
                 self._indicators[ID] = self
         
-        print(f'The indicator "{ID}" has been added to the registry.')
+        print(f'The impact indicator "{ID}" has been added to the registry.')
 
     def deregister(self):
-        '''Remove this indicator from the registry.'''
+        '''Remove this impact indicator from the registry.'''
         ID = self.ID
         IDs = (ID, *self.get_alias())
         for i in IDs:
             self._indicators.pop(i)
         self._registered = False
             
-        print(f'The indicator "{ID}" has been removed from the registry.')
+        print(f'The impact indicator "{ID}" has been removed from the registry.')
 
 
     @classmethod
     def load_indicators_from_file(cls, path):
         '''
-        Load indicators from a datasheet.
+        Load impact indicator from a datasheet.
         
         The first row of this datasheet should have "indicator" 
         (must have value as it is used as the ID, e.g., GlobalWarming),
@@ -230,7 +230,7 @@ class ImpactIndicator:
             
             This function is just one way to batch-load impact indicators,
             you can always write your own function that fits your datasheet format,
-            as long as it provides all the information to construct the indicators.
+            as long as it provides all the information to construct the impact indicator.
         
         
         Parameters
@@ -248,7 +248,7 @@ class ImpactIndicator:
         data = load_data(path=path)
         for indicator in data.index:
             if indicator in cls._indicators.keys():
-                raise ValueError(f'The indicator "{indicator}" has been added.')
+                raise ValueError(f'The impact indicator "{indicator}" has been added.')
             else:
                 new = cls.__new__(cls)
                 dct = {}
@@ -264,12 +264,22 @@ class ImpactIndicator:
 
     @classmethod
     def get_indicator(cls, ID):
-        '''Get an indicator by its ID.'''
+        '''Get an impact indicator by its ID.'''
         return cls._indicators[ID]
 
     @classmethod
-    def get_all_indicators(cls):
-        '''Get a list of all defined indicators.'''
+    def get_all_indicators(cls, as_dict=False):
+        '''
+        Get all defined impact indicator.
+        
+        Parameters
+        ----------
+        as_dict : bool
+            False returns a list and True returns a dict.
+        '''
+        if as_dict:
+            return cls._indicators
+        
         return sorted(set([i for i in cls._indicators.values()]), key=lambda i: i.ID)
 
     @property
@@ -293,7 +303,7 @@ class ImpactIndicator:
 
     @property
     def method(self):
-        '''Impact assessment method of the indicator.'''    
+        '''Impact assessment method of the impact indicator.'''    
         return self._method
     @method.setter
     def method(self, i):
@@ -301,7 +311,7 @@ class ImpactIndicator:
 
     @property
     def category(self):
-        '''Impact category of the indicator.'''    
+        '''Impact category of the impact indicator.'''    
         return self._category
     @category.setter
     def category(self, i):
@@ -309,7 +319,7 @@ class ImpactIndicator:
 
     @property
     def description(self):
-        '''Description of the indicator.'''    
+        '''Description of the impact indicator.'''    
         return self._description
     @description.setter
     def description(self, i):
@@ -317,7 +327,7 @@ class ImpactIndicator:
 
     @property
     def registered(self):
-        '''[bool] If this indicator is registered in the records.'''
+        '''[bool] If this impact indicator is registered in the records.'''
         return self._registered
 
 

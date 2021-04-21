@@ -100,8 +100,11 @@ class Transportation:
     def copy(self):
         new = Transportation.__new__(Transportation)
         for slot in Transportation.__slots__:
-            value = getattr(self, slot)
-            setattr(new, slot, copy_maybe(value))
+            if slot == '_item':
+                new._item = self._item
+            else:
+                value = getattr(self, slot)
+                setattr(new, slot, copy_maybe(value))
         return new
     
     __copy__ = copy

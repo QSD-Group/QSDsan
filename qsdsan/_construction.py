@@ -87,8 +87,11 @@ class Construction:
     def copy(self):
         new = Construction.__new__(Construction)
         for slot in Construction.__slots__:
-            value = getattr(self, slot)
-            setattr(new, slot, copy_maybe(value))
+            if slot == '_item':
+                new._item = self._item
+            else:
+                value = getattr(self, slot)
+                setattr(new, slot, copy_maybe(value))
         return new
 
     __copy__ = copy

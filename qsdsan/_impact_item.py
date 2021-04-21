@@ -132,6 +132,8 @@ class ImpactItem:
                  source=None, register=True, **indicator_CFs):
         
         self._ID = ID
+        self._registered = register
+        
         if source:
             self.source = source
         else:
@@ -145,16 +147,19 @@ class ImpactItem:
                     self.add_indicator_CF(indicator, CF_value, CF_unit)
                 except:
                     self.add_indicator_CF(indicator, value)
-            if ID:
-                if register:
+            if register:
+                if ID:
                     if ID in self._items.keys():
                         old = self._items[ID]
                         for i in old.__slots__:
                             if not getattr(old, i) == getattr(self, i):
-                                warn(f'The impact item "{ID}" is being replaced in the registry.')
+                                warn(f'The impact item "{ID}" is replaced in the registry.')
                     else:
                         self._items[ID] = self
                         self._registered = True
+                else:
+                    raise ValueError('Cannot register an impact item without an ID.')
+
     
     # This makes sure it won't be shown as memory location of the object
     def __repr__(self):
@@ -328,8 +333,18 @@ class ImpactItem:
         return cls._items[ID]
     
     @classmethod
-    def get_all_items(cls):
-        '''Get a list of all impact items'''
+    def get_all_items(cls, as_dict=False):
+        '''
+        Get all impact items.
+        
+        Parameters
+        ----------
+        as_dict : bool
+            False returns a list and True returns a dict.
+        '''
+        if as_dict:
+            return cls._items
+
         return sorted(set(i for i in cls._items.values()), key=lambda i: i.ID)
     
     @property
@@ -426,9 +441,12 @@ class StreamImpactItem(ImpactItem):
 
         self._linked_stream = None
         self.linked_stream = linked_stream
+        self._registered = register
+
         if not ID and linked_stream:
             ID = self.linked_stream.ID + '_item'
         self._ID = ID
+
         if source:
             self.source = source
         else:
@@ -443,8 +461,14 @@ class StreamImpactItem(ImpactItem):
                     self.add_indicator_CF(CF, value)
         
         if register:
-            self._items[ID] = self
-            self._registered = True
+            if ID in self._items.keys():
+                old = self._items[ID]
+                for i in old.__slots__:
+                    if not getattr(old, i) == getattr(self, i):
+                        warn(f'The impact item "{ID}" is replaced in the registry.')
+            else:
+                self._items[ID] = self
+                self._registered = True
 
 
     def __repr__(self):
