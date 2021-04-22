@@ -26,8 +26,19 @@ class SanStream(Stream):
     A subclass of :class:`thermosteam.Stream` with additional attributes
     for environmental impacts.
     
+    .. note::
+        
+        Parameters below only include the ones additional to those of :class:`thermosteam.Stream`.
+
+    
+    Parameters
+    ----------
+    impact_item : :class:`StreamImpactItem`
+        The :class:`StreamImpactItem` this stream is linked to.
+    
     Examples
     --------
+    `Component and WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/Component_and_WasteStream.html>`_
     
     See Also
     --------
@@ -40,10 +51,10 @@ class SanStream(Stream):
 
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None, impact_item=None,
-                 **chemical_flows):
+                 **component_flows):
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
                          units=units, price=price, thermo=thermo,
-                         **chemical_flows)
+                         **component_flows)
         
         if impact_item:
             impact_item._linked_stream = self
@@ -179,7 +190,7 @@ class SanStream(Stream):
 
     @property
     def impact_item(self):
-        '''[StreamImpactItem] The :class:`StreamImpactItem` this waste stream is linked to.'''
+        '''[:class:`StreamImpactItem`] The :class:`StreamImpactItem` this stream is linked to.'''
         return self._impact_item
     @impact_item.setter
     def impact_item(self, i):

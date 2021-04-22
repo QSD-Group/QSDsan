@@ -27,7 +27,7 @@ from . import (
 __all__ = (
     *checkers.__all__,
     *cod.__all__,
-    *descriptors.__all__,    
+    *descriptors.__all__,
     *loading.__all__,
     *parse.__all__,
     )
@@ -36,6 +36,7 @@ def _secondary_importing():
     global __all__
     from . import (
         decorators,
+        examples,
         formatting,
         getters,
         setters,
@@ -44,6 +45,7 @@ def _secondary_importing():
     __all__ = (
         *__all__,
         *decorators.__all__,
+        *examples.__all__,
         *formatting.__all__,
         *getters.__all__,
         *setters.__all__,

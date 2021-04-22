@@ -122,6 +122,59 @@ class WasteStream(SanStream):
     A subclass of :class:`~.SanStream` with additional attributes and methods
     for wastewater.
     
+    .. note::
+        
+        [1] Parameters below only include the ones additional to those of
+        :class:`thermosteam.Stream`.
+        
+        [2] Properties not defined during during initiation will be calculated
+        using :func:`WasteStream.composite`.
+    
+    
+    Parameters
+    ----------
+    pH : float
+        pH of the stream, unitless.
+    SAlk : float
+        Alkalinity, in meq/L (or mmol HCO3-/L). Assumed to be mainly bicarbonate.
+    COD : float
+        Chemical oxygen demand, in mg/L.
+    BOD : float
+        Biochemical oxygen demand, in mg/L, same as BOD5.
+    uBOD : float
+        Ultimate biochemical oxygen demand, in mg/L.
+    cnBOD : float
+        Carbonaceous nitrogenous BOD, in mg/L. Biochemical oxygen demand including nitrification.
+    ThOD : float
+        Theoretical oxygen demand, in mg/L.
+    TC : float
+        Total carbon, in mg/L.
+    TOC : float
+        Total organic carbon, in mg/L.
+    TN : float
+        Total nitrogen, in mg/L.
+    TKN : float
+        Total Kjeldahl nitrogen, in mg/L.
+    TP : float
+        Total phosphorus, in mg/L.
+    TK : float
+        Total potassium, in mg/L.
+    TMg : float
+        Total magnesium, in mg/L.
+    TCa : float
+        Total calcium, in mg/L.
+    dry_mass : float
+        Total solids, dry mass of dissolved and suspended solids, in mg/L.
+    charge : float
+        TO BE IMPLEMENTED
+    ratios : float
+        TO BE IMPLEMENTED
+    impact_item : :class:`StreamImpactItem`
+        The :class:`StreamImpactItem` this stream is linked to.
+    component_flows : kwargs
+        Component flow data.
+    
+    
     Examples
     --------
     `Component and WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/Component_and_WasteStream.html>`_
@@ -138,20 +191,22 @@ class WasteStream(SanStream):
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None, 
                  pH=7., SAlk=2.5, COD=None, BOD=None, uBOD=None,
+                 ThOD=None, cnBOD=None,
                  TC=None, TOC=None, TN=None, TKN=None, TP=None, TK=None,
                  TMg=None, TCa=None, dry_mass=None, charge=None, ratios=None,
-                 ThOD=None, cnBOD=None, impact_item=None, **chemical_flows):
+                 impact_item=None, **component_flows):
         
         SanStream.__init__(self=self, ID=ID, flow=flow, phase=phase, T=T, P=P,
                            units=units, price=price, thermo=thermo,
-                           impact_item=impact_item, **chemical_flows)
+                           impact_item=impact_item, **component_flows)
         
         self._init_ws(pH, SAlk, COD, BOD, uBOD, TC, TOC, TN, TKN,
                       TP, TK, TMg, TCa, ThOD, cnBOD, dry_mass, charge, ratios)
 
     def _init_ws(self, pH=7., SAlk=None, COD=None, BOD=None,
-                 uBOD=None, TC=None, TOC=None, TN=None, TKN=None,
-                 TP=None, TK=None, TMg=None, TCa=None, ThOD=None, cnBOD=None,
+                 uBOD=None, ThOD=None, cnBOD=None,
+                 TC=None, TOC=None, TN=None, TKN=None,
+                 TP=None, TK=None, TMg=None, TCa=None,
                  dry_mass=None, charge=None, ratios=None):
 
         self._pH = pH
@@ -159,6 +214,8 @@ class WasteStream(SanStream):
         self._COD = COD
         self._BOD = BOD
         self._uBOD = uBOD
+        self._ThOD = ThOD
+        self._cnBOD = cnBOD
         self._TC = TC
         self._TOC = TOC
         self._TN = TN
@@ -167,8 +224,6 @@ class WasteStream(SanStream):
         self._TK = TK
         self._TMg = TMg
         self._TCa = TCa
-        self._ThOD = ThOD
-        self._cnBOD = cnBOD
         self._dry_mass = dry_mass
         self._charge = charge
         self._ratios = ratios
@@ -231,7 +286,7 @@ class WasteStream(SanStream):
     def show(self, T='K', P='Pa', flow='g/hr', composition=False, N=15,
              stream_info=True, details=True):
         '''
-        Print waste stream information.
+        Print information related to this :class:`WasteStream`.
 
         Parameters
         ----------
@@ -452,7 +507,7 @@ class WasteStream(SanStream):
 
     @property
     def SAlk(self):
-        '''[float] Alkalinity in meq/L (or mmol HCO3-/L). Assumed to be mainly bicarbonate.'''
+        '''[float] Alkalinity, in meq/L (or mmol HCO3-/L). Assumed to be mainly bicarbonate.'''
         return self._liq_sol_properties('SAlk', 0.)
 
     @property

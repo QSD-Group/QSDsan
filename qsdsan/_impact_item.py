@@ -28,10 +28,8 @@ getattr = getattr
 
 __all__ = ('ImpactItem', 'StreamImpactItem')
 
-def check_source(item):
-    if item.source:
-        raise ValueError(f'This ImpactItem is copied from {item.source.ID}, '
-                         'value cannot be set.')
+def get_source_item(item):
+    return item if not item.source else item.source
 
 class ImpactItem:
     '''
@@ -57,6 +55,14 @@ class ImpactItem:
         Impact indicators and their characteriziation factors (CFs),
         can be in the form of str=float or str=(float, unit).
     
+    Tip
+    ---
+    :class:`ImpactItem` should be used for environmental impacts associated with
+    construction and transportation.
+    For impacts associated with streams (e.g., chemicals, wastes, emissions),
+    use :class:`StreamImpactItem` instead.
+
+
     Examples
     --------
     Firstly make impact indicators.
@@ -87,8 +93,11 @@ class ImpactItem:
     >>> # Note that 5.93 appears instead of 5.926 is for nicer print
     >>> Electricity.CFs
     {'GlobalWarming': 0.48, 'FossilEnergyConsumption': 5.926}
-    >>> # Items without an ID won't be added to the registry.
-    >>> CO2 = qs.ImpactItem(functional_unit='kg', GWP=1)
+    >>> # Items without an ID cannot be added to the registry.
+    >>> CO2 = qs.ImpactItem(functional_unit='kg', GWP=1, register=True)
+    Traceback (most recent call last):
+        ...
+    ValueError: Cannot register an impact item without an ID.    
     >>> qs.ImpactItem.get_all_items()
     [<ImpactItem: Electricity>, <ImpactItem: Steel>]
 
@@ -101,7 +110,7 @@ class ImpactItem:
     >>> Steel3.CFs['GlobalWarming']
     2.55
     
-    Once linked, CFs of the copy will update with the source.
+    Once linked, CFs of the copy will update with the source (it works vice versa).
     
     >>> Steel.CFs['GlobalWarming'] = 2
     >>> Steel.CFs['GlobalWarming']
@@ -144,9 +153,9 @@ class ImpactItem:
             for indicator, value in indicator_CFs.items():
                 try:
                     CF_value, CF_unit = value # unit provided for CF
-                    self.add_indicator_CF(indicator, CF_value, CF_unit)
+                    self.add_indicator(indicator, CF_value, CF_unit)
                 except:
-                    self.add_indicator_CF(indicator, value)
+                    self.add_indicator(indicator, value)
             if register:
                 if ID:
                     if ID in self._items.keys():
@@ -186,20 +195,22 @@ class ImpactItem:
     _ipython_display_ = show
 
     def _update_price(self, price=0., unit=''):
-        check_source(self)
+        source_item = get_source_item(self)
         if not unit or unit == currency:
-            self._price = float(price)
+            source_item._price = float(price)
         else:
             converted = auom(unit).convert(float(price), currency)
-            self._price = converted
+            source_item._price = converted
 
-    def add_indicator_CF(self, indicator, CF_value, CF_unit=''):
-        '''Add an indicator charactorization factor for this :class:`ImpactItem` object.'''
-        check_source(self)
+    def add_indicator(self, indicator, CF_value, CF_unit=''):
+        '''Add an indicator with charactorization factor values.'''
+        source_item = get_source_item(self)
         if isinstance(indicator, str):
             indicator = indicators[indicator]
+            
         try: CF_unit2 = CF_unit.replace(' eq', '-eq')
         except: pass
+    
         if CF_unit and CF_unit != indicator.unit and CF_unit2 != indicator.unit:
             try:
                 CF_value = auom(parse_unit(CF_unit)[0]). \
@@ -207,7 +218,23 @@ class ImpactItem:
             except:
                 raise ValueError(f'Conversion of the given unit {CF_unit} to '
                                  f'the defaut unit {indicator.unit} is not supported.')
-        self._CFs[indicator.ID] = CF_value
+        
+        source_item._CFs[indicator.ID] = CF_value
+
+    def remove_indicator(self, indicator):
+        '''
+        Remove an indicator.
+        
+        Parameters
+        ----------
+        indicator : str or :class:`~.ImpactIndicator`
+            The :class:`~.ImpactIndicator` or its ID.
+        '''
+        ID = indicator if isinstance(indicator, str) else indicator.ID
+        source_item = get_source_item(self)
+        source_item.CFs.pop(ID)
+        print(f'The impact indicator "{ID}" has been removed.')
+
 
     def copy(self, new_ID=None, set_as_source=False, register=True):
         '''
@@ -323,9 +350,9 @@ class ImpactItem:
             else:
                 for item in data.index:
                     old = items[item]
-                    old.add_indicator_CF(indicator=sheet,
-                                         CF_value=float(data.loc[item]['expected']),
-                                         CF_unit=data.loc[item]['unit'])
+                    old.add_indicator(indicator=sheet,
+                                        CF_value=float(data.loc[item]['expected']),
+                                        CF_unit=data.loc[item]['unit'])
     
     @classmethod
     def get_item(cls, ID):
@@ -375,36 +402,31 @@ class ImpactItem:
     @property
     def functional_unit(self):
         '''[str] Functional unit of the item.'''
-        if self.source: return self.source._functional_unit.units
-        return self._functional_unit.units
+        return get_source_item(self)._functional_unit.units
     @functional_unit.setter
     def functional_unit(self, i):
-        check_source(self)
-        self._functional_unit = auom(i)
+        get_source_item(self)._functional_unit = auom(i)
     
     @property
     def indicators(self):
         ''' [tuple] :class:`ImpactIndicator` objects associated with the item.'''
-        return tuple(indicators[i] for i in self.CFs.keys())
+        return tuple(indicators[i] for i in get_source_item(self)._CFs.keys())
     
     @property
     def price(self):
         '''Price of the item per functional unit.'''
-        if self.source: return self.source.price
-        return self._price
+        return get_source_item(self)._price
     @price.setter
     def price(self, price, unit=''):
-        self._update_price(price, unit)
+        get_source_item(self)._update_price(price, unit)
     
     @property
     def CFs(self):
         '''[dict] Characterization factors of the item for different impact indicators.'''
-        if self.source: return self.source._CFs
-        return self._CFs
+        return get_source_item(self)._CFs
     @CFs.setter
     def CFs(self, indicator, CF_value, CF_unit=''):
-        check_source(self)
-        self.add_indicator_CF(indicator, CF_value, CF_unit)
+        get_source_item(self).add_indicator(indicator, CF_value, CF_unit)
         
     @property
     def registered(self):
@@ -416,8 +438,8 @@ class ImpactItem:
 
 class StreamImpactItem(ImpactItem):
     '''
-    A class for calculation of environmental impacts associated with chemical
-    inputs and emissions.
+    A class for calculation of environmental impacts associated with streams 
+    (e.g., chemical inputs, emissions).
     
     Parameters
     ----------
@@ -431,6 +453,75 @@ class StreamImpactItem(ImpactItem):
     indicator_CFs : kwargs
         ImpactIndicators and their characteriziation factors (CFs).
     
+    Tip
+    ---
+    For environmental impacts associated with construction and transportation,
+    use :class:`ImpactItem` instead.
+
+    Examples
+    --------
+    Refer to :class:`ImpactItem` for general features.
+    Below is about the additional features for :class:`StreamImpactItem`.
+    
+    Assume we want to account for the globalwarming potential for methane:
+
+    >>> # Make impact indicators
+    >>> import qsdsan as qs
+    >>> GWP = qs.ImpactIndicator('GlobalWarming', alias='GWP', unit='kg CO2-eq')
+    >>> FEC = qs.ImpactIndicator('FossilEnergyConsumption', alias='FEC', unit='MJ')
+    >>> # Make an stream impact item
+    >>> methane_item = qs.StreamImpactItem('methane_item', register=True, GWP=28)
+    >>> methane_item.show()
+    StreamImpactItem: [per kg]
+    Linked to       : None
+    Price           : 0 USD
+    ImpactIndicators:
+                               Characterization factors
+    GlobalWarming (kg CO2-eq)                        28
+    >>> # Make a stream and link the stream to the impact item
+    >>> cmps = qs.utils.examples.load_example_cmps()
+    >>> qs.set_thermo(cmps)
+    >>> methane = qs.SanStream('methane', Methane=1, units='kg/hr',
+                               impact_item=methane_item)
+    >>> methane_item.show()
+    StreamImpactItem: [per kg]
+    Linked to       : methane
+    Price           : 0 USD
+    ImpactIndicators:
+                               Characterization factors
+    GlobalWarming (kg CO2-eq)                        28
+
+    We can make copies of the impact item, and link it to the original one.
+    
+    >>> methane2 = methane.copy('methane2')
+    >>> methane_item2 = methane_item.copy('methane_item2', stream=methane2,
+                                          set_as_source=True, register=True)
+    >>> methane_item2.CFs['GlobalWarming']
+    28
+    >>> methane_item2.CFs['GlobalWarming'] = 1
+    >>> methane_item.CFs['GlobalWarming']
+    1
+    
+    We can also add or remove impact indicators.
+    
+    >>> methane_item2.remove_indicator('GlobalWarming')
+    The impact indicator "GlobalWarming" has been removed.
+    >>> methane_item2.show()
+    StreamImpactItem: [per kg]
+    Linked to       : methane2
+    Source          : methane_item
+    Price           : 0 USD
+    ImpactIndicators:
+     None
+    >>> methane_item2.add_indicator('GlobalWarming', 28)
+    >>> methane_item2.show()
+    StreamImpactItem: [per kg]
+    Linked to       : methane2
+    Source          : methane_item
+    Price           : 0 USD
+    ImpactIndicators:
+                               Characterization factors
+    GlobalWarming (kg CO2-eq)                        28
     '''
 
     __slots__ = ('_ID', '_linked_stream', '_functional_unit', '_CFs', '_source',
@@ -456,9 +547,9 @@ class StreamImpactItem(ImpactItem):
             for CF, value in indicator_CFs.items():
                 try:
                     CF_value, CF_unit = value # unit provided for CF
-                    self.add_indicator_CF(CF, CF_value, CF_unit)
+                    self.add_indicator(CF, CF_value, CF_unit)
                 except:
-                    self.add_indicator_CF(CF, value)
+                    self.add_indicator(CF, value)
         
         if register:
             if ID in self._items.keys():
@@ -552,7 +643,7 @@ class StreamImpactItem(ImpactItem):
     @property
     def source(self):
         '''
-        [StreamImpactItem] If provided, all attributions and properties of this
+        [:class:`StreamImpactItem`] If provided, all attributions and properties of this
         :class:`StreamImpactItem` will be copied from the provided source.
         
         .. note::
@@ -570,7 +661,7 @@ class StreamImpactItem(ImpactItem):
     @property
     def linked_stream(self):
         '''
-        [SanStream] The associated :class:`SanStream` for environmental impact calculation,
+        [:class:`SanStream`] The associated :class:`SanStream` for environmental impact calculation,
         can be set by either the :class:`SanStream` object or its ID.
         '''
         return self._linked_stream

@@ -113,6 +113,62 @@ class Component(Chemical):
     A subclass of :class:`thermosteam.Chemical` with additional attributes
     and methods for waste treatment.
 
+    Parameters
+    ----------
+    ID : str
+        ID for the component, must be unique.
+    search_ID : str
+        ID that will be passed to :class:`thermosteam.Chemical` to search the database.
+    formula : str
+        Formula for the component, formula from the database will be used
+        if the component is constructed from the database and it has a formula in the database.
+    phase : str
+        If provided, this component will be assumed to only exist in the given phase.
+    i_C : float
+        Carbon content of the component, [g C/g measure unit].
+    i_N : float
+        Nitrogen content of the component, [g N/g measure unit].
+    i_P : float
+        Phosphorus content of the component, [g P/g measure unit].
+    i_K : float
+        Potassium content of the component, [g K/g measure unit].
+    i_Mg : float
+        Magnesium content of the component, [g Mg/g measure unit].
+    i_Ca : float
+        Calcium content of the component, [g Ca/g measure unit].
+    i_mass : float
+        Mass content of the component, [g Component/g measure unit].
+    i_charge : float
+        Charge content of the component, [mol +/g measure unit].
+        Positive values indicate cations and negative values indicate anions.
+    i_COD : float
+        COD content, calculated based on `measured_as`, `organic`, and `formula` if not given.
+    i_NOD : float
+        Nitrogenous oxygen demand, calculated based on `measured_as`,
+        `degradability`, and `formula` if not given.
+    f_BOD5_COD : float
+        BOD5 fraction in COD of the component, unitless.
+    f_uBOD_COD : float        
+        Ultimate BOD fraction in COD of the component, unitless.
+    f_Vmass_Totmass : float        
+        Volatile fraction of the mass of the component, unitless.
+    description : str
+        Description of the component.
+    measured_as : str
+        The unit as which the component is measured.
+        Can be left as blank or chosen from 'COD', or a constituent 
+        element of the component.
+    particle_size : str
+        Size of the component based on the type.
+        Must be chosen from 'Dissolved gas', 'Soluble', 'Colloidal', or 'Particulate'.
+    degradability : str
+        Degradability of the Component.
+        Must be chosen from 'Readily', 'Slowly', or 'Undegradable'.
+    organic : bool
+        True (organic) or False (inorganic).
+    chemical_properties : kwargs
+        Will be passed to :class:`thermosteam.Chemical`.
+
     .. note::
         
         [1] Element ratios like `i_C`, `i_N`, `i_P`, `i_K`, `i_Mg`, and `i_Ca` will
@@ -121,6 +177,10 @@ class Component(Chemical):
         
         [2] For fractions including `f_BOD5_COD`, `f_uBOD_COD`, and `f_Vmass_Totmass`,
         their values must be within [0, 1].
+        
+        [3] If no formula or MW is provided, then MW of this component is assumed to
+        1 to avoid ZeroDivisionError exception in calculation.
+    
     
     Examples
     --------
@@ -403,7 +463,7 @@ class Component(Chemical):
 
     @property
     def organic(self):
-        '''[bool] True (organic) or False (inorganic)'''
+        '''[bool] True (organic) or False (inorganic).'''
         return self._organic
     @organic.setter
     def organic(self, organic):
@@ -412,7 +472,7 @@ class Component(Chemical):
 
     @property
     def i_COD(self):
-        '''[float] COD content, calculated based on `measured_as`, `organic` and `formula`.'''
+        '''[float] COD content, calculated based on `measured_as`, `organic`, and `formula` if not given.'''
         return self._i_COD or 0.
     @i_COD.setter
     def i_COD(self, i):
@@ -438,7 +498,7 @@ class Component(Chemical):
     def i_NOD(self):
         '''
         [float] Nitrogenous oxygen demand, calculated based on `measured_as`,
-        `degradability` and `formula`.'''
+        `degradability`, and `formula` if not given.'''
         return self._i_NOD or 0.        
     @i_NOD.setter
     def i_NOD(self, i):

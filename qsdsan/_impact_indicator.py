@@ -127,6 +127,7 @@ class ImpactIndicator:
     def __repr__(self):
         return f'<ImpactIndicator: {self.ID}>'
 
+
     def show(self):
         '''Show basic information about this impact indicator.'''
         if self.unit:
