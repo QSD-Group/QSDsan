@@ -22,16 +22,19 @@ from . import currency, SanStream, WasteStream, ImpactIndicator
 from ._units_of_measure import auom, parse_unit
 from .utils.formatting import format_number as f_num
 
-# indicators = ImpactIndicator.get_all_indi
 isinstance = isinstance
 getattr = getattr
 
 __all__ = ('ImpactItem', 'StreamImpactItem')
 
-def get_source_item(item):
-    return item if not item.source else item.source
+def check_source(item, return_item=False):
+    if item.source:
+        raise ValueError(f'This impact item is copied from {item.source.ID}, '
+                         'value cannot be set.')
+    if return_item:
+        return item
 
-@registered(ticket_name='Item')
+@registered(ticket_name='item')
 class ImpactItem:
     '''
     A class for calculation of environmental impacts.
@@ -39,8 +42,7 @@ class ImpactItem:
     Parameters
     ----------
     ID : str
-        ID of the impact item. If no ID is provided, this item will not be
-        saved in the ImpactItem dict.
+        ID of the impact item.
     functional_unit : str
         Functional unit of the impact item.
     price : float
@@ -50,8 +52,6 @@ class ImpactItem:
     source : ImpactItem
         If provided, all attributions and properties of this impact item will
         be copied from the provided source.
-    register : bool
-        Whether to add to the registry.
     indicator_CFs : kwargs
         Impact indicators and their characteriziation factors (CFs),
         can be in the form of str=float or str=(float, unit).
@@ -94,25 +94,19 @@ class ImpactItem:
     >>> # Note that 5.93 appears instead of 5.926 is for nicer print
     >>> Electricity.CFs
     {'GlobalWarming': 0.48, 'FossilEnergyConsumption': 5.926}
-    >>> # Items without an ID cannot be added to the registry.
-    >>> CO2 = qs.ImpactItem(functional_unit='kg', GWP=1, register=True)
-    Traceback (most recent call last):
-        ...
-    ValueError: Cannot register an impact item without an ID.    
+    >>> # Get all impact items
     >>> qs.ImpactItem.get_all_items()
-    [<ImpactItem: Electricity>, <ImpactItem: Steel>]
+    {'Steel': <ImpactItem: Steel>, 'Electricity': <ImpactItem: Electricity>}
 
     You can make copies of impact items and choose to link to the source or not.
     
-    >>> Steel2 = Steel.copy('Steel2', set_as_source=True, register=True)
+    >>> Steel2 = Steel.copy('Steel2', set_as_source=True)
     >>> Steel2.CFs['GlobalWarming']
     2.55
-    >>> Steel3 = Steel.copy('Steel3', set_as_source=False, register=False)
+    >>> Steel3 = Steel.copy('Steel3', set_as_source=False)
     >>> Steel3.CFs['GlobalWarming']
     2.55
-    
-    Once linked, CFs of the copy will update with the source (it works vice versa).
-    
+    >>> # Once linked, CFs of the copy will update with the source
     >>> Steel.CFs['GlobalWarming'] = 2
     >>> Steel.CFs['GlobalWarming']
     2
@@ -120,27 +114,44 @@ class ImpactItem:
     2
     >>> Steel3.CFs['GlobalWarming']
     2.55
+    >>> # Update the copy won't update the source
+    >>> Steel2.CFs['GlobalWarming'] = 5
+    >>> Steel.CFs['GlobalWarming']
+    2
+    >>> Steel2.CFs['GlobalWarming']
+    2
     
     Manage the registry.
     
     >>> qs.ImpactItem.get_all_items()
-    [<ImpactItem: Electricity>, <ImpactItem: Steel>, <ImpactItem: Steel2>]
+    {'Steel': <ImpactItem: Steel>,
+     'Electricity': <ImpactItem: Electricity>,
+     'Steel2': <ImpactItem: Steel2>,
+     'Steel3': <ImpactItem: Steel3>}
     >>> Steel2.deregister()
     The impact item "Steel2" has been removed from the registry.
-    >>> Steel3.register()
-    The impact item "Steel3" has been added to the registry.
     >>> qs.ImpactItem.get_all_items()
-    [<ImpactItem: Electricity>, <ImpactItem: Steel>, <ImpactItem: Steel3>]
+    {'Steel': <ImpactItem: Steel>,
+     'Electricity': <ImpactItem: Electricity>,
+     'Steel3': <ImpactItem: Steel3>}
+    >>> Steel2.register()
+    The impact item "Steel2" has been added to the registry.
+    >>> qs.ImpactItem.get_all_items()
+    {'Steel': <ImpactItem: Steel>,
+     'Electricity': <ImpactItem: Electricity>,
+     'Steel3': <ImpactItem: Steel3>,
+     'Steel2': <ImpactItem: Steel2>}
     >>> qs.ImpactItem.clear_registry()
     All impact items have been removed from registry.
+    >>> qs.ImpactItem.get_all_items()
+    {}
     '''
     
     _items = {}    
     
-    __slots__ = ('_ID', '_functional_unit', '_price', '_CFs', '_source',
-                 '_registered')
+    __slots__ = ('_ID', '_functional_unit', '_price', '_CFs', '_source')
     
-    def __init__(self, ID=None, functional_unit='kg', price=0., price_unit='',
+    def __init__(self, ID, functional_unit='kg', price=0., price_unit='',
                  source=None,
                  # register=True,
                  **indicator_CFs):
@@ -162,18 +173,19 @@ class ImpactItem:
                     self.add_indicator(indicator, CF_value, CF_unit)
                 except:
                     self.add_indicator(indicator, value)
-            if register:
-                if ID:
-                    if ID in self._items.keys():
-                        old = self._items[ID]
-                        for i in old.__slots__:
-                            if not getattr(old, i) == getattr(self, i):
-                                warn(f'The impact item "{ID}" is replaced in the registry.')
-                    else:
-                        self._items[ID] = self
-                        self._registered = True
-                else:
-                    raise ValueError('Cannot register an impact item without an ID.')
+            
+            # if register:
+            #     if ID:
+            #         if ID in self._items.keys():
+            #             old = self._items[ID]
+            #             for i in old.__slots__:
+            #                 if not getattr(old, i) == getattr(self, i):
+            #                     warn(f'The impact item "{ID}" is replaced in the registry.')
+            #         else:
+            #             self._items[ID] = self
+            #             self._registered = True
+            #     else:
+            #         raise ValueError('Cannot register an impact item without an ID.')
 
     
     # This makes sure it won't be shown as memory location of the object
@@ -201,7 +213,7 @@ class ImpactItem:
     _ipython_display_ = show
 
     def _update_price(self, price=0., unit=''):
-        source_item = get_source_item(self)
+        source_item = check_source(self, True)
         if not unit or unit == currency:
             source_item._price = float(price)
         else:
@@ -210,9 +222,9 @@ class ImpactItem:
 
     def add_indicator(self, indicator, CF_value, CF_unit=''):
         '''Add an indicator with charactorization factor values.'''
-        source_item = get_source_item(self)
+        source_item = check_source(self, True)
         if isinstance(indicator, str):
-            indicator = ImpactIndicator.get_all_indicators(as_dict=True)[indicator]
+            indicator = ImpactIndicator.get_indicator(indicator)
             # try: indicator = indicators[indicator]
             # except: breakpoint()
             
@@ -226,7 +238,7 @@ class ImpactItem:
             except:
                 raise ValueError(f'Conversion of the given unit {CF_unit} to '
                                  f'the defaut unit {indicator.unit} is not supported.')
-        
+
         source_item._CFs[indicator.ID] = CF_value
 
     def remove_indicator(self, indicator):
@@ -236,15 +248,14 @@ class ImpactItem:
         Parameters
         ----------
         indicator : str or :class:`~.ImpactIndicator`
-            The :class:`~.ImpactIndicator` or its ID.
+            :class:`~.ImpactIndicator` or its ID.
         '''
         ID = indicator if isinstance(indicator, str) else indicator.ID
-        source_item = get_source_item(self)
-        source_item.CFs.pop(ID)
+        check_source(self, True).CFs.pop(ID)
         print(f'The impact indicator "{ID}" has been removed.')
 
 
-    def copy(self, new_ID=None, set_as_source=False, register=True):
+    def copy(self, new_ID, set_as_source=False):
         '''
         Return a new :class:`ImpactItem` object with the same settings.
         
@@ -259,22 +270,24 @@ class ImpactItem:
         '''
         
         new = ImpactItem.__new__(ImpactItem)
-        new.ID = new_ID
+        new.__init__(new_ID)        
+        
+        # new.ID = new_ID
         
         if set_as_source:
             new.source = self
         else:
             for slot in ImpactItem.__slots__:
-                if slot == '_ID':
+                if slot in ('_ID', '_source'):
                     continue
                 value = getattr(self, slot)
                 setattr(new, slot, copy_maybe(value))
-        
-        if register:
-            self._items[new_ID] = new
-            new._registered = True
-        else:
-            new._registered = False
+            new.source = self.source
+        # if register:
+        #     self._items[new_ID] = new
+        #     new._registered = True
+        # else:
+        #     new._registered = False
         
         return new
 
@@ -282,29 +295,51 @@ class ImpactItem:
 
     def register(self):
         '''Add this impact item to the registry.'''
-        ID = self.ID
-        if self._registered:
-            warn(f'The impact item "{ID}" is already in registry.')
-            return
-        else:
-            self._items[ID] = self
+        self.registry.register_safely(self.ID, self)
         
-        print(f'The impact item "{ID}" has been added to the registry.')
+        # ID = self.ID
+        # if self._registered:
+        #     warn(f'The impact item "{ID}" is already in registry.')
+        #     return
+        # else:
+        #     self._items[ID] = self
+        
+        print(f'The impact item "{self.ID}" has been added to the registry.')
 
     def deregister(self):
         '''Remove this impact item from the registry.'''
-        ID = self.ID
-        self._items.pop(ID)
-        self._registered = False
-        print(f'The impact item "{ID}" has been removed from the registry.')
+        self.registry.discard(self.ID)
+        
+        # ID = self.ID
+        # self._items.pop(ID)
+        # self._registered = False
+
+        print(f'The impact item "{self.ID}" has been removed from the registry.')
     
     @classmethod
     def clear_registry(cls):
         '''Remove all existing impact items from the registry.'''
-        for i in cls._items.values():
-            i._registered = False
-        cls._items = {}
+        cls.registry.clear()
+        
+        # for i in cls._items.values():
+        #     i._registered = False
+        # cls._items = {}
+        
         print('All impact items have been removed from registry.')
+    
+    
+    @classmethod
+    def get_all_items(cls):
+        '''Get all impact items.'''
+        # if as_dict:
+        #     return cls._items
+
+        return cls.registry.data
+    
+    @classmethod
+    def get_item(cls, ID):
+        '''Get an item by its ID.'''
+        return cls.get_all_items().get(ID)
     
     @classmethod
     def load_items_from_excel(cls, path):
@@ -343,111 +378,99 @@ class ImpactItem:
         Tip
         ---
         Refer to the `Bwaise system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise/data>`_
-        in the ``Exposan`` repository for a sample file.
+        in the `Exposan` repository for a sample file.
         '''
         if not (path.endswith('.xls') or path.endswith('.xlsx')):
             raise ValueError('Only Excel files ends with ".xlsx" or ".xls" can be interpreted.')
         
         data_file = pd.ExcelFile(path, engine='openpyxl')
-        items = cls._items
-        for sheet in data_file.sheet_names:
-            data = data_file.parse(sheet, index_col=0)
-
-            if sheet == 'info':
-                for item in data.index:
-                    if item in items.keys():
-                        warn(f'The impact item "{item}" has been added.')
-                    else:
-                        new = cls.__new__(cls)
-                        new.__init__(ID=item,
-                                     functional_unit=data.loc[item]['functional_unit'])
-                        items[item] = new
-            else:
-                for item in data.index:
-                    old = items[item]
-                    old.add_indicator(indicator=sheet,
-                                      CF_value=float(data.loc[item]['expected']),
-                                      CF_unit=data.loc[item]['unit'])
-    
-    @classmethod
-    def get_item(cls, ID):
-        '''Get an item by its ID.'''
-        return cls._items[ID]
-    
-    @classmethod
-    def get_all_items(cls, as_dict=False):
-        '''
-        Get all impact items.
+        # items = cls.get_all_items()
         
-        Parameters
-        ----------
-        as_dict : bool
-            False returns a list and True returns a dict.
-        '''
-        if as_dict:
-            return cls._items
+        for sheet_name in data_file.sheet_names:
+            data = data_file.parse(sheet_name, index_col=0)
 
-        return sorted(set(i for i in cls._items.values()), key=lambda i: i.ID)
+            if sheet_name == 'info':
+                for item_ID in data.index:
+                    # if item in items.keys():
+                    #     warn(f'The impact item "{item}" has been added.')
+                    # else:
+                    new = cls.__new__(cls)
+                    new.__init__(ID=item_ID,
+                                 functional_unit=data.loc[item_ID]['functional_unit'])
+                    # items[item] = new
+            else:
+                for item_ID in data.index:
+                    item = cls.get_item(item_ID)
+                    item.add_indicator(indicator=sheet_name,
+                                       CF_value=float(data.loc[item_ID]['expected']),
+                                       CF_unit=data.loc[item_ID]['unit'])
     
     @property
     def source(self):
         '''
-        [ImpactItem] If provided, all attributions and properties of this
+        [:class:`ImpactItem`] If provided, all attributions and properties of this
         impact item will be copied from the provided source.
+        ID of the impact item can be provided instead of the object.
         '''
         return self._source
     @source.setter
     def source(self, i):
         if not isinstance(i, ImpactItem):
-            raise ValueError('`source` can only be an `ImpactItem`, '
-                             f'not {type(i).__name__}.')
+            if isinstance(i, str):
+                i = self.get_item(i)
+            elif not i:
+                i = None
+            else:
+                raise ValueError('`source` can only be an `ImpactItem` or its ID, '
+                                 f'not {type(i).__name__}.')
         self._source = i
     
     @property
     def ID(self):
-        '''
-        [str] ID of the item. If no ID is provided, this item will not be
-        saved in the ImpactItem dict.
-        '''
+        '''[str] ID of this item.'''
         return self._ID
     @ID.setter
-    def ID(self, i):
-        self._ID = i
+    def ID(self, ID):
+        self._ID = ID
     
     @property
     def functional_unit(self):
-        '''[str] Functional unit of the item.'''
-        return get_source_item(self)._functional_unit.units
+        '''[str] Functional unit of this item.'''
+        return check_source(self, True)._functional_unit.units
     @functional_unit.setter
     def functional_unit(self, i):
-        get_source_item(self)._functional_unit = auom(i)
+        check_source(self, True)._functional_unit = auom(i)
     
     @property
     def indicators(self):
-        ''' [tuple] :class:`ImpactIndicator` objects associated with the item.'''
-        return tuple(ImpactIndicator.get_all_indicators(as_dict=True)[i]
-                     for i in get_source_item(self)._CFs.keys())
+        ''' [tuple] Impact indicators associated with this item.'''
+        return tuple(ImpactIndicator.get_all_indicators(True)[i]
+                     for i in self.CFs.keys())
     
     @property
     def price(self):
-        '''Price of the item per functional unit.'''
-        return get_source_item(self)._price
+        '''Price of this item per functional unit.'''
+        return check_source(self, True)._price
     @price.setter
     def price(self, price, unit=''):
-        get_source_item(self)._update_price(price, unit)
+        check_source(self, True)._update_price(price, unit)
     
     @property
     def CFs(self):
-        '''[dict] Characterization factors of the item for different impact indicators.'''
-        return get_source_item(self)._CFs
+        '''[dict] Characterization factors of this item for different impact indicators.'''
+        if self.source:
+            return self.source._CFs.copy()
+        else:
+            return self._CFs
     @CFs.setter
     def CFs(self, indicator, CF_value, CF_unit=''):
-        get_source_item(self).add_indicator(indicator, CF_value, CF_unit)
+        check_source(self, True).add_indicator(indicator, CF_value, CF_unit)
         
     @property
     def registered(self):
-        '''[bool] If this impact item is registered in the records.'''
-        return self._registered
+        '''[bool] If this impact item is registered in the record.'''
+        data = self.registry.data.get(self.ID)
+        return True if data else False
 
 
 # %%
@@ -464,8 +487,6 @@ class StreamImpactItem(ImpactItem):
     source : :class:`StreamImpactItem`
         If provided, all attributions and properties of this
         :class:`StreamImpactItem` will be copied from the provided source.
-    register : bool
-        Whether to add to the registry.
     indicator_CFs : kwargs
         ImpactIndicators and their characteriziation factors (CFs).
     
@@ -486,7 +507,7 @@ class StreamImpactItem(ImpactItem):
     >>> GWP = qs.ImpactIndicator('GlobalWarming', alias='GWP', unit='kg CO2-eq')
     >>> FEC = qs.ImpactIndicator('FossilEnergyConsumption', alias='FEC', unit='MJ')
     >>> # Make an stream impact item
-    >>> methane_item = qs.StreamImpactItem('methane_item', register=True, GWP=28)
+    >>> methane_item = qs.StreamImpactItem('methane_item', GWP=28)
     >>> methane_item.show()
     StreamImpactItem: [per kg]
     Linked to       : None
@@ -511,16 +532,16 @@ class StreamImpactItem(ImpactItem):
     
     >>> methane2 = methane.copy('methane2')
     >>> methane_item2 = methane_item.copy('methane_item2', stream=methane2,
-    ...                                   set_as_source=True, register=True)
+    ...                                   set_as_source=True)
     >>> methane_item2.CFs['GlobalWarming']
     28
-    >>> methane_item2.CFs['GlobalWarming'] = 1
-    >>> methane_item.CFs['GlobalWarming']
+    >>> methane_item.CFs['GlobalWarming'] = 1
+    >>> methane_item2.CFs['GlobalWarming']
     1
     
     We can also add or remove impact indicators.
     
-    >>> methane_item2.remove_indicator('GlobalWarming')
+    >>> methane_item.remove_indicator('GlobalWarming')
     The impact indicator "GlobalWarming" has been removed.
     >>> methane_item2.show()
     StreamImpactItem: [per kg]
@@ -529,7 +550,7 @@ class StreamImpactItem(ImpactItem):
     Price           : 0 USD
     ImpactIndicators:
      None
-    >>> methane_item2.add_indicator('GlobalWarming', 28)
+    >>> methane_item.add_indicator('GlobalWarming', 28)
     >>> methane_item2.show()
     StreamImpactItem: [per kg]
     Linked to       : methane2
@@ -540,15 +561,15 @@ class StreamImpactItem(ImpactItem):
     GlobalWarming (kg CO2-eq)                        28
     '''
 
-    __slots__ = ('_ID', '_linked_stream', '_functional_unit', '_CFs', '_source',
-                 '_registered')
+    __slots__ = ('_ID', '_linked_stream', '_functional_unit', '_CFs', '_source')
 
-    def __init__(self, ID=None, linked_stream=None, source=None, register=True,
-                 **indicator_CFs):
+    def __init__(self, ID='', linked_stream=None, source=None, **indicator_CFs):
 
         self._linked_stream = None
         self.linked_stream = linked_stream
-        self._registered = register
+        self._register(ID)
+        
+        # self._registered = register
 
         if not ID and linked_stream:
             ID = self.linked_stream.ID + '_item'
@@ -567,15 +588,15 @@ class StreamImpactItem(ImpactItem):
                 except:
                     self.add_indicator(CF, value)
         
-        if register:
-            if ID in self._items.keys():
-                old = self._items[ID]
-                for i in old.__slots__:
-                    if not getattr(old, i) == getattr(self, i):
-                        warn(f'The impact item "{ID}" is replaced in the registry.')
-            else:
-                self._items[ID] = self
-                self._registered = True
+        # if register:
+        #     if ID in self._items.keys():
+        #         old = self._items[ID]
+        #         for i in old.__slots__:
+        #             if not getattr(old, i) == getattr(self, i):
+        #                 warn(f'The impact item "{ID}" is replaced in the registry.')
+        #     else:
+        #         self._items[ID] = self
+        #         self._registered = True
 
 
     def __repr__(self):
@@ -612,7 +633,7 @@ class StreamImpactItem(ImpactItem):
     _ipython_display_ = show
 
 
-    def copy(self, new_ID=None, stream=None, set_as_source=False, register=True):
+    def copy(self, new_ID=None, stream=None, set_as_source=False):
         '''
         Return a new :class:`StreamImpactItem` object with the same settings.
 
@@ -624,8 +645,6 @@ class StreamImpactItem(ImpactItem):
             Linked stream to the copy.
         set_as_source : bool
             Whether to set the original impact item as the source.
-        register : bool
-            Whether to register the new impact item.
         '''
         
         new = StreamImpactItem.__new__(StreamImpactItem)
@@ -636,21 +655,23 @@ class StreamImpactItem(ImpactItem):
             new.source = self
         else:
             for slot in StreamImpactItem.__slots__:
-                if slot in ('_ID', '_linked_stream'):
+                if slot in ('_ID', '_source', '_linked_stream'):
                     continue
                 value = getattr(self, slot)
                 setattr(new, slot, copy_maybe(value))
+            
+            new.source = self.source
         
         if stream:
             stream.impact_item = new
             if not new_ID:
                 new.ID = f'{stream.ID}_item'
         
-        if register:
-            self._items[new.ID] = new
-            new._registered = True
-        else:
-            new._registered = False
+        # if register:
+        #     self._items[new.ID] = new
+        #     new._registered = True
+        # else:
+        #     new._registered = False
         
         return new
     
@@ -661,18 +682,27 @@ class StreamImpactItem(ImpactItem):
         '''
         [:class:`StreamImpactItem`] If provided, all attributions and properties of this
         :class:`StreamImpactItem` will be copied from the provided source.
+        ID of the impact item can be provided instead of the object.
         
         .. note::
+            
             Since the price is copied from the price of the `linked_stream`, it
-            can be different form the source.
+            can be different from the source.
         '''
         return self._source
     @source.setter
     def source(self, i):
+        if isinstance(i, str):
+            i = self.get_item(i)
+        
         if not isinstance(i, StreamImpactItem):
-            raise ValueError('source can only be a StreamImpactItem, ' \
-                             f'not a {type(i).__name__}.')
+            if not i:
+                i = None
+            else:
+                raise ValueError('`source` can only be a StreamImpactItem, ' \
+                                 f'not a {type(i).__name__}.')
         self._source = i
+
 
     @property
     def linked_stream(self):
@@ -732,7 +762,8 @@ class StreamImpactItem(ImpactItem):
         '''[float] Price of the linked stream.'''
         if self.linked_stream:
             return self.linked_stream.price
-        else: return 0.
+        else:
+            return 0.
 
 
 

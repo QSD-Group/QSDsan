@@ -19,11 +19,11 @@ import math
 import numpy as np
 import pandas as pd
 from collections.abc import Iterable
+from warnings import warn
 from . import ImpactItem, Stream, SanStream, SanUnit
 from ._units_of_measure import auom
 from .utils.formatting import format_number as f_num
 
-items = ImpactItem._items
 isinstance = isinstance
 iter = iter
 callable = callable
@@ -117,7 +117,7 @@ class LCA:
     def add_other_item(self, item, f_quantity, unit=''):
         '''Add other :class:`ImpactItem` in LCA.'''
         if isinstance(item, str):
-            item = items[item]
+            item = ImpactItem.get_item(item)
         fu = item.functional_unit
         if not callable(f_quantity):
             f = lambda: f_quantity
@@ -267,7 +267,7 @@ class LCA:
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         other_dct = self.other_items         
         for i in other_dct.keys():
-            item = items[i]
+            item = ImpactItem.get_item(i)
             for m, n in item.CFs.items():
                 impacts[m] += n*other_dct[i]['quantity']
         return impacts
@@ -559,10 +559,11 @@ class LCA:
         if not self.other_items:
             other = set()
         else:
-            other = set(sum((items[i].indicators for i in self.other_items.keys()), ()))
+            other = set(sum((ImpactItem.get_item(i).indicators
+                             for i in self.other_items.keys()), ()))
         tot = constr.union(trans, ws, other)
         if len(tot) == 0:
-            raise ValueError('No `ImpactIndicators` have been added.')
+            warn('No `ImpactIndicator` has been added.')
         return tot
     
     @property

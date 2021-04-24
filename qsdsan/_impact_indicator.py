@@ -23,7 +23,7 @@ from .utils.loading import load_data
 __all__ = ('ImpactIndicator', )
 
 
-@registered(ticket_name='Ind')
+@registered(ticket_name='ind')
 class ImpactIndicator:
     '''
     To handle different impact indicators in life cycle assessment.
@@ -48,8 +48,6 @@ class ImpactIndicator:
         Unit of the ImpactIndicator, e.g., 'kg CO2-eq'.
     description : str
         Supplementary explanation.
-    register : bool
-        Whether to add to the registry.
         
     Examples
     --------
@@ -66,39 +64,46 @@ class ImpactIndicator:
     
     >>> GWP.show()
     ImpactIndicator: GlobalWarming as kg CO2-eq
+     Alias      : None
      Method     : TRACI
      Category   : environmental impact
      Description: Effect of climate change ...
-     
-    
-    Add, retrieve, and remove alias.
-    
-    >>> GWP.set_alias('GWP')
-    >>> GWP.set_alias('GlobalWarmingPotential')
-    >>> GWP.get_alias()
-    ['GWP', 'GlobalWarmingPotential']
-    >>> GWP.remove_alias('GlobalWarmingPotential')
-    >>> GWP.get_alias()
-    ['GWP']
+    >>> # Add an alias
+    >>> GWP.alias = 'GWP'
+    >>> GWP.show()
+    ImpactIndicator: GlobalWarming as kg CO2-eq
+     Alias      : GWP
+     Method     : TRACI
+     Category   : environmental impact
+     Description: Effect of climate change ...
+    >>> # Add another impact indicator
+    >>> FEC = qs.ImpactIndicator('FossilEnergyConsumption', alias='FEC', unit='MJ')
+    >>> # Get all impact indicators
+    >>> qs.ImpactIndicator.get_all_indicators()
+    {'GlobalWarming': <ImpactIndicator: GlobalWarming>,
+     'FossilEnergyConsumption': <ImpactIndicator: FossilEnergyConsumption>}
 
     Manage the registry.
 
     >>> GWP.deregister()
     The impact indicator "GlobalWarming" has been removed from the registry.
     >>> qs.ImpactIndicator.get_all_indicators()
-    []
+    {'FossilEnergyConsumption': <ImpactIndicator: FossilEnergyConsumption>}
     >>> GWP.register()
     The impact indicator "GlobalWarming" has been added to the registry.    
     >>> qs.ImpactIndicator.get_all_indicators()
-    [<ImpactIndicator: GlobalWarming>]
+    {'FossilEnergyConsumption': <ImpactIndicator: FossilEnergyConsumption>,
+     'GlobalWarming': <ImpactIndicator: GlobalWarming>}
     >>> qs.ImpactIndicator.clear_registry()
     All impact indicators have been removed from registry.
+    >>> qs.ImpactIndicator.get_all_indicators()
+    {}
     '''
     
     # _indicators = ImpactIndicator.registry.data
     
     __slots__ = ('_ID', '_alias', '_method', '_category', '_unit', '_ureg_unit',
-                 '_unit_remaining', '_description', '_registered')
+                 '_unit_remaining', '_description')
 
     def __init__(self, ID, alias='', method='', category='', unit='', description='',
                  # register=True,
@@ -210,6 +215,52 @@ class ImpactIndicator:
         # cls._indicators = {}
         print('All impact indicators have been removed from registry.')
 
+
+    #!!! PAUSED, TO REMOVE _indicators
+
+    @classmethod
+    def get_all_indicators(cls, include_alias=False):
+        '''
+        Get all defined impact indicator as a dict.
+        
+        Parameters
+        ----------
+        include_alias : bool
+            If True, aliases will be included as keys in the dict as well.
+        '''
+
+        if not include_alias:
+            return cls.registry.data
+
+        else:
+            dct = cls.registry.data.copy()
+            dct.update(cls._get_alias_dct(cls))
+            return dct
+
+        # if not include_alias:
+        #     return cls.registry.data
+        
+        # else:
+        #     dct = 
+        #     return cls.registry.data
+        
+        # else:
+        #     # all_indicators = set(cls.registry.data.items())
+        #     breakpoint()
+        #     return {i.ID:i for i in sorted(set(cls.registry.data.items()),
+        #                                    key=lambda j: j.ID)}
+        # if as_dict:
+        #     cls.registry.data
+        #     return {i.ID:i for i in cls.registry}
+        
+        # return sorted(set([i for i in cls.registry.values()]), key=lambda i: i.ID)
+
+    @classmethod
+    def get_indicator(cls, ID_or_alias):
+        '''Get an impact indicator by its ID or alias.'''
+        dct = cls.get_all_indicators(True)
+        return dct.get(ID_or_alias)
+
     @classmethod
     def load_indicators_from_file(cls, path):
         '''
@@ -240,23 +291,24 @@ class ImpactIndicator:
         [1] tsv is preferred as it shows up on GitHub.
         
         [2] Refer to the `Bwaise system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise/data>`_
-        in the ``Exposan`` repository for a sample file.
+        in the `Exposan` repository for a sample file.
         '''
         data = load_data(path=path)
         for indicator in data.index:
-            if indicator in cls._indicators.keys():
+            if indicator in cls.get_all_indicators(True).keys():
                 raise ValueError(f'The impact indicator "{indicator}" has been added.')
             else:
                 new = cls.__new__(cls)
-                dct = {}
+                kwargs = {}
                 for k in ('alias', 'unit', 'method', 'category', 'description'):
                     try:
-                        dct[k] = data.loc[indicator][k]
+                        kwargs[k] = data.loc[indicator][k]
                     except KeyError:
-                        dct[k] = ''
+                        kwargs[k] = ''
 
-                new.__init__(ID=indicator, **dct)
-                cls._indicators[indicator] = new
+                new.__init__(ID=indicator, **kwargs)
+
+                # cls._indicators[indicator] = new
 
     def _get_alias_dct(cls):
         dct = {}
@@ -265,64 +317,17 @@ class ImpactIndicator:
                 dct[i.alias] = i
         return dct
 
-    @classmethod
-    def get_indicator(cls, ID_or_alias):
-        '''Get an impact indicator by its ID or alias.'''
-        dct = cls.get_all_indicators(True)
-        return dct.get(ID_or_alias)
-
-    @classmethod
-    def get_all_indicators(cls, include_alias=False):
-        '''
-        Get all defined impact indicator as a dict.
-        
-        Parameters
-        ----------
-        include_alias : bool
-            If True, aliases will be included as keys in the dict as well.
-        '''
-
-        if not include_alias:
-            return cls.registry.data
-
-        else:
-            dct = cls.registry.data.copy()
-            dct.update(cls._get_alias_dct())
-            return dct
-
-        # if not include_alias:
-        #     return cls.registry.data
-        
-        # else:
-        #     dct = 
-        #     return cls.registry.data
-        
-        # else:
-        #     # all_indicators = set(cls.registry.data.items())
-        #     breakpoint()
-        #     return {i.ID:i for i in sorted(set(cls.registry.data.items()),
-        #                                    key=lambda j: j.ID)}
-        # if as_dict:
-        #     cls.registry.data
-        #     return {i.ID:i for i in cls.registry}
-        
-        # return sorted(set([i for i in cls.registry.values()]), key=lambda i: i.ID)
-
     @property
     def ID(self):
-        '''ID of the impact indicator.'''
+        '''[str] ID of this impact indicator.'''
         return self._ID
     @ID.setter
     def ID(self, ID):
-        old_ID = self.ID
-        self._indicators[ID] = self._indicators.pop(old_ID)
         self._ID = ID
-
-
 
     @property
     def alias(self):
-        '''Alias of the impact indicator.'''
+        '''[str] Alias of this impact indicator.'''
         if not hasattr(self, '_alias'): # for initiation
             self._alias = None
         return self._alias
@@ -333,7 +338,7 @@ class ImpactIndicator:
         
         if alias:
             if not isinstance(alias, str):
-                raise TypeError(f'``alias`` can only be a str, not {type(alias).__name__}.')
+                raise TypeError(f'`alias` can only be a str, not {type(alias).__name__}.')
 
             if alias in alias_dct.keys():
                 old_ind = alias_dct[alias]
@@ -395,7 +400,7 @@ class ImpactIndicator:
 
     @property
     def unit(self):
-        '''Unit of the impact indicator.'''    
+        '''[str] Unit of this impact indicator.'''    
         return self._unit
     @unit.setter
     def unit(self, i):
@@ -404,7 +409,7 @@ class ImpactIndicator:
 
     @property
     def method(self):
-        '''Impact assessment method of the impact indicator.'''    
+        '''[str] Impact assessment method of this impact indicator.'''    
         return self._method
     @method.setter
     def method(self, i):
@@ -412,7 +417,7 @@ class ImpactIndicator:
 
     @property
     def category(self):
-        '''Impact category of the impact indicator.'''    
+        '''[str] Impact category of this impact indicator.'''    
         return self._category
     @category.setter
     def category(self, i):
@@ -420,7 +425,7 @@ class ImpactIndicator:
 
     @property
     def description(self):
-        '''Description of the impact indicator.'''    
+        '''[str] Description of this impact indicator.'''    
         return self._description
     @description.setter
     def description(self, i):
@@ -428,7 +433,7 @@ class ImpactIndicator:
 
     @property
     def registered(self):
-        '''[bool] If this impact indicator is registered in the records.'''
+        '''[bool] If this impact indicator is registered in the record.'''
         data = self.registry.data.get(self.ID)
         return True if data else False
 

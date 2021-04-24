@@ -110,14 +110,14 @@ class Transportation:
 
     @property
     def item(self):
-        '''[ImpactItem] Item associated with this transportation.'''
+        '''[:class:`ImpactItem`] Item associated with this transportation activity.'''
         return self._item
     @item.setter
     def item(self, i):
         if isinstance(i, str):
-            i = ImpactItem._items[i]
+            i = ImpactItem.get_item(i)
         elif i is not ImpactItem:
-            raise TypeError('Only <ImpactItem> or  <ImpactItem>.ID can be set, '
+            raise TypeError('Only `ImpactItem` or the ID of `ImpactItem` can be set, '
                             f'not {type(i).__name__}.')
         self._item = i
 

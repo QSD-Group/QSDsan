@@ -107,20 +107,20 @@ class Construction:
     
     @property
     def item(self):
-        '''[ImpactItem] Item associated with this construction activity.'''
+        '''[:class:`ImpactItem`] The impact item associated with this construction activity.'''
         return self._item
     @item.setter
     def item(self, i):
         if isinstance(i, str):
-            i = ImpactItem._items[i]
+            i = ImpactItem.get_item(i)
         elif i is not ImpactItem:
-            raise TypeError('Only <ImpactItem> or  <ImpactItem>.ID can be set, '
+            raise TypeError('Only `ImpactItem` or the ID of `ImpactItem` can be set, '
                             f'not {type(i).__name__}.')
         self._item = i
 
     @property
     def indicators(self):
-        ''' [tuple] ImpactIndicators associated with the construction item.'''
+        ''' [tuple] Impact indicators associated with the construction item.'''
         return self.item.indicators
 
     @property
