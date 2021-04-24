@@ -12,13 +12,6 @@ This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
-    
-# import os, sys
-# sys.path.insert(0, os.path.abspath('../tmo'))
-# sys.path.insert(0, os.path.abspath('../bst'))
-# sys.path.insert(0, os.path.abspath('../es'))
-# del os, sys
-
 
 from . import (
     test_bst_units,

@@ -65,7 +65,3 @@ def test_component():
     assert isclose(components.S_N2.i_COD, - molecular_weight({'O':1.5})/molecular_weight({'N':1}), rel_tol=1e-3)
     assert isclose(components.S_NO3.i_COD, - molecular_weight({'O':4})/molecular_weight({'N':1}), rel_tol=1e-3)
     tmo.settings.set_thermo(components)
-    
-
-# if __name__ == '__main__':
-#     test_component()

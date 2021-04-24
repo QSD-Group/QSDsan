@@ -46,6 +46,3 @@ def test_waste_stream():
     with pytest.raises(AttributeError):
         ws5.COD = 5
     
-
-# if __name__ == '__main__':
-#     test_waste_stream()
