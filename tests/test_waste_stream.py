@@ -45,7 +45,3 @@ def test_waste_stream():
     # Make sure below attributes are calculated based on flow info, cannot be set
     with pytest.raises(AttributeError):
         ws5.COD = 5
-    
-
-# if __name__ == '__main__':
-#     test_waste_stream()

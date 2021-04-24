@@ -26,8 +26,3 @@ def test_bwaise():
     assert_allclose(bw.lcaA.total_impacts['GlobalWarming'], 146386354.786746, rtol=1e-3)
     assert_allclose(bw.lcaB.total_impacts['GlobalWarming'], 8794967.822499081, rtol=1e-3)
     assert_allclose(bw.lcaC.total_impacts['GlobalWarming'], 56832681.43125322, rtol=1e-3)
-    
-    
-# If pytest runs this module, it calls the test_bwaise function and test exposan
-# if __name__ == '__main__':
-#     test_bwaise()

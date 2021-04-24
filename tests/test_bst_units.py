@@ -139,44 +139,4 @@ def test_HXprocess():
 
 
 
-# if __name__ == '__main__':
-#     test_Splitter()
-#     test_Pump()
-#     test_MixTank()
-#     test_StorageTank()
-#     test_HXutility()
-#     test_HXprocess()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -56,7 +56,3 @@ def test_sanunit():
     M4.simulate()
     M4.show()
     assert_allclose(M4.installed_cost, 7237.455247692897, rtol=1e-3)
-
-
-# if __name__ == '__main__':
-#     test_sanunit()

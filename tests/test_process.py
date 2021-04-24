@@ -116,7 +116,3 @@ def test_process():
     assert isinstance(asm2d, CompiledProcesses)
     assert p12 in asm2d
     assert set(asm2d.parameters.keys()) == set(params)
-
-    
-# if __name__ == '__main__':
-#     test_process()    
