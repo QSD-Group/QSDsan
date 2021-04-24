@@ -152,13 +152,9 @@ class ImpactItem:
     __slots__ = ('_ID', '_functional_unit', '_price', '_CFs', '_source')
     
     def __init__(self, ID, functional_unit='kg', price=0., price_unit='',
-                 source=None,
-                 # register=True,
-                 **indicator_CFs):
+                 source=None, **indicator_CFs):
         
         self._register(ID)
-        # self._ID = ID
-        # self._registered = register
         
         if source:
             self.source = source
@@ -173,19 +169,6 @@ class ImpactItem:
                     self.add_indicator(indicator, CF_value, CF_unit)
                 except:
                     self.add_indicator(indicator, value)
-            
-            # if register:
-            #     if ID:
-            #         if ID in self._items.keys():
-            #             old = self._items[ID]
-            #             for i in old.__slots__:
-            #                 if not getattr(old, i) == getattr(self, i):
-            #                     warn(f'The impact item "{ID}" is replaced in the registry.')
-            #         else:
-            #             self._items[ID] = self
-            #             self._registered = True
-            #     else:
-            #         raise ValueError('Cannot register an impact item without an ID.')
 
     
     # This makes sure it won't be shown as memory location of the object
@@ -225,8 +208,6 @@ class ImpactItem:
         source_item = check_source(self, True)
         if isinstance(indicator, str):
             indicator = ImpactIndicator.get_indicator(indicator)
-            # try: indicator = indicators[indicator]
-            # except: breakpoint()
             
         try: CF_unit2 = CF_unit.replace(' eq', '-eq')
         except: pass
@@ -272,8 +253,6 @@ class ImpactItem:
         new = ImpactItem.__new__(ImpactItem)
         new.__init__(new_ID)        
         
-        # new.ID = new_ID
-        
         if set_as_source:
             new.source = self
         else:
@@ -283,11 +262,6 @@ class ImpactItem:
                 value = getattr(self, slot)
                 setattr(new, slot, copy_maybe(value))
             new.source = self.source
-        # if register:
-        #     self._items[new_ID] = new
-        #     new._registered = True
-        # else:
-        #     new._registered = False
         
         return new
 
@@ -295,45 +269,24 @@ class ImpactItem:
 
     def register(self):
         '''Add this impact item to the registry.'''
-        self.registry.register_safely(self.ID, self)
-        
-        # ID = self.ID
-        # if self._registered:
-        #     warn(f'The impact item "{ID}" is already in registry.')
-        #     return
-        # else:
-        #     self._items[ID] = self
-        
+        self.registry.register_safely(self.ID, self)       
         print(f'The impact item "{self.ID}" has been added to the registry.')
 
     def deregister(self):
         '''Remove this impact item from the registry.'''
         self.registry.discard(self.ID)
-        
-        # ID = self.ID
-        # self._items.pop(ID)
-        # self._registered = False
-
         print(f'The impact item "{self.ID}" has been removed from the registry.')
     
     @classmethod
     def clear_registry(cls):
         '''Remove all existing impact items from the registry.'''
         cls.registry.clear()
-        
-        # for i in cls._items.values():
-        #     i._registered = False
-        # cls._items = {}
-        
         print('All impact items have been removed from registry.')
     
     
     @classmethod
     def get_all_items(cls):
         '''Get all impact items.'''
-        # if as_dict:
-        #     return cls._items
-
         return cls.registry.data
     
     @classmethod
@@ -384,20 +337,15 @@ class ImpactItem:
             raise ValueError('Only Excel files ends with ".xlsx" or ".xls" can be interpreted.')
         
         data_file = pd.ExcelFile(path, engine='openpyxl')
-        # items = cls.get_all_items()
         
         for sheet_name in data_file.sheet_names:
             data = data_file.parse(sheet_name, index_col=0)
 
             if sheet_name == 'info':
                 for item_ID in data.index:
-                    # if item in items.keys():
-                    #     warn(f'The impact item "{item}" has been added.')
-                    # else:
                     new = cls.__new__(cls)
                     new.__init__(ID=item_ID,
                                  functional_unit=data.loc[item_ID]['functional_unit'])
-                    # items[item] = new
             else:
                 for item_ID in data.index:
                     item = cls.get_item(item_ID)
@@ -568,8 +516,6 @@ class StreamImpactItem(ImpactItem):
         self._linked_stream = None
         self.linked_stream = linked_stream
         self._register(ID)
-        
-        # self._registered = register
 
         if not ID and linked_stream:
             ID = self.linked_stream.ID + '_item'
@@ -587,16 +533,6 @@ class StreamImpactItem(ImpactItem):
                     self.add_indicator(CF, CF_value, CF_unit)
                 except:
                     self.add_indicator(CF, value)
-        
-        # if register:
-        #     if ID in self._items.keys():
-        #         old = self._items[ID]
-        #         for i in old.__slots__:
-        #             if not getattr(old, i) == getattr(self, i):
-        #                 warn(f'The impact item "{ID}" is replaced in the registry.')
-        #     else:
-        #         self._items[ID] = self
-        #         self._registered = True
 
 
     def __repr__(self):
@@ -666,13 +602,7 @@ class StreamImpactItem(ImpactItem):
             stream.impact_item = new
             if not new_ID:
                 new.ID = f'{stream.ID}_item'
-        
-        # if register:
-        #     self._items[new.ID] = new
-        #     new._registered = True
-        # else:
-        #     new._registered = False
-        
+                
         return new
     
     __copy__ = copy
