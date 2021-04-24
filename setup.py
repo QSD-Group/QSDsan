@@ -17,14 +17,14 @@ from setuptools import setup
 setup(
     name='qsdsan',
     packages=['qsdsan'],
-    version='0.2.2',
+    version='0.2.3',
     license='UIUC',
     author='Quantitative Sustainable Design Group',
     author_email='quantitative.sustainable.design@gmail.com',
     description='Quantitative Sustainable Design for sanitation and resource recovery systems',
     long_description=open('README.rst').read(),
     url="https://github.com/QSD-Group/QSDsan",
-    install_requires=['biosteam==2.27.7', 'thermosteam==0.24.10', 'exposan==0.0.9',
+    install_requires=['biosteam==2.27.7', 'thermosteam==0.24.10', 'exposan==0.0.10',
                       'matplotlib>=3.3.2', 'scikit-learn', 'scipy',
                       'SALib>=1.4.0b0', 'seaborn', 'sympy'],
     package_data=
