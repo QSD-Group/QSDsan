@@ -130,7 +130,8 @@ class SanStream(Stream):
             
         elif not isinstance(stream, cls):
             if not ID:
-                stream.registry.untrack((stream,))
+                stream.registry.discard(stream)
+                # stream.registry.untrack((stream,))
             new = cls.__new__(cls)
             new.ID = stream.ID if not ID else ID
             new._link = None

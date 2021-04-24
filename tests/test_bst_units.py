@@ -18,6 +18,10 @@ import biosteam as bst
 import qsdsan as qs
 from numpy.testing import assert_allclose
 
+__all__ = ('test_Splitter', 'test_Pump', 'test_MixTank', 'test_StorageTank',
+           'test_HXutility', 'test_HXprocess',)
+
+
 bst.default_utilities()
 chems = bst.Chemicals(('Methanol', 'Ethanol'))
 
@@ -135,13 +139,13 @@ def test_HXprocess():
 
 
 
-if __name__ == '__main__':
-    test_Splitter()
-    test_Pump()
-    test_MixTank()
-    test_StorageTank()
-    test_HXutility()
-    test_HXprocess()
+# if __name__ == '__main__':
+#     test_Splitter()
+#     test_Pump()
+#     test_MixTank()
+#     test_StorageTank()
+#     test_HXutility()
+#     test_HXprocess()
 
 
 

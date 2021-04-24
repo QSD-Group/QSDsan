@@ -16,7 +16,9 @@ for license details.
 import pytest
 from numpy.testing import assert_allclose
 from math import isclose
-    
+
+__all__ = ('test_waste_stream',)
+
 def test_waste_stream():
     import thermosteam as tmo
     from qsdsan import Components, WasteStream
@@ -45,5 +47,5 @@ def test_waste_stream():
         ws5.COD = 5
     
 
-if __name__ == '__main__':
-    test_waste_stream()
+# if __name__ == '__main__':
+#     test_waste_stream()

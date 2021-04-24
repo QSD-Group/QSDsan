@@ -17,12 +17,12 @@ for license details.
 
 import pandas as pd
 from warnings import warn
-from thermosteam.utils import copy_maybe
+from thermosteam.utils import copy_maybe, registered
 from . import currency, SanStream, WasteStream, ImpactIndicator
 from ._units_of_measure import auom, parse_unit
 from .utils.formatting import format_number as f_num
 
-indicators = ImpactIndicator._indicators
+# indicators = ImpactIndicator.get_all_indi
 isinstance = isinstance
 getattr = getattr
 
@@ -31,6 +31,7 @@ __all__ = ('ImpactItem', 'StreamImpactItem')
 def get_source_item(item):
     return item if not item.source else item.source
 
+@registered(ticket_name='Item')
 class ImpactItem:
     '''
     A class for calculation of environmental impacts.
@@ -130,6 +131,8 @@ class ImpactItem:
     The impact item "Steel3" has been added to the registry.
     >>> qs.ImpactItem.get_all_items()
     [<ImpactItem: Electricity>, <ImpactItem: Steel>, <ImpactItem: Steel3>]
+    >>> qs.ImpactItem.clear_registry()
+    All impact items have been removed from registry.
     '''
     
     _items = {}    
@@ -138,10 +141,13 @@ class ImpactItem:
                  '_registered')
     
     def __init__(self, ID=None, functional_unit='kg', price=0., price_unit='',
-                 source=None, register=True, **indicator_CFs):
+                 source=None,
+                 # register=True,
+                 **indicator_CFs):
         
-        self._ID = ID
-        self._registered = register
+        self._register(ID)
+        # self._ID = ID
+        # self._registered = register
         
         if source:
             self.source = source
@@ -206,7 +212,9 @@ class ImpactItem:
         '''Add an indicator with charactorization factor values.'''
         source_item = get_source_item(self)
         if isinstance(indicator, str):
-            indicator = indicators[indicator]
+            indicator = ImpactIndicator.get_all_indicators(as_dict=True)[indicator]
+            # try: indicator = indicators[indicator]
+            # except: breakpoint()
             
         try: CF_unit2 = CF_unit.replace(' eq', '-eq')
         except: pass
@@ -223,7 +231,7 @@ class ImpactItem:
 
     def remove_indicator(self, indicator):
         '''
-        Remove an indicator.
+        Remove an indicator from this impact item.
         
         Parameters
         ----------
@@ -290,6 +298,13 @@ class ImpactItem:
         self._registered = False
         print(f'The impact item "{ID}" has been removed from the registry.')
     
+    @classmethod
+    def clear_registry(cls):
+        '''Remove all existing impact items from the registry.'''
+        for i in cls._items.values():
+            i._registered = False
+        cls._items = {}
+        print('All impact items have been removed from registry.')
     
     @classmethod
     def load_items_from_excel(cls, path):
@@ -351,8 +366,8 @@ class ImpactItem:
                 for item in data.index:
                     old = items[item]
                     old.add_indicator(indicator=sheet,
-                                        CF_value=float(data.loc[item]['expected']),
-                                        CF_unit=data.loc[item]['unit'])
+                                      CF_value=float(data.loc[item]['expected']),
+                                      CF_unit=data.loc[item]['unit'])
     
     @classmethod
     def get_item(cls, ID):
@@ -410,7 +425,8 @@ class ImpactItem:
     @property
     def indicators(self):
         ''' [tuple] :class:`ImpactIndicator` objects associated with the item.'''
-        return tuple(indicators[i] for i in get_source_item(self)._CFs.keys())
+        return tuple(ImpactIndicator.get_all_indicators(as_dict=True)[i]
+                     for i in get_source_item(self)._CFs.keys())
     
     @property
     def price(self):
@@ -482,7 +498,7 @@ class StreamImpactItem(ImpactItem):
     >>> cmps = qs.utils.examples.load_example_cmps()
     >>> qs.set_thermo(cmps)
     >>> methane = qs.SanStream('methane', Methane=1, units='kg/hr',
-                               impact_item=methane_item)
+    ...                        impact_item=methane_item)
     >>> methane_item.show()
     StreamImpactItem: [per kg]
     Linked to       : methane
@@ -495,7 +511,7 @@ class StreamImpactItem(ImpactItem):
     
     >>> methane2 = methane.copy('methane2')
     >>> methane_item2 = methane_item.copy('methane_item2', stream=methane2,
-                                          set_as_source=True, register=True)
+    ...                                   set_as_source=True, register=True)
     >>> methane_item2.CFs['GlobalWarming']
     28
     >>> methane_item2.CFs['GlobalWarming'] = 1

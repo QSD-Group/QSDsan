@@ -17,11 +17,9 @@ for license details.
 
 import pandas as pd
 from thermosteam.utils import copy_maybe
-from . import currency, ImpactIndicator, ImpactItem
+from . import currency, ImpactItem
 from ._units_of_measure import auom
 from .utils.formatting import format_number as f_num
-
-indicators = ImpactIndicator._indicators
 
 __all__ = ('Transportation',)
 

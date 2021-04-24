@@ -15,6 +15,8 @@ for license details.
 
 import pytest
 
+__all__ = ('test_component',)
+
 def test_component():
     import thermosteam as tmo
     from qsdsan import Component, Components
@@ -65,5 +67,5 @@ def test_component():
     tmo.settings.set_thermo(components)
     
 
-if __name__ == '__main__':
-    test_component()
+# if __name__ == '__main__':
+#     test_component()

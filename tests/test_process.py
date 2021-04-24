@@ -16,6 +16,8 @@ from sympy import symbols, Eq
 from sympy.parsing.sympy_parser import parse_expr
 from math import isclose
 
+__all__ = ('test_process',)
+
 def test_process():
     
     from qsdsan import Components, Process, Processes, CompiledProcesses
@@ -116,5 +118,5 @@ def test_process():
     assert set(asm2d.parameters.keys()) == set(params)
 
     
-if __name__ == '__main__':
-    test_process()    
+# if __name__ == '__main__':
+#     test_process()    

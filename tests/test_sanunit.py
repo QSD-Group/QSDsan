@@ -14,6 +14,8 @@ for license details.
 
 from numpy.testing import assert_allclose
 
+__all__ = ('test_sanunit',)
+
 def test_sanunit():
     import qsdsan as qs
     components = qs.Components.load_default()
@@ -56,5 +58,5 @@ def test_sanunit():
     assert_allclose(M4.installed_cost, 7237.455247692897, rtol=1e-3)
 
 
-if __name__ == '__main__':
-    test_sanunit()
+# if __name__ == '__main__':
+#     test_sanunit()

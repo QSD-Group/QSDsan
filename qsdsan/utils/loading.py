@@ -19,10 +19,11 @@ del os
 
 import pandas as pd
 
-__all__ = ('load_data', 'data_path')
+__all__ = ('load_data', 'data_path',)
  
 
 def load_data(path=None, sheet=None, **kwargs):
+    '''For data importing.'''
     kwargs.setdefault('index_col', 0)
     last_4 = path[-4:]
     if last_4 == '.tsv':
@@ -35,3 +36,6 @@ def load_data(path=None, sheet=None, **kwargs):
     else:
         raise ValueError('Only tsv, csv, or xlsx files can be loaded.')
     return data
+
+
+    

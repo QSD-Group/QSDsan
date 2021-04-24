@@ -16,12 +16,14 @@ for license details.
 # %%
 
 from warnings import warn
+from thermosteam.utils import registered
 from ._units_of_measure import parse_unit
 from .utils.loading import load_data
 
 __all__ = ('ImpactIndicator', )
 
 
+@registered(ticket_name='Ind')
 class ImpactIndicator:
     '''
     To handle different impact indicators in life cycle assessment.
@@ -89,28 +91,34 @@ class ImpactIndicator:
     The impact indicator "GlobalWarming" has been added to the registry.    
     >>> qs.ImpactIndicator.get_all_indicators()
     [<ImpactIndicator: GlobalWarming>]
+    >>> qs.ImpactIndicator.clear_registry()
+    All impact indicators have been removed from registry.
     '''
     
-    _indicators = {}
+    # _indicators = ImpactIndicator.registry.data
     
     __slots__ = ('_ID', '_alias', '_method', '_category', '_unit', '_ureg_unit',
                  '_unit_remaining', '_description', '_registered')
 
     def __init__(self, ID, alias='', method='', category='', unit='', description='',
-                 register=True, **kwargs):
+                 # register=True,
+                 **kwargs):
         
-        if register:
-            if ID in self._indicators.keys():
-                warn(f'The impact indicator "{ID}" is replaced in the registry.')
+        # if register:
+        #     if ID in self._indicators.keys():
+        #         warn(f'The impact indicator "{ID}" is replaced in the registry.')
         
-        self._ID = ID
+        # self._ID = ID
+        self._register(ID)
+        self.alias = alias
+        
         self._unit = str(unit)
         self._ureg_unit, self._unit_remaining = parse_unit(unit)
         self._method = method
         self._category = category
         self._description = description
-        self._indicators[ID] = self
-        self._registered = True
+        # self._indicators[ID] = self
+        # self._registered = True
 
         if 'synonym' in kwargs.keys():
             synonym = kwargs['synonym']
@@ -121,12 +129,20 @@ class ImpactIndicator:
                 raise DeprecationWarning('`synonym` has been changed to `alias` for qsdsan v0.2.2 and above, ' \
                                          f'the given `synonym` "{synonym}" is ignored as `alias` "{alias}" is provided.')
         
-        if alias and str(alias) != 'nan':
-            self.set_alias(alias)
+
+            
+            # self.set_alias(alias)
+        
+        #!!! temp
+        
 
     def __repr__(self):
         return f'<ImpactIndicator: {self.ID}>'
 
+    #!!! Temporary, remove after making sure registry works
+    # @classmethod
+    # def _indicators(cls):
+    #     return {i.ID:i for i in cls.registry}
 
     def show(self):
         '''Show basic information about this impact indicator.'''
@@ -134,14 +150,16 @@ class ImpactIndicator:
             info = f'ImpactIndicator: {self.ID} as {self.unit}'
         else:
             info = f'ImpactIndicator: {self.ID}'
-        line =   '\n Alias(es)  : '
-        aliases = self.get_alias()
-        if aliases:
-            for alias in aliases[:-1]:
-                line += alias + '; '
-            line += aliases[-1]
-            if len(line) > 40: line = line[:40] + '...'
-            info += line
+        alias = self.alias if self.alias else 'None'
+        line =   f'\n Alias      : {alias}'
+        
+        # aliases = self.get_alias()
+        # if aliases:
+        #     for alias in aliases[:-1]:
+        #         line += alias + '; '
+        #     line += aliases[-1]
+        if len(line) > 40: line = line[:40] + '...'
+        info += line
         info += f'\n Method     : {self.method or None}'
         info += f'\n Category   : {self.category or None}'
         line =  f'\n Description: {self.description or None}'
@@ -151,68 +169,46 @@ class ImpactIndicator:
     
     _ipython_display_ = show
     
-    def set_alias(self, alias):
-        '''
-        Give the impact indicator an alias.
-
-        Parameters
-        ----------
-        alias : str
-            New alias of the impact indicator.
-        '''
-        dct = self._indicators
-        if alias in dct.keys() and dct[alias] is not self:
-            warn(f'The alias "{alias}" is already in use.')
-            return
-
-        else:
-            dct[alias] = self
     
-    def get_alias(self):
-        '''Return all aliases of the impact indicator as a list.'''
 
-        return sorted([i for i, j in self._indicators.items()
-                       if j==self and i != self.ID])
-
-    def remove_alias(self, alias):
-        '''
-        Remove a certain alias.
-        
-        Parameters
-        ----------
-        alias : str
-            The alias of the impact indicator to be removed.
-        '''
-        if self._indicators[alias] is not self:
-            warn('"{alias}" is not the alias of {self.ID}.')
-            return
-        else:
-            self._indicators.pop(alias)
 
     def register(self):
         '''Add this impact indicator to the registry.'''
+        self.registry.register_safely(self.ID, self)
         
-        ID = self.ID
-        if self._registered:
-            warn(f'The impact indicator "{ID}" is already in registry.')
-            return
-        else:
-            IDs = (ID, *self.get_alias())
-            for i in IDs:
-                self._indicators[ID] = self
         
-        print(f'The impact indicator "{ID}" has been added to the registry.')
+        # ID = self.ID
+        # if self._registered:
+        #     warn(f'The impact indicator "{ID}" is already in registry.')
+        #     return
+        # else:
+        #     IDs = (ID, *self.get_alias())
+        #     for i in IDs:
+        #         self._indicators[ID] = self
+        
+        print(f'The impact indicator "{self.ID}" has been added to the registry.')
 
     def deregister(self):
         '''Remove this impact indicator from the registry.'''
-        ID = self.ID
-        IDs = (ID, *self.get_alias())
-        for i in IDs:
-            self._indicators.pop(i)
-        self._registered = False
+        self.registry.discard(self.ID)
+        
+        # ID = self.ID
+        # IDs = (ID, *self.get_alias())
+        # for i in IDs:
+        #     self._indicators.pop(i)
+        # self._registered = False
             
-        print(f'The impact indicator "{ID}" has been removed from the registry.')
+        print(f'The impact indicator "{self.ID}" has been removed from the registry.')
 
+
+    @classmethod
+    def clear_registry(cls):
+        '''Remove all existing impact indicators from the registry.'''
+        cls.registry.clear()
+        # for i in cls._indicators.values():
+        #     i._registered = False
+        # cls._indicators = {}
+        print('All impact indicators have been removed from registry.')
 
     @classmethod
     def load_indicators_from_file(cls, path):
@@ -262,36 +258,140 @@ class ImpactIndicator:
                 new.__init__(ID=indicator, **dct)
                 cls._indicators[indicator] = new
 
+    def _get_alias_dct(cls):
+        dct = {}
+        for i in cls.registry.data.values():
+            if i.alias:
+                dct[i.alias] = i
+        return dct
 
     @classmethod
-    def get_indicator(cls, ID):
-        '''Get an impact indicator by its ID.'''
-        return cls._indicators[ID]
+    def get_indicator(cls, ID_or_alias):
+        '''Get an impact indicator by its ID or alias.'''
+        dct = cls.get_all_indicators(True)
+        return dct.get(ID_or_alias)
 
     @classmethod
-    def get_all_indicators(cls, as_dict=False):
+    def get_all_indicators(cls, include_alias=False):
         '''
-        Get all defined impact indicator.
+        Get all defined impact indicator as a dict.
         
         Parameters
         ----------
-        as_dict : bool
-            False returns a list and True returns a dict.
+        include_alias : bool
+            If True, aliases will be included as keys in the dict as well.
         '''
-        if as_dict:
-            return cls._indicators
+
+        if not include_alias:
+            return cls.registry.data
+
+        else:
+            dct = cls.registry.data.copy()
+            dct.update(cls._get_alias_dct())
+            return dct
+
+        # if not include_alias:
+        #     return cls.registry.data
         
-        return sorted(set([i for i in cls._indicators.values()]), key=lambda i: i.ID)
+        # else:
+        #     dct = 
+        #     return cls.registry.data
+        
+        # else:
+        #     # all_indicators = set(cls.registry.data.items())
+        #     breakpoint()
+        #     return {i.ID:i for i in sorted(set(cls.registry.data.items()),
+        #                                    key=lambda j: j.ID)}
+        # if as_dict:
+        #     cls.registry.data
+        #     return {i.ID:i for i in cls.registry}
+        
+        # return sorted(set([i for i in cls.registry.values()]), key=lambda i: i.ID)
 
     @property
     def ID(self):
-        '''ID of the impact indicator.''' 
+        '''ID of the impact indicator.'''
         return self._ID
     @ID.setter
     def ID(self, ID):
         old_ID = self.ID
         self._indicators[ID] = self._indicators.pop(old_ID)
         self._ID = ID
+
+
+
+    @property
+    def alias(self):
+        '''Alias of the impact indicator.'''
+        if not hasattr(self, '_alias'): # for initiation
+            self._alias = None
+        return self._alias
+    @alias.setter
+    def alias(self, alias):
+        alias = None if str(alias) == 'nan' else alias
+        alias_dct = self._get_alias_dct()
+        
+        if alias:
+            if not isinstance(alias, str):
+                raise TypeError(f'``alias`` can only be a str, not {type(alias).__name__}.')
+
+            if alias in alias_dct.keys():
+                old_ind = alias_dct[alias]
+                if old_ind.ID != self.ID:
+                    warn(f'The alias "{alias}" is now being used for "{self.ID}", ' \
+                         f'instead of {old_ind.ID}.')
+                    old_ind._alias = None
+            self._alias = alias
+        
+        else:
+            self._alias = None
+    
+    
+    # def set_alias(self, alias):
+    #     '''
+    #     Give the impact indicator an alias.
+
+    #     Parameters
+    #     ----------
+    #     alias : str
+    #         Alias of the impact indicator.
+    #     '''
+    #     if alias and str(alias) != 'nan':
+    #         self._alias = alias
+    #         self.registry.register_safely(alias, self)
+        
+        
+    #     self.register
+        
+    #     dct = self.registry.data
+    #     if alias in dct.keys() and dct[alias] is not self:
+    #         warn(f'The alias "{alias}" is already in use.')
+    #         return
+
+    #     else:
+    #         dct[alias] = self
+    
+    # def get_alias(self):
+    #     '''Return all aliases of the impact indicator as a list.'''
+
+    #     return sorted([i for i, j in self.registry.data.items()
+    #                    if j==self and i != self.ID])
+
+    # def remove_alias(self, alias):
+    #     '''
+    #     Remove a certain alias.
+        
+    #     Parameters
+    #     ----------
+    #     alias : str
+    #         The alias of the impact indicator to be removed.
+    #     '''
+    #     if self.registry.data[alias] is not self:
+    #         warn('"{alias}" is not the alias of {self.ID}.')
+    #         return
+    #     else:
+    #         self._indicators.pop(alias)
+
 
     @property
     def unit(self):
@@ -329,7 +429,6 @@ class ImpactIndicator:
     @property
     def registered(self):
         '''[bool] If this impact indicator is registered in the records.'''
-        return self._registered
-
-
+        data = self.registry.data.get(self.ID)
+        return True if data else False
 

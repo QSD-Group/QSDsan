@@ -64,8 +64,8 @@ class SimpleTEA(TEA):
     Firstly make a system (refer to the `tutorial <https://qsdsan.readthedocs.io/en/latest/tutorials/SanUnit_and_System.html>`_)
     for how to do so, here we import a pre-constructed one.
     
-    >>> from exposan import bwaise as bw
-    >>> sysA = bw.sysA
+    >>> # from exposan import bwaise as bw
+    >>> # sysA = bw.sysA
     '''
     
     __slots__ = (*(i for i in TEA.__slots__ if i not in conflict_slots),

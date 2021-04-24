@@ -14,6 +14,8 @@ for license details.
 
 from numpy.testing import assert_allclose
 
+__all__ = ('test_bwaise',)
+
 def test_bwaise():
     from exposan import bwaise as bw
     
@@ -27,5 +29,5 @@ def test_bwaise():
     
     
 # If pytest runs this module, it calls the test_bwaise function and test exposan
-if __name__ == '__main__':
-    test_bwaise()
+# if __name__ == '__main__':
+#     test_bwaise()
