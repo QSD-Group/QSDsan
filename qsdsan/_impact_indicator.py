@@ -295,20 +295,20 @@ class ImpactIndicator:
         '''
         data = load_data(path=path)
         for indicator in data.index:
-            if indicator in cls.get_all_indicators(True).keys():
-                raise ValueError(f'The impact indicator "{indicator}" has been added.')
-            else:
-                new = cls.__new__(cls)
-                kwargs = {}
-                for k in ('alias', 'unit', 'method', 'category', 'description'):
-                    try:
-                        kwargs[k] = data.loc[indicator][k]
-                    except KeyError:
-                        kwargs[k] = ''
+            # if indicator in cls.get_all_indicators(True).keys():
+            #     raise ValueError(f'The impact indicator "{indicator}" has been added.')
+            # else:
+            new = cls.__new__(cls)
+            kwargs = {}
+            for k in ('alias', 'unit', 'method', 'category', 'description'):
+                try:
+                    kwargs[k] = data.loc[indicator][k]
+                except KeyError:
+                    kwargs[k] = ''
 
-                new.__init__(ID=indicator, **kwargs)
+            new.__init__(ID=indicator, **kwargs)
 
-                # cls._indicators[indicator] = new
+            # cls._indicators[indicator] = new
 
     def _get_alias_dct(cls):
         dct = {}
