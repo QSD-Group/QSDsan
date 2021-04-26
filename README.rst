@@ -20,16 +20,16 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 What is ``QSDsan``?
 -------------------
-``QSDsan`` is an open-source, community-led platform for quantitative sustainable design of sanitation and resource recovery systems. It leverages the structure and modules developed in the `BioSTEAM <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_ platform with additional functions tailored to sanitation processes.
+``QSDsan`` is an open-source, community-led platform for the quantitative sustainable design (QSD) of sanitation and resource recovery systems. It is one of a series of platforms that are being developed for the execution of QSD - a methodology for the research, design, and deployment of technologies and inform decision-making. [1]_ It leverages the structure and modules developed in the `BioSTEAM <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_ platform [2]_ with additional functions tailored to sanitation processes.
 
 As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
 
-All systems developed with ``QSDsan`` are included in the package `exposan <https://github.com/QSD-Group/EXPOsan>`_ - exposition of sanitation and resource recovery systems.
+All systems developed with ``QSDsan`` are included in the package `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ - exposition of sanitation and resource recovery systems.
 
 
 Installation
 ------------
-You can downlonw the package from `PyPI <https://pypi.org/project/qsdsan/>`_.
+You can download the package from `PyPI <https://pypi.org/project/qsdsan/>`_.
 
 If you use pip:
 
@@ -37,7 +37,7 @@ If you use pip:
 
     pip install qsdsan
 
-Note that development of this package is currently under initial stage with limited backward compatibility, please feel free to submit an issue for any questions regarding package upgrading.
+Note that development of this package is currently under initial stage with limited backward compatibility, please feel free to `submit an issue <https://github.com/QSD-Group/QSDsan/issues>`_ for any questions regarding package upgrading.
 
 If you prefer the most recent version on GitHub, please follow the steps in the `Contributing to QSDsan <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ section of the documentation.
 
@@ -73,3 +73,9 @@ Please refer to the `Contributing to QSDsan <https://qsdsan.readthedocs.io/en/la
 License information
 -------------------
 Please refer to the ``LICENSE.txt`` for information on the terms & conditions for usage of this software, and a DISCLAIMER OF ALL WARRANTIES.
+
+References
+----------
+.. [1] Li, Y.; Hand, S.; Trimmer, J. T.; Byrne, D. M.; Chambers, K. G.; Lohman, H. A. C.; Shi, R.; Zhang, X.; Cook, S. M.; Guest, J. S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. In Prep. 2021.
+
+.. [2] Cortés-Peña, Y.; Kumar, D.; Singh, V.; Guest, J. S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020, 8 (8), 3302–3310. https://doi.org/10.1021/acssuschemeng.9b07040.
