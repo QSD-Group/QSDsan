@@ -16,7 +16,7 @@ for license details.
 
 from warnings import warn
 from .. import currency, SanUnit, Transportation
-from .._units_of_measure import auom
+from ..utils import auom
 
 __all__ = ('Trucking',)
 
@@ -66,7 +66,7 @@ class Trucking(SanUnit):
                  if_material_loss=True, loss_ratio=0.02):
         SanUnit.__init__(self, ID, ins, outs)
         self.single_truck = \
-            Transportation(item='Trucking',
+            Transportation(ID='single_truck', item='Trucking',
                            load_type=load_type, load=load, load_unit=load_unit,
                            distance=distance, distance_unit=distance_unit,
                            interval=interval, interval_unit=interval_unit)
@@ -108,7 +108,7 @@ class Trucking(SanUnit):
             factor = auom('kg').conversion_factor(single.default_units['load'])
             N = self.F_mass_in*factor*single.interval/single.load
         self.design_results['Parallel trucks'] = N
-        total = single.copy()
+        total = single.copy('total_truck')
         total.load *= N
         self.transportation = (total,)
         self._add_OPEX = {'Total fee': self.fee/total.interval*N}

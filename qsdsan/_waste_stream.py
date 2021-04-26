@@ -29,7 +29,7 @@ import numpy as np
 from thermosteam import utils, settings
 from . import Components, Stream, MultiStream, SanStream, MissingSanStream, \
     set_thermo
-from ._units_of_measure import auom
+from .utils import auom
 
 __all__ = ('WasteStream', 'MissingWasteStream')
 

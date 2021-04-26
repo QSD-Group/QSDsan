@@ -20,11 +20,10 @@ from math import isclose
 __all__ = ('test_waste_stream',)
 
 def test_waste_stream():
-    import thermosteam as tmo
-    from qsdsan import Components, WasteStream
+    from qsdsan import set_thermo, Components, WasteStream
     
     components = Components.load_default()
-    tmo.settings.set_thermo(components)
+    set_thermo(components)
 
     ws1 = WasteStream.codstates_inf_model('ws1', 1e5)
     ws2 = WasteStream.codstates_inf_model('ws2', 1e5*24/1e3, units=('m3/d', 'g/m3'))

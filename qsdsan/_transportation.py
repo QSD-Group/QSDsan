@@ -16,29 +16,81 @@ for license details.
 # %%
 
 import pandas as pd
-from thermosteam.utils import copy_maybe
+from thermosteam.utils import registered
 from . import currency, ImpactItem
-from ._units_of_measure import auom
-from .utils.formatting import format_number as f_num
+from .utils import (
+    auom, copy_attr,
+    format_number as f_num
+    )
 
 __all__ = ('Transportation',)
 
 
+@registered(ticket_name='Trans')
 class Transportation:
-    '''Transportation cost and environmental impacts.'''
+    '''    
+    Transportation activity for cost and environmental impact calculations.
+    
+    Parameters
+    ----------
+    ID : str
+        ID of this transportation activity.
+    item : :class:`ImpactItem`
+        Impact item associated with this transportation activity.
+    load_type : str
+        Can be either 'mass' or 'volume'.
+    load : float
+        Quantity of the load per trip.
+    load_unit : str
+        Unit of the load.
+    distance : float
+        Distance per trip.
+    distance_unit : str
+        Unit of the distance.
+    interval : float
+        Distance per trip.
+    interval_unit : str
+        Unit of the transportation interval.
+    
+    Examples
+    --------
+    >>> import qsdsan as qs
+    >>> # Make impact indicator
+    >>> GWP = qs.ImpactIndicator('GlobalWarming', alias='GWP', unit='kg CO2-eq')
+    >>> FEC = qs.ImpactIndicator('FossilEnergyConsumption', alias='FEC', unit='MJ')
+    >>> # Assuming transporting 1 kg of goods for 1 km emits 10 kg CO2-eq
+    >>> Trucking = qs.ImpactItem('Trucking', 'kg*km', GWP=10, FEC=5)
+    >>> # Make a transportation activity for transporting 1000 kg goods for 1 mile every day
+    >>> shipping = qs.Transportation('shipping', item=Trucking,
+    ...                              load_type='mass', load=1, load_unit='tonne',
+    ...                              distance='1', distance_unit='mile',
+    ...                              interval='1', interval_unit='day')
+    >>> shipping.show()
+    Transportation: Trucking [per trip]
+    Load          : 1000 kg
+    Distance      : 1.61 km
+    Interval      : 24 hr
+    Total cost    : None USD
+    Total impacts :
+                                  Impacts
+    GlobalWarming (kg CO2-eq)    1.61e+04
+    FossilEnergyConsumption (MJ) 8.05e+03
+    '''
 
-    __slots__ = ('_item', '_load_type', '_load', '_distance', '_interval',
+    __slots__ = ('_ID', '_item', '_load_type', '_load', '_distance', '_interval',
                  'default_units')
     
-    def __init__(self, item=None,
+    def __init__(self, ID='', item=None,
                  load_type='mass', load=1., load_unit='kg',
                  distance=1., distance_unit='km',
                  interval=1., interval_unit='hr'):
+        self._register(ID)
         self.item = item
         self.default_units = {
             'distance': 'km',
             'interval': 'hr',
             }
+        
         self._load_type = load_type
         if load_type == 'mass':
             self.default_units['load'] = 'kg'
@@ -49,15 +101,17 @@ class Transportation:
         else:
             raise ValueError("load_type can only be 'mass' or 'volume', "
                              f'not {load_type}.')
+        
         self._update_value('load', load, load_unit)
         self._update_value('distance', distance, distance_unit)
         self._update_value('interval', interval, interval_unit)
 
-        try:
-            auom(str(load_unit)+'*'+str(distance_unit)).convert(1, self.item.functional_unit)
-        except:
-            raise ValueError(f'Units of `load` {load_unit} and `distance` {distance_unit} '
-                             f'do not match the item `functional_unit` {self.item.functional_unit}.')
+        if item:            
+            try:
+                auom(str(load_unit)+'*'+str(distance_unit)).convert(1, self.item.functional_unit)
+            except:
+                raise ValueError(f'Units of `load` {load_unit} and `distance` {distance_unit} '
+                                 f'do not match the item `functional_unit` {self.item.functional_unit}.')
         
     
     def _update_value(self, var, value, unit=''):
@@ -95,14 +149,10 @@ class Transportation:
 
     _ipython_display_ = show # funny that _ipython_display_ and _ipython_display behave differently
 
-    def copy(self):
+    def copy(self, new_ID=''):
         new = Transportation.__new__(Transportation)
-        for slot in Transportation.__slots__:
-            if slot == '_item':
-                new._item = self._item
-            else:
-                value = getattr(self, slot)
-                setattr(new, slot, copy_maybe(value))
+        new.__init__(new_ID)
+        new = copy_attr(new, self, skip=('_ID',))
         return new
     
     __copy__ = copy
@@ -114,9 +164,11 @@ class Transportation:
         return self._item
     @item.setter
     def item(self, i):
-        if isinstance(i, str):
+        if not i:
+            i = None
+        elif isinstance(i, str):
             i = ImpactItem.get_item(i)
-        elif i is not ImpactItem:
+        elif not isinstance(i, ImpactItem):
             raise TypeError('Only `ImpactItem` or the ID of `ImpactItem` can be set, '
                             f'not {type(i).__name__}.')
         self._item = i

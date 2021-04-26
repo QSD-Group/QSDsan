@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 import thermosteam as tmo
 from . import _component, Chemical, Chemicals, CompiledChemicals, Component
-from .utils.loading import load_data
+from .utils import load_data
 
 __all__ = ('Components', 'CompiledComponents')
 

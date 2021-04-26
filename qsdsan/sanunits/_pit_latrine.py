@@ -17,11 +17,7 @@ for license details.
 
 from .. import WasteStream, Construction
 from ._toilet import Toilet
-from ..utils.loading import load_data, data_path
-
-# Note that here two different methods are used to check the user-input values
-from ..utils.checkers import Fraction as Frac_C
-from ..utils.descriptors import Fraction as Frac_D
+from ..utils import load_data, data_path
 
 __all__ = ('PitLatrine',)
 
@@ -65,8 +61,9 @@ class PitLatrine(Toilet):
     :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
     
     '''
-
-    _P_leaching = Frac_D(name='P_leaching')
+    
+    # Legacy code to add checkers
+    # _P_leaching = Frac_D(name='P_leaching')
 
     def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, lifetime=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
@@ -274,8 +271,10 @@ class PitLatrine(Toilet):
         return self._N_leaching
     @N_leaching.setter
     def N_leaching(self, i):
-        @Frac_C(self)
-        def N_leaching(): return i
+        self._N_leaching = float(i)
+        # Legacy code to add checkers
+        # @Frac_C(self)
+        # def N_leaching(): return i
 
     @property
     def P_leaching(self):

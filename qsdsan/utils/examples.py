@@ -12,7 +12,7 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import qsdsan as qs
+from .. import Component, Components
 
 __all__ = ('load_example_cmps',)
 
@@ -26,33 +26,33 @@ __all__ = ('load_example_cmps',)
 def load_example_cmps():
     '''Load some default components for documentation purpose.'''
 
-    H2O = qs.Component('H2O', search_ID='H2O', particle_size='Soluble',
-                       degradability='Undegradable', organic=False)
+    H2O = Component('H2O', search_ID='H2O', particle_size='Soluble',
+                     degradability='Undegradable', organic=False)
     
-    CO2 = qs.Component('CO2', search_ID='CO2', particle_size='Dissolved gas',
-                       degradability='Undegradable', organic=False)  
+    CO2 = Component('CO2', search_ID='CO2', particle_size='Dissolved gas',
+                    degradability='Undegradable', organic=False)  
 
-    N2O = qs.Component('N2O', search_ID='N2O', particle_size='Dissolved gas',
-                       degradability='Undegradable', organic=False)
+    N2O = Component('N2O', search_ID='N2O', particle_size='Dissolved gas',
+                    degradability='Undegradable', organic=False)
 
-    NaCl = qs.Component('NaCl', search_ID='NaCl', particle_size='Soluble',
-                         degradability='Undegradable', organic=False)
+    NaCl = Component('NaCl', search_ID='NaCl', particle_size='Soluble',
+                     degradability='Undegradable', organic=False)
 
-    H2SO4 = qs.Component('H2SO4', search_ID='H2SO4', particle_size='Soluble',
-                         degradability='Undegradable', organic=False)
+    H2SO4 = Component('H2SO4', search_ID='H2SO4', particle_size='Soluble',
+                      degradability='Undegradable', organic=False)
     
-    CH4 = qs.Component('CH4', search_ID='CH4', particle_size='Dissolved gas',
-                       degradability='Readily', organic=True)
+    CH4 = Component('CH4', search_ID='CH4', particle_size='Dissolved gas',
+                     degradability='Readily', organic=True)
 
-    Methanol = qs.Component('Methanol', search_ID='Methanol',
-                            particle_size='Soluble',
-                            degradability='Readily', organic=True)
+    Methanol = Component('Methanol', search_ID='Methanol',
+                         particle_size='Soluble',
+                         degradability='Readily', organic=True)
 
-    Ethanol = qs.Component('Ethanol', search_ID='Ethanol',
-                           particle_size='Soluble',
-                           degradability='Readily', organic=True)
+    Ethanol = Component('Ethanol', search_ID='Ethanol',
+                         particle_size='Soluble',
+                         degradability='Readily', organic=True)
     
-    cmps = qs.Components((H2O, CO2, N2O, NaCl, H2SO4, CH4, Methanol, Ethanol))
+    cmps = Components((H2O, CO2, N2O, NaCl, H2SO4, CH4, Methanol, Ethanol))
 
     cmps.compile()
     cmps.set_synonym('H2O', 'Water')

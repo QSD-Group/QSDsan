@@ -136,7 +136,3 @@ def test_HXprocess():
     qs_unit = qs.sanunits.HXprocess(ins=qs_ws, phase0='l', phase1='l')
     
     check_results(bst_unit, qs_unit)
-
-
-
-

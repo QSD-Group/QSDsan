@@ -16,9 +16,8 @@ for license details.
 # %%
 
 from warnings import warn
-from thermosteam.utils import registered
-from ._units_of_measure import parse_unit
-from .utils.loading import load_data
+from thermosteam.utils import registered 
+from .utils import parse_unit, load_data
 
 __all__ = ('ImpactIndicator', )
 
@@ -31,9 +30,9 @@ class ImpactIndicator:
     Parameters
     ----------
     ID : str
-        ID of the ImpactIndicator.
+        ID of this impact indicator.
     alias : str
-        Alternative ID of the ImpactIndicator.
+        Alternative ID of this impact indicator.
         
         .. note::
 
@@ -43,9 +42,9 @@ class ImpactIndicator:
     method : str
         Impact assessment method, e.g., 'TRACI'.
     category : str
-        Category of the ImpactIndicator, e.g., 'human health'.
+        Category of this impact indicator, e.g., 'human health'.
     unit : str
-        Unit of the ImpactIndicator, e.g., 'kg CO2-eq'.
+        Unit of this impact indicator, e.g., 'kg CO2-eq'.
     description : str
         Supplementary explanation.
         
@@ -103,7 +102,7 @@ class ImpactIndicator:
     __slots__ = ('_ID', '_alias', '_method', '_category', '_unit', '_ureg_unit',
                  '_unit_remaining', '_description')
 
-    def __init__(self, ID, alias='', method='', category='', unit='', description='',
+    def __init__(self, ID='', alias='', method='', category='', unit='', description='',
                  **kwargs):
         
         self._register(ID)
@@ -134,21 +133,18 @@ class ImpactIndicator:
             info = f'ImpactIndicator: {self.ID} as {self.unit}'
         else:
             info = f'ImpactIndicator: {self.ID}'
+            
         alias = self.alias if self.alias else 'None'
         line =   f'\n Alias      : {alias}'
-        
-        # aliases = self.get_alias()
-        # if aliases:
-        #     for alias in aliases[:-1]:
-        #         line += alias + '; '
-        #     line += aliases[-1]
         if len(line) > 40: line = line[:40] + '...'
         info += line
+        
         info += f'\n Method     : {self.method or None}'
         info += f'\n Category   : {self.category or None}'
         line =  f'\n Description: {self.description or None}'
         if len(line) > 40: line = line[:40] + '...'
         info += line
+        
         print(info)
     
     _ipython_display_ = show

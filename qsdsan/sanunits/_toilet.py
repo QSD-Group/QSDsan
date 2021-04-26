@@ -18,7 +18,7 @@ for license details.
 from warnings import warn
 from .. import SanUnit
 from ._decay import Decay
-from ..utils.loading import load_data, data_path
+from ..utils import load_data, data_path
 
 __all__ = ('Toilet',)
 
