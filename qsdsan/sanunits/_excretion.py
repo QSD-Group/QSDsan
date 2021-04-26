@@ -15,7 +15,7 @@ for license details.
 # %%
 
 from .. import SanUnit
-from ..utils.loading import load_data, data_path
+from ..utils import load_data, data_path
 
 __all__ = ('Excretion',)
 

@@ -54,7 +54,6 @@ from ._lca import *
 
 
 from . import (
-    _units_of_measure, # if not included here, then need to add to setup.py
     _component,
     _components,
     _sanstream,

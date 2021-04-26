@@ -39,7 +39,7 @@ from SALib.sample import (
 from SALib.analyze import morris, fast, rbd_fast, sobol
 from SALib.plotting import morris as sa_plt_morris
 from biosteam.plots import plot_spearman
-from .utils.decorators import time_printer
+from .utils import time_printer
 
 isinstance = isinstance
 getattr = getattr

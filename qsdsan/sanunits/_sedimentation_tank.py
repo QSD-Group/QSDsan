@@ -19,7 +19,7 @@ import numpy as np
 from .. import Construction
 from ._decay import Decay
 from ._sludge_separator import SludgeSeparator
-from ..utils.loading import load_data, data_path
+from ..utils import load_data, data_path
 
 __all__ = ('SedimentationTank',)
 

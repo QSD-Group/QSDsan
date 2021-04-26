@@ -33,7 +33,6 @@ setup(
                     'data/sanunit_data/*',
                     'processes/*',
                     'sanunits/*',
-                    'units_of_measure.txt',
                     'utils/*',
                     ]},
     platforms=['Windows', 'Mac', 'Linux'],

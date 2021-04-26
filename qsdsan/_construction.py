@@ -16,33 +16,61 @@ for license details.
 # %%
 
 import pandas as pd
-from thermosteam.utils import copy_maybe
+from thermosteam.utils import registered
 from . import currency, ImpactItem
-from ._units_of_measure import auom
-from .utils.formatting import format_number as f_num
+from .utils import (
+    auom, copy_attr,
+    format_number as f_num
+    )
 
 __all__ = ('Construction',)
 
 
+@registered(ticket_name='Constr')
 class Construction:
     '''
     Construction activity for cost and environmental impact calculations.
     
     Parameters
     ----------
+    ID : str
+        ID of this construction activity.
     item : :class:`ImpactItem`
         Impact item associated with this consturction activity.
     quantity : float
         Quantity of the impact item involved in this construction activity.
     lifetime : float
-        Lifetime of this construction activity.
-    
+        Lifetime of the constructed item.
+    lifetime_unit : str
+        Unit of the lifetime.
+        
+    Examples
+    --------
+    >>> import qsdsan as qs
+    >>> # Make impact indicators
+    >>> GWP = qs.ImpactIndicator('GlobalWarming', alias='GWP', unit='kg CO2-eq')
+    >>> FEC = qs.ImpactIndicator('FossilEnergyConsumption', alias='FEC', unit='MJ')
+    >>> # Make impact item
+    >>> Steel = qs.ImpactItem('Steel', 'kg', GWP=2.55, FEC=0.5)
+    >>> # Make a construction activity that uses 100 g of steel
+    >>> steel_100_g = qs.Construction('steel_100_g', item=Steel, quantity=100,
+    ...                               quantity_unit='g')
+    >>> steel_100_g.show()
+    Construction : Steel
+    Lifetime     : None yr
+    Quantity     : 0.1 kg
+    Total cost   : None USD
+    Total impacts:
+                                  Impacts
+    GlobalWarming (kg CO2-eq)       0.255
+    FossilEnergyConsumption (MJ)     0.05
     '''
 
-    __slots__ = ('_item', '_quantity', '_lifetime')
+    __slots__ = ('_ID', '_item', '_quantity', '_lifetime')
     
-    def __init__(self, item=None, quantity=0., quantity_unit='',
+    def __init__(self, ID='', item=None, quantity=0., quantity_unit='',
                  lifetime=None, lifetime_unit='yr'):
+        self._register(ID)
         self.item = item
         self._update_quantity(quantity, quantity_unit)
         self._lifetime = None
@@ -82,14 +110,10 @@ class Construction:
         
     _ipython_display_ = show
     
-    def copy(self):
+    def copy(self, new_ID=''):
         new = Construction.__new__(Construction)
-        for slot in Construction.__slots__:
-            if slot == '_item':
-                new._item = self._item
-            else:
-                value = getattr(self, slot)
-                setattr(new, slot, copy_maybe(value))
+        new.__init__(new_ID)
+        new = copy_attr(new, self, skip=('_ID',))        
         return new
 
     __copy__ = copy
@@ -111,9 +135,11 @@ class Construction:
         return self._item
     @item.setter
     def item(self, i):
-        if isinstance(i, str):
+        if not i:
+            i = None
+        elif isinstance(i, str):
             i = ImpactItem.get_item(i)
-        elif i is not ImpactItem:
+        elif not isinstance(i, ImpactItem):
             raise TypeError('Only `ImpactItem` or the ID of `ImpactItem` can be set, '
                             f'not {type(i).__name__}.')
         self._item = i
@@ -143,30 +169,12 @@ class Construction:
 
     @property
     def impacts(self):
-        '''[dict] Total impacts of this construction item.'''
+        '''[dict] Total impacts of this construction activity over its lifetime.'''
         impacts = {}
         for indicator, CF in self.item.CFs.items():
             impacts[indicator] = self.quantity*CF
         return impacts
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    
     
     

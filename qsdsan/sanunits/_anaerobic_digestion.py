@@ -22,7 +22,7 @@ TODO (maybe):
 import numpy as np
 from .. import SanUnit, Construction
 from ._decay import Decay
-from ..utils.loading import load_data, data_path
+from ..utils import load_data, data_path
 
 __all__ = ('AnaerobicDigestion',)
 

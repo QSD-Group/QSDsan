@@ -16,7 +16,7 @@ for license details.
 # %%
 
 from biosteam.utils import NotImplementedMethod
-from ._units_of_measure import auom
+from .utils import auom
 
 __all__ = ('Equipment',)
 

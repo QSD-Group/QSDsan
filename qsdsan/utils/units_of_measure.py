@@ -12,21 +12,27 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+'''
+TODO:
+    Move Component/WasteStream ones here as well
+'''
+
+
 
 # %%
 
 __all__ = ('ureg', 'auom', 'ruom', 'parse_unit')
 
-#!!! Make sure all units are defined in a single registry (same as thermosteam)
-#!!! Move Component/WasteStream ones here as well
-
-from thermosteam.units_of_measure import ureg, AbsoluteUnitsOfMeasure, RelativeUnitsOfMeasure
-auom = AbsoluteUnitsOfMeasure
-ruom = RelativeUnitsOfMeasure
-
 import os
-ureg.load_definitions(os.path.dirname(os.path.realpath(__file__)) + '/units_of_measure.txt')
-del os
+from thermosteam.units_of_measure import (
+    ureg,
+    AbsoluteUnitsOfMeasure as auom,
+    RelativeUnitsOfMeasure as ruom
+    )
+
+path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                    'units_definition.txt')
+ureg.load_definitions(path)
 
 def parse_unit(value):
     str_list = value.split(' ') # for something like 'kg CO2-eq'
@@ -41,10 +47,12 @@ def parse_unit(value):
         others = '-'.join(str_list.pop(0))
         try: return auom(unit), others
         except: pass
-    # For something like 'MJ' or 'tonne*km', not at the start as something like 'kg N' will
-    # be misinterpreted
+    
+    # For something like 'MJ' or 'tonne*km',
+    # not doing this earlier as something like 'kg N' will be misinterpreted
     try: return auom(value), ''
     except: pass
+    
     return None, value
 
 

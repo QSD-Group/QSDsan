@@ -17,10 +17,12 @@ for license details.
 
 import pandas as pd
 from warnings import warn
-from thermosteam.utils import copy_maybe, registered
+from thermosteam.utils import registered
 from . import currency, SanStream, WasteStream, ImpactIndicator
-from ._units_of_measure import auom, parse_unit
-from .utils.formatting import format_number as f_num
+from .utils import (
+    auom, parse_unit, copy_attr,
+    format_number as f_num
+    )
 
 isinstance = isinstance
 getattr = getattr
@@ -49,7 +51,7 @@ class ImpactItem:
         Price of the item per functional unit.
     price_unit : str
         Unit of the price.
-    source : ImpactItem
+    source : :class:`ImpactItem`
         If provided, all attributions and properties of this impact item will
         be copied from the provided source.
     indicator_CFs : kwargs
@@ -77,7 +79,7 @@ class ImpactItem:
     >>> Steel = qs.ImpactItem('Steel', 'kg', GWP=2.55)
     >>> Steel.show()
     ImpactItem      : Steel [per kg]
-    Price           : 0 USD
+    Price           : None USD
     ImpactIndicators:
                                Characterization factors
     GlobalWarming (kg CO2-eq)                      2.55
@@ -86,7 +88,7 @@ class ImpactItem:
     ...                             GWP=(480, 'g CO2-eq'), FEC=(5926, 'kJ'))
     >>> Electricity.show()
     ImpactItem      : Electricity [per kWh]
-    Price           : 0 USD
+    Price           : None USD
     ImpactIndicators:
                                   Characterization factors
     GlobalWarming (kg CO2-eq)                         0.48
@@ -151,7 +153,7 @@ class ImpactItem:
     
     __slots__ = ('_ID', '_functional_unit', '_price', '_CFs', '_source')
     
-    def __init__(self, ID, functional_unit='kg', price=0., price_unit='',
+    def __init__(self, ID='', functional_unit='kg', price=0., price_unit='',
                  source=None, **indicator_CFs):
         
         self._register(ID)
@@ -236,7 +238,7 @@ class ImpactItem:
         print(f'The impact indicator "{ID}" has been removed.')
 
 
-    def copy(self, new_ID, set_as_source=False):
+    def copy(self, new_ID='', set_as_source=False):
         '''
         Return a new :class:`ImpactItem` object with the same settings.
         
@@ -251,17 +253,15 @@ class ImpactItem:
         '''
         
         new = ImpactItem.__new__(ImpactItem)
-        new.__init__(new_ID)        
+        new.__init__(new_ID)
         
         if set_as_source:
-            new.source = self
+            if self.source:
+                new.source = self.source
+            else:
+                new.source = self
         else:
-            for slot in ImpactItem.__slots__:
-                if slot in ('_ID', '_source'):
-                    continue
-                value = getattr(self, slot)
-                setattr(new, slot, copy_maybe(value))
-            new.source = self.source
+            new = copy_attr(new, self, skip=('_ID', '_source'))
         
         return new
 
@@ -459,7 +459,7 @@ class StreamImpactItem(ImpactItem):
     >>> methane_item.show()
     StreamImpactItem: [per kg]
     Linked to       : None
-    Price           : 0 USD
+    Price           : None USD
     ImpactIndicators:
                                Characterization factors
     GlobalWarming (kg CO2-eq)                        28
@@ -471,7 +471,7 @@ class StreamImpactItem(ImpactItem):
     >>> methane_item.show()
     StreamImpactItem: [per kg]
     Linked to       : methane
-    Price           : 0 USD
+    Price           : None USD
     ImpactIndicators:
                                Characterization factors
     GlobalWarming (kg CO2-eq)                        28
@@ -495,7 +495,7 @@ class StreamImpactItem(ImpactItem):
     StreamImpactItem: [per kg]
     Linked to       : methane2
     Source          : methane_item
-    Price           : 0 USD
+    Price           : None USD
     ImpactIndicators:
      None
     >>> methane_item.add_indicator('GlobalWarming', 28)
@@ -503,7 +503,7 @@ class StreamImpactItem(ImpactItem):
     StreamImpactItem: [per kg]
     Linked to       : methane2
     Source          : methane_item
-    Price           : 0 USD
+    Price           : None USD
     ImpactIndicators:
                                Characterization factors
     GlobalWarming (kg CO2-eq)                        28
@@ -569,7 +569,7 @@ class StreamImpactItem(ImpactItem):
     _ipython_display_ = show
 
 
-    def copy(self, new_ID=None, stream=None, set_as_source=False):
+    def copy(self, new_ID='', stream=None, set_as_source=False):
         '''
         Return a new :class:`StreamImpactItem` object with the same settings.
 
@@ -588,15 +588,12 @@ class StreamImpactItem(ImpactItem):
         new._linked_stream = None # initiate this attribute
         
         if set_as_source:
-            new.source = self
+            if self.source:
+                new.source = self.source
+            else:
+                new.source = self
         else:
-            for slot in StreamImpactItem.__slots__:
-                if slot in ('_ID', '_source', '_linked_stream'):
-                    continue
-                value = getattr(self, slot)
-                setattr(new, slot, copy_maybe(value))
-            
-            new.source = self.source
+            new = copy_attr(new, self, skip=('_ID', '_linked_stream', '_source'))
         
         if stream:
             stream.impact_item = new

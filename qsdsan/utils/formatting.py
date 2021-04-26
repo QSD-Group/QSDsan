@@ -19,14 +19,21 @@ __all__ = ('format_number', )
 
 
 def format_number(number):
+    if not number:
+        return 'None'
+
     number = float(number)
     if abs(number) == 0 or str(number) == 'nan':
         return '0'
+
     elif abs(number) > 1e6 or abs(number) < 1e-4:
         return str(f'{number:.2E}')
+
     elif 1e-3 < abs(number) < 0.01:
         return str(round(number, 4))
+
     elif number == int(number):
         return str(int(number))
+
     else:
         return str(round(number, 2))

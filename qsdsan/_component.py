@@ -18,11 +18,13 @@ for license details.
 
 
 import thermosteam as tmo
-from chemicals.elements import molecular_weight, charge_from_formula
-from chemicals.elements import mass_fractions as get_mass_frac
+from chemicals.elements import (
+    mass_fractions as get_mass_frac,
+    molecular_weight,
+    charge_from_formula
+    )
 from . import Chemical
-from ._units_of_measure import auom
-from .utils.cod import cod_test_stoichiometry, electron_acceptor_cod
+from .utils import auom, cod_test_stoichiometry, electron_acceptor_cod
 
 __all__ = ('Component',)
 

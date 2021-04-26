@@ -21,8 +21,10 @@ import pandas as pd
 from collections.abc import Iterable
 from warnings import warn
 from . import ImpactItem, Stream, SanStream, SanUnit
-from ._units_of_measure import auom
-from .utils.formatting import format_number as f_num
+from .utils import (
+    auom,
+    format_number as f_num
+    )
 
 isinstance = isinstance
 iter = iter

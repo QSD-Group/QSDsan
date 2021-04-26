@@ -18,7 +18,7 @@ for license details.
 import numpy as np
 from .. import Construction
 from ._toilet import Toilet
-from ..utils.loading import load_data, data_path
+from ..utils import load_data, data_path
 
 __all__ = ('UDDT',)
 

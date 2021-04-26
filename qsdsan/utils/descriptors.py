@@ -13,11 +13,12 @@ for license details.
 '''
 
 
-from collections import defaultdict
+# from collections import defaultdict
 from weakref import WeakKeyDictionary
 
 __all__ = ('Validator', 'NonNegativeFloat', 'NonNgeativeInt', 'Fraction',
-           'BareModule')
+           # 'BareModule'
+           )
 
 
 # %%

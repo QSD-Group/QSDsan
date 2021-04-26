@@ -17,36 +17,47 @@ for license details.
 # on them, while other modules in utils depend on the main modules.
 
 from . import (
-    checkers,
     cod,
-    descriptors,
+    decorators,
+    # descriptors, # currently not in use
+    getters,
+    formatting,
     loading,
     parse,
+    setters,
+    units_of_measure,
     )
 
+from .cod import *
+from .decorators import *
+# from .descriptors import *
+from .getters import *
+from .formatting import *
+from .loading import *
+from .parse import *
+from .setters import *
+from .units_of_measure import *
+
+
 __all__ = (
-    *checkers.__all__,
     *cod.__all__,
-    *descriptors.__all__,
+    *decorators.__all__,
+    # *descriptors.__all__,
+    *getters.__all__,
+    *formatting.__all__,
     *loading.__all__,
     *parse.__all__,
+    *setters.__all__,
+    *units_of_measure.__all__,
     )
+
 
 def _secondary_importing():
     global __all__
     from . import (
-        decorators,
         examples,
-        formatting,
-        getters,
-        setters,
         )
     
-    __all__ = (
-        *__all__,
-        *decorators.__all__,
-        *examples.__all__,
-        *formatting.__all__,
-        *getters.__all__,
-        *setters.__all__,
-                )
+    from .examples import load_example_cmps
+
+    
