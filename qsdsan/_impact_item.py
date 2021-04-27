@@ -29,10 +29,14 @@ getattr = getattr
 
 __all__ = ('ImpactItem', 'StreamImpactItem')
 
-def check_source(item, return_item=False):
+def check_source(item, return_item=False, raise_error=True):
     if item.source:
-        raise ValueError(f'This impact item is copied from {item.source.ID}, '
-                         'value cannot be set.')
+        if raise_error:
+            raise ValueError(f'This impact item is copied from {item.source.ID}, '
+                             'value cannot be set.')
+        else:
+            item = item.source         
+            
     if return_item:
         return item
 
@@ -166,11 +170,13 @@ class ImpactItem:
             self._update_price(price, price_unit)
             self._CFs = {}
             for indicator, value in indicator_CFs.items():
+                
                 try:
                     CF_value, CF_unit = value # unit provided for CF
                     self.add_indicator(indicator, CF_value, CF_unit)
                 except:
-                    self.add_indicator(indicator, value)
+                    try: self.add_indicator(indicator, value)
+                    except: breakpoint()
 
     
     # This makes sure it won't be shown as memory location of the object
@@ -210,7 +216,7 @@ class ImpactItem:
         source_item = check_source(self, True)
         if isinstance(indicator, str):
             indicator = ImpactIndicator.get_indicator(indicator)
-            
+
         try: CF_unit2 = CF_unit.replace(' eq', '-eq')
         except: pass
     
@@ -248,8 +254,6 @@ class ImpactItem:
             ID of the new impact item.
         set_as_source : bool
             Whether to set the original impact item as the source.
-        register : bool
-            Whether to register the new impact item.
         '''
         
         new = ImpactItem.__new__(ImpactItem)
@@ -384,7 +388,7 @@ class ImpactItem:
     @property
     def functional_unit(self):
         '''[str] Functional unit of this item.'''
-        return check_source(self, True)._functional_unit.units
+        return check_source(self, True, False)._functional_unit.units
     @functional_unit.setter
     def functional_unit(self, i):
         check_source(self, True)._functional_unit = auom(i)
@@ -398,7 +402,7 @@ class ImpactItem:
     @property
     def price(self):
         '''Price of this item per functional unit.'''
-        return check_source(self, True)._price
+        return check_source(self, True, False)._price
     @price.setter
     def price(self, price, unit=''):
         check_source(self, True)._update_price(price, unit)
@@ -409,7 +413,7 @@ class ImpactItem:
         if self.source:
             return self.source._CFs.copy()
         else:
-            return self._CFs
+            return self._CFs.copy()
     @CFs.setter
     def CFs(self, indicator, CF_value, CF_unit=''):
         check_source(self, True).add_indicator(indicator, CF_value, CF_unit)

@@ -361,9 +361,11 @@ class SanUnit(Unit, isabstract=True):
         results = super().results(with_units, include_utilities,
                                   include_total_cost, include_installed_cost,
                                   include_zeros, external_utilities, key_hook)
-
-        for k, v in self.add_OPEX.items():
-            results.loc[(k, ''), :] = ('USD/hr', v)
+        if not self.add_OPEX:
+            results.loc[('Additional OPEX', ''), :] = ('USD/hr', 0)
+        else:
+            for k, v in self.add_OPEX.items():
+                results.loc[(k, ''), :] = ('USD/hr', v)
         if with_units:
             results.replace({'USD': f'{currency}', 'USD/hr': f'{currency}/hr'},
                             inplace=True)

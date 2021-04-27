@@ -431,7 +431,7 @@ class WasteStream(SanStream):
             if specification == 'TKN': 
                 IDs = [ID for ID in IDs if ID not in ('S_N2','S_NO2','S_NO3')]
             elif specification not in _specific_groups.keys():
-                raise KeyError(f"Undefined specification {specification}."
+                raise KeyError(f"Undefined specification {specification}. "
                                f"Must be one of {_specific_groups.keys()}."
                                "Or, try defining 'subgroup'.")
             else: 
