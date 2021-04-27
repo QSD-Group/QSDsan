@@ -27,6 +27,9 @@ from .utils import (
 isinstance = isinstance
 getattr = getattr
 
+#!!! PAUSED, RERUN TUTORIAL TO MAKE SURE IT WORKS!!!
+
+
 __all__ = ('ImpactItem', 'StreamImpactItem')
 
 def check_source(item, return_item=False, raise_error=True):
@@ -35,7 +38,7 @@ def check_source(item, return_item=False, raise_error=True):
             raise ValueError(f'This impact item is copied from {item.source.ID}, '
                              'value cannot be set.')
         else:
-            item = item.source         
+            item = item.source
             
     if return_item:
         return item
@@ -413,7 +416,7 @@ class ImpactItem:
         if self.source:
             return self.source._CFs.copy()
         else:
-            return self._CFs.copy()
+            return self._CFs
     @CFs.setter
     def CFs(self, indicator, CF_value, CF_unit=''):
         check_source(self, True).add_indicator(indicator, CF_value, CF_unit)
