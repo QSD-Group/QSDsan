@@ -41,8 +41,9 @@ class Excretion(SanUnit):
     _N_ins = 0
     _N_outs = 2
     
-    def __init__(self, ID='', ins=None, outs=(), **kwargs):                
-        SanUnit.__init__(self, ID, ins, outs)
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 **kwargs):                
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         data = load_data(path=data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])

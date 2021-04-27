@@ -464,7 +464,7 @@ class StreamImpactItem(ImpactItem):
                                Characterization factors
     GlobalWarming (kg CO2-eq)                        28
     >>> # Make a stream and link the stream to the impact item
-    >>> cmps = qs.utils.examples.load_example_cmps()
+    >>> cmps = qs.utils.load_example_cmps()
     >>> qs.set_thermo(cmps)
     >>> methane = qs.SanStream('methane', Methane=1, units='kg/hr',
     ...                        impact_item=methane_item)

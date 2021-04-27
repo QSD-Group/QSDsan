@@ -87,7 +87,7 @@ class SanStream(Stream):
     __copy__ = copy
 
     @staticmethod
-    def from_stream(cls, stream, ID=None, **kwargs):
+    def from_stream(cls, stream, ID='', **kwargs):
         '''
         Cast a :class:`thermosteam.Stream` or :class:`biosteam.utils.MissingStream`
         to :class:`SanStream` or :class:`MissingSanStream`.
@@ -99,7 +99,7 @@ class SanStream(Stream):
         stream : :class:`thermosteam.Stream`
             The original stream.
         ID : str
-            If not provided, will use the ID of the original stream.
+            If not provided, will use default ID.
         kwargs
             Additional properties of the new stream.
         
@@ -133,10 +133,22 @@ class SanStream(Stream):
                 stream.registry.discard(stream)
                 # stream.registry.untrack((stream,))
             new = cls.__new__(cls)
-            new.ID = stream.ID if not ID else ID
-            new._link = None
-            new._sink = stream._sink
-            new._source = stream._source
+
+            new_ID = ID if ID else stream.ID
+            if new_ID[0]=='s' and new_ID[1:].isnumeric(): # old ID is default
+                new_ID = ''
+            new.__init__(ID=new_ID)
+    
+            new._link = stream._link
+
+            source = new._source = stream._source
+            if source:
+                source._outs[source._outs.index(stream)] = new
+
+            sink = new._sink = stream._sink
+            if sink:
+                sink._ins[sink._ins.index(stream)] = new            
+                        
             new._thermo = stream._thermo
             new._imol = stream._imol.copy()
             new._thermal_condition = stream._thermal_condition.copy()
@@ -146,7 +158,7 @@ class SanStream(Stream):
             
             for attr, val in kwargs.items():
                 setattr(new, attr, val)
-                
+            
             stream._link = stream._sink = stream._source = None
             return new        
 

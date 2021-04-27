@@ -73,6 +73,8 @@ from . import (
     )
 
 utils._secondary_importing()
+for _slot in utils.doc_examples.__all__:
+    setattr(utils, _slot, getattr(utils.doc_examples, _slot))
 
 __all__ = (
     *_component.__all__,

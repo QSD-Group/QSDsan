@@ -35,10 +35,10 @@ class BiogasCombustion(SanUnit):
     
     '''
     
-    def __init__(self, ID='', ins=None, outs=(), if_combustion=False,
-                 biogas_loss=0.1, biogas_eff=0.55):
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 if_combustion=False, biogas_loss=0.1, biogas_eff=0.55):
 
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.if_combustion = if_combustion
         self._biogas_loss = biogas_loss
         self._biogas_eff = biogas_eff

@@ -65,14 +65,15 @@ class PitLatrine(Toilet):
     # Legacy code to add checkers
     # _P_leaching = Frac_D(name='P_leaching')
 
-    def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1, lifetime=8,
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 N_user=1, N_toilet=1, lifetime=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True, 
                  CAPEX=449, OPEX_over_CAPEX=0.05,
                  if_leaching=True, if_shared=True,
                  if_pit_above_water_table=True, **kwargs):
 
-        Toilet.__init__(self, ID, ins, outs, N_user, N_toilet,
+        Toilet.__init__(self, ID, ins, outs, thermo, init_with, N_user, N_toilet,
                         if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
                         if_air_emission, if_ideal_emptying, CAPEX, OPEX_over_CAPEX)
 

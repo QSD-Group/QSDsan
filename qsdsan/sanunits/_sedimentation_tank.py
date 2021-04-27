@@ -59,11 +59,12 @@ class SedimentationTank(SludgeSeparator, Decay):
     
     '''
     
-    def __init__(self, ID='', ins=None, outs=(), split=None, settled_frac=None,
+    def __init__(self, ID='', ins=None, outs=(),thermo=None, init_with='WasteStream',
+                 split=None, settled_frac=None,
                  if_N2O_emission=False, **kwargs):    
         
-        SludgeSeparator.__init__(self, ID, ins, outs, split, settled_frac,
-                                 F_BM_default=1)
+        SludgeSeparator.__init__(self, ID, ins, outs, thermo, init_with,
+                                 split, settled_frac, F_BM_default=1)
         self.if_N2O_emission = if_N2O_emission
 
         data = load_data(path=data_path)

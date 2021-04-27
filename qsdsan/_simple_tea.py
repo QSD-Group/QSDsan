@@ -61,11 +61,53 @@ class SimpleTEA(TEA):
 
     Examples
     --------
-    Firstly make a system (refer to the `tutorial <https://qsdsan.readthedocs.io/en/latest/tutorials/SanUnit_and_System.html>`_)
-    for how to do so, here we import a pre-constructed one.
+    A system should be constructed prior to TEA, here we import a pre-constructed one.
     
-    >>> # from exposan import bwaise as bw
-    >>> # sysA = bw.sysA
+    >>> import qsdsan as qs
+    >>> from qsdsan.utils import load_example_cmps, load_example_sys
+    >>> cmps = load_example_cmps()
+    >>> sys = load_example_sys(cmps)
+    >>> sys.simulate()
+    >>> sys.show()
+    System: sys
+    ins...
+    [0] ss1
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (kmol/hr): H2O      5.55
+                        Ethanol  0.0217
+    [1] ss2
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (kmol/hr): H2O       111
+                        NaCl      0.856
+                        Methanol  0.312
+    outs...
+    [0] alcohols
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (kmol/hr): Methanol  0.312
+                        Ethanol   0.0217
+    [1] salt_water1
+        phase: 'l', T: 350 K, P: 101325 Pa
+        flow (kmol/hr): H2O   23.3
+                        NaCl  0.171
+    [2] salt_water2
+        phase: 'l', T: 350 K, P: 101325 Pa
+        flow (kmol/hr): H2O   93.3
+                        NaCl  0.684
+    >>> tea = qs.SimpleTEA(system=sys, discount_rate=0.05, start_year=2021,
+    ...                     lifetime=10, uptime_ratio=0.9,
+    ...                     system_add_OPEX=0.03)
+    >>> tea.show()
+    SimpleTEA: sys
+    NPV  : -263,572 USD at 5.0% discount rate
+    EAC  : 34,134 USD/yr
+    CAPEX: 58,190 USD (annualized to 7,536 USD/yr)
+    AOC  : 26,598 USD/yr
+    
+    See Also
+    --------
+    `SanUnit and System <https://qsdsan.readthedocs.io/en/latest/tutorials/SanUnit_and_System.html>`_
+    
+    `TEA and LCA <https://qsdsan.readthedocs.io/en/latest/tutorials/TEA_and_LCA.html>`_
     '''
     
     __slots__ = (*(i for i in TEA.__slots__ if i not in conflict_slots),
@@ -105,7 +147,14 @@ class SimpleTEA(TEA):
         # Based on IRS Publication 946 (2019), MACRS15 should be used for
         # municipal wastewater treatment plant, but the system lifetime is
         # just 10 yrs or shorter, so changed to a shorter one
-        self.depreciation = 'MACRS7'
+        if lifetime >= 8:
+            self.depreciation = 'MACRS7'
+        elif lifetime >=6:
+            self.depreciation = 'MACRS5'
+        else:
+             raise ValueError('Currently BioSTEAM does not support TEA ' \
+                              'for systems with a lifetime shorter than 6 years.')
+
         self.income_tax = 0.
         self.startup_months = 0.
         self.startup_FOCfrac = 0.

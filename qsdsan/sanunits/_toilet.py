@@ -70,12 +70,13 @@ class Toilet(SanUnit, Decay, isabstract=True):
     
     '''
     
-    def __init__(self, ID='', ins=None, outs=(), N_user=1, N_toilet=1,
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 N_user=1, N_toilet=1,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True,
                  CAPEX=None, OPEX_over_CAPEX=None):
 
-        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
         self._N_user = 1
         self._N_toilet = 1
         self.N_user = N_user

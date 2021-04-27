@@ -123,6 +123,7 @@ class SanUnit(Unit, isabstract=True):
         self._register(ID)
         self._specification = None
         self._load_thermo(thermo)
+        self._init_with = init_with
         self._init_ins(ins, init_with)
         self._init_outs(outs, init_with)
         self._init_utils()
@@ -160,7 +161,6 @@ class SanUnit(Unit, isabstract=True):
             for n, s in enumerate(strm_inputs):
                 if isinstance(s, Stream):
                     init_with[f'{ins_or_outs}{n}'] = type(s).__name__
-        
 
         init_with = _update_init_with(init_with, ins_or_outs, len(streams))
         
@@ -186,7 +186,7 @@ class SanUnit(Unit, isabstract=True):
         super()._init_ins(ins)
         self._ins = self._convert_stream(ins, self.ins, init_with, 'ins')
 
-    def _init_outs(self, outs, init_with):            
+    def _init_outs(self, outs, init_with):
         super()._init_outs(outs)
         self._outs = self._convert_stream(outs, self.outs, init_with, 'outs')
 

@@ -15,6 +15,7 @@ for license details.
 
 # %%
 
+from collections.abc import Iterable
 from biosteam._graphics import UnitGraphics
 from .. import SanUnit
 
@@ -38,14 +39,16 @@ class LumpedCost(SanUnit):
     
     '''
     
-    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  cost_item_name='Lumped cost',
                  CAPEX=0., power=0., add_OPEX=0., **kwargs):
-        try: iter(ins)
-        except: ins = (ins,)
-        self._N_outs = self._N_ins = len(ins)
+        if isinstance(ins, str) or (not isinstance(ins, Iterable)):
+            self._N_outs = self._N_ins = 1
+        else:
+            self._N_outs = self._N_ins = len(ins)
         self._graphics = UnitGraphics.box(self._N_ins, self._N_outs)
-        SanUnit.__init__(self, ID, ins, outs, thermo)
+        
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.F_BM = {cost_item_name: 1}
         self.baseline_purchase_costs = {cost_item_name: CAPEX}
         self.power_utility(power)

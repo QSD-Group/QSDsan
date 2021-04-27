@@ -14,6 +14,7 @@ for license details.
 
 # %%
 
+from collections.abc import Iterable
 from biosteam._graphics import splitter_graphics
 from .. import SanUnit
 
@@ -24,12 +25,35 @@ class ComponentSplitter(SanUnit):
     '''
     Split the influent into individual components,
     the last effluent contains all remaining components.
+    
+    Parameters
+    ----------
+    split_keys : iterable
+        IDs of components to be splitted to different effluents.
+        Element of the item in the iterable can be str or another iterable
+        containing component IDs.
+        If the item is also iterable, all components whose ID are in the iterable
+        will be splitted to the same effluent.
+        The split is always 1 for a certain component to an effluent (i.e., complete split).
+        
+        .. note::
+            
+            Length of the `split_keys()` (which determines size of the outs) cannot be changed after initiation.
+    
     '''
     
-    def __init__(self, ID='', ins=None, outs=(), split_keys=()):
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+                 init_with='WasteStream', split_keys=()):
+        if not split_keys:
+            raise ValueError('`split_keys` cannot be empty.')
         
-        SanUnit.__init__(self, ID, ins, outs)
-        self.split_keys = split_keys
+        if isinstance(split_keys, str):
+            self._N_outs = 2
+        else:
+            self._N_outs = len(split_keys) + 1
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+
+        self._split_keys = split_keys
     
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False
@@ -38,51 +62,47 @@ class ComponentSplitter(SanUnit):
     def _run(self):
         last = self.outs[-1]
         last.mix_from(self.ins)
+        
         splitted = []
-        num = 0
-        for cmps in self.split_keys:
+        # num = 0
+        for num, cmps in enumerate(self.split_keys):
             if isinstance(cmps, str):
-                self.outs[num].imass[cmps] = last.imass[cmps]
-                last.imass[cmps] = 0
-                if cmps in splitted:
-                    raise ValueError(f'The component {cmps} appears more than once in `split_dict`.')
-                splitted.append(cmps)
-            else:
-                try: iter(cmps)
-                except:
-                    raise ValueError('Elements of the split must be str or iterable, '
-                                     f'not {type(cmps).__name__}.')
-                for cmp in cmps:
-                    self.outs[num].imass[cmp] = last.imass[cmp]
-                    last.imass[cmp] = 0
-                    if cmp in splitted:
-                        raise ValueError(f'The component {cmps} appears more than once in `split_dict`.')
-                    splitted.append(cmp)
+                cmps = (cmps,)
 
-            num += 1
+            elif not isinstance(cmps, Iterable):
+                raise ValueError('`split_keys` must be an iterable, '
+                                 f'not {type(cmps).__name__}.')
+            
+            for cmp in cmps:
+                self.outs[num].imass[cmp] = last.imass[cmp]
+                last.imass[cmp] = 0
+                if cmp in splitted:
+                    raise ValueError(f'The component {cmps} appears more than once in `split_keys`.')
+                splitted.append(cmp)
+
 
     @property
     def split_keys(self):
         '''
-        [iterable] An iterable containing IDs of components to be splitted to
-        different effluents. Element of the item in the iterable can be str of
-        another iterable containing component IDs. If the item is also iterable,
-        all components whose ID are in the iterable will be splitted to the same
-        effluent. Note that the split is 1 (i.e., all of the remaining components
-        will be diverted to the effluent).
+        [iterable] IDs of components to be splitted to different effluents.
+        Element of the item in the iterable can be str or another iterable
+        containing component IDs.
+        If the item is also iterable, all components whose ID are in the iterable
+        will be splitted to the same effluent.
+        The split is always 1 for a certain component to an effluent (i.e., complete split).
+        
+        .. note::
+            
+            Length of the `split_keys()` (which determines size of the outs) cannot be changed after initiation.
         '''
         return self._split_keys
     @split_keys.setter
-    def split_keys(self, i):        
+    def split_keys(self, i):
+        if isinstance(i, str):
+            i = (i,)
+            
+        if len(i) != len(self.outs):
+            raise ValueError('Size of `split_keys` cannot be changed after initiation.')
+
         self._split_keys = i
-
-
-
-
-
-
-
-
-
-
 

@@ -55,10 +55,10 @@ class Lagoon(SanUnit, Decay):
 
     '''
     
-    def __init__(self, ID='', ins=None, outs=(), design_type='anaerobic',
-                 flow_rate=None, if_N2O_emission=False, **kwargs):    
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 design_type='anaerobic', flow_rate=None, if_N2O_emission=False, **kwargs):    
         
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self._tau = None
         self._P_removal = 0.
         

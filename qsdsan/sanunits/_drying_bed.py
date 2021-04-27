@@ -54,10 +54,10 @@ class DryingBed(SanUnit, Decay):
     
     '''
     
-    def __init__(self, ID='', ins=None, outs=(), design_type='unplanted',
-                 **kwargs):
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 design_type='unplanted', **kwargs):
 
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         N_unplanted = {'covered': 19,
                        'uncovered': 30,
                        'storage': 19,

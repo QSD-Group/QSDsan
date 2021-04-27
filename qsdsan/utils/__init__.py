@@ -53,11 +53,6 @@ __all__ = (
 
 
 def _secondary_importing():
-    global __all__
     from . import (
-        examples,
+        doc_examples,
         )
-    
-    from .examples import load_example_cmps
-
-    

@@ -53,10 +53,10 @@ class SludgeSeparator(SanUnit):
     
     '''
     
-    def __init__(self, ID='', ins=None, outs=(), split=None, settled_frac=None,
-                 **kwargs):    
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 split=None, settled_frac=None, **kwargs):    
         
-        SanUnit.__init__(self, ID, ins, outs, **kwargs)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, **kwargs)
         data = load_data(path=data_path)
         if not split:
             value = eval(data.loc['split']['expected'])

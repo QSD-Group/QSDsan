@@ -58,13 +58,13 @@ class Trucking(SanUnit):
     
     '''
     
-    def __init__(self, ID='', ins=None, outs=(),
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  load_type='mass', load=1., load_unit='kg',
                  distance=1., distance_unit='km',
                  interval=1., interval_unit='hr',
                  fee=0., fee_unit=currency,
                  if_material_loss=True, loss_ratio=0.02):
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.single_truck = \
             Transportation(ID='single_truck', item='Trucking',
                            load_type=load_type, load=load, load_unit=load_unit,

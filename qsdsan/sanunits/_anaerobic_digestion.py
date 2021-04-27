@@ -61,9 +61,9 @@ class AnaerobicDigestion(SanUnit, Decay):
     
     '''
     
-    def __init__(self, ID='', ins=None, outs=(), flow_rate=None,
-                 if_capture_biogas=True, if_N2O_emission=False, **kwargs):
-        SanUnit.__init__(self, ID, ins, outs)
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 flow_rate=None, if_capture_biogas=True, if_N2O_emission=False, **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self._flow_rate = flow_rate
         self.if_capture_biogas = if_capture_biogas
         self.if_N2O_emission = if_N2O_emission

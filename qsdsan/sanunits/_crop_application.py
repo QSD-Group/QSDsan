@@ -40,10 +40,10 @@ class CropApplication(SanUnit):
  
     '''
     
-    def __init__(self, ID='', ins=None, outs=(),
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  if_material_loss=True, loss_ratio=0.02):
 
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.if_material_loss = if_material_loss
         self.loss_ratio = loss_ratio
     
