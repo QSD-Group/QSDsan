@@ -41,12 +41,12 @@ class LCA:
     ----------
     system : :class:`biosteam.System`
         System for which this LCA is conducted for.
-    lifetime : float
+    lifetime : int
         Lifetime of the LCA.
     lifetime_unit : str
         Unit of lifetime.
     uptime_ratio : float
-        Fraction of time that the plant is operating.
+        Fraction of time that the system is operating.
     item_quantities : kwargs, :class:`ImpactItem` or str = float/callable or (float/callable, unit)
         Other :class:`ImpactItem` objects (e.g., electricity) and their quantities.
         Note that callable functions are used so that quantity of items can be updated.
@@ -54,11 +54,135 @@ class LCA:
 
     Examples
     --------
-    Firstly make a system (refer to the `tutorial <https://qsdsan.readthedocs.io/en/latest/tutorials/SanUnit_and_System.html>`_)
-    for how to do so, here we import a pre-constructed one.
+    A system should be constructed prior to LCA, here we import a pre-constructed one.
     
-    >>> # from exposan import bwaise as bw
-    >>> # sysA = bw.sysA
+    >>> import qsdsan as qs
+    >>> from qsdsan.utils import load_example_cmps, load_example_sys
+    >>> cmps = load_example_cmps()
+    >>> sys = load_example_sys(cmps)
+    >>> # Uncomment the line below to see the system diagram
+    >>> # sys.diagram()
+    >>> sys.simulate()
+    >>> sys.show()
+    System: sys
+    ins...
+    [0] water
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (kmol/hr): H2O   111
+                        NaCl  0.856
+    [1] methanol
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (kmol/hr): Methanol  0.624
+    [2] ethanol
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (kmol/hr): Ethanol  0.217
+    outs...
+    [0] alcohols
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (kmol/hr): Methanol  0.624
+                        Ethanol   0.217
+    [1] waste_brine
+        phase: 'l', T: 350 K, P: 101325 Pa
+        flow (kmol/hr): H2O   88.8
+                        NaCl  0.684
+    
+    And we also need to specify the impact indicators that we are interested in.
+    
+    >>> GWP = qs.ImpactIndicator('GlobalWarming', alias='GWP', unit='kg CO2-eq')
+    >>> FEC = qs.ImpactIndicator('FossilEnergyConsumption', alias='FEC', unit='MJ')
+    
+    There are four different types of impacts in `QSDsan`:
+    construction, transportation, stream, and others.
+    
+    Note that it is best to add the impact items when developing the unit module,
+    (i.e., typically in the `_design` function, but can also in `_run`  or `_cost`)
+    but for illustrative purpose, we add it after the system is constructed.
+    
+    Construction is mainly used for impacts that only occur once per lifetime
+    of the equipment or the unit.
+    
+    For example, assume we want to consider the amount of stainless steel
+    and concrete used in constructing the MixTank M1.
+    
+    >>> # Make the impact item, numbers are made up
+    >>> SS = qs.ImpactItem('SS', functional_unit='kg', GWP=3, FEC=50)
+    >>> Concrete = qs.ImpactItem('Concrete', functional_unit='kg', GWP=4, FEC=30)
+    >>> # Specify the amount of stainless steel and concrete used in the unit
+    >>> SS_constr_M1 = qs.Construction(item=SS, quantity=100)
+    >>> Concrete_constr_M1 = qs.Construction(item=Concrete, quantity=50)
+    >>> # Retrieve the unit from the registry
+    >>> flowsheet = qs.Flowsheet.flowsheet.default
+    >>> M1 = flowsheet.unit.M1
+    >>> # Add the construction activity
+    >>> M1.construction = (SS_constr_M1, Concrete_constr_M1)
+    
+    Transportation activity can be added in a similar manner, assuming that
+    stainless steel and concrete are delivered by truck from 500 km away.
+
+    The interval set below is assuming a system lifetime of 10 year
+    and this delivery is only needed once for the entire lifetime.
+    
+    >>> lifetime = 10
+    >>> Trucking = qs.ImpactItem('Trucking', functional_unit='kg*km',
+    ...                          GWP=0.5, FEC=1.5)
+    >>> total_quantity = SS_constr_M1.quantity + Concrete_constr_M1.quantity
+    >>> Trans_M1 = qs.Transportation(item=Trucking, load_type='mass',
+    ...                              load=total_quantity, distance=500,
+    ...                              interval=lifetime, interval_unit='yr')
+    >>> M1.transportation = Trans_M1
+
+    We can als consider the impacts associated with chemicals and emissions.
+    For example, assume the acquisition of methanol, ethanol and disposal of
+    the waste brine all have impacts, but the generated alcohols can be treated
+    as a product therefore have credits with 
+    
+    >>> # Retrieve streams
+    >>> methanol = flowsheet.stream.methanol
+    >>> ethanol = flowsheet.stream.ethanol
+    >>> alcohols = flowsheet.stream.alcohols
+    >>> waste_brine = flowsheet.stream.waste_brine
+    >>> # Create `StreamImpactItem` and link to the streams
+    >>> methanol_item = qs.StreamImpactItem(linked_stream=methanol, GWP=2, FEC=13)
+    >>> ethanol_item = qs.StreamImpactItem(linked_stream=ethanol, GWP=2.1, FEC=25)
+    >>> alcohols_item = qs.StreamImpactItem(linked_stream=alcohols, GWP=-0.2, FEC=-5)
+    >>> brine_item = qs.StreamImpactItem(linked_stream=methanol, GWP=2, FEC=3)
+    
+    Finally, there might be other impacts we want to include in the LCA,
+    for example, the electricity needed to operate the system.
+    
+    We can use add those additional items when creating the `LCA` object.
+    
+    >>> # Get the electricity usage of the system throughout the lifetime,
+    >>> # note that the default power utility unit is hr
+    >>> total_power = sum((i.rate for i in sys.power_utilities))*24*365*lifetime
+    >>> # Create an impact item for the electricity
+    >>> e_item = qs.ImpactItem('e_item', 'kWh', GWP=1.1, FEC=24)
+    >>> # Create the LCA object
+    >>> lca = qs.LCA(system=sys, lifetime=10, e_item=total_power)
+
+    Now we can look at the total impacts associate with this system.
+    
+    >>> lca.show() # doctest: +SKIP
+    LCA: sys (lifetime 10 yr)
+    Impacts:
+                                  Construction  Transportation  WasteStream   Others    Total
+    FossilEnergyConsumption (MJ)       6.5e+03        1.12e+05      1.4e+07 1.95e+06 1.61e+07
+    GlobalWarming (kg CO2-eq)              500        3.75e+04     4.82e+06 8.94e+04 4.95e+06
+    >>> # Retrieve impacts associated with a specific indicator
+    >>> lca.total_impacts['GlobalWarming']
+    4945363.316130896
+    
+    Or breakdowns of the different category
+    
+    >>> lca.total_impacts['GlobalWarming'] # doctest: +ELLIPSIS
+    4945363.3...
+    >>> lca.get_impact_table('Construction') # doctest: +SKIP
+
+    See Also
+    --------
+    `SanUnit and System <https://qsdsan.readthedocs.io/en/latest/tutorials/SanUnit_and_System.html>`_
+    
+    `TEA and LCA <https://qsdsan.readthedocs.io/en/latest/tutorials/TEA_and_LCA.html>`_
     '''
     
     __slots__ = ('_system',  '_lifetime', '_uptime_ratio',
@@ -110,9 +234,9 @@ class LCA:
 
     def _update_lifetime(self, lifetime=0., unit='yr'):
         if not unit or unit == 'yr':
-            self._lifetime = float(lifetime)
+            self._lifetime = int(lifetime)
         else:
-            converted = auom(unit).convert(float(lifetime), 'yr')
+            converted = auom(unit).convert(int(lifetime), 'yr')
             self._lifetime = converted
 
     
@@ -379,7 +503,7 @@ class LCA:
             cat_table.rename(index={num: 'Sum'}, inplace=True)
         return cat_table
     
-    def get_impact_table(self, category=None, time=None, time_unit='hr'):
+    def get_impact_table(self, category, time=None, time_unit='hr'):
         '''
         Return a :class:`pandas.DataFrame` table for the given impact category,
         normalized to a certain time frame.
@@ -389,13 +513,13 @@ class LCA:
         else:
             time = auom(time_unit).convert(float(time), 'hr')
         
-        if category in ('Construction', 'Other'):
-            time = time/self.lifetime_hr
-        
         cat = category.lower()
         tot = getattr(self, f'total_{cat}_impacts')
-        if category in ('Construction', 'Transportation'):
-            cat = category.lower()
+        
+        if cat in ('construction', 'other'):
+            time = time/self.lifetime_hr
+
+        if cat in ('construction', 'transportation'):
             units = sorted(getattr(self, f'_{cat}_units'),
                               key=(lambda su: su.ID))
             items = sorted(set(i.item for i in getattr(self,  f'{cat}_inventory')),
@@ -443,7 +567,7 @@ class LCA:
         ind_head = sum(([f'{i.ID} [{i.unit}]',
                          f'Category {i.ID} Ratio'] for i in self.indicators), [])
         
-        if category == 'Stream':
+        if cat in ('stream', 'streams'):
             headings = ['Stream', 'Mass [kg]', *ind_head]
             item_dct = dict.fromkeys(headings)
             for key in item_dct.keys():
@@ -465,7 +589,7 @@ class LCA:
             table.set_index(['Stream'], inplace=True)
             return self._append_cat_sum(table, cat, tot)
 
-        elif category == 'Other':
+        elif cat == 'other':
             headings = ['Other', 'Quantity', *ind_head]
             item_dct = dict.fromkeys(headings)
             for key in item_dct.keys():
@@ -490,7 +614,7 @@ class LCA:
         
         raise ValueError(
             'category can only be "Construction", "Transportation", "Stream", or "Other", ' \
-            f'not {category}.')
+            f'not "{category}".')
 
 
     def save_report(self, file=None, sheet_name='LCA',
@@ -518,7 +642,7 @@ class LCA:
     
     @property
     def lifetime(self):
-        '''[float] Lifetime of the system, [yr].'''
+        '''[int] Lifetime of the system, [yr].'''
         return self._lifetime
     @lifetime.setter
     def lifetime(self, lifetime, unit='yr'):
@@ -535,7 +659,7 @@ class LCA:
         return self._uptime_ratio
     @uptime_ratio.setter
     def uptime_ratio(self, i):
-        if 0 <= i <= 1:
+        if 0 <=i<= 1:
             self._uptime_ratio = float(i)
         else:
             raise ValueError('uptime_ratio must be in [0,1].')

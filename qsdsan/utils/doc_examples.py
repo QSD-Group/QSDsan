@@ -80,16 +80,16 @@ def load_example_sys(cmps=None):
     if cmps:
         set_thermo(cmps)
     
-    ss1 = SanStream('ss1', Water=100, Ethanol=1, units='kg/hr')
-    ss2 = SanStream('ss2', Water=2000, NaCl=50, Methanol=10, units='kg/hr')
-    
-    M1 = su.MixTank('M1', ins=(ss1, ss2))
+    salt_water = SanStream('water', Water=2000, NaCl=50, units='kg/hr')
+    methanol = SanStream('methanol', Methanol=20, units='kg/hr')
+    ethanol = SanStream('ethanol', Ethanol=10, units='kg/hr')
+
+    M1 = su.MixTank('M1', ins=(salt_water, 'recycled_brine', methanol, ethanol))
     P1 = su.Pump('P1', ins=M1-0)
     H1 = su.HXutility('H1', ins=P1-0, T=350)
-    S1 = su.ComponentSplitter('S1', ins=H1-0, split_keys=('Ethanol', 'Methanol'))
+    S1 = su.ComponentSplitter('S1', ins=H1-0, split_keys=('Methanol', 'Ethanol'))
     M2 = su.Mixer('M2', ins=(S1-0, S1-1), outs='alcohols')
-    S2 = su.Splitter('S2', ins=S1-2, outs=('salt_water1', 'salt_water2'), split=0.2)
-    
+    S2 = su.Splitter('S2', ins=S1-2, outs=(1-M1, 'waste_brine'), split=0.2)
     sys = System('sys', path=(M1, P1, H1, S1, M2, S2))
     
     return sys

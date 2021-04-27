@@ -74,7 +74,7 @@ class ImpactItem:
     >>> GWP = qs.ImpactIndicator('GlobalWarming', alias='GWP', unit='kg CO2-eq')
     >>> FEC = qs.ImpactIndicator('FossilEnergyConsumption', alias='FEC', unit='MJ')
     
-    We can make impact items in different ways.
+    We can make impact items in different ways (numbers are made up).
     
     >>> Steel = qs.ImpactItem('Steel', 'kg', GWP=2.55)
     >>> Steel.show()

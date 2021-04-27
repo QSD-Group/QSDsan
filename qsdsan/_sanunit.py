@@ -90,10 +90,22 @@ class SanUnit(Unit, isabstract=True):
         Float input will be automatically converted to a dict with the key being
         "Additional OPEX".
     uptime_ratio : float
-        Uptime of the unit to adjust add_OPEX, should be in [0,1]
+        Uptime of the unit to adjust `add_OPEX`, should be in [0,1]
         (i.e., a unit that is always operating has an uptime_ratio of 1).
-    lifetime : float or dict
-        Lifetime of this unit (float) or individual equipment within this unit
+        
+        .. note::
+            
+            This will not affect the utility (heating, cooling, power) and
+            material costs/environmental impacts.
+            
+            To account for less utility and material flows, normalize them to
+            the `uptime_ratio` of the system.
+            For example, if the system operates 100% of time but a pump only works
+            50% of the pump at 50 kW. Set the pump `power_utility` to be 50*50%=25 kW.
+            
+            
+    lifetime : int or dict
+        Lifetime of this unit (int) or individual equipment within this unit
         (dict) in year.
         It will be used to adjust cost and emission calculation in TEA and LCA.
         Equipment without provided lifetime will be assumed to have the same
@@ -269,7 +281,7 @@ class SanUnit(Unit, isabstract=True):
 
     @property
     def components(self):
-        '''[Components] The :class:`Components` object associated with this unit.'''
+        '''[Components] The :class:`~.Components` object associated with this unit.'''
         return self.chemicals
 
 
@@ -284,27 +296,27 @@ class SanUnit(Unit, isabstract=True):
         else:
             if not isinstance(i, Iterable):
                 raise TypeError(
-                    f'Only <Construction> can be included, not {type(i).__name__}.')
+                    f'Only `Construction` object can be included, not {type(i).__name__}.')
             for j in i:
                 if not isinstance(j, Construction):
                     raise TypeError(
-                        f'Only <Construction> can be included, not {type(j).__name__}.')
+                        f'Only `Construction` object can be included, not {type(j).__name__}.')
         self._construction = i
 
-    @property
-    def construction_impacts(self):
-        '''[dict] Total impacts associated with this unit.'''
-        impacts = {}
-        if not self.construction:
-            return impacts
-        for i in self.construction:
-            impact = i.impacts
-            for i, j in impact.items():
-                try:
-                    impacts[i] += j
-                except:
-                    impacts[i] = j
-        return impacts
+    # @property
+    # def construction_impacts(self):
+    #     '''[dict] Total impacts associated with this unit.'''
+    #     impacts = {}
+    #     if not self.construction:
+    #         return impacts
+    #     for i in self.construction:
+    #         impact = i.impacts
+    #         for i, j in impact.items():
+    #             try:
+    #                 impacts[i] += j
+    #             except:
+    #                 impacts[i] = j
+    #     return impacts
 
     @property
     def transportation(self):
@@ -317,11 +329,11 @@ class SanUnit(Unit, isabstract=True):
         else:
             if not isinstance(i, Iterable):
                 raise TypeError(
-                    f'Only <Transportation> can be included, not {type(i).__name__}.')
+                    f'Only `Transportation` object  can be included, not {type(i).__name__}.')
             for j in i:
                 if not isinstance(j, Transportation):
                     raise TypeError(
-                        f'Only <Transportation> can be included, not {type(j).__name__}.')
+                        f'Only `Transportation` can be included, not {type(j).__name__}.')
         self._transportation = i
 
     @property
@@ -366,13 +378,14 @@ class SanUnit(Unit, isabstract=True):
         return self._uptime_ratio
     @uptime_ratio.setter
     def uptime_ratio(self, i):
-        assert 0 <= i <= 1, f'Uptime must be between 0 and 1 (100%), not {i}.'
+        if not 0 <=i<= 1:
+            raise ValueError(f'Uptime must be between 0 and 1 (100%), not {i}.')
         self._uptime_ratio = float(i)
 
     @property
     def lifetime(self):
         '''
-        [float or dict] Lifetime of this unit (float) or individual equipment
+        [int or dict] Lifetime of this unit (int) or individual equipment
         within this unit (dict) in year.
         It will be used to adjust cost and emission calculation in TEA and LCA.
         Equipment without provided lifetime will be assumed to have the same
@@ -386,4 +399,9 @@ class SanUnit(Unit, isabstract=True):
             return None
     @lifetime.setter
     def lifetime(self, i):
-        self._lifetime = float(i) if i is not None else i
+        if not i:
+            self._lifetime = None
+        elif isinstance(i, dict):
+            self._default_equipment_lifetime.update(i)
+        else:
+            self._lifetime = int(i)

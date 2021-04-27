@@ -66,7 +66,7 @@ class Trucking(SanUnit):
                  if_material_loss=True, loss_ratio=0.02):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.single_truck = \
-            Transportation(ID='single_truck', item='Trucking',
+            Transportation(item='Trucking',
                            load_type=load_type, load=load, load_unit=load_unit,
                            distance=distance, distance_unit=distance_unit,
                            interval=interval, interval_unit=interval_unit)
@@ -108,7 +108,7 @@ class Trucking(SanUnit):
             factor = auom('kg').conversion_factor(single.default_units['load'])
             N = self.F_mass_in*factor*single.interval/single.load
         self.design_results['Parallel trucks'] = N
-        total = single.copy('total_truck')
+        total = single.copy()
         total.load *= N
         self.transportation = (total,)
         self._add_OPEX = {'Total fee': self.fee/total.interval*N}
@@ -128,11 +128,13 @@ class Trucking(SanUnit):
         If a single number is provided, then it is assumed that losses of
         all Components in the WasteStream are the same.
         
-        Note
-        ----
-        Set state variable values (e.g., COD) will be retained if the loss
-        ratio is a single number (treated like the loss stream is split
-        from the original stream), but not when the ratio is a dict.
+        .. note::
+    
+            Pre-set state variable values in :class:`~.WasteStream`
+            (e.g., COD set through `_COD` rather than calculated)
+            will be retained if the loss ratio is a single number
+            (treated like the loss stream is split from the original stream),
+            but will be overwritten when the ratio is a dict.
 
         '''
         return self._loss_ratio

@@ -38,8 +38,40 @@ class SimpleTEA(TEA):
         Start year of the system.
     lifetime : int
         Total lifetime of the system, [yr]. Currently `biosteam` only supports int.
+        
+        .. note::
+
+            As :class:`SimpleTEA` is a subclass of :class:`biosteam.TEA`,
+            and :class:`biosteam.TEA` currently only supports certain
+            depreciation schedules, lifetime must be larger than or equal to 6.
+            
+            
     uptime_ratio : float
-        Fraction of time that the system is operating.
+        Fraction of time that the system is operating, should be in [0,1]
+        (i.e., a system that is always operating has an uptime_ratio of 1).
+        
+        .. note::
+            
+            If a unit has an `uptime_ratio` that is different from the `uptime_ratio`
+            of the system, the `uptime_ratio` of the unit will be used in calculating
+            the additional operation expenses (provided in `unit.add_OPEX`).
+            
+            However, `uptime_ratio` of the unit will not affect the utility
+            (heating, cooling, power) and material costs/environmental impacts.
+            
+            For example, if the `uptime_ratio` of the system and the unit are
+            1 and 0.5, respectively, then in calculating operating expenses
+            associated with the unit:
+                
+                - Utility and material costs/environmental impacts will be calculated for 1*24*365 hours per year.
+                - Additional operaitng expenses will be calculated for 0.5*24*365 hours per year.
+                
+            If less utility and material flows are not used at the same `uptime_ratio`
+            as the system, they should be normalized to be the same.
+            For example, if the system operates 100% of time but a pump only works
+            50% of the pump at 50 kW. Set the pump `power_utility` to be 50*50%=25 kW.
+            
+            
     CAPEX : float
         Capital expenditure, if not provided, is set to be the same as `installed_equipment_cost`.
     lang_factor : float or None
@@ -67,41 +99,40 @@ class SimpleTEA(TEA):
     >>> from qsdsan.utils import load_example_cmps, load_example_sys
     >>> cmps = load_example_cmps()
     >>> sys = load_example_sys(cmps)
+    >>> # Uncomment the line below to see the system diagram
+    >>> # sys.diagram()
     >>> sys.simulate()
     >>> sys.show()
     System: sys
     ins...
-    [0] ss1
+    [0] water
         phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (kmol/hr): H2O      5.55
-                        Ethanol  0.0217
-    [1] ss2
+        flow (kmol/hr): H2O   111
+                        NaCl  0.856
+    [1] methanol
         phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (kmol/hr): H2O       111
-                        NaCl      0.856
-                        Methanol  0.312
+        flow (kmol/hr): Methanol  0.624
+    [2] ethanol
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (kmol/hr): Ethanol  0.217
     outs...
     [0] alcohols
         phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (kmol/hr): Methanol  0.312
-                        Ethanol   0.0217
-    [1] salt_water1
+        flow (kmol/hr): Methanol  0.624
+                        Ethanol   0.217
+    [1] waste_brine
         phase: 'l', T: 350 K, P: 101325 Pa
-        flow (kmol/hr): H2O   23.3
-                        NaCl  0.171
-    [2] salt_water2
-        phase: 'l', T: 350 K, P: 101325 Pa
-        flow (kmol/hr): H2O   93.3
+        flow (kmol/hr): H2O   88.8
                         NaCl  0.684
     >>> tea = qs.SimpleTEA(system=sys, discount_rate=0.05, start_year=2021,
     ...                     lifetime=10, uptime_ratio=0.9,
     ...                     system_add_OPEX=0.03)
     >>> tea.show()
     SimpleTEA: sys
-    NPV  : -263,572 USD at 5.0% discount rate
-    EAC  : 34,134 USD/yr
-    CAPEX: 58,190 USD (annualized to 7,536 USD/yr)
-    AOC  : 26,598 USD/yr
+    NPV  : -259,077 USD at 5.0% discount rate
+    EAC  : 33,552 USD/yr
+    CAPEX: 61,183 USD (annualized to 7,923 USD/yr)
+    AOC  : 25,628 USD/yr
     
     See Also
     --------
@@ -278,7 +309,7 @@ class SimpleTEA(TEA):
         return self._uptime_ratio
     @uptime_ratio.setter
     def uptime_ratio(self, i):
-        if 0 <= i <= 1:
+        if 0 <=i<= 1:
             self._uptime_ratio = float(i)
             self._operating_days = 365*float(i)
             self._operating_hours = self._operating_days * 24
