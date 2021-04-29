@@ -22,7 +22,7 @@ That is a good question. We prefer to use the capitalized version (e.g., ``QSDsa
 - It refers to the platform, not just the core package (i.e., it includes the entire ecosystem that supports the core package).
 - We style the name to convey the name's meaning (e.g., the "QSD" part stands for "quantitative sustainable design").
 
-But the name of the actual packages are all in lower cases per `PEP-8 <https://www.python.org/dev/peps/pep-0008/#package-and-module-names>`_:
+But names of the actual packages are all in lower cases per `PEP-8 <https://www.python.org/dev/peps/pep-0008/#package-and-module-names>`_:
 
    *Modules should have short, all-lowercase names. Underscores can be used in the module name if it improves readability. Python packages should also have short, all-lowercase names, although the use of underscores is discouraged.*
 

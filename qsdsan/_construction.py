@@ -56,7 +56,8 @@ class Construction:
     >>> steel_100_g = qs.Construction('steel_100_g', item=Steel, quantity=100,
     ...                               quantity_unit='g')
     >>> steel_100_g.show()
-    Construction : Steel
+    Construction : steel_100_g
+    Impact item  : Steel
     Lifetime     : None yr
     Quantity     : 0.1 kg
     Total cost   : None USD
@@ -85,15 +86,16 @@ class Construction:
             self._quantity = converted
            
     def __repr__(self):
-        return f'<Construction: {self.item.ID}>'
+        return f'<Construction: {self.ID}>'
     
     def show(self):
         '''Show basic information about this :class:`Construction` object.'''
         item = self.item
         impacts = self.impacts
-        info = f'Construction : {item.ID}'
+        info = f'Construction : {self.ID}'
+        info += f'\nImpact item  : {item.ID}'
         info += f'\nLifetime     : {f_num(self.lifetime)} yr'
-        info += f'\nQuantity     : {f_num(self.quantity)} {self.item.functional_unit}'
+        info += f'\nQuantity     : {f_num(self.quantity)} {item.functional_unit}'
         info += f'\nTotal cost   : {f_num(self.cost)} {currency}'
         info += '\nTotal impacts:'
         print(info)

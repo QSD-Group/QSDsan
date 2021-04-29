@@ -66,7 +66,8 @@ class Transportation:
     ...                              distance='1', distance_unit='mile',
     ...                              interval='1', interval_unit='day')
     >>> shipping.show()
-    Transportation: Trucking [per trip]
+    Transportation: shipping
+    Impact item   : Trucking [per trip]
     Load          : 1000 kg
     Distance      : 1.61 km
     Interval      : 24 hr
@@ -123,13 +124,14 @@ class Transportation:
             setattr(self, '_'+var, converted)
 
     def __repr__(self):
-        return f'<Transportation: {self.item.ID}>'
+        return f'<Transportation: {self.ID}>'
 
     def show(self):
         item = self.item
         impacts = self.impacts
         du = self.default_units
-        info = f'Transportation: {item.ID} [per trip]'
+        info = f'Transportation: {self.ID}'
+        info += f'\nImpact item   : {item.ID} [per trip]'
         info += f"\nLoad          : {f_num(self.load)} {du['load']}"
         info += f"\nDistance      : {f_num(self.distance)} {du['distance']}"
         info += f"\nInterval      : {f_num(self.interval)} {du['interval']}"

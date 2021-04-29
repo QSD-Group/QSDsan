@@ -437,6 +437,9 @@ class StreamImpactItem(ImpactItem):
     
     Parameters
     ----------
+    ID : str
+        ID of the item. If no ID is provided but its `linked_stream` is provided,
+        the ID will be set as ID of the `linked_stream` with a suffix '_item'
     linked_stream : :class:`SanStream`
         The associated :class:`SanStream` for environmental impact calculation.
     source : :class:`StreamImpactItem`
@@ -464,7 +467,7 @@ class StreamImpactItem(ImpactItem):
     >>> # Make an stream impact item
     >>> methane_item = qs.StreamImpactItem('methane_item', GWP=28)
     >>> methane_item.show()
-    StreamImpactItem: [per kg]
+    StreamImpactItem: methane_item [per kg]
     Linked to       : None
     Price           : None USD
     ImpactIndicators:
@@ -476,7 +479,7 @@ class StreamImpactItem(ImpactItem):
     >>> methane = qs.SanStream('methane', Methane=1, units='kg/hr',
     ...                        impact_item=methane_item)
     >>> methane_item.show()
-    StreamImpactItem: [per kg]
+    StreamImpactItem: methane_item [per kg]
     Linked to       : methane
     Price           : None USD
     ImpactIndicators:
@@ -499,7 +502,7 @@ class StreamImpactItem(ImpactItem):
     >>> methane_item.remove_indicator('GlobalWarming')
     The impact indicator "GlobalWarming" has been removed.
     >>> methane_item2.show()
-    StreamImpactItem: [per kg]
+    StreamImpactItem: methane_item2 [per kg]
     Linked to       : methane2
     Source          : methane_item
     Price           : None USD
@@ -507,7 +510,7 @@ class StreamImpactItem(ImpactItem):
      None
     >>> methane_item.add_indicator('GlobalWarming', 28)
     >>> methane_item2.show()
-    StreamImpactItem: [per kg]
+    StreamImpactItem: methane_item2 [per kg]
     Linked to       : methane2
     Source          : methane_item
     Price           : None USD
@@ -543,15 +546,11 @@ class StreamImpactItem(ImpactItem):
 
 
     def __repr__(self):
-        if self.linked_stream:
-            kind = type(self.linked_stream).__name__
-            return f'<StreamImpactItem: {kind} {self.linked_stream}>'
-        else:
-            return '<StreamImpactItem: no linked stream>'
+        return f'<StreamImpactItem: {self.ID}>'
 
     def show(self):
         '''Show basic information about this :class:`StreamImpactItem` object.'''
-        info = f'StreamImpactItem: [per {self.functional_unit}]'    
+        info = f'StreamImpactItem: {self.ID} [per {self.functional_unit}]'    
         if self.linked_stream:
             info += f'\nLinked to       : {self.linked_stream}'
         else:

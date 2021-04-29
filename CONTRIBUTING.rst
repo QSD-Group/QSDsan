@@ -68,6 +68,19 @@ Forking and Cloning
 		upstream	https://github.com/QSD-Group/QSDsan.git (fetch)
 		upstream	https://github.com/QSD-Group/QSDsan.git (push)
 
+#. Pull in upstream changes:
+
+	.. code:: bash
+
+	    git pull upstream main
+
+#. If you are working on a new feature (rather than some quick work like fixing a small bug), then it is recommended to checkout a new branch:
+
+	.. code:: bash
+
+	    git checkout -b REPLACE-ME-WITH-FEATURE-NAME
+
+
 Note
 ^^^^
 #. We use fork as the default way for collaboration (i.e., for all first-time contributors). If you are a constant contributor and have independently made at least one successful and meaningful contribution through forking, you will be given the write access to ``QSDsan`` and you can use branch for easier code syncing. We will also jinvite you to join the ``QSDsan`` team.
@@ -87,27 +100,27 @@ Developing Modules
 
 	.. code:: bash
 
-	    git push origin master
+	    git push origin main # or the name of the new branch
 
 	- As your develop your contributions, the root repository may update, you should merge these changes and resolve any conflicts before your final push.
 
 	.. code:: bash
 
-	    git pull upstream master
+	    git pull upstream main
 
 
 Submitting Pull Request
 -----------------------
 #. Once you are satisfied with your changes and push all commits to your fork, go to you GitHub fork of ``QSDsan``, and submit a `pull request <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request>`_.
 
-	- You can confirm that you have pulled all updates from the root repository if there's a message showing that your branch is X commits ahead of QSD-Group:master (not X commits ahead, Y commits behind).
+	- You can confirm that you have pulled all updates from the root repository if there's a message showing that your branch is X commits ahead of QSD-Group:main (not X commits ahead, Y commits behind).
 
 #. One of the Quantitative Sustainable Design Group members will review your changes and accept or discuss with you if edits are needed.
 
 
 Documentation
 -------------
-Whenever new modules or functions are added, concise and thorough documents should be added with examples for `doctest <https://docs.python.org/3/library/doctest.html>`_. Please also include yourself (contact method is optional) to the list of contributors on the top of the module.
+Whenever new modules or functions are added, concise and thorough documents should be added with examples for `doctest`_. Please also include yourself (contact method is optional) to the list of contributors on the top of the module.
 
 ``QSDsan`` uses `numpydoc docstring style <https://numpydoc.readthedocs.io/en/latest/format.html>`_ with some modifications for better rendering. Some important notes:
 
@@ -144,11 +157,23 @@ Whenever new modules or functions are added, concise and thorough documents shou
 
 Most of the documentations will be automatically generated through `Sphinx's autodoc extension <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_. If your contribution involves new classes or modules, please add a new .rst file in docs/source/. and add it to the appropriate section in the ``index.rst`` file. You can refer to any of the existing files for examples.
 
-Tutorials are prepared in `Jupyter Notebook <https://jupyter.org/>`_ and potential contributors are encouraged to use the `templates <https://github.com/QSD-Group/QSDsan/tree/master/docs/source/for_developers>`_.
+Tutorials are prepared in `Jupyter Notebook <https://jupyter.org/>`_ and potential contributors are encouraged to use the `templates <https://github.com/QSD-Group/QSDsan/tree/main/docs/source/for_developers>`_ which includes proper license and contribution information.
 
 
 Testing
 -------
-``QSDsan`` uses `Travis CI <https://travis-ci.com/>`_ for testing. A pull request will only be accepted when the branch has no conflicts with the root repository and all tests have been passed. More instructions on testing will be added.
+``QSDsan`` uses `AppVeyor <https://www.appveyor.com/>`_ to test all pushes and pull requests. A pull request will only be accepted when the branch has no conflicts with the root repository and all tests have been passed. You can run the test locally using `pytest <https://docs.pytest.org/en/6.2.x/>`_:
+
+	.. code:: bash
+
+	    python3 -m pytest
+
+This runs all tests under the QSDsan/tests directory as well as all examples in the documentation through `doctest`_. Test results will be similar to the screenshot below, where a green dot indicates the test has been successfully passed and a red F indicates a failure. The number of dots and Fs indicate how many test functions or doctests are run for each moduel. Detailed error traceback on each failed test will be listed to help you fix the bug.
+
+.. figure:: ../../docs/source/images/pytest.png
+   :width: 600
+   :align: center
 
 
+.. Links
+.. _doctest: https://docs.python.org/3/library/doctest.html
