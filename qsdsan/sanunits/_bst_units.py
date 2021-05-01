@@ -166,7 +166,7 @@ class HXutility(SanUnit, bst.units.HXutility):
                  *, T=None, V=None, rigorous=False, U=None, H=None,
                  heat_exchanger_type="Floating head",
                  material="Carbon steel/carbon steel",
-                 N_shells=2, ft=None):
+                 N_shells=2, ft=None, heat_only=None, cool_only=None):
         SanUnit.__init__(self, ID, ins, outs, thermo,
                          init_with=init_with, F_BM_default=F_BM_default)
         self.T = T #: [float] Temperature of outlet stream (K).
@@ -179,14 +179,17 @@ class HXutility(SanUnit, bst.units.HXutility):
         #: [float] Enforced overall heat transfer coefficent (kW/m^2/K)
         self.U = U
         
-        #: [float] Total heat transfered.
-        self.Q = None
-        
         #: Number of shells for LMTD correction factor method.
         self.N_shells = N_shells
         
         #: User imposed correction factor.
         self.ft = ft
+        
+        #: [bool] If True, heat exchanger can only heat. 
+        self.heat_only = heat_only
+        
+        #: [bool] If True, heat exchanger can only cool. 
+        self.cool_only = cool_only
         
         self.material = material
         self.heat_exchanger_type = heat_exchanger_type
