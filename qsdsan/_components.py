@@ -151,14 +151,14 @@ class Components(Chemicals):
     _default_data = None
     
     @classmethod
-    def load_from_file(cls, path='', use_default_data=False, store_data=False):
+    def load_from_file(cls, path_or_df, use_default_data=False, store_data=False):
         '''
         Create and return a :class:`Components` objects based on properties
-        defined in a cvs or an Excel file.
+        defined in a datasheet.
     
         Parameters
         ----------
-        path : str
+        path_or_df : str or :class:`pandas.DataFrame`
             File path, the file should end with ".cvs", ".xls", or "xlsx".
     
         Returns
@@ -173,8 +173,10 @@ class Components(Chemicals):
         '''
         if use_default_data and cls._default_data is not None:
             data = cls._default_data
+        elif isinstance(path_or_df, str):
+            data = load_data(path_or_df, index_col=None)
         else:
-            data = load_data(path, index_col=None)
+            data = path_or_df
         
         new = cls(())
 
@@ -251,7 +253,7 @@ class Components(Chemicals):
         import os
         path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/_components.tsv')
         del os
-        new = cls.load_from_file(path=path, use_default_data=True, store_data=True)
+        new = cls.load_from_file(path, use_default_data=True, store_data=True)
 
         H2O = Component.from_chemical('H2O', Chemical('H2O'),
                                       i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,

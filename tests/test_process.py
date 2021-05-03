@@ -10,18 +10,17 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-import pytest
-import os
-from sympy import symbols, Eq
-from sympy.parsing.sympy_parser import parse_expr
-from math import isclose
+
 
 __all__ = ('test_process',)
 
 def test_process():
-    
-    from qsdsan import Components, Process, Processes, CompiledProcesses
-    import thermosteam as tmo
+    import pytest
+    import os
+    from sympy import symbols, Eq
+    from sympy.parsing.sympy_parser import parse_expr
+    from math import isclose
+    from qsdsan import set_thermo, Components, Process, Processes, CompiledProcesses
     
     cmps = Components.load_default()
 
@@ -61,7 +60,7 @@ def test_process():
                              X_I, X_S, X_H, X_PAO, X_PP, X_PHA, X_AUT, X_MeOH, X_MeP])
     
     cmps_asm2d.compile()
-    tmo.settings.set_thermo(cmps_asm2d)
+    set_thermo(cmps_asm2d)
     
     p1 = Process('aero_hydrolysis', 
                  'X_S -> [1-f_SI]S_F + [f_SI]S_I + [?]S_NH4 + [?]S_PO4 + [?]S_ALK', 

@@ -25,25 +25,25 @@ class SanStream(Stream):
     '''
     A subclass of :class:`thermosteam.Stream` with additional attributes
     for environmental impacts.
-    
+
     .. note::
-        
+
         Parameters below only include the ones additional to those of :class:`thermosteam.Stream`.
 
-    
+
     Parameters
     ----------
     impact_item : :class:`StreamImpactItem`
         The :class:`StreamImpactItem` this stream is linked to.
-    
+
     Examples
     --------
     `Component and WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/Component_and_WasteStream.html>`_
-    
+
     See Also
     --------
     `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
-    
+
     '''
 
     __slots__ = (*Stream.__slots__, '_impact_item')
@@ -55,7 +55,7 @@ class SanStream(Stream):
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
                          units=units, price=price, thermo=thermo,
                          **component_flows)
-        
+
         if impact_item:
             impact_item._linked_stream = self
         self._impact_item = impact_item
@@ -63,27 +63,27 @@ class SanStream(Stream):
     def copy(self, new_ID=''):
         '''
         Copy the information of another stream.
-        
+
         Parameters
         ----------
         new_ID : str
             ID of the new stream, a default ID will be assigned if not provided.
-        
-        
+
+
         .. note::
-            
+
             [1] Price of the original stream is not copied.
-            
+
             [2] If the original stream has an :class:`~.StreamImpactItem`,
             then a new :class:`~.StreamImpactItem` will be created for the new stream
             and the new impact item will be linked to the original impact item.
         '''
-        
+
         new = super().copy(ID=new_ID)
         if self.impact_item:
             self.impact_item.copy(stream=new)
         return new
-        
+
     __copy__ = copy
 
     @staticmethod
@@ -91,7 +91,7 @@ class SanStream(Stream):
         '''
         Cast a :class:`thermosteam.Stream` or :class:`biosteam.utils.MissingStream`
         to :class:`SanStream` or :class:`MissingSanStream`.
-        
+
         Parameters
         ----------
         cls : obj
@@ -102,7 +102,7 @@ class SanStream(Stream):
             If not provided, will use default ID.
         kwargs
             Additional properties of the new stream.
-        
+
         Examples
         --------
         >>> import qsdsan as qs
@@ -123,11 +123,11 @@ class SanStream(Stream):
         >>> ss.price
         10.0
         '''
-        
+
         if isinstance(stream, MissingStream):
             new = MissingSanStream.__new__(MissingSanStream)
             return new
-            
+
         elif not isinstance(stream, cls):
             if not ID:
                 stream.registry.discard(stream)
@@ -138,7 +138,7 @@ class SanStream(Stream):
             if new_ID[0]=='s' and new_ID[1:].isnumeric(): # old ID is default
                 new_ID = ''
             new.__init__(ID=new_ID)
-    
+
             new._link = stream._link
 
             source = new._source = stream._source
@@ -147,20 +147,20 @@ class SanStream(Stream):
 
             sink = new._sink = stream._sink
             if sink:
-                sink._ins[sink._ins.index(stream)] = new            
-                        
+                sink._ins[sink._ins.index(stream)] = new
+
             new._thermo = stream._thermo
             new._imol = stream._imol.copy()
             new._thermal_condition = stream._thermal_condition.copy()
             new.reset_cache()
             new.price = 0
             new.impact_item = None
-            
+
             for attr, val in kwargs.items():
                 setattr(new, attr, val)
-            
+
             stream._link = stream._sink = stream._source = None
-            return new        
+            return new
 
         else:
             return stream
@@ -169,18 +169,18 @@ class SanStream(Stream):
         '''
         Update this stream to be a mixture of other streams,
         initial content of this stream will be ignored.
-        
+
         Parameters
         ----------
         others : iterable
             Can contain :class:`thermosteam.Stream`, :class:`SanStream`,
             or :class:`~.WasteStream`
-        
+
         .. note::
-            
+
             Price and impact item are not included.
-        
-            
+
+
         Examples
         --------
         >>> import qsdsan as qs
@@ -222,11 +222,11 @@ class MissingSanStream(MissingStream):
     '''
     A subclass of :class:`biosteam.MissingStream`, create a special object
     that acts as a dummy until replaced by an actual :class:`SanStream`.
-    
+
     .. note::
-        
+
         Users usually do not need to interact with this class.
-        
+
     '''
 
     @property
@@ -235,11 +235,6 @@ class MissingSanStream(MissingStream):
 
     def __repr__(self):
         return '<MissingSanStream>'
-    
+
     def __str__(self):
         return 'missing sanstream'
-
-
-
-
-

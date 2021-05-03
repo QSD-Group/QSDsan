@@ -13,15 +13,14 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-import pytest
-from numpy.testing import assert_allclose
-from math import isclose
-
 __all__ = ('test_waste_stream',)
 
 def test_waste_stream():
+    import pytest
+    from numpy.testing import assert_allclose
+    from math import isclose
     from qsdsan import set_thermo, Components, WasteStream
-    
+
     components = Components.load_default()
     set_thermo(components)
 
@@ -31,7 +30,7 @@ def test_waste_stream():
     assert isclose(ws1.TKN, 40, rel_tol=1e-3)
     assert isclose(ws1.TP, 10, rel_tol=1e-3)
     assert isclose(ws1.F_vol, ws2.F_vol)
-    
+
     ws3 = WasteStream(S_Ac=5, H2O=1000, units='kg/hr')
     ws4 = WasteStream(X_NOO=10, H2O=1000, units='kg/hr')
     ws5 = WasteStream()
@@ -40,7 +39,7 @@ def test_waste_stream():
     # TODO: After updating the default component properties,
     # add in tests here to make sure COD, etc. are calculated correctly
     assert_allclose(ws5.COD, 7424.606289711915, rtol=1e-3)
-    
+
     # Make sure below attributes are calculated based on flow info, cannot be set
     with pytest.raises(AttributeError):
         ws5.COD = 5

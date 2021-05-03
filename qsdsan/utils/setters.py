@@ -17,21 +17,18 @@ for license details.
 
 __all__ = ('copy_attr', 'AttrSetter', 'AttrFuncSetter', 'DictAttrSetter')
 
-setattr = setattr
-getattr = getattr
-isinstance = isinstance
 
 def copy_attr(new, original, skip=(), same=()):
     '''
     Set the attributes of a new object based on an original one:
-    
+
         - If one attribute is in `skip`, it will not be copied to the new object.
-        - If one attribute is in `same`, the attribute of the new object will be
+        - If one attribute is in `same`, the attribute of the new object will be \
         the same as the original object.
-        - For remaining attributes, if it has :func:`copy`, then the attribute
-        of the new object will be set as the copy of the original one; otherwise,
+        - For remaining attributes, if it has :func:`copy`, then the attribute \
+        of the new object will be set as the copy of the original one; otherwise, \
         it will be the same as the original one.
-    
+
     Parameters
     ----------
     new : obj
@@ -43,12 +40,12 @@ def copy_attr(new, original, skip=(), same=()):
     same : Iterable
         Attributes that will be the same for the original one and the copy.
     '''
-    
+
     for slot in original.__slots__:
         if slot in skip:
             continue
         else:
-            value = getattr(original, slot)            
+            value = getattr(original, slot)
             if slot in same:
                 setattr(new, slot, value)
                 return new
@@ -57,9 +54,9 @@ def copy_attr(new, original, skip=(), same=()):
                     new_value = value.copy()
                 else:
                     new_value = value
-            setattr(new, slot, new_value)    
+            setattr(new, slot, new_value)
     return new
-            
+
 
 
 class AttrSetter:
@@ -69,7 +66,7 @@ class AttrSetter:
         if isinstance(attrs, str):
             attrs = (attrs,)
         self.attrs = attrs
-        
+
     def __call__(self, value):
         for attr in self.attrs:
             setattr(self.obj, attr, value)
@@ -84,12 +81,12 @@ class AttrFuncSetter:
             funcs = (funcs,)
         self.attrs = attrs
         self.funcs = funcs
-        
+
     def __call__(self, value):
         attrs = self.attrs
         funcs = self.funcs
         obj = self.obj
-        
+
         if len(funcs) == 1:
             func = funcs[0]
             for attr in attrs:
@@ -111,4 +108,3 @@ class DictAttrSetter:
     def __call__(self, value):
         for key in self.keys:
             self.dict_attr[key] = value
-

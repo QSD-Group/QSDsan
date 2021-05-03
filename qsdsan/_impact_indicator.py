@@ -16,7 +16,7 @@ for license details.
 # %%
 
 from warnings import warn
-from thermosteam.utils import registered 
+from thermosteam.utils import registered
 from .utils import parse_unit, load_data
 
 __all__ = ('ImpactIndicator', )
@@ -26,14 +26,14 @@ __all__ = ('ImpactIndicator', )
 class ImpactIndicator:
     '''
     To handle different impact indicators in life cycle assessment.
-    
+
     Parameters
     ----------
     ID : str
         ID of this impact indicator.
     alias : str
         Alternative ID of this impact indicator.
-        
+
         .. note::
 
             "synonym" was used bfore v0.2.2 it is still supported, but may be
@@ -47,20 +47,20 @@ class ImpactIndicator:
         Unit of this impact indicator, e.g., 'kg CO2-eq'.
     description : str
         Supplementary explanation.
-        
+
     Examples
     --------
     Make an impact indicator for global warming potential.
-    
+
     >>> import qsdsan as qs
     >>> GWP = qs.ImpactIndicator('GlobalWarming', method='TRACI',
     ...                          category='environmental impact',
     ...                          unit='kg CO2-eq',
     ...                          description='Effect of climate change measured as \
     ...                                      global warming potential.')
-    
+
     See relevant information.
-    
+
     >>> GWP.show()
     ImpactIndicator: GlobalWarming as kg CO2-eq
      Alias      : None
@@ -89,7 +89,7 @@ class ImpactIndicator:
     >>> qs.ImpactIndicator.get_all_indicators()
     {'FossilEnergyConsumption': <ImpactIndicator: FossilEnergyConsumption>}
     >>> GWP.register()
-    The impact indicator "GlobalWarming" has been added to the registry.    
+    The impact indicator "GlobalWarming" has been added to the registry.
     >>> qs.ImpactIndicator.get_all_indicators()
     {'FossilEnergyConsumption': <ImpactIndicator: FossilEnergyConsumption>,
      'GlobalWarming': <ImpactIndicator: GlobalWarming>}
@@ -98,16 +98,16 @@ class ImpactIndicator:
     >>> qs.ImpactIndicator.get_all_indicators()
     {}
     '''
-    
+
     __slots__ = ('_ID', '_alias', '_method', '_category', '_unit', '_ureg_unit',
                  '_unit_remaining', '_description')
 
     def __init__(self, ID='', alias='', method='', category='', unit='', description='',
                  **kwargs):
-        
+
         self._register(ID)
         self.alias = alias
-        
+
         self._unit = str(unit)
         self._ureg_unit, self._unit_remaining = parse_unit(unit)
         self._method = method
@@ -133,31 +133,31 @@ class ImpactIndicator:
             info = f'ImpactIndicator: {self.ID} as {self.unit}'
         else:
             info = f'ImpactIndicator: {self.ID}'
-            
+
         alias = self.alias if self.alias else 'None'
         line =   f'\n Alias      : {alias}'
         if len(line) > 40: line = line[:40] + '...'
         info += line
-        
+
         info += f'\n Method     : {self.method or None}'
         info += f'\n Category   : {self.category or None}'
         line =  f'\n Description: {self.description or None}'
         if len(line) > 40: line = line[:40] + '...'
         info += line
-        
+
         print(info)
-    
+
     _ipython_display_ = show
 
 
     def register(self):
         '''Add this impact indicator to the registry.'''
-        self.registry.register_safely(self.ID, self)        
+        self.registry.register_safely(self.ID, self)
         print(f'The impact indicator "{self.ID}" has been added to the registry.')
 
     def deregister(self):
         '''Remove this impact indicator from the registry.'''
-        self.registry.discard(self.ID)            
+        self.registry.discard(self.ID)
         print(f'The impact indicator "{self.ID}" has been removed from the registry.')
 
 
@@ -171,7 +171,7 @@ class ImpactIndicator:
     def get_all_indicators(cls, include_alias=False):
         '''
         Get all defined impact indicator as a dict.
-        
+
         Parameters
         ----------
         include_alias : bool
@@ -183,7 +183,7 @@ class ImpactIndicator:
 
         else:
             dct = cls.registry.data.copy()
-            dct.update(cls._get_alias_dct(cls))
+            dct.update(cls._get_alias_dct())
             return dct
 
     @classmethod
@@ -193,49 +193,52 @@ class ImpactIndicator:
         return dct.get(ID_or_alias)
 
     @classmethod
-    def load_indicators_from_file(cls, path):
+    def load_indicators_from_file(cls, path_or_df):
         '''
         Load impact indicator from a datasheet.
-        
-        The first row of this datasheet should have "indicator" 
-        (must have value as it is used as the ID, e.g., GlobalWarming),
+
+        The first row of this datasheet should have "indicator"
+        (it is used as the ID, e.g., GlobalWarming),
         "alias" (e.g., GWP), "unit" (e.g., kg CO2-eq), "method" (e.g., TRACI),
         "category" (e.g., environmental impact), and "description".
         Aside from "indicator", other information is optional.
-        
+
         Each row should be a data entry.
-        
+
         .. note::
-            
+
             This function is just one way to batch-load impact indicators,
             you can always write your own function that fits your datasheet format,
             as long as it provides all the information to construct the impact indicator.
-        
-        
+
+
         Parameters
         ----------
-        path : str
-            Complete path of the datasheet, currently support tsv, csv, and xls/xlsx.
-        
+        path_or_df : str or :class:`pandas.DataFrame`
+            DataFrame or complete path of the datasheet, currently support tsv, csv, and xls/xlsx.
+
         Tip
         ---
         [1] tsv is preferred as it shows up on GitHub.
-        
+
         [2] Refer to the `Bwaise system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise/data>`_
         in the `Exposan` repository for a sample file.
         '''
-        data = load_data(path=path)
-        for indicator in data.index:
+
+        data = load_data(path=path_or_df, index_col=None) if isinstance(path_or_df, str) else path_or_df
+
+        for num in data.index:
             new = cls.__new__(cls)
             kwargs = {}
             for k in ('alias', 'unit', 'method', 'category', 'description'):
                 try:
-                    kwargs[k] = data.loc[indicator][k]
+                    kwargs[k] = data.iloc[num][k]
                 except KeyError:
                     kwargs[k] = ''
 
-            new.__init__(ID=indicator, **kwargs)
+            new.__init__(ID=data.iloc[num]['indicator'], **kwargs)
 
+    @classmethod
     def _get_alias_dct(cls):
         dct = {}
         for i in cls.registry.data.values():
@@ -261,7 +264,7 @@ class ImpactIndicator:
     def alias(self, alias):
         alias = None if str(alias) == 'nan' else alias
         alias_dct = self._get_alias_dct()
-        
+
         if alias:
             if not isinstance(alias, str):
                 raise TypeError(f'`alias` can only be a str, not {type(alias).__name__}.')
@@ -273,13 +276,13 @@ class ImpactIndicator:
                          f'instead of {old_ind.ID}.')
                     old_ind._alias = None
             self._alias = alias
-        
+
         else:
             self._alias = None
 
     @property
     def unit(self):
-        '''[str] Unit of this impact indicator.'''    
+        '''[str] Unit of this impact indicator.'''
         return self._unit
     @unit.setter
     def unit(self, i):
@@ -288,7 +291,7 @@ class ImpactIndicator:
 
     @property
     def method(self):
-        '''[str] Impact assessment method of this impact indicator.'''    
+        '''[str] Impact assessment method of this impact indicator.'''
         return self._method
     @method.setter
     def method(self, i):
@@ -296,7 +299,7 @@ class ImpactIndicator:
 
     @property
     def category(self):
-        '''[str] Impact category of this impact indicator.'''    
+        '''[str] Impact category of this impact indicator.'''
         return self._category
     @category.setter
     def category(self, i):
@@ -304,7 +307,7 @@ class ImpactIndicator:
 
     @property
     def description(self):
-        '''[str] Description of this impact indicator.'''    
+        '''[str] Description of this impact indicator.'''
         return self._description
     @description.setter
     def description(self, i):
@@ -315,4 +318,3 @@ class ImpactIndicator:
         '''[bool] If this impact indicator is registered in the record.'''
         data = self.registry.data.get(self.ID)
         return True if data else False
-

@@ -1,7 +1,7 @@
 # Needed by qsdsan
-biosteam==2.27.7
-thermosteam==0.24.10
-exposan==0.0.11
+biosteam==2.28.4
+thermosteam==0.25.4
+exposan==0.0.13
 pint>=0.12
 numpy>=1.19.2
 ipykernel>=5.3.4

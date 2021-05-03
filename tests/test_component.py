@@ -13,11 +13,10 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-import pytest
-
 __all__ = ('test_component',)
 
 def test_component():
+    import pytest
     import thermosteam as tmo
     from qsdsan import Component, Components
     from chemicals.elements import molecular_weight

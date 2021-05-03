@@ -253,17 +253,3 @@ class HXprocess(SanUnit, bst.units.HXprocess):
         
         self.material = material
         self.heat_exchanger_type = heat_exchanger_type
-
-
-
-
-
-
-
-
-    
-    
-    
-    
-    
-    

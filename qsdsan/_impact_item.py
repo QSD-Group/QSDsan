@@ -24,11 +24,6 @@ from .utils import (
     format_number as f_num
     )
 
-isinstance = isinstance
-getattr = getattr
-
-#!!! PAUSED, RERUN TUTORIAL TO MAKE SURE IT WORKS!!!
-
 
 __all__ = ('ImpactItem', 'StreamImpactItem')
 
@@ -39,7 +34,7 @@ def check_source(item, return_item=False, raise_error=True):
                              'value cannot be set.')
         else:
             item = item.source
-            
+
     if return_item:
         return item
 
@@ -47,7 +42,7 @@ def check_source(item, return_item=False, raise_error=True):
 class ImpactItem:
     '''
     A class for calculation of environmental impacts.
-    
+
     Parameters
     ----------
     ID : str
@@ -64,7 +59,7 @@ class ImpactItem:
     indicator_CFs : kwargs
         Impact indicators and their characteriziation factors (CFs),
         can be in the form of str=float or str=(float, unit).
-    
+
     Tip
     ---
     :class:`ImpactItem` should be used for environmental impacts associated with
@@ -76,13 +71,13 @@ class ImpactItem:
     Examples
     --------
     Firstly make impact indicators.
-    
+
     >>> import qsdsan as qs
     >>> GWP = qs.ImpactIndicator('GlobalWarming', alias='GWP', unit='kg CO2-eq')
     >>> FEC = qs.ImpactIndicator('FossilEnergyConsumption', alias='FEC', unit='MJ')
-    
+
     We can make impact items in different ways (numbers are made up).
-    
+
     >>> Steel = qs.ImpactItem('Steel', 'kg', GWP=2.55)
     >>> Steel.show()
     ImpactItem      : Steel [per kg]
@@ -108,7 +103,7 @@ class ImpactItem:
     {'Steel': <ImpactItem: Steel>, 'Electricity': <ImpactItem: Electricity>}
 
     You can make copies of impact items and choose to link to the source or not.
-    
+
     >>> Steel2 = Steel.copy('Steel2', set_as_source=True)
     >>> Steel2.CFs['GlobalWarming']
     2.55
@@ -129,9 +124,9 @@ class ImpactItem:
     2
     >>> Steel2.CFs['GlobalWarming']
     2
-    
+
     Manage the registry.
-    
+
     >>> qs.ImpactItem.get_all_items()
     {'Steel': <ImpactItem: Steel>,
      'Electricity': <ImpactItem: Electricity>,
@@ -155,16 +150,16 @@ class ImpactItem:
     >>> qs.ImpactItem.get_all_items()
     {}
     '''
-    
-    _items = {}    
-    
+
+    _items = {}
+
     __slots__ = ('_ID', '_functional_unit', '_price', '_CFs', '_source')
-    
+
     def __init__(self, ID='', functional_unit='kg', price=0., price_unit='',
                  source=None, **indicator_CFs):
-        
+
         self._register(ID)
-        
+
         if source:
             self.source = source
         else:
@@ -173,15 +168,14 @@ class ImpactItem:
             self._update_price(price, price_unit)
             self._CFs = {}
             for indicator, value in indicator_CFs.items():
-                
+
                 try:
                     CF_value, CF_unit = value # unit provided for CF
                     self.add_indicator(indicator, CF_value, CF_unit)
                 except:
-                    try: self.add_indicator(indicator, value)
-                    except: breakpoint()
+                    self.add_indicator(indicator, value)
 
-    
+
     # This makes sure it won't be shown as memory location of the object
     def __repr__(self):
         return f'<ImpactItem: {self.ID}>'
@@ -203,7 +197,7 @@ class ImpactItem:
                 },
                 index=index)
             print(df.to_string())
-        
+
     _ipython_display_ = show
 
     def _update_price(self, price=0., unit=''):
@@ -222,21 +216,21 @@ class ImpactItem:
 
         try: CF_unit2 = CF_unit.replace(' eq', '-eq')
         except: pass
-    
+
         if CF_unit and CF_unit != indicator.unit and CF_unit2 != indicator.unit:
             try:
                 CF_value = auom(parse_unit(CF_unit)[0]). \
                     convert(CF_value, indicator._ureg_unit.units)
             except:
                 raise ValueError(f'Conversion of the given unit {CF_unit} to '
-                                 f'the defaut unit {indicator.unit} is not supported.')
+                                  f'the defaut unit {indicator.unit} is not supported.')
 
         source_item._CFs[indicator.ID] = CF_value
 
     def remove_indicator(self, indicator):
         '''
         Remove an indicator from this impact item.
-        
+
         Parameters
         ----------
         indicator : str or :class:`~.ImpactIndicator`
@@ -250,7 +244,7 @@ class ImpactItem:
     def copy(self, new_ID='', set_as_source=False):
         '''
         Return a new :class:`ImpactItem` object with the same settings.
-        
+
         Parameters
         ----------
         new_ID : str
@@ -258,10 +252,10 @@ class ImpactItem:
         set_as_source : bool
             Whether to set the original impact item as the source.
         '''
-        
+
         new = ImpactItem.__new__(ImpactItem)
         new.__init__(new_ID)
-        
+
         if set_as_source:
             if self.source:
                 new.source = self.source
@@ -269,97 +263,104 @@ class ImpactItem:
                 new.source = self
         else:
             new = copy_attr(new, self, skip=('_ID', '_source'))
-        
+
         return new
 
     __copy__ = copy
 
     def register(self):
         '''Add this impact item to the registry.'''
-        self.registry.register_safely(self.ID, self)       
+        self.registry.register_safely(self.ID, self)
         print(f'The impact item "{self.ID}" has been added to the registry.')
 
     def deregister(self):
         '''Remove this impact item from the registry.'''
         self.registry.discard(self.ID)
         print(f'The impact item "{self.ID}" has been removed from the registry.')
-    
+
     @classmethod
     def clear_registry(cls):
         '''Remove all existing impact items from the registry.'''
         cls.registry.clear()
         print('All impact items have been removed from registry.')
-    
-    
+
+
     @classmethod
     def get_all_items(cls):
         '''Get all impact items.'''
         return cls.registry.data
-    
+
     @classmethod
     def get_item(cls, ID):
         '''Get an item by its ID.'''
         return cls.get_all_items().get(ID)
-    
+
     @classmethod
-    def load_items_from_excel(cls, path):
+    def _load_items_from_df(cls, name, df):
+        if name.lower() == 'info':
+            for num in df.index:
+                new = cls.__new__(cls)
+                new.__init__(ID=df.iloc[num].ID,
+                             functional_unit=df.iloc[num].functional_unit)
+        else:
+            for num in df.index:
+                item = cls.get_item(df.iloc[num].ID)
+                item.add_indicator(indicator=name,
+                                   CF_value=float(df.iloc[num].expected),
+                                   CF_unit=df.iloc[num].unit)
+
+    @classmethod
+    def load_items_from_excel(cls, path_or_dict):
         '''
-        Load impact items from an Excel file.
-        
+        Load impact items from an Excel file or a :class:`pandas.DataFrame`.
+
         This Excel should have multiple sheets:
-            
+
             - The "info" sheet should have two columns: "ID" (e.g., Cement) \
             and "functional_unit" (e.g., kg) of different impact items.
-            
+
             - The remaining sheets should contain characterization factors of \
             impact indicators.
-            
+
                 - Name of the sheet should be the ID (e.g., GlobalWarming) or \
                 alias (e.g., GWP) of the indicator.
-                
+
                 - Each sheet should have at least two columns: "unit" (e.g., kg CO2-eq) \
                 and "expected" (values) of the CF.
-                
+
                 - You can also have additional columns to be used for other purpose \
                 (e.g., uncertainty analysis).
-        
+
         .. note::
-            
+
             This function is just one way to batch-load impact items,
             you can always write your own function that fits your datasheet format,
             as long as it provides all the information to construct new impact items.
-        
-        
+
+
         Parameters
         ----------
-        path : str
-            Complete path of the Excel file.
+        path_or_dict : str or dict of :class:`pandas.DataFrame`
+            A dict of DataFrame or complete path of the datasheet in xls/xlsx.
 
         Tip
         ---
         Refer to the `Bwaise system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise/data>`_
         in the `Exposan` repository for a sample file.
         '''
-        if not (path.endswith('.xls') or path.endswith('.xlsx')):
-            raise ValueError('Only Excel files ends with ".xlsx" or ".xls" can be interpreted.')
-        
-        data_file = pd.ExcelFile(path, engine='openpyxl')
-        
-        for sheet_name in data_file.sheet_names:
-            data = data_file.parse(sheet_name, index_col=0)
+        if isinstance(path_or_dict, str):
+            if not (path_or_dict.endswith('.xls') or path_or_dict.endswith('.xlsx')):
+                raise ValueError('Only Excel files ends with ".xlsx" or ".xls" can be interpreted.')
 
-            if sheet_name == 'info':
-                for item_ID in data.index:
-                    new = cls.__new__(cls)
-                    new.__init__(ID=item_ID,
-                                 functional_unit=data.loc[item_ID]['functional_unit'])
-            else:
-                for item_ID in data.index:
-                    item = cls.get_item(item_ID)
-                    item.add_indicator(indicator=sheet_name,
-                                       CF_value=float(data.loc[item_ID]['expected']),
-                                       CF_unit=data.loc[item_ID]['unit'])
-    
+            data_file = pd.ExcelFile(path_or_dict, engine='openpyxl')
+
+            for sheet_name in data_file.sheet_names:
+                data = data_file.parse(sheet_name)
+                cls._load_items_from_df(sheet_name, data)
+        else:
+            for k, v in path_or_dict.items():
+                cls._load_items_from_df(k, v)
+
     @property
     def source(self):
         '''
@@ -379,7 +380,7 @@ class ImpactItem:
                 raise ValueError('`source` can only be an `ImpactItem` or its ID, '
                                  f'not {type(i).__name__}.')
         self._source = i
-    
+
     @property
     def ID(self):
         '''[str] ID of this item.'''
@@ -387,7 +388,7 @@ class ImpactItem:
     @ID.setter
     def ID(self, ID):
         self._ID = ID
-    
+
     @property
     def functional_unit(self):
         '''[str] Functional unit of this item.'''
@@ -395,13 +396,13 @@ class ImpactItem:
     @functional_unit.setter
     def functional_unit(self, i):
         check_source(self, True)._functional_unit = auom(i)
-    
+
     @property
     def indicators(self):
         ''' [tuple] Impact indicators associated with this item.'''
         return tuple(ImpactIndicator.get_all_indicators(True)[i]
                      for i in self.CFs.keys())
-    
+
     @property
     def price(self):
         '''Price of this item per functional unit.'''
@@ -409,7 +410,7 @@ class ImpactItem:
     @price.setter
     def price(self, price, unit=''):
         check_source(self, True)._update_price(price, unit)
-    
+
     @property
     def CFs(self):
         '''[dict] Characterization factors of this item for different impact indicators.'''
@@ -420,7 +421,7 @@ class ImpactItem:
     @CFs.setter
     def CFs(self, indicator, CF_value, CF_unit=''):
         check_source(self, True).add_indicator(indicator, CF_value, CF_unit)
-        
+
     @property
     def registered(self):
         '''[bool] If this impact item is registered in the record.'''
@@ -432,9 +433,9 @@ class ImpactItem:
 
 class StreamImpactItem(ImpactItem):
     '''
-    A class for calculation of environmental impacts associated with streams 
+    A class for calculation of environmental impacts associated with streams
     (e.g., chemical inputs, emissions).
-    
+
     Parameters
     ----------
     ID : str
@@ -447,7 +448,7 @@ class StreamImpactItem(ImpactItem):
         :class:`StreamImpactItem` will be copied from the provided source.
     indicator_CFs : kwargs
         ImpactIndicators and their characteriziation factors (CFs).
-    
+
     Tip
     ---
     For environmental impacts associated with construction and transportation,
@@ -457,7 +458,7 @@ class StreamImpactItem(ImpactItem):
     --------
     Refer to :class:`ImpactItem` for general features.
     Below is about the additional features for :class:`StreamImpactItem`.
-    
+
     Assume we want to account for the globalwarming potential for methane:
 
     >>> # Make impact indicators
@@ -487,7 +488,7 @@ class StreamImpactItem(ImpactItem):
     GlobalWarming (kg CO2-eq)                        28
 
     We can make copies of the impact item, and link it to the original one.
-    
+
     >>> methane2 = methane.copy('methane2')
     >>> methane_item2 = methane_item.copy('methane_item2', stream=methane2,
     ...                                   set_as_source=True)
@@ -496,9 +497,9 @@ class StreamImpactItem(ImpactItem):
     >>> methane_item.CFs['GlobalWarming'] = 1
     >>> methane_item2.CFs['GlobalWarming']
     1
-    
+
     We can also add or remove impact indicators.
-    
+
     >>> methane_item.remove_indicator('GlobalWarming')
     The impact indicator "GlobalWarming" has been removed.
     >>> methane_item2.show()
@@ -550,7 +551,7 @@ class StreamImpactItem(ImpactItem):
 
     def show(self):
         '''Show basic information about this :class:`StreamImpactItem` object.'''
-        info = f'StreamImpactItem: {self.ID} [per {self.functional_unit}]'    
+        info = f'StreamImpactItem: {self.ID} [per {self.functional_unit}]'
         if self.linked_stream:
             info += f'\nLinked to       : {self.linked_stream}'
         else:
@@ -571,7 +572,7 @@ class StreamImpactItem(ImpactItem):
             # print(' '*18+df.to_string().replace('\n', '\n'+' '*18))
             print(df.to_string())
 
-    
+
     _ipython_display_ = show
 
 
@@ -588,11 +589,11 @@ class StreamImpactItem(ImpactItem):
         set_as_source : bool
             Whether to set the original impact item as the source.
         '''
-        
+
         new = StreamImpactItem.__new__(StreamImpactItem)
         new.ID = new_ID
         new._linked_stream = None # initiate this attribute
-        
+
         if set_as_source:
             if self.source:
                 new.source = self.source
@@ -600,14 +601,14 @@ class StreamImpactItem(ImpactItem):
                 new.source = self
         else:
             new = copy_attr(new, self, skip=('_ID', '_linked_stream', '_source'))
-        
+
         if stream:
             stream.impact_item = new
             if not new_ID:
                 new.ID = f'{stream.ID}_item'
-                
+
         return new
-    
+
     __copy__ = copy
 
     @property
@@ -616,9 +617,9 @@ class StreamImpactItem(ImpactItem):
         [:class:`StreamImpactItem`] If provided, all attributions and properties of this
         :class:`StreamImpactItem` will be copied from the provided source.
         ID of the impact item can be provided instead of the object.
-        
+
         .. note::
-            
+
             Since the price is copied from the price of the `linked_stream`, it
             can be different from the source.
         '''
@@ -627,7 +628,7 @@ class StreamImpactItem(ImpactItem):
     def source(self, i):
         if isinstance(i, str):
             i = self.get_item(i)
-        
+
         if not isinstance(i, StreamImpactItem):
             if not i:
                 i = None
@@ -644,7 +645,7 @@ class StreamImpactItem(ImpactItem):
         can be set by either the :class:`SanStream` object or its ID.
         '''
         return self._linked_stream
-        
+
     @linked_stream.setter
     def linked_stream(self, new_s):
         if new_s and not isinstance(new_s, SanStream):
@@ -659,7 +660,7 @@ class StreamImpactItem(ImpactItem):
             else:
                 raise TypeError('`linked_stream` must be a `SanStream` or '
                                 f'the ID of a `SanStream`, not {type(new_s).__name__}.')
-        
+
         if self._linked_stream:
             old_s = self._linked_stream
             self._linked_stream.impact_item = None
@@ -689,7 +690,7 @@ class StreamImpactItem(ImpactItem):
     def functional_unit(self):
         '''[str] Functional unit of the item, set to 'kg'.'''
         return auom('kg')
-    
+
     @property
     def price(self):
         '''[float] Price of the linked stream.'''
@@ -697,10 +698,3 @@ class StreamImpactItem(ImpactItem):
             return self.linked_stream.price
         else:
             return 0.
-
-
-
-
-
-
-

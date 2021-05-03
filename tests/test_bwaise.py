@@ -12,11 +12,10 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-from numpy.testing import assert_allclose
-
 __all__ = ('test_bwaise',)
 
 def test_bwaise():
+    from numpy.testing import assert_allclose
     from exposan import bwaise as bw
     
     assert_allclose(bw.teaA.NPV, -22732728.213841617, rtol=1e-3)

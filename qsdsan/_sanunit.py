@@ -26,26 +26,23 @@ from . import currency, Unit, Stream, SanStream, WasteStream, \
 
 __all__ = ('SanUnit',)
 
-isinstance = isinstance
-hasattr = hasattr
-getattr = getattr
-
 def _update_init_with(init_with, ins_or_outs, size):
+
     if isinstance(init_with, str):
         init_with = dict.fromkeys([f'{ins_or_outs}{n}' for n in range(size)], init_with)
         return init_with
-    
+
     if len(init_with) == 1 and (('all' or 'All' or 'else' or 'Else') in init_with.keys()):
         init_with = dict.fromkeys([f'{ins_or_outs}{n}' for n in range(size)], init_with)
         return init_with
-    
+
     if 'else' in init_with.keys():
         new_init_with = dict.fromkeys([f'{ins_or_outs}{n}' for n in range(size)], init_with['else'])
     elif 'Else' in init_with.keys():
         new_init_with = dict.fromkeys([f'{ins_or_outs}{n}' for n in range(size)], init_with['Else'])
     else:
         new_init_with = {}
-    
+
     for k, v in init_with.items():
         if k in ('Else', 'else'):
             continue
@@ -80,7 +77,7 @@ class SanUnit(Unit, isabstract=True):
         When provided as a str, all streams will be of the same class;
         when provided as a dict, use "ins" or "outs" followed with the order number
         (i.e., ins0, outs-1) as keys; you can use ":" to denote a range (e.g., ins2:4);
-        you can also use "else" to specify the stream class for non-provided ones.        
+        you can also use "else" to specify the stream class for non-provided ones.
     construction : :class:`~.Construction` or iterable
         Contains construction information.
     transportation : :class:`~.Transportation` or iterable
@@ -92,18 +89,18 @@ class SanUnit(Unit, isabstract=True):
     uptime_ratio : float
         Uptime of the unit to adjust `add_OPEX`, should be in [0,1]
         (i.e., a unit that is always operating has an uptime_ratio of 1).
-        
+
         .. note::
-            
+
             This will not affect the utility (heating, cooling, power) and
             material costs/environmental impacts.
-            
+
             To account for less utility and material flows, normalize them to
             the `uptime_ratio` of the system.
             For example, if the system operates 100% of time but a pump only works
             50% of the pump at 50 kW. Set the pump `power_utility` to be 50*50%=25 kW.
-            
-            
+
+
     lifetime : int or dict
         Lifetime of this unit (int) or individual equipment within this unit
         (dict) in year.
@@ -112,9 +109,9 @@ class SanUnit(Unit, isabstract=True):
         lifetime as the TEA/LCA.
     F_BM_default : float
         If not None, all bare module factors will be default to the set value.
-        
+
         .. note::
-            
+
             Regardless of F_BM_default, design (F_D), pressure (F_P),
             and material (F_M) factors are all defaulted to 0.
 
@@ -152,7 +149,7 @@ class SanUnit(Unit, isabstract=True):
         self.add_OPEX = add_OPEX
         self.uptime_ratio = 1.
         self.lifetime = lifetime
-        
+
         if F_BM_default:
             F_BM = self.F_BM
             self.F_BM = defaultdict(lambda: F_BM_default)
@@ -166,19 +163,26 @@ class SanUnit(Unit, isabstract=True):
         if not streams:
             return []
 
-        init_with = dict.fromkeys([f'{ins_or_outs}{i}' for i in range(len(streams))],
-                                   init_with)
+        if isinstance(init_with, str):
+            init_with = dict.fromkeys([f'{ins_or_outs}{n}'
+                                       for n in range(len(streams))], init_with)
 
         # Do not change pre-defined stream types
-        if isinstance(strm_inputs, Iterable) and not isinstance(strm_inputs, str):             
+        if isinstance(strm_inputs, Stream): # input is a stream
+            init_with[f'{ins_or_outs}0'] = type(strm_inputs).__name__
+         # input is an iterable of stream
+        elif isinstance(strm_inputs, Iterable) and not isinstance(strm_inputs, str):
             for n, s in enumerate(strm_inputs):
                 if isinstance(s, Stream):
                     init_with[f'{ins_or_outs}{n}'] = type(s).__name__
 
         init_with = _update_init_with(init_with, ins_or_outs, len(streams))
-        
+
         converted = []
         for k, v in init_with.items():
+            if not ins_or_outs in k:
+                continue
+
             num = k.split(ins_or_outs)[-1]
             s = streams[int(num)]
             if v == 's':
@@ -193,8 +197,8 @@ class SanUnit(Unit, isabstract=True):
             raise ValueError(f'Type(s) of {diff} stream(s) has/have not been specified.')
 
         return converted
-     
-    
+
+
     def _init_ins(self, ins, init_with):
         super()._init_ins(ins)
         self._ins = self._convert_stream(ins, self.ins, init_with, 'ins')
@@ -231,7 +235,7 @@ class SanUnit(Unit, isabstract=True):
             info += f'[{i}] {stream.ID}' + link_info + stream_info[index+1:]
             i += 1
         return info
-        
+
 
     def _info(self, T, P, flow, composition, N, IDs, _stream_info):
         '''Information of the unit.'''
@@ -239,10 +243,10 @@ class SanUnit(Unit, isabstract=True):
             info = f'{type(self).__name__}: {self.ID}\n'
         else:
             info = f'{type(self).__name__}\n'
-        
+
         info = self._get_stream_info(info, 'ins', _stream_info,
                                      T, P, flow, composition, N, IDs)
-        
+
         info = self._get_stream_info(info, 'outs', _stream_info,
                                      T, P, flow, composition, N, IDs)
         info = info.replace('\n ', '\n    ')
@@ -303,21 +307,6 @@ class SanUnit(Unit, isabstract=True):
                     raise TypeError(
                         f'Only `Construction` object can be included, not {type(j).__name__}.')
         self._construction = i
-
-    # @property
-    # def construction_impacts(self):
-    #     '''[dict] Total impacts associated with this unit.'''
-    #     impacts = {}
-    #     if not self.construction:
-    #         return impacts
-    #     for i in self.construction:
-    #         impact = i.impacts
-    #         for i, j in impact.items():
-    #             try:
-    #                 impacts[i] += j
-    #             except:
-    #                 impacts[i] = j
-    #     return impacts
 
     @property
     def transportation(self):
@@ -392,7 +381,7 @@ class SanUnit(Unit, isabstract=True):
         within this unit (dict) in year.
         It will be used to adjust cost and emission calculation in TEA and LCA.
         Equipment without provided lifetime will be assumed to have the same
-        lifetime as the TEA/LCA. 
+        lifetime as the TEA/LCA.
         '''
         if self._lifetime is not None:
             return self._lifetime
