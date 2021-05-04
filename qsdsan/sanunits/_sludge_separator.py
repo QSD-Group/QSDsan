@@ -59,10 +59,10 @@ class SludgeSeparator(SanUnit):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, **kwargs)
         data = load_data(path=data_path)
         if not split:
-            value = dct_from_str(data.loc['split']['expected'], dtype='str')
+            value = dct_from_str(data.loc['split']['expected'])
             setattr(self, 'split', value)
         if not settled_frac:
-            value = dct_from_str(data.loc['settled_frac']['expected'])
+            value = float(data.loc['settled_frac']['expected'])
             setattr(self, 'settled_frac', value)
         del data
 
@@ -95,7 +95,8 @@ class SludgeSeparator(SanUnit):
             for var in self.split.keys():
                 #!!! In the future this should be best by changing the state variable
                 if var == 'TS':
-                    sol.imass['OtherSS'] = split[var] * waste.imass['OtherSS']
+                    try: sol.imass['OtherSS'] = split[var] * waste.imass['OtherSS']
+                    except: breakpoint()
                 elif var == 'COD':
                     sol_COD = split[var] * waste._COD * waste.F_vol
                     liq_COD = waste._COD * waste.F_vol - sol_COD
