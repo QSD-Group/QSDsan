@@ -193,7 +193,7 @@ class ImpactIndicator:
         return dct.get(ID_or_alias)
 
     @classmethod
-    def load_indicators_from_file(cls, path_or_df):
+    def load_indicators_from_file(cls, path_or_df, index_col=None):
         '''
         Load impact indicator from a datasheet.
 
@@ -216,6 +216,8 @@ class ImpactIndicator:
         ----------
         path_or_df : str or :class:`pandas.DataFrame`
             DataFrame or complete path of the datasheet, currently support tsv, csv, and xls/xlsx.
+        index_col : None or int
+            Index column of the :class:`pandas.DataFrame`.
 
         Tip
         ---
@@ -225,7 +227,7 @@ class ImpactIndicator:
         in the `Exposan` repository for a sample file.
         '''
 
-        data = load_data(path=path_or_df, index_col=None) if isinstance(path_or_df, str) else path_or_df
+        data = load_data(path=path_or_df, index_col=index_col) if isinstance(path_or_df, str) else path_or_df
 
         for num in data.index:
             new = cls.__new__(cls)

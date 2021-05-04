@@ -17,7 +17,7 @@ for license details.
 
 from .. import WasteStream, Construction
 from ._toilet import Toilet
-from ..utils import load_data, data_path
+from ..utils import load_data, data_path, dct_from_str
 
 __all__ = ('PitLatrine',)
 
@@ -29,7 +29,7 @@ data_path += 'sanunit_data/_pit_latrine.tsv'
 class PitLatrine(Toilet):
     '''
     Single pit latrine based on Trimmer et al. [1]_, a subclass of :class:`~.Toilet`.
-    
+
     Parameters
     ----------
     if_leaching : bool
@@ -37,7 +37,7 @@ class PitLatrine(Toilet):
         (i.e., if the pit walls and floors are permeable).
     if_pit_above_water_table : bool
         If the pit is above local water table.
-        
+
     Returns
     -------
     waste : WasteStream
@@ -48,27 +48,27 @@ class PitLatrine(Toilet):
         Fugitive CH4.
     N2O : WasteStream
         Fugitive N2O.
-    
+
     References
     ----------
     .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
-    
+
     See Also
     --------
     :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
-    
+
     '''
-    
+
     # Legacy code to add checkers
     # _P_leaching = Frac_D(name='P_leaching')
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  N_user=1, N_toilet=1, lifetime=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
-                 if_desiccant=False, if_air_emission=True, if_ideal_emptying=True, 
+                 if_desiccant=False, if_air_emission=True, if_ideal_emptying=True,
                  CAPEX=449, OPEX_over_CAPEX=0.05,
                  if_leaching=True, if_shared=True,
                  if_pit_above_water_table=True, **kwargs):
@@ -85,7 +85,7 @@ class PitLatrine(Toilet):
         data = load_data(path=data_path)
         for para in data.index:
             if para in ('MCF_decay', 'N2O_EF_decay'):
-                value = eval(data.loc[para]['expected'])
+                value = dct_from_str(data.loc[para]['expected'], dtype='float')
             else:
                 value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)
@@ -99,7 +99,7 @@ class PitLatrine(Toilet):
 
 
     _N_outs = 4
-        
+
     def _run(self):
         Toilet._run(self)
         waste, leachate, CH4, N2O = self.outs
@@ -108,7 +108,7 @@ class PitLatrine(Toilet):
         mixed = WasteStream()
         mixed.mix_from(self.ins)
         tot_COD_kg = sum(float(getattr(i, 'COD'))*i.F_vol for i in self.ins)/1e3
-        
+
         # All composite variables in mg/L
         # Leaching
         # Here COD change due to leaching not considered
@@ -121,7 +121,7 @@ class PitLatrine(Toilet):
             leachate.imass['P'] = mixed.imass['P'] * self.P_leaching
             leachate.imass['K'] = mixed.imass['K'] * self.K_leaching
             mixed.mass -= leachate.mass
-        
+
         # Air emission
         #!!! Based on the logic, COD won't degrade without air emission?
         if self.if_air_emission:
@@ -154,7 +154,7 @@ class PitLatrine(Toilet):
             CH4.empty()
             N2O.empty()
 
-        # Aquatic emission when not ideally emptied        
+        # Aquatic emission when not ideally emptied
         if not self.if_ideal_emptying:
             mixed, CH4, N2O = self.get_emptying_emission(
                 waste=mixed, CH4=CH4, N2O=N2O,
@@ -170,9 +170,9 @@ class PitLatrine(Toilet):
             mixed.imass['H2O'] -= diff
             mixed.imass['H2O'] = max(0, mixed.imass['H2O'])
             mixed._COD = mixed_COD / mixed.F_vol
-        
+
         waste.copy_like(mixed)
-        
+
         # Scale up the effluent based on the number of user per toilet and
         # toilet number
         tot_user = self.N_user * self.N_toilet
@@ -195,7 +195,7 @@ class PitLatrine(Toilet):
         design['Single pit volume'] = self.pit_V
         design['Single pit area'] = self.pit_area
         design['Single pit depth'] = self.pit_depth
-        
+
         density = self.density_dct
         self.construction = (
             Construction(item='Cement', quantity=700*N, quantity_unit='kg'),
@@ -218,7 +218,7 @@ class PitLatrine(Toilet):
     @pit_depth.setter
     def pit_depth(self, i):
         self._pit_depth = float(i)
-        
+
     @property
     def pit_area(self):
         '''[float] Area of the pit, [m2].'''
@@ -226,13 +226,13 @@ class PitLatrine(Toilet):
     @pit_area.setter
     def pit_area(self, i):
         self._pit_area = float(i)
-    
+
     #!!! Should add some contraints, maybe in _run, to make sure the pit is big
     # enough for the amount of excreta
     @property
     def pit_V(self):
         '''[float] Volume of the pit, [m3].'''
-        return self.pit_area*self.pit_depth     
+        return self.pit_area*self.pit_depth
 
     @property
     def emptying_period(self):
@@ -328,8 +328,3 @@ class PitLatrine(Toilet):
     @N2O_EF_decay.setter
     def N2O_EF_decay(self, i):
         self._N2O_EF_decay[self._return_MCF_EF()] = float(i)
-
-
-
-
-

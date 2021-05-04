@@ -310,7 +310,7 @@ class ImpactItem:
                                    CF_unit=df.iloc[num].unit)
 
     @classmethod
-    def load_items_from_excel(cls, path_or_dict):
+    def load_items_from_excel(cls, path_or_dict, index_col=None):
         '''
         Load impact items from an Excel file or a :class:`pandas.DataFrame`.
 
@@ -342,6 +342,8 @@ class ImpactItem:
         ----------
         path_or_dict : str or dict of :class:`pandas.DataFrame`
             A dict of DataFrame or complete path of the datasheet in xls/xlsx.
+        index_col : None or int
+            Index column of the :class:`pandas.DataFrame`.
 
         Tip
         ---
@@ -355,7 +357,7 @@ class ImpactItem:
             data_file = pd.ExcelFile(path_or_dict, engine='openpyxl')
 
             for sheet_name in data_file.sheet_names:
-                data = data_file.parse(sheet_name)
+                data = data_file.parse(sheet_name, index_col=index_col)
                 cls._load_items_from_df(sheet_name, data)
         else:
             for k, v in path_or_dict.items():
