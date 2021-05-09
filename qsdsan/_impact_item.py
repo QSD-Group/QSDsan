@@ -296,7 +296,7 @@ class ImpactItem:
         return cls.get_all_items().get(ID)
 
     @classmethod
-    def _load_items_from_df(cls, name, df):
+    def _load_from_df(cls, name, df):
         if name.lower() == 'info':
             for num in df.index:
                 new = cls.__new__(cls)
@@ -311,6 +311,14 @@ class ImpactItem:
 
     @classmethod
     def load_items_from_excel(cls, path_or_dict, index_col=None):
+        '''Same as :func:`load_from_file`, has been deprecated.'''
+        warn('`load_items_from_excel` has been deprecated, '
+             'please use `load_from_file` instead.', stacklevel=2)
+        cls.load_from_file(path_or_dict, index_col)
+
+
+    @classmethod
+    def load_from_file(cls, path_or_dict, index_col=None):
         '''
         Load impact items from an Excel file or a :class:`pandas.DataFrame`.
 
@@ -358,10 +366,10 @@ class ImpactItem:
 
             for sheet_name in data_file.sheet_names:
                 data = data_file.parse(sheet_name, index_col=index_col)
-                cls._load_items_from_df(sheet_name, data)
+                cls._load_from_df(sheet_name, data)
         else:
             for k, v in path_or_dict.items():
-                cls._load_items_from_df(k, v)
+                cls._load_from_df(k, v)
 
     @property
     def source(self):
@@ -480,7 +488,7 @@ class StreamImpactItem(ImpactItem):
     >>> cmps = qs.utils.load_example_cmps()
     >>> qs.set_thermo(cmps)
     >>> methane = qs.SanStream('methane', Methane=1, units='kg/hr',
-    ...                        impact_item=methane_item)
+    ...                        stream_impact_item=methane_item)
     >>> methane_item.show()
     StreamImpactItem: methane_item [per kg]
     Linked to       : methane
@@ -543,7 +551,8 @@ class StreamImpactItem(ImpactItem):
             for CF, value in indicator_CFs.items():
                 try:
                     CF_value, CF_unit = value # unit provided for CF
-                    self.add_indicator(CF, CF_value, CF_unit)
+                    try: self.add_indicator(CF, CF_value, CF_unit)
+                    except: breakpoint()
                 except:
                     self.add_indicator(CF, value)
 
@@ -585,7 +594,7 @@ class StreamImpactItem(ImpactItem):
         Parameters
         ----------
         new_ID : str
-            ID of the new impact item.
+            ID of the new stream impact item.
         stream : :class:`~.SanStream`
             Linked stream to the copy.
         set_as_source : bool
@@ -605,7 +614,7 @@ class StreamImpactItem(ImpactItem):
             new = copy_attr(new, self, skip=('_ID', '_linked_stream', '_source'))
 
         if stream:
-            stream.impact_item = new
+            stream.stream_impact_item = new
             if not new_ID:
                 new.ID = f'{stream.ID}_item'
 
@@ -665,16 +674,16 @@ class StreamImpactItem(ImpactItem):
 
         if self._linked_stream:
             old_s = self._linked_stream
-            self._linked_stream.impact_item = None
-            warn(f'`ImpactItem` {self.ID} is unlinked from {old_s.ID} and ' \
+            self._linked_stream.stream_impact_item = None
+            warn(f'`StreamImpactItem` {self.ID} is unlinked from {old_s.ID} and ' \
                  f'linked to {new_s.ID}.', stacklevel=2)
         if new_s:
             if hasattr(self, '_ID'):
-                if new_s.impact_item and new_s.impact_item.ID != self.ID:
+                if new_s.stream_impact_item and new_s.stream_impact_item.ID != self.ID:
                     msg = f'The original `StreamImpactItem` linked to stream {new_s} ' \
                         f'is replaced with {self}.'
                     warn(message=msg, stacklevel=2)
-            new_s._impact_item = self
+            new_s._stream_impact_item = self
         self._linked_stream = new_s
 
     @property

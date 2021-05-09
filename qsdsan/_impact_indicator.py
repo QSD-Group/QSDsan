@@ -37,7 +37,7 @@ class ImpactIndicator:
         .. note::
 
             "synonym" was used bfore v0.2.2 it is still supported, but may be
-            deprecated in the future.
+            removed in the future.
 
     method : str
         Impact assessment method, e.g., 'TRACI'.
@@ -193,7 +193,14 @@ class ImpactIndicator:
         return dct.get(ID_or_alias)
 
     @classmethod
-    def load_indicators_from_file(cls, path_or_df, index_col=None):
+    def load_indicators_from_file(cls, path_or_dict, index_col=None):
+        '''Same as :func:`load_from_file`, has been deprecated.'''
+        warn('`load_indicators_from_file` has been deprecated, '
+             'please use `load_from_file` instead.', stacklevel=2)
+        cls.load_from_excel(path_or_dict, index_col)
+
+    @classmethod
+    def load_from_file(cls, path_or_df, index_col=None):
         '''
         Load impact indicator from a datasheet.
 

@@ -93,7 +93,7 @@ class SludgeSeparator(SanUnit):
             liq.mass -= sol.mass
         else:
             for var in self.split.keys():
-                #!!! In the future this should be best by changing the state variable
+                #!!! In the future this should be best done by changing the state variable
                 if var == 'TS':
                     try: sol.imass['OtherSS'] = split[var] * waste.imass['OtherSS']
                     except: breakpoint()
@@ -123,11 +123,11 @@ class SludgeSeparator(SanUnit):
         before degradation. If a single number is provided, then it is assumed
         that retentions of all Components in the WasteStream are the same.
 
-        Note
-        ----
-        Set state variable values (e.g., COD) will be retained if the retention
-        ratio is a single number (treated like the loss stream is split
-        from the original stream), but not when the ratio is a dict.
+        .. note::
+
+            Set state variable values (e.g., COD) will be retained if the retention
+            ratio is a single number (treated like the loss stream is split
+            from the original stream), but not when the ratio is a dict.
 
         '''
         return self._split

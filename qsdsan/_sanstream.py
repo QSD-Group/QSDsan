@@ -14,8 +14,9 @@ for license details.
 
 # %%
 
-from . import Stream
+from warnings import warn
 from biosteam.utils import MissingStream
+from . import Stream
 
 __all__ = ('SanStream', 'MissingSanStream')
 
@@ -33,7 +34,7 @@ class SanStream(Stream):
 
     Parameters
     ----------
-    impact_item : :class:`StreamImpactItem`
+    stream_impact_item : :class:`StreamImpactItem`
         The :class:`StreamImpactItem` this stream is linked to.
 
     Examples
@@ -46,19 +47,20 @@ class SanStream(Stream):
 
     '''
 
-    __slots__ = (*Stream.__slots__, '_impact_item')
+    __slots__ = (*Stream.__slots__, '_impact_item', '_stream_impact_item')
     ticket_name = 'ss'
 
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
-                 units='kg/hr', price=0., thermo=None, impact_item=None,
+                 units='kg/hr', price=0., thermo=None, stream_impact_item=None,
                  **component_flows):
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
                          units=units, price=price, thermo=thermo,
                          **component_flows)
 
-        if impact_item:
-            impact_item._linked_stream = self
-        self._impact_item = impact_item
+        if stream_impact_item:
+            stream_impact_item._linked_stream = self
+        self._stream_impact_item = stream_impact_item
+        self._impact_item = self._stream_impact_item
 
     def copy(self, new_ID=''):
         '''
@@ -80,8 +82,8 @@ class SanStream(Stream):
         '''
 
         new = super().copy(ID=new_ID)
-        if self.impact_item:
-            self.impact_item.copy(stream=new)
+        if self.stream_impact_item:
+            self.stream_impact_item.copy(stream=new)
         return new
 
     __copy__ = copy
@@ -154,7 +156,7 @@ class SanStream(Stream):
             new._thermal_condition = stream._thermal_condition.copy()
             new.reset_cache()
             new.price = 0
-            new.impact_item = None
+            new.stream_impact_item = None
 
             for attr, val in kwargs.items():
                 setattr(new, attr, val)
@@ -202,14 +204,21 @@ class SanStream(Stream):
 
 
     @property
-    def impact_item(self):
+    def stream_impact_item(self):
         '''[:class:`StreamImpactItem`] The :class:`StreamImpactItem` this stream is linked to.'''
-        return self._impact_item
-    @impact_item.setter
-    def impact_item(self, i):
-        self._impact_item = i
+        return self._stream_impact_item
+    @stream_impact_item.setter
+    def stream_impact_item(self, i):
+        self._stream_impact_item = i
         if i:
             i.linked_stream = self
+
+    @property
+    def impact_item(self):
+        '''Same as `stream_impact_item`, has been deprecated.'''
+        warn('The property `impact_item` has been changed to `stream_impact_item`, '
+             'please use `stream_impact_item` instead.', stacklevel=2)
+        return self.stream_impact_item
 
     @property
     def components(self):
@@ -230,8 +239,15 @@ class MissingSanStream(MissingStream):
     '''
 
     @property
-    def impact_item(self):
+    def stream_impact_item(self):
         return None
+
+    @property
+    def impact_item(self):
+        '''Same as `stream_impact_item`, has been deprecated.'''
+        warn('The property `impact_item` has been changed to `stream_impact_item`, '
+             'please use `stream_impact_item` instead.')
+        return self.stream_impact_item
 
     def __repr__(self):
         return '<MissingSanStream>'

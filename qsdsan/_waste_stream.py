@@ -42,7 +42,7 @@ _common_composite_vars = ('_COD', '_BOD', '_uBOD', '_TC', '_TOC', '_TN',
                           '_dry_mass', '_charge', '_ThOD', '_cnBOD')
 
 _ws_specific_slots = (*_common_composite_vars,
-                      '_pH', '_SAlk', '_ratios', '_impact_item')
+                      '_pH', '_SAlk', '_ratios', '_stream_impact_item')
 
 _specific_groups = {'S_VFA': ('S_Ac', 'S_Prop'),
                     'X_Stor': ('X_OHO_PHA', 'X_GAO_PHA', 'X_PAO_PHA',
@@ -169,7 +169,7 @@ class WasteStream(SanStream):
         TO BE IMPLEMENTED
     ratios : float
         TO BE IMPLEMENTED
-    impact_item : :class:`StreamImpactItem`
+    stream_impact_item : :class:`StreamImpactItem`
         The :class:`StreamImpactItem` this stream is linked to.
     component_flows : kwargs
         Component flow data.
@@ -194,11 +194,11 @@ class WasteStream(SanStream):
                  ThOD=None, cnBOD=None,
                  TC=None, TOC=None, TN=None, TKN=None, TP=None, TK=None,
                  TMg=None, TCa=None, dry_mass=None, charge=None, ratios=None,
-                 impact_item=None, **component_flows):
+                 stream_impact_item=None, **component_flows):
 
         SanStream.__init__(self=self, ID=ID, flow=flow, phase=phase, T=T, P=P,
                            units=units, price=price, thermo=thermo,
-                           impact_item=impact_item, **component_flows)
+                           stream_impact_item=stream_impact_item, **component_flows)
 
         self._init_ws(pH, SAlk, COD, BOD, uBOD, TC, TOC, TN, TKN,
                       TP, TK, TMg, TCa, ThOD, cnBOD, dry_mass, charge, ratios)
