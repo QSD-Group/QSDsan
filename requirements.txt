@@ -1,6 +1,6 @@
 biosteam==2.28.5
 thermosteam==0.25.5
-exposan==0.0.14
+exposan==0.0.16
 sphinx
 sphinx_rtd_theme
 nbsphinx
