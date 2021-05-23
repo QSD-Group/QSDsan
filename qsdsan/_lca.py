@@ -301,23 +301,27 @@ class LCA:
         '''
         if not isinstance(units, Iterable):
             units = (units,)
-        if not time:
-            ratio = 1
+        if time is None:
+            time = self.lifetime_hr
         else:
-            converted = auom(time_unit).convert(float(time), 'hr')
-            ratio = converted/self.lifetime_hr
+            time = auom(time_unit).convert(float(time), 'hr')
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         for i in units:
             if not isinstance(i, SanUnit):
                 continue
             for j in i.construction:
                 impact = j.impacts
-                if j.lifetime is not None:
-                    factor = math.ceil(time/j.lifetime)
-                else:
-                    factor = 1.
+                if j.lifetime is not None: # this equipment has a lifetime
+                    constr_lifetime = auom('yr').convert(j.lifetime, 'hr')
+                    ratio = math.ceil(time/constr_lifetime)
+                else: # equipment doesn't have a lifetime
+                    if i.lifetime and not isinstance(i.lifetime, dict): # unit has a uniform lifetime
+                        constr_lifetime = auom('yr').convert(i.lifetime, 'hr')
+                        ratio = math.ceil(time/constr_lifetime)
+                    else: # no lifetime, assume just need one
+                        ratio = 1.
                 for m, n in impact.items():
-                    impacts[m] += n*ratio*factor
+                    impacts[m] += n*ratio
         return impacts
 
     def get_transportation_impacts(self, units, time=None, time_unit='hr'):

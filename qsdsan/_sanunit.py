@@ -260,8 +260,12 @@ class SanUnit(Unit, isabstract=True):
     def add_equipment_design(self):
         for equip in self.equipments:
             name = equip.name or format_title(type(equip).__name__)
-            self.design_results.update(equip._design())
-            self._units.update(equip.design_units)
+            equip_design = equip._design()
+            equip_design = {} if not equip_design else equip_design
+            self.design_results.update(equip_design)
+
+            equip_units = {} if not equip.design_units else equip.design_units
+            self._units.update(equip_units)
             self.F_BM[name] = equip.F_BM
             if equip.lifetime:
                 self._default_equipment_lifetime[name] = equip.lifetime
