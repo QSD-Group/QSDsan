@@ -231,7 +231,8 @@ class SanUnit(Unit, isabstract=True):
                 stream_info = stream._wastestream_info()
             su = stream._source if ins_or_outs=='ins' else stream._sink
             index = stream_info.index('\n')
-            link_info = f'  from  {type(su).__name__}-{su}\n' if su else '\n'
+            from_or_to = 'from' if ins_or_outs=='ins' else 'to'
+            link_info = f'  {from_or_to}  {type(su).__name__}-{su}\n' if su else '\n'
             info += f'[{i}] {stream.ID}' + link_info + stream_info[index+1:]
             i += 1
         return info
