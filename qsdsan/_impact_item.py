@@ -168,13 +168,11 @@ class ImpactItem:
             self._update_price(price, price_unit)
             self._CFs = {}
             for indicator, value in indicator_CFs.items():
-
                 try:
                     CF_value, CF_unit = value # unit provided for CF
                     self.add_indicator(indicator, CF_value, CF_unit)
                 except:
                     self.add_indicator(indicator, value)
-
 
     # This makes sure it won't be shown as memory location of the object
     def __repr__(self):
@@ -268,21 +266,24 @@ class ImpactItem:
 
     __copy__ = copy
 
-    def register(self):
+    def register(self, msg=True):
         '''Add this impact item to the registry.'''
         self.registry.register_safely(self.ID, self)
-        print(f'The impact item "{self.ID}" has been added to the registry.')
+        if msg:
+            print(f'The impact item "{self.ID}" has been added to the registry.')
 
-    def deregister(self):
+    def deregister(self, msg=True):
         '''Remove this impact item from the registry.'''
         self.registry.discard(self.ID)
-        print(f'The impact item "{self.ID}" has been removed from the registry.')
+        if msg:
+            print(f'The impact item "{self.ID}" has been removed from the registry.')
 
     @classmethod
-    def clear_registry(cls):
+    def clear_registry(cls, msg=True):
         '''Remove all existing impact items from the registry.'''
         cls.registry.clear()
-        print('All impact items have been removed from registry.')
+        if msg:
+            print('All impact items have been removed from registry.')
 
 
     @classmethod
@@ -436,7 +437,7 @@ class ImpactItem:
     def registered(self):
         '''[bool] If this impact item is registered in the record.'''
         data = self.registry.data.get(self.ID)
-        return True if data else False
+        return True if data is self else False
 
 
 # %%

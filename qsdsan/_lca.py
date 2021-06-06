@@ -20,15 +20,11 @@ import numpy as np
 import pandas as pd
 from collections.abc import Iterable
 from warnings import warn
-from . import ImpactItem, Stream, SanStream, SanUnit
+from . import ImpactIndicator, ImpactItem, Stream, SanStream, SanUnit
 from .utils import (
     auom,
     format_number as f_num
     )
-
-isinstance = isinstance
-iter = iter
-callable = callable
 
 __all__ = ('LCA',)
 
@@ -47,6 +43,8 @@ class LCA:
         Unit of lifetime.
     uptime_ratio : float
         Fraction of time that the system is operating.
+    indicators : iterable
+        `ImpactIndicator` objects or their IDs/aliases
     item_quantities : kwargs, :class:`ImpactItem` or str = float/callable or (float/callable, unit)
         Other :class:`ImpactItem` objects (e.g., electricity) and their quantities.
         Note that callable functions are used so that quantity of items can be updated.
@@ -165,7 +163,7 @@ class LCA:
     >>> lca.show() # doctest: +SKIP
     LCA: sys (lifetime 10 yr)
     Impacts:
-                                  Construction  Transportation  WasteStream   Others    Total
+                                  Construction  Transportation       Stream   Others    Total
     FossilEnergyConsumption (MJ)       6.5e+03        1.12e+05      1.4e+07 1.95e+06 1.61e+07
     GlobalWarming (kg CO2-eq)              500        3.75e+04     4.82e+06 8.94e+04 4.95e+06
     >>> # Retrieve impacts associated with a specific indicator
@@ -187,18 +185,19 @@ class LCA:
 
     __slots__ = ('_system',  '_lifetime', '_uptime_ratio',
                  '_construction_units', '_transportation_units',
-                 '_lca_streams', '_impact_indicators',
+                 '_lca_streams', '_indicators',
                  '_other_items', '_other_items_f')
 
 
-    def __init__(self, system, lifetime, lifetime_unit='yr', uptime_ratio=1,
-                 **item_quantities):
+    def __init__(self, system, lifetime, lifetime_unit='yr',
+                 indicators=(), uptime_ratio=1, **item_quantities):
         system.simulate()
         self._construction_units = set()
         self._transportation_units = set()
         self._lca_streams = set()
         self._update_system(system)
         self._update_lifetime(lifetime, lifetime_unit)
+        self.indicators = indicators
         self.uptime_ratio = uptime_ratio
         self._other_items = {}
         self._other_items_f = {}
@@ -283,7 +282,7 @@ class LCA:
             df = pd.DataFrame({
                 'Construction': tuple(self.total_construction_impacts.values()),
                 'Transportation': tuple(self.total_transportation_impacts.values()),
-                'WasteStream': tuple(self.total_stream_impacts.values()),
+                'Stream': tuple(self.total_stream_impacts.values()),
                 'Others': tuple(self.total_other_impacts.values()),
                 'Total': tuple(self.total_impacts.values())
                 },
@@ -321,6 +320,8 @@ class LCA:
                     else: # no lifetime, assume just need one
                         ratio = 1.
                 for m, n in impact.items():
+                    if m not in impacts.keys():
+                        continue
                     impacts[m] += n*ratio
         return impacts
 
@@ -342,6 +343,8 @@ class LCA:
             for j in i.transportation:
                 impact = j.impacts
                 for m, n in impact.items():
+                    if m not in impacts.keys():
+                        continue
                     impacts[m] += n*time/j.interval
         return impacts
 
@@ -352,12 +355,12 @@ class LCA:
         Return all stream-related impacts for the given streams,
         normalized to a certain time frame.
         '''
+        if stream_items == None:
+            stream_items = self.stream_inventory
         if not isinstance(stream_items, Iterable):
             stream_items = (stream_items,)
         if not isinstance(exclude, Iterable):
             exclude = (exclude,)
-        if stream_items == None:
-            stream_items = self.stream_inventory
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         if not time:
             time = self.lifetime_hr
@@ -374,7 +377,9 @@ class LCA:
                 else: continue
             else:
                 ws = j.linked_stream
+
             if ws in exclude: continue
+
             for m, n in j.CFs.items():
                 if kind == 'all':
                     pass
@@ -385,6 +390,8 @@ class LCA:
                 else:
                     raise ValueError('kind can only be "all", "direct_emission", or "offset", '
                                      f'not {kind}.')
+                if m not in impacts.keys():
+                    continue
                 impacts[m] += n*time*ws.F_mass
         return impacts
 
@@ -399,6 +406,8 @@ class LCA:
         for i in other_dct.keys():
             item = ImpactItem.get_item(i)
             for m, n in item.CFs.items():
+                if m not in impacts.keys():
+                    continue
                 impacts[m] += n*other_dct[i]['quantity']
         return impacts
 
@@ -412,6 +421,8 @@ class LCA:
                   ws_impacts,
                   self.total_other_impacts):
             for m, n in i.items():
+                if m not in impacts.keys():
+                    continue
                 impacts[m] += n
         return impacts
 
@@ -671,7 +682,16 @@ class LCA:
 
     @property
     def indicators(self):
-        '''[set] All impact indicators associated with this LCA.'''
+        '''
+        [list] All impact indicators associated with this LCA object.
+        If not `ImpactIndicator` has been added, then will be defaulted to
+        sum of the `ImpactIndicator` objects added to the system associated
+        with this LCA (e.g., associated with construction, streams, etc.
+
+        '''
+        if self._indicators:
+            return self._indicators
+
         if not self.construction_inventory:
             constr = set()
         else:
@@ -695,7 +715,19 @@ class LCA:
         tot = constr.union(trans, ws, other)
         if len(tot) == 0:
             warn('No `ImpactIndicator` has been added.')
-        return tot
+        return list(tot)
+    @indicators.setter
+    def indicators(self, i):
+        if not (isinstance(i, Iterable) and not isinstance(i, str)):
+            i = (i,)
+        inds = []
+        for ind in i:
+            if isinstance(ind, str):
+                ind = ImpactIndicator.get_indicator(ind)
+            if not isinstance(ind, ImpactIndicator):
+                raise TypeError(f'{ind} is not an `ImpactIndicator` or ID/alias of an `ImpactIndicator`.')
+            inds.append(ind)
+        self._indicators = inds
 
     @property
     def construction_units(self):
