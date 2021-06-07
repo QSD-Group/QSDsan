@@ -150,25 +150,27 @@ class ImpactIndicator:
     _ipython_display_ = show
 
 
-    def register(self, msg=True):
+    def register(self, print_msg=True):
         '''Add this impact indicator to the registry.'''
         self.registry.register_safely(self.ID, self)
-        if msg:
+        if print_msg:
             print(f'The impact indicator "{self.ID}" has been added to the registry.')
 
-    def deregister(self, msg=True):
+
+    def deregister(self, print_msg=True):
         '''Remove this impact indicator from the registry.'''
         self.registry.discard(self.ID)
-        if msg:
+        if print_msg:
             print(f'The impact indicator "{self.ID}" has been removed from the registry.')
 
 
     @classmethod
-    def clear_registry(cls, msg=True):
+    def clear_registry(cls, print_msg=True):
         '''Remove all existing impact indicators from the registry.'''
         cls.registry.clear()
-        if msg:
+        if print_msg:
             print('All impact indicators have been removed from registry.')
+
 
     @classmethod
     def get_all_indicators(cls, include_alias=False):

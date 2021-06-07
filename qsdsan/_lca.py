@@ -15,7 +15,7 @@ for license details.
 
 # %%
 
-import math
+import sys, math
 import numpy as np
 import pandas as pd
 from collections.abc import Iterable
@@ -204,9 +204,12 @@ class LCA:
         for item, val in item_quantities.items():
             try:
                 f_quantity, unit = val # unit provided for the quantity
-            except:
-                f_quantity = val
-                unit = ''
+            except Exception as e:
+                if 'unpack' in str(sys.exc_info()[1]):
+                    f_quantity = val
+                    unit = ''
+                else:
+                    raise e
             self.add_other_item(item, f_quantity, unit)
 
 

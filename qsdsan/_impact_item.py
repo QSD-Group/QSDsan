@@ -15,6 +15,7 @@ for license details.
 
 # %%
 
+import sys
 import pandas as pd
 from warnings import warn
 from thermosteam.utils import registered
@@ -95,7 +96,7 @@ class ImpactItem:
                                   Characterization factors
     GlobalWarming (kg CO2-eq)                         0.48
     FossilEnergyConsumption (MJ)                      5.93
-    >>> # Note that 5.93 appears instead of 5.926 is for nicer print
+    >>> # Note that 5.93 appearing instead of 5.926 is for nicer print
     >>> Electricity.CFs
     {'GlobalWarming': 0.48, 'FossilEnergyConsumption': 5.926}
     >>> # Get all impact items
@@ -171,8 +172,13 @@ class ImpactItem:
                 try:
                     CF_value, CF_unit = value # unit provided for CF
                     self.add_indicator(indicator, CF_value, CF_unit)
-                except:
-                    self.add_indicator(indicator, value)
+                # except: breakpoint()
+                except Exception as e:
+                    if 'unpack' in str(sys.exc_info()[1]):
+                        self.add_indicator(indicator, value)
+                    else:
+                        raise e
+
 
     # This makes sure it won't be shown as memory location of the object
     def __repr__(self):
@@ -212,8 +218,7 @@ class ImpactItem:
         if isinstance(indicator, str):
             indicator = ImpactIndicator.get_indicator(indicator)
 
-        try: CF_unit2 = CF_unit.replace(' eq', '-eq')
-        except: pass
+        CF_unit2 = CF_unit.replace(' eq', '-eq')
 
         if CF_unit and CF_unit != indicator.unit and CF_unit2 != indicator.unit:
             try:
@@ -266,23 +271,23 @@ class ImpactItem:
 
     __copy__ = copy
 
-    def register(self, msg=True):
+    def register(self, print_msg=True):
         '''Add this impact item to the registry.'''
         self.registry.register_safely(self.ID, self)
-        if msg:
+        if print_msg:
             print(f'The impact item "{self.ID}" has been added to the registry.')
 
-    def deregister(self, msg=True):
+    def deregister(self, print_msg=True):
         '''Remove this impact item from the registry.'''
         self.registry.discard(self.ID)
-        if msg:
+        if print_msg:
             print(f'The impact item "{self.ID}" has been removed from the registry.')
 
     @classmethod
-    def clear_registry(cls, msg=True):
+    def clear_registry(cls, print_msg=True):
         '''Remove all existing impact items from the registry.'''
         cls.registry.clear()
-        if msg:
+        if print_msg:
             print('All impact items have been removed from registry.')
 
 
@@ -552,14 +557,17 @@ class StreamImpactItem(ImpactItem):
             for CF, value in indicator_CFs.items():
                 try:
                     CF_value, CF_unit = value # unit provided for CF
-                    try: self.add_indicator(CF, CF_value, CF_unit)
-                    except: breakpoint()
-                except:
-                    self.add_indicator(CF, value)
+                    self.add_indicator(CF, CF_value, CF_unit)
+                except Exception as e:
+                    if 'unpack' in str(sys.exc_info()[1]):
+                        self.add_indicator(CF, value)
+                    else:
+                        raise e
 
 
     def __repr__(self):
         return f'<StreamImpactItem: {self.ID}>'
+
 
     def show(self):
         '''Show basic information about this :class:`StreamImpactItem` object.'''
