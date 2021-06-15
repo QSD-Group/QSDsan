@@ -8,31 +8,20 @@ This module is developed by:
     Smiti Mittal <smitimittal@gmail.com>
     Yalin Li <zoe.yalin.li@gmail.com>
     Anna Kogler
-
+    
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
 # %%
+
 import math
-#!!! Change this to relative importing when compiled into qsdsan
-from qsdsan import Equipment, SanUnit, Component, WasteStream
-# from .. import SanUnit, Equipment # relative importing
+from .. import Equipment, SanUnit, Component, WasteStream
 
-isinstance = isinstance
-
-# __all__ = ('Electrode', 'ElectroChemCell')
+__all__ = ('ElectrochemicalCell',)
 
 # %%
-
-# =============================================================================
-# Then we can construct the unit with the different equipment
-# =============================================================================
-
-#!!! Note `Electrode` and `ElectroChemCell` has not been include in `qsdsan` now,
-# so to actual run the example below, first run this script, then change
-# `qs.sanunits.Electrode` to `Electrode` and `qs.sanunits.ElectroChemCell` to `ElectroChemCell`
 
 class ElectroChemCell(SanUnit):
 
@@ -119,16 +108,16 @@ qs.set_thermo(cmps)
 # Set waste streams
 influent = qs.WasteStream('influent', H2O=1000, NH4OH=50)
 cleaning_agent = qs.WasteStream('cleaning_agent', price=5)
-# Set anode and cathode
-anode = Electrode(name='anode', electrode_type='anode',
+# Set equipments
+anode = qs.equipments.Electrode(name='anode', electrode_type='anode',
                               material='graphite', surface_area=10)
-cathode = Electrode(name='cathode', electrode_type='cathode',
+cathode = qs.equipments.Electrode(name='cathode', electrode_type='cathode',
                                 material='carbon', surface_area=10, unit_cost=1)
-membrane = Membrane(name='membrane', N=2,
+membrane = qs.equipments.Membrane(name='membrane', N=2,
             material='polyethylene', unit_cost=0.2, surface_area=1)
-column = Column(name='column1', N=3,
+column = qs.equipments.Column(name='column1', N=3,
             material='resin', unit_cost=2, surface_area=20)
-machine = Machine(name='fan', N=1, unit_cost=3)
+machine = qs.equipments.Machine(name='fan', N=1, unit_cost=3)
 # Set the unit
 U1 = ElectroChemCell('U1', ins=(influent, cleaning_agent),
                                 outs=('rec', 'rem', 'leftover'),
