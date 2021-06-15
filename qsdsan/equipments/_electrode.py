@@ -14,19 +14,11 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-# %%
 import math
-#!!! Change this to relative importing when compiled into qsdsan
-from qsdsan import Equipment, SanUnit, Component, WasteStream
-# from .. import SanUnit, Equipment # relative importing
+from .. import Equipment, SanUnit, Component, WasteStream
 
 isinstance = isinstance
 
-# __all__ = ('Electrode', 'ElectroChemCell')
-
-# %%
-
-# Be sure to include documentation and examples
 class Electrode(Equipment):
     '''
     Electrodes to be used in an electrochemical cell.
