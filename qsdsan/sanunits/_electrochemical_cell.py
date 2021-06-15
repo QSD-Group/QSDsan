@@ -71,9 +71,9 @@ class ElectroChemCell(SanUnit):
     >>> influent = qs.WasteStream('influent', H2O=1000, NH4OH=50)
     >>> cleaning_agent = qs.WasteStream('cleaning_agent', price=5)
     >>> # Set equipments
-    >>> anode = qs.equipments.Electrode(name='anode', electrode_type='anode',
+    >>> anode = qs.equipments.Electrode(name='anode', N=1, electrode_type='anode',
     ...                               material='graphite', surface_area=10)
-    >>> cathode = qs.equipments.Electrode(name='cathode', electrode_type='cathode',
+    >>> cathode = qs.equipments.Electrode(name='cathode', N=1, electrode_type='cathode',
     ...                                 material='carbon', surface_area=10, unit_cost=1)
     >>> membrane = qs.equipments.Membrane(name='membrane', N=2,
     ...             material='polyethylene', unit_cost=0.2, surface_area=1)
@@ -132,37 +132,29 @@ class ElectroChemCell(SanUnit):
          TN         : 3964.4 mg/L
          TKN        : 3964.4 mg/L
     >>> U1.results()
-    Electro chem cell                             Units        U1
-    Design              Type of electrode		          cathode
-                        Number of anode                         0
-                        Material of anode                graphite
-                        Surface area of anode        m2        10
-                        Number of cathode                      
-                        Material of cathode                carbon
-                        Surface area of cathode      m2        10
-    Purchase cost       anode                       USD      11.6
-                        cathode                     USD       116
-    Total purchase cost                             USD       128
-    Utility cost                                 USD/hr    0.0782
-    Additional OPEX                              USD/hr         0
-    Number of cathode		0
-    Material of cathode		carbon
-    Surface area of cathode	m2	10
-    Number of membrane		2
-    Material of membrane		polyethylene
-    Surface area of membrane	m2	1
-    Number of column1		3
-    Material of column1		resin
-    Surface area of column1	m2	20
-    Number of fan		1
-    Purchase cost	anode	USD	0
-    cathode	USD	0
-    membrane	USD	0.4
-    column1	USD	120
-    fan	USD	3
-    Total purchase cost		USD	123
-    Utility cost		USD/hr	0
-    Additional OPEX		USD/hr	24.7
+    Electro chem cell                             Units             U1
+    Design              Type of electrode		               cathode
+                        Number of anode                              1
+                        Material of anode                     graphite
+                        Surface area of anode        m2             10
+                        Number of cathode                            1
+                        Material of cathode                     carbon
+                        Surface area of cathode      m2             10
+                        Number of membrane                           2
+                        Material of membrane              polyethylene
+                        Surface area of membrane     m2              1
+                        Number of column1                            3
+                        Material of column1                      resin
+                        Surface area of column1      m2             20
+                        Number of fan                                1
+    Purchase cost       anode                       USD            0.1
+                        cathode                     USD              1
+                        membrane                    USD            0.4
+                        column1                     USD            120
+                        fan                         USD              3
+    Total purchase cost                             USD            124
+    Utility cost                                 USD/hr              0
+    Additional OPEX		                         USD/hr	          24.7
 
     '''
 
