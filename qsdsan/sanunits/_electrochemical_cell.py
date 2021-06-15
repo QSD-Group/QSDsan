@@ -96,8 +96,6 @@ class ElectroChemCell(SanUnit):
         add_OPEX = sum(self.equip_costs)*self.OPEX_over_CAPEX
         self._add_OPEX = {'Additional OPEX': add_OPEX}
 
-print('classes compiled')
-
 #sample code
 # Set components
 import qsdsan as qs
