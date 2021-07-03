@@ -301,7 +301,7 @@ class LCA:
         Return all construction-related impacts for the given unit,
         normalized to a certain time frame.
         '''
-        if not isinstance(units, Iterable):
+        if not isinstance(units, Iterable) or isinstance(units, str):
             units = (units,)
         if time is None:
             time = self.lifetime_hr
@@ -506,13 +506,14 @@ class LCA:
             tot[m] += trans[m] + s[m] + other[m]
         return tot
 
-    def _append_cat_sum(self, cat_table, cat, tot):
+    def _append_cat_sum(self, cat_table, cat, tot, time_ratio=1):
         num = len(cat_table)
-        try: cat_table.loc[num] = ''
-        except: breakpoint()
+        cat_table.loc[num] = '' # initiate a blank spot for value to be added later
+
         for i in self.indicators:
-            cat_table[f'{i.ID} [{i.unit}]'][num] = tot[i.ID]
+            cat_table[f'{i.ID} [{i.unit}]'][num] = tot[i.ID] * time_ratio
             cat_table[f'Category {i.ID} Ratio'][num] = 1
+
         if cat in ('construction', 'transportation'):
             cat_table.rename(index={num: ('Sum', 'All')}, inplace=True)
             cat_table.index = \
@@ -520,6 +521,7 @@ class LCA:
                                           names=[cat.capitalize(), 'SanUnit'])
         else:
             cat_table.rename(index={num: 'Sum'}, inplace=True)
+
         return cat_table
 
     def get_impact_table(self, category, time=None, time_unit='hr'):
@@ -534,6 +536,7 @@ class LCA:
 
         cat = category.lower()
         tot = getattr(self, f'total_{cat}_impacts')
+        time_ratio = time/self.lifetime_hr
 
         if cat in ('construction', 'other'):
             time = time/self.lifetime_hr
@@ -555,9 +558,10 @@ class LCA:
                     continue
                 for i in getattr(su, cat):
                     item_dct[i.item.ID]['SanUnit'].append(su.ID)
-                    item_dct[i.item.ID]['Quantity'].append(i.quantity*time)
                     if cat == 'transportation':
-                        item_dct[i.item.ID]['Quantity'][-1] /= i.interval
+                        item_dct[i.item.ID]['Quantity'].append(i.quantity*time/i.interval)
+                    else: # construction
+                        item_dct[i.item.ID]['Quantity'].append(i.quantity*time_ratio)
 
             dfs = []
             for item in items:
@@ -569,7 +573,7 @@ class LCA:
                 for i in self.indicators:
                     if i.ID in item.CFs:
                         dct[f'{i.ID} [{i.unit}]'] = impact = dct['Quantity']*item.CFs[i.ID]
-                        dct[f'Category {i.ID} Ratio'] = impact/tot[i.ID]
+                        dct[f'Category {i.ID} Ratio'] = impact/(tot[i.ID]*time_ratio)
                     else:
                         dct[f'{i.ID} [{i.unit}]'] = dct[f'Category {i.ID} Ratio'] = 0
                 df = pd.DataFrame.from_dict(dct)
@@ -581,7 +585,7 @@ class LCA:
                 dfs.append(df)
 
             table = pd.concat(dfs)
-            return self._append_cat_sum(table, cat, tot)
+            return self._append_cat_sum(table, cat, tot, time_ratio)
 
         ind_head = sum(([f'{i.ID} [{i.unit}]',
                          f'Category {i.ID} Ratio'] for i in self.indicators), [])
@@ -600,13 +604,13 @@ class LCA:
                     if ind.ID in ws_item.CFs.keys():
                         impact = ws_item.CFs[ind.ID]*mass
                         item_dct[f'{ind.ID} [{ind.unit}]'].append(impact)
-                        item_dct[f'Category {ind.ID} Ratio'].append(impact/tot[ind.ID])
+                        item_dct[f'Category {ind.ID} Ratio'].append(impact/(tot[ind.ID]*time_ratio))
                     else:
                         item_dct[f'{ind.ID} [{ind.unit}]'].append(0)
                         item_dct[f'Category {ind.ID} Ratio'].append(0)
             table = pd.DataFrame.from_dict(item_dct)
             table.set_index(['Stream'], inplace=True)
-            return self._append_cat_sum(table, cat, tot)
+            return self._append_cat_sum(table, cat, tot, time_ratio)
 
         elif cat == 'other':
             headings = ['Other', 'Quantity', *ind_head]
@@ -622,14 +626,14 @@ class LCA:
                     if ind.ID in other.CFs.keys():
                         impact = other.CFs[ind.ID]*quantity
                         item_dct[f'{ind.ID} [{ind.unit}]'].append(impact)
-                        item_dct[f'Category {ind.ID} Ratio'].append(impact/tot[ind.ID])
+                        item_dct[f'Category {ind.ID} Ratio'].append(impact/(tot[ind.ID]*time_ratio))
                     else:
                         item_dct[f'{ind.ID} [{ind.unit}]'].append(0)
                         item_dct[f'Category {ind.ID} Ratio'].append(0)
 
             table = pd.DataFrame.from_dict(item_dct)
             table.set_index(['Other'], inplace=True)
-            return self._append_cat_sum(table, cat, tot)
+            return self._append_cat_sum(table, cat, tot, time_ratio)
 
         raise ValueError(
             'category can only be "Construction", "Transportation", "Stream", or "Other", ' \
