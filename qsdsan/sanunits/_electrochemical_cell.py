@@ -23,7 +23,7 @@ __all__ = ('ElectrochemicalCell',)
 
 # %%
 
-class ElectroChemCell(SanUnit):
+class ElectrochemicalCell(SanUnit):
 
     '''
     
