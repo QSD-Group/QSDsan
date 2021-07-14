@@ -644,7 +644,7 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
         writer = pd.ExcelWriter(file)
         for name, si_df in sobol_dct.items():
             n_row = 0
-            for df in si_df:
+            for df in si_df.values():
                 df.to_excel(writer, sheet_name=name, startrow=n_row)
                 n_row += len(df.index) + 2 + len(df.columns.names)
         writer.save()
