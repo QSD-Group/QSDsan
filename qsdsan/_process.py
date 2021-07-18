@@ -602,12 +602,18 @@ class CompiledProcesses(Processes):
     def __len__(self):
         return self.size
     
+    def __iter__(self):
+        return iter(self.tuple)
+        
     def copy(self):
         '''Return a copy.'''
-        copy = Processes(self)
+        copy = Processes(self.tuple)
         copy.compile()
         return copy    
     
     def set_parameters(self, **parameters):
         '''Set values to stoichiometric and/or kinetic parameters.'''
         self._parameters.update(parameters)
+    
+    def __repr__(self):
+        return f"{type(self).__name__}([{', '.join(self.IDs)}])"
