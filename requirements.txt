@@ -1,6 +1,6 @@
-biosteam==2.29.0
-thermosteam==0.25.7
-exposan==0.0.17
+biosteam==2.30.0
+thermosteam==0.26.0
+exposan==0.0.18
 sphinx
 sphinx_rtd_theme
 nbsphinx
