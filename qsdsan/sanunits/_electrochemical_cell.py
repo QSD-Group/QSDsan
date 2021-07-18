@@ -16,12 +16,10 @@ for license details.
 
 # %%
 
-import math
-from .. import Equipment, SanUnit, Component, WasteStream
+from .. import Equipment, SanUnit, WasteStream
 
 __all__ = ('ElectrochemicalCell',)
 
-# %%
 
 class ElectrochemicalCell(SanUnit):
     '''
