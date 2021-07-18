@@ -112,7 +112,7 @@ class SanUnit(Unit, isabstract=True):
 
         .. note::
 
-            Regardless of F_BM_default, design (F_D), pressure (F_P),
+            Regardless of `F_BM_default`, design (F_D), pressure (F_P),
             and material (F_M) factors are all defaulted to 0.
 
     See Also
@@ -224,8 +224,8 @@ class SanUnit(Unit, isabstract=True):
                 continue
             ws_info = stream._wastestream_info() if isinstance(stream, WasteStream) else ''
             if _stream_info:
-                stream_info = stream._info(None, T, P, flow, composition, N, IDs) + \
-                    '\n'
+                stream_info = stream._info(None, T, P, flow, composition, N, IDs) #+ \
+                    # '\n' # this breaks the code block in sphinx
                 stream_info += ('\n' + ws_info) if ws_info else ''
             else:
                 stream_info = stream._wastestream_info()

@@ -31,7 +31,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     '''
     Abstract class containing common parameters and design algorithms for toilets
     based on Trimmer et al. [1]_
-    
+
     Parameters
     ----------
     N_user : float
@@ -56,20 +56,20 @@ class Toilet(SanUnit, Decay, isabstract=True):
         Capital cost of a single toilet.
     OPEX_over_CAPEX : float
         Fraction of annual operating cost over total capital cost.
-    
+
     References
     ----------
     .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
-        
+
     See Also
     --------
     :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-    
+
     '''
-    
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  N_user=1, N_toilet=1,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
@@ -81,8 +81,8 @@ class Toilet(SanUnit, Decay, isabstract=True):
         self._N_toilet = 1
         self.N_user = N_user
         self.N_toilet = N_toilet
-        self.if_toilet_paper = if_toilet_paper       
-        self.if_flushing = if_flushing       
+        self.if_toilet_paper = if_toilet_paper
+        self.if_flushing = if_flushing
         self.if_cleansing = if_cleansing
         self.if_desiccant = if_desiccant
         self.if_air_emission = if_air_emission
@@ -98,12 +98,12 @@ class Toilet(SanUnit, Decay, isabstract=True):
             else:
                 setattr(self, '_'+para, value)
         del data
-        
+
         self._empty_ratio = 0.59
-        
+
     _N_ins = 6
     _outs_size_is_fixed = False
-    # F_BM = {'Total toilets': 1}
+
 
     def _run(self):
         ur, fec, tp, fw, cw, des = self.ins
@@ -114,13 +114,13 @@ class Toilet(SanUnit, Decay, isabstract=True):
 
     density_dct = {
         'Sand': 1442,
-        'Gravel': 1600,        
-        'Brick': 1750,        
+        'Gravel': 1600,
+        'Brick': 1750,
         'Plastic': 0.63,
         'Steel': 7900,
         'StainlessSteelSheet': 2.64
         }
-        
+
     def _cost(self):
         self.baseline_purchase_costs['Total toilets'] = self.CAPEX * self.N_toilet
         add_OPEX = self.baseline_purchase_costs['Total toilets']*self.OPEX_over_CAPEX/365/24
@@ -170,7 +170,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     @N_user.setter
     def N_user(self, i):
         self._N_user = float(i)
-        
+
     @property
     def N_toilet(self):
         '''[float] Number of parallel toilets.'''
@@ -189,7 +189,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     @toilet_paper.setter
     def toilet_paper(self, i):
         self._toilet_paper = float(i)
-        
+
     @property
     def flushing_water(self):
         '''
@@ -200,25 +200,25 @@ class Toilet(SanUnit, Decay, isabstract=True):
     @flushing_water.setter
     def flushing_water(self, i):
         self._flushing_water = float(i)
-    
+
     @property
     def cleansing_water(self):
         '''
-        [float] Amount of water used for cleansing 
+        [float] Amount of water used for cleansing
         (if `if_cleansing_water` is True), [kg/cap/hr].
         '''
         return self._cleansing_water
     @cleansing_water.setter
     def cleansing_water(self, i):
         self._cleansing_water = float(i)
-        
+
     @property
     def desiccant(self):
         '''
         [float] Amount of desiccant used (if `if_desiccant` is True), [kg/cap/hr].
 
         .. note::
-            
+
             Value set by `desiccant_V` and `desiccant_rho`.
 
         '''
@@ -241,7 +241,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         [float] Fraction of excreta that is appropriately emptied.
 
         .. note::
-            
+
             Will be 1 (i.e., 100%) if `if_ideal_emptying` is True.
 
         '''
@@ -270,9 +270,3 @@ class Toilet(SanUnit, Decay, isabstract=True):
     @N2O_EF_aq.setter
     def N2O_EF_aq(self, i):
         self._N2O_EF_aq = float(i)
-
-
-
-
-
-
