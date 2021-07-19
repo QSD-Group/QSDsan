@@ -17,7 +17,7 @@ from setuptools import setup
 setup(
     name='qsdsan',
     packages=['qsdsan'],
-    version='0.2.13',
+    version='0.2.14',
     license='UIUC',
     author='Quantitative Sustainable Design Group',
     author_email='quantitative.sustainable.design@gmail.com',
@@ -31,7 +31,7 @@ setup(
         {'qsdsan': [
                     'data/*',
                     'data/sanunit_data/*',
-                    'equipment/*',
+                    'equipments/*',
                     'processes/*',
                     'sanunits/*',
                     'utils/*',
