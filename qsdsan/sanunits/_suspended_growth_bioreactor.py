@@ -36,7 +36,7 @@ def _add_aeration_to_growth_model(aer, model):
 #%%
 class CSTR(SanUnit):
 
-    _N_ins = 2
+    _N_ins = 3
     _N_outs = 1
     
     def __init__(self, ID='', ins=None, outs=(), V_max=1000, aeration=2.0, DO_ID='S_O2',

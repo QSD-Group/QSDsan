@@ -16,8 +16,7 @@ https://doi.org/10.1016/0043-1354(91)90066-Y.
 
 '''
 
-__all__ = ('FlatBottomCircularClarifier', 
-           '_settling_flux',)
+__all__ = ('FlatBottomCircularClarifier', )
 
 from .. import SanUnit
 from math import exp
