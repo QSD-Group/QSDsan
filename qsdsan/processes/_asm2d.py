@@ -11,6 +11,7 @@ for license details.
 '''
 
 import thermosteam as tmo    
+from thermosteam.utils import chemicals_user  
 # import os
 # os.chdir("C:/Users/joy_c/Dropbox/PhD/Research/QSD/codes_developing/QSDsan")
 from qsdsan import Components, Process, Processes
@@ -217,13 +218,16 @@ asm2d.set_parameters(
 #     K_ALK_PRE=0.5*12             # alkalinity half saturation coefficient for phosphate precipitation = 0.5 mol(HCO3-)/m^3 = 6.0 gC/m^3
 #     )
 
-
+@chemicals_user
 class ASM2d(Processes):
     '''
     Activated Sludge Model No. 2d in orginal notation.
 
     Parameters
     ----------
+    components: class:`CompiledComponents`, optional
+        Components corresponding to each entry in the stoichiometry array, 
+        defaults to thermosteam.settings.chemicals. 
     iN_SI : float, optional
         Nitrogen content of inert soluble COD, in [g N/g COD]. The default is 0.01.
     iN_SF : float, optional
@@ -408,7 +412,8 @@ class ASM2d(Processes):
         https://doi.org/10.2166/9781780401164.
 
     '''    
-    def __new__(cls, iN_SI=0.01, iN_SF=0.03, iN_XI=0.02, iN_XS=0.04, iN_BM=0.07, 
+    def __new__(cls, components=None, 
+                iN_SI=0.01, iN_SF=0.03, iN_XI=0.02, iN_XS=0.04, iN_BM=0.07, 
                 iP_SI=0.0, iP_SF=0.01, iP_XI=0.01, iP_XS=0.01, iP_BM=0.02,
                 iTSS_XI=0.75, iTSS_XS=0.75, iTSS_BM=0.9,
                 f_SI=0.0, Y_H=0.625, f_XI_H=0.1, 
@@ -424,28 +429,31 @@ class ASM2d(Processes):
                 mu_AUT=1.0, b_AUT=0.15, K_O2_AUT=0.5, K_NH4_AUT=1.0, K_ALK_AUT=0.5, K_P_AUT=0.01,
                 k_PRE=1.0, k_RED=0.6, K_ALK_PRE=0.5,
                 path=None, **kwargs):
-        if path: data_path = path
+        if not path: path = data_path
         
-        cmps_asm2d.S_I.i_N = iN_SI
-        cmps_asm2d.S_F.i_N = iN_SF
-        cmps_asm2d.X_I.i_N = iN_XI
-        cmps_asm2d.X_S.i_N = iN_XS
-        cmps_asm2d.X_H.i_N = cmps_asm2d.X_PAO.i_N = cmps_asm2d.X_AUT.i_N = iN_BM
-        cmps_asm2d.S_I.i_P = iP_SI
-        cmps_asm2d.S_F.i_P = iP_SF
-        cmps_asm2d.X_I.i_P = iP_XI
-        cmps_asm2d.X_S.i_P = iP_XS
-        cmps_asm2d.X_H.i_P = cmps_asm2d.X_PAO.i_P = cmps_asm2d.X_AUT.i_P = iP_BM
-        cmps_asm2d.X_I.i_mass = iTSS_XI
-        cmps_asm2d.X_S.i_mass = iTSS_XS
-        cmps_asm2d.X_H.i_mass = cmps_asm2d.X_PAO.i_mass = cmps_asm2d.X_AUT.i_mass = iTSS_BM
-        self = Processes.load_from_file(data_path,
+        self = Processes.load_from_file(path,
+                                        components=components,
                                         conserved_for=('COD', 'N', 'P', 'charge'),
                                         parameters=params,
                                         compile=False)
         if path == None: 
             self.extend([p12, p14])
             self.compile()
+        
+        self._components.S_I.i_N = iN_SI
+        self._components.S_F.i_N = iN_SF
+        self._components.X_I.i_N = iN_XI
+        self._components.X_S.i_N = iN_XS
+        self._components.X_H.i_N = self._components.X_PAO.i_N = self._components.X_AUT.i_N = iN_BM
+        self._components.S_I.i_P = iP_SI
+        self._components.S_F.i_P = iP_SF
+        self._components.X_I.i_P = iP_XI
+        self._components.X_S.i_P = iP_XS
+        self._componentsd.X_H.i_P = self._components.X_PAO.i_P = self._components.X_AUT.i_P = iP_BM
+        self._components.X_I.i_mass = iTSS_XI
+        self._components.X_S.i_mass = iTSS_XS
+        self._components.X_H.i_mass = self._components.X_PAO.i_mass = self._components.X_AUT.i_mass = iTSS_BM
+
         self.set_parameters(f_SI=f_SI, Y_H=Y_H, f_XI_H=f_XI_H, Y_PAO=Y_PAO, Y_PO4=Y_PO4,
                             Y_PHA=Y_PHA, f_XI_PAO=f_XI_PAO, Y_A=Y_A, f_XI_AUT=f_XI_AUT, 
                             K_h=K_h, eta_NO3=eta_NO3, eta_fe=eta_fe, K_O2=K_O2, 

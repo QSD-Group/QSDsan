@@ -9,7 +9,8 @@ This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
-import thermosteam as tmo    
+import thermosteam as tmo
+from thermosteam.utils import chemicals_user  
 # import os
 # os.chdir("C:/Users/joy_c/Dropbox/PhD/Research/QSD/codes_developing/QSDsan")
 from qsdsan import Components, Processes#, Process
@@ -67,6 +68,7 @@ X_ND.measured_as = 'N'
 X_ND.i_COD = X_ND.i_C = X_ND.i_P = 0
 
 S_ALK = cmps.S_CO3.copy('S_ALK')      # measured as g C
+S_ALK.description = 'Alkalinity, assumed to be HCO3-'
 
 # add S_N2 to close mass balance
 # add water for the creation of WasteStream objects
@@ -128,12 +130,16 @@ asm1.set_parameters(
 #     k_a = 0.04                   # ammonification rate constant = 0.04 d^(-1)/(gCOD/m3)
 #     )
 
+@chemicals_user
 class ASM1(Processes):
     '''
     Activated Sludge Model No. 1 in original notation.
 
     Parameters
     ----------
+    components: class:`CompiledComponents`, optional
+        Components corresponding to each entry in the stoichiometry array, 
+        defaults to thermosteam.settings.chemicals. 
     Y_A : float, optional
         Autotrophic yield, in [g COD/g N]. The default is 0.24.
     Y_H : float, optional
@@ -192,18 +198,18 @@ class ASM1(Processes):
         https://doi.org/10.2166/9781780401164.
 
     '''    
-    def __new__(cls, Y_A=0.24, Y_H=0.67, f_P=0.08, i_XB=0.08, i_XP=0.06, mu_H=4.0, 
-                K_S=10.0, K_O_H=0.2, K_NO=0.5, b_H=0.3, eta_g=0.8, eta_h=0.8, 
+    def __new__(cls, components=None, Y_A=0.24, Y_H=0.67, f_P=0.08, i_XB=0.08, i_XP=0.06, 
+                mu_H=4.0, K_S=10.0, K_O_H=0.2, K_NO=0.5, b_H=0.3, eta_g=0.8, eta_h=0.8, 
                 k_h=3.0, K_X=0.1, mu_A=0.5, K_NH=1.0, K_O_A=0.4, k_a=0.05, 
                 path=None, **kwargs):
-        if path: data_path = path
-        cmps_asm1.X_BH.i_N = cmps_asm1.X_BA.i_N = i_XB
-        cmps_asm1.X_P.i_N = i_XP
-        self = Processes.load_from_file(data_path,
+        if not path: path = data_path
+        self = Processes.load_from_file(path,
                                         conserved_for=('COD', 'charge', 'N'),
                                         parameters=params,
-                                        components=cmps_asm1,
+                                        components=components,
                                         compile=True)
+        self._components.X_BH.i_N = self._components.X_BA.i_N = i_XB
+        self._components.X_P.i_N = i_XP
         self.set_parameters(Y_A=Y_A, Y_H=Y_H, f_P=f_P, mu_H=mu_H, K_S=K_S, K_O_H=K_O_H, 
                             K_NO=K_NO, b_H=b_H, eta_g=eta_g, eta_h=eta_h, k_h=k_h, 
                             K_X=K_X, mu_A=mu_A, K_NH=K_NH, K_O_A=K_O_A, k_a=k_a, 
