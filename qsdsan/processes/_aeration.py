@@ -71,15 +71,16 @@ class DiffusedAeration(Process):
     R = 8.314            # Universal gas constant, [J/mol/K]
     P_s = 101325         # Standard sea-level atmospheric pressure, [Pa]
 
-    def __init__(self, ID, DO_ID, KLa_20=None, DOsat_s20=9.09, 
+    def __init__(self, ID, DO_ID, KLa=None, DOsat=None, 
+                 KLa_20=None, DOsat_s20=9.09, 
                  alpha=0.6, beta=0.95, F=1.0, theta=1.024, 
                  d_submergence=5, V=None, fine_pore=True, 
                  elevation=0, T_air=293.15, T_water=293.15, 
                  Q_air=None, SOTE=None, CF1=277.6533841):
 
-        super().__init__(self, ID, reaction={DO_ID: 1}, ref_component=DO_ID,
-                         conserved_for=(), parameters=('KLa', 'DOsat'),
-                         rate_equation='KLa*(DOsat - %s)' % DO_ID)
+        super().__init__(ID, reaction={DO_ID:1}, ref_component=DO_ID,
+                         rate_equation='KLa*(DOsat - %s)' % DO_ID,
+                         conserved_for=(), parameters=('KLa', 'DOsat'))
         self._KLa_20 = KLa_20
         self._DOsat_s20 = DOsat_s20
         self._alpha = alpha
@@ -95,7 +96,8 @@ class DiffusedAeration(Process):
         self._Q_air = Q_air
         self._SOTE = SOTE
         self._CF1 = CF1
-        self.update()
+        self.update(KLa, DOsat)
+
             
     def _calc_delta(self):
         if self._fine_pore: self._delta = 1 + 0.03858*self._d_submergence
@@ -115,27 +117,30 @@ class DiffusedAeration(Process):
     def _calc_DOsat(self):
         Omega = self._calc_omega()
         tau = self._calc_tau()
-        self._DOsat = tau * self._beta * Omega * self._delta * self._DOsat_s20
+        self.DOsat = tau * self._beta * Omega * self._delta * self._DOsat_s20
     
     def _calc_KLa(self, KLa_20=None):
-        self._KLa = self._alpha * self._F * self._theta ** (self._T_water - 293.15) * (KLa_20 or self._KLa_20)
+        self.KLa = self._alpha * self._F * self._theta ** (self._T_water - 293.15) * (KLa_20 or self._KLa_20)
     
     def _calc_KLa_20(self):
         Q_air_s = self._Q_air * (293.15/self._T_air) * exp(-self.g * self.M_air * self._elevation / self.R / self._T_air/1e3)
         KLa_20 = Q_air_s * self._SOTE * self._CF1 / (self._V * self._delta * self._DOsat_s20)
         return KLa_20
 
-    def update(self):
-        self._calc_delta()
-        self._calc_DOsat()
-        if self._Q_air and self._SOTE and self._V:
-            KLa_20 = self._calc_KLa_20()
-            self._calc_KLa(KLa_20)
-        elif self._KLa_20:
-            self._calc_KLa()
-        else: 
-            self._KLa = None
-        self.set_parameters(KLa=self._KLa, DOsat = self._DOsat)
+    def update(self, KLa=None, DOsat=None):
+        if DOsat: self.DOsat = DOsat
+        else:
+            self._calc_delta()
+            self._calc_DOsat()
+        if KLa: self.KLa = KLa
+        else:
+            if self._Q_air and self._SOTE and self._V:
+                KLa_20 = self._calc_KLa_20()
+                self._calc_KLa(KLa_20)
+            elif self._KLa_20:
+                self._calc_KLa()
+            else: 
+                self.KLa = None
     
     @property
     def DOsat(self):
@@ -144,6 +149,10 @@ class DiffusedAeration(Process):
         quality, temperature, atmospheric pressure, diffuser submergence depth, [mg/L].
         """
         return self._DOsat
+    @DOsat.setter
+    def DOsat(self, DOsat):
+        self._DOsat = DOsat
+        self.set_parameters(DOsat = DOsat)
     
     @property
     def KLa(self):
@@ -152,7 +161,11 @@ class DiffusedAeration(Process):
         water quality, diffuser fouling, temperature, [1/d].
         """
         return self._KLa
-
+    @KLa.setter
+    def KLa(self, KLa):
+        self._KLa = KLa
+        self.set_parameters(KLa=KLa)
+    
     @property
     def Q_air(self):
         """[float] Airflow rate at field conditions, [m^3/d]."""
