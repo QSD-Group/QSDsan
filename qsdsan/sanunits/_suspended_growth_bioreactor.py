@@ -28,13 +28,39 @@ def _add_aeration_to_growth_model(aer, model):
     if isinstance(aer, Process):
         processes = Processes(model.tuple)
         processes.append(aer)
-        processes.compile()
     else:
         processes = model
+    processes.compile()
     return processes
 
 #%%
 class CSTR(SanUnit):
+    '''
+    A single continuous stirred tank reactor.
+
+    Parameters
+    ----------
+    ID : str
+        ID for the reactor.
+    ins : :class:`WasteStream`
+        Influents to the reactor. Can be an array of up to 3 WasteStream objects by
+        default, typically wastewater to be treated, recycled effluent, recycled 
+        activated sludge.
+    outs : :class:`WasteStream`
+        Treated effluent.
+    V_max : float
+        Designed volume, in [m^3]. The default is 1000.
+    aeration : float or :class:`Process`, optional
+        Aeration setting. Either specify a targeted dissolved oxygen concentration
+        in [mg O2/L] or provide a :class:`Process` object to represent aeration,
+        or None for no aeration. The default is 2.0.
+    DO_ID : str, optional
+        The :class:`Component` ID for dissolved oxygen, only relevant when the 
+        reactor is aerated. The default is 'S_O2'.
+    suspended_growth_model : :class:`Processes`, optional
+        The suspended growth biokinetic model. The default is None.
+
+    '''
 
     _N_ins = 3
     _N_outs = 1
@@ -106,7 +132,70 @@ class CSTR(SanUnit):
     
 
 class SBR(SanUnit):
-    
+    '''
+    Sequential batch reactors operated in parallel. The number of reactors is 
+    determined by operation cycle and influent flowrate. 
+
+    Parameters
+    ----------
+    ID : str
+        ID for the reactors. The default is ''.
+    ins : :class:`WasteStream`
+        Influent to the reactor. Expected number of influent is 1.
+    outs : :class:`WasteStream`
+        Treated effluent and wasted sludge.
+    surface_area : float, optional
+        Surface area of the reactor bottom, in [m^2]. The reactor is assumed 
+        to be cylinder. The default is 1500.
+    height : float, optional
+        Height of the reactor, in [m]. The default is 4.
+    operation_cycle : iterable of float, optional
+        Operation cycle of the SBR, time for each stage specified in [h]. There
+        are 7 stages: 1 - fill, 2 - fill, 3 - mix, 4 - mix, 5 - settle, 6 - decant, 
+        7 - desludge. The first 4 stages are modeled as a biological reactor. 
+        The 5th stage is modeled as a 1D N-layer settler. The last 2 stages are 
+        assumed inactive. The default is (0.5, 1.5, 2.0, 0, 1.0, 0.5, 0.1).
+    aeration : iterable of float and/or :class:`Process`, optional
+        Aeration settings for the first 4 stages of the operation cycle. Either 
+        specify a targeted dissolved oxygen concentration in [mg O2/L] or provide 
+        a :class:`Process` object to represent aeration, or None for no aeration. 
+        The default is (None, None, None, 2.0).
+    DO_ID : str, optional
+        The :class:`Component` ID for dissolved oxygen, only relevant when the 
+        reactor is aerated. The default is 'S_O2'.
+    suspended_growth_model : :class:`Processes`, optional
+        The suspended growth biokinetic model. The default is None.
+    N_layer : int, optional
+        The number of layers to model settling. The default is 10.
+    pumped_flow : float, optional
+        Designed effluent flowrate, in [m^3/d]. The default is None.
+    underflow : float, optional
+        Designed wasted activated sludge flowrate, in [m^3/d]. The default is None.
+    X_threshold : float, optional
+        Threshold suspended solid cocentration, in [g/m^3]. The default is 3000.
+    v_max : float, optional
+        Maximum theoretical (i.e. Vesilind) settling velocity, in [m/d]. The 
+        default is 474.
+    v_max_practical : float, optional
+        Maximum practical settling velocity, in [m/d]. The default is 250.
+    rh : float, optional
+        Hindered zone settling parameter in the double-exponential settling velocity
+        function, in [m^3/g]. The default is 5.76e-4.
+    rp : float, optional
+        Flocculant zone settling parameter in the double-exponential settling velocity
+        function, in [m^3/g]. The default is 2.86e-3.
+    fns : float, optional
+        Non-settleable fraction of the suspended solids, dimensionless. Must be within 
+        [0, 1], The default is 2.28e-3.
+
+    References
+    ----------
+    .. [1] Takács, I.; Patry, G. G.; Nolasco, D. A Dynamic Model of the Clarification
+        -Thickening Process. Water Res. 1991, 25 (10), 1263–1271. 
+        https://doi.org/10.1016/0043-1354(91)90066-Y.
+
+    '''
+        
     _N_ins = 1
     _N_outs = 2
     
@@ -230,7 +319,6 @@ class SBR(SanUnit):
             T_settle = T[4]
             def dX_dt(t, X):         
                 VX = [_settling_flux(x, self._v_max, self._v_max_p, X_min, self._rh, self._rp) for x in X]
-                #!!! all below or all above feed layer?
                 J = [VX[j] if X[j+1] <= self._X_t else min(VX[j], VX[j+1]) for j in range(n-1)]
                 settle_out = np.array(J + [0])
                 settle_in = np.array([0] + J)
@@ -260,8 +348,6 @@ class SBR(SanUnit):
 
     def _design(self):
         pass
-
-
     
     def _compile_dC_dt(self, V0, Qin, Cin, C, fill, aer):
         isa = isinstance
