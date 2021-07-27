@@ -15,7 +15,7 @@ import thermosteam as tmo
 from qsdsan import Components, Processes#, Process
 from ..utils import data_path
 
-__all__ = ('cmps_asm1', 'asm1')
+__all__ = ('cmps_asm1', 'asm1', 'ASM1')
 
 
 data_path += 'process_data/_asm1.tsv'
@@ -127,3 +127,85 @@ asm1.set_parameters(
 #     K_O_A = 0.4,                 # O2 half saturation coefficient for autotrophic growth = 0.4 gO2/m3
 #     k_a = 0.04                   # ammonification rate constant = 0.04 d^(-1)/(gCOD/m3)
 #     )
+
+class ASM1(Processes):
+    '''
+    Activated Sludge Model No. 1 in original notation.
+
+    Parameters
+    ----------
+    Y_A : float, optional
+        Autotrophic yield, in [g COD/g N]. The default is 0.24.
+    Y_H : float, optional
+        Heterotrophic yield, in [g COD/g COD]. The default is 0.67.
+    f_P : float, optional
+        Fraction of biomass yielding particulate products. The default is 0.08.
+    i_XB : float, optional
+        Nitrogen content of biomass, in [g N/g COD]. The default is 0.08.
+    i_XP : float, optional
+        Nitrogen content of particulate products arising from biomass decay,
+        in [g N/g COD]. The default is 0.06.
+    mu_H : float, optional
+        Heterotrophic maximum specific growth rate, in [d^(-1)]. The default 
+        is 4.0.
+    K_S : float, optional
+        Readily biodegradable substrate half saturation coefficient, in [g COD/m^3].
+        The default is 10.0.
+    K_O_H : float, optional
+        Oxygen half saturation coefficient for heterotrophic growth, in [g O2/m^3]. 
+        The default is 0.2.
+    K_NO : float, optional
+        Nitrate half saturation coefficient, in [g N/m^3]. The default is 0.5.
+    b_H : float, optional
+        Heterotrophic biomass decay rate constant, in [d^(-1)]. The default is 0.3.
+    eta_g : float, optional
+        Reduction factor for anoxic growth of heterotrophs. The default is 0.8.
+    eta_h : float, optional
+        Reduction factor for anoxic hydrolysis. The default is 0.8.
+    k_h : float, optional
+        Hydrolysis rate constant, in [d^(-1)]. The default is 3.0.
+    K_X : float, optional
+        Slowly biodegradable substrate half saturation coefficient for hydrolysis,
+        in [g COD/g COD]. The default is 0.1.
+    mu_A : float, optional
+        Autotrophic maximum specific growth rate, in [d^(-1)]. The default is 0.5.
+    K_NH : float, optional
+        Ammonium (nutrient) half saturation coefficient, in [g N/m^3]. The default 
+        is 1.0.
+    K_O_A : float, optional
+        Oxygen half saturation coefficient for autotrophic growth, in [g O2/m^3]. 
+        The default is 0.4.
+    k_a : float, optional
+        Ammonification rate constant, in [m^3/g COD/d]. The default is 0.05.
+    path : str, optional
+        Alternative file path for the Gujer matrix. The default is None.
+
+    References
+    ----------
+    .. [1] Henze, M.; Gujer, W.; Mino, T.; Loosdrecht, M. van. Activated Sludge 
+        Models: ASM1, ASM2, ASM2d and ASM3; IWA task group on mathematical modelling
+        for design and operation of biological wastewater treatment, Ed.; IWA 
+        Publishing: London, 2000.
+    .. [2] Rieger, L.; Gillot, S.; Langergraber, G.; Ohtsuki, T.; Shaw, A.; Takács, 
+        I.; Winkler, S. Guidelines for Using Activated Sludge Models; IWA Publishing: 
+        London, New York, 2012; Vol. 11. 
+        https://doi.org/10.2166/9781780401164.
+
+    '''    
+    def __new__(cls, Y_A=0.24, Y_H=0.67, f_P=0.08, i_XB=0.08, i_XP=0.06, mu_H=4.0, 
+                K_S=10.0, K_O_H=0.2, K_NO=0.5, b_H=0.3, eta_g=0.8, eta_h=0.8, 
+                k_h=3.0, K_X=0.1, mu_A=0.5, K_NH=1.0, K_O_A=0.4, k_a=0.05, 
+                path=None, **kwargs):
+        if path: data_path = path
+        cmps_asm1.X_BH.i_N = cmps_asm1.X_BA.i_N = i_XB
+        cmps_asm1.X_P.i_N = i_XP
+        self = Processes.load_from_file(data_path,
+                                        conserved_for=('COD', 'charge', 'N'),
+                                        parameters=params,
+                                        components=cmps_asm1,
+                                        compile=True)
+        self.set_parameters(Y_A=Y_A, Y_H=Y_H, f_P=f_P, mu_H=mu_H, K_S=K_S, K_O_H=K_O_H, 
+                            K_NO=K_NO, b_H=b_H, eta_g=eta_g, eta_h=eta_h, k_h=k_h, 
+                            K_X=K_X, mu_A=mu_A, K_NH=K_NH, K_O_A=K_O_A, k_a=k_a, 
+                            **kwargs)
+        return self
