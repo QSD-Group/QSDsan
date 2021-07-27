@@ -112,7 +112,7 @@ class SanUnit(Unit, isabstract=True):
 
         .. note::
 
-            Regardless of F_BM_default, design (F_D), pressure (F_P),
+            Regardless of `F_BM_default`, design (F_D), pressure (F_P),
             and material (F_M) factors are all defaulted to 0.
 
     See Also
@@ -224,14 +224,15 @@ class SanUnit(Unit, isabstract=True):
                 continue
             ws_info = stream._wastestream_info() if isinstance(stream, WasteStream) else ''
             if _stream_info:
-                stream_info = stream._info(None, T, P, flow, composition, N, IDs) + \
-                    '\n'
+                stream_info = stream._info(None, T, P, flow, composition, N, IDs) #+ \
+                    # '\n' # this breaks the code block in sphinx
                 stream_info += ('\n' + ws_info) if ws_info else ''
             else:
                 stream_info = stream._wastestream_info()
             su = stream._source if ins_or_outs=='ins' else stream._sink
             index = stream_info.index('\n')
-            link_info = f'  from  {type(su).__name__}-{su}\n' if su else '\n'
+            from_or_to = 'from' if ins_or_outs=='ins' else 'to'
+            link_info = f'  {from_or_to}  {type(su).__name__}-{su}\n' if su else '\n'
             info += f'[{i}] {stream.ID}' + link_info + stream_info[index+1:]
             i += 1
         return info
@@ -260,8 +261,12 @@ class SanUnit(Unit, isabstract=True):
     def add_equipment_design(self):
         for equip in self.equipments:
             name = equip.name or format_title(type(equip).__name__)
-            self.design_results.update(equip._design())
-            self._units.update(equip.design_units)
+            equip_design = equip._design()
+            equip_design = {} if not equip_design else equip_design
+            self.design_results.update(equip_design)
+
+            equip_units = {} if not equip.design_units else equip.design_units
+            self._units.update(equip_units)
             self.F_BM[name] = equip.F_BM
             if equip.lifetime:
                 self._default_equipment_lifetime[name] = equip.lifetime

@@ -54,17 +54,17 @@ class Components(Chemicals):
     '''
     A subclass of :class:`thermosteam.Chemicals`, contains :class:`Component`
     objects as attributes.
-    
+
     Examples
     --------
     `Component and WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/Component_and_WasteStream.html>`_
-    
+
     See Also
     --------
     `thermosteam.Chemicals <https://thermosteam.readthedocs.io/en/latest/Chemicals.html>`_
-    
+
     '''
-    
+
     def __new__(cls, components, cache=False):
         self = super(Chemicals, cls).__new__(cls)
         isa = isinstance
@@ -81,15 +81,15 @@ class Components(Chemicals):
                                 'use `Component.from_chemical` to define a `Component` object.')
             else:
                 raise TypeError(f'Only `Component` objects can be included, not a `{type(i).__name__}` object.')
-        
+
         return self
-    
+
     def __setattr__(self, ID, component):
         raise TypeError('Cannot set attribute; use `<Components>.append/extend` instead.')
-    
+
     def __setitem__(self, ID, component):
         raise TypeError('Cannot set item; use `<Components>.append/extend` instead.')
-    
+
     def __getitem__(self, key):
         '''Return a :class:`Component` object or a list of :class:`Component` objects.'''
         dct = self.__dict__
@@ -100,21 +100,21 @@ class Components(Chemicals):
                 return [dct[i] for i in key]
         except KeyError as key_error:
             raise UndefinedComponent(key_error.args[0])
-    
+
     def __contains__(self, component):
         if isinstance(component, str):
             return component in self.__dict__
         elif isinstance(component, Component):
             return component in self.__dict__.values()
         else: # pragma: no cover
-            return False        
-    
+            return False
+
     def copy(self):
         '''Return a copy.'''
         copy = object.__new__(Components)
         for cmp in self: setattr(copy, cmp.ID, cmp)
         return copy
-    
+
     def append(self, component):
         '''Append a Component'''
         if not isinstance(component, Component):
@@ -128,14 +128,14 @@ class Components(Chemicals):
         if ID in self.__dict__:
             raise ValueError(f"{ID} already defined in this `Components` object.")
         setattr(self, ID, component)
-    
+
     def extend(self, components):
         '''Extend with more :class:`Component` objects.'''
         if isinstance(components, Components):
             self.__dict__.update(components.__dict__)
         else:
             for component in components: self.append(component)
-        
+
     def compile(self, skip_checks=False):
         '''Cast as a :class:`CompiledComponents` object.'''
         components = tuple(self)
@@ -147,58 +147,65 @@ class Components(Chemicals):
             raise error
 
     kwarray = array = index = indices = must_compile
-    
+
     _default_data = None
-    
+
     @classmethod
-    def load_from_file(cls, path_or_df, use_default_data=False, store_data=False):
+    def load_from_file(cls, path_or_df, index_col=None,
+                       use_default_data=False, store_data=False):
         '''
         Create and return a :class:`Components` objects based on properties
         defined in a datasheet.
-    
+
         Parameters
         ----------
         path_or_df : str or :class:`pandas.DataFrame`
             File path, the file should end with ".cvs", ".xls", or "xlsx".
-    
+        index_col : None or int
+            Index column of the :class:`pandas.DataFrame`.
+        use_default_data : bool
+            Whether to use the default components.
+        store_data : bool
+            Whether to store this as the default components.
+
         Returns
         -------
         A :class:`Components` object that contains all created Component objects.
 
-            
+
         .. note::
-            
+
             The :class:`Components` object needs to be compiled before it is used in simulation.
-    
+
         '''
         if use_default_data and cls._default_data is not None:
             data = cls._default_data
         elif isinstance(path_or_df, str):
-            data = load_data(path_or_df, index_col=None)
+            data = load_data(path_or_df, index_col=index_col)
         else:
             data = path_or_df
-        
+
         new = cls(())
 
         for i, cmp in data.iterrows():
             if pd.isna(cmp.measured_as):
                 cmp.measured_as = None
             try:
-                component = Component(ID = cmp.ID, 
-                                      search_ID = str(cmp.CAS), 
+                component = Component(ID = cmp.ID,
+                                      search_ID = str(cmp.CAS),
                                       measured_as = cmp.measured_as)
             except LookupError:
                 try:
-                    component = Component(ID = cmp.ID, 
+                    component = Component(ID = cmp.ID,
                                           search_ID = 'PubChem='+str(int(cmp.PubChem)),
-                                          measured_as = cmp.measured_as) 
+                                          measured_as = cmp.measured_as)
                 except:
                     if not pd.isna(cmp.formula):
                         component = Component(ID = cmp.ID,
-                                              formula = cmp.formula, 
-                                              measured_as = cmp.measured_as)            
+                                              formula = cmp.formula,
+                                              measured_as = cmp.measured_as)
                     else:
-                        component = Component(ID = cmp.ID, 
+                        component = Component(ID = cmp.ID,
                                               measured_as = cmp.measured_as)
             for j in _component_properties:
                 field = '_' + j
@@ -209,14 +216,14 @@ class Components(Chemicals):
         if store_data:
             cls._default_data = data
         return new
-    
-    
+
+
     @classmethod
     def load_default(cls, use_default_data=True, store_data=True, default_compile=True):
         '''
         Create and return a :class:`Components` or :class:`CompiledComponents`
         object containing all default :class:`Component` objects.
-    
+
         Parameters
         ----------
         use_default_data : bool, optional
@@ -225,7 +232,7 @@ class Components(Chemicals):
             Whether to store the default data as cache. The default is True.
         default_compile : bool, optional
             Whether to compile the default :class:`Components`. The default is True.
-    
+
         Returns
         -------
         A :class:`Components` or :class:`CompiledComponents` object with
@@ -235,25 +242,25 @@ class Components(Chemicals):
         .. note::
 
             [1] Component-specific properties are defined in ./data/component.cvs.
-    
-            [2] When `default_compile` is True, all essential chemical-specific properties 
+
+            [2] When `default_compile` is True, all essential chemical-specific properties
             (except molar volume model and normal boiling temperature) that are missing will
             be defaulted to those of water.
-            
+
             [3] When `default_compile` is True, missing molar volume models will be defaulted
-            according to particle sizes: particulate or colloidal -> 1.2e-5 m3/mol, 
+            according to particle sizes: particulate or colloidal -> 1.2e-5 m3/mol,
             soluble -> copy from urea, dissolved gas -> copy from CO2.
-            
-            [4] When `default_compile` is True, missing normal boiling temoerature will be 
-            defaulted according to particle sizes: particulate or colloidal -> copy from NaCl, 
+
+            [4] When `default_compile` is True, missing normal boiling temoerature will be
+            defaulted according to particle sizes: particulate or colloidal -> copy from NaCl,
             soluble -> copy from urea, dissolved gas -> copy from CO2.
-            
-    
+
+
         '''
         import os
         path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/_components.tsv')
         del os
-        new = cls.load_from_file(path, use_default_data=True, store_data=True)
+        new = cls.load_from_file(path, index_col=None, use_default_data=True, store_data=True)
 
         H2O = Component.from_chemical('H2O', Chemical('H2O'),
                                       i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
@@ -261,34 +268,34 @@ class Components(Chemicals):
                                       particle_size='Soluble',
                                       degradability='Undegradable', organic=False)
         new.append(H2O)
-                
+
         if default_compile:
             isa = isinstance
             for i in new:
                 i.default()
-                
+
                 if not i.Tb:
                     if i.particle_size == 'Soluble': i.Tb = Chemical('urea').Tb
                     elif i.particle_size == 'Dissolved gas': i.Tb = Chemical('CO2').Tb
                     else: i.Tb = Chemical('NaCl').Tb
-                
-                if (isa(i.V, _TMH) and (len(i.V.models)==0 or (i.V[0].Tmin > 298.15 or i.V[0].Tmax < 298.15))) or (isa(i.V, _PH) and (len(i.V.l.models)==0 or (i.V.l[0].Tmin > 298.15 or i.V.l[0].Tmax < 298.15))): 
-                    if i.particle_size == 'Soluble': 
-                        i.copy_models_from(Chemical('urea'), names=('V',))                        
+
+                if (isa(i.V, _TMH) and (len(i.V.models)==0 or (i.V[0].Tmin > 298.15 or i.V[0].Tmax < 298.15))) or (isa(i.V, _PH) and (len(i.V.l.models)==0 or (i.V.l[0].Tmin > 298.15 or i.V.l[0].Tmax < 298.15))):
+                    if i.particle_size == 'Soluble':
+                        i.copy_models_from(Chemical('urea'), names=('V',))
                     elif i.particle_size in ('Particulate', 'Colloidal'):
                         try: i.V.add_model(1.2e-5)
-                        except AttributeError: 
+                        except AttributeError:
                             i.V.l.add_model(1.2e-5)    # m^3/mol
                             i.V.s.add_model(1.2e-5)
                     else:
                         i.copy_models_from(Chemical('CO2'), names=('V',))
-                      
-                    
+
+
                 for j in ('sigma', 'epsilon', 'kappa', 'Cn', 'mu', 'Psat', 'Hvap'):
                     if isa(getattr(i, j), _TMH) and len(getattr(i,j).models) > 0: continue
                     elif isa(getattr(i, j), _PH) and len(getattr(i,j).l.models) > 0: continue
                     i.copy_models_from(H2O, names=(j,))
-            
+
             new.compile()
         return new
 
@@ -309,19 +316,19 @@ def component_data_array(components, attr):
 class CompiledComponents(CompiledChemicals):
     '''
     A subclass of :class:`thermosteam.CompiledChemicals`, contains `Component` objects as attributes.
-    
+
     See Also
     --------
     `thermosteam.CompiledChemicals <https://thermosteam.readthedocs.io/en/latest/Chemicals.html>`_
-    
+
     '''
-    
+
     _cache = {}
-    
+
     def __new__(cls, components, cache=None):
         isa = isinstance
         components = tuple([cmp if isa(cmp, Component) else Component(cmp, cache)
-                           for cmp in components])        
+                           for cmp in components])
         cache = cls._cache
         if components in cache:
             self = cache[components]
@@ -332,8 +339,8 @@ class CompiledComponents(CompiledChemicals):
                 setfield(self, cmp.ID, cmp)
             self._compile()
             cache[components] = self
-        return self    
-    
+        return self
+
     def refresh_constants(self):
         '''
         Refresh constant arrays of :class:`Components` objects,
@@ -362,14 +369,14 @@ class CompiledComponents(CompiledChemicals):
 
         for i in _num_component_properties:
             dct[i] = component_data_array(components, i)
-        
+
         dct['s'] = np.asarray([1 if cmp.particle_size == 'Soluble' else 0 for cmp in components])
         dct['c'] = np.asarray([1 if cmp.particle_size == 'Colloidal' else 0 for cmp in components])
         dct['x'] = np.asarray([1 if cmp.particle_size == 'Particulate' else 0 for cmp in components])
         dct['b'] = np.asarray([1 if cmp.degradability != 'Undegradable' else 0 for cmp in components])
         dct['rb'] = np.asarray([1 if cmp.degradability == 'Readily' else 0 for cmp in components])
         dct['org'] = np.asarray([int(cmp.organic) for cmp in components])
-    
+
     def subgroup(self, IDs):
         '''Create a new subgroup of :class:`Component` objects.'''
         components = self[IDs]
@@ -380,7 +387,7 @@ class CompiledComponents(CompiledChemicals):
                 try: new.set_synonym(i, j)
                 except: pass
         return new
-    
+
     def index(self, ID):
         '''Return index of specified component.'''
         try: return self._index[ID]
@@ -394,7 +401,7 @@ class CompiledComponents(CompiledChemicals):
             return [dct[i] for i in IDs]
         except KeyError as key_error:
             raise UndefinedComponent(key_error.args[0])
-    
+
     def __contains__(self, component):
         if isinstance(component, str):
             return component in self.__dict__
@@ -402,7 +409,7 @@ class CompiledComponents(CompiledChemicals):
             return component in self.tuple
         else: # pragma: no cover
             return False
-    
+
     def copy(self):
         '''Return a copy.'''
         copy = Components(self)

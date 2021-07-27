@@ -19,7 +19,7 @@ import numpy as np
 from warnings import warn
 from .. import SanUnit, Construction
 from ._decay import Decay
-from ..utils import load_data, data_path
+from ..utils import load_data, data_path, dct_from_str
 
 __all__ = ('DryingBed',)
 
@@ -29,7 +29,7 @@ data_path += 'sanunit_data/_drying_bed.tsv'
 class DryingBed(SanUnit, Decay):
     '''
     Unplanted and planted drying bed for solids based on Trimmer et al. [1]_
-    
+
     Parameters
     ----------
     ins : WasteStream
@@ -40,20 +40,20 @@ class DryingBed(SanUnit, Decay):
         Can be "unplanted" or "planted". The default unplanted process has
         a number of "covered", "uncovered", and "storage" beds. The storage
         bed is similar to the covered bed, but with higher wall height.
-        
+
     References
     ----------
     .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
-        
+
     See Also
     --------
     :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-    
+
     '''
-    
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  design_type='unplanted', **kwargs):
 
@@ -69,29 +69,29 @@ class DryingBed(SanUnit, Decay):
             self._N_bed = dict.fromkeys(N_unplanted.keys(), 0)
             self._N_bed['planted'] = 2
             self.design_type = 'planted'
-            
+
         data = load_data(path=data_path)
         for para in data.index:
             if para == 'N_bed': continue
             if para in ('sol_frac', 'bed_L', 'bed_W', 'bed_H'):
-                value = eval(data.loc[para]['expected'])
+                value = dct_from_str(data.loc[para]['expected'], dtype='float')
             else:
                 value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)
         del data
-        
+
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-        
+
     _N_ins = 1
     _N_outs = 4
-    
+
     def _run(self):
         waste = self.ins[0]
         sol, evaporated, CH4, N2O = self.outs
         sol.copy_like(waste)
         evaporated.phase = CH4.phase = N2O.phase = 'g'
-        
+
         # COD degradation in settled solids
         COD_loss = self.first_order_decay(k=self.decay_k_COD,
                                           t=self.tau/365,
@@ -137,7 +137,7 @@ class DryingBed(SanUnit, Decay):
 
     def _design(self):
         design = self.design_results
-        
+
         L = np.fromiter(self.bed_L.values(), dtype=float)
         W = np.fromiter(self.bed_W.values(), dtype=float)
         H = np.fromiter(self.bed_H.values(), dtype=float)
@@ -152,7 +152,7 @@ class DryingBed(SanUnit, Decay):
             (cover_array*N*L*W/(np.cos(self.cover_slope/180*np.pi))).sum()
         design['Total column length'] = tot_column_length = \
             (cover_array*N*2*self.column_per_side*self.column_H).sum()
-        
+
         concrete = (N*self.concrete_thickness*(L*W+2*L*H+2*W*H)).sum()
         steel = tot_cover_area*self.cover_unit_mass + \
             tot_column_length*self.column_unit_mass
@@ -285,11 +285,3 @@ class DryingBed(SanUnit, Decay):
     @cover_unit_mass.setter
     def cover_unit_mass(self, i):
         self._cover_unit_mass = float(i)
-
-
-
-
-
-
-
-

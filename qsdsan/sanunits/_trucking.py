@@ -15,7 +15,7 @@ for license details.
 # %%
 
 from warnings import warn
-from .. import currency, SanUnit, Transportation
+from .. import currency, SanUnit, ImpactItem, Transportation
 from ..utils import auom
 
 __all__ = ('Trucking',)
@@ -23,7 +23,7 @@ __all__ = ('Trucking',)
 
 class Trucking(SanUnit):
     '''
-    For transportation of materials with considerations on material loss 
+    For transportation of materials with considerations on material loss
     based on Trimmer et al. [1]_
 
     Parameters
@@ -48,16 +48,16 @@ class Trucking(SanUnit):
         If material loss occurs during transportation.
     loss_ratio : float or dict
         Fractions of material losses due to transportation.
-        
+
     References
     ----------
     .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
-    
+
     '''
-    
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  load_type='mass', load=1., load_unit='kg',
                  distance=1., distance_unit='km',
@@ -73,7 +73,7 @@ class Trucking(SanUnit):
         self._update_fee(fee, fee_unit)
         self.if_material_loss = if_material_loss
         self.loss_ratio = loss_ratio
-    
+
     _N_ins = 1
     _N_outs = 2
 
@@ -94,13 +94,13 @@ class Trucking(SanUnit):
                 transported.mass *= 1 - self.loss_ratio
                 loss.mass = self.ins[0].mass - transported.mass
             else:
-                for cmp, ratio in self.loss_ratio.items():                        
+                for cmp, ratio in self.loss_ratio.items():
                     transported.imass[cmp] *= 1 - ratio
                     loss.imass[cmp] = self.ins[0].imass[cmp] - transported.imass[cmp]
 
-
     def _design(self):
         single = self.single_truck
+        single.item = ImpactItem.get_item('Trucking') # in case it has been updated
         if single.load_type == 'volume':
             factor = auom('m3').conversion_factor(single.default_units['load'])
             N = self.F_vol_in*factor*single.interval/single.load
@@ -127,9 +127,9 @@ class Trucking(SanUnit):
         [float] or [dict] Fractions of material losses due to transportation.
         If a single number is provided, then it is assumed that losses of
         all Components in the WasteStream are the same.
-        
+
         .. note::
-    
+
             Pre-set state variable values in :class:`~.WasteStream`
             (e.g., COD set through `_COD` rather than calculated)
             will be retained if the loss ratio is a single number
@@ -152,15 +152,3 @@ class Trucking(SanUnit):
                 self._loss_ratio_type = 'dict'
             else:
                 raise TypeError(f'Only float or dict allowed, not {type(i).__name__}.')
-
-
-
-
-
-
-
-
-
-
-
-

@@ -37,7 +37,7 @@ class ImpactIndicator:
         .. note::
 
             "synonym" was used bfore v0.2.2 it is still supported, but may be
-            deprecated in the future.
+            removed in the future.
 
     method : str
         Impact assessment method, e.g., 'TRACI'.
@@ -150,22 +150,27 @@ class ImpactIndicator:
     _ipython_display_ = show
 
 
-    def register(self):
+    def register(self, print_msg=True):
         '''Add this impact indicator to the registry.'''
         self.registry.register_safely(self.ID, self)
-        print(f'The impact indicator "{self.ID}" has been added to the registry.')
+        if print_msg:
+            print(f'The impact indicator "{self.ID}" has been added to the registry.')
 
-    def deregister(self):
+
+    def deregister(self, print_msg=True):
         '''Remove this impact indicator from the registry.'''
         self.registry.discard(self.ID)
-        print(f'The impact indicator "{self.ID}" has been removed from the registry.')
+        if print_msg:
+            print(f'The impact indicator "{self.ID}" has been removed from the registry.')
 
 
     @classmethod
-    def clear_registry(cls):
+    def clear_registry(cls, print_msg=True):
         '''Remove all existing impact indicators from the registry.'''
         cls.registry.clear()
-        print('All impact indicators have been removed from registry.')
+        if print_msg:
+            print('All impact indicators have been removed from registry.')
+
 
     @classmethod
     def get_all_indicators(cls, include_alias=False):
@@ -193,7 +198,14 @@ class ImpactIndicator:
         return dct.get(ID_or_alias)
 
     @classmethod
-    def load_indicators_from_file(cls, path_or_df):
+    def load_indicators_from_file(cls, path_or_dict, index_col=None):
+        '''Same as :func:`load_from_file`, has been deprecated.'''
+        warn('`load_indicators_from_file` has been deprecated, '
+             'please use `load_from_file` instead.', stacklevel=2)
+        cls.load_from_excel(path_or_dict, index_col)
+
+    @classmethod
+    def load_from_file(cls, path_or_df, index_col=None):
         '''
         Load impact indicator from a datasheet.
 
@@ -216,6 +228,8 @@ class ImpactIndicator:
         ----------
         path_or_df : str or :class:`pandas.DataFrame`
             DataFrame or complete path of the datasheet, currently support tsv, csv, and xls/xlsx.
+        index_col : None or int
+            Index column of the :class:`pandas.DataFrame`.
 
         Tip
         ---
@@ -225,7 +239,7 @@ class ImpactIndicator:
         in the `Exposan` repository for a sample file.
         '''
 
-        data = load_data(path=path_or_df, index_col=None) if isinstance(path_or_df, str) else path_or_df
+        data = load_data(path=path_or_df, index_col=index_col) if isinstance(path_or_df, str) else path_or_df
 
         for num in data.index:
             new = cls.__new__(cls)

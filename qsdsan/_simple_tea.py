@@ -23,7 +23,7 @@ __all__ = ('SimpleTEA',)
 
 conflict_slots = ('lang_factor', 'system', 'units', 'feeds', 'products')
 
-class SimpleTEA(TEA):    
+class SimpleTEA(TEA):
     '''
     Calculate an annualized cost for simple economic analysis that does not
     include loan payment (i.e., 100% equity) and taxes.
@@ -38,40 +38,40 @@ class SimpleTEA(TEA):
         Start year of the system.
     lifetime : int
         Total lifetime of the system, [yr]. Currently `biosteam` only supports int.
-        
+
         .. note::
 
             As :class:`SimpleTEA` is a subclass of :class:`biosteam.TEA`,
             and :class:`biosteam.TEA` currently only supports certain
             depreciation schedules, lifetime must be larger than or equal to 6.
-            
-            
+
+
     uptime_ratio : float
         Fraction of time that the system is operating, should be in [0,1]
         (i.e., a system that is always operating has an uptime_ratio of 1).
-        
+
         .. note::
-            
+
             If a unit has an `uptime_ratio` that is different from the `uptime_ratio`
             of the system, the `uptime_ratio` of the unit will be used in calculating
             the additional operation expenses (provided in `unit.add_OPEX`).
-            
+
             However, `uptime_ratio` of the unit will not affect the utility
             (heating, cooling, power) and material costs/environmental impacts.
-            
+
             For example, if the `uptime_ratio` of the system and the unit are
             1 and 0.5, respectively, then in calculating operating expenses
             associated with the unit:
-                
+
                 - Utility and material costs/environmental impacts will be calculated for 1*24*365 hours per year.
                 - Additional operaitng expenses will be calculated for 0.5*24*365 hours per year.
-                
+
             If less utility and material flows are not used at the same `uptime_ratio`
             as the system, they should be normalized to be the same.
             For example, if the system operates 100% of time but a pump only works
             50% of the pump at 50 kW. Set the pump `power_utility` to be 50*50%=25 kW.
-            
-            
+
+
     CAPEX : float
         Capital expenditure, if not provided, is set to be the same as `installed_equipment_cost`.
     lang_factor : float or None
@@ -94,7 +94,7 @@ class SimpleTEA(TEA):
     Examples
     --------
     A system should be constructed prior to TEA, here we import a pre-constructed one.
-    
+
     >>> import qsdsan as qs
     >>> from qsdsan.utils import load_example_cmps, load_example_sys
     >>> cmps = load_example_cmps()
@@ -133,22 +133,22 @@ class SimpleTEA(TEA):
     EAC  : 33,552 USD/yr
     CAPEX: 61,183 USD (annualized to 7,923 USD/yr)
     AOC  : 25,628 USD/yr
-    
+
     See Also
     --------
     `SanUnit and System <https://qsdsan.readthedocs.io/en/latest/tutorials/SanUnit_and_System.html>`_
-    
+
     `TEA and LCA <https://qsdsan.readthedocs.io/en/latest/tutorials/TEA_and_LCA.html>`_
     '''
-    
+
     __slots__ = (*(i for i in TEA.__slots__ if i not in conflict_slots),
                  '_system', '_units', '_feeds', '_products',
                  '_discount_rate', '_start_year', '_lifetime',
                  '_uptime_ratio', '_operating_hours', '_CAPEX', '_lang_factor',
                  '_annual_maintenance', '_annual_labor', '_system_add_OPEX')
-    
+
     def __init__(self, system, discount_rate=0.05,
-                 start_year=date.today().year, lifetime=10, uptime_ratio=1., 
+                 start_year=date.today().year, lifetime=10, uptime_ratio=1.,
                  CAPEX=0., lang_factor=None,
                  annual_maintenance=0., annual_labor=0., system_add_OPEX={},
                  construction_schedule=None):
@@ -172,7 +172,7 @@ class SimpleTEA(TEA):
         if not construction_schedule:
             construction_schedule = (1,)
         self.construction_schedule = construction_schedule
-        
+
         ########## Not relevant to SimpleTEA but required by TEA ##########
         # From U.S. IRS for tax purpose, won't matter when tax set to 0
         # Based on IRS Publication 946 (2019), MACRS15 should be used for
@@ -195,11 +195,11 @@ class SimpleTEA(TEA):
         self.finance_interest = 0.
         self.finance_years = 0
         self.finance_fraction = 0
-        
-        
+
+
     def __repr__(self):
         return f'<{type(self).__name__}: {self.system.ID}>'
-    
+
     def show(self):
         c = self.currency
         info = f'{type(self).__name__}: {self.system.ID}'
@@ -210,8 +210,8 @@ class SimpleTEA(TEA):
         print(info)
 
     _ipython_display_ = show
-        
-    
+
+
     def _DPI(self, installed_equipment_cost):
         return installed_equipment_cost
 
@@ -231,15 +231,20 @@ class SimpleTEA(TEA):
         r = self.discount_rate
         for unit in units:
             lifetime = unit.lifetime or self.lifetime
-            if not unit._default_equipment_lifetime:
+            # no unit lifetime or unit lifetime given as a number
+            # (i.e., no individual equipment lifetime)
+            if not isinstance(lifetime, dict):
                 CAPEX += unit.installed_cost*r/(1-(1+r)**(-lifetime))
             else:
-                lifetime_dct = dict.fromkeys(unit.purchase_costs.keys(), lifetime)
-                lifetime_dct.update(unit._default_equipment_lifetime)
+                lifetime_dct = dict.fromkeys(unit.purchase_costs.keys())
+                lifetime_dct.update(lifetime)
                 for equip, cost in unit.purchase_costs.items():
                     factor = unit.F_BM[equip]*\
                         unit.F_D.get(equip, 1.)*unit.F_P.get(equip, 1.)*unit.F_M.get(equip, 1.)
-                    CAPEX += factor*cost*r/(1-(1+r)**(-lifetime_dct[equip]))
+                    # for equipment that does not have individual lifetime
+                    # use the unit lifetime or TEA lifetime
+                    equip_lifetime = lifetime_dct[equip] or self.lifetime
+                    CAPEX += factor*cost*r/(1-(1+r)**(-equip_lifetime))
         return CAPEX
 
     @property
@@ -259,12 +264,12 @@ class SimpleTEA(TEA):
     def units(self):
         '''[:class:`qsdsan.SanUnit`] Units in the system.'''
         return self._units
-    
+
     @property
     def feeds(self):
         '''[:class:`qsdsan.WasteStream`] System feed streams.'''
         return self._feeds
-    
+
     @property
     def products(self):
         '''[:class:`qsdsan.WasteStream`] System product streams.'''
@@ -280,7 +285,7 @@ class SimpleTEA(TEA):
             self._discount_rate = float(i)
         else:
             raise ValueError('`discount_rate` must be in [0,1].')
-    
+
     @property
     def start_year(self):
         '''[int] Start year of the system.'''
@@ -288,7 +293,7 @@ class SimpleTEA(TEA):
     @start_year.setter
     def start_year(self, i):
         self._start_year = i
-    
+
     @property
     def lifetime(self):
         '''[int] Total lifetime of the system, [yr]. Currently `biosteam` only supports int.'''
@@ -302,7 +307,7 @@ class SimpleTEA(TEA):
     def duration(self):
         '''[int] Duration of the system based on start_year and lifetime.'''
         return self._duration
-    
+
     @property
     def uptime_ratio(self):
         '''[float] Fraction of time that the system is operating.'''
@@ -325,7 +330,7 @@ class SimpleTEA(TEA):
     def operating_hours(self):
         '''[float] Equivalent operating hours calculated based on `uptime_ratio`.'''
         return self._operating_hours
-    
+
     @property
     def lang_factor(self):
         '''[float] A factor to estimate the total installation cost based on equipment purchase cost.'''
@@ -446,28 +451,14 @@ class SimpleTEA(TEA):
         operaitng expenditure other than chemical inputs and utilities.
         '''
         return self._FOC(self.FCI)
-    
+
     @property
     def annualized_CAPEX(self):
         '''[float] Annualized capital expenditure.'''
         return self.get_unit_annualized_CAPEX(self.units)
 
-    
+
     @property
     def EAC(self):
-        '''[float] Equivalent annual cost of the system.'''
+        '''[float] Equivalent annual cost of the system (sales not included).'''
         return self.annualized_CAPEX+self.AOC
-
-    
-
-
-
-
-
-
-
-
-
-
-
-

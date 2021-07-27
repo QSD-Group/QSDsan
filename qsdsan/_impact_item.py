@@ -15,6 +15,7 @@ for license details.
 
 # %%
 
+import sys
 import pandas as pd
 from warnings import warn
 from thermosteam.utils import registered
@@ -95,7 +96,7 @@ class ImpactItem:
                                   Characterization factors
     GlobalWarming (kg CO2-eq)                         0.48
     FossilEnergyConsumption (MJ)                      5.93
-    >>> # Note that 5.93 appears instead of 5.926 is for nicer print
+    >>> # Note that 5.93 appearing instead of 5.926 is for nicer print
     >>> Electricity.CFs
     {'GlobalWarming': 0.48, 'FossilEnergyConsumption': 5.926}
     >>> # Get all impact items
@@ -168,12 +169,15 @@ class ImpactItem:
             self._update_price(price, price_unit)
             self._CFs = {}
             for indicator, value in indicator_CFs.items():
-
                 try:
                     CF_value, CF_unit = value # unit provided for CF
                     self.add_indicator(indicator, CF_value, CF_unit)
-                except:
-                    self.add_indicator(indicator, value)
+                # except: breakpoint()
+                except Exception as e:
+                    if 'unpack' in str(sys.exc_info()[1]):
+                        self.add_indicator(indicator, value)
+                    else:
+                        raise e
 
 
     # This makes sure it won't be shown as memory location of the object
@@ -214,8 +218,7 @@ class ImpactItem:
         if isinstance(indicator, str):
             indicator = ImpactIndicator.get_indicator(indicator)
 
-        try: CF_unit2 = CF_unit.replace(' eq', '-eq')
-        except: pass
+        CF_unit2 = CF_unit.replace(' eq', '-eq')
 
         if CF_unit and CF_unit != indicator.unit and CF_unit2 != indicator.unit:
             try:
@@ -268,21 +271,24 @@ class ImpactItem:
 
     __copy__ = copy
 
-    def register(self):
+    def register(self, print_msg=True):
         '''Add this impact item to the registry.'''
         self.registry.register_safely(self.ID, self)
-        print(f'The impact item "{self.ID}" has been added to the registry.')
+        if print_msg:
+            print(f'The impact item "{self.ID}" has been added to the registry.')
 
-    def deregister(self):
+    def deregister(self, print_msg=True):
         '''Remove this impact item from the registry.'''
         self.registry.discard(self.ID)
-        print(f'The impact item "{self.ID}" has been removed from the registry.')
+        if print_msg:
+            print(f'The impact item "{self.ID}" has been removed from the registry.')
 
     @classmethod
-    def clear_registry(cls):
+    def clear_registry(cls, print_msg=True):
         '''Remove all existing impact items from the registry.'''
         cls.registry.clear()
-        print('All impact items have been removed from registry.')
+        if print_msg:
+            print('All impact items have been removed from registry.')
 
 
     @classmethod
@@ -296,7 +302,7 @@ class ImpactItem:
         return cls.get_all_items().get(ID)
 
     @classmethod
-    def _load_items_from_df(cls, name, df):
+    def _load_from_df(cls, name, df):
         if name.lower() == 'info':
             for num in df.index:
                 new = cls.__new__(cls)
@@ -310,7 +316,15 @@ class ImpactItem:
                                    CF_unit=df.iloc[num].unit)
 
     @classmethod
-    def load_items_from_excel(cls, path_or_dict):
+    def load_items_from_excel(cls, path_or_dict, index_col=None):
+        '''Same as :func:`load_from_file`, has been deprecated.'''
+        warn('`load_items_from_excel` has been deprecated, '
+             'please use `load_from_file` instead.', stacklevel=2)
+        cls.load_from_file(path_or_dict, index_col)
+
+
+    @classmethod
+    def load_from_file(cls, path_or_dict, index_col=None):
         '''
         Load impact items from an Excel file or a :class:`pandas.DataFrame`.
 
@@ -342,6 +356,8 @@ class ImpactItem:
         ----------
         path_or_dict : str or dict of :class:`pandas.DataFrame`
             A dict of DataFrame or complete path of the datasheet in xls/xlsx.
+        index_col : None or int
+            Index column of the :class:`pandas.DataFrame`.
 
         Tip
         ---
@@ -355,11 +371,11 @@ class ImpactItem:
             data_file = pd.ExcelFile(path_or_dict, engine='openpyxl')
 
             for sheet_name in data_file.sheet_names:
-                data = data_file.parse(sheet_name)
-                cls._load_items_from_df(sheet_name, data)
+                data = data_file.parse(sheet_name, index_col=index_col)
+                cls._load_from_df(sheet_name, data)
         else:
             for k, v in path_or_dict.items():
-                cls._load_items_from_df(k, v)
+                cls._load_from_df(k, v)
 
     @property
     def source(self):
@@ -426,7 +442,7 @@ class ImpactItem:
     def registered(self):
         '''[bool] If this impact item is registered in the record.'''
         data = self.registry.data.get(self.ID)
-        return True if data else False
+        return True if data is self else False
 
 
 # %%
@@ -478,7 +494,7 @@ class StreamImpactItem(ImpactItem):
     >>> cmps = qs.utils.load_example_cmps()
     >>> qs.set_thermo(cmps)
     >>> methane = qs.SanStream('methane', Methane=1, units='kg/hr',
-    ...                        impact_item=methane_item)
+    ...                        stream_impact_item=methane_item)
     >>> methane_item.show()
     StreamImpactItem: methane_item [per kg]
     Linked to       : methane
@@ -542,12 +558,16 @@ class StreamImpactItem(ImpactItem):
                 try:
                     CF_value, CF_unit = value # unit provided for CF
                     self.add_indicator(CF, CF_value, CF_unit)
-                except:
-                    self.add_indicator(CF, value)
+                except Exception as e:
+                    if 'unpack' in str(sys.exc_info()[1]):
+                        self.add_indicator(CF, value)
+                    else:
+                        raise e
 
 
     def __repr__(self):
         return f'<StreamImpactItem: {self.ID}>'
+
 
     def show(self):
         '''Show basic information about this :class:`StreamImpactItem` object.'''
@@ -583,7 +603,7 @@ class StreamImpactItem(ImpactItem):
         Parameters
         ----------
         new_ID : str
-            ID of the new impact item.
+            ID of the new stream impact item.
         stream : :class:`~.SanStream`
             Linked stream to the copy.
         set_as_source : bool
@@ -603,7 +623,7 @@ class StreamImpactItem(ImpactItem):
             new = copy_attr(new, self, skip=('_ID', '_linked_stream', '_source'))
 
         if stream:
-            stream.impact_item = new
+            stream.stream_impact_item = new
             if not new_ID:
                 new.ID = f'{stream.ID}_item'
 
@@ -663,16 +683,16 @@ class StreamImpactItem(ImpactItem):
 
         if self._linked_stream:
             old_s = self._linked_stream
-            self._linked_stream.impact_item = None
-            warn(f'`ImpactItem` {self.ID} is unlinked from {old_s.ID} and ' \
+            self._linked_stream.stream_impact_item = None
+            warn(f'`StreamImpactItem` {self.ID} is unlinked from {old_s.ID} and ' \
                  f'linked to {new_s.ID}.', stacklevel=2)
         if new_s:
             if hasattr(self, '_ID'):
-                if new_s.impact_item and new_s.impact_item.ID != self.ID:
+                if new_s.stream_impact_item and new_s.stream_impact_item.ID != self.ID:
                     msg = f'The original `StreamImpactItem` linked to stream {new_s} ' \
                         f'is replaced with {self}.'
                     warn(message=msg, stacklevel=2)
-            new_s._impact_item = self
+            new_s._stream_impact_item = self
         self._linked_stream = new_s
 
     @property

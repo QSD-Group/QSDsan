@@ -68,6 +68,7 @@ from . import (
     _simple_tea,
     _lca,
     processes,
+    equipments,
     sanunits,
     stats,
     )

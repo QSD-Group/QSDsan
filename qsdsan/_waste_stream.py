@@ -42,7 +42,7 @@ _common_composite_vars = ('_COD', '_BOD', '_uBOD', '_TC', '_TOC', '_TN',
                           '_dry_mass', '_charge', '_ThOD', '_cnBOD')
 
 _ws_specific_slots = (*_common_composite_vars,
-                      '_pH', '_SAlk', '_ratios', '_impact_item')
+                      '_pH', '_SAlk', '_ratios', '_stream_impact_item')
 
 _specific_groups = {'S_VFA': ('S_Ac', 'S_Prop'),
                     'X_Stor': ('X_OHO_PHA', 'X_GAO_PHA', 'X_PAO_PHA',
@@ -67,8 +67,18 @@ vol_unit = auom('L/hr')
 conc_unit = auom('mg/L')
 
 
-#%% functions for calibrations of N, P contents and BOD:COD ratio of certain components
+# %%
 
+# =============================================================================
+# Util functions
+# =============================================================================
+
+_load_components = settings.get_default_chemicals
+
+def to_float(stream, slot):
+    return 0. if getattr(stream, slot) is None else float(getattr(stream, slot))
+
+# functions for calibrations of N, P contents and BOD:COD ratio of certain components
 def _calib_SF_iN(components, concentrations, STKN):
     cmp_c = np.asarray([v for v in concentrations.values()])
     SN = (cmp_c * components.i_N * (components.s + components.c)).sum()
@@ -114,8 +124,6 @@ def _calib_XBsub_fBODCOD(components, concentrations, substrate_IDs, BOD):
 # =============================================================================
 # Define the WasteStream class
 # =============================================================================
-
-_load_components = settings.get_default_chemicals
 
 class WasteStream(SanStream):
     '''
@@ -169,7 +177,7 @@ class WasteStream(SanStream):
         TO BE IMPLEMENTED
     ratios : float
         TO BE IMPLEMENTED
-    impact_item : :class:`StreamImpactItem`
+    stream_impact_item : :class:`StreamImpactItem`
         The :class:`StreamImpactItem` this stream is linked to.
     component_flows : kwargs
         Component flow data.
@@ -194,11 +202,11 @@ class WasteStream(SanStream):
                  ThOD=None, cnBOD=None,
                  TC=None, TOC=None, TN=None, TKN=None, TP=None, TK=None,
                  TMg=None, TCa=None, dry_mass=None, charge=None, ratios=None,
-                 impact_item=None, **component_flows):
+                 stream_impact_item=None, **component_flows):
 
         SanStream.__init__(self=self, ID=ID, flow=flow, phase=phase, T=T, P=P,
                            units=units, price=price, thermo=thermo,
-                           impact_item=impact_item, **component_flows)
+                           stream_impact_item=stream_impact_item, **component_flows)
 
         self._init_ws(pH, SAlk, COD, BOD, uBOD, TC, TOC, TN, TKN,
                       TP, TK, TMg, TCa, ThOD, cnBOD, dry_mass, charge, ratios)
@@ -659,6 +667,7 @@ class WasteStream(SanStream):
                 value = getattr(other, slot)
                 setattr(self, slot, value)
 
+
     def mix_from(self, others):
         '''
         Update this stream to be a mixture of other streams,
@@ -692,18 +701,16 @@ class WasteStream(SanStream):
          WasteStream-specific properties:
           pH         : 7.0
         '''
-
         others = [s for s in others if not 'Missing' in type(s).__name__]
         Stream.mix_from(self, others)
 
         for slot in _ws_specific_slots:
-            if not hasattr(self, slot):
+            if not hasattr(self, slot) or slot=='_stream_impact_item':
                 continue
             #!!! This need reviewing, might not be good to calculate some
             # attributes like pH
             try:
-                tot = sum(float(getattr(i, slot))*i.F_vol for i in others
-                          if hasattr(i, slot))
+                tot = sum(to_float(i, slot)*i.F_vol for i in others if hasattr(i, slot))
             except: continue
 
             if tot == 0.:
@@ -725,7 +732,6 @@ class WasteStream(SanStream):
         -------
         TDS : float
             In mg/L.
-
         '''
         TDS = self.composite('solids', particle_size='s')
         if include_colloidal:
@@ -745,7 +751,6 @@ class WasteStream(SanStream):
         -------
         TSS : float
             In mg/L.
-
         '''
         TSS = self.composite('solids', particle_size='x')
         if include_colloidal:

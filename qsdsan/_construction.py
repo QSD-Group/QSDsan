@@ -30,7 +30,7 @@ __all__ = ('Construction',)
 class Construction:
     '''
     Construction activity for cost and environmental impact calculations.
-    
+
     Parameters
     ----------
     ID : str
@@ -43,7 +43,7 @@ class Construction:
         Lifetime of the constructed item.
     lifetime_unit : str
         Unit of the lifetime.
-        
+
     Examples
     --------
     >>> import qsdsan as qs
@@ -68,7 +68,7 @@ class Construction:
     '''
 
     __slots__ = ('_ID', '_item', '_quantity', '_lifetime')
-    
+
     def __init__(self, ID='', item=None, quantity=0., quantity_unit='',
                  lifetime=None, lifetime_unit='yr'):
         self._register(ID)
@@ -84,10 +84,10 @@ class Construction:
         else:
             converted = auom(quantity_unit).convert(float(quantity), self.item.functional_unit)
             self._quantity = converted
-           
+
     def __repr__(self):
         return f'<Construction: {self.ID}>'
-    
+
     def show(self):
         '''Show basic information about this :class:`Construction` object.'''
         item = self.item
@@ -109,17 +109,17 @@ class Construction:
                 index=index)
             # print(' '*15+df.to_string().replace('\n', '\n'+' '*15))
             print(df.to_string())
-        
+
     _ipython_display_ = show
-    
+
     def copy(self, new_ID=''):
         new = Construction.__new__(Construction)
         new.__init__(new_ID)
-        new = copy_attr(new, self, skip=('_ID',))        
+        new = copy_attr(new, self, skip=('_ID',))
         return new
 
     __copy__ = copy
-    
+
     @property
     def lifetime(self):
         '''[float] Lifetime of this construction activity.'''
@@ -130,7 +130,7 @@ class Construction:
             self.lifetime = lifetime
         else:
             self._lifetime = auom(unit).convert(lifetime, 'yr')
-    
+
     @property
     def item(self):
         '''[:class:`ImpactItem`] The impact item associated with this construction activity.'''
@@ -176,7 +176,3 @@ class Construction:
         for indicator, CF in self.item.CFs.items():
             impacts[indicator] = self.quantity*CF
         return impacts
-
-
-    
-    

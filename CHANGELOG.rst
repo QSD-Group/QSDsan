@@ -6,9 +6,17 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 Ongoing
 -------
-- Now LCA data can be imported from external databases using the newly made `BW2QSD <https://github.com/QSD-Group/BW2QSD>`_ package!
-- Added :class:`Process.DiffusedAeration`, a subclass of :class:`Process`.
-- Updated :class:`SanUnit` so that it can be initialized with any of :class:`thermosteam.Stream`, :class:`~.SanStream`, or :class:`~.WasteStream`.
+- Now LCA data can be imported from external databases using the newly made `BW2QSD <https://github.com/QSD-Group/BW2QSD>`_ package.
+- Added a :class:`~.sanunits.ElectrochemicalCell` using the following :class:`~.Equipment`:
+
+	- :class:`~.equipments.Column`
+	- :class:`~.equipments.Electrode`
+	- :class:`~.equipments.Machine`
+	- :class:`~.equipments.Membrane`
+
+- Added :class:`~.sanunits.Clarifier` and :class:`~.sanunits.CSTR`.
+- Added :class:`~.Process.DiffusedAeration`, a subclass of :class:`~.Process`.
+- Updated :class:`~.SanUnit` so that it can be initialized with any of :class:`thermosteam.Stream`, :class:`~.SanStream`, or :class:`~.WasteStream`.
 
 	- These three classes can now be mixed.
 

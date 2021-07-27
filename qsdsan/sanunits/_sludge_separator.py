@@ -18,7 +18,7 @@ for license details.
 from warnings import warn
 from .. import SanUnit
 from ._decay import Decay
-from ..utils import load_data, data_path
+from ..utils import load_data, data_path, dct_from_str
 
 __all__ = ('SludgeSeparator',)
 
@@ -30,7 +30,7 @@ class SludgeSeparator(SanUnit):
     '''
     For sludge separation based on Trimmer et al. [1]_, note that no default
     cost or environmental impacts are included.
-    
+
     Parameters
     ----------
     ins : WasteStream
@@ -43,32 +43,32 @@ class SludgeSeparator(SanUnit):
     settled_frac : float
         Fraction of influent that settles as solids.
         The default value will be used if not given.
-        
+
     References
     ----------
     .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
-    
+
     '''
-    
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 split=None, settled_frac=None, **kwargs):    
-        
+                 split=None, settled_frac=None, **kwargs):
+
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, **kwargs)
         data = load_data(path=data_path)
         if not split:
-            value = eval(data.loc['split']['expected'])
+            value = dct_from_str(data.loc['split']['expected'])
             setattr(self, 'split', value)
         if not settled_frac:
             value = float(data.loc['settled_frac']['expected'])
             setattr(self, 'settled_frac', value)
         del data
-    
+
     _N_ins = 1
     _outs_size_is_fixed = False
-    
+
     def _adjust_solid_water(self, influent, liq, sol):
         sol.imass['H2O'] = 0
         sol.imass['H2O'] = influent.F_mass * self.settled_frac - sol.F_mass
@@ -79,11 +79,11 @@ class SludgeSeparator(SanUnit):
             warn(msg, stacklevel=2)
         liq.imass['H2O'] = influent.imass['H2O'] - sol.imass['H2O']
         return liq, sol
-        
+
     def _run(self):
         waste = self.ins[0]
         liq, sol = self.outs[0], self.outs[1]
-        
+
         # Retention in the settled solids
         split = self.split
         if self._split_type == 'float':
@@ -93,9 +93,10 @@ class SludgeSeparator(SanUnit):
             liq.mass -= sol.mass
         else:
             for var in self.split.keys():
-                #!!! In the future this should be best by changing the state variable
+                #!!! In the future this should be best done by changing the state variable
                 if var == 'TS':
-                    sol.imass['OtherSS'] = split[var] * waste.imass['OtherSS']
+                    try: sol.imass['OtherSS'] = split[var] * waste.imass['OtherSS']
+                    except: breakpoint()
                 elif var == 'COD':
                     sol_COD = split[var] * waste._COD * waste.F_vol
                     liq_COD = waste._COD * waste.F_vol - sol_COD
@@ -108,7 +109,7 @@ class SludgeSeparator(SanUnit):
                 else:
                     sol.imass[var] = split[var] * waste.imass[var]
             liq.mass = waste.mass - sol.mass
-        
+
         # Adjust total mass of of the settled solids by changing water content.
         liq, sol = self._adjust_solid_water(waste, liq, sol)
         sol._COD = sol_COD / sol.F_vol
@@ -121,12 +122,12 @@ class SludgeSeparator(SanUnit):
         [float] or [dict] Fractions of material retention in the settled solids
         before degradation. If a single number is provided, then it is assumed
         that retentions of all Components in the WasteStream are the same.
-        
-        Note
-        ----
-        Set state variable values (e.g., COD) will be retained if the retention
-        ratio is a single number (treated like the loss stream is split
-        from the original stream), but not when the ratio is a dict.
+
+        .. note::
+
+            Set state variable values (e.g., COD) will be retained if the retention
+            ratio is a single number (treated like the loss stream is split
+            from the original stream), but not when the ratio is a dict.
 
         '''
         return self._split
@@ -149,26 +150,3 @@ class SludgeSeparator(SanUnit):
     @settled_frac.setter
     def settled_frac(self, i):
         self._settled_frac = float(i)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

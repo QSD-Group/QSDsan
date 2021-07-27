@@ -11,6 +11,7 @@ sanunits
    CropApplication
    Decay
    DryingBed
+   ElectrochemicalCell
    Excretion
    Lagoon
    LiquidTreatmentBed

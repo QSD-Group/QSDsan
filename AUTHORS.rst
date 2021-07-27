@@ -38,7 +38,7 @@ Funding Support
 ---------------
 - `Jeremy Guest <jsguest@illinois.edu>`_
 - William Tarpeh
-- Roland Cusick
+- Ro Cusick
 
 
 Special Acknowledgement

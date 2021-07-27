@@ -28,9 +28,9 @@ __all__ = ('Transportation',)
 
 @registered(ticket_name='Trans')
 class Transportation:
-    '''    
+    '''
     Transportation activity for cost and environmental impact calculations.
-    
+
     Parameters
     ----------
     ID : str
@@ -51,7 +51,7 @@ class Transportation:
         Distance per trip.
     interval_unit : str
         Unit of the transportation interval.
-    
+
     Examples
     --------
     >>> import qsdsan as qs
@@ -80,7 +80,7 @@ class Transportation:
 
     __slots__ = ('_ID', '_item', '_load_type', '_load', '_distance', '_interval',
                  'default_units')
-    
+
     def __init__(self, ID='', item=None,
                  load_type='mass', load=1., load_unit='kg',
                  distance=1., distance_unit='km',
@@ -91,7 +91,7 @@ class Transportation:
             'distance': 'km',
             'interval': 'hr',
             }
-        
+
         self._load_type = load_type
         if load_type == 'mass':
             self.default_units['load'] = 'kg'
@@ -102,19 +102,19 @@ class Transportation:
         else:
             raise ValueError("load_type can only be 'mass' or 'volume', "
                              f'not {load_type}.')
-        
+
         self._update_value('load', load, load_unit)
         self._update_value('distance', distance, distance_unit)
         self._update_value('interval', interval, interval_unit)
 
-        if item:            
+        if item:
             try:
                 auom(str(load_unit)+'*'+str(distance_unit)).convert(1, self.item.functional_unit)
             except:
                 raise ValueError(f'Units of `load` {load_unit} and `distance` {distance_unit} '
                                  f'do not match the item `functional_unit` {self.item.functional_unit}.')
-        
-    
+
+
     def _update_value(self, var, value, unit=''):
         default_unit = self.default_units[var]
         if not unit or unit == default_unit:
@@ -156,7 +156,7 @@ class Transportation:
         new.__init__(new_ID)
         new = copy_attr(new, self, skip=('_ID',))
         return new
-    
+
     __copy__ = copy
 
 
@@ -191,7 +191,7 @@ class Transportation:
             raise ValueError('load_type can only be "mass" or "volume", '
                              f'not {i}.')
         self._load_type = i
-        
+
     @property
     def indicators(self):
         ''' [tuple] Impact indicators associated with the transportation item.'''
@@ -203,7 +203,7 @@ class Transportation:
         [float] Transportation load each trip.
 
         .. note::
-            
+
             Set this to 1 and let the load_unit match the functional unit of the item
             if load does not affect price and impacts.
 
@@ -219,7 +219,7 @@ class Transportation:
         [float] Transportation distance each trip.
 
         .. note::
-            
+
             Set this to 1 and let the `distance_unit` match the functional unit of the item
             if distance does not affect price and impacts.
 
@@ -261,10 +261,3 @@ class Transportation:
         for indicator, CF in self.item.CFs.items():
             impacts[indicator] = self.quantity*CF
         return impacts
-
-
-
-
-
-
-

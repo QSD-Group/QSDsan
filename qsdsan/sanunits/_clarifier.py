@@ -6,10 +6,12 @@ This module is developed by:
     Joy Cheung <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
-Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 
 
+Reference
+---------
 [1] Takács, I.; Patry, G. G.; Nolasco, D. A Dynamic Model of the 
 Clarification-Thickening Process. Water Res. 1991, 25 (10), 1263–1271. 
 https://doi.org/10.1016/0043-1354(91)90066-Y.

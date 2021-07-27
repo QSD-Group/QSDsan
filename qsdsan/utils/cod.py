@@ -23,7 +23,7 @@ dichromate_oxidizing_elements = ('C', 'H', 'O', 'N', 'S', 'P')
 dichromate_oxidizing_elements_set = frozenset(dichromate_oxidizing_elements)
 
 def cod_test_stoichiometry(atoms, charge=0, MW=None, missing_handling='elemental'):
-    '''
+    r'''
     Return a dictionary of stoichiometric coefficients of the oxidation reaction
     by dichromate, given a dictionary of a molecule's constituent atoms and their 
     counts, as well as the number of negative charge, if any.
@@ -59,23 +59,22 @@ def cod_test_stoichiometry(atoms, charge=0, MW=None, missing_handling='elemental
         'Cr2O7-2' is always present, with negative values indicating dichromate is
         required/consumed. [-]
 
-    Note
-    ----
-    The stoichiometry is given by:
-    .. math::
-        C_n H_a O_b N_c S_d P_e^{f-} + xCr_2O_7^{2-} + (8x+c-2d-3e+f)H^{+} 
-            -> nCO_2 + 2xCr^{3+} + cNH_4^{+} + dSO_4^{2-} + ePO_4^{3-} + (b+7x-2n-4d-4e)H_2O
-    .. math::
-        x = \frac{4n+a-2b-3c+6d+5e+f}{6}
+    .. note::
+        The stoichiometry is given by:
+            .. math::
+                C_n H_a O_b N_c S_d P_e^{f-} + xCr_2O_7^{2-} + (8x+c-2d-3e+f)H^{+} 
+                    -> nCO_2 + 2xCr^{3+} + cNH_4^{+} + dSO_4^{2-} + ePO_4^{3-} + (b+7x-2n-4d-4e)H_2O
+            .. math::
+                x = \frac{4n+a-2b-3c+6d+5e+f}{6}
     
-    Also included in the results is the moles of Cr2O7-2 required per mole of
-    the mixture of the molecule.
+        Also included in the results is the moles of Cr2O7-2 required per mole of
+        the mixture of the molecule.
 
-    All products are in aqueous solution.
-    
-    Atoms not in ['C', 'H', 'N', 'O', 'S', 'P'] are returned as pure species; 
-    i.e. sodium hydroxide produces water and pure Na.
-    
+        All products are in aqueous solution.
+        
+        Atoms not in ['C', 'H', 'N', 'O', 'S', 'P'] are returned as pure species; 
+        i.e. sodium hydroxide produces water and pure Na.
+        
     Examples
     --------
     >>> # Acetate in COD test:
