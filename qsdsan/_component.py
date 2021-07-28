@@ -405,7 +405,7 @@ class Component(Chemical):
         if measured_as:
             if measured_as == 'COD':
                 self._MW = molecular_weight({'O':2})
-            elif measured_as in self.atoms:
+            elif measured_as in self.atoms or 'i_'+measured_as in _num_component_properties:
                 self._MW = molecular_weight({measured_as:1})
             else:
                 raise AttributeError(f"Component {self.ID} must be measured as "
@@ -422,7 +422,7 @@ class Component(Chemical):
             denom = self._i_mass
         elif new == 'COD':
             denom = self._i_COD
-        elif new in self.atoms:
+        elif new in self.atoms or 'i_'+new in _num_component_properties:
             try: denom = getattr(self, '_i_'+new)
             except AttributeError:
                 denom = get_mass_frac(self.atoms)[new] * self._i_mass
@@ -476,7 +476,7 @@ class Component(Chemical):
         return self._i_COD or 0.
     @i_COD.setter
     def i_COD(self, i):
-        if i: self._i_COD = check_return_property('i_COD', i)
+        if i != None: self._i_COD = check_return_property('i_COD', i)
         else:
             if self.organic or self.formula in ('H2', 'O2', 'N2', 'NO2-', 'NO3-'):
                 if self.measured_as == 'COD': self._i_COD = 1.

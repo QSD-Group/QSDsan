@@ -434,6 +434,7 @@ class Processes():
             process = Process(ID, stoichio, 
                               ref_component=ref, 
                               rate_equation=rate_eq,
+                              components=components,
                               conserved_for=conserved_for,
                               parameters=parameters)
             new.append(process)

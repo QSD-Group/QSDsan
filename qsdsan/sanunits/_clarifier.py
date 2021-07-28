@@ -22,11 +22,12 @@ __all__ = ('FlatBottomCircularClarifier', )
 
 from .. import SanUnit
 from math import exp
-from sympy import symbols, lambdify, Matrix
+# from sympy import symbols, lambdify, Matrix
 from scipy.integrate import solve_ivp
+from warnings import warn
 import numpy as np
 
-def settling_flux(X, v_max, v_max_practical, X_min, rh, rp):
+def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp):
     X_star = max(X-X_min, 0)
     v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star)))
     return X*max(v, 0)
@@ -79,8 +80,8 @@ class FlatBottomCircularClarifier(SanUnit):
             flow_out = X*Q_e*[j <= jf for j in range(n)] + X*Q_s*[j >= jf for j in range(n)]
             flow_in = np.array([flow_out[j+1] if j < jf else flow_out[j-1] for j in range(n)])
             flow_in[jf] = Q_in * X_in            
-            VX = [settling_flux(x, self._v_max, self._v_max_p, X_min, self._rh, self._rp) for x in X]
-            J = [VX[j] if X[j+1] <= X_t and j < jf else min(VX[j], VX[j+1]) for j in range(n-1)]
+            VX = [_settling_flux(x, self._v_max, self._v_max_p, X_min, self._rh, self._rp) for x in X]
+            J = [VX[j] if X[j+1] <= self._X_t and j < jf else min(VX[j], VX[j+1]) for j in range(n-1)]
             settle_out = np.array(J + [0])
             settle_in = np.array([0] + J)
             dXdt = ((flow_in - flow_out)/self._A + settle_in - settle_out)/self._hj
@@ -91,11 +92,11 @@ class FlatBottomCircularClarifier(SanUnit):
             else: return 1
         limit.terminal = True
         
-        sol = solve_ivp(dX_dt, (0, t_bound), np.ones(n)*X_0, method='BDF', events=limit)
+        sol = solve_ivp(dX_dt, (0, t_bound), np.ones(n)*X_0, events=limit)
         X_out = sol.y.transpose()[-1]
         if steady_state:
             while len(sol.t_events) == 0:
-                sol = solve_ivp(dX_dt, (0, t_bound), X_out, method='BDF', events=limit)
+                sol = solve_ivp(dX_dt, (0, t_bound), X_out, events=limit)
                 X_out = sol.y.transpose()[-1]
         else:
             if len(sol.t_events) == 0: 
