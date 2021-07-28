@@ -438,7 +438,7 @@ class ASM2d(Processes):
                                         compile=False)
         if path == None: 
             self.extend([p12, p14])
-            self.compile()
+        self.compile()
         
         self._components.S_I.i_N = iN_SI
         self._components.S_F.i_N = iN_SF
@@ -449,7 +449,7 @@ class ASM2d(Processes):
         self._components.S_F.i_P = iP_SF
         self._components.X_I.i_P = iP_XI
         self._components.X_S.i_P = iP_XS
-        self._componentsd.X_H.i_P = self._components.X_PAO.i_P = self._components.X_AUT.i_P = iP_BM
+        self._components.X_H.i_P = self._components.X_PAO.i_P = self._components.X_AUT.i_P = iP_BM
         self._components.X_I.i_mass = iTSS_XI
         self._components.X_S.i_mass = iTSS_XS
         self._components.X_H.i_mass = self._components.X_PAO.i_mass = self._components.X_AUT.i_mass = iTSS_BM
