@@ -37,11 +37,12 @@ class FlatBottomCircularClarifier(SanUnit):
     _N_ins = 1
     _N_outs = 2
     
-    def __init__(self, ID='', ins=None, outs=(), sludge_flow_rate=2000, 
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, 
+                 init_with='WasteStream', sludge_flow_rate=2000, 
                  surface_area=1500, height=4, N_layer=10, feed_layer=4, 
                  X_threshold=3000, v_max=474, v_max_practical=250, 
                  rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, **kwargs):
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self._Qs = sludge_flow_rate
         self._V = surface_area * height
         self._A = surface_area
@@ -68,14 +69,14 @@ class FlatBottomCircularClarifier(SanUnit):
         sludge.copy_like(inf)
         Q_s = self._Qs
         Q_e = Q_in - Q_s
+        n = self._N_layer
         jf = self._feed_layer - 1
         if jf not in range(self._N_layer): 
             raise ValueError(f'feed layer {self._feed_layer} is out of range.'
                              f'must be an integer between 1 and {self._N_layer}.')
-        if self._init_X: X_0 = self._init_X
-        else: X_0 = X_in  
+        if self._init_X is not None: X_0 = self._init_X
+        else: X_0 = np.ones(n)*X_in  
         X_min = X_in * self._fns
-        n = self._N_layer
         def dX_dt(t, X):
             flow_out = X*Q_e*[j <= jf for j in range(n)] + X*Q_s*[j >= jf for j in range(n)]
             flow_in = np.array([flow_out[j+1] if j < jf else flow_out[j-1] for j in range(n)])
@@ -92,7 +93,7 @@ class FlatBottomCircularClarifier(SanUnit):
             else: return 1
         limit.terminal = True
         
-        sol = solve_ivp(dX_dt, (0, t_bound), np.ones(n)*X_0, events=limit)
+        sol = solve_ivp(dX_dt, (0, t_bound), X_0, events=limit)
         X_out = sol.y.transpose()[-1]
         if steady_state:
             while len(sol.t_events) == 0:

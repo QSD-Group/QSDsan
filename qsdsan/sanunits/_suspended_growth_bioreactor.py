@@ -10,7 +10,7 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-from .. import SanUnit, Construction, WasteStream, Process, Processes
+from .. import SanUnit, WasteStream, Process, Processes
 from ._clarifier import _settling_flux
 from sympy import symbols, lambdify, Matrix
 from scipy.integrate import solve_ivp
@@ -28,9 +28,11 @@ def _add_aeration_to_growth_model(aer, model):
     if isinstance(aer, Process):
         processes = Processes(model.tuple)
         processes.append(aer)
+        processes.compile()
+        processes.set_parameters(**aer.parameters, **model.parameters)
     else:
         processes = model
-    processes.compile()
+        processes.compile()
     return processes
 
 #%%
@@ -64,10 +66,12 @@ class CSTR(SanUnit):
 
     _N_ins = 3
     _N_outs = 1
+    _ins_size_is_fixed = False
     
-    def __init__(self, ID='', ins=None, outs=(), V_max=1000, aeration=2.0, DO_ID='S_O2',
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', 
+                 V_max=1000, aeration=2.0, DO_ID='S_O2',
                  suspended_growth_model=None, **kwargs):
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self._V_max = V_max
         self._aeration = aeration
         self._DO_ID = DO_ID
@@ -78,7 +82,7 @@ class CSTR(SanUnit):
         
     def _run(self, t_bound=10, steady_state=False, cache_state=True):
         isa = isinstance        
-        if self._model:
+        if self._model is not None:
             mixed = WasteStream()
             mixed.mix_from(self.ins)
             treated = self.outs[0]
@@ -86,14 +90,13 @@ class CSTR(SanUnit):
             Q = mixed.get_total_flow('m3/d')
             tau = self._V_max / Q
             C_in = mixed.mass / mixed.F_vol * 1e3    # concentrations in g/m3
-            if self._init_C: C_0 = self._init_C
+            if self._init_C is not None: C_0 = self._init_C
             else: C_0 = C_in            
             C = list(symbols(self.components.IDs))
             
             processes = _add_aeration_to_growth_model(self._aeration, self._model)                               
             mass_balance_terms = list(zip(C_in, C, processes.production_rates.rate_of_production))
             C_dot_eqs = [(cin-c)/tau + r for cin, c, r in mass_balance_terms]
-            
             if isa(self._aeration, (float, int)):
                 i = self.components.index(self._DO_ID)
                 C_0[i] = C_in[i] = self._aeration
@@ -113,23 +116,32 @@ class CSTR(SanUnit):
                 return J_func(*y)            
             
             sol = solve_ivp(dC_dt, (0, t_bound), C_0, method='BDF', jac=J_func, events=limit)
-            C_out = sol.y.transpose()[-1]
+            C_out = np.array([max(y, 0) for y in sol.y.transpose()[-1]])
             if steady_state:
                 while len(sol.t_events) == 0:
                     sol = solve_ivp(dC_dt, (0, t_bound), C_out, method='BDF', jac=J_func, events=limit)
-                    C_out = sol.y.transpose()[-1]
+                    C_out = np.array([max(y, 0) for y in sol.y.transpose()[-1]])
             else:
                 if len(sol.t_events) == 0: 
                     warn(f'{self.ID} did not reach steady state in this run.')
             if cache_state: self._init_C = C_out
             treated.set_flow(C_out*treated.F_vol, 'g/hr', self.components.IDs)
-            
         else:
             raise RuntimeError(f'{self.ID} was initiated without a suspended growth model.')
     
     def _design(self):
         pass
     
+    @property
+    def init_state(self):
+        return dict(zip(self.components.IDs, self._init_C))
+    
+    @init_state.setter
+    def init_state(self, C):
+        if len(C) == len(self.components.IDs):
+            self._init_C = np.asarray(C)
+        else: 
+            raise ValueError(f'Must be a 1D array of length {len(self.components.IDs)}')
 
 class SBR(SanUnit):
     '''
@@ -251,7 +263,7 @@ class SBR(SanUnit):
     
     def _run(self, cache_state=True):
         isa = isinstance        
-        if self._model:
+        if self._model is not None:
             inf = self.ins[0]
             Q_in = inf.get_total_flow('m3/d')
             eff, sludge = self.outs
@@ -260,7 +272,7 @@ class SBR(SanUnit):
             C_in = inf.mass / inf.F_vol * 1e3    # concentrations in g/m3
             cmps = self.components
             C = list(symbols(cmps.IDs))
-            if self._init_Vas:
+            if self._init_Vas is not None:
                 V_0 = self._init_Vas
                 C_0 = self._init_Cas
             else: 
