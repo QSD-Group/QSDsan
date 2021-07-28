@@ -97,7 +97,7 @@ def symbolize(coeff_dct, components, conserved_for, parameters):
             else: v_arr.append(coeff_dct[cmp])
         v = Matrix(sympify(v_arr, parameters))
         ic = get_ic(components.subgroup(IDs), conserved_for)
-        sol = solve(ic * v, unknowns)
+        sol = solve(simplify(ic * v).as_expr(), unknowns)
         coeff_dct = dict(zip(IDs, simplify(v.subs(sol))))
         del unknowns                    
     else:
@@ -136,28 +136,3 @@ def get_stoichiometric_coeff(reaction, ref_component, components, conserved_for,
         else: coeff[:] = [v/normalize_factor for v in coeff]
     return coeff
 
-#%%
-# from qsdsan import Components
-
-# # hydrolysis
-# rxn = 'XB_Subst -> [1-fsi]SF + [fsi]SU_E + [?]SNH4 + [?]SPO4 + [?]SCO3'
-# ref = 'XB_Subst'
-# cmps = Components.load_default()
-# conserved_for = ('COD', 'N', 'P', 'charge')
-# parameters = {'fsi': symbols('fsi')}
-
-# # anoxic growth on SF
-# rxn = '[1/yh]SF + [(1-yh)/yh/2.86]SNO3 + [?]SPO4 + [?]SNH4 + [?]SCO3 -> [(1-yh)/yh/2.86]SN2 + XOHO'
-# ref = 'XOHO'
-# # cmps = Components.load_default()
-# # conserved_for = ('COD', 'N', 'P', 'charge')
-# parameters = {'yh': symbols('yh'),}
-
-# stoichiometry = get_stoichiometric_coeff(rxn, ref, cmps, conserved_for, parameters)
-# dict(zip(cmps.IDs, stoichiometry))
-
-#%%
-# nID = '[1-fsi]SF'
-# coeffient = '1-fsi'
-
-# split_coefficient(nID, 1)
