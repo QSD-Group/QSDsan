@@ -107,6 +107,7 @@ asm1.set_parameters(
     mu_A = 0.8,                  # autotrophic maximum specific growth rate = 0.8 d^(-1)
     K_NH = 1.0,                  # ammonium (nutrient) half saturation coefficient = 1.0 gN/m3
     K_O_A = 0.4,                 # O2 half saturation coefficient for autotrophic growth = 0.4 gO2/m3
+    b_A = 0.05,                  # !!! BSM1 value
     k_a = 0.08                   # ammonification rate constant = 0.08 d^(-1)/(gCOD/m3)
     )
 
@@ -127,6 +128,7 @@ asm1.set_parameters(
 #     mu_A = 0.3,                  # autotrophic maximum specific growth rate = 0.3 d^(-1)
 #     K_NH = 1.0,                  # ammonium (nutrient) half saturation coefficient = 1.0 gN/m3
 #     K_O_A = 0.4,                 # O2 half saturation coefficient for autotrophic growth = 0.4 gO2/m3
+#     b_A = 0.05,                  # !!! BSM1 value
 #     k_a = 0.04                   # ammonification rate constant = 0.04 d^(-1)/(gCOD/m3)
 #     )
 
@@ -178,6 +180,8 @@ class ASM1(Processes):
     K_NH : float, optional
         Ammonium (nutrient) half saturation coefficient, in [g N/m^3]. The default 
         is 1.0.
+    b_A : float, optional
+        Autotrophic biomass decay rate constant, in [d^(-1)]. The default is 0.05.
     K_O_A : float, optional
         Oxygen half saturation coefficient for autotrophic growth, in [g O2/m^3]. 
         The default is 0.4.
@@ -200,7 +204,7 @@ class ASM1(Processes):
     '''    
     def __new__(cls, components=None, Y_A=0.24, Y_H=0.67, f_P=0.08, i_XB=0.08, i_XP=0.06, 
                 mu_H=4.0, K_S=10.0, K_O_H=0.2, K_NO=0.5, b_H=0.3, eta_g=0.8, eta_h=0.8, 
-                k_h=3.0, K_X=0.1, mu_A=0.5, K_NH=1.0, K_O_A=0.4, k_a=0.05, 
+                k_h=3.0, K_X=0.1, mu_A=0.5, K_NH=1.0, b_A=0.05, K_O_A=0.4, k_a=0.05, 
                 path=None, **kwargs):
         if not path: path = data_path
         self = Processes.load_from_file(path,
@@ -212,6 +216,6 @@ class ASM1(Processes):
         self._components.X_P.i_N = i_XP
         self.set_parameters(Y_A=Y_A, Y_H=Y_H, f_P=f_P, mu_H=mu_H, K_S=K_S, K_O_H=K_O_H, 
                             K_NO=K_NO, b_H=b_H, eta_g=eta_g, eta_h=eta_h, k_h=k_h, 
-                            K_X=K_X, mu_A=mu_A, K_NH=K_NH, K_O_A=K_O_A, k_a=k_a, 
+                            K_X=K_X, mu_A=mu_A, K_NH=K_NH, b_A=b_A, K_O_A=K_O_A, k_a=k_a, 
                             **kwargs)
         return self
