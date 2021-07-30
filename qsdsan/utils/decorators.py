@@ -50,13 +50,12 @@ def time_printer(func):
     '''
     
     def inner(*args, **kwargs):
-        try: print_time = kwargs['print_time']
-        except: print_time = False
-        if print_time:
+        print_time = kwargs.get('print_time')
+        if print_time is not False:
             timer = TicToc()
             timer.tic()
         output = func(*args, **kwargs)
-        if print_time:
+        if print_time is not False:
             time = str(timedelta(seconds=round(timer.elapsed_time)))
             print(f'\nTotal time: {time}.')
         return output

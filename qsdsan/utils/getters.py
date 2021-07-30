@@ -18,6 +18,32 @@ for license details.
 __all__ = ('FuncGetter',)
 
 
+# # The below two classes haven't been successfully used,
+# # not sure if the idea is good.
+# class AttrGetter:
+#     __slots__ = ('attr',)
+#     def __init__(self, obj, attr):
+#         self.attr = getattr(obj, attr)
+
+#     def __call__(self):
+#         return self.attr
+
+
+# class AttrGetter:
+#     __slots__ = ('obj', 'attrs')
+#     def __init__(self, obj, attrs):
+#         self.obj = obj
+#         if isinstance(attrs, str):
+#             attrs = (attrs,)
+#         self.attrs = attrs
+
+#     def __call__(self):
+#         if len(self.attrs) == 1:
+#             print(getattr(self.obj, self.attrs[0]))
+#             return getattr(self.obj, self.attrs[0])
+#         return [getattr(self.obj, attr) for attr in self.attrs]
+
+
 class FuncGetter:
     __slots__ = ('func', 'params')
     def __init__(self, func, params):

@@ -58,7 +58,6 @@ def copy_attr(new, original, skip=(), same=()):
     return new
 
 
-
 class AttrSetter:
     __slots__ = ('obj', 'attrs')
     def __init__(self, obj, attrs):
@@ -70,6 +69,7 @@ class AttrSetter:
     def __call__(self, value):
         for attr in self.attrs:
             setattr(self.obj, attr, value)
+
 
 class AttrFuncSetter:
     __slots__ = ('obj', 'attrs', 'funcs')
@@ -96,6 +96,7 @@ class AttrFuncSetter:
                 setattr(obj, attrs[num], func(value))
         else:
             raise ValueError('Number of functions does not match number of attributes.')
+
 
 class DictAttrSetter:
     __slots__ = ('obj', 'dict_attr', 'keys')

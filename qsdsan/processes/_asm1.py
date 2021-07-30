@@ -9,9 +9,10 @@ This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
+
+import os
 import thermosteam as tmo
-from thermosteam.utils import chemicals_user  
-# import os
+from thermosteam.utils import chemicals_user
 # os.chdir("C:/Users/joy_c/Dropbox/PhD/Research/QSD/codes_developing/QSDsan")
 from qsdsan import Components, Processes#, Process
 from ..utils import data_path
@@ -19,7 +20,7 @@ from ..utils import data_path
 __all__ = ('cmps_asm1', 'asm1', 'ASM1')
 
 
-data_path += 'process_data/_asm1.tsv'
+data_path = os.path.join(data_path, 'process_data/_asm1.tsv')
 # data_path = "qsdsan/data/process_data/_asm1.tsv"
 
 ############# Components with default notation #############
@@ -72,16 +73,16 @@ S_ALK.description = 'Alkalinity, assumed to be HCO3-'
 
 # add S_N2 to close mass balance
 # add water for the creation of WasteStream objects
-cmps_asm1 = Components([S_I, S_S, X_I, X_S, X_BH, X_BA, X_P, 
-                        S_O, S_NO, S_NH, S_ND, X_ND, S_ALK, 
-                        cmps.S_N2, cmps.H2O])         
+cmps_asm1 = Components([S_I, S_S, X_I, X_S, X_BH, X_BA, X_P,
+                        S_O, S_NO, S_NH, S_ND, X_ND, S_ALK,
+                        cmps.S_N2, cmps.H2O])
 
 cmps_asm1.compile()
 tmo.settings.set_thermo(cmps_asm1)
 
 ############ Processes in ASM1 #################
-params = ('Y_H', 'Y_A', 'f_P', 
-          'mu_H', 'K_S', 'K_O_H', 'K_NO', 'b_H', 
+params = ('Y_H', 'Y_A', 'f_P',
+          'mu_H', 'K_S', 'K_O_H', 'K_NO', 'b_H',
           'mu_A', 'K_NH', 'K_O_A', 'b_A',
           'eta_g', 'k_a', 'k_h', 'K_X', 'eta_h')
 
@@ -94,7 +95,7 @@ asm1 = Processes.load_from_file(data_path,
 asm1.set_parameters(
     Y_A = 0.24,                  # autotrophic yield = 0.24 gCOD/gN
     Y_H = 0.67,                  # heterotrophic yield = 0.67 gCOD/gCOD
-    f_P = 0.08,                  # fraction of biomass yielding particulate products = 0.08, unitless 
+    f_P = 0.08,                  # fraction of biomass yielding particulate products = 0.08, unitless
     mu_H = 6,                    # heterotrophic maximum specific growth rate = 6.0 d^(-1)
     K_S = 20,                    # readily biodegradable substrate half saturation coefficient = 20.0 gCOD/m3
     K_O_H = 0.2,                 # O2 half saturation coefficient = 0.2 gO2/m3
@@ -115,7 +116,7 @@ asm1.set_parameters(
 # asm1.set_parameters(
 #     Y_A = 0.24,                  # autotrophic yield = 0.24 gCOD/gN
 #     Y_H = 0.67,                  # heterotrophic yield = 0.67 gCOD/gCOD
-#     f_P = 0.08,                  # fraction of biomass yielding particulate products = 0.08, unitless 
+#     f_P = 0.08,                  # fraction of biomass yielding particulate products = 0.08, unitless
 #     mu_H = 3,                    # heterotrophic maximum specific growth rate = 3.0 d^(-1)
 #     K_S = 20,                    # readily biodegradable substrate half saturation coefficient = 20.0 gCOD/m3
 #     K_O_H = 0.2,                 # O2 half saturation coefficient = 0.2 gO2/m3
@@ -140,8 +141,8 @@ class ASM1(Processes):
     Parameters
     ----------
     components: class:`CompiledComponents`, optional
-        Components corresponding to each entry in the stoichiometry array, 
-        defaults to thermosteam.settings.chemicals. 
+        Components corresponding to each entry in the stoichiometry array,
+        defaults to thermosteam.settings.chemicals.
     Y_A : float, optional
         Autotrophic yield, in [g COD/g N]. The default is 0.24.
     Y_H : float, optional
@@ -154,13 +155,13 @@ class ASM1(Processes):
         Nitrogen content of particulate products arising from biomass decay,
         in [g N/g COD]. The default is 0.06.
     mu_H : float, optional
-        Heterotrophic maximum specific growth rate, in [d^(-1)]. The default 
+        Heterotrophic maximum specific growth rate, in [d^(-1)]. The default
         is 4.0.
     K_S : float, optional
         Readily biodegradable substrate half saturation coefficient, in [g COD/m^3].
         The default is 10.0.
     K_O_H : float, optional
-        Oxygen half saturation coefficient for heterotrophic growth, in [g O2/m^3]. 
+        Oxygen half saturation coefficient for heterotrophic growth, in [g O2/m^3].
         The default is 0.2.
     K_NO : float, optional
         Nitrate half saturation coefficient, in [g N/m^3]. The default is 0.5.
@@ -178,12 +179,12 @@ class ASM1(Processes):
     mu_A : float, optional
         Autotrophic maximum specific growth rate, in [d^(-1)]. The default is 0.5.
     K_NH : float, optional
-        Ammonium (nutrient) half saturation coefficient, in [g N/m^3]. The default 
+        Ammonium (nutrient) half saturation coefficient, in [g N/m^3]. The default
         is 1.0.
     b_A : float, optional
         Autotrophic biomass decay rate constant, in [d^(-1)]. The default is 0.05.
     K_O_A : float, optional
-        Oxygen half saturation coefficient for autotrophic growth, in [g O2/m^3]. 
+        Oxygen half saturation coefficient for autotrophic growth, in [g O2/m^3].
         The default is 0.4.
     k_a : float, optional
         Ammonification rate constant, in [m^3/g COD/d]. The default is 0.05.
@@ -192,19 +193,19 @@ class ASM1(Processes):
 
     References
     ----------
-    .. [1] Henze, M.; Gujer, W.; Mino, T.; Loosdrecht, M. van. Activated Sludge 
+    .. [1] Henze, M.; Gujer, W.; Mino, T.; Loosdrecht, M. van. Activated Sludge
         Models: ASM1, ASM2, ASM2d and ASM3; IWA task group on mathematical modelling
-        for design and operation of biological wastewater treatment, Ed.; IWA 
+        for design and operation of biological wastewater treatment, Ed.; IWA
         Publishing: London, 2000.
-    .. [2] Rieger, L.; Gillot, S.; Langergraber, G.; Ohtsuki, T.; Shaw, A.; Takács, 
-        I.; Winkler, S. Guidelines for Using Activated Sludge Models; IWA Publishing: 
-        London, New York, 2012; Vol. 11. 
+    .. [2] Rieger, L.; Gillot, S.; Langergraber, G.; Ohtsuki, T.; Shaw, A.; Takács,
+        I.; Winkler, S. Guidelines for Using Activated Sludge Models; IWA Publishing:
+        London, New York, 2012; Vol. 11.
         https://doi.org/10.2166/9781780401164.
 
-    '''    
-    def __new__(cls, components=None, Y_A=0.24, Y_H=0.67, f_P=0.08, i_XB=0.08, i_XP=0.06, 
-                mu_H=4.0, K_S=10.0, K_O_H=0.2, K_NO=0.5, b_H=0.3, eta_g=0.8, eta_h=0.8, 
-                k_h=3.0, K_X=0.1, mu_A=0.5, K_NH=1.0, b_A=0.05, K_O_A=0.4, k_a=0.05, 
+    '''
+    def __new__(cls, components=None, Y_A=0.24, Y_H=0.67, f_P=0.08, i_XB=0.08, i_XP=0.06,
+                mu_H=4.0, K_S=10.0, K_O_H=0.2, K_NO=0.5, b_H=0.3, eta_g=0.8, eta_h=0.8,
+                k_h=3.0, K_X=0.1, mu_A=0.5, K_NH=1.0, b_A=0.05, K_O_A=0.4, k_a=0.05,
                 path=None, **kwargs):
         if not path: path = data_path
         self = Processes.load_from_file(path,
@@ -214,8 +215,8 @@ class ASM1(Processes):
                                         compile=True)
         self._components.X_BH.i_N = self._components.X_BA.i_N = i_XB
         self._components.X_P.i_N = i_XP
-        self.set_parameters(Y_A=Y_A, Y_H=Y_H, f_P=f_P, mu_H=mu_H, K_S=K_S, K_O_H=K_O_H, 
-                            K_NO=K_NO, b_H=b_H, eta_g=eta_g, eta_h=eta_h, k_h=k_h, 
-                            K_X=K_X, mu_A=mu_A, K_NH=K_NH, b_A=b_A, K_O_A=K_O_A, k_a=k_a, 
+        self.set_parameters(Y_A=Y_A, Y_H=Y_H, f_P=f_P, mu_H=mu_H, K_S=K_S, K_O_H=K_O_H,
+                            K_NO=K_NO, b_H=b_H, eta_g=eta_g, eta_h=eta_h, k_h=k_h,
+                            K_X=K_X, mu_A=mu_A, K_NH=K_NH, b_A=b_A, K_O_A=K_O_A, k_a=k_a,
                             **kwargs)
         return self

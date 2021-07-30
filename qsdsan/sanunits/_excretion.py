@@ -28,21 +28,21 @@ class Excretion(SanUnit):
     '''
     Estimation of N, P, K, and COD in urine and feces based on dietary intake
     for one person based on Trimmer et al. [1]_
-    
+
     References
     ----------
     .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
-    
+
     '''
-    
+
     _N_ins = 0
     _N_outs = 2
-    
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 **kwargs):                
+                 **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         data = load_data(path=data_path)
         for para in data.index:
@@ -72,10 +72,10 @@ class Excretion(SanUnit):
         ur.imass['Ca'] = self.Ca_ur / factor
         ur.imass['H2O'] = self.ur_moi * ur_exc
         ur.imass['OtherSS'] = ur_exc - ur.F_mass
-        
+
         fec_exc = self.fec_exc / factor
         fec_N = (1-self.N_ur)/self.N_ur * ur_N
-        fec.imass['NH3'] = fec_N * self.N_fec_NH3   
+        fec.imass['NH3'] = fec_N * self.N_fec_NH3
         fec.imass['NonNH3'] = fec_N - fec.imass['NH3']
         fec.imass['P'] = (1-self.P_ur)/self.P_ur * ur.imass['P']
         fec.imass['K'] = (1-self.K_ur)/self.K_ur * ur.imass['K']
@@ -83,7 +83,7 @@ class Excretion(SanUnit):
         fec.imass['Ca'] = self.Ca_fec / factor
         fec.imass['H2O'] = self.fec_moi * fec_exc
         fec.imass['OtherSS'] = fec_exc - fec.F_mass
-        
+
         # 14 kJ/g COD, the average lower heating value of excreta
         tot_COD = e_cal*self.e_exc*4.184/14/1e3 # in kg COD/hr
         ur._COD = tot_COD*(1-self.e_fec) / (ur.F_vol/1e3) # in mg/L
@@ -96,7 +96,7 @@ class Excretion(SanUnit):
     @e_cal.setter
     def e_cal(self, i):
         self._e_cal = float(i)
-    
+
     @property
     def p_veg(self):
         '''[float] Vegetal protein intake, [g/cap/d].'''
@@ -288,5 +288,3 @@ class Excretion(SanUnit):
     @Ca_fec.setter
     def Ca_fec(self, i):
         self._Ca_fec = float(i)
-
-

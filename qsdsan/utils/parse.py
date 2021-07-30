@@ -26,16 +26,16 @@ def split_coefficient(nID, sign):
     if len(nID.split(']')) > 1:
         coeff, ID = nID.split(']')[0].split('[')[1], nID.split(']')[1]
         try: return sign * float(coeff), ID
-        except ValueError: 
+        except ValueError:
             if sign == 1: return coeff, ID
             elif sign == -1: return '-('+coeff+')', ID
     else:
         for i, letter in enumerate(nID):
             if letter != 'e' and letter.isalpha(): break
-        if i: 
+        if i:
             ID = nID[i:]
             n = sign * float(nID[:i])
-        else: 
+        else:
             ID = nID
             n = sign
     return n, ID
@@ -46,7 +46,7 @@ def extract_coefficients(nIDs, dct, sign):
         if ID in dct:
             raise ValueError('Components can only appear once in a reaction; '
                             f'multiple instances of {repr(ID)} found')
-        dct[ID] = n        
+        dct[ID] = n
 
 def str2dct(reaction) -> dict:
     reaction = reaction.replace(' ', '')
@@ -70,9 +70,9 @@ def dct2list(dct, components):
     cmp_index = components._index
     for ID, coefficient in dct.items():
         lst[cmp_index[ID]] = coefficient
-    return lst    
+    return lst
 
-def get_ic(cmps, conservation_for):        
+def get_ic(cmps, conservation_for):
     '''
     return conversion factors as a sympy matrix to solve for unknown stoichiometric coefficients.
     '''
@@ -97,36 +97,37 @@ def symbolize(coeff_dct, components, conserved_for, parameters):
             else: v_arr.append(coeff_dct[cmp])
         v = Matrix(sympify(v_arr, parameters))
         ic = get_ic(components.subgroup(IDs), conserved_for)
-        sol = solve(ic * v, unknowns)
+        sol = solve(simplify(ic*v).as_expr(), unknowns)
+        # sol = solve(ic * v, unknowns)
         coeff_dct = dict(zip(IDs, simplify(v.subs(sol))))
-        del unknowns                    
+        del unknowns
     else:
         coeff_dct = {k: simplify(parse_expr(v, local_dict=parameters)) for k, v in coeff_dct.items()}
     return coeff_dct
-    
+
 def get_stoichiometric_coeff(reaction, ref_component, components, conserved_for, parameters):
     '''
-    parse input reaction to get array of symbolic expressions (or a function to return numpy array with parameters as kwargs) 
+    parse input reaction to get array of symbolic expressions (or a function to return numpy array with parameters as kwargs)
     or numpy array of input values for stoichiometric coefficients.
     '''
     isa = isinstance
-    coeff_dct = None    
+    coeff_dct = None
 
     if isa(reaction, np.ndarray):
         if len(reaction) == components.size: coeff = reaction
-        else: 
+        else:
             raise ValueError("The array of stoichiometric coefficients must have "
                              "the same length as Components {repr(components))}.")
     elif isa(reaction, dict):
         if all([isa(v, (float, int)) for v in reaction.values()]):
             coeff = dct2arr(reaction, components)
-        else: 
+        else:
             coeff_dct = reaction
     elif isa(reaction, str):
         coeff_dct = str2dct(reaction)
     else:
         raise ValueError("reaction must be either a str or a dict or an array; "
-                         f"not a '{type(reaction).__name__}' object")        
+                         f"not a '{type(reaction).__name__}' object")
     if coeff_dct:
         coeff_dct = symbolize(coeff_dct, components, conserved_for, parameters)
         coeff = dct2list(coeff_dct, components)

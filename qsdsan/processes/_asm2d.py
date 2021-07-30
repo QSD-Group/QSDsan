@@ -10,8 +10,8 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-import thermosteam as tmo    
-from thermosteam.utils import chemicals_user  
+import thermosteam as tmo
+from thermosteam.utils import chemicals_user
 # import os
 # os.chdir("C:/Users/joy_c/Dropbox/PhD/Research/QSD/codes_developing/QSDsan")
 from qsdsan import Components, Process, Processes
@@ -19,8 +19,8 @@ from ..utils import data_path
 
 __all__ = ('cmps_asm2d', 'asm2d', 'ASM2d')
 
-
 data_path += 'process_data/_asm2d.tsv'
+# import os
 # data_path = "qsdsan/data/process_data/_asm2d.tsv"
 
 ############# Components with default notation #############
@@ -70,13 +70,13 @@ cmps_asm2d.compile()
 tmo.settings.set_thermo(cmps_asm2d)
 
 ############ Processes in ASM2d #################
-params = ('f_SI', 'Y_H', 'f_XI_H', 'Y_PAO', 'Y_PO4', 'Y_PHA', 'f_XI_PAO', 'Y_A', 'f_XI_AUT', 
-          'K_h', 'eta_NO3', 'eta_fe', 'K_O2', 'K_NO3', 'K_X', 
-          'mu_H', 'q_fe', 'eta_NO3_H', 'b_H', 'K_O2_H', 'K_F', 'K_fe', 'K_A_H', 
-          'K_NO3_H', 'K_NH4_H', 'K_P_H', 'K_ALK_H', 
-          'q_PHA', 'q_PP', 'mu_PAO', 'eta_NO3_PAO', 'b_PAO', 'b_PP', 'b_PHA', 
-          'K_O2_PAO', 'K_NO3_PAO', 'K_A_PAO', 'K_NH4_PAO', 'K_PS',' K_P_PAO', 
-          'K_ALK_PAO', 'K_PP', 'K_MAX', 'K_IPP', 'K_PHA', 
+params = ('f_SI', 'Y_H', 'f_XI_H', 'Y_PAO', 'Y_PO4', 'Y_PHA', 'f_XI_PAO', 'Y_A', 'f_XI_AUT',
+          'K_h', 'eta_NO3', 'eta_fe', 'K_O2', 'K_NO3', 'K_X',
+          'mu_H', 'q_fe', 'eta_NO3_H', 'b_H', 'K_O2_H', 'K_F', 'K_fe', 'K_A_H',
+          'K_NO3_H', 'K_NH4_H', 'K_P_H', 'K_ALK_H',
+          'q_PHA', 'q_PP', 'mu_PAO', 'eta_NO3_PAO', 'b_PAO', 'b_PP', 'b_PHA',
+          'K_O2_PAO', 'K_NO3_PAO', 'K_A_PAO', 'K_NH4_PAO', 'K_PS',' K_P_PAO',
+          'K_ALK_PAO', 'K_PP', 'K_MAX', 'K_IPP', 'K_PHA',
           'mu_AUT', 'b_AUT', 'K_O2_AUT', 'K_NH4_AUT', 'K_ALK_AUT', 'K_P_AUT',
           'k_PRE', 'k_RED', 'K_ALK_PRE')
 
@@ -226,8 +226,8 @@ class ASM2d(Processes):
     Parameters
     ----------
     components: class:`CompiledComponents`, optional
-        Components corresponding to each entry in the stoichiometry array, 
-        defaults to thermosteam.settings.chemicals. 
+        Components corresponding to each entry in the stoichiometry array,
+        defaults to thermosteam.settings.chemicals.
     iN_SI : float, optional
         Nitrogen content of inert soluble COD, in [g N/g COD]. The default is 0.01.
     iN_SF : float, optional
@@ -242,46 +242,46 @@ class ASM2d(Processes):
     iP_SI : float, optional
         Phosphorus content of inert soluble COD, in [g P/g COD]. The default is 0.0.
     iP_SF : float, optional
-        Phosphorus content of fermentable substrate, in [g P/g COD]. The default 
+        Phosphorus content of fermentable substrate, in [g P/g COD]. The default
         is 0.01.
     iP_XI : float, optional
-        Phosphorus content of inert particulate COD, in [g P/g COD]. The default 
+        Phosphorus content of inert particulate COD, in [g P/g COD]. The default
         is 0.01.
     iP_XS : float, optional
-        Phosphorus content of slowly biodegradable substrate, in [g P/g COD]. The 
+        Phosphorus content of slowly biodegradable substrate, in [g P/g COD]. The
         default is 0.01.
     iP_BM : float, optional
         Phosphorus content of biomass, in [g P/g COD]. The default is 0.02.
     iTSS_XI : float, optional
-        TSS to COD ratio for inert particulate COD, in [g TSS/g COD]. The default 
+        TSS to COD ratio for inert particulate COD, in [g TSS/g COD]. The default
         is 0.75.
     iTSS_XS : float, optional
-        TSS to COD ratio for slowly biodegradable substrate, in [g TSS/g COD]. The 
+        TSS to COD ratio for slowly biodegradable substrate, in [g TSS/g COD]. The
         default is 0.75.
     iTSS_BM : float, optional
         TSS to COD ratio for biomass, in [g TSS/g COD]. The default is 0.9.
     f_SI : float, optional
-        Production of soluble inerts in hydrolysis, in [g COD/g COD]. The default 
+        Production of soluble inerts in hydrolysis, in [g COD/g COD]. The default
         is 0.0.
     Y_H : float, optional
         Heterotrophic yield coefficient, in[g COD/g COD]. The default is 0.625.
     f_XI_H : float, optional
-        Fraction of inert COD generated in heterotrophic biomass lysis, 
+        Fraction of inert COD generated in heterotrophic biomass lysis,
         in [g COD/g COD]. The default is 0.1.
     Y_PAO : float, optional
         PAO yield coefficient, in[g COD/g COD]. The default is 0.625.
     Y_PO4 : float, optional
-        PP requirement (PO4 release) per PHA stored, in [g P/g COD]. 
+        PP requirement (PO4 release) per PHA stored, in [g P/g COD].
         The default is 0.4.
     Y_PHA : float, optional
         PHA requirement for PP storage, in [g COD/g P]. The default is 0.2.
     f_XI_PAO : float, optional
-        Fraction of inert COD generated in PAO lysis, in [g COD/g COD]. 
+        Fraction of inert COD generated in PAO lysis, in [g COD/g COD].
         The default is 0.1.
     Y_A : float, optional
         Autotrophic yield, in [g COD/g N]. The default is 0.24.
     f_XI_AUT : float, optional
-        Fraction of inert COD generated in autotrophic biomass lysis, 
+        Fraction of inert COD generated in autotrophic biomass lysis,
         in [g COD/g COD]. The default is 0.1.
     K_h : float, optional
         Hydrolysis rate constant, in [d^(-1)]. The default is 3.0.
@@ -292,7 +292,7 @@ class ASM2d(Processes):
     K_O2 : float, optional
         O2 half saturation coefficient for hydrolysis, in [g O2/m^3]. The default is 0.2.
     K_NO3 : float, optional
-        Nitrate half saturation coefficient for hydrolysis, in [g N/m^3]. 
+        Nitrate half saturation coefficient for hydrolysis, in [g N/m^3].
         The default is 0.5.
     K_X : float, optional
         Slowly biodegradable substrate half saturation coefficient for hydrolysis,
@@ -302,12 +302,12 @@ class ASM2d(Processes):
     q_fe : float, optional
         Fermentation maximum rate, in [d^(-1)]. The default is 3.0.
     eta_NO3_H : float, optional
-        Reduction factor for anoxic heterotrophic growth, dimensionless. 
+        Reduction factor for anoxic heterotrophic growth, dimensionless.
         The default is 0.8.
     b_H : float, optional
         Lysis and decay rate constant, in [d^(-1)]. The default is 0.4.
     K_O2_H : float, optional
-        O2 half saturation coefficient for heterotrophs, in [g O2/m^3]. 
+        O2 half saturation coefficient for heterotrophs, in [g O2/m^3].
         The default is 0.2.
     K_F : float, optional
         Fermentable substrate half saturation coefficient for heterotrophic growth,
@@ -316,19 +316,19 @@ class ASM2d(Processes):
         Fermentable substrate half saturation coefficient for fermentation,
         in [g COD/m^3]. The default is 4.0.
     K_A_H : float, optional
-        VFA half saturation coefficient for heterotrophs, in [g COD/m^3]. 
+        VFA half saturation coefficient for heterotrophs, in [g COD/m^3].
         The default is 4.0.
     K_NO3_H : float, optional
-        Nitrate half saturation coefficient for heterotrophs, in [g N/m^3]. 
+        Nitrate half saturation coefficient for heterotrophs, in [g N/m^3].
         The default is 0.5.
     K_NH4_H : float, optional
-        Ammonium (nutrient) half saturation coefficient for heterotrophs, in [g N/m^3]. 
+        Ammonium (nutrient) half saturation coefficient for heterotrophs, in [g N/m^3].
         The default is 0.05.
     K_P_H : float, optional
-        Phosphorus (nutrient) half saturation coefficient for heterotrophs, 
+        Phosphorus (nutrient) half saturation coefficient for heterotrophs,
         in [g P/m^3]. The default is 0.01.
     K_ALK_H : float, optional
-        Alkalinity half saturation coefficient for heterotrophs, in [mol(HCO3-)/m^3]. 
+        Alkalinity half saturation coefficient for heterotrophs, in [mol(HCO3-)/m^3].
         The default is 0.1.
     q_PHA : float, optional
         Rate constant for storage of PHA, in [d^(-1)]. The default is 3.0.
@@ -351,16 +351,16 @@ class ASM2d(Processes):
     K_A_PAO : float, optional
         VFA half saturation coefficient for PAO, in [g COD/m^3]. The default is 4.0.
     K_NH4_PAO : float, optional
-        Ammonium (nutrient) half saturation coefficient for PAO, in [g N/m^3]. 
+        Ammonium (nutrient) half saturation coefficient for PAO, in [g N/m^3].
         The default is 0.05.
     K_PS : float, optional
-        Phosphorus half saturation coefficient for storage of PP, in [g P/m^3]. 
+        Phosphorus half saturation coefficient for storage of PP, in [g P/m^3].
         The default is 0.2.
     K_P_PAO : float, optional
-        Phosphorus (nutrient) half saturation coefficient for PAO, in [g P/m^3]. 
+        Phosphorus (nutrient) half saturation coefficient for PAO, in [g P/m^3].
         The default is 0.01.
     K_ALK_PAO : float, optional
-        Alkalinity half saturation coefficient for PAO, in [mol(HCO3-)/m^3]. 
+        Alkalinity half saturation coefficient for PAO, in [mol(HCO3-)/m^3].
         The default is 0.1.
     K_PP : float, optional
         Poly-phosphate half saturation coefficient for storage of PHA, in [g P/g COD].
@@ -368,7 +368,7 @@ class ASM2d(Processes):
     K_MAX : float, optional
         Maximum ratio of poly-phosphate to PAO, in [g P/g COD]. The default is 0.34.
     K_IPP : float, optional
-        Inhibition coefficient for poly-phosphate storage, in [g P/g COD]. 
+        Inhibition coefficient for poly-phosphate storage, in [g P/g COD].
         The default is 0.02.
     K_PHA : float, optional
         PHA half saturation coefficient, in [g COD/g COD]. The default is 0.01.
@@ -377,24 +377,24 @@ class ASM2d(Processes):
     b_AUT : float, optional
         Autotrophic decay rate, in [d^(-1)]. The default is 0.15.
     K_O2_AUT : float, optional
-        O2 half saturation coefficient for autotrophs, in [g O2/m^3]. 
+        O2 half saturation coefficient for autotrophs, in [g O2/m^3].
         The default is 0.5.
     K_NH4_AUT : float, optional
-        Ammonium (nutrient) half saturation coefficient for autotrophs, in [g N/m^3]. 
+        Ammonium (nutrient) half saturation coefficient for autotrophs, in [g N/m^3].
         The default is 1.0.
     K_ALK_AUT : float, optional
-        Alkalinity half saturation coefficient for autotrophs, in [mol(HCO3-)/m^3]. 
+        Alkalinity half saturation coefficient for autotrophs, in [mol(HCO3-)/m^3].
         The default is 0.5.
     K_P_AUT : float, optional
-        Phosphorus (nutrient) half saturation coefficient for autotrophs, in [g P/m^3]. 
+        Phosphorus (nutrient) half saturation coefficient for autotrophs, in [g P/m^3].
         The default is 0.01.
     k_PRE : float, optional
-        Rate constant for phosphorus precipitation with Fe(OH)3, in [m^3/g Fe(OH)3/d]. 
+        Rate constant for phosphorus precipitation with Fe(OH)3, in [m^3/g Fe(OH)3/d].
         The default is 1.0.
     k_RED : float, optional
         Rate constant for redissoluation of FePO4, in [d^(-1)]. The default is 0.6.
     K_ALK_PRE : float, optional
-        Alkalinity half saturation coefficient for P precipitation, in [mol(HCO3-)/m^3]. 
+        Alkalinity half saturation coefficient for P precipitation, in [mol(HCO3-)/m^3].
         The default is 0.5.
     path : str, optional
         Alternative file path for the Gujer matrix. The default is None.
@@ -402,44 +402,44 @@ class ASM2d(Processes):
 
     References
     ----------
-    .. [1] Henze, M.; Gujer, W.; Mino, T.; Loosdrecht, M. van. Activated Sludge 
+    .. [1] Henze, M.; Gujer, W.; Mino, T.; Loosdrecht, M. van. Activated Sludge
         Models: ASM1, ASM2, ASM2d and ASM3; IWA task group on mathematical modelling
-        for design and operation of biological wastewater treatment, Ed.; IWA 
+        for design and operation of biological wastewater treatment, Ed.; IWA
         Publishing: London, 2000.
-    .. [2] Rieger, L.; Gillot, S.; Langergraber, G.; Ohtsuki, T.; Shaw, A.; Takács, 
-        I.; Winkler, S. Guidelines for Using Activated Sludge Models; IWA Publishing: 
-        London, New York, 2012; Vol. 11. 
+    .. [2] Rieger, L.; Gillot, S.; Langergraber, G.; Ohtsuki, T.; Shaw, A.; Takács,
+        I.; Winkler, S. Guidelines for Using Activated Sludge Models; IWA Publishing:
+        London, New York, 2012; Vol. 11.
         https://doi.org/10.2166/9781780401164.
 
-    '''    
-    def __new__(cls, components=None, 
-                iN_SI=0.01, iN_SF=0.03, iN_XI=0.02, iN_XS=0.04, iN_BM=0.07, 
+    '''
+    def __new__(cls, components=None,
+                iN_SI=0.01, iN_SF=0.03, iN_XI=0.02, iN_XS=0.04, iN_BM=0.07,
                 iP_SI=0.0, iP_SF=0.01, iP_XI=0.01, iP_XS=0.01, iP_BM=0.02,
                 iTSS_XI=0.75, iTSS_XS=0.75, iTSS_BM=0.9,
-                f_SI=0.0, Y_H=0.625, f_XI_H=0.1, 
-                Y_PAO=0.625, Y_PO4=0.4, Y_PHA=0.2, f_XI_PAO=0.1, 
-                Y_A=0.24, f_XI_AUT=0.1, 
-                K_h=3.0, eta_NO3=0.6, eta_fe=0.4, K_O2=0.2, K_NO3=0.5, K_X=0.1, 
-                mu_H=6.0, q_fe=3.0, eta_NO3_H=0.8, b_H=0.4, K_O2_H=0.2, K_F=4.0, 
-                K_fe=4.0, K_A_H=4.0, K_NO3_H=0.5, K_NH4_H=0.05, K_P_H=0.01, K_ALK_H=0.1, 
-                q_PHA=3.0, q_PP=1.5, mu_PAO=1.0, eta_NO3_PAO=0.6, b_PAO=0.2, b_PP=0.2, 
-                b_PHA=0.2, K_O2_PAO=0.2, K_NO3_PAO=0.5, K_A_PAO=4.0, K_NH4_PAO=0.05, 
-                K_PS=0.2, K_P_PAO=0.01, K_ALK_PAO=0.1, 
-                K_PP=0.01, K_MAX=0.34, K_IPP=0.02, K_PHA=0.01, 
+                f_SI=0.0, Y_H=0.625, f_XI_H=0.1,
+                Y_PAO=0.625, Y_PO4=0.4, Y_PHA=0.2, f_XI_PAO=0.1,
+                Y_A=0.24, f_XI_AUT=0.1,
+                K_h=3.0, eta_NO3=0.6, eta_fe=0.4, K_O2=0.2, K_NO3=0.5, K_X=0.1,
+                mu_H=6.0, q_fe=3.0, eta_NO3_H=0.8, b_H=0.4, K_O2_H=0.2, K_F=4.0,
+                K_fe=4.0, K_A_H=4.0, K_NO3_H=0.5, K_NH4_H=0.05, K_P_H=0.01, K_ALK_H=0.1,
+                q_PHA=3.0, q_PP=1.5, mu_PAO=1.0, eta_NO3_PAO=0.6, b_PAO=0.2, b_PP=0.2,
+                b_PHA=0.2, K_O2_PAO=0.2, K_NO3_PAO=0.5, K_A_PAO=4.0, K_NH4_PAO=0.05,
+                K_PS=0.2, K_P_PAO=0.01, K_ALK_PAO=0.1,
+                K_PP=0.01, K_MAX=0.34, K_IPP=0.02, K_PHA=0.01,
                 mu_AUT=1.0, b_AUT=0.15, K_O2_AUT=0.5, K_NH4_AUT=1.0, K_ALK_AUT=0.5, K_P_AUT=0.01,
                 k_PRE=1.0, k_RED=0.6, K_ALK_PRE=0.5,
                 path=None, **kwargs):
         if not path: path = data_path
-        
+
         self = Processes.load_from_file(path,
                                         components=components,
                                         conserved_for=('COD', 'N', 'P', 'charge'),
                                         parameters=params,
                                         compile=False)
-        if path == None: 
+        if path == None:
             self.extend([p12, p14])
             self.compile()
-        
+
         self._components.S_I.i_N = iN_SI
         self._components.S_F.i_N = iN_SF
         self._components.X_I.i_N = iN_XI
@@ -455,20 +455,19 @@ class ASM2d(Processes):
         self._components.X_H.i_mass = self._components.X_PAO.i_mass = self._components.X_AUT.i_mass = iTSS_BM
 
         self.set_parameters(f_SI=f_SI, Y_H=Y_H, f_XI_H=f_XI_H, Y_PAO=Y_PAO, Y_PO4=Y_PO4,
-                            Y_PHA=Y_PHA, f_XI_PAO=f_XI_PAO, Y_A=Y_A, f_XI_AUT=f_XI_AUT, 
-                            K_h=K_h, eta_NO3=eta_NO3, eta_fe=eta_fe, K_O2=K_O2, 
-                            K_NO3=K_NO3, K_X=K_X, 
-                            mu_H=mu_H, q_fe=q_fe, eta_NO3_H=eta_NO3_H, b_H=b_H, 
+                            Y_PHA=Y_PHA, f_XI_PAO=f_XI_PAO, Y_A=Y_A, f_XI_AUT=f_XI_AUT,
+                            K_h=K_h, eta_NO3=eta_NO3, eta_fe=eta_fe, K_O2=K_O2,
+                            K_NO3=K_NO3, K_X=K_X,
+                            mu_H=mu_H, q_fe=q_fe, eta_NO3_H=eta_NO3_H, b_H=b_H,
                             K_O2_H=K_O2_H, K_F=K_F, K_fe=K_fe, K_A_H=K_A_H, K_NO3_H=K_NO3_H,
                             K_NH4_H=K_NH4_H, K_P_H=K_P_H, K_ALK_H=K_ALK_H*12,
-                            q_PHA=q_PHA, q_PP=q_PP, mu_PAO=mu_PAO, eta_NO3_PAO=eta_NO3_PAO, 
-                            b_PAO=b_PAO, b_PP=b_PP, b_PHA=b_PHA, K_O2_PAO=K_O2_PAO, 
-                            K_NO3_PAO=K_NO3_PAO, K_A_PAO=K_A_PAO, K_NH4_PAO=K_NH4_PAO, 
-                            K_PS=K_PS, K_P_PAO=K_P_PAO, K_ALK_PAO=K_ALK_PAO*12, K_PP=K_PP, 
-                            K_MAX=K_MAX, K_IPP=K_IPP, K_PHA=K_PHA, 
-                            mu_AUT=mu_AUT, b_AUT=b_AUT, K_O2_AUT=K_O2_AUT, K_NH4_AUT=K_NH4_AUT, 
+                            q_PHA=q_PHA, q_PP=q_PP, mu_PAO=mu_PAO, eta_NO3_PAO=eta_NO3_PAO,
+                            b_PAO=b_PAO, b_PP=b_PP, b_PHA=b_PHA, K_O2_PAO=K_O2_PAO,
+                            K_NO3_PAO=K_NO3_PAO, K_A_PAO=K_A_PAO, K_NH4_PAO=K_NH4_PAO,
+                            K_PS=K_PS, K_P_PAO=K_P_PAO, K_ALK_PAO=K_ALK_PAO*12, K_PP=K_PP,
+                            K_MAX=K_MAX, K_IPP=K_IPP, K_PHA=K_PHA,
+                            mu_AUT=mu_AUT, b_AUT=b_AUT, K_O2_AUT=K_O2_AUT, K_NH4_AUT=K_NH4_AUT,
                             K_ALK_AUT=K_ALK_AUT*12, K_P_AUT=K_P_AUT,
                             k_PRE=k_PRE, k_RED=k_RED, K_ALK_PRE=K_ALK_PRE*12,
                             **kwargs)
         return self
-    
