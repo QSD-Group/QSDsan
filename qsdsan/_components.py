@@ -84,11 +84,14 @@ class Components(Chemicals):
 
         return self
 
+
     def __setattr__(self, ID, component):
         raise TypeError('Cannot set attribute; use `<Components>.append/extend` instead.')
 
+
     def __setitem__(self, ID, component):
         raise TypeError('Cannot set item; use `<Components>.append/extend` instead.')
+
 
     def __getitem__(self, key):
         '''Return a :class:`Component` object or a list of :class:`Component` objects.'''
@@ -101,6 +104,7 @@ class Components(Chemicals):
         except KeyError as key_error:
             raise UndefinedComponent(key_error.args[0])
 
+
     def __contains__(self, component):
         if isinstance(component, str):
             return component in self.__dict__
@@ -109,11 +113,17 @@ class Components(Chemicals):
         else: # pragma: no cover
             return False
 
+
+    def __repr__(self):
+        return f"Components([{', '.join(self.__dict__)}])"
+
+
     def copy(self):
         '''Return a copy.'''
         copy = object.__new__(Components)
         for cmp in self: setattr(copy, cmp.ID, cmp)
         return copy
+
 
     def append(self, component):
         '''Append a Component'''
@@ -129,12 +139,14 @@ class Components(Chemicals):
             raise ValueError(f"{ID} already defined in this `Components` object.")
         setattr(self, ID, component)
 
+
     def extend(self, components):
         '''Extend with more :class:`Component` objects.'''
         if isinstance(components, Components):
             self.__dict__.update(components.__dict__)
         else:
             for component in components: self.append(component)
+
 
     def compile(self, skip_checks=False):
         '''Cast as a :class:`CompiledComponents` object.'''
@@ -149,6 +161,7 @@ class Components(Chemicals):
     kwarray = array = index = indices = must_compile
 
     _default_data = None
+
 
     @classmethod
     def load_from_file(cls, path_or_df, index_col=None,
@@ -311,6 +324,49 @@ class Components(Chemicals):
         return new
 
 
+    @classmethod
+    def from_chemicals(cls, chemicals, **data):
+        '''
+        Return a new :class:`Components` from a :class:`thermosteam.Chemicals`
+        or :class:`thermosteam.CompiledChemicals` object.
+
+        Parameters
+        ----------
+        chemicals: thermosteam.Chemicals
+            The :class:`thermosteam.Chemicals` object as the basis
+            for the new :class:`~.Components` object.
+            :class:`Component` objects will have the same ID as the corresponding
+            :class:`thermosteam.Chemical` object in the :class:`thermosteam.Chemicals`
+            object.
+        data : dict
+            A nested dict with keys being the new components and values being the inner dict,
+            keys and values of the inner dict are the attribute names and values, respectively.
+
+        Examples
+        --------
+        >>> import qsdsan as qs
+        >>> chems = qs.Chemicals((qs.Chemical('Water'), qs.Chemical('Ethanol')))
+        >>> data = {'Water': {'particle_size': 'Soluble',
+        ...                   'degradability': 'Undegradable',
+        ...                   'organic': False},
+        ...         'Ethanol': {'particle_size': 'Soluble',
+        ...                     'degradability': 'Readily',
+        ...                     'organic': False}}
+        >>> cmps = qs.Components.from_chemicals(chems, **data)
+        >>> cmps
+        Components([Water, Ethanol])
+        '''
+        cmps = cls.__new__(cls, ())
+        for i in chemicals.__iter__():
+            val_dct = data.get(i.ID)
+            cmp = Component.from_chemical(i.ID, i)
+            if val_dct:
+                for k, v in val_dct.items():
+                    setattr(cmp, k, v)
+            cmps.append(cmp)
+
+        return cmps
+
 
 # %%
 
@@ -323,6 +379,7 @@ chemical_data_array = tmo._chemicals.chemical_data_array
 def component_data_array(components, attr):
     data = chemical_data_array(components, attr)
     return data
+
 
 class CompiledComponents(CompiledChemicals):
     '''
@@ -352,6 +409,20 @@ class CompiledComponents(CompiledChemicals):
             cache[components] = self
         return self
 
+
+    def __contains__(self, component):
+        if isinstance(component, str):
+            return component in self.__dict__
+        elif isinstance(component, Component):
+            return component in self.tuple
+        else: # pragma: no cover
+            return False
+
+
+    def __repr__(self):
+        return f"CompiledComponents([{', '.join(self.IDs)}])"
+
+
     def refresh_constants(self):
         '''
         Refresh constant arrays of :class:`Components` objects,
@@ -366,6 +437,7 @@ class CompiledComponents(CompiledChemicals):
     def compile(self, skip_checks=False):
         '''Skip, :class:`CompiledComponents` have already been compiled.'''
         pass
+
 
     def _compile(self, components, skip_checks=False):
         dct = self.__dict__
@@ -388,6 +460,7 @@ class CompiledComponents(CompiledChemicals):
         dct['rb'] = np.asarray([1 if cmp.degradability == 'Readily' else 0 for cmp in components])
         dct['org'] = np.asarray([int(cmp.organic) for cmp in components])
 
+
     def subgroup(self, IDs):
         '''Create a new subgroup of :class:`Component` objects.'''
         components = self[IDs]
@@ -399,11 +472,13 @@ class CompiledComponents(CompiledChemicals):
                 except: pass
         return new
 
+
     def index(self, ID):
         '''Return index of specified component.'''
         try: return self._index[ID]
         except KeyError:
             raise UndefinedComponent(ID)
+
 
     def indices(self, IDs):
         '''Return indices of multiple components.'''
@@ -413,13 +488,6 @@ class CompiledComponents(CompiledChemicals):
         except KeyError as key_error:
             raise UndefinedComponent(key_error.args[0])
 
-    def __contains__(self, component):
-        if isinstance(component, str):
-            return component in self.__dict__
-        elif isinstance(component, Component):
-            return component in self.tuple
-        else: # pragma: no cover
-            return False
 
     def copy(self):
         '''Return a copy.'''

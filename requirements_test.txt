@@ -9,6 +9,6 @@ SALib>=1.4.0b0
 matplotlib>=3.3.2
 sympy>=1.8
 
-# Packages by others
+# Packages for testing
 pytest-cov>=2.0.1
 coveralls>=2.2.0
