@@ -512,6 +512,14 @@ class Component(Chemical):
         self._i_NOD = check_return_property('i_NOD', i)
 
 
+    def __str__(self):
+        return self._ID
+
+
+    def __repr__(self):
+        return f"Component('{self}')"
+
+
     def show(self, chemical_info=False):
         '''
         Show component properties.
@@ -579,8 +587,9 @@ class Component(Chemical):
         new = copy_attr(new, self, skip=('_ID', '_CAS', '_N_solutes'))
         new._ID = new_ID
         new._locked_state = self._locked_state
-        new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus, new.Tm,
-                           new.Tb, new.eos, new.eos_1atm, new.phase_ref)
+        # breakpoint()
+        new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus,
+                           new.Tm, new.Tb, new.eos, new.phase_ref)
         new._label_handles()
         for i,j in data.items(): setattr(new, i , j)
         return new
@@ -610,8 +619,8 @@ class Component(Chemical):
 
         if phase: new._locked_state = phase
 
-        new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus, new.Tm,
-                           new.Tb, new.eos, new.eos_1atm, new.phase_ref)
+        new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus,
+                           new.Tm, new.Tb, new.eos, new.phase_ref)
         new._label_handles()
         new._measured_as = measured_as
         new.i_mass = i_mass

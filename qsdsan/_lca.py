@@ -167,13 +167,11 @@ class LCA:
     FossilEnergyConsumption (MJ)       6.5e+03        1.12e+05      1.4e+07 1.95e+06 1.61e+07
     GlobalWarming (kg CO2-eq)              500        3.75e+04     4.82e+06 8.94e+04 4.95e+06
     >>> # Retrieve impacts associated with a specific indicator
-    >>> lca.total_impacts['GlobalWarming']
-    4945363.316130896
 
     Or breakdowns of the different category
 
     >>> lca.total_impacts['GlobalWarming'] # doctest: +ELLIPSIS
-    4945363.3...
+    4944207...
     >>> lca.get_impact_table('Construction') # doctest: +SKIP
 
     See Also

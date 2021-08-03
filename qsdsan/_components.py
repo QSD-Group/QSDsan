@@ -30,7 +30,7 @@ utils = tmo.utils
 _component_properties = _component._component_properties
 _num_component_properties = _component._num_component_properties
 _key_component_properties = _component._key_component_properties
-_TMH = tmo.base.thermo_model_handle.ThermoModelHandle
+# _TMH = tmo.base.thermo_model_handle.ThermoModelHandle
 _PH = tmo.base.phase_handle.PhaseHandle
 
 
@@ -274,27 +274,38 @@ class Components(Chemicals):
             for i in new:
                 i.default()
 
-                if not i.Tb:
-                    if i.particle_size == 'Soluble': i.Tb = Chemical('urea').Tb
-                    elif i.particle_size == 'Dissolved gas': i.Tb = Chemical('CO2').Tb
-                    else: i.Tb = Chemical('NaCl').Tb
+                if i.particle_size == 'Soluble':
+                    ref_chem = Chemical('urea')
+                elif i.particle_size == 'Dissolved gas':
+                    ref_chem = Chemical('CO2')
+                else:
+                    ref_chem = Chemical('NaCl')
 
-                if (isa(i.V, _TMH) and (len(i.V.models)==0 or (i.V[0].Tmin > 298.15 or i.V[0].Tmax < 298.15))) or (isa(i.V, _PH) and (len(i.V.l.models)==0 or (i.V.l[0].Tmin > 298.15 or i.V.l[0].Tmax < 298.15))):
-                    if i.particle_size == 'Soluble':
-                        i.copy_models_from(Chemical('urea'), names=('V',))
-                    elif i.particle_size in ('Particulate', 'Colloidal'):
+                i.Tb = ref_chem.Tb if not i.Tb else i.Tb
+
+                COPY_V = False # if don't have V model, set those to default
+                if isa(i.V, _PH):
+                    if not i.V.l.valid_methods(298.15):
+                        COPY_V = True
+                else:
+                    if not i.V.valid_methods(298.15):
+                        COPY_V = True
+
+                if COPY_V:
+                    if i.particle_size in ('Soluble', 'Dissolved gas'):
+                        i.copy_models_from(ref_chem, names=('V',))
+                    else:
                         try: i.V.add_model(1.2e-5)
                         except AttributeError:
                             i.V.l.add_model(1.2e-5)    # m^3/mol
                             i.V.s.add_model(1.2e-5)
-                    else:
-                        i.copy_models_from(Chemical('CO2'), names=('V',))
 
+                i.copy_models_from(H2O)
 
-                for j in ('sigma', 'epsilon', 'kappa', 'Cn', 'mu', 'Psat', 'Hvap'):
-                    if isa(getattr(i, j), _TMH) and len(getattr(i,j).models) > 0: continue
-                    elif isa(getattr(i, j), _PH) and len(getattr(i,j).l.models) > 0: continue
-                    i.copy_models_from(H2O, names=(j,))
+                try:
+                    i.Hvap(i.Tb)
+                except RuntimeError: # Hvap model of H2O cannot be extrapolated to Tb
+                    i.copy_models_from(ref_chem, names=('Hvap',))
 
             new.compile()
         return new

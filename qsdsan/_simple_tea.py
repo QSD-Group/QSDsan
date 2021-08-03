@@ -129,10 +129,10 @@ class SimpleTEA(TEA):
     ...                     system_add_OPEX=0.03)
     >>> tea.show()
     SimpleTEA: sys
-    NPV  : -259,077 USD at 5.0% discount rate
-    EAC  : 33,552 USD/yr
-    CAPEX: 61,183 USD (annualized to 7,923 USD/yr)
-    AOC  : 25,628 USD/yr
+    NPV  : -258,730 USD at 5.0% discount rate
+    EAC  : 33,507 USD/yr
+    CAPEX: 60,912 USD (annualized to 7,888 USD/yr)
+    AOC  : 25,618 USD/yr
 
     See Also
     --------
