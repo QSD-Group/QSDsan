@@ -24,9 +24,9 @@ setup(
     description='Quantitative Sustainable Design for sanitation and resource recovery systems',
     long_description=open('README.rst').read(),
     url="https://github.com/QSD-Group/QSDsan",
-    install_requires=['biosteam==2.30.0', 'thermosteam==0.26.0', 'exposan==0.0.18', 
+    install_requires=['biosteam>=2.30.0', 'thermosteam>=0.26.0', 'exposan>=0.0.18', 
                       'pandas>=1.2.4', 'matplotlib>=3.3.2', 'scikit-learn', 'scipy',
-                      'SALib>=1.4.0b0', 'seaborn', 'sympy'],
+                      'SALib>=1.4.0b0', 'seaborn', 'sympy>=1.8'],
     package_data=
         {'qsdsan': [
                     'data/*',

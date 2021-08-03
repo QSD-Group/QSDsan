@@ -1,14 +1,14 @@
 # Needed by qsdsan
-biosteam==2.30.0
-thermosteam==0.26.0
-exposan==0.0.18
+biosteam>=2.30.0
+thermosteam>=0.26.0
+exposan>=0.0.18
 pint>=0.12
 numpy>=1.19.2
 ipykernel>=5.3.4
 scikit-learn>=0.23.2
 SALib>=1.4.0b0
 matplotlib>=3.3.2
-sympy>=1.7.1
+sympy>=1.8
 
 # Packages by others
 pytest-cov>=2.0.1
