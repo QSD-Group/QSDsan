@@ -8,20 +8,17 @@ This module is developed by:
     Smiti Mittal <smitimittal@gmail.com>
     Yalin Li <zoe.yalin.li@gmail.com>
     Anna Kogler
-    
+
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-# %%
 
-import math
-from .. import Equipment, SanUnit, Component, WasteStream
+from .. import Equipment
 
 __all__ = ('Membrane',)
 
-#%%
 
 class Membrane(Equipment):
     '''
@@ -51,14 +48,15 @@ class Membrane(Equipment):
                  design_units={},
                  F_BM=1., lifetime=10000, lifetime_unit='hr', N=0,
                  material='polypropylene', unit_cost=0.1, surface_area=1):
-        Equipment.__init__(self=self, name=name, design_units=design_units, F_BM=F_BM, lifetime=lifetime, lifetime_unit=lifetime_unit)
+        Equipment.__init__(self=self, name=name, design_units=design_units,
+                           F_BM=F_BM, lifetime=lifetime, lifetime_unit=lifetime_unit)
         self.name = name
         self.N = N
         self.unit_cost = unit_cost
         self.material = material
         self.surface_area = surface_area
 
-    # All subclasses of `Membrane` must have a `_design` and a `_cost` method
+
     def _design(self):
         design = {
             f'Number of {self.name}': self.N,
@@ -68,19 +66,17 @@ class Membrane(Equipment):
         self.design_units = {f'Surface area of {self.name}': 'm2'}
         return design
 
+
     # All subclasses of `Membrane` must have a `_cost` method, which returns the
     # purchase cost of this equipment
     def _cost(self):
         return self.unit_cost*self.N*self.surface_area
 
-    # You can use property to add checks
+
     @property
     def N(self):
-        '''[str] Number of units of the electrode.'''
+        '''[int] Number of units of the electrode.'''
         return self._N
     @N.setter
     def N(self, i):
-        try:
-            self._N = int(i)
-        except:
-            raise ValueError(f'N must be an integer')
+        self._N = int(i)
