@@ -30,6 +30,7 @@ setup(
     package_data=
         {'qsdsan': [
                     'data/*',
+                    'data/process_data/*',
                     'data/sanunit_data/*',
                     'equipments/*',
                     'processes/*',
