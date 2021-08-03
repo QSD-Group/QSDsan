@@ -192,27 +192,19 @@ class DryingBed(SanUnit, Decay):
             raise ValueError(f'design_type can only be "unplanted" or "planted", '
                              f"not {i}.")
 
-    @staticmethod
-    def _set_bed_prop(prop, value):
-        if isinstance(value, dict):
-            for key in value.keys():
-                prop[key] = value[key]
-        else:
-            raise TypeError(f'Only dict object is allowed, not {type(value).__name__}.')
-
     @property
     def N_bed(self):
         '''
         [dict] Number of the different types of drying beds,
         float will be converted to the smallest integer.
         '''
-        #!!! Think of a better way to do this
         for i, j in self._N_bed.items():
             self._N_bed[i] = int(np.ceil(j))
         return self._N_bed
     @N_bed.setter
     def N_bed(self, i):
-        self._set_bed_prop(self._N_bed, i)
+        int_i = {k: np.ceil(v) for k, v in i.items()}
+        self._N_bed.update(int_i)
 
     @property
     def bed_L(self):
@@ -220,7 +212,7 @@ class DryingBed(SanUnit, Decay):
         return self._bed_L
     @bed_L.setter
     def bed_L(self, i):
-        self._set_bed_prop(self._bed_L, i)
+        self._bed_L.update(i)
 
     @property
     def bed_W(self):
@@ -228,7 +220,7 @@ class DryingBed(SanUnit, Decay):
         return self._bed_W
     @bed_W.setter
     def bed_W(self, i):
-        self._set_bed_prop(self._bed_W, i)
+        self._bed_W.update(i)
 
     @property
     def bed_H(self):
@@ -236,7 +228,7 @@ class DryingBed(SanUnit, Decay):
         return self._bed_H
     @bed_H.setter
     def bed_H(self, i):
-        self._set_bed_prop(self._bed_H, i)
+        self._bed_H.update(i)
 
     @property
     def column_H(self):

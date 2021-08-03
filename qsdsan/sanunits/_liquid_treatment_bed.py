@@ -28,7 +28,7 @@ data_path += 'sanunit_data/_liquid_treatment_bed.tsv'
 class LiquidTreatmentBed(SanUnit, Decay):
     '''
     For secondary treatment of liquid based on Trimmer et al. [1]_
-    
+
     Parameters
     ----------
     ins : WasteStream
@@ -37,35 +37,35 @@ class LiquidTreatmentBed(SanUnit, Decay):
         Treated waste, fugitive CH4, and fugitive N2O.
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
-        
+
     References
     ----------
     .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
-    
+
     See Also
     --------
     :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-    
+
     '''
-    
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  if_N2O_emission=False, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
         self.if_N2O_emission = if_N2O_emission
-    
+
         data = load_data(path=data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)
         del data
-        
+
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-    
+
     _N_ins = 1
     _N_outs = 3
 
@@ -74,17 +74,16 @@ class LiquidTreatmentBed(SanUnit, Decay):
         treated, CH4, N2O = self.outs
         treated.copy_like(self.ins[0])
         CH4.phase = N2O.phase = 'g'
-        
+
         # COD removal
         COD_loss = self.first_order_decay(k=self.decay_k_COD,
                                           t=self.tau/365,
                                           max_decay=self.COD_max_decay)
         COD_loss_tot = COD_loss*waste.COD/1e3*waste.F_vol
-        
+
         treated._COD *= (1-COD_loss)
-        #!!! Which assumption is better?
         treated.imass['OtherSS'] *= (1-COD_loss)
-        # treated.mass *= (1-COD_loss)
+
         CH4_prcd = COD_loss_tot*self.MCF_decay*self.max_CH4_emission
         CH4.imass['CH4'] = CH4_prcd
 
@@ -100,7 +99,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
             N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
         else:
             N2O.empty()
-    
+
     _units = {
         'Residence time': 'd',
         'Bed length': 'm',
@@ -117,7 +116,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
         design['Bed width'] = W = self.bed_W
         design['Bed height'] = H = self.bed_H
         design['Single bed volume'] = L*W*H
-        
+
         concrete = N*self.concrete_thickness*(L*W+2*L*H+2*W*H)
         self.construction = (
             Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
@@ -135,7 +134,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
         return self._tau
     @tau.setter
     def tau(self, i):
-        self._tau = float(i)
+        self._tau = i
 
     @property
     def N_bed(self):
@@ -151,7 +150,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
         return self._bed_L
     @bed_L.setter
     def bed_L(self, i):
-        self._bed_L = float(i)
+        self._bed_L = i
 
     @property
     def bed_W(self):
@@ -159,7 +158,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
         return self._bed_W
     @bed_W.setter
     def bed_W(self, i):
-        self._bed_W = float(i)
+        self._bed_W = i
 
     @property
     def bed_H(self):
@@ -167,7 +166,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
         return self._bed_H
     @bed_H.setter
     def bed_H(self, i):
-        self._bed_H = float(i)
+        self._bed_H = i
 
     @property
     def concrete_thickness(self):
@@ -175,11 +174,4 @@ class LiquidTreatmentBed(SanUnit, Decay):
         return self._concrete_thickness
     @concrete_thickness.setter
     def concrete_thickness(self, i):
-        self._concrete_thickness = float(i)
-
-
-
-
-
-
-
+        self._concrete_thickness = i

@@ -217,7 +217,7 @@ class PitLatrine(Toilet):
         return self._pit_depth
     @pit_depth.setter
     def pit_depth(self, i):
-        self._pit_depth = float(i)
+        self._pit_depth = i
 
     @property
     def pit_area(self):
@@ -225,7 +225,7 @@ class PitLatrine(Toilet):
         return self._pit_area
     @pit_area.setter
     def pit_area(self, i):
-        self._pit_area = float(i)
+        self._pit_area = i
 
     #!!! Should add some contraints, maybe in _run, to make sure the pit is big
     # enough for the amount of excreta
@@ -240,7 +240,7 @@ class PitLatrine(Toilet):
         return self._emptying_period
     @emptying_period.setter
     def emptying_period(self, i):
-        self._emptying_period = float(i)
+        self._emptying_period = i
 
     @property
     def sludge_accum_rate(self):
@@ -248,7 +248,7 @@ class PitLatrine(Toilet):
         return self._sludge_accum_rate
     @sludge_accum_rate.setter
     def sludge_accum_rate(self, i):
-        self._sludge_accum_rate = float(i)
+        self._sludge_accum_rate = i
 
     @property
     def liq_leaching(self):
@@ -261,7 +261,7 @@ class PitLatrine(Toilet):
             max(self.N_leaching, self.P_leaching, self.K_leaching)
     @liq_leaching.setter
     def liq_leaching(self, i):
-        self._liq_leaching = float(i)
+        self._liq_leaching = i
 
     @property
     def N_leaching(self):
@@ -272,7 +272,7 @@ class PitLatrine(Toilet):
         return self._N_leaching
     @N_leaching.setter
     def N_leaching(self, i):
-        self._N_leaching = float(i)
+        self._N_leaching = i
         # Legacy code to add checkers
         # @Frac_C(self)
         # def N_leaching(): return i
@@ -286,7 +286,7 @@ class PitLatrine(Toilet):
         return self._P_leaching
     @P_leaching.setter
     def P_leaching(self, i):
-        self._P_leaching = float(i)
+        self._P_leaching = i
 
     @property
     def K_leaching(self):
@@ -300,7 +300,7 @@ class PitLatrine(Toilet):
     def K_leaching(self, i):
         if i < 0:
             raise ValueError('Value for K_leaching cannot be negative')
-        self._K_leaching = float(i)
+        self._K_leaching = i
 
     def _return_MCF_EF(self):
         # self._MCF and self._N2O_EF are dict for
@@ -319,7 +319,7 @@ class PitLatrine(Toilet):
         return float(self._MCF_decay[self._return_MCF_EF()])
     @MCF_decay.setter
     def MCF_decay(self, i):
-        self._MCF_decay[self._return_MCF_EF()] = float(i)
+        self._MCF_decay[self._return_MCF_EF()] = i
 
     @property
     def N2O_EF_decay(self):
@@ -327,4 +327,4 @@ class PitLatrine(Toilet):
         return float(self._N2O_EF_decay[self._return_MCF_EF()])
     @N2O_EF_decay.setter
     def N2O_EF_decay(self, i):
-        self._N2O_EF_decay[self._return_MCF_EF()] = float(i)
+        self._N2O_EF_decay[self._return_MCF_EF()] = i

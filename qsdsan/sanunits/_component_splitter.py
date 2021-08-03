@@ -25,7 +25,7 @@ class ComponentSplitter(SanUnit):
     '''
     Split the influent into individual components,
     the last effluent contains all remaining components.
-    
+
     Parameters
     ----------
     split_keys : iterable
@@ -35,18 +35,18 @@ class ComponentSplitter(SanUnit):
         If the item is also iterable, all components whose ID are in the iterable
         will be splitted to the same effluent.
         The split is always 1 for a certain component to an effluent (i.e., complete split).
-        
+
         .. note::
-            
+
             Length of the `split_keys()` (which determines size of the outs) cannot be changed after initiation.
-    
+
     '''
-    
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', split_keys=()):
         if not split_keys:
             raise ValueError('`split_keys` cannot be empty.')
-        
+
         if isinstance(split_keys, str):
             self._N_outs = 2
         else:
@@ -54,7 +54,7 @@ class ComponentSplitter(SanUnit):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
 
         self._split_keys = split_keys
-    
+
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False
     _graphics = splitter_graphics
@@ -62,7 +62,7 @@ class ComponentSplitter(SanUnit):
     def _run(self):
         last = self.outs[-1]
         last.mix_from(self.ins)
-        
+
         splitted = []
         # num = 0
         for num, cmps in enumerate(self.split_keys):
@@ -72,7 +72,7 @@ class ComponentSplitter(SanUnit):
             elif not isinstance(cmps, Iterable):
                 raise ValueError('`split_keys` must be an iterable, '
                                  f'not {type(cmps).__name__}.')
-            
+
             for cmp in cmps:
                 self.outs[num].imass[cmp] = last.imass[cmp]
                 last.imass[cmp] = 0
@@ -90,9 +90,9 @@ class ComponentSplitter(SanUnit):
         If the item is also iterable, all components whose ID are in the iterable
         will be splitted to the same effluent.
         The split is always 1 for a certain component to an effluent (i.e., complete split).
-        
+
         .. note::
-            
+
             Length of the `split_keys()` (which determines size of the outs) cannot be changed after initiation.
         '''
         return self._split_keys
@@ -100,9 +100,8 @@ class ComponentSplitter(SanUnit):
     def split_keys(self, i):
         if isinstance(i, str):
             i = (i,)
-            
+
         if len(i) != len(self.outs):
             raise ValueError('Size of `split_keys` cannot be changed after initiation.')
 
         self._split_keys = i
-

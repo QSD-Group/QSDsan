@@ -32,9 +32,9 @@ class BiogasCombustion(SanUnit):
         Fraction of biogas loss.
     biogas_eff : float
         Combustion efficiency of biogas as a fraction of CH4.
-    
+
     '''
-    
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  if_combustion=False, biogas_loss=0.1, biogas_eff=0.55):
 
@@ -42,7 +42,7 @@ class BiogasCombustion(SanUnit):
         self.if_combustion = if_combustion
         self._biogas_loss = biogas_loss
         self._biogas_eff = biogas_eff
-    
+
     _N_ins = 2
     _N_outs = 3
 
@@ -64,15 +64,15 @@ class BiogasCombustion(SanUnit):
             air.imol['N2'] = 0.79/0.21 * air.imol['O2']
         else:
             air.empty()
-        
-        
+
+
     @property
     def biogas_loss(self):
         '''[float] Fraction of biogas loss.'''
         return self._biogas_loss
     @biogas_loss.setter
     def biogas_loss(self, i):
-        self._biogas_loss = float(i)
+        self._biogas_loss = i
 
     @property
     def biogas_eff(self):
@@ -80,14 +80,4 @@ class BiogasCombustion(SanUnit):
         return self._biogas_eff
     @biogas_eff.setter
     def biogas_eff(self, i):
-        self._biogas_eff = float(i)
-
-
-
-
-
-
-
-
-
-
+        self._biogas_eff = i

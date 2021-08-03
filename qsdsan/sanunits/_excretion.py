@@ -95,7 +95,7 @@ class Excretion(SanUnit):
         return self._e_cal
     @e_cal.setter
     def e_cal(self, i):
-        self._e_cal = float(i)
+        self._e_cal = i
 
     @property
     def p_veg(self):
@@ -103,7 +103,7 @@ class Excretion(SanUnit):
         return self._p_veg
     @p_veg.setter
     def p_veg(self, i):
-        self._p_veg = float(i)
+        self._p_veg = i
 
     @property
     def p_anim(self):
@@ -111,7 +111,7 @@ class Excretion(SanUnit):
         return self._p_anim
     @p_anim.setter
     def p_anim(self, i):
-        self._p_anim = float(i)
+        self._p_anim = i
 
     @property
     def N_prot(self):
@@ -119,7 +119,7 @@ class Excretion(SanUnit):
         return self._N_prot
     @N_prot.setter
     def N_prot(self, i):
-        self._N_prot = float(i)
+        self._N_prot = i
 
     @property
     def P_prot_v(self):
@@ -127,7 +127,7 @@ class Excretion(SanUnit):
         return self._P_prot_v
     @P_prot_v.setter
     def P_prot_v(self, i):
-        self._P_prot_v = float(i)
+        self._P_prot_v = i
 
     @property
     def P_prot_a(self):
@@ -135,7 +135,7 @@ class Excretion(SanUnit):
         return self._P_prot_a
     @P_prot_a.setter
     def P_prot_a(self, i):
-        self._P_prot_a = float(i)
+        self._P_prot_a = i
 
     @property
     def K_cal(self):
@@ -143,7 +143,7 @@ class Excretion(SanUnit):
         return self._K_cal
     @K_cal.setter
     def K_cal(self, i):
-        self._K_cal = float(i)
+        self._K_cal = i
 
     @property
     def N_exc(self):
@@ -151,7 +151,7 @@ class Excretion(SanUnit):
         return self._N_exc
     @N_exc.setter
     def N_exc(self, i):
-        self._N_exc = float(i)
+        self._N_exc = i
 
     @property
     def P_exc(self):
@@ -159,7 +159,7 @@ class Excretion(SanUnit):
         return self._P_exc
     @P_exc.setter
     def P_exc(self, i):
-        self._P_exc = float(i)
+        self._P_exc = i
 
     @property
     def K_exc(self):
@@ -167,7 +167,7 @@ class Excretion(SanUnit):
         return self._K_exc
     @K_exc.setter
     def K_exc(self, i):
-        self._K_exc = float(i)
+        self._K_exc = i
 
     @property
     def e_exc(self):
@@ -175,7 +175,7 @@ class Excretion(SanUnit):
         return self._e_exc
     @e_exc.setter
     def e_exc(self, i):
-        self._e_exc = float(i)
+        self._e_exc = i
 
     @property
     def N_ur(self):
@@ -183,7 +183,7 @@ class Excretion(SanUnit):
         return self._N_ur
     @N_ur.setter
     def N_ur(self, i):
-        self._N_ur = float(i)
+        self._N_ur = i
 
     @property
     def P_ur(self):
@@ -191,7 +191,7 @@ class Excretion(SanUnit):
         return self._P_ur
     @P_ur.setter
     def P_ur(self, i):
-        self._P_ur = float(i)
+        self._P_ur = i
 
     @property
     def K_ur(self):
@@ -199,7 +199,7 @@ class Excretion(SanUnit):
         return self._K_ur
     @K_ur.setter
     def K_ur(self, i):
-        self._K_ur = float(i)
+        self._K_ur = i
 
     @property
     def e_fec(self):
@@ -207,7 +207,7 @@ class Excretion(SanUnit):
         return self._e_fec
     @e_fec.setter
     def e_fec(self, i):
-        self._e_fec = float(i)
+        self._e_fec = i
 
     @property
     def N_ur_NH3(self):
@@ -215,7 +215,7 @@ class Excretion(SanUnit):
         return self._N_ur_NH3
     @N_ur_NH3.setter
     def N_ur_NH3(self, i):
-        self._N_ur_NH3 = float(i)
+        self._N_ur_NH3 = i
 
     @property
     def N_fec_NH3(self):
@@ -223,7 +223,7 @@ class Excretion(SanUnit):
         return self._N_fec_NH3
     @N_fec_NH3.setter
     def N_fec_NH3(self, i):
-        self._N_fec_NH3 = float(i)
+        self._N_fec_NH3 = i
 
     @property
     def ur_exc(self):
@@ -231,7 +231,7 @@ class Excretion(SanUnit):
         return self._ur_exc
     @ur_exc.setter
     def ur_exc(self, i):
-        self._ur_exc = float(i)
+        self._ur_exc = i
 
     @property
     def fec_exc(self):
@@ -239,7 +239,7 @@ class Excretion(SanUnit):
         return self._fec_exc
     @fec_exc.setter
     def fec_exc(self, i):
-        self._fec_exc = float(i)
+        self._fec_exc = i
 
     @property
     def ur_moi(self):
@@ -247,7 +247,7 @@ class Excretion(SanUnit):
         return self._ur_moi
     @ur_moi.setter
     def ur_moi(self, i):
-        self._ur_moi = float(i)
+        self._ur_moi = i
 
     @property
     def fec_moi(self):
@@ -255,7 +255,7 @@ class Excretion(SanUnit):
         return self._fec_moi
     @fec_moi.setter
     def fec_moi(self, i):
-        self._fec_moi = float(i)
+        self._fec_moi = i
 
     @property
     def Mg_ur(self):
@@ -263,7 +263,7 @@ class Excretion(SanUnit):
         return self._Mg_ur
     @Mg_ur.setter
     def Mg_ur(self, i):
-        self._Mg_ur = float(i)
+        self._Mg_ur = i
 
     @property
     def Mg_fec(self):
@@ -271,7 +271,7 @@ class Excretion(SanUnit):
         return self._Mg_fec
     @Mg_fec.setter
     def Mg_fec(self, i):
-        self._Mg_fec = float(i)
+        self._Mg_fec = i
 
     @property
     def Ca_ur(self):
@@ -279,7 +279,7 @@ class Excretion(SanUnit):
         return self._Ca_ur
     @Ca_ur.setter
     def Ca_ur(self, i):
-        self._Ca_ur = float(i)
+        self._Ca_ur = i
 
     @property
     def Ca_fec(self):
@@ -287,4 +287,4 @@ class Excretion(SanUnit):
         return self._Ca_fec
     @Ca_fec.setter
     def Ca_fec(self, i):
-        self._Ca_fec = float(i)
+        self._Ca_fec = i

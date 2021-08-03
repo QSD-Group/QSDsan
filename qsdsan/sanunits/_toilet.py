@@ -169,7 +169,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         return self._N_user
     @N_user.setter
     def N_user(self, i):
-        self._N_user = float(i)
+        self._N_user = i
 
     @property
     def N_toilet(self):
@@ -177,7 +177,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         return self._N_toilet
     @N_toilet.setter
     def N_toilet(self, i):
-        self._N_toilet = float(i)
+        self._N_toilet = i
 
     @property
     def toilet_paper(self):
@@ -188,7 +188,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         return self._toilet_paper
     @toilet_paper.setter
     def toilet_paper(self, i):
-        self._toilet_paper = float(i)
+        self._toilet_paper = i
 
     @property
     def flushing_water(self):
@@ -199,7 +199,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         return self._flushing_water
     @flushing_water.setter
     def flushing_water(self, i):
-        self._flushing_water = float(i)
+        self._flushing_water = i
 
     @property
     def cleansing_water(self):
@@ -210,7 +210,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         return self._cleansing_water
     @cleansing_water.setter
     def cleansing_water(self, i):
-        self._cleansing_water = float(i)
+        self._cleansing_water = i
 
     @property
     def desiccant(self):
@@ -233,7 +233,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         return self._N_volatilization
     @N_volatilization.setter
     def N_volatilization(self, i):
-        self._N_volatilization = float(i)
+        self._N_volatilization = i
 
     @property
     def empty_ratio(self):
@@ -253,7 +253,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         if self.if_ideal_emptying:
             msg = f'`if_ideal_emptying` is True, the set value {i} is ignored.'
             warn(msg, source=self)
-        self._empty_ratio = float(i)
+        self._empty_ratio = i
 
     @property
     def MCF_aq(self):
@@ -261,7 +261,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         return self._MCF_aq
     @MCF_aq.setter
     def MCF_aq(self, i):
-        self._MCF_aq = float(i)
+        self._MCF_aq = i
 
     @property
     def N2O_EF_aq(self):
@@ -269,4 +269,4 @@ class Toilet(SanUnit, Decay, isabstract=True):
         return self._N2O_EF_aq
     @N2O_EF_aq.setter
     def N2O_EF_aq(self, i):
-        self._N2O_EF_aq = float(i)
+        self._N2O_EF_aq = i

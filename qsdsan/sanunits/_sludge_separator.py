@@ -149,4 +149,4 @@ class SludgeSeparator(SanUnit):
         return self._settled_frac
     @settled_frac.setter
     def settled_frac(self, i):
-        self._settled_frac = float(i)
+        self._settled_frac = i

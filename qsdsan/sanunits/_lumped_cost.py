@@ -25,7 +25,7 @@ class LumpedCost(SanUnit):
     '''
     A unit that does not affect stream flow (e.g., outs will be copied from ins),
     but only for cost calculation purpose.
-    
+
     Parameters
     ----------
     cost_item_name : str
@@ -36,9 +36,9 @@ class LumpedCost(SanUnit):
         Total electricity usage.
     add_OPEX : float
         Additional operating cost per hour.
-    
+
     '''
-    
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  cost_item_name='Lumped cost',
                  CAPEX=0., power=0., add_OPEX=0., **kwargs):
@@ -47,7 +47,7 @@ class LumpedCost(SanUnit):
         else:
             self._N_outs = self._N_ins = len(ins)
         self._graphics = UnitGraphics.box(self._N_ins, self._N_outs)
-        
+
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.F_BM = {cost_item_name: 1}
         self.baseline_purchase_costs = {cost_item_name: CAPEX}
@@ -55,20 +55,10 @@ class LumpedCost(SanUnit):
         self._add_OPEX = add_OPEX
         for attr, val in kwargs.items():
             setattr(self, attr, val)
-    
+
     def _run(self):
         for num, stream in enumerate(self.ins):
             self.outs[num].copy_like(stream)
 
     def _setup(self):
         pass
-
-
-
-
-
-
-
-
-
-

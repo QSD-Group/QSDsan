@@ -30,7 +30,7 @@ data_path += 'sanunit_data/_sedimentation_tank.tsv'
 class SedimentationTank(SludgeSeparator, Decay):
     '''
     Sedimentation of wastes into liquid and solid phases based on Trimmer et al. [1]_
-    
+
     Parameters
     ----------
     ins : WasteStream
@@ -45,24 +45,24 @@ class SedimentationTank(SludgeSeparator, Decay):
         The default value will be used if not given.
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
-        
+
     References
     ----------
     .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
-    
+
     See Also
     --------
     :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-    
+
     '''
-    
+
     def __init__(self, ID='', ins=None, outs=(),thermo=None, init_with='WasteStream',
                  split=None, settled_frac=None,
-                 if_N2O_emission=False, **kwargs):    
-        
+                 if_N2O_emission=False, **kwargs):
+
         SludgeSeparator.__init__(self, ID, ins, outs, thermo, init_with,
                                  split, settled_frac, F_BM_default=1)
         self.if_N2O_emission = if_N2O_emission
@@ -72,18 +72,18 @@ class SedimentationTank(SludgeSeparator, Decay):
             value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)
         del data
-        
+
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-    
+
     _N_ins = 1
     _N_outs = 4
-    
+
     def _run(self):
         waste = self.ins[0]
         liq, sol, CH4, N2O = self.outs
         CH4.phase = N2O.phase = 'g'
-        
+
         # Retention in the settled solids
         SludgeSeparator._run(self)
 
@@ -93,10 +93,10 @@ class SedimentationTank(SludgeSeparator, Decay):
                                           max_decay=self.COD_max_decay)
         tot_COD_kg = sol._COD * sol.F_vol / 1e3
         sol.imass['OtherSS'] *= 1 - COD_loss
-        
+
         # Adjust total mass of of the settled solids by changing water content
         liq, sol = self._adjust_solid_water(waste, liq, sol)
-        
+
         COD_loss_kg = tot_COD_kg * COD_loss
         CH4.imass['CH4'] = COD_loss_kg * self.max_CH4_emission * self.MCF_decay
         sol._COD = tot_COD_kg*(1-COD_loss)/sol.F_vol*1e3
@@ -114,7 +114,7 @@ class SedimentationTank(SludgeSeparator, Decay):
             N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
         else:
             N2O.empty()
-    
+
     _units = {
         'Single tank volume': 'm3',
         'Single tank height': 'm',
@@ -122,7 +122,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         'Single tank length': 'm',
         'Single roof area': 'm2'
         }
-    
+
     def _design(self):
         design = self.design_results
         #!!! Why isn't tau used?
@@ -153,7 +153,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         return self._tau
     @tau.setter
     def tau(self, i):
-        self._tau = float(i)
+        self._tau = i
 
     @property
     def tank_V(self):
@@ -161,7 +161,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         return self._tank_V
     @tank_V.setter
     def tank_V(self, i):
-        self._tank_V = float(i)
+        self._tank_V = i
 
     @property
     def tank_L_to_W(self):
@@ -169,7 +169,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         return self._tank_L_to_W
     @tank_L_to_W.setter
     def tank_L_to_W(self, i):
-        self._tank_L_to_W = float(i)
+        self._tank_L_to_W = i
 
     @property
     def tank_W_to_H(self):
@@ -177,7 +177,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         return self._tank_W_to_H
     @tank_W_to_H.setter
     def tank_W_to_H(self, i):
-        self._tank_W_to_H = float(i)
+        self._tank_W_to_H = i
 
     @property
     def N_tank(self):
@@ -201,7 +201,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         return self._concrete_thickness
     @concrete_thickness.setter
     def concrete_thickness(self, i):
-        self._concrete_thickness = float(i)
+        self._concrete_thickness = i
 
     @property
     def roof_slope(self):
@@ -209,7 +209,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         return self._roof_slope
     @roof_slope.setter
     def roof_slope(self, i):
-        self._roof_slope = float(i)
+        self._roof_slope = i
 
     @property
     def roof_unit_mass(self):
@@ -217,12 +217,4 @@ class SedimentationTank(SludgeSeparator, Decay):
         return self._roof_unit_mass
     @roof_unit_mass.setter
     def roof_unit_mass(self, i):
-        self._roof_unit_mass = float(i)
-
-
-
-
-
-
-
-
+        self._roof_unit_mass = i
