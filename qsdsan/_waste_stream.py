@@ -30,6 +30,7 @@ from thermosteam import settings
 from . import Components, Stream, MultiStream, SanStream, MissingSanStream, \
     set_thermo
 from .utils import auom, copy_attr
+from warnings import warn
 
 __all__ = ('WasteStream', 'MissingWasteStream')
 
@@ -292,7 +293,7 @@ class WasteStream(SanStream):
 
 
     def show(self, T='K', P='Pa', flow='g/hr', composition=False, N=15,
-             stream_info=True, details=True):
+             stream_info=True, details=True, concentrations='mg/L'):
         '''
         Print information related to this :class:`WasteStream`.
 
@@ -327,13 +328,13 @@ class WasteStream(SanStream):
             T_units = T or display_units.T
             P_units = P or display_units.P
             info += self._info_phaseTP(self.phase, T_units, P_units)
-        info += self._wastestream_info(details=details)
+        info += self._wastestream_info(details=details, concentrations=concentrations, N=N)
         print(info)
 
     _ipython_display_ = show
 
 
-    def _wastestream_info(self, details=True):
+    def _wastestream_info(self, details=True, concentrations=None, N=15):
         _ws_info = ' WasteStream-specific properties:'
         # Wastewater-related properties are not relevant for gas or solids
         if self.phase != 'l':
@@ -357,8 +358,31 @@ class WasteStream(SanStream):
                 # _ws_info += int(bool(self.charge))*f'  charge     : {self.charge:.1f} mmol/L\n'
             else:
                 _ws_info += '  ...\n'
-
+            _ws_info += self._concentration_info(unit=concentrations, N=N)
         return _ws_info
+
+    def _concentration_info(self, unit='mg/L', N=15):
+        if not isinstance(unit, str): return ''
+        else:
+            C_arr = self.get_mass_concentration(unit=unit)
+            N_ID = sum(C_arr > 0)
+            too_many_components = N_ID > N
+            N_max =  min(N_ID, N)
+            IDs = self.components.IDs
+            lengths = [len(ID) for ID in IDs]
+            maxlen = max(lengths) + 2
+            line = f' Component concentrations ({unit}):\n'
+            n = 0
+            for i in range(len(IDs)):
+                if n == N_max: break
+                if C_arr[i] > 0:
+                    n += 1
+                    spaces = ' ' * (maxlen - lengths[i])
+                    line += '  ' + IDs[i] + spaces + f'{C_arr[i]:.1f}\n'
+            if too_many_components:
+                line += '  ...\n'
+            return line
+        
 
     @property
     def ratios(self):
@@ -768,6 +792,82 @@ class WasteStream(SanStream):
         '''[float] Inorganic/involatile suspended solids, in mg/L.'''
         return self.composite('solids', particle_size='x', volatile=False)
 
+
+    def get_mass_concentration(self, unit='g/m3', IDs=None):
+        '''
+        Get mass concentrations in given unit.
+
+        Parameters
+        ----------
+        unit : str, optional
+            Unit of measure. The default is 'g/m3'.
+        IDs : Iterable[str], optional
+            IDs of components. When not specified, returns mass concentrations of
+            all components in thermo.
+
+        '''
+        F_vol = self.F_vol
+        if not F_vol: raise RuntimeError(f'{repr(self)} is empty')
+        if not IDs: IDs = self.components.IDs
+        C = self.imass[IDs]/F_vol*1e3      # in mg/L
+        return C*conc_unit.conversion_factor(unit)
+    
+    
+    def set_flow_by_concentration(self, flow_tot, concentrations, units, 
+                                  bulk_liquid_ID='H2O', atol=1e-5, maxiter=50):
+        '''
+        Set the mass flows of the WasteStream by specifying total volumetric flow and
+        concentrations as well as identifying the component that constitutes the bulk liquid.
+
+        Parameters
+        ----------
+        flow_tot : float
+            Total volumetric flow of the WasteStream.
+        concentrations : dict[str, float]
+            Concentrations of components.
+        units : iterable[str]
+            The first indicates the unit for the input total flow, the second 
+            indicates the unit for the input concentrations.
+        bulk_liquid_ID : str, optional
+            ID of the Component that constitutes the bulk liquid, e.g., the solvent. 
+            The default is 'H2O'.
+        atol : float, optional
+            The absoute tolerance of error in estimated WasteStream density. 
+            The default is 1e-5 kg/L.
+        maxiter : int, optional
+            The maximum number of iterations to estimate the flow of the bulk-liquid 
+            component and overall density of the WasteStream. The default is 50.
+
+
+        '''
+        if flow_tot == 0: raise RuntimeError(f'{repr(self)} is empty')
+        if bulk_liquid_ID in concentrations.keys(): 
+            C_h2o = concentrations.pop(bulk_liquid_ID)
+            warn(f'ignored concentration specified for {bulk_liquid_ID}:{C_h2o}')
+        
+        self.empty()
+        f = conc_unit.conversion_factor(units[1])
+        Q_tot = flow_tot / vol_unit.conversion_factor(units[0])   # converted to L/hr
+        C_arr = np.array(list(concentrations.values()))        
+        IDs = concentrations.keys()
+        M_arr = C_arr/f*Q_tot*1e-6       # kg/hr
+        dwt = M_arr.sum()                # dry weight
+        self.set_flow(M_arr, 'kg/hr', IDs)
+            
+        den = self.components[bulk_liquid_ID].rho(phase=self.phase, T=self.T, P=self.P)*1e-3  # bulk liquid density in [kg/L]
+        i = 0
+        while True:
+            i += 1
+            den0 = den
+            M_tot = den0 * Q_tot
+            M_h2o = M_tot - dwt
+            self.set_flow('kg/hr', bulk_liquid_ID, M_h2o)
+            den = M_tot / self.get_total_flow('L/hr')
+            if abs(den0 - den) <= atol: break
+            if i > maxiter: raise RuntimeError(f'{bulk_liquid_ID} mass flow calculation failed to converge within '
+                                               f'{maxiter} iterations.')
+            
+            
     @classmethod
     def codstates_inf_model(cls, ID, flow_tot=0., units = ('L/hr', 'mg/L'),
                             phase='l', T=298.15, P=101325., price=0., thermo=None,
@@ -909,36 +1009,12 @@ class WasteStream(SanStream):
         set_thermo(cmps)
 
         #************ convert concentrations to flow rates *************
-        flow_tot /= vol_unit.conversion_factor(units[0])
-        factor = conc_unit.conversion_factor(units[1])
-
-        cmp_dct = {k:v/factor*flow_tot*1e-6 for k,v in cmp_dct.items()}       # [mg/L]*[L/hr]*1e-6[kg/mg] = [kg/hr]
-        dwt = sum(cmp_dct.values())         # dry weight
-
-        den = 1
-        i = 0
-        while True:
-            den0 = den
-            cmp_dct['H2O'] = flow_tot*den0 - dwt
-
-            #---------- Yalin's comments ----------
-            # This is to avoid BioSTEAM showing the warning that this ID exists
-            # in the registry
-            #!!! But maybe there's a better way to deal with this?
-            # Also this appears in all of the four models, consider making this into a function
-            temp = cls(ID=ID+str(i), phase=phase, T=T, P=P, units='kg/hr', price=price,
-                      thermo=thermo, pH=pH, SAlk=SAlk, **cmp_dct)
-            den = flow_tot*den0/(temp.F_vol*1e3)
-            i += 1
-            if abs(den-den0) <= 1e-3: break
-            if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
-
-        new.mass = temp.mass
+        new.set_flow_by_concentration(flow_tot, cmp_dct, units)
         new.ratios = r
 
         return new
 
-
+    
     @classmethod
     def codbased_inf_model(cls, ID, flow_tot=0., units = ('L/hr', 'mg/L'),
                            phase='l', T=298.15, P=101325., price=0., thermo=None,
@@ -1086,25 +1162,7 @@ class WasteStream(SanStream):
         set_thermo(cmps)
 
         #************ convert concentrations to flow rates *************
-        flow_tot /= vol_unit.conversion_factor(units[0])
-        factor = conc_unit.conversion_factor(units[1])
-
-        cmp_dct = {k:v/factor*flow_tot*1e-6 for k,v in cmp_dct.items()}       # [mg/L]*[L/hr]*1e-6[kg/mg] = [kg/hr]
-        dwt = sum(cmp_dct.values())
-
-        den = 1
-        i = 0
-        while True:
-            den0 = den
-            cmp_dct['H2O'] = flow_tot*den0 - dwt
-            temp = cls(ID=ID+str(i), phase=phase, T=T, P=P, units='kg/hr', price=price,
-                      thermo=thermo, pH=pH, SAlk=SAlk, **cmp_dct)
-            den = flow_tot*den0/(temp.F_vol*1e3)
-            i += 1
-            if abs(den-den0) <= 1e-3: break
-            if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
-
-        new.mass = temp.mass
+        new.set_flow_by_concentration(flow_tot, cmp_dct, units)
         new.ratios = r
 
         return new
@@ -1258,25 +1316,7 @@ class WasteStream(SanStream):
         set_thermo(cmps)
 
         #************ convert concentrations to flow rates *************
-        flow_tot /= vol_unit.conversion_factor(units[0])
-        factor = conc_unit.conversion_factor(units[1])
-
-        cmp_dct = {k:v/factor*flow_tot*1e-6 for k,v in cmp_dct.items()}       # [mg/L]*[L/hr]*1e-6[kg/mg] = [kg/hr]
-        dwt = sum(cmp_dct.values())
-
-        den = 1
-        i = 0
-        while True:
-            den0 = den
-            cmp_dct['H2O'] = flow_tot*den0 - dwt
-            temp = cls(ID=ID+str(i), phase=phase, T=T, P=P, units='kg/hr', price=price,
-                      thermo=thermo, pH=pH, SAlk=SAlk, **cmp_dct)
-            den = flow_tot*den0/(temp.F_vol*1e3)
-            i += 1
-            if abs(den-den0) <= 1e-3: break
-            if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
-
-        new.mass = temp.mass
+        new.set_flow_by_concentration(flow_tot, cmp_dct, units)
         new.ratios = r
 
         return new
@@ -1425,25 +1465,7 @@ class WasteStream(SanStream):
         set_thermo(cmps)
 
         #************ convert concentrations to flow rates *************
-        flow_tot /= vol_unit.conversion_factor(units[0])
-        factor = conc_unit.conversion_factor(units[1])
-
-        cmp_dct = {k:v/factor*flow_tot*1e-6 for k,v in cmp_dct.items()}       # [mg/L]*[L/hr]*1e-6[kg/mg] = [kg/hr]
-        dwt = sum(cmp_dct.values())
-
-        den = 1
-        i = 0
-        while True:
-            den0 = den
-            cmp_dct['H2O'] = flow_tot*den0 - dwt
-            temp = cls(ID=ID+str(i), phase=phase, T=T, P=P, units='kg/hr', price=price,
-                      thermo=thermo, pH=pH, SAlk=SAlk, **cmp_dct)
-            den = flow_tot*den0/(temp.F_vol*1e3)
-            i += 1
-            if abs(den-den0) <= 1e-3: break
-            if i > 50: raise ValueError('Density calculation failed to converge within 50 iterations.')
-
-        new.mass = temp.mass
+        new.set_flow_by_concentration(flow_tot, cmp_dct, units)
         new.ratios = r
 
         return new
