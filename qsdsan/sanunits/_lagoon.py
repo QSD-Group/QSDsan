@@ -27,7 +27,7 @@ __all__ = ('Lagoon',)
 class Lagoon(SanUnit, Decay):
     '''
     Anaerobic and facultative lagoon treatment based on Trimmer et al. [1]_
-    
+
     Parameters
     ----------
     ins : WasteStream
@@ -39,42 +39,49 @@ class Lagoon(SanUnit, Decay):
     flow_rate : float
         Total flow rate through the lagoon (to calculate retention time), [m3/d].
         If not provided, will use F_vol_in.
+    degraded_components : tuple
+        IDs of components that will degrade (at the same removal as `COD_removal`).
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
-        
+
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+
     References
     ----------
     .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
-        
+
     See Also
     --------
     :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-
     '''
-    
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 design_type='anaerobic', flow_rate=None, if_N2O_emission=False, **kwargs):    
-        
+                 design_type='anaerobic', flow_rate=None, degraded_components=('OtherSS',),
+                 if_N2O_emission=False, **kwargs):
+
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self._tau = None
         self._P_removal = 0.
-        
+
         anaerobic_path = data_path + 'sanunit_data/_anaerobic_lagoon.tsv'
         self._anaerobic_defaults = load_data(path=anaerobic_path)
         facultative_path = data_path + 'sanunit_data/_facultative_lagoon.tsv'
         self._facultative_defaults = load_data(path=facultative_path)
-        
+
         self._design_type = None
         self.design_type = design_type
         self._flow_rate = flow_rate
+        self.degraded_components = tuple(degraded_components)
         self.if_N2O_emission = if_N2O_emission
-        
+
         for attr, value in kwargs.items():
-            setattr(self, attr, value)        
-    
+            setattr(self, attr, value)
+
     _N_ins = 1
     _N_outs = 3
 
@@ -83,10 +90,10 @@ class Lagoon(SanUnit, Decay):
         treated, CH4, N2O = self.outs
         CH4.phase = N2O.phase = 'g'
 
-        treated.copy_like(waste)        
+        treated.copy_like(waste)
         removed_frac = self.COD_removal*self.COD_decay
-        treated.imass['OtherSS'] *= 1 - self.COD_removal
-        
+        treated.imass[self.degraded_components] *= 1 - self.COD_removal
+
         CH4.imass['CH4'] = removed_frac*waste.COD*waste.F_vol/1e3 * \
             self.MCF_decay*self.max_CH4_emission
 
@@ -102,7 +109,7 @@ class Lagoon(SanUnit, Decay):
             N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
         else:
             N2O.empty()
-            
+
         treated.imass['P'] *= 1 - self.P_removal
         treated._COD = waste.COD*waste.F_vol*(1-self.COD_removal)/treated.F_vol
 
@@ -120,14 +127,14 @@ class Lagoon(SanUnit, Decay):
         design['Lagoon length'] = L = self.lagoon_L
         design['Lagoon width'] = W = self.lagoon_W
         design['Lagoon depth'] = depth = V / (L*W)
-        
+
         liner = (L*W + 2*depth*(L+W)) * N * self.liner_unit_mass
         self.construction = (
             Construction(item='Plastic', quantity=liner, quantity_unit='kg'),
             Construction(item='Excavation', quantity=N*V, quantity_unit='m3'),
             )
         self.add_construction(add_cost=False)
-    
+
     @property
     def design_type(self):
         '''[str] Lagoon type, can be either "anaerobic" or "facultative".'''
@@ -156,24 +163,24 @@ class Lagoon(SanUnit, Decay):
         return self._COD_removal
     @COD_removal.setter
     def COD_removal(self, i):
-        self._COD_removal = float(i)
-    
+        self._COD_removal = i
+
     @property
     def COD_decay(self):
         '''[float] Fraction of removed COD that decays.'''
         return self._COD_decay
     @COD_decay.setter
     def COD_decay(self, i):
-        self._COD_decay = float(i)
-        
+        self._COD_decay = i
+
     @property
     def P_removal(self):
         '''[float] Fraction of P removed during treatment.'''
         return self._P_removal
     @P_removal.setter
     def P_removal(self, i):
-        self._P_removal = float(i)
-        
+        self._P_removal = i
+
     @property
     def N_lagoon(self):
         '''[int] Number of lagoons, float will be converted to the smallest integer.'''
@@ -191,13 +198,13 @@ class Lagoon(SanUnit, Decay):
         return self._flow_rate if self._flow_rate else self.F_vol_in*24
     @flow_rate.setter
     def flow_rate(self, i):
-        self._flow_rate = float(i)
+        self._flow_rate = i
 
     @property
     def tau(self):
         '''[float] Residence time, [d].'''
         if self._lagoon_V:
-            return self._lagoon_V*self.N_lagoon/self.flow_rate 
+            return self._lagoon_V*self.N_lagoon/self.flow_rate
         else:
             return self._tau
     @tau.setter
@@ -206,7 +213,7 @@ class Lagoon(SanUnit, Decay):
             msg = f'Residence time set, the original lagoon volume of {self._lagoon_V} m3 is ignored.'
             warn(msg, source=self)
             self._lagoon_V = None
-        self._tau = float(i)
+        self._tau = i
 
     @property
     def lagoon_V(self):
@@ -221,7 +228,7 @@ class Lagoon(SanUnit, Decay):
             msg = f'Lagoon volume set, the original residence time of {self._tau} d is ignored.'
             warn(msg, source=self)
             self._tau = None
-        self._lagoon_V = float(i)
+        self._lagoon_V = i
 
     @property
     def lagoon_L(self):
@@ -229,7 +236,7 @@ class Lagoon(SanUnit, Decay):
         return self._lagoon_L
     @lagoon_L.setter
     def lagoon_L(self, i):
-        self._lagoon_L = float(i)
+        self._lagoon_L = i
 
     @property
     def lagoon_W(self):
@@ -237,7 +244,7 @@ class Lagoon(SanUnit, Decay):
         return self._lagoon_W
     @lagoon_W.setter
     def lagoon_W(self, i):
-        self._lagoon_W = float(i)
+        self._lagoon_W = i
 
     @property
     def liner_unit_mass(self):
@@ -245,15 +252,4 @@ class Lagoon(SanUnit, Decay):
         return self._liner_unit_mass
     @liner_unit_mass.setter
     def liner_unit_mass(self, i):
-        self._liner_unit_mass = float(i)
-
-
-
-
-
-
-
-
-
-
-
+        self._liner_unit_mass = i

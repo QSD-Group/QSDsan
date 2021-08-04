@@ -28,48 +28,57 @@ data_path += 'sanunit_data/_anaerobic_baffled_reactor.tsv'
 class AnaerobicBaffledReactor(SanUnit, Decay):
     '''
     Anaerobic baffled reactor with the production of biogas based on Trimmer et al. [1]_
-    
+
     Parameters
     ----------
     ins : WasteStream
         Waste for treatment.
     outs : WasteStream
         Treated waste, biogas, fugitive CH4, and fugitive N2O.
+    degraded_components : tuple
+        IDs of components that will degrade (at the same removal as `COD_removal`).
     if_capture_biogas : bool
         If produced biogas will be captured, otherwise it will be treated
         as fugitive CH4.
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
-        
+
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+
     References
     ----------
     .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
-    
+
     See Also
     --------
     :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-    
     '''
-    
+
+    gravel_density = 1600
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 if_capture_biogas=True, if_N2O_emission=False, **kwargs):
-        
+                 degraded_components=('OtherSS',), if_capture_biogas=True,
+                 if_N2O_emission=False, **kwargs):
+
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
+        self.degraded_components = tuple(degraded_components)
         self.if_capture_biogas = if_capture_biogas
         self.if_N2O_emission = if_N2O_emission
-    
+
         data = load_data(path=data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)
         del data
-        
+
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-    
+
     _N_ins = 1
     _N_outs = 4
 
@@ -78,15 +87,12 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         treated, biogas, CH4, N2O = self.outs
         treated.copy_like(self.ins[0])
         biogas.phase = CH4.phase = N2O.phase = 'g'
-        
+
         # COD removal
         COD_deg = waste._COD*waste.F_vol/1e3*self.COD_removal # kg/hr
         treated._COD *= (1-self.COD_removal)
-        
-        #!!! Which assumption is better?
-        treated.imass['OtherSS'] *= (1-self.COD_removal)
-        # treated.mass *= (1-self.COD_removal)
-        
+        treated.imass[self.degraded_components] *= (1-self.COD_removal)
+
         CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
         if self.if_capture_biogas:
             biogas.imass['CH4'] = CH4_prcd
@@ -128,8 +134,8 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         concrete = N*self.concrete_thickness*(2*L*W+2*L*H+(2+N_b)*W*H)*self.add_concrete
         self.construction = (
             Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
-            #!!! Uncertainty on gravel density not included
-            Construction(item='Gravel', quantity= N*V/(N_b+1)*1600, quantity_unit='kg'),
+            Construction(item='Gravel', quantity= N*V/(N_b+1)*self.gravel_density,
+                         quantity_unit='kg'),
             Construction(item='Excavation', quantity=N*V, quantity_unit='m3'),
             )
         self.add_construction()
@@ -141,7 +147,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         return self._tau
     @tau.setter
     def tau(self, i):
-        self._tau = float(i)
+        self._tau = i
 
     @property
     def COD_removal(self):
@@ -149,7 +155,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         return self._COD_removal
     @COD_removal.setter
     def COD_removal(self, i):
-        self._COD_removal = float(i)
+        self._COD_removal = i
 
     @property
     def N_removal(self):
@@ -157,7 +163,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         return self._N_removal
     @N_removal.setter
     def N_removal(self, i):
-        self._N_removal = float(i)
+        self._N_removal = i
 
     @property
     def N_reactor(self):
@@ -173,7 +179,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         return self._reactor_L
     @reactor_L.setter
     def reactor_L(self, i):
-        self._reactor_L = float(i)
+        self._reactor_L = i
 
     @property
     def reactor_W(self):
@@ -181,7 +187,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         return self._reactor_W
     @reactor_W.setter
     def reactor_W(self, i):
-        self._reactor_W = float(i)
+        self._reactor_W = i
 
     @property
     def reactor_H(self):
@@ -189,7 +195,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         return self._reactor_H
     @reactor_H.setter
     def reactor_H(self, i):
-        self._reactor_H = float(i)
+        self._reactor_H = i
 
     @property
     def N_baffle(self):
@@ -208,7 +214,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         return self._add_concrete
     @add_concrete.setter
     def add_concrete(self, i):
-        self._add_concrete = float(i)
+        self._add_concrete = i
 
     @property
     def concrete_thickness(self):
@@ -216,17 +222,4 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         return self._concrete_thickness
     @concrete_thickness.setter
     def concrete_thickness(self, i):
-        self._concrete_thickness = float(i)
-
-
-
-
-
-
-
-
-
-
-
-
-
+        self._concrete_thickness = i

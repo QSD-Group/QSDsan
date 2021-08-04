@@ -8,20 +8,17 @@ This module is developed by:
     Smiti Mittal <smitimittal@gmail.com>
     Yalin Li <zoe.yalin.li@gmail.com>
     Anna Kogler
-    
+
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-# %%
 
-import math
-from .. import Equipment, SanUnit, Component, WasteStream
+from .. import Equipment
 
 __all__ = ('Machine',)
 
-#%%
 
 class Machine(Equipment):
     '''
@@ -46,7 +43,8 @@ class Machine(Equipment):
                  design_units={},
                  F_BM=1., lifetime=10000, lifetime_unit='hr', N=0,
                  unit_cost=0.1):
-        Equipment.__init__(self=self, name=name, design_units=design_units, F_BM=F_BM, lifetime=lifetime, lifetime_unit=lifetime_unit)
+        Equipment.__init__(self=self, name=name, design_units=design_units,
+                           F_BM=F_BM, lifetime=lifetime, lifetime_unit=lifetime_unit)
         self.name = name
         self.N = N
         self.unit_cost = unit_cost
@@ -63,14 +61,11 @@ class Machine(Equipment):
     def _cost(self):
         return self.unit_cost*self.N
 
-    # You can use property to add checks
+
     @property
     def N(self):
-        '''[str] Number of units of the electrode.'''
+        '''[int] Number of units of the electrode.'''
         return self._N
     @N.setter
     def N(self, i):
-        try:
-            self._N = int(i)
-        except:
-            raise ValueError(f'N must be an integer')
+        self._N = int(i)

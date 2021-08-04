@@ -15,7 +15,7 @@ Box plot
 .. code:: bash
 
     from qsdsan import stats as s
-    from exposan.systems import bwaise as bw
+    from exposan import bwaise as bw
 
     modelA = bw.modelA
 

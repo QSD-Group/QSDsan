@@ -40,6 +40,12 @@ class DryingBed(SanUnit, Decay):
         Can be "unplanted" or "planted". The default unplanted process has
         a number of "covered", "uncovered", and "storage" beds. The storage
         bed is similar to the covered bed, but with higher wall height.
+    degraded_components : tuple
+        IDs of components that will degrade (simulated by first-order decay).
+
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
 
     References
     ----------
@@ -51,11 +57,10 @@ class DryingBed(SanUnit, Decay):
     See Also
     --------
     :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 design_type='unplanted', **kwargs):
+                 design_type='unplanted', degraded_components=('OtherSS',), **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         N_unplanted = {'covered': 19,
@@ -69,6 +74,8 @@ class DryingBed(SanUnit, Decay):
             self._N_bed = dict.fromkeys(N_unplanted.keys(), 0)
             self._N_bed['planted'] = 2
             self.design_type = 'planted'
+
+        self.degraded_components = tuple(degraded_components)
 
         data = load_data(path=data_path)
         for para in data.index:
@@ -97,7 +104,7 @@ class DryingBed(SanUnit, Decay):
                                           t=self.tau/365,
                                           max_decay=self.COD_max_decay)
         sol_COD = sol._COD/1e3*sol.F_vol * (1-COD_loss)
-        sol.imass['OtherSS'] *= 1 - COD_loss
+        sol.imass[self.degraded_components] *= 1 - COD_loss
         CH4.imass['CH4'] = waste.COD/1e3*waste.F_vol*COD_loss * \
             self.max_CH4_emission*self.MCF_decay # COD in mg/L (g/m3)
 
@@ -192,27 +199,19 @@ class DryingBed(SanUnit, Decay):
             raise ValueError(f'design_type can only be "unplanted" or "planted", '
                              f"not {i}.")
 
-    @staticmethod
-    def _set_bed_prop(prop, value):
-        if isinstance(value, dict):
-            for key in value.keys():
-                prop[key] = value[key]
-        else:
-            raise TypeError(f'Only dict object is allowed, not {type(value).__name__}.')
-
     @property
     def N_bed(self):
         '''
         [dict] Number of the different types of drying beds,
         float will be converted to the smallest integer.
         '''
-        #!!! Think of a better way to do this
         for i, j in self._N_bed.items():
             self._N_bed[i] = int(np.ceil(j))
         return self._N_bed
     @N_bed.setter
     def N_bed(self, i):
-        self._set_bed_prop(self._N_bed, i)
+        int_i = {k: np.ceil(v) for k, v in i.items()}
+        self._N_bed.update(int_i)
 
     @property
     def bed_L(self):
@@ -220,7 +219,7 @@ class DryingBed(SanUnit, Decay):
         return self._bed_L
     @bed_L.setter
     def bed_L(self, i):
-        self._set_bed_prop(self._bed_L, i)
+        self._bed_L.update(i)
 
     @property
     def bed_W(self):
@@ -228,7 +227,7 @@ class DryingBed(SanUnit, Decay):
         return self._bed_W
     @bed_W.setter
     def bed_W(self, i):
-        self._set_bed_prop(self._bed_W, i)
+        self._bed_W.update(i)
 
     @property
     def bed_H(self):
@@ -236,7 +235,7 @@ class DryingBed(SanUnit, Decay):
         return self._bed_H
     @bed_H.setter
     def bed_H(self, i):
-        self._set_bed_prop(self._bed_H, i)
+        self._bed_H.update(i)
 
     @property
     def column_H(self):

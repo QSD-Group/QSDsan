@@ -32,22 +32,23 @@ class PitLatrine(Toilet):
 
     Parameters
     ----------
+    ins : WasteStream
+        Solid for drying.
+    outs : WasteStream
+        Recyclable mixed excreta, stream leached to soil, fugitive CH4, and fugitive N2O.
+    lifetime : int
+        Lifetime of this pit latrine, [yr].
     if_leaching : bool
         If infiltration to soil occurs
         (i.e., if the pit walls and floors are permeable).
+    if_shared : bool
+        If the toilet is shared.
     if_pit_above_water_table : bool
         If the pit is above local water table.
 
-    Returns
-    -------
-    waste : WasteStream
-        Recyclable mixed excreta.
-    leachate : WasteStream
-        Leached to soil.
-    CH4 : WasteStream
-        Fugitive CH4.
-    N2O : WasteStream
-        Fugitive N2O.
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
 
     References
     ----------
@@ -59,21 +60,21 @@ class PitLatrine(Toilet):
     See Also
     --------
     :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
-
     '''
 
     # Legacy code to add checkers
     # _P_leaching = Frac_D(name='P_leaching')
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 N_user=1, N_toilet=1, lifetime=8,
+                 degraded_components=('OtherSS',), N_user=1, N_toilet=1,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True,
                  CAPEX=449, OPEX_over_CAPEX=0.05,
-                 if_leaching=True, if_shared=True,
+                 lifetime=8, if_leaching=True, if_shared=True,
                  if_pit_above_water_table=True, **kwargs):
 
-        Toilet.__init__(self, ID, ins, outs, thermo, init_with, N_user, N_toilet,
+        Toilet.__init__(self, ID, ins, outs, thermo, init_with,
+                        degraded_components, N_user, N_toilet,
                         if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
                         if_air_emission, if_ideal_emptying, CAPEX, OPEX_over_CAPEX)
 
@@ -137,7 +138,7 @@ class PitLatrine(Toilet):
                                               max_decay=self.COD_max_decay)
             COD_loss_kg = tot_COD_kg * COD_loss
             CH4.imass['CH4'] = COD_loss_kg * self.max_CH4_emission * self.MCF_decay
-            mixed.imass['OtherSS'] *= 1 - COD_loss
+            mixed.imass[self.degraded_components] *= 1 - COD_loss
 
             N_loss = self.first_order_decay(k=self.decay_k_N,
                                             t=self.emptying_period,
@@ -217,7 +218,7 @@ class PitLatrine(Toilet):
         return self._pit_depth
     @pit_depth.setter
     def pit_depth(self, i):
-        self._pit_depth = float(i)
+        self._pit_depth = i
 
     @property
     def pit_area(self):
@@ -225,7 +226,7 @@ class PitLatrine(Toilet):
         return self._pit_area
     @pit_area.setter
     def pit_area(self, i):
-        self._pit_area = float(i)
+        self._pit_area = i
 
     #!!! Should add some contraints, maybe in _run, to make sure the pit is big
     # enough for the amount of excreta
@@ -240,7 +241,7 @@ class PitLatrine(Toilet):
         return self._emptying_period
     @emptying_period.setter
     def emptying_period(self, i):
-        self._emptying_period = float(i)
+        self._emptying_period = i
 
     @property
     def sludge_accum_rate(self):
@@ -248,7 +249,7 @@ class PitLatrine(Toilet):
         return self._sludge_accum_rate
     @sludge_accum_rate.setter
     def sludge_accum_rate(self, i):
-        self._sludge_accum_rate = float(i)
+        self._sludge_accum_rate = i
 
     @property
     def liq_leaching(self):
@@ -261,7 +262,7 @@ class PitLatrine(Toilet):
             max(self.N_leaching, self.P_leaching, self.K_leaching)
     @liq_leaching.setter
     def liq_leaching(self, i):
-        self._liq_leaching = float(i)
+        self._liq_leaching = i
 
     @property
     def N_leaching(self):
@@ -272,7 +273,7 @@ class PitLatrine(Toilet):
         return self._N_leaching
     @N_leaching.setter
     def N_leaching(self, i):
-        self._N_leaching = float(i)
+        self._N_leaching = i
         # Legacy code to add checkers
         # @Frac_C(self)
         # def N_leaching(): return i
@@ -286,7 +287,7 @@ class PitLatrine(Toilet):
         return self._P_leaching
     @P_leaching.setter
     def P_leaching(self, i):
-        self._P_leaching = float(i)
+        self._P_leaching = i
 
     @property
     def K_leaching(self):
@@ -300,7 +301,7 @@ class PitLatrine(Toilet):
     def K_leaching(self, i):
         if i < 0:
             raise ValueError('Value for K_leaching cannot be negative')
-        self._K_leaching = float(i)
+        self._K_leaching = i
 
     def _return_MCF_EF(self):
         # self._MCF and self._N2O_EF are dict for
@@ -319,7 +320,7 @@ class PitLatrine(Toilet):
         return float(self._MCF_decay[self._return_MCF_EF()])
     @MCF_decay.setter
     def MCF_decay(self, i):
-        self._MCF_decay[self._return_MCF_EF()] = float(i)
+        self._MCF_decay[self._return_MCF_EF()] = i
 
     @property
     def N2O_EF_decay(self):
@@ -327,4 +328,4 @@ class PitLatrine(Toilet):
         return float(self._N2O_EF_decay[self._return_MCF_EF()])
     @N2O_EF_decay.setter
     def N2O_EF_decay(self, i):
-        self._N2O_EF_decay[self._return_MCF_EF()] = float(i)
+        self._N2O_EF_decay[self._return_MCF_EF()] = i

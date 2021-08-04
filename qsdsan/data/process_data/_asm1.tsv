@@ -1,0 +1,9 @@
+	S_I	S_S	X_I	X_S	X_BH	X_BA	X_P	S_O	S_NO	S_N2	S_NH	S_ND	X_ND	S_ALK	
+aero_growth_hetero		(-1)/Y_H			1			(Y_H-1)/Y_H			?			?	mu_H*S_S/(K_S+S_S)*S_O/(K_O_H+S_O)*S_NH/(K_NH+S_NH)*X_BH
+anox_growth_hetero		(-1)/Y_H			1				7/20*(Y_H-1)/Y_H	7/20*(1-Y_H)/Y_H	?			?	mu_H*S_S/(K_S+S_S)*K_O_H/(K_O_H+S_O)*S_NO/(K_NO+S_NO)*S_NH/(K_NH+S_NH)*eta_g*X_BH
+aero_growth_auto						1		(Y_A-32/7)/Y_A	1/Y_A		?			?	mu_A*S_NH/(K_NH+S_NH)*S_O/(K_O_A+S_O)*X_BA
+decay_hetero				1-f_P	-1		f_P						?		b_H*X_BH
+decay_auto				1-f_P		-1	f_P						?		b_A*X_BA
+ammonification											1	-1		?	k_a*S_ND*X_BH
+hydrolysis		1		-1											k_h*X_S/(K_X*X_BH+X_S)*(S_O/(K_O_H+S_O)+eta_h*K_O_H/(K_O_H+S_O)*S_NO/(K_NO+S_NO))*X_BH
+hydrolysis_N												1	-1		k_h*X_S/(K_X*X_BH+X_S)*(S_O/(K_O_H+S_O)+eta_h*K_O_H/(K_O_H+S_O)*S_NO/(K_NO+S_NO))*X_BH*X_ND/X_S

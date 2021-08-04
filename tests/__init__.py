@@ -15,7 +15,6 @@ for license details.
 
 from . import (
     test_bst_units,
-    test_bwaise,
     test_component,
     test_process,
     test_sanunit,
@@ -25,7 +24,6 @@ from . import (
 
 __all__ = (
     *test_bst_units.__all__,
-    *test_bwaise.__all__,
     *test_component.__all__,
     *test_process.__all__,
     *test_sanunit.__all__,

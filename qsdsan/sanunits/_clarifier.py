@@ -22,11 +22,12 @@ __all__ = ('FlatBottomCircularClarifier', )
 
 from .. import SanUnit
 from math import exp
-from sympy import symbols, lambdify, Matrix
+# from sympy import symbols, lambdify, Matrix
 from scipy.integrate import solve_ivp
+from warnings import warn
 import numpy as np
 
-def settling_flux(X, v_max, v_max_practical, X_min, rh, rp):
+def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp):
     X_star = max(X-X_min, 0)
     v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star)))
     return X*max(v, 0)
@@ -36,11 +37,12 @@ class FlatBottomCircularClarifier(SanUnit):
     _N_ins = 1
     _N_outs = 2
     
-    def __init__(self, ID='', ins=None, outs=(), sludge_flow_rate=2000, 
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, 
+                 init_with='WasteStream', sludge_flow_rate=2000, 
                  surface_area=1500, height=4, N_layer=10, feed_layer=4, 
                  X_threshold=3000, v_max=474, v_max_practical=250, 
                  rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, **kwargs):
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self._Qs = sludge_flow_rate
         self._V = surface_area * height
         self._A = surface_area
@@ -67,20 +69,20 @@ class FlatBottomCircularClarifier(SanUnit):
         sludge.copy_like(inf)
         Q_s = self._Qs
         Q_e = Q_in - Q_s
+        n = self._N_layer
         jf = self._feed_layer - 1
         if jf not in range(self._N_layer): 
             raise ValueError(f'feed layer {self._feed_layer} is out of range.'
                              f'must be an integer between 1 and {self._N_layer}.')
-        if self._init_X: X_0 = self._init_X
-        else: X_0 = X_in  
+        if self._init_X is not None: X_0 = self._init_X
+        else: X_0 = np.ones(n)*X_in  
         X_min = X_in * self._fns
-        n = self._N_layer
         def dX_dt(t, X):
             flow_out = X*Q_e*[j <= jf for j in range(n)] + X*Q_s*[j >= jf for j in range(n)]
             flow_in = np.array([flow_out[j+1] if j < jf else flow_out[j-1] for j in range(n)])
             flow_in[jf] = Q_in * X_in            
-            VX = [settling_flux(x, self._v_max, self._v_max_p, X_min, self._rh, self._rp) for x in X]
-            J = [VX[j] if X[j+1] <= X_t and j < jf else min(VX[j], VX[j+1]) for j in range(n-1)]
+            VX = [_settling_flux(x, self._v_max, self._v_max_p, X_min, self._rh, self._rp) for x in X]
+            J = [VX[j] if X[j+1] <= self._X_t and j < jf else min(VX[j], VX[j+1]) for j in range(n-1)]
             settle_out = np.array(J + [0])
             settle_in = np.array([0] + J)
             dXdt = ((flow_in - flow_out)/self._A + settle_in - settle_out)/self._hj
@@ -91,11 +93,11 @@ class FlatBottomCircularClarifier(SanUnit):
             else: return 1
         limit.terminal = True
         
-        sol = solve_ivp(dX_dt, (0, t_bound), np.ones(n)*X_0, method='BDF', events=limit)
+        sol = solve_ivp(dX_dt, (0, t_bound), X_0, events=limit)
         X_out = sol.y.transpose()[-1]
         if steady_state:
             while len(sol.t_events) == 0:
-                sol = solve_ivp(dX_dt, (0, t_bound), X_out, method='BDF', events=limit)
+                sol = solve_ivp(dX_dt, (0, t_bound), X_out, events=limit)
                 X_out = sol.y.transpose()[-1]
         else:
             if len(sol.t_events) == 0: 

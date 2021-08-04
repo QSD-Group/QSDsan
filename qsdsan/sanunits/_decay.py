@@ -12,6 +12,7 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+
 # %%
 
 import numpy as np
@@ -19,9 +20,6 @@ import numpy as np
 __all__ = ('Decay',)
 
 
-# %%
-
-#!!! This can be potentially made into a Process
 class Decay:
     '''For non-steady state degradation.'''
 
@@ -49,26 +47,25 @@ class Decay:
         Returns
         -------
         N removal: tuple
-            Amount of preferred N to be removed, amount of other N to be removed.            
-
+            Amount of preferred N to be removed, amount of other N to be removed.
         '''
         if not preferred_N > 0:
             return 0, tot_red
         elif preferred_N > tot_red:
             return tot_red, 0
         else:
-            return preferred_N, tot_red-preferred_N  
-      
+            return preferred_N, tot_red-preferred_N
+
     @staticmethod
     def first_order_decay(k, t, max_decay, t0=0, tot=1):
         r'''
         Calculate first-order degradation loss based on Trimmer et al. [1]_
-        
+
         .. math:: C_0 = tot * max_{decay}
         .. math:: C_{avg} = \frac{C_0}{k*t} * (e^{-k*t_0}-e^{-k*t_f})
         .. math:: loss = C_0 - C_{avg}
-        
-        
+
+
         Parameters
         ----------
         k : float
@@ -94,7 +91,6 @@ class Decay:
             Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
             Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
             https://doi.org/10.1021/acs.est.0c03296.
-
         '''
 
         C0 = tot * max_decay
@@ -109,7 +105,7 @@ class Decay:
         return self._COD_max_decay
     @COD_max_decay.setter
     def COD_max_decay(self, i):
-        self._COD_max_decay = float(i)
+        self._COD_max_decay = i
 
     @property
     def decay_k_COD(self):
@@ -117,7 +113,7 @@ class Decay:
         return self._decay_k_COD
     @decay_k_COD.setter
     def decay_k_COD(self, i):
-        self._decay_k_COD = float(i)
+        self._decay_k_COD = i
 
     @property
     def MCF_decay(self):
@@ -125,7 +121,7 @@ class Decay:
         return self._MCF_decay
     @MCF_decay.setter
     def MCF_decay(self, i):
-        self._MCF_decay = float(i)
+        self._MCF_decay = i
 
     @property
     def max_CH4_emission(self):
@@ -133,7 +129,7 @@ class Decay:
         return self._max_CH4_emission
     @max_CH4_emission.setter
     def max_CH4_emission(self, i):
-        self._max_CH4_emission = float(i)
+        self._max_CH4_emission = i
 
     @property
     def N_max_decay(self):
@@ -141,7 +137,7 @@ class Decay:
         return self._N_max_decay
     @N_max_decay.setter
     def N_max_decay(self, i):
-        self._N_max_decay = float(i)
+        self._N_max_decay = i
 
     @property
     def decay_k_N(self):
@@ -149,7 +145,7 @@ class Decay:
         return self._decay_k_N
     @decay_k_N.setter
     def decay_k_N(self, i):
-        self._decay_k_N = float(i)
+        self._decay_k_N = i
 
     @property
     def N2O_EF_decay(self):
@@ -157,11 +153,4 @@ class Decay:
         return self._N2O_EF_decay
     @N2O_EF_decay.setter
     def N2O_EF_decay(self, i):
-        self._N2O_EF_decay = float(i)
-
-
-
-
-
-
-
+        self._N2O_EF_decay = i
