@@ -33,6 +33,9 @@ class BiogasCombustion(SanUnit):
     biogas_eff : float
         Combustion efficiency of biogas as a fraction of CH4.
 
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -42,6 +45,7 @@ class BiogasCombustion(SanUnit):
         self.if_combustion = if_combustion
         self._biogas_loss = biogas_loss
         self._biogas_eff = biogas_eff
+
 
     _N_ins = 2
     _N_outs = 3

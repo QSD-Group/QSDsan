@@ -31,13 +31,16 @@ class CropApplication(SanUnit):
     loss_ratio : float or dict
         Fractions of material losses during application (if `if_materiloass` is True).
 
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+
     References
     ----------
     .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
         Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
         Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
         https://doi.org/10.1021/acs.est.0c03296.
-
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',

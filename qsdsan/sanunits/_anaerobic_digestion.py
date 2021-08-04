@@ -38,11 +38,17 @@ class AnaerobicDigestion(SanUnit, Decay):
     flow_rate : float
         Total flow rate through the reactor (for sizing purpose), [m3/d].
         If not provided, will use F_vol_in.
+    degraded_components : tuple
+        IDs of components that will degrade (at the same removal as `COD_removal`).
     if_capture_biogas : bool
         If produced biogas will be captured, otherwise it will be treated
         as fugitive CH4.
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
+
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
 
     References
     ----------
@@ -54,13 +60,15 @@ class AnaerobicDigestion(SanUnit, Decay):
     See Also
     --------
     :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 flow_rate=None, if_capture_biogas=True, if_N2O_emission=False, **kwargs):
+                 flow_rate=None, degraded_components=('OtherSS',),
+                 if_capture_biogas=True, if_N2O_emission=False,
+                 **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self._flow_rate = flow_rate
+        self.degraded_components = tuple(degraded_components)
         self.if_capture_biogas = if_capture_biogas
         self.if_N2O_emission = if_N2O_emission
 
@@ -73,8 +81,10 @@ class AnaerobicDigestion(SanUnit, Decay):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+
     _N_ins = 1
     _N_outs = 4
+
 
     def _run(self):
         waste = self.ins[0]
@@ -85,7 +95,7 @@ class AnaerobicDigestion(SanUnit, Decay):
         # COD removal
         COD_deg = treated._COD*treated.F_vol/1e3*self.COD_removal # kg/hr
         treated._COD *= (1-self.COD_removal)
-        treated.imass['OtherSS'] *= (1-self.COD_removal)
+        treated.imass[self.degraded_components] *= (1-self.COD_removal)
 
         CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
         if self.if_capture_biogas:
@@ -122,8 +132,10 @@ class AnaerobicDigestion(SanUnit, Decay):
         design['Residence time'] = tau = self.tau
         design['Reactor number'] = N = self.N_reactor
         V_tot = Q * tau*24
-        # one extra as a backup
+
+        # One extra as a backup
         design['Single reactor volume'] = V_single = V_tot/(1-self.headspace_frac)/(N-1)
+
         # Rx modeled as a cylinder
         design['Reactor diameter'] = D = (4*V_single*self.aspect_ratio/np.pi)**(1/3)
         design['Reactor height'] = H = self.aspect_ratio * D

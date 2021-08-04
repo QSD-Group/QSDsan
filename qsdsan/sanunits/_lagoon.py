@@ -39,8 +39,14 @@ class Lagoon(SanUnit, Decay):
     flow_rate : float
         Total flow rate through the lagoon (to calculate retention time), [m3/d].
         If not provided, will use F_vol_in.
+    degraded_components : tuple
+        IDs of components that will degrade (at the same removal as `COD_removal`).
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
+
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
 
     References
     ----------
@@ -52,11 +58,11 @@ class Lagoon(SanUnit, Decay):
     See Also
     --------
     :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 design_type='anaerobic', flow_rate=None, if_N2O_emission=False, **kwargs):
+                 design_type='anaerobic', flow_rate=None, degraded_components=('OtherSS',),
+                 if_N2O_emission=False, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self._tau = None
@@ -70,6 +76,7 @@ class Lagoon(SanUnit, Decay):
         self._design_type = None
         self.design_type = design_type
         self._flow_rate = flow_rate
+        self.degraded_components = tuple(degraded_components)
         self.if_N2O_emission = if_N2O_emission
 
         for attr, value in kwargs.items():
@@ -85,7 +92,7 @@ class Lagoon(SanUnit, Decay):
 
         treated.copy_like(waste)
         removed_frac = self.COD_removal*self.COD_decay
-        treated.imass['OtherSS'] *= 1 - self.COD_removal
+        treated.imass[self.degraded_components] *= 1 - self.COD_removal
 
         CH4.imass['CH4'] = removed_frac*waste.COD*waste.F_vol/1e3 * \
             self.MCF_decay*self.max_CH4_emission

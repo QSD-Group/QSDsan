@@ -44,6 +44,10 @@ class SludgeSeparator(SanUnit):
         Fraction of influent that settles as solids.
         The default value will be used if not given.
 
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+
     References
     ----------
     .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
@@ -55,8 +59,8 @@ class SludgeSeparator(SanUnit):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  split=None, settled_frac=None, **kwargs):
-
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, **kwargs)
+
         data = load_data(path=data_path)
         if not split:
             value = dct_from_str(data.loc['split']['expected'])

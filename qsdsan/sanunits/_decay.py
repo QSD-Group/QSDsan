@@ -12,6 +12,7 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+
 # %%
 
 import numpy as np
@@ -19,9 +20,6 @@ import numpy as np
 __all__ = ('Decay',)
 
 
-# %%
-
-#!!! This can be potentially made into a Process
 class Decay:
     '''For non-steady state degradation.'''
 
@@ -50,7 +48,6 @@ class Decay:
         -------
         N removal: tuple
             Amount of preferred N to be removed, amount of other N to be removed.
-
         '''
         if not preferred_N > 0:
             return 0, tot_red
@@ -94,7 +91,6 @@ class Decay:
             Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
             Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
             https://doi.org/10.1021/acs.est.0c03296.
-
         '''
 
         C0 = tot * max_decay

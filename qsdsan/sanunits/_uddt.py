@@ -35,6 +35,13 @@ class UDDT(Toilet):
 
     Parameters
     ----------
+    ins : WasteStream
+        Solid for drying.
+    outs : WasteStream
+        Recyclable liquid urine, recyclable solid feces, struvite scaling (irrecoverable),
+        hydroxyapatite scaling (irrecoverable), fugitive CH4, and fugitive N2O.
+    lifetime : int
+        Lifetime of this pit latrine, [yr].
     T : float
         Temperature, [K].
     safety_factor : float
@@ -45,20 +52,9 @@ class UDDT(Toilet):
     if_pit_above_water_table : bool
         If the pit is above local water table.
 
-    Returns
-    -------
-    liq : WasteStream
-        Recyclable liquid urine.
-    sol : WasteStream
-        Recyclable solid feces.
-    struvite : WasteStream
-        Struvite scaling (irrecoverable).
-    HAP : WasteStream
-        Hydroxyapatite scaling (irrecoverable).
-    CH4 : WasteStream
-        Fugitive CH4.
-    N2O : WasteStream
-        Fugitive N2O.
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
 
     References
     ----------
@@ -70,18 +66,18 @@ class UDDT(Toilet):
     See Also
     --------
     :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
-
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 N_user=1, N_toilet=1, lifetime=8,
+                 degraded_components=('OtherSS',), N_user=1, N_toilet=1, lifetime=8,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=True, if_air_emission=True, if_ideal_emptying=True,
                  CAPEX=553, OPEX_over_CAPEX=0.1,
                  T=273.15+24, safety_factor=1, if_prep_loss=True, if_treatment=False,
                  **kwargs):
 
-        Toilet.__init__(self, ID, ins, outs, thermo, init_with, N_user, N_toilet,
+        Toilet.__init__(self, ID, ins, outs, thermo, init_with,
+                        degraded_components, N_user, N_toilet,
                         if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
                         if_air_emission, if_ideal_emptying, CAPEX, OPEX_over_CAPEX)
         self.lifetime = lifetime
@@ -129,7 +125,7 @@ class UDDT(Toilet):
             CH4.imass['CH4'] = sol.COD/1e3*sol.F_vol*COD_loss * \
                 self.max_CH4_emission*self.MCF_decay # COD in mg/L (g/m3)
             sol._COD *= 1 - COD_loss
-            sol.imass['OtherSS'] *= 1 - COD_loss
+            sol.imass[self.degraded_components] *= 1 - COD_loss
 
             N_loss = self.first_order_decay(k=self.decay_k_N,
                                             t=self.collection_period/365,
@@ -214,9 +210,7 @@ class UDDT(Toilet):
             sol.imass['H2O'] = (sol.F_mass-sol.imass['H2O']) / (1-fec_moi)
             sol._COD = sol_COD*1e3/sol.F_vol
 
-        #!!! Maybe don't need this, only add this to the design_results dict,
-        # remove setter if shouldn't be set
-        self.vault_V = sol.F_vol*self.collection_period*24 # in day
+        self._vault_V = sol.F_vol*self.collection_period*24 # in day
 
         # Non-ideal emptying
         if not self.if_ideal_emptying:
@@ -317,9 +311,6 @@ class UDDT(Toilet):
     def vault_V(self):
         '''[float] Volume of the feces dehydration vault, [m3].'''
         return self._vault_V
-    @vault_V.setter
-    def vault_V(self, i):
-        self._vault_V = i
 
     @property
     def struvite_pKsp(self):

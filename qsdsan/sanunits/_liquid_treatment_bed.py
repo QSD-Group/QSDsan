@@ -35,8 +35,14 @@ class LiquidTreatmentBed(SanUnit, Decay):
         Waste for treatment.
     outs : WasteStream
         Treated waste, fugitive CH4, and fugitive N2O.
+    degraded_components : tuple
+        IDs of components that will degrade (at the same removal as `COD_removal`).
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
+
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
 
     References
     ----------
@@ -48,13 +54,13 @@ class LiquidTreatmentBed(SanUnit, Decay):
     See Also
     --------
     :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 if_N2O_emission=False, **kwargs):
+                 degraded_components=('OtherSS',), if_N2O_emission=False, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
+        self.degraded_components = tuple(degraded_components)
         self.if_N2O_emission = if_N2O_emission
 
         data = load_data(path=data_path)
@@ -82,7 +88,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
         COD_loss_tot = COD_loss*waste.COD/1e3*waste.F_vol
 
         treated._COD *= (1-COD_loss)
-        treated.imass['OtherSS'] *= (1-COD_loss)
+        treated.imass[self.degraded_components] *= (1-COD_loss)
 
         CH4_prcd = COD_loss_tot*self.MCF_decay*self.max_CH4_emission
         CH4.imass['CH4'] = CH4_prcd

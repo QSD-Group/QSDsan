@@ -35,11 +35,17 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         Waste for treatment.
     outs : WasteStream
         Treated waste, biogas, fugitive CH4, and fugitive N2O.
+    degraded_components : tuple
+        IDs of components that will degrade (at the same removal as `COD_removal`).
     if_capture_biogas : bool
         If produced biogas will be captured, otherwise it will be treated
         as fugitive CH4.
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
+
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
 
     References
     ----------
@@ -51,15 +57,16 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
     See Also
     --------
     :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-
     '''
 
     gravel_density = 1600
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 if_capture_biogas=True, if_N2O_emission=False, **kwargs):
+                 degraded_components=('OtherSS',), if_capture_biogas=True,
+                 if_N2O_emission=False, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
+        self.degraded_components = tuple(degraded_components)
         self.if_capture_biogas = if_capture_biogas
         self.if_N2O_emission = if_N2O_emission
 
@@ -84,7 +91,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         # COD removal
         COD_deg = waste._COD*waste.F_vol/1e3*self.COD_removal # kg/hr
         treated._COD *= (1-self.COD_removal)
-        treated.imass['OtherSS'] *= (1-self.COD_removal)
+        treated.imass[self.degraded_components] *= (1-self.COD_removal)
 
         CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
         if self.if_capture_biogas:

@@ -32,22 +32,23 @@ class PitLatrine(Toilet):
 
     Parameters
     ----------
+    ins : WasteStream
+        Solid for drying.
+    outs : WasteStream
+        Recyclable mixed excreta, stream leached to soil, fugitive CH4, and fugitive N2O.
+    lifetime : int
+        Lifetime of this pit latrine, [yr].
     if_leaching : bool
         If infiltration to soil occurs
         (i.e., if the pit walls and floors are permeable).
+    if_shared : bool
+        If the toilet is shared.
     if_pit_above_water_table : bool
         If the pit is above local water table.
 
-    Returns
-    -------
-    waste : WasteStream
-        Recyclable mixed excreta.
-    leachate : WasteStream
-        Leached to soil.
-    CH4 : WasteStream
-        Fugitive CH4.
-    N2O : WasteStream
-        Fugitive N2O.
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
 
     References
     ----------
@@ -59,21 +60,21 @@ class PitLatrine(Toilet):
     See Also
     --------
     :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
-
     '''
 
     # Legacy code to add checkers
     # _P_leaching = Frac_D(name='P_leaching')
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 N_user=1, N_toilet=1, lifetime=8,
+                 degraded_components=('OtherSS',), N_user=1, N_toilet=1,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True,
                  CAPEX=449, OPEX_over_CAPEX=0.05,
-                 if_leaching=True, if_shared=True,
+                 lifetime=8, if_leaching=True, if_shared=True,
                  if_pit_above_water_table=True, **kwargs):
 
-        Toilet.__init__(self, ID, ins, outs, thermo, init_with, N_user, N_toilet,
+        Toilet.__init__(self, ID, ins, outs, thermo, init_with,
+                        degraded_components, N_user, N_toilet,
                         if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
                         if_air_emission, if_ideal_emptying, CAPEX, OPEX_over_CAPEX)
 
@@ -137,7 +138,7 @@ class PitLatrine(Toilet):
                                               max_decay=self.COD_max_decay)
             COD_loss_kg = tot_COD_kg * COD_loss
             CH4.imass['CH4'] = COD_loss_kg * self.max_CH4_emission * self.MCF_decay
-            mixed.imass['OtherSS'] *= 1 - COD_loss
+            mixed.imass[self.degraded_components] *= 1 - COD_loss
 
             N_loss = self.first_order_decay(k=self.decay_k_N,
                                             t=self.emptying_period,

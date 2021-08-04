@@ -38,8 +38,12 @@ class ComponentSplitter(SanUnit):
 
         .. note::
 
-            Length of the `split_keys()` (which determines size of the outs) cannot be changed after initiation.
+            Length of the `split_keys()` (which determines size of the outs) \
+            cannot be changed after initiation.
 
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
@@ -55,16 +59,17 @@ class ComponentSplitter(SanUnit):
 
         self._split_keys = split_keys
 
+
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False
     _graphics = splitter_graphics
+
 
     def _run(self):
         last = self.outs[-1]
         last.mix_from(self.ins)
 
         splitted = []
-        # num = 0
         for num, cmps in enumerate(self.split_keys):
             if isinstance(cmps, str):
                 cmps = (cmps,)
@@ -93,7 +98,8 @@ class ComponentSplitter(SanUnit):
 
         .. note::
 
-            Length of the `split_keys()` (which determines size of the outs) cannot be changed after initiation.
+            Length of the `split_keys()` (which determines size of the outs) \
+                cannot be changed after initiation.
         '''
         return self._split_keys
     @split_keys.setter

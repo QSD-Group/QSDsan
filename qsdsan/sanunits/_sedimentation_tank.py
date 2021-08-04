@@ -23,7 +23,6 @@ from ..utils import load_data, data_path
 
 __all__ = ('SedimentationTank',)
 
-
 data_path += 'sanunit_data/_sedimentation_tank.tsv'
 
 
@@ -37,14 +36,14 @@ class SedimentationTank(SludgeSeparator, Decay):
         Waste for treatment.
     outs : WasteStream
         Liquid, settled solids, fugitive CH4, and fugitive N2O.
-    split : float or dict
-        Fractions of material retention in the settled solids.
-        Default values will be used if not given.
-    settled_frac : float
-        Fraction of influent that settles as solids.
-        The default value will be used if not given.
+    degraded_components : tuple
+        IDs of components that will degrade (simulated by first-order decay).
     if_N2O_emission : bool
         If consider N2O emission from N degradation the process.
+
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
 
     References
     ----------
@@ -56,15 +55,15 @@ class SedimentationTank(SludgeSeparator, Decay):
     See Also
     --------
     :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-
     '''
 
     def __init__(self, ID='', ins=None, outs=(),thermo=None, init_with='WasteStream',
                  split=None, settled_frac=None,
-                 if_N2O_emission=False, **kwargs):
+                 degraded_components=('OtherSS',), if_N2O_emission=False, **kwargs):
 
         SludgeSeparator.__init__(self, ID, ins, outs, thermo, init_with,
                                  split, settled_frac, F_BM_default=1)
+        self.degraded_components = tuple(degraded_components)
         self.if_N2O_emission = if_N2O_emission
 
         data = load_data(path=data_path)
@@ -92,7 +91,7 @@ class SedimentationTank(SludgeSeparator, Decay):
                                           t=self.tau/365,
                                           max_decay=self.COD_max_decay)
         tot_COD_kg = sol._COD * sol.F_vol / 1e3
-        sol.imass['OtherSS'] *= 1 - COD_loss
+        sol.imass[self.degraded_components] *= 1 - COD_loss
 
         # Adjust total mass of of the settled solids by changing water content
         liq, sol = self._adjust_solid_water(waste, liq, sol)

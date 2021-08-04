@@ -37,6 +37,9 @@ class LumpedCost(SanUnit):
     add_OPEX : float
         Additional operating cost per hour.
 
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
