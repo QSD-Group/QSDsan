@@ -4,8 +4,8 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
-Ongoing
--------
+`0.3.0`_
+--------
 - Now LCA data can be imported from external databases using the newly made `BW2QSD <https://github.com/QSD-Group/BW2QSD>`_ package.
 - New subclasses of :class:`~.SanUnit`:
 
@@ -37,8 +37,8 @@ Ongoing
 - Renamed the ``master`` branch to ``main``.
 
 
-`0.2.0`_ (2021-03-17)
----------------------
+`0.2.0`_
+--------
 - Added :class:`~.Process`, :class:`~.Processes`, and :class:`~.CompiledProcesses` classes for stoichiometric process and its kinetics.
 - Added an :class:`~.Equipment` class for design and costing of unit equipment.
 - For the ``stats`` module:
@@ -62,8 +62,8 @@ Ongoing
 - Added more clear guidelines on `contribution <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ and a `author list <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_ in the document.
 
 
-`0.1.0`_ (2021-02-14)
----------------------
+`0.1.0`_
+--------
 - Added a ``stats`` module including:
 
 	- Pearson and Spearman correlations: :func:`qsdsan.stats.get_correlations`.
@@ -80,8 +80,8 @@ Ongoing
 - Updated UML diagram.
 
 
-`0.0.3`_ (2021-01-10)
----------------------
+`0.0.3`_
+--------
 - More flexible setting of :class:`~.ImpactItem` for :class:`~.WasteStream`.
 - Add status badge to README.rst
 - Add CHANGELOG.rst
@@ -94,8 +94,8 @@ Ongoing
 		-  :class:`~.SanUnit` and :class:`~.System`
 
 
-`0.0.2`_ (2021-01-07)
----------------------
+`0.0.2`_
+--------
 - Added the all three sanitation scenarios as described in `Trimmer et al.`_, including uncertainty/sensitivity analyses with tutorial.
 - Inclusion of GPX models for estimation of :class:`~.WasteStream` properties.
 - Live documentation for the `latest`_ and `beta`_ version.
@@ -108,8 +108,8 @@ Ongoing
 - Added :func:`save_report` function to :class:`~.LCA` for report exporting.
 
 
-`0.0.1`_ (2020-12-23)
----------------------
+`0.0.1`_
+--------
 - First public release.
 
 
@@ -119,6 +119,7 @@ Ongoing
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
+.. _0.3.0: https://github.com/QSD-Group/QSDsan/commit/3c19aebd5503433120217228c3388533cee4bd30
 .. _0.2.0: https://github.com/QSD-Group/QSDsan/commit/286943eb206ebd89f58e50b9fdd1bed486e894ae
 .. _0.1.0: https://github.com/QSD-Group/QSDsan/commit/1c3d11d9f72421c8b5dbdf6b537775ca35ec65c0
 .. _0.0.3: https://github.com/QSD-Group/QSDsan/commit/e20222caccc58d9ee414ca08d8ec55f3a44ffca7

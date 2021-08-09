@@ -18,6 +18,7 @@ for license details.
 
 from . import (
     cod,
+    colors,
     decorators,
     # descriptors, # currently not in use
     getters,
@@ -29,6 +30,7 @@ from . import (
     )
 
 from .cod import *
+from .colors import *
 from .decorators import *
 # from .descriptors import *
 from .getters import *
@@ -41,6 +43,7 @@ from .units_of_measure import *
 
 __all__ = (
     *cod.__all__,
+    *colors.__all__,
     *decorators.__all__,
     # *descriptors.__all__,
     *getters.__all__,

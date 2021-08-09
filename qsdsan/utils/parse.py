@@ -20,6 +20,7 @@ import numpy as np
 
 __all__ = ('get_stoichiometric_coeff', )
 
+
 #%%
 
 def split_coefficient(nID, sign):
@@ -74,7 +75,7 @@ def dct2list(dct, components):
 
 def get_ic(cmps, conservation_for):
     '''
-    return conversion factors as a sympy matrix to solve for unknown stoichiometric coefficients.
+    Return conversion factors as a sympy matrix to solve for unknown stoichiometric coefficients.
     '''
     if conservation_for:
         arr = getattr(cmps, 'i_'+conservation_for[0])
@@ -106,7 +107,7 @@ def symbolize(coeff_dct, components, conserved_for, parameters):
 
 def get_stoichiometric_coeff(reaction, ref_component, components, conserved_for, parameters):
     '''
-    parse input reaction to get array of symbolic expressions (or a function to return numpy array with parameters as kwargs)
+    Parse input reaction to get array of symbolic expressions (or a function to return numpy array with parameters as kwargs)
     or numpy array of input values for stoichiometric coefficients.
     '''
     isa = isinstance

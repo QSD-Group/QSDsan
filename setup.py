@@ -25,7 +25,7 @@ setup(
     long_description=open('README.rst').read(),
     url="https://github.com/QSD-Group/QSDsan",
     install_requires=['biosteam>=2.31.1', 'thermosteam>=0.27.2' ,
-                      'pandas>=1.2.4', 'matplotlib>=3.3.2', 'scikit-learn', 'scipy',
+                      'pandas>=1.2.4', 'matplotlib>=3.3.2', 'scikit-learn', 'scipy>=1.7.1',
                       'SALib>=1.4.0b0', 'seaborn', 'sympy>=1.8'],
     package_data=
         {'qsdsan': [
