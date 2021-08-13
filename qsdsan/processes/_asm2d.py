@@ -10,155 +10,165 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-import thermosteam as tmo    
+import pickle as pk   
 from thermosteam.utils import chemicals_user  
-# import os
+import os
 # os.chdir("C:/Users/joy_c/Dropbox/PhD/Research/QSD/codes_developing/QSDsan")
 from qsdsan import Components, Process, Processes
 from ..utils import data_path
 
-__all__ = ('cmps_asm2d', 'asm2d', 'ASM2d')
+__all__ = ('load_asm2d_cmps', 'ASM2d')
 
+# data_path = "qsdsan/data/"
 
-data_path += 'process_data/_asm2d.tsv'
-# data_path = "qsdsan/data/process_data/_asm2d.tsv"
+_path = data_path + 'process_data/_asm2d.tsv'
+_path_cmps = os.path.join(data_path, '_asm2d_cmps.pckl')
 
 ############# Components with default notation #############
-cmps = Components.load_default()
+def _pickle_asm2d_cmps():
+    cmps = Components.load_default()
+    
+    S_A = cmps.S_Ac.copy('S_A')
+    S_ALK = cmps.S_CO3.copy('S_ALK')      # measured as g C
+    S_F = cmps.S_F.copy('S_F')
+    S_I = cmps.S_U_E.copy('S_I')
+    S_N2 = cmps.S_N2.copy('S_N2')
+    S_NH4 = cmps.S_NH4.copy('S_NH4')
+    S_NO3 = cmps.S_NO3.copy('S_NO3')
+    S_O2 = cmps.S_O2.copy('S_O2')
+    S_PO4 = cmps.S_PO4.copy('S_PO4')
+    
+    X_AUT = cmps.X_AOO.copy('X_AUT')
+    X_H = cmps.X_OHO.copy('X_H')
+    X_I = cmps.X_U_OHO_E.copy('X_I')
+    X_MeOH = cmps.X_FeOH.copy('X_MeOH')
+    X_MeP = cmps.X_FePO4.copy('X_MeP')
+    X_PAO = cmps.X_PAO.copy('X_PAO')
+    X_PHA = cmps.X_PAO_PHA.copy('X_PHA')
+    X_PP = cmps.X_PAO_PP_Lo.copy('X_PP')
+    X_S = cmps.X_B_Subst.copy('X_S')
+    
+    S_I.i_N = 0.01
+    S_F.i_N = 0.03
+    X_I.i_N = 0.02
+    X_S.i_N = 0.04
+    X_H.i_N = X_PAO.i_N = X_AUT.i_N = 0.07
+    
+    S_I.i_P = 0.00
+    S_F.i_P = 0.01
+    X_I.i_P = 0.01
+    X_S.i_P = 0.01
+    X_H.i_P = X_PAO.i_P = X_AUT.i_P = 0.02
+    
+    X_I.i_mass = 0.75
+    X_S.i_mass = 0.75
+    X_H.i_mass = X_PAO.i_mass = X_AUT.i_mass = 0.9
+    
+    cmps_asm2d = Components([S_O2, S_F, S_A, S_NH4, S_NO3, S_PO4, S_I, S_ALK, S_N2,
+                             X_I, X_S, X_H, X_PAO, X_PP, X_PHA, X_AUT, X_MeOH, X_MeP,
+                             cmps.H2O])
+    cmps_asm2d.compile()
+    
+    f = open(_path_cmps, 'wb')
+    pk.dump(cmps_asm2d, f)
+    f.close()
+    
+# _pickle_asm2d_cmps()
 
-S_A = cmps.S_Ac.copy('S_A')
-S_ALK = cmps.S_CO3.copy('S_ALK')      # measured as g C
-S_F = cmps.S_F.copy('S_F')
-S_I = cmps.S_U_E.copy('S_I')
-S_N2 = cmps.S_N2.copy('S_N2')
-S_NH4 = cmps.S_NH4.copy('S_NH4')
-S_NO3 = cmps.S_NO3.copy('S_NO3')
-S_O2 = cmps.S_O2.copy('S_O2')
-S_PO4 = cmps.S_PO4.copy('S_PO4')
-
-X_AUT = cmps.X_AOO.copy('X_AUT')
-X_H = cmps.X_OHO.copy('X_H')
-X_I = cmps.X_U_OHO_E.copy('X_I')
-X_MeOH = cmps.X_FeOH.copy('X_MeOH')
-X_MeP = cmps.X_FePO4.copy('X_MeP')
-X_PAO = cmps.X_PAO.copy('X_PAO')
-X_PHA = cmps.X_PAO_PHA.copy('X_PHA')
-X_PP = cmps.X_PAO_PP_Lo.copy('X_PP')
-X_S = cmps.X_B_Subst.copy('X_S')
-
-S_I.i_N = 0.01
-S_F.i_N = 0.03
-X_I.i_N = 0.02
-X_S.i_N = 0.04
-X_H.i_N = X_PAO.i_N = X_AUT.i_N = 0.07
-
-S_I.i_P = 0.00
-S_F.i_P = 0.01
-X_I.i_P = 0.01
-X_S.i_P = 0.01
-X_H.i_P = X_PAO.i_P = X_AUT.i_P = 0.02
-
-X_I.i_mass = 0.75
-X_S.i_mass = 0.75
-X_H.i_mass = X_PAO.i_mass = X_AUT.i_mass = 0.9
-
-cmps_asm2d = Components([S_O2, S_F, S_A, S_NH4, S_NO3, S_PO4, S_I, S_ALK, S_N2,
-                         X_I, X_S, X_H, X_PAO, X_PP, X_PHA, X_AUT, X_MeOH, X_MeP,
-                         cmps.H2O])
-
-cmps_asm2d.compile()
-tmo.settings.set_thermo(cmps_asm2d)
-
+def load_asm2d_cmps():
+    cmps = pk.load(_path_cmps)
+    return cmps
+    
 ############ Processes in ASM2d #################
-params = ('f_SI', 'Y_H', 'f_XI_H', 'Y_PAO', 'Y_PO4', 'Y_PHA', 'f_XI_PAO', 'Y_A', 'f_XI_AUT', 
-          'K_h', 'eta_NO3', 'eta_fe', 'K_O2', 'K_NO3', 'K_X', 
-          'mu_H', 'q_fe', 'eta_NO3_H', 'b_H', 'K_O2_H', 'K_F', 'K_fe', 'K_A_H', 
-          'K_NO3_H', 'K_NH4_H', 'K_P_H', 'K_ALK_H', 
-          'q_PHA', 'q_PP', 'mu_PAO', 'eta_NO3_PAO', 'b_PAO', 'b_PP', 'b_PHA', 
-          'K_O2_PAO', 'K_NO3_PAO', 'K_A_PAO', 'K_NH4_PAO', 'K_PS',' K_P_PAO', 
-          'K_ALK_PAO', 'K_PP', 'K_MAX', 'K_IPP', 'K_PHA', 
-          'mu_AUT', 'b_AUT', 'K_O2_AUT', 'K_NH4_AUT', 'K_ALK_AUT', 'K_P_AUT',
-          'k_PRE', 'k_RED', 'K_ALK_PRE')
+# params = ('f_SI', 'Y_H', 'f_XI_H', 'Y_PAO', 'Y_PO4', 'Y_PHA', 'f_XI_PAO', 'Y_A', 'f_XI_AUT', 
+#           'K_h', 'eta_NO3', 'eta_fe', 'K_O2', 'K_NO3', 'K_X', 
+#           'mu_H', 'q_fe', 'eta_NO3_H', 'b_H', 'K_O2_H', 'K_F', 'K_fe', 'K_A_H', 
+#           'K_NO3_H', 'K_NH4_H', 'K_P_H', 'K_ALK_H', 
+#           'q_PHA', 'q_PP', 'mu_PAO', 'eta_NO3_PAO', 'b_PAO', 'b_PP', 'b_PHA', 
+#           'K_O2_PAO', 'K_NO3_PAO', 'K_A_PAO', 'K_NH4_PAO', 'K_PS',' K_P_PAO', 
+#           'K_ALK_PAO', 'K_PP', 'K_MAX', 'K_IPP', 'K_PHA', 
+#           'mu_AUT', 'b_AUT', 'K_O2_AUT', 'K_NH4_AUT', 'K_ALK_AUT', 'K_P_AUT',
+#           'k_PRE', 'k_RED', 'K_ALK_PRE')
 
-asm2d = Processes.load_from_file(data_path,
-                                 conserved_for=('COD', 'N', 'P', 'charge'),
-                                 parameters=params,
-                                 compile=False)
+# asm2d = Processes.load_from_file(data_path,
+#                                  conserved_for=('COD', 'N', 'P', 'charge'),
+#                                  parameters=params,
+#                                  compile=False)
 
-p12 = Process('anox_storage_PP',
-              'S_PO4 + [Y_PHA]X_PHA + [?]S_NO3 -> X_PP + [?]S_N2 + [?]S_NH4 + [?]S_ALK',
-              ref_component='X_PP',
-              rate_equation='q_PP * S_O2/(K_O2_PAO+S_O2) * S_PO4/(K_PS+S_PO4) * S_ALK/(K_ALK_PAO+S_ALK) * (X_PHA/X_PAO)/(K_PHA+X_PHA/X_PAO) * (K_MAX-X_PP/X_PAO)/(K_IPP+K_MAX-X_PP/X_PAO) * X_PAO * eta_NO3_PAO * K_O2_PAO/S_O2 * S_NO3/(K_NO3_PAO+S_NO3)',
-              parameters=('Y_PHA', 'q_PP', 'K_O2_PAO', 'K_PS', 'K_ALK_PAO', 'K_PHA', 'eta_NO3_PAO', 'K_IPP', 'K_NO3_PAO'),
-              conserved_for=('COD', 'N', 'P', 'NOD', 'charge'))
+# p12 = Process('anox_storage_PP',
+#               'S_PO4 + [Y_PHA]X_PHA + [?]S_NO3 -> X_PP + [?]S_N2 + [?]S_NH4 + [?]S_ALK',
+#               ref_component='X_PP',
+#               rate_equation='q_PP * S_O2/(K_O2_PAO+S_O2) * S_PO4/(K_PS+S_PO4) * S_ALK/(K_ALK_PAO+S_ALK) * (X_PHA/X_PAO)/(K_PHA+X_PHA/X_PAO) * (K_MAX-X_PP/X_PAO)/(K_IPP+K_MAX-X_PP/X_PAO) * X_PAO * eta_NO3_PAO * K_O2_PAO/S_O2 * S_NO3/(K_NO3_PAO+S_NO3)',
+#               parameters=('Y_PHA', 'q_PP', 'K_O2_PAO', 'K_PS', 'K_ALK_PAO', 'K_PHA', 'eta_NO3_PAO', 'K_IPP', 'K_NO3_PAO'),
+#               conserved_for=('COD', 'N', 'P', 'NOD', 'charge'))
 
-p14 = Process('PAO_anox_growth',
-             '[1/Y_PAO]X_PHA + [?]S_NO3 + [?]S_PO4 -> X_PAO + [?]S_N2 + [?]S_NH4  + [?]S_ALK',
-             ref_component='X_PAO',
-             rate_equation='mu_PAO * S_O2/(K_O2_PAO + S_O2) * S_NH4/(K_NH4_PAO + S_NH4) * S_PO4/(K_P_PAO + S_PO4) * S_ALK/(K_ALK_PAO + S_ALK) * (X_PHA/X_PAO)/(K_PHA + X_PHA/X_PAO) * X_PAO * eta_NO3_PAO * K_O2_PAO/S_O2 * S_NO3/(K_NO3_PAO + S_NO3)',
-             parameters=('Y_PAO', 'mu_PAO', 'K_O2_PAO', 'K_NH4_PAO', 'K_P_PAO', 'K_ALK_PAO', 'K_PHA', 'eta_NO3_PAO', 'K_NO3_PAO'),
-             conserved_for=('COD', 'N', 'P', 'NOD', 'charge'))
+# p14 = Process('PAO_anox_growth',
+#               '[1/Y_PAO]X_PHA + [?]S_NO3 + [?]S_PO4 -> X_PAO + [?]S_N2 + [?]S_NH4  + [?]S_ALK',
+#               ref_component='X_PAO',
+#               rate_equation='mu_PAO * S_O2/(K_O2_PAO + S_O2) * S_NH4/(K_NH4_PAO + S_NH4) * S_PO4/(K_P_PAO + S_PO4) * S_ALK/(K_ALK_PAO + S_ALK) * (X_PHA/X_PAO)/(K_PHA + X_PHA/X_PAO) * X_PAO * eta_NO3_PAO * K_O2_PAO/S_O2 * S_NO3/(K_NO3_PAO + S_NO3)',
+#               parameters=('Y_PAO', 'mu_PAO', 'K_O2_PAO', 'K_NH4_PAO', 'K_P_PAO', 'K_ALK_PAO', 'K_PHA', 'eta_NO3_PAO', 'K_NO3_PAO'),
+#               conserved_for=('COD', 'N', 'P', 'NOD', 'charge'))
 
-asm2d.extend([p12, p14])
-asm2d.compile()
+# asm2d.extend([p12, p14])
+# asm2d.compile()
 
-# ASM2d typical values at 20 degree C
-asm2d.set_parameters(
-    f_SI = 0,                    # production of soluble inerts in hydrolysis = 0.0 gCOD/gCOD
-    Y_H = 0.625,                 # heterotrophic yield = 0.625 gCOD/gCOD
-    f_XI_H=0.1,                  # fraction of inert COD generated in heterotrophic biomass lysis = 0.1 gCOD/gCOD
-    Y_PAO = 0.625,               # PAO yield = 0.625 gCOD/gCOD
-    Y_PO4 = 0.4,                 # PP requirement (PO4 release) per PHA stored = 0.4 gP/gCOD
-    Y_PHA = 0.2,                 # PHA requirement for PP storage = 0.2 gCOD/gP
-    f_XI_PAO=0.1,                # fraction of inert COD generated in PAO biomass lysis = 0.1 gCOD/gCOD
-    Y_A = 0.24,                  # autotrophic yield = 0.24 gCOD/gN
-    f_XI_AUT=0.1,                # fraction of inert COD generated in autotrophic biomass lysis = 0.1 gCOD/gCOD
-    K_h = 3,                     # hydrolysis rate constant = 3.0 d^(-1)
-    eta_NO3 = 0.6,               # reduction factor for anoxic hydrolysis = 0.6
-    eta_fe = 0.4,                # anaerobic hydrolysis reduction factor = 0.4
-    K_O2 = 0.2,                  # O2 half saturation coefficient of hydrolysis = 0.2 mgO2/L
-    K_NO3 = 0.5,                 # nitrate half saturation coefficient of hydrolysis = 0.5 mgN/L
-    K_X = 0.1,                   # slowly biodegradable substrate half saturation coefficient for hydrolysis = 0.1 gCOD/gCOD
-    mu_H = 6,                    # heterotrophic maximum specific growth rate = 6.0 d^(-1)
-    q_fe = 3,                    # fermentation maximum rate = 3.0 d^(-1)
-    eta_NO3_H = 0.8,             # denitrification reduction factor for heterotrophic growth = 0.8
-    b_H = 0.4,                   # lysis and decay rate constant = 0.4 d^(-1)
-    K_O2_H=0.2,                  # O2 half saturation coefficient of heterotrophs = 0.2 mgO2/L
-    K_F = 4,                     # fermentable substrate half saturation coefficient for heterotrophic growth = 4.0 mgCOD/L
-    K_fe = 4,                    # fermentable substrate half saturation coefficient for fermentation = 4.0 mgCOD/L
-    K_A_H = 4,                   # VFA half saturation coefficient for heterotrophs = 4.0 mgCOD/L
-    K_NO3_H=0.5,                 # nitrate half saturation coefficient = 0.5 mgN/L
-    K_NH4_H = 0.05,              # ammonium (nutrient) half saturation coefficient for heterotrophs = 0.05 mgN/L
-    K_P_H = 0.01,                # phosphorus (nutrient) half saturation coefficient for heterotrophs = 0.01 mgP/L
-    K_ALK_H = 0.1*12,            # alkalinity half saturation coefficient for heterotrophs = 0.1 mol(HCO3-)/m^3 = 1.2 gC/m^3
-    q_PHA = 3,                   # rate constant for storage of PHA = 3.0 d^(-1)
-    q_PP = 1.5,                  # rate constant for storage of PP = 1.5 d^(-1)
-    mu_PAO = 1,                  # PAO maximum specific growth rate = 1.0 d^(-1)
-    eta_NO3_PAO=0.6,             # denitrification reduction factor for PAO growth = 0.8
-    b_PAO = 0.2,                 # PAO lysis rate = 0.2 d^(-1)
-    b_PP = 0.2,                  # PP lysis rate = 0.2 d^(-1)
-    b_PHA = 0.2,                 # PHA lysis rate = 0.2 d^(-1)
-    K_O2_PAO=0.2,                # O2 half saturation coefficient for PAOs = 0.2 mgO2/L
-    K_NO3_PAO=0.5,               # nitrate half saturation coefficient for PAOs = 0.5 mgN/L
-    K_A_PAO=4.0,                 # VFA half saturation coefficient for PAOs = 4.0 mgCOD/L
-    K_NH4_PAO=0.05,              # ammonium (nutrient) half saturation coefficient for PAOs = 0.05 mgN/L
-    K_PS = 0.2,                  # phosphorus half saturation coefficient for storage of PP = 0.2 mgP/L
-    K_P_PAO=0.01,                # phosphorus (nutrient) half saturation coefficient for heterotrophs = 0.01 mgP/L
-    K_ALK_PAO=0.1*12,            # alkalinity half saturation coefficient for PAOs = 0.1 mol(HCO3-)/m^3 = 1.2 gC/m^3
-    K_PP = 0.01,                 # PP half saturation coefficient for storage of PHA = 0.01 gP/gCOD (?). gCOD/gCOD in GPS-X
-    K_MAX = 0.34,                # maximum ratio of X_PP/X_PAO = 0.34 gX_PP/gX_PAO
-    K_IPP = 0.02,                # inhibition coefficient for PP storage = 0.02 gP/gCOD
-    K_PHA = 0.01,                # PHA half saturation coefficient = 0.01 gCOD/gCOD
-    mu_AUT = 1,                  # autotrophic maximum specific growth rate = 1.0 d^(-1)
-    b_AUT = 0.15,                # autotrophic decay rate = 0.15 d^(-1)
-    K_O2_AUT = 0.5,              # O2 half saturation coefficient for autotrophic growth = 0.5 mgO2/L
-    K_NH4_AUT = 1,               # ammonium (substrate) half saturation coefficient for autotrophic growth = 1.0 mgN/L
-    K_ALK_AUT=0.5*12,            # alkalinity half saturation coefficient for autotrophic growth = 0.5 mol(HCO3-)/m^3 = 6.0 gC/m^3
-    K_P_AUT=0.01,                # phosphorus (nutrient) half saturation coefficient for autotrophic growth = 0.01 mgP/L
-    k_PRE = 1,                   # phosphorus precipitation with MeOH rate constant = 1.0 m^3/g/d
-    k_RED = 0.6,                 # redissoluation of phosphates rate constant = 0.6 d^(-1)
-    K_ALK_PRE=0.5*12             # alkalinity half saturation coefficient for phosphate precipitation = 0.5 mol(HCO3-)/m^3 = 6.0 gC/m^3
-    )
+# # ASM2d typical values at 20 degree C
+# asm2d.set_parameters(
+#     f_SI = 0,                    # production of soluble inerts in hydrolysis = 0.0 gCOD/gCOD
+#     Y_H = 0.625,                 # heterotrophic yield = 0.625 gCOD/gCOD
+#     f_XI_H=0.1,                  # fraction of inert COD generated in heterotrophic biomass lysis = 0.1 gCOD/gCOD
+#     Y_PAO = 0.625,               # PAO yield = 0.625 gCOD/gCOD
+#     Y_PO4 = 0.4,                 # PP requirement (PO4 release) per PHA stored = 0.4 gP/gCOD
+#     Y_PHA = 0.2,                 # PHA requirement for PP storage = 0.2 gCOD/gP
+#     f_XI_PAO=0.1,                # fraction of inert COD generated in PAO biomass lysis = 0.1 gCOD/gCOD
+#     Y_A = 0.24,                  # autotrophic yield = 0.24 gCOD/gN
+#     f_XI_AUT=0.1,                # fraction of inert COD generated in autotrophic biomass lysis = 0.1 gCOD/gCOD
+#     K_h = 3,                     # hydrolysis rate constant = 3.0 d^(-1)
+#     eta_NO3 = 0.6,               # reduction factor for anoxic hydrolysis = 0.6
+#     eta_fe = 0.4,                # anaerobic hydrolysis reduction factor = 0.4
+#     K_O2 = 0.2,                  # O2 half saturation coefficient of hydrolysis = 0.2 mgO2/L
+#     K_NO3 = 0.5,                 # nitrate half saturation coefficient of hydrolysis = 0.5 mgN/L
+#     K_X = 0.1,                   # slowly biodegradable substrate half saturation coefficient for hydrolysis = 0.1 gCOD/gCOD
+#     mu_H = 6,                    # heterotrophic maximum specific growth rate = 6.0 d^(-1)
+#     q_fe = 3,                    # fermentation maximum rate = 3.0 d^(-1)
+#     eta_NO3_H = 0.8,             # denitrification reduction factor for heterotrophic growth = 0.8
+#     b_H = 0.4,                   # lysis and decay rate constant = 0.4 d^(-1)
+#     K_O2_H=0.2,                  # O2 half saturation coefficient of heterotrophs = 0.2 mgO2/L
+#     K_F = 4,                     # fermentable substrate half saturation coefficient for heterotrophic growth = 4.0 mgCOD/L
+#     K_fe = 4,                    # fermentable substrate half saturation coefficient for fermentation = 4.0 mgCOD/L
+#     K_A_H = 4,                   # VFA half saturation coefficient for heterotrophs = 4.0 mgCOD/L
+#     K_NO3_H=0.5,                 # nitrate half saturation coefficient = 0.5 mgN/L
+#     K_NH4_H = 0.05,              # ammonium (nutrient) half saturation coefficient for heterotrophs = 0.05 mgN/L
+#     K_P_H = 0.01,                # phosphorus (nutrient) half saturation coefficient for heterotrophs = 0.01 mgP/L
+#     K_ALK_H = 0.1*12,            # alkalinity half saturation coefficient for heterotrophs = 0.1 mol(HCO3-)/m^3 = 1.2 gC/m^3
+#     q_PHA = 3,                   # rate constant for storage of PHA = 3.0 d^(-1)
+#     q_PP = 1.5,                  # rate constant for storage of PP = 1.5 d^(-1)
+#     mu_PAO = 1,                  # PAO maximum specific growth rate = 1.0 d^(-1)
+#     eta_NO3_PAO=0.6,             # denitrification reduction factor for PAO growth = 0.8
+#     b_PAO = 0.2,                 # PAO lysis rate = 0.2 d^(-1)
+#     b_PP = 0.2,                  # PP lysis rate = 0.2 d^(-1)
+#     b_PHA = 0.2,                 # PHA lysis rate = 0.2 d^(-1)
+#     K_O2_PAO=0.2,                # O2 half saturation coefficient for PAOs = 0.2 mgO2/L
+#     K_NO3_PAO=0.5,               # nitrate half saturation coefficient for PAOs = 0.5 mgN/L
+#     K_A_PAO=4.0,                 # VFA half saturation coefficient for PAOs = 4.0 mgCOD/L
+#     K_NH4_PAO=0.05,              # ammonium (nutrient) half saturation coefficient for PAOs = 0.05 mgN/L
+#     K_PS = 0.2,                  # phosphorus half saturation coefficient for storage of PP = 0.2 mgP/L
+#     K_P_PAO=0.01,                # phosphorus (nutrient) half saturation coefficient for heterotrophs = 0.01 mgP/L
+#     K_ALK_PAO=0.1*12,            # alkalinity half saturation coefficient for PAOs = 0.1 mol(HCO3-)/m^3 = 1.2 gC/m^3
+#     K_PP = 0.01,                 # PP half saturation coefficient for storage of PHA = 0.01 gP/gCOD (?). gCOD/gCOD in GPS-X
+#     K_MAX = 0.34,                # maximum ratio of X_PP/X_PAO = 0.34 gX_PP/gX_PAO
+#     K_IPP = 0.02,                # inhibition coefficient for PP storage = 0.02 gP/gCOD
+#     K_PHA = 0.01,                # PHA half saturation coefficient = 0.01 gCOD/gCOD
+#     mu_AUT = 1,                  # autotrophic maximum specific growth rate = 1.0 d^(-1)
+#     b_AUT = 0.15,                # autotrophic decay rate = 0.15 d^(-1)
+#     K_O2_AUT = 0.5,              # O2 half saturation coefficient for autotrophic growth = 0.5 mgO2/L
+#     K_NH4_AUT = 1,               # ammonium (substrate) half saturation coefficient for autotrophic growth = 1.0 mgN/L
+#     K_ALK_AUT=0.5*12,            # alkalinity half saturation coefficient for autotrophic growth = 0.5 mol(HCO3-)/m^3 = 6.0 gC/m^3
+#     K_P_AUT=0.01,                # phosphorus (nutrient) half saturation coefficient for autotrophic growth = 0.01 mgP/L
+#     k_PRE = 1,                   # phosphorus precipitation with MeOH rate constant = 1.0 m^3/g/d
+#     k_RED = 0.6,                 # redissoluation of phosphates rate constant = 0.6 d^(-1)
+#     K_ALK_PRE=0.5*12             # alkalinity half saturation coefficient for phosphate precipitation = 0.5 mol(HCO3-)/m^3 = 6.0 gC/m^3
+#     )
 
 # ASM2d typical values at 10 degree C
 # asm2d.set_parameters(
@@ -412,6 +422,18 @@ class ASM2d(Processes):
         https://doi.org/10.2166/9781780401164.
 
     '''    
+    _params = ('f_SI', 'Y_H', 'f_XI_H', 'Y_PAO', 'Y_PO4', 'Y_PHA', 'f_XI_PAO', 'Y_A', 'f_XI_AUT', 
+               'K_h', 'eta_NO3', 'eta_fe', 'K_O2', 'K_NO3', 'K_X', 
+               'mu_H', 'q_fe', 'eta_NO3_H', 'b_H', 'K_O2_H', 'K_F', 'K_fe', 'K_A_H', 
+               'K_NO3_H', 'K_NH4_H', 'K_P_H', 'K_ALK_H', 
+               'q_PHA', 'q_PP', 'mu_PAO', 'eta_NO3_PAO', 'b_PAO', 'b_PP', 'b_PHA', 
+               'K_O2_PAO', 'K_NO3_PAO', 'K_A_PAO', 'K_NH4_PAO', 'K_PS',' K_P_PAO', 
+               'K_ALK_PAO', 'K_PP', 'K_MAX', 'K_IPP', 'K_PHA', 
+               'mu_AUT', 'b_AUT', 'K_O2_AUT', 'K_NH4_AUT', 'K_ALK_AUT', 'K_P_AUT',
+               'k_PRE', 'k_RED', 'K_ALK_PRE')
+    
+
+    
     def __new__(cls, components=None, 
                 iN_SI=0.01, iN_SF=0.03, iN_XI=0.02, iN_XS=0.04, iN_BM=0.07, 
                 iP_SI=0.0, iP_SF=0.01, iP_XI=0.01, iP_XS=0.01, iP_BM=0.02,
@@ -429,15 +451,30 @@ class ASM2d(Processes):
                 mu_AUT=1.0, b_AUT=0.15, K_O2_AUT=0.5, K_NH4_AUT=1.0, K_ALK_AUT=0.5, K_P_AUT=0.01,
                 k_PRE=1.0, k_RED=0.6, K_ALK_PRE=0.5,
                 path=None, **kwargs):
-        if not path: path = data_path
+        if not path: path = _path
         
         self = Processes.load_from_file(path,
                                         components=components,
                                         conserved_for=('COD', 'N', 'P', 'charge'),
-                                        parameters=params,
+                                        parameters=cls._params,
                                         compile=False)
         if path == None: 
-            self.extend([p12, p14])
+            _p12 = Process('anox_storage_PP',
+                           'S_PO4 + [Y_PHA]X_PHA + [?]S_NO3 -> X_PP + [?]S_N2 + [?]S_NH4 + [?]S_ALK',
+                           components=components,
+                           ref_component='X_PP',
+                           rate_equation='q_PP * S_O2/(K_O2_PAO+S_O2) * S_PO4/(K_PS+S_PO4) * S_ALK/(K_ALK_PAO+S_ALK) * (X_PHA/X_PAO)/(K_PHA+X_PHA/X_PAO) * (K_MAX-X_PP/X_PAO)/(K_IPP+K_MAX-X_PP/X_PAO) * X_PAO * eta_NO3_PAO * K_O2_PAO/S_O2 * S_NO3/(K_NO3_PAO+S_NO3)',
+                           parameters=('Y_PHA', 'q_PP', 'K_O2_PAO', 'K_PS', 'K_ALK_PAO', 'K_PHA', 'eta_NO3_PAO', 'K_IPP', 'K_NO3_PAO'),
+                           conserved_for=('COD', 'N', 'P', 'NOD', 'charge'))
+
+            _p14 = Process('PAO_anox_growth',
+                           '[1/Y_PAO]X_PHA + [?]S_NO3 + [?]S_PO4 -> X_PAO + [?]S_N2 + [?]S_NH4  + [?]S_ALK',
+                           components=components,
+                           ref_component='X_PAO',
+                           rate_equation='mu_PAO * S_O2/(K_O2_PAO + S_O2) * S_NH4/(K_NH4_PAO + S_NH4) * S_PO4/(K_P_PAO + S_PO4) * S_ALK/(K_ALK_PAO + S_ALK) * (X_PHA/X_PAO)/(K_PHA + X_PHA/X_PAO) * X_PAO * eta_NO3_PAO * K_O2_PAO/S_O2 * S_NO3/(K_NO3_PAO + S_NO3)',
+                           parameters=('Y_PAO', 'mu_PAO', 'K_O2_PAO', 'K_NH4_PAO', 'K_P_PAO', 'K_ALK_PAO', 'K_PHA', 'eta_NO3_PAO', 'K_NO3_PAO'),
+                           conserved_for=('COD', 'N', 'P', 'NOD', 'charge'))
+            self.extend([_p12, _p14])
         self.compile()
         
         self._components.S_I.i_N = iN_SI
