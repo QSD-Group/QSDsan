@@ -864,8 +864,9 @@ class WasteStream(SanStream):
             self.set_flow('kg/hr', bulk_liquid_ID, M_h2o)
             den = M_tot / self.get_total_flow('L/hr')
             if abs(den0 - den) <= atol: break
-            if i > maxiter: raise RuntimeError(f'{bulk_liquid_ID} mass flow calculation failed to converge within '
-                                               f'{maxiter} iterations.')
+            if i > maxiter: 
+                raise RuntimeError(f'{bulk_liquid_ID} mass flow calculation failed '
+                                   f'to converge within {maxiter} iterations.')
             
             
     @classmethod
