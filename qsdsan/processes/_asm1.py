@@ -10,108 +10,116 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-import os
-import thermosteam as tmo
+
+import os, pickle as pk
 from thermosteam.utils import chemicals_user
 # os.chdir("C:/Users/joy_c/Dropbox/PhD/Research/QSD/codes_developing/QSDsan")
-from qsdsan import Components, Processes#, Process
+from qsdsan import Components, Processes
 from ..utils import data_path
 
-__all__ = ('cmps_asm1', 'asm1', 'ASM1')
+__all__ = ('load_asm1_cmps', 'ASM1')
 
-
-data_path = os.path.join(data_path, 'process_data/_asm1.tsv')
-# data_path = "qsdsan/data/process_data/_asm1.tsv"
+_path = data_path + 'process_data/_asm1.tsv'
+_path_cmps = os.path.join(data_path, '_asm1_cmps.pckl')
 
 ############# Components with default notation #############
-cmps = Components.load_default()
+def _pickle_asm1_cmps():
 
-S_I = cmps.S_U_Inf.copy('S_I')
-S_I.description = 'Soluble inert organic matter'
+    cmps = Components.load_default()
 
-#%%
-X_I = cmps.X_U_Inf.copy('X_I')
-X_I.description = 'Particulate inert organic matter'
+    S_I = cmps.S_U_Inf.copy('S_I')
+    S_I.description = 'Soluble inert organic matter'
 
-S_S = cmps.S_F.copy('S_S')
-S_S.description = 'Readily biodegradable substrate'
-S_S.i_N = 0
+    X_I = cmps.X_U_Inf.copy('X_I')
+    X_I.description = 'Particulate inert organic matter'
 
-X_S = cmps.X_B_Subst.copy('X_S')
-X_S.description = 'Slowly biodegradable substrate'
-X_S.i_N = 0
+    S_S = cmps.S_F.copy('S_S')
+    S_S.description = 'Readily biodegradable substrate'
+    S_S.i_N = 0
 
-X_BH = cmps.X_OHO.copy('X_BH')
-X_BH.description = 'Active heterotrophic biomass'
+    X_S = cmps.X_B_Subst.copy('X_S')
+    X_S.description = 'Slowly biodegradable substrate'
+    X_S.i_N = 0
 
-X_BA = cmps.X_AOO.copy('X_BA')
-X_BA.description = 'Active autotrophic biomass'
-X_BH.i_N = X_BA.i_N = 0.086     # i_XB
+    X_BH = cmps.X_OHO.copy('X_BH')
+    X_BH.description = 'Active heterotrophic biomass'
 
-X_P = cmps.X_U_OHO_E.copy('X_P')
-X_P.description = 'Particulate products arising from biomass decay'
-X_P.i_N = 0.06                  # i_XP
+    X_BA = cmps.X_AOO.copy('X_BA')
+    X_BA.description = 'Active autotrophic biomass'
+    X_BH.i_N = X_BA.i_N = 0.086     # i_XB
 
-S_O = cmps.S_O2.copy('S_O')
+    X_P = cmps.X_U_OHO_E.copy('X_P')
+    X_P.description = 'Particulate products arising from biomass decay'
+    X_P.i_N = 0.06                  # i_XP
 
-S_NO = cmps.S_NO3.copy('S_NO')
-S_NO.description = 'Nitrate and nitrite nitrogen'
+    S_O = cmps.S_O2.copy('S_O')
 
-S_NH = cmps.S_NH4.copy('S_NH')
+    S_NO = cmps.S_NO3.copy('S_NO')
+    S_NO.description = 'Nitrate and nitrite nitrogen'
 
-S_ND = cmps.S_F.copy('S_ND')
-S_ND.description = 'Soluble biodegradable organic nitrogen'
-S_ND.measured_as = 'N'
-S_ND.i_COD = S_ND.i_C = S_ND.i_P = 0
+    S_NH = cmps.S_NH4.copy('S_NH')
 
-X_ND = cmps.X_B_Subst.copy('X_ND')
-X_ND.description = 'Particulate biodegradable organic nitrogen'
-X_ND.measured_as = 'N'
-X_ND.i_COD = X_ND.i_C = X_ND.i_P = 0
+    S_ND = cmps.S_F.copy('S_ND')
+    S_ND.description = 'Soluble biodegradable organic nitrogen'
+    S_ND.measured_as = 'N'
+    S_ND.i_COD = S_ND.i_C = S_ND.i_P = 0
 
-S_ALK = cmps.S_CO3.copy('S_ALK')      # measured as g C
-S_ALK.description = 'Alkalinity, assumed to be HCO3-'
+    X_ND = cmps.X_B_Subst.copy('X_ND')
+    X_ND.description = 'Particulate biodegradable organic nitrogen'
+    X_ND.measured_as = 'N'
+    X_ND.i_COD = X_ND.i_C = X_ND.i_P = 0
 
-# add S_N2 to close mass balance
-# add water for the creation of WasteStream objects
-cmps_asm1 = Components([S_I, S_S, X_I, X_S, X_BH, X_BA, X_P,
-                        S_O, S_NO, S_NH, S_ND, X_ND, S_ALK,
-                        cmps.S_N2, cmps.H2O])
+    S_ALK = cmps.S_CO3.copy('S_ALK')      # measured as g C
+    S_ALK.description = 'Alkalinity, assumed to be HCO3-'
 
-cmps_asm1.compile()
-tmo.settings.set_thermo(cmps_asm1)
+    # add S_N2 to close mass balance
+    # add water for the creation of WasteStream objects
+    cmps_asm1 = Components([S_I, S_S, X_I, X_S, X_BH, X_BA, X_P,
+                            S_O, S_NO, S_NH, S_ND, X_ND, S_ALK,
+                            cmps.S_N2, cmps.H2O])
+    cmps_asm1.compile()
+
+    f = open(_path_cmps, 'wb')
+    pk.dump(cmps_asm1, f)
+    f.close()
+
+# _pickle_asm1_cmps()
+
+def load_asm1_cmps():
+    cmps = pk.load(_path_cmps)
+    return cmps
 
 ############ Processes in ASM1 #################
-params = ('Y_H', 'Y_A', 'f_P',
-          'mu_H', 'K_S', 'K_O_H', 'K_NO', 'b_H',
-          'mu_A', 'K_NH', 'K_O_A', 'b_A',
-          'eta_g', 'k_a', 'k_h', 'K_X', 'eta_h')
+# params = ('Y_H', 'Y_A', 'f_P',
+#           'mu_H', 'K_S', 'K_O_H', 'K_NO', 'b_H',
+#           'mu_A', 'K_NH', 'K_O_A', 'b_A',
+#           'eta_g', 'k_a', 'k_h', 'K_X', 'eta_h')
 
-asm1 = Processes.load_from_file(data_path,
-                                conserved_for=('COD', 'charge', 'N'),
-                                parameters=params,
-                                compile=True)
+# asm1 = Processes.load_from_file(data_path,
+#                                 conserved_for=('COD', 'charge', 'N'),
+#                                 parameters=params,
+#                                 compile=True)
 
 # ASM1 typical values at 20 degree C
-asm1.set_parameters(
-    Y_A = 0.24,                  # autotrophic yield = 0.24 gCOD/gN
-    Y_H = 0.67,                  # heterotrophic yield = 0.67 gCOD/gCOD
-    f_P = 0.08,                  # fraction of biomass yielding particulate products = 0.08, unitless
-    mu_H = 6,                    # heterotrophic maximum specific growth rate = 6.0 d^(-1)
-    K_S = 20,                    # readily biodegradable substrate half saturation coefficient = 20.0 gCOD/m3
-    K_O_H = 0.2,                 # O2 half saturation coefficient = 0.2 gO2/m3
-    K_NO = 0.5,                  # nitrate half saturation coefficient = 0.5 gN/m3
-    b_H = 0.62,                  # heterotrophic biomass decay rate constant = 0.62 d^(-1)
-    eta_g = 0.8,                 # reduction factor for anoxic growth of heterotrophs = 0.8, unitless
-    eta_h = 0.4,                 # anoxic hydrolysis reduction factor = 0.4, unitless
-    k_h = 3.0,                   # hydrolysis rate constant = 3.0 d^(-1)
-    K_X = 0.03,                  # slowly biodegradable substrate half saturation coefficient for hydrolysis = 0.03 gCOD/gCOD
-    mu_A = 0.8,                  # autotrophic maximum specific growth rate = 0.8 d^(-1)
-    K_NH = 1.0,                  # ammonium (nutrient) half saturation coefficient = 1.0 gN/m3
-    K_O_A = 0.4,                 # O2 half saturation coefficient for autotrophic growth = 0.4 gO2/m3
-    b_A = 0.05,                  # !!! BSM1 value
-    k_a = 0.08                   # ammonification rate constant = 0.08 d^(-1)/(gCOD/m3)
-    )
+# asm1.set_parameters(
+#     Y_A = 0.24,                  # autotrophic yield = 0.24 gCOD/gN
+#     Y_H = 0.67,                  # heterotrophic yield = 0.67 gCOD/gCOD
+#     f_P = 0.08,                  # fraction of biomass yielding particulate products = 0.08, unitless
+#     mu_H = 6,                    # heterotrophic maximum specific growth rate = 6.0 d^(-1)
+#     K_S = 20,                    # readily biodegradable substrate half saturation coefficient = 20.0 gCOD/m3
+#     K_O_H = 0.2,                 # O2 half saturation coefficient = 0.2 gO2/m3
+#     K_NO = 0.5,                  # nitrate half saturation coefficient = 0.5 gN/m3
+#     b_H = 0.62,                  # heterotrophic biomass decay rate constant = 0.62 d^(-1)
+#     eta_g = 0.8,                 # reduction factor for anoxic growth of heterotrophs = 0.8, unitless
+#     eta_h = 0.4,                 # anoxic hydrolysis reduction factor = 0.4, unitless
+#     k_h = 3.0,                   # hydrolysis rate constant = 3.0 d^(-1)
+#     K_X = 0.03,                  # slowly biodegradable substrate half saturation coefficient for hydrolysis = 0.03 gCOD/gCOD
+#     mu_A = 0.8,                  # autotrophic maximum specific growth rate = 0.8 d^(-1)
+#     K_NH = 1.0,                  # ammonium (nutrient) half saturation coefficient = 1.0 gN/m3
+#     K_O_A = 0.4,                 # O2 half saturation coefficient for autotrophic growth = 0.4 gO2/m3
+#     b_A = 0.05,                  # !!! BSM1 value
+#     k_a = 0.08                   # ammonification rate constant = 0.08 d^(-1)/(gCOD/m3)
+#     )
 
 # ASM1 typical values at 10 degree C
 # asm1.set_parameters(
@@ -202,16 +210,21 @@ class ASM1(Processes):
         I.; Winkler, S. Guidelines for Using Activated Sludge Models; IWA Publishing:
         London, New York, 2012; Vol. 11.
         https://doi.org/10.2166/9781780401164.
-
     '''
+
+    _params = ('Y_H', 'Y_A', 'f_P',
+              'mu_H', 'K_S', 'K_O_H', 'K_NO', 'b_H',
+              'mu_A', 'K_NH', 'K_O_A', 'b_A',
+              'eta_g', 'k_a', 'k_h', 'K_X', 'eta_h')
+
     def __new__(cls, components=None, Y_A=0.24, Y_H=0.67, f_P=0.08, i_XB=0.08, i_XP=0.06,
                 mu_H=4.0, K_S=10.0, K_O_H=0.2, K_NO=0.5, b_H=0.3, eta_g=0.8, eta_h=0.8,
                 k_h=3.0, K_X=0.1, mu_A=0.5, K_NH=1.0, b_A=0.05, K_O_A=0.4, k_a=0.05,
                 path=None, **kwargs):
-        if not path: path = data_path
+        if not path: path = _path
         self = Processes.load_from_file(path,
                                         conserved_for=('COD', 'charge', 'N'),
-                                        parameters=params,
+                                        parameters=cls._params,
                                         components=components,
                                         compile=True)
         self._components.X_BH.i_N = self._components.X_BA.i_N = i_XB
