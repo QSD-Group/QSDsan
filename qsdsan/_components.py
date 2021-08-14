@@ -69,12 +69,16 @@ class Components(Chemicals):
         self = super(Chemicals, cls).__new__(cls)
         isa = isinstance
         setfield = setattr
-        CASs = set()
+        IDs = set()
+        # CASs = set()
         for i in components:
             if isa(i, Component):
-                CAS = i.CAS
-                if CAS in CASs: continue
-                CASs.add(CAS)
+                ID = i.ID
+                if ID in IDs:
+                    raise ValueError(f'More than one `Component` has the ID {ID}.')
+                # CAS = i.CAS
+                # if CAS in CASs: continue
+                # CASs.add(CAS)
                 setfield(self, i.ID, i)
             elif isa(i, Chemical):
                 raise TypeError(f'{i} is a `thermosteam.Chemical` object, '

@@ -18,7 +18,9 @@ or
        ExecutableNotFound: failed to execute ['dot', '-Kdot', '-Tpng'], make sure the Graphviz executables are on your systems' PATH
 
 
-It is likely that your ``graphviz`` is not configured correctly. This `post <https://stackoverflow.com/questions/35064304/runtimeerror-make-sure-the-graphviz-executables-are-on-your-systems-path-aft>`_ provides a lot of useful information, and this normally can be solved by:
+or if you cannot get any diagram at all. It is likely that your ``graphviz`` is not configured correctly.
+
+This `post <https://stackoverflow.com/questions/35064304/runtimeerror-make-sure-the-graphviz-executables-are-on-your-systems-path-aft>`_ provides a lot of useful information, and this normally can be solved by:
 
     .. code:: bash
 

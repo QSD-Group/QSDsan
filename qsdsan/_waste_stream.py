@@ -274,6 +274,8 @@ class WasteStream(SanStream):
          flow (g/hr): H2O  1.8e+06
          WasteStream-specific properties:
           pH         : 7.0
+         Component concentrations (mg/L):
+          H2O          1012485.4
         >>> ws.price
         8.0
         '''
@@ -381,6 +383,7 @@ class WasteStream(SanStream):
                     line += '  ' + IDs[i] + spaces + f'{C_arr[i]:.1f}\n'
             if too_many_components:
                 line += '  ...\n'
+            line = line.rstrip('\n')
             return line
 
 
@@ -724,6 +727,9 @@ class WasteStream(SanStream):
                       H2O   1e+05
          WasteStream-specific properties:
           pH         : 7.0
+         Component concentrations (mg/L):
+          S_O2         303021.4
+          H2O          303021.4
         '''
         others = [s for s in others if not 'Missing' in type(s).__name__]
         Stream.mix_from(self, others)

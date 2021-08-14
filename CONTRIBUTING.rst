@@ -47,6 +47,14 @@ Forking and Cloning
 	- If you don't have ``git``, follow the `instructions <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_ to install it.
 	- The ``--depth-1`` flag is to tell ``git`` just clone the latest commit, you can change the depth number or just remove this flag completely, but then ``git`` will download more historical commits, which takes longer time to clone and needs more space.
 
+	.. note::
+	 	
+	 	This will only clone the main branch, if you want other branches, then use the ``no-single-branch`` flag, i.e.
+
+		.. code:: bash
+
+		    git clone https://github.com/<YOUR_USERNAME>/QSDsan.git --depth=1 --no-single-branch
+
 #. Add the root ``QSDsan`` as the upstream:
 
 	.. code:: bash

@@ -566,6 +566,7 @@ class Component(Chemical):
 
     _ipython_display_ = show
 
+
     def get_missing_properties(self, properties=None):
         '''Return a list of all missing thermodynamic properties.'''
         missing = []
@@ -578,23 +579,34 @@ class Component(Chemical):
                 missing.append(i)
         return missing
 
+
     def copy(self, new_ID, **data):
         '''
         Return a new :class:`Component` object with the same settings with
         alternative data set by kwargs.
         '''
         new = self.__class__.__new__(cls=self.__class__, ID=new_ID)
-        new = copy_attr(new, self, skip=('_ID', '_CAS', '_N_solutes'))
+        new = copy_attr(new, self, skip=('_ID', '_CAS', '_N_solutes', '_locked_state'))
         new._ID = new_ID
-        new._locked_state = self._locked_state
-        # breakpoint()
+
+        phase = data.get('phase') or self._locked_state
+        new._locked_state = phase
+
+        phase = data.get('phase') or self._locked_state
+        new._locked_state = phase
+
         new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus,
                            new.Tm, new.Tb, new.eos, new.phase_ref)
         new._label_handles()
-        for i,j in data.items(): setattr(new, i , j)
+
+        for i,j in data.items():
+            if i == 'phase':
+                continue
+            setattr(new, i , j)
         return new
 
     __copy__ = copy
+
 
     @classmethod
     def from_chemical(cls, ID, chemical=None, phase=None, measured_as=None,

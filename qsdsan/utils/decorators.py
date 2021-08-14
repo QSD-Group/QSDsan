@@ -42,7 +42,6 @@ def time_printer(func):
     ...     return a
     >>> # This will print run time
     >>> print(foo(a=5))
-
     function `foo`
     Total time: 0:00:00.
     5
@@ -60,7 +59,7 @@ def time_printer(func):
         if print_time is not False:
             time = str(timedelta(seconds=round(timer.elapsed_time)))
             name = str(func).split(' ')[1]
-            print(f'\nfunction `{name}`')
+            print(f'function `{name}`')
             print(f'Total time: {time}.')
         return output
     inner.__doc__ = func.__doc__
