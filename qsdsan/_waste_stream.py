@@ -382,7 +382,7 @@ class WasteStream(SanStream):
             if too_many_components:
                 line += '  ...\n'
             return line
-        
+
 
     @property
     def ratios(self):
@@ -811,9 +811,9 @@ class WasteStream(SanStream):
         if not IDs: IDs = self.components.IDs
         C = self.imass[IDs]/F_vol*1e3      # in mg/L
         return C*conc_unit.conversion_factor(unit)
-    
-    
-    def set_flow_by_concentration(self, flow_tot, concentrations, units, 
+
+
+    def set_flow_by_concentration(self, flow_tot, concentrations, units,
                                   bulk_liquid_ID='H2O', atol=1e-5, maxiter=50):
         '''
         Set the mass flows of the WasteStream by specifying total volumetric flow and
@@ -826,34 +826,34 @@ class WasteStream(SanStream):
         concentrations : dict[str, float]
             Concentrations of components.
         units : iterable[str]
-            The first indicates the unit for the input total flow, the second 
+            The first indicates the unit for the input total flow, the second
             indicates the unit for the input concentrations.
         bulk_liquid_ID : str, optional
-            ID of the Component that constitutes the bulk liquid, e.g., the solvent. 
+            ID of the Component that constitutes the bulk liquid, e.g., the solvent.
             The default is 'H2O'.
         atol : float, optional
-            The absoute tolerance of error in estimated WasteStream density. 
+            The absoute tolerance of error in estimated WasteStream density.
             The default is 1e-5 kg/L.
         maxiter : int, optional
-            The maximum number of iterations to estimate the flow of the bulk-liquid 
+            The maximum number of iterations to estimate the flow of the bulk-liquid
             component and overall density of the WasteStream. The default is 50.
 
 
         '''
         if flow_tot == 0: raise RuntimeError(f'{repr(self)} is empty')
-        if bulk_liquid_ID in concentrations.keys(): 
+        if bulk_liquid_ID in concentrations.keys():
             C_h2o = concentrations.pop(bulk_liquid_ID)
             warn(f'ignored concentration specified for {bulk_liquid_ID}:{C_h2o}')
-        
+
         self.empty()
         f = conc_unit.conversion_factor(units[1])
         Q_tot = flow_tot / vol_unit.conversion_factor(units[0])   # converted to L/hr
-        C_arr = np.array(list(concentrations.values()))        
+        C_arr = np.array(list(concentrations.values()))
         IDs = concentrations.keys()
         M_arr = C_arr/f*Q_tot*1e-6       # kg/hr
         dwt = M_arr.sum()                # dry weight
-        self.set_flow(M_arr, 'kg/hr', IDs)
-            
+        self.set_flow(M_arr, 'kg/hr', tuple(IDs))
+
         den = self.components[bulk_liquid_ID].rho(phase=self.phase, T=self.T, P=self.P)*1e-3  # bulk liquid density in [kg/L]
         i = 0
         while True:
@@ -861,14 +861,14 @@ class WasteStream(SanStream):
             den0 = den
             M_tot = den0 * Q_tot
             M_h2o = M_tot - dwt
-            self.set_flow('kg/hr', bulk_liquid_ID, M_h2o)
+            self.set_flow(M_h2o, 'kg/hr', bulk_liquid_ID)
             den = M_tot / self.get_total_flow('L/hr')
             if abs(den0 - den) <= atol: break
-            if i > maxiter: 
+            if i > maxiter:
                 raise RuntimeError(f'{bulk_liquid_ID} mass flow calculation failed '
                                    f'to converge within {maxiter} iterations.')
-            
-            
+
+
     @classmethod
     def codstates_inf_model(cls, ID, flow_tot=0., units = ('L/hr', 'mg/L'),
                             phase='l', T=298.15, P=101325., price=0., thermo=None,
@@ -1015,7 +1015,7 @@ class WasteStream(SanStream):
 
         return new
 
-    
+
     @classmethod
     def codbased_inf_model(cls, ID, flow_tot=0., units = ('L/hr', 'mg/L'),
                            phase='l', T=298.15, P=101325., price=0., thermo=None,
