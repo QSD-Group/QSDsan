@@ -592,9 +592,6 @@ class Component(Chemical):
         phase = data.get('phase') or self._locked_state
         new._locked_state = phase
 
-        phase = data.get('phase') or self._locked_state
-        new._locked_state = phase
-
         new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus,
                            new.Tm, new.Tb, new.eos, new.phase_ref)
         new._label_handles()
