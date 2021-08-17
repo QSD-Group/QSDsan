@@ -11,10 +11,9 @@ for license details.
 '''
 
 
-import os, pickle as pk
+import pickle as pk
 from thermosteam.utils import chemicals_user
 import os
-
 # os.chdir("C:/Users/joy_c/Dropbox/PhD/Research/QSD/codes_developing/QSDsan")
 from qsdsan import Components, Process, Processes
 from ..utils import data_path
@@ -78,8 +77,8 @@ def _pickle_asm2d_cmps():
 # _pickle_asm2d_cmps()
 
 def load_asm2d_cmps():
-    cmps = pk.load(_path_cmps)
-    return cmps
+    with open(_path_cmps, 'rb') as f:
+        return pk.load(f)
 
 ############ Processes in ASM2d #################
 # params = ('f_SI', 'Y_H', 'f_XI_H', 'Y_PAO', 'Y_PO4', 'Y_PHA', 'f_XI_PAO', 'Y_A', 'f_XI_AUT',
