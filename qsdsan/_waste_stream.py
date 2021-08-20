@@ -627,7 +627,10 @@ class WasteStream(SanStream):
     # def charge(self):
     #     return self._liq_sol_properties('charge', self.composite('charge'))
 
-
+    @property
+    def Conc(self):
+        return self.get_mass_concentration()
+    
     def copy(self, new_ID='', ws_properties=True):
         '''
         Copy the information of another stream.

@@ -61,7 +61,9 @@ class CSTR(SanUnit):
         reactor is aerated. The default is 'S_O2'.
     suspended_growth_model : :class:`Processes`, optional
         The suspended growth biokinetic model. The default is None.
-
+    # cache_state : bool, optional
+    #     Whether to store the states of stream composition in the tank from 
+    #     most recent run. The default is True.
     '''
 
     _N_ins = 3
@@ -69,79 +71,91 @@ class CSTR(SanUnit):
     _ins_size_is_fixed = False
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', 
-                 V_max=1000, aeration=2.0, DO_ID='S_O2',
-                 suspended_growth_model=None, **kwargs):
+                 V_max=1000, aeration=2.0, DO_ID='S_O2', suspended_growth_model=None, 
+                 cache_state=True, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self._V_max = V_max
         self._aeration = aeration
         self._DO_ID = DO_ID
         self._model = suspended_growth_model
+        # self._cache_state = cache_state
         for attr, value in kwargs.items():
             setattr(self, attr, value)
+        self._isdynamic = True
         self._init_C = None
+
+    @property
+    def state(self):
+        if self._state is None: return None
+        else: return dict(zip(self.components.IDs, self._state))
+    
+    @state.setter
+    def state(self, C):
+        C = np.asarray(C)
+        if C.shape != (len(self.components), ):
+            raise ValueError(f'state must be a 1D array of length {len(self.components)}')
+        self._state = C
+
+    def _init_state(self):
+        mixed = WasteStream()
+        mixed.mix_from(self.ins)
+        self._state = mixed.Conc
+    
+    def _state_locator(self, arr):
+        '''derives conditions of output stream from conditions within the clarifier'''
+        dct = {}
+        dct[self.outs[0].ID] = arr
+        dct[self.ID] = arr
+        return dct
         
-    def _run(self, t_bound=10, steady_state=False, cache_state=True):
+    def _load_state(self):
+        '''returns a dictionary of values of state variables within the CSTR and in the output stream.'''
+        if self._state is None: self._init_state()
+        return self._state_locator(self._state)
+        
+    def _run(self):
+        mixed = WasteStream()
+        mixed.mix_from(self.ins)
+        treated = self.outs[0]
+        treated.copy_like(mixed)
+        Q = treated.get_total_flow('m3/d')
+        if self._state is None: self._init_state()
+        C0 = self.state
+        try: C0.pop('H2O')
+        except: pass
+        treated.set_flow_by_concentration(Q, C0, units=('m3/d', 'mg/L'))
+    
+    def _ODE(self):
         isa = isinstance        
-        if self._model is not None:
-            mixed = WasteStream()
-            mixed.mix_from(self.ins)
-            treated = self.outs[0]
-            treated.copy_like(mixed)
-            Q = mixed.get_total_flow('m3/d')
-            tau = self._V_max / Q
-            C_in = mixed.mass / mixed.F_vol * 1e3    # concentrations in g/m3
-            if self._init_C is not None: C_0 = self._init_C
-            else: C_0 = C_in            
-            C = list(symbols(self.components.IDs))
-            
-            processes = _add_aeration_to_growth_model(self._aeration, self._model)                               
-            mass_balance_terms = list(zip(C_in, C, processes.production_rates.rate_of_production))
-            C_dot_eqs = [(cin-c)/tau + r for cin, c, r in mass_balance_terms]
+        Q_ins = [ws.get_total_flow('m3/d') for ws in self.ins]
+        Q_e = self.outs[0].get_total_flow('m3/d')
+        V = self._V_max
+        C = list(symbols(self.components.IDs))        
+        if self._model is None:
+            warn(f'{self.ID} was initiated without a suspended growth model, '
+                 f'and thus run as a non-reactive unit')
+            r = lambda *args: np.zeros(len(C))         
+        else:
+            processes = _add_aeration_to_growth_model(self._aeration, self._model)
+            r_eqs = list(processes.production_rates.rate_of_production)
+            r = lambdify(C, r_eqs)           
+        
+        def dC_dt(C_ins, C):
+            flow_in = np.dot(Q_ins, C_ins) / V
             if isa(self._aeration, (float, int)):
                 i = self.components.index(self._DO_ID)
-                C_0[i] = C_in[i] = self._aeration
-                C_dot_eqs[i] = 0
-            
-            def dC_dt(t, y):
-                C_dot = lambdify(C, C_dot_eqs)
-                return C_dot(*y)
-            def limit(t, y):
-                dCdt = np.array(dC_dt(0, y))
-                if np.allclose(dCdt, np.zeros(len(y)), atol=1e-3): return 0
-                else: return 1
-            limit.terminal = True            
-            J = Matrix(dC_dt(None, C)).jacobian(C)
-            def J_func(t, y):
-                J_func = lambdify(C, J)
-                return J_func(*y)            
-            
-            sol = solve_ivp(dC_dt, (0, t_bound), C_0, method='BDF', jac=J_func, events=limit)
-            C_out = np.array([max(y, 0) for y in sol.y.transpose()[-1]])
-            if steady_state:
-                while len(sol.t_events) == 0:
-                    sol = solve_ivp(dC_dt, (0, t_bound), C_out, method='BDF', jac=J_func, events=limit)
-                    C_out = np.array([max(y, 0) for y in sol.y.transpose()[-1]])
-            else:
-                if len(sol.t_events) == 0: 
-                    warn(f'{self.ID} did not reach steady state in this run.')
-            if cache_state: self._init_C = C_out
-            treated.set_flow(C_out*treated.F_vol, 'g/hr', self.components.IDs)
-        else:
-            raise RuntimeError(f'{self.ID} was initiated without a suspended growth model.')
+                C[i] = self._aeration
+            flow_out = Q_e * C / V
+            react = np.asarray(r(*C))
+            C_dot = flow_in - flow_out + react
+            if isa(self._aeration, (float, int)): C_dot[i] = 0         
+            return C_dot
+        
+        return dC_dt
     
     def _design(self):
         pass
     
-    @property
-    def init_state(self):
-        return dict(zip(self.components.IDs, self._init_C))
-    
-    @init_state.setter
-    def init_state(self, C):
-        if len(C) == len(self.components.IDs):
-            self._init_C = np.asarray(C)
-        else: 
-            raise ValueError(f'Must be a 1D array of length {len(self.components.IDs)}')
 
 class SBR(SanUnit):
     '''
@@ -198,8 +212,10 @@ class SBR(SanUnit):
         function, in [m^3/g]. The default is 2.86e-3.
     fns : float, optional
         Non-settleable fraction of the suspended solids, dimensionless. Must be within 
-        [0, 1], The default is 2.28e-3.
-
+        [0, 1]. The default is 2.28e-3.
+    cache_state : bool, optional
+        Whether to store volume and composition of retained sludge in the tank from 
+        most recent run. The default is True.
     References
     ----------
     .. [1] Takács, I.; Patry, G. G.; Nolasco, D. A Dynamic Model of the Clarification
@@ -211,14 +227,16 @@ class SBR(SanUnit):
     _N_ins = 1
     _N_outs = 2
     
-    def __init__(self, ID='', ins=None, outs=(), surface_area=1500, height=4, 
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', 
+                 surface_area=1500, height=4, 
                  operation_cycle=(0.5, 1.5, 2.0, 0, 1.0, 0.5, 0.1), 
                  aeration=(None, None, None, 2.0), DO_ID='S_O2',
                  suspended_growth_model=None, N_layer=10, 
                  pumped_flow=None, underflow=None,
                  X_threshold=3000, v_max=474, v_max_practical=250, 
-                 rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, **kwargs):
-        SanUnit.__init__(self, ID, ins, outs)
+                 rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, 
+                 cache_state=True, **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self._V = surface_area * height
         self._A = surface_area
         self._h = height
@@ -235,8 +253,10 @@ class SBR(SanUnit):
         self._rh = rh
         self._rp = rp
         self._fns = fns
+        self._cache_state = cache_state
         for attr, value in kwargs.items():
             setattr(self, attr, value)
+        self._isdynamic = False
         self._init_Vas = None
         self._init_Cas = None
         self._dynamic_composition = None
@@ -262,8 +282,10 @@ class SBR(SanUnit):
         else: return None
     
     def _run(self, cache_state=True):
-        isa = isinstance        
-        if self._model is not None:
+        if self._model is None:
+            raise RuntimeError(f'{self.ID} was initiated without a suspended growth model.')
+        else:
+            isa = isinstance        
             inf = self.ins[0]
             Q_in = inf.get_total_flow('m3/d')
             eff, sludge = self.outs
@@ -286,7 +308,7 @@ class SBR(SanUnit):
                 Vmax = self._V*0.75
                 hj = self._h*0.75/n
             
-            # fill and mix/aerate stages
+            # ********fill and mix/aerate stages***********
             T_fill = (Vmax - V_0)/Q_in # maximum total fill time in day
             T = [t/24 for t in self._operation_cycle]  # operation cycle in day
             if T_fill <= T[0]: 
@@ -324,7 +346,7 @@ class SBR(SanUnit):
                     y_mat = np.hstack((y_mat, sol.y))
             self._dynamic_composition = np.vstack((t_arr, y_mat)).transpose()
             
-            # settle, decant, desludge
+            # *********settle, decant, desludge**********
             eff.set_flow(C_0*eff.F_vol, 'g/hr', self.components.IDs)
             X_0 = eff.get_TSS()
             X_min = X_0 * self._fns
@@ -352,11 +374,10 @@ class SBR(SanUnit):
             was_mass_flow = C_as*V_was/T[6]
             sludge.set_flow(was_mass_flow, 'g/d', cmps.IDs)
             
-            if cache_state: 
+            if self._cache_state: 
                 self._init_Vas = V_total - V_eff - V_was
                 self._init_Cas = C_as
-        else: 
-            raise RuntimeError(f'{self.ID} was initiated without a suspended growth model.')
+
 
     def _design(self):
         pass
