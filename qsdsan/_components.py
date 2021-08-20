@@ -302,15 +302,9 @@ class Components(Chemicals):
 
                 COPY_V = False # if don't have V model, set those to default
                 if isa(i.V, _PH):
-                    v = None
-                    try: v = i.V.l(298.15, 101325)
-                    except DomainError: COPY_V = True
-                    if not v: COPY_V = True
+                    if not i.V.l.valid_methods(298.15): COPY_V = True
                 else:
-                    v = None
-                    try: v = i.V(298.15, 101325)
-                    except DomainError: COPY_V = True
-                    if not v: COPY_V = True
+                    if not i.V.valid_methods(298.15): COPY_V = True
 
                 if COPY_V:
                     if i.particle_size in ('Soluble', 'Dissolved gas'):
@@ -325,7 +319,7 @@ class Components(Chemicals):
 
                 try:
                     i.Hvap(i.Tb)
-                except (RuntimeError, DomainError): # Hvap model of H2O cannot be extrapolated to Tb
+                except RuntimeError: # Hvap model of H2O cannot be extrapolated to Tb
                     i.copy_models_from(ref_chem, names=('Hvap',))
 
             new.compile()
