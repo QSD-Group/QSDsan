@@ -1,5 +1,5 @@
 parameter	name (if diff)	unit	expected	low	high	distribution	references
-emptying_period	pit_emptying_period	years	0.8	0.3	2.4	triangular	"Bwaise survey results (May, 2018); calculations"
+emptying_period	pit_emptying_period	yr	0.8	0.3	2.4	triangular	"Bwaise survey results (May, 2018); calculations"
 sludge_accum_rate	sludge_accumulation_rate	L/cap/yr	270	100	900	triangular	"Strande et al., 2017; Chowdhry & Kone, 2012 (Gates Foundation report)"
 N_leaching		fraction of N input	0.13	0.01	0.5	uniform	"Jacks et al., 1999; Lagerstedt et al., 1994; Orner and Mihelcic, 2017; Nyenje et al., 2013 (2-20%); Phillips and Burton, 2005 (26-43%)"
 P_leaching		fraction of P input	0.18	0	0.37	uniform	"Nyenje et al., 2013 (0-1%); Orner and Mihelcic, 2017; Phillips and Burton, 2005 (30-37%)"

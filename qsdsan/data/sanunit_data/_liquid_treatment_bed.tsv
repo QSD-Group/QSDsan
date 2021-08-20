@@ -1,5 +1,5 @@
 parameter	name (if diff)	unit	expected	low	high	distribution	references
-tau	retention_time_sec	days	3	1	5	uniform	"CIDI; EAWAG, 2014; Tchobanoglous et al., 2014"
+tau	retention_time_sec	d	3	1	5	uniform	"CIDI; EAWAG, 2014; Tchobanoglous et al., 2014"
 COD_max_decay	COD_degradation_sec	% of total COD	0.7	0.6	0.8	triangular	"Leeds; Orner and Mihelcic, 2017"
 MCF_decay	MCF_sec	% anaerobic conversion of degraded COD	0.8	0.8	1	triangular	"IPCC, 2006"
 N_max_decay	N_max_denitrification_sec	% N removal	0.8	0.7	0.9	triangular	"Orner and Mihelcic, 2017"

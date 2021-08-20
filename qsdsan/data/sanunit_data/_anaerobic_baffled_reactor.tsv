@@ -1,5 +1,5 @@
 parameter	name (if diff)	unit	expected	low	high	distribution	references
-tau	retention_time_ABR	days	3	1	5	uniform	"CIDI; EAWAG, 2014; Tchobanoglous et al., 2014"
+tau	retention_time_ABR	d	3	1	5	uniform	"CIDI; EAWAG, 2014; Tchobanoglous et al., 2014"
 COD_removal	COD_removal_ABR	fraction of total COD	0.93	0.83	0.99	uniform	"EAWAG, 2014"
 MCF_decay	MCF_ABR	fraction of anaerobic conversion of degraded COD	1			constant	"IPCC, 2006"
 N_removal	N_removal_ABR	fraction of N removed	0.08	0	0.15	uniform	"EAWAG, 2014"

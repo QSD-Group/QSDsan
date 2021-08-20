@@ -1,5 +1,5 @@
 parameter	name (if diff)	unit	expected	low	high	distribution	references
-tau	retention_time_drying_bed	days	180	180	270	triangular	Lubigi (>6 months in uncovered drying beds)
+tau	retention_time_drying_bed	d	180	180	270	triangular	Lubigi (>6 months in uncovered drying beds)
 sol_frac	final_solids_content_drying_bed	fraction	"unplanted=0.35, planted=0.55"	"unplanted=0.3, planted=0.4"	"unplanted=0.4, planted=0.7"	uniform	"Lubigi; EAWAG, 2014"
 COD_max_decay	COD_degradation_drying_bed	fraction of total COD	0.7	0.6	0.8	triangular	"Leeds; Orner and Mihelcic, 2017"
 MCF_decay	MCF_drying_bed	fraction of anaerobic conversion of degraded COD	0.2	0	0.3	triangular	"IPCC, 2006"
@@ -23,5 +23,5 @@ column_H	covered_column_height	m	2.75	2.5	3	uniform	Lubigi photos; CIDI
 column_per_side	covered_columns_per_side	-	7			constant	Lubigi photos; CIDI
 column_unit_mass	column_mass_per_meter	kg/m	30	23	37	uniform	Sandeep Steels
 concrete_thickness	concrete_thickness	m	0.3	0.15	0.45	uniform	assumption
-cover_slope		degrees	20	10	30	uniform	assumption
+cover_slope		degree	20	10	30	uniform	assumption
 cover_unit_mass	roof_mass	kg/m2	2.64	2.26	3.58	uniform	Home Depot
