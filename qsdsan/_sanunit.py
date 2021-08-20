@@ -127,7 +127,7 @@ class SanUnit(Unit, isabstract=True):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  construction=(), transportation=(), equipments=(),
                  add_OPEX={}, uptime_ratio=1., lifetime=None, F_BM_default=None,
-                 **kwargs):
+                 isdynamic=False, **kwargs):
 
         self._register(ID)
         self._specification = None
@@ -154,7 +154,8 @@ class SanUnit(Unit, isabstract=True):
             F_BM = self.F_BM
             self.F_BM = defaultdict(lambda: F_BM_default)
             self.F_BM.update(F_BM)
-
+        
+        self._isdynamic = isdynamic
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
@@ -253,6 +254,9 @@ class SanUnit(Unit, isabstract=True):
         info = info.replace('\n ', '\n    ')
         return info[:-1]
 
+    def _ODE(self):
+        return None
+
 
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, IDs=None, stream_info=True):
         '''Print information of the unit, including waste stream-specific information.'''
@@ -294,6 +298,10 @@ class SanUnit(Unit, isabstract=True):
         '''[Components] The :class:`~.Components` object associated with this unit.'''
         return self.chemicals
 
+    @property
+    def isdynamic(self):
+        '''[bool] Whether the unit runs dynamically within a system.'''
+        return self._isdynamic
 
     @property
     def construction(self):

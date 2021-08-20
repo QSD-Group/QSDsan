@@ -66,9 +66,6 @@ class FlatBottomCircularClarifier(SanUnit):
     fns : float, optional
         Non-settleable fraction of the suspended solids, dimensionless. Must be within 
         [0, 1]. The default is 2.28e-3.
-    # cache_state : bool, optional
-    #     Whether to store distribution state of components within the clarifier from 
-    #     most recent run. The default is True.
 
     References
     ----------
@@ -85,9 +82,9 @@ class FlatBottomCircularClarifier(SanUnit):
                  surface_area=1500, height=4, N_layer=10, feed_layer=4, 
                  X_threshold=3000, v_max=474, v_max_practical=250, 
                  rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, 
-                 cache_state=True, **kwargs):
+                 isdynamic=True, **kwargs):
 
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic)
         self._Qs = sludge_flow_rate
         self._V = surface_area * height
         self._A = surface_area
@@ -103,7 +100,6 @@ class FlatBottomCircularClarifier(SanUnit):
         # self._cache_state = cache_state
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-        self._isdynamic = True
         self._state = None   
 
         

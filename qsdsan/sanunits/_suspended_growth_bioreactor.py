@@ -72,8 +72,8 @@ class CSTR(SanUnit):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', 
                  V_max=1000, aeration=2.0, DO_ID='S_O2', suspended_growth_model=None, 
-                 cache_state=True, **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+                 isdynamic=True, **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic)
         self._V_max = V_max
         self._aeration = aeration
         self._DO_ID = DO_ID
@@ -81,8 +81,6 @@ class CSTR(SanUnit):
         # self._cache_state = cache_state
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-        self._isdynamic = True
-        self._init_C = None
 
     @property
     def state(self):
@@ -256,7 +254,6 @@ class SBR(SanUnit):
         self._cache_state = cache_state
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-        self._isdynamic = False
         self._init_Vas = None
         self._init_Cas = None
         self._dynamic_composition = None
