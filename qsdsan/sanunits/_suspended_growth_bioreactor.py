@@ -139,7 +139,7 @@ class CSTR(SanUnit):
             r = lambdify(C, r_eqs)           
         
         def dC_dt(C_ins, C):
-            flow_in = np.dot(Q_ins, C_ins) / V
+            flow_in = Q_ins @ C_ins / V
             if isa(self._aeration, (float, int)):
                 i = self.components.index(self._DO_ID)
                 C[i] = self._aeration
