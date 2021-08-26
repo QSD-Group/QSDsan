@@ -49,6 +49,9 @@ You can find tutorials and documents at:
    https://qsdsan.readthedocs.io
 
 
+Additionally, we are actively developing education modules for QSDsan (and other libraries/packages developed by the QSD group, you can find them in the EDUxQSD repositor)
+
+
 About the authors
 -----------------
 Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors are listed below, please refer to the `author page <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_ for the full list of authors.

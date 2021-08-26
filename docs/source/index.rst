@@ -51,7 +51,9 @@ Follow the tutorial to get started!
    :maxdepth: 1
    :caption: Tutorial
 
-   tutorials/Component_and_WasteStream
+   tutorials/Helpful_Basic
+   tutorials/Component
+   tutorials/WasteStream
    tutorials/SanUnit_and_System
    tutorials/TEA_and_LCA
 

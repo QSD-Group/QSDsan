@@ -39,7 +39,7 @@ class SanStream(Stream):
 
     Examples
     --------
-    `Component and WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/Component_and_WasteStream.html>`_
+    `WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/WasteStream.html>`_
 
     See Also
     --------
