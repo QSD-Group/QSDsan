@@ -51,7 +51,7 @@ Follow the tutorial to get started!
    :maxdepth: 1
    :caption: Tutorial
 
-   tutorials/Helpful_Basic
+   tutorials/Helpful_Basics
    tutorials/Component
    tutorials/WasteStream
    tutorials/SanUnit_and_System
