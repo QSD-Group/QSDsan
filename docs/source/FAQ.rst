@@ -42,6 +42,25 @@ or
     If you have already installed graphviz (both the actual software and the Python interface) but still getting the same error, your probably need to add the path of the graphviz software to your system path. To do that, you need to firstly locate where the graphviz software is, add the graphviz path to your system path (for Windows, the post above has instruction on how to add to your path; for macOS, you add ``export PATH="<REPLACE_WITH_GRAPHVIZ_PATH>:$PATH"`` to your shell profile).
 
 
+``UnicodeDecodeError``
+----------------------
+When using non-English operating systems, you may run into errors similar to (cp949 is the case of Korean Windows):
+
+   .. code:: bash
+
+       UnicodeDecodeError: 'cp949' codec can't decode byte Oxe2 in position 3426: multibyte sequence
+
+
+To fix this, Windows users can go to Control Panel -> Clock, Language, Region -> Change date, time, or number formats, then follow the steps below:
+
+.. figure:: ./images/unicode.png
+   :width: 400
+   :align: center
+
+
+We are not sure if this error will appear for Mac users, but let us know if you run into this and we will be happy to help with troubleshooting!
+
+
 Tips
 ====
 
