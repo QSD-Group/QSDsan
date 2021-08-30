@@ -90,6 +90,7 @@ class CSTR(SanUnit):
     @state.setter
     def state(self, C):
         C = np.asarray(C)
+        #!!! the shape of state array should be determined by the _ODE()
         if C.shape != (len(self.components), ):
             raise ValueError(f'state must be a 1D array of length {len(self.components)}')
         self._state = C
