@@ -53,15 +53,17 @@ class LumpedCost(SanUnit):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.F_BM = {cost_item_name: 1}
-        self.baseline_purchase_costs = {cost_item_name: CAPEX}
+        self.CAPEX_dct = {cost_item_name: CAPEX}
         self.power_utility(power)
         self._add_OPEX = add_OPEX
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
+
     def _run(self):
         for num, stream in enumerate(self.ins):
             self.outs[num].copy_like(stream)
 
-    def _setup(self):
-        pass
+
+    def _cost(self):
+        self.baseline_purchase_costs.update(self.CAPEX_dct)

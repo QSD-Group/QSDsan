@@ -1,11 +1,10 @@
 Authors
 =======
 
-Lead Developers & Organizers
-----------------------------
+Lead Developers
+---------------
 - `Yalin Li <zoe.yalin.li@gmail.com>`_ (current maintainer)
 - `Joy Cheung <joycheung1994@gmail.com>`_
-- `Stetson Rowles <lsr@illinois.edu>`_
 
 
 Code Development
@@ -25,7 +24,7 @@ Module Development
 - Smiti Mittal
 - Anna Kogler
 - Samuel Aguiar
-- Taylor Stephen
+- Tyler Stephen
 - Shion Watabe
 
 

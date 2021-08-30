@@ -1,5 +1,5 @@
 parameter	name (if diff)	unit	expected	low	high	distribution	references
-tau	residence_time_AD	days	90			constant	CIDI
+tau	residence_time_AD	d	90			constant	CIDI
 COD_removal	COD_removal_AD	fraction of COD removal	0.7	0.6	0.8	uniform	"Tchobanoglous et al,. 2014 (EAWAG: 80-85fraction of BOD removal)"
 MCF_decay	MCF_AD	fraction of anaerobic conversion of degraded COD	1			constant	"IPCC, 2006"
 N_max_decay	N_max_denitrification_AD	fraction of N removal	0.8	0.7	0.9	triangular	"Orner and Mihelcic, 2017"

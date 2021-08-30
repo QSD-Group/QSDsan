@@ -193,7 +193,7 @@ class Component(Chemical):
 
     Examples
     --------
-    `Component and WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/Component_and_WasteStream.html>`_
+    `Component <https://qsdsan.readthedocs.io/en/latest/tutorials/Component.html>`_
 
 
     See Also

@@ -57,7 +57,7 @@ class Components(Chemicals):
 
     Examples
     --------
-    `Component and WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/Component_and_WasteStream.html>`_
+    `Component <https://qsdsan.readthedocs.io/en/latest/tutorials/Component.html>`_
 
     See Also
     --------
@@ -386,6 +386,10 @@ def component_data_array(components, attr):
 class CompiledComponents(CompiledChemicals):
     '''
     A subclass of :class:`thermosteam.CompiledChemicals`, contains `Component` objects as attributes.
+
+    Examples
+    --------
+    `Component <https://qsdsan.readthedocs.io/en/latest/tutorials/Component.html>`_
 
     See Also
     --------

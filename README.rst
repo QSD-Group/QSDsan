@@ -29,13 +29,13 @@ All systems developed with ``QSDsan`` are included in the package `EXPOsan <http
 
 Installation
 ------------
-You can download the package from `PyPI <https://pypi.org/project/qsdsan/>`_.
-
-If you use pip:
+The easiest way is through ``pip``, in command/Anaconda prompt (Windows) or terminal (macOS):
 
 .. code:: bash
 
     pip install qsdsan
+
+You can also download the package from `PyPI <https://pypi.org/project/qsdsan/>`_.
 
 Note that development of this package is currently under initial stage with limited backward compatibility, please feel free to `submit an issue <https://github.com/QSD-Group/QSDsan/issues>`_ for any questions regarding package upgrading.
 
@@ -47,6 +47,9 @@ Documentation
 You can find tutorials and documents at:
 
    https://qsdsan.readthedocs.io
+
+
+Additionally, we are actively developing education modules for QSDsan (and other libraries/packages developed by the QSD group, you can find them in the EDUxQSD repositor)
 
 
 About the authors
@@ -76,6 +79,6 @@ Please refer to the ``LICENSE.txt`` for information on the terms & conditions fo
 
 References
 ----------
-.. [1] Li, Y.; Hand, S.; Trimmer, J. T.; Byrne, D. M.; Chambers, K. G.; Lohman, H. A. C.; Shi, R.; Zhang, X.; Cook, S. M.; Guest, J. S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. In Prep. 2021.
+.. [1] Li, Y.; Trimmer, J. T.; Hand, S.; Zhang, X.; Chambers, K. G.; Lohman, H. A. C.; Shi, R.; Byrne, D. M.; Cook, S. M.; Guest, J. S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. *Critial Review Proposal Submitted*, 2021.
 
 .. [2] Cortés-Peña, Y.; Kumar, D.; Singh, V.; Guest, J. S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020, 8 (8), 3302–3310. https://doi.org/10.1021/acssuschemeng.9b07040.
