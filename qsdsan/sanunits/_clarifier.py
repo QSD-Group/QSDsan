@@ -113,6 +113,7 @@ class FlatBottomCircularClarifier(SanUnit):
     @state.setter
     def state(self, C):
         C = np.asarray(C)
+        #!!! the shape of state array should be determined by the _ODE()
         if C.shape != (self._N_layer, len(self.components)):
             raise ValueError(f'state must be an array of shape {(self._N_layer, len(self.components))}')
         self._state = C
