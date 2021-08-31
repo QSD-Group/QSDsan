@@ -13,7 +13,7 @@ When using :func:`diagram`, if you run into a ``graphviz`` error similar to:
 
 or
 
-   .. code:: bash
+   .. code::
 
        ExecutableNotFound: failed to execute ['dot', '-Kdot', '-Tpng'], make sure the Graphviz executables are on your systems' PATH
 
@@ -25,14 +25,14 @@ or if you cannot get any diagram at all. It is likely that your ``graphviz`` is 
 
 This `post <https://stackoverflow.com/questions/35064304/runtimeerror-make-sure-the-graphviz-executables-are-on-your-systems-path-aft>`_ provides a lot of useful information, and this normally can be solved by:
 
-    .. code:: bash
+    .. code::
 
        conda install graphviz # if you are using conda
 
 
 or
 
-    .. code:: bash
+    .. code::
 
        brew install graphviz # if you are using brew
 
@@ -46,19 +46,12 @@ or
 ----------------------
 When using non-English operating systems, you may run into errors similar to (cp949 is the case of Korean Windows):
 
-   .. code:: bash
+   .. code::
 
        UnicodeDecodeError: 'cp949' codec can't decode byte Oxe2 in position 3426: multibyte sequence
 
 
-To fix this, Windows users can go to Control Panel -> Clock, Language, Region -> Change date, time, or number formats, then follow the steps below:
-
-.. figure:: ./images/unicode.png
-   :width: 400
-   :align: center
-
-
-We are not sure if this error will appear for Mac users, but let us know if you run into this and we will be happy to help with troubleshooting!
+To fix this, Windows users can look at this `thread <https://stackoverflow.com/questions/57131654/using-utf-8-encoding-chcp-65001-in-command-prompt-windows-powershell-window>`_ on updating the character encoding in the Windows console to UTF-8. We are not sure if this error will appear for Mac users, but let us know if you run into this and we will be happy to help with troubleshooting.
 
 
 Tips
