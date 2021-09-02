@@ -21,6 +21,7 @@ def test_process():
     from sympy.parsing.sympy_parser import parse_expr
     from math import isclose
     from qsdsan import set_thermo, Components, Process, Processes, CompiledProcesses
+    import qsdsan.processes as pc
 
     cmps = Components.load_default()
 
@@ -115,7 +116,16 @@ def test_process():
     assert isinstance(asm2d, CompiledProcesses)
     assert p12 in asm2d
     assert set(asm2d.parameters.keys()) == set(params)
-
+    
+    try: cmps_asm1 = pc.load_asm1_cmps()
+    except: 
+        pc._asm1._pickle_asm1_cmps()
+        cmps_asm1 = pc.load_asm1_cmps()
+    
+    try: cmps_asm2d = pc.load_asm2d_cmps()
+    except:
+        pc._asm2d._pickle_asm2d_cmps()
+        cmps_asm2d = pc.load_asm2d_cmps()
 
 if __name__ == '__main__':
     test_process()
