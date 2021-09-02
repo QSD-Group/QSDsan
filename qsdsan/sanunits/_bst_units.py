@@ -6,6 +6,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
+    Joy Cheung <joycheung1994@gmail.com>
 
 Part of this module is based on the biosteam package:
 https://github.com/BioSTEAMDevelopmentGroup/biosteam
@@ -15,9 +16,9 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-
+import numpy as np
 import biosteam as bst
-from .. import SanUnit
+from .. import SanUnit, WasteStream
 
 
 __all__ = (
@@ -40,7 +41,67 @@ class Mixer(SanUnit, bst.units.Mixer):
     --------
     `biosteam.units.Mixer <https://biosteam.readthedocs.io/en/latest/units/mixing.html>`_
     '''
+    
+    @property
+    def state(self):
+        '''The state of the Mixer, including component concentrations [mg/L] and flow rate [m^3/d].'''
+        if self._state is None: return None
+        else: 
+            return dict(zip(list(self.components.IDs) + ['Q'], self._state))
+    
+    @state.setter
+    def state(self, QCs):        
+        QCs = np.asarray(QCs)
+        if QCs.shape != (len(self.components)+1, ):
+            raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
+                              'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
+        self._state = QCs
 
+    def _init_state(self, state=None):
+        '''initialize state by specifiying or calculating component concentrations 
+        based on influents. Total flow rate is always initialized as the sum of 
+        influent wastestream flows.'''
+        mixed = WasteStream()
+        mixed.mix_from(self.ins)
+        Q = mixed.get_total_flow('m3/d')
+        self._state = np.append(state or mixed.Conc, Q)
+    
+    def _state_locator(self, arr):
+        '''derives conditions of output stream from conditions of the Mixer'''
+        dct = {}
+        dct[self.outs[0].ID] = arr
+        dct[self.ID] = arr
+        return dct
+    
+    def _dstate_locator(self, arr):
+        '''derives rates of change of output stream from rates of change of the Mixer'''
+        return self._state_locator(arr)
+        
+    def _load_state(self):
+        '''returns a dictionary of values of state variables within the CSTR and in the output stream.'''
+        if self._state is None: self._init_state()
+        return self._state_locator(self._state)
+        
+    @property
+    def _ODE(self):
+        _n_ins = len(self.ins)
+        _n_state = len(self.components)+1
+        def dy_dt(QC_ins, QC, dQC_ins):
+            if _n_ins > 1:
+                QC_ins = QC_ins.reshape((_n_ins, _n_state))
+                Q_ins = QC_ins[:, -1]
+                C_ins = QC_ins[:, :-1]
+                dQC_ins = dQC_ins.reshape((_n_ins, _n_state))
+                dQ_ins = dQC_ins[:, -1]
+                dC_ins = dQC_ins[:, :-1]
+                Q = Q_ins.sum()
+                C = Q_ins @ C_ins / Q
+                Q_dot = dQ_ins.sum()
+                C_dot = (dQ_ins @ C_ins + Q_ins @ dC_ins - Q_dot * C)/Q
+                return np.append(C_dot, Q_dot)
+            else:
+                return dQC_ins
+        return dy_dt
 
 class Splitter(SanUnit, bst.units.Splitter):
     '''
@@ -57,6 +118,51 @@ class Splitter(SanUnit, bst.units.Splitter):
                          init_with=init_with, F_BM_default=F_BM_default)
         self._isplit = self.thermo.chemicals.isplit(split, order)
 
+    @property
+    def state(self):
+        '''Component concentrations in each layer and total flow rate.'''
+        if self._state is None: return None
+        else: 
+            return dict(zip(list(self.components.IDs) + ['Q'], self._state))
+        
+    @state.setter
+    def state(self, QCs):        
+        QCs = np.asarray(QCs)
+        if QCs.shape != (len(self.components)+1, ):
+            raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
+                              'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
+        self._state = QCs
+
+    def _init_state(self):
+        Cs = self.ins[0].Conc
+        Q = self.ins[0].get_total_flow('m3/d')
+        self._state = np.append(Cs, Q)
+    
+    def _state_locator(self, arr):
+        '''derives conditions of output stream from conditions of the Splitter'''
+        dct = {}
+        Q1 = arr[-1] * self.split   # assuming split is a single value for all components
+        Q2 = arr[-1] - Q1
+        Cs = arr[:-1]
+        dct[self.outs[0].ID] = np.append(Cs[0], Q1)
+        dct[self.outs[1].ID] = np.append(Cs[-1], Q2)
+        dct[self.ID] = arr
+        return dct
+
+    def _dstate_locator(self, arr):
+        '''derives rates of change of output streams from rates of change of the Splitter'''
+        return self._state_locator(arr)
+
+    def _load_state(self):
+        '''returns a dictionary of values of state variables within the clarifer and in the output streams.'''
+        if self._state is None: self._init_state()
+        return self._state_locator(self._state)
+    
+    @property
+    def _ODE(self):
+        def dy_dt(QC_ins, QC, dQC_ins):
+            return dQC_ins
+        return dy_dt
 
 class FakeSplitter(SanUnit, bst.units.FakeSplitter):
     '''
@@ -98,6 +204,48 @@ class Pump(SanUnit, bst.units.Pump):
         self.dP_design = dP_design
         self.ignore_NPSH = ignore_NPSH
 
+    @property
+    def state(self):
+        '''The state of the Pump, including component concentrations [mg/L] and flow rate [m^3/d].'''
+        if self._state is None: return None
+        else: 
+            return dict(zip(list(self.components.IDs) + ['Q'], self._state))
+    
+    @state.setter
+    def state(self, QCs):        
+        QCs = np.asarray(QCs)
+        if QCs.shape != (len(self.components)+1, ):
+            raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
+                              'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
+        self._state = QCs
+
+    def _init_state(self):
+        Cs = self.ins[0].Conc
+        Q = self.ins[0].get_total_flow('m3/d')
+        self._state = np.append(Cs, Q)
+    
+    def _state_locator(self, arr):
+        '''derives conditions of output stream from conditions of the Mixer'''
+        dct = {}
+        dct[self.outs[0].ID] = arr
+        dct[self.ID] = arr
+        return dct
+    
+    def _dstate_locator(self, arr):
+        '''derives rates of change of output stream from rates of change of the Mixer'''
+        return self._state_locator(arr)
+        
+    def _load_state(self):
+        '''returns a dictionary of values of state variables within the CSTR and in the output stream.'''
+        if self._state is None: self._init_state()
+        return self._state_locator(self._state)
+        
+    @property
+    def _ODE(self):
+        def dy_dt(QC_ins, QC, dQC_ins):
+            return dQC_ins
+        return dy_dt
+    
 
 class Tank(SanUnit, bst.units.Tank, isabstract=True):
     '''

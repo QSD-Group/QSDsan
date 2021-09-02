@@ -81,31 +81,42 @@ class CSTR(SanUnit):
         # self._cache_state = cache_state
         for attr, value in kwargs.items():
             setattr(self, attr, value)
+        # self._state = None
 
     @property
     def state(self):
+        '''The state of the CSTR, including component concentrations [mg/L] and flow rate [m^3/d].'''
         if self._state is None: return None
-        else: return dict(zip(self.components.IDs, self._state))
+        else: 
+            return dict(zip(list(self.components.IDs) + ['Q'], self._state))
     
     @state.setter
-    def state(self, C):
-        C = np.asarray(C)
-        #!!! the shape of state array should be determined by the _ODE()
-        if C.shape != (len(self.components), ):
-            raise ValueError(f'state must be a 1D array of length {len(self.components)}')
-        self._state = C
+    def state(self, QCs):        
+        QCs = np.asarray(QCs)
+        if QCs.shape != (len(self.components)+1, ):
+            raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
+                              'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
+        self._state = QCs
 
-    def _init_state(self):
+    def _init_state(self, state=None):
+        '''initialize state by specifiying or calculating component concentrations 
+        based on influents. Total flow rate is always initialized as the sum of 
+        influent wastestream flows.'''
         mixed = WasteStream()
         mixed.mix_from(self.ins)
-        self._state = mixed.Conc
+        Q = mixed.get_total_flow('m3/d')
+        self._state = np.append(state or mixed.Conc, Q)
     
     def _state_locator(self, arr):
-        '''derives conditions of output stream from conditions within the clarifier'''
+        '''derives conditions of output stream from conditions within the CSTR'''
         dct = {}
         dct[self.outs[0].ID] = arr
         dct[self.ID] = arr
         return dct
+    
+    def _dstate_locator(self, arr):
+        '''derives rates of change of output stream from rates of change within the CSTR'''
+        return self._state_locator(arr)
         
     def _load_state(self):
         '''returns a dictionary of values of state variables within the CSTR and in the output stream.'''
@@ -113,21 +124,15 @@ class CSTR(SanUnit):
         return self._state_locator(self._state)
         
     def _run(self):
+        '''Only to converge volumetric flows.'''
         mixed = WasteStream()
         mixed.mix_from(self.ins)
-        treated = self.outs[0]
+        treated, = self.outs
         treated.copy_like(mixed)
-        Q = treated.get_total_flow('m3/d')
-        if self._state is None: self._init_state()
-        C0 = self.state
-        try: C0.pop('H2O')
-        except: pass
-        treated.set_flow_by_concentration(Q, C0, units=('m3/d', 'mg/L'))
     
+    @property
     def _ODE(self):
         isa = isinstance        
-        Q_ins = [ws.get_total_flow('m3/d') for ws in self.ins]
-        Q_e = self.outs[0].get_total_flow('m3/d')
         V = self._V_max
         C = list(symbols(self.components.IDs))        
         if self._model is None:
@@ -139,18 +144,56 @@ class CSTR(SanUnit):
             r_eqs = list(processes.production_rates.rate_of_production)
             r = lambdify(C, r_eqs)           
         
-        def dC_dt(C_ins, C):
-            flow_in = Q_ins @ C_ins / V
-            if isa(self._aeration, (float, int)):
-                i = self.components.index(self._DO_ID)
-                C[i] = self._aeration
-            flow_out = Q_e * C / V
-            react = np.asarray(r(*C))
-            C_dot = flow_in - flow_out + react
-            if isa(self._aeration, (float, int)): C_dot[i] = 0         
-            return C_dot
+        _n_ins = len(self.ins)
+        _n_state = len(C) + 1
         
-        return dC_dt
+        if isa(self._aeration, (float, int)):
+            i = self.components.index(self._DO_ID)
+            fixed_DO = self._aeration
+            def dy_dt(QC_ins, QC, dQC_ins):
+                if _n_ins > 1:
+                    QC_ins = QC_ins.reshape((_n_ins, _n_state))
+                    Q_ins = QC_ins[:, -1]
+                    C_ins = QC_ins[:, :-1]
+                    flow_in = Q_ins @ C_ins / V
+                    Q_e = Q_ins.sum()
+                    dQC_ins = dQC_ins.reshape((_n_ins, _n_state))
+                    Q_dot = dQC_ins[:, -1].sum()
+                else:
+                    Q_ins = QC_ins[-1]
+                    C_ins = QC_ins[:-1]
+                    flow_in = Q_ins * C_ins / V
+                    Q_e = Q_ins
+                    Q_dot = dQC_ins[-1]                                   
+                C = QC[:-1]
+                C[i] = fixed_DO
+                flow_out = Q_e * C / V
+                react = np.asarray(r(*C))
+                C_dot = flow_in - flow_out + react
+                C_dot[i] = 0.0                
+                return np.append(C_dot, Q_dot)
+        else:
+            def dy_dt(QC_ins, QC, dQC_ins):
+                if _n_ins > 1:
+                    QC_ins = QC_ins.reshape((_n_ins, _n_state))
+                    Q_ins = QC_ins[:, -1]
+                    C_ins = QC_ins[:, :-1]
+                    flow_in = Q_ins @ C_ins / V
+                    Q_e = Q_ins.sum()
+                    dQC_ins = dQC_ins.reshape((_n_ins, _n_state))
+                    Q_dot = dQC_ins[:, -1].sum()
+                else:
+                    Q_e = Q_ins = QC_ins[-1]
+                    C_ins = QC_ins[:-1]
+                    flow_in = Q_ins * C_ins / V
+                    Q_dot = dQC_ins[-1]    
+                C = QC[:-1]
+                flow_out = Q_e * C / V
+                react = np.asarray(r(*C))
+                C_dot = flow_in - flow_out + react
+                return np.append(C_dot, Q_dot)
+        
+        return dy_dt
     
     def _design(self):
         pass
