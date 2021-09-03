@@ -1,4 +1,4 @@
-biosteam>=2.31.8
+biosteam>=2.31.7
 thermosteam>=0.27.9
 sphinx
 sphinx_rtd_theme
