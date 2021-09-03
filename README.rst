@@ -31,7 +31,7 @@ Installation
 ------------
 The easiest way is through ``pip``, in command/Anaconda prompt (Windows) or terminal (macOS):
 
-.. code:: bash
+.. code::
 
     pip install qsdsan
 
@@ -59,7 +59,6 @@ Development and maintenance of the package is supported by the Quantitative Sust
 **Lead developers:**
    - `Yalin Li <zoe.yalin.li@gmail.com>`_ (current maintainer)
    - `Joy Cheung <joycheung1994@gmail.com>`_
-   - `Stetson Rowles <lsr@illinois.edu>`_
 
 **Project conception & funding support:**
    - `Jeremy Guest <jsguest@illinois.edu>`_

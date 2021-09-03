@@ -20,7 +20,7 @@ def test_process():
     from sympy import symbols, Eq
     from sympy.parsing.sympy_parser import parse_expr
     from math import isclose
-    from qsdsan import set_thermo, Components, Process, Processes, CompiledProcesses
+    from qsdsan import set_thermo, Components, Process, Processes, CompiledProcesses, _pk
     import qsdsan.processes as pc
 
     cmps = Components.load_default()
@@ -118,15 +118,15 @@ def test_process():
     assert set(asm2d.parameters.keys()) == set(params)
 
     # Try re-pickling and save the results
-    try: cmps_asm1 = pc.load_asm1_cmps()
+    pickle = True if _pk else False
+    try: pc.load_asm1_cmps()
     except:
-        pc._asm1._create_asm1_cmps(pickle=True)
-        cmps_asm1 = pc.load_asm1_cmps()
+        pc._asm1._create_asm1_cmps(pickle=pickle)
 
-    try: cmps_asm2d = pc.load_asm2d_cmps()
+    try: pc.load_asm2d_cmps()
     except:
-        pc._asm2d._create_asm1_cmps(pickle=True)
-        cmps_asm2d = pc.load_asm2d_cmps()
+        pc._asm2d._create_asm1_cmps(pickle=pickle)
+        pc.load_asm2d_cmps()
 
 
 if __name__ == '__main__':

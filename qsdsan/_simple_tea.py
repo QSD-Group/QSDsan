@@ -154,7 +154,7 @@ class SimpleTEA(TEA):
                  construction_schedule=None):
         system.simulate()
         self.system = system
-        system._TEA = self
+        # system._TEA = self
         self.discount_rate = discount_rate
         # IRR (internal rate of return) is the discount rate when net present value is 0
         self.IRR = discount_rate
@@ -317,7 +317,7 @@ class SimpleTEA(TEA):
         if 0 <=i<= 1:
             self._uptime_ratio = float(i)
             self._operating_days = 365*float(i)
-            self._operating_hours = self._operating_days * 24
+            self._operating_hours = self.system.operating_hours = self._operating_days * 24
         else:
             raise ValueError('`uptime_ratio` must be in [0,1].')
 
@@ -325,11 +325,17 @@ class SimpleTEA(TEA):
     def operating_days(self):
         '''[float] Equivalent operating days calculated based on `uptime_ratio`.'''
         return self._operating_days
+    @operating_days.setter
+    def operating_days(self, i):
+        raise AttributeError('Set `uptime_ratio` instead.')
 
     @property
     def operating_hours(self):
         '''[float] Equivalent operating hours calculated based on `uptime_ratio`.'''
         return self._operating_hours
+    @operating_hours.setter
+    def operating_hours(self, i):
+        raise AttributeError('Set `uptime_ratio` instead.')
 
     @property
     def lang_factor(self):

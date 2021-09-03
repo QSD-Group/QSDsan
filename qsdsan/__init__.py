@@ -19,7 +19,7 @@ py_version = sys.version.split('.')
 _PY_MAJOR, _PY_MINOR = int(py_version[0]), int(py_version[1])
 
 if (_PY_MAJOR, _PY_MINOR) <= (3, 7):
-    from warning import warn
+    from warnings import warn
     if (_PY_MAJOR, _PY_MINOR) >= (3, 5):
         try: import pickle5 as _pk
         except ModuleNotFoundError:
