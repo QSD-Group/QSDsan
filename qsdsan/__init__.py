@@ -27,6 +27,7 @@ if (_PY_MAJOR, _PY_MINOR) <= (3, 7):
                  'installing `pickle5` by running `pip install pickle5` in your '
                  'command/Anaconda prompt or terminal can reduce the loading time.\n'
                  'For further information, check https://pypi.org/project/pickle5/.')
+            _pk = None
     else:
         warn(f'Python version {_PY_MAJOR}.{_PY_MINOR} does not support Pickle Protocol 5, '
              'and will have slower speed in when loading the default processes.')
