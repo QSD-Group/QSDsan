@@ -6,6 +6,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
+    Joy Cheung <joycheung1994@gmail.com>
 
 Part of this module is based on the BioSTEAM package:
 https://github.com/BioSTEAMDevelopmentGroup/biosteam
@@ -127,7 +128,7 @@ class SanUnit(Unit, isabstract=True):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  construction=(), transportation=(), equipments=(),
                  add_OPEX={}, uptime_ratio=1., lifetime=None, F_BM_default=None,
-                 **kwargs):
+                 isdynamic=False, **kwargs):
 
         self._register(ID)
         self._specification = None
@@ -154,6 +155,9 @@ class SanUnit(Unit, isabstract=True):
             F_BM = self.F_BM
             self.F_BM = defaultdict(lambda: F_BM_default)
             self.F_BM.update(F_BM)
+
+        self._isdynamic = isdynamic
+        self._state = None
 
         for attr, val in kwargs.items():
             setattr(self, attr, val)
@@ -293,6 +297,14 @@ class SanUnit(Unit, isabstract=True):
     def components(self):
         '''[Components] The :class:`~.Components` object associated with this unit.'''
         return self.chemicals
+
+    @property
+    def isdynamic(self):
+        '''[bool] Whether the unit runs dynamically within a system.'''
+        return self._isdynamic
+    @isdynamic.setter
+    def isdynamic(self, i):
+        self._isdynamic = bool(i)
 
 
     @property

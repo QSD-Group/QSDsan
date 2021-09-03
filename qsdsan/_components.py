@@ -32,6 +32,7 @@ _num_component_properties = _component._num_component_properties
 _key_component_properties = _component._key_component_properties
 # _TMH = tmo.base.thermo_model_handle.ThermoModelHandle
 _PH = tmo.base.phase_handle.PhaseHandle
+DomainError = tmo.exceptions.DomainError
 
 
 # %%
@@ -302,11 +303,9 @@ class Components(Chemicals):
 
                 COPY_V = False # if don't have V model, set those to default
                 if isa(i.V, _PH):
-                    if not i.V.l.valid_methods(298.15):
-                        COPY_V = True
+                    if not i.V.l.valid_methods(298.15): COPY_V = True
                 else:
-                    if not i.V.valid_methods(298.15):
-                        COPY_V = True
+                    if not i.V.valid_methods(298.15): COPY_V = True
 
                 if COPY_V:
                     if i.particle_size in ('Soluble', 'Dissolved gas'):
@@ -413,9 +412,12 @@ class CompiledComponents(CompiledChemicals):
             setfield = setattr
             for cmp in components:
                 setfield(self, cmp.ID, cmp)
-            self._compile()
+            self._compile(components)
             cache[components] = self
         return self
+
+    def __reduce__(self):
+        return CompiledComponents, (self.tuple, )
 
 
     def __contains__(self, component):

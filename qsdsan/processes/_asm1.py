@@ -19,8 +19,10 @@ from ..utils import data_path
 
 __all__ = ('load_asm1_cmps', 'ASM1')
 
+# data_path = 'qsdsan/data'
 _path = data_path + 'process_data/_asm1.tsv'
 _path_cmps = os.path.join(data_path, '_asm1_cmps.pckl')
+
 
 ############# Components with default notation #############
 def _pickle_asm1_cmps():
@@ -86,8 +88,9 @@ def _pickle_asm1_cmps():
 # _pickle_asm1_cmps()
 
 def load_asm1_cmps():
-    cmps = pk.load(_path_cmps)
-    return cmps
+    with open(_path_cmps, 'rb') as f:
+        return pk.load(f)
+
 
 ############ Processes in ASM1 #################
 # params = ('Y_H', 'Y_A', 'f_P',
