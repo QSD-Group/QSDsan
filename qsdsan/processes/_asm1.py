@@ -10,11 +10,10 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-
-import os, pickle as pk
+import os
 from thermosteam.utils import chemicals_user
 # os.chdir("C:/Users/joy_c/Dropbox/PhD/Research/QSD/codes_developing/QSDsan")
-from qsdsan import Components, Processes
+from qsdsan import Components, Processes, _pk
 from ..utils import data_path
 
 __all__ = ('load_asm1_cmps', 'ASM1')
@@ -25,8 +24,19 @@ _path_cmps = os.path.join(data_path, '_asm1_cmps.pckl')
 
 
 ############# Components with default notation #############
-def _pickle_asm1_cmps():
+# Check Python version for pickling compatibility
+# def _check_pickle():
+#     if not _COMPATIBLE_WITH_PICKLE5:
+#         raise RuntimeError('Python version does not support Pickle Protocol 5, ')
 
+#             warn(f'Python version {_PY_MAJOR}.{_PY_MINOR} does not support Pickle Protocol 5, '
+#                  'and will lead to PicklingError if using default processes.\n')
+
+#     if _NEED_PICKLE5:
+#         import pickle5 as pk
+
+
+def _create_asm1_cmps(pickle=False):
     cmps = Components.load_default()
 
     S_I = cmps.S_U_Inf.copy('S_I')
@@ -81,15 +91,27 @@ def _pickle_asm1_cmps():
                             cmps.S_N2, cmps.H2O])
     cmps_asm1.compile()
 
-    f = open(_path_cmps, 'wb')
-    pk.dump(cmps_asm1, f)
-    f.close()
+    if pickle:
+        if _pk is None:
+            raise RuntimeError('Python version does not support Pickle Protocol 5, '
+                               'cannot pickle and save compiled results.')
+        else:
+            f = open(_path_cmps, 'wb')
+            _pk.dump(cmps_asm1, f, protocol=5)
+            f.close()
+
+    return cmps_asm1
+
 
 # _pickle_asm1_cmps()
 
 def load_asm1_cmps():
-    with open(_path_cmps, 'rb') as f:
-        return pk.load(f)
+    if _pk:
+        with open(_path_cmps, 'rb') as f:
+            return _pk.load(f)
+    else:
+        return _create_asm1_cmps(pickle=False)
+
 
 
 ############ Processes in ASM1 #################

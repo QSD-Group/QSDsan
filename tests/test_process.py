@@ -117,15 +117,15 @@ def test_process():
     assert p12 in asm2d
     assert set(asm2d.parameters.keys()) == set(params)
 
-    # Try re-pickling
+    # Try re-pickling and save the results
     try: cmps_asm1 = pc.load_asm1_cmps()
     except:
-        pc._asm1._pickle_asm1_cmps()
+        pc._asm1._create_asm1_cmps(pickle=True)
         cmps_asm1 = pc.load_asm1_cmps()
 
     try: cmps_asm2d = pc.load_asm2d_cmps()
     except:
-        pc._asm2d._pickle_asm2d_cmps()
+        pc._asm2d._create_asm1_cmps(pickle=True)
         cmps_asm2d = pc.load_asm2d_cmps()
 
 
