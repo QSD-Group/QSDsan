@@ -6,10 +6,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
-<<<<<<< HEAD
-=======
     Joy Cheung <joycheung1994@gmail.com>
->>>>>>> c8a8dd144c5a198fceff2739e145f248899bbf71
 
 Part of this module is based on the biosteam package:
 https://github.com/BioSTEAMDevelopmentGroup/biosteam

@@ -256,15 +256,11 @@ class SBR(SanUnit):
         function, in [m^3/g]. The default is 2.86e-3.
     fns : float, optional
         Non-settleable fraction of the suspended solids, dimensionless. Must be within
-<<<<<<< HEAD
-        [0, 1], The default is 2.28e-3.
-
-=======
         [0, 1]. The default is 2.28e-3.
     cache_state : bool, optional
         Whether to store volume and composition of retained sludge in the tank from
         most recent run. The default is True.
->>>>>>> c8a8dd144c5a198fceff2739e145f248899bbf71
+
     References
     ----------
     .. [1] Takács, I.; Patry, G. G.; Nolasco, D. A Dynamic Model of the Clarification
