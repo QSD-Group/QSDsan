@@ -835,6 +835,10 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
         g = sns.JointGrid(data=sns_df, x=x_name, y=y_name)
 
         kind_split = kind_lower.split('-')
+        if len(kind_split) == 1:
+            raise ValueError(f'Data input implies 2D-plot, but input `kind` is "{kind}", '
+                             f'implies 1D plot, maybe you want "{kind}-{kind}"?')
+
         if kind_split[0] in ('hist', 'kde'):
             func = getattr(sns, f'{kind_split[0]}plot')
             g.plot_joint(func, **center_kws)
@@ -897,7 +901,6 @@ def _plot_corr_bubble(corr_df, ratio, **kwargs):
 
     g.ax.grid(True, which='major', color='k',linestyle='--', linewidth=0.7)
     g.tight_layout()
-
     return g
 
 
@@ -914,10 +917,10 @@ def plot_correlations(result_df, parameters=(), metrics=(), top=None,
         correlation indices.
     parameters : :class:`biosteam.Parameter`
         Metric(s) of interest for the plot, will be default to all parameters
-        included in ``corr_dct`` if not provided.
+        included in `result_df` if not provided.
     metrics : :class:`biosteam.Metric`
         Metric(s) of interest for the plot, will be default to all metrics
-        included in ``corr_dct`` if not provided.
+        included in `result_df` if not provided.
     top : int
         Plot the top X parameters with the highest absolute correlation indices,
         this is only applicable for the case of just one metric.
@@ -926,7 +929,7 @@ def plot_correlations(result_df, parameters=(), metrics=(), top=None,
     close_fig : bool
         Whether to close the figure
         (if not close, new figure will be overlaid on the current figure).
-    kwargs
+    **kwargs: dict
         Other kwargs that will be passed to :func:`seaborn.relplot`.
 
     Returns
@@ -988,7 +991,7 @@ def plot_correlations(result_df, parameters=(), metrics=(), top=None,
 # =============================================================================
 
 def plot_morris_results(morris_dct, metric, kind='scatter',
-                        x_axis='mu_star',
+                        x_axis='mu_star', plot_lines=True,
                         k1=0.1, k2=0.5, k3=1, label_kind='number',
                         file='', close_fig=True, **kwargs):
     '''
@@ -1008,6 +1011,8 @@ def plot_morris_results(morris_dct, metric, kind='scatter',
         Either "scatter" (:math:`{\sigma}`) vs. :math:`{\mu^*}` or "bar" (:math:`{\mu^*}` with confidence interval) plot.
     x_axis : str
         X-axis parameter, should be either "mu_star" (the commonly used one) or "mu".
+    plot_lines: bool
+        Whether to plot the guide lines with slopes being k1 to k3.
     k1 : float
         The slope to differentiate monotonic (above the line)
         and linear (below the line).
@@ -1018,8 +1023,8 @@ def plot_morris_results(morris_dct, metric, kind='scatter',
         The slope to differentiate non-linear and/or non-monotonic (above the line)
         and almost monotonic (below the line).
     label_kind : str
-        How to label the points, can be either "number" (use index number of the result table)
-        of "name" (use index name of the result table).
+        How to label the points, can be "number" (use index number of the result table),
+        "name" (use index name of the result table), or None.
     file : str
         If provided, the generated figure will be saved as a png file.
     close_fig : bool
@@ -1049,7 +1054,7 @@ def plot_morris_results(morris_dct, metric, kind='scatter',
     elif label_kind == 'name':
         labels = df.index.values
     else:
-        raise ValueError(f'label_kind can only be "number" or "name", not "{label_kind}".')
+        labels = []
 
     ax = plt.subplot()
     sns.set_theme(style='ticks')
@@ -1060,13 +1065,14 @@ def plot_morris_results(morris_dct, metric, kind='scatter',
             ax.annotate(label, (x, y), xytext=(10, 10), textcoords='offset points',
                         ha='center')
         x_range = np.arange(-1, np.ceil(ax.get_xlim()[1])+1)
-        line1, = ax.plot(x_range, k1*x_range, color='black', linestyle='-.')
-        line2, = ax.plot(x_range, k2*x_range, color='black', linestyle='--')
-        line3, = ax.plot(x_range, k3*x_range, color='black', linestyle='-')
-        ax.legend((line3, line2, line1), (r'$\sigma/\mu^*$'+f'={k3}',
-                                          r'$\sigma/\mu^*$'+f'={k2}',
-                                          r'$\sigma/\mu^*$'+f'={k1}'),
-                  loc='best')
+        if plot_lines:
+            line1, = ax.plot(x_range, k1*x_range, color='black', linestyle='-.')
+            line2, = ax.plot(x_range, k2*x_range, color='black', linestyle='--')
+            line3, = ax.plot(x_range, k3*x_range, color='black', linestyle='-')
+            ax.legend((line3, line2, line1), (r'$\sigma/\mu^*$'+f'={k3}',
+                                              r'$\sigma/\mu^*$'+f'={k2}',
+                                              r'$\sigma/\mu^*$'+f'={k1}'),
+                      loc='best')
         if x_axis == 'mu_star':
             ax.set_xlim(0,)
         ax.set_ylim(0,)
