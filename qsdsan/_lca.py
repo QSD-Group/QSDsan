@@ -230,6 +230,7 @@ class LCA:
                 self._lca_streams.add(s)
         self._lca_streams = sorted(self._lca_streams, key=lambda s: s.ID)
         self._system = system
+        system._LCA = self
 
 
     def _update_lifetime(self, lifetime=0., unit='yr'):

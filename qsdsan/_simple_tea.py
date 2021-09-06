@@ -154,7 +154,7 @@ class SimpleTEA(TEA):
                  construction_schedule=None):
         system.simulate()
         self.system = system
-        # system._TEA = self
+        system._TEA = self
         self.discount_rate = discount_rate
         # IRR (internal rate of return) is the discount rate when net present value is 0
         self.IRR = discount_rate
@@ -259,6 +259,7 @@ class SimpleTEA(TEA):
                                 key=lambda x: x.line)
             self._feeds = i.feeds
             self._products = i.products
+            self.system._TEA = self
 
     @property
     def units(self):
