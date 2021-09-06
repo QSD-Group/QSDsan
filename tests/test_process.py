@@ -125,7 +125,7 @@ def test_process():
 
     try: pc.load_asm2d_cmps()
     except:
-        pc._asm2d._create_asm1_cmps(pickle=pickle)
+        pc._asm2d._create_asm2d_cmps(pickle=pickle)
         pc.load_asm2d_cmps()
 
 
