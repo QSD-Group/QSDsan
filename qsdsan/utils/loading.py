@@ -18,13 +18,13 @@ data_path = path[:-6] + '/data/'
 del os
 
 import pandas as pd
+from .. import _pk
 
-__all__ = ('load_data', 'data_path', 'dct_from_str')
+__all__ = ('load_data', 'data_path', 'dct_from_str', 'save_pickle', 'load_pickle')
 
 
 def load_data(path=None, sheet=None, index_col=0, **kwargs):
     '''For data importing.'''
-
     last_4 = path[-4:]
     if last_4 == '.tsv':
         data = pd.read_csv(path, sep='\t', index_col=index_col, **kwargs)
@@ -38,6 +38,7 @@ def load_data(path=None, sheet=None, index_col=0, **kwargs):
     else:
         raise ValueError('Only tsv, csv, or xlsx files can be loaded.')
     return data
+
 
 def dct_from_str(dct_str, sep=',', dtype='float'):
     '''
@@ -55,3 +56,24 @@ def dct_from_str(dct_str, sep=',', dtype='float'):
 
     else:
         return {k:v for k, v in splitted}
+
+
+def save_pickle(obj, path):
+    '''Save object as a pickle file using Pickle Protocol 5.'''
+    if _pk is None:
+        raise RuntimeError('Current environment does not support Pickle Protocol 5, '
+                           'cannot save pickle files.')
+    f = open(path, 'wb')
+    _pk.dump(obj, f, protocol=5)
+    f.close()
+
+
+def load_pickle(path):
+    '''Load object saved as a pickle file using Pickle Protocol 5.'''
+    if _pk is None:
+        raise RuntimeError('Current environment does not support Pickle Protocol 5, '
+                           'cannot load pickle files.')
+    f = open(path, 'rb')
+    obj = _pk.load(f)
+    f.close()
+    return obj

@@ -117,7 +117,8 @@ def test_process():
     assert p12 in asm2d
     assert set(asm2d.parameters.keys()) == set(params)
 
-    # Try re-pickling and save the results
+    # Try re-pickling if the tests are run locally and
+    # the environment supports Pickle Protocol 5
     pickle = True if _pk else False
     try: pc.load_asm1_cmps()
     except:
