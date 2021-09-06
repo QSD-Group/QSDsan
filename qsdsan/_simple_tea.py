@@ -154,7 +154,11 @@ class SimpleTEA(TEA):
                  construction_schedule=None):
         system.simulate()
         self.system = system
-        system._TEA = self
+        try: # for some versions of biosteam without the `_TEA` attribute
+            system._TEA = self
+        except AttributeError:
+            pass
+
         self.discount_rate = discount_rate
         # IRR (internal rate of return) is the discount rate when net present value is 0
         self.IRR = discount_rate
@@ -259,7 +263,10 @@ class SimpleTEA(TEA):
                                 key=lambda x: x.line)
             self._feeds = i.feeds
             self._products = i.products
-            self.system._TEA = self
+            try:
+                self.system._TEA = self
+            except AttributeError:
+                pass
 
     @property
     def units(self):

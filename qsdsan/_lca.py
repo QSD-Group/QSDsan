@@ -230,7 +230,10 @@ class LCA:
                 self._lca_streams.add(s)
         self._lca_streams = sorted(self._lca_streams, key=lambda s: s.ID)
         self._system = system
-        system._LCA = self
+        try: # for older versions of biosteam without the `_LCA` attribute
+            system._LCA = self
+        except AttributeError:
+            pass
 
 
     def _update_lifetime(self, lifetime=0., unit='yr'):
