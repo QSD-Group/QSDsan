@@ -33,9 +33,20 @@ _checked_properties = tmo._chemical._checked_properties
 lock_phase = tmo._chemical.lock_phase
 display_asfunctor = tmo._chemical.display_asfunctor
 copy_maybe = tmo.utils.copy_maybe
+get_component_data = tmo._chemical.get_chemical_data
 
 
 # %%
+# =============================================================================
+# Filling missing properties
+# =============================================================================
+
+def unpickle_component(cmp_data):
+    cmp = object.__new__(Component)
+    setfield = setattr
+    for field, value in cmp_data.items():
+        setfield(cmp, field, value)
+    return cmp
 
 # =============================================================================
 # Representation
@@ -233,6 +244,11 @@ class Component(Chemical):
         self.i_COD = i_COD
         self.i_NOD = i_NOD
         return self
+
+
+    def __reduce__(self):
+        return unpickle_component, (get_component_data(self),)
+
 
     def _atom_frac_setter(self, atom=None, frac=None):
         if self.formula:

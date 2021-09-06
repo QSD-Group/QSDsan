@@ -6,7 +6,7 @@ This module is developed by:
     Joy Cheung <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
-Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
@@ -20,7 +20,8 @@ def test_process():
     from sympy import symbols, Eq
     from sympy.parsing.sympy_parser import parse_expr
     from math import isclose
-    from qsdsan import set_thermo, Components, Process, Processes, CompiledProcesses
+    from qsdsan import set_thermo, Components, Process, Processes, CompiledProcesses, _pk
+    import qsdsan.processes as pc
 
     cmps = Components.load_default()
 
@@ -115,6 +116,17 @@ def test_process():
     assert isinstance(asm2d, CompiledProcesses)
     assert p12 in asm2d
     assert set(asm2d.parameters.keys()) == set(params)
+
+    # Try re-pickling and save the results
+    pickle = True if _pk else False
+    try: pc.load_asm1_cmps()
+    except:
+        pc._asm1._create_asm1_cmps(pickle=pickle)
+
+    try: pc.load_asm2d_cmps()
+    except:
+        pc._asm2d._create_asm1_cmps(pickle=pickle)
+        pc.load_asm2d_cmps()
 
 
 if __name__ == '__main__':

@@ -21,6 +21,7 @@ from . import (
     colors,
     decorators,
     # descriptors, # currently not in use
+    evaluation,
     getters,
     formatting,
     loading,
@@ -33,6 +34,7 @@ from .cod import *
 from .colors import *
 from .decorators import *
 # from .descriptors import *
+from .evaluation import *
 from .getters import *
 from .formatting import *
 from .loading import *
@@ -46,6 +48,7 @@ __all__ = (
     *colors.__all__,
     *decorators.__all__,
     # *descriptors.__all__,
+    *evaluation.__all__,
     *getters.__all__,
     *formatting.__all__,
     *loading.__all__,

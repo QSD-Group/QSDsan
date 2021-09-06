@@ -170,7 +170,13 @@ Tutorials are prepared in `Jupyter Notebook <https://jupyter.org/>`_ and potenti
 
 Testing
 -------
-``QSDsan`` uses `AppVeyor <https://www.appveyor.com/>`_ to test all pushes and pull requests. A pull request will only be accepted when the branch has no conflicts with the root repository and all tests have been passed. You can run the test locally using `pytest <https://docs.pytest.org/en/6.2.x/>`_:
+``QSDsan`` uses `AppVeyor <https://www.appveyor.com/>`_ to test all pushes and pull requests. A pull request will only be accepted when:
+
+#. Meaningful contributions have been made.
+#. The branch has no conflicts with the root repository.
+#. All tests have been passed.
+
+You can run the test locally using `pytest <https://docs.pytest.org/en/6.2.x/>`_:
 
 	.. code:: bash
 

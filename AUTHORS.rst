@@ -3,22 +3,22 @@ Authors
 
 Lead Developers
 ---------------
-- `Yalin Li <zoe.yalin.li@gmail.com>`_ (current maintainer)
-- `Joy Cheung <joycheung1994@gmail.com>`_
+- `Yalin Li <mailto:mailto:zoe.yalin.li@gmail.com>`_ (current maintainer)
+- `Joy Cheung <mailto:joycheung1994@gmail.com>`_
 
 
 Code Development
 ----------------
-- `Yalin Li <zoe.yalin.li@gmail.com>`_
-- `Joy Cheung <joycheung1994@gmail.com>`_
+- `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_
+- `Joy Cheung <mailto:joycheung1994@gmail.com>`_
 - `Other developers <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ that have contributed to the repository.
 
 
 Module Development
 ------------------
-- `Yalin Li <zoe.yalin.li@gmail.com>`_
-- `Joy Cheung <joycheung1994@gmail.com>`_
-- `Stetson Rowles <lsr@illinois.edu>`_
+- `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_
+- `Joy Cheung <mailto:joycheung1994@gmail.com>`_
+- Stetson Rowles
 - Tori Morgan
 - Hannah Lohman
 - Smiti Mittal
@@ -30,14 +30,12 @@ Module Development
 
 Project Conception
 ------------------
-- `Jeremy Guest <jsguest@illinois.edu>`_
+- `Jeremy Guest <mailto:jsguest@illinois.edu>`_
 
 
 Funding Support
 ---------------
-- `Jeremy Guest <jsguest@illinois.edu>`_
-- William Tarpeh
-- Ro Cusick
+- `Jeremy Guest <mailto:jsguest@illinois.edu>`_
 
 
 Special Acknowledgement

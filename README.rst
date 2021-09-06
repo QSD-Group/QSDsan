@@ -10,6 +10,8 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
    :target: https://pypi.org/project/qsdsan/
 .. image:: https://readthedocs.org/projects/qsdsan/badge/?version=latest
    :target: https://qsdsan.readthedocs.io/en/latest/
+.. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+   :target: https://qsdsan.readthedocs.io/en/latest/CODE_OF_CONDUCT.html
 .. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/main?label=build-main&logo=appveyor
    :target: https://github.com/QSD-Group/QSDsan/tree/main
 .. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/beta?label=build-beta&logo=appveyor
@@ -31,7 +33,7 @@ Installation
 ------------
 The easiest way is through ``pip``, in command/Anaconda prompt (Windows) or terminal (macOS):
 
-.. code:: bash
+.. code::
 
     pip install qsdsan
 
@@ -57,12 +59,11 @@ About the authors
 Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors are listed below, please refer to the `author page <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_ for the full list of authors.
 
 **Lead developers:**
-   - `Yalin Li <zoe.yalin.li@gmail.com>`_ (current maintainer)
-   - `Joy Cheung <joycheung1994@gmail.com>`_
-   - `Stetson Rowles <lsr@illinois.edu>`_
+   - `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_ (current maintainer)
+   - `Joy Cheung <mailto:joycheung1994@gmail.com>`_
 
 **Project conception & funding support:**
-   - `Jeremy Guest <jsguest@illinois.edu>`_
+   - `Jeremy Guest <mailto:jsguest@illinois.edu>`_
 
 **Special acknowledgement:**
    - Yoel Cortés-Peña for helping many of the ``QSDsan`` members get started on Python and package development.
