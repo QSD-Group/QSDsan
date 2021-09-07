@@ -159,7 +159,7 @@ class Components(Chemicals):
         setattr(self, '__class__', CompiledComponents)
         try: self._compile(components, skip_checks)
         except Exception as error:
-            setattr(self, '__class__', Chemicals)
+            setattr(self, '__class__', Components)
             setattr(self, '__dict__', {i.ID: i for i in components})
             raise error
 
