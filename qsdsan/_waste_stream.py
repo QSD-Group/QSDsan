@@ -629,6 +629,7 @@ class WasteStream(SanStream):
 
     @property
     def Conc(self):
+        '''Mass concentrations, in g/m3.'''
         return self.get_mass_concentration()
 
 
