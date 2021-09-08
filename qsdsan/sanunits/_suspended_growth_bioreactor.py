@@ -151,7 +151,7 @@ class CSTR(SanUnit):
         if isa(self._aeration, (float, int)):
             i = self.components.index(self._DO_ID)
             fixed_DO = self._aeration
-            def dy_dt(QC_ins, QC, dQC_ins):
+            def dy_dt(t, QC_ins, QC, dQC_ins):
                 if _n_ins > 1:
                     QC_ins = QC_ins.reshape((_n_ins, _n_state))
                     Q_ins = QC_ins[:, -1]
@@ -174,7 +174,7 @@ class CSTR(SanUnit):
                 C_dot[i] = 0.0
                 return np.append(C_dot, Q_dot)
         else:
-            def dy_dt(QC_ins, QC, dQC_ins):
+            def dy_dt(t, QC_ins, QC, dQC_ins):
                 if _n_ins > 1:
                     QC_ins = QC_ins.reshape((_n_ins, _n_state))
                     Q_ins = QC_ins[:, -1]

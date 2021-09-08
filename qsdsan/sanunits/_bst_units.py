@@ -88,7 +88,7 @@ class Mixer(SanUnit, bst.units.Mixer):
     def _ODE(self):
         _n_ins = len(self.ins)
         _n_state = len(self.components)+1
-        def dy_dt(QC_ins, QC, dQC_ins):
+        def dy_dt(t, QC_ins, QC, dQC_ins):
             if _n_ins > 1:
                 QC_ins = QC_ins.reshape((_n_ins, _n_state))
                 Q_ins = QC_ins[:, -1]
@@ -166,7 +166,7 @@ class Splitter(SanUnit, bst.units.Splitter):
 
     @property
     def _ODE(self):
-        def dy_dt(QC_ins, QC, dQC_ins):
+        def dy_dt(t, QC_ins, QC, dQC_ins):
             return dQC_ins
         return dy_dt
 
@@ -303,7 +303,11 @@ class MixTank(Tank, bst.units.MixTank):
     --------
     `biosteam.units.MixTank <https://biosteam.readthedocs.io/en/latest/units/Tank.html>`_
     '''
-
+    #!!! link for biosteam mixtank is obsolete
+    # should use CSTR instead for dynamic simulation since it's not different from
+    # Mixer in biosteam in terms of process modeling, i.e., no residence time is considered. 
+    # plus CSTR's volume is specified rather than calculated, bc we can't specify HRT (tau)
+    # for CSTR with changing flowrate
 
 class HXutility(SanUnit, bst.units.HXutility):
     '''
