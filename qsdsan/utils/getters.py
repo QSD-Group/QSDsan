@@ -15,20 +15,21 @@ for license details.
 
 # %%
 
-__all__ = ('FuncGetter',)
+__all__ = ('AttrGetter', 'FuncGetter')
 
 
-# # The below two classes haven't been successfully used,
-# # not sure if the idea is good.
-# class AttrGetter:
-#     __slots__ = ('attr',)
-#     def __init__(self, obj, attr):
-#         self.attr = getattr(obj, attr)
 
-#     def __call__(self):
-#         return self.attr
+class AttrGetter:
+    __slots__ = ('obj', 'attr', 'hook')
+    def __init__(self, obj, attr, hook=lambda i: i):
+        self.obj = obj
+        self.attr = attr
+        self.hook = hook
 
+    def __call__(self):
+        return self.hook(getattr(self.obj, self.attr))
 
+# # The below one needs updating
 # class AttrGetter:
 #     __slots__ = ('obj', 'attrs')
 #     def __init__(self, obj, attrs):
