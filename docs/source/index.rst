@@ -103,7 +103,7 @@ Development and maintenance of the platform is supported by the Quantitative Sus
 
 **Lead developers:**
    - `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_
-   - `Joy Cheung <mailto:joycheung1994@gmail.com>`_
+   - `Joy Zhang <mailto:joycheung1994@gmail.com>`_
 
 **Project conception & funding support:**
    - `Jeremy Guest <mailto:jsguest@illinois.edu>`_
