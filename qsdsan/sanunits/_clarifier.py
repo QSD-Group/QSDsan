@@ -11,10 +11,6 @@ for license details.
 '''
 
 from .. import SanUnit
-from math import exp
-# from sympy import symbols, lambdify, Matrix
-# from scipy.integrate import solve_ivp
-# from warnings import warn
 import numpy as np
 import pandas as pd
 
@@ -22,7 +18,7 @@ __all__ = ('FlatBottomCircularClarifier', )
 
 def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp):
     X_star = max(X-X_min, 0)
-    v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star)))
+    v = min(v_max_practical, v_max*(np.exp(-rh*X_star) - np.exp(-rp*X_star)))
     return X*max(v, 0)
 
 class FlatBottomCircularClarifier(SanUnit):
@@ -96,14 +92,128 @@ class FlatBottomCircularClarifier(SanUnit):
         self._rh = rh
         self._rp = rp
         self._fns = fns
-        # self._cache_state = cache_state
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-        # self._state = None
 
     @property
+    def sludge_flow_rate(self):
+        '''[float] The designed sludge flow rate (wasted + recycled) in m3/d.'''
+        return self._Qs
+    
+    @sludge_flow_rate.setter
+    def sludge_flow_rate(self, Qs):
+        self._Qs = Qs
+
+    @property
+    def V_settle(self):
+        '''[float] Total volume modeled for settling in m^3, calculated based on surface area and height.'''
+        return self._V
+    
+    @property
+    def A_settle(self):
+        '''[float] The surface area for settling in m^2, i.e., the area of the clarifer's flat bottom.'''
+        return self._A
+    
+    @A_settle.setter
+    def A_settle(self, A):
+        self._A = A
+    
+    @property
+    def h_layer(self):
+        '''[float] The height of each layer in the settling model, in m.'''
+        return self._hj
+
+    @h_layer.setter
+    def h_layer(self, h):
+        self._hj = h
+        
+    @property
+    def N_layer(self):
+        '''[int] The number of layers into which the clarifier is divided in the settling model.'''
+        return self._N_layer
+    
+    @N_layer.setter
+    def N_layer(self, N):
+        self._N_layer = int(N)
+    
+    @property
+    def feed_layer(self):
+        '''[int] The feed layer counting from top to bottom.'''
+        return self._feed_layer
+    
+    @feed_layer.setter
+    def feed_layer(self, jf):
+        jf = int(jf)
+        if jf > self._N_layer or jf < 1: 
+            raise ValueError(f'feed layer {self._feed_layer} is out of range.'
+                             f'must be an integer between 1 and {self._N_layer}.')
+        self._feed_layer = jf
+        
+    @property
+    def v_max(self):
+        '''[float] Maximum theoretical (i.e. Vesilind) settling velocity, in m/d'''
+        return self._v_max
+    
+    @v_max.setter
+    def v_max(self, vm):
+        if vm < self._v_max_p: 
+            raise ValueError('v_max must be greater than or equal to v_max_p.')
+        self._v_max = vm
+        
+    @property
+    def v_max_p(self):
+        '''[float] Maximum practical settling velocity, in m/d'''
+        return self._v_max_p
+    
+    @v_max_p.setter
+    def v_max_p(self, vmp):
+        if vmp > self._v_max or vmp <= 0: 
+            raise ValueError('v_max_p must be within (0, v_max].')
+        self._v_max_p = vmp
+    
+    @property
+    def X_t(self):
+        '''[float] Threshold suspended solid cocentration, in g/m^3.'''
+        return self._X_t
+    
+    @X_t.setter
+    def X_t(self, xt):
+        if xt < 0: raise ValueError('X_t must be positive.')
+        self._X_t = xt
+    
+    @property
+    def rh(self):
+        '''[float] Hindered zone settling parameter in the double-exponential settling velocity function, in m^3/g.'''
+        return self._rh
+    
+    @rh.setter
+    def rh(self, rh):
+        if rh > self._rp: raise ValueError('rh must be less than or equal to rp.')
+        self._rh = rh
+    
+    @property
+    def rp(self):
+        '''[float] Flocculant zone settling parameter in the double-exponential settling velocity function, in m^3/g.'''
+        return self._rp
+    
+    @rp.setter
+    def rp(self, rp):
+        if rp < self._rh: raise ValueError('rp must be greater than or equal to rp.')
+        self._rp = rp
+        
+    @property
+    def fns(self):
+        '''[float] Non-settleable fraction of the suspended solids'''
+        return self._fns
+    
+    @fns.setter
+    def fns(self, fns):
+        if fns < 0 or fns > 1: raise ValueError('fns must be within [0,1].')
+        self._fns = fns    
+    
+    @property
     def state(self):
-        '''Component concentrations in each layer and total flow rate.'''
+        '''Component concentrations [mg/L] in each layer and total flow rate [m3/d].'''
         if self._state is None: return None
         else:
             Cs = pd.DataFrame(self._state[:-1].reshape((self._N_layer, len(self.components))),
@@ -117,7 +227,9 @@ class FlatBottomCircularClarifier(SanUnit):
     def state(self, QCs):
         QCs = np.asarray(QCs)
         if QCs.shape != (self._N_layer * len(self.components) + 1,):
-            raise ValueError(f'state must be a 1d-array of shape {(self._N_layer * len(self.components) + 1,)}')
+            raise ValueError(f'state must be a 1d-array of shape {(self._N_layer * len(self.components) + 1,)}, '
+                             f'with the first {self._N_layer * len(self.components)} element being the component '
+                             f'concentrations on layer 1-{self._N_layer} and the last being the total flow rate.')
         self._state = QCs
 
     def _init_state(self, state=None):

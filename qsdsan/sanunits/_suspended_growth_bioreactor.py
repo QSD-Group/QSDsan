@@ -10,7 +10,7 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-from .. import SanUnit, WasteStream, Process, Processes
+from .. import SanUnit, WasteStream, Process, Processes, CompiledProcesses
 from ._clarifier import _settling_flux
 from sympy import symbols, lambdify, Matrix
 from scipy.integrate import solve_ivp
@@ -78,11 +78,59 @@ class CSTR(SanUnit):
         self._aeration = aeration
         self._DO_ID = DO_ID
         self._model = suspended_growth_model
-
-        # self._cache_state = cache_state
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-        # self._state = None
+
+    @property
+    def V_max(self):
+        '''[float] The designed maximum liquid volume, not accounting for increased volume due to aeration, in m^3.'''
+        return self._V_max
+    
+    @V_max.setter
+    def V_max(self, Vm):
+        self._V_max = Vm
+    
+    @property
+    def aeration(self):
+        '''[:class:`Process` or float or NoneType] Aeration model.'''
+        return self._aeration
+    
+    @aeration.setter
+    def aeration(self, ae):
+        if ae is None or isinstance(ae, Process): self._aeration = ae
+        elif isinstance(ae, (float, int)): 
+            if ae < 0: 
+                raise ValueError('targeted dissolved oxygen concentration for aeration must be non-negative.')
+            else: 
+                if ae > 14: 
+                    warn(f'targeted dissolved oxygen concentration for {self.ID} might exceed the saturated level.')
+                self._aeration = ae
+        else:
+            raise TypeError(f'aeration must be one of the following types: float, '
+                            f'int, Process, NoneType. Not {type(ae)}')
+    
+    @property
+    def suspended_growth_model(self):
+        '''[:class:`CompiledProcesses` or NoneType] Suspended growth model.'''
+        return self._model
+    
+    @suspended_growth_model.setter
+    def suspended_growth_model(self, model):
+        if isinstance(model, CompiledProcesses) or model is None: self._model = model
+        else: raise TypeError(f'suspended_growth_model must be one of the following '
+                              f'types: CompiledProesses, NoneType. Not {type(model)}')
+
+    @property
+    def DO_ID(self):
+        '''[str] The `Component` ID for dissolved oxygen used in the suspended growth model and the aeration model.'''
+        return self._DO_ID
+    
+    @DO_ID.setter
+    def DO_ID(self, doid):
+        if doid not in self.components.IDs:
+            raise ValueError(f'DO_ID must be in the set of `CompiledComponents` used to set thermo, '
+                             f'i.e., one of {self.components.IDs}.')
+        self._DO_ID = doid
 
     @property
     def state(self):
