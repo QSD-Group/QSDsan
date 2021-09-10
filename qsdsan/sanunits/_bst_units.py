@@ -107,11 +107,11 @@ class Mixer(SanUnit, bst.units.Mixer):
     
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
-        for out in self.outs:
-            Q = dct_y[out.ID]
-            Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
-            Cs.pop('H2O', None)
-            out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))    
+        out, = self.outs
+        Q = dct_y[out.ID][-1]
+        Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
+        Cs.pop('H2O', None)
+        out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))    
 
 class Splitter(SanUnit, bst.units.Splitter):
     '''
@@ -180,7 +180,7 @@ class Splitter(SanUnit, bst.units.Splitter):
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
         for out in self.outs:
-            Q = dct_y[out.ID]
+            Q = dct_y[out.ID][-1]
             Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
             Cs.pop('H2O', None)
             out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))    
@@ -271,7 +271,14 @@ class Pump(SanUnit, bst.units.Pump):
             return dQC_ins
         return dy_dt
 
-
+    def _define_outs(self):
+        dct_y = self._state_locator(self._state)
+        out, = self.outs
+        Q = dct_y[out.ID][-1]
+        Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
+        Cs.pop('H2O', None)
+        out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
+        
 class Tank(SanUnit, bst.units.Tank, isabstract=True):
     '''
     Similar to the :class:`biosteam.units.Tank`,

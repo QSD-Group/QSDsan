@@ -246,11 +246,11 @@ class CSTR(SanUnit):
 
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
-        for out in self.outs:
-            Q = dct_y[out.ID]
-            Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
-            Cs.pop('H2O', None)
-            out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))    
+        out, = self.outs
+        Q = dct_y[out.ID][-1]
+        Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
+        Cs.pop('H2O', None)
+        out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))    
 
     def _design(self):
         pass
