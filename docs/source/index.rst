@@ -44,8 +44,7 @@ If you prefer the most recent version on GitHub, please follow the steps in the 
 
 Getting Started
 ---------------
-
-Follow the tutorial to get started!
+Follow the tutorial to get started! For each of these tutorials, we are also recording videos where one of the QSD group members will go through the tutorial step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
 
 .. toctree::
    :maxdepth: 1

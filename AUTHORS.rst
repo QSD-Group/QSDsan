@@ -19,13 +19,19 @@ Module Development
 - `Yalin Li`_
 - `Joy Cheung`_
 - Stetson Rowles
-- Tori Morgan
-- Hannah Lohman
 - Smiti Mittal
 - Anna Kogler
 - Samuel Aguiar
 - Tyler Stephen
 - Shion Watabe
+
+
+Tutorial and Video
+------------------
+- `Yalin Li`_
+- `Joy Cheung`_
+- Tori Morgan
+- Hannah Lohman
 
 
 Project Conception
