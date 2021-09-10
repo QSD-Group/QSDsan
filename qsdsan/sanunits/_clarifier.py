@@ -3,14 +3,12 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Joy Cheung <joycheung1994@gmail.com>
+    Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
-
-__all__ = ('FlatBottomCircularClarifier', )
 
 from .. import SanUnit
 from math import exp
@@ -20,6 +18,7 @@ from math import exp
 import numpy as np
 import pandas as pd
 
+__all__ = ('FlatBottomCircularClarifier', )
 
 def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp):
     X_star = max(X-X_min, 0)
@@ -146,7 +145,7 @@ class FlatBottomCircularClarifier(SanUnit):
         dCs = arr[:-1].reshape((self._N_layer, len(self.components)))
         dct[self.outs[0].ID] = np.append(dCs[0], dQ)
         dct[self.outs[1].ID] = np.append(dCs[-1], 0)
-        dct[self.ID] = dCs
+        dct[self.ID] = arr
         return dct
 
     def _load_state(self):
@@ -216,6 +215,13 @@ class FlatBottomCircularClarifier(SanUnit):
 
         return dy_dt
 
+    def _define_outs(self):
+        dct_y = self._state_locator(self._state)
+        for out in self.outs:
+            Q = dct_y[out.ID]
+            Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
+            Cs.pop('H2O', None)
+            out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))     
 
     def _design(self):
         pass

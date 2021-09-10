@@ -6,7 +6,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
-    Joy Cheung <joycheung1994@gmail.com>
+    Joy Zhang <joycheung1994@gmail.com>
 
 Part of this module is based on the biosteam package:
 https://github.com/BioSTEAMDevelopmentGroup/biosteam
@@ -104,7 +104,14 @@ class Mixer(SanUnit, bst.units.Mixer):
             else:
                 return dQC_ins
         return dy_dt
-
+    
+    def _define_outs(self):
+        dct_y = self._state_locator(self._state)
+        for out in self.outs:
+            Q = dct_y[out.ID]
+            Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
+            Cs.pop('H2O', None)
+            out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))    
 
 class Splitter(SanUnit, bst.units.Splitter):
     '''
@@ -170,6 +177,13 @@ class Splitter(SanUnit, bst.units.Splitter):
             return dQC_ins
         return dy_dt
 
+    def _define_outs(self):
+        dct_y = self._state_locator(self._state)
+        for out in self.outs:
+            Q = dct_y[out.ID]
+            Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
+            Cs.pop('H2O', None)
+            out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))    
 
 class FakeSplitter(SanUnit, bst.units.FakeSplitter):
     '''

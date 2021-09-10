@@ -3,7 +3,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Joy Cheung <joycheung1994@gmail.com>
+    Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -196,6 +196,13 @@ class CSTR(SanUnit):
 
         return dy_dt
 
+    def _define_outs(self):
+        dct_y = self._state_locator(self._state)
+        for out in self.outs:
+            Q = dct_y[out.ID]
+            Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
+            Cs.pop('H2O', None)
+            out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))    
 
     def _design(self):
         pass
