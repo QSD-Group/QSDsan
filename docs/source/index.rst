@@ -105,6 +105,12 @@ Development and maintenance of the platform is supported by the Quantitative Sus
    - `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_
    - `Joy Zhang <mailto:joycheung1994@gmail.com>`_
 
+**Tutorials and videos:**
+   - `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_
+   - `Joy Zhang <mailto:joycheung1994@gmail.com>`_
+   - Tori Morgan
+   - Hannah Lohman
+
 **Project conception & funding support:**
    - `Jeremy Guest <mailto:jsguest@illinois.edu>`_
 

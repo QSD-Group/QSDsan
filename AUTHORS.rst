@@ -26,8 +26,8 @@ Module Development
 - Shion Watabe
 
 
-Tutorial and Video
-------------------
+Tutorials and Videos
+--------------------
 - `Yalin Li`_
 - `Joy Zhang`_
 - Tori Morgan
