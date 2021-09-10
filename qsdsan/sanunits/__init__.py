@@ -21,6 +21,7 @@ from ._component_splitter import *
 from ._crop_application import *
 from ._decay import *
 from ._drying_bed import *
+from ._dynamic_influent import *
 from ._electrochemical_cell import *
 from ._excretion import *
 from ._lagoon import *
@@ -45,6 +46,7 @@ from . import (
     _crop_application,
     _decay,
     _drying_bed,
+    _dynamic_influent,
     _electrochemical_cell,
     _excretion,
     _lagoon,
@@ -70,6 +72,7 @@ __all__ = (
     *_crop_application.__all__,
     *_decay.__all__,
     *_drying_bed.__all__,
+    *_dynamic_influent.__all__,
     *_electrochemical_cell.__all__,
     *_excretion.__all__,
     *_lagoon.__all__,
