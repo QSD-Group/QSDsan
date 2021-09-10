@@ -434,7 +434,7 @@ class WasteStream(SanStream):
         volatile : bool, optional
             Volatile (True) or involatile (False). The default is None.
         specification : str, optional
-            One of ("SVFA", "XStor", "XANO", "XBio", "SNOx", "XPAO_PP", "TKN").
+            One of ("S_VFA", "X_Stor", "X_ANO", "X_Bio", "S_NOx", "X_PAO_PP", "TKN").
             The default is None.
 
         Returns

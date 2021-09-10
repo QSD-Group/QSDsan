@@ -10,6 +10,9 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
    :target: https://pypi.org/project/qsdsan/
 .. image:: https://readthedocs.org/projects/qsdsan/badge/?version=latest
    :target: https://qsdsan.readthedocs.io/en/latest/
+.. image:: https://img.shields.io/endpoint?color=%23ff0000&label=YouTube&url=https%3A%2F%2Fyoutube-channel-badge-blond.vercel.app%2Fapi%2Fvideos
+   :target: https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA
+
 .. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
    :target: https://qsdsan.readthedocs.io/en/latest/CODE_OF_CONDUCT.html
 .. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/main?label=build-main&logo=appveyor
@@ -50,8 +53,9 @@ You can find tutorials and documents at:
 
    https://qsdsan.readthedocs.io
 
+For each of these tutorials, we are also recording videos where one of the QSD group members will go through the tutorial step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
 
-Additionally, we are actively developing education modules for QSDsan (and other libraries/packages developed by the QSD group, you can find them in the EDUxQSD repositor)
+Additionally, we are actively developing education modules for QSDsan (and other libraries/packages developed by the QSD group, you can find them in the `QSDedu repository <https://github.com/QSD-Group/QSDedu>`_).
 
 
 About the authors
