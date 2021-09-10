@@ -183,7 +183,7 @@ class FlatBottomCircularClarifier(SanUnit):
         A = self._A
         hj = self._hj
 
-        def dy_dt(QC_ins, QC, dQC_ins):
+        def dy_dt(t, QC_ins, QC, dQC_ins):
             Q_in = QC_ins[-1]
             Q_e = max(Q_in - Q_s, 0)
             C_in = QC_ins[:-1]
