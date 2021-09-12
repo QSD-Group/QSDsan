@@ -41,8 +41,6 @@ from SALib.plotting import morris as sa_plt_morris
 from biosteam.plots import plot_spearman
 from .utils import time_printer
 
-isinstance = isinstance
-getattr = getattr
 var_indices = bst.evaluation._model.var_indices
 indices_to_multiindex = bst.evaluation._model.indices_to_multiindex
 
@@ -140,7 +138,7 @@ def get_correlations(model, input_x=None, input_y=None,
         - "omit": drop the pair from analysis.
     file : str
         If provided, the results will be saved as an Excel file.
-    kwargs
+    **kwargs : dict
         Other kwargs that will be passed to ``scipy``.
 
     Returns
@@ -248,7 +246,7 @@ def generate_samples(inputs, kind, N, seed=None, **kwargs):
         The number of samples or trajectories (Morris).
     seed : int
         Seed to generate random samples.
-    kwargs
+    **kwargs : dict
         Other kwargs that will be passed to ``SALib``.
 
     Returns
@@ -313,7 +311,7 @@ def morris_analysis(model, inputs, metrics=None, nan_policy='propagate',
         Whether to show simulation time in the console.
     file : str
         If provided, the results will be saved as an Excel file.
-    kwargs
+    **kwargs : dict
         Other kwargs that will be passed to ``SALib``.
 
     Returns
@@ -348,7 +346,10 @@ def morris_analysis(model, inputs, metrics=None, nan_policy='propagate',
         si = morris.analyze(inputs, param_val.to_numpy(), results.to_numpy(),
                             conf_level=conf_level, print_to_console=print_to_console,
                             **kwargs)
-        morris_dct[metric.name] = si.to_df()
+        df = si.to_df()
+        df.reset_index(inplace=True)
+        df.rename(columns={'index':'parameter'}, inplace=True)
+        morris_dct[metric.name] = df
 
     if file:
         writer = pd.ExcelWriter(file)
@@ -401,7 +402,7 @@ def morris_till_convergence(model, inputs, metrics=None,
         Whether to show simulation time in the console.
     file : str
         If provided, the results will be saved as an Excel file.
-    kwargs
+    **kwargs : dict
         Other kwargs that will be passed to ``SALib``.
 
     Examples
@@ -510,7 +511,7 @@ def fast_analysis(model, inputs, kind, metrics=None, nan_policy='propagate',
         Whether to show simulation time in the console.
     file : str
         If provided, the results will be saved as an Excel file.
-    kwargs
+    **kwargs : dict
         Other kwargs that will be passed to ``SALib``.
 
     Returns
@@ -604,7 +605,7 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
         Whether to show simulation time in the console.
     file : str
         If provided, the results will be saved as an Excel file.
-    kwargs
+    **kwargs : dict
         Other kwargs that will be passed to ``SALib``.
 
     Returns
@@ -993,7 +994,7 @@ def plot_correlations(result_df, parameters=(), metrics=(), top=None,
 def plot_morris_results(morris_dct, metric, kind='scatter',
                         x_axis='mu_star', plot_lines=True,
                         k1=0.1, k2=0.5, k3=1, label_kind='number',
-                        file='', close_fig=True, **kwargs):
+                        scatter_color='k', file='', close_fig=True, **kwargs):
     '''
     Visualize the results from Morris One-at-A-Time analysis as either scatter
     or bar plots.
@@ -1011,8 +1012,6 @@ def plot_morris_results(morris_dct, metric, kind='scatter',
         Either "scatter" (:math:`{\sigma}`) vs. :math:`{\mu^*}` or "bar" (:math:`{\mu^*}` with confidence interval) plot.
     x_axis : str
         X-axis parameter, should be either "mu_star" (the commonly used one) or "mu".
-    plot_lines: bool
-        Whether to plot the guide lines with slopes being k1 to k3.
     k1 : float
         The slope to differentiate monotonic (above the line)
         and linear (below the line).
@@ -1023,14 +1022,17 @@ def plot_morris_results(morris_dct, metric, kind='scatter',
         The slope to differentiate non-linear and/or non-monotonic (above the line)
         and almost monotonic (below the line).
     label_kind : str
-        How to label the points, can be "number" (use index number of the result table),
-        "name" (use index name of the result table), or None.
+        How to label the points in the scatter plot,
+        can be "number" (use index number of the result table),
+        "name" (use index name of the result table), or None (no labels).
+    scatter_color : str or RGBs
+        Color for the scattor plot.
     file : str
         If provided, the generated figure will be saved as a png file.
     close_fig : bool
         Whether to close the figure
         (if not close, new figure will be overlaid on the current figure).
-    kwargs
+    **kwargs : dict
         Other kwargs that will be passed to :func:`morris.horizontal_bar_plot` in ``SALib.plotting``.
 
     Returns
@@ -1047,12 +1049,12 @@ def plot_morris_results(morris_dct, metric, kind='scatter',
 
     df = morris_dct[metric.name]
     x_data = getattr(df, x_axis)
+    x_error = df.mu_star_conf if x_axis=='mu_star' else None
     y_data = df.sigma
-    num = len(x_data)
     if label_kind == 'number':
-        labels = range(num)
-    elif label_kind == 'name':
         labels = df.index.values
+    elif label_kind == 'name':
+        labels = df.parameter
     else:
         labels = []
 
@@ -1060,19 +1062,34 @@ def plot_morris_results(morris_dct, metric, kind='scatter',
     sns.set_theme(style='ticks')
 
     if kind == 'scatter':
-        ax.scatter(x_data, y_data, color='k')
+        if x_error is not None:
+            ax.errorbar(x=x_data, y=y_data, xerr=x_error, fmt='.', color=scatter_color)
+        else:
+            ax.scatter(x_data, y_data, color=scatter_color)
         for x, y, label in zip(x_data, y_data, labels):
             ax.annotate(label, (x, y), xytext=(10, 10), textcoords='offset points',
                         ha='center')
         x_range = np.arange(-1, np.ceil(ax.get_xlim()[1])+1)
-        if plot_lines:
-            line1, = ax.plot(x_range, k1*x_range, color='black', linestyle='-.')
-            line2, = ax.plot(x_range, k2*x_range, color='black', linestyle='--')
+        
+        lines, legends = [], []
+        if k3:
             line3, = ax.plot(x_range, k3*x_range, color='black', linestyle='-')
-            ax.legend((line3, line2, line1), (r'$\sigma/\mu^*$'+f'={k3}',
-                                              r'$\sigma/\mu^*$'+f'={k2}',
-                                              r'$\sigma/\mu^*$'+f'={k1}'),
-                      loc='best')
+            lines.append(line3)
+            legends.append(r'$\sigma/\mu^*$'+f'={k3}')
+
+        if k2:
+            line2, = ax.plot(x_range, k2*x_range, color='black', linestyle='--')
+            lines.append(line2)
+            legends.append(r'$\sigma/\mu^*$'+f'={k2}')        
+        
+        if k1:
+            line1, = ax.plot(x_range, k1*x_range, color='black', linestyle='-.')
+            lines.append(line1)
+            legends.append(r'$\sigma/\mu^*$'+f'={k1}')
+        
+        if len(lines) > 0:
+            ax.legend(lines, legends, loc='best')
+        
         if x_axis == 'mu_star':
             ax.set_xlim(0,)
         ax.set_ylim(0,)

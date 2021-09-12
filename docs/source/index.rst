@@ -44,8 +44,7 @@ If you prefer the most recent version on GitHub, please follow the steps in the 
 
 Getting Started
 ---------------
-
-Follow the tutorial to get started!
+Follow the tutorial to get started! For each of these tutorials, we are also recording videos where one of the QSD group members will go through the tutorial step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
 
 .. toctree::
    :maxdepth: 1
@@ -104,7 +103,13 @@ Development and maintenance of the platform is supported by the Quantitative Sus
 
 **Lead developers:**
    - `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_
-   - `Joy Cheung <mailto:joycheung1994@gmail.com>`_
+   - `Joy Zhang <mailto:joycheung1994@gmail.com>`_
+
+**Tutorials and videos:**
+   - `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_
+   - `Joy Zhang <mailto:joycheung1994@gmail.com>`_
+   - Tori Morgan
+   - Hannah Lohman
 
 **Project conception & funding support:**
    - `Jeremy Guest <mailto:jsguest@illinois.edu>`_

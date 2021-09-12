@@ -15,7 +15,7 @@ import os
 
 # os.chdir("C:/Users/joy_c/Dropbox/PhD/Research/QSD/codes_developing/QSDsan")
 from qsdsan import Components, Process, Processes, _pk
-from ..utils import data_path
+from ..utils import data_path, save_pickle, load_pickle
 
 __all__ = ('load_asm2d_cmps', 'ASM2d')
 
@@ -70,14 +70,7 @@ def _create_asm2d_cmps(pickle=False):
     cmps_asm2d.compile()
 
     if pickle:
-        if _pk is None:
-            raise RuntimeError('Python version does not support Pickle Protocol 5, '
-                               'cannot pickle and save compiled results.')
-        else:
-            f = open(_path_cmps, 'wb')
-            _pk.dump(cmps_asm2d, f, protocol=5)
-            f.close()
-
+        save_pickle(cmps_asm2d, _path_cmps)
     return cmps_asm2d
 
 
@@ -85,8 +78,7 @@ def _create_asm2d_cmps(pickle=False):
 
 def load_asm2d_cmps():
     if _pk:
-        with open(_path_cmps, 'rb') as f:
-            return _pk.load(f)
+        return load_pickle(_path_cmps)
     else:
         return _create_asm2d_cmps(pickle=False)
 

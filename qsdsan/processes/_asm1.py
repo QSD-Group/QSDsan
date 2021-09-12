@@ -14,7 +14,7 @@ import os
 from thermosteam.utils import chemicals_user
 # os.chdir("C:/Users/joy_c/Dropbox/PhD/Research/QSD/codes_developing/QSDsan")
 from qsdsan import Components, Processes, _pk
-from ..utils import data_path
+from ..utils import data_path, save_pickle, load_pickle
 
 __all__ = ('load_asm1_cmps', 'ASM1')
 
@@ -24,18 +24,6 @@ _path_cmps = os.path.join(data_path, '_asm1_cmps.pckl')
 
 
 ############# Components with default notation #############
-# Check Python version for pickling compatibility
-# def _check_pickle():
-#     if not _COMPATIBLE_WITH_PICKLE5:
-#         raise RuntimeError('Python version does not support Pickle Protocol 5, ')
-
-#             warn(f'Python version {_PY_MAJOR}.{_PY_MINOR} does not support Pickle Protocol 5, '
-#                  'and will lead to PicklingError if using default processes.\n')
-
-#     if _NEED_PICKLE5:
-#         import pickle5 as pk
-
-
 def _create_asm1_cmps(pickle=False):
     cmps = Components.load_default()
 
@@ -92,14 +80,7 @@ def _create_asm1_cmps(pickle=False):
     cmps_asm1.compile()
 
     if pickle:
-        if _pk is None:
-            raise RuntimeError('Python version does not support Pickle Protocol 5, '
-                               'cannot pickle and save compiled results.')
-        else:
-            f = open(_path_cmps, 'wb')
-            _pk.dump(cmps_asm1, f, protocol=5)
-            f.close()
-
+        save_pickle(cmps_asm1, _path_cmps)
     return cmps_asm1
 
 
@@ -107,8 +88,7 @@ def _create_asm1_cmps(pickle=False):
 
 def load_asm1_cmps():
     if _pk:
-        with open(_path_cmps, 'rb') as f:
-            return _pk.load(f)
+        return load_pickle(_path_cmps)
     else:
         return _create_asm1_cmps(pickle=False)
 
