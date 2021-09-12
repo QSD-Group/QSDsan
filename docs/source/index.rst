@@ -44,7 +44,9 @@ If you prefer the most recent version on GitHub, please follow the steps in the 
 
 Getting Started
 ---------------
-Follow the tutorial to get started! For each of these tutorials, we are also recording videos where one of the QSD group members will go through the tutorial step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
+Follow the tutorial to get started! We are updating the tutorials (you will see a note at the start of some tutorials saying updates are coming) and we will add new ones related to uncertainty/sensitivity analyses.
+
+For each of these tutorials, we are also recording videos where one of the QSD group members will go through the tutorial step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
 
 .. toctree::
    :maxdepth: 1
@@ -53,8 +55,10 @@ Follow the tutorial to get started! For each of these tutorials, we are also rec
    tutorials/Helpful_Basics
    tutorials/Component
    tutorials/WasteStream
-   tutorials/SanUnit_and_System
-   tutorials/TEA_and_LCA
+   tutorials/SanUnit
+   tutorials/System
+   tutorials/TEA
+   tutorials/LCA
 
 
 How does ``QSDsan`` work?

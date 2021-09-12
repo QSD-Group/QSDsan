@@ -881,7 +881,7 @@ class WasteStream(SanStream):
 
 
     @classmethod
-    def codstates_inf_model(cls, ID, flow_tot=0., units = ('L/hr', 'mg/L'),
+    def codstates_inf_model(cls, ID='', flow_tot=0., units = ('L/hr', 'mg/L'),
                             phase='l', T=298.15, P=101325., price=0., thermo=None,
                             pH=7., SAlk=10., ratios=None,
                             COD=430., TKN=40., TP=10., iVSS_TSS=0.75, iSNH_STKN=0.9,
@@ -1028,7 +1028,7 @@ class WasteStream(SanStream):
 
 
     @classmethod
-    def codbased_inf_model(cls, ID, flow_tot=0., units = ('L/hr', 'mg/L'),
+    def codbased_inf_model(cls, ID='', flow_tot=0., units = ('L/hr', 'mg/L'),
                            phase='l', T=298.15, P=101325., price=0., thermo=None,
                            pH=7., SAlk=10., ratios=None,
                            COD=430., TKN=40., TP=10., iVSS_TSS=0.75, iSNH_STKN=0.9,
@@ -1181,7 +1181,7 @@ class WasteStream(SanStream):
 
 
     @classmethod
-    def bodbased_inf_model(cls, ID, flow_tot=0., units = ('L/hr', 'mg/L'),
+    def bodbased_inf_model(cls, ID='', flow_tot=0., units = ('L/hr', 'mg/L'),
                            phase='l', T=298.15, P=101325., price=0., thermo=None,
                            pH=7., SAlk=10., ratios=None,
                            BOD=250., TKN=40., TP=10., iVSS_TSS=0.75, iSNH_STKN=0.9,
@@ -1335,7 +1335,7 @@ class WasteStream(SanStream):
 
 
     @classmethod
-    def sludge_inf_model(cls, ID, flow_tot=0., units = ('L/hr', 'mg/L'),
+    def sludge_inf_model(cls, ID='', flow_tot=0., units = ('L/hr', 'mg/L'),
                          phase='l', T=298.15, P=101325., price=0., thermo=None,
                          pH=7., SAlk=10., ratios=None,
                          TSS=1e4, TKN=750., TP=250., S_NH4=100., S_PO4=50.,
