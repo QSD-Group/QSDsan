@@ -1096,7 +1096,7 @@ class WasteStream(SanStream):
         cmp_c = np.asarray([v for v in cmp_dct.values()])
         S_U = sCOD - (cmp_c * cmps.s * cmps.org).sum()
         cmp_dct['S_U_Inf'] = S_U * r['iSUInf_SU']
-        cmp_dct['S_U_E'] = S_U - cmp_dct['SU_Inf']
+        cmp_dct['S_U_E'] = S_U - cmp_dct['S_U_Inf']
 
         cmp_dct['C_B_BAP'] = C_B * r['iBAP_CB']
         cmp_dct['C_B_UAP'] = C_B * r['iUAP_CB']
@@ -1250,7 +1250,7 @@ class WasteStream(SanStream):
         cmp_c = np.asarray([v for v in cmp_dct.values()])
         S_U = sCOD - (cmp_c * cmps.s * cmps.org).sum()
         cmp_dct['S_U_Inf'] = S_U * r['iSUInf_SU']
-        cmp_dct['S_U_E'] = S_U - cmp_dct['SU_Inf']
+        cmp_dct['S_U_E'] = S_U - cmp_dct['S_U_Inf']
 
         cmp_dct['C_B_BAP'] = C_B * r['iBAP_CB']
         cmp_dct['C_B_UAP'] = C_B * r['iUAP_CB']
@@ -1445,7 +1445,7 @@ class WasteStream(SanStream):
         cmp_dct['S_Ac'] = frSAc_scCOD * scCOD
         cmp_dct['S_Prop'] = frSProp_scCOD * scCOD
         cmp_dct['S_U_Inf'] = frSU_scCOD * scCOD * r['iSUInf_SU']
-        cmp_dct['S_U_E'] = frSU_scCOD * scCOD - cmp_dct['SU_Inf']
+        cmp_dct['S_U_E'] = frSU_scCOD * scCOD - cmp_dct['S_U_Inf']
 
         C_B = frCB_scCOD * scCOD
         cmp_dct['C_B_BAP'] = C_B * r['iBAP_CB']
