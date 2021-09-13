@@ -83,7 +83,8 @@ class SanStream(Stream):
 
         new = super().copy(ID=new_ID)
         if hasattr(self, '_stream_impact_item'):
-            self.stream_impact_item.copy(stream=new)
+            if self.stream_impact_item is not None:
+                self.stream_impact_item.copy(stream=new)
         return new
 
     __copy__ = copy
