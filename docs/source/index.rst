@@ -44,7 +44,9 @@ If you prefer the most recent version on GitHub, please follow the steps in the 
 
 Getting Started
 ---------------
-Follow the tutorial to get started! We are updating the tutorials (you will see a note at the start of some tutorials saying updates are coming) and we will add new ones related to uncertainty/sensitivity analyses.
+Follow the tutorial to get started! All tutorials are written using Jupyter Notebook, you can run your own Jupyter environment, or you can visit `this page <https://mybinder.org/v2/gh/QSD-Group/QSDsan/main?filepath=%2Fdocs%2Fsource%2Ftutorials>`_ to run the Jupyter environment in your browser.
+
+We are updating the tutorials (you will see a note at the start of some tutorials saying updates are coming) and we will add new ones related to uncertainty/sensitivity analyses.
 
 For each of these tutorials, we are also recording videos where one of the QSD group members will go through the tutorial step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
 
