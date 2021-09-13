@@ -10,16 +10,16 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
    :target: https://pypi.org/project/qsdsan/
 .. image:: https://readthedocs.org/projects/qsdsan/badge/?version=latest
    :target: https://qsdsan.readthedocs.io/en/latest/
-   :target: https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA
-.. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
-   :target: https://qsdsan.readthedocs.io/en/latest/CODE_OF_CONDUCT.html
 .. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/main?label=build-main&logo=appveyor
    :target: https://github.com/QSD-Group/QSDsan/tree/main
 .. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/beta?label=build-beta&logo=appveyor
    :target: https://github.com/QSD-Group/QSDsan/tree/beta
-.. image:: https://img.shields.io/endpoint?color=%23ff0000&label=YouTube%20 Videos&url=https%3A%2F%2Fyoutube-channel-badge-blond.vercel.app%2Fapi%2Fvideos
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/QSD-Group/QSDsan/main?filepath=%2Fdocs%2Fsource%2Ftutorials
+.. image:: https://img.shields.io/endpoint?color=%23ff0000&label=YouTube%20 Videos&url=https%3A%2F%2Fyoutube-channel-badge-blond.vercel.app%2Fapi%2Fvideos
+   :target: https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA
+.. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+   :target: https://qsdsan.readthedocs.io/en/latest/CODE_OF_CONDUCT.html
 
 
 .. contents::
