@@ -54,13 +54,14 @@ For each of these tutorials, we are also recording videos where one of the QSD g
    :maxdepth: 1
    :caption: Tutorial
 
-   tutorials/Helpful_Basics
-   tutorials/Component
-   tutorials/WasteStream
-   tutorials/SanUnit
-   tutorials/System
-   tutorials/TEA
-   tutorials/LCA
+   tutorials/1_Helpful_Basics
+   tutorials/2_Component
+   tutorials/3_WasteStream
+   tutorials/4_SanUnit_basic
+   tutorials/5_SanUnit_advanced
+   tutorials/6_System
+   tutorials/7_TEA
+   tutorials/8_LCA
 
 
 How does ``QSDsan`` work?
