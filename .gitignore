@@ -17,6 +17,8 @@ _build
 prof
 *Pyreverse*
 monkeytype.sqlite3
+
+# Spyder
 *.spyproject*
 
 # Docs #
@@ -25,8 +27,6 @@ monkeytype.sqlite3
 **/_demo.py
 **/.ipynb_checkpoints
 **/.pylint.d
-docs/tutorial/.ipynb_checkpoints
-docs/.ipynb_checkpoints
 docs/build/*
 
 # Compiled source #
