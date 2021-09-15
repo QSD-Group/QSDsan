@@ -154,9 +154,11 @@ class Splitter(SanUnit, bst.units.Splitter):
         '''derives conditions of output stream from conditions of the Splitter'''
         dct = {}
         s = self.split
-        dct[self.outs[0].ID] = dct[self.outs[1].ID] = dct[self.ID] = arr
-        dct[self.outs[0].ID][-1] *= s
-        dct[self.outs[1].ID][-1] *= 1-s
+        h2o_id = self.components.index('H2O')
+        s_flow = s[h2o_id]
+        dct[self.ID] = arr
+        dct[self.outs[0].ID] = np.append(s/s_flow, s_flow) * arr
+        dct[self.outs[1].ID] = np.append((1-s)/(1-s_flow), 1-s_flow) * arr
         return dct
 
     def _dstate_locator(self, arr):
