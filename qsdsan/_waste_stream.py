@@ -26,7 +26,8 @@ TODO:
 # %%
 
 import numpy as np
-from thermosteam import settings
+from free_properties import PropertyFactory, property_array
+from thermosteam import settings, indexer
 from . import Components, Stream, MultiStream, SanStream, MissingSanStream, \
     set_thermo
 from .utils import auom, copy_attr
@@ -118,6 +119,69 @@ def _calib_XBsub_fBODCOD(components, concentrations, substrate_IDs, BOD):
         raise ValueError("BOD5-to-COD ratio for X_B_Subst and X_Stor was estimated out of range [0,1].")
     return fbodtocod_sub
 
+
+# Indexer for nicer display
+@property
+def group_conc_compositions(self):
+    raise AttributeError('cannot set group by concentratino')
+
+ComponentConcentrationIndexer, ConcentrationIndexer = \
+    indexer._new_Indexer('Concentration', 'mg/L', group_conc_compositions)
+
+ChemicalMolarFlowIndexer = indexer.ChemicalMolarFlowIndexer
+
+@PropertyFactory(slots=('name', 'mol', 'index', 'F_vol', 'MW',
+                        'phase', 'phase_container'))
+def ConcentrationProperty(self):
+    '''Concentration flow, in mg/L (g/m3).'''
+    f_mass = self.mol[self.index] * self.MW
+    phase = self.phase or self.phase_container.phase
+    if phase != 'l':
+        raise AttributeError('Concentration only valid for liquid phase.')
+    V_sum = self.F_vol
+    if V_sum==0:
+        raise RuntimeError('WasteStream is empty, concentration cannot be calculated.')
+    return 1000. * f_mass / V_sum if f_mass else 0.
+@ConcentrationProperty.setter
+def ConcentrationProperty(self, value):
+    raise AttributeError('Cannot set flow rate by concentration.')
+
+def by_conc(self, TP):
+    '''
+    Return a ComponentConcentrationIndexer that references this object's
+    molar and volume data (volume relies on molar).
+
+    Parameters
+    ----------
+    TP : ThermalCondition
+
+    '''
+    try:
+        conc = self._data_cache[TP]
+    except:
+        cmps = self.chemicals
+        mol = self.data
+        F_vol = self.by_volume(TP).data.sum()
+        conc = np.zeros_like(mol, dtype=object)
+        for i, cmp in enumerate(cmps):
+            conc[i] = ConcentrationProperty(cmp.ID, mol, i, F_vol, cmp.MW,
+                                            None, self._phase)
+        self._data_cache[TP] = \
+        conc = ComponentConcentrationIndexer.from_data(property_array(conc),
+                                                      self._phase, cmps,
+                                                      False)
+    return conc
+indexer.ChemicalMolarFlowIndexer.by_conc = by_conc
+
+def by_conc(self, TP):
+    '''
+    Raise an error for attempt multi-phase usage
+    as concentration only valid for liquid).
+    '''
+    raise AttributeError('Concentration only valid for liquid phase.')
+
+indexer.MolarFlowIndexer.by_conc = by_conc; del by_conc
+del PropertyFactory
 
 
 # %%
@@ -627,10 +691,24 @@ class WasteStream(SanStream):
     # def charge(self):
     #     return self._liq_sol_properties('charge', self.composite('charge'))
 
+
+
     @property
-    def Conc(self):
-        '''Mass concentrations, in g/m3.'''
-        return self.get_mass_concentration()
+    def iconc(self):
+        '''[Indexer] Mass concentrations, in mg/L (g/m3).'''
+        return self._imol.by_conc(self._thermal_condition)
+
+    @property
+    def conc(self):
+        '''[property_array] Mass concentrations, in mg/L (g/m3).'''
+        return self.iconc.data
+        # mass = self.mass
+        # try: mass[:] = self.get_mass_concentration()
+        # except: breakpoint()
+        # printed = mass.__repr__()
+        # printed = printed.replace('kg/hr', 'mg/L')
+        # print(printed)
+        # return printed
 
 
     def copy(self, new_ID='', ws_properties=True):

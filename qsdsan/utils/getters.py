@@ -20,14 +20,15 @@ __all__ = ('AttrGetter', 'FuncGetter')
 
 
 class AttrGetter:
-    __slots__ = ('obj', 'attr', 'hook')
-    def __init__(self, obj, attr, hook=lambda i: i):
+    __slots__ = ('obj', 'attr', 'hook', 'hook_param')
+    def __init__(self, obj, attr, hook=lambda i: i, hook_param=None):
         self.obj = obj
         self.attr = attr
         self.hook = hook
+        self.hook_param = hook_param
 
     def __call__(self):
-        return self.hook(getattr(self.obj, self.attr))
+        return self.hook(getattr(self.obj, self.attr), *self.hook_param)
 
 # # The below one needs updating
 # class AttrGetter:

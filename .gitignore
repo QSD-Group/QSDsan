@@ -17,8 +17,6 @@ _build
 prof
 *Pyreverse*
 monkeytype.sqlite3
-
-# Spyder
 *.spyproject*
 
 # Docs #
