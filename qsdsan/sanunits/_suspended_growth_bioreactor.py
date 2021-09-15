@@ -214,10 +214,10 @@ class CSTR(SanUnit):
                     flow_in = Q_ins * C_ins / V
                     Q_e = Q_ins
                     Q_dot = dQC_ins[-1]
-                C = QC[:-1]
+                Cs = QC[:-1]
                 C[i] = fixed_DO
-                flow_out = Q_e * C / V
-                react = np.asarray(r(*C))
+                flow_out = Q_e * Cs / V
+                react = np.asarray(r(*Cs))
                 C_dot = flow_in - flow_out + react
                 C_dot[i] = 0.0
                 return np.append(C_dot, Q_dot)

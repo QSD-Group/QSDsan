@@ -71,8 +71,7 @@ class Mixer(SanUnit, bst.units.Mixer):
     def _state_locator(self, arr):
         '''derives conditions of output stream from conditions of the Mixer'''
         dct = {}
-        dct[self.outs[0].ID] = arr
-        dct[self.ID] = arr
+        dct[self.outs[0].ID] = dct[self.ID] = arr
         return dct
 
     def _dstate_locator(self, arr):
@@ -154,12 +153,10 @@ class Splitter(SanUnit, bst.units.Splitter):
     def _state_locator(self, arr):
         '''derives conditions of output stream from conditions of the Splitter'''
         dct = {}
-        Q1 = arr[-1] * self.split   # assuming split is a single value for all components
-        Q2 = arr[-1] - Q1
-        Cs = arr[:-1]
-        dct[self.outs[0].ID] = np.append(Cs[0], Q1)
-        dct[self.outs[1].ID] = np.append(Cs[-1], Q2)
-        dct[self.ID] = arr
+        s = self.split
+        dct[self.outs[0].ID] = dct[self.outs[1].ID] = dct[self.ID] = arr
+        dct[self.outs[0].ID][-1] *= s
+        dct[self.outs[1].ID][-1] *= 1-s
         return dct
 
     def _dstate_locator(self, arr):
@@ -252,8 +249,7 @@ class Pump(SanUnit, bst.units.Pump):
     def _state_locator(self, arr):
         '''derives conditions of output stream from conditions of the Mixer'''
         dct = {}
-        dct[self.outs[0].ID] = arr
-        dct[self.ID] = arr
+        dct[self.outs[0].ID] = dct[self.ID] = arr
         return dct
 
     def _dstate_locator(self, arr):

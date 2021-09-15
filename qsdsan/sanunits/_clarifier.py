@@ -218,7 +218,7 @@ class FlatBottomCircularClarifier(SanUnit):
         else:
             Cs = pd.DataFrame(self._state[:-1].reshape((self._N_layer, len(self.components))),
                               columns=self.components.IDs,
-                              index={'layer': range(1, self._N_layer + 1)})
+                              index=range(1, self._N_layer + 1))
             Q = self._state[-1]
             return {'Concentrations [mg/L]': Cs,
                     'Total flow rate [m3/d]': Q}
@@ -234,16 +234,19 @@ class FlatBottomCircularClarifier(SanUnit):
 
     def _init_state(self, state=None):
         if state: Cs = state.flatten()
-        else: Cs = np.repeat(self.ins[0].Conc, self._N_layer, axis=0)
+        # else: Cs = np.tile(self.ins[0].Conc, self._N_layer)
+        else:
+            Cs = np.array([f*self.ins[0].Conc for f in 10**np.linspace(-1,1,self._N_layer)])
+            Cs = Cs.flatten()
         Q = self.ins[0].get_total_flow('m3/d')
         self._state = np.append(Cs, Q)
 
     def _state_locator(self, arr):
         '''derives conditions of output stream from conditions within the clarifier'''
         dct = {}
-        Q_s = self._Qs
         Q = arr[-1]
-        Q_e = Q - Q_s
+        Q_e = max(Q - self._Qs, 0)
+        Q_s = Q - Q_e
         Cs = arr[:-1].reshape((self._N_layer, len(self.components)))
         dct[self.outs[0].ID] = np.append(Cs[0], Q_e)
         dct[self.outs[1].ID] = np.append(Cs[-1], Q_s)
@@ -271,7 +274,7 @@ class FlatBottomCircularClarifier(SanUnit):
         Q_in = inf.get_total_flow('m3/d')
         eff, sludge = self.outs
         Q_s = self._Qs
-        Q_e = Q_in - Q_s
+        Q_e = max(Q_in - Q_s, 0)
         inf.split_to(eff, sludge, split=Q_e/Q_in)
 
 
@@ -284,7 +287,7 @@ class FlatBottomCircularClarifier(SanUnit):
                               f'must be an integer between 1 and {self._N_layer}.')
         x = self.components.x
         imass = self.components.i_mass
-        Q_s = self._Qs
+        # Q_s = self._Qs
         fns = self._fns
         vmax = self._v_max
         vmaxp = self._v_max_p
@@ -296,14 +299,16 @@ class FlatBottomCircularClarifier(SanUnit):
 
         def dy_dt(t, QC_ins, QC, dQC_ins):
             Q_in = QC_ins[-1]
-            Q_e = max(Q_in - Q_s, 0)
+            Q_e = max(Q_in - self._Qs, 0)
+            Q_s = Q_in - Q_e
             C_in = QC_ins[:-1]
-            X_in = sum(C_in*imass*x)
-            X_composition = C_in*x/X_in
+            X_in = sum(C_in*imass*x)    # TSS
+            # X_composition = C_in*x/X_in
             Z_in = C_in*(1-x)
             X_min = X_in * fns
             C = QC[:-1].reshape((n,len(x)))
-            X = np.dot(C, imass*x)      # (n,) array, TSS for each layer
+            X = C @ (imass*x)           # (n,) array, TSS for each layer
+            X_composition = np.array([C[j]*x/X[j] for j in range(n)])    # (n,m) array, [g component / g TSS] for all solids in each layer
             Z = C*(1-x)                 # (n, m) array, solubles for each layer
             Q_jout = np.array([Q_e if j < jf else Q_in if j == jf else Q_s for j in range(n)])
             #*********particulates***********
@@ -314,7 +319,7 @@ class FlatBottomCircularClarifier(SanUnit):
             settle_out = np.array(J + [0])
             settle_in = np.array([0] + J)
             X_dot = ((flow_in - flow_out)/A + settle_in - settle_out)/hj        # (n,)
-            C_x_dot = np.array([X_composition*x_dot for x_dot in X_dot])        # (n, m), 0 wherever not particulate
+            C_x_dot = np.array([X_composition[j]*X_dot[j] for j in range(n)])        # (n, m), 0 wherever not particulate
             #********non-particulates***********
             flow_out = np.array([zj*qjout for zj, qjout in zip(Z, Q_jout)])
             flow_in = np.array([Q_e*Z[j+1] if j < jf else Q_in*Z_in if j == jf else Q_s*Z[j-1] for j in range(n)])
