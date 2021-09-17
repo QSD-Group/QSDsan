@@ -225,7 +225,6 @@ def define_inputs(model):
     return model.problem()
 
 
-# TODO: incorporate sampling from different distributions
 def generate_samples(inputs, kind, N, seed=None, **kwargs):
     '''
     Generate samples for sensitivity analysis using ``SALib``.
@@ -971,15 +970,10 @@ def plot_correlations(result_df, parameters=(), metrics=(), top=None,
         return _save_fig_return(fig, ax, file, close_fig)
 
     else: # multiple metrics, bubble plot
-        corr_df = pd.DataFrame()
-
-        for m in df.columns:
-            temp_df = pd.DataFrame(columns=('parameter', 'metric', 'correlation', 'size'))
-            temp_df['parameter'] = df.index
-            temp_df['metric'] = [m]*temp_df.shape[0]
-            temp_df['correlation'] = df[m].values
-            temp_df['size'] = np.abs(df[m].values)
-            corr_df = pd.concat((corr_df, temp_df))
+        corr_df = df.stack(dropna=False).reset_index()
+        corr_df.rename(columns={'level_0': 'parameter', 'level_1': 'metric',
+                                0: 'correlation'}, inplace=True)
+        corr_df['size'] = corr_df['correlation'].abs()
 
         g = _plot_corr_bubble(corr_df, len(metric_names)/len(param_names), **kwargs)
 
@@ -991,10 +985,10 @@ def plot_correlations(result_df, parameters=(), metrics=(), top=None,
 # Plot Morris analysis results
 # =============================================================================
 
-def plot_morris_results(morris_dct, metric, kind='scatter',
+def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
                         x_axis='mu_star', plot_lines=True,
                         k1=0.1, k2=0.5, k3=1, label_kind='number',
-                        scatter_color='k', file='', close_fig=True, **kwargs):
+                        color='k', file='', close_fig=True, **kwargs):
     '''
     Visualize the results from Morris One-at-A-Time analysis as either scatter
     or bar plots.
@@ -1010,6 +1004,8 @@ def plot_morris_results(morris_dct, metric, kind='scatter',
         The metric of interest for the plot.
     kind : str
         Either "scatter" (:math:`{\sigma}`) vs. :math:`{\mu^*}` or "bar" (:math:`{\mu^*}` with confidence interval) plot.
+    ax : :class:`matplotlib.AxesSubplot`
+        If provided, the figure will be plotted on this axis.
     x_axis : str
         X-axis parameter, should be either "mu_star" (the commonly used one) or "mu".
     k1 : float
@@ -1025,8 +1021,8 @@ def plot_morris_results(morris_dct, metric, kind='scatter',
         How to label the points in the scatter plot,
         can be "number" (use index number of the result table),
         "name" (use index name of the result table), or None (no labels).
-    scatter_color : str or RGBs
-        Color for the scattor plot.
+    color : str or RGBs
+        Plot color.
     file : str
         If provided, the generated figure will be saved as a png file.
     close_fig : bool
@@ -1058,38 +1054,38 @@ def plot_morris_results(morris_dct, metric, kind='scatter',
     else:
         labels = []
 
-    ax = plt.subplot()
+    ax = ax if ax is not None else plt.subplot()
     sns.set_theme(style='ticks')
 
     if kind == 'scatter':
         if x_error is not None:
-            ax.errorbar(x=x_data, y=y_data, xerr=x_error, fmt='.', color=scatter_color)
+            ax.errorbar(x=x_data, y=y_data, xerr=x_error, fmt='.', color=color)
         else:
-            ax.scatter(x_data, y_data, color=scatter_color)
+            ax.scatter(x_data, y_data, color=color)
         for x, y, label in zip(x_data, y_data, labels):
             ax.annotate(label, (x, y), xytext=(10, 10), textcoords='offset points',
                         ha='center')
         x_range = np.arange(-1, np.ceil(ax.get_xlim()[1])+1)
-        
+
         lines, legends = [], []
         if k3:
-            line3, = ax.plot(x_range, k3*x_range, color='black', linestyle='-')
+            line3, = ax.plot(x_range, k3*x_range, color=color, linestyle='-')
             lines.append(line3)
             legends.append(r'$\sigma/\mu^*$'+f'={k3}')
 
         if k2:
-            line2, = ax.plot(x_range, k2*x_range, color='black', linestyle='--')
+            line2, = ax.plot(x_range, k2*x_range, color=color, linestyle='--')
             lines.append(line2)
-            legends.append(r'$\sigma/\mu^*$'+f'={k2}')        
-        
+            legends.append(r'$\sigma/\mu^*$'+f'={k2}')
+
         if k1:
-            line1, = ax.plot(x_range, k1*x_range, color='black', linestyle='-.')
+            line1, = ax.plot(x_range, k1*x_range, color=color, linestyle='-.')
             lines.append(line1)
             legends.append(r'$\sigma/\mu^*$'+f'={k1}')
-        
+
         if len(lines) > 0:
             ax.legend(lines, legends, loc='best')
-        
+
         if x_axis == 'mu_star':
             ax.set_xlim(0,)
         ax.set_ylim(0,)
@@ -1098,6 +1094,7 @@ def plot_morris_results(morris_dct, metric, kind='scatter',
         fig = ax.figure
 
     elif kind == 'bar':
+        kwargs['color'] = color
         if x_axis == 'mu':
             raise ValueError('Bar plot can only be made for mu_star, not mu.')
         df = morris_dct[metric.name]
@@ -1112,8 +1109,9 @@ def plot_morris_results(morris_dct, metric, kind='scatter',
     return _save_fig_return(fig, ax, file, close_fig)
 
 
-def plot_morris_convergence(result_dct, metric, parameters=(), plot_rank=False,
-                            kind='line', show_error=True, palette='pastel', file='', close_fig=True):
+def plot_morris_convergence(result_dct, metric, parameters=(),
+                            plot_rank=False, kind='line', ax=None, show_error=True,
+                            palette='pastel', file='', close_fig=True):
     '''
     Plot the evolution of :math:`{\mu^*}` or its rank with the number of trajectories.
 
@@ -1134,6 +1132,8 @@ def plot_morris_convergence(result_dct, metric, parameters=(), plot_rank=False,
             If plot_rank is True, error bars or bands will not be included.
     kind : str
         Can be either 'line' or 'scatter'.
+    ax : :class:`matplotlib.AxesSubplot`
+        If provided, the figure will be plotted on this axis.
     show_error : bool
         Whether to include the confidence interval in the plot,
         will be bars for scatter plot and bands for line plot.
@@ -1157,7 +1157,7 @@ def plot_morris_convergence(result_dct, metric, parameters=(), plot_rank=False,
     `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
     '''
 
-    ax = plt.subplot()
+    ax = ax if ax is not None else plt.subplot()
     df = result_dct['mu_star'][metric.name].copy().astype('float64')
     conf_df = result_dct['mu_star_conf'][metric.name].copy().astype('float64')
 
@@ -1252,8 +1252,8 @@ def _plot_heatmap(hmap_df, ax=None, annot=False, diagonal='', sts1_df=None,
     return ax
 
 
-def plot_fast_results(result_dct, metric, parameters=(), error_bar=True,
-                      file='', close_fig=True):
+def plot_fast_results(result_dct, metric, parameters=(),
+                      ax=None, error_bar=True, file='', close_fig=True):
     '''
     Visualize the results from FAST or RBD-FAST analysis as a bar plot.
 
@@ -1267,6 +1267,8 @@ def plot_fast_results(result_dct, metric, parameters=(), error_bar=True,
         Single or a iterable of model parameters whose :math:`{\mu^*}` will be
         included in the plot.
         Will be set to all parameters in retult_dct will be used if not provided.
+    ax : :class:`matplotlib.AxesSubplot`
+        If provided, the figure will be plotted on this axis.
     error_bar : bool
         Whether to include the confidence interval as error bars in the plot.
     file : str
@@ -1294,12 +1296,13 @@ def plot_fast_results(result_dct, metric, parameters=(), error_bar=True,
     df = result_dct[metric.name]
     kind = 'STS1' if 'ST' in df.columns else 'S1'
 
-    ax = _plot_bar(kind, df, error_bar)
+    ax = _plot_bar(kind, df, error_bar, ax=ax)
 
     return _save_fig_return(ax.figure, ax, file, close_fig)
 
 
-def plot_sobol_results(result_dct, metric, parameters=(), kind='all',
+def plot_sobol_results(result_dct, metric, ax=None,
+                       parameters=(), kind='all',
                        annotate_heatmap=False, plot_in_diagonal='',
                        error_bar=True, file='', close_fig=True):
     '''
