@@ -12,13 +12,11 @@ for license details.
 
 import os
 from thermosteam.utils import chemicals_user
-# os.chdir("C:/Users/joy_c/Dropbox/PhD/Research/QSD/codes_developing/QSDsan")
 from qsdsan import Components, Processes, _pk
 from ..utils import data_path, save_pickle, load_pickle
 
 __all__ = ('load_asm1_cmps', 'ASM1')
 
-# data_path = 'qsdsan/data'
 _path = data_path + 'process_data/_asm1.tsv'
 _path_cmps = os.path.join(data_path, '_asm1_cmps.pckl')
 
@@ -62,12 +60,12 @@ def _create_asm1_cmps(pickle=False):
     S_ND = cmps.S_F.copy('S_ND')
     S_ND.description = 'Soluble biodegradable organic nitrogen'
     S_ND.measured_as = 'N'
-    S_ND.i_COD = S_ND.i_C = S_ND.i_P = 0
+    S_ND.i_COD = S_ND.i_C = S_ND.i_P = S_ND.i_mass = 0
 
     X_ND = cmps.X_B_Subst.copy('X_ND')
     X_ND.description = 'Particulate biodegradable organic nitrogen'
     X_ND.measured_as = 'N'
-    X_ND.i_COD = X_ND.i_C = X_ND.i_P = 0
+    X_ND.i_COD = X_ND.i_C = X_ND.i_P = X_ND.i_mass = 0
 
     S_ALK = cmps.S_CO3.copy('S_ALK')      # measured as g C
     S_ALK.description = 'Alkalinity, assumed to be HCO3-'
@@ -84,7 +82,7 @@ def _create_asm1_cmps(pickle=False):
     return cmps_asm1
 
 
-# _pickle_asm1_cmps()
+# _create_asm1_cmps(True)
 
 def load_asm1_cmps():
     if _pk:

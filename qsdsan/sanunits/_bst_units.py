@@ -6,7 +6,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
-    Joy Cheung <joycheung1994@gmail.com>
+    Joy Zhang <joycheung1994@gmail.com>
 
 Part of this module is based on the biosteam package:
 https://github.com/BioSTEAMDevelopmentGroup/biosteam
@@ -71,8 +71,7 @@ class Mixer(SanUnit, bst.units.Mixer):
     def _state_locator(self, arr):
         '''derives conditions of output stream from conditions of the Mixer'''
         dct = {}
-        dct[self.outs[0].ID] = arr
-        dct[self.ID] = arr
+        dct[self.outs[0].ID] = dct[self.ID] = arr
         return dct
 
     def _dstate_locator(self, arr):
@@ -104,7 +103,14 @@ class Mixer(SanUnit, bst.units.Mixer):
             else:
                 return dQC_ins
         return dy_dt
-
+    
+    def _define_outs(self):
+        dct_y = self._state_locator(self._state)
+        out, = self.outs
+        Q = dct_y[out.ID][-1]
+        Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
+        Cs.pop('H2O', None)
+        out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))    
 
 class Splitter(SanUnit, bst.units.Splitter):
     '''
@@ -147,12 +153,12 @@ class Splitter(SanUnit, bst.units.Splitter):
     def _state_locator(self, arr):
         '''derives conditions of output stream from conditions of the Splitter'''
         dct = {}
-        Q1 = arr[-1] * self.split   # assuming split is a single value for all components
-        Q2 = arr[-1] - Q1
-        Cs = arr[:-1]
-        dct[self.outs[0].ID] = np.append(Cs[0], Q1)
-        dct[self.outs[1].ID] = np.append(Cs[-1], Q2)
+        s = self.split
+        h2o_id = self.components.index('H2O')
+        s_flow = s[h2o_id]
         dct[self.ID] = arr
+        dct[self.outs[0].ID] = np.append(s/s_flow, s_flow) * arr
+        dct[self.outs[1].ID] = np.append((1-s)/(1-s_flow), 1-s_flow) * arr
         return dct
 
     def _dstate_locator(self, arr):
@@ -170,6 +176,13 @@ class Splitter(SanUnit, bst.units.Splitter):
             return dQC_ins
         return dy_dt
 
+    def _define_outs(self):
+        dct_y = self._state_locator(self._state)
+        for out in self.outs:
+            Q = dct_y[out.ID][-1]
+            Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
+            Cs.pop('H2O', None)
+            out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))    
 
 class FakeSplitter(SanUnit, bst.units.FakeSplitter):
     '''
@@ -238,8 +251,7 @@ class Pump(SanUnit, bst.units.Pump):
     def _state_locator(self, arr):
         '''derives conditions of output stream from conditions of the Mixer'''
         dct = {}
-        dct[self.outs[0].ID] = arr
-        dct[self.ID] = arr
+        dct[self.outs[0].ID] = dct[self.ID] = arr
         return dct
 
     def _dstate_locator(self, arr):
@@ -257,7 +269,14 @@ class Pump(SanUnit, bst.units.Pump):
             return dQC_ins
         return dy_dt
 
-
+    def _define_outs(self):
+        dct_y = self._state_locator(self._state)
+        out, = self.outs
+        Q = dct_y[out.ID][-1]
+        Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
+        Cs.pop('H2O', None)
+        out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
+        
 class Tank(SanUnit, bst.units.Tank, isabstract=True):
     '''
     Similar to the :class:`biosteam.units.Tank`,

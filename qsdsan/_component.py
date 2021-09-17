@@ -316,7 +316,8 @@ class Component(Chemical):
     @property
     def i_mass(self):
         '''[float] Mass content of the component, [g Component/g measure unit].'''
-        return self._i_mass or 1.
+        if self._i_mass is None: return 1
+        else: return self._i_mass
     @i_mass.setter
     def i_mass(self, i):
         if self.atoms:

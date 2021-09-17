@@ -26,7 +26,7 @@ __all__ = ('load_data', 'data_path', 'dct_from_str', 'save_pickle', 'load_pickle
 def load_data(path=None, sheet=None, index_col=0, **kwargs):
     '''For data importing.'''
     last_4 = path[-4:]
-    if last_4 == '.tsv':
+    if last_4 in ('.tsv', '.txt'):
         data = pd.read_csv(path, sep='\t', index_col=index_col, **kwargs)
     elif last_4 == '.csv':
         data = pd.read_csv(path, index_col=index_col, **kwargs)
