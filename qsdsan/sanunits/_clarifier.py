@@ -92,6 +92,8 @@ class FlatBottomCircularClarifier(SanUnit):
         self._rh = rh
         self._rp = rp
         self._fns = fns
+        self._solubles = None
+        self._solids = None
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
@@ -232,12 +234,34 @@ class FlatBottomCircularClarifier(SanUnit):
                              f'concentrations on layer 1-{self._N_layer} and the last being the total flow rate.')
         self._state = QCs
 
+    def set_init_solubles(self, **kwargs):
+        '''set the initial concentrations [mg/L] of solubles in the clarifier.'''
+        Cs = np.zeros(len(self.components))
+        cmpx = self.components.index
+        x = self.components.x
+        for k, v in kwargs.items(): Cs[cmpx(k)] = v
+        self._solubles = np.tile(Cs*(1-x), self._N_layer)
+    
+    def set_init_TSS(self, arr):
+        '''set the initial TSS [mg/L] in each layer of the clarifier.'''
+        if len(arr) != self._N_layer:
+            raise ValueError(f'expects an iterable of length {self._N_layer}, not {len(arr)}')
+        self._solids = np.asarray(arr, dtype=float)
+
     def _init_state(self, state=None):
-        if state: Cs = state.flatten()
-        # else: Cs = np.tile(self.ins[0].Conc, self._N_layer)
+        if state is not None: Cs = state.flatten()
         else:
-            Cs = np.array([f*self.ins[0].Conc for f in 10**np.linspace(-1,1,self._N_layer)])
-            Cs = Cs.flatten()
+            x = self.components.x
+            C_in = self.ins[0].Conc
+            if self._solubles is not None and self._solids is not None:
+                TSS_in = self.ins[0].get_TSS()
+                TSS_ratios = self._solids / TSS_in
+                Xs = np.array([C_in*x*r for r in TSS_ratios]).flatten()
+                Zs = self._solubles
+                Cs = Xs + Zs
+            else:
+                Cs = np.array([(f*x+(1-x))*C_in for f in 20**np.linspace(-1,1,self._N_layer)])
+                Cs = Cs.flatten()
         Q = self.ins[0].get_total_flow('m3/d')
         self._state = np.append(Cs, Q)
 

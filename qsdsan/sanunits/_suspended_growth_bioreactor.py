@@ -78,6 +78,7 @@ class CSTR(SanUnit):
         self._aeration = aeration
         self._DO_ID = DO_ID
         self._model = suspended_growth_model
+        self._concs = None
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
@@ -147,6 +148,13 @@ class CSTR(SanUnit):
                               'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
         self._state = QCs
 
+    def set_init_conc(self, **kwargs):
+        '''set the initial concentrations [mg/L] of the CSTR.'''
+        Cs = np.zeros(len(self.components))
+        cmpx = self.components.index
+        for k, v in kwargs.items(): Cs[cmpx(k)] = v
+        self._concs = Cs
+
     def _init_state(self, state=None):
         '''initialize state by specifiying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
@@ -154,7 +162,10 @@ class CSTR(SanUnit):
         mixed = WasteStream()
         mixed.mix_from(self.ins)
         Q = mixed.get_total_flow('m3/d')
-        self._state = np.append(state or mixed.Conc, Q)
+        if state is not None: Cs = state
+        elif self._concs is not None: Cs = self._concs
+        else: Cs = mixed.Conc
+        self._state = np.append(Cs, Q)
 
     def _state_locator(self, arr):
         '''derives conditions of output stream from conditions within the CSTR'''
