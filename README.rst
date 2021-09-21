@@ -17,7 +17,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/QSD-Group/QSDsan/main?filepath=%2Fdocs%2Fsource%2Ftutorials
 .. image:: https://img.shields.io/endpoint?color=%23ff0000&label=YouTube%20 Videos&url=https%3A%2F%2Fyoutube-channel-badge-blond.vercel.app%2Fapi%2Fvideos
-   :target: https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA
+   :target: https://www.youtube.com/playlist?list=PL-tj_uM0mIdFv72MAULnWjS6lx_cCyi2N
 .. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
    :target: https://qsdsan.readthedocs.io/en/latest/CODE_OF_CONDUCT.html
 
