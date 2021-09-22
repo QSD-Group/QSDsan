@@ -515,7 +515,11 @@ class WasteStream(SanStream):
             raise KeyError(f"Undefined composite variable {variable},"
                            f"Must be one of {_defined_composite_vars}.")
 
-        #!!! assuming it's a liquid WasteStream
+        # Can only be used for liquid
+        if not self.phase == 'l':
+            raise RuntimeError('Only liquid streams can use the `composite` method, '
+                               f'the current WasteStream {self.ID} is {self.phase}.')
+        
         #TODO: deal with units
         if subgroup:
             cmps = subgroup
