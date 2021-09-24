@@ -82,39 +82,45 @@ class CSTR(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+    def reset_cache(self):
+        '''Reset cached states.'''
+        self._state = None
+        for s in self.outs:
+            s.empty()
+
     @property
     def V_max(self):
         '''[float] The designed maximum liquid volume, not accounting for increased volume due to aeration, in m^3.'''
         return self._V_max
-    
+
     @V_max.setter
     def V_max(self, Vm):
         self._V_max = Vm
-    
+
     @property
     def aeration(self):
         '''[:class:`Process` or float or NoneType] Aeration model.'''
         return self._aeration
-    
+
     @aeration.setter
     def aeration(self, ae):
         if ae is None or isinstance(ae, Process): self._aeration = ae
-        elif isinstance(ae, (float, int)): 
-            if ae < 0: 
+        elif isinstance(ae, (float, int)):
+            if ae < 0:
                 raise ValueError('targeted dissolved oxygen concentration for aeration must be non-negative.')
-            else: 
-                if ae > 14: 
+            else:
+                if ae > 14:
                     warn(f'targeted dissolved oxygen concentration for {self.ID} might exceed the saturated level.')
                 self._aeration = ae
         else:
             raise TypeError(f'aeration must be one of the following types: float, '
                             f'int, Process, NoneType. Not {type(ae)}')
-    
+
     @property
     def suspended_growth_model(self):
         '''[:class:`CompiledProcesses` or NoneType] Suspended growth model.'''
         return self._model
-    
+
     @suspended_growth_model.setter
     def suspended_growth_model(self, model):
         if isinstance(model, CompiledProcesses) or model is None: self._model = model
@@ -125,7 +131,7 @@ class CSTR(SanUnit):
     def DO_ID(self):
         '''[str] The `Component` ID for dissolved oxygen used in the suspended growth model and the aeration model.'''
         return self._DO_ID
-    
+
     @DO_ID.setter
     def DO_ID(self, doid):
         if doid not in self.components.IDs:
@@ -195,7 +201,7 @@ class CSTR(SanUnit):
         if self._ODE is None:
             self._compile_ODE()
         return self._ODE
-    
+
     def _compile_ODE(self):
         isa = isinstance
         V = self._V_max
@@ -266,7 +272,7 @@ class CSTR(SanUnit):
         Q = dct_y[out.ID][-1]
         Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
         Cs.pop('H2O', None)
-        out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))    
+        out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
 
     def _design(self):
         pass
@@ -377,6 +383,14 @@ class SBR(SanUnit):
         self._init_Vas = None
         self._init_Cas = None
         self._dynamic_composition = None
+
+
+    def reset_cache(self):
+        '''Reset cached states.'''
+        self._init_Vas = self._init_Cas = None
+        self._state = None
+        for s in self.outs:
+            s.empty()
 
     @property
     def operation_cycle(self):

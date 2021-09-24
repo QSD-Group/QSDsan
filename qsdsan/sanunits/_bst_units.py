@@ -44,14 +44,19 @@ class Mixer(SanUnit, bst.units.Mixer):
     `biosteam.units.Mixer <https://biosteam.readthedocs.io/en/latest/units/mixing.html>`_
     '''
 
-    # def __init__(self,  ID='', ins=None, outs=(), thermo=None, *, 
+    # def __init__(self,  ID='', ins=None, outs=(), thermo=None, *,
     #              init_with='Stream', F_BM_default=None):
     #     SanUnit.__init__(self, ID, ins, outs, thermo,
     #                      init_with=init_with, F_BM_default=F_BM_default)
     #     self._ODE = None
     #     self._Conc = None
-        
-    
+
+    def reset_cache(self):
+        '''Reset cached states.'''
+        self._state = None
+        for s in self.outs:
+            s.empty()
+
     @property
     def state(self):
         '''The state of the Mixer, including component concentrations [mg/L] and flow rate [m^3/d].'''
@@ -96,7 +101,7 @@ class Mixer(SanUnit, bst.units.Mixer):
         if self._ODE is None:
             self._compile_ODE()
         return self._ODE
-    
+
     def _compile_ODE(self):
         _n_ins = len(self.ins)
         _n_state = len(self.components)+1
@@ -116,14 +121,14 @@ class Mixer(SanUnit, bst.units.Mixer):
             else:
                 return dQC_ins
         self._ODE = dy_dt
-    
+
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
         out, = self.outs
         Q = dct_y[out.ID][-1]
         Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
         Cs.pop('H2O', None)
-        out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))    
+        out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
 
 class Splitter(SanUnit, bst.units.Splitter):
     '''
@@ -141,6 +146,12 @@ class Splitter(SanUnit, bst.units.Splitter):
         SanUnit.__init__(self, ID, ins, outs, thermo,
                          init_with=init_with, F_BM_default=F_BM_default)
         self._isplit = self.thermo.chemicals.isplit(split, order)
+
+    def reset_cache(self):
+        '''Reset cached states.'''
+        self._state = None
+        for s in self.outs:
+            s.empty()
 
 
     @property
@@ -188,7 +199,7 @@ class Splitter(SanUnit, bst.units.Splitter):
         if self._ODE is None:
             self._compile_ODE()
         return self._ODE
-    
+
     def _compile_ODE(self):
         def dy_dt(t, QC_ins, QC, dQC_ins):
             return dQC_ins
@@ -200,7 +211,7 @@ class Splitter(SanUnit, bst.units.Splitter):
             Q = dct_y[out.ID][-1]
             Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
             Cs.pop('H2O', None)
-            out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))    
+            out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
 
 class FakeSplitter(SanUnit, bst.units.FakeSplitter):
     '''
@@ -246,6 +257,12 @@ class Pump(SanUnit, bst.units.Pump):
         self.dP_design = dP_design
         self.ignore_NPSH = ignore_NPSH
 
+    def reset_cache(self):
+        '''Reset cached states.'''
+        self._state = None
+        for s in self.outs:
+            s.empty()
+
     @property
     def state(self):
         '''The state of the Pump, including component concentrations [mg/L] and flow rate [m^3/d].'''
@@ -286,7 +303,7 @@ class Pump(SanUnit, bst.units.Pump):
         if self._ODE is None:
             self._compile_ODE()
         return self._ODE
-    
+
     def _compile_ODE(self):
         def dy_dt(QC_ins, QC, dQC_ins):
             return dQC_ins
@@ -299,7 +316,7 @@ class Pump(SanUnit, bst.units.Pump):
         Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
         Cs.pop('H2O', None)
         out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
-        
+
 class Tank(SanUnit, bst.units.Tank, isabstract=True):
     '''
     Similar to the :class:`biosteam.units.Tank`,
@@ -347,7 +364,7 @@ class MixTank(Tank, bst.units.MixTank):
     '''
     #!!! link for biosteam mixtank is obsolete
     # should use CSTR instead for dynamic simulation since it's not different from
-    # Mixer in biosteam in terms of process modeling, i.e., no residence time is considered. 
+    # Mixer in biosteam in terms of process modeling, i.e., no residence time is considered.
     # plus CSTR's volume is specified rather than calculated, bc we can't specify HRT (tau)
     # for CSTR with changing flowrate
 
