@@ -44,6 +44,14 @@ class Mixer(SanUnit, bst.units.Mixer):
     `biosteam.units.Mixer <https://biosteam.readthedocs.io/en/latest/units/mixing.html>`_
     '''
 
+    # def __init__(self,  ID='', ins=None, outs=(), thermo=None, *, 
+    #              init_with='Stream', F_BM_default=None):
+    #     SanUnit.__init__(self, ID, ins, outs, thermo,
+    #                      init_with=init_with, F_BM_default=F_BM_default)
+    #     self._ODE = None
+    #     self._Conc = None
+        
+    
     @property
     def state(self):
         '''The state of the Mixer, including component concentrations [mg/L] and flow rate [m^3/d].'''
@@ -84,7 +92,12 @@ class Mixer(SanUnit, bst.units.Mixer):
         return self._state_locator(self._state)
 
     @property
-    def _ODE(self):
+    def ODE(self):
+        if self._ODE is None:
+            self._compile_ODE()
+        return self._ODE
+    
+    def _compile_ODE(self):
         _n_ins = len(self.ins)
         _n_state = len(self.components)+1
         def dy_dt(t, QC_ins, QC, dQC_ins):
@@ -102,7 +115,7 @@ class Mixer(SanUnit, bst.units.Mixer):
                 return np.append(C_dot, Q_dot)
             else:
                 return dQC_ins
-        return dy_dt
+        self._ODE = dy_dt
     
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
@@ -171,10 +184,15 @@ class Splitter(SanUnit, bst.units.Splitter):
         return self._state_locator(self._state)
 
     @property
-    def _ODE(self):
+    def ODE(self):
+        if self._ODE is None:
+            self._compile_ODE()
+        return self._ODE
+    
+    def _compile_ODE(self):
         def dy_dt(t, QC_ins, QC, dQC_ins):
             return dQC_ins
-        return dy_dt
+        self._ODE = dy_dt
 
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
@@ -264,10 +282,15 @@ class Pump(SanUnit, bst.units.Pump):
         return self._state_locator(self._state)
 
     @property
-    def _ODE(self):
+    def ODE(self):
+        if self._ODE is None:
+            self._compile_ODE()
+        return self._ODE
+    
+    def _compile_ODE(self):
         def dy_dt(QC_ins, QC, dQC_ins):
             return dQC_ins
-        return dy_dt
+        self._ODE = dy_dt
 
     def _define_outs(self):
         dct_y = self._state_locator(self._state)

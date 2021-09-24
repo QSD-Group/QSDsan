@@ -92,6 +92,7 @@ class FlatBottomCircularClarifier(SanUnit):
         self._rh = rh
         self._rp = rp
         self._fns = fns
+        self._ODE = None
         self._solubles = None
         self._solids = None
         for attr, value in kwargs.items():
@@ -303,7 +304,12 @@ class FlatBottomCircularClarifier(SanUnit):
 
 
     @property
-    def _ODE(self):
+    def ODE(self):
+        if self._ODE is None:
+            self._compile_ODE()
+        return self._ODE
+    
+    def _compile_ODE(self):
         n = self._N_layer
         jf = self._feed_layer - 1
         if jf not in range(self._N_layer):
@@ -354,7 +360,7 @@ class FlatBottomCircularClarifier(SanUnit):
 
             return np.append(C_dot, Q_dot)
 
-        return dy_dt
+        self._ODE = dy_dt
 
     def _define_outs(self):
         dct_y = self._state_locator(self._state)

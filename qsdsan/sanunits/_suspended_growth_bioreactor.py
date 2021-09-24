@@ -191,7 +191,12 @@ class CSTR(SanUnit):
         treated.copy_like(mixed)
 
     @property
-    def _ODE(self):
+    def ODE(self):
+        if self._ODE is None:
+            self._compile_ODE()
+        return self._ODE
+    
+    def _compile_ODE(self):
         isa = isinstance
         V = self._V_max
         C = list(symbols(self.components.IDs))
@@ -253,7 +258,7 @@ class CSTR(SanUnit):
                 C_dot = flow_in - flow_out + react
                 return np.append(C_dot, Q_dot)
 
-        return dy_dt
+        self._ODE = dy_dt
 
     def _define_outs(self):
         dct_y = self._state_locator(self._state)

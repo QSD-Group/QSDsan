@@ -158,6 +158,7 @@ class SanUnit(Unit, isabstract=True):
 
         self._isdynamic = isdynamic
         self._state = None
+        self._ODE = None
 
         for attr, val in kwargs.items():
             setattr(self, attr, val)
