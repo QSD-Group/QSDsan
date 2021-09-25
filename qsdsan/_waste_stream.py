@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Joy Cheung <joycheung1994@gmail.com>
+    Joy Zhang <joycheung1994@gmail.com>
     Yalin Li <zoe.yalin.li@gmail.com>
 
 Part of this module is based on the Thermosteam package:
@@ -26,6 +26,7 @@ TODO:
 # %%
 
 import numpy as np
+import flexsolve as flx
 from thermosteam import settings
 from . import Components, Stream, MultiStream, SanStream, MissingSanStream, \
     set_thermo
@@ -824,7 +825,7 @@ class WasteStream(SanStream):
         return C*conc_unit.conversion_factor(unit)
 
 
-    def set_flow_by_concentration(self, flow_tot, concentrations, units,
+    def set_flow_by_concentration(self, flow_tot, concentrations, units=('L/hr', 'mg/L'),
                                   bulk_liquid_ID='H2O', atol=1e-5, maxiter=50):
         '''
         Set the mass flows of the WasteStream by specifying total volumetric flow and
@@ -853,31 +854,55 @@ class WasteStream(SanStream):
         '''
         if flow_tot == 0: raise RuntimeError(f'{repr(self)} is empty')
         if bulk_liquid_ID in concentrations.keys():
-            C_h2o = concentrations.pop(bulk_liquid_ID)
-            warn(f'ignored concentration specified for {bulk_liquid_ID}:{C_h2o}')
+            C_bulk = concentrations.pop(bulk_liquid_ID)
+            warn(f'ignored concentration specified for {bulk_liquid_ID}:{C_bulk}')
 
         self.empty()
-        f = conc_unit.conversion_factor(units[1])
+        f = conc_unit.conversion_factor(units[1]) # convert to mg/L
         Q_tot = flow_tot / vol_unit.conversion_factor(units[0])   # converted to L/hr
         C_arr = np.array(list(concentrations.values()))
         IDs = concentrations.keys()
-        M_arr = C_arr/f*Q_tot*1e-6       # kg/hr
-        dwt = M_arr.sum()                # dry weight
+        M_arr = C_arr/f*Q_tot*1e-6       # mg/L * L/hr /1e6 = kg/hr
         self.set_flow(M_arr, 'kg/hr', tuple(IDs))
 
+        # Density of the mixture should be larger than the pure bulk liquid,
+        # give it a factor of 100 for safety
         den = self.components[bulk_liquid_ID].rho(phase=self.phase, T=self.T, P=self.P)*1e-3  # bulk liquid density in [kg/L]
-        i = 0
-        while True:
-            i += 1
-            den0 = den
-            M_tot = den0 * Q_tot
-            M_h2o = M_tot - dwt
-            self.set_flow(M_h2o, 'kg/hr', bulk_liquid_ID)
-            den = M_tot / self.get_total_flow('L/hr')
-            if abs(den0 - den) <= atol: break
-            if i > maxiter:
-                raise RuntimeError(f'{bulk_liquid_ID} mass flow calculation failed '
-                                   f'to converge within {maxiter} iterations.')
+        bulk_ref_phase = self.components[bulk_liquid_ID].phase_ref
+        if bulk_ref_phase != 'l':
+            warn(f'Reference phase of liquid is "{bulk_ref_phase}", not "l", '
+                 'flow might not be set correctly.')
+
+        M_bulk_max = Q_tot * den * 100 # L/hr * kg/L = kg/hr
+
+        M_bulk = flx.IQ_interpolation(f=self._Q_obj_f,
+                                      x0=0, x1=M_bulk_max,
+                                      xtol=0.01, ytol=atol, # ytol here is actually Q, but should be fine
+                                      args=(bulk_liquid_ID, Q_tot),
+                                      maxiter=maxiter, checkbounds=False)
+        self.set_flow(M_bulk, 'kg/hr', bulk_liquid_ID)
+
+        # dwt = M_arr.sum()                # dry weight of non-bulk liquid
+        # M_bulk = self._Q_obj_f(bulk_liquid_ID, Q_tot, M_bulk)
+
+        # i = 0
+        # while True:
+        #     i += 1
+        #     den0 = den
+        #     M_tot = den0 * Q_tot # kg/L * L/hr = kg/hr
+        #     M_bulk = M_tot - dwt
+        #     self.set_flow(M_bulk, 'kg/hr', bulk_liquid_ID)
+        #     den = M_tot / self.get_total_flow('L/hr')
+        #     if abs(den0 - den) <= atol: break
+        #     if i > maxiter:
+        #         raise RuntimeError(f'{bulk_liquid_ID} mass flow calculation failed '
+        #                            f'to converge within {maxiter} iterations.')
+        #     if M_bulk > M_tot: #!!! M_bulk often large than M_tot, not correct
+        #         print('Bulk flow rate > total flow rate!')
+
+    def _Q_obj_f(self, M_bulk, bulk_liquid_ID, target_Q):
+        self.set_flow(M_bulk, 'kg/hr', bulk_liquid_ID)
+        return self.F_vol*1e3 - target_Q
 
 
     @classmethod
