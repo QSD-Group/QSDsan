@@ -882,23 +882,6 @@ class WasteStream(SanStream):
                                       maxiter=maxiter, checkbounds=False)
         self.set_flow(M_bulk, 'kg/hr', bulk_liquid_ID)
 
-        # dwt = M_arr.sum()                # dry weight of non-bulk liquid
-        # M_bulk = self._Q_obj_f(bulk_liquid_ID, Q_tot, M_bulk)
-
-        # i = 0
-        # while True:
-        #     i += 1
-        #     den0 = den
-        #     M_tot = den0 * Q_tot # kg/L * L/hr = kg/hr
-        #     M_bulk = M_tot - dwt
-        #     self.set_flow(M_bulk, 'kg/hr', bulk_liquid_ID)
-        #     den = M_tot / self.get_total_flow('L/hr')
-        #     if abs(den0 - den) <= atol: break
-        #     if i > maxiter:
-        #         raise RuntimeError(f'{bulk_liquid_ID} mass flow calculation failed '
-        #                            f'to converge within {maxiter} iterations.')
-        #     if M_bulk > M_tot: #!!! M_bulk often large than M_tot, not correct
-        #         print('Bulk flow rate > total flow rate!')
 
     def _Q_obj_f(self, M_bulk, bulk_liquid_ID, target_Q):
         self.set_flow(M_bulk, 'kg/hr', bulk_liquid_ID)

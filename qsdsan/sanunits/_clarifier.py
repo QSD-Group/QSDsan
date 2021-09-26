@@ -12,7 +12,7 @@ for license details.
 
 from .. import SanUnit
 import numpy as np
-import pandas as pd
+# import pandas as pd
 
 __all__ = ('FlatBottomCircularClarifier', )
 
@@ -85,7 +85,7 @@ class FlatBottomCircularClarifier(SanUnit):
         self._A = surface_area
         self._hj = height/N_layer
         self._N_layer = N_layer
-        self._feed_layer = feed_layer
+        self.feed_layer = feed_layer
         self._v_max = v_max
         self._v_max_p = v_max_practical
         self._X_t = X_threshold
@@ -220,34 +220,34 @@ class FlatBottomCircularClarifier(SanUnit):
         if fns < 0 or fns > 1: raise ValueError('fns must be within [0,1].')
         self._fns = fns
 
-    @property
-    def state(self):
-        '''Component concentrations [mg/L] in each layer and total flow rate [m3/d].'''
-        if self._state is None: return None
-        else:
-            Cs = pd.DataFrame(self._state[:-1].reshape((self._N_layer, len(self.components))),
-                              columns=self.components.IDs,
-                              index=range(1, self._N_layer + 1))
-            Q = self._state[-1]
-            return {'Concentrations [mg/L]': Cs,
-                    'Total flow rate [m3/d]': Q}
+    # @property
+    # def state(self):
+    #     '''Component concentrations [mg/L] in each layer and total flow rate [m3/d].'''
+    #     if self._state is None: return None
+    #     else:
+    #         Cs = pd.DataFrame(self._state[:-1].reshape((self._N_layer, len(self.components))),
+    #                           columns=self.components.IDs,
+    #                           index=range(1, self._N_layer + 1))
+    #         Q = self._state[-1]
+    #         return {'Concentrations [mg/L]': Cs,
+    #                 'Total flow rate [m3/d]': Q}
 
-    @state.setter
-    def state(self, QCs):
-        QCs = np.asarray(QCs)
-        if QCs.shape != (self._N_layer * len(self.components) + 1,):
-            raise ValueError(f'state must be a 1d-array of shape {(self._N_layer * len(self.components) + 1,)}, '
-                             f'with the first {self._N_layer * len(self.components)} element being the component '
-                             f'concentrations on layer 1-{self._N_layer} and the last being the total flow rate.')
-        self._state = QCs
+    # @state.setter
+    # def state(self, QCs):
+    #     QCs = np.asarray(QCs)
+    #     if QCs.shape != (self._N_layer * len(self.components) + 1,):
+    #         raise ValueError(f'state must be a 1d-array of shape {(self._N_layer * len(self.components) + 1,)}, '
+    #                          f'with the first {self._N_layer * len(self.components)} element being the component '
+    #                          f'concentrations on layer 1-{self._N_layer} and the last being the total flow rate.')
+    #     self._state = QCs
 
-    def set_init_solubles(self, **kwargs):
-        '''set the initial concentrations [mg/L] of solubles in the clarifier.'''
-        Cs = np.zeros(len(self.components))
-        cmpx = self.components.index
-        x = self.components.x
-        for k, v in kwargs.items(): Cs[cmpx(k)] = v
-        self._solubles = np.tile(Cs*(1-x), self._N_layer)
+    # def set_init_solubles(self, **kwargs):
+    #     '''set the initial concentrations [mg/L] of solubles in the clarifier.'''
+    #     Cs = np.zeros(len(self.components))
+    #     cmpx = self.components.index
+    #     x = self.components.x
+    #     for k, v in kwargs.items(): Cs[cmpx(k)] = v
+    #     self._solubles = np.tile(Cs*(1-x), self._N_layer)
 
     def set_init_TSS(self, arr):
         '''set the initial TSS [mg/L] in each layer of the clarifier.'''
@@ -255,43 +255,86 @@ class FlatBottomCircularClarifier(SanUnit):
             raise ValueError(f'expects an iterable of length {self._N_layer}, not {len(arr)}')
         self._solids = np.asarray(arr, dtype=float)
 
-    def _init_state(self, state=None):
-        if state is not None: Cs = state.flatten()
-        else:
-            x = self.components.x
-            C_in = self.ins[0].Conc
-            if self._solubles is not None and self._solids is not None:
-                TSS_in = self.ins[0].get_TSS()
-                TSS_ratios = self._solids / TSS_in
-                Xs = np.array([C_in*x*r for r in TSS_ratios]).flatten()
-                Zs = self._solubles
-                Cs = Xs + Zs
-            else:
-                Cs = np.array([(f*x+(1-x))*C_in for f in 20**np.linspace(-1,1,self._N_layer)])
-                Cs = Cs.flatten()
-        Q = self.ins[0].get_total_flow('m3/d')
-        self._state = np.append(Cs, Q)
+    # def _init_state(self, state=None):
+    #     if state is not None: Cs = state.flatten()
+    #     else:
+    #         x = self.components.x
+    #         C_in = self.ins[0].Conc
+    #         if self._solubles is not None and self._solids is not None:
+    #             TSS_in = self.ins[0].get_TSS()
+    #             TSS_ratios = self._solids / TSS_in
+    #             Xs = np.array([C_in*x*r for r in TSS_ratios]).flatten()  # composition of solids is the same as influent
+    #             Zs = self._solubles
+    #             Cs = Xs + Zs
+    #         else:
+    #             Cs = np.array([(f*x+(1-x))*C_in for f in 20**np.linspace(-1,1,self._N_layer)])
+    #             Cs = Cs.flatten()
+    #     Q = self.ins[0].get_total_flow('m3/d')
+    #     self._state = np.append(Cs, Q)
+
+    def _init_state(self):
+        x = self.components.x
+        imass = self.components.i_mass
+        source = self.ins[0]._source
+        QCs = source._state_locator(source._state)[self.ins[0].ID]
+        TSS_in = sum((QCs[:-1] * x * imass))
+        TSS = self._solids if self._solids is not None \
+            else np.array([TSS_in*f for f in 20**np.linspace(-1,1,self._N_layer)])
+        self._state = np.append(QCs, TSS)
+            
+    # def _state_locator(self, arr):
+    #     '''derives conditions of output stream from conditions within the clarifier'''
+    #     dct = {}
+    #     Q = arr[-1]
+    #     Q_e = max(Q - self._Qs, 0)
+    #     Q_s = Q - Q_e
+    #     Cs = arr[:-1].reshape((self._N_layer, len(self.components)))
+    #     dct[self.outs[0].ID] = np.append(Cs[0], Q_e)
+    #     dct[self.outs[1].ID] = np.append(Cs[-1], Q_s)
+    #     dct[self.ID] = arr
+    #     return dct
 
     def _state_locator(self, arr):
-        '''derives conditions of output stream from conditions within the clarifier'''
+        x = self.components.x
+        imass = self.components.i_mass
+        n = self._N_layer
         dct = {}
-        Q = arr[-1]
+        Q = arr[-(1+n)]
         Q_e = max(Q - self._Qs, 0)
         Q_s = Q - Q_e
-        Cs = arr[:-1].reshape((self._N_layer, len(self.components)))
-        dct[self.outs[0].ID] = np.append(Cs[0], Q_e)
-        dct[self.outs[1].ID] = np.append(Cs[-1], Q_s)
-        dct[self.ID] = arr
+        Cs = arr[:-(1+n)]
+        TSS_in = sum(Cs * x * imass)
+        r_e = arr[-n]/TSS_in
+        r_s = arr[-1]/TSS_in
+        self._state = dct[self.ID] = arr
+        dct[self.outs[0].ID] = np.append(Cs*((1-x)+r_e*x), Q_e)
+        dct[self.outs[1].ID] = np.append(Cs*((1-x)+r_s*x), Q_s)
         return dct
 
+    # def _dstate_locator(self, arr):
+    #     '''derives rates of change of output streams from rates of change within the clarifier'''
+    #     dct = {}
+    #     dQ = arr[-1]
+    #     dCs = arr[:-1].reshape((self._N_layer, len(self.components)))
+    #     dct[self.outs[0].ID] = np.append(dCs[0], dQ)
+    #     dct[self.outs[1].ID] = np.append(dCs[-1], 0)
+    #     dct[self.ID] = arr
+    #     return dct
+    
     def _dstate_locator(self, arr):
-        '''derives rates of change of output streams from rates of change within the clarifier'''
+        x = self.components.x
+        imass = self.components.i_mass
+        n = self._N_layer
         dct = {}
-        dQ = arr[-1]
-        dCs = arr[:-1].reshape((self._N_layer, len(self.components)))
-        dct[self.outs[0].ID] = np.append(dCs[0], dQ)
-        dct[self.outs[1].ID] = np.append(dCs[-1], 0)
+        dQ = arr[-(1+n)]
+        dCs = arr[:-(1+n)] * (1-x)
+        Xs = self._state[:-(1+n)] * x
+        X_composition = Xs / (Xs*imass).sum()   # (m, ), mg COD/ mg TSS
+        dX_e = arr[-n] * X_composition
+        dX_s = arr[-1] * X_composition
         dct[self.ID] = arr
+        dct[self.outs[0].ID] = np.append(dCs+dX_e, dQ)
+        dct[self.outs[1].ID] = np.append(dCs+dX_s, 0)
         return dct
 
     def _load_state(self):
@@ -315,15 +358,63 @@ class FlatBottomCircularClarifier(SanUnit):
             self._compile_ODE()
         return self._ODE
 
+    # def _compile_ODE(self):
+    #     n = self._N_layer
+    #     jf = self._feed_layer - 1
+    #     if jf not in range(self._N_layer):
+    #         raise ValueError(f'feed layer {self._feed_layer} is out of range.'
+    #                           f'must be an integer between 1 and {self._N_layer}.')
+    #     x = self.components.x
+    #     imass = self.components.i_mass
+    #     # Q_s = self._Qs
+    #     fns = self._fns
+    #     vmax = self._v_max
+    #     vmaxp = self._v_max_p
+    #     rh = self._rh
+    #     rp = self._rp
+    #     X_t = self._X_t
+    #     A = self._A
+    #     hj = self._hj
+
+    #     def dy_dt(t, QC_ins, QC, dQC_ins):
+    #         Q_in = QC_ins[-1]
+    #         Q_e = max(Q_in - self._Qs, 0)
+    #         Q_s = Q_in - Q_e
+    #         C_in = QC_ins[:-1]
+    #         X_in = sum(C_in*imass*x)    # TSS
+    #         # X_composition = C_in*x/X_in
+    #         Z_in = C_in*(1-x)
+    #         X_min = X_in * fns
+    #         C = QC[:-1].reshape((n,len(x)))
+    #         X = C @ (imass*x)           # (n,) array, TSS for each layer
+    #         X_composition = np.array([C[j]*x/X[j] for j in range(n)])    # (n,m) array, [g component / g TSS] for all solids in each layer
+    #         Z = C*(1-x)                 # (n, m) array, solubles for each layer
+    #         Q_jout = np.array([Q_e if j < jf else Q_in if j == jf else Q_s for j in range(n)])
+    #         #*********particulates***********
+    #         flow_out = X*Q_jout
+    #         flow_in = np.array([Q_e*X[j+1] if j < jf else Q_in*X_in if j == jf else Q_s*X[j-1] for j in range(n)])
+    #         VX = [_settling_flux(xj, vmax, vmaxp, X_min, rh, rp) for xj in X]
+    #         J = [VX[j] if X[j+1] <= X_t and j < jf else min(VX[j], VX[j+1]) for j in range(n-1)]
+    #         settle_out = np.array(J + [0])
+    #         settle_in = np.array([0] + J)
+    #         X_dot = ((flow_in - flow_out)/A + settle_in - settle_out)/hj        # (n,)
+    #         C_x_dot = np.array([X_composition[j]*X_dot[j] for j in range(n)])        # (n, m), 0 wherever not particulate
+    #         #********non-particulates***********
+    #         flow_out = np.array([zj*qjout for zj, qjout in zip(Z, Q_jout)])
+    #         flow_in = np.array([Q_e*Z[j+1] if j < jf else Q_in*Z_in if j == jf else Q_s*Z[j-1] for j in range(n)])
+    #         C_nx_dot = (flow_in - flow_out)/A/hj                                # (n, m), 0 wherever particulate
+
+    #         C_dot = (C_x_dot + C_nx_dot).flatten()
+    #         Q_dot = dQC_ins[-1]
+
+    #         return np.append(C_dot, Q_dot)
+
+    #     self._ODE = dy_dt
     def _compile_ODE(self):
         n = self._N_layer
         jf = self._feed_layer - 1
-        if jf not in range(self._N_layer):
-            raise ValueError(f'feed layer {self._feed_layer} is out of range.'
-                              f'must be an integer between 1 and {self._N_layer}.')
         x = self.components.x
         imass = self.components.i_mass
-        # Q_s = self._Qs
         fns = self._fns
         vmax = self._v_max
         vmaxp = self._v_max_p
@@ -332,42 +423,28 @@ class FlatBottomCircularClarifier(SanUnit):
         X_t = self._X_t
         A = self._A
         hj = self._hj
-
+        
         def dy_dt(t, QC_ins, QC, dQC_ins):
+            QC_dot = dQC_ins
             Q_in = QC_ins[-1]
             Q_e = max(Q_in - self._Qs, 0)
             Q_s = Q_in - Q_e
             C_in = QC_ins[:-1]
-            X_in = sum(C_in*imass*x)    # TSS
-            # X_composition = C_in*x/X_in
-            Z_in = C_in*(1-x)
+            X_in = sum(C_in*imass*x)
             X_min = X_in * fns
-            C = QC[:-1].reshape((n,len(x)))
-            X = C @ (imass*x)           # (n,) array, TSS for each layer
-            X_composition = np.array([C[j]*x/X[j] for j in range(n)])    # (n,m) array, [g component / g TSS] for all solids in each layer
-            Z = C*(1-x)                 # (n, m) array, solubles for each layer
+            X = QC[-n:]        # (n, ), TSS for each layer
             Q_jout = np.array([Q_e if j < jf else Q_in if j == jf else Q_s for j in range(n)])
-            #*********particulates***********
             flow_out = X*Q_jout
             flow_in = np.array([Q_e*X[j+1] if j < jf else Q_in*X_in if j == jf else Q_s*X[j-1] for j in range(n)])
             VX = [_settling_flux(xj, vmax, vmaxp, X_min, rh, rp) for xj in X]
             J = [VX[j] if X[j+1] <= X_t and j < jf else min(VX[j], VX[j+1]) for j in range(n-1)]
             settle_out = np.array(J + [0])
             settle_in = np.array([0] + J)
-            X_dot = ((flow_in - flow_out)/A + settle_in - settle_out)/hj        # (n,)
-            C_x_dot = np.array([X_composition[j]*X_dot[j] for j in range(n)])        # (n, m), 0 wherever not particulate
-            #********non-particulates***********
-            flow_out = np.array([zj*qjout for zj, qjout in zip(Z, Q_jout)])
-            flow_in = np.array([Q_e*Z[j+1] if j < jf else Q_in*Z_in if j == jf else Q_s*Z[j-1] for j in range(n)])
-            C_nx_dot = (flow_in - flow_out)/A/hj                                # (n, m), 0 wherever particulate
-
-            C_dot = (C_x_dot + C_nx_dot).flatten()
-            Q_dot = dQC_ins[-1]
-
-            return np.append(C_dot, Q_dot)
-
+            TSS_dot = ((flow_in - flow_out)/A + settle_in - settle_out)/hj        # (n,)
+            return np.append(QC_dot, TSS_dot)
+        
         self._ODE = dy_dt
-
+    
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
         for out in self.outs:
