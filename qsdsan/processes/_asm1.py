@@ -86,7 +86,7 @@ def _create_asm1_cmps(pickle=False):
     return cmps_asm1
 
 
-_create_asm1_cmps(True)
+#_create_asm1_cmps(True)
 
 def load_asm1_cmps():
     if _pk:
