@@ -3,7 +3,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Joy Cheung <joycheung1994@gmail.com>
+    Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
@@ -31,6 +31,7 @@ def _create_asm1_cmps(pickle=False):
     X_I = cmps.X_U_Inf.copy('X_I')
     X_I.description = 'Particulate inert organic matter'
 
+
     S_S = cmps.S_F.copy('S_S')
     S_S.description = 'Readily biodegradable substrate'
     S_S.i_N = 0
@@ -41,6 +42,7 @@ def _create_asm1_cmps(pickle=False):
 
     X_BH = cmps.X_OHO.copy('X_BH')
     X_BH.description = 'Active heterotrophic biomass'
+    
 
     X_BA = cmps.X_AOO.copy('X_BA')
     X_BA.description = 'Active autotrophic biomass'
@@ -49,6 +51,8 @@ def _create_asm1_cmps(pickle=False):
     X_P = cmps.X_U_OHO_E.copy('X_P')
     X_P.description = 'Particulate products arising from biomass decay'
     X_P.i_N = 0.06                  # i_XP
+
+    X_I.i_mass = X_S.i_mass = X_BH.i_mass = X_BA.i_mass = X_P.i_mass = .75    # fr_COD_SS
 
     S_O = cmps.S_O2.copy('S_O')
 
@@ -82,7 +86,7 @@ def _create_asm1_cmps(pickle=False):
     return cmps_asm1
 
 
-# _create_asm1_cmps(True)
+_create_asm1_cmps(True)
 
 def load_asm1_cmps():
     if _pk:
@@ -223,15 +227,17 @@ class ASM1(Processes):
     def __new__(cls, components=None, Y_A=0.24, Y_H=0.67, f_P=0.08, i_XB=0.08, i_XP=0.06,
                 mu_H=4.0, K_S=10.0, K_O_H=0.2, K_NO=0.5, b_H=0.3, eta_g=0.8, eta_h=0.8,
                 k_h=3.0, K_X=0.1, mu_A=0.5, K_NH=1.0, b_A=0.05, K_O_A=0.4, k_a=0.05,
-                path=None, **kwargs):
+                fr_COD_SS=0.75, path=None, **kwargs):
         if not path: path = _path
         self = Processes.load_from_file(path,
                                         conserved_for=('COD', 'charge', 'N'),
                                         parameters=cls._params,
                                         components=components,
                                         compile=True)
-        self._components.X_BH.i_N = self._components.X_BA.i_N = i_XB
-        self._components.X_P.i_N = i_XP
+        cmps = self._components
+        cmps.X_BH.i_N = cmps.X_BA.i_N = i_XB
+        cmps.X_P.i_N = i_XP
+        cmps.X_I.i_mass = cmps.X_S.i_mass = cmps.X_P.i_mass = cmps.X_BH.i_mass = cmps.X_BA.i_mass = fr_COD_SS
         self.set_parameters(Y_A=Y_A, Y_H=Y_H, f_P=f_P, mu_H=mu_H, K_S=K_S, K_O_H=K_O_H,
                             K_NO=K_NO, b_H=b_H, eta_g=eta_g, eta_h=eta_h, k_h=k_h,
                             K_X=K_X, mu_A=mu_A, K_NH=K_NH, b_A=b_A, K_O_A=K_O_A, k_a=k_a,
