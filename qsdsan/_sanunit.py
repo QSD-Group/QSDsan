@@ -114,7 +114,7 @@ class SanUnit(Unit, isabstract=True):
         .. note::
 
             Regardless of `F_BM_default`, design (F_D), pressure (F_P),
-            and material (F_M) factors are all defaulted to 0.
+            and material (F_M) factors are all defaulted to 1.
 
     See Also
     --------
@@ -380,8 +380,17 @@ class SanUnit(Unit, isabstract=True):
             results.loc[('Additional OPEX', ''), :] = ('USD/hr', 0)
         else:
             for k, v in self.add_OPEX.items():
-                try: results.loc[(k, ''), :] = ('USD/hr', v)
-                except: breakpoint()
+                if not with_units:
+                    results.loc[(k, '')] = v
+                else:
+                    try: results.loc[(k, ''), :] = ('USD/hr', v)
+                    # When `results` is a series instead of dataframe,
+                    # might not need this
+                    except ValueError:
+                        results = results.to_frame(name=self.ID)
+                        results.insert(0, 'Units', '')
+                        results.loc[(k, ''), :] = ('USD/hr', v)
+                        results.columns.name = type(self).__name__
         if with_units:
             results.replace({'USD': f'{currency}', 'USD/hr': f'{currency}/hr'},
                             inplace=True)

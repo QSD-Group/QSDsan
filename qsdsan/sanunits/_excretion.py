@@ -29,6 +29,15 @@ class Excretion(SanUnit):
     Estimation of N, P, K, and COD in urine and feces based on dietary intake
     for one person based on Trimmer et al. [1]_
 
+    Parameters
+    ----------
+    waste_ratio : float
+        A ratio in [0, 1] to indicate the amount of intake calories and nutrients
+        (N, P, K) that is wasted.
+
+        .. note::
+            Not considered for Mg and Ca.
+
     Examples
     --------
     `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
@@ -45,8 +54,10 @@ class Excretion(SanUnit):
     _N_outs = 2
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 **kwargs):
+                 waste_ratio=0, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        self.waste_ratio = waste_ratio
+
         data = load_data(path=data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
@@ -60,19 +71,24 @@ class Excretion(SanUnit):
         ur, fec = self.outs
         ur.empty()
         fec.empty()
-        # From g per person per day to kg per hour
-        factor = 24 * 1e3
-        e_cal = self.e_cal / 24
-        ur_exc = self.ur_exc / factor
+
+        not_wasted = 1 - self.waste_ratio
+        factor = 24 * 1e3 # from g per person per day to kg per hour
+
         ur_N = (self.p_veg+self.p_anim)/factor*self.N_prot \
-           * self.N_exc*self.N_ur
+           * self.N_exc*self.N_ur*not_wasted
         ur.imass['NH3'] = ur_N * self.N_ur_NH3
         ur.imass['NonNH3'] = ur_N - ur.imass['NH3']
+
         ur.imass['P'] = (self.p_veg*self.P_prot_v+self.p_anim*self.P_prot_a)/factor \
-            * self.P_exc*self.P_ur
+            * self.P_exc*self.P_ur*not_wasted
+
+        e_cal = self.e_cal / 24 * not_wasted
         ur.imass['K'] = e_cal/1e3 * self.K_cal/1e3 * self.K_exc*self.K_ur
         ur.imass['Mg'] = self.Mg_ur / factor
         ur.imass['Ca'] = self.Ca_ur / factor
+
+        ur_exc = self.ur_exc / factor
         ur.imass['H2O'] = self.ur_moi * ur_exc
         ur.imass['OtherSS'] = ur_exc - ur.F_mass
 
@@ -291,3 +307,17 @@ class Excretion(SanUnit):
     @Ca_fec.setter
     def Ca_fec(self, i):
         self._Ca_fec = i
+
+    @property
+    def waste_ratio(self):
+        '''
+        [float] The amount of intake calories and nutrients
+        (N, P, K) that is wasted.
+
+        .. note::
+            Not considered for Mg and Ca.
+        '''
+        return self._waste_ratio
+    @waste_ratio.setter
+    def waste_ratio(self, i):
+        self._waste_ratio = i

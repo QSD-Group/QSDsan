@@ -163,7 +163,7 @@ class PitLatrine(Toilet):
                 CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
 
-        # Drain extra water, assume density of water (1 kg/L)
+        # Drain extra water, assume density of water to be 1 kg/L
         sludge = self.sludge_accum_rate/(365*24)
         diff = mixed.F_mass - sludge
         if diff > 0:

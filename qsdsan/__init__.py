@@ -6,7 +6,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
-    Joy Cheung <joycheung1994@gmail.com>
+    Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -53,6 +53,8 @@ Chemicals = tmo.Chemicals
 CompiledChemicals = tmo.CompiledChemicals
 Stream = tmo.Stream
 set_thermo = tmo.settings.set_thermo
+get_components = tmo.settings.get_chemicals
+get_thermo = tmo.settings.get_thermo
 
 MultiStream = tmo.MultiStream
 Unit = bst.Unit
