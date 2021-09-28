@@ -18,7 +18,7 @@ for license details.
 
 
 # %%
-
+import numpy as np
 from collections import defaultdict
 from collections.abc import Iterable
 from biosteam.utils.misc import format_title
@@ -307,6 +307,13 @@ class SanUnit(Unit, isabstract=True):
     def isdynamic(self, i):
         self._isdynamic = bool(i)
 
+    def _state_tracer(self):
+        states = []
+        for inf in self.ins:
+            u = inf._source
+            state = u._state_locator(u._state)[inf.ID]
+            states.append(state)
+        return np.array(states)
 
     @property
     def construction(self):

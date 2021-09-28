@@ -44,12 +44,6 @@ class Mixer(SanUnit, bst.units.Mixer):
     `biosteam.units.Mixer <https://biosteam.readthedocs.io/en/latest/units/mixing.html>`_
     '''
 
-    # def __init__(self,  ID='', ins=None, outs=(), thermo=None, *,
-    #              init_with='Stream', F_BM_default=None):
-    #     SanUnit.__init__(self, ID, ins, outs, thermo,
-    #                      init_with=init_with, F_BM_default=F_BM_default)
-    #     self._ODE = None
-    #     self._Conc = None
 
     def reset_cache(self):
         '''Reset cached states.'''
@@ -71,15 +65,24 @@ class Mixer(SanUnit, bst.units.Mixer):
             raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
                               'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
         self._state = QCs
-
-    def _init_state(self, state=None):
+    
+    # def set_init_conc(self, **kwargs):
+    #     '''set the initial concentrations [mg/L] of the CSTR.'''
+    #     Cs = np.zeros(len(self.components))
+    #     cmpx = self.components.index
+    #     for k, v in kwargs.items(): Cs[cmpx(k)] = v
+    #     self._concs = Cs
+    
+    def _init_state(self):
         '''initialize state by specifiying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
-        mixed = WasteStream()
-        mixed.mix_from(self.ins)
-        Q = mixed.get_total_flow('m3/d')
-        self._state = np.append(state or mixed.Conc, Q)
+        QCs = self._state_tracer()
+        if QCs.shape[0] <= 1: self._state = QCs[0]
+        else: 
+            Qs = QCs[:,-1]
+            Cs = QCs[:,:-1]
+            self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
 
     def _state_locator(self, arr):
         '''derives conditions of output stream from conditions of the Mixer'''
@@ -146,6 +149,7 @@ class Splitter(SanUnit, bst.units.Splitter):
         SanUnit.__init__(self, ID, ins, outs, thermo,
                          init_with=init_with, F_BM_default=F_BM_default)
         self._isplit = self.thermo.chemicals.isplit(split, order)
+        # self._concs = None
 
     def reset_cache(self):
         '''Reset cached states.'''
@@ -169,10 +173,15 @@ class Splitter(SanUnit, bst.units.Splitter):
                               'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
         self._state = QCs
 
-    def _init_state(self):
-        Cs = self.ins[0].Conc
-        Q = self.ins[0].get_total_flow('m3/d')
-        self._state = np.append(Cs, Q)
+    # def set_init_conc(self, **kwargs):
+    #     '''set the initial concentrations [mg/L] of the CSTR.'''
+    #     Cs = np.zeros(len(self.components))
+    #     cmpx = self.components.index
+    #     for k, v in kwargs.items(): Cs[cmpx(k)] = v
+    #     self._concs = Cs
+
+    def _init_state(self, state=None):
+        self._state = self._state_tracer()[0]
 
     def _state_locator(self, arr):
         '''derives conditions of output stream from conditions of the Splitter'''
@@ -256,6 +265,7 @@ class Pump(SanUnit, bst.units.Pump):
         self.material = material
         self.dP_design = dP_design
         self.ignore_NPSH = ignore_NPSH
+        # self._concs = None
 
     def reset_cache(self):
         '''Reset cached states.'''
@@ -278,10 +288,15 @@ class Pump(SanUnit, bst.units.Pump):
                               'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
         self._state = QCs
 
-    def _init_state(self):
-        Cs = self.ins[0].Conc
-        Q = self.ins[0].get_total_flow('m3/d')
-        self._state = np.append(Cs, Q)
+    # def set_init_conc(self, **kwargs):
+    #     '''set the initial concentrations [mg/L] of the CSTR.'''
+    #     Cs = np.zeros(len(self.components))
+    #     cmpx = self.components.index
+    #     for k, v in kwargs.items(): Cs[cmpx(k)] = v
+    #     self._concs = Cs
+        
+    def _init_state(self, state=None):
+        self._state = self._state_tracer()[0]
 
     def _state_locator(self, arr):
         '''derives conditions of output stream from conditions of the Mixer'''
