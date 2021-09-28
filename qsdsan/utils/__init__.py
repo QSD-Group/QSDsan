@@ -30,6 +30,8 @@ from . import (
     units_of_measure,
     )
 
+from biosteam.utils import NotImplementedMethod
+
 from .cod import *
 from .colors import *
 from .decorators import *
@@ -55,6 +57,7 @@ __all__ = (
     *parse.__all__,
     *setters.__all__,
     *units_of_measure.__all__,
+    'NotImplementedMethod',
     )
 
 

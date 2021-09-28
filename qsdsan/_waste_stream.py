@@ -519,7 +519,7 @@ class WasteStream(SanStream):
         if not self.phase == 'l':
             raise RuntimeError('Only liquid streams can use the `composite` method, '
                                f'the current WasteStream {self.ID} is {self.phase}.')
-        
+
         #TODO: deal with units
         if subgroup:
             cmps = subgroup
@@ -713,6 +713,11 @@ class WasteStream(SanStream):
         # printed = printed.replace('kg/hr', 'mg/L')
         # print(printed)
         # return printed
+
+    @property
+    def Conc(self):
+        '''[property_array] Mass concentrations, in mg/L (g/m3), same as `conc`.'''
+        return self.iconc.data
 
 
     def copy(self, new_ID='', ws_properties=True):
