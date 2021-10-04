@@ -94,9 +94,9 @@ class FlatBottomCircularClarifier(SanUnit):
         self._rp = rp
         self._fns = fns
         self._ODE = None
-        # self._solubles = None
         self._solids = None
-        # self._dstate = None
+        self._solubles = None
+        self._X_comp = np.zeros(len(self.components))
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
@@ -243,13 +243,13 @@ class FlatBottomCircularClarifier(SanUnit):
     #                          f'concentrations on layer 1-{self._N_layer} and the last being the total flow rate.')
     #     self._state = QCs
 
-    # def set_init_solubles(self, **kwargs):
-    #     '''set the initial concentrations [mg/L] of solubles in the clarifier.'''
-    #     Cs = np.zeros(len(self.components))
-    #     cmpx = self.components.index
-    #     x = self.components.x
-    #     for k, v in kwargs.items(): Cs[cmpx(k)] = v
-    #     self._solubles = np.tile(Cs*(1-x), self._N_layer)
+    def set_init_solubles(self, **kwargs):
+        '''set the initial concentrations [mg/L] of solubles in the clarifier.'''
+        Cs = np.zeros(len(self.components))
+        cmpx = self.components.index
+        x = self.components.x
+        for k, v in kwargs.items(): Cs[cmpx(k)] = v
+        self._solubles = np.tile(Cs*(1-x), self._N_layer)
 
     def set_init_TSS(self, arr):
         '''set the initial TSS [mg/L] in each layer of the clarifier.'''
@@ -261,7 +261,7 @@ class FlatBottomCircularClarifier(SanUnit):
     #     if state is not None: Cs = state.flatten()
     #     else:
     #         x = self.components.x
-    #         C_in = self.ins[0].Conc
+    #         C_in = self.ins[0].conc
     #         if self._solubles is not None and self._solids is not None:
     #             TSS_in = self.ins[0].get_TSS()
     #             TSS_ratios = self._solids / TSS_in
@@ -275,14 +275,19 @@ class FlatBottomCircularClarifier(SanUnit):
     #     self._state = np.append(Cs, Q)
 
     def _init_state(self):
+        n = self._N_layer
         x = self.components.x
         imass = self.components.i_mass
-        source = self.ins[0]._source
-        QCs = source._state_locator(source._state)[self.ins[0].ID]
-        TSS_in = sum((QCs[:-1] * x * imass))
+        QCs = self._state_tracer()[0]
+        Q = QCs[-1]
+        Z = self._solubles if self._solubles is not None \
+            else np.tile(QCs[:-1]*(1-x), n)
+        TSS_in = sum(QCs[:-1] * x * imass)
         TSS = self._solids if self._solids is not None \
-            else np.array([TSS_in*f for f in 20**np.linspace(-1,1,self._N_layer)])
-        self._state = np.append(QCs, TSS)
+            else np.array([TSS_in*f for f in 20**np.linspace(-1,1,n)])
+        ZQs = np.append(Z, Q)
+        self._state = np.append(ZQs, TSS)
+        self._X_comp = QCs[:-1] * x / TSS_in
             
     # def _state_locator(self, arr):
     #     '''derives conditions of output stream from conditions within the clarifier'''
@@ -298,19 +303,18 @@ class FlatBottomCircularClarifier(SanUnit):
 
     def _state_locator(self, arr):
         x = self.components.x
-        imass = self.components.i_mass
         n = self._N_layer
         dct = {}
         Q = arr[-(1+n)]
-        Q_e = max(Q - self._Qs, 0)
-        Q_s = Q - Q_e
-        Cs = arr[:-(1+n)]
-        TSS_in = sum(Cs * x * imass)
-        r_e = arr[-n]/TSS_in
-        r_s = arr[-1]/TSS_in
+        Q_e = Q - self._Qs
+        Z_e = arr[:len(x)]
+        Z_s = arr[(n-1)*len(x):n*len(x)]
+        X_composition = self._X_comp # (m, ), mg COD/ mg TSS
+        X_e = arr[-n] * X_composition
+        X_s = arr[-1] * X_composition
         dct[self.ID] = arr
-        dct[self.outs[0].ID] = np.append(Cs*((1-x)+r_e*x), Q_e)
-        dct[self.outs[1].ID] = np.append(Cs*((1-x)+r_s*x), Q_s)
+        dct[self.outs[0].ID] = np.append(Z_e+X_e, Q_e)
+        dct[self.outs[1].ID] = np.append(Z_s+X_s, self._Qs)
         return dct
 
     # def _dstate_locator(self, arr):
@@ -324,25 +328,24 @@ class FlatBottomCircularClarifier(SanUnit):
     #     return dct
     
     def _dstate_locator(self, arr):
-        # if self._dstate is None: self._dstate = arr
-        # else: self._dstate = np.vstack((self._dstate, arr))
         x = self.components.x
         n = self._N_layer
         dct = {}
         dQ = arr[-(1+n)]
-        dCs = arr[:-(1+n)] * (1-x)
-        X_composition = arr[:-(1+n)] * x  # (m, ), mg COD/ mg TSS
+        dZ_e = arr[:len(x)]
+        dZ_s = arr[(n-1)*len(x):n*len(x)]
+        X_composition = self._X_comp # (m, ), mg COD/ mg TSS
         dX_e = arr[-n] * X_composition
         dX_s = arr[-1] * X_composition
         dct[self.ID] = arr
-        dct[self.outs[0].ID] = np.append(dCs+dX_e, dQ)
-        dct[self.outs[1].ID] = np.append(dCs+dX_s, 0)
+        dct[self.outs[0].ID] = np.append(dZ_e+dX_e, dQ)
+        dct[self.outs[1].ID] = np.append(dZ_s+dX_s, 0)
         return dct
 
     def _load_state(self):
         '''returns a dictionary of values of state variables within the clarifer and in the output streams.'''
         if self._state is None: self._init_state()
-        return self._state_locator(self._state)
+        return {self.ID: self._state}
 
     def _run(self):
         '''only to converge volumetric flows.'''
@@ -417,6 +420,7 @@ class FlatBottomCircularClarifier(SanUnit):
         n = self._N_layer
         jf = self._feed_layer - 1
         x = self.components.x
+        m = len(x)
         imass = self.components.i_mass
         fns = self._fns
         vmax = self._v_max
@@ -426,30 +430,37 @@ class FlatBottomCircularClarifier(SanUnit):
         X_t = self._X_t
         A = self._A
         hj = self._hj
+        Q_s = self._Qs
         
         def dy_dt(t, QC_ins, QC, dQC_ins):
-            Z_dot = dQC_ins[:-1] * (1-x)       # dC/dt for solubles in influent
-            Q_dot = dQC_ins[-1]                # dQ/dt of influent
+            dQC = np.zeros_like(QC)
+            dQC[-(n+1)] = dQC_ins[-1]
             Q_in = QC_ins[-1]
-            Q_e = max(Q_in - self._Qs, 0)
-            Q_s = Q_in - Q_e
+            Q_e = Q_in - Q_s
             C_in = QC_ins[:-1]
+            Z_in = C_in*(1-x)
             X_in = sum(C_in*imass*x)           # influent TSS
-            X_composition = C_in * x / X_in    # g COD/g TSS for solids in influent
+            self._X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
             X_min = X_in * fns
             X = QC[-n:]                        # (n, ), TSS for each layer
+            Z = QC[:n*m].reshape((n, m)) * (1-x) #(n,m), solubles for each layer, zero for all particulates
+            #***********TSS*************
             Q_jout = np.array([Q_e if j < jf else Q_in if j == jf else Q_s for j in range(n)])
             flow_out = X*Q_jout
             flow_in = np.array([Q_e*X[j+1] if j < jf else Q_in*X_in if j == jf else Q_s*X[j-1] for j in range(n)])
             VX = [_settling_flux(xj, vmax, vmaxp, X_min, rh, rp) for xj in X]
-            J = np.array([VX[j] if X[j+1] <= X_t and j < jf else min(VX[j], VX[j+1]) for j in range(n-1)])
-            settle_out = np.append(J, 0)
-            settle_in = np.insert(J, 0, 0)
-            TSS_dot = ((flow_in - flow_out)/A + settle_in - settle_out)/hj        # (n,)
-            QC_dot = np.append(Z_dot + X_composition, Q_dot) 
-            return np.append(QC_dot, TSS_dot)
+            J = [VX[j] if X[j+1] <= X_t and j < jf else min(VX[j], VX[j+1]) for j in range(n-1)]
+            settle_out = np.array(J + [0])
+            settle_in = np.array([0] + J)
+            dQC[-n:] = ((flow_in - flow_out)/A + settle_in - settle_out)/hj        # (n,)
+            #*********solubles**********
+            dZ = np.array([Q_e*(Z[j+1]-Z[j]) if j < jf 
+                           else Q_s*(Z[j-1]-Z[j]) if j > jf
+                           else Q_in*(Z_in - Z[j]) for j in range(n)])         # (n, m), 0 wherever particulate
+            dQC[:n*m] = dZ.reshape((n*m,))/A/hj
+            return dQC
         
-        self._ODE = dy_dt
+        self._ODE = dy_dt      
     
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
@@ -536,22 +547,22 @@ class IdealClarifier(SanUnit):
         eff, sludge = self.outs
         cmps = self.components
         Q_in = inf.get_total_flow('m3/d')
-        TSS_in = (inf.Conc*cmps.x*cmps.i_mass).sum()
+        TSS_in = (inf.conc*cmps.x*cmps.i_mass).sum()
         params = (Qs, e_rmv, MLSS) = self._Qs, self._e_rmv, self._MLSS
         if sum([i is None for i in params]) > 1: 
             raise RuntimeError('must specify two of the following parameters: '
                                'sludge_flow_rate, solids_removal_efficiency, sludge_MLSS')
         if Qs is None:
             Qs = self._calc_Qs(TSS_in, Q_in)
-            Xs = MLSS / TSS_in * inf.Conc * cmps.x
-            Xe = (1-e_rmv) * inf.Conc * cmps.x
+            Xs = MLSS / TSS_in * inf.conc * cmps.x
+            Xe = (1-e_rmv) * inf.conc * cmps.x
         elif e_rmv is None:
             e_rmv = self._calc_ermv(TSS_in, Q_in)
-            Xs = MLSS / TSS_in * inf.Conc * cmps.x
-            Xe = (1-e_rmv) * inf.Conc * cmps.x
+            Xs = MLSS / TSS_in * inf.conc * cmps.x
+            Xe = (1-e_rmv) * inf.conc * cmps.x
         else:
-            Xe, Xs = self._calc_SS(inf.Conc * cmps.x, Q_in)
-        Zs = Ze = inf.Conc * (1-cmps.x)
+            Xe, Xs = self._calc_SS(inf.conc * cmps.x, Q_in)
+        Zs = Ze = inf.conc * (1-cmps.x)
         Ce = dict(zip(cmps.IDs, Ze+Xe))
         Cs = dict(zip(cmps.IDs, Zs+Xs))
         Ce.pop('H2O', None)
