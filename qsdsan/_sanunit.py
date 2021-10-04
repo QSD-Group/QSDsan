@@ -6,7 +6,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
-    Joy Cheung <joycheung1994@gmail.com>
+    Joy Zhang <joycheung1994@gmail.com>
 
 Part of this module is based on the BioSTEAM package:
 https://github.com/BioSTEAMDevelopmentGroup/biosteam
@@ -18,7 +18,7 @@ for license details.
 
 
 # %%
-
+import numpy as np
 from collections import defaultdict
 from collections.abc import Iterable
 from biosteam.utils.misc import format_title
@@ -157,16 +157,11 @@ class SanUnit(Unit, isabstract=True):
             self.F_BM.update(F_BM)
 
         self._isdynamic = isdynamic
-        self._init_dynamic()
+        self._state = None
+        self._ODE = None
 
         for attr, val in kwargs.items():
             setattr(self, attr, val)
-
-    def _init_dynamic(self):
-        '''Initialize attributes related to dynamic simulation.'''
-        self._state = None
-        self._ODE = None
-        self._state_source = None
 
 
     def _convert_stream(self, strm_inputs, streams, init_with, ins_or_outs):
@@ -301,7 +296,7 @@ class SanUnit(Unit, isabstract=True):
 
     @property
     def components(self):
-        '''[:class:`Components`] The :class:`~.Components` object associated with this unit.'''
+        '''[Components] The :class:`~.Components` object associated with this unit.'''
         return self.chemicals
 
     @property
@@ -312,18 +307,13 @@ class SanUnit(Unit, isabstract=True):
     def isdynamic(self, i):
         self._isdynamic = bool(i)
 
-    @property
-    def state_source(self):
-        '''
-        [obj] If provided, the state of this `SanUnit` and its effluents will be
-        directed to the state of the source (used in dynamic simulation).
-        '''
-        return self._state_source
-
-    @state_source.setter
-    def state_source(self, source):
-        self._state_source = source
-
+    def _state_tracer(self):
+        states = []
+        for inf in self.ins:
+            u = inf._source
+            state = u._state_locator(u._state)[inf.ID]
+            states.append(state)
+        return np.array(states)
 
     @property
     def construction(self):

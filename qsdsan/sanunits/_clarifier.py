@@ -14,7 +14,8 @@ from .. import SanUnit
 import numpy as np
 # import pandas as pd
 
-__all__ = ('FlatBottomCircularClarifier', )
+__all__ = ('FlatBottomCircularClarifier', 
+           'IdealClarifier',)
 
 def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp):
     X_star = max(X-X_min, 0)
@@ -93,8 +94,9 @@ class FlatBottomCircularClarifier(SanUnit):
         self._rp = rp
         self._fns = fns
         self._ODE = None
-        self._solubles = None
+        # self._solubles = None
         self._solids = None
+        # self._dstate = None
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
@@ -281,7 +283,7 @@ class FlatBottomCircularClarifier(SanUnit):
         TSS = self._solids if self._solids is not None \
             else np.array([TSS_in*f for f in 20**np.linspace(-1,1,self._N_layer)])
         self._state = np.append(QCs, TSS)
-
+            
     # def _state_locator(self, arr):
     #     '''derives conditions of output stream from conditions within the clarifier'''
     #     dct = {}
@@ -306,7 +308,7 @@ class FlatBottomCircularClarifier(SanUnit):
         TSS_in = sum(Cs * x * imass)
         r_e = arr[-n]/TSS_in
         r_s = arr[-1]/TSS_in
-        self._state = dct[self.ID] = arr
+        dct[self.ID] = arr
         dct[self.outs[0].ID] = np.append(Cs*((1-x)+r_e*x), Q_e)
         dct[self.outs[1].ID] = np.append(Cs*((1-x)+r_s*x), Q_s)
         return dct
@@ -320,16 +322,16 @@ class FlatBottomCircularClarifier(SanUnit):
     #     dct[self.outs[1].ID] = np.append(dCs[-1], 0)
     #     dct[self.ID] = arr
     #     return dct
-
+    
     def _dstate_locator(self, arr):
+        # if self._dstate is None: self._dstate = arr
+        # else: self._dstate = np.vstack((self._dstate, arr))
         x = self.components.x
-        imass = self.components.i_mass
         n = self._N_layer
         dct = {}
         dQ = arr[-(1+n)]
         dCs = arr[:-(1+n)] * (1-x)
-        Xs = self._state[:-(1+n)] * x
-        X_composition = Xs / (Xs*imass).sum()   # (m, ), mg COD/ mg TSS
+        X_composition = arr[:-(1+n)] * x  # (m, ), mg COD/ mg TSS
         dX_e = arr[-n] * X_composition
         dX_s = arr[-1] * X_composition
         dct[self.ID] = arr
@@ -410,7 +412,7 @@ class FlatBottomCircularClarifier(SanUnit):
     #         return np.append(C_dot, Q_dot)
 
     #     self._ODE = dy_dt
-
+    
     def _compile_ODE(self):
         n = self._N_layer
         jf = self._feed_layer - 1
@@ -424,28 +426,31 @@ class FlatBottomCircularClarifier(SanUnit):
         X_t = self._X_t
         A = self._A
         hj = self._hj
-
+        
         def dy_dt(t, QC_ins, QC, dQC_ins):
-            QC_dot = dQC_ins
+            Z_dot = dQC_ins[:-1] * (1-x)       # dC/dt for solubles in influent
+            Q_dot = dQC_ins[-1]                # dQ/dt of influent
             Q_in = QC_ins[-1]
             Q_e = max(Q_in - self._Qs, 0)
             Q_s = Q_in - Q_e
             C_in = QC_ins[:-1]
-            X_in = sum(C_in*imass*x)
+            X_in = sum(C_in*imass*x)           # influent TSS
+            X_composition = C_in * x / X_in    # g COD/g TSS for solids in influent
             X_min = X_in * fns
-            X = QC[-n:]        # (n, ), TSS for each layer
+            X = QC[-n:]                        # (n, ), TSS for each layer
             Q_jout = np.array([Q_e if j < jf else Q_in if j == jf else Q_s for j in range(n)])
             flow_out = X*Q_jout
             flow_in = np.array([Q_e*X[j+1] if j < jf else Q_in*X_in if j == jf else Q_s*X[j-1] for j in range(n)])
             VX = [_settling_flux(xj, vmax, vmaxp, X_min, rh, rp) for xj in X]
-            J = [VX[j] if X[j+1] <= X_t and j < jf else min(VX[j], VX[j+1]) for j in range(n-1)]
-            settle_out = np.array(J + [0])
-            settle_in = np.array([0] + J)
+            J = np.array([VX[j] if X[j+1] <= X_t and j < jf else min(VX[j], VX[j+1]) for j in range(n-1)])
+            settle_out = np.append(J, 0)
+            settle_in = np.insert(J, 0, 0)
             TSS_dot = ((flow_in - flow_out)/A + settle_in - settle_out)/hj        # (n,)
+            QC_dot = np.append(Z_dot + X_composition, Q_dot) 
             return np.append(QC_dot, TSS_dot)
-
+        
         self._ODE = dy_dt
-
+    
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
         for out in self.outs:
@@ -456,3 +461,104 @@ class FlatBottomCircularClarifier(SanUnit):
 
     def _design(self):
         pass
+
+
+class IdealClarifier(SanUnit):
+    
+    _N_ins = 1
+    _N_outs = 2
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+                 sludge_flow_rate=2000, solids_removal_efficiency=.995,
+                 sludge_MLSS=None, isdynamic=False, init_with='WasteStream', 
+                 F_BM_default=None, **kwargs):
+        
+        SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
+                         init_with=init_with, F_BM_default=F_BM_default)
+        self.sludge_flow_rate = sludge_flow_rate
+        self.solids_removal_efficiency = solids_removal_efficiency
+        self.sludge_MLSS = sludge_MLSS
+        
+    @property
+    def sludge_flow_rate(self):
+        '''[float] The designed sludge flow rate (wasted + recycled) in m3/d.'''
+        return self._Qs
+
+    @sludge_flow_rate.setter
+    def sludge_flow_rate(self, Qs):
+        if Qs is not None: self._Qs = Qs
+        elif self.ins[0].isempty(): self._Qs = None
+        else: self._Qs = self._calc_Qs()
+
+    @property
+    def solids_removal_efficiency(self):
+        return self._e_rmv
+    
+    @solids_removal_efficiency.setter
+    def solids_removal_efficiency(self, f):
+        if f is not None:
+            if f > 1 or f < 0:
+                raise ValueError(f'solids removal efficiency must be within [0, 1], not {f}')
+            self._e_rmv = f
+        elif self.ins[0].isempty(): self._e_rmv = None
+        else: self._e_rmv = self._calc_ermv()
+    
+    @property
+    def sludge_MLSS(self):
+        return self._MLSS
+    
+    @sludge_MLSS.setter
+    def sludge_MLSS(self, MLSS):
+        if MLSS is not None: self._MLSS = MLSS
+        elif self.ins[0].isempty(): self._MLSS = None
+        else: self._MLSS = self._calc_SS()[1]
+    
+    def _calc_Qs(self, TSS_in=None, Q_in=None):
+        if Q_in is None: Q_in = self.ins[0].get_total_flow('m3/d')
+        if TSS_in is None: TSS_in = self.ins[0].get_TSS()
+        return Q_in*TSS_in*self._e_rmv/(self._MLSS-TSS_in)
+    
+    def _calc_ermv(self, TSS_in=None, Q_in=None):
+        if Q_in is None: Q_in = self.ins[0].get_total_flow('m3/d')
+        if TSS_in is None: TSS_in = self.ins[0].get_TSS()
+        return self._Qs*(self._MLSS-TSS_in)/TSS_in/(Q_in-self._Qs)        
+    
+    def _calc_SS(self, SS_in=None, Q_in=None):
+        if Q_in is None: Q_in = self.ins[0].get_total_flow('m3/d')
+        if SS_in is None: SS_in = self.ins[0].get_TSS()
+        SS_e = (1-self._e_rmv)*SS_in
+        Qs = self._Qs
+        Qe = Q_in - Qs
+        return SS_e, (Q_in*SS_in - Qe*SS_e)/Qs
+    
+    def _run(self):
+        inf, = self.ins
+        eff, sludge = self.outs
+        cmps = self.components
+        Q_in = inf.get_total_flow('m3/d')
+        TSS_in = (inf.Conc*cmps.x*cmps.i_mass).sum()
+        params = (Qs, e_rmv, MLSS) = self._Qs, self._e_rmv, self._MLSS
+        if sum([i is None for i in params]) > 1: 
+            raise RuntimeError('must specify two of the following parameters: '
+                               'sludge_flow_rate, solids_removal_efficiency, sludge_MLSS')
+        if Qs is None:
+            Qs = self._calc_Qs(TSS_in, Q_in)
+            Xs = MLSS / TSS_in * inf.Conc * cmps.x
+            Xe = (1-e_rmv) * inf.Conc * cmps.x
+        elif e_rmv is None:
+            e_rmv = self._calc_ermv(TSS_in, Q_in)
+            Xs = MLSS / TSS_in * inf.Conc * cmps.x
+            Xe = (1-e_rmv) * inf.Conc * cmps.x
+        else:
+            Xe, Xs = self._calc_SS(inf.Conc * cmps.x, Q_in)
+        Zs = Ze = inf.Conc * (1-cmps.x)
+        Ce = dict(zip(cmps.IDs, Ze+Xe))
+        Cs = dict(zip(cmps.IDs, Zs+Xs))
+        Ce.pop('H2O', None)
+        Cs.pop('H2O', None)
+        eff.set_flow_by_concentration(Q_in-Qs, Ce, units=('m3/d', 'mg/L'))
+        sludge.set_flow_by_concentration(Qs, Cs, units=('m3/d', 'mg/L'))
+    
+    def _design(self):
+        pass
+        

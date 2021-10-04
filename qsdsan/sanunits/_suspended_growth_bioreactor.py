@@ -79,7 +79,6 @@ class CSTR(SanUnit):
         self._DO_ID = DO_ID
         self._model = suspended_growth_model
         self._concs = None
-
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
@@ -392,7 +391,6 @@ class SBR(SanUnit):
         self._state = None
         for s in self.outs:
             s.empty()
-
 
     @property
     def operation_cycle(self):
