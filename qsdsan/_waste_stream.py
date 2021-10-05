@@ -76,7 +76,8 @@ conc_unit = auom('mg/L')
 # Util functions
 # =============================================================================
 
-_load_components = settings.get_default_chemicals
+_load_components = settings.get_chemicals
+_load_thermo = settings.get_thermo
 
 def to_float(stream, slot):
     return 0. if getattr(stream, slot) is None else float(getattr(stream, slot))
@@ -993,7 +994,9 @@ class WasteStream(SanStream):
                             X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.):
 
         if thermo: cmps = thermo.chemicals
-        else: cmps = _load_components(None)
+        else:
+            cmps = _load_components()
+            thermo = _load_thermo()
 
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 
@@ -1108,12 +1111,9 @@ class WasteStream(SanStream):
         XB_Substi_N = _calib_XBsub_iN(cmps, cmp_dct, TKN - S_NH4/iSNH_STKN)
         XB_Substi_P = _calib_XBsub_iP(cmps, cmp_dct, TP)
 
-        cmps = Components(cmps)
         if S_NH4 > 0 and cmp_dct['S_F'] > 0: cmps.S_F.i_N = SFi_N
         cmps.X_B_Subst.i_N = XB_Substi_N
         cmps.X_B_Subst.i_P = XB_Substi_P
-        cmps.compile()
-        set_thermo(cmps)
 
         #************ convert concentrations to flow rates *************
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
@@ -1141,7 +1141,9 @@ class WasteStream(SanStream):
 
 
         if thermo: cmps = thermo.chemicals
-        else: cmps = _load_components(None)
+        else:
+            cmps = _load_components()
+            thermo = _load_thermo()
 
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 
@@ -1260,13 +1262,10 @@ class WasteStream(SanStream):
         sub_IDs = ('X_B_Subst', 'X_OHO_PHA', 'X_GAO_PHA', 'X_PAO_PHA', 'X_GAO_Gly', 'X_PAO_Gly')
         fbodtocod_sub = _calib_XBsub_fBODCOD(cmps, cmp_dct, sub_IDs, BOD)
 
-        cmps = Components(cmps)
         if S_NH4 > 0 and cmp_dct['S_F'] > 0: cmps.S_F.i_N = SFi_N
         cmps.X_B_Subst.i_N = XB_Substi_N
         cmps.X_B_Subst.i_P = XB_Substi_P
         for i in sub_IDs: cmps[i].f_BOD5_COD = fbodtocod_sub
-        cmps.compile()
-        set_thermo(cmps)
 
         #************ convert concentrations to flow rates *************
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
@@ -1294,7 +1293,9 @@ class WasteStream(SanStream):
 
 
         if thermo: cmps = thermo.chemicals
-        else: cmps = _load_components(None)
+        else:
+            cmps = _load_components()
+            thermo = _load_thermo()
 
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 
@@ -1414,13 +1415,10 @@ class WasteStream(SanStream):
         sub_IDs = ('X_B_Subst', 'X_OHO_PHA', 'X_GAO_PHA', 'X_PAO_PHA', 'X_GAO_Gly', 'X_PAO_Gly')
         fbodtocod_sub = _calib_XBsub_fBODCOD(cmps, cmp_dct, sub_IDs, BOD)
 
-        cmps = Components(cmps)
         if S_NH4 > 0 and cmp_dct['S_F'] > 0: cmps.S_F.i_N = SFi_N
         cmps.X_B_Subst.i_N = XB_Substi_N
         cmps.X_B_Subst.i_P = XB_Substi_P
         for i in sub_IDs: cmps[i].f_BOD5_COD = fbodtocod_sub
-        cmps.compile()
-        set_thermo(cmps)
 
         #************ convert concentrations to flow rates *************
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
@@ -1450,7 +1448,9 @@ class WasteStream(SanStream):
 
 
         if thermo: cmps = thermo.chemicals
-        else: cmps = _load_components(None)
+        else:
+            cmps = _load_components()
+            thermo = _load_thermo()
 
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 
@@ -1564,12 +1564,9 @@ class WasteStream(SanStream):
         XB_Substi_N = _calib_XBsub_iN(cmps, cmp_dct, TKN - S_NH4/iSNH_STKN)
         XB_Substi_P = _calib_XBsub_iP(cmps, cmp_dct, TP)
 
-        cmps = Components(cmps)
         if S_NH4 > 0 and cmp_dct['S_F'] > 0: cmps.S_F.i_N = SFi_N
         cmps.X_B_Subst.i_N = XB_Substi_N
         cmps.X_B_Subst.i_P = XB_Substi_P
-        cmps.compile()
-        set_thermo(cmps)
 
         #************ convert concentrations to flow rates *************
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)

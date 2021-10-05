@@ -80,7 +80,7 @@ def load_example_sys(cmps=None):
     if cmps:
         set_thermo(cmps)
     
-    salt_water = SanStream('water', Water=2000, NaCl=50, units='kg/hr')
+    salt_water = SanStream('salt_water', Water=2000, NaCl=50, units='kg/hr')
     methanol = SanStream('methanol', Methanol=20, units='kg/hr')
     ethanol = SanStream('ethanol', Ethanol=10, units='kg/hr')
 
