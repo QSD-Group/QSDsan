@@ -64,7 +64,7 @@ class LCA:
     >>> sys.show()
     System: sys
     ins...
-    [0] water
+    [0] salt_water
         phase: 'l', T: 298.15 K, P: 101325 Pa
         flow (kmol/hr): H2O   111
                         NaCl  0.856
