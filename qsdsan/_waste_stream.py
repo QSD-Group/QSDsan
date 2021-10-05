@@ -1113,6 +1113,7 @@ class WasteStream(SanStream):
         if S_NH4 > 0 and cmp_dct['S_F'] > 0: cmps.S_F.i_N = SFi_N
         cmps.X_B_Subst.i_N = XB_Substi_N
         cmps.X_B_Subst.i_P = XB_Substi_P
+        cmps.refresh_constants()
 
         #************ convert concentrations to flow rates *************
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
@@ -1265,6 +1266,7 @@ class WasteStream(SanStream):
         cmps.X_B_Subst.i_N = XB_Substi_N
         cmps.X_B_Subst.i_P = XB_Substi_P
         for i in sub_IDs: cmps[i].f_BOD5_COD = fbodtocod_sub
+        cmps.refresh_constants()
 
         #************ convert concentrations to flow rates *************
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
@@ -1418,6 +1420,7 @@ class WasteStream(SanStream):
         cmps.X_B_Subst.i_N = XB_Substi_N
         cmps.X_B_Subst.i_P = XB_Substi_P
         for i in sub_IDs: cmps[i].f_BOD5_COD = fbodtocod_sub
+        cmps.refresh_constants()
 
         #************ convert concentrations to flow rates *************
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
@@ -1566,6 +1569,7 @@ class WasteStream(SanStream):
         if S_NH4 > 0 and cmp_dct['S_F'] > 0: cmps.S_F.i_N = SFi_N
         cmps.X_B_Subst.i_N = XB_Substi_N
         cmps.X_B_Subst.i_P = XB_Substi_P
+        cmps.refresh_constants()
 
         #************ convert concentrations to flow rates *************
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
