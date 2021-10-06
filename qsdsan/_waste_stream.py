@@ -29,8 +29,7 @@ import numpy as np
 import flexsolve as flx
 from free_properties import PropertyFactory, property_array
 from thermosteam import settings, indexer
-from . import Components, Stream, MultiStream, SanStream, MissingSanStream, \
-    set_thermo
+from . import Stream, MultiStream, SanStream, MissingSanStream
 from .utils import auom, copy_attr
 from warnings import warn
 

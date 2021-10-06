@@ -12,6 +12,7 @@ for license details.
 
 import os
 from thermosteam.utils import chemicals_user
+from thermosteam import settings
 from qsdsan import Components, Processes, _pk
 from ..utils import data_path, save_pickle, load_pickle
 
@@ -19,7 +20,7 @@ __all__ = ('load_asm1_cmps', 'ASM1')
 
 _path = data_path + 'process_data/_asm1.tsv'
 _path_cmps = os.path.join(data_path, '_asm1_cmps.pckl')
-
+_load_components = settings.get_default_chemicals
 
 ############# Components with default notation #############
 def _create_asm1_cmps(pickle=False):
@@ -52,7 +53,7 @@ def _create_asm1_cmps(pickle=False):
     X_P.description = 'Particulate products arising from biomass decay'
     X_P.i_N = 0.06                  # i_XP
 
-    X_I.i_mass = X_S.i_mass = X_BH.i_mass = X_BA.i_mass = X_P.i_mass = .75    # fr_COD_SS
+    # X_I.i_mass = X_S.i_mass = X_BH.i_mass = X_BA.i_mass = X_P.i_mass = .75    # fr_COD_SS
 
     S_O = cmps.S_O2.copy('S_O')
 
@@ -227,17 +228,21 @@ class ASM1(Processes):
     def __new__(cls, components=None, Y_A=0.24, Y_H=0.67, f_P=0.08, i_XB=0.08, i_XP=0.06,
                 mu_H=4.0, K_S=10.0, K_O_H=0.2, K_NO=0.5, b_H=0.3, eta_g=0.8, eta_h=0.8,
                 k_h=3.0, K_X=0.1, mu_A=0.5, K_NH=1.0, b_A=0.05, K_O_A=0.4, k_a=0.05,
-                fr_COD_SS=0.75, path=None, **kwargs):
+                fr_SS_COD=0.75, path=None, **kwargs):
         if not path: path = _path
+        
+        cmps = _load_components(components)
+        cmps.X_BH.i_N = cmps.X_BA.i_N = i_XB
+        cmps.X_P.i_N = i_XP
+        cmps.X_I.i_mass = cmps.X_S.i_mass = cmps.X_P.i_mass = cmps.X_BH.i_mass = cmps.X_BA.i_mass = fr_SS_COD
+        cmps.refresh_constants()
+        
         self = Processes.load_from_file(path,
                                         conserved_for=('COD', 'charge', 'N'),
                                         parameters=cls._params,
-                                        components=components,
+                                        components=cmps,
                                         compile=True)
-        cmps = self._components
-        cmps.X_BH.i_N = cmps.X_BA.i_N = i_XB
-        cmps.X_P.i_N = i_XP
-        cmps.X_I.i_mass = cmps.X_S.i_mass = cmps.X_P.i_mass = cmps.X_BH.i_mass = cmps.X_BA.i_mass = fr_COD_SS
+
         self.set_parameters(Y_A=Y_A, Y_H=Y_H, f_P=f_P, mu_H=mu_H, K_S=K_S, K_O_H=K_O_H,
                             K_NO=K_NO, b_H=b_H, eta_g=eta_g, eta_h=eta_h, k_h=k_h,
                             K_X=K_X, mu_A=mu_A, K_NH=K_NH, b_A=b_A, K_O_A=K_O_A, k_a=k_a,

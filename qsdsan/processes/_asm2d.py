@@ -10,19 +10,17 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 
-from thermosteam.utils import chemicals_user
 import os
-
-# os.chdir("C:/Users/joy_c/Dropbox/PhD/Research/QSD/codes_developing/QSDsan")
+from thermosteam.utils import chemicals_user
+from thermosteam import settings
 from qsdsan import Components, Process, Processes, _pk
 from ..utils import data_path, save_pickle, load_pickle
 
 __all__ = ('load_asm2d_cmps', 'ASM2d')
 
-# data_path = "qsdsan/data/"
-
 _path = data_path + 'process_data/_asm2d.tsv'
 _path_cmps = os.path.join(data_path, '_asm2d_cmps.pckl')
+_load_components = settings.get_default_chemicals
 
 ############# Components with default notation #############
 def _create_asm2d_cmps(pickle=False):
@@ -456,9 +454,24 @@ class ASM2d(Processes):
                 path=None, **kwargs):
 
         if not path: path = _path
+        
+        cmps = _load_components(components)
+        cmps.S_I.i_N = iN_SI
+        cmps.S_F.i_N = iN_SF
+        cmps.X_I.i_N = iN_XI
+        cmps.X_S.i_N = iN_XS
+        cmps.X_H.i_N = cmps.X_PAO.i_N = cmps.X_AUT.i_N = iN_BM
+        cmps.S_I.i_P = iP_SI
+        cmps.S_F.i_P = iP_SF
+        cmps.X_I.i_P = iP_XI
+        cmps.X_S.i_P = iP_XS
+        cmps.X_H.i_P = cmps.X_PAO.i_P = cmps.X_AUT.i_P = iP_BM
+        cmps.X_I.i_mass = iTSS_XI
+        cmps.X_S.i_mass = iTSS_XS
+        cmps.X_H.i_mass = cmps.X_PAO.i_mass = cmps.X_AUT.i_mass = iTSS_BM
 
         self = Processes.load_from_file(path,
-                                        components=components,
+                                        components=cmps,
                                         conserved_for=('COD', 'N', 'P', 'charge'),
                                         parameters=cls._params,
                                         compile=False)
@@ -466,7 +479,7 @@ class ASM2d(Processes):
         if path == None:
             _p12 = Process('anox_storage_PP',
                            'S_PO4 + [Y_PHA]X_PHA + [?]S_NO3 -> X_PP + [?]S_N2 + [?]S_NH4 + [?]S_ALK',
-                           components=components,
+                           components=cmps,
                            ref_component='X_PP',
                            rate_equation='q_PP * S_O2/(K_O2_PAO+S_O2) * S_PO4/(K_PS+S_PO4) * S_ALK/(K_ALK_PAO+S_ALK) * (X_PHA/X_PAO)/(K_PHA+X_PHA/X_PAO) * (K_MAX-X_PP/X_PAO)/(K_IPP+K_MAX-X_PP/X_PAO) * X_PAO * eta_NO3_PAO * K_O2_PAO/S_O2 * S_NO3/(K_NO3_PAO+S_NO3)',
                            parameters=('Y_PHA', 'q_PP', 'K_O2_PAO', 'K_PS', 'K_ALK_PAO', 'K_PHA', 'eta_NO3_PAO', 'K_IPP', 'K_NO3_PAO'),
@@ -474,7 +487,7 @@ class ASM2d(Processes):
 
             _p14 = Process('PAO_anox_growth',
                            '[1/Y_PAO]X_PHA + [?]S_NO3 + [?]S_PO4 -> X_PAO + [?]S_N2 + [?]S_NH4  + [?]S_ALK',
-                           components=components,
+                           components=cmps,
                            ref_component='X_PAO',
                            rate_equation='mu_PAO * S_O2/(K_O2_PAO + S_O2) * S_NH4/(K_NH4_PAO + S_NH4) * S_PO4/(K_P_PAO + S_PO4) * S_ALK/(K_ALK_PAO + S_ALK) * (X_PHA/X_PAO)/(K_PHA + X_PHA/X_PAO) * X_PAO * eta_NO3_PAO * K_O2_PAO/S_O2 * S_NO3/(K_NO3_PAO + S_NO3)',
                            parameters=('Y_PAO', 'mu_PAO', 'K_O2_PAO', 'K_NH4_PAO', 'K_P_PAO', 'K_ALK_PAO', 'K_PHA', 'eta_NO3_PAO', 'K_NO3_PAO'),
@@ -482,21 +495,6 @@ class ASM2d(Processes):
             self.extend([_p12, _p14])
 
         self.compile()
-
-        self._components.S_I.i_N = iN_SI
-        self._components.S_F.i_N = iN_SF
-        self._components.X_I.i_N = iN_XI
-        self._components.X_S.i_N = iN_XS
-        self._components.X_H.i_N = self._components.X_PAO.i_N = self._components.X_AUT.i_N = iN_BM
-        self._components.S_I.i_P = iP_SI
-        self._components.S_F.i_P = iP_SF
-        self._components.X_I.i_P = iP_XI
-        self._components.X_S.i_P = iP_XS
-        self._components.X_H.i_P = self._components.X_PAO.i_P = self._components.X_AUT.i_P = iP_BM
-        self._components.X_I.i_mass = iTSS_XI
-        self._components.X_S.i_mass = iTSS_XS
-        self._components.X_H.i_mass = self._components.X_PAO.i_mass = self._components.X_AUT.i_mass = iTSS_BM
-
         self.set_parameters(f_SI=f_SI, Y_H=Y_H, f_XI_H=f_XI_H, Y_PAO=Y_PAO, Y_PO4=Y_PO4,
                             Y_PHA=Y_PHA, f_XI_PAO=f_XI_PAO, Y_A=Y_A, f_XI_AUT=f_XI_AUT,
                             K_h=K_h, eta_NO3=eta_NO3, eta_fe=eta_fe, K_O2=K_O2,

@@ -18,7 +18,8 @@ from . import Components
 from .utils.loading import load_data
 from .utils.parse import get_stoichiometric_coeff
 from thermosteam.utils import chemicals_user, read_only
-from sympy import symbols, Matrix, lambdify
+from thermosteam import settings
+from sympy import symbols, Matrix
 from sympy.parsing.sympy_parser import parse_expr
 import numpy as np
 import pandas as pd
@@ -30,6 +31,7 @@ class UndefinedProcess(AttributeError):
     def __init__(self, ID):
         super().__init__(repr(ID))
         
+_load_components = settings.get_default_chemicals
 #%%
 @chemicals_user        
 class Process():
@@ -244,7 +246,6 @@ class Process():
     
 #%%
 setattr = object.__setattr__
-@chemicals_user
 class Processes():
     """
     Create a :class:`Processes` object that contains :class:`Process` objects as attributes.
@@ -505,8 +506,7 @@ class CompiledProcesses(Processes):
         dct['IDs'] = IDs
         dct['_index'] = index = dict(zip(IDs, index))
         cmps = Components([cmp for i in processes for cmp in i._components])
-        cmps.compile()
-        dct['_components'] = cmps
+        dct['_components'] = _load_components(cmps)
         M_stch = []
         params = {}
         rate_eqs = tuple_([i._rate_equation for i in processes])
