@@ -18,7 +18,7 @@ for license details.
 
 import numpy as np
 import biosteam as bst
-from .. import SanUnit, WasteStream
+from .. import SanUnit
 
 
 __all__ = (
@@ -58,13 +58,13 @@ class Mixer(SanUnit, bst.units.Mixer):
         else:
             return dict(zip(list(self.components.IDs) + ['Q'], self._state))
 
-    @state.setter
-    def state(self, QCs):
-        QCs = np.asarray(QCs)
-        if QCs.shape != (len(self.components)+1, ):
-            raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
-                              'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
-        self._state = QCs
+    # @state.setter
+    # def state(self, QCs):
+    #     QCs = np.asarray(QCs)
+    #     if QCs.shape != (len(self.components)+1, ):
+    #         raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
+    #                           'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
+    #     self._state = QCs
     
     # def set_init_conc(self, **kwargs):
     #     '''set the initial concentrations [mg/L] of the CSTR.'''
@@ -97,7 +97,7 @@ class Mixer(SanUnit, bst.units.Mixer):
     def _load_state(self):
         '''returns a dictionary of values of state variables within the CSTR and in the output stream.'''
         if self._state is None: self._init_state()
-        return self._state_locator(self._state)
+        return {self.ID: self._state}
 
     @property
     def ODE(self):
@@ -124,7 +124,9 @@ class Mixer(SanUnit, bst.units.Mixer):
             else:
                 return dQC_ins
         self._ODE = dy_dt
-
+        self._ins_y = np.zeros(_n_ins * _n_state)
+        self._ins_dy = np.zeros_like(self._ins_y)
+        
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
         out, = self.outs
@@ -180,7 +182,7 @@ class Splitter(SanUnit, bst.units.Splitter):
     #     for k, v in kwargs.items(): Cs[cmpx(k)] = v
     #     self._concs = Cs
 
-    def _init_state(self, state=None):
+    def _init_state(self):
         self._state = self._state_tracer()[0]
 
     def _state_locator(self, arr):
@@ -201,7 +203,7 @@ class Splitter(SanUnit, bst.units.Splitter):
     def _load_state(self):
         '''returns a dictionary of values of state variables within the clarifer and in the output streams.'''
         if self._state is None: self._init_state()
-        return self._state_locator(self._state)
+        return {self.ID: self._state}
 
     @property
     def ODE(self):
@@ -213,7 +215,9 @@ class Splitter(SanUnit, bst.units.Splitter):
         def dy_dt(t, QC_ins, QC, dQC_ins):
             return dQC_ins
         self._ODE = dy_dt
-
+        self._ins_y = np.zeros(len(self.components)+1)
+        self._ins_dy = np.zeros_like(self._ins_y)
+        
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
         for out in self.outs:
@@ -311,7 +315,7 @@ class Pump(SanUnit, bst.units.Pump):
     def _load_state(self):
         '''returns a dictionary of values of state variables within the CSTR and in the output stream.'''
         if self._state is None: self._init_state()
-        return self._state_locator(self._state)
+        return {self.ID: self._state}
 
     @property
     def ODE(self):
@@ -323,6 +327,8 @@ class Pump(SanUnit, bst.units.Pump):
         def dy_dt(QC_ins, QC, dQC_ins):
             return dQC_ins
         self._ODE = dy_dt
+        self._ins_y = np.zeros(len(self.components)+1)
+        self._ins_dy = np.zeros_like(self._ins_y)
 
     def _define_outs(self):
         dct_y = self._state_locator(self._state)

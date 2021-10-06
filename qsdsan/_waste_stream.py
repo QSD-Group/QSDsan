@@ -90,7 +90,7 @@ def _calib_SF_iN(components, concentrations, STKN):
     other_stkn = SN - SF_N - SNOx_N
     SF_N = STKN - other_stkn
     if SF_N < 0:
-        raise ValueError("Negative N content for S_F was estimated.")
+        raise ValueError("Negative N content {SF_N} for S_F was estimated.")
     return SF_N/concentrations['S_F']
 
 def _calib_XBsub_iN(components, concentrations, XTKN):
@@ -98,7 +98,7 @@ def _calib_XBsub_iN(components, concentrations, XTKN):
     other_xtkn = (cmp_c * components.i_N * components.x).sum() - concentrations['X_B_Subst'] * components.X_B_Subst.i_N
     XB_Subst_N = XTKN - other_xtkn
     if XB_Subst_N < 0:
-        raise ValueError("Negative N content for X_B_Subst was estimated.")
+        raise ValueError(f"Negative N content {XB_Subst_N} for X_B_Subst was estimated.")
     return XB_Subst_N/concentrations['X_B_Subst']
 
 
@@ -107,7 +107,7 @@ def _calib_XBsub_iP(components, concentrations, TP):
     other_p = (cmp_c * components.i_P).sum() - concentrations['X_B_Subst'] * components.X_B_Subst.i_P
     XB_Subst_P = TP - other_p
     if XB_Subst_P < 0:
-        raise ValueError("Negative P content for X_B_Subst was estimated.")
+        raise ValueError(f"Negative P content {XB_Subst_P} for X_B_Subst was estimated.")
     return XB_Subst_P/concentrations['X_B_Subst']
 
 def _calib_XBsub_fBODCOD(components, concentrations, substrate_IDs, BOD):
@@ -117,7 +117,7 @@ def _calib_XBsub_fBODCOD(components, concentrations, substrate_IDs, BOD):
     other_BOD = (cmp_c * (components.x + components.c + components.s) * components.f_BOD5_COD).sum() - (c_sub * XB_sub.f_BOD5_COD).sum()
     fbodtocod_sub = (BOD - other_BOD)/c_sub.sum()
     if fbodtocod_sub > 1 or fbodtocod_sub < 0:
-        raise ValueError("BOD5-to-COD ratio for X_B_Subst and X_Stor was estimated out of range [0,1].")
+        raise ValueError(f"BOD5-to-COD ratio {fbodtocod_sub} for X_B_Subst and X_Stor was estimated out of range [0,1].")
     return fbodtocod_sub
 
 

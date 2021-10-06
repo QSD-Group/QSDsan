@@ -170,7 +170,7 @@ class CSTR(SanUnit):
         Q = mixed.get_total_flow('m3/d')
         if state is not None: Cs = state
         elif self._concs is not None: Cs = self._concs
-        else: Cs = mixed.Conc
+        else: Cs = mixed.conc
         self._state = np.append(Cs, Q)
 
     def _state_locator(self, arr):
@@ -187,7 +187,7 @@ class CSTR(SanUnit):
     def _load_state(self):
         '''returns a dictionary of values of state variables within the CSTR and in the output stream.'''
         if self._state is None: self._init_state()
-        return self._state_locator(self._state)
+        return {self.ID: self._state}
 
     def _run(self):
         '''Only to converge volumetric flows.'''

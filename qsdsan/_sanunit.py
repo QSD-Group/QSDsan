@@ -311,7 +311,8 @@ class SanUnit(Unit, isabstract=True):
         states = []
         for inf in self.ins:
             u = inf._source
-            state = u._state_locator(u._state)[inf.ID]
+            state = u._state_locator(u._state)[inf.ID] if u \
+                else np.append(inf.conc, inf.get_total_flow('m3/d'))
             states.append(state)
         return np.array(states)
 
