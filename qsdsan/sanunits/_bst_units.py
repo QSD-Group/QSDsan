@@ -65,21 +65,21 @@ class Mixer(SanUnit, bst.units.Mixer):
     #         raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
     #                           'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
     #     self._state = QCs
-    
+
     # def set_init_conc(self, **kwargs):
     #     '''set the initial concentrations [mg/L] of the CSTR.'''
     #     Cs = np.zeros(len(self.components))
     #     cmpx = self.components.index
     #     for k, v in kwargs.items(): Cs[cmpx(k)] = v
     #     self._concs = Cs
-    
+
     def _init_state(self):
         '''initialize state by specifiying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
         QCs = self._state_tracer()
         if QCs.shape[0] <= 1: self._state = QCs[0]
-        else: 
+        else:
             Qs = QCs[:,-1]
             Cs = QCs[:,:-1]
             self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
@@ -124,9 +124,9 @@ class Mixer(SanUnit, bst.units.Mixer):
             else:
                 return dQC_ins
         self._ODE = dy_dt
-        self._ins_y = np.zeros(_n_ins * _n_state)
-        self._ins_dy = np.zeros_like(self._ins_y)
-        
+        self._ins_state = np.zeros(_n_ins * _n_state)
+        self._ins_dstate = np.zeros_like(self._ins_state)
+
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
         out, = self.outs
@@ -153,13 +153,6 @@ class Splitter(SanUnit, bst.units.Splitter):
         self._isplit = self.thermo.chemicals.isplit(split, order)
         # self._concs = None
 
-    def reset_cache(self):
-        '''Reset cached states.'''
-        self._state = None
-        for s in self.outs:
-            s.empty()
-
-
     @property
     def state(self):
         '''Component concentrations in each layer and total flow rate.'''
@@ -183,27 +176,68 @@ class Splitter(SanUnit, bst.units.Splitter):
     #     self._concs = Cs
 
     def _init_state(self):
-        self._state = self._state_tracer()[0]
+        SanUnit._init_state(self, False)
+        ins0 = self.ins[0]
+        source_dct_state = ins0._source._dct_state
+        if source_dct_state is None:
+            _state = self._state = np.zeros(shape=len(self.components)+1)
+        else:
+            _state = self._state = source_dct_state[ins0.ID]
+        self._dstate = np.zeros_like(_state)
+        self._init_dct_state()
 
-    def _state_locator(self, arr):
-        '''derives conditions of output stream from conditions of the Splitter'''
-        dct = {}
+
+    def _update_state(self, arr, dct=None, update=True):
+        '''Update states of output streams based on the state of the splitter.'''
         s = self.split
         h2o_id = self.components.index('H2O')
         s_flow = s[h2o_id]
+
+        dct = dct if (dct or update==False) else self._dct_state
         dct[self.ID] = arr
-        dct[self.outs[0].ID] = np.append(s/s_flow, s_flow) * arr
-        dct[self.outs[1].ID] = np.append((1-s)/(1-s_flow), 1-s_flow) * arr
+        ID0, ID1 = self.outs[0].ID, self.outs[1].ID
+
+        if ID0 not in dct:
+            dct[ID0] = np.zeros_like(arr)
+            dct[ID1] = dct[ID0].copy()
+
+        dct[ID0][:-1] = s/s_flow * arr[:-1]
+        dct[ID0][-1] = s_flow * arr[-1]
+        dct[ID1][:-1] = (1-s)/(1-s_flow)* arr[:-1]
+        dct[ID1][-1] = (1-s_flow) * arr[-1]
+
+        if update:
+            self._dct_state = dct
+            self._state = arr
         return dct
 
-    def _dstate_locator(self, arr):
-        '''derives rates of change of output streams from rates of change of the Splitter'''
-        return self._state_locator(arr)
+    def _update_dstate(self, arr):
+        '''Update rates of change of output streams based on the rates of change of the splitter.'''
+        self._dct_dstate = self._update_state(arr, self._dct_dstate, False)
+        self._dstate = arr
+        return self._dct_dstate
+
+
+    # def _state_locator(self, arr):
+    #     '''derives conditions of output stream from conditions of the Splitter'''
+    #     dct = {}
+    #     s = self.split
+    #     h2o_id = self.components.index('H2O')
+    #     s_flow = s[h2o_id]
+    #     dct[self.ID] = arr
+    #     dct[self.outs[0].ID] = np.append(s/s_flow, s_flow) * arr
+    #     dct[self.outs[1].ID] = np.append((1-s)/(1-s_flow), 1-s_flow) * arr
+    #     return dct
+
+    # def _dstate_locator(self, arr):
+    #     '''derives rates of change of output streams from rates of change of the Splitter'''
+    #     return self._state_locator(arr)
 
     def _load_state(self):
-        '''returns a dictionary of values of state variables within the clarifer and in the output streams.'''
+        '''Return state of the splitter.'''
         if self._state is None: self._init_state()
-        return {self.ID: self._state}
+        return self._state
+        # return {self.ID: self._state}
 
     @property
     def ODE(self):
@@ -215,16 +249,19 @@ class Splitter(SanUnit, bst.units.Splitter):
         def dy_dt(t, QC_ins, QC, dQC_ins):
             return dQC_ins
         self._ODE = dy_dt
-        self._ins_y = np.zeros(len(self.components)+1)
-        self._ins_dy = np.zeros_like(self._ins_y)
-        
+        # self._ins_state = np.zeros(len(self.components)+1)
+        # self._ins_dstate = np.zeros_like(self._ins_state)
+
     def _define_outs(self):
-        dct_y = self._state_locator(self._state)
+        dct_y = self._update_state(self._state)
+        # dct_y = self._state_locator(self._state)
         for out in self.outs:
             Q = dct_y[out.ID][-1]
             Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
             Cs.pop('H2O', None)
             out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
+
+
 
 class FakeSplitter(SanUnit, bst.units.FakeSplitter):
     '''
@@ -298,7 +335,7 @@ class Pump(SanUnit, bst.units.Pump):
     #     cmpx = self.components.index
     #     for k, v in kwargs.items(): Cs[cmpx(k)] = v
     #     self._concs = Cs
-        
+
     def _init_state(self, state=None):
         self._state = self._state_tracer()[0]
 
@@ -327,8 +364,8 @@ class Pump(SanUnit, bst.units.Pump):
         def dy_dt(QC_ins, QC, dQC_ins):
             return dQC_ins
         self._ODE = dy_dt
-        self._ins_y = np.zeros(len(self.components)+1)
-        self._ins_dy = np.zeros_like(self._ins_y)
+        self._ins_state = np.zeros(len(self.components)+1)
+        self._ins_dstate = np.zeros_like(self._ins_state)
 
     def _define_outs(self):
         dct_y = self._state_locator(self._state)

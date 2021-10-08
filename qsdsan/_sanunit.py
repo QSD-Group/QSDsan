@@ -157,12 +157,90 @@ class SanUnit(Unit, isabstract=True):
             self.F_BM.update(F_BM)
 
         self._isdynamic = isdynamic
-        self._state = None
-        self._ODE = None
+        self._init_dynamic()
 
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
+    def _set_state_to_None(self):
+        self._state = None
+        self._dstate = None
+        self._dct_state = None
+        self._dct_dstate = None
+        self._ins_state = None
+        self._ins_dstate = None
+
+    def _init_dynamic(self):
+        self._set_state_to_None()
+        self._ODE = None
+
+
+    def _init_state(self, init_unit_state=True):
+        n = len(self.ins) * (len(self.components)+1)
+        self._ins_state = np.zeros(shape=n)
+        self._ins_dstate = np.zeros_like(self._ins_state)
+        self._dct_state = {}
+        self._dct_dstate = {}
+        if init_unit_state:
+            self._state = np.zeros(shape=len(self.components)+1)
+            self._dstate = np.zeros_like(self._state)
+
+
+    def _init_dct_state(self):
+        self._update_state(self._state)
+        dstate = np.zeros_like(self._state)
+        self._update_dstate(dstate)
+
+
+    def _update_ins_state(self):
+        '''Update cached states of input streams.'''
+        ins_y = self._ins_state
+        len_state = len(self.components) + 1
+        for n, i in enumerate(self.ins):
+            if i._source is None:
+                ins_y[n*len_state:(n+1)*len_state-1] = i.conc
+                ins_y[(n+1)*len_state-1] = i.F_vol * 24 # m3/d
+            else:
+                if i._source._dct_state is None:
+                    continue
+                ins_y[n*len_state:(n+1)*len_state] = i._source._dct_state[i._ID]
+        return ins_y
+
+
+    def _update_ins_dstate(self):
+        '''Update cached rates of changes for states of input streams.'''
+        ins_dy = self._ins_dstate
+        len_dstate = len(self.components) + 1
+        for n, i in enumerate(self.ins):
+            if i._source is None:
+                ins_dy[n*len_dstate:(n+1)*len_dstate] = 0
+            else:
+                if i._source._dct_dstate is None:
+                    continue
+                ins_dy[n*len_dstate:(n+1)*len_dstate] = i._source._dct_dstate[i._ID]
+        return ins_dy
+
+    @property
+    def state(self):
+        '''Component concentrations in each layer and total flow rate.'''
+        if self._state is None: return None
+        else:
+            return dict(zip(list(self.components.IDs) + ['Q'], self._state))
+
+    @state.setter
+    def state(self, QCs):
+        QCs = np.asarray(QCs)
+        if QCs.shape != (len(self.components)+1, ):
+            raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
+                              'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
+        self._state = QCs
+
+
+    def reset_cache(self):
+        '''Reset cached states.'''
+        self._set_state_to_None()
+        for s in self.outs:
+            s.empty()
 
     def _convert_stream(self, strm_inputs, streams, init_with, ins_or_outs):
         if not streams:
@@ -307,14 +385,14 @@ class SanUnit(Unit, isabstract=True):
     def isdynamic(self, i):
         self._isdynamic = bool(i)
 
-    def _state_tracer(self):
-        states = []
-        for inf in self.ins:
-            u = inf._source
-            state = u._state_locator(u._state)[inf.ID] if u \
-                else np.append(inf.conc, inf.get_total_flow('m3/d'))
-            states.append(state)
-        return np.array(states)
+    # def _state_tracer(self):
+    #     states = []
+    #     for inf in self.ins:
+    #         u = inf._source
+    #         state = u._state_locator(u._state)[inf.ID] if u \
+    #             else np.append(inf.conc, inf.get_total_flow('m3/d'))
+    #         states.append(state)
+    #     return np.array(states)
 
     @property
     def construction(self):

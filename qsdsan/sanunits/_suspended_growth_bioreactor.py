@@ -82,11 +82,11 @@ class CSTR(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    def reset_cache(self):
-        '''Reset cached states.'''
-        self._state = None
-        for s in self.outs:
-            s.empty()
+    # def reset_cache(self):
+    #     '''Reset cached states.'''
+    #     self._state = None
+    #     for s in self.outs:
+    #         s.empty()
 
     @property
     def V_max(self):
@@ -155,16 +155,17 @@ class CSTR(SanUnit):
         self._state = QCs
 
     def set_init_conc(self, **kwargs):
-        '''set the initial concentrations [mg/L] of the CSTR.'''
+        '''Set the initial concentrations [mg/L] of the CSTR.'''
         Cs = np.zeros(len(self.components))
         cmpx = self.components.index
         for k, v in kwargs.items(): Cs[cmpx(k)] = v
         self._concs = Cs
 
     def _init_state(self, state=None):
-        '''initialize state by specifiying or calculating component concentrations
+        '''Initialize state by specifiying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
+        SanUnit._init_state(self, False)
         mixed = WasteStream()
         mixed.mix_from(self.ins)
         Q = mixed.get_total_flow('m3/d')
@@ -172,22 +173,47 @@ class CSTR(SanUnit):
         elif self._concs is not None: Cs = self._concs
         else: Cs = mixed.conc
         self._state = np.append(Cs, Q)
+        self._init_dct_state()
 
-    def _state_locator(self, arr):
-        '''derives conditions of output stream from conditions within the CSTR'''
-        dct = {}
-        dct[self.outs[0].ID] = arr
-        dct[self.ID] = arr
+
+    def _update_state(self, arr, dct=None, update=True):
+        '''Update states of output streams based on the state of this CSTR.'''
+        dct = dct if (dct or update==False) else self._dct_state
+        if not dct:
+            dct = dict.fromkeys((self.ID, self.outs[0].ID), arr)
+        dct[self.ID] = dct[self.outs[0].ID] = arr
+        if update:
+            self._dct_state = dct
+            self._state = arr
         return dct
 
-    def _dstate_locator(self, arr):
-        '''derives rates of change of output stream from rates of change within the CSTR'''
-        return self._state_locator(arr)
+    def _update_dstate(self, arr):
+        '''Update rates of change of output streams based on the rates of change of the CSTR.'''
+        self._dct_dstate = self._update_state(arr, self._dct_dstate, False)
+        self._dstate = arr
+        return self._dct_dstate
 
     def _load_state(self):
-        '''returns a dictionary of values of state variables within the CSTR and in the output stream.'''
+        '''Return state of this CSTR.'''
         if self._state is None: self._init_state()
-        return {self.ID: self._state}
+        return self._state
+
+
+    # def _state_locator(self, arr):
+    #     '''derives conditions of output stream from conditions within the CSTR'''
+    #     dct = {}
+    #     dct[self.outs[0].ID] = arr
+    #     dct[self.ID] = arr
+    #     return dct
+
+    # def _dstate_locator(self, arr):
+    #     '''derives rates of change of output stream from rates of change within the CSTR'''
+    #     return self._state_locator(arr)
+
+    # def _load_state(self):
+    #     '''returns a dictionary of values of state variables within the CSTR and in the output stream.'''
+    #     if self._state is None: self._init_state()
+    #     return {self.ID: self._state}
 
     def _run(self):
         '''Only to converge volumetric flows.'''
@@ -217,10 +243,12 @@ class CSTR(SanUnit):
 
         _n_ins = len(self.ins)
         _n_state = len(C) + 1
-
+        dy = self._dstate
+        # dy = np.zeros(shape=_n_state)
         if isa(self._aeration, (float, int)):
             i = self.components.index(self._DO_ID)
             fixed_DO = self._aeration
+
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 if _n_ins > 1:
                     QC_ins = QC_ins.reshape((_n_ins, _n_state))
@@ -242,7 +270,10 @@ class CSTR(SanUnit):
                 react = np.asarray(r(*Cs))
                 C_dot = flow_in - flow_out + react
                 C_dot[i] = 0.0
-                return np.append(C_dot, Q_dot)
+                # return np.append(C_dot, Q_dot)
+                dy[:-1] = C_dot
+                dy[-1] = Q_dot
+                return dy
         else:
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 if _n_ins > 1:
@@ -262,15 +293,18 @@ class CSTR(SanUnit):
                 flow_out = Q_e * C / V
                 react = np.asarray(r(*C))
                 C_dot = flow_in - flow_out + react
-                return np.append(C_dot, Q_dot)
+                # return np.append(C_dot, Q_dot)
+                dy[:-1] = C_dot
+                dy[-1] = Q_dot
+                return dy
 
         self._ODE = dy_dt
 
     def _define_outs(self):
-        dct_y = self._state_locator(self._state)
         out, = self.outs
-        Q = dct_y[out.ID][-1]
-        Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
+        out_state = self._update_state(self._state)[out.ID]
+        Q = out_state[-1]
+        Cs = dict(zip(self.components.IDs, out_state[:-1]))
         Cs.pop('H2O', None)
         out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
 
@@ -380,6 +414,7 @@ class SBR(SanUnit):
 
         for attr, value in kwargs.items():
             setattr(self, attr, value)
+
         self._init_Vas = None
         self._init_Cas = None
         self._dynamic_composition = None
@@ -387,10 +422,11 @@ class SBR(SanUnit):
 
     def reset_cache(self):
         '''Reset cached states.'''
+        super().reset_cache()
         self._init_Vas = self._init_Cas = None
-        self._state = None
-        for s in self.outs:
-            s.empty()
+        # self._state = None
+        # for s in self.outs:
+        #     s.empty()
 
     @property
     def operation_cycle(self):

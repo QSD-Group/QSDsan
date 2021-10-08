@@ -14,7 +14,7 @@ from .. import SanUnit
 import numpy as np
 # import pandas as pd
 
-__all__ = ('FlatBottomCircularClarifier', 
+__all__ = ('FlatBottomCircularClarifier',
            'IdealClarifier',)
 
 def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp):
@@ -100,11 +100,11 @@ class FlatBottomCircularClarifier(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    def reset_cache(self):
-        '''Reset cached states.'''
-        self._state = None
-        for s in self.outs:
-            s.empty()
+    # def reset_cache(self):
+    #     '''Reset cached states.'''
+    #     self._state = None
+    #     for s in self.outs:
+    #         s.empty()
 
     @property
     def sludge_flow_rate(self):
@@ -238,10 +238,12 @@ class FlatBottomCircularClarifier(SanUnit):
         self._solids = np.asarray(arr, dtype=float)
 
     def _init_state(self):
+        SanUnit._init_state(self, False)
         n = self._N_layer
         x = self.components.x
         imass = self.components.i_mass
-        QCs = self._state_tracer()[0]
+        # QCs = self._state_tracer()[0]
+        QCs = self._update_ins_state()
         Q = QCs[-1]
         Z = self._solubles if self._solubles is not None \
             else QCs[:-1]*(1-x)
@@ -249,43 +251,109 @@ class FlatBottomCircularClarifier(SanUnit):
         TSS_in = sum(QCs[:-1] * x * imass)
         TSS = self._solids if self._solids is not None \
             else np.array([TSS_in*f for f in 20**np.linspace(-1,1,n)])
-        ZQs = np.append(Z, Q)
-        self._state = np.append(ZQs, TSS)
+        # ZQs = np.append(Z, Q)
+        # self._state = np.append(ZQs, TSS)
+        self._state = np.concatenate([Z, [Q], TSS])
         if TSS_in != 0: self._X_comp = QCs[:-1] * x / TSS_in
+        self._init_dct_state()
 
-    def _state_locator(self, arr):
+
+    def _update_state(self, arr):
+        '''Update states of output streams based on the state of the clarifier.'''
         x = self.components.x
         n = self._N_layer
-        dct = {}
         Q = arr[-(1+n)]
         Q_e = Q - self._Qs
         Z = arr[:len(x)]
         X_composition = self._X_comp # (m, ), mg COD/ mg TSS
         X_e = arr[-n] * X_composition
         X_s = arr[-1] * X_composition
-        dct[self.ID] = arr
-        dct[self.outs[0].ID] = np.append(Z+X_e, Q_e)
-        dct[self.outs[1].ID] = np.append(Z+X_s, self._Qs)        
-        return dct
-    
-    def _dstate_locator(self, arr):
+        dct_y = self._dct_state
+
+        dct_y[self.ID] = arr
+        ID0, ID1 = self.outs[0].ID, self.outs[1].ID
+        if ID0 not in dct_y:
+            dct_y[ID0] = np.zeros(shape=len(Z)+1)
+            dct_y[ID1] = dct_y[ID0].copy()
+        # breakpoint()
+        #!!! PAUSED, CHECK HERE WITH JOY
+        dct_y[ID0][:-1] = Z + X_e
+        dct_y[ID0][-1] = Q_e
+        # dct_y[self.ID][:len(x)] = dct_y[ID0][:-1] = Z + X_e
+        # dct_y[self.ID][len(x)] = dct_y[ID0][-1] = Q_e
+
+        dct_y[ID1][:-1] = Z + X_s
+        dct_y[ID1][-1] = self._Qs
+        self._dct_state = dct_y
+        self._state = dct_y[self.ID]
+        # breakpoint()
+        return dct_y
+
+    def _update_dstate(self, arr):
+        '''Update rates of change of output streams based on the rates of change of the clarifier.'''
         x = self.components.x
         n = self._N_layer
-        dct = {}
         dQ = arr[-(1+n)]
         dZ = arr[:len(x)]
         X_composition = self._X_comp # (m, ), mg COD/ mg TSS
         dX_e = arr[-n] * X_composition
         dX_s = arr[-1] * X_composition
-        dct[self.ID] = arr
-        dct[self.outs[0].ID] = np.append(dZ+dX_e, dQ)
-        dct[self.outs[1].ID] = np.append(dZ+dX_s, 0)
-        return dct
+
+        dct_dy = self._dct_dstate
+        dct_dy[self.ID] = arr
+
+        ID0, ID1 = self.outs[0].ID, self.outs[1].ID
+        if ID0 not in dct_dy:
+            dct_dy[ID0] = np.zeros(shape=len(dZ)+1)
+            dct_dy[ID1] = dct_dy[ID0].copy()
+
+        dct_dy[ID0][:-1] = dZ + dX_e
+        dct_dy[ID0][-1] = dQ
+        dct_dy[ID1][:-1] = dZ + dX_s
+        dct_dy[ID1][-1] = 0
+        self._dct_dstate = dct_dy
+        self._dstate = arr
+        return dct_dy
+
+
+    # def _state_locator(self, arr):
+    #     x = self.components.x
+    #     n = self._N_layer
+    #     dct = {}
+    #     Q = arr[-(1+n)]
+    #     Q_e = Q - self._Qs
+    #     Z = arr[:len(x)]
+    #     X_composition = self._X_comp # (m, ), mg COD/ mg TSS
+    #     X_e = arr[-n] * X_composition
+    #     X_s = arr[-1] * X_composition
+    #     dct[self.ID] = arr
+    #     dct[self.outs[0].ID] = np.append(Z+X_e, Q_e)
+    #     dct[self.outs[1].ID] = np.append(Z+X_s, self._Qs)
+    #     return dct
+
+    # def _dstate_locator(self, arr):
+    #     x = self.components.x
+    #     n = self._N_layer
+    #     dct = {}
+    #     dQ = arr[-(1+n)]
+    #     dZ = arr[:len(x)]
+    #     X_composition = self._X_comp # (m, ), mg COD/ mg TSS
+    #     dX_e = arr[-n] * X_composition
+    #     dX_s = arr[-1] * X_composition
+    #     dct[self.ID] = arr
+    #     dct[self.outs[0].ID] = np.append(dZ+dX_e, dQ)
+    #     dct[self.outs[1].ID] = np.append(dZ+dX_s, 0)
+    #     return dct
 
     def _load_state(self):
-        '''returns a dictionary of values of state variables within the clarifer and in the output streams.'''
+        '''Return state of the clarifier.'''
         if self._state is None: self._init_state()
-        return {self.ID: self._state}
+        return self._state
+
+    # def _load_state(self):
+    #     '''returns a dictionary of values of state variables within the clarifer and in the output streams.'''
+    #     if self._state is None: self._init_state()
+    #     return {self.ID: self._state}
 
     def _run(self):
         '''only to converge volumetric flows.'''
@@ -302,7 +370,7 @@ class FlatBottomCircularClarifier(SanUnit):
         if self._ODE is None:
             self._compile_ODE()
         return self._ODE
-    
+
     def _compile_ODE(self):
         n = self._N_layer
         jf = self._feed_layer - 1
@@ -318,9 +386,9 @@ class FlatBottomCircularClarifier(SanUnit):
         A = self._A
         hj = self._hj
         Q_s = self._Qs
-        
+        dQC = np.zeros_like(self._dstate)
+        # dQC = self._dstate
         def dy_dt(t, QC_ins, QC, dQC_ins):
-            dQC = np.zeros_like(QC)
             dQC[-(n+1)] = dQC_ins[-1]
             Q_in = QC_ins[-1]
             Q_e = Q_in - Q_s
@@ -343,11 +411,12 @@ class FlatBottomCircularClarifier(SanUnit):
             #*********solubles**********
             dQC[:m] = Q_in*(Z_in - Z)/A/(hj*n)
             return dQC
-        
-        self._ODE = dy_dt      
-    
+
+        self._ODE = dy_dt
+
     def _define_outs(self):
-        dct_y = self._state_locator(self._state)
+        dct_y = self._update_state(self._state)
+        # dct_y = self._state_locator(self._state)
         for out in self.outs:
             Q = dct_y[out.ID][-1]
             Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
@@ -359,21 +428,21 @@ class FlatBottomCircularClarifier(SanUnit):
 
 
 class IdealClarifier(SanUnit):
-    
+
     _N_ins = 1
     _N_outs = 2
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  sludge_flow_rate=2000, solids_removal_efficiency=.995,
-                 sludge_MLSS=None, isdynamic=False, init_with='WasteStream', 
+                 sludge_MLSS=None, isdynamic=False, init_with='WasteStream',
                  F_BM_default=None, **kwargs):
-        
+
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
                          init_with=init_with, F_BM_default=F_BM_default)
         self.sludge_flow_rate = sludge_flow_rate
         self.solids_removal_efficiency = solids_removal_efficiency
         self.sludge_MLSS = sludge_MLSS
-        
+
     @property
     def sludge_flow_rate(self):
         '''[float] The designed sludge flow rate (wasted + recycled) in m3/d.'''
@@ -388,7 +457,7 @@ class IdealClarifier(SanUnit):
     @property
     def solids_removal_efficiency(self):
         return self._e_rmv
-    
+
     @solids_removal_efficiency.setter
     def solids_removal_efficiency(self, f):
         if f is not None:
@@ -397,27 +466,27 @@ class IdealClarifier(SanUnit):
             self._e_rmv = f
         elif self.ins[0].isempty(): self._e_rmv = None
         else: self._e_rmv = self._calc_ermv()
-    
+
     @property
     def sludge_MLSS(self):
         return self._MLSS
-    
+
     @sludge_MLSS.setter
     def sludge_MLSS(self, MLSS):
         if MLSS is not None: self._MLSS = MLSS
         elif self.ins[0].isempty(): self._MLSS = None
         else: self._MLSS = self._calc_SS()[1]
-    
+
     def _calc_Qs(self, TSS_in=None, Q_in=None):
         if Q_in is None: Q_in = self.ins[0].get_total_flow('m3/d')
         if TSS_in is None: TSS_in = self.ins[0].get_TSS()
         return Q_in*TSS_in*self._e_rmv/(self._MLSS-TSS_in)
-    
+
     def _calc_ermv(self, TSS_in=None, Q_in=None):
         if Q_in is None: Q_in = self.ins[0].get_total_flow('m3/d')
         if TSS_in is None: TSS_in = self.ins[0].get_TSS()
-        return self._Qs*(self._MLSS-TSS_in)/TSS_in/(Q_in-self._Qs)        
-    
+        return self._Qs*(self._MLSS-TSS_in)/TSS_in/(Q_in-self._Qs)
+
     def _calc_SS(self, SS_in=None, Q_in=None):
         if Q_in is None: Q_in = self.ins[0].get_total_flow('m3/d')
         if SS_in is None: SS_in = self.ins[0].get_TSS()
@@ -425,7 +494,7 @@ class IdealClarifier(SanUnit):
         Qs = self._Qs
         Qe = Q_in - Qs
         return SS_e, (Q_in*SS_in - Qe*SS_e)/Qs
-    
+
     def _run(self):
         inf, = self.ins
         eff, sludge = self.outs
@@ -433,7 +502,7 @@ class IdealClarifier(SanUnit):
         Q_in = inf.get_total_flow('m3/d')
         TSS_in = (inf.conc*cmps.x*cmps.i_mass).sum()
         params = (Qs, e_rmv, MLSS) = self._Qs, self._e_rmv, self._MLSS
-        if sum([i is None for i in params]) > 1: 
+        if sum([i is None for i in params]) > 1:
             raise RuntimeError('must specify two of the following parameters: '
                                'sludge_flow_rate, solids_removal_efficiency, sludge_MLSS')
         if Qs is None:
@@ -453,7 +522,6 @@ class IdealClarifier(SanUnit):
         Cs.pop('H2O', None)
         eff.set_flow_by_concentration(Q_in-Qs, Ce, units=('m3/d', 'mg/L'))
         sludge.set_flow_by_concentration(Qs, Cs, units=('m3/d', 'mg/L'))
-    
+
     def _design(self):
         pass
-        

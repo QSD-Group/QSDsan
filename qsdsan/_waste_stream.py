@@ -936,8 +936,6 @@ class WasteStream(SanStream):
         maxiter : int, optional
             The maximum number of iterations to estimate the flow of the bulk-liquid
             component and overall density of the WasteStream. The default is 50.
-
-
         '''
         if flow_tot == 0: raise RuntimeError(f'{repr(self)} is empty')
         if bulk_liquid_ID in concentrations.keys():
