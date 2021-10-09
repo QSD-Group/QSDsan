@@ -1,5 +1,5 @@
-biosteam>=2.31.10
-thermosteam>=0.27.10
+biosteam>=2.31.12
+thermosteam>=0.27.11
 sphinx
 sphinx_rtd_theme
 nbsphinx
