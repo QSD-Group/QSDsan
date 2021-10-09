@@ -30,7 +30,8 @@ data_path += 'sanunit_data/_uddt.tsv'
 class UDDT(Toilet):
     '''
     Urine-diverting dry toilet with liquid storage tank and dehydration vault
-    for urine and feces storage, respectively, based on Trimmer et al. [1]_,
+    for urine and feces storage, respectively, based on 
+    `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_,
     a subclass of qsdsan.sanunits.Toilet.
 
     Parameters
@@ -58,14 +59,14 @@ class UDDT(Toilet):
 
     References
     ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
+    :ref:`qsdsan.sanunits.Toilet <sanunits_toilets>`
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -323,7 +324,8 @@ class UDDT(Toilet):
     @property
     def prep_sludge(self):
         '''
-        [float] Fraction of total precipitate appearing as sludge that can
+        [float]
+        Fraction of total precipitate appearing as sludge that can
         settle and be removed.
         '''
         return self._prep_sludge

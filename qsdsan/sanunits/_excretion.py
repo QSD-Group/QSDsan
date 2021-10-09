@@ -27,7 +27,7 @@ data_path += 'sanunit_data/_excretion.tsv'
 class Excretion(SanUnit):
     '''
     Estimation of N, P, K, and COD in urine and feces based on dietary intake
-    for one person based on Trimmer et al. [1]_
+    for one person based on `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
 
     Parameters
     ----------
@@ -44,10 +44,10 @@ class Excretion(SanUnit):
 
     References
     ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
     '''
 
     _N_ins = 0

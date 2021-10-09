@@ -59,7 +59,8 @@ class Decay:
     @staticmethod
     def first_order_decay(k, t, max_decay, t0=0, tot=1):
         r'''
-        Calculate first-order degradation loss based on Trimmer et al. [1]_
+        Calculate first-order degradation loss based on
+        `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_.
 
         .. math:: C_0 = tot * max_{decay}
         .. math:: C_{avg} = \frac{C_0}{k*t} * (e^{-k*t_0}-e^{-k*t_f})
@@ -87,10 +88,10 @@ class Decay:
 
         References
         ----------
-        .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-            Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-            Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-            https://doi.org/10.1021/acs.est.0c03296.
+        [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+        https://doi.org/10.1021/acs.est.0c03296.
         '''
 
         C0 = tot * max_decay

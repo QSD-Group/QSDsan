@@ -28,8 +28,9 @@ allocate_N_removal = Decay.allocate_N_removal
 
 class SludgeSeparator(SanUnit):
     '''
-    For sludge separation based on Trimmer et al. [1]_, note that no default
-    cost or environmental impacts are included.
+    For sludge separation based on
+    `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_,
+    note that no default cost or environmental impacts are included.
 
     Parameters
     ----------
@@ -50,10 +51,10 @@ class SludgeSeparator(SanUnit):
 
     References
     ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
 
     '''
 

@@ -27,7 +27,8 @@ data_path += 'sanunit_data/_anaerobic_baffled_reactor.tsv'
 
 class AnaerobicBaffledReactor(SanUnit, Decay):
     '''
-    Anaerobic baffled reactor with the production of biogas based on Trimmer et al. [1]_
+    Anaerobic baffled reactor with the production of biogas based on
+    `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
 
     Parameters
     ----------
@@ -49,10 +50,10 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
 
     References
     ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
 
     See Also
     --------

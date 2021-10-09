@@ -27,7 +27,8 @@ data_path += 'sanunit_data/_liquid_treatment_bed.tsv'
 
 class LiquidTreatmentBed(SanUnit, Decay):
     '''
-    For secondary treatment of liquid based on Trimmer et al. [1]_
+    For secondary treatment of liquid based on
+    `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
 
     Parameters
     ----------
@@ -46,10 +47,10 @@ class LiquidTreatmentBed(SanUnit, Decay):
 
     References
     ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
 
     See Also
     --------

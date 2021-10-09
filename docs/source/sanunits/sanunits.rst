@@ -4,27 +4,22 @@ sanunits
 .. toctree::
    :maxdepth: 1
 
-   AnaerobicBaffledReactor
-   AnaerobicDigestion
+   anaerobic_reactors
    BiogasCombustion
+   clarifiers
    ComponentSplitter
    CropApplication
    Decay
-   DryingBed
    ElectrochemicalCell
    Excretion
    Lagoon
-   LiquidTreatmentBed
    LumpedCost
    Mixer
-   MixTank
-   PitLatrine
    Pump
-   SedimentationTank
    SludgeSeparator
    Splitter
-   StorageTank
-   Tank
-   Toilet
+   suspended_growth_bioreactors
+   tanks
+   toilets
+   treatment_beds
    Trucking
-   UDDT
