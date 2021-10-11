@@ -111,8 +111,8 @@ class DiffusedAeration(Process):
         
     
     def _calc_tau(self):
-        x = self._T_water - 273.15
-        return -7e-6 * x**3 + 8e-4 * x**2 - 4.35e-2 * x + 1.6052
+        x = self._T_water - 293.15
+        return -7e-6 * x**3 + 4e-4 * x**2 - 1.98e-2 * x + 1.0
     
     def _calc_DOsat(self):
         Omega = self._calc_omega()
@@ -186,3 +186,15 @@ class DiffusedAeration(Process):
         elif self._Q_air and self._SOTE and self._V:
             return self._calc_KLa_20()
         else: return None
+
+    @property
+    def depth_correction_factor(self):
+        return self._delta
+    
+    @property
+    def temperature_correction_factor(self):
+        return self._calc_tau()
+    
+    @property
+    def pressure_correction_factor(self):
+        return self._calc_omega()
