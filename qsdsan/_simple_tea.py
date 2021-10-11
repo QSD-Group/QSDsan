@@ -26,7 +26,7 @@ conflict_slots = ('lang_factor', 'system', 'units', 'feeds', 'products')
 class SimpleTEA(TEA):
     '''
     Calculate an annualized cost for simple economic analysis that does not
-    include loan payment (i.e., 100% equity) and taxes.
+    include loan payment (i.e., 100% equity).
 
     Parameters
     ----------
@@ -34,6 +34,20 @@ class SimpleTEA(TEA):
         The system this TEA is conducted for.
     discount_rate : float
         Interest rate used in discounted cash flow analysis.
+
+        .. note::
+
+            Herein `discount_rate` equals to `IRR` (internal rate of return).
+            Although theoretically, IRR is the discount rate only when the
+            net present value (NPV) is 0.
+
+    income_tax : float
+        Combined tax (e.g., sum of national, state, local levels) for net earnings.
+    depreciation : str
+        Can be any of "MACRS5", "MACRS7", "MACRS10", "MACRS15", "MACRS20".
+        Note that the lifetime of the system should be longer than the number
+        following "MACRS" (i.e., 5, 7, 10, 15, 20).
+        It is used with ``income_tax`` to calculate the income tax.
     start_year : int
         Start year of the system.
     lifetime : int
@@ -66,7 +80,7 @@ class SimpleTEA(TEA):
                 - Utility and material costs/environmental impacts will be calculated for 1*24*365 hours per year.
                 - Additional operaitng expenses will be calculated for 0.5*24*365 hours per year.
 
-            If less utility and material flows are not used at the same `uptime_ratio`
+            If utility and material flows are not used at the same `uptime_ratio`
             as the system, they should be normalized to be the same.
             For example, if the system operates 100% of time but a pump only works
             50% of the pump at 50 kW. Set the pump `power_utility` to be 50*50%=25 kW.
@@ -133,6 +147,7 @@ class SimpleTEA(TEA):
     EAC  : 33,507 USD/yr
     CAPEX: 60,912 USD (annualized to 7,888 USD/yr)
     AOC  : 25,618 USD/yr
+    Sales: 0 USD/yr
 
     See Also
     --------
@@ -147,7 +162,7 @@ class SimpleTEA(TEA):
                  '_uptime_ratio', '_operating_hours', '_CAPEX', '_lang_factor',
                  '_annual_maintenance', '_annual_labor', '_system_add_OPEX')
 
-    def __init__(self, system, discount_rate=0.05,
+    def __init__(self, system, discount_rate=0.05, income_tax=0., depreciation=None,
                  start_year=date.today().year, lifetime=10, uptime_ratio=1.,
                  CAPEX=0., lang_factor=None,
                  annual_maintenance=0., annual_labor=0., system_add_OPEX={},
@@ -159,13 +174,26 @@ class SimpleTEA(TEA):
         except AttributeError:
             pass
 
-        self.discount_rate = discount_rate
+        self.income_tax = income_tax
         # IRR (internal rate of return) is the discount rate when net present value is 0
         self.IRR = discount_rate
         self._IRR = discount_rate # guess IRR for solve_IRR method
         self._sales = 0 # guess cost for solve_price method
         self.start_year = start_year
         self.lifetime = lifetime
+        # From U.S. IRS for tax purpose, won't matter when ``income_tax`` set to 0.
+        # Based on IRS Publication 946 (2019), MACRS15 should be used for
+        # municipal wastewater treatment plant.
+        if not depreciation:
+            if lifetime >= 15:
+                self.depreciation = 'MACRS7'
+            elif lifetime >= 8:
+                self.depreciation = 'MACRS7'
+            elif lifetime >=6:
+                self.depreciation = 'MACRS5'
+            else:
+                 raise ValueError('Currently BioSTEAM does not support TEA ' \
+                                  'for systems with a lifetime shorter than 6 years.')
         self.uptime_ratio = 1.
         self._lang_factor = None
         self._CAPEX = CAPEX
@@ -178,19 +206,6 @@ class SimpleTEA(TEA):
         self.construction_schedule = construction_schedule
 
         ########## Not relevant to SimpleTEA but required by TEA ##########
-        # From U.S. IRS for tax purpose, won't matter when tax set to 0
-        # Based on IRS Publication 946 (2019), MACRS15 should be used for
-        # municipal wastewater treatment plant, but the system lifetime is
-        # just 10 yrs or shorter, so changed to a shorter one
-        if lifetime >= 8:
-            self.depreciation = 'MACRS7'
-        elif lifetime >=6:
-            self.depreciation = 'MACRS5'
-        else:
-             raise ValueError('Currently BioSTEAM does not support TEA ' \
-                              'for systems with a lifetime shorter than 6 years.')
-
-        self.income_tax = 0.
         self.startup_months = 0.
         self.startup_FOCfrac = 0.
         self.startup_VOCfrac = 0.
@@ -211,6 +226,7 @@ class SimpleTEA(TEA):
         info += f'\nEAC  : {self.EAC:,.0f} {c}/yr'
         info += f'\nCAPEX: {self.CAPEX:,.0f} {c} (annualized to {self.annualized_CAPEX:,.0f} {c}/yr)'
         info += f'\nAOC  : {self.AOC:,.0f} {c}/yr'
+        info += f'\nSales: {self.sales:,.0f} {c}/yr'
         print(info)
 
     _ipython_display_ = show
@@ -285,14 +301,11 @@ class SimpleTEA(TEA):
 
     @property
     def discount_rate(self):
-        '''[float] Interest rate used in discounted cash flow analysis.'''
-        return self._discount_rate
+        '''[float] Interest rate used in discounting.'''
+        return self.IRR
     @discount_rate.setter
     def discount_rate(self, i):
-        if 0 <= i <= 1:
-            self._discount_rate = float(i)
-        else:
-            raise ValueError('`discount_rate` must be in [0,1].')
+        self.IRR = i
 
     @property
     def start_year(self):

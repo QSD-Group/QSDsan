@@ -1,11 +1,17 @@
+# Needed by qsdsan
 biosteam>=2.31.12
 thermosteam>=0.27.11
-sphinx
-sphinx_rtd_theme
-nbsphinx
 scikit-learn
 scipy
 SALib
 matplotlib
 seaborn
 sympy
+
+# Specifically for docs
+sphinx
+sphinx_rtd_theme
+nbsphinx
+ipywidgets
+jupyterlab-widgets
+widgetsnbextension
