@@ -167,6 +167,7 @@ class SimpleTEA(TEA):
         self.IRR = discount_rate
         self._IRR = discount_rate # guess IRR for solve_IRR method
         self._sales = 0 # guess cost for solve_price method
+        self._depreciation = None # initialize this attribute
         self.start_year = start_year
         self.lifetime = lifetime
         self.uptime_ratio = 1.
@@ -448,37 +449,13 @@ class SimpleTEA(TEA):
         .. math::
 
             annualized\ capital\ cost = annual\ net\ earning - annualized\ NPV
-
         '''
         return self.net_earnings-self.annualized_NPV
 
-
-    #################### Deprecated ####################
-    def get_unit_annualized_CAPEX(self, units):
-        try: iter(units)
-        except: units = (units, )
-        CAPEX = 0
-        r = self.discount_rate
-        for unit in units:
-            lifetime = unit.lifetime or self.lifetime
-            # no unit equipment lifetime or unit equipment lifetime given as a number
-            # (i.e., no individual equipment lifetime)
-            if not isinstance(lifetime, dict):
-                CAPEX += unit.installed_cost*r/(1-(1+r)**(-lifetime))
-            else:
-                lifetime_dct = dict.fromkeys(unit.purchase_costs.keys())
-                lifetime_dct.update(lifetime)
-                for equip, cost in unit.purchase_costs.items():
-                    factor = unit.F_BM[equip]*\
-                        unit.F_D.get(equip, 1.)*unit.F_P.get(equip, 1.)*unit.F_M.get(equip, 1.)
-                    # for equipment that does not have individual lifetime
-                    # use the unit lifetime or TEA lifetime
-                    equip_lifetime = lifetime_dct[equip] or self.lifetime
-                    CAPEX += factor*cost*r/(1-(1+r)**(-equip_lifetime))
-        return CAPEX
-
     @property
     def EAC(self):
-        warn('`EAC` is deprecated since qsdsan v0.3.8, please refer to '
-             'https://github.com/QSD-Group/QSDsan/blob/main/docs/source/tutorials/7_TEA.ipynb'
-             ' for details')
+        '''
+        [float] Equvalent annual cost calculated as the sum of `annualized_CAPEX` and
+        `AOC` (annual operating cost).
+        '''
+        return self.annualized_CAPEX+self.AOC
