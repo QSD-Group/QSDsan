@@ -18,7 +18,9 @@ for license details.
 
 
 # %%
+
 import numpy as np
+from warnings import warn
 from collections import defaultdict
 from collections.abc import Iterable
 from biosteam.utils.misc import format_title
@@ -102,7 +104,7 @@ class SanUnit(Unit, isabstract=True):
             50% of the pump at 50 kW. Set the pump `power_utility` to be 50*50%=25 kW.
 
 
-    lifetime : int or dict
+    equipment_lifetime : int or dict
         Lifetime of this unit (int) or individual equipment within this unit
         (dict) in year.
         It will be used to adjust cost and emission calculation in TEA and LCA.
@@ -419,17 +421,29 @@ class SanUnit(Unit, isabstract=True):
         Equipment without provided lifetime will be assumed to have the same
         lifetime as the TEA/LCA.
         '''
-        if self._lifetime is not None:
-            return self._lifetime
-        elif self._default_equipment_lifetime:
-            return self._default_equipment_lifetime
-        else:
-            return None
+        return self.equipment_lifetime
+        # if self.equipment_lifetime is not None:
+        #     return self.equipment_lifetime
+        # elif self._default_equipment_lifetime:
+        #     return self._default_equipment_lifetime
+        # else:
+        #     return None
     @lifetime.setter
     def lifetime(self, i):
         if not i:
-            self._lifetime = None
-        elif isinstance(i, dict):
-            self._default_equipment_lifetime.update(i)
+            self.equipment_lifetime = {}
         else:
-            self._lifetime = int(i)
+            self.equipment_lifetime = i if isinstance(i, dict) else int(i)
+
+        # elif isinstance(i, dict):
+        #     self._default_equipment_lifetime.update(i)
+        # else:
+        #     self.equipment_lifetime = int(i)
+
+    # def lifetime(self):
+    #     warn('The use of `lifetime` is deprecated, please use `equipment_lifetime`.')
+    #     return self.equipment_lifetime
+    # @lifetime.setter
+    # def lifetime(self, i):
+    #     warn('The use of `lifetime` is deprecated, please use `equipment_lifetime`.')
+    #     self.equipment_lifetime = i

@@ -16,6 +16,7 @@ for license details.
 # %%
 
 import qsdsan as qs
+from warnings import warn
 from datetime import date
 from biosteam import TEA
 
@@ -43,11 +44,6 @@ class SimpleTEA(TEA):
 
     income_tax : float
         Combined tax (e.g., sum of national, state, local levels) for net earnings.
-    depreciation : str
-        Can be any of "MACRS5", "MACRS7", "MACRS10", "MACRS15", "MACRS20".
-        Note that the lifetime of the system should be longer than the number
-        following "MACRS" (i.e., 5, 7, 10, 15, 20).
-        It is used with ``income_tax`` to calculate the income tax.
     start_year : int
         Start year of the system.
     lifetime : int
@@ -144,10 +140,6 @@ class SimpleTEA(TEA):
     >>> tea.show()
     SimpleTEA: sys
     NPV  : -258,730 USD at 5.0% discount rate
-    EAC  : 33,507 USD/yr
-    CAPEX: 60,912 USD (annualized to 7,888 USD/yr)
-    AOC  : 25,618 USD/yr
-    Sales: 0 USD/yr
 
     See Also
     --------
@@ -162,18 +154,14 @@ class SimpleTEA(TEA):
                  '_uptime_ratio', '_operating_hours', '_CAPEX', '_lang_factor',
                  '_annual_maintenance', '_annual_labor', '_system_add_OPEX')
 
-    def __init__(self, system, discount_rate=0.05, income_tax=0., depreciation=None,
+    def __init__(self, system, discount_rate=0.05, income_tax=0.,
                  start_year=date.today().year, lifetime=10, uptime_ratio=1.,
                  CAPEX=0., lang_factor=None,
                  annual_maintenance=0., annual_labor=0., system_add_OPEX={},
-                 construction_schedule=None):
+                 depreciation='SL', construction_schedule=(1,)):
         system.simulate()
         self.system = system
-        try: # for some versions of biosteam without the `_TEA` attribute
-            system._TEA = self
-        except AttributeError:
-            pass
-
+        system._TEA = self
         self.income_tax = income_tax
         # IRR (internal rate of return) is the discount rate when net present value is 0
         self.IRR = discount_rate
@@ -181,19 +169,6 @@ class SimpleTEA(TEA):
         self._sales = 0 # guess cost for solve_price method
         self.start_year = start_year
         self.lifetime = lifetime
-        # From U.S. IRS for tax purpose, won't matter when ``income_tax`` set to 0.
-        # Based on IRS Publication 946 (2019), MACRS15 should be used for
-        # municipal wastewater treatment plant.
-        if not depreciation:
-            if lifetime >= 15:
-                self.depreciation = 'MACRS7'
-            elif lifetime >= 8:
-                self.depreciation = 'MACRS7'
-            elif lifetime >=6:
-                self.depreciation = 'MACRS5'
-            else:
-                 raise ValueError('Currently BioSTEAM does not support TEA ' \
-                                  'for systems with a lifetime shorter than 6 years.')
         self.uptime_ratio = 1.
         self._lang_factor = None
         self._CAPEX = CAPEX
@@ -201,8 +176,7 @@ class SimpleTEA(TEA):
         self.annual_maintenance = annual_maintenance
         self.annual_labor = annual_labor
         self.system_add_OPEX = system_add_OPEX
-        if not construction_schedule:
-            construction_schedule = (1,)
+        self.depreciation = depreciation
         self.construction_schedule = construction_schedule
 
         ########## Not relevant to SimpleTEA but required by TEA ##########
@@ -223,10 +197,6 @@ class SimpleTEA(TEA):
         c = self.currency
         info = f'{type(self).__name__}: {self.system.ID}'
         info += f'\nNPV  : {self.NPV:,.0f} {c} at {self.discount_rate:.1%} discount rate'
-        info += f'\nEAC  : {self.EAC:,.0f} {c}/yr'
-        info += f'\nCAPEX: {self.CAPEX:,.0f} {c} (annualized to {self.annualized_CAPEX:,.0f} {c}/yr)'
-        info += f'\nAOC  : {self.AOC:,.0f} {c}/yr'
-        info += f'\nSales: {self.sales:,.0f} {c}/yr'
         print(info)
 
     _ipython_display_ = show
@@ -243,29 +213,6 @@ class SimpleTEA(TEA):
 
     def _FOC(self, FCI):
         return FCI*self.annual_maintenance+self.annual_labor+self.total_add_OPEX
-
-    def get_unit_annualized_CAPEX(self, units):
-        try: iter(units)
-        except: units = (units, )
-        CAPEX = 0
-        r = self.discount_rate
-        for unit in units:
-            lifetime = unit.lifetime or self.lifetime
-            # no unit lifetime or unit lifetime given as a number
-            # (i.e., no individual equipment lifetime)
-            if not isinstance(lifetime, dict):
-                CAPEX += unit.installed_cost*r/(1-(1+r)**(-lifetime))
-            else:
-                lifetime_dct = dict.fromkeys(unit.purchase_costs.keys())
-                lifetime_dct.update(lifetime)
-                for equip, cost in unit.purchase_costs.items():
-                    factor = unit.F_BM[equip]*\
-                        unit.F_D.get(equip, 1.)*unit.F_P.get(equip, 1.)*unit.F_M.get(equip, 1.)
-                    # for equipment that does not have individual lifetime
-                    # use the unit lifetime or TEA lifetime
-                    equip_lifetime = lifetime_dct[equip] or self.lifetime
-                    CAPEX += factor*cost*r/(1-(1+r)**(-equip_lifetime))
-        return CAPEX
 
     @property
     def system(self):
@@ -301,7 +248,7 @@ class SimpleTEA(TEA):
 
     @property
     def discount_rate(self):
-        '''[float] Interest rate used in discounting.'''
+        '''[float] Interest rate used in discounting, same as `IRR` in :class:`biosteam.TEA`.'''
         return self.IRR
     @discount_rate.setter
     def discount_rate(self, i):
@@ -480,12 +427,57 @@ class SimpleTEA(TEA):
         return self._FOC(self.FCI)
 
     @property
-    def annualized_CAPEX(self):
-        '''[float] Annualized capital expenditure.'''
-        return self.get_unit_annualized_CAPEX(self.units)
+    def annualized_NPV(self):
+        r'''
+        [float] Annualized NPV calculated as:
 
+        .. math::
+
+            annualized\ NPV = \frac{NPV*r}{(1-(1+r)^{-lifetime})}
+        '''
+        r = self.discount_rate
+        t = self.lifetime
+        return self.NPV*r/(1-(1+r)**(-t))
+
+    @property
+    def annualized_CAPEX(self):
+        r'''
+        [float] Annualized capital expenditure calculated through annualized NPV as:
+
+        .. math::
+
+            annualized\ capital\ cost = annual\ net\ earning - annualized\ NPV
+
+        '''
+        return self.net_earnings-self.annualized_NPV
+
+
+    #################### Deprecated ####################
+    def get_unit_annualized_CAPEX(self, units):
+        try: iter(units)
+        except: units = (units, )
+        CAPEX = 0
+        r = self.discount_rate
+        for unit in units:
+            lifetime = unit.lifetime or self.lifetime
+            # no unit equipment lifetime or unit equipment lifetime given as a number
+            # (i.e., no individual equipment lifetime)
+            if not isinstance(lifetime, dict):
+                CAPEX += unit.installed_cost*r/(1-(1+r)**(-lifetime))
+            else:
+                lifetime_dct = dict.fromkeys(unit.purchase_costs.keys())
+                lifetime_dct.update(lifetime)
+                for equip, cost in unit.purchase_costs.items():
+                    factor = unit.F_BM[equip]*\
+                        unit.F_D.get(equip, 1.)*unit.F_P.get(equip, 1.)*unit.F_M.get(equip, 1.)
+                    # for equipment that does not have individual lifetime
+                    # use the unit lifetime or TEA lifetime
+                    equip_lifetime = lifetime_dct[equip] or self.lifetime
+                    CAPEX += factor*cost*r/(1-(1+r)**(-equip_lifetime))
+        return CAPEX
 
     @property
     def EAC(self):
-        '''[float] Equivalent annual cost of the system (sales not included).'''
-        return self.annualized_CAPEX+self.AOC
+        warn('`EAC` is deprecated since qsdsan v0.3.8, please refer to '
+             'https://github.com/QSD-Group/QSDsan/blob/main/docs/source/tutorials/7_TEA.ipynb'
+             ' for details')
