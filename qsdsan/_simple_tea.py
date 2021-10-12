@@ -265,11 +265,12 @@ class SimpleTEA(TEA):
     @property
     def lifetime(self):
         '''[int] Total lifetime of the system, [yr]. Currently `biosteam` only supports int.'''
-        return int(self._lifetime)
+        return self._lifetime
     @lifetime.setter
     def lifetime(self, i):
         self._lifetime = self._years = int(i)
         self._duration = (int(self.start_year), int(self.start_year+self.lifetime))
+        self.depreciation = self.depreciation
 
     @property
     def duration(self):
