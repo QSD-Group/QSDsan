@@ -35,7 +35,7 @@ def _create_asm1_cmps(pickle=False):
 
     S_S = cmps.S_F.copy('S_S')
     S_S.description = 'Readily biodegradable substrate'
-    S_S.i_N = 0
+    S_S.i_N = S_I.i_N = 0
 
     X_S = cmps.X_B_Subst.copy('X_S')
     X_S.description = 'Slowly biodegradable substrate'
@@ -51,7 +51,7 @@ def _create_asm1_cmps(pickle=False):
 
     X_P = cmps.X_U_OHO_E.copy('X_P')
     X_P.description = 'Particulate products arising from biomass decay'
-    X_P.i_N = 0.06                  # i_XP
+    X_P.i_N = X_I.i_N = 0.06                  # i_XP
 
     # X_I.i_mass = X_S.i_mass = X_BH.i_mass = X_BA.i_mass = X_P.i_mass = .75    # fr_COD_SS
 
@@ -233,7 +233,7 @@ class ASM1(Processes):
         
         cmps = _load_components(components)
         cmps.X_BH.i_N = cmps.X_BA.i_N = i_XB
-        cmps.X_P.i_N = i_XP
+        cmps.X_P.i_N = cmps.X_I.i_N = i_XP
         cmps.X_I.i_mass = cmps.X_S.i_mass = cmps.X_P.i_mass = cmps.X_BH.i_mass = cmps.X_BA.i_mass = fr_SS_COD
         cmps.refresh_constants()
         
