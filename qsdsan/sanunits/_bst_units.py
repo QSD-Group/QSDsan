@@ -324,7 +324,7 @@ class Pump(SanUnit, bst.units.Pump):
         return self._ODE
 
     def _compile_ODE(self):
-        def dy_dt(QC_ins, QC, dQC_ins):
+        def dy_dt(t, QC_ins, QC, dQC_ins):
             return dQC_ins
         self._ODE = dy_dt
         self._ins_y = np.zeros(len(self.components)+1)
