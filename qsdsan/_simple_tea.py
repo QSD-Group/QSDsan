@@ -16,7 +16,6 @@ for license details.
 # %%
 
 import qsdsan as qs
-from warnings import warn
 from datetime import date
 from biosteam import TEA
 
@@ -428,6 +427,11 @@ class SimpleTEA(TEA):
         '''
         return self._FOC(self.FCI)
 
+    def _get_annuity_factor(self, yrs):
+        yrs = yrs or self._years
+        r = self.discount_rate
+        return (1-(1+r)**(-yrs))/r
+
     @property
     def annualized_NPV(self):
         r'''
@@ -437,9 +441,7 @@ class SimpleTEA(TEA):
 
             annualized\ NPV = \frac{NPV*r}{(1-(1+r)^{-lifetime})}
         '''
-        r = self.discount_rate
-        t = self.lifetime
-        return self.NPV*r/(1-(1+r)**(-t))
+        return self.NPV/self._get_annuity_factor()
 
     @property
     def annualized_CAPEX(self):
@@ -449,8 +451,50 @@ class SimpleTEA(TEA):
         .. math::
 
             annualized\ capital\ cost = annual\ net\ earning - annualized\ NPV
+
+        .. note::
+
+            Read the `tutorial <https://github.com/QSD-Group/QSDsan/blob/main/docs/source/tutorials/7_TEA.ipynb>`_
+            about the difference between `annualized_CAPEX` and `annualized_equipment_cost`.
         '''
         return self.net_earnings-self.annualized_NPV
+
+    @property
+    def annualized_equipment_cost(self):
+        r'''
+        [float] Annualized equipment cost representing the sum of the annualized
+        cost of each equipment, which is as:
+
+        .. math::
+
+            annualized\ equipment\ cost = \frac{equipment\ installed\ cost}{(1-(1+r)^{-lifetime})}
+
+        .. note::
+
+            Read the `tutorial <https://github.com/QSD-Group/QSDsan/blob/main/docs/source/tutorials/7_TEA.ipynb>`_
+            about the difference between `annualized_CAPEX` and `annualized_equipment_cost`.
+        '''
+        units = self.units
+        cost = 0
+        get_A = self._get_annuity_factor
+
+        for unit in units:
+            lifetime = unit.lifetime or self.lifetime
+            # no unit equipment lifetime or unit equipment lifetime given as a number
+            # (i.e., no individual equipment lifetime)
+            if not isinstance(lifetime, dict):
+                cost += unit.installed_cost/get_A(lifetime)
+            else:
+                lifetime_dct = dict.fromkeys(unit.purchase_costs.keys())
+                lifetime_dct.update(lifetime)
+                for equip, cost in unit.purchase_costs.items():
+                    factor = unit.F_BM[equip]*\
+                        unit.F_D.get(equip, 1.)*unit.F_P.get(equip, 1.)*unit.F_M.get(equip, 1.)
+                    # for equipment that does not have individual lifetime
+                    # use the unit lifetime or TEA lifetime
+                    equip_lifetime = lifetime_dct[equip] or self.lifetime
+                    cost += factor*cost/get_A(equip_lifetime)
+        return cost
 
     @property
     def EAC(self):

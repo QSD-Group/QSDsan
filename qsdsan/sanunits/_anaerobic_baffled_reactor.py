@@ -71,6 +71,12 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         self.if_capture_biogas = if_capture_biogas
         self.if_N2O_emission = if_N2O_emission
 
+        self.construction = (
+            Construction('concrete', item='Concrete', quantity_unit='m3'),
+            Construction('gravel', item='Gravel', quantity_unit='kg'),
+            Construction('excavation', item='Excavation', quantity_unit='m3'),
+            )
+
         data = load_data(path=data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
@@ -132,13 +138,13 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         design['Reactor width'] = W = self.reactor_W
         design['Reactor height'] = H = self.reactor_H
         design['Single reactor volume'] = V = L*W*H
+
+        constr = self.construction
         concrete = N*self.concrete_thickness*(2*L*W+2*L*H+(2+N_b)*W*H)*self.add_concrete
-        self.construction = (
-            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
-            Construction(item='Gravel', quantity= N*V/(N_b+1)*self.gravel_density,
-                         quantity_unit='kg'),
-            Construction(item='Excavation', quantity=N*V, quantity_unit='m3'),
-            )
+        constr[0].quantity = concrete
+        constr[1].quantity = N*V/(N_b+1) * self.gravel_density
+        constr[2].quantity = N * V # excavation
+
         self.add_construction()
 
 

@@ -71,7 +71,10 @@ class Construction:
 
     def __init__(self, ID='', item=None, quantity=0., quantity_unit='',
                  lifetime=None, lifetime_unit='yr'):
-        self._register(ID)
+        if ID == '': # this is only to auto-generate ID for ones that don't have
+            self._register(ID)
+        else:
+            self._ID = ID
         self.item = item
         self._update_quantity(quantity, quantity_unit)
         self._lifetime = None

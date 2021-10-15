@@ -80,6 +80,11 @@ class Lagoon(SanUnit, Decay):
         self.degraded_components = tuple(degraded_components)
         self.if_N2O_emission = if_N2O_emission
 
+        self.construction = (
+            Construction('liner', item='Plastic', quantity_unit='kg'),
+            Construction('excavation', item='Excavation', quantity_unit='m3'),
+            )
+
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
@@ -130,10 +135,10 @@ class Lagoon(SanUnit, Decay):
         design['Lagoon depth'] = depth = V / (L*W)
 
         liner = (L*W + 2*depth*(L+W)) * N * self.liner_unit_mass
-        self.construction = (
-            Construction(item='Plastic', quantity=liner, quantity_unit='kg'),
-            Construction(item='Excavation', quantity=N*V, quantity_unit='m3'),
-            )
+        constr = self.construction
+        constr[0].quantity = liner
+        constr[1].quantity = N * V # excavation
+
         self.add_construction(add_cost=False)
 
     @property

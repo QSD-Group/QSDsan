@@ -78,6 +78,11 @@ class DryingBed(SanUnit, Decay):
 
         self.degraded_components = tuple(degraded_components)
 
+        self.construction = (
+            Construction('concrete', item='Concrete', quantity_unit='m3'),
+            Construction('steel', item='Steel', quantity_unit='kg'),
+            )
+
         data = load_data(path=data_path)
         for para in data.index:
             if para == 'N_bed': continue
@@ -164,10 +169,11 @@ class DryingBed(SanUnit, Decay):
         concrete = (N*self.concrete_thickness*(L*W+2*L*H+2*W*H)).sum()
         steel = tot_cover_area*self.cover_unit_mass + \
             tot_column_length*self.column_unit_mass
-        self.construction = (
-            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
-            Construction(item='Steel', quantity=steel, quantity_unit='kg'),
-            )
+
+        constr = self.construction
+        constr[0].quantity = concrete
+        constr[1].quantity = steel
+
         for i in self.construction:
             self.F_BM[i.item.ID] = 1
 

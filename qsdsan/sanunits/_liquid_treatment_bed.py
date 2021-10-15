@@ -63,6 +63,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
         self.degraded_components = tuple(degraded_components)
         self.if_N2O_emission = if_N2O_emission
+        self.construction = (Construction('concrete', item='Concrete', quantity_unit='m3'))
 
         data = load_data(path=data_path)
         for para in data.index:
@@ -125,9 +126,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
         design['Single bed volume'] = L*W*H
 
         concrete = N*self.concrete_thickness*(L*W+2*L*H+2*W*H)
-        self.construction = (
-            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
-            )
+        self.construction[0].quantity = concrete
         self.add_construction()
 
 

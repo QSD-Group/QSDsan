@@ -67,6 +67,11 @@ class SedimentationTank(SludgeSeparator, Decay):
         self.degraded_components = tuple(degraded_components)
         self.if_N2O_emission = if_N2O_emission
 
+        self.construction = (
+            Construction('concrete', item='Concrete', quantity_unit='m3'),
+            Construction('steel', item='Steel', quantity_unit='kg'),
+            )
+
         data = load_data(path=data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
@@ -91,6 +96,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         COD_loss = self.first_order_decay(k=self.decay_k_COD,
                                           t=self.tau/365,
                                           max_decay=self.COD_max_decay)
+
         tot_COD_kg = sol._COD * sol.F_vol / 1e3
         sol.imass[self.degraded_components] *= 1 - COD_loss
 
@@ -125,7 +131,7 @@ class SedimentationTank(SludgeSeparator, Decay):
 
     def _design(self):
         design = self.design_results
-        #!!! Why isn't tau used?
+        # `tau` not used, might be that working volume fraction not known
         design['Tank number'] = N = self.N_tank
         design['Single tank volume'] = V_single = self.tank_V
         L2W = self.tank_L_to_W
@@ -141,10 +147,10 @@ class SedimentationTank(SludgeSeparator, Decay):
         side_concrete = N*thick*(L*W+2*W*H+2*L*H)
         column_concrete = N*(thick**2)*H*self.column_per_side*2
 
-        self.construction = (
-            Construction(item='Concrete', quantity=side_concrete+column_concrete, quantity_unit='m3'),
-            Construction(item='Excavation', quantity=design['Single roof area']+side_area, quantity_unit='m3'),
-            )
+        constr = self.construction
+        constr[0].quantity = side_concrete + column_concrete
+        constr[1].quantity = (design['Single roof area']+side_area) * self.roof_unit_mass # steel
+
         self.add_construction()
 
     @property

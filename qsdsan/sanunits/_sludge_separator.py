@@ -98,10 +98,8 @@ class SludgeSeparator(SanUnit):
             liq.mass -= sol.mass
         else:
             for var in self.split.keys():
-                #!!! In the future this should be best done by changing the state variable
                 if var == 'TS':
-                    try: sol.imass['OtherSS'] = split[var] * waste.imass['OtherSS']
-                    except: breakpoint()
+                    sol.imass['OtherSS'] = split[var] * waste.imass['OtherSS']
                 elif var == 'COD':
                     sol_COD = split[var] * waste._COD * waste.F_vol
                     liq_COD = waste._COD * waste.F_vol - sol_COD

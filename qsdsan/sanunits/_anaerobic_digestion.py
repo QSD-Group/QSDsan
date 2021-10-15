@@ -73,6 +73,11 @@ class AnaerobicDigestion(SanUnit, Decay):
         self.if_capture_biogas = if_capture_biogas
         self.if_N2O_emission = if_N2O_emission
 
+        self.construction = (
+            Construction('concrete', item='Concrete', quantity_unit='m3'),
+            Construction('excavation', item='Excavation', quantity_unit='m3'),
+            )
+
         data = load_data(path=data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
@@ -140,11 +145,12 @@ class AnaerobicDigestion(SanUnit, Decay):
         # Rx modeled as a cylinder
         design['Reactor diameter'] = D = (4*V_single*self.aspect_ratio/np.pi)**(1/3)
         design['Reactor height'] = H = self.aspect_ratio * D
+
+        constr = self.construction
         concrete =  N*self.concrete_thickness*(2*np.pi/4*(D**2)+np.pi*D*H)
-        self.construction = (
-            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
-            Construction(item='Excavation', quantity=V_tot, quantity_unit='m3'),
-            )
+        constr[0].quantity = concrete
+        constr[1].quantity = V_tot # excavation
+
         self.add_construction()
 
 

@@ -85,7 +85,10 @@ class Transportation:
                  load_type='mass', load=1., load_unit='kg',
                  distance=1., distance_unit='km',
                  interval=1., interval_unit='hr'):
-        self._register(ID)
+        if ID == '': # this is only to auto-generate ID for ones that don't have
+            self._register(ID)
+        else:
+            self._ID = ID
         self.item = item
         self.default_units = {
             'distance': 'km',
