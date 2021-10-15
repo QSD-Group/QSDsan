@@ -633,9 +633,7 @@ class LCA:
             for other_ID in self.other_items.keys():
                 other = self.other_items[other_ID]['item']
                 item_dct['Other'].append(f'{other_ID} [{other.functional_unit}]')
-                import pdb
-                pdb.set_trace()
-                quantity = self.other_items[other_ID]['quantity'] * time
+                quantity = self.other_items[other_ID]['quantity'] * time_ratio
                 item_dct['Quantity'].append(quantity)
                 for ind in self.indicators:
                     if ind.ID in other.CFs.keys():

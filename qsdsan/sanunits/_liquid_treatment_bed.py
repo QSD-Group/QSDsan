@@ -39,7 +39,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
     degraded_components : tuple
         IDs of components that will degrade (at the same removal as `COD_removal`).
     if_N2O_emission : bool
-        If consider N2O emission from N degradation the process.
+        If consider N2O emission from N degradation in the process.
 
     Examples
     --------

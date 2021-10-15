@@ -42,7 +42,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         If produced biogas will be captured, otherwise it will be treated
         as fugitive CH4.
     if_N2O_emission : bool
-        If consider N2O emission from N degradation the process.
+        If considering fugitive N2O generated from the degraded N.
 
     Examples
     --------
@@ -108,16 +108,15 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
             CH4.imass['CH4'] = CH4_prcd
             biogas.empty()
 
+        N_tot = waste.TN/1e3 * waste.F_vol
+        N_loss_tot = N_tot * self.N_removal
+        NH3_rmd, NonNH3_rmd = \
+            self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
+        treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
+        treated.imass['NonNH3'] = waste.imass['NonNH3'] - NonNH3_rmd
+
         if self.if_N2O_emission:
-            N_loss = self.first_order_decay(k=self.decay_k_N,
-                                            t=self.tau/365,
-                                            max_decay=self.N_max_decay)
-            N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol*self.N_removal
-            NH3_rmd, NonNH3_rmd = \
-                self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
-            treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
-            treated.imass['NonNH3'] = waste.imass['NonNH3'] - NonNH3_rmd
-            N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
+            N2O.imass['N2O'] = N_loss_tot*self.N_max_decay*self.N2O_EF_decay*44/28
         else:
             N2O.empty()
 

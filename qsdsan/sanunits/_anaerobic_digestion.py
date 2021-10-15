@@ -45,7 +45,7 @@ class AnaerobicDigestion(SanUnit, Decay):
         If produced biogas will be captured, otherwise it will be treated
         as fugitive CH4.
     if_N2O_emission : bool
-        If consider N2O emission from N degradation the process.
+        If consider N2O emission from N degradation in the process.
 
     Examples
     --------

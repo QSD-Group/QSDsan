@@ -50,8 +50,6 @@ class UDDT(Toilet):
         must be larger than 1.
     if_treatment : bool
         If has onsite treatment.
-    if_pit_above_water_table : bool
-        If the pit is above local water table.
 
     Examples
     --------
