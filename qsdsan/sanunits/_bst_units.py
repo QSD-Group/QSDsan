@@ -57,21 +57,6 @@ class Mixer(SanUnit, bst.units.Mixer):
         if self._state is None: return None
         else:
             return dict(zip(list(self.components.IDs) + ['Q'], self._state))
-
-    # @state.setter
-    # def state(self, QCs):
-    #     QCs = np.asarray(QCs)
-    #     if QCs.shape != (len(self.components)+1, ):
-    #         raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
-    #                           'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
-    #     self._state = QCs
-    
-    # def set_init_conc(self, **kwargs):
-    #     '''set the initial concentrations [mg/L] of the CSTR.'''
-    #     Cs = np.zeros(len(self.components))
-    #     cmpx = self.components.index
-    #     for k, v in kwargs.items(): Cs[cmpx(k)] = v
-    #     self._concs = Cs
     
     def _init_state(self):
         '''initialize state by specifiying or calculating component concentrations
@@ -124,8 +109,6 @@ class Mixer(SanUnit, bst.units.Mixer):
             else:
                 return dQC_ins
         self._ODE = dy_dt
-        self._ins_y = np.zeros(_n_ins * _n_state)
-        self._ins_dy = np.zeros_like(self._ins_y)
         
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
@@ -175,12 +158,6 @@ class Splitter(SanUnit, bst.units.Splitter):
                               'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
         self._state = QCs
 
-    # def set_init_conc(self, **kwargs):
-    #     '''set the initial concentrations [mg/L] of the CSTR.'''
-    #     Cs = np.zeros(len(self.components))
-    #     cmpx = self.components.index
-    #     for k, v in kwargs.items(): Cs[cmpx(k)] = v
-    #     self._concs = Cs
 
     def _init_state(self):
         self._state = self._state_tracer()[0]
@@ -215,8 +192,6 @@ class Splitter(SanUnit, bst.units.Splitter):
         def dy_dt(t, QC_ins, QC, dQC_ins):
             return dQC_ins
         self._ODE = dy_dt
-        self._ins_y = np.zeros(len(self.components)+1)
-        self._ins_dy = np.zeros_like(self._ins_y)
         
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
@@ -269,7 +244,6 @@ class Pump(SanUnit, bst.units.Pump):
         self.material = material
         self.dP_design = dP_design
         self.ignore_NPSH = ignore_NPSH
-        # self._concs = None
 
     def reset_cache(self):
         '''Reset cached states.'''
@@ -291,13 +265,6 @@ class Pump(SanUnit, bst.units.Pump):
             raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
                               'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
         self._state = QCs
-
-    # def set_init_conc(self, **kwargs):
-    #     '''set the initial concentrations [mg/L] of the CSTR.'''
-    #     Cs = np.zeros(len(self.components))
-    #     cmpx = self.components.index
-    #     for k, v in kwargs.items(): Cs[cmpx(k)] = v
-    #     self._concs = Cs
         
     def _init_state(self, state=None):
         self._state = self._state_tracer()[0]
@@ -327,8 +294,6 @@ class Pump(SanUnit, bst.units.Pump):
         def dy_dt(t, QC_ins, QC, dQC_ins):
             return dQC_ins
         self._ODE = dy_dt
-        self._ins_y = np.zeros(len(self.components)+1)
-        self._ins_dy = np.zeros_like(self._ins_y)
 
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
@@ -337,6 +302,41 @@ class Pump(SanUnit, bst.units.Pump):
         Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
         Cs.pop('H2O', None)
         out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
+
+
+class HydraulicDelay(Pump):
+    '''
+    A fake unit for implementing hydraulic delay by a first-order reaction 
+    (i.e., a low-pass filter) with a specified time constant [d].
+    
+    See Also
+    --------
+    `Benchmark Simulation Model No.1 implemented in MATLAB & Simulink <https://www.cs.mcgill.ca/~hv/articles/WWTP/sim_manual.pdf>`
+    '''
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, t_delay=1e-4, *,
+                 init_with='WasteStream', F_BM_default=None):
+        SanUnit.__init__(self, ID, ins, outs, thermo,
+                         init_with=init_with, F_BM_default=F_BM_default)
+        self.t_delay = t_delay
+    
+    def _compile_ODE(self):
+        T = self.t_delay
+        def dy_dt(t, QC_ins, QC, dQC_ins):
+            Q_in = QC_ins[-1]
+            Q = QC[-1]
+            C_in = QC_ins[:-1]
+            C = QC[:-1]
+            dQC_ins[-1] = (Q_in - Q)/T
+            dQC_ins[:-1] = Q_in/Q*(C_in - C)/T
+            return dQC_ins
+        self._ODE = dy_dt
+    
+    def _design(self):
+        pass
+    
+    def _cost(self):
+        pass
+
 
 class Tank(SanUnit, bst.units.Tank, isabstract=True):
     '''
