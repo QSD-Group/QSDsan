@@ -390,8 +390,8 @@ class LCA:
                 if not isinstance(j, SanStream):
                     continue
                 ws = j
-                if j.impact_item:
-                    j = ws.impact_item
+                if j.stream_impact_item:
+                    j = ws.stream_impact_item
                 else: continue
             else:
                 ws = j.linked_stream

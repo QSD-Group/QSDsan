@@ -427,7 +427,7 @@ class SimpleTEA(TEA):
         '''
         return self._FOC(self.FCI)
 
-    def _get_annuity_factor(self, yrs):
+    def _get_annuity_factor(self, yrs=None):
         yrs = yrs or self._years
         r = self.discount_rate
         return (1-(1+r)**(-yrs))/r
@@ -459,11 +459,11 @@ class SimpleTEA(TEA):
         '''
         return self.net_earnings-self.annualized_NPV
 
-    @property
-    def annualized_equipment_cost(self):
+
+    def get_unit_annualized_equipment_cost(self, units=None):
         r'''
-        [float] Annualized equipment cost representing the sum of the annualized
-        cost of each equipment, which is as:
+        Annualized equipment cost representing the sum of the annualized
+        cost of each equipment, which is calculated as:
 
         .. math::
 
@@ -474,7 +474,9 @@ class SimpleTEA(TEA):
             Read the `tutorial <https://github.com/QSD-Group/QSDsan/blob/main/docs/source/tutorials/7_TEA.ipynb>`_
             about the difference between `annualized_CAPEX` and `annualized_equipment_cost`.
         '''
-        units = self.units
+        units = units or self.units
+        try: iter(units)
+        except: units = (units,)
         cost = 0
         get_A = self._get_annuity_factor
 
@@ -495,6 +497,16 @@ class SimpleTEA(TEA):
                     equip_lifetime = lifetime_dct[equip] or self.lifetime
                     cost += factor*cost/get_A(equip_lifetime)
         return cost
+
+
+    @property
+    def annualized_equipment_cost(self):
+        '''
+        [float] Annualized equipment cost representing the sum of the annualized
+        cost of each equipment, calculated using ``get_unit_annualized_equipment_cost``.
+        '''
+        return self.get_unit_annualized_equipment_cost()
+
 
     @property
     def EAC(self):
