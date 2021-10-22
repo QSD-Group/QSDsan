@@ -318,6 +318,28 @@ class HydraulicDelay(Pump):
         SanUnit.__init__(self, ID, ins, outs, thermo,
                          init_with=init_with, F_BM_default=F_BM_default)
         self.t_delay = t_delay
+        self._concs = None
+        self._q = None
+    
+    def set_init_conc(self, **kwargs):
+        '''set the initial concentrations [mg/L].'''
+        Cs = np.zeros(len(self.components))
+        cmpx = self.components.index
+        for k, v in kwargs.items(): Cs[cmpx(k)] = v
+        self._concs = Cs
+    
+    def set_init_flow(self, q):
+        '''set the initial volumetric flow [m3/d].'''
+        self._q = q
+    
+    def _init_state(self):
+        '''initialize state by specifiying or calculating component concentrations
+        based on influents. Total flow rate is always initialized as the sum of
+        influent wastestream flows.'''
+        if self._concs is not None and self._q is not None:
+            self._state = np.append(self._concs, self._q)
+        else:
+            self._state = self._state_tracer()[0]
     
     def _compile_ODE(self):
         T = self.t_delay
