@@ -109,7 +109,7 @@ In particular, ``QSDsan`` introduces:
 
 About the developers
 --------------------
-Development and maintenance of the platform is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors are listed below, please refer to the `author page <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_ for the full list of authors.
+Development and maintenance of the platform is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_, as well as `other developers <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ that have contributed to the repository.
 
 
 .. toctree::
@@ -118,25 +118,42 @@ Development and maintenance of the platform is supported by the Quantitative Sus
 
    authors/Yalin_Li
    authors/Joy_Zhang
-   authors/Stetson_Rowles
    authors/Tori_Morgan
    authors/Hannah_Lohman
+   authors/Stetson_Rowles
 
 
 Roles
 ^^^^^
 **Lead developers:**
-   - `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_
-   - `Joy Zhang <mailto:joycheung1994@gmail.com>`_
+   - `Yalin Li`_ (current maintainer)
+   - `Joy Zhang`_
+
 
 **Tutorials and videos:**
-   - `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_
-   - `Joy Zhang <mailto:joycheung1994@gmail.com>`_
-   - Tori Morgan
-   - Hannah Lohman
+   - `Yalin Li`_
+   - `Joy Zhang`_
+   - `Tori Morgan <https://qsdsan.readthedocs.io/en/beta/authors/Tori_Morgan.html>`_
+   - `Hannah Lohman <https://qsdsan.readthedocs.io/en/beta/authors/Hannah_Lohman.html>`_
 
-**Project conception & funding support:**
+
+**Module development:**
+   - `Yalin Li`_
+   - `Joy Zhang`_
+   - `Stetson Rowles <https://qsdsan.readthedocs.io/en/beta/authors/Stetson_Rowles.html>`_
+   - Smiti Mittal
+   - Anna Kogler
+   - Samuel Aguiar
+   - Tyler Stephen
+   - Shion Watabe
+   - `Other developers <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ that have contributed to the repository.
+
+
+**Funding support:**
    - `Jeremy Guest <mailto:jsguest@illinois.edu>`_
+   - `Ro Cusick <mailto:rcusick@illinois.edu>`_
+   - `William Tarpeh <mailto:wtarpeh@stanford.edu>`_
+
 
 **Special acknowledgement:**
    - Yoel Cortés-Peña for helping many of the ``QSDsan`` members get started on Python and package development.
@@ -152,7 +169,6 @@ If you would like to contribute, please follow our contribution guide, thank you
    :maxdepth: 1
    :caption: Contributions
 
-   AUTHORS
    CODE_OF_CONDUCT
    CONTRIBUTING
    for_developers/Tutorial_Template
@@ -196,3 +212,8 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+.. Links
+.. _Yalin Li: https://qsdsan.readthedocs.io/en/beta/authors/Yalin_Li.html
+.. _Joy Zhang: https://qsdsan.readthedocs.io/en/beta/authors/Joy_Zhang.html
