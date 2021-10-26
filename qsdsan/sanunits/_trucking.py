@@ -115,7 +115,7 @@ class Trucking(SanUnit):
         self.design_results['Parallel trucks'] = N
 
         total, = self.transportation
-        copy_attr(total, single, skip=('_ID',)) # in case attributes have been updated
+        copy_attr(total, single, skip=('_ID', '_item')) # in case attributes have been updated
         total.load = single.load * N
         self._add_OPEX = {'Total fee': self.fee/total.interval*N}
 

@@ -115,10 +115,14 @@ class Construction:
 
     _ipython_display_ = show
 
-    def copy(self, new_ID=''):
+    def copy(self, new_ID='', skip_item=True):
         new = Construction.__new__(Construction)
         new.__init__(new_ID)
-        new = copy_attr(new, self, skip=('_ID',))
+        if skip_item:
+            new = copy_attr(new, self, skip=('_ID', '_item'))
+            new.item = self.item
+        else:
+            new = copy_attr(new, self, skip=('_ID',))
         return new
 
     __copy__ = copy

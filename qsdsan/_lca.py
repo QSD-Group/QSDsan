@@ -454,8 +454,8 @@ class LCA:
             One or a iterable of streams. Note that impacts of these streams will be
             excluded in calculating the total impacts.
         allocate_by : str, iterable, or function to generate an iterable
-            If provided as a str, can be "mass", "energy", or 'value' to allocate
-            the impacts accordingly.
+            If provided as a str, can be "mass" (`F_mass`), "energy" (`HHV`),
+            or 'value' (`F_mass`*`price`) to allocate the impacts accordingly.
             If provided as an iterable (no need to normalize so that sum of the iterable is 1),
             will allocate impacts according to the iterable.
             If provided as a function,  will call the function to generate an
