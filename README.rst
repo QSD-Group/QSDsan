@@ -68,15 +68,15 @@ About the authors
 Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors are listed below, please refer to the `author page <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_ for the full list of authors.
 
 **Lead developers:**
-- `Yalin Li`_ (current maintainer)
-- `Joy Zhang`_
+   - `Yalin Li`_ (current maintainer)
+   - `Joy Zhang`_
 
 
 **Tutorials and videos:**
-- `Yalin Li`_ (current maintainer)
-- `Joy Zhang`_
-- `Tori Morgan <https://qsdsan.readthedocs.io/en/beta/authors/Tori_Morgan.html>`_
-- `Hannah Lohman <https://qsdsan.readthedocs.io/en/beta/authors/Hannah_Lohman.html>`_
+   - `Yalin Li`_ (current maintainer)
+   - `Joy Zhang`_
+   - `Tori Morgan <https://qsdsan.readthedocs.io/en/beta/authors/Tori_Morgan.html>`_
+   - `Hannah Lohman <https://qsdsan.readthedocs.io/en/beta/authors/Hannah_Lohman.html>`_
 
 
 **Project conception & funding support:**
