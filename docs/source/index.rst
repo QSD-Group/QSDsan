@@ -116,9 +116,15 @@ Development and maintenance of the platform is supported by the Quantitative Sus
    :maxdepth: 1
    :caption: Core Developers
 
+   authors/Yalin_Li
+   authors/Joy_Zhang
+   authors/Stetson_Rowles
    authors/Tori_Morgan
+   authors/Hannah_Lohman
 
 
+Roles
+^^^^^
 **Lead developers:**
    - `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_
    - `Joy Zhang <mailto:joycheung1994@gmail.com>`_
