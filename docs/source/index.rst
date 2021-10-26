@@ -14,6 +14,8 @@ As an open-source and impact-driven platform, QSDsan aims to identify configurat
 
 All systems developed with ``QSDsan`` are included in the package `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ - exposition of sanitation and resource recovery systems.
 
+Additionally, another package, `DMsan <https://github.com/QSD-Group/DMsan>`_ (decision-making for sanitation and resource recovery systems), is being developed for decision-making among multiple dimensions of sustainability with consideration of location-specific contextual parameters.
+
 
 To capitalize, or not to capitalize?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -62,6 +64,7 @@ For each of these tutorials, we are also recording videos where one of the QSD g
    tutorials/6_System
    tutorials/7_TEA
    tutorials/8_LCA
+   tutorials/9_Uncertainty_and_Sensitivity_Analyses
 
 
 How does ``QSDsan`` work?
@@ -107,6 +110,14 @@ In particular, ``QSDsan`` introduces:
 About the developers
 --------------------
 Development and maintenance of the platform is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors are listed below, please refer to the `author page <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_ for the full list of authors.
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Core Developers
+
+   authors/Tori_Morgan
+
 
 **Lead developers:**
    - `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_
