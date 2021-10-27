@@ -231,6 +231,16 @@ class FlatBottomCircularClarifier(SanUnit):
         # self._solubles = np.tile(Cs*(1-x), self._N_layer)
         self._solubles = Cs*(1-x)
 
+    def set_init_sludge_solids(self, **kwargs):
+        '''set the initial concentrations [mg/L] of solids in the underflow sludge.'''
+        cmpx = self.components.index
+        x = self.components.x
+        Xs = np.zeros_like(x)
+        for k, v in kwargs.items(): Xs[cmpx(k)] = v
+        Xs *= x
+        tss = sum(Xs * self.components.i_mass)
+        if tss != 0: self._X_comp = Xs / tss
+
     def set_init_TSS(self, arr):
         '''set the initial TSS [mg/L] in each layer of the clarifier.'''
         if len(arr) != self._N_layer:
