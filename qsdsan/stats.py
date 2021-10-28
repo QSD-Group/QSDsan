@@ -8,8 +8,8 @@ This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
 With contributions from:
-    Joy Cheung <joycheung1994@gmail.com>
-    Yoel Rene Cortés-Peña <yoelcortes@gmail.com>
+    Joy Zhang <joycheung1994@gmail.com>
+    Yoel Cortés-Peña <yoelcortes@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -20,9 +20,11 @@ for license details.
 # %%
 
 __all__ = ('get_correlations', 'define_inputs', 'generate_samples',
-           'morris_analysis', 'morris_till_convergence', 'sobol_analysis',
+           'morris_analysis', 'morris_till_convergence',
+           'fast_analysis', 'sobol_analysis',
            'plot_uncertainties', 'plot_correlations',
-           'plot_morris_results', 'plot_morris_convergence', 'plot_sobol_results')
+           'plot_morris_results', 'plot_morris_convergence',
+           'plot_fast_results', 'plot_sobol_results')
 
 from collections.abc import Iterable
 import numpy as np

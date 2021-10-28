@@ -266,6 +266,7 @@ class ImpactItem:
                 new.source = self
         else:
             new = copy_attr(new, self, skip=('_ID', '_source'))
+            new.source = None
 
         return new
 
@@ -621,6 +622,7 @@ class StreamImpactItem(ImpactItem):
                 new.source = self
         else:
             new = copy_attr(new, self, skip=('_ID', '_linked_stream', '_source'))
+            new.source = None
 
         if stream:
             stream.stream_impact_item = new

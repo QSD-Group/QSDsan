@@ -43,7 +43,6 @@ I quoted this as a closing remark for my Ph.D. defense, still (and I sincerely h
 
 
    | -- **Jiabao Wen**
-   | *Former Prime Minister of China*
    | *For Centennial Anniversary of Tongji University*
 
 
