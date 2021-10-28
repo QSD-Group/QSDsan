@@ -207,14 +207,6 @@ References
 .. [2] Cortés-Peña, Y.; Kumar, D.; Singh, V.; Guest, J. S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020, 8 (8), 3302–3310. https://doi.org/10.1021/acssuschemeng.9b07040.
 
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-
 .. Links
 .. _Yalin Li: https://qsdsan.readthedocs.io/en/beta/authors/Yalin_Li.html
 .. _Joy Zhang: https://qsdsan.readthedocs.io/en/beta/authors/Joy_Zhang.html
