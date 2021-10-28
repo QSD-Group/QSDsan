@@ -56,6 +56,7 @@ For each of these tutorials, we are also recording videos where one of the QSD g
    :maxdepth: 1
    :caption: Tutorial
 
+   tutorials/0_Quick_Overview
    tutorials/1_Helpful_Basics
    tutorials/2_Component
    tutorials/3_WasteStream

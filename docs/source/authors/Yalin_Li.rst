@@ -1,6 +1,6 @@
-========
-Yalin Li
-========
+=======================
+Yalin Li (creator/lead)
+=======================
 
 .. figure:: Yalin_Li.jpg
    :width: 80%
@@ -9,9 +9,9 @@ Yalin Li
    
    Oh the mountains and I love them.
 
-.. If you want a more serious webpage, check out here: 
+.. This page is focused on my aspirations for ```QSDsan``. For information related to my research/teaching interests and other professional activities, please check out my `personal website <>`_ ().
 
-I'm the current maintainer and one of the lead developers of ``QSDsan``. I am a postdoctoral researcher in the `Guest Group <http://engineeringforsustainability.com>`_ at the `University of Illinois at Urbana-Champaign (UIUC) <http://illinois.edu>`_. I am affiliated with the `Institute of Sustainability, Energy, and Environment (iSEE) <https://sustainability.illinois.edu>`_ and the `Center for Advanced Bioenergy and Bioproduct Innovation (CABBI) <https://cabbi.bio>`_.
+I'm the creator, lead developer, and current maintainer of ``QSDsan``. I am a postdoctoral researcher in the `Guest Group <http://engineeringforsustainability.com>`_ at the `University of Illinois at Urbana-Champaign (UIUC) <http://illinois.edu>`_. I am affiliated with the `Institute of Sustainability, Energy, and Environment (iSEE) <https://sustainability.illinois.edu>`_ and the `Center for Advanced Bioenergy and Bioproduct Innovation (CABBI) <https://cabbi.bio>`_.
 
 My background is in experimentation where I investigated multiple thermochemical and catalytic technologies for renewable products from biomass and wastewater (still missing the experiments and my beloved reactors), but I transitioned after graduation as I wanted to look at the big-picture implications through quantitative sustainable design (QSD). Unbeknownst to me, I would go on a fantastic journey as I advance the methodology of QSD and develop tools to for its application in research and education.
 

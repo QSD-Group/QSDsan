@@ -21,6 +21,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 .. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
    :target: https://qsdsan.readthedocs.io/en/latest/CODE_OF_CONDUCT.html
 
+|
 
 .. contents::
 
