@@ -22,7 +22,7 @@ for license details.
 import numpy as np
 from collections import defaultdict
 from collections.abc import Iterable
-from biosteam.utils.misc import format_title
+from biosteam.utils import Inlets, Outlets, format_title
 from . import currency, Unit, Stream, SanStream, WasteStream, \
     Construction, Transportation
 
@@ -207,11 +207,15 @@ class SanUnit(Unit, isabstract=True):
 
     def _init_ins(self, ins, init_with):
         super()._init_ins(ins)
-        self._ins = self._convert_stream(ins, self.ins, init_with, 'ins')
+        converted = self._convert_stream(ins, self.ins, init_with, 'ins')
+        self._ins = Inlets(self, self._N_ins, converted, self._thermo,
+                           self._ins_size_is_fixed, self._stacklevel)
 
     def _init_outs(self, outs, init_with):
         super()._init_outs(outs)
-        self._outs = self._convert_stream(outs, self.outs, init_with, 'outs')
+        converted = self._convert_stream(outs, self.outs, init_with, 'outs')
+        self._outs = Outlets(self, self._N_outs, converted, self._thermo,
+                           self._outs_size_is_fixed, self._stacklevel)
 
     def _init_results(self):
         super()._init_results()
