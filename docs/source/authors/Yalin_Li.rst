@@ -46,7 +46,7 @@ I quoted this as a closing remark for my Ph.D. defense, still (and I sincerely h
    | *For Centennial Anniversary of Tongji University*
 
 
-To ruin everything (and show my peculiar taste of humor), this is the traditional dish of Cornwell, England called stargazy pie (picture from `Wikipedia <https://en.wikipedia.org/wiki/Stargazy_pie>`_):
+To ruin everything (and show my peculiar taste of humor), this is a traditional dish of Cornwell, England, called stargazy pie (picture from `Wikipedia <https://en.wikipedia.org/wiki/Stargazy_pie>`_):
 
 .. figure:: https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/StargazyPie.jpg/2560px-StargazyPie.jpg
    :width: 50%
