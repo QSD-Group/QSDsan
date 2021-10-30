@@ -124,6 +124,7 @@ Other notes
 ***********
 #. If you have never used ``git`` in terminal/command prompt, GitHub would ask for authentication and requires you create to a personal access token (instead of using your username and password), follow the instructions from `GitHub <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>`_ to create the token.
 #. For Mac users, you'll probably run into an error related to ``/Library/Developer/CommandLineTools`` if you don't have Xcode Command Line (i.e., ``xcode-select``), follow these `instructions <https://www.freecodecamp.org/news/install-xcode-command-line-tools/>`_ to install it. Note that as you can see in the linked post, even the ``xcode-select``, which is much smaller than the full Xcode app, requires 1GB+ space.
+#. After you cloned ``QSDsan``, you'll need to configure your system path to make sure that you are importing the cloned ``QSDsan``, which means you might need to uninstalled any ``pip``-installed version and add the cloned path to your IDE (e.g., Spyder).
 
 
 Upgrade Python
