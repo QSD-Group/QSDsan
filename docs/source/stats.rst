@@ -45,6 +45,7 @@ Box plot
         label.set_rotation(45)
 
 .. figure:: ./images/stats/plot_uncer_box.png
+   :width: 50%
 
 
 Histogram plot
@@ -57,6 +58,7 @@ Histogram plot
 	                               center_kws={'kde':True, 'log_scale': 10})
 
 .. figure:: ./images/stats/plot_uncer_hist.png
+   :width: 60%
 
 
 .. code:: python
@@ -68,6 +70,7 @@ Histogram plot
 	                                 kind='hist-box')
 
 .. figure:: ./images/stats/plot_uncer_hist-box.png
+   :width: 50%
 
 
 Kernel density plots
@@ -79,6 +82,7 @@ Kernel density plots
 	                               center_kws={'fill': True, 'log_scale': 2})                        
 
 .. figure:: ./images/stats/plot_uncer_kde.png
+   :width: 60%
 
 
 .. code:: python
@@ -89,6 +93,7 @@ Kernel density plots
 	                                 center_kws={'fill': True})
 
 .. figure:: ./images/stats/plot_uncer_kde-kde.png
+   :width: 50%
 
 
 .. code:: python
@@ -99,6 +104,7 @@ Kernel density plots
 	                                 margin_kws={'kde': True, 'fill': False})
 
 .. figure:: ./images/stats/plot_uncer_kde-hist.png
+   :width: 50%
 
 
 Correlations
@@ -137,6 +143,7 @@ Bar plot for single metric
 
 
 .. figure:: ./images/stats/plot_corr_bar.png
+   :width: 60%
 
 
 Bubble plot for multiple metrics
@@ -148,6 +155,7 @@ Bubble plot for multiple metrics
 
 
 .. figure:: ./images/stats/plot_corr_bubble.png
+   :width: 80%
 
 
 Input and sample preparation
@@ -189,6 +197,7 @@ Examples
 
 
 .. figure:: ./images/stats/plot_morris.png
+   :width: 60%
 
 
 Line plot with error bands for evolutionary of :math:`\mu^*`
@@ -208,6 +217,7 @@ Line plot with error bands for evolutionary of :math:`\mu^*`
 
 
 .. figure:: ./images/stats/plot_morris_conv.png
+   :width: 80%
 
 
 Line plot for evolutionary of :math:`\mu^*` rank
@@ -220,6 +230,7 @@ Line plot for evolutionary of :math:`\mu^*` rank
 
 
 .. figure:: ./images/stats/plot_morris_conv_rank.png
+   :width: 80%
 
 
 FAST
@@ -249,6 +260,7 @@ Bar plot for (e)FAST
 
 
 .. figure:: ./images/stats/plot_fast.png
+   :width: 60%
 
 
 Bar plot for RBD-FAST
@@ -270,6 +282,7 @@ Bar plot for RBD-FAST
 
 
 .. figure:: ./images/stats/plot_rbd.png
+   :width: 60%
 
 
 Sobol
@@ -300,6 +313,7 @@ Bar plot for total and main effects
 
 
 .. figure:: ./images/stats/plot_sobol_sts1.png
+   :width: 60%
 
 
 Heat map for total and second-order effects
@@ -316,6 +330,7 @@ Heat map for total and second-order effects
 
 
 .. figure:: ./images/stats/plot_sobol_sts2.png
+   :width: 80%
 
 
 Bar plot and heat map for total, main, and second-order effects

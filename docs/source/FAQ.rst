@@ -57,6 +57,75 @@ To fix this, Windows users can look at this `thread <https://stackoverflow.com/q
 Tips
 ====
 
+Private Fork
+------------
+While ``QSDsan`` (and other supporting packages such as ``EXPOsan``) will stay open-source, it is totally understandable that you may want to create a private fork of ``QSDsan`` (e.g., because of non-disclosure agreement).
+
+However, GitHub does not allow you to directly create a private fork (since the root repo ``QSDsan`` is public). You can follow these steps for a work-around (modified from an original post `here <https://gist.github.com/0xjac/85097472043b697ab57ba1b1c7530274>`_, you need to do all following in your terminal/command prompt):
+#. Create a bare clone of the repository (this is temporary and will be removed):
+
+    .. code::
+
+        git clone --bare https://github.com/QSD-Group/QSDsan.git
+
+    .. note::
+
+        You should firstly navigate (i.e., ``cd`` to wherever you want the repository to be saved).
+
+#. `Create a new private repository on Github <https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository>`_ and name it ``QSDsan`` (this name actually doesn't matter too much and you can use alternatives that you like, but you'll need to update the clone address below).
+#. Mirror-push your bare clone to your new ``QSDsan`` repository (replace ``<YOUR_USERNAME>`` with your actual Github username in the url below, without the ``<>``):
+
+    .. code::
+
+        cd QSDsan.git
+        git push --mirror https://github.com/<YOUR_USERNAME>/QSDsan.git
+
+#. Remove the temporary local repository you created in step 1 (since we already pushed it to remote).
+
+    .. code::
+
+        cd ..
+        rm -rf QSDsan.git
+
+#. You can now clone your ``QSDsan`` repository to your local.
+
+    .. code::
+
+        git clone https://github.com/<YOUR_USERNAME>/QSDsan.git
+
+#. It's also recommend to add the root ``QSDsan`` repo as remote to fetch future changes. Make sure you also disable push on the remote:
+
+    .. code::
+
+        git remote add upstream https://github.com/QSD-Group/QSDsan.git
+        git remote set-url --push upstream DISABLE
+
+    .. note::
+
+        Don't forget to firstly navigate to the ``QSDsan`` folder by ``cd QSDsan``
+
+#. To double-check things have been set up correctly, you can check the remote url using ``git remove -v``, and you should see something like:
+
+    .. code::
+
+        origin  https://github.com/<YOUR_USERNAME>/QSDsan.git (fetch)
+        origin  https://github.com/<YOUR_USERNAME>/QSDsan.git (push)
+        upstream    https://github.com/QSD-Group/QSDsan.git (fetch)
+        upstream    DISABLE (push)
+
+#. In the future, you'll want to push to ``origin`` to update your remote fork. To pull updates from the root ``QSDsan`` (i.e., ``upstream``):
+
+    .. code::
+
+        git fetch upstream
+        git rebase upstream/main
+
+Other notes
+***********
+#. If you have never used ``git`` in terminal/command prompt, GitHub would ask for authentication and requires you create to a personal access token (instead of using your username and password), follow the instructions from `GitHub <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>`_ to create the token.
+#. For Mac users, you'll probably run into an error related to ``/Library/Developer/CommandLineTools`` if you don't have Xcode Command Line (i.e., ``xcode-select``), follow these `instructions <https://www.freecodecamp.org/news/install-xcode-command-line-tools/>`_ to install it. Note that as you can see in the linked post, even the ``xcode-select``, which is much smaller than the full Xcode app, requires 1GB+ space.
+
+
 Upgrade Python
 --------------
 ``QSDsan`` is currently compatible with and tested for Python 3.7 and 3.8. However, with ``BioSTEAM`` moving to Python 3.8 (see this `issue <https://github.com/BioSTEAMDevelopmentGroup/biosteam/issues/56>`_), qsdsan may be only compatible with Python 3.8 and higher in the future. 
