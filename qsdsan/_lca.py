@@ -521,12 +521,12 @@ class LCA:
             tot[m] += trans[m] + s[m] + other[m]
         return tot
 
-    def _append_cat_sum(self, cat_table, cat, tot, time_ratio=1):
+    def _append_cat_sum(self, cat_table, cat, tot):
         num = len(cat_table)
         cat_table.loc[num] = '' # initiate a blank spot for value to be added later
 
         for i in self.indicators:
-            cat_table[f'{i.ID} [{i.unit}]'][num] = tot[i.ID] * time_ratio
+            cat_table[f'{i.ID} [{i.unit}]'][num] = tot[i.ID]
             cat_table[f'Category {i.ID} Ratio'][num] = 1
 
         if cat in ('construction', 'transportation'):
@@ -550,9 +550,10 @@ class LCA:
             time = auom(time_unit).convert(float(time), 'hr')
 
         cat = category.lower()
-        tot = getattr(self, f'total_{cat}_impacts')
-        time_ratio = time/self.lifetime_hr if (cat != 'construction' or self.annualize_construction) \
-            else ceil(time/self.lifetime_hr)
+        tot_f = getattr(self, f'get_{cat}_impacts')
+        kwargs = {'time': time, 'time_unit': time_unit} if cat != 'other' else {}
+        tot = tot_f(**kwargs)
+        time_ratio = time/self.lifetime_hr
 
         if cat in ('construction', 'transportation'):
             units = sorted(getattr(self, f'_{cat}_units'),
@@ -574,14 +575,17 @@ class LCA:
                     if cat == 'transportation':
                         item_dct[i.item.ID]['Quantity'].append(i.quantity*time/i.interval)
                     else: # construction
-                        item_dct[i.item.ID]['Quantity'].append(i.quantity*time_ratio)
+                        lifetime = i.lifetime or su.lifetime or self.lifetime
+                        if isinstance(lifetime, dict): # in the case the the equipment is not in the unit lifetime dict
+                            lifetime = lifetime.get(i.item.ID) or self.lifetime
+                        constr_ratio = self.lifetime/lifetime if self.annualize_construction else ceil(self.lifetime/lifetime)
+                        item_dct[i.item.ID]['Quantity'].append(i.quantity*constr_ratio)
 
             dfs = []
             for item in items:
                 dct = item_dct[item.ID]
                 dct['SanUnit'].append('Total')
-                dct['Quantity'] = np.array(dct['Quantity'])
-                dct['Quantity'] = np.append(dct['Quantity'], dct['Quantity'].sum())
+                dct['Quantity'] = np.append(dct['Quantity'], sum(dct['Quantity']))
                 dct['Item Ratio'] = dct['Quantity']/dct['Quantity'].sum()*2
                 for i in self.indicators:
                     if i.ID in item.CFs:
@@ -598,7 +602,7 @@ class LCA:
                 dfs.append(df)
 
             table = pd.concat(dfs)
-            return self._append_cat_sum(table, cat, tot, time_ratio)
+            return self._append_cat_sum(table, cat, tot)
 
         ind_head = sum(([f'{i.ID} [{i.unit}]',
                          f'Category {i.ID} Ratio'] for i in self.indicators), [])
@@ -623,7 +627,7 @@ class LCA:
                         item_dct[f'Category {ind.ID} Ratio'].append(0)
             table = pd.DataFrame.from_dict(item_dct)
             table.set_index(['Stream'], inplace=True)
-            return self._append_cat_sum(table, cat, tot, time_ratio)
+            return self._append_cat_sum(table, cat, tot)
 
         elif cat == 'other':
             headings = ['Other', 'Quantity', *ind_head]
@@ -646,7 +650,7 @@ class LCA:
 
             table = pd.DataFrame.from_dict(item_dct)
             table.set_index(['Other'], inplace=True)
-            return self._append_cat_sum(table, cat, tot, time_ratio)
+            return self._append_cat_sum(table, cat, tot)
 
         raise ValueError(
             'category can only be "Construction", "Transportation", "Stream", or "Other", ' \

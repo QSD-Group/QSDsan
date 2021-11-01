@@ -103,7 +103,7 @@ class SanUnit(Unit, isabstract=True):
             50% of the pump at 50 kW. Set the pump `power_utility` to be 50*50%=25 kW.
 
 
-    equipment_lifetime : int or dict
+    lifetime : int or dict
         Lifetime of this unit (int) or individual equipment within this unit
         (dict) in year.
         It will be used to adjust cost and emission calculation in TEA and LCA.
