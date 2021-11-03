@@ -96,7 +96,8 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         biogas.phase = CH4.phase = N2O.phase = 'g'
 
         # COD removal
-        COD_deg = waste._COD*waste.F_vol/1e3*self.COD_removal # kg/hr
+        _COD = waste._COD or waste.COD
+        COD_deg = _COD*waste.F_vol/1e3*self.COD_removal # kg/hr
         treated._COD *= (1-self.COD_removal)
         treated.imass[self.degraded_components] *= (1-self.COD_removal)
 

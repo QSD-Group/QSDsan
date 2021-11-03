@@ -100,7 +100,8 @@ class Lagoon(SanUnit, Decay):
         removed_frac = self.COD_removal*self.COD_decay
         treated.imass[self.degraded_components] *= 1 - self.COD_removal
 
-        CH4.imass['CH4'] = removed_frac*waste.COD*waste.F_vol/1e3 * \
+        _COD = waste._COD or waste.COD
+        CH4.imass['CH4'] = removed_frac*_COD*waste.F_vol/1e3 * \
             self.MCF_decay*self.max_CH4_emission
 
         if self.if_N2O_emission:
@@ -117,7 +118,7 @@ class Lagoon(SanUnit, Decay):
             N2O.empty()
 
         treated.imass['P'] *= 1 - self.P_removal
-        treated._COD = waste.COD*waste.F_vol*(1-self.COD_removal)/treated.F_vol
+        treated._COD = _COD*waste.F_vol*(1-self.COD_removal)/treated.F_vol
 
     _units = {
         'Single lagoon volume': 'm3',

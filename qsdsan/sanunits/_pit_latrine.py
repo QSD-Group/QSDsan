@@ -120,7 +120,7 @@ class PitLatrine(Toilet):
 
         mixed = WasteStream()
         mixed.mix_from(self.ins)
-        tot_COD_kg = sum(float(getattr(i, 'COD'))*i.F_vol for i in self.ins)/1e3
+        tot_COD_kg = sum(float(getattr(i, '_COD') or getattr(i, 'COD'))*i.F_vol for i in self.ins)/1e3
 
         # All composite variables in mg/L
         # Leaching

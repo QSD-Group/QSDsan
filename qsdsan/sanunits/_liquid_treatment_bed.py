@@ -84,12 +84,13 @@ class LiquidTreatmentBed(SanUnit, Decay):
         CH4.phase = N2O.phase = 'g'
 
         # COD removal
+        _COD = waste._COD or waste.COD
         COD_loss = self.first_order_decay(k=self.decay_k_COD,
                                           t=self.tau/365,
                                           max_decay=self.COD_max_decay)
-        COD_loss_tot = COD_loss*waste.COD/1e3*waste.F_vol
+        COD_loss_tot = COD_loss*_COD/1e3*waste.F_vol
 
-        treated._COD *= (1-COD_loss)
+        treated._COD = _COD * (1-COD_loss)
         treated.imass[self.degraded_components] *= (1-COD_loss)
 
         CH4_prcd = COD_loss_tot*self.MCF_decay*self.max_CH4_emission

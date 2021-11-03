@@ -101,8 +101,9 @@ class SludgeSeparator(SanUnit):
                 if var == 'TS':
                     sol.imass['OtherSS'] = split[var] * waste.imass['OtherSS']
                 elif var == 'COD':
-                    sol_COD = split[var] * waste._COD * waste.F_vol
-                    liq_COD = waste._COD * waste.F_vol - sol_COD
+                    _COD = waste._COD or waste.COD
+                    sol_COD = split[var] * _COD * waste.F_vol
+                    liq_COD = _COD * waste.F_vol - sol_COD
                 elif var == 'N':
                     N_sol = split[var]*(waste.imass['NH3']+waste.imass['NonNH3'])
                     NonNH3_rmd, NH3_rmd = \

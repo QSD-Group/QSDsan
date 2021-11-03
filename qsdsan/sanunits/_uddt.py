@@ -114,7 +114,8 @@ class UDDT(Toilet):
         liq.copy_like(self.ins[0])
         # Assume all of additives (toilet paper and desiccant) and water
         # (cleansing and flushing) go to feces
-        sol_COD = self.ins[1]._COD*self.ins[1].F_vol/1e3
+        _COD = self.ins[1]._COD or self.ins[1].COD
+        sol_COD = _COD*self.ins[1].F_vol/1e3
         sol.mix_from(self.ins[1:])
         sol._COD = sol_COD*1e3/sol.F_vol
         struvite.phase = HAP.phase = 's'
@@ -133,7 +134,7 @@ class UDDT(Toilet):
             COD_loss = self.first_order_decay(k=self.decay_k_COD,
                                               t=self.collection_period/365,
                                               max_decay=self.COD_max_decay)
-            CH4.imass['CH4'] = sol.COD/1e3*sol.F_vol*COD_loss * \
+            CH4.imass['CH4'] = sol._COD/1e3*sol.F_vol*COD_loss * \
                 self.max_CH4_emission*self.MCF_decay # COD in mg/L (g/m3)
             sol._COD *= 1 - COD_loss
             sol.imass[self.degraded_components] *= 1 - COD_loss

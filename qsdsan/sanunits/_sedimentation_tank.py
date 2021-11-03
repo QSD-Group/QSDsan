@@ -97,7 +97,8 @@ class SedimentationTank(SludgeSeparator, Decay):
                                           t=self.tau/365,
                                           max_decay=self.COD_max_decay)
 
-        tot_COD_kg = sol._COD * sol.F_vol / 1e3
+        _COD = sol._COD or sol.COD
+        tot_COD_kg = _COD * sol.F_vol / 1e3
         sol.imass[self.degraded_components] *= 1 - COD_loss
 
         # Adjust total mass of of the settled solids by changing water content
