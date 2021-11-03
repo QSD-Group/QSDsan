@@ -54,6 +54,37 @@ When using non-English operating systems, you may run into errors similar to (cp
 To fix this, Windows users can look at this `thread <https://stackoverflow.com/questions/57131654/using-utf-8-encoding-chcp-65001-in-command-prompt-windows-powershell-window>`_ on updating the character encoding in the Windows console to UTF-8. We are not sure if this error will appear for Mac users, but let us know if you run into this and we will be happy to help with troubleshooting.
 
 
+``ModuleNotFoundError``
+-----------------------
+Sometimes (even though you have downloaded/cloned/installed ``qsdsan``), you still cannot see:
+
+   .. code::
+
+       ModuleNotFoundError: No module named 'qsdsan'
+
+
+There are multiple possible reasons:
+
+- If you have multiple conda environments, make sure you firstly do ``conda activate <ENV NAME>`` (replace ``<ENV NAME>`` with the actual name of your environment) to activate the environment.
+- If you are using the downloaded/cloned version of qsdsan, make sure you have added the path to the cloned version to your system path (more details on the tutorial `Helpful Basics <https://qsdsan.readthedocs.io/en/latest/tutorials/1_Helpful_Basics.html>`_).
+- If you are using Jupyter Notebook
+    
+    - If you are using the downloaded/cloned version of ``qsdsan``, note that Jupyter Notebook does not know about the path you configured in other editors (e.g., Spyder), so you may need to change directory (with ``os.chdir``) or set ``sys.path``.
+    - If you are using pip-installed ``qsdsan``, try to do this in your terminal/command prompt (firstly do ``conda activate <ENV NAME>`` if you are using an virtual environment, and replace ``<KERNEL NAME>`` with the name you like):
+
+        .. code::
+
+            python -m ipykernel install --user --name <KERNEL NAME>
+
+
+        .. note::
+
+            If you do not have ``ipykernel``, firstly do ``conda install ipykernel``
+
+
+        Then when you open the Jupyter Notebook, select the ``<KERNEL NAME>`` kernel when you create a new notebook you can find more details in this post about `enabling multiple kernels in Jupyter Notebook <https://medium.com/@ace139/enable-multiple-kernels-in-jupyter-notebooks-6098c738fe72>`_.
+
+
 Tips
 ====
 

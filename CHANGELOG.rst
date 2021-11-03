@@ -4,6 +4,12 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
+Ongoing
+--------
+- Significantly expanded the tutorials with demo videos on `YouTube <https://www.youtube.com/playlist?list=PL-tj_uM0mIdFv72MAULnWjS6lx_cCyi2N>`_. Now tutorials cover all non-dynamic major classes (tutorials on dynamic classes will be included in the next major release).
+- Added system-wise dynamic simulation capacity and `benchmark simulation system #1 (BSM1) model on EXPOsan <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_.
+
+
 `0.3.0`_
 --------
 - Now LCA data can be imported from external databases using the newly made `BW2QSD <https://github.com/QSD-Group/BW2QSD>`_ package.
@@ -31,7 +37,7 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - Added :class:`~.SanStream` for non-waste streams (e.g., gases).
 - Updated the ``add_OPEX`` attribute of :class:`~.SanUnit` and ``system_add_OPEX`` attribute of :class:`~.SimpleTEA` so that they take :class:`dict` as the default to allow display of multiple additional operating expenses.
-- Split the ``systems`` module into an individual package `EXPOsan <https://github.com/QSD-Group/exposan>`_.
+- Split the ``systems`` module into an individual package `EXPOsan`_.
 - Now using :class:`thermosteam.utils.Registry` to manage :class:`~.ImpactIndicator` and :class:`~.ImpactItem`.
 - Added `AppVeyor CI <https://ci.appveyor.com/project/yalinli2/qsdsan>`_.
 - Renamed the ``master`` branch to ``main``.
@@ -114,8 +120,9 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 
 .. Other links
-.. _latest: https://qsdsan.readthedocs.io/en/latest/
-.. _beta: https://qsdsan.readthedocs.io/en/beta/
+.. _latest: https://qsdsan.readthedocs.io/en/latest
+.. _beta: https://qsdsan.readthedocs.io/en/beta
+.. _EXPOsan:  https://github.com/QSD-Group/exposan
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
