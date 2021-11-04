@@ -87,6 +87,7 @@ class SludgeSeparator(SanUnit):
         liq, sol = self.outs[0], self.outs[1]
 
         # Retention in the settled solids
+        sol_COD = liq_COD = None
         split = self.split
         if self._split_type == 'float':
             liq.copy_like(waste)
@@ -113,8 +114,8 @@ class SludgeSeparator(SanUnit):
 
         # Adjust total mass of of the settled solids by changing water content.
         liq, sol = self._adjust_solid_water(waste, liq, sol)
-        sol._COD = sol_COD / sol.F_vol
-        liq._COD = liq_COD / liq.F_vol
+        sol._COD = sol._COD if not sol_COD else sol_COD / sol.F_vol
+        liq._COD = liq._COD if not liq_COD else liq_COD / liq.F_vol
 
 
     @property
