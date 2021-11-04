@@ -27,7 +27,8 @@ data_path += 'sanunit_data/_anaerobic_baffled_reactor.tsv'
 
 class AnaerobicBaffledReactor(SanUnit, Decay):
     '''
-    Anaerobic baffled reactor with the production of biogas based on Trimmer et al. [1]_
+    Anaerobic baffled reactor with the production of biogas based on
+    `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
 
     Parameters
     ----------
@@ -41,7 +42,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         If produced biogas will be captured, otherwise it will be treated
         as fugitive CH4.
     if_N2O_emission : bool
-        If consider N2O emission from N degradation the process.
+        If considering fugitive N2O generated from the degraded N.
 
     Examples
     --------
@@ -49,10 +50,10 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
 
     References
     ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
 
     See Also
     --------
@@ -69,6 +70,12 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         self.degraded_components = tuple(degraded_components)
         self.if_capture_biogas = if_capture_biogas
         self.if_N2O_emission = if_N2O_emission
+
+        self.construction = (
+            Construction('concrete', item='Concrete', quantity_unit='m3'),
+            Construction('gravel', item='Gravel', quantity_unit='kg'),
+            Construction('excavation', item='Excavation', quantity_unit='m3'),
+            )
 
         data = load_data(path=data_path)
         for para in data.index:
@@ -101,16 +108,15 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
             CH4.imass['CH4'] = CH4_prcd
             biogas.empty()
 
+        N_tot = waste.TN/1e3 * waste.F_vol
+        N_loss_tot = N_tot * self.N_removal
+        NH3_rmd, NonNH3_rmd = \
+            self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
+        treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
+        treated.imass['NonNH3'] = waste.imass['NonNH3'] - NonNH3_rmd
+
         if self.if_N2O_emission:
-            N_loss = self.first_order_decay(k=self.decay_k_N,
-                                            t=self.tau/365,
-                                            max_decay=self.N_max_decay)
-            N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol*self.N_removal
-            NH3_rmd, NonNH3_rmd = \
-                self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
-            treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
-            treated.imass['NonNH3'] = waste.imass['NonNH3'] - NonNH3_rmd
-            N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
+            N2O.imass['N2O'] = N_loss_tot*self.N_max_decay*self.N2O_EF_decay*44/28
         else:
             N2O.empty()
 
@@ -131,13 +137,13 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         design['Reactor width'] = W = self.reactor_W
         design['Reactor height'] = H = self.reactor_H
         design['Single reactor volume'] = V = L*W*H
+
+        constr = self.construction
         concrete = N*self.concrete_thickness*(2*L*W+2*L*H+(2+N_b)*W*H)*self.add_concrete
-        self.construction = (
-            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
-            Construction(item='Gravel', quantity= N*V/(N_b+1)*self.gravel_density,
-                         quantity_unit='kg'),
-            Construction(item='Excavation', quantity=N*V, quantity_unit='m3'),
-            )
+        constr[0].quantity = concrete
+        constr[1].quantity = N*V/(N_b+1) * self.gravel_density
+        constr[2].quantity = N * V # excavation
+
         self.add_construction()
 
 

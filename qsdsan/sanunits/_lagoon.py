@@ -26,7 +26,8 @@ __all__ = ('Lagoon',)
 
 class Lagoon(SanUnit, Decay):
     '''
-    Anaerobic and facultative lagoon treatment based on Trimmer et al. [1]_
+    Anaerobic and facultative lagoon treatment based on
+    `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
 
     Parameters
     ----------
@@ -42,7 +43,7 @@ class Lagoon(SanUnit, Decay):
     degraded_components : tuple
         IDs of components that will degrade (at the same removal as `COD_removal`).
     if_N2O_emission : bool
-        If consider N2O emission from N degradation the process.
+        If consider N2O emission from N degradation in the process.
 
     Examples
     --------
@@ -50,10 +51,10 @@ class Lagoon(SanUnit, Decay):
 
     References
     ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
 
     See Also
     --------
@@ -78,6 +79,11 @@ class Lagoon(SanUnit, Decay):
         self._flow_rate = flow_rate
         self.degraded_components = tuple(degraded_components)
         self.if_N2O_emission = if_N2O_emission
+
+        self.construction = (
+            Construction('liner', item='Plastic', quantity_unit='kg'),
+            Construction('excavation', item='Excavation', quantity_unit='m3'),
+            )
 
         for attr, value in kwargs.items():
             setattr(self, attr, value)
@@ -129,10 +135,10 @@ class Lagoon(SanUnit, Decay):
         design['Lagoon depth'] = depth = V / (L*W)
 
         liner = (L*W + 2*depth*(L+W)) * N * self.liner_unit_mass
-        self.construction = (
-            Construction(item='Plastic', quantity=liner, quantity_unit='kg'),
-            Construction(item='Excavation', quantity=N*V, quantity_unit='m3'),
-            )
+        constr = self.construction
+        constr[0].quantity = liner
+        constr[1].quantity = N * V # excavation
+
         self.add_construction(add_cost=False)
 
     @property

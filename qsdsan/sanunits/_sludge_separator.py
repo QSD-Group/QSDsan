@@ -28,8 +28,9 @@ allocate_N_removal = Decay.allocate_N_removal
 
 class SludgeSeparator(SanUnit):
     '''
-    For sludge separation based on Trimmer et al. [1]_, note that no default
-    cost or environmental impacts are included.
+    For sludge separation based on
+    `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_,
+    note that no default cost or environmental impacts are included.
 
     Parameters
     ----------
@@ -50,10 +51,10 @@ class SludgeSeparator(SanUnit):
 
     References
     ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
 
     '''
 
@@ -97,10 +98,8 @@ class SludgeSeparator(SanUnit):
             liq.mass -= sol.mass
         else:
             for var in self.split.keys():
-                #!!! In the future this should be best done by changing the state variable
                 if var == 'TS':
-                    try: sol.imass['OtherSS'] = split[var] * waste.imass['OtherSS']
-                    except: breakpoint()
+                    sol.imass['OtherSS'] = split[var] * waste.imass['OtherSS']
                 elif var == 'COD':
                     sol_COD = split[var] * waste._COD * waste.F_vol
                     liq_COD = waste._COD * waste.F_vol - sol_COD

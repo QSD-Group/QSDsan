@@ -27,7 +27,8 @@ data_path += 'sanunit_data/_liquid_treatment_bed.tsv'
 
 class LiquidTreatmentBed(SanUnit, Decay):
     '''
-    For secondary treatment of liquid based on Trimmer et al. [1]_
+    For secondary treatment of liquid based on
+    `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
 
     Parameters
     ----------
@@ -38,7 +39,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
     degraded_components : tuple
         IDs of components that will degrade (at the same removal as `COD_removal`).
     if_N2O_emission : bool
-        If consider N2O emission from N degradation the process.
+        If consider N2O emission from N degradation in the process.
 
     Examples
     --------
@@ -46,10 +47,10 @@ class LiquidTreatmentBed(SanUnit, Decay):
 
     References
     ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
 
     See Also
     --------
@@ -62,6 +63,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
         self.degraded_components = tuple(degraded_components)
         self.if_N2O_emission = if_N2O_emission
+        self.construction = (Construction('concrete', item='Concrete', quantity_unit='m3'))
 
         data = load_data(path=data_path)
         for para in data.index:
@@ -124,9 +126,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
         design['Single bed volume'] = L*W*H
 
         concrete = N*self.concrete_thickness*(L*W+2*L*H+2*W*H)
-        self.construction = (
-            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
-            )
+        self.construction[0].quantity = concrete
         self.add_construction()
 
 

@@ -21,8 +21,11 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 .. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
    :target: https://qsdsan.readthedocs.io/en/latest/CODE_OF_CONDUCT.html
 
+|
 
 .. contents::
+
+|
 
 What is ``QSDsan``?
 -------------------
@@ -31,6 +34,8 @@ What is ``QSDsan``?
 As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
 
 All systems developed with ``QSDsan`` are included in the package `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ - exposition of sanitation and resource recovery systems.
+
+Additionally, another package, `DMsan <https://github.com/QSD-Group/DMsan>`_ (decision-making for sanitation and resource recovery systems), is being developed for decision-making among multiple dimensions of sustainability with consideration of location-specific contextual parameters.
 
 
 Installation
@@ -66,17 +71,20 @@ About the authors
 Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors are listed below, please refer to the `author page <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_ for the full list of authors.
 
 **Lead developers:**
-   - `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_ (current maintainer)
-   - `Joy Zhang <mailto:joycheung1994@gmail.com>`_
+   - `Yalin Li`_ (current maintainer)
+   - `Joy Zhang`_
+
 
 **Tutorials and videos:**
-   - `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_
-   - `Joy Zhang <mailto:joycheung1994@gmail.com>`_
-   - Tori Morgan
-   - Hannah Lohman
+   - `Yalin Li`_ (current maintainer)
+   - `Joy Zhang`_
+   - `Tori Morgan <https://qsdsan.readthedocs.io/en/beta/authors/Tori_Morgan.html>`_
+   - `Hannah Lohman <https://qsdsan.readthedocs.io/en/beta/authors/Hannah_Lohman.html>`_
+
 
 **Project conception & funding support:**
    - `Jeremy Guest <mailto:jsguest@illinois.edu>`_
+
 
 **Special acknowledgement:**
    - Yoel Cortés-Peña for helping many of the ``QSDsan`` members get started on Python and package development.
@@ -96,3 +104,8 @@ References
 .. [1] Li, Y.; Trimmer, J. T.; Hand, S.; Zhang, X.; Chambers, K. G.; Lohman, H. A. C.; Shi, R.; Byrne, D. M.; Cook, S. M.; Guest, J. S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. *Critial Review Proposal Submitted*, 2021.
 
 .. [2] Cortés-Peña, Y.; Kumar, D.; Singh, V.; Guest, J. S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020, 8 (8), 3302–3310. https://doi.org/10.1021/acssuschemeng.9b07040.
+
+
+.. Links
+.. _Yalin Li: https://qsdsan.readthedocs.io/en/beta/authors/Yalin_Li.html
+.. _Joy Zhang: https://qsdsan.readthedocs.io/en/beta/authors/Joy_Zhang.html

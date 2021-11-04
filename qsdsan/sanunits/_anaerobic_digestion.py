@@ -27,7 +27,8 @@ data_path += 'sanunit_data/_anaerobic_digestion.tsv'
 
 class AnaerobicDigestion(SanUnit, Decay):
     '''
-    Anaerobic digestion of wastes with the production of biogas based on Trimmer et al. [1]_
+    Anaerobic digestion of wastes with the production of biogas based on
+    `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
 
     Parameters
     ----------
@@ -44,7 +45,7 @@ class AnaerobicDigestion(SanUnit, Decay):
         If produced biogas will be captured, otherwise it will be treated
         as fugitive CH4.
     if_N2O_emission : bool
-        If consider N2O emission from N degradation the process.
+        If consider N2O emission from N degradation in the process.
 
     Examples
     --------
@@ -52,10 +53,10 @@ class AnaerobicDigestion(SanUnit, Decay):
 
     References
     ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
 
     See Also
     --------
@@ -71,6 +72,11 @@ class AnaerobicDigestion(SanUnit, Decay):
         self.degraded_components = tuple(degraded_components)
         self.if_capture_biogas = if_capture_biogas
         self.if_N2O_emission = if_N2O_emission
+
+        self.construction = (
+            Construction('concrete', item='Concrete', quantity_unit='m3'),
+            Construction('excavation', item='Excavation', quantity_unit='m3'),
+            )
 
         data = load_data(path=data_path)
         for para in data.index:
@@ -139,11 +145,12 @@ class AnaerobicDigestion(SanUnit, Decay):
         # Rx modeled as a cylinder
         design['Reactor diameter'] = D = (4*V_single*self.aspect_ratio/np.pi)**(1/3)
         design['Reactor height'] = H = self.aspect_ratio * D
+
+        constr = self.construction
         concrete =  N*self.concrete_thickness*(2*np.pi/4*(D**2)+np.pi*D*H)
-        self.construction = (
-            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
-            Construction(item='Excavation', quantity=V_tot, quantity_unit='m3'),
-            )
+        constr[0].quantity = concrete
+        constr[1].quantity = V_tot # excavation
+
         self.add_construction()
 
 

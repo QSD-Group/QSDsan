@@ -15,9 +15,10 @@ for license details.
 
 # %%
 
-import sys, math
+import sys
 import numpy as np
 import pandas as pd
+from math import ceil
 from collections.abc import Iterable
 from warnings import warn
 from . import ImpactIndicator, ImpactItem, Stream, SanStream, SanUnit
@@ -41,10 +42,17 @@ class LCA:
         Lifetime of the LCA.
     lifetime_unit : str
         Unit of lifetime.
+    indicators : iterable
+        `ImpactIndicator` objects or their IDs/aliases.
     uptime_ratio : float
         Fraction of time that the system is operating.
-    indicators : iterable
-        `ImpactIndicator` objects or their IDs/aliases
+    annualize_construction : bool
+        Used in the case that the lifetime of this LCA (e.g., 10 years)
+        is not divisible by the lifetime of certain equipment (e.g., 8 years).
+        If True, then the impacts from construction will be annualized using
+        the lifetime of the equipment;
+        if False, then the total number of the equipment needed throughout this
+        LCA will be calculated using `ceil(LCA lifetime/equipment lifetime`.
     item_quantities : kwargs, :class:`ImpactItem` or str = float/callable or (float/callable, unit)
         Other :class:`ImpactItem` objects (e.g., electricity) and their quantities.
         Note that callable functions are used so that quantity of items can be updated.
@@ -64,7 +72,7 @@ class LCA:
     >>> sys.show()
     System: sys
     ins...
-    [0] water
+    [0] salt_water
         phase: 'l', T: 298.15 K, P: 101325 Pa
         flow (kmol/hr): H2O   111
                         NaCl  0.856
@@ -184,11 +192,12 @@ class LCA:
     __slots__ = ('_system',  '_lifetime', '_uptime_ratio',
                  '_construction_units', '_transportation_units',
                  '_lca_streams', '_indicators',
-                 '_other_items', '_other_items_f')
+                 '_other_items', '_other_items_f', 'annualize_construction')
 
 
     def __init__(self, system, lifetime, lifetime_unit='yr',
-                 indicators=(), uptime_ratio=1, **item_quantities):
+                 indicators=(), uptime_ratio=1, annualize_construction=False,
+                 **item_quantities):
         system.simulate()
         self._construction_units = set()
         self._transportation_units = set()
@@ -197,6 +206,7 @@ class LCA:
         self._update_lifetime(lifetime, lifetime_unit)
         self.indicators = indicators
         self.uptime_ratio = uptime_ratio
+        self.annualize_construction = annualize_construction
         self._other_items = {}
         self._other_items_f = {}
         for item, val in item_quantities.items():
@@ -298,11 +308,13 @@ class LCA:
     _ipython_display_ = show
 
 
-    def get_construction_impacts(self, units, time=None, time_unit='hr'):
+    def get_construction_impacts(self, units=None, time=None, time_unit='hr'):
         '''
         Return all construction-related impacts for the given unit,
         normalized to a certain time frame.
         '''
+        units = self.construction_units if units is None else units
+        annualize = self.annualize_construction
         if not isinstance(units, Iterable) or isinstance(units, str):
             units = (units,)
         if time is None:
@@ -317,11 +329,11 @@ class LCA:
                 impact = j.impacts
                 if j.lifetime is not None: # this equipment has a lifetime
                     constr_lifetime = auom('yr').convert(j.lifetime, 'hr')
-                    ratio = math.ceil(time/constr_lifetime)
+                    ratio = ceil(time/constr_lifetime) if not annualize else time/constr_lifetime
                 else: # equipment doesn't have a lifetime
                     if i.lifetime and not isinstance(i.lifetime, dict): # unit has a uniform lifetime
                         constr_lifetime = auom('yr').convert(i.lifetime, 'hr')
-                        ratio = math.ceil(time/constr_lifetime)
+                        ratio = ceil(time/constr_lifetime) if not annualize else time/constr_lifetime
                     else: # no lifetime, assume just need one
                         ratio = 1.
                 for m, n in impact.items():
@@ -330,11 +342,12 @@ class LCA:
                     impacts[m] += n*ratio
         return impacts
 
-    def get_transportation_impacts(self, units, time=None, time_unit='hr'):
+    def get_transportation_impacts(self, units=None, time=None, time_unit='hr'):
         '''
         Return all transportation-related impacts for the given unit,
         normalized to a certain time frame.
         '''
+        units = self.transportation_units if units is None else units
         if not isinstance(units, Iterable):
             units = (units,)
         if not time:
@@ -377,8 +390,8 @@ class LCA:
                 if not isinstance(j, SanStream):
                     continue
                 ws = j
-                if j.impact_item:
-                    j = ws.impact_item
+                if j.stream_impact_item:
+                    j = ws.stream_impact_item
                 else: continue
             else:
                 ws = j.linked_stream
@@ -441,8 +454,8 @@ class LCA:
             One or a iterable of streams. Note that impacts of these streams will be
             excluded in calculating the total impacts.
         allocate_by : str, iterable, or function to generate an iterable
-            If provided as a str, can be "mass", "energy", or 'value' to allocate
-            the impacts accordingly.
+            If provided as a str, can be "mass" (`F_mass`), "energy" (`HHV`),
+            or 'value' (`F_mass`*`price`) to allocate the impacts accordingly.
             If provided as an iterable (no need to normalize so that sum of the iterable is 1),
             will allocate impacts according to the iterable.
             If provided as a function,  will call the function to generate an
@@ -538,10 +551,8 @@ class LCA:
 
         cat = category.lower()
         tot = getattr(self, f'total_{cat}_impacts')
-        time_ratio = time/self.lifetime_hr
-
-        if cat in ('construction', 'other'):
-            time = time/self.lifetime_hr
+        time_ratio = time/self.lifetime_hr if (cat != 'construction' or self.annualize_construction) \
+            else ceil(time/self.lifetime_hr)
 
         if cat in ('construction', 'transportation'):
             units = sorted(getattr(self, f'_{cat}_units'),
@@ -622,7 +633,7 @@ class LCA:
             for other_ID in self.other_items.keys():
                 other = self.other_items[other_ID]['item']
                 item_dct['Other'].append(f'{other_ID} [{other.functional_unit}]')
-                quantity = self.other_items[other_ID]['quantity'] * time
+                quantity = self.other_items[other_ID]['quantity'] * time_ratio
                 item_dct['Quantity'].append(quantity)
                 for ind in self.indicators:
                     if ind.ID in other.CFs.keys():

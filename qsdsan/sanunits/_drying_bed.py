@@ -28,7 +28,8 @@ data_path += 'sanunit_data/_drying_bed.tsv'
 
 class DryingBed(SanUnit, Decay):
     '''
-    Unplanted and planted drying bed for solids based on Trimmer et al. [1]_
+    Unplanted and planted drying bed for solids based on
+    `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
 
     Parameters
     ----------
@@ -49,10 +50,10 @@ class DryingBed(SanUnit, Decay):
 
     References
     ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
 
     See Also
     --------
@@ -76,6 +77,11 @@ class DryingBed(SanUnit, Decay):
             self.design_type = 'planted'
 
         self.degraded_components = tuple(degraded_components)
+
+        self.construction = (
+            Construction('concrete', item='Concrete', quantity_unit='m3'),
+            Construction('steel', item='Steel', quantity_unit='kg'),
+            )
 
         data = load_data(path=data_path)
         for para in data.index:
@@ -163,10 +169,11 @@ class DryingBed(SanUnit, Decay):
         concrete = (N*self.concrete_thickness*(L*W+2*L*H+2*W*H)).sum()
         steel = tot_cover_area*self.cover_unit_mass + \
             tot_column_length*self.column_unit_mass
-        self.construction = (
-            Construction(item='Concrete', quantity=concrete, quantity_unit='m3'),
-            Construction(item='Steel', quantity=steel, quantity_unit='kg'),
-            )
+
+        constr = self.construction
+        constr[0].quantity = concrete
+        constr[1].quantity = steel
+
         for i in self.construction:
             self.F_BM[i.item.ID] = 1
 

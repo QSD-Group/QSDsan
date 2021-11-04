@@ -75,7 +75,8 @@ conc_unit = auom('mg/L')
 # Util functions
 # =============================================================================
 
-_load_components = settings.get_default_chemicals
+_load_components = settings.get_chemicals
+_load_thermo = settings.get_thermo
 
 def to_float(stream, slot):
     return 0. if getattr(stream, slot) is None else float(getattr(stream, slot))
@@ -519,7 +520,7 @@ class WasteStream(SanStream):
         if not self.phase == 'l':
             raise RuntimeError('Only liquid streams can use the `composite` method, '
                                f'the current WasteStream {self.ID} is {self.phase}.')
-        
+
         #TODO: deal with units
         if subgroup:
             cmps = subgroup
@@ -713,6 +714,11 @@ class WasteStream(SanStream):
         # printed = printed.replace('kg/hr', 'mg/L')
         # print(printed)
         # return printed
+
+    @property
+    def Conc(self):
+        '''[property_array] Mass concentrations, in mg/L (g/m3), same as `conc`.'''
+        return self.iconc.data
 
 
     def copy(self, new_ID='', ws_properties=True):
@@ -987,7 +993,9 @@ class WasteStream(SanStream):
                             X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.):
 
         if thermo: cmps = thermo.chemicals
-        else: cmps = _load_components(None)
+        else:
+            cmps = _load_components()
+            thermo = _load_thermo()
 
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 
@@ -1133,7 +1141,9 @@ class WasteStream(SanStream):
 
 
         if thermo: cmps = thermo.chemicals
-        else: cmps = _load_components(None)
+        else:
+            cmps = _load_components()
+            thermo = _load_thermo()
 
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 
@@ -1257,7 +1267,7 @@ class WasteStream(SanStream):
         cmps.X_B_Subst.i_P = XB_Substi_P
         for i in sub_IDs: cmps[i].f_BOD5_COD = fbodtocod_sub
         cmps.refresh_constants()
-        
+
         #************ convert concentrations to flow rates *************
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
         new.ratios = r
@@ -1284,7 +1294,9 @@ class WasteStream(SanStream):
 
 
         if thermo: cmps = thermo.chemicals
-        else: cmps = _load_components(None)
+        else:
+            cmps = _load_components()
+            thermo = _load_thermo()
 
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 
@@ -1438,7 +1450,9 @@ class WasteStream(SanStream):
 
 
         if thermo: cmps = thermo.chemicals
-        else: cmps = _load_components(None)
+        else:
+            cmps = _load_components()
+            thermo = _load_thermo()
 
         cmp_dct = dict.fromkeys(cmps.IDs, 0.)
 

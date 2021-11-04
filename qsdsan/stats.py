@@ -8,8 +8,8 @@ This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
 With contributions from:
-    Joy Cheung <joycheung1994@gmail.com>
-    Yoel Rene Cortés-Peña <yoelcortes@gmail.com>
+    Joy Zhang <joycheung1994@gmail.com>
+    Yoel Cortés-Peña <yoelcortes@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -20,9 +20,11 @@ for license details.
 # %%
 
 __all__ = ('get_correlations', 'define_inputs', 'generate_samples',
-           'morris_analysis', 'morris_till_convergence', 'sobol_analysis',
+           'morris_analysis', 'morris_till_convergence',
+           'fast_analysis', 'sobol_analysis',
            'plot_uncertainties', 'plot_correlations',
-           'plot_morris_results', 'plot_morris_convergence', 'plot_sobol_results')
+           'plot_morris_results', 'plot_morris_convergence',
+           'plot_fast_results', 'plot_sobol_results')
 
 from collections.abc import Iterable
 import numpy as np
@@ -270,7 +272,9 @@ def generate_samples(inputs, kind, N, seed=None, **kwargs):
     elif lower == 'rbd':
         return rbd_sampler.sample(inputs, N=N, seed=seed, **kwargs)
     elif lower == 'sobol':
-        return sobol_sampler.sample(inputs, N=N, seed=seed, **kwargs)
+        if seed:
+            raise ValueError('Cannot set seed for Sobol analysis.')
+        return sobol_sampler.sample(inputs, N=N, **kwargs)
     else:
         raise ValueError('kind can only be "FAST", "RBD", "Morris", or "Sobol", ' \
                          f'not "{kind}".')
@@ -425,15 +429,16 @@ def morris_till_convergence(model, inputs, metrics=None,
     cum_model.evaluate()
     cum_dct = dict(mu_star={}, mu_star_conf={})
     metrics = _update_input(metrics, model.metrics)
+    kwargs['print_time'] = kwargs.get('print_time') or False
     temp_dct = morris_analysis(model=cum_model, inputs=inputs, metrics=metrics,
                                nan_policy=nan_policy, conf_level=conf_level,
-                               print_to_console=print_to_console, **kwargs)
+                               print_to_console=print_to_console,**kwargs)
     for m in metrics:
         for idx in ('mu_star', 'mu_star_conf'):
             data0 = getattr(temp_dct[m.name], idx)
-            df = pd.DataFrame(columns=data0.index, index=(2,))
+            df = pd.DataFrame(columns=temp_dct[m.name].parameter, index=(2,))
             df.index.name = idx
-            df.loc[2] = data0.copy()
+            df.loc[2] = data0.values
             cum_dct[idx][m.name] = df
 
     for n in range(2, N_max):
@@ -445,21 +450,22 @@ def morris_till_convergence(model, inputs, metrics=None,
         temp_dct = morris_analysis(model=cum_model, inputs=inputs, metrics=metrics,
                                    nan_policy=nan_policy, conf_level=conf_level,
                                    print_to_console=print_to_console, **kwargs)
+
         all_converged = True
         for m in metrics:
             mu_star = temp_dct[m.name].mu_star
             mu_star_conf = temp_dct[m.name].mu_star_conf
-            cum_dct['mu_star'][m.name].loc[n+1] = mu_star
-            cum_dct['mu_star_conf'][m.name].loc[n+1] = mu_star_conf
+            cum_dct['mu_star'][m.name].loc[n+1] = mu_star.values
+            cum_dct['mu_star_conf'][m.name].loc[n+1] = mu_star_conf.values
 
             converged = False if (mu_star_conf/mu_star.max()>threshold).any() else True
             all_converged = all_converged & converged
 
         if all_converged:
-            print(f'mu_star converges at {n} trajectories.')
+            print(f'mu_star converges at # {n+1} trajectories.')
             break
         elif n == N_max-1:
-            print(f'mu_star has not converged with {n} trajectories.')
+            print(f'mu_star has not converged within {n+1} trajectories.')
 
     if file:
         writer = pd.ExcelWriter(file)
@@ -751,29 +757,18 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
     x_df = y_df = None
     sns_df = pd.DataFrame(columns=('x_group', 'x_data', 'y_group', 'y_data'))
 
-    dfs = []
     if not y_axis: # no data provided or only x, 1D, horizontal
         x_axis = _update_input(x_axis, model.metrics)
         x_df = df[[i.name for i in x_axis]]
-
-        for x in x_df.columns:
-            temp_df = sns_df.copy()
-            temp_df['x_data'] = x_df[x]
-            temp_df['x_group'] = x
-            dfs.append(temp_df)
-
-        sns_df = pd.concat(dfs)
+        temp_df = x_df.stack(dropna=False).reset_index(name='x_data')
+        sns_df['x_data'] = temp_df['x_data']
+        sns_df['x_group'] = temp_df['level_1']
 
     elif not x_axis: # only y, 1D, vertical
         y_df = df[[i.name for i in y_axis]]
-
-        for y in y_df.columns:
-            temp_df = sns_df.copy()
-            temp_df['y_data'] = y_df[y]
-            temp_df['y_group'] = y
-            dfs.append(temp_df)
-
-        sns_df = pd.concat(dfs)
+        temp_df = y_df.stack(dropna=False).reset_index(name='y_data')
+        sns_df['y_data'] = temp_df['y_data']
+        sns_df['y_group'] = temp_df['level_1']
 
     else: # x and y, 2D
         len_x = len_y = 1
@@ -794,7 +789,7 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
     sns.set_theme(style='ticks')
     if not twoD: # 1D plot
         if kind_lower == 'box':
-            center_kws.setdefault('dodge', False)
+            center_kws['dodge'] = center_kws.get('dodge') or False
 
             if x_df is not None: # horizontal box plot
                 ax = sns.boxplot(data=sns_df, x='x_group', y='x_data', hue='x_group',
@@ -841,6 +836,9 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
 
         if kind_split[0] in ('hist', 'kde'):
             func = getattr(sns, f'{kind_split[0]}plot')
+            #!!! For some reason `seaborn` might raise an error with "dodge"
+            try: center_kws.pop('dodge')
+            except: pass
             g.plot_joint(func, **center_kws)
         else:
             raise ValueError(f'The provided kind "{kind}" is not valid for 2D plot.')

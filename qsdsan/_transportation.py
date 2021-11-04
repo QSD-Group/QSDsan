@@ -85,7 +85,10 @@ class Transportation:
                  load_type='mass', load=1., load_unit='kg',
                  distance=1., distance_unit='km',
                  interval=1., interval_unit='hr'):
-        self._register(ID)
+        if ID == '': # this is only to auto-generate ID for ones that don't have
+            self._register(ID)
+        else:
+            self._ID = ID
         self.item = item
         self.default_units = {
             'distance': 'km',
@@ -149,12 +152,16 @@ class Transportation:
             # print(' '*16+df.to_string().replace('\n', '\n'+' '*16))
             print(df.to_string())
 
-    _ipython_display_ = show # funny that _ipython_display_ and _ipython_display behave differently
+    _ipython_display_ = show # funny that `_ipython_display_` and `_ipython_display` behave differently
 
-    def copy(self, new_ID=''):
+    def copy(self, new_ID='', skip_item=True):
         new = Transportation.__new__(Transportation)
         new.__init__(new_ID)
-        new = copy_attr(new, self, skip=('_ID',))
+        if skip_item:
+            new = copy_attr(new, self, skip=('_ID', '_item'))
+            new.item = self.item
+        else:
+            new = copy_attr(new, self, skip=('_ID',))
         return new
 
     __copy__ = copy

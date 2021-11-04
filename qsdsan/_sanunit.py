@@ -18,10 +18,11 @@ for license details.
 
 
 # %%
+
 import numpy as np
 from collections import defaultdict
 from collections.abc import Iterable
-from biosteam.utils.misc import format_title
+from biosteam.utils import Inlets, Outlets, format_title
 from . import currency, Unit, Stream, SanStream, WasteStream, \
     Construction, Transportation
 
@@ -102,7 +103,7 @@ class SanUnit(Unit, isabstract=True):
             50% of the pump at 50 kW. Set the pump `power_utility` to be 50*50%=25 kW.
 
 
-    lifetime : int or dict
+    equipment_lifetime : int or dict
         Lifetime of this unit (int) or individual equipment within this unit
         (dict) in year.
         It will be used to adjust cost and emission calculation in TEA and LCA.
@@ -206,11 +207,15 @@ class SanUnit(Unit, isabstract=True):
 
     def _init_ins(self, ins, init_with):
         super()._init_ins(ins)
-        self._ins = self._convert_stream(ins, self.ins, init_with, 'ins')
+        converted = self._convert_stream(ins, self.ins, init_with, 'ins')
+        self._ins = Inlets(self, self._N_ins, converted, self._thermo,
+                           self._ins_size_is_fixed, self._stacklevel)
 
     def _init_outs(self, outs, init_with):
         super()._init_outs(outs)
-        self._outs = self._convert_stream(outs, self.outs, init_with, 'outs')
+        converted = self._convert_stream(outs, self.outs, init_with, 'outs')
+        self._outs = Outlets(self, self._N_outs, converted, self._thermo,
+                           self._outs_size_is_fixed, self._stacklevel)
 
     def _init_results(self):
         super()._init_results()
@@ -419,17 +424,10 @@ class SanUnit(Unit, isabstract=True):
         Equipment without provided lifetime will be assumed to have the same
         lifetime as the TEA/LCA.
         '''
-        if self._lifetime is not None:
-            return self._lifetime
-        elif self._default_equipment_lifetime:
-            return self._default_equipment_lifetime
-        else:
-            return None
+        return self.equipment_lifetime
     @lifetime.setter
     def lifetime(self, i):
         if not i:
-            self._lifetime = None
-        elif isinstance(i, dict):
-            self._default_equipment_lifetime.update(i)
+            self.equipment_lifetime = {}
         else:
-            self._lifetime = int(i)
+            self.equipment_lifetime = i if isinstance(i, dict) else int(i)

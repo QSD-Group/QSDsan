@@ -30,7 +30,8 @@ data_path += 'sanunit_data/_uddt.tsv'
 class UDDT(Toilet):
     '''
     Urine-diverting dry toilet with liquid storage tank and dehydration vault
-    for urine and feces storage, respectively, based on Trimmer et al. [1]_,
+    for urine and feces storage, respectively, based on
+    `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_,
     a subclass of qsdsan.sanunits.Toilet.
 
     Parameters
@@ -49,8 +50,6 @@ class UDDT(Toilet):
         must be larger than 1.
     if_treatment : bool
         If has onsite treatment.
-    if_pit_above_water_table : bool
-        If the pit is above local water table.
 
     Examples
     --------
@@ -58,14 +57,14 @@ class UDDT(Toilet):
 
     References
     ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
+    :ref:`qsdsan.sanunits.Toilet <sanunits_toilets>`
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -85,6 +84,17 @@ class UDDT(Toilet):
         self._safety_factor = safety_factor
         self.if_prep_loss = if_prep_loss
         self.if_treatment = if_treatment
+
+        self.construction = (
+            Construction('cement', item='Cement', quantity_unit='kg'),
+            Construction('sand', item='Sand', quantity_unit='kg'),
+            Construction('gravel', item='Gravel', quantity_unit='kg'),
+            Construction('brick', item='Brick', quantity_unit='kg'),
+            Construction('liner', item='Plastic', quantity_unit='kg'),
+            Construction('steel', item='Steel', quantity_unit='kg'),
+            Construction('ss_sheet', item='StainlessSteelSheet', quantity_unit='kg'),
+            Construction('wood', item='Wood', quantity_unit='m3'),
+            )
 
         data = load_data(path=data_path)
         for para in data.index:
@@ -110,7 +120,8 @@ class UDDT(Toilet):
         struvite.phase = HAP.phase = 's'
         CH4.phase = N2O.phase = 'g'
 
-        #!!! Modified from ref [1], assume this only happens when air emission occurs
+        # Modified from ref [1], assume this only happens when air emission occurs
+        # (to be consistent with pit latrine)
         if self.if_air_emission:
             # N loss due to ammonia volatilization
             NH3_rmd, NonNH3_rmd = \
@@ -187,7 +198,6 @@ class UDDT(Toilet):
                 (alpha + ((1-alpha)*(f_NH3_Emerson**beta)))
             NH3_conc = NH3_mmol * f_NH3_Pitzer
 
-            #!!! Shouldn't the collection period and design be affected by this as well?
             # Time (in days) to reach desired inactivation level
             self.treatment_tau = ((3.2 + self.log_removal) \
                              / (10**(-3.7+0.062*(self.T-273.15)) * (NH3_conc**0.7))) \
@@ -207,7 +217,9 @@ class UDDT(Toilet):
             mixed.mix_from(self.ins[1:])
             fec_moi_int = mixed.imass['H2O']/mixed.F_mass
             fec_moi = MC_min + (fec_moi_int-MC_min)/(r*t)*(1-np.exp(-r*t))
-            sol.imass['H2O'] = (sol.F_mass-sol.imass['H2O']) / (1-fec_moi)
+            dry_mass = sol.F_mass-sol.imass['H2O']
+            tot_mass = (sol.F_mass-sol.imass['H2O']) / (1-fec_moi)
+            sol.imass['H2O'] = tot_mass - dry_mass
             sol._COD = sol_COD*1e3/sol.F_vol
 
         self._vault_V = sol.F_vol*self.collection_period*24 # in day
@@ -228,9 +240,11 @@ class UDDT(Toilet):
         # Scale up the effluent based on the number of user per toilet and
         # toilet number
         tot_user = self.N_user * self.N_toilet
+
         for i in self.outs:
             if not i.F_mass == 0:
                 i.F_mass *= tot_user
+
 
     _units = {
         'Collection period': 'd',
@@ -251,17 +265,15 @@ class UDDT(Toilet):
         design['Treatment volume'] = self.treatment_V
 
         density = self.density_dct
-        self.construction = (
-            Construction(item='Cement', quantity=200*N, quantity_unit='kg'),
-            Construction(item='Sand', quantity=0.6*density['Sand']*N, quantity_unit='kg'),
-            Construction(item='Gravel', quantity=0.2*density['Gravel']*N, quantity_unit='kg'),
-            Construction(item='Brick', quantity=682*0.0024*density['Brick']*N, quantity_unit='kg'),
-            Construction(item='Plastic', quantity=4*density['Plastic']*N, quantity_unit='kg'),
-            Construction(item='Steel', quantity=0.00351*density['Steel']*N, quantity_unit='kg'),
-            Construction(item='StainlessSteelSheet',
-                         quantity=28.05*density['StainlessSteelSheet']*N, quantity_unit='kg'),
-            Construction(item='Wood', quantity=0.222*N, quantity_unit='m3'),
-            )
+        constr = self.construction
+        constr[0].quantity = 200 * N # cement
+        constr[1].quantity = 0.6 * density['Sand'] * N
+        constr[2].quantity = 0.2 * density['Gravel'] * N
+        constr[3].quantity = 682*0.0024 * density['Brick'] * N
+        constr[4].quantity = 4 * density['Plastic'] * N
+        constr[5].quantity = 0.00351 * density['Steel'] * N
+        constr[6].quantity = 28.05*density['StainlessSteelSheet'] * N
+        constr[7].quantity = 0.222 * N # wood
 
         self.add_construction(add_cost=False)
 
@@ -323,7 +335,8 @@ class UDDT(Toilet):
     @property
     def prep_sludge(self):
         '''
-        [float] Fraction of total precipitate appearing as sludge that can
+        [float]
+        Fraction of total precipitate appearing as sludge that can
         settle and be removed.
         '''
         return self._prep_sludge

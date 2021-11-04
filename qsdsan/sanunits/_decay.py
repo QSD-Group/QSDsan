@@ -24,6 +24,7 @@ class Decay:
     '''For non-steady state degradation.'''
 
     # Put these as default class attributes
+    _t0 = 0
     _COD_max_decay = None
     _decay_k_COD = None
     _MCF_decay = None
@@ -56,15 +57,16 @@ class Decay:
         else:
             return preferred_N, tot_red-preferred_N
 
-    @staticmethod
-    def first_order_decay(k, t, max_decay, t0=0, tot=1):
+
+    def first_order_decay(self, k, t, max_decay, t0=None, tot=1):
         r'''
-        Calculate first-order degradation loss based on Trimmer et al. [1]_
+        Calculate first-order degradation loss based on
+        `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_.
 
-        .. math:: C_0 = tot * max_{decay}
-        .. math:: C_{avg} = \frac{C_0}{k*t} * (e^{-k*t_0}-e^{-k*t_f})
-        .. math:: loss = C_0 - C_{avg}
-
+        .. math:: C_{deg} = tot * max_{decay}
+        .. math:: t_f = t_0 + t
+        .. math:: C_{avg} = \frac{C_deg}{k*t} * (e^{-k*t_0}-e^{-k*t_f})
+        .. math:: loss = C_{deg} - C_{avg}
 
         Parameters
         ----------
@@ -73,7 +75,7 @@ class Decay:
         t0 : float
             Degradation time prior to current process.
         t : float
-            Degradation time in current process.
+            Degradation time in current process (i.e., tf-t0).
         max_decay : float
             Maximum removal ratio.
         tot : float, optional
@@ -87,17 +89,26 @@ class Decay:
 
         References
         ----------
-        .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-            Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-            Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-            https://doi.org/10.1021/acs.est.0c03296.
+        [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+        https://doi.org/10.1021/acs.est.0c03296.
         '''
-
-        C0 = tot * max_decay
-        Cavg = C0/(k*t) * (np.exp(-k*t0)-np.exp(-k*(t0+t)))
-        loss = C0 - Cavg
+        t0 = self.t0 if not t0 else t0
+        tf = t0 + t
+        Cdeg = tot * max_decay
+        Cavg = Cdeg/(k*t) * (np.exp(-k*t0)-np.exp(-k*tf))
+        loss = Cdeg - Cavg
         return loss
 
+
+    @property
+    def t0(self):
+        '''[float] Degradation time prior to current process.'''
+        return self._t0
+    @t0.setter
+    def t0(self, i):
+        self._t0 = i
 
     @property
     def COD_max_decay(self):

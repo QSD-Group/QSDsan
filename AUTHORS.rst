@@ -1,5 +1,5 @@
-Authors
-=======
+Authors & Roles
+===============
 
 Lead Developers
 ---------------
@@ -7,41 +7,32 @@ Lead Developers
 - `Joy Zhang`_
 
 
-Code Development
-----------------
+Tutorials and Videos
+--------------------
 - `Yalin Li`_
 - `Joy Zhang`_
-- `Other developers <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ that have contributed to the repository.
+- `Tori Morgan <https://qsdsan.readthedocs.io/en/beta/authors/Tori_Morgan.html>`_
+- `Hannah Lohman <https://qsdsan.readthedocs.io/en/beta/authors/Hannah_Lohman.html>`_
 
 
 Module Development
 ------------------
 - `Yalin Li`_
 - `Joy Zhang`_
-- Stetson Rowles
+- `Stetson Rowles <https://qsdsan.readthedocs.io/en/beta/authors/Stetson_Rowles.html>`_
 - Smiti Mittal
 - Anna Kogler
 - Samuel Aguiar
 - Tyler Stephen
 - Shion Watabe
-
-
-Tutorials and Videos
---------------------
-- `Yalin Li`_
-- `Joy Zhang`_
-- Tori Morgan
-- Hannah Lohman
-
-
-Project Conception
-------------------
-- `Jeremy Guest`_
+- `Other developers <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ that have contributed to the repository.
 
 
 Funding Support
 ---------------
-- `Jeremy Guest`_
+- `Jeremy Guest <mailto:jsguest@illinois.edu>`_
+- `Ro Cusick <mailto:rcusick@illinois.edu>`_
+- `William Tarpeh <mailto:wtarpeh@stanford.edu>`_
 
 
 Special Acknowledgement
@@ -50,6 +41,5 @@ Special Acknowledgement
 
 
 .. Links
-.. _Yalin Li: mailto:zoe.yalin.li@gmail.com
-.. _Joy Zhang: mailto:joycheung1994@gmail.com
-.. _Jeremy Guest: mailto:jsguest@illinois.edu
+.. _Yalin Li: https://qsdsan.readthedocs.io/en/beta/authors/Yalin_Li.html
+.. _Joy Zhang: https://qsdsan.readthedocs.io/en/beta/authors/Joy_Zhang.html

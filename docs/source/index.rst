@@ -14,6 +14,8 @@ As an open-source and impact-driven platform, QSDsan aims to identify configurat
 
 All systems developed with ``QSDsan`` are included in the package `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ - exposition of sanitation and resource recovery systems.
 
+Additionally, another package, `DMsan <https://github.com/QSD-Group/DMsan>`_ (decision-making for sanitation and resource recovery systems), is being developed for decision-making among multiple dimensions of sustainability with consideration of location-specific contextual parameters.
+
 
 To capitalize, or not to capitalize?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -54,6 +56,7 @@ For each of these tutorials, we are also recording videos where one of the QSD g
    :maxdepth: 1
    :caption: Tutorial
 
+   tutorials/0_Quick_Overview
    tutorials/1_Helpful_Basics
    tutorials/2_Component
    tutorials/3_WasteStream
@@ -62,6 +65,7 @@ For each of these tutorials, we are also recording videos where one of the QSD g
    tutorials/6_System
    tutorials/7_TEA
    tutorials/8_LCA
+   tutorials/9_Uncertainty_and_Sensitivity_Analyses
 
 
 How does ``QSDsan`` work?
@@ -106,20 +110,51 @@ In particular, ``QSDsan`` introduces:
 
 About the developers
 --------------------
-Development and maintenance of the platform is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors are listed below, please refer to the `author page <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_ for the full list of authors.
+Development and maintenance of the platform is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_, as well as `other developers <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ that have contributed to the repository.
 
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Core Developers
+
+   authors/Yalin_Li
+   authors/Joy_Zhang
+   authors/Tori_Morgan
+   authors/Hannah_Lohman
+   authors/Stetson_Rowles
+
+
+Roles
+^^^^^
 **Lead developers:**
-   - `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_
-   - `Joy Zhang <mailto:joycheung1994@gmail.com>`_
+   - `Yalin Li`_ (current maintainer)
+   - `Joy Zhang`_
+
 
 **Tutorials and videos:**
-   - `Yalin Li <mailto:zoe.yalin.li@gmail.com>`_
-   - `Joy Zhang <mailto:joycheung1994@gmail.com>`_
-   - Tori Morgan
-   - Hannah Lohman
+   - `Yalin Li`_
+   - `Joy Zhang`_
+   - `Tori Morgan <https://qsdsan.readthedocs.io/en/beta/authors/Tori_Morgan.html>`_
+   - `Hannah Lohman <https://qsdsan.readthedocs.io/en/beta/authors/Hannah_Lohman.html>`_
 
-**Project conception & funding support:**
+
+**Module development:**
+   - `Yalin Li`_
+   - `Joy Zhang`_
+   - `Stetson Rowles <https://qsdsan.readthedocs.io/en/beta/authors/Stetson_Rowles.html>`_
+   - Smiti Mittal
+   - Anna Kogler
+   - Samuel Aguiar
+   - Tyler Stephen
+   - Shion Watabe
+   - `Other developers <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ that have contributed to the repository.
+
+
+**Funding support:**
    - `Jeremy Guest <mailto:jsguest@illinois.edu>`_
+   - `Ro Cusick <mailto:rcusick@illinois.edu>`_
+   - `William Tarpeh <mailto:wtarpeh@stanford.edu>`_
+
 
 **Special acknowledgement:**
    - Yoel Cortés-Peña for helping many of the ``QSDsan`` members get started on Python and package development.
@@ -135,7 +170,6 @@ If you would like to contribute, please follow our contribution guide, thank you
    :maxdepth: 1
    :caption: Contributions
 
-   AUTHORS
    CODE_OF_CONDUCT
    CONTRIBUTING
    for_developers/Tutorial_Template
@@ -173,9 +207,6 @@ References
 .. [2] Cortés-Peña, Y.; Kumar, D.; Singh, V.; Guest, J. S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020, 8 (8), 3302–3310. https://doi.org/10.1021/acssuschemeng.9b07040.
 
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. Links
+.. _Yalin Li: https://qsdsan.readthedocs.io/en/beta/authors/Yalin_Li.html
+.. _Joy Zhang: https://qsdsan.readthedocs.io/en/beta/authors/Joy_Zhang.html

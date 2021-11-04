@@ -26,7 +26,7 @@ conflict_slots = ('lang_factor', 'system', 'units', 'feeds', 'products')
 class SimpleTEA(TEA):
     '''
     Calculate an annualized cost for simple economic analysis that does not
-    include loan payment (i.e., 100% equity) and taxes.
+    include loan payment (i.e., 100% equity).
 
     Parameters
     ----------
@@ -34,6 +34,15 @@ class SimpleTEA(TEA):
         The system this TEA is conducted for.
     discount_rate : float
         Interest rate used in discounted cash flow analysis.
+
+        .. note::
+
+            Herein `discount_rate` equals to `IRR` (internal rate of return).
+            Although theoretically, IRR is the discount rate only when the
+            net present value (NPV) is 0.
+
+    income_tax : float
+        Combined tax (e.g., sum of national, state, local levels) for net earnings.
     start_year : int
         Start year of the system.
     lifetime : int
@@ -66,7 +75,7 @@ class SimpleTEA(TEA):
                 - Utility and material costs/environmental impacts will be calculated for 1*24*365 hours per year.
                 - Additional operaitng expenses will be calculated for 0.5*24*365 hours per year.
 
-            If less utility and material flows are not used at the same `uptime_ratio`
+            If utility and material flows are not used at the same `uptime_ratio`
             as the system, they should be normalized to be the same.
             For example, if the system operates 100% of time but a pump only works
             50% of the pump at 50 kW. Set the pump `power_utility` to be 50*50%=25 kW.
@@ -105,7 +114,7 @@ class SimpleTEA(TEA):
     >>> sys.show()
     System: sys
     ins...
-    [0] water
+    [0] salt_water
         phase: 'l', T: 298.15 K, P: 101325 Pa
         flow (kmol/hr): H2O   111
                         NaCl  0.856
@@ -130,9 +139,6 @@ class SimpleTEA(TEA):
     >>> tea.show()
     SimpleTEA: sys
     NPV  : -258,730 USD at 5.0% discount rate
-    EAC  : 33,507 USD/yr
-    CAPEX: 60,912 USD (annualized to 7,888 USD/yr)
-    AOC  : 25,618 USD/yr
 
     See Also
     --------
@@ -147,23 +153,20 @@ class SimpleTEA(TEA):
                  '_uptime_ratio', '_operating_hours', '_CAPEX', '_lang_factor',
                  '_annual_maintenance', '_annual_labor', '_system_add_OPEX')
 
-    def __init__(self, system, discount_rate=0.05,
+    def __init__(self, system, discount_rate=0.05, income_tax=0.,
                  start_year=date.today().year, lifetime=10, uptime_ratio=1.,
                  CAPEX=0., lang_factor=None,
                  annual_maintenance=0., annual_labor=0., system_add_OPEX={},
-                 construction_schedule=None):
+                 depreciation='SL', construction_schedule=(1,)):
         system.simulate()
         self.system = system
-        try: # for some versions of biosteam without the `_TEA` attribute
-            system._TEA = self
-        except AttributeError:
-            pass
-
-        self.discount_rate = discount_rate
+        system._TEA = self
+        self.income_tax = income_tax
         # IRR (internal rate of return) is the discount rate when net present value is 0
         self.IRR = discount_rate
         self._IRR = discount_rate # guess IRR for solve_IRR method
         self._sales = 0 # guess cost for solve_price method
+        self._depreciation = None # initialize this attribute
         self.start_year = start_year
         self.lifetime = lifetime
         self.uptime_ratio = 1.
@@ -173,24 +176,10 @@ class SimpleTEA(TEA):
         self.annual_maintenance = annual_maintenance
         self.annual_labor = annual_labor
         self.system_add_OPEX = system_add_OPEX
-        if not construction_schedule:
-            construction_schedule = (1,)
+        self.depreciation = depreciation
         self.construction_schedule = construction_schedule
 
         ########## Not relevant to SimpleTEA but required by TEA ##########
-        # From U.S. IRS for tax purpose, won't matter when tax set to 0
-        # Based on IRS Publication 946 (2019), MACRS15 should be used for
-        # municipal wastewater treatment plant, but the system lifetime is
-        # just 10 yrs or shorter, so changed to a shorter one
-        if lifetime >= 8:
-            self.depreciation = 'MACRS7'
-        elif lifetime >=6:
-            self.depreciation = 'MACRS5'
-        else:
-             raise ValueError('Currently BioSTEAM does not support TEA ' \
-                              'for systems with a lifetime shorter than 6 years.')
-
-        self.income_tax = 0.
         self.startup_months = 0.
         self.startup_FOCfrac = 0.
         self.startup_VOCfrac = 0.
@@ -208,9 +197,6 @@ class SimpleTEA(TEA):
         c = self.currency
         info = f'{type(self).__name__}: {self.system.ID}'
         info += f'\nNPV  : {self.NPV:,.0f} {c} at {self.discount_rate:.1%} discount rate'
-        info += f'\nEAC  : {self.EAC:,.0f} {c}/yr'
-        info += f'\nCAPEX: {self.CAPEX:,.0f} {c} (annualized to {self.annualized_CAPEX:,.0f} {c}/yr)'
-        info += f'\nAOC  : {self.AOC:,.0f} {c}/yr'
         print(info)
 
     _ipython_display_ = show
@@ -227,29 +213,6 @@ class SimpleTEA(TEA):
 
     def _FOC(self, FCI):
         return FCI*self.annual_maintenance+self.annual_labor+self.total_add_OPEX
-
-    def get_unit_annualized_CAPEX(self, units):
-        try: iter(units)
-        except: units = (units, )
-        CAPEX = 0
-        r = self.discount_rate
-        for unit in units:
-            lifetime = unit.lifetime or self.lifetime
-            # no unit lifetime or unit lifetime given as a number
-            # (i.e., no individual equipment lifetime)
-            if not isinstance(lifetime, dict):
-                CAPEX += unit.installed_cost*r/(1-(1+r)**(-lifetime))
-            else:
-                lifetime_dct = dict.fromkeys(unit.purchase_costs.keys())
-                lifetime_dct.update(lifetime)
-                for equip, cost in unit.purchase_costs.items():
-                    factor = unit.F_BM[equip]*\
-                        unit.F_D.get(equip, 1.)*unit.F_P.get(equip, 1.)*unit.F_M.get(equip, 1.)
-                    # for equipment that does not have individual lifetime
-                    # use the unit lifetime or TEA lifetime
-                    equip_lifetime = lifetime_dct[equip] or self.lifetime
-                    CAPEX += factor*cost*r/(1-(1+r)**(-equip_lifetime))
-        return CAPEX
 
     @property
     def system(self):
@@ -285,14 +248,11 @@ class SimpleTEA(TEA):
 
     @property
     def discount_rate(self):
-        '''[float] Interest rate used in discounted cash flow analysis.'''
-        return self._discount_rate
+        '''[float] Interest rate used in discounting, same as `IRR` in :class:`biosteam.TEA`.'''
+        return self.IRR
     @discount_rate.setter
     def discount_rate(self, i):
-        if 0 <= i <= 1:
-            self._discount_rate = float(i)
-        else:
-            raise ValueError('`discount_rate` must be in [0,1].')
+        self.IRR = i
 
     @property
     def start_year(self):
@@ -305,11 +265,12 @@ class SimpleTEA(TEA):
     @property
     def lifetime(self):
         '''[int] Total lifetime of the system, [yr]. Currently `biosteam` only supports int.'''
-        return int(self._lifetime)
+        return self._lifetime
     @lifetime.setter
     def lifetime(self, i):
         self._lifetime = self._years = int(i)
         self._duration = (int(self.start_year), int(self.start_year+self.lifetime))
+        self.depreciation = self.depreciation
 
     @property
     def duration(self):
@@ -466,13 +427,91 @@ class SimpleTEA(TEA):
         '''
         return self._FOC(self.FCI)
 
+    def _get_annuity_factor(self, yrs=None):
+        yrs = yrs or self._years
+        r = self.discount_rate
+        return (1-(1+r)**(-yrs))/r
+
+    @property
+    def annualized_NPV(self):
+        r'''
+        [float] Annualized NPV calculated as:
+
+        .. math::
+
+            annualized\ NPV = \frac{NPV*r}{(1-(1+r)^{-lifetime})}
+        '''
+        return self.NPV/self._get_annuity_factor()
+
     @property
     def annualized_CAPEX(self):
-        '''[float] Annualized capital expenditure.'''
-        return self.get_unit_annualized_CAPEX(self.units)
+        r'''
+        [float] Annualized capital expenditure calculated through annualized NPV as:
+
+        .. math::
+
+            annualized\ capital\ cost = annual\ net\ earning - annualized\ NPV
+
+        .. note::
+
+            Read the `tutorial <https://github.com/QSD-Group/QSDsan/blob/main/docs/source/tutorials/7_TEA.ipynb>`_
+            about the difference between `annualized_CAPEX` and `annualized_equipment_cost`.
+        '''
+        return self.net_earnings-self.annualized_NPV
+
+
+    def get_unit_annualized_equipment_cost(self, units=None):
+        r'''
+        Annualized equipment cost representing the sum of the annualized
+        cost of each equipment, which is calculated as:
+
+        .. math::
+
+            annualized\ equipment\ cost = \frac{equipment\ installed\ cost}{(1-(1+r)^{-lifetime})}
+
+        .. note::
+
+            Read the `tutorial <https://github.com/QSD-Group/QSDsan/blob/main/docs/source/tutorials/7_TEA.ipynb>`_
+            about the difference between `annualized_CAPEX` and `annualized_equipment_cost`.
+        '''
+        units = units or self.units
+        try: iter(units)
+        except: units = (units,)
+        cost = 0
+        get_A = self._get_annuity_factor
+
+        for unit in units:
+            lifetime = unit.lifetime or self.lifetime
+            # no unit equipment lifetime or unit equipment lifetime given as a number
+            # (i.e., no individual equipment lifetime)
+            if not isinstance(lifetime, dict):
+                cost += unit.installed_cost/get_A(lifetime)
+            else:
+                lifetime_dct = dict.fromkeys(unit.purchase_costs.keys())
+                lifetime_dct.update(lifetime)
+                for equip, cost in unit.purchase_costs.items():
+                    factor = unit.F_BM[equip]*\
+                        unit.F_D.get(equip, 1.)*unit.F_P.get(equip, 1.)*unit.F_M.get(equip, 1.)
+                    # for equipment that does not have individual lifetime
+                    # use the unit lifetime or TEA lifetime
+                    equip_lifetime = lifetime_dct[equip] or self.lifetime
+                    cost += factor*cost/get_A(equip_lifetime)
+        return cost
+
+
+    @property
+    def annualized_equipment_cost(self):
+        '''
+        [float] Annualized equipment cost representing the sum of the annualized
+        cost of each equipment, calculated using ``get_unit_annualized_equipment_cost``.
+        '''
+        return self.get_unit_annualized_equipment_cost()
 
 
     @property
     def EAC(self):
-        '''[float] Equivalent annual cost of the system (sales not included).'''
+        '''
+        [float] Equvalent annual cost calculated as the sum of `annualized_CAPEX` and
+        `AOC` (annual operating cost).
+        '''
         return self.annualized_CAPEX+self.AOC

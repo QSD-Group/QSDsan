@@ -71,7 +71,10 @@ class Construction:
 
     def __init__(self, ID='', item=None, quantity=0., quantity_unit='',
                  lifetime=None, lifetime_unit='yr'):
-        self._register(ID)
+        if ID == '': # this is only to auto-generate ID for ones that don't have
+            self._register(ID)
+        else:
+            self._ID = ID
         self.item = item
         self._update_quantity(quantity, quantity_unit)
         self._lifetime = None
@@ -112,10 +115,14 @@ class Construction:
 
     _ipython_display_ = show
 
-    def copy(self, new_ID=''):
+    def copy(self, new_ID='', skip_item=True):
         new = Construction.__new__(Construction)
         new.__init__(new_ID)
-        new = copy_attr(new, self, skip=('_ID',))
+        if skip_item:
+            new = copy_attr(new, self, skip=('_ID', '_item'))
+            new.item = self.item
+        else:
+            new = copy_attr(new, self, skip=('_ID',))
         return new
 
     __copy__ = copy

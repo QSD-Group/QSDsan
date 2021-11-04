@@ -28,7 +28,8 @@ data_path += 'sanunit_data/_pit_latrine.tsv'
 
 class PitLatrine(Toilet):
     '''
-    Single pit latrine based on Trimmer et al. [1]_, a subclass of :class:`~.Toilet`.
+    Single pit latrine based on `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_,
+    a subclass of :class:`~.Toilet`.
 
     Parameters
     ----------
@@ -52,14 +53,14 @@ class PitLatrine(Toilet):
 
     References
     ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
+    :ref:`qsdsan.sanunits.Toilet <sanunits_toilets>`
     '''
 
     # Legacy code to add checkers
@@ -82,6 +83,20 @@ class PitLatrine(Toilet):
         self.if_leaching = if_leaching
         self.if_pit_above_water_table = if_pit_above_water_table
         self.if_shared = if_shared
+        self._pit_depth = 4.57 # m
+        self._pit_area = 0.8 # m2
+        self._liq_leaching = None
+
+        self.construction = (
+            Construction('cement', item='Cement', quantity_unit='kg'),
+            Construction('sand', item='Sand', quantity_unit='kg'),
+            Construction('gravel', item='Gravel', quantity_unit='kg'),
+            Construction('brick', item='Brick', quantity_unit='kg'),
+            Construction('liner', item='Plastic', quantity_unit='kg'),
+            Construction('steel', item='Steel', quantity_unit='kg'),
+            Construction('wood', item='Wood', quantity_unit='m3'),
+            Construction('excavation', item='Excavation', quantity_unit='m3'),
+            )
 
         data = load_data(path=data_path)
         for para in data.index:
@@ -92,9 +107,6 @@ class PitLatrine(Toilet):
             setattr(self, '_'+para, value)
         del data
 
-        self._pit_depth = 4.57 # m
-        self._pit_area = 0.8 # m2
-        self._liq_leaching = None
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
@@ -112,7 +124,7 @@ class PitLatrine(Toilet):
 
         # All composite variables in mg/L
         # Leaching
-        # Here COD change due to leaching not considered
+        # Here COD change due to leaching is not considered
         if self.if_leaching:
             # Additional assumption not in ref [1]
             leachate.imass['H2O'] = mixed.imass['H2O'] * self.liq_leaching
@@ -124,7 +136,6 @@ class PitLatrine(Toilet):
             mixed.mass -= leachate.mass
 
         # Air emission
-        #!!! Based on the logic, COD won't degrade without air emission?
         if self.if_air_emission:
             # N loss due to ammonia volatilization
             NH3_rmd, NonNH3_rmd = \
@@ -198,16 +209,15 @@ class PitLatrine(Toilet):
         design['Single pit depth'] = self.pit_depth
 
         density = self.density_dct
-        self.construction = (
-            Construction(item='Cement', quantity=700*N, quantity_unit='kg'),
-            Construction(item='Sand', quantity=2.2*density['Sand']*N, quantity_unit='kg'),
-            Construction(item='Gravel', quantity=0.8*density['Gravel']*N, quantity_unit='kg'),
-            Construction(item='Brick', quantity=54*0.0024*density['Brick']*N, quantity_unit='kg'),
-            Construction(item='Plastic', quantity=16*density['Plastic']*N, quantity_unit='kg'),
-            Construction(item='Steel', quantity=0.00425*density['Steel']*N, quantity_unit='kg'),
-            Construction(item='Wood', quantity=0.19*N, quantity_unit='m3'),
-            Construction(item='Excavation', quantity=self.pit_V*N, quantity_unit='m3'),
-            )
+        constr = self.construction
+        constr[0].quantity = 700 * N # cment
+        constr[1].quantity = 2.2 * density['Sand'] * N
+        constr[2].quantity = 0.8 * density['Gravel'] * N
+        constr[3].quantity = 54*0.0024 * density['Brick'] * N
+        constr[4].quantity = 16 * density['Plastic'] * N
+        constr[5].quantity = 0.00425 * density['Steel'] * N
+        constr[6].quantity = 0.19 * N # wood
+        constr[7].quantity = self.pit_V * N # excavation
 
         self.add_construction(add_cost=False)
 

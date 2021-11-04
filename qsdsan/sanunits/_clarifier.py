@@ -25,7 +25,7 @@ def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp):
 class FlatBottomCircularClarifier(SanUnit):
     """
     A flat-bottom circular clarifier with a simple 1-dimensional
-    N-layer settling model.
+    N-layer settling model. [1]_
 
     Parameters
     ----------

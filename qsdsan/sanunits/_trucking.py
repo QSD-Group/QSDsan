@@ -16,7 +16,7 @@ for license details.
 
 from warnings import warn
 from .. import currency, SanUnit, ImpactItem, Transportation
-from ..utils import auom
+from ..utils import auom, copy_attr
 
 __all__ = ('Trucking',)
 
@@ -24,7 +24,7 @@ __all__ = ('Trucking',)
 class Trucking(SanUnit):
     '''
     For transportation of materials with considerations on material loss
-    based on Trimmer et al. [1]_
+    based on `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
 
     Parameters
     ----------
@@ -55,10 +55,10 @@ class Trucking(SanUnit):
 
     References
     ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -68,11 +68,13 @@ class Trucking(SanUnit):
                  fee=0., fee_unit=currency,
                  if_material_loss=True, loss_ratio=0.02):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
-        self.single_truck = \
-            Transportation(item='Trucking',
+        self.single_truck = single = \
+            Transportation('single_truck', item='Trucking',
                            load_type=load_type, load=load, load_unit=load_unit,
                            distance=distance, distance_unit=distance_unit,
                            interval=interval, interval_unit=interval_unit)
+        total = single.copy('total_truck')
+        self.transportation = (total,)
         self._update_fee(fee, fee_unit)
         self.if_material_loss = if_material_loss
         self.loss_ratio = loss_ratio
@@ -111,9 +113,10 @@ class Trucking(SanUnit):
             factor = auom('kg').conversion_factor(single.default_units['load'])
             N = self.F_mass_in*factor*single.interval/single.load
         self.design_results['Parallel trucks'] = N
-        total = single.copy()
-        total.load *= N
-        self.transportation = (total,)
+
+        total, = self.transportation
+        copy_attr(total, single, skip=('_ID', '_item')) # in case attributes have been updated
+        total.load = single.load * N
         self._add_OPEX = {'Total fee': self.fee/total.interval*N}
 
     @property

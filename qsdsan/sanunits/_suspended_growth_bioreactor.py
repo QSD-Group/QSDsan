@@ -61,10 +61,11 @@ class CSTR(SanUnit):
         reactor is aerated. The default is 'S_O2'.
     suspended_growth_model : :class:`Processes`, optional
         The suspended growth biokinetic model. The default is None.
+    '''
+    
     # cache_state : bool, optional
     #     Whether to store the states of stream composition in the tank from
     #     most recent run. The default is True.
-    '''
 
     _N_ins = 3
     _N_outs = 1
@@ -281,7 +282,7 @@ class CSTR(SanUnit):
 class SBR(SanUnit):
     '''
     Sequential batch reactors operated in parallel. The number of reactors is
-    determined by operation cycle and influent flowrate.
+    determined by operation cycle and influent flowrate. [1]_
 
     Parameters
     ----------

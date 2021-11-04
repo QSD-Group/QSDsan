@@ -1,11 +1,17 @@
-biosteam>=2.31.10
-thermosteam>=0.27.10
-sphinx
-sphinx_rtd_theme
-nbsphinx
+# Needed by qsdsan
+biosteam==2.31.13
+thermosteam==0.27.12
 scikit-learn
 scipy
 SALib
 matplotlib
 seaborn
 sympy
+
+# Specifically for docs
+sphinx
+sphinx_rtd_theme
+nbsphinx
+ipywidgets
+jupyterlab-widgets
+widgetsnbextension

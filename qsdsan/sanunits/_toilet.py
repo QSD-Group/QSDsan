@@ -30,7 +30,7 @@ data_path += 'sanunit_data/_toilet.tsv'
 class Toilet(SanUnit, Decay, isabstract=True):
     '''
     Abstract class containing common parameters and design algorithms for toilets
-    based on Trimmer et al. [1]_
+    based on `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
 
     Parameters
     ----------
@@ -61,10 +61,10 @@ class Toilet(SanUnit, Decay, isabstract=True):
 
     References
     ----------
-    .. [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
-        Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
-        Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
-        https://doi.org/10.1021/acs.est.0c03296.
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
 
     See Also
     --------
@@ -133,7 +133,8 @@ class Toilet(SanUnit, Decay, isabstract=True):
     @staticmethod
     def get_emptying_emission(waste, CH4, N2O, empty_ratio, CH4_factor, N2O_factor):
         '''
-        Calculate emissions due to non-ideal emptying based on Trimmer et al. [1]_
+        Calculate emissions due to non-ideal emptying based on
+        `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_,
 
         Parameters
         ----------

@@ -3,10 +3,10 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Joy Cheung <joycheung1994@gmail.com>
+    Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
-Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
@@ -233,7 +233,7 @@ def load_asm2d_cmps():
 @chemicals_user
 class ASM2d(Processes):
     '''
-    Activated Sludge Model No. 2d in orginal notation.
+    Activated Sludge Model No. 2d in orginal notation. [1]_, [2]_
 
     Parameters
     ----------
