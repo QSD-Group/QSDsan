@@ -63,13 +63,10 @@ class SludgeSeparator(SanUnit):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, **kwargs)
 
         data = load_data(path=data_path)
-        if not split:
-            value = dct_from_str(data.loc['split']['expected'])
-            setattr(self, 'split', value)
-        if not settled_frac:
-            value = float(data.loc['settled_frac']['expected'])
-            setattr(self, 'settled_frac', value)
+        self.split = split or dct_from_str(data.loc['split']['expected'])
+        self.settled_frac = settled_frac or float(data.loc['settled_frac']['expected'])
         del data
+
 
     _N_ins = 1
     _outs_size_is_fixed = False
@@ -79,7 +76,7 @@ class SludgeSeparator(SanUnit):
         sol.imass['H2O'] = influent.F_mass * self.settled_frac - sol.F_mass
         if sol.imass['H2O'] < 0:
             sol.imass['H2O'] = 0
-            msg = 'Negative water content calcualted for settled solids, ' \
+            msg = 'Negative water content calculated for settled solids, ' \
                 'try smaller split or larger settled_frac.'
             warn(msg, stacklevel=2)
         liq.imass['H2O'] = influent.imass['H2O'] - sol.imass['H2O']
