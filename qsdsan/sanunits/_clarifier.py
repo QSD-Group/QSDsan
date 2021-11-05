@@ -337,7 +337,7 @@ class FlatBottomCircularClarifier(SanUnit):
             C_in = QC_ins[:-1]
             Z_in = C_in*(1-x)
             X_in = sum(C_in*imass*x)           # influent TSS
-            if X_in != 0: self._X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
+            if X_in != 0 and t >= 1: self._X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
             X_min = X_in * fns
             X = QC[-n:]                        # (n, ), TSS for each layer
             Z = QC[:m] * (1-x)

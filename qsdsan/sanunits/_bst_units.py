@@ -350,11 +350,11 @@ class HydraulicDelay(Pump):
             Q = QC[-1]
             C_in = QC_ins[:-1]
             C = QC[:-1]
-            if dQC_ins[-1] == 0:
-                dQC_ins[:-1] = (Q_in*C_in - Q*C)/(Q*T)
-            else:
-                dQC_ins[-1] = (Q_in - Q)/T
-                dQC_ins[:-1] = Q_in/Q*(C_in - C)/T
+            # if dQC_ins[-1] == 0:
+            #     dQC_ins[:-1] = (Q_in*C_in - Q*C)/(Q*T)
+            # else:
+            dQC_ins[-1] = (Q_in - Q)/T
+            dQC_ins[:-1] = Q_in/Q*(C_in - C)/T
             return dQC_ins
         self._ODE = dy_dt
     
