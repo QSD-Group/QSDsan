@@ -46,11 +46,30 @@ The easiest way is through ``pip``, in command/Anaconda prompt (Windows) or term
 
     pip install qsdsan
 
+If you need to update:
+
+.. code::
+
+    pip install -U qsdsan
+
+Or for a specific version (replace X.X.X with the version number):
+
+.. code::
+
+    pip install qsdsan==X.X.X
+
+If you want to install the latest GitHub version at the `main branch <https://github.com/qsd-group/qsdsan>`_:
+
+.. code::
+
+    pip install git+https://github.com/QSD-Group/QSDsan.git
+
+
 You can also download the package from `PyPI <https://pypi.org/project/qsdsan/>`_.
 
 Note that development of this package is currently under initial stage with limited backward compatibility, please feel free to `submit an issue <https://github.com/QSD-Group/QSDsan/issues>`_ for any questions regarding package upgrading.
 
-If you prefer the most recent version on GitHub, please follow the steps in the `Contributing to QSDsan <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ section of the documentation.
+If you are a developer and want to contribute to ``QSDsan``, please follow the steps in the `Contributing to QSDsan <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ section of the documentation to clone the repository.
 
 
 Documentation
