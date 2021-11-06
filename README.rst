@@ -52,7 +52,7 @@ If you need to update:
 
     pip install -U qsdsan
 
-Or for a specific version (replace X.X.X with the version number):
+or for a specific version (replace X.X.X with the version number):
 
 .. code::
 
@@ -63,6 +63,13 @@ If you want to install the latest GitHub version at the `main branch <https://gi
 .. code::
 
     pip install git+https://github.com/QSD-Group/QSDsan.git
+
+
+or other fork and/or branch (replace ``<USERNAME_OF_THE_FORK>`` and ``<BRANCH_NAME>`` with the desired fork and branch names)
+
+.. code::
+
+    pip install git+https://github.com/<USERNAME_OF_THE_FORK>/QSDsan@<BRANCH_NAME>
 
 
 You can also download the package from `PyPI <https://pypi.org/project/qsdsan/>`_.

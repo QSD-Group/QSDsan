@@ -31,7 +31,7 @@ Forking and Cloning
 	    https://github.com/<YOUR_USERNAME>/QSDsan.git
 
 
-#. In your command prompt, navigate to your preferred location by using ``cd``, e.g.,
+#. In your terminal/command prompt, navigate to your preferred location by using ``cd``, e.g.,
 
 	.. code:: bash
 
@@ -54,6 +54,19 @@ Forking and Cloning
 		.. code:: bash
 
 		    git clone https://github.com/<YOUR_USERNAME>/QSDsan.git --depth=1 --no-single-branch
+
+#. Navigate into the cloned QSDsan:
+
+	.. code:: bash
+
+	    cd QSDsan
+
+#. Install required packages:
+
+	.. code:: bash
+
+	    pip install –r requirements_dev.txt
+
 
 #. Add the root ``QSDsan`` as the upstream:
 
