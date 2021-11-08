@@ -33,7 +33,7 @@ from . import Stream, MultiStream, SanStream, MissingSanStream
 from .utils import auom, copy_attr
 from warnings import warn
 
-__all__ = ('WasteStream', 'MissingWasteStream')
+__all__ = ('WasteStream', 'MissingWasteStream', 'get_mock_conc')
 
 
 _defined_composite_vars = ('COD', 'BOD5', 'BOD', 'uBOD', 'NOD', 'ThOD', 'cnBOD',
@@ -134,7 +134,7 @@ ChemicalMolarFlowIndexer = indexer.ChemicalMolarFlowIndexer
 @PropertyFactory(slots=('name', 'mol', 'index', 'F_vol', 'MW',
                         'phase', 'phase_container'))
 def ConcentrationProperty(self):
-    '''Concentration flow, in mg/L (g/m3).'''
+    '''Concentration flows, in mg/L (g/m3).'''
     f_mass = self.mol[self.index] * self.MW
     phase = self.phase or self.phase_container.phase
     if phase != 'l':
@@ -182,6 +182,24 @@ def by_conc(self, TP):
     raise AttributeError('Concentration only valid for liquid phase.')
 
 indexer.MolarFlowIndexer.by_conc = by_conc; del by_conc
+
+@PropertyFactory(units='mg/L')
+def MockConcentrationProperty(self):
+    '''Mock array to show concentration flows nicely, in mg/L (g/m3).'''
+    return self.data
+@MockConcentrationProperty.setter
+def MockConcentrationProperty(self, value):
+    self.data = value
+
+def get_mock_conc(IDs, data={}):
+    '''
+    Generate a MockConcentrationProperty based on the given IDs and data,
+    concentration of IDs not included in data will be default to 0.
+    '''
+    dct = {ID: 0. for ID in IDs}
+    dct.update(data)
+    return property_array([MockConcentrationProperty(k, v) for k, v in dct.items()])
+    
 del PropertyFactory
 
 
