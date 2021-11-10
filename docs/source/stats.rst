@@ -28,8 +28,8 @@ Box plot
 
 	seed = 3221 # set numpy seed for sample reproducibility
 
-    # Run Monte Carlo uncertainty analysis and get Spearman rank correlations,
-    # here we use a small sample size for demonstrative purpose
+   # Run Monte Carlo uncertainty analysis and get Spearman rank correlations,
+   # here we use a small sample size for demonstrative purpose
 	m.run_uncertainty(modelA, N=100, seed=seed, rule='L',
 	                  percentiles=(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1))
 
@@ -39,10 +39,10 @@ Box plot
 	                               x_axis=key_metrics[:-2], # only recoveries
 	                               kind='box', file='')
     
-    # Trim figure
-    fig.subplots_adjust(bottom=0.25)
-    for label in ax.get_xticklabels():
-        label.set_rotation(45)
+   # Trim figure
+   fig.subplots_adjust(bottom=0.25)
+   for label in ax.get_xticklabels():
+       label.set_rotation(45)
 
 .. figure:: ./images/stats/plot_uncer_box.png
    :width: 50%
