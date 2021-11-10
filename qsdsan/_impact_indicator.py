@@ -202,7 +202,7 @@ class ImpactIndicator:
         '''Same as :func:`load_from_file`, has been deprecated.'''
         warn('`load_indicators_from_file` has been deprecated, '
              'please use `load_from_file` instead.', stacklevel=2)
-        cls.load_from_excel(path_or_dict, index_col)
+        cls.load_from_file(path_or_dict, index_col)
 
     @classmethod
     def load_from_file(cls, path_or_df, index_col=None):
