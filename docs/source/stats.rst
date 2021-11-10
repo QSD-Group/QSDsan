@@ -20,29 +20,29 @@ Box plot
 
 	m = bw.models
 	modelA = bw.modelA
-
+		
 	# Total COD/N/P/K recovery and net cost/GWP
 	modelA.metrics = key_metrics = bw.get_key_metrics(
 	    modelA, alt_names={'Annual net cost': 'Cost',
 	                       'Net emission GlobalWarming': 'GWP'})
-
+		
 	seed = 3221 # set numpy seed for sample reproducibility
-
-   # Run Monte Carlo uncertainty analysis and get Spearman rank correlations,
-   # here we use a small sample size for demonstrative purpose
+		
+	# Run Monte Carlo uncertainty analysis and get Spearman rank correlations,
+	# here we use a small sample size for demonstrative purpose
 	m.run_uncertainty(modelA, N=100, seed=seed, rule='L',
 	                  percentiles=(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1))
-
+		
 	# Pass a path to `file` or use `fig.savefig` if want to save the figure,
 	# the `file` kwarg exists for pretty much all of the plotting functions
 	fig, ax = s.plot_uncertainties(modelA,
 	                               x_axis=key_metrics[:-2], # only recoveries
 	                               kind='box', file='')
-    
-   # Trim figure
-   fig.subplots_adjust(bottom=0.25)
-   for label in ax.get_xticklabels():
-       label.set_rotation(45)
+	   
+	# Trim figure
+	fig.subplots_adjust(bottom=0.25)
+	for label in ax.get_xticklabels():
+	    label.set_rotation(45)
 
 .. figure:: ./images/stats/plot_uncer_box.png
    :width: 50%
