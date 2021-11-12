@@ -15,7 +15,7 @@ for license details.
 
 # %%
 
-import numpy as np
+from math import exp
 
 __all__ = ('Decay',)
 
@@ -97,7 +97,7 @@ class Decay:
         t0 = self.t0 if not t0 else t0
         tf = t0 + t
         Cdeg = tot * max_decay
-        Cavg = Cdeg/(k*t) * (np.exp(-k*t0)-np.exp(-k*tf))
+        Cavg = Cdeg/(k*t) * (exp(-k*t0)-exp(-k*tf))
         loss = Cdeg - Cavg
         return loss
 

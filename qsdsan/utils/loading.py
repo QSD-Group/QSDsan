@@ -12,31 +12,34 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import os
-path = os.path.dirname(os.path.realpath(__file__))
-data_path = path[:-6] + '/data/'
-del os
+from os import path as ospath
+path = ospath.dirname(ospath.realpath(__file__))
+qs_path = ospath.realpath(ospath.join(ospath.dirname(__file__), '../'))
+data_path = ospath.join(qs_path, 'data')
 
 import pandas as pd
 from .. import _pk
 
-__all__ = ('load_data', 'data_path', 'dct_from_str', 'save_pickle', 'load_pickle')
+__all__ = ('ospath', 'load_data', 'data_path',
+           'dct_from_str', 'save_pickle', 'load_pickle')
 
 
 def load_data(path=None, sheet=None, index_col=0, **kwargs):
     '''For data importing.'''
-    last_4 = path[-4:]
-    if last_4 in ('.tsv', '.txt'):
+    if path.endswith(('.tsv', '.txt')):
         data = pd.read_csv(path, sep='\t', index_col=index_col, **kwargs)
-    elif last_4 == '.csv':
+    elif path.endswith('.csv'):
         data = pd.read_csv(path, index_col=index_col, **kwargs)
-    elif last_4 in ('xlsx', '.xls'):
-        try: data = pd.read_excel(path, sheet_name=sheet, engine='openpyxl',
-                                  index_col=index_col, **kwargs)
-        except: data = pd.read_excel(path, engine='openpyxl',
-                                     index_col=index_col, **kwargs)
+    elif path.endswith(('.xlsx', '.xls')):
+        if sheet:
+            data = pd.read_excel(path, sheet_name=sheet, engine='openpyxl',
+                                 index_col=index_col, **kwargs)
+        else:
+            data = pd.read_excel(path, engine='openpyxl',
+                                 index_col=index_col, **kwargs)
     else:
-        raise ValueError('Only tsv, csv, or xlsx files can be loaded.')
+        raise ValueError('Only tab deliminted (tsv/txt), comma delimited (csv), '
+                         'or Excel (xlsx, xls) files can be loaded.')
     return data
 
 

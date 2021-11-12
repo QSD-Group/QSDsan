@@ -18,11 +18,11 @@ for license details.
 import numpy as np
 from .. import Construction
 from ._toilet import Toilet
-from ..utils import load_data, data_path
+from ..utils import ospath, load_data, data_path
 
 __all__ = ('UDDT',)
 
-data_path += 'sanunit_data/_uddt.tsv'
+uddt_path = ospath.join(data_path, 'sanunit_data/_uddt.tsv')
 
 
 # %%
@@ -96,7 +96,7 @@ class UDDT(Toilet):
             Construction('wood', item='Wood', quantity_unit='m3'),
             )
 
-        data = load_data(path=data_path)
+        data = load_data(path=uddt_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)

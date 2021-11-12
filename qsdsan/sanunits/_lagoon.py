@@ -15,14 +15,16 @@ for license details.
 
 # %%
 
-import numpy as np
 from warnings import warn
+from math import ceil
 from .. import SanUnit, Construction
 from ._decay import Decay
-from ..utils import load_data, data_path
+from ..utils import ospath, load_data, data_path
 
 __all__ = ('Lagoon',)
 
+anaerobic_path = ospath.join(data_path, 'sanunit_data/_anaerobic_lagoon.tsv')
+facultative_path = ospath.join(data_path, 'sanunit_data/_facultative_lagoon.tsv')
 
 class Lagoon(SanUnit, Decay):
     '''
@@ -68,12 +70,8 @@ class Lagoon(SanUnit, Decay):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self._tau = None
         self._P_removal = 0.
-
-        anaerobic_path = data_path + 'sanunit_data/_anaerobic_lagoon.tsv'
         self._anaerobic_defaults = load_data(path=anaerobic_path)
-        facultative_path = data_path + 'sanunit_data/_facultative_lagoon.tsv'
         self._facultative_defaults = load_data(path=facultative_path)
-
         self._design_type = None
         self.design_type = design_type
         self._flow_rate = flow_rate
@@ -194,7 +192,7 @@ class Lagoon(SanUnit, Decay):
         return self._N_lagoon
     @N_lagoon.setter
     def N_lagoon(self, i):
-        self._N_lagoon = int(np.ceil(i))
+        self._N_lagoon = ceil(i)
 
     @property
     def flow_rate(self):

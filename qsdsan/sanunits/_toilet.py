@@ -18,11 +18,11 @@ for license details.
 from warnings import warn
 from .. import SanUnit
 from ._decay import Decay
-from ..utils import load_data, data_path
+from ..utils import ospath, load_data, data_path
 
 __all__ = ('Toilet',)
 
-data_path += 'sanunit_data/_toilet.tsv'
+toilet_path = ospath.join(data_path, 'sanunit_data/_toilet.tsv')
 
 
 # %%
@@ -93,7 +93,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         self.CAPEX = CAPEX
         self.OPEX_over_CAPEX = OPEX_over_CAPEX
 
-        data = load_data(path=data_path)
+        data = load_data(path=toilet_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             if para in ('desiccant_V', 'desiccant_rho'):

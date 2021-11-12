@@ -11,12 +11,11 @@ for license details.
 '''
 
 from .. import SanUnit, WasteStream
-from ..utils import load_data, data_path
-import numpy as np
-import pandas as pd
+from ..utils import ospath, load_data, data_path
+import numpy as np, pandas as pd
 
 __all__ = ('DynamicInfluent',)
-data_path += 'sanunit_data/_inf_dry_2006.txt'
+dynamic_inf_path = ospath.join(data_path, 'sanunit_data/_inf_dry_2006.tsv')
 
 class DynamicInfluent(SanUnit):
     
@@ -26,12 +25,12 @@ class DynamicInfluent(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), data_file=None, thermo=None,
                  init_with='WasteStream', isdynamic=True, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic)
-        self._init_from_file(data_file)
+        self._init_from_file(dynamic_inf_path)
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    def _init_from_file(self, file_path):
-        path = file_path or data_path
+    def _init_from_file(self, file_path=None):
+        path = file_path or dynamic_inf_path
         df = load_data(path, index_col=None)
         self._data = df
     

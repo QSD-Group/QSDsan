@@ -10,16 +10,15 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import os
 from thermosteam.utils import chemicals_user
 from thermosteam import settings
 from qsdsan import Components, Process, Processes, _pk
-from ..utils import data_path, save_pickle, load_pickle
+from ..utils import ospath, data_path, save_pickle, load_pickle
 
 __all__ = ('load_asm2d_cmps', 'ASM2d')
 
-_path = data_path + 'process_data/_asm2d.tsv'
-_path_cmps = os.path.join(data_path, '_asm2d_cmps.pckl')
+_path = ospath.join(data_path, 'process_data/_asm2d.tsv')
+_path_cmps = ospath.join(data_path, '_asm2d_cmps.pckl')
 _load_components = settings.get_default_chemicals
 
 ############# Components with default notation #############

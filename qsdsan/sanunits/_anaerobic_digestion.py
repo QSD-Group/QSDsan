@@ -15,14 +15,14 @@ for license details.
 
 # %%
 
-import numpy as np
+from math import pi, ceil
 from .. import SanUnit, Construction
 from ._decay import Decay
-from ..utils import load_data, data_path
+from ..utils import ospath, load_data, data_path
 
 __all__ = ('AnaerobicDigestion',)
 
-data_path += 'sanunit_data/_anaerobic_digestion.tsv'
+ad_path = ospath.join(data_path, 'sanunit_data/_anaerobic_digestion.tsv')
 
 
 class AnaerobicDigestion(SanUnit, Decay):
@@ -78,7 +78,7 @@ class AnaerobicDigestion(SanUnit, Decay):
             Construction('excavation', item='Excavation', quantity_unit='m3'),
             )
 
-        data = load_data(path=data_path)
+        data = load_data(path=ad_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)
@@ -144,11 +144,11 @@ class AnaerobicDigestion(SanUnit, Decay):
         design['Single reactor volume'] = V_single = V_tot/(1-self.headspace_frac)/(N-1)
 
         # Rx modeled as a cylinder
-        design['Reactor diameter'] = D = (4*V_single*self.aspect_ratio/np.pi)**(1/3)
+        design['Reactor diameter'] = D = (4*V_single*self.aspect_ratio/pi)**(1/3)
         design['Reactor height'] = H = self.aspect_ratio * D
 
         constr = self.construction
-        concrete =  N*self.concrete_thickness*(2*np.pi/4*(D**2)+np.pi*D*H)
+        concrete =  N*self.concrete_thickness*(2*pi/4*(D**2)+pi*D*H)
         constr[0].quantity = concrete
         constr[1].quantity = V_tot # excavation
 
@@ -188,7 +188,7 @@ class AnaerobicDigestion(SanUnit, Decay):
         return self._N_reactor
     @N_reactor.setter
     def N_reactor(self, i):
-        self._N_reactor = int(np.ceil(i))
+        self._N_reactor = ceil(i)
 
     @property
     def aspect_ratio(self):

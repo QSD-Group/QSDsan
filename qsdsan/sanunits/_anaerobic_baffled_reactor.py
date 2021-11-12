@@ -15,14 +15,14 @@ for license details.
 
 # %%
 
-import numpy as np
+from math import ceil
 from .. import SanUnit, Construction
 from ._decay import Decay
-from ..utils import load_data, data_path
+from ..utils import ospath, load_data, data_path
 
 __all__ = ('AnaerobicBaffledReactor',)
 
-data_path += 'sanunit_data/_anaerobic_baffled_reactor.tsv'
+abr_path = ospath.join(data_path, 'sanunit_data/_anaerobic_baffled_reactor.tsv')
 
 
 class AnaerobicBaffledReactor(SanUnit, Decay):
@@ -77,7 +77,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
             Construction('excavation', item='Excavation', quantity_unit='m3'),
             )
 
-        data = load_data(path=data_path)
+        data = load_data(path=abr_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)
@@ -178,7 +178,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         return self._N_reactor
     @N_reactor.setter
     def N_reactor(self, i):
-        self._N_reactor = int(np.ceil(i))
+        self._N_reactor = ceil(i)
 
     @property
     def reactor_L(self):
@@ -210,7 +210,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         return self._N_baffle
     @N_baffle.setter
     def N_baffle(self, i):
-        self._N_baffle = int(np.ceil(i))
+        self._N_baffle = ceil(i)
 
     @property
     def add_concrete(self):

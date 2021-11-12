@@ -17,14 +17,12 @@ for license details.
 
 from .. import WasteStream, Construction
 from ._toilet import Toilet
-from ..utils import load_data, data_path, dct_from_str
+from ..utils import ospath, load_data, data_path, dct_from_str
 
 __all__ = ('PitLatrine',)
 
-data_path += 'sanunit_data/_pit_latrine.tsv'
+pit_path = ospath.join(data_path, 'sanunit_data/_pit_latrine.tsv')
 
-
-# %%
 
 class PitLatrine(Toilet):
     '''
@@ -98,7 +96,7 @@ class PitLatrine(Toilet):
             Construction('excavation', item='Excavation', quantity_unit='m3'),
             )
 
-        data = load_data(path=data_path)
+        data = load_data(path=pit_path)
         for para in data.index:
             if para in ('MCF_decay', 'N2O_EF_decay'):
                 value = dct_from_str(data.loc[para]['expected'], dtype='float')

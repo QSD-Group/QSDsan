@@ -16,15 +16,15 @@ for license details.
 # %%
 
 import numpy as np
+from math import ceil
 from warnings import warn
 from .. import SanUnit, Construction
 from ._decay import Decay
-from ..utils import load_data, data_path, dct_from_str
+from ..utils import ospath, load_data, data_path, dct_from_str
 
 __all__ = ('DryingBed',)
 
-data_path += 'sanunit_data/_drying_bed.tsv'
-
+drying_bed_path = ospath.join(data_path, 'sanunit_data/_drying_bed.tsv')
 
 class DryingBed(SanUnit, Decay):
     '''
@@ -83,7 +83,7 @@ class DryingBed(SanUnit, Decay):
             Construction('steel', item='Steel', quantity_unit='kg'),
             )
 
-        data = load_data(path=data_path)
+        data = load_data(path=drying_bed_path)
         for para in data.index:
             if para == 'N_bed': continue
             if para in ('sol_frac', 'bed_L', 'bed_W', 'bed_H'):
@@ -214,11 +214,11 @@ class DryingBed(SanUnit, Decay):
         float will be converted to the smallest integer.
         '''
         for i, j in self._N_bed.items():
-            self._N_bed[i] = int(np.ceil(j))
+            self._N_bed[i] = ceil(j)
         return self._N_bed
     @N_bed.setter
     def N_bed(self, i):
-        int_i = {k: np.ceil(v) for k, v in i.items()}
+        int_i = {k: ceil(v) for k, v in i.items()}
         self._N_bed.update(int_i)
 
     @property
@@ -259,7 +259,7 @@ class DryingBed(SanUnit, Decay):
         return self._column_per_side
     @column_per_side.setter
     def column_per_side(self, i):
-        self._column_per_side = int(np.ceil(i))
+        self._column_per_side = ceil(i)
 
     @property
     def column_unit_mass(self):

@@ -15,14 +15,14 @@ for license details.
 
 # %%
 
-import numpy as np
+from math import ceil
 from .. import SanUnit, Construction
 from ._decay import Decay
-from ..utils import load_data, data_path
+from ..utils import ospath, load_data, data_path
 
 __all__ = ('LiquidTreatmentBed',)
 
-data_path += 'sanunit_data/_liquid_treatment_bed.tsv'
+liquid_bed_path = ospath.join(data_path, 'sanunit_data/_liquid_treatment_bed.tsv')
 
 
 class LiquidTreatmentBed(SanUnit, Decay):
@@ -65,7 +65,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
         self.if_N2O_emission = if_N2O_emission
         self.construction = (Construction('concrete', item='Concrete', quantity_unit='m3'))
 
-        data = load_data(path=data_path)
+        data = load_data(path=liquid_bed_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)
@@ -149,7 +149,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
         return self._N_bed
     @N_bed.setter
     def N_bed(self, i):
-        self._N_bed = int(np.ceil(i))
+        self._N_bed = ceil(i)
 
     @property
     def bed_L(self):

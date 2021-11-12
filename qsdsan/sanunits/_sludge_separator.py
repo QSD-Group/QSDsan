@@ -18,11 +18,11 @@ for license details.
 from warnings import warn
 from .. import SanUnit
 from ._decay import Decay
-from ..utils import load_data, data_path, dct_from_str
+from ..utils import ospath, load_data, data_path, dct_from_str
 
 __all__ = ('SludgeSeparator',)
 
-data_path += 'sanunit_data/_sludge_separator.tsv'
+separator_path = ospath.join(data_path, 'sanunit_data/_sludge_separator.tsv')
 
 allocate_N_removal = Decay.allocate_N_removal
 
@@ -62,7 +62,7 @@ class SludgeSeparator(SanUnit):
                  split=None, settled_frac=None, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, **kwargs)
 
-        data = load_data(path=data_path)
+        data = load_data(path=separator_path)
         self.split = split or dct_from_str(data.loc['split']['expected'])
         self.settled_frac = settled_frac or float(data.loc['settled_frac']['expected'])
         del data

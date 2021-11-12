@@ -15,15 +15,15 @@ for license details.
 
 # %%
 
-import numpy as np
+from math import ceil, pi, cos
 from .. import Construction
 from ._decay import Decay
 from ._sludge_separator import SludgeSeparator
-from ..utils import load_data, data_path
+from ..utils import ospath, load_data, data_path
 
 __all__ = ('SedimentationTank',)
 
-data_path += 'sanunit_data/_sedimentation_tank.tsv'
+sedmentation_path = ospath.join(data_path, 'sanunit_data/_sedimentation_tank.tsv')
 
 
 class SedimentationTank(SludgeSeparator, Decay):
@@ -72,7 +72,7 @@ class SedimentationTank(SludgeSeparator, Decay):
             Construction('steel', item='Steel', quantity_unit='kg'),
             )
 
-        data = load_data(path=data_path)
+        data = load_data(path=sedmentation_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)
@@ -140,7 +140,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         design['Single tank height'] = H = (V_single/(L2W*(W2H**2)))**(1/3)
         design['Single tank width'] = W = H * W2H
         design['Single tank length'] = L = W * L2W
-        design['Single roof area'] = N*L*W/(np.cos(self.roof_slope/180*np.pi))
+        design['Single roof area'] = N*L*W/(cos(self.roof_slope/180*pi))
         side_area = N*2*(L*H + W*H)
 
         # Concrete
@@ -192,7 +192,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         return self._N_tank
     @N_tank.setter
     def N_tank(self, i):
-        self._N_tank = int(np.ceil(i))
+        self._N_tank = ceil(i)
 
     @property
     def column_per_side(self):
@@ -200,7 +200,7 @@ class SedimentationTank(SludgeSeparator, Decay):
         return self._column_per_side
     @column_per_side.setter
     def column_per_side(self, i):
-        self._column_per_side = int(np.ceil(i))
+        self._column_per_side = ceil(i)
 
     @property
     def concrete_thickness(self):
