@@ -288,6 +288,10 @@ class WasteStream(SanStream):
                  TMg=None, TCa=None, dry_mass=None, charge=None, ratios=None,
                  stream_impact_item=None, **component_flows):
 
+        if 'impact_item' in component_flows.keys():
+            raise ValueError('The keyword `impact_item` is deprecated, '
+                             'please use `stream_impact_item` instead.')
+
         SanStream.__init__(self=self, ID=ID, flow=flow, phase=phase, T=T, P=P,
                            units=units, price=price, thermo=thermo,
                            stream_impact_item=stream_impact_item, **component_flows)
