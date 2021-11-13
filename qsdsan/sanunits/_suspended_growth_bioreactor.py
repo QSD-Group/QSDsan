@@ -208,7 +208,7 @@ class CSTR(SanUnit):
         V = self._V_max
         C = list(symbols(self.components.IDs))
         if self._model is None:
-            warn(f'{self.ID} was initiated without a suspended growth model, '
+            warn(f'{self.ID} was initialized without a suspended growth model, '
                  f'and thus run as a non-reactive unit')
             r = lambda *args: np.zeros(len(C))
         else:
@@ -415,7 +415,7 @@ class SBR(SanUnit):
 
     def _run(self, cache_state=True):
         if self._model is None:
-            raise RuntimeError(f'{self.ID} was initiated without a suspended growth model.')
+            raise RuntimeError(f'{self.ID} was initialized without a suspended growth model.')
         else:
             isa = isinstance
             inf = self.ins[0]

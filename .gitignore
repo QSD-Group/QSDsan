@@ -14,7 +14,7 @@ MANIFEST
 htmlcov
 _build
 .cache
-prof
+*.prof
 *Pyreverse*
 monkeytype.sqlite3
 *.spyproject*
