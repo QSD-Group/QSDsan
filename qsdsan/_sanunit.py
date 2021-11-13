@@ -364,7 +364,7 @@ class SanUnit(Unit, isabstract=True):
             state = u._state_locator(u._state)[inf.ID] if u \
                 else np.append(inf.conc, inf.get_total_flow('m3/d'))
             states.append(state)
-        return np.array(states)
+        return np.array(states).astype('float')
 
     @property
     def construction(self):

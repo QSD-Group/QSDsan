@@ -24,7 +24,7 @@ from .. import SanUnit
 __all__ = (
     'Mixer',
     'Splitter', 'FakeSplitter', 'ReversedSplitter',
-    'Pump',
+    'Pump', 'HydraulicDelay',
     'Tank', 'StorageTank', 'MixTank',
     'HXutility', 'HXprocess',
     )
@@ -317,9 +317,10 @@ class HydraulicDelay(Pump):
                  init_with='WasteStream', F_BM_default=None):
         SanUnit.__init__(self, ID, ins, outs, thermo,
                          init_with=init_with, F_BM_default=F_BM_default)
+        self._isdynamic = True
         self.t_delay = t_delay
         self._concs = None
-        self._q = None
+        # self._q = None
     
     def set_init_conc(self, **kwargs):
         '''set the initial concentrations [mg/L].'''
@@ -328,19 +329,20 @@ class HydraulicDelay(Pump):
         for k, v in kwargs.items(): Cs[cmpx(k)] = v
         self._concs = Cs
     
-    def set_init_flow(self, q):
-        '''set the initial volumetric flow [m3/d].'''
-        self._q = q
-    
     def _init_state(self):
         '''initialize state by specifiying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
-        if self._concs is not None and self._q is not None:
-            self._state = np.append(self._concs, self._q)
+        if self._concs is not None:
+            self._state = np.append(self._concs, self.ins[0].get_total_flow('m3/d'))
         else:
             self._state = self._state_tracer()[0]
     
+    def _run(self):
+        s_in, = self.ins
+        s_out, = self.outs
+        s_out.copy_like(s_in)
+        
     def _compile_ODE(self):
         T = self.t_delay
         def dy_dt(t, QC_ins, QC, dQC_ins):
@@ -348,8 +350,11 @@ class HydraulicDelay(Pump):
             Q = QC[-1]
             C_in = QC_ins[:-1]
             C = QC[:-1]
-            dQC_ins[-1] = (Q_in - Q)/T
-            dQC_ins[:-1] = Q_in/Q*(C_in - C)/T
+            if dQC_ins[-1] == 0:
+                dQC_ins[:-1] = (Q_in*C_in - Q*C)/(Q*T)
+            else:
+                dQC_ins[-1] = (Q_in - Q)/T
+                dQC_ins[:-1] = Q_in/Q*(C_in - C)/T
             return dQC_ins
         self._ODE = dy_dt
     

@@ -61,6 +61,11 @@ class FlatBottomCircularClarifier(SanUnit):
     fns : float, optional
         Non-settleable fraction of the suspended solids, dimensionless. Must be within
         [0, 1]. The default is 2.28e-3.
+    t_delay : float, optional
+        Time of delay [d] for the start of change in the underflow sludge composition during 
+        dynamic simulation. When t < t_delay, the relative concentrations of particulates
+        in the underflow sludge stays the same as the set initial sludge composition. The 
+        default is 1.
 
     References
     ----------
@@ -77,7 +82,7 @@ class FlatBottomCircularClarifier(SanUnit):
                  init_with='WasteStream', sludge_flow_rate=2000,
                  surface_area=1500, height=4, N_layer=10, feed_layer=4,
                  X_threshold=3000, v_max=474, v_max_practical=250,
-                 rh=5.76e-4, rp=2.86e-3, fns=2.28e-3,
+                 rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, t_delay=1,
                  isdynamic=True, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic)
@@ -93,6 +98,7 @@ class FlatBottomCircularClarifier(SanUnit):
         self._rh = rh
         self._rp = rp
         self._fns = fns
+        self._t_delay = t_delay
         self._ODE = None
         self._solids = None
         self._solubles = None
@@ -222,6 +228,14 @@ class FlatBottomCircularClarifier(SanUnit):
         if fns < 0 or fns > 1: raise ValueError('fns must be within [0,1].')
         self._fns = fns
 
+    @property
+    def t_delay(self):
+        return self._t_delay
+    
+    @t_delay.setter
+    def t_delay(self, T):
+        self._t_delay = max(0, T)
+
     def set_init_solubles(self, **kwargs):
         '''set the initial concentrations [mg/L] of solubles in the clarifier.'''
         Cs = np.zeros(len(self.components))
@@ -328,6 +342,7 @@ class FlatBottomCircularClarifier(SanUnit):
         A = self._A
         hj = self._hj
         Q_s = self._Qs
+        T = self._t_delay
         
         def dy_dt(t, QC_ins, QC, dQC_ins):
             dQC = np.zeros_like(QC)
@@ -337,7 +352,7 @@ class FlatBottomCircularClarifier(SanUnit):
             C_in = QC_ins[:-1]
             Z_in = C_in*(1-x)
             X_in = sum(C_in*imass*x)           # influent TSS
-            if X_in != 0: self._X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
+            if X_in != 0 and t >= T: self._X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
             X_min = X_in * fns
             X = QC[-n:]                        # (n, ), TSS for each layer
             Z = QC[:m] * (1-x)
