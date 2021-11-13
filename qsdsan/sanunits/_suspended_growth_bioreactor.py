@@ -163,7 +163,7 @@ class CSTR(SanUnit):
         self._concs = Cs
 
     def _init_state(self, state=None):
-        '''initialize state by specifiying or calculating component concentrations
+        '''initialize state by specifying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
         mixed = WasteStream()

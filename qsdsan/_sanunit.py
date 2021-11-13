@@ -20,11 +20,12 @@ for license details.
 # %%
 
 import numpy as np
+from scipy.integrate import solve_ivp
 from collections import defaultdict
 from collections.abc import Iterable
 from biosteam.utils import Inlets, Outlets, format_title
 from . import currency, Unit, Stream, SanStream, WasteStream, \
-    Construction, Transportation
+    Construction, Transportation, System
 
 __all__ = ('SanUnit',)
 
@@ -130,7 +131,6 @@ class SanUnit(Unit, isabstract=True):
                  construction=(), transportation=(), equipments=(),
                  add_OPEX={}, uptime_ratio=1., lifetime=None, F_BM_default=None,
                  isdynamic=False, **kwargs):
-
         self._register(ID)
         self._specification = None
         self._load_thermo(thermo)
@@ -141,25 +141,20 @@ class SanUnit(Unit, isabstract=True):
         self._init_results()
         self._init_specification()
         self._assert_compatible_property_package()
-
         self.construction = construction
         self.transportation = transportation
         for equip in equipments:
             equip._linked_unit = self
         self.equipments = equipments
-
         self.add_OPEX = add_OPEX
         self.uptime_ratio = 1.
         self.lifetime = lifetime
-
         if F_BM_default:
             F_BM = self.F_BM
             self.F_BM = defaultdict(lambda: F_BM_default)
             self.F_BM.update(F_BM)
-
         self._isdynamic = isdynamic
-        self._state = None
-        self._ODE = None
+        self._init_dynamic()
 
         for attr, val in kwargs.items():
             setattr(self, attr, val)
@@ -204,6 +199,10 @@ class SanUnit(Unit, isabstract=True):
 
         return converted
 
+    def _init_dynamic(self):
+        self._state = None
+        self._ODE = None
+        self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
 
     def _init_ins(self, ins, init_with):
         super()._init_ins(ins)
@@ -262,6 +261,52 @@ class SanUnit(Unit, isabstract=True):
                                      T, P, flow, composition, N, IDs)
         info = info.replace('\n ', '\n    ')
         return info[:-1]
+
+    def simulate(self, t_span=(0, 0), start_from_cached_state=True, **kwargs):
+        '''
+        Converge mass and energy flows, design, and cost the unit.
+        
+        .. note::
+            
+            If this unit is a dynamic unit, ODEs will be run after ``_run``
+            and/or ``specification``.
+        
+        Parameters
+        ----------
+        t_span : tuple(float, float)
+            Integration time span for dynamic units.
+        start_from_cached_state: bool
+            Whether to start from the cached state.
+        kwargs : dict
+            Other keyword arguments that will be passed to ``scipy.integrate.solve_ivp``
+            
+        See Also
+        --------
+        `scipy.integrate.solve_ivp <https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html>`_
+        '''
+        super().simulate()
+        if self.isdynamic:            
+            #!!! Not sure how to do the ODE for a single unit, using a mock system for now
+            self._mock_dyn_sys.simulate(t_span=t_span,
+                                        start_from_cached_state=start_from_cached_state,
+                                        **kwargs)
+
+            # if not start_from_cached_state:
+            #     self._state = None
+            # self._load_state()
+            # ins = self._ins
+            # state = self._state
+            # dQC_ins = np.zeros((len(self.components)+1)*len(ins))
+            # dy_dt = self.ODE
+            # def dydt(t, y):
+            #     QC_ins = np.concatenante(np.append(ws.conc, ws.get_total_flow('m3/d')) 
+            #                              for ws in ins)
+            #     QC = state #!!! but unit state isn't being updated in ODE?
+            #     QC_dot = dy_dt(t, QC_ins, QC, dQC_ins)
+            #     return QC_dot
+            # sol = solve_ivp(fun=dydt, t_span=t_span, y0=self._state, **kwargs)
+            # self._write_state(sol.t[-1], sol.y.T[-1])
+            self._summary()
 
 
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, IDs=None, stream_info=True):
