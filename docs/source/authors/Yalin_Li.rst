@@ -11,11 +11,11 @@ Yalin Li (creator/lead)
 
 **Email:** `work <mailto:yalinli2@illinois.edu>`_; `personal <mailto:zoe.yalin.li@gmail.com>`_
 
-**Webpage:** `personal site <yalinli2.github.io/webpage>`_
+**Webpage:** `personal site <http://yalinli2.github.io/webpage/>`_
 
-This page is primarily about my aspirations for ``QSDsan``. For information related to my research/teaching interests and other professional activities, please check out my `personal webpage <http://yalinli2.github.io/webpage/>`_ (and feel free to check out the `source code <http://github.com/yalinli2/webpage>`_ and build your own webpage).
+This page is primarily about my aspirations for ``QSDsan``. For information related to my research/teaching interests and other professional activities, please check out my `personal webpage <http://yalinli2.github.io/webpage>`_ (and feel free to check out the `source code <http://github.com/yalinli2/webpage>`_ and build your own webpage).
 
-I'm the creator, lead developer, and current maintainer of ``QSDsan``. I am a postdoctoral researcher in the `Guest Group <http://engineeringforsustainability.com>`_ at the `University of Illinois at Urbana-Champaign (UIUC) <http://illinois.edu>`_. I am affiliated with the `Institute of Sustainability, Energy, and Environment (iSEE) <https://sustainability.illinois.edu>`_ and the `Center for Advanced Bioenergy and Bioproduct Innovation (CABBI) <https://cabbi.bio>`_.
+I'm the creator, lead developer, and current maintainer of ``QSDsan``. I am a postdoctoral researcher in the `Guest Group <http://engineeringforsustainability.com>`_ at the `University of Illinois at Urbana-Champaign (UIUC) <http://illinois.edu>`_. I am affiliated with the `Institute of Sustainability, Energy, and Environment (iSEE) <https://sustainability.illinois.edu>`_ and the `Center for Advanced Bioenergy and Bioproducts Innovation (CABBI) <https://cabbi.bio>`_.
 
 My background is in experimentation where I investigated multiple thermochemical and catalytic technologies for renewable products from biomass and wastewater (still missing the experiments and my beloved reactors), but I transitioned after graduation as I wanted to look at the big-picture implications through quantitative sustainable design (QSD). Unbeknownst to me, I would go on a fantastic journey as I advance the methodology of QSD and develop tools to for its application in research and education.
 
