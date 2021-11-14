@@ -20,9 +20,9 @@ for license details.
 # %%
 
 import numpy as np
-from scipy.integrate import solve_ivp
 from collections import defaultdict
 from collections.abc import Iterable
+from matplotlib import pyplot as plt
 from biosteam.utils import Inlets, Outlets, format_title
 from . import currency, Unit, Stream, SanStream, WasteStream, \
     Construction, Transportation, System
@@ -153,9 +153,9 @@ class SanUnit(Unit, isabstract=True):
             F_BM = self.F_BM
             self.F_BM = defaultdict(lambda: F_BM_default)
             self.F_BM.update(F_BM)
-        self._isdynamic = isdynamic
-        self._init_dynamic()
-
+        self.isdynamic = isdynamic
+        # For units with different states, should update it in the unit's ``__init__``
+        self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components] + ['Q [m3/d]']
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
@@ -201,6 +201,7 @@ class SanUnit(Unit, isabstract=True):
 
     def _init_dynamic(self):
         self._state = None
+        self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components]
         self._ODE = None
         self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
 
@@ -262,7 +263,8 @@ class SanUnit(Unit, isabstract=True):
         info = info.replace('\n ', '\n    ')
         return info[:-1]
 
-    def simulate(self, t_span=(0, 0), start_from_cached_state=True, **kwargs):
+    def simulate(self, t_span=(0, 0), start_from_cached_state=True, 
+                 solver='', **kwargs):
         '''
         Converge mass and energy flows, design, and cost the unit.
         
@@ -290,7 +292,6 @@ class SanUnit(Unit, isabstract=True):
             self._mock_dyn_sys.simulate(t_span=t_span,
                                         start_from_cached_state=start_from_cached_state,
                                         **kwargs)
-
             # if not start_from_cached_state:
             #     self._state = None
             # self._load_state()
@@ -308,6 +309,46 @@ class SanUnit(Unit, isabstract=True):
             # self._write_state(sol.t[-1], sol.y.T[-1])
             self._summary()
 
+    def plot_state_over_time(self, system=None, state_var=()):
+        '''
+        Plot the selected state variable over simulated time,
+        all state variables will be plotted if not given.
+        
+        Parameters
+        ----------
+        system : obj
+            The ``System`` object where this unit is simulated,
+            leave as None if this unit is simulated alone.
+        state_var : str of Iterable
+            Name of the state variables, if unsure, check the `_state_header` attribute.
+        '''
+        if not self.isdynamic:
+            raise RuntimeError(f'Unit {self.ID} is not a dynamic unit, '
+                               'cannot plot state over time.')
+        state_var = [state_var] if isinstance(state_var, str) else state_var
+        sys = system or self._mock_dyn_sys
+        try:
+            df = sys._state2df()
+        except:
+            system_or_unit = 'system' if sys==system else 'unit'
+            ID = sys.ID.rstrip('_dynmock')
+            raise RuntimeError(f'The {system_or_unit} {ID} has not been simulated, '
+                               'please simulate first.')    
+        t = df.iloc[:, 0]
+        unit_df = df.xs(self.ID, axis=1)
+        variables = [i.split(' ')[0] for i in self._state_header]
+        units = [i.split(' ')[1] for i in self._state_header]
+        unit_df.columns = variables
+        if state_var:
+            unit_df = unit_df.loc[:, state_var]
+        fig, ax = plt.subplots(figsize=(8, 4.5))
+        for var in unit_df.columns:
+            ax.plot(t, getattr(unit_df, var), '-o',
+                    label=f'{var} {units[variables.index(var)]}')
+        ax.legend(loc='best')
+        ylabel = 'Concentration' if 'Q' not in state_var else 'Concentration or flow'
+        ax.set(xlabel='Time [d]', ylabel=ylabel)
+        return fig, ax
 
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, IDs=None, stream_info=True):
         '''Print information of the unit, including waste stream-specific information.'''
@@ -355,7 +396,12 @@ class SanUnit(Unit, isabstract=True):
         return self._isdynamic
     @isdynamic.setter
     def isdynamic(self, i):
-        self._isdynamic = bool(i)
+        if hasattr(self, '_isdynamic'):
+            if self._isdynamic == bool(i):
+                return
+        else:
+            self._isdynamic = bool(i)
+            self._init_dynamic()
 
     def _state_tracer(self):
         states = []

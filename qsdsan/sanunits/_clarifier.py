@@ -103,6 +103,9 @@ class FlatBottomCircularClarifier(SanUnit):
         self._solids = None
         self._solubles = None
         self._X_comp = np.zeros(len(self.components))
+        header = self._state_header
+        self._state_header = list(header[:-1]) + \
+            [f'TSS{i+1} [mg/L]' for i in range(N_layer)] + [header[-1]]
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
@@ -369,7 +372,8 @@ class FlatBottomCircularClarifier(SanUnit):
             dQC[:m] = Q_in*(Z_in - Z)/A/(hj*n)
             return dQC
         
-        self._ODE = dy_dt      
+        self._ODE = dy_dt
+                
     
     def _define_outs(self):
         dct_y = self._state_locator(self._state)
