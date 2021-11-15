@@ -35,6 +35,12 @@ from ._suspended_growth_bioreactor import *
 from ._toilet import *
 from ._trucking import *
 from ._uddt import *
+from ._murt_toilet import *
+from ._primary_reclaimer import *
+from ._ultrafiltration import *
+from ._ion_exchange_reclaimer import *
+from ._ecr_reclaimer import *
+
 
 #add new sanunits here
 from . import (
@@ -60,6 +66,11 @@ from . import (
     _toilet,
     _trucking,
     _uddt,
+    _murt_toilet,
+    _primary_reclaimer,
+    _ultrafiltration,
+    _ion_exchange_reclaimer,
+    _ecr_reclaimer
     )
 
 #add new sanunits here
@@ -86,4 +97,9 @@ __all__ = (
     *_toilet.__all__,
     *_trucking.__all__,
     *_uddt.__all__,
+    *_murt_toilet,
+    *_primary_reclaimer,
+    *_ultrafiltration,
+    *_ion_exchange_reclaimer,
+    *_ecr_reclaimer
            )
