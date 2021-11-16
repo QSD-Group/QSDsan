@@ -69,9 +69,10 @@ class MURTToilet(Toilet):
                  CAPEX=0, OPEX_over_CAPEX=0,
                  T=273.15+24, safety_factor=1, **kwargs):
 
-        Toilet.__init__(self, ID, ins, outs, thermo, init_with, N_user, N_toilet,
-                        if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
-                        if_air_emission, if_ideal_emptying, CAPEX, OPEX_over_CAPEX)
+        Toilet.__init__(self, ID, ins, outs, thermo, init_with, N_user=N_user, N_toilet=N_toilet,
+                        if_toilet_paper=if_toilet_paper, if_flushing=if_flushing, if_cleansing=if_cleansing, 
+                        if_desiccant=if_desiccant, if_air_emission=if_air_emission, if_ideal_emptying=if_ideal_emptying, 
+                        CAPEX=CAPEX, OPEX_over_CAPEX=OPEX_over_CAPEX)
         self.lifetime = lifetime
         self.T = T
         self._safety_factor = safety_factor

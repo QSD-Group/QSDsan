@@ -97,9 +97,9 @@ __all__ = (
     *_toilet.__all__,
     *_trucking.__all__,
     *_uddt.__all__,
-    *_murt_toilet,
-    *_primary_reclaimer,
-    *_ultrafiltration,
-    *_ion_exchange_reclaimer,
-    *_ecr_reclaimer
+    *_murt_toilet.__all__,
+    *_primary_reclaimer.__all__,
+    *_ultrafiltration.__all__,
+    *_ion_exchange_reclaimer.__all__,
+    *_ecr_reclaimer.__all__
            )

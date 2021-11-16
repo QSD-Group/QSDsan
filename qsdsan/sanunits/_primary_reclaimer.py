@@ -15,7 +15,7 @@ from ..utils import load_data, data_path
 # __all__ = ('PrimaryES',)
 __all__ = ('PrimaryReclaimer',)
 
-data_path += 'sanunit_data/_primary_reclaimer.tsv'
+data_path += 'sanunit_data/_primary_reclaimer.csv'
 
 
 
