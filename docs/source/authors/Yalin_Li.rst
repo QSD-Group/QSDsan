@@ -68,4 +68,4 @@ What I do for fun
 
 Professional
 ------------
-If you want to chec kout my publications, the most up-to-date list is on `Google Scholar <https://scholar.google.com/citations?user=5Zv3mM0AAAAJ&hl=en>`_. For my other repositories, `GitHub <https://github.com/yalinli2>`_ would be the go-to place. You can also check out my complete `CV <https://drive.google.com/file/d/1XxD9vS4LtoyfvWILSEbQZ6toQdKhBdt4/view?usp=sharing>`_ to know about my other professional activities (conference presentations, teaching, service, etc.).
+If you want to check out my publications, the most up-to-date list is on `Google Scholar <https://scholar.google.com/citations?user=5Zv3mM0AAAAJ&hl=en>`_. For my other repositories, `GitHub <https://github.com/yalinli2>`_ would be the go-to place. You can also check out my complete `CV <https://drive.google.com/file/d/1XxD9vS4LtoyfvWILSEbQZ6toQdKhBdt4/view?usp=sharing>`_ to know about my other professional activities (conference presentations, teaching, service, etc.).
