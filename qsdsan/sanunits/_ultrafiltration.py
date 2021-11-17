@@ -26,7 +26,7 @@ __all__ = ('Ultrafiltration',)
 
 #path to csv with all the inputs
 
-data_path += 'sanunit_data/_ultrafiltration.tsv'
+data_path += 'sanunit_data/_ultrafiltration_reclaimer.csv'
 
 ### 
 class Ultrafiltration(SanUnit):
@@ -106,4 +106,3 @@ class Ultrafiltration(SanUnit):
     def _calc_maintenance_labor_cost(self):
         ion_exchange_maintenance_labor = ((self.labor_maintenance_GAC_replacement * self.wages))
         return ion_exchange_maintenance_labor/ (365 * 24) # USD/hr (all items are per hour)
-
