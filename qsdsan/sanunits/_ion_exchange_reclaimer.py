@@ -27,7 +27,7 @@ __all__ = ('IonExchangeReclaimer',)
 
 #path to csv with all the inputs
 
-data_path += 'sanunit_data/_ion_exchange_reclaimer.tsv'
+data_path += 'sanunit_data/_ion_exchange_reclaimer.csv'
 
 ### 
 class IonExchangeReclaimer(SanUnit):

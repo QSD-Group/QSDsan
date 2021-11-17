@@ -58,16 +58,16 @@ class Ultrafiltration(SanUnit):
         
 # define the number of influent and effluent streams    
     _N_ins = 1
-    _N_outs = 4
+    _N_outs = 2
 
 # in _run: define influent and effluent streams and treatment processes 
     def _run(self):
         waste = self.ins[0]
-        treated, sludge = self.outs
+        treated, retentate = self.outs
         treated.copy_like(self.ins[0])   
         
-        self.sludge_prcd = (waste.imass['OtherSS']* self.TSS_removal) #mg/L
-        sludge.imass['OtherSS'] = self.sludge_prcd
+        self.retentate_prcd = (waste.imass['OtherSS']* self.TSS_removal) #mg/L
+        retentate.imass['OtherSS'] = self.retentate_prcd
     
     def _design(self):
         design = self.design_results
