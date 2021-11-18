@@ -90,19 +90,12 @@ class PrimaryReclaimer(SanUnit, Decay):
         self.sludge_TN_F_mass = self.sludge_TN * waste.F_vol * 1e-3
         sludge.imass['N'] = self.sludge_TN
         
-        self.sludge_TP = waste.imass['P'] * self.TP_removal
-        self.sludge_TP_F_mass = self.sludge_TP * waste.F_vol * 1e-3 
-        sludge.imass['P'] = self.sludge_TP 
         
         self.sludge_COD = waste._COD * self.COD_removal 
         self.sludge_COD_F_mass = self.sludge_COD * waste.F_vol * 1e-3
         sludge._COD = self.sludge_COD 
         
-        self.sludge_prcd = (self.reactor_volume * waste.imass['OtherSS']
-                            * self.VSS_TSS_ratio)
-        sludge.imass['OtherSS'] = (self.sludge_prcd - self.sludge_TN_F_mass 
-         - self.sludge_TP_F_mass - self.sludge_COD_F_mass)
-        
+
         sludge.imass['H2O'] = sludge.F_mass * 0.5
         
 #!!!!!Need to find away to cost treatment of solids

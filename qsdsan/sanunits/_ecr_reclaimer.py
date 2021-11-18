@@ -13,7 +13,7 @@ from ..utils import load_data, data_path
 
 __all__ = ('ECR_Reclaimer',)
 
-data_path += 'sanunit_data/_ECR_Reclaimer.tsv'
+data_path += 'sanunit_data/_ECR_Reclaimer.csv'
 
 
 class ECR_Reclaimer(SanUnit, Decay):
@@ -51,7 +51,7 @@ class ECR_Reclaimer(SanUnit, Decay):
     
     
     _N_ins = 3
-    _N_outs = 3
+    _N_outs = 1
 
 #look up literature values for percentages typically removed by anaerobic/follow yalin/john's assumptions \
    
