@@ -201,6 +201,7 @@ class SanUnit(Unit, isabstract=True):
 
     def _init_dynamic(self):
         self._state = None
+        self._dstate = None
         self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components]
         self._ODE = None
         self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
@@ -403,14 +404,20 @@ class SanUnit(Unit, isabstract=True):
             self._isdynamic = bool(i)
             self._init_dynamic()
 
-    def _state_tracer(self):
-        states = []
-        for inf in self.ins:
-            u = inf._source
-            state = u._state_locator(u._state)[inf.ID] if u \
-                else np.append(inf.conc, inf.get_total_flow('m3/d'))
-            states.append(state)
-        return np.array(states).astype('float')
+    # def _state_tracer(self):
+    #     states = []
+    #     for inf in self.ins:
+    #         u = inf._source
+    #         state = u._state_locator(u._state)[inf.ID] if u \
+    #             else np.append(inf.conc, inf.get_total_flow('m3/d'))
+    #         states.append(state)
+    #     return np.array(states).astype('float')
+    
+    def _collect_ins_state(self):
+        return np.array([inf._state for inf in self._ins])
+            
+    def _collect_ins_dstate(self):
+        return np.array([inf._dstate for inf in self._ins])
 
     @property
     def construction(self):

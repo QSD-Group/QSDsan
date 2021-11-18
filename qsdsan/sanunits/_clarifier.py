@@ -268,7 +268,7 @@ class FlatBottomCircularClarifier(SanUnit):
         n = self._N_layer
         x = self.components.x
         imass = self.components.i_mass
-        QCs = self._state_tracer()[0]
+        QCs = self._collect_ins_state()[0]
         Q = QCs[-1]
         Z = self._solubles if self._solubles is not None \
             else QCs[:-1]*(1-x)
@@ -278,41 +278,80 @@ class FlatBottomCircularClarifier(SanUnit):
             else np.array([TSS_in*f for f in 20**np.linspace(-1,1,n)])
         ZQs = np.append(Z, Q)
         self._state = np.append(ZQs, TSS)
+        self._dstate = self._state * 0.
         if TSS_in != 0: self._X_comp = QCs[:-1] * x / TSS_in
 
-    def _state_locator(self, arr):
+    def _update_state(self, arr):
+        self._state = arr
         x = self.components.x
         n = self._N_layer
-        dct = {}
         Q = arr[-(1+n)]
         Q_e = Q - self._Qs
         Z = arr[:len(x)]
         X_composition = self._X_comp # (m, ), mg COD/ mg TSS
         X_e = arr[-n] * X_composition
         X_s = arr[-1] * X_composition
-        dct[self.ID] = arr
-        dct[self.outs[0].ID] = np.append(Z+X_e, Q_e)
-        dct[self.outs[1].ID] = np.append(Z+X_s, self._Qs)        
-        return dct
-    
-    def _dstate_locator(self, arr):
+        eff, slg = self._outs
+        if eff._state is None: eff._state = np.append(Z+X_e, Q_e)
+        else: 
+            eff._state[:-1] = Z+X_e
+            eff._state[-1] = Q_e
+        if slg._state is None: slg._state = np.append(Z+X_s, self._Qs)
+        else:
+            slg._state[:-1] = Z+X_s
+
+    # def _state_locator(self, arr):
+    #     x = self.components.x
+    #     n = self._N_layer
+    #     dct = {}
+    #     Q = arr[-(1+n)]
+    #     Q_e = Q - self._Qs
+    #     Z = arr[:len(x)]
+    #     X_composition = self._X_comp # (m, ), mg COD/ mg TSS
+    #     X_e = arr[-n] * X_composition
+    #     X_s = arr[-1] * X_composition
+    #     dct[self.ID] = arr
+    #     dct[self.outs[0].ID] = np.append(Z+X_e, Q_e)
+    #     dct[self.outs[1].ID] = np.append(Z+X_s, self._Qs)        
+    #     return dct
+
+    def _update_dstate(self):
+        arr = self._dstate
         x = self.components.x
         n = self._N_layer
-        dct = {}
         dQ = arr[-(1+n)]
         dZ = arr[:len(x)]
         X_composition = self._X_comp # (m, ), mg COD/ mg TSS
-        dX_e = arr[-n] * X_composition
+        try: dX_e = arr[-n] * X_composition
+        except: breakpoint()
         dX_s = arr[-1] * X_composition
-        dct[self.ID] = arr
-        dct[self.outs[0].ID] = np.append(dZ+dX_e, dQ)
-        dct[self.outs[1].ID] = np.append(dZ+dX_s, 0)
-        return dct
+        eff, slg = self._outs
+        if eff._dstate is None: eff._dstate = np.append(dZ+dX_e, dQ)
+        else: 
+            eff._dstate[:-1] = dZ+dX_e
+            eff._dstate[-1] = dQ
+        if slg._dstate is None: slg._dstate = np.append(dZ+dX_s, 0.)
+        else:
+            slg._dstate[:-1] = dZ+dX_s
+    
+    # def _dstate_locator(self, arr):
+    #     x = self.components.x
+    #     n = self._N_layer
+    #     dct = {}
+    #     dQ = arr[-(1+n)]
+    #     dZ = arr[:len(x)]
+    #     X_composition = self._X_comp # (m, ), mg COD/ mg TSS
+    #     dX_e = arr[-n] * X_composition
+    #     dX_s = arr[-1] * X_composition
+    #     dct[self.ID] = arr
+    #     dct[self.outs[0].ID] = np.append(dZ+dX_e, dQ)
+    #     dct[self.outs[1].ID] = np.append(dZ+dX_s, 0)
+    #     return dct
 
-    def _load_state(self):
-        '''returns a dictionary of values of state variables within the clarifer and in the output streams.'''
-        if self._state is None: self._init_state()
-        return {self.ID: self._state}
+    # def _load_state(self):
+    #     '''returns a dictionary of values of state variables within the clarifer and in the output streams.'''
+    #     if self._state is None: self._init_state()
+    #     return {self.ID: self._state}
 
     def _run(self):
         '''only to converge volumetric flows.'''
@@ -348,11 +387,11 @@ class FlatBottomCircularClarifier(SanUnit):
         T = self._t_delay
         
         def dy_dt(t, QC_ins, QC, dQC_ins):
-            dQC = np.zeros_like(QC)
-            dQC[-(n+1)] = dQC_ins[-1]
-            Q_in = QC_ins[-1]
+            dQC = self._dstate
+            dQC[-(n+1)] = dQC_ins[0,-1]
+            Q_in = QC_ins[0,-1]
             Q_e = Q_in - Q_s
-            C_in = QC_ins[:-1]
+            C_in = QC_ins[0,:-1]
             Z_in = C_in*(1-x)
             X_in = sum(C_in*imass*x)           # influent TSS
             if X_in != 0 and t >= T: self._X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
@@ -370,7 +409,8 @@ class FlatBottomCircularClarifier(SanUnit):
             dQC[-n:] = ((flow_in - flow_out)/A + settle_in - settle_out)/hj        # (n,)
             #*********solubles**********
             dQC[:m] = Q_in*(Z_in - Z)/A/(hj*n)
-            return dQC
+            self._update_dstate()
+            # return dQC
         
         self._ODE = dy_dt
                 
