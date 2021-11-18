@@ -44,7 +44,8 @@ _common_composite_vars = ('_COD', '_BOD', '_uBOD', '_TC', '_TOC', '_TN',
                           '_dry_mass', '_charge', '_ThOD', '_cnBOD')
 
 _ws_specific_slots = (*_common_composite_vars,
-                      '_pH', '_SAlk', '_ratios', '_stream_impact_item')
+                      '_pH', '_SAlk', '_ratios', '_stream_impact_item', 
+                      '_state', '_dstate')
 
 _specific_groups = {'S_VFA': ('S_Ac', 'S_Prop'),
                     'X_Stor': ('X_OHO_PHA', 'X_GAO_PHA', 'X_PAO_PHA',
@@ -323,6 +324,8 @@ class WasteStream(SanStream):
         self._dry_mass = dry_mass
         self._charge = charge
         self._ratios = ratios
+        self._state = None
+        self._dstate = None
 
     @staticmethod
     def from_stream(cls, stream, ID=None, **kwargs):
@@ -996,6 +999,15 @@ class WasteStream(SanStream):
         self.set_flow(M_bulk, 'kg/hr', bulk_liquid_ID)
         return self.F_vol*1e3 - target_Q
 
+    def _init_state(self):
+        self._state = np.append(self.conc.astype('float'), self.get_total_flow('m3/d'))
+        self._dstate = self._state * 0.
+    
+    def _state2flows(self):
+        Q = self._state[-1]
+        Cs = dict(zip(self.components.IDs, self._state[:-1]))
+        Cs.pop('H2O', None)
+        self.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
 
     @classmethod
     def codstates_inf_model(cls, ID='', flow_tot=0., units = ('L/hr', 'mg/L'),
