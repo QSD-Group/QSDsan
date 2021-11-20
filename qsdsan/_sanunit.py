@@ -206,6 +206,7 @@ class SanUnit(Unit, isabstract=True):
         self._ODE = None
         self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
 
+
     def _init_ins(self, ins, init_with):
         super()._init_ins(ins)
         converted = self._convert_stream(ins, self.ins, init_with, 'ins')
@@ -288,26 +289,13 @@ class SanUnit(Unit, isabstract=True):
         `scipy.integrate.solve_ivp <https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html>`_
         '''
         super().simulate()
-        if self.isdynamic:            
-            #!!! Not sure how to do the ODE for a single unit, using a mock system for now
-            self._mock_dyn_sys.simulate(t_span=t_span,
-                                        start_from_cached_state=start_from_cached_state,
-                                        **kwargs)
-            # if not start_from_cached_state:
-            #     self._state = None
-            # self._load_state()
-            # ins = self._ins
-            # state = self._state
-            # dQC_ins = np.zeros((len(self.components)+1)*len(ins))
-            # dy_dt = self.ODE
-            # def dydt(t, y):
-            #     QC_ins = np.concatenante(np.append(ws.conc, ws.get_total_flow('m3/d')) 
-            #                              for ws in ins)
-            #     QC = state #!!! but unit state isn't being updated in ODE?
-            #     QC_dot = dy_dt(t, QC_ins, QC, dQC_ins)
-            #     return QC_dot
-            # sol = solve_ivp(fun=dydt, t_span=t_span, y0=self._state, **kwargs)
-            # self._write_state(sol.t[-1], sol.y.T[-1])
+        if self.isdynamic:
+            sys = self._mock_dyn_sys
+            sys._feeds = self.ins
+            sys._products = self.outs
+            sys.simulate(t_span=t_span,
+                         start_from_cached_state=start_from_cached_state,
+                         **kwargs)
             self._summary()
 
     def plot_state_over_time(self, system=None, state_var=()):
