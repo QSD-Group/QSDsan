@@ -280,8 +280,7 @@ class CSTR(SanUnit):
                 #     Q_dot = dQC_ins[-1]
                 Cs = QC[:-1]
                 flow_out = Q_e * Cs / V
-                try: react = np.asarray(r(*Cs))
-                except: breakpoint()
+                react = np.asarray(r(*Cs))
                 C_dot = flow_in - flow_out + react
                 self._dstate[:-1] = C_dot
                 self._update_dstate()

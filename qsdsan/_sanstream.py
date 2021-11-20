@@ -65,6 +65,21 @@ class SanStream(Stream):
     def copy(self, new_ID=''):
         '''
         Copy the information of another stream.
+        
+        There are three functions related to copying: ``copy``, ``copy_like``, and ``copy_flow``,
+        and they have slight differences in using.
+        
+        Both ``copy`` and ``copy_like`` makes the new stream the same as the original one
+        (other than that the new stream does not have the cost),
+        but when using ``copy``, you do now need to pre-create the new stream,
+        (i.e., you can just do ``new_stream = original_stream.copy('new_ID')``),
+        but to use ``copy_like``, you need to firstly create the new stream, then
+        ``new_stream.copy_like(original_stream)``.
+        
+        For ``copy_flow``, it is similar to ``copy_like`` in that you need to firstly
+        creating the new stream, but unlike ``copy_flow`` that copies properties
+        such as temperature, pressure, ``copy_flow`` just copies the mass flow information,
+        but you can choose which component to copy.
 
         Parameters
         ----------
@@ -85,9 +100,73 @@ class SanStream(Stream):
         if hasattr(self, '_stream_impact_item'):
             if self.stream_impact_item is not None:
                 self.stream_impact_item.copy(stream=new)
+            else:
+                new._stream_impact_item = None
         return new
 
     __copy__ = copy
+    
+    
+    def copy_like(self, other):
+        '''
+        Copy the information of another stream without creating a new stream.
+
+        Parameters
+        ----------
+        other : obj
+            The stream where mass flows and stream properties will be copied from.
+            
+        .. note::
+
+            [1] Price is not copied.
+
+            [2] If the original stream has an :class:`~.StreamImpactItem`,
+            then a new :class:`~.StreamImpactItem` will be created for the new stream
+            and the new impact item will be linked to the original impact item.
+            
+        See Also 
+        --------
+        :func:`copy`_ for the differences between ``copy``, ``copy_like``, and ``copy_flow``.
+        '''
+        
+        Stream.copy_like(self, other)
+
+        if not isinstance(other, SanStream):
+            return
+
+        if hasattr(other, '_stream_impact_item'):
+            if other.stream_impact_item is not None:
+                self.stream_impact_item.copy(stream=self)
+    
+    
+    def copy_flow(self, other, IDs=..., *, remove=False, exclude=False):
+        '''
+        Copy only the mass flow of another stream without creating a new stream.
+
+        Parameters
+        ----------
+        other : obj
+            The stream where mass flows will be copied from.
+        IDs=... : Iterable[str], defaults to all components.
+            IDs of the components to be copied from.
+        remove=False: bool, optional
+            If True, copied components will be removed from the original stream.
+        exclude=False: bool, optional
+            If True, exclude designated components when copying.
+            
+            
+        See Also 
+        --------
+        :func:`copy`_ for the differences between ``copy``, ``copy_like``, and ``copy_flow``.
+        '''
+        Stream.copy_flow(self, other)
+        
+        if not isinstance(other, SanStream):
+            return
+
+        self._stream_impact_item = None     
+    
+    
 
     @staticmethod
     def from_stream(cls, stream, ID='', **kwargs):
@@ -202,6 +281,7 @@ class SanStream(Stream):
 
         others = [s for s in others if not 'Missing' in type(s).__name__]
         Stream.mix_from(self, others)
+        self._stream_impact_item = None
 
 
     @property

@@ -732,13 +732,7 @@ class WasteStream(SanStream):
     def conc(self):
         '''[property_array] Mass concentrations, in mg/L (g/m3).'''
         return self.iconc.data
-        # mass = self.mass
-        # try: mass[:] = self.get_mass_concentration()
-        # except: breakpoint()
-        # printed = mass.__repr__()
-        # printed = printed.replace('kg/hr', 'mg/L')
-        # print(printed)
-        # return printed
+
 
     @property
     def Conc(self):
@@ -756,7 +750,6 @@ class WasteStream(SanStream):
             ID of the new stream, a default ID will be assigned if not provided.
         ws_properties : bool
             Whether to copy wastewater-related properties to the new stream.
-
 
         .. note::
 
@@ -776,9 +769,9 @@ class WasteStream(SanStream):
 
     __copy__ = copy
 
-    # TODO: add documents for these functions, differentiate copy, copy_like, and copy_flow
+
     def copy_like(self, other):
-        Stream.copy_like(self, other)
+        SanStream.copy_like(self, other)
 
         if not isinstance(other, WasteStream):
             return
@@ -786,31 +779,6 @@ class WasteStream(SanStream):
         for slot in _ws_specific_slots:
             value = getattr(other, slot)
             setattr(self, slot, value)
-
-    def copy_flow(self, other, IDs=..., *, remove=False, exclude=False, if_copy_ws=False):
-        #!!! How to inherit the Stream copy_flow function?
-        # Stream.copy_flow(self, other, IDs, remove, exclude)
-
-        chemicals = self.chemicals
-        mol = other.mol
-        if exclude:
-            IDs = chemicals.get_index(IDs)
-            index = np.ones(chemicals.size, dtype=bool)
-            index[IDs] = False
-        else:
-            index = chemicals.get_index(IDs)
-
-        self.mol[index] = mol[index]
-        if remove:
-            if isinstance(other, MultiStream):
-                other.imol.data[:, index] = 0
-            else:
-                mol[index] = 0
-
-        if if_copy_ws:
-            for slot in _ws_specific_slots:
-                value = getattr(other, slot)
-                setattr(self, slot, value)
 
 
     def mix_from(self, others):
@@ -849,19 +817,22 @@ class WasteStream(SanStream):
           S_O2         303021.4
           H2O          303021.4
         '''
-        others = [s for s in others if not 'Missing' in type(s).__name__]
-        Stream.mix_from(self, others)
+        # others = [s for s in others if not 'Missing' in type(s).__name__]
+        # Stream.mix_from(self, others)
+
+        SanStream.mix_from(self, others)
 
         for slot in _ws_specific_slots:
             if not hasattr(self, slot) or slot=='_stream_impact_item':
                 continue
             #!!! This need reviewing, might not be good to calculate some
             # attributes like pH
+            tot = None
             try:
                 tot = sum(to_float(i, slot)*i.F_vol for i in others if hasattr(i, slot))
-            except: continue
+            except: tot = 0.
 
-            if tot == 0.:
+            if tot == None or self.F_vol == 0.:
                 setattr(self, slot, None)
             else:
                 setattr(self, slot, tot/self.F_vol)

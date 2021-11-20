@@ -172,7 +172,6 @@ class ImpactItem:
                 try:
                     CF_value, CF_unit = value # unit provided for CF
                     self.add_indicator(indicator, CF_value, CF_unit)
-                # except: breakpoint()
                 except Exception as e:
                     if 'unpack' in str(sys.exc_info()[1]):
                         self.add_indicator(indicator, value)
