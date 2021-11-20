@@ -817,25 +817,19 @@ class WasteStream(SanStream):
           S_O2         303021.4
           H2O          303021.4
         '''
-        # others = [s for s in others if not 'Missing' in type(s).__name__]
-        # Stream.mix_from(self, others)
-
         SanStream.mix_from(self, others)
 
         for slot in _ws_specific_slots:
             if not hasattr(self, slot) or slot=='_stream_impact_item':
                 continue
-            #!!! This need reviewing, might not be good to calculate some
+            #!!! This needs reviewing, might not be good to calculate some
             # attributes like pH
-            tot = None
+            # tot = None
             try:
                 tot = sum(to_float(i, slot)*i.F_vol for i in others if hasattr(i, slot))
-            except: tot = 0.
-
-            if tot == None or self.F_vol == 0.:
-                setattr(self, slot, None)
-            else:
                 setattr(self, slot, tot/self.F_vol)
+            except: 
+                setattr(self, slot, None)
 
 
     def get_TDS(self, include_colloidal=True):

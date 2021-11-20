@@ -281,7 +281,8 @@ class SanStream(Stream):
 
         others = [s for s in others if not 'Missing' in type(s).__name__]
         Stream.mix_from(self, others)
-        self._stream_impact_item = None
+        if not hasattr(self, '_stream_impact_item'):
+            self._stream_impact_item = None
 
 
     @property
