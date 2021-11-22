@@ -73,7 +73,6 @@ class IonExchangeReclaimer(SanUnit):
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
         del data
-        
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
@@ -118,22 +117,23 @@ class IonExchangeReclaimer(SanUnit):
         #KCl_cost_day = KCl_demand_time * 24 * (self.KCl / self.KCl_weight_per_cost) # $ KCl / d
         KCl.imass['PotassiumChloride'] = self.KCl_demand_time
 
-      
+
         #!!! During storage most N as urea goes to NH3, should that 
         # conversion be added or just use total N here? 
         self.N_removed = waste.imass['NH3'] * (self.TN_removal)
-        self.N_recovered = self.N_removed * self.desorption_recovery_efficiency  # kg N / hr
+        self.N_recovered = self.N_removed * (self.desorption_recovery_efficiency)  # kg N / hr
         treated.imass['NH3'] =  waste.imass['NH3'] - self.N_removed # kg N / hr
         conc_NH3.imass['NH3'] = self.N_recovered # kg N / hr
         conc_NH3.imass['PotassiumChloride'] = self.KCl_demand_time
         zeolite_out.imass['NH3'] = self.N_removed - self.N_recovered
-    
+        
+        
     def _design(self):
         design = self.design_results
         
-        design['Plastic'] = P_quant = self.plastic_weight
+        design['Plastic'] = P_quant = self.Plastic_weight
         design['PVC'] = PVC_quant = self.PVC_weight
-        design['Steel'] = S_quant = self.steel_weight
+        design['Steel'] = S_quant = self.Steel_weight
         
         self.construction = (
             Construction(item='Plastic', quantity = P_quant, quantity_unit = 'kg'),
@@ -154,16 +154,16 @@ class IonExchangeReclaimer(SanUnit):
             
         self._BM = dict.fromkeys(self.purchase_costs.keys(), 1)
               
-        self.add_OPEX =  self._calc_replacement_cost() + self._calc_maintenance_labor_cost()
+        # self.add_OPEX =  self._calc_replacement_cost() + self._calc_maintenance_labor_cost()
     
         
     def _calc_replacement_cost(self):
-        ion_exchange_replacement_cost = (self.zeolite_bag_mesh * self.zeolite_lifetime) #USD/yr
+        ion_exchange_replacement_cost = (self.GAC_zeolite_mesh * self.zeolite_lifetime) #USD/yr
         return ion_exchange_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
                   
-    def _calc_maintenance_labor_cost(self):
-        ion_exchange_maintenance_labor = ((self.labor_maintenance_GAC_replacement * self.wages))
-        return ion_exchange_maintenance_labor/ (365 * 24) # USD/hr (all items are per hour)
+    # def _calc_maintenance_labor_cost(self):
+    #     ion_exchange_maintenance_labor = ((self.labor_maintenance_GAC_replacement * self.wages))
+    #     return ion_exchange_maintenance_labor/ (365 * 24) # USD/hr (all items are per hour)
 
 
 

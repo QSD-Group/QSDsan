@@ -56,7 +56,7 @@ class ECR_Reclaimer(SanUnit, Decay):
 #look up literature values for percentages typically removed by anaerobic/follow yalin/john's assumptions \
    
     def _run(self):
-        waste, salt, HCl_acid = self.ins
+        waste, salt, HCl = self.ins
         treated = self.outs[0]
         treated.copy_like(self.ins[0])
 
@@ -64,7 +64,7 @@ class ECR_Reclaimer(SanUnit, Decay):
         
       
         HCL_density = 1.2 #g/ml
-        HCl_acid.imass['HCl'] = self.HCl_dosing/52/24/7 * HCL_density / 1000 #kg/h
+        HCl.imass['HCl'] = self.HCl_dosing/52/24/7 * HCL_density / 1000 #kg/h
         
         
                 
@@ -74,10 +74,8 @@ class ECR_Reclaimer(SanUnit, Decay):
 
     def _design(self):
         design = self.design_results
-        design['Metal'] = electrode_quant = self.electrode
-        design['Pump'] = pump_quant = self.pump
-        self.construction = ((Construction(item='Pump', quantity = pump_quant, quantity_unit = 'ea')),
-                             (Construction(item='Metal', quantity = electrode_quant, quantity_unit = 'kg')))
+        design['Titanium'] = electrode_quant = self.Titanium_weight
+        self.construction = ((Construction(item='Titanium', quantity = electrode_quant, quantity_unit = 'kg')))
         self.add_construction()
  
     def _cost(self):
@@ -85,18 +83,8 @@ class ECR_Reclaimer(SanUnit, Decay):
         #purchase_costs is used for capital costs
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.purchase_costs['level_guage_cost'] = (self.level_guage_cost)
-        self.purchase_costs['pump_cost'] = (self.pump_cost)
-        self.purchase_costs['fan_cost'] = (self.fan_cost)
-        self.purchase_costs['salt_dosing_device_cost'] = (self.salt_dosing_device_cost)
-        self.purchase_costs['UPVC_pipe_cost'] = (self.UPVC_pipe_cost)
-        self.purchase_costs['UPVC_electric_ball_cost'] = (self.UPVC_electric_ball_cost)
-        self.purchase_costs['GAC_cost'] = (self.GAC_cost)
-        self.purchase_costs['electrode_cost'] = (self.electrode_cost)
-        self.purchase_costs['ECR_reactor_cost'] = (self.ECR_reactor_cost)
-        self.purchase_costs['power_supply_cost'] = (self.power_supply_cost)
-        self.purchase_costs['plastic_spraying_cabinent_cost'] = (self.plastic_spraying_cabinent_cost)
-        
+        self.purchase_costs['EC_brush'] = (self.EC_brush)
+        self.purchase_costs['EC_cell'] = (self.EC_cell)
         
         self._BM = dict.fromkeys(self.purchase_costs.keys(), 1)
         

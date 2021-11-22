@@ -11,3 +11,7 @@ COD_removal,,fraction of COD removal,0.57515,0.28481,0.876453,triangular,Duke Da
 MCF_decay,,fraction of anaerobic conversion of degraded COD,1,,,constant,"IPCC, 2006"
 N_max_decay,,fraction of N removal,1,,,constant,Report
 N2O_EF_decay,,fraction of of degraded N emitted as N2O,0.005,0.0005,0.006,triangular,"IPCC, 2006; Leeds"
+HCL_life,,times/year,4,3,5,uniform,
+salt_dosing_pump_life,re,times/year,0.1,0.09,0.11,triangular,
+HCl_dosing,,ml/year,2000,1500,2500,uniform,
+salt_dosing,,kg/week,6,5.4,6.6,triangular,

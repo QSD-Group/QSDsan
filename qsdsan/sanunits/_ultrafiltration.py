@@ -72,14 +72,14 @@ class Ultrafiltration(SanUnit):
     def _design(self):
         design = self.design_results
         
-        design['Plastic'] = P_quant = self.plastic_weight
-        design['PVC'] = PVC_quant = self.PVC_weight
-        design['Steel'] = S_quant = self.steel_weight
+        
+        design['Plastic'] = P_quant = self.Plastic_weight
+        design['Steel'] = S_quant = self.Steel_weight
+        
         
         self.construction = (
-            Construction(item='Plastic', quantity = P_quant, quantity_unit = 'kg'),
-            Construction(item='PVC', quantity = PVC_quant, quantity_unit = 'kg'),
-            Construction(item='Steel', quantity = S_quant, quantity_unit = 'kg'),
+              Construction(item='Plastic', quantity = P_quant, quantity_unit = 'kg'),
+            Construction(item='Steel', quantity = S_quant, quantity_unit = 'kg')
             )
         self.add_construction(add_cost=False)        
  
@@ -96,13 +96,3 @@ class Ultrafiltration(SanUnit):
             
         self._BM = dict.fromkeys(self.purchase_costs.keys(), 1)
               
-        self.add_OPEX =   + self._calc_maintenance_labor_cost()
-    
-        
-    def _calc_replacement_cost(self):
-        ion_exchange_replacement_cost = (self.zeolite_bag_mesh * self.zeolite_lifetime) #USD/yr
-        return ion_exchange_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
-                  
-    def _calc_maintenance_labor_cost(self):
-        ion_exchange_maintenance_labor = ((self.labor_maintenance_GAC_replacement * self.wages))
-        return ion_exchange_maintenance_labor/ (365 * 24) # USD/hr (all items are per hour)

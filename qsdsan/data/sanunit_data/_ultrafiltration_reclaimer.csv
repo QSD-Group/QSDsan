@@ -38,7 +38,7 @@ onehalf_in_pipe_clamp_lifetime,"1/2"" pipe clamp sheet metal",y,3,2.7,3.3,unifor
 UF_brush_lifetime,Nylon bush for Ultra filteration,y,3,2.7,3.3,uniform,SI Manuscript with Duke
 two_way_valve_lifetime,2-way valve ( Modulating),y,3,2.7,3.3,uniform,SI Manuscript with Duke
 UF_unit_lifetime,Ultrafilteration Unit,y,5,2.5,7.5,uniform,SI Manuscript with Duke
-PVC_weight,,kg,12.5,6.25,18.75,uniform,SI Manuscript with Duke
+Plastic_weight,,kg,12.5,6.25,18.75,uniform,SI Manuscript with Duke
 Brass_weight,,kg,0.3855535,0.289165125,0.481941875,uniform,SI Manuscript with Duke
 Steel_weight,,kg,3,2.25,3.75,uniform,SI Manuscript with Duke
 Nylon_weight,,kg,1.21,0.9075,1.5125,uniform,SI Manuscript with Duke
