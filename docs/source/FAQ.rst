@@ -70,7 +70,7 @@ There are multiple possible reasons:
 - If you are using Jupyter Notebook
     
     - If you are using the downloaded/cloned version of ``qsdsan``, note that Jupyter Notebook does not know about the path you configured in other editors (e.g., Spyder), so you may need to change directory (with ``os.chdir``) or set ``sys.path``.
-    - If you are using pip-installed ``qsdsan``, try to do this in your terminal/command prompt (firstly do ``conda activate <ENV NAME>`` if you are using an virtual environment, and replace ``<KERNEL NAME>`` with the name you like):
+    - If you are using pip-installed ``qsdsan``, try to do this in your command-line interface (CLI, e.g., Anaconda prompt, terminal; firstly do ``conda activate <ENV NAME>`` if you are using an virtual environment, and replace ``<KERNEL NAME>`` with the name you like):
 
         .. code::
 
@@ -92,7 +92,7 @@ Private Fork
 ------------
 While ``QSDsan`` (and other supporting packages such as ``EXPOsan``) will stay open-source, it is totally understandable that you may want to create a private fork of ``QSDsan`` (e.g., because of non-disclosure agreement).
 
-However, GitHub does not allow you to directly create a private fork (since the root repo ``QSDsan`` is public). You can follow these steps for a work-around (modified from an original post `here <https://gist.github.com/0xjac/85097472043b697ab57ba1b1c7530274>`_, you need to do all following in your terminal/command prompt):
+However, GitHub does not allow you to directly create a private fork (since the root repo ``QSDsan`` is public). You can follow these steps for a work-around (modified from an original post `here <https://gist.github.com/0xjac/85097472043b697ab57ba1b1c7530274>`_, you need to do all following in your command-line interface):
 #. Create a bare clone of the repository (this is temporary and will be removed):
 
     .. code::
@@ -153,7 +153,7 @@ However, GitHub does not allow you to directly create a private fork (since the 
 
 Other notes
 ***********
-#. If you have never used ``git`` in terminal/command prompt, GitHub would ask for authentication and requires you create to a personal access token (instead of using your username and password), follow the instructions from `GitHub <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>`_ to create the token.
+#. If you have never used ``git`` in your CLI, GitHub would ask for authentication and requires you create to a personal access token (instead of using your username and password), follow the instructions from `GitHub <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>`_ to create the token.
 #. For Mac users, you'll probably run into an error related to ``/Library/Developer/CommandLineTools`` if you don't have Xcode Command Line (i.e., ``xcode-select``), follow these `instructions <https://www.freecodecamp.org/news/install-xcode-command-line-tools/>`_ to install it. Note that as you can see in the linked post, even the ``xcode-select``, which is much smaller than the full Xcode app, requires 1GB+ space.
 #. After you cloned ``QSDsan``, you'll need to configure your system path to make sure that you are importing the cloned ``QSDsan``, which means you might need to uninstalled any ``pip``-installed version and add the cloned path to your IDE (e.g., Spyder).
 

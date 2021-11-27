@@ -31,7 +31,7 @@ Forking and Cloning
 	    https://github.com/<YOUR_USERNAME>/QSDsan.git
 
 
-#. In your terminal/command prompt, navigate to your preferred location by using ``cd``, e.g.,
+#. In your command-line interface (e.g., Anaconda prompt, terminal), navigate to your preferred location by using ``cd``, e.g.,
 
 	.. code:: bash
 

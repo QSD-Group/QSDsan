@@ -40,7 +40,7 @@ Additionally, another package, `DMsan <https://github.com/QSD-Group/DMsan>`_ (de
 
 Installation
 ------------
-The easiest way is through ``pip``, in command/Anaconda prompt (Windows) or terminal (macOS):
+The easiest way is through ``pip``, in command-line interface (e.g., Anaconda prompt, terminal):
 
 .. code::
 

@@ -31,7 +31,7 @@ But names of the actual packages are all in lower cases per `PEP-8 <https://www.
 
 Installation
 ------------
-The easiest way is through ``pip``, in command/Anaconda prompt (Windows) or terminal (macOS):
+The easiest way is through ``pip``, in command-line interface (Anaconda prompt, terminal):
 
 .. code::
 
