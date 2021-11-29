@@ -5,6 +5,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
    :width: 500
    :align: center
 
+|
 
 What is ``QSDsan``?
 -------------------

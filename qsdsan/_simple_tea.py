@@ -97,8 +97,8 @@ class SimpleTEA(TEA):
         Annual additional system-wise operating expenditure (on top of the `add_OPEX` of each unit).
         Float input will be automatically converted to a dict with the key being
         "System additional OPEX".
-    construction_schedule : tuple or None
-        Construction progress, must sum up to 1, leave as `None` will assume the system finishes within one year.
+    construction_schedule : tuple
+        Construction progress prior to the start of the system (fraction of the construction that can be finished each year), must sum up to 1.
 
     Examples
     --------

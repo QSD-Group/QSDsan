@@ -1057,7 +1057,8 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
 
     if kind == 'scatter':
         if x_error is not None:
-            ax.errorbar(x=x_data, y=y_data, xerr=x_error, fmt='.', color=color)
+            ax.errorbar(x=x_data, y=y_data, xerr=x_error, fmt='.',
+                        color=color)
         else:
             ax.scatter(x_data, y_data, color=color)
         for x, y, label in zip(x_data, y_data, labels):
@@ -1066,18 +1067,19 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
         x_range = np.arange(-1, np.ceil(ax.get_xlim()[1])+1)
 
         lines, legends = [], []
+        line_color = kwargs.get('line_color') or color
         if k3:
-            line3, = ax.plot(x_range, k3*x_range, color=color, linestyle='-')
+            line3, = ax.plot(x_range, k3*x_range, color=line_color, linestyle='-')
             lines.append(line3)
             legends.append(r'$\sigma/\mu^*$'+f'={k3}')
 
         if k2:
-            line2, = ax.plot(x_range, k2*x_range, color=color, linestyle='--')
+            line2, = ax.plot(x_range, k2*x_range, color=line_color, linestyle='--')
             lines.append(line2)
             legends.append(r'$\sigma/\mu^*$'+f'={k2}')
 
         if k1:
-            line1, = ax.plot(x_range, k1*x_range, color=color, linestyle='-.')
+            line1, = ax.plot(x_range, k1*x_range, color=line_color, linestyle='-.')
             lines.append(line1)
             legends.append(r'$\sigma/\mu^*$'+f'={k1}')
 
@@ -1099,7 +1101,6 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
         df['names'] = df.index
         fig = sa_plt_morris.horizontal_bar_plot(ax, df, opts=kwargs)
 
-    # for ax in fig.axes:
     for key in ax.spines.keys():
         ax.spines[key].set(color='k', linewidth=0.5, visible=True)
         ax.grid(False)
