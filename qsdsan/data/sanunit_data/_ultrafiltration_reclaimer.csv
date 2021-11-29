@@ -43,4 +43,5 @@ Brass_weight,,kg,0.3855535,0.289165125,0.481941875,uniform,SI Manuscript with Du
 Steel_weight,,kg,3,2.25,3.75,uniform,SI Manuscript with Duke
 Nylon_weight,,kg,1.21,0.9075,1.5125,uniform,SI Manuscript with Duke
 TSS_removal,,%,0.756501,0.108696,1,triangular,Duke Data
-TSS_influent,,,93.53571,19,338,,
+TSS_influent,,,93.53571,19,338,uniform,
+replacement_costs,,USD,283.981,255.5829,312.3791,uniform,10% of capital costs

@@ -83,18 +83,18 @@ class ECR_Reclaimer(SanUnit, Decay):
         #purchase_costs is used for capital costs
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.purchase_costs['EC_brush'] = (self.EC_brush)
-        self.purchase_costs['EC_cell'] = (self.EC_cell)
+        self.baseline_purchase_costs['EC_brush'] = (self.EC_brush)
+        self.baseline_purchase_costs['EC_cell'] = (self.EC_cell)
         
-        self._BM = dict.fromkeys(self.purchase_costs.keys(), 1)
+        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
         #need to be a cost per hour
-        ECR_replacement_parts_annual_cost = ((self.electrode_replacement_cost * self.electrode_life) + 
-        (self.pump_cost * self.pump_life)+ 
-        (self.level_guage_replacement_cost * self.level_guage_life) + 
-        (self.GAC_cost * self.GAC_filter_life ) +
-        (self.HCL_replacement_cost * self.HCL_life / 365 / 24) +
-        (self.salt_replacement_cost / 7 / 24 ))
+        ECR_replacement_parts_annual_cost = (self.EC_cell * (10/self.EC_cell_lifetime))
+        # (self.pump_cost * self.pump_life)+ 
+        # (self.level_guage_replacement_cost * self.level_guage_life) + 
+        # (self.GAC_cost * self.GAC_filter_life ) +
+        # (self.HCL_replacement_cost * self.HCL_life / 365 / 24) +
+        # (self.salt_replacement_cost / 7 / 24 ))
         
         self.add_OPEX =  (ECR_replacement_parts_annual_cost) / (365 * 24) # USD/hr (all items are per hour)
         

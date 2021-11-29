@@ -39,7 +39,7 @@ class Ultrafiltration(SanUnit):
 
     def __init__(self, ID='', ins=None, outs=(), if_gridtied=True, **kwargs):
         
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         self.if_gridtied = if_gridtied
 
 # load data from csv each name will be self.name    
@@ -87,12 +87,16 @@ class Ultrafiltration(SanUnit):
      #_cost based on amount of steel and stainless plus individual components
     def _cost(self):
 
-        self.purchase_costs['Pipes'] = (self.one_in_pipe_SCH40 + self.onehalf_in_pipe_SCH40 + self.three_in_pipe_SCH80)
-        self.purchase_costs['fittings'] = (self.one_in_elbow_SCH80 + self.one_in_tee_SCH80 + self.one_in_SCH80
+       self.baseline_purchase_costs['Pipes'] = (self.one_in_pipe_SCH40 + self.onehalf_in_pipe_SCH40 + self.three_in_pipe_SCH80)
+       self.baseline_purchase_costs['fittings'] = (self.one_in_elbow_SCH80 + self.one_in_tee_SCH80 + self.one_in_SCH80
             + self.one_onehalf_in_SCH80 + self.onehalf_in_SCH80 + self.three_in_SCH80_endcap + self.one_one_NB_MTA
             + self.one_onehalf_NB_MTA + self.foot_valve + self.one_onehalf_in_SCH80_threadedtee + self.three_in_pipe_clamp
             + self.one_in_pipe_clamp + self.onehalf_in_pipe_clamp + self.two_way_valve + self.UF_brush)   
-        self.purchase_costs['UF_unit'] = (self.UF_unit)                                 
-            
-        self._BM = dict.fromkeys(self.purchase_costs.keys(), 1)
-              
+       self.baseline_purchase_costs['UF_unit'] = (self.UF_unit)                                 
+          
+       self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
+        
+       self.add_OPEX = (self.replacement_costs
+                         / 10) #USD/yr
+        
+

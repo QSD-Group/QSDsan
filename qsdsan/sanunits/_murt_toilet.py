@@ -175,10 +175,10 @@ class MURTToilet(Toilet):
         self.add_construction()
 
     def _cost(self):
-        self.purchase_costs['Ceramic Toilets'] = ((self.squatting_pan_cost + 
+        self.baseline_purchase_costs['Ceramic Toilets'] = ((self.squatting_pan_cost + 
                                                     self.urinal_cost) * self.N_toilet)
-        self.purchase_costs['Fan'] = ((self.fan_cost * self.N_toilet))
-        self.purchase_costs['Misc. parts'] = ((self.led_cost +
+        self.baseline_purchase_costs['Fan'] = ((self.fan_cost * self.N_toilet))
+        self.baseline_purchase_costs['Misc. parts'] = ((self.led_cost +
                                               self.anticor_floor_cost +
                                               self.circuit_change_cost +
                                               self.pipe_cost)
@@ -186,7 +186,7 @@ class MURTToilet(Toilet):
 
         
         
-        self._BM = dict.fromkeys(self.purchase_costs.keys(), 1)
+        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
 
 
     

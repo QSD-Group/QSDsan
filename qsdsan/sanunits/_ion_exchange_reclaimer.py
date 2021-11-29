@@ -64,7 +64,7 @@ class IonExchangeReclaimer(SanUnit):
 
     def __init__(self, ID='', ins=None, outs=(), if_gridtied=True, **kwargs):
         
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         self.if_gridtied = if_gridtied
 
 # load data from csv each name will be self.name    
@@ -146,13 +146,13 @@ class IonExchangeReclaimer(SanUnit):
      #_cost based on amount of steel and stainless plus individual components
     def _cost(self):
 
-        self.purchase_costs['Pipes'] = (self.four_in_pipe_SCH40 + self.four_in_pipe_SCH80)
-        self.purchase_costs['fittings'] = (self.four_in_pipe_SCH80_endcap + self.NRV + self.connector + 
+        self.baseline_purchase_costs['Pipes'] = (self.four_in_pipe_SCH40 + self.four_in_pipe_SCH80)
+        self.baseline_purchase_costs['fittings'] = (self.four_in_pipe_SCH80_endcap + self.NRV + self.connector + 
             self.ball_valve + self.three_eight_elbow + self.ten_ten_mm_tee + self.OD_tube + self.four_in_pipe_clamp)
                                            
-        self.purchase_costs['GAC_Zeolite'] = (self.GAC_zeolite_mesh)  
+        self.baseline_purchase_costs['GAC_Zeolite'] = (self.GAC_zeolite_mesh)  
             
-        self._BM = dict.fromkeys(self.purchase_costs.keys(), 1)
+        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
               
         # self.add_OPEX =  self._calc_replacement_cost() + self._calc_maintenance_labor_cost()
     

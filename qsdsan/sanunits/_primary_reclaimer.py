@@ -41,7 +41,7 @@ class PrimaryReclaimer(SanUnit, Decay):
     '''
     
     def __init__(self, ID='', ins=None, outs=(), **kwargs):
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         
         data = load_data(path=data_path)
         for para in data.index:
@@ -109,7 +109,7 @@ class PrimaryReclaimer(SanUnit, Decay):
  
     def _cost(self):
         
-        self.purchase_costs['Tanks'] = (self.FRP_tank_cost)
-        self._BM = dict.fromkeys(self.purchase_costs.keys(), 1)
+        self.baseline_purchase_costs['Tanks'] = (self.FRP_tank_cost)
+        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
 

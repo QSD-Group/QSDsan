@@ -1,5 +1,5 @@
 ﻿parameter,name,unit,expected,low,high,distribution,reference
-EC_bush,Nylon bush for EC Cell,USD,19.68,17.712,21.648,triangular,Duke BOM
+EC_brush,Nylon bush for EC Cell,USD,19.68,17.712,21.648,triangular,Duke BOM
 EC_cell,EC Cell,USD,575,517.5,632.5,triangular,Duke BOM
 energy_demand,watts*hour/L,Wh/L,1.1,0.825,1.375,uniform,Duke presentation
 EC_cell_lifetime,,yr,2,1.5,2.5,uniform,SI
