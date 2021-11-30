@@ -29,7 +29,7 @@ import numpy as np
 import flexsolve as flx
 from free_properties import PropertyFactory, property_array
 from thermosteam import settings, indexer
-from . import Stream, MultiStream, SanStream, MissingSanStream
+from . import SanStream, MissingSanStream
 from .utils import auom, copy_attr
 from warnings import warn
 
@@ -141,8 +141,8 @@ def ConcentrationProperty(self):
     if phase != 'l':
         raise AttributeError('Concentration only valid for liquid phase.')
     V_sum = self.F_vol
-    if V_sum==0:
-        raise RuntimeError('WasteStream is empty, concentration cannot be calculated.')
+    # if V_sum==0:
+    #     raise RuntimeError('WasteStream is empty, concentration cannot be calculated.')
     return 1000. * f_mass / V_sum if f_mass else 0.
 @ConcentrationProperty.setter
 def ConcentrationProperty(self, value):

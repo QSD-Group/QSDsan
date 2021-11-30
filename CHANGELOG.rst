@@ -4,8 +4,8 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
-``1.0.0``
----------
+`1.0.0`_
+--------
 Official release of ``QSDsan`` v1.0.0!
 
 - Added system-wise dynamic simulation capacity. To use the dynamic simulation function, a unit needs to have several supporting methods to initialize its state and compile ordinary differential equations (ODEs), refer to the units included in the BSM1 system below for usage, documentation and tutorial will be coming soon!
@@ -129,10 +129,10 @@ Official release of ``QSDsan`` v1.0.0!
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
+.. _1.0.0: https://github.com/QSD-Group/QSDsan/commit/559a0e43428411b23319ffd087e04c5d08f46d4a
 .. _0.3.0: https://github.com/QSD-Group/QSDsan/commit/3c19aebd5503433120217228c3388533cee4bd30
 .. _0.2.0: https://github.com/QSD-Group/QSDsan/commit/286943eb206ebd89f58e50b9fdd1bed486e894ae
 .. _0.1.0: https://github.com/QSD-Group/QSDsan/commit/1c3d11d9f72421c8b5dbdf6b537775ca35ec65c0
 .. _0.0.3: https://github.com/QSD-Group/QSDsan/commit/e20222caccc58d9ee414ca08d8ec55f3a44ffca7
 .. _0.0.2: https://github.com/QSD-Group/QSDsan/commit/84653f5979fbcd76a80ffb6b22ffec1c5ca2a084
 .. _0.0.1: https://github.com/QSD-Group/QSDsan/commit/f95e6172780cfe24ab68cd27ba19837e010b3d99
-

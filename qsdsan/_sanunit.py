@@ -63,6 +63,10 @@ def _update_init_with(init_with, ins_or_outs, size):
 
     return new_init_with
 
+def _get_inf_state(inf):
+    inf._init_state()
+    return inf._state
+
 add2list = lambda lst, item: lst.extend(item) if isinstance(item, Iterable) \
     else lst.append(item)
 
@@ -393,9 +397,20 @@ class SanUnit(Unit, isabstract=True):
             self._isdynamic = bool(i)
             self._init_dynamic()
 
-    
+
     def _collect_ins_state(self):
         return np.array([inf._state for inf in self._ins])
+        # states = []
+        # for inf in self.ins:
+        #     state = inf._state
+        #     if state is not None:
+        #         if not isinstance(state, float):
+        #             states.append(state)
+        #         else:
+        #             inf._init_state()
+        #             states.append(inf._state)
+        # return np.array(states)
+                
             
     def _collect_ins_dstate(self):
         return np.array([inf._dstate for inf in self._ins])

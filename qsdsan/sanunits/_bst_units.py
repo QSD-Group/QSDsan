@@ -143,9 +143,10 @@ class Splitter(SanUnit, bst.units.Splitter):
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *, split, order=None,
-                  init_with='Stream', F_BM_default=None):
+                  init_with='Stream', F_BM_default=None, isdynamic=False):
         SanUnit.__init__(self, ID, ins, outs, thermo,
-                         init_with=init_with, F_BM_default=F_BM_default)
+                         init_with=init_with, F_BM_default=F_BM_default,
+                         isdynamic=isdynamic)
         self._isplit = self.thermo.chemicals.isplit(split, order)
         # self._concs = None
 
@@ -264,9 +265,10 @@ class Pump(SanUnit, bst.units.Pump):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
                   P=None, pump_type='Default', material='Cast iron',
                   dP_design=405300, ignore_NPSH=True,
-                  init_with='Stream', F_BM_default=None):
+                  init_with='Stream', F_BM_default=None, isdynamic=False):
         SanUnit.__init__(self, ID, ins, outs, thermo,
-                         init_with=init_with, F_BM_default=F_BM_default)
+                         init_with=init_with, F_BM_default=F_BM_default,
+                         isdynamic=isdynamic)
         self.P = P
         self.pump_type = pump_type
         self.material = material
@@ -352,10 +354,10 @@ class HydraulicDelay(Pump):
     `Benchmark Simulation Model No.1 implemented in MATLAB & Simulink <https://www.cs.mcgill.ca/~hv/articles/WWTP/sim_manual.pdf>`
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, t_delay=1e-4, *,
-                 init_with='WasteStream', F_BM_default=None):
+                 init_with='WasteStream', F_BM_default=None, isdynamic=False):
         SanUnit.__init__(self, ID, ins, outs, thermo,
-                         init_with=init_with, F_BM_default=F_BM_default)
-        self._isdynamic = True
+                         init_with=init_with, F_BM_default=F_BM_default,
+                         isdynamic=isdynamic)
         self.t_delay = t_delay
         self._concs = None
         # self._q = None

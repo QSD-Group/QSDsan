@@ -160,7 +160,7 @@ class LCA:
 
     >>> # Get the electricity usage of the system throughout the lifetime,
     >>> # note that the default power utility unit is hr
-    >>> total_power = sum((i.rate for i in sys.power_utilities))*24*365*lifetime
+    >>> total_power = sys.power_utility.rate*24*365*lifetime
     >>> # Create an impact item for the electricity
     >>> e_item = qs.ImpactItem('e_item', 'kWh', GWP=1.1, FEC=24)
     >>> # Create the LCA object

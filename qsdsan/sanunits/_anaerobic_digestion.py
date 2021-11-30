@@ -35,7 +35,7 @@ class AnaerobicDigestion(SanUnit, Decay):
     ins : WasteStream
         Waste for treatment.
     outs : WasteStream
-        Treated waste, biogas, and fugitive N2O.
+        Treated waste, captured biogas, fugitive CH4, and fugitive N2O.
     flow_rate : float
         Total flow rate through the reactor (for sizing purpose), [m3/d].
         If not provided, will use F_vol_in.
