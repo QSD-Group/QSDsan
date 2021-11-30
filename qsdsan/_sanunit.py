@@ -199,6 +199,7 @@ class SanUnit(Unit, isabstract=True):
 
         return converted
 
+
     def _init_dynamic(self):
         self._state = None
         self._dstate = None
@@ -392,14 +393,6 @@ class SanUnit(Unit, isabstract=True):
             self._isdynamic = bool(i)
             self._init_dynamic()
 
-    # def _state_tracer(self):
-    #     states = []
-    #     for inf in self.ins:
-    #         u = inf._source
-    #         state = u._state_locator(u._state)[inf.ID] if u \
-    #             else np.append(inf.conc, inf.get_total_flow('m3/d'))
-    #         states.append(state)
-    #     return np.array(states).astype('float')
     
     def _collect_ins_state(self):
         return np.array([inf._state for inf in self._ins])

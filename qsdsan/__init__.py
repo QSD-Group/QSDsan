@@ -36,14 +36,14 @@ if (_PY_MAJOR, _PY_MINOR) <= (3, 7):
 else:
     import pickle as _pk
 
-del sys, py_version
-
 
 import pkg_resources
 try:
     __version__ = pkg_resources.get_distribution('qsdsan').version
 except pkg_resources.DistributionNotFound:  # pragma: no cover
     __version__ = None
+
+del sys, py_version, pkg_resources
 
 
 import thermosteam as tmo

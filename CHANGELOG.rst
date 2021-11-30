@@ -4,10 +4,13 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
-Ongoing
---------
+``1.0.0``
+---------
+Official release of ``QSDsan`` v1.0.0!
+
+- Added system-wise dynamic simulation capacity. To use the dynamic simulation function, a unit needs to have several supporting methods to initialize its state and compile ordinary differential equations (ODEs), refer to the units included in the BSM1 system below for usage, documentation and tutorial will be coming soon!
+- Developed the `benchmark simulation system no.1 (BSM1) model on EXPOsan <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_ with comparison against the MATLAB/Simulink model developed by the International Water Association (IWA) Task Group on Benchmarking of Control Strategies. See the `README <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_ for details
 - Significantly expanded the tutorials with demo videos on `YouTube <https://www.youtube.com/playlist?list=PL-tj_uM0mIdFv72MAULnWjS6lx_cCyi2N>`_. Now tutorials cover all non-dynamic major classes (tutorials on dynamic classes will be included in the next major release).
-- Added system-wise dynamic simulation capacity and `benchmark simulation system #1 (BSM1) model on EXPOsan <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_.
 
 
 `0.3.0`_
