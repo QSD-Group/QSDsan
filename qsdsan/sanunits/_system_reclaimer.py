@@ -12,13 +12,13 @@ from qsdsan import SanUnit, Construction
 from ._decay import Decay
 from ..utils import load_data, data_path
 
-__all__ = ('System',)
+__all__ = ('SystemReclaimer',)
 
-data_path += 'sanunit_data/_system.tsv'
+data_path += 'sanunit_data/_system_reclaimer.csv'
 
 
 
-class System(SanUnit, Decay):
+class SystemReclaimer(SanUnit, Decay):
     '''
     Cost and life cycle impacts of the system components for the Reclaimer 2.0
     
@@ -26,7 +26,7 @@ class System(SanUnit, Decay):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', 
                  **kwargs):
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
 
 
 # load data from csv each name will be self.name    
@@ -46,9 +46,9 @@ class System(SanUnit, Decay):
     def _design(self):
         #find rough value for FRP for tank 
         design = self.design_results
-        design['Brass'] = brass_quant = self.aluminum_weight
+        #!!! Consider doing later design['Brass'] = brass_quant = self.aluminum_weight
         design['Steel'] = steel_quant = self.steel_weight
-        self.construction = ((Construction(item='Brass', quantity = brass_quant, quantity_unit = 'kg')),
+        self.construction = (
                             (Construction(item='Steel', quantity = steel_quant, quantity_unit = 'kg')))
         self.add_construction()
         
@@ -58,18 +58,20 @@ class System(SanUnit, Decay):
         #purchase_costs is used for capital costs
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.purchase_costs['System'] = (self.T_nut + self.die_cast_hinge + self.SLS.locks + self.DC_round_key
-                                         self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
-                                         self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
+        self.baseline_purchase_costs['System'] = (self.T_nut + self.die_cast_hinge + self.SLS_locks + self.DC_round_key
+                                         + self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
+                                         + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
                                          + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
-                                         self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank)
-        self._BM = dict.fromkeys(self.purchase_costs.keys(), 1)
+                                         + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank)
+        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
         #certain parts need to be replaced based on an expected lifefime
         #the cost of these parts is considered along with the cost of the labor to replace them
-        replacement_parts_annual_cost = ((self.T_nut + self.die_cast_hinge + self.SLS.locks + self.DC_round_key
-                                         self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
-                                         self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
+        replacement_parts_annual_cost = ((self.T_nut + self.die_cast_hinge + self.SLS_locks + self.DC_round_key
+                                         + self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
+                                         + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
                                          + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
-                                         self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * self.lifetime) / 20 # USD/ lifetime of project only accounts for time running
+                                         + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * self.lifetime) / 20 # USD/ lifetime of project only accounts for time running
         self.add_OPEX =  (replacement_parts_annual_cost) / (365 * 24) # USD/hr (all items are per hour)
+        self.power_utility(self.power_demand)
+        #self.power_utility(self.power_demand * self.working_time)

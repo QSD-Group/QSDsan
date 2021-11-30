@@ -41,6 +41,7 @@ from ._ultrafiltration import *
 from ._ion_exchange_reclaimer import *
 from ._ecr_reclaimer import *
 from ._housing_reclaimer import *
+from ._system_reclaimer import *
 
 
 #add new sanunits here
@@ -72,7 +73,8 @@ from . import (
     _ultrafiltration,
     _ion_exchange_reclaimer,
     _ecr_reclaimer,
-    _housing_reclaimer
+    _housing_reclaimer,
+    _system_reclaimer
     )
 
 #add new sanunits here
@@ -104,5 +106,6 @@ __all__ = (
     *_ultrafiltration.__all__,
     *_ion_exchange_reclaimer.__all__,
     *_ecr_reclaimer.__all__,
-    *_housing_reclaimer.__all__
+    *_housing_reclaimer.__all__,
+    *_system_reclaimer.__all__
            )

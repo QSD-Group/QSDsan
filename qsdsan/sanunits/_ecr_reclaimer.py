@@ -38,7 +38,7 @@ class ECR_Reclaimer(SanUnit, Decay):
     '''
     
     def __init__(self, ID='', ins=None, outs=(), **kwargs):
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         
         data = load_data(path=data_path)
         for para in data.index:
@@ -98,6 +98,7 @@ class ECR_Reclaimer(SanUnit, Decay):
         
         self.add_OPEX =  (ECR_replacement_parts_annual_cost) / (365 * 24) # USD/hr (all items are per hour)
         
+        self.power_utility(self.power_demand)
         #self.power_utility(self.power_demand * self.working_time)
         
         # costs associated with full time opperators can be added in the TEA as staff

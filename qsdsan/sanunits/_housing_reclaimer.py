@@ -14,7 +14,7 @@ from ..utils import load_data, data_path
 
 __all__ = ('HousingReclaimer',)
 
-data_path += 'sanunit_data/_housing_reclaimer.tsv'
+data_path += 'sanunit_data/_housing_reclaimer.csv'
 
 
 
@@ -28,7 +28,7 @@ class HousingReclaimer(SanUnit, Decay):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', 
                  **kwargs):
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
 
 
 # load data from csv each name will be self.name    
@@ -48,9 +48,9 @@ class HousingReclaimer(SanUnit, Decay):
     def _design(self):
         #find rough value for FRP for tank 
         design = self.design_results
-        design['Aluminum'] = aluminum_quant = self.aluminum_weight
+        #!!! Add later design['Aluminum'] = aluminum_quant = self.aluminum_weight
         design['Steel'] = steel_quant = self.steel_weight
-        self.construction = ((Construction(item='Aluminum', quantity = aluminum_quant, quantity_unit = 'kg')),
+        self.construction = (
                             (Construction(item='Steel', quantity = steel_quant, quantity_unit = 'kg')))
         self.add_construction()
         
@@ -60,9 +60,9 @@ class HousingReclaimer(SanUnit, Decay):
         #purchase_costs is used for capital costs
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.purchase_costs['Housing'] = (self.frame + self.extrusion + self.angle_frame + 
+        self.baseline_purchase_costs['Housing'] = (self.frame + self.extrusion + self.angle_frame + 
                 self.angle + self.door_sheet + self.plate_valve + self.powder)
-        self._BM = dict.fromkeys(self.purchase_costs.keys(), 1)
+        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
         #certain parts need to be replaced based on an expected lifefime
         #the cost of these parts is considered along with the cost of the labor to replace them

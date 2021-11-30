@@ -45,3 +45,6 @@ Nylon_weight,,kg,1.21,0.9075,1.5125,uniform,SI Manuscript with Duke
 TSS_removal,,%,0.756501,0.108696,1,triangular,Duke Data
 TSS_influent,,,93.53571,19,338,uniform,
 replacement_costs,,USD,283.981,255.5829,312.3791,uniform,10% of capital costs
+Liters,,L/hr,30,22.5,37.5,uniform,email from Brian
+power_demand,,W,750,675,825,uniform,email from Brian
+working_time,,hr,15,10,20,uniform,

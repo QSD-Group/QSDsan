@@ -96,7 +96,9 @@ class Ultrafiltration(SanUnit):
           
        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
-       self.add_OPEX = (self.replacement_costs
-                         / 10) #USD/yr
+       self.add_OPEX = (self.replacement_costs/ 10) #USD/yr
+       
+       self.power_utility(self.power_demand)
+       #self.power_utility(self.power_demand * self.working_time)
         
 
