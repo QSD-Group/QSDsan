@@ -147,7 +147,7 @@ class SanStream(Stream):
         ----------
         other : obj
             The stream where mass flows will be copied from.
-        IDs=... : Iterable[str], defaults to all components.
+        IDs=... : Iterable(str), defaults to all components.
             IDs of the components to be copied from.
         remove=False: bool, optional
             If True, copied components will be removed from the original stream.
@@ -166,7 +166,62 @@ class SanStream(Stream):
 
         self._stream_impact_item = None     
     
-    
+
+    @staticmethod
+    def degassing(original_stream, receiving_stream=None, gas_IDs=()):
+        '''
+        Remove all the gas components from the original stream,
+        if `receiving_stream` is given, then the gas components will be transfered 
+        to the receiving stream.
+        
+        If `gas_IDs` is not provided, then the gas components wiil be those
+        either have `locked_state`=='g' or `particle_size`== 'Dissolved gas'.
+        
+        Parameters
+        ----------
+        original_stream : None or obj
+            The stream where the gas components will be removed.
+        receiving_stream : None or obj
+            The stream to receive the gas components.
+        gas_IDs : Iterable(str)
+            IDs of the gas components to be removed, will be set according
+            to the component properties if not provided.
+        '''
+        if not gas_IDs:
+            gas_IDs = original_stream.gases if isinstance(original_stream, SanStream) \
+                else [i.ID for i in original_stream.components if i.locked_state=='g']
+        if receiving_stream:
+            receiving_stream.imass[gas_IDs] += original_stream.imass[gas_IDs]
+        original_stream.imass[gas_IDs] = 0
+
+
+    @staticmethod
+    def filtering(original_stream, receiving_stream=None, solid_IDs=()):
+        '''
+        Remove all the solid components from the original stream,
+        if `receiving_stream` is given, then the solid components will be transfered 
+        to the receiving stream.
+        
+        If `solid_IDs` is not provided, then the gas components wiil be those
+        either have `locked_state`=='g' or `particle_size`== 'Particulate'.
+        
+        Parameters
+        ----------
+        original_stream : None or obj
+            The stream where the gas components will be removed.
+        receiving_stream : None or obj
+            The stream to receive the gas components.
+        solid_IDs : Iterable(str)
+            IDs of the solid components to be removed, will be set according
+            to the component properties if not provided.
+        '''
+        if not solid_IDs:
+            solid_IDs = original_stream.solids if isinstance(original_stream, SanStream) \
+                else [i.ID for i in original_stream.components if i.locked_state=='s']
+        if receiving_stream:
+            receiving_stream.imass[solid_IDs] += original_stream.imass[solid_IDs]
+        original_stream.imass[solid_IDs] = 0
+
 
     @staticmethod
     def from_stream(cls, stream, ID='', **kwargs):
@@ -254,7 +309,7 @@ class SanStream(Stream):
 
         Parameters
         ----------
-        others : iterable
+        others : Iteralbe(obj)
             Can contain :class:`thermosteam.Stream`, :class:`SanStream`,
             or :class:`~.WasteStream`
 

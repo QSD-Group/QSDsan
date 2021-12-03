@@ -449,7 +449,7 @@ class CompiledComponents(CompiledChemicals):
         pass
 
 
-    def _compile(self, components, skip_checks=False):
+    def _compile(self, components, skip_checks=False):        
         dct = self.__dict__
         tuple_ = tuple # this speeds up the code
         components = tuple_(dct.values())
@@ -463,12 +463,17 @@ class CompiledComponents(CompiledChemicals):
         for i in _num_component_properties:
             dct[i] = component_data_array(components, i)
 
+        g = dct['g'] = np.asarray([1 if cmp.particle_size == 'Dissolved gas' else 0 for cmp in components])        
         dct['s'] = np.asarray([1 if cmp.particle_size == 'Soluble' else 0 for cmp in components])
         dct['c'] = np.asarray([1 if cmp.particle_size == 'Colloidal' else 0 for cmp in components])
-        dct['x'] = np.asarray([1 if cmp.particle_size == 'Particulate' else 0 for cmp in components])
+        x = dct['x'] = np.asarray([1 if cmp.particle_size == 'Particulate' else 0 for cmp in components])
         dct['b'] = np.asarray([1 if cmp.degradability != 'Undegradable' else 0 for cmp in components])
         dct['rb'] = np.asarray([1 if cmp.degradability == 'Readily' else 0 for cmp in components])
         dct['org'] = np.asarray([int(cmp.organic) for cmp in components])
+        
+        IDs = np.asarray([i.ID for i in components])
+        dct['gases'] = tuple(IDs[g.astype(bool)])
+        dct['solids'] = tuple(IDs[x.astype(bool)])
 
 
     def subgroup(self, IDs):
@@ -504,3 +509,26 @@ class CompiledComponents(CompiledChemicals):
         copy = Components(self)
         copy.compile()
         return copy
+    
+    @property
+    def gases(self):
+        '''
+        IDs of all the components that has `particle_size`== 'Dissolved gas'.
+        '''
+        return self._gases
+
+                
+    @property
+    def gases(self):
+        '''
+        IDs of all the gas components.
+
+        The gas components are defined as ones that either have `locked_state`=='g' or
+        `particle_size`== 'Dissolved gas'.
+        '''
+        gases = []
+        for i in self.__iter__():
+            if i.locked_state!='g':
+                gases.append(i.ID)
+            elif i.particle_size == 'Dissolved gas':
+                gases.append(i.ID)

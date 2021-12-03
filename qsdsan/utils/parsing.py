@@ -2,11 +2,10 @@
 # -*- coding: utf-8 -*-
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
+Copyright (C) 2020-, Quantitative Sustainable Design Group
 
 This module is developed by:
-    Joy Cheung <joycheung1994@gmail.com>
-    Yalin Li
+    Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt

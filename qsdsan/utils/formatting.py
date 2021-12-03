@@ -15,7 +15,7 @@ for license details.
 
 # %%
 
-__all__ = ('format_number', )
+__all__ = ('format_number', 'format_str',)
 
 
 def format_number(number):
@@ -37,3 +37,9 @@ def format_number(number):
 
     else:
         return str(round(number, 2))
+
+
+def format_str(string):
+    string = string.replace(' ', '_')
+    string = string.replace('-', '_')
+    return string

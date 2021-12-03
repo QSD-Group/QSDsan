@@ -6,6 +6,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
+    Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -24,10 +25,13 @@ from ._drying_bed import *
 from ._dynamic_influent import *
 from ._electrochemical_cell import *
 from ._excretion import *
+from ._internal_circulation_rx import *
 from ._lagoon import *
 from ._liquid_treatment_bed import *
 from ._lumped_cost import *
+from ._membrane_bioreactor import *
 from ._pit_latrine import *
+from ._polishing_filter import *
 from ._sedimentation_tank import *
 from ._sludge_separator import *
 from ._suspended_growth_bioreactor import *
@@ -49,10 +53,13 @@ from . import (
     _dynamic_influent,
     _electrochemical_cell,
     _excretion,
+    _internal_circulation_rx,
     _lagoon,
     _liquid_treatment_bed,
     _lumped_cost,
+    _membrane_bioreactor,
     _pit_latrine,
+    _polishing_filter,
     _sedimentation_tank,
     _sludge_separator,
     _suspended_growth_bioreactor,
@@ -75,10 +82,13 @@ __all__ = (
     *_dynamic_influent.__all__,
     *_electrochemical_cell.__all__,
     *_excretion.__all__,
+    *_internal_circulation_rx.__all__,
     *_lagoon.__all__,
     *_liquid_treatment_bed.__all__,
     *_lumped_cost.__all__,
+    *_membrane_bioreactor.__all__,
     *_pit_latrine.__all__,
+    *_polishing_filter.__all__,
     *_sedimentation_tank.__all__,
     *_sludge_separator.__all__,
     *_suspended_growth_bioreactor.__all__,
