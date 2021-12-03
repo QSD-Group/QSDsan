@@ -101,7 +101,8 @@ html_css_files = [
 	'css/theme_overrides.css',
 	]
 html_js_files = [
-	'qsdsan.js'
+	'qsdsan.js',
+	'https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js'
 ]
 
 # -- Extension settings -------------------------------------------------------

@@ -5,15 +5,15 @@ Yalin Li (creator/lead)
 .. figure:: Yalin_Li.jpg
    :width: 80%
    :align: center
-   :alt: picture of Yalin
+   :alt: Yalin at Yosemite
    
    Oh the mountains and I love them.
 
 **Email:** `work <mailto:yalinli2@illinois.edu>`_; `personal <mailto:zoe.yalin.li@gmail.com>`_
 
-**Webpage:** `personal site <http://yalinli2.github.io/webpage/>`_
+**Webpage:** `professional <http://yalinli2.github.io/webpage/>`_
 
-This page is primarily about my aspirations for ``QSDsan``. For information related to my research/teaching interests and other professional activities, please check out my `personal webpage <http://yalinli2.github.io/webpage>`_ (and feel free to check out the `source code <http://github.com/yalinli2/webpage>`_ and build your own webpage).
+This page is primarily about my aspirations for ``QSDsan``. For information related to my research/teaching interests and other professional activities, please check out my `webpage <http://yalinli2.github.io/webpage>`_ (and feel free to check out the `source code <http://github.com/yalinli2/webpage>`_ and build your own one).
 
 I'm the creator, lead developer, and current maintainer of ``QSDsan``. I am a postdoctoral researcher in the `Guest Group <http://engineeringforsustainability.com>`_ at the `University of Illinois at Urbana-Champaign (UIUC) <http://illinois.edu>`_. I am affiliated with the `Institute of Sustainability, Energy, and Environment (iSEE) <https://sustainability.illinois.edu>`_ and the `Center for Advanced Bioenergy and Bioproducts Innovation (CABBI) <https://cabbi.bio>`_.
 
