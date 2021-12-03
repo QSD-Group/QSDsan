@@ -9,8 +9,9 @@ Created on Thu Oct 28 10:56:00 2021
 import numpy as np
 from warnings import warn
 from qsdsan import SanUnit, Construction
-from ._decay import Decay
-from ..utils import load_data, data_path
+#from ._decay import Decay
+from qsdsan.utils.loading import load_data, data_path
+
 
 __all__ = ('HousingReclaimer',)
 
@@ -18,7 +19,7 @@ data_path += 'sanunit_data/_housing_reclaimer.csv'
 
 
 
-class HousingReclaimer(SanUnit, Decay):
+class HousingReclaimer(SanUnit):
     '''
     Cost and life cycle impacts of the housing for the Reclaimer 2.0
     

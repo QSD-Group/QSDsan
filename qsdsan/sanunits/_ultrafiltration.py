@@ -95,10 +95,14 @@ class Ultrafiltration(SanUnit):
        self.baseline_purchase_costs['UF_unit'] = (self.UF_unit)                                 
           
        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
-        
-       self.add_OPEX = (self.replacement_costs/ 10) #USD/yr
        
-       self.power_utility(self.power_demand)
-       #self.power_utility(self.power_demand * self.working_time)
+       self.power_utility(self.power_demand/ 1000) #kW
+    
+    def _calc_replacement_cost(self):
+        ultrafiltration_replacement_cost = (self.replacement_costs) #USD/yr
+        return ultrafiltration_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
+       
+
+
         
 

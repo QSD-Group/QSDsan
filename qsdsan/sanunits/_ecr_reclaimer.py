@@ -8,15 +8,15 @@ Created on Wed May  5 14:31:47 2021
 import numpy as np
 from warnings import warn
 from qsdsan import SanUnit, Construction
-from ._decay import Decay
-from ..utils import load_data, data_path
+#from ._decay import Decay
+from qsdsan.utils.loading import load_data, data_path
 
 __all__ = ('ECR_Reclaimer',)
 
 data_path += 'sanunit_data/_ECR_Reclaimer.csv'
 
 
-class ECR_Reclaimer(SanUnit, Decay):
+class ECR_Reclaimer(SanUnit):
     '''
    Electrochemical treatment with chlorine dosing 
 
@@ -88,18 +88,13 @@ class ECR_Reclaimer(SanUnit, Decay):
         
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
-        #need to be a cost per hour
-        ECR_replacement_parts_annual_cost = (self.EC_cell * (10/self.EC_cell_lifetime))
-        # (self.pump_cost * self.pump_life)+ 
-        # (self.level_guage_replacement_cost * self.level_guage_life) + 
-        # (self.GAC_cost * self.GAC_filter_life ) +
-        # (self.HCL_replacement_cost * self.HCL_life / 365 / 24) +
-        # (self.salt_replacement_cost / 7 / 24 ))
-        
-        self.add_OPEX =  (ECR_replacement_parts_annual_cost) / (365 * 24) # USD/hr (all items are per hour)
-        
-        self.power_utility(self.power_demand)
+        self.power_utility(self.power_demand / 1000) #kW
         #self.power_utility(self.power_demand * self.working_time)
+    
+    def _calc_replacement_cost(self):
+        ecr_replacement_cost = (self.EC_cell * (10/self.EC_cell_lifetime)) #USD/yr
+        return ecr_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
+
         
-        # costs associated with full time opperators can be added in the TEA as staff
-        # Yalin is looking into how to account for annual LCA impact of replacement parts based on lifetime
+       
+        

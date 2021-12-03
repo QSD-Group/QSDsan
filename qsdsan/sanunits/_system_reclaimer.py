@@ -9,8 +9,9 @@ Created on Thu Oct 28 13:41:55 2021
 import numpy as np
 from warnings import warn
 from qsdsan import SanUnit, Construction
-from ._decay import Decay
-from ..utils import load_data, data_path
+#from ._decay import Decay
+from qsdsan.utils.loading import load_data, data_path
+
 
 __all__ = ('SystemReclaimer',)
 
@@ -18,7 +19,7 @@ data_path += 'sanunit_data/_system_reclaimer.csv'
 
 
 
-class SystemReclaimer(SanUnit, Decay):
+class SystemReclaimer(SanUnit):
     '''
     Cost and life cycle impacts of the system components for the Reclaimer 2.0
     
@@ -67,11 +68,18 @@ class SystemReclaimer(SanUnit, Decay):
         
         #certain parts need to be replaced based on an expected lifefime
         #the cost of these parts is considered along with the cost of the labor to replace them
-        replacement_parts_annual_cost = ((self.T_nut + self.die_cast_hinge + self.SLS_locks + self.DC_round_key
+        replacement_parts_annual_cost = (self.T_nut + self.die_cast_hinge + self.SLS_locks + self.DC_round_key
                                          + self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
                                          + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
                                          + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
-                                         + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * self.lifetime) / 20 # USD/ lifetime of project only accounts for time running
-        self.add_OPEX =  (replacement_parts_annual_cost) / (365 * 24) # USD/hr (all items are per hour)
-        self.power_utility(self.power_demand)
+                                         + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * .1
+     
+        self.power_utility(self.power_demand / 1000) #kW
         #self.power_utility(self.power_demand * self.working_time)
+        
+    def _calc_replacement_cost(self):
+        controls_replacement_cost = (self.replacement_parts_annual_cost) #USD/yr
+        return controls_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
+        
+
+
