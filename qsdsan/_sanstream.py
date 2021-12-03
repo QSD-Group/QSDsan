@@ -126,7 +126,7 @@ class SanStream(Stream):
             
         See Also 
         --------
-        :func:`copy`_ for the differences between ``copy``, ``copy_like``, and ``copy_flow``.
+        :func:`copy` for the differences between ``copy``, ``copy_like``, and ``copy_flow``.
         '''
         
         Stream.copy_like(self, other)
@@ -157,7 +157,7 @@ class SanStream(Stream):
             
         See Also 
         --------
-        :func:`copy`_ for the differences between ``copy``, ``copy_like``, and ``copy_flow``.
+        :func:`copy` for the differences between ``copy``, ``copy_like``, and ``copy_flow``.
         '''
         Stream.copy_flow(self, other)
         

@@ -100,6 +100,9 @@ html_css_files = [
 	'css/qsdsan.css',
 	'css/theme_overrides.css',
 	]
+html_js_files = [
+	'qsdsan.js'
+]
 
 # -- Extension settings -------------------------------------------------------
 # napoleon_custom_sections = ['Tips']

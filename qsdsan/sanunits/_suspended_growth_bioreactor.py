@@ -80,6 +80,7 @@ class CSTR(SanUnit):
         self._DO_ID = DO_ID
         self._model = suspended_growth_model
         self._concs = None
+        self._mixed = WasteStream()
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
@@ -166,8 +167,9 @@ class CSTR(SanUnit):
         '''initialize state by specifying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
-        mixed = WasteStream()
-        mixed.mix_from(self.ins)
+        mixed = self._mixed # avoid creating multiple new streams
+        # mixed = WasteStream()
+        self._mixed.mix_from(self.ins)
         Q = mixed.get_total_flow('m3/d')
         if state is not None: Cs = state
         elif self._concs is not None: Cs = self._concs
@@ -199,10 +201,10 @@ class CSTR(SanUnit):
 
     def _run(self):
         '''Only to converge volumetric flows.'''
-        mixed = WasteStream()
-        mixed.mix_from(self.ins)
-        treated, = self.outs
-        treated.copy_like(mixed)
+        # mixed = self._mixed
+        # mixed.mix_from(self.ins)
+        # treated, = self.outs
+        self.outs[0].mix_from(self.ins)
 
     @property
     def ODE(self):
