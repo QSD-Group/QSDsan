@@ -22,7 +22,8 @@ code.literal{
 }
 
 
-/* copy button */
+/* copy button, not really working */
+/*
 button.copybtn {
 	webkit-transition:  opacity .3s ease-in-out;
 	-o-transition:  opacity .3s ease-in-out;
@@ -43,10 +44,12 @@ div.highlight .copybtn:hover {
 div.highlight {
 	position: relative;
 }
+*/
 
-
-/* Want to make text justified? */
+/* tried to make text justified, not really working */
+/*
 .section #basic-2-flip-flop-synchronizer{
      text-align:justify !important;
 }
+*/
 

@@ -10,8 +10,9 @@ sympy
 
 # Specifically for docs
 sphinx
-sphinx_rtd_theme
 nbsphinx
+sphinx_rtd_theme
+sphinx-copybutton
 ipywidgets
 jupyterlab-widgets
 widgetsnbextension

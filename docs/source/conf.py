@@ -46,6 +46,7 @@ extensions = [
 'sphinx.ext.intersphinx',
 'sphinx.ext.mathjax',
 'sphinx.ext.napoleon',
+'sphinx_copybutton',
 ]
 
 # Allow exceptions to occur in notebooks
@@ -98,12 +99,14 @@ html_favicon = '_static/favicon.png'
 html_static_path = ['_static']
 html_css_files = [
 	'css/qsdsan.css',
+	'css/copybutton.css',
 	'css/theme_overrides.css',
 	]
-html_js_files = [
-	'qsdsan.js',
-	'https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js'
-]
+#!! Not seem to be working, using the extension now
+# html_js_files = [
+# 	'qsdsan.js', 
+# 	'https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js'
+# ]
 
 # -- Extension settings -------------------------------------------------------
 # napoleon_custom_sections = ['Tips']
