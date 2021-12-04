@@ -33,12 +33,11 @@ from .. import SanStream, SanUnit
 from ._bst_units import HXutility
 from ._wwt_pump import WWTpump
 
-from _internal_circulation_rx import InternalCirculationRx
-from utils import (
+from ._internal_circulation_rx import InternalCirculationRx
+from ..utils import (
     auom,
     compute_stream_COD,
     format_str,
-    get_BD_dct,
     default_component_dict,
     cost_pump,
     )
@@ -196,7 +195,7 @@ class AnMBR(SanUnit):
                'AF', 'AeF')
 
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, 
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', isdynamic=False, *,
                  reactor_type='CSTR',
                  membrane_configuration='cross-flow',
@@ -206,7 +205,7 @@ class AnMBR(SanUnit):
                  include_aerobic_filter=False,
                  add_GAC=False,
                  include_degassing_membrane=True,
-                 biodegradability={}, Y=0.05, # from the 0.02-0.08 uniform range in ref [1]
+                 biodegradability=1.0, Y=0.05, # from the 0.02-0.08 uniform range in ref [1]
                  solids=(), split={}, biomass_conc=10.5,
                  T=35+273.15,
                  include_pump_building_cost=False,
@@ -221,8 +220,7 @@ class AnMBR(SanUnit):
         self.membrane_unit_cost = membrane_unit_cost
         self.add_GAC = add_GAC
         self.include_degassing_membrane = include_degassing_membrane
-        self.biodegradability = \
-            biodegradability if biodegradability else get_BD_dct(self.chemicals)
+        self.biodegradability = biodegradability
         self.Y = Y
         cmps = self.components
         self.solids = solids or cmps.solids
@@ -283,19 +281,6 @@ class AnMBR(SanUnit):
                 raise DesignError(f'Only plastic materials {plastics} and "ceramic"'
                                   'allowed for "multi-tube" membrane',
                                   f'not "{m_material}".')
-
-
-    @staticmethod
-    def compute_COD(stream):
-        r'''
-        Compute the chemical oxygen demand (COD) of a given stream in kg-O2/m3
-        by summing the COD of each chemical in the stream using:
-
-        .. math::
-            COD [\frac{kg}{m^3}] = mol_{chemical} [\frac{kmol}{m^3}] * \frac{g O_2}{mol chemical}
-        '''
-        return compute_stream_COD(stream)
-
 
     # =========================================================================
     # _run
@@ -1040,7 +1025,7 @@ class AnMBR(SanUnit):
     @property
     def OLR(self):
         '''[float] Organic loading rate, [kg COD/m3/hr].'''
-        return  self.compute_COD(self.ins[0])*self.ins[0].F_vol/(self.V_tot*_ft3_to_m3)
+        return compute_stream_COD(self.ins[0], 'kg/m3')*self.ins[0].F_vol/(self.V_tot*_ft3_to_m3)
 
 
     ### Pump/blower ###
@@ -1358,5 +1343,6 @@ class AnMBR(SanUnit):
     def organic_rm(self):
         '''[float] Overall organic (COD) removal rate.'''
         Qi, Qe = self._inf.F_vol, self.outs[1].F_vol
-        Si, Se = self.compute_COD(self._inf), self.compute_COD(self.outs[1])
+        Si = compute_stream_COD(self._inf, 'kg/m3')
+        Se = compute_stream_COD(self.outs[1], 'kg/m3')
         return 1 - Qe*Se/(Qi*Si)

@@ -15,8 +15,7 @@ for license details.
 
 # import thermosteam as tmo
 from . import Components
-from .utils.loading import load_data
-from .utils.parse import get_stoichiometric_coeff
+from .utils import load_data, get_stoichiometric_coeff
 from thermosteam.utils import chemicals_user, read_only
 from thermosteam import settings
 from sympy import symbols, Matrix

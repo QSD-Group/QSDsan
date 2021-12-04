@@ -18,11 +18,11 @@ from . import (
     construction,
     decorators,
     # descriptors, # currently not in use
-    digestion,
     evaluation,
     getters,
     formatting,
     loading,
+    misc,
     parsing,
     setters,
     units_of_measure,
@@ -35,11 +35,11 @@ from .colors import *
 from .construction import *
 from .decorators import *
 # from .descriptors import *
-from .digestion import *
 from .evaluation import *
 from .getters import *
 from .formatting import *
 from .loading import *
+from .misc import *
 from .parsing import *
 from .setters import *
 from .units_of_measure import *
@@ -51,11 +51,11 @@ __all__ = (
     *construction.__all__,
     *decorators.__all__,
     # *descriptors.__all__,
-    *digestion.__all__,
     *evaluation.__all__,
     *getters.__all__,
     *formatting.__all__,
     *loading.__all__,
+    *misc.__all__,
     *parsing.__all__,
     *setters.__all__,
     *units_of_measure.__all__,

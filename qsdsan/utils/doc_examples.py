@@ -24,7 +24,7 @@ __all__ = ('load_example_cmps', 'load_example_sys',)
 # %%
 
 # =============================================================================
-# Examplary components
+# Exemplary components
 # =============================================================================
 
 def load_example_cmps():
@@ -32,10 +32,10 @@ def load_example_cmps():
 
     H2O = Component('H2O', search_ID='H2O', particle_size='Soluble',
                      degradability='Undegradable', organic=False)
-    
+
     CO2 = Component('CO2', search_ID='CO2', phase='g',
                     particle_size='Dissolved gas',
-                    degradability='Undegradable', organic=False)  
+                    degradability='Undegradable', organic=False)
 
     N2O = Component('N2O', search_ID='N2O', phase='g',
                     particle_size='Dissolved gas',
@@ -46,7 +46,7 @@ def load_example_cmps():
 
     H2SO4 = Component('H2SO4', search_ID='H2SO4', phase='s', particle_size='Soluble',
                       degradability='Undegradable', organic=False)
-    
+
     CH4 = Component('CH4', search_ID='CH4', phase='g', particle_size='Dissolved gas',
                      degradability='Readily', organic=True)
 
@@ -57,7 +57,7 @@ def load_example_cmps():
     Ethanol = Component('Ethanol', search_ID='Ethanol', phase='l',
                          particle_size='Soluble',
                          degradability='Readily', organic=True)
-    
+
     cmps = Components((H2O, CO2, N2O, NaCl, H2SO4, CH4, Methanol, Ethanol))
     for cmp in cmps:
         cmp.default()
@@ -65,7 +65,7 @@ def load_example_cmps():
     cmps.compile()
     cmps.set_synonym('H2O', 'Water')
     cmps.set_synonym('CH4', 'Methane')
-    
+
     return cmps
 
 # %%
@@ -76,10 +76,10 @@ def load_example_cmps():
 
 def load_example_sys(cmps=None):
     '''Load a pre-constructed system for documentation purpose.'''
-    
+
     if cmps:
         set_thermo(cmps)
-    
+
     salt_water = SanStream('salt_water', Water=2000, NaCl=50, units='kg/hr')
     methanol = SanStream('methanol', Methanol=20, units='kg/hr')
     ethanol = SanStream('ethanol', Ethanol=10, units='kg/hr')
@@ -91,19 +91,5 @@ def load_example_sys(cmps=None):
     M2 = su.Mixer('M2', ins=(S1-0, S1-1), outs='alcohols')
     S2 = su.Splitter('S2', ins=S1-2, outs=(1-M1, 'waste_brine'), split=0.2)
     sys = System('sys', path=(M1, P1, H1, S1, M2, S2))
-    
+
     return sys
-    
-
-
-
-
-
-
-
-
-
-
-
-
-

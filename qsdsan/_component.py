@@ -124,6 +124,8 @@ class Component(Chemical):
     A subclass of :class:`thermosteam.Chemical` with additional attributes
     and methods for waste treatment.
 
+    At a minimum, ID, particle_size, degradability, and organic should be provided.
+
     Parameters
     ----------
     ID : str
@@ -215,8 +217,10 @@ class Component(Chemical):
         if search_ID:
             self = super().__new__(cls, ID=ID, search_ID=search_ID,
                                    search_db=True, **chemical_properties)
-        else:
-            self = super().__new__(cls, ID=ID, search_db=False, **chemical_properties)
+        else: # still try to search nonetheless
+            try: self = super().__new__(cls, ID=ID, **chemical_properties)
+            except LookupError:
+                self = super().__new__(cls, ID=ID, search_db=False, **chemical_properties)
 
         self._ID = ID
         if formula:
@@ -493,7 +497,7 @@ class Component(Chemical):
         return self._i_COD or 0.
     @i_COD.setter
     def i_COD(self, i):
-        if i != None: self._i_COD = check_return_property('i_COD', i)
+        if i is not None: self._i_COD = check_return_property('i_COD', i)
         else:
             if self.organic or self.formula in ('H2', 'O2', 'N2', 'NO2-', 'NO3-'):
                 if self.measured_as == 'COD': self._i_COD = 1.

@@ -115,7 +115,7 @@ class PolishingFilter(SanUnit):
     _pumps =  ('lift', 'recir', 'eff', 'sludge')
 
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, 
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', isdynamic=False, *,
                  filter_type='aerobic',
                  OLR=(0.5+4)/24, # from the 0.5-4 kg/m3/d uniform range in ref [1]
@@ -157,18 +157,6 @@ class PolishingFilter(SanUnit):
         self._growth_rxns = get_digestion_rxns(self.ins[0], 1.,
                                                0., X_growth, 'WWTsludge')
         self._i_rm = self._decomp_rxns.X + self._growth_rxns.X
-
-
-    @staticmethod
-    def compute_COD(stream):
-        r'''
-        Compute the chemical oxygen demand (COD) of a given stream in kg-O2/m3
-        by summing the COD of each chemical in the stream using:
-
-        .. math::
-            COD [\frac{kg}{m^3}] = mol_{chemical} [\frac{kmol}{m^3}] * \frac{g O_2}{mol chemical}
-        '''
-        return compute_stream_COD(stream)
 
 
     def _run(self):
@@ -284,7 +272,7 @@ class PolishingFilter(SanUnit):
         Q = inf.F_vol
 
         ### Concrete ###
-        get_V = lambda N: ((Q/N)*self.compute_COD(inf)) / self.OLR # m3
+        get_V = lambda N: ((Q/N)*compute_stream_COD(inf, 'kg/m3')) / self.OLR # m3
         get_A = lambda N: Q/N/self.HLR
 
         V, A = get_V(N), get_A(N)
@@ -298,7 +286,7 @@ class PolishingFilter(SanUnit):
             d = _A_to_d(A)
             D = V / d
 
-        self._OLR = ((Q/N)*self.compute_COD(inf)) / V
+        self._OLR = ((Q/N)*compute_stream_COD(inf, 'kg/m3')) / V
         V_ft3 = V / _ft3_to_m3 * N
         d_ft = d / _ft_to_m
         D_ft = D / _ft_to_m
@@ -675,5 +663,6 @@ class PolishingFilter(SanUnit):
     def organic_rm(self):
         '''[float] Overall organic (COD) removal rate.'''
         Qi, Qe = self._inf.F_vol, self.outs[1].F_vol
-        Si, Se = self.compute_COD(self._inf), self.compute_COD(self.outs[1])
+        Si = compute_stream_COD(self._inf, 'kg/m3')
+        Se = compute_stream_COD(self.outs[1], 'kg/m3')
         return 1 - Qe*Se/(Qi*Si)

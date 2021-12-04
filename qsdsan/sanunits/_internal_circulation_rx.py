@@ -22,21 +22,10 @@ TODO:
 '''
 
 import sympy as sp
-# import biosteam as bst
-# import thermosteam as tmo
 from biosteam.exceptions import DesignError
 from .. import SanStream, SanUnit
 from ._bst_units import MixTank, Pump, HXutility
-
-# from biorefineries.wwt.utils import (
-#     get_BD_dct,
-#     compute_stream_COD,
-#     get_digestion_rxns,
-#     IC_purchase_cost_algorithms
-#     )
-#!!! potentially replace the corresponding functions from QSDsan (e.g., wrt COD)
-from .utils import (
-    get_BD_dct,
+from ..utils import (
     compute_stream_COD,
     get_digestion_rxns,
     IC_purchase_cost_algorithms
@@ -45,7 +34,6 @@ from .utils import (
 __all__ = ('InternalCirculationRx',)
 
 degassing = SanStream.degassing
-
 
 
 # %%
@@ -78,8 +66,8 @@ class InternalCirculationRx(MixTank):
     OLRall : float
         Overall organic loading rate, [kg COD/m3/hr].
     biodegradability : float or dict
-        Biodegradability of chemicals,
-        when shown as a float, all biodegradable chemicals are assumped to have
+        Biodegradability of components,
+        when shown as a float, all biodegradable components are assumped to have
         the same degradability.
     Y : float
         Biomass yield, [kg biomass/kg consumed COD].
@@ -146,7 +134,7 @@ class InternalCirculationRx(MixTank):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
                  method='lumped', biomass_cmp='WWTsludge',
-                 OLRall=1.25, biodegradability={}, Y=0.07,
+                 OLRall=1.25, biodegradability=1., Y=0.07,
                  vessel_type='IC', vessel_material='Stainless steel',
                  V_wf=0.8, kW_per_m3=0., T=35+273.15, init_with='WasteStream',
                  **kwargs):
@@ -154,8 +142,7 @@ class InternalCirculationRx(MixTank):
         self._gas = self.outs[0].copy()
         self.method = method
         self.OLRall = OLRall
-        self.biodegradability = \
-            biodegradability if biodegradability else get_BD_dct(self.chemicals)
+        self.biodegradability = biodegradability
         self.Y = Y
         self.V_wf = V_wf or self._default_V_wf
         self.vessel_type = 'IC'
@@ -188,18 +175,6 @@ class InternalCirculationRx(MixTank):
         self._i_rm = self._biogas_rxns.X + self._growth_rxns.X
 
 
-    @staticmethod
-    def compute_COD(stream):
-        r'''
-        Compute the chemical oxygen demand (COD) of a given stream in kg-O2/m3
-        by summing the COD of each chemical in the stream using:
-
-        .. math::
-            COD [\frac{kg}{m^3}] = mol_{chemical} [\frac{kmol}{m^3}] * \frac{g O_2}{mol chemical}
-        '''
-        return compute_stream_COD(stream)
-
-
     def _run(self):
         inf = self._inf = self.ins[0].copy()
         biogas, eff, waste  = self.outs
@@ -218,7 +193,7 @@ class InternalCirculationRx(MixTank):
         biogas_rxns(inf.mol)
 
         degassing(inf, gas)
-        Se = compute_stream_COD(inf)
+        Se = compute_stream_COD(inf, 'kg/m3')
 
         Qi, Si, Xi, Qe, Y = self.Qi, self.Si, self.Xi, self.Qe, self.Y
         method = self.method.lower()
@@ -380,8 +355,8 @@ class InternalCirculationRx(MixTank):
     @property
     def biodegradability(self):
         '''
-        [float of dict] Biodegradability of chemicals,
-        when shown as a float, all biodegradable chemicals are assumped to have
+        [float of dict] Biodegradability of components,
+        when shown as a float, all biodegradable components are assumped to have
         the same degradability.
         '''
         return self._biodegradability
@@ -397,13 +372,13 @@ class InternalCirculationRx(MixTank):
         for k, v in i.items():
             if not 0<=v<=1:
                 raise ValueError('`biodegradability` should be within [0, 1], '
-                                 f'the input value for chemical "{k}" is '
+                                 f'the input value for component "{k}" is '
                                  'outside the range.')
         self._biodegradability = i
 
     @property
     def i_rm(self):
-        '''[:class:`np.array`] Removal of each chemical in this reactor.'''
+        '''[:class:`np.array`] Removal of each component in this reactor.'''
         return self._i_rm
 
     @property
@@ -594,26 +569,26 @@ class InternalCirculationRx(MixTank):
     @property
     def Si(self):
         '''
-        [float] Influent substrate (i.e., biodegradable chemicals)
+        [float] Influent substrate (i.e., biodegradable components)
         concentration, [kg/m3].
         '''
-        return self.compute_COD(self.ins[0])
+        return compute_stream_COD(self.ins[0], 'kg/m3')
 
     @property
     def Se(self):
         '''
-        [float] Effluent substrate (i.e., biodegradable chemicals)
+        [float] Effluent substrate (i.e., biodegradable components)
         concentration, [kg/m3].
         '''
-        return self.compute_COD(self.outs[1])
+        return compute_stream_COD(self.outs[1], 'kg/m3')
 
     @property
     def Sw(self):
         '''
-        [float] Waste flow substrate (i.e., biodegradable chemicals)
+        [float] Waste flow substrate (i.e., biodegradable components)
         concentration, [kg/m3].
         '''
-        return self.compute_COD(self.outs[2])
+        return compute_stream_COD(self.outs[2], 'kg/m3')
 
     @property
     def Xi(self):
