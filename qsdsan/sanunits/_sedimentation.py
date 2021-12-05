@@ -16,17 +16,16 @@ for license details.
 # %%
 
 from math import ceil, pi, cos
+from . import Decay, SludgeSeparator
 from .. import Construction
-from ._decay import Decay
-from ._sludge_separator import SludgeSeparator
 from ..utils import ospath, load_data, data_path
 
-__all__ = ('SedimentationTank',)
+__all__ = ('Sedimentation',)
 
 sedmentation_path = ospath.join(data_path, 'sanunit_data/_sedimentation_tank.tsv')
 
 
-class SedimentationTank(SludgeSeparator, Decay):
+class Sedimentation(SludgeSeparator, Decay):
     '''
     Sedimentation of wastes into liquid and solid phases based on
     `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_

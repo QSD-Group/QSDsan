@@ -14,9 +14,9 @@ for license details.
 
 import math
 from warnings import warn
+from . import HXutility
+from ._pumping import WWTpump
 from .. import SanStream, SanUnit
-from ._bst_units import HXutility
-from ._wwt_pump import WWTpump
 from ..utils import (
     auom,
     compute_stream_COD,

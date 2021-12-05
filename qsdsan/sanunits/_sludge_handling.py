@@ -12,17 +12,25 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import math
 import flexsolve as flx
 import biosteam as bst
+from warnings import warn
+from math import ceil
+from . import Decay
 from .. import SanUnit
+from ..utils import ospath, load_data, data_path, dct_from_str
 
-__all__ = ('SludgeHandling', 'BeltThickener', 'SludgeCentrifuge')
+__all__ = (
+    'SludgeHandling', 'BeltThickener', 'SludgeCentrifuge',
+    'SludgeSeparator',
+    )
 
+
+# %%
 
 class SludgeHandling(SanUnit):
     '''
-    A generic class for handling of wastewater treatmnet sludge.
+    A generic class for handling of wastewater treatment sludge.
 
     The 0th outs is the water-rich supernatant (effluent) and
     the 1st outs is the solid-rich sludge.
@@ -160,7 +168,7 @@ class BeltThickener(SludgeHandling):
 
 
     def _design(self):
-        self._N_thickener = N = math.ceil(self._mixed.F_vol/self.max_capacity)
+        self._N_thickener = N = ceil(self._mixed.F_vol/self.max_capacity)
         self.design_results['Number of thickners'] = N
         self.F_BM['Thickeners'] = 1.7 # ref [2]
         self.baseline_purchase_costs['Thickeners'] = 4000 * N
@@ -207,3 +215,136 @@ class SludgeCentrifuge(SludgeHandling, bst.SolidsCentrifuge):
     _design = bst.SolidsCentrifuge._design
 
     _cost = SludgeHandling._cost
+
+
+# %%
+
+separator_path = ospath.join(data_path, 'sanunit_data/_sludge_separator.tsv')
+allocate_N_removal = Decay.allocate_N_removal
+
+class SludgeSeparator(SanUnit):
+    '''
+    For sludge separation based on
+    `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_,
+    note that no default cost or environmental impacts are included.
+
+    Parameters
+    ----------
+    ins : WasteStream
+        Waste for treatment.
+    outs : WasteStream
+        Liquid, settled solids.
+    split : float or dict
+        Fractions of material retention in the settled solids.
+        Default values will be used if not given.
+    settled_frac : float
+        Fraction of influent that settles as solids.
+        The default value will be used if not given.
+
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+
+    References
+    ----------
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
+
+    '''
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 split=None, settled_frac=None, **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, **kwargs)
+
+        data = load_data(path=separator_path)
+        self.split = split or dct_from_str(data.loc['split']['expected'])
+        self.settled_frac = settled_frac or float(data.loc['settled_frac']['expected'])
+        del data
+
+
+    _N_ins = 1
+    _outs_size_is_fixed = False
+
+    def _adjust_solid_water(self, influent, liq, sol):
+        sol.imass['H2O'] = 0
+        sol.imass['H2O'] = influent.F_mass * self.settled_frac - sol.F_mass
+        if sol.imass['H2O'] < 0:
+            sol.imass['H2O'] = 0
+            msg = 'Negative water content calculated for settled solids, ' \
+                'try smaller split or larger settled_frac.'
+            warn(msg)
+        liq.imass['H2O'] = influent.imass['H2O'] - sol.imass['H2O']
+        return liq, sol
+
+    def _run(self):
+        waste = self.ins[0]
+        liq, sol = self.outs[0], self.outs[1]
+
+        # Retention in the settled solids
+        sol_COD = liq_COD = None
+        split = self.split
+        if self._split_type == 'float':
+            liq.copy_like(waste)
+            sol.copy_like(waste)
+            sol.mass *= self.split
+            liq.mass -= sol.mass
+        else:
+            for var in self.split.keys():
+                if var == 'TS':
+                    sol.imass['OtherSS'] = split[var] * waste.imass['OtherSS']
+                elif var == 'COD':
+                    _COD = waste._COD or waste.COD
+                    sol_COD = split[var] * _COD * waste.F_vol
+                    liq_COD = _COD * waste.F_vol - sol_COD
+                elif var == 'N':
+                    N_sol = split[var]*(waste.imass['NH3']+waste.imass['NonNH3'])
+                    NonNH3_rmd, NH3_rmd = \
+                        allocate_N_removal(N_sol, waste.imass['NonNH3'])
+                    sol.imass['NonNH3'] = NonNH3_rmd
+                    sol.imass['NH3'] = NH3_rmd
+                else:
+                    sol.imass[var] = split[var] * waste.imass[var]
+            liq.mass = waste.mass - sol.mass
+
+        # Adjust total mass of of the settled solids by changing water content.
+        liq, sol = self._adjust_solid_water(waste, liq, sol)
+        sol._COD = sol._COD if not sol_COD else sol_COD / sol.F_vol
+        liq._COD = liq._COD if not liq_COD else liq_COD / liq.F_vol
+
+
+    @property
+    def split(self):
+        '''
+        [float] or [dict] Fractions of material retention in the settled solids
+        before degradation. If a single number is provided, then it is assumed
+        that retentions of all Components in the WasteStream are the same.
+
+        .. note::
+
+            Set state variable values (e.g., COD) will be retained if the retention
+            ratio is a single number (treated like the loss stream is split
+            from the original stream), but not when the ratio is a dict.
+
+        '''
+        return self._split
+    @split.setter
+    def split(self, i):
+        try:
+            self._split = float(i)
+            self._split_type = 'float'
+        except:
+            if isinstance(i, dict):
+                self._split = i
+                self._split_type = 'dict'
+            else:
+                raise TypeError(f'Only float or dict allowed, not {type(i).__name__}.')
+
+    @property
+    def settled_frac(self):
+        '''[float] Fraction of influent that settles as solids.'''
+        return self._settled_frac
+    @settled_frac.setter
+    def settled_frac(self, i):
+        self._settled_frac = i

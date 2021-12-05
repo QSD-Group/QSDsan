@@ -15,9 +15,9 @@ for license details.
 
 # %%
 
-from .. import WasteStream, Construction
-from ._toilet import Toilet
-from ..utils import ospath, load_data, data_path, dct_from_str
+from . import Toilet
+from ... import WasteStream, Construction
+from ...utils import ospath, load_data, data_path, dct_from_str
 
 __all__ = ('PitLatrine',)
 

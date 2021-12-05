@@ -17,8 +17,8 @@ for license details.
 
 from warnings import warn
 from math import ceil
+from . import Decay
 from .. import SanUnit, Construction
-from ._decay import Decay
 from ..utils import ospath, load_data, data_path
 
 __all__ = ('Lagoon',)

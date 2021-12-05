@@ -23,8 +23,10 @@ TODO:
 
 import sympy as sp
 from biosteam.exceptions import DesignError
+from ._hx import HXutility
+from ._tanks import MixTank
+from ._pumping import Pump
 from .. import SanStream, SanUnit
-from ._bst_units import MixTank, Pump, HXutility
 from ..utils import (
     compute_stream_COD,
     get_digestion_rxns,

@@ -16,9 +16,9 @@ for license details.
 # %%
 
 from warnings import warn
-from .. import SanUnit
-from ._decay import Decay
-from ..utils import ospath, load_data, data_path
+from ... import SanUnit
+from .._decay import Decay
+from ...utils import ospath, load_data, data_path
 
 __all__ = ('Toilet',)
 

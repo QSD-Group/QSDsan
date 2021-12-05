@@ -16,9 +16,9 @@ for license details.
 # %%
 
 import numpy as np
-from .. import Construction
-from ._toilet import Toilet
-from ..utils import ospath, load_data, data_path
+from . import Toilet
+from ... import Construction
+from ...utils import ospath, load_data, data_path
 
 __all__ = ('UDDT',)
 
