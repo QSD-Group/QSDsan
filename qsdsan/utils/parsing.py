@@ -106,8 +106,7 @@ def symbolize(coeff_dct, components, conserved_for, parameters):
 
 def get_stoichiometric_coeff(reaction, ref_component, components, conserved_for, parameters):
     '''
-    Parse input reaction to get array of symbolic expressions (or a function to return numpy array with parameters as kwargs)
-    or numpy array of input values for stoichiometric coefficients.
+    Parse input reaction to get array of symbolic expressions (or a function to return `numpy` array with parameters as kwargs) or `numpy` array of input values for stoichiometric coefficients.
     '''
     isa = isinstance
     coeff_dct = None

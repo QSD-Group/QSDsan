@@ -29,10 +29,8 @@ https://doi.org/10.1039/C5EE03715H.
 
 import math
 from biosteam.exceptions import DesignError
-from . import HXutility, WWTpump
+from . import HXutility, WWTpump, InternalCirculationRx
 from .. import SanStream, SanUnit
-
-from ._internal_circulation_rx import InternalCirculationRx
 from ..utils import (
     auom,
     compute_stream_COD,

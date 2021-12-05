@@ -12,12 +12,6 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-'''
-TODO:
-    Move Component/WasteStream ones here as well
-'''
-
-
 
 # %%
 
@@ -35,6 +29,7 @@ path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
 ureg.load_definitions(path)
 
 def parse_unit(value):
+    '''Parse user' input units to those that can be recognized by `pint`.'''
     str_list = value.split(' ') # for something like 'kg CO2-eq'
     if len(str_list) > 1:
         unit = str_list[0]
@@ -47,13 +42,10 @@ def parse_unit(value):
         others = '-'.join(str_list.pop(0))
         try: return auom(unit), others
         except: pass
-    
+
     # For something like 'MJ' or 'tonne*km',
     # not doing this earlier as something like 'kg N' will be misinterpreted
     try: return auom(value), ''
     except: pass
-    
+
     return None, value
-
-
-

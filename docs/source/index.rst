@@ -122,10 +122,11 @@ In particular, ``QSDsan`` introduces:
    SanUnit
    SimpleTEA
    Transportation
-   equipments/equipments
+   equipments/_index
    processes/processes
-   sanunits/sanunits
+   sanunits/_index
    stats
+   utils/_index
 
 
 About the developers

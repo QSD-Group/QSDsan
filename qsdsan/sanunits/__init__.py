@@ -27,6 +27,7 @@ from ._lumped_cost import *
 from ._pumping import *
 from ._sludge_handling import *
 from ._suspended_growth_bioreactor import *
+from ._tanks import *
 from ._trucking import *
 
 # Units that rely on other units
@@ -36,12 +37,11 @@ from ._lagoon import *
 from ._membrane_bioreactors import *
 from ._polishing_filter import *
 from ._sedimentation import *
-from ._tanks import *
 from ._toilets import *
 from ._treatment_beds import *
 
 
-# Alphabetically
+# From then on the order doesn't, alphabetically
 from . import (
     _abstract,
     _anaerobic_reactors,
@@ -67,7 +67,6 @@ from . import (
     _treatment_beds,
     _trucking,
     )
-
 
 __all__ = (
     *_abstract.__all__,
