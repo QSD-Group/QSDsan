@@ -35,6 +35,7 @@ setup(
                     'equipments/*',
                     'processes/*',
                     'sanunits/*',
+                    'sanunits/_toilets/*',
                     'utils/*',
                     ]},
     platforms=['Windows', 'Mac', 'Linux'],
