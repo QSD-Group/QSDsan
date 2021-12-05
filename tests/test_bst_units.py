@@ -8,18 +8,23 @@ This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
-Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
-
 
 import numpy as np
 import biosteam as bst
 import qsdsan as qs
 from numpy.testing import assert_allclose
 
-__all__ = ('test_Splitter', 'test_Pump', 'test_MixTank', 'test_StorageTank',
-           'test_HXutility', 'test_HXprocess',)
+__all__ = (
+    'test_HXprocess',
+    'test_HXutility',
+    'test_MixTank',
+    'test_Pump',
+    'test_Splitter',
+    'test_StorageTank',
+    )
 
 
 bst.default_utilities()
@@ -71,24 +76,26 @@ def check_results(bst_unit, qs_unit):
 # Testing functions
 # =============================================================================
 
-def test_Splitter():
-    bst_s, qs_ws = create_streams(1)
+def test_HXprocess():
+    bst_s, qs_ws = create_streams(2)
+    bst_s[0].T = qs_ws[0].T = 400
+
     bst.settings.set_thermo(chems)
-    bst_unit = bst.units.Splitter(ins=bst_s, split=0.1)
+    bst_unit = bst.units.HXprocess(ins=bst_s, phase0='l', phase1='l')
 
     qs.set_thermo(cmps)
-    qs_unit = qs.sanunits.Splitter(ins=qs_ws, split=0.1)
+    qs_unit = qs.sanunits.HXprocess(ins=qs_ws, phase0='l', phase1='l')
 
     check_results(bst_unit, qs_unit)
 
 
-def test_Pump():
+def test_HXutility():
     bst_s, qs_ws = create_streams(1)
     bst.settings.set_thermo(chems)
-    bst_unit = bst.units.Pump(ins=bst_s)
+    bst_unit = bst.units.HXutility(ins=bst_s, T=400, rigorous=False) #!!! Try True
 
     qs.set_thermo(cmps)
-    qs_unit = qs.sanunits.Pump(ins=qs_ws)
+    qs_unit = qs.sanunits.HXutility(ins=qs_ws, T=400, rigorous=False) #!!! Try True
 
     check_results(bst_unit, qs_unit)
 
@@ -104,6 +111,28 @@ def test_MixTank():
     check_results(bst_unit, qs_unit)
 
 
+def test_Pump():
+    bst_s, qs_ws = create_streams(1)
+    bst.settings.set_thermo(chems)
+    bst_unit = bst.units.Pump(ins=bst_s)
+
+    qs.set_thermo(cmps)
+    qs_unit = qs.sanunits.Pump(ins=qs_ws)
+
+    check_results(bst_unit, qs_unit)
+
+
+def test_Splitter():
+    bst_s, qs_ws = create_streams(1)
+    bst.settings.set_thermo(chems)
+    bst_unit = bst.units.Splitter(ins=bst_s, split=0.1)
+
+    qs.set_thermo(cmps)
+    qs_unit = qs.sanunits.Splitter(ins=qs_ws, split=0.1)
+
+    check_results(bst_unit, qs_unit)
+
+
 def test_StorageTank():
     bst_s, qs_ws = create_streams(1)
     bst.settings.set_thermo(chems)
@@ -115,33 +144,10 @@ def test_StorageTank():
     check_results(bst_unit, qs_unit)
 
 
-def test_HXutility():
-    bst_s, qs_ws = create_streams(1)
-    bst.settings.set_thermo(chems)
-    bst_unit = bst.units.HXutility(ins=bst_s, T=400, rigorous=False) #!!! Try True
-
-    qs.set_thermo(cmps)
-    qs_unit = qs.sanunits.HXutility(ins=qs_ws, T=400, rigorous=False) #!!! Try True
-
-    check_results(bst_unit, qs_unit)
-
-def test_HXprocess():
-    bst_s, qs_ws = create_streams(2)
-    bst_s[0].T = qs_ws[0].T = 400
-
-    bst.settings.set_thermo(chems)
-    bst_unit = bst.units.HXprocess(ins=bst_s, phase0='l', phase1='l')
-
-    qs.set_thermo(cmps)
-    qs_unit = qs.sanunits.HXprocess(ins=qs_ws, phase0='l', phase1='l')
-
-    check_results(bst_unit, qs_unit)
-
-
 if __name__ == '__main__':
-    test_Splitter()
-    test_Pump()
-    test_MixTank()
-    test_StorageTank()
-    test_HXutility()
     test_HXprocess()
+    test_HXutility()
+    test_MixTank()
+    test_Pump()
+    test_Splitter()
+    test_StorageTank()

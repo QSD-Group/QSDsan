@@ -195,13 +195,14 @@ _m3_to_gal = auom('m3').conversion_factor('gallon')
 
 class WWTpump(SanUnit):
     '''
-    Generic class for pumps used in wastewater treatment.
+    Generic class for pumps used in wastewater treatment. [1]_
 
     Parameters
     ----------
     pump_type : str
         The type of the pump that determines the design algorithms to use.
         The following combination is valid:
+
             - "permeate_cross-flow"
             - "retentate_CSTR"
             - "retentate_AF"
@@ -210,19 +211,20 @@ class WWTpump(SanUnit):
             - "lift"
             - "sludge"
             - "chemical"
+
     Q_mgd : float
         Volumetric flow rate in million gallon per day, [mgd].
         Will use total volumetric flow through the unit if not provided.
-    add_inputs : dct
-        Additional inputs that will be passed to the corresponding design alogrithm.
-        Check the document for the design alogrithm for the specific input requirements.
+    add_inputs : dict
+        Additional inputs that will be passed to the corresponding design algorithm.
+        Check the document for the design algorithm for the specific input requirements.
 
     References
     ----------
     .. [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
-    Valorization of Dilute Organic Carbon Waste Streams.
-    Energy Environ. Sci. 2016, 9 (3), 1102–1112.
-    https://doi.org/10.1039/C5EE03715H.
+        Valorization of Dilute Organic Carbon Waste Streams.
+        Energy Environ. Sci. 2016, 9 (3), 1102–1112.
+        https://doi.org/10.1039/C5EE03715H.
     '''
     _N_ins = 1
     _N_outs = 1

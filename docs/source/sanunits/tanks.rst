@@ -17,9 +17,3 @@ StorageTank
 -----------
 .. autoclass:: qsdsan.sanunits.StorageTank
    :members:
-
-
-SedimentationTank
------------------
-.. autoclass:: qsdsan.sanunits.SedimentationTank
-   :members:

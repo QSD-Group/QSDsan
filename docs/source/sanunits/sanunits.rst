@@ -4,20 +4,23 @@ sanunits
 .. toctree::
    :maxdepth: 1
 
+   abstract
    anaerobic_reactors
    BiogasCombustion
    clarifiers
-   ComponentSplitter
    CropApplication
    Decay
    ElectrochemicalCell
    Excretion
+   hx
+   InternalCirculationRx
    Lagoon
    LumpedCost
-   Mixer
-   Pump
-   SludgeSeparator
-   Splitter
+   membrane_bioreactors
+   PolishingFilter
+   pumping
+   sludge_handling
+   Sedimentation
    suspended_growth_bioreactors
    tanks
    toilets

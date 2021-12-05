@@ -4,6 +4,23 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
+Ongoing
+-------
+- Added many new :class:`~.SanUnit` and reorganized package/documentation structure, new unit operations include:
+
+	- :class:`~.sanunits.AnMBR`
+	- :class:`~.sanunits.InternalCirculationRx`
+	- :class:`~.sanunits.SludgeHandling`
+
+		- :class:`~.sanunits.BeltThickener`
+		- :class:`~.sanunits.SludgeCentrifuge`
+
+	- :class:`~.sanunits.PolishingFilter`
+	- :class:`~.sanunits.WWTpump`
+
+- Building the `official website <https://qsdsan.com>`_ of ``QSDsan``! The first version expected to go live Spring, 2022.
+
+
 `1.0.0`_
 --------
 Official release of ``QSDsan`` v1.0.0!
@@ -57,7 +74,7 @@ Official release of ``QSDsan`` v1.0.0!
 		- :func:`qsdsan.stats.fast_analysis` for (extended) Fourier amplitude sensitivity test (FAST) and random balance design (RBD) FAST.
 		- :func:`qsdsan.stats.morris_till_convergence` to run Morris analysis until the results converge.
 		- Added Kendall's tau and Kolmogorov–Smirnov test to :func:`qsdsan.stats.get_correlations`.
-	
+
 	- Plotting functions to visualize all test results:
 
 		- :func:`qsdsan.stats.plot_uncertainties` fpr results from uncertainty analysis as different 1D or 2D plots.

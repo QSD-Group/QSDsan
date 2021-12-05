@@ -30,7 +30,8 @@ __all__ = (
 
 class SludgeHandling(SanUnit):
     '''
-    A generic class for handling of wastewater treatment sludge.
+    A generic class for handling of wastewater treatment sludge based on
+    `Shoener et al. <https://doi.org/10.1039/C5EE03715H>`_
 
     The 0th outs is the water-rich supernatant (effluent) and
     the 1st outs is the solid-rich sludge.
@@ -38,8 +39,8 @@ class SludgeHandling(SanUnit):
     Two pumps (one for the supernatant and one for sludge) are included.
 
     Separation split is determined by the moisture (i.e., water) content
-    of the sludge, soluble chemicals will have the same split as water,
-    insolubles chemicals will all go to the retentate.
+    of the sludge, soluble components will have the same split as water,
+    insolubles components will all go to the retentate.
 
     Parameters
     ----------
@@ -51,7 +52,7 @@ class SludgeHandling(SanUnit):
 
     References
     ----------
-    .. [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
+    [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
     Valorization of Dilute Organic Carbon Waste Streams.
     Energy Environ. Sci. 2016, 9 (3), 1102–1112.
     https://doi.org/10.1039/C5EE03715H.
@@ -119,10 +120,11 @@ class BeltThickener(SludgeHandling):
     the 1st outs is the solid-rich sludge.
 
     Key parameters include:
+
         - Capacity: 80-100 m3/h.
         - Influent solids concentration: 0.2-1%.
         - Sludge cake moisture content: 90-96%.
-        - Motor power: 3 (driving motor) and 1.1 agitator motor.
+        - Motor power: 3 (driving motor) and 1.1 (agitator motor) kW.
         - Belt width: 2.5 m.
         - Weight: 2350 kg.
         - Quote price: $3680 ea for three or more sets.
@@ -134,11 +136,9 @@ class BeltThickener(SludgeHandling):
     ----------
     sludge_moisture : float
         Moisture content of the thickened sludge, [wt% water].
-    solubles : tuple
-        IDs of the soluble chemicals.
-        Note that all chemicals that are not included in this tuple and not
-        locked as gas phase (i.e., `chemical.locked_state!='g'`) will be
-        treated as solids in simulation.
+    solids : Iterable(str)
+        IDs of the solid components.
+        If not provided, will be set to the default `solids` attribute of the components.
     max_capacity : float
         Maximum hydraulic loading per belt thickener, [m3/h].
     power_demand : float
@@ -146,23 +146,22 @@ class BeltThickener(SludgeHandling):
 
     References
     ----------
-    .. [1] `Industrial filtering equipment gravity thickener rotary thickening belt filter press \
-    <https://www.alibaba.com/product-detail/Industrial-filtering-equipment-gravity-thickener-rotary_60757627922.html?spm=a2700.galleryofferlist.normal_offer.d_title.78556be9t8szku>`_
-    Data obtained on 7/21/2021.
-
+    .. [1] `Industrial filtering equipment gravity thickener rotary thickening belt filter press. \
+        <https://www.alibaba.com/product-detail/Industrial-filtering-equipment-gravity-thickener-rotary_60757627922.html?spm=a2700.galleryofferlist.normal_offer.d_title.78556be9t8szku>`_
+        Data obtained on 7/21/2021.
     .. [2] Humbird et al., Process Design and Economics for Biochemical Conversion of
-    Lignocellulosic Biomass to Ethanol: Dilute-Acid Pretreatment and Enzymatic
-    Hydrolysis of Corn Stover; Technical Report NREL/TP-5100-47764;
-    National Renewable Energy Lab (NREL), 2011.
-    https://www.nrel.gov/docs/fy11osti/47764.pdf
+        Lignocellulosic Biomass to Ethanol: Dilute-Acid Pretreatment and Enzymatic
+        Hydrolysis of Corn Stover; Technical Report NREL/TP-5100-47764;
+        National Renewable Energy Lab (NREL), 2011.
+        https://www.nrel.gov/docs/fy11osti/47764.pdf
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 sludge_moisture=0.96, solubles=(),
+                 sludge_moisture=0.96, solids=(),
                  max_capacity=100, power_demand=4.1):
         SludgeHandling.__init__(self, ID, ins, outs, thermo,
                                 sludge_moisture=sludge_moisture,
-                                solubles=solubles)
+                                solids=solids)
         self.max_capacity = max_capacity
         self.power_demand = power_demand
 
@@ -195,19 +194,17 @@ class SludgeCentrifuge(SludgeHandling, bst.SolidsCentrifuge):
     ----------
     sludge_moisture : float
         Moisture content of the thickened sludge, [wt% water].
-    solubles : tuple
-        IDs of the soluble chemicals.
-        Note that all chemicals that are not included in this tuple and not
-        locked as gas phase (i.e., `chemical.locked_state!='g'`) will be
-        treated as solids in simulation.
+    solids : Iterable(str)
+        IDs of the solid components.
+        If not provided, will be set to the default `solids` attribute of the components.
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 sludge_moisture=0.8, solubles=(),
+                 sludge_moisture=0.8, solids=(),
                  centrifuge_type='scroll_solid_bowl'):
         SludgeHandling.__init__(self, ID, ins, outs, thermo,
                                 sludge_moisture=sludge_moisture,
-                                solubles=solubles)
+                                solids=solids)
         self.centrifuge_type = centrifuge_type
 
     _run = SludgeHandling._run
