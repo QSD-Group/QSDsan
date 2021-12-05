@@ -1,0 +1,42 @@
+﻿Unit,Dynamic,Abstract,Status
+﻿AnMBR (anaerobic membrane bioreactor),No,No,Completed
+AnaerobicBaffledReactor,No,No,Completed
+AnaerobicDigestion,No,No,Completed
+BeltThickener,No,No,Completed
+BiogasCombustion,No,No,Completed
+CSTR (continuously stirred tank reactor),Yes,No,Completed
+ComponentSplitter,No,Yes,Completed
+CropApplication,No,Yes,Completed
+Decay,No,Yes,First order only
+DryingBed,No,No,Completed
+DynamicInfluent,Yes,No,Under development
+ElectrochemicalCell,No,No,Completed
+Excretion,No,No,Completed
+FakeSplitter,No,Yes,Completed
+FlatBottomCircularClarifier,Yes,No,Completed
+HXprocess,No,No,Completed
+HXutility,No,No,Completed
+HydraulicDelay,Yes,Yes,Completed
+IdealClarifier,No,No,Completed
+InternalCirculationRx,No,No,Completed
+Lagoon,No,No,Completed
+LiquidTreatmentBed,No,No,Completed
+LumpedCost,No,Yes,Completed
+MixTank,No,No,Completed
+Mixer,Yes,Yes,Completed
+PitLatrine,No,No,Completed
+PolishingFilter,No,No,Completed
+Pump,Yes,No,Completed
+ReversedSplitter,No,Yes,Completed
+SBR (seqential batch reactor),Yes,No,Under development
+Sedimentation,No,No,Completed
+SludgeCentrifuge,No,No,Completed
+SludgeHandling,No,Yes,Completed
+SludgeSeparator,No,Yes,Completed
+Splitter,Yes,Yes,Completed
+StorageTank,No,No,Completed
+Tank,No,Yes,Completed
+Toilet,No,Yes,Completed
+Trucking,No,No,Completed
+UDDT (urine diverting dry toilets),No,No,Completed
+WWTpump (wastewater treatment pump),No,No,Completed

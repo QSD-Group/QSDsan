@@ -63,7 +63,6 @@ class MixTank(Tank, MixTank):
     '''
 
 
-
 class StorageTank(Tank, StorageTank):
     '''
     Similar to the :class:`biosteam.units.StorageTank`,

@@ -176,7 +176,7 @@ def get_cod_stoichiometry(component, aqueous=False, **replace):
 
     For inorganic components, all dict values will be 0.
 
-    If `aqueous`==False, the stoichiometry is given by:
+    If `aqueous` == False, the stoichiometry is given by:
 
     .. math::
         C_nH_aO_bN_cS_dP_e + \frac{2n+0.5a-b-1.5c+3d+2.5e}{2}O_2
