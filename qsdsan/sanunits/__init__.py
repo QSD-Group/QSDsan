@@ -15,8 +15,8 @@ for license details.
 
 # Units that do not rely on other units
 from ._abstract import *
-from ._biogas_combustion import *
 from ._clarifier import *
+from ._combustion import *
 from ._crop_application import *
 from ._dynamic_influent import *
 from ._decay import *
@@ -45,8 +45,8 @@ from ._treatment_beds import *
 from . import (
     _abstract,
     _anaerobic_reactors,
-    _biogas_combustion,
     _clarifier,
+    _combustion,
     _crop_application,
     _decay,
     _dynamic_influent,
@@ -71,8 +71,8 @@ from . import (
 __all__ = (
     *_abstract.__all__,
     *_anaerobic_reactors.__all__,
-    *_biogas_combustion.__all__,
     *_clarifier.__all__,
+    *_combustion.__all__,
     *_crop_application.__all__,
     *_decay.__all__,
     *_dynamic_influent.__all__,

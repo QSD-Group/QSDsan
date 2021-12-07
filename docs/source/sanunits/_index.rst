@@ -20,8 +20,8 @@ Links to docs
 
    abstract
    anaerobic_reactors
-   BiogasCombustion
    clarifiers
+   combustion
    CropApplication
    Decay
    ElectrochemicalCell

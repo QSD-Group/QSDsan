@@ -62,7 +62,7 @@ class SanStream(Stream):
         self._stream_impact_item = stream_impact_item
         self._impact_item = self._stream_impact_item
 
-    def copy(self, new_ID=''):
+    def copy(self, new_ID='', copy_price=False, copy_impact_item=True):
         '''
         Copy the information of another stream.
 
@@ -85,18 +85,18 @@ class SanStream(Stream):
         ----------
         new_ID : str
             ID of the new stream, a default ID will be assigned if not provided.
-
-
-        .. note::
-
-            [1] Price of the original stream is not copied.
-
-            [2] If the original stream has an :class:`~.StreamImpactItem`,
+        copy_price : bool
+            If True, price of the new stream will be set to be the same as
+            the original stream.
+        copy_impact_item : bool
+            If True and the original stream has an :class:`~.StreamImpactItem`,
             then a new :class:`~.StreamImpactItem` will be created for the new stream
             and the new impact item will be linked to the original impact item.
         '''
 
         new = super().copy(ID=new_ID)
+        if copy_price:
+            new.price = self.price
         if hasattr(self, '_stream_impact_item'):
             if self.stream_impact_item is not None:
                 self.stream_impact_item.copy(stream=new)
@@ -107,7 +107,7 @@ class SanStream(Stream):
     __copy__ = copy
 
 
-    def copy_like(self, other):
+    def copy_like(self, other, copy_price=False, copy_impact_item=True):
         '''
         Copy the information of another stream without creating a new stream.
 
@@ -115,12 +115,11 @@ class SanStream(Stream):
         ----------
         other : obj
             The stream where mass flows and stream properties will be copied from.
-
-        .. note::
-
-            [1] Price is not copied.
-
-            [2] If the original stream has an :class:`~.StreamImpactItem`,
+        copy_price : bool
+            If True, price of the new stream will be set to be the same as
+            the original stream.
+        copy_impact_item : bool
+            If True and the original stream has an :class:`~.StreamImpactItem`,
             then a new :class:`~.StreamImpactItem` will be created for the new stream
             and the new impact item will be linked to the original impact item.
 
@@ -130,13 +129,14 @@ class SanStream(Stream):
         '''
 
         Stream.copy_like(self, other)
-
         if not isinstance(other, SanStream):
             return
-
-        if hasattr(other, '_stream_impact_item'):
-            if other.stream_impact_item is not None:
-                self.stream_impact_item.copy(stream=self)
+        if copy_price:
+            other.price = self.price
+        if copy_impact_item:
+            if hasattr(other, '_stream_impact_item'):
+                if other.stream_impact_item is not None:
+                    self.stream_impact_item.copy(stream=self)
 
 
     def copy_flow(self, other, IDs=..., *, remove=False, exclude=False):

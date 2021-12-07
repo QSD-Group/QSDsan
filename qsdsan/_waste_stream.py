@@ -44,7 +44,7 @@ _common_composite_vars = ('_COD', '_BOD', '_uBOD', '_TC', '_TOC', '_TN',
                           '_dry_mass', '_charge', '_ThOD', '_cnBOD')
 
 _ws_specific_slots = (*_common_composite_vars,
-                      '_pH', '_SAlk', '_ratios', '_stream_impact_item', 
+                      '_pH', '_SAlk', '_ratios', '_stream_impact_item',
                       '_state', '_dstate')
 
 _specific_groups = {'S_VFA': ('S_Ac', 'S_Prop'),
@@ -200,7 +200,7 @@ def get_mock_conc(IDs, data={}):
     dct = {ID: 0. for ID in IDs}
     dct.update(data)
     return property_array([MockConcentrationProperty(k, v) for k, v in dct.items()])
-    
+
 del PropertyFactory
 
 
@@ -740,38 +740,74 @@ class WasteStream(SanStream):
         return self.iconc.data
 
 
-    def copy(self, new_ID='', ws_properties=True):
+    def copy(self, new_ID='', copy_price=False, copy_impact_item=True,
+             ws_properties=True):
         '''
         Copy the information of another stream.
+
+        There are three functions related to copying: ``copy``, ``copy_like``, and ``copy_flow``,
+        and they have slight differences in using.
+
+        Both ``copy`` and ``copy_like`` makes the new stream the same as the original one
+        (other than that the new stream does not have the cost),
+        but when using ``copy``, you do now need to pre-create the new stream,
+        (i.e., you can just do ``new_stream = original_stream.copy('new_ID')``),
+        but to use ``copy_like``, you need to firstly create the new stream, then
+        ``new_stream.copy_like(original_stream)``.
+
+        For ``copy_flow``, it is similar to ``copy_like`` in that you need to firstly
+        creating the new stream, but unlike ``copy_flow`` that copies properties
+        such as temperature, pressure, ``copy_flow`` just copies the mass flow information,
+        but you can choose which component to copy.
 
         Parameters
         ----------
         new_ID : str
             ID of the new stream, a default ID will be assigned if not provided.
-        ws_properties : bool
-            Whether to copy wastewater-related properties to the new stream.
-
-        .. note::
-
-            [1] Price of the original stream is not copied.
-
-            [2] If the original stream has an :class:`~.StreamImpactItem`,
+        copy_price : bool
+            If True, price of the new stream will be set to be the same as
+            the original stream.
+        copy_impact_item : bool
+            If True and the original stream has an :class:`~.StreamImpactItem`,
             then a new :class:`~.StreamImpactItem` will be created for the new stream
             and the new impact item will be linked to the original impact item.
+        ws_properties : bool
+            Whether to copy wastewater-related properties to the new stream.
         '''
-        new = SanStream.copy(self, new_ID=new_ID)
-
+        new = SanStream.copy(self, new_ID=new_ID,
+                             copy_price=copy_price,
+                             copy_impact_item=copy_impact_item)
         if ws_properties:
             new._init_ws()
             new = copy_attr(new, self, skip=SanStream.__slots__)
-
         return new
 
     __copy__ = copy
 
 
-    def copy_like(self, other):
-        SanStream.copy_like(self, other)
+    def copy_like(self, other, copy_price=False, copy_impact_item=True):
+        '''
+        Copy the information of another stream without creating a new stream.
+
+        Parameters
+        ----------
+        other : obj
+            The stream where mass flows and stream properties will be copied from.
+        copy_price : bool
+            If True, price of the new stream will be set to be the same as
+            the original stream.
+        copy_impact_item : bool
+            If True and the original stream has an :class:`~.StreamImpactItem`,
+            then a new :class:`~.StreamImpactItem` will be created for the new stream
+            and the new impact item will be linked to the original impact item.
+
+        See Also
+        --------
+        :func:`copy` for the differences between ``copy``, ``copy_like``, and ``copy_flow``.
+        '''
+        SanStream.copy_like(self, other,
+                            copy_price=copy_price,
+                            copy_impact_item=copy_impact_item)
 
         if not isinstance(other, WasteStream):
             return
@@ -828,7 +864,7 @@ class WasteStream(SanStream):
             try:
                 tot = sum(to_float(i, slot)*i.F_vol for i in others if hasattr(i, slot))
                 setattr(self, slot, tot/self.F_vol)
-            except: 
+            except:
                 setattr(self, slot, None)
 
 
@@ -967,7 +1003,7 @@ class WasteStream(SanStream):
     def _init_state(self):
         self._state = np.append(self.conc.astype('float'), self.get_total_flow('m3/d'))
         self._dstate = self._state * 0.
-    
+
     def _state2flows(self):
         Q = self._state[-1]
         Cs = dict(zip(self.components.IDs, self._state[:-1]))

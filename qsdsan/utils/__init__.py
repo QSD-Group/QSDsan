@@ -12,12 +12,17 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+# Used in other modules so need to be imported first
+from . import units_of_measure
+from .units_of_measure import *
+
 from . import (
     cod,
     colors,
     construction,
     decorators,
     # descriptors, # currently not in use
+    energy,
     evaluation,
     getters,
     formatting,
@@ -25,7 +30,6 @@ from . import (
     misc,
     parsing,
     setters,
-    units_of_measure,
     )
 
 from biosteam.utils import NotImplementedMethod
@@ -35,6 +39,7 @@ from .colors import *
 from .construction import *
 from .decorators import *
 # from .descriptors import *
+from .energy import *
 from .evaluation import *
 from .getters import *
 from .formatting import *
@@ -42,7 +47,6 @@ from .loading import *
 from .misc import *
 from .parsing import *
 from .setters import *
-from .units_of_measure import *
 
 
 __all__ = (
@@ -51,6 +55,7 @@ __all__ = (
     *construction.__all__,
     *decorators.__all__,
     # *descriptors.__all__,
+    *energy.__all__,
     *evaluation.__all__,
     *getters.__all__,
     *formatting.__all__,
