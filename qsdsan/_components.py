@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 import thermosteam as tmo
 from . import _component, Chemical, Chemicals, CompiledChemicals, Component
-from .utils import load_data
+from .utils import add_V_from_rho, load_data
 
 __all__ = ('Components', 'CompiledComponents')
 
@@ -168,6 +168,65 @@ class Components(Chemicals):
     _default_data = None
 
 
+    def default_compile(self, lock_state_at='l',
+                        soluble_ref='Urea', gas_ref='CO2', particulate_ref='CaO'):
+        '''
+        Auto-fill of the missing properties of the components and compile,
+        boiling point (Tb) and molar volume (V) will be copied from the reference component,
+        the remaining missing properties will be copied from those of water.
+
+        Parameters
+        ----------
+        lock_state_at : str
+            Lock the state of components at a certain phase,
+            can be 'g', 'l', 's', or left as empty to avoid locking state.
+            Components that have already been locked will not be affected.
+        soluble_ref : str
+            ID of the reference component for those with `particle_size` == 'Souble'.
+        gas_ref : str
+            ID of the reference component for those with `particle_size` == 'Dissolved gas'.
+        particulate_ref : str
+            ID of the reference component for those with `particle_size` == 'Particulate'.
+
+        Examples
+        --------
+        >>> X = Component('X', phase='s', measured_as='COD', i_COD=0, description='Biomass',
+        ...               organic=True, particle_size='Particulate', degradability='Readily')
+        >>> X_inert = Component('X_inert', phase='s', description='Inert biomass', i_COD=0,
+        ...                     organic=True, particle_size='Particulate', degradability='Undegradable')
+        >>> Substrate = Component('Substrate', phase='s', measured_as='COD', i_mass=18.3/300,
+        ...                       organic=True, particle_size='Particulate', degradability='Readily')
+        >>> cmps = Components([X, X_inert, Substrate])
+        >>> cmps.default_compile()
+        >>> cmps
+        CompiledComponents([X, X_inert, Substrate])
+        '''
+        isa = isinstance
+        sol = Chemical(soluble_ref)
+        gas = Chemical(gas_ref)
+        par = Chemical(particulate_ref)
+        water = Chemical('Water')
+        for cmp in self:
+            particle_size = cmp.particle_size
+            ref = sol if particle_size=='Souble' \
+                else gas if particle_size=='Dissolved gas' else par
+            if lock_state_at :
+                try: cmp.at_state(lock_state_at)
+                except TypeError: pass
+            cmp.Tb = cmp.Tb or ref.Tb
+            # If don't have model for molar volume, set those to default
+            COPY_V = False
+            if isa(cmp.V, _PH):
+                if not cmp.V.l.valid_methods(298.15): COPY_V = True
+            else:
+                if not cmp.V.valid_methods(298.15): COPY_V = True
+            if COPY_V:
+                cmp.copy_models_from(ref, names=('V', 'Hvap'))
+            # Copy all remaining properties from water
+            cmp.copy_models_from(water)
+        self.compile()
+
+
     @classmethod
     def load_from_file(cls, path_or_df, index_col=None,
                        use_default_data=False, store_data=False):
@@ -287,6 +346,7 @@ class Components(Chemicals):
                                       degradability='Undegradable', organic=False)
         new.append(H2O)
 
+        #!!! Potentially use the `default_compile` method
         if default_compile:
             isa = isinstance
             for i in new:
@@ -325,6 +385,80 @@ class Components(Chemicals):
 
             new.compile()
         return new
+
+
+    @staticmethod
+    def append_combustion_components(components, alt_IDs={},
+                                     try_default_compile=True,
+                                     **default_compile_kwargs):
+        '''
+        Return a new :class:`~.Components` object with the given components
+        and those needed for combustion reactions (complete oxidation with O2),
+        namely O2, CO2 (for C), H2O (for H), N2 (for N), P4O10 (for P), and SO2 (for S).
+
+        If the combustion components are already in the given collection,
+        they will NOT be overwritten.
+
+        Parameters
+        ----------
+        components : Iterable(obj)
+            The original components to be appended.
+        alt_IDs : dict
+            Alternative IDs for the combustion components to be added as synonyms,
+            e.g., if "S_O2" is used instead of "O2", then pass {'O2': 'S_O2'}.
+        default_compile : bool
+            Whether to try default compile when some components
+            are missiong key properties for compiling.
+        default_compile_kwargs : dict
+            Keyword arguments to pass to `default_compile` if needed.
+
+        See Also
+        --------
+        :func:`default_compile`
+
+        Examples
+        --------
+        >>> from qsdsan import Components
+        >>> cmps = Components.load_default()
+        >>> cmps
+        CompiledComponents([S_H2, S_CH4, S_CH3OH, S_Ac, S_Prop, S_F, S_U_Inf, S_U_E, C_B_Subst, C_B_BAP, C_B_UAP, C_U_Inf, X_B_Subst, X_OHO_PHA, X_GAO_PHA, X_PAO_PHA, X_GAO_Gly, X_PAO_Gly, X_OHO, X_AOO, X_NOO, X_AMO, X_PAO, X_MEOLO, X_FO, X_ACO, X_HMO, X_PRO, X_U_Inf, X_U_OHO_E, X_U_PAO_E, X_Ig_ISS, X_MgCO3, X_CaCO3, X_MAP, X_HAP, X_HDP, X_FePO4, X_AlPO4, X_AlOH, X_FeOH, X_PAO_PP_Lo, X_PAO_PP_Hi, S_NH4, S_NO2, S_NO3, S_PO4, S_K, S_Ca, S_Mg, S_CO3, S_N2, S_O2, S_CAT, S_AN, H2O])
+        >>> CH4 = cmps.S_CH4.copy('CH4', phase='g')
+        >>> cmps = Components.append_combustion_components([*cmps, CH4], alt_IDs=dict(O2='S_O2'))
+        >>> cmps
+        CompiledComponents([S_H2, S_CH4, S_CH3OH, S_Ac, S_Prop, S_F, S_U_Inf, S_U_E, C_B_Subst, C_B_BAP, C_B_UAP, C_U_Inf, X_B_Subst, X_OHO_PHA, X_GAO_PHA, X_PAO_PHA, X_GAO_Gly, X_PAO_Gly, X_OHO, X_AOO, X_NOO, X_AMO, X_PAO, X_MEOLO, X_FO, X_ACO, X_HMO, X_PRO, X_U_Inf, X_U_OHO_E, X_U_PAO_E, X_Ig_ISS, X_MgCO3, X_CaCO3, X_MAP, X_HAP, X_HDP, X_FePO4, X_AlPO4, X_AlOH, X_FeOH, X_PAO_PP_Lo, X_PAO_PP_Hi, S_NH4, S_NO2, S_NO3, S_PO4, S_K, S_Ca, S_Mg, S_CO3, S_N2, S_O2, S_CAT, S_AN, H2O, CH4, CO2, N2, P4O10, SO2])
+        >>> cmps.O2 is cmps.S_O2
+        True
+        '''
+        cmps = components if (
+            isinstance(components, Components)
+            or isinstance(components, CompiledComponents)
+            ) else Components(components)
+        comb_cmps = ['O2', 'CO2', 'H2O', 'N2', 'P4O10', 'SO2']
+        synonyms = dict(H2O='Water')
+        synonyms.update(alt_IDs)
+        get = getattr
+        for k, v in alt_IDs.items():
+            try:
+                get(cmps, v)
+                synonyms[k] = comb_cmps.pop(comb_cmps.index(k))
+            except AttributeError:
+                pass
+        for ID in comb_cmps:
+            try: get(cmps, ID)
+            except AttributeError:
+                phase = 'g' if ID in ('O2', 'CO2', 'N2', 'SO2') else 's' if ID=='P4O10' else ''
+                ps = 'Dissolved gas' if phase == 'g' else 'Particulate' if phase=='s' else 'Soluble'
+                cmp = Component(ID, phase=phase, organic=False, particle_size=ps,
+                                degradability='Undegradable')
+                cmps.append(cmp)
+        add_V_from_rho(cmps.P4O10, rho=2.39, rho_unit='g/mL') # http://www.chemspider.com/Chemical-Structure.14128.html
+        try:
+            cmps.compile()
+        except RuntimeError: # cannot compile due to missing properties
+            cmps.default_compile(**default_compile_kwargs)
+        for k, v in synonyms.items():
+            cmps.set_synonym(k, v)
+        return cmps
 
 
     @classmethod

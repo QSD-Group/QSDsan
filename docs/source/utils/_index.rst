@@ -9,6 +9,7 @@ utils
    construction
    decorators
    doc_examples
+   energy
    evaluation
    formatting
    getters

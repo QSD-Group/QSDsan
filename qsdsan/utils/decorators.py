@@ -32,7 +32,7 @@ TicToc = bst.utils.TicToc
 
 def time_printer(func):
     '''
-    Allow functions to print execution time with a `print_time` kwargs.
+    Allow functions to print execution time with a `print_time` kwarg.
 
     Examples
     --------

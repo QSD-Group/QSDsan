@@ -9,6 +9,7 @@ Ongoing
 - Added many new :class:`~.SanUnit` and reorganized package/documentation structure, new unit operations include:
 
 	- :class:`~.sanunits.AnMBR`
+	- :class:`~.sanunits.CHP`
 	- :class:`~.sanunits.InternalCirculationRx`
 	- :class:`~.sanunits.SludgeHandling`
 

@@ -21,6 +21,7 @@ for license details.
 from warnings import warn
 from flexsolve import IQ_interpolation
 from biosteam import HeatUtility
+from thermosteam.reaction import ParallelReaction
 from .. import SanUnit
 from ..utils import sum_system_utility
 
@@ -174,13 +175,18 @@ class CHP(SanUnit):
         self._refresh_sys()
 
         cmps = self.components
-        rxns = self.combustion_reactions = cmps.get_combustion_reactions()
+        rxns = []
+        for cmp in cmps:
+            if cmp.phase in ('l', 's') and (not cmp.organic or cmp.degradability=='Undegradable'):
+                continue
+            rxns.append(cmp.get_combustion_reaction())
+        combustion_rxns = self.combustion_reactions = ParallelReaction(rxns)
 
         def react(natural_gas_flow=0):
             emission.copy_flow(feed)
             emission.imol['CH4'] += natural_gas_flow
             natural_gas.imol['CH4'] = natural_gas_flow
-            rxns.force_reaction(emission.mol)
+            combustion_rxns.force_reaction(emission.mol)
             air.imol['O2'] = -emission.imol['O2']
             air.imol['N2'] = air.imol['O2']/0.21*0.79
             emission.imol['O2'] = 0

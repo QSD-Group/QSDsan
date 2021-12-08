@@ -12,3 +12,5 @@ each = count = ea
 unit = count
 point = points
 MM- = 10**6 = mm-
+MGD = 1e6 * gallon / day
+mgd = MGD

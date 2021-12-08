@@ -25,7 +25,7 @@ __all__ = ('IC_purchase_cost_algorithms', 'select_pipe', 'cost_pump')
 
 
 # =============================================================================
-# IC
+# Internal circulation reactor
 # =============================================================================
 # Tank cost algorithms
 IC_purchase_cost_algorithms = mix_tank_purchase_cost_algorithms.copy()
@@ -43,9 +43,6 @@ ic = TankPurchaseCostAlgorithm(
 IC_purchase_cost_algorithms['IC'] = ic
 
 
-# =============================================================================
-# AnMBR
-# =============================================================================
 # Based on ANSI (American National Standards Institute) pipe chart
 # the original code has a bug (no data for 22) and has been fixed here
 boundaries = np.concatenate([
