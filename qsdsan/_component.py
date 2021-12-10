@@ -111,8 +111,8 @@ def check_return_property(name, value):
         if name.startswith('f_') and (value>1 or value<0):
             raise ValueError(f'{name} must be within [0,1].')
     elif name in allowed_values.keys():
-        assert value in allowed_values[name], \
-            f'{name} must be in {allowed_values[name]}.'
+        if value not in allowed_values[name]:
+            raise ValueError(f'{name} must be in {allowed_values[name]}.')
         return value
 
 # =============================================================================

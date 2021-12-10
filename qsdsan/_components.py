@@ -597,17 +597,22 @@ class CompiledComponents(CompiledChemicals):
         for i in _num_component_properties:
             dct[i] = component_data_array(components, i)
 
-        g = dct['g'] = np.asarray([1 if cmp.particle_size == 'Dissolved gas' else 0 for cmp in components])
+        dct['g'] = np.asarray([1 if cmp.particle_size == 'Dissolved gas' else 0 for cmp in components])
         dct['s'] = np.asarray([1 if cmp.particle_size == 'Soluble' else 0 for cmp in components])
         dct['c'] = np.asarray([1 if cmp.particle_size == 'Colloidal' else 0 for cmp in components])
-        x = dct['x'] = np.asarray([1 if cmp.particle_size == 'Particulate' else 0 for cmp in components])
-        dct['b'] = np.asarray([1 if cmp.degradability != 'Undegradable' else 0 for cmp in components])
+        dct['x'] = np.asarray([1 if cmp.particle_size == 'Particulate' else 0 for cmp in components])
+        b = dct['b'] = np.asarray([1 if cmp.degradability != 'Undegradable' else 0 for cmp in components])
         dct['rb'] = np.asarray([1 if cmp.degradability == 'Readily' else 0 for cmp in components])
-        dct['org'] = np.asarray([int(cmp.organic) for cmp in components])
+        org = dct['org'] = np.asarray([int(cmp.organic) for cmp in components])
+        inorg = dct['inorg'] = np.ones_like(org) - org
+        ID_arr = dct['_ID_arr'] = np.asarray([i.ID for i in components])
 
-        IDs = np.asarray([i.ID for i in components])
-        dct['gases'] = tuple(IDs[g.astype(bool)])
-        dct['solids'] = tuple(IDs[x.astype(bool)])
+        # Inorganic but not undegradable, incorrect
+        inorg_b = inorg * b
+        if inorg_b.sum() > 0:
+            bad_IDs = ID_arr[np.where(inorg_b==1)[0]]
+            raise ValueError(f'Components {bad_IDs} are inorganic but not undegradable, '
+                             'which is not correct.')
 
 
     def subgroup(self, IDs):
@@ -643,3 +648,84 @@ class CompiledComponents(CompiledChemicals):
         copy = Components(self)
         copy.compile()
         return copy
+
+
+    def get_IDs_from_array(self, array):
+        '''
+        Get the IDs of a group of components based on the 1/0 or True/False array.
+
+        Parameters
+        ----------
+        array : Iterable(1/0)
+            1D collection of 1/0 or True/False with the same length
+            as the IDs.
+
+        Examples
+        --------
+        >>> from qsdsan import Components
+        >>> cmps = Components.load_default()
+        >>> arr = cmps.get_IDs_from_array(cmps.g)
+        ('S_H2', 'S_CH4', 'S_N2', 'S_O2')
+        '''
+        return tuple(self._ID_arr[np.asarray(array).astype(bool)])
+
+
+    def get_array_from_IDs(self, IDs):
+        '''
+        Generate a ``numpy`` array in the same shape as ``CompiledComponents.IDs``,
+        where the values would be 1 for components whose IDs are in the given ID iterable
+        and 0 for components not in the given ID iterable.
+
+        Parameters
+        ----------
+        IDs : Iterable(str)
+            IDs of select components within this ``~.CompiledComponents``.
+
+        Examples
+        --------
+        >>> from qsdsan import Components
+        >>> cmps = Components.load_default()
+        >>> IDs = ('S_H2', 'S_CH4', 'S_N2', 'S_O2')
+        >>> cmps.get_array_from_IDs(IDs)
+        array([1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0])
+        '''
+        arr = np.zeros_like(self._ID_arr, dtype='int')
+        arr[self.indices(IDs)] = 1
+        return arr
+
+    @property
+    def gases(self):
+        '''[tuple] IDs of gas components.'''
+        return self.get_IDs_from_array(self.g)
+
+    @property
+    def solids(self):
+        '''[tuple] IDs of solids (particulate) components.'''
+        return self.get_IDs_from_array(self.x)
+
+    @property
+    def inorganics(self):
+        '''[tuple] IDs of inorganic omponents.'''
+        return self.get_IDs_from_array(self.inorg)
+
+    @property
+    def substrates(self):
+        '''[tuple] IDs of substrate (soluble/colloidal & organic & degradable) components.'''
+        return self.get_IDs_from_array((self.s+self.c)*self.b*self.org)
+
+    @property
+    def active_biomass(self):
+        '''[tuple] IDs of active biomass (particulate & organic & degradable) components.'''
+        return self.get_IDs_from_array(self.x*self.b*self.org)
+
+    @property
+    def inert_biomass(self):
+        '''[tuple] IDs of inert biomass (particulate & organic & undegradable) components.'''
+        return self.get_IDs_from_array(self.x*self.org-self.x*self.b*self.org)
+
+    @property
+    def inorganic_solids(self):
+        '''[tuple] IDs of inorganic solids (particulate & inorganic, all undegradable) components.'''
+        return self.get_IDs_from_array(self.x*self.inorg)

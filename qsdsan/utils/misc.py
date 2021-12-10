@@ -20,7 +20,7 @@ from thermosteam.functional import rho_to_V
 from . import auom
 
 
-__all__ = ('add_V_from_rho', 'default_component_dict', )
+__all__ = ('add_V_from_rho', 'correct_param_with_T', 'default_component_dict', )
 
 
 def add_V_from_rho(component, rho, rho_unit='kg/m3'):
@@ -54,6 +54,36 @@ def add_V_from_rho(component, rho, rho_unit='kg/m3'):
     except AttributeError:
         handle = getattr(component.V, component.locked_state)
         handle.add_model(V_model)
+
+
+def correct_param_with_T(k0, T0, T, theta):
+    r'''
+    Correct the coefficient value considering the temperature effect by:
+
+    .. math::
+
+        k = k_0 * \theta^{T-T_0}
+
+    Parameters
+    ----------
+    k0 : float
+        Coefficient value at a certain temperature.
+    T0 : float
+        Temperature for the known coefficient value.
+    T : float
+        New temperature will the coefficient value will be calculated for.
+    theta :
+        Temperature coefficient.
+
+    Examples
+    --------
+    >>> # Correct the maximum specific growth rate for heterotrophs from 20 to 30°C
+    >>> from qsdsan.utils import correct_param_with_T
+    >>> mu_hat_30 = correct_param_with_T(k0=6, T0=20+273.15, T=30+273.15, theta=1.08)
+    12.95... # doctest: +ELLIPIS
+    '''
+    return k0*theta**(T-T0)
+
 
 
 def default_component_dict(dct={}, *, cmps, gas=None, soluble=None, solid=None):

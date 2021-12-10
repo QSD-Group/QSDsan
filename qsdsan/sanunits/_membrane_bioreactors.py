@@ -85,7 +85,7 @@ class AnMBR(SanUnit):
         Whether to include an aerobic filtration process in this AnMBR,
         can only be True in "AF" (not "CSTR") reactor.
     add_GAC : bool
-        If to add granual activated carbon to enhance biomass retention,
+        If to add granular activated carbon to enhance biomass retention,
         can only be True for the "submerged" configuration.
     include_degassing_membrane : bool
         If to include a degassing membrane to enhance methane
