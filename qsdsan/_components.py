@@ -598,8 +598,8 @@ class CompiledComponents(CompiledChemicals):
             dct[i] = component_data_array(components, i)
 
         dct['g'] = np.asarray([1 if cmp.particle_size == 'Dissolved gas' else 0 for cmp in components])
-        dct['s'] = np.asarray([1 if cmp.particle_size == 'Soluble' else 0 for cmp in components])
-        dct['c'] = np.asarray([1 if cmp.particle_size == 'Colloidal' else 0 for cmp in components])
+        s = dct['s'] = np.asarray([1 if cmp.particle_size == 'Soluble' else 0 for cmp in components])
+        c = dct['c'] = np.asarray([1 if cmp.particle_size == 'Colloidal' else 0 for cmp in components])
         dct['x'] = np.asarray([1 if cmp.particle_size == 'Particulate' else 0 for cmp in components])
         b = dct['b'] = np.asarray([1 if cmp.degradability != 'Undegradable' else 0 for cmp in components])
         dct['rb'] = np.asarray([1 if cmp.degradability == 'Readily' else 0 for cmp in components])
@@ -607,11 +607,11 @@ class CompiledComponents(CompiledChemicals):
         inorg = dct['inorg'] = np.ones_like(org) - org
         ID_arr = dct['_ID_arr'] = np.asarray([i.ID for i in components])
 
-        # Inorganic but not undegradable, incorrect
-        inorg_b = inorg * b
+        # Inorganic degradable non-gas, incorrect
+        inorg_b = inorg * b * (s+c)
         if inorg_b.sum() > 0:
             bad_IDs = ID_arr[np.where(inorg_b==1)[0]]
-            raise ValueError(f'Components {bad_IDs} are inorganic but not undegradable, '
+            raise ValueError(f'Components {bad_IDs} are inorganic, degradable, and not gas, '
                              'which is not correct.')
 
 
@@ -664,7 +664,7 @@ class CompiledComponents(CompiledChemicals):
         --------
         >>> from qsdsan import Components
         >>> cmps = Components.load_default()
-        >>> arr = cmps.get_IDs_from_array(cmps.g)
+        >>> cmps.get_IDs_from_array(cmps.g)
         ('S_H2', 'S_CH4', 'S_N2', 'S_O2')
         '''
         return tuple(self._ID_arr[np.asarray(array).astype(bool)])

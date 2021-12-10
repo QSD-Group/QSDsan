@@ -80,7 +80,8 @@ def correct_param_with_T(k0, T0, T, theta):
     >>> # Correct the maximum specific growth rate for heterotrophs from 20 to 30°C
     >>> from qsdsan.utils import correct_param_with_T
     >>> mu_hat_30 = correct_param_with_T(k0=6, T0=20+273.15, T=30+273.15, theta=1.08)
-    12.95... # doctest: +ELLIPIS
+    >>> mu_hat_30 # doctest: +ELLIPSIS
+    12.95...
     '''
     return k0*theta**(T-T0)
 
