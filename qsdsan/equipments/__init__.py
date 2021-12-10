@@ -12,23 +12,22 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-from ._electrode import *
-from ._membrane import *
 from ._column import *
+from ._electrode import *
 from ._machine import*
-
+from ._membrane import *
 
 from . import (
-    _electrode,
-    _membrane,
     _column,
-    _machine
+    _electrode,
+    _machine,
+    _membrane,
     )
 
 
 __all__ = (
-    *_electrode.__all__,
-    *_membrane.__all__,
     *_column.__all__,
+    *_electrode.__all__,
     *_machine.__all__,
+    *_membrane.__all__,
            )

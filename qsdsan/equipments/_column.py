@@ -23,7 +23,7 @@ __all__ = ('Column',)
 class Column(Equipment):
     '''
     Columns to be used in an electrochemical cell.
-    Refer to the example in :class:`ElectroChemCell` for how to use this class.
+    Refer to the example in :class:`~.sanunits.ElectroChemCell` for how to use this class.
 
     Parameters
     ----------
@@ -39,7 +39,7 @@ class Column(Equipment):
 
     See Also
     --------
-    :class:`ElectroChemCell`
+    :class:`~.sanunits.ElectroChemCell`
 
     '''
 
@@ -51,7 +51,6 @@ class Column(Equipment):
                  material='resin', unit_cost=0.1, surface_area=1):
         Equipment.__init__(self=self, name=name, design_units=design_units,
                            F_BM=F_BM, lifetime=lifetime, lifetime_unit=lifetime_unit)
-        self.name = name
         self.N = N
         self.unit_cost = unit_cost
         self.material = material

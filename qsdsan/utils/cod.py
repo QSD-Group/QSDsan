@@ -76,7 +76,9 @@ def cod_test_stoichiometry(atoms, charge=0, MW=None, missing_handling='elemental
         required/consumed. [-]
 
     .. note::
+
         The stoichiometry is given by:
+
             .. math::
                 C_n H_a O_b N_c S_d P_e^{f-} + xCr_2O_7^{2-} + (8x+c-2d-3e+f)H^{+}
                     -> nCO_2 + 2xCr^{3+} + cNH_4^{+} + dSO_4^{2-} + ePO_4^{3-} + (b+7x-2n-4d-4e)H_2O

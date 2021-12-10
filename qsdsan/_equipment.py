@@ -20,8 +20,6 @@ from .utils import auom
 
 __all__ = ('Equipment',)
 
-hasattr = hasattr
-
 class Equipment:
     '''
     A flexible class for the design of individual equipment of a :class:`SanUnit`,
@@ -58,9 +56,10 @@ class Equipment:
     Parameters
     ----------
     Name : str
-        Name of this equipment, can be left as None.
+        Name of this equipment, can be left as None
+        to use the name of the class as the name.
     design_units: dict
-        Unit (e.g., m, kg) of design parameters.
+        Units of measure (e.g., m, kg) the of design parameters.
     F_BM: float
         Bare module factor of this equipment.
     F_D: float

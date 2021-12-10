@@ -23,7 +23,7 @@ __all__ = ('Electrode',)
 class Electrode(Equipment):
     '''
     Electrodes to be used in an electrochemical cell.
-    Refer to the example in :class:`ElectroChemCell` for how to use this class.
+    Refer to the example in :class:`~.sanunits.ElectroChemCell` for how to use this class.
 
     Parameters
     ----------
@@ -41,7 +41,7 @@ class Electrode(Equipment):
 
     See Also
     --------
-    :class:`ElectroChemCell`
+    :class:`~.sanunits.ElectroChemCell`
 
     '''
 

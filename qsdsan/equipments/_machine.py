@@ -23,7 +23,7 @@ __all__ = ('Machine',)
 class Machine(Equipment):
     '''
     Supplementary machines to be used in an electrochemical process.
-    Refer to the example in :class:`ElectroChemCell` for how to use this class.
+    Refer to the example in :class:`~.sanunits.ElectroChemCell` for how to use this class.
 
     Parameters
     ----------
@@ -34,7 +34,7 @@ class Machine(Equipment):
 
     See Also
     --------
-    :class:`ElectroChemCell`
+    :class:`~.sanunits.ElectroChemCell`
 
     '''
     __slots__ = ('_N', 'name', 'unit_cost')
@@ -45,7 +45,6 @@ class Machine(Equipment):
                  unit_cost=0.1):
         Equipment.__init__(self=self, name=name, design_units=design_units,
                            F_BM=F_BM, lifetime=lifetime, lifetime_unit=lifetime_unit)
-        self.name = name
         self.N = N
         self.unit_cost = unit_cost
 

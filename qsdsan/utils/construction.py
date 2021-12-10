@@ -15,13 +15,17 @@ for license details.
 '''Select pipe size from volumetric flow rate and velocity.'''
 
 import numpy as np
+from math import pi
 from biosteam.utils import ExponentialFunctor
 from biosteam.units.design_tools.tank_design import (
     mix_tank_purchase_cost_algorithms,
     TankPurchaseCostAlgorithm
     )
 
-__all__ = ('IC_purchase_cost_algorithms', 'select_pipe', 'cost_pump')
+__all__ = ('IC_purchase_cost_algorithms',
+           'calculate_pipe_material',
+           'select_pipe',
+           'cost_pump')
 
 
 # =============================================================================
@@ -97,7 +101,20 @@ pipe_dct = {
 
 
 def select_pipe(Q, v):
-    '''Select pipe based on Q (flow in ft3/s) and velocity (ft/s)'''
+    '''
+    Select pipe based on Q (flow in ft3/s) and velocity (ft/s).
+
+    Parameters
+    ----------
+    Q : float
+        Flow rate of the fluid, [ft3/s] (cfs).
+    v : float
+        Velocity of the fluid, [ft/s].
+
+    Returns
+    -------
+    Outer diameter, thickness, and inner diameter of the pipe (three floats), all in ft.
+    '''
     A = Q / v # cross-section area
     d = (4*A/np.pi) ** 0.5 # minimum inner diameter, [ft]
     d *= 12 # minimum inner diameter, [in]
@@ -108,14 +125,58 @@ def select_pipe(Q, v):
     return OD, t, ID
 
 
-def cost_pump(unit):
+def calculate_pipe_material(OD, t, ID, L, density=None):
+    '''
+    Calculate the total material needed of pipes.
+
+    Parameters
+    ----------
+    OD : float
+        Outer diameter of the pipe, [in].
+    t : float
+        Thickness of the pipe, [in].
+    ID : float
+        Inner diameter of the pipe, [in].
+    L : float
+        Length of the pipe, [ft].
+    density : float
+        Density of the material, [kg/ft3].
+
+    Returns
+    -------
+    Quantity of the material in ft3 (if no density provided) or kg (if density provided).
+    '''
+    V = pi/4 * ((OD/12)**2-(ID/12)**2) * L
+    quantity = V if not density else V*density
+    return quantity
+
+
+
+def cost_pump(unit=None, Q_mgd=None, recir_ratio=None):
     '''
     Calculate the cost of the pump and pump building for a unit
     based on its `Q_mgd` (hydraulic flow in million gallons per day),
     `recir_ratio` (recirculation ratio) attributes.
-    '''
 
-    Q_mgd, recir_ratio = unit.Q_mgd, unit.recir_ratio
+    Optionally, can left `unit` as None and directly provide
+    `Q_mgd` and `recir_ratio` values.
+
+    Parameters
+    ----------
+    unit : obj
+        :class:`~.SanUnit` with the attribute `Q_mgd` and `recir_ratio`
+        (if `Q_mgd` and/or `recir_ratio` are not provided).
+    Q_mgd : float
+        Hydraulic flow [mgd] (million gallons per day).
+    recir_ratio : float
+        Recirculation ratio.
+
+    Returns
+    -------
+    Costs of the pumps and pump building (two floats) in USD.
+    '''
+    Q_mgd = Q_mgd or unit.Q_mgd
+    recir_ratio = recir_ratio or unit.recir_ratio
 
     # Installed pump cost, this is a fitted curve
     pumps = 2.065e5 + 7.721*1e4*Q_mgd

@@ -23,7 +23,7 @@ __all__ = ('Membrane',)
 class Membrane(Equipment):
     '''
     Membranes to be used in an electrochemical cell.
-    Refer to the example in :class:`ElectroChemCell` for how to use this class.
+    Refer to the example in :class:`~.sanunits.ElectroChemCell` for how to use this class.
 
     Parameters
     ----------
@@ -39,7 +39,7 @@ class Membrane(Equipment):
 
     See Also
     --------
-    :class:`ElectroChemCell`
+    :class:`~.sanunits.ElectroChemCell`
 
     '''
     __slots__ = ('_N', 'name', 'unit_cost', 'material', 'surface_area')
@@ -50,7 +50,6 @@ class Membrane(Equipment):
                  material='polypropylene', unit_cost=0.1, surface_area=1):
         Equipment.__init__(self=self, name=name, design_units=design_units,
                            F_BM=F_BM, lifetime=lifetime, lifetime_unit=lifetime_unit)
-        self.name = name
         self.N = N
         self.unit_cost = unit_cost
         self.material = material
@@ -75,7 +74,7 @@ class Membrane(Equipment):
 
     @property
     def N(self):
-        '''[int] Number of units of the electrode.'''
+        '''[int] Number of units of the membrane.'''
         return self._N
     @N.setter
     def N(self, i):

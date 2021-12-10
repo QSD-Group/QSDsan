@@ -702,7 +702,7 @@ class AnMBR(SanUnit):
             hdpe += i.baseline_purchase_costs['Packing HDPE [m3]']
 
         # Pump
-        # Note that maintenance and operating costs are included as a lumped
+        #!!! Note that maintenance and operating costs are included as a lumped
         # number in the biorefinery thus not included here
         # TODO: considering adding the O&M and letting user choose if to include
         pumps, building = cost_pump(self)
@@ -797,7 +797,7 @@ class AnMBR(SanUnit):
 
         # Blower building
         area = 128 * (TCFM**0.256) # building area, [ft2]
-        building = area * 90 # 90 is the unit price, [$/ft]
+        building = area * 90 # 90 is the unit price, [USD/ft]
 
         return air_pipes, blowers, building
 
@@ -1074,7 +1074,7 @@ class AnMBR(SanUnit):
     def L_BB(self):
         '''[float] Length of the blower building, [ft].'''
         if self.membrane_configuration == 'submerged':
-            return (69+6/12) if self.cas_per_tank<=18 else (76 + 8/12)
+            return (69+6/12) if self.cas_per_tank<=18 else (76+8/12)
         return 0
 
     @property

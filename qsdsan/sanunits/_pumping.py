@@ -334,7 +334,7 @@ class WWTpump(SanUnit):
         Design pump for the permeate stream of cross-flow membrane configuration.
 
         Parameters defined through the `add_inputs` argument upon initiation of
-        this unit (Q_mgd listed separatedly) will be used if not provided
+        this unit (Q_mgd listed separately) will be used if not provided
         when calling this function.
 
         Parameters
@@ -382,7 +382,7 @@ class WWTpump(SanUnit):
         Design pump for the retent stream of CSTR reactors.
 
         Parameters defined through the `add_inputs` argument upon initiation of
-        this unit (Q_mgd listed separatedly) will be used if not provided
+        this unit (Q_mgd listed separately) will be used if not provided
         when calling this function.
 
         Parameters
@@ -412,7 +412,7 @@ class WWTpump(SanUnit):
         Design pump for the retentate stream of AF reactors.
 
         Parameters defined through the `add_inputs` argument upon initiation of
-        this unit (Q_mgd listed separatedly) will be used if not provided
+        this unit (Q_mgd listed separately) will be used if not provided
         when calling this function.
 
         Parameters
@@ -446,7 +446,7 @@ class WWTpump(SanUnit):
         Design pump for the recirculation stream of CSTR reactors.
 
         Parameters defined through the `add_inputs` argument upon initiation of
-        this unit (Q_mgd listed separatedly) will be used if not provided
+        this unit (Q_mgd listed separately) will be used if not provided
         when calling this function.
 
         Parameters
@@ -477,7 +477,7 @@ class WWTpump(SanUnit):
         Design pump for the recirculation stream of AF reactors.
 
         Parameters defined through the `add_inputs` argument upon initiation of
-        this unit (Q_mgd listed separatedly) will be used if not provided
+        this unit (Q_mgd listed separately) will be used if not provided
         when calling this function.
 
         Parameters
@@ -514,7 +514,7 @@ class WWTpump(SanUnit):
         Design pump for the filter tank to lift streams.
 
         Parameters defined through the `add_inputs` argument upon initiation of
-        this unit (Q_mgd listed separatedly) will be used if not provided
+        this unit (Q_mgd listed separately) will be used if not provided
         when calling this function.
 
         Parameters
@@ -573,7 +573,7 @@ class WWTpump(SanUnit):
         and made of HDPE.
 
         Parameters defined through the `add_inputs` argument upon initiation of
-        this unit (Q_mgd listed separatedly) will be used if not provided
+        this unit (Q_mgd listed separately) will be used if not provided
         when calling this function.
 
         Parameters
