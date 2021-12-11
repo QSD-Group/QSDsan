@@ -86,14 +86,14 @@ class PitLatrine(Toilet):
         self._liq_leaching = None
 
         self.construction = (
-            Construction('cement', item='Cement', quantity_unit='kg'),
-            Construction('sand', item='Sand', quantity_unit='kg'),
-            Construction('gravel', item='Gravel', quantity_unit='kg'),
-            Construction('brick', item='Brick', quantity_unit='kg'),
-            Construction('liner', item='Plastic', quantity_unit='kg'),
-            Construction('steel', item='Steel', quantity_unit='kg'),
-            Construction('wood', item='Wood', quantity_unit='m3'),
-            Construction('excavation', item='Excavation', quantity_unit='m3'),
+            Construction('cement', linked_unit=self, item='Cement', quantity_unit='kg'),
+            Construction('sand', linked_unit=self, item='Sand', quantity_unit='kg'),
+            Construction('gravel', linked_unit=self, item='Gravel', quantity_unit='kg'),
+            Construction('brick', linked_unit=self, item='Brick', quantity_unit='kg'),
+            Construction('liner', linked_unit=self, item='Plastic', quantity_unit='kg'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            Construction('wood', linked_unit=self, item='Wood', quantity_unit='m3'),
+            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
             )
 
         data = load_data(path=pit_path)
@@ -236,7 +236,7 @@ class PitLatrine(Toilet):
     def pit_area(self, i):
         self._pit_area = i
 
-    #!!! Should add some contraints, maybe in _run, to make sure the pit is big
+    #!!! Should add some constraints, maybe in _run, to make sure the pit is big
     # enough for the amount of excreta
     @property
     def pit_V(self):

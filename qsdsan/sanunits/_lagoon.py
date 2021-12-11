@@ -79,8 +79,8 @@ class Lagoon(SanUnit, Decay):
         self.if_N2O_emission = if_N2O_emission
 
         self.construction = (
-            Construction('liner', item='Plastic', quantity_unit='kg'),
-            Construction('excavation', item='Excavation', quantity_unit='m3'),
+            Construction('liner', linked_unit=self, item='Plastic', quantity_unit='kg'),
+            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
             )
 
         for attr, value in kwargs.items():

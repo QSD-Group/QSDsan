@@ -42,13 +42,16 @@ class Membrane(Equipment):
     :class:`~.sanunits.ElectroChemCell`
 
     '''
-    __slots__ = ('_N', 'name', 'unit_cost', 'material', 'surface_area')
 
-    def __init__(self, name=None, # when left as None, will be the same as the class name
-                 design_units={},
+    def __init__(self, ID='', linked_unit=None,
+                 units={
+                     'Number of membrane modules': '',
+                     'Material of membrane': '',
+                     'Surface area of membrane': 'm2'
+                     },
                  F_BM=1., lifetime=10000, lifetime_unit='hr', N=0,
                  material='polypropylene', unit_cost=0.1, surface_area=1):
-        Equipment.__init__(self=self, name=name, design_units=design_units,
+        Equipment.__init__(self=self, ID=ID, linked_unit=linked_unit, units=units,
                            F_BM=F_BM, lifetime=lifetime, lifetime_unit=lifetime_unit)
         self.N = N
         self.unit_cost = unit_cost
@@ -58,16 +61,13 @@ class Membrane(Equipment):
 
     def _design(self):
         design = {
-            f'Number of {self.name}': self.N,
-            f'Material of {self.name}': self.material,
-            f'Surface area of {self.name}': self.surface_area
+            'Number of membrane modules': self.N,
+            'Material of membrane': self.material,
+            'Surface area of membrane': self.surface_area
             }
-        self.design_units = {f'Surface area of {self.name}': 'm2'}
         return design
 
 
-    # All subclasses of `Membrane` must have a `_cost` method, which returns the
-    # purchase cost of this equipment
     def _cost(self):
         return self.unit_cost*self.N*self.surface_area
 

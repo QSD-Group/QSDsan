@@ -6,15 +6,15 @@ utils
 
    cod
    colors
+   components
    construction
    decorators
    doc_examples
-   energy
    evaluation
    formatting
    getters
    loading
-   misc
    parsing
    setters
    units_of_measure
+   utilities

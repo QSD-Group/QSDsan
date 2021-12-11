@@ -72,9 +72,9 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         self.if_N2O_emission = if_N2O_emission
 
         self.construction = (
-            Construction('concrete', item='Concrete', quantity_unit='m3'),
-            Construction('gravel', item='Gravel', quantity_unit='kg'),
-            Construction('excavation', item='Excavation', quantity_unit='m3'),
+            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
+            Construction('gravel', linked_unit=self, item='Gravel', quantity_unit='kg'),
+            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
             )
 
         data = load_data(path=abr_path)
@@ -285,8 +285,8 @@ class AnaerobicDigestion(SanUnit, Decay):
         self.if_N2O_emission = if_N2O_emission
 
         self.construction = (
-            Construction('concrete', item='Concrete', quantity_unit='m3'),
-            Construction('excavation', item='Excavation', quantity_unit='m3'),
+            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
+            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
             )
 
         data = load_data(path=ad_path)

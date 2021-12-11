@@ -19,10 +19,10 @@ from .units_of_measure import *
 from . import (
     cod,
     colors,
+    components,
     construction,
     decorators,
     # descriptors, # currently not in use
-    energy,
     evaluation,
     getters,
     formatting,
@@ -30,16 +30,17 @@ from . import (
     misc,
     parsing,
     setters,
+    utilities,
     )
 
 from biosteam.utils import NotImplementedMethod
 
 from .cod import *
 from .colors import *
+from .components import *
 from .construction import *
 from .decorators import *
 # from .descriptors import *
-from .energy import *
 from .evaluation import *
 from .getters import *
 from .formatting import *
@@ -47,15 +48,17 @@ from .loading import *
 from .misc import *
 from .parsing import *
 from .setters import *
+from .utilities import *
 
 
 __all__ = (
+    'NotImplementedMethod',
     *cod.__all__,
     *colors.__all__,
+    *components.__all__,
     *construction.__all__,
     *decorators.__all__,
     # *descriptors.__all__,
-    *energy.__all__,
     *evaluation.__all__,
     *getters.__all__,
     *formatting.__all__,
@@ -64,7 +67,7 @@ __all__ = (
     *parsing.__all__,
     *setters.__all__,
     *units_of_measure.__all__,
-    'NotImplementedMethod',
+    *utilities.__all__,
     )
 
 

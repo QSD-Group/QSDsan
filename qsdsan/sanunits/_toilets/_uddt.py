@@ -86,14 +86,14 @@ class UDDT(Toilet):
         self.if_treatment = if_treatment
 
         self.construction = (
-            Construction('cement', item='Cement', quantity_unit='kg'),
-            Construction('sand', item='Sand', quantity_unit='kg'),
-            Construction('gravel', item='Gravel', quantity_unit='kg'),
-            Construction('brick', item='Brick', quantity_unit='kg'),
-            Construction('liner', item='Plastic', quantity_unit='kg'),
-            Construction('steel', item='Steel', quantity_unit='kg'),
-            Construction('ss_sheet', item='StainlessSteelSheet', quantity_unit='kg'),
-            Construction('wood', item='Wood', quantity_unit='m3'),
+            Construction('cement', linked_unit=self, item='Cement', quantity_unit='kg'),
+            Construction('sand', linked_unit=self, item='Sand', quantity_unit='kg'),
+            Construction('gravel', linked_unit=self, item='Gravel', quantity_unit='kg'),
+            Construction('brick', linked_unit=self, item='Brick', quantity_unit='kg'),
+            Construction('liner', linked_unit=self, item='Plastic', quantity_unit='kg'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            Construction('ss_sheet', linked_unit=self, item='StainlessSteelSheet', quantity_unit='kg'),
+            Construction('wood', linked_unit=self, item='Wood', quantity_unit='m3'),
             )
 
         data = load_data(path=uddt_path)

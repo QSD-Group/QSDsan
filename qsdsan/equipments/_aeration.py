@@ -68,21 +68,15 @@ class Blower(Equipment):
     :class:`~.sanunits.ActivatedSludgeProcess`
 
     '''
-    __slots__ = (
-        'name', 'N_reactor', 'gas_demand_per_reactor',
-        'TDH', 'eff_blower', 'eff_motor', 'AFF',
-        'blower_building_unit_cost',
-        )
 
-
-    def __init__(self, name=None,
+    def __init__(self, ID=None, linked_unit=None,
                  F_BM={
                      'Blowers': 2.22,
                      'Blower piping': 1,
                      'Blower building': 1.11,
                      },
                  lifetime=15, lifetime_unit='yr',
-                 design_units={
+                 units={
                      'Total gas flow': 'cfm',
                      'Gas flow per blower': 'cfm',
                      'Number of blowers': '',
@@ -91,9 +85,9 @@ class Blower(Equipment):
                  N_reactor=2, gas_demand_per_reactor=1,
                  TDH=6, eff_blower=0.7, eff_motor=0.7, AFF=3.33,
                  blower_building_unit_cost=90):
-        Equipment.__init__(self=self, name=name, F_BM=F_BM,
+        Equipment.__init__(self=self, ID=ID, linked_unit=linked_unit, F_BM=F_BM,
                            lifetime=lifetime, lifetime_unit=lifetime_unit,
-                           design_units=design_units)
+                           units=units)
         self.N_reactor = N_reactor
         self.gas_demand_per_reactor = gas_demand_per_reactor
         self.TDH = TDH
@@ -229,24 +223,18 @@ class GasPiping(Equipment):
     --------
     :class:`~.sanunits.ActivatedSludgeProcess`
     '''
-    __slots__ = (
-        'name', 'N_reactor', 'N_pipe_per_reactor',
-        'gas_demand_per_reactor', 'v_header', 'v_manifold',
-        'L_reactor', 'L_extra', 'W_reactor', 'W_extra',
-        'pipe_density', 'pipe_unit_cost',
-                 )
 
-
-    def __init__(self, name=None, F_BM=1., lifetime=15, lifetime_unit='yr',
-                 design_units={'Gas pipe material': 'kg',},
+    def __init__(self, ID=None, linked_unit=None,
+                 F_BM=1., lifetime=15, lifetime_unit='yr',
+                 units={'Gas pipe material': 'kg',},
                  N_reactor=2, N_pipe_per_reactor=1,
                  gas_demand_per_reactor=1, v_header=70, v_manifold=70,
                  L_reactor=12, L_extra=0, W_reactor=21, W_extra=2,
                  pipe_density=227.3, # from 0.29 lb/in3
                  pipe_unit_cost=0,):
-        Equipment.__init__(self=self, name=name, F_BM=F_BM,
+        Equipment.__init__(self=self, ID=ID, linked_unit=linked_unit, F_BM=F_BM,
                            lifetime=lifetime, lifetime_unit=lifetime_unit,
-                           design_units=design_units)
+                           units=units)
         self.N_reactor = N_reactor
         self.N_pipe_per_reactor = N_pipe_per_reactor
         self.gas_demand_per_reactor = gas_demand_per_reactor

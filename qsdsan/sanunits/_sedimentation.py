@@ -67,8 +67,8 @@ class Sedimentation(SludgeSeparator, Decay):
         self.if_N2O_emission = if_N2O_emission
 
         self.construction = (
-            Construction('concrete', item='Concrete', quantity_unit='m3'),
-            Construction('steel', item='Steel', quantity_unit='kg'),
+            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
             )
 
         data = load_data(path=sedmentation_path)

@@ -69,7 +69,7 @@ class Trucking(SanUnit):
                  if_material_loss=True, loss_ratio=0.02):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.single_truck = single = \
-            Transportation('single_truck', item='Trucking',
+            Transportation('single_truck', linked_unit=self, item='Trucking',
                            load_type=load_type, load=load, load_unit=load_unit,
                            distance=distance, distance_unit=distance_unit,
                            interval=interval, interval_unit=interval_unit)

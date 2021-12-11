@@ -20,7 +20,8 @@ from thermosteam.utils import registered
 from . import currency, ImpactItem
 from .utils import (
     auom, copy_attr,
-    format_number as f_num
+    format_number as f_num,
+    register_with_prefix,
     )
 
 __all__ = ('Construction',)
@@ -34,9 +35,14 @@ class Construction:
     Parameters
     ----------
     ID : str
-        ID of this construction activity.
+        ID of this construction activity,
+        a default ID will be given if not provided.
+        If this construction activity is linked to a unit,
+        then the actual ID will be {unit.ID}_{ID}.
+    linked_unit : obj
+        Unit that this construction activity is linked to, can be left as None.
     item : :class:`ImpactItem`
-        Impact item associated with this consturction activity.
+        Impact item associated with this construction activity.
     quantity : float
         Quantity of the impact item involved in this construction activity.
     lifetime : float
@@ -67,14 +73,13 @@ class Construction:
     FossilEnergyConsumption (MJ)     0.05
     '''
 
-    __slots__ = ('_ID', '_item', '_quantity', '_lifetime')
+    __slots__ = ('_ID', '_linked_unit', '_item', '_quantity', '_lifetime')
 
-    def __init__(self, ID='', item=None, quantity=0., quantity_unit='',
+    def __init__(self, ID='', linked_unit=None, item=None, quantity=0., quantity_unit='',
                  lifetime=None, lifetime_unit='yr'):
-        if ID == '': # this is only to auto-generate ID for ones that don't have
-            self._register(ID)
-        else:
-            self._ID = ID
+        self._linked_unit = linked_unit
+        prefix = self.linked_unit.ID if self.linked_unit else ''
+        register_with_prefix(self, prefix, ID)
         self.item = item
         self._update_quantity(quantity, quantity_unit)
         self._lifetime = None
@@ -126,6 +131,17 @@ class Construction:
         return new
 
     __copy__ = copy
+
+    @property
+    def linked_unit(self):
+        '''
+        :class:`~.SanUnit` The unit that this construction activity belongs to.
+
+        .. note::
+
+            This property will be updated upon initialization of the unit.
+        '''
+        return self._linked_unit
 
     @property
     def lifetime(self):

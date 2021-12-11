@@ -20,7 +20,8 @@ from thermosteam.utils import registered
 from . import currency, ImpactItem
 from .utils import (
     auom, copy_attr,
-    format_number as f_num
+    format_number as f_num,
+    register_with_prefix,
     )
 
 __all__ = ('Transportation',)
@@ -34,7 +35,12 @@ class Transportation:
     Parameters
     ----------
     ID : str
-        ID of this transportation activity.
+        ID of this transportation activity,
+        a default ID will be given if not provided.
+        If this transportation activity is linked to a unit,
+        then the actual ID will be {unit.ID}_{ID}.
+    linked_unit : obj
+        Unit that this transportation activity is linked to, can be left as None.
     item : :class:`ImpactItem`
         Impact item associated with this transportation activity.
     load_type : str
@@ -78,17 +84,16 @@ class Transportation:
     FossilEnergyConsumption (MJ) 8.05e+03
     '''
 
-    __slots__ = ('_ID', '_item', '_load_type', '_load', '_distance', '_interval',
+    __slots__ = ('_ID', '_linked_unit', '_item', '_load_type', '_load', '_distance', '_interval',
                  'default_units')
 
-    def __init__(self, ID='', item=None,
+    def __init__(self, ID='', linked_unit=None, item=None,
                  load_type='mass', load=1., load_unit='kg',
                  distance=1., distance_unit='km',
                  interval=1., interval_unit='hr'):
-        if ID == '': # this is only to auto-generate ID for ones that don't have
-            self._register(ID)
-        else:
-            self._ID = ID
+        self._linked_unit = linked_unit
+        prefix = self.linked_unit.ID if self.linked_unit else ''
+        register_with_prefix(self, prefix, ID)
         self.item = item
         self.default_units = {
             'distance': 'km',
@@ -166,6 +171,17 @@ class Transportation:
 
     __copy__ = copy
 
+
+    @property
+    def linked_unit(self):
+        '''
+        :class:`~.SanUnit` The unit that this transportation activity belongs to.
+
+        .. note::
+
+            This property will be updated upon initialization of the unit.
+        '''
+        return self._linked_unit
 
     @property
     def item(self):

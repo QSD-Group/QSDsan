@@ -23,7 +23,7 @@ def sum_system_utility(system, operating_hours=None, exclude_units=(),
     '''
     Sum up the select utility of a system
     (power in kWh, heating/cooling duty in GJ,
-     note that the duty will be negative for cooling utilities).
+    note that the duty will be negative for cooling utilities).
 
     Parameters
     ----------

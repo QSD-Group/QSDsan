@@ -79,8 +79,8 @@ class DryingBed(SanUnit, Decay):
         self.degraded_components = tuple(degraded_components)
 
         self.construction = (
-            Construction('concrete', item='Concrete', quantity_unit='m3'),
-            Construction('steel', item='Steel', quantity_unit='kg'),
+            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
             )
 
         data = load_data(path=drying_bed_path)
@@ -339,7 +339,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
         self.degraded_components = tuple(degraded_components)
         self.if_N2O_emission = if_N2O_emission
-        self.construction = (Construction('concrete', item='Concrete', quantity_unit='m3'))
+        self.construction = (Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'))
 
         data = load_data(path=liquid_bed_path)
         for para in data.index:

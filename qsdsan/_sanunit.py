@@ -25,7 +25,7 @@ from collections.abc import Iterable
 from matplotlib import pyplot as plt
 from biosteam.utils import Inlets, Outlets, format_title
 from . import currency, Unit, Stream, SanStream, WasteStream, \
-    Construction, Transportation, System
+    Construction, Transportation, Equipment, System
 
 __all__ = ('SanUnit',)
 
@@ -79,16 +79,18 @@ class SanUnit(Unit, isabstract=True):
     Parameters
     ----------
     init_with : str or dict
-        Which class of stream the :class:`SanUnit` will be initialized with,
+        Which class of stream the :class:`~.SanUnit` will be initialized with,
         can be "Stream" (shorthanded as "s"), "SanStream" ("ss"), or "WasteStream" ("ws").
         When provided as a str, all streams will be of the same class;
         when provided as a dict, use "ins" or "outs" followed with the order number
         (i.e., ins0, outs-1) as keys; you can use ":" to denote a range (e.g., ins2:4);
         you can also use "else" to specify the stream class for non-provided ones.
-    construction : :class:`~.Construction` or iterable
-        Contains construction information.
-    transportation : :class:`~.Transportation` or iterable
-        Contains construction information.
+    construction : Iterable(obj)
+        :class:`~.Construction` with construction information.
+    transportation : Iterable(obj)
+        :class:`~.Transportation` with transportation information.
+    equipments: Iterable(obj)
+        :class:`~.Equipment` with equipment information.
     add_OPEX : float or dict
         Operating expense per hour in addition to utility cost (assuming 100% uptime).
         Float input will be automatically converted to a dict with the key being
@@ -132,7 +134,7 @@ class SanUnit(Unit, isabstract=True):
     ticket_name = 'SU'
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 construction=(), transportation=(), equipments=(),
+                 construction=(), transportation=(), equipments=(), equipment_kwargs={},
                  add_OPEX={}, uptime_ratio=1., lifetime=None, F_BM_default=None,
                  isdynamic=False, **kwargs):
         self._register(ID)
@@ -145,10 +147,11 @@ class SanUnit(Unit, isabstract=True):
         self._init_results()
         self._init_specification()
         self._assert_compatible_property_package()
+        for i in (*construction, *transportation, *equipments):
+            i._linked_unit = self
+            breakpoint()
         self.construction = construction
         self.transportation = transportation
-        for equip in equipments:
-            equip._linked_unit = self
         self.equipments = equipments
         self.add_OPEX = add_OPEX
         self.uptime_ratio = 1.
@@ -270,16 +273,16 @@ class SanUnit(Unit, isabstract=True):
         info = info.replace('\n ', '\n    ')
         return info[:-1]
 
-    def simulate(self, t_span=(0, 0), start_from_cached_state=True, 
+    def simulate(self, t_span=(0, 0), start_from_cached_state=True,
                  solver='', **kwargs):
         '''
         Converge mass and energy flows, design, and cost the unit.
-        
+
         .. note::
-            
+
             If this unit is a dynamic unit, ODEs will be run after ``_run``
             and/or ``specification``.
-        
+
         Parameters
         ----------
         t_span : tuple(float, float)
@@ -288,7 +291,7 @@ class SanUnit(Unit, isabstract=True):
             Whether to start from the cached state.
         kwargs : dict
             Other keyword arguments that will be passed to ``scipy.integrate.solve_ivp``
-            
+
         See Also
         --------
         `scipy.integrate.solve_ivp <https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html>`_
@@ -307,7 +310,7 @@ class SanUnit(Unit, isabstract=True):
         '''
         Plot the selected state variable over simulated time,
         all state variables will be plotted if not given.
-        
+
         Parameters
         ----------
         system : obj
@@ -327,7 +330,7 @@ class SanUnit(Unit, isabstract=True):
             system_or_unit = 'system' if sys==system else 'unit'
             ID = sys.ID.rstrip('_dynmock')
             raise RuntimeError(f'The {system_or_unit} {ID} has not been simulated, '
-                               'please simulate first.')    
+                               'please simulate first.')
         t = df.iloc[:, 0]
         unit_df = df.xs(self.ID, axis=1)
         variables = [i.split(' ')[0] for i in self._state_header]
@@ -349,22 +352,40 @@ class SanUnit(Unit, isabstract=True):
         print(self._info(T, P, flow, composition, N, IDs, stream_info))
 
     def add_equipment_design(self):
+        unit_design = self.design_results
+        unit_units = self._units
+        F_BM, F_D, F_P, F_M, lifetime = \
+            self.F_BM, self.F_D, self.F_P, self.F_M, self._default_equipment_lifetime
+        isa = isinstance
+        get = getattr
+        def update_unit_attr(unit_attr, equip_ID, equip_attr):
+            if isa(equip_attr, dict):
+                unit_attr.update(equip_attr)
+            else:
+                unit_attr[equip_ID] = equip_attr
         for equip in self.equipments:
-            name = equip.name or format_title(type(equip).__name__)
+            equip_ID = equip.ID
             equip_design = equip._design()
             equip_design = {} if not equip_design else equip_design
-            self.design_results.update(equip_design)
+            unit_design.update(equip_design)
 
-            equip_units = {} if not equip.design_units else equip.design_units
-            self._units.update(equip_units)
-            self.F_BM[name] = equip.F_BM
-            if equip.lifetime:
-                self._default_equipment_lifetime[name] = equip.lifetime
+            equip_units = {} if not equip.units else equip.units
+            unit_units.update(equip_units)
+            for unit_attr, equip_attr in zip(
+                    (F_BM, F_D, F_P, F_M, lifetime),
+                    ('F_BM', 'F_D', 'F_P', 'F_M', 'lifetime'),
+                    ):
+                update_unit_attr(unit_attr, equip_ID, get(equip, equip_attr))
+
 
     def add_equipment_cost(self):
+        unit_cost = self.baseline_purchase_costs
         for equip in self.equipments:
-            name = equip.name or format_title(type(equip).__name__)
-            self.baseline_purchase_costs[name] = equip._cost()
+            equip_cost = equip._cost()
+            if isinstance(equip_cost, dict):
+                unit_cost.update(equip_cost)
+            else:
+                unit_cost[equip.ID] = equip_cost
 
     def add_construction(self, add_unit=True, add_design=True, add_cost=True,
                          add_lifetime=True):
@@ -410,14 +431,14 @@ class SanUnit(Unit, isabstract=True):
         #             inf._init_state()
         #             states.append(inf._state)
         # return np.array(states)
-                
-            
+
+
     def _collect_ins_dstate(self):
         return np.array([inf._dstate for inf in self._ins])
 
     @property
     def construction(self):
-        '''[:class:`~.Construction` or iterable] Contains construction information.'''
+        '''Iterable(obj) :class:`~.Construction` with construction information.'''
         return self._construction
     @construction.setter
     def construction(self, i):
@@ -435,7 +456,7 @@ class SanUnit(Unit, isabstract=True):
 
     @property
     def transportation(self):
-        '''[:class:`~.Transportation` or iterable] Contains transportation information.'''
+        '''Iterable(obj) :class:`~.Transportation` with transportation information.'''
         return self._transportation
     @transportation.setter
     def transportation(self, i):
@@ -450,6 +471,24 @@ class SanUnit(Unit, isabstract=True):
                     raise TypeError(
                         f'Only `Transportation` can be included, not {type(j).__name__}.')
         self._transportation = i
+
+    @property
+    def equipments(self):
+        '''Iterable(obj) :class:`~.Equipment` with equipments information.'''
+        return self._equipments
+    @equipments.setter
+    def equipments(self, i):
+        if isinstance(i, Equipment):
+            i = (i,)
+        else:
+            if not isinstance(i, Iterable):
+                raise TypeError(
+                    f'Only `Equipment` object  can be included, not {type(i).__name__}.')
+            for j in i:
+                if not isinstance(j, Equipment):
+                    raise TypeError(
+                        f'Only `Equipment` can be included, not {type(j).__name__}.')
+        self._equipments = i
 
     @property
     def add_OPEX(self):
