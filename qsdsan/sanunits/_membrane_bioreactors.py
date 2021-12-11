@@ -92,7 +92,7 @@ class AnMBR(SanUnit):
         (generated through the digestion reaction) recovery.
     biodegradability : float or dict
         Biodegradability of chemicals,
-        when shown as a float, all biodegradable chemicals are assumped to have
+        when shown as a float, all biodegradable chemicals are assumed to have
         the same degradability.
     Y : float
         Biomass yield, [kg biomass/kg consumed COD].
@@ -676,7 +676,7 @@ class AnMBR(SanUnit):
             self.F_BM, self._default_equipment_lifetime
 
         ### Capital ###
-        # Concrete and excavaction
+        # Concrete and excavation
         VEX, VWC, VSC = \
             D['Excavation [ft3]'], D['Wall concrete [ft3]'], D['Slab concrete [ft3]']
         # 27 is to convert the VEX from ft3 to yard3
@@ -721,7 +721,7 @@ class AnMBR(SanUnit):
         F_BM['Blower building'] = 1.11
         lifetime['Blowers'] = 15
 
-        # Degassing membrame
+        # Degassing membrane
         C['Degassing membrane'] = 10000 * D['Degassing membrane']
 
         # Set bare module factor to 1 if not otherwise provided
@@ -777,6 +777,7 @@ class AnMBR(SanUnit):
         # Air pipes
         # Note that the original codes use CFMD instead of TCFM for air pipes,
         # but based on the coding they are equivalent
+        # (i.e., just used an alternative name)
         if TCFM <= 1000:
             air_pipes = 617.2 * AFF * (TCFM**0.2553)
         elif 1000 < TCFM <= 10000:
@@ -797,7 +798,7 @@ class AnMBR(SanUnit):
 
         # Blower building
         area = 128 * (TCFM**0.256) # building area, [ft2]
-        building = area * 90 # 90 is the unit price, [USD/ft]
+        building = area * 90 # 90 is the unit price, [USD/ft2]
 
         return air_pipes, blowers, building
 
@@ -1268,7 +1269,7 @@ class AnMBR(SanUnit):
     def biodegradability(self):
         '''
         [float of dict] Biodegradability of chemicals,
-        when shown as a float, all biodegradable chemicals are assumped to have
+        when shown as a float, all biodegradable chemicals are assumed to have
         the same degradability.
         '''
         return self._biodegradability

@@ -16,6 +16,7 @@ for license details.
 TODO: update the AnMBR code afterwards with the equipment here.
 '''
 
+from math import ceil
 from .. import Equipment
 from ..utils import select_pipe, calculate_pipe_material
 
@@ -43,6 +44,14 @@ class Blower(Equipment):
         Efficiency of the blower in fraction (i.e., 0.7 for 70%).
     eff_motor : float
         Efficiency of the motor in fraction (i.e., 0.7 for 70%).
+    AFF : float
+        Air flow fraction.
+        The default value is calculated as STE/6
+        (STE stands for standard oxygen transfer efficiency, and default STE is 20).
+        If using different STE value, AFF should be 1 if STE/6<1
+        and 3.33 if STE/6>1.
+    blower_building_unit_cost : float
+        Cost of the blower building, [USD/ft2].
 
     References
     ----------
@@ -59,17 +68,29 @@ class Blower(Equipment):
     :class:`~.sanunits.ActivatedSludgeProcess`
 
     '''
-    __slots__ = ('name', 'Length',
-                 'unit_cost', 'material', 'surface_area')
+    __slots__ = (
+        'name', 'N_reactor', 'gas_demand_per_reactor',
+        'TDH', 'eff_blower', 'eff_motor', 'AFF',
+        'blower_building_unit_cost',
+        )
 
 
-    def __init__(self, name=None, F_BM=1., lifetime=15, lifetime_unit='yr',
-                 design_units={
-                     'Blower power': 'kW',
+    def __init__(self, name=None,
+                 F_BM={
+                     'Blowers': 2.22,
+                     'Blower piping': 1,
+                     'Blower building': 1.11,
                      },
-                 N_reactor=2,
-                 gas_demand_per_reactor=1,
-                 TDH=6, eff_blower=0.7, eff_motor=0.7):
+                 lifetime=15, lifetime_unit='yr',
+                 design_units={
+                     'Total gas flow': 'cfm',
+                     'Gas flow per blower': 'cfm',
+                     'Number of blowers': '',
+                     'Total blower power': 'kW',
+                     },
+                 N_reactor=2, gas_demand_per_reactor=1,
+                 TDH=6, eff_blower=0.7, eff_motor=0.7, AFF=3.33,
+                 blower_building_unit_cost=90):
         Equipment.__init__(self=self, name=name, F_BM=F_BM,
                            lifetime=lifetime, lifetime_unit=lifetime_unit,
                            design_units=design_units)
@@ -78,6 +99,8 @@ class Blower(Equipment):
         self.TDH = TDH
         self.eff_blower = eff_blower
         self.eff_motor = eff_motor
+        self.AFF = AFF
+        self.blower_building_unit_cost = blower_building_unit_cost
 
 
     def _design(self):
@@ -90,66 +113,46 @@ class Blower(Equipment):
         # Calculate brake horsepower, 14.7 is atmospheric pressure in psi
         BHP = (gas_tot*0.23)*(((14.7+TDH)/14.7)**0.283-1)/eff_blower
         # 0.746 is horsepower to kW
-        D['Blower power'] = BHP*0.746/eff_motor
+        D['Total blower power'] = BHP*0.746/eff_motor
 
-
-        #!!! PAUSED on updating the codes,
-        # then want to update the AnMBR code to include those
-        air = self.linked_unit.ins[-1]
-
-        if (not self.add_GAC) and (self.membrane_configuration=='submerged'):
-            gas = self.SGD * self.mod_surface_area*_ft2_to_m2 # [m3/h]
-            gas /= (_ft3_to_m3 * 60) # [ft3/min]
-            gas_train = gas * self.N_train*self.cas_per_tank*self.mod_per_cas
-
-            TCFM = math.ceil(gas_train) # total cubic ft per min
-            N = 1
-            if TCFM <= 30000:
-                CFMB = TCFM / N # cubic ft per min per blower
-                while CFMB > 7500:
-                    N += 1
-                    CFMB = TCFM / N
-            elif 30000 < TCFM <= 72000:
+        # Calculate the number of blowers
+        TCFM = ceil(gas_demand_per_reactor) # total cubic ft per min
+        N = 1
+        if TCFM <= 30000:
+            CFMB = TCFM / N # cubic ft per min per blower
+            while CFMB > 7500:
+                N += 1
                 CFMB = TCFM / N
-                while CFMB > 18000:
-                    N += 1
-                    CFMB = TCFM / N
-            else:
+        elif 30000 < TCFM <= 72000:
+            CFMB = TCFM / N
+            while CFMB > 18000:
+                N += 1
                 CFMB = TCFM / N
-                while CFMB > 100000:
-                    N += 1
-                    CFMB = TCFM / N
+        else:
+            CFMB = TCFM / N
+            while CFMB > 100000:
+                N += 1
+                CFMB = TCFM / N
 
-            gas_m3_hr = TCFM * _ft3_to_m3 * 60 # ft3/min to m3/hr
-
-            air.ivol['N2'] = 0.79
-            air.ivol['O2'] = 0.21
-            air.F_vol = gas_m3_hr
-        else: # no sparging/blower needed
-            TCFM = CFMB = 0.
-            N = -1 # to account for the spare
-            air.empty()
-
-        D = self.design_results
-        D['Total air flow [CFM]'] = TCFM
-        D['Blower capacity [CFM]'] = CFMB
-        D['Blowers'] = self._N_blower = N + 1 # add a spare
-
+        D['Total gas flow'] = TCFM
+        D['Blower capacity'] = CFMB
+        D['Number of blowers'] = N + 1 # add a spare
         return D
 
-    # TODO: make it possible to choose whether to include air piping here in the blower or not
     def _cost(self, TCFM, CFMB):
-        AFF = self.AFF
+        N_reactor, AFF, C = self.N_reactor, self.AFF, self.cost
 
         # Air pipes
         # Note that the original codes use CFMD instead of TCFM for air pipes,
         # but based on the coding they are equivalent
+        # (i.e., just used an alternative name)
         if TCFM <= 1000:
-            air_pipes = 617.2 * AFF * (TCFM**0.2553)
+            piping = 617.2 * AFF * (TCFM**0.2553)
         elif 1000 < TCFM <= 10000:
-            air_pipes = 1.43 * AFF * (TCFM**1.1337)
+            piping = 1.43 * AFF * (TCFM**1.1337)
         else:
-            air_pipes = 28.59 * AFF * (TCFM**0.8085)
+            piping = 28.59 * AFF * (TCFM**0.8085)
+        C['Blower air piping'] = piping
 
         # Blowers
         if TCFM <= 30000:
@@ -161,14 +164,12 @@ class Blower(Equipment):
         else:
             ratio = 0.964 * (CFMB**0.4286)
             blowers  = 480000*ratio / 100
+        C['Blowers'] = blowers * N_reactor
 
         # Blower building
         area = 128 * (TCFM**0.256) # building area, [ft2]
-        building = area * 90 # 90 is the unit price, [USD/ft]
-
-        return air_pipes, blowers, building
-
-
+        C['Blower building'] = area * self.blower_building_unit_cost
+        return C
 
 
 # %%
@@ -181,8 +182,7 @@ class GasPiping(Equipment):
     manifold along the width of th reactor
     (i.e., gas will be pumped from the manifold to the header then into the reactor).
 
-    Refer to :class:`~.sanunits.AnMBR` or :class:`~.sanunits.ActivatedSludgeProcess`
-    for examples.
+    Refer to :class:`~.sanunits.ActivatedSludgeProcess` for usage.
 
     Parameters
     ----------
@@ -227,10 +227,7 @@ class GasPiping(Equipment):
 
     See Also
     --------
-    :class:`~.sanunits.AnMBR`
-
     :class:`~.sanunits.ActivatedSludgeProcess`
-
     '''
     __slots__ = (
         'name', 'N_reactor', 'N_pipe_per_reactor',
