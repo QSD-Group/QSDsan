@@ -31,6 +31,9 @@ class Lagoon(SanUnit, Decay):
     Anaerobic and facultative lagoon treatment based on
     `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
 
+    To enable life cycle assessment, the following impact items should be pre-constructed:
+    `Plastic`, `Excavation`.
+
     Parameters
     ----------
     ins : WasteStream

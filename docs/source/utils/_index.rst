@@ -10,11 +10,9 @@ utils
    construction
    decorators
    doc_examples
-   evaluation
    formatting
-   getters
    loading
+   misc
+   model_eval
    parsing
-   setters
-   units_of_measure
    utilities

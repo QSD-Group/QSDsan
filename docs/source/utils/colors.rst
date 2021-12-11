@@ -1,4 +1,4 @@
-colors
+Colors
 ======
 
 test_colormaps

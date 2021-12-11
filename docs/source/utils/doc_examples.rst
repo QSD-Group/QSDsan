@@ -1,5 +1,5 @@
-doc examples
-============
+Documentation Examples
+======================
 
 load_example_cmps
 -----------------

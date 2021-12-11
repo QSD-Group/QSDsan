@@ -1,4 +1,4 @@
-decorators
+Decorators
 ==========
 
 time_printer

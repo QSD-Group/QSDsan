@@ -1,4 +1,4 @@
-components
+Components
 ==========
 
 add_V_from_rho

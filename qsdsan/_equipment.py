@@ -28,7 +28,7 @@ class Equipment:
     this class can be dependent on but will not affect the mass flows within
     the unit.
 
-    A non-abstract instance of this class must have:
+    A non-abstract subclass of this class must have:
 
         - A :func:`Equipment._design` method for equipment design.
 

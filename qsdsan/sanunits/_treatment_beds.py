@@ -31,6 +31,9 @@ class DryingBed(SanUnit, Decay):
     Unplanted and planted drying bed for solids based on
     `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
 
+    To enable life cycle assessment, the following impact items should be pre-constructed:
+    `Concrete`, `Steel`.
+
     Parameters
     ----------
     ins : WasteStream
@@ -305,6 +308,9 @@ class LiquidTreatmentBed(SanUnit, Decay):
     '''
     For secondary treatment of liquid based on
     `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
+
+    To enable life cycle assessment, the following impact items should be pre-constructed:
+    Concrete.
 
     Parameters
     ----------

@@ -1,4 +1,4 @@
-utilities
+Utilities
 =========
 
 sum_system_utility

@@ -159,9 +159,9 @@ class Transportation:
 
     _ipython_display_ = show # funny that `_ipython_display_` and `_ipython_display` behave differently
 
-    def copy(self, new_ID='', skip_item=True):
+    def copy(self, new_ID='', skip_item=True, **kwargs):
         new = Transportation.__new__(Transportation)
-        new.__init__(new_ID)
+        new.__init__(new_ID, **kwargs)
         if skip_item:
             new = copy_attr(new, self, skip=('_ID', '_item'))
             new.item = self.item
@@ -192,7 +192,7 @@ class Transportation:
         if not i:
             i = None
         elif isinstance(i, str):
-            i = ImpactItem.get_item(i)
+            i = ImpactItem.get_item(i) or ImpactItem(i) # add a filler to enable simulation without LCA
         elif not isinstance(i, ImpactItem):
             raise TypeError('Only `ImpactItem` or the ID of `ImpactItem` can be set, '
                             f'not {type(i).__name__}.')

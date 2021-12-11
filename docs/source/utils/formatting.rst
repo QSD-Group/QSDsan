@@ -1,4 +1,4 @@
-formatting
+Formatting
 ==========
 
 format_number

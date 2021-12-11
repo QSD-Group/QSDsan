@@ -21,8 +21,14 @@ import pandas as pd
 from .. import _pk
 
 __all__ = ('ospath', 'load_data', 'data_path',
-           'dct_from_str', 'save_pickle', 'load_pickle')
+           'save_pickle', 'load_pickle')
 
+
+# %%
+
+# =============================================================================
+# From Datasheet
+# =============================================================================
 
 def load_data(path=None, sheet=None, index_col=0, **kwargs):
     '''For data importing.'''
@@ -43,23 +49,12 @@ def load_data(path=None, sheet=None, index_col=0, **kwargs):
     return data
 
 
-def dct_from_str(dct_str, sep=',', dtype='float'):
-    '''
-    Use to parse str into a dict,
-    the str should be written in `k1=v1, k2=v2, ..., kn=vn`
-    (separated by comma or other symbols defined by `sep`).
-    '''
-    splitted = [i.split('=') for i in dct_str.replace(' ', '').split(sep)]
 
-    if dtype == 'float':
-        return {k:float(v) for k, v in splitted}
+# %%
 
-    elif dtype == 'int':
-        return {k:int(v) for k, v in splitted}
-
-    else:
-        return {k:v for k, v in splitted}
-
+# =============================================================================
+# From Pickle File
+# =============================================================================
 
 def save_pickle(obj, path):
     '''Save object as a pickle file using Pickle Protocol 5.'''

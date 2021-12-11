@@ -1,5 +1,5 @@
-cod
-===
+Chemical Oxygen Demand (COD)
+============================
 
 cod_test_stoichiometry
 ----------------------

@@ -18,7 +18,11 @@ from . import Decay
 from .. import SanUnit, Construction
 from ..utils import ospath, load_data, data_path
 
-__all__ = ('AnaerobicBaffledReactor', 'AnaerobicDigestion',)
+__all__ = (
+    'AnaerobicBaffledReactor',
+    'AnaerobicDigestion',
+    'ConventionalAnaerobicDigester',
+    )
 
 
 # %%
@@ -29,6 +33,9 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
     '''
     Anaerobic baffled reactor with the production of biogas based on
     `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
+
+    To enable life cycle assessment, the following impact items should be pre-constructed:
+    `Concrete`, `Gravel`, `Excavation`.
 
     Parameters
     ----------
@@ -241,6 +248,11 @@ class AnaerobicDigestion(SanUnit, Decay):
     Anaerobic digestion of wastes with the production of biogas based on
     `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
 
+    To enable life cycle assessment, the following impact items should be pre-constructed:
+    `Concrete`, `Excavation`.
+
+    Cost is calculated by the unit cost of the impact items and their quantities.
+
     Parameters
     ----------
     ins : WasteStream
@@ -424,3 +436,38 @@ class AnaerobicDigestion(SanUnit, Decay):
     @concrete_thickness.setter
     def concrete_thickness(self, i):
         self._concrete_thickness = i
+
+
+# %%
+
+class ConventionalAnaerobicDigester(SanUnit):
+    '''
+    A conventional anaerobic digester for centralized treatment as in
+    `Shoener et al. <https://doi.org/10.1039/C5EE03715H>`_.
+
+    Parameters
+    ----------
+    ins : WasteStream
+        Waste for treatment.
+    outs : WasteStream
+        Treated waste, captured biogas, fugitive CH4, and fugitive N2O.
+    flow_rate : float
+        Total flow rate through the reactor (for sizing purpose), [m3/d].
+        If not provided, will use F_vol_in.
+    degraded_components : tuple
+        IDs of components that will degrade (at the same removal as `COD_removal`).
+    if_capture_biogas : bool
+        If produced biogas will be captured, otherwise it will be treated
+        as fugitive CH4.
+    if_N2O_emission : bool
+        If consider N2O emission from N degradation in the process.
+
+    References
+    ----------
+    [1] Shoener, B. D.; Zhong, C.; Greiner, A. D.; Khunjar, W. O.; Hong, P.-Y.; Guest, J. S.
+        Design of Anaerobic Membrane Bioreactors for the Valorization
+        of Dilute Organic Carbon Waste Streams.
+        Energy Environ. Sci. 2016, 9 (3), 1102–1112.
+        https://doi.org/10.1039/C5EE03715H.
+
+    '''

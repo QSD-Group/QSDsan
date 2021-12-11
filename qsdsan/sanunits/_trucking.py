@@ -26,6 +26,9 @@ class Trucking(SanUnit):
     For transportation of materials with considerations on material loss
     based on `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
 
+    To enable life cycle assessment, the following impact items should be pre-constructed:
+    `Trucking`.
+
     Parameters
     ----------
     load_type : str
@@ -73,7 +76,7 @@ class Trucking(SanUnit):
                            load_type=load_type, load=load, load_unit=load_unit,
                            distance=distance, distance_unit=distance_unit,
                            interval=interval, interval_unit=interval_unit)
-        total = single.copy('total_truck')
+        total = single.copy('total_truck', linked_unit=self)
         self.transportation = (total,)
         self._update_fee(fee, fee_unit)
         self.if_material_loss = if_material_loss

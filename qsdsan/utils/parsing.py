@@ -5,18 +5,43 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Joy Zhang <joycheung1994@gmail.com>
+    Yalin Li <zoe.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-
+import numpy as np
 from sympy import symbols, sympify, simplify, Matrix, solve
 from sympy.parsing.sympy_parser import parse_expr
-import numpy as np
+from . import auom
 
-__all__ = ('get_stoichiometric_coeff', )
+__all__ = (
+    'dct_from_str',
+    'get_stoichiometric_coeff',
+    'parse_unit',
+    )
+
+
+# %%
+
+def dct_from_str(dct_str, sep=',', dtype='float'):
+    '''
+    Use to parse str into a dict,
+    the str should be written in `k1=v1, k2=v2, ..., kn=vn`
+    (separated by comma or other symbols defined by `sep`).
+    '''
+    splitted = [i.split('=') for i in dct_str.replace(' ', '').split(sep)]
+
+    if dtype == 'float':
+        return {k:float(v) for k, v in splitted}
+
+    elif dtype == 'int':
+        return {k:int(v) for k, v in splitted}
+
+    else:
+        return {k:v for k, v in splitted}
 
 
 #%%
@@ -133,3 +158,32 @@ def get_stoichiometric_coeff(reaction, ref_component, components, conserved_for,
         if isa(coeff, np.ndarray): coeff /= normalize_factor
         else: coeff[:] = [v/normalize_factor for v in coeff]
     return coeff
+
+
+# %%
+
+# =============================================================================
+# Units of measure
+# =============================================================================
+
+def parse_unit(value):
+    '''Parse user' input units to those that can be recognized by `pint`.'''
+    str_list = value.split(' ') # for something like 'kg CO2-eq'
+    if len(str_list) > 1:
+        unit = str_list[0]
+        others = ' '.join(str_list.pop(0))
+        try: return auom(unit), others
+        except: pass
+    str_list = value.split('-') # for something like 'MJ-eq'
+    if len(str_list) > 1:
+        unit = str_list[0]
+        others = '-'.join(str_list.pop(0))
+        try: return auom(unit), others
+        except: pass
+
+    # For something like 'MJ' or 'tonne*km',
+    # not doing this earlier as something like 'kg N' will be misinterpreted
+    try: return auom(value), ''
+    except: pass
+
+    return None, value

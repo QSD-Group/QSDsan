@@ -27,7 +27,11 @@ pit_path = ospath.join(data_path, 'sanunit_data/_pit_latrine.tsv')
 class PitLatrine(Toilet):
     '''
     Single pit latrine based on `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_,
-    a subclass of :class:`~.Toilet`.
+    a subclass of :class:`qsdsan.sanunits.Toilet`.
+
+    To enable life cycle assessment, the following impact items should be pre-constructed:
+    `Cement`, `Sand`, `Gravel`, `Brick`, `Plastic`, `Steel`, `Wood`, `Excavation`.
+
 
     Parameters
     ----------
@@ -208,7 +212,7 @@ class PitLatrine(Toilet):
 
         density = self.density_dct
         constr = self.construction
-        constr[0].quantity = 700 * N # cment
+        constr[0].quantity = 700 * N # cement
         constr[1].quantity = 2.2 * density['Sand'] * N
         constr[2].quantity = 0.8 * density['Gravel'] * N
         constr[3].quantity = 54*0.0024 * density['Brick'] * N
@@ -236,8 +240,7 @@ class PitLatrine(Toilet):
     def pit_area(self, i):
         self._pit_area = i
 
-    #!!! Should add some constraints, maybe in _run, to make sure the pit is big
-    # enough for the amount of excreta
+    # With baseline assumptions, this is about the same as the total volume of the excreta
     @property
     def pit_V(self):
         '''[float] Volume of the pit, [m3].'''

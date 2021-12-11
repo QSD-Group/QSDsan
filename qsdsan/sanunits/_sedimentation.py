@@ -30,6 +30,9 @@ class Sedimentation(SludgeSeparator, Decay):
     Sedimentation of wastes into liquid and solid phases based on
     `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
 
+    To enable life cycle assessment, the following impact items should be pre-constructed:
+    `Concrete`, `Steel`.
+
     Parameters
     ----------
     ins : WasteStream

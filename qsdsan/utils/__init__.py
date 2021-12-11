@@ -12,9 +12,18 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-# Used in other modules so need to be imported first
-from . import units_of_measure
-from .units_of_measure import *
+# Units of measure
+import os
+from thermosteam.units_of_measure import (
+    ureg,
+    AbsoluteUnitsOfMeasure as auom,
+    RelativeUnitsOfMeasure as ruom
+    )
+
+path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                    'units_definition.txt')
+ureg.load_definitions(path)
+
 
 from . import (
     cod,
@@ -23,13 +32,11 @@ from . import (
     construction,
     decorators,
     # descriptors, # currently not in use
-    evaluation,
-    getters,
     formatting,
     loading,
     misc,
+    model_eval,
     parsing,
-    setters,
     utilities,
     )
 
@@ -41,17 +48,16 @@ from .components import *
 from .construction import *
 from .decorators import *
 # from .descriptors import *
-from .evaluation import *
-from .getters import *
 from .formatting import *
 from .loading import *
 from .misc import *
+from .model_eval import *
 from .parsing import *
-from .setters import *
 from .utilities import *
 
 
 __all__ = (
+    'ureg', 'auom', 'ruom',
     'NotImplementedMethod',
     *cod.__all__,
     *colors.__all__,
@@ -59,14 +65,11 @@ __all__ = (
     *construction.__all__,
     *decorators.__all__,
     # *descriptors.__all__,
-    *evaluation.__all__,
-    *getters.__all__,
     *formatting.__all__,
     *loading.__all__,
+    *model_eval.__all__,
     *misc.__all__,
     *parsing.__all__,
-    *setters.__all__,
-    *units_of_measure.__all__,
     *utilities.__all__,
     )
 

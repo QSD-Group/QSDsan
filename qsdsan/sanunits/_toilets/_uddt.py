@@ -32,7 +32,10 @@ class UDDT(Toilet):
     Urine-diverting dry toilet with liquid storage tank and dehydration vault
     for urine and feces storage, respectively, based on
     `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_,
-    a subclass of qsdsan.sanunits.Toilet.
+    a subclass of :class:`qsdsan.sanunits.Toilet`.
+
+    To enable life cycle assessment, the following impact items should be pre-constructed:
+    `Cement`, `Sand`, `Gravel`, `Brick`, `Plastic`, `Steel`, `StainlessSteelSheet`, `Wood`.
 
     Parameters
     ----------
