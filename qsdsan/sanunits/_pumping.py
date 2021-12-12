@@ -217,7 +217,7 @@ class WWTpump(SanUnit):
         Will use total volumetric flow through the unit if not provided.
     add_inputs : dict
         Additional inputs that will be passed to the corresponding design algorithm.
-        Check the document for the design algorithm for the specific input requirements.
+        Check the documentation for the design algorithm for the specific input requirements.
 
     References
     ----------
@@ -242,7 +242,7 @@ class WWTpump(SanUnit):
         'recirculation_AF',
         'lift',
         'sludge',
-        'chemical'
+        'chemical',
         )
 
 
@@ -260,7 +260,6 @@ class WWTpump(SanUnit):
 
 
     def _design(self):
-
         pump_type = format_str(self.pump_type)
         design_func = getattr(self, f'design_{pump_type}')
 
@@ -272,7 +271,27 @@ class WWTpump(SanUnit):
         D['Chemical storage HDPE [m3]'] = hdpe
 
 
+    #!!! Want to add construction cost here
     def _cost(self):
+        FPC = self.factor * self.Q_mgd # firm pumping capacity
+        O = M = 0. # operating/maintenance, USD/yr
+        if 0 < FPC <= 7:
+            O = 440*25*FPC**0.1285
+            M = 360*25*FPC**0.1478
+        elif 7 < FPC <= 41:
+            O = 294.4*25*FPC**0.3335
+            M = 255.2*25*FPC**0.3247
+        elif 41 < FPC <= 80:
+            O = 40.5*25*FPC**0.8661
+            M = 85.7*25*FPC**0.6456
+        else:
+            O = 21.3*25*FPC**1.012
+            M = 30.6*25*FPC**0.8806
+        self.add_OPEX = {
+            'Operating': O/365/24,
+            'Maintenance': M/365/24,
+            }
+
         self.power_utility.rate = self.BHP/self.motor_efficiency * _hp_to_kW
 
 
@@ -632,6 +651,14 @@ class WWTpump(SanUnit):
     def valid_pump_types(self):
         '''[tuple] Acceptable pump types.'''
         return self._valid_pump_types
+
+    @property
+    def capacity_factor(self):
+        '''[float] A safety factor to handle peaks.'''
+        return self._capacity_factor
+    @capacity_factor.setter
+    def capacity_factor(self, i):
+        self._capacity_factor = i
 
     @property
     def N_pump(self):

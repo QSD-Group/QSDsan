@@ -18,6 +18,7 @@ TODO:
     (AF, submerged, sparging, GAC, flat sheet, hollow fiber)
     - Maybe add AeMBR as well (make an MBR superclass)
         - AeMBR can use higher flux and allows for lower transmembrane pressure
+    - Add maintenance and operating costs (allow user to choose if to include)
 
 References
 ----------
@@ -27,7 +28,7 @@ Energy Environ. Sci. 2016, 9 (3), 1102–1112.
 https://doi.org/10.1039/C5EE03715H.
 '''
 
-import math
+from math import ceil, floor, pi
 from biosteam.exceptions import DesignError
 from . import HXutility, WWTpump, InternalCirculationRx
 from .. import SanStream, SanUnit
@@ -37,6 +38,7 @@ from ..utils import (
     format_str,
     default_component_dict,
     cost_pump,
+    calculate_excavation_volume,
     )
 
 __all__ = ('AnMBR',)
@@ -68,6 +70,8 @@ class AnMBR(SanUnit):
     reactor_type : str
         Can either be "CSTR" for continuous stirred tank reactor
         or "AF" for anaerobic filter.
+    N_train : int
+        Number of treatment train, should be at least two in case one failing.
     membrane_configuration : str
         Can either be "cross-flow" or "submerged".
     membrane_type : str
@@ -130,12 +134,16 @@ class AnMBR(SanUnit):
         Hydrolysis of Corn Stover; Technical Report NREL/TP-5100-47764;
         National Renewable Energy Lab (NREL), 2011.
         https://www.nrel.gov/docs/fy11osti/47764.pdf
+
+    See Also
+    --------
+    `MATLAB codes <https://github.com/QSD-Group/AnMBR>`_ used in ref 1,
+    especially the system layout `diagrams <https://github.com/QSD-Group/AnMBR/blob/main/System_Design.pdf>`_.
     '''
     _N_ins = 6 # influent, recycle (optional), naocl, citric acid, bisulfite, air (optional)
     _N_outs = 4 # biogas, effluent, waste sludge, air (optional)
 
     # Equipment-related parameters
-    _N_train_min = 2
     _cas_per_tank_spare = 2
 
     _mod_surface_area = {
@@ -156,20 +164,21 @@ class AnMBR(SanUnit):
 
     _N_blower = 0
 
-    _W_tank = 21
-    _D_tank = 12
+    _W_tank = 21 # ft
+    _D_tank = 12 # ft
+    _freeboard = 2 # ft
+    _W_dist = 4.5 # ft
+    _W_eff = 4.5 # ft
 
-    _W_dist = 4.5
-    _W_eff = 4.5
+    _L_well = 8 # ft
+    _W_well = 8 # ft
+    _D_well = 12 # ft
 
-    _L_well = 8
-    _W_well = 8
-    _D_well = 12
+    _t_wall = None
+    _t_slab = None
 
-    _t_wall = _t_slab = None
-    
     _excav_slope = 1.5
-    _constr_access = 3
+    _constr_access = 3 # ft
 
     # Operation-related parameters
     _HRT = 10
@@ -196,6 +205,7 @@ class AnMBR(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', isdynamic=False, *,
                  reactor_type='CSTR',
+                 N_train=2,
                  membrane_configuration='cross-flow',
                  membrane_type='multi-tube',
                  membrane_material='ceramic',
@@ -211,6 +221,7 @@ class AnMBR(SanUnit):
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with, isdynamic=isdynamic)
         self.reactor_type = reactor_type
+        self.N_train = N_train
         self.include_aerobic_filter = include_aerobic_filter
         self.membrane_configuration = membrane_configuration
         self.membrane_type = membrane_type
@@ -403,7 +414,7 @@ class AnMBR(SanUnit):
             gas /= (_ft3_to_m3 * 60) # [ft3/min]
             gas_train = gas * self.N_train*self.cas_per_tank*self.mod_per_cas
 
-            TCFM = math.ceil(gas_train) # total cubic ft per min
+            TCFM = ceil(gas_train) # total cubic ft per min
             N = 1
             if TCFM <= 30000:
                 CFMB = TCFM / N # cubic ft per min per blower
@@ -501,7 +512,7 @@ class AnMBR(SanUnit):
         ### Concrete calculation ###
         W_N_trains = (self.W_tank+2*t_wall)*N_train - t_wall*(N_train-1)
 
-        D = D_tank + 2 # add 2 ft of freeboard
+        D = D_tank + self.freeboard
         t = t_wall + t_slab
 
         get_VWC = lambda L1, N: N * t_wall * L1 * D
@@ -537,20 +548,19 @@ class AnMBR(SanUnit):
         VSC = VSC_dist + VSC_CSTR + VSC_eff + VSC_PBB + VSC_membrane_tank + VSC_well
 
         ### Excavation calculation ###
-        get_VEX = lambda L_bttom, W_bottom, diff: \
-            0.5 * D_tank * (L_bottom*W_bottom+(L_bottom+diff)*(W_bottom+diff)) # bottom+top
-
-        L_bottom = W_dist + L_CSTR + W_eff + L_membrane_tank + 2*CA
-        W_bottom = W_N_trains + 2*CA
-        diff = D_tank * SL
-
-        # Excavation volume for membrane tanks, [ft3]
-        VEX_membrane_tank = get_VEX(L_bottom, W_bottom, diff)
+        # Excavation volume for the reactor and membrane tanks, [ft3]
+        VEX_tanks = calculate_excavation_volume(
+            L=(W_dist+L_CSTR+W_eff+L_membrane_tank),
+            W=W_N_trains, D=D_tank, excav_slope=SL, constr_acess=CA)
 
         # Excavation volume for pump/blower building, [ft3]
-        VEX_PBB = get_VEX((W_PB+W_BB+2*CA), W_bottom, diff)
+        VEX_PBB = calculate_excavation_volume(
+            L=(W_PB+W_BB),
+            W=W_N_trains, D=D_tank, excav_slope=SL, constr_acess=CA)
 
-        VEX = VEX_membrane_tank + VEX_PBB
+        VEX = VEX_tanks + VEX_PBB
+
+        #!!! Need to add wet wells for submerged configurations
 
         return VWC, VSC, VEX
 
@@ -678,11 +688,12 @@ class AnMBR(SanUnit):
             self.F_BM, self._default_equipment_lifetime
 
         ### Capital ###
+        #!!! Change `include_excavation_cost` to excavation_unit_cost
         # Concrete and excavation
         VEX, VWC, VSC = \
             D['Excavation [ft3]'], D['Wall concrete [ft3]'], D['Slab concrete [ft3]']
         # 27 is to convert the VEX from ft3 to yard3
-        C['Reactor excavation'] = VEX/27*8 if self.include_excavation_cost else 0.
+        C['Reactor excavation'] = VEX / 27 * 8 if self.include_excavation_cost else 0.
         C['Wall concrete'] = VWC / 27 * 650
         C['Slab concrete'] = VSC / 27 * 350
 
@@ -704,16 +715,14 @@ class AnMBR(SanUnit):
             hdpe += i.baseline_purchase_costs['Packing HDPE [m3]']
 
         # Pump
-        #!!! Note that maintenance and operating costs are included as a lumped
-        # number in the biorefinery thus not included here
-        # TODO: considering adding the O&M and letting user choose if to include
+        #!!! Move the costing to the pumps
         pumps, building = cost_pump(self)
         C['Pumps'] = pumps
         C['Pump building'] = building if self.include_pump_building_cost else 0.
         C['Pump excavation'] = VEX/27*0.3 if self.include_excavation_cost else 0.
 
         F_BM['Pumps'] = F_BM['Pump building'] = F_BM['Pump excavation'] = \
-            1.18 * (1+0.007) # 0.007 is for  miscellaneous costs
+            1.18 * (1+0.007) # 0.007 is for miscellaneous costs
         lifetime['Pumps'] = 15
 
         # Blower and air pipe
@@ -886,13 +895,16 @@ class AnMBR(SanUnit):
 
     @property
     def N_train(self):
-        '''[int] Number of treatment train.'''
-        if not hasattr(self, '_N_train'):
-            return self._N_train_min
+        '''
+        [int] Number of treatment train, should be at least two in case one failing.
+        '''
         return self._N_train
     @N_train.setter
     def N_train(self, i):
-        self._N_train = math.ceil(i)
+        i = ceil(i)
+        if i < 2:
+            raise ValueError('`N_train` should be at least 2.')
+        self._N_train = i
 
     @property
     def cas_per_tank_spare(self):
@@ -900,7 +912,7 @@ class AnMBR(SanUnit):
         return self._cas_per_tank_spare
     @cas_per_tank_spare.setter
     def cas_per_tank_spare(self, i):
-        self._cas_per_tank_spare = math.ceil(i)
+        self._cas_per_tank_spare = ceil(i)
 
     @property
     def mod_per_cas_range(self):
@@ -912,7 +924,7 @@ class AnMBR(SanUnit):
     @mod_per_cas_range.setter
     def mod_per_cas_range(self, i):
         self._mod_per_cas_range[self.membrane_type] = \
-            tuple(math.floor(i[0]), math.floor(i[1]))
+            tuple(floor(i[0]), floor(i[1]))
 
     @property
     def mod_per_cas(self):
@@ -930,7 +942,7 @@ class AnMBR(SanUnit):
         return self._cas_per_tank_range
     @cas_per_tank_range.setter
     def cas_per_tank_range(self, i):
-        self._cas_per_tank_range = tuple(math.floor(i[0]), math.floor(i[1]))
+        self._cas_per_tank_range = tuple(floor(i[0]), floor(i[1]))
 
     @property
     def cas_per_tank(self):
@@ -953,7 +965,7 @@ class AnMBR(SanUnit):
         return self._mod_surface_area[self.membrane_type]
     @mod_surface_area.setter
     def mod_surface_area(self, i):
-        self._mod_surface_area[self.membrane_type] = float(i)
+        self._mod_surface_area[self.membrane_type] = i
 
     @property
     def L_CSTR(self):
@@ -965,7 +977,8 @@ class AnMBR(SanUnit):
     @property
     def L_membrane_tank(self):
         '''[float] Length of the membrane tank, [ft].'''
-        #!!! Maybe should set this to 0 for cross-flow?
+        if self.membrane_configuration=='cross-flow':
+            return 0.
         return math.ceil((self.cas_per_tank+self.cas_per_tank_spare)*3.4)
 
     @property
@@ -974,7 +987,7 @@ class AnMBR(SanUnit):
         return self._W_tank
     @W_tank.setter
     def W_tank(self, i):
-        self._W_tank = float(i)
+        self._W_tank = i
 
     @property
     def D_tank(self):
@@ -982,7 +995,15 @@ class AnMBR(SanUnit):
         return self._D_tank
     @D_tank.setter
     def D_tank(self, i):
-        self._D_tank = float(i)
+        self._D_tank = i
+
+    @property
+    def freeboard(self):
+        '''[float] Freeboard added to the depth of the reactor/membrane tank, [ft].'''
+        return self._freeboard
+    @freeboard.setter
+    def freeboard(self, i):
+        self._freeboard = i
 
     @property
     def W_dist(self):
@@ -990,7 +1011,7 @@ class AnMBR(SanUnit):
         return self._W_dist
     @W_dist.setter
     def W_dist(self, i):
-        self._W_dist = float(i)
+        self._W_dist = i
 
     @property
     def W_eff(self):
@@ -998,23 +1019,7 @@ class AnMBR(SanUnit):
         return self._W_eff
     @W_eff.setter
     def W_eff(self, i):
-        self._W_eff = float(i)
-
-    @property
-    def t_wall(self):
-        '''
-        [float] Concrete wall thickness, [ft].
-        default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
-        '''
-        return self._t_wall or (1 + max(self.D_tank-12, 0)/12)
-
-    @property
-    def t_slab(self):
-        '''
-        [float] Concrete slab thickness, [ft],
-        default to be 2 in thicker than the wall thickness.
-        '''
-        return self._t_slab or self.t_wall+2/12
+        self._W_eff = i
 
     @property
     def V_tot(self):
@@ -1047,7 +1052,7 @@ class AnMBR(SanUnit):
         (optional).
         '''
         if self.include_degassing_membrane:
-            return math.ceil(self.Q_cmd/24/30) # assume each can hand 30 m3/d of influent
+            return ceil(self.Q_cmd/24/30) # assume each can hand 30 m3/d of influent
         return 0
 
     @property
@@ -1056,7 +1061,7 @@ class AnMBR(SanUnit):
         if self.membrane_configuration == 'submerged':
             N = self.cas_per_tank
         else: # cross-flow
-            N = math.ceil(self.L_CSTR/((1+8/12)+(3+4/12)))
+            N = ceil(self.L_CSTR/((1+8/12)+(3+4/12)))
 
         if 0 <= N <= 10:
             W_PB = 27 + 4/12
@@ -1098,7 +1103,7 @@ class AnMBR(SanUnit):
         return self._L_well if self.membrane_configuration == 'submerged' else 0
     @L_well.setter
     def L_well(self, i):
-        self._L_well = float(i)
+        self._L_well = i
 
     @property
     def W_well(self):
@@ -1109,7 +1114,7 @@ class AnMBR(SanUnit):
         return self._W_well if self.membrane_configuration == 'submerged' else 0
     @W_well.setter
     def W_well(self, i):
-        self._W_well = float(i)
+        self._W_well = i
 
     @property
     def D_well(self):
@@ -1120,7 +1125,29 @@ class AnMBR(SanUnit):
         return self._D_well if self.membrane_configuration == 'submerged' else 0
     @D_well.setter
     def D_well(self, i):
-        self._D_well = float(i)
+        self._D_well = i
+
+    @property
+    def t_wall(self):
+        '''
+        [float] Concrete wall thickness, [ft].
+        default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
+        '''
+        return self._t_wall or (1 + max(self.D_tank-12, 0)/12)
+    @t_wall.setter
+    def t_wall(self, i):
+        self._t_wall = i
+
+    @property
+    def t_slab(self):
+        '''
+        [float] Concrete slab thickness, [ft],
+        default to be 2 in thicker than the wall thickness.
+        '''
+        return self._t_slab or self.t_wall+2/12
+    @t_slab.setter
+    def t_slab(self, i):
+        self._t_slab = i
 
 
     ### Excavation ###
@@ -1130,7 +1157,7 @@ class AnMBR(SanUnit):
         return self._excav_slope
     @excav_slope.setter
     def excav_slope(self, i):
-        self._excav_slope = float(i)
+        self._excav_slope = i
 
     @property
     def constr_access(self):
@@ -1138,7 +1165,7 @@ class AnMBR(SanUnit):
         return self._constr_access
     @constr_access.setter
     def constr_access(self, i):
-        self._constr_access = float(i)
+        self._constr_access = i
 
 
     ### Operation-related parameters ###
@@ -1174,7 +1201,7 @@ class AnMBR(SanUnit):
         return self._HRT
     @HRT.setter
     def HRT(self, i):
-        self._HRT = float(i)
+        self._HRT = i
 
     @property
     def recir_ratio(self):
@@ -1186,7 +1213,7 @@ class AnMBR(SanUnit):
         return self._recir_ratio
     @recir_ratio.setter
     def recir_ratio(self, i):
-        self._recir_ratio = float(i)
+        self._recir_ratio = i
 
     @property
     def J_max(self):
@@ -1194,7 +1221,7 @@ class AnMBR(SanUnit):
         return self._J_max
     @J_max.setter
     def J_max(self, i):
-        self._J_max = float(i)
+        self._J_max = i
 
     @property
     def J(self):
@@ -1209,7 +1236,7 @@ class AnMBR(SanUnit):
         return self._TMP_dct[self.membrane_configuration]
     @TMP_anaerobic.setter
     def TMP_anaerobic(self, i):
-        self._TMP_dct[self.membrane_configuration] = float(i)
+        self._TMP_dct[self.membrane_configuration] = i
 
     @property
     def TMP_aerobic(self):
@@ -1223,7 +1250,7 @@ class AnMBR(SanUnit):
             return self._TMP_aerobic or self._TMP_dct[self.membrane_configuration]/2
     @TMP_aerobic.setter
     def TMP_aerobic(self, i):
-        self._TMP_aerobic = float(i)
+        self._TMP_aerobic = i
 
     @property
     def SGD(self):
@@ -1231,7 +1258,7 @@ class AnMBR(SanUnit):
         return self._SGD
     @SGD.setter
     def SGD(self, i):
-        self._SGD = float(i)
+        self._SGD = i
 
     @property
     def AFF(self):
@@ -1245,17 +1272,15 @@ class AnMBR(SanUnit):
         return self._AFF
     @AFF.setter
     def AFF(self, i):
-        self._AFF = float(i)
+        self._AFF = i
 
     @property
     def v_cross_flow(self):
-        '''
-        [float] Cross-flow velocity, [m/s].
-        '''
+        '''[float] Cross-flow velocity, [m/s].'''
         return self._v_cross_flow if self.membrane_configuration=='cross-flow' else 0
     @v_cross_flow.setter
     def v_cross_flow(self, i):
-        self._v_cross_flow = float(i)
+        self._v_cross_flow = i
 
     @property
     def v_GAC(self):
@@ -1265,7 +1290,7 @@ class AnMBR(SanUnit):
         return self._v_GAC if self.add_GAC==True else 0
     @v_GAC.setter
     def v_GAC(self, i):
-        self._v_GAC = float(i)
+        self._v_GAC = i
 
     @property
     def biodegradability(self):

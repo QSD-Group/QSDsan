@@ -17,7 +17,7 @@ from math import ceil, pi
 from . import Decay
 from .. import SanUnit, Construction
 from ..sanunits import HXutility
-from ..utils import ospath, load_data, data_path, auom
+from ..utils import ospath, load_data, data_path, auom, calculate_excavation_volume
 __all__ = (
     'AnaerobicBaffledReactor',
     'AnaerobicDigestion',
@@ -475,11 +475,11 @@ class SludgeDigester(SanUnit):
         Heat transfer coefficients for heat loss calculation, [W/m2/°C],
         keys should contain "wall", "floor", and "ceiling".
     wall_concrete_unit_cost : float
-        Unit cost of the wall concrete, [UDS/m3].
+        Unit cost of the wall concrete, [UDS/ft3].
     slab_concrete_unit_cost : float
-        Unit cost of the slab concrete, [UDS/m3].
+        Unit cost of the slab concrete, [UDS/ft3].
     excavation_unit_cost : float
-        Unit cost of the excavation activity, [UDS/m3].
+        Unit cost of the excavation activity, [UDS/ft3].
 
     References
     ----------
@@ -491,19 +491,23 @@ class SludgeDigester(SanUnit):
 
     '''
 
-    _T_air = 17 + 273.15 # [K]
-    _T_earth = 10 + 273.15 # [K]
+    # All in K
+    _T_air = 17 + 273.15
+    _T_earth = 10 + 273.15
 
+    # All in ft
     _freeboard = 3
     _t_wall = 6/12
     _t_slab = 8/12
 
-    _PBL = 50
-    _PBW = 30
-    _PBD = 10
+    # Pump building, all in ft
+    _L_PB = 50
+    _W_PB = 30
+    _D_PB = 10
 
-    _excav_slope = 1.5
-    _constr_access = 3
+    # Excavation
+    _excav_slope = 1.5 # horizontal/vertical
+    _constr_access = 3 # ft
 
     auxiliary_unit_names = ('heat_exchanger',)
 
@@ -513,9 +517,9 @@ class SludgeDigester(SanUnit):
                  methane_yield=0.4, methane_fraction=0.65,
                  depth=10,
                  heat_transfer_coeff=dict(wall=0.7, floor=1.7, ceiling=0.95),
-                 wall_concrete_unit_cost=850, # from $650/yard3
-                 slab_concrete_unit_cost=458, # from $350/yard3
-                 excavation_unit_cost=10.5, # from $8/yard3
+                 wall_concrete_unit_cost=24, # from $650/yd3
+                 slab_concrete_unit_cost=13, # from $350/yd3
+                 excavation_unit_cost=0.3, # from $8/yd3
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.HRT = HRT
@@ -574,21 +578,22 @@ class SludgeDigester(SanUnit):
         'Volume': 'm3',
         'Surface area': 'm2',
         'Diameter': 'm',
-        'Concrete': 'm3',
-        'Excavation': 'm3',
+        'Wall concrete': 'ft3',
+        'Slab concrete': 'ft3',
+        'Excavation': 'ft3',
         }
     def _design(self):
         design = self.design_results
         sludge, = self.ins
-        Q = sludge.F_vol * 1e3 * 24 # from m3/hr to L/d
+        Q = sludge.F_vol * 24 # from m3/hr to m3/d
 
         # Dimensions
         design['SRT'] = self.SRT
         HRT = design['HRT'] = self.HRT
-        V = design['Volume'] = Q * HRT
-        depth = design['depth'] = self.depth
-        A = design['Surface area'] = V / depth
-        dia = design['Diameter']= (A*4/pi) ** 0.5
+        V = design['Volume'] = Q * HRT # m3
+        depth = design['depth'] = self.depth # m
+        A = design['Surface area'] = V / depth # m2
+        dia = design['Diameter']= (A*4/pi) ** 0.5 # m
 
         # Calculate needed heating
         T = self.T
@@ -609,18 +614,13 @@ class SludgeDigester(SanUnit):
         self.heat_exchanger.simulate_as_auxiliary_exchanger(duty, sludge)
 
         # Concrete usage
-        wall_concrete = self.t_wall * pi*dia*(depth+self.freeboard)
-        slab_concrete = 2 * self.t_slab * A # floor and ceiling
-        design['Wall concrete'] = auom('ft3').convert(wall_concrete, 'm3')
-        design['Slab concrete'] = auom('ft3').convert(slab_concrete, 'm3')
+        ft_2_m = auom('ft').conversion_factor('m')
+        design['Wall concrete'] = self.t_wall * pi*(dia*ft_2_m)*(depth*ft_2_m+self.freeboard)
+        design['Slab concrete'] = 2 * self.t_slab * A*(ft_2_m**2) # floor and ceiling
 
         # Excavation
-        PBL, PBW, PBD = self.PBL, self.PBW, self.PBD
-        excav_slope, constr_access = self.excav_slope, self.constr_access
-        A_bottom = (PBL+2*constr_access)*(PBW+2*constr_access)
-        A_top = (PBL+2*constr_access+PBW*excav_slope)*(PBW+2*constr_access+PBW*excav_slope)
-        V_excav = 0.5 * (A_bottom+A_top) * PBD
-        design['Excavation'] = auom('ft3').convert(V_excav, 'm3')
+        design['Excavation'] = calculate_excavation_volume(
+            self.L_PB, self.W_PB, self.D_PB, self.excav_slope, self.constr_access)
 
 
     def _cost(self):
@@ -637,7 +637,7 @@ class SludgeDigester(SanUnit):
         return self._T_air
     @T_air.setter
     def T_air(self, i):
-        self._T_air = float(i)
+        self._T_air = i
 
     @property
     def T_earth(self):
@@ -645,7 +645,7 @@ class SludgeDigester(SanUnit):
         return self._T_earth
     @T_earth.setter
     def T_earth(self, i):
-        self._T_earth = float(i)
+        self._T_earth = i
 
     @property
     def t_wall(self):
@@ -653,7 +653,7 @@ class SludgeDigester(SanUnit):
         return self._t_wall
     @t_wall.setter
     def t_wall(self, i):
-        self._t_wall = float(i)
+        self._t_wall = i
 
     @property
     def t_slab(self):
@@ -664,31 +664,31 @@ class SludgeDigester(SanUnit):
         return self._t_slab or self.t_wall+2/12
     @t_slab.setter
     def t_slab(self, i):
-        self._t_slab = float(i)
+        self._t_slab = i
 
     @property
-    def PBL(self):
+    def L_PB(self):
         '''[float] Length of the pump building, [ft].'''
-        return self._PBL
-    @PBL.setter
-    def PBL(self, i):
-        self._PBL = float(i)
+        return self._L_PB
+    @L_PB.setter
+    def L_PB(self, i):
+        self._L_PB = i
 
     @property
-    def PBW(self):
+    def W_PB(self):
         '''[float] Width of the pump building, [ft].'''
-        return self._PBW
-    @PBW.setter
-    def PBW(self, i):
-        self._PBW = float(i)
+        return self._W_PB
+    @W_PB.setter
+    def W_PB(self, i):
+        self._W_PB = i
 
     @property
-    def PBD(self):
+    def D_PB(self):
         '''[float] Depth of the pump building, [ft].'''
-        return self._PBD
-    @PBD.setter
-    def PBD(self, i):
-        self._PBD = float(i)
+        return self._D_PB
+    @D_PB.setter
+    def D_PB(self, i):
+        self._D_PB = i
 
     @property
     def excav_slope(self):
@@ -696,7 +696,7 @@ class SludgeDigester(SanUnit):
         return self._excav_slope
     @excav_slope.setter
     def excav_slope(self, i):
-        self._excav_slope = float(i)
+        self._excav_slope = i
 
     @property
     def constr_access(self):
@@ -704,4 +704,4 @@ class SludgeDigester(SanUnit):
         return self._constr_access
     @constr_access.setter
     def constr_access(self, i):
-        self._constr_access = float(i)
+        self._constr_access = i

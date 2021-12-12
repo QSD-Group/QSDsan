@@ -16,35 +16,77 @@ for license details.
 
 import numpy as np
 from math import pi
-from biosteam.utils import ExponentialFunctor
-from biosteam.units.design_tools.tank_design import (
-    mix_tank_purchase_cost_algorithms,
-    TankPurchaseCostAlgorithm
-    )
 
-__all__ = ('IC_purchase_cost_algorithms',
-           'calculate_pipe_material',
-           'select_pipe',
-           'cost_pump')
 
+__all__ = (
+    'calculate_excavation_volume',
+    'calculate_pipe_material',
+    'select_pipe',
+    'cost_pump',
+           )
+
+
+# %%
 
 # =============================================================================
-# Internal circulation reactor
+# Excavation
 # =============================================================================
-# Tank cost algorithms
-IC_purchase_cost_algorithms = mix_tank_purchase_cost_algorithms.copy()
-conventional = IC_purchase_cost_algorithms['Conventional']
-#!!! Need to check if the cost correlation still holds for the ranges beyond
-ic = TankPurchaseCostAlgorithm(
-    ExponentialFunctor(A=conventional.f_Cp.A,
-                       n=conventional.f_Cp.n),
-    V_min=np.pi/4*1.5**2*16, # 1.5 and 16 are the lower bounds of the width and height ranges in ref [1]
-    V_max=np.pi/4*12**2*25, # 12 and 25 are the lower bounds of the width and height ranges in ref [1]
-    V_units='m^3',
-    CE=conventional.CE,
-    material='Stainless steel')
 
-IC_purchase_cost_algorithms['IC'] = ic
+def calculate_excavation_volume(L, W, D, excav_slope, constr_acess):
+    '''
+    Calculate the excavation volume needed as a frustum.
+
+    Note that the units of the parameters do no matter as along as they are consistent.
+
+    Parameters
+    ----------
+    L : float
+        Length at the bottom.
+    W : float
+        Width at the bottom.
+    D : float
+        Depth.
+    excav_slope : float
+        Slope (horizontal/vertical).
+    constr_acess : float
+        Construction access on top of the length/width.
+    '''
+    L_bottom = L + 2*constr_acess
+    W_bottom = W + 2*constr_acess
+    diff = D * excav_slope
+    return 0.5*(L_bottom*W_bottom+(L_bottom+diff)*(W_bottom+diff))
+
+
+# %%
+
+# =============================================================================
+# Piping
+# =============================================================================
+
+def calculate_pipe_material(OD, t, ID, L, density=None):
+    '''
+    Calculate the total material needed of pipes.
+
+    Parameters
+    ----------
+    OD : float
+        Outer diameter of the pipe, [in].
+    t : float
+        Thickness of the pipe, [in].
+    ID : float
+        Inner diameter of the pipe, [in].
+    L : float
+        Length of the pipe, [ft].
+    density : float
+        Density of the material, [kg/ft3].
+
+    Returns
+    -------
+    Quantity of the material in ft3 (if no density provided) or kg (if density provided).
+    '''
+    V = pi/4 * ((OD/12)**2-(ID/12)**2) * L
+    quantity = V if not density else V*density
+    return quantity
 
 
 # Based on ANSI (American National Standards Institute) pipe chart
@@ -125,34 +167,15 @@ def select_pipe(Q, v):
     return OD, t, ID
 
 
-def calculate_pipe_material(OD, t, ID, L, density=None):
-    '''
-    Calculate the total material needed of pipes.
+# %%
 
-    Parameters
-    ----------
-    OD : float
-        Outer diameter of the pipe, [in].
-    t : float
-        Thickness of the pipe, [in].
-    ID : float
-        Inner diameter of the pipe, [in].
-    L : float
-        Length of the pipe, [ft].
-    density : float
-        Density of the material, [kg/ft3].
+# =============================================================================
+# Pumping
+# =============================================================================
 
-    Returns
-    -------
-    Quantity of the material in ft3 (if no density provided) or kg (if density provided).
-    '''
-    V = pi/4 * ((OD/12)**2-(ID/12)**2) * L
-    quantity = V if not density else V*density
-    return quantity
-
-
-
-def cost_pump(unit=None, Q_mgd=None, recir_ratio=None):
+#!!! Maybe move this to the Pump unit!
+def cost_pump(unit=None, Q_mgd=None, recir_ratio=None,
+              building_unit_cost=90):
     '''
     Calculate the cost of the pump and pump building for a unit
     based on its `Q_mgd` (hydraulic flow in million gallons per day),
@@ -170,6 +193,8 @@ def cost_pump(unit=None, Q_mgd=None, recir_ratio=None):
         Hydraulic flow [mgd] (million gallons per day).
     recir_ratio : float
         Recirculation ratio.
+    building_unit_cost : float
+        Unit cost of the pump building, [USD/ft2].
 
     Returns
     -------
@@ -200,6 +225,6 @@ def cost_pump(unit=None, Q_mgd=None, recir_ratio=None):
                 GPMi = GPM / N
 
         PBA = N * (0.0284*GPM+640) # pump building area, [ft]
-        building += 90 * PBA
+        building += PBA * building_unit_cost
 
     return pumps, building

@@ -22,18 +22,41 @@ TODO:
 '''
 
 import sympy as sp
+from math import pi
 from biosteam.exceptions import DesignError
+from biosteam.utils import ExponentialFunctor
+from biosteam.units.design_tools.tank_design import (
+    mix_tank_purchase_cost_algorithms,
+    TankPurchaseCostAlgorithm
+    )
 from . import HXutility, MixTank, Pump
 from .. import SanStream, SanUnit
 from ..utils import (
     compute_stream_COD,
     get_digestion_rxns,
-    IC_purchase_cost_algorithms
     )
 
 __all__ = ('InternalCirculationRx',)
 
 degassing = SanStream.degassing
+
+
+# %%
+
+# Tank cost algorithms
+IC_purchase_cost_algorithms = mix_tank_purchase_cost_algorithms.copy()
+conventional = IC_purchase_cost_algorithms['Conventional']
+#!!! Need to check if the cost correlation still holds for the ranges beyond
+ic = TankPurchaseCostAlgorithm(
+    ExponentialFunctor(A=conventional.f_Cp.A,
+                       n=conventional.f_Cp.n),
+    V_min=pi/4*1.5**2*16, # 1.5 and 16 are the lower bounds of the width and height ranges in ref [1]
+    V_max=pi/4*12**2*25, # 12 and 25 are the lower bounds of the width and height ranges in ref [1]
+    V_units='m^3',
+    CE=conventional.CE,
+    material='Stainless steel')
+
+IC_purchase_cost_algorithms['IC'] = ic
 
 
 # %%

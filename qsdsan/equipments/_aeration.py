@@ -29,13 +29,16 @@ class Blower(Equipment):
     '''
     Design and cost blowers based on `Shoener et al. <https://doi.org/10.1039/C5EE03715H>`_.
 
+    Note that concrete usage and excavation is not included for here
+    as blowers are often housed together with the reactor tanks and pumps.
+
     Refer to :class:`~.sanunits.AnMBR` or :class:`~.sanunits.ActivatedSludgeProcess`
     for examples.
 
     Parameters
     ----------
     N_reactor : int
-        Number of the reactor where the gas sparging modules will be installed.
+        Number of the reactors where the gas sparging modules will be installed.
     gas_demand_per_reactor : float
         Gas demand per reactor, [cfm] (cubic ft per minute).
     TDH : float
@@ -56,10 +59,10 @@ class Blower(Equipment):
     References
     ----------
     [1] Shoener, B. D.; Zhong, C.; Greiner, A. D.; Khunjar, W. O.; Hong, P.-Y.; Guest, J. S.
-        Design of Anaerobic Membrane Bioreactors for the Valorization
-        of Dilute Organic Carbon Waste Streams.
-        Energy Environ. Sci. 2016, 9 (3), 1102–1112.
-        https://doi.org/10.1039/C5EE03715H.
+    Design of Anaerobic Membrane Bioreactors for the Valorization
+    of Dilute Organic Carbon Waste Streams.
+    Energy Environ. Sci. 2016, 9 (3), 1102–1112.
+    https://doi.org/10.1039/C5EE03715H.
 
     See Also
     --------
@@ -130,7 +133,7 @@ class Blower(Equipment):
 
         D['Total gas flow'] = TCFM
         D['Blower capacity'] = CFMB
-        D['Number of blowers'] = N + 1 # add a spare
+        D['Number of blowers'] = N
         return D
 
     def _cost(self, TCFM, CFMB):
@@ -215,10 +218,10 @@ class GasPiping(Equipment):
     References
     ----------
     [1] Shoener, B. D.; Zhong, C.; Greiner, A. D.; Khunjar, W. O.; Hong, P.-Y.; Guest, J. S.
-        Design of Anaerobic Membrane Bioreactors for the Valorization
-        of Dilute Organic Carbon Waste Streams.
-        Energy Environ. Sci. 2016, 9 (3), 1102–1112.
-        https://doi.org/10.1039/C5EE03715H.
+    Design of Anaerobic Membrane Bioreactors for the Valorization
+    of Dilute Organic Carbon Waste Streams.
+    Energy Environ. Sci. 2016, 9 (3), 1102–1112.
+    https://doi.org/10.1039/C5EE03715H.
 
     See Also
     --------

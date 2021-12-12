@@ -5,7 +5,7 @@ cm3 = (cm)**3 = cm3 = cu_centimeter = cu_cm
 ft2 = ft**2 = ft2 = sq_ft
 ft3 = ft**3 = ft3 = cu_ft = cf
 in3 = in**3 = in3 = cu_in
-yard3 = yard**3 = yard3 = cu_yard
+yd3 = yard**3 = yd3 = cu_yd
 cfm = cf/minute
 cfs = cf/second
 yr = year = yr = y
