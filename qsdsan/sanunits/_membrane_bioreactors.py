@@ -166,6 +166,8 @@ class AnMBR(SanUnit):
     _W_well = 8
     _D_well = 12
 
+    _t_wall = _t_slab = None
+    
     _excav_slope = 1.5
     _constr_access = 3
 
@@ -187,7 +189,7 @@ class AnMBR(SanUnit):
 
     # Other equipment
     auxiliary_unit_names = ('heat_exchanger',)
-    _pumps =  ('perm', 'retent', 'recir', 'sludge', 'naocl', 'citric', 'bisulfite',
+    pumps =  ('perm', 'retent', 'recir', 'sludge', 'naocl', 'citric', 'bisulfite',
                'AF', 'AeF')
 
 
@@ -246,7 +248,7 @@ class AnMBR(SanUnit):
 
         if reactor_type == 'CSTR':
             if self.include_aerobic_filter:
-                raise DesignError('Aerobic filteration cannot be used in CSTR.')
+                raise DesignError('Aerobic filtration cannot be used in CSTR.')
 
         if m_config == 'submerged':
             if not m_type in ('hollow fiber', 'flat sheet'):
@@ -614,7 +616,7 @@ class AnMBR(SanUnit):
     # Called by _design
     def _design_pump(self):
         rx_type, m_config, pumps = \
-            self.reactor_type, self.membrane_configuration, self._pumps
+            self.reactor_type, self.membrane_configuration, self.pumps
 
         # IDs = ['perm', 'retent', 'recir', 'sludge', 'naocl', 'citric', 'bisulfite']
 
@@ -757,7 +759,7 @@ class AnMBR(SanUnit):
 
         # Pumping
         pumping = 0.
-        for ID in self._pumps:
+        for ID in self.pumps:
             p = getattr(self, f'{ID}_pump')
             if p is None:
                 continue
@@ -1002,17 +1004,17 @@ class AnMBR(SanUnit):
     def t_wall(self):
         '''
         [float] Concrete wall thickness, [ft].
-        Minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
+        default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
         '''
-        return 1 + max(self.D_tank-12, 0)/12
+        return self._t_wall or (1 + max(self.D_tank-12, 0)/12)
 
     @property
     def t_slab(self):
         '''
-        [float] Concrete slab thickness, [ft].
-        2 in thicker than the wall thickness.
+        [float] Concrete slab thickness, [ft],
+        default to be 2 in thicker than the wall thickness.
         '''
-        return self.t_wall+2/12
+        return self._t_slab or self.t_wall+2/12
 
     @property
     def V_tot(self):

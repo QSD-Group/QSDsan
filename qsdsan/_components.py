@@ -716,6 +716,11 @@ class CompiledComponents(CompiledChemicals):
         return self.get_IDs_from_array((self.s+self.c)*self.b*self.org)
 
     @property
+    def biomass(self):
+        '''[tuple] IDs of biomass (particulate & organic) components.'''
+        return self.get_IDs_from_array(self.x*self.org)
+
+    @property
     def active_biomass(self):
         '''[tuple] IDs of active biomass (particulate & organic & degradable) components.'''
         return self.get_IDs_from_array(self.x*self.b*self.org)

@@ -18,6 +18,7 @@ from warnings import warn
 from math import ceil
 from . import Decay
 from .. import SanUnit
+from ..sanunits import Pump
 from ..utils import ospath, load_data, data_path, dct_from_str
 
 __all__ = (
@@ -73,8 +74,8 @@ class SludgeHandling(SanUnit):
         cmps = self.components
         self.solids = solids or cmps.solids
         self.solubles = tuple([i.ID for i in cmps if i.ID not in self.solids])
-        self.effluent_pump = bst.Pump(f'{self.ID}_eff')
-        self.sludge_pump = bst.Pump(f'{self.ID}_sludge')
+        self.effluent_pump = Pump(f'{self.ID}_eff', init_with=init_with)
+        self.sludge_pump = Pump(f'{self.ID}_sludge', init_with=init_with)
         self._mixed = self.ins[0].copy()
 
 

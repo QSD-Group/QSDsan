@@ -111,7 +111,7 @@ class PolishingFilter(SanUnit):
 
     # Other equipment
     auxiliary_unit_names = ('heat_exchanger',)
-    _pumps =  ('lift', 'recir', 'eff', 'sludge')
+    pumps =  ('lift', 'recir', 'eff', 'sludge')
 
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
@@ -243,10 +243,10 @@ class PolishingFilter(SanUnit):
             }
 
         WWTpump._batch_adding_pump(
-            self, self._pumps, ins_dct, type_dct, inputs_dct)
+            self, self.pumps, ins_dct, type_dct, inputs_dct)
 
         pipe_ss, pump_ss = 0., 0.
-        for i in self._pumps:
+        for i in self.pumps:
             p = getattr(self, f'{i}_pump')
             p.simulate()
             pipe_ss += p.design_results['Pipe stainless steel [kg]']
@@ -426,7 +426,7 @@ class PolishingFilter(SanUnit):
 
         # Pumping
         pumping = 0.
-        for ID in self._pumps:
+        for ID in self.pumps:
             # if p is None:
             #     continue
             p = getattr(self, f'{ID}_pump')
