@@ -19,7 +19,7 @@ from thermosteam.reaction import (
     Reaction as Rxn,
     ParallelReaction as PRxn
     )
-from .units_of_measure import auom
+from . import auom
 
 __all__ = (
     'cod_test_stoichiometry',

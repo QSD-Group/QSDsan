@@ -239,7 +239,7 @@ class PolishingFilter(SanUnit):
             'lift': (self.N_filter, self.D),
             'recir': (self.N_filter, self.d, self.D),
             'eff': (self.N_filter, self.D),
-            'sludge': (),
+            'sludge': (1,),
             }
 
         WWTpump._batch_adding_pump(

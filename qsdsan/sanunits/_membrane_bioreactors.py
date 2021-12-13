@@ -199,7 +199,7 @@ class AnMBR(SanUnit):
     # Other equipment
     auxiliary_unit_names = ('heat_exchanger',)
     pumps =  ('perm', 'retent', 'recir', 'sludge', 'naocl', 'citric', 'bisulfite',
-               'AF', 'AeF')
+              'AF', 'AeF')
 
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
@@ -654,11 +654,11 @@ class AnMBR(SanUnit):
             'perm': (self.cas_per_tank, self.D_tank, self.TMP_anaerobic,
                      self.include_aerobic_filter),
             'retent': (self.cas_per_tank,),
-            'recir': (self.L_CSTR,),
-            'sludge': (),
-            'naocl': (),
-            'citric': (),
-            'bisulfite': (),
+            'recir': (1, self.L_CSTR,),
+            'sludge': (1,),
+            'naocl': (1,),
+            'citric': (1,),
+            'bisulfite': (1,),
             }
 
         WWTpump._batch_adding_pump(self, pumps[:-2], ins_dct, type_dct, inputs_dct)
@@ -722,7 +722,7 @@ class AnMBR(SanUnit):
         C['Pump excavation'] = VEX/27*0.3 if self.include_excavation_cost else 0.
 
         F_BM['Pumps'] = F_BM['Pump building'] = F_BM['Pump excavation'] = \
-            1.18 * (1+0.007) # 0.007 is for miscellaneous costs
+            1.18 * (1+0.007/100) # 0.007 is for miscellaneous costs
         lifetime['Pumps'] = 15
 
         # Blower and air pipe
@@ -782,6 +782,7 @@ class AnMBR(SanUnit):
 
 
     # Called by _cost
+    #!!! Add the Equipment Blower, then this will not be needed
     def _cost_blower(self, TCFM, CFMB):
         AFF = self.AFF
 

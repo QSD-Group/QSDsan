@@ -31,6 +31,7 @@ from ._tanks import *
 from ._trucking import *
 
 # Units that rely on other units
+from ._activated_sludge import *
 from ._anaerobic_reactors import *
 from ._internal_circulation_rx import *
 from ._lagoon import *
@@ -41,9 +42,10 @@ from ._toilets import *
 from ._treatment_beds import *
 
 
-# From then on the order doesn't, alphabetically
+# From then on the order doesn't matter, listed alphabetically
 from . import (
     _abstract,
+    _activated_sludge,
     _anaerobic_reactors,
     _clarifier,
     _combustion,
@@ -70,6 +72,7 @@ from . import (
 
 __all__ = (
     *_abstract.__all__,
+    *_activated_sludge.__all__,
     *_anaerobic_reactors.__all__,
     *_clarifier.__all__,
     *_combustion.__all__,
@@ -92,4 +95,4 @@ __all__ = (
     *_toilets.__all__,
     *_treatment_beds.__all__,
     *_trucking.__all__,
-           )
+    )

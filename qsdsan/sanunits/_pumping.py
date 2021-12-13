@@ -17,7 +17,7 @@ for license details.
 '''
 
 import numpy as np
-from math import pi
+from math import pi, ceil
 from biosteam.units import Pump
 from biosteam.units.design_tools.mechanical import (
     brake_efficiency as brake_eff,
@@ -195,13 +195,18 @@ _m3_to_gal = auom('m3').conversion_factor('gallon')
 
 class WWTpump(SanUnit):
     '''
-    Generic class for pumps used in wastewater treatment. [1]_
+    Generic class for pumps used in wastewater treatment, [1]_
+    all pumps are assumed be made of stainless steel.
+
+    This class is intended to be used as a part of other units
+    (e.g., :class:`~.AnMBR`), but it can be used as a standalone unit,
+    with the caveat being that the
 
     Parameters
     ----------
     pump_type : str
         The type of the pump that determines the design algorithms to use.
-        The following combination is valid:
+        The following types are valid:
 
             - "permeate_cross-flow"
             - "retentate_CSTR"
@@ -211,13 +216,30 @@ class WWTpump(SanUnit):
             - "lift"
             - "sludge"
             - "chemical"
+            - "" (i.e., empty)
+
+        When left as empty, the generic algorithm will be used and the following
+        values should be included in `add_inputs` (in this order):
+
+            - N_pump: number of pumps
+            - L_s: pipe length of the suction side, [ft]
+            - L_d: pipe length of the discharge side, [ft]
+            - H_ts: total static head, [ft]
+            - H_p: pressure head, [ft]
 
     Q_mgd : float
         Volumetric flow rate in million gallon per day, [mgd].
         Will use total volumetric flow through the unit if not provided.
-    add_inputs : dict
+    add_inputs : Iterable
         Additional inputs that will be passed to the corresponding design algorithm.
-        Check the documentation for the design algorithm for the specific input requirements.
+        Check the documentation of for the corresponding pump type
+        for the design algorithm of the specific input requirements.
+    building_unit_cost : float
+        Unit cost of the pump building, [USD/ft2].
+    excavation_unit_cost : float
+        Unit cost of excavation for the building, [USD/ft3].
+    kwargs : dict
+        Other attributes to be set.
 
     References
     ----------
@@ -225,12 +247,30 @@ class WWTpump(SanUnit):
         Valorization of Dilute Organic Carbon Waste Streams.
         Energy Environ. Sci. 2016, 9 (3), 1102–1112.
         https://doi.org/10.1039/C5EE03715H.
+
+    See Also
+    --------
+    :class:`~.AnMBR`
     '''
     _N_ins = 1
     _N_outs = 1
 
-    v = 3 # fluid velocity, [ft/s]
-    C = 110 # Hazen- Williams coefficient for stainless steel (SS)
+    _v = 3 # fluid velocity, [ft/s]
+    _C = 110 # Hazen-Williams coefficient for stainless steel (SS)
+
+    # Pump SS (for pumps within 300-1000 gpm)
+    # http://www.godwinpumps.com/images/uploads/ProductCatalog_Nov_2011_spread2.pdf
+    # assume 50% of the product weight is SS
+    _SS_per_pump = 725 * 0.5
+
+    # Dimensions of the pump building, all in ft unless otherwise noted
+    _L_PB = 21
+    _W_PB = 21
+    _D_PB = 12
+    _t_wall = None
+    _t_slab = None
+    _excav_slope = 1.5 # horizontal/vertical
+    _constr_access = 3
 
     _default_equipment_lifetime = {'Pump': 15}
 
@@ -245,14 +285,29 @@ class WWTpump(SanUnit):
         'chemical',
         )
 
-
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', isdynamic=False, *,
-                 pump_type, Q_mgd=None, add_inputs):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with, isdynamic=isdynamic)
+                 pump_type, Q_mgd=None, add_inputs=(),
+                 include_cost=False,
+                 building_unit_cost=90,
+                 excavation_unit_cost=0., #!!! need updating
+                 **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with)
         self.pump_type = pump_type
         self.Q_mgd = Q_mgd
         self.add_inputs = add_inputs
+        self.include_cost = include_cost
+        self.building_unit_cost = building_unit_cost
+        self.excavation_unit_cost = excavation_unit_cost
+        F_BM = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
+        self.F_BM.update({
+            'Pump': F_BM,
+            'Pump building': F_BM,
+            'Pump excavation': F_BM,
+            })
+
+        for attr, val in kwargs.items:
+            setattr(self, attr, val)
 
 
     def _run(self):
@@ -261,53 +316,89 @@ class WWTpump(SanUnit):
 
     def _design(self):
         pump_type = format_str(self.pump_type)
-        design_func = getattr(self, f'design_{pump_type}')
+        if not pump_type:
+            pipe, pumps = self._design_generic(self.Q_mgd, *self.add_inputs)
+            hdpe = 0.
+        else:
+            design_func = getattr(self, f'design_{pump_type}')
+            pipe, pumps, hdpe = design_func()
 
         D = self.design_results
-        pipe, pumps, hdpe = design_func()
+
         D['Pipe stainless steel [kg]'] = pipe
-        #!!! need to consider pump's lifetime in LCA
+        #!!! need to these materials' lifetime in LCA
         D['Pump stainless steel [kg]'] = pumps
         D['Chemical storage HDPE [m3]'] = hdpe
 
 
-    #!!! Want to add construction cost here
+    #!!! Want to add construction cost here,
+    # note that the capacity factor for the sludge pump should be `recir_ratio`
     def _cost(self):
-        FPC = self.factor * self.Q_mgd # firm pumping capacity
-        O = M = 0. # operating/maintenance, USD/yr
-        if 0 < FPC <= 7:
-            O = 440*25*FPC**0.1285
-            M = 360*25*FPC**0.1478
-        elif 7 < FPC <= 41:
-            O = 294.4*25*FPC**0.3335
-            M = 255.2*25*FPC**0.3247
-        elif 41 < FPC <= 80:
-            O = 40.5*25*FPC**0.8661
-            M = 85.7*25*FPC**0.6456
-        else:
-            O = 21.3*25*FPC**1.012
-            M = 30.6*25*FPC**0.8806
-        self.add_OPEX = {
-            'Operating': O/365/24,
-            'Maintenance': M/365/24,
-            }
+        C = self.baseline_purchase_costs
+        if self.include_cost: #
+            # Pump
+            Q_mgd = self.Q_mgd
+            capacity_factor = self.capacity_factor
 
+            # Installed pump cost, this is a fitted curve
+            C['Pump'] = 2.065e5 + 7.721*1e4*Q_mgd
+
+            # Design capacity of intermediate pumps, gpm,
+            GPM = capacity_factor * Q_mgd * 1e6 / 24 / 60
+
+            # Pump building
+            if GPM == 0:
+                N = 0
+            else:
+                N = 1 # number of buildings
+                GPMi = GPM
+                while GPMi > 80000:
+                    N += 1
+                    GPMi = GPM / N
+
+            PBA = N * (0.0284*GPM+640) # pump building area, [ft]
+            C['Pump building'] = PBA * self.building_unit_cost
+
+            #!!! PAUSED at adding concrete and excavation
+            # Excavation
+
+
+            # Operations and maintenance
+            FPC = capacity_factor * Q_mgd # firm pumping capacity
+            O = M = 0. # USD/yr
+            if 0 < FPC <= 7:
+                O = 440*25*FPC**0.1285
+                M = 360*25*FPC**0.1478
+            elif 7 < FPC <= 41:
+                O = 294.4*25*FPC**0.3335
+                M = 255.2*25*FPC**0.3247
+            elif 41 < FPC <= 80:
+                O = 40.5*25*FPC**0.8661
+                M = 85.7*25*FPC**0.6456
+            else:
+                O = 21.3*25*FPC**1.012
+                M = 30.6*25*FPC**0.8806
+            self.add_OPEX = {
+                'Operating': O/365/24,
+                'Maintenance': M/365/24,
+                }
+        else:
+            C.clear()
         self.power_utility.rate = self.BHP/self.motor_efficiency * _hp_to_kW
 
 
     # Used by other classes
+    #!!! Need to figure out a way to include cost or not
     @staticmethod
-    def _batch_adding_pump(obj, IDs, ins_dct, type_dct, inputs_dct):
+    def _batch_adding_pump(unit, IDs, ins_dct, type_dct, inputs_dct):
         for i in IDs:
-            if not hasattr(obj, f'{i}_pump'):
-                # if i == None:
-                #     continue
+            if not hasattr(unit, f'{i}_pump'):
                 pump = WWTpump(
-                    ID=f'{obj.ID}_{i}',
+                    ID=f'{unit.ID}_{i}',
                     ins=ins_dct[i],
                     pump_type=type_dct[i],
                     add_inputs=inputs_dct[i])
-                setattr(obj, f'{i}_pump', pump)
+                setattr(unit, f'{i}_pump', pump)
 
 
     # Generic algorithms that will be called by all design functions
@@ -336,23 +427,20 @@ class WWTpump(SanUnit):
         V_s = N_pump * pi/4*((OD_s)**2-(ID_s)**2) * (L_s*12)
         # SS volume for discharge, [in3]
         V_d = pi/4*((OD_d)**2-(ID_d)**2) * (L_d*12)
+
         # Total SS mass, [kg]
         M_SS_pipe = 0.29 * (V_s+V_d) * _lb_to_kg
-
-        # Pump SS (for pumps within 300-1000 gpm)
-        # http://www.godwinpumps.com/images/uploads/ProductCatalog_Nov_2011_spread2.pdf
-        # assume 50% of the product weight is SS
-        M_SS_pump = N_pump * (725*0.5)
-
+        M_SS_pump = N_pump * self.SS_per_pump
         return M_SS_pipe, M_SS_pump
 
 
-    def design_permeate_cross_flow(self, Q_mgd=None, cas_per_tank=None, D_tank=None,
-                                   TMP=None, include_aerobic_filter=False):
+    def design_permeate_cross_flow(self, Q_mgd=None, N_pump=None, D=None,
+                                   TMP=None, include_aerobic_filter=False,
+                                   **kwargs):
         '''
         Design pump for the permeate stream of cross-flow membrane configuration.
 
-        Parameters defined through the `add_inputs` argument upon initiation of
+        Parameters defined through the `add_inputs` argument upon initialization of
         this unit (Q_mgd listed separately) will be used if not provided
         when calling this function.
 
@@ -360,32 +448,37 @@ class WWTpump(SanUnit):
         ----------
         Q_mgd : float
             Volumetric flow rate in million gallon per day, [mgd].
-        cas_per_tank : int
-            Number of membrane cassettes per tank.
-        D_tank: float
-            Depth of the membrane tank, [ft].
+        N_pump : int
+            Number of the pumps.
+        D : float
+            Depth of the reactor, [ft].
         TMP : float
             Transmembrane pressure, [psi].
         include_aerobic_filter : bool
-            Whether aerobic filter is included in the reactor design.
+            Whether aerobic filter is included in the reactor design,
+            additional head will be added if the filter is included.
+        kwargs : dict
+            Additional attribute values to set (e.g., `L_s`, `H_ts`),
+            this will overwrite the default values.
         '''
         add_inputs = self.add_inputs
         Q_mgd = Q_mgd or self.Q_mgd
-        cas_per_tank = cas_per_tank or add_inputs[0]
-        D_tank = D_tank or add_inputs[1]
+        N_pump = N_pump or add_inputs[0]
+        D = D or add_inputs[1]
         TMP = TMP or add_inputs[2]
         include_aerobic_filter = include_aerobic_filter or add_inputs[3]
 
-        H_ts_PERM = D_tank if include_aerobic_filter else 0
+        H_ts_PERM = D if include_aerobic_filter else 0
 
-        M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
-            Q_mgd=Q_mgd,
-            N_pump=cas_per_tank,
+        val_dct = dict(
             L_s=20, # based on a 30-module unit with a total length of 6 m, [ft]
-            L_d=10*cas_per_tank, # based on a 30-module unit with a total width of 1.6 m and extra space, [ft]
+            L_d=10*N_pump, # based on a 30-module unit with a total width of 1.6 m and extra space, [ft]
             H_ts=H_ts_PERM, #  H_ds_PERM (D_tank) - H_ss_PERM (0 or D_tank)
             H_p=TMP*2.31 # TMP in water head, [ft], comment below on 2.31
             )
+        val_dct.update(kwargs)
+        M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
+            Q_mgd=Q_mgd, N_pump=N_pump, **val_dct)
 
         # # factor = 2.31 calculated by
         # factor = auom('psi').conversion_factor('Pa') # Pa is kg/m/s2, now in [Pa]
@@ -396,11 +489,11 @@ class WWTpump(SanUnit):
         return M_SS_IR_pipe, M_SS_IR_pump, 0
 
 
-    def design_retentate_CSTR(self, Q_mgd=None, cas_per_tank=None):
+    def design_retentate_CSTR(self, Q_mgd=None, N_pump=None, **kwargs):
         '''
         Design pump for the retent stream of CSTR reactors.
 
-        Parameters defined through the `add_inputs` argument upon initiation of
+        Parameters defined through the `add_inputs` argument upon initialization of
         this unit (Q_mgd listed separately) will be used if not provided
         when calling this function.
 
@@ -408,29 +501,34 @@ class WWTpump(SanUnit):
         ----------
         Q_mgd : float
             Volumetric flow rate in million gallon per day, [mgd].
-        cas_per_tank : int
-            Number of membrane cassettes per tank.
+        N_pump : int
+            Number of the pumps.
+        kwargs : dict
+            Additional attribute values to set (e.g., `L_s`, `H_ts`),
+            this will overwrite the default values.
         '''
         Q_mgd = Q_mgd or self.Q_mgd
-        cas_per_tank = cas_per_tank or self.add_inputs[0]
+        N_pump = N_pump or self.add_inputs[0]
 
-        M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
-            Q_mgd=Q_mgd,
-            N_pump=cas_per_tank,
+        val_dct = dict(
             L_s=100, # pipe length per module
             L_d=30, # pipe length per module (same as the discharge side of lift pump)
             H_ts=0., # H_ds_IR (D_tank) - H_ss_IR (D_tank)
             H_p=0. # no pressure
             )
+        val_dct.update(kwargs)
+
+        M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
+            Q_mgd=Q_mgd, N_pump=N_pump, **val_dct)
 
         return M_SS_IR_pipe, M_SS_IR_pump, 0
 
 
-    def design_retentate_AF(self, Q_mgd=None, N_filter=None, D=None):
+    def design_retentate_AF(self, Q_mgd=None, N_pump=None, D=None, **kwargs):
         '''
         Design pump for the retentate stream of AF reactors.
 
-        Parameters defined through the `add_inputs` argument upon initiation of
+        Parameters defined through the `add_inputs` argument upon initialization of
         this unit (Q_mgd listed separately) will be used if not provided
         when calling this function.
 
@@ -438,33 +536,38 @@ class WWTpump(SanUnit):
         ----------
         Q_mgd : float
             Volumetric flow rate in million gallon per day, [mgd].
-        N_filter : float
-            Number of filter tanks.
+        N_pump : int
+            Number of the pumps.
         D : float
-            Depth of the filter tank, [ft].
+            Depth of the reactor, [ft].
+        kwargs : dict
+            Additional attribute values to set (e.g., `L_s`, `H_ts`),
+            this will overwrite the default values.
         '''
         add_inputs = self.add_inputs
         Q_mgd = Q_mgd or self.Q_mgd
-        N_filter = N_filter or add_inputs[0]
+        N_pump = N_pump or add_inputs[0]
         D = D or add_inputs[1]
 
-        M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
-            Q_mgd=Q_mgd,
-            N_pump=N_filter,
+        val_dct = dict(
             L_s=100, # assumed pipe length per filter, [ft]
             L_d=30, # same as discharge side of lift pumping, [ft]
             H_ts=0., # H_ds_IR (D) - H_ss_IR (D)
             H_p=0. # no pressure
             )
+        val_dct.update(kwargs)
+
+        M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
+            Q_mgd=Q_mgd, N_pump=N_pump, **val_dct)
 
         return M_SS_IR_pipe, M_SS_IR_pump, 0
 
 
-    def design_recirculation_CSTR(self, Q_mgd=None, L_CSTR=None):
+    def design_recirculation_CSTR(self, Q_mgd=None, N_pump=None, L=None, **kwargs):
         '''
-        Design pump for the recirculation stream of CSTR reactors.
+        Design pump for the recirculation stream of reactors.
 
-        Parameters defined through the `add_inputs` argument upon initiation of
+        Parameters defined through the `add_inputs` argument upon initialization of
         this unit (Q_mgd listed separately) will be used if not provided
         when calling this function.
 
@@ -472,30 +575,37 @@ class WWTpump(SanUnit):
         ----------
         Q_mgd : float
             Volumetric flow rate in million gallon per day, [mgd].
-        L_CSTR : float
-            Length of the CSTR tank, [ft].
+        N_pump : int
+            Number of the pumps.
+        L : float
+            Length of the reactor, [ft].
+        kwargs : dict
+            Additional attribute values to set (e.g., `L_s`, `H_ts`),
+            this will overwrite the default values.
         '''
         Q_mgd = Q_mgd or self.Q_mgd
-        L_CSTR = L_CSTR or self.add_inputs[0]
+        L = L or self.add_inputs[0]
 
-        M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
-            Q_mgd=Q_mgd,
-            N_pump=1,
+        val_dct = dict(
             L_s=0., # ignore suction side
-            L_d=L_CSTR, # pipe length per train
+            L_d=L, # pipe length per train
             H_ts=5., # H_ds_IR (5) - H_ss_IR (0)
             H_p=0. # no pressure
             )
+        val_dct.update(kwargs)
+
+        M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
+            Q_mgd=Q_mgd, N_pump=N_pump, **val_dct)
 
         return M_SS_IR_pipe, M_SS_IR_pump, 0
 
 
-    def design_recirculation_AF(self, Q_mgd=None, N_filter=None, d=None,
-                                D=None):
+    def design_recirculation_AF(self, Q_mgd=None, N_pump=None, d=None,
+                                D=None, **kwargs):
         '''
         Design pump for the recirculation stream of AF reactors.
 
-        Parameters defined through the `add_inputs` argument upon initiation of
+        Parameters defined through the `add_inputs` argument upon initialization of
         this unit (Q_mgd listed separately) will be used if not provided
         when calling this function.
 
@@ -503,36 +613,41 @@ class WWTpump(SanUnit):
         ----------
         Q_mgd : float
             Volumetric flow rate in million gallon per day, [mgd].
-        N_filter : float
-            Number of filter tanks.
+        N_pump : int
+            Number of the pumps.
         d : float
-            diameter of the filter tank, [ft].
+            Diameter (or width) of the reactor, [ft].
         D : float
-            Depth of the filter tank, [ft].
+            Depth of the reactor, [ft].
+        kwargs : dict
+            Additional attribute values to set (e.g., `L_s`, `H_ts`),
+            this will overwrite the default values.
         '''
         add_inputs = self.add_inputs
         Q_mgd = Q_mgd or self.Q_mgd
-        N_filter = N_filter or add_inputs[0]
+        N_pump = N_pump or add_inputs[0]
         d = d or add_inputs[1]
         D = D or add_inputs[2]
 
-        M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
-            Q_mgd=Q_mgd,
-            N_pump=N_filter,
+        val_dct = dict(
             L_s=d+D, # pipe length per filter, [ft]
             L_d=30, # same as discharge side of lift pumping, [ft]
             H_ts=0., # H_ds_IR (D) - H_ss_IR (D)
             H_p=0. # no pressure
             )
+        val_dct.update(kwargs)
+
+        M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
+            Q_mgd=Q_mgd, N_pump=N_pump, **kwargs)
 
         return M_SS_IR_pipe, M_SS_IR_pump, 0
 
 
-    def design_lift(self, Q_mgd=None, N_filter=None, D=None):
+    def design_lift(self, Q_mgd=None, N_pump=None, D=None, **kwargs):
         '''
         Design pump for the filter tank to lift streams.
 
-        Parameters defined through the `add_inputs` argument upon initiation of
+        Parameters defined through the `add_inputs` argument upon initialization of
         this unit (Q_mgd listed separately) will be used if not provided
         when calling this function.
 
@@ -540,29 +655,34 @@ class WWTpump(SanUnit):
         ----------
         Q_mgd : float
             Volumetric flow rate in million gallon per day, [mgd].
-        N_filter : float
-            Number of filter tanks.
+        N_pump : int
+            Number of the pumps.
         D : float
             Depth of the filter tank, [ft].
+        kwargs : dict
+            Additional attribute values to set (e.g., `L_s`, `H_ts`),
+            this will overwrite the default values.
         '''
         add_inputs = self.add_inputs
         Q_mgd = Q_mgd or self.Q_mgd
-        N_filter = N_filter or add_inputs[0]
+        N_pump = N_pump or add_inputs[0]
         D = D or add_inputs[1]
 
-        M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
-            Q_mgd=Q_mgd,
-            N_pump=N_filter,
+        val_dct = dict(
             L_s=150, # length of suction pipe per filter, [ft]
             L_d=30, # pipe length per filter, [ft]
             H_ts=D, # H_ds_LIFT (D) - H_ss_LIFT (0)
             H_p=0. # no pressure
             )
+        val_dct.update(kwargs)
+
+        M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
+            Q_mgd=Q_mgd, N_pump=N_pump, **kwargs)
 
         return M_SS_IR_pipe, M_SS_IR_pump, 0
 
 
-    def design_sludge(self, Q_mgd=None):
+    def design_sludge(self, Q_mgd=None, N_pump=None, **kwargs):
         '''
         Design pump for handling waste sludge.
 
@@ -570,28 +690,36 @@ class WWTpump(SanUnit):
         ----------
         Q_mgd : float
             Volumetric flow rate in million gallon per day, [mgd].
+        N_pump : int
+            Number of the pumps.
+        kwargs : dict
+            Additional attribute values to set (e.g., `L_s`, `H_ts`),
+            this will overwrite the default values.
         '''
         Q_mgd = Q_mgd or self.Q_mgd
+        N_pump = N_pump or 1
 
-        M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
-            Q_mgd=Q_mgd,
-            N_pump=1,
+        val_dct = dict(
             L_s=50, # length of suction pipe, [ft]
             L_d=50, # length of discharge pipe, [ft]
             H_ts=0., # H_ds_LIFT (D) - H_ss_LIFT (0)
             H_p=0. # no pressure
             )
+        val_dct.update(kwargs)
+
+        M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
+            Q_mgd=Q_mgd, N_pump=N_pump, **kwargs)
 
         return M_SS_IR_pipe, M_SS_IR_pump, 0
 
 
-    def design_chemical(self, Q_mgd=None):
+    def design_chemical(self, Q_mgd=None, N_pump=None, **kwargs):
         '''
         Design pump for membrane cleaning chemicals (NaOCl and citric acid),
         storage containers are included, and are assumed to be cubic in shape
         and made of HDPE.
 
-        Parameters defined through the `add_inputs` argument upon initiation of
+        Parameters defined through the `add_inputs` argument upon initialization of
         this unit (Q_mgd listed separately) will be used if not provided
         when calling this function.
 
@@ -599,6 +727,11 @@ class WWTpump(SanUnit):
         ----------
         Q_mgd : float
             Volumetric flow rate in million gallon per day, [mgd].
+        N_pump : int
+            Number of the pumps.
+        kwargs : dict
+            Additional attribute values to set (e.g., `L_s`, `H_ts`),
+            this will overwrite the default values.
         '''
         if not Q_mgd:
             V_CHEM = self.ins[0].F_vol * 24 * 7 * 2 # for two weeks of storage, [m3]
@@ -606,6 +739,7 @@ class WWTpump(SanUnit):
         else:
             V_CHEM = (Q_mgd*1e6/_m3_to_gal) * 7 * 2
             Q_CHEM_mgd = Q_mgd
+        N_pump = N_pump or 1
 
         # HDPE volume, [m3], 0.003 [m] is the thickness of the container
         V_HDPE = 0.003 * (V_CHEM**(1/3))**2*6
@@ -618,14 +752,16 @@ class WWTpump(SanUnit):
         H_ds_CHEM = 9 + 7/12 - 18/12
         H_ts_CHEM = H_ds_CHEM - H_ss_CHEM
 
-        M_SS_CHEM_pipe, M_SS_CHEM_pump = self._design_generic(
-            Q_mgd=Q_CHEM_mgd,
-            N_pump=1,
+        val_dct = dict(
             L_s=0., # no suction pipe
             L_d=30.,
             H_ts=H_ts_CHEM,
             H_p=0. # no pressure
             )
+        val_dct.update(kwargs)
+
+        M_SS_CHEM_pipe, M_SS_CHEM_pump = self._design_generic(
+            Q_mgd=Q_CHEM_mgd, N_pump=N_pump, **kwargs)
 
         return M_SS_CHEM_pipe, M_SS_CHEM_pump, V_HDPE
 
@@ -651,49 +787,6 @@ class WWTpump(SanUnit):
     def valid_pump_types(self):
         '''[tuple] Acceptable pump types.'''
         return self._valid_pump_types
-
-    @property
-    def capacity_factor(self):
-        '''[float] A safety factor to handle peaks.'''
-        return self._capacity_factor
-    @capacity_factor.setter
-    def capacity_factor(self, i):
-        self._capacity_factor = i
-
-    @property
-    def N_pump(self):
-        '''[int] Number of pumps.'''
-        return self._N_pump
-
-    @property
-    def H_sf(self):
-        '''[float] Suction friction head, [ft].'''
-        return self._H_sf
-
-    @property
-    def H_df(self):
-        '''[float] Discharge friction head, [ft].'''
-        return self._H_df
-
-    @property
-    def H_ts(self):
-        '''[float] Total static head, [ft].'''
-        return self._H_ts
-
-    @property
-    def H_p(self):
-        '''[float] Pressure head, [ft].'''
-        return self._H_p
-
-    @property
-    def TDH(self):
-        '''[float] Total dynamic head, [ft].'''
-        return self.H_ts+self.H_sf+self.H_df+self.H_p
-
-    @property
-    def BHP(self):
-        '''[float] Brake horsepower, [hp].'''
-        return (self.TDH*self.Q_gpm)/3960/self.brake_efficiency
 
     @property
     def Q_mgd(self):
@@ -724,6 +817,138 @@ class WWTpump(SanUnit):
     def Q_cfs(self):
         '''[float] Volumetric flow rate in cubic feet per second, [cfs].'''
         return self.Q_mgd*1e6/24/60/60/_ft3_to_gal
+
+    @property
+    def capacity_factor(self):
+        '''[float] A safety factor to handle peaks.'''
+        return self._capacity_factor
+    @capacity_factor.setter
+    def capacity_factor(self, i):
+        self._capacity_factor = i
+
+    @property
+    def N_pump(self):
+        '''[int] Number of pumps.'''
+        return self._N_pump or 1
+    @N_pump.setter
+    def N_pump(self, i):
+        self._N_pump = ceil(i)
+
+    @property
+    def v(self):
+        '''[float] Fluid velocity, [ft/s].'''
+        return self._v
+    @v.setter
+    def v(self, i):
+        self._v = i
+
+    @property
+    def C(self):
+        '''[float] Hazen-Williams coefficient to calculate fluid friction.'''
+        return self._C
+    @C.setter
+    def C(self, i):
+        self._C = i
+
+    @property
+    def L_PB(self):
+        '''[float] Length of the pump building, [ft].'''
+        return self._L_PB
+    @L_PB.setter
+    def L_PB(self, i):
+        self._L_PB = i
+
+    @property
+    def W_PB(self):
+        '''[float] Width of the pump building, [ft].'''
+        return self._W_PB
+    @W_PB.setter
+    def W_PB(self, i):
+        self.W_PB = i
+
+    @property
+    def D_PB(self):
+        '''[float] Depth of the pump building, [ft].'''
+        return self._D_PB
+    @D_PB.setter
+    def D_PB(self, i):
+        self._D_PB = i
+
+    @property
+    def t_wall(self):
+        '''
+        [float] Concrete wall thickness, [ft].
+        default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
+        '''
+        return self._t_wall or (1 + max(self.D_PB-12, 0)/12)
+    @t_wall.setter
+    def t_wall(self, i):
+        self._t_wall = i
+
+    @property
+    def t_slab(self):
+        '''
+        [float] Concrete slab thickness, [ft],
+        default to be 2 in thicker than the wall thickness.
+        '''
+        return self._t_slab or self.t_wall+2/12
+    @t_slab.setter
+    def t_slab(self, i):
+        self._t_slab = i
+
+    @property
+    def excav_slope(self):
+        '''[float] Slope for excavation (horizontal/vertical).'''
+        return self._excav_slope
+    @excav_slope.setter
+    def excav_slope(self, i):
+        self._excav_slope = i
+
+    @property
+    def constr_access(self):
+        '''[float] Extra room for construction access, [ft].'''
+        return self._constr_access
+    @constr_access.setter
+    def constr_access(self, i):
+        self._constr_access = i
+
+    @property
+    def SS_per_pump(self):
+        '''[float] Quantity of stainless steel per pump, [kg/ea].'''
+        return self._SS_per_pump
+    @SS_per_pump.setter
+    def SS_per_pump(self, i):
+        self._SS_per_pump = i
+
+    @property
+    def H_sf(self):
+        '''[float] Suction friction head, [ft].'''
+        return self._H_sf
+
+    @property
+    def H_df(self):
+        '''[float] Discharge friction head, [ft].'''
+        return self._H_df
+
+    @property
+    def H_ts(self):
+        '''[float] Total static head, [ft].'''
+        return self._H_ts
+
+    @property
+    def H_p(self):
+        '''[float] Pressure head, [ft].'''
+        return self._H_p
+
+    @property
+    def TDH(self):
+        '''[float] Total dynamic head, [ft].'''
+        return self.H_ts+self.H_sf+self.H_df+self.H_p
+
+    @property
+    def BHP(self):
+        '''[float] Brake horsepower, [hp].'''
+        return (self.TDH*self.Q_gpm)/3960/self.brake_efficiency
 
     @property
     def brake_efficiency(self):
