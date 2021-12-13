@@ -74,21 +74,6 @@ class Mixer(SanUnit, Mixer):
         '''updates rates of change of output stream from rates of change of the Mixer'''
         self._outs[0]._dstate = self._dstate
 
-    # def _state_locator(self, arr):
-    #     '''derives conditions of output stream from conditions of the Mixer'''
-    #     dct = {}
-    #     dct[self.outs[0].ID] = dct[self.ID] = arr
-    #     return dct
-
-    # def _dstate_locator(self, arr):
-    #     '''derives rates of change of output stream from rates of change of the Mixer'''
-    #     return self._state_locator(arr)
-
-    # def _load_state(self):
-    #     '''returns a dictionary of values of state variables within the CSTR and in the output stream.'''
-    #     if self._state is None: self._init_state()
-    #     return {self.ID: self._state}
-
     @property
     def ODE(self):
         if self._ODE is None:
@@ -100,10 +85,8 @@ class Mixer(SanUnit, Mixer):
         # _n_state = len(self.components)+1
         def dy_dt(t, QC_ins, QC, dQC_ins):
             if _n_ins > 1:
-                # QC_ins = QC_ins.reshape((_n_ins, _n_state))
                 Q_ins = QC_ins[:, -1]
                 C_ins = QC_ins[:, :-1]
-                # dQC_ins = dQC_ins.reshape((_n_ins, _n_state))
                 dQ_ins = dQC_ins[:, -1]
                 dC_ins = dQC_ins[:, :-1]
                 Q = Q_ins.sum()
@@ -112,9 +95,7 @@ class Mixer(SanUnit, Mixer):
                 C_dot = (dQ_ins @ C_ins + Q_ins @ dC_ins - Q_dot * C)/Q
                 self._dstate[-1] = Q_dot
                 self._dstate[:-1] = C_dot
-                # return np.append(C_dot, Q_dot)
             else:
-                # return dQC_ins
                 self._dstate = dQC_ins[0]
             self._update_dstate()
         self._ODE = dy_dt
@@ -191,23 +172,6 @@ class Splitter(SanUnit, Splitter):
         arr = self._dstate
         self._outs[0]._dstate = self._split_out0_state * arr
         self._outs[1]._dstate = self._split_out1_state * arr
-
-    # def _state_locator(self, arr):
-    #     '''derives conditions of output stream from conditions of the Splitter'''
-    #     dct = {}
-    #     dct[self.ID] = arr
-    #     dct[self.outs[0].ID] = self._split_out0_state * arr
-    #     dct[self.outs[1].ID] = self._split_out1_state * arr
-    #     return dct
-
-    # def _dstate_locator(self, arr):
-    #     '''derives rates of change of output streams from rates of change of the Splitter'''
-    #     return self._state_locator(arr)
-
-    # def _load_state(self):
-    #     '''returns a dictionary of values of state variables within the clarifer and in the output streams.'''
-    #     if self._state is None: self._init_state()
-    #     return {self.ID: self._state}
 
     @property
     def ODE(self):
