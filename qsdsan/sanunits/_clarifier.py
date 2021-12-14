@@ -104,8 +104,7 @@ class FlatBottomCircularClarifier(SanUnit):
         self._solubles = None
         self._X_comp = np.zeros(len(self.components))
         header = self._state_header
-        self._state_header = list(header[:-1]) + \
-            [f'TSS{i+1} [mg/L]' for i in range(N_layer)] + [header[-1]]
+        self._state_header = list(header) + [f'TSS{i+1} [mg/L]' for i in range(N_layer)] 
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
