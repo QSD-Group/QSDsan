@@ -159,16 +159,18 @@ def by_conc(self, TP):
 
     '''
     try:
-        conc = self._data_cache[TP]
+        conc = self._data_cache['conc'][TP]
     except:
         cmps = self.chemicals
         mol = self.data
-        F_vol = self.by_volume(TP).data.sum()
+        try: F_vol = self.by_volume(TP).data.sum()
+        except:         breakpoint()
         conc = np.zeros_like(mol, dtype=object)
         for i, cmp in enumerate(cmps):
             conc[i] = ConcentrationProperty(cmp.ID, mol, i, F_vol, cmp.MW,
                                             None, self._phase)
-        self._data_cache[TP] = \
+        self._data_cache['conc'] = {}
+        self._data_cache['conc'][TP] = \
         conc = ComponentConcentrationIndexer.from_data(property_array(conc),
                                                       self._phase, cmps,
                                                       False)
