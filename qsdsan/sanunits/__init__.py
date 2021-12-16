@@ -42,6 +42,7 @@ from ._ion_exchange_reclaimer import *
 from ._ecr_reclaimer import *
 from ._housing_reclaimer import *
 from ._system_reclaimer import *
+from ._sludge_pasteurization import*
 
 
 #add new sanunits here
@@ -74,7 +75,8 @@ from . import (
     _ion_exchange_reclaimer,
     _ecr_reclaimer,
     _housing_reclaimer,
-    _system_reclaimer
+    _system_reclaimer,
+    _sludge_pasteurization
     )
 
 #add new sanunits here
@@ -107,5 +109,6 @@ __all__ = (
     *_ion_exchange_reclaimer.__all__,
     *_ecr_reclaimer.__all__,
     *_housing_reclaimer.__all__,
-    *_system_reclaimer.__all__
+    *_system_reclaimer.__all__,
+    *_sludge_pasteurization
            )

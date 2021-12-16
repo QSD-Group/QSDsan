@@ -143,7 +143,19 @@ class IonExchangeReclaimer(SanUnit):
         self.add_construction(add_cost=False)        
  
         
-     #_cost based on amount of steel and stainless plus individual components
+     #_cost based on amount of steel and stainless plus individual component
+        
+
+    def _calc_replacement_cost(self):
+        ion_exchange_replacement_cost = ((self.GAC_zeolite_mesh * self.zeolite_lifetime) + (self.ion_exchange_replacement_other_parts/10)) #USD/yr
+        return ion_exchange_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
+                  
+    def _calc_maintenance_labor_cost(self):
+        ion_exchange_maintenance_labor = ((self.labor_maintenance_zeolite_regeneration * self.wages) 
+                                        + (self.labor_maintenance_GAC_replacement * self.wages)
+                                        + (self.labor_replacement_zeolite * self.wages))
+        return ion_exchange_maintenance_labor/ (365 * 24) # USD/hr (all items are per hour)
+    
     def _cost(self):
 
         self.baseline_purchase_costs['Pipes'] = (self.four_in_pipe_SCH40 + self.four_in_pipe_SCH80)
@@ -153,17 +165,11 @@ class IonExchangeReclaimer(SanUnit):
         self.baseline_purchase_costs['GAC_Zeolite'] = (self.GAC_zeolite_mesh)  
             
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
-              
-        # self.add_OPEX =  self._calc_replacement_cost() + self._calc_maintenance_labor_cost()
+     
+        add_OPEX = self._calc_replacement_cost() +  self._calc_maintenance_labor_cost()
+        self._add_OPEX = {'Additional OPEX': add_OPEX}
     
-        
-    def _calc_replacement_cost(self):
-        ion_exchange_replacement_cost = (self.GAC_zeolite_mesh * self.zeolite_lifetime) #USD/yr
-        return ion_exchange_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
-                  
-    # def _calc_maintenance_labor_cost(self):
-    #     ion_exchange_maintenance_labor = ((self.labor_maintenance_GAC_replacement * self.wages))
-    #     return ion_exchange_maintenance_labor/ (365 * 24) # USD/hr (all items are per hour)
+    
 
 
 
