@@ -168,9 +168,7 @@ class CSTR(SanUnit):
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
         mixed = self._mixed # avoid creating multiple new streams
-        self._mixed.mix_from(self.ins)
-        # mixed = WasteStream()
-        # mixed.mix_from(self.ins)
+        mixed.mix_from(self.ins)
         Q = mixed.get_total_flow('m3/d')
         if state is not None: Cs = state
         elif self._concs is not None: Cs = self._concs

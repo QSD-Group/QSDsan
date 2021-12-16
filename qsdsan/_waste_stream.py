@@ -159,7 +159,7 @@ def by_conc(self, TP):
 
     '''
     try:
-        conc = self._data_cache['conc'][TP]
+        conc = self._data_cache['conc', TP]
     except:
         cmps = self.chemicals
         mol = self.data
@@ -169,8 +169,7 @@ def by_conc(self, TP):
         for i, cmp in enumerate(cmps):
             conc[i] = ConcentrationProperty(cmp.ID, mol, i, F_vol, cmp.MW,
                                             None, self._phase)
-        self._data_cache['conc'] = {}
-        self._data_cache['conc'][TP] = \
+        self._data_cache['conc', TP] = \
         conc = ComponentConcentrationIndexer.from_data(property_array(conc),
                                                       self._phase, cmps,
                                                       False)
