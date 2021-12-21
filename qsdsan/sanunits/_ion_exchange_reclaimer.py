@@ -166,7 +166,7 @@ class IonExchangeReclaimer(SanUnit):
             
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
      
-        add_OPEX = self._calc_replacement_cost() +  self._calc_maintenance_labor_cost()
+        add_OPEX = self._calc_replacement_cost() 
         self._add_OPEX = {'Additional OPEX': add_OPEX}
     
     
