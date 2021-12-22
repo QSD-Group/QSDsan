@@ -147,7 +147,7 @@ class IonExchangeReclaimer(SanUnit):
         
 
     def _calc_replacement_cost(self):
-        ion_exchange_replacement_cost = ((self.GAC_zeolite_mesh * self.zeolite_lifetime) + (self.ion_exchange_replacement_other_parts/10)) #USD/yr
+        ion_exchange_replacement_cost = ((self.GAC_zeolite_mesh * self.zeolite_lifetime) + (self.ion_exchange_replacement_other_parts /10)) #USD/yr
         return ion_exchange_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
                   
     def _calc_maintenance_labor_cost(self):

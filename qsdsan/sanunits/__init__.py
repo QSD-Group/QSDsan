@@ -110,5 +110,5 @@ __all__ = (
     *_ecr_reclaimer.__all__,
     *_housing_reclaimer.__all__,
     *_system_reclaimer.__all__,
-    *_sludge_pasteurization
+    *_sludge_pasteurization.__all__
            )

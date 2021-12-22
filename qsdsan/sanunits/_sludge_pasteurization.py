@@ -24,15 +24,25 @@ class SludgePasteurization(SanUnit):
     Parameters
     ----------
     if_combustion : bool
-        If include combusion reaction during simulation.
+         If include combusion reaction during simulation.
     temp_pasteurization : float
         Pasteurization temperature (Kelvin)
     Examples
+    hhv_lpg : float
+        Higher heating value of Liquid Petroleum Gas at 25C/298.15K in MJ/kg
+        The higher heating value (also known gross calorific value or gross energy) of a fuel is defined as the amount of heat released 
+        by a specified quantity (initially at 25°C) once it is combusted and the products have returned to a temperature of 25°C, which 
+        takes into account the latent heat of vaporization of water in the combustion products.
+        
+    Higher heating value (HHV) is calculated with the product of water being in liquid form while 
+    lower heating value (LHV) is calculated with the product of water being in vapor form.
     --------
     `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
     '''
     
-    #TELL SHION ABOUT ADDING 273.15, THE TWO MISTAKES CANCEL EACH OTHER ABOUT BUT FOR CONSISTENCY AND ACCURACY YOU PROBABLY WANT TO FIX IT 
+    #higher heating value is returned to 25 degrees after combusted but the lower heat value is not
+    #can't maintain temperature for that long, after combustion 
+    
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', 
                  heat_loss=0.1, target_MC = 0.1, sludge_temp = 10 + 273.15, 
                  temp_pasteurization= 70 + 273.15, lhv_lpg = 50125):
@@ -42,15 +52,16 @@ class SludgePasteurization(SanUnit):
         self._target_MC = target_MC      
         self._sludge_temp = sludge_temp
         self._temp_pasteurization = temp_pasteurization
-        
+        self._lhv_lpg = lhv_lpg
+    breakpoint()    
     _N_ins = 3
-    _N_outs = 4
+    _N_outs = 1
 
     def _run(self):
         air, sludge, lpg = self.ins
         lpg.phase = 'l'
         sludge.phase = 's'
-        struvite, treated_sludge = self.outs 
+        treated_sludge = self.outs[0] 
         treated_sludge.copy_like(sludge) 
         treated_sludge = treated_sludge.mass
         
@@ -64,6 +75,7 @@ class SludgePasteurization(SanUnit):
         
         #
         
+        #check for kg vs gram, if gram / 1000 
         #DON'T DIVIDE BY 1000 IF YOU WANT KG/HR 
         # Mass calculations
         # total amount of water in sludge
@@ -76,12 +88,20 @@ class SludgePasteurization(SanUnit):
         #WHAT IS THE TEMP OF EVAPORATED WATER, WHERE DOES THE EVAPORATED WATER GO, RECOVER HEAT, 
         #AND FINAL TEMP OF SLUDGE, AT WHAT TEMP IS WATER REMOVED. 
         
+        #water will be evaporated and goes into the atmosphere 
+        #temperature of evaportaed water will be sludge pasterurizaiton tempearture 
+        #no heat is recovered
+        #final temperature is 25 degrees
+        #water temp removed is the same as the sludge pasteurization temperature 
+        
+        
+        #pg 5 eq 4 and 5 
         #IF IT SHOULD BE THAT WET CONTENT IS 10% AFTER SLUDGE PASTERUZIATION 
         #TELL SHION THAT HEAT LOSS IS IN .1% IF SHE DIVIDES BY 100
         # Overall heat required for pasteurization
-        self.Q_d = ((self.M_w * self.Cp_w * (self.temp_pasteurization - self.sludge_temp) 
-                    + self.M_dm * self.Cp_dm * (self.temp_pasteurization - self.sludge_temp) 
-                    + self.M_we * self.l_w)*(1 + self.heat_loss)) #kJ/hr
+        self.Q_d = ((self.M_w * self.Cp_w * (self.temp_pasteurization - self.sludge_temp)) 
+                    + (self.M_dm * self.Cp_dm * (self.temp_pasteurization - self.sludge_temp)) 
+                    + (self.M_we * self.l_w))*(1 + self.heat_loss) #kJ/hr
         
 
         lpg_vol_reqd = self.Q_d / self.lhv_lpg # kg/hr 
@@ -120,7 +140,7 @@ class SludgePasteurization(SanUnit):
     @temp_pasteurization.setter
     def temp_pasteurization(self, i):
         self._temp_pasteurization = i
-            
+
         
         
         

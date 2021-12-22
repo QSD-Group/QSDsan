@@ -97,19 +97,19 @@ class PrimaryReclaimer(SanUnit, Decay):
         
 
         sludge.imass['H2O'] = sludge.F_mass * 0.5
-        
-#!!!!!Need to find away to cost treatment of solids
 
     def _design(self):
         #find rough value for FRP for tank 
         design = self.design_results
-        design['FRP'] = FRP_quant = self.FRP_per_tank  
-        self.construction = (Construction(item='FRP', quantity = FRP_quant, quantity_unit = 'kg'))
+        design['FRP'] = FRP_quant = self.FRP_per_tank 
+        design['Pump'] = pump_quant = self.pump_lca
+        self.construction = (Construction(item='FRP', quantity = FRP_quant, quantity_unit = 'kg'),
+                             Construction(item='Pump', quantity = pump_quant, quantity_unit = 'kg'))
         self.add_construction()
  
     def _cost(self):
         
-        self.baseline_purchase_costs['Tanks'] = (self.FRP_tank_cost)
+        self.baseline_purchase_costs['Tanks'] = (self.FRP_tank_cost + self.pump)
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
 
