@@ -19,6 +19,7 @@ for license details.
 import numpy as np
 import pandas as pd
 import thermosteam as tmo
+from warnings import warn
 from . import _component, Chemical, Chemicals, CompiledChemicals, Component
 from .utils import add_V_from_rho, load_data
 
@@ -299,7 +300,8 @@ class Components(Chemicals):
     def load_default(cls, use_default_data=True, store_data=True, default_compile=True):
         '''
         Create and return a :class:`Components` or :class:`CompiledComponents`
-        object containing all default :class:`Component` objects.
+        object containing all default :class:`Component` objects based on
+        `Reiger et al. <https://iwaponline.com/ebooks/book/630/Guidelines-for-Using-Activated-Sludge-Models>`_
 
         Parameters
         ----------
@@ -333,6 +335,11 @@ class Components(Chemicals):
             soluble -> copy from urea, dissolved gas -> copy from CO2.
 
 
+        References
+        ----------
+        [1] Rieger, L.; Gillot, S.; Langergraber, G.; Ohtsuki, T.; Shaw, A.; Tak´cs, I.; Winkler, S.
+        Guidelines for Using Activated Sludge Models; IWA Publishing, 2012.
+        https://doi.org/10.2166/9781780401164.
         '''
         import os
         path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/_components.tsv')
@@ -346,7 +353,6 @@ class Components(Chemicals):
                                       degradability='Undegradable', organic=False)
         new.append(H2O)
 
-        #!!! Potentially use the `default_compile` method
         if default_compile:
             isa = isinstance
             for i in new:
@@ -716,21 +722,26 @@ class CompiledComponents(CompiledChemicals):
         return self.get_IDs_from_array((self.s+self.c)*self.b*self.org)
 
     @property
-    def biomass(self):
-        '''[tuple] IDs of biomass (particulate & organic) components.'''
-        return self.get_IDs_from_array(self.x*self.org)
-
-    @property
-    def active_biomass(self):
-        '''[tuple] IDs of active biomass (particulate & organic & degradable) components.'''
-        return self.get_IDs_from_array(self.x*self.b*self.org)
-
-    @property
-    def inert_biomass(self):
-        '''[tuple] IDs of inert biomass (particulate & organic & undegradable) components.'''
-        return self.get_IDs_from_array(self.x*self.org-self.x*self.b*self.org)
-
-    @property
     def inorganic_solids(self):
         '''[tuple] IDs of inorganic solids (particulate & inorganic, all undegradable) components.'''
         return self.get_IDs_from_array(self.x*self.inorg)
+
+    @property
+    def organic_solids(self):
+        '''[tuple] IDs of organic solids (particulate & organic) components.'''
+        return self.get_IDs_from_array(self.x*self.org)
+
+    @property
+    def biomass(self):
+        '''
+        [tuple] IDs of biomass, will return `organic_solids`
+        (particulate & organic) components if not set by the user.
+        '''
+        if hasattr(self, 'biomass'):
+            return self.biomass
+        else:
+            warn('The `biomass` group is not set, using `organic_solids` instead.')
+            return self.organic_solids
+    @biomass.setter
+    def biomass(self, i):
+        raise RuntimeError('Please use `define_group` to define the biomass group.')

@@ -1,9 +1,11 @@
+Errors and Tips
+===============
 
 Common Errors
-=============
+-------------
 
 ``graphviz``
-------------
+************
 When using :func:`diagram`, if you run into a ``graphviz`` error similar to:
 
    .. code:: bash
@@ -43,7 +45,7 @@ or
 
 
 ``UnicodeDecodeError``
-----------------------
+**********************
 When using non-English operating systems, you may run into errors similar to (cp949 is the case of Korean Windows):
 
    .. code::
@@ -55,7 +57,7 @@ To fix this, Windows users can look at this `thread <https://stackoverflow.com/q
 
 
 ``ModuleNotFoundError``
------------------------
+***********************
 Sometimes (even though you have downloaded/cloned/installed ``qsdsan``), you still cannot see:
 
    .. code::
@@ -86,13 +88,14 @@ There are multiple possible reasons:
 
 
 Tips
-====
+----
 
 Private Fork
-------------
-While ``QSDsan`` (and other supporting packages such as ``EXPOsan``) will stay open-source, it is totally understandable that you may want to create a private fork of ``QSDsan`` (e.g., because of non-disclosure agreement).
+************
+While ``QSDsan`` (and other supporting packages such as ``EXPOsan``) will stay open-source, it is totally understandable that you may want to create private forks of these packages (e.g., because of non-disclosure agreement).
 
-However, GitHub does not allow you to directly create a private fork (since the root repo ``QSDsan`` is public). You can follow these steps for a work-around (modified from an original post `here <https://gist.github.com/0xjac/85097472043b697ab57ba1b1c7530274>`_, you need to do all following in your command-line interface):
+However, GitHub does not allow you to directly create a private fork (or more accurately, this is a separate repo mirror the public repo ``QSDsan``). You can follow these steps for a work-around (modified from an original post `here <https://gist.github.com/0xjac/85097472043b697ab57ba1b1c7530274>`_, you need to do all following in your command-line interface):
+
 #. Create a bare clone of the repository (this is temporary and will be removed):
 
     .. code::
@@ -101,7 +104,7 @@ However, GitHub does not allow you to directly create a private fork (since the 
 
     .. note::
 
-        You should firstly navigate (i.e., ``cd`` to wherever you want the repository to be saved).
+        You should firstly navigate (i.e., ``cd``) to wherever you want the repository to be saved.
 
 #. `Create a new private repository on Github <https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository>`_ and name it ``QSDsan`` (this name actually doesn't matter too much and you can use alternatives that you like, but you'll need to update the clone address below).
 #. Mirror-push your bare clone to your new ``QSDsan`` repository (replace ``<YOUR_USERNAME>`` with your actual Github username in the url below, without the ``<>``):
@@ -151,20 +154,20 @@ However, GitHub does not allow you to directly create a private fork (since the 
         git fetch upstream
         git rebase upstream/main
 
-Other notes
-***********
+**Other notes**
+
 #. If you have never used ``git`` in your CLI, GitHub would ask for authentication and requires you create to a personal access token (instead of using your username and password), follow the instructions from `GitHub <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>`_ to create the token.
 #. For Mac users, you'll probably run into an error related to ``/Library/Developer/CommandLineTools`` if you don't have Xcode Command Line (i.e., ``xcode-select``), follow these `instructions <https://www.freecodecamp.org/news/install-xcode-command-line-tools/>`_ to install it. Note that as you can see in the linked post, even the ``xcode-select``, which is much smaller than the full Xcode app, requires 1GB+ space.
 #. After you cloned ``QSDsan``, you'll need to configure your system path to make sure that you are importing the cloned ``QSDsan``, which means you might need to uninstalled any ``pip``-installed version and add the cloned path to your IDE (e.g., Spyder).
 
 
 Upgrade Python
---------------
+**************
 ``QSDsan`` is currently compatible with and tested for Python 3.7 and 3.8. However, with ``BioSTEAM`` moving to Python 3.8 (see this `issue <https://github.com/BioSTEAMDevelopmentGroup/biosteam/issues/56>`_), qsdsan may be only compatible with Python 3.8 and higher in the future. 
 
 If you need to upgrade Python but having a lot of existing packages, creating a virtual environment may be the best way to avoid conflicts. If you are using ``conda``, its has related documentations on `Python upgrading <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-python.html>`_.
 
 
 Pickle Protocol
----------------
+***************
 ``QSDsan`` saves some of the default components and processes as `pickle <https://docs.python.org/3/library/pickle.html>`_ files to reduce the loading time, Python pickle has different protocols, and Protocol 5 is used in ``QSDsan``. The default ``pickle`` module in Python 3.5-3.7 uses Protocol 4 thus not compatible. For Python 3.5-3.7 users, ``QSDsan`` will prompt a warning to install the `package <https://pypi.org/project/pickle5/>`_ ``pickle5`` for compatibility. For Python 3.4 and below, longer loading time is expected as no pre-saved data files are used.
