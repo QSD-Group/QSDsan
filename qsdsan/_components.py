@@ -713,13 +713,8 @@ class CompiledComponents(CompiledChemicals):
 
     @property
     def inorganics(self):
-        '''[tuple] IDs of inorganic omponents.'''
+        '''[tuple] IDs of inorganic components.'''
         return self.get_IDs_from_array(self.inorg)
-
-    @property
-    def substrates(self):
-        '''[tuple] IDs of substrate (soluble/colloidal & organic & degradable) components.'''
-        return self.get_IDs_from_array((self.s+self.c)*self.b*self.org)
 
     @property
     def inorganic_solids(self):
@@ -732,16 +727,31 @@ class CompiledComponents(CompiledChemicals):
         return self.get_IDs_from_array(self.x*self.org)
 
     @property
+    def substrates(self):
+        '''
+        [tuple] IDs of substrate components, will return
+        soluble/colloidal & organic & degradable components
+        if not set by the user.
+        '''
+        try: return self.__dict__['substrates']
+        except:
+            warn('The `substrates` group is not set, using '
+                 'soluble/colloidal & organic & degradable components instead.')
+            return self.get_IDs_from_array((self.s+self.c)*self.b*self.org)
+    @substrates.setter
+    def substrates(self, i):
+        raise RuntimeError('Please use `define_group` to define the `substrates` group.')
+
+    @property
     def biomass(self):
         '''
-        [tuple] IDs of biomass, will return `organic_solids`
+        [tuple] IDs of biomass components, will return `organic_solids`
         (particulate & organic) components if not set by the user.
         '''
-        if hasattr(self, 'biomass'):
-            return self.biomass
-        else:
+        try: return self.__dict__['biomass']
+        except:
             warn('The `biomass` group is not set, using `organic_solids` instead.')
             return self.organic_solids
     @biomass.setter
     def biomass(self, i):
-        raise RuntimeError('Please use `define_group` to define the biomass group.')
+        raise RuntimeError('Please use `define_group` to define the `biomass` group.')

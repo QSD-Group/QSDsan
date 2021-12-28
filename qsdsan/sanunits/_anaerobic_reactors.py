@@ -445,6 +445,9 @@ class SludgeDigester(SanUnit):
     A conventional digester for anaerobic digestion of sludge as in
     `Shoener et al. <https://doi.org/10.1039/C5EE03715H>`_.
 
+    Note that the `CompiledComponents` object set in system simulation must
+    have defined `active_biomass`.
+
     Parameters
     ----------
     ins : Iterable
