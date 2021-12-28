@@ -33,8 +33,9 @@ Links to docs
    membrane_bioreactors
    PolishingFilter
    pumping
-   sludge_handling
+   Screening
    Sedimentation
+   sludge_handling
    suspended_growth_bioreactors
    tanks
    toilets

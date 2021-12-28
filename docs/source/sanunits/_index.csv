@@ -30,6 +30,7 @@ PolishingFilter,No,No,Completed
 Pump,Yes,No,Completed
 ReversedSplitter,No,Yes,Completed
 SBR (sequential batch reactor),Yes,No,Under development
+Screening,No,No,Completed
 Sedimentation,No,No,Completed
 SludgeCentrifuge,No,No,Completed
 ﻿SludgeDigester,No,Yes,Under development

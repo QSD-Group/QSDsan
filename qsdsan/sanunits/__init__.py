@@ -25,6 +25,7 @@ from ._excretion import *
 from ._hx import *
 from ._lumped_cost import *
 from ._pumping import *
+from ._screening import *
 from ._sludge_handling import *
 from ._suspended_growth_bioreactor import *
 from ._tanks import *
@@ -61,6 +62,7 @@ from . import (
     _membrane_bioreactors,
     _polishing_filter,
     _pumping,
+    _screening,
     _sedimentation,
     _sludge_handling,
     _suspended_growth_bioreactor,
@@ -88,6 +90,7 @@ __all__ = (
     *_membrane_bioreactors.__all__,
     *_polishing_filter.__all__,
     *_pumping.__all__,
+    *_screening.__all__,
     *_sedimentation.__all__,
     *_sludge_handling.__all__,
     *_suspended_growth_bioreactor.__all__,

@@ -11,7 +11,14 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-__all__ = ('copy_attr', 'register_with_prefix', )
+from datetime import timedelta
+from biosteam.utils import TicToc
+
+__all__ = (
+    'copy_attr',
+    'register_with_prefix',
+    'time_printer',
+    )
 
 
 def copy_attr(new, original, skip=(), same=()):
@@ -79,3 +86,40 @@ def register_with_prefix(obj, prefix, ID):
     else:
         full_ID = prefix+'_'+ID if prefix else ID
         registry.register_safely(full_ID, obj)
+
+
+# Allow functions to print execution time with a `print_time` kwargs
+def time_printer(func):
+    '''
+    Allow functions to print execution time with a `print_time` kwarg.
+
+    Examples
+    --------
+    >>> from qsdsan.utils import time_printer
+    >>> @time_printer
+    ... def foo(a=1, print_time=False):
+    ...     return a
+    >>> # This will print run time
+    >>> print(foo(a=5))
+    function `foo`
+    Total time: 0:00:00.
+    5
+    >>> # This will NOT print run time
+    >>> print(foo(a=5, print_time=False))
+    5
+    '''
+
+    def inner(*args, **kwargs):
+        print_time = kwargs.get('print_time')
+        if print_time is not False:
+            timer = TicToc()
+            timer.tic()
+        output = func(*args, **kwargs)
+        if print_time is not False:
+            time = str(timedelta(seconds=round(timer.elapsed_time)))
+            name = str(func).split(' ')[1]
+            print(f'function `{name}`')
+            print(f'Total time: {time}.')
+        return output
+    inner.__doc__ = func.__doc__
+    return inner

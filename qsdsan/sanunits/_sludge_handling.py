@@ -50,6 +50,8 @@ class SludgeHandling(SanUnit):
     solids : Iterable(str)
         IDs of the solid components.
         If not provided, will be set to the default `solids` attribute of the components.
+    disposal_cost : float
+        Disposal cost of the dewatered solids. [$/kg].
 
     References
     ----------
@@ -66,10 +68,10 @@ class SludgeHandling(SanUnit):
 
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 init_with='WasteStream', isdynamic=False,
-                 sludge_moisture=0.96, solids=()):
-        SanUnit.__init__(self, ID, ins, outs, thermo,
-                         init_with=init_with, isdynamic=isdynamic)
+                 init_with='WasteStream',
+                 sludge_moisture=0.96, solids=(),
+                 disposal_cost=125/907.18474): # from $/U.S. ton
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with)
         self.sludge_moisture = sludge_moisture
         cmps = self.components
         self.solids = solids or cmps.solids
@@ -105,11 +107,15 @@ class SludgeHandling(SanUnit):
 
 
     def _cost(self):
+        m_solids = self.outs[-1].F_mass_out
+        self.add_OPEX = {'Sludge disposal': m_solids*self.disposal_cost}
         pumps = (self.effluent_pump, self.sludge_pump)
+        self.power_utility.rate = 0.
         for i in range(2):
             pumps[i].ins[0] = self.outs[i].copy() # use `.proxy()` will interfere `_run`
             pumps[i].simulate()
             self.power_utility.rate += pumps[i].power_utility.rate
+
 
 
 class BeltThickener(SludgeHandling):

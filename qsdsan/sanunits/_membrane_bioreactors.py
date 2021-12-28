@@ -28,7 +28,7 @@ Energy Environ. Sci. 2016, 9 (3), 1102–1112.
 https://doi.org/10.1039/C5EE03715H.
 '''
 
-from math import ceil, floor, pi
+from math import ceil, floor
 from biosteam.exceptions import DesignError
 from . import HXutility, WWTpump, InternalCirculationRx
 from .. import SanStream, SanUnit
@@ -980,7 +980,7 @@ class AnMBR(SanUnit):
         '''[float] Length of the membrane tank, [ft].'''
         if self.membrane_configuration=='cross-flow':
             return 0.
-        return math.ceil((self.cas_per_tank+self.cas_per_tank_spare)*3.4)
+        return ceil((self.cas_per_tank+self.cas_per_tank_spare)*3.4)
 
     @property
     def W_tank(self):

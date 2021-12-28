@@ -8,7 +8,6 @@ utils
    colors
    components
    construction
-   decorators
    doc_examples
    formatting
    loading

@@ -23,7 +23,7 @@ import numpy as np
 from collections import defaultdict
 from collections.abc import Iterable
 from matplotlib import pyplot as plt
-from biosteam.utils import Inlets, Outlets, format_title
+from biosteam.utils import Inlets, Outlets
 from . import currency, Unit, Stream, SanStream, WasteStream, \
     Construction, Transportation, Equipment, System
 
@@ -421,17 +421,6 @@ class SanUnit(Unit, isabstract=True):
 
     def _collect_ins_state(self):
         return np.array([inf._state for inf in self._ins])
-        # states = []
-        # for inf in self.ins:
-        #     state = inf._state
-        #     if state is not None:
-        #         if not isinstance(state, float):
-        #             states.append(state)
-        #         else:
-        #             inf._init_state()
-        #             states.append(inf._state)
-        # return np.array(states)
-
 
     def _collect_ins_dstate(self):
         return np.array([inf._dstate for inf in self._ins])

@@ -30,8 +30,6 @@ from . import (
     colors,
     components,
     construction,
-    decorators,
-    # descriptors, # currently not in use
     formatting,
     loading,
     misc,
@@ -46,8 +44,6 @@ from .cod import *
 from .colors import *
 from .components import *
 from .construction import *
-from .decorators import *
-# from .descriptors import *
 from .formatting import *
 from .loading import *
 from .misc import *
@@ -63,8 +59,6 @@ __all__ = (
     *colors.__all__,
     *components.__all__,
     *construction.__all__,
-    *decorators.__all__,
-    # *descriptors.__all__,
     *formatting.__all__,
     *loading.__all__,
     *model_eval.__all__,
