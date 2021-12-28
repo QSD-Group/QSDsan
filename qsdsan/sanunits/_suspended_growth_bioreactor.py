@@ -182,27 +182,9 @@ class CSTR(SanUnit):
     def _update_dstate(self):
         self._outs[0]._dstate = self._dstate
 
-    # def _state_locator(self, arr):
-    #     '''derives conditions of output stream from conditions within the CSTR'''
-    #     dct = {}
-    #     dct[self.outs[0].ID] = arr
-    #     dct[self.ID] = arr
-    #     return dct
-
-    # def _dstate_locator(self, arr):
-    #     '''derives rates of change of output stream from rates of change within the CSTR'''
-    #     return self._state_locator(arr)
-
-    # def _load_state(self):
-    #     '''returns a dictionary of values of state variables within the CSTR and in the output stream.'''
-    #     if self._state is None: self._init_state()
-    #     return {self.ID: self._state}
 
     def _run(self):
         '''Only to converge volumetric flows.'''
-        # mixed = self._mixed
-        # mixed.mix_from(self.ins)
-        # treated, = self.outs
         self.outs[0].mix_from(self.ins)
 
     @property
@@ -224,8 +206,6 @@ class CSTR(SanUnit):
             r_eqs = list(processes.production_rates.rate_of_production)
             r = lambdify(C, r_eqs)
 
-        # _n_ins = len(self.ins)
-        # _n_state = len(C) + 1
 
         if isa(self._aeration, (float, int)):
             i = self.components.index(self._DO_ID)
@@ -236,20 +216,6 @@ class CSTR(SanUnit):
                 flow_in = Q_ins @ C_ins / V
                 Q_e = Q_ins.sum()
                 self._dstate[-1] = dQC_ins[:, -1].sum()
-                # if _n_ins > 1:
-                #     QC_ins = QC_ins.reshape((_n_ins, _n_state))
-                #     Q_ins = QC_ins[:, -1]
-                #     C_ins = QC_ins[:, :-1]
-                #     flow_in = Q_ins @ C_ins / V
-                #     Q_e = Q_ins.sum()
-                #     dQC_ins = dQC_ins.reshape((_n_ins, _n_state))
-                #     Q_dot = dQC_ins[:, -1].sum()
-                # else:
-                #     Q_ins = QC_ins[-1]
-                #     C_ins = QC_ins[:-1]
-                #     flow_in = Q_ins * C_ins / V
-                #     Q_e = Q_ins
-                #     Q_dot = dQC_ins[-1]
                 Cs = QC[:-1]
                 Cs[i] = fixed_DO
                 flow_out = Q_e * Cs / V
@@ -258,7 +224,6 @@ class CSTR(SanUnit):
                 C_dot[i] = 0.0
                 self._dstate[:-1] = C_dot
                 self._update_dstate()
-                # return np.append(C_dot, Q_dot)
         else:
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 Q_ins = QC_ins[:, -1]
@@ -266,26 +231,12 @@ class CSTR(SanUnit):
                 flow_in = Q_ins @ C_ins / V
                 Q_e = Q_ins.sum()
                 self._dstate[-1] = dQC_ins[:, -1].sum()
-                # if _n_ins > 1:
-                #     QC_ins = QC_ins.reshape((_n_ins, _n_state))
-                #     Q_ins = QC_ins[:, -1]
-                #     C_ins = QC_ins[:, :-1]
-                #     flow_in = Q_ins @ C_ins / V
-                #     Q_e = Q_ins.sum()
-                #     dQC_ins = dQC_ins.reshape((_n_ins, _n_state))
-                #     Q_dot = dQC_ins[:, -1].sum()
-                # else:
-                #     Q_e = Q_ins = QC_ins[-1]
-                #     C_ins = QC_ins[:-1]
-                #     flow_in = Q_ins * C_ins / V
-                #     Q_dot = dQC_ins[-1]
                 Cs = QC[:-1]
                 flow_out = Q_e * Cs / V
                 react = np.asarray(r(*Cs))
                 C_dot = flow_in - flow_out + react
                 self._dstate[:-1] = C_dot
                 self._update_dstate()
-                # return np.append(C_dot, Q_dot)
 
         self._ODE = dy_dt
 

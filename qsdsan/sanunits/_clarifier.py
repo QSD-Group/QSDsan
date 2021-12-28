@@ -244,7 +244,6 @@ class FlatBottomCircularClarifier(SanUnit):
         cmpx = self.components.index
         x = self.components.x
         for k, v in kwargs.items(): Cs[cmpx(k)] = v
-        # self._solubles = np.tile(Cs*(1-x), self._N_layer)
         self._solubles = Cs*(1-x)
 
     def set_init_sludge_solids(self, **kwargs):
@@ -299,20 +298,6 @@ class FlatBottomCircularClarifier(SanUnit):
         else:
             slg._state[:-1] = Z+X_s
 
-    # def _state_locator(self, arr):
-    #     x = self.components.x
-    #     n = self._N_layer
-    #     dct = {}
-    #     Q = arr[-(1+n)]
-    #     Q_e = Q - self._Qs
-    #     Z = arr[:len(x)]
-    #     X_composition = self._X_comp # (m, ), mg COD/ mg TSS
-    #     X_e = arr[-n] * X_composition
-    #     X_s = arr[-1] * X_composition
-    #     dct[self.ID] = arr
-    #     dct[self.outs[0].ID] = np.append(Z+X_e, Q_e)
-    #     dct[self.outs[1].ID] = np.append(Z+X_s, self._Qs)        
-    #     return dct
 
     def _update_dstate(self):
         arr = self._dstate
@@ -333,25 +318,7 @@ class FlatBottomCircularClarifier(SanUnit):
         else:
             slg._dstate[:-1] = dZ+dX_s
     
-    # def _dstate_locator(self, arr):
-    #     x = self.components.x
-    #     n = self._N_layer
-    #     dct = {}
-    #     dQ = arr[-(1+n)]
-    #     dZ = arr[:len(x)]
-    #     X_composition = self._X_comp # (m, ), mg COD/ mg TSS
-    #     dX_e = arr[-n] * X_composition
-    #     dX_s = arr[-1] * X_composition
-    #     dct[self.ID] = arr
-    #     dct[self.outs[0].ID] = np.append(dZ+dX_e, dQ)
-    #     dct[self.outs[1].ID] = np.append(dZ+dX_s, 0)
-    #     return dct
-
-    # def _load_state(self):
-    #     '''returns a dictionary of values of state variables within the clarifer and in the output streams.'''
-    #     if self._state is None: self._init_state()
-    #     return {self.ID: self._state}
-
+    
     def _run(self):
         '''only to converge volumetric flows.'''
         inf, = self.ins
