@@ -20,6 +20,7 @@ from math import pi
 
 __all__ = (
     'calculate_excavation_volume',
+    'excavation',
     'calculate_pipe_material',
     'select_pipe',
     'cost_pump',
@@ -32,7 +33,7 @@ __all__ = (
 # Excavation
 # =============================================================================
 
-def calculate_excavation_volume(L, W, D, excav_slope, constr_acess):
+def calculate_excavation_volume(L, W, D, excav_slope, constr_access):
     '''
     Calculate the excavation volume needed as a frustum.
 
@@ -41,20 +42,155 @@ def calculate_excavation_volume(L, W, D, excav_slope, constr_acess):
     Parameters
     ----------
     L : float
-        Length at the bottom.
+        Excavation length at the bottom.
     W : float
-        Width at the bottom.
+        Excavation width at the bottom.
     D : float
-        Depth.
+        Excavation depth.
     excav_slope : float
-        Slope (horizontal/vertical).
+        Excavation slope (horizontal/vertical).
     constr_acess : float
-        Construction access on top of the length/width.
+        Extra (i.e., on top of the length/width) room for construction access.
     '''
-    L_bottom = L + 2*constr_acess
-    W_bottom = W + 2*constr_acess
+    L_bottom = L + 2*constr_access
+    W_bottom = W + 2*constr_access
     diff = D * excav_slope
     return 0.5*(L_bottom*W_bottom+(L_bottom+diff)*(W_bottom+diff))
+
+
+def excavation(ID, excav_L=0, excav_W=0, excav_D=0,
+               excav_slope=1.5, constr_access=3, excav_unit_cost=0.3,
+               F_BM=1, lifetime=None):
+    '''
+    A convenient decorator to add excavation-related properties and functions
+    to a :class:`qs.SanUnit`.
+
+    The excavation volume is calculated as a frustum.
+
+    Parameters
+    ----------
+    ID : str
+        ID of this excavation activity.
+    excav_L : float
+        Excavation length at the bottom, [ft].
+    excav_W : float
+        Excavation width at the bottom, [ft].
+    excav_D : float
+        Excavation depth. [ft].
+    excav_slope : float
+        Excavation slope (horizontal/vertical).
+    constr_access : float
+        Extra (i.e., on top of the length/width) room for construction access, [ft].
+    excav_unit_cost : float
+        Unit cost of the excavation activity, [$/ft3].
+    F_BM : float
+        Bare module factor of this excavation activity.
+    lifetime : int
+        Lifetime of this excavation activity.
+    '''
+
+    return lambda cls: add_excavation(cls, ID, excav_L, excav_W, excav_D,
+                                      excav_slope, constr_access, excav_unit_cost,
+                                      F_BM, lifetime)
+
+
+        # can be left as empty if this decorator is used only once for this unit.
+        # This is useful when one unit has multiple excavation activities having
+        # different parameters (and in which case `ID` must be provided to differentiate them).
+
+        # will be 0 regardless of the set value when `include_excavation_cost` is False.
+
+def add_excavation(cls, ID, excav_L, excav_W, excav_D,
+                   excav_slope, constr_access, excav_unit_cost,
+                   F_BM, lifetime):
+    def set_excav_L(cls, i): cls._excav_L = i
+    def set_excav_W(cls, i): cls._excav_W = i
+    def set_excav_D(cls, i): cls._excav_D = i
+    def set_excav_slope(cls, i): cls._excav_slope = i
+    def set_constr_access(cls, i): cls._constr_access = i
+    def set_excav_unit_cost(cls, i): cls._excav_unit_cost = i
+    prop_dct = {
+        'excav_L':
+            (excav_L, # value of the property
+             lambda cls: cls._excav_L, # getter
+             set_excav_L, # setter
+             '[dict(float)] Excavation length at the bottom, [ft].'), # documentation
+        'excav_W':
+            (excav_W,
+             lambda cls: cls._excav_W,
+             set_excav_W,
+             '[dict(float)] Excavation width at the bottom, [ft].'),
+        'excav_D':
+            (excav_D,
+             lambda cls: cls._excav_D,
+             set_excav_D,
+             '[dict(float)] Excavation depth at the bottom, [ft].'),
+        'excav_slope':
+            (excav_slope,
+             lambda cls: cls._excav_slope,
+             set_excav_slope,
+             '[dict(float)] Slope for excavation (horizontal/vertical).'),
+        'constr_access':
+            (constr_access,
+             lambda cls: cls._constr_access,
+             set_constr_access,
+             '[dict(float)] Extra (i.e., on top of the length/width) room for construction access, [ft].'),
+        'excav_unit_cost':
+            (excav_unit_cost,
+             lambda cls: cls._excav_unit_cost,
+             set_excav_unit_cost,
+             '[dict(float)] Unit cost of the excavation activity, [$/ft3].'),
+        }
+    # Add attributes and properties
+    get_cls = getattr
+    set_cls = setattr
+    try:
+        items = get_cls(cls, '_excavation_items')
+        items.append(ID)
+    except AttributeError:
+        cls._excavation_items = [ID]
+    for prop_name, val in prop_dct.items():
+        # Firstly set the attributes with a `_` prefix.
+        attr_name = f'_{prop_name}'
+        try:
+            existing = get_cls(cls, attr_name)
+            existing[ID] = val[0]
+        except AttributeError:
+            set_cls(cls, attr_name, {ID: val[0]})
+            # Then add the corresponding properties with documentation.
+            prop = property(fget=val[1], fset=val[2], doc=val[3])
+            set_cls(cls, prop_name, prop)
+    key = '{ID} excavation'
+    cls.F_BM[key] = F_BM
+    cls._default_equipment_lifetime[key] = lifetime
+
+    # Add convenient functions for instances of the class
+    try: get_cls(cls, '_add_excavation_design')
+    except AttributeError:
+        def _add_excavation_design(self):
+            D = self.design_results
+            units = self._units
+            L_dct, W_dct, D_dct = \
+                get_cls(self, 'excav_L'), get_cls(self, 'excav_W'), get_cls(self, 'excav_D')
+            excav_slope_dct, constr_access_dct = \
+                get_cls(self, 'excav_slope'), get_cls(self, 'constr_access')
+            for item in items:
+                key = f'{item} excavation'
+                units[key] = 'ft3'
+                D[key] = calculate_excavation_volume(
+                    L_dct[item], W_dct[item], D_dct[item],
+                    excav_slope_dct[item], constr_access_dct[item])
+        cls._add_excavation_design = _add_excavation_design
+
+        def _add_excavation_cost(self):
+            D = self.design_results
+            C = self.baseline_purchase_costs
+            excav_unit_cost_dct = get_cls(self, 'excav_unit_cost')
+            for item in items:
+                key = f'{item} excavation'
+                C[key] = D[key] * excav_unit_cost_dct[item]
+        cls._add_excavation_cost = _add_excavation_cost
+    return cls
 
 
 # %%

@@ -692,7 +692,7 @@ class AnMBR(SanUnit):
         # Concrete and excavation
         VEX, VWC, VSC = \
             D['Excavation [ft3]'], D['Wall concrete [ft3]'], D['Slab concrete [ft3]']
-        # 27 is to convert the VEX from ft3 to yard3
+        # 27 is to convert the VEX from ft3 to yd3
         C['Reactor excavation'] = VEX / 27 * 8 if self.include_excavation_cost else 0.
         C['Wall concrete'] = VWC / 27 * 650
         C['Slab concrete'] = VSC / 27 * 350

@@ -85,20 +85,6 @@ class Pump(SanUnit, Pump):
         '''updates rates of change of output stream from rates of change of the Mixer'''
         self._outs[0]._dstate = self._dstate
 
-    # def _state_locator(self, arr):
-    #     '''derives conditions of output stream from conditions of the Mixer'''
-    #     dct = {}
-    #     dct[self.outs[0].ID] = dct[self.ID] = arr
-    #     return dct
-
-    # def _dstate_locator(self, arr):
-    #     '''derives rates of change of output stream from rates of change of the Mixer'''
-    #     return self._state_locator(arr)
-
-    # def _load_state(self):
-    #     '''returns a dictionary of values of state variables within the CSTR and in the output stream.'''
-    #     if self._state is None: self._init_state()
-    #     return {self.ID: self._state}
 
     @property
     def ODE(self):
@@ -234,10 +220,6 @@ class WWTpump(SanUnit):
         Additional inputs that will be passed to the corresponding design algorithm.
         Check the documentation of for the corresponding pump type
         for the design algorithm of the specific input requirements.
-    building_unit_cost : float
-        Unit cost of the pump building, [USD/ft2].
-    excavation_unit_cost : float
-        Unit cost of excavation for the building, [USD/ft3].
     kwargs : dict
         Other attributes to be set.
 
@@ -272,7 +254,13 @@ class WWTpump(SanUnit):
     _excav_slope = 1.5 # horizontal/vertical
     _constr_access = 3
 
-    _default_equipment_lifetime = {'Pump': 15}
+    #!!! need to all materials' lifetime in LCA
+    _default_equipment_lifetime = {
+        'Pump': 15,
+        'Pipe stainless steel': 15,
+        'Pump stainless steel': 15,
+        'Chemical storage HDPE': 30,
+        }
 
     _valid_pump_types = (
         'permeate_cross-flow',
@@ -285,20 +273,22 @@ class WWTpump(SanUnit):
         'chemical',
         )
 
+    # Default costs
+    _building_unit_cost = 90 # [$/ft2]
+    _wall_concrete_cost = 650/27 # [$/ft3], $650/yd3, 27 to convert from ft3
+    _slab_concrete_cost = 350/27 # [$/ft3]
+    _excavation_unit_cost = 0.3/27 # [$/ft3]
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', isdynamic=False, *,
                  pump_type, Q_mgd=None, add_inputs=(),
                  include_cost=False,
-                 building_unit_cost=90,
-                 excavation_unit_cost=0., #!!! need updating
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with)
         self.pump_type = pump_type
         self.Q_mgd = Q_mgd
         self.add_inputs = add_inputs
         self.include_cost = include_cost
-        self.building_unit_cost = building_unit_cost
-        self.excavation_unit_cost = excavation_unit_cost
         F_BM = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
         self.F_BM.update({
             'Pump': F_BM,
@@ -314,6 +304,11 @@ class WWTpump(SanUnit):
         self.outs[0].copy_like(self.ins[0])
 
 
+    _units = {
+        'Pipe stainless steel': 'kg',
+        'Pump stainless steel': 'kg',
+        'Chemical storage HDPE': 'm3',
+        }
     def _design(self):
         pump_type = format_str(self.pump_type)
         if not pump_type:
@@ -324,11 +319,9 @@ class WWTpump(SanUnit):
             pipe, pumps, hdpe = design_func()
 
         D = self.design_results
-
-        D['Pipe stainless steel [kg]'] = pipe
-        #!!! need to these materials' lifetime in LCA
-        D['Pump stainless steel [kg]'] = pumps
-        D['Chemical storage HDPE [m3]'] = hdpe
+        D['Pipe stainless steel'] = pipe
+        D['Pump stainless steel'] = pumps
+        D['Chemical storage HDPE'] = hdpe
 
 
     #!!! Want to add construction cost here,
@@ -360,6 +353,9 @@ class WWTpump(SanUnit):
             C['Pump building'] = PBA * self.building_unit_cost
 
             #!!! PAUSED at adding concrete and excavation
+            # Concrete
+
+
             # Excavation
 
 
@@ -384,7 +380,7 @@ class WWTpump(SanUnit):
                 }
         else:
             C.clear()
-        self.power_utility.rate = self.BHP/self.motor_efficiency * _hp_to_kW
+        self.power_utility.consumption = self.BHP/self.motor_efficiency * _hp_to_kW
 
 
     # Used by other classes
@@ -959,3 +955,35 @@ class WWTpump(SanUnit):
     def motor_efficiency(self):
         '''[float] Motor efficiency.'''
         return motor_eff(self.BHP)
+
+    @property
+    def building_unit_cost(self):
+        '''[float] Unit cost of the pump building, [USD/ft2].'''
+        return self._building_unit_cost if self.include_cost else 0.
+    @building_unit_cost.setter
+    def building_unit_cost(self, i):
+        self._building_unit_cost = i
+
+    @property
+    def wall_concrete_cost(self):
+        '''[float] Unit cost of wall concrete, [USD/ft3].'''
+        return self._wall_concrete_cost if self.include_cost else 0.
+    @wall_concrete_cost.setter
+    def wall_concrete_cost(self, i):
+        self._wall_concrete_cost = i
+
+    @property
+    def slab_concrete_cost(self):
+        '''[float] Unit cost of slab concrete, [USD/ft3].'''
+        return self._slab_concrete_cost if self.include_cost else 0.
+    @slab_concrete_cost.setter
+    def slab_concrete_cost(self, i):
+        self._slab_concrete_cost = i
+
+    @property
+    def excavation_unit_cost(self):
+        '''[float] Unit cost of excavation for the pump building, [USD/ft3].'''
+        return self._excavation_unit_cost if self.include_cost else 0.
+    @excavation_unit_cost.setter
+    def excavation_unit_cost(self, i):
+        self._excavation_unit_cost = i

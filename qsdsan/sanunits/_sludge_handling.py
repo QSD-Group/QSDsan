@@ -108,13 +108,18 @@ class SludgeHandling(SanUnit):
 
     def _cost(self):
         m_solids = self.outs[-1].F_mass_out
-        self.add_OPEX = {'Sludge disposal': m_solids*self.disposal_cost}
+        disposal_cost = self.disposal_cost
+        add_OPEX, power_utility = self.add_OPEX, self.power_utility
+        if disposal_cost != 0:
+            add_OPEX = {'Sludge disposal': m_solids*self.disposal_cost}
+        else:
+            add_OPEX.clear()
         pumps = (self.effluent_pump, self.sludge_pump)
-        self.power_utility.rate = 0.
+        power_utility.consumption = 0.
         for i in range(2):
             pumps[i].ins[0] = self.outs[i].copy() # use `.proxy()` will interfere `_run`
             pumps[i].simulate()
-            self.power_utility.rate += pumps[i].power_utility.rate
+            power_utility.consumption += pumps[i].power_utility.rate
 
 
 

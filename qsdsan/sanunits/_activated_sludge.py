@@ -40,6 +40,9 @@ class ActivatedSludgeProcess(SanUnit):
         Number of treatment train, should be at least two in case one failing.
     T : float
         Temperature in the aeration tank/anaerobic digester, [K].
+    X_i0 : float
+        Inert biomass concentration in the influent, [mg VSS/L],
+        will calculated based on `inert_biomass` of the current `CompiledComponents` if not provided.
     X_v : float
         Reactor volatile suspended solids (biomass concentration in the aeration tank),
         referred to as mixed volatile liquor suspended solids
@@ -142,8 +145,8 @@ class ActivatedSludgeProcess(SanUnit):
 
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 N_train=2, T=35+273.15, X_v=1210, X_e=15, X_w=10000, SLR=20, SF=4,
-                 aeration_power=1, # p337 of ref 1
+                 N_train=2, T=35+273.15, X_i0=None, X_v=1210, X_e=15, X_w=10000,
+                 SLR=20, SF=4, aeration_power=1, # p337 of ref 1
                  q_hat=12, K=20, Y=0.5, b=0.396, f_d=0.8, # change from 0.2 of ref 2 based on p171 of ref 1
                  COD_factor=1.42, # p8 of Complex Systems in ref 1
                  q_UAP=1.8, q_BAP=0.1, k1=0.12, k2=0.09, K_UAP=100, K_BAP=85,
@@ -151,6 +154,7 @@ class ActivatedSludgeProcess(SanUnit):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.N_train = N_train
         self.T = T
+        self.X_i0 = X_i0
         self.X_v = X_v
         self.X_e = X_e
         self.X_w = X_w
@@ -189,7 +193,17 @@ class ActivatedSludgeProcess(SanUnit):
         S_0 = inf.COD # influent substrate concentration
 
         cmps = self.components
-        X_i0 = inf.imass[cmps.inert_biomass].sum()
+        X_i0 = self.X_i0
+        if not X_i0:
+            try:
+                X_i0 = inf.concs[cmps.inert_biomass].sum()
+            except AttributeError: # group not defined
+                raise AttributeError('The `inert_biomass` group of current `CompiledComponents` '
+                                     'has not bee defined. '
+                                     'Please either define it using the `define_group` function of '
+                                     '`CompiledComponents` or provide `X_i0` for this '
+                                     f'`{self.__class__.__name__}` unit.')
+
         X_v, X_e, X_w, SF = self.X_v, self.X_e, self.X_w, self.SF
         K, Y, b, f_d, COD_factor, q_hat = \
             self.K, self.Y, self.b, self.f_d, self.COD_factor, self.q_hat
@@ -244,38 +258,43 @@ class ActivatedSludgeProcess(SanUnit):
         was.copy_flow(inf)
         Q_eff = Q - Q_was
 
+        # Non-particulate components
         substrates = cmps.substrates
         S_concs = eff.concs[substrates] * S/S_0
-        eff_dct = {ID:S_concs[n] for n, ID in enumerate(substrates)}
+        eff_dct = dict.fromkeys(cmps.IDs, 0)
+        eff_dct.pop('H2O')
+        eff_dct.update({ID:S_concs[n] for n, ID in enumerate(substrates)})
+        # Non-substrate and non-particulate (soluble, colloial, dissolved gas) components
+        # will be splitted in the same way as flow rate mass-wise
         was_dct = eff_dct.copy()
 
-        active_biomass = cmps.inert_biomass
-        X_a_e_concs = eff.concs[active_biomass] * X_e/X_v
+        # Particulate components
+        try: active_biomass = cmps.active_biomass
+        except AttributeError:
+            raise AttributeError('The `active_biomass` group of current `CompiledComponents` '
+                                 'has not bee defined. '
+                                 'Please either define it using the `define_group` function of '
+                                 '`CompiledComponents`.')
+        X_a_inf = inf.concs[active_biomass].sum()
+        X_a_e_concs = eff.concs[active_biomass] * X_e/X_a_inf
         eff_dct.update({ID:X_a_e_concs[n] for n, ID in enumerate(active_biomass)})
-        X_a_w_concs = eff.concs[active_biomass] * X_w/X_v
+        X_a_w_concs = eff.concs[active_biomass] * X_w/X_a_inf
         was_dct.update({ID:X_a_w_concs[n] for n, ID in enumerate(active_biomass)})
-
-        inert_biomass = cmps.inert_biomass
-        X_i_e_concs = eff.concs[inert_biomass] * X_e/X_v
-        eff_dct.update({ID:X_i_e_concs[n] for n, ID in enumerate(inert_biomass)})
-        X_i_w_concs = eff.concs[inert_biomass] * X_w/X_v
-        was_dct.update({ID:X_i_w_concs[n] for n, ID in enumerate(inert_biomass)})
-
-        inorganic_solids = cmps.inorganic_solids
-        X_inorg_e_concs = eff.concs[inorganic_solids] * X_e/X_v
-        eff_dct.update({ID:X_inorg_e_concs[n] for n, ID in enumerate(inorganic_solids)})
-        X_inorg_w_concs = eff.concs[inorganic_solids] * X_w/X_v
-        was_dct.update({ID:X_inorg_w_concs[n] for n, ID in enumerate(inorganic_solids)})
 
         eff.set_flow_by_concentration(
             flow_tot=Q_eff, concentrations=eff_dct, units=('L/d', 'mg/L'))
         was.set_flow_by_concentration(
-            flow_tot=Q_eff, concentrations=was_dct, units=('L/d', 'mg/L'))
+            flow_tot=Q_was, concentrations=was_dct, units=('L/d', 'mg/L'))
+
+        # Assume all non-active solids (including inorganic solids) go to sludge
+        X_i = set(cmps.solids).difference(set(active_biomass))
+        eff.imass[X_i] = 0
+        was.imass[X_i] = inf.imass[X_i]
 
         air.empty()
+        emission.empty()
         air.imass['O2'] = auom('mg/d').convert(O2_uptake, 'kg/hr')
-        air.imass['N2'] = air.imol['O2']/0.21*0.79
-        emission.copy_flow(air, air.gases, remove=False)
+        emission.imass['N2'] = air.imass['N2'] = air.imol['O2']/0.21*0.79
 
         eff.T = was.T = emission.T = self.T
 
@@ -393,7 +412,7 @@ class ActivatedSludgeProcess(SanUnit):
 
     def _cost(self):
         self.add_equipment_cost()
-        #!!! Consider include pump as a equipment or similar,
+        #!!! Consider including pumps as equipment or similar,
         # note that the `capacity_factor` should be 2 for the intermediate pumps
         # and return sludge ratio
 
