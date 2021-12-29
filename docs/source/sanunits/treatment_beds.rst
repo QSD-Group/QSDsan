@@ -1,4 +1,3 @@
-
 Treatment Beds
 ==============
 
