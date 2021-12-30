@@ -99,7 +99,7 @@ class Ultrafiltration(SanUnit):
        self.power_utility(self.power_demand/ 1000) #kW
     
     def _calc_replacement_cost(self):
-        ultrafiltration_replacement_cost = (self.replacement_costs) #USD/yr
+        ultrafiltration_replacement_cost = (self.replacement_costs / 20) #USD/yr
         return ultrafiltration_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
        
 

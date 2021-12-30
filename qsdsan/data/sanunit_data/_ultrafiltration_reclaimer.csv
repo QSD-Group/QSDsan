@@ -18,7 +18,6 @@ onehalf_in_pipe_clamp,"1/2"" pipe clamp sheet metal",USD,0.48,0.432,0.528,triang
 UF_brush,Nylon bush for Ultra filteration,USD,9.84,8.856,10.824,triangular,Duke BOM
 two_way_valve,2-way valve ( Modulating),USD,153.62,138.258,168.982,triangular,Duke BOM
 UF_unit,Ultrafilteration Unit,USD,2580.8,2322.72,2838.88,triangular,Duke BOM
-energy_demand,Watts*hour/L,Wh/L,15.0392,1.0784,29,uniform,Duke UI meeting 2021_09_24
 one_in_pipe_SCH40_lifetime,"1"" Pipe SCH 40 x 3000 mm Long",y,3,2.7,3.3,uniform,SI Manuscript with Duke
 onehalf_in_pipe_SCH40_lifetime,"1/2"" Pipe SCH 40 x 3000 mm Long",y,3,2.7,3.3,uniform,SI Manuscript with Duke
 one_in_elbow_SCH80_lifetime,"1"" 90 Deg Elbow SCH 80",y,3,2.7,3.3,uniform,SI Manuscript with Duke
@@ -43,8 +42,5 @@ Brass_weight,,kg,0.3855535,0.289165125,0.481941875,uniform,SI Manuscript with Du
 Steel_weight,,kg,3,2.25,3.75,uniform,SI Manuscript with Duke
 Nylon_weight,,kg,1.21,0.9075,1.5125,uniform,SI Manuscript with Duke
 TSS_removal,,%,0.756501,0.108696,1,triangular,Duke Data
-TSS_influent,,,93.53571,19,338,uniform,
-replacement_costs,,USD,283.981,255.5829,312.3791,uniform,10% of capital costs
-Liters,,L/hr,30,22.5,37.5,uniform,email from Brian
-power_demand,,W,750,675,825,uniform,email from Brian
-working_time,,hr,15,10,20,uniform,
+replacement_costs,,USD,283.981,212.98575,354.97625,triangular,10% of capital costs
+power_demand,,W,750,675,825,triangular,email from Brian

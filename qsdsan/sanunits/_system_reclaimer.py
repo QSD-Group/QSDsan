@@ -66,19 +66,19 @@ class SystemReclaimer(SanUnit):
                                          + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank)
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
-        #certain parts need to be replaced based on an expected lifefime
-        #the cost of these parts is considered along with the cost of the labor to replace them
-        replacement_parts_annual_cost = (self.T_nut + self.die_cast_hinge + self.SLS_locks + self.DC_round_key
-                                         + self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
-                                         + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
-                                         + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
-                                         + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * .1
+        # #certain parts need to be replaced based on an expected lifefime
+        # #the cost of these parts is considered along with the cost of the labor to replace them
+        # replacement_parts_annual_cost = (self.T_nut + self.die_cast_hinge + self.SLS_locks + self.DC_round_key
+        #                                  + self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
+        #                                  + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
+        #                                  + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
+        #                                  + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * .1
      
         self.power_utility(self.power_demand / 1000) #kW
         #self.power_utility(self.power_demand * self.working_time)
         
     def _calc_replacement_cost(self):
-        controls_replacement_cost = (self.replacement_parts_annual_cost) #USD/yr
+        controls_replacement_cost = (self.replacement_costs) / 20 #USD/yr
         return controls_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
         
 

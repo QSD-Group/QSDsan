@@ -114,7 +114,7 @@ class IonExchangeReclaimer(SanUnit):
         
         # KCl
         self.KCl_demand_time = (self.KCl_weight * self.regen_freq_per_yr) / (365*24) # kg KCl / hr
-        #KCl_cost_day = KCl_demand_time * 24 * (self.KCl / self.KCl_weight_per_cost) # $ KCl / d
+        # KCl_cost_day = self.KCl_demand_time * 24 * (self.KCl / self.KCl_weight_per_cost) # $ KCl / d
         KCl.imass['PotassiumChloride'] = self.KCl_demand_time
 
 
@@ -151,9 +151,7 @@ class IonExchangeReclaimer(SanUnit):
         return ion_exchange_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
                   
     def _calc_maintenance_labor_cost(self):
-        ion_exchange_maintenance_labor = ((self.labor_maintenance_zeolite_regeneration * self.wages) 
-                                        + (self.labor_maintenance_GAC_replacement * self.wages)
-                                        + (self.labor_replacement_zeolite * self.wages))
+        ion_exchange_maintenance_labor = (self.labor_maintenance_zeolite_regeneration * self.wages)
         return ion_exchange_maintenance_labor/ (365 * 24) # USD/hr (all items are per hour)
     
     def _cost(self):

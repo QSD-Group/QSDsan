@@ -50,21 +50,20 @@ class ECR_Reclaimer(SanUnit):
             setattr(self, attr, value)
     
     
-    _N_ins = 3
+    _N_ins = 2
     _N_outs = 1
 
-#look up literature values for percentages typically removed by anaerobic/follow yalin/john's assumptions \
    
     def _run(self):
-        waste, salt, HCl = self.ins
+        waste, salt = self.ins
         treated = self.outs[0]
         treated.copy_like(self.ins[0])
 
         salt.imass['NaCl'] = self.salt_dosing/7 #salt demand per day
         
       
-        HCL_density = 1.2 #g/ml
-        HCl.imass['HCl'] = self.HCl_dosing/52/24/7 * HCL_density / 1000 #kg/h
+        # HCL_density = 1.2 #g/ml
+        # HCl.imass['HCl'] = self.HCl_dosing/52/24/7 * HCL_density / 1000 #kg/h
         
         
                 
@@ -92,7 +91,7 @@ class ECR_Reclaimer(SanUnit):
         #self.power_utility(self.power_demand * self.working_time)
     
     def _calc_replacement_cost(self):
-        ecr_replacement_cost = (self.EC_cell * (10/self.EC_cell_lifetime)) #USD/yr
+        ecr_replacement_cost = (self.EC_cell * (20/self.EC_cell_lifetime)) + (self.EC_brush * (20/self.EC_brush_lifetime)) #USD/yr
         return ecr_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
 
         

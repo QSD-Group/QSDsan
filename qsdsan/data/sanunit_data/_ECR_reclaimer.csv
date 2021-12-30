@@ -5,15 +5,13 @@ energy_demand,watts*hour/L,Wh/L,1.1,0.825,1.375,uniform,Duke presentation
 EC_cell_lifetime,,yr,2,1.5,2.5,uniform,SI
 Titanium_weight,,kg,1.029,0.5145,1.5435,uniform,SI
 nylon_weight,,kg,0.78,0.663,0.897,uniform,SI
-EC_bush_lifetime,,yr,10,7.5,12.5,uniform,SI
+EC_brush_lifetime,,yr,10,7.5,12.5,uniform,SI
 tau,,days,0.010416667,,,constant,CIDI
 COD_removal,,fraction of COD removal,0.57515,0.28481,0.876453,triangular,Duke Data
 MCF_decay,,fraction of anaerobic conversion of degraded COD,1,,,constant,"IPCC, 2006"
 N_max_decay,,fraction of N removal,1,,,constant,Report
 N2O_EF_decay,,fraction of of degraded N emitted as N2O,0.005,0.0005,0.006,triangular,"IPCC, 2006; Leeds"
 HCL_life,,times/year,4,3,5,uniform,
-salt_dosing_pump_life,re,times/year,0.1,0.09,0.11,triangular,
-HCl_dosing,,ml/year,2000,1500,2500,uniform,
-salt_dosing,,kg/week,6,5.4,6.6,triangular,
+HCl_dosing,,ml/year,2000,1000,3000,uniform,UIUC Assumptions - 50% uncertainty
+salt_dosing,,kg/week,6,3,9,triangular,
 power_demand,,W,50,45,55,triangular,
-working_time,,h,15,10,20,uniform,

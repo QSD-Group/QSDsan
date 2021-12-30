@@ -25,3 +25,4 @@ steel_weight,,kg,3,1.5,4.5,uniform,Duke BOM
 brass_weight,,kg,1,0.5,1.5,uniform,Duke BOM
 power_demand,,W,40,36,44,triangular,Brian's email
 working_time,,hr,15,10,20,uniform,
+replacement_costs,,USD/lifetime,28.364,14.182,42.546,uniform,Sum of costs * .1 with 50% uncertainty
