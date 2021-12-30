@@ -19,6 +19,7 @@ TODO:
     - Maybe add AeMBR as well (make an MBR superclass)
         - AeMBR can use higher flux and allows for lower transmembrane pressure
     - Add maintenance and operating costs (allow user to choose if to include)
+    - The `capacity_factor` for sludge pump should be `recir_ratio`
 
 References
 ----------

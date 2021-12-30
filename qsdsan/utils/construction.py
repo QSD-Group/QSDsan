@@ -73,13 +73,13 @@ def concrete(ID, L_concrete=0, W_concrete=0, D_concrete=0,
              slab_concrete_unit_cost=13, # about $350/yd3, 350/27
              F_BM=1, lifetime=None):
     '''
-    A convenient decorator to add concrete usage-related properties and functions
+    Handy decorator to add concrete usage-related properties and design/cost functions
     to a :class:`qs.SanUnit`.
 
     Parameters
     ----------
     ID : str
-        ID for which concrete that will be used.
+        ID for which concrete will be used.
     L_concrete : float
         Length of the concrete wall (without considering the wall thickness), [ft].
     W_concrete : float
@@ -287,7 +287,7 @@ def excavation(ID, L_excav=0, W_excav=0, D_excav=0,
                excav_slope=1.5, constr_access=3, excav_unit_cost=0.011, # about $0.3/yd3, 0.3/27
                F_BM=1, lifetime=None):
     '''
-    A convenient decorator to add excavation-related properties and functions
+    Handy decorator to add excavation-related properties and design/cost functions
     to a :class:`qs.SanUnit`.
 
     The excavation volume is calculated as a frustum.
@@ -554,7 +554,7 @@ def select_pipe(Q, v):
 # Pumping
 # =============================================================================
 
-#!!! Maybe move this to the Pump unit!
+#!!! Take this out once replacing all of its usage with the
 def cost_pump(unit=None, Q_mgd=None, recir_ratio=None,
               building_unit_cost=90):
     '''
