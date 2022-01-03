@@ -1,0 +1,28 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+P_rec_1		fraction P recovered	0.9			constant	Lohman et al. 2020
+MW_P		MW of P	30.97			constant	Lohman et al. 2020
+N_P_ratio_struvite		_N:P ratio in struvite	1			constant	Lohman et al. 2020
+MW_N		MW of N	14.01			constant	Lohman et al. 2020
+K_rec_1		fraction K recovered	0			constant	Lohman et al. 2020
+Mg_dose		_mol Mg per mol P	1.1			constant	Lohman et al. 2020
+Mg_MgOH2_ratio		_mol Mg per mol Mg(OH)2	1			constant	Lohman et al. 2020
+MW_MgOH2		_molecular weight of magnesium hydroxide	58.32			constant	Lohman et al. 2020
+Mg_MgCO3_ratio		_mol Mg per mol MgCO3	1			constant	Lohman et al. 2020
+MW_MgCO3		_molecular weight of magnesium carbonate	84.31			constant	Lohman et al. 2020
+cycles_per_day		cycles per day (assuming 1 per hour)	8			constant	Lohman et al. 2020
+reactor_volume		L	500			constant	Lohman et al. 2020
+material_P_stirrer		ft2	3	2	5	uniform	Lohman et al. 2020
+material_P_pipe		m	3	2	5	uniform	Lohman et al. 2020
+cost_P_reactor		USD	1300	1170	1430	uniform	Lohman et al. 2020
+cost_P_stirrer		USD/m2	3.5	2.48	4.51	uniform	Lohman et al. 2020
+cost_P_pipe		USD/m	0.15	0.1	0.2	uniform	Lohman et al. 2020
+cost_filter_bag		USD/20 bags	81.63	73.467	89.793	uniform	Lohman et al. 2020
+filter_bag_wt		kg/bag	0.05	0.01	1	uniform	
+cost_MgOH2_powder		USD/metric ton	145	130	160	uniform	Lohman et al. 2020
+cost_MgCO3_powder		USD/metric ton	900	800	1000	uniform	Lohman et al. 2020
+P_op_cost		% capital cost	5	4.5	5.5	uniform	Lohman et al. 2020
+P_maint_cost		% capital cost	30	27	33	uniform	Lohman et al. 2020
+filter_reuse		# times reused	10	5	20	uniform	Lohman et al. 2020
+MW_struvite		MW of struvite	245.41			constant	
+reactor_weight		kg	50	25	75	uniform	alibaba
+pvc_mass		kg PVC/m	0.472	0.354	0.59	uniform	http://www.midcoonline.com/web/Pages/Products/Pipe/Info/PVC_CPVC/
