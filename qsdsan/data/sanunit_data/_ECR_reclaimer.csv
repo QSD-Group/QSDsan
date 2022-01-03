@@ -13,5 +13,6 @@ N_max_decay,,fraction of N removal,1,,,constant,Report
 N2O_EF_decay,,fraction of of degraded N emitted as N2O,0.005,0.0005,0.006,triangular,"IPCC, 2006; Leeds"
 HCL_life,,times/year,4,3,5,uniform,
 HCl_dosing,,ml/year,2000,1000,3000,uniform,UIUC Assumptions - 50% uncertainty
-salt_dosing,,kg/week,6,3,9,triangular,
+salt_dosing,,kg/week,3,1.5,4.5,triangular,
 power_demand,,W,50,45,55,triangular,
+NaCl_dosing_cost,,USD/week,10,5,15,uniform,UIUC Assumptions - 50% uncertainty

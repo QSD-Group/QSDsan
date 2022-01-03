@@ -80,7 +80,6 @@ class SludgePasteurization(SanUnit):
         sludge.phase = 's'
         treated_sludge = self.outs[0] 
         treated_sludge.copy_like(sludge) 
-        treated_sludge = treated_sludge.mass
         
         
         #Constants

@@ -50,7 +50,7 @@ class HousingReclaimer(SanUnit):
         #find rough value for FRP for tank 
         design = self.design_results
         #!!! Add later design['Aluminum'] = aluminum_quant = self.aluminum_weight
-        design['Steel'] = steel_quant = self.steel_weight
+        design['Steel'] = steel_quant = (self.steel_weight + self.framework_weight + self.fittings_weight)
         self.construction = (
                             (Construction(item='Steel', quantity = steel_quant, quantity_unit = 'kg')))
         self.add_construction()
@@ -62,7 +62,7 @@ class HousingReclaimer(SanUnit):
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
         self.baseline_purchase_costs['Housing'] = (self.frame + self.extrusion + self.angle_frame + 
-                self.angle + self.door_sheet + self.plate_valve + self.powder)
+                self.angle + self.door_sheet + self.plate_valve + self.powder + self.container + self.doors + self.insulation)
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
         #certain parts need to be replaced based on an expected lifefime
