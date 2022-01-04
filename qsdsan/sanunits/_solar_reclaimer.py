@@ -47,7 +47,7 @@ class SolarReclaimer(SanUnit):
         # else:
         #     self._N_outs = self._N_ins = len(ins)
         # self._graphics = UnitGraphics.box(self._N_ins, self._N_outs)
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
 
 
 # load data from csv each name will be self.name    
@@ -73,7 +73,7 @@ class SolarReclaimer(SanUnit):
                              Construction(item='Solar', quantity = solar_quant, quantity_unit = 'm2'))
         self.construction = (
                              Construction(item='Battery', quantity = battery_quant, quantity_unit = 'kg'))
-        self.add_construction()
+        self.add_construction(add_cost=False)
  
     def _calc_replacement_cost(self):
         solar_replacement_parts_annual_cost = (self.solar_replacement * self.solar_cost)  # USD/yr only accounts for time running
@@ -83,11 +83,14 @@ class SolarReclaimer(SanUnit):
         solar_maintenance_labor = (self.pannel_cleaning * self.wages)
         return solar_maintenance_labor / (365 * 24) # USD/hr (all items are per hour)
     
+    F_BM = {'Battery System': 1, 'Solar Cost':1}
     def _cost(self):
         #purchase_costs is used for capital costs
         self.baseline_purchase_costs['Battery System'] = (self.battery_storage_cost + self.battery_holder_cost)
         self.baseline_purchase_costs['Solar Cost'] = (self.solar_cost + self.solar_module_system + self.inverter_cost)
-        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
+        # self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
+
+     
         
         add_OPEX = self._calc_replacement_cost() 
         self._add_OPEX = {'Additional OPEX': add_OPEX}
