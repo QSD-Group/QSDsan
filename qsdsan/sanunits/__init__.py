@@ -43,7 +43,7 @@ from ._ecr_reclaimer import *
 from ._housing_reclaimer import *
 from ._system_reclaimer import *
 from ._sludge_pasteurization import*
-
+from ._solar_reclaimer import*
 
 #add new sanunits here
 from . import (
@@ -76,7 +76,8 @@ from . import (
     _ecr_reclaimer,
     _housing_reclaimer,
     _system_reclaimer,
-    _sludge_pasteurization
+    _sludge_pasteurization,
+    _solar_reclaimer
     )
 
 #add new sanunits here
@@ -110,5 +111,6 @@ __all__ = (
     *_ecr_reclaimer.__all__,
     *_housing_reclaimer.__all__,
     *_system_reclaimer.__all__,
-    *_sludge_pasteurization.__all__
+    *_sludge_pasteurization.__all__,
+    *_solar_reclaimer.__all__
            )

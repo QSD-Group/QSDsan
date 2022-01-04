@@ -131,7 +131,7 @@ class SludgePasteurization(SanUnit):
         return sludge_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
             
     def _calc_maintenance_labor_cost(self):
-        sludge_maintenance_labor_cost = (self.sludge_labor_maintenance * self.sludge_wages)
+        sludge_maintenance_labor_cost = (self.sludge_labor_maintenance * self.wages)
         return sludge_maintenance_labor_cost/ (365 * 24) # USD/hr (all items are per hour)
 
         

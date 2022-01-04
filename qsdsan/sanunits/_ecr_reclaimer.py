@@ -91,7 +91,7 @@ class ECR_Reclaimer(SanUnit):
         #self.power_utility(self.power_demand * self.working_time)
     
     def _calc_replacement_cost(self):
-        ecr_replacement_cost = (self.EC_cell * (20/self.EC_cell_lifetime)) + (self.EC_brush * (20/self.EC_brush_lifetime) + (self.NaCl_dosing_cost *52 )) #USD/yr
+        ecr_replacement_cost = (self.EC_cell * (20/self.EC_cell_lifetime)) + (self.EC_brush * (20/self.EC_brush_lifetime))  #USD/yr
         return ecr_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
 
         
