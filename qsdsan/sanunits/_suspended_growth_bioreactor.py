@@ -50,6 +50,9 @@ class CSTR(SanUnit):
         activated sludge.
     outs : :class:`WasteStream`
         Treated effluent.
+    split : iterable of float
+        Volumetric splits of effluent flows if there are more than one effluent. 
+        The default is None. 
     V_max : float
         Designed volume, in [m^3]. The default is 1000.
     aeration : float or :class:`Process`, optional
@@ -62,17 +65,15 @@ class CSTR(SanUnit):
     suspended_growth_model : :class:`Processes`, optional
         The suspended growth biokinetic model. The default is None.
     '''
-    
-    # cache_state : bool, optional
-    #     Whether to store the states of stream composition in the tank from
-    #     most recent run. The default is True.
 
     _N_ins = 3
     _N_outs = 1
     _ins_size_is_fixed = False
+    _outs_size_is_fixed = False
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 V_max=1000, aeration=2.0, DO_ID='S_O2', suspended_growth_model=None,
+    def __init__(self, ID='', ins=None, outs=(), split=None, thermo=None, 
+                 init_with='WasteStream', V_max=1000, aeration=2.0, 
+                 DO_ID='S_O2', suspended_growth_model=None,
                  isdynamic=True, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic)
         self._V_max = V_max
@@ -81,6 +82,7 @@ class CSTR(SanUnit):
         self._model = suspended_growth_model
         self._concs = None
         self._mixed = WasteStream()
+        self.split = split
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
@@ -142,6 +144,19 @@ class CSTR(SanUnit):
         self._DO_ID = doid
 
     @property
+    def split(self):
+        '''[numpy.1darray or NoneType] The volumetric split of outs.'''
+        return self._split 
+    
+    @split.setter
+    def split(self, split):
+        if split is None: self._split = split
+        else:
+            if len(split) != len(self._outs):
+                raise ValueError('split and outs must have the same size')
+            self._split = np.array(split)/sum(split)
+    
+    @property
     def state(self):
         '''The state of the CSTR, including component concentrations [mg/L] and flow rate [m^3/d].'''
         if self._state is None: return None
@@ -163,29 +178,43 @@ class CSTR(SanUnit):
         for k, v in kwargs.items(): Cs[cmpx(k)] = v
         self._concs = Cs
 
-    def _init_state(self, state=None):
+    def _init_state(self):
         '''initialize state by specifying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
-        mixed = self._mixed # avoid creating multiple new streams
-        mixed.mix_from(self.ins)
+        mixed = self._mixed 
         Q = mixed.get_total_flow('m3/d')
-        if state is not None: Cs = state
-        elif self._concs is not None: Cs = self._concs
+        if self._concs is not None: Cs = self._concs
         else: Cs = mixed.conc
         self._state = np.append(Cs, Q)
         self._dstate = self._state * 0.
 
     def _update_state(self, arr):
-        self._state = self._outs[0]._state = arr
+        self._state = arr
+        if self.split is None: self._outs[0]._state = arr
+        else:
+            for ws, spl in zip(self._outs, self.split):
+                ws._state = arr.copy()
+                ws._state[-1] *= spl
     
     def _update_dstate(self):
-        self._outs[0]._dstate = self._dstate
-
+        arr = self._dstate
+        if self.split is None: self._outs[0]._dstate = arr
+        else:
+            for ws, spl in zip(self._outs, self.split):
+                ws._dstate = arr.copy()
+                ws._dstate[-1] *= spl
 
     def _run(self):
         '''Only to converge volumetric flows.'''
-        self.outs[0].mix_from(self.ins)
+        mixed = self._mixed # avoid creating multiple new streams
+        mixed.mix_from(self.ins)
+        Q = mixed.F_vol # m3/hr
+        if self.split is None: self.outs[0].copy_like(mixed)
+        else: 
+            for ws, spl in zip(self._outs, self.split):
+                ws.copy_like(mixed)
+                ws.set_total_flow(Q*spl, 'm3/hr')
 
     @property
     def ODE(self):
@@ -239,14 +268,6 @@ class CSTR(SanUnit):
                 self._update_dstate()
 
         self._ODE = dy_dt
-
-    def _define_outs(self):
-        dct_y = self._state_locator(self._state)
-        out, = self.outs
-        Q = dct_y[out.ID][-1]
-        Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
-        Cs.pop('H2O', None)
-        out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
 
     def _design(self):
         pass
