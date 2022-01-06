@@ -178,10 +178,16 @@ _lb_to_kg = auom('lb').conversion_factor('kg')
 _ft_to_m = auom('ft').conversion_factor('m')
 _ft3_to_gal = auom('ft3').conversion_factor('gallon')
 _m3_to_gal = auom('m3').conversion_factor('gallon')
-F_BM = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
+F_BM_pump = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
+default_equipment_lifetime = {
+    'Pump': 15,
+    'Pump pipe stainless steel': 15,
+    'Pump stainless steel': 15,
+    'Pump chemical storage HDPE': 30,
+    }
 
-@concrete('Pump building', L_concrete=21, W_concrete=21, D_concrete=12, F_BM=F_BM)
-@excavation('Pump building', L_excav=21, W_excav=21, D_excav=12, F_BM=F_BM)
+@concrete('Pump building', L_concrete=21, W_concrete=21, D_concrete=12, F_BM=F_BM_pump)
+@excavation('Pump building', L_excav=21, W_excav=21, D_excav=12, F_BM=F_BM_pump)
 class WWTpump(SanUnit):
     '''
     Generic class for pumps used in wastewater treatment, [1]_
@@ -258,12 +264,8 @@ class WWTpump(SanUnit):
     _SS_per_pump = 725 * 0.5
     _building_unit_cost = 90 # [$/ft2]
 
-    _default_equipment_lifetime = {
-        'Pump': 15,
-        'Pipe stainless steel': 15,
-        'Pump stainless steel': 15,
-        'Chemical storage HDPE': 30,
-        }
+    _default_equipment_lifetime = default_equipment_lifetime
+    F_BM = {'Pump': F_BM_pump}
 
     _valid_pump_types = (
         'permeate_cross-flow',
@@ -278,8 +280,8 @@ class WWTpump(SanUnit):
         )
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 init_with='WasteStream', *,
-                 pump_type, Q_mgd=None, add_inputs=(),
+                 init_with='WasteStream',
+                 pump_type='', Q_mgd=None, add_inputs=(),
                  include_pump_cost = False,
                  include_building_cost = False,
                  include_building_concrete=False,
@@ -293,7 +295,6 @@ class WWTpump(SanUnit):
         self.include_building_cost = include_building_cost
         self.include_building_concrete = include_building_concrete
         self.include_building_excavation = include_building_excavation
-        self.F_BM['Pump'] = F_BM
 
         for attr, val in kwargs.items:
             setattr(self, attr, val)
@@ -304,9 +305,9 @@ class WWTpump(SanUnit):
 
 
     _units = {
-        'Pipe stainless steel': 'kg',
+        'Pump pipe stainless steel': 'kg',
         'Pump stainless steel': 'kg',
-        'Chemical storage HDPE': 'm3',
+        'Pump chemical storage HDPE': 'm3',
         }
     def _design(self):
         pump_type = format_str(self.pump_type)
@@ -318,9 +319,20 @@ class WWTpump(SanUnit):
             pipe, pumps, hdpe = design_func()
 
         D = self.design_results
-        D['Pipe stainless steel'] = pipe
+        D['Pump pipe stainless steel'] = pipe
         D['Pump stainless steel'] = pumps
-        D['Chemical storage HDPE'] = hdpe
+        if hdpe:
+            D['Pump chemical storage HDPE'] = hdpe
+            self._units['Pump chemical storage HDPE'] = 'm3'
+        else:
+            try:
+                self._units.pop('Pump chemical storage HDPE')
+            except:
+                pass
+            try:
+                self.design_results.pop('Pump chemical storage HDPE')
+            except:
+                pass
 
         # Concrete/excavation for pump building
         if self.include_building_concrete:
@@ -908,12 +920,12 @@ class WWTpump(SanUnit):
 # =============================================================================
 
 #!!! Need to add an example afe=
-def pump(ID, ins, pump_type, Q_mgd, add_inputs,
-         include_pump_cost,
-         include_building_cost,
-         include_building_concrete,
-         include_building_excavation,
-         **kwargs):
+def pump(ID, ins=(), pump_type='', Q_mgd=None, add_inputs=(),
+         include_pump_cost=False,
+         include_building_cost=False,
+         include_building_concrete=False,
+         include_building_excavation=False,
+         F_BM=F_BM_pump, lifetime=default_equipment_lifetime, **kwargs):
     '''
     Handy decorator to add a :class:`~.WWTpump` as an attribute of
     a :class:`qsdsan.SanUnit`.
@@ -938,16 +950,15 @@ def pump(ID, ins, pump_type, Q_mgd, add_inputs,
                                 include_building_cost,
                                 include_building_concrete,
                                 include_building_excavation,
-                                **kwargs)
+                                F_BM, lifetime, **kwargs)
 
 
-def add_pump(cls, ID, ins=(), *,
-             pump_type, Q_mgd=None, add_inputs=(),
-             include_pump_cost = False,
-             include_building_cost = False,
-             include_building_concrete=False,
-             include_building_excavation=False,
-             **kwargs):
+def add_pump(cls, ID, ins, pump_type, Q_mgd, add_inputs,
+             include_pump_cost,
+             include_building_cost,
+             include_building_concrete,
+             include_building_excavation,
+             F_BM, lifetime, **kwargs):
     pump = WWTpump(
         ID, ins=ins, pump_type=pump_type, Q_mgd=Q_mgd, add_inputs=add_inputs,
         include_pump_cost=include_pump_cost,

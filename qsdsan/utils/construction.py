@@ -194,10 +194,10 @@ def add_concrete(cls, ID, L_concrete, W_concrete, D_concrete,
     get_cls = getattr
     set_cls = setattr
     try:
-        items = get_cls(cls, '_concrete_items')
+        items = get_cls(cls, '_concrete')
         items.append(ID)
     except AttributeError:
-        items = cls._concrete_items = [ID]
+        items = cls._concrete = [ID]
     for prop_name, val in prop_dct.items():
         # Firstly set the attributes with a `_` prefix.
         attr_name = f'_{prop_name}'
@@ -389,10 +389,10 @@ def add_excavation(cls, ID, L_excav, W_excav, D_excav,
     get_cls = getattr
     set_cls = setattr
     try:
-        items = get_cls(cls, '_excavation_items')
+        items = get_cls(cls, '_excavation')
         items.append(ID)
     except AttributeError:
-        items = cls._excavation_items = [ID]
+        items = cls._excavation = [ID]
     for prop_name, val in prop_dct.items():
         # Firstly set the attributes with a `_` prefix.
         attr_name = f'_{prop_name}'
