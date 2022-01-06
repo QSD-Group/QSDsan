@@ -23,6 +23,7 @@ import numpy as np
 from collections import defaultdict
 from collections.abc import Iterable
 from matplotlib import pyplot as plt
+from warnings import warn
 from biosteam.utils import Inlets, Outlets
 from . import currency, Unit, Stream, SanStream, WasteStream, \
     Construction, Transportation, Equipment, System
@@ -418,6 +419,8 @@ class SanUnit(Unit, isabstract=True):
             self._isdynamic = bool(i)
             self._init_dynamic()
 
+    def get_retained_mass(self, biomass_IDs):
+        warn(f'The retained biomass in {self.ID} is ignored.')
 
     def _collect_ins_state(self):
         return np.array([inf._state for inf in self._ins])
