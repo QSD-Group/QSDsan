@@ -242,6 +242,7 @@ class CSTR(SanUnit):
 
         _dstate = self._dstate
         _update_dstate = self._update_dstate
+        temp_react = self._temp_react = np.zeros(len(_dstate)-1)
         if isa(self._aeration, (float, int)):
             i = self.components.index(self._DO_ID)
             fixed_DO = self._aeration
@@ -254,8 +255,8 @@ class CSTR(SanUnit):
                 Cs = QC[:-1]
                 Cs[i] = fixed_DO
                 flow_out = Q_e * Cs / V
-                react = np.asarray(r(*Cs))
-                C_dot = flow_in - flow_out + react
+                temp_react[:] = r(*Cs)
+                C_dot = flow_in - flow_out + temp_react
                 C_dot[i] = 0.0
                 _dstate[-1] = dQC_ins[:, -1].sum()
                 _update_dstate()
@@ -268,8 +269,8 @@ class CSTR(SanUnit):
                 _dstate[-1] = dQC_ins[:, -1].sum()
                 Cs = QC[:-1]
                 flow_out = Q_e * Cs / V
-                react = np.asarray(r(*Cs))
-                C_dot = flow_in - flow_out + react
+                temp_react[:] = r(*Cs)
+                C_dot = flow_in - flow_out + temp_react
                 _dstate[:-1] = C_dot
                 _update_dstate()
 

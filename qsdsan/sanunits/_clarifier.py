@@ -11,6 +11,7 @@ for license details.
 '''
 
 from math import exp
+from numpy import maximum as npmax, minimum as npmin, exp as npexp
 from .. import SanUnit, WasteStream
 import numpy as np
 # import pandas as pd
@@ -18,10 +19,12 @@ import numpy as np
 __all__ = ('FlatBottomCircularClarifier',
            'IdealClarifier',)
 
+
 def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp):
     X_star = max(X-X_min, 0)
     v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star))) # exp from the builtin math module is 10X faster
     return X*max(v, 0)
+
 
 class FlatBottomCircularClarifier(SanUnit):
     """
@@ -347,40 +350,89 @@ class FlatBottomCircularClarifier(SanUnit):
         m = len(x)
         imass = self.components.i_mass
         fns = self._fns
-        vmax = self._v_max
-        vmaxp = self._v_max_p
-        rh = self._rh
-        rp = self._rp
-        X_t = self._X_t
-        A = self._A
-        hj = self._hj
         Q_s = self._Qras + self._Qwas
 
         dQC = self._dstate
         _update_dstate = self._update_dstate
-        _X_comp = self._X_comp
+
+        nzeros = np.zeros(n)
+        Q_jout = nzeros.copy()
+        X_rolled = nzeros.copy()
+        X_min_arr = nzeros.copy()
+        settle_out = nzeros.copy()
+        settle_in = nzeros.copy()
+
+        # Make these constants into arrays so it'll be faster in `dy_dt`
+        vmax_arr = np.full_like(nzeros, self._v_max)
+        vmaxp_arr = np.full_like(nzeros, self._v_max_p)
+        rh_arr = np.full_like(nzeros, self._rh)
+        rp_arr = np.full_like(nzeros, self._rp)
+        A, hj = self._A, self._hj
+        A_arr = np.full_like(nzeros, A)
+        hj_arr = np.full_like(nzeros, hj)
+        J = np.zeros(n-1)
+        X_t_arr = np.full(jf, self._X_t)
+        Q_in_arr = np.zeros(m)
+        factor = np.full(m, A*hj*n)
+
+        # def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp):
+        #     X_star = max(X-X_min, 0)
+        #     v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star))) # exp from the builtin math module is 10X faster
+        #     return X*max(v, 0)
         def dy_dt(t, QC_ins, QC, dQC_ins):
+            # dQC[-(n+1)] = dQC_ins[0,-1]
+            # Q_in = QC_ins[0,-1]
+            # Q_e = Q_in - Q_s
+            # C_in = QC_ins[0,:-1]
+            # Z_in = C_in*(1-x)
+            # X_in = sum(C_in*imass*x)           # influent TSS
+            # if X_in != 0: self._X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
+            # X_min = X_in * fns
+            # X = QC[-n:]                        # (n, ), TSS for each layer
+            # Z = QC[:m] * (1-x)
+            # #***********TSS*************
+            # Q_jout = np.array([Q_e if j < jf else Q_in if j == jf else Q_s for j in range(n)])
+            # flow_out = X*Q_jout
+            # flow_in = np.array([Q_e*X[j+1] if j < jf else Q_in*X_in if j == jf else Q_s*X[j-1] for j in range(n)])
+            # VX = [_settling_flux(xj, vmax, vmaxp, X_min, rh, rp) for xj in X]
+            # J = [VX[j] if X[j+1] <= X_t and j < jf else min(VX[j], VX[j+1]) for j in range(n-1)]
+            # settle_out = np.array(J + [0])
+            # settle_in = np.array([0] + J)
+            # dQC[-n:] = ((flow_in - flow_out)/A + settle_in - settle_out)/hj        # (n,)
+            # #*********solubles**********
+            # dQC[:m] = Q_in*(Z_in - Z)/A/(hj*n)
+            # _update_dstate()
             dQC[-(n+1)] = dQC_ins[0,-1]
             Q_in = QC_ins[0,-1]
             Q_e = Q_in - Q_s
             C_in = QC_ins[0,:-1]
             Z_in = C_in*(1-x)
             X_in = sum(C_in*imass*x)           # influent TSS
-            if X_in != 0: _X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
-            X_min = X_in * fns
+            if X_in != 0: self._X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
+            X_min_arr[:] = X_in * fns
             X = QC[-n:]                        # (n, ), TSS for each layer
             Z = QC[:m] * (1-x)
             #***********TSS*************
-            Q_jout = np.array([Q_e if j < jf else Q_in if j == jf else Q_s for j in range(n)])
-            flow_out = X*Q_jout
-            flow_in = np.array([Q_e*X[j+1] if j < jf else Q_in*X_in if j == jf else Q_s*X[j-1] for j in range(n)])
-            VX = [_settling_flux(xj, vmax, vmaxp, X_min, rh, rp) for xj in X]
-            J = [VX[j] if X[j+1] <= X_t and j < jf else min(VX[j], VX[j+1]) for j in range(n-1)]
-            settle_out = np.array(J + [0])
-            settle_in = np.array([0] + J)
-            dQC[-n:] = ((flow_in - flow_out)/A + settle_in - settle_out)/hj        # (n,)
+            Q_jout[:jf] = Q_e
+            Q_jout[jf] = Q_in
+            Q_jout[jf+1:] = Q_s
+            flow_out = X * Q_jout
+            X_rolled[:jf] = X[1: jf+1]
+            X_rolled[jf] = X_in
+            X_rolled[jf+1:] = X[jf: -1]
+            flow_in = X_rolled * Q_jout
+            X_star = npmax(X-X_min_arr, nzeros)
+            v = npmin(vmaxp_arr, vmax_arr*(npexp(-rh_arr*X_star) - npexp(-rp_arr*X_star)))
+            VX = X * npmax(v, nzeros)
+            J[:] = npmin(VX[:-1], VX[1:])
+            condition = (X_rolled[:jf]<X_t_arr)
+            J[:jf][condition] = VX[:jf][condition]
+            settle_out[:-1] = J
+            settle_in[1:] = J
+            dQC[-n:] = ((flow_in - flow_out)/A_arr + settle_in - settle_out)/hj_arr       # (n,)
             #*********solubles**********
-            dQC[:m] = Q_in*(Z_in - Z)/A/(hj*n)
+            Q_in_arr[:] = Q_in
+            dQC[:m] = Q_in_arr*(Z_in - Z)/factor
             _update_dstate()
 
         self._ODE = dy_dt
