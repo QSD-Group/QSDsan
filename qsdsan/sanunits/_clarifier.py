@@ -10,7 +10,7 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-from .. import SanUnit
+from .. import SanUnit, WasteStream
 import numpy as np
 # import pandas as pd
 
@@ -61,11 +61,6 @@ class FlatBottomCircularClarifier(SanUnit):
     fns : float, optional
         Non-settleable fraction of the suspended solids, dimensionless. Must be within
         [0, 1]. The default is 2.28e-3.
-    t_delay : float, optional
-        Time of delay [d] for the start of change in the underflow sludge composition during 
-        dynamic simulation. When t < t_delay, the relative concentrations of particulates
-        in the underflow sludge stays the same as the set initial sludge composition. The 
-        default is 1.
 
     References
     ----------
@@ -76,17 +71,18 @@ class FlatBottomCircularClarifier(SanUnit):
     """
 
     _N_ins = 1
-    _N_outs = 2
+    _N_outs = 3
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 init_with='WasteStream', sludge_flow_rate=2000,
+                 init_with='WasteStream', underflow=2000, wastage=385,
                  surface_area=1500, height=4, N_layer=10, feed_layer=4,
                  X_threshold=3000, v_max=474, v_max_practical=250,
-                 rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, t_delay=1,
-                 isdynamic=True, **kwargs):
+                 rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, isdynamic=True, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic)
-        self._Qs = sludge_flow_rate
+        self._Qras = underflow
+        self._Qwas = wastage
+        self._sludge = WasteStream()
         self._V = surface_area * height
         self._A = surface_area
         self._hj = height/N_layer
@@ -98,7 +94,6 @@ class FlatBottomCircularClarifier(SanUnit):
         self._rh = rh
         self._rp = rp
         self._fns = fns
-        self._t_delay = t_delay
         self._ODE = None
         self._solids = None
         self._solubles = None
@@ -115,13 +110,22 @@ class FlatBottomCircularClarifier(SanUnit):
             s.empty()
 
     @property
-    def sludge_flow_rate(self):
-        '''[float] The designed sludge flow rate (wasted + recycled) in m3/d.'''
-        return self._Qs
+    def underflow(self):
+        '''[float] The designed recycling sludge flow rate in m3/d.'''
+        return self._Qras
 
-    @sludge_flow_rate.setter
-    def sludge_flow_rate(self, Qs):
-        self._Qs = Qs
+    @underflow.setter
+    def underflow(self, ras):
+        self._Qras = ras
+
+    @property
+    def wastage(self):
+        '''[float] The designed wasted sludge flow rate in m3/d.'''
+        return self._Qwas
+
+    @wastage.setter
+    def wastage(self, was):
+        self._Qwas = was
 
     @property
     def V_settle(self):
@@ -230,14 +234,6 @@ class FlatBottomCircularClarifier(SanUnit):
         if fns < 0 or fns > 1: raise ValueError('fns must be within [0,1].')
         self._fns = fns
 
-    @property
-    def t_delay(self):
-        return self._t_delay
-    
-    @t_delay.setter
-    def t_delay(self, T):
-        self._t_delay = max(0, T)
-
     def set_init_solubles(self, **kwargs):
         '''set the initial concentrations [mg/L] of solubles in the clarifier.'''
         Cs = np.zeros(len(self.components))
@@ -270,7 +266,6 @@ class FlatBottomCircularClarifier(SanUnit):
         Q = QCs[-1]
         Z = self._solubles if self._solubles is not None \
             else QCs[:-1]*(1-x)
-            # else np.tile(QCs[:-1]*(1-x), n)
         TSS_in = sum(QCs[:-1] * x * imass)
         TSS = self._solids if self._solids is not None \
             else np.array([TSS_in*f for f in 20**np.linspace(-1,1,n)])
@@ -284,20 +279,21 @@ class FlatBottomCircularClarifier(SanUnit):
         x = self.components.x
         n = self._N_layer
         Q = arr[-(1+n)]
-        Q_e = Q - self._Qs
+        Q_e = Q - self._Qras - self._Qwas
         Z = arr[:len(x)]
         X_composition = self._X_comp # (m, ), mg COD/ mg TSS
         X_e = arr[-n] * X_composition
-        X_s = arr[-1] * X_composition
-        eff, slg = self._outs
+        C_s = Z + arr[-1] * X_composition
+        eff, ras, was = self._outs
         if eff._state is None: eff._state = np.append(Z+X_e, Q_e)
         else: 
             eff._state[:-1] = Z+X_e
             eff._state[-1] = Q_e
-        if slg._state is None: slg._state = np.append(Z+X_s, self._Qs)
-        else:
-            slg._state[:-1] = Z+X_s
-
+        #!!! might need to enable dynamic sludge volume flows
+        if ras._state is None: ras._state = np.append(C_s, self._Qras)
+        else: ras._state[:-1] = C_s
+        if was._state is None: was._state = np.append(C_s, self._Qwas)
+        else: was._state[:-1] = C_s
 
     def _update_dstate(self):
         arr = self._dstate
@@ -306,28 +302,30 @@ class FlatBottomCircularClarifier(SanUnit):
         dQ = arr[-(1+n)]
         dZ = arr[:len(x)]
         X_composition = self._X_comp # (m, ), mg COD/ mg TSS
-        try: dX_e = arr[-n] * X_composition
-        except: breakpoint()
-        dX_s = arr[-1] * X_composition
-        eff, slg = self._outs
+        dX_e = arr[-n] * X_composition
+        dC_s = dZ + arr[-1] * X_composition
+        eff, ras, was = self._outs
         if eff._dstate is None: eff._dstate = np.append(dZ+dX_e, dQ)
         else: 
             eff._dstate[:-1] = dZ+dX_e
             eff._dstate[-1] = dQ
-        if slg._dstate is None: slg._dstate = np.append(dZ+dX_s, 0.)
-        else:
-            slg._dstate[:-1] = dZ+dX_s
-    
+        #!!! might need to enable dynamic sludge volume flows
+        if ras._dstate is None: ras._dstate = np.append(dC_s, 0.)
+        else: ras._dstate[:-1] = dC_s
+        if was._dstate is None: was._dstate = np.append(dC_s, 0.)
+        else: was._dstate[:-1] = dC_s
     
     def _run(self):
         '''only to converge volumetric flows.'''
         inf, = self.ins
+        sludge = self._sludge
         Q_in = inf.get_total_flow('m3/d')
-        eff, sludge = self.outs
-        Q_s = self._Qs
-        Q_e = max(Q_in - Q_s, 0)
-        inf.split_to(eff, sludge, split=Q_e/Q_in)
-
+        eff, ras, was = self.outs
+        Q_ras = self._Qras
+        Q_was = self._Qwas
+        s_e = 1 - (Q_ras+Q_was)/Q_in
+        inf.split_to(eff, sludge, s_e)
+        sludge.split_to(ras, was, Q_ras/(Q_ras+Q_was))
 
     @property
     def ODE(self):
@@ -349,8 +347,7 @@ class FlatBottomCircularClarifier(SanUnit):
         X_t = self._X_t
         A = self._A
         hj = self._hj
-        Q_s = self._Qs
-        T = self._t_delay
+        Q_s = self._Qras + self._Qwas
         
         def dy_dt(t, QC_ins, QC, dQC_ins):
             dQC = self._dstate
@@ -360,7 +357,7 @@ class FlatBottomCircularClarifier(SanUnit):
             C_in = QC_ins[0,:-1]
             Z_in = C_in*(1-x)
             X_in = sum(C_in*imass*x)           # influent TSS
-            if X_in != 0 and t >= T: self._X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
+            if X_in != 0: self._X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
             X_min = X_in * fns
             X = QC[-n:]                        # (n, ), TSS for each layer
             Z = QC[:m] * (1-x)
@@ -376,18 +373,8 @@ class FlatBottomCircularClarifier(SanUnit):
             #*********solubles**********
             dQC[:m] = Q_in*(Z_in - Z)/A/(hj*n)
             self._update_dstate()
-            # return dQC
         
         self._ODE = dy_dt
-                
-    
-    def _define_outs(self):
-        dct_y = self._state_locator(self._state)
-        for out in self.outs:
-            Q = dct_y[out.ID][-1]
-            Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
-            Cs.pop('H2O', None)
-            out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
 
     def _design(self):
         pass
