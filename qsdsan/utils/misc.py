@@ -18,6 +18,7 @@ __all__ = (
     'copy_attr',
     'register_with_prefix',
     'time_printer',
+    'ords',
     )
 
 
@@ -122,3 +123,10 @@ def time_printer(func):
         return output
     inner.__doc__ = func.__doc__
     return inner
+
+
+# Return the sum of unicode of a string, more for fun
+def ords(string):
+    string = str(string)
+    added = sum(ord(i) for i in string)
+    return added
