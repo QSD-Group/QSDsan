@@ -327,6 +327,12 @@ class FlatBottomCircularClarifier(SanUnit):
         inf.split_to(eff, sludge, s_e)
         sludge.split_to(ras, was, Q_ras/(Q_ras+Q_was))
 
+    def get_retained_mass(self, biomass_IDs):
+        cmps = self.components
+        tss = self._state[-self._N_layer:].mean()
+        mass = cmps.i_mass * self._X_comp * tss
+        return self._V * mass[cmps.indices(biomass_IDs)].sum()
+    
     @property
     def ODE(self):
         if self._ODE is None:

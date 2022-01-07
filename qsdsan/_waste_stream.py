@@ -512,8 +512,8 @@ class WasteStream(SanStream):
                 ("COD", "BOD5", "BOD", "uBOD", "NOD", "ThOD", "cnBOD",
                 "C", "N", "P", "K", "Mg", "Ca",
                 "solids", "charge").
-        subgroup : CompiledComponents, optional
-            A subgroup of :class:`CompiledComponents`. The default is None.
+        subgroup : tuple[str], optional
+            IDs of a subgroup of :class:`CompiledComponents`. The default is None.
         particle_size : "g", "s", "c", or "x", optional
             Dissolved gas ("g"), soluble ("s"), colloidal ("c"), particulate ("x").
             The default is None.
@@ -548,11 +548,7 @@ class WasteStream(SanStream):
                                f'the current WasteStream {self.ID} is {self.phase}.')
 
         #TODO: deal with units
-        if subgroup:
-            cmps = subgroup
-
-        else:
-            cmps = self.components
+        cmps =  self.components.subgroup(subgroup) if subgroup is not None else self.components
 
         IDs = list(cmps.IDs)
         if 'H2O' in IDs: IDs.remove('H2O')

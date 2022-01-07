@@ -216,6 +216,11 @@ class CSTR(SanUnit):
                 ws.copy_like(mixed)
                 ws.set_total_flow(Q*spl, 'm3/hr')
 
+    def get_retained_mass(self, biomass_IDs):
+        cmps = self.components
+        mass = cmps.i_mass * self._state[:-1]
+        return self._V_max * mass[cmps.indices(biomass_IDs)].sum()
+        
     @property
     def ODE(self):
         if self._ODE is None:
