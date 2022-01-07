@@ -51,8 +51,8 @@ class CSTR(SanUnit):
     outs : :class:`WasteStream`
         Treated effluent.
     split : iterable of float
-        Volumetric splits of effluent flows if there are more than one effluent. 
-        The default is None. 
+        Volumetric splits of effluent flows if there are more than one effluent.
+        The default is None.
     V_max : float
         Designed volume, in [m^3]. The default is 1000.
     aeration : float or :class:`Process`, optional
@@ -71,8 +71,8 @@ class CSTR(SanUnit):
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False
 
-    def __init__(self, ID='', ins=None, outs=(), split=None, thermo=None, 
-                 init_with='WasteStream', V_max=1000, aeration=2.0, 
+    def __init__(self, ID='', ins=None, outs=(), split=None, thermo=None,
+                 init_with='WasteStream', V_max=1000, aeration=2.0,
                  DO_ID='S_O2', suspended_growth_model=None,
                  isdynamic=True, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic)
@@ -146,8 +146,8 @@ class CSTR(SanUnit):
     @property
     def split(self):
         '''[numpy.1darray or NoneType] The volumetric split of outs.'''
-        return self._split 
-    
+        return self._split
+
     @split.setter
     def split(self, split):
         if split is None: self._split = split
@@ -155,7 +155,7 @@ class CSTR(SanUnit):
             if len(split) != len(self._outs):
                 raise ValueError('split and outs must have the same size')
             self._split = np.array(split)/sum(split)
-    
+
     @property
     def state(self):
         '''The state of the CSTR, including component concentrations [mg/L] and flow rate [m^3/d].'''
@@ -182,7 +182,7 @@ class CSTR(SanUnit):
         '''initialize state by specifying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
-        mixed = self._mixed 
+        mixed = self._mixed
         Q = mixed.get_total_flow('m3/d')
         if self._concs is not None: Cs = self._concs
         else: Cs = mixed.conc
@@ -196,7 +196,7 @@ class CSTR(SanUnit):
             for ws, spl in zip(self._outs, self.split):
                 ws._state = arr.copy()
                 ws._state[-1] *= spl
-    
+
     def _update_dstate(self):
         arr = self._dstate
         if self.split is None: self._outs[0]._dstate = arr
@@ -211,7 +211,7 @@ class CSTR(SanUnit):
         mixed.mix_from(self.ins)
         Q = mixed.F_vol # m3/hr
         if self.split is None: self.outs[0].copy_like(mixed)
-        else: 
+        else:
             for ws, spl in zip(self._outs, self.split):
                 ws.copy_like(mixed)
                 ws.set_total_flow(Q*spl, 'm3/hr')
@@ -220,7 +220,7 @@ class CSTR(SanUnit):
         cmps = self.components
         mass = cmps.i_mass * self._state[:-1]
         return self._V_max * mass[cmps.indices(biomass_IDs)].sum()
-        
+
     @property
     def ODE(self):
         if self._ODE is None:
@@ -240,7 +240,8 @@ class CSTR(SanUnit):
             r_eqs = list(processes.production_rates.rate_of_production)
             r = lambdify(C, r_eqs)
 
-
+        _dstate = self._dstate
+        _update_dstate = self._update_dstate
         if isa(self._aeration, (float, int)):
             i = self.components.index(self._DO_ID)
             fixed_DO = self._aeration
@@ -249,28 +250,28 @@ class CSTR(SanUnit):
                 C_ins = QC_ins[:, :-1]
                 flow_in = Q_ins @ C_ins / V
                 Q_e = Q_ins.sum()
-                self._dstate[-1] = dQC_ins[:, -1].sum()
+                _dstate[-1] = dQC_ins[:, -1].sum()
                 Cs = QC[:-1]
                 Cs[i] = fixed_DO
                 flow_out = Q_e * Cs / V
                 react = np.asarray(r(*Cs))
                 C_dot = flow_in - flow_out + react
                 C_dot[i] = 0.0
-                self._dstate[:-1] = C_dot
-                self._update_dstate()
+                _dstate[-1] = dQC_ins[:, -1].sum()
+                _update_dstate()
         else:
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 Q_ins = QC_ins[:, -1]
                 C_ins = QC_ins[:, :-1]
                 flow_in = Q_ins @ C_ins / V
                 Q_e = Q_ins.sum()
-                self._dstate[-1] = dQC_ins[:, -1].sum()
+                _dstate[-1] = dQC_ins[:, -1].sum()
                 Cs = QC[:-1]
                 flow_out = Q_e * Cs / V
                 react = np.asarray(r(*Cs))
                 C_dot = flow_in - flow_out + react
-                self._dstate[:-1] = C_dot
-                self._update_dstate()
+                _dstate[:-1] = C_dot
+                _update_dstate()
 
         self._ODE = dy_dt
 

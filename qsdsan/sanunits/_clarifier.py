@@ -10,16 +10,17 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+from math import exp
 from .. import SanUnit, WasteStream
 import numpy as np
 # import pandas as pd
 
-__all__ = ('FlatBottomCircularClarifier', 
+__all__ = ('FlatBottomCircularClarifier',
            'IdealClarifier',)
 
 def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp):
     X_star = max(X-X_min, 0)
-    v = min(v_max_practical, v_max*(np.exp(-rh*X_star) - np.exp(-rp*X_star)))
+    v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star))) # exp from the builtin math module is 10X faster
     return X*max(v, 0)
 
 class FlatBottomCircularClarifier(SanUnit):
@@ -46,7 +47,7 @@ class FlatBottomCircularClarifier(SanUnit):
     feed_layer : int, optional
         The feed layer counting from top to bottom. The default is 4.
     X_threshold : float, optional
-        Threshold suspended solid cocentration, in [g/m^3]. The default is 3000.
+        Threshold suspended solid concentration, in [g/m^3]. The default is 3000.
     v_max : float, optional
         Maximum theoretical (i.e. Vesilind) settling velocity, in [m/d]. The
         default is 474.
@@ -99,7 +100,7 @@ class FlatBottomCircularClarifier(SanUnit):
         self._solubles = None
         self._X_comp = np.zeros(len(self.components))
         header = self._state_header
-        self._state_header = list(header) + [f'TSS{i+1} [mg/L]' for i in range(N_layer)] 
+        self._state_header = list(header) + [f'TSS{i+1} [mg/L]' for i in range(N_layer)]
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
@@ -134,7 +135,7 @@ class FlatBottomCircularClarifier(SanUnit):
 
     @property
     def A_settle(self):
-        '''[float] The surface area for settling in m^2, i.e., the area of the clarifer's flat bottom.'''
+        '''[float] The surface area for settling in m^2, i.e., the area of the clarifier's flat bottom.'''
         return self._A
 
     @A_settle.setter
@@ -196,7 +197,7 @@ class FlatBottomCircularClarifier(SanUnit):
 
     @property
     def X_t(self):
-        '''[float] Threshold suspended solid cocentration, in g/m^3.'''
+        '''[float] Threshold suspended solid concentration, in g/m^3.'''
         return self._X_t
 
     @X_t.setter
@@ -286,7 +287,7 @@ class FlatBottomCircularClarifier(SanUnit):
         C_s = Z + arr[-1] * X_composition
         eff, ras, was = self._outs
         if eff._state is None: eff._state = np.append(Z+X_e, Q_e)
-        else: 
+        else:
             eff._state[:-1] = Z+X_e
             eff._state[-1] = Q_e
         #!!! might need to enable dynamic sludge volume flows
@@ -306,7 +307,7 @@ class FlatBottomCircularClarifier(SanUnit):
         dC_s = dZ + arr[-1] * X_composition
         eff, ras, was = self._outs
         if eff._dstate is None: eff._dstate = np.append(dZ+dX_e, dQ)
-        else: 
+        else:
             eff._dstate[:-1] = dZ+dX_e
             eff._dstate[-1] = dQ
         #!!! might need to enable dynamic sludge volume flows
@@ -314,7 +315,7 @@ class FlatBottomCircularClarifier(SanUnit):
         else: ras._dstate[:-1] = dC_s
         if was._dstate is None: was._dstate = np.append(dC_s, 0.)
         else: was._dstate[:-1] = dC_s
-    
+
     def _run(self):
         '''only to converge volumetric flows.'''
         inf, = self.ins
@@ -332,13 +333,13 @@ class FlatBottomCircularClarifier(SanUnit):
         tss = self._state[-self._N_layer:].mean()
         mass = cmps.i_mass * self._X_comp * tss
         return self._V * mass[cmps.indices(biomass_IDs)].sum()
-    
+
     @property
     def ODE(self):
         if self._ODE is None:
             self._compile_ODE()
         return self._ODE
-    
+
     def _compile_ODE(self):
         n = self._N_layer
         jf = self._feed_layer - 1
@@ -354,16 +355,18 @@ class FlatBottomCircularClarifier(SanUnit):
         A = self._A
         hj = self._hj
         Q_s = self._Qras + self._Qwas
-        
+
+        dQC = self._dstate
+        _update_dstate = self._update_dstate
+        _X_comp = self._X_comp
         def dy_dt(t, QC_ins, QC, dQC_ins):
-            dQC = self._dstate
             dQC[-(n+1)] = dQC_ins[0,-1]
             Q_in = QC_ins[0,-1]
             Q_e = Q_in - Q_s
             C_in = QC_ins[0,:-1]
             Z_in = C_in*(1-x)
             X_in = sum(C_in*imass*x)           # influent TSS
-            if X_in != 0: self._X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
+            if X_in != 0: _X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
             X_min = X_in * fns
             X = QC[-n:]                        # (n, ), TSS for each layer
             Z = QC[:m] * (1-x)
@@ -378,8 +381,8 @@ class FlatBottomCircularClarifier(SanUnit):
             dQC[-n:] = ((flow_in - flow_out)/A + settle_in - settle_out)/hj        # (n,)
             #*********solubles**********
             dQC[:m] = Q_in*(Z_in - Z)/A/(hj*n)
-            self._update_dstate()
-        
+            _update_dstate()
+
         self._ODE = dy_dt
 
     def _design(self):
@@ -387,21 +390,21 @@ class FlatBottomCircularClarifier(SanUnit):
 
 
 class IdealClarifier(SanUnit):
-    
+
     _N_ins = 1
     _N_outs = 2
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  sludge_flow_rate=2000, solids_removal_efficiency=.995,
-                 sludge_MLSS=None, isdynamic=False, init_with='WasteStream', 
+                 sludge_MLSS=None, isdynamic=False, init_with='WasteStream',
                  F_BM_default=None, **kwargs):
-        
+
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
                          init_with=init_with, F_BM_default=F_BM_default)
         self.sludge_flow_rate = sludge_flow_rate
         self.solids_removal_efficiency = solids_removal_efficiency
         self.sludge_MLSS = sludge_MLSS
-        
+
     @property
     def sludge_flow_rate(self):
         '''[float] The designed sludge flow rate (wasted + recycled) in m3/d.'''
@@ -416,7 +419,7 @@ class IdealClarifier(SanUnit):
     @property
     def solids_removal_efficiency(self):
         return self._e_rmv
-    
+
     @solids_removal_efficiency.setter
     def solids_removal_efficiency(self, f):
         if f is not None:
@@ -425,27 +428,27 @@ class IdealClarifier(SanUnit):
             self._e_rmv = f
         elif self.ins[0].isempty(): self._e_rmv = None
         else: self._e_rmv = self._calc_ermv()
-    
+
     @property
     def sludge_MLSS(self):
         return self._MLSS
-    
+
     @sludge_MLSS.setter
     def sludge_MLSS(self, MLSS):
         if MLSS is not None: self._MLSS = MLSS
         elif self.ins[0].isempty(): self._MLSS = None
         else: self._MLSS = self._calc_SS()[1]
-    
+
     def _calc_Qs(self, TSS_in=None, Q_in=None):
         if Q_in is None: Q_in = self.ins[0].get_total_flow('m3/d')
         if TSS_in is None: TSS_in = self.ins[0].get_TSS()
         return Q_in*TSS_in*self._e_rmv/(self._MLSS-TSS_in)
-    
+
     def _calc_ermv(self, TSS_in=None, Q_in=None):
         if Q_in is None: Q_in = self.ins[0].get_total_flow('m3/d')
         if TSS_in is None: TSS_in = self.ins[0].get_TSS()
-        return self._Qs*(self._MLSS-TSS_in)/TSS_in/(Q_in-self._Qs)        
-    
+        return self._Qs*(self._MLSS-TSS_in)/TSS_in/(Q_in-self._Qs)
+
     def _calc_SS(self, SS_in=None, Q_in=None):
         if Q_in is None: Q_in = self.ins[0].get_total_flow('m3/d')
         if SS_in is None: SS_in = self.ins[0].get_TSS()
@@ -453,7 +456,7 @@ class IdealClarifier(SanUnit):
         Qs = self._Qs
         Qe = Q_in - Qs
         return SS_e, (Q_in*SS_in - Qe*SS_e)/Qs
-    
+
     def _run(self):
         inf, = self.ins
         eff, sludge = self.outs
@@ -461,7 +464,7 @@ class IdealClarifier(SanUnit):
         Q_in = inf.get_total_flow('m3/d')
         TSS_in = (inf.conc*cmps.x*cmps.i_mass).sum()
         params = (Qs, e_rmv, MLSS) = self._Qs, self._e_rmv, self._MLSS
-        if sum([i is None for i in params]) > 1: 
+        if sum([i is None for i in params]) > 1:
             raise RuntimeError('must specify two of the following parameters: '
                                'sludge_flow_rate, solids_removal_efficiency, sludge_MLSS')
         if Qs is None:
@@ -481,7 +484,6 @@ class IdealClarifier(SanUnit):
         Cs.pop('H2O', None)
         eff.set_flow_by_concentration(Q_in-Qs, Ce, units=('m3/d', 'mg/L'))
         sludge.set_flow_by_concentration(Qs, Cs, units=('m3/d', 'mg/L'))
-    
+
     def _design(self):
         pass
-        
