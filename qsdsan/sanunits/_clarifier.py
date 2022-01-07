@@ -13,14 +13,16 @@ for license details.
 from math import exp
 from .. import SanUnit, WasteStream
 import numpy as np
-# import pandas as pd
 
 __all__ = ('FlatBottomCircularClarifier',
            'IdealClarifier',)
 
 def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp):
+    # X_star = np.maximum(X-X_min, 0)
+    # v = np.minimum(v_max_practical, v_max*(np.exp(-rh*X_star) - np.exp(-rp*X_star)))
+    # return X*np.maximum(v, 0)
     X_star = max(X-X_min, 0)
-    v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star))) # exp from the builtin math module is 10X faster
+    v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star)))
     return X*max(v, 0)
 
 class FlatBottomCircularClarifier(SanUnit):
@@ -36,8 +38,10 @@ class FlatBottomCircularClarifier(SanUnit):
         Influent to the clarifier. Expected number of influent is 1.
     outs : :class:`WasteStream`
         Treated effluent and sludge.
-    sludge_flow_rate : float, optional
-        Designed sludge flowrate (WAS + RAS), in [m^3/d]. The default is 2000.
+    underflow : float, optional
+        Designed recycling sludge flowrate (RAS), in [m^3/d]. The default is 2000.
+    wastage : float, optional
+        Designed wasted sludge flowrate (WAS), in [m^3/d]. The default is 385.
     surface_area : float, optional
         Surface area of the clarifier, in [m^2]. The default is 1500.
     height : float, optional
@@ -358,7 +362,6 @@ class FlatBottomCircularClarifier(SanUnit):
 
         dQC = self._dstate
         _update_dstate = self._update_dstate
-        _X_comp = self._X_comp
         def dy_dt(t, QC_ins, QC, dQC_ins):
             dQC[-(n+1)] = dQC_ins[0,-1]
             Q_in = QC_ins[0,-1]
@@ -366,7 +369,7 @@ class FlatBottomCircularClarifier(SanUnit):
             C_in = QC_ins[0,:-1]
             Z_in = C_in*(1-x)
             X_in = sum(C_in*imass*x)           # influent TSS
-            if X_in != 0: _X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
+            if X_in != 0: self._X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
             X_min = X_in * fns
             X = QC[-n:]                        # (n, ), TSS for each layer
             Z = QC[:m] * (1-x)
@@ -375,6 +378,7 @@ class FlatBottomCircularClarifier(SanUnit):
             flow_out = X*Q_jout
             flow_in = np.array([Q_e*X[j+1] if j < jf else Q_in*X_in if j == jf else Q_s*X[j-1] for j in range(n)])
             VX = [_settling_flux(xj, vmax, vmaxp, X_min, rh, rp) for xj in X]
+            # VX = _settling_flux(X, vmax, vmaxp, X_min, rh, rp)
             J = [VX[j] if X[j+1] <= X_t and j < jf else min(VX[j], VX[j+1]) for j in range(n-1)]
             settle_out = np.array(J + [0])
             settle_in = np.array([0] + J)
