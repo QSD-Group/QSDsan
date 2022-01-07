@@ -19,13 +19,13 @@ __all__ = ('FlatBottomCircularClarifier',
            'IdealClarifier',)
 
 
-def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp):
-    # X_star = np.maximum(X-X_min, 0)
-    # v = np.minimum(v_max_practical, v_max*(np.exp(-rh*X_star) - np.exp(-rp*X_star)))
-    # return X*np.maximum(v, 0)
-    X_star = max(X-X_min, 0)
-    v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star)))
-    return X*max(v, 0)
+def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp, n0):
+    X_star = npmax(X-X_min, n0)
+    v = npmin(v_max_practical, v_max*(npexp(-rh*X_star) - npexp(-rp*X_star)))
+    return X*npmax(v, n0)
+    # X_star = max(X-X_min, 0)
+    # v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star)))
+    # return X*max(v, 0)
 
 
 class FlatBottomCircularClarifier(SanUnit):
@@ -371,37 +371,17 @@ class FlatBottomCircularClarifier(SanUnit):
         vmaxp_arr = np.full_like(nzeros, self._v_max_p)
         rh_arr = np.full_like(nzeros, self._rh)
         rp_arr = np.full_like(nzeros, self._rp)
-        A, hj = self._A, self._hj
+        func_vx = lambda x, xmin : _settling_flux(x, vmax_arr, vmaxp_arr, xmin, rh_arr, rp_arr, nzeros)
+        
+        A, hj, V = self._A, self._hj, self._V
         A_arr = np.full_like(nzeros, A)
         hj_arr = np.full_like(nzeros, hj)
         J = np.zeros(n-1)
         X_t_arr = np.full(jf, self._X_t)
         Q_in_arr = np.zeros(m)
-        factor = np.full(m, A*hj*n)
+        V_arr = np.full(m, V)
 
         def dy_dt(t, QC_ins, QC, dQC_ins):
-            # dQC[-(n+1)] = dQC_ins[0,-1]
-            # Q_in = QC_ins[0,-1]
-            # Q_e = Q_in - Q_s
-            # C_in = QC_ins[0,:-1]
-            # Z_in = C_in*(1-x)
-            # X_in = sum(C_in*imass*x)           # influent TSS
-            # if X_in != 0: self._X_comp = C_in * x / X_in     # g COD/g TSS for solids in influent
-            # X_min = X_in * fns
-            # X = QC[-n:]                        # (n, ), TSS for each layer
-            # Z = QC[:m] * (1-x)
-            # #***********TSS*************
-            # Q_jout = np.array([Q_e if j < jf else Q_in if j == jf else Q_s for j in range(n)])
-            # flow_out = X*Q_jout
-            # flow_in = np.array([Q_e*X[j+1] if j < jf else Q_in*X_in if j == jf else Q_s*X[j-1] for j in range(n)])
-            # VX = [_settling_flux(xj, vmax, vmaxp, X_min, rh, rp) for xj in X]
-            # J = [VX[j] if X[j+1] <= X_t and j < jf else min(VX[j], VX[j+1]) for j in range(n-1)]
-            # settle_out = np.array(J + [0])
-            # settle_in = np.array([0] + J)
-            # dQC[-n:] = ((flow_in - flow_out)/A + settle_in - settle_out)/hj        # (n,)
-            # #*********solubles**********
-            # dQC[:m] = Q_in*(Z_in - Z)/A/(hj*n)
-            # _update_dstate()
             dQC[-(n+1)] = dQC_ins[0,-1]
             Q_in = QC_ins[0,-1]
             Q_e = Q_in - Q_s
@@ -421,9 +401,7 @@ class FlatBottomCircularClarifier(SanUnit):
             X_rolled[jf] = X_in
             X_rolled[jf+1:] = X[jf: -1]
             flow_in = X_rolled * Q_jout
-            X_star = npmax(X-X_min_arr, nzeros)
-            v = npmin(vmaxp_arr, vmax_arr*(npexp(-rh_arr*X_star) - npexp(-rp_arr*X_star)))
-            VX = X * npmax(v, nzeros)
+            VX = func_vx(X, X_min_arr)
             J[:] = npmin(VX[:-1], VX[1:])
             condition = (X_rolled[:jf]<X_t_arr)
             J[:jf][condition] = VX[:jf][condition]
@@ -432,7 +410,7 @@ class FlatBottomCircularClarifier(SanUnit):
             dQC[-n:] = ((flow_in - flow_out)/A_arr + settle_in - settle_out)/hj_arr       # (n,)
             #*********solubles**********
             Q_in_arr[:] = Q_in
-            dQC[:m] = Q_in_arr*(Z_in - Z)/factor
+            dQC[:m] = Q_in_arr*(Z_in - Z)/V_arr
             _update_dstate()
 
         self._ODE = dy_dt
