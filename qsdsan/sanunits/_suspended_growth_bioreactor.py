@@ -81,7 +81,7 @@ class CSTR(SanUnit):
         self._DO_ID = DO_ID
         self._model = suspended_growth_model
         self._concs = None
-        self._mixed = WasteStream()
+        self._mixed = WasteStream(f'{self.ID}_mixed')
         self.split = split
         for attr, value in kwargs.items():
             setattr(self, attr, value)
@@ -172,22 +172,31 @@ class CSTR(SanUnit):
         self._state = QCs
 
     def set_init_conc(self, **kwargs):
-        '''set the initial concentrations [mg/L] of the CSTR.'''
+        '''Set the initial concentrations [mg/L] of the CSTR.'''
         Cs = np.zeros(len(self.components))
         cmpx = self.components.index
         for k, v in kwargs.items(): Cs[cmpx(k)] = v
         self._concs = Cs
 
     def _init_state(self):
-        '''initialize state by specifying or calculating component concentrations
+        '''Initialize state by specifying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
         mixed = self._mixed
+        init_concs = self._concs
         Q = mixed.get_total_flow('m3/d')
-        if self._concs is not None: Cs = self._concs
+        if init_concs is not None:
+            Cs = init_concs
+            # Update bulk liquid concentration if not set by the user
+            bulk_liquid_idx = mixed.bulk_liquid_idx
+            if not Cs[bulk_liquid_idx]:
+                Cs[bulk_liquid_idx] = mixed.conc[bulk_liquid_idx]
         else: Cs = mixed.conc
-        self._state = np.append(Cs, Q)
-        self._dstate = self._state * 0.
+        state = np.empty((Cs.shape[0]+1,), dtype='float')
+        state[:-1] = Cs
+        state[-1] = Q
+        self._state = state
+        self._dstate = state * 0.
 
     def _update_state(self, arr):
         self._state = arr
@@ -229,8 +238,8 @@ class CSTR(SanUnit):
 
     def _compile_ODE(self):
         isa = isinstance
-        V = self._V_max
         C = list(symbols(self.components.IDs))
+        m = len(C)
         if self._model is None:
             warn(f'{self.ID} was initialized without a suspended growth model, '
                  f'and thus run as a non-reactive unit')

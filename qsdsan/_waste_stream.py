@@ -45,7 +45,7 @@ _common_composite_vars = ('_COD', '_BOD', '_uBOD', '_TC', '_TOC', '_TN',
 
 _ws_specific_slots = (*_common_composite_vars,
                       '_pH', '_SAlk', '_ratios', '_stream_impact_item',
-                      '_state', '_dstate')
+                      '_state', '_dstate', '_bulk_liquid_ID', '_bulk_liquid_idx')
 
 _specific_groups = {'S_VFA': ('S_Ac', 'S_Prop'),
                     'X_Stor': ('X_OHO_PHA', 'X_GAO_PHA', 'X_PAO_PHA',
@@ -163,8 +163,7 @@ def by_conc(self, TP):
     except:
         cmps = self.chemicals
         mol = self.data
-        try: F_vol = self.by_volume(TP).data.sum()
-        except:         breakpoint()
+        F_vol = self.by_volume(TP).data.sum()
         conc = np.zeros_like(mol, dtype=object)
         for i, cmp in enumerate(cmps):
             conc[i] = ConcentrationProperty(cmp.ID, mol, i, F_vol, cmp.MW,
@@ -305,7 +304,8 @@ class WasteStream(SanStream):
                  uBOD=None, ThOD=None, cnBOD=None,
                  TC=None, TOC=None, TN=None, TKN=None,
                  TP=None, TK=None, TMg=None, TCa=None,
-                 dry_mass=None, charge=None, ratios=None):
+                 dry_mass=None, charge=None, ratios=None,
+                 bulk_liquid_ID='H2O'):
 
         self._pH = pH
         self._SAlk = SAlk
@@ -325,6 +325,7 @@ class WasteStream(SanStream):
         self._dry_mass = dry_mass
         self._charge = charge
         self._ratios = ratios
+        self.bulk_liquid_ID = bulk_liquid_ID
         self._state = None
         self._dstate = None
 
@@ -730,11 +731,32 @@ class WasteStream(SanStream):
         '''[property_array] Mass concentrations, in mg/L (g/m3).'''
         return self.iconc.data
 
-
     @property
     def Conc(self):
         '''[property_array] Mass concentrations, in mg/L (g/m3), same as `conc`.'''
         return self.iconc.data
+
+    @property
+    def bulk_liquid_ID(self):
+        '''
+        [str] ID of the Component that constitutes the bulk liquid, e.g., the solvent.
+        Default to be 'H2O'.
+        '''
+        if self._bulk_liquid_ID is None:
+            self._bulk_liquid_ID = 'H2O'
+        return self._bulk_liquid_ID
+    @bulk_liquid_ID.setter
+    def bulk_liquid_ID(self, i):
+        try:
+            self._bulk_liquid_idx = self.components.index(i)
+            self._bulk_liquid_ID = i
+        except:
+            raise ValueError(f'The provided `bulk_liquid_ID` "{i}" is not in the current `CompiledComponents`.')
+
+    @property
+    def bulk_liquid_idx(self):
+        '''[int] Index of the Component that constitutes the bulk liquid, e.g., the solvent.'''
+        return self._bulk_liquid_idx
 
 
     def copy(self, new_ID='', copy_price=False, copy_impact_item=True,
@@ -853,7 +875,10 @@ class WasteStream(SanStream):
         SanStream.mix_from(self, others)
 
         for slot in _ws_specific_slots:
-            if not hasattr(self, slot) or slot=='_stream_impact_item':
+            if not hasattr(self, slot) or slot in (
+                    '_stream_impact_item',
+                    '_bulk_liquid_idx',
+                    ):
                 continue
             #!!! This needs reviewing, might not be good to calculate some
             # attributes like pH
@@ -963,6 +988,8 @@ class WasteStream(SanStream):
 
         '''
         if flow_tot == 0: raise RuntimeError(f'{repr(self)} is empty')
+        if self.bulk_liquid_ID != bulk_liquid_ID:
+            self.bulk_liquid_ID = bulk_liquid_ID
         if bulk_liquid_ID in concentrations.keys():
             C_bulk = concentrations.pop(bulk_liquid_ID)
             warn(f'ignored concentration specified for {bulk_liquid_ID}:{C_bulk}')
@@ -975,10 +1002,11 @@ class WasteStream(SanStream):
         M_arr = C_arr/f*Q_tot*1e-6       # mg/L * L/hr /1e6 = kg/hr
         self.set_flow(M_arr, 'kg/hr', tuple(IDs))
 
+        cmps = self.components
         # Density of the mixture should be larger than the pure bulk liquid,
         # give it a factor of 100 for safety
-        den = self.components[bulk_liquid_ID].rho(phase=self.phase, T=self.T, P=self.P)*1e-3  # bulk liquid density in [kg/L]
-        bulk_ref_phase = self.components[bulk_liquid_ID].phase_ref
+        den = cmps[bulk_liquid_ID].rho(phase=self.phase, T=self.T, P=self.P)*1e-3  # bulk liquid density in [kg/L]
+        bulk_ref_phase = cmps[bulk_liquid_ID].phase_ref
         if bulk_ref_phase != 'l':
             warn(f'Reference phase of liquid is "{bulk_ref_phase}", not "l", '
                  'flow might not be set correctly.')
@@ -998,8 +1026,15 @@ class WasteStream(SanStream):
         return self.F_vol*1e3 - target_Q
 
     def _init_state(self):
-        self._state = np.append(self.conc.astype('float'), self.get_total_flow('m3/d'))
-        self._dstate = self._state * 0.
+        # The following takes ~1 μs, while
+        # `conc = np.append(self.conc.astype('float'), 0)`
+        # takes ~24 μs
+        conc = self.conc
+        state = np.empty((conc.shape[0]+1,), dtype='float')
+        state[:-1] = conc
+        state[-1] = self.get_total_flow('m3/d')
+        self._state = state
+        self._dstate = state * 0.
 
     def _state2flows(self):
         Q = self._state[-1]
@@ -1708,6 +1743,28 @@ class MissingWasteStream(MissingSanStream):
     def dry_mass(self):
         '''[float] Total solids.'''
         return 0.
+
+    @property
+    def bulk_liquid_ID(self):
+        '''
+        [str] ID of the Component that constitutes the bulk liquid, e.g., the solvent.
+        Default to be 'H2O'.
+        '''
+        if self._bulk_liquid_ID is None:
+            self._bulk_liquid_ID = 'H2O'
+        return self._bulk_liquid_ID
+    @bulk_liquid_ID.setter
+    def bulk_liquid_ID(self, i):
+        try:
+            self._bulk_liquid_idx = self.components.index(i)
+            self._bulk_liquid_ID = i
+        except:
+            return None
+
+    @property
+    def bulk_liquid_idx(self):
+        '''[int] Index of the Component that constitutes the bulk liquid, e.g., the solvent.'''
+        return self._bulk_liquid_idx
 
     #!!! Keep this up-to-date with WasteStream
     # @property
