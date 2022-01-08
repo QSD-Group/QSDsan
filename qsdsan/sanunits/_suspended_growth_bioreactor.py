@@ -242,8 +242,7 @@ class CSTR(SanUnit):
             r = lambdify(C, r_eqs)
 
         _dstate = self._dstate
-        _update_dstate = self._update_dstate
-        temp_react = self._temp_react = np.zeros(m)
+        _update_dstate = self._update_dstate      
         V_arr = np.full(m, self._V_max)
         Q_e_arr = np.zeros(m)
         
@@ -254,15 +253,12 @@ class CSTR(SanUnit):
                 Q_ins = QC_ins[:, -1]
                 C_ins = QC_ins[:, :-1]
                 flow_in = Q_ins @ C_ins / V_arr
-                # Q_e = Q_ins.sum()
-                Q_e_arr[:] = Q_ins.sum()
-                _dstate[-1] = dQC_ins[:, -1].sum()
+                Q_e_arr[:] = sum(Q_ins)
+                _dstate[-1] = sum(dQC_ins[:, -1])
                 Cs = QC[:-1]
                 Cs[i] = fixed_DO
-                # flow_out = Q_e * Cs / V_arr
                 flow_out = Q_e_arr * Cs / V_arr
-                temp_react[:] = r(*Cs)
-                _dstate[:-1] = flow_in - flow_out + temp_react
+                _dstate[:-1] = flow_in - flow_out + r(*Cs)
                 _dstate[i] = 0
                 _update_dstate()
         else:
@@ -270,14 +266,11 @@ class CSTR(SanUnit):
                 Q_ins = QC_ins[:, -1]
                 C_ins = QC_ins[:, :-1]
                 flow_in = Q_ins @ C_ins / V_arr
-                # Q_e = Q_ins.sum()
-                Q_e_arr[:] = Q_ins.sum()
-                _dstate[-1] = dQC_ins[:, -1].sum()
+                Q_e_arr[:] = sum(Q_ins)
+                _dstate[-1] = sum(dQC_ins[:, -1])
                 Cs = QC[:-1]
-                # flow_out = Q_e * Cs / V_arr
                 flow_out = Q_e_arr * Cs / V_arr
-                temp_react[:] = r(*Cs)
-                _dstate[:-1] = flow_in - flow_out + temp_react
+                _dstate[:-1] = flow_in - flow_out + r(*Cs)                
                 _update_dstate()
 
         self._ODE = dy_dt
