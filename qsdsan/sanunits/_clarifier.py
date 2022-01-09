@@ -14,16 +14,18 @@ from math import exp
 from numpy import maximum as npmax, minimum as npmin, exp as npexp
 from .. import SanUnit, WasteStream
 import numpy as np
-# import pandas as pd
 
 __all__ = ('FlatBottomCircularClarifier',
            'IdealClarifier',)
 
 
-def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp):
-    X_star = max(X-X_min, 0)
-    v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star))) # exp from the builtin math module is 10X faster
-    return X*max(v, 0)
+def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp, n0):
+    X_star = npmax(X-X_min, n0)
+    v = npmin(v_max_practical, v_max*(npexp(-rh*X_star) - npexp(-rp*X_star)))
+    return X*npmax(v, n0)
+    # X_star = max(X-X_min, 0)
+    # v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star)))
+    # return X*max(v, 0)
 
 
 class FlatBottomCircularClarifier(SanUnit):
@@ -39,8 +41,10 @@ class FlatBottomCircularClarifier(SanUnit):
         Influent to the clarifier. Expected number of influent is 1.
     outs : :class:`WasteStream`
         Treated effluent and sludge.
-    sludge_flow_rate : float, optional
-        Designed sludge flowrate (WAS + RAS), in [m^3/d]. The default is 2000.
+    underflow : float, optional
+        Designed recycling sludge flowrate (RAS), in [m^3/d]. The default is 2000.
+    wastage : float, optional
+        Designed wasted sludge flowrate (WAS), in [m^3/d]. The default is 385.
     surface_area : float, optional
         Surface area of the clarifier, in [m^2]. The default is 1500.
     height : float, optional
@@ -367,13 +371,15 @@ class FlatBottomCircularClarifier(SanUnit):
         vmaxp_arr = np.full_like(nzeros, self._v_max_p)
         rh_arr = np.full_like(nzeros, self._rh)
         rp_arr = np.full_like(nzeros, self._rp)
-        A, hj = self._A, self._hj
+        func_vx = lambda x, xmin : _settling_flux(x, vmax_arr, vmaxp_arr, xmin, rh_arr, rp_arr, nzeros)
+        
+        A, hj, V = self._A, self._hj, self._V
         A_arr = np.full_like(nzeros, A)
         hj_arr = np.full_like(nzeros, hj)
         J = np.zeros(n-1)
         X_t_arr = np.full(jf, self._X_t)
         Q_in_arr = np.zeros(m)
-        factor = np.full(m, A*hj*n)
+        V_arr = np.full(m, V)
 
         def dy_dt(t, QC_ins, QC, dQC_ins):
             dQC[-(n+1)] = dQC_ins[0,-1]
@@ -395,9 +401,7 @@ class FlatBottomCircularClarifier(SanUnit):
             X_rolled[jf] = X_in
             X_rolled[jf+1:] = X[jf: -1]
             flow_in = X_rolled * Q_jout
-            X_star = npmax(X-X_min_arr, nzeros)
-            v = npmin(vmaxp_arr, vmax_arr*(npexp(-rh_arr*X_star) - npexp(-rp_arr*X_star)))
-            VX = X * npmax(v, nzeros)
+            VX = func_vx(X, X_min_arr)
             J[:] = npmin(VX[:-1], VX[1:])
             condition = (X_rolled[:jf]<X_t_arr)
             J[:jf][condition] = VX[:jf][condition]
@@ -406,7 +410,7 @@ class FlatBottomCircularClarifier(SanUnit):
             dQC[-n:] = ((flow_in - flow_out)/A_arr + settle_in - settle_out)/hj_arr       # (n,)
             #*********solubles**********
             Q_in_arr[:] = Q_in
-            dQC[:m] = Q_in_arr*(Z_in - Z)/factor
+            dQC[:m] = Q_in_arr*(Z_in - Z)/V_arr
             _update_dstate()
 
         self._ODE = dy_dt

@@ -229,56 +229,48 @@ class CSTR(SanUnit):
 
     def _compile_ODE(self):
         isa = isinstance
-        V = self._V_max
+        # V = self._V_max
         C = list(symbols(self.components.IDs))
+        m = len(C)
         if self._model is None:
             warn(f'{self.ID} was initialized without a suspended growth model, '
                  f'and thus run as a non-reactive unit')
-            r = lambda *args: np.zeros(len(C))
+            r = lambda *args: np.zeros(m)
         else:
             processes = _add_aeration_to_growth_model(self._aeration, self._model)
             r_eqs = list(processes.production_rates.rate_of_production)
             r = lambdify(C, r_eqs)
 
         _dstate = self._dstate
-        _update_dstate = self._update_dstate
+        _update_dstate = self._update_dstate      
         V_arr = np.full(m, self._V_max)
         Q_e_arr = np.zeros(m)
+        
         if isa(self._aeration, (float, int)):
             i = self.components.index(self._DO_ID)
             fixed_DO = self._aeration
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 Q_ins = QC_ins[:, -1]
                 C_ins = QC_ins[:, :-1]
-                # flow_in = Q_ins @ C_ins / V_arr
-                flow_in = Q_ins @ C_ins
-                # Q_e_arr[:] = Q_ins.sum()
-                # _dstate[-1] = dQC_ins[:, -1].sum()
+                flow_in = Q_ins @ C_ins / V_arr
                 Q_e_arr[:] = sum(Q_ins)
                 _dstate[-1] = sum(dQC_ins[:, -1])
                 Cs = QC[:-1]
                 Cs[i] = fixed_DO
-                # flow_out = Q_e * Cs / V_arr
-                # flow_out = Q_e_arr * Cs / V_arr
-                flow_out = Q_e_arr * Cs
-                # temp_react[:] = r(*Cs)
-                # _dstate[:-1] = flow_in - flow_out + temp_react
-                _dstate[:-1] = (flow_in-flow_out)/V_arr + r(*Cs)
+                flow_out = Q_e_arr * Cs / V_arr
+                _dstate[:-1] = flow_in - flow_out + r(*Cs)
                 _dstate[i] = 0
                 _update_dstate()
         else:
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 Q_ins = QC_ins[:, -1]
                 C_ins = QC_ins[:, :-1]
-                flow_in = Q_ins @ C_ins
-                # Q_e_arr[:] = Q_ins.sum()
-                # _dstate[-1] = dQC_ins[:, -1].sum()
-                Q_e_arr[:] = sum(Q_ins) # faster than Q_ins.sum()
+                flow_in = Q_ins @ C_ins / V_arr
+                Q_e_arr[:] = sum(Q_ins)
                 _dstate[-1] = sum(dQC_ins[:, -1])
                 Cs = QC[:-1]
-                # flow_out = Q_e * Cs / V_arr
-                flow_out = Q_e_arr * Cs
-                _dstate[:-1] = (flow_in-flow_out)/V_arr + r(*Cs)
+                flow_out = Q_e_arr * Cs / V_arr
+                _dstate[:-1] = flow_in - flow_out + r(*Cs)                
                 _update_dstate()
 
         self._ODE = dy_dt
