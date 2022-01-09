@@ -74,7 +74,7 @@ class FlatBottomCircularClarifier(SanUnit):
 
     """
 
-    _N_ins = 1 # if more than 1 ins, then need to update the Q/water conc. calc in `_init_state`
+    _N_ins = 1
     _N_outs = 3
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
@@ -257,7 +257,7 @@ class FlatBottomCircularClarifier(SanUnit):
         if tss != 0: self._X_comp = Xs / tss
 
     def set_init_TSS(self, arr):
-        '''Set the initial TSS [mg/L] in each layer of the clarifier.'''
+        '''set the initial TSS [mg/L] in each layer of the clarifier.'''
         if len(arr) != self._N_layer:
             raise ValueError(f'expects an iterable of length {self._N_layer}, not {len(arr)}')
         self._solids = np.asarray(arr, dtype=float)
@@ -273,22 +273,10 @@ class FlatBottomCircularClarifier(SanUnit):
         TSS_in = sum(QCs[:-1] * x * imass)
         TSS = self._solids if self._solids is not None \
             else np.array([TSS_in*f for f in 20**np.linspace(-1,1,n)])
-
-        Z_len = Z.shape[0]
-        state = np.empty((Z_len+1+TSS.shape[0],), dtype='float')
-        state[:Z_len] = Z
-        state[Z_len] = Q
-        state[Z_len+1:] = TSS
-
-        # Update bulk liquid concentration if not set by the user,
-        # need to update if more than 1 ins
-        inf, = self.ins
-        bulk_liquid_idx = inf.bulk_liquid_idx
-        state[bulk_liquid_idx] = state[bulk_liquid_idx] or inf.conc[bulk_liquid_idx]
-        self._state = state
-        self._dstate = state * 0.
+        ZQs = np.append(Z, Q)
+        self._state = np.append(ZQs, TSS)
+        self._dstate = self._state * 0.
         if TSS_in != 0: self._X_comp = QCs[:-1] * x / TSS_in
-
 
     def _update_state(self, arr):
         self._state = arr
