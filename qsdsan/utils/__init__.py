@@ -36,6 +36,7 @@ from . import (
     model_eval,
     parsing,
     utilities,
+    wwt_design,
     )
 
 from biosteam.utils import NotImplementedMethod
@@ -50,6 +51,7 @@ from .misc import *
 from .model_eval import *
 from .parsing import *
 from .utilities import *
+from .wwt_design import *
 
 
 __all__ = (
@@ -65,6 +67,7 @@ __all__ = (
     *misc.__all__,
     *parsing.__all__,
     *utilities.__all__,
+    *wwt_design.__all__,
     )
 
 
