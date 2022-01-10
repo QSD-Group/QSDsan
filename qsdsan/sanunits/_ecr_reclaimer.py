@@ -84,6 +84,7 @@ class ECR_Reclaimer(SanUnit):
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
         self.baseline_purchase_costs['EC_brush'] = (self.EC_brush)
         self.baseline_purchase_costs['EC_cell'] = (self.EC_cell)
+        self.baseline_purchase_costs['Salt'] = (self.NaCl_dosing_cost * self.salt_dosing)
         
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
@@ -91,7 +92,9 @@ class ECR_Reclaimer(SanUnit):
         #self.power_utility(self.power_demand * self.working_time)
     
     def _calc_replacement_cost(self):
-        ecr_replacement_cost = (self.EC_cell * (20/self.EC_cell_lifetime)) + (self.EC_brush * (20/self.EC_brush_lifetime))  #USD/yr
+        ecr_replacement_cost = ((self.EC_cell * (20/self.EC_cell_lifetime)) + 
+        (self.EC_brush * (20/self.EC_brush_lifetime)) +
+        (self.NaCl_dosing_cost * self.salt_dosing * 52 * 20)) #USD/yr
         return ecr_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
 
         

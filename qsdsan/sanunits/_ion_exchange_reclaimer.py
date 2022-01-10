@@ -106,7 +106,7 @@ class IonExchangeReclaimer(SanUnit):
         zeolite_out.imass['Zeolite'] = zeolite_demand_time
         
         # GAC
-        gac_demand_time = self.gac_weight / (self.gac_lifetime*365*24) # kg gac / hr
+        gac_demand_time = self.gac_weight / (self.gac_annual_replacement*365*24) # kg gac / hr
         #gac_demand_influent = gac_demand_time / waste.F_vol # kg gac / m3 treated
         #gac_cost_day = gac_demand_time * 24 * (self.gac / self.gac_weight) # $ gac / d
         gac_in.imass['GAC'] = gac_demand_time
@@ -147,7 +147,9 @@ class IonExchangeReclaimer(SanUnit):
         
 
     def _calc_replacement_cost(self):
-        ion_exchange_replacement_cost = ((self.GAC_zeolite_mesh * self.zeolite_lifetime) + (self.ion_exchange_replacement_other_parts /10)) #USD/yr
+        ion_exchange_replacement_cost = ((self.GAC_zeolite_mesh * self.gac_annual_replacement)
+                                         + (self.ion_exchange_replacement_other_parts /10)
+                                         + (self.KCl_cost * self.KCl_weight * self.regen_freq_per_yr)) #USD/yr
         return ion_exchange_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
                   
     def _calc_maintenance_labor_cost(self):
@@ -160,7 +162,8 @@ class IonExchangeReclaimer(SanUnit):
         self.baseline_purchase_costs['fittings'] = (self.four_in_pipe_SCH80_endcap + self.NRV + self.connector + 
             self.ball_valve + self.three_eight_elbow + self.ten_ten_mm_tee + self.OD_tube + self.four_in_pipe_clamp)
                                            
-        self.baseline_purchase_costs['GAC_Zeolite'] = (self.GAC_zeolite_mesh)  
+        self.baseline_purchase_costs['GAC_Zeolite'] = (self.GAC_zeolite_mesh) 
+        self.baseline_purchase_costs['Regeneration Solution'] = (self.KCl_cost * self.KCl_weight)
             
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
      

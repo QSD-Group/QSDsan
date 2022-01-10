@@ -10,4 +10,4 @@ battery_replacement,,times/year,0.1,0.09,0.11,triangular,BOM
 solar_capacity,,m2,19.8,14.85,24.75,uniform,BOM
 battery_kg,,kg,68.7,51.525,85.875,uniform,6-CNJ-250
 OM,,times/year,10,5,15,uniform,BOm
-wages,,USD/cap/day,29.11,14.55,43.68,triangular,SURT report average from an average across water
+wages,,USD/cap/hr,29.11,14.55,43.68,triangular,SURT report average from an average across water

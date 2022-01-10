@@ -20,8 +20,8 @@ for license details.
 import numpy as np
 from warnings import warn
 from qsdsan import SanUnit, Construction, WasteStream
-from ._decay import Decay
-from ..utils import load_data, data_path
+# from ._decay import Decay
+from qsdsan.utils.loading import load_data, data_path
 from qsdsan.sanunits._toilet import Toilet
 
 __all__ = ('MURTToilet',)
