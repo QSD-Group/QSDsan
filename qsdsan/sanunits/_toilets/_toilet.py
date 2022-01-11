@@ -139,7 +139,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         Parameters
         ----------
         stream : WasteStream
-            Excreta stream that is not appropriately empited (before emptying).
+            Excreta stream that is not appropriately emptied (before emptying).
         CH4 : WasteStream
             Fugitive CH4 gas (before emptying).
         N2O : WasteStream
@@ -154,7 +154,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         Returns
         -------
         stream : WasteStream
-            Excreta stream that is not appropriately empited (after emptying).
+            Excreta stream that is not appropriately emptied (after emptying).
         CH4 : WasteStream
             Fugitive CH4 gas (after emptying).
         N2O : WasteStream
@@ -169,7 +169,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
 
     @property
     def N_user(self):
-        '''[float] Number of people that use the toilet per hour.'''
+        '''[float] Number of people that share the toilet.'''
         return self._N_user
     @N_user.setter
     def N_user(self, i):
@@ -231,7 +231,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     @property
     def N_volatilization(self):
         '''
-        [float] Fraction of input N that volatizes to the air
+        [float] Fraction of input N that volatilizes to the air
         (if `if_air_emission` is True).
         '''
         return self._N_volatilization

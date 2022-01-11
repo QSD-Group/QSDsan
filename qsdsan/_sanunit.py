@@ -150,7 +150,6 @@ class SanUnit(Unit, isabstract=True):
         self._assert_compatible_property_package()
         for i in (*construction, *transportation, *equipments):
             i._linked_unit = self
-            breakpoint()
         self.construction = construction
         self.transportation = transportation
         self.equipments = equipments
