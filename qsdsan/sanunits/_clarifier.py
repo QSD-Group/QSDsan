@@ -270,7 +270,8 @@ class FlatBottomCircularClarifier(SanUnit):
         n = self._N_layer
         x = self.components.x
         imass = self.components.i_mass
-        QCs = self._collect_ins_state()[0]
+        self._refresh_ins()
+        QCs = self._ins_QC[0]
         Q = QCs[-1]
         Z = self._solubles if self._solubles is not None \
             else QCs[:-1]*(1-x)
@@ -371,7 +372,7 @@ class FlatBottomCircularClarifier(SanUnit):
         vmaxp_arr = np.full_like(nzeros, self._v_max_p)
         rh_arr = np.full_like(nzeros, self._rh)
         rp_arr = np.full_like(nzeros, self._rp)
-        func_vx = lambda x, xmin : _settling_flux(x, vmax_arr, vmaxp_arr, xmin, rh_arr, rp_arr, nzeros)
+        func_vx = lambda x_arr, xmin_arr : _settling_flux(x_arr, vmax_arr, vmaxp_arr, xmin_arr, rh_arr, rp_arr, nzeros)
         
         A, hj, V = self._A, self._hj, self._V
         A_arr = np.full_like(nzeros, A)

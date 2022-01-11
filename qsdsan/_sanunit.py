@@ -211,6 +211,8 @@ class SanUnit(Unit, isabstract=True):
     def _init_dynamic(self):
         self._state = None
         self._dstate = None
+        self._ins_QC = np.empty((len(self._ins), len(self.components)+1))
+        self._ins_dQC = self._ins_QC.copy()
         self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components]
         self._ODE = None
         self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
@@ -422,11 +424,10 @@ class SanUnit(Unit, isabstract=True):
     def get_retained_mass(self, biomass_IDs):
         warn(f'The retained biomass in {self.ID} is ignored.')
 
-    def _collect_ins_state(self):
-        return np.array([inf._state for inf in self._ins])
-
-    def _collect_ins_dstate(self):
-        return np.array([inf._dstate for inf in self._ins])
+    def _refresh_ins(self):
+        for i, ws in enumerate(self._ins):
+            self._ins_QC[i,:] = ws._state
+            self._ins_dQC[i,:] = ws._dstate
 
     @property
     def construction(self):
