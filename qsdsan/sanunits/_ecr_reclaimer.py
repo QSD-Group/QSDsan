@@ -75,7 +75,7 @@ class ECR_Reclaimer(SanUnit):
         design = self.design_results
         design['Titanium'] = electrode_quant = self.Titanium_weight
         self.construction = ((Construction(item='Titanium', quantity = electrode_quant, quantity_unit = 'kg')))
-        self.add_construction()
+        self.add_construction(add_cost=False)
  
     def _cost(self):
         

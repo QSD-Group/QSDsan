@@ -63,7 +63,7 @@ class MURTToilet(Toilet):
     # _P_leaching = Frac_D(name='P_leaching')
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 N_user=1, N_toilet=1, lifetime=8,
+                 N_user=1, N_toilet=1, lifetime=8, ppl = 120,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=True, if_air_emission=True, if_ideal_emptying=True,
                  CAPEX=0, OPEX_over_CAPEX=0,
@@ -76,6 +76,7 @@ class MURTToilet(Toilet):
         self.lifetime = lifetime
         self.T = T
         self._safety_factor = safety_factor
+        self.ppl = ppl
 
         data = load_data(path=data_path)
         for para in data.index:

@@ -51,9 +51,8 @@ class HousingReclaimer(SanUnit):
         design = self.design_results
         #!!! Add later design['Aluminum'] = aluminum_quant = self.aluminum_weight
         design['Steel'] = steel_quant = (self.steel_weight + self.framework_weight + self.fittings_weight)
-        self.construction = (
-                            (Construction(item='Steel', quantity = steel_quant, quantity_unit = 'kg')))
-        self.add_construction()
+        self.construction = ((Construction(item='Steel', quantity = steel_quant, quantity_unit = 'kg')))
+        self.add_construction(add_cost=False)
         
  
     def _cost(self):
