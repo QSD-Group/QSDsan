@@ -295,8 +295,7 @@ class FlatBottomCircularClarifier(SanUnit):
         inf, = self.ins
         imass = self.components.i_mass
         C_in = inf._state[:-1]
-        X_composition = self._X_comp = C_in*x/sum(C_in*imass*x)
-        # X_composition = self._X_comp # (m, ), mg COD/ mg TSS
+        X_composition = self._X_comp = C_in*x/sum(C_in*imass*x) # (m, ), mg COD/ mg TSS
         X_e = arr[-n] * X_composition
         C_s = Z + arr[-1] * X_composition
         eff, ras, was = self._outs
@@ -387,7 +386,6 @@ class FlatBottomCircularClarifier(SanUnit):
         X_t_arr = np.full(jf, self._X_t)
         Q_in_arr = np.zeros(m)
         V_arr = np.full(m, V)
-        # X_comp = self._X_comp
 
         def dy_dt(t, QC_ins, QC, dQC_ins):
             dQC[-(n+1)] = dQC_ins[0,-1]
@@ -396,7 +394,6 @@ class FlatBottomCircularClarifier(SanUnit):
             C_in = QC_ins[0,:-1]
             Z_in = C_in*(1-x)
             X_in = sum(C_in*imass*x)           # influent TSS
-            # X_comp[:] = (C_in*x/X_in)[:] # g COD/g TSS for solids in influent
             X_min_arr[:] = X_in * fns
             X = QC[-n:]                        # (n, ), TSS for each layer
             Z = QC[:m] * (1-x)
