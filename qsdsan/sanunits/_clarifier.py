@@ -4,6 +4,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Joy Zhang <joycheung1994@gmail.com>
+    Yalin Li <zoe.yalin.li@gmail.com>    
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -295,7 +296,7 @@ class FlatBottomCircularClarifier(SanUnit):
         inf, = self.ins
         imass = self.components.i_mass
         C_in = inf._state[:-1]
-        X_composition = self._X_comp = C_in*x/sum(C_in*imass*x) # (m, ), mg COD/ mg TSS
+        X_composition = self._X_comp = C_in*x/sum(C_in*imass*x)
         X_e = arr[-n] * X_composition
         C_s = Z + arr[-1] * X_composition
         eff, ras, was = self._outs
