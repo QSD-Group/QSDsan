@@ -204,6 +204,8 @@ class ASM1(Processes):
         The default is 0.4.
     k_a : float, optional
         Ammonification rate constant, in [m^3/g COD/d]. The default is 0.05.
+    fr_SS_COD : float, optional
+        Ash content for organic particulate components, in [g SS/g COD]. The default is 0.75.
     path : str, optional
         Alternative file path for the Gujer matrix. The default is None.
 

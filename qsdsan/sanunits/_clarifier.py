@@ -4,6 +4,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Joy Zhang <joycheung1994@gmail.com>
+    Yalin Li <zoe.yalin.li@gmail.com>    
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -296,7 +297,6 @@ class FlatBottomCircularClarifier(SanUnit):
         imass = self.components.i_mass
         C_in = inf._state[:-1]
         X_composition = self._X_comp = C_in*x/sum(C_in*imass*x)
-        # X_composition = self._X_comp # (m, ), mg COD/ mg TSS
         X_e = arr[-n] * X_composition
         C_s = Z + arr[-1] * X_composition
         eff, ras, was = self._outs
@@ -387,7 +387,6 @@ class FlatBottomCircularClarifier(SanUnit):
         X_t_arr = np.full(jf, self._X_t)
         Q_in_arr = np.zeros(m)
         V_arr = np.full(m, V)
-        # X_comp = self._X_comp
 
         def dy_dt(t, QC_ins, QC, dQC_ins):
             dQC[-(n+1)] = dQC_ins[0,-1]
@@ -396,7 +395,6 @@ class FlatBottomCircularClarifier(SanUnit):
             C_in = QC_ins[0,:-1]
             Z_in = C_in*(1-x)
             X_in = sum(C_in*imass*x)           # influent TSS
-            # X_comp[:] = (C_in*x/X_in)[:] # g COD/g TSS for solids in influent
             X_min_arr[:] = X_in * fns
             X = QC[-n:]                        # (n, ), TSS for each layer
             Z = QC[:m] * (1-x)
