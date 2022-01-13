@@ -69,7 +69,7 @@ class PitLatrine(Toilet):
     # _P_leaching = Frac_D(name='P_leaching')
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 degraded_components=('OtherSS',), N_user=1, N_toilet=1,
+                 degraded_components=('OtherSS',), N_user=1, N_toilet=1, N_tot_user=None,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True,
                  CAPEX=449, OPEX_over_CAPEX=0.05,
@@ -77,7 +77,7 @@ class PitLatrine(Toilet):
                  if_pit_above_water_table=True, **kwargs):
 
         Toilet.__init__(self, ID, ins, outs, thermo, init_with,
-                        degraded_components, N_user, N_toilet,
+                        degraded_components, N_user, N_toilet, N_tot_user,
                         if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
                         if_air_emission, if_ideal_emptying, CAPEX, OPEX_over_CAPEX)
 
