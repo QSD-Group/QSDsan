@@ -89,6 +89,8 @@ class CSTR(SanUnit):
     def reset_cache(self):
         '''Reset cached states.'''
         self._state = None
+        self._dstate = None
+        self._ODE = None
         for s in self.outs:
             s.empty()
 
@@ -229,7 +231,6 @@ class CSTR(SanUnit):
 
     def _compile_ODE(self):
         isa = isinstance
-        # V = self._V_max
         C = list(symbols(self.components.IDs))
         m = len(C)
         if self._model is None:
@@ -385,13 +386,6 @@ class SBR(SanUnit):
         self._init_Cas = None
         self._dynamic_composition = None
 
-
-    def reset_cache(self):
-        '''Reset cached states.'''
-        self._init_Vas = self._init_Cas = None
-        self._state = None
-        for s in self.outs:
-            s.empty()
 
     @property
     def operation_cycle(self):

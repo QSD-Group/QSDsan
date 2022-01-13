@@ -117,6 +117,8 @@ class FlatBottomCircularClarifier(SanUnit):
     def reset_cache(self):
         '''Reset cached states.'''
         self._state = None
+        self._dstate = None
+        self._ODE = None
         for s in self.outs:
             s.empty()
 
