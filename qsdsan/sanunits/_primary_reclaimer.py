@@ -53,15 +53,28 @@ class PrimaryReclaimer(SanUnit, Decay):
             setattr(self, attr, value)
     
     
-    _N_ins = 1
-    _N_outs = 4
+    _N_ins = 2
+    _N_outs = 5
 
      
     def _run(self):
-        waste = self.ins[0]
-        treated, CH4, N2O, sludge = self.outs
+        waste, MgOH2 = self.ins
+        self.ins[1].imass['MagnesiumHydroxide'] = (self.orthoP_post / self.MW_P / self.Mg_dose * self.MW_MgOH2)
+
+        treated, CH4, N2O, sludge, struvite = self.outs
         treated.copy_like(self.ins[0])
         CH4.phase = N2O.phase = 'g'
+        
+        
+        #MgOH2.imass['MagnesiumHydroxide'] =(self.orthoP_post_AnMBR / self.MW_P / self.Mg_dose * self.MW_MgOH2)  # kg Mg(OH)2 per hr;
+        
+        
+        P_precipitated = self.orthoP_post * self.P_recovery  # kg precipitated-P/hr
+        N_precipitated = (self.orthoP_post * self.P_recovery / self.MW_P * self.N_P_ratio_struvite * self.MW_N)  # kg precipitated-N/hr
+        
+        
+        struvite_production_time = P_precipitated / self.MW_P * self.MW_struvite  # kg (NH4)MgPO4•6(H2O) / hr
+        struvite.imass['Struvite'] = struvite_production_time
         
         # COD removal
         COD_deg = treated.COD*treated.F_vol/1e3*self.COD_removal # kg/hr
@@ -102,7 +115,7 @@ class PrimaryReclaimer(SanUnit, Decay):
         #find rough value for FRP for tank 
         design = self.design_results
         design['FRP'] = FRP_quant = self.FRP_per_tank 
-        design['Pump'] = pump_quant = self.pump_lca
+        design['Pump'] = pump_quant = self.pump_lca * 2
         self.construction = (Construction(item='FRP', quantity = FRP_quant, quantity_unit = 'kg'),
                              Construction(item='Pump', quantity = pump_quant, quantity_unit = 'each'))
         self.add_construction(add_cost = False)
@@ -110,6 +123,7 @@ class PrimaryReclaimer(SanUnit, Decay):
     def _cost(self):
         
         self.baseline_purchase_costs['Tanks'] = (self.FRP_tank_cost + self.pump)
+        self.baseline_purchase_costs['Chemicals'] = (self.MgOH2_cost)
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
 

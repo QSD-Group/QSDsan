@@ -59,7 +59,7 @@ class ECR_Reclaimer(SanUnit):
         treated = self.outs[0]
         treated.copy_like(self.ins[0])
 
-        salt.imass['NaCl'] = self.salt_dosing / 7 #salt demand per day
+        salt.imass['NaCl'] = self.salt_dosing / 7 / 24 #salt demand per day
         
       
         # HCL_density = 1.2 #g/ml
