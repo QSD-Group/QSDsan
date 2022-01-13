@@ -23,6 +23,8 @@ from qsdsan import SanUnit, Construction, WasteStream
 # from ._decay import Decay
 from qsdsan.utils.loading import load_data, data_path
 from qsdsan.sanunits._toilet import Toilet
+from math import ceil 
+
 
 __all__ = ('MURTToilet',)
 
@@ -59,17 +61,16 @@ class MURTToilet(Toilet):
     
     '''
     
-    # Legacy code to add checkers
-    # _P_leaching = Frac_D(name='P_leaching')
+    ppl = 1
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 N_user=1, N_toilet=1, lifetime=8, ppl = 120,
+                 N_user=1, lifetime=8, ppl = 120,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=True, if_air_emission=True, if_ideal_emptying=True,
                  CAPEX=0, OPEX_over_CAPEX=0,
                  T=273.15+24, safety_factor=1, **kwargs):
 
-        Toilet.__init__(self, ID, ins, outs, thermo, init_with, N_user=N_user, N_toilet=N_toilet,
+        Toilet.__init__(self, ID, ins, outs, thermo, init_with, N_user=N_user, N_toilet=ppl/N_user,
                         if_toilet_paper=if_toilet_paper, if_flushing=if_flushing, if_cleansing=if_cleansing, 
                         if_desiccant=if_desiccant, if_air_emission=if_air_emission, if_ideal_emptying=if_ideal_emptying, 
                         CAPEX=CAPEX, OPEX_over_CAPEX=OPEX_over_CAPEX)
@@ -77,6 +78,8 @@ class MURTToilet(Toilet):
         self.T = T
         self._safety_factor = safety_factor
         self.ppl = ppl
+        self.N_user = N_user
+        
 
         data = load_data(path=data_path)
         for para in data.index:
@@ -149,7 +152,7 @@ class MURTToilet(Toilet):
         
         # Scale up the effluent based on the number of user per toilet and
         # toilet number
-        tot_user = self.N_user * self.N_toilet
+        tot_user = self.ppl
         for i in self.outs:
             if not i.F_mass == 0:
                 i.F_mass *= tot_user
@@ -198,6 +201,15 @@ class MURTToilet(Toilet):
     @collection_period.setter
     def collection_period(self, i):
         self._collection_period = float(i)
+    
+    @property
+    def N_toilet(self):
+        '''[float] Number of parallel toilets.'''
+        return self.ppl/self.N_user
+    @N_toilet.setter
+    def N_toilet(self, i):
+        self._N_toilet = i
+        self._N_user = self.ppl/i
 
     
     

@@ -105,7 +105,7 @@ class PrimaryReclaimer(SanUnit, Decay):
         design['Pump'] = pump_quant = self.pump_lca
         self.construction = (Construction(item='FRP', quantity = FRP_quant, quantity_unit = 'kg'),
                              Construction(item='Pump', quantity = pump_quant, quantity_unit = 'each'))
-        self.add_construction()
+        self.add_construction(add_cost = False)
  
     def _cost(self):
         
