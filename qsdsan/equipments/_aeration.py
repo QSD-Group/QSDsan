@@ -135,6 +135,8 @@ class Blower(Equipment):
         D['Blower capacity'] = CFMB
         D['Number of blowers'] = N
 
+        return D
+
 
     def _cost(self, TCFM, CFMB):
         N_reactor, AFF, C = self.N_reactor, self.AFF, self.cost
@@ -166,6 +168,8 @@ class Blower(Equipment):
         # Blower building
         area = 128 * (TCFM**0.256) # building area, [ft2]
         C['Blower building'] = area * self.building_unit_cost
+
+        return C
 
 
 # %%

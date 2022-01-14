@@ -18,8 +18,6 @@ TODO:
     (AF, submerged, sparging, GAC, flat sheet, hollow fiber)
     - Maybe add AeMBR as well (make an MBR superclass)
         - AeMBR can use higher flux and allows for lower transmembrane pressure
-    - Add maintenance and operating costs (allow user to choose if to include)
-    - The `capacity_factor` for sludge pump should be `recir_ratio`
 
 References
 ----------
@@ -33,6 +31,7 @@ from math import ceil, floor
 from biosteam.exceptions import DesignError
 from . import HXutility, WWTpump, InternalCirculationRx
 from .. import SanStream, SanUnit
+from ..equipments import Blower
 from ..utils import (
     auom,
     compute_stream_COD,
@@ -207,11 +206,17 @@ class AnMBR(SanUnit):
     _SGD = 0.625 # from the 0.05-1.2 uniform range in ref [1]
     _AFF = 3.33
 
+    # Costs
+    excav_unit_cost = 8 / 27 # $/ft3, 27 is to convert from $/yd3
+    wall_concrete_unit_cost = 650 / 27 # $/ft3
+    slab_concrete_unit_cost = 350 / 27 # $/ft3
     GAC_price = 13.78 # $/kg
 
     _refresh_rxns = InternalCirculationRx._refresh_rxns
 
     # Other equipment
+    pumps =  ('perm', 'retent', 'recir', 'sludge', 'naocl', 'citric', 'bisulfite',
+              'AF', 'AeF')
     auxiliary_unit_names = ('heat_exchanger',)
 
     _units = {
@@ -271,9 +276,11 @@ class AnMBR(SanUnit):
         self.heat_exchanger = hx = HXutility(None, None, None, T=T)
         self.heat_utilities = hx.heat_utilities
         self._refresh_rxns()
+
         for k, v in kwargs.items():
             setattr(self, k, v)
 
+        self._add_equipments()
         self._check_design()
 
 
@@ -317,10 +324,8 @@ class AnMBR(SanUnit):
                                   'allowed for "multi-tube" membrane',
                                   f'not "{m_material}".')
 
-    # Add pumps
-    pumps =  ('perm', 'retent', 'recir', 'sludge', 'naocl', 'citric', 'bisulfite',
-              'AF', 'AeF')
-    def _add_pumps(self):
+    # Add pumps and blower
+    def _add_equipments(self):
         ID, ins, outs = self.ID, self.ins, self.outs
         rx_type, m_config, pumps = \
             self.reactor_type, self.membrane_configuration, self.pumps
@@ -366,6 +371,9 @@ class AnMBR(SanUnit):
                 include_building_excavation=False,
                 )
             setattr(self, f'{i}_pump', pump)
+
+        blower = self.blower = Blower(ID+'_blower', linked_unit=self)
+        self.equipments = (blower,)
 
 
     # =========================================================================
@@ -424,7 +432,9 @@ class AnMBR(SanUnit):
         # Gas for sparging, no sparging needed if submerged or using GAC
         air_out.link_with(air_in)
         air_in.T = 17 + 273.15
-        self._design_blower()
+
+        # self._design_blower()
+        self.add_equipment_design()
 
         if self.T is not None:
             perm.T = sludge.T = biogas.T = air_out.T = self.T
@@ -545,7 +555,6 @@ class AnMBR(SanUnit):
         D['Excavation'] = excavation
 
         # Optional addition of packing media (used in filters)
-        #!!! Need to add the units to the `_units` dict
         ldpe, hdpe = 0., 0.
         for i in (self.AF, self.AeF):
             if i is None:
@@ -760,14 +769,12 @@ class AnMBR(SanUnit):
         D, C = self.design_results, self.baseline_purchase_costs
 
         ### Capital ###
-        #!!! Change `include_excavation_cost` to excavation_unit_cost
         # Concrete and excavation
         VEX, VWC, VSC = \
             D['Excavation'], D['Wall concrete'], D['Slab concrete']
-        # 27 is to convert the VEX from ft3 to yd3
-        C['Reactor excavation'] = VEX / 27 * 8 if self.include_excavation_cost else 0.
-        C['Wall concrete'] = VWC / 27 * 650
-        C['Slab concrete'] = VSC / 27 * 350
+        C['Reactor excavation'] = VEX * self.excav_unit_cost
+        C['Wall concrete'] = VWC * self.wall_concrete_unit_cost
+        C['Slab concrete'] = VSC * self.slab_concrete_unit_cost
 
         # Membrane
         C['Membrane'] = self.membrane_unit_cost * D['Membrane'] / _ft2_to_m2
@@ -802,12 +809,14 @@ class AnMBR(SanUnit):
         add_OPEX['Pump operating'] = opex_o
         add_OPEX['Pump maintenance'] = opex_m
 
-        # Blower and air pipe
-        TCFM, CFMB = D['Total air flow'], D['Blower capacity']
-        C['Air pipes'], C['Blowers'], C['Blower building'] = self._cost_blower(TCFM, CFMB)
+        # TCFM, CFMB = D['Total air flow'], D['Blower capacity']
+        # C['Air pipes'], C['Blowers'], C['Blower building'] = self._cost_blower(TCFM, CFMB)
 
         # Degassing membrane
         C['Degassing membrane'] = 10000 * D['Degassing membrane']
+
+        # Blower and air pipe
+        self.add_equipment_cost()
 
         ### Heat and power ###
         # Heat loss, assume air is 17°C, ground is 10°C
@@ -821,12 +830,10 @@ class AnMBR(SanUnit):
             A_F = L_CSTR * W_tank
             A_W *= N_train * _ft2_to_m2
             A_F *= N_train * _ft2_to_m2
-
             loss = 0.7 * (T-(17+273.15)) * A_W / 1e3 # 0.7 W/m2/°C for wall
             loss += 1.7 * (T-(10+273.15)) * A_F / 1e3 # 1.7 W/m2/°C for floor
             loss += 0.95 * (T-(17+273.15)) * A_F / 1e3 # 0.95 W/m2/°C for floating cover
         self._heat_loss = loss
-
         # Fluid heating
         inf = self._inf
         if T:
@@ -835,54 +842,48 @@ class AnMBR(SanUnit):
         else:
             duty = 0
         self.heat_exchanger.simulate_as_auxiliary_exchanger(duty, inf)
-
-        # Pumping
+        # Power for pumping and gas
         pumping = 0.
         for ID in self.pumps:
             p = getattr(self, f'{ID}_pump')
             if p is None:
                 continue
             pumping += p.power_utility.rate
-
-        # Gas
         sparging = 0. #!!! output from submerge design
         degassing = 3 * self.N_degasser # assume each uses 3 kW
-
         self.power_utility.rate = sparging + degassing + pumping + loss
 
 
-    # Called by _cost
-    #!!! Add the Equipment Blower, then this will not be needed
-    def _cost_blower(self, TCFM, CFMB):
-        AFF = self.AFF
+    # def _cost_blower(self, TCFM, CFMB):
+    #     AFF = self.AFF
 
-        # Air pipes
-        # Note that the original codes use CFMD instead of TCFM for air pipes,
-        # but based on the coding they are equivalent
-        # (i.e., just used an alternative name)
-        if TCFM <= 1000:
-            air_pipes = 617.2 * AFF * (TCFM**0.2553)
-        elif 1000 < TCFM <= 10000:
-            air_pipes = 1.43 * AFF * (TCFM**1.1337)
-        else:
-            air_pipes = 28.59 * AFF * (TCFM**0.8085)
+    #     # Air pipes
+    #     # Note that the original codes use CFMD instead of TCFM for air pipes,
+    #     # but based on the coding they are equivalent
+    #     # (i.e., just used an alternative name)
+    #     if TCFM <= 1000:
+    #         air_pipes = 617.2 * AFF * (TCFM**0.2553)
+    #     elif 1000 < TCFM <= 10000:
+    #         air_pipes = 1.43 * AFF * (TCFM**1.1337)
+    #     else:
+    #         air_pipes = 28.59 * AFF * (TCFM**0.8085)
 
-        # Blowers
-        if TCFM <= 30000:
-            ratio = 0.7 * (CFMB**0.6169)
-            blowers = 58000*ratio / 100
-        elif 30000 < TCFM <= 72000:
-            ratio = 0.377 * (CFMB**0.5928)
-            blowers = 218000*ratio / 100
-        else:
-            ratio = 0.964 * (CFMB**0.4286)
-            blowers  = 480000*ratio / 100
+    #     # Blowers
+    #     if TCFM <= 30000:
+    #         ratio = 0.7 * (CFMB**0.6169)
+    #         blowers = 58000*ratio / 100
+    #     elif 30000 < TCFM <= 72000:
+    #         ratio = 0.377 * (CFMB**0.5928)
+    #         blowers = 218000*ratio / 100
+    #     else:
+    #         ratio = 0.964 * (CFMB**0.4286)
+    #         blowers  = 480000*ratio / 100
 
-        # Blower building
-        area = 128 * (TCFM**0.256) # building area, [ft2]
-        building = area * 90 # 90 is the unit price, [USD/ft2]
+    #     # Blower building
+    #     area = 128 * (TCFM**0.256) # building area, [ft2]
+    #     building = area * 90 # 90 is the unit price, [USD/ft2]
 
-        return air_pipes, blowers, building
+    #     return air_pipes, blowers, building
 
 
     ### Reactor configuration ###
