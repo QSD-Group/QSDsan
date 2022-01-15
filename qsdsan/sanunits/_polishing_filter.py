@@ -181,6 +181,8 @@ class PolishingFilter(SanUnit):
         self.solids_conc = solids_conc
         self.T = T
         self.include_degassing_membrane = include_degassing_membrane
+        self.F_BM.update(F_BM)
+        self._default_equipment_lifetime.update(lifetime)
 
         # Initiate the attributes
         self.heat_exchanger = hx = HXutility(None, None, None, T=T)
@@ -189,43 +191,6 @@ class PolishingFilter(SanUnit):
 
         for k, v in kwargs.items():
             setattr(self, k, v)
-
-        self._add_pumps()
-
-
-    def _add_pumps(self):
-        ID, ins, outs = self.ID, self.ins, self.outs
-        N_filter, D, d, pumps = self.N_filter, self.D, self.d, self.pumps
-        ins_dct = {
-            'lift': ins[0].proxy(),
-            'recir': ins[1].proxy(),
-            'eff': outs[1].proxy(),
-            'sludge': outs[2].proxy(),
-            }
-        type_dct = {
-            'lift': 'lift',
-            'recir': 'recirculation_AF',
-            'eff': 'retentate_AF',
-            'sludge': 'sludge',
-            }
-        inputs_dct = {
-            'lift': (N_filter, D),
-            'recir': (N_filter, d, D),
-            'eff': (N_filter, D),
-            'sludge': (1,),
-            }
-        for i in pumps[:-2]:
-            ID = f'{ID}_{i}'
-            capacity_factor=1. if i!='recir' else self.recir_ratio
-            pump = WWTpump(
-                ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
-                Q_mgd=None, add_inputs=inputs_dct[i],
-                capacity_factor=capacity_factor,
-                include_pump_cost=True,
-                include_building_cost=False,
-                include_OM_cost=False,
-                )
-            setattr(self, f'{i}_pump', pump)
 
 
     def _refresh_rxns(self, X_decomp=None, X_growth=None):
@@ -302,12 +267,9 @@ class PolishingFilter(SanUnit):
         D['Excavation'] = VEX
 
         ### Pumps ###
-        pipe_ss, pump_ss = 0., 0.
-        for i in self.pumps:
-            p = getattr(self, f'{i}_pump')
-            p.simulate()
-            pipe_ss += p.design_results['Pump pipe stainless steel']
-            pump_ss += p.design_results['Pump stainless steel']
+        pipe, pumps = self._design_pump()
+        D['Pump pipe stainless steel'] = pipe
+        D['Pump stainless steel'] = pumps
 
         ### Packing ###
         # Assume 50%/50% vol/vol LDPE/HDPE
@@ -410,6 +372,53 @@ class PolishingFilter(SanUnit):
     #     VEX_PB = 0.5 * (Area_B_P+Area_T_P) * PBD # total volume of excavaion, [ft3]
 
     #     return N_AF, d_AF, D_AF, V_m_AF, VWC_AF, VWC_AF, VEX_PB
+
+    def _design_pump(self):
+        ID, ins, outs = self.ID, self.ins, self.outs
+        N_filter, D, d, pumps = self.N_filter, self.D, self.d, self.pumps
+        ins_dct = {
+            'lift': ins[0].proxy(),
+            'recir': ins[1].proxy(),
+            'eff': outs[1].proxy(),
+            'sludge': outs[2].proxy(),
+            }
+        type_dct = {
+            'lift': 'lift',
+            'recir': 'recirculation_AF',
+            'eff': 'retentate_AF',
+            'sludge': 'sludge',
+            }
+        inputs_dct = {
+            'lift': (N_filter, D),
+            'recir': (N_filter, d, D),
+            'eff': (N_filter, D),
+            'sludge': (1,),
+            }
+        for i in pumps:
+            if hasattr(self, f'{i}_pump'):
+                p = getattr(self, f'{i}_pump')
+                setattr(p, 'add_inputs', inputs_dct[i])
+            else:
+                ID = f'{ID}_{i}'
+                capacity_factor=1. if i!='recir' else self.recir_ratio
+                pump = WWTpump(
+                    ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
+                    Q_mgd=None, add_inputs=inputs_dct[i],
+                    capacity_factor=capacity_factor,
+                    include_pump_cost=True,
+                    include_building_cost=False,
+                    include_OM_cost=False,
+                    )
+                setattr(self, f'{i}_pump', pump)
+
+        pipe_ss, pump_ss = 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p.simulate()
+            pipe_ss += p.design_results['Pump pipe stainless steel']
+            pump_ss += p.design_results['Pump stainless steel']
+        return pipe_ss, pump_ss
+
 
     def _cost(self):
         D, C = self.design_results, self.baseline_purchase_costs

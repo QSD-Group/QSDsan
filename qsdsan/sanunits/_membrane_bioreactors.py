@@ -212,9 +212,7 @@ class AnMBR(SanUnit):
     T_air = 17 + 273.15
     T_earth = 10 + 273.15
     # Heat transfer coefficients, all in W/m2/°C
-    H_wall = 0.7
-    H_floor = 1.7
-    H_ceilling = 0.95
+    heat_transfer_coeff=dict(wall=0.7, floor=1.7, ceiling=0.95),
 
     # Costs
     excav_unit_cost = (8+0.3) / 27 # $/ft3, 27 is to convert from $/yd3
@@ -261,8 +259,9 @@ class AnMBR(SanUnit):
                  biomass_ID='WWTsludge', solids_conc=10.5,
                  T=35+273.15,
                  F_BM=default_F_BM, lifetime=default_equipment_lifetime,
-                 **kwargs):
+                 F_BM_default=1, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with, F_BM_default=1)
+        self._inf = self.ins[0].copy() # this stream will be preserved (i.e., no reaction)
         self.reactor_type = reactor_type
         self.N_train = N_train
         self.include_aerobic_filter = include_aerobic_filter
@@ -278,7 +277,7 @@ class AnMBR(SanUnit):
         self.split = split if split else default_component_dict(
             cmps=cmps, gas=0.15, solubles=0.125, solids=0) # ref[2]
         self.solids = solids or cmps.solids
-        self._xcmp = xcmp = getattr(self.components, biomass_ID)
+        self._xcmp = getattr(self.components, biomass_ID)
         self.solids_conc = solids_conc
         self.T = T
         self.F_BM.update(F_BM)
@@ -292,7 +291,6 @@ class AnMBR(SanUnit):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-        self._add_pumps()
         blower = self.blower = Blower(ID+'_blower', linked_unit=self)
         self.equipments = (blower,)
         self._check_design()
@@ -338,56 +336,6 @@ class AnMBR(SanUnit):
                                   'allowed for "multi-tube" membrane',
                                   f'not "{m_material}".')
 
-    # Add pumps and blower
-    def _add_pumps(self):
-        ID, ins, outs = self.ID, self.ins, self.outs
-        rx_type, m_config, pumps = \
-            self.reactor_type, self.membrane_configuration, self.pumps
-
-        ins_dct = {
-            'perm': outs[1].proxy(),
-            'retent': self._retent,
-            'recir': self._recir,
-            'sludge': outs[2].proxy(),
-            'naocl': ins[2].proxy(),
-            'citric': ins[3].proxy(),
-            'bisulfite': ins[4].proxy(),
-            }
-
-        type_dct = {
-            'perm': f'permeate_{m_config}',
-            'retent': f'retentate_{rx_type}',
-            'recir': f'recirculation_{rx_type}',
-            'sludge': 'sludge',
-            'naocl': 'chemical',
-            'citric': 'chemical',
-            'bisulfite': 'chemical',
-            }
-
-        inputs_dct = {
-            'perm': (self.cas_per_tank, self.D_tank, self.TMP_anaerobic,
-                     self.include_aerobic_filter),
-            'retent': (self.cas_per_tank,),
-            'recir': (1, self.L_CSTR,),
-            'sludge': (1,),
-            'naocl': (1,),
-            'citric': (1,),
-            'bisulfite': (1,),
-            }
-
-        for i in pumps[:-2]:
-            ID = f'{ID}_{i}'
-            capacity_factor=2. if i=='perm' else self.recir_ratio if i=='recir' else 1.
-            pump = WWTpump(
-                ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
-                Q_mgd=None, add_inputs=inputs_dct[i],
-                capacity_factor=capacity_factor,
-                include_pump_cost=True,
-                include_building_cost=False,
-                include_OM_cost=False,
-                )
-            setattr(self, f'{i}_pump', pump)
-
 
     # =========================================================================
     # _run
@@ -400,9 +348,8 @@ class AnMBR(SanUnit):
         biogas.phase = 'g'
         biogas.empty()
 
-        inf = raw.copy()
+        inf = self._inf
         inf.mix_from((raw, recycled))
-        self._inf = inf.copy() # this stream will be preserved (i.e., no reaction)
 
         # Chemicals for cleaning, assume all chemicals will be used up
         # 2.2 L/yr/cmd of 12.5 wt% solution (15% vol)
@@ -502,49 +449,6 @@ class AnMBR(SanUnit):
             self._recir_ratio = Q_IR_mgd / Q_mgd
 
         return Q_R_mgd, Q_IR_mgd
-
-
-    # Called by _run
-    def _design_blower(self):
-        air = self.ins[-1]
-
-        if (not self.add_GAC) and (self.membrane_configuration=='submerged'):
-            gas = self.SGD * self.mod_surface_area*_ft2_to_m2 # [m3/h]
-            gas /= (_ft3_to_m3 * 60) # [ft3/min]
-            gas_train = gas * self.N_train*self.cas_per_tank*self.mod_per_cas
-
-            TCFM = ceil(gas_train) # total cubic ft per min
-            N = 1
-            if TCFM <= 30000:
-                CFMB = TCFM / N # cubic ft per min per blower
-                while CFMB > 7500:
-                    N += 1
-                    CFMB = TCFM / N
-            elif 30000 < TCFM <= 72000:
-                CFMB = TCFM / N
-                while CFMB > 18000:
-                    N += 1
-                    CFMB = TCFM / N
-            else:
-                CFMB = TCFM / N
-                while CFMB > 100000:
-                    N += 1
-                    CFMB = TCFM / N
-
-            gas_m3_hr = TCFM * _ft3_to_m3 * 60 # ft3/min to m3/hr
-
-            air.ivol['N2'] = 0.79
-            air.ivol['O2'] = 0.21
-            air.F_vol = gas_m3_hr
-        else: # no sparging/blower needed
-            TCFM = CFMB = 0.
-            N = -1 # to account for the spare
-            air.empty()
-
-        D = self.design_results
-        D['Total air flow'] = TCFM
-        D['Blower capacity'] = CFMB
-        D['Blowers'] = self._N_blower = N + 1 # add a spare
 
 
     # =========================================================================
@@ -723,44 +627,57 @@ class AnMBR(SanUnit):
     ### Step C function ###
     # Called by _design
     def _design_pump(self):
-        # rx_type, m_config, pumps = \
-        #     self.reactor_type, self.membrane_configuration, self.pumps
-
-        # ins_dct = {
-        #     'perm': self.outs[1].proxy(),
-        #     'retent': self._retent,
-        #     'recir': self._recir,
-        #     'sludge': self.outs[2].proxy(),
-        #     'naocl': self.ins[2].proxy(),
-        #     'citric': self.ins[3].proxy(),
-        #     'bisulfite': self.ins[4].proxy(),
-        #     }
-
-        # type_dct = {
-        #     'perm': f'permeate_{m_config}',
-        #     'retent': f'retentate_{rx_type}',
-        #     'recir': f'recirculation_{rx_type}',
-        #     'sludge': 'sludge',
-        #     'naocl': 'chemical',
-        #     'citric': 'chemical',
-        #     'bisulfite': 'chemical',
-        #     }
-
-        # inputs_dct = {
-        #     'perm': (self.cas_per_tank, self.D_tank, self.TMP_anaerobic,
-        #              self.include_aerobic_filter),
-        #     'retent': (self.cas_per_tank,),
-        #     'recir': (1, self.L_CSTR,),
-        #     'sludge': (1,),
-        #     'naocl': (1,),
-        #     'citric': (1,),
-        #     'bisulfite': (1,),
-        #     }
-
-        # WWTpump._batch_adding_pump(self, pumps[:-2], ins_dct, type_dct, inputs_dct)
         pumps = self.pumps
+        ID, ins, outs = self.ID, self.ins, self.outs
+        rx_type, m_config, pumps = \
+            self.reactor_type, self.membrane_configuration, self.pumps
         self.AF_pump = self.AF.lift_pump if self.AF else None
         self.AeF_pump = self.AeF.lift_pump if self.AeF else None
+        ins_dct = {
+            'perm': outs[1].proxy(),
+            'retent': self._retent,
+            'recir': self._recir,
+            'sludge': outs[2].proxy(),
+            'naocl': ins[2].proxy(),
+            'citric': ins[3].proxy(),
+            'bisulfite': ins[4].proxy(),
+            }
+        type_dct = {
+            'perm': f'permeate_{m_config}',
+            'retent': f'retentate_{rx_type}',
+            'recir': f'recirculation_{rx_type}',
+            'sludge': 'sludge',
+            'naocl': 'chemical',
+            'citric': 'chemical',
+            'bisulfite': 'chemical',
+            }
+        inputs_dct = {
+            'perm': (self.cas_per_tank, self.D_tank, self.TMP_anaerobic,
+                     self.include_aerobic_filter),
+            'retent': (self.cas_per_tank,),
+            'recir': (1, self.L_CSTR,),
+            'sludge': (1,),
+            'naocl': (1,),
+            'citric': (1,),
+            'bisulfite': (1,),
+            }
+
+        for i in pumps[:-2]:
+            if hasattr(self, f'{i}_pump'):
+                p = getattr(self, f'{i}_pump')
+                setattr(p, 'add_inputs', inputs_dct[i])
+            else:
+                ID = f'{ID}_{i}'
+                capacity_factor=2. if i=='perm' else self.recir_ratio if i=='recir' else 1.
+                pump = WWTpump(
+                    ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
+                    Q_mgd=None, add_inputs=inputs_dct[i],
+                    capacity_factor=capacity_factor,
+                    include_pump_cost=True,
+                    include_building_cost=False,
+                    include_OM_cost=False,
+                    )
+                setattr(self, f'{i}_pump', pump)
 
         pipe_ss, pump_ss, hdpe = 0., 0., 0.
         for i in (*pumps, 'AF', 'AeF'):
@@ -780,7 +697,6 @@ class AnMBR(SanUnit):
     # =========================================================================
     def _cost(self):
         D, C = self.design_results, self.baseline_purchase_costs
-
         ### Capital ###
         # Concrete and excavation
         VEX, VWC, VSC = \
@@ -821,9 +737,6 @@ class AnMBR(SanUnit):
         add_OPEX['Pump operating'] = opex_o
         add_OPEX['Pump maintenance'] = opex_m
 
-        # TCFM, CFMB = D['Total air flow'], D['Blower capacity']
-        # C['Air pipes'], C['Blowers'], C['Blower building'] = self._cost_blower(TCFM, CFMB)
-
         # Degassing membrane
         C['Degassing membrane'] = 10000 * D['Degassing membrane']
 
@@ -831,10 +744,11 @@ class AnMBR(SanUnit):
         self.add_equipment_cost()
 
         ### Heat and power ###
-        # Heat loss, assume air is 17°C, ground is 10°C
+        # Heat loss
         T = self.T
+        coeff = self.heat_transfer_coeff
         if T is None:
-            loss = 0.
+            duty = 0.
         else:
             N_train, L_CSTR, W_tank, D_tank = \
                 self.N_train, self.L_CSTR, self.W_tank, self.D_tank
@@ -842,17 +756,16 @@ class AnMBR(SanUnit):
             A_F = L_CSTR * W_tank
             A_W *= N_train * _ft2_to_m2
             A_F *= N_train * _ft2_to_m2
-            loss = self.H_wall * (T-self.T_air) * A_W / 1e3
-            loss += self.H_floor * (T-self.T_earth) * A_F / 1e3
-            loss += self.H_ceiling * (T-self.T_air) * A_F / 1e3
-        self._heat_loss = loss
+            duty = coeff['wall'] * (T-self.T_air) * A_W # [W]
+            duty += coeff['floor'] * (T-self.T_earth) # [W]
+            duty += coeff['ceiling'] * (T-self.T_air) # [W]
+            duty *= 60*60/1e3 # kJ/hr
+        self._heat_loss = duty
         # Fluid heating
         inf = self._inf
         if T:
             H_at_T = inf.thermo.mixture.H(mol=inf.mol, phase='l', T=T, P=101325)
-            duty = -(inf.H - H_at_T)
-        else:
-            duty = 0
+            duty += -(inf.H - H_at_T)
         self.heat_exchanger.simulate_as_auxiliary_exchanger(duty, inf)
         # Power for pumping and gas
         pumping = 0.
@@ -863,39 +776,8 @@ class AnMBR(SanUnit):
             pumping += p.power_utility.rate
         sparging = 0. #!!! output from submerge design
         degassing = 3 * self.N_degasser # assume each uses 3 kW
-        self.power_utility.rate = sparging + degassing + pumping + loss
-
-
-    # def _cost_blower(self, TCFM, CFMB):
-    #     AFF = self.AFF
-
-    #     # Air pipes
-    #     # Note that the original codes use CFMD instead of TCFM for air pipes,
-    #     # but based on the coding they are equivalent
-    #     # (i.e., just used an alternative name)
-    #     if TCFM <= 1000:
-    #         air_pipes = 617.2 * AFF * (TCFM**0.2553)
-    #     elif 1000 < TCFM <= 10000:
-    #         air_pipes = 1.43 * AFF * (TCFM**1.1337)
-    #     else:
-    #         air_pipes = 28.59 * AFF * (TCFM**0.8085)
-
-    #     # Blowers
-    #     if TCFM <= 30000:
-    #         ratio = 0.7 * (CFMB**0.6169)
-    #         blowers = 58000*ratio / 100
-    #     elif 30000 < TCFM <= 72000:
-    #         ratio = 0.377 * (CFMB**0.5928)
-    #         blowers = 218000*ratio / 100
-    #     else:
-    #         ratio = 0.964 * (CFMB**0.4286)
-    #         blowers  = 480000*ratio / 100
-
-    #     # Blower building
-    #     area = 128 * (TCFM**0.256) # building area, [ft2]
-    #     building = area * 90 # 90 is the unit price, [USD/ft2]
-
-    #     return air_pipes, blowers, building
+        self.power_utility.rate = self.blower.power_utility.rate + \
+            sparging + degassing + pumping
 
 
     ### Reactor configuration ###

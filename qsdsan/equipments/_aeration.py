@@ -12,10 +12,6 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-'''
-TODO: update the AnMBR code afterwards with the equipment here.
-'''
-
 from math import ceil
 from .. import Equipment
 from ..utils import select_pipe, calculate_pipe_material
@@ -140,7 +136,6 @@ class Blower(Equipment):
 
     def _cost(self, TCFM, CFMB):
         N_reactor, AFF, C = self.N_reactor, self.AFF, self.cost
-
         # Air pipes
         # Note that the original codes use CFMD instead of TCFM for air pipes,
         # but based on the coding they are equivalent

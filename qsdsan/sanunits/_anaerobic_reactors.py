@@ -16,7 +16,7 @@ for license details.
 from math import ceil, pi
 from . import Decay
 from .. import SanUnit, Construction
-from ..sanunits import HXutility
+from ..sanunits import HXutility, WWTpump
 from ..utils import ospath, load_data, data_path, auom, calculate_excavation_volume
 __all__ = (
     'AnaerobicBaffledReactor',
@@ -440,6 +440,17 @@ class AnaerobicDigestion(SanUnit, Decay):
 
 # %%
 
+F_BM_pump = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
+default_F_BM = {
+        'Pump': F_BM_pump,
+        'Pump building': F_BM_pump,
+        }
+default_equipment_lifetime = {
+    'Pump': 15,
+    'Pump pipe stainless steel': 15,
+    'Pump stainless steel': 15,
+    }
+
 class SludgeDigester(SanUnit):
     '''
     A conventional digester for anaerobic digestion of sludge as in
@@ -493,7 +504,6 @@ class SludgeDigester(SanUnit):
         https://doi.org/10.1039/C5EE03715H.
 
     '''
-
     # All in K
     _T_air = 17 + 273.15
     _T_earth = 10 + 273.15
@@ -523,8 +533,9 @@ class SludgeDigester(SanUnit):
                  wall_concrete_unit_cost=24, # from $650/yd3
                  slab_concrete_unit_cost=13, # from $350/yd3
                  excavation_unit_cost=0.3, # from $8/yd3
-                 **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+                 F_BM=default_F_BM, lifetime=default_equipment_lifetime,
+                 F_BM_default=1, **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
         self.HRT = HRT
         self.SRT = SRT
         self.T = T
@@ -541,6 +552,13 @@ class SludgeDigester(SanUnit):
         self.wall_concrete_unit_cost = wall_concrete_unit_cost
         self.slab_concrete_unit_cost = slab_concrete_unit_cost
         self.excavation_unit_cost = excavation_unit_cost
+        self.F_BM.update(F_BM)
+        self._default_equipment_lifetime.update(lifetime)
+        self.sludge_pump = WWTpump(
+            ID=f'{ID}_sludge', ins=self.ins[0].proxy(), pump_type='',
+            Q_mgd=None, add_inputs=(1,), capacity_factor=1.,
+            include_pump_cost=True, include_building_cost=False,
+            include_OM_cost=False)
 
 
     def _run(self):
@@ -584,6 +602,8 @@ class SludgeDigester(SanUnit):
         'Wall concrete': 'ft3',
         'Slab concrete': 'ft3',
         'Excavation': 'ft3',
+        'Pump pipe stainless steel': 'kg',
+        'Pump stainless steel': 'kg',
         }
     def _design(self):
         design = self.design_results
@@ -625,6 +645,10 @@ class SludgeDigester(SanUnit):
         design['Excavation'] = calculate_excavation_volume(
             self.L_PB, self.W_PB, self.D_PB, self.excav_slope, self.constr_access)
 
+        # Pump
+        sludge_pump = self.sludge_pump
+        sludge_pump.simulate()
+        design.update(sludge_pump.design_results)
 
     def _cost(self):
         D, C = self.design_results, self.baseline_purchase_costs
@@ -632,6 +656,9 @@ class SludgeDigester(SanUnit):
         C['Wall concrete'] = D['Wall concrete'] * self.wall_concrete_unit_cost
         C['Slab concrete'] = D['Slab concrete'] * self.slab_concrete_unit_cost
         C['Excavation'] = D['Excavation'] * self.excavation_unit_cost
+        sludge_pump = self.sludge_pump
+        C.update(sludge_pump.baseline_purchase_costs)
+        self.power_utility.rate = sludge_pump.power_utility.rate
 
 
     @property

@@ -409,7 +409,7 @@ class WWTpump(SanUnit):
 
 
     # Generic algorithms that will be called by all design functions
-    def _design_generic(self, Q_mgd, N_pump, L_s, L_d, H_ts, H_p):
+    def _design_generic(self, Q_mgd, N_pump, L_s=0., L_d=0., H_ts=0., H_p=0.):
         self.Q_mgd, self._H_ts, self._H_p = Q_mgd, H_ts, H_p
         v, C, Q_cfs = self.v, self.C, self.Q_cfs # [ft/s], -, [ft3/s]
 
