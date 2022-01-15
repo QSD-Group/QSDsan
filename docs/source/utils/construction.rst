@@ -34,11 +34,3 @@ Piping
 select_pipe
 ^^^^^^^^^^^
 .. autofunction:: qsdsan.utils.select_pipe
-
-
-Pumping
--------
-
-cost_pump
-^^^^^^^^^
-.. autofunction:: qsdsan.utils.cost_pump

@@ -35,7 +35,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
 
     Parameters
     ----------
-   degraded_components : tuple
+    degraded_components : tuple
         IDs of components that will degrade (simulated by first-order decay).
     N_user : int, float
         Number of people per toilet.
@@ -49,7 +49,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         .. note::
 
             If `N_tot_user` is provided (i.e., not "None"),
-            then updating `N_user` will recalculate `N_toilet`, and vice verse.
+            then updating `N_user` will recalculate `N_toilet`, and vice versa.
 
     if_toilet_paper : bool
         If toilet paper is used.
@@ -227,7 +227,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     def toilet_paper(self):
         '''
         [float] Amount of toilet paper used
-        (if `if_toilet_paper` is True), [kg/cap/hr].
+        (if ``if_toilet_paper`` is True), [kg/cap/hr].
         '''
         return self._toilet_paper
     @toilet_paper.setter
@@ -238,7 +238,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     def flushing_water(self):
         '''
         [float] Amount of water used for flushing
-        (if `if_flushing_water` is True), [kg/cap/hr].
+        (if ``if_flushing_water`` is True), [kg/cap/hr].
         '''
         return self._flushing_water
     @flushing_water.setter
@@ -249,7 +249,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     def cleansing_water(self):
         '''
         [float] Amount of water used for cleansing
-        (if `if_cleansing_water` is True), [kg/cap/hr].
+        (if ``if_cleansing_water`` is True), [kg/cap/hr].
         '''
         return self._cleansing_water
     @cleansing_water.setter
@@ -259,11 +259,11 @@ class Toilet(SanUnit, Decay, isabstract=True):
     @property
     def desiccant(self):
         '''
-        [float] Amount of desiccant used (if `if_desiccant` is True), [kg/cap/hr].
+        [float] Amount of desiccant used (if ``if_desiccant`` is True), [kg/cap/hr].
 
         .. note::
 
-            Value set by `desiccant_V` and `desiccant_rho`.
+            Value set by ``desiccant_V`` and ``desiccant_rho``.
 
         '''
         return self.desiccant_V*self.desiccant_rho
@@ -272,7 +272,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     def N_volatilization(self):
         '''
         [float] Fraction of input N that volatilizes to the air
-        (if `if_air_emission` is True).
+        (if ``if_air_emission`` is True).
         '''
         return self._N_volatilization
     @N_volatilization.setter
@@ -286,7 +286,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
 
         .. note::
 
-            Will be 1 (i.e., 100%) if `if_ideal_emptying` is True.
+            Will be 1 (i.e., 100%) if ``if_ideal_emptying`` is True.
 
         '''
         if self.if_ideal_emptying:

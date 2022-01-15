@@ -58,8 +58,8 @@ default_F_BM = {
         'Membrane': 1+0.15, # assume 15% for replacement labor
         'Pumps': F_BM_pump,
         'Pump building': F_BM_pump,
-        'Blowers': 2.11,
-        'Blower building': 1.11,
+#        'Blowers': 2.11,
+#        'Blower building': 1.11,
         }
 default_equipment_lifetime = {
     'Membrane': 10,
@@ -67,7 +67,7 @@ default_equipment_lifetime = {
     'Pump pipe stainless steel': 15,
     'Pump stainless steel': 15,
     'Pump chemical storage HDPE': 30,
-    'Blowers': 15,
+#    'Blowers': 15,
     }
 
 
@@ -111,8 +111,8 @@ class AnMBR(SanUnit):
         If to include a degassing membrane to enhance methane
         (generated through the digestion reaction) recovery.
     biodegradability : float or dict
-        Biodegradability of chemicals,
-        when shown as a float, all biodegradable chemicals are assumed to have
+        Biodegradability of components,
+        when shown as a float, all biodegradable components are assumed to have
         the same degradability.
     Y : float
         Biomass yield, [kg biomass/kg consumed COD].
@@ -126,8 +126,10 @@ class AnMBR(SanUnit):
         Default splits (based on the membrane bioreactor in [2]_) will be used
         if not provided.
         Note that the split for `Water` will be ignored as it will be adjusted
-        to satisfy the `biomass_conc` setting.
-    biomass_conc : float
+        to satisfy the `solids_conc` setting.
+    biomass_ID: str
+        ID of the Component that represents the biomass.
+    solids_conc : float
         Concentration of the biomass in the waste sludge, [g/L].
     T : float
         Temperature of the reactor.
@@ -193,7 +195,7 @@ class AnMBR(SanUnit):
     _constr_access = 3 # ft
 
     # Operation-related parameters
-    _HRT = 10
+    _HRT = 10 # hr
     _J_max = 12
     _TMP_dct = {
         'cross-flow': 2.5,
@@ -206,8 +208,16 @@ class AnMBR(SanUnit):
     _SGD = 0.625 # from the 0.05-1.2 uniform range in ref [1]
     _AFF = 3.33
 
+    # Heating
+    T_air = 17 + 273.15
+    T_earth = 10 + 273.15
+    # Heat transfer coefficients, all in W/m2/°C
+    H_wall = 0.7
+    H_floor = 1.7
+    H_ceilling = 0.95
+
     # Costs
-    excav_unit_cost = 8 / 27 # $/ft3, 27 is to convert from $/yd3
+    excav_unit_cost = (8+0.3) / 27 # $/ft3, 27 is to convert from $/yd3
     wall_concrete_unit_cost = 650 / 27 # $/ft3
     slab_concrete_unit_cost = 350 / 27 # $/ft3
     GAC_price = 13.78 # $/kg
@@ -220,6 +230,7 @@ class AnMBR(SanUnit):
     auxiliary_unit_names = ('heat_exchanger',)
 
     _units = {
+        'Total volume': 'ft3',
         'Wall concrete': 'ft3',
         'Slab concrete': 'ft3',
         'Excavation': 'ft3',
@@ -232,7 +243,6 @@ class AnMBR(SanUnit):
         'Packing LDPE': 'm3',
         'Packing HDPE': 'm3',
         'GAC': 'kg',
-        'Total volume': 'ft3',
         }
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
@@ -247,7 +257,8 @@ class AnMBR(SanUnit):
                  add_GAC=False,
                  include_degassing_membrane=True,
                  biodegradability=1.0, Y=0.05, # from the 0.02-0.08 uniform range in ref [1]
-                 solids=(), split={}, biomass_conc=10.5,
+                 solids=(), split={},
+                 biomass_ID='WWTsludge', solids_conc=10.5,
                  T=35+273.15,
                  F_BM=default_F_BM, lifetime=default_equipment_lifetime,
                  **kwargs):
@@ -264,10 +275,11 @@ class AnMBR(SanUnit):
         self.biodegradability = biodegradability
         self.Y = Y
         cmps = self.components
-        self.solids = solids or cmps.solids
         self.split = split if split else default_component_dict(
             cmps=cmps, gas=0.15, solubles=0.125, solids=0) # ref[2]
-        self.biomass_conc = biomass_conc
+        self.solids = solids or cmps.solids
+        self._xcmp = xcmp = getattr(self.components, biomass_ID)
+        self.solids_conc = solids_conc
         self.T = T
         self.F_BM.update(F_BM)
         self._default_equipment_lifetime.update(lifetime)
@@ -280,7 +292,9 @@ class AnMBR(SanUnit):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-        self._add_equipments()
+        self._add_pumps()
+        blower = self.blower = Blower(ID+'_blower', linked_unit=self)
+        self.equipments = (blower,)
         self._check_design()
 
 
@@ -325,7 +339,7 @@ class AnMBR(SanUnit):
                                   f'not "{m_material}".')
 
     # Add pumps and blower
-    def _add_equipments(self):
+    def _add_pumps(self):
         ID, ins, outs = self.ID, self.ins, self.outs
         rx_type, m_config, pumps = \
             self.reactor_type, self.membrane_configuration, self.pumps
@@ -363,17 +377,16 @@ class AnMBR(SanUnit):
 
         for i in pumps[:-2]:
             ID = f'{ID}_{i}'
+            capacity_factor=2. if i=='perm' else self.recir_ratio if i=='recir' else 1.
             pump = WWTpump(
                 ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
                 Q_mgd=None, add_inputs=inputs_dct[i],
+                capacity_factor=capacity_factor,
                 include_pump_cost=True,
-                include_building_concrete=True,
-                include_building_excavation=False,
+                include_building_cost=False,
+                include_OM_cost=False,
                 )
             setattr(self, f'{i}_pump', pump)
-
-        blower = self.blower = Blower(ID+'_blower', linked_unit=self)
-        self.equipments = (blower,)
 
 
     # =========================================================================
@@ -419,11 +432,11 @@ class AnMBR(SanUnit):
         self.biogas_rxns(inf.mol)
         inf.split_to(perm, sludge, self._isplit.data)
 
-        biomass_conc = self._biomass_conc
+        solids_conc = self._solids_conc
         m_solids = sludge.imass[self.solids].sum()
-        if m_solids/sludge.F_vol <= biomass_conc:
-            diff = sludge.ivol['Water'] - m_solids/biomass_conc
-            sludge.ivol['Water'] = m_solids/biomass_conc
+        if m_solids/sludge.F_vol <= solids_conc:
+            diff = sludge.ivol['Water'] - m_solids/solids_conc
+            sludge.ivol['Water'] = m_solids/solids_conc
             perm.ivol['Water'] += diff
 
         degassing(perm, biogas)
@@ -574,7 +587,7 @@ class AnMBR(SanUnit):
 
         # Step C: Pumps
         pipe, pumps, hdpe = self._design_pump()
-        D['Pipe stainless steel'] = pipe
+        D['Pump pipe stainless steel'] = pipe
         D['Pump stainless steel'] = pumps
         D['Pump chemical storage HDPE'] = hdpe
 
@@ -750,13 +763,13 @@ class AnMBR(SanUnit):
         self.AeF_pump = self.AeF.lift_pump if self.AeF else None
 
         pipe_ss, pump_ss, hdpe = 0., 0., 0.
-        for i in pumps:
+        for i in (*pumps, 'AF', 'AeF'):
             p = getattr(self, f'{i}_pump')
             if p == None:
                 continue
             p.simulate()
             p_design = p.design_results
-            pipe_ss += p_design['Pipe stainless steel']
+            pipe_ss += p_design['Pump pipe stainless steel']
             pump_ss += p_design['Pump stainless steel']
             hdpe += p_design['Chemical storage HDPE']
         return pipe_ss, pump_ss, hdpe
@@ -797,7 +810,6 @@ class AnMBR(SanUnit):
             p = getattr(self, f'{i}_pump')
             if p == None:
                 continue
-            p.simulate()
             p_cost, p_add_opex = p.baseline_purchase_costs, p.add_OPEX
             pump_cost += p_cost['Pump']
             building_cost += p_cost['Pump building']
@@ -815,7 +827,7 @@ class AnMBR(SanUnit):
         # Degassing membrane
         C['Degassing membrane'] = 10000 * D['Degassing membrane']
 
-        # Blower and air pipe
+        # Blower
         self.add_equipment_cost()
 
         ### Heat and power ###
@@ -830,9 +842,9 @@ class AnMBR(SanUnit):
             A_F = L_CSTR * W_tank
             A_W *= N_train * _ft2_to_m2
             A_F *= N_train * _ft2_to_m2
-            loss = 0.7 * (T-(17+273.15)) * A_W / 1e3 # 0.7 W/m2/°C for wall
-            loss += 1.7 * (T-(10+273.15)) * A_F / 1e3 # 1.7 W/m2/°C for floor
-            loss += 0.95 * (T-(17+273.15)) * A_F / 1e3 # 0.95 W/m2/°C for floating cover
+            loss = self.H_wall * (T-self.T_air) * A_W / 1e3
+            loss += self.H_floor * (T-self.T_earth) * A_F / 1e3
+            loss += self.H_ceiling * (T-self.T_air) * A_F / 1e3
         self._heat_loss = loss
         # Fluid heating
         inf = self._inf
@@ -1367,8 +1379,8 @@ class AnMBR(SanUnit):
     @property
     def biodegradability(self):
         '''
-        [float of dict] Biodegradability of chemicals,
-        when shown as a float, all biodegradable chemicals are assumed to have
+        [float of dict] Biodegradability of components,
+        when shown as a float, all biodegradable component are assumed to have
         the same degradability.
         '''
         return self._biodegradability
@@ -1384,17 +1396,25 @@ class AnMBR(SanUnit):
         for k, v in i.items():
             if not 0<=v<=1:
                 raise ValueError('`biodegradability` should be within [0, 1], '
-                                 f'the input value for chemical "{k}" is '
+                                 f'the input value for component "{k}" is '
                                  'outside the range.')
         self._biodegradability = i
 
     @property
-    def sludge_conc(self):
-        '''Concentration of biomass ("WWTsludge") in the waste sludge, [g/L].'''
-        return self._sludge_conc
-    @sludge_conc.setter
-    def sludge_conc(self, i):
-        self._sludge_conc = i
+    def biomass_ID(self):
+        '''[str] ID of the Component that represents the biomass.'''
+        return self._xcmp.ID
+    @biomass_ID.setter
+    def biomass_ID(self, i):
+        self._xcmp = getattr(self.components, i)
+
+    @property
+    def solids_conc(self):
+        '''Concentration of solids in the waste sludge, [g/L].'''
+        return self._solids_conc
+    @solids_conc.setter
+    def solids_conc(self, i):
+        self._solids_conc = i
 
     @property
     def Y(self):
@@ -1431,7 +1451,7 @@ class AnMBR(SanUnit):
     @property
     def growth_rxns(self):
         '''
-        [:class:`tmo.ParallelReaction`] Biomass (WWTsludge) growth reactions.
+        [:class:`tmo.ParallelReaction`] Biomass growth reactions.
         '''
         return self._growth_rxns
 

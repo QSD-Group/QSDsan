@@ -409,6 +409,8 @@ class ActivatedSludgeProcess(SanUnit):
             excav_slope=excav_slope, constr_access=constr_access)
         D['Excavation'] = VEX
 
+        #!!! Need to add heat loss
+
 
     def _cost(self):
         self.add_equipment_cost()
@@ -503,7 +505,7 @@ class ActivatedSludgeProcess(SanUnit):
 
     @property
     def freeboard(self):
-        '''[float] Freeboard added to the depth of the reactor/membrane tank, [ft].'''
+        '''[float] Freeboard added to the depth of the reactor tank, [ft].'''
         return self._freeboard
     @freeboard.setter
     def freeboard(self, i):

@@ -12,11 +12,8 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-'''Select pipe size from volumetric flow rate and velocity.'''
-
 import numpy as np
 from math import pi
-
 
 __all__ = (
     'calculate_concrete_volume',
@@ -25,7 +22,6 @@ __all__ = (
     'excavation',
     'calculate_pipe_material',
     'select_pipe',
-    'cost_pump',
     )
 
 
@@ -280,7 +276,7 @@ def calculate_excavation_volume(L, W, D, excav_slope, constr_access):
     L_bottom = L + 2*constr_access
     W_bottom = W + 2*constr_access
     diff = D * excav_slope
-    return 0.5*(L_bottom*W_bottom+(L_bottom+diff)*(W_bottom+diff))
+    return 0.5*(L_bottom*W_bottom+(L_bottom+diff)*(W_bottom+diff))*D
 
 
 def excavation(ID, L_excav=0, W_excav=0, D_excav=0,
@@ -546,67 +542,3 @@ def select_pipe(Q, v):
     OD, t = pipe_dct[boundaries[d_index]]
     ID = OD - 2*t # inner diameter, [in]
     return OD, t, ID
-
-
-# %%
-
-# =============================================================================
-# Pumping
-# =============================================================================
-
-#!!! Take this out once replacing all of its usage
-# has been replaced with the pump decorator
-def cost_pump(unit=None, Q_mgd=None, recir_ratio=None,
-              building_unit_cost=90):
-    '''
-    Calculate the cost of the pump and pump building for a unit
-    based on its `Q_mgd` (hydraulic flow in million gallons per day),
-    `recir_ratio` (recirculation ratio) attributes.
-
-    Optionally, can left `unit` as None and directly provide
-    `Q_mgd` and `recir_ratio` values.
-
-    Parameters
-    ----------
-    unit : obj
-        :class:`~.SanUnit` with the attribute `Q_mgd` and `recir_ratio`
-        (if `Q_mgd` and/or `recir_ratio` are not provided).
-    Q_mgd : float
-        Hydraulic flow [mgd] (million gallons per day).
-    recir_ratio : float
-        Recirculation ratio.
-    building_unit_cost : float
-        Unit cost of the pump building, [USD/ft2].
-
-    Returns
-    -------
-    Costs of the pumps and pump building (two floats) in USD.
-    '''
-    Q_mgd = Q_mgd or unit.Q_mgd
-    recir_ratio = recir_ratio or unit.recir_ratio
-
-    # Installed pump cost, this is a fitted curve
-    pumps = 2.065e5 + 7.721*1e4*Q_mgd
-
-    # Design capacity of intermediate pumps, gpm,
-    # 2 is the excess capacity factor to handle peak flows
-    GPMI = 2 * Q_mgd * 1e6 / 24 / 60
-
-    # Design capacity of recirculation pumps, gpm
-    GPMR = recir_ratio * Q_mgd * 1e6 / 24 / 60
-
-    building = 0.
-    for GPM in (GPMI, GPMR):
-        if GPM == 0:
-            N = 0
-        else:
-            N = 1 # number of buildings
-            GPMi = GPM
-            while GPMi > 80000:
-                N += 1
-                GPMi = GPM / N
-
-        PBA = N * (0.0284*GPM+640) # pump building area, [ft]
-        building += PBA * building_unit_cost
-
-    return pumps, building

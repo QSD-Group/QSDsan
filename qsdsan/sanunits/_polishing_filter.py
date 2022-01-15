@@ -12,8 +12,8 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import math
 from warnings import warn
+from math import pi, ceil
 from . import HXutility
 from ._pumping import WWTpump
 from .. import SanStream, SanUnit
@@ -22,7 +22,7 @@ from ..utils import (
     compute_stream_COD,
     get_digestion_rxns,
     default_component_dict,
-    cost_pump,
+    calculate_excavation_volume,
     )
 
 __all__ = ('PolishingFilter',)
@@ -37,9 +37,20 @@ _m3_to_gal = auom('m3').conversion_factor('gal')
 _cmh_to_mgd = _m3_to_gal * 24 / 1e6 # cubic meter per hour to million gallon per day
 _lb_to_kg = auom('lb').conversion_factor('kg')
 
+_d_to_A = lambda d: pi/4*(d**2)
+_A_to_d = lambda A: ((4*A)/pi)**0.5
 
-_d_to_A = lambda d: math.pi/4*(d**2)
-_A_to_d = lambda A: ((4*A)/math.pi)**0.5
+F_BM_pump = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
+default_F_BM = {
+        'Membrane': 1+0.15, # assume 15% for replacement labor
+        'Pumps': F_BM_pump,
+        'Pump building': F_BM_pump,
+        }
+default_equipment_lifetime = {
+    'Pumps': 15,
+    'Pump pipe stainless steel': 15,
+    'Pump stainless steel': 15,
+    }
 
 
 # %%
@@ -72,8 +83,12 @@ class PolishingFilter(SanUnit):
         Default splits (based on the membrane bioreactor in [2]_) will be used
         if not provided.
         Note that the split for `Water` will be ignored as it will be adjusted
-        to satisfy the `biomass_conc` setting.
-    biomass_conc : float
+        to satisfy the `solids_conc` setting.
+    biodegradability : float or dict
+        Biodegradability of components,
+        when shown as a float, all biodegradable components are assumed to have
+        the same degradability.
+    solids_conc : float
         Concentration of the biomass in the waste sludge, [g/L].
     T : float
         Temperature of the filter tank.
@@ -82,10 +97,8 @@ class PolishingFilter(SanUnit):
         If to include a degassing membrane to enhance methane
         (generated through the digestion reaction) recovery.
         No degassing membrane will be added if `filter_type` is "aerobic".
-    include_pump_building_cost : bool
-        Whether to include the construction cost of pump building.
-    include_excavation_cost : bool
-        Whether to include the construction cost of excavation.
+    kwargs : dict
+        Other keyword arguments (e.g., t_wall, t_slab).
 
     References
     ----------
@@ -104,57 +117,126 @@ class PolishingFilter(SanUnit):
 
     _N_filter_min = 2
     _d_max = 12
+    _L_B = 50
+    _W_B = 30
+    _D_B = 10
     _t_wall = 8/12
     _t_slab = 1
     _excav_slope = 1.5
     _constr_access = 3
+
+    # Heating
+    T_air = 17 + 273.15
+    T_earth = 10 + 273.15
+    # Heat transfer coefficients, all in W/m2/°C
+    H_wall = 0.7
+    H_floor = 1.7
+    H_ceilling = 0.95
+
+    # Costs
+    excav_unit_cost = (8+0.3) / 27 # $/ft3, 27 is to convert from $/yd3
+    wall_concrete_unit_cost = 650 / 27 # $/ft3
+    slab_concrete_unit_cost = 350 / 27 # $/ft3
+    LDPE_unit_cost = 195 # $/m3
+    HDPE_unit_cost = 195 # $/m3
 
     # Other equipment
     auxiliary_unit_names = ('heat_exchanger',)
     pumps =  ('lift', 'recir', 'eff', 'sludge')
 
 
+    _units = {
+        'Total volume': 'ft3',
+        'Wall concrete': 'ft3',
+        'Slab concrete': 'ft3',
+        'Excavation': 'ft3',
+        'Pump pipe stainless steel': 'kg',
+        'Pump stainless steel': 'kg',
+        'Packing LDPE': 'm3',
+        'Packing HDPE': 'm3',
+        }
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 init_with='WasteStream', isdynamic=False, *,
+                 init_with='WasteStream',
                  filter_type='aerobic',
                  OLR=(0.5+4)/24, # from the 0.5-4 kg/m3/d uniform range in ref [1]
                  HLR=(0.11+0.44)/2, # from the 0.11-0.44  uniform range in ref [1]
                  X_decomp=0.74, X_growth=0.22, # X_decomp & X_growth from ref [2]
-                 solids=(),
-                 split={}, biomass_conc=10.5, T=30+273.15,
+                 biodegradability=1.,
+                 split={}, solids=(), solids_conc=10.5, T=30+273.15,
                  include_degassing_membrane=False,
-                 include_pump_building_cost=False,
-                 include_excavation_cost=False):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with, isdynamic=isdynamic)
+                 F_BM=default_F_BM, lifetime=default_equipment_lifetime,
+                 **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with, F_BM_default=1)
         self.filter_type = filter_type
         self.OLR = OLR
         self.HLR = HLR
         self.X_decomp = X_decomp
         self.X_growth = X_growth
+        self.biodegradability = biodegradability
         cmps = self.components
-        self.solids = solids or cmps.solids
         self.split = split if split else default_component_dict(
             cmps=cmps, gas=0.15, solubles=0.125, solids=0) # ref[2]
-        self.biomass_conc = biomass_conc
+        self.solids = solids or cmps.solids
+        self.solids_conc = solids_conc
         self.T = T
         self.include_degassing_membrane = include_degassing_membrane
-        self.include_pump_building_cost = include_pump_building_cost
-        self.include_excavation_cost = include_excavation_cost
 
         # Initiate the attributes
         self.heat_exchanger = hx = HXutility(None, None, None, T=T)
         self.heat_utilities = hx.heat_utilities
         self._refresh_rxns()
 
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+        self._add_pumps()
+
+
+    def _add_pumps(self):
+        ID, ins, outs = self.ID, self.ins, self.outs
+        N_filter, D, d, pumps = self.N_filter, self.D, self.d, self.pumps
+        ins_dct = {
+            'lift': ins[0].proxy(),
+            'recir': ins[1].proxy(),
+            'eff': outs[1].proxy(),
+            'sludge': outs[2].proxy(),
+            }
+        type_dct = {
+            'lift': 'lift',
+            'recir': 'recirculation_AF',
+            'eff': 'retentate_AF',
+            'sludge': 'sludge',
+            }
+        inputs_dct = {
+            'lift': (N_filter, D),
+            'recir': (N_filter, d, D),
+            'eff': (N_filter, D),
+            'sludge': (1,),
+            }
+        for i in pumps[:-2]:
+            ID = f'{ID}_{i}'
+            capacity_factor=1. if i!='recir' else self.recir_ratio
+            pump = WWTpump(
+                ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
+                Q_mgd=None, add_inputs=inputs_dct[i],
+                capacity_factor=capacity_factor,
+                include_pump_cost=True,
+                include_building_cost=False,
+                include_OM_cost=False,
+                )
+            setattr(self, f'{i}_pump', pump)
+
 
     def _refresh_rxns(self, X_decomp=None, X_growth=None):
         X_decomp = X_decomp if X_decomp else self.X_decomp
         X_growth = X_growth if X_growth else self.X_growth
 
+        xcmp_ID = self._xcmp.ID
         self._decomp_rxns = get_digestion_rxns(self.ins[0], 1.,
-                                               X_decomp, 0., 'WWTsludge')
+                                               X_decomp, 0., xcmp_ID)
         self._growth_rxns = get_digestion_rxns(self.ins[0], 1.,
-                                               0., X_growth, 'WWTsludge')
+                                               0., X_growth, xcmp_ID)
         self._i_rm = self._decomp_rxns.X + self._growth_rxns.X
 
 
@@ -175,11 +257,11 @@ class PolishingFilter(SanUnit):
         inf.split_to(eff, waste, self._isplit.data)
         # tmo.separations.split(inf, eff, waste, self._isplit.data)
 
-        biomass_conc = self._biomass_conc
+        solids_conc = self._solids_conc
         m_solids = waste.imass[self.solids].sum()
-        if m_solids/waste.F_vol <= biomass_conc:
-            diff = waste.ivol['Water'] - m_solids/biomass_conc
-            waste.ivol['Water'] = m_solids/biomass_conc
+        if m_solids/waste.F_vol <= solids_conc:
+            diff = waste.ivol['Water'] - m_solids/solids_conc
+            waste.ivol['Water'] = m_solids/solids_conc
             eff.ivol['Water'] += diff
 
         biogas.phase = air_in.phase = air_out.phase = 'g'
@@ -214,60 +296,34 @@ class PolishingFilter(SanUnit):
 
         ### Concrete and excavation ###
         V, VWC, VSC, VEX = func()
-        D['Volume [ft3]'] = V
-        D['Wall concrete [ft3]'] = VWC
-        D['Slab concrete [ft3]'] = VSC
-        D['Excavation [ft3]'] = VEX
+        D['Total volume'] = V
+        D['Wall concrete'] = VWC
+        D['Slab concrete'] = VSC
+        D['Excavation'] = VEX
 
         ### Pumps ###
-        ('lift', 'recir', 'eff', 'sludge')
-        ins_dct = {
-            'lift': self.ins[0].proxy(),
-            'recir': self.ins[1].proxy(),
-            'eff': self.outs[1].proxy(),
-            'sludge': self.outs[2].proxy(),
-            }
-
-        type_dct = {
-            'lift': 'lift',
-            'recir': 'recirculation_AF',
-            'eff': 'retentate_AF',
-            'sludge': 'sludge',
-            }
-
-        inputs_dct = {
-            'lift': (self.N_filter, self.D),
-            'recir': (self.N_filter, self.d, self.D),
-            'eff': (self.N_filter, self.D),
-            'sludge': (1,),
-            }
-
-        WWTpump._batch_adding_pump(
-            self, self.pumps, ins_dct, type_dct, inputs_dct)
-
         pipe_ss, pump_ss = 0., 0.
         for i in self.pumps:
             p = getattr(self, f'{i}_pump')
             p.simulate()
-            pipe_ss += p.design_results['Pipe stainless steel [kg]']
-            pump_ss += p.design_results['Pump stainless steel [kg]']
+            pipe_ss += p.design_results['Pump pipe stainless steel']
+            pump_ss += p.design_results['Pump stainless steel']
 
         ### Packing ###
         # Assume 50%/50% vol/vol LDPE/HDPE
         # 0.9 is void fraction, usually 85% - 95% for plastic packing media
         # 925 is density of LDPE (910-940), [kg/m3] (not used)
         # 950 is density of LDPE (930-970), [kg/m3] (not used)
-        # M_LDPE_kg = 0.5 * (1-0.9) * 925 * V_m
-        # M_HDPE_kg = 0.5 * (1-0.9) * 950 * V_m
-        D['Packing LDPE [m3]'] = D['Packing HDPE [m3]'] = 0.05 * V
+        # M_LDPE_kg = 0.5 * (1-0.9) * 925 * V_m (not used)
+        # M_HDPE_kg = 0.5 * (1-0.9) * 950 * V_m (not used)
+        D['Packing LDPE'] = D['Packing HDPE'] = 0.05 * V
 
         ### Degassing ###
         D['Degassing membrane'] = self.N_degasser
 
 
     def _design_aerobic(self):
-        inf, N, SL, CA \
-            = self._inf, self._N_filter_min, self.excav_slope, self.constr_access
+        inf, N = self._inf, self._N_filter_min
         Q = inf.F_vol
 
         ### Concrete ###
@@ -292,20 +348,14 @@ class PolishingFilter(SanUnit):
         self._N_filter, self._d, self._D = N, d, D_ft
 
         # Volume of wall/slab concrete, [ft3]
-        # 8/12 is wall thickness, 3 is freeboard
-        VWC = self.t_wall * math.pi * d_ft * (D_ft+3)
+        VWC = self.t_wall * pi * d_ft * (D_ft+self.freeboard)
         VWC *= N
-
-        # 1 is slab thickness
-        VSC = 2 * 1 * _d_to_A(d_ft)
+        VSC = 2 * self.t_slab * _d_to_A(d_ft)
         VSC *= N
 
         ### Excavation ###
-        # 50/30/10 are building length/width/depth, [ft]
-        L_B, W_B, diff = (50+2*CA), (30+2*CA), (10*SL)
-        Area_B = L_B * W_B
-        Area_T = (L_B+diff) * (W_B+diff)
-        VEX = 0.5 * (Area_B+Area_T) * 10 # [ft3]
+        VEX = calculate_excavation_volume(
+            self.L_B, self.W_B, self.D_B, self.excav_slope, self.constr_access)
 
         return V_ft3, VWC, VSC, VEX
 
@@ -343,7 +393,7 @@ class PolishingFilter(SanUnit):
     #     ### Concrete material ###
     #     # External wall concrete, [ft3]
     #     # 6/12 is wall thickness and 3 is freeboard
-    #     VWC_AF = N_AF * 6/12 * math.pi * d_AF * (D_AF+3)
+    #     VWC_AF = N_AF * 6/12 * math.pi * d_AF * (D_AF+self.freeboard)
     #     VWC_AF *= N_AF
     #     # Floor slab concrete, [ft3]
     #     # 8/12 is slab thickness
@@ -362,57 +412,55 @@ class PolishingFilter(SanUnit):
     #     return N_AF, d_AF, D_AF, V_m_AF, VWC_AF, VWC_AF, VEX_PB
 
     def _cost(self):
-        D, C, F_BM, lifetime = self.design_results, self.baseline_purchase_costs, \
-            self.F_BM, self._default_equipment_lifetime
+        D, C = self.design_results, self.baseline_purchase_costs
 
         ### Capital ###
         # Concrete and excavaction
         VEX, VWC, VSC = \
-            D['Excavation [ft3]'], D['Wall concrete [ft3]'], D['Slab concrete [ft3]']
+            D['Excavation'], D['Wall concrete'], D['Slab concrete']
         # 27 is to convert the VEX from ft3 to yard3
-        C['Filter tank excavation'] = VEX/27*8 if self.include_excavation_cost else 0.
-        C['Wall concrete'] = VWC / 27 * 650
-        C['Slab concrete'] = VSC / 27 * 350
+        C['Filter tank excavation'] = VEX * self.excav_unit_cost
+        C['Wall concrete'] = VWC * self.wall_concrete_unit_cost
+        C['Slab concrete'] = VSC * self.slab_concrete_unit_cost
 
         # Packing material
-        # 195 is the cost of both LDPE and HDPE in $/m3
-        C['Packing LDPE'] = 195 * D['Packing LDPE [m3]']
-        C['Packing HDPE'] = 195 * D['Packing HDPE [m3]']
+        C['Packing LDPE'] = D['Packing LDPE'] * self.LDPE_unit_cost
+        C['Packing HDPE'] = D['Packing HDPE'] * self.HDPE_unit_cost
 
         # Pump
-        # Note that maintenance and operating costs are included as a lumped
-        # number in the biorefinery thus not included here
-        # TODO: considering adding the O&M and letting user choose if to include
-        pumps, building = cost_pump(self)
-        C['Pumps'] = pumps
-        C['Pump building'] = building if self.include_pump_building_cost else 0.
-        C['Pump excavation'] = VEX/27*0.3 if self.include_excavation_cost else 0.
+        pumps, add_OPEX = self.pumps, self.add_OPEX
+        pump_cost, building_cost, opex_o, opex_m, pumping_power = 0., 0., 0., 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p_cost, p_add_opex = p.baseline_purchase_costs, p.add_OPEX
+            pump_cost += p_cost['Pump']
+            building_cost += p_cost['Pump building']
+            opex_o += p_add_opex['Pump operating']
+            opex_m += p_add_opex['Pump maintenance']
+            pumping_power += p.power_utility.rate
 
-        F_BM['Pumps'] = F_BM['Pump building'] = F_BM['Pump excavation'] = \
-            1.18 * (1+0.007) # 0.007 is for  miscellaneous costs
-        lifetime['Pumps'] = 15
+        C['Pumps'] = pump_cost
+        C['Pump building'] = building_cost
+        add_OPEX['Pump operating'] = opex_o
+        add_OPEX['Pump maintenance'] = opex_m
 
         # Degassing membrane
         C['Degassing membrane'] = 10000 * D['Degassing membrane']
 
-        # Set bare module factor to 1 if not otherwise provided
-        for k in C.keys():
-            F_BM[k] = 1 if not F_BM.get(k) else F_BM.get(k)
-
         ### Heat and power ###
-        # Heat loss, assume air is 17°C, ground is 10°C
         T = self.T
         if T is None:
             loss = 0.
         else:
             N_filter, d, D = self.N_filter, self.d, self.D
-            A_W = math.pi * d * D
+            A_W = pi * d * D
             A_F = _d_to_A(d)
             A_W *= N_filter * _ft2_to_m2
             A_F *= N_filter * _ft2_to_m2
 
-            loss = 0.7 * (T-(17+273.15)) * A_W / 1e3 # 0.7 W/m2/°C for wall
-            loss += 1.7 * (T-(10+273.15)) * A_F / 1e3 # 1.7 W/m2/°C for floor
+            loss = self.H_wall * (T-self.T_air) * A_W / 1e3
+            loss += self.H_floor * (T-self.T_earth) * A_F / 1e3
+            loss += self.H_ceiling * (T-self.T_air) * A_F / 1e3
         self._heat_loss = loss
 
         # Fluid heating
@@ -424,48 +472,10 @@ class PolishingFilter(SanUnit):
             duty = 0
         self.heat_exchanger.simulate_as_auxiliary_exchanger(duty, inf)
 
-        # Pumping
-        pumping = 0.
-        for ID in self.pumps:
-            # if p is None:
-            #     continue
-            p = getattr(self, f'{ID}_pump')
-            pumping += p.power_utility.rate
-
         # Degassing
         degassing = 3 * self.N_degasser # assume each uses 3 kW
 
-        self.power_utility.rate = loss + pumping + degassing
-
-
-    # def _cost_pump(self):
-    #     Q_mgd, recir_ratio = self.Q_mgd, self.recir_ratio
-
-    #     # Installed pump cost, this is a fitted curve
-    #     pumps = 2.065e5 + 7.721*1e4*Q_mgd
-
-    #     # Design capacity of intermediate pumps, gpm,
-    #     # 2 is the excess capacity factor to handle peak flows
-    #     GPMI = 2 * Q_mgd * 1e6 / 24 / 60
-
-    #     # Design capacity of recirculation pumps, gpm
-    #     GPMR = recir_ratio * Q_mgd * 1e6 / 24 / 60
-
-    #     building = 0.
-    #     for GPM in (GPMI, GPMR):
-    #         if GPM == 0:
-    #             N = 0
-    #         else:
-    #             N = 1 # number of buildings
-    #             GPMi = GPM
-    #             while GPMi > 80000:
-    #                 N += 1
-    #                 GPMi = GPM / N
-
-    #         PBA = N * (0.0284*GPM+640) # pump building area, [ft]
-    #         building += 90 * PBA
-
-    #     return pumps, building
+        self.power_utility.rate = loss + pumping_power + degassing
 
 
     @property
@@ -508,6 +518,24 @@ class PolishingFilter(SanUnit):
         self._d_max = i
 
     @property
+    def d(self):
+        '''[float] Diameter of the filter tank, [ft].'''
+        return self._d
+
+    @property
+    def D(self):
+        '''[float] Depth of the filter tank, [ft].'''
+        return self._D
+
+    @property
+    def freeboard(self):
+        '''[float] Freeboard added to the depth of the reactor tank, [ft].'''
+        return self._freeboard
+    @freeboard.setter
+    def freeboard(self, i):
+        self._freeboard = i
+
+    @property
     def excav_slope(self):
         '''[float] Slope for excavation (horizontal/vertical).'''
         return self._excav_slope
@@ -529,14 +557,28 @@ class PolishingFilter(SanUnit):
         return self._N_filter
 
     @property
-    def d(self):
-        '''[float] Diameter of the filter tank, [ft].'''
-        return self._d
+    def L_B(self):
+        '''[float] Length of the reactor building, [ft].'''
+        return max(self._L_B, self._d*self.N_filter)
+    @L_B.setter
+    def L_B(self, i):
+        self._L_B = i
 
     @property
-    def D(self):
-        '''[float] Depth of the filter tank, [ft].'''
-        return self._D
+    def W_B(self):
+        '''[float] Width of the reactor building, [ft].'''
+        return max(self._W_B, self._d)
+    @W_B.setter
+    def W_B(self, i):
+        self._W_B = i
+
+    @property
+    def D_B(self):
+        '''[float] Depth of the reactor building, [ft].'''
+        return max(self._D_B, self._D)
+    @D_B.setter
+    def D_B(self, i):
+        self._D_B = i
 
     @property
     def t_wall(self):
@@ -564,7 +606,7 @@ class PolishingFilter(SanUnit):
             if self.filter_type=='aerobic':
                 warn('No degassing membrane needed for when `filter_type` is "aerobic".')
                 return 0
-            return math.ceil(self.Q_cmd/24/30) # assume each can hand 30 m3/d of influent
+            return ceil(self.Q_cmd/24/30) # assume each can hand 30 m3/d of influent
         return 0
 
     @property
@@ -596,8 +638,32 @@ class PolishingFilter(SanUnit):
 
     @property
     def i_rm(self):
-        '''[:class:`np.array`] Removal of each chemical in this filter tank.'''
+        '''[:class:`np.array`] Removal of each component in this filter tank.'''
         return self._i_rm
+
+    @property
+    def biodegradability(self):
+        '''
+        [float of dict] Biodegradability of components,
+        when shown as a float, all biodegradable component are assumed to have
+        the same degradability.
+        '''
+        return self._biodegradability
+    @biodegradability.setter
+    def biodegradability(self, i):
+        if isinstance(i, float):
+            if not 0<=i<=1:
+                raise ValueError('`biodegradability` should be within [0, 1], '
+                                 f'the input value {i} is outside the range.')
+            self._biodegradability = i
+            return
+
+        for k, v in i.items():
+            if not 0<=v<=1:
+                raise ValueError('`biodegradability` should be within [0, 1], '
+                                 f'the input value for component "{k}" is '
+                                 'outside the range.')
+        self._biodegradability = i
 
     @property
     def split(self):
@@ -609,12 +675,12 @@ class PolishingFilter(SanUnit):
         self._isplit = self.components.isplit(i, order=None)
 
     @property
-    def biomass_conc(self):
-        '''Concentration of biomass ("WWTsludge") in the waste sludge, [g/L].'''
-        return self._biomass_conc
-    @biomass_conc.setter
-    def biomass_conc(self, i):
-        self._biomass_conc = i
+    def solids_conc(self):
+        '''Concentration of solids in the waste sludge, [g/L].'''
+        return self._solids_conc
+    @solids_conc.setter
+    def solids_conc(self, i):
+        self._solids_conc = i
 
     @property
     def X_decomp(self):

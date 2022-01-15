@@ -32,7 +32,7 @@ __all__ = ('Pump', 'HydraulicDelay', 'WWTpump', 'wwtpump')
 class Pump(SanUnit, Pump):
     '''
     Similar to the :class:`biosteam.units.Pump`,
-    but can be initilized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`,
+    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`,
     and allows dynamic simulation.
 
     See Also
@@ -236,10 +236,14 @@ class WWTpump(SanUnit):
         Additional inputs that will be passed to the corresponding design algorithm.
         Check the documentation of for the corresponding pump type
         for the design algorithm of the specific input requirements.
+    capacity_factor : float
+        A safety factor to handle peak flows.
     include_pump_cost : bool
         Whether to include pump cost.
     include_building_cost : bool
         Whether to include the cost of the pump building.
+    include_OM_cost : bool
+        Whether to include the operating and maintenance cost of the pump.
     F_BM : dict
         Bare module factors of the individual equipment.
     lifetime : dict
@@ -291,7 +295,9 @@ class WWTpump(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream',
                  prefix='', pump_type='', Q_mgd=None, add_inputs=(),
+                 capacity_factor=1.,
                  include_pump_cost=True, include_building_cost=False,
+                 include_OM_cost=False,
                  F_BM=default_F_BM,
                  lifetime=default_equipment_lifetime,
                  **kwargs):
@@ -299,8 +305,10 @@ class WWTpump(SanUnit):
         self.pump_type = pump_type
         self.Q_mgd = Q_mgd
         self.add_inputs = add_inputs
+        self.capacity_factor = capacity_factor
         self.include_pump_cost = include_pump_cost
         self.include_building_cost = include_building_cost
+        self.include_OM_cost = include_OM_cost
         self.F_BM.update(F_BM)
         self._default_equipment_lifetime.update(lifetime)
 
@@ -350,14 +358,19 @@ class WWTpump(SanUnit):
     def _cost(self):
         C = self.baseline_purchase_costs
         C.clear()
+        add_OPEX = self.add_OPEX
+        add_OPEX.clear()
         Q_mgd, capacity_factor = self.Q_mgd, self.capacity_factor
 
+        start = self._format_key_start_with_prefix('P')
+        C[f'{start}ump'] = C[f'{start}ump building'] = 0.
+        add_OPEX[f'{start}ump operating'] = add_OPEX[f'{start}ump maintenance'] = 0.
         # Pump
         if self.include_pump_cost:
-            start = self._format_key_start_with_prefix('P')
             C[f'{start}ump'] = 2.065e5 + 7.721*1e4*Q_mgd # fitted curve
 
-            # Operations and maintenance
+        # Operations and maintenance
+        if self.include_OM_cost:
             FPC = capacity_factor * Q_mgd # firm pumping capacity
             O = M = 0. # USD/yr
             if 0 < FPC <= 7:
@@ -379,7 +392,6 @@ class WWTpump(SanUnit):
 
         # Pump building
         if self.include_building_cost:
-            start = self._format_key_start_with_prefix('P')
             # Design capacity of intermediate pumps, gpm,
             GPM = capacity_factor * Q_mgd * 1e6 / 24 / 60
             if GPM == 0:
@@ -394,18 +406,6 @@ class WWTpump(SanUnit):
             C[f'{start}ump building'] = PBA * self.building_unit_cost
 
         self.power_utility.consumption = self.BHP/self.motor_efficiency * _hp_to_kW
-
-    #!!! Replace this with the decorator
-    @staticmethod
-    def _batch_adding_pump(unit, IDs, ins_dct, type_dct, inputs_dct, **kwargs):
-        for i in IDs:
-            if not hasattr(unit, f'{i}_pump'):
-                pump = WWTpump(
-                    ID=f'{unit.ID}_{i}',
-                    ins=ins_dct[i],
-                    pump_type=type_dct[i],
-                    add_inputs=inputs_dct[i])
-                setattr(unit, f'{i}_pump', pump)
 
 
     # Generic algorithms that will be called by all design functions
@@ -827,7 +827,7 @@ class WWTpump(SanUnit):
 
     @property
     def capacity_factor(self):
-        '''[float] A safety factor to handle peaks.'''
+        '''[float] A safety factor to handle peak flow.'''
         return self._capacity_factor
     @capacity_factor.setter
     def capacity_factor(self, i):
@@ -921,8 +921,9 @@ class WWTpump(SanUnit):
 # =============================================================================
 
 def wwtpump(ID, ins=(), prefix='', pump_type='', Q_mgd=None, add_inputs=(),
-         include_pump_cost=False, include_building_cost=False,
-         F_BM=F_BM_pump, lifetime=default_equipment_lifetime, **kwargs):
+            capacity_factor=1., include_pump_cost=True, include_building_cost=False,
+            include_OM_cost=False, F_BM=F_BM_pump, lifetime=default_equipment_lifetime,
+            **kwargs):
     '''
     Handy decorator to add a :class:`~.WWTpump` as an attribute of
     a :class:`qsdsan.SanUnit`.
@@ -943,18 +944,20 @@ def wwtpump(ID, ins=(), prefix='', pump_type='', Q_mgd=None, add_inputs=(),
     https://doi.org/10.1039/C5EE03715H.
     '''
     return lambda cls: add_pump(cls, ID, ins, prefix, pump_type, Q_mgd, add_inputs,
-                                include_pump_cost, include_building_cost,
-                                F_BM, lifetime, **kwargs)
+                                capacity_factor, include_pump_cost, include_building_cost,
+                                include_OM_cost, F_BM, lifetime, **kwargs)
 
 
 def add_pump(cls, ID, ins, prefix, pump_type, Q_mgd, add_inputs,
-             include_pump_cost, include_building_cost,
-             F_BM, lifetime, **kwargs):
+             capacity_factor, include_pump_cost, include_building_cost,
+             include_OM_cost, F_BM, lifetime, **kwargs):
     pump = WWTpump(
         ID, ins=ins,
         prefix=prefix, pump_type=pump_type, Q_mgd=Q_mgd, add_inputs=add_inputs,
+        capacity_factor=capacity_factor,
         include_pump_cost=include_pump_cost,
         include_building_cost=include_building_cost,
+        include_OM_cost=include_OM_cost,
         F_BM=F_BM, lifetime=lifetime, **kwargs)
     setattr(cls, f'{ID}_pump', pump)
     return cls

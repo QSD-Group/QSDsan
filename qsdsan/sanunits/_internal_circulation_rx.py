@@ -84,13 +84,13 @@ class InternalCirculationRx(MixTank):
 
         In "lumped" method, design parameters include:
             - OLRall, biodegradability, Y, q_Qw, and q_Xw
-    biomass_cmp: str
+    biomass_ID: str
         ID of the Component that represents the biomass.
     OLRall : float
         Overall organic loading rate, [kg COD/m3/hr].
     biodegradability : float or dict
         Biodegradability of components,
-        when shown as a float, all biodegradable components are assumped to have
+        when shown as a float, all biodegradable components are assumed to have
         the same degradability.
     Y : float
         Biomass yield, [kg biomass/kg consumed COD].
@@ -154,7 +154,7 @@ class InternalCirculationRx(MixTank):
 
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
-                 method='lumped', biomass_cmp='WWTsludge',
+                 method='lumped', biomass_ID='WWTsludge',
                  OLRall=1.25, biodegradability=1., Y=0.07,
                  vessel_type='IC', vessel_material='Stainless steel',
                  V_wf=0.8, kW_per_m3=0., T=35+273.15, init_with='WasteStream',
@@ -176,7 +176,7 @@ class InternalCirculationRx(MixTank):
         self.heat_utilities = hx.heat_utilities
         self._refresh_rxns()
         # Conversion will be adjusted in the _run function
-        self._xcmp = xcmp = getattr(self.components, biomass_cmp)
+        self._xcmp = xcmp = getattr(self.components, biomass_ID)
         self._decay_rxn = xcmp.get_combustion_reaction(conversion=0.)
         self.effluent_pump = Pump(f'{self.ID}_eff')
         self.sludge_pump = Pump(f'{self.ID}_sludge')
@@ -355,11 +355,11 @@ class InternalCirculationRx(MixTank):
         self._method = i.lower()
 
     @property
-    def biomass_cmp(self):
+    def biomass_ID(self):
         '''[str] ID of the Component that represents the biomass.'''
         return self._xcmp.ID
-    @biomass_cmp.setter
-    def biomass_cmp(self, i):
+    @biomass_ID.setter
+    def biomass_ID(self, i):
         self._xcmp = getattr(self.components, i)
 
     @property
@@ -377,7 +377,7 @@ class InternalCirculationRx(MixTank):
     def biodegradability(self):
         '''
         [float of dict] Biodegradability of components,
-        when shown as a float, all biodegradable components are assumped to have
+        when shown as a float, all biodegradable components are assumed to have
         the same degradability.
         '''
         return self._biodegradability
@@ -565,7 +565,7 @@ class InternalCirculationRx(MixTank):
     @property
     def decay_rxn(self):
         '''
-        [:class:`tmo.Reaction`] Biomass endogeneous decay.
+        [:class:`tmo.Reaction`] Biomass endogenous decay.
 
         .. note::
             Conversion is adjusted in the _run function.
