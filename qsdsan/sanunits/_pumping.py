@@ -180,7 +180,7 @@ _ft3_to_gal = auom('ft3').conversion_factor('gallon')
 _m3_to_gal = auom('m3').conversion_factor('gallon')
 F_BM_pump = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
 default_F_BM = {
-        'Pumps': F_BM_pump,
+        'Pump': F_BM_pump,
         'Pump building': F_BM_pump,
         }
 default_equipment_lifetime = {
@@ -304,6 +304,8 @@ class WWTpump(SanUnit):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with)
         self.pump_type = pump_type
         self.Q_mgd = Q_mgd
+        try: iter(add_inputs)
+        except: add_inputs = (add_inputs,)
         self.add_inputs = add_inputs
         self.capacity_factor = capacity_factor
         self.include_pump_cost = include_pump_cost
@@ -319,7 +321,7 @@ class WWTpump(SanUnit):
             self._default_equipment_lifetime = \
                 {prefix+' '+[k][0].lower()+k[1:]:v for k, v in self._default_equipment_lifetime.items()}
 
-        for attr, val in kwargs.items:
+        for attr, val in kwargs.items():
             setattr(self, attr, val)
 
     def _run(self):

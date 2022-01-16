@@ -53,10 +53,12 @@ class SanStream(Stream):
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None, stream_impact_item=None,
                  **component_flows):
+        if 'impact_item' in component_flows.keys():
+            raise ValueError('The keyword `impact_item` is deprecated, '
+                             'please use `stream_impact_item` instead.')
         super().__init__(ID=ID, flow=flow, phase=phase, T=T, P=P,
                          units=units, price=price, thermo=thermo,
                          **component_flows)
-
         if stream_impact_item:
             stream_impact_item._linked_stream = self
         self._stream_impact_item = stream_impact_item
@@ -166,6 +168,31 @@ class SanStream(Stream):
 
         self._stream_impact_item = None
 
+    
+    def proxy(self, ID=None):
+        '''
+        Return a new stream that shares all data with this one.
+        
+        Parameters
+        ----------
+        ID : str
+            ID of the new proxy stream.
+        
+        Examples
+        --------
+        >>> from qsdsan import set_thermo, SanStream
+        >>> from qsdsan.utils import load_example_cmps
+        >>> cmps = load_example_cmps()
+        >>> set_thermo(cmps)
+        >>> ss1 = SanStream('ss1', Water=100, NaCl=1)
+        >>> ss2 = ss1.proxy('ss2')
+        >>> ss2.mol is ss1.mol
+        True
+        '''
+        new = Stream.proxy(self, ID=ID)
+        new._stream_impact_item = self._stream_impact_item
+        return new
+        
 
     @staticmethod
     def degassing(original_stream, receiving_stream=None, gas_IDs=()):
@@ -260,12 +287,12 @@ class SanStream(Stream):
         >>> ss.price
         10.0
         '''
-
+        # Missing stream
         if isinstance(stream, MissingStream):
-            new = MissingSanStream.__new__(MissingSanStream)
+            new = MissingSanStream.__init__(MissingSanStream, stream._source, stream._sink)
             return new
-
-        elif not isinstance(stream, cls):
+        # An actual stream
+        if not isinstance(stream, cls):
             if not ID:
                 stream.registry.discard(stream)
                 # stream.registry.untrack((stream,))
@@ -298,7 +325,6 @@ class SanStream(Stream):
 
             stream._link = stream._sink = stream._source = None
             return new
-
         else:
             return stream
 
@@ -354,7 +380,7 @@ class SanStream(Stream):
     def impact_item(self):
         '''Same as `stream_impact_item`, has been deprecated.'''
         warn('The property `impact_item` has been changed to `stream_impact_item`, '
-             'please use `stream_impact_item` instead.', stacklevel=2)
+             'please use `stream_impact_item` instead.')
         return self.stream_impact_item
 
     @property
@@ -374,6 +400,7 @@ class MissingSanStream(MissingStream):
         Users usually do not need to interact with this class.
 
     '''
+    line = 'SanStream'
 
     @property
     def stream_impact_item(self):

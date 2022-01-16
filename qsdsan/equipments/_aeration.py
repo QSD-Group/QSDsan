@@ -52,7 +52,6 @@ class Blower(Equipment):
     building_unit_cost : float
         Unit cost of the blower building, [USD/ft2].
 
-
     References
     ----------
     [1] Shoener, B. D.; Zhong, C.; Greiner, A. D.; Khunjar, W. O.; Hong, P.-Y.; Guest, J. S.
@@ -84,6 +83,7 @@ class Blower(Equipment):
                      },
                  N_reactor=2, gas_demand_per_reactor=1,
                  TDH=6, eff_blower=0.7, eff_motor=0.7, AFF=3.33,
+                 building_unit_cost=90,
                  ):
         Equipment.__init__(self=self, ID=ID, linked_unit=linked_unit, F_BM=F_BM,
                            lifetime=lifetime, lifetime_unit=lifetime_unit,
@@ -94,10 +94,10 @@ class Blower(Equipment):
         self.eff_blower = eff_blower
         self.eff_motor = eff_motor
         self.AFF = AFF
+        self.building_unit_cost = building_unit_cost
 
 
     def _design(self):
-        D = self.design_results
         N_reactor, gas_demand_per_reactor  =  \
             self.N_reactor, self.gas_demand_per_reactor
         gas_tot = N_reactor * gas_demand_per_reactor
@@ -106,7 +106,7 @@ class Blower(Equipment):
         # Calculate brake horsepower, 14.7 is atmospheric pressure in psi
         BHP = (gas_tot*0.23)*(((14.7+TDH)/14.7)**0.283-1)/eff_blower
         # 0.746 is horsepower to kW
-        D['Total blower power'] = BHP*0.746/eff_motor
+        D = {'Total blower power': BHP*0.746/eff_motor}
 
         # Calculate the number of blowers
         TCFM = ceil(gas_demand_per_reactor) # total cubic ft per min
@@ -126,16 +126,17 @@ class Blower(Equipment):
             while CFMB > 100000:
                 N += 1
                 CFMB = TCFM / N
-
+        
         D['Total gas flow'] = TCFM
         D['Blower capacity'] = CFMB
         D['Number of blowers'] = N
-
         return D
 
 
-    def _cost(self, TCFM, CFMB):
-        N_reactor, AFF, C = self.N_reactor, self.AFF, self.cost
+    def _cost(self):
+        D = self.design_results
+        TCFM, CFMB = D['Total gas flow'], D['Blower capacity']
+        N_reactor, AFF = self.N_reactor, self.AFF
         # Air pipes
         # Note that the original codes use CFMD instead of TCFM for air pipes,
         # but based on the coding they are equivalent
@@ -146,7 +147,7 @@ class Blower(Equipment):
             piping = 1.43 * AFF * (TCFM**1.1337)
         else:
             piping = 28.59 * AFF * (TCFM**0.8085)
-        C['Blower air piping'] = piping
+        C = {'Blower air piping': piping}
 
         # Blowers
         if TCFM <= 30000:
@@ -251,8 +252,6 @@ class GasPiping(Equipment):
 
 
     def _design(self):
-        D = self.design_results
-
         # Gas piping
         N_reactor, N_pipe_per_reactor, gas_demand_per_reactor, pipe_density =  \
             self.N_reactor, self.N_pipe_per_reactor, self.gas_demand_per_reactor, self.pipe_density
@@ -269,9 +268,7 @@ class GasPiping(Equipment):
         gas_tot = N_reactor * gas_demand_per_reactor
         OD_gsm, t_gsm, ID_gsm = select_pipe(gas_tot, self.v_manifold)
         M_gsm = calculate_pipe_material(OD_gsm, t_gsm, ID_gsm, L_gsm, pipe_density)
-
-        D['Gas pipe material'] = M_gh + M_gsm
-        return D
+        return {'Gas pipe material': M_gh+M_gsm}
 
 
     def _cost(self):

@@ -26,12 +26,11 @@ from matplotlib import pyplot as plt
 from warnings import warn
 from biosteam.utils import Inlets, Outlets
 from . import currency, Unit, Stream, SanStream, WasteStream, \
-    Construction, Transportation, Equipment, System
+    Construction, Transportation, Equipment
 
 __all__ = ('SanUnit',)
 
 def _update_init_with(init_with, ins_or_outs, size):
-
     if isinstance(init_with, str):
         init_with = dict.fromkeys([f'{ins_or_outs}{n}' for n in range(size)], init_with)
         return init_with
@@ -168,29 +167,27 @@ class SanUnit(Unit, isabstract=True):
 
 
     def _convert_stream(self, strm_inputs, streams, init_with, ins_or_outs):
+        isa = isinstance
         if not streams:
             return []
-
-        if isinstance(init_with, str):
+        if isa(init_with, str):
             init_with = dict.fromkeys([f'{ins_or_outs}{n}'
                                        for n in range(len(streams))], init_with)
-
         # Do not change pre-defined stream types
-        if isinstance(strm_inputs, Stream): # input is a stream
+        if isa(strm_inputs, Stream): # input is a stream
             init_with[f'{ins_or_outs}0'] = type(strm_inputs).__name__
-         # input is an iterable of stream
-        elif isinstance(strm_inputs, Iterable) and not isinstance(strm_inputs, str):
-            for n, s in enumerate(strm_inputs):
-                if isinstance(s, Stream):
-                    init_with[f'{ins_or_outs}{n}'] = type(s).__name__
+        # `input` is an iterable of stream
+        elif isa(strm_inputs, Iterable) and not isa(strm_inputs, str):
+            for in_or_out, s in zip(ins_or_outs, strm_inputs):
+                if isa(s, Stream):
+                    init_with[in_or_out] = type(s).__name__
 
         init_with = _update_init_with(init_with, ins_or_outs, len(streams))
 
         converted = []
         for k, v in init_with.items():
-            if not ins_or_outs in k:
+            if not ins_or_outs in k: # leave out outsX when going through ins and vice versa
                 continue
-
             num = k.split(ins_or_outs)[-1]
             s = streams[int(num)]
             if v == 's':
@@ -221,7 +218,7 @@ class SanUnit(Unit, isabstract=True):
         super()._init_ins(ins)
         converted = self._convert_stream(ins, self.ins, init_with, 'ins')
         self._ins = Inlets(self, self._N_ins, converted, self._thermo,
-                           self._ins_size_is_fixed, self._stacklevel)
+                            self._ins_size_is_fixed, self._stacklevel)
 
     def _init_outs(self, outs, init_with):
         super()._init_outs(outs)
@@ -367,7 +364,7 @@ class SanUnit(Unit, isabstract=True):
                 unit_attr[equip_ID] = equip_attr
         for equip in self.equipments:
             equip_ID = equip.ID
-            equip_design = equip._design()
+            equip_design = equip._design_results = equip._design()
             equip_design = {} if not equip_design else equip_design
             unit_design.update(equip_design)
 
@@ -383,7 +380,7 @@ class SanUnit(Unit, isabstract=True):
     def add_equipment_cost(self):
         unit_cost = self.baseline_purchase_costs
         for equip in self.equipments:
-            equip_cost = equip._cost()
+            equip_cost = equip._baseline_purchase_costs = equip._cost()
             if isinstance(equip_cost, dict):
                 unit_cost.update(equip_cost)
             else:

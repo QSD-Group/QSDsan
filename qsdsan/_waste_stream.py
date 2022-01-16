@@ -29,6 +29,7 @@ import numpy as np
 import flexsolve as flx
 from free_properties import PropertyFactory, property_array
 from thermosteam import settings, indexer
+from biosteam.utils import MissingStream
 from . import SanStream, MissingSanStream
 from .utils import auom, copy_attr
 from warnings import warn
@@ -44,7 +45,7 @@ _common_composite_vars = ('_COD', '_BOD', '_uBOD', '_TC', '_TOC', '_TN',
                           '_dry_mass', '_charge', '_ThOD', '_cnBOD')
 
 _ws_specific_slots = (*_common_composite_vars,
-                      '_pH', '_SAlk', '_ratios', '_stream_impact_item',
+                      '_pH', '_SAlk', '_ratios', # '_stream_impact_item',
                       '_state', '_dstate')
 
 _specific_groups = {'S_VFA': ('S_Ac', 'S_Prop'),
@@ -163,8 +164,7 @@ def by_conc(self, TP):
     except:
         cmps = self.chemicals
         mol = self.data
-        try: F_vol = self.by_volume(TP).data.sum()
-        except:         breakpoint()
+        F_vol = self.by_volume(TP).data.sum()
         conc = np.zeros_like(mol, dtype=object)
         for i, cmp in enumerate(cmps):
             conc[i] = ConcentrationProperty(cmp.ID, mol, i, F_vol, cmp.MW,
@@ -289,11 +289,6 @@ class WasteStream(SanStream):
                  TC=None, TOC=None, TN=None, TKN=None, TP=None, TK=None,
                  TMg=None, TCa=None, dry_mass=None, charge=None, ratios=None,
                  stream_impact_item=None, **component_flows):
-
-        if 'impact_item' in component_flows.keys():
-            raise ValueError('The keyword `impact_item` is deprecated, '
-                             'please use `stream_impact_item` instead.')
-
         SanStream.__init__(self=self, ID=ID, flow=flow, phase=phase, T=T, P=P,
                            units=units, price=price, thermo=thermo,
                            stream_impact_item=stream_impact_item, **component_flows)
@@ -370,18 +365,16 @@ class WasteStream(SanStream):
         >>> ws.price
         8.0
         '''
-
+        # Missing stream
+        if isinstance(stream, MissingStream):
+            new = MissingWasteStream.__init__(MissingWasteStream, stream._source, stream._sink)
+            return new
+        
+        # An actual stream
         new = SanStream.from_stream(cls, stream, ID)
-
-        if isinstance(new, MissingSanStream):
-            missing_new = MissingWasteStream.__new__(MissingWasteStream)
-            return missing_new
-
         for attr, val in kwargs.items():
             setattr(new, attr, val)
-
         new._init_ws()
-
         return new
 
 
@@ -813,6 +806,32 @@ class WasteStream(SanStream):
             value = getattr(other, slot)
             setattr(self, slot, value)
 
+    def proxy(self, ID=None):
+        '''
+        Return a new stream that shares all data with this one.
+        
+        Parameters
+        ----------
+        ID : str
+            ID of the new proxy stream.
+        
+        Examples
+        --------
+        >>> from qsdsan import set_thermo, WasteStream
+        >>> from qsdsan.utils import load_example_cmps
+        >>> cmps = load_example_cmps()
+        >>> set_thermo(cmps)
+        >>> ws1 = WasteStream('ws1', Water=100, NaCl=1)
+        >>> ws2 = ws1.proxy('ws2')
+        >>> ws2.conc is ws1.conc
+        True
+        '''
+        new = SanStream.proxy(self, ID=ID)
+        for slot in _ws_specific_slots:
+            value = getattr(self, slot)
+            setattr(new, slot, value)
+        return new
+
 
     def mix_from(self, others):
         '''
@@ -853,7 +872,7 @@ class WasteStream(SanStream):
         SanStream.mix_from(self, others)
 
         for slot in _ws_specific_slots:
-            if not hasattr(self, slot) or slot=='_stream_impact_item':
+            if not hasattr(self, slot):
                 continue
             #!!! This needs reviewing, might not be good to calculate some
             # attributes like pH
@@ -1622,8 +1641,8 @@ class MissingWasteStream(MissingSanStream):
 
         Users usually do not need to interact with this class.
     '''
-
-    # TODO: add others
+    line = 'WasteStream'
+    
     @property
     def pH(self):
         '''[float] pH, unitless.'''

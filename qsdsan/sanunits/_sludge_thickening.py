@@ -22,16 +22,19 @@ from ..sanunits import Pump
 from ..utils import ospath, load_data, data_path, dct_from_str
 
 __all__ = (
-    'SludgeHandling', 'BeltThickener', 'SludgeCentrifuge',
+    'SludgeThickening',
+    'BeltThickener',
+    'SludgeCentrifuge',
     'SludgeSeparator',
     )
 
 
 # %%
 
-class SludgeHandling(SanUnit):
+class SludgeThickening(SanUnit):
     '''
-    A generic class for handling of wastewater treatment sludge based on
+    A generic class for concentrating (i.e., thickening) of sludge
+    from wastewater treatment processes based on
     `Shoener et al. <https://doi.org/10.1039/C5EE03715H>`_
 
     The 0th outs is the water-rich supernatant (effluent) and
@@ -74,7 +77,7 @@ class SludgeHandling(SanUnit):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with)
         self.sludge_moisture = sludge_moisture
         cmps = self.components
-        self.solids = solids or cmps.solids
+        self.solids = solids or [cmp.ID for i in cmps.solids]
         self.solubles = tuple([i.ID for i in cmps if i.ID not in self.solids])
         self.effluent_pump = Pump(f'{self.ID}_eff', init_with=init_with)
         self.sludge_pump = Pump(f'{self.ID}_sludge', init_with=init_with)
@@ -123,7 +126,7 @@ class SludgeHandling(SanUnit):
 
 
 
-class BeltThickener(SludgeHandling):
+class BeltThickener(SludgeThickening):
     '''
     Gravity belt thickener (GBT) designed based on the manufacture specification
     data sheet. [1]_
@@ -171,7 +174,7 @@ class BeltThickener(SludgeHandling):
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  sludge_moisture=0.96, solids=(),
                  max_capacity=100, power_demand=4.1):
-        SludgeHandling.__init__(self, ID, ins, outs, thermo,
+        SludgeThickening.__init__(self, ID, ins, outs, thermo,
                                 sludge_moisture=sludge_moisture,
                                 solids=solids)
         self.max_capacity = max_capacity
@@ -192,11 +195,11 @@ class BeltThickener(SludgeHandling):
         return self._N
 
 
-class SludgeCentrifuge(SludgeHandling, bst.SolidsCentrifuge):
+class SludgeCentrifuge(SludgeThickening, bst.SolidsCentrifuge):
     '''
     Solid centrifuge for sludge dewatering.
 
-    `_run` and `_cost` are based on `SludgeHandling` and `_design`
+    `_run` and `_cost` are based on `SludgeThickening` and `_design`
     is based on `SolidsCentrifuge`.
 
     The 0th outs is the water-rich supernatant (effluent) and
@@ -214,16 +217,16 @@ class SludgeCentrifuge(SludgeHandling, bst.SolidsCentrifuge):
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  sludge_moisture=0.8, solids=(),
                  centrifuge_type='scroll_solid_bowl'):
-        SludgeHandling.__init__(self, ID, ins, outs, thermo,
+        SludgeThickening.__init__(self, ID, ins, outs, thermo,
                                 sludge_moisture=sludge_moisture,
                                 solids=solids)
         self.centrifuge_type = centrifuge_type
 
-    _run = SludgeHandling._run
+    _run = SludgeThickening._run
 
     _design = bst.SolidsCentrifuge._design
 
-    _cost = SludgeHandling._cost
+    _cost = SludgeThickening._cost
 
 
 # %%

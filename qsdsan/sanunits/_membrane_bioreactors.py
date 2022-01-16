@@ -284,6 +284,7 @@ class AnMBR(SanUnit):
         self._default_equipment_lifetime.update(lifetime)
 
         # Initiate the attributes
+        self.AF = self.AeF = None
         self.heat_exchanger = hx = HXutility(None, None, None, T=T)
         self.heat_utilities = hx.heat_utilities
         self._refresh_rxns()
@@ -769,7 +770,7 @@ class AnMBR(SanUnit):
         self.heat_exchanger.simulate_as_auxiliary_exchanger(duty, inf)
         # Power for pumping and gas
         pumping = 0.
-        for ID in self.pumps:
+        for ID in self.pumps: #!!! check if cost/power of AF_pump/AeF_pump included in AF/AeF
             p = getattr(self, f'{ID}_pump')
             if p is None:
                 continue

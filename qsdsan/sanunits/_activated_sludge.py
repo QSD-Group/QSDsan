@@ -12,6 +12,7 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+from warnings import warn
 from math import ceil
 from .. import SanUnit
 from ..sanunits import HXutility, WWTpump
@@ -193,13 +194,12 @@ class ActivatedSludgeProcess(SanUnit):
         self.k1 = k1
         self.k2 = k2
         self.K_UAP = K_UAP
-        self.k_BAP = K_BAP
+        self.K_BAP = K_BAP
         self.heat_exchanger = hx = HXutility(None, None, None, T=T)
         self.heat_utilities = hx.heat_utilities
-        self.equipments = (
-            Blower('blower', linked_unit=self, N_reactor=N_train),
-            GasPiping('gas piping', linked_unit=self, N_reactor=N_train),
-            )
+        self.blower = blower = Blower('blower', linked_unit=self, N_reactor=N_train)
+        self.air_piping = air_piping = GasPiping('air_piping', linked_unit=self, N_reactor=N_train)
+        self.equipments = (blower, air_piping)
         self.F_BM.update(F_BM)
         self._default_equipment_lifetime.update(lifetime)
 
@@ -220,10 +220,10 @@ class ActivatedSludgeProcess(SanUnit):
         X_i0 = self.X_i0
         if not X_i0:
             try:
-                X_i0 = inf.concs[cmps.inert_biomass].sum()
+                X_i0 = inf.iconc['inert_biomass'].sum()
             except AttributeError: # group not defined
                 raise AttributeError('The `inert_biomass` group of current `CompiledComponents` '
-                                     'has not bee defined. '
+                                     'has not been defined. '
                                      'Please either define it using the `define_group` function of '
                                      '`CompiledComponents` or provide `X_i0` for this '
                                      f'`{self.__class__.__name__}` unit.')
@@ -284,27 +284,36 @@ class ActivatedSludgeProcess(SanUnit):
 
         # Non-particulate components
         substrates = cmps.substrates
-        S_concs = eff.concs[substrates] * S/S_0
+        S_conc = eff.iconc['substrates'] * S/S_0
         eff_dct = dict.fromkeys(cmps.IDs, 0)
         eff_dct.pop('H2O')
-        eff_dct.update({ID:S_concs[n] for n, ID in enumerate(substrates)})
+        if len(substrates) > 1:
+            eff_dct.update({cmp.ID: conc for cmp, conc in zip(substrates, S_conc)})
+        else: # Only one component in `substrates`
+            eff_dct[substrates[0].ID] = S_conc
         # Non-substrate and non-particulate (soluble, colloial, dissolved gas) components
         # will be splitted in the same way as flow rate mass-wise
         was_dct = eff_dct.copy()
 
         # Particulate components
-        try: active_biomass = cmps.active_biomass
+        try:
+            active_biomass = cmps.active_biomass
+            X_a_inf = inf.iconc['active_biomass'].sum()
         except AttributeError:
-            raise AttributeError('The `active_biomass` group of current `CompiledComponents` '
-                                 'has not bee defined. '
-                                 'Please either define it using the `define_group` function of '
-                                 '`CompiledComponents`.')
-        X_a_inf = inf.concs[active_biomass].sum()
-        X_a_e_concs = eff.concs[active_biomass] * X_e/X_a_inf
-        eff_dct.update({ID:X_a_e_concs[n] for n, ID in enumerate(active_biomass)})
-        X_a_w_concs = eff.concs[active_biomass] * X_w/X_a_inf
-        was_dct.update({ID:X_a_w_concs[n] for n, ID in enumerate(active_biomass)})
-
+            warn('The `active_biomass` group of current `CompiledComponents` '
+                 'has not been defined and is assumed to be 0.')
+            X_a_inf = 0
+        if X_a_inf != 0:
+            X_a_e_conc = eff.iconc['active_biomass'] * X_e/X_a_inf
+            X_a_w_conc = eff.iconc['active_biomass'] * X_w/X_a_inf
+        else:
+            X_a_e_conc = X_a_w_conc = eff.iconc['active_biomass']
+        if len(active_biomass) > 1:        
+            eff_dct.update({cmp.ID:conc for cmp, conc in zip(active_biomass, X_a_e_conc)})
+            was_dct.update({cmp.ID:conc for cmp, conc in zip(active_biomass, X_a_w_conc)})
+        else:
+            eff_dct[active_biomass[0].ID] = X_a_e_conc
+            was_dct[active_biomass[0].ID] = X_a_w_conc
         eff.set_flow_by_concentration(
             flow_tot=Q_eff, concentrations=eff_dct, units=('L/d', 'mg/L'))
         was.set_flow_by_concentration(
@@ -312,11 +321,12 @@ class ActivatedSludgeProcess(SanUnit):
 
         # Assume all non-active solids (including inorganic solids) go to sludge
         X_i = set(cmps.solids).difference(set(active_biomass))
-        eff.imass[X_i] = 0
-        was.imass[X_i] = inf.imass[X_i]
+        X_i_IDs = tuple((cmp.ID for cmp in X_i))
+        eff.imass[X_i_IDs] = 0
+        was.imass[X_i_IDs] = inf.imass[X_i_IDs]
         ras = self._ras
         ras.copy_like(was)
-        ras.imass *= Q_ras/Q_was
+        ras.mass *= Q_ras/Q_was
 
         air.empty()
         emission.empty()
@@ -363,7 +373,7 @@ class ActivatedSludgeProcess(SanUnit):
             L_tank = V_tank / A_tank
 
         D['N_train'] = self.N_train = N_train
-        D['Aeration tank volume'] = self.V_tank = V_tank
+        D['Aeration tank volume'] = self._V_tank = V_tank
         D['Aeration tank length'] = self.L_tank
 
         # Clarifier
@@ -386,10 +396,10 @@ class ActivatedSludgeProcess(SanUnit):
         t_wall, t_slab = self.t_wall, self.t_slab
         W_N_trains = (W_tank+2*t_wall)*N_train - t_wall*(N_train-1)
 
-        D = D_tank + self.freeboard
+        D_tot = D_tank + self.freeboard
         t = t_wall + t_slab
 
-        get_VWC = lambda L1, N: N * t_wall * L1 * D # get volume of wall concrete
+        get_VWC = lambda L1, N: N * t_wall * L1 * D_tot # get volume of wall concrete
         get_VSC = lambda L2: t * L2 * W_N_trains # get volume of slab concrete
 
         # Distribution channel, [ft3],
@@ -444,10 +454,10 @@ class ActivatedSludgeProcess(SanUnit):
 
     def _design_pump(self):
         ID, pumps = self.ID, self.pumps
-        inf, was = self._inf, self._was
+        inf, ras = self._inf, self._ras
         ins_dct = {
             'inf': inf.proxy(),
-            'recir': was.proxy(),
+            'recir': ras.proxy(),
             }
         type_dct = dict.fromkeys(pumps, '')
         inputs_dct = dict.fromkeys(pumps, self.N_train)
@@ -457,7 +467,7 @@ class ActivatedSludgeProcess(SanUnit):
                 setattr(p, 'add_inputs', inputs_dct[i])
             else:
                 ID = f'{ID}_{i}'
-                capacity_factor=2. if i=='inf' else was.F_vol/inf.F_vol
+                capacity_factor=2. if i=='inf' else ras.F_vol/inf.F_vol
                 pump = WWTpump(
                     ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
                     Q_mgd=None, add_inputs=inputs_dct[i],
@@ -469,7 +479,7 @@ class ActivatedSludgeProcess(SanUnit):
                 setattr(self, f'{i}_pump', pump)
 
         pipe_ss, pump_ss = 0., 0.
-        for i in (*pumps, 'AF', 'AeF'):
+        for i in pumps:
             p = getattr(self, f'{i}_pump')
             p.simulate()
             p_design = p.design_results
@@ -524,7 +534,8 @@ class ActivatedSludgeProcess(SanUnit):
             if p is None:
                 continue
             pumping += p.power_utility.rate
-        self.power_utility.rate = self.blower.power_utility.rate + pumping
+        self.power_utility.rate = \
+            self.blower.design_results['Total blower power'] + pumping
 
 
     @property

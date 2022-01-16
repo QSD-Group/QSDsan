@@ -26,7 +26,7 @@ from ._hx import *
 from ._lumped_cost import *
 from ._pumping import *
 from ._screening import *
-from ._sludge_handling import *
+from ._sludge_thickening import *
 from ._suspended_growth_bioreactor import *
 from ._tanks import *
 from ._trucking import *
@@ -64,7 +64,7 @@ from . import (
     _pumping,
     _screening,
     _sedimentation,
-    _sludge_handling,
+    _sludge_thickening,
     _suspended_growth_bioreactor,
     _tanks,
     _toilets,
@@ -92,7 +92,7 @@ __all__ = (
     *_pumping.__all__,
     *_screening.__all__,
     *_sedimentation.__all__,
-    *_sludge_handling.__all__,
+    *_sludge_thickening.__all__,
     *_suspended_growth_bioreactor.__all__,
     *_tanks.__all__,
     *_toilets.__all__,

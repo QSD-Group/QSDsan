@@ -632,6 +632,33 @@ class CompiledComponents(CompiledChemicals):
                 except: pass
         return new
 
+    # def define_group(self, name, IDs, composition=None, wt=False):
+    #     '''
+    #     Define a group of components.
+        
+    #     This is similar to :func:`CompiledChemicals.define_group` in `thermosteam`,
+    #     but will add the IDs (instead of the actual components) as an attribute
+    #     to this :class:`~.CompiledComponents` to be consistent with other methods
+    #     for `CompiledComponents`.
+        
+    #     Parameters
+    #     ----------
+    #     name : str
+    #         Name of group.
+    #     IDs : Iterable(str)
+    #         IDs of components in the group.
+    #     composition : Iterable(float), optional
+    #         Default composition of component group. 
+    #     wt : bool, optional
+    #         Whether composition is given by weight (True) or mol (False).
+    #         Defaults to False.
+            
+    #     See Also
+    #     --------
+    #     :func:`thermosteam.CompiledChemicals.define_group`
+    #     '''
+    #     CompiledChemicals.define_group(self, name, IDs, composition=None, wt=False)
+
 
     def index(self, ID):
         '''Return index of specified component.'''
@@ -703,33 +730,33 @@ class CompiledComponents(CompiledChemicals):
 
     @property
     def gases(self):
-        '''[tuple] IDs of gas components.'''
-        return self.get_IDs_from_array(self.g)
+        '''[list] Gas components.'''
+        return self[self.get_IDs_from_array(self.g)]
 
     @property
     def solids(self):
-        '''[tuple] IDs of solids (particulate) components.'''
-        return self.get_IDs_from_array(self.x)
+        '''[list] Solids (particulate) components.'''
+        return self[self.get_IDs_from_array(self.x)]
 
     @property
     def inorganics(self):
-        '''[tuple] IDs of inorganic components.'''
-        return self.get_IDs_from_array(self.inorg)
+        '''[list] Inorganic components.'''
+        return self[self.get_IDs_from_array(self.inorg)]
 
     @property
     def inorganic_solids(self):
-        '''[tuple] IDs of inorganic solids (particulate & inorganic, all undegradable) components.'''
-        return self.get_IDs_from_array(self.x*self.inorg)
+        '''[list] Inorganic solids (particulate & inorganic, all undegradable) components.'''
+        return self[self.get_IDs_from_array(self.x*self.inorg)]
 
     @property
     def organic_solids(self):
-        '''[tuple] IDs of organic solids (particulate & organic) components.'''
-        return self.get_IDs_from_array(self.x*self.org)
+        '''[list] Organic solids (particulate & organic) components.'''
+        return self[self.get_IDs_from_array(self.x*self.org)]
 
     @property
     def substrates(self):
         '''
-        [tuple] IDs of substrate components, will return
+        [list] Substrate components, will return
         soluble/colloidal & organic & degradable components
         if not set by the user.
         '''
@@ -737,7 +764,7 @@ class CompiledComponents(CompiledChemicals):
         except:
             warn('The `substrates` group is not set, using '
                  'soluble/colloidal & organic & degradable components instead.')
-            return self.get_IDs_from_array((self.s+self.c)*self.b*self.org)
+            return self[self.get_IDs_from_array((self.s+self.c)*self.b*self.org)]
     @substrates.setter
     def substrates(self, i):
         raise RuntimeError('Please use `define_group` to define the `substrates` group.')
@@ -745,7 +772,7 @@ class CompiledComponents(CompiledChemicals):
     @property
     def biomass(self):
         '''
-        [tuple] IDs of biomass components, will return `organic_solids`
+        [list] Biomass components, will return `organic_solids`
         (particulate & organic) components if not set by the user.
         '''
         try: return self.__dict__['biomass']
