@@ -109,6 +109,7 @@ class FlatBottomCircularClarifier(SanUnit):
         self._solids = None
         self._solubles = None
         self._X_comp = np.zeros(len(self.components))
+        self._dX_comp = self._X_comp.copy()
         header = self._state_header
         self._state_header = list(header) + [f'TSS{i+1} [mg/L]' for i in range(N_layer)]
         for attr, value in kwargs.items():
@@ -288,6 +289,7 @@ class FlatBottomCircularClarifier(SanUnit):
         self._dstate = self._state * 0.
         if TSS_in != 0: self._X_comp = QCs[:-1] * x / TSS_in
 
+
     def _update_state(self, arr):
         self._state = arr
         x = self.components.x
@@ -318,13 +320,15 @@ class FlatBottomCircularClarifier(SanUnit):
         n = self._N_layer
         dQ = arr[-(1+n)]
         dZ = arr[:len(x)]
+        TSS_e, TSS_s = self._state[-n], self._state[-1]
         X_composition = self._X_comp # (m, ), mg COD/ mg TSS
-        dX_e = arr[-n] * X_composition
-        dC_s = dZ + arr[-1] * X_composition
+        dX_composition = self._dX_comp
+        dC_e = dZ + arr[-n] * X_composition + dX_composition * TSS_e
+        dC_s = dZ + arr[-1] * X_composition + dX_composition * TSS_s
         eff, ras, was = self._outs
-        if eff._dstate is None: eff._dstate = np.append(dZ+dX_e, dQ)
+        if eff._dstate is None: eff._dstate = np.append(dC_e, dQ)
         else:
-            eff._dstate[:-1] = dZ+dX_e
+            eff._dstate[:-1] = dC_e
             eff._dstate[-1] = dQ
         #!!! might need to enable dynamic sludge volume flows
         if ras._dstate is None: ras._dstate = np.append(dC_s, 0.)
@@ -366,6 +370,7 @@ class FlatBottomCircularClarifier(SanUnit):
         Q_s = self._Qras + self._Qwas
 
         dQC = self._dstate
+        dX_comp = self._dX_comp
         _update_dstate = self._update_dstate
 
         nzeros = np.zeros(n)
@@ -392,11 +397,16 @@ class FlatBottomCircularClarifier(SanUnit):
 
         def dy_dt(t, QC_ins, QC, dQC_ins):
             dQC[-(n+1)] = dQC_ins[0,-1]
+        # def dy_dt(t, QC_ins, QC):
+            #!!! can't fix at 0 with dynamic influent
+            dQC[-(n+1)] = 0
             Q_in = QC_ins[0,-1]
             Q_e = Q_in - Q_s
             C_in = QC_ins[0,:-1]
+            dC_in = dQC_ins[0,:-1]
             Z_in = C_in*(1-x)
             X_in = sum(C_in*imass*x)           # influent TSS
+            dX_in = sum(dC_in*imass*x)
             X_min_arr[:] = X_in * fns
             X = QC[-n:]                        # (n, ), TSS for each layer
             Z = QC[:m] * (1-x)
@@ -419,6 +429,8 @@ class FlatBottomCircularClarifier(SanUnit):
             #*********solubles**********
             Q_in_arr[:] = Q_in
             dQC[:m] = Q_in_arr*(Z_in - Z)/V_arr
+            # instrumental variables
+            dX_comp[:] = (dC_in * X_in - dX_in * C_in) * x / X_in**2
             _update_dstate()
 
         self._ODE = dy_dt
