@@ -52,12 +52,6 @@ class Pump(SanUnit, Pump):
         self.dP_design = dP_design
         self.ignore_NPSH = ignore_NPSH
 
-    def reset_cache(self):
-        '''Reset cached states.'''
-        self._state = None
-        for s in self.outs:
-            s.empty()
-
     @property
     def state(self):
         '''The state of the Pump, including component concentrations [mg/L] and flow rate [m^3/d].'''
@@ -74,7 +68,8 @@ class Pump(SanUnit, Pump):
         self._state = QCs
 
     def _init_state(self):
-        self._state = self._collect_ins_state()[0]
+        self._refresh_ins()
+        self._state = self._ins_QC[0]
         self._dstate = self._state * 0.
 
     def _update_state(self, arr):
@@ -97,14 +92,6 @@ class Pump(SanUnit, Pump):
             self._dstate = dQC_ins[0]
             self._update_dstate()
         self._ODE = dy_dt
-
-    def _define_outs(self):
-        dct_y = self._state_locator(self._state)
-        out, = self.outs
-        Q = dct_y[out.ID][-1]
-        Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
-        Cs.pop('H2O', None)
-        out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
 
 
 # %%
@@ -138,7 +125,9 @@ class HydraulicDelay(Pump):
         '''initialize state by specifiying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
-        self._state = self._collect_ins_state()[0]
+        self._refresh_ins()
+        self._state = self._ins_QC[0]
+        self._dstate = self._state * 0
         if self._concs is not None:
             self._state[:-1] = self._concs
 

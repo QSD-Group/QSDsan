@@ -420,6 +420,13 @@ class SanUnit(Unit, isabstract=True):
             self._isdynamic = bool(i)
             self._init_dynamic()
 
+    def reset_cache(self):
+        '''Reset cached states for dynamic units.'''
+        if self.isdynamic:
+            self._init_dynamic()
+            for s in self.outs:
+                s.empty()
+
     def get_retained_mass(self, biomass_IDs):
         warn(f'The retained biomass in {self.ID} is ignored.')
 
