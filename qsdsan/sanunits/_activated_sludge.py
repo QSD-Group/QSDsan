@@ -28,7 +28,7 @@ class ActivatedSludgeProcess(SanUnit):
 
     Single tank and clarifier are assumed to have the same width;
     pump/blower buildings are assumed to have the same width as the
-    total tanks/clarifers.
+    total tanks/clarifiers.
 
     Parameters
     ----------
@@ -53,7 +53,7 @@ class ActivatedSludgeProcess(SanUnit):
     X_w : float
         Biomass concentration in the waste activated sludge, [mg VSS/L].
     SLR : float
-        Solids loading rate for the clarifer, [lb/ft2/d].
+        Solids loading rate for the clarifier, [lb/ft2/d].
     SF : float
         Safety factor to scale up the minimum solids retention time (SRT), should be larger than 1.
     aeration_power : float
@@ -456,7 +456,7 @@ class ActivatedSludgeProcess(SanUnit):
 
     @property
     def Q_ras(self):
-        '''[float] Returnactivated sludge flow rate, [m3/d].'''
+        '''[float] Return activated sludge flow rate, [m3/d].'''
         return self._Q_ras
 
     @property

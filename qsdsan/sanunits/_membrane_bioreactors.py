@@ -38,7 +38,6 @@ from ..utils import (
     compute_stream_COD,
     format_str,
     default_component_dict,
-    cost_pump,
     calculate_excavation_volume,
     )
 
@@ -54,6 +53,23 @@ _m3_to_gal = auom('m3').conversion_factor('gal')
 _cmh_to_mgd = _m3_to_gal * 24 / 1e6 # cubic meter per hour to million gallon per day
 _lb_to_kg = auom('lb').conversion_factor('kg')
 
+F_BM_pump = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
+#!!! Take out the blower-related ones once finish updating the equipment
+default_F_BM = {
+        'Membrane': 1+0.15, # assume 15% for replacement labor
+        'Pumps': F_BM_pump,
+        'Pump building': F_BM_pump,
+        'Blowers': 2.11,
+        'Blower building': 1.11,
+        }
+default_equipment_lifetime = {
+    'Membrane': 10,
+    'Pumps': 15,
+    'Pump pipe stainless steel': 15,
+    'Pump stainless steel': 15,
+    'Pump chemical storage HDPE': 30,
+    'Blowers': 15,
+    }
 
 
 # %%
@@ -117,10 +133,6 @@ class AnMBR(SanUnit):
     T : float
         Temperature of the reactor.
         Will not control temperature if provided as None.
-    include_pump_building_cost : bool
-        Whether to include the construction cost of pump building.
-    include_excavation_cost : bool
-        Whether to include the construction cost of excavation.
     kwargs : dict
         Other keyword arguments (e.g., J_max, SGD).
 
@@ -195,16 +207,31 @@ class AnMBR(SanUnit):
     _SGD = 0.625 # from the 0.05-1.2 uniform range in ref [1]
     _AFF = 3.33
 
+    GAC_price = 13.78 # $/kg
+
     _refresh_rxns = InternalCirculationRx._refresh_rxns
 
     # Other equipment
     auxiliary_unit_names = ('heat_exchanger',)
-    pumps =  ('perm', 'retent', 'recir', 'sludge', 'naocl', 'citric', 'bisulfite',
-              'AF', 'AeF')
 
+    _units = {
+        'Wall concrete': 'ft3',
+        'Slab concrete': 'ft3',
+        'Excavation': 'ft3',
+        'Membrane': 'm3',
+        'Pump pipe stainless steel': 'kg',
+        'Pump stainless steel': 'kg',
+        'Pump chemical storage HDPE': 'm3',
+        'Total air flow': 'CFM',
+        'Blower capacity': 'CFM',
+        'Packing LDPE': 'm3',
+        'Packing HDPE': 'm3',
+        'GAC': 'kg',
+        'Total volume': 'ft3',
+        }
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 init_with='WasteStream', isdynamic=False, *,
+                 init_with='WasteStream', *,
                  reactor_type='CSTR',
                  N_train=2,
                  membrane_configuration='cross-flow',
@@ -217,10 +244,9 @@ class AnMBR(SanUnit):
                  biodegradability=1.0, Y=0.05, # from the 0.02-0.08 uniform range in ref [1]
                  solids=(), split={}, biomass_conc=10.5,
                  T=35+273.15,
-                 include_pump_building_cost=False,
-                 include_excavation_cost=False,
+                 F_BM=default_F_BM, lifetime=default_equipment_lifetime,
                  **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with, isdynamic=isdynamic)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with, F_BM_default=1)
         self.reactor_type = reactor_type
         self.N_train = N_train
         self.include_aerobic_filter = include_aerobic_filter
@@ -238,14 +264,13 @@ class AnMBR(SanUnit):
             cmps=cmps, gas=0.15, solubles=0.125, solids=0) # ref[2]
         self.biomass_conc = biomass_conc
         self.T = T
-        self.include_pump_building_cost = include_pump_building_cost
-        self.include_excavation_cost = include_excavation_cost
+        self.F_BM.update(F_BM)
+        self._default_equipment_lifetime.update(lifetime)
 
         # Initiate the attributes
         self.heat_exchanger = hx = HXutility(None, None, None, T=T)
         self.heat_utilities = hx.heat_utilities
         self._refresh_rxns()
-
         for k, v in kwargs.items():
             setattr(self, k, v)
 
@@ -291,6 +316,57 @@ class AnMBR(SanUnit):
                 raise DesignError(f'Only plastic materials {plastics} and "ceramic"'
                                   'allowed for "multi-tube" membrane',
                                   f'not "{m_material}".')
+
+    # Add pumps
+    pumps =  ('perm', 'retent', 'recir', 'sludge', 'naocl', 'citric', 'bisulfite',
+              'AF', 'AeF')
+    def _add_pumps(self):
+        ID, ins, outs = self.ID, self.ins, self.outs
+        rx_type, m_config, pumps = \
+            self.reactor_type, self.membrane_configuration, self.pumps
+
+        ins_dct = {
+            'perm': outs[1].proxy(),
+            'retent': self._retent,
+            'recir': self._recir,
+            'sludge': outs[2].proxy(),
+            'naocl': ins[2].proxy(),
+            'citric': ins[3].proxy(),
+            'bisulfite': ins[4].proxy(),
+            }
+
+        type_dct = {
+            'perm': f'permeate_{m_config}',
+            'retent': f'retentate_{rx_type}',
+            'recir': f'recirculation_{rx_type}',
+            'sludge': 'sludge',
+            'naocl': 'chemical',
+            'citric': 'chemical',
+            'bisulfite': 'chemical',
+            }
+
+        inputs_dct = {
+            'perm': (self.cas_per_tank, self.D_tank, self.TMP_anaerobic,
+                     self.include_aerobic_filter),
+            'retent': (self.cas_per_tank,),
+            'recir': (1, self.L_CSTR,),
+            'sludge': (1,),
+            'naocl': (1,),
+            'citric': (1,),
+            'bisulfite': (1,),
+            }
+
+        for i in pumps[:-2]:
+            ID = f'{ID}_{i}'
+            pump = WWTpump(
+                ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
+                Q_mgd=None, add_inputs=inputs_dct[i],
+                include_pump_cost=True,
+                include_building_concrete=True,
+                include_building_excavation=False,
+                )
+            setattr(self, f'{i}_pump', pump)
+
 
     # =========================================================================
     # _run
@@ -379,7 +455,6 @@ class AnMBR(SanUnit):
     # Called by _run
     def _compute_liq_flows(self):
         m_type = self.membrane_type
-
         if m_type == 'multi-tube':
             # Cross-flow flow rate per module,
             # based on manufacture specifications for compact 33, [m3/hr]
@@ -444,8 +519,8 @@ class AnMBR(SanUnit):
             air.empty()
 
         D = self.design_results
-        D['Total air flow [CFM]'] = TCFM
-        D['Blower capacity [CFM]'] = CFMB
+        D['Total air flow'] = TCFM
+        D['Blower capacity'] = CFMB
         D['Blowers'] = self._N_blower = N + 1 # add a spare
 
 
@@ -465,39 +540,40 @@ class AnMBR(SanUnit):
         func = getattr(self, f'_design_{self.reactor_type}')
 
         wall, slab, excavation = func()
-        D['Wall concrete [ft3]'] = wall
-        D['Slab concrete [ft3]'] = slab
-        D['Excavation [ft3]'] = excavation
+        D['Wall concrete'] = wall
+        D['Slab concrete'] = slab
+        D['Excavation'] = excavation
 
         # Optional addition of packing media (used in filters)
+        #!!! Need to add the units to the `_units` dict
         ldpe, hdpe = 0., 0.
         for i in (self.AF, self.AeF):
             if i is None:
                 continue
-            ldpe += i.design_results['Packing LDPE [m3]']
-            hdpe += i.design_results['Packing LDPE [m3]']
+            ldpe += i.design_results['Packing LDPE']
+            hdpe += i.design_results['Packing HDPE']
 
         # Optional addition of GAC
-        D['GAC [kg]'] = self._design_GAC()
+        D['GAC'] = self._design_GAC()
 
         # Step B: Membrane
         # Call the corresponding design function
         # (_design_hollow_fiber, _design_flat_sheet, or _design_multi_tube)
         m_type = format_str(self.membrane_type)
         func = getattr(self, f'_design_{m_type}')
-        D['Membrane [m3]'] = func()
+        D['Membrane'] = func()
 
         # Step C: Pumps
         pipe, pumps, hdpe = self._design_pump()
-        D['Pipe stainless steel [kg]'] = pipe
-        D['Pump stainless steel [kg]'] = pumps
-        D['Pump chemical storage HDPE [m3]'] = hdpe
+        D['Pipe stainless steel'] = pipe
+        D['Pump stainless steel'] = pumps
+        D['Pump chemical storage HDPE'] = hdpe
 
         # Step D: Degassing membrane
         D['Degassing membrane'] = self.N_degasser
 
         # Total volume
-        D['Total volume [ft3]'] = self.V_tot
+        D['Total volume'] = self.V_tot
 
 
     ### Step A functions ###
@@ -585,7 +661,6 @@ class AnMBR(SanUnit):
         # Concrete for wet well (mixed liquor storage), [ft3]
         L = L_well + 2*t_wall
         W = W_well + 2*t_wall
-
         VWC_well = 2 * t_wall * (L_well+W) * D_well
         VSC_well = (t_slab+t_wall) * L * W
 
@@ -626,44 +701,42 @@ class AnMBR(SanUnit):
     ### Step C function ###
     # Called by _design
     def _design_pump(self):
-        rx_type, m_config, pumps = \
-            self.reactor_type, self.membrane_configuration, self.pumps
+        # rx_type, m_config, pumps = \
+        #     self.reactor_type, self.membrane_configuration, self.pumps
 
-        # IDs = ['perm', 'retent', 'recir', 'sludge', 'naocl', 'citric', 'bisulfite']
+        # ins_dct = {
+        #     'perm': self.outs[1].proxy(),
+        #     'retent': self._retent,
+        #     'recir': self._recir,
+        #     'sludge': self.outs[2].proxy(),
+        #     'naocl': self.ins[2].proxy(),
+        #     'citric': self.ins[3].proxy(),
+        #     'bisulfite': self.ins[4].proxy(),
+        #     }
 
-        ins_dct = {
-            'perm': self.outs[1].proxy(),
-            'retent': self._retent,
-            'recir': self._recir,
-            'sludge': self.outs[2].proxy(),
-            'naocl': self.ins[2].proxy(),
-            'citric': self.ins[3].proxy(),
-            'bisulfite': self.ins[4].proxy(),
-            }
+        # type_dct = {
+        #     'perm': f'permeate_{m_config}',
+        #     'retent': f'retentate_{rx_type}',
+        #     'recir': f'recirculation_{rx_type}',
+        #     'sludge': 'sludge',
+        #     'naocl': 'chemical',
+        #     'citric': 'chemical',
+        #     'bisulfite': 'chemical',
+        #     }
 
-        type_dct = {
-            'perm': f'permeate_{m_config}',
-            'retent': f'retentate_{rx_type}',
-            'recir': f'recirculation_{rx_type}',
-            'sludge': 'sludge',
-            'naocl': 'chemical',
-            'citric': 'chemical',
-            'bisulfite': 'chemical',
-            }
+        # inputs_dct = {
+        #     'perm': (self.cas_per_tank, self.D_tank, self.TMP_anaerobic,
+        #              self.include_aerobic_filter),
+        #     'retent': (self.cas_per_tank,),
+        #     'recir': (1, self.L_CSTR,),
+        #     'sludge': (1,),
+        #     'naocl': (1,),
+        #     'citric': (1,),
+        #     'bisulfite': (1,),
+        #     }
 
-        inputs_dct = {
-            'perm': (self.cas_per_tank, self.D_tank, self.TMP_anaerobic,
-                     self.include_aerobic_filter),
-            'retent': (self.cas_per_tank,),
-            'recir': (1, self.L_CSTR,),
-            'sludge': (1,),
-            'naocl': (1,),
-            'citric': (1,),
-            'bisulfite': (1,),
-            }
-
-        WWTpump._batch_adding_pump(self, pumps[:-2], ins_dct, type_dct, inputs_dct)
-
+        # WWTpump._batch_adding_pump(self, pumps[:-2], ins_dct, type_dct, inputs_dct)
+        pumps = self.pumps
         self.AF_pump = self.AF.lift_pump if self.AF else None
         self.AeF_pump = self.AeF.lift_pump if self.AeF else None
 
@@ -672,12 +745,11 @@ class AnMBR(SanUnit):
             p = getattr(self, f'{i}_pump')
             if p == None:
                 continue
-
             p.simulate()
-            pipe_ss += p.design_results['Pipe stainless steel [kg]']
-            pump_ss += p.design_results['Pump stainless steel [kg]']
-            hdpe += p.design_results['Chemical storage HDPE [m3]']
-
+            p_design = p.design_results
+            pipe_ss += p_design['Pipe stainless steel']
+            pump_ss += p_design['Pump stainless steel']
+            hdpe += p_design['Chemical storage HDPE']
         return pipe_ss, pump_ss, hdpe
 
 
@@ -685,60 +757,57 @@ class AnMBR(SanUnit):
     # _cost
     # =========================================================================
     def _cost(self):
-        D, C, F_BM, lifetime = self.design_results, self.baseline_purchase_costs, \
-            self.F_BM, self._default_equipment_lifetime
+        D, C = self.design_results, self.baseline_purchase_costs
 
         ### Capital ###
         #!!! Change `include_excavation_cost` to excavation_unit_cost
         # Concrete and excavation
         VEX, VWC, VSC = \
-            D['Excavation [ft3]'], D['Wall concrete [ft3]'], D['Slab concrete [ft3]']
+            D['Excavation'], D['Wall concrete'], D['Slab concrete']
         # 27 is to convert the VEX from ft3 to yd3
         C['Reactor excavation'] = VEX / 27 * 8 if self.include_excavation_cost else 0.
         C['Wall concrete'] = VWC / 27 * 650
         C['Slab concrete'] = VSC / 27 * 350
 
         # Membrane
-        C['Membrane'] = self.membrane_unit_cost * D['Membrane [m3]'] / _ft2_to_m2
-        F_BM['Membrane'] = 1 + 0.15 # assume 15% for replacement labor
-        lifetime['Membrane'] = 10
+        C['Membrane'] = self.membrane_unit_cost * D['Membrane'] / _ft2_to_m2
 
         # GAC
-        # $13.78/kg
-        C['GAC'] = 13.78 * D['GAC [kg]']
+        C['GAC'] = self.GAC_price * D['GAC']
 
         # Packing material
         ldpe, hdpe = 0., 0.
         for i in (self.AF, self.AeF):
             if i is None:
                 continue
-            ldpe += i.baseline_purchase_costs['Packing LDPE [m3]']
-            hdpe += i.baseline_purchase_costs['Packing HDPE [m3]']
+            ldpe += i.baseline_purchase_costs['Packing LDPE']
+            hdpe += i.baseline_purchase_costs['Packing HDPE']
 
         # Pump
-        #!!! Move the costing to the pumps
-        pumps, building = cost_pump(self)
-        C['Pumps'] = pumps
-        C['Pump building'] = building if self.include_pump_building_cost else 0.
-        C['Pump excavation'] = VEX/27*0.3 if self.include_excavation_cost else 0.
+        pumps, add_OPEX = self.pumps, self.add_OPEX
+        pump_cost, building_cost, opex_o, opex_m = 0., 0., 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            if p == None:
+                continue
+            p.simulate()
+            p_cost, p_add_opex = p.baseline_purchase_costs, p.add_OPEX
+            pump_cost += p_cost['Pump']
+            building_cost += p_cost['Pump building']
+            opex_o += p_add_opex['Pump operating']
+            opex_m += p_add_opex['Pump maintenance']
 
-        F_BM['Pumps'] = F_BM['Pump building'] = F_BM['Pump excavation'] = \
-            1.18 * (1+0.007/100) # 0.007 is for miscellaneous costs
-        lifetime['Pumps'] = 15
+        C['Pumps'] = pump_cost
+        C['Pump building'] = building_cost
+        add_OPEX['Pump operating'] = opex_o
+        add_OPEX['Pump maintenance'] = opex_m
 
         # Blower and air pipe
-        TCFM, CFMB = D['Total air flow [CFM]'], D['Blower capacity [CFM]']
+        TCFM, CFMB = D['Total air flow'], D['Blower capacity']
         C['Air pipes'], C['Blowers'], C['Blower building'] = self._cost_blower(TCFM, CFMB)
-        F_BM['Blowers'] = 2 * 1.11
-        F_BM['Blower building'] = 1.11
-        lifetime['Blowers'] = 15
 
         # Degassing membrane
         C['Degassing membrane'] = 10000 * D['Degassing membrane']
-
-        # Set bare module factor to 1 if not otherwise provided
-        for k in C.keys():
-            F_BM[k] = 1 if not F_BM.get(k) else F_BM.get(k)
 
         ### Heat and power ###
         # Heat loss, assume air is 17°C, ground is 10°C

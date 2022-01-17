@@ -15,6 +15,7 @@ for license details.
 
 # %%
 
+from math import ceil
 from warnings import warn
 from ... import SanUnit
 from .._decay import Decay
@@ -34,12 +35,22 @@ class Toilet(SanUnit, Decay, isabstract=True):
 
     Parameters
     ----------
-    N_user : float
-        Number of people that share this toilet.
-    N_toilet : float
-        Number of parallel toilets.
-    degraded_components : tuple
+   degraded_components : tuple
         IDs of components that will degrade (simulated by first-order decay).
+    N_user : int, float
+        Number of people per toilet.
+        Note that this number can be a float when calculated from `N_tot_user` and `N_toilet`.
+    N_toilet : int
+        Number of parallel toilets.
+        In calculation, `N_toilet` will be calculated as `ceil(N_tot_user/N_user)`.
+    N_tot_user : int
+        Total number of users.
+
+        .. note::
+
+            If `N_tot_user` is provided (i.e., not "None"),
+            then updating `N_user` will recalculate `N_toilet`, and vice verse.
+
     if_toilet_paper : bool
         If toilet paper is used.
     if_flushing : bool
@@ -73,17 +84,17 @@ class Toilet(SanUnit, Decay, isabstract=True):
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 degraded_components=('OtherSS',), N_user=1, N_toilet=1,
+                 degraded_components=('OtherSS',), N_user=1, N_toilet=1, N_tot_user=None,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True,
                  CAPEX=None, OPEX_over_CAPEX=None):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
         self.degraded_components = tuple(degraded_components)
-        self._N_user = 1
-        self._N_toilet = 1
+        self._N_user = self._N_toilet = self._N_tot_user = None
         self.N_user = N_user
         self.N_toilet = N_toilet
+        self.N_tot_user = N_tot_user
         self.if_toilet_paper = if_toilet_paper
         self.if_flushing = if_flushing
         self.if_cleansing = if_cleansing
@@ -169,19 +180,48 @@ class Toilet(SanUnit, Decay, isabstract=True):
 
     @property
     def N_user(self):
-        '''[float] Number of people that share the toilet.'''
-        return self._N_user
+        '''[int, float] Number of people per toilet.'''
+        return self._N_user or self.N_tot_user/self.N_toilet
     @N_user.setter
     def N_user(self, i):
-        self._N_user = i
+        if i is not None:
+            N_user = self._N_user = int(i)
+            old_toilet = self._N_toilet
+            if old_toilet and self.N_tot_user:
+                new_toilet = ceil(self.N_tot_user/N_user)
+                warn(f'With the provided `N_user`, the previous `N_toilet` of {old_toilet} '
+                     f'is recalculated from `N_tot_user` and `N_user` as {new_toilet}.')
+                self._N_toilet = None
+        else:
+            self._N_user = i
 
     @property
     def N_toilet(self):
-        '''[float] Number of parallel toilets.'''
+        '''[int] Number of parallel toilets.'''
         return self._N_toilet
     @N_toilet.setter
     def N_toilet(self, i):
-        self._N_toilet = i
+        if i is not None:
+            N_toilet = self._N_toilet = ceil(i)
+            old_user = self._N_user
+            if old_user and self.N_tot_user:
+                new_user = self.N_tot_user/N_toilet
+                warn(f'With the provided `N_toilet`, the previous `N_user` of {old_user} '
+                     f'is recalculated from `N_tot_user` and `N_toilet` as {new_user}.')
+                self._N_user = None
+        else:
+            self._N_toilet = i
+
+    @property
+    def N_tot_user(self):
+        '''[int] Number of total users.'''
+        return self._N_tot_user
+    @N_tot_user.setter
+    def N_tot_user(self, i):
+        if i is not None:
+            self._N_tot_user = int(i)
+        else:
+            self._N_tot_user = None
 
     @property
     def toilet_paper(self):
@@ -255,8 +295,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     @empty_ratio.setter
     def empty_ratio(self, i):
         if self.if_ideal_emptying:
-            msg = f'`if_ideal_emptying` is True, the set value {i} is ignored.'
-            warn(msg, source=self)
+            warn(f'`if_ideal_emptying` is True, the set value {i} is ignored.')
         self._empty_ratio = i
 
     @property

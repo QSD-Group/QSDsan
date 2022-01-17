@@ -29,8 +29,8 @@ class Blower(Equipment):
     '''
     Design and cost blowers based on `Shoener et al. <https://doi.org/10.1039/C5EE03715H>`_.
 
-    Note that concrete usage and excavation is not included for here
-    as blowers are often housed together with the reactor tanks and pumps.
+    Note that blower building concrete usage and excavation is not included here
+    as blowers are often housed together with the reactors.
 
     Refer to :class:`~.sanunits.AnMBR` or :class:`~.sanunits.ActivatedSludgeProcess`
     for examples.
@@ -55,8 +55,7 @@ class Blower(Equipment):
         and 3.33 if STE/6>1.
     building_unit_cost : float
         Unit cost of the blower building, [USD/ft2].
-    excavation_unit_cost : float
-        Unit cost of excavation for the building, [USD/ft3].
+
 
     References
     ----------
@@ -73,14 +72,6 @@ class Blower(Equipment):
     :class:`~.sanunits.ActivatedSludgeProcess`
 
     '''
-    # Dimensions of the blower building, all in ft unless noted
-    _L_BB = 21
-    _W_BB = 21
-    _D_BB = 12
-    _t_wall = None
-    _t_slab = None
-    _excav_slope = 1.5 # horizontal/vertical
-    _constr_access = 3
 
     def __init__(self, ID=None, linked_unit=None,
                  F_BM={
@@ -90,15 +81,13 @@ class Blower(Equipment):
                      },
                  lifetime=15, lifetime_unit='yr',
                  units={
-                     'Total gas flow': 'cfm',
-                     'Gas flow per blower': 'cfm',
+                     'Total gas flow': 'CFM',
+                     'Gas flow per blower': 'CFM',
                      'Number of blowers': '',
                      'Total blower power': 'kW',
                      },
                  N_reactor=2, gas_demand_per_reactor=1,
                  TDH=6, eff_blower=0.7, eff_motor=0.7, AFF=3.33,
-                 building_unit_cost=90,
-                 excavation_unit_cost=0. #!!! need updating
                  ):
         Equipment.__init__(self=self, ID=ID, linked_unit=linked_unit, F_BM=F_BM,
                            lifetime=lifetime, lifetime_unit=lifetime_unit,
@@ -109,8 +98,6 @@ class Blower(Equipment):
         self.eff_blower = eff_blower
         self.eff_motor = eff_motor
         self.AFF = AFF
-        self.building_unit_cost = building_unit_cost
-        self.excavation_unit_cost = excavation_unit_cost
 
 
     def _design(self):
@@ -147,7 +134,7 @@ class Blower(Equipment):
         D['Total gas flow'] = TCFM
         D['Blower capacity'] = CFMB
         D['Number of blowers'] = N
-        return D
+
 
     def _cost(self, TCFM, CFMB):
         N_reactor, AFF, C = self.N_reactor, self.AFF, self.cost
@@ -179,73 +166,6 @@ class Blower(Equipment):
         # Blower building
         area = 128 * (TCFM**0.256) # building area, [ft2]
         C['Blower building'] = area * self.building_unit_cost
-
-        #!!! Need to add excavation and concrete
-
-        return C
-
-    @property
-    def L_BB(self):
-        '''[float] Length of the blower building, [ft].'''
-        return self._L_BB
-    @L_BB.setter
-    def L_BB(self, i):
-        self._L_BB = i
-
-    @property
-    def W_BB(self):
-        '''[float] Width of the blower building, [ft].'''
-        return self._W_BB
-    @W_BB.setter
-    def W_BB(self, i):
-        self.W_BB = i
-
-    @property
-    def D_BB(self):
-        '''[float] Depth of the blower building, [ft].'''
-        return self._D_BB
-    @D_BB.setter
-    def D_BB(self, i):
-        self._D_BB = i
-
-    @property
-    def t_wall(self):
-        '''
-        [float] Concrete wall thickness, [ft].
-        default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
-        '''
-        return self._t_wall or (1 + max(self.D_BB-12, 0)/12)
-    @t_wall.setter
-    def t_wall(self, i):
-        self._t_wall = i
-
-    @property
-    def t_slab(self):
-        '''
-        [float] Concrete slab thickness, [ft],
-        default to be 2 in thicker than the wall thickness.
-        '''
-        return self._t_slab or self.t_wall+2/12
-    @t_slab.setter
-    def t_slab(self, i):
-        self._t_slab = i
-
-    @property
-    def excav_slope(self):
-        '''[float] Slope for excavation (horizontal/vertical).'''
-        return self._excav_slope
-    @excav_slope.setter
-    def excav_slope(self, i):
-        self._excav_slope = i
-
-    @property
-    def constr_access(self):
-        '''[float] Extra room for construction access, [ft].'''
-        return self._constr_access
-    @constr_access.setter
-    def constr_access(self, i):
-        self._constr_access = i
-
 
 
 # %%

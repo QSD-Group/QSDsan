@@ -554,7 +554,8 @@ def select_pipe(Q, v):
 # Pumping
 # =============================================================================
 
-#!!! Take this out once replacing all of its usage with the
+#!!! Take this out once replacing all of its usage
+# has been replaced with the pump decorator
 def cost_pump(unit=None, Q_mgd=None, recir_ratio=None,
               building_unit_cost=90):
     '''
