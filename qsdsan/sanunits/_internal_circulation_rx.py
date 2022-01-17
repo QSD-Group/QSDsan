@@ -160,7 +160,12 @@ class InternalCirculationRx(MixTank):
                  V_wf=0.8, kW_per_m3=0., T=35+273.15, init_with='WasteStream',
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with)
-        self._gas = self.outs[0].copy()
+        ID = self.ID
+        self._inf = self.ins[0].copy(f'{ID}_inf')
+        self._gas = self.outs[0].copy(f'{ID}_gas')
+        #!!! Double-check if this would interfere
+        self._eff = self.outs[1].proxy(f'{ID}_eff')
+        self._sludge = self.outs[2].proxy(f'{ID}_sludge')
         self.method = method
         self.OLRall = OLRall
         self.biodegradability = biodegradability
@@ -171,7 +176,7 @@ class InternalCirculationRx(MixTank):
         self.kW_per_m3 = kW_per_m3
         self.T = T
 
-        # Initiate the attributes
+        # Initialize the attributes
         self.heat_exchanger = hx = HXutility(None, None, None, T=T)
         self.heat_utilities = hx.heat_utilities
         self._refresh_rxns()
@@ -197,14 +202,14 @@ class InternalCirculationRx(MixTank):
 
 
     def _run(self):
-        inf = self._inf = self.ins[0].copy()
+        inf = self._inf
         biogas, eff, waste  = self.outs
-
-        # Initiate the streams
+        # Initialize the streams
+        inf.copy_like(self.ins[0])
         biogas.phase = 'g'
         biogas.empty()
         gas = self._gas
-        gas.copy_from(biogas)
+        gas.copy_like(biogas)
 
         inf.split_to(waste, eff, self.q_Qw)
         biogas_rxns = self.biogas_rxns
@@ -252,7 +257,6 @@ class InternalCirculationRx(MixTank):
 
     def _run_separate(self, run_inputs):
         Qi, Si, Xi, Qe, Se, Vliq, Y, mu_max, b, Fxb, Fxt = run_inputs
-
         Qw = Qi - Qe
         Xb, Xe, Sb, Vb = sp.symbols('Xb, Xe, Sb, Vb', real=True)
 
@@ -328,11 +332,11 @@ class InternalCirculationRx(MixTank):
     def _cost(self):
         MixTank._cost(self)
 
+        power_utility = self.power_utility
         pumps = (self.effluent_pump, self.sludge_pump)
-        for i in range(2):
-            pumps[i].ins[0] = self.outs[i+1].copy() # use `.proxy()` will interfere `_run`
-            pumps[i].simulate()
-            self.power_utility.rate += pumps[i].power_utility.rate
+        for p in pumps:
+            p.simulate()
+            power_utility.rate += p.power_utility.rate
 
         inf, T = self.ins[0], self.T
         if T:

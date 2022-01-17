@@ -24,7 +24,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from matplotlib import pyplot as plt
 from warnings import warn
-from biosteam.utils import Inlets, Outlets
+from biosteam.utils import MissingStream, Inlets, Outlets
 from . import currency, Unit, Stream, SanStream, WasteStream, \
     Construction, Transportation, Equipment
 
@@ -60,12 +60,22 @@ def _update_init_with(init_with, ins_or_outs, size):
             raise ValueError(f'Stream type for {k} is invalid, ' \
                              'valid values are "Stream" or "s", "SanStream" or "ss", ' \
                              'and "WasteStream" or "ws".')
-
     return new_init_with
+
+
+def _replace_missing_streams(port, missing):
+    for idx, s_type in missing:
+        if s_type == 's':
+            continue
+        s = port[idx]
+        stream_class = SanStream if s_type=='ss' else WasteStream
+        port.replace(s, stream_class.from_stream(stream_class, s))
+
 
 def _get_inf_state(inf):
     inf._init_state()
     return inf._state
+
 
 add2list = lambda lst, item: lst.extend(item) if isinstance(item, Iterable) \
     else lst.append(item)
@@ -160,8 +170,9 @@ class SanUnit(Unit, isabstract=True):
             self.F_BM = defaultdict(lambda: F_BM_default)
             self.F_BM.update(F_BM)
         self.isdynamic = isdynamic
+        #!!! Do we need to update `_state_header` here?
         # For units with different states, should update it in the unit's ``__init__``
-        self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components] + ['Q [m3/d]']
+        # # self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components] + ['Q [m3/d]']
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
@@ -184,12 +195,15 @@ class SanUnit(Unit, isabstract=True):
 
         init_with = _update_init_with(init_with, ins_or_outs, len(streams))
 
-        converted = []
+        converted, missing = [], []
         for k, v in init_with.items():
             if not ins_or_outs in k: # leave out outsX when going through ins and vice versa
                 continue
-            num = k.split(ins_or_outs)[-1]
-            s = streams[int(num)]
+            num = int(k.split(ins_or_outs)[-1])
+            s = streams[num]
+            if isa(s, MissingStream):
+                missing.append((num, v))
+                continue
             if v == 's':
                 converted.append(s)
             elif v == 'ss':
@@ -197,11 +211,11 @@ class SanUnit(Unit, isabstract=True):
             else:
                 converted.append(WasteStream.from_stream(WasteStream, s))
 
-        diff = len(converted) - len(streams)
+        diff = len(converted) + len(missing) - len(streams)
         if diff != 0:
             raise ValueError(f'Type(s) of {diff} stream(s) has/have not been specified.')
 
-        return converted
+        return converted, missing
 
 
     def _init_dynamic(self):
@@ -216,18 +230,23 @@ class SanUnit(Unit, isabstract=True):
 
     def _init_ins(self, ins, init_with):
         super()._init_ins(ins)
-        converted = self._convert_stream(ins, self.ins, init_with, 'ins')
-        self._ins = Inlets(self, self._N_ins, converted, self._thermo,
-                            self._ins_size_is_fixed, self._stacklevel)
+        converted, missing = self._convert_stream(ins, self.ins, init_with, 'ins')
+        _ins = self._ins = Inlets(self, self._N_ins, converted, self._thermo,
+                                  self._ins_size_is_fixed, self._stacklevel)
+        # Cannot do it within `_convert_stream` as it creates new streams and
+        # cause error in `Inlets/Outlets._redock`
+        _replace_missing_streams(_ins, missing)
+
 
     def _init_outs(self, outs, init_with):
         super()._init_outs(outs)
-        converted = self._convert_stream(outs, self.outs, init_with, 'outs')
-        self._outs = Outlets(self, self._N_outs, converted, self._thermo,
-                           self._outs_size_is_fixed, self._stacklevel)
+        converted, missing = self._convert_stream(outs, self.outs, init_with, 'outs')
+        _outs = self._outs = Outlets(self, self._N_outs, converted, self._thermo,
+                                     self._outs_size_is_fixed, self._stacklevel)
+        _replace_missing_streams(_outs, missing)
 
-    def _init_results(self):
-        super()._init_results()
+    # def _init_results(self):
+    #     super()._init_results()
 
     def __repr__(self):
         return f'<{type(self).__name__}: {self.ID}>'

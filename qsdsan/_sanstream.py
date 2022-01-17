@@ -168,31 +168,60 @@ class SanStream(Stream):
 
         self._stream_impact_item = None
 
-    
-    def proxy(self, ID=None):
+
+    def flow_proxy(self, ID=None):
         '''
-        Return a new stream that shares all data with this one.
-        
+        Return a new stream that shares flow data with this one.
+
         Parameters
         ----------
         ID : str
             ID of the new proxy stream.
-        
+
         Examples
         --------
         >>> from qsdsan import set_thermo, SanStream
         >>> from qsdsan.utils import load_example_cmps
         >>> cmps = load_example_cmps()
         >>> set_thermo(cmps)
-        >>> ss1 = SanStream('ss1', Water=100, NaCl=1)
+        >>> ss1 = SanStream('ss1', Water=100, NaCl=1, price=3.18)
+        >>> ss2 = ss1.flow_proxy('ss2')
+        >>> ss2.mol is ss1.mol
+        True
+        >>> ss2.price == ss1.price
+        False
+        '''
+        new = Stream.flow_proxy(self, ID=ID)
+        new._stream_impact_item = None
+        return new
+
+
+    def proxy(self, ID=None):
+        '''
+        Return a new stream that shares all data with this one.
+
+        Parameters
+        ----------
+        ID : str
+            ID of the new proxy stream.
+
+        Examples
+        --------
+        >>> from qsdsan import set_thermo, SanStream
+        >>> from qsdsan.utils import load_example_cmps
+        >>> cmps = load_example_cmps()
+        >>> set_thermo(cmps)
+        >>> ss1 = SanStream('ss1', Water=100, NaCl=1, price=3.18)
         >>> ss2 = ss1.proxy('ss2')
         >>> ss2.mol is ss1.mol
+        True
+        >>> ss2.price == ss1.price
         True
         '''
         new = Stream.proxy(self, ID=ID)
         new._stream_impact_item = self._stream_impact_item
         return new
-        
+
 
     @staticmethod
     def degassing(original_stream, receiving_stream=None, gas_IDs=()):
@@ -287,9 +316,11 @@ class SanStream(Stream):
         >>> ss.price
         10.0
         '''
-        # Missing stream
+        # Missing stream, note that if to make updates here,
+        # it's likely that `WasteStream.from_stream` should be updated as well.
         if isinstance(stream, MissingStream):
-            new = MissingSanStream.__init__(MissingSanStream, stream._source, stream._sink)
+            new = MissingSanStream.__new__(MissingSanStream)
+            new.__init__(stream._source, stream._sink)
             return new
         # An actual stream
         if not isinstance(stream, cls):
@@ -297,7 +328,6 @@ class SanStream(Stream):
                 stream.registry.discard(stream)
                 # stream.registry.untrack((stream,))
             new = cls.__new__(cls)
-
             new_ID = ID if ID else stream.ID
             if new_ID[0]=='s' and new_ID[1:].isnumeric(): # old ID is default
                 new_ID = ''
@@ -349,12 +379,12 @@ class SanStream(Stream):
         >>> import qsdsan as qs
         >>> cmps = qs.Components.load_default()
         >>> qs.set_thermo(cmps)
-        >>> s1 = qs.Stream(H2O=100, price=5, units='kg/hr')
-        >>> s2 = qs.SanStream(S_O2=100, units='kg/hr')
-        >>> s3 = qs.SanStream()
+        >>> s1 = qs.Stream('s1', H2O=100, price=5, units='kg/hr')
+        >>> s2 = qs.SanStream('s2', S_O2=100, units='kg/hr')
+        >>> s3 = qs.SanStream('s3')
         >>> s3.mix_from((s1, s2))
         >>> s3.show()
-        SanStream: ss2
+        SanStream: s3
          phase: 'l', T: 298.15 K, P: 101325 Pa
          flow (kmol/hr): S_O2  3.13
                          H2O   5.55
@@ -401,6 +431,21 @@ class MissingSanStream(MissingStream):
 
     '''
     line = 'SanStream'
+
+    def materialize_connection(self, ID=''):
+        '''
+        Disconnect this missing stream from any unit operations and 
+        replace it with a material stream. 
+        '''
+        source = self._source
+        sink = self._sink
+        if not (source or sink):
+            raise RuntimeError("either a source or a sink is required to "
+                               "materialize connection")
+        material_stream = SanStream(ID, thermo=(source or sink).thermo)
+        if source: source._outs.replace(self, material_stream)
+        if sink: sink._ins.replace(self, material_stream)
+        return material_stream
 
     @property
     def stream_impact_item(self):

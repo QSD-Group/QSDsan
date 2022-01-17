@@ -77,7 +77,7 @@ class Blower(Equipment):
                  lifetime=15, lifetime_unit='yr',
                  units={
                      'Total gas flow': 'CFM',
-                     'Gas flow per blower': 'CFM',
+                     'Blower capacity': 'CFM',
                      'Number of blowers': '',
                      'Total blower power': 'kW',
                      },
@@ -126,7 +126,7 @@ class Blower(Equipment):
             while CFMB > 100000:
                 N += 1
                 CFMB = TCFM / N
-        
+
         D['Total gas flow'] = TCFM
         D['Blower capacity'] = CFMB
         D['Number of blowers'] = N
@@ -204,7 +204,7 @@ class GasPiping(Equipment):
     W_extra : float
         Extra width to be included in piping for each of the reactor, [ft].
     pipe_density : float
-        Density of the pipe, [kg/ft].
+        Density of the pipe, [kg/ft3].
     pipe_unit_cost : float
         Unit cost of the pipe, [USD/kg].
     TDH : float
@@ -267,7 +267,7 @@ class GasPiping(Equipment):
         L_gsm = W_reactor*N_reactor + W_extra
         gas_tot = N_reactor * gas_demand_per_reactor
         OD_gsm, t_gsm, ID_gsm = select_pipe(gas_tot, self.v_manifold)
-        M_gsm = calculate_pipe_material(OD_gsm, t_gsm, ID_gsm, L_gsm, pipe_density)
+        M_gsm = calculate_pipe_material(OD_gsm, t_gsm, ID_gsm, L_gsm, pipe_density) # kg
         return {'Gas pipe material': M_gh+M_gsm}
 
 

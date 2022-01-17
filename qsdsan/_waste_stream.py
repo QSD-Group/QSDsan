@@ -367,9 +367,10 @@ class WasteStream(SanStream):
         '''
         # Missing stream
         if isinstance(stream, MissingStream):
-            new = MissingWasteStream.__init__(MissingWasteStream, stream._source, stream._sink)
+            new = MissingWasteStream.__new__(MissingWasteStream)
+            new.__init__(stream._source, stream._sink)
             return new
-        
+
         # An actual stream
         new = SanStream.from_stream(cls, stream, ID)
         for attr, val in kwargs.items():
@@ -806,15 +807,16 @@ class WasteStream(SanStream):
             value = getattr(other, slot)
             setattr(self, slot, value)
 
+
     def proxy(self, ID=None):
         '''
         Return a new stream that shares all data with this one.
-        
+
         Parameters
         ----------
         ID : str
             ID of the new proxy stream.
-        
+
         Examples
         --------
         >>> from qsdsan import set_thermo, WasteStream
@@ -1642,7 +1644,22 @@ class MissingWasteStream(MissingSanStream):
         Users usually do not need to interact with this class.
     '''
     line = 'WasteStream'
-    
+
+    def materialize_connection(self, ID=''):
+        '''
+        Disconnect this missing stream from any unit operations and 
+        replace it with a material stream. 
+        '''
+        source = self._source
+        sink = self._sink
+        if not (source or sink):
+            raise RuntimeError("either a source or a sink is required to "
+                               "materialize connection")
+        material_stream = WasteStream(ID, thermo=(source or sink).thermo)
+        if source: source._outs.replace(self, material_stream)
+        if sink: sink._ins.replace(self, material_stream)
+        return material_stream
+
     @property
     def pH(self):
         '''[float] pH, unitless.'''

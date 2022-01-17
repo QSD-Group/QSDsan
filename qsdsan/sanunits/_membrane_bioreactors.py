@@ -368,9 +368,10 @@ class AnMBR(SanUnit):
         bisulfite.F_vol = (0.35/1e3/365/24) * (inf.F_vol*24) # m3/hr solution
 
         # For pump design
+        ID = self.ID
         self._compute_mod_case_tank_N()
         Q_R_mgd, Q_IR_mgd = self._compute_liq_flows()
-        retent, recir = inf.copy(), inf.copy()
+        retent, recir = inf.copy(f'{ID}_rentent'), inf.copy(f'{ID}_recir')
         retent.F_mass *= Q_R_mgd / self.Q_mgd
         recir.F_mass *= Q_IR_mgd / self.Q_mgd
         self._retent, self._recir = retent, recir
@@ -635,13 +636,13 @@ class AnMBR(SanUnit):
         self.AF_pump = self.AF.lift_pump if self.AF else None
         self.AeF_pump = self.AeF.lift_pump if self.AeF else None
         ins_dct = {
-            'perm': outs[1].proxy(),
+            'perm': outs[1].proxy(f'{ID}_perm'),
             'retent': self._retent,
             'recir': self._recir,
-            'sludge': outs[2].proxy(),
-            'naocl': ins[2].proxy(),
-            'citric': ins[3].proxy(),
-            'bisulfite': ins[4].proxy(),
+            'sludge': outs[2].proxy(f'{ID}_sludge'),
+            'naocl': ins[2].proxy(f'{ID}_NaOCl'),
+            'citric': ins[3].proxy(f'{ID}_citric'),
+            'bisulfite': ins[4].proxy(f'{ID}_bisulfite'),
             }
         type_dct = {
             'perm': f'permeate_{m_config}',

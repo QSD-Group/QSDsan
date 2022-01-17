@@ -172,8 +172,9 @@ class ActivatedSludgeProcess(SanUnit):
                  F_BM=default_F_BM, lifetime=default_equipment_lifetime,
                  F_BM_default=1, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
-        self._inf = self.ins[0].copy()
-        self._ras = self.ins[0].copy()
+        ID, ins0 = self.ID, self.ins[0]
+        self._inf = ins0.copy(f'{ID}_inf')
+        self._ras = ins0.copy(f'{ID}_ras')
         self.N_train = N_train
         self.T = T
         self.X_i0 = X_i0
@@ -308,7 +309,7 @@ class ActivatedSludgeProcess(SanUnit):
             X_a_w_conc = eff.iconc['active_biomass'] * X_w/X_a_inf
         else:
             X_a_e_conc = X_a_w_conc = eff.iconc['active_biomass']
-        if len(active_biomass) > 1:        
+        if len(active_biomass) > 1:
             eff_dct.update({cmp.ID:conc for cmp, conc in zip(active_biomass, X_a_e_conc)})
             was_dct.update({cmp.ID:conc for cmp, conc in zip(active_biomass, X_a_w_conc)})
         else:
@@ -456,9 +457,13 @@ class ActivatedSludgeProcess(SanUnit):
         ID, pumps = self.ID, self.pumps
         inf, ras = self._inf, self._ras
         ins_dct = {
-            'inf': inf.proxy(),
-            'recir': ras.proxy(),
+            'inf': inf,
+            'recir': ras,
             }
+        # ins_dct = {
+        #     'inf': inf.proxy(f'{ID}_inf'),
+        #     'recir': ras.proxy(f'{ID}_ras'),
+        #     }
         type_dct = dict.fromkeys(pumps, '')
         inputs_dct = dict.fromkeys(pumps, self.N_train)
         for i in pumps:

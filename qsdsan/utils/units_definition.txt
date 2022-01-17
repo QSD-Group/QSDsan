@@ -6,8 +6,8 @@ ft2 = ft**2 = ft2 = sq_ft
 ft3 = ft**3 = ft3 = cu_ft = cf
 in3 = in**3 = in3 = cu_in
 yd3 = yard**3 = yd3 = cu_yd
-cfm = cf/minute
-cfs = cf/second
+cfm = cf/minute = CFM
+cfs = cf/second = CFS
 yr = year = yr = y
 hr = hour = hr = h
 d = day
