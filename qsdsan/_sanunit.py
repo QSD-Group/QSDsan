@@ -24,9 +24,9 @@ from collections import defaultdict
 from collections.abc import Iterable
 from matplotlib import pyplot as plt
 from warnings import warn
-from biosteam.utils import Inlets, Outlets
-from . import currency, Unit, Stream, SanStream, WasteStream, \
-    Construction, Transportation, Equipment, System
+from biosteam.utils import Inlets, Outlets, ignore_docking_warnings
+from . import currency, Unit, Stream, SanStream, WasteStream, System, \
+    Construction, Transportation, Equipment
 
 __all__ = ('SanUnit',)
 
@@ -206,15 +206,14 @@ class SanUnit(Unit, isabstract=True):
 
         return converted
 
-
+    @ignore_docking_warnings
     def _init_dynamic(self):
         self._state = None
         self._dstate = None
         self._ins_QC = np.empty((len(self._ins), len(self.components)+1))
         self._ins_dQC = self._ins_QC.copy()
-        self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components]
         self._ODE = None
-        # self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
+        self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
 
 
     def _init_ins(self, ins, init_with):
@@ -416,13 +415,13 @@ class SanUnit(Unit, isabstract=True):
         if hasattr(self, '_isdynamic'):
             if self._isdynamic == bool(i):
                 return
-        else:
-            self._isdynamic = bool(i)
-            self._init_dynamic()
+        else: self._isdynamic = bool(i)
+        if hasattr(self, '_compile_ODE'): self._init_dynamic()
 
     def reset_cache(self):
         '''Reset cached states for dynamic units.'''
-        if self.isdynamic:
+        super().reset_cache()
+        if hasattr(self, '_ODE'):
             self._init_dynamic()
             for s in self.outs:
                 s.empty()

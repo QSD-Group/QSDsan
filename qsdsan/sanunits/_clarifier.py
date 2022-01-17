@@ -105,7 +105,6 @@ class FlatBottomCircularClarifier(SanUnit):
         self._rh = rh
         self._rp = rp
         self._fns = fns
-        self._ODE = None
         self._solids = None
         self._solubles = None
         self._X_comp = np.zeros(len(self.components))
@@ -114,14 +113,6 @@ class FlatBottomCircularClarifier(SanUnit):
         self._state_header = list(header) + [f'TSS{i+1} [mg/L]' for i in range(N_layer)]
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-
-    def reset_cache(self):
-        '''Reset cached states.'''
-        self._state = None
-        self._dstate = None
-        self._ODE = None
-        for s in self.outs:
-            s.empty()
 
     @property
     def underflow(self):
@@ -397,9 +388,6 @@ class FlatBottomCircularClarifier(SanUnit):
 
         def dy_dt(t, QC_ins, QC, dQC_ins):
             dQC[-(n+1)] = dQC_ins[0,-1]
-        # def dy_dt(t, QC_ins, QC):
-            #!!! can't fix at 0 with dynamic influent
-            dQC[-(n+1)] = 0
             Q_in = QC_ins[0,-1]
             Q_e = Q_in - Q_s
             C_in = QC_ins[0,:-1]
