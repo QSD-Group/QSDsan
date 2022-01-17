@@ -25,6 +25,7 @@ __all__ = (
     'Mixer',
     'Splitter', 'FakeSplitter', 'ReversedSplitter',
     'ComponentSplitter',
+    'Sampler',
     )
 
 
@@ -41,11 +42,6 @@ class Mixer(SanUnit, Mixer):
     `biosteam.units.Mixer <https://biosteam.readthedocs.io/en/latest/units/mixing.html>`_
     '''
 
-    def reset_cache(self):
-        '''Reset cached states.'''
-        self._state = None
-        for s in self.outs:
-            s.empty()
 
     @property
     def state(self):
@@ -58,7 +54,8 @@ class Mixer(SanUnit, Mixer):
         '''initialize state by specifiying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
-        QCs = self._collect_ins_state()
+        self._refresh_ins()
+        QCs = self._ins_QC
         if QCs.shape[0] <= 1: self._state = QCs[0]
         else:
             Qs = QCs[:,-1]
@@ -82,7 +79,6 @@ class Mixer(SanUnit, Mixer):
 
     def _compile_ODE(self):
         _n_ins = len(self.ins)
-        # _n_state = len(self.components)+1
         def dy_dt(t, QC_ins, QC, dQC_ins):
             if _n_ins > 1:
                 Q_ins = QC_ins[:, -1]
@@ -100,13 +96,6 @@ class Mixer(SanUnit, Mixer):
             self._update_dstate()
         self._ODE = dy_dt
 
-    def _define_outs(self):
-        dct_y = self._state_locator(self._state)
-        out, = self.outs
-        Q = dct_y[out.ID][-1]
-        Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
-        Cs.pop('H2O', None)
-        out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
 
 
 # %%
@@ -128,13 +117,6 @@ class Splitter(SanUnit, Splitter):
                          init_with=init_with, F_BM_default=F_BM_default,
                          isdynamic=isdynamic)
         self._isplit = self.thermo.chemicals.isplit(split, order)
-        # self._concs = None
-
-    def reset_cache(self):
-        '''Reset cached states.'''
-        self._state = None
-        for s in self.outs:
-            s.empty()
 
 
     @property
@@ -154,7 +136,8 @@ class Splitter(SanUnit, Splitter):
 
 
     def _init_state(self):
-        self._state = self._collect_ins_state()[0]
+        self._refresh_ins()
+        self._state = self._ins_QC[0]
         self._dstate = self._state * 0.
         s = self.split
         s_flow = s[self.components.index('H2O')]
@@ -184,14 +167,6 @@ class Splitter(SanUnit, Splitter):
             self._dstate = dQC_ins[0]
             self._update_dstate()
         self._ODE = dy_dt
-
-    def _define_outs(self):
-        dct_y = self._state_locator(self._state)
-        for out in self.outs:
-            Q = dct_y[out.ID][-1]
-            Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
-            Cs.pop('H2O', None)
-            out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
 
 
 class FakeSplitter(SanUnit, FakeSplitter):
@@ -306,3 +281,60 @@ class ComponentSplitter(SanUnit):
             raise ValueError('Size of `split_keys` cannot be changed after initiation.')
 
         self._split_keys = i
+
+class Sampler(SanUnit):
+    
+    _N_ins = 1
+    _N_outs = 1
+    
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
+                 init_with='WasteStream', F_BM_default=None, isdynamic=False):
+        SanUnit.__init__(self, ID, ins, outs, thermo,
+                         init_with=init_with, F_BM_default=F_BM_default,
+                         isdynamic=isdynamic)
+
+    def _run(self):
+        inf, = self.ins
+        out, = self.outs
+        out.copy_like(inf)
+
+    @property
+    def state(self):
+        '''The state of the Pump, including component concentrations [mg/L] and flow rate [m^3/d].'''
+        if self._state is None: return None
+        else:
+            return dict(zip(list(self.components.IDs) + ['Q'], self._state))
+
+    @state.setter
+    def state(self, QCs):
+        QCs = np.asarray(QCs)
+        if QCs.shape != (len(self.components)+1, ):
+            raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
+                              'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
+        self._state = QCs
+
+    def _init_state(self):
+        self._refresh_ins()
+        self._state = self._ins_QC[0]
+        self._dstate = self._state * 0.
+
+    def _update_state(self, arr):
+        '''updates conditions of output stream based on conditions of the Mixer'''
+        self._state = self._outs[0]._state = arr
+
+    def _update_dstate(self):
+        '''updates rates of change of output stream from rates of change of the Mixer'''
+        self._outs[0]._dstate = self._dstate
+
+
+    @property
+    def ODE(self):
+        if self._ODE is None:
+            self._compile_ODE()
+        return self._ODE
+
+    def _compile_ODE(self):
+        def dy_dt(t, QC_ins, QC, dQC_ins):
+            self._dstate = dQC_ins[0]
+            self._update_dstate()
+        self._ODE = dy_dt
