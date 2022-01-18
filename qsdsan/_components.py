@@ -244,7 +244,14 @@ class Components(Chemicals):
                             V_const = V_model(T=298.15, P=101325)
                         V_const *= (cmp.MW/ref.MW)
                         get(cmp.V, phase).add_model(V_const)
-                cmp.copy_models_from(ref, names=('Hvap', ))
+            
+            if not cmp.Hvap.valid_methods():
+                try:
+                    ref.Hvap(cmp.Tb)
+                    cmp.copy_models_from(ref, names=('Hvap', ))
+                except RuntimeError: # Hvap model cannot be extrapolated to Tb
+                    cmp.copy_models_from(water, names=('Hvap', ))
+            
             # Copy all remaining properties from water
             cmp.copy_models_from(water)
         self.compile()
@@ -376,7 +383,7 @@ class Components(Chemicals):
         new.append(H2O)
 
         if default_compile:
-            new.default_compile(lock_state_at='')
+            new.default_compile(lock_state_at='', particulate_ref='NaCl')
             
             # isa = isinstance
             # for i in new:
