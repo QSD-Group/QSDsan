@@ -548,7 +548,7 @@ class WasteStream(SanStream):
         if 'H2O' in IDs: IDs.remove('H2O')
 
         if specification:
-            warn(f'{specification} is defined with regards to the set of default component IDs.'
+            warn(f'{specification} is defined with regards to the set of default component IDs. '
                  'Consider using the "subgroup=" argument if different sets of component IDs are used.')
             if specification == 'TKN':
                 IDs = [ID for ID in IDs if ID not in ('S_N2','S_NO2','S_NO3')]

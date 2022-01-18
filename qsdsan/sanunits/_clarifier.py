@@ -115,13 +115,6 @@ class FlatBottomCircularClarifier(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    def reset_cache(self):
-        '''Reset cached states.'''
-        self._state = None
-        self._dstate = None
-        self._ODE = None
-        for s in self.outs:
-            s.empty()
 
     @property
     def underflow(self):

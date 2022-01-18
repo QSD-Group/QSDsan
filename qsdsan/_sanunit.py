@@ -24,8 +24,8 @@ from collections import defaultdict
 from collections.abc import Iterable
 from matplotlib import pyplot as plt
 from warnings import warn
-from biosteam.utils import MissingStream, Inlets, Outlets
-from . import currency, Unit, Stream, SanStream, WasteStream, \
+from biosteam.utils import MissingStream, Inlets, Outlets, ignore_docking_warnings
+from . import currency, Unit, Stream, SanStream, WasteStream, System, \
     Construction, Transportation, Equipment
 
 __all__ = ('SanUnit',)
@@ -170,9 +170,8 @@ class SanUnit(Unit, isabstract=True):
             self.F_BM = defaultdict(lambda: F_BM_default)
             self.F_BM.update(F_BM)
         self.isdynamic = isdynamic
-        #!!! Do we need to update `_state_header` here?
-        # For units with different states, should update it in the unit's ``__init__``
-        # # self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components] + ['Q [m3/d]']
+        # For units with different state headers, should update it in the unit's ``__init__``
+        self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components] + ['Q [m3/d]']
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
@@ -180,7 +179,7 @@ class SanUnit(Unit, isabstract=True):
     def _convert_stream(self, strm_inputs, streams, init_with, ins_or_outs):
         isa = isinstance
         if not streams:
-            return []
+            return [], []
         if isa(init_with, str):
             init_with = dict.fromkeys([f'{ins_or_outs}{n}'
                                        for n in range(len(streams))], init_with)
@@ -218,14 +217,14 @@ class SanUnit(Unit, isabstract=True):
         return converted, missing
 
 
+    @ignore_docking_warnings
     def _init_dynamic(self):
         self._state = None
         self._dstate = None
         self._ins_QC = np.empty((len(self._ins), len(self.components)+1))
         self._ins_dQC = self._ins_QC.copy()
-        self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components]
         self._ODE = None
-        # self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
+        self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
 
 
     def _init_ins(self, ins, init_with):
@@ -291,7 +290,7 @@ class SanUnit(Unit, isabstract=True):
         info = info.replace('\n ', '\n    ')
         return info[:-1]
 
-    def simulate(self, t_span=(0, 0), start_from_cached_state=True,
+    def simulate(self, t_span=(0, 0), state_reset_hook=True,
                  solver='', **kwargs):
         '''
         Converge mass and energy flows, design, and cost the unit.
@@ -305,13 +304,17 @@ class SanUnit(Unit, isabstract=True):
         ----------
         t_span : tuple(float, float)
             Integration time span for dynamic units.
-        start_from_cached_state: bool
-            Whether to start from the cached state.
+        state_reset_hook: str or callable
+            Hook function to reset the cache state between simulations (for dynamic systems).
+            Can be "reset_cache" or "clear_state" to call `System.reset_cache` or `System.clear_state`,
+            or None to avoiding resetting.
         kwargs : dict
             Other keyword arguments that will be passed to ``scipy.integrate.solve_ivp``
 
         See Also
         --------
+        :func:`~.System.simulate`
+        
         `scipy.integrate.solve_ivp <https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html>`_
         '''
         super().simulate()
@@ -320,7 +323,7 @@ class SanUnit(Unit, isabstract=True):
             sys._feeds = self.ins
             sys._products = self.outs
             sys.simulate(t_span=t_span,
-                         start_from_cached_state=start_from_cached_state,
+                         state_reset_hook=state_reset_hook,
                          **kwargs)
             self._summary()
 
@@ -434,11 +437,14 @@ class SanUnit(Unit, isabstract=True):
                 return
         else:
             self._isdynamic = bool(i)
+        if hasattr(self, '_compile_ODE'):
             self._init_dynamic()
+            
 
     def reset_cache(self):
-        '''Reset cached states for dynamic units.'''
-        if self.isdynamic:
+        '''Reset unit cache, including cached states for dynamic units.'''
+        super().reset_cache()
+        if hasattr(self, '_ODE'):
             self._init_dynamic()
             for s in self.outs:
                 s.empty()

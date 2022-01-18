@@ -161,7 +161,7 @@ class SanStream(Stream):
         --------
         :func:`copy` for the differences between ``copy``, ``copy_like``, and ``copy_flow``.
         '''
-        Stream.copy_flow(self, other)
+        Stream.copy_flow(self, other=other, IDs=IDs, remove=remove, exclude=exclude)
 
         if not isinstance(other, SanStream):
             return

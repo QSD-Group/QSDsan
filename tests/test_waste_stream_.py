@@ -38,7 +38,8 @@ def test_waste_stream():
     assert_allclose(ws5.F_mass, 2015.0)
     # TODO: After updating the default component properties,
     # add in tests here to make sure COD, etc. are calculated correctly
-    assert_allclose(ws5.COD, 7039.72047693117, rtol=1e-2)
+    # assert_allclose(ws5.COD, 7039.72047693117, rtol=1e-2)
+    assert_allclose(ws5.COD, 7414.267796, rtol=1e-2)
 
     # Make sure below attributes are calculated based on flow info, cannot be set
     with pytest.raises(AttributeError):

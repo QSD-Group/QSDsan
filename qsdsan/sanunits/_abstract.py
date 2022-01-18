@@ -51,7 +51,7 @@ class Mixer(SanUnit, Mixer):
             return dict(zip(list(self.components.IDs) + ['Q'], self._state))
 
     def _init_state(self):
-        '''initialize state by specifiying or calculating component concentrations
+        '''initialize state by specifying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
         self._refresh_ins()
@@ -121,7 +121,7 @@ class Splitter(SanUnit, Splitter):
 
     @property
     def state(self):
-        '''Component concentrations in each layer and total flow rate.'''
+        '''Component concentrations and total flow rate.'''
         if self._state is None: return None
         else:
             return dict(zip(list(self.components.IDs) + ['Q'], self._state))
@@ -145,13 +145,13 @@ class Splitter(SanUnit, Splitter):
         self._split_out1_state = np.append((1-s)/(1-s_flow), 1-s_flow)
 
     def _update_state(self, arr):
-        '''updates conditions of output stream based on conditions of the Mixer'''
+        '''updates conditions of output stream based on conditions of the Splitter'''
         self._state = arr
         self._outs[0]._state = self._split_out0_state * arr
         self._outs[1]._state = self._split_out1_state * arr
 
     def _update_dstate(self):
-        '''updates rates of change of output stream from rates of change of the Mixer'''
+        '''updates rates of change of output stream from rates of change of the Splitter'''
         arr = self._dstate
         self._outs[0]._dstate = self._split_out0_state * arr
         self._outs[1]._dstate = self._split_out1_state * arr

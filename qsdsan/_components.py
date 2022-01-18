@@ -203,13 +203,14 @@ class Components(Chemicals):
         CompiledComponents([X, X_inert, Substrate])
         '''
         isa = isinstance
+        get = getattr
         sol = Chemical(soluble_ref)
         gas = Chemical(gas_ref)
         par = Chemical(particulate_ref)
         water = Chemical('Water')
         for cmp in self:
             particle_size = cmp.particle_size
-            ref = sol if particle_size=='Souble' \
+            ref = sol if particle_size=='Soluble' \
                 else gas if particle_size=='Dissolved gas' else par
             if lock_state_at :
                 try: cmp.at_state(lock_state_at)
@@ -222,7 +223,28 @@ class Components(Chemicals):
             else:
                 if not cmp.V.valid_methods(298.15): COPY_V = True
             if COPY_V:
-                cmp.copy_models_from(ref, names=('V', 'Hvap'))
+                locked_state = cmp.locked_state
+                if locked_state:
+                    try:
+                        V_model = get(ref.V, locked_state) # ref not locked state
+                        V_const = V_model(T=298.15, P=101325)
+                    except:
+                        V_model = ref.V # ref locked state
+                        V_const = V_model(locked_state, T=298.15, P=101325)
+                    V_const *= (cmp.MW/ref.MW)
+                    cmp.V.add_model(V_const)
+                else:
+                    for phase in ('g', 'l', 's'): # iterate through phases
+                        backup_ref = gas if phase=='g' else sol if phase=='l' else par
+                        try:
+                            V_model = get(ref.V, phase) # the default ref has the model
+                            V_const = V_model(T=298.15, P=101325)
+                        except:
+                            V_model = get(backup_ref.V, phase)
+                            V_const = V_model(T=298.15, P=101325)
+                        V_const *= (cmp.MW/ref.MW)
+                        get(cmp.V, phase).add_model(V_const)
+                cmp.copy_models_from(ref, names=('Hvap', ))
             # Copy all remaining properties from water
             cmp.copy_models_from(water)
         self.compile()
@@ -354,42 +376,49 @@ class Components(Chemicals):
         new.append(H2O)
 
         if default_compile:
-            isa = isinstance
-            for i in new:
-                i.default()
+            new.default_compile(lock_state_at='')
+            
+            # isa = isinstance
+            # for i in new:
+            #     i.default()
 
-                if i.particle_size == 'Soluble':
-                    ref_chem = Chemical('urea')
-                elif i.particle_size == 'Dissolved gas':
-                    ref_chem = Chemical('CO2')
-                else:
-                    ref_chem = Chemical('NaCl')
+            #     if i.particle_size == 'Soluble':
+            #         ref_chem = Chemical('urea')
+            #     elif i.particle_size == 'Dissolved gas':
+            #         ref_chem = Chemical('CO2')
+            #     else:
+            #         ref_chem = Chemical('NaCl')
 
-                i.Tb = ref_chem.Tb if not i.Tb else i.Tb
+            #     i.Tb = ref_chem.Tb if not i.Tb else i.Tb
 
-                COPY_V = False # if don't have V model, set those to default
-                if isa(i.V, _PH):
-                    if not i.V.l.valid_methods(298.15): COPY_V = True
-                else:
-                    if not i.V.valid_methods(298.15): COPY_V = True
+            #     COPY_V = False # if don't have V model, set those to default
+            #     if isa(i.V, _PH):
+            #         if not i.V.l.valid_methods(298.15): COPY_V = True
+            #     else:
+            #         if not i.V.valid_methods(298.15): COPY_V = True
 
-                if COPY_V:
-                    if i.particle_size in ('Soluble', 'Dissolved gas'):
-                        i.copy_models_from(ref_chem, names=('V',))
-                    else:
-                        try: i.V.add_model(1.2e-5)
-                        except AttributeError:
-                            i.V.l.add_model(1.2e-5)    # m^3/mol
-                            i.V.s.add_model(1.2e-5)
+            #     if COPY_V:
+            #         if i.particle_size in ('Soluble', 'Dissolved gas'):
+            #             MW_r = ref_chem.MW/i.MW
+            #             if MW_r < 0.2 or MW_r > 5:
+            #                 warn(f'The `Component` {i.ID} has very different molecular weight (cmp.MW) '
+            #                       f'as the reference component {ref_chem.ID}, '
+            #                       f'copying the molar volume model might not be desirable.')
+            #             i.copy_models_from(ref_chem, names=('V',))
+            #         else:
+            #             try: i.V.add_model(1.2e-5)
+            #             except AttributeError:
+            #                 i.V.l.add_model(1.2e-5)    # m^3/mol
+            #                 i.V.s.add_model(1.2e-5)
 
-                i.copy_models_from(H2O)
+            #     i.copy_models_from(H2O)
 
-                try:
-                    i.Hvap(i.Tb)
-                except RuntimeError: # Hvap model of H2O cannot be extrapolated to Tb
-                    i.copy_models_from(ref_chem, names=('Hvap',))
+            #     try:
+            #         i.Hvap(i.Tb)
+            #     except RuntimeError: # Hvap model of H2O cannot be extrapolated to Tb
+            #         i.copy_models_from(ref_chem, names=('Hvap',))
 
-            new.compile()
+            # new.compile()
         return new
 
 
@@ -414,7 +443,7 @@ class Components(Chemicals):
             e.g., if "S_O2" is used instead of "O2", then pass {'O2': 'S_O2'}.
         default_compile : bool
             Whether to try default compile when some components
-            are missiong key properties for compiling.
+            are missing key properties for compiling.
         default_compile_kwargs : dict
             Keyword arguments to pass to `default_compile` if needed.
 
@@ -435,10 +464,8 @@ class Components(Chemicals):
         >>> cmps.O2 is cmps.S_O2
         True
         '''
-        cmps = components if (
-            isinstance(components, Components)
-            or isinstance(components, CompiledComponents)
-            ) else Components(components)
+        cmps = components if isinstance(components, (Components, CompiledComponents)) \
+            else Components(components)
         comb_cmps = ['O2', 'CO2', 'H2O', 'N2', 'P4O10', 'SO2']
         synonyms = dict(H2O='Water')
         synonyms.update(alt_IDs)

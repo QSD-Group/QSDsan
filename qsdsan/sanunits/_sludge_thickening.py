@@ -48,6 +48,10 @@ class SludgeThickening(SanUnit):
 
     Parameters
     ----------
+    ins : Iterable(obj)
+        Dilute sludge stream.
+    outs : Iterable(obj)
+        Water/bulk-liquid-rich stream, concentrated sludge.
     sludge_moisture : float
         Moisture content of the sludge, [wt% water].
     solids : Iterable(str)
@@ -77,8 +81,9 @@ class SludgeThickening(SanUnit):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with)
         self.sludge_moisture = sludge_moisture
         cmps = self.components
-        self.solids = solids or [cmp.ID for i in cmps.solids]
+        self.solids = solids or tuple((cmp.ID for cmp in cmps.solids))
         self.solubles = tuple([i.ID for i in cmps if i.ID not in self.solids])
+        self.disposal_cost = disposal_cost
         self.effluent_pump = Pump(f'{self.ID}_eff', init_with=init_with)
         self.sludge_pump = Pump(f'{self.ID}_sludge', init_with=init_with)
         self._mixed = self.ins[0].copy()
@@ -99,7 +104,6 @@ class SludgeThickening(SanUnit):
         mixed = self._mixed
         mixed.mix_from(self.ins)
         eff.T = sludge.T = mixed.T
-
         sludge.copy_flow(mixed, solids, remove=True) # all solids go to sludge
         eff.copy_flow(mixed, solubles)
 
@@ -110,7 +114,7 @@ class SludgeThickening(SanUnit):
 
 
     def _cost(self):
-        m_solids = self.outs[-1].F_mass_out
+        m_solids = self.outs[-1].F_mass
         disposal_cost = self.disposal_cost
         add_OPEX, power_utility = self.add_OPEX, self.power_utility
         if disposal_cost != 0:
@@ -183,7 +187,7 @@ class BeltThickener(SludgeThickening):
 
     def _design(self):
         self._N_thickener = N = ceil(self._mixed.F_vol/self.max_capacity)
-        self.design_results['Number of thickners'] = N
+        self.design_results['Number of thickeners'] = N
         self.F_BM['Thickeners'] = 1.7 # ref [2]
         self.baseline_purchase_costs['Thickeners'] = 4000 * N
         self.power_utility.rate = self.power_demand * N
