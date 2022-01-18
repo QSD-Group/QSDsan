@@ -86,14 +86,6 @@ class CSTR(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    def reset_cache(self):
-        '''Reset cached states.'''
-        self._state = None
-        self._dstate = None
-        self._ODE = None
-        for s in self.outs:
-            s.empty()
-
     @property
     def V_max(self):
         '''[float] The designed maximum liquid volume, not accounting for increased volume due to aeration, in m^3.'''

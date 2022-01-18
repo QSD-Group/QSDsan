@@ -24,7 +24,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from matplotlib import pyplot as plt
 from warnings import warn
-from biosteam.utils import MissingStream, Inlets, Outlets, ignore_docking_warnings
+from biosteam.utils import MissingStream, Inlets, Outlets
 from . import currency, Unit, Stream, SanStream, WasteStream, System, \
     Construction, Transportation, Equipment
 
@@ -169,9 +169,8 @@ class SanUnit(Unit, isabstract=True):
             F_BM = self.F_BM
             self.F_BM = defaultdict(lambda: F_BM_default)
             self.F_BM.update(F_BM)
-        self.isdynamic = isdynamic
         # For units with different state headers, should update it in the unit's ``__init__``
-        self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components] + ['Q [m3/d]']
+        self.isdynamic = isdynamic
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
@@ -217,14 +216,19 @@ class SanUnit(Unit, isabstract=True):
         return converted, missing
 
 
-    @ignore_docking_warnings
     def _init_dynamic(self):
         self._state = None
         self._dstate = None
         self._ins_QC = np.empty((len(self._ins), len(self.components)+1))
         self._ins_dQC = self._ins_QC.copy()
         self._ODE = None
-        self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
+        if not hasattr(self, '_mock_dyn_sys'):
+            self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
+        # Shouldn't need to re-create the mock system everytime
+        # if hasattr(self, '_mock_dyn_sys'):
+        #     sys = self._mock_dyn_sys
+        #     sys.registry.discard(sys)
+        # self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
 
 
     def _init_ins(self, ins, init_with):
@@ -435,16 +439,20 @@ class SanUnit(Unit, isabstract=True):
         if hasattr(self, '_isdynamic'):
             if self._isdynamic == bool(i):
                 return
-        else:
-            self._isdynamic = bool(i)
+        else: self._isdynamic = bool(i)
         if hasattr(self, '_compile_ODE'):
             self._init_dynamic()
-            
+            if hasattr(self, '_mock_dyn_sys'):
+                ID = self.ID+'_dynmock'
+                System.registry.discard(ID)
+            self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
+            if not hasattr(self, '_state_header'):
+                self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components] + ['Q [m3/d]']
 
     def reset_cache(self):
-        '''Reset unit cache, including cached states for dynamic units.'''
+        '''Reset cached states for dynamic units.'''
         super().reset_cache()
-        if hasattr(self, '_ODE'):
+        if hasattr(self, '_compile_ODE'):
             self._init_dynamic()
             for s in self.outs:
                 s.empty()

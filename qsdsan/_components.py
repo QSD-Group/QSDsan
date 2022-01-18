@@ -425,7 +425,7 @@ class Components(Chemicals):
             #     except RuntimeError: # Hvap model of H2O cannot be extrapolated to Tb
             #         i.copy_models_from(ref_chem, names=('Hvap',))
 
-            # new.compile()
+            new.compile()
         return new
 
 
