@@ -16,7 +16,7 @@ for license details.
 __all__ = ('test_waste_stream',)
 
 def test_waste_stream():
-    import pytest
+    import pytest, numpy as np
     from numpy.testing import assert_allclose
     from math import isclose
     from qsdsan import set_thermo, Components, WasteStream
@@ -43,6 +43,18 @@ def test_waste_stream():
     # Make sure below attributes are calculated based on flow info, cannot be set
     with pytest.raises(AttributeError):
         ws5.COD = 5
+
+    # Concentration calclation
+    ws6 = WasteStream(X_CaCO3=1, H2O=1000, units='kg/hr')
+    assert_allclose(np.abs(ws6.conc.value-ws6.mass/ws6.F_vol*1e3).sum(), 0, atol=1e-6)
+    ws6.imass['X_B_Subst', 'X_GAO_PHA'] = (100, 1)
+    ws7 = WasteStream(X_CaCO3=1, X_B_Subst=100, X_GAO_PHA=1, H2O=1000, units='kg/hr')
+    assert_allclose(np.abs(ws6.conc.value-ws7.mass/ws7.F_vol*1e3).sum(), 0, atol=1e-6)
+    ws6.mass[:] = 1e-3
+    ws6.imass['H2O'] = 1e3
+    diff = ws6.conc.value - np.ones_like(ws6.conc.value)
+    diff[components.index('H2O')] = 0
+    assert_allclose(np.max(np.abs(diff)), 0, atol=1e-2)
 
 
 if __name__ == '__main__':

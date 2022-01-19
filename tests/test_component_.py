@@ -17,8 +17,8 @@ __all__ = ('test_component',)
 
 def test_component():
     import pytest
-    import thermosteam as tmo
-    from qsdsan import Component, Components
+    from qsdsan import Chemical, Component, Components, set_thermo, \
+        _waste_stream as ws_module
     from chemicals.elements import molecular_weight
     from math import isclose
 
@@ -40,30 +40,45 @@ def test_component():
     assert S_Ac.i_mass == 1
     assert S_Ac.i_COD == molecular_weight({'O':4})/molecular_weight({'C':2, 'H':3, 'O':2})
 
-    S_HS = Component.from_chemical('S_HS', tmo.Chemical('Hydrosulfide'),
+    S_HS = Component.from_chemical('S_HS', Chemical('Hydrosulfide'),
                                   particle_size="Soluble",
                                   degradability="Undegradable", organic=False)
     assert S_HS.i_charge < 0
     S_HS.measured_as = 'S'
     assert S_HS.i_mass > 1
 
-    components = Components.load_default(default_compile=False)
+    # Check default components
+    cmps1 = Components.load_default(default_compile=False)
+    H2O_chemical = Chemical('H2O')
+    H2O = Component.from_chemical('H2O', H2O_chemical)
+    with pytest.raises(ValueError): # H2O already in default components
+        cmps1.append(H2O)
+    with pytest.raises(RuntimeError): # key chemical-related properties missing
+        cmps1.compile()
+    # Can compile with default-filling those missing properties
+    cmps1.default_compile(lock_state_at='', particulate_ref='NaCl')
 
-    #!!! Should we allow None for particle_size, degradability, and organic?
-    # with pytest.raises(AssertionError):
-    #     H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'))
-
-    H2O = Component.from_chemical('H2O', tmo.Chemical('H2O'),
+    cmps2 = Components((cmp for cmp in cmps1 if cmp.ID != 'H2O'))
+    H2O = Component.from_chemical('H2O', Chemical('H2O'),
                                   particle_size='Soluble',
                                   degradability='Undegradable', organic=False)
-    with pytest.raises(ValueError):
-        components.append(H2O)
-    components = Components.load_default()
-    assert components.S_H2.measured_as == 'COD'
-    assert components.S_H2.i_COD == 1
-    assert isclose(components.S_N2.i_COD, - molecular_weight({'O':1.5})/molecular_weight({'N':1}), rel_tol=1e-3)
-    assert isclose(components.S_NO3.i_COD, - molecular_weight({'O':4})/molecular_weight({'N':1}), rel_tol=1e-3)
-    tmo.settings.set_thermo(components)
+    cmps2.append(H2O)
+    cmps2.default_compile(lock_state_at='', particulate_ref='NaCl')
+
+    cmps3 = Components.load_default()
+    assert cmps3.S_H2.measured_as == 'COD'
+    assert cmps3.S_H2.i_COD == 1
+    assert isclose(cmps3.S_N2.i_COD, - molecular_weight({'O':1.5})/molecular_weight({'N':1}), rel_tol=1e-3)
+    assert isclose(cmps3.S_NO3.i_COD, - molecular_weight({'O':4})/molecular_weight({'N':1}), rel_tol=1e-3)
+    set_thermo(cmps3)
+
+    # Check if the default groups are up-to-date
+    cached_cmp_IDs = ws_module._default_cmp_IDs
+    cached_cmp_groups = ws_module._specific_groups
+    assert set(cmps3.IDs) == cached_cmp_IDs
+    get_IDs = lambda attr: {cmp.ID for cmp in getattr(cmps3, attr)}
+    for attr, IDs in cached_cmp_groups.items():
+        assert IDs == get_IDs(attr)
 
 
 if __name__ == '__main__':

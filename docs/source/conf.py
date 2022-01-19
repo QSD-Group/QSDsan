@@ -31,7 +31,7 @@ copyright = f'2020-{time.gmtime().tm_year}, Quantitative Sustainable Design Grou
 # built documents.
 #
 # The short X.Y version.
-version = '1.0.5'
+version = '1.0.6'
 # The full version, including alpha/beta/rc tags.
 release = version
 
