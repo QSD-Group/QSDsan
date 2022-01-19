@@ -74,14 +74,18 @@ class SolarReclaimer(SanUnit):
         self.construction = (
                              Construction(item='Battery', quantity = battery_quant, quantity_unit = 'kg'))
         self.add_construction(add_cost=False)
- 
+
+    def _calc_labor_cost(self):
+        labor_cost = self.wages * self.pannel_cleaning
+        return labor_cost/(365 * 24)  # USD/hr (all items are per hour)
+    
     def _calc_replacement_cost(self):
         solar_replacement_parts_annual_cost = (self.solar_replacement * self.solar_cost)  # USD/yr only accounts for time running
         return solar_replacement_parts_annual_cost/ (365 * 24) # USD/hr (all items are per hour)
                   
-    def _calc_maintenance_labor_cost(self):
-        solar_maintenance_labor = (self.pannel_cleaning * self.wages)
-        return solar_maintenance_labor / (365 * 24) # USD/hr (all items are per hour)
+    # def _calc_maintenance_labor_cost(self):
+    #     solar_maintenance_labor = (self.pannel_cleaning * self.wages)
+    #     return solar_maintenance_labor / (365 * 24) # USD/hr (all items are per hour)
     
     F_BM = {'Battery System': 1, 'Solar Cost':1}
     def _cost(self):

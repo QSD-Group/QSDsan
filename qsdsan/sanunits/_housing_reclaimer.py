@@ -60,11 +60,9 @@ class HousingReclaimer(SanUnit):
         #purchase_costs is used for capital costs
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.baseline_purchase_costs['Housing'] = (self.frame + self.extrusion + self.angle_frame + 
-                self.angle + self.door_sheet + self.plate_valve + self.powder + self.container + self.doors + self.insulation)
+        self.baseline_purchase_costs['Housing'] = ((self.frame + self.extrusion + self.angle_frame + 
+                self.angle + self.door_sheet + self.plate_valve) * 4) + (self.powder + 
+                (self.container * (7/9))  + ((self.doors * (7/9)) + self.insulation))
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
-        #certain parts need to be replaced based on an expected lifefime
-        #the cost of these parts is considered along with the cost of the labor to replace them
-        #rc_replacement_parts_annual_cost = (self.filter_replacement * self.filter_cost) # USD/yr only accounts for time running
-        #self.add_OPEX =  (rc_replacement_parts_annual_cost) / (365 * 24) # USD/hr (all items are per hour)
+

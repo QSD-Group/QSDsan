@@ -92,7 +92,7 @@ class SludgePasteurization(SanUnit):
         
         # Mass calculations
         # total amount of water in sludge
-        self.M_w = sludge.imass['H2O'] #kg/hr
+        self.M_w = sludge.imass['H2O'] #kg/hrs
         # total amount of dry matter in sludge
         self.M_dm = (sludge.F_mass - sludge.imass['H2O']) #kg/hr
         # total amount of water to be evaporated to reach target dry matter content
@@ -122,7 +122,7 @@ class SludgePasteurization(SanUnit):
         self.baseline_purchase_costs['Dryer'] = self.sludge_dryer
         self.baseline_purchase_costs['Barrel'] = self.sludge_barrel
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
-        self.add_OPEX =  self._calc_replacement_cost() + self._calc_maintenance_labor_cost() # USD/hr (all items are per hour)
+        self.add_OPEX =  self._calc_replacement_cost() + self._calc_labor_cost() # USD/hr (all items are per hour)
         self.power_demand = 0          
         self.power_utility(self.power_demand)
 
@@ -130,11 +130,13 @@ class SludgePasteurization(SanUnit):
         sludge_replacement_cost = 0 #USD/yr
         return sludge_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
             
-    def _calc_maintenance_labor_cost(self):
-        sludge_maintenance_labor_cost = (self.sludge_labor_maintenance * self.wages)
-        return sludge_maintenance_labor_cost/ (365 * 24) # USD/hr (all items are per hour)
+    # def _calc_maintenance_labor_cost(self):
+    #     sludge_maintenance_labor_cost = (self.sludge_labor_maintenance * self.wages)
+    #     return sludge_maintenance_labor_cost/ (365 * 24) # USD/hr (all items are per hour)
 
-        
+    def _calc_labor_cost(self):
+        labor_cost = self.wages * self.sludge_labor_maintenance
+        return labor_cost/(365 * 24)  # USD/hr (all items are per hour)
 
     @property
     def heat_loss(self):

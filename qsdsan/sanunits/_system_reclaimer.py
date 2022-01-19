@@ -48,10 +48,10 @@ class SystemReclaimer(SanUnit):
         #find rough value for FRP for tank 
         design = self.design_results
         #!!! Consider doing later design['Brass'] = brass_quant = self.aluminum_weight
-        design['Steel'] = steel_quant = self.steel_weight
+        design['Steel'] = steel_quant = self.steel_weight * 4
         self.construction = (
                             (Construction(item='Steel', quantity = steel_quant, quantity_unit = 'kg')))
-        self.add_construction()
+        self.add_construction(add_cost=False)
         
  
     def _cost(self):
@@ -63,7 +63,7 @@ class SystemReclaimer(SanUnit):
                                          + self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
                                          + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
                                          + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
-                                         + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank)
+                                         + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * 4
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
         # #certain parts need to be replaced based on an expected lifefime
@@ -74,11 +74,11 @@ class SystemReclaimer(SanUnit):
         #                                  + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
         #                                  + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * .1
      
-        self.power_utility(self.power_demand / 1000) #kW
+        self.power_utility(self.power_demand * 4 / 1000) #kW
         #self.power_utility(self.power_demand * self.working_time)
         
     def _calc_replacement_cost(self):
-        controls_replacement_cost = (self.replacement_costs) / 20 #USD/yr
+        controls_replacement_cost = (self.replacement_costs * 4) / 20 #USD/yr
         return controls_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
         
 

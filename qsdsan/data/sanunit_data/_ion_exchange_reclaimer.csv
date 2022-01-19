@@ -13,10 +13,10 @@ GAC_zeolite_mesh,GAC and Zeolite Mesh Bags,USD,20,18,22,triangular,Duke BOM - 10
 TN_removal,total nitrogen removal,% removal ,0.99,0.891,1,triangular,Lena's notes
 zeolite_weight,weight of clinoptolite,kg,8,,,constant,Lena's notes
 zeolite_lifetime,replacement of clinoptolite,/yr,4,2,6,triangular,Lena's notes
-gac_weight,weight of GAC,kg,1.83,1,3,triangular,NEWgen analysis and scaled based on zeolite weight (newgen zeolite is 350 with gac weight of 8 so 2 % of zeolite weight)
-gac_annual_replacement,lietime of GAC,/yr,4,2,6,uniform,Lena's notes
+gac_weight,weight of GAC,kg,16,,,constant,Lena's notes
+gac_annual_replacement,lietime of GAC,/yr,7,2,12,uniform,Lena's notes
 KCl_weight,weight of KCl,kg,1.005932,0.67,1.341864,triangular,Lena's notes: 9 - 18 L of 1M KCL)
-regen_freq_per_yr,regeneration of zeolite per year,/yr,4,2,6,triangular,Lena's notes: 6 regeneration cycles every 3 months
+regen_freq_per_yr,regeneration of zeolite per year,/yr,7,2,12,triangular,Lena's notes: 6 regeneration cycles every 3 months
 desorption_recovery_efficiency,d,% recovery,95,90,100,uniform,
 PVC_weight,,kg,10,5,15,uniform,Duke BOM with 50% uncertainty 
 Steel_weight,,kg,0.45,0.225,0.675,uniform,Duke BOM with 50% uncertainty 
@@ -26,3 +26,5 @@ labor_maintenance_zeolite_regeneration,labor_maintenance_zeolite_regeneration,hr
 ion_exchange_replacement_other_parts,replacement of all other parts,USD,23.67,11.835,35.505,triangular,10% of all other parts (not gac zeolite) with 50% uncertainty on high and low
 wages,,USD/person/hr,29.11,14.55,43.68,triangular,SURT report average from an average across water
 KCl_cost,KCl cost,USD/kg,15,11.25,18.75,uniform,Alibaba
+GAC_cost,,USD/kg,2.645,0.29,5,uniform,Duke team
+Zeolite_cost,,USD/kg,0.91,0.28,1.54,uniform,Duke team

@@ -50,30 +50,20 @@ class ECR_Reclaimer(SanUnit):
             setattr(self, attr, value)
     
     
-    _N_ins = 2
+    _N_ins = 1
     _N_outs = 1
 
    
     def _run(self):
-        waste, salt = self.ins
+        waste = self.ins[0]
         treated = self.outs[0]
         treated.copy_like(self.ins[0])
 
-        salt.imass['NaCl'] = self.salt_dosing / 7 / 24 #salt demand per day
-        
-      
-        # HCL_density = 1.2 #g/ml
-        # HCl.imass['HCl'] = self.HCl_dosing/52/24/7 * HCL_density / 1000 #kg/h
-        
-        
-                
-#no replacement parts for the anaerobic tank and cleaning performed 
-#throughout whole system is considered in TEA 
-
+              
 
     def _design(self):
         design = self.design_results
-        design['Titanium'] = electrode_quant = self.Titanium_weight
+        design['Titanium'] = electrode_quant = self.Titanium_weight * 4
         self.construction = ((Construction(item='Titanium', quantity = electrode_quant, quantity_unit = 'kg')))
         self.add_construction(add_cost=False)
  
@@ -82,19 +72,17 @@ class ECR_Reclaimer(SanUnit):
         #purchase_costs is used for capital costs
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.baseline_purchase_costs['EC_brush'] = (self.EC_brush)
-        self.baseline_purchase_costs['EC_cell'] = (self.EC_cell)
-        self.baseline_purchase_costs['Salt'] = (self.NaCl_dosing_cost * self.salt_dosing)
+        self.baseline_purchase_costs['EC_brush'] = (self.EC_brush * 4)
+        self.baseline_purchase_costs['EC_cell'] = (self.EC_cell * 4)
         
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
-        self.power_utility(self.power_demand / 1000) #kW
+        self.power_utility(self.power_demand * 4 / 1000) #kW
         #self.power_utility(self.power_demand * self.working_time)
     
     def _calc_replacement_cost(self):
         ecr_replacement_cost = ((self.EC_cell * (20/self.EC_cell_lifetime)) + 
-        (self.EC_brush * (20/self.EC_brush_lifetime)) +
-        (self.NaCl_dosing_cost * self.salt_dosing * 52 * 20)) #USD/yr
+        (self.EC_brush * (20/self.EC_brush_lifetime))) * 4 #USD/yr
         return ecr_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
 
         

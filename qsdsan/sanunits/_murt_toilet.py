@@ -176,7 +176,7 @@ class MURTToilet(Toilet):
             Construction(item='Fan', quantity=Fan_quant*N, quantity_unit='ea'),
             )
 
-        self.add_construction()
+        self.add_construction(add_cost=False)
 
     def _cost(self):
         self.baseline_purchase_costs['Ceramic Toilets'] = ((self.squatting_pan_cost + 
