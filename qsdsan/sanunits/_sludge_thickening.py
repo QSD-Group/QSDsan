@@ -12,10 +12,10 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import flexsolve as flx
-import biosteam as bst
+import numpy as np, flexsolve as flx
 from warnings import warn
 from math import ceil
+from biosteam import Splitter, SolidsCentrifuge
 from . import Decay
 from .. import SanUnit
 from ..sanunits import Pump
@@ -31,7 +31,7 @@ __all__ = (
 
 # %%
 
-class SludgeThickening(SanUnit):
+class SludgeThickening(SanUnit, Splitter):
     '''
     A generic class for concentrating (i.e., thickening) of sludge
     from wastewater treatment processes based on
@@ -42,9 +42,12 @@ class SludgeThickening(SanUnit):
 
     Two pumps (one for the supernatant and one for sludge) are included.
 
-    Separation split is determined by the moisture (i.e., water) content
-    of the sludge, soluble components will have the same split as water,
+    Separation split is determined by the moisture (i.e., water)
+    content of the sludge, soluble components will have the same split as water,
     insolubles components will all go to the retentate.
+    
+    Note that if the moisture content of the incoming feeds are smaller than
+    the target moisture content, the target moisture content will be ignored.
 
     Parameters
     ----------
@@ -68,15 +71,14 @@ class SludgeThickening(SanUnit):
     https://doi.org/10.1039/C5EE03715H.
     '''
 
-    _graphics = bst.Splitter._graphics
+    _graphics = Splitter._graphics
     _ins_size_is_fixed = False
     _N_outs = 2
     auxiliary_unit_names = ('effluent_pump', 'sludge_pump')
 
-
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream',
-                 sludge_moisture=0.96, solids=(),
+                 sludge_moisture=0.96, solids=(), 
                  disposal_cost=125/907.18474): # from $/U.S. ton
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with)
         self.sludge_moisture = sludge_moisture
@@ -84,10 +86,42 @@ class SludgeThickening(SanUnit):
         self.solids = solids or tuple((cmp.ID for cmp in cmps.solids))
         self.solubles = tuple([i.ID for i in cmps if i.ID not in self.solids])
         self.disposal_cost = disposal_cost
-        self.effluent_pump = Pump(f'{self.ID}_eff', init_with=init_with)
-        self.sludge_pump = Pump(f'{self.ID}_sludge', init_with=init_with)
+        eff = self._eff = self.outs[0].proxy(f'{ID}_eff')
+        sludge = self._sludge = self.outs[1].proxy(f'{ID}_sludge')
+        self.effluent_pump = Pump(f'{self.ID}_eff', ins=eff, init_with=init_with)
+        self.sludge_pump = Pump(f'{self.ID}_sludge', ins=sludge, init_with=init_with)
         self._mixed = self.ins[0].copy()
+        self._set_split_at_mc()
 
+
+    def _set_split_at_mc(self):
+        mixed = self._mixed
+        eff, sludge = self.outs
+        mixed.mix_from(self.ins)
+        mc = self.sludge_moisture
+        mixed_F_mass = mixed.F_mass
+        if mixed_F_mass == 0: # empty streams
+            split = 0
+        else:
+            mixed_mc = mixed.imass['Water']/mixed_F_mass
+            if mixed_mc < mc: # not enough water in the feeds
+                warn(f'The set `sludge_moisture` {mc} is smaller than the '
+                     f'moisture content in the influent ({mixed_mc:.3f}) and is ignored.')
+                sludge.copy_like(mixed)
+                eff.empty()
+                split = 0
+            else:
+                solubles, solids = self.solubles, self.solids
+                sludge.copy_flow(mixed)
+                solids_mass = sludge.imass[solids].sum()
+                sludge.imass[('Water', *solubles)] *= \
+                    (solids_mass/(1-mc)-solids_mass)/(mixed_F_mass-solids_mass)
+                eff.mass = mixed.mass - sludge.mass
+                split = mixed.mass.value.copy()
+                idx = np.where(mixed.mass!=0)
+                split[idx] = eff.mass[idx]/mixed.mass[idx]
+        self._isplit = self.thermo.chemicals.isplit(split)
+        
 
     @staticmethod
     def _mc_at_split(split, solubles, mixed, eff, sludge, target_mc):
@@ -108,26 +142,20 @@ class SludgeThickening(SanUnit):
         eff.copy_flow(mixed, solubles)
 
         flx.IQ_interpolation(
-                f=self._mc_at_split, x0=1e-3, x1=1.-1e-3,
-                args=(solubles, mixed, eff, sludge, self.sludge_moisture),
-                checkbounds=False)
+            f=self._mc_at_split, x0=1e-3, x1=1.-1e-3,
+            args=(solubles, mixed, eff, sludge, self.sludge_moisture),
+            checkbounds=False)
+        self._set_split_at_mc()
 
 
     def _cost(self):
         m_solids = self.outs[-1].F_mass
-        disposal_cost = self.disposal_cost
-        add_OPEX, power_utility = self.add_OPEX, self.power_utility
-        if disposal_cost != 0:
-            add_OPEX = {'Sludge disposal': m_solids*self.disposal_cost}
-        else:
-            add_OPEX.clear()
-        pumps = (self.effluent_pump, self.sludge_pump)
-        power_utility.consumption = 0.
-        for i in range(2):
-            pumps[i].ins[0] = self.outs[i].copy() # use `.proxy()` will interfere `_run`
-            pumps[i].simulate()
-            power_utility.consumption += pumps[i].power_utility.rate
-
+        self.add_OPEX = {'Sludge disposal': m_solids*self.disposal_cost}
+        power = 0
+        for p in (self.effluent_pump, self.sludge_pump):
+            p.simulate()
+            power += p.power_utility.rate
+        self.power_utility.rate = power
 
 
 class BeltThickener(SludgeThickening):
@@ -190,16 +218,19 @@ class BeltThickener(SludgeThickening):
         self.design_results['Number of thickeners'] = N
         self.F_BM['Thickeners'] = 1.7 # ref [2]
         self.baseline_purchase_costs['Thickeners'] = 4000 * N
-        self.power_utility.rate = self.power_demand * N
+        
+    def _cost(self):
+        super()._cost()
+        self.power_utility.rate += self.power_demand * self.N_thickener 
 
 
     @property
     def N_thickener(self):
         '''[int] Number of required belt thickeners.'''
-        return self._N
+        return self._N_thickener
 
 
-class SludgeCentrifuge(SludgeThickening, bst.SolidsCentrifuge):
+class SludgeCentrifuge(SludgeThickening, SolidsCentrifuge):
     '''
     Solid centrifuge for sludge dewatering.
 
@@ -228,7 +259,7 @@ class SludgeCentrifuge(SludgeThickening, bst.SolidsCentrifuge):
 
     _run = SludgeThickening._run
 
-    _design = bst.SolidsCentrifuge._design
+    _design = SolidsCentrifuge._design
 
     _cost = SludgeThickening._cost
 

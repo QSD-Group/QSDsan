@@ -20,7 +20,7 @@ for license details.
 
 from warnings import warn
 from flexsolve import IQ_interpolation
-from biosteam import HeatUtility
+from biosteam import HeatUtility, Facility
 from thermosteam.reaction import ParallelReaction
 from .. import SanUnit
 from ..utils import sum_system_utility
@@ -98,7 +98,7 @@ class BiogasCombustion(SanUnit):
         self._biogas_eff = i
 
 
-class CHP(SanUnit):
+class CHP(SanUnit, Facility):
     '''
     Combustion of all feed streams with simple estimation of the capital cost
     of a combined heat and power (CHP) unit based on Shoener et al. [1]_
@@ -116,15 +116,16 @@ class CHP(SanUnit):
         Capital cost of the CHP per kW of power generated, $/kW.
     CHP_type : str
         Type of the CHP to adjust the heat-to-power efficiency.
-        Can be "fuel cell" (40.5%), "microturbine" (27%),
-        "internal combustion" (36%), "combustion gas" (31.5%).
-        Note that the default values will be ignored if `effiency` is also provided.
+        Can be "Fuel cell" (40.5%), "Microturbine" (27%),
+        "Internal combustion" (36%), "Combustion gas" (31.5%).
+        Note that when `CHP_type` is provided, the set `combined_efficiency`
+        will be ignored.
     combustion_eff : float
         Efficiency of the boiler to convert the energy embedded in the feed
         to the heating steam.
     combined_eff : float
         Combined heat (the total embedded energy in feed streams)-to-power efficiency
-        (i.e., combustion effiency * power generation efficiency).
+        (i.e., combustion efficiency * power generation efficiency).
     system : obj
         The linked system whose heating/power utility needs will be supplied
         by this CHP unit.
@@ -144,8 +145,8 @@ class CHP(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  unit_CAPEX=1225, CHP_type='Fuel cell',
                  combustion_eff=0.8, combined_eff=None,
-                 system=None, supplement_utility=''):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+                 system=None, supplement_utility='', F_BM={'CHP': 1.}):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM=F_BM)
         self.unit_CAPEX = unit_CAPEX
         self.CHP_type = CHP_type
         self.combustion_eff = combustion_eff
@@ -155,8 +156,16 @@ class CHP(SanUnit):
         self._sys_heating_utilities = ()
         self._sys_power_utilities = ()
 
+    network_priority = 0
     _N_ins = 3
     _N_outs = 2
+
+    default_combined_eff = {
+        'Fuel cell': 0.405,
+        'Microturbine': 0.27,
+        'Internal combustion': 0.36,
+        'Combustion gas': 0.315,
+        }
 
     # Only simulate in design stage to ensure capturing all system-wise utility
     def _run(self):
@@ -177,9 +186,11 @@ class CHP(SanUnit):
         cmps = self.components
         rxns = []
         for cmp in cmps:
-            if cmp.phase in ('l', 's') and (not cmp.organic or cmp.degradability=='Undegradable'):
+            if cmp.locked_state in ('l', 's') and (not cmp.organic or cmp.degradability=='Undegradable'):
                 continue
-            rxns.append(cmp.get_combustion_reaction())
+            rxn = cmp.get_combustion_reaction()
+            if rxn:
+                rxns.append(rxn)
         combustion_rxns = self.combustion_reactions = ParallelReaction(rxns)
 
         def react(natural_gas_flow=0):
@@ -188,7 +199,7 @@ class CHP(SanUnit):
             natural_gas.imol['CH4'] = natural_gas_flow
             combustion_rxns.force_reaction(emission.mol)
             air.imol['O2'] = -emission.imol['O2']
-            air.imol['N2'] = air.imol['O2']/0.21*0.79
+            emission.imol['N2'] = air.imol['N2'] = air.imol['O2']/0.21*0.79
             emission.imol['O2'] = 0
             H_net_feed = feed.H + feed.HHV - emission.H # substracting the energy in emission
             return H_net_feed
@@ -229,7 +240,6 @@ class CHP(SanUnit):
         ash.copy_flow(emission, IDs=tuple(ash_IDs), remove=True)
 
 
-    F_BM = {'CHP': 1.}
     def _cost(self):
         unit_CAPEX = self.unit_CAPEX
         unit_CAPEX /= (3600/self.combined_eff) # convert to $ per kJ
@@ -238,7 +248,7 @@ class CHP(SanUnit):
 
 
     def _refresh_sys(self):
-        sys = self.system
+        sys = self._system
         if sys:
             units = [u for u in sys.units if u is not self]
             hu_dct = self._sys_heating_utilities = {}
@@ -259,25 +269,14 @@ class CHP(SanUnit):
         return self._CHP_type
     @CHP_type.setter
     def CHP_type(self, i):
-        eff = self.combined_eff
+        eff = self.combined_eff if hasattr(self, '_combined_eff') else None
         if i is None and eff:
             self._CHP_type = i
             return
-        i = i.lower()
         if eff:
             warn(f'With the provided `CHP_type` ({i}), '
-                 f'the current `combined_eff` {eff} will be overwritten.')
-        if i == 'fuel cell':
-            eff = 0.405
-        elif i == 'microturbine':
-            eff = 0.27
-        elif i == 'internal combustion':
-            eff = 0.36
-        elif i == 'combustion gas':
-            eff = 0.315
-        else:
-            raise ValueError(f'`CHP_type` can only be "fuel cell", "microtuerbine", '
-                             f'"internal combustion", or "gas combustion", not "{i}".')
+                 f'the current `combined_eff` {eff} will be ignored.')
+        self._CHP_type = i
 
     @property
     def combustion_eff(self):
@@ -288,11 +287,15 @@ class CHP(SanUnit):
         return self._combustion_eff
     @combustion_eff.setter
     def combustion_eff(self, i):
-        combined_eff = self.combined_eff
-        if combined_eff:
-            if i < combined_eff:
-                raise ValueError(f'`combustion_eff` ({i}) should be larger than '
-                                 f'`combined_eff` ({combined_eff}).')
+        if i is None:
+            self._combustion_eff = i
+            return
+        if hasattr(self, '_combined_eff'):
+            combined_eff = self.combined_eff
+            if combined_eff:
+                if i < combined_eff:
+                    raise ValueError(f'`combustion_eff` ({i}) should be larger than '
+                                     f'`combined_eff` ({combined_eff}).')
         self._combustion_eff = i
 
     @property
@@ -300,19 +303,29 @@ class CHP(SanUnit):
         '''
         [float] Combined heat (the total embedded energy in feed streams)-to-power efficiency
         (i.e., combustion effiency * power generation efficiency).
+        Note that when `CHP_type` is provided, the set `combined_efficiency`
+        will be ignored.
         '''
+        if self.CHP_type:
+            return self.default_combined_eff[self.CHP_type]
         return self._combined_eff
     @combined_eff.setter
     def combined_eff(self, i):
+        if i is None:
+            self._combined_eff = i
+            return
         CHP_type = self.CHP_type
         if CHP_type:
             warn(f'With the provided `combined_eff` ({i}), '
                  f'the `CHP_type` ("{CHP_type}") is ignored.')
-        combustion_eff = self.combustion_eff
-        if combustion_eff:
-            if i > combustion_eff:
-                raise ValueError(f'`combined_eff` ({i}) should be smaller than '
-                                 f'`combustion_eff` ({combustion_eff}).')
+            self._combined_eff = i
+            return
+        if hasattr(self, '_combustion_eff'):
+            combustion_eff = self.combustion_eff
+            if combustion_eff:
+                if i > combustion_eff:
+                    raise ValueError(f'`combined_eff` ({i}) should be smaller than '
+                                     f'`combustion_eff` ({combustion_eff}).')
         self._combined_eff = i
 
     @property
@@ -324,8 +337,8 @@ class CHP(SanUnit):
         return self._system
     @system.setter
     def system(self, i):
-        self._refresh_sys()
         self._system = i
+        self._refresh_sys()
 
     @property
     def sys_heating_utilities(self):

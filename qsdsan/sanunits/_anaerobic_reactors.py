@@ -462,9 +462,9 @@ class SludgeDigester(SanUnit):
     Parameters
     ----------
     ins : Iterable
-        Sludge for treatment.
+        Sludge for digestion.
     outs : Iterable
-        Treated waste, captured biogas, fugitive CH4, and fugitive N2O.
+        Digested sludge, generated biogas.
     HRT : float
         Hydraulic retention time, [d].
     SRT : float
@@ -504,6 +504,8 @@ class SludgeDigester(SanUnit):
         https://doi.org/10.1039/C5EE03715H.
 
     '''
+    _N_outs = 2
+    
     # All in K
     _T_air = 17 + 273.15
     _T_earth = 10 + 273.15
@@ -544,7 +546,7 @@ class SludgeDigester(SanUnit):
         self.organics_conversion = organics_conversion
         self.COD_factor = COD_factor
         self.methane_yield = methane_yield
-        self.methane_fraction
+        self.methane_fraction = methane_fraction
         self.depth = depth
         self.heat_transfer_coeff = heat_transfer_coeff
         self.heat_exchanger = hx = HXutility(None, None, None, T=T)
@@ -568,14 +570,13 @@ class SludgeDigester(SanUnit):
         biogas.phase = 'g'
 
         # Biogas production estimation based on Example 13-5 of Metcalf & Eddy, 5th edn.
-        cmps = self.components
         Y, b, SRT = self.Y, self.b, self.SRT
         organics_conversion, COD_factor = self.organics_conversion, self.COD_factor
         methane_yield, methane_fraction = self.methane_yield, self.methane_fraction
-        biomass_COD = sludge.imass[cmps.active_biomass].sum()*1e3*24*1.42 # [g/d], 1.42 converts VSS to COD
+        biomass_COD = sludge.imass['active_biomass'].sum()*1e3*24*1.42 # [g/d], 1.42 converts VSS to COD
 
         digested.mass = sludge.mass
-        digested.imass[cmps.active_biomass] = 0 # biomass-derived COD calculated separately
+        digested.imass['active_biomass'] = 0 # biomass-derived COD calculated separately
         substrate_COD = digested.COD*24*digested.F_vol # [g/d]
 
         tot_COD = biomass_COD + substrate_COD # [g/d]
@@ -584,13 +585,13 @@ class SludgeDigester(SanUnit):
         methane_vol = methane_yield*tot_COD*organics_conversion - COD_factor*digestion_yield
 
         # Update stream flows
-        digested.imass[cmps.substrates] *= (1-organics_conversion)
-        digested.imass[cmps.active_biomass] = \
-            sludge.imass[cmps.active_biomass]*(1-organics_conversion)
+        digested.imass['substrates'] *= (1-organics_conversion)
+        digested.imass['active_biomass'] = \
+            sludge.imass['active_biomass']*(1-organics_conversion)
 
         biogas.empty()
-        biogas.i_vol['CH4'] = methane_vol
-        biogas.i_vol['CO2'] = methane_vol/methane_fraction*(1-methane_fraction)
+        biogas.ivol['CH4'] = methane_vol
+        biogas.ivol['CO2'] = methane_vol/methane_fraction*(1-methane_fraction)
 
 
     _units = {
@@ -676,6 +677,14 @@ class SludgeDigester(SanUnit):
     @T_earth.setter
     def T_earth(self, i):
         self._T_earth = i
+
+    @property
+    def freeboard(self):
+        '''[float] Freeboard added to the depth of the reactor tank, [ft].'''
+        return self._freeboard
+    @freeboard.setter
+    def freeboard(self, i):
+        self._freeboard = i
 
     @property
     def t_wall(self):
