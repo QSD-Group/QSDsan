@@ -77,8 +77,8 @@ class DiffusedAeration(Process):
     R = 8.314            # Universal gas constant, [J/mol/K]
     P_s = 101325         # Standard sea-level atmospheric pressure, [Pa]
 
-    def __init__(self, ID, DO_ID, KLa=None, DOsat=None, 
-                 KLa_20=None, Q_air=None, V=None, DOsat_s20=9.09, 
+    def __init__(self, ID, DO_ID, V, KLa=None, DOsat=None, 
+                 KLa_20=None, Q_air=None, DOsat_s20=9.09, 
                  alpha=0.6, beta=0.95, F=1.0, theta=1.024, 
                  d_submergence=5, fine_pore=True, 
                  elevation=0, T_air=293.15, T_water=293.15, 
@@ -88,9 +88,9 @@ class DiffusedAeration(Process):
                          rate_equation='KLa*(DOsat - %s)' % DO_ID,
                          conserved_for=(), parameters=('KLa', 'DOsat'))
 
+        self._V = V
         self._KLa_20 = KLa_20
         self._Q_air = Q_air
-        self._V = V
         self._DOsat_s20 = DOsat_s20
         self._alpha = alpha
         self._beta = beta
@@ -113,16 +113,17 @@ class DiffusedAeration(Process):
         return self._alpha * self._F * self._theta ** (self._T_water - 293.15) * self.KLa_20
     
     def _calc_KLa_20(self):
-        return  self.SOTR / (self._V * self.delta * self._DOsat_s20)
+        self._SOTR = SOTR = self._Q_air / self.factor * self._SOTE * self._CF1
+        return SOTR / (self._V * self.delta * self._DOsat_s20)
 
     def _calc_Q_air(self):
-        return self.SOTR / self._SOTE / self._CF1 * self.factor
+        self._SOTR = SOTR = self.KLa_20 * self.delta * self._DOsat_s20 * self._V
+        return SOTR / self._SOTE / self._CF1 * self.factor
     
     @property
     def SOTR(self):
-        if self._Q_air: return self._Q_air / self.factor * self._SOTE * self._CF1
-        elif self._KLa_20: return self._KLa_20 * self.delta * self._DOsat_s20 * self._V
-        else: return None
+        '''[float] Standard oxygen transfer rate, [g/d]'''
+        return self._SOTR
     
     @property
     def factor(self):
@@ -171,10 +172,7 @@ class DiffusedAeration(Process):
     @property
     def Q_air(self):
         """[float] Airflow rate at field conditions, [m^3/d]."""
-        if self._Q_air: return self._Q_air
-        elif self._KLa_20 and self._V:
-            return self._calc_Q_air()
-        else: return None
+        return self._Q_air or self._calc_Q_air()
 
     @Q_air.setter
     def Q_air(self, Q):
@@ -190,10 +188,7 @@ class DiffusedAeration(Process):
     @V.setter
     def V(self, i):
         self._V = i
-        if not self._Q_air: self._Q_air = self._calc_Q_air()
-        else: 
-            self._KLa_20 = None
-            self.KLa = None
+        # self.KLa = None
 
     @property
     def DOsat_s20(self):
@@ -203,9 +198,7 @@ class DiffusedAeration(Process):
     
     @DOsat_s20.setter
     def DOsat_s20(self, i):
-        r = self._KLa_20 / self._DOsat_s20
         self._DOsat_s20 = i
-        self._KLa_20 = i * r
         self.KLa = None   
         self.DOsat = None    
 
@@ -257,7 +250,6 @@ class DiffusedAeration(Process):
     @d_submergence.setter
     def d_submergence(self, i):
         self._dsub = i
-        self._KLa_20 = None
         self.KLa = None
         self.DOsat = None
 
@@ -269,7 +261,6 @@ class DiffusedAeration(Process):
     @fine_pore.setter
     def fine_pore(self, i):
         self._fine_pore = bool(i)
-        self._KLa_20 = None
         self.KLa = None
         self.DOsat = None
     
@@ -281,7 +272,6 @@ class DiffusedAeration(Process):
     @elevation.setter
     def elevation(self, i):
         self._elevation = i
-        self._KLa_20 = None
         self.KLa = None
         self.DOsat = None
 
@@ -293,7 +283,6 @@ class DiffusedAeration(Process):
     @T_air.setter
     def T_air(self, i):
         self._T_air = i
-        self._KLa_20 = None
         self.KLa = None
         self.DOsat = None
 
@@ -305,7 +294,6 @@ class DiffusedAeration(Process):
     @T_water.setter
     def T_water(self, i):
         self._T_water = i
-        self._KLa_20 = None
         self.KLa = None
         self.DOsat = None
 
@@ -317,7 +305,6 @@ class DiffusedAeration(Process):
     @SOTE.setter
     def SOTE(self, i):
         self._SOTE = i
-        self._KLa_20 = None
         self.KLa = None
 
     @property
@@ -328,7 +315,6 @@ class DiffusedAeration(Process):
     @CF1.setter
     def CF1(self, i):
         self._CF1 = i
-        self._KLa_20 = None
         self.KLa = None
         
     @property
