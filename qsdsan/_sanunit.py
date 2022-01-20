@@ -144,7 +144,7 @@ class SanUnit(Unit, isabstract=True):
     ticket_name = 'SU'
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 construction=(), transportation=(), equipments=(), equipment_kwargs={},
+                 construction=(), transportation=(), equipments=(),
                  add_OPEX={}, uptime_ratio=1., lifetime=None, F_BM_default=None,
                  isdynamic=False, **kwargs):
         self._register(ID)
@@ -159,10 +159,11 @@ class SanUnit(Unit, isabstract=True):
         self._assert_compatible_property_package()
         for i in (*construction, *transportation, *equipments):
             i._linked_unit = self
-        self.construction = construction
-        self.transportation = transportation
-        self.equipments = equipments
-        self.add_OPEX = add_OPEX
+        # Make fresh ones for each unit
+        self.construction = () if not construction else construction
+        self.transportation = () if not transportation else transportation
+        self.equipments = () if not equipments else equipments
+        self.add_OPEX = add_OPEX.copy()
         self.uptime_ratio = 1.
         self.lifetime = lifetime
         if F_BM_default:
@@ -248,8 +249,9 @@ class SanUnit(Unit, isabstract=True):
                                      self._outs_size_is_fixed, self._stacklevel)
         _replace_missing_streams(_outs, missing)
 
-    # def _init_results(self):
-    #     super()._init_results()
+    def _init_results(self):
+        super()._init_results()
+        self.add_OPEX = {}
 
     def __repr__(self):
         return f'<{type(self).__name__}: {self.ID}>'
@@ -507,14 +509,15 @@ class SanUnit(Unit, isabstract=True):
         return self._equipments
     @equipments.setter
     def equipments(self, i):
-        if isinstance(i, Equipment):
+        isa = isinstance
+        if isa(i, Equipment):
             i = (i,)
         else:
-            if not isinstance(i, Iterable):
+            if not isa(i, Iterable):
                 raise TypeError(
                     f'Only `Equipment` object  can be included, not {type(i).__name__}.')
             for j in i:
-                if not isinstance(j, Equipment):
+                if not isa(j, Equipment):
                     raise TypeError(
                         f'Only `Equipment` can be included, not {type(j).__name__}.')
         self._equipments = i
@@ -530,9 +533,10 @@ class SanUnit(Unit, isabstract=True):
             else self._add_OPEX
     @add_OPEX.setter
     def add_OPEX(self, i):
-        if isinstance(i, float):
+        isa = isinstance
+        if isa(i, float):
             i = {'Additional OPEX': i}
-        if not isinstance(i, dict):
+        if not isa(i, dict):
             raise TypeError(
                 f'add_OPEX can only be float of dict, not {type(i).__name__}.')
         self._add_OPEX = i

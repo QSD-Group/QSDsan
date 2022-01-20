@@ -149,7 +149,7 @@ class InternalCirculationRx(MixTank):
     _default_vessel_material = 'Stainless steel'
     purchase_cost_algorithms = IC_purchase_cost_algorithms
 
-    # Other equipment
+    # Other equipment, only capital cost will be automatically accounted for
     auxiliary_unit_names = ('heat_exchanger', 'effluent_pump', 'sludge_pump')
 
 
@@ -163,9 +163,6 @@ class InternalCirculationRx(MixTank):
         ID = self.ID
         self._inf = self.ins[0].copy(f'{ID}_inf')
         self._gas = self.outs[0].copy(f'{ID}_gas')
-        #!!! Double-check if this would interfere
-        self._eff = self.outs[1].proxy(f'{ID}_eff')
-        self._sludge = self.outs[2].proxy(f'{ID}_sludge')
         self.method = method
         self.OLRall = OLRall
         self.biodegradability = biodegradability
@@ -175,7 +172,6 @@ class InternalCirculationRx(MixTank):
         self.vessel_material = vessel_material
         self.kW_per_m3 = kW_per_m3
         self.T = T
-
         # Initialize the attributes
         self.heat_exchanger = hx = HXutility(None, None, None, T=T)
         self.heat_utilities = hx.heat_utilities
@@ -183,8 +179,11 @@ class InternalCirculationRx(MixTank):
         # Conversion will be adjusted in the _run function
         self._xcmp = xcmp = getattr(self.components, biomass_ID)
         self._decay_rxn = xcmp.get_combustion_reaction(conversion=0.)
-        self.effluent_pump = Pump(f'{self.ID}_eff')
-        self.sludge_pump = Pump(f'{self.ID}_sludge')
+        #!!! Double-check if this would interfere
+        eff = self._eff = self.outs[1].proxy(f'{ID}_eff')
+        sludge = self._sludge = self.outs[2].proxy(f'{ID}_sludge')
+        self.effluent_pump = Pump(f'{self.ID}_eff', ins=eff, init_with=init_with)
+        self.sludge_pump = Pump(f'{self.ID}_sludge', ins=sludge, init_with=init_with)
 
         for k, v in kwargs.items():
             setattr(self, k, v)

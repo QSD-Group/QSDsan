@@ -64,7 +64,7 @@ class SanStream(Stream):
         self._stream_impact_item = stream_impact_item
         self._impact_item = self._stream_impact_item
 
-    def copy(self, new_ID='', copy_price=False, copy_impact_item=True):
+    def copy(self, new_ID='', copy_price=False, copy_impact_item=False):
         '''
         Copy the information of another stream.
 
@@ -109,7 +109,7 @@ class SanStream(Stream):
     __copy__ = copy
 
 
-    def copy_like(self, other, copy_price=False, copy_impact_item=True):
+    def copy_like(self, other, copy_price=False, copy_impact_item=False):
         '''
         Copy the information of another stream without creating a new stream.
 
@@ -188,7 +188,7 @@ class SanStream(Stream):
         >>> ss2 = ss1.flow_proxy('ss2')
         >>> ss2.mol is ss1.mol
         True
-        >>> ss2.price == ss1.price
+        >>> ss2.thermal_condition is ss1.thermal_condition
         False
         '''
         new = Stream.flow_proxy(self, ID=ID)
@@ -199,6 +199,11 @@ class SanStream(Stream):
     def proxy(self, ID=None):
         '''
         Return a new stream that shares all data with this one.
+
+        Note that unlike other properties, the `price` and `stream_impact_item`
+        of the two streams are not connected,
+        i.e., the price of the new stream will be the same as the
+        original one upon creation, but then they can be different.
 
         Parameters
         ----------
@@ -215,11 +220,14 @@ class SanStream(Stream):
         >>> ss2 = ss1.proxy('ss2')
         >>> ss2.mol is ss1.mol
         True
-        >>> ss2.price == ss1.price
+        >>> ss2.thermal_condition is ss1.thermal_condition
         True
+        >>> ss2.price = 5.2335
+        >>> ss1.price
+        3.18
         '''
         new = Stream.proxy(self, ID=ID)
-        new._stream_impact_item = self._stream_impact_item
+        new._stream_impact_item = None
         return new
 
 
@@ -434,8 +442,8 @@ class MissingSanStream(MissingStream):
 
     def materialize_connection(self, ID=''):
         '''
-        Disconnect this missing stream from any unit operations and 
-        replace it with a material stream. 
+        Disconnect this missing stream from any unit operations and
+        replace it with a material stream.
         '''
         source = self._source
         sink = self._sink

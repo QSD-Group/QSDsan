@@ -45,18 +45,29 @@ _common_composite_vars = ('_COD', '_BOD', '_uBOD', '_TC', '_TOC', '_TN',
                           '_dry_mass', '_charge', '_ThOD', '_cnBOD')
 
 _ws_specific_slots = (*_common_composite_vars,
-                      '_pH', '_SAlk', '_ratios', # '_stream_impact_item',
+                      '_pH', '_SAlk', '_ratios',
+                      # '_stream_impact_item', (pls keep this here, might be useful in debugging)
                       '_state', '_dstate')
 
-_specific_groups = {'S_VFA': ('S_Ac', 'S_Prop'),
-                    'X_Stor': ('X_OHO_PHA', 'X_GAO_PHA', 'X_PAO_PHA',
-                              'X_GAO_Gly', 'X_PAO_Gly'),
-                    'X_ANO': ('X_AOO', 'X_NOO'),
-                    'X_Bio': ('X_OHO', 'X_AOO', 'X_NOO', 'X_AMO', 'X_PAO',
-                             'X_MEOLO', 'X_ACO', 'X_HMO', 'X_PRO', 'X_FO'),
-                    'S_NOx': ('S_NO2', 'S_NO3'),
-                    'X_PAO_PP': ('X_PAO_PP_Lo', 'X_PAO_PP_Hi'),
-                    'TKN': ()}
+# Used in the `composite` method
+_default_cmp_IDs = {
+    'S_H2', 'S_CH4', 'S_CH3OH', 'S_Ac', 'S_Prop', 'S_F', 'S_U_Inf', 'S_U_E',
+    'C_B_Subst', 'C_B_BAP', 'C_B_UAP', 'C_U_Inf', 'X_B_Subst', 'X_OHO_PHA',
+    'X_GAO_PHA', 'X_PAO_PHA', 'X_GAO_Gly', 'X_PAO_Gly', 'X_OHO', 'X_AOO',
+    'X_NOO', 'X_AMO', 'X_PAO', 'X_MEOLO', 'X_FO', 'X_ACO', 'X_HMO', 'X_PRO',
+    'X_U_Inf', 'X_U_OHO_E', 'X_U_PAO_E', 'X_Ig_ISS', 'X_MgCO3', 'X_CaCO3',
+    'X_MAP', 'X_HAP', 'X_HDP', 'X_FePO4', 'X_AlPO4', 'X_AlOH', 'X_FeOH',
+    'X_PAO_PP_Lo', 'X_PAO_PP_Hi', 'S_NH4', 'S_NO2', 'S_NO3', 'S_PO4',
+    'S_K', 'S_Ca', 'S_Mg', 'S_CO3', 'S_N2', 'S_O2', 'S_CAT', 'S_AN', 'H2O'
+    }
+_specific_groups = {'S_VFA': {'S_Ac', 'S_Prop'},
+                    'X_Stor': {'X_OHO_PHA', 'X_GAO_PHA', 'X_PAO_PHA',
+                              'X_GAO_Gly', 'X_PAO_Gly'},
+                    'X_ANO': {'X_AOO', 'X_NOO'},
+                    'X_Bio': {'X_OHO', 'X_AOO', 'X_NOO', 'X_AMO', 'X_PAO',
+                              'X_MEOLO', 'X_ACO', 'X_HMO', 'X_PRO', 'X_FO'},
+                    'S_NOx': {'S_NO2', 'S_NO3'},
+                    'X_PAO_PP': {'X_PAO_PP_Lo', 'X_PAO_PP_Hi'}}
 
 _default_ratios = {'iHi_XPAOPP': 0,
                    'iCB_XCB': 0.15,
@@ -159,20 +170,16 @@ def by_conc(self, TP):
     TP : ThermalCondition
 
     '''
-    try:
-        conc = self._data_cache['conc', TP]
-    except:
-        cmps = self.chemicals
-        mol = self.data
-        F_vol = self.by_volume(TP).data.sum()
-        conc = np.zeros_like(mol, dtype=object)
-        for i, cmp in enumerate(cmps):
-            conc[i] = ConcentrationProperty(cmp.ID, mol, i, F_vol, cmp.MW,
-                                            None, self._phase)
-        self._data_cache['conc', TP] = \
-        conc = ComponentConcentrationIndexer.from_data(property_array(conc),
-                                                      self._phase, cmps,
-                                                      False)
+    cmps = self.chemicals
+    mol = self.data
+    F_vol = self.by_volume(TP).data.sum()
+    conc = np.zeros_like(mol, dtype=object)
+    for i, cmp in enumerate(cmps):
+        conc[i] = ConcentrationProperty(cmp.ID, mol, i, F_vol, cmp.MW,
+                                        None, self._phase)
+    self._data_cache['conc', TP] = \
+    conc = ComponentConcentrationIndexer.from_data(
+        property_array(conc), self._phase, cmps, False)
     return conc
 indexer.ChemicalMolarFlowIndexer.by_conc = by_conc
 
@@ -183,7 +190,8 @@ def by_conc(self, TP):
     '''
     raise AttributeError('Concentration only valid for liquid phase.')
 
-indexer.MolarFlowIndexer.by_conc = by_conc; del by_conc
+indexer.MolarFlowIndexer.by_conc = by_conc
+del by_conc
 
 @PropertyFactory(units='mg/L')
 def MockConcentrationProperty(self):
@@ -439,7 +447,8 @@ class WasteStream(SanStream):
                 _ws_info += int(bool(self.TC))    *f'  TC         : {self.TC:.1f} mg/L\n'
                 _ws_info += int(bool(self.TOC))   *f'  TOC        : {self.TOC:.1f} mg/L\n'
                 _ws_info += int(bool(self.TN))    *f'  TN         : {self.TN:.1f} mg/L\n'
-                _ws_info += int(bool(self.TKN))   *f'  TKN        : {self.TKN:.1f} mg/L\n'
+                # `TKN` not included as the users need to define that to include in TKN calculation
+                # _ws_info += int(bool(self.TKN))   *f'  TKN        : {self.TKN:.1f} mg/L\n'
                 _ws_info += int(bool(self.TP))    *f'  TP         : {self.TP:.1f} mg/L\n'
                 _ws_info += int(bool(self.TK))    *f'  TK         : {self.TK:.1f} mg/L\n'
                 # _ws_info += int(bool(self.charge))*f'  charge     : {self.charge:.1f} mmol/L\n'
@@ -494,20 +503,19 @@ class WasteStream(SanStream):
 
     def composite(self, variable, subgroup=None, particle_size=None,
                   degradability=None, organic=None, volatile=None,
-                  specification=None):
-
+                  specification=None, unit=None):
         """
-        Calculate any composite variable by specifications.
+        Calculate select composite variable with the provided constraints.
 
         Parameters
         ----------
         variable : str
             The composite variable to calculate. One of the followings:
-                ("COD", "BOD5", "BOD", "uBOD", "NOD", "ThOD", "cnBOD",
-                "C", "N", "P", "K", "Mg", "Ca",
-                "solids", "charge").
-        subgroup : tuple[str], optional
-            IDs of a subgroup of :class:`CompiledComponents`. The default is None.
+            ("COD", "BOD5", "BOD", "uBOD", "NOD", "ThOD", "cnBOD",
+            "C", "N", "P", "K", "Mg", "Ca", "solids", "charge").
+        subgroup : tuple(str or obj), optional
+            Iterable of :class:`CompiledComponents` (or their IDs)
+            which the composite variable will be calculated for.
         particle_size : "g", "s", "c", or "x", optional
             Dissolved gas ("g"), soluble ("s"), colloidal ("c"), particulate ("x").
             The default is None.
@@ -519,13 +527,62 @@ class WasteStream(SanStream):
         volatile : bool, optional
             Volatile (True) or involatile (False). The default is None.
         specification : str, optional
-            One of ("S_VFA", "X_Stor", "X_ANO", "X_Bio", "S_NOx", "X_PAO_PP", "TKN").
-            The default is None.
+            A group of :class:`Component` defined through :func:`Component.define_group`.
+
+            If using the default components (through :func:`Components.load_default`)
+            or a subgroup of these default components,
+            the specification can be one of
+            ("S_VFA", "X_Stor", "X_ANO", "X_Bio", "S_NOx", "X_PAO_PP").
+
+            You can also use :func:`CompileComponents.define_group` to define
+            your own specification groups.
+
+            The composite variable will be calculated for the
+            intersection of all designated constrains
+            (i.e., `subgroup`, `particle_size`, `degradability`, `organic`,
+             `volatile`, and `specification`).
+        unit : str
+            The unit that the result will be returned in.
+            If not provided, result will be in mg/L except for charge (mmol/L).
 
         Returns
         -------
         value : float
-            The estimated value of the composite variable, in [mg/L] or [mmol/L] (for "Charge").
+            The estimated value of the composite variable in the desired unit.
+
+        Examples
+        --------
+        >>> from qsdsan import set_thermo, Components, WasteStream
+        >>> cmps = Components.load_default()
+        >>> set_thermo(cmps)
+        >>> ws = WasteStream.codstates_inf_model('ws', flow_tot=1000, pH=6.8, COD=500, TP=11)
+        >>> # To calculate the particulate BOD (i.e., xBOD) of the WasteStream object,
+        >>> # you just need to specify the composite variable as "BOD", and particle size as "x"
+        >>> ws.composite('BOD', particle_size='x') # doctest: +ELLIPSIS
+        152.83...
+        >>> # You can also adjust the unit you want the result to be in
+        >>> ws.composite('BOD', particle_size='x', unit='g/L') # doctest: +ELLIPSIS
+        0.15283...
+        >>> # Biomass COD
+        >>> ws.composite('COD', specification='X_Bio')
+        0.0
+        >>> # Nitrogen as nitrate/nitrite
+        >>> ws.composite('N', specification='S_NOx')
+        0.0
+        >>> # Soluble TKN, note that the `TKN` attribute is pre-defined in the default components
+        >>> # as all components that are not "S_N2", "S_NO2", and "S_NO3"
+        >>> # For your own components, you can pre-define the group using
+        >>> # the `define_group` function (e.g., `cmps.define_group`)
+        >>> ws.composite('N', subgroup=cmps.TKN, particle_size='s') # doctest: +ELLIPSIS
+        27.77...
+        >>> ws.composite('C', organic=True) # doctest: +ELLIPSIS
+        160.00...
+        >>> ws.composite('solids', particle_size='s') # doctest: +ELLIPSIS
+        947.88...
+
+        See Also
+        --------
+        :func:`CompiledComponents.define_group`
 
         """
         _get = getattr
@@ -541,28 +598,38 @@ class WasteStream(SanStream):
             raise RuntimeError('Only liquid streams can use the `composite` method, '
                                f'the current WasteStream {self.ID} is {self.phase}.')
 
-        #TODO: deal with units
-        cmps =  self.components.subgroup(subgroup) if subgroup is not None else self.components
-
-        IDs = list(cmps.IDs)
-        if 'H2O' in IDs: IDs.remove('H2O')
+        isa = isinstance
+        all_cmps = self.components
+        subgroup = subgroup or all_cmps
+        subgroup_IDs = {i if isa(i, str) else i.ID for i in subgroup} # use set for easier element comparison
+        subgroup_IDs = subgroup_IDs.difference({'Water', 'H2O'}) # remove water
 
         if specification:
-            warn(f'{specification} is defined with regards to the set of default component IDs. '
-                 'Consider using the "subgroup=" argument if different sets of component IDs are used.')
-            if specification == 'TKN':
-                IDs = [ID for ID in IDs if ID not in ('S_N2','S_NO2','S_NO3')]
-            elif specification not in _specific_groups.keys():
-                raise KeyError(f"Undefined specification {specification}. "
-                               f"Must be one of {_specific_groups.keys()}."
-                               "Or, try defining 'subgroup'.")
-            else:
-                IDs = [ID for ID in IDs if ID in _specific_groups[specification]]
+            try:
+                specified_IDs = set(_get(all_cmps, specification))
+            except AttributeError: # no pre-defined groups
+                try:
+                    specified_IDs = _specific_groups[specification]
+                except KeyError: # specification not in the default ones
+                    raise KeyError(f"Undefined specification {specification}. "
+                                   f"`specification` must be one of {_specific_groups.keys()}. "
+                                   "Use the `subgroup` argument instead or "
+                                   "define the specification group using "
+                                   "`CompiledComponents.define_group`.")
+                # Issue a warning if the subgroup containings components outside of the default ones
+                if not subgroup_IDs.issubset(_default_cmp_IDs):
+                    warn(f'{specification} is defined with regards to the set of default component IDs. '
+                          'Consider using the `subgroup` argument instead of '
+                          '`specification`, or define the specification group using '
+                          '`CompiledComponents.define_group` '
+                          'if different sets of component IDs are used.')
+            IDs = tuple(subgroup_IDs.intersection(specified_IDs))
+        else:
+            IDs = tuple(subgroup_IDs)
 
-        IDs = tuple(IDs)
-        cmps = cmps.subgroup(IDs)
-        cmp_c = self.imass[IDs]/self.F_vol*1e3      #[mg/L]
-        exclude_gas = _get(cmps, 's')+_get(cmps, 'c')+_get(cmps, 'x')
+        cmps = all_cmps.subgroup(IDs)
+        cmp_c = self.iconc[IDs].value # [mg/L]
+        exclude_gas = cmps.s + cmps.c + cmps.x
 
         if variable == 'COD':
             var = cmps.i_COD * cmp_c * exclude_gas * (cmps.i_COD >= 0)
@@ -596,7 +663,7 @@ class WasteStream(SanStream):
         else:
             var = cmps.i_charge * cmp_c
 
-        dummy = np.ones(len(cmp_c))
+        dummy = np.ones_like(cmp_c)
         if particle_size:
             if particle_size == 'g':
                 dummy *= 1-exclude_gas
@@ -604,16 +671,22 @@ class WasteStream(SanStream):
                 dummy *= _get(cmps, particle_size)
 
         if degradability:
-            if degradability == 'u': dummy *= 1-_get(cmps, 'b')
-            elif degradability == 'b': dummy *= _get(cmps, 'b')
-            elif degradability == 'rb': dummy *= _get(cmps, 'rb')
-            else: dummy *= _get(cmps, 'b')-_get(cmps, 'rb')
+            if degradability == 'u': dummy *= 1-cmps.b
+            elif degradability == 'b': dummy *= cmps.b
+            elif degradability == 'rb': dummy *= cmps.rb
+            else: dummy *= cmps.b-cmps.rb
 
         if organic != None:
-            if organic: dummy *= _get(cmps, 'org')
-            else: dummy *= 1-_get(cmps, 'org')
+            if organic: dummy *= cmps.org
+            else: dummy *= 1-cmps.org
 
-        return (dummy*var).sum()
+        result = (dummy*var).sum()
+        if not unit:
+            return result
+
+        converted = auom('mg/L').convert(result, unit) if variable != 'charge' \
+            else auom('mmol/L').convert(result, unit)
+        return converted
 
 
     def _liq_sol_properties(self, prop, value):
@@ -682,7 +755,15 @@ class WasteStream(SanStream):
     @property
     def TKN(self):
         '''[float] Total Kjeldahl nitrogen, in mg/L.'''
-        return self._liq_sol_properties('TKN', self.composite('N', specification='TKN'))
+        try:
+            subgroup = self.components.TKN
+        except:
+            warn('No `TKN` group defined for the current `CompiledComponents`, '
+                 '`TKN` will be calculated using `TN` minus concentrations of '
+                 '"S_N2", "S_NO2", and "S_NO3". '
+                 'Use `define_group` to define the TKN groups if want to calculate otherwise.')
+            subgroup = [i.ID for i in self.components if i.ID not in ('S_N2','S_NO2','S_NO3')]
+        return self._liq_sol_properties('TKN', self.composite('N', subgroup=subgroup))
 
     @property
     def TP(self):
@@ -715,7 +796,6 @@ class WasteStream(SanStream):
     #     return self._liq_sol_properties('charge', self.composite('charge'))
 
 
-
     @property
     def iconc(self):
         '''[Indexer] Mass concentrations, in mg/L (g/m3).'''
@@ -726,14 +806,18 @@ class WasteStream(SanStream):
         '''[property_array] Mass concentrations, in mg/L (g/m3).'''
         return self.iconc.data
 
-
     @property
     def Conc(self):
         '''[property_array] Mass concentrations, in mg/L (g/m3), same as `conc`.'''
-        return self.iconc.data
+        return self.conc
+
+    @property
+    def density(self):
+        '''[float] Density of the stream, in mg/L (kg/m3).'''
+        return self.F_mass/self.F_vol
 
 
-    def copy(self, new_ID='', copy_price=False, copy_impact_item=True,
+    def copy(self, new_ID='', copy_price=False, copy_impact_item=False,
              ws_properties=True):
         '''
         Copy the information of another stream.
@@ -778,7 +862,7 @@ class WasteStream(SanStream):
     __copy__ = copy
 
 
-    def copy_like(self, other, copy_price=False, copy_impact_item=True):
+    def copy_like(self, other, copy_price=False, copy_impact_item=False):
         '''
         Copy the information of another stream without creating a new stream.
 
@@ -814,6 +898,10 @@ class WasteStream(SanStream):
         '''
         Return a new stream that shares all data with this one.
 
+        Note that unlike other properties, the price of the two streams are not
+        connected, i.e., the price of the new stream will be the same as the
+        original one upon creation, but then they can be different.
+
         Parameters
         ----------
         ID : str
@@ -827,7 +915,15 @@ class WasteStream(SanStream):
         >>> set_thermo(cmps)
         >>> ws1 = WasteStream('ws1', Water=100, NaCl=1)
         >>> ws2 = ws1.proxy('ws2')
-        >>> ws2.conc is ws1.conc
+        >>> ws2.mol is ws1.mol
+        True
+        >>> # Note that concentration is always calculated (mass/vol) upon request,
+        >>> # so `ws2.conc is ws1.conc` will return False
+        >>> import numpy as np
+        >>> np.all(ws2.conc==ws1.conc)
+        True
+        >>> ws1.imol['Water'] = 10000
+        >>> np.all(ws2.conc==ws1.conc)
         True
         '''
         new = SanStream.proxy(self, ID=ID)
@@ -987,6 +1083,8 @@ class WasteStream(SanStream):
         '''
         if flow_tot == 0: raise RuntimeError(f'{repr(self)} is empty')
         if bulk_liquid_ID in concentrations.keys():
+            for i in range(8):
+                warn('\n', stacklevel=i)
             C_bulk = concentrations.pop(bulk_liquid_ID)
             warn(f'ignored concentration specified for {bulk_liquid_ID}:{C_bulk}')
 
@@ -1171,6 +1269,7 @@ class WasteStream(SanStream):
         cmps.refresh_constants()
 
         #************ convert concentrations to flow rates *************
+        cmp_dct.pop('H2O', None) # avoid warning related to H2O as the bulk liquid
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
         new.ratios = r
 
@@ -1324,6 +1423,7 @@ class WasteStream(SanStream):
         cmps.refresh_constants()
 
         #************ convert concentrations to flow rates *************
+        cmp_dct.pop('H2O', None) # avoid warning related to H2O as the bulk liquid
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
         new.ratios = r
 
@@ -1478,6 +1578,7 @@ class WasteStream(SanStream):
         cmps.refresh_constants()
 
         #************ convert concentrations to flow rates *************
+        cmp_dct.pop('H2O', None) # avoid warning related to H2O as the bulk liquid
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
         new.ratios = r
 
@@ -1627,6 +1728,7 @@ class WasteStream(SanStream):
         cmps.refresh_constants()
 
         #************ convert concentrations to flow rates *************
+        cmp_dct.pop('H2O', None) # avoid warning related to H2O as the bulk liquid
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
         new.ratios = r
 
@@ -1649,8 +1751,8 @@ class MissingWasteStream(MissingSanStream):
 
     def materialize_connection(self, ID=''):
         '''
-        Disconnect this missing stream from any unit operations and 
-        replace it with a material stream. 
+        Disconnect this missing stream from any unit operations and
+        replace it with a material stream.
         '''
         source = self._source
         sink = self._sink
@@ -1745,6 +1847,11 @@ class MissingWasteStream(MissingSanStream):
     @property
     def dry_mass(self):
         '''[float] Total solids.'''
+        return 0.
+
+    @property
+    def density(self):
+        '''[float] Density of the stream, in mg/L (kg/m3).'''
         return 0.
 
     #!!! Keep this up-to-date with WasteStream

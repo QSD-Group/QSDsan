@@ -211,7 +211,7 @@ class ActivatedSludgeProcess(SanUnit):
     # Equation/page numbers are noted for the 2001 Rittmann and McCarty book
     def _run(self):
         inf, air = self.ins
-        self._inf.copy_like(inf)
+        self._inf.copy_flow(inf)
         eff, was, emission = self.outs
         air.phase = emission.phase = 'g'
         Q = auom('m3/hr').convert(inf.F_vol, 'L/d')
