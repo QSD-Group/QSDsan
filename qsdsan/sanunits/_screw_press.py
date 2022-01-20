@@ -22,12 +22,12 @@ for license details.
 
 import numpy as np
 from qsdsan import SanUnit, Construction
-from qsdsan.sanunits._sludge_separator import SludgeSeparator
+from . import SludgeSeparator
 from qsdsan.utils.loading import load_data, data_path
 import os
 __all__ = ('ScrewPress',)
 
-data_path += 'sanunit_data/_screw_press.tsv'
+data_path += '/sanunit_data/_screw_press.tsv'
 #path to csv with all the inputs
 #data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_screw_press.csv' 
 #path =  os.path.abspath(os.path.dirname('_screw_press.csv'))

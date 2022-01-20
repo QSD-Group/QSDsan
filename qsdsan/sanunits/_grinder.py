@@ -30,7 +30,7 @@ __all__ = ('Grinder',)
 
 #path to csv with all the inputs
 #data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_grinder.csv'
-data_path += 'sanunit_data/_grinder.tsv'
+data_path += '/sanunit_data/_grinder.tsv'
 
 ### 
 class Grinder(SanUnit):

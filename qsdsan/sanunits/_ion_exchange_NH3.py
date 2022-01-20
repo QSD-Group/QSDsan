@@ -26,7 +26,7 @@ __all__ = ('IonExchangeNH3',)
 #path to csv with all the inputs
 #data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_ion_exchange_NH3.csv'
 #data_path = os.path.abspath(os.path.dirname('_ion_exchange_NH3.csv'))
-data_path += 'sanunit_data/_ion_exchange_NH3.tsv'
+data_path += '/sanunit_data/_ion_exchange_NH3.tsv'
 # data_path += 'sanunit_data/_carbonizer_base.csv'
 
 ### 

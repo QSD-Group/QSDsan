@@ -27,7 +27,7 @@ from qsdsan.utils.loading import load_data, data_path
 import os
 __all__ = ('PollutionControlDevice',)
 
-data_path += 'sanunit_data/_pollution_control_device.tsv'
+data_path += '/sanunit_data/_pollution_control_device.tsv'
 
 #data_path = '//Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_pollution_control_device.csv'
 

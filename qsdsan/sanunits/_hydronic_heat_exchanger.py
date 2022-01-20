@@ -37,7 +37,7 @@ __all__ = ('HydronicHeatExchanger',)
 #data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_hydronic_heat_exchanger.csv'
 
 #data_path = os.path.abspath(os.path.dirname('_hydronic_heat_exchanger.csv'))
-data_path += 'sanunit_data/_hydronic_heat_exchanger.tsv'
+data_path += '/sanunit_data/_hydronic_heat_exchanger.tsv'
 
 ### 
 class HydronicHeatExchanger(SanUnit):

@@ -30,7 +30,7 @@ __all__ = ('IndustrialControlPanel',)
 #path to csv with all the inputs
 #data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_industrial_control_panel.csv'
 #data_path = os.path.abspath(os.path.dirname('_industrial_control_panel.csv'))
-data_path += 'sanunit_data/_industrial_control_panel.tsv'
+data_path += '/sanunit_data/_industrial_control_panel.tsv'
 
 ### 
 class IndustrialControlPanel(SanUnit):

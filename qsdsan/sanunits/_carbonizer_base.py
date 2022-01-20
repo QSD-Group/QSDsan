@@ -26,7 +26,7 @@ __all__ = ('CarbonizerBase',)
 #path to csv with all the inputs
 
 #data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_carbonizer_base.csv'
-data_path += 'sanunit_data/_carbonizer_base.tsv'
+data_path += '/sanunit_data/_carbonizer_base.tsv'
 
 ### 
 class CarbonizerBase(SanUnit):

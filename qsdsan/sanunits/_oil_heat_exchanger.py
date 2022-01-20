@@ -30,7 +30,7 @@ __all__ = ('OilHeatExchanger',)
 
 #data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_oil_heat_exchanger.csv'
 #data_path = os.path.abspath(os.path.dirname('_oil_heat_exchanger.csv'))
-data_path += 'sanunit_data/_oil_heat_exchanger.tsv'
+data_path += '/sanunit_data/_oil_heat_exchanger.tsv'
 
 ### 
 class OilHeatExchanger(SanUnit):

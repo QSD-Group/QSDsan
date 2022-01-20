@@ -37,7 +37,7 @@ __all__ = ('HousingBiogenicRefinery',)
 
 #data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_housing_biogenic_refinery.csv'
 
-data_path += 'sanunit_data/_housing_biogenic_refinery.tsv'
+data_path += '/sanunit_data/_housing_biogenic_refinery.tsv'
 
 ### 
 class HousingBiogenicRefinery(SanUnit):
