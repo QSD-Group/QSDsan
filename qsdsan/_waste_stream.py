@@ -817,7 +817,7 @@ class WasteStream(SanStream):
         return self.F_mass/self.F_vol
 
 
-    def copy(self, new_ID='', copy_price=False, copy_impact_item=True,
+    def copy(self, new_ID='', copy_price=False, copy_impact_item=False,
              ws_properties=True):
         '''
         Copy the information of another stream.
@@ -862,7 +862,7 @@ class WasteStream(SanStream):
     __copy__ = copy
 
 
-    def copy_like(self, other, copy_price=False, copy_impact_item=True):
+    def copy_like(self, other, copy_price=False, copy_impact_item=False):
         '''
         Copy the information of another stream without creating a new stream.
 
@@ -1269,8 +1269,7 @@ class WasteStream(SanStream):
         cmps.refresh_constants()
 
         #************ convert concentrations to flow rates *************
-        try: cmp_dct.pop('H2O') # avoid the warning
-        except KeyError: pass
+        cmp_dct.pop('H2O', None) # avoid warning related to H2O as the bulk liquid
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
         new.ratios = r
 
@@ -1424,8 +1423,7 @@ class WasteStream(SanStream):
         cmps.refresh_constants()
 
         #************ convert concentrations to flow rates *************
-        try: cmp_dct.pop('H2O') # avoid the warning
-        except KeyError: pass
+        cmp_dct.pop('H2O', None) # avoid warning related to H2O as the bulk liquid
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
         new.ratios = r
 
@@ -1580,8 +1578,7 @@ class WasteStream(SanStream):
         cmps.refresh_constants()
 
         #************ convert concentrations to flow rates *************
-        try: cmp_dct.pop('H2O') # avoid the warning
-        except KeyError: pass
+        cmp_dct.pop('H2O', None) # avoid warning related to H2O as the bulk liquid
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
         new.ratios = r
 
@@ -1731,8 +1728,7 @@ class WasteStream(SanStream):
         cmps.refresh_constants()
 
         #************ convert concentrations to flow rates *************
-        try: cmp_dct.pop('H2O') # avoid the warning
-        except KeyError: pass
+        cmp_dct.pop('H2O', None) # avoid warning related to H2O as the bulk liquid
         new.set_flow_by_concentration(flow_tot, cmp_dct, units)
         new.ratios = r
 

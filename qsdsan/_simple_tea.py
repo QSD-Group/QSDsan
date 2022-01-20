@@ -423,7 +423,7 @@ class SimpleTEA(TEA):
     def FOC(self):
         '''
         [float] Fixed operating cost, including maintenance, labor, and any additional
-        operaitng expenditure other than chemical inputs and utilities.
+        operating expenditure other than chemical inputs and utilities.
         '''
         return self._FOC(self.FCI)
 
@@ -511,7 +511,7 @@ class SimpleTEA(TEA):
     @property
     def EAC(self):
         '''
-        [float] Equvalent annual cost calculated as the sum of `annualized_CAPEX` and
+        [float] Equivalent annual cost calculated as the sum of `annualized_CAPEX` and
         `AOC` (annual operating cost).
         '''
         return self.annualized_CAPEX+self.AOC

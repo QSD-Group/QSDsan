@@ -64,7 +64,7 @@ class SanStream(Stream):
         self._stream_impact_item = stream_impact_item
         self._impact_item = self._stream_impact_item
 
-    def copy(self, new_ID='', copy_price=False, copy_impact_item=True):
+    def copy(self, new_ID='', copy_price=False, copy_impact_item=False):
         '''
         Copy the information of another stream.
 
@@ -109,7 +109,7 @@ class SanStream(Stream):
     __copy__ = copy
 
 
-    def copy_like(self, other, copy_price=False, copy_impact_item=True):
+    def copy_like(self, other, copy_price=False, copy_impact_item=False):
         '''
         Copy the information of another stream without creating a new stream.
 
