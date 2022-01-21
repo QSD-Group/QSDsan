@@ -125,7 +125,9 @@ def symbolize(coeff_dct, components, conserved_for, parameters):
         coeff_dct = dict(zip(IDs, simplify(v.subs(sol))))
         del unknowns
     else:
-        coeff_dct = {k: simplify(parse_expr(v, local_dict=parameters)) for k, v in coeff_dct.items()}
+        isa = isinstance
+        coeff_dct = {k: simplify(parse_expr(v, local_dict=parameters)) \
+                     if isa(v, str) else v for k, v in coeff_dct.items()}
     return coeff_dct
 
 def get_stoichiometric_coeff(reaction, ref_component, components, conserved_for, parameters):
