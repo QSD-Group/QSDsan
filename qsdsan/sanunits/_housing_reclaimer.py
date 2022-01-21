@@ -17,7 +17,11 @@ __all__ = ('HousingReclaimer',)
 
 data_path += 'sanunit_data/_housing_reclaimer.csv'
 
+X = 4 #number of reclaimers
 
+P = 5/4
+
+D = 5
 
 class HousingReclaimer(SanUnit):
     '''
@@ -50,7 +54,7 @@ class HousingReclaimer(SanUnit):
         #find rough value for FRP for tank 
         design = self.design_results
         #!!! Add later design['Aluminum'] = aluminum_quant = self.aluminum_weight
-        design['Steel'] = steel_quant = (self.steel_weight + self.framework_weight + self.fittings_weight)
+        design['Steel'] = steel_quant = (self.steel_weight + (self.framework_weight/4) + self.fittings_weight)
         self.construction = ((Construction(item='Steel', quantity = steel_quant, quantity_unit = 'kg')))
         self.add_construction(add_cost=False)
         
@@ -61,8 +65,7 @@ class HousingReclaimer(SanUnit):
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
         self.baseline_purchase_costs['Housing'] = ((self.frame + self.extrusion + self.angle_frame + 
-                self.angle + self.door_sheet + self.plate_valve) * 4) + (self.powder + 
-                (self.container * (7/9))  + ((self.doors * (7/9)) + self.insulation))
+                self.angle + self.door_sheet + self.plate_valve + self.powder) * X) + ((self.container * (P))  + (self.doors * D))
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
 

@@ -15,6 +15,7 @@ __all__ = ('ECR_Reclaimer',)
 
 data_path += 'sanunit_data/_ECR_Reclaimer.csv'
 
+X = 4 #number of reclaimers
 
 class ECR_Reclaimer(SanUnit):
     '''
@@ -63,7 +64,7 @@ class ECR_Reclaimer(SanUnit):
 
     def _design(self):
         design = self.design_results
-        design['Titanium'] = electrode_quant = self.Titanium_weight * 4
+        design['Titanium'] = electrode_quant = self.Titanium_weight * X
         self.construction = ((Construction(item='Titanium', quantity = electrode_quant, quantity_unit = 'kg')))
         self.add_construction(add_cost=False)
  
@@ -72,17 +73,17 @@ class ECR_Reclaimer(SanUnit):
         #purchase_costs is used for capital costs
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.baseline_purchase_costs['EC_brush'] = (self.EC_brush * 4)
-        self.baseline_purchase_costs['EC_cell'] = (self.EC_cell * 4)
+        self.baseline_purchase_costs['EC_brush'] = (self.EC_brush * X)
+        self.baseline_purchase_costs['EC_cell'] = (self.EC_cell * X)
         
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
-        self.power_utility(self.power_demand * 4 / 1000) #kW
+        self.power_utility(self.power_demand * X / 1000) #kW
         #self.power_utility(self.power_demand * self.working_time)
     
     def _calc_replacement_cost(self):
         ecr_replacement_cost = ((self.EC_cell * (20/self.EC_cell_lifetime)) + 
-        (self.EC_brush * (20/self.EC_brush_lifetime))) * 4 #USD/yr
+        (self.EC_brush * (20/self.EC_brush_lifetime))) * X #USD/yr
         return ecr_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
 
         

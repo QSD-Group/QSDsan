@@ -29,6 +29,8 @@ __all__ = ('IonExchangeReclaimer',)
 
 data_path += 'sanunit_data/_ion_exchange_reclaimer.csv'
 
+X = 4 #number of reclaimers
+
 ### 
 class IonExchangeReclaimer(SanUnit):
     '''
@@ -99,19 +101,19 @@ class IonExchangeReclaimer(SanUnit):
         
         #from Lena's info 
         # Zeolite
-        zeolite_demand_time = (self.zeolite_weight / (self.zeolite_lifetime*365*24)) * 4 # kg zeolite / hr
+        zeolite_demand_time = (self.zeolite_weight / (self.zeolite_lifetime*365*24)) * X # kg zeolite / hr
         #zeolite_demand_influent = zeolite_demand_time / waste.F_vol # kg zeolite / m3 treated
         #zeolite_cost_day = zeolite_demand_time * 24 * (self.zeolite/self.zeolite_weight_per_cost) # $ zeolite / d
         zeolite_in.imass['Zeolite'] = zeolite_demand_time
         zeolite_out.imass['Zeolite'] = zeolite_demand_time
         
         # GAC
-        gac_demand_time = ((self.gac_weight * self.gac_annual_replacement) / (365*24)) * 4 # kg gac / hr
+        gac_demand_time = ((self.gac_weight * self.gac_annual_replacement) / (365*24)) * X # kg gac / hr
         gac_in.imass['GAC'] = gac_demand_time
         gac_out.imass['GAC'] = gac_demand_time
         
         # KCl
-        self.KCl_demand_time = ((self.KCl_weight * self.regen_freq_per_yr) / (365*24)) * 4 # kg KCl / hr
+        self.KCl_demand_time = ((self.KCl_weight * self.regen_freq_per_yr) / (365*24)) * X # kg KCl / hr
         KCl.imass['PotassiumChloride'] = self.KCl_demand_time
 
 
@@ -128,9 +130,9 @@ class IonExchangeReclaimer(SanUnit):
     def _design(self):
         design = self.design_results
         
-        design['Plastic'] = P_quant = self.Plastic_weight * 4
-        design['PVC'] = PVC_quant = self.PVC_weight * 4
-        design['Steel'] = S_quant = self.Steel_weight * 4
+        design['Plastic'] = P_quant = self.Plastic_weight * X
+        design['PVC'] = PVC_quant = self.PVC_weight * X
+        design['Steel'] = S_quant = self.Steel_weight * X
         
         self.construction = (
             Construction(item='Plastic', quantity = P_quant, quantity_unit = 'kg'),
@@ -144,25 +146,25 @@ class IonExchangeReclaimer(SanUnit):
      
     def _calc_labor_cost(self):
 		# I'm calculation
-        labor_cost = (self.wages * self.labor_maintenance_zeolite_regeneration) * 4
+        labor_cost = (self.wages * self.labor_maintenance_zeolite_regeneration) * X
         return labor_cost / (365 * 24) # USD/hr (all items are per hour)
     
     def _calc_replacement_cost(self):
         ion_exchange_replacement_cost = (((self.Zeolite_cost * self.gac_annual_replacement)
                                          + (self.KCl_cost * self.KCl_weight + self.regen_freq_per_yr) 
                                          + (self.GAC_cost * self.gac_annual_replacement)
-                                         + (self.ion_exchange_replacement_other_parts /10))) * 4 #USD/yr
+                                         + (self.ion_exchange_replacement_other_parts /10))) * X #USD/yr
         return ion_exchange_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
                  
     
     def _cost(self):
 
-        self.baseline_purchase_costs['Pipes'] = (self.four_in_pipe_SCH40 + self.four_in_pipe_SCH80) * 4
+        self.baseline_purchase_costs['Pipes'] = (self.four_in_pipe_SCH40 + self.four_in_pipe_SCH80) * X
         self.baseline_purchase_costs['fittings'] = (self.four_in_pipe_SCH80_endcap + self.NRV + self.connector + 
-        self.ball_valve + self.three_eight_elbow + self.ten_ten_mm_tee + self.OD_tube + self.four_in_pipe_clamp) * 4
+        self.ball_valve + self.three_eight_elbow + self.ten_ten_mm_tee + self.OD_tube + self.four_in_pipe_clamp) * X
                                            
-        self.baseline_purchase_costs['GAC_Zeolite'] = (self.GAC_zeolite_mesh + self.GAC_cost + self.Zeolite_cost) * 4
-        self.baseline_purchase_costs['Regeneration Solution'] = (self.KCl_cost * self.KCl_weight) * 4
+        self.baseline_purchase_costs['GAC_Zeolite'] = (self.GAC_zeolite_mesh + self.GAC_cost + self.Zeolite_cost) * X
+        self.baseline_purchase_costs['Regeneration Solution'] = (self.KCl_cost * self.KCl_weight) * X
             
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
      

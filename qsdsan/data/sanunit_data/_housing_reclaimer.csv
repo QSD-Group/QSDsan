@@ -8,8 +8,7 @@ plate_valve,SS304 Plate for valve mtg 120 x 120 x 5 thk,USD,7.2,6.48,7.92,triang
 powder,Powder coating,USD,33.33,29.997,36.663,triangular,Duke BOM
 aluminum_weight,,kg,1.125,1.0125,1.2375,uniform,SI
 steel_weight,,kg,1.603,1.4427,1.7633,uniform,SI
-container,Container of entire system,USD,8600,6450,10750,uniform,Based on containers from other systems with 25% uncertainty
-doors,door of toilet and equipment - 9 pcs,USD,1314,985.5,1642.5,uniform,Based on containers from other systems with 25% uncertainty
-insulation,heat insulation,USD,1846,1384.5,2307.5,uniform,Based on containers from other systems with 25% uncertainty
+container,Container of entire system,USD,6538,4903.5,8172.5,uniform,Based on containers from other systems with 25% uncertainty
+doors,door of toilet and equipment - 9 pcs,USD/door,146,131.4,160.6,uniform,Based on one door 
 framework_weight,housing_framework_steel_weight,kg,1270,1016,1524,uniform,https://www.seabox.com/cutsheets/SB822.0.pdf
 fittings_weight,housing_fittings_steel_weight,kg,1,0.8,1.2,uniform,Approximation

@@ -17,7 +17,7 @@ __all__ = ('PrimaryReclaimer',)
 
 data_path += 'sanunit_data/_primary_reclaimer.csv'
 
-
+P = 4/4
 
 class PrimaryReclaimer(SanUnit, Decay):
     '''
@@ -59,14 +59,11 @@ class PrimaryReclaimer(SanUnit, Decay):
      
     def _run(self):
         waste, MgOH2 = self.ins
-        self.ins[1].imass['MagnesiumHydroxide'] = (self.orthoP_post / self.MW_P / self.Mg_dose * self.MW_MgOH2)
+        self.ins[1].imass['MagnesiumHydroxide'] = (self.orthoP_post / self.MW_P / self.Mg_dose * self.MW_MgOH2)/24  # kg Mg(OH)2 per hr;
 
         treated, CH4, N2O, sludge, struvite = self.outs
         treated.copy_like(self.ins[0])
         CH4.phase = N2O.phase = 'g'
-        
-        
-        #MgOH2.imass['MagnesiumHydroxide'] =(self.orthoP_post_AnMBR / self.MW_P / self.Mg_dose * self.MW_MgOH2)  # kg Mg(OH)2 per hr;
         
         
         P_precipitated = self.orthoP_post * self.P_recovery  # kg precipitated-P/hr
@@ -122,8 +119,11 @@ class PrimaryReclaimer(SanUnit, Decay):
  
     def _cost(self):
         
-        self.baseline_purchase_costs['Tanks'] = (self.FRP_tank_cost + self.pump)
-        self.baseline_purchase_costs['Chemicals'] = (self.MgOH2_cost)
+        self.baseline_purchase_costs['Tanks'] = ((self.FRP_tank_cost * P) + self.pump)
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
+    
+    def _calc_replacement_cost(self):
+        Mg_cost = (self.orthoP_post / self.MW_P / self.Mg_dose * self.MW_MgOH2 * self.MgOH2_cost) * P
+        return Mg_cost # USD/hr (all items are per hour)
         
 
