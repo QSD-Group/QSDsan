@@ -185,9 +185,12 @@ class Process():
     def stoichiometry(self):
         '''[dict] Non-zero stoichiometric coefficients.'''
         allcmps = dict(zip(self._components.IDs, self._stoichiometry))
-        active_cmps = {k:v for k,v in allcmps.items() if v != 0}        
-        if isinstance(self._stoichiometry, list):
-            active_cmps = {k:v.subs(self._parameters) for k,v in active_cmps.items()}
+        active_cmps = {k:v for k,v in allcmps.items() if v != 0} 
+        isa = isinstance
+        if isa(self._stoichiometry, list):
+            active_cmps = {k:v.subs(self._parameters) \
+                           if not isa(v, (float, int)) else v \
+                               for k,v in active_cmps.items()}
         return active_cmps
         
     @property
