@@ -390,8 +390,8 @@ class Components(Chemicals):
         if default_compile:
             new.default_compile(lock_state_at='', particulate_ref='NaCl')
             new.compile()
-            # Add aliases (`set_synonym` is the same as `set_alias`)
-            new.set_synonym('H2O', 'Water')
+            # Add aliases
+            new.set_alias('H2O', 'Water')
             # Pre-define the group used in `composition` calculation
             new.define_group('S_VFA', ('S_Ac', 'S_Prop'))
             new.define_group('X_Stor', ('X_OHO_PHA', 'X_GAO_PHA', 'X_PAO_PHA',
@@ -473,7 +473,7 @@ class Components(Chemicals):
         except RuntimeError: # cannot compile due to missing properties
             cmps.default_compile(**default_compile_kwargs)
         for k, v in aliases.items():
-            cmps.set_synonym(k, v)
+            cmps.set_alias(k, v)
         return cmps
 
 
@@ -637,8 +637,8 @@ class CompiledComponents(CompiledChemicals):
         new = Components(components)
         new.compile()
         for i in new.IDs:
-            for j in self.get_synonyms(i):
-                try: new.set_synonym(i, j)
+            for j in self.get_aliases(i):
+                try: new.set_alias(i, j)
                 except: pass
         return new
 

@@ -118,7 +118,7 @@ In particular, ``QSDsan`` introduces:
    ImpactItem
    LCA
    Process
-   Streams
+   streams
    SanUnit
    SimpleTEA
    Transportation

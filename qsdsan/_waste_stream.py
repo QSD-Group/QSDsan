@@ -539,8 +539,7 @@ class WasteStream(SanStream):
 
             The composite variable will be calculated for the
             intersection of all designated constrains
-            (i.e., `subgroup`, `particle_size`, `degradability`, `organic`,
-             `volatile`, and `specification`).
+            (i.e., `subgroup`, `particle_size`, `degradability`, `organic`, `volatile`, and `specification`).
         unit : str
             The unit that the result will be returned in.
             If not provided, result will be in mg/L except for charge (mmol/L).
