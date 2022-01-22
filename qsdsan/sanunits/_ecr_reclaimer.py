@@ -78,8 +78,8 @@ class ECR_Reclaimer(SanUnit):
         
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
-        self.power_utility(self.power_demand * X / 1000) #kW
-        #self.power_utility(self.power_demand * self.working_time)
+        #self.power_utility(self.power_demand * X / 1000) #kW
+        self.power_utility(self.power_demand * 0)
     
     def _calc_replacement_cost(self):
         ecr_replacement_cost = ((self.EC_cell * (20/self.EC_cell_lifetime)) + 

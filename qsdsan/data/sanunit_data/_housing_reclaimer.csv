@@ -12,3 +12,4 @@ container,Container of entire system,USD,6538,4903.5,8172.5,uniform,Based on con
 doors,door of toilet and equipment - 9 pcs,USD/door,146,131.4,160.6,uniform,Based on one door 
 framework_weight,housing_framework_steel_weight,kg,1270,1016,1524,uniform,https://www.seabox.com/cutsheets/SB822.0.pdf
 fittings_weight,housing_fittings_steel_weight,kg,1,0.8,1.2,uniform,Approximation
+portable_toilet,,each,702.53,526.8975,878.1625,triangular,

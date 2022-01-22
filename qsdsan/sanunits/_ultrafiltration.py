@@ -28,7 +28,8 @@ __all__ = ('Ultrafiltration',)
 
 data_path += 'sanunit_data/_ultrafiltration_reclaimer.csv'
 
-X = 4 #number of reclaimers
+R = 4 #number of reclaimers
+
 ### 
 class Ultrafiltration(SanUnit):
     '''
@@ -74,8 +75,8 @@ class Ultrafiltration(SanUnit):
         design = self.design_results
         
         
-        design['Plastic'] = P_quant = self.Plastic_weight * X
-        design['Steel'] = S_quant = self.Steel_weight * X
+        design['Plastic'] = P_quant = self.Plastic_weight 
+        design['Steel'] = S_quant = self.Steel_weight 
         
         
         self.construction = (
@@ -88,19 +89,22 @@ class Ultrafiltration(SanUnit):
      #_cost based on amount of steel and stainless plus individual components
     def _cost(self):
 
-       self.baseline_purchase_costs['Pipes'] = (self.one_in_pipe_SCH40 + self.onehalf_in_pipe_SCH40 + self.three_in_pipe_SCH80) * X
+       self.baseline_purchase_costs['Pipes'] = (self.one_in_pipe_SCH40 + self.onehalf_in_pipe_SCH40 + self.three_in_pipe_SCH80)
        self.baseline_purchase_costs['fittings'] = (self.one_in_elbow_SCH80 + self.one_in_tee_SCH80 + self.one_in_SCH80
             + self.one_onehalf_in_SCH80 + self.onehalf_in_SCH80 + self.three_in_SCH80_endcap + self.one_one_NB_MTA
             + self.one_onehalf_NB_MTA + self.foot_valve + self.one_onehalf_in_SCH80_threadedtee + self.three_in_pipe_clamp
-            + self.one_in_pipe_clamp + self.onehalf_in_pipe_clamp + self.two_way_valve + self.UF_brush) * X
-       self.baseline_purchase_costs['UF_unit'] = (self.UF_unit) * X                
+            + self.one_in_pipe_clamp + self.onehalf_in_pipe_clamp + self.two_way_valve + self.UF_brush) 
+       self.baseline_purchase_costs['UF_unit'] = (self.UF_unit) * R               
           
        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
        
-       self.power_utility(self.power_demand * X / 1000) #kW
+       #If grid 
+       #self.power_utility(self.power_demand_4 / 1000) #kW
+       #If solar
+       self.power_utility(self.power_demand * 0) #kW
     
     def _calc_replacement_cost(self):
-        ultrafiltration_replacement_cost = (self.replacement_costs * X / 20) #USD/yr
+        ultrafiltration_replacement_cost = (self.replacement_costs / 20) #USD/yr
         return ultrafiltration_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
        
 
