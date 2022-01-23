@@ -17,9 +17,9 @@ __all__ = ('HousingReclaimer',)
 
 data_path += 'sanunit_data/_housing_reclaimer.csv'
 
-R = 4 - 1 #number of reclaimers
+# R = 4 - 1 #number of reclaimers
 
-P = 5
+P = 1
 
 #D = 5
 
@@ -65,7 +65,7 @@ class HousingReclaimer(SanUnit):
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
         self.baseline_purchase_costs['Housing'] = ((self.frame + self.extrusion + self.angle_frame + self.angle + self.door_sheet + self.plate_valve + self.powder)
-        + ((self.frame + self.extrusion + self.angle_frame + self.angle + self.door_sheet + self.plate_valve + self.powder) * .1 * R)
+        # + ((self.frame + self.extrusion + self.angle_frame + self.angle + self.door_sheet + self.plate_valve + self.powder) * .1 * R)
         + (self.portable_toilet * (P)))   #+ (self.doors * D))
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         

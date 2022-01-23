@@ -21,7 +21,7 @@ __all__ = ('SludgePasteurization',)
 
 data_path += 'sanunit_data/_sludge_pasteurization.tsv'
 
-P = 5/4
+P = 1/4
 
 class SludgePasteurization(SanUnit):
     '''

@@ -17,7 +17,7 @@ __all__ = ('SystemReclaimer',)
 
 data_path += 'sanunit_data/_system_reclaimer.csv'
 
-R = 4 - 1 #number of reclaimers
+# R = 1 #number of reclaimers
 
 
 
@@ -65,12 +65,12 @@ class SystemReclaimer(SanUnit):
                                          + self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
                                          + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
                                          + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
-                                         + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) 
-                                         + ((self.T_nut + self.die_cast_hinge + self.SLS_locks + self.DC_round_key
-                                         + self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
-                                         + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
-                                         + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
-                                         + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * R * .05))
+                                         + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank)) 
+                                         # + ((self.T_nut + self.die_cast_hinge + self.SLS_locks + self.DC_round_key
+                                         # + self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
+                                         # + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
+                                         # + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
+                                         # + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * R * .05))
         self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
         # #certain parts need to be replaced based on an expected lifefime

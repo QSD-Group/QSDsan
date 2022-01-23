@@ -91,7 +91,7 @@ class SolarReclaimer(SanUnit):
     def _cost(self):
         #purchase_costs is used for capital costs
         self.baseline_purchase_costs['Battery System'] = (self.battery_storage_cost + self.battery_holder_cost)
-        self.baseline_purchase_costs['Solar Cost'] = ((self.solar_cost * self.power_demand_120users) + self.solar_module_system 
+        self.baseline_purchase_costs['Solar Cost'] = ((self.solar_cost * self.power_demand_30users) + self.solar_module_system 
                                                       + self.inverter_cost)
         # self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
 

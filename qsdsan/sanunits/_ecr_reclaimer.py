@@ -15,7 +15,7 @@ __all__ = ('ECR_Reclaimer',)
 
 data_path += 'sanunit_data/_ECR_Reclaimer.csv'
 
-X = 4 #number of reclaimers
+X = 1 #number of reclaimers
 
 class ECR_Reclaimer(SanUnit):
     '''

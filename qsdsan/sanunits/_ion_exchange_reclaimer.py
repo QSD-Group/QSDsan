@@ -29,7 +29,7 @@ __all__ = ('IonExchangeReclaimer',)
 
 data_path += 'sanunit_data/_ion_exchange_reclaimer.csv'
 
-X = 4 #number of reclaimers
+X = 1 #number of reclaimers
 
 ### 
 class IonExchangeReclaimer(SanUnit):

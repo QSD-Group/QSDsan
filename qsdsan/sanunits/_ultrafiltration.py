@@ -28,7 +28,7 @@ __all__ = ('Ultrafiltration',)
 
 data_path += 'sanunit_data/_ultrafiltration_reclaimer.csv'
 
-R = 4 #number of reclaimers
+R = 1 #number of reclaimers
 
 ### 
 class Ultrafiltration(SanUnit):
