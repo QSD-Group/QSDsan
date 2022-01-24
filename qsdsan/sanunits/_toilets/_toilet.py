@@ -198,7 +198,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     @property
     def N_toilet(self):
         '''[int] Number of parallel toilets.'''
-        return self._N_toilet
+        return self._N_toilet or ceil(self.N_tot_user/self.N_user)
     @N_toilet.setter
     def N_toilet(self, i):
         if i is not None:
