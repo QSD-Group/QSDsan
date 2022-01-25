@@ -18,6 +18,7 @@ from warnings import warn
 from math import floor, ceil
 import numpy as np
 import pandas as pd
+from numba import njit
 
 __all__ = ('CSTR',
            'SBR',
@@ -34,6 +35,28 @@ def _add_aeration_to_growth_model(aer, model):
         processes = model
         processes.compile()
     return processes
+
+# %%
+
+@njit(cache=True)
+def dydt_cstr_no_rxn_fixed_aer(t, QC_ins, QC, dQC_ins, V_arr, Q_e_arr, _dstate, Cs):
+    Q_ins = QC_ins[:, -1]
+    C_ins = QC_ins[:, :-1]
+    flow_in = Q_ins @ C_ins / V_arr
+    Q_e_arr[:] = Q_ins.sum(axis=0)
+    _dstate[-1] = dQC_ins[:, -1].sum(axis=0)
+    flow_out = Q_e_arr * Cs / V_arr
+    _dstate[:-1] = flow_in - flow_out
+
+@njit(cache=True)
+def dydt_cstr_no_rxn_controlled_aer(t, QC_ins, QC, dQC_ins, V_arr, Q_e_arr, _dstate, Cs):
+    Q_ins = QC_ins[:, -1]
+    C_ins = QC_ins[:, :-1]
+    flow_in = Q_ins @ C_ins / V_arr
+    Q_e_arr[:] = Q_ins.sum(axis=0)
+    _dstate[-1] = dQC_ins[:, -1].sum(axis=0)
+    flow_out = Q_e_arr * Cs / V_arr
+    _dstate[:-1] = flow_in - flow_out 
 
 #%%
 class CSTR(SanUnit):
@@ -243,27 +266,17 @@ class CSTR(SanUnit):
             i = self.components.index(self._DO_ID)
             fixed_DO = self._aeration
             def dy_dt(t, QC_ins, QC, dQC_ins):
-                Q_ins = QC_ins[:, -1]
-                C_ins = QC_ins[:, :-1]
-                flow_in = Q_ins @ C_ins / V_arr
-                Q_e_arr[:] = sum(Q_ins)
-                _dstate[-1] = sum(dQC_ins[:, -1])
                 Cs = QC[:-1]
                 Cs[i] = fixed_DO
-                flow_out = Q_e_arr * Cs / V_arr
-                _dstate[:-1] = flow_in - flow_out + r(*Cs)
+                dydt_cstr_no_rxn_controlled_aer(t, QC_ins, QC, dQC_ins, V_arr, Q_e_arr, _dstate, Cs)
+                _dstate[:-1] += r(*Cs)
                 _dstate[i] = 0
                 _update_dstate()
         else:
             def dy_dt(t, QC_ins, QC, dQC_ins):
-                Q_ins = QC_ins[:, -1]
-                C_ins = QC_ins[:, :-1]
-                flow_in = Q_ins @ C_ins / V_arr
-                Q_e_arr[:] = sum(Q_ins)
-                _dstate[-1] = sum(dQC_ins[:, -1])
                 Cs = QC[:-1]
-                flow_out = Q_e_arr * Cs / V_arr
-                _dstate[:-1] = flow_in - flow_out + r(*Cs)                
+                dydt_cstr_no_rxn_fixed_aer(t, QC_ins, QC, dQC_ins, V_arr, Q_e_arr, _dstate, Cs)
+                _dstate[:-1] += r(*Cs)
                 _update_dstate()
 
         self._ODE = dy_dt
