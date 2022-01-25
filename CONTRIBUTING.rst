@@ -22,9 +22,13 @@ The following guideline is adapted from `BioSTEAM <https://biosteam.readthedocs.
 
 Forking and Cloning
 -------------------
+
+Use command-line interface
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 #. Fork ``QSDsan`` by going to its `GitHub homepage <https://github.com/QSD-Group/QSDsan>`_ and click the "Fork" button at the top right corner.
 
-#. Copy the link to **your** fork of ``QSDsan`` (you can find it in the green "Code" button on your forked GitHub ``QSDsan`` page), it should be something like:
+#. GitHub will open a new page showing your fork, click the green "Code" button on the top and copy the HTTPS address (there's a handy copy button next to the address), it should be something like:
 
 	.. code:: bash
 
@@ -102,11 +106,34 @@ Forking and Cloning
 	    git checkout -b REPLACE-ME-WITH-FEATURE-NAME
 
 
+Use GitHub Desktop
+^^^^^^^^^^^^^^^^^^
+
+If you are new to command-line interface, `GitHub Desktop <https://desktop.github.com/>`_ can be a good way to get started as it has a graphic interface, though less powerful.
+
+To see screenshots of the different interface, visit GitHub's documentations on `Cloning a repository from GitHub to GitHub Desktop <https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/adding-and-cloning-repositories/cloning-a-repository-from-github-to-github-desktop>`_
+
+#. Download and install GitHub Desktop.
+
+#. Fork ``QSDsan`` by going to its `GitHub homepage <https://github.com/QSD-Group/QSDsan>`_ and click the "Fork" button at the top right corner.
+
+#. GitHub will open a new page showing your fork, click the green "Code" button on the top and select "Open with GitHub Desktop".
+
+#. GitHub Desktop will automatically open, and it will ask you where you want to clone it, select a place that you like.
+
+#. Next, you will be prompted to select whether you want to contribute to the parent repository or for you own purpose, we would appreciate your contributing back to QSDsan, so please select "To contribute to the parent repository" :). You can read more about this, including how to change this setting, in this post about `fork behavior <https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/adding-and-cloning-repositories/cloning-and-forking-repositories-from-github-desktop#managing-fork-behavior>`_.
+
+#. In the opened dialogue, click on the "Fetch origin" button on the top, then if you click the "Current Branch" button (next to the "Fetch origin" button), you should see a list of the branches on your fork (start with "origin", e.g., "origin/main") and those from the root repo managed by us (start with "upstream", e.g., "upstream/main"). All branches on your fork are copied from the corresponding branch from the root repo (i.e., "origin/main" copied from "upstream/main") at this moment. You can choose which one you would like to work on, if unsure, just select main (i.e., "origin/main").
+
+#. You can work on your changes locally, `make commits <https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/making-changes-in-a-branch/committing-and-reviewing-changes-to-your-project>`_, then `push <https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/making-changes-in-a-branch/pushing-changes-to-github>`_ to your fork remote (i.e., on GitHub's website). Pushing them online would allow you to save/back up the history of your changes, and makes it super easy for us to help you debug.
+
+#. In the future, whenever you want to merge changes from QSDsan (e.g., we just release a new feature), click on the "Current Branch" button, then click the "Choose a branch to merge into main" ("main" would be the name of the branch that you are working on) on the bottom of the drop-down, then select the branch from the root repo (starting with "upstream", e.g., "upstream/main") that you want to pull changes from, and click the "Create a merge commit" button on the bottom. Note that you can control whether Git does the pull ("merge", "rebase", etc.), check Git/GitHub's documentation if you want to know more. Also note that sometimes you need to `resolve conflicts <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/resolving-a-merge-conflict-on-github>`_ prior to merging.
+
+
 Note
 ^^^^
 #. We use fork as the default way for collaboration (i.e., for all first-time contributors). If you are a constant contributor and have independently made at least one successful and meaningful contribution through forking, you will be given the write access to ``QSDsan`` and you can use branch for easier code syncing. We will also jinvite you to join the ``QSDsan`` team.
 #. GitHub has really detailed documentation on `forking <https://docs.github.com/en/github/getting-started-with-github/fork-a-repo>`_ (and almost everything else).
-#. If you are new to command-line interface, `GitHub Desktop <https://desktop.github.com/>`_ is recommended.
 
 
 Developing Modules
