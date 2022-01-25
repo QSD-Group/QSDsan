@@ -68,6 +68,7 @@ class IonExchangeReclaimer(SanUnit):
         
         SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         self.if_gridtied = if_gridtied
+        self.price_ratio = 1
 
 # load data from csv each name will be self.name    
         data = load_data(path=data_path)
@@ -154,19 +155,24 @@ class IonExchangeReclaimer(SanUnit):
                                          + (self.KCl_cost * self.KCl_weight + self.regen_freq_per_yr) 
                                          + (self.GAC_cost * self.gac_annual_replacement)
                                          + (self.ion_exchange_replacement_other_parts /10))) * X #USD/yr
-        return ion_exchange_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
+        return ion_exchange_replacement_cost/ (365 * 24)  * self.price_ratio # USD/hr (all items are per hour)
                  
     
     def _cost(self):
-
-        self.baseline_purchase_costs['Pipes'] = (self.four_in_pipe_SCH40 + self.four_in_pipe_SCH80) * X
-        self.baseline_purchase_costs['fittings'] = (self.four_in_pipe_SCH80_endcap + self.NRV + self.connector + 
+        
+        C = self.baseline_purchase_costs
+        C['Pipes'] = (self.four_in_pipe_SCH40 + self.four_in_pipe_SCH80) * X
+        C['fittings'] = (self.four_in_pipe_SCH80_endcap + self.NRV + self.connector + 
         self.ball_valve + self.three_eight_elbow + self.ten_ten_mm_tee + self.OD_tube + self.four_in_pipe_clamp) * X
                                            
-        self.baseline_purchase_costs['GAC_Zeolite'] = (self.GAC_zeolite_mesh + self.GAC_cost + self.Zeolite_cost) * X
-        self.baseline_purchase_costs['Regeneration Solution'] = (self.KCl_cost * self.KCl_weight) * X
+        C['GAC_Zeolite'] = (self.GAC_zeolite_mesh + self.GAC_cost + self.Zeolite_cost) * X
+        C['Regeneration Solution'] = (self.KCl_cost * self.KCl_weight) * X
             
-        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+            C[equipment] = cost * ratio
+        
+        #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
      
         add_OPEX = self._calc_replacement_cost() 
         self._add_OPEX = {'Additional OPEX': add_OPEX}

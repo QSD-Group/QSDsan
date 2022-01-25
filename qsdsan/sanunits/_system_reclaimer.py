@@ -30,7 +30,7 @@ class SystemReclaimer(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', 
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
-
+        self.price_ratio = 1
 
 # load data from csv each name will be self.name    
         data = load_data(path=data_path)
@@ -57,11 +57,9 @@ class SystemReclaimer(SanUnit):
         
  
     def _cost(self):
-        
-        #purchase_costs is used for capital costs
-        #can use quantities from above (e.g., self.design_results['StainlessSteel'])
-        #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.baseline_purchase_costs['System'] = ((self.T_nut + self.die_cast_hinge + self.SLS_locks + self.DC_round_key
+        C = self.baseline_purchase_costs
+
+        C['System'] = ((self.T_nut + self.die_cast_hinge + self.SLS_locks + self.DC_round_key
                                          + self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
                                          + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
                                          + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
@@ -71,7 +69,11 @@ class SystemReclaimer(SanUnit):
                                          # + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
                                          # + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
                                          # + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * R * .05))
-        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+            C[equipment] = cost * ratio
+        
+        #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
         # #certain parts need to be replaced based on an expected lifefime
         # #the cost of these parts is considered along with the cost of the labor to replace them
@@ -85,7 +87,7 @@ class SystemReclaimer(SanUnit):
         self.power_utility(self.power_demand * 0)
         
     def _calc_replacement_cost(self):
-        controls_replacement_cost = (self.replacement_costs) / 20 #USD/yr
+        controls_replacement_cost = (self.replacement_costs) / 20 * self.price_ratio #USD/yr
         return controls_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
         
 

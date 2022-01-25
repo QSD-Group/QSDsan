@@ -42,6 +42,7 @@ class PrimaryReclaimer(SanUnit, Decay):
     
     def __init__(self, ID='', ins=None, outs=(), **kwargs):
         SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
+        self.price_ratio = 1
         
         data = load_data(path=data_path)
         for para in data.index:
@@ -118,12 +119,17 @@ class PrimaryReclaimer(SanUnit, Decay):
         self.add_construction(add_cost = False)
  
     def _cost(self):
+        C = self.baseline_purchase_costs
+        C['Tanks'] = ((self.FRP_tank_cost * P) + self.pump)
         
-        self.baseline_purchase_costs['Tanks'] = ((self.FRP_tank_cost * P) + self.pump)
-        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+            C[equipment] = cost * ratio
+        
+        #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
     
     def _calc_replacement_cost(self):
         Mg_cost = (self.orthoP_post / self.MW_P / self.Mg_dose * self.MW_MgOH2 * self.MgOH2_cost) * P
-        return Mg_cost # USD/hr (all items are per hour)
+        return Mg_cost * self.price_ratio # USD/hr (all items are per hour)
         
 

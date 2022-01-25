@@ -21,7 +21,7 @@ __all__ = ('SludgePasteurization',)
 
 data_path += 'sanunit_data/_sludge_pasteurization.tsv'
 
-P = 1/4
+P = 5/4
 
 class SludgePasteurization(SanUnit):
     '''
@@ -62,6 +62,7 @@ class SludgePasteurization(SanUnit):
         self._sludge_temp = sludge_temp
         self._temp_pasteurization = temp_pasteurization
         self.lhv_lpg = lhv_lpg  
+        self.price_ratio = 1
         
         data = load_data(path=data_path)
         
@@ -120,17 +121,23 @@ class SludgePasteurization(SanUnit):
         self.add_construction(add_cost=False)
         
     def _cost(self):
-
-        self.baseline_purchase_costs['Dryer'] = 0 #self.sludge_dryer
-        self.baseline_purchase_costs['Barrel'] = 0 #self.sludge_barrel
-        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
+        C= self.baseline_purchase_costs
+        C['Dryer'] = 0 #self.sludge_dryer
+        C['Barrel'] = 0 #self.sludge_barrel
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+            C[equipment] = cost * ratio
+        
+        #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
+        
+        
         self.add_OPEX =  self._calc_replacement_cost() + self._calc_labor_cost() # USD/hr (all items are per hour)
         self.power_demand = 0          
         self.power_utility(self.power_demand)
 
     def _calc_replacement_cost(self):
         sludge_replacement_cost = (self.sludge_dryer + self.sludge_barrel) / 10 * P #USD/yr
-        return sludge_replacement_cost/ (20 * 365 * 24) # USD/hr (all items are per hour)
+        return sludge_replacement_cost/ (20 * 365 * 24) * self.price_ratio# USD/hr (all items are per hour)
             
     # def _calc_maintenance_labor_cost(self):
     #     sludge_maintenance_labor_cost = (self.sludge_labor_maintenance * self.wages)

@@ -79,7 +79,7 @@ class MURTToilet(Toilet):
         self._safety_factor = safety_factor
         self.ppl = ppl
         self.N_user = N_user
-        
+        self.price_ratio = 1
 
         data = load_data(path=data_path)
         for para in data.index:
@@ -179,18 +179,16 @@ class MURTToilet(Toilet):
         self.add_construction(add_cost=False)
 
     def _cost(self):
-        self.baseline_purchase_costs['Ceramic Toilets'] = ((self.squatting_pan_cost + 
-                                                    self.urinal_cost) * self.N_toilet)
-        self.baseline_purchase_costs['Fan'] = ((self.fan_cost * self.N_toilet))
-        self.baseline_purchase_costs['Misc. parts'] = ((self.led_cost +
-                                              self.anticor_floor_cost +
-                                              self.circuit_change_cost +
-                                              self.pipe_cost)
-                                              * self.N_toilet)
+        C = self.baseline_purchase_costs
+        C['Ceramic Toilets'] = ((self.squatting_pan_cost + self.urinal_cost) * self.N_toilet)
+        C['Fan'] = ((self.fan_cost * self.N_toilet))
+        C['Misc. parts'] = ((self.led_cost + self.anticor_floor_cost + self.circuit_change_cost + self.pipe_cost) * self.N_toilet)
 
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+            C[equipment] = cost * ratio
         
-        
-        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
+        #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
 
 
     

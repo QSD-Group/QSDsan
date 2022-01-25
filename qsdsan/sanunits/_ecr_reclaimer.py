@@ -15,7 +15,7 @@ __all__ = ('ECR_Reclaimer',)
 
 data_path += 'sanunit_data/_ECR_Reclaimer.csv'
 
-X = 1 #number of reclaimers
+X = 4 #number of reclaimers
 
 class ECR_Reclaimer(SanUnit):
     '''
@@ -41,6 +41,7 @@ class ECR_Reclaimer(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), **kwargs):
         SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         
+        self.price_ratio = 1
         data = load_data(path=data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
@@ -70,13 +71,16 @@ class ECR_Reclaimer(SanUnit):
  
     def _cost(self):
         
-        #purchase_costs is used for capital costs
-        #can use quantities from above (e.g., self.design_results['StainlessSteel'])
-        #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.baseline_purchase_costs['EC_brush'] = (self.EC_brush * X)
-        self.baseline_purchase_costs['EC_cell'] = (self.EC_cell * X)
+        C = self.baseline_purchase_cost
+
+        C['EC_brush'] = (self.EC_brush) * X
+        C['EC_cell'] = (self.EC_cell) * X
         
-        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+            C[equipment] = cost * ratio
+        
+        #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
         #self.power_utility(self.power_demand * X / 1000) #kW
         self.power_utility(self.power_demand * 0)
@@ -84,7 +88,7 @@ class ECR_Reclaimer(SanUnit):
     def _calc_replacement_cost(self):
         ecr_replacement_cost = ((self.EC_cell * (20/self.EC_cell_lifetime)) + 
         (self.EC_brush * (20/self.EC_brush_lifetime))) * X #USD/yr
-        return ecr_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
+        return ecr_replacement_cost/ (365 * 24) * self.price_ratio # USD/hr (all items are per hour)
 
         
        

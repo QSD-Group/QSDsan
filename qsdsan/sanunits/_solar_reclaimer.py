@@ -48,6 +48,7 @@ class SolarReclaimer(SanUnit):
         #     self._N_outs = self._N_ins = len(ins)
         # self._graphics = UnitGraphics.box(self._N_ins, self._N_outs)
         SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
+        self.price_ratio = 1
 
 
 # load data from csv each name will be self.name    
@@ -81,7 +82,7 @@ class SolarReclaimer(SanUnit):
     
     def _calc_replacement_cost(self):
         solar_replacement_parts_annual_cost = (self.solar_replacement * self.solar_cost)  # USD/yr only accounts for time running
-        return solar_replacement_parts_annual_cost/ (365 * 24) # USD/hr (all items are per hour)
+        return solar_replacement_parts_annual_cost/ (365 * 24) * self.price_ratio # USD/hr (all items are per hour)
                   
     # def _calc_maintenance_labor_cost(self):
     #     solar_maintenance_labor = (self.pannel_cleaning * self.wages)
@@ -90,10 +91,15 @@ class SolarReclaimer(SanUnit):
     F_BM = {'Battery System': 1, 'Solar Cost':1}
     def _cost(self):
         #purchase_costs is used for capital costs
-        self.baseline_purchase_costs['Battery System'] = (self.battery_storage_cost + self.battery_holder_cost)
-        self.baseline_purchase_costs['Solar Cost'] = ((self.solar_cost * self.power_demand_30users) + self.solar_module_system 
+        C=self.baseline_purchase_costs
+        C['Battery System'] = (self.battery_storage_cost + self.battery_holder_cost)
+        C['Solar Cost'] = ((self.solar_cost * self.power_demand_30users) + self.solar_module_system 
                                                       + self.inverter_cost)
-        # self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+            C[equipment] = cost * ratio
+        
+        #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
 
      
         

@@ -34,7 +34,7 @@ class HousingReclaimer(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', 
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
-
+        self.price_ratio = 1
 
 # load data from csv each name will be self.name    
         data = load_data(path=data_path)
@@ -60,13 +60,18 @@ class HousingReclaimer(SanUnit):
         
  
     def _cost(self):
-        
+        C = self.baseline_purchase_costs
         #purchase_costs is used for capital costs
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.baseline_purchase_costs['Housing'] = ((self.frame + self.extrusion + self.angle_frame + self.angle + self.door_sheet + self.plate_valve + self.powder)
+        C['Housing'] = ((self.frame + self.extrusion + self.angle_frame + self.angle + self.door_sheet + self.plate_valve + self.powder)
         # + ((self.frame + self.extrusion + self.angle_frame + self.angle + self.door_sheet + self.plate_valve + self.powder) * .1 * R)
         + (self.portable_toilet * (P)))   #+ (self.doors * D))
-        self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
+        
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+            C[equipment] = cost * ratio
+        
+        #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
 

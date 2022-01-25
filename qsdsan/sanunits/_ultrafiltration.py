@@ -43,7 +43,7 @@ class Ultrafiltration(SanUnit):
         
         SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         self.if_gridtied = if_gridtied
-
+        self.price_ratio = 1
 # load data from csv each name will be self.name    
         data = load_data(path=data_path)
         for para in data.index:
@@ -88,24 +88,28 @@ class Ultrafiltration(SanUnit):
         
      #_cost based on amount of steel and stainless plus individual components
     def _cost(self):
-
-       self.baseline_purchase_costs['Pipes'] = (self.one_in_pipe_SCH40 + self.onehalf_in_pipe_SCH40 + self.three_in_pipe_SCH80)
-       self.baseline_purchase_costs['fittings'] = (self.one_in_elbow_SCH80 + self.one_in_tee_SCH80 + self.one_in_SCH80
+        C =self.baseline_purchase_costs
+        C['Pipes'] = (self.one_in_pipe_SCH40 + self.onehalf_in_pipe_SCH40 + self.three_in_pipe_SCH80)
+        C['fittings'] = (self.one_in_elbow_SCH80 + self.one_in_tee_SCH80 + self.one_in_SCH80
             + self.one_onehalf_in_SCH80 + self.onehalf_in_SCH80 + self.three_in_SCH80_endcap + self.one_one_NB_MTA
             + self.one_onehalf_NB_MTA + self.foot_valve + self.one_onehalf_in_SCH80_threadedtee + self.three_in_pipe_clamp
             + self.one_in_pipe_clamp + self.onehalf_in_pipe_clamp + self.two_way_valve + self.UF_brush) 
-       self.baseline_purchase_costs['UF_unit'] = (self.UF_unit) * R               
+        C['UF_unit'] = (self.UF_unit) * R               
           
-       self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+            C[equipment] = cost * ratio
+        
+        #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
        
        #If grid 
        #self.power_utility(self.power_demand_4 / 1000) #kW
        #If solar
-       self.power_utility(self.power_demand * 0) #kW
+        self.power_utility(self.power_demand * 0) #kW
     
     def _calc_replacement_cost(self):
         ultrafiltration_replacement_cost = (self.replacement_costs / 20) #USD/yr
-        return ultrafiltration_replacement_cost/ (365 * 24) # USD/hr (all items are per hour)
+        return ultrafiltration_replacement_cost/ (365 * 24) * self.price_ratio # USD/hr (all items are per hour)
        
 
 
