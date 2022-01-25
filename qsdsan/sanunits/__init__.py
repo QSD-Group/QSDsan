@@ -37,7 +37,6 @@ from ._oil_heat_exchanger import *
 from ._pollution_control_device import * 
 from ._pumping import *
 from ._screening import *
-from ._screw_press import * 
 from ._sludge_thickening import *
 from ._struvite_precipitation import *
 from ._suspended_growth_bioreactor import *
@@ -54,6 +53,7 @@ from ._internal_circulation_rx import *
 from ._lagoon import *
 from ._membrane_bioreactors import *
 from ._polishing_filter import *
+from ._screw_press import * 
 from ._sedimentation import *
 from ._toilets import *
 from ._treatment_beds import *
