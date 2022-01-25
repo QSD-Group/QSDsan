@@ -203,13 +203,14 @@ class Components(Chemicals):
         CompiledComponents([X, X_inert, Substrate])
         '''
         isa = isinstance
+        get = getattr
         sol = Chemical(soluble_ref)
         gas = Chemical(gas_ref)
         par = Chemical(particulate_ref)
         water = Chemical('Water')
         for cmp in self:
             particle_size = cmp.particle_size
-            ref = sol if particle_size=='Souble' \
+            ref = sol if particle_size=='Soluble' \
                 else gas if particle_size=='Dissolved gas' else par
             if lock_state_at :
                 try: cmp.at_state(lock_state_at)
@@ -222,7 +223,35 @@ class Components(Chemicals):
             else:
                 if not cmp.V.valid_methods(298.15): COPY_V = True
             if COPY_V:
-                cmp.copy_models_from(ref, names=('V', 'Hvap'))
+                locked_state = cmp.locked_state
+                if locked_state:
+                    try:
+                        V_model = get(ref.V, locked_state) # ref not locked state
+                        V_const = V_model(T=298.15, P=101325)
+                    except:
+                        V_model = ref.V # ref locked state
+                        V_const = V_model(locked_state, T=298.15, P=101325)
+                    V_const *= (cmp.MW/ref.MW)
+                    cmp.V.add_model(V_const)
+                else:
+                    for phase in ('g', 'l', 's'): # iterate through phases
+                        backup_ref = gas if phase=='g' else sol if phase=='l' else par
+                        try:
+                            V_model = get(ref.V, phase) # the default ref has the model
+                            V_const = V_model(T=298.15, P=101325)
+                        except:
+                            V_model = get(backup_ref.V, phase)
+                            V_const = V_model(T=298.15, P=101325)
+                        V_const *= (cmp.MW/ref.MW)
+                        get(cmp.V, phase).add_model(V_const)
+
+            if not cmp.Hvap.valid_methods():
+                try:
+                    ref.Hvap(cmp.Tb)
+                    cmp.copy_models_from(ref, names=('Hvap', ))
+                except RuntimeError: # Hvap model cannot be extrapolated to Tb
+                    cmp.copy_models_from(water, names=('Hvap', ))
+
             # Copy all remaining properties from water
             cmp.copy_models_from(water)
         self.compile()
@@ -242,7 +271,7 @@ class Components(Chemicals):
         index_col : None or int
             Index column of the :class:`pandas.DataFrame`.
         use_default_data : bool
-            Whether to use the default components.
+            Whether to use the cached default components.
         store_data : bool
             Whether to store this as the default components.
 
@@ -297,7 +326,7 @@ class Components(Chemicals):
 
 
     @classmethod
-    def load_default(cls, use_default_data=True, store_data=True, default_compile=True):
+    def load_default(cls, use_default_data=True, store_data=False, default_compile=True):
         '''
         Create and return a :class:`Components` or :class:`CompiledComponents`
         object containing all default :class:`Component` objects based on
@@ -327,13 +356,17 @@ class Components(Chemicals):
             be defaulted to those of water.
 
             [3] When `default_compile` is True, missing molar volume models will be defaulted
-            according to particle sizes: particulate or colloidal -> 1.2e-5 m3/mol,
+            according to particle sizes: particulate or colloidal -> copy from NaCl,
             soluble -> copy from urea, dissolved gas -> copy from CO2.
 
-            [4] When `default_compile` is True, missing normal boiling temoerature will be
+            [4] When `default_compile` is True, missing normal boiling temperature will be
             defaulted according to particle sizes: particulate or colloidal -> copy from NaCl,
             soluble -> copy from urea, dissolved gas -> copy from CO2.
 
+
+        See Also
+        --------
+        :func:`~.Components.default_compile`
 
         References
         ----------
@@ -344,7 +377,8 @@ class Components(Chemicals):
         import os
         path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/_components.tsv')
         del os
-        new = cls.load_from_file(path, index_col=None, use_default_data=True, store_data=True)
+        new = cls.load_from_file(path, index_col=None,
+                                 use_default_data=use_default_data, store_data=store_data)
 
         H2O = Component.from_chemical('H2O', Chemical('H2O'),
                                       i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
@@ -354,42 +388,20 @@ class Components(Chemicals):
         new.append(H2O)
 
         if default_compile:
-            isa = isinstance
-            for i in new:
-                i.default()
-
-                if i.particle_size == 'Soluble':
-                    ref_chem = Chemical('urea')
-                elif i.particle_size == 'Dissolved gas':
-                    ref_chem = Chemical('CO2')
-                else:
-                    ref_chem = Chemical('NaCl')
-
-                i.Tb = ref_chem.Tb if not i.Tb else i.Tb
-
-                COPY_V = False # if don't have V model, set those to default
-                if isa(i.V, _PH):
-                    if not i.V.l.valid_methods(298.15): COPY_V = True
-                else:
-                    if not i.V.valid_methods(298.15): COPY_V = True
-
-                if COPY_V:
-                    if i.particle_size in ('Soluble', 'Dissolved gas'):
-                        i.copy_models_from(ref_chem, names=('V',))
-                    else:
-                        try: i.V.add_model(1.2e-5)
-                        except AttributeError:
-                            i.V.l.add_model(1.2e-5)    # m^3/mol
-                            i.V.s.add_model(1.2e-5)
-
-                i.copy_models_from(H2O)
-
-                try:
-                    i.Hvap(i.Tb)
-                except RuntimeError: # Hvap model of H2O cannot be extrapolated to Tb
-                    i.copy_models_from(ref_chem, names=('Hvap',))
-
+            new.default_compile(lock_state_at='', particulate_ref='NaCl')
             new.compile()
+            # Add aliases (`set_synonym` is the same as `set_alias`)
+            new.set_synonym('H2O', 'Water')
+            # Pre-define the group used in `composition` calculation
+            new.define_group('S_VFA', ('S_Ac', 'S_Prop'))
+            new.define_group('X_Stor', ('X_OHO_PHA', 'X_GAO_PHA', 'X_PAO_PHA',
+                                        'X_GAO_Gly', 'X_PAO_Gly'),)
+            new.define_group('X_ANO', ('X_AOO', 'X_NOO'))
+            new.define_group('X_Bio', ('X_OHO', 'X_AOO', 'X_NOO', 'X_AMO', 'X_PAO',
+                                       'X_MEOLO', 'X_ACO', 'X_HMO', 'X_PRO', 'X_FO'))
+            new.define_group('S_NOx', ('S_NO2', 'S_NO3'))
+            new.define_group('X_PAO_PP', ('X_PAO_PP_Lo', 'X_PAO_PP_Hi'))
+            new.define_group('TKN', [i.ID for i in new if i.ID not in ('S_N2','S_NO2','S_NO3')])
         return new
 
 
@@ -410,11 +422,11 @@ class Components(Chemicals):
         components : Iterable(obj)
             The original components to be appended.
         alt_IDs : dict
-            Alternative IDs for the combustion components to be added as synonyms,
+            Alternative IDs for the combustion components to be added as aliases,
             e.g., if "S_O2" is used instead of "O2", then pass {'O2': 'S_O2'}.
         default_compile : bool
             Whether to try default compile when some components
-            are missiong key properties for compiling.
+            are missing key properties for compiling.
         default_compile_kwargs : dict
             Keyword arguments to pass to `default_compile` if needed.
 
@@ -435,18 +447,16 @@ class Components(Chemicals):
         >>> cmps.O2 is cmps.S_O2
         True
         '''
-        cmps = components if (
-            isinstance(components, Components)
-            or isinstance(components, CompiledComponents)
-            ) else Components(components)
+        cmps = components if isinstance(components, (Components, CompiledComponents)) \
+            else Components(components)
         comb_cmps = ['O2', 'CO2', 'H2O', 'N2', 'P4O10', 'SO2']
-        synonyms = dict(H2O='Water')
-        synonyms.update(alt_IDs)
+        aliases = dict(H2O='Water')
+        aliases.update(alt_IDs)
         get = getattr
         for k, v in alt_IDs.items():
             try:
                 get(cmps, v)
-                synonyms[k] = comb_cmps.pop(comb_cmps.index(k))
+                aliases[k] = comb_cmps.pop(comb_cmps.index(k))
             except AttributeError:
                 pass
         for ID in comb_cmps:
@@ -462,7 +472,7 @@ class Components(Chemicals):
             cmps.compile()
         except RuntimeError: # cannot compile due to missing properties
             cmps.default_compile(**default_compile_kwargs)
-        for k, v in synonyms.items():
+        for k, v in aliases.items():
             cmps.set_synonym(k, v)
         return cmps
 
@@ -703,33 +713,33 @@ class CompiledComponents(CompiledChemicals):
 
     @property
     def gases(self):
-        '''[tuple] IDs of gas components.'''
-        return self.get_IDs_from_array(self.g)
+        '''[list] Gas components.'''
+        return self[self.get_IDs_from_array(self.g)]
 
     @property
     def solids(self):
-        '''[tuple] IDs of solids (particulate) components.'''
-        return self.get_IDs_from_array(self.x)
+        '''[list] Solids (particulate) components.'''
+        return self[self.get_IDs_from_array(self.x)]
 
     @property
     def inorganics(self):
-        '''[tuple] IDs of inorganic components.'''
-        return self.get_IDs_from_array(self.inorg)
+        '''[list] Inorganic components.'''
+        return self[self.get_IDs_from_array(self.inorg)]
 
     @property
     def inorganic_solids(self):
-        '''[tuple] IDs of inorganic solids (particulate & inorganic, all undegradable) components.'''
-        return self.get_IDs_from_array(self.x*self.inorg)
+        '''[list] Inorganic solids (particulate & inorganic, all undegradable) components.'''
+        return self[self.get_IDs_from_array(self.x*self.inorg)]
 
     @property
     def organic_solids(self):
-        '''[tuple] IDs of organic solids (particulate & organic) components.'''
-        return self.get_IDs_from_array(self.x*self.org)
+        '''[list] Organic solids (particulate & organic) components.'''
+        return self[self.get_IDs_from_array(self.x*self.org)]
 
     @property
     def substrates(self):
         '''
-        [tuple] IDs of substrate components, will return
+        [list] Substrate components, will return
         soluble/colloidal & organic & degradable components
         if not set by the user.
         '''
@@ -737,7 +747,7 @@ class CompiledComponents(CompiledChemicals):
         except:
             warn('The `substrates` group is not set, using '
                  'soluble/colloidal & organic & degradable components instead.')
-            return self.get_IDs_from_array((self.s+self.c)*self.b*self.org)
+            return self[self.get_IDs_from_array((self.s+self.c)*self.b*self.org)]
     @substrates.setter
     def substrates(self, i):
         raise RuntimeError('Please use `define_group` to define the `substrates` group.')
@@ -745,7 +755,7 @@ class CompiledComponents(CompiledChemicals):
     @property
     def biomass(self):
         '''
-        [tuple] IDs of biomass components, will return `organic_solids`
+        [list] Biomass components, will return `organic_solids`
         (particulate & organic) components if not set by the user.
         '''
         try: return self.__dict__['biomass']

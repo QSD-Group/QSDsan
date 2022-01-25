@@ -12,18 +12,240 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-'''Select pipe size from volumetric flow rate and velocity.'''
-
 import numpy as np
 from math import pi
 
-
 __all__ = (
+    'calculate_concrete_volume',
+    'concrete',
     'calculate_excavation_volume',
+    'excavation',
     'calculate_pipe_material',
     'select_pipe',
-    'cost_pump',
     )
+
+
+# %%
+
+# =============================================================================
+# Concrete
+# =============================================================================
+
+def calculate_concrete_volume(L, W, D, t_wall, t_slab, include_cover):
+    '''
+    Calculate needed volume of concrete.
+
+    Note that the units of the parameters do no matter as along as they are consistent.
+
+    Parameters
+    ----------
+    L : float
+        Length of the concrete wall (without considering the wall thickness), [ft].
+    W : float
+        Width of the concrete wall (without considering the wall thickness), [ft].
+    D : float
+        Depth of the concrete wall, [ft].
+    t_wall : float
+        Thickness of the concrete wall, [ft].
+    t_slab : float
+        Thickness of the concrete slab, [ft].
+    include_cover : bool
+        Whether to include a cover on the top (t will be the same as the floor).
+    '''
+    # Wall concrete
+    L_w_t = L + t_wall
+    W_w_t = W + t_wall
+    L_wall = 2 * (L_w_t+W_w_t)
+    V_wall = L_wall * D * t_wall
+    # Slab concrete
+    A_slab = L_w_t * W_w_t if not include_cover else 2 * L_w_t * W_w_t
+    V_slab = A_slab * (t_wall+t_slab)
+    return V_wall, V_slab
+
+
+def concrete(ID, L_concrete=0, W_concrete=0, D_concrete=0,
+             t_wall=None, t_slab=None, include_cover=False,
+             wall_concrete_unit_cost=24, # about $650/yd3, 650/27
+             slab_concrete_unit_cost=13, # about $350/yd3, 350/27
+             F_BM=1, lifetime=None):
+    '''
+    Handy decorator to add concrete usage-related properties and design/cost functions
+    to a :class:`qs.SanUnit`.
+
+    Parameters
+    ----------
+    ID : str
+        ID for which concrete will be used.
+    L_concrete : float
+        Length of the concrete wall (without considering the wall thickness), [ft].
+    W_concrete : float
+        Width of the concrete wall (without considering the wall thickness), [ft].
+    D_concrete : float
+        Depth of the concrete wall, [ft].
+    t_wall : float
+        Thickness of the concrete wall, [ft],
+        if not provided, will be calculated based on `D_concrete` (1 ft per 12 ft depth, minimum 1 ft).
+    t_slab : float
+        Thickness of the concrete slab, [ft],
+        if not provided, will be calculated based on `t_wall` (t_wall+2/12 ft).
+    wall_concrete_unit_cost : float
+        Unit cost of the wall concrete, [$/ft3].
+    slab_concrete_unit_cost : float
+        Unit cost of the slab concrete, [$/ft3].
+    include_cover : bool
+        Whether to include a cover on the top (t will be the same as the floor).
+    F_BM : float
+        Bare module factor of the concrete.
+    lifetime : int
+        Lifetime of the concrete.
+
+    Examples
+    --------
+    >>> from qsdsan import SanUnit, set_thermo
+    >>> from qsdsan.utils import load_example_cmps, concrete
+    >>> # Create the class
+    >>> @concrete('Pump building', L_concrete=20, W_concrete=10, D_concrete=5)
+    ... @concrete('Blower building', L_concrete=20, W_concrete=10, D_concrete=5,
+    ...           t_wall=2, t_slab=3, include_cover=True)
+    ... class FakeUnit(SanUnit):
+    ...     def _design(self):
+    ...         self._add_concrete_design()
+    ...     def _cost(self):
+    ...         self._add_concrete_cost()
+    >>> # Use the class
+    >>> cmps = load_example_cmps()
+    >>> set_thermo(cmps)
+    >>> U1 = FakeUnit('U1', ins='ws1', outs='ws2')
+    >>> U1.simulate()
+    >>> U1.results() # doctest: +SKIP
+
+    References
+    ----------
+    [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
+    Valorization of Dilute Organic Carbon Waste Streams.
+    Energy Environ. Sci. 2016, 9 (3), 1102–1112.
+    https://doi.org/10.1039/C5EE03715H.
+    '''
+    return lambda cls: add_concrete(cls, ID, L_concrete, W_concrete, D_concrete,
+                                    t_wall, t_slab, include_cover,
+                                    wall_concrete_unit_cost, slab_concrete_unit_cost,
+                                    F_BM, lifetime)
+
+
+def add_concrete(cls, ID, L_concrete, W_concrete, D_concrete,
+                 t_wall, t_slab, include_cover,
+                 wall_concrete_unit_cost, slab_concrete_unit_cost,
+                 F_BM, lifetime):
+    def set_L_concrete(cls, i): cls._L_concrete = i
+    def set_W_concrete(cls, i): cls._W_concrete = i
+    def set_D_concrete(cls, i): cls._D_concrete = i
+    def set_t_wall(cls, i): cls._t_wall = i
+    def set_t_slab(cls, i): cls._t_slab = i
+    def set_include_cover(cls, i): cls._include_cover = i
+    def set_wall_concrete_unit_cost(cls, i): cls._wall_concrete_unit_cost = i
+    def set_slab_concrete_unit_cost(cls, i): cls._slab_concrete_unit_cost = i
+    prop_dct = {
+        'L_concrete':
+            (L_concrete, # value of the property
+             lambda cls: cls._L_concrete, # getter
+             set_L_concrete, # setter
+             '[dict(float)] Length of the concrete wall (without considering the wall thickness), [ft].'), # documentation
+        'W_concrete':
+            (W_concrete,
+             lambda cls: cls._W_concrete,
+             set_W_concrete,
+             '[dict(float)] Length of the concrete wall (without considering the wall thickness), [ft].'),
+        'D_concrete':
+            (D_concrete,
+             lambda cls: cls._D_concrete,
+             set_D_concrete,
+             '[dict(float)] Depth of the concrete wall, [ft].'),
+        't_wall':
+            (t_wall,
+             lambda cls: cls._t_wall,
+             set_t_wall,
+             '[dict(float)] Thickness of the concrete wall, [ft], if not provided, will be calculated based on `D_concrete` (1 ft per 12 ft depth, minimum 1 ft).'),
+        't_slab':
+            (t_slab,
+             lambda cls: cls._t_slab,
+             set_t_wall,
+             '[dict(float)] Thickness of the concrete slab, [ft], if not provided, will be calculated based on `t_wall` (t_wall+2/12 ft).'),
+        'include_cover':
+            (include_cover,
+             lambda cls: cls._include_cover,
+             set_include_cover,
+             '[dict(bool)] Whether to include a cover on the top (t will be the same as the floor).'),
+        'wall_concrete_unit_cost':
+            (wall_concrete_unit_cost,
+             lambda cls: cls._wall_concrete_unit_cost,
+             set_wall_concrete_unit_cost,
+             '[dict(float)] Unit cost of the wall concrete, [$/ft3].'),
+        'slab_concrete_unit_cost':
+            (slab_concrete_unit_cost,
+             lambda cls: cls._slab_concrete_unit_cost,
+             set_slab_concrete_unit_cost,
+             '[dict(float)] Unit cost of the slab concrete, [$/ft3].'),
+        }
+    # Add attributes and properties
+    get_cls = getattr
+    set_cls = setattr
+    try:
+        items = get_cls(cls, '_concrete')
+        items.append(ID)
+    except AttributeError:
+        items = cls._concrete = [ID]
+    for prop_name, val in prop_dct.items():
+        # Firstly set the attributes with a `_` prefix.
+        attr_name = f'_{prop_name}'
+        try:
+            existing = get_cls(cls, attr_name)
+            existing[ID] = val[0]
+        except AttributeError:
+            set_cls(cls, attr_name, {ID: val[0]})
+            # Then add the corresponding properties with documentation.
+            prop = property(fget=val[1], fset=val[2], doc=val[3])
+            set_cls(cls, prop_name, prop)
+
+    wall_n_slab = ('wall', 'slab')
+    for wall_or_slab in wall_n_slab:
+        key = f'{ID} {wall_or_slab} concrete'
+        cls._F_BM_default[key] = F_BM
+        cls._default_equipment_lifetime[key] = lifetime
+
+    # Add convenient functions for instances of the class
+    try: get_cls(cls, '_add_concrete_design')
+    except AttributeError:
+        def _add_concrete_design(self):
+            D = self.design_results
+            units = self._units
+            L_dct, W_dct, D_dct = get_cls(self, 'L_concrete'), \
+                get_cls(self, 'W_concrete'), get_cls(self, 'D_concrete')
+            t_wall_dct, t_slab_dct,cover_dct = get_cls(self, 't_wall'), \
+                get_cls(self, 't_slab'), get_cls(self, 'include_cover')
+            for item in items:
+                D_concrete = D_dct[item]
+                t_wall = t_wall_dct[item] = t_wall_dct[item] or (1+max(D_concrete-12, 0)/12)
+                t_slab = t_slab_dct[item] = t_slab_dct[item] or t_wall+2/12
+                Vs = calculate_concrete_volume(
+                    L_dct[item], W_dct[item], D_concrete, t_wall, t_slab, cover_dct[item])
+                for wall_or_slab, V in zip(wall_n_slab, Vs):
+                    key = f'{item} {wall_or_slab} concrete'
+                    units[key] = 'ft3'
+                    D[key] = V
+        cls._add_concrete_design = _add_concrete_design
+
+        def _add_concrete_cost(self):
+            D = self.design_results
+            C = self.baseline_purchase_costs
+            cost_dcts = get_cls(self, 'wall_concrete_unit_cost'), \
+                get_cls(self, 'slab_concrete_unit_cost')
+            for item in items:
+                for wall_or_slab, cost_dct in zip(wall_n_slab, cost_dcts):
+                    key = f'{item} {wall_or_slab} concrete'
+                    C[key] = D[key] * cost_dct[item]
+        cls._add_concrete_cost = _add_concrete_cost
+
+    return cls
 
 
 # %%
@@ -32,7 +254,7 @@ __all__ = (
 # Excavation
 # =============================================================================
 
-def calculate_excavation_volume(L, W, D, excav_slope, constr_acess):
+def calculate_excavation_volume(L, W, D, excav_slope, constr_access):
     '''
     Calculate the excavation volume needed as a frustum.
 
@@ -41,20 +263,175 @@ def calculate_excavation_volume(L, W, D, excav_slope, constr_acess):
     Parameters
     ----------
     L : float
-        Length at the bottom.
+        Excavation length at the bottom.
     W : float
-        Width at the bottom.
+        Excavation width at the bottom.
     D : float
-        Depth.
+        Excavation depth.
     excav_slope : float
-        Slope (horizontal/vertical).
+        Excavation slope (horizontal/vertical).
     constr_acess : float
-        Construction access on top of the length/width.
+        Extra (i.e., on top of the length/width) room for construction access.
     '''
-    L_bottom = L + 2*constr_acess
-    W_bottom = W + 2*constr_acess
+    L_bottom = L + 2*constr_access
+    W_bottom = W + 2*constr_access
     diff = D * excav_slope
-    return 0.5*(L_bottom*W_bottom+(L_bottom+diff)*(W_bottom+diff))
+    return 0.5*(L_bottom*W_bottom+(L_bottom+diff)*(W_bottom+diff))*D
+
+
+def excavation(ID, L_excav=0, W_excav=0, D_excav=0,
+               excav_slope=1.5, constr_access=3, excav_unit_cost=0.011, # about $0.3/yd3, 0.3/27
+               F_BM=1, lifetime=None):
+    '''
+    Handy decorator to add excavation-related properties and design/cost functions
+    to a :class:`qs.SanUnit`.
+
+    The excavation volume is calculated as a frustum.
+
+    Parameters
+    ----------
+    ID : str
+        ID of this excavation activity.
+    L_excav : float
+        Excavation length at the bottom, [ft].
+    W_excav : float
+        Excavation width at the bottom, [ft].
+    D_excav : float
+        Excavation depth. [ft].
+    excav_slope : float
+        Excavation slope (horizontal/vertical).
+    constr_access : float
+        Extra (i.e., on top of the length/width) room for construction access, [ft].
+    excav_unit_cost : float
+        Unit cost of the excavation activity, [$/ft3].
+    F_BM : float
+        Bare module factor of this excavation activity.
+    lifetime : int
+        Lifetime of this excavation activity.
+
+    Examples
+    --------
+    >>> from qsdsan import SanUnit, set_thermo
+    >>> from qsdsan.utils import load_example_cmps, excavation
+    >>> # Create the class
+    >>> @excavation('Reactor building', L_excav=100, W_excav=150, D_excav=20,
+    ...             excav_unit_cost=8/27)
+    ... @excavation('Pump and blower building', L_excav=30, W_excav=15, D_excav=10)
+    ... class FakeUnit(SanUnit):
+    ...     def _design(self):
+    ...         self._add_excavation_design()
+    ...     def _cost(self):
+    ...         self._add_excavation_cost()
+    >>> # Use the class
+    >>> cmps = load_example_cmps()
+    >>> set_thermo(cmps)
+    >>> U1 = FakeUnit('U1', ins='ws1', outs='ws2')
+    >>> U1.simulate()
+    >>> U1.results() # doctest: +SKIP
+
+    References
+    ----------
+    [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
+    Valorization of Dilute Organic Carbon Waste Streams.
+    Energy Environ. Sci. 2016, 9 (3), 1102–1112.
+    https://doi.org/10.1039/C5EE03715H.
+    '''
+    return lambda cls: add_excavation(cls, ID, L_excav, W_excav, D_excav,
+                                      excav_slope, constr_access, excav_unit_cost,
+                                      F_BM, lifetime)
+
+def add_excavation(cls, ID, L_excav, W_excav, D_excav,
+                   excav_slope, constr_access, excav_unit_cost,
+                   F_BM, lifetime):
+    def set_L_excav(cls, i): cls._L_excav = i
+    def set_W_excav(cls, i): cls._W_excav = i
+    def set_D_excav(cls, i): cls._D_excav = i
+    def set_excav_slope(cls, i): cls._excav_slope = i
+    def set_constr_access(cls, i): cls._constr_access = i
+    def set_excav_unit_cost(cls, i): cls._excav_unit_cost = i
+    prop_dct = {
+        'L_excav':
+            (L_excav, # value of the property
+             lambda cls: cls._L_excav, # getter
+             set_L_excav, # setter
+             '[dict(float)] Excavation length at the bottom, [ft].'), # documentation
+        'W_excav':
+            (W_excav,
+             lambda cls: cls._W_excav,
+             set_W_excav,
+             '[dict(float)] Excavation width at the bottom, [ft].'),
+        'D_excav':
+            (D_excav,
+             lambda cls: cls._D_excav,
+             set_D_excav,
+             '[dict(float)] Excavation depth at the bottom, [ft].'),
+        'excav_slope':
+            (excav_slope,
+             lambda cls: cls._excav_slope,
+             set_excav_slope,
+             '[dict(float)] Slope for excavation (horizontal/vertical).'),
+        'constr_access':
+            (constr_access,
+             lambda cls: cls._constr_access,
+             set_constr_access,
+             '[dict(float)] Extra (i.e., on top of the length/width) room for construction access, [ft].'),
+        'excav_unit_cost':
+            (excav_unit_cost,
+             lambda cls: cls._excav_unit_cost,
+             set_excav_unit_cost,
+             '[dict(float)] Unit cost of the excavation activity, [$/ft3].'),
+        }
+    # Add attributes and properties
+    get_cls = getattr
+    set_cls = setattr
+    try:
+        items = get_cls(cls, '_excavation')
+        items.append(ID)
+    except AttributeError:
+        items = cls._excavation = [ID]
+    for prop_name, val in prop_dct.items():
+        # Firstly set the attributes with a `_` prefix.
+        attr_name = f'_{prop_name}'
+        try:
+            existing = get_cls(cls, attr_name)
+            existing[ID] = val[0]
+        except AttributeError:
+            set_cls(cls, attr_name, {ID: val[0]})
+            # Then add the corresponding properties with documentation.
+            prop = property(fget=val[1], fset=val[2], doc=val[3])
+            set_cls(cls, prop_name, prop)
+
+    key = f'{ID} excavation'
+    cls._F_BM_default[key] = F_BM
+    cls._default_equipment_lifetime[key] = lifetime
+
+    # Add convenient functions for instances of the class
+    try: get_cls(cls, '_add_excavation_design')
+    except AttributeError:
+        def _add_excavation_design(self):
+            D = self.design_results
+            units = self._units
+            L_dct, W_dct, D_dct = \
+                get_cls(self, 'L_excav'), get_cls(self, 'W_excav'), get_cls(self, 'D_excav')
+            excav_slope_dct, constr_access_dct = \
+                get_cls(self, 'excav_slope'), get_cls(self, 'constr_access')
+            for item in items:
+                key = f'{item} excavation'
+                units[key] = 'ft3'
+                D[key] = calculate_excavation_volume(
+                    L_dct[item], W_dct[item], D_dct[item],
+                    excav_slope_dct[item], constr_access_dct[item])
+        cls._add_excavation_design = _add_excavation_design
+
+        def _add_excavation_cost(self):
+            D = self.design_results
+            C = self.baseline_purchase_costs
+            excav_unit_cost_dct = get_cls(self, 'excav_unit_cost')
+            for item in items:
+                key = f'{item} excavation'
+                C[key] = D[key] * excav_unit_cost_dct[item]
+        cls._add_excavation_cost = _add_excavation_cost
+    return cls
 
 
 # %%
@@ -165,66 +542,3 @@ def select_pipe(Q, v):
     OD, t = pipe_dct[boundaries[d_index]]
     ID = OD - 2*t # inner diameter, [in]
     return OD, t, ID
-
-
-# %%
-
-# =============================================================================
-# Pumping
-# =============================================================================
-
-#!!! Maybe move this to the Pump unit!
-def cost_pump(unit=None, Q_mgd=None, recir_ratio=None,
-              building_unit_cost=90):
-    '''
-    Calculate the cost of the pump and pump building for a unit
-    based on its `Q_mgd` (hydraulic flow in million gallons per day),
-    `recir_ratio` (recirculation ratio) attributes.
-
-    Optionally, can left `unit` as None and directly provide
-    `Q_mgd` and `recir_ratio` values.
-
-    Parameters
-    ----------
-    unit : obj
-        :class:`~.SanUnit` with the attribute `Q_mgd` and `recir_ratio`
-        (if `Q_mgd` and/or `recir_ratio` are not provided).
-    Q_mgd : float
-        Hydraulic flow [mgd] (million gallons per day).
-    recir_ratio : float
-        Recirculation ratio.
-    building_unit_cost : float
-        Unit cost of the pump building, [USD/ft2].
-
-    Returns
-    -------
-    Costs of the pumps and pump building (two floats) in USD.
-    '''
-    Q_mgd = Q_mgd or unit.Q_mgd
-    recir_ratio = recir_ratio or unit.recir_ratio
-
-    # Installed pump cost, this is a fitted curve
-    pumps = 2.065e5 + 7.721*1e4*Q_mgd
-
-    # Design capacity of intermediate pumps, gpm,
-    # 2 is the excess capacity factor to handle peak flows
-    GPMI = 2 * Q_mgd * 1e6 / 24 / 60
-
-    # Design capacity of recirculation pumps, gpm
-    GPMR = recir_ratio * Q_mgd * 1e6 / 24 / 60
-
-    building = 0.
-    for GPM in (GPMI, GPMR):
-        if GPM == 0:
-            N = 0
-        else:
-            N = 1 # number of buildings
-            GPMi = GPM
-            while GPMi > 80000:
-                N += 1
-                GPMi = GPM / N
-
-        PBA = N * (0.0284*GPM+640) # pump building area, [ft]
-        building += PBA * building_unit_cost
-
-    return pumps, building

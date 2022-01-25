@@ -84,13 +84,13 @@ class InternalCirculationRx(MixTank):
 
         In "lumped" method, design parameters include:
             - OLRall, biodegradability, Y, q_Qw, and q_Xw
-    biomass_cmp: str
+    biomass_ID: str
         ID of the Component that represents the biomass.
     OLRall : float
         Overall organic loading rate, [kg COD/m3/hr].
     biodegradability : float or dict
         Biodegradability of components,
-        when shown as a float, all biodegradable components are assumped to have
+        when shown as a float, all biodegradable components are assumed to have
         the same degradability.
     Y : float
         Biomass yield, [kg biomass/kg consumed COD].
@@ -149,18 +149,20 @@ class InternalCirculationRx(MixTank):
     _default_vessel_material = 'Stainless steel'
     purchase_cost_algorithms = IC_purchase_cost_algorithms
 
-    # Other equipment
+    # Other equipment, only capital cost will be automatically accounted for
     auxiliary_unit_names = ('heat_exchanger', 'effluent_pump', 'sludge_pump')
 
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
-                 method='lumped', biomass_cmp='WWTsludge',
+                 method='lumped', biomass_ID='WWTsludge',
                  OLRall=1.25, biodegradability=1., Y=0.07,
                  vessel_type='IC', vessel_material='Stainless steel',
                  V_wf=0.8, kW_per_m3=0., T=35+273.15, init_with='WasteStream',
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with)
-        self._gas = self.outs[0].copy()
+        ID = self.ID
+        self._inf = self.ins[0].copy(f'{ID}_inf')
+        self._gas = self.outs[0].copy(f'{ID}_gas')
         self.method = method
         self.OLRall = OLRall
         self.biodegradability = biodegradability
@@ -170,16 +172,18 @@ class InternalCirculationRx(MixTank):
         self.vessel_material = vessel_material
         self.kW_per_m3 = kW_per_m3
         self.T = T
-
-        # Initiate the attributes
+        # Initialize the attributes
         self.heat_exchanger = hx = HXutility(None, None, None, T=T)
         self.heat_utilities = hx.heat_utilities
         self._refresh_rxns()
         # Conversion will be adjusted in the _run function
-        self._xcmp = xcmp = getattr(self.components, biomass_cmp)
+        self._xcmp = xcmp = getattr(self.components, biomass_ID)
         self._decay_rxn = xcmp.get_combustion_reaction(conversion=0.)
-        self.effluent_pump = Pump(f'{self.ID}_eff')
-        self.sludge_pump = Pump(f'{self.ID}_sludge')
+        #!!! Double-check if this would interfere
+        eff = self._eff = self.outs[1].proxy(f'{ID}_eff')
+        sludge = self._sludge = self.outs[2].proxy(f'{ID}_sludge')
+        self.effluent_pump = Pump(f'{self.ID}_eff', ins=eff, init_with=init_with)
+        self.sludge_pump = Pump(f'{self.ID}_sludge', ins=sludge, init_with=init_with)
 
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -197,14 +201,14 @@ class InternalCirculationRx(MixTank):
 
 
     def _run(self):
-        inf = self._inf = self.ins[0].copy()
+        inf = self._inf
         biogas, eff, waste  = self.outs
-
-        # Initiate the streams
+        # Initialize the streams
+        inf.copy_like(self.ins[0])
         biogas.phase = 'g'
         biogas.empty()
         gas = self._gas
-        gas.copy_from(biogas)
+        gas.copy_like(biogas)
 
         inf.split_to(waste, eff, self.q_Qw)
         biogas_rxns = self.biogas_rxns
@@ -252,7 +256,6 @@ class InternalCirculationRx(MixTank):
 
     def _run_separate(self, run_inputs):
         Qi, Si, Xi, Qe, Se, Vliq, Y, mu_max, b, Fxb, Fxt = run_inputs
-
         Qw = Qi - Qe
         Xb, Xe, Sb, Vb = sp.symbols('Xb, Xe, Sb, Vb', real=True)
 
@@ -328,11 +331,11 @@ class InternalCirculationRx(MixTank):
     def _cost(self):
         MixTank._cost(self)
 
+        power_utility = self.power_utility
         pumps = (self.effluent_pump, self.sludge_pump)
-        for i in range(2):
-            pumps[i].ins[0] = self.outs[i+1].copy() # use `.proxy()` will interfere `_run`
-            pumps[i].simulate()
-            self.power_utility.rate += pumps[i].power_utility.rate
+        for p in pumps:
+            p.simulate()
+            power_utility.rate += p.power_utility.rate
 
         inf, T = self.ins[0], self.T
         if T:
@@ -355,11 +358,11 @@ class InternalCirculationRx(MixTank):
         self._method = i.lower()
 
     @property
-    def biomass_cmp(self):
+    def biomass_ID(self):
         '''[str] ID of the Component that represents the biomass.'''
         return self._xcmp.ID
-    @biomass_cmp.setter
-    def biomass_cmp(self, i):
+    @biomass_ID.setter
+    def biomass_ID(self, i):
         self._xcmp = getattr(self.components, i)
 
     @property
@@ -377,7 +380,7 @@ class InternalCirculationRx(MixTank):
     def biodegradability(self):
         '''
         [float of dict] Biodegradability of components,
-        when shown as a float, all biodegradable components are assumped to have
+        when shown as a float, all biodegradable components are assumed to have
         the same degradability.
         '''
         return self._biodegradability
@@ -565,7 +568,7 @@ class InternalCirculationRx(MixTank):
     @property
     def decay_rxn(self):
         '''
-        [:class:`tmo.Reaction`] Biomass endogeneous decay.
+        [:class:`tmo.Reaction`] Biomass endogenous decay.
 
         .. note::
             Conversion is adjusted in the _run function.

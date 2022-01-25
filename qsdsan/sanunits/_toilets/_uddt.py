@@ -71,15 +71,15 @@ class UDDT(Toilet):
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 degraded_components=('OtherSS',), N_user=1, N_toilet=1, lifetime=8,
+                 degraded_components=('OtherSS',), N_user=1, N_toilet=1, N_tot_user=None,
                  if_toilet_paper=True, if_flushing=False, if_cleansing=False,
                  if_desiccant=True, if_air_emission=True, if_ideal_emptying=True,
-                 CAPEX=553, OPEX_over_CAPEX=0.1,
+                 CAPEX=553, OPEX_over_CAPEX=0.1, lifetime=8,
                  T=273.15+24, safety_factor=1, if_prep_loss=True, if_treatment=False,
                  **kwargs):
 
         Toilet.__init__(self, ID, ins, outs, thermo, init_with,
-                        degraded_components, N_user, N_toilet,
+                        degraded_components, N_user, N_toilet, N_tot_user,
                         if_toilet_paper, if_flushing, if_cleansing, if_desiccant,
                         if_air_emission, if_ideal_emptying, CAPEX, OPEX_over_CAPEX)
         self.lifetime = lifetime

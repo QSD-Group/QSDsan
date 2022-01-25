@@ -12,13 +12,25 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+from warnings import warn
 from math import ceil
 from .. import SanUnit
+from ..sanunits import HXutility, WWTpump
 from ..equipments import Blower, GasPiping
 from ..utils import auom, calculate_excavation_volume
-
-
 __all__ = ('ActivatedSludgeProcess',)
+
+_ft2_to_m2 = auom('ft2').conversion_factor('m2')
+F_BM_pump = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
+default_F_BM = {
+        'Pumps': F_BM_pump,
+        'Pump building': F_BM_pump,
+        }
+default_equipment_lifetime = {
+    'Pumps': 15,
+    'Pump pipe stainless steel': 15,
+    'Pump stainless steel': 15,
+    }
 
 class ActivatedSludgeProcess(SanUnit):
     '''
@@ -28,7 +40,7 @@ class ActivatedSludgeProcess(SanUnit):
 
     Single tank and clarifier are assumed to have the same width;
     pump/blower buildings are assumed to have the same width as the
-    total tanks/clarifers.
+    total tanks/clarifiers.
 
     Parameters
     ----------
@@ -40,6 +52,9 @@ class ActivatedSludgeProcess(SanUnit):
         Number of treatment train, should be at least two in case one failing.
     T : float
         Temperature in the aeration tank/anaerobic digester, [K].
+    X_i0 : float
+        Inert biomass concentration in the influent, [mg VSS/L],
+        will calculated based on `inert_biomass` of the current `CompiledComponents` if not provided.
     X_v : float
         Reactor volatile suspended solids (biomass concentration in the aeration tank),
         referred to as mixed volatile liquor suspended solids
@@ -50,7 +65,7 @@ class ActivatedSludgeProcess(SanUnit):
     X_w : float
         Biomass concentration in the waste activated sludge, [mg VSS/L].
     SLR : float
-        Solids loading rate for the clarifer, [lb/ft2/d].
+        Solids loading rate for the clarifier, [lb/ft2/d].
     SF : float
         Safety factor to scale up the minimum solids retention time (SRT), should be larger than 1.
     aeration_power : float
@@ -140,17 +155,29 @@ class ActivatedSludgeProcess(SanUnit):
     _excav_slope = 1.5 # horizontal/vertical
     _constr_access = 3 # ft
 
+    # Costs
+    excav_unit_cost = (8+0.3) / 27 # $/ft3, 27 is to convert from $/yd3
+    wall_concrete_unit_cost = 650 / 27 # $/ft3
+    slab_concrete_unit_cost = 350 / 27 # $/ft3
+
+    pumps = ('inf', 'recir')
+    auxiliary_unit_names = ('heat_exchanger',)
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 N_train=2, T=35+273.15, X_v=1210, X_e=15, X_w=10000, SLR=20, SF=4,
-                 aeration_power=1, # p337 of ref 1
+                 N_train=2, T=35+273.15, X_i0=None, X_v=1210, X_e=15, X_w=10000,
+                 SLR=20, SF=4, aeration_power=1, # p337 of ref 1
                  q_hat=12, K=20, Y=0.5, b=0.396, f_d=0.8, # change from 0.2 of ref 2 based on p171 of ref 1
                  COD_factor=1.42, # p8 of Complex Systems in ref 1
                  q_UAP=1.8, q_BAP=0.1, k1=0.12, k2=0.09, K_UAP=100, K_BAP=85,
-                 **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+                 F_BM=default_F_BM, lifetime=default_equipment_lifetime,
+                 F_BM_default=1, **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
+        ID, ins0 = self.ID, self.ins[0]
+        self._inf = ins0.copy(f'{ID}_inf')
+        self._ras = ins0.copy(f'{ID}_ras')
         self.N_train = N_train
         self.T = T
+        self.X_i0 = X_i0
         self.X_v = X_v
         self.X_e = X_e
         self.X_w = X_w
@@ -168,12 +195,14 @@ class ActivatedSludgeProcess(SanUnit):
         self.k1 = k1
         self.k2 = k2
         self.K_UAP = K_UAP
-        self.k_BAP = K_BAP
-
-        self.equipments = (
-            Blower('blower', linked_unit=self, N_reactor=N_train),
-            GasPiping('gas piping', linked_unit=self, N_reactor=N_train),
-            )
+        self.K_BAP = K_BAP
+        self.heat_exchanger = hx = HXutility(None, None, None, T=T)
+        self.heat_utilities = hx.heat_utilities
+        self.blower = blower = Blower('blower', linked_unit=self, N_reactor=N_train)
+        self.air_piping = air_piping = GasPiping('air_piping', linked_unit=self, N_reactor=N_train)
+        self.equipments = (blower, air_piping)
+        self.F_BM.update(F_BM)
+        self._default_equipment_lifetime.update(lifetime)
 
         for attr, value in kwargs.items():
             setattr(self, attr, value)
@@ -182,14 +211,24 @@ class ActivatedSludgeProcess(SanUnit):
     # Equation/page numbers are noted for the 2001 Rittmann and McCarty book
     def _run(self):
         inf, air = self.ins
+        self._inf.copy_flow(inf)
         eff, was, emission = self.outs
         air.phase = emission.phase = 'g'
         Q = auom('m3/hr').convert(inf.F_vol, 'L/d')
         self._Q = Q/1e3 # convert to m3/d
         S_0 = inf.COD # influent substrate concentration
-
         cmps = self.components
-        X_i0 = inf.imass[cmps.inert_biomass].sum()
+        X_i0 = self.X_i0
+        if not X_i0:
+            try:
+                X_i0 = inf.iconc['inert_biomass'].sum()
+            except AttributeError: # group not defined
+                raise AttributeError('The `inert_biomass` group of current `CompiledComponents` '
+                                     'has not been defined. '
+                                     'Please either define it using the `define_group` function of '
+                                     '`CompiledComponents` or provide `X_i0` for this '
+                                     f'`{self.__class__.__name__}` unit.')
+
         X_v, X_e, X_w, SF = self.X_v, self.X_e, self.X_w, self.SF
         K, Y, b, f_d, COD_factor, q_hat = \
             self.K, self.Y, self.b, self.f_d, self.COD_factor, self.q_hat
@@ -244,38 +283,56 @@ class ActivatedSludgeProcess(SanUnit):
         was.copy_flow(inf)
         Q_eff = Q - Q_was
 
+        # Non-particulate components
         substrates = cmps.substrates
-        S_concs = eff.concs[substrates] * S/S_0
-        eff_dct = {ID:S_concs[n] for n, ID in enumerate(substrates)}
+        S_conc = eff.iconc['substrates'] * S/S_0
+        eff_dct = dict.fromkeys(cmps.IDs, 0)
+        eff_dct.pop('H2O')
+        if len(substrates) > 1:
+            eff_dct.update({cmp.ID: conc for cmp, conc in zip(substrates, S_conc)})
+        else: # Only one component in `substrates`
+            eff_dct[substrates[0].ID] = S_conc
+        # Non-substrate and non-particulate (soluble, colloial, dissolved gas) components
+        # will be splitted in the same way as flow rate mass-wise
         was_dct = eff_dct.copy()
 
-        active_biomass = cmps.inert_biomass
-        X_a_e_concs = eff.concs[active_biomass] * X_e/X_v
-        eff_dct.update({ID:X_a_e_concs[n] for n, ID in enumerate(active_biomass)})
-        X_a_w_concs = eff.concs[active_biomass] * X_w/X_v
-        was_dct.update({ID:X_a_w_concs[n] for n, ID in enumerate(active_biomass)})
-
-        inert_biomass = cmps.inert_biomass
-        X_i_e_concs = eff.concs[inert_biomass] * X_e/X_v
-        eff_dct.update({ID:X_i_e_concs[n] for n, ID in enumerate(inert_biomass)})
-        X_i_w_concs = eff.concs[inert_biomass] * X_w/X_v
-        was_dct.update({ID:X_i_w_concs[n] for n, ID in enumerate(inert_biomass)})
-
-        inorganic_solids = cmps.inorganic_solids
-        X_inorg_e_concs = eff.concs[inorganic_solids] * X_e/X_v
-        eff_dct.update({ID:X_inorg_e_concs[n] for n, ID in enumerate(inorganic_solids)})
-        X_inorg_w_concs = eff.concs[inorganic_solids] * X_w/X_v
-        was_dct.update({ID:X_inorg_w_concs[n] for n, ID in enumerate(inorganic_solids)})
-
+        # Particulate components
+        try:
+            active_biomass = cmps.active_biomass
+            X_a_inf = inf.iconc['active_biomass'].sum()
+        except AttributeError:
+            warn('The `active_biomass` group of current `CompiledComponents` '
+                 'has not been defined and is assumed to be 0.')
+            X_a_inf = 0
+        if X_a_inf != 0:
+            X_a_e_conc = eff.iconc['active_biomass'] * X_e/X_a_inf
+            X_a_w_conc = eff.iconc['active_biomass'] * X_w/X_a_inf
+        else:
+            X_a_e_conc = X_a_w_conc = eff.iconc['active_biomass']
+        if len(active_biomass) > 1:
+            eff_dct.update({cmp.ID:conc for cmp, conc in zip(active_biomass, X_a_e_conc)})
+            was_dct.update({cmp.ID:conc for cmp, conc in zip(active_biomass, X_a_w_conc)})
+        else:
+            eff_dct[active_biomass[0].ID] = X_a_e_conc
+            was_dct[active_biomass[0].ID] = X_a_w_conc
         eff.set_flow_by_concentration(
             flow_tot=Q_eff, concentrations=eff_dct, units=('L/d', 'mg/L'))
         was.set_flow_by_concentration(
-            flow_tot=Q_eff, concentrations=was_dct, units=('L/d', 'mg/L'))
+            flow_tot=Q_was, concentrations=was_dct, units=('L/d', 'mg/L'))
+
+        # Assume all non-active solids (including inorganic solids) go to sludge
+        X_i = set(cmps.solids).difference(set(active_biomass))
+        X_i_IDs = tuple((cmp.ID for cmp in X_i))
+        eff.imass[X_i_IDs] = 0
+        was.imass[X_i_IDs] = inf.imass[X_i_IDs]
+        ras = self._ras
+        ras.copy_like(was)
+        ras.mass *= Q_ras/Q_was
 
         air.empty()
+        emission.empty()
         air.imass['O2'] = auom('mg/d').convert(O2_uptake, 'kg/hr')
-        air.imass['N2'] = air.imol['O2']/0.21*0.79
-        emission.copy_flow(air, air.gases, remove=False)
+        emission.imass['N2'] = air.imass['N2'] = air.imol['O2']/0.21*0.79
 
         eff.T = was.T = emission.T = self.T
 
@@ -293,6 +350,8 @@ class ActivatedSludgeProcess(SanUnit):
         'Wall concrete': 'ft3',
         'Slab concrete': 'ft3',
         'Excavation': 'ft3',
+        'Pump pipe stainless steel': 'kg',
+        'Pump stainless steel': 'kg',
         }
     def _design(self):
         D = self.design_results
@@ -315,7 +374,7 @@ class ActivatedSludgeProcess(SanUnit):
             L_tank = V_tank / A_tank
 
         D['N_train'] = self.N_train = N_train
-        D['Aeration tank volume'] = self.V_tank = V_tank
+        D['Aeration tank volume'] = self._V_tank = V_tank
         D['Aeration tank length'] = self.L_tank
 
         # Clarifier
@@ -338,10 +397,10 @@ class ActivatedSludgeProcess(SanUnit):
         t_wall, t_slab = self.t_wall, self.t_slab
         W_N_trains = (W_tank+2*t_wall)*N_train - t_wall*(N_train-1)
 
-        D = D_tank + self.freeboard
+        D_tot = D_tank + self.freeboard
         t = t_wall + t_slab
 
-        get_VWC = lambda L1, N: N * t_wall * L1 * D # get volume of wall concrete
+        get_VWC = lambda L1, N: N * t_wall * L1 * D_tot # get volume of wall concrete
         get_VSC = lambda L2: t * L2 * W_N_trains # get volume of slab concrete
 
         # Distribution channel, [ft3],
@@ -378,24 +437,111 @@ class ActivatedSludgeProcess(SanUnit):
 
         # Excavation
         excav_slope, constr_access = self.excav_slope, self.constr_access
-
         # Aeration tank and clarifier
         VEX = calculate_excavation_volume(
             L=(W_dist+L_tank+L_clarifier), W=W_N_trains, D=D_tank,
             excav_slope=excav_slope, constr_access=constr_access)
-
         # Pump/blower building
         VEX += calculate_excavation_volume(
             L=(W_PB+W_BB), W=W_N_trains, D=D_tank,
             excav_slope=excav_slope, constr_access=constr_access)
         D['Excavation'] = VEX
 
+        # Pumps
+        pipe, pumps = self._design_pump()
+        D['Pump pipe stainless steel'] = pipe
+        D['Pump stainless steel'] = pumps
+
+
+    def _design_pump(self):
+        ID, pumps = self.ID, self.pumps
+        inf, ras = self._inf, self._ras
+        ins_dct = {
+            'inf': inf,
+            'recir': ras,
+            }
+        # ins_dct = {
+        #     'inf': inf.proxy(f'{ID}_inf'),
+        #     'recir': ras.proxy(f'{ID}_ras'),
+        #     }
+        type_dct = dict.fromkeys(pumps, '')
+        inputs_dct = dict.fromkeys(pumps, self.N_train)
+        for i in pumps:
+            if hasattr(self, f'{i}_pump'):
+                p = getattr(self, f'{i}_pump')
+                setattr(p, 'add_inputs', inputs_dct[i])
+            else:
+                ID = f'{ID}_{i}'
+                capacity_factor=2. if i=='inf' else ras.F_vol/inf.F_vol
+                pump = WWTpump(
+                    ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
+                    Q_mgd=None, add_inputs=inputs_dct[i],
+                    capacity_factor=capacity_factor,
+                    include_pump_cost=True,
+                    include_building_cost=False,
+                    include_OM_cost=False,
+                    )
+                setattr(self, f'{i}_pump', pump)
+
+        pipe_ss, pump_ss = 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p.simulate()
+            p_design = p.design_results
+            pipe_ss += p_design['Pump pipe stainless steel']
+            pump_ss += p_design['Pump stainless steel']
+        return pipe_ss, pump_ss
+
 
     def _cost(self):
+        D, C = self.design_results, self.baseline_purchase_costs
+        ### Capital ###
+        # Concrete and excavation
+        VEX, VWC, VSC = \
+            D['Excavation'], D['Wall concrete'], D['Slab concrete']
+        C['Reactor excavation'] = VEX * self.excav_unit_cost
+        C['Wall concrete'] = VWC * self.wall_concrete_unit_cost
+        C['Slab concrete'] = VSC * self.slab_concrete_unit_cost
+
+        # Pump
+        pumps, add_OPEX = self.pumps, self.add_OPEX
+        pump_cost, building_cost, opex_o, opex_m = 0., 0., 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p_cost, p_add_opex = p.baseline_purchase_costs, p.add_OPEX
+            pump_cost += p_cost['Pump']
+            building_cost += p_cost['Pump building']
+            opex_o += p_add_opex['Pump operating']
+            opex_m += p_add_opex['Pump maintenance']
+
+        C['Pumps'] = pump_cost
+        C['Pump building'] = building_cost
+        add_OPEX['Pump operating'] = opex_o
+        add_OPEX['Pump maintenance'] = opex_m
+
+        # Blower
         self.add_equipment_cost()
-        #!!! Consider include pump as a equipment or similar,
-        # note that the `capacity_factor` should be 2 for the intermediate pumps
-        # and return sludge ratio
+
+        ### Heat and power ###
+        # Fluid heating
+        T, inf = self.T, self._inf
+        inf.copy_like(self.ins[0])
+        if T:
+            H_at_T = inf.thermo.mixture.H(mol=inf.mol, phase='l', T=T, P=101325)
+            duty = -(inf.H - H_at_T)
+        else:
+            duty = 0
+        self.heat_exchanger.simulate_as_auxiliary_exchanger(duty, inf)
+        # Power
+        pumping = 0.
+        for ID in self.pumps:
+            p = getattr(self, f'{ID}_pump')
+            if p is None:
+                continue
+            pumping += p.power_utility.rate
+        self.power_utility.rate = \
+            self.blower.design_results['Total blower power'] + pumping
+
 
     @property
     def N_train(self):
@@ -437,7 +583,7 @@ class ActivatedSludgeProcess(SanUnit):
 
     @property
     def Q_ras(self):
-        '''[float] Returnactivated sludge flow rate, [m3/d].'''
+        '''[float] Return activated sludge flow rate, [m3/d].'''
         return self._Q_ras
 
     @property
@@ -484,7 +630,7 @@ class ActivatedSludgeProcess(SanUnit):
 
     @property
     def freeboard(self):
-        '''[float] Freeboard added to the depth of the reactor/membrane tank, [ft].'''
+        '''[float] Freeboard added to the depth of the reactor tank, [ft].'''
         return self._freeboard
     @freeboard.setter
     def freeboard(self, i):
@@ -515,28 +661,28 @@ class ActivatedSludgeProcess(SanUnit):
         self._W_BB = i
 
     @property
-    def L_well(self):
+    def L_WW(self):
         '''[float] Length of the wet well for mixed liquor storage, [ft].'''
-        return self._L_well
-    @L_well.setter
-    def L_well(self, i):
-        self._L_well = i
+        return self._L_WW
+    @L_WW.setter
+    def L_WW(self, i):
+        self._L_WW = i
 
     @property
-    def W_well(self):
+    def W_WW(self):
         '''[float] Width of the wet well for mixed liquor storage, [ft].'''
-        return self._W_well
-    @W_well.setter
-    def W_well(self, i):
-        self._W_well = i
+        return self._W_WW
+    @W_WW.setter
+    def W_WW(self, i):
+        self._W_WW = i
 
     @property
-    def D_well(self):
+    def D_WW(self):
         '''[float] Depth of the wet well for mixed liquor storage, [ft].'''
-        return self._D_well
-    @D_well.setter
-    def D_well(self, i):
-        self._D_well = i
+        return self._D_WW
+    @D_WW.setter
+    def D_WW(self, i):
+        self._D_WW = i
 
     @property
     def t_wall(self):

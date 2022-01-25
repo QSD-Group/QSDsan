@@ -50,6 +50,9 @@ class CSTR(SanUnit):
         activated sludge.
     outs : :class:`WasteStream`
         Treated effluent.
+    split : iterable of float
+        Volumetric splits of effluent flows if there are more than one effluent.
+        The default is None.
     V_max : float
         Designed volume, in [m^3]. The default is 1000.
     aeration : float or :class:`Process`, optional
@@ -62,17 +65,15 @@ class CSTR(SanUnit):
     suspended_growth_model : :class:`Processes`, optional
         The suspended growth biokinetic model. The default is None.
     '''
-    
-    # cache_state : bool, optional
-    #     Whether to store the states of stream composition in the tank from
-    #     most recent run. The default is True.
 
     _N_ins = 3
     _N_outs = 1
     _ins_size_is_fixed = False
+    _outs_size_is_fixed = False
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 V_max=1000, aeration=2.0, DO_ID='S_O2', suspended_growth_model=None,
+    def __init__(self, ID='', ins=None, outs=(), split=None, thermo=None,
+                 init_with='WasteStream', V_max=1000, aeration=2.0,
+                 DO_ID='S_O2', suspended_growth_model=None,
                  isdynamic=True, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic)
         self._V_max = V_max
@@ -81,14 +82,9 @@ class CSTR(SanUnit):
         self._model = suspended_growth_model
         self._concs = None
         self._mixed = WasteStream()
+        self.split = split
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-
-    def reset_cache(self):
-        '''Reset cached states.'''
-        self._state = None
-        for s in self.outs:
-            s.empty()
 
     @property
     def V_max(self):
@@ -142,6 +138,19 @@ class CSTR(SanUnit):
         self._DO_ID = doid
 
     @property
+    def split(self):
+        '''[numpy.1darray or NoneType] The volumetric split of outs.'''
+        return self._split
+
+    @split.setter
+    def split(self, split):
+        if split is None: self._split = split
+        else:
+            if len(split) != len(self._outs):
+                raise ValueError('split and outs must have the same size')
+            self._split = np.array(split)/sum(split)
+
+    @property
     def state(self):
         '''The state of the CSTR, including component concentrations [mg/L] and flow rate [m^3/d].'''
         if self._state is None: return None
@@ -163,29 +172,48 @@ class CSTR(SanUnit):
         for k, v in kwargs.items(): Cs[cmpx(k)] = v
         self._concs = Cs
 
-    def _init_state(self, state=None):
+    def _init_state(self):
         '''initialize state by specifying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
-        mixed = self._mixed # avoid creating multiple new streams
-        mixed.mix_from(self.ins)
+        mixed = self._mixed
         Q = mixed.get_total_flow('m3/d')
-        if state is not None: Cs = state
-        elif self._concs is not None: Cs = self._concs
+        if self._concs is not None: Cs = self._concs
         else: Cs = mixed.conc
         self._state = np.append(Cs, Q)
         self._dstate = self._state * 0.
 
     def _update_state(self, arr):
-        self._state = self._outs[0]._state = arr
-    
-    def _update_dstate(self):
-        self._outs[0]._dstate = self._dstate
+        self._state = arr
+        if self.split is None: self._outs[0]._state = arr
+        else:
+            for ws, spl in zip(self._outs, self.split):
+                ws._state = arr.copy()
+                ws._state[-1] *= spl
 
+    def _update_dstate(self):
+        arr = self._dstate
+        if self.split is None: self._outs[0]._dstate = arr
+        else:
+            for ws, spl in zip(self._outs, self.split):
+                ws._dstate = arr.copy()
+                ws._dstate[-1] *= spl
 
     def _run(self):
         '''Only to converge volumetric flows.'''
-        self.outs[0].mix_from(self.ins)
+        mixed = self._mixed # avoid creating multiple new streams
+        mixed.mix_from(self.ins)
+        Q = mixed.F_vol # m3/hr
+        if self.split is None: self.outs[0].copy_like(mixed)
+        else:
+            for ws, spl in zip(self._outs, self.split):
+                ws.copy_like(mixed)
+                ws.set_total_flow(Q*spl, 'm3/hr')
+
+    def get_retained_mass(self, biomass_IDs):
+        cmps = self.components
+        mass = cmps.i_mass * self._state[:-1]
+        return self._V_max * mass[cmps.indices(biomass_IDs)].sum()
 
     @property
     def ODE(self):
@@ -195,58 +223,50 @@ class CSTR(SanUnit):
 
     def _compile_ODE(self):
         isa = isinstance
-        V = self._V_max
         C = list(symbols(self.components.IDs))
+        m = len(C)
         if self._model is None:
             warn(f'{self.ID} was initialized without a suspended growth model, '
                  f'and thus run as a non-reactive unit')
-            r = lambda *args: np.zeros(len(C))
+            r = lambda *args: np.zeros(m)
         else:
             processes = _add_aeration_to_growth_model(self._aeration, self._model)
             r_eqs = list(processes.production_rates.rate_of_production)
             r = lambdify(C, r_eqs)
 
-
+        _dstate = self._dstate
+        _update_dstate = self._update_dstate      
+        V_arr = np.full(m, self._V_max)
+        Q_e_arr = np.zeros(m)
+        
         if isa(self._aeration, (float, int)):
             i = self.components.index(self._DO_ID)
             fixed_DO = self._aeration
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 Q_ins = QC_ins[:, -1]
                 C_ins = QC_ins[:, :-1]
-                flow_in = Q_ins @ C_ins / V
-                Q_e = Q_ins.sum()
-                self._dstate[-1] = dQC_ins[:, -1].sum()
+                flow_in = Q_ins @ C_ins / V_arr
+                Q_e_arr[:] = sum(Q_ins)
+                _dstate[-1] = sum(dQC_ins[:, -1])
                 Cs = QC[:-1]
                 Cs[i] = fixed_DO
-                flow_out = Q_e * Cs / V
-                react = np.asarray(r(*Cs))
-                C_dot = flow_in - flow_out + react
-                C_dot[i] = 0.0
-                self._dstate[:-1] = C_dot
-                self._update_dstate()
+                flow_out = Q_e_arr * Cs / V_arr
+                _dstate[:-1] = flow_in - flow_out + r(*Cs)
+                _dstate[i] = 0
+                _update_dstate()
         else:
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 Q_ins = QC_ins[:, -1]
                 C_ins = QC_ins[:, :-1]
-                flow_in = Q_ins @ C_ins / V
-                Q_e = Q_ins.sum()
-                self._dstate[-1] = dQC_ins[:, -1].sum()
+                flow_in = Q_ins @ C_ins / V_arr
+                Q_e_arr[:] = sum(Q_ins)
+                _dstate[-1] = sum(dQC_ins[:, -1])
                 Cs = QC[:-1]
-                flow_out = Q_e * Cs / V
-                react = np.asarray(r(*Cs))
-                C_dot = flow_in - flow_out + react
-                self._dstate[:-1] = C_dot
-                self._update_dstate()
+                flow_out = Q_e_arr * Cs / V_arr
+                _dstate[:-1] = flow_in - flow_out + r(*Cs)                
+                _update_dstate()
 
         self._ODE = dy_dt
-
-    def _define_outs(self):
-        dct_y = self._state_locator(self._state)
-        out, = self.outs
-        Q = dct_y[out.ID][-1]
-        Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
-        Cs.pop('H2O', None)
-        out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
 
     def _design(self):
         pass
@@ -358,13 +378,6 @@ class SBR(SanUnit):
         self._init_Cas = None
         self._dynamic_composition = None
 
-
-    def reset_cache(self):
-        '''Reset cached states.'''
-        self._init_Vas = self._init_Cas = None
-        self._state = None
-        for s in self.outs:
-            s.empty()
 
     @property
     def operation_cycle(self):

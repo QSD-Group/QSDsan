@@ -1,9 +1,9 @@
-Sludge Handling
-===============
+Sludge Thickening
+=================
 
-SludgeHandling
---------------
-.. autoclass:: qsdsan.sanunits.SludgeHandling
+SludgeThickening
+----------------
+.. autoclass:: qsdsan.sanunits.SludgeThickening
    :members:
 
 

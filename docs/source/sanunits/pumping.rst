@@ -17,3 +17,12 @@ WWTpump
 -------
 .. autoclass:: qsdsan.sanunits.WWTpump
    :members:
+
+wwtpump
+-------
+
+Note
+^^^^
+This is a decorator function to add the :class:`WWTpump` to a ``SanUnit``.
+
+.. autofunction:: qsdsan.sanunits.wwtpump

@@ -28,7 +28,7 @@ __all__ = (
 
 class AttrGetter:
     __slots__ = ('obj', 'attr', 'hook', 'hook_param')
-    def __init__(self, obj, attr, hook=lambda i: i, hook_param=None):
+    def __init__(self, obj, attr, hook=lambda i: i, hook_param=()):
         self.obj = obj
         self.attr = attr
         self.hook = hook

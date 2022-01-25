@@ -18,6 +18,7 @@ qs_path = ospath.realpath(ospath.join(ospath.dirname(__file__), '../'))
 data_path = ospath.join(qs_path, 'data')
 
 import pandas as pd
+import numpy as np
 from .. import _pk
 
 __all__ = ('ospath', 'load_data', 'data_path',
@@ -43,9 +44,14 @@ def load_data(path=None, sheet=None, index_col=0, **kwargs):
         else:
             data = pd.read_excel(path, engine='openpyxl',
                                  index_col=index_col, **kwargs)
+    elif path.endswith('.npy'):
+        arr = np.load(path)
+        index = arr[:, index_col]
+        data = arr[:, np.arange(arr.shape[1]) != index_col]
+        data = pd.DataFrame(data, index=index, **kwargs)
     else:
         raise ValueError('Only tab deliminted (tsv/txt), comma delimited (csv), '
-                         'or Excel (xlsx, xls) files can be loaded.')
+                         'Excel (xlsx, xls) , or binary (.npy) files can be loaded.')
     return data
 
 

@@ -184,7 +184,7 @@ def get_correlations(model, input_x=None, input_y=None,
     else:
         raise ValueError('kind can only be "Spearman", "Pearson", '
                         f'"Kendall", or "KS", not "{kind}".')
-    r_df, p_df = dfs = correlation(input_x, input_y, nan_policy+' nan', **kwargs)
+    r_df, p_df = dfs = correlation(input_x, input_y, filter=nan_policy+' nan', **kwargs)
     for df in dfs:
         df.index.names = ('Element', 'Input x')
         df.columns.names = ('Element', 'Input y')

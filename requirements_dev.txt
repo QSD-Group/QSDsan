@@ -1,6 +1,6 @@
 # Needed by qsdsan
-biosteam>=2.31.18
-thermosteam>=0.27.15
+biosteam>=2.31.21
+thermosteam>=0.27.18
 scikit-learn
 scipy
 SALib

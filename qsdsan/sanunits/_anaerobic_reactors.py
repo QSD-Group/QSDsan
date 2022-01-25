@@ -16,7 +16,7 @@ for license details.
 from math import ceil, pi
 from . import Decay
 from .. import SanUnit, Construction
-from ..sanunits import HXutility
+from ..sanunits import HXutility, WWTpump
 from ..utils import ospath, load_data, data_path, auom, calculate_excavation_volume
 __all__ = (
     'AnaerobicBaffledReactor',
@@ -440,6 +440,17 @@ class AnaerobicDigestion(SanUnit, Decay):
 
 # %%
 
+F_BM_pump = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
+default_F_BM = {
+        'Pump': F_BM_pump,
+        'Pump building': F_BM_pump,
+        }
+default_equipment_lifetime = {
+    'Pump': 15,
+    'Pump pipe stainless steel': 15,
+    'Pump stainless steel': 15,
+    }
+
 class SludgeDigester(SanUnit):
     '''
     A conventional digester for anaerobic digestion of sludge as in
@@ -451,9 +462,9 @@ class SludgeDigester(SanUnit):
     Parameters
     ----------
     ins : Iterable
-        Sludge for treatment.
+        Sludge for digestion.
     outs : Iterable
-        Treated waste, captured biogas, fugitive CH4, and fugitive N2O.
+        Digested sludge, generated biogas.
     HRT : float
         Hydraulic retention time, [d].
     SRT : float
@@ -493,7 +504,8 @@ class SludgeDigester(SanUnit):
         https://doi.org/10.1039/C5EE03715H.
 
     '''
-
+    _N_outs = 2
+    
     # All in K
     _T_air = 17 + 273.15
     _T_earth = 10 + 273.15
@@ -523,8 +535,9 @@ class SludgeDigester(SanUnit):
                  wall_concrete_unit_cost=24, # from $650/yd3
                  slab_concrete_unit_cost=13, # from $350/yd3
                  excavation_unit_cost=0.3, # from $8/yd3
-                 **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+                 F_BM=default_F_BM, lifetime=default_equipment_lifetime,
+                 F_BM_default=1, **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
         self.HRT = HRT
         self.SRT = SRT
         self.T = T
@@ -533,7 +546,7 @@ class SludgeDigester(SanUnit):
         self.organics_conversion = organics_conversion
         self.COD_factor = COD_factor
         self.methane_yield = methane_yield
-        self.methane_fraction
+        self.methane_fraction = methane_fraction
         self.depth = depth
         self.heat_transfer_coeff = heat_transfer_coeff
         self.heat_exchanger = hx = HXutility(None, None, None, T=T)
@@ -541,6 +554,13 @@ class SludgeDigester(SanUnit):
         self.wall_concrete_unit_cost = wall_concrete_unit_cost
         self.slab_concrete_unit_cost = slab_concrete_unit_cost
         self.excavation_unit_cost = excavation_unit_cost
+        self.F_BM.update(F_BM)
+        self._default_equipment_lifetime.update(lifetime)
+        self.sludge_pump = WWTpump(
+            ID=f'{ID}_sludge', ins=self.ins[0].proxy(), pump_type='',
+            Q_mgd=None, add_inputs=(1,), capacity_factor=1.,
+            include_pump_cost=True, include_building_cost=False,
+            include_OM_cost=False)
 
 
     def _run(self):
@@ -550,14 +570,13 @@ class SludgeDigester(SanUnit):
         biogas.phase = 'g'
 
         # Biogas production estimation based on Example 13-5 of Metcalf & Eddy, 5th edn.
-        cmps = self.components
         Y, b, SRT = self.Y, self.b, self.SRT
         organics_conversion, COD_factor = self.organics_conversion, self.COD_factor
         methane_yield, methane_fraction = self.methane_yield, self.methane_fraction
-        biomass_COD = sludge.imass[cmps.active_biomass].sum()*1e3*24*1.42 # [g/d], 1.42 converts VSS to COD
+        biomass_COD = sludge.imass['active_biomass'].sum()*1e3*24*1.42 # [g/d], 1.42 converts VSS to COD
 
         digested.mass = sludge.mass
-        digested.imass[cmps.active_biomass] = 0 # biomass-derived COD calculated separately
+        digested.imass['active_biomass'] = 0 # biomass-derived COD calculated separately
         substrate_COD = digested.COD*24*digested.F_vol # [g/d]
 
         tot_COD = biomass_COD + substrate_COD # [g/d]
@@ -566,13 +585,13 @@ class SludgeDigester(SanUnit):
         methane_vol = methane_yield*tot_COD*organics_conversion - COD_factor*digestion_yield
 
         # Update stream flows
-        digested.imass[cmps.substrates] *= (1-organics_conversion)
-        digested.imass[cmps.active_biomass] = \
-            sludge.imass[cmps.active_biomass]*(1-organics_conversion)
+        digested.imass['substrates'] *= (1-organics_conversion)
+        digested.imass['active_biomass'] = \
+            sludge.imass['active_biomass']*(1-organics_conversion)
 
         biogas.empty()
-        biogas.i_vol['CH4'] = methane_vol
-        biogas.i_vol['CO2'] = methane_vol/methane_fraction*(1-methane_fraction)
+        biogas.ivol['CH4'] = methane_vol
+        biogas.ivol['CO2'] = methane_vol/methane_fraction*(1-methane_fraction)
 
 
     _units = {
@@ -584,6 +603,8 @@ class SludgeDigester(SanUnit):
         'Wall concrete': 'ft3',
         'Slab concrete': 'ft3',
         'Excavation': 'ft3',
+        'Pump pipe stainless steel': 'kg',
+        'Pump stainless steel': 'kg',
         }
     def _design(self):
         design = self.design_results
@@ -625,6 +646,10 @@ class SludgeDigester(SanUnit):
         design['Excavation'] = calculate_excavation_volume(
             self.L_PB, self.W_PB, self.D_PB, self.excav_slope, self.constr_access)
 
+        # Pump
+        sludge_pump = self.sludge_pump
+        sludge_pump.simulate()
+        design.update(sludge_pump.design_results)
 
     def _cost(self):
         D, C = self.design_results, self.baseline_purchase_costs
@@ -632,6 +657,9 @@ class SludgeDigester(SanUnit):
         C['Wall concrete'] = D['Wall concrete'] * self.wall_concrete_unit_cost
         C['Slab concrete'] = D['Slab concrete'] * self.slab_concrete_unit_cost
         C['Excavation'] = D['Excavation'] * self.excavation_unit_cost
+        sludge_pump = self.sludge_pump
+        C.update(sludge_pump.baseline_purchase_costs)
+        self.power_utility.rate = sludge_pump.power_utility.rate
 
 
     @property
@@ -649,6 +677,14 @@ class SludgeDigester(SanUnit):
     @T_earth.setter
     def T_earth(self, i):
         self._T_earth = i
+
+    @property
+    def freeboard(self):
+        '''[float] Freeboard added to the depth of the reactor tank, [ft].'''
+        return self._freeboard
+    @freeboard.setter
+    def freeboard(self, i):
+        self._freeboard = i
 
     @property
     def t_wall(self):

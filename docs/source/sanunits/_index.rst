@@ -35,7 +35,7 @@ Links to docs
    pumping
    Screening
    Sedimentation
-   sludge_handling
+   sludge_thickening
    suspended_growth_bioreactors
    tanks
    toilets

@@ -34,7 +34,7 @@ Screening,No,No,Completed
 Sedimentation,No,No,Completed
 SludgeCentrifuge,No,No,Completed
 ﻿SludgeDigester,No,Yes,Under development
-SludgeHandling,No,Yes,Completed
+SludgeThickening,No,Yes,Completed
 SludgeSeparator,No,Yes,Completed
 Splitter,Yes,Yes,Completed
 StorageTank,No,No,Completed

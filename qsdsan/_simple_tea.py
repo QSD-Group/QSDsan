@@ -73,7 +73,7 @@ class SimpleTEA(TEA):
             associated with the unit:
 
                 - Utility and material costs/environmental impacts will be calculated for 1*24*365 hours per year.
-                - Additional operaitng expenses will be calculated for 0.5*24*365 hours per year.
+                - Additional operating expenses will be calculated for 0.5*24*365 hours per year.
 
             If utility and material flows are not used at the same `uptime_ratio`
             as the system, they should be normalized to be the same.
@@ -98,7 +98,7 @@ class SimpleTEA(TEA):
         Float input will be automatically converted to a dict with the key being
         "System additional OPEX".
     construction_schedule : tuple
-        Construction progress prior to the start of the system (fraction of the construction that can be finished each year), must sum up to 1.
+        Construction progress prior to the start of the system (fraction of the construction that can be finished each year), must sum up to 1. Leave as the default (1,) if no special construction progress is expected.
 
     Examples
     --------
@@ -175,7 +175,7 @@ class SimpleTEA(TEA):
         self.lang_factor = lang_factor
         self.annual_maintenance = annual_maintenance
         self.annual_labor = annual_labor
-        self.system_add_OPEX = system_add_OPEX
+        self.system_add_OPEX = {}.copy() if not system_add_OPEX else system_add_OPEX
         self.depreciation = depreciation
         self.construction_schedule = construction_schedule
 
@@ -402,7 +402,7 @@ class SimpleTEA(TEA):
         Float input will be automatically converted to a dict with the key being
         "System additional OPEX".
         '''
-        return {'System dditional OPEX': self._system_add_OPEX} \
+        return {'System additional OPEX': self._system_add_OPEX} \
                if isinstance(self._system_add_OPEX, float) else self._system_add_OPEX
         return self._system_add_OPEX
     @system_add_OPEX.setter
@@ -423,7 +423,7 @@ class SimpleTEA(TEA):
     def FOC(self):
         '''
         [float] Fixed operating cost, including maintenance, labor, and any additional
-        operaitng expenditure other than chemical inputs and utilities.
+        operating expenditure other than chemical inputs and utilities.
         '''
         return self._FOC(self.FCI)
 
@@ -511,7 +511,7 @@ class SimpleTEA(TEA):
     @property
     def EAC(self):
         '''
-        [float] Equvalent annual cost calculated as the sum of `annualized_CAPEX` and
+        [float] Equivalent annual cost calculated as the sum of `annualized_CAPEX` and
         `AOC` (annual operating cost).
         '''
         return self.annualized_CAPEX+self.AOC

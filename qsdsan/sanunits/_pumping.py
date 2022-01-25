@@ -26,13 +26,13 @@ from biosteam.units.design_tools.mechanical import (
 from .. import SanUnit
 from ..utils import auom, select_pipe, format_str
 
-__all__ = ('Pump', 'HydraulicDelay', 'WWTpump', )
+__all__ = ('Pump', 'HydraulicDelay', 'WWTpump', 'wwtpump')
 
 
 class Pump(SanUnit, Pump):
     '''
     Similar to the :class:`biosteam.units.Pump`,
-    but can be initilized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`,
+    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`,
     and allows dynamic simulation.
 
     See Also
@@ -52,12 +52,6 @@ class Pump(SanUnit, Pump):
         self.dP_design = dP_design
         self.ignore_NPSH = ignore_NPSH
 
-    def reset_cache(self):
-        '''Reset cached states.'''
-        self._state = None
-        for s in self.outs:
-            s.empty()
-
     @property
     def state(self):
         '''The state of the Pump, including component concentrations [mg/L] and flow rate [m^3/d].'''
@@ -74,7 +68,8 @@ class Pump(SanUnit, Pump):
         self._state = QCs
 
     def _init_state(self):
-        self._state = self._collect_ins_state()[0]
+        self._refresh_ins()
+        self._state = self._ins_QC[0]
         self._dstate = self._state * 0.
 
     def _update_state(self, arr):
@@ -85,20 +80,6 @@ class Pump(SanUnit, Pump):
         '''updates rates of change of output stream from rates of change of the Mixer'''
         self._outs[0]._dstate = self._dstate
 
-    # def _state_locator(self, arr):
-    #     '''derives conditions of output stream from conditions of the Mixer'''
-    #     dct = {}
-    #     dct[self.outs[0].ID] = dct[self.ID] = arr
-    #     return dct
-
-    # def _dstate_locator(self, arr):
-    #     '''derives rates of change of output stream from rates of change of the Mixer'''
-    #     return self._state_locator(arr)
-
-    # def _load_state(self):
-    #     '''returns a dictionary of values of state variables within the CSTR and in the output stream.'''
-    #     if self._state is None: self._init_state()
-    #     return {self.ID: self._state}
 
     @property
     def ODE(self):
@@ -111,14 +92,6 @@ class Pump(SanUnit, Pump):
             self._dstate = dQC_ins[0]
             self._update_dstate()
         self._ODE = dy_dt
-
-    def _define_outs(self):
-        dct_y = self._state_locator(self._state)
-        out, = self.outs
-        Q = dct_y[out.ID][-1]
-        Cs = dict(zip(self.components.IDs, dct_y[out.ID][:-1]))
-        Cs.pop('H2O', None)
-        out.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
 
 
 # %%
@@ -149,10 +122,12 @@ class HydraulicDelay(Pump):
         self._concs = Cs
 
     def _init_state(self):
-        '''initialize state by specifiying or calculating component concentrations
+        '''initialize state by specifying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
-        self._state = self._collect_ins_state()[0]
+        self._refresh_ins()
+        self._state = self._ins_QC[0]
+        self._dstate = self._state * 0
         if self._concs is not None:
             self._state[:-1] = self._concs
 
@@ -192,6 +167,17 @@ _lb_to_kg = auom('lb').conversion_factor('kg')
 _ft_to_m = auom('ft').conversion_factor('m')
 _ft3_to_gal = auom('ft3').conversion_factor('gallon')
 _m3_to_gal = auom('m3').conversion_factor('gallon')
+F_BM_pump = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
+default_F_BM = {
+        'Pump': F_BM_pump,
+        'Pump building': F_BM_pump,
+        }
+default_equipment_lifetime = {
+    'Pump': 15,
+    'Pump pipe stainless steel': 15,
+    'Pump stainless steel': 15,
+    'Pump chemical storage HDPE': 30,
+    }
 
 class WWTpump(SanUnit):
     '''
@@ -199,11 +185,16 @@ class WWTpump(SanUnit):
     all pumps are assumed be made of stainless steel.
 
     This class is intended to be used as a part of other units
-    (e.g., :class:`~.AnMBR`), but it can be used as a standalone unit,
-    with the caveat being that the
+    (e.g., :class:`~.AnMBR`), but it can be used as a standalone unit.
+
+    Note that pump building concrete usage and excavation is not included here
+    as pumps are often housed together with the reactors.
 
     Parameters
     ----------
+    prefix : str
+        If provided, all keys in design and cost dicts will be prefixed with
+        the provided string.
     pump_type : str
         The type of the pump that determines the design algorithms to use.
         The following types are valid:
@@ -234,10 +225,18 @@ class WWTpump(SanUnit):
         Additional inputs that will be passed to the corresponding design algorithm.
         Check the documentation of for the corresponding pump type
         for the design algorithm of the specific input requirements.
-    building_unit_cost : float
-        Unit cost of the pump building, [USD/ft2].
-    excavation_unit_cost : float
-        Unit cost of excavation for the building, [USD/ft3].
+    capacity_factor : float
+        A safety factor to handle peak flows.
+    include_pump_cost : bool
+        Whether to include pump cost.
+    include_building_cost : bool
+        Whether to include the cost of the pump building.
+    include_OM_cost : bool
+        Whether to include the operating and maintenance cost of the pump.
+    F_BM : dict
+        Bare module factors of the individual equipment.
+    lifetime : dict
+        Lifetime of the individual equipment.
     kwargs : dict
         Other attributes to be set.
 
@@ -262,17 +261,13 @@ class WWTpump(SanUnit):
     # http://www.godwinpumps.com/images/uploads/ProductCatalog_Nov_2011_spread2.pdf
     # assume 50% of the product weight is SS
     _SS_per_pump = 725 * 0.5
+    _building_unit_cost = 90 # [$/ft2]
 
-    # Dimensions of the pump building, all in ft unless otherwise noted
-    _L_PB = 21
-    _W_PB = 21
-    _D_PB = 12
-    _t_wall = None
-    _t_slab = None
-    _excav_slope = 1.5 # horizontal/vertical
-    _constr_access = 3
-
-    _default_equipment_lifetime = {'Pump': 15}
+    _units = {
+        'Pump pipe stainless steel': 'kg',
+        'Pump stainless steel': 'kg',
+        'Pump chemical storage HDPE': 'm3',
+        }
 
     _valid_pump_types = (
         'permeate_cross-flow',
@@ -283,36 +278,46 @@ class WWTpump(SanUnit):
         'lift',
         'sludge',
         'chemical',
+        '',
         )
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 init_with='WasteStream', isdynamic=False, *,
-                 pump_type, Q_mgd=None, add_inputs=(),
-                 include_cost=False,
-                 building_unit_cost=90,
-                 excavation_unit_cost=0., #!!! need updating
+                 init_with='WasteStream',
+                 prefix='', pump_type='', Q_mgd=None, add_inputs=(),
+                 capacity_factor=1.,
+                 include_pump_cost=True, include_building_cost=False,
+                 include_OM_cost=False,
+                 F_BM=default_F_BM,
+                 lifetime=default_equipment_lifetime,
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with)
         self.pump_type = pump_type
         self.Q_mgd = Q_mgd
+        try: iter(add_inputs)
+        except: add_inputs = (add_inputs,)
         self.add_inputs = add_inputs
-        self.include_cost = include_cost
-        self.building_unit_cost = building_unit_cost
-        self.excavation_unit_cost = excavation_unit_cost
-        F_BM = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
-        self.F_BM.update({
-            'Pump': F_BM,
-            'Pump building': F_BM,
-            'Pump excavation': F_BM,
-            })
+        self.capacity_factor = capacity_factor
+        self.include_pump_cost = include_pump_cost
+        self.include_building_cost = include_building_cost
+        self.include_OM_cost = include_OM_cost
+        self.F_BM.update(F_BM)
+        self._default_equipment_lifetime.update(lifetime)
 
-        for attr, val in kwargs.items:
+        self.prefix = prefix
+        if prefix:
+            self._units = {prefix+' '+[k][0].lower()+k[1:]:v for k, v in self._units.items()}
+            self.F_BM = {prefix+' '+[k][0].lower()+k[1:]:v for k, v in self.F_BM.items()}
+            self._default_equipment_lifetime = \
+                {prefix+' '+[k][0].lower()+k[1:]:v for k, v in self._default_equipment_lifetime.items()}
+
+        for attr, val in kwargs.items():
             setattr(self, attr, val)
-
 
     def _run(self):
         self.outs[0].copy_like(self.ins[0])
 
+    def _format_key_start_with_prefix(self, start):
+        return start.upper() if not self.prefix else self.prefix+' '+start.lower()
 
     def _design(self):
         pump_type = format_str(self.pump_type)
@@ -324,46 +329,39 @@ class WWTpump(SanUnit):
             pipe, pumps, hdpe = design_func()
 
         D = self.design_results
+        start = self._format_key_start_with_prefix('P')
+        D[f'{start}ump pipe stainless steel'] = pipe
+        D[f'{start}ump stainless steel'] = pumps
+        if hdpe:
+            D[f'{start}ump chemical storage HDPE'] = hdpe
+            self._units[f'{start}ump chemical storage HDPE'] = 'm3'
+        else:
+            try:
+                self._units.pop(f'{start}ump chemical storage HDPE')
+            except KeyError:
+                pass
+            try:
+                self.design_results.pop(f'{start}ump chemical storage HDPE')
+            except KeyError:
+                pass
 
-        D['Pipe stainless steel [kg]'] = pipe
-        #!!! need to these materials' lifetime in LCA
-        D['Pump stainless steel [kg]'] = pumps
-        D['Chemical storage HDPE [m3]'] = hdpe
 
-
-    #!!! Want to add construction cost here,
-    # note that the capacity factor for the sludge pump should be `recir_ratio`
     def _cost(self):
         C = self.baseline_purchase_costs
-        if self.include_cost: #
-            # Pump
-            Q_mgd = self.Q_mgd
-            capacity_factor = self.capacity_factor
+        C.clear()
+        add_OPEX = self.add_OPEX
+        add_OPEX.clear()
+        Q_mgd, capacity_factor = self.Q_mgd, self.capacity_factor
 
-            # Installed pump cost, this is a fitted curve
-            C['Pump'] = 2.065e5 + 7.721*1e4*Q_mgd
+        start = self._format_key_start_with_prefix('P')
+        C[f'{start}ump'] = C[f'{start}ump building'] = 0.
+        add_OPEX[f'{start}ump operating'] = add_OPEX[f'{start}ump maintenance'] = 0.
+        # Pump
+        if self.include_pump_cost:
+            C[f'{start}ump'] = 2.065e5 + 7.721*1e4*Q_mgd # fitted curve
 
-            # Design capacity of intermediate pumps, gpm,
-            GPM = capacity_factor * Q_mgd * 1e6 / 24 / 60
-
-            # Pump building
-            if GPM == 0:
-                N = 0
-            else:
-                N = 1 # number of buildings
-                GPMi = GPM
-                while GPMi > 80000:
-                    N += 1
-                    GPMi = GPM / N
-
-            PBA = N * (0.0284*GPM+640) # pump building area, [ft]
-            C['Pump building'] = PBA * self.building_unit_cost
-
-            #!!! PAUSED at adding concrete and excavation
-            # Excavation
-
-
-            # Operations and maintenance
+        # Operations and maintenance
+        if self.include_OM_cost:
             FPC = capacity_factor * Q_mgd # firm pumping capacity
             O = M = 0. # USD/yr
             if 0 < FPC <= 7:
@@ -379,30 +377,30 @@ class WWTpump(SanUnit):
                 O = 21.3*25*FPC**1.012
                 M = 30.6*25*FPC**0.8806
             self.add_OPEX = {
-                'Operating': O/365/24,
-                'Maintenance': M/365/24,
+                f'{start}ump operating': O/365/24,
+                f'{start}ump maintenance': M/365/24,
                 }
-        else:
-            C.clear()
-        self.power_utility.rate = self.BHP/self.motor_efficiency * _hp_to_kW
 
+        # Pump building
+        if self.include_building_cost:
+            # Design capacity of intermediate pumps, gpm,
+            GPM = capacity_factor * Q_mgd * 1e6 / 24 / 60
+            if GPM == 0:
+                N = 0
+            else:
+                N = 1 # number of buildings
+                GPMi = GPM
+                while GPMi > 80000:
+                    N += 1
+                    GPMi = GPM / N
+            PBA = N * (0.0284*GPM+640) # pump building area, [ft2]
+            C[f'{start}ump building'] = PBA * self.building_unit_cost
 
-    # Used by other classes
-    #!!! Need to figure out a way to include cost or not
-    @staticmethod
-    def _batch_adding_pump(unit, IDs, ins_dct, type_dct, inputs_dct):
-        for i in IDs:
-            if not hasattr(unit, f'{i}_pump'):
-                pump = WWTpump(
-                    ID=f'{unit.ID}_{i}',
-                    ins=ins_dct[i],
-                    pump_type=type_dct[i],
-                    add_inputs=inputs_dct[i])
-                setattr(unit, f'{i}_pump', pump)
+        self.power_utility.consumption = self.BHP/self.motor_efficiency * _hp_to_kW
 
 
     # Generic algorithms that will be called by all design functions
-    def _design_generic(self, Q_mgd, N_pump, L_s, L_d, H_ts, H_p):
+    def _design_generic(self, Q_mgd, N_pump, L_s=0., L_d=0., H_ts=0., H_p=0.):
         self.Q_mgd, self._H_ts, self._H_p = Q_mgd, H_ts, H_p
         v, C, Q_cfs = self.v, self.C, self.Q_cfs # [ft/s], -, [ft3/s]
 
@@ -820,7 +818,7 @@ class WWTpump(SanUnit):
 
     @property
     def capacity_factor(self):
-        '''[float] A safety factor to handle peaks.'''
+        '''[float] A safety factor to handle peak flow.'''
         return self._capacity_factor
     @capacity_factor.setter
     def capacity_factor(self, i):
@@ -849,68 +847,6 @@ class WWTpump(SanUnit):
     @C.setter
     def C(self, i):
         self._C = i
-
-    @property
-    def L_PB(self):
-        '''[float] Length of the pump building, [ft].'''
-        return self._L_PB
-    @L_PB.setter
-    def L_PB(self, i):
-        self._L_PB = i
-
-    @property
-    def W_PB(self):
-        '''[float] Width of the pump building, [ft].'''
-        return self._W_PB
-    @W_PB.setter
-    def W_PB(self, i):
-        self.W_PB = i
-
-    @property
-    def D_PB(self):
-        '''[float] Depth of the pump building, [ft].'''
-        return self._D_PB
-    @D_PB.setter
-    def D_PB(self, i):
-        self._D_PB = i
-
-    @property
-    def t_wall(self):
-        '''
-        [float] Concrete wall thickness, [ft].
-        default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
-        '''
-        return self._t_wall or (1 + max(self.D_PB-12, 0)/12)
-    @t_wall.setter
-    def t_wall(self, i):
-        self._t_wall = i
-
-    @property
-    def t_slab(self):
-        '''
-        [float] Concrete slab thickness, [ft],
-        default to be 2 in thicker than the wall thickness.
-        '''
-        return self._t_slab or self.t_wall+2/12
-    @t_slab.setter
-    def t_slab(self, i):
-        self._t_slab = i
-
-    @property
-    def excav_slope(self):
-        '''[float] Slope for excavation (horizontal/vertical).'''
-        return self._excav_slope
-    @excav_slope.setter
-    def excav_slope(self, i):
-        self._excav_slope = i
-
-    @property
-    def constr_access(self):
-        '''[float] Extra room for construction access, [ft].'''
-        return self._constr_access
-    @constr_access.setter
-    def constr_access(self, i):
-        self._constr_access = i
 
     @property
     def SS_per_pump(self):
@@ -959,3 +895,60 @@ class WWTpump(SanUnit):
     def motor_efficiency(self):
         '''[float] Motor efficiency.'''
         return motor_eff(self.BHP)
+
+    @property
+    def building_unit_cost(self):
+        '''[float] Unit cost of the pump building, [USD/ft2].'''
+        return self._building_unit_cost if self.include_cost else 0.
+    @building_unit_cost.setter
+    def building_unit_cost(self, i):
+        self._building_unit_cost = i
+
+
+# %%
+
+# =============================================================================
+# Decorator
+# =============================================================================
+
+def wwtpump(ID, ins=(), prefix='', pump_type='', Q_mgd=None, add_inputs=(),
+            capacity_factor=1., include_pump_cost=True, include_building_cost=False,
+            include_OM_cost=False, F_BM=F_BM_pump, lifetime=default_equipment_lifetime,
+            **kwargs):
+    '''
+    Handy decorator to add a :class:`~.WWTpump` as an attribute of
+    a :class:`qsdsan.SanUnit`.
+
+    Refer to class:`WWTpump` for the parameters needed for using this decorator.
+
+    See Also
+    --------
+    :class:`~.WWTpump`
+
+    :class:`~.AnMBR`
+
+    References
+    ----------
+    [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
+    Valorization of Dilute Organic Carbon Waste Streams.
+    Energy Environ. Sci. 2016, 9 (3), 1102–1112.
+    https://doi.org/10.1039/C5EE03715H.
+    '''
+    return lambda cls: add_pump(cls, ID, ins, prefix, pump_type, Q_mgd, add_inputs,
+                                capacity_factor, include_pump_cost, include_building_cost,
+                                include_OM_cost, F_BM, lifetime, **kwargs)
+
+
+def add_pump(cls, ID, ins, prefix, pump_type, Q_mgd, add_inputs,
+             capacity_factor, include_pump_cost, include_building_cost,
+             include_OM_cost, F_BM, lifetime, **kwargs):
+    pump = WWTpump(
+        ID, ins=ins,
+        prefix=prefix, pump_type=pump_type, Q_mgd=Q_mgd, add_inputs=add_inputs,
+        capacity_factor=capacity_factor,
+        include_pump_cost=include_pump_cost,
+        include_building_cost=include_building_cost,
+        include_OM_cost=include_OM_cost,
+        F_BM=F_BM, lifetime=lifetime, **kwargs)
+    setattr(cls, f'{ID}_pump', pump)
+    return cls

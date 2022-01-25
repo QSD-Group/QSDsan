@@ -108,6 +108,12 @@ utils._secondary_importing()
 for _slot in utils.doc_examples.__all__:
     setattr(utils, _slot, getattr(utils.doc_examples, _slot))
 
+# Add the `pump` decorator to the util module
+from .sanunits import wwtpump
+utils.__all__ = (*utils.__all__, 'wwtpump')
+setattr(utils, 'wwtpump', wwtpump)
+
+
 __all__ = (
     *_component.__all__,
     *_components.__all__,
@@ -122,4 +128,4 @@ __all__ = (
     *_sanunit.__all__,
     *_simple_tea.__all__,
     *_lca.__all__,
-           )
+    )

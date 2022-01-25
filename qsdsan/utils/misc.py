@@ -18,6 +18,7 @@ __all__ = (
     'copy_attr',
     'register_with_prefix',
     'time_printer',
+    'ords',
     )
 
 
@@ -88,7 +89,7 @@ def register_with_prefix(obj, prefix, ID):
         registry.register_safely(full_ID, obj)
 
 
-# Allow functions to print execution time with a `print_time` kwargs
+# Allow functions to print execution time with a `print_time` kwarg
 def time_printer(func):
     '''
     Allow functions to print execution time with a `print_time` kwarg.
@@ -97,7 +98,7 @@ def time_printer(func):
     --------
     >>> from qsdsan.utils import time_printer
     >>> @time_printer
-    ... def foo(a=1, print_time=False):
+    ... def foo(a=1, **kwargs):
     ...     return a
     >>> # This will print run time
     >>> print(foo(a=5))
@@ -108,7 +109,6 @@ def time_printer(func):
     >>> print(foo(a=5, print_time=False))
     5
     '''
-
     def inner(*args, **kwargs):
         print_time = kwargs.get('print_time')
         if print_time is not False:
@@ -123,3 +123,10 @@ def time_printer(func):
         return output
     inner.__doc__ = func.__doc__
     return inner
+
+
+# Return the sum of unicode of a string, more for fun
+def ords(string):
+    string = str(string)
+    added = sum(ord(i) for i in string)
+    return added
