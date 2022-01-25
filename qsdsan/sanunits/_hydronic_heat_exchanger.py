@@ -34,10 +34,7 @@ import os
 
 __all__ = ('HydronicHeatExchanger',)
 
-#data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_hydronic_heat_exchanger.csv'
-
-#data_path = os.path.abspath(os.path.dirname('_hydronic_heat_exchanger.csv'))
-data_path += '/sanunit_data/_hydronic_heat_exchanger.tsv'
+su_data_path = os.path.join(data_path, 'sanunit_data/_hydronic_heat_exchanger.tsv')
 
 ### 
 class HydronicHeatExchanger(SanUnit):
@@ -75,8 +72,9 @@ class HydronicHeatExchanger(SanUnit):
         
         SanUnit.__init__(self, ID, ins, outs, init_with=init_with)
 
+        self.price_ratio = 1 
     
-        data = load_data(path=data_path)
+        data = load_data(path=su_data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
@@ -132,11 +130,11 @@ class HydronicHeatExchanger(SanUnit):
         #purchase_costs is used for capital costs
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.baseline_purchase_costs['Stainless steel'] = (self.stainless_steel_cost 
-                            * self.design_results['StainlessSteel'])
-        self.baseline_purchase_costs['Steel'] = (self.steel_cost
-                            * self.design_results['Steel'])
-        self.baseline_purchase_costs['Misc. parts'] = (self.hhx_stack 
+       
+        C = self.baseline_purchase_costs
+        C['Stainless steel'] = (self.stainless_steel_cost * self.design_results['StainlessSteel'])
+        C['Steel'] = (self.steel_cost * self.design_results['Steel'])
+        C['Misc. parts'] = (self.hhx_stack 
                                               + self.hhx_stack_thermocouple 
                                               + self.hhx_oxygen_sensor 
                                               + self.hhx_inducer_fan 
@@ -151,9 +149,9 @@ class HydronicHeatExchanger(SanUnit):
                                               + self.hhx_thermal_well 
                                               + self.hhx_hot_water_tank 
                                               + self.hhx_overflow_tank)
-       
-        self.F_BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
-        
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+           C[equipment] = cost * ratio 
         
         #certain parts need to be replaced based on an expected lifefime
         #the cost of these parts is considered along with the cost of the labor to replace them
@@ -164,7 +162,7 @@ class HydronicHeatExchanger(SanUnit):
                                  + (self.service_team_purgewaterloop_hhx / 60 * (1 / self.frequency_corrective_maintenance) * self.service_team_wages)) #USD/yr only accounts for time running
         
         #need to be a cost per hour
-        self.add_OPEX =  (cb_replacement_parts_annual_cost + cb_annual_maintenance) / (365 * 24) # USD/hr (all items are per hour)
+        self.add_OPEX =  (cb_replacement_parts_annual_cost * ratio + cb_annual_maintenance) / (365 * 24) # USD/hr (all items are per hour)
         
         power_demand = (self.water_pump_power + self.hhx_inducer_fan_power) #kW
         self.power_utility(power_demand) #kW

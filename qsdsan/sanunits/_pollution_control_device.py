@@ -27,12 +27,9 @@ from qsdsan.utils.loading import load_data, data_path
 import os
 __all__ = ('PollutionControlDevice',)
 
-data_path += '/sanunit_data/_pollution_control_device.tsv'
+su_data_path = os.path.join(data_path, 'sanunit_data/_pollution_control_device.tsv')
 
 #data_path = '//Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_pollution_control_device.csv'
-
-#data_path = os.path.abspath(os.path.dirname('_pollution_control_device.csv'))
-# data_path += 'sanunit_data/_pollution_control_device.csv'
 
 ### 
 class PollutionControlDevice(SanUnit):
@@ -76,9 +73,10 @@ class PollutionControlDevice(SanUnit):
         
         
         SanUnit.__init__(self, ID, ins, outs)
-
+        
+        self.price_ratio = 1 
     
-        data = load_data(path=data_path)
+        data = load_data(path=su_data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
@@ -135,12 +133,11 @@ class PollutionControlDevice(SanUnit):
         #purchase_costs is used for capital costs
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.baseline_purchase_costs['Stainless steel'] = (self.stainless_steel_cost 
-                            * self.design_results['StainlessSteel'])
-        self.baseline_purchase_costs['Steel'] = (self.steel_cost 
-                            * self.design_results['Steel'])
-        self.baseline_purchase_costs['Electric motor'] = self.input_auger_motor_pcd
-        self.baseline_purchase_costs['Misc. parts'] = (self.o2_sensor_cost_pcd +
+        C = self.baseline_purchase_costs
+        C['Stainless steel'] = (self.stainless_steel_cost * self.design_results['StainlessSteel'])
+        C['Steel'] = (self.steel_cost * self.design_results['Steel'])
+        C['Electric motor'] = self.input_auger_motor_pcd
+        C['Misc. parts'] = (self.o2_sensor_cost_pcd +
                                               self.thermocouple_cost_cb_pcd +
                                               self.thermistor_cost_cb_pcd +
                                               self.input_auger_pcd +
@@ -152,8 +149,10 @@ class PollutionControlDevice(SanUnit):
                                               self.feedstock_staging_assembly_pcd +
                                               self.temperature_limit_switch_pcd +
                                               self.airlock_pcd)
-        self.F_BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
- 
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+            C[equipment] = cost * ratio 
+    
         #certain parts need to be replaced based on an expected lifefime
         #the cost of these parts is considered along with the cost of the labor to replace them
         cb_replacement_parts_annual_cost = (((self.daily_run_time * 365 / self.o2_sensor_lifetime_pcd) * self.o2_sensor_cost_pcd)
@@ -165,7 +164,7 @@ class PollutionControlDevice(SanUnit):
                                  + (self.service_team_replacebrick_pcd / 60 * (1 / self.frequency_corrective_maintenance) * self.service_team_wages)
                                  + (self.service_team_replaceo2sensor_pcd / 60 * (self.daily_run_time * 365 / self.o2_sensor_lifetime_pcd) * self.service_team_wages)) #USD/yr only accounts for time running
 
-        self.add_OPEX =  (cb_replacement_parts_annual_cost + cb_annual_maintenance) / (365 * 24) # USD/hr 
+        self.add_OPEX =  (cb_replacement_parts_annual_cost * ratio + cb_annual_maintenance) / (365 * 24) # USD/hr 
        
         power_demand = (self.pcd_auger_power + self.pcd_airlock_power) * self.daily_run_time / 24 #kW
         self.power_utility(power_demand)  #kWh

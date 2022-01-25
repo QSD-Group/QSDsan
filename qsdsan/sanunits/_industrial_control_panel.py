@@ -27,10 +27,7 @@ from qsdsan.utils.loading import load_data, data_path
 import os
 __all__ = ('IndustrialControlPanel',)
 
-#path to csv with all the inputs
-#data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_industrial_control_panel.csv'
-#data_path = os.path.abspath(os.path.dirname('_industrial_control_panel.csv'))
-data_path += '/sanunit_data/_industrial_control_panel.tsv'
+su_data_path = os.path.join(data_path,'sanunit_data/_industrial_control_panel.tsv')
 
 ### 
 class IndustrialControlPanel(SanUnit):
@@ -65,9 +62,10 @@ class IndustrialControlPanel(SanUnit):
         self._graphics = UnitGraphics.box(self._N_ins, self._N_outs)
         SanUnit.__init__(self, ID, ins, outs)
 
+        self.price_ratio = 1 
 
 # load data from csv each name will be self.name    
-        data = load_data(path=data_path)
+        data = load_data(path=su_data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
@@ -110,12 +108,8 @@ class IndustrialControlPanel(SanUnit):
                                               self.icp_power_meter_transformer + 
                                               self.icp_AC_to_DC + 
                                               self.icp_DC_to_AC + 
-                                              self.icp_touch_screen)    
-
+                                              self.icp_touch_screen) * self.price_ratio
         
-        self.F_BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
-
-
         
         #certain parts need to be replaced based on an expected lifefime
         #the cost of these parts is considered along with the cost of the labor to replace them
@@ -128,7 +122,7 @@ class IndustrialControlPanel(SanUnit):
                                   / self.frequency_corrective_maintenance)) #USD/yr only accounts for time running
         
         #need to be a cost per hour
-        self.add_OPEX =  (cb_replacement_parts_annual_cost + cb_annual_maintenance) / (365 * 24) # USD/hr (all items are per hour)
+        self.add_OPEX =  (cb_replacement_parts_annual_cost * self.price_ratio + cb_annual_maintenance) / (365 * 24) # USD/hr (all items are per hour)
 
        
         power_demand = (self.icp_controller_board_power + self.icp_variable_frequence_drives_power) #kWh/hr (all items are per hour)

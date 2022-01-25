@@ -28,9 +28,7 @@ from qsdsan.utils.loading import load_data, data_path
 import os
 __all__ = ('OilHeatExchanger',)
 
-#data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_oil_heat_exchanger.csv'
-#data_path = os.path.abspath(os.path.dirname('_oil_heat_exchanger.csv'))
-data_path += '/sanunit_data/_oil_heat_exchanger.tsv'
+su_data_path = os.path.join(data_path,'sanunit_data/_oil_heat_exchanger.tsv')
 
 ### 
 class OilHeatExchanger(SanUnit):
@@ -66,8 +64,9 @@ class OilHeatExchanger(SanUnit):
         
         SanUnit.__init__(self, ID, ins, outs)
 
+        self.price_ratio = 1 
     
-        data = load_data(path=data_path)
+        data = load_data(path=su_data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
@@ -116,9 +115,8 @@ class OilHeatExchanger(SanUnit):
     #_cost based on amount of steel and stainless plus individual components
     def _cost(self):
     
-        self.baseline_purchase_costs['Oil Heat Exchanger'] = (self.orc_cost)
+        self.baseline_purchase_costs['Oil Heat Exchanger'] = (self.orc_cost) * self.price_ratio
         
-        self.F_BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
         power_demand = (self.oil_pump_power - self.oil_electrical_energy_generated) #kWh
         self.power_utility(power_demand) #kWh

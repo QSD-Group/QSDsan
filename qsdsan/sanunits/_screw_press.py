@@ -27,13 +27,8 @@ from qsdsan.utils.loading import load_data, data_path
 import os
 __all__ = ('ScrewPress',)
 
-data_path += '/sanunit_data/_screw_press.tsv'
-#path to csv with all the inputs
-#data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_screw_press.csv' 
-#path =  os.path.abspath(os.path.dirname('_screw_press.csv'))
-#data_path = (path+'/_screw_press.csv')
+su_data_path = os.path.join(data_path,'sanunit_data/_screw_press.tsv')
 
-#data_path += '_screw_press.csv'
 
 ### 
 class ScrewPress(SludgeSeparator):
@@ -76,9 +71,10 @@ class ScrewPress(SludgeSeparator):
         
         SludgeSeparator.__init__(self, ID, ins, outs, thermo, init_with, 
                                  split, settled_frac, F_BM_default=1)
+        self.price_ratio = 1 
         
 # load data from csv each name will be self.name    
-        data = load_data(path=data_path)
+        data = load_data(path=su_data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
@@ -153,9 +149,8 @@ class ScrewPress(SludgeSeparator):
         #purchase_costs is used for capital costs
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.baseline_purchase_costs['Screw Press'] = (self.dewatering_screw_press_cost)
+        self.baseline_purchase_costs['Screw Press'] = (self.dewatering_screw_press_cost) * self.price_ratio
         
-        self.F_BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
         #dewatered_water_treatment_cost = self.dewatering_solids_flowrate * self.wwt_cost
         #OM_costs = (dewatered_water_treatment_cost) # $/hr

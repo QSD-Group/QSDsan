@@ -26,7 +26,7 @@ __all__ = ('CarbonizerBase',)
 #path to csv with all the inputs
 
 #data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_carbonizer_base.csv'
-data_path += '/sanunit_data/_carbonizer_base.tsv'
+su_data_path = os.path.join(data_path, 'sanunit_data/_carbonizer_base.tsv')
 
 ### 
 class CarbonizerBase(SanUnit):
@@ -76,9 +76,10 @@ class CarbonizerBase(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), **kwargs):
         
         SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
+        self.price_ratio = 1 
 
 # load data from csv each name will be self.name    
-        data = load_data(path=data_path)
+        data = load_data(path=su_data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
@@ -86,7 +87,6 @@ class CarbonizerBase(SanUnit):
         
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-
 
 
 
@@ -104,8 +104,6 @@ class CarbonizerBase(SanUnit):
         heat_out.phase = N2O.phase = 'g'
         
 
-        
-        
         
         #define moisture content 
         if waste.F_mass == 0:
@@ -207,13 +205,11 @@ class CarbonizerBase(SanUnit):
         #purchase_costs is used for capital costs
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.baseline_purchase_costs['Stainless steel'] = (self.stainless_steel_cost 
-                            * self.design_results['StainlessSteel'])
-        self.baseline_purchase_costs['Steel'] = (self.steel_cost
-                            * self.design_results['Steel'])
-        self.baseline_purchase_costs['Electric motors'] = (self.char_auger_motor_cost_cb + 
-                                                 self.fuel_auger_motor_cost_cb)
-        self.baseline_purchase_costs['Misc. parts'] = (self.pyrolysis_pot_cost_cb +
+        C = self.baseline_purchase_costs 
+        C['Stainless steel'] = (self.stainless_steel_cost * self.design_results['StainlessSteel'])
+        C['Steel'] = (self.steel_cost * self.design_results['Steel'])
+        C['Electric motors'] = (self.char_auger_motor_cost_cb + self.fuel_auger_motor_cost_cb)
+        C['Misc. parts'] = (self.pyrolysis_pot_cost_cb +
                                               self.primary_air_blower_cost_cb +
                                               self.thermocouple_cost_cb_pcd +
                                               self.thermistor_cost_cb_pcd +
@@ -229,9 +225,9 @@ class CarbonizerBase(SanUnit):
                                               self.combusion_chamber_cost_cb +
                                               self.sprayer_cost_cb +
                                               self.vent_cost_cb)
-        
-        self.F_BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
-
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+            C[equipment] = cost * ratio
         
         #certain parts need to be replaced based on an expected lifefime
         #the cost of these parts is considered along with the cost of the labor to replace them
@@ -257,7 +253,7 @@ class CarbonizerBase(SanUnit):
                           + (self.service_team_replaceairlock_cb / 60 * (1 / self.airlock_motor_lifetime_cb) * self.service_team_wages)) #USD/yr only accounts for time running
         
         
-        self.add_OPEX =  (cb_replacement_parts_annual_cost + cb_annual_maintenance) / (365 * 24) # USD/hr (all items are per hour)
+        self.add_OPEX =  (cb_replacement_parts_annual_cost * ratio + cb_annual_maintenance) / (365 * 24) # USD/hr (all items are per hour)
         
        
         power_demand = (self.carbonizer_biochar_auger_power + self.carbonizer_fuel_auger_power +

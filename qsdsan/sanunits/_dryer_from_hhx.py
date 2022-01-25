@@ -28,9 +28,8 @@ import os
 __all__ = ('DryerFromHHX',)
 
 #path to csv with all the inputs
-#data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_dryer_from_hhx.csv'
 
-data_path += '/sanunit_data/_dryer_from_hhx.tsv'
+su_data_path = os.path.join(data_path, 'sanunit_data/_dryer_from_hhx.tsv')
 ### 
 class DryerFromHHX(SanUnit):
     '''
@@ -64,9 +63,10 @@ class DryerFromHHX(SanUnit):
         
         SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         self.moisture_content_out = moisture_content_out
+        self.price_ratio = 1 
 
 # load data from csv each name will be self.name    
-        data = load_data(path=data_path)
+        data = load_data(path=su_data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)

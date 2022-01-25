@@ -36,8 +36,8 @@ __all__ = ('HousingBiogenicRefinery',)
 #path to csv with all the inputs
 
 #data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_housing_biogenic_refinery.csv'
-
-data_path += '/sanunit_data/_housing_biogenic_refinery.tsv'
+import os
+su_data_path = os.path.join(data_path, 'sanunit_data/_housing_biogenic_refinery.tsv')
 
 ### 
 class HousingBiogenicRefinery(SanUnit):
@@ -72,11 +72,12 @@ class HousingBiogenicRefinery(SanUnit):
             self._N_outs = self._N_ins = len(ins)
         self._graphics = UnitGraphics.box(self._N_ins, self._N_outs)
         SanUnit.__init__(self, ID, ins, outs)
+        self.price_ratio = 1
         self.const_wage = const_wage
         self.const_person_days = const_person_days
 
 # load data from csv each name will be self.name    
-        data = load_data(path=data_path)
+        data = load_data(path=su_data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
@@ -114,14 +115,14 @@ class HousingBiogenicRefinery(SanUnit):
         #purchase_costs is used for capital costs
         #can use quantities from above (e.g., self.design_results['StainlessSteel'])
         #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.baseline_purchase_costs['Containers'] = (self.container20ft_cost + self.container40ft_cost)
-        self.baseline_purchase_costs['Equip Housing'] = (self.design_results['StainlessSteelSheet'] 
-                                                / 4.88 * self.stainless_steel_housing)  
-        self.baseline_purchase_costs['Concrete'] = (self.design_results['Concrete'] 
-                                                * self.concrete_cost) 
-        self.baseline_purchase_costs['Labor'] = (self.const_wage*self.const_person_days) 
-
-        self.F_BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
+        C = self.baseline_purchase_costs
+        C['Containers'] = (self.container20ft_cost + self.container40ft_cost)
+        C['Equip Housing'] = (self.design_results['StainlessSteelSheet'] / 4.88 * self.stainless_steel_housing)  
+        C['Concrete'] = (self.design_results['Concrete'] * self.concrete_cost) 
+        C['Labor'] = (self.const_wage*self.const_person_days) 
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+            C[equipment] = cost * ratio 
 
 
     
