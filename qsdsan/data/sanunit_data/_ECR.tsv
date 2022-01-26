@@ -1,0 +1,37 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+tau		days	0.010416667			constant	CIDI
+COD_removal		fraction of COD removal	0.47	0.3525	0.5875	uniform	"Tchobanoglous et al,. 2014 (EAWAG: 80-85fraction of BOD removal)"
+MCF_decay		fraction of anaerobic conversion of degraded COD	1			constant	"IPCC, 2006"
+N_max_decay		fraction of N removal	1			constant	Report
+N2O_EF_decay		fraction of of degraded N emitted as N2O	0.005	0.0005	0.006	triangular	"IPCC, 2006; Leeds"
+ECR_reactor_cost		USD	615	461.25	768.75	triangular	Eco-san BOM
+electrode_cost		USD	2616	2354.4	2877.6	triangular	
+level_guage_cost	six guages	USD	40	36	44	triangular	
+power_supply_cost		USD	2154	1938.6	2369.4	triangular	
+pump_cost		USD	109	98.1	119.9	triangular	
+fan_cost		USD	140	126	167.7	triangular	BOM
+UPVC_pipe_cost		USD	250	225	275	triangular	BOM
+UPVC_electric_ball_cost		USD	150	135	165	constant	BOM
+salt_dosing_device_cost		USD	650	585	715	triangular	BOM
+plastic_spraying_cabinent_cost		USD	308	277.2	338.8	triangular	BOM
+GAC_cost		USD	67.5	60.75	74.25	uniform	
+level_guage_life		times/year	4	3.6	4.4	triangular	
+electrode_life		times/year	0.7	0.63	0.77	triangular	Eco-san data
+pump_life		times/year	0.75	0.675	0.825	triangular	
+cartridge_life	replacement of filter cartidge	times/year	18	12	24	uniform	
+salt_dosing_pump_life	re	times/year	0.1	0.09	0.11	triangular	
+GAC_filter_life	Activated carbon filter shell	times/year	4.5	3	6	uniform	
+HCL_life		times/year	4	3	5	uniform	
+FRP		kg	2156	1617	2695	triangular	
+electrode	Ru/Ir/Ti	kg	3.4	2.3	4.5	uniform	
+salt_dosing		kg/week	6	5.4	6.6	triangular	
+OM		days/year	18	12	24	uniform	
+operator_wages		USD/day	29	5.37	52.59	triangular	
+power_demand		kW	1.086	0.9774	1.1946	triangular	
+electrode_replacement_cost		USD	1250	1125	1375	triangular	
+level_guage_replacement_cost		USD	10	9	11	triangular	Eco
+salt_replacement_cost		USD	10	9	11	triangular	
+HCL_replacement_cost		USD	12.5	11.25	13.75	triangular	
+pump		each	1			constant	
+HCl_dosing		mL	2000	1500	2500	uniform	
+working_time		hr/day	0.348958333	0.197916667	0.5	uniform	

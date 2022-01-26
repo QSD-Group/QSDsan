@@ -138,10 +138,7 @@ class SludgePasteurization(SanUnit):
     def _calc_replacement_cost(self):
         sludge_replacement_cost = (self.sludge_dryer + self.sludge_barrel) / 10 * P #USD/yr
         return sludge_replacement_cost/ (20 * 365 * 24) * self.price_ratio# USD/hr (all items are per hour)
-            
-    # def _calc_maintenance_labor_cost(self):
-    #     sludge_maintenance_labor_cost = (self.sludge_labor_maintenance * self.wages)
-    #     return sludge_maintenance_labor_cost/ (365 * 24) # USD/hr (all items are per hour)
+
 
     def _calc_labor_cost(self):
         labor_cost = (self.wages * self.sludge_labor_maintenance) * P

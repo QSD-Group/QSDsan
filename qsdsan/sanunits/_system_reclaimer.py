@@ -83,8 +83,8 @@ class SystemReclaimer(SanUnit):
         #                                  + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
         #                                  + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * .1
      
-        #self.power_utility(self.power_demand / 1000) #kW
-        self.power_utility(self.power_demand * 0)
+        self.power_utility(self.power_demand / 1000) #kW
+        # self.power_utility(self.power_demand * 0)
         
     def _calc_replacement_cost(self):
         controls_replacement_cost = (self.replacement_costs) / 20 * self.price_ratio #USD/yr

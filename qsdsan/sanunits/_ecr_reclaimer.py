@@ -71,10 +71,12 @@ class ECR_Reclaimer(SanUnit):
  
     def _cost(self):
         
-        C = self.baseline_purchase_cost
+        self.EC_brush_scaled = (self.EC_brush) * X
+        self.EC_cell_scaled = (self.EC_cell) * X
+        C = self.baseline_purchase_costs
 
-        C['EC_brush'] = (self.EC_brush) * X
-        C['EC_cell'] = (self.EC_cell) * X
+        C['EC_brush'] = self.EC_brush_scaled
+        C['EC_cell'] = self.EC_cell_scaled
         
         ratio = self.price_ratio
         for equipment, cost in C.items():
@@ -82,8 +84,8 @@ class ECR_Reclaimer(SanUnit):
         
         #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
         
-        #self.power_utility(self.power_demand * X / 1000) #kW
-        self.power_utility(self.power_demand * 0)
+        self.power_utility(self.power_demand * X / 1000) #kW
+        # self.power_utility(self.power_demand * 0)
     
     def _calc_replacement_cost(self):
         ecr_replacement_cost = ((self.EC_cell * (20/self.EC_cell_lifetime)) + 

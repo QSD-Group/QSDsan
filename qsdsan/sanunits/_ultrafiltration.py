@@ -103,9 +103,9 @@ class Ultrafiltration(SanUnit):
         #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
        
        #If grid 
-       #self.power_utility(self.power_demand_4 / 1000) #kW
+        self.power_utility(self.power_demand_4 / 1000) #kW
        #If solar
-        self.power_utility(self.power_demand * 0) #kW
+        # self.power_utility(self.power_demand * 0) #kW
     
     def _calc_replacement_cost(self):
         ultrafiltration_replacement_cost = (self.replacement_costs / 20) #USD/yr

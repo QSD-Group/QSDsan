@@ -44,6 +44,13 @@ from ._housing_reclaimer import *
 from ._system_reclaimer import *
 from ._sludge_pasteurization import*
 from ._solar_reclaimer import*
+from ._primaryMBR import*
+from ._aerobic_ES_bio import*
+from ._anaerobic_ES_bio import*
+from ._MBR import*
+from ._MBR_ECR import*
+from ._recycling_controls import*
+from ._solar import*
 
 #add new sanunits here
 from . import (
@@ -77,7 +84,14 @@ from . import (
     _housing_reclaimer,
     _system_reclaimer,
     _sludge_pasteurization,
-    _solar_reclaimer
+    _solar_reclaimer,
+    _primaryMBR,
+    _aerobic_ES_bio,
+    _anaerobic_ES_bio,
+    _MBR,
+    _MBR_ECR,
+    _recycling_controls,
+    _solar
     )
 
 #add new sanunits here
@@ -112,5 +126,12 @@ __all__ = (
     *_housing_reclaimer.__all__,
     *_system_reclaimer.__all__,
     *_sludge_pasteurization.__all__,
-    *_solar_reclaimer.__all__
+    *_solar_reclaimer.__all__,
+    *_primaryMBR.__all__,
+    *_aerobic_ES_bio.__all__,
+    *_anaerobic_ES_bio.__all__,
+    *_MBR.__all__,
+    *_MBR_ECR.__all__,
+    *_recycling_controls.__all__,
+    *_solar.__all__
            )
