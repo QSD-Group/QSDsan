@@ -275,7 +275,7 @@ class FlatBottomCircularClarifier(SanUnit):
             else QCs[:-1]*(1-x)
         TSS_in = sum(QCs[:-1] * x * imass)
         TSS = self._solids if self._solids is not None \
-            else np.array([TSS_in*f for f in 20**np.linspace(-1,1,n)])
+            else TSS_in*(20**np.linspace(-1,1,n))
         ZQs = np.append(Z, Q)
         self._state = np.append(ZQs, TSS)
         self._dstate = self._state * 0.
