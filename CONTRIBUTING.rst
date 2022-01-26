@@ -23,7 +23,7 @@ The following guideline is adapted from `BioSTEAM <https://biosteam.readthedocs.
 Forking and Cloning
 -------------------
 
-Use command-line interface
+Via command-line interface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 #. Fork ``QSDsan`` by going to its `GitHub homepage <https://github.com/QSD-Group/QSDsan>`_ and click the "Fork" button at the top right corner.
@@ -106,7 +106,7 @@ Use command-line interface
 	    git checkout -b REPLACE-ME-WITH-FEATURE-NAME
 
 
-Use GitHub Desktop
+Via GitHub Desktop
 ^^^^^^^^^^^^^^^^^^
 
 If you are new to command-line interface, `GitHub Desktop <https://desktop.github.com/>`_ can be a good way to get started as it has a graphic interface, though less powerful.
@@ -134,6 +134,7 @@ Note
 ^^^^
 #. We use fork as the default way for collaboration (i.e., for all first-time contributors). If you are a constant contributor and have independently made at least one successful and meaningful contribution through forking, you will be given the write access to ``QSDsan`` and you can use branch for easier code syncing. We will also jinvite you to join the ``QSDsan`` team.
 #. GitHub has really detailed documentation on `forking <https://docs.github.com/en/github/getting-started-with-github/fork-a-repo>`_ (and almost everything else).
+#. As QSDsan is public, all created forks would be public as well. We would appreciate if you make your work public and contribute back, but we understand it if you would like to create a private fork of QSDsan. To do so, please check our tip on creating the `private fork <https://qsdsan.readthedocs.io/en/latest/FAQ.html#private-fork>`_.
 
 
 Developing Modules
