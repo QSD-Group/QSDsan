@@ -29,7 +29,6 @@ __all__ = ('PollutionControlDevice',)
 
 su_data_path = os.path.join(data_path, 'sanunit_data/_pollution_control_device.tsv')
 
-#data_path = '//Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_pollution_control_device.csv'
 
 ### 
 class PollutionControlDevice(SanUnit):
@@ -72,7 +71,7 @@ class PollutionControlDevice(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), carbonizer_uptime_ratio=1, **kwargs):
         
         
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         
         self.price_ratio = 1 
     

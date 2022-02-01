@@ -70,7 +70,7 @@ class HydronicHeatExchanger(SanUnit):
     def __init__(self, ID='', ins=None, outs=(),init_with='WasteStream', **kwargs):
         
         
-        SanUnit.__init__(self, ID, ins, outs, init_with=init_with)
+        SanUnit.__init__(self, ID, ins, outs, init_with=init_with, F_BM_default=1)
 
         self.price_ratio = 1 
     

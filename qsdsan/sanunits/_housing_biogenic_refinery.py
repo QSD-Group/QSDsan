@@ -35,7 +35,6 @@ __all__ = ('HousingBiogenicRefinery',)
 
 #path to csv with all the inputs
 
-#data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_housing_biogenic_refinery.csv'
 import os
 su_data_path = os.path.join(data_path, 'sanunit_data/_housing_biogenic_refinery.tsv')
 
@@ -71,7 +70,7 @@ class HousingBiogenicRefinery(SanUnit):
         else:
             self._N_outs = self._N_ins = len(ins)
         self._graphics = UnitGraphics.box(self._N_ins, self._N_outs)
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         self.price_ratio = 1
         self.const_wage = const_wage
         self.const_person_days = const_person_days

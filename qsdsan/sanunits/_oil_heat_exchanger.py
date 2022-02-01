@@ -62,7 +62,7 @@ class OilHeatExchanger(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), **kwargs):
         
         
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
 
         self.price_ratio = 1 
     

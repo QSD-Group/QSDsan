@@ -60,7 +60,7 @@ class IndustrialControlPanel(SanUnit):
         else:
             self._N_outs = self._N_ins = len(ins)
         self._graphics = UnitGraphics.box(self._N_ins, self._N_outs)
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
 
         self.price_ratio = 1 
 
