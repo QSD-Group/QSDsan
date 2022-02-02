@@ -120,12 +120,12 @@ In particular, ``QSDsan`` introduces:
    Process
    SanUnit
    SimpleTEA
+   streams
    Transportation
    equipments/_index
    processes/processes
    sanunits/_index
    stats
-   streams
    utils/_index
 
 
