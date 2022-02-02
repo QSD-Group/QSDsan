@@ -118,7 +118,6 @@ In particular, ``QSDsan`` introduces:
    ImpactItem
    LCA
    Process
-   streams
    SanUnit
    SimpleTEA
    Transportation
@@ -126,6 +125,7 @@ In particular, ``QSDsan`` introduces:
    processes/processes
    sanunits/_index
    stats
+   streams
    utils/_index
 
 
