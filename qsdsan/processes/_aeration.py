@@ -30,10 +30,10 @@ class DiffusedAeration(Process):
         The component ID of dissolved oxygen (DO) defined in the :class:`~.WasteStream` objects.
     KLa : float, optional
         Oxygen mass transfer coefficient at field condition, [1/d]. A user-defined
-        value of KLa supercedes values calculated with other parameters.
+        value of KLa supersedes values calculated with other parameters.
     DOsat : float, optional
         Surface DO saturation concentration at field condition, [mg/L]. A user-defined
-        value of DOsat supercedes values calculated with other parameters.
+        value of DOsat supersedes values calculated with other parameters.
     KLa_20 : float, optional
         Oxygen mass transfer coefficient at standard condition (20 degree C, 
         clean water, new diffuser), [1/d]. The default is None.

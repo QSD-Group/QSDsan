@@ -93,7 +93,7 @@ def test_process():
                  conserved_for=('COD', 'N', 'P', 'NOD', 'charge'))
 
     PAO_anox_processes = Processes([p12, p14])
-    assert PAO_anox_processes.PAO_anox_growth.ref_component == X_PAO
+    assert PAO_anox_processes.PAO_anox_growth.ref_component == X_PAO.ID
     with pytest.raises(AttributeError):
         print(PAO_anox_processes.production_rates)
 
