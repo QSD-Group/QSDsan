@@ -18,7 +18,7 @@ from . import Component, Components
 from .utils import load_data, get_stoichiometric_coeff
 from thermosteam.utils import chemicals_user, read_only
 from thermosteam import settings
-from sympy import symbols, Matrix
+from sympy import symbols, Matrix, simplify
 from sympy.parsing.sympy_parser import parse_expr
 import numpy as np
 import pandas as pd
@@ -66,15 +66,109 @@ class Process():
 
     Examples
     --------
-    None.
-
+    To create a :class:`Process` object, basic information including stoichiometry, kinetic rate
+    equation, and reference component must be specified. Unknown stoichiometric coefficients
+    can be solved automatically based on conservation of materials.
+    
+    >>> import qsdsan as qs
+    >>> cmps = qs.processes.load_asm1_cmps()
+    >>> qs.set_thermo(cmps)
+    >>> pc1 = qs.Process(ID='aerobic_hetero_growth',
+    ...                  reaction='[1/Y_H]S_S + [1-1/Y_H]S_O + [?]S_NH + [?]S_ALK -> X_BH',
+    ...                  ref_component='X_BH',
+    ...                  rate_equation='mu_H*S_S/(K_S+S_S)*S_O/(K_O_H+S_O)*S_NH/(K_NH+S_NH)*X_BH',
+    ...                  conserved_for=('COD', 'N', 'charge'),
+    ...                  parameters=('Y_H', 'mu_H', 'K_S', 'K_O_H', 'K_NH'))
+    >>> pc1.show()
+    Process: aerobic_hetero_growth
+    [stoichiometry] S_S: -1/Y_H
+                    X_BH: 1.00
+                    S_O: (1.0 - Y_H)/Y_H
+                    S_NH: -0.0860
+                    S_ALK: -0.0737
+    [reference]     X_BH
+    [rate equation] S_NH*S_O*S_S*X_BH*mu_H/((K_NH ...
+    [parameters]    Y_H: Y_H
+                    mu_H: mu_H
+                    K_S: K_S
+                    K_O_H: K_O_H
+                    K_NH: K_NH
+    
+    If all stoichiometric coefficients and relevant parameters are specified, one can also
+    check if materials are conserved. No returns when all materials are conserved.
+    
+    >>> pc2 = qs.Process(ID='hydrolysis',
+    ...                  reaction={'S_S':1, 'X_S':-1},
+    ...                  ref_component='S_S',
+    ...                  rate_equation='k_h*X_S/(K_X*X_BH+X_S)*(S_O/(K_O_H+S_O)+eta_h*K_O_H/(K_O_H+S_O)*S_NO/(K_NO+S_NO))*X_BH',
+    ...                  conserved_for=(),
+    ...                  parameters=('k_h', 'K_X', 'K_O_H', 'eta_h', 'K_NO'))
+    >>> pc2.show()
+    Process: hydrolysis
+    [stoichiometry] S_S: 1
+                    X_S: -1
+    [reference]     S_S
+    [rate equation] X_BH*X_S*k_h*(K_O_H*S_NO*eta_h...
+    [parameters]    k_h: k_h
+                    K_X: K_X
+                    K_O_H: K_O_H
+                    eta_h: eta_h
+                    K_NO: K_NO
+    
+    >>> pc2.conserved_for = ('COD', 'N')
+    >>> pc2.check_conservation()
+    
+    Raise warning when materials are not strictly conserved based on the given 
+    stoichiometric coefficients with defined parameters. An error will be raised
+    instead of the stoichiometric coefficients are purely numerical.
+    
+    >>> pc3 = qs.Process(ID='decay_hetero',
+    ...                  reaction='X_BH -> [f_P]X_P + [1-f_P]X_S + [0.05-0.05*f_P]X_ND',
+    ...                  ref_component='X_BH',
+    ...                  rate_equation='b_H*X_BH',
+    ...                  conserved_for=('COD', 'N'),
+    ...                  parameters=('f_P', 'b_H'))
+    >>> pc3.check_conservation() 
+    UserWarning: The following materials aren't strictly conserved by the stoichiometric coefficients. 
+    A positive value means the material is created, a negative value means the material is destroyed:
+     N: 0.01*f_P - 0.036
+    
+    Parameter values can be set. Changes will be reflected in the stoichiometry  
+    and/or the rate equation:
+    
+    >>> pc2.set_parameters(eta_h = 0.8)
+    >>> pc2.parameters
+    {'k_h': k_h, 'K_X': K_X, 'K_O_H': K_O_H, 'eta_h': 0.8, 'K_NO': K_NO}
+    
+    >>> str(pc2.rate_equation)
+    'X_BH*X_S*k_h*(0.8*K_O_H*S_NO/((K_NO + S_NO)*(K_O_H + S_O)) + S_O/(K_O_H + S_O))/(K_X*X_BH + X_S)'
+    
+    An reversed process can be easily created:
+    
+    >>> pc2_reversed = pc2.copy('hydrolysis_reversed')
+    >>> pc2_reversed.reverse()
+    >>> pc2_reversed.show()
+    Process: hydrolysis_reversed
+    [stoichiometry] S_S: -1
+                    X_S: 1
+    [reference]     S_S
+    [rate equation] -X_BH*X_S*k_h*(0.8*K_O_H*S_NO/...
+    [parameters]    k_h: k_h
+                    K_X: K_X
+                    K_O_H: K_O_H
+                    eta_h: eta_h
+                    K_NO: K_NO
+    
+    See Also
+    --------
+    `numpy.isclose <https://numpy.org/doc/stable/reference/generated/numpy.isclose.html>`_ for ``rtol`` and ``atol`` settings.
     """
     def __init__(self, ID, reaction, ref_component, rate_equation=None, components=None, 
                  conserved_for=('COD', 'N', 'P', 'charge'), parameters=None):
         self._ID = ID
         self._reaction = reaction
-        self._ref_component = ref_component # might be better to set the components first, but this should be fine considering legacy
         self.components = self._load_chemicals(components)
+        self._ref_component = ref_component
         self.conserved_for = conserved_for
         self._parameters = {p: symbols(p) for p in parameters}
         self._stoichiometry = get_stoichiometric_coeff(
@@ -99,56 +193,29 @@ class Process():
     def check_conservation(self, rtol=1e-5, atol=1e-8):
         '''
         Check conservation of materials (based on the rules set in the `conserved_for` attribute)
-        given numerical stoichiometric coefficients.
+        given purely numerical stoichiometric coefficients or stoichiometric coefficients
+        with defined parameters. 
         
         No return indicates that all rules are satisfied.
 
         Parameters
         ----------
         rtol : float
-            Relative tolerance.
+            Relative tolerance. Only applicable to purely numerical coefficients.
         atol : float
-            Absolute tolerance.
-
-        Examples
-        --------
-        >>> import qsdsan as qs
-        >>> cmps = qs.Components.load_default()
-        >>> qs.set_thermo(cmps)
-
-        Prompt warning when no conservation rule is set.
-
-        >>> aer = qs.Process('aer', reaction={'S_O2':1}, ref_component='S_O2',
-        ...                          rate_equation='KLa*(DOsat - S_O2)',
-        ...                          conserved_for=(), parameters=('KLa', 'DOsat'))
-
-        >>> aer.check_conservation() # doctest: +SKIP
-        
-        Raise error when materials are not conserved.
-        
-        >>> den1 = qs.Process('den1', reaction={'S_NO3':-1, 'S_NO2':0.5}, ref_component='S_NO3',
-        ...                   rate_equation='k1*S_NO3',
-        ...                   conserved_for=('N',), parameters=('k1',))
-        >>> den1.check_conservation() # doctest: +IGNORE_EXCEPTION_DETAIL
-        Traceback (most recent call last):
-        RuntimeError: The following materials are unconserved by the stoichiometric coefficients.
-
-        No returns when all materials are conserved.
-        
-        >>> den1.reaction = {'S_NO3':-1, 'S_NO2':1}
-        >>> den1.check_conservation()
+            Absolute tolerance. Only applicable to purely numerical coefficients.
 
         See Also
         --------
         `numpy.isclose <https://numpy.org/doc/stable/reference/generated/numpy.isclose.html>`_ for ``rtol`` and ``atol`` settings.
         '''
         isa = isinstance
-        if isa(self._stoichiometry, np.ndarray):
-            ic = self.get_conversion_factors()
+        v = self._stoichiometry
+        ic = self.get_conversion_factors()
+        if isa(v, np.ndarray):
             if ic is None: # no `conserved_for` attribute
                 warn('No available `conserved_for` attributes, cannot check conservation.')
                 return
-            v = self._stoichiometry
             ic_dot_v = ic @ v
             ic_dot_v = np.array([ic_dot_v]) if ic_dot_v.size==1 else ic_dot_v
             conserved_arr = np.isclose(ic_dot_v, np.zeros(ic_dot_v.shape), rtol=rtol, atol=atol)
@@ -161,9 +228,22 @@ class Process():
                                    "means the material is created, a negative value "
                                    "means the material is destroyed:\n "
                                    + "\n ".join([f"{material}: {value:.2f}" for material, value in unconserved]))
+        elif isa(v, list):
+            if ic is None:
+                warn('No available `conserved_for` attributes, cannot check conservation.')
+                return
+            ic_dot_v = list(simplify(ic * Matrix(v)))
+            materials = self._conserved_for
+            unconserved = [(materials[i], prod) for i, prod in enumerate(ic_dot_v) if prod != 0]
+            if len(unconserved) > 0:
+                warn("The following materials aren't strictly conserved by the "
+                     "stoichiometric coefficients. A positive value "
+                     "means the material is created, a negative value "
+                     "means the material is destroyed:\n "
+                     + "\n ".join([f"{material}: {value}" for material, value in unconserved]))
         else: 
-            raise RuntimeError("Can only check conservations with numerical "
-                               "stoichiometric coefficients.")
+            raise RuntimeError("Can only check conservations with purely numerical "
+                               "stoichiometric coefficients or coefficients with defined parameters.")
     
     def reverse(self):
         '''reverse the process as to flip the signs of stoichiometric coefficients of all components.'''
@@ -342,30 +422,6 @@ class Process():
         new_ID : str
             ID of the new process, will be set to the original process'ID with
             a "_copy" suffix if not provided.
-
-        Examples
-        --------
-        >>> import qsdsan as qs
-        >>> cmps = qs.Components.load_default()
-        >>> qs.set_thermo(cmps)
-        >>> aer = qs.Process('aer', reaction={'S_O2':1}, ref_component='S_O2',
-        ...                          rate_equation='KLa*(DOsat - S_O2)',
-        ...                          conserved_for=(), parameters=('KLa', 'DOsat'))
-        >>> aer.show()
-        Process: aer
-        [stoichiometry] S_O2: 1
-        [reference]     S_O2
-        [rate equation] KLa*(DOsat - S_O2)
-        [parameters]    KLa: KLa
-                        DOsat: DOsat
-        >>> aer_cp = aer.copy()
-        >>> aer_cp.show()
-        Process: aer_copy
-        [stoichiometry] S_O2: 1
-        [reference]     S_O2
-        [rate equation] KLa*(DOsat - S_O2)
-        [parameters]    KLa: KLa
-                        DOsat: DOsat
         '''
         cls = self.__class__
         new = cls.__new__(cls)
@@ -391,8 +447,48 @@ class Processes():
 
     Examples
     --------
-    None.
+    >>> import qsdsan as qs
+    >>> cmps = qs.processes.load_asm1_cmps()
+    >>> qs.set_thermo(cmps)
+    >>> pc1 = qs.Process(ID='aerobic_hetero_growth',
+    ...                  reaction='[1/Y_H]S_S + [1-1/Y_H]S_O + [?]S_NH + [?]S_ALK -> X_BH',
+    ...                  ref_component='X_BH',
+    ...                  rate_equation='mu_H*S_S/(K_S+S_S)*S_O/(K_O_H+S_O)*S_NH/(K_NH+S_NH)*X_BH',
+    ...                  conserved_for=('COD', 'N', 'charge'),
+    ...                  parameters=('Y_H', 'mu_H', 'K_S', 'K_O_H', 'K_NH'))
+    >>> pc2 = qs.Process(ID='hydrolysis',
+    ...                  reaction={'S_S':1, 'X_S':-1},
+    ...                  ref_component='S_S',
+    ...                  rate_equation='k_h*X_S/(K_X*X_BH+X_S)*(S_O/(K_O_H+S_O)+eta_h*K_O_H/(K_O_H+S_O)*S_NO/(K_NO+S_NO))*X_BH',
+    ...                  conserved_for=(),
+    ...                  parameters=('k_h', 'K_X', 'K_O_H', 'eta_h', 'K_NO'))
+    >>> pcs = qs.Processes([pc1, pc2])
 
+    >>> pcs.show()
+    Processes([aerobic_hetero_growth, hydrolysis])
+
+    >>> pcs.hydrolysis
+    Process: hydrolysis
+    [stoichiometry] S_S: 1
+                    X_S: -1
+    [reference]     S_S
+    [rate equation] X_BH*X_S*k_h*(K_O_H*S_NO*eta_h...
+    [parameters]    k_h: k_h
+                    K_X: K_X
+                    K_O_H: K_O_H
+                    eta_h: eta_h
+                    K_NO: K_NO
+
+    >>> pc3 = qs.Process(ID='decay_hetero',
+    ...                  reaction='X_BH -> [f_P]X_P + [1-f_P]X_S + [0.05-0.05*f_P]X_ND',
+    ...                  ref_component='X_BH',
+    ...                  rate_equation='b_H*X_BH',
+    ...                  conserved_for=('COD', 'N'),
+    ...                  parameters=('f_P', 'b_H'))
+    >>> pcs.append(pc3)
+    >>> pcs.compile()
+    >>> pcs.show()
+    CompiledProcesses([aerobic_hetero_growth, hydrolysis])
     """
     
     def __new__(cls, processes):
@@ -520,7 +616,8 @@ class Processes():
             to all components set in the system (i.e., through :func:`set_thermo`).
         conserved_for : tuple[str], optional
             Materials subject to conservation rules, must have corresponding 'i\_' 
-            attributes for the components. The default is ('COD', 'N', 'P', 'charge').
+            attributes for the components. Applied to all processes.
+            The default is ('COD', 'N', 'P', 'charge').
         parameters : Iterable[str], optional
             Symbolic parameters in stoichiometry coefficients and/or rate equation.
         use_default_data : bool, optional
@@ -591,10 +688,6 @@ class CompiledProcesses(Processes):
     Parameters
     ----------
     processes : Iterable[:class:`Process`]
-
-    Examples
-    --------
-    None.
 
     """
     
@@ -683,28 +776,11 @@ class CompiledProcesses(Processes):
         rate_eqs = [eq.subs(self._parameters) for eq in self._rate_equations]
         return pd.DataFrame(rate_eqs, index=self.IDs, columns=('rate_equation',))
     
-    # @property
-    # def rate_equations_function(self):
-    #     '''
-    #     [function] A function object of the rate equations. When evaluated, 
-    #     returns a list of process rates.
-    #     '''
-    #     return self._rate_equations_function
-    
     @property
     def production_rates(self):
         '''[pandas.DataFrame] The rates of production of the components.'''
         rates = [r.subs(self._parameters) for r in self._production_rates]
         return pd.DataFrame(rates, index=self._components.IDs, columns=('rate_of_production',))
-    
-    # @property
-    # def production_rates_function(self):
-    #     '''
-    #     [function] A function object of the components' rates of production. 
-    #     When evaluated, returns a list of production rates.
-    #     '''
-    #     args = list(symbols(self._components.IDs)) + [v for k,v in self._parameters.items() if k == str(v)]
-    #     return [lambdify(args, r) for r in self._production_rates]
     
     def subgroup(self, IDs):
         '''Create a new subgroup of :class:`CompiledProcesses` objects.'''
