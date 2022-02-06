@@ -59,6 +59,27 @@ Via command-line interface
 
 		    git clone https://github.com/<YOUR_USERNAME>/QSDsan.git --depth=1 --no-single-branch
 
+		Without the ``no-single-branch`` flag, the reference of the remote branch (when you do ``git fetch``) is set to the main branch only (instead of all of the existing and future new branches), i.e., when you do
+
+		.. code:: bash
+
+		    git config --get remote.origin.fetch
+
+		you will see
+
+		.. code:: bash
+
+		    +refs/heads/main:refs/remotes/origin/main
+
+		Because it only tracks the main branch, so if didn't include the ``no-single-branch`` flag when cloning but later wanted to pull/push other branches, you will need to update the fetch reference to all branches using:
+
+
+		.. code:: bash
+
+		    git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+
+		and you can double-check again to confirm the fetch reference has been updated.
+
 #. Navigate into the cloned QSDsan:
 
 	.. code:: bash
@@ -84,7 +105,7 @@ Via command-line interface
 
 	    git remote -v
 
-	- This should show something like (origin is your fork and upstream is the root repository):
+	This should show something like (origin is your fork and upstream is the root repository):
 
 	.. code:: bash
 
@@ -99,7 +120,7 @@ Via command-line interface
 
 	    git pull upstream main
 
-#. If you are working on a new feature (rather than some quick work like fixing a small bug), then it is recommended to checkout a new branch:
+#. If you are working on a new feature (rather than some quick work like fixing a small bug), then it is recommended to checkout a new branch (note that branch names are case-sensitive):
 
 	.. code:: bash
 

@@ -22,7 +22,7 @@ __all__ = (
     )
 
 
-def copy_attr(new, original, skip=(), same=()):
+def copy_attr(new, original, skip=(), same=(), slots=None):
     '''
     Set the attributes of a new object based on an original one:
 
@@ -43,9 +43,11 @@ def copy_attr(new, original, skip=(), same=()):
         Attributes that will not be copied.
     same : Iterable
         Attributes that will be the same for the original one and the copy.
+    slots : Iterable[str]
+        All fields of the original object, will be set to `original.__slots__` if not provided.
     '''
-
-    for slot in original.__slots__:
+    slots = slots or original.__slots__
+    for slot in slots:
         if slot in skip:
             continue
         else:

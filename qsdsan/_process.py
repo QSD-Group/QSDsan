@@ -3,7 +3,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Joy Cheung <joycheung1994@gmail.com>
+    Joy Zhang <joycheung1994@gmail.com>
 
 Part of this module is based on the Thermosteam package:
 https://github.com/BioSTEAMDevelopmentGroup/thermosteam
@@ -13,8 +13,8 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-# import thermosteam as tmo
-from . import Components
+from warnings import warn
+from . import Component, Components
 from .utils import load_data, get_stoichiometric_coeff
 from thermosteam.utils import chemicals_user, read_only
 from thermosteam import settings
@@ -56,12 +56,12 @@ class Process():
         The kinetic rate equation of the process. The default is None.
     components=None : class:`CompiledComponents`, optional
         Components corresponding to each entry in the stoichiometry array, 
-        defaults to thermosteam.settings.chemicals. 
+        defaults to all components set in the system (i.e., through :func:`set_thermo`).
     conserved_for : tuple[str], optional
         Materials subject to conservation rules, must be an 'i\_' attribute of
         the components. The default is ("COD", "N", "P", "charge").
     parameters : Iterable[str], optional
-        Symbolic parameters in stoichiometry coefficients and/or rate equation. 
+        Symbolic parameters in stoichiometry coefficients and/or rate equation.
         The default is None.
 
     Examples
@@ -69,18 +69,16 @@ class Process():
     None.
 
     """
-
     def __init__(self, ID, reaction, ref_component, rate_equation=None, components=None, 
                  conserved_for=('COD', 'N', 'P', 'charge'), parameters=None):
-
         self._ID = ID
-        self._stoichiometry = []
-        self._components = self._load_chemicals(components)
-        self._ref_component = ref_component
-        self._conserved_for = conserved_for
+        self._reaction = reaction
+        self._ref_component = ref_component # might be better to set the components first, but this should be fine considering legacy
+        self.components = self._load_chemicals(components)
+        self.conserved_for = conserved_for
         self._parameters = {p: symbols(p) for p in parameters}
-        
-        self._stoichiometry = get_stoichiometric_coeff(reaction, self._ref_component, self._components, self._conserved_for, self._parameters)
+        self._stoichiometry = get_stoichiometric_coeff(
+            reaction, self._ref_component, self._components, self._conserved_for, self._parameters)
         self._parse_rate_eq(rate_equation)
                 
     def get_conversion_factors(self, as_matrix=False):        
@@ -88,23 +86,73 @@ class Process():
         return conversion factors (i.e., the 'i\_' attributes of the components) 
         as a numpy.ndarray or a SymPy Matrix.
         '''
-        if self._conservation_for:
+        conserved_for = self._conserved_for
+        if conserved_for:
             cmps = self._components
-            arr = getattr(cmps, 'i_'+self._conservation_for[0])
-            for c in self._conservation_for[1:]:
+            arr = getattr(cmps, 'i_'+conserved_for[0])
+            for c in conserved_for[1:]:
                 arr = np.vstack((arr, getattr(cmps, 'i_'+c)))
             if as_matrix: return Matrix(arr.tolist())
             return arr
         else: return None
                     
-    def check_conservation(self, tol=1e-8):
-        '''check conservation of materials given numerical stoichiometric coefficients. '''
+    def check_conservation(self, rtol=1e-5, atol=1e-8):
+        '''
+        Check conservation of materials (based on the rules set in the `conserved_for` attribute)
+        given numerical stoichiometric coefficients.
+        
+        No return indicates that all rules are satisfied.
+
+        Parameters
+        ----------
+        rtol : float
+            Relative tolerance.
+        atol : float
+            Absolute tolerance.
+
+        Examples
+        --------
+        >>> import qsdsan as qs
+        >>> cmps = qs.Components.load_default()
+        >>> qs.set_thermo(cmps)
+
+        Prompt warning when no conservation rule is set.
+
+        >>> aer = qs.Process('aer', reaction={'S_O2':1}, ref_component='S_O2',
+        ...                          rate_equation='KLa*(DOsat - S_O2)',
+        ...                          conserved_for=(), parameters=('KLa', 'DOsat'))
+
+        >>> aer.check_conservation() # doctest: +SKIP
+        
+        Raise error when materials are not conserved.
+        
+        >>> den1 = qs.Process('den1', reaction={'S_NO3':-1, 'S_NO2':0.5}, ref_component='S_NO3',
+        ...                   rate_equation='k1*S_NO3',
+        ...                   conserved_for=('N',), parameters=('k1',))
+        >>> den1.check_conservation() # doctest: +IGNORE_EXCEPTION_DETAIL
+        Traceback (most recent call last):
+        RuntimeError: The following materials are unconserved by the stoichiometric coefficients.
+
+        No returns when all materials are conserved.
+        
+        >>> den1.reaction = {'S_NO3':-1, 'S_NO2':1}
+        >>> den1.check_conservation()
+
+        See Also
+        --------
+        `numpy.isclose <https://numpy.org/doc/stable/reference/generated/numpy.isclose.html>`_ for ``rtol`` and ``atol`` settings.
+        '''
         isa = isinstance
         if isa(self._stoichiometry, np.ndarray):
             ic = self.get_conversion_factors()
+            if ic is None: # no `conserved_for` attribute
+                warn('No available `conserved_for` attributes, cannot check conservation.')
+                return
             v = self._stoichiometry
             ic_dot_v = ic @ v
-            conserved_arr = np.isclose(ic_dot_v, np.zeros(ic_dot_v.shape), atol=tol)
+            ic_dot_v = np.array([ic_dot_v]) if ic_dot_v.size==1 else ic_dot_v
+            conserved_arr = np.isclose(ic_dot_v, np.zeros(ic_dot_v.shape), rtol=rtol, atol=atol)
+            conserved_arr = np.array([conserved_arr]) if conserved_arr.size==1 else conserved_arr
             if not conserved_arr.all(): 
                 materials = self._conserved_for
                 unconserved = [(materials[i], ic_dot_v[i]) for i, conserved in enumerate(conserved_arr) if not conserved]
@@ -127,13 +175,36 @@ class Process():
         
     @property
     def ID(self):
-        '''[str] A unique identification'''
+        '''[str] A unique identification.'''
         return self._ID
+    @ID.setter
+    def ID(self, ID):
+        self._ID = ID
     
+    @property
+    def reaction(self):
+        '''
+        [dict, str, or numpy.ndarray]
+        
+        A dictionary of stoichiometric coefficients with component IDs as 
+        keys, or a numeric array of stoichiometric coefficients, or a string 
+        of a stoichiometric equation written as: 
+        i1 R1 + ... + in Rn -> j1 P1 + ... + jm Pm.
+        Stoichiometric coefficients can be symbolic or numerical. 
+        Unknown stoichiometric coefficients to solve for should be expressed as "?".
+        '''
+        return self._reaction
+    @reaction.setter
+    def reaction(self, rxn):
+        self._reaction = rxn
+        if rxn:
+            self._stoichiometry = get_stoichiometric_coeff(
+                rxn, self._ref_component, self._components, self._conserved_for, self._parameters)
+
     @property
     def ref_component(self):
         '''
-        [str] ID of the reference component
+        [str] ID of the reference component.
         
         .. note::
     
@@ -141,28 +212,45 @@ class Process():
             normalized so that the new stoichiometric coefficient of the new reference
             component is 1 or -1. The rate equation will also be updated automatically.
         '''
-        return getattr(self._components, self._ref_component)    
+        return getattr(self._components, self._ref_component).ID
     @ref_component.setter
     def ref_component(self, ref_cmp):
-        if ref_cmp: 
-            self._ref_component = ref_cmp
+        if ref_cmp:
+            self._ref_component = str(ref_cmp) # in case a component obj is passed
             self._normalize_stoichiometry(ref_cmp)
             self._normalize_rate_eq(ref_cmp)
+
+    @property
+    def components(self):
+        '''
+        [class:`CompiledComponents`]
+        
+        Components corresponding to each entry in the stoichiometry array, 
+        defaults to all components set in the system (i.e., through :func:`set_thermo`).
+        '''
+        return self._components
+    @components.setter
+    def components(self, cmps):
+        self._components = _load_components(cmps)
 
     @property
     def conserved_for(self):
         '''
         [tuple] Materials subject to conservation rules, must have corresponding 
-        'i\_' attributes for the components
+        'i\_' attributes for the components.
         '''
         return self._conserved_for
     @conserved_for.setter
     def conserved_for(self, materials):
+        get = getattr
+        for mat in materials:
+            try: get(Component, f'i_{mat}')
+            except: raise ValueError(f'Components do not have i_{mat} attribute.')
         self._conserved_for = materials
     
     @property
     def parameters(self):
-        '''[dict] Symbolic parameters in stoichiometric coefficients and rate equation.'''
+        '''[dict] Symbolic parameters in stoichiometric coefficients and/or rate equation.'''
         return self._parameters
     
     def append_parameters(self, *new_pars):
@@ -203,18 +291,21 @@ class Process():
     
     def _parse_rate_eq(self, eq):
         cmpconc_symbols = {c: symbols(c) for c in self._components.IDs}
-        self._rate_equation = parse_expr(eq, {**cmpconc_symbols, **self._parameters})
+        params = self._parameters
+        self._rate_equation = parse_expr(str(eq), {**cmpconc_symbols, **params})
     
     def _normalize_stoichiometry(self, new_ref):
         isa = isinstance
-        factor = abs(self._stoichiometry[self._components._index[new_ref]])
+        new_ref = str(new_ref)
+        stoich = self._stoichiometry
+        factor = abs(stoich[self._components.index(new_ref)])
         if isa(self._stoichiometry, np.ndarray):
-            self._stoichiometry /= factor
-        elif isa(self._stoichiometry, list):
-            self._stoichiometry = [v/factor for v in self._stoichiometry]
+            stoich /= factor
+        elif isa(stoich, list):
+            self._stoichiometry = [v/factor for v in stoich]
     
     def _normalize_rate_eq(self, new_ref):
-        factor = self._stoichiometry[self._components._index[new_ref]]
+        factor = self._stoichiometry[self._components.index(str(new_ref))]
         self._rate_equation *= factor
     
     def show(self):
@@ -227,7 +318,7 @@ class Process():
                 else: line = f"{cmp}: {stoichio.evalf(n=3)}"
                 section.append(line)
         info += header + ("\n" + 16*" ").join(section)
-        info += '\n[reference]     ' + f"{self.ref_component.ID}"
+        info += '\n[reference]     ' + f"{self.ref_component}"
         line = '\n[rate equation] ' + f"{self._rate_equation}"
         if len(line) > 47: line = line[:47] + '...'
         info += line
@@ -242,10 +333,52 @@ class Process():
 
     _ipython_display_ = show
         
-    # TODO: return a copy
-    def copy():
-        pass
-    
+    def copy(self, new_ID=''):
+        '''
+        Return a copy of the process with the same attributes (other than `ID`).
+
+        Parameters
+        ----------
+        new_ID : str
+            ID of the new process, will be set to the original process'ID with
+            a "_copy" suffix if not provided.
+
+        Examples
+        --------
+        >>> import qsdsan as qs
+        >>> cmps = qs.Components.load_default()
+        >>> qs.set_thermo(cmps)
+        >>> aer = qs.Process('aer', reaction={'S_O2':1}, ref_component='S_O2',
+        ...                          rate_equation='KLa*(DOsat - S_O2)',
+        ...                          conserved_for=(), parameters=('KLa', 'DOsat'))
+        >>> aer.show()
+        Process: aer
+        [stoichiometry] S_O2: 1
+        [reference]     S_O2
+        [rate equation] KLa*(DOsat - S_O2)
+        [parameters]    KLa: KLa
+                        DOsat: DOsat
+        >>> aer_cp = aer.copy()
+        >>> aer_cp.show()
+        Process: aer_copy
+        [stoichiometry] S_O2: 1
+        [reference]     S_O2
+        [rate equation] KLa*(DOsat - S_O2)
+        [parameters]    KLa: KLa
+                        DOsat: DOsat
+        '''
+        cls = self.__class__
+        new = cls.__new__(cls)
+        new_ID = new_ID or self.ID+'_copy'
+        new.__init__(
+            new_ID, reaction=self.reaction, ref_component=self.ref_component,
+            rate_equation=self.rate_equation, components=self._components,
+            conserved_for=self.conserved_for, parameters=self.parameters
+            )
+        return new
+    __copy__ = copy
+
+
 #%%
 setattr = object.__setattr__
 class Processes():
@@ -384,12 +517,12 @@ class Processes():
             File path.
         components : :class:`CompiledComponents`, optional
             Components corresponding to the columns in the stoichiometry matrix, 
-            defaults to thermosteam.settings.chemicals. The default is None.
+            to all components set in the system (i.e., through :func:`set_thermo`).
         conserved_for : tuple[str], optional
             Materials subject to conservation rules, must have corresponding 'i\_' 
             attributes for the components. The default is ('COD', 'N', 'P', 'charge').
         parameters : Iterable[str], optional
-            Symbolic parameters in waste. The default is None.
+            Symbolic parameters in stoichiometry coefficients and/or rate equation.
         use_default_data : bool, optional
             Whether to use default data. The default is False.
         store_data : bool, optional

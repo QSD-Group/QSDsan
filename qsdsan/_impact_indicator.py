@@ -17,7 +17,7 @@ for license details.
 
 from warnings import warn
 from thermosteam.utils import registered
-from .utils import parse_unit, load_data
+from .utils import parse_unit, load_data, copy_attr
 
 __all__ = ('ImpactIndicator', )
 
@@ -150,6 +150,47 @@ class ImpactIndicator:
     _ipython_display_ = show
 
 
+    def copy(self, new_ID=''):
+        '''
+        Return a new :class:`ImpactIndicator` object with the same settings.
+
+        .. note:
+
+            Aliases will not be copied.
+
+        Parameters
+        ----------
+        new_ID : str
+            ID of the new impact indicator.
+
+        Examples
+        --------
+        >>> import qsdsan as qs
+        >>> GWP = qs.ImpactIndicator('GlobalWarming', alias='GWP', method='TRACI',
+        ...                          category='environmental impact',
+        ...                          unit='kg CO2-eq',
+        ...                          description='Effect of climate change measured as \
+        ...                                      global warming potential.')
+        >>> GWP.show() # doctest: +ELLIPSIS
+        ImpactIndicator: GlobalWarming as kg CO2-eq
+         Alias      : GWP
+         Method     : TRACI
+         Category   : environmental impact
+         Description: Effect of climate change ...
+        >>> GWP_cp = GWP.copy()
+        >>> GWP_cp.show() # doctest: +ELLIPSIS
+        ImpactIndicator: ind1 as kg CO2-eq
+         Alias      : None
+         Method     : TRACI
+         Category   : environmental impact
+         Description: Effect of climate change ...
+        '''
+        cls = self.__class__
+        new = cls.__new__(cls)
+        new.__init__(new_ID)
+        new = copy_attr(new, self, skip=('_ID', '_alias'))
+        return new        
+
     def register(self, print_msg=True):
         '''Add this impact indicator to the registry.'''
         self.registry.register_safely(self.ID, self)
@@ -231,11 +272,9 @@ class ImpactIndicator:
         index_col : None or int
             Index column of the :class:`pandas.DataFrame`.
 
-        Tip
-        ---
-        [1] tsv is preferred as it shows up on GitHub.
-
-        [2] Refer to the `Bwaise system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise/data>`_
+        See Also
+        --------
+        Refer to the `Bwaise system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise/data>`_
         in the `Exposan` repository for a sample file.
         '''
 
