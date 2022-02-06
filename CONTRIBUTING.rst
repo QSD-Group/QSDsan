@@ -120,7 +120,7 @@ Via command-line interface
 
 	    git pull upstream main
 
-#. If you are working on a new feature (rather than some quick work like fixing a small bug), then it is recommended to checkout a new branch:
+#. If you are working on a new feature (rather than some quick work like fixing a small bug), then it is recommended to checkout a new branch (note that branch names are case-sensitive):
 
 	.. code:: bash
 
