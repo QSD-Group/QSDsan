@@ -156,8 +156,7 @@ def get_stoichiometric_coeff(reaction, ref_component, components, conserved_for,
         coeff_dct = symbolize(coeff_dct, components, conserved_for, parameters)
         coeff = dct2list(coeff_dct, components)
     if ref_component:
-        try: normalize_factor = abs(coeff[components.index(str(ref_component))])
-        except: breakpoint()
+        normalize_factor = abs(coeff[components.index(str(ref_component))])
         if isa(coeff, np.ndarray): coeff /= normalize_factor
         else: coeff[:] = [v/normalize_factor for v in coeff]
     return coeff
