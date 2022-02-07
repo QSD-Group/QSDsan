@@ -120,7 +120,7 @@ class Process():
     
     Raise warning when materials are not strictly conserved based on the given 
     stoichiometric coefficients with defined parameters. An error will be raised
-    instead of the stoichiometric coefficients are purely numerical.
+    instead for stoichiometric coefficients that are purely numerical.
     
     >>> pc3 = qs.Process(ID='decay_hetero',
     ...                  reaction='X_BH -> [f_P]X_P + [1-f_P]X_S + [0.05-0.05*f_P]X_ND',
@@ -428,9 +428,10 @@ class Process():
         new_ID = new_ID or self.ID+'_copy'
         new.__init__(
             new_ID, reaction=self.reaction, ref_component=self.ref_component,
-            rate_equation=self.rate_equation, components=self._components,
-            conserved_for=self.conserved_for, parameters=self.parameters
+            rate_equation=self._rate_equation, components=self._components,
+            conserved_for=self.conserved_for, parameters=self.parameters.keys()
             )
+        new._parameters.update(self.parameters)
         return new
     __copy__ = copy
 
@@ -488,7 +489,7 @@ class Processes():
     >>> pcs.append(pc3)
     >>> pcs.compile()
     >>> pcs.show()
-    CompiledProcesses([aerobic_hetero_growth, hydrolysis])
+    CompiledProcesses([aerobic_hetero_growth, hydrolysis, decay_hetero])
     """
     
     def __new__(cls, processes):
