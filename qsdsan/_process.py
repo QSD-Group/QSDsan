@@ -152,11 +152,11 @@ class Process():
     [stoichiometry] S_S: -1
                     X_S: 1
     [reference]     S_S
-    [rate equation] -X_BH*X_S*k_h*(0.8*K_O_H*S_NO/...
+    [rate equation] -X_BH*X_S*k_h*(K_O_H*S_NO*eta_...
     [parameters]    k_h: k_h
                     K_X: K_X
                     K_O_H: K_O_H
-                    eta_h: eta_h
+                    eta_h: 0.8
                     K_NO: K_NO
     
     See Also
@@ -303,7 +303,7 @@ class Process():
     @property
     def components(self):
         '''
-        [class:`CompiledComponents`]
+        [:class:`CompiledComponents`]
         
         Components corresponding to each entry in the stoichiometry array, 
         defaults to all components set in the system (i.e., through :func:`set_thermo`).
@@ -365,7 +365,8 @@ class Process():
     def rate_equation(self):
         '''
         [SymPy expression] Kinetic rate equation of the process. Also the rate in
-        which the reference component is reacted or produced in the process.
+        which the reference component is reacted or produced in the process. Kinetic
+        parameters in the equation are replaced with their assigned values.
         '''
         return self._rate_equation.subs(self._parameters)
     
@@ -481,7 +482,7 @@ class Processes():
                     K_NO: K_NO
 
     >>> pc3 = qs.Process(ID='decay_hetero',
-    ...                  reaction='X_BH -> [f_P]X_P + [1-f_P]X_S + [0.05-0.05*f_P]X_ND',
+    ...                  reaction='X_BH -> [f_P]X_P + [1-f_P]X_S + [?]X_ND',
     ...                  ref_component='X_BH',
     ...                  rate_equation='b_H*X_BH',
     ...                  conserved_for=('COD', 'N'),
@@ -490,6 +491,24 @@ class Processes():
     >>> pcs.compile()
     >>> pcs.show()
     CompiledProcesses([aerobic_hetero_growth, hydrolysis, decay_hetero])
+    
+    Once the processes are compiled, corresponding attributes become accessible:
+    
+    >>> pcs.parameters
+    {'Y_H': Y_H,
+     'mu_H': mu_H,
+     'K_S': K_S,
+     'K_O_H': K_O_H,
+     'K_NH': K_NH,
+     'k_h': k_h,
+     'K_X': K_X,
+     'eta_h': eta_h,
+     'K_NO': K_NO,
+     'f_P': f_P,
+     'b_H': b_H}
+    
+    >>> pcs.production_rates.rate_of_production.loc['X_S']
+    -1.0*X_BH*X_S*k_h*(K_O_H*S_NO*eta_h/((K_NO + S_NO)*(K_O_H + S_O)) + S_O/(K_O_H + S_O))/(K_X*X_BH + X_S) + X_BH*b_H*(1 - f_P)
     """
     
     def __new__(cls, processes):
@@ -827,6 +846,11 @@ class CompiledProcesses(Processes):
     def set_parameters(self, **parameters):
         '''Set values to stoichiometric and/or kinetic parameters.'''
         self._parameters.update(parameters)
+        for pc in self:
+            intersect = pc._parameters.keys() & parameters.keys()
+            if intersect:
+                params = {k:v for k, v in parameters.items() if k in intersect}
+                pc._parameters.update(params)
     
     def __repr__(self):
         return f"{type(self).__name__}([{', '.join(self.IDs)}])"
