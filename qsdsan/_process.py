@@ -128,10 +128,10 @@ class Process():
     ...                  rate_equation='b_H*X_BH',
     ...                  conserved_for=('COD', 'N'),
     ...                  parameters=('f_P', 'b_H'))
-    >>> pc3.check_conservation() 
+    >>> pc3.check_conservation() # doctest: +SKIP
     UserWarning: The following materials aren't strictly conserved by the stoichiometric coefficients. 
     A positive value means the material is created, a negative value means the material is destroyed:
-     N: 0.01*f_P - 0.036
+      N: 0.01*f_P - 0.036
     
     Parameter values can be set. Changes will be reflected in the stoichiometry  
     and/or the rate equation:
@@ -465,11 +465,10 @@ class Processes():
     ...                  conserved_for=(),
     ...                  parameters=('k_h', 'K_X', 'K_O_H', 'eta_h', 'K_NO'))
     >>> pcs = qs.Processes([pc1, pc2])
-
     >>> pcs.show()
     Processes([aerobic_hetero_growth, hydrolysis])
 
-    >>> pcs.hydrolysis
+    >>> pcs.hydrolysis.show()
     Process: hydrolysis
     [stoichiometry] S_S: 1
                     X_S: -1
@@ -496,16 +495,16 @@ class Processes():
     
     >>> pcs.parameters
     {'Y_H': Y_H,
-     'mu_H': mu_H,
-     'K_S': K_S,
-     'K_O_H': K_O_H,
-     'K_NH': K_NH,
-     'k_h': k_h,
-     'K_X': K_X,
-     'eta_h': eta_h,
-     'K_NO': K_NO,
-     'f_P': f_P,
-     'b_H': b_H}
+      'mu_H': mu_H,
+      'K_S': K_S,
+      'K_O_H': K_O_H,
+      'K_NH': K_NH,
+      'k_h': k_h,
+      'K_X': K_X,
+      'eta_h': eta_h,
+      'K_NO': K_NO,
+      'f_P': f_P,
+      'b_H': b_H}
     
     >>> pcs.production_rates.rate_of_production.loc['X_S']
     -1.0*X_BH*X_S*k_h*(K_O_H*S_NO*eta_h/((K_NO + S_NO)*(K_O_H + S_O)) + S_O/(K_O_H + S_O))/(K_X*X_BH + X_S) + X_BH*b_H*(1 - f_P)

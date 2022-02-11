@@ -48,7 +48,7 @@ The easiest way is through ``pip``, in command-line interface (e.g., Anaconda pr
 
     pip install qsdsan
 
-If you need to update:
+If you need to upgrade:
 
 .. code::
 
