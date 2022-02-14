@@ -10,10 +10,10 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-from .. import SanUnit, WasteStream
+from .. import SanUnit
 from ..utils import ospath, load_data, data_path
-import numpy as np, pandas as pd
 from scipy.interpolate import InterpolatedUnivariateSpline, CubicSpline, interp1d
+import numpy as np
 
 __all__ = ('DynamicInfluent',)
 dynamic_inf_path = ospath.join(data_path, 'sanunit_data/_inf_dry_2006.tsv')
@@ -31,7 +31,8 @@ class DynamicInfluent(SanUnit):
         Dynamic influent.
     data_file : str, optional
         The file path for the time-series data. Acceptable file extensions are
-        `.xlsx`, `.xls`, `.csv`, `.tsv`.The default is None.
+        `.xlsx`, `.xls`, `.csv`, `.tsv`. If none specified, will load the default
+        time-series data of dry-weather influent with components from ASM1.
     interpolator : str or int or callable, optional
         Interpolator to use. It can be a string (e.g., 'slinear', 'quadratic', 'cubic')
         or an integer within [1,5] to specify the order of a spline interpolation.  
@@ -61,7 +62,6 @@ class DynamicInfluent(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), data_file=None, interpolator=None, 
                  derivative_approximator=None, thermo=None, init_with='WasteStream', 
                  isdynamic=True, load_data_kwargs={}, intpl_kwargs={}, **kwargs):
-
         SanUnit.__init__(self, ID, None, outs, thermo, init_with, isdynamic=isdynamic)
         self._intpl_kwargs = intpl_kwargs
         self.interpolator = interpolator
@@ -125,6 +125,10 @@ class DynamicInfluent(SanUnit):
         intpl = self._intpl
         ikwargs = self._intpl_kwargs
         y_IDs = self.components.IDs + ('Q',)
+        diff_set = set(df.columns) - set(y_IDs) - {'t'}
+        if diff_set: 
+            raise RuntimeError(f'The data file contains state variable(s) that are'
+                               f'inconsistent with the thermo: {diff_set}')
         self._interpolant = [intpl(df.t, df.loc[:,y], **ikwargs) \
                              if y in df.columns else lambda t: 0 \
                              for y in y_IDs]
