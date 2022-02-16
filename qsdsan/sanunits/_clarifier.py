@@ -279,8 +279,6 @@ class FlatBottomCircularClarifier(SanUnit):
         self._state = np.append(ZQs, TSS)
         self._dstate = self._state * 0.
         if TSS_in != 0: self._X_comp = QCs[:-1] * x / TSS_in
-        return self._state
-
 
     def _update_state(self):
         arr = self._state

@@ -202,7 +202,6 @@ class CSTR(SanUnit):
         else: Cs = mixed.conc
         self._state = np.append(Cs, Q)
         self._dstate = self._state * 0.
-        return self._state
 
     def _update_state(self):
         arr = self._state
