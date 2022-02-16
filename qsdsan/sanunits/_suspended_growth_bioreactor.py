@@ -39,7 +39,7 @@ def _add_aeration_to_growth_model(aer, model):
 # %%
 
 @njit(cache=True)
-def dydt_cstr_no_rxn_fixed_aer(t, QC_ins, QC, dQC_ins, V_arr, Q_e_arr, _dstate, Cs):
+def dydt_cstr_no_rxn_fixed_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, Cs):
     Q_ins = QC_ins[:, -1]
     C_ins = QC_ins[:, :-1]
     flow_in = Q_ins @ C_ins / V_arr
@@ -49,7 +49,7 @@ def dydt_cstr_no_rxn_fixed_aer(t, QC_ins, QC, dQC_ins, V_arr, Q_e_arr, _dstate, 
     _dstate[:-1] = flow_in - flow_out
 
 @njit(cache=True)
-def dydt_cstr_no_rxn_controlled_aer(t, QC_ins, QC, dQC_ins, V_arr, Q_e_arr, _dstate, Cs):
+def dydt_cstr_no_rxn_controlled_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, Cs):
     Q_ins = QC_ins[:, -1]
     C_ins = QC_ins[:, :-1]
     flow_in = Q_ins @ C_ins / V_arr
@@ -196,31 +196,31 @@ class CSTR(SanUnit):
         self._concs = Cs
 
     def _init_state(self):
-        '''initialize state by specifying or calculating component concentrations
-        based on influents. Total flow rate is always initialized as the sum of
-        influent wastestream flows.'''
         mixed = self._mixed
         Q = mixed.get_total_flow('m3/d')
         if self._concs is not None: Cs = self._concs
         else: Cs = mixed.conc
         self._state = np.append(Cs, Q)
         self._dstate = self._state * 0.
+        return self._state
 
-    def _update_state(self, arr):
-        self._state = arr
-        if self.split is None: self._outs[0]._state = arr
+    def _update_state(self):
+        arr = self._state
+        if self.split is None: self._outs[0].state = arr
         else:
             for ws, spl in zip(self._outs, self.split):
-                ws._state = arr.copy()
-                ws._state[-1] *= spl
+                y = arr.copy()
+                y[-1] *= spl
+                ws.state = y
 
     def _update_dstate(self):
         arr = self._dstate
-        if self.split is None: self._outs[0]._dstate = arr
+        if self.split is None: self._outs[0].dstate = arr
         else:
             for ws, spl in zip(self._outs, self.split):
-                ws._dstate = arr.copy()
-                ws._dstate[-1] *= spl
+                y = arr.copy()
+                y[-1] *= spl
+                ws.dstate = y
 
     def _run(self):
         '''Only to converge volumetric flows.'''
@@ -268,14 +268,14 @@ class CSTR(SanUnit):
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 Cs = QC[:-1]
                 Cs[i] = fixed_DO
-                dydt_cstr_no_rxn_controlled_aer(t, QC_ins, QC, dQC_ins, V_arr, Q_e_arr, _dstate, Cs)
+                dydt_cstr_no_rxn_controlled_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, Cs)
                 _dstate[:-1] += r(*Cs)
                 _dstate[i] = 0
                 _update_dstate()
         else:
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 Cs = QC[:-1]
-                dydt_cstr_no_rxn_fixed_aer(t, QC_ins, QC, dQC_ins, V_arr, Q_e_arr, _dstate, Cs)
+                dydt_cstr_no_rxn_fixed_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, Cs)
                 _dstate[:-1] += r(*Cs)
                 _update_dstate()
 

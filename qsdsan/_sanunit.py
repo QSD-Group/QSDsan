@@ -220,9 +220,10 @@ class SanUnit(Unit, isabstract=True):
     def _init_dynamic(self):
         self._state = None
         self._dstate = None
-        self._ins_QC = np.empty((len(self._ins), len(self.components)+1))
+        self._ins_QC = np.zeros((len(self._ins), len(self.components)+1))
         self._ins_dQC = self._ins_QC.copy()
         self._ODE = None
+        self._AE = None
         if not hasattr(self, '_mock_dyn_sys'):
             self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
         # Shouldn't need to re-create the mock system everytime
@@ -451,6 +452,10 @@ class SanUnit(Unit, isabstract=True):
             if not hasattr(self, '_state_header'):
                 self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components] + ['Q [m3/d]']
 
+    @property
+    def hasode(self):
+        return hasattr(self, '_compile_ODE')
+
     def reset_cache(self):
         '''Reset cached states for dynamic units.'''
         super().reset_cache()
@@ -461,11 +466,6 @@ class SanUnit(Unit, isabstract=True):
 
     def get_retained_mass(self, biomass_IDs):
         warn(f'The retained biomass in {self.ID} is ignored.')
-
-    def _refresh_ins(self):
-        for i, ws in enumerate(self._ins):
-            self._ins_QC[i,:] = ws._state
-            self._ins_dQC[i,:] = ws._dstate
 
     @property
     def construction(self):

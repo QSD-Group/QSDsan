@@ -151,11 +151,11 @@ class DynamicInfluent(SanUnit):
         self._state = self.interpolant(0)
         self._dstate = self.derivative(0)
 
-    def _update_state(self, arr):
-        self._state = self._outs[0]._state = arr
+    def _update_state(self):
+        self._outs[0].state = self._state
 
     def _update_dstate(self):
-        self._outs[0]._dstate = self._dstate
+        self._outs[0].dstate = self._dstate
 
     def _run(self):
         '''Only to converge volumetric flows.'''
@@ -166,27 +166,24 @@ class DynamicInfluent(SanUnit):
         y0.pop('H2O', None)
         out.set_flow_by_concentration(Q=Q, concentrations=y0, units=('m3/d', 'mg/L'))
 
-    # def get_retained_mass(self, biomass_IDs):
-        # cmps = self.components
-        # mass = cmps.i_mass * self._state[:-1]
-        # return self._V_max * mass[cmps.indices(biomass_IDs)].sum()
-
     @property
-    def ODE(self):
-        if self._ODE is None:
-            self._compile_ODE()
-        return self._ODE
+    def AE(self):
+        if self._AE is None:
+            self._compile_AE()
+        return self._AE
 
-    def _compile_ODE(self):
+    def _compile_AE(self):
+        _state = self._state
         _dstate = self._dstate
         f = self.interpolant
         f_dy = self.derivative
         _update_state = self._update_state
         _update_dstate = self._update_dstate      
 
-        def dy_dt(t):
-            _update_state(f(t))
+        def yt(t, QC_ins, dQC_ins):
+            _state[:] = f(t)
+            _update_state()
             _dstate[:] = f_dy(t)
             _update_dstate()
 
-        self._ODE = dy_dt
+        self._AE = yt
