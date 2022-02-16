@@ -268,7 +268,6 @@ class FlatBottomCircularClarifier(SanUnit):
         n = self._N_layer
         x = self.components.x
         imass = self.components.i_mass
-        self._refresh_ins()
         QCs = self._ins_QC[0]
         Q = QCs[-1]
         Z = self._solubles if self._solubles is not None \

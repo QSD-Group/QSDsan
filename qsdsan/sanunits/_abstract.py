@@ -303,7 +303,7 @@ class Sampler(SanUnit):
 
     @property
     def state(self):
-        '''The state of the Pump, including component concentrations [mg/L] and flow rate [m^3/d].'''
+        '''The sampled state, including component concentrations [mg/L] and flow rate [m^3/d].'''
         if self._state is None: return None
         else:
             return dict(zip(list(self.components.IDs) + ['Q'], self._state))
@@ -312,12 +312,10 @@ class Sampler(SanUnit):
         self._state = self._ins_QC[0]
         self._dstate = self._state * 0.
 
-    def _update_state(self, arr):
-        '''updates conditions of output stream based on conditions of the Mixer'''
+    def _update_state(self):
         self._outs[0].state = self._state
 
     def _update_dstate(self):
-        '''updates rates of change of output stream from rates of change of the Mixer'''
         self._outs[0].dstate = self._dstate
 
     @property

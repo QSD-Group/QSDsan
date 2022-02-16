@@ -63,7 +63,7 @@ class Pump(SanUnit, Pump):
         self._state = self._ins_QC[0]
         self._dstate = self._state * 0.
 
-    def _update_state(self, arr):
+    def _update_state(self):
         '''updates conditions of output stream based on conditions of the Mixer'''
         self._outs[0].state = self._state
 

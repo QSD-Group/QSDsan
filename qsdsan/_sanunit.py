@@ -439,27 +439,28 @@ class SanUnit(Unit, isabstract=True):
         return self._isdynamic
     @isdynamic.setter
     def isdynamic(self, i):
-        if hasattr(self, '_isdynamic'):
+        hasfield = hasattr
+        if hasfield(self, '_isdynamic'):
             if self._isdynamic == bool(i):
                 return
         else: self._isdynamic = bool(i)
-        if hasattr(self, '_compile_ODE'):
+        if self.hasode:
             self._init_dynamic()
             if hasattr(self, '_mock_dyn_sys'):
                 ID = self.ID+'_dynmock'
                 System.registry.discard(ID)
             self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
-            if not hasattr(self, '_state_header'):
+            if not hasfield(self, '_state_header'):
                 self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components] + ['Q [m3/d]']
 
     @property
     def hasode(self):
         return hasattr(self, '_compile_ODE')
 
-    def reset_cache(self):
+    def reset_cache(self, dynamic_system=False):
         '''Reset cached states for dynamic units.'''
         super().reset_cache()
-        if hasattr(self, '_compile_ODE'):
+        if self.hasode or dynamic_system:
             self._init_dynamic()
             for s in self.outs:
                 s.empty()

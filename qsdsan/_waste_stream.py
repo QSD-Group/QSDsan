@@ -1127,7 +1127,8 @@ class WasteStream(SanStream):
     @state.setter
     def state(self, y):
         if self.isproduct(): 
-            self._state[:] = y
+            try: self._state[:] = y
+            except TypeError: self._state = y
             # decide whether to record state over time
         else: 
             i = self._sink._ins.index(self)
@@ -1143,7 +1144,8 @@ class WasteStream(SanStream):
     @dstate.setter
     def dstate(self, dy):
         if self.isproduct(): 
-            self._dstate[:] = dy
+            try: self._dstate[:] = dy
+            except TypeError: self._dstate = dy
             # decide whether to record state over time
         else: 
             i = self._sink._ins.index(self)
