@@ -36,7 +36,7 @@ class Tank(SanUnit, Tank, isabstract=True):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
                   vessel_type=None, tau=None, V_wf=None,
                   vessel_material=None, kW_per_m3=0.,
-                  init_with='Stream', F_BM_default=None):
+                  init_with='WasteStream', F_BM_default=None):
 
         SanUnit.__init__(self, ID, ins, outs, thermo,
                          init_with=init_with, F_BM_default=F_BM_default)

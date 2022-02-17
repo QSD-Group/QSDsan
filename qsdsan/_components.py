@@ -59,7 +59,7 @@ class Components(Chemicals):
 
     Examples
     --------
-    `Component <https://qsdsan.readthedocs.io/en/latest/tutorials/Component.html>`_
+    `Component <https://qsdsan.readthedocs.io/en/latest/tutorials/2_Component.html>`_
 
     See Also
     --------
@@ -540,7 +540,7 @@ class CompiledComponents(CompiledChemicals):
 
     Examples
     --------
-    `Component <https://qsdsan.readthedocs.io/en/latest/tutorials/Component.html>`_
+    `Component <https://qsdsan.readthedocs.io/en/latest/tutorials/2_Component.html>`_
 
     See Also
     --------

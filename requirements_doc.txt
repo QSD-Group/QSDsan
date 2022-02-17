@@ -2,10 +2,13 @@
 biosteam>=2.31.23
 thermosteam>=0.27.18
 SALib
-seaborn
 sympy
+seaborn
 
 # Specifically for docs
+sphinx
+nbsphinx
+sphinx_rtd_theme
 sphinx-copybutton
 ipywidgets
 jupyterlab-widgets

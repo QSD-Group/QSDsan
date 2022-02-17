@@ -635,6 +635,7 @@ class AnMBR(SanUnit):
             self.reactor_type, self.membrane_configuration, self.pumps
         self.AF_pump = self.AF.lift_pump if self.AF else None
         self.AeF_pump = self.AeF.lift_pump if self.AeF else None
+        #!!! Maybe move `ins_dct` to `__init__` so it won't be repeated
         ins_dct = {
             'perm': outs[1].proxy(f'{ID}_perm'),
             'retent': self._retent,

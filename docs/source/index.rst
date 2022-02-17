@@ -66,15 +66,15 @@ If you are a developer and want to contribute to ``QSDsan``, please follow the s
 
 Getting Started
 ---------------
-Follow the tutorial to get started! All tutorials are written using Jupyter Notebook, you can run your own Jupyter environment, or you can visit `this page <https://mybinder.org/v2/gh/QSD-Group/QSDsan/main?filepath=%2Fdocs%2Fsource%2Ftutorials>`_ to run the Jupyter environment in your browser.
+To help you familiarize with ``QSDsan``, we include two types of tutorials - topical tutorials that cover on one or multiple classes of ``QSDsan``, or design tutorials that show you how to translate a practical design problem into coding in QSDsan. Follow them to get started!
 
-We are updating the tutorials (you will see a note at the start of some tutorials saying updates are coming) and we will add new ones related to uncertainty/sensitivity analyses.
+All tutorials are written using Jupyter Notebook, you can run your own Jupyter environment, or you can visit `this page <https://mybinder.org/v2/gh/QSD-Group/QSDsan/main?filepath=%2Fdocs%2Fsource%2Ftutorials>`_ to run the Jupyter environment in your browser.
 
-For each of these tutorials, we are also recording videos where one of the QSD group members will go through the tutorial step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
+For each of these tutorials and examples, we are also recording videos where one of the QSD group members will go through the material step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
 
 .. toctree::
    :maxdepth: 1
-   :caption: Tutorial
+   :caption: Topical Tutorials
 
    tutorials/0_Quick_Overview
    tutorials/1_Helpful_Basics
@@ -86,6 +86,12 @@ For each of these tutorials, we are also recording videos where one of the QSD g
    tutorials/7_TEA
    tutorials/8_LCA
    tutorials/9_Uncertainty_and_Sensitivity_Analyses
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Design Tutorials
+
+   design_examples/12_Chlorination
 
 
 How does ``QSDsan`` work?
