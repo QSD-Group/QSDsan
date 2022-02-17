@@ -475,7 +475,7 @@ class ASM2d(Processes):
                                         parameters=cls._params,
                                         compile=False)
 
-        if path == None:
+        if path == _path:
             _p12 = Process('anox_storage_PP',
                            'S_PO4 + [Y_PHA]X_PHA + [?]S_NO3 -> X_PP + [?]S_N2 + [?]S_NH4 + [?]S_ALK',
                            components=cmps,
