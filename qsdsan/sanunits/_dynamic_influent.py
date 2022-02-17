@@ -10,10 +10,10 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-from .. import SanUnit, WasteStream
+from .. import SanUnit
 from ..utils import ospath, load_data, data_path
-import numpy as np, pandas as pd
 from scipy.interpolate import InterpolatedUnivariateSpline, CubicSpline, interp1d
+import numpy as np
 
 __all__ = ('DynamicInfluent',)
 dynamic_inf_path = ospath.join(data_path, 'sanunit_data/_inf_dry_2006.tsv')
@@ -31,7 +31,8 @@ class DynamicInfluent(SanUnit):
         Dynamic influent.
     data_file : str, optional
         The file path for the time-series data. Acceptable file extensions are
-        `.xlsx`, `.xls`, `.csv`, `.tsv`.The default is None.
+        `.xlsx`, `.xls`, `.csv`, `.tsv`. If none specified, will load the default
+        time-series data of dry-weather influent with components from ASM1.
     interpolator : str or int or callable, optional
         Interpolator to use. It can be a string (e.g., 'slinear', 'quadratic', 'cubic')
         or an integer within [1,5] to specify the order of a spline interpolation.  
@@ -61,7 +62,6 @@ class DynamicInfluent(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), data_file=None, interpolator=None, 
                  derivative_approximator=None, thermo=None, init_with='WasteStream', 
                  isdynamic=True, load_data_kwargs={}, intpl_kwargs={}, **kwargs):
-
         SanUnit.__init__(self, ID, None, outs, thermo, init_with, isdynamic=isdynamic)
         self._intpl_kwargs = intpl_kwargs
         self.interpolator = interpolator
@@ -125,6 +125,10 @@ class DynamicInfluent(SanUnit):
         intpl = self._intpl
         ikwargs = self._intpl_kwargs
         y_IDs = self.components.IDs + ('Q',)
+        diff_set = set(df.columns) - set(y_IDs) - {'t'}
+        if diff_set: 
+            raise RuntimeError(f'The data file contains state variable(s) that are'
+                               f'inconsistent with the thermo: {diff_set}')
         self._interpolant = [intpl(df.t, df.loc[:,y], **ikwargs) \
                              if y in df.columns else lambda t: 0 \
                              for y in y_IDs]
@@ -147,11 +151,11 @@ class DynamicInfluent(SanUnit):
         self._state = self.interpolant(0)
         self._dstate = self.derivative(0)
 
-    def _update_state(self, arr):
-        self._state = self._outs[0]._state = arr
+    def _update_state(self):
+        self._outs[0].state = self._state
 
     def _update_dstate(self):
-        self._outs[0]._dstate = self._dstate
+        self._outs[0].dstate = self._dstate
 
     def _run(self):
         '''Only to converge volumetric flows.'''
@@ -162,27 +166,24 @@ class DynamicInfluent(SanUnit):
         y0.pop('H2O', None)
         out.set_flow_by_concentration(Q=Q, concentrations=y0, units=('m3/d', 'mg/L'))
 
-    # def get_retained_mass(self, biomass_IDs):
-        # cmps = self.components
-        # mass = cmps.i_mass * self._state[:-1]
-        # return self._V_max * mass[cmps.indices(biomass_IDs)].sum()
-
     @property
-    def ODE(self):
-        if self._ODE is None:
-            self._compile_ODE()
-        return self._ODE
+    def AE(self):
+        if self._AE is None:
+            self._compile_AE()
+        return self._AE
 
-    def _compile_ODE(self):
+    def _compile_AE(self):
+        _state = self._state
         _dstate = self._dstate
         f = self.interpolant
         f_dy = self.derivative
         _update_state = self._update_state
         _update_dstate = self._update_dstate      
 
-        def dy_dt(t):
-            _update_state(f(t))
+        def yt(t, QC_ins, dQC_ins):
+            _state[:] = f(t)
+            _update_state()
             _dstate[:] = f_dy(t)
             _update_dstate()
 
-        self._ODE = dy_dt
+        self._AE = yt

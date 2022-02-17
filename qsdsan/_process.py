@@ -513,10 +513,14 @@ class Processes():
     def __new__(cls, processes):
 
         self = super().__new__(cls)
-        #!!! add function to detect duplicated processes
         setfield = setattr
+        hasfield = hasattr
+        duplicates = []
         for i in processes:
-            setfield(self, i.ID, i)
+            if hasfield(self, i.ID): duplicates.append(i.ID)
+            else: setfield(self, i.ID, i)
+        if set(duplicates):
+            raise ValueError(f'Processes with duplicate IDs were found: {set(duplicates)}')
         return self
     
     # def __getnewargs__(self):

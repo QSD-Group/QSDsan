@@ -220,9 +220,10 @@ class SanUnit(Unit, isabstract=True):
     def _init_dynamic(self):
         self._state = None
         self._dstate = None
-        self._ins_QC = np.empty((len(self._ins), len(self.components)+1))
+        self._ins_QC = np.zeros((len(self._ins), len(self.components)+1))
         self._ins_dQC = self._ins_QC.copy()
         self._ODE = None
+        self._AE = None
         if not hasattr(self, '_mock_dyn_sys'):
             self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
         # Shouldn't need to re-create the mock system everytime
@@ -438,34 +439,34 @@ class SanUnit(Unit, isabstract=True):
         return self._isdynamic
     @isdynamic.setter
     def isdynamic(self, i):
-        if hasattr(self, '_isdynamic'):
+        hasfield = hasattr
+        if hasfield(self, '_isdynamic'):
             if self._isdynamic == bool(i):
                 return
         else: self._isdynamic = bool(i)
-        if hasattr(self, '_compile_ODE'):
+        if self.hasode:
             self._init_dynamic()
             if hasattr(self, '_mock_dyn_sys'):
                 ID = self.ID+'_dynmock'
                 System.registry.discard(ID)
             self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
-            if not hasattr(self, '_state_header'):
+            if not hasfield(self, '_state_header'):
                 self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components] + ['Q [m3/d]']
 
-    def reset_cache(self):
+    @property
+    def hasode(self):
+        return hasattr(self, '_compile_ODE')
+
+    def reset_cache(self, dynamic_system=False):
         '''Reset cached states for dynamic units.'''
         super().reset_cache()
-        if hasattr(self, '_compile_ODE'):
+        if self.hasode or dynamic_system:
             self._init_dynamic()
             for s in self.outs:
                 s.empty()
 
     def get_retained_mass(self, biomass_IDs):
         warn(f'The retained biomass in {self.ID} is ignored.')
-
-    def _refresh_ins(self):
-        for i, ws in enumerate(self._ins):
-            self._ins_QC[i,:] = ws._state
-            self._ins_dQC[i,:] = ws._dstate
 
     @property
     def construction(self):

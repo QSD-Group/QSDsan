@@ -1117,13 +1117,47 @@ class WasteStream(SanStream):
         self.set_flow(M_bulk, 'kg/hr', bulk_liquid_ID)
         return self.F_vol*1e3 - target_Q
 
-    def _init_state(self):
-        self._state = np.append(self.conc.astype('float'), self.get_total_flow('m3/d'))
-        self._dstate = self._state * 0.
+    @property
+    def state(self):
+        if self.isproduct(): return self._state
+        else: 
+            i = self._sink._ins.index(self)
+            return self._sink._ins_QC[i]
+    
+    @state.setter
+    def state(self, y):
+        if self.isproduct(): 
+            try: self._state[:] = y
+            except TypeError: self._state = y
+            # decide whether to record state over time
+        else: 
+            i = self._sink._ins.index(self)
+            self._sink._ins_QC[i,:] = y
+    
+    @property
+    def dstate(self):
+        if self.isproduct(): return self._dstate
+        else:
+            i = self._sink._ins.index(self)
+            return self._sink._ins_dQC[i]
+    
+    @dstate.setter
+    def dstate(self, dy):
+        if self.isproduct(): 
+            try: self._dstate[:] = dy
+            except TypeError: self._dstate = dy
+            # decide whether to record state over time
+        else: 
+            i = self._sink._ins.index(self)
+            self._sink._ins_dQC[i,:] = dy        
+
+    def _init_state(self):  
+        self.state = np.append(self.conc.astype('float'), self.get_total_flow('m3/d'))
+        self.dstate = np.zeros_like(self.state)
 
     def _state2flows(self):
-        Q = self._state[-1]
-        Cs = dict(zip(self.components.IDs, self._state[:-1]))
+        Q = self.state[-1]
+        Cs = dict(zip(self.components.IDs, self.state[:-1]))
         Cs.pop('H2O', None)
         self.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
 
