@@ -87,11 +87,12 @@ For each of these tutorials and examples, we are also recording videos where one
    tutorials/8_LCA
    tutorials/9_Uncertainty_and_Sensitivity_Analyses
 
-.. toctree::
+..
+   .. toctree::
    :maxdepth: 1
    :caption: Design Tutorials
 
-   design_examples/12_Chlorination
+   tutorials/12_Chlorination
 
 
 How does ``QSDsan`` work?
@@ -165,16 +166,7 @@ Roles
    - `Hannah Lohman <https://qsdsan.readthedocs.io/en/beta/authors/Hannah_Lohman.html>`_
 
 
-**Module development:**
-   - `Yalin Li`_
-   - `Joy Zhang`_
-   - `Stetson Rowles <https://qsdsan.readthedocs.io/en/beta/authors/Stetson_Rowles.html>`_
-   - Smiti Mittal
-   - Anna Kogler
-   - Samuel Aguiar
-   - Tyler Stephen
-   - Shion Watabe
-   - `Other developers <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ that have contributed to the repository.
+**Module development:** `developers <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ that have contributed to the repository.
 
 
 **Funding support:**
