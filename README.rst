@@ -137,12 +137,12 @@ If you would like to receive news related to the QSDsan platform, you can subscr
 
 QSDsan Events
 -------------
-We will keep this calendar up-to-date as we organize more events (office hours, workshops), add it `here <https://calendar.google.com/calendar/u/0?cid=ZXAxYXU1NjFsajhrbmZ1bXBjZDJhN21sMDhAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ>`_.
+We will keep this `calendar <https://calendar.google.com/calendar/embed?src=ep1au561lj8knfumpcd2a7ml08%40group.calendar.google.com&ctz=America%2FChicago>`_ up-to-date as we organize more events (office hours, workshops).
 
 .. raw:: html
 
     <embed>
-        <iframe src="https://calendar.google.com/calendar/embed?src=ep1au561lj8knfumpcd2a7ml08%40group.calendar.google.com&ctz=America%2FChicago" style="border: 0" width="800" height="600" frameborder="0" scrolling="no"></iframe>
+        <iframe src="https://calendar.google.com/calendar/embed?src=ep1au561lj8knfumpcd2a7ml08%40group.calendar.google.com&ctz=America%2FChicago" style="border: 0" width="100%" height="600" scrolling="no"></iframe>
     </embed>
 
 
