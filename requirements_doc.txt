@@ -2,8 +2,8 @@
 biosteam>=2.31.23
 thermosteam>=0.27.18
 SALib
-sympy
 seaborn
+sympy
 
 # Specifically for docs
 sphinx
