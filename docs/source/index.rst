@@ -196,7 +196,18 @@ If you would like to contribute, please follow our contribution guide, thank you
 
 ``QSDsan`` is and will stay open source under University of Illinois/NCSA Open Source License. Any third-party packages copied from ``QSDsan`` must be strictly open-source (not copy-left nor open-access). Please refer to `LICENSE <https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt>`_ and `CONTRIBUTION <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ for details.
 
-If you would like to receive exciting news related to the QSDsan platform, you can subscribe to email updates using `this form <https://groups.webservices.illinois.edu/subscribe/154591>`_ (don't worry, you will be able to unsubscribe :)). Thank you in advance for your interest!
+If you would like to receive news related to the QSDsan platform, you can subscribe to email updates using `this form <https://groups.webservices.illinois.edu/subscribe/154591>`_ (don't worry, you will be able to unsubscribe :)). Thank you in advance for your interest!
+
+
+QSDsan Events
+-------------
+We will keep this calendar up-to-date as we organize more events (office hours, workshops), add it `here <https://calendar.google.com/calendar/u/0?cid=ZXAxYXU1NjFsajhrbmZ1bXBjZDJhN21sMDhAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ>`_.
+
+.. raw:: html
+
+    <embed>
+        <iframe src="https://calendar.google.com/calendar/embed?src=ep1au561lj8knfumpcd2a7ml08%40group.calendar.google.com&ctz=America%2FChicago" style="border: 0" width="800" height="600" frameborder="0" scrolling="no"></iframe>
+    </embed>
 
 
 More resources
