@@ -205,7 +205,7 @@ If you would like to receive news related to the QSDsan platform, you can subscr
 
    Events.rst
 
-We will keep the calendar up-to-date as we organize more events (office hours, workshops, etc.), click on the events to see the details (including meeting links).
+We will keep the calendar up-to-date as we organize more events (office hours, workshops, etc.), click on the events in the calendar to see the details (including meeting links).
 
 .. raw:: html
 

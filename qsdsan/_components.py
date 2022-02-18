@@ -191,6 +191,7 @@ class Components(Chemicals):
 
         Examples
         --------
+        >>> from qsdsan import Component, Components
         >>> X = Component('X', phase='s', measured_as='COD', i_COD=0, description='Biomass',
         ...               organic=True, particle_size='Particulate', degradability='Readily')
         >>> X_inert = Component('X_inert', phase='s', description='Inert biomass', i_COD=0,
