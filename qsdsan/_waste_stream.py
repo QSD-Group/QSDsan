@@ -31,7 +31,8 @@ from free_properties import PropertyFactory, property_array
 from thermosteam import settings, indexer
 from biosteam.utils import MissingStream
 from . import SanStream, MissingSanStream
-from .utils import auom, copy_attr
+from .utils import auom, copy_attr, WasteStreamScope
+from biosteam.utils import Scope
 from warnings import warn
 
 __all__ = ('WasteStream', 'MissingWasteStream', 'get_mock_conc')
@@ -47,7 +48,7 @@ _common_composite_vars = ('_COD', '_BOD', '_uBOD', '_TC', '_TOC', '_TN',
 _ws_specific_slots = (*_common_composite_vars,
                       '_pH', '_SAlk', '_ratios',
                       # '_stream_impact_item', (pls keep this here, might be useful in debugging)
-                      '_state', '_dstate')
+                      '_state', '_dstate', '_scope')
 
 # Used in the `composite` method
 _default_cmp_IDs = {
@@ -889,6 +890,7 @@ class WasteStream(SanStream):
             return
 
         for slot in _ws_specific_slots:
+            if slot == '_scope': continue
             value = getattr(other, slot)
             setattr(self, slot, value)
 
@@ -927,6 +929,7 @@ class WasteStream(SanStream):
         '''
         new = SanStream.proxy(self, ID=ID)
         for slot in _ws_specific_slots:
+            if slot == '_scope': continue
             value = getattr(self, slot)
             setattr(new, slot, value)
         return new
@@ -1150,6 +1153,21 @@ class WasteStream(SanStream):
         else: 
             i = self._sink._ins.index(self)
             self._sink._ins_dQC[i,:] = dy        
+
+    @property
+    def scope(self):
+        """A tracker of the wastestream's time-series data during dynamic simulation."""
+        if not hasattr(self, '_scope'):
+            self._scope = WasteStreamScope(self)
+        return self._scope
+    
+    @scope.setter
+    def scope(self, s):
+        if not isinstance(s, Scope): 
+            raise TypeError(f'{s} must be an {Scope} not {type(s)}.')
+        if self is not s.subject:
+            raise ValueError(f'The subject of {s} must be {self} not {s.subject}.')
+        self._scope = s
 
     def _init_state(self):  
         self.state = np.append(self.conc.astype('float'), self.get_total_flow('m3/d'))
