@@ -890,9 +890,9 @@ class WasteStream(SanStream):
             return
 
         for slot in _ws_specific_slots:
-            if slot != '_scope':
-                value = getattr(other, slot)
-                setattr(self, slot, value)
+            if slot == '_scope': continue
+            value = getattr(other, slot)
+            setattr(self, slot, value)
 
 
     def proxy(self, ID=None):
@@ -929,6 +929,7 @@ class WasteStream(SanStream):
         '''
         new = SanStream.proxy(self, ID=ID)
         for slot in _ws_specific_slots:
+            if slot == '_scope': continue
             value = getattr(self, slot)
             setattr(new, slot, value)
         return new
