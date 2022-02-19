@@ -280,7 +280,7 @@ class WasteStream(SanStream):
 
     Examples
     --------
-    `WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/WasteStream.html>`_
+    `WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/3_WasteStream.html>`_
 
     See Also
     --------

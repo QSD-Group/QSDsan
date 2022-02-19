@@ -35,9 +35,6 @@ class Excretion(SanUnit):
         A ratio in [0, 1] to indicate the amount of intake calories and nutrients
         (N, P, K) that is wasted.
 
-        .. note::
-            Not considered for Mg and Ca.
-
     Examples
     --------
     `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_

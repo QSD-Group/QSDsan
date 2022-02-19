@@ -227,6 +227,10 @@ Whenever new modules or functions are added, concise and thorough documents shou
 
 Most of the documentations will be automatically generated through `Sphinx's autodoc extension <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_. If your contribution involves new classes or modules, please add a new .rst file in docs/source/. and add it to the appropriate section in the ``index.rst`` file. You can refer to any of the existing files for examples.
 
+
+We recommend generating the documentation locally prior to push to GitHub/send in the pull request to make sure links, formatting, etc. are working properly. This `YouTube video <https://www.youtube.com/watch?v=oJsUvBQyHBs>`_ provides a good walk-through example/demonstration.
+
+
 Tutorials are prepared in `Jupyter Notebook <https://jupyter.org/>`_ and potential contributors are encouraged to use the `templates <https://github.com/QSD-Group/QSDsan/tree/main/docs/source/for_developers>`_ which includes proper license and contribution information.
 
 

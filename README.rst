@@ -10,10 +10,8 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
    :target: https://pypi.org/project/qsdsan/
 .. image:: https://readthedocs.org/projects/qsdsan/badge/?version=latest
    :target: https://qsdsan.readthedocs.io/en/latest/
-.. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/main?label=build-main&logo=appveyor
+.. image:: https://github.com/QSD-Group/QSDsan/actions/workflows/build.yml/badge.svg?branch=main
    :target: https://github.com/QSD-Group/QSDsan/tree/main
-.. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/beta?label=build-beta&logo=appveyor
-   :target: https://github.com/QSD-Group/QSDsan/tree/beta
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/QSD-Group/QSDsan/main?filepath=%2Fdocs%2Fsource%2Ftutorials
 .. image:: https://img.shields.io/badge/news-subscribe-F3A93C?style=flat&logo=rss
@@ -48,7 +46,7 @@ The easiest way is through ``pip``, in command-line interface (e.g., Anaconda pr
 
     pip install qsdsan
 
-If you need to update:
+If you need to upgrade:
 
 .. code::
 
@@ -132,16 +130,28 @@ Please refer to the `Contributing to QSDsan <https://qsdsan.readthedocs.io/en/la
 
 Stay Connected
 --------------
-If you would like to receive exciting news related to the QSDsan platform, you can subscribe to email updates using `this form <https://groups.webservices.illinois.edu/subscribe/154591>`_ (don't worry, you will be able to unsubscribe :)). Thank you in advance for your interest!
+If you would like to receive news related to the QSDsan platform, you can subscribe to email updates using `this form <https://groups.webservices.illinois.edu/subscribe/154591>`_ (don't worry, you will be able to unsubscribe :)). Thank you in advance for your interest!
+
+
+QSDsan Events
+-------------
+We will keep this `calendar <https://calendar.google.com/calendar/embed?src=ep1au561lj8knfumpcd2a7ml08%40group.calendar.google.com&ctz=America%2FChicago>`_ up-to-date as we organize more events (office hours, workshops, etc.), click on the events in the calendar to see the details (including meeting links).
+
+.. raw:: html
+
+    <embed>
+        <iframe src="https://calendar.google.com/calendar/embed?src=ep1au561lj8knfumpcd2a7ml08%40group.calendar.google.com&ctz=America%2FChicago" style="border: 0" width="100%" height="600" scrolling="no"></iframe>
+    </embed>
 
 
 License information
 -------------------
 Please refer to the ``LICENSE.txt`` for information on the terms & conditions for usage of this software, and a DISCLAIMER OF ALL WARRANTIES.
 
+
 References
 ----------
-.. [1] Li, Y.; Trimmer, J. T.; Hand, S.; Zhang, X.; Chambers, K. G.; Lohman, H. A. C.; Shi, R.; Byrne, D. M.; Cook, S. M.; Guest, J. S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. *Critial Review Proposal Submitted*, 2021.
+.. [1] Li, Y.; Trimmer, J. T.; Hand, S.; Zhang, X.; Chambers, K. G.; Lohman, H. A. C.; Shi, R.; Byrne, D. M.; Cook, S. M.; Guest, J. S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. Submitted to Environmental Science & Technology, 2022.
 
 .. [2] Cortés-Peña, Y.; Kumar, D.; Singh, V.; Guest, J. S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020, 8 (8), 3302–3310. https://doi.org/10.1021/acssuschemeng.9b07040.
 

@@ -136,9 +136,12 @@ class SimpleTEA(TEA):
     >>> tea = qs.SimpleTEA(system=sys, discount_rate=0.05, start_year=2021,
     ...                     lifetime=10, uptime_ratio=0.9,
     ...                     system_add_OPEX=0.03)
+    >>> # Your results maybe slightly different depending on the version of 
+    >>> # QSDsan's dependent packages (e.g., thermo)
     >>> tea.show()
     SimpleTEA: sys
-    NPV  : -258,730 USD at 5.0% discount rate
+    NPV  : -258,734 USD at 5.0% discount rate
+
 
     See Also
     --------
