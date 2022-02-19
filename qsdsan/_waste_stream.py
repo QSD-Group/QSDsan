@@ -890,7 +890,12 @@ class WasteStream(SanStream):
             return
 
         for slot in _ws_specific_slots:
-            if slot == '_scope': continue
+            # try:
+            #     value = getattr(other, slot)
+            #     setattr(self, slot, value)
+            # except:
+            #     breakpoint()
+            if slot == '_scope': continue  #!!! confused, why error?
             value = getattr(other, slot)
             setattr(self, slot, value)
 
@@ -929,7 +934,12 @@ class WasteStream(SanStream):
         '''
         new = SanStream.proxy(self, ID=ID)
         for slot in _ws_specific_slots:
-            if slot == '_scope': continue
+            # try:
+            #     value = getattr(self, slot)
+            #     setattr(new, slot, value)
+            # except:
+            #     breakpoint()
+            if slot == '_scope': continue #!!! confused, why error?
             value = getattr(self, slot)
             setattr(new, slot, value)
         return new
@@ -1163,7 +1173,7 @@ class WasteStream(SanStream):
     
     @scope.setter
     def scope(self, s):
-        if not isinstance(s, Scope): 
+        if not isinstance(s, Scope): #!!! confused, why `{Scope}`?
             raise TypeError(f'{s} must be an {Scope} not {type(s)}.')
         if self is not s.subject:
             raise ValueError(f'The subject of {s} must be {self} not {s.subject}.')
