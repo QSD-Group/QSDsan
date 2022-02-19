@@ -1168,7 +1168,12 @@ class WasteStream(SanStream):
         if not isinstance(s, Scope):
             raise TypeError(f'{s} must be a `Scope`, not {type(s)}.')
         if self is not s.subject:
-            raise ValueError(f'The subject of {s.__repr__()} must be {self}, not {s.subject}.')
+            if isinstance(s, WasteStreamScope):
+                s = WasteStreamScope(self)
+                warn(f'{self} is not {s}.subject, so {s} has been re-initialized '
+                     f'as a {WasteStreamScope} object with {self} as its subject.')
+            else:
+                raise ValueError(f'The subject of {s} must be {self} not {s.subject}.')
         self._scope = s
 
     def _init_state(self):  
