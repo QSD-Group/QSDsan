@@ -616,7 +616,7 @@ class WasteStream(SanStream):
                                    "Use the `subgroup` argument instead or "
                                    "define the specification group using "
                                    "`CompiledComponents.define_group`.")
-                # Issue a warning if the subgroup containings components outside of the default ones
+                # Issue a warning if the subgroup contains components outside of the default ones
                 if not subgroup_IDs.issubset(_default_cmp_IDs):
                     warn(f'{specification} is defined with regards to the set of default component IDs. '
                           'Consider using the `subgroup` argument instead of '
@@ -856,7 +856,9 @@ class WasteStream(SanStream):
                              copy_impact_item=copy_impact_item)
         if ws_properties:
             new._init_ws()
-            new = copy_attr(new, self, skip=SanStream.__slots__)
+            # Skip `_scope`, if users want it to be scoped,
+            # then calling the `scope` property will automatically make the property
+            new = copy_attr(new, self, skip=(*SanStream.__slots__, '_scope'))
         return new
 
     __copy__ = copy
@@ -890,12 +892,7 @@ class WasteStream(SanStream):
             return
 
         for slot in _ws_specific_slots:
-            # try:
-            #     value = getattr(other, slot)
-            #     setattr(self, slot, value)
-            # except:
-            #     breakpoint()
-            if slot == '_scope': continue  #!!! confused, why error?
+            if slot == '_scope': continue # see notes in `copy`
             value = getattr(other, slot)
             setattr(self, slot, value)
 
@@ -934,12 +931,7 @@ class WasteStream(SanStream):
         '''
         new = SanStream.proxy(self, ID=ID)
         for slot in _ws_specific_slots:
-            # try:
-            #     value = getattr(self, slot)
-            #     setattr(new, slot, value)
-            # except:
-            #     breakpoint()
-            if slot == '_scope': continue #!!! confused, why error?
+            if slot == '_scope': continue # see notes in `copy`
             value = getattr(self, slot)
             setattr(new, slot, value)
         return new
@@ -1078,14 +1070,14 @@ class WasteStream(SanStream):
             Total volumetric flow of the WasteStream.
         concentrations : dict[str, float]
             Concentrations of components.
-        units : iterable[str]
+        units : Iterable[str]
             The first indicates the unit for the input total flow, the second
             indicates the unit for the input concentrations.
         bulk_liquid_ID : str, optional
             ID of the Component that constitutes the bulk liquid, e.g., the solvent.
             The default is 'H2O'.
         atol : float, optional
-            The absoute tolerance of error in estimated WasteStream density.
+            The absolute tolerance of error in estimated WasteStream density.
             The default is 1e-5 kg/L.
         maxiter : int, optional
             The maximum number of iterations to estimate the flow of the bulk-liquid
@@ -1173,10 +1165,10 @@ class WasteStream(SanStream):
     
     @scope.setter
     def scope(self, s):
-        if not isinstance(s, Scope): #!!! confused, why `{Scope}`?
-            raise TypeError(f'{s} must be an {Scope} not {type(s)}.')
+        if not isinstance(s, Scope):
+            raise TypeError(f'{s} must be a `Scope`, not {type(s)}.')
         if self is not s.subject:
-            raise ValueError(f'The subject of {s} must be {self} not {s.subject}.')
+            raise ValueError(f'The subject of {s.__repr__()} must be {self}, not {s.subject}.')
         self._scope = s
 
     def _init_state(self):  
