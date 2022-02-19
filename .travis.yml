@@ -2,8 +2,8 @@ language: c
 os:
   - linux
 compiler:
-  - "3.7"
   - "3.8"
+  - "3.9"
 matrix:
   fast_finish: true
 notifications:
@@ -17,12 +17,12 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda create -q -n test-environment python=$CC numpy pandas scipy matplotlib pytest sympy pytz
+  - conda create -q -n test-environment python=$CC pip pytest
   - source activate test-environment
   - pip install -r requirements_test.txt
   - python setup.py -q install
   - rm -rf qsdsan
 script:
-  - py.test . -v --cov-report html --cov=qsdsan --cov-report term-missing -m "not slow"
+  - pytest
 after_success:
   - coveralls

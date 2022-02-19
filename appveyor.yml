@@ -2,8 +2,8 @@ build: false
 
 environment:
   matrix:
-    - PYTHON: 3.7
     - PYTHON: 3.8
+    - PYTHON: 3.9
 
 platform:
   - x86

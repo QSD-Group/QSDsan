@@ -4,3 +4,7 @@ thermosteam>=0.27.18
 SALib>=1.4.5
 seaborn
 sympy>=1.8
+
+# Packages for testing
+pytest-cov
+coveralls
