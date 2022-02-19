@@ -4,20 +4,31 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 .. image:: https://img.shields.io/pypi/l/qsdsan?color=blue&logo=UIUC&style=flat
    :target: https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
+
 .. image:: https://img.shields.io/pypi/pyversions/qsdsan?style=flat
    :target: https://pypi.python.org/pypi/qsdsan
+
 .. image:: https://img.shields.io/pypi/v/qsdsan?style=flat&color=blue
    :target: https://pypi.org/project/qsdsan/
+
 .. image:: https://readthedocs.org/projects/qsdsan/badge/?version=latest
    :target: https://qsdsan.readthedocs.io/en/latest/
+
 .. image:: https://github.com/QSD-Group/QSDsan/actions/workflows/build.yml/badge.svg?branch=main
    :target: https://github.com/QSD-Group/QSDsan/tree/main
+
+.. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/main?label=build&logo=appveyor
+   :target: https://github.com/QSD-Group/QSDsan/tree/main
+
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/QSD-Group/QSDsan/main?filepath=%2Fdocs%2Fsource%2Ftutorials
+
 .. image:: https://img.shields.io/badge/news-subscribe-F3A93C?style=flat&logo=rss
    :target: https://groups.webservices.illinois.edu/subscribe/154591
+
 .. image:: https://img.shields.io/endpoint?color=%23ff0000&label=YouTube%20 Videos&url=https%3A%2F%2Fyoutube-channel-badge-blond.vercel.app%2Fapi%2Fvideos
    :target: https://www.youtube.com/playlist?list=PL-tj_uM0mIdFv72MAULnWjS6lx_cCyi2N
+
 .. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
    :target: https://qsdsan.readthedocs.io/en/latest/CODE_OF_CONDUCT.html
 
