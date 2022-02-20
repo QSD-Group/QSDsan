@@ -27,6 +27,4 @@ test_script:
 
 branches:
   only:
-    - main
-    - beta
-    - dev
+    - pypi
