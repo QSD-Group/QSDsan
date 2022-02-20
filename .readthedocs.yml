@@ -21,7 +21,6 @@ sphinx:
 python:
   version: 3.8
   install:
-    - method: pip
     - requirements: requirements_doc.txt
 
 # Added
