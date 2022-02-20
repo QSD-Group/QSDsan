@@ -8,3 +8,4 @@ sympy>=1.8
 # Packages for testing
 pytest-cov
 coveralls
+nbval
