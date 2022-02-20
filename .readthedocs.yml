@@ -21,6 +21,10 @@ sphinx:
 python:
   version: 3.8
   install:
+    - method: pip
+      path: git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git
+    - method: pip
+      path: git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@dyn_sim
     - requirements: requirements_doc.txt
 
 # Added
