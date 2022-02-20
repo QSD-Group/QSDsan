@@ -14,11 +14,11 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 .. image:: https://readthedocs.org/projects/qsdsan/badge/?version=latest
    :target: https://qsdsan.readthedocs.io/en/latest/
 
-.. image:: https://github.com/QSD-Group/QSDsan/actions/workflows/build.yml/badge.svg?branch=main
+.. image:: https://github.com/QSD-Group/QSDsan/actions/workflows/build-latest.yml/badge.svg?branch=main
    :target: https://github.com/QSD-Group/QSDsan/tree/main
 
-.. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/main?label=build&logo=appveyor
-   :target: https://github.com/QSD-Group/QSDsan/tree/main
+.. image:: https://github.com/QSD-Group/QSDsan/actions/workflows/build-stable.yml/badge.svg?branch=stable
+   :target: https://github.com/QSD-Group/QSDsan/tree/stable
 
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/QSD-Group/QSDsan/main?filepath=%2Fdocs%2Fsource%2Ftutorials
@@ -31,6 +31,11 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 .. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
    :target: https://qsdsan.readthedocs.io/en/latest/CODE_OF_CONDUCT.html
+
+.. AppVeyor, not in active use:
+..
+   .. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/main?label=build-stable&logo=appveyor
+   :target: https://github.com/QSD-Group/QSDsan/tree/stable
 
 |
 
