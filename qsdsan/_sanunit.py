@@ -22,7 +22,6 @@ for license details.
 import numpy as np
 from collections import defaultdict
 from collections.abc import Iterable
-from matplotlib import pyplot as plt
 from warnings import warn
 from biosteam.utils import MissingStream, Inlets, Outlets
 from . import currency, Unit, Stream, SanStream, WasteStream, System, \
@@ -300,6 +299,22 @@ class SanUnit(Unit, isabstract=True):
                                      T, P, flow, composition, N, IDs)
         info = info.replace('\n ', '\n    ')
         return info[:-1]
+
+    def set_dynamic_tracker(self, *subjects, **kwargs):
+        """
+        Set up an :class:`SystemScope` object to track the dynamic data.
+
+        Parameters
+        ----------
+        *subjects :
+            Any subjects of the system to track, which must have an `.scope`
+            attribute of type :class:`Scope`.
+        """
+        sys = self._mock_dyn_sys
+        if self.isdynamic:
+            sys._scope = {'subjects':subjects, 'kwargs':kwargs}
+        else:
+            warn(f'{self.ID} is not a dynamic unit, cannot set tracker.')
 
     def simulate(self, t_span=(0, 0), state_reset_hook=True,
                  solver='', **kwargs):
