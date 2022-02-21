@@ -121,7 +121,7 @@ class DynamicInfluent(SanUnit):
             y_end = df_y.iloc[0,:].to_dict()
             y_end['t'] = 2*df.t.iloc[-1] - df.t.iloc[-2]
             df.append(y_end)
-        self._t_end = df.t[-1]
+        self._t_end = df.t.iloc[-1]
         intpl = self._intpl
         ikwargs = self._intpl_kwargs
         y_IDs = self.components.IDs + ('Q',)
@@ -133,7 +133,7 @@ class DynamicInfluent(SanUnit):
                              if y in df.columns else lambda t: 0 \
                              for y in y_IDs]
         if self._func_dydt is None:
-            self._derivative = [i.derivative if hasattr(i, 'derivative') else lambda t: 0 \
+            self._derivative = [i.derivative() if hasattr(i, 'derivative') else lambda t: 0 \
                                 for i in self._interpolant]
         else: self._derivative = None
 
@@ -164,7 +164,7 @@ class DynamicInfluent(SanUnit):
         Q = y0.pop('Q')
         y0.pop('t', None)
         y0.pop('H2O', None)
-        out.set_flow_by_concentration(Q=Q, concentrations=y0, units=('m3/d', 'mg/L'))
+        out.set_flow_by_concentration(flow_tot=Q, concentrations=y0, units=('m3/d', 'mg/L'))
 
     @property
     def AE(self):

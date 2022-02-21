@@ -41,6 +41,9 @@ class WasteStreamScope(Scope):
         header = list(zip([wastestream.ID]*len(names), names))
         super().__init__(wastestream, ('state',), header=header)
     
+    def __repr__(self):
+        return f'<WasteStreamScope: {self.subject.ID}>'
+    
     def plot_time_series(self, state_var=()):
         """Plot the time series data of specified state variables."""
         state_var = [state_var] if isinstance(state_var, str) else state_var
@@ -75,6 +78,9 @@ class SanUnitScope(Scope):
         names = unit._state_header
         header = list(zip([unit.ID]*len(names), names))
         super().__init__(unit, ('_state',), header=header)
+
+    def __repr__(self):
+        return f'<SanUnitScope: {self.subject.ID}>'
     
     def plot_time_series(self, state_var=()):
         state_var = [state_var] if isinstance(state_var, str) else state_var
