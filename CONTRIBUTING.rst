@@ -90,7 +90,7 @@ Via command-line interface
 
 	.. code:: bash
 
-	    pip install –r requirements_dev.txt
+	    pip install –r requirements.txt
 
 
 #. Add the root ``QSDsan`` as the upstream:
@@ -124,7 +124,7 @@ Via command-line interface
 
 	.. code:: bash
 
-	    git checkout -b REPLACE-ME-WITH-FEATURE-NAME
+	    git checkout -b <REPLACE-ME-WITH-FEATURE-NAME>
 
 
 Via GitHub Desktop
