@@ -76,7 +76,7 @@ class Mixer(SanUnit, Mixer):
             self._compile_AE()
         return self._AE
 
-    def _compile_ODE(self):
+    def _compile_AE(self):
         _n_ins = len(self.ins)
         _state = self._state
         _dstate = self._dstate
