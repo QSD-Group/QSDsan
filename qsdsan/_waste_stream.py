@@ -1134,7 +1134,6 @@ class WasteStream(SanStream):
         if self.isproduct(): 
             try: self._state[:] = y
             except TypeError: self._state = y
-            # decide whether to record state over time
         else: 
             i = self._sink._ins.index(self)
             self._sink._ins_QC[i,:] = y
@@ -1177,7 +1176,7 @@ class WasteStream(SanStream):
         self._scope = s
 
     def _init_state(self):  
-        self.state = np.append(self.conc.astype('float'), self.get_total_flow('m3/d'))
+        self.state = np.append(self.conc.astype('float64'), self.get_total_flow('m3/d'))
         self.dstate = np.zeros_like(self.state)
 
     def _state2flows(self):
