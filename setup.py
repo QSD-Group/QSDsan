@@ -23,8 +23,11 @@ setup(
     author_email='quantitative.sustainable.design@gmail.com',
     description='Quantitative Sustainable Design for sanitation and resource recovery systems',
     long_description=open('README.rst', encoding='utf-8').read(),
-    url="https://github.com/QSD-Group/QSDsan",
-    install_requires=['biosteam>=2.31.21', 'thermosteam>=0.27.18',
+    url='https://github.com/QSD-Group/QSDsan',
+    project_urls={
+        'Documentation': 'https://qsdsan.readthedocs.io/',
+    },
+    install_requires=['biosteam>=2.31.23', 'thermosteam>=0.27.18',
                       'pandas>=1.3.2', 'matplotlib>=3.3.2', 'scikit-learn', 'scipy>=1.7.1',
                       'SALib>=1.4.5', 'seaborn', 'sympy>=1.8'],
     package_data=
@@ -56,8 +59,8 @@ setup(
                  'Operating System :: POSIX :: BSD',
                  'Operating System :: POSIX :: Linux',
                  'Operating System :: Unix',
-                 'Programming Language :: Python :: 3.7',
                  'Programming Language :: Python :: 3.8',
+                 'Programming Language :: Python :: 3.9',
                  ],
     keywords=['quantitative sustainable design', 'sanitation', 'resource recovery', 'techno-economic analysis', 'life cycle assessment'],
 )

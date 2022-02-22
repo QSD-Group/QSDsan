@@ -59,39 +59,35 @@ class Pump(SanUnit, Pump):
         else:
             return dict(zip(list(self.components.IDs) + ['Q'], self._state))
 
-    @state.setter
-    def state(self, QCs):
-        QCs = np.asarray(QCs)
-        if QCs.shape != (len(self.components)+1, ):
-            raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
-                              'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
-        self._state = QCs
-
     def _init_state(self):
-        self._refresh_ins()
         self._state = self._ins_QC[0]
         self._dstate = self._state * 0.
 
-    def _update_state(self, arr):
+    def _update_state(self):
         '''updates conditions of output stream based on conditions of the Mixer'''
-        self._state = self._outs[0]._state = arr
+        self._outs[0].state = self._state
 
     def _update_dstate(self):
         '''updates rates of change of output stream from rates of change of the Mixer'''
-        self._outs[0]._dstate = self._dstate
-
+        self._outs[0].dstate = self._dstate
 
     @property
-    def ODE(self):
-        if self._ODE is None:
-            self._compile_ODE()
-        return self._ODE
+    def AE(self):
+        if self._AE is None:
+            self._compile_AE()
+        return self._AE
 
-    def _compile_ODE(self):
-        def dy_dt(t, QC_ins, QC, dQC_ins):
-            self._dstate = dQC_ins[0]
-            self._update_dstate()
-        self._ODE = dy_dt
+    def _compile_AE(self):
+        _state = self._state
+        _dstate = self._dstate
+        _update_state = self._update_state
+        _update_dstate = self._update_dstate
+        def yt(t, QC_ins, dQC_ins):
+            _state[:] = QC_ins[0]
+            _dstate[:] = dQC_ins[0]
+            _update_state()
+            _update_dstate()
+        self._AE = yt
 
 
 # %%
@@ -106,13 +102,12 @@ class HydraulicDelay(Pump):
     `Benchmark Simulation Model No.1 implemented in MATLAB & Simulink <https://www.cs.mcgill.ca/~hv/articles/WWTP/sim_manual.pdf>`
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, t_delay=1e-4, *,
-                 init_with='WasteStream', F_BM_default=None, isdynamic=False):
+                 init_with='WasteStream', F_BM_default=None, isdynamic=True):
         SanUnit.__init__(self, ID, ins, outs, thermo,
                          init_with=init_with, F_BM_default=F_BM_default,
                          isdynamic=isdynamic)
         self.t_delay = t_delay
         self._concs = None
-        # self._q = None
 
     def set_init_conc(self, **kwargs):
         '''set the initial concentrations [mg/L].'''
@@ -125,7 +120,6 @@ class HydraulicDelay(Pump):
         '''initialize state by specifying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
-        self._refresh_ins()
         self._state = self._ins_QC[0]
         self._dstate = self._state * 0
         if self._concs is not None:
@@ -136,21 +130,28 @@ class HydraulicDelay(Pump):
         s_out, = self.outs
         s_out.copy_like(s_in)
 
+    @property
+    def ODE(self):
+        if self._ODE is None:
+            self._compile_ODE()
+        return self._ODE
+
     def _compile_ODE(self):
         T = self.t_delay
+        _dstate = self._dstate
+        _update_dstate = self._update_dstate
         def dy_dt(t, QC_ins, QC, dQC_ins):
-            dQC = self._dstate
             Q_in = QC_ins[0,-1]
             Q = QC[-1]
             C_in = QC_ins[0,:-1]
             C = QC[:-1]
             if dQC_ins[0,-1] == 0:
-                dQC[-1] = 0
-                dQC[:-1] = (Q_in*C_in - Q*C)/(Q*T)
+                _dstate[-1] = 0
+                _dstate[:-1] = (Q_in*C_in - Q*C)/(Q*T)
             else:
-                dQC[-1] = (Q_in - Q)/T
-                dQC[:-1] = Q_in/Q*(C_in - C)/T
-            self._update_dstate()
+                _dstate[-1] = (Q_in - Q)/T
+                _dstate[:-1] = Q_in/Q*(C_in - C)/T
+            _update_dstate()
         self._ODE = dy_dt
 
     def _design(self):

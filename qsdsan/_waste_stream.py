@@ -31,7 +31,8 @@ from free_properties import PropertyFactory, property_array
 from thermosteam import settings, indexer
 from biosteam.utils import MissingStream
 from . import SanStream, MissingSanStream
-from .utils import auom, copy_attr
+from .utils import auom, copy_attr, WasteStreamScope
+from biosteam.utils import Scope
 from warnings import warn
 
 __all__ = ('WasteStream', 'MissingWasteStream', 'get_mock_conc')
@@ -47,7 +48,7 @@ _common_composite_vars = ('_COD', '_BOD', '_uBOD', '_TC', '_TOC', '_TN',
 _ws_specific_slots = (*_common_composite_vars,
                       '_pH', '_SAlk', '_ratios',
                       # '_stream_impact_item', (pls keep this here, might be useful in debugging)
-                      '_state', '_dstate')
+                      '_state', '_dstate', '_scope')
 
 # Used in the `composite` method
 _default_cmp_IDs = {
@@ -279,7 +280,7 @@ class WasteStream(SanStream):
 
     Examples
     --------
-    `WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/WasteStream.html>`_
+    `WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/3_WasteStream.html>`_
 
     See Also
     --------
@@ -539,8 +540,7 @@ class WasteStream(SanStream):
 
             The composite variable will be calculated for the
             intersection of all designated constrains
-            (i.e., `subgroup`, `particle_size`, `degradability`, `organic`,
-             `volatile`, and `specification`).
+            (i.e., `subgroup`, `particle_size`, `degradability`, `organic`, `volatile`, and `specification`).
         unit : str
             The unit that the result will be returned in.
             If not provided, result will be in mg/L except for charge (mmol/L).
@@ -616,7 +616,7 @@ class WasteStream(SanStream):
                                    "Use the `subgroup` argument instead or "
                                    "define the specification group using "
                                    "`CompiledComponents.define_group`.")
-                # Issue a warning if the subgroup containings components outside of the default ones
+                # Issue a warning if the subgroup contains components outside of the default ones
                 if not subgroup_IDs.issubset(_default_cmp_IDs):
                     warn(f'{specification} is defined with regards to the set of default component IDs. '
                           'Consider using the `subgroup` argument instead of '
@@ -856,7 +856,9 @@ class WasteStream(SanStream):
                              copy_impact_item=copy_impact_item)
         if ws_properties:
             new._init_ws()
-            new = copy_attr(new, self, skip=SanStream.__slots__)
+            # Skip `_scope`, if users want it to be scoped,
+            # then calling the `scope` property will automatically make the property
+            new = copy_attr(new, self, skip=(*SanStream.__slots__, '_scope'))
         return new
 
     __copy__ = copy
@@ -890,6 +892,7 @@ class WasteStream(SanStream):
             return
 
         for slot in _ws_specific_slots:
+            if slot == '_scope': continue # see notes in `copy`
             value = getattr(other, slot)
             setattr(self, slot, value)
 
@@ -928,6 +931,7 @@ class WasteStream(SanStream):
         '''
         new = SanStream.proxy(self, ID=ID)
         for slot in _ws_specific_slots:
+            if slot == '_scope': continue # see notes in `copy`
             value = getattr(self, slot)
             setattr(new, slot, value)
         return new
@@ -1066,14 +1070,14 @@ class WasteStream(SanStream):
             Total volumetric flow of the WasteStream.
         concentrations : dict[str, float]
             Concentrations of components.
-        units : iterable[str]
+        units : Iterable[str]
             The first indicates the unit for the input total flow, the second
             indicates the unit for the input concentrations.
         bulk_liquid_ID : str, optional
             ID of the Component that constitutes the bulk liquid, e.g., the solvent.
             The default is 'H2O'.
         atol : float, optional
-            The absoute tolerance of error in estimated WasteStream density.
+            The absolute tolerance of error in estimated WasteStream density.
             The default is 1e-5 kg/L.
         maxiter : int, optional
             The maximum number of iterations to estimate the flow of the bulk-liquid
@@ -1118,13 +1122,66 @@ class WasteStream(SanStream):
         self.set_flow(M_bulk, 'kg/hr', bulk_liquid_ID)
         return self.F_vol*1e3 - target_Q
 
-    def _init_state(self):
-        self._state = np.append(self.conc.astype('float'), self.get_total_flow('m3/d'))
-        self._dstate = self._state * 0.
+    @property
+    def state(self):
+        if self.isproduct(): return self._state
+        else: 
+            i = self._sink._ins.index(self)
+            return self._sink._ins_QC[i]
+    
+    @state.setter
+    def state(self, y):
+        if self.isproduct(): 
+            try: self._state[:] = y
+            except TypeError: self._state = y
+        else: 
+            i = self._sink._ins.index(self)
+            self._sink._ins_QC[i,:] = y
+    
+    @property
+    def dstate(self):
+        if self.isproduct(): return self._dstate
+        else:
+            i = self._sink._ins.index(self)
+            return self._sink._ins_dQC[i]
+    
+    @dstate.setter
+    def dstate(self, dy):
+        if self.isproduct(): 
+            try: self._dstate[:] = dy
+            except TypeError: self._dstate = dy
+            # decide whether to record state over time
+        else: 
+            i = self._sink._ins.index(self)
+            self._sink._ins_dQC[i,:] = dy        
+
+    @property
+    def scope(self):
+        """A tracker of the wastestream's time-series data during dynamic simulation."""
+        if not hasattr(self, '_scope'):
+            self._scope = WasteStreamScope(self)
+        return self._scope
+    
+    @scope.setter
+    def scope(self, s):
+        if not isinstance(s, Scope):
+            raise TypeError(f'{s} must be a `Scope`, not {type(s)}.')
+        if self is not s.subject:
+            if isinstance(s, WasteStreamScope):
+                s = WasteStreamScope(self)
+                warn(f'{self} is not {s}.subject, so {s} has been re-initialized '
+                     f'as a {WasteStreamScope} object with {self} as its subject.')
+            else:
+                raise ValueError(f'The subject of {s} must be {self} not {s.subject}.')
+        self._scope = s
+
+    def _init_state(self):  
+        self.state = np.append(self.conc.astype('float64'), self.get_total_flow('m3/d'))
+        self.dstate = np.zeros_like(self.state)
 
     def _state2flows(self):
-        Q = self._state[-1]
-        Cs = dict(zip(self.components.IDs, self._state[:-1]))
+        Q = self.state[-1]
+        Cs = dict(zip(self.components.IDs, self.state[:-1]))
         Cs.pop('H2O', None)
         self.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
 

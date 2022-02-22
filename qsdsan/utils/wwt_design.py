@@ -15,7 +15,7 @@ __all__ = ('get_SRT',)
 
 def get_SRT(system, biomass_IDs, active_unit_IDs=None):
     """
-    Estimate sludge residence time (SRT) of an activated sludge system.
+    Estimate sludge residence time (SRT) of an activated sludge system. 
 
     Parameters
     ----------
@@ -30,6 +30,12 @@ def get_SRT(system, biomass_IDs, active_unit_IDs=None):
     Returns
     -------
     [float] Estimated sludge residence time in days.
+    
+    Note
+    ----
+    This function uses component flowrates of the system's product `WasteStream`
+    for calculation, which does not carry time-dependent information. So, it 
+    should not be used for a system with dynamic influents.
 
     """
     waste = sum([ws.composite('solids', subgroup=biomass_IDs)*ws.F_vol*24 for ws in system.products])

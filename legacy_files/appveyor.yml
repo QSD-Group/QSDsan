@@ -2,8 +2,8 @@ build: false
 
 environment:
   matrix:
-    - PYTHON: 3.7
     - PYTHON: 3.8
+    - PYTHON: 3.9
 
 platform:
   - x86
@@ -17,10 +17,14 @@ init:
 
 install:
   - cmd: activate condaenv
-  - cmd: conda install -yq pip numpy pandas scipy matplotlib pytest sympy pytz
+  - cmd: conda install -yq pip pytest
   - cmd: pip install -r requirements_test.txt
   - cmd: python setup.py install
   - cmd: rmdir /Q /S qsdsan
 
 test_script:
-  - cmd: pytest --cov-report html --cov=qsdsan -m "not slow and not online"
+  - cmd: pytest
+
+branches:
+  only:
+    - pypi

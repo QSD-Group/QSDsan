@@ -268,43 +268,47 @@ class FlatBottomCircularClarifier(SanUnit):
         n = self._N_layer
         x = self.components.x
         imass = self.components.i_mass
-        self._refresh_ins()
         QCs = self._ins_QC[0]
         Q = QCs[-1]
         Z = self._solubles if self._solubles is not None \
             else QCs[:-1]*(1-x)
         TSS_in = sum(QCs[:-1] * x * imass)
         TSS = self._solids if self._solids is not None \
-            else np.array([TSS_in*f for f in 20**np.linspace(-1,1,n)])
+            else TSS_in*(20**np.linspace(-1,1,n))
         ZQs = np.append(Z, Q)
         self._state = np.append(ZQs, TSS)
         self._dstate = self._state * 0.
         if TSS_in != 0: self._X_comp = QCs[:-1] * x / TSS_in
 
-
-    def _update_state(self, arr):
-        self._state = arr
+    def _update_state(self):
+        arr = self._state
         x = self.components.x
         n = self._N_layer
-        Q = arr[-(1+n)]
-        Q_e = Q - self._Qras - self._Qwas
+        Q_e = arr[-(1+n)] - self._Qras - self._Qwas
         Z = arr[:len(x)]
         inf, = self.ins
         imass = self.components.i_mass
-        C_in = inf._state[:-1]
+        C_in = inf.state[:-1]
         X_composition = self._X_comp = C_in*x/sum(C_in*imass*x)
         X_e = arr[-n] * X_composition
         C_s = Z + arr[-1] * X_composition
         eff, ras, was = self._outs
-        if eff._state is None: eff._state = np.append(Z+X_e, Q_e)
+        if eff.isproduct() and eff.state is None: 
+            eff.state = np.append(Z+X_e, Q_e)
         else:
-            eff._state[:-1] = Z+X_e
-            eff._state[-1] = Q_e
+            eff.state[:-1] = Z+X_e   # not sure if this works for a setter
+            eff.state[-1] = Q_e
         #!!! might need to enable dynamic sludge volume flows
-        if ras._state is None: ras._state = np.append(C_s, self._Qras)
-        else: ras._state[:-1] = C_s
-        if was._state is None: was._state = np.append(C_s, self._Qwas)
-        else: was._state[:-1] = C_s
+        if ras.isproduct() and ras.state is None: 
+            ras.state = np.append(C_s, self._Qras)
+        else: 
+            ras.state[:-1] = C_s
+            ras.state[-1] = self._Qras
+        if was.isproduct() and was.state is None: 
+            was.state = np.append(C_s, self._Qwas)
+        else: 
+            was.state[:-1] = C_s
+            was.state[-1] = self._Qwas
 
     def _update_dstate(self):
         arr = self._dstate
@@ -318,15 +322,20 @@ class FlatBottomCircularClarifier(SanUnit):
         dC_e = dZ + arr[-n] * X_composition + dX_composition * TSS_e
         dC_s = dZ + arr[-1] * X_composition + dX_composition * TSS_s
         eff, ras, was = self._outs
-        if eff._dstate is None: eff._dstate = np.append(dC_e, dQ)
+        if eff.isproduct() and eff.dstate is None: 
+            eff.dstate = np.append(dC_e, dQ)
         else:
-            eff._dstate[:-1] = dC_e
-            eff._dstate[-1] = dQ
+            eff.dstate[:-1] = dC_e # not sure if this works for a setter
+            eff.dstate[-1] = dQ
         #!!! might need to enable dynamic sludge volume flows
-        if ras._dstate is None: ras._dstate = np.append(dC_s, 0.)
-        else: ras._dstate[:-1] = dC_s
-        if was._dstate is None: was._dstate = np.append(dC_s, 0.)
-        else: was._dstate[:-1] = dC_s
+        if ras.isproduct() and ras.dstate is None: 
+            ras.dstate = np.append(dC_s, 0.)
+        else: 
+            ras.dstate[:-1] = dC_s
+        if was.isproduct() and was.dstate is None: 
+            was.dstate = np.append(dC_s, 0.)
+        else: 
+            was.dstate[:-1] = dC_s
 
     def _run(self):
         '''only to converge volumetric flows.'''

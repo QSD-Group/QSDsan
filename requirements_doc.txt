@@ -1,10 +1,9 @@
 # Needed by qsdsan
-biosteam>=2.31.21
+git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git
+git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@dyn_sim
+biosteam>=2.31.23
 thermosteam>=0.27.18
-scikit-learn
-scipy
 SALib
-matplotlib
 seaborn
 sympy
 

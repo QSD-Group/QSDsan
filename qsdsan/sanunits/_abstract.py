@@ -54,7 +54,6 @@ class Mixer(SanUnit, Mixer):
         '''initialize state by specifying or calculating component concentrations
         based on influents. Total flow rate is always initialized as the sum of
         influent wastestream flows.'''
-        self._refresh_ins()
         QCs = self._ins_QC
         if QCs.shape[0] <= 1: self._state = QCs[0]
         else:
@@ -63,23 +62,27 @@ class Mixer(SanUnit, Mixer):
             self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
         self._dstate = self._state * 0.
 
-    def _update_state(self, arr):
+    def _update_state(self):
         '''updates conditions of output stream based on conditions of the Mixer'''
-        self._state = self._outs[0]._state = arr
+        self._outs[0].state = self._state
 
     def _update_dstate(self):
         '''updates rates of change of output stream from rates of change of the Mixer'''
-        self._outs[0]._dstate = self._dstate
+        self._outs[0].dstate = self._dstate
 
     @property
-    def ODE(self):
-        if self._ODE is None:
-            self._compile_ODE()
-        return self._ODE
+    def AE(self):
+        if self._AE is None:
+            self._compile_AE()
+        return self._AE
 
-    def _compile_ODE(self):
+    def _compile_AE(self):
         _n_ins = len(self.ins)
-        def dy_dt(t, QC_ins, QC, dQC_ins):
+        _state = self._state
+        _dstate = self._dstate
+        _update_state = self._update_state
+        _update_dstate = self._update_dstate
+        def yt(t, QC_ins, dQC_ins):
             if _n_ins > 1:
                 Q_ins = QC_ins[:, -1]
                 C_ins = QC_ins[:, :-1]
@@ -87,14 +90,18 @@ class Mixer(SanUnit, Mixer):
                 dC_ins = dQC_ins[:, :-1]
                 Q = Q_ins.sum()
                 C = Q_ins @ C_ins / Q
+                _state[-1] = Q
+                _state[:-1] = C
                 Q_dot = dQ_ins.sum()
                 C_dot = (dQ_ins @ C_ins + Q_ins @ dC_ins - Q_dot * C)/Q
-                self._dstate[-1] = Q_dot
-                self._dstate[:-1] = C_dot
+                _dstate[-1] = Q_dot
+                _dstate[:-1] = C_dot
             else:
-                self._dstate = dQC_ins[0]
-            self._update_dstate()
-        self._ODE = dy_dt
+                _state[:] = QC_ins[0]
+                _dstate[:] = dQC_ins[0]
+            _update_state()
+            _update_dstate()
+        self._AE = yt
 
 
 
@@ -126,17 +133,7 @@ class Splitter(SanUnit, Splitter):
         else:
             return dict(zip(list(self.components.IDs) + ['Q'], self._state))
 
-    @state.setter
-    def state(self, QCs):
-        QCs = np.asarray(QCs)
-        if QCs.shape != (len(self.components)+1, ):
-            raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
-                              'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
-        self._state = QCs
-
-
     def _init_state(self):
-        self._refresh_ins()
         self._state = self._ins_QC[0]
         self._dstate = self._state * 0.
         s = self.split
@@ -144,29 +141,35 @@ class Splitter(SanUnit, Splitter):
         self._split_out0_state = np.append(s/s_flow, s_flow)
         self._split_out1_state = np.append((1-s)/(1-s_flow), 1-s_flow)
 
-    def _update_state(self, arr):
+    def _update_state(self):
         '''updates conditions of output stream based on conditions of the Splitter'''
-        self._state = arr
-        self._outs[0]._state = self._split_out0_state * arr
-        self._outs[1]._state = self._split_out1_state * arr
+        arr = self._state
+        self._outs[0].state = self._split_out0_state * arr
+        self._outs[1].state = self._split_out1_state * arr
 
     def _update_dstate(self):
         '''updates rates of change of output stream from rates of change of the Splitter'''
         arr = self._dstate
-        self._outs[0]._dstate = self._split_out0_state * arr
-        self._outs[1]._dstate = self._split_out1_state * arr
+        self._outs[0].dstate = self._split_out0_state * arr
+        self._outs[1].dstate = self._split_out1_state * arr
 
     @property
-    def ODE(self):
-        if self._ODE is None:
-            self._compile_ODE()
-        return self._ODE
+    def AE(self):
+        if self._AE is None:
+            self._compile_AE()
+        return self._AE
 
-    def _compile_ODE(self):
-        def dy_dt(t, QC_ins, QC, dQC_ins):
-            self._dstate = dQC_ins[0]
-            self._update_dstate()
-        self._ODE = dy_dt
+    def _compile_AE(self):
+        _state = self._state
+        _dstate = self._dstate
+        _update_state = self._update_state
+        _update_dstate = self._update_dstate
+        def yt(t, QC_ins, dQC_ins):
+            _state[:] = QC_ins[0]
+            _dstate[:] = dQC_ins[0]
+            _update_state()
+            _update_dstate()
+        self._AE = yt
 
 
 class FakeSplitter(SanUnit, FakeSplitter):
@@ -300,41 +303,35 @@ class Sampler(SanUnit):
 
     @property
     def state(self):
-        '''The state of the Pump, including component concentrations [mg/L] and flow rate [m^3/d].'''
+        '''The sampled state, including component concentrations [mg/L] and flow rate [m^3/d].'''
         if self._state is None: return None
         else:
             return dict(zip(list(self.components.IDs) + ['Q'], self._state))
 
-    @state.setter
-    def state(self, QCs):
-        QCs = np.asarray(QCs)
-        if QCs.shape != (len(self.components)+1, ):
-            raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
-                              'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
-        self._state = QCs
-
     def _init_state(self):
-        self._refresh_ins()
         self._state = self._ins_QC[0]
         self._dstate = self._state * 0.
 
-    def _update_state(self, arr):
-        '''updates conditions of output stream based on conditions of the Mixer'''
-        self._state = self._outs[0]._state = arr
+    def _update_state(self):
+        self._outs[0].state = self._state
 
     def _update_dstate(self):
-        '''updates rates of change of output stream from rates of change of the Mixer'''
-        self._outs[0]._dstate = self._dstate
-
+        self._outs[0].dstate = self._dstate
 
     @property
-    def ODE(self):
-        if self._ODE is None:
-            self._compile_ODE()
-        return self._ODE
+    def AE(self):
+        if self._AE is None:
+            self._compile_AE()
+        return self._AE
 
-    def _compile_ODE(self):
-        def dy_dt(t, QC_ins, QC, dQC_ins):
-            self._dstate = dQC_ins[0]
-            self._update_dstate()
-        self._ODE = dy_dt
+    def _compile_AE(self):
+        _state = self._state
+        _dstate = self._dstate
+        _update_state = self._update_state
+        _update_dstate = self._update_dstate
+        def yt(t, QC_ins, dQC_ins):
+            _state[:] = QC_ins[0]
+            _dstate[:] = dQC_ins[0]
+            _update_state()
+            _update_dstate()
+        self._AE = yt

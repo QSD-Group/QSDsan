@@ -37,6 +37,7 @@ from . import (
     parsing,
     utilities,
     wwt_design,
+    scope,
     )
 
 from biosteam.utils import NotImplementedMethod
@@ -52,7 +53,7 @@ from .model_eval import *
 from .parsing import *
 from .utilities import *
 from .wwt_design import *
-
+from .scope import *
 
 __all__ = (
     'ureg', 'auom', 'ruom',
@@ -68,6 +69,7 @@ __all__ = (
     *parsing.__all__,
     *utilities.__all__,
     *wwt_design.__all__,
+    *scope.__all__,
     )
 
 

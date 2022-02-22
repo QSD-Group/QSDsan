@@ -22,11 +22,12 @@ for license details.
 import numpy as np
 from collections import defaultdict
 from collections.abc import Iterable
-from matplotlib import pyplot as plt
 from warnings import warn
 from biosteam.utils import MissingStream, Inlets, Outlets
 from . import currency, Unit, Stream, SanStream, WasteStream, System, \
     Construction, Transportation, Equipment
+from .utils import SanUnitScope
+from biosteam.utils import Scope
 
 __all__ = ('SanUnit',)
 
@@ -220,11 +221,14 @@ class SanUnit(Unit, isabstract=True):
     def _init_dynamic(self):
         self._state = None
         self._dstate = None
-        self._ins_QC = np.empty((len(self._ins), len(self.components)+1))
+        self._ins_QC = np.zeros((len(self._ins), len(self.components)+1))
         self._ins_dQC = self._ins_QC.copy()
         self._ODE = None
+        self._AE = None
         if not hasattr(self, '_mock_dyn_sys'):
             self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
+        if not hasattr(self, '_state_header'):
+            self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components] + ['Q [m3/d]']
         # Shouldn't need to re-create the mock system everytime
         # if hasattr(self, '_mock_dyn_sys'):
         #     sys = self._mock_dyn_sys
@@ -296,6 +300,22 @@ class SanUnit(Unit, isabstract=True):
         info = info.replace('\n ', '\n    ')
         return info[:-1]
 
+    def set_dynamic_tracker(self, *subjects, **kwargs):
+        """
+        Set up an :class:`SystemScope` object to track the dynamic data.
+
+        Parameters
+        ----------
+        *subjects :
+            Any subjects of the system to track, which must have an `.scope`
+            attribute of type :class:`Scope`.
+        """
+        sys = self._mock_dyn_sys
+        if self.isdynamic:
+            sys._scope = {'subjects':subjects, 'kwargs':kwargs}
+        else:
+            warn(f'{self.ID} is not a dynamic unit, cannot set tracker.')
+
     def simulate(self, t_span=(0, 0), state_reset_hook=True,
                  solver='', **kwargs):
         '''
@@ -332,47 +352,6 @@ class SanUnit(Unit, isabstract=True):
                          state_reset_hook=state_reset_hook,
                          **kwargs)
             self._summary()
-
-    def plot_state_over_time(self, system=None, state_var=()):
-        '''
-        Plot the selected state variable over simulated time,
-        all state variables will be plotted if not given.
-
-        Parameters
-        ----------
-        system : obj
-            The ``System`` object where this unit is simulated,
-            leave as None if this unit is simulated alone.
-        state_var : str of Iterable
-            Name of the state variables, if unsure, check the `_state_header` attribute.
-        '''
-        if not self.isdynamic:
-            raise RuntimeError(f'Unit {self.ID} is not a dynamic unit, '
-                               'cannot plot state over time.')
-        state_var = [state_var] if isinstance(state_var, str) else state_var
-        sys = system or self._mock_dyn_sys
-        try:
-            df = sys._state2df()
-        except:
-            system_or_unit = 'system' if sys==system else 'unit'
-            ID = sys.ID.rstrip('_dynmock')
-            raise RuntimeError(f'The {system_or_unit} {ID} has not been simulated, '
-                               'please simulate first.')
-        t = df.iloc[:, 0]
-        unit_df = df.xs(self.ID, axis=1)
-        variables = [i.split(' ')[0] for i in self._state_header]
-        units = [i.split(' ')[1] for i in self._state_header]
-        unit_df.columns = variables
-        if state_var:
-            unit_df = unit_df.loc[:, state_var]
-        fig, ax = plt.subplots(figsize=(8, 4.5))
-        for var in unit_df.columns:
-            ax.plot(t, getattr(unit_df, var), '-o',
-                    label=f'{var} {units[variables.index(var)]}')
-        ax.legend(loc='best')
-        ylabel = 'Concentration' if 'Q' not in state_var else 'Concentration or flow'
-        ax.set(xlabel='Time [d]', ylabel=ylabel)
-        return fig, ax
 
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, IDs=None, stream_info=True):
         '''Print information of the unit, including waste stream-specific information.'''
@@ -438,34 +417,48 @@ class SanUnit(Unit, isabstract=True):
         return self._isdynamic
     @isdynamic.setter
     def isdynamic(self, i):
-        if hasattr(self, '_isdynamic'):
+        hasfield = hasattr
+        if hasfield(self, '_isdynamic'):
             if self._isdynamic == bool(i):
                 return
         else: self._isdynamic = bool(i)
-        if hasattr(self, '_compile_ODE'):
+        if self.hasode:
             self._init_dynamic()
             if hasattr(self, '_mock_dyn_sys'):
                 ID = self.ID+'_dynmock'
                 System.registry.discard(ID)
             self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
-            if not hasattr(self, '_state_header'):
-                self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components] + ['Q [m3/d]']
 
-    def reset_cache(self):
+    @property
+    def scope(self):
+        """A tracker of the unit's time-series data during dynamic simulation."""
+        if not hasattr(self, '_scope'):
+            self._scope = SanUnitScope(self)
+        return self._scope
+    
+    @scope.setter
+    def scope(self, s):
+        if not isinstance(s, Scope): 
+            raise TypeError(f'{s} must be an {Scope} not {type(s)}.')
+        if self is not s.subject:
+            raise ValueError(f'The subject of {s} must be {self} not {s.subject}.')
+        self._scope = s
+
+    @property
+    def hasode(self):
+        """Whether this unit's dynamic states are determined by ordinary differential equations."""
+        return hasattr(self, '_compile_ODE')
+
+    def reset_cache(self, dynamic_system=False):
         '''Reset cached states for dynamic units.'''
         super().reset_cache()
-        if hasattr(self, '_compile_ODE'):
+        if self.hasode or dynamic_system:
             self._init_dynamic()
             for s in self.outs:
                 s.empty()
 
     def get_retained_mass(self, biomass_IDs):
         warn(f'The retained biomass in {self.ID} is ignored.')
-
-    def _refresh_ins(self):
-        for i, ws in enumerate(self._ins):
-            self._ins_QC[i,:] = ws._state
-            self._ins_dQC[i,:] = ws._dstate
 
     @property
     def construction(self):

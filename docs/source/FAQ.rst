@@ -132,7 +132,7 @@ However, GitHub does not allow you to directly create a private fork (or more ac
     .. code::
 
         git remote add upstream https://github.com/QSD-Group/QSDsan.git
-        git remote set-url --push upstream DISABLE
+        git remote set-url --push upstream DISABLED
 
     .. note::
 
