@@ -30,7 +30,6 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 .. image:: https://codecov.io/gh/QSD-Group/QSDsan/branch/main/graph/badge.svg?token=Z1CASBXEOE
    :target: https://codecov.io/gh/QSD-Group/QSDsan
 
-
 .. Binder launch of tutorials
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/QSD-Group/QSDsan/main?filepath=%2Fdocs%2Fsource%2Ftutorials
