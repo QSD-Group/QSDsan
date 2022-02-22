@@ -27,8 +27,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
    :target: https://github.com/QSD-Group/QSDsan/actions/workflows/build-stable.yml
 
 .. Codecov
-..
-   .. image:: https://codecov.io/gh/QSD-Group/QSDsan/branch/main/graph/badge.svg?token=Z1CASBXEOE
+.. image:: https://codecov.io/gh/QSD-Group/QSDsan/branch/main/graph/badge.svg?token=Z1CASBXEOE
    :target: https://codecov.io/gh/QSD-Group/QSDsan
 
 
