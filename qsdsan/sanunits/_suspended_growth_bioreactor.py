@@ -200,8 +200,7 @@ class CSTR(SanUnit):
         Q = mixed.get_total_flow('m3/d')
         if self._concs is not None: Cs = self._concs
         else: Cs = mixed.conc
-        self._state = np.append(Cs, Q).astype('float64') #!!! might be good to do this for all state arrays, including streams'
-        # self._state = np.append(Cs, Q)
+        self._state = np.append(Cs, Q).astype('float64')
         self._dstate = self._state * 0.
 
     def _update_state(self):
