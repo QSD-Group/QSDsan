@@ -161,39 +161,25 @@ def get_correlations(model, input_x=None, input_y=None,
     >>> r_df3, p_df3 = s.get_correlations(model, kind='Kendall')
     >>> r_df4, p_df4 = s.get_correlations(
     ...     model, input_x=p[0], input_y=m[-1], kind='KS', thresholds=[0.1])
-    
+
     Plots for uncertainty analysis
 
     >>> # Box
     >>> fig, ax = s.plot_uncertainties(model, x_axis=m[0], kind='box')
-    >>> fig # doctest: +ELLIPSIS
-    <Figure ...
     >>> # Histogram 
     >>> fig, ax = s.plot_uncertainties(model, y_axis=m[1], kind='hist')
-    >>> fig # doctest: +ELLIPSIS
-    <Figure ...
     >>> # Kernel density
     >>> fig, ax = s.plot_uncertainties(model, x_axis=m[2], kind='kde')
-    >>> fig # doctest: +ELLIPSIS
-    <Figure ...
     >>> # 2-D counterparts
     >>> fig, ax = s.plot_uncertainties(
     ...     model, x_axis=m[0], y_axis=m[1], kind='hist-hist')
-    >>> fig # doctest: +ELLIPSIS
-    <Figure ...
     >>> fig, ax = s.plot_uncertainties(
     ...     model, x_axis=m[0], y_axis=m[1], kind='kde-kde')
-    >>> fig # doctest: +ELLIPSIS
-    <Figure ...
 
     Plots for sensitivity analysis
 
     >>> fig, ax = s.plot_correlations(r_df1, metrics=m[-2])
-    >>> fig # doctest: +ELLIPSIS
-    <Figure ...
     >>> fig, ax = s.plot_correlations(r_df2)
-    >>> fig # doctest: +ELLIPSIS
-    <Figure ...
 
     See Also
     --------
@@ -269,10 +255,10 @@ def define_inputs(model):
 
     `SALib Basics <https://salib.readthedocs.io/en/latest/basics.html#an-example>`_
     '''
-    return model.problem() # pragma: no cover
+    return model.problem()
 
 
-def generate_samples(inputs, kind, N, seed=None, **kwargs):  # pragma: no cover
+def generate_samples(inputs, kind, N, seed=None, **kwargs):
     '''
     Generate samples for sensitivity analysis using ``SALib``.
 
@@ -326,10 +312,8 @@ def generate_samples(inputs, kind, N, seed=None, **kwargs):  # pragma: no cover
 # Morris
 # =============================================================================
 
-@time_printer
 def morris_analysis(model, inputs, metrics=None, nan_policy='propagate',
-                    conf_level=0.95, print_to_console=False,
-                    print_time=False, file='', **kwargs):
+                    conf_level=0.95, print_to_console=False, file='', **kwargs):
     '''
     Run Morris sensitivity analysis using ``SALib``.
 
@@ -353,8 +337,6 @@ def morris_analysis(model, inputs, metrics=None, nan_policy='propagate',
         Confidence level of results.
     print_to_console : bool
         Whether to show results in the console.
-    print_time : bool
-        Whether to show simulation time in the console.
     file : str
         If provided, the results will be saved as an Excel file.
     **kwargs : dict
@@ -377,10 +359,8 @@ def morris_analysis(model, inputs, metrics=None, nan_policy='propagate',
     >>> samples = s.generate_samples(inputs, kind='Morris', N=10, seed=554)
     >>> model.load_samples(samples)
     >>> model.evaluate()
-    >>> dct = s.morris_analysis(model, inputs, seed=554, nan_policy='fill_mean', print_time=False)
+    >>> dct = s.morris_analysis(model, inputs, seed=554, nan_policy='fill_mean')
     >>> fig, ax = s.plot_morris_results(dct, metric=model.metrics[0])
-    >>> fig # doctest: +ELLIPSIS
-    <Figure ...
 
     See Also
     --------
@@ -421,12 +401,11 @@ def morris_analysis(model, inputs, metrics=None, nan_policy='propagate',
     return morris_dct
 
 
-@time_printer
 def morris_till_convergence(model, inputs, metrics=None,
                             N_max=20, seed=None, threshold=0.1,
                             nan_policy='propagate',
                             conf_level=0.95, print_to_console=False,
-                            print_time=False, file='', **kwargs):
+                            file='', **kwargs):
     '''
     Run Morris analysis from N=2 to N=N_max until the results converge
     (i.e., mu_star_conf/mu_star_max < threshold for all parameters,
@@ -459,8 +438,6 @@ def morris_till_convergence(model, inputs, metrics=None,
         Confidence level of results.
     print_to_console : bool
         Whether to show results in the console.
-    print_time : bool
-        Whether to show simulation time in the console.
     file : str
         If provided, the results will be saved as an Excel file.
     **kwargs : dict
@@ -475,14 +452,10 @@ def morris_till_convergence(model, inputs, metrics=None,
     >>> # Morris analysis requires special samples
     >>> inputs = s.define_inputs(model)
     >>> # Use a small maximum trajectory number for demonstrative purpose
-    >>> dct = s.morris_till_convergence(model, inputs, seed=554, N_max=10, print_time=False)
+    >>> dct = s.morris_till_convergence(model, inputs, seed=554, N_max=10)
     mu_star has not converged within 10 trajectories.
     >>> fig, ax = s.plot_morris_convergence(dct, metric=model.metrics[-2], plot_rank=False)
-    >>> fig # doctest: +ELLIPSIS
-    <Figure ...
     >>> fig, ax = s.plot_morris_convergence(dct, metric=model.metrics[-2], plot_rank=True)
-    >>> fig # doctest: +ELLIPSIS
-    <Figure ...
 
     See Also
     --------
@@ -503,7 +476,6 @@ def morris_till_convergence(model, inputs, metrics=None,
     cum_model.evaluate()
     cum_dct = dict(mu_star={}, mu_star_conf={})
     metrics = _update_input(metrics, model.metrics)
-    kwargs['print_time'] = kwargs.get('print_time') or False
     temp_dct = morris_analysis(model=cum_model, inputs=inputs, metrics=metrics,
                                nan_policy=nan_policy, conf_level=conf_level,
                                print_to_console=print_to_console,**kwargs)
@@ -556,10 +528,8 @@ def morris_till_convergence(model, inputs, metrics=None,
 # (e)FAST and RBD-FAST
 # =============================================================================
 
-@time_printer
 def fast_analysis(model, inputs, kind, metrics=None, nan_policy='propagate',
-                  conf_level=0.95, print_to_console=False, print_time=False,
-                  file='', **kwargs):
+                  conf_level=0.95, print_to_console=False, file='', **kwargs):
     '''
     Run Fourier amplitude sensitivity test (Saltelli's extended FAST) or
     random balance design (RBD) FAST using ``SALib``.
@@ -586,8 +556,6 @@ def fast_analysis(model, inputs, kind, metrics=None, nan_policy='propagate',
         Confidence level of results.
     print_to_console : bool
         Whether to show results in the console.
-    print_time : bool
-        Whether to show simulation time in the console.
     file : str
         If provided, the results will be saved as an Excel file.
     **kwargs : dict
@@ -610,19 +578,15 @@ def fast_analysis(model, inputs, kind, metrics=None, nan_policy='propagate',
     >>> samples = s.generate_samples(inputs, kind='FAST', N=100, M=4, seed=554)
     >>> model.load_samples(samples)
     >>> model.evaluate()
-    >>> dct = s.fast_analysis(model, inputs, kind='FAST', M=4, seed=554, nan_policy='fill_mean', print_time=False)
+    >>> dct = s.fast_analysis(model, inputs, kind='FAST', M=4, seed=554, nan_policy='fill_mean')
     >>> fig, ax = s.plot_fast_results(dct, metric=model.metrics[-3])
-    >>> fig # doctest: +ELLIPSIS
-    <Figure ...
     >>> # If want to do RBD-FAST
     >>> # Use a small sample size for demonstrative purpose
     >>> samples = s.generate_samples(inputs, kind='RBD', N=100, seed=554)
     >>> model.load_samples(samples)
     >>> model.evaluate()
-    >>> dct = s.fast_analysis(model, inputs, kind='RBD', seed=554, nan_policy='fill_mean', print_time=False)
+    >>> dct = s.fast_analysis(model, inputs, kind='RBD', seed=554, nan_policy='fill_mean')
     >>> fig, ax = s.plot_fast_results(dct, metric=model.metrics[-3])
-    >>> fig # doctest: +ELLIPSIS
-    <Figure ...
 
     See Also
     --------
@@ -675,10 +639,9 @@ def fast_analysis(model, inputs, kind, metrics=None, nan_policy='propagate',
 # Sobol
 # =============================================================================
 
-@time_printer
 def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
                    calc_second_order=True, conf_level=0.95, print_to_console=False,
-                   print_time=False, file='', **kwargs):
+                   file='', **kwargs):
     '''
     Run Sobol sensitivity analysis using ``SALib``.
 
@@ -704,8 +667,6 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
         Confidence level of results.
     print_to_console : bool
         Whether to show results in the console.
-    print_time : bool
-        Whether to show simulation time in the console.
     file : str
         If provided, the results will be saved as an Excel file.
     **kwargs : dict
@@ -731,22 +692,16 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
     >>> # Error will be raised if `nan_policy` says so
     >>> dct = s.sobol_analysis(
     ...     model, inputs, seed=554, calc_second_order=True, conf_level=0.95,
-    ...     nan_policy='raise') # doctest: +ELLIPSIS
+    ...     nan_policy='raise') # doctest: +SKIP
     Traceback ...
     >>> dct = s.sobol_analysis(
     ...     model, inputs, seed=554, calc_second_order=True, conf_level=0.95,
-    ...     nan_policy='fill_mean', print_time=False)
+    ...     nan_policy='fill_mean')
     >>> # Different types of plots
     >>> fig, ax = s.plot_sobol_results(dct, metric=model.metrics[-1], kind='STS1')
-    >>> fig # doctest: +ELLIPSIS
-    <Figure ...
     >>> fig, ax = s.plot_sobol_results(
     ...     dct, metric=model.metrics[-1], kind='STS2', plot_in_diagonal='ST')
-    >>> fig # doctest: +ELLIPSIS
-    <Figure ...
     >>> fig, ax = s.plot_sobol_results(dct, metric=model.metrics[0], kind='all')
-    >>> fig # doctest: +ELLIPSIS
-    <Figure ...
 
     See Also
     --------
