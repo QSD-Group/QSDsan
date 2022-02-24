@@ -149,10 +149,13 @@ def get_correlations(model, input_x=None, input_y=None,
 
     Examples
     --------
-    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    >>> from qsdsan.utils import load_example_model
+
 
     See Also
     --------
+    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+
     :func:`scipy.stats.spearmanr`
 
     :func:`scipy.stats.pearsonr`

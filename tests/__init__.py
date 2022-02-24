@@ -18,6 +18,7 @@ for license details.
 from . import (
     test_bst_units_,
     test_component_,
+    test_doc_model_,
     test_process_,
     test_sanunit_,
     test_waste_stream_,
@@ -25,6 +26,7 @@ from . import (
 
 from .test_bst_units_ import *
 from .test_component_ import *
+from .test_doc_model_ import *
 from .test_process_ import *
 from .test_sanunit_ import *
 from .test_waste_stream_ import *
@@ -32,13 +34,14 @@ from .test_waste_stream_ import *
 __all__ = (
     *test_bst_units_.__all__,
     *test_component_.__all__,
+    *test_doc_model_.__all__,
     *test_process_.__all__,
     *test_sanunit_.__all__,
     *test_waste_stream_.__all__,
     )
 
 # Only runs locally because of version management,
-# these tests will be run in ``exposan``'s tests online
+# these tests will be run in `exposan`'s tests online
 try:
     from . import test_es_temp
 except:
