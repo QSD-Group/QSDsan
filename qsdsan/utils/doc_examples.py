@@ -16,12 +16,9 @@ from .. import (
     Component, Components, SanStream, System, SimpleTEA, Model,
     set_thermo, sanunits as su
     )
-from ..utils import ospath, load_data, data_path
 from chaospy import distributions as shape
 
 __all__ = ('load_example_cmps', 'load_example_sys', 'load_example_model',)
-
-dir_path = ospath.realpath(ospath.join(data_path, '../../tests'))
 
 
 # %%
@@ -147,26 +144,20 @@ def load_example_sys(cmps=None):
 # Example system model
 # =============================================================================
 
-def load_example_model(N=100, rule='L', seed=554, evaluate=False,
-                       path=None, **sample_kwargs):
+def load_example_model(evaluate=False, N=100, rule='L', seed=554, **sample_kwargs):
     '''
     Load a pre-constructed system model for documentation purpose.
 
     Parameters
     ----------
-    N : int
-        Sample size.
-    rule : str
-        Sampling rule.
-    seed : int
-        Random seed for sample consistency.
     evaluate : bool
-        Whether to load samples and simulate the system.
-        When set as False, pre-simulated results will be loaded.
-    path : str
-        When provided, simulation results will be saved to the given path.
-        Default path will be used if an empty string is provided.
-        No file will be saved if set to `None`.
+        Whether to evaluate the model (i.e., simulate the system and get metrics).
+    N : int
+        Sample size, will be ignored if `evaluate` is set to False.
+    rule : str
+        Sampling rule, will be ignored if `evaluate` is set to False.
+    seed : int
+        Random seed for sample consistency, will be ignored if `evaluate` is set to False.
     sample_kwargs : dict
         Additional keyword arguments that will be passed to :func:`model.sample`
 
@@ -181,7 +172,7 @@ def load_example_model(N=100, rule='L', seed=554, evaluate=False,
     Examples
     --------
     >>> from qsdsan.utils import load_example_model
-    >>> model = load_example_model(N=100, rule='L', seed=554, simulate=False, path=None)
+    >>> model = load_example_model(N=100, rule='L', seed=554, evaluate=False)
     >>> model.system.path
     (<MixTank: M1>,
      <Pump: P1>,
@@ -273,16 +264,9 @@ def load_example_model(N=100, rule='L', seed=554, evaluate=False,
     def get_NPV():
         return tea.NPV
 
-    samples = model.sample(N=N, rule=rule, seed=seed, **sample_kwargs)
-    model.load_samples(samples)
-    default_path = ospath.join(dir_path, 'doc_model_data.csv')
     if evaluate:
+        samples = model.sample(N=N, rule=rule, seed=seed, **sample_kwargs)
+        model.load_samples(samples)
         model.evaluate()
-    else:
-        model.table = load_data(default_path)
-
-    if path is not None:
-        file_path = default_path if path=='' else path
-        model.table.to_csv(file_path)
 
     return model

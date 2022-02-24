@@ -77,9 +77,7 @@ def _update_nan(df, nan_policy, legit=('propagate', 'raise', 'omit')):
         return df.dropna()
     elif nan_policy == 'fill_mean':
         return df.fillna(df.dropna().mean())
-    # Shouldn't get to this step
-    else:
-        return df
+    return df
 
 def _update_df_names(df, columns=True, index=True):
     new_df = df.copy()
@@ -124,7 +122,7 @@ def get_correlations(model, input_x=None, input_y=None,
     Parameters
     ----------
     model : :class:`biosteam.Model`
-        Uncertainty model with defined paramters and metrics.
+        Uncertainty model with defined parameters and metrics.
     input_x : :class:`biosteam.Parameter` or :class:`biosteam.Metric`
         The first set of input, can be single values or an iterable,
         will be defaulted to all model parameters if not provided.
@@ -145,16 +143,61 @@ def get_correlations(model, input_x=None, input_y=None,
 
     Returns
     -------
-    Two :class:`pandas.DataFrame` containing the test statistics and p-values.
+    Two :class:`pandas.DataFrame` containing the test correlations and p-values.
 
     Examples
     --------
-    >>> from qsdsan.utils import load_example_model
+    Run uncertainty and sensitivity analyses
 
+    >>> # Import a pre-constructed system model
+    >>> from qsdsan import stats as s
+    >>> from qsdsan.utils import load_example_model
+    >>> # Use a small sample size for demonstrative purpose
+    >>> model = load_example_model(evaluate=True, N=100, rule='L', seed=554)
+    >>> p, m = model.parameters, model.metrics
+    >>> # Correlations, p-values
+    >>> r_df1, p_df1 = s.get_correlations(model, kind='Spearman')
+    >>> r_df2, p_df2 = s.get_correlations(model, kind='Pearson')
+    >>> r_df3, p_df3 = s.get_correlations(model, kind='Kendall')
+    >>> r_df4, p_df4 = s.get_correlations(
+    ...     model, input_x=p[0], input_y=m[-1], kind='KS', thresholds=[0.1])
+    
+    Plots for uncertainty analysis
+
+    >>> # Box
+    >>> fig, ax = s.plot_uncertainties(model, x_axis=m[0], kind='box')
+    >>> fig # doctest: +ELLIPSIS
+    <Figure ...
+    >>> # Histogram 
+    >>> fig, ax = s.plot_uncertainties(model, y_axis=m[1], kind='hist')
+    >>> fig # doctest: +ELLIPSIS
+    <Figure ...
+    >>> # Kernel density
+    >>> fig, ax = s.plot_uncertainties(model, x_axis=m[2], kind='kde')
+    >>> fig # doctest: +ELLIPSIS
+    <Figure ...
+    >>> # 2-D counterparts
+    >>> fig, ax = s.plot_uncertainties(
+    ...     model, x_axis=m[0], y_axis=m[1], kind='hist-hist')
+    >>> fig # doctest: +ELLIPSIS
+    <Figure ...
+    >>> fig, ax = s.plot_uncertainties(
+    ...     model, x_axis=m[0], y_axis=m[1], kind='kde-kde')
+    >>> fig # doctest: +ELLIPSIS
+    <Figure ...
+
+    Plots for sensitivity analysis
+
+    >>> fig, ax = s.plot_correlations(r_df1, metrics=m[-2])
+    >>> fig # doctest: +ELLIPSIS
+    <Figure ...
+    >>> fig, ax = s.plot_correlations(r_df2)
+    >>> fig # doctest: +ELLIPSIS
+    <Figure ...
 
     See Also
     --------
-    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
 
     :func:`scipy.stats.spearmanr`
 
@@ -165,8 +208,9 @@ def get_correlations(model, input_x=None, input_y=None,
     :func:`scipy.stats.kstest`
     '''
 
-    if input_x and not isinstance(input_x, Iterable): input_x = (input_x,)
-    if input_y and not isinstance(input_y, Iterable): input_y = (input_y,)
+    input_x = (input_x,) if (input_x and not isinstance(input_x, Iterable)) else input_x
+    input_y = (input_y,) if (input_y and not isinstance(input_y, Iterable)) else input_y
+
     if nan_policy not in ('propagate', 'raise', 'omit'):
         raise ValueError(f'nan_policy can only be in ("omit", "propagate", "raise"), ' \
                          f'not "{nan_policy}".')
@@ -212,32 +256,30 @@ def define_inputs(model):
     Parameters
     ----------
     model : :class:`biosteam.Model`
-        Uncertainty model with defined paramters and metrics.
+        Uncertainty model with defined parameters and metrics.
 
     Returns
     -------
     inputs : dict
         A dict containing model inputs for sampling by ``SALib``.
 
-    Examples
-    --------
-    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
-
     See Also
     --------
+    `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+
     `SALib Basics <https://salib.readthedocs.io/en/latest/basics.html#an-example>`_
     '''
-    return model.problem()
+    return model.problem() # pragma: no cover
 
 
-def generate_samples(inputs, kind, N, seed=None, **kwargs):
+def generate_samples(inputs, kind, N, seed=None, **kwargs):  # pragma: no cover
     '''
     Generate samples for sensitivity analysis using ``SALib``.
 
     Parameters
     ----------
     model : :class:`biosteam.Model`
-        Uncertainty model with defined paramters and metrics.
+        Uncertainty model with defined parameters and metrics.
     inputs : dict
         A dict generated by :func:`qsdsan.sensitivity.define_inputs` to be used for ``SALib``,
         keys should include "num_vars", "names", and "bounds".
@@ -258,12 +300,10 @@ def generate_samples(inputs, kind, N, seed=None, **kwargs):
     samples: array
         Samples to be used for the indicated sensitivies analyses.
 
-    Examples
-    --------
-    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
-
     See Also
     --------
+    `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+
     ``SALib`` `API <https://salib.readthedocs.io/en/latest/api.html>`_
     '''
 
@@ -296,7 +336,7 @@ def morris_analysis(model, inputs, metrics=None, nan_policy='propagate',
     Parameters
     ----------
     model : :class:`biosteam.Model`
-        Uncertainty model with defined paramters and metrics.
+        Uncertainty model with defined parameters and metrics.
     inputs : dict
         A dict generated by :func:`qsdsan.sensitivity.define_inputs` to be used for ``SALib``,
         keys should include "num_vars", "names", and "bounds".
@@ -327,10 +367,25 @@ def morris_analysis(model, inputs, metrics=None, nan_policy='propagate',
 
     Examples
     --------
-    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    >>> # Import a pre-constructed system model
+    >>> from qsdsan import stats as s
+    >>> from qsdsan.utils import load_example_model
+    >>> model = load_example_model(evaluate=False)
+    >>> # Morris analysis requires special samples
+    >>> inputs = s.define_inputs(model)
+    >>> # Use a small sample size for demonstrative purpose
+    >>> samples = s.generate_samples(inputs, kind='Morris', N=10, seed=554)
+    >>> model.load_samples(samples)
+    >>> model.evaluate()
+    >>> dct = s.morris_analysis(model, inputs, seed=554, nan_policy='fill_mean', print_time=False)
+    >>> fig, ax = s.plot_morris_results(dct, metric=model.metrics[0])
+    >>> fig # doctest: +ELLIPSIS
+    <Figure ...
 
     See Also
     --------
+    `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+
     ``SALib`` `API <https://salib.readthedocs.io/en/latest/api.html>`_
     '''
 
@@ -381,7 +436,7 @@ def morris_till_convergence(model, inputs, metrics=None,
     Parameters
     ----------
     model : :class:`biosteam.Model`
-        Uncertainty model with defined paramters and metrics.
+        Uncertainty model with defined parameters and metrics.
     inputs : dict
         A dict generated by :func:`qsdsan.sensitivity.define_inputs` to be used for ``SALib``,
         keys should include "num_vars", "names", and "bounds".
@@ -413,10 +468,26 @@ def morris_till_convergence(model, inputs, metrics=None,
 
     Examples
     --------
-    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    >>> # Import a pre-constructed system model
+    >>> from qsdsan import stats as s
+    >>> from qsdsan.utils import load_example_model
+    >>> model = load_example_model(evaluate=False)
+    >>> # Morris analysis requires special samples
+    >>> inputs = s.define_inputs(model)
+    >>> # Use a small maximum trajectory number for demonstrative purpose
+    >>> dct = s.morris_till_convergence(model, inputs, seed=554, N_max=10, print_time=False)
+    mu_star has not converged within 10 trajectories.
+    >>> fig, ax = s.plot_morris_convergence(dct, metric=model.metrics[-2], plot_rank=False)
+    >>> fig # doctest: +ELLIPSIS
+    <Figure ...
+    >>> fig, ax = s.plot_morris_convergence(dct, metric=model.metrics[-2], plot_rank=True)
+    >>> fig # doctest: +ELLIPSIS
+    <Figure ...
 
     See Also
     --------
+    `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+
     :func:`qsdsan.stats.morris_analysis`
     '''
 
@@ -496,7 +567,7 @@ def fast_analysis(model, inputs, kind, metrics=None, nan_policy='propagate',
     Parameters
     ----------
     model : :class:`biosteam.Model`
-        Uncertainty model with defined paramters and metrics.
+        Uncertainty model with defined parameters and metrics.
     inputs : dict
         A dict generated by :func:`qsdsan.sensitivity.define_inputs` to be used for ``SALib``,
         keys should include "num_vars", "names", and "bounds".
@@ -529,10 +600,34 @@ def fast_analysis(model, inputs, kind, metrics=None, nan_policy='propagate',
 
     Examples
     --------
-    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    >>> # Import a pre-constructed system model
+    >>> from qsdsan import stats as s
+    >>> from qsdsan.utils import load_example_model
+    >>> model = load_example_model(evaluate=False)
+    >>> # FAST analysis requires special samples
+    >>> inputs = s.define_inputs(model)
+    >>> # Use a small sample size for demonstrative purpose
+    >>> samples = s.generate_samples(inputs, kind='FAST', N=100, M=4, seed=554)
+    >>> model.load_samples(samples)
+    >>> model.evaluate()
+    >>> dct = s.fast_analysis(model, inputs, kind='FAST', M=4, seed=554, nan_policy='fill_mean', print_time=False)
+    >>> fig, ax = s.plot_fast_results(dct, metric=model.metrics[-3])
+    >>> fig # doctest: +ELLIPSIS
+    <Figure ...
+    >>> # If want to do RBD-FAST
+    >>> # Use a small sample size for demonstrative purpose
+    >>> samples = s.generate_samples(inputs, kind='RBD', N=100, seed=554)
+    >>> model.load_samples(samples)
+    >>> model.evaluate()
+    >>> dct = s.fast_analysis(model, inputs, kind='RBD', seed=554, nan_policy='fill_mean', print_time=False)
+    >>> fig, ax = s.plot_fast_results(dct, metric=model.metrics[-3])
+    >>> fig # doctest: +ELLIPSIS
+    <Figure ...
 
     See Also
     --------
+    `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+
     ``SALib`` `API <https://salib.readthedocs.io/en/latest/api.html>`_
     '''
 
@@ -590,7 +685,7 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
     Parameters
     ----------
     model : :class:`biosteam.Model`
-        Uncertainty model with defined paramters and metrics.
+        Uncertainty model with defined parameters and metrics.
     inputs : dict
         A dict generated by :func:`qsdsan.sensitivity.define_inputs` to be used for ``SALib``,
         keys should include "num_vars", "names", and "bounds".
@@ -623,10 +718,40 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
 
     Examples
     --------
-    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    >>> # Import a pre-constructed system model
+    >>> from qsdsan import stats as s
+    >>> from qsdsan.utils import load_example_model
+    >>> model = load_example_model(evaluate=False)
+    >>> # Sobol analysis requires special samples
+    >>> inputs = s.define_inputs(model)
+    >>> # Use a small sample size for demonstrative purpose
+    >>> samples = s.generate_samples(inputs, kind='Sobol', N=10, calc_second_order=True)
+    >>> model.load_samples(samples)
+    >>> model.evaluate()
+    >>> # Error will be raised if `nan_policy` says so
+    >>> dct = s.sobol_analysis(
+    ...     model, inputs, seed=554, calc_second_order=True, conf_level=0.95,
+    ...     nan_policy='raise') # doctest: +ELLIPSIS
+    Traceback ...
+    >>> dct = s.sobol_analysis(
+    ...     model, inputs, seed=554, calc_second_order=True, conf_level=0.95,
+    ...     nan_policy='fill_mean', print_time=False)
+    >>> # Different types of plots
+    >>> fig, ax = s.plot_sobol_results(dct, metric=model.metrics[-1], kind='STS1')
+    >>> fig # doctest: +ELLIPSIS
+    <Figure ...
+    >>> fig, ax = s.plot_sobol_results(
+    ...     dct, metric=model.metrics[-1], kind='STS2', plot_in_diagonal='ST')
+    >>> fig # doctest: +ELLIPSIS
+    <Figure ...
+    >>> fig, ax = s.plot_sobol_results(dct, metric=model.metrics[0], kind='all')
+    >>> fig # doctest: +ELLIPSIS
+    <Figure ...
 
     See Also
     --------
+    `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+
     ``SALib`` `API <https://salib.readthedocs.io/en/latest/api.html>`_
     '''
 
@@ -745,10 +870,12 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
 
     Examples
     --------
-    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
 
     See Also
     --------
+    :func:`get_correlations`
+
     :func:`seaborn.jointplot` `docs <https://seaborn.pydata.org/generated/seaborn.jointplot.html>`_
     '''
 
@@ -768,6 +895,7 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
         sns_df['x_group'] = temp_df['level_1']
 
     elif not x_axis: # only y, 1D, vertical
+        y_axis = (y_axis,) if not isinstance(y_axis, Iterable) else y_axis
         y_df = df[[i.name for i in y_axis]]
         temp_df = y_df.stack(dropna=False).reset_index(name='y_data')
         sns_df['y_data'] = temp_df['y_data']
@@ -808,15 +936,18 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
             ax.set(xlabel=xlabel, ylabel=ylabel)
 
         elif kind_lower == 'hist':
+            center_kws.pop('dodge', None) # not sure why this would sometimes be carried from other runs
             if x_df is not None: # horizontal hist plot
                 ax = sns.histplot(data=sns_df, x='x_data', hue='x_group', **center_kws)
                 ax.set_xlabel('Values')
 
             else: # vertical hist plot
-                ax = sns.histplot(data=sns_df, y='y_data', hue='y_group', **center_kws)
+                try: ax = sns.histplot(data=sns_df, y='y_data', hue='y_group', **center_kws)
+                except: breakpoint()
                 ax.set_ylabel('Values')
 
         elif kind_lower == 'kde':
+            center_kws.pop('dodge', None)
             if x_df is not None: # horizontal kde plot
                 ax = sns.kdeplot(data=sns_df, x='x_data', hue='x_group', **center_kws)
             else: # vertical kde plot
@@ -839,14 +970,14 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
 
         if kind_split[0] in ('hist', 'kde'):
             func = getattr(sns, f'{kind_split[0]}plot')
-            #!!! For some reason `seaborn` might raise an error with "dodge"
-            try: center_kws.pop('dodge')
-            except: pass
+            center_kws.pop('dodge', None)
             g.plot_joint(func, **center_kws)
         else:
             raise ValueError(f'The provided kind "{kind}" is not valid for 2D plot.')
 
         if kind_split[1] in ('box', 'hist', 'kde'):
+            if kind_split[1] != 'box':
+                center_kws.pop('dodge', None)
             func = getattr(sns, f'{kind_split[1]}plot')
             g.plot_marginals(func, **margin_kws)
         else:
@@ -942,7 +1073,9 @@ def plot_correlations(result_df, parameters=(), metrics=(), top=None,
 
     Examples
     --------
-    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    :func:`get_correlations`
+
+    `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
 
     See Also
     --------
@@ -1039,9 +1172,11 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
     axis : :class:`matplotlib.axes._subplots.AxesSubplot`
         The generated figure axis.
 
-    Examples
+    See Also
     --------
-    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    :func:`morris_analysis`
+
+    `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
     '''
 
     df = morris_dct[metric.name]
@@ -1067,7 +1202,8 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
         for x, y, label in zip(x_data, y_data, labels):
             ax.annotate(label, (x, y), xytext=(10, 10), textcoords='offset points',
                         ha='center')
-        x_range = np.arange(-1, np.ceil(ax.get_xlim()[1])+1)
+        # Use linspace instead of arange as the data can be really large
+        x_range = np.linspace(*ax.get_xlim(), 10)
 
         lines, legends = [], []
         line_color = kwargs.get('line_color') or color
@@ -1154,9 +1290,11 @@ def plot_morris_convergence(result_dct, metric, parameters=(),
     axis : :class:`matplotlib.axes._subplots.AxesSubplot`
         The generated figure axis.
 
-    Examples
+    See Also
     --------
-    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    :func:`morris_analysis`
+
+    `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
     '''
 
     ax = ax if ax is not None else plt.subplot()
@@ -1286,9 +1424,11 @@ def plot_fast_results(result_dct, metric, parameters=(),
     axis : :class:`matplotlib.axes._subplots.AxesSubplot`
         The generated figure axis.
 
-    Examples
+    See Also
     --------
-    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    :func:`fast_analysis`
+
+    `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
     '''
 
     param_names = _update_input(parameters, result_dct[metric.name]['S1'].index)
@@ -1368,9 +1508,11 @@ def plot_sobol_results(result_dct, metric, ax=None,
         If generating bar plot and heat map, a tuple of two axes will be returned
         for the respective plot.
 
-    Examples
+    See Also
     --------
-    `QSDsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
+    :func:`sobol_analysis`
+
+    `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
     '''
 
     kind_upper = kind.upper()
@@ -1453,7 +1595,8 @@ def plot_sobol_results(result_dct, metric, ax=None,
             xlabels[0] = '' if not plot_in_diagonal else xlabels[0]
             ax_s2.set_xticklabels(xlabels)
 
-            plt.tight_layout()
+            try: plt.tight_layout()
+            except AttributeError: pass # when no results
             plt.subplots_adjust(wspace=0.4, top=0.85)
             fig.suptitle(f'Variance breakdown for {metric.name.lower()}')
 
