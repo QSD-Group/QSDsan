@@ -12,16 +12,16 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import os
 from .. import (
     Component, Components, SanStream, System, SimpleTEA, Model,
     set_thermo, sanunits as su
     )
-from ..utils import load_data
+from ..utils import ospath, load_data, data_path
 from chaospy import distributions as shape
 
 __all__ = ('load_example_cmps', 'load_example_sys', 'load_example_model',)
-file_path = os.path.realpath(__file__)
+
+dir_path = ospath.realpath(ospath.join(data_path, '../../tests'))
 
 
 # %%
@@ -181,7 +181,7 @@ def load_example_model(N=100, rule='L', seed=554, evaluate=False,
     Examples
     --------
     >>> from qsdsan.utils import load_example_model
-    >>> model = load_example_model(N=100, rule='L', seed=554, simulate=False, path=None):
+    >>> model = load_example_model(N=100, rule='L', seed=554, simulate=False, path=None)
     >>> model.system.path
     (<MixTank: M1>,
      <Pump: P1>,
@@ -275,13 +275,14 @@ def load_example_model(N=100, rule='L', seed=554, evaluate=False,
 
     samples = model.sample(N=N, rule=rule, seed=seed, **sample_kwargs)
     model.load_samples(samples)
+    default_path = ospath.join(dir_path, 'doc_model_data.csv')
     if evaluate:
         model.evaluate()
     else:
-        model.table = load_data(os.path.join(path, 'doc_model_data.csv'))
+        model.table = load_data(default_path)
 
     if path is not None:
-        file_path = 'doc_model_data.csv' if path=='' else path
+        file_path = default_path if path=='' else path
         model.table.to_csv(file_path)
 
     return model

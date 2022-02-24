@@ -16,7 +16,8 @@ __all__ = ('test_doc_model',)
 
 def test_doc_model():
     from qsdsan.utils import load_example_model
-    model = load_example_model(evaluate=True, path='')
+    try: model = load_example_model(evaluate=False, path=None)
+    except: model = load_example_model(evaluate=True, path='')
 
 
 if __name__ == '__main__':
