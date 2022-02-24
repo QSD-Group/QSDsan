@@ -165,10 +165,9 @@ class MURTToilet(Toilet):
             self.squatting_pan_weight*self.N_squatting_pan + self.urinal_weight*self.N_urinal
         design['Fan (single MURT)'] = N_fan = self.N_fan
 
-        self.construction = (
-            Construction(item='Ceramic', quantity=Ceramic_quant*N, quantity_unit='kg'),
-            Construction(item='Fan', quantity=N_fan*N, quantity_unit='ea'),
-            )
+        constr = self.construction
+        constr[0].quantity = Ceramic_quant * N
+        constr[1].quantity = N_fan * N
         self.add_construction()
 
     def _cost(self):

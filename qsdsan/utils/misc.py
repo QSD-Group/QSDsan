@@ -19,6 +19,7 @@ __all__ = (
     'register_with_prefix',
     'time_printer',
     'ords',
+    'price_ratio',
     )
 
 
@@ -91,7 +92,6 @@ def register_with_prefix(obj, prefix, ID):
         registry.register_safely(full_ID, obj)
 
 
-# Allow functions to print execution time with a `print_time` kwarg
 def time_printer(func):
     '''
     Allow functions to print execution time with a `print_time` kwarg.
@@ -132,3 +132,32 @@ def ords(string):
     string = str(string)
     added = sum(ord(i) for i in string)
     return added
+
+def price_ratio(default_price_ratio):
+    '''
+    Add a `price_ratio` attribute to a unit that can be used to adjust
+    capital and operating cost.
+
+    Parameters
+    ----------
+    default_price_ratio : float
+        Default value of the price ratio.
+
+    Examples
+    --------
+    >>> from qsdsan import SanUnit, Components, set_thermo
+    >>> from qsdsan.utils import price_ratio
+    >>> @price_ratio(default_price_ratio=0.5)
+    ... class Foo(SanUnit):
+    ...     pass
+    >>> set_thermo(Components.load_default())
+    >>> F1 = Foo()
+    >>> print(F1.price_ratio)
+    '''
+    return lambda cls: add_price_ratio(cls, default_price_ratio)
+
+def add_price_ratio(cls, default_price_ratio=1):
+    cls.price_ratio = default_price_ratio
+    return cls
+
+
