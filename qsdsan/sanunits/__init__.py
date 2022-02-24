@@ -32,7 +32,7 @@ from ._dryer_from_hhx import *
 from ._electrochemical_cell import *
 from ._excretion import *
 from ._grinder import *
-from ._housing_biogenic_refinery import *
+from ._housing import *
 from ._hx import *
 from ._hydronic_heat_exchanger import *
 from ._ion_exchange_NH3 import *
@@ -74,6 +74,7 @@ from . import (
 	    _dynamic_influent,
 	    _electrochemical_cell,
 	    _excretion,
+        _housing,
 	    _hx,
 	    _internal_circulation_rx,
 	    _lagoon,
@@ -89,7 +90,9 @@ from . import (
 	    _toilets,
 	    _treatment_beds,
 	    _trucking,
-        _housing_biogenic_refinery,
+
+
+
         _screw_press,
         _carbonizer_base,
         _pollution_control_device,
@@ -99,7 +102,6 @@ from . import (
         _ion_exchange_NH3,
         _struvite_precipitation,
         _grinder,
-        _construction_biogenic_refinery,
 	    )
 
 
@@ -115,6 +117,7 @@ __all__ = (
 	    *_dynamic_influent.__all__,
 	    *_electrochemical_cell.__all__,
 	    *_excretion.__all__,
+        *_housing.__all__,
 	    *_hx.__all__,
 	    *_internal_circulation_rx.__all__,
 	    *_lagoon.__all__,
@@ -130,7 +133,9 @@ __all__ = (
 	    *_toilets.__all__,
 	    *_treatment_beds.__all__,
 	    *_trucking.__all__,
-        *_housing_biogenic_refinery.__all__,
+
+
+
         *_screw_press.__all__,
         *_carbonizer_base.__all__,
         *_pollution_control_device.__all__,
@@ -140,5 +145,4 @@ __all__ = (
         *_ion_exchange_NH3.__all__,
         *_struvite_precipitation.__all__,
         *_grinder.__all__,
-        *_construction_biogenic_refinery.__all__,
 	    )

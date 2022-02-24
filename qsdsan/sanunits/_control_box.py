@@ -16,13 +16,13 @@ for license details.
 # %%
 
 from .. import SanUnit, Construction
-from ..utils.loading import ospath, load_data, data_path, price_ratio
+from ..utils import ospath, load_data, data_path, price_ratio
 
 __all__ = ('ControlBoxOP',)
 
 op_path = ospath.join(data_path,'sanunit_data/_control_box_op.tsv')
 
-@price_ratio
+@price_ratio(default_price_ratio=1)
 class ControlBoxOP(SanUnit):
     '''
     Control box (industrial control panel) for the omni processor.
@@ -70,7 +70,7 @@ class ControlBoxOP(SanUnit):
         design['Electronics'] = constr[0].quantity = 2
         design['ElectricConnectors'] = constr[1].quantity = 0.5
         design['ElectricCables'] = constr[2].quantity = 3
-        self.add_construction(add_cost=False)
+        self.add_construction()
 
     # Cost based on amount of steel and stainless plus individual components
     def _cost(self):

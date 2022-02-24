@@ -57,7 +57,6 @@ class MURTToilet(Toilet):
     See Also
     --------
     :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
-
     '''
 
     #change to be 1 squatting pan and 2 urinals1
@@ -88,7 +87,6 @@ class MURTToilet(Toilet):
             setattr(self, para, value)
         del data
 
-        self._tank_V = 60/1e3 # m3
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
