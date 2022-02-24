@@ -8,6 +8,9 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
     Joy Zhang <joycheung1994@gmail.com>
+    Lane To <lane20@illinois.edu>
+    Lewis Rowles <stetsonsc@gmail.com>
+    Smiti Mittal <smitimittal@gmail.com>
 	
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -99,7 +102,6 @@ from . import (
         _ion_exchange_NH3,     
         _struvite_precipitation,
         _grinder,
-        _murt_toilet,
         _construction_biogenic_refinery,
 	    )
 	
@@ -141,6 +143,5 @@ __all__ = (
         *_ion_exchange_NH3.__all__,
         *_struvite_precipitation.__all__,
         *_grinder.__all__,
-        *_murt_toilet.__all__,
         *_construction_biogenic_refinery.__all__,
 	    )

@@ -35,9 +35,9 @@ class PitLatrine(Toilet):
 
     Parameters
     ----------
-    ins : WasteStream
-        Solid for drying.
-    outs : WasteStream
+    ins : :class:`~.WasteStream`
+        Excreta.
+    outs : Iterable(:class:`~.WasteStream`)
         Recyclable mixed excreta, stream leached to soil, fugitive CH4, and fugitive N2O.
     lifetime : int
         Lifetime of this pit latrine, [yr].

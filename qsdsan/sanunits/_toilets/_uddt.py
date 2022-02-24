@@ -45,7 +45,7 @@ class UDDT(Toilet):
         Recyclable liquid urine, recyclable solid feces, struvite scaling (irrecoverable),
         hydroxyapatite scaling (irrecoverable), fugitive CH4, and fugitive N2O.
     lifetime : int
-        Lifetime of this pit latrine, [yr].
+        Lifetime of this UDDT, [yr].
     T : float
         Temperature, [K].
     safety_factor : float
