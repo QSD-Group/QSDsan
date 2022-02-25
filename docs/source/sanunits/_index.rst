@@ -26,7 +26,7 @@ Links to docs
    Decay
    ElectrochemicalCell
    Excretion
-   hx
+   hxs
    InternalCirculationRx
    Lagoon
    LumpedCost

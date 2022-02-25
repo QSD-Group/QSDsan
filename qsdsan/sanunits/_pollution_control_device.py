@@ -40,6 +40,12 @@ class PollutionControlDevice(SanUnit):
     will start to degrade above 615°C and could cause the feedstock to
     prematurely pyrolyze in the fuel auger.
 
+    The following components should be included in system thermo object for simulation:
+    N2O.
+
+    The following impact items should be pre-constructed for life cycle assessment:
+    StainlessSteel, Steel, ElectricMotor, CatalyticConverter.
+
     Parameters
     ----------
     ins : Iterable(stream obj)

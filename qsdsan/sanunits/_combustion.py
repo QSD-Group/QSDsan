@@ -201,7 +201,7 @@ class CHP(SanUnit, Facility):
             air.imol['O2'] = -emission.imol['O2']
             emission.imol['N2'] = air.imol['N2'] = air.imol['O2']/0.21*0.79
             emission.imol['O2'] = 0
-            H_net_feed = feed.H + feed.HHV - emission.H # substracting the energy in emission
+            H_net_feed = feed.H + feed.HHV - emission.H # subtracting the energy in emission
             return H_net_feed
 
         # Calculate extra natural gas needed to supplement the utilities
@@ -282,7 +282,7 @@ class CHP(SanUnit, Facility):
     def combustion_eff(self):
         '''
         [float] Combined heat (the total embedded energy in feed streams)-to-power efficiency
-        (i.e., combustion effiency * power generation efficiency).
+        (i.e., combustion efficiency * power generation efficiency).
         '''
         return self._combustion_eff
     @combustion_eff.setter

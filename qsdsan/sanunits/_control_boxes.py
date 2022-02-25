@@ -65,6 +65,7 @@ class ControlBoxOP(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+
     def _design(self):
         design = self.design_results
         constr = self.construction
@@ -73,7 +74,7 @@ class ControlBoxOP(SanUnit):
         design['ElectricCables'] = constr[2].quantity = 3
         self.add_construction()
 
-    # Cost based on amount of steel and stainless plus individual components
+
     def _cost(self):
         self.baseline_purchase_costs['Misc. parts'] = (
             self.icp_controller_board +

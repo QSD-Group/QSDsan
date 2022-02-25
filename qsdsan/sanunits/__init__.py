@@ -33,11 +33,10 @@ from ._electrochemical_cell import *
 from ._excretion import *
 from ._grinder import *
 from ._housing import *
-from ._hx import *
+from ._hxs import *
 from ._hydronic_heat_exchanger import *
 from ._ion_exchange_NH3 import *
 from ._lumped_cost import *
-from ._oil_heat_exchanger import *
 from ._pollution_control_device import *
 from ._pumping import *
 from ._screening import *
@@ -65,6 +64,7 @@ from . import (
 	    _abstract,
 	    _activated_sludge,
 	    _anaerobic_reactors,
+        _carbonizer_base,
 	    _clarifier,
 	    _combustion,
         _control_boxes,
@@ -74,12 +74,13 @@ from . import (
 	    _electrochemical_cell,
 	    _excretion,
         _housing,
-	    _hx,
+	    _hxs,
 	    _internal_circulation_rx,
 	    _lagoon,
 	    _lumped_cost,
 	    _membrane_bioreactors,
 	    _polishing_filter,
+        _pollution_control_device,
 	    _pumping,
 	    _screening,
 	    _sedimentation,
@@ -92,9 +93,7 @@ from . import (
 
 
 
-        _carbonizer_base,
-        _pollution_control_device,
-        _oil_heat_exchanger,
+
         _hydronic_heat_exchanger,
         _dryer_from_hhx,
         _ion_exchange_NH3,
@@ -107,6 +106,7 @@ __all__ = (
 	    *_abstract.__all__,
 	    *_activated_sludge.__all__,
 	    *_anaerobic_reactors.__all__,
+        *_carbonizer_base.__all__,
 	    *_clarifier.__all__,
 	    *_combustion.__all__,
         *_control_boxes.__all__,
@@ -116,12 +116,13 @@ __all__ = (
 	    *_electrochemical_cell.__all__,
 	    *_excretion.__all__,
         *_housing.__all__,
-	    *_hx.__all__,
+	    *_hxs.__all__,
 	    *_internal_circulation_rx.__all__,
 	    *_lagoon.__all__,
 	    *_lumped_cost.__all__,
 	    *_membrane_bioreactors.__all__,
 	    *_polishing_filter.__all__,
+        *_pollution_control_device.__all__,
 	    *_pumping.__all__,
 	    *_screening.__all__,
 	    *_sedimentation.__all__,
@@ -134,9 +135,7 @@ __all__ = (
 
 
 
-        *_carbonizer_base.__all__,
-        *_pollution_control_device.__all__,
-        *_oil_heat_exchanger.__all__,
+
         *_hydronic_heat_exchanger.__all__,
         *_dryer_from_hhx.__all__,
         *_ion_exchange_NH3.__all__,

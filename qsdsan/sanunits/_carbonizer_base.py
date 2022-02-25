@@ -219,4 +219,4 @@ class CarbonizerBase(SanUnit):
             self.carbonizer_primary_air_blower_power
         self.power_utility(power_demand)  #kWh
 
-        # costs associated with full time opperators can be added in the TEA as staff
+        # costs associated with full time operators can be added in the TEA as staff
