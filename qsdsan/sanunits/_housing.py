@@ -7,6 +7,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 This module is developed by:
     Lewis Rowles <stetsonsc@gmail.com>
     Yalin Li <zoe.yalin.li@gmail.com>
+    Lane To <lane20@illinois.edu>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -29,14 +30,14 @@ class HousingBiogenicRefinery(SanUnit):
     containers, and the concrete slab.
     No process algorithm is included, only design (including) cost algorithms are included.
 
-    To enable life cycle assessment, the following impact items should be pre-constructed:
-    `Steel`, `StainlessSteelSheet`, `Concrete`.
+    The following impact items should be pre-constructed for life cycle assessment:
+    Steel, StainlessSteelSheet, Concrete.
 
     Parameters
     ----------
-    ins : :class:`~.WasteStream`
+    ins : stream obj
         Influent stream.
-    outs : :class:`~.WasteStream`
+    outs : stream obj
         Effluent stream, is copied from the influent stream.
     '''
 

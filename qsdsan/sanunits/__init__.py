@@ -8,8 +8,8 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
     Joy Zhang <joycheung1994@gmail.com>
-    Lane To <lane20@illinois.edu>
     Lewis Rowles <stetsonsc@gmail.com>
+    Lane To <lane20@illinois.edu>
     Smiti Mittal <smitimittal@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -55,7 +55,6 @@ from ._internal_circulation_rx import *
 from ._lagoon import *
 from ._membrane_bioreactors import *
 from ._polishing_filter import *
-from ._screw_press import *
 from ._sedimentation import *
 from ._toilets import *
 from ._treatment_beds import *
@@ -93,7 +92,6 @@ from . import (
 
 
 
-        _screw_press,
         _carbonizer_base,
         _pollution_control_device,
         _oil_heat_exchanger,
@@ -136,7 +134,6 @@ __all__ = (
 
 
 
-        *_screw_press.__all__,
         *_carbonizer_base.__all__,
         *_pollution_control_device.__all__,
         *_oil_heat_exchanger.__all__,
