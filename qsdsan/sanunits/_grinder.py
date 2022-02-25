@@ -1,130 +1,98 @@
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Mar 21 19:55:59 2021
-
-@author: lewisrowles
-"""
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Lewis Rowles <stetsonsc@gmail.com>
+    Yalin Li <zoe.yalin.li@gmail.com>
+    Lane To <lane20@illinois.edu>
 
 This module is under the University of Illinois/NCSA Open Source License.
-Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
+
 # %%
 
-
-import numpy as np
-from qsdsan import SanUnit, Construction
-from qsdsan.utils.loading import load_data, data_path
-import os
+from .. import SanUnit, Construction
+from ..utils import ospath, load_data, data_path
 
 __all__ = ('Grinder',)
 
-#path to csv with all the inputs
-#data_path = '/Users/lewisrowles/opt/anaconda3/lib/python3.8/site-packages/exposan/biogenic_refinery/_grinder.csv'
-data_path += '/sanunit_data/_grinder.tsv'
+grinder_path = ospath.join(data_path, 'sanunit_data/_grinder.tsv')
 
-### 
+#!!! Need `price_ratio`?
 class Grinder(SanUnit):
     '''
     Grinder is used to break up solids.
 
-    
-    Reference documents
-    -------------------
-    N/A
-    
+    The following components should be included in system thermo object for simulation:
+    H2O, OtherSS.
+
+    The following impact items should be pre-constructed for life cycle assessment:
+    Steel.
+
     Parameters
     ----------
-    ins : WasteStream
-        Solids
-    outs : WasteStream 
-        Solids
+    ins : stream obj
+        Influent stream.
+    outs : stream obj
+        Effluent stream.
+    moisture_content_out : float
+        Moisture content of the effleunt solids stream.
 
-        
     References
     ----------
-    .. N/A
-    
+    #!!! Reference?
+
     '''
-    
 
-    def __init__(self, ID='', ins=None, outs=(), **kwargs):
-        
-        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 moisture_content_out=0.35, **kwargs): #!!! is the default moisture content 35% or 65%?
+        SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with,
+                         F_BM_default=1)
+        self.moisture_content_out = moisture_content_out
+        self.construction = (
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            )
 
-# load data from csv each name will be self.name    
-        data = load_data(path=data_path)
+        data = load_data(path=grinder_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
         del data
-        
+
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-
-
-
-        
-# define the number of influent and effluent streams    
     _N_ins = 1
     _N_outs = 1
 
-# in _run: define influent and effluent streams and treatment processes 
     def _run(self):
         waste_in = self.ins[0]
         waste_out = self.outs[0]
-        waste_out.copy_like(self.ins[0])
+        waste_out.copy_like(waste_in)
 
-        moisture_content = (waste_in.imass['H2O'] / waste_in.F_mass) # fraction
+        mc_in = waste_in.imass['H2O'] / waste_in.F_mass # fraction
+        mc_out = self.moisture_content_out
+        if mc_in < mc_out:
+            raise RuntimeError(f'Moisture content of the influent stream ({mc_in:.2f}) '
+                               f'is smaller than the desired moisture content ({mc_out:.2f}).')
         TS_in = waste_in.F_mass - waste_in.imass['H2O'] # kg TS dry/hr
-        
-        self.waste_sol_flow = waste_in.imass['OtherSS']
+        waste_out.imass['H2O'] = TS_in/(1-mc_out)*mc_out
+        # #!!! This is assuming a moisture content of 65%, not 35%
+        # # set necessary moisture content of effluent as 35%
+        # waste_out.imass['H2O'] = (0.65/0.35) * TS_in # fraction
 
-        # set necessary moisture content of effluent as 35%
-        waste_out.imass['H2O'] = (0.65/0.35) * TS_in # fraction
-        waste_out._COD = (waste_in.COD * (waste_in.F_vol/waste_out.F_vol))
-        
+        waste_out._COD = waste_in.COD * waste_in.F_vol / waste_out.F_vol
+
     def _design(self):
-        design = self.design_results
-        
-        # defining the quantities of materials/items
-        # note that these items to be to be in the _impacts_items.xlsx
-        # add function to calculate the number of screw presses required based on 
-        # influent flowrate 
-        design['Steel'] = S_quant = (self.grinder_steel)
-
-        
-        self.construction = (
-            Construction(item='Steel', quantity = S_quant, quantity_unit = 'kg'),
-            )
+        self.design_results['Steel'] = self.construction[0].quantity = self.grinder_steel
         self.add_construction(add_cost=False)
-        
 
-    #_cost based on amount of steel and stainless plus individual components
+
     def _cost(self):
-        
-        #purchase_costs is used for capital costs
-        #can use quantities from above (e.g., self.design_results['StainlessSteel'])
-        #can be broken down as specific items within purchase_costs or grouped (e.g., 'Misc. parts')
-        self.baseline_purchase_costs['Grinder'] = (self.grinder)
-        
-        self.F_BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
-
-
-       
-        power_demand = (self.grinder_electricity * (self.waste_sol_flow)) #kW (all items are per hour)
-
-        self.power_utility(power_demand)
-
-        
-
+        self.baseline_purchase_costs['Grinder'] = self.grinder
+        self.power_utility(self.grinder_electricity * self.ins[0].imass['OtherSS']) # kWh/hr

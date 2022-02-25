@@ -28,7 +28,7 @@ struvite_path = ospath.join(data_path, '/sanunit_data/_struvite_precipitation.ts
 #!!! No `price_ratio`?
 class StruvitePrecipitation(SanUnit):
     '''
-    Stuvite precipitation for P recovery from liquid stream as solid stuvite.
+    Struvite precipitation for P recovery from liquid stream as solid struvite.
 
     The following components should be included in system thermo object for simulation:
     P, NH3, K, MagnesiumHydroxide, MagnesiumCarbonate, Struvite, FilterBag.

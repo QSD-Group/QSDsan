@@ -44,7 +44,6 @@ from ._suspended_growth_bioreactor import *
 from ._tanks import *
 from ._trucking import *
 
-
 # Units that rely on other units
 from ._activated_sludge import *
 from ._anaerobic_reactors import *
@@ -71,6 +70,7 @@ from . import (
 	    _dynamic_influent,
 	    _electrochemical_cell,
 	    _excretion,
+        _grinder,
         _housing,
 	    _hxs,
 	    _internal_circulation_rx,
@@ -90,11 +90,6 @@ from . import (
 	    _toilets,
 	    _treatment_beds,
 	    _trucking,
-
-
-
-
-        _grinder,
 	    )
 
 
@@ -111,6 +106,7 @@ __all__ = (
 	    *_dynamic_influent.__all__,
 	    *_electrochemical_cell.__all__,
 	    *_excretion.__all__,
+        *_grinder.__all__,
         *_housing.__all__,
 	    *_hxs.__all__,
 	    *_internal_circulation_rx.__all__,
@@ -130,10 +126,4 @@ __all__ = (
 	    *_toilets.__all__,
 	    *_treatment_beds.__all__,
 	    *_trucking.__all__,
-
-
-
-
-
-        *_grinder.__all__,
 	    )
