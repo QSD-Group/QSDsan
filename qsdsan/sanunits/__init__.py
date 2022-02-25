@@ -34,7 +34,6 @@ from ._excretion import *
 from ._grinder import *
 from ._housing import *
 from ._hxs import *
-from ._hydronic_heat_exchanger import *
 from ._ion_exchange_NH3 import *
 from ._lumped_cost import *
 from ._pollution_control_device import *
@@ -94,7 +93,6 @@ from . import (
 
 
 
-        _hydronic_heat_exchanger,
         _dryer_from_hhx,
         _ion_exchange_NH3,
         _struvite_precipitation,
@@ -136,7 +134,6 @@ __all__ = (
 
 
 
-        *_hydronic_heat_exchanger.__all__,
         *_dryer_from_hhx.__all__,
         *_ion_exchange_NH3.__all__,
         *_struvite_precipitation.__all__,

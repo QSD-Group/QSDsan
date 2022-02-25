@@ -87,12 +87,14 @@ class ControlBoxOP(SanUnit):
             self.icp_DC_to_AC +
             self.icp_touch_screen) * self.price_ratio
 
-        cb_annual_maintenance = \
+        # O&M cost converted to annual basis, labor included,
+        # USD/yr only accounts for time running
+        annual_maintenance = \
             (self.electrician_replacecables_icp+self.electrician_replacewires_icp)*self.certified_electrician_wages + \
             self.service_team_replacetouchscreen_icp*self.service_team_wages + \
             self.facility_manager_configurevariable_icp*self.facility_manager_wages + \
             (self.biomass_controls_replaceboard_icp+self.biomass_controls_codemalfunctioning_icp)*self.biomass_controls_wages
 
-        self.add_OPEX =  cb_annual_maintenance/60/self.frequency_corrective_maintenance/(365*24) # USD/hr
+        self.add_OPEX =  annual_maintenance/60/self.frequency_corrective_maintenance/(365*24) # USD/hr
         # kWh/hr
         self.power_utility(self.icp_controller_board_power+self.icp_variable_frequence_drives_power)

@@ -135,7 +135,7 @@ class PollutionControlDevice(SanUnit):
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
 
-        # Part replacement cost converted to annual basis, labor included,
+        # O&M cost converted to annual basis, labor included,
         # USD/yr only accounts for time running
         hpd = self.daily_run_time # hr per day
         replacement_parts_annual_cost = \
@@ -157,4 +157,4 @@ class PollutionControlDevice(SanUnit):
         self.power_utility(power_demand) # kWh/hr
 
         #!!! Still useful?
-        # costs associated with full time opperators can be added in the TEA as staff
+        # costs associated with full time operators can be added in the TEA as staff

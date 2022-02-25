@@ -179,7 +179,7 @@ class CarbonizerBase(SanUnit):
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
 
-        # Part replacement cost converted to annual basis, labor included,
+        # O&M cost converted to annual basis, labor included,
         # USD/yr only accounts for time running
         tot_hr = self.daily_run_time * 365
         replacement_parts_annual_cost = \

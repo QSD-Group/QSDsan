@@ -22,7 +22,7 @@ from biosteam.units import HXprocess, HXutility
 from .. import SanUnit, Construction
 from ..utils import ospath, load_data, data_path, price_ratio
 
-__all__ = ('HXprocess', 'HXutility', 'OilHeatExchanger', )
+__all__ = ('HXprocess', 'HXutility', 'HydronicHeatExchanger', 'OilHeatExchanger', )
 
 
 # %%
@@ -142,7 +142,7 @@ oilhx_path = ospath.join(data_path,'sanunit_data/_oil_heat_exchanger.tsv')
 @price_ratio(default_price_ratio=1)
 class OilHeatExchanger(SanUnit):
     '''
-    Oil heat exhanger utilizes an organic Rankin cycle. This CHP system is
+    Oil heat exchanger utilizes an organic Rankin cycle. This CHP system is
     used to generate additional electricity that the refinery and/or
     facility can use to decrease the units electrical demand on the
     electrical grid. This type of system is required for ISO 31800
@@ -192,6 +192,8 @@ class OilHeatExchanger(SanUnit):
         heat_in = self.ins[0]
         heat_out = self.outs[0]
         heat_out.copy_like(heat_in)
+        # #!!! The following should probably b
+        # hot_gas_out.phase = hot_gas_in.phase = 'g'
         heat_out.phase = 'g'
 
         # Set temperature
@@ -199,9 +201,14 @@ class OilHeatExchanger(SanUnit):
 
         #!!! Below aren't used anywhere
         # Calculate the power that was delivered to the ORC
-        self.power_delivery_orc = self.oil_flowrate * ((273.15 + self.oil_temp_out) - (273.15 + self.oil_temp_in)) * self.oil_density * self.oil_specific_heat * (60/1000)  # MJ/hr
+        self.power_delivery_orc = \
+            self.oil_flowrate * \
+            (self.oil_temp_out-self.oil_temp_in) * \
+            self.oil_density * self.oil_specific_heat * (60/1000)  # MJ/hr
         # Calculate losses through pipe
-        self.pipe_heat_loss = ((273.15 + self.oil_temp_out) - (273.15 + self.amb_temp)) / (self.oil_r_pipe_k_k_w + self.oil_r_insulation_k_k_w) * 3.6  # MJ/hr
+        self.pipe_heat_loss = \
+            (self.oil_temp_out-self.amb_temp) / \
+            (self.oil_r_pipe_k_k_w+self.oil_r_insulation_k_k_w) * 3.6  # MJ/hr
 
 
     def _design(self):
@@ -215,3 +222,129 @@ class OilHeatExchanger(SanUnit):
     def _cost(self):
         self.baseline_purchase_costs['Oil Heat Exchanger'] = self.orc_cost * self.price_ratio
         self.power_utility(self.oil_pump_power-self.oil_electrical_energy_generated) # kWh/hr
+
+
+
+hhx_path = ospath.join(data_path, 'sanunit_data/_hydronic_heat_exchanger.tsv')
+
+@price_ratio
+class HydronicHeatExchanger(SanUnit):
+    '''
+    Hydronic heat exchanger is used for applications that require drying
+    of the feedstock before the refinery is capable of processing the
+    material. The heat is exchanged between the exhaust gas and water,
+    which is then pumped into radiators connected to a dryer.
+    The refinery monitors the temperature of the water to ensure that
+    the feedstock is being sufficiently dried before entering the refinery.
+
+    The following components should be included in system thermo object for simulation:
+    N2O.
+
+    The following impact items should be pre-constructed for life cycle assessment:
+    OilHeatExchanger, Pump.
+
+    Parameters
+    ----------
+    ins : WasteStream
+        Hot gas.
+    outs : WasteStream
+        Hot gas.
+
+    References
+    ----------
+    #!!! Reference?
+
+    '''
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
+
+        self.construction = (
+            Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            Construction('hydronic_heat_exchanger', linked_unit=self, item='HydronicHeatExchanger', quantity_unit='ea'),
+            Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
+            )
+
+        data = load_data(path=hhx_path)
+        for para in data.index:
+            value = float(data.loc[para]['expected'])
+            setattr(self, para, value)
+        del data
+
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+
+
+    _N_ins = 1
+    _N_outs = 1
+
+    def _run(self):
+        hot_gas_in = self.ins[0]
+        hot_gas_out = self.outs[0]
+        # #!!! The following should probably b
+        # hot_gas_out.copy_like(hot_gas_in)
+        # hot_gas_out.phase = hot_gas_in.phase = 'g'
+        hot_gas_out.phase = 'g'
+
+        # Set temperature
+        hot_gas_out.T = self.hhx_temp
+        # Calculate the heat that was delivered to the HHX
+        self.heat_output_water = \
+            self.water_flowrate * \
+            (self.water_out_temp-self.water_in_temp) * \
+            self.water_density_kg_m_3 * \
+            self.water_heat_capacity_k_j_kg_k * (60/1000)  # MJ/hr
+        # Calculate losses through water pipe
+        self.heat_loss_water_pipe = \
+            (self.water_out_temp-self.ambient_temp) / \
+            (self.water_r_pipe_k_k_w+self.water_r_insulation_k_k_w) * 3.6 # MJ/hr
+
+
+    def _design(self):
+        design = self.design_results
+        constr = self.construction
+        design['StainlessSteel'] = constr[0].quantity = self.heat_exchanger_hydronic_stainless
+        design['Steel'] = constr[1].quantity  = self.heat_exchanger_hydronic_steel
+        design['HydronicHeatExchanger'] = constr[2].quantity = 1
+        design['Pump'] = constr[3].quantity = 17.2/2.72
+        self.add_construction()
+
+
+    def _cost(self):
+        C = self.baseline_purchase_costs
+        D = self.design_results
+        C['Stainless steel'] = self.stainless_steel_cost * D['StainlessSteel']
+        C['Steel'] = self.steel_cost * D['Steel']
+        C['Misc. parts'] = \
+            self.hhx_stack + \
+            self.hhx_stack_thermocouple + \
+            self.hhx_oxygen_sensor + \
+            self.hhx_inducer_fan + \
+            self.hhx_flow_meter + \
+            self.hhx_pump + \
+            self.hhx_water_in_thermistor + \
+            self.hhx_water_out_thermistor + \
+            self.hhx_load_tank + \
+            self.hhx_expansion_tank + \
+            self.hhx_heat_exchanger + \
+            self.hhx_values + \
+            self.hhx_thermal_well + \
+            self.hhx_hot_water_tank + \
+            self.hhx_overflow_tank
+
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+           C[equipment] = cost * ratio
+
+        # O&M cost converted to annual basis, labor included,
+        # USD/yr only accounts for time running
+        num = 1 / self.frequency_corrective_maintenance
+        annual_maintenance = \
+            self.service_team_adjustdoor_hhx*12 + \
+            num * (self.service_team_replacewaterpump_hhx+self.service_team_purgewaterloop_hhx)
+
+        self.add_OPEX =  annual_maintenance * self.service_team_wages / 60 / (365 * 24) # USD/hr (all items are per hour)
+
+        self.power_utility(self.water_pump_power+self.hhx_inducer_fan_power) # kWh/hr
