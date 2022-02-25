@@ -42,7 +42,7 @@ class StruvitePrecipitation(SanUnit):
     ins : Iterable (stream obj)
         Liquid waste, Mg(OH)2, MgCO3, filter bag.
     outs : Iterable (stream obj)
-        Treated waste, struvite
+        Treated waste, struvite.
     Mg_molar_split : Iterable(float)
         The molar split between Mg(OH)2 and MgCO3.
         (1, 0) means all Mg is added as Mg(OH)2 and (0,1) means all MgCO3.
@@ -55,7 +55,8 @@ class StruvitePrecipitation(SanUnit):
     https://dx.doi.org/10.1021/acs.est.0c03764
     [2] Tarpeh et al., Evaluating ion exchange for nitrogen recovery from
     source-separated urine in Nairobi, Kenya. Development Engineering. 2018,
-    3, 188–195. https://doi.org/10.1016/j.deveng.2018.07.002
+    3, 188–195.
+    https://doi.org/10.1016/j.deveng.2018.07.002
 
     '''
 
@@ -104,6 +105,8 @@ class StruvitePrecipitation(SanUnit):
         # Total K recovered [kg K/hr]
         treated.imol['K'] =  waste.imol['K'] * (1-self.K_rec_1)
 
+        magnesium_hydroxide.empty()
+        magnesium_carbonate.empty()
         magnesium_hydroxide.imol['MagnesiumHydroxide'] = waste.imol['P']*Mg_dose*Mg_molar_split[0]
         magnesium_carbonate.imol['MagnesiumCarbonate'] = waste.imol['P']*Mg_dose*Mg_molar_split[1]
         struvite.imol['Struvite'] = P_recovered
@@ -127,10 +130,10 @@ class StruvitePrecipitation(SanUnit):
         self.add_OPEX =  0.35/4 * self.baseline_purchase_cost / (365 * 24) # USD/hr (all items are per hour)
 
         #!!! Still need this?
-        # costs associated with full time opperators can be added in the TEA as staff
+        # costs associated with full time operators can be added in the TEA as staff
 
 
     @property
     def N_tank(self):
         '''[int] Number of reactor tanks.'''
-        return ceil(self.outs[0].F_vol*1000/24/self.cycles_per_day/self.reactor_volume)
+        return ceil(self.ins[0].F_vol*1000*24/self.cycles_per_day/self.reactor_volume)

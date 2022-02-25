@@ -33,7 +33,7 @@ from ._excretion import *
 from ._grinder import *
 from ._housing import *
 from ._hxs import *
-from ._ion_exchange_NH3 import *
+from ._ion_exchanges import *
 from ._lumped_cost import *
 from ._pollution_control_device import *
 from ._pumping import *
@@ -74,6 +74,7 @@ from . import (
         _housing,
 	    _hxs,
 	    _internal_circulation_rx,
+        _ion_exchanges,
 	    _lagoon,
 	    _lumped_cost,
 	    _membrane_bioreactors,
@@ -92,7 +93,7 @@ from . import (
 
 
 
-        _ion_exchange_NH3,
+
         _grinder,
 	    )
 
@@ -113,6 +114,7 @@ __all__ = (
         *_housing.__all__,
 	    *_hxs.__all__,
 	    *_internal_circulation_rx.__all__,
+        *_ion_exchanges.__all__,
 	    *_lagoon.__all__,
 	    *_lumped_cost.__all__,
 	    *_membrane_bioreactors.__all__,
@@ -132,6 +134,6 @@ __all__ = (
 
 
 
-        *_ion_exchange_NH3.__all__,
+
         *_grinder.__all__,
 	    )
