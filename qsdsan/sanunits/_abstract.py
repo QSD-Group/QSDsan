@@ -42,6 +42,13 @@ class Mixer(SanUnit, Mixer):
     `biosteam.units.Mixer <https://biosteam.readthedocs.io/en/latest/units/mixing.html>`_
     '''
 
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+                 init_with='WasteStream', F_BM_default=None, isdynamic=False,
+                 rigorous=False):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with,
+                         F_BM_default=F_BM_default, isdynamic=isdynamic)
+        self.rigorous = rigorous
+
 
     @property
     def state(self):
@@ -119,7 +126,7 @@ class Splitter(SanUnit, Splitter):
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *, split, order=None,
-                  init_with='Stream', F_BM_default=None, isdynamic=False):
+                  init_with='WasteStream', F_BM_default=None, isdynamic=False):
         SanUnit.__init__(self, ID, ins, outs, thermo,
                          init_with=init_with, F_BM_default=F_BM_default,
                          isdynamic=isdynamic)

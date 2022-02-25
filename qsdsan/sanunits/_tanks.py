@@ -26,7 +26,7 @@ __all__ = ('Tank', 'MixTank', 'StorageTank', )
 class Tank(SanUnit, Tank, isabstract=True):
     '''
     Similar to the :class:`biosteam.units.Tank`,
-    but can be initilized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
+    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
 
     See Also
     --------
@@ -51,7 +51,7 @@ class Tank(SanUnit, Tank, isabstract=True):
 class MixTank(Tank, MixTank):
     '''
     Similar to the :class:`biosteam.units.MixTank`,
-    but can be initilized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
+    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
 
     .. note::
 
@@ -66,7 +66,7 @@ class MixTank(Tank, MixTank):
 class StorageTank(Tank, StorageTank):
     '''
     Similar to the :class:`biosteam.units.StorageTank`,
-    but can be initilized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
+    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
 
     See Also
     --------

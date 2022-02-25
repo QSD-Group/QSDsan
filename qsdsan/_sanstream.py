@@ -367,7 +367,7 @@ class SanStream(Stream):
         else:
             return stream
 
-    def mix_from(self, others):
+    def mix_from(self, others, **kwargs):
         '''
         Update this stream to be a mixture of other streams,
         initial content of this stream will be ignored.
@@ -400,7 +400,7 @@ class SanStream(Stream):
         '''
 
         others = [s for s in others if not 'Missing' in type(s).__name__]
-        Stream.mix_from(self, others)
+        Stream.mix_from(self, others, **kwargs)
         if not hasattr(self, '_stream_impact_item'):
             self._stream_impact_item = None
 
