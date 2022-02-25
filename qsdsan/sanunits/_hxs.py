@@ -22,7 +22,11 @@ from biosteam.units import HXprocess, HXutility
 from .. import SanUnit, Construction
 from ..utils import ospath, load_data, data_path, price_ratio
 
-__all__ = ('HXprocess', 'HXutility', 'HydronicHeatExchanger', 'OilHeatExchanger', )
+__all__ = (
+    'HXprocess', 'HXutility',
+    'HydronicHeatExchanger', 'HHXdryer',
+    'OilHeatExchanger',
+    )
 
 
 # %%
@@ -137,94 +141,6 @@ class HXutility(SanUnit, HXutility):
 
 # %%
 
-oilhx_path = ospath.join(data_path,'sanunit_data/_oil_heat_exchanger.tsv')
-
-@price_ratio(default_price_ratio=1)
-class OilHeatExchanger(SanUnit):
-    '''
-    Oil heat exchanger utilizes an organic Rankin cycle. This CHP system is
-    used to generate additional electricity that the refinery and/or
-    facility can use to decrease the units electrical demand on the
-    electrical grid. This type of system is required for ISO 31800
-    certification as the treatment unity needs to be energy independent
-    when processing faecal sludge.
-
-    The following components should be included in system thermo object for simulation:
-    N2O.
-
-    The following impact items should be pre-constructed for life cycle assessment:
-    OilHeatExchanger, Pump.
-
-    Parameters
-    ----------
-    ins : stream obj
-        Hot gas.
-    outs : stream obj
-        Hot gas.
-
-    References
-    ----------
-    #!!! Reference?
-
-    '''
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
-
-        self.construction = (
-            Construction('oil_heat_exchanger', linked_unit=self, item='OilHeatExchanger', quantity_unit='ea'),
-            Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
-            )
-
-        data = load_data(path=oilhx_path)
-        for para in data.index:
-            value = float(data.loc[para]['expected'])
-            setattr(self, para, value)
-        del data
-
-        for attr, value in kwargs.items():
-            setattr(self, attr, value)
-
-    _N_ins = 1
-    _N_outs = 1
-
-    def _run(self):
-        heat_in = self.ins[0]
-        heat_out = self.outs[0]
-        heat_out.copy_like(heat_in)
-        # #!!! The following should probably b
-        # hot_gas_out.phase = hot_gas_in.phase = 'g'
-        heat_out.phase = 'g'
-
-        # Set temperature
-        heat_out.T = self.ohx_temp
-
-        #!!! Below aren't used anywhere
-        # Calculate the power that was delivered to the ORC
-        self.power_delivery_orc = \
-            self.oil_flowrate * \
-            (self.oil_temp_out-self.oil_temp_in) * \
-            self.oil_density * self.oil_specific_heat * (60/1000)  # MJ/hr
-        # Calculate losses through pipe
-        self.pipe_heat_loss = \
-            (self.oil_temp_out-self.amb_temp) / \
-            (self.oil_r_pipe_k_k_w+self.oil_r_insulation_k_k_w) * 3.6  # MJ/hr
-
-
-    def _design(self):
-        design = self.design_results
-        constr = self.construction
-        design['OilHeatExchanger'] = constr[0].quantity = 4/200
-        design['Pump'] = constr[1].quantity = 2.834/2.27
-        self.add_construction()
-
-
-    def _cost(self):
-        self.baseline_purchase_costs['Oil Heat Exchanger'] = self.orc_cost * self.price_ratio
-        self.power_utility(self.oil_pump_power-self.oil_electrical_energy_generated) # kWh/hr
-
-
-
 hhx_path = ospath.join(data_path, 'sanunit_data/_hydronic_heat_exchanger.tsv')
 
 @price_ratio
@@ -236,6 +152,8 @@ class HydronicHeatExchanger(SanUnit):
     which is then pumped into radiators connected to a dryer.
     The refinery monitors the temperature of the water to ensure that
     the feedstock is being sufficiently dried before entering the refinery.
+
+    This class should be used together with :class:`~.sanunits.DryerFromHHX`.
 
     The following components should be included in system thermo object for simulation:
     N2O.
@@ -253,6 +171,10 @@ class HydronicHeatExchanger(SanUnit):
     References
     ----------
     #!!! Reference?
+
+    See Also
+    --------
+    :class:`~.sanunits.DryerFromHHX`
 
     '''
 
@@ -348,3 +270,205 @@ class HydronicHeatExchanger(SanUnit):
         self.add_OPEX =  annual_maintenance * self.service_team_wages / 60 / (365 * 24) # USD/hr (all items are per hour)
 
         self.power_utility(self.water_pump_power+self.hhx_inducer_fan_power) # kWh/hr
+
+
+hhx_dryer_path = ospath.join(data_path, 'sanunit_data/_hhx_dryer.tsv')
+
+@price_ratio(default_price_ratio=1)
+class HHXdryer(SanUnit):
+    '''
+    Dryer is used in combination with :class:`~.sanunits.HydronicHeatExchanger`.
+
+    Parameters
+    ----------
+    ins : WasteStream
+        Dewatered solids, heat.
+    outs : WasteStream
+        Dried solids, fugitive N2O, fugitive CH4.
+    #!!! Get rid of these?
+            set both as WasteStream
+            others could be:
+            Gases consist of SO2_emissions, NOx_emissions, CO_emissions,
+            Hg_emissions, Cd_emissions, As_emissions, Dioxin_Furans_emissions.
+    moisture_content_out : float
+        Desired moisture content of the effluent.
+
+    References
+    ----------
+    #!!! Reference?
+
+    See Also
+    --------
+    :class:`~.sanunits.HydronicHeatExchanger`
+
+    '''
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 moisture_content_out=0.35, **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
+        self.moisture_content_out = moisture_content_out
+
+        data = load_data(path=hhx_dryer_path)
+        for para in data.index:
+            value = float(data.loc[para]['expected'])
+            setattr(self, para, value)
+        del data
+
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+
+
+    _N_ins = 2
+    _N_outs = 3
+
+    def _run(self):
+        waste_in, heat_in = self.ins
+        waste_out, N2O, CH4  = self.outs
+        waste_out.copy_like(self.ins[0])
+        heat_in.phase = N2O.phase = CH4.phase = 'g'
+
+        # Calculate heat needed to dry to the desired moisture content
+        mc_in = waste_in.imass['H2O'] / waste_in.F_mass # fraction
+        mc_out = self.moisture_content_out
+        if mc_in < mc_out:
+            raise RuntimeError(f'Moisture content of the influent stream ({mc_in:.2f}) '
+                               f'is smaller than the desired moisture cotent ({mc_out:.2f}).')
+        TS_in = waste_in.F_mass - waste_in.imass['H2O'] # kg TS dry/hr
+        waste_out.imass['H2O'] = TS_in/(1-mc_out)*mc_out
+        water_to_dry = waste_in.imass['H2O'] - waste_out.imass['H2O'] # kg water/hr
+        heat_needed_to_dry_35 = water_to_dry * self.energy_required_to_dry_sludge # MJ/hr
+
+        #!!! heat_supplied isn't calculated from heat_in and heat loss?
+        heat_supplied = self.dryer_heat_transfer_coeff * self.area_surface * (self.water_out_temp-self.feedstock_temp)
+
+        if heat_needed_to_dry_35 > heat_supplied:
+            raise RuntimeError(f'Heat required exceeds heat supplied.')
+
+        #!!! Still needs this?
+        # set to use COD or C for carbon based on influent composition
+        # if waste_in.COD == 0:
+        #     C_in = waste_in.imass['C']
+
+        # else:
+        #     C_in = self.carbon_COD_ratio * waste_in.COD
+
+        # Emissions
+        drying_CO2_to_air = (self.drying_CO2_emissions * self.carbon_COD_ratio
+                             * waste_in.COD * waste_in.F_vol / 1000) # kg CO2 /hr
+
+        #!!! Add or not?
+        # add conversion factor for COD to TC?
+        CH4.imass['CH4'] = drying_CH4_to_air = \
+            self.drying_CH4_emissions * self.carbon_COD_ratio * \
+            waste_in.COD * waste_in.F_vol / 1000 # kg CH4 /hr
+
+        drying_NH3_to_air = self.drying_NH3_emissions * waste_in.TN * waste_in.F_vol / 1000 # kg NH3 /hr
+        N2O.imass['N2O'] = drying_NH3_to_air * self.NH3_to_N2O # kg N2O /hr
+
+        #!!! This is not correct, need to convert from CH4/CO2 to C
+        # Reduce COD and TN in waste_out based on emissions
+        waste_out._COD = (waste_in.COD * (waste_in.F_vol/waste_out.F_vol)) - ((drying_CO2_to_air + drying_CH4_to_air) / self.carbon_COD_ratio)
+        # # Probably should be like this
+        # waste_out._COD = (waste_in.COD*waste_in.F_vol - (drying_CO2_to_air/44*12+drying_CH4_to_air/16*12) / self.carbon_COD_ratio)
+
+        #!!! Why this is commented out?
+        # waste_out.imass['C'] -= ((drying_CO2_to_air + drying_CH4_to_air))
+
+        #!!! Should do the conversion from NH3 to N
+        waste_out.imass['N'] -= drying_NH3_to_air
+
+        #!!! Are these used?
+        # Jacket loss data and calculate losses due to convection and radiation
+        self.jacket_heat_loss_conv = self.heat_transfer_coeff * (self.water_air_hx_temp1 - self.ambient_temp) * self.water_air_hx_area1 / 1000 / 0.2778 # MJ/hr
+        self.jacket_heat_loss_radiation = self.radiative_emissivity * 5.67e-8 * ((self.water_air_hx_temp1 + 273)**4 - (self.ambient_temp + 273)**4) / 1000 / 0.2778 # MJ/hr
+        self.jacket_heat_loss_sum = self.jacket_heat_loss_conv + self.jacket_heat_loss_radiation # MJ/hr
+        #these can be calculated for pyrolysis and catalytic converter also
+
+
+# %%
+
+oilhx_path = ospath.join(data_path,'sanunit_data/_oil_heat_exchanger.tsv')
+
+@price_ratio(default_price_ratio=1)
+class OilHeatExchanger(SanUnit):
+    '''
+    Oil heat exchanger utilizes an organic Rankin cycle. This CHP system is
+    used to generate additional electricity that the refinery and/or
+    facility can use to decrease the units electrical demand on the
+    electrical grid. This type of system is required for ISO 31800
+    certification as the treatment unity needs to be energy independent
+    when processing faecal sludge.
+
+    The following components should be included in system thermo object for simulation:
+    N2O.
+
+    The following impact items should be pre-constructed for life cycle assessment:
+    OilHeatExchanger, Pump.
+
+    Parameters
+    ----------
+    ins : stream obj
+        Hot gas.
+    outs : stream obj
+        Hot gas.
+
+    References
+    ----------
+    #!!! Reference?
+
+    '''
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
+
+        self.construction = (
+            Construction('oil_heat_exchanger', linked_unit=self, item='OilHeatExchanger', quantity_unit='ea'),
+            Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
+            )
+
+        data = load_data(path=oilhx_path)
+        for para in data.index:
+            value = float(data.loc[para]['expected'])
+            setattr(self, para, value)
+        del data
+
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+
+    _N_ins = 1
+    _N_outs = 1
+
+    def _run(self):
+        heat_in = self.ins[0]
+        heat_out = self.outs[0]
+        heat_out.copy_like(heat_in)
+        # #!!! The following should probably b
+        # hot_gas_out.phase = hot_gas_in.phase = 'g'
+        heat_out.phase = 'g'
+
+        # Set temperature
+        heat_out.T = self.ohx_temp
+
+        #!!! Below aren't used anywhere
+        # Calculate the power that was delivered to the ORC
+        self.power_delivery_orc = \
+            self.oil_flowrate * \
+            (self.oil_temp_out-self.oil_temp_in) * \
+            self.oil_density * self.oil_specific_heat * (60/1000)  # MJ/hr
+        # Calculate losses through pipe
+        self.pipe_heat_loss = \
+            (self.oil_temp_out-self.amb_temp) / \
+            (self.oil_r_pipe_k_k_w+self.oil_r_insulation_k_k_w) * 3.6  # MJ/hr
+
+
+    def _design(self):
+        design = self.design_results
+        constr = self.construction
+        design['OilHeatExchanger'] = constr[0].quantity = 4/200
+        design['Pump'] = constr[1].quantity = 2.834/2.27
+        self.add_construction()
+
+
+    def _cost(self):
+        self.baseline_purchase_costs['Oil Heat Exchanger'] = self.orc_cost * self.price_ratio
+        self.power_utility(self.oil_pump_power-self.oil_electrical_energy_generated) # kWh/hr
