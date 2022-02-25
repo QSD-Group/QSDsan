@@ -8,6 +8,7 @@ This module is developed by:
     Smiti Mittal <smitimittal@gmail.com>
     Yalin Li <zoe.yalin.li@gmail.com>
     Anna Kogler
+    Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -16,8 +17,9 @@ for license details.
 
 
 from .. import Equipment
+# from .utils import auom
 
-__all__ = ('Membrane',)
+__all__ = ('Membrane', 'HollowFiberMembrane')
 
 
 class Membrane(Equipment):
@@ -79,3 +81,49 @@ class Membrane(Equipment):
     @N.setter
     def N(self, i):
         self._N = int(i)
+        
+
+class HollowFiberMembrane(Equipment):
+    
+    _PermSelect_pricing = {
+        # model: (area [cm^2], price [USD], min Q_gas [scfm], max Q_gas [scfm])
+        'PDMSXA-10': (10, 117, 4e-5, 4e-3), 
+        'PDMSXA-1000': (1000, 304, 4e-3, 0.4),
+        'PDMSXA-7500': (7500, 541, 2e-2, 1.0),
+        'PDMSXA-2.1': (2.1e4, 1045, 4e-2, 2.0)
+        }
+    
+    scfm_to_kmolphr = 0.002641 * 453.59237 * 60 / 1000
+    
+    def __init__(self, ID='', linked_unit=None,
+                 units=dict(), F_BM=1.15, lifetime=5, lifetime_unit='yr',
+                 material='polydimethylsiloxane'):
+        Equipment.__init__(self=self, ID=ID, linked_unit=linked_unit, units=units,
+                           F_BM=F_BM, lifetime=lifetime, lifetime_unit=lifetime_unit)
+        self.material = material
+        
+    def _design(self):
+        for ws in self.linked_unit.outs:
+            if ws.phase == 'g':
+                Q_mol = ws.F_mol # kmol/hr
+                break
+        key = None
+        N = 0
+        while not key: 
+            N += 1
+            Q = Q_mol / N
+            for md, data in self._PermSelect_pricing.items():
+                Q_max = data[-1] * self.scfm_to_kmolphr
+                if Q < Q_max:
+                    key = md
+        return {'Material': self.material,
+                'Number of membrane units': N,
+                'Membrane unit model':key}
+                
+    def _cost(self):
+        design = self._design()
+        N = design['Number of membrane units']
+        key = design['Membrane unit model']
+        p = self._PermSelect_pricing[key][1]
+        return N * p
+        

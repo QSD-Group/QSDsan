@@ -30,6 +30,7 @@ from ._sludge_thickening import *
 from ._suspended_growth_bioreactor import *
 from ._tanks import *
 from ._trucking import *
+from ._encapsulation_bioreactor import *
 
 # Units that rely on other units
 from ._activated_sludge import *
@@ -54,6 +55,7 @@ from . import (
     _decay,
     _dynamic_influent,
     _electrochemical_cell,
+    _encapsulation_bioreactor,
     _excretion,
     _hx,
     _internal_circulation_rx,
@@ -82,6 +84,7 @@ __all__ = (
     *_decay.__all__,
     *_dynamic_influent.__all__,
     *_electrochemical_cell.__all__,
+    *_encapsulation_bioreactor.__all__,
     *_excretion.__all__,
     *_hx.__all__,
     *_internal_circulation_rx.__all__,
