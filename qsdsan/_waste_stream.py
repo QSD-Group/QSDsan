@@ -628,7 +628,7 @@ class WasteStream(SanStream):
             IDs = tuple(subgroup_IDs)
 
         cmps = all_cmps.subgroup(IDs)
-        cmp_c = self.iconc[IDs].value # [mg/L]
+        cmp_c = self.iconc[IDs] # [mg/L]
         exclude_gas = cmps.s + cmps.c + cmps.x
 
         if variable == 'COD':
