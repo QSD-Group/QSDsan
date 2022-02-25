@@ -30,11 +30,11 @@ class CarbonizerBase(SanUnit):
     pot where it is exposed to high temperature pyrolysis. This process
     produces biochar and hot gases.
 
-    The Carbonizer base is the central location for the combined pyrolysis
+    The carbonizer base is the central location for the combined pyrolysis
     and combustion process. The feedstock is received into the pyrolysis pot
     where it is flash pyrolyzed releasing volatile gases which are then mixed
     with air which is pumped in through the Primary Blower causing combustion
-    of the gases. Due to the combustion of gases, the Carbonizer base is the
+    of the gases. Due to the combustion of gases, the carbonizer base is the
     hottest location of the refinery ranging between 550-900°C. This
     range is closely monitored as pyrolysis usually starts at 350°C and
     all of the volatile gases are released at 550°C. This temperature is
@@ -65,7 +65,6 @@ class CarbonizerBase(SanUnit):
     ----------
     #!!! Reference?
     '''
-
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  **kwargs):
@@ -180,11 +179,10 @@ class CarbonizerBase(SanUnit):
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
 
-        # Part replacement cost converted to annual basis, labor inncluded,
+        # Part replacement cost converted to annual basis, labor included,
         # USD/yr only accounts for time running
-        #!!! But price_ratio is not considered here?
         tot_hr = self.daily_run_time * 365
-        cb_replacement_parts_annual_cost = \
+        replacement_parts_annual_cost = \
             tot_hr/self.pyrolysis_pot_lifetime_cb * self.pyrolysis_pot_cost_cb + \
             tot_hr/self.char_auger_motor_lifetime_cb * self.char_auger_motor_cost_cb + \
             tot_hr/self.fuel_auger_motor_lifetime_cb * self.fuel_auger_motor_cost_cb + \
@@ -194,9 +192,9 @@ class CarbonizerBase(SanUnit):
             1/self.forced_air_fan_lifetime_cb * self.forced_air_fan_cost_cb + \
             1/self.airlock_motor_lifetime_cb * self.airlock_motor_cost_cb + \
             1/self.inducer_fan_lifetime_cb * self.inducer_fan_cost_cb
-        cb_replacement_parts_annual_cost *= ratio
+        replacement_parts_annual_cost *= ratio
 
-        cb_annual_maintenance = \
+        annual_maintenance = \
             (self.service_team_greasebearing_cb+self.service_team_tighten_cb+self.service_team_adjustdoor_cb) * 12 + \
             1/self.frequency_corrective_maintenance * (
                 self.service_team_replacegasket_cb +
@@ -210,10 +208,10 @@ class CarbonizerBase(SanUnit):
             1/self.inducer_fan_lifetime_cb * self.service_team_replacefan_cb + \
             1/self.frequency_corrective_maintenance * self.service_team_replacepaddleswitch_cb + \
             1/self.airlock_motor_lifetime_cb * self.service_team_replaceairlock_cb
-        cb_annual_maintenance *= self.service_team_wages / 60
+        annual_maintenance *= self.service_team_wages / 60
 
         self.add_OPEX = ( # USD/hr (all items are per hour)
-            cb_replacement_parts_annual_cost+cb_annual_maintenance) / (365 * 24)
+            replacement_parts_annual_cost+annual_maintenance) / (365 * 24)
 
         power_demand = \
             self.carbonizer_biochar_auger_power + \
