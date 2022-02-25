@@ -19,7 +19,7 @@ Ongoing
 	- :class:`~.sanunits.PolishingFilter`
 	- :class:`~.sanunits.WWTpump`
 
-- Added documentation for the util functions.
+- Continue to enhance documentation (e.g., :class:`~.Process`, `~.stats`, util functions).
 - Building the `official website <https://qsdsan.com>`_ of ``QSDsan``! The first version expected to go live Spring, 2022.
 
 

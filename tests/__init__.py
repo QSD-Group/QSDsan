@@ -38,7 +38,7 @@ __all__ = (
     )
 
 # Only runs locally because of version management,
-# these tests will be run in ``exposan``'s tests online
+# these tests will be run in `exposan`'s tests online
 try:
     from . import test_es_temp
 except:

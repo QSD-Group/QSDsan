@@ -463,7 +463,7 @@ class LCA:
 
         .. note::
 
-            Energy of the stream will be calcuated as the sum of HHVs of all components
+            Energy of the stream will be calculated as the sum of HHVs of all components
             in the stream.
 
         '''
