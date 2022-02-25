@@ -937,7 +937,7 @@ class WasteStream(SanStream):
         return new
 
 
-    def mix_from(self, others):
+    def mix_from(self, others, **kwargs):
         '''
         Update this stream to be a mixture of other streams,
         initial content of this stream will be ignored.
@@ -946,7 +946,10 @@ class WasteStream(SanStream):
         ----------
         others : iterable
             Can contain :class:`thermosteam.Stream`, :class:`SanStream`,
-            or :class:`~.WasteStream`
+            or :class:`~.WasteStream`.
+        kwargs : dict
+            Other keyword arguments that will be passed to :func:`Stream.mix_from`
+
 
         .. note::
 
@@ -973,7 +976,7 @@ class WasteStream(SanStream):
           S_O2         303021.4
           H2O          303021.4
         '''
-        SanStream.mix_from(self, others)
+        SanStream.mix_from(self, others, **kwargs)
 
         for slot in _ws_specific_slots:
             if not hasattr(self, slot):
@@ -1125,35 +1128,35 @@ class WasteStream(SanStream):
     @property
     def state(self):
         if self.isproduct(): return self._state
-        else: 
+        else:
             i = self._sink._ins.index(self)
             return self._sink._ins_QC[i]
-    
+
     @state.setter
     def state(self, y):
-        if self.isproduct(): 
+        if self.isproduct():
             try: self._state[:] = y
             except TypeError: self._state = y
-        else: 
+        else:
             i = self._sink._ins.index(self)
             self._sink._ins_QC[i,:] = y
-    
+
     @property
     def dstate(self):
         if self.isproduct(): return self._dstate
         else:
             i = self._sink._ins.index(self)
             return self._sink._ins_dQC[i]
-    
+
     @dstate.setter
     def dstate(self, dy):
-        if self.isproduct(): 
+        if self.isproduct():
             try: self._dstate[:] = dy
             except TypeError: self._dstate = dy
             # decide whether to record state over time
-        else: 
+        else:
             i = self._sink._ins.index(self)
-            self._sink._ins_dQC[i,:] = dy        
+            self._sink._ins_dQC[i,:] = dy
 
     @property
     def scope(self):
@@ -1161,7 +1164,7 @@ class WasteStream(SanStream):
         if not hasattr(self, '_scope'):
             self._scope = WasteStreamScope(self)
         return self._scope
-    
+
     @scope.setter
     def scope(self, s):
         if not isinstance(s, Scope):
@@ -1175,7 +1178,7 @@ class WasteStream(SanStream):
                 raise ValueError(f'The subject of {s} must be {self} not {s.subject}.')
         self._scope = s
 
-    def _init_state(self):  
+    def _init_state(self):
         self.state = np.append(self.conc.astype('float64'), self.get_total_flow('m3/d'))
         self.dstate = np.zeros_like(self.state)
 
