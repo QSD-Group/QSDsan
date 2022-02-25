@@ -48,7 +48,7 @@ class ControlBoxOP(SanUnit):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
+        SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
 
         self.construction = (
             Construction('electronics', linked_unit=self, item='Electronics', quantity_unit='kg'),

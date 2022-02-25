@@ -43,7 +43,7 @@ class HousingBiogenicRefinery(SanUnit):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  const_wage=15, const_person_days=100, **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
         self.const_wage = const_wage
         self.const_person_days = const_person_days
 

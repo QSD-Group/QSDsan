@@ -24,7 +24,7 @@ from ._abstract import *
 from ._carbonizer_base import *
 from ._clarifier import *
 from ._combustion import *
-from ._control_box import *
+from ._control_boxes import *
 from ._crop_application import *
 from ._decay import *
 from ._dynamic_influent import *
@@ -67,7 +67,7 @@ from . import (
 	    _anaerobic_reactors,
 	    _clarifier,
 	    _combustion,
-        _control_box,
+        _control_boxes,
 	    _crop_application,
 	    _decay,
 	    _dynamic_influent,
@@ -109,7 +109,7 @@ __all__ = (
 	    *_anaerobic_reactors.__all__,
 	    *_clarifier.__all__,
 	    *_combustion.__all__,
-        *_control_box.__all__,
+        *_control_boxes.__all__,
 	    *_crop_application.__all__,
 	    *_decay.__all__,
 	    *_dynamic_influent.__all__,
