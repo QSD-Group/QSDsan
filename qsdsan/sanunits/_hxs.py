@@ -279,6 +279,9 @@ class HHXdryer(SanUnit):
     '''
     Dryer is used in combination with :class:`~.sanunits.HydronicHeatExchanger`.
 
+    The following components should be included in system thermo object for simulation:
+    H2O, N, CH4, N2O.
+
     Parameters
     ----------
     ins : WasteStream
@@ -342,7 +345,7 @@ class HHXdryer(SanUnit):
         heat_supplied = self.dryer_heat_transfer_coeff * self.area_surface * (self.water_out_temp-self.feedstock_temp)
 
         if heat_needed_to_dry_35 > heat_supplied:
-            raise RuntimeError(f'Heat required exceeds heat supplied.')
+            raise RuntimeError('Heat required exceeds heat supplied.')
 
         #!!! Still needs this?
         # set to use COD or C for carbon based on influent composition

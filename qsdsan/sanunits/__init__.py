@@ -28,7 +28,6 @@ from ._control_boxes import *
 from ._crop_application import *
 from ._decay import *
 from ._dynamic_influent import *
-from ._dryer_from_hhx import *
 from ._electrochemical_cell import *
 from ._excretion import *
 from ._grinder import *
@@ -84,6 +83,7 @@ from . import (
 	    _screening,
 	    _sedimentation,
 	    _sludge_thickening,
+        _struvite_precipitation,
 	    _suspended_growth_bioreactor,
 	    _tanks,
 	    _toilets,
@@ -92,10 +92,7 @@ from . import (
 
 
 
-
-        _dryer_from_hhx,
         _ion_exchange_NH3,
-        _struvite_precipitation,
         _grinder,
 	    )
 
@@ -125,6 +122,7 @@ __all__ = (
 	    *_screening.__all__,
 	    *_sedimentation.__all__,
 	    *_sludge_thickening.__all__,
+        *_struvite_precipitation.__all__,
 	    *_suspended_growth_bioreactor.__all__,
 	    *_tanks.__all__,
 	    *_toilets.__all__,
@@ -134,8 +132,6 @@ __all__ = (
 
 
 
-        *_dryer_from_hhx.__all__,
         *_ion_exchange_NH3.__all__,
-        *_struvite_precipitation.__all__,
         *_grinder.__all__,
 	    )
