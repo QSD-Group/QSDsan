@@ -35,7 +35,7 @@ class H2E(SanUnit):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, 
                  init_with='WasteStream', equipments=(), lifetime=20, 
-                 COD_removal=0.28, H2_yield=4e-4, CH4_yield=0.0, frac_H2=0.2, 
+                 COD_removal=0.2, H2_yield=4e-4, CH4_yield=0.0, frac_H2=0.28, 
                  tau=1, T=273.15+35, safety_factor=1.3, 
                  V_frac_beads=0.09, e_heat=0.8, p_treatment=0.24, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, 
@@ -236,7 +236,7 @@ class H2E(SanUnit):
 class CH4E(H2E):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 equipments=(), lifetime=20, COD_removal=0.5, CH4_yield=0.135, 
+                 equipments=(), lifetime=20, COD_removal=0.55, CH4_yield=0.135, 
                  frac_CH4=0.62, tau=15, T=273.15+35, d_wall=0.1, d_slab=0.1, 
                  safety_factor=1.3, V_frac_beads=0.09, e_heat=0.8, 
                  p_treatment=0.24, p_wall_concrete=497.25, 
