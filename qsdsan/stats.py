@@ -41,7 +41,6 @@ from SALib.sample import (
 from SALib.analyze import morris, fast, rbd_fast, sobol
 from SALib.plotting import morris as sa_plt_morris
 from biosteam.plots import plot_spearman
-from .utils import time_printer
 
 var_indices = bst.evaluation._model.var_indices
 indices_to_multiindex = bst.evaluation._model.indices_to_multiindex
