@@ -23,6 +23,9 @@ def test_exposan():
     from exposan import bwaise as bw
     bw.print_summaries((bw.sysA, bw.sysB, bw.sysC))
 
+    from exposan import cas
+    cas.sys.simulate()
+
 
 if __name__ == '__main__':
     test_exposan()

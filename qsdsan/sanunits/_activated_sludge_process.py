@@ -460,12 +460,8 @@ class ActivatedSludgeProcess(SanUnit):
             'inf': inf,
             'recir': ras,
             }
-        # ins_dct = {
-        #     'inf': inf.proxy(f'{ID}_inf'),
-        #     'recir': ras.proxy(f'{ID}_ras'),
-        #     }
         type_dct = dict.fromkeys(pumps, '')
-        inputs_dct = dict.fromkeys(pumps, self.N_train)
+        inputs_dct = dict.fromkeys(pumps, (self.N_train,))
         for i in pumps:
             if hasattr(self, f'{i}_pump'):
                 p = getattr(self, f'{i}_pump')

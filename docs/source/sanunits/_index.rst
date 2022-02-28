@@ -19,6 +19,7 @@ Links to docs
    :maxdepth: 1
 
    abstract
+   ActivatedSludgeProcess
    anaerobic_reactors
    clarifiers
    combustion

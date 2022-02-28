@@ -1,5 +1,6 @@
 ﻿Unit,Dynamic,Abstract,Status
 ﻿AnMBR (anaerobic membrane bioreactor),No,No,Completed
+ActivatedSludgeProcess,No,No,Under development
 AnaerobicBaffledReactor,No,No,Completed
 AnaerobicDigestion,No,No,Completed
 BeltThickener,No,No,Completed
