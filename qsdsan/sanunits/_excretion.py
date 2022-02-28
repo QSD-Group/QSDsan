@@ -195,7 +195,7 @@ class Excretion(SanUnit):
 
     @property
     def N_ur(self):
-        '''[float] Nitrogen content of urine, [wt%].'''
+        '''[float] Nitrogen recovered in urine, [wt%].'''
         return self._N_ur
     @N_ur.setter
     def N_ur(self, i):
@@ -203,7 +203,7 @@ class Excretion(SanUnit):
 
     @property
     def P_ur(self):
-        '''[float] Phosphorus content of urine, [wt%].'''
+        '''[float] Phosphorus recovered in urine, [wt%].'''
         return self._P_ur
     @P_ur.setter
     def P_ur(self, i):
@@ -211,7 +211,7 @@ class Excretion(SanUnit):
 
     @property
     def K_ur(self):
-        '''[float] Potassium content of urine, [wt%].'''
+        '''[float] Potassium recovered in urine, [wt%].'''
         return self._K_ur
     @K_ur.setter
     def K_ur(self, i):
