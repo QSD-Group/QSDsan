@@ -292,8 +292,8 @@ class ActivatedSludgeProcess(SanUnit):
             eff_dct.update({cmp.ID: conc for cmp, conc in zip(substrates, S_conc)})
         else: # Only one component in `substrates`
             eff_dct[substrates[0].ID] = S_conc
-        # Non-substrate and non-particulate (soluble, colloial, dissolved gas) components
-        # will be splitted in the same way as flow rate mass-wise
+        # Non-substrate and non-particulate (soluble, colloidal, dissolved gas) components
+        # will be split in the same way as flow rate mass-wise
         was_dct = eff_dct.copy()
 
         # Particulate components

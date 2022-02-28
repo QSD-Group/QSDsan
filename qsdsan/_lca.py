@@ -66,8 +66,7 @@ class LCA:
     >>> from qsdsan.utils import load_example_cmps, load_example_sys
     >>> cmps = load_example_cmps()
     >>> sys = load_example_sys(cmps)
-    >>> sys.diagram() # doctest: +ELLIPSIS
-    <...
+    >>> sys.diagram() # doctest: +SKIP
     >>> sys.simulate()
     >>> sys.show()
     System: sys
@@ -179,6 +178,27 @@ class LCA:
     >>> # Below is for testing purpose, you do not need it
     >>> lca.get_impact_table('Construction').to_dict() # doctest: +ELLIPSIS
     {'Quantity': ...
+    >>> lca.get_impact_table('Transportation').to_dict() # doctest: +ELLIPSIS
+    {'Quantity': ...
+    >>> lca.get_impact_table('Stream').to_dict() # doctest: +ELLIPSIS
+    {'Mass [kg]': ...
+    >>> lca.get_impact_table('Construction').to_dict() # doctest: +ELLIPSIS
+    {'Quantity': ...
+
+    You can also allocate the impact based on mass, energy, value, or a ratio you like
+
+    >>> lca.get_allocated_impacts(sys.products, allocate_by='mass')['waste_brine']['FossilEnergyConsumption'] # doctest: +NUMBER
+    28761581.933170985
+    >>> lca.get_allocated_impacts(sys.products, allocate_by='energy')['alcohols']['GlobalWarming'] # doctest: +NUMBER
+    11063009.556015274
+    >>> alcohols.price = 5
+    >>> waste_brine.price = 1
+    >>> GWP_alcohols = lca.get_allocated_impacts(sys.products, allocate_by='value')['alcohols']['GlobalWarming']
+    >>> GWP_brine = lca.get_allocated_impacts(sys.products, allocate_by='value')['waste_brine']['GlobalWarming']
+    >>> GWP_alcohols + GWP_brine # doctest: +NUMBER
+    5469807.976508294
+    >>> lca.get_total_impacts(exclude=sys.products)['GlobalWarming'] # doctest: +NUMBER
+    5469807.976508295
 
     See Also
     --------
@@ -447,6 +467,10 @@ class LCA:
         '''
         Allocate total impacts to one or multiple streams.
 
+        Note that original impacts assigned to the streams will be excluded,
+        i.e., the total impact for allocation will be calculated using
+        `LCA.get_total_impacts(exclude=streams)`.
+
         Parameters
         ----------
         streams : :class:`WasteStream` or iterable
@@ -487,7 +511,8 @@ class LCA:
             ratios = allocate_by()
         else:
             raise ValueError('allocate_by can only be "mass", "energy", "value", '
-                             'an iterable, or a function to generate an iterable.')
+                             'an iterable (with the same length as `streams`), '
+                             'or a function to generate an iterable.')
         if ratios.sum() == 0:
             raise ValueError('Calculated allocation ratios are all zero, cannot allocate.')
         ratios = ratios/ratios.sum()
@@ -496,8 +521,7 @@ class LCA:
                 continue
             if not s in self.system.streams:
                 raise ValueError(f'`WasteStream` {s} not in the system.')
-            allocated[s.ID] = dict.fromkeys(impact_dct.keys(),
-                                            (ratios[n]*impact_vals).sum())
+            allocated[s.ID] = dict(zip(impact_dct.keys(), ratios[n]*impact_vals))
         return allocated
 
 
