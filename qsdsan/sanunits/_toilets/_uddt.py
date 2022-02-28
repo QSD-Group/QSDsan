@@ -243,11 +243,10 @@ class UDDT(Toilet):
 
         # Scale up the effluent based on the number of user per toilet and
         # toilet number
-        tot_user = self.N_user * self.N_toilet
-
+        N_tot_user = self.N_tot_user or self.N_toilet*self.N_user
         for i in self.outs:
             if not i.F_mass == 0:
-                i.F_mass *= tot_user
+                i.F_mass *= N_tot_user
 
 
     _units = {
