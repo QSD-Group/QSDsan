@@ -119,13 +119,17 @@ def test_process():
     # Try re-pickling if the tests are run locally and
     # the environment supports Pickle Protocol 5
     pickle = True if _pk else False
-    try: pc.load_asm1_cmps()
+    try:
+        pc._asm1.create_asm1_cmps(pickle=False) # test function
+        pc.load_asm1_cmps()
     except:
-        pc._asm1._create_asm1_cmps(pickle=pickle)
+        pc._asm1.create_asm1_cmps(pickle=pickle)
 
-    try: pc.load_asm2d_cmps()
+    try:
+        pc._asm2d.create_asm2d_cmps(pickle=False) # test function
+        pc.load_asm2d_cmps()
     except:
-        pc._asm2d._create_asm2d_cmps(pickle=pickle)
+        pc._asm2d.create_asm2d_cmps(pickle=pickle)
         pc.load_asm2d_cmps()
 
 

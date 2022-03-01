@@ -50,6 +50,8 @@ def sum_system_utility(system, operating_hours=None, exclude_units=(),
     >>> sys.simulate()
     >>> sum_system_utility(sys, utility='heating', result_unit='kJ/yr') # doctest: +NUMBER
     463359.8752661339
+    >>> sum_system_utility(sys, utility='cooling', result_unit='GJ/yr') # doctest: +NUMBER
+    0.0
     >>> # Exclude a certain unit
     >>> sum_system_utility(sys, utility='power') # doctest: +NUMBER
     8026.734351097134

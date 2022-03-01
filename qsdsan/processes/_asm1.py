@@ -22,7 +22,7 @@ _path_cmps = ospath.join(data_path, '_asm1_cmps.pckl')
 _load_components = settings.get_default_chemicals
 
 ############# Components with default notation #############
-def _create_asm1_cmps(pickle=False):
+def create_asm1_cmps(pickle=False):
     cmps = Components.load_default()
 
     S_I = cmps.S_U_Inf.copy('S_I')
@@ -42,7 +42,7 @@ def _create_asm1_cmps(pickle=False):
 
     X_BH = cmps.X_OHO.copy('X_BH')
     X_BH.description = 'Active heterotrophic biomass'
-    
+
 
     X_BA = cmps.X_AOO.copy('X_BA')
     X_BA.description = 'Active autotrophic biomass'
@@ -84,15 +84,16 @@ def _create_asm1_cmps(pickle=False):
     if pickle:
         save_pickle(cmps_asm1, _path_cmps)
     return cmps_asm1
+_create_asm1_cmps = create_asm1_cmps
 
 
-#_create_asm1_cmps(True)
+#create_asm1_cmps(True)
 
 def load_asm1_cmps():
     if _pk:
         return load_pickle(_path_cmps)
     else:
-        return _create_asm1_cmps(pickle=False)
+        return create_asm1_cmps(pickle=False)
 
 
 
@@ -209,6 +210,15 @@ class ASM1(Processes):
     path : str, optional
         Alternative file path for the Gujer matrix. The default is None.
 
+    Examples
+    --------
+    >>> from qsdsan import processes as pc, set_thermo
+    >>> cmps = pc.load_asm1_cmps()
+    >>> set_thermo(cmps)
+    >>> asm1 = pc.ASM1()
+    >>> asm1.show()
+    CompiledProcesses([aero_growth_hetero, anox_growth_hetero, aero_growth_auto, decay_hetero, decay_auto, ammonification, hydrolysis, hydrolysis_N])
+
     References
     ----------
     .. [1] Henze, M.; Gujer, W.; Mino, T.; Loosdrecht, M. van. Activated Sludge
@@ -231,13 +241,13 @@ class ASM1(Processes):
                 k_h=3.0, K_X=0.1, mu_A=0.5, K_NH=1.0, b_A=0.05, K_O_A=0.4, k_a=0.05,
                 fr_SS_COD=0.75, path=None, **kwargs):
         if not path: path = _path
-        
+
         cmps = _load_components(components)
         cmps.X_BH.i_N = cmps.X_BA.i_N = i_XB
         cmps.X_P.i_N = cmps.X_I.i_N = i_XP
         cmps.X_I.i_mass = cmps.X_S.i_mass = cmps.X_P.i_mass = cmps.X_BH.i_mass = cmps.X_BA.i_mass = fr_SS_COD
         cmps.refresh_constants()
-        
+
         self = Processes.load_from_file(path,
                                         conserved_for=('COD', 'charge', 'N'),
                                         parameters=cls._params,
