@@ -292,8 +292,8 @@ class ActivatedSludgeProcess(SanUnit):
             eff_dct.update({cmp.ID: conc for cmp, conc in zip(substrates, S_conc)})
         else: # Only one component in `substrates`
             eff_dct[substrates[0].ID] = S_conc
-        # Non-substrate and non-particulate (soluble, colloial, dissolved gas) components
-        # will be splitted in the same way as flow rate mass-wise
+        # Non-substrate and non-particulate (soluble, colloidal, dissolved gas) components
+        # will be split in the same way as flow rate mass-wise
         was_dct = eff_dct.copy()
 
         # Particulate components
@@ -460,12 +460,8 @@ class ActivatedSludgeProcess(SanUnit):
             'inf': inf,
             'recir': ras,
             }
-        # ins_dct = {
-        #     'inf': inf.proxy(f'{ID}_inf'),
-        #     'recir': ras.proxy(f'{ID}_ras'),
-        #     }
         type_dct = dict.fromkeys(pumps, '')
-        inputs_dct = dict.fromkeys(pumps, self.N_train)
+        inputs_dct = dict.fromkeys(pumps, (self.N_train,))
         for i in pumps:
             if hasattr(self, f'{i}_pump'):
                 p = getattr(self, f'{i}_pump')

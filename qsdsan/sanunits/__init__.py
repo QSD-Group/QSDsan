@@ -29,6 +29,7 @@ from ._crop_application import *
 from ._decay import *
 from ._dynamic_influent import *
 from ._electrochemical_cell import *
+from ._encapsulation_bioreactor import *
 from ._excretion import *
 from ._grinder import *
 from ._housing import *
@@ -45,7 +46,7 @@ from ._tanks import *
 from ._trucking import *
 
 # Units that rely on other units
-from ._activated_sludge import *
+from ._activated_sludge_process import *
 from ._anaerobic_reactors import *
 from ._internal_circulation_rx import *
 from ._lagoon import *
@@ -59,7 +60,7 @@ from ._treatment_beds import *
 # From then on the order doesn't matter, listed alphabetically
 from . import (
 	    _abstract,
-	    _activated_sludge,
+	    _activated_sludge_process,
 	    _anaerobic_reactors,
         _carbonizer_base,
 	    _clarifier,
@@ -69,6 +70,7 @@ from . import (
 	    _decay,
 	    _dynamic_influent,
 	    _electrochemical_cell,
+        _encapsulation_bioreactor,
 	    _excretion,
         _grinder,
         _housing,
@@ -95,7 +97,7 @@ from . import (
 
 __all__ = (
 	    *_abstract.__all__,
-	    *_activated_sludge.__all__,
+	    *_activated_sludge_process.__all__,
 	    *_anaerobic_reactors.__all__,
         *_carbonizer_base.__all__,
 	    *_clarifier.__all__,
@@ -105,6 +107,7 @@ __all__ = (
 	    *_decay.__all__,
 	    *_dynamic_influent.__all__,
 	    *_electrochemical_cell.__all__,
+        *_encapsulation_bioreactor.__all__,
 	    *_excretion.__all__,
         *_grinder.__all__,
         *_housing.__all__,

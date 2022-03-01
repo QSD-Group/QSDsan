@@ -42,6 +42,7 @@ release = version
 # ones.
 extensions = [
 'nbsphinx',
+'sphinx_rtd_dark_mode',
 'sphinx.ext.autodoc',
 'sphinx.ext.intersphinx',
 'sphinx.ext.mathjax',
@@ -62,6 +63,9 @@ exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'manni'
+
+# Webpage dark mode
+default_dark_mode = False
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -102,7 +106,7 @@ html_css_files = [
 	'css/copybutton.css',
 	'css/theme_overrides.css',
 	]
-#!! Not seem to be working, using the extension now
+#!!! Not seem to be working, using the extension now
 # html_js_files = [
 # 	'qsdsan.js', 
 # 	'https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js'

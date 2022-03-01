@@ -15,31 +15,37 @@ for license details.
 
 # Add a trailing "_" to differentiate the module from
 # the functions within the module
+
 from . import (
+    # QSDsan modules, alphabetically
     test_bst_units_,
     test_component_,
+    test_dyn_sys_,
     test_process_,
     test_sanunit_,
     test_waste_stream_,
+    # EXPOsan systems
+    test_exposan_,
     )
+
 
 from .test_bst_units_ import *
 from .test_component_ import *
+from .test_dyn_sys_ import *
 from .test_process_ import *
 from .test_sanunit_ import *
 from .test_waste_stream_ import *
 
+from .test_exposan_ import *
+
+
 __all__ = (
     *test_bst_units_.__all__,
     *test_component_.__all__,
+    *test_dyn_sys_.__all__,
     *test_process_.__all__,
     *test_sanunit_.__all__,
     *test_waste_stream_.__all__,
-    )
 
-# Only runs locally because of version management,
-# these tests will be run in `exposan`'s tests online
-try:
-    from . import test_es_temp
-except:
-    pass
+    *test_exposan_.__all__,
+    )

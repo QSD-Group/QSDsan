@@ -30,6 +30,7 @@ jobs:
         python -m pip install pytest-cov
         pip install git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git
         pip install git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@dyn_sim
+        pip install git+https://github.com/QSD-Group/EXPOsan.git
         pip install -r requirements_test.txt
     - name: Test and generate coverage report
       run: |
