@@ -49,7 +49,7 @@ class HousingBiogenicRefinery(SanUnit):
 
         self.construction = (
             Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
-            Construction('stainlesssteelsheet', linked_unit=self, quantity_unit='kg'),
+            Construction('stainless_steel_sheet', linked_unit=self, quantity_unit='kg'),
             Construction('concrete', item='Concrete', linked_unit=self, quantity_unit='m3'),
             )
 
@@ -78,9 +78,9 @@ class HousingBiogenicRefinery(SanUnit):
         C['Containers'] = self.container20ft_cost + self.container40ft_cost
         C['Equip Housing'] = D['StainlessSteelSheet'] / 4.88 * self.stainless_steel_housing
         C['Concrete'] = D['Concrete'] * self.concrete_cost
-
-        #!!! Why is labor included in the capital cost dict? Why it is multiplied by the `price_ratio`?
-        C['Labor'] = self.const_wage * self.const_person_days
         ratio = self.price_ratio
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
+
+        # Labor during initial construction, should not be multiplied by `price_ratio`
+        C['Labor'] = self.const_wage * self.const_person_days
