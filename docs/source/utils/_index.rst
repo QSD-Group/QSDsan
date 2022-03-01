@@ -15,3 +15,4 @@ utils
    model_eval
    parsing
    utilities
+   wwt_design

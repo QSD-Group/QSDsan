@@ -16,12 +16,6 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-'''
-TODO:
-    Check compatibility for multiphase for phase-equilibrium
-'''
-
-
 
 # %%
 
@@ -35,7 +29,7 @@ from .utils import auom, copy_attr, WasteStreamScope
 from biosteam.utils import Scope
 from warnings import warn
 
-__all__ = ('WasteStream', 'MissingWasteStream', 'get_mock_conc')
+__all__ = ('WasteStream', 'MissingWasteStream',)
 
 
 _defined_composite_vars = ('COD', 'BOD5', 'BOD', 'uBOD', 'NOD', 'ThOD', 'cnBOD',
@@ -192,26 +186,7 @@ def by_conc(self, TP):
     raise AttributeError('Concentration only valid for liquid phase.')
 
 indexer.MolarFlowIndexer.by_conc = by_conc
-del by_conc
-
-@PropertyFactory(units='mg/L')
-def MockConcentrationProperty(self):
-    '''Mock array to show concentration flows nicely, in mg/L (g/m3).'''
-    return self.data
-@MockConcentrationProperty.setter
-def MockConcentrationProperty(self, value):
-    self.data = value
-
-def get_mock_conc(IDs, data={}):
-    '''
-    Generate a MockConcentrationProperty based on the given IDs and data,
-    concentration of IDs not included in data will be default to 0.
-    '''
-    dct = {ID: 0. for ID in IDs}
-    dct.update(data)
-    return property_array([MockConcentrationProperty(k, v) for k, v in dct.items()])
-
-del PropertyFactory
+del by_conc, PropertyFactory
 
 
 # %%
@@ -1204,7 +1179,81 @@ class WasteStream(SanStream):
                             X_FePO4=0., X_AlPO4=0., X_FeOH=0., X_AlOH=0.,
                             X_MAP=0., X_HAP=0., X_HDP=0., X_PAO_PP=0.,
                             X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.):
+        '''
+        Create a waste stream using the COD states influent characterization model as in [1]_,
+        requires the default component set (can be created by :func:`~.Components.load_default`)
 
+        Normal attributes of the waste streams (e.g., phase, T, Pa, price) can be passed as usual.
+
+        Parameters
+        ----------
+        ID : str
+            ID of the stream.
+        flow_tot : float
+            Total flowrates.
+        units : tuple(str, str)
+            Unit of the flowrate and component concentrations.
+
+        Examples
+        --------
+        >>> from qsdsan import Components, WasteStream, set_thermo
+        >>> cmps = Components.load_default()
+        >>> set_thermo(cmps)
+        >>> ws = WasteStream.codstates_inf_model('ws_codstates', flow_tot=100)
+        >>> ws.show()
+        WasteStream: ws_codstates
+         phase: 'l', T: 298.15 K, P: 101325 Pa
+         flow (g/hr): S_F        8.6
+                      S_U_Inf    2.15
+                      C_B_Subst  4
+                      X_B_Subst  22.7
+                      X_U_Inf    5.59
+                      X_Ig_ISS   5.23
+                      S_NH4      2.5
+                      S_PO4      0.8
+                      S_K        2.8
+                      S_Ca       14
+                      S_Mg       5
+                      S_CO3      12
+                      S_N2       1.8
+                      S_CAT      0.3
+                      S_AN       1.2
+                      ...
+         WasteStream-specific properties:
+          pH         : 7.0
+          Alkalinity : 10.0 mg/L
+          COD        : 430.0 mg/L
+          BOD        : 221.8 mg/L
+          TC         : 265.0 mg/L
+          TOC        : 137.6 mg/L
+          TN         : 40.0 mg/L
+          TP         : 10.0 mg/L
+          TK         : 28.0 mg/L
+         Component concentrations (mg/L):
+          S_F          86.0
+          S_U_Inf      21.5
+          C_B_Subst    40.0
+          X_B_Subst    226.6
+          X_U_Inf      55.9
+          X_Ig_ISS     52.3
+          S_NH4        25.0
+          S_PO4        8.0
+          S_K          28.0
+          S_Ca         140.0
+          S_Mg         50.0
+          S_CO3        120.0
+          S_N2         18.0
+          S_CAT        3.0
+          S_AN         12.0
+          ...
+
+        References
+        ----------
+        [1] Hydromantis. GPS-X Technical Reference - v8.0.
+        Hydromantis Environmental Software Solutions, Inc. 2019.
+        https://www.hydromantis.com/help/GPS-X/docs/8.0/Technical/index.html
+
+        '''
         if thermo: cmps = thermo.chemicals
         else:
             cmps = _load_components()
@@ -1352,7 +1401,81 @@ class WasteStream(SanStream):
                            X_FePO4=0., X_AlPO4=0., X_FeOH=0., X_AlOH=0.,
                            X_MAP=0., X_HAP=0., X_HDP=0., X_PAO_PP=0.,
                            X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.):
+        '''
+        Create a waste stream using the COD-based influent characterization model as in [1]_,
+        requires the default component set (can be created by :func:`~.Components.load_default`)
 
+        Normal attributes of the waste streams (e.g., phase, T, Pa, price) can be passed as usual.
+
+        Parameters
+        ----------
+        ID : str
+            ID of the stream.
+        flow_tot : float
+            Total flowrates.
+        units : tuple(str, str)
+            Unit of the flowrate and component concentrations.
+
+        Examples
+        --------
+        >>> from qsdsan import Components, WasteStream, set_thermo
+        >>> cmps = Components.load_default()
+        >>> set_thermo(cmps)
+        >>> ws = WasteStream.codbased_inf_model('ws_codinf', flow_tot=100)
+        >>> ws.show()
+        WasteStream: ws_codinf
+         phase: 'l', T: 298.15 K, P: 101325 Pa
+         flow (g/hr): S_F        7.5
+                      S_U_Inf    3.25
+                      C_B_Subst  4
+                      X_B_Subst  22.7
+                      X_U_Inf    5.58
+                      X_Ig_ISS   5.23
+                      S_NH4      2.5
+                      S_PO4      0.8
+                      S_K        2.8
+                      S_Ca       14
+                      S_Mg       5
+                      S_CO3      12
+                      S_N2       1.8
+                      S_CAT      0.3
+                      S_AN       1.2
+                      ...
+         WasteStream-specific properties:
+          pH         : 7.0
+          Alkalinity : 10.0 mg/L
+          COD        : 430.0 mg/L
+          BOD        : 249.4 mg/L
+          TC         : 265.0 mg/L
+          TOC        : 137.6 mg/L
+          TN         : 40.0 mg/L
+          TP         : 10.0 mg/L
+          TK         : 28.0 mg/L
+         Component concentrations (mg/L):
+          S_F          75.0
+          S_U_Inf      32.5
+          C_B_Subst    40.0
+          X_B_Subst    226.7
+          X_U_Inf      55.8
+          X_Ig_ISS     52.3
+          S_NH4        25.0
+          S_PO4        8.0
+          S_K          28.0
+          S_Ca         140.0
+          S_Mg         50.0
+          S_CO3        120.0
+          S_N2         18.0
+          S_CAT        3.0
+          S_AN         12.0
+          ...
+
+        References
+        ----------
+        [1] Hydromantis. GPS-X Technical Reference - v8.0.
+        Hydromantis Environmental Software Solutions, Inc. 2019.
+        https://www.hydromantis.com/help/GPS-X/docs/8.0/Technical/index.html
+
+        '''
 
         if thermo: cmps = thermo.chemicals
         else:
@@ -1506,7 +1629,81 @@ class WasteStream(SanStream):
                            X_FePO4=0., X_AlPO4=0., X_FeOH=0., X_AlOH=0.,
                            X_MAP=0., X_HAP=0., X_HDP=0., X_PAO_PP=0.,
                            X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.):
+        '''
+        Create a waste stream using the BOD influent characterization model as in [1]_,
+        requires the default component set (can be created by :func:`~.Components.load_default`)
 
+        Normal attributes of the waste streams (e.g., phase, T, Pa, price) can be passed as usual.
+
+        Parameters
+        ----------
+        ID : str
+            ID of the stream.
+        flow_tot : float
+            Total flowrates.
+        units : tuple(str, str)
+            Unit of the flowrate and component concentrations.
+
+        Examples
+        --------
+        >>> from qsdsan import Components, WasteStream, set_thermo
+        >>> cmps = Components.load_default()
+        >>> set_thermo(cmps)
+        >>> ws = WasteStream.bodbased_inf_model('ws_bodinf', flow_tot=100)
+        >>> ws.show()
+        WasteStream: ws_bodinf
+         phase: 'l', T: 298.15 K, P: 101325 Pa
+         flow (g/hr): S_F        8.72
+                      S_U_Inf    3.78
+                      C_B_Subst  4
+                      X_B_Subst  22.7
+                      X_U_Inf    3.94
+                      X_Ig_ISS   4.93
+                      S_NH4      2.5
+                      S_PO4      0.8
+                      S_K        2.8
+                      S_Ca       14
+                      S_Mg       5
+                      S_CO3      12
+                      S_N2       1.8
+                      S_CAT      0.3
+                      S_AN       1.2
+                      ...
+         WasteStream-specific properties:
+          pH         : 7.0
+          Alkalinity : 10.0 mg/L
+          COD        : 431.0 mg/L
+          BOD        : 250.0 mg/L
+          TC         : 264.9 mg/L
+          TOC        : 137.9 mg/L
+          TN         : 40.0 mg/L
+          TP         : 10.0 mg/L
+          TK         : 28.0 mg/L
+         Component concentrations (mg/L):
+          S_F          87.2
+          S_U_Inf      37.8
+          C_B_Subst    40.0
+          X_B_Subst    226.7
+          X_U_Inf      39.4
+          X_Ig_ISS     49.3
+          S_NH4        25.0
+          S_PO4        8.0
+          S_K          28.0
+          S_Ca         140.0
+          S_Mg         50.0
+          S_CO3        120.0
+          S_N2         18.0
+          S_CAT        3.0
+          S_AN         12.0
+          ...
+
+        References
+        ----------
+        [1] Hydromantis. GPS-X Technical Reference - v8.0.
+        Hydromantis Environmental Software Solutions, Inc. 2019.
+        https://www.hydromantis.com/help/GPS-X/docs/8.0/Technical/index.html
+
+        '''
 
         if thermo: cmps = thermo.chemicals
         else:
@@ -1663,7 +1860,81 @@ class WasteStream(SanStream):
                          S_NO2=0., S_NO3=0., X_PAO_PP=0., X_FeOH=0., X_AlOH=0.,
                          X_FePO4=0., X_AlPO4=0., X_MAP=0., X_HAP=0., X_HDP=0.,
                          X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.):
+        '''
+        Create a waste stream using the sludge influent characterization model as in [1]_,
+        requires the default component set (can be created by :func:`~.Components.load_default`)
 
+        Normal attributes of the waste streams (e.g., phase, T, Pa, price) can be passed as usual.
+
+        Parameters
+        ----------
+        ID : str
+            ID of the stream.
+        flow_tot : float
+            Total flowrates.
+        units : tuple(str, str)
+            Unit of the flowrate and component concentrations.
+
+        Examples
+        --------
+        >>> from qsdsan import Components, WasteStream, set_thermo
+        >>> cmps = Components.load_default()
+        >>> set_thermo(cmps)
+        >>> ws = WasteStream.sludge_inf_model('ws_sludgeinf', flow_tot=100)
+        >>> ws.show()
+        WasteStream: ws_sludgeinf
+         phase: 'l', T: 298.15 K, P: 101325 Pa
+         flow (g/hr): S_F        1.08
+                      S_U_Inf    8.65
+                      C_B_Subst  1.08
+                      X_B_Subst  81.9
+                      X_OHO      192
+                      X_AOO      9.62
+                      X_NOO      9.62
+                      X_PAO      9.62
+                      X_U_Inf    468
+                      X_U_OHO_E  285
+                      X_U_PAO_E  14.3
+                      X_Ig_ISS   298
+                      S_NH4      10
+                      S_PO4      5
+                      S_K        2.8
+                      ...
+         WasteStream-specific properties:
+          pH         : 7.0
+          Alkalinity : 10.0 mg/L
+          COD        : 10814.4 mg/L
+          BOD        : 1744.3 mg/L
+          TC         : 4246.5 mg/L
+          TOC        : 3702.2 mg/L
+          TN         : 750.0 mg/L
+          TP         : 250.0 mg/L
+          TK         : 52.9 mg/L
+         Component concentrations (mg/L):
+          S_F          10.8
+          S_U_Inf      86.5
+          C_B_Subst    10.8
+          X_B_Subst    819.0
+          X_OHO        1924.0
+          X_AOO        96.2
+          X_NOO        96.2
+          X_PAO        96.2
+          X_U_Inf      4680.0
+          X_U_OHO_E    2852.0
+          X_U_PAO_E    142.6
+          X_Ig_ISS     2980.6
+          S_NH4        100.0
+          S_PO4        50.0
+          S_K          28.0
+          ...
+
+        References
+        ----------
+        [1] Hydromantis. GPS-X Technical Reference - v8.0.
+        Hydromantis Environmental Software Solutions, Inc. 2019.
+        https://www.hydromantis.com/help/GPS-X/docs/8.0/Technical/index.html
+
+        '''
 
         if thermo: cmps = thermo.chemicals
         else:
