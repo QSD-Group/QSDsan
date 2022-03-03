@@ -170,7 +170,7 @@ class Components(Chemicals):
 
 
     def default_compile(self, lock_state_at='l',
-                        soluble_ref='Urea', gas_ref='CO2', particulate_ref='CaO'):
+                        soluble_ref='Urea', gas_ref='CO2', particulate_ref='Stearin'):
         '''
         Auto-fill of the missing properties of the components and compile,
         boiling point (Tb) and molar volume (V) will be copied from the reference component,

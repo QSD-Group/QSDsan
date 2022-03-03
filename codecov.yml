@@ -1,6 +1,21 @@
 coverage:
   range: "70...100"
   status:
+    patch:
+      default:
+        # basic
+        target: 50%
+        threshold: 1%
+        paths: 
+          - "src"
+        # advanced settings
+        branches: 
+          - main
+          - beta
+          - dev
+        if_ci_failed: error # success, failure, error, ignore
+        informational: true
+        only_pulls: false
     project:
       default:
         # basic
