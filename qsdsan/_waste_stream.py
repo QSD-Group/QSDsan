@@ -533,11 +533,11 @@ class WasteStream(SanStream):
         >>> ws = WasteStream.codstates_inf_model('ws', flow_tot=1000, pH=6.8, COD=500, TP=11)
         >>> # To calculate the particulate BOD (i.e., xBOD) of the WasteStream object,
         >>> # you just need to specify the composite variable as "BOD", and particle size as "x"
-        >>> ws.composite('BOD', particle_size='x') # doctest: +ELLIPSIS
-        152.83...
+        >>> ws.composite('BOD', particle_size='x') # doctest: +NUMBER
+        152.83
         >>> # You can also adjust the unit you want the result to be in
-        >>> ws.composite('BOD', particle_size='x', unit='g/L') # doctest: +ELLIPSIS
-        0.15283...
+        >>> ws.composite('BOD', particle_size='x', unit='g/L') # doctest: +NUMBER
+        0.15283
         >>> # Biomass COD
         >>> ws.composite('COD', specification='X_Bio')
         0.0
@@ -548,12 +548,12 @@ class WasteStream(SanStream):
         >>> # as all components that are not "S_N2", "S_NO2", and "S_NO3"
         >>> # For your own components, you can pre-define the group using
         >>> # the `define_group` function (e.g., `cmps.define_group`)
-        >>> ws.composite('N', subgroup=cmps.TKN, particle_size='s') # doctest: +ELLIPSIS
-        27.77...
-        >>> ws.composite('C', organic=True) # doctest: +ELLIPSIS
-        160.00...
+        >>> ws.composite('N', subgroup=cmps.TKN, particle_size='s') # doctest: +NUMBER
+        27.777777777777796
+        >>> ws.composite('C', organic=True) # doctest: +NUMBER
+        160.00
         >>> ws.composite('solids', particle_size='s') # doctest: +ELLIPSIS
-        947.88...
+        945.69...
 
         See Also
         --------
