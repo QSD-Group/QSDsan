@@ -1166,23 +1166,21 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
         for x, y, label in zip(x_data, y_data, labels):
             ax.annotate(label, (x, y), xytext=(10, 10), textcoords='offset points',
                         ha='center')
-        # Use linspace instead of arange as the data can be really large
-        x_range = np.linspace(*ax.get_xlim(), 10)
-
+        
         lines, legends = [], []
         line_color = kwargs.get('line_color') or color
         if k3:
-            line3, = ax.plot(x_range, k3*x_range, color=line_color, linestyle='-')
+            line3 = ax.axline(xy1=(0,0), slope=k3, color=line_color, linestyle='-')
             lines.append(line3)
             legends.append(r'$\sigma/\mu^*$'+f'={k3}')
 
         if k2:
-            line2, = ax.plot(x_range, k2*x_range, color=line_color, linestyle='--')
+            line2 = ax.axline(xy1=(0,0), slope=k2, color=line_color, linestyle='--')
             lines.append(line2)
             legends.append(r'$\sigma/\mu^*$'+f'={k2}')
 
         if k1:
-            line1, = ax.plot(x_range, k1*x_range, color=line_color, linestyle='-.')
+            line1 = ax.plot(xy1=(0,0), slope=k1, color=line_color, linestyle='-.')
             lines.append(line1)
             legends.append(r'$\sigma/\mu^*$'+f'={k1}')
 
