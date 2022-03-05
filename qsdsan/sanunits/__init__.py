@@ -7,11 +7,14 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
     Joy Zhang <joycheung1994@gmail.com>
-
+    Smiti Mittal <smitimittal@gmail.com>
+    
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
+
+# **NOTE** PLEASE ORDER THE MODULES ALPHABETICALLY #
 
 # Units that do not rely on other units
 from ._abstract import *
@@ -22,7 +25,7 @@ from ._dynamic_influent import *
 from ._decay import *
 from ._electrochemical_cell import *
 from ._excretion import *
-from ._hx import *
+from ._heat_exchanging import *
 from ._lumped_cost import *
 from ._pumping import *
 from ._screening import *
@@ -57,7 +60,7 @@ from . import (
     _electrochemical_cell,
     _encapsulation_bioreactor,
     _excretion,
-    _hx,
+    _heat_exchanging,
     _internal_circulation_rx,
     _lagoon,
     _lumped_cost,
@@ -86,7 +89,7 @@ __all__ = (
     *_electrochemical_cell.__all__,
     *_encapsulation_bioreactor.__all__,
     *_excretion.__all__,
-    *_hx.__all__,
+    *_heat_exchanging.__all__,
     *_internal_circulation_rx.__all__,
     *_lagoon.__all__,
     *_lumped_cost.__all__,

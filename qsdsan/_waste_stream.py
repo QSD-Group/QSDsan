@@ -132,7 +132,7 @@ def _calib_XBsub_fBODCOD(components, concentrations, substrate_IDs, BOD):
 # Indexer for nicer display
 @property
 def group_conc_compositions(self):
-    raise AttributeError('cannot set group by concentratino')
+    raise AttributeError('cannot set group by concentration')
 
 ComponentConcentrationIndexer, ConcentrationIndexer = \
     indexer._new_Indexer('Concentration', 'mg/L', group_conc_compositions)
@@ -919,7 +919,7 @@ class WasteStream(SanStream):
 
         Parameters
         ----------
-        others : iterable
+        others : Iterable(obj)
             Can contain :class:`thermosteam.Stream`, :class:`SanStream`,
             or :class:`~.WasteStream`.
         kwargs : dict
@@ -1180,7 +1180,7 @@ class WasteStream(SanStream):
                             X_MAP=0., X_HAP=0., X_HDP=0., X_PAO_PP=0.,
                             X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.):
         '''
-        Create a waste stream using the COD states influent characterization model as in [1]_,
+        Create a waste stream using the COD states influent characterization model,
         requires the default component set (can be created by :func:`~.Components.load_default`)
 
         Normal attributes of the waste streams (e.g., phase, T, Pa, price) can be passed as usual.
@@ -1402,7 +1402,7 @@ class WasteStream(SanStream):
                            X_MAP=0., X_HAP=0., X_HDP=0., X_PAO_PP=0.,
                            X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.):
         '''
-        Create a waste stream using the COD-based influent characterization model as in [1]_,
+        Create a waste stream using the COD-based influent characterization model,
         requires the default component set (can be created by :func:`~.Components.load_default`)
 
         Normal attributes of the waste streams (e.g., phase, T, Pa, price) can be passed as usual.
@@ -1630,7 +1630,7 @@ class WasteStream(SanStream):
                            X_MAP=0., X_HAP=0., X_HDP=0., X_PAO_PP=0.,
                            X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.):
         '''
-        Create a waste stream using the BOD influent characterization model as in [1]_,
+        Create a waste stream using the BOD influent characterization model,
         requires the default component set (can be created by :func:`~.Components.load_default`)
 
         Normal attributes of the waste streams (e.g., phase, T, Pa, price) can be passed as usual.
@@ -1861,7 +1861,7 @@ class WasteStream(SanStream):
                          X_FePO4=0., X_AlPO4=0., X_MAP=0., X_HAP=0., X_HDP=0.,
                          X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.):
         '''
-        Create a waste stream using the sludge influent characterization model as in [1]_,
+        Create a waste stream using the sludge influent characterization model,
         requires the default component set (can be created by :func:`~.Components.load_default`)
 
         Normal attributes of the waste streams (e.g., phase, T, Pa, price) can be passed as usual.

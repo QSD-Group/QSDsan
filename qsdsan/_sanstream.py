@@ -39,7 +39,7 @@ class SanStream(Stream):
 
     Examples
     --------
-    `WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/WasteStream.html>`_
+    `WasteStream <https://qsdsan.readthedocs.io/en/latest/tutorials/WasteStream.html>`__
 
     See Also
     --------
@@ -235,10 +235,10 @@ class SanStream(Stream):
     def degassing(original_stream, receiving_stream=None, gas_IDs=()):
         '''
         Remove all the gas components from the original stream,
-        if `receiving_stream` is given, then the gas components will be transfered
+        if `receiving_stream` is given, then the gas components will be transferred
         to the receiving stream.
 
-        If `gas_IDs` is not provided, then the gas components wiil be those
+        If `gas_IDs` is not provided, then the gas components will be those
         either have `locked_state` == "g" or `particle_size` == "Dissolved gas".
 
         Parameters
@@ -263,10 +263,10 @@ class SanStream(Stream):
     def filtering(original_stream, receiving_stream=None, solid_IDs=()):
         '''
         Remove all the solid components from the original stream,
-        if `receiving_stream` is given, then the solid components will be transfered
+        if `receiving_stream` is given, then the solid components will be transferred
         to the receiving stream.
 
-        If `solid_IDs` is not provided, then the gas components wiil be those
+        If `solid_IDs` is not provided, then the gas components will be those
         either have `locked_state` == "g" or `particle_size` == "Particulate".
 
         Parameters
@@ -374,7 +374,7 @@ class SanStream(Stream):
 
         Parameters
         ----------
-        others : Iteralbe(obj)
+        others : Iterable(obj)
             Can contain :class:`thermosteam.Stream`, :class:`SanStream`,
             or :class:`~.WasteStream`
 

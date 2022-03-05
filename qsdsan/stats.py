@@ -408,8 +408,8 @@ def morris_till_convergence(model, inputs, metrics=None,
     '''
     Run Morris analysis from N=2 to N=N_max until the results converge
     (i.e., mu_star_conf/mu_star_max < threshold for all parameters,
-     where as mu_star_max is the maximum :math:`{\mu^*}` value for a certain metric,
-     and this should be satisfied for all metrics).
+    where as mu_star_max is the maximum :math:`{\mu^*}` value for a certain metric,
+    and this should be satisfied for all metrics).
 
     Parameters
     ----------

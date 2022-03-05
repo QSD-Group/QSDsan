@@ -19,7 +19,6 @@ for license details.
 import numpy as np
 import pandas as pd
 import thermosteam as tmo
-from warnings import warn
 from . import _component, Chemical, Chemicals, CompiledChemicals, Component
 from .utils import add_V_from_rho, load_data
 

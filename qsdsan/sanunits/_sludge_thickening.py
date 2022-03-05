@@ -249,10 +249,10 @@ class SludgeCentrifuge(SludgeThickening, SolidsCentrifuge):
         If not provided, will be set to the default `solids` attribute of the components.
     '''
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  sludge_moisture=0.8, solids=(),
                  centrifuge_type='scroll_solid_bowl'):
-        SludgeThickening.__init__(self, ID, ins, outs, thermo,
+        SludgeThickening.__init__(self, ID, ins, outs, thermo, init_with,
                                 sludge_moisture=sludge_moisture,
                                 solids=solids)
         self.centrifuge_type = centrifuge_type

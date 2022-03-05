@@ -20,7 +20,7 @@ __all__ = ('Screening',)
 
 class Screening(SanUnit):
     '''
-    A non-reactive unit used to esitmate the operating cost of screening.
+    A non-reactive unit used to estimate the operating cost of screening.
 
     Note that only costs from electricity and screened out solids disposal are considered
     (i.e., no equipment cost).
