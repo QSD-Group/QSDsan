@@ -393,7 +393,12 @@ class Components(Chemicals):
             new.compile()
             # Add aliases
             new.set_alias('H2O', 'Water')
-            # Pre-define the group used in `composition` calculation
+            # Pre-define groups
+            new.define_group('substrates',
+                             ('S_CH3OH', 'S_Ac', 'S_Prop', 'S_F', 'C_B_Subst', 'X_B_Subst'))
+            new.define_group('biomass',
+                             ('X_OHO', 'X_AOO', 'X_NOO', 'X_AMO', 'X_PAO',
+                              'X_MEOLO', 'X_FO', 'X_ACO', 'X_HMO', 'X_PRO'))
             new.define_group('S_VFA', ('S_Ac', 'S_Prop'))
             new.define_group('X_Stor', ('X_OHO_PHA', 'X_GAO_PHA', 'X_PAO_PHA',
                                         'X_GAO_Gly', 'X_PAO_Gly'),)
@@ -740,29 +745,25 @@ class CompiledComponents(CompiledChemicals):
     @property
     def substrates(self):
         '''
-        [list] Substrate components, will return
-        soluble/colloidal & organic & degradable components
-        if not set by the user.
+        [list] Substrate components.
         '''
         try: return self.__dict__['substrates']
         except:
-            warn('The `substrates` group is not set, using '
-                 'soluble/colloidal & organic & degradable components instead.')
-            return self[self.get_IDs_from_array((self.s+self.c)*self.b*self.org)]
+            raise ValueError('The `substrates` group is not set, '
+                             'use `define_group` to define the `substrates` group.')
     @substrates.setter
     def substrates(self, i):
-        raise RuntimeError('Please use `define_group` to define the `substrates` group.')
+        raise RuntimeError('Use `define_group` to define the `substrates` group.')
 
     @property
     def biomass(self):
         '''
-        [list] Biomass components, will return `organic_solids`
-        (particulate & organic) components if not set by the user.
+        [list] Biomass components.
         '''
         try: return self.__dict__['biomass']
         except:
-            warn('The `biomass` group is not set, using `organic_solids` instead.')
-            return self.organic_solids
+            raise ValueError('The `biomass` group is not set, '
+                             'use `define_group` to define the `biomass` group.')
     @biomass.setter
     def biomass(self, i):
-        raise RuntimeError('Please use `define_group` to define the `biomass` group.')
+        raise RuntimeError('Use `define_group` to define the `biomass` group.')

@@ -1,6 +1,6 @@
-=========
-Joy Zhang
-=========
+===================
+Joy Zhang (co-lead)
+===================
 
 **Full profile coming soon!**
 
