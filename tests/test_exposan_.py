@@ -16,9 +16,11 @@ for license details.
 __all__ = ('test_exposan',)
 
 def test_exposan():
+    from qsdsan.utils import get_SRT
     from exposan.bsm1 import bsm1
     bsm1.reset_cache()
     bsm1.simulate(t_span=(0,10), method='BDF')
+    print(get_SRT(bsm1, biomass_IDs=('X_BH', 'X_BA'))) # to test the `get_SRT` function
 
     from exposan import bwaise as bw
     bw.print_summaries((bw.sysA, bw.sysB, bw.sysC))

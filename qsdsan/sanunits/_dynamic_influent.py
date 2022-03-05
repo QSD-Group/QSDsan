@@ -120,7 +120,7 @@ class DynamicInfluent(SanUnit):
         if any(df_y.iloc[-1,:] != df_y.iloc[0,:]):
             y_end = df_y.iloc[0,:].to_dict()
             y_end['t'] = 2*df.t.iloc[-1] - df.t.iloc[-2]
-            df.append(y_end)
+            df.append(y_end, ignore_index=True)
         self._t_end = df.t.iloc[-1]
         intpl = self._intpl
         ikwargs = self._intpl_kwargs

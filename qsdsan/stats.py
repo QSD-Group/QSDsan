@@ -26,11 +26,11 @@ __all__ = ('get_correlations', 'define_inputs', 'generate_samples',
            'plot_morris_results', 'plot_morris_convergence',
            'plot_fast_results', 'plot_sobol_results')
 
-from collections.abc import Iterable
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import biosteam as bst
+from collections.abc import Iterable
 from warnings import warn
 from matplotlib import pyplot as plt
 from SALib.sample import (
@@ -165,7 +165,7 @@ def get_correlations(model, input_x=None, input_y=None,
 
     >>> # Box
     >>> fig, ax = s.plot_uncertainties(model, x_axis=m[0], kind='box')
-    >>> # Histogram 
+    >>> # Histogram
     >>> fig, ax = s.plot_uncertainties(model, y_axis=m[1], kind='hist')
     >>> # Kernel density
     >>> fig, ax = s.plot_uncertainties(model, x_axis=m[2], kind='kde')
@@ -408,8 +408,8 @@ def morris_till_convergence(model, inputs, metrics=None,
     '''
     Run Morris analysis from N=2 to N=N_max until the results converge
     (i.e., mu_star_conf/mu_star_max < threshold for all parameters,
-     where as mu_star_max is the maximum :math:`{\mu^*}` value for a certain metric,
-     and this should be satisfied for all metrics).
+    where as mu_star_max is the maximum :math:`{\mu^*}` value for a certain metric,
+    and this should be satisfied for all metrics).
 
     Parameters
     ----------
@@ -746,7 +746,7 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
 # Plot uncertainty analysis results
 # =============================================================================
 
-def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
+def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box', adjust_hue=False,
                        file='', close_fig=True, center_kws={}, margin_kws={}):
     '''
     Visualize uncertainty analysis results as one of the following depending on inputs:
@@ -805,6 +805,8 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
         default to None.
     kind : str
         What kind of plot to be returned, refer to the summary table for valid inputs.
+    adjust_hue : bool
+        Whether to adjust the hue of the colors based on the data.
     file : str
         If provided, the generated figure will be saved as a png file.
     close_fig : bool
@@ -873,17 +875,21 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
 
     sns.set_theme(style='ticks')
     if not twoD: # 1D plot
+        try:
+            center_kws.pop('hue')
+            warn('Please use the `adjust_hue` argument for hue adjustment.')
+        except: pass
         if kind_lower == 'box':
             center_kws['dodge'] = center_kws.get('dodge') or False
 
             if x_df is not None: # horizontal box plot
-                ax = sns.boxplot(data=sns_df, x='x_group', y='x_data', hue='x_group',
-                                 **center_kws)
+                hue = 'x_group' if adjust_hue else None
+                ax = sns.boxplot(data=sns_df, x='x_group', y='x_data', hue=hue, **center_kws)
                 xlabel = ''
                 ylabel = 'Values'
             else:
-                ax = sns.boxplot(data=sns_df, x='y_data', y='y_group', hue='y_group',
-                                 **center_kws)
+                hue = 'y_group' if adjust_hue else None
+                ax = sns.boxplot(data=sns_df, x='y_data', y='y_group', hue=hue, **center_kws)
                 xlabel = 'Values'
                 ylabel = ''
 
@@ -892,26 +898,30 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box',
         elif kind_lower == 'hist':
             center_kws.pop('dodge', None) # not sure why this would sometimes be carried from other runs
             if x_df is not None: # horizontal hist plot
-                ax = sns.histplot(data=sns_df, x='x_data', hue='x_group', **center_kws)
+                hue = 'x_group' if adjust_hue else None
+                ax = sns.histplot(data=sns_df, x='x_data', hue=hue, **center_kws)
                 ax.set_xlabel('Values')
 
             else: # vertical hist plot
-                try: ax = sns.histplot(data=sns_df, y='y_data', hue='y_group', **center_kws)
-                except: breakpoint()
+                hue = 'y_group' if adjust_hue else None
+                ax = sns.histplot(data=sns_df, y='y_data', hue=hue, **center_kws)
                 ax.set_ylabel('Values')
 
         elif kind_lower == 'kde':
             center_kws.pop('dodge', None)
             if x_df is not None: # horizontal kde plot
-                ax = sns.kdeplot(data=sns_df, x='x_data', hue='x_group', **center_kws)
+                hue = 'x_group' if adjust_hue else None
+                ax = sns.kdeplot(data=sns_df, x='x_data', hue=hue, **center_kws)
             else: # vertical kde plot
-                ax = sns.kdeplot(data=sns_df, y='y_data', hue='y_group', **center_kws)
+                hue = 'y_group' if adjust_hue else None
+                ax = sns.kdeplot(data=sns_df, y='y_data', hue=hue, **center_kws)
 
         else:
             raise ValueError('kind can only be "box", "kde", "hist", or "hist-kde", ' \
                              f'for 1D plot, not "{kind}".')
 
-        ax.get_legend().set_title('')
+        if adjust_hue:
+            ax.get_legend().set_title('')
         return _save_fig_return(ax.figure, ax, file, close_fig)
 
     else: # 2D plot
@@ -1156,23 +1166,21 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
         for x, y, label in zip(x_data, y_data, labels):
             ax.annotate(label, (x, y), xytext=(10, 10), textcoords='offset points',
                         ha='center')
-        # Use linspace instead of arange as the data can be really large
-        x_range = np.linspace(*ax.get_xlim(), 10)
-
+        
         lines, legends = [], []
         line_color = kwargs.get('line_color') or color
         if k3:
-            line3, = ax.plot(x_range, k3*x_range, color=line_color, linestyle='-')
+            line3 = ax.axline(xy1=(0,0), slope=k3, color=line_color, linestyle='-')
             lines.append(line3)
             legends.append(r'$\sigma/\mu^*$'+f'={k3}')
 
         if k2:
-            line2, = ax.plot(x_range, k2*x_range, color=line_color, linestyle='--')
+            line2 = ax.axline(xy1=(0,0), slope=k2, color=line_color, linestyle='--')
             lines.append(line2)
             legends.append(r'$\sigma/\mu^*$'+f'={k2}')
 
         if k1:
-            line1, = ax.plot(x_range, k1*x_range, color=line_color, linestyle='-.')
+            line1 = ax.plot(xy1=(0,0), slope=k1, color=line_color, linestyle='-.')
             lines.append(line1)
             legends.append(r'$\sigma/\mu^*$'+f'={k1}')
 

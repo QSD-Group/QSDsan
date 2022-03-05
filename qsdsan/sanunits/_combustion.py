@@ -262,9 +262,9 @@ class CHP(SanUnit, Facility):
     def CHP_type(self):
         '''
         [str] Type of the CHP to adjust the heat-to-power efficiency.
-        Can be "fuel cell" (40.5%), "microturbine" (27%),
-        "internal combustion" (36%), "combustion gas" (31.5%),
-        or None and define an effiency.
+        Can be "Fuel cell" (40.5%), "Microturbine" (27%),
+        "Internal combustion" (36%), "Combustion gas" (31.5%),
+        or None and define an efficiency.
         '''
         return self._CHP_type
     @CHP_type.setter
@@ -302,7 +302,7 @@ class CHP(SanUnit, Facility):
     def combined_eff(self):
         '''
         [float] Combined heat (the total embedded energy in feed streams)-to-power efficiency
-        (i.e., combustion effiency * power generation efficiency).
+        (i.e., combustion efficiency * power generation efficiency).
         Note that when `CHP_type` is provided, the set `combined_efficiency`
         will be ignored.
         '''

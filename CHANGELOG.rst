@@ -4,8 +4,9 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
-Ongoing
+`1.1.0`
 -------
+- Fully tested dynamic simulation capacity, refer to the `BSM1 system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_ in EXPOsan for an example implementation.
 - Added many new :class:`~.SanUnit` and reorganized package/documentation structure, new unit operations include:
 
 	- :class:`~.sanunits.AnMBR`
@@ -20,7 +21,7 @@ Ongoing
 	- :class:`~.sanunits.WWTpump`
 
 - Continue to enhance documentation (e.g., :class:`~.Process`, `~.stats`, util functions).
-- Building the `official website <https://qsdsan.com>`_ of ``QSDsan``! The first version expected to go live Spring, 2022.
+- Building the `official website <https://qsdsan.com>`_ of ``QSDsan``! The first version is expected to go live Spring, 2022.
 
 
 `1.0.0`_
@@ -148,6 +149,7 @@ Official release of ``QSDsan`` v1.0.0!
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
+.. _1.1.0: https://github.com/QSD-Group/QSDsan/commit/9061ae5529963cf057487f8a66d9231b129bec4d
 .. _1.0.0: https://github.com/QSD-Group/QSDsan/commit/559a0e43428411b23319ffd087e04c5d08f46d4a
 .. _0.3.0: https://github.com/QSD-Group/QSDsan/commit/3c19aebd5503433120217228c3388533cee4bd30
 .. _0.2.0: https://github.com/QSD-Group/QSDsan/commit/286943eb206ebd89f58e50b9fdd1bed486e894ae

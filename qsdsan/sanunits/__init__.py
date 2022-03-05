@@ -33,7 +33,7 @@ from ._encapsulation_bioreactor import *
 from ._excretion import *
 from ._grinder import *
 from ._housing import *
-from ._hxs import *
+from ._heat_exchanging import *
 from ._ion_exchanges import *
 from ._lumped_cost import *
 from ._pollution_control_device import *
@@ -74,7 +74,7 @@ from . import (
 	    _excretion,
         _grinder,
         _housing,
-	    _hxs,
+	    _heat_exchanging,
 	    _internal_circulation_rx,
         _ion_exchanges,
 	    _lagoon,
@@ -111,7 +111,7 @@ __all__ = (
 	    *_excretion.__all__,
         *_grinder.__all__,
         *_housing.__all__,
-	    *_hxs.__all__,
+	    *_heat_exchanging.__all__,
 	    *_internal_circulation_rx.__all__,
         *_ion_exchanges.__all__,
 	    *_lagoon.__all__,

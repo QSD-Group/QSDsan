@@ -438,6 +438,18 @@ class Component(Chemical):
 
         self._measured_as = measured_as
 
+    formula = property(Chemical.formula.fget)
+    @formula.setter
+    def formula(self, formula):
+        Chemical.formula.fset(self, formula)
+        if hasattr(self, '_measured_as'):
+            _ms = self._measured_as
+            self.measured_as = None
+            for field in _num_component_properties:
+                if field.startswith('i_'):
+                    setattr(self, field, None)
+            self.measured_as = _ms
+
     def _convert_i_attr(self, new):
         if new == None:
             denom = self._i_mass

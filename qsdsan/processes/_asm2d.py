@@ -22,7 +22,7 @@ _path_cmps = ospath.join(data_path, '_asm2d_cmps.pckl')
 _load_components = settings.get_default_chemicals
 
 ############# Components with default notation #############
-def _create_asm2d_cmps(pickle=False):
+def create_asm2d_cmps(pickle=False):
     cmps = Components.load_default()
 
     S_A = cmps.S_Ac.copy('S_A')
@@ -59,21 +59,22 @@ def _create_asm2d_cmps(pickle=False):
     cmps_asm2d = Components([cmps.S_O2, cmps.S_N2, cmps.S_NH4, cmps.S_NO3, cmps.S_PO4,
                              S_F, S_A, S_I, S_ALK, X_I, X_S, X_H, X_PAO, X_PP,
                              X_PHA, X_AUT, X_MeOH, X_MeP, cmps.H2O])
-                             
+
     cmps_asm2d.compile()
 
     if pickle:
         save_pickle(cmps_asm2d, _path_cmps)
     return cmps_asm2d
+_create_asm2d_cmps = create_asm2d_cmps
 
 
-# _create_asm2d_cmps(True)
+# create_asm2d_cmps(True)
 
 def load_asm2d_cmps():
     if _pk:
         return load_pickle(_path_cmps)
     else:
-        return _create_asm2d_cmps(pickle=False)
+        return create_asm2d_cmps(pickle=False)
 
 
 ############ Processes in ASM2d #################
@@ -406,6 +407,14 @@ class ASM2d(Processes):
     path : str, optional
         Alternative file path for the Gujer matrix. The default is None.
 
+    Examples
+    --------
+    >>> from qsdsan import processes as pc, set_thermo
+    >>> cmps = pc.load_asm2d_cmps()
+    >>> set_thermo(cmps)
+    >>> asm2d = pc.ASM2d()
+    >>> asm2d.show()
+    CompiledProcesses([aero_hydrolysis, anox_hydrolysis, anae_hydrolysis, hetero_growth_S_F, hetero_growth_S_A, denitri_S_F, denitri_S_A, ferment, hetero_lysis, PAO_storage_PHA, aero_storage_PP, PAO_aero_growth_PHA, PAO_lysis, PP_lysis, PHA_lysis, auto_aero_growth, auto_lysis, precipitation, redissolution, anox_storage_PP, PAO_anox_growth])
 
     References
     ----------
@@ -449,7 +458,7 @@ class ASM2d(Processes):
                 path=None, **kwargs):
 
         if not path: path = _path
-        
+
         cmps = _load_components(components)
         cmps.S_I.i_N = iN_SI
         cmps.S_F.i_N = iN_SF

@@ -132,7 +132,63 @@ def copy_samples(original, new, exclude=()):
     '''
     Copy samples of the shared parameters in the original model to the new model.
     Parameters in `exclude` will be excluded (i.e., not copied).
+
+    Parameters
+    ----------
+    original : obj
+        Original model where the samples will be copied from.
+    new : obj
+        New model whose samples of the shared parameters
+        will be copied from the original model.
+    exclude : tuple(obj)
+        Parameters that will be excluded from copying.
+
+    Examples
+    --------
+    Create two models with shared and different parameters
+
+    >>> from qsdsan.utils import load_example_model
+    >>> original = load_example_model()
+    >>> new = original.copy()
+
+    The 1st/2nd parameters of the original model are the same as
+    the 0th/1st parameters of the new model.
+
+    >>> original.parameters = original.parameters[:3]
+    >>> original.parameters
+    (<Parameter: [Stream-salt water] Salt flow rate (kg/hr)>,
+     <Parameter: [HXutility-H1] Heat exchanger temperature (K)>,
+     <Parameter: [Stream-salt water] Salt solution price (USD/kg)>)
+    >>> new.parameters = new.parameters[1:4]
+    >>> new.parameters
+    (<Parameter: [HXutility-H1] Heat exchanger temperature (K)>,
+     <Parameter: [Stream-salt water] Salt solution price (USD/kg)>,
+     <Parameter: [Mix tank-M1] Mix tank retention time (hr)>)
+
+    Before copying, none of the samples of the shared parameter is the same
+
+    >>> original_samples = original.sample(N=100, rule='L')
+    >>> original.load_samples(original_samples)
+    >>> new_samples = new.sample(N=100, rule='L')
+    >>> new.load_samples(new_samples)
+    >>> (original.table.values[:, 1:3]==new.table.values[:, 0:2]).any()
+    False
+
+    Let's copy the samples, but exclude the "Salt solution price" parameter
+
+    >>> copy_samples(original, new, exclude=(original.parameters[-1],))
+    >>> # After copying, all of the samples of the "Heat exchanger temperature"
+    >>> # parameter are the same
+    >>> (original.table.values[:, 1]==new.table.values[:, 0]).all()
+    True
+    >>> # But none of the samples are the same for the excluded
+    >>> # "Salt solution price" parameter
+    >>> (original.table.values[:, 2]==new.table.values[:, 1]).any()
+    False
+
     '''
+    try: iter(exclude)
+    except: exclude = (exclude,)
     col0 = original.table.columns.get_level_values(1)[:len(original.parameters)]
     col1 = new.table.columns.get_level_values(1)[:len(new.parameters)]
     shared = col0.intersection(col1)
