@@ -82,6 +82,13 @@ class Transportation:
                                   Impacts
     GlobalWarming (kg CO2-eq)    1.61e+04
     FossilEnergyConsumption (MJ) 8.05e+03
+    >>> # Registry management (transportation activities will be auto-registered)
+    >>> shipping.deregister()
+    The transportation activity "shipping" has been removed from the registry.
+    >>> shipping.register()
+    The transportation activity "shipping" has been added to the registry.
+    >>> Transportation.clear_registry()
+    All transportation activities have been removed from registry.
     '''
 
     __slots__ = ('_ID', '_linked_unit', '_item', '_load_type', '_load', '_distance', '_interval',
@@ -170,6 +177,26 @@ class Transportation:
         return new
 
     __copy__ = copy
+
+
+    def register(self, print_msg=True):
+        '''Add this transportation activity to the registry.'''
+        self.registry.register_safely(self.ID, self)
+        if print_msg:
+            print(f'The transportation activity "{self.ID}" has been added to the registry.')
+
+    def deregister(self, print_msg=True):
+        '''Remove this transportation activity to the registry.'''
+        self.registry.discard(self.ID)
+        if print_msg:
+            print(f'The transportation activity "{self.ID}" has been removed from the registry.')
+
+    @classmethod
+    def clear_registry(cls, print_msg=True):
+        '''Remove all existing transportation activities from the registry.'''
+        cls.registry.clear()
+        if print_msg:
+            print('All transportation activities have been removed from registry.')
 
 
     @property

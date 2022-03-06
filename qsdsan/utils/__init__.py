@@ -17,7 +17,7 @@ import os
 from thermosteam.units_of_measure import (
     ureg,
     AbsoluteUnitsOfMeasure as auom,
-    RelativeUnitsOfMeasure as ruom
+    RelativeUnitsOfMeasure as ruom,
     )
 
 path = os.path.join(os.path.dirname(os.path.realpath(__file__)),

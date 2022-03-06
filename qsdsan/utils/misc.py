@@ -16,10 +16,11 @@ from biosteam.utils import TicToc
 
 __all__ = (
     'copy_attr',
-    'register_with_prefix',
-    'time_printer',
     'ords',
     'price_ratio',
+    'clear_lca_registries',
+    'register_with_prefix',
+    'time_printer',
     )
 
 
@@ -63,6 +64,47 @@ def copy_attr(new, original, skip=(), same=(), slots=None):
                     new_value = value
             setattr(new, slot, new_value)
     return new
+
+
+def ords(string):
+    '''
+    Return the sum of unicode of a string, more for fun.
+
+    Examples
+    --------
+    >>> from qsdsan.utils import ords
+    >>> ords('QSDsan')
+    554
+    '''
+    string = str(string)
+    added = sum(ord(i) for i in string)
+    return added
+
+
+def clear_lca_registries(print_msg=False):
+    '''
+    Clear registries related to LCA, including instances of
+    :class:`~.ImpactIndicator`, :class:`~.ImpactItem`, :class:`~.Construction`,
+    and :class:`~.Transportation`
+
+    Parameters
+    ----------
+    print_msg : bool
+        Whether to print registry clear notice.
+
+    Examples
+    --------
+    >>> from qsdsan.utils import clear_lca_registries
+    >>> clear_lca_registries(True)
+    All impact indicators have been removed from registry.
+    All impact items have been removed from registry.
+    All construction activities have been removed from registry.
+    All transportation activities have been removed from registry.
+    '''
+    # Only import when this function is called to avoid circular import during package initialization
+    from qsdsan import ImpactIndicator, ImpactItem, Construction, Transportation
+    for lca_cls in (ImpactIndicator, ImpactItem, Construction, Transportation):
+        lca_cls.clear_registry(print_msg)
 
 
 def register_with_prefix(obj, prefix, ID):
@@ -159,5 +201,3 @@ def price_ratio(default_price_ratio):
 def add_price_ratio(cls, default_price_ratio=1):
     cls.price_ratio = default_price_ratio
     return cls
-
-
