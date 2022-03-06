@@ -334,9 +334,9 @@ class HHXdryer(SanUnit):
         # Calculate heat needed to dry to the desired moisture content
         mc_in = waste_in.imass['H2O'] / waste_in.F_mass # fraction
         mc_out = self.moisture_content_out
-        if mc_in < mc_out:
-            warn(f'Moisture content of the influent stream ({mc_in:.2f}) '
-                f'is smaller than the desired moisture content ({mc_out:.2f}).')
+        if mc_in < mc_out*0.999: # allow a small error
+            warn(f'Moisture content of the influent stream ({mc_in:.1%}) '
+                f'is smaller than the desired moisture content ({mc_out:.1%}).')
         TS_in = waste_in.F_mass - waste_in.imass['H2O'] # kg TS dry/hr
         waste_out.imass['H2O'] = TS_in/(1-mc_out)*mc_out
         water_to_dry = waste_in.imass['H2O'] - waste_out.imass['H2O'] # kg water/hr

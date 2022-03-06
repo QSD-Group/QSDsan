@@ -101,7 +101,7 @@ class CarbonizerBase(SanUnit):
 
         # Moisture content
         mc = waste.imass['H2O']/waste.F_mass if waste.F_mass!=0 else 0
-        if mc > 0.35:
+        if mc > 0.351: # allow a small error
             warn(f'Moisture content of the influent is {mc:.1%}, '
                 'larger than the maximum allowed level of 35%.')
 
