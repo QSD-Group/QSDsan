@@ -16,9 +16,10 @@ from biosteam.utils import TicToc
 
 __all__ = (
     'copy_attr',
+    'ords',
+    'clear_lca_registries',
     'register_with_prefix',
     'time_printer',
-    'ords',
     )
 
 
@@ -64,6 +65,47 @@ def copy_attr(new, original, skip=(), same=(), slots=None):
     return new
 
 
+def ords(string):
+    '''
+    Return the sum of unicode of a string, more for fun.
+
+    Examples
+    --------
+    >>> from qsdsan.utils import ords
+    >>> ords('QSDsan')
+    554
+    '''
+    string = str(string)
+    added = sum(ord(i) for i in string)
+    return added
+
+
+def clear_lca_registries(print_msg=False):
+    '''
+    Clear registries related to LCA, including instances of
+    :class:`~.ImpactIndicator`, :class:`~.ImpactItem`, :class:`~.Construction`,
+    and :class:`~.Transportation`
+
+    Parameters
+    ----------
+    print_msg : bool
+        Whether to print registry clear notice.
+
+    Examples
+    --------
+    >>> from qsdsan.utils import clear_lca_registries
+    >>> clear_lca_registries(True)
+    All impact indicators have been removed from registry.
+    All impact items have been removed from registry.
+    All construction activities have been removed from registry.
+    All transportation activities have been removed from registry.
+    '''
+    # Only import when this function is called to avoid circular import during package initialization
+    from qsdsan import ImpactIndicator, ImpactItem, Construction, Transportation
+    for lca_cls in (ImpactIndicator, ImpactItem, Construction, Transportation):
+        lca_cls.clear_registry(print_msg)
+
+
 def register_with_prefix(obj, prefix, ID):
     '''
     Register the object with a prefix (and a "_" between the prefix and the ID).
@@ -91,7 +133,6 @@ def register_with_prefix(obj, prefix, ID):
         registry.register_safely(full_ID, obj)
 
 
-# Allow functions to print execution time with a `print_time` kwarg
 def time_printer(func):
     '''
     Allow functions to print execution time with a `print_time` kwarg.
@@ -125,10 +166,3 @@ def time_printer(func):
         return output
     inner.__doc__ = func.__doc__
     return inner
-
-
-# Return the sum of unicode of a string, more for fun
-def ords(string):
-    string = str(string)
-    added = sum(ord(i) for i in string)
-    return added

@@ -28,7 +28,7 @@ __all__ = ('ospath', 'load_data', 'data_path',
 # %%
 
 # =============================================================================
-# From Datasheet
+# Datasheet
 # =============================================================================
 
 def load_data(path=None, sheet=None, index_col=0, **kwargs):
@@ -59,7 +59,7 @@ def load_data(path=None, sheet=None, index_col=0, **kwargs):
 # %%
 
 # =============================================================================
-# From Pickle File
+# Pickle files
 # =============================================================================
 
 def save_pickle(obj, path):

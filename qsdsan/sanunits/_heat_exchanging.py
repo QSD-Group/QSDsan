@@ -25,7 +25,7 @@ __all__ = ('HXprocess', 'HXutility',)
 class HXprocess(SanUnit, HXprocess):
     '''
     Similar to :class:`biosteam.units.HXprocess`,
-    but can be initilized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
+    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
 
     See Also
     --------
@@ -45,10 +45,10 @@ class HXprocess(SanUnit, HXprocess):
         SanUnit.__init__(self, ID, ins, outs, thermo,
                          init_with=init_with, F_BM_default=F_BM_default)
 
-        #: [float] Enforced overall heat transfer coefficent (kW/m^2/K)
+        #: [float] Enforced overall heat transfer coefficient (kW/m^2/K)
         self.U = U
 
-        #: [float] Total heat transfered.
+        #: [float] Total heat transferred.
         self.Q = None
 
         #: Number of shells for LMTD correction factor method.
@@ -85,7 +85,7 @@ class HXprocess(SanUnit, HXprocess):
 class HXutility(SanUnit, HXutility):
     '''
     Similar to :class:`biosteam.units.HXutility`,
-    but can be initilized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
+    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
 
     See Also
     --------
@@ -107,7 +107,7 @@ class HXutility(SanUnit, HXutility):
         #: [bool] If true, calculate vapor liquid equilibrium
         self.rigorous = rigorous
 
-        #: [float] Enforced overall heat transfer coefficent (kW/m^2/K)
+        #: [float] Enforced overall heat transfer coefficient (kW/m^2/K)
         self.U = U
 
         #: Number of shells for LMTD correction factor method.

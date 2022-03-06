@@ -212,7 +212,7 @@ class ImpactItem:
             source_item._price = converted
 
     def add_indicator(self, indicator, CF_value, CF_unit=''):
-        '''Add an indicator with charactorization factor values.'''
+        '''Add an indicator with characterization factor values.'''
         source_item = check_source(self, True)
         if isinstance(indicator, str):
             indicator = ImpactIndicator.get_indicator(indicator)

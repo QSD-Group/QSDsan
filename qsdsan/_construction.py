@@ -71,6 +71,13 @@ class Construction:
                                   Impacts
     GlobalWarming (kg CO2-eq)       0.255
     FossilEnergyConsumption (MJ)     0.05
+    >>> # Registry management (construction activities will be auto-registered)
+    >>> steel_100_g.deregister()
+    The construction activity "steel_100_g" has been removed from the registry.
+    >>> steel_100_g.register()
+    The construction activity "steel_100_g" has been added to the registry.
+    >>> Construction.clear_registry()
+    All construction activities have been removed from registry.
     '''
 
     __slots__ = ('_ID', '_linked_unit', '_item', '_quantity', '_lifetime')
@@ -131,6 +138,25 @@ class Construction:
         return new
 
     __copy__ = copy
+
+    def register(self, print_msg=True):
+        '''Add this construction activity to the registry.'''
+        self.registry.register_safely(self.ID, self)
+        if print_msg:
+            print(f'The construction activity "{self.ID}" has been added to the registry.')
+
+    def deregister(self, print_msg=True):
+        '''Remove this construction activity to the registry.'''
+        self.registry.discard(self.ID)
+        if print_msg:
+            print(f'The construction activity "{self.ID}" has been removed from the registry.')
+
+    @classmethod
+    def clear_registry(cls, print_msg=True):
+        '''Remove all existing construction activities from the registry.'''
+        cls.registry.clear()
+        if print_msg:
+            print('All construction activities have been removed from registry.')
 
     @property
     def linked_unit(self):
