@@ -94,8 +94,6 @@ component_units_of_measure = {
 
 # %%
 
-#!!! What should the gas/solid-phase Component value (e.g., CH4 in biogas)
-# for particle_size and degradability? Can we put None or NA?
 allowed_values = {
     'particle_size': ('Dissolved gas', 'Soluble', 'Colloidal', 'Particulate'),
     'degradability': ('Readily', 'Slowly', 'Undegradable'),
@@ -215,12 +213,12 @@ class Component(Chemical):
                 description=None, particle_size=None,
                 degradability=None, organic=None, **chemical_properties):
         if search_ID:
-            self = super().__new__(cls, ID=ID, search_ID=search_ID,
-                                   search_db=True, **chemical_properties)
+            self = Chemical.__new__(cls, ID=ID, search_ID=search_ID,
+                                    search_db=True, **chemical_properties)
         else: # still try to search nonetheless
-            try: self = super().__new__(cls, ID=ID, **chemical_properties)
+            try: self = Chemical.__new__(cls, ID=ID, **chemical_properties)
             except LookupError:
-                self = super().__new__(cls, ID=ID, search_db=False, **chemical_properties)
+                self = Chemical.__new__(cls, ID=ID, search_db=False, **chemical_properties)
 
         self._ID = ID
         if formula:
@@ -647,13 +645,10 @@ class Component(Chemical):
                       organic=None, **data):
         '''Return a new :class:`Component` from a :class:`thermosteam.Chemical` object.'''
         new = cls.__new__(cls, ID=ID, phase=phase)
-
         if chemical is None:
             chemical = ID
-
         if isinstance(chemical, str):
             chemical = Chemical(chemical)
-
         for field in chemical.__slots__:
             value = getattr(chemical, field, None)
             setattr(new, field, copy_maybe(value))

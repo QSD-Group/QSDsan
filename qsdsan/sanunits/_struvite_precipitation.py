@@ -23,7 +23,7 @@ from ..utils.loading import ospath, load_data, data_path
 
 __all__ = ('StruvitePrecipitation',)
 
-struvite_path = ospath.join(data_path, '/sanunit_data/_struvite_precipitation.tsv')
+struvite_path = ospath.join(data_path, 'sanunit_data/_struvite_precipitation.tsv')
 
 #!!! No `price_ratio`?
 class StruvitePrecipitation(SanUnit):
@@ -71,7 +71,7 @@ class StruvitePrecipitation(SanUnit):
             Construction('pvc', linked_unit=self, item='PVC', quantity_unit='kg'),
             )
 
-        data = load_data(path=data_path)
+        data = load_data(path=struvite_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
@@ -93,7 +93,7 @@ class StruvitePrecipitation(SanUnit):
             ws.phase = 's'
 
         Mg_molar_split = self.Mg_molar_split
-        Mg_molar_split /= sum(Mg_molar_split) # normalize to a sum of 1
+        sum_splits = sum(Mg_molar_split)
         Mg_dose, P_rec_1 = self.Mg_dose, self.P_rec_1
         # Total P recovered [kmol P/hr]
         P_recovered = waste.imol['P'] * P_rec_1
@@ -107,8 +107,8 @@ class StruvitePrecipitation(SanUnit):
 
         magnesium_hydroxide.empty()
         magnesium_carbonate.empty()
-        magnesium_hydroxide.imol['MagnesiumHydroxide'] = waste.imol['P']*Mg_dose*Mg_molar_split[0]
-        magnesium_carbonate.imol['MagnesiumCarbonate'] = waste.imol['P']*Mg_dose*Mg_molar_split[1]
+        magnesium_hydroxide.imol['MagnesiumHydroxide'] = waste.imol['P']*Mg_dose*(Mg_molar_split[0]/sum_splits)
+        magnesium_carbonate.imol['MagnesiumCarbonate'] = waste.imol['P']*Mg_dose*(Mg_molar_split[1]/sum_splits)
         struvite.imol['Struvite'] = P_recovered
         bag_filter.imass['FilterBag'] = self.N_tank * self.cycles_per_day / self.filter_reuse / 24 # bags/hr
 

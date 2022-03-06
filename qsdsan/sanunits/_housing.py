@@ -49,7 +49,7 @@ class HousingBiogenicRefinery(SanUnit):
 
         self.construction = (
             Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
-            Construction('stainless_steel_sheet', linked_unit=self, quantity_unit='kg'),
+            Construction('stainless_steel_sheet', item='StainlessSteelSheet', linked_unit=self, quantity_unit='kg'),
             Construction('concrete', item='Concrete', linked_unit=self, quantity_unit='m3'),
             )
 

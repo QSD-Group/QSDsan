@@ -16,6 +16,7 @@ for license details.
 
 # %%
 
+from warnings import warn
 from .. import SanUnit, Construction
 from ..utils import ospath, load_data, data_path, price_ratio
 
@@ -101,8 +102,8 @@ class CarbonizerBase(SanUnit):
         # Moisture content
         mc = waste.imass['H2O']/waste.F_mass if waste.F_mass!=0 else 0
         if mc > 0.35:
-            raise RuntimeError(f'Moisture content of the influent is {mc:.1%}, '
-                               'larger than the maximum allowed level of 35%.')
+            warn(f'Moisture content of the influent is {mc:.1%}, '
+                'larger than the maximum allowed level of 35%.')
 
         biochar.empty()
         biochar_prcd = waste.F_mass * (1-mc) * self.biochar_production_rate # kg biochar /hr
@@ -117,8 +118,8 @@ class CarbonizerBase(SanUnit):
         # One unit is capable of treating 550 kg/d (35% moisture based on 20 hr of run time) or 18 kg dry/hr
         self.daily_run_time = hpd = waste.F_mass*(1-mc) * 24/self.loading_rate # hr/d
         if hpd > 24:
-            raise RuntimeError(f'The calcualted run time for `CarbonizerBase` is {hpd:.2f} per day, '
-                               'which is unrealistic.')
+            warn(f'The calcualted run time for `CarbonizerBase` is {hpd:.2f} per day, '
+                 'which is unrealistic.')
         self.uptime_ratio = hpd / 24 # ratio of uptime (all items are per hour)
 
         # # Energy balance, not really being used

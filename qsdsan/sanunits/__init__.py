@@ -24,7 +24,7 @@ from ._abstract import *
 from ._carbonizer_base import *
 from ._clarifier import *
 from ._combustion import *
-from ._control_boxes import *
+from ._controlling import *
 from ._crop_application import *
 from ._decay import *
 from ._dynamic_influent import *
@@ -65,7 +65,7 @@ from . import (
         _carbonizer_base,
 	    _clarifier,
 	    _combustion,
-        _control_boxes,
+        _controlling,
 	    _crop_application,
 	    _decay,
 	    _dynamic_influent,
@@ -102,7 +102,7 @@ __all__ = (
         *_carbonizer_base.__all__,
 	    *_clarifier.__all__,
 	    *_combustion.__all__,
-        *_control_boxes.__all__,
+        *_controlling.__all__,
 	    *_crop_application.__all__,
 	    *_decay.__all__,
 	    *_dynamic_influent.__all__,

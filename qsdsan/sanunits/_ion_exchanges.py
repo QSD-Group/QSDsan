@@ -138,7 +138,7 @@ class IonExchangeNH3(SanUnit):
     @property
     def N_column(self):
         '''[int] Number of resin columns.'''
-        return ceil(self.ins[0].F_vol*1000*24/self.cycles_per_day/self.column_daily_loading_rate)
+        return ceil(self.ins[0].F_vol*1000*24/self.column_daily_loading_rate)
 
     @property
     def N_tank(self):

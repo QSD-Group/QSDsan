@@ -18,6 +18,7 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+from warnings import warn
 from biosteam.units import HXprocess, HXutility
 from .. import SanUnit, Construction
 from ..utils import ospath, load_data, data_path, price_ratio
@@ -143,7 +144,7 @@ class HXutility(SanUnit, HXutility):
 
 hhx_path = ospath.join(data_path, 'sanunit_data/_hydronic_heat_exchanger.tsv')
 
-@price_ratio
+@price_ratio(default_price_ratio=1)
 class HydronicHeatExchanger(SanUnit):
     '''
     Hydronic heat exchanger is used for applications that require drying
@@ -334,8 +335,8 @@ class HHXdryer(SanUnit):
         mc_in = waste_in.imass['H2O'] / waste_in.F_mass # fraction
         mc_out = self.moisture_content_out
         if mc_in < mc_out:
-            raise RuntimeError(f'Moisture content of the influent stream ({mc_in:.2f}) '
-                               f'is smaller than the desired moisture content ({mc_out:.2f}).')
+            warn(f'Moisture content of the influent stream ({mc_in:.2f}) '
+                f'is smaller than the desired moisture content ({mc_out:.2f}).')
         TS_in = waste_in.F_mass - waste_in.imass['H2O'] # kg TS dry/hr
         waste_out.imass['H2O'] = TS_in/(1-mc_out)*mc_out
         water_to_dry = waste_in.imass['H2O'] - waste_out.imass['H2O'] # kg water/hr
@@ -345,7 +346,7 @@ class HHXdryer(SanUnit):
         heat_supplied = self.dryer_heat_transfer_coeff * self.area_surface * (self.water_out_temp-self.feedstock_temp)
 
         if heat_needed_to_dry_35 > heat_supplied:
-            raise RuntimeError('Heat required exceeds heat supplied.')
+            warn('Heat required exceeds heat supplied.')
 
         #!!! Still needs this?
         # set to use COD or C for carbon based on influent composition
