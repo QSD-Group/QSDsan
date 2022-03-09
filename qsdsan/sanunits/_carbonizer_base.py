@@ -167,7 +167,6 @@ class CarbonizerBase(SanUnit):
             self.airlock_motor_cost_cb + \
             self.inducer_fan_cost_cb + \
             self.biochar_collection_box_cost_cb + \
-            self.klinker_basher_cost_cb + \
             self.drive_chain_cost_cb + \
             self.chain_guards_cost_cb + \
             self.door_cost_cb + \

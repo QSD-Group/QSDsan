@@ -28,6 +28,11 @@ class Grinder(SanUnit):
     '''
     Grinder is used to break up solids.
 
+    .. note:
+
+        Moisture content of the effluent is adjusted to be 65%, although the grinder
+        itself can't change the moisture. This assumption was made based on pilot experiments.
+
     The following components should be included in system thermo object for simulation:
     H2O, OtherSS.
 
@@ -50,7 +55,7 @@ class Grinder(SanUnit):
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 moisture_content_out=0.35, **kwargs): #!!! is the default moisture content 35% or 65%?
+                 moisture_content_out=0.65, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with,
                          F_BM_default=1)
         self.moisture_content_out = moisture_content_out
@@ -82,10 +87,6 @@ class Grinder(SanUnit):
                                f'is smaller than the desired moisture content ({mc_out:.2f}).')
         TS_in = waste_in.F_mass - waste_in.imass['H2O'] # kg TS dry/hr
         waste_out.imass['H2O'] = TS_in/(1-mc_out)*mc_out
-        # #!!! This is assuming a moisture content of 65%, not 35%
-        # # set necessary moisture content of effluent as 35%
-        # waste_out.imass['H2O'] = (0.65/0.35) * TS_in # fraction
-
         waste_out._COD = waste_in.COD * waste_in.F_vol / waste_out.F_vol
 
     def _design(self):

@@ -154,6 +154,13 @@ class HydronicHeatExchanger(SanUnit):
     The refinery monitors the temperature of the water to ensure that
     the feedstock is being sufficiently dried before entering the refinery.
 
+    .. note::
+
+        The number of pumps in the design results are floats as the costs
+        are scaled based on a pump of different size.
+        The exponential scaling method might be considered for a better estimation.
+
+
     This class should be used together with :class:`~.sanunits.DryerFromHHX`.
 
     The following components should be included in system thermo object for simulation:
@@ -162,12 +169,17 @@ class HydronicHeatExchanger(SanUnit):
     The following impact items should be pre-constructed for life cycle assessment:
     OilHeatExchanger, Pump.
 
+
     Parameters
     ----------
     ins : WasteStream
         Hot gas.
     outs : WasteStream
         Hot gas.
+
+    Warnings
+    --------
+    Energy balance is not performed for this unit.
 
     References
     ----------
@@ -206,23 +218,21 @@ class HydronicHeatExchanger(SanUnit):
     def _run(self):
         hot_gas_in = self.ins[0]
         hot_gas_out = self.outs[0]
-        # #!!! The following should probably b
-        # hot_gas_out.copy_like(hot_gas_in)
-        # hot_gas_out.phase = hot_gas_in.phase = 'g'
-        hot_gas_out.phase = 'g'
-
-        # Set temperature
+        hot_gas_out.copy_like(hot_gas_in)
+        hot_gas_out.phase = hot_gas_in.phase = 'g'
         hot_gas_out.T = self.hhx_temp
-        # Calculate the heat that was delivered to the HHX
-        self.heat_output_water = \
-            self.water_flowrate * \
-            (self.water_out_temp-self.water_in_temp) * \
-            self.water_density_kg_m_3 * \
-            self.water_heat_capacity_k_j_kg_k * (60/1000)  # MJ/hr
-        # Calculate losses through water pipe
-        self.heat_loss_water_pipe = \
-            (self.water_out_temp-self.ambient_temp) / \
-            (self.water_r_pipe_k_k_w+self.water_r_insulation_k_k_w) * 3.6 # MJ/hr
+
+        # # The following codes can be used to calculate the heat that was delivered to the HHX
+        # self.heat_output_water = \
+        #     self.water_flowrate * \
+        #     (self.water_out_temp-self.water_in_temp) * \
+        #     self.water_density_kg_m_3 * \
+        #     self.water_heat_capacity_k_j_kg_k * (60/1000)  # MJ/hr
+
+        # # The following codes can be used to calculate losses through water pipe
+        # self.heat_loss_water_pipe = \
+        #     (self.water_out_temp-self.ambient_temp) / \
+        #     (self.water_r_pipe_k_k_w+self.water_r_insulation_k_k_w) * 3.6 # MJ/hr
 
 
     def _design(self):
@@ -297,6 +307,10 @@ class HHXdryer(SanUnit):
     moisture_content_out : float
         Desired moisture content of the effluent.
 
+    Warnings
+    --------
+    Energy balance is not performed for this unit.
+
     References
     ----------
     #!!! Reference?
@@ -342,26 +356,16 @@ class HHXdryer(SanUnit):
         water_to_dry = waste_in.imass['H2O'] - waste_out.imass['H2O'] # kg water/hr
         heat_needed_to_dry_35 = water_to_dry * self.energy_required_to_dry_sludge # MJ/hr
 
-        #!!! heat_supplied isn't calculated from heat_in and heat loss?
+        # Estimate heat supplied based on the data
         heat_supplied = self.dryer_heat_transfer_coeff * self.area_surface * (self.water_out_temp-self.feedstock_temp)
 
         if heat_needed_to_dry_35 > heat_supplied:
             warn('Heat required exceeds heat supplied.')
 
-        #!!! Still needs this?
-        # set to use COD or C for carbon based on influent composition
-        # if waste_in.COD == 0:
-        #     C_in = waste_in.imass['C']
-
-        # else:
-        #     C_in = self.carbon_COD_ratio * waste_in.COD
-
         # Emissions
         drying_CO2_to_air = (self.drying_CO2_emissions * self.carbon_COD_ratio
                              * waste_in.COD * waste_in.F_vol / 1000) # kg CO2 /hr
 
-        #!!! Add or not?
-        # add conversion factor for COD to TC?
         CH4.imass['CH4'] = drying_CH4_to_air = \
             self.drying_CH4_emissions * self.carbon_COD_ratio * \
             waste_in.COD * waste_in.F_vol / 1000 # kg CH4 /hr
@@ -370,23 +374,19 @@ class HHXdryer(SanUnit):
         N2O.imass['N2O'] = drying_NH3_to_air * self.NH3_to_N2O # kg N2O /hr
 
         #!!! This is not correct, need to convert from CH4/CO2 to C
-        # Reduce COD and TN in waste_out based on emissions
-        waste_out._COD = (waste_in.COD * (waste_in.F_vol/waste_out.F_vol)) - ((drying_CO2_to_air + drying_CH4_to_air) / self.carbon_COD_ratio)
-        # # Probably should be like this
-        # waste_out._COD = (waste_in.COD*waste_in.F_vol - (drying_CO2_to_air/44*12+drying_CH4_to_air/16*12) / self.carbon_COD_ratio)
+        # # Reduce COD and TN in waste_out based on emissions
+        # waste_out._COD = (waste_in.COD * (waste_in.F_vol/waste_out.F_vol)) - ((drying_CO2_to_air + drying_CH4_to_air) / self.carbon_COD_ratio)
+        # Probably should be like this
+        # 44/12/16 are the molecular weights of CO2, C, and CH4, respectively
+        waste_out._COD = (waste_in.COD*waste_in.F_vol - (drying_CO2_to_air/44*12+drying_CH4_to_air/16*12) / self.carbon_COD_ratio)
 
-        #!!! Why this is commented out?
-        # waste_out.imass['C'] -= ((drying_CO2_to_air + drying_CH4_to_air))
+        # 17/14 are the molecular weights of NH3/N, respectively
+        waste_out.imass['N'] -= drying_NH3_to_air / 17 * 14
 
-        #!!! Should do the conversion from NH3 to N
-        waste_out.imass['N'] -= drying_NH3_to_air
-
-        #!!! Are these used?
-        # Jacket loss data and calculate losses due to convection and radiation
-        self.jacket_heat_loss_conv = self.heat_transfer_coeff * (self.water_air_hx_temp1 - self.ambient_temp) * self.water_air_hx_area1 / 1000 / 0.2778 # MJ/hr
-        self.jacket_heat_loss_radiation = self.radiative_emissivity * 5.67e-8 * ((self.water_air_hx_temp1 + 273)**4 - (self.ambient_temp + 273)**4) / 1000 / 0.2778 # MJ/hr
-        self.jacket_heat_loss_sum = self.jacket_heat_loss_conv + self.jacket_heat_loss_radiation # MJ/hr
-        #these can be calculated for pyrolysis and catalytic converter also
+        # # The following codes can be used to calculate losses due to convection and radiation
+        # self.jacket_heat_loss_conv = self.heat_transfer_coeff * (self.water_air_hx_temp1 - self.ambient_temp) * self.water_air_hx_area1 / 1000 / 0.2778 # MJ/hr
+        # self.jacket_heat_loss_radiation = self.radiative_emissivity * 5.67e-8 * ((self.water_air_hx_temp1 + 273)**4 - (self.ambient_temp + 273)**4) / 1000 / 0.2778 # MJ/hr
+        # self.jacket_heat_loss_sum = self.jacket_heat_loss_conv + self.jacket_heat_loss_radiation # MJ/hr
 
 
 # %%
@@ -403,6 +403,16 @@ class OilHeatExchanger(SanUnit):
     certification as the treatment unity needs to be energy independent
     when processing faecal sludge.
 
+    .. note::
+
+        This unit should be used in conjunction of :class:`~.sanunits.CarbonizerBase`
+        as it uses the the heat from that unit for heat-exchaning
+        (i.e., itself doesn't generate heat).
+
+        The number of oil heat exchanger and pumps in the design results are floats as the costs
+        are scaled based on equipment of different sizes.
+        The exponential scaling method might be considered for a better estimation.
+
     The following components should be included in system thermo object for simulation:
     N2O.
 
@@ -415,6 +425,10 @@ class OilHeatExchanger(SanUnit):
         Hot gas.
     outs : stream obj
         Hot gas.
+
+    Warnings
+    --------
+    Energy balance is not performed for this unit.
 
     References
     ----------
@@ -443,26 +457,22 @@ class OilHeatExchanger(SanUnit):
     _N_outs = 1
 
     def _run(self):
-        heat_in = self.ins[0]
-        heat_out = self.outs[0]
-        heat_out.copy_like(heat_in)
-        # #!!! The following should probably b
-        # hot_gas_out.phase = hot_gas_in.phase = 'g'
-        heat_out.phase = 'g'
+        hot_gas_in = self.ins[0]
+        hot_gas_out = self.outs[0]
+        hot_gas_out.copy_like(hot_gas_in)
+        hot_gas_out.phase = hot_gas_in.phase = 'g'
+        hot_gas_out.T = self.ohx_temp
 
-        # Set temperature
-        heat_out.T = self.ohx_temp
+        # # The following codes can be used to calculate the power that was delivered to the ORC
+        # self.power_delivery_orc = \
+        #     self.oil_flowrate * \
+        #     (self.oil_temp_out-self.oil_temp_in) * \
+        #     self.oil_density * self.oil_specific_heat * (60/1000)  # MJ/hr
 
-        #!!! Below aren't used anywhere
-        # Calculate the power that was delivered to the ORC
-        self.power_delivery_orc = \
-            self.oil_flowrate * \
-            (self.oil_temp_out-self.oil_temp_in) * \
-            self.oil_density * self.oil_specific_heat * (60/1000)  # MJ/hr
-        # Calculate losses through pipe
-        self.pipe_heat_loss = \
-            (self.oil_temp_out-self.amb_temp) / \
-            (self.oil_r_pipe_k_k_w+self.oil_r_insulation_k_k_w) * 3.6  # MJ/hr
+        # # The following codes can be used to calculate losses through pipe
+        # self.pipe_heat_loss = \
+        #     (self.oil_temp_out-self.amb_temp) / \
+        #     (self.oil_r_pipe_k_k_w+self.oil_r_insulation_k_k_w) * 3.6  # MJ/hr
 
 
     def _design(self):

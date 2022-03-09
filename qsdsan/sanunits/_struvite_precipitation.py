@@ -94,16 +94,16 @@ class StruvitePrecipitation(SanUnit):
 
         Mg_molar_split = self.Mg_molar_split
         sum_splits = sum(Mg_molar_split)
-        Mg_dose, P_rec_1 = self.Mg_dose, self.P_rec_1
+        Mg_dose, P_rec = self.Mg_dose, self.P_rec
         # Total P recovered [kmol P/hr]
-        P_recovered = waste.imol['P'] * P_rec_1
+        P_recovered = waste.imol['P'] * P_rec
         treated.imol['P'] =  waste.imol['P'] - P_recovered
 
         # Total N recovered, 1:1 mol/mol N:P in struvite ((NH4)MgPO4·6(H2O))
         treated.imol['NH3'] =  waste.imol['NH3'] - P_recovered
 
         # Total K recovered [kg K/hr]
-        treated.imol['K'] =  waste.imol['K'] * (1-self.K_rec_1)
+        treated.imol['K'] =  waste.imol['K'] * (1-self.K_rec)
 
         magnesium_hydroxide.empty()
         magnesium_carbonate.empty()

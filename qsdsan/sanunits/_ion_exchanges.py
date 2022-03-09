@@ -78,7 +78,6 @@ class IonExchangeNH3(SanUnit):
     _N_ins = 3
     _N_outs = 3
 
-# in _run: define influent and effluent streams and treatment processes
     def _run(self):
         waste, resin_in, H2SO4 = self.ins
         treated, resin_out, conc_NH3 = self.outs
@@ -86,7 +85,7 @@ class IonExchangeNH3(SanUnit):
 
         #!!! During storage most N as urea goes to NH3, should that
         # conversion be added or just use total N here?
-        N_recovered = waste.imass['NH3'] * self.N_rec_2 # kg N / hr
+        N_recovered = waste.imass['NH3'] * self.N_rec # kg N / hr
         treated.imass['NH3'] =  waste.imass['NH3'] - N_recovered # kg N / hr
         conc_NH3.imass['NH3'] = N_recovered # kg N / hr
 
@@ -101,14 +100,10 @@ class IonExchangeNH3(SanUnit):
 
         resin_demand_influent = waste.TN / self.resin_lifetime / self.ad_density / 14 # kg resin / m3 treated
         resin_demand_time = resin_demand_influent * waste.F_vol # kg resin / hr
-        #!!! Used anywhere?
-        resin_cost_day = resin_demand_time * 24 * self.cost_resin # $ resin / d
         resin_in.imass['Polystyrene'] = resin_out.imass['Polystyrene'] = resin_demand_time
 
         acid_demand_influent = waste.TN * self.vol_H2SO4 / self.ad_density / 14 # L acid / L treated
         acid_demand_time = acid_demand_influent * waste.F_vol * 1000 * 1.83 # kg acid / hr
-        #!!! Used anywhere?
-        acid_cost_day = acid_demand_time * 24 / 1000 * self.cost_H2SO4 # $ acid / d
         H2SO4.imass['H2SO4'] = acid_demand_time
 
 
@@ -142,5 +137,5 @@ class IonExchangeNH3(SanUnit):
 
     @property
     def N_tank(self):
-        '''[int] Number of tanks, calculated as `ceil(N_column/3)`.'''
-        return ceil(self.N_column/3)
+        '''[int] Number of tanks for cost estimation, might be float (instead of int).'''
+        return self.N_column/3
