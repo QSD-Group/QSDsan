@@ -416,9 +416,6 @@ class SludgeSeparator(SanUnit):
 
 screw_path = ospath.join(data_path,'sanunit_data/_screw_press.tsv')
 
-#!!! See GitHub issue here for question about the data references:
-# https://github.com/QSD-Group/QSDsan/issues/58
-
 @price_ratio(default_price_ratio=1)
 class ScrewPress(SludgeSeparator):
     '''
@@ -444,6 +441,8 @@ class ScrewPress(SludgeSeparator):
     [1] Tchobanoglous, G.; Stensel, H. D.; Tsuchihashi, R.; Burton, F.; Abu-Orf,
     M.; Bowden, G.; Pfrang, W. Wastewater Engineering: Treatment and Resource
     Recovery, 5th ed.; Metcalf & Eddy, Inc., AECOM, McGraw-Hill: New York, 2014.
+    [2] Rowles et al., Financial viability and environmental sustainability of fecal sludge
+    management with Omni Processors. In Prep.
 
     '''
 

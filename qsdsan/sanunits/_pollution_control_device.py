@@ -52,15 +52,11 @@ class PollutionControlDevice(SanUnit):
         hot gas, fugitive N2O (from Carbonizer Base)
     outs : Iterable(stream obj)
         hot gas, fugitive N2O.
-    #!!! get rid of these emissions?
-            others could be:
-            Gases consist of SO2_emissions, NOx_emissions, CO_emissions,
-            Hg_emissions, Cd_emissions, As_emissions, Dioxin_Furans_emissions.
 
     References
     ----------
-    #!!! Reference?
-
+    Rowles et al., Financial viability and environmental sustainability of fecal sludge
+    management with Omni Processors. In Prep.
     '''
 
 
@@ -155,6 +151,3 @@ class PollutionControlDevice(SanUnit):
 
         power_demand = (self.pcd_auger_power+self.pcd_airlock_power) * hpd / 24
         self.power_utility(power_demand) # kWh/hr
-
-        #!!! Still useful?
-        # costs associated with full time operators can be added in the TEA as staff

@@ -161,7 +161,7 @@ class HydronicHeatExchanger(SanUnit):
         The exponential scaling method might be considered for a better estimation.
 
 
-    This class should be used together with :class:`~.sanunits.DryerFromHHX`.
+    This class should be used together with :class:`~.sanunits.HHXdryer`.
 
     The following components should be included in system thermo object for simulation:
     N2O.
@@ -183,11 +183,12 @@ class HydronicHeatExchanger(SanUnit):
 
     References
     ----------
-    #!!! Reference?
+    Rowles et al., Financial viability and environmental sustainability of fecal sludge
+    management with Omni Processors. In Prep.
 
     See Also
     --------
-    :class:`~.sanunits.DryerFromHHX`
+    :class:`~.sanunits.HHXdryer`
 
     '''
 
@@ -299,11 +300,6 @@ class HHXdryer(SanUnit):
         Dewatered solids, heat.
     outs : WasteStream
         Dried solids, fugitive N2O, fugitive CH4.
-    #!!! Get rid of these?
-            set both as WasteStream
-            others could be:
-            Gases consist of SO2_emissions, NOx_emissions, CO_emissions,
-            Hg_emissions, Cd_emissions, As_emissions, Dioxin_Furans_emissions.
     moisture_content_out : float
         Desired moisture content of the effluent.
 
@@ -313,7 +309,8 @@ class HHXdryer(SanUnit):
 
     References
     ----------
-    #!!! Reference?
+    Rowles et al., Financial viability and environmental sustainability of fecal sludge
+    management with Omni Processors. In Prep.
 
     See Also
     --------
@@ -432,7 +429,8 @@ class OilHeatExchanger(SanUnit):
 
     References
     ----------
-    #!!! Reference?
+    Rowles et al., Financial viability and environmental sustainability of fecal sludge
+    management with Omni Processors. In Prep.
 
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',

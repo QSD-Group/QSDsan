@@ -50,7 +50,8 @@ class Grinder(SanUnit):
 
     References
     ----------
-    #!!! Reference?
+    Rowles et al., Financial viability and environmental sustainability of fecal sludge
+    management with Omni Processors. In Prep.
 
     '''
 

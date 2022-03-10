@@ -39,7 +39,7 @@ class CarbonizerBase(SanUnit):
     hottest location of the refinery ranging between 550-900°C. This
     range is closely monitored as pyrolysis usually starts at 350°C and
     all of the volatile gases are released at 550°C. This temperature is
-    also important when confirming treatment of the faecal sludge, as it
+    also important when confirming treatment of the fecal sludge, as it
     serves as our evidence for inactivation of the microbes in the sludge.
     After the gases are combusted, the exhaust travels below a baffle plate
     to encourage the fallout of particulates before it proceeds to the
@@ -57,14 +57,11 @@ class CarbonizerBase(SanUnit):
         Dewatered solids moisture content ≤ 35%.
     outs : Iterable(stream obj)
         Biochar, hot gas, fugitive N2O.
-    #!!! get rid of these emissions?
-            others could be:
-            Gases consist of SO2_emissions, NOx_emissions, CO_emissions,
-            Hg_emissions, Cd_emissions, As_emissions, Dioxin_Furans_emissions.
 
     References
     ----------
-    #!!! Reference?
+    Rowles et al., Financial viability and environmental sustainability of fecal sludge
+    management with Omni Processors. In Prep.
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -217,6 +214,4 @@ class CarbonizerBase(SanUnit):
             self.carbonizer_biochar_auger_power + \
             self.carbonizer_fuel_auger_power + \
             self.carbonizer_primary_air_blower_power
-        self.power_utility(power_demand)  #kWh
-
-        # costs associated with full time operators can be added in the TEA as staff
+        self.power_utility(power_demand)  # kWh

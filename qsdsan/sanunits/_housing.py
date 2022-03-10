@@ -39,6 +39,11 @@ class HousingBiogenicRefinery(SanUnit):
         Influent stream.
     outs : stream obj
         Effluent stream, is copied from the influent stream.
+
+    References
+    ----------
+    Rowles et al., Financial viability and environmental sustainability of fecal sludge
+    management with Omni Processors. In Prep.
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -62,7 +67,7 @@ class HousingBiogenicRefinery(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    
+
     def _design(self):
         design = self.design_results
         constr = self.construction
@@ -71,7 +76,7 @@ class HousingBiogenicRefinery(SanUnit):
         design['Concrete'] = constr[2].quantity = self.concrete_thickness * self.footprint
         self.add_construction()
 
-    
+
     def _cost(self):
         D = self.design_results
         C = self.baseline_purchase_costs

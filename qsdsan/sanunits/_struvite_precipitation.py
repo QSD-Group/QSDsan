@@ -57,6 +57,8 @@ class StruvitePrecipitation(SanUnit):
     source-separated urine in Nairobi, Kenya. Development Engineering. 2018,
     3, 188–195.
     https://doi.org/10.1016/j.deveng.2018.07.002
+    [3] Rowles et al., Financial viability and environmental sustainability of fecal sludge
+    management with Omni Processors. In Prep.
 
     '''
 
@@ -84,7 +86,6 @@ class StruvitePrecipitation(SanUnit):
     _N_ins = 4
     _N_outs = 2
 
-# in _run: define influent and effluent streams and treatment processes
     def _run(self):
         waste, magnesium_hydroxide, magnesium_carbonate, bag_filter = self.ins
         treated, struvite = self.outs
@@ -128,9 +129,6 @@ class StruvitePrecipitation(SanUnit):
         C['Stirrer'] = N_tank * self.cost_P_stirrer
         C['PVC'] = N_tank * self.material_P_pipe * self.cost_P_pipe
         self.add_OPEX =  0.35/4 * self.baseline_purchase_cost / (365 * 24) # USD/hr (all items are per hour)
-
-        #!!! Still need this?
-        # costs associated with full time operators can be added in the TEA as staff
 
 
     @property
