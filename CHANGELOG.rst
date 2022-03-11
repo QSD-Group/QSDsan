@@ -4,6 +4,35 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
+`1.1.0`
+-------
+- Fully tested dynamic simulation capacity, refer to the `BSM1 system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_ in EXPOsan for an example implementation.
+- Added many new :class:`~.SanUnit` and reorganized package/documentation structure, new unit operations include:
+
+	- :class:`~.sanunits.AnMBR`
+	- :class:`~.sanunits.CHP`
+	- :class:`~.sanunits.InternalCirculationRx`
+	- :class:`~.sanunits.SludgeHandling`
+
+		- :class:`~.sanunits.BeltThickener`
+		- :class:`~.sanunits.SludgeCentrifuge`
+
+	- :class:`~.sanunits.PolishingFilter`
+	- :class:`~.sanunits.WWTpump`
+
+- Continue to enhance documentation (e.g., :class:`~.Process`, `~.stats`, util functions).
+- Building the `official website <https://qsdsan.com>`_ of ``QSDsan``! The first version is expected to go live Spring, 2022.
+
+
+`1.0.0`_
+--------
+Official release of ``QSDsan`` v1.0.0!
+
+- Added system-wise dynamic simulation capacity. To use the dynamic simulation function, a unit needs to have several supporting methods to initialize its state and compile ordinary differential equations (ODEs), refer to the units included in the BSM1 system below for usage, documentation and tutorial will be coming soon!
+- Developed the `benchmark simulation system no.1 (BSM1) model on EXPOsan <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_ with comparison against the MATLAB/Simulink model developed by the International Water Association (IWA) Task Group on Benchmarking of Control Strategies. See the `README <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_ for details
+- Significantly expanded the tutorials with demo videos on `YouTube <https://www.youtube.com/playlist?list=PL-tj_uM0mIdFv72MAULnWjS6lx_cCyi2N>`_. Now tutorials cover all non-dynamic major classes (tutorials on dynamic classes will be included in the next major release).
+
+
 `0.3.0`_
 --------
 - Now LCA data can be imported from external databases using the newly made `BW2QSD <https://github.com/QSD-Group/BW2QSD>`_ package.
@@ -31,7 +60,7 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - Added :class:`~.SanStream` for non-waste streams (e.g., gases).
 - Updated the ``add_OPEX`` attribute of :class:`~.SanUnit` and ``system_add_OPEX`` attribute of :class:`~.SimpleTEA` so that they take :class:`dict` as the default to allow display of multiple additional operating expenses.
-- Split the ``systems`` module into an individual package `EXPOsan <https://github.com/QSD-Group/exposan>`_.
+- Split the ``systems`` module into an individual package `EXPOsan`_.
 - Now using :class:`thermosteam.utils.Registry` to manage :class:`~.ImpactIndicator` and :class:`~.ImpactItem`.
 - Added `AppVeyor CI <https://ci.appveyor.com/project/yalinli2/qsdsan>`_.
 - Renamed the ``master`` branch to ``main``.
@@ -48,7 +77,7 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 		- :func:`qsdsan.stats.fast_analysis` for (extended) Fourier amplitude sensitivity test (FAST) and random balance design (RBD) FAST.
 		- :func:`qsdsan.stats.morris_till_convergence` to run Morris analysis until the results converge.
 		- Added Kendall's tau and Kolmogorov–Smirnov test to :func:`qsdsan.stats.get_correlations`.
-	
+
 	- Plotting functions to visualize all test results:
 
 		- :func:`qsdsan.stats.plot_uncertainties` fpr results from uncertainty analysis as different 1D or 2D plots.
@@ -114,15 +143,17 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 
 .. Other links
-.. _latest: https://qsdsan.readthedocs.io/en/latest/
-.. _beta: https://qsdsan.readthedocs.io/en/beta/
+.. _latest: https://qsdsan.readthedocs.io/en/latest
+.. _beta: https://qsdsan.readthedocs.io/en/beta
+.. _EXPOsan:  https://github.com/QSD-Group/exposan
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
+.. _1.1.0: https://github.com/QSD-Group/QSDsan/commit/9061ae5529963cf057487f8a66d9231b129bec4d
+.. _1.0.0: https://github.com/QSD-Group/QSDsan/commit/559a0e43428411b23319ffd087e04c5d08f46d4a
 .. _0.3.0: https://github.com/QSD-Group/QSDsan/commit/3c19aebd5503433120217228c3388533cee4bd30
 .. _0.2.0: https://github.com/QSD-Group/QSDsan/commit/286943eb206ebd89f58e50b9fdd1bed486e894ae
 .. _0.1.0: https://github.com/QSD-Group/QSDsan/commit/1c3d11d9f72421c8b5dbdf6b537775ca35ec65c0
 .. _0.0.3: https://github.com/QSD-Group/QSDsan/commit/e20222caccc58d9ee414ca08d8ec55f3a44ffca7
 .. _0.0.2: https://github.com/QSD-Group/QSDsan/commit/84653f5979fbcd76a80ffb6b22ffec1c5ca2a084
 .. _0.0.1: https://github.com/QSD-Group/QSDsan/commit/f95e6172780cfe24ab68cd27ba19837e010b3d99
-

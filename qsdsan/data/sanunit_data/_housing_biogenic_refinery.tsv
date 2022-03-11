@@ -1,0 +1,7 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+container20ft_cost		USD	2872.5	2700	3045	uniform	https://www.containerdiscounts.com/20-foot-shipping-container
+container40ft_cost		USD	4053	4011	4095	uniform	https://www.containerdiscounts.com/20-foot-shipping-container
+stainless_steel_housing		USD per m2	166.185	119.67	212.7	uniform	https://www.mscdirect.com/browse/tnpla/32004459?cid=ppc-google-New+-+Raw+Materials+-+PLA_sxRU4eYE2___164124449459_c_S&mkwid=sxRU4eYE2%7cdc&pcrid=164124449459&rd=k&product_id=32004459&pgrid=35979546206&ptaid=aud-1023917971169:pla-335830923837
+concrete_cost		USD per m3	180.5	147.6	213.4	uniform	Trimmer et al. 2020
+concrete_thickness		m	0.3	0.15	0.45	uniform	Trimmer et al. 2020
+footprint		m2	45	36	54	uniform	2 to 3 times the system footprint

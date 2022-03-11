@@ -1,0 +1,466 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+'''
+QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
+
+This module is developed by:
+    Yalin Li <zoe.yalin.li@gmail.com>
+
+This module is under the University of Illinois/NCSA Open Source License.
+Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
+for license details.
+'''
+
+import numpy as np
+from math import ceil
+from warnings import warn
+from .. import SanUnit, Construction
+from ._decay import Decay
+from ..utils import ospath, load_data, data_path, dct_from_str
+
+__all__ = ('DryingBed', 'LiquidTreatmentBed')
+
+
+# %%
+
+drying_bed_path = ospath.join(data_path, 'sanunit_data/_drying_bed.tsv')
+
+class DryingBed(SanUnit, Decay):
+    '''
+    Unplanted and planted drying bed for solids based on
+    `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
+
+    To enable life cycle assessment, the following impact items should be pre-constructed:
+    `Concrete`, `Steel`.
+
+    Parameters
+    ----------
+    ins : WasteStream
+        Solid for drying.
+    outs : WasteStream
+        Dried solids, evaporated water, fugitive CH4, and fugitive N2O.
+    design_type : str
+        Can be "unplanted" or "planted". The default unplanted process has
+        a number of "covered", "uncovered", and "storage" beds. The storage
+        bed is similar to the covered bed, but with higher wall height.
+    degraded_components : tuple
+        IDs of components that will degrade (simulated by first-order decay).
+
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+
+    References
+    ----------
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
+
+    See Also
+    --------
+    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    '''
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 design_type='unplanted', degraded_components=('OtherSS',), **kwargs):
+
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        N_unplanted = {'covered': 19,
+                       'uncovered': 30,
+                       'storage': 19,
+                       'planted': 0}
+        if design_type == 'unplanted':
+            self._N_bed = N_unplanted
+            self.design_type = 'unplanted'
+        else:
+            self._N_bed = dict.fromkeys(N_unplanted.keys(), 0)
+            self._N_bed['planted'] = 2
+            self.design_type = 'planted'
+
+        self.degraded_components = tuple(degraded_components)
+
+        self.construction = (
+            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            )
+
+        data = load_data(path=drying_bed_path)
+        for para in data.index:
+            if para == 'N_bed': continue
+            if para in ('sol_frac', 'bed_L', 'bed_W', 'bed_H'):
+                value = dct_from_str(data.loc[para]['expected'], dtype='float')
+            else:
+                value = float(data.loc[para]['expected'])
+            setattr(self, '_'+para, value)
+        del data
+
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+
+    _N_ins = 1
+    _N_outs = 4
+
+    def _run(self):
+        waste = self.ins[0]
+        sol, evaporated, CH4, N2O = self.outs
+        sol.copy_like(waste)
+        evaporated.phase = CH4.phase = N2O.phase = 'g'
+
+        # COD degradation in settled solids
+        COD_loss = self.first_order_decay(k=self.decay_k_COD,
+                                          t=self.tau/365,
+                                          max_decay=self.COD_max_decay)
+        _COD = sol._COD or sol.COD
+        sol_COD = _COD/1e3*sol.F_vol * (1-COD_loss)
+        sol.imass[self.degraded_components] *= 1 - COD_loss
+        CH4.imass['CH4'] = waste.COD/1e3*waste.F_vol*COD_loss * \
+            self.max_CH4_emission*self.MCF_decay # COD in mg/L (g/m3)
+
+        # N degradation
+        N_loss = self.first_order_decay(k=self.decay_k_N,
+                                        t=self.tau/365,
+                                        max_decay=self.N_max_decay)
+        N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol
+        NH3_rmd, NonNH3_rmd = \
+            self.allocate_N_removal(N_loss_tot, sol.imass['NH3'])
+        sol.imass ['NH3'] -=  NH3_rmd
+        sol.imass['NonNH3'] -= NonNH3_rmd
+        N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
+
+        # Adjust water content in the dried solids
+        sol_frac = self.sol_frac
+        solid_content = 1 - sol.imass['H2O']/sol.F_mass
+        if solid_content > sol_frac:
+            msg = f'Solid content of the solid after COD removal is {solid_content:.2f}, '\
+                f'larger than the set sol_frac of {sol_frac:.2f} for the {self.design_type} ' \
+                'process type, the set value is ignored.'
+            warn(msg, stacklevel=3)
+            evaporated.empty()
+        else:
+            sol.imass['H2O'] = (sol.F_mass-sol.imass['H2O'])/sol_frac
+            evaporated.imass['H2O'] = waste.imass['H2O'] - sol.imass['H2O']
+        sol._COD = sol_COD*1e3/sol.F_vol
+
+    _units = {
+        'Single covered bed volume': 'm3',
+        'Single uncovered bed volume': 'm3',
+        'Single storage bed volume': 'm3',
+        'Single planted bed volume': 'm3',
+        'Total cover area': 'm2',
+        'Total column length': 'm'
+        }
+
+    def _design(self):
+        design = self.design_results
+
+        L = np.fromiter(self.bed_L.values(), dtype=float)
+        W = np.fromiter(self.bed_W.values(), dtype=float)
+        H = np.fromiter(self.bed_H.values(), dtype=float)
+        V = L * W * H
+        N_bed = self.N_bed
+        N = np.fromiter(N_bed.values(), dtype=int)
+        for n, i in enumerate(N_bed.keys()):
+            design[f'Number of {i} bed'] = N_bed[i]
+            design[f'Single {i} bed volume'] = V[n]
+        cover_array = np.array((1, 0, 1, 0)) # covered, uncovered, storage, planted
+        design['Total cover area'] = tot_cover_area = \
+            (cover_array*N*L*W/(np.cos(self.cover_slope/180*np.pi))).sum()
+        design['Total column length'] = tot_column_length = \
+            (cover_array*N*2*self.column_per_side*self.column_H).sum()
+
+        concrete = (N*self.concrete_thickness*(L*W+2*L*H+2*W*H)).sum()
+        steel = tot_cover_area*self.cover_unit_mass + \
+            tot_column_length*self.column_unit_mass
+
+        constr = self.construction
+        constr[0].quantity = concrete
+        constr[1].quantity = steel
+
+        for i in self.construction:
+            self.F_BM[i.item.ID] = 1
+
+    @property
+    def tau(self):
+        '''[float] Retention time, [d].'''
+        return self._tau
+    @tau.setter
+    def tau(self, i):
+        self._tau = float(i)
+
+    @property
+    def sol_frac(self):
+        '''[float] Final solid content of the dried solids.'''
+        return self._sol_frac[self.design_type]
+    @sol_frac.setter
+    def sol_frac(self, i):
+        self._sol_frac[self.design_type] = float(i)
+
+    @property
+    def design_type(self):
+        '''[str] Drying bed type, can be either "unplanted" or "planted".'''
+        return self._design_type
+    @design_type.setter
+    def design_type(self, i):
+        if i in ('unplanted', 'planted'):
+            self._design_type = i
+            self.line =f'{i.capitalize()} drying bed'
+        else:
+            raise ValueError(f'design_type can only be "unplanted" or "planted", '
+                             f"not {i}.")
+
+    @property
+    def N_bed(self):
+        '''
+        [dict] Number of the different types of drying beds,
+        float will be converted to the smallest integer.
+        '''
+        for i, j in self._N_bed.items():
+            self._N_bed[i] = ceil(j)
+        return self._N_bed
+    @N_bed.setter
+    def N_bed(self, i):
+        int_i = {k: ceil(v) for k, v in i.items()}
+        self._N_bed.update(int_i)
+
+    @property
+    def bed_L(self):
+        '''[dict] Length of the different types of drying beds, [m].'''
+        return self._bed_L
+    @bed_L.setter
+    def bed_L(self, i):
+        self._bed_L.update(i)
+
+    @property
+    def bed_W(self):
+        '''[dict] Width of the different types of drying beds, [m].'''
+        return self._bed_W
+    @bed_W.setter
+    def bed_W(self, i):
+        self._bed_W.update(i)
+
+    @property
+    def bed_H(self):
+        '''[dict] Wall height of the different types of drying beds, [m].'''
+        return self._bed_H
+    @bed_H.setter
+    def bed_H(self, i):
+        self._bed_H.update(i)
+
+    @property
+    def column_H(self):
+        '''[float] Column height for covered bed, [m].'''
+        return self._column_H
+    @column_H.setter
+    def column_H(self, i):
+        self._column_H = float(i)
+
+    @property
+    def column_per_side(self):
+        '''[int] Number of columns per side of covered bed, float will be converted to the smallest integer.'''
+        return self._column_per_side
+    @column_per_side.setter
+    def column_per_side(self, i):
+        self._column_per_side = ceil(i)
+
+    @property
+    def column_unit_mass(self):
+        '''[float] Unit mass of the column, [kg/m].'''
+        return self._column_unit_mass
+    @column_unit_mass.setter
+    def column_unit_mass(self, i):
+        self._column_unit_mass = float(i)
+
+    @property
+    def concrete_thickness(self):
+        '''[float] Thickness of the concrete wall.'''
+        return self._concrete_thickness
+    @concrete_thickness.setter
+    def concrete_thickness(self, i):
+        self._concrete_thickness = float(i)
+
+    @property
+    def cover_slope(self):
+        '''[float] Slope of the bed cover, [°].'''
+        return self._cover_slope
+    @cover_slope.setter
+    def cover_slope(self, i):
+        self._cover_slope = float(i)
+
+    @property
+    def cover_unit_mass(self):
+        '''[float] Unit mass of the bed cover, [kg/m2].'''
+        return self._cover_unit_mass
+    @cover_unit_mass.setter
+    def cover_unit_mass(self, i):
+        self._cover_unit_mass = float(i)
+
+
+# %%
+
+
+
+liquid_bed_path = ospath.join(data_path, 'sanunit_data/_liquid_treatment_bed.tsv')
+
+
+class LiquidTreatmentBed(SanUnit, Decay):
+    '''
+    For secondary treatment of liquid based on
+    `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
+
+    To enable life cycle assessment, the following impact items should be pre-constructed:
+    Concrete.
+
+    Parameters
+    ----------
+    ins : WasteStream
+        Waste for treatment.
+    outs : WasteStream
+        Treated waste, fugitive CH4, and fugitive N2O.
+    degraded_components : tuple
+        IDs of components that will degrade (at the same removal as `COD_removal`).
+    if_N2O_emission : bool
+        If consider N2O emission from N degradation in the process.
+
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+
+    References
+    ----------
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296.
+
+    See Also
+    --------
+    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    '''
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 degraded_components=('OtherSS',), if_N2O_emission=False, **kwargs):
+
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
+        self.degraded_components = tuple(degraded_components)
+        self.if_N2O_emission = if_N2O_emission
+        self.construction = (Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'))
+
+        data = load_data(path=liquid_bed_path)
+        for para in data.index:
+            value = float(data.loc[para]['expected'])
+            setattr(self, '_'+para, value)
+        del data
+
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+
+    _N_ins = 1
+    _N_outs = 3
+
+    def _run(self):
+        waste = self.ins[0]
+        treated, CH4, N2O = self.outs
+        treated.copy_like(self.ins[0])
+        CH4.phase = N2O.phase = 'g'
+
+        # COD removal
+        _COD = waste._COD or waste.COD
+        COD_loss = self.first_order_decay(k=self.decay_k_COD,
+                                          t=self.tau/365,
+                                          max_decay=self.COD_max_decay)
+        COD_loss_tot = COD_loss*_COD/1e3*waste.F_vol
+
+        treated._COD = _COD * (1-COD_loss)
+        treated.imass[self.degraded_components] *= (1-COD_loss)
+
+        CH4_prcd = COD_loss_tot*self.MCF_decay*self.max_CH4_emission
+        CH4.imass['CH4'] = CH4_prcd
+
+        if self.if_N2O_emission:
+            N_loss = self.first_order_decay(k=self.decay_k_N,
+                                            t=self.tau/365,
+                                            max_decay=self.N_max_decay)
+            N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol
+            NH3_rmd, NonNH3_rmd = \
+                self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
+            treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
+            treated.imass['NonNH3'] = waste.imass['NonNH3'] - NonNH3_rmd
+            N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
+        else:
+            N2O.empty()
+
+    _units = {
+        'Residence time': 'd',
+        'Bed length': 'm',
+        'Bed width': 'm',
+        'Bed height': 'm',
+        'Single bed volume': 'm3'
+        }
+
+    def _design(self):
+        design = self.design_results
+        design['Residence time'] = self.tau
+        design['Bed number'] = N = self.N_bed
+        design['Bed length'] = L = self.bed_L
+        design['Bed width'] = W = self.bed_W
+        design['Bed height'] = H = self.bed_H
+        design['Single bed volume'] = L*W*H
+
+        concrete = N*self.concrete_thickness*(L*W+2*L*H+2*W*H)
+        self.construction[0].quantity = concrete
+        self.add_construction()
+
+
+    def _cost(self):
+        pass
+
+
+    @property
+    def tau(self):
+        '''[float] Residence time, [d].'''
+        return self._tau
+    @tau.setter
+    def tau(self, i):
+        self._tau = i
+
+    @property
+    def N_bed(self):
+        '''[int] Number of treatment beds, float will be converted to the smallest integer.'''
+        return self._N_bed
+    @N_bed.setter
+    def N_bed(self, i):
+        self._N_bed = ceil(i)
+
+    @property
+    def bed_L(self):
+        '''[float] Bed length, [m].'''
+        return self._bed_L
+    @bed_L.setter
+    def bed_L(self, i):
+        self._bed_L = i
+
+    @property
+    def bed_W(self):
+        '''[float] Bed width, [m].'''
+        return self._bed_W
+    @bed_W.setter
+    def bed_W(self, i):
+        self._bed_W = i
+
+    @property
+    def bed_H(self):
+        '''[float] Bed height, [m].'''
+        return self._bed_H
+    @bed_H.setter
+    def bed_H(self, i):
+        self._bed_H = i
+
+    @property
+    def concrete_thickness(self):
+        '''[float] Thickness of the concrete wall.'''
+        return self._concrete_thickness
+    @concrete_thickness.setter
+    def concrete_thickness(self, i):
+        self._concrete_thickness = i

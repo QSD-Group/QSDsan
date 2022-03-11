@@ -1,5 +1,4 @@
-
-Treatmend Beds
+Treatment Beds
 ==============
 
 DryingBed

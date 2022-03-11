@@ -18,7 +18,7 @@ import sys
 py_version = sys.version.split('.')
 _PY_MAJOR, _PY_MINOR = int(py_version[0]), int(py_version[1])
 
-if (_PY_MAJOR, _PY_MINOR) <= (3, 7):
+if (_PY_MAJOR, _PY_MINOR) <= (3, 7): # pragma: no cover
     from warnings import warn
     if (_PY_MAJOR, _PY_MINOR) >= (3, 5):
         try: import pickle5 as _pk
@@ -36,14 +36,14 @@ if (_PY_MAJOR, _PY_MINOR) <= (3, 7):
 else:
     import pickle as _pk
 
-del sys, py_version
-
 
 import pkg_resources
 try:
     __version__ = pkg_resources.get_distribution('qsdsan').version
 except pkg_resources.DistributionNotFound:  # pragma: no cover
     __version__ = None
+
+del sys, py_version, pkg_resources
 
 
 import thermosteam as tmo
@@ -52,16 +52,18 @@ Chemical = tmo.Chemical
 Chemicals = tmo.Chemicals
 CompiledChemicals = tmo.CompiledChemicals
 Stream = tmo.Stream
+MultiStream = tmo.MultiStream
 set_thermo = tmo.settings.set_thermo
 get_components = tmo.settings.get_chemicals
 get_thermo = tmo.settings.get_thermo
 
 PowerUtility = bst.PowerUtility
-MultiStream = tmo.MultiStream
 Unit = bst.Unit
 System = bst.System
+Scope = bst.utils.Scope
 Model = bst.Model
 Flowsheet = bst.Flowsheet
+main_flowsheet = bst.main_flowsheet
 CEPCI = bst.CE # Chemical Engineering Plant Cost Index
 CEPCI_by_year = bst.units.design_tools.CEPCI_by_year
 del tmo, bst
@@ -108,6 +110,12 @@ utils._secondary_importing()
 for _slot in utils.doc_examples.__all__:
     setattr(utils, _slot, getattr(utils.doc_examples, _slot))
 
+# Add the `pump` decorator to the util module
+from .sanunits import wwtpump
+utils.__all__ = (*utils.__all__, 'wwtpump')
+setattr(utils, 'wwtpump', wwtpump)
+
+
 __all__ = (
     *_component.__all__,
     *_components.__all__,
@@ -122,4 +130,4 @@ __all__ = (
     *_sanunit.__all__,
     *_simple_tea.__all__,
     *_lca.__all__,
-           )
+    )

@@ -22,14 +22,16 @@ for license details.
 import numpy as np
 from collections import defaultdict
 from collections.abc import Iterable
-from biosteam.utils import Inlets, Outlets, format_title
-from . import currency, Unit, Stream, SanStream, WasteStream, \
-    Construction, Transportation
+from warnings import warn
+from biosteam.utils import MissingStream, Inlets, Outlets
+from . import currency, Unit, Stream, SanStream, WasteStream, System, \
+    Construction, Transportation, Equipment
+from .utils import SanUnitScope
+from biosteam.utils import Scope
 
 __all__ = ('SanUnit',)
 
 def _update_init_with(init_with, ins_or_outs, size):
-
     if isinstance(init_with, str):
         init_with = dict.fromkeys([f'{ins_or_outs}{n}' for n in range(size)], init_with)
         return init_with
@@ -59,8 +61,22 @@ def _update_init_with(init_with, ins_or_outs, size):
             raise ValueError(f'Stream type for {k} is invalid, ' \
                              'valid values are "Stream" or "s", "SanStream" or "ss", ' \
                              'and "WasteStream" or "ws".')
-
     return new_init_with
+
+
+def _replace_missing_streams(port, missing):
+    for idx, s_type in missing:
+        if s_type == 's':
+            continue
+        s = port[idx]
+        stream_class = SanStream if s_type=='ss' else WasteStream
+        port.replace(s, stream_class.from_stream(stream_class, s))
+
+
+def _get_inf_state(inf):
+    inf._init_state()
+    return inf._state
+
 
 add2list = lambda lst, item: lst.extend(item) if isinstance(item, Iterable) \
     else lst.append(item)
@@ -74,16 +90,18 @@ class SanUnit(Unit, isabstract=True):
     Parameters
     ----------
     init_with : str or dict
-        Which class of stream the :class:`SanUnit` will be initialized with,
+        Which class of stream the :class:`~.SanUnit` will be initialized with,
         can be "Stream" (shorthanded as "s"), "SanStream" ("ss"), or "WasteStream" ("ws").
         When provided as a str, all streams will be of the same class;
         when provided as a dict, use "ins" or "outs" followed with the order number
         (i.e., ins0, outs-1) as keys; you can use ":" to denote a range (e.g., ins2:4);
         you can also use "else" to specify the stream class for non-provided ones.
-    construction : :class:`~.Construction` or iterable
-        Contains construction information.
-    transportation : :class:`~.Transportation` or iterable
-        Contains construction information.
+    construction : Iterable(obj)
+        :class:`~.Construction` with construction information.
+    transportation : Iterable(obj)
+        :class:`~.Transportation` with transportation information.
+    equipments: Iterable(obj)
+        :class:`~.Equipment` with equipment information.
     add_OPEX : float or dict
         Operating expense per hour in addition to utility cost (assuming 100% uptime).
         Float input will be automatically converted to a dict with the key being
@@ -103,7 +121,7 @@ class SanUnit(Unit, isabstract=True):
             50% of the pump at 50 kW. Set the pump `power_utility` to be 50*50%=25 kW.
 
 
-    equipment_lifetime : int or dict
+    lifetime : int or dict
         Lifetime of this unit (int) or individual equipment within this unit
         (dict) in year.
         It will be used to adjust cost and emission calculation in TEA and LCA.
@@ -130,7 +148,6 @@ class SanUnit(Unit, isabstract=True):
                  construction=(), transportation=(), equipments=(),
                  add_OPEX={}, uptime_ratio=1., lifetime=None, F_BM_default=None,
                  isdynamic=False, **kwargs):
-
         self._register(ID)
         self._specification = None
         self._load_thermo(thermo)
@@ -141,56 +158,52 @@ class SanUnit(Unit, isabstract=True):
         self._init_results()
         self._init_specification()
         self._assert_compatible_property_package()
-
-        self.construction = construction
-        self.transportation = transportation
-        for equip in equipments:
-            equip._linked_unit = self
-        self.equipments = equipments
-
-        self.add_OPEX = add_OPEX
+        for i in (*construction, *transportation, *equipments):
+            i._linked_unit = self
+        # Make fresh ones for each unit
+        self.construction = () if not construction else construction
+        self.transportation = () if not transportation else transportation
+        self.equipments = () if not equipments else equipments
+        self.add_OPEX = add_OPEX.copy()
         self.uptime_ratio = 1.
         self.lifetime = lifetime
-
         if F_BM_default:
             F_BM = self.F_BM
             self.F_BM = defaultdict(lambda: F_BM_default)
             self.F_BM.update(F_BM)
-
-        self._isdynamic = isdynamic
-        self._state = None
-        self._ODE = None
-
+        # For units with different state headers, should update it in the unit's ``__init__``
+        self.isdynamic = isdynamic
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
 
     def _convert_stream(self, strm_inputs, streams, init_with, ins_or_outs):
+        isa = isinstance
         if not streams:
-            return []
-
-        if isinstance(init_with, str):
+            return [], []
+        if isa(init_with, str):
             init_with = dict.fromkeys([f'{ins_or_outs}{n}'
                                        for n in range(len(streams))], init_with)
-
         # Do not change pre-defined stream types
-        if isinstance(strm_inputs, Stream): # input is a stream
+        if isa(strm_inputs, Stream): # input is a stream
             init_with[f'{ins_or_outs}0'] = type(strm_inputs).__name__
-         # input is an iterable of stream
-        elif isinstance(strm_inputs, Iterable) and not isinstance(strm_inputs, str):
-            for n, s in enumerate(strm_inputs):
-                if isinstance(s, Stream):
-                    init_with[f'{ins_or_outs}{n}'] = type(s).__name__
+        # `input` is an iterable of stream
+        elif isa(strm_inputs, Iterable) and not isa(strm_inputs, str):
+            for in_or_out, s in zip(ins_or_outs, strm_inputs):
+                if isa(s, Stream):
+                    init_with[in_or_out] = type(s).__name__
 
         init_with = _update_init_with(init_with, ins_or_outs, len(streams))
 
-        converted = []
+        converted, missing = [], []
         for k, v in init_with.items():
-            if not ins_or_outs in k:
+            if not ins_or_outs in k: # leave out outsX when going through ins and vice versa
                 continue
-
-            num = k.split(ins_or_outs)[-1]
-            s = streams[int(num)]
+            num = int(k.split(ins_or_outs)[-1])
+            s = streams[num]
+            if isa(s, MissingStream):
+                missing.append((num, v))
+                continue
             if v == 's':
                 converted.append(s)
             elif v == 'ss':
@@ -198,27 +211,51 @@ class SanUnit(Unit, isabstract=True):
             else:
                 converted.append(WasteStream.from_stream(WasteStream, s))
 
-        diff = len(converted) - len(streams)
+        diff = len(converted) + len(missing) - len(streams)
         if diff != 0:
             raise ValueError(f'Type(s) of {diff} stream(s) has/have not been specified.')
 
-        return converted
+        return converted, missing
+
+
+    def _init_dynamic(self):
+        self._state = None
+        self._dstate = None
+        self._ins_QC = np.zeros((len(self._ins), len(self.components)+1))
+        self._ins_dQC = self._ins_QC.copy()
+        self._ODE = None
+        self._AE = None
+        if not hasattr(self, '_mock_dyn_sys'):
+            self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
+        if not hasattr(self, '_state_header'):
+            self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components] + ['Q [m3/d]']
+        # Shouldn't need to re-create the mock system everytime
+        # if hasattr(self, '_mock_dyn_sys'):
+        #     sys = self._mock_dyn_sys
+        #     sys.registry.discard(sys)
+        # self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
 
 
     def _init_ins(self, ins, init_with):
         super()._init_ins(ins)
-        converted = self._convert_stream(ins, self.ins, init_with, 'ins')
-        self._ins = Inlets(self, self._N_ins, converted, self._thermo,
-                           self._ins_size_is_fixed, self._stacklevel)
+        converted, missing = self._convert_stream(ins, self.ins, init_with, 'ins')
+        _ins = self._ins = Inlets(self, self._N_ins, converted, self._thermo,
+                                  self._ins_size_is_fixed, self._stacklevel)
+        # Cannot do it within `_convert_stream` as it creates new streams and
+        # cause error in `Inlets/Outlets._redock`
+        _replace_missing_streams(_ins, missing)
+
 
     def _init_outs(self, outs, init_with):
         super()._init_outs(outs)
-        converted = self._convert_stream(outs, self.outs, init_with, 'outs')
-        self._outs = Outlets(self, self._N_outs, converted, self._thermo,
-                           self._outs_size_is_fixed, self._stacklevel)
+        converted, missing = self._convert_stream(outs, self.outs, init_with, 'outs')
+        _outs = self._outs = Outlets(self, self._N_outs, converted, self._thermo,
+                                     self._outs_size_is_fixed, self._stacklevel)
+        _replace_missing_streams(_outs, missing)
 
     def _init_results(self):
         super()._init_results()
+        self.add_OPEX = {}
 
     def __repr__(self):
         return f'<{type(self).__name__}: {self.ID}>'
@@ -263,28 +300,98 @@ class SanUnit(Unit, isabstract=True):
         info = info.replace('\n ', '\n    ')
         return info[:-1]
 
+    def set_dynamic_tracker(self, *subjects, **kwargs):
+        """
+        Set up an :class:`SystemScope` object to track the dynamic data.
+
+        Parameters
+        ----------
+        *subjects :
+            Any subjects of the system to track, which must have an `.scope`
+            attribute of type :class:`Scope`.
+        """
+        sys = self._mock_dyn_sys
+        if self.isdynamic:
+            sys._scope = {'subjects':subjects, 'kwargs':kwargs}
+        else:
+            warn(f'{self.ID} is not a dynamic unit, cannot set tracker.')
+
+    def simulate(self, t_span=(0, 0), state_reset_hook=True,
+                 solver='', **kwargs):
+        '''
+        Converge mass and energy flows, design, and cost the unit.
+
+        .. note::
+
+            If this unit is a dynamic unit, ODEs will be run after ``_run``
+            and/or ``specification``.
+
+        Parameters
+        ----------
+        t_span : tuple(float, float)
+            Integration time span for dynamic units.
+        state_reset_hook: str or callable
+            Hook function to reset the cache state between simulations (for dynamic systems).
+            Can be "reset_cache" or "clear_state" to call `System.reset_cache` or `System.clear_state`,
+            or None to avoiding resetting.
+        kwargs : dict
+            Other keyword arguments that will be passed to ``scipy.integrate.solve_ivp``
+
+        See Also
+        --------
+        :func:`~.System.simulate`
+        
+        `scipy.integrate.solve_ivp <https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html>`_
+        '''
+        super().simulate()
+        if self.isdynamic:
+            sys = self._mock_dyn_sys
+            sys._feeds = self.ins
+            sys._products = self.outs
+            sys.simulate(t_span=t_span,
+                         state_reset_hook=state_reset_hook,
+                         **kwargs)
+            self._summary()
 
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, IDs=None, stream_info=True):
         '''Print information of the unit, including waste stream-specific information.'''
         print(self._info(T, P, flow, composition, N, IDs, stream_info))
 
     def add_equipment_design(self):
+        unit_design = self.design_results
+        unit_units = self._units
+        F_BM, F_D, F_P, F_M, lifetime = \
+            self.F_BM, self.F_D, self.F_P, self.F_M, self._default_equipment_lifetime
+        isa = isinstance
+        get = getattr
+        def update_unit_attr(unit_attr, equip_ID, equip_attr):
+            if isa(equip_attr, dict):
+                unit_attr.update(equip_attr)
+            else:
+                unit_attr[equip_ID] = equip_attr
         for equip in self.equipments:
-            name = equip.name or format_title(type(equip).__name__)
-            equip_design = equip._design()
+            equip_ID = equip.ID
+            equip_design = equip._design_results = equip._design()
             equip_design = {} if not equip_design else equip_design
-            self.design_results.update(equip_design)
+            unit_design.update(equip_design)
 
-            equip_units = {} if not equip.design_units else equip.design_units
-            self._units.update(equip_units)
-            self.F_BM[name] = equip.F_BM
-            if equip.lifetime:
-                self._default_equipment_lifetime[name] = equip.lifetime
+            equip_units = {} if not equip.units else equip.units
+            unit_units.update(equip_units)
+            for unit_attr, equip_attr in zip(
+                    (F_BM, F_D, F_P, F_M, lifetime),
+                    ('F_BM', 'F_D', 'F_P', 'F_M', 'lifetime'),
+                    ):
+                update_unit_attr(unit_attr, equip_ID, get(equip, equip_attr))
+
 
     def add_equipment_cost(self):
+        unit_cost = self.baseline_purchase_costs
         for equip in self.equipments:
-            name = equip.name or format_title(type(equip).__name__)
-            self.baseline_purchase_costs[name] = equip._cost()
+            equip_cost = equip._baseline_purchase_costs = equip._cost()
+            if isinstance(equip_cost, dict):
+                unit_cost.update(equip_cost)
+            else:
+                unit_cost[equip.ID] = equip_cost
 
     def add_construction(self, add_unit=True, add_design=True, add_cost=True,
                          add_lifetime=True):
@@ -310,20 +417,52 @@ class SanUnit(Unit, isabstract=True):
         return self._isdynamic
     @isdynamic.setter
     def isdynamic(self, i):
-        self._isdynamic = bool(i)
+        hasfield = hasattr
+        if hasfield(self, '_isdynamic'):
+            if self._isdynamic == bool(i):
+                return
+        else: self._isdynamic = bool(i)
+        if self.hasode:
+            self._init_dynamic()
+            if hasattr(self, '_mock_dyn_sys'):
+                ID = self.ID+'_dynmock'
+                System.registry.discard(ID)
+            self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
 
-    def _state_tracer(self):
-        states = []
-        for inf in self.ins:
-            u = inf._source
-            state = u._state_locator(u._state)[inf.ID] if u \
-                else np.append(inf.conc, inf.get_total_flow('m3/d'))
-            states.append(state)
-        return np.array(states)
+    @property
+    def scope(self):
+        """A tracker of the unit's time-series data during dynamic simulation."""
+        if not hasattr(self, '_scope'):
+            self._scope = SanUnitScope(self)
+        return self._scope
+    
+    @scope.setter
+    def scope(self, s):
+        if not isinstance(s, Scope): 
+            raise TypeError(f'{s} must be an {Scope} not {type(s)}.')
+        if self is not s.subject:
+            raise ValueError(f'The subject of {s} must be {self} not {s.subject}.')
+        self._scope = s
+
+    @property
+    def hasode(self):
+        """Whether this unit's dynamic states are determined by ordinary differential equations."""
+        return hasattr(self, '_compile_ODE')
+
+    def reset_cache(self, dynamic_system=False):
+        '''Reset cached states for dynamic units.'''
+        super().reset_cache()
+        if self.hasode or dynamic_system:
+            self._init_dynamic()
+            for s in self.outs:
+                s.empty()
+
+    def get_retained_mass(self, biomass_IDs):
+        warn(f'The retained biomass in {self.ID} is ignored.')
 
     @property
     def construction(self):
-        '''[:class:`~.Construction` or iterable] Contains construction information.'''
+        '''Iterable(obj) :class:`~.Construction` with construction information.'''
         return self._construction
     @construction.setter
     def construction(self, i):
@@ -341,7 +480,7 @@ class SanUnit(Unit, isabstract=True):
 
     @property
     def transportation(self):
-        '''[:class:`~.Transportation` or iterable] Contains transportation information.'''
+        '''Iterable(obj) :class:`~.Transportation` with transportation information.'''
         return self._transportation
     @transportation.setter
     def transportation(self, i):
@@ -358,6 +497,25 @@ class SanUnit(Unit, isabstract=True):
         self._transportation = i
 
     @property
+    def equipments(self):
+        '''Iterable(obj) :class:`~.Equipment` with equipments information.'''
+        return self._equipments
+    @equipments.setter
+    def equipments(self, i):
+        isa = isinstance
+        if isa(i, Equipment):
+            i = (i,)
+        else:
+            if not isa(i, Iterable):
+                raise TypeError(
+                    f'Only `Equipment` object  can be included, not {type(i).__name__}.')
+            for j in i:
+                if not isa(j, Equipment):
+                    raise TypeError(
+                        f'Only `Equipment` can be included, not {type(j).__name__}.')
+        self._equipments = i
+
+    @property
     def add_OPEX(self):
         '''
         [dict] Operating expense per hour in addition to utility cost.
@@ -368,9 +526,10 @@ class SanUnit(Unit, isabstract=True):
             else self._add_OPEX
     @add_OPEX.setter
     def add_OPEX(self, i):
-        if isinstance(i, float):
+        isa = isinstance
+        if isa(i, float):
             i = {'Additional OPEX': i}
-        if not isinstance(i, dict):
+        if not isa(i, dict):
             raise TypeError(
                 f'add_OPEX can only be float of dict, not {type(i).__name__}.')
         self._add_OPEX = i

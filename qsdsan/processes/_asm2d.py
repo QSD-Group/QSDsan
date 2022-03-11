@@ -10,31 +10,25 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import os
 from thermosteam.utils import chemicals_user
 from thermosteam import settings
 from qsdsan import Components, Process, Processes, _pk
-from ..utils import data_path, save_pickle, load_pickle
+from ..utils import ospath, data_path, save_pickle, load_pickle
 
 __all__ = ('load_asm2d_cmps', 'ASM2d')
 
-_path = data_path + 'process_data/_asm2d.tsv'
-_path_cmps = os.path.join(data_path, '_asm2d_cmps.pckl')
+_path = ospath.join(data_path, 'process_data/_asm2d.tsv')
+_path_cmps = ospath.join(data_path, '_asm2d_cmps.pckl')
 _load_components = settings.get_default_chemicals
 
 ############# Components with default notation #############
-def _create_asm2d_cmps(pickle=False):
+def create_asm2d_cmps(pickle=False):
     cmps = Components.load_default()
 
     S_A = cmps.S_Ac.copy('S_A')
     S_ALK = cmps.S_CO3.copy('S_ALK')      # measured as g C
     S_F = cmps.S_F.copy('S_F')
     S_I = cmps.S_U_E.copy('S_I')
-    S_N2 = cmps.S_N2.copy('S_N2')
-    S_NH4 = cmps.S_NH4.copy('S_NH4')
-    S_NO3 = cmps.S_NO3.copy('S_NO3')
-    S_O2 = cmps.S_O2.copy('S_O2')
-    S_PO4 = cmps.S_PO4.copy('S_PO4')
 
     X_AUT = cmps.X_AOO.copy('X_AUT')
     X_H = cmps.X_OHO.copy('X_H')
@@ -62,23 +56,25 @@ def _create_asm2d_cmps(pickle=False):
     X_S.i_mass = 0.75
     X_H.i_mass = X_PAO.i_mass = X_AUT.i_mass = 0.9
 
-    cmps_asm2d = Components([S_O2, S_F, S_A, S_NH4, S_NO3, S_PO4, S_I, S_ALK, S_N2,
-                             X_I, X_S, X_H, X_PAO, X_PP, X_PHA, X_AUT, X_MeOH, X_MeP,
-                             cmps.H2O])
+    cmps_asm2d = Components([cmps.S_O2, cmps.S_N2, cmps.S_NH4, cmps.S_NO3, cmps.S_PO4,
+                             S_F, S_A, S_I, S_ALK, X_I, X_S, X_H, X_PAO, X_PP,
+                             X_PHA, X_AUT, X_MeOH, X_MeP, cmps.H2O])
+
     cmps_asm2d.compile()
 
     if pickle:
         save_pickle(cmps_asm2d, _path_cmps)
     return cmps_asm2d
+_create_asm2d_cmps = create_asm2d_cmps
 
 
-# _pickle_asm2d_cmps()
+# create_asm2d_cmps(True)
 
 def load_asm2d_cmps():
     if _pk:
         return load_pickle(_path_cmps)
     else:
-        return _create_asm2d_cmps(pickle=False)
+        return create_asm2d_cmps(pickle=False)
 
 
 ############ Processes in ASM2d #################
@@ -411,6 +407,14 @@ class ASM2d(Processes):
     path : str, optional
         Alternative file path for the Gujer matrix. The default is None.
 
+    Examples
+    --------
+    >>> from qsdsan import processes as pc, set_thermo
+    >>> cmps = pc.load_asm2d_cmps()
+    >>> set_thermo(cmps)
+    >>> asm2d = pc.ASM2d()
+    >>> asm2d.show()
+    CompiledProcesses([aero_hydrolysis, anox_hydrolysis, anae_hydrolysis, hetero_growth_S_F, hetero_growth_S_A, denitri_S_F, denitri_S_A, ferment, hetero_lysis, PAO_storage_PHA, aero_storage_PP, PAO_aero_growth_PHA, PAO_lysis, PP_lysis, PHA_lysis, auto_aero_growth, auto_lysis, precipitation, redissolution, anox_storage_PP, PAO_anox_growth])
 
     References
     ----------
@@ -454,7 +458,7 @@ class ASM2d(Processes):
                 path=None, **kwargs):
 
         if not path: path = _path
-        
+
         cmps = _load_components(components)
         cmps.S_I.i_N = iN_SI
         cmps.S_F.i_N = iN_SF
@@ -476,7 +480,7 @@ class ASM2d(Processes):
                                         parameters=cls._params,
                                         compile=False)
 
-        if path == None:
+        if path == _path:
             _p12 = Process('anox_storage_PP',
                            'S_PO4 + [Y_PHA]X_PHA + [?]S_NO3 -> X_PP + [?]S_N2 + [?]S_NH4 + [?]S_ALK',
                            components=cmps,

@@ -5,6 +5,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
    :width: 500
    :align: center
 
+|
 
 What is ``QSDsan``?
 -------------------
@@ -31,31 +32,51 @@ But names of the actual packages are all in lower cases per `PEP-8 <https://www.
 
 Installation
 ------------
-The easiest way is through ``pip``, in command/Anaconda prompt (Windows) or terminal (macOS):
+The easiest way is through ``pip``, in command-line interface (Anaconda prompt, terminal):
 
-.. code:: bash
+.. code::
 
     pip install qsdsan
+
+If you need to update:
+
+.. code::
+
+    pip install -U qsdsan
+
+Or for a specific version (replace X.X.X with the version number):
+
+.. code::
+
+    pip install qsdsan==X.X.X
+
+If you want to install the latest GitHub version at the `main branch <https://github.com/qsd-group/qsdsan>`_:
+
+.. code::
+
+    pip install git+https://github.com/QSD-Group/QSDsan.git
+
 
 You can also download the package from `PyPI <https://pypi.org/project/qsdsan/>`_.
 
 Note that development of this package is currently under initial stage with limited backward compatibility, please feel free to `submit an issue <https://github.com/QSD-Group/QSDsan/issues>`_ for any questions regarding package upgrading.
 
-If you prefer the most recent version on GitHub, please follow the steps in the `Contributing to QSDsan <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ section of the documentation.
+If you are a developer and want to contribute to ``QSDsan``, please follow the steps in the `Contributing to QSDsan <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ section of the documentation to clone the repository.
 
 
 Getting Started
 ---------------
-Follow the tutorial to get started! All tutorials are written using Jupyter Notebook, you can run your own Jupyter environment, or you can visit `this page <https://mybinder.org/v2/gh/QSD-Group/QSDsan/main?filepath=%2Fdocs%2Fsource%2Ftutorials>`_ to run the Jupyter environment in your browser.
+To help you familiarize with ``QSDsan``, we include two types of tutorials - topical tutorials that cover on one or multiple classes of ``QSDsan``, or design tutorials that show you how to translate a practical design problem into coding in QSDsan. Follow them to get started!
 
-We are updating the tutorials (you will see a note at the start of some tutorials saying updates are coming) and we will add new ones related to uncertainty/sensitivity analyses.
+All tutorials are written using Jupyter Notebook, you can run your own Jupyter environment, or you can visit `this page <https://mybinder.org/v2/gh/QSD-Group/QSDsan/main?filepath=%2Fdocs%2Fsource%2Ftutorials>`_ to run the Jupyter environment in your browser.
 
-For each of these tutorials, we are also recording videos where one of the QSD group members will go through the tutorial step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
+For each of these tutorials and examples, we are also recording videos where one of the QSD group members will go through the material step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
 
 .. toctree::
    :maxdepth: 1
-   :caption: Tutorial
+   :caption: Topical Tutorials
 
+   tutorials/0_Quick_Overview
    tutorials/1_Helpful_Basics
    tutorials/2_Component
    tutorials/3_WasteStream
@@ -65,6 +86,13 @@ For each of these tutorials, we are also recording videos where one of the QSD g
    tutorials/7_TEA
    tutorials/8_LCA
    tutorials/9_Uncertainty_and_Sensitivity_Analyses
+
+..
+   .. toctree::
+   :maxdepth: 1
+   :caption: Design Tutorials
+
+   tutorials/12_Chlorination
 
 
 How does ``QSDsan`` work?
@@ -97,14 +125,15 @@ In particular, ``QSDsan`` introduces:
    ImpactItem
    LCA
    Process
-   Streams
    SanUnit
    SimpleTEA
+   streams
    Transportation
-   equipments/equipments
+   equipments/_index
    processes/processes
-   sanunits/sanunits
+   sanunits/_index
    stats
+   utils/_index
 
 
 About the developers
@@ -137,16 +166,7 @@ Roles
    - `Hannah Lohman <https://qsdsan.readthedocs.io/en/beta/authors/Hannah_Lohman.html>`_
 
 
-**Module development:**
-   - `Yalin Li`_
-   - `Joy Zhang`_
-   - `Stetson Rowles <https://qsdsan.readthedocs.io/en/beta/authors/Stetson_Rowles.html>`_
-   - Smiti Mittal
-   - Anna Kogler
-   - Samuel Aguiar
-   - Tyler Stephen
-   - Shion Watabe
-   - `Other developers <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ that have contributed to the repository.
+**Module development:** `developers <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ that have contributed to the repository.
 
 
 **Funding support:**
@@ -176,6 +196,24 @@ If you would like to contribute, please follow our contribution guide, thank you
 
 ``QSDsan`` is and will stay open source under University of Illinois/NCSA Open Source License. Any third-party packages copied from ``QSDsan`` must be strictly open-source (not copy-left nor open-access). Please refer to `LICENSE <https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt>`_ and `CONTRIBUTION <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ for details.
 
+If you would like to receive news related to the QSDsan platform, you can subscribe to email updates using `this form <https://groups.webservices.illinois.edu/subscribe/154591>`_ (don't worry, you will be able to unsubscribe :)). Thank you in advance for your interest!
+
+
+.. toctree::
+   :caption: Events
+   :maxdepth: 1
+
+   Events.rst
+
+We will keep the calendar up-to-date as we organize more events (office hours, workshops, etc.), click on the events in the calendar to see the details (including meeting links).
+
+.. raw:: html
+
+    <embed>
+        <iframe src="https://calendar.google.com/calendar/embed?src=ep1au561lj8knfumpcd2a7ml08%40group.calendar.google.com&ctz=America%2FChicago" style="border: 0" width="100%" height="600" scrolling="no"></iframe>
+    </embed>
+
+|
 
 More resources
 --------------
@@ -201,17 +239,9 @@ Additionally, to get the full value of ``QSDsan``, we highly recommend reading t
 
 References
 ----------
-.. [1] Li, Y.; Trimmer, J. T.; Hand, S.; Zhang, X.; Chambers, K. G.; Lohman, H. A. C.; Shi, R.; Byrne, D. M.; Cook, S. M.; Guest, J. S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. *Critial Review Proposal Submitted*, 2021.
+.. [1] Li, Y.; Trimmer, J. T.; Hand, S.; Zhang, X.; Chambers, K. G.; Lohman, H. A. C.; Shi, R.; Byrne, D. M.; Cook, S. M.; Guest, J. S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. Submitted to Environmental Science & Technology, 2022.
 
 .. [2] Cortés-Peña, Y.; Kumar, D.; Singh, V.; Guest, J. S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020, 8 (8), 3302–3310. https://doi.org/10.1021/acssuschemeng.9b07040.
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 
 
 .. Links

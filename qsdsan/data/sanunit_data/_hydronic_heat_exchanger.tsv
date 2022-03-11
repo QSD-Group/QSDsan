@@ -1,0 +1,36 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references	
+heat_exchanger_hydronic_steel		kg	417.73	313.2975	522.1625	uniform	Pilot Study	
+heat_exchanger_hydronic_stainless		kg	68.7	51.525	85.875	uniform	Pilot Study	
+water_pump_power		kW	0.215	0.16125	0.26875	uniform	Pilot Study	
+hhx_inducer_fan_power		kW	0.065	0.04875	0.08125	uniform	Pilot Study	
+hhx_stack		USD	171.87	147.74	196	uniform	https://www.grainger.com/product/45ZA30?cm_mmc=PPC:+Google+PLA&ef_id=CjwKCAiAi_D_BRApEiwASslbJ_o5FR37lzt3xNL1w48Uh5GjGizVYoFDEiXzoleONpgjNK-1Ri5IgRoCWNwQAvD_BwE:G:s&s_kwcid=AL!2966!3!264955915919!!!g!437257756459!&gucid=N:N:PS:Paid:GGL:CSM-2295:4P7A1P:20501231	
+hhx_stack_thermocouple		USD	38.5	32	45	uniform	Pilot Study	
+hhx_oxygen_sensor		USD	320.29	160.58	480	uniform	Pilot Study	
+hhx_inducer_fan		USD	375	250	500	uniform	Pilot Study	
+hhx_flow_meter		USD	246.775	192.15	301.4	uniform	https://www.grainger.com/product/1YEF7?cm_mmc=PPC:+Google+PLA&ef_id=CjwKCAiA_9r_BRBZEiwAHZ_v18zu3mofLg6kFHjeCHqMIfYjLc37WDVZshj6qL7HrPNycGfLHpR23hoC3OMQAvD_BwE:G:s&s_kwcid=AL!2966!3!281698275975!!!g!471329001584!&gucid=N:N:PS:Paid:GGL:CSM-2295:4P7A1P:20501231	
+hhx_pump		USD	792.25	576	1008.5	uniform	https://www.coleparmer.com/i/masterflex-mechanically-coupled-self-priming-centrifugal-pump-19-gpm-120-ft-304-ss-115-230-vac/7550571?PubID=UX&persist=true&ip=no	
+hhx_water_in_thermistor		USD	11.79	7.86	15.72	uniform	Pilot Study	
+hhx_water_out_thermistor		USD	11.79	7.86	15.72	uniform	Pilot Study	
+hhx_load_tank		USD	572	429	715	uniform	https://www.globalindustrial.com/p/motors/hydraulic-motors/hydraulic-reservoir/hydraulic-reservoir-w-intergral-brackets-smr30ss-30-gal-stainless-steel?infoParam.campaignId=T9F&adlclid=ADL-6e297a4c-8f23-4649-bc65-dc21efd50818	
+hhx_expansion_tank		USD	228.02	199	257.04	uniform	https://www.grainger.com/product/FLEXCON-Expansion-Tank-2P670	
+hhx_heat_exchanger		USD	1031.595	752.79	1310.4	uniform	https://www.grainger.com/category/hvac-and-refrigeration/heaters/hydronic-boilers-heaters/hydronic-duct-heating-cooling-coils?brandName=PRECISION+COILS&filters=brandName	
+hhx_values		USD	56.105	27.16	85.05	uniform	https://www.grainger.com/search/plumbing/plumbing-valves/shut-off-valves/ball-valves/manual-ball-valves?sst=4&ts_optout=true&searchQuery=value&categoryIndex=1	
+hhx_thermal_well		USD	75.065	57.82	92.31	uniform	https://www.grainger.com/search/hvac-and-refrigeration/hvac-controls-and-thermostats/immersion-wells?tv_optin=false&searchQuery=Thermal+Well&searchBar=true	
+hhx_hot_water_tank		USD	572	429	715	uniform	https://www.globalindustrial.com/p/motors/hydraulic-motors/hydraulic-reservoir/hydraulic-reservoir-w-intergral-brackets-smr30ss-30-gal-stainless-steel?infoParam.campaignId=T9F&adlclid=ADL-6e297a4c-8f23-4649-bc65-dc21efd50818	
+hhx_overflow_tank		USD	214.33	160.7475	267.9125	uniform	https://www.grainger.com/product/FLUKE-Fluid-Expansion-Overflow-Kit-54DD56	
+steel_cost		USD/kg	7.485	3.81	11.16	uniform	Pilot Study	
+stainless_steel_cost		USD/kg	23.585	5.08	42.09	uniform	Pilot Study	
+frequency_corrective_maintenance		y / occurance	3.5	0.5	5	uniform	*assumed	
+service_team_wages		usd per cap per hr	6.05	3.37	10.35	triangular	https://www.salaryexpert.com/salary/job/utility-serviceman/india	"China 10.35, South Africa 4.3, India 3.37  "
+service_team_adjustdoor_hhx		min / month	330	60	600	uniform	Pilot Study	
+service_team_replacewaterpump_hhx		min / corrective maintenance	165	30	300	uniform	Pilot Study	
+service_team_purgewaterloop_hhx		min / corrective maintenance	27.5	5	50	uniform	Pilot Study	
+hhx_temp		C	110.6	106.2	115	triangular	Meyers et al 2019	
+water_flowrate		L/min	13.8	7.24	20.36	triangular	Meyers et al 2019	
+water_out_temp		C	81.7	76.3	87.1	triangular	Meyers et al 2019	
+water_in_temp		C	36.3	28.63	43.97	triangular	Meyers et al 2019	
+water_density_kg_m_3		kg/m3	969			constant		
+water_heat_capacity_k_j_kg_k		KJ/(kg K)	3.85			constant		
+ambient_temp		C	25.6	25.14	26.06	uniform	Meyers et al 2019	
+water_r_pipe_k_k_w		K/kW	0.04			constant	Meyers et al 2019	
+water_r_insulation_k_k_w		K/kW	24.1			constant	Meyers et al 2019	

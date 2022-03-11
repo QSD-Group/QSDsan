@@ -15,11 +15,11 @@ for license details.
 # %%
 
 from .. import SanUnit
-from ..utils import load_data, data_path
+from ..utils import ospath, load_data, data_path
 
 __all__ = ('Excretion',)
 
-data_path += 'sanunit_data/_excretion.tsv'
+excretion_path = ospath.join(data_path, 'sanunit_data/_excretion.tsv')
 
 
 # %%
@@ -34,9 +34,6 @@ class Excretion(SanUnit):
     waste_ratio : float
         A ratio in [0, 1] to indicate the amount of intake calories and nutrients
         (N, P, K) that is wasted.
-
-        .. note::
-            Not considered for Mg and Ca.
 
     Examples
     --------
@@ -58,7 +55,7 @@ class Excretion(SanUnit):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.waste_ratio = waste_ratio
 
-        data = load_data(path=data_path)
+        data = load_data(path=excretion_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)
@@ -198,7 +195,7 @@ class Excretion(SanUnit):
 
     @property
     def N_ur(self):
-        '''[float] Nitrogen content of urine, [wt%].'''
+        '''[float] Nitrogen recovered in urine, [wt%].'''
         return self._N_ur
     @N_ur.setter
     def N_ur(self, i):
@@ -206,7 +203,7 @@ class Excretion(SanUnit):
 
     @property
     def P_ur(self):
-        '''[float] Phosphorus content of urine, [wt%].'''
+        '''[float] Phosphorus recovered in urine, [wt%].'''
         return self._P_ur
     @P_ur.setter
     def P_ur(self, i):
@@ -214,7 +211,7 @@ class Excretion(SanUnit):
 
     @property
     def K_ur(self):
-        '''[float] Potassium content of urine, [wt%].'''
+        '''[float] Potassium recovered in urine, [wt%].'''
         return self._K_ur
     @K_ur.setter
     def K_ur(self, i):

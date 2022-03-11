@@ -4,7 +4,9 @@ The QSDsan project is under the University of Illinois/NCSA Open Source License
 
 University of Illinois/NCSA Open Source License
 
-Copyright (c) 2020- Quantitative Sustainable Design Group. All rights reserved.
+Copyright (c) 2020- Quantitative Sustainable Design Group.
+
+All rights reserved.
 
 Developed by: Quantitative Sustainable Design Group and contributors.
 

@@ -94,8 +94,6 @@ component_units_of_measure = {
 
 # %%
 
-#!!! What should the gas/solid-phase Component value (e.g., CH4 in biogas)
-# for particle_size and degradability? Can we put None or NA?
 allowed_values = {
     'particle_size': ('Dissolved gas', 'Soluble', 'Colloidal', 'Particulate'),
     'degradability': ('Readily', 'Slowly', 'Undegradable'),
@@ -111,8 +109,8 @@ def check_return_property(name, value):
         if name.startswith('f_') and (value>1 or value<0):
             raise ValueError(f'{name} must be within [0,1].')
     elif name in allowed_values.keys():
-        assert value in allowed_values[name], \
-            f'{name} must be in {allowed_values[name]}.'
+        if value not in allowed_values[name]:
+            raise ValueError(f'{name} must be in {allowed_values[name]}.')
         return value
 
 # =============================================================================
@@ -123,6 +121,8 @@ class Component(Chemical):
     '''
     A subclass of :class:`thermosteam.Chemical` with additional attributes
     and methods for waste treatment.
+
+    At a minimum, ID, particle_size, degradability, and organic should be provided.
 
     Parameters
     ----------
@@ -195,7 +195,7 @@ class Component(Chemical):
 
     Examples
     --------
-    `Component <https://qsdsan.readthedocs.io/en/latest/tutorials/Component.html>`_
+    `Component <https://qsdsan.readthedocs.io/en/latest/tutorials/2_Component.html>`_
 
 
     See Also
@@ -213,10 +213,12 @@ class Component(Chemical):
                 description=None, particle_size=None,
                 degradability=None, organic=None, **chemical_properties):
         if search_ID:
-            self = super().__new__(cls, ID=ID, search_ID=search_ID,
-                                   search_db=True, **chemical_properties)
-        else:
-            self = super().__new__(cls, ID=ID, search_db=False, **chemical_properties)
+            self = Chemical.__new__(cls, ID=ID, search_ID=search_ID,
+                                    search_db=True, **chemical_properties)
+        else: # still try to search nonetheless
+            try: self = Chemical.__new__(cls, ID=ID, **chemical_properties)
+            except LookupError:
+                self = Chemical.__new__(cls, ID=ID, search_db=False, **chemical_properties)
 
         self._ID = ID
         if formula:
@@ -434,6 +436,18 @@ class Component(Chemical):
 
         self._measured_as = measured_as
 
+    formula = property(Chemical.formula.fget)
+    @formula.setter
+    def formula(self, formula):
+        Chemical.formula.fset(self, formula)
+        if hasattr(self, '_measured_as'):
+            _ms = self._measured_as
+            self.measured_as = None
+            for field in _num_component_properties:
+                if field.startswith('i_'):
+                    setattr(self, field, None)
+            self.measured_as = _ms
+
     def _convert_i_attr(self, new):
         if new == None:
             denom = self._i_mass
@@ -493,7 +507,7 @@ class Component(Chemical):
         return self._i_COD or 0.
     @i_COD.setter
     def i_COD(self, i):
-        if i != None: self._i_COD = check_return_property('i_COD', i)
+        if i is not None: self._i_COD = check_return_property('i_COD', i)
         else:
             if self.organic or self.formula in ('H2', 'O2', 'N2', 'NO2-', 'NO3-'):
                 if self.measured_as == 'COD': self._i_COD = 1.
@@ -631,13 +645,10 @@ class Component(Chemical):
                       organic=None, **data):
         '''Return a new :class:`Component` from a :class:`thermosteam.Chemical` object.'''
         new = cls.__new__(cls, ID=ID, phase=phase)
-
         if chemical is None:
             chemical = ID
-
         if isinstance(chemical, str):
             chemical = Chemical(chemical)
-
         for field in chemical.__slots__:
             value = getattr(chemical, field, None)
             setattr(new, field, copy_maybe(value))

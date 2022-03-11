@@ -1,11 +1,11 @@
 Clarifiers
 ==========
 
-Flat bottom circular clarifer
------------------------------
+Flat bottom circular clarifier
+------------------------------
 .. autoclass:: qsdsan.sanunits.FlatBottomCircularClarifier
    :members:
-
+   
 
 Ideal clarifier
 ---------------

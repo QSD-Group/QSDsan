@@ -1,17 +1,21 @@
-========
-Yalin Li
-========
+=======================
+Yalin Li (creator/lead)
+=======================
 
 .. figure:: Yalin_Li.jpg
    :width: 80%
    :align: center
-   :alt: picture of Yalin
+   :alt: Yalin at Yosemite
    
    Oh the mountains and I love them.
 
-.. If you want a more serious webpage, check out here: 
+**Email:** `work <mailto:yalinli2@illinois.edu>`_; `personal <mailto:zoe.yalin.li@gmail.com>`_
 
-I'm the current maintainer and one of the lead developers of ``QSDsan``. I am a postdoctoral researcher in the `Guest Group <http://engineeringforsustainability.com>`_ at the `University of Illinois at Urbana-Champaign (UIUC) <http://illinois.edu>`_. I am affiliated with the `Institute of Sustainability, Energy, and Environment (iSEE) <https://sustainability.illinois.edu>`_ and the `Center for Advanced Bioenergy and Bioproduct Innovation (CABBI) <https://cabbi.bio>`_.
+**Webpage:** `professional <http://yalinli2.github.io/webpage/>`_
+
+This page is primarily about my aspirations for ``QSDsan``. For information related to my research/teaching interests and other professional activities, please check out my `webpage <http://yalinli2.github.io/webpage>`_ (and feel free to check out the `source code <http://github.com/yalinli2/webpage>`_ and build your own one).
+
+I'm the creator, lead developer, and current maintainer of ``QSDsan``. I am a postdoctoral researcher in the `Guest Group <http://engineeringforsustainability.com>`_ at the `University of Illinois at Urbana-Champaign (UIUC) <http://illinois.edu>`_. I am affiliated with the `Institute of Sustainability, Energy, and Environment (iSEE) <https://sustainability.illinois.edu>`_ and the `Center for Advanced Bioenergy and Bioproducts Innovation (CABBI) <https://cabbi.bio>`_.
 
 My background is in experimentation where I investigated multiple thermochemical and catalytic technologies for renewable products from biomass and wastewater (still missing the experiments and my beloved reactors), but I transitioned after graduation as I wanted to look at the big-picture implications through quantitative sustainable design (QSD). Unbeknownst to me, I would go on a fantastic journey as I advance the methodology of QSD and develop tools to for its application in research and education.
 
@@ -46,7 +50,7 @@ I quoted this as a closing remark for my Ph.D. defense, still (and I sincerely h
    | *For Centennial Anniversary of Tongji University*
 
 
-To ruin everything (and show my peculiar taste of humor), this is the traditional dish of Cornwell, England called stargazy pie (picture from `Wikipedia <https://en.wikipedia.org/wiki/Stargazy_pie>`_):
+To ruin everything (and show my peculiar taste of humor), this is a traditional dish of Cornwell, England, called stargazy pie (picture from `Wikipedia <https://en.wikipedia.org/wiki/Stargazy_pie>`_):
 
 .. figure:: https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/StargazyPie.jpg/2560px-StargazyPie.jpg
    :width: 50%
@@ -64,4 +68,4 @@ What I do for fun
 
 Professional
 ------------
-If you want to chec kout my publications, the most up-to-date list is on `Google Scholar <https://scholar.google.com/citations?user=5Zv3mM0AAAAJ&hl=en>`_. For my other repositories, `GitHub <https://github.com/yalinli2>`_ would be the go-to place. You can also check out my complete `CV <https://drive.google.com/file/d/1XxD9vS4LtoyfvWILSEbQZ6toQdKhBdt4/view?usp=sharing>`_ to know about my other professional activities (conference presentations, teaching, service, etc.).
+If you want to check out my publications, the most up-to-date list is on `Google Scholar <https://scholar.google.com/citations?user=5Zv3mM0AAAAJ&hl=en>`_. For my other repositories, `GitHub <https://github.com/yalinli2>`_ would be the go-to place. You can also check out my complete `CV <https://drive.google.com/file/d/1XxD9vS4LtoyfvWILSEbQZ6toQdKhBdt4/view?usp=sharing>`_ to know about my other professional activities (conference presentations, teaching, service, etc.).

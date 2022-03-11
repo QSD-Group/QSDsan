@@ -20,7 +20,8 @@ from thermosteam.utils import registered
 from . import currency, ImpactItem
 from .utils import (
     auom, copy_attr,
-    format_number as f_num
+    format_number as f_num,
+    register_with_prefix,
     )
 
 __all__ = ('Construction',)
@@ -34,9 +35,14 @@ class Construction:
     Parameters
     ----------
     ID : str
-        ID of this construction activity.
+        ID of this construction activity,
+        a default ID will be given if not provided.
+        If this construction activity is linked to a unit,
+        then the actual ID will be {unit.ID}_{ID}.
+    linked_unit : obj
+        Unit that this construction activity is linked to, can be left as None.
     item : :class:`ImpactItem`
-        Impact item associated with this consturction activity.
+        Impact item associated with this construction activity.
     quantity : float
         Quantity of the impact item involved in this construction activity.
     lifetime : float
@@ -65,16 +71,22 @@ class Construction:
                                   Impacts
     GlobalWarming (kg CO2-eq)       0.255
     FossilEnergyConsumption (MJ)     0.05
+    >>> # Registry management (construction activities will be auto-registered)
+    >>> steel_100_g.deregister()
+    The construction activity "steel_100_g" has been removed from the registry.
+    >>> steel_100_g.register()
+    The construction activity "steel_100_g" has been added to the registry.
+    >>> Construction.clear_registry()
+    All construction activities have been removed from registry.
     '''
 
-    __slots__ = ('_ID', '_item', '_quantity', '_lifetime')
+    __slots__ = ('_ID', '_linked_unit', '_item', '_quantity', '_lifetime')
 
-    def __init__(self, ID='', item=None, quantity=0., quantity_unit='',
+    def __init__(self, ID='', linked_unit=None, item=None, quantity=0., quantity_unit='',
                  lifetime=None, lifetime_unit='yr'):
-        if ID == '': # this is only to auto-generate ID for ones that don't have
-            self._register(ID)
-        else:
-            self._ID = ID
+        self._linked_unit = linked_unit
+        prefix = self.linked_unit.ID if self.linked_unit else ''
+        register_with_prefix(self, prefix, ID)
         self.item = item
         self._update_quantity(quantity, quantity_unit)
         self._lifetime = None
@@ -115,9 +127,9 @@ class Construction:
 
     _ipython_display_ = show
 
-    def copy(self, new_ID='', skip_item=True):
+    def copy(self, new_ID='', skip_item=True, **kwargs):
         new = Construction.__new__(Construction)
-        new.__init__(new_ID)
+        new.__init__(new_ID, **kwargs)
         if skip_item:
             new = copy_attr(new, self, skip=('_ID', '_item'))
             new.item = self.item
@@ -126,6 +138,36 @@ class Construction:
         return new
 
     __copy__ = copy
+
+    def register(self, print_msg=True):
+        '''Add this construction activity to the registry.'''
+        self.registry.register_safely(self.ID, self)
+        if print_msg:
+            print(f'The construction activity "{self.ID}" has been added to the registry.')
+
+    def deregister(self, print_msg=True):
+        '''Remove this construction activity to the registry.'''
+        self.registry.discard(self.ID)
+        if print_msg:
+            print(f'The construction activity "{self.ID}" has been removed from the registry.')
+
+    @classmethod
+    def clear_registry(cls, print_msg=True):
+        '''Remove all existing construction activities from the registry.'''
+        cls.registry.clear()
+        if print_msg:
+            print('All construction activities have been removed from registry.')
+
+    @property
+    def linked_unit(self):
+        '''
+        :class:`~.SanUnit` The unit that this construction activity belongs to.
+
+        .. note::
+
+            This property will be updated upon initialization of the unit.
+        '''
+        return self._linked_unit
 
     @property
     def lifetime(self):
@@ -147,7 +189,7 @@ class Construction:
         if not i:
             i = None
         elif isinstance(i, str):
-            i = ImpactItem.get_item(i)
+            i = ImpactItem.get_item(i) or ImpactItem(i) # add a filler to enable simulation without LCA
         elif not isinstance(i, ImpactItem):
             raise TypeError('Only `ImpactItem` or the ID of `ImpactItem` can be set, '
                             f'not {type(i).__name__}.')

@@ -7,7 +7,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 This module is developed by:
     Smiti Mittal <smitimittal@gmail.com>
     Yalin Li <zoe.yalin.li@gmail.com>
-    Anna Kogler
+    Anna Kogler <akogler@stanford.edu>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -23,7 +23,7 @@ __all__ = ('Machine',)
 class Machine(Equipment):
     '''
     Supplementary machines to be used in an electrochemical process.
-    Refer to the example in :class:`ElectroChemCell` for how to use this class.
+    Refer to the example in :class:`~.sanunits.ElectroChemCell` for how to use this class.
 
     Parameters
     ----------
@@ -34,37 +34,33 @@ class Machine(Equipment):
 
     See Also
     --------
-    :class:`ElectroChemCell`
+    :class:`~.sanunits.ElectroChemCell`
 
     '''
-    __slots__ = ('_N', 'name', 'unit_cost')
 
-    def __init__(self, name=None, # when left as None, will be the same as the class name
-                 design_units={},
+    def __init__(self, ID=None, linked_unit=None, units={'Number of machines': ''},
                  F_BM=1., lifetime=10000, lifetime_unit='hr', N=0,
                  unit_cost=0.1):
-        Equipment.__init__(self=self, name=name, design_units=design_units,
+        Equipment.__init__(self=self, ID=ID, linked_unit=linked_unit, units=units,
                            F_BM=F_BM, lifetime=lifetime, lifetime_unit=lifetime_unit)
-        self.name = name
         self.N = N
         self.unit_cost = unit_cost
 
-    # All subclasses of `Machine` must have a `_design` and a `_cost` method
+
     def _design(self):
         design = {
-            f'Number of {self.name}': self.N,
+            'Number of machines': self.N,
             }
         return design
 
-    # All subclasses of `Membrane` must have a `_cost` method, which returns the
-    # purchase cost of this equipment
+
     def _cost(self):
         return self.unit_cost*self.N
 
 
     @property
     def N(self):
-        '''[int] Number of units of the electrode.'''
+        '''[int] Number of units of the machine.'''
         return self._N
     @N.setter
     def N(self, i):

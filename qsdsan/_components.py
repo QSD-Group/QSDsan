@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 import thermosteam as tmo
 from . import _component, Chemical, Chemicals, CompiledChemicals, Component
-from .utils import load_data
+from .utils import add_V_from_rho, load_data
 
 __all__ = ('Components', 'CompiledComponents')
 
@@ -58,7 +58,7 @@ class Components(Chemicals):
 
     Examples
     --------
-    `Component <https://qsdsan.readthedocs.io/en/latest/tutorials/Component.html>`_
+    `Component <https://qsdsan.readthedocs.io/en/latest/tutorials/2_Component.html>`_
 
     See Also
     --------
@@ -168,6 +168,95 @@ class Components(Chemicals):
     _default_data = None
 
 
+    def default_compile(self, lock_state_at='l',
+                        soluble_ref='Urea', gas_ref='CO2', particulate_ref='Stearin'):
+        '''
+        Auto-fill of the missing properties of the components and compile,
+        boiling point (Tb) and molar volume (V) will be copied from the reference component,
+        the remaining missing properties will be copied from those of water.
+
+        Parameters
+        ----------
+        lock_state_at : str
+            Lock the state of components at a certain phase,
+            can be 'g', 'l', 's', or left as empty to avoid locking state.
+            Components that have already been locked will not be affected.
+        soluble_ref : str
+            ID of the reference component for those with `particle_size` == 'Souble'.
+        gas_ref : str
+            ID of the reference component for those with `particle_size` == 'Dissolved gas'.
+        particulate_ref : str
+            ID of the reference component for those with `particle_size` == 'Particulate'.
+
+        Examples
+        --------
+        >>> from qsdsan import Component, Components
+        >>> X = Component('X', phase='s', measured_as='COD', i_COD=0, description='Biomass',
+        ...               organic=True, particle_size='Particulate', degradability='Readily')
+        >>> X_inert = Component('X_inert', phase='s', description='Inert biomass', i_COD=0,
+        ...                     organic=True, particle_size='Particulate', degradability='Undegradable')
+        >>> Substrate = Component('Substrate', phase='s', measured_as='COD', i_mass=18.3/300,
+        ...                       organic=True, particle_size='Particulate', degradability='Readily')
+        >>> cmps = Components([X, X_inert, Substrate])
+        >>> cmps.default_compile()
+        >>> cmps
+        CompiledComponents([X, X_inert, Substrate])
+        '''
+        isa = isinstance
+        get = getattr
+        sol = Chemical(soluble_ref)
+        gas = Chemical(gas_ref)
+        par = Chemical(particulate_ref)
+        water = Chemical('Water')
+        for cmp in self:
+            particle_size = cmp.particle_size
+            ref = sol if particle_size=='Soluble' \
+                else gas if particle_size=='Dissolved gas' else par
+            if lock_state_at :
+                try: cmp.at_state(lock_state_at)
+                except TypeError: pass
+            cmp.Tb = cmp.Tb or ref.Tb
+            # If don't have model for molar volume, set those to default
+            COPY_V = False
+            if isa(cmp.V, _PH):
+                if not cmp.V.l.valid_methods(298.15): COPY_V = True
+            else:
+                if not cmp.V.valid_methods(298.15): COPY_V = True
+            if COPY_V:
+                locked_state = cmp.locked_state
+                if locked_state:
+                    try:
+                        V_model = get(ref.V, locked_state) # ref not locked state
+                        V_const = V_model(T=298.15, P=101325)
+                    except:
+                        V_model = ref.V # ref locked state
+                        V_const = V_model(locked_state, T=298.15, P=101325)
+                    V_const *= (cmp.MW/ref.MW)
+                    cmp.V.add_model(V_const)
+                else:
+                    for phase in ('g', 'l', 's'): # iterate through phases
+                        backup_ref = gas if phase=='g' else sol if phase=='l' else par
+                        try:
+                            V_model = get(ref.V, phase) # the default ref has the model
+                            V_const = V_model(T=298.15, P=101325)
+                        except:
+                            V_model = get(backup_ref.V, phase)
+                            V_const = V_model(T=298.15, P=101325)
+                        V_const *= (cmp.MW/ref.MW)
+                        get(cmp.V, phase).add_model(V_const)
+
+            if not cmp.Hvap.valid_methods():
+                try:
+                    ref.Hvap(cmp.Tb)
+                    cmp.copy_models_from(ref, names=('Hvap', ))
+                except RuntimeError: # Hvap model cannot be extrapolated to Tb
+                    cmp.copy_models_from(water, names=('Hvap', ))
+
+            # Copy all remaining properties from water
+            cmp.copy_models_from(water)
+        self.compile()
+
+
     @classmethod
     def load_from_file(cls, path_or_df, index_col=None,
                        use_default_data=False, store_data=False):
@@ -182,7 +271,7 @@ class Components(Chemicals):
         index_col : None or int
             Index column of the :class:`pandas.DataFrame`.
         use_default_data : bool
-            Whether to use the default components.
+            Whether to use the cached default components.
         store_data : bool
             Whether to store this as the default components.
 
@@ -237,10 +326,11 @@ class Components(Chemicals):
 
 
     @classmethod
-    def load_default(cls, use_default_data=True, store_data=True, default_compile=True):
+    def load_default(cls, use_default_data=True, store_data=False, default_compile=True):
         '''
         Create and return a :class:`Components` or :class:`CompiledComponents`
-        object containing all default :class:`Component` objects.
+        object containing all default :class:`Component` objects based on
+        `Reiger et al. <https://iwaponline.com/ebooks/book/630/Guidelines-for-Using-Activated-Sludge-Models>`_
 
         Parameters
         ----------
@@ -266,19 +356,29 @@ class Components(Chemicals):
             be defaulted to those of water.
 
             [3] When `default_compile` is True, missing molar volume models will be defaulted
-            according to particle sizes: particulate or colloidal -> 1.2e-5 m3/mol,
+            according to particle sizes: particulate or colloidal -> copy from NaCl,
             soluble -> copy from urea, dissolved gas -> copy from CO2.
 
-            [4] When `default_compile` is True, missing normal boiling temoerature will be
+            [4] When `default_compile` is True, missing normal boiling temperature will be
             defaulted according to particle sizes: particulate or colloidal -> copy from NaCl,
             soluble -> copy from urea, dissolved gas -> copy from CO2.
 
 
+        See Also
+        --------
+        :func:`~.Components.default_compile`
+
+        References
+        ----------
+        [1] Rieger, L.; Gillot, S.; Langergraber, G.; Ohtsuki, T.; Shaw, A.; Tak´cs, I.; Winkler, S.
+        Guidelines for Using Activated Sludge Models; IWA Publishing, 2012.
+        https://doi.org/10.2166/9781780401164.
         '''
         import os
         path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/_components.tsv')
         del os
-        new = cls.load_from_file(path, index_col=None, use_default_data=True, store_data=True)
+        new = cls.load_from_file(path, index_col=None,
+                                 use_default_data=use_default_data, store_data=store_data)
 
         H2O = Component.from_chemical('H2O', Chemical('H2O'),
                                       i_charge=0, f_BOD5_COD=0, f_uBOD_COD=0,
@@ -288,43 +388,98 @@ class Components(Chemicals):
         new.append(H2O)
 
         if default_compile:
-            isa = isinstance
-            for i in new:
-                i.default()
-
-                if i.particle_size == 'Soluble':
-                    ref_chem = Chemical('urea')
-                elif i.particle_size == 'Dissolved gas':
-                    ref_chem = Chemical('CO2')
-                else:
-                    ref_chem = Chemical('NaCl')
-
-                i.Tb = ref_chem.Tb if not i.Tb else i.Tb
-
-                COPY_V = False # if don't have V model, set those to default
-                if isa(i.V, _PH):
-                    if not i.V.l.valid_methods(298.15): COPY_V = True
-                else:
-                    if not i.V.valid_methods(298.15): COPY_V = True
-
-                if COPY_V:
-                    if i.particle_size in ('Soluble', 'Dissolved gas'):
-                        i.copy_models_from(ref_chem, names=('V',))
-                    else:
-                        try: i.V.add_model(1.2e-5)
-                        except AttributeError:
-                            i.V.l.add_model(1.2e-5)    # m^3/mol
-                            i.V.s.add_model(1.2e-5)
-
-                i.copy_models_from(H2O)
-
-                try:
-                    i.Hvap(i.Tb)
-                except RuntimeError: # Hvap model of H2O cannot be extrapolated to Tb
-                    i.copy_models_from(ref_chem, names=('Hvap',))
-
+            new.default_compile(lock_state_at='', particulate_ref='NaCl')
             new.compile()
+            # Add aliases
+            new.set_alias('H2O', 'Water')
+            # Pre-define groups
+            new.define_group('substrates',
+                             ('S_CH3OH', 'S_Ac', 'S_Prop', 'S_F', 'C_B_Subst', 'X_B_Subst'))
+            new.define_group('biomass',
+                             ('X_OHO', 'X_AOO', 'X_NOO', 'X_AMO', 'X_PAO',
+                              'X_MEOLO', 'X_FO', 'X_ACO', 'X_HMO', 'X_PRO'))
+            new.define_group('S_VFA', ('S_Ac', 'S_Prop'))
+            new.define_group('X_Stor', ('X_OHO_PHA', 'X_GAO_PHA', 'X_PAO_PHA',
+                                        'X_GAO_Gly', 'X_PAO_Gly'),)
+            new.define_group('X_ANO', ('X_AOO', 'X_NOO'))
+            new.define_group('X_Bio', ('X_OHO', 'X_AOO', 'X_NOO', 'X_AMO', 'X_PAO',
+                                       'X_MEOLO', 'X_ACO', 'X_HMO', 'X_PRO', 'X_FO'))
+            new.define_group('S_NOx', ('S_NO2', 'S_NO3'))
+            new.define_group('X_PAO_PP', ('X_PAO_PP_Lo', 'X_PAO_PP_Hi'))
+            new.define_group('TKN', [i.ID for i in new if i.ID not in ('S_N2','S_NO2','S_NO3')])
         return new
+
+
+    @staticmethod
+    def append_combustion_components(components, alt_IDs={},
+                                     try_default_compile=True,
+                                     **default_compile_kwargs):
+        '''
+        Return a new :class:`~.Components` object with the given components
+        and those needed for combustion reactions (complete oxidation with O2),
+        namely O2, CO2 (for C), H2O (for H), N2 (for N), P4O10 (for P), and SO2 (for S).
+
+        If the combustion components are already in the given collection,
+        they will NOT be overwritten.
+
+        Parameters
+        ----------
+        components : Iterable(obj)
+            The original components to be appended.
+        alt_IDs : dict
+            Alternative IDs for the combustion components to be added as aliases,
+            e.g., if "S_O2" is used instead of "O2", then pass {'O2': 'S_O2'}.
+        default_compile : bool
+            Whether to try default compile when some components
+            are missing key properties for compiling.
+        default_compile_kwargs : dict
+            Keyword arguments to pass to `default_compile` if needed.
+
+        See Also
+        --------
+        :func:`default_compile`
+
+        Examples
+        --------
+        >>> from qsdsan import Components
+        >>> cmps = Components.load_default()
+        >>> cmps
+        CompiledComponents([S_H2, S_CH4, S_CH3OH, S_Ac, S_Prop, S_F, S_U_Inf, S_U_E, C_B_Subst, C_B_BAP, C_B_UAP, C_U_Inf, X_B_Subst, X_OHO_PHA, X_GAO_PHA, X_PAO_PHA, X_GAO_Gly, X_PAO_Gly, X_OHO, X_AOO, X_NOO, X_AMO, X_PAO, X_MEOLO, X_FO, X_ACO, X_HMO, X_PRO, X_U_Inf, X_U_OHO_E, X_U_PAO_E, X_Ig_ISS, X_MgCO3, X_CaCO3, X_MAP, X_HAP, X_HDP, X_FePO4, X_AlPO4, X_AlOH, X_FeOH, X_PAO_PP_Lo, X_PAO_PP_Hi, S_NH4, S_NO2, S_NO3, S_PO4, S_K, S_Ca, S_Mg, S_CO3, S_N2, S_O2, S_CAT, S_AN, H2O])
+        >>> CH4 = cmps.S_CH4.copy('CH4', phase='g')
+        >>> cmps = Components.append_combustion_components([*cmps, CH4], alt_IDs=dict(O2='S_O2'))
+        >>> cmps
+        CompiledComponents([S_H2, S_CH4, S_CH3OH, S_Ac, S_Prop, S_F, S_U_Inf, S_U_E, C_B_Subst, C_B_BAP, C_B_UAP, C_U_Inf, X_B_Subst, X_OHO_PHA, X_GAO_PHA, X_PAO_PHA, X_GAO_Gly, X_PAO_Gly, X_OHO, X_AOO, X_NOO, X_AMO, X_PAO, X_MEOLO, X_FO, X_ACO, X_HMO, X_PRO, X_U_Inf, X_U_OHO_E, X_U_PAO_E, X_Ig_ISS, X_MgCO3, X_CaCO3, X_MAP, X_HAP, X_HDP, X_FePO4, X_AlPO4, X_AlOH, X_FeOH, X_PAO_PP_Lo, X_PAO_PP_Hi, S_NH4, S_NO2, S_NO3, S_PO4, S_K, S_Ca, S_Mg, S_CO3, S_N2, S_O2, S_CAT, S_AN, H2O, CH4, CO2, N2, P4O10, SO2])
+        >>> cmps.O2 is cmps.S_O2
+        True
+        '''
+        cmps = components if isinstance(components, (Components, CompiledComponents)) \
+            else Components(components)
+        comb_cmps = ['O2', 'CO2', 'H2O', 'N2', 'P4O10', 'SO2']
+        aliases = dict(H2O='Water')
+        aliases.update(alt_IDs)
+        get = getattr
+        for k, v in alt_IDs.items():
+            try:
+                get(cmps, v)
+                aliases[k] = comb_cmps.pop(comb_cmps.index(k))
+            except AttributeError:
+                pass
+        for ID in comb_cmps:
+            try: get(cmps, ID)
+            except AttributeError:
+                phase = 'g' if ID in ('O2', 'CO2', 'N2', 'SO2') else 's' if ID=='P4O10' else ''
+                ps = 'Dissolved gas' if phase == 'g' else 'Particulate' if phase=='s' else 'Soluble'
+                cmp = Component(ID, phase=phase, organic=False, particle_size=ps,
+                                degradability='Undegradable')
+                cmps.append(cmp)
+        add_V_from_rho(cmps.P4O10, rho=2.39, rho_unit='g/mL') # http://www.chemspider.com/Chemical-Structure.14128.html
+        try:
+            cmps.compile()
+        except RuntimeError: # cannot compile due to missing properties
+            cmps.default_compile(**default_compile_kwargs)
+        for k, v in aliases.items():
+            cmps.set_alias(k, v)
+        return cmps
 
 
     @classmethod
@@ -360,7 +515,7 @@ class Components(Chemicals):
         Components([Water, Ethanol])
         '''
         cmps = cls.__new__(cls, ())
-        for i in chemicals.__iter__():
+        for i in chemicals:
             val_dct = data.get(i.ID)
             cmp = Component.from_chemical(i.ID, i)
             if val_dct:
@@ -390,7 +545,7 @@ class CompiledComponents(CompiledChemicals):
 
     Examples
     --------
-    `Component <https://qsdsan.readthedocs.io/en/latest/tutorials/Component.html>`_
+    `Component <https://qsdsan.readthedocs.io/en/latest/tutorials/2_Component.html>`_
 
     See Also
     --------
@@ -445,7 +600,7 @@ class CompiledComponents(CompiledChemicals):
             dct[i] = component_data_array(components, i)
 
     def compile(self, skip_checks=False):
-        '''Skip, :class:`CompiledComponents` have already been compiled.'''
+        '''Do nothing, :class:`CompiledComponents` have already been compiled.'''
         pass
 
 
@@ -463,12 +618,22 @@ class CompiledComponents(CompiledChemicals):
         for i in _num_component_properties:
             dct[i] = component_data_array(components, i)
 
-        dct['s'] = np.asarray([1 if cmp.particle_size == 'Soluble' else 0 for cmp in components])
-        dct['c'] = np.asarray([1 if cmp.particle_size == 'Colloidal' else 0 for cmp in components])
+        dct['g'] = np.asarray([1 if cmp.particle_size == 'Dissolved gas' else 0 for cmp in components])
+        s = dct['s'] = np.asarray([1 if cmp.particle_size == 'Soluble' else 0 for cmp in components])
+        c = dct['c'] = np.asarray([1 if cmp.particle_size == 'Colloidal' else 0 for cmp in components])
         dct['x'] = np.asarray([1 if cmp.particle_size == 'Particulate' else 0 for cmp in components])
-        dct['b'] = np.asarray([1 if cmp.degradability != 'Undegradable' else 0 for cmp in components])
+        b = dct['b'] = np.asarray([1 if cmp.degradability != 'Undegradable' else 0 for cmp in components])
         dct['rb'] = np.asarray([1 if cmp.degradability == 'Readily' else 0 for cmp in components])
-        dct['org'] = np.asarray([int(cmp.organic) for cmp in components])
+        org = dct['org'] = np.asarray([int(cmp.organic) for cmp in components])
+        inorg = dct['inorg'] = np.ones_like(org) - org
+        ID_arr = dct['_ID_arr'] = np.asarray([i.ID for i in components])
+
+        # Inorganic degradable non-gas, incorrect
+        inorg_b = inorg * b * (s+c)
+        if inorg_b.sum() > 0:
+            bad_IDs = ID_arr[np.where(inorg_b==1)[0]]
+            raise ValueError(f'Components {bad_IDs} are inorganic, degradable, and not gas, '
+                             'which is not correct.')
 
 
     def subgroup(self, IDs):
@@ -477,8 +642,8 @@ class CompiledComponents(CompiledChemicals):
         new = Components(components)
         new.compile()
         for i in new.IDs:
-            for j in self.get_synonyms(i):
-                try: new.set_synonym(i, j)
+            for j in self.get_aliases(i):
+                try: new.set_alias(i, j)
                 except: pass
         return new
 
@@ -504,3 +669,100 @@ class CompiledComponents(CompiledChemicals):
         copy = Components(self)
         copy.compile()
         return copy
+
+
+    def get_IDs_from_array(self, array):
+        '''
+        Get the IDs of a group of components based on the 1/0 or True/False array.
+
+        Parameters
+        ----------
+        array : Iterable(1/0)
+            1D collection of 1/0 or True/False with the same length
+            as the IDs.
+
+        Examples
+        --------
+        >>> from qsdsan import Components
+        >>> cmps = Components.load_default()
+        >>> cmps.get_IDs_from_array(cmps.g)
+        ('S_H2', 'S_CH4', 'S_N2', 'S_O2')
+        '''
+        return tuple(self._ID_arr[np.asarray(array).astype(bool)])
+
+
+    def get_array_from_IDs(self, IDs):
+        '''
+        Generate a ``numpy`` array in the same shape as ``CompiledComponents.IDs``,
+        where the values would be 1 for components whose IDs are in the given ID iterable
+        and 0 for components not in the given ID iterable.
+
+        Parameters
+        ----------
+        IDs : Iterable(str)
+            IDs of select components within this ``~.CompiledComponents``.
+
+        Examples
+        --------
+        >>> from qsdsan import Components
+        >>> cmps = Components.load_default()
+        >>> IDs = ('S_H2', 'S_CH4', 'S_N2', 'S_O2')
+        >>> cmps.get_array_from_IDs(IDs)
+        array([1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0])
+        '''
+        arr = np.zeros_like(self._ID_arr, dtype='int')
+        arr[self.indices(IDs)] = 1
+        return arr
+
+    @property
+    def gases(self):
+        '''[list] Gas components.'''
+        return self[self.get_IDs_from_array(self.g)]
+
+    @property
+    def solids(self):
+        '''[list] Solids (particulate) components.'''
+        return self[self.get_IDs_from_array(self.x)]
+
+    @property
+    def inorganics(self):
+        '''[list] Inorganic components.'''
+        return self[self.get_IDs_from_array(self.inorg)]
+
+    @property
+    def inorganic_solids(self):
+        '''[list] Inorganic solids (particulate & inorganic, all undegradable) components.'''
+        return self[self.get_IDs_from_array(self.x*self.inorg)]
+
+    @property
+    def organic_solids(self):
+        '''[list] Organic solids (particulate & organic) components.'''
+        return self[self.get_IDs_from_array(self.x*self.org)]
+
+    @property
+    def substrates(self):
+        '''
+        [list] Substrate components.
+        '''
+        try: return self.__dict__['substrates']
+        except:
+            raise ValueError('The `substrates` group is not set, '
+                             'use `define_group` to define the `substrates` group.')
+    @substrates.setter
+    def substrates(self, i):
+        raise RuntimeError('Use `define_group` to define the `substrates` group.')
+
+    @property
+    def biomass(self):
+        '''
+        [list] Biomass components.
+        '''
+        try: return self.__dict__['biomass']
+        except:
+            raise ValueError('The `biomass` group is not set, '
+                             'use `define_group` to define the `biomass` group.')
+    @biomass.setter
+    def biomass(self, i):
+        raise RuntimeError('Use `define_group` to define the `biomass` group.')

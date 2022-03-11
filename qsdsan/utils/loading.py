@@ -12,51 +12,55 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import os
-path = os.path.dirname(os.path.realpath(__file__))
-data_path = path[:-6] + '/data/'
-del os
+from os import path as ospath
+path = ospath.dirname(ospath.realpath(__file__))
+qs_path = ospath.realpath(ospath.join(ospath.dirname(__file__), '../'))
+data_path = ospath.join(qs_path, 'data')
 
 import pandas as pd
+import numpy as np
 from .. import _pk
 
-__all__ = ('load_data', 'data_path', 'dct_from_str', 'save_pickle', 'load_pickle')
+__all__ = ('ospath', 'load_data', 'data_path',
+           'save_pickle', 'load_pickle')
 
+
+# %%
+
+# =============================================================================
+# Datasheet
+# =============================================================================
 
 def load_data(path=None, sheet=None, index_col=0, **kwargs):
     '''For data importing.'''
-    last_4 = path[-4:]
-    if last_4 in ('.tsv', '.txt'):
+    if path.endswith(('.tsv', '.txt')):
         data = pd.read_csv(path, sep='\t', index_col=index_col, **kwargs)
-    elif last_4 == '.csv':
+    elif path.endswith('.csv'):
         data = pd.read_csv(path, index_col=index_col, **kwargs)
-    elif last_4 in ('xlsx', '.xls'):
-        try: data = pd.read_excel(path, sheet_name=sheet, engine='openpyxl',
-                                  index_col=index_col, **kwargs)
-        except: data = pd.read_excel(path, engine='openpyxl',
-                                     index_col=index_col, **kwargs)
+    elif path.endswith(('.xlsx', '.xls')):
+        if sheet:
+            data = pd.read_excel(path, sheet_name=sheet, engine='openpyxl',
+                                 index_col=index_col, **kwargs)
+        else:
+            data = pd.read_excel(path, engine='openpyxl',
+                                 index_col=index_col, **kwargs)
+    elif path.endswith('.npy'):
+        arr = np.load(path)
+        index = arr[:, index_col]
+        data = arr[:, np.arange(arr.shape[1]) != index_col]
+        data = pd.DataFrame(data, index=index, **kwargs)
     else:
-        raise ValueError('Only tsv, csv, or xlsx files can be loaded.')
+        raise ValueError('Only tab deliminted (tsv/txt), comma delimited (csv), '
+                         'Excel (xlsx, xls) , or binary (.npy) files can be loaded.')
     return data
 
 
-def dct_from_str(dct_str, sep=',', dtype='float'):
-    '''
-    Use to parse str into a dict,
-    the str should be written in `k1=v1, k2=v2, ..., kn=vn`
-    (separated by comma or other symbols defined by `sep`).
-    '''
-    splitted = [i.split('=') for i in dct_str.replace(' ', '').split(sep)]
 
-    if dtype == 'float':
-        return {k:float(v) for k, v in splitted}
+# %%
 
-    elif dtype == 'int':
-        return {k:int(v) for k, v in splitted}
-
-    else:
-        return {k:v for k, v in splitted}
-
+# =============================================================================
+# Pickle files
+# =============================================================================
 
 def save_pickle(obj, path):
     '''Save object as a pickle file using Pickle Protocol 5.'''

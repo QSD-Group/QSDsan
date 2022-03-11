@@ -31,7 +31,7 @@ copyright = f'2020-{time.gmtime().tm_year}, Quantitative Sustainable Design Grou
 # built documents.
 #
 # The short X.Y version.
-version = '0.3.10'
+version = '1.1.3'
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -42,10 +42,12 @@ release = version
 # ones.
 extensions = [
 'nbsphinx',
+'sphinx_rtd_dark_mode',
 'sphinx.ext.autodoc',
 'sphinx.ext.intersphinx',
 'sphinx.ext.mathjax',
 'sphinx.ext.napoleon',
+'sphinx_copybutton',
 ]
 
 # Allow exceptions to occur in notebooks
@@ -61,6 +63,9 @@ exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'manni'
+
+# Webpage dark mode
+default_dark_mode = False
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -98,8 +103,14 @@ html_favicon = '_static/favicon.png'
 html_static_path = ['_static']
 html_css_files = [
 	'css/qsdsan.css',
+	'css/copybutton.css',
 	'css/theme_overrides.css',
 	]
+#!!! Not seem to be working, using the extension now
+# html_js_files = [
+# 	'qsdsan.js', 
+# 	'https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js'
+# ]
 
 # -- Extension settings -------------------------------------------------------
 # napoleon_custom_sections = ['Tips']

@@ -15,19 +15,24 @@ for license details.
 
 # %%
 
-import numpy as np
 from warnings import warn
+from math import ceil
+from . import Decay
 from .. import SanUnit, Construction
-from ._decay import Decay
-from ..utils import load_data, data_path
+from ..utils import ospath, load_data, data_path
 
 __all__ = ('Lagoon',)
 
+anaerobic_path = ospath.join(data_path, 'sanunit_data/_anaerobic_lagoon.tsv')
+facultative_path = ospath.join(data_path, 'sanunit_data/_facultative_lagoon.tsv')
 
 class Lagoon(SanUnit, Decay):
     '''
     Anaerobic and facultative lagoon treatment based on
     `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
+
+    To enable life cycle assessment, the following impact items should be pre-constructed:
+    `Plastic`, `Excavation`.
 
     Parameters
     ----------
@@ -68,12 +73,8 @@ class Lagoon(SanUnit, Decay):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self._tau = None
         self._P_removal = 0.
-
-        anaerobic_path = data_path + 'sanunit_data/_anaerobic_lagoon.tsv'
         self._anaerobic_defaults = load_data(path=anaerobic_path)
-        facultative_path = data_path + 'sanunit_data/_facultative_lagoon.tsv'
         self._facultative_defaults = load_data(path=facultative_path)
-
         self._design_type = None
         self.design_type = design_type
         self._flow_rate = flow_rate
@@ -81,8 +82,8 @@ class Lagoon(SanUnit, Decay):
         self.if_N2O_emission = if_N2O_emission
 
         self.construction = (
-            Construction('liner', item='Plastic', quantity_unit='kg'),
-            Construction('excavation', item='Excavation', quantity_unit='m3'),
+            Construction('liner', linked_unit=self, item='Plastic', quantity_unit='kg'),
+            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
             )
 
         for attr, value in kwargs.items():
@@ -100,7 +101,8 @@ class Lagoon(SanUnit, Decay):
         removed_frac = self.COD_removal*self.COD_decay
         treated.imass[self.degraded_components] *= 1 - self.COD_removal
 
-        CH4.imass['CH4'] = removed_frac*waste.COD*waste.F_vol/1e3 * \
+        _COD = waste._COD or waste.COD
+        CH4.imass['CH4'] = removed_frac*_COD*waste.F_vol/1e3 * \
             self.MCF_decay*self.max_CH4_emission
 
         if self.if_N2O_emission:
@@ -117,7 +119,7 @@ class Lagoon(SanUnit, Decay):
             N2O.empty()
 
         treated.imass['P'] *= 1 - self.P_removal
-        treated._COD = waste.COD*waste.F_vol*(1-self.COD_removal)/treated.F_vol
+        treated._COD = _COD*waste.F_vol*(1-self.COD_removal)/treated.F_vol
 
     _units = {
         'Single lagoon volume': 'm3',
@@ -193,7 +195,7 @@ class Lagoon(SanUnit, Decay):
         return self._N_lagoon
     @N_lagoon.setter
     def N_lagoon(self, i):
-        self._N_lagoon = int(np.ceil(i))
+        self._N_lagoon = ceil(i)
 
     @property
     def flow_rate(self):

@@ -20,7 +20,8 @@ from thermosteam.utils import registered
 from . import currency, ImpactItem
 from .utils import (
     auom, copy_attr,
-    format_number as f_num
+    format_number as f_num,
+    register_with_prefix,
     )
 
 __all__ = ('Transportation',)
@@ -34,7 +35,12 @@ class Transportation:
     Parameters
     ----------
     ID : str
-        ID of this transportation activity.
+        ID of this transportation activity,
+        a default ID will be given if not provided.
+        If this transportation activity is linked to a unit,
+        then the actual ID will be {unit.ID}_{ID}.
+    linked_unit : obj
+        Unit that this transportation activity is linked to, can be left as None.
     item : :class:`ImpactItem`
         Impact item associated with this transportation activity.
     load_type : str
@@ -76,19 +82,25 @@ class Transportation:
                                   Impacts
     GlobalWarming (kg CO2-eq)    1.61e+04
     FossilEnergyConsumption (MJ) 8.05e+03
+    >>> # Registry management (transportation activities will be auto-registered)
+    >>> shipping.deregister()
+    The transportation activity "shipping" has been removed from the registry.
+    >>> shipping.register()
+    The transportation activity "shipping" has been added to the registry.
+    >>> Transportation.clear_registry()
+    All transportation activities have been removed from registry.
     '''
 
-    __slots__ = ('_ID', '_item', '_load_type', '_load', '_distance', '_interval',
+    __slots__ = ('_ID', '_linked_unit', '_item', '_load_type', '_load', '_distance', '_interval',
                  'default_units')
 
-    def __init__(self, ID='', item=None,
+    def __init__(self, ID='', linked_unit=None, item=None,
                  load_type='mass', load=1., load_unit='kg',
                  distance=1., distance_unit='km',
                  interval=1., interval_unit='hr'):
-        if ID == '': # this is only to auto-generate ID for ones that don't have
-            self._register(ID)
-        else:
-            self._ID = ID
+        self._linked_unit = linked_unit
+        prefix = self.linked_unit.ID if self.linked_unit else ''
+        register_with_prefix(self, prefix, ID)
         self.item = item
         self.default_units = {
             'distance': 'km',
@@ -154,9 +166,9 @@ class Transportation:
 
     _ipython_display_ = show # funny that `_ipython_display_` and `_ipython_display` behave differently
 
-    def copy(self, new_ID='', skip_item=True):
+    def copy(self, new_ID='', skip_item=True, **kwargs):
         new = Transportation.__new__(Transportation)
-        new.__init__(new_ID)
+        new.__init__(new_ID, **kwargs)
         if skip_item:
             new = copy_attr(new, self, skip=('_ID', '_item'))
             new.item = self.item
@@ -167,6 +179,37 @@ class Transportation:
     __copy__ = copy
 
 
+    def register(self, print_msg=True):
+        '''Add this transportation activity to the registry.'''
+        self.registry.register_safely(self.ID, self)
+        if print_msg:
+            print(f'The transportation activity "{self.ID}" has been added to the registry.')
+
+    def deregister(self, print_msg=True):
+        '''Remove this transportation activity to the registry.'''
+        self.registry.discard(self.ID)
+        if print_msg:
+            print(f'The transportation activity "{self.ID}" has been removed from the registry.')
+
+    @classmethod
+    def clear_registry(cls, print_msg=True):
+        '''Remove all existing transportation activities from the registry.'''
+        cls.registry.clear()
+        if print_msg:
+            print('All transportation activities have been removed from registry.')
+
+
+    @property
+    def linked_unit(self):
+        '''
+        :class:`~.SanUnit` The unit that this transportation activity belongs to.
+
+        .. note::
+
+            This property will be updated upon initialization of the unit.
+        '''
+        return self._linked_unit
+
     @property
     def item(self):
         '''[:class:`ImpactItem`] Item associated with this transportation activity.'''
@@ -176,7 +219,7 @@ class Transportation:
         if not i:
             i = None
         elif isinstance(i, str):
-            i = ImpactItem.get_item(i)
+            i = ImpactItem.get_item(i) or ImpactItem(i) # add a filler to enable simulation without LCA
         elif not isinstance(i, ImpactItem):
             raise TypeError('Only `ImpactItem` or the ID of `ImpactItem` can be set, '
                             f'not {type(i).__name__}.')

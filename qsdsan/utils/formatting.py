@@ -15,10 +15,11 @@ for license details.
 
 # %%
 
-__all__ = ('format_number', )
+__all__ = ('format_number', 'format_str',)
 
 
 def format_number(number):
+    '''Pretty print number based on its magnitude.'''
     if not number:
         return 'None'
 
@@ -37,3 +38,10 @@ def format_number(number):
 
     else:
         return str(round(number, 2))
+
+
+def format_str(string):
+    '''Replace space and "-" with "_".'''
+    string = string.replace(' ', '_')
+    string = string.replace('-', '_')
+    return string

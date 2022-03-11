@@ -1,0 +1,13 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+orc_cost		USD	24000	16000	32000	uniform	Pilot Study
+oil_pump_power		kW	0.065	0.04875	0.08125	uniform	Myers et al 2019
+oil_electrical_energy_generated		kW	2.2	1.65	2.75	uniform	Myers et al 2019
+oil_flowrate		L/min	12.69889	10.756657	14.641123	uniform	Myers et al 2019
+ohx_temp		C	210.3	146.2	274.4	uniform	Myers et al 2019
+oil_temp_in		C	88.2	84.21	92.19	uniform	Myers et al 2019
+oil_temp_out		C	154	144.72	163.28	uniform	Myers et al 2019
+oil_density		kg/m3	759			constant	Myers et al 2019
+oil_specific_heat		kJ/kg K	2.38			constant	Myers et al 2019
+amb_temp		C	25.6	25.14	26.06	uniform	Myers et al 2019
+oil_r_pipe_k_k_w		K/kW	0.09			constant	Myers et al 2019
+oil_r_insulation_k_k_w		K/kW	57.3			constant	Myers et al 2019

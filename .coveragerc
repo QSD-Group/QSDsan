@@ -1,0 +1,38 @@
+# .coveragerc to control coverage.py
+[run]
+branch = True
+omit = 
+    # Anything with temp
+    **/*temp*
+
+    # Specific files
+    conftest.py
+    setup.py
+
+[report]
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+
+    # Skip usually untriggered lines
+    def __repr__
+    if file
+    if path
+
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise AttributeError
+    raise FileNotFoundError
+    raise RuntimeError
+    raise TypeError
+    raise ValueError
+    raise UserWarning
+
+    # Don't complain if non-runnable code isn't run:
+    if __name__ == .__main__.:
+
+ignore_errors = True
+
+[html]
+directory = htmlcov

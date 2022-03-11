@@ -1,0 +1,30 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+o2_sensor_cost_pcd		USD	320.29	160.58	480	uniform	Pilot Study
+thermocouple_cost_cb_pcd		USD	38.5	32	45	uniform	Pilot Study
+thermistor_cost_cb_pcd		USD	11.79	7.86	15.72	uniform	Pilot Study
+input_auger_pcd		USD	838.025	681.05	995	uniform	https://www.indiamart.com/proddetail/stainless-steel-screw-conveyor-10742232573.html
+input_auger_motor_pcd		USD	319.7	278	361.4	uniform	Pilot Study
+catylist_pcd		USD	299.99	175.99	423.99	uniform	https://www.autozone.com/exhaust/catalytic-converter-universal?filterByKeyWord=catalyst&fromString=search&isIgnoreVehicle=false
+drive_chain_pcd		USD	290.7			constant	https://www.grainger.com/search/power-transmission/power-transmission-chains-and-sprockets/roller-chains?sst=4&ts_optout=true&searchQuery=%2340+drive+chain
+catalyst_access_door_pcd		USD	437	276	598	uniform	https://www.grainger.com/product/6EJA9?cm_mmc=PPC:+Google+PLA&ef_id=CjwKCAiAi_D_BRApEiwASslbJ9ONdr_pWJzS-38WreiKIqjRmFR0CbulqwVwnFflKyr21Azs1EtNfBoChtcQAvD_BwE:G:s&s_kwcid=AL!2966!3!264955916048!!!g!502441189157!&gucid=N:N:PS:Paid:GGL:CSM-2295:4P7A1P:20501231
+feedstock_staging_bin_pcd		USD	306	249	363	uniform	https://www.acitydiscount.com/Allstrong-Inc-Stainless-Steel-100-Qt-Flour-Ingredient-Bin-w-Casters-NSF-DN-FB100.0.83414.1.1.htm?utm_source=google&utm_medium=cse&utm_campaign=cse_goo&ppcid=22&link=83414
+bindicator_pcd		USD	251.68			constant	Pilot Study
+feedstock_staging_assembly_pcd		USD	136.45			constant	https://www.certifiedmtp.com/material-handling-chute/
+temperature_limit_switch_pcd		USD	141.505	133.02	149.99	uniform	https://www.grainger.com/product/HONEYWELL-HOME-Fan-and-Limit-Control-2E819
+airlock_pcd		USD	218.5	190	247	uniform	https://www.grainger.com/search/power-transmission/power-transmission-chains-and-sprockets/roller-chains?sst=4&ts_optout=true&searchQuery=%2340+drive+chain
+steel_cost		USD/kg	7.485	3.81	11.16	uniform	Pilot Study
+stainless_steel_cost		USD/kg	23.585	5.08	42.09	uniform	Pilot Study
+service_team_replacecatalyst_pcd		min / corrective maintenance	82.5	15	150	uniform	Pilot Study
+service_team_replacebrick_pcd		min / corrective maintenance	82.5	15	150	uniform	Pilot Study
+service_team_replaceo2sensor_pcd		min / corrective maintenance	55	10	100	uniform	Pilot Study
+service_team_adjustdoor_pcd		min / month	110	20	200	uniform	Pilot Study
+pcd_cat_sandwich_steel		kg	156.15			constant	Pilot Study
+pcd_cat_sandwich_stainless		kg	41.64			constant	Pilot Study
+thermocouple_lifetime_cb_2pcd		y	1.5	1	2	uniform	Pilot Study
+thermistor_lifetime_cb_2pcd		y	3			constant	Pilot Study
+o2_sensor_lifetime_pcd		h	2000			constant	Pilot Study
+frequency_corrective_maintenance		y / occurance	3.5	0.5	5	uniform	*assumed
+pcd_auger_power		kW	0.065			constant	Pilot Study
+pcd_airlock_power		kW	0.065			constant	Pilot Study
+service_team_wages		usd per cap per hr	6.05	3.37	10.35	triangular	https://www.salaryexpert.com/salary/job/utility-serviceman/india
+catalyst_temp		C	825.5833333	806.7867005	844.3799662	triangular	Pilot Study

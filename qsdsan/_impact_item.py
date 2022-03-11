@@ -172,7 +172,6 @@ class ImpactItem:
                 try:
                     CF_value, CF_unit = value # unit provided for CF
                     self.add_indicator(indicator, CF_value, CF_unit)
-                # except: breakpoint()
                 except Exception as e:
                     if 'unpack' in str(sys.exc_info()[1]):
                         self.add_indicator(indicator, value)
@@ -213,7 +212,7 @@ class ImpactItem:
             source_item._price = converted
 
     def add_indicator(self, indicator, CF_value, CF_unit=''):
-        '''Add an indicator with charactorization factor values.'''
+        '''Add an indicator with characterization factor values.'''
         source_item = check_source(self, True)
         if isinstance(indicator, str):
             indicator = ImpactIndicator.get_indicator(indicator)
@@ -254,9 +253,31 @@ class ImpactItem:
             ID of the new impact item.
         set_as_source : bool
             Whether to set the original impact item as the source.
-        '''
 
-        new = ImpactItem.__new__(ImpactItem)
+        Examples
+        --------
+        >>> import qsdsan as qs
+        >>> GWP = qs.ImpactIndicator('GlobalWarming', alias='GWP', unit='kg CO2-eq')
+        >>> Steel = qs.ImpactItem('Steel', 'kg', GWP=2.55)
+        >>> Steel.show()
+        ImpactItem      : Steel [per kg]
+        Price           : None USD
+        ImpactIndicators:
+                                   Characterization factors
+        GlobalWarming (kg CO2-eq)                      2.55
+        >>> Steel_cp = Steel.copy(set_as_source=True)
+        >>> Steel_cp.show()
+        ImpactItem      : item1 [per kg]
+        Source          : Steel
+        Price           : None USD
+        ImpactIndicators:
+                                   Characterization factors
+        GlobalWarming (kg CO2-eq)                      2.55
+        >>> Steel_cp.source is Steel
+        True
+        '''
+        cls = self.__class__
+        new = cls.__new__(cls)
         new.__init__(new_ID)
 
         if set_as_source:
@@ -610,8 +631,8 @@ class StreamImpactItem(ImpactItem):
         set_as_source : bool
             Whether to set the original impact item as the source.
         '''
-
-        new = StreamImpactItem.__new__(StreamImpactItem)
+        cls = self.__class__
+        new = cls.__new__(cls)
         new.ID = new_ID
         new._linked_stream = None # initiate this attribute
 
