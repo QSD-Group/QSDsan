@@ -432,6 +432,9 @@ class Component(Chemical):
                 raise AttributeError(f"Component {self.ID} must be measured as "
                                      f"either COD or one of its constituent atoms, "
                                      f"if not as itself.")
+        else:
+            if self.atoms: self._MW = molecular_weight(self.atoms)
+            else: self._MW = 1               
 
         if self._measured_as != measured_as:
             self._convert_i_attr(measured_as)
@@ -451,7 +454,7 @@ class Component(Chemical):
             self.measured_as = _ms
 
     def _convert_i_attr(self, new):
-        if new == None:
+        if new is None:
             denom = self._i_mass
         elif new == 'COD':
             denom = self._i_COD
