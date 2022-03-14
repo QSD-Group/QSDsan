@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Joy Cheung <joycheung1994@gmail.com>
+    Joy Zhang <joycheung1994@gmail.com>
     Yalin Li <zoe.yalin.li@gmail.com>
 
 Part of this module is based on the Thermosteam package:
@@ -346,7 +346,7 @@ class Component(Chemical):
             i = 1
         self._i_mass = check_return_property('i_mass', i)
 
-    #!!! Need to enable calculation from formula and water chemistry equilibria
+    #TODO: Need to enable calculation from formula and water chemistry equilibria
     @property
     def i_charge(self):
         '''

@@ -182,7 +182,7 @@ class Components(Chemicals):
             can be 'g', 'l', 's', or left as empty to avoid locking state.
             Components that have already been locked will not be affected.
         soluble_ref : str
-            ID of the reference component for those with `particle_size` == 'Souble'.
+            ID of the reference component for those with `particle_size` == 'Soluble'.
         gas_ref : str
             ID of the reference component for those with `particle_size` == 'Dissolved gas'.
         particulate_ref : str

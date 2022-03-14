@@ -283,7 +283,7 @@ def generate_samples(inputs, kind, N, seed=None, **kwargs):
     Returns
     -------
     samples: array
-        Samples to be used for the indicated sensitivies analyses.
+        Samples to be used for the indicated sensitivity analyses.
 
     See Also
     --------
@@ -796,11 +796,11 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box', adjust_hue=False
     ----------
     model : :class:`biosteam.Model`
         The model with uncertainty analysis (in <:class:`Model`.table>) results for plotting.
-    x_axis : :class:`biosteam.Parameter`, :class:`biosteam.Metric` or iterable
+    x_axis : :class:`biosteam.Parameter`, :class:`biosteam.Metric` or Iterable
         What to plot on the x-axis, can be parameters or metrics of the model,
         default to all model metrics included in the model result table
         if neither x nor y is provided.
-    y_axis : :class:`biosteam.Parameter`, :class:`biosteam.Metric` or iterable
+    y_axis : :class:`biosteam.Parameter`, :class:`biosteam.Metric` or Iterable
         What to plot on the y-axis, can be parameters or metrics of the model,
         default to None.
     kind : str
@@ -821,7 +821,7 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box', adjust_hue=False
     -------
     figure : :class:`matplotlib.figure.Figure`
         The generated figure.
-    axis : :class:`matplotlib.axes._subplots.AxesSubplot` or iterable
+    axis : :class:`matplotlib.axes._subplots.AxesSubplot` or Iterable
         The generated figure axis (or axes for 2D figure).
 
     Examples
@@ -1222,7 +1222,7 @@ def plot_morris_convergence(result_dct, metric, parameters=(),
     metric : :class:`biosteam.Metric`
         The metric of interest for the plot.
     parameters : :class:`biosteam.Parameter`
-        Single or a iterable of model parameters whose :math:`{\mu^*}` will be
+        Single or a Iterable of model parameters whose :math:`{\mu^*}` will be
         included in the plot.
         Will be set to all parameters in retult_dct will be used if not provided.
     plot_rank : bool
@@ -1366,7 +1366,7 @@ def plot_fast_results(result_dct, metric, parameters=(),
     metric : :class:`biosteam.Metric`
         The metric of interest for the plot.
     parameters : :class:`biosteam.Parameter`
-        Single or a iterable of model parameters whose :math:`{\mu^*}` will be
+        Single or a Iterable of model parameters whose :math:`{\mu^*}` will be
         included in the plot.
         Will be set to all parameters in retult_dct will be used if not provided.
     ax : :class:`matplotlib.AxesSubplot`
@@ -1412,7 +1412,7 @@ def plot_sobol_results(result_dct, metric, ax=None,
     '''
     Visualize the results from Sobol analysis as a bar plot and/or heat map.
     Total (:math:`S_{Ti}`) and main (:math:`S_{1i}`) effects can be drawn in
-    the bar plot or diagnoal of the heat map;
+    the bar plot or diagonal of the heat map;
     second-order interaction effects between two parameters (:math:`S_{2ij}`)
     are shown in the heat map.
 
@@ -1423,7 +1423,7 @@ def plot_sobol_results(result_dct, metric, ax=None,
     metric : :class:`biosteam.Metric`
         The metric of interest for the plot.
     parameters : :class:`biosteam.Parameter`
-        Single or a iterable of model parameters whose :math:`{\mu^*}` will be
+        Single or a Iterable of model parameters whose :math:`{\mu^*}` will be
         included in the plot.
         Will be set to all parameters in retult_dct will be used if not provided.
     kind : str

@@ -58,7 +58,7 @@ class ImpactItem:
         If provided, all attributions and properties of this impact item will
         be copied from the provided source.
     indicator_CFs : kwargs
-        Impact indicators and their characteriziation factors (CFs),
+        Impact indicators and their characterization factors (CFs),
         can be in the form of str=float or str=(float, unit).
 
     Tip
@@ -225,7 +225,7 @@ class ImpactItem:
                     convert(CF_value, indicator._ureg_unit.units)
             except:
                 raise ValueError(f'Conversion of the given unit {CF_unit} to '
-                                  f'the defaut unit {indicator.unit} is not supported.')
+                                  f'the default unit {indicator.unit} is not supported.')
 
         source_item._CFs[indicator.ID] = CF_value
 
@@ -485,7 +485,7 @@ class StreamImpactItem(ImpactItem):
         If provided, all attributions and properties of this
         :class:`StreamImpactItem` will be copied from the provided source.
     indicator_CFs : kwargs
-        ImpactIndicators and their characteriziation factors (CFs).
+        ImpactIndicators and their characterization factors (CFs).
 
     Tip
     ---
@@ -497,7 +497,7 @@ class StreamImpactItem(ImpactItem):
     Refer to :class:`ImpactItem` for general features.
     Below is about the additional features for :class:`StreamImpactItem`.
 
-    Assume we want to account for the globalwarming potential for methane:
+    Assume we want to account for the global warming potential for methane:
 
     >>> # Make impact indicators
     >>> import qsdsan as qs

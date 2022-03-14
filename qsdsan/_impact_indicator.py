@@ -36,7 +36,7 @@ class ImpactIndicator:
 
         .. note::
 
-            "synonym" was used bfore v0.2.2 it is still supported, but may be
+            "synonym" was used before v0.2.2 it is still supported, but may be
             removed in the future.
 
     method : str

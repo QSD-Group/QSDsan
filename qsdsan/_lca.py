@@ -42,7 +42,7 @@ class LCA:
         Lifetime of the LCA.
     lifetime_unit : str
         Unit of lifetime.
-    indicators : iterable
+    indicators : Iterable(obj)
         `ImpactIndicator` objects or their IDs/aliases.
     uptime_ratio : float
         Fraction of time that the system is operating.
@@ -473,16 +473,16 @@ class LCA:
 
         Parameters
         ----------
-        streams : :class:`WasteStream` or iterable
-            One or a iterable of streams. Note that impacts of these streams will be
+        streams : Iterable(obj)
+            One or a Iterable of streams. Note that impacts of these streams will be
             excluded in calculating the total impacts.
-        allocate_by : str, iterable, or function to generate an iterable
+        allocate_by : str, Iterable, or function to generate an Iterable
             If provided as a str, can be "mass" (`F_mass`), "energy" (`HHV`),
             or 'value' (`F_mass`*`price`) to allocate the impacts accordingly.
-            If provided as an iterable (no need to normalize so that sum of the iterable is 1),
-            will allocate impacts according to the iterable.
+            If provided as an Iterable (no need to normalize so that sum of the Iterable is 1),
+            will allocate impacts according to the Iterable.
             If provided as a function,  will call the function to generate an
-            iterable to allocate the impacts accordingly.
+            Iterable to allocate the impacts accordingly.
 
         .. note::
 
@@ -511,8 +511,8 @@ class LCA:
             ratios = allocate_by()
         else:
             raise ValueError('allocate_by can only be "mass", "energy", "value", '
-                             'an iterable (with the same length as `streams`), '
-                             'or a function to generate an iterable.')
+                             'an Iterable (with the same length as `streams`), '
+                             'or a function to generate an Iterable.')
         if ratios.sum() == 0:
             raise ValueError('Calculated allocation ratios are all zero, cannot allocate.')
         ratios = ratios/ratios.sum()
@@ -778,7 +778,7 @@ class LCA:
 
     @property
     def construction_units(self):
-        '''[set] All units in the linked system with constrution activity.'''
+        '''[set] All units in the linked system with construction activity.'''
         return self._construction_units
 
     @property
