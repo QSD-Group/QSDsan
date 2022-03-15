@@ -369,7 +369,7 @@ class PolishingFilter(SanUnit):
     #     PBL, PBW, PBD = 50, 30, 10 # pump building length, width, depth, [ft]
     #     Area_B_P = (PBL+2*CA) * (PBW+2*CA) # bottom area of frustum, [ft2]
     #     Area_T_P = (PBL+2*CA+PBW*SL) * (PBW+2*CA+PBD*SL) # top area of frustum, [ft2]
-    #     VEX_PB = 0.5 * (Area_B_P+Area_T_P) * PBD # total volume of excavaion, [ft3]
+    #     VEX_PB = 0.5 * (Area_B_P+Area_T_P) * PBD # total volume of excavation, [ft3]
 
     #     return N_AF, d_AF, D_AF, V_m_AF, VWC_AF, VWC_AF, VEX_PB
 
@@ -424,7 +424,7 @@ class PolishingFilter(SanUnit):
         D, C = self.design_results, self.baseline_purchase_costs
 
         ### Capital ###
-        # Concrete and excavaction
+        # Concrete and excavation
         VEX, VWC, VSC = \
             D['Excavation'], D['Wall concrete'], D['Slab concrete']
         # 27 is to convert the VEX from ft3 to yard3

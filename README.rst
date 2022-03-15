@@ -12,11 +12,15 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 .. PyPI version
 .. image:: https://img.shields.io/pypi/v/qsdsan?style=flat&color=blue
-   :target: https://pypi.org/project/qsdsan/
+   :target: https://pypi.org/project/qsdsan
+
+.. arXiv
+.. image:: https://img.shields.io/badge/arXiv-2203.06243-b31b1b.svg?style=flat
+   :target: https://arxiv.org/abs/2203.06243
 
 .. Documentation build
 .. image:: https://readthedocs.org/projects/qsdsan/badge/?version=latest
-   :target: https://qsdsan.readthedocs.io/en/latest/
+   :target: https://qsdsan.readthedocs.io/en/latest
 
 .. GitHub test and coverage of the main branch
 .. image:: https://github.com/QSD-Group/QSDsan/actions/workflows/build-latest.yml/badge.svg?branch=main
@@ -63,7 +67,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 What is ``QSDsan``?
 -------------------
-``QSDsan`` is an open-source, community-led platform for the quantitative sustainable design (QSD) of sanitation and resource recovery systems. It is one of a series of platforms that are being developed for the execution of QSD - a methodology for the research, design, and deployment of technologies and inform decision-making [1]_. It leverages the structure and modules developed in the `BioSTEAM <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_ platform [2]_ with additional functions tailored to sanitation processes.
+``QSDsan`` is an open-source, community-led platform for the quantitative sustainable design (QSD) of sanitation and resource recovery systems [1]_. It is one of a series of platforms that are being developed for the execution of QSD - a methodology for the research, design, and deployment of technologies and inform decision-making [2]_. It leverages the structure and modules developed in the `BioSTEAM <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_ platform [3]_ with additional functions tailored to sanitation processes.
 
 As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
 
@@ -179,9 +183,11 @@ Please refer to the ``LICENSE.txt`` for information on the terms & conditions fo
 
 References
 ----------
-.. [1] Li, Y.; Trimmer, J. T.; Hand, S.; Zhang, X.; Chambers, K. G.; Lohman, H. A. C.; Shi, R.; Byrne, D. M.; Cook, S. M.; Guest, J. S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. Submitted to Environmental Science & Technology, 2022.
+.. [1] Li, Y., Zhang, X., Morgan, V.L., Lohman, H.A.C., Rowles, L.S., Mittal, S., Kogler, A., Cusick, R.D., Tarpeh, W.A., and Guest, J.S. QSDsan: An integrated platform for quantitative sustainable design of sanitation and resource recovery systems. arXiv: `2203.06243 <https://arxiv.org/abs/2203.06243>`_ [cs.CY], March 15, 2022.
 
-.. [2] Cortés-Peña, Y.; Kumar, D.; Singh, V.; Guest, J. S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020, 8 (8), 3302–3310. https://doi.org/10.1021/acssuschemeng.9b07040.
+.. [2] Li, Y.; Trimmer, J. T.; Hand, S.; Zhang, X.; Chambers, K. G.; Lohman, H. A. C.; Shi, R.; Byrne, D. M.; Cook, S. M.; Guest, J. S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. Submitted to Environmental Science & Technology, 2022.
+
+.. [3] Cortés-Peña, Y.; Kumar, D.; Singh, V.; Guest, J. S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020, 8 (8), 3302–3310. https://doi.org/10.1021/acssuschemeng.9b07040.
 
 
 .. Links

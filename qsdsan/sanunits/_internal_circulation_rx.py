@@ -472,7 +472,7 @@ class InternalCirculationRx(MixTank):
     @property
     def Fxb(self):
         '''
-        [float] Biomass transfer ratio from the bottom reacor to the top reactor,
+        [float] Biomass transfer ratio from the bottom reactor to the top reactor,
         should be within [0, 1] (ideal to no retention),
         only relevant when the "separate" method is used.
         '''
@@ -487,7 +487,7 @@ class InternalCirculationRx(MixTank):
     @property
     def Fxt(self):
         '''
-        [float] Biomass transfer ratio from the top reacor to the effluent,
+        [float] Biomass transfer ratio from the top reactor to the effluent,
         should be within [0, 1] (ideal to no retention),
         only relevant when the "separate" method is used.
         '''
