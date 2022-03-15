@@ -183,7 +183,7 @@ Please refer to the ``LICENSE.txt`` for information on the terms & conditions fo
 
 References
 ----------
-.. [1] Li, Y., Zhang, X., Morgan, V.L., Lohman, H.A.C., Rowles, L.S., Mittal, S., Kogler, A., Cusick, R.D., Tarpeh, W.A., and Guest, J.S. QSDsan: An integrated platform for quantitative sustainable design of sanitation and resource recovery systems. arXiv: `2203.06243 <https://arxiv.org/abs/2203.06243>`_ [cs.CY], March 15, 2022.
+.. [1] Li, Y., Zhang, X., Morgan, V.L., Lohman, H.A.C., Rowles, L.S., Mittal, S., Kogler, A., Cusick, R.D., Tarpeh, W.A., and Guest, J.S. QSDsan: An integrated platform for quantitative sustainable design of sanitation and resource recovery systems. arXiv: `2203.06243 <https://arxiv.org/abs/2203.06243>`_ [cs.CY], March 7, 2022.
 
 .. [2] Li, Y.; Trimmer, J. T.; Hand, S.; Zhang, X.; Chambers, K. G.; Lohman, H. A. C.; Shi, R.; Byrne, D. M.; Cook, S. M.; Guest, J. S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. Submitted to Environmental Science & Technology, 2022.
 
