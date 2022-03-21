@@ -350,14 +350,14 @@ class HHXdryer(SanUnit):
                 f'is smaller than the desired moisture content ({mc_out:.1%}).')
         TS_in = waste_in.F_mass - waste_in.imass['H2O'] # kg TS dry/hr
         waste_out.imass['H2O'] = TS_in/(1-mc_out)*mc_out
-        water_to_dry = waste_in.imass['H2O'] - waste_out.imass['H2O'] # kg water/hr
-        heat_needed_to_dry_35 = water_to_dry * self.energy_required_to_dry_sludge # MJ/hr
 
-        # Estimate heat supplied based on the data
-        heat_supplied = self.dryer_heat_transfer_coeff * self.area_surface * (self.water_out_temp-self.feedstock_temp)
-
-        if heat_needed_to_dry_35 > heat_supplied:
-            warn('Heat required exceeds heat supplied.')
+        # # The following codes can be used to compare if the supplied heat is
+        # # sufficient to provide the needed heat for drying
+        # water_to_dry = waste_in.imass['H2O'] - waste_out.imass['H2O'] # kg water/hr
+        # heat_needed_to_dry_35 = water_to_dry * self.energy_required_to_dry_sludge # MJ/hr
+        # heat_supplied = self.dryer_heat_transfer_coeff * self.area_surface * (self.water_out_temp-self.feedstock_temp)
+        # if heat_needed_to_dry_35 > heat_supplied:
+        #     warn('Heat required exceeds heat supplied.')
 
         # Emissions
         drying_CO2_to_air = (self.drying_CO2_emissions * self.carbon_COD_ratio
@@ -381,7 +381,7 @@ class HHXdryer(SanUnit):
         waste_out.imass['N'] -= drying_NH3_to_air / 17 * 14
 
         # # The following codes can be used to calculate losses due to convection and radiation
-        # self.jacket_heat_loss_conv = self.heat_transfer_coeff * (self.water_air_hx_temp1 - self.ambient_temp) * self.water_air_hx_area1 / 1000 / 0.2778 # MJ/hr
+        # self.jacket_heat_loss_conv = self.heat_transfer_coeff * (self.water_air_hx_temp - self.ambient_temp) * self.water_air_hx_area / 1000 / 0.2778 # MJ/hr
         # self.jacket_heat_loss_radiation = self.radiative_emissivity * 5.67e-8 * ((self.water_air_hx_temp1 + 273)**4 - (self.ambient_temp + 273)**4) / 1000 / 0.2778 # MJ/hr
         # self.jacket_heat_loss_sum = self.jacket_heat_loss_conv + self.jacket_heat_loss_radiation # MJ/hr
 
