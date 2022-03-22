@@ -21,7 +21,14 @@ __all__ = ('SludgePasteurization',)
 
 data_path += 'sanunit_data/_sludge_pasteurization.tsv'
 
-P = 5/4
+#To scale the system from 0 - 125 users based on sludge pasteurization units corresponding to 25 users: 
+ppl = 120
+
+if (ppl <=25): P = 1/4
+elif (ppl >25 and ppl <=50): P = 2/4
+elif (ppl >50 and ppl <=75): P = 3/4
+elif (ppl >75 and ppl <=100): P = 4/4
+else: P = 5/4
 
 class SludgePasteurization(SanUnit):
     '''
@@ -132,7 +139,7 @@ class SludgePasteurization(SanUnit):
         
         
         self.add_OPEX =  self._calc_replacement_cost() + self._calc_labor_cost() # USD/hr (all items are per hour)
-        self.power_demand = 0          
+        self.power_demand = 0
         self.power_utility(self.power_demand)
 
     def _calc_replacement_cost(self):
@@ -174,29 +181,6 @@ class SludgePasteurization(SanUnit):
         
         
         
-        
-        #         #WHAT IS THE TEMP OF EVAPORATED WATER, WHERE DOES THE EVAPORATED WATER GO, RECOVER HEAT, 
-        # #AND FINAL TEMP OF SLUDGE, AT WHAT TEMP IS WATER REMOVED. 
-        
-        # #water will be evaporated and goes into the atmosphere 
-        # #temperature of evaportaed water will be sludge pasterurizaiton tempearture 
-        # #no heat is recovered
-        # #final temperature is 25 degrees
-        # #water temp removed is the same as the sludge pasteurization temperature 
-        
-        
-        # #pg 5 eq 4 and 5 
-        # #IF IT SHOULD BE THAT WET CONTENT IS 10% AFTER SLUDGE PASTERUZIATION 
-        # #TELL SHION THAT HEAT LOSS IS IN .1% IF SHE DIVIDES BY 100
-        # # Overall heat required for pasteurization
-        # self.Q_d = ((self.M_w * self.Cp_w * (self.temp_pasteurization - self.sludge_temp)) 
-        #             + (self.M_dm * self.Cp_dm * (self.temp_pasteurization - self.sludge_temp)) 
-        #             + (self.M_we * self.l_w))*(1 + self.heat_loss) #kJ/hr
-        
-
-        # lpg_vol_reqd = self.Q_d / self.lhv_lpg # kg/hr 
-        # lpg.imass['CH4'] = lpg_vol_reqd
-
         
         
         

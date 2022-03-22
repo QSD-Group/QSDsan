@@ -16,20 +16,34 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 # %%
-
-
-import numpy as np
 from qsdsan import SanUnit, Construction
+from chaospy import distributions as shape
 from qsdsan.utils.loading import load_data, data_path
-import os
 __all__ = ('Ultrafiltration',)
 
-#path to csv with all the inputs
 
 data_path += 'sanunit_data/_ultrafiltration_reclaimer.csv'
 
-R = 1 #number of reclaimers
+#To scale the system from 0 - 120 users based on units corresponding to 30 users: 
+ppl = 120
 
+#power demand decreases with number of ultrafiltration units added (calculated by Duke Team)
+power_demand_1 = shape.Triangle(lower=750, midpoint = 675, upper=825)
+power_demand_2 = shape.Triangle(lower=540, midpoint = 405, upper=675)
+power_demand_3 = shape.Triangle(lower=510, midpoint = 382.5, upper=637.5)
+power_demand_4 = shape.Triangle(lower=480, midpoint = 360, upper=600)
+
+if (ppl <=30): R = 1 
+elif (ppl >30 and ppl <=60): R = 2
+elif (ppl >60 and ppl <=90): R = 3
+elif (ppl >90 and ppl <=120): R = 4
+else: R = 5
+
+if (ppl <=30): power_demand = power_demand_1
+elif (ppl >30 and ppl <=60): power_demand = power_demand_2
+elif (ppl >60 and ppl <=90): power_demand = power_demand_3
+elif (ppl >90 and ppl <=120): power_demand = power_demand_4
+    
 ### 
 class Ultrafiltration(SanUnit):
     '''
@@ -37,14 +51,13 @@ class Ultrafiltration(SanUnit):
     to prolong filter
     
     '''
-    
+
 
     def __init__(self, ID='', ins=None, outs=(), if_gridtied=True, **kwargs):
         
         SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         self.if_gridtied = if_gridtied
-        self.price_ratio = 1
-# load data from csv each name will be self.name    
+        self.price_ratio = 1  
         data = load_data(path=data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
@@ -53,10 +66,6 @@ class Ultrafiltration(SanUnit):
         
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-
-
-
-
         
 # define the number of influent and effluent streams    
     _N_ins = 1
@@ -85,8 +94,7 @@ class Ultrafiltration(SanUnit):
             )
         self.add_construction(add_cost=False)        
  
-        
-     #_cost based on amount of steel and stainless plus individual components
+    
     def _cost(self):
         C =self.baseline_purchase_costs
         C['Pipes'] = (self.one_in_pipe_SCH40 + self.onehalf_in_pipe_SCH40 + self.three_in_pipe_SCH80)
@@ -100,10 +108,10 @@ class Ultrafiltration(SanUnit):
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
         
-        #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
-       
-       #If grid 
-        self.power_utility(self.power_demand_4 / 1000) #kW
+   
+       #If grid
+        self.power_demand = power_demand
+        self.power_utility(self.power_demand / 1000) #kW
        #If solar
         # self.power_utility(self.power_demand * 0) #kW
     

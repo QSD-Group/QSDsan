@@ -17,19 +17,20 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
 # %%
-
-
-import numpy as np
 from qsdsan import SanUnit, Construction
 from qsdsan.utils.loading import load_data, data_path
-import os
 __all__ = ('IonExchangeReclaimer',)
-
-#path to csv with all the inputs
 
 data_path += 'sanunit_data/_ion_exchange_reclaimer.csv'
 
-X = 1 #number of reclaimers
+#To scale the system from 0 - 120 users based on units corresponding to 30 users: 
+ppl = 120
+
+if (ppl <=30): R = 1 
+elif (ppl >30 and ppl <=60): R = 2
+elif (ppl >60 and ppl <=90): R = 3
+elif (ppl >90 and ppl <=120): R = 4
+else: R = 5
 
 ### 
 class IonExchangeReclaimer(SanUnit):
@@ -69,8 +70,7 @@ class IonExchangeReclaimer(SanUnit):
         SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         self.if_gridtied = if_gridtied
         self.price_ratio = 1
-
-# load data from csv each name will be self.name    
+  
         data = load_data(path=data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
@@ -102,24 +102,19 @@ class IonExchangeReclaimer(SanUnit):
         
         #from Lena's info 
         # Zeolite
-        zeolite_demand_time = (self.zeolite_weight / (self.zeolite_lifetime*365*24)) * X # kg zeolite / hr
-        #zeolite_demand_influent = zeolite_demand_time / waste.F_vol # kg zeolite / m3 treated
-        #zeolite_cost_day = zeolite_demand_time * 24 * (self.zeolite/self.zeolite_weight_per_cost) # $ zeolite / d
+        zeolite_demand_time = (self.zeolite_weight / (self.zeolite_lifetime*365*24)) * R # kg zeolite / hr
         zeolite_in.imass['Zeolite'] = zeolite_demand_time
         zeolite_out.imass['Zeolite'] = zeolite_demand_time
         
         # GAC
-        gac_demand_time = ((self.gac_weight * self.gac_annual_replacement) / (365*24)) * X # kg gac / hr
+        gac_demand_time = ((self.gac_weight * self.gac_annual_replacement) / (365*24)) * R # kg gac / hr
         gac_in.imass['GAC'] = gac_demand_time
         gac_out.imass['GAC'] = gac_demand_time
         
         # KCl
-        self.KCl_demand_time = ((self.KCl_weight * self.regen_freq_per_yr) / (365*24)) * X # kg KCl / hr
+        self.KCl_demand_time = ((self.KCl_weight * self.regen_freq_per_yr) / (365*24)) * R # kg KCl / hr
         KCl.imass['PotassiumChloride'] = self.KCl_demand_time
 
-
-        #!!! During storage most N as urea goes to NH3, should that 
-        # conversion be added or just use total N here? 
         self.N_removed = waste.imass['NH3'] * (self.TN_removal)
         self.N_recovered = self.N_removed * (self.desorption_recovery_efficiency)  # kg N / hr
         treated.imass['NH3'] =  waste.imass['NH3'] - self.N_removed # kg N / hr
@@ -131,9 +126,9 @@ class IonExchangeReclaimer(SanUnit):
     def _design(self):
         design = self.design_results
         
-        design['Plastic'] = P_quant = self.Plastic_weight * X
-        design['PVC'] = PVC_quant = self.PVC_weight * X
-        design['Steel'] = S_quant = self.Steel_weight * X
+        design['Plastic'] = P_quant = self.Plastic_weight * R
+        design['PVC'] = PVC_quant = self.PVC_weight * R
+        design['Steel'] = S_quant = self.Steel_weight * R
         
         self.construction = (
             Construction(item='Plastic', quantity = P_quant, quantity_unit = 'kg'),
@@ -142,37 +137,32 @@ class IonExchangeReclaimer(SanUnit):
             )
         self.add_construction(add_cost=False)        
  
-        
-     #_cost based on amount of steel and stainless plus individual component
      
     def _calc_labor_cost(self):
-		# I'm calculation
-        labor_cost = (self.wages * self.labor_maintenance_zeolite_regeneration) * X
+        labor_cost = (self.wages * self.labor_maintenance_zeolite_regeneration) * R
         return labor_cost / (365 * 24) # USD/hr (all items are per hour)
     
     def _calc_replacement_cost(self):
         ion_exchange_replacement_cost = (((self.Zeolite_cost * self.gac_annual_replacement)
                                          + (self.KCl_cost * self.KCl_weight + self.regen_freq_per_yr) 
                                          + (self.GAC_cost * self.gac_annual_replacement)
-                                         + (self.ion_exchange_replacement_other_parts /10))) * X #USD/yr
+                                         + (self.ion_exchange_replacement_other_parts /10))) * R #USD/yr
         return ion_exchange_replacement_cost/ (365 * 24)  * self.price_ratio # USD/hr (all items are per hour)
                  
     
     def _cost(self):
         
         C = self.baseline_purchase_costs
-        C['Pipes'] = (self.four_in_pipe_SCH40 + self.four_in_pipe_SCH80) * X
+        C['Pipes'] = (self.four_in_pipe_SCH40 + self.four_in_pipe_SCH80) * R
         C['fittings'] = (self.four_in_pipe_SCH80_endcap + self.NRV + self.connector + 
-        self.ball_valve + self.three_eight_elbow + self.ten_ten_mm_tee + self.OD_tube + self.four_in_pipe_clamp) * X
+        self.ball_valve + self.three_eight_elbow + self.ten_ten_mm_tee + self.OD_tube + self.four_in_pipe_clamp) * R
                                            
-        C['GAC_Zeolite'] = (self.GAC_zeolite_mesh + self.GAC_cost + self.Zeolite_cost) * X
-        C['Regeneration Solution'] = (self.KCl_cost * self.KCl_weight) * X
+        C['GAC_Zeolite'] = (self.GAC_zeolite_mesh + self.GAC_cost + self.Zeolite_cost) * R
+        C['Regeneration Solution'] = (self.KCl_cost * self.KCl_weight) * R
             
         ratio = self.price_ratio
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
-        
-        #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
      
         add_OPEX = self._calc_replacement_cost() 
         self._add_OPEX = {'Additional OPEX': add_OPEX}

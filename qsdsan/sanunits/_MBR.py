@@ -126,7 +126,7 @@ class MBR(SanUnit, Decay):
                     + (self.guage_cost * self.guage_life)) 
         
         self.add_OPEX =  (MBR_replacement_parts_annual_cost) / (365 * 24) * self.price_ratio # USD/hr (all items are per hour)
-        #self.power_utility(self.power_demand * self.working_time)
+        self.power_utility(self.power_demand * self.working_time)
         
        #power is negligible in the aerobic Tank 
     

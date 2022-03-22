@@ -6,8 +6,6 @@ Created on Thu Oct 28 13:41:55 2021
 @author: torimorgan
 """
 
-import numpy as np
-from warnings import warn
 from qsdsan import SanUnit, Construction
 #from ._decay import Decay
 from qsdsan.utils.loading import load_data, data_path
@@ -17,7 +15,14 @@ __all__ = ('SystemReclaimer',)
 
 data_path += 'sanunit_data/_system_reclaimer.csv'
 
-# R = 1 #number of reclaimers
+#To scale the system from 0 - 120 users based on units corresponding to 30 users: 
+ppl = 120
+
+if (ppl <=30): R = 1 
+elif (ppl >30 and ppl <=60): R = 2
+elif (ppl >60 and ppl <=90): R = 3
+elif (ppl >90 and ppl <=120): R = 4
+else: R = 5
 
 
 
@@ -47,9 +52,7 @@ class SystemReclaimer(SanUnit):
         treated.copy_like(self.ins[0])
 
     def _design(self):
-        #find rough value for FRP for tank 
         design = self.design_results
-        #!!! Consider doing later design['Brass'] = brass_quant = self.aluminum_weight
         design['Steel'] = steel_quant = self.steel_weight * 1
         self.construction = (
                             (Construction(item='Steel', quantity = steel_quant, quantity_unit = 'kg')))
@@ -63,27 +66,19 @@ class SystemReclaimer(SanUnit):
                                          + self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
                                          + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
                                          + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
-                                         + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank)) 
-                                         # + ((self.T_nut + self.die_cast_hinge + self.SLS_locks + self.DC_round_key
-                                         # + self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
-                                         # + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
-                                         # + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
-                                         # + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * R * .05))
+                                         + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) 
+                                          + ((self.T_nut + self.die_cast_hinge + self.SLS_locks + self.DC_round_key
+                                          + self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
+                                          + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
+                                          + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
+                                          + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * R * .05))
         ratio = self.price_ratio
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
-        
-        #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
-        
-        # #certain parts need to be replaced based on an expected lifefime
-        # #the cost of these parts is considered along with the cost of the labor to replace them
-        # replacement_parts_annual_cost = (self.T_nut + self.die_cast_hinge + self.SLS_locks + self.DC_round_key
-        #                                  + self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
-        #                                  + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
-        #                                  + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
-        #                                  + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * .1
-     
+    
+        #If grid
         self.power_utility(self.power_demand / 1000) #kW
+        #If solar
         # self.power_utility(self.power_demand * 0)
         
     def _calc_replacement_cost(self):

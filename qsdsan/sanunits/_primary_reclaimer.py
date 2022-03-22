@@ -5,19 +5,23 @@ Created on Sun May 16 15:31:50 2021
 
 @author: torimorgan
 """
-
-import numpy as np
-from warnings import warn
 from qsdsan import SanUnit, Construction
 from ._decay import Decay
 from ..utils import load_data, data_path
 
-# __all__ = ('PrimaryES',)
 __all__ = ('PrimaryReclaimer',)
 
 data_path += 'sanunit_data/_primary_reclaimer.csv'
 
-P = 4/4
+#To scale the system from 0 - 125 users based on sludge pasteurization units corresponding to 25 users: 
+ppl = 120
+
+if (ppl <=25): P = 1/4
+elif (ppl >25 and ppl <=50): P = 2/4
+elif (ppl >50 and ppl <=75): P = 3/4
+elif (ppl >75 and ppl <=100): P = 4/4
+else: P = 5/4
+
 
 class PrimaryReclaimer(SanUnit, Decay):
     '''
@@ -66,21 +70,14 @@ class PrimaryReclaimer(SanUnit, Decay):
         treated.copy_like(self.ins[0])
         CH4.phase = N2O.phase = 'g'
         
-        
         P_precipitated = self.orthoP_post * self.P_recovery  # kg precipitated-P/hr
-        N_precipitated = (self.orthoP_post * self.P_recovery / self.MW_P * self.N_P_ratio_struvite * self.MW_N)  # kg precipitated-N/hr
-        
         
         struvite_production_time = P_precipitated / self.MW_P * self.MW_struvite  # kg (NH4)MgPO4•6(H2O) / hr
         struvite.imass['Struvite'] = struvite_production_time
         
         # COD removal
         COD_deg = treated.COD*treated.F_vol/1e3*self.COD_removal # kg/hr
-        #add conversion of COD to C here 
         treated._COD = waste.COD * (1-self.COD_removal)
-       
-        
-        #do this for all sanunits
         
         CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
         CH4.imass['CH4'] = CH4_prcd
@@ -88,8 +85,7 @@ class PrimaryReclaimer(SanUnit, Decay):
                                             t=self.tau/365,
                                             max_decay=self.N_max_decay)
         
-        N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol #work through the 
-            #conversions to make sure they are applicable
+        N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol 
         NH3_rmd, NonNH3_rmd = \
             self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
         treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
@@ -101,12 +97,10 @@ class PrimaryReclaimer(SanUnit, Decay):
         self.sludge_TN_F_mass = self.sludge_TN * waste.F_vol * 1e-3
         sludge.imass['N'] = self.sludge_TN
         
-        
         self.sludge_COD = waste._COD * self.COD_removal 
         self.sludge_COD_F_mass = self.sludge_COD * waste.F_vol * 1e-3
         sludge._COD = self.sludge_COD 
         
-
         sludge.imass['H2O'] = sludge.F_mass * 0.5
 
     def _design(self):
@@ -125,11 +119,3 @@ class PrimaryReclaimer(SanUnit, Decay):
         ratio = self.price_ratio
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
-        
-        #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
-    
-    def _calc_replacement_cost(self):
-        Mg_cost = (self.orthoP_post / self.MW_P / self.Mg_dose * self.MW_MgOH2 * self.MgOH2_cost) * P
-        return Mg_cost * self.price_ratio # USD/hr (all items are per hour)
-        
-

@@ -43,7 +43,3 @@ Steel_weight,,kg,3,2.25,3.75,uniform,SI Manuscript with Duke
 Nylon_weight,,kg,1.21,0.9075,1.5125,uniform,SI Manuscript with Duke
 TSS_removal,,%,0.756501,0.108696,1,triangular,Duke Data
 replacement_costs,,USD,283.981,212.98575,354.97625,triangular,10% of capital costs
-power_demand,,W,750,675,825,triangular,email from Brian
-power_demand_2,,W,540,405,675,triangular,email from Brian
-power_demand_3,,W,510,382.5,637.5,triangular,email from Brian
-power_demand_4,,W,480,360,600,triangular,email from Brian
