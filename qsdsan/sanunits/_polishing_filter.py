@@ -14,6 +14,7 @@ for license details.
 
 from warnings import warn
 from math import pi, ceil
+from thermosteam.reaction import ParallelReaction as PRxn
 from . import HXutility
 from ._pumping import WWTpump
 from .. import SanStream, SanUnit
@@ -62,6 +63,10 @@ class PolishingFilter(SanUnit):
 
     Parameters
     ----------
+    ins : Inlets(obj)
+        Influent, recycle, air (optional & when aerobic).
+    outs : Outlets(obj)
+        Biogas (when anaerobic), effluent, waste sludge, air (optional & when aerobic).
     filter_type : str
         Can either be "anaerobic" or "aerobic".
     OLR : float
@@ -196,12 +201,22 @@ class PolishingFilter(SanUnit):
     def _refresh_rxns(self, X_decomp=None, X_growth=None):
         X_decomp = X_decomp if X_decomp else self.X_decomp
         X_growth = X_growth if X_growth else self.X_growth
-
         xcmp_ID = self._xcmp.ID
-        self._decomp_rxns = get_digestion_rxns(self.ins[0], 1.,
-                                               X_decomp, 0., xcmp_ID)
-        self._growth_rxns = get_digestion_rxns(self.ins[0], 1.,
-                                               0., X_growth, xcmp_ID)
+
+        self._growth_rxns = growth_rxns = \
+            get_digestion_rxns(self.ins[0], 1., 0., X_growth, xcmp_ID)
+        if self.filter_type == 'anaerobic':
+            self._decomp_rxns = get_digestion_rxns(self.ins[0], 1.,
+                                                   X_decomp, 0., xcmp_ID)
+        else: # aerobic
+            decomp_rxns = []
+            get = getattr
+            chems = self.chemicals
+            for chem_ID in growth_rxns.reactants:
+                decomp_rxns.append(get(chems, chem_ID).get_combustion_reaction())
+            self._decomp_rxns = PRxn(decomp_rxns)
+            self._decomp_rxns.X *= X_decomp
+
         self._i_rm = self._decomp_rxns.X + self._growth_rxns.X
 
 
@@ -248,6 +263,7 @@ class PolishingFilter(SanUnit):
             degassing(eff, air_out)
             degassing(waste, air_out)
             air_out.imol['N2'] += air_in.imol['N2']
+            air_out.imol['O2'] += air_in.imol['O2']
             self._recir_ratio = None
 
         if self.T is not None:

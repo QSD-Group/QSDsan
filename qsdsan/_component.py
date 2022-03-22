@@ -18,6 +18,8 @@ for license details.
 
 
 import thermosteam as tmo
+from warnings import warn
+from thermo import TDependentProperty
 from chemicals.elements import (
     mass_fractions as get_mass_frac,
     molecular_weight,
@@ -434,7 +436,7 @@ class Component(Chemical):
                                      f"if not as itself.")
         else:
             if self.atoms: self._MW = molecular_weight(self.atoms)
-            else: self._MW = 1               
+            else: self._MW = 1
 
         if self._measured_as != measured_as:
             self._convert_i_attr(measured_as)
@@ -616,6 +618,7 @@ class Component(Chemical):
         return missing
 
 
+    #TODO: possible to directly use `Chemical.copy`?
     def copy(self, new_ID, **data):
         '''
         Return a new :class:`Component` object with the same settings with
@@ -628,8 +631,11 @@ class Component(Chemical):
         phase = data.get('phase') or self._locked_state
         new._locked_state = phase
 
+        TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = False
         new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus,
                            new.Tm, new.Tb, new.eos, new.phase_ref)
+        TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = True
+
         new._label_handles()
 
         for i,j in data.items():
@@ -641,6 +647,14 @@ class Component(Chemical):
     __copy__ = copy
 
 
+    # # This won't work if a customized chemical is used
+    # @classmethod
+    # def from_chemical(cls, ID, chemical=None, **data):
+    #     '''Return a new :class:`Component` from a :class:`thermosteam.Chemical` object.'''
+    #     chemical_ID = chemical if isinstance(chemical, str) else chemical.ID
+    #     new = Component(ID=ID, search_ID=chemical_ID, **data)
+    #     return new
+
     @classmethod
     def from_chemical(cls, ID, chemical=None, phase=None, measured_as=None,
                       i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
@@ -651,8 +665,7 @@ class Component(Chemical):
         '''Return a new :class:`Component` from a :class:`thermosteam.Chemical` object.'''
         new = cls.__new__(cls, ID=ID, phase=phase)
 
-        if chemical is None:
-            chemical = ID
+        if chemical is None: chemical = ID
 
         if isinstance(chemical, str):
             chemical = Chemical(chemical)
@@ -664,8 +677,11 @@ class Component(Chemical):
 
         if phase: new._locked_state = phase
 
+        TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = False
         new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus,
-                           new.Tm, new.Tb, new.eos, new.phase_ref)
+                            new.Tm, new.Tb, new.eos, new.phase_ref)
+        TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = True
+
         new._label_handles()
         new._measured_as = measured_as
         new.i_mass = i_mass

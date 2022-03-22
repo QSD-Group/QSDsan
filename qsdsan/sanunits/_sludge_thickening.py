@@ -71,6 +71,7 @@ class SludgeThickening(SanUnit, Splitter):
     https://doi.org/10.1039/C5EE03715H.
     '''
 
+    SKIPPED = False
     _graphics = Splitter._graphics
     _ins_size_is_fixed = False
     _N_outs = 2
@@ -110,6 +111,7 @@ class SludgeThickening(SanUnit, Splitter):
                 sludge.copy_like(mixed)
                 eff.empty()
                 split = 0
+                self.SKIPPED = True
             else:
                 solubles, solids = self.solubles, self.solids
                 sludge.copy_flow(mixed)
@@ -120,6 +122,7 @@ class SludgeThickening(SanUnit, Splitter):
                 split = mixed.mass.value.copy()
                 idx = np.where(mixed.mass!=0)
                 split[idx] = eff.mass[idx]/mixed.mass[idx]
+                self.SKIPPED = False
         self._isplit = self.thermo.chemicals.isplit(split)
         
 
@@ -141,21 +144,27 @@ class SludgeThickening(SanUnit, Splitter):
         sludge.copy_flow(mixed, solids, remove=True) # all solids go to sludge
         eff.copy_flow(mixed, solubles)
 
+        self._set_split_at_mc()
         flx.IQ_interpolation(
             f=self._mc_at_split, x0=1e-3, x1=1.-1e-3,
             args=(solubles, mixed, eff, sludge, self.sludge_moisture),
             checkbounds=False)
-        self._set_split_at_mc()
+        self._set_split_at_mc() #!!! not sure if still needs this
 
 
     def _cost(self):
-        m_solids = self.outs[-1].F_mass
-        self.add_OPEX = {'Sludge disposal': m_solids*self.disposal_cost}
-        power = 0
-        for p in (self.effluent_pump, self.sludge_pump):
-            p.simulate()
-            power += p.power_utility.rate
-        self.power_utility.rate = power
+        if self.SKIPPED == False:
+            m_solids = self.outs[-1].F_mass
+            self.add_OPEX = {'Sludge disposal': m_solids*self.disposal_cost}
+            power = 0
+            for p in (self.effluent_pump, self.sludge_pump):
+                p.simulate()
+                power += p.power_utility.rate
+            self.power_utility.rate = power
+        else:
+            self.add_OPEX = {}
+            self.baseline_purchase_costs.clear()
+            self.power_utility.rate = 0
 
 
 class BeltThickener(SludgeThickening):

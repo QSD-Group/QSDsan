@@ -75,6 +75,10 @@ class InternalCirculationRx(MixTank):
 
     Parameters
     ----------
+    ins : Inlets(obj)
+        Influent.
+    outs : Outlets(obj)
+        Biogas, effluent, waste sludge.
     method : str
         Either "separate" to design the bottom and top reactors separately as in [2]_ ,
         or "lumped" to design the entire IC reactor as a black box following [3]_ .
