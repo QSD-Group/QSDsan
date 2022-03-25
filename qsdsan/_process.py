@@ -18,22 +18,184 @@ from . import Component, Components
 from .utils import load_data, get_stoichiometric_coeff
 from thermosteam.utils import chemicals_user, read_only
 from thermosteam import settings
-from sympy import symbols, Matrix, simplify
+from sympy import symbols, Matrix, simplify, lambdify
 from sympy.parsing.sympy_parser import parse_expr
 import numpy as np
 import pandas as pd
     
 __all__ = ('Process', 'Processes', 'CompiledProcesses', )
 
+_load_components = settings.get_default_chemicals
+
 class UndefinedProcess(AttributeError):
     '''AttributeError regarding undefined Component objects.'''
     def __init__(self, ID):
         super().__init__(repr(ID))
+
+#%%
+class DynamicParameter:
+    
+    def __init__(self, symbol, function=None, params={}):
+        self.symbol = symbol
+        self.function = function
+        self._params = params
+    
+    @property
+    def symbol(self):
+        return self._symbol
+    @symbol.setter
+    def symbol(self, s):
+        self._symbol = symbols(s)
+    
+    @property
+    def function(self):
+        return self._function
+    
+    @function.setter
+    def function(self, f):
+        if callable(f):
+            nargs = f.__code__.co_argcount
+            if nargs > 2: 
+                raise ValueError(f'function for the {self.__repr__()} must take '
+                                 f'at most 2 positional arguments: an array '
+                                 f'of state variables and a dictionary of parameters, '
+                                 f'not {nargs} positional arguments.')
+            elif nargs == 0:
+                self._function = lambda state_arr, params: f()
+            elif nargs == 1:
+                self._function = lambda state_arr, params: f(state_arr)
+            else:
+                self._function = f
+        elif isinstance(f, (float, int)):
+            self._function = lambda state_arr, params: f
+        elif f is None:
+            self._function = lambda state_arr, params: None
+        else:
+            raise TypeError(f'function must be a callable or a float or int, if not None, '
+                            f'not {type(f)}')
         
-_load_components = settings.get_default_chemicals
+    @property
+    def params(self):
+        return self._params
+    
+    def set_params(self, **params):
+        self._params.update(params)
+    
+    def __call__(self, state_arr):
+        return self.function(state_arr, self.params)
+    
+    def __repr__(self):
+        return f'<DynamicParameter: {str(self.symbol)}>'
+
+#%%
+class Kinetics(DynamicParameter):
+    
+    def __init__(self, process, function=None, params={}):
+        super().__init__(symbol=f'rho_{process.ID}', function=function,
+                         params=params)
+        self.process = process
+    
+    @property
+    def process(self):
+        return self._process
+    @process.setter
+    def process(self, pc):
+        if not isinstance(pc, Process):
+            raise TypeError(f'processes must be of type `Process`, not {type(pc)}')            
+        self._process = pc
+    
+    def copy(self, new_process=None):
+        '''Return a copy.'''
+        pc = new_process or self.process
+        copy = object.__new__(Kinetics, process=pc, 
+                              function=self.function,
+                              params=self.params)
+        for attr, v in self.__dict__.items():
+            if attr not in ('_process', '_function', '_params'):
+                setattr(copy, attr, v)
+        return copy
+    
+    def __repr__(self):
+        return f'<Kinetics: {self.process.ID}>'
+
+class MultiKinetics:
+    
+    def __init__(self, processes, function=None, params={}):
+        self.processes = processes
+        self.function = function
+        self._params = params
+    
+    @property
+    def processes(self):
+        return self._processes
+    @processes.setter
+    def processes(self, pc):
+        if not isinstance(pc, (Processes, CompiledProcesses)):
+            raise TypeError(f'processes must be of type `Processes` or '
+                            f'`CompiledProcesses`, not {type(pc)}')            
+        self._processes = pc
+    
+    @property
+    def function(self):
+        return self._function
+    
+    @function.setter
+    def function(self, f):
+        if callable(f):
+            nargs = f.__code__co_argcount
+            if nargs > 2: 
+                raise ValueError(f'function for the {self.__repr__()} must take '
+                                 f'at most 2 positional arguments: an array '
+                                 f'of state variables and a dictionary of parameters, '
+                                 f'not {nargs} positional arguments.')
+            elif nargs == 0:
+                self._function = lambda state_arr, params: f()
+            elif nargs == 1:
+                self._function = lambda state_arr, params: f(state_arr)
+            else:
+                self._function = f
+        elif f is None:
+            self._function = self._collect_kinetics()
+        else:
+            try: f = np.array(f, dtype=float)
+            except TypeError:
+                raise TypeError(f'function must be a callable or an array '
+                                f'of length {len(self.processes)}, if not None, '
+                                f'not {type(f)}')
+            if f.shape == (len(self.processes),):
+                self._function = lambda state_arr, params: f
+            else:
+                raise ValueError(f'function, if provided as an array, '
+                                f'must have equal length as {self.processes}, '
+                                f'not of shape {f.shape}')
+    
+    def _collect_kinetics(self):
+        pcs = self.processes
+        if any([pc.rate_function == None for pc in pcs]): return None
+        rho_arr = np.empty(len(pcs))
+        def f(state_arr, params):
+            rho_arr[:] = [p.rate_function.function(state_arr, 
+                                                   {**p.rate_function.params, **params}) 
+                          for p in pcs]
+            return rho_arr
+        return f
+    
+    @property
+    def params(self):
+        return self._params
+    
+    def set_params(self, **params):
+        self._params.update(params)
+    
+    def __call__(self, state_arr):
+        return self.function(state_arr, self.params)
+    
+    def __repr__(self):
+        return f'<MultiKinetics({[p.ID for p in self.processes]})>'
+    
 #%%
 @chemicals_user        
-class Process():
+class Process:
     """
     Create a :class:`Process` object which defines a stoichiometric process and its kinetics.
     A :class:`Process` object is capable of reacting the component flow rates of a :class:`WasteStream`
@@ -163,8 +325,9 @@ class Process():
     --------
     `numpy.isclose <https://numpy.org/doc/stable/reference/generated/numpy.isclose.html>`_ for ``rtol`` and ``atol`` settings.
     """
-    def __init__(self, ID, reaction, ref_component, rate_equation=None, components=None, 
-                 conserved_for=('COD', 'N', 'P', 'charge'), parameters=None):
+    def __init__(self, ID, reaction, ref_component, rate_equation=None, 
+                 components=None, conserved_for=('COD', 'N', 'P', 'charge'),
+                 parameters=()):
         self._ID = ID
         self._reaction = reaction
         self.components = self._load_chemicals(components)
@@ -172,8 +335,11 @@ class Process():
         self.conserved_for = conserved_for
         self._parameters = {p: symbols(p) for p in parameters}
         self._stoichiometry = get_stoichiometric_coeff(
-            reaction, self._ref_component, self._components, self._conserved_for, self._parameters)
+            reaction, self._ref_component, self._components, self._conserved_for, 
+            self.parameters)
         self._parse_rate_eq(rate_equation)
+        self._dyn_params={}
+        self.rate_function=None
                 
     def get_conversion_factors(self, as_matrix=False):        
         '''
@@ -183,9 +349,8 @@ class Process():
         conserved_for = self._conserved_for
         if conserved_for:
             cmps = self._components
-            arr = getattr(cmps, 'i_'+conserved_for[0])
-            for c in conserved_for[1:]:
-                arr = np.vstack((arr, getattr(cmps, 'i_'+c)))
+            getfield = getattr
+            arr = np.array([getfield(cmps, f'i_{x}') for x in conserved_for])
             if as_matrix: return Matrix(arr.tolist())
             return arr
         else: return None
@@ -349,6 +514,17 @@ class Process():
         '''
         self._parameters.update(parameters)
     
+    def dynamic_parameter(self, function=None, symbol=None, params={}):
+        if symbol:
+            if symbol not in self.parameters.keys():
+                warn(f'new symbolic parameter {symbol} added.')
+                self.append_parameters(symbol)
+            if not function:
+                return lambda f: self.dynamic_parameter(f, symbol, params=params)
+            dp = DynamicParameter(symbol, function, params)
+            self._dyn_params[symbol] = dp
+            return dp
+    
     @property
     def stoichiometry(self):
         '''[dict] Non-zero stoichiometric coefficients.'''
@@ -368,12 +544,52 @@ class Process():
         which the reference component is reacted or produced in the process. Kinetic
         parameters in the equation are replaced with their assigned values.
         '''
-        return self._rate_equation.subs(self._parameters)
+        if self._rate_equation:
+            return self._rate_equation.subs(self._parameters)
     
+    def kinetics(self, function=None, parameters={}):
+        if not function:
+            return lambda f: self.kinetics(f, parameters=parameters)
+        else:
+            self._rate_function = Kinetics(self, function, parameters)
+    
+    @property
+    def rate_function(self):
+        if self._rate_function is None and self._rate_equation:
+            self._rate_eq2func()
+        return self._rate_function
+    @rate_function.setter
+    def rate_function(self, k):
+        if k is None:
+            self._rate_function = None
+        elif isinstance(k, Kinetics):
+            if k.process is self:
+                self._rate_function = k
+            else:
+                warn(f'attempted to use {k.__repr__()} for Process: {self.ID}. '
+                     f'A copy was created instead.')
+                self._rate_function = k.copy(self)
+        elif callable(k):
+            self.kinetics(function=k)
+        else:
+            raise TypeError(f'rate_function must be a `Kinetics` object, or '
+                            f'a function that takes exactly 1 input argument '
+                            f'(i.e., an array of state variables), or None, '
+                            f'not {type(k)}')
+        
     def _parse_rate_eq(self, eq):
-        cmpconc_symbols = {c: symbols(c) for c in self._components.IDs}
-        params = self._parameters
-        self._rate_equation = parse_expr(str(eq), {**cmpconc_symbols, **params})
+        if eq is not None:
+            state_symbols = {c: symbols(c) for c in self._components.IDs}
+            params = self._parameters
+            self._rate_equation = parse_expr(str(eq), {**state_symbols, **params})
+        else: self._rate_equation = None
+    
+    def _rate_eq2func(self):
+        var = list(symbols(self._components.IDs))
+        lamb = lambdify(var, self.rate_equation, 'numpy')
+        def f(state_arr, params={}):
+            return lamb(*state_arr)
+        self.kinetics(function=f)
     
     def _normalize_stoichiometry(self, new_ref):
         isa = isinstance
@@ -391,25 +607,31 @@ class Process():
     
     def show(self):
         info = f"Process: {self.ID}"
-        header = '\n[stoichiometry] '
+        header = '\n[stoichiometry]'.ljust(22)
         section = []
         for cmp, stoichio in tuple(zip(self._components.IDs, self._stoichiometry)):
             if stoichio != 0:
                 if isinstance(stoichio, (int, float)): line = f"{cmp}: {stoichio:.3g}"
                 else: line = f"{cmp}: {stoichio.evalf(n=3)}"
                 section.append(line)
-        info += header + ("\n" + 16*" ").join(section)
-        info += '\n[reference]     ' + f"{self.ref_component}"
-        line = '\n[rate equation] ' + f"{self._rate_equation}"
-        if len(line) > 47: line = line[:47] + '...'
+        info += header + ("\n" + 21*" ").join(section)
+        info += '\n[reference]'.ljust(22)+ f"{self.ref_component}"
+        line = '\n[rate equation]'.ljust(22) + f"{self._rate_equation}"
+        if len(line) > 50: line = line[:50] + '...'
         info += line
-        header = '\n[parameters]    '
+        header = '\n[parameters]'.ljust(22)
         section = []
         for k,v in self.parameters.items():
             if isinstance(v, (int, float)): line = f"{k}: {v:.3g}"
             else: line = f"{k}: {v}"
             section.append(line)
-        info += header + ("\n" + 16*" ").join(section)
+        info += header + ("\n" + 21*" ").join(section)
+        header = '\n[dynamic parameters]'.ljust(22)
+        section = []
+        for v in self._dyn_params.values():
+            line = v.__repr__()
+            section.append(line)
+        info += header + ("\n" + 21*" ").join(section)
         print(info)
 
     _ipython_display_ = show
@@ -429,17 +651,25 @@ class Process():
         new_ID = new_ID or self.ID+'_copy'
         new.__init__(
             new_ID, reaction=self.reaction, ref_component=self.ref_component,
-            rate_equation=self._rate_equation, components=self._components,
-            conserved_for=self.conserved_for, parameters=self.parameters.keys()
+            # rate_equation=self._rate_equation, rate_function=self._rate_function,
+            rate_equation=self._rate_equation,
+            components=self._components, conserved_for=self.conserved_for, 
+            # parameters=self.parameters.keys(), dynamic_params=self._dyn_params.keys()
+            parameters=self.parameters.keys()
             )
         new._parameters.update(self.parameters)
+        new._dyn_params.update(self._dyn_params)
+        rho = self._rate_function
+        new.rate_function(rho.function, rho.params)
         return new
     __copy__ = copy
 
 
 #%%
 setattr = object.__setattr__
-class Processes():
+
+@chemicals_user
+class Processes:
     """
     Create a :class:`Processes` object that contains :class:`Process` objects as attributes.
 
@@ -624,7 +854,7 @@ class Processes():
     
     @classmethod
     def load_from_file(cls, path='', components=None, 
-                       conserved_for=('COD', 'N', 'P', 'charge'), parameters=None,
+                       conserved_for=('COD', 'N', 'P', 'charge'), parameters=(),
                        use_default_data=False, store_data=False, compile=True):
         """
         Create :class:`CompiledProcesses` object from a table of process IDs, stoichiometric 
@@ -672,25 +902,30 @@ class Processes():
         else:
             data = load_data(path=path, index_col=None, na_values=0)
         
-        cmp_IDs = data.columns[1:-1]
+        cmps = _load_components(components)
+        
+        cmp_IDs = [i for i in data.columns if i in cmps.IDs]        
         data.dropna(how='all', subset=cmp_IDs, inplace=True)
         new = cls(())
         for i, proc in data.iterrows():
             ID = proc[0]
-            stoichio = proc[1:-1]
-            if pd.isna(proc[-1]): rate_eq = None
-            else: rate_eq = proc[-1]
+            stoichio = proc[cmp_IDs]
+            if data.columns[-1] in cmp_IDs: rate_eq = None
+            else:
+                if pd.isna(proc[-1]): rate_eq = None
+                else: rate_eq = proc[-1]
             stoichio = stoichio[-pd.isna(stoichio)].to_dict()
+            ref = None
             for k,v in stoichio.items():
-                try: stoichio[k] = float(v)
+                try: 
+                    v = stoichio[k] = float(v)
+                    if ref is None and v in (-1, 1): ref = k
                 except: continue
-            ref = [k for k,v in stoichio.items() if v in (-1, 1)]
-            if len(ref) == 0: ref = list(stoichio.keys())[0]                
-            else: ref = ref[0]            
+            if ref is None: ref = stoichio.keys()[0]
             process = Process(ID, stoichio, 
                               ref_component=ref, 
                               rate_equation=rate_eq,
-                              components=components,
+                              components=cmps,
                               conserved_for=conserved_for,
                               parameters=parameters)
             new.append(process)
@@ -703,7 +938,7 @@ class Processes():
         
             
 #%%
-@read_only(methods=('append', 'extend', '__setitem__'))
+@read_only(methods=('append', 'extend'))
 class CompiledProcesses(Processes):
     """
     Create a :class:`CompiledProcesses` object that contains :class:`Process` objects as attributes.
@@ -742,13 +977,13 @@ class CompiledProcesses(Processes):
         isa = isinstance
         tuple_ = tuple
         # processes = tuple_(dct.values())
-        missing_rate_proc = []
-        for process in processes:
-            if process.rate_equation == None: 
-                missing_rate_proc.append(process.ID)
-        if not skip_checks and len(missing_rate_proc) > 0: 
-            raise RuntimeError(f"The following processes are missing rate equations:"
-                               f"{missing_rate_proc}")        
+        # missing_rate_proc = []
+        # for process in processes:
+        #     if process.rate_equation is None: 
+        #         missing_rate_proc.append(process.ID)
+        # if not skip_checks and len(missing_rate_proc) > 0: 
+        #     raise RuntimeError(f"The following processes are missing rate equations:"
+        #                        f"{missing_rate_proc}")        
         IDs = tuple_([i.ID for i in processes])
         size = len(IDs)
         index = tuple_(range(size))
@@ -760,25 +995,63 @@ class CompiledProcesses(Processes):
         dct['_components'] = _load_components(cmps)
         M_stch = []
         params = {}
+        dyn_params = {}
         rate_eqs = tuple_([i._rate_equation for i in processes])
         all_numeric = True
         for i in processes:
             stch = [0]*cmps.size
             params.update(i._parameters)
+            dyn_params.update(i._dyn_params)
             if all_numeric and isa(i._stoichiometry, (list, tuple)): all_numeric = False
             for cmp, coeff in i.stoichiometry.items():
                 stch[cmps._index[cmp]] = coeff
             M_stch.append(stch)
         dct['_parameters'] = params
+        dct['_dyn_params'] = dyn_params
+        for i in processes:
+            i._parameters = dct['_parameters']
+            i._dyn_params = dct['_dyn_params']
         if all_numeric: M_stch = np.asarray(M_stch)
         dct['_stoichiometry'] = M_stch
+        dct['_stoichio_lambdified'] = None
         dct['_rate_equations'] = rate_eqs
-        dct['_production_rates'] = list(Matrix(M_stch).T * Matrix(rate_eqs))
+        if all(rate_eqs):
+            dct['_production_rates'] = list(Matrix(M_stch).T * Matrix(rate_eqs))
+        else:
+            dct['_production_rates'] = None
+        dct['_rate_function'] = None
         
     @property
     def parameters(self):
         '''[dict] All symbolic stoichiometric and kinetic parameters.'''
         return self._parameters
+
+    def append_parameters(self, *new_pars):
+        '''append new symbolic parameters'''
+        for p in new_pars:
+            self._parameters[p] = symbols(p)
+            
+    def set_parameters(self, **parameters):
+        '''Set values to stoichiometric and/or kinetic parameters.'''
+        self._parameters.update(parameters)
+        if self._stoichio_lambdified is not None: 
+            self.__dict__['_stoichio_lambdified'] = None
+
+    def dynamic_parameter(self, function=None, symbol=None, params={}):
+        if symbol:
+            if symbol not in self.parameters.keys():
+                warn(f'new symbolic parameter {symbol} added.')
+                self.append_parameters(symbol)
+            if not function:
+                return lambda f: self.dynamic_parameter(f, symbol, params=params)
+            dp = DynamicParameter(symbol, function, params)
+            self.__dict__['_dyn_params'][symbol] = dp
+            return dp
+    
+    def params_eval(self, state_arr):
+        dct = self._parameters
+        for k, p in self._dyn_params:
+            dct[k] = p(state_arr)
     
     @property
     def stoichiometry(self):
@@ -790,20 +1063,84 @@ class CompiledProcesses(Processes):
             stoichio_vals = []
             for row in stoichio:
                 stoichio_vals.append([v.subs(v_params) if not isa(v, (float, int)) else v for v in row])
+            try: stoichio_vals = np.asarray(stoichio_vals, dtype=float)
+            except TypeError: pass                    
             return pd.DataFrame(stoichio_vals, index=self.IDs, columns=self._components.IDs)
         else: return pd.DataFrame(stoichio, index=self.IDs, columns=self._components.IDs)
     
+    def _lambdify_stoichio(self):
+        dct = self._dyn_params
+        dct_vals = self._parameters
+        if dct:
+            sbs = [i.symbol for i in dct.values()]
+            lamb = lambdify(sbs, self.stoichiometry.to_numpy(), 'numpy')
+            arr = np.empty((self.size, len(self._components)))
+            def f():
+                v = [v for k,v in dct_vals.items() if k in dct.keys()]
+                arr[:,:] = lamb(*v)
+                return arr
+            self.__dict__['_stoichio_lambdified'] = f
+        else:
+            try: 
+                stoichio_arr = self.stoichiometry.to_numpy(dtype=float)
+            except TypeError:
+                isa = isinstance
+                undefined = [k for k, v in dct_vals if not isa(v, (float, int))]
+                raise TypeError(f'Undefined static parameters: {undefined}')
+            self.__dict__['_stoichio_lambdified'] = lambda : stoichio_arr
+    
+    def stoichio_eval(self):
+        if self._stoichio_lambdified is None: self._lambdify_stoichio()
+        return self._stoichio_lambdified()
+
     @property
     def rate_equations(self):
         '''[pandas.DataFrame] Rate equations.'''
-        rate_eqs = [eq.subs(self._parameters) for eq in self._rate_equations]
-        return pd.DataFrame(rate_eqs, index=self.IDs, columns=('rate_equation',))
+        if all(self._rate_equations):
+            rate_eqs = [eq.subs(self._parameters) for eq in self._rate_equations]
+            return pd.DataFrame(rate_eqs, index=self.IDs, columns=('rate_equation',))
     
+    @property
+    def rate_function(self):
+        if self._rate_function is None:
+            self._collect_rate_func()
+        return self._rate_function
+    
+    @rate_function.setter
+    def rate_function(self, k):
+        dct = self.__dict__
+        if k is None:
+            dct['_rate_function'] = None
+        elif isinstance(k, MultiKinetics):
+            dct['_rate_function'] = k
+        elif callable(k):
+            dct['_rate_function'] = MultiKinetics(self, function=k)
+        else:
+            raise TypeError(f'rate_function must be a `MultiKinetics` object, or '
+                            f'a function that takes exactly 1 input argument '
+                            f'(i.e., an array of state variables), or None, '
+                            f'not {type(k)}')
+    
+    def _collect_rate_func(self):
+        self.__dict__['_rate_function'] = MultiKinetics(self)
+        
+    def rate_eval(self, state_arr):
+        return self.rate_function(state_arr)
+
     @property
     def production_rates(self):
         '''[pandas.DataFrame] The rates of production of the components.'''
-        rates = [r.subs(self._parameters) for r in self._production_rates]
-        return pd.DataFrame(rates, index=self._components.IDs, columns=('rate_of_production',))
+        if self._production_rates is None:
+            return None
+        else:
+            rates = [r.subs(self._parameters) for r in self._production_rates]
+            return pd.DataFrame(rates, index=self._components.IDs, columns=('rate_of_production',))
+    
+    def production_rates_eval(self, state_arr):
+        self.params_eval(state_arr)
+        M_stoichio = self.stoichio_eval()
+        rho_arr = self.rate_eval(state_arr)
+        return np.dot(M_stoichio.T, rho_arr)
     
     def subgroup(self, IDs):
         '''Create a new subgroup of :class:`CompiledProcesses` objects.'''
@@ -844,16 +1181,7 @@ class CompiledProcesses(Processes):
         '''Return a copy.'''
         copy = Processes(self.tuple)
         copy.compile()
-        return copy    
-    
-    def set_parameters(self, **parameters):
-        '''Set values to stoichiometric and/or kinetic parameters.'''
-        self._parameters.update(parameters)
-        for pc in self:
-            intersect = pc._parameters.keys() & parameters.keys()
-            if intersect:
-                params = {k:v for k, v in parameters.items() if k in intersect}
-                pc._parameters.update(params)
+        return copy
     
     def __repr__(self):
         return f"{type(self).__name__}([{', '.join(self.IDs)}])"

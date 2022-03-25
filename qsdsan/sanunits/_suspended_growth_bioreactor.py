@@ -254,7 +254,7 @@ class CSTR(SanUnit):
         else:
             processes = _add_aeration_to_growth_model(self._aeration, self._model)
             r_eqs = list(processes.production_rates.rate_of_production)
-            r = lambdify(C, r_eqs)
+            r = lambdify(C, r_eqs, 'numpy')
 
         _dstate = self._dstate
         _update_dstate = self._update_dstate      
