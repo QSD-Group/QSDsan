@@ -14,7 +14,7 @@ for license details.
 '''
 import qsdsan as qs
 import numpy as np
-from scipy.optimize import fsolve
+# from scipy.optimize import fsolve
 from math import exp
 # from flexsolve import 
 
@@ -27,7 +27,7 @@ from math import exp
 cmps_all = qs.Components.load_default(default_compile=False)
 
 # varies
-X_c = cmps_all.X_AUT.copy('X_c')
+X_c = cmps_all.X_OHO.copy('X_c')
 X_c.description = 'Composite'
 X_c.i_N = 0.002 * 14
 
@@ -50,8 +50,8 @@ X_li = qs.Component.from_chemical('X_li', chemical='tripalmitin',
                                   organic=True)
 
 # both varies
-X_I = cmps_all.X_U_Inf('X_I')
-S_I = cmps_all.S_U_Inf('S_I')
+X_I = cmps_all.X_U_Inf.copy('X_I')
+S_I = cmps_all.S_U_Inf.copy('S_I')
 X_I.i_N = S_I.i_N = 0.002 * 14
 
 S_su = qs.Component.from_chemical('S_su', chemical='glucose',
@@ -136,7 +136,7 @@ cmps_adm1 = qs.Components([S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2,
                            S_ch4, S_IC, S_IN, S_I, X_c, X_ch, X_pr, X_li,
                            X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I, 
                            S_cat, S_an])
-cmps_adm1.default_compile()
+# cmps_adm1.default_compile()
 
 
 pairs = ('H+', 'OH-', 'NH4+', 'NH3', 'CO2', 'HCO3-', 'HAc', 'Ac-', 
