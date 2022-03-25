@@ -23,7 +23,8 @@ from sympy.parsing.sympy_parser import parse_expr
 import numpy as np
 import pandas as pd
     
-__all__ = ('Process', 'Processes', 'CompiledProcesses', )
+__all__ = ('DynamicParameter', 'Kinetics', 'MultiKinetics',
+           'Process', 'Processes', 'CompiledProcesses', )
 
 _load_components = settings.get_default_chemicals
 
@@ -34,7 +35,28 @@ class UndefinedProcess(AttributeError):
 
 #%%
 class DynamicParameter:
+    """
+    Create a :class:`DynamicParameter` object which defines a parameter
+    in a :class:`Process`'s stoichiometry that dynamically depends on the state
+    variables. 
     
+    Parameters
+    ----------
+    symbol : str
+        The symbol of the dynamic parameter in the stoichiometric coefficient.
+    function : Callable or float or int, optional
+        The function that returns the value of the dynamic parameter when given
+        the array of state variables and additional parameters as positional
+        arguments. The default is None.
+    params : dict, optional
+        Additional parameters input to the function for the calculation of the 
+        dynamic parameters. The default is {}.
+
+    Examples
+    --------
+    None.
+
+    """
     def __init__(self, symbol, function=None, params={}):
         self.symbol = symbol
         self.function = function
@@ -42,6 +64,7 @@ class DynamicParameter:
     
     @property
     def symbol(self):
+        '''[sympy.Symbol] Symbol of the dynamic parameter in stoichiometric coefficents.'''
         return self._symbol
     @symbol.setter
     def symbol(self, s):
@@ -49,6 +72,7 @@ class DynamicParameter:
     
     @property
     def function(self):
+        '''[Callable] Function that evaluates the dynamic parameter.'''
         return self._function
     
     @function.setter
@@ -76,12 +100,22 @@ class DynamicParameter:
         
     @property
     def params(self):
+        '''[dict] Additional parameters input to the function.'''
         return self._params
     
     def set_params(self, **params):
+        '''
+        Set values for the parameters needed for the evaluation of the dynamic parameter.
+
+        Parameters
+        ----------
+        **params : float or int
+            Parameters and values.
+        '''
         self._params.update(params)
     
     def __call__(self, state_arr):
+        '''Return the evaluated dynamic parameter when given an array of state variables.'''
         return self.function(state_arr, self.params)
     
     def __repr__(self):
@@ -89,6 +123,27 @@ class DynamicParameter:
 
 #%%
 class Kinetics(DynamicParameter):
+    """
+    Create a :class:`Kinetics` object which defines a :class:`Process` object's 
+    kinetic rate. It is a subclass of :class:`DynamicParameter`.
+
+    Parameters
+    ----------
+    process : :class:`Process`
+        The process that features this kinectis.
+    function : Callable or float or int, optional
+        The function that evaluates the kinetic rate of reaction when given
+        the array of state variables and additional parameters as positional
+        arguments. The default is None.
+    params : dict, optional
+        Additional parameters input to the function for the calculation of the 
+        kinetic rate of reaction. The default is {}.
+
+    Examples
+    --------
+    None.
+
+    """
     
     def __init__(self, process, function=None, params={}):
         super().__init__(symbol=f'rho_{process.ID}', function=function,
@@ -97,6 +152,7 @@ class Kinetics(DynamicParameter):
     
     @property
     def process(self):
+        '''[:class:`Process`] The process whose reaction rate is defined by this Kinetics object.'''
         return self._process
     @process.setter
     def process(self, pc):
@@ -119,7 +175,27 @@ class Kinetics(DynamicParameter):
         return f'<Kinetics: {self.process.ID}>'
 
 class MultiKinetics:
-    
+    """
+    Create a :class:`MultiKinetics` object which defines a :class:`Processes` object's 
+    kinetic rates.
+
+    Parameters
+    ----------
+    processes : :class:`Processes`
+        The process that features this kinectis.
+    function : Callable or Iterable[float or int], optional
+        The function that returns the array of kinetic rates of the processes when 
+        given the array of state variables and additional parameters as positional 
+        arguments. The default is None.
+    params : dict, optional
+        Additional parameters input to the function for the calculation of the 
+        kinetic rates. The default is {}.
+
+    Examples
+    --------
+    None.
+
+    """
     def __init__(self, processes, function=None, params={}):
         self.processes = processes
         self.function = function
@@ -127,6 +203,8 @@ class MultiKinetics:
     
     @property
     def processes(self):
+        '''[:class:`Processes`] The process whose reaction rate is defined 
+        by this Kinetics object.'''
         return self._processes
     @processes.setter
     def processes(self, pc):
@@ -137,6 +215,7 @@ class MultiKinetics:
     
     @property
     def function(self):
+        '''[Callable] Function that evaluates the kinetic rates.'''
         return self._function
     
     @function.setter
@@ -182,12 +261,23 @@ class MultiKinetics:
     
     @property
     def params(self):
+        '''[dict] Additional parameters input to the function.'''
         return self._params
     
     def set_params(self, **params):
+        '''
+        Set values for the parameters needed for the evaluation of the kinetic rates.
+
+        Parameters
+        ----------
+        **params : float or int
+            Parameters and values.
+        '''
         self._params.update(params)
     
     def __call__(self, state_arr):
+        '''Return the evaluated array of kinetic rates when given 
+        an array of state variables.'''
         return self.function(state_arr, self.params)
     
     def __repr__(self):
@@ -223,13 +313,13 @@ class Process:
         Materials subject to conservation rules, must be an 'i\_' attribute of
         the components. The default is ("COD", "N", "P", "charge").
     parameters : Iterable[str], optional
-        Symbolic parameters in stoichiometry coefficients and/or rate equation.
-        The default is None.
+        Symbolic parameters in stoichiometry coefficients (both constant and dynamic) 
+        and/or rate equation. The default is None.
 
     Examples
     --------
-    To create a :class:`Process` object, basic information including stoichiometry, kinetic rate
-    equation, and reference component must be specified. Unknown stoichiometric coefficients
+    To create a :class:`Process` object, basic information including stoichiometry, 
+    and reference component must be specified. Unknown stoichiometric coefficients
     can be solved automatically based on conservation of materials.
     
     >>> import qsdsan as qs
@@ -343,7 +433,7 @@ class Process:
                 
     def get_conversion_factors(self, as_matrix=False):        
         '''
-        return conversion factors (i.e., the 'i\_' attributes of the components) 
+        Return conversion factors (i.e., the 'i\_' attributes of the components) 
         as a numpy.ndarray or a SymPy Matrix.
         '''
         conserved_for = self._conserved_for
@@ -411,12 +501,14 @@ class Process:
                                "stoichiometric coefficients or coefficients with defined parameters.")
     
     def reverse(self):
-        '''reverse the process as to flip the signs of stoichiometric coefficients of all components.'''
+        '''Reverse the process as to flip the signs of stoichiometric coefficients of all components.'''
         if isinstance(self._stoichiometry, np.ndarray):
             self._stoichiometry = -self._stoichiometry
         else:
             self._stoichiometry = [-v for v in self._stoichiometry]
-        self._rate_equation = -self._rate_equation
+        if self._rate_equation: 
+            self._rate_equation = -self._rate_equation
+        self._rate_function = None
         
     @property
     def ID(self):
@@ -495,11 +587,12 @@ class Process:
     
     @property
     def parameters(self):
-        '''[dict] Symbolic parameters in stoichiometric coefficients and/or rate equation.'''
+        '''[dict] Symbolic parameters in stoichiometric coefficients (both 
+        constant and dynamic) and/or rate equation.'''
         return self._parameters
     
     def append_parameters(self, *new_pars):
-        '''append new symbolic parameters'''
+        '''Append new symbolic parameters'''
         for p in new_pars:
             self._parameters[p] = symbols(p)
     
@@ -509,12 +602,14 @@ class Process:
 
         Parameters
         ----------
-        **parameters : float, int, or str
+        **parameters : float or int
             Parameters and values.
         '''
         self._parameters.update(parameters)
     
     def dynamic_parameter(self, function=None, symbol=None, params={}):
+        '''Add a function for the evaluation of a dynamic parameter in the 
+        stoichiometry of the process. Creates a :class:`DynamicParameter` object.'''
         if symbol:
             if symbol not in self.parameters.keys():
                 warn(f'new symbolic parameter {symbol} added.')
@@ -548,6 +643,8 @@ class Process:
             return self._rate_equation.subs(self._parameters)
     
     def kinetics(self, function=None, parameters={}):
+        '''Add a function for the evaluation of the kinetic rate of the process. 
+        Creates a :class:`Kinetics` object.'''
         if not function:
             return lambda f: self.kinetics(f, parameters=parameters)
         else:
@@ -555,6 +652,7 @@ class Process:
     
     @property
     def rate_function(self):
+        '''[:class:`Kinetics`] The function to evaluate the kinetic rate of the process.'''
         if self._rate_function is None and self._rate_equation:
             self._rate_eq2func()
         return self._rate_function
@@ -1027,7 +1125,7 @@ class CompiledProcesses(Processes):
         return self._parameters
 
     def append_parameters(self, *new_pars):
-        '''append new symbolic parameters'''
+        '''Append new symbolic parameters'''
         for p in new_pars:
             self._parameters[p] = symbols(p)
             
@@ -1038,6 +1136,8 @@ class CompiledProcesses(Processes):
             self.__dict__['_stoichio_lambdified'] = None
 
     def dynamic_parameter(self, function=None, symbol=None, params={}):
+        '''Add a function for the evaluation of a dynamic parameter in the 
+        stoichiometry of the process. Creates a :class:`DynamicParameter` object.'''
         if symbol:
             if symbol not in self.parameters.keys():
                 warn(f'new symbolic parameter {symbol} added.')
@@ -1049,6 +1149,7 @@ class CompiledProcesses(Processes):
             return dp
     
     def params_eval(self, state_arr):
+        '''Evaluate the dynamic parameters in the stoichiometry given an array of state variables.'''
         dct = self._parameters
         for k, p in self._dyn_params:
             dct[k] = p(state_arr)
@@ -1090,6 +1191,7 @@ class CompiledProcesses(Processes):
             self.__dict__['_stoichio_lambdified'] = lambda : stoichio_arr
     
     def stoichio_eval(self):
+        '''Return the stoichiometric coefficients.'''
         if self._stoichio_lambdified is None: self._lambdify_stoichio()
         return self._stoichio_lambdified()
 
@@ -1102,6 +1204,7 @@ class CompiledProcesses(Processes):
     
     @property
     def rate_function(self):
+        '''[:class:`MultiKinetics`] The function to evaluate the kinetic rates of the processes.'''
         if self._rate_function is None:
             self._collect_rate_func()
         return self._rate_function
@@ -1125,6 +1228,7 @@ class CompiledProcesses(Processes):
         self.__dict__['_rate_function'] = MultiKinetics(self)
         
     def rate_eval(self, state_arr):
+        '''Return the kinetic rates given an array of state variables.'''
         return self.rate_function(state_arr)
 
     @property
@@ -1137,6 +1241,7 @@ class CompiledProcesses(Processes):
             return pd.DataFrame(rates, index=self._components.IDs, columns=('rate_of_production',))
     
     def production_rates_eval(self, state_arr):
+        '''Return the rates of production or consumption of the components.'''
         self.params_eval(state_arr)
         M_stoichio = self.stoichio_eval()
         rho_arr = self.rate_eval(state_arr)
