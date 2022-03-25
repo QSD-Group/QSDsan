@@ -18,11 +18,11 @@ from scipy.optimize import fsolve
 from math import exp
 # from flexsolve import 
 
-__all__ = ('load_adm1_cmps', 'ADM1')
+# __all__ = ('load_adm1_cmps', 'ADM1')
 
-_path = ospath.join(data_path, 'process_data/_adm1.tsv')
-_path_cmps = ospath.join(data_path, '_adm1_cmps.pckl')
-_load_components = settings.get_default_chemicals
+# _path = os.path.join(data_path, 'process_data/_adm1.tsv')
+# _path_cmps = os.path.join(data_path, '_adm1_cmps.pckl')
+# _load_components = settings.get_default_chemicals
 
 cmps_all = qs.Components.load_default(default_compile=False)
 
