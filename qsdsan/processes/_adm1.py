@@ -16,7 +16,7 @@ import qsdsan as qs
 import numpy as np
 # from scipy.optimize import fsolve
 from math import exp
-# from flexsolve import 
+# from flexsolve import
 
 # __all__ = ('load_adm1_cmps', 'ADM1')
 
@@ -31,7 +31,8 @@ X_c = cmps_all.X_OHO.copy('X_c')
 X_c.description = 'Composite'
 X_c.i_N = 0.002 * 14
 
-X_ch = qs.Component.from_chemical('X_ch', chemical='glycogen',
+
+X_ch = qs.Component.from_chemical('X_ch', chemical='glycogen', Tc=1011.4, # glucan
                                   description='Carbohydrates',
                                   measured_as='COD',
                                   particle_size='Particulate',
@@ -132,14 +133,14 @@ for bio in (X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2): bio.formula = 'C5H7O2N'
 S_cat = cmps_all.S_CAT.copy('S_cat')
 S_an = cmps_all.S_AN.copy('S_an')
 
-cmps_adm1 = qs.Components([S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2, 
+cmps_adm1 = qs.Components([S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2,
                            S_ch4, S_IC, S_IN, S_I, X_c, X_ch, X_pr, X_li,
-                           X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I, 
+                           X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I,
                            S_cat, S_an])
 # cmps_adm1.default_compile()
 
 
-pairs = ('H+', 'OH-', 'NH4+', 'NH3', 'CO2', 'HCO3-', 'HAc', 'Ac-', 
+pairs = ('H+', 'OH-', 'NH4+', 'NH3', 'CO2', 'HCO3-', 'HAc', 'Ac-',
          'HPr', 'Pr-', 'HBu', 'Bu-', 'HVa', 'Va-')
 
 def acid_base_rxn(mols, state_arr, pKas):
@@ -189,26 +190,26 @@ def jac(mols, state_arr, pKas):
 def low_pH_inhibit(pH, ul, ll):
     if pH >= ul: return 1
     else: return exp(-3 * ((pH-ul)/(ul-ll))**2)
-    
+
 def pH_inhibit(pH, ul, ll):
     return (1+2*10**(0.5*(ll-ul)))/(1+10**(pH-ul)+10**(ll-pH))
 
 class ADM1(qs.Processes):
-    
+
     _stoichio_params = ('f_ch_xc', 'f_pr_xc', 'f_li_xc', 'f_xI_xc',
                         'f_fa_li', 'f_bu_su', 'f_pro_su', 'f_ac_su',
-                        'f_va_aa', 'f_bu_aa', 'f_pro_aa', 'f_ac_aa', 
+                        'f_va_aa', 'f_bu_aa', 'f_pro_aa', 'f_ac_aa',
                         'f_ac_fa', 'f_pro_va', 'f_ac_va', 'f_ac_bu', 'f_ac_pro',
                         'Y_su', 'Y_aa', 'Y_fa', 'Y_c4', 'Y_pro', 'Y_ac', 'Y_h2')
     _kinetic_params = ('q_dis', 'q_ch_hyd', 'q_pr_hyd', 'q_li_hyd',
                        'k_su', 'k_aa', 'k_fa', 'k_c4', 'k_pro', 'k_ac', 'k_h2',
                        'K_su', 'K_aa', 'K_fa', 'K_c4', 'K_pro', 'K_ac', 'K_h2',
                        'b_su', 'b_aa', 'b_fa', 'b_c4', 'b_pro', 'b_ac', 'b_h2')
-    
+
     def __new__(cls, components=None, path=None, N_xc=2e-3, N_I=2e-3, N_aa=7e-3,
                 f_ch_xc=0.2, f_pr_xc=0.2, f_li_xc=0.25, f_xI_xc=0.25,
-                f_fa_li=0.95, f_bu_su=0.13, f_pro_su=0.27, f_ac_su=0.41, 
-                f_va_aa=0.23, f_bu_aa=0.26, f_pro_aa=0.05, f_ac_aa=0.4, 
+                f_fa_li=0.95, f_bu_su=0.13, f_pro_su=0.27, f_ac_su=0.41,
+                f_va_aa=0.23, f_bu_aa=0.26, f_pro_aa=0.05, f_ac_aa=0.4,
                 f_ac_fa=0.7, f_pro_va=0.54, f_ac_va=0.31, f_ac_bu=0.8, f_ac_pro=0.57,
                 Y_su=0.1, Y_aa=0.08, Y_fa=0.06, Y_c4=0.06, Y_pro=0.04, Y_ac=0.05, Y_h2=0.06,
                 q_dis=0.4, q_ch_hyd=0.25, q_pr_hyd=0.2, q_li_hyd=0.1,

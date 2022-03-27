@@ -667,8 +667,11 @@ class Component(Chemical):
 
         if chemical is None: chemical = ID
 
+        formula = None
         if isinstance(chemical, str):
-            chemical = Chemical(chemical)
+            formula = data.pop('formula', None)
+            chemical = Chemical(chemical, **data)
+        if formula: new._formula = formula
 
         for field in chemical.__slots__:
             value = getattr(chemical, field, None)
@@ -701,8 +704,4 @@ class Component(Chemical):
         new._organic = organic
         new.i_COD = i_COD
         new.i_NOD = i_NOD
-        for i,j in data.items():
-            if i == 'formula':
-                new._formula = j
-            else: setattr(new, i , j)
         return new

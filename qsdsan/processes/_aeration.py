@@ -75,11 +75,12 @@ class DiffusedAeration(Process):
     >>> aer = pc.DiffusedAeration('aer', 'S_O', KLa=240, DOsat=8.0, V=1333)
     >>> aer.show()
     Process: aer
-    [stoichiometry] S_O: 1
-    [reference]     S_O
-    [rate equation] KLa*(DOsat - S_O)
-    [parameters]    KLa: 240
-                    DOsat: 8
+    [stoichiometry]      S_O: 1
+    [reference]          S_O
+    [rate equation]      KLa*(DOsat - S_O)
+    [parameters]         KLa: 240
+                         DOsat: 8
+    [dynamic parameters]
     """
 
 
