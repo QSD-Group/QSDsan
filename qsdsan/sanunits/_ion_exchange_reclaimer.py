@@ -21,7 +21,10 @@ from qsdsan import SanUnit, Construction
 from qsdsan.utils.loading import load_data, data_path
 __all__ = ('IonExchangeReclaimer',)
 
-data_path += 'sanunit_data/_ion_exchange_reclaimer.csv'
+import os
+data_path = os.path.join(data_path, 'sanunit_data/_ion_exchange_reclaimer.csv')
+
+
 
 #To scale the system from 0 - 120 users based on units corresponding to 30 users: 
 ppl = 120
@@ -99,8 +102,6 @@ class IonExchangeReclaimer(SanUnit):
         conc_NH3.phase = 'l'
         KCl.phase = 's'
         
-        
-        #from Lena's info 
         # Zeolite
         zeolite_demand_time = (self.zeolite_weight / (self.zeolite_lifetime*365*24)) * R # kg zeolite / hr
         zeolite_in.imass['Zeolite'] = zeolite_demand_time

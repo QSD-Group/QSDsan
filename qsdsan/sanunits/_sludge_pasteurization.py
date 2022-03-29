@@ -12,14 +12,14 @@ for license details.
 
 
 # %%
-
-import numpy as np
 from qsdsan import SanUnit, Construction
 from qsdsan.utils.loading import load_data, data_path
 
 __all__ = ('SludgePasteurization',)
 
-data_path += 'sanunit_data/_sludge_pasteurization.tsv'
+import os
+data_path = os.path.join(data_path, 'sanunit_data/_sludge_pasteurization.tsv')
+
 
 #To scale the system from 0 - 125 users based on sludge pasteurization units corresponding to 25 users: 
 ppl = 120
@@ -55,9 +55,6 @@ class SludgePasteurization(SanUnit):
     --------
     `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
     '''
-    
-    #higher heating value is returned to 25 degrees after combusted but the lower heat value is not
-    #can't maintain temperature for that long, after combustion 
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', 
                  heat_loss=0.1, target_MC = 0.1, sludge_temp = 10 + 273.15, 
@@ -129,14 +126,11 @@ class SludgePasteurization(SanUnit):
         
     def _cost(self):
         C= self.baseline_purchase_costs
-        C['Dryer'] = 0 #self.sludge_dryer
-        C['Barrel'] = 0 #self.sludge_barrel
+        C['Dryer'] = 0 
+        C['Barrel'] = 0 
         ratio = self.price_ratio
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
-        
-        #self._BM = dict.fromkeys(self.baseline_purchase_costs.keys(), 1)
-        
         
         self.add_OPEX =  self._calc_replacement_cost() + self._calc_labor_cost() # USD/hr (all items are per hour)
         self.power_demand = 0

@@ -11,7 +11,8 @@ from qsdsan.utils.loading import load_data, data_path
 
 __all__ = ('ECR_Reclaimer',)
 
-data_path += 'sanunit_data/_ECR_Reclaimer.csv'
+import os
+data_path = os.path.join(data_path, 'sanunit_data/_ECR_Reclaimer.csv')
 
 #To scale the system from 0 - 120 users based on units corresponding to 30 users: 
 ppl = 120

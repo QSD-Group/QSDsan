@@ -13,7 +13,9 @@ from qsdsan.utils.loading import load_data, data_path
 
 __all__ = ('SystemReclaimer',)
 
-data_path += 'sanunit_data/_system_reclaimer.csv'
+import os
+data_path = os.path.join(data_path,'sanunit_data/_system_reclaimer.csv')
+
 
 #To scale the system from 0 - 120 users based on units corresponding to 30 users: 
 ppl = 120
@@ -71,7 +73,7 @@ class SystemReclaimer(SanUnit):
                                           + self.handle_rod + self.eight_mm_bolt + self.button_headed_nut
                                           + self.twelve_mm_bolt + self.ten_mm_CSK + self.sixteen_mm_bolt 
                                           + self.coupling_brass + self.socket + self.onehalf_tank_nipple + self.onehalf_in_coupling_brass
-                                          + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * R * .05))
+                                          + self.onehalf_in_fitting + self.plate + self.pump + self.three_way_valve + self.lofted_tank) * (R-1) * .05))
         ratio = self.price_ratio
         for equipment, cost in C.items():
             C[equipment] = cost * ratio

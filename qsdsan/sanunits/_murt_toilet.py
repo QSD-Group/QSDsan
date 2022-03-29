@@ -20,15 +20,16 @@ for license details.
 import numpy as np
 from warnings import warn
 from qsdsan import SanUnit, Construction, WasteStream
-# from ._decay import Decay
 from qsdsan.utils.loading import load_data, data_path
-from qsdsan.sanunits._toilet import Toilet
+from qsdsan.sanunits._toilets import Toilet
 from math import ceil 
 
 
 __all__ = ('MURTToilet',)
 
-data_path += 'sanunit_data/_murt_toilet.tsv'
+import os
+data_path = os.path.join(data_path, 'sanunit_data/_murt_toilet.tsv')
+
 
 
 

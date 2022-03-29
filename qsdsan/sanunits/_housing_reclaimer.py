@@ -7,13 +7,14 @@ Created on Thu Oct 28 10:56:00 2021
 """
 
 from qsdsan import SanUnit, Construction
-#from ._decay import Decay
 from qsdsan.utils.loading import load_data, data_path
 
 
 __all__ = ('HousingReclaimer',)
 
-data_path += 'sanunit_data/_housing_reclaimer.csv'
+import os
+data_path = os.path.join(data_path,'sanunit_data/_housing_reclaimer.csv')
+
 
 #To scale the system from 0 - 120 users based on units corresponding to 30 users: 
 ppl = 120
@@ -66,7 +67,7 @@ class HousingReclaimer(SanUnit):
     def _cost(self):
         C = self.baseline_purchase_costs
         C['Housing'] = ((self.frame + self.extrusion + self.angle_frame + self.angle + self.door_sheet + self.plate_valve + self.powder)
-        + ((self.frame + self.extrusion + self.angle_frame + self.angle + self.door_sheet + self.plate_valve + self.powder) * .1 * R)
+        + ((self.frame + self.extrusion + self.angle_frame + self.angle + self.door_sheet + self.plate_valve + self.powder) * .1 * (R-1))
         + (self.portable_toilet * (D)))
         
         ratio = self.price_ratio

@@ -71,7 +71,7 @@ class SolarReclaimer(SanUnit):
         return labor_cost/(365 * 24)  # USD/hr (all items are per hour)
     
     def _calc_replacement_cost(self):
-        solar_replacement_parts _annual_cost = (self.solar_replacement * self.solar_cost)  # USD/yr only accounts for time running
+        solar_replacement_parts_annual_cost = (self.solar_replacement * self.solar_cost)  
         return solar_replacement_parts_annual_cost/ (365 * 24) * self.price_ratio # USD/hr (all items are per hour)
                   
     def _calc_maintenance_labor_cost(self):

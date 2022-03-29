@@ -11,7 +11,8 @@ from ..utils import load_data, data_path
 
 __all__ = ('PrimaryReclaimer',)
 
-data_path += 'sanunit_data/_primary_reclaimer.csv'
+import os
+primary_reclaimer_data_path = os.path.join(data_path, 'sanunit_data/_primary_reclaimer.csv')
 
 #To scale the system from 0 - 125 users based on sludge pasteurization units corresponding to 25 users: 
 ppl = 120
@@ -48,7 +49,7 @@ class PrimaryReclaimer(SanUnit, Decay):
         SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
         self.price_ratio = 1
         
-        data = load_data(path=data_path)
+        data = load_data(path=primary_reclaimer_data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
