@@ -63,7 +63,7 @@ from ._ion_exchange_reclaimer import *
 from ._ecr_reclaimer import *
 from ._housing_reclaimer import *
 from ._system_reclaimer import *
-from ._sludge_pasteurization import*
+from ._sludge_pasteurization_reclaimer import*
 from ._solar_reclaimer import*
 from ._primaryMBR import*
 from ._aerobic_ES_bio import*
@@ -115,7 +115,7 @@ from . import (
         _ecr_reclaimer,
         _housing_reclaimer,
         _system_reclaimer,
-        _sludge_pasteurization,
+        _sludge_pasteurization_reclaimer,
         _solar_reclaimer,
         _primaryMBR,
         _aerobic_ES_bio,
@@ -168,7 +168,7 @@ __all__ = (
         *_ecr_reclaimer.__all__,
         *_housing_reclaimer.__all__,
         *_system_reclaimer.__all__,
-        *_sludge_pasteurization.__all__,
+        *_sludge_pasteurization_reclaimer.__all__,
         *_solar_reclaimer.__all__,
         *_primaryMBR.__all__,
         *_aerobic_ES_bio.__all__,

@@ -1,32 +1,38 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Sun May 16 15:31:50 2021
 
-@author: torimorgan
-"""
+'''
+QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
+
+This module is developed by:
+    Tori Morgan <tvlmorgan@gmail.com>
+    Hannah Lohman <hlohman94@gmail.com>
+
+This module is under the University of Illinois/NCSA Open Source License.
+Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
+for license details.
+'''
+
+
+# %%
+
+import numpy as np
+from warnings import warn
 from qsdsan import SanUnit, Construction
 from ._decay import Decay
-from ..utils import load_data, data_path
+from ..utils import ospath, load_data, data_path, price_ratio
 
 __all__ = ('PrimaryReclaimer',)
 
-import os
-primary_reclaimer_data_path = os.path.join(data_path, 'sanunit_data/_primary_reclaimer.csv')
 
-#To scale the system from 0 - 125 users based on sludge pasteurization units corresponding to 25 users: 
-ppl = 120
+# %%
 
-if (ppl <=25): P = 1/4
-elif (ppl >25 and ppl <=50): P = 2/4
-elif (ppl >50 and ppl <=75): P = 3/4
-elif (ppl >75 and ppl <=100): P = 4/4
-else: P = 5/4
+primary_reclaimer_path = ospath.join(data_path, 'sanunit_data/_primary_reclaimer.csv')
 
-
+@price_ratio(default_price_ratio=1)
 class PrimaryReclaimer(SanUnit, Decay):
     '''
-    Anaerobic digestion of wastes in primary treatment of Reclaimer
+    Anaerobic digestion of waste in septic tank.
 
     Parameters
     ----------
@@ -34,22 +40,29 @@ class PrimaryReclaimer(SanUnit, Decay):
         Waste for treatment.
     outs : WasteStream
         Treated waste, fugitive CH4, and fugitive N2O.
-   
-        
+    if_include_front_end: bool
+        If front end is included in analysis.
+    ppl: int
+        Total number of users for scaling of costs.
+
     References
     ----------
-    .. 2019.06 Technical report for BMGF V3 _ CC 2019.06.13.pdf
+    [1] 2019.06 Technical report for BMGF V3 _ CC 2019.06.13.pdf
+
     See Also
     --------
     :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
     
     '''
     
-    def __init__(self, ID='', ins=None, outs=(), **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, F_BM_default=1)
-        self.price_ratio = 1
-        
-        data = load_data(path=primary_reclaimer_data_path)
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', if_include_front_end=True, ppl=1, **kwargs):
+
+        SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
+
+        self.if_include_front_end = if_include_front_end
+        self.ppl = ppl
+
+        data = load_data(path=primary_reclaimer_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
@@ -58,11 +71,9 @@ class PrimaryReclaimer(SanUnit, Decay):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
     
-    
     _N_ins = 2
     _N_outs = 5
 
-     
     def _run(self):
         waste, MgOH2 = self.ins
         self.ins[1].imass['MagnesiumHydroxide'] = (self.orthoP_post / self.MW_P / self.Mg_dose * self.MW_MgOH2)/24  # kg Mg(OH)2 per hr;
@@ -105,18 +116,30 @@ class PrimaryReclaimer(SanUnit, Decay):
         sludge.imass['H2O'] = sludge.F_mass * 0.5
 
     def _design(self):
-        #find rough value for FRP for tank 
         design = self.design_results
-        design['FRP'] = FRP_quant = self.FRP_per_tank 
+        design['FRP'] = FRP_quant = self.FRP_per_tank  # Fibre-reinforced plastic material
         design['Pump'] = pump_quant = self.pump_lca * 2
-        self.construction = (Construction(item='FRP', quantity = FRP_quant, quantity_unit = 'kg'),
-                             Construction(item='Pump', quantity = pump_quant, quantity_unit = 'each'))
-        self.add_construction(add_cost = False)
+
+        self.construction = (Construction(item='FRP', quantity=FRP_quant, quantity_unit='kg'),
+                             Construction(item='Pump', quantity=pump_quant, quantity_unit='each'))
+
+        self.add_construction(add_cost=False)
  
     def _cost(self):
-        C = self.baseline_purchase_costs
-        C['Tanks'] = ((self.FRP_tank_cost * P) + self.pump)
-        
-        ratio = self.price_ratio
-        for equipment, cost in C.items():
-            C[equipment] = cost * ratio
+
+        # Scaling the septic tank for number of users. Original design assumes 100 users.
+        # Use 0.25 scale for anything under 25 users and then manually calculate the scale for anything above 25.
+        if self.ppl <= 25:
+            ppl_scale = 1/4
+        else:
+            ppl_scale = self.ppl/100
+
+        if self.if_include_front_end:
+            C = self.baseline_purchase_costs
+            C['Tanks'] = self.FRP_tank_cost * ppl_scale
+            C['Pump'] = self.pump
+            ratio = self.price_ratio
+            for equipment, cost in C.items():
+                C[equipment] = cost * ratio
+        else:
+            self.baseline_purchase_costs.clear()
