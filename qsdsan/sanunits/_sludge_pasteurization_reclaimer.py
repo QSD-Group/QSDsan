@@ -159,9 +159,9 @@ class SludgePasteurizationReclaimer(SanUnit):
 
         if self.if_sludge_service:
             # assume 10 septic tanks sharing 1 sludge pasteurization unit
-            design['Steel'] = S_quant = (self.sludge_dryer_weight + self.sludge_barrel_weight) / 10 * user_scale_up
+            design['Steel'] = S_quant = (self.sludge_dryer_weight + self.sludge_barrel_weight) / 10 * self.user_scale_up
         else:
-            design['Steel'] = S_quant = (self.sludge_dryer_weight + self.sludge_barrel_weight) * user_scale_up
+            design['Steel'] = S_quant = (self.sludge_dryer_weight + self.sludge_barrel_weight) * self.user_scale_up
 
         self.construction = Construction(item='Steel', quantity=S_quant, quantity_unit='kg')
         self.add_construction(add_cost=False)
