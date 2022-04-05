@@ -23,17 +23,10 @@ from ..utils import ospath, load_data, data_path, price_ratio
 
 __all__ = ('SludgePasteurizationReclaimer',)
 
+
+# %%
+
 sludge_data_path = ospath.join(data_path, 'sanunit_data/_sludge_pasteurization_reclaimer.tsv')
-
-
-# #To scale the system from 0 - 125 users based on sludge pasteurization units corresponding to 25 users:
-# ppl = 120
-#
-# if (ppl <=25): P = 1/4
-# elif (ppl >25 and ppl <=50): P = 2/4
-# elif (ppl >50 and ppl <=75): P = 3/4
-# elif (ppl >75 and ppl <=100): P = 4/4
-# else: P = 5/4
 
 @price_ratio(default_price_ratio=1)
 class SludgePasteurizationReclaimer(SanUnit):
