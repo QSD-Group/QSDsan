@@ -42,5 +42,7 @@ Brass_weight,,kg,0.3855535,0.289165125,0.481941875,uniform,SI Manuscript with Du
 Steel_weight,,kg,3,2.25,3.75,uniform,SI Manuscript with Duke
 Nylon_weight,,kg,1.21,0.9075,1.5125,uniform,SI Manuscript with Duke
 TSS_removal,,%,0.756501,0.108696,1,triangular,Duke Data
-replacement_costs,,USD,283.981,212.98575,354.97625,triangular,10% of capital costs
-power_demand,,kW,180,162,198,,
+power_demand_1,power demand with 1 ultrafiltration units,W,750,675,825,triangular,Duke Data
+power_demand_2,power demand with 2 ultrafiltration units,W,540,405,675,triangular,Duke Data
+power_demand_3,power demand with 3 ultrafiltration units,W,510,382.5,637.5,triangular,Duke Data
+power_demand_4,power demand with 4 ultrafiltration units,W,480,360,600,triangular,Duke Data

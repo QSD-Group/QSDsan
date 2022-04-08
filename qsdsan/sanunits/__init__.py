@@ -9,6 +9,8 @@ This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
     Joy Zhang <joycheung1994@gmail.com>
     Lewis Rowles <stetsonsc@gmail.com>
+    Tori Morgan <tvlmorgan@gmail.com>
+    Hannah Lohman <hlohman94@gmail.com>
     Lane To <lane20@illinois.edu>
     Smiti Mittal <smitimittal@gmail.com>
 
@@ -58,7 +60,7 @@ from ._treatment_beds import *
 
 from ._murt_toilet import *
 from ._primary_reclaimer import *
-from ._ultrafiltration import *
+from ._ultrafiltration_reclaimer import *
 from ._ion_exchange_reclaimer import *
 from ._ecr_reclaimer import *
 from ._housing_reclaimer import *
@@ -110,7 +112,7 @@ from . import (
 	    _trucking,
         _murt_toilet,
         _primary_reclaimer,
-        _ultrafiltration,
+        _ultrafiltration_reclaimer,
         _ion_exchange_reclaimer,
         _ecr_reclaimer,
         _housing_reclaimer,
@@ -163,7 +165,7 @@ __all__ = (
 	    *_trucking.__all__,
         *_murt_toilet.__all__,
         *_primary_reclaimer.__all__,
-        *_ultrafiltration.__all__,
+        *_ultrafiltration_reclaimer.__all__,
         *_ion_exchange_reclaimer.__all__,
         *_ecr_reclaimer.__all__,
         *_housing_reclaimer.__all__,
