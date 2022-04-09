@@ -215,7 +215,9 @@ class ImpactItem:
         '''Add an indicator with characterization factor values.'''
         source_item = check_source(self, True)
         if isinstance(indicator, str):
-            indicator = ImpactIndicator.get_indicator(indicator)
+            ind = ImpactIndicator.get_indicator(indicator)
+            if ind is None: raise RuntimeError(f'The ImpactIndicator "{indicator}" has not been defined.')
+            indicator = ind
 
         CF_unit2 = CF_unit.replace(' eq', '-eq')
 
