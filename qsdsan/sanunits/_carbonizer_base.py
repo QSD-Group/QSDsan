@@ -114,10 +114,6 @@ class CarbonizerBase(SanUnit):
         # Daily run time for the influent waste
         # One unit is capable of treating 550 kg/d (35% moisture based on 20 hr of run time) or 18 kg dry/hr
         self.daily_run_time = hpd = waste.F_mass*(1-mc) * 24/self.loading_rate # hr/d
-        if hpd > 24:
-            warn(f'The calcualted run time for `CarbonizerBase` is {hpd:.2f} per day, '
-                 'which is unrealistic and set to 24.')
-            hpd = 24
         self.uptime_ratio = hpd / 24 # ratio of uptime (all items are per hour)
 
         # # Energy balance, not really being used
