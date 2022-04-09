@@ -171,8 +171,8 @@ class LCA:
     LCA: sys (lifetime 10 yr)
     ...
     >>> # Retrieve impacts associated with a specific indicator
-    >>> lca.get_total_impacts()[GWP.ID] # doctest: +NUMBER
-    4944207.976508295
+    >>> lca.get_total_impacts()[GWP.ID] # doctest: +ELLIPSIS
+    4944207.9765...
     >>> # Or breakdowns of the different category
     >>> lca.get_impact_table('Construction') # doctest: +SKIP
     >>> # Below is for testing purpose, you do not need it
@@ -187,18 +187,18 @@ class LCA:
 
     You can also allocate the impact based on mass, energy, value, or a ratio you like
 
-    >>> lca.get_allocated_impacts(sys.products, allocate_by='mass')['waste_brine']['FossilEnergyConsumption'] # doctest: +NUMBER
-    28761581.933170985
-    >>> lca.get_allocated_impacts(sys.products, allocate_by='energy')['alcohols']['GlobalWarming'] # doctest: +NUMBER
-    11063009.556015274
+    >>> lca.get_allocated_impacts(sys.products, allocate_by='mass')['waste_brine']['FossilEnergyConsumption'] # doctest: +ELLIPSIS
+    28761581.9...
+    >>> lca.get_allocated_impacts(sys.products, allocate_by='energy')['alcohols']['GlobalWarming'] # doctest: +ELLIPSIS
+    11063009.556...
     >>> alcohols.price = 5
     >>> waste_brine.price = 1
     >>> GWP_alcohols = lca.get_allocated_impacts(sys.products, allocate_by='value')['alcohols']['GlobalWarming']
     >>> GWP_brine = lca.get_allocated_impacts(sys.products, allocate_by='value')['waste_brine']['GlobalWarming']
-    >>> GWP_alcohols + GWP_brine # doctest: +NUMBER
-    5469807.976508294
-    >>> lca.get_total_impacts(exclude=sys.products)['GlobalWarming'] # doctest: +NUMBER
-    5469807.976508295
+    >>> GWP_alcohols + GWP_brine # doctest: +ELLIPSIS
+    5469807.9765...
+    >>> lca.get_total_impacts(exclude=sys.products)['GlobalWarming'] # doctest: +ELLIPSIS
+    5469807.9765...
 
     See Also
     --------
