@@ -371,7 +371,10 @@ class HHXdryer(SanUnit):
         N2O.imass['N2O'] = drying_NH3_to_air * self.NH3_to_N2O # kg N2O /hr
 
         # 44/12/16 are the molecular weights of CO2, C, and CH4, respectively
-        waste_out._COD = (waste_in.COD*waste_in.F_vol - (drying_CO2_to_air/44*12+drying_CH4_to_air/16*12) / self.carbon_COD_ratio) / wasted_out.F_vol
+        waste_out._COD = (
+            waste_in.COD*waste_in.F_vol - 
+            (drying_CO2_to_air/44*12+drying_CH4_to_air/16*12) / self.carbon_COD_ratio
+            ) / waste_out.F_vol
 
         # 17/14 are the molecular weights of NH3/N, respectively
         waste_out.imass['N'] -= drying_NH3_to_air / 17 * 14

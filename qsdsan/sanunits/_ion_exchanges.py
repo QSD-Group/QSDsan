@@ -127,8 +127,6 @@ class IonExchangeNH3(SanUnit):
         C['Tubing'] = self.cost_tubing * self.tubing_length*N_column
         C['Tank'] = N_column/3 * self.tank_cost # one tank has three columns
 
-        #!!! Still need this?
-        # costs associated with full time operators can be added in the TEA as staff
 
     @property
     def N_column(self):

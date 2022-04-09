@@ -116,7 +116,8 @@ class CarbonizerBase(SanUnit):
         self.daily_run_time = hpd = waste.F_mass*(1-mc) * 24/self.loading_rate # hr/d
         if hpd > 24:
             warn(f'The calcualted run time for `CarbonizerBase` is {hpd:.2f} per day, '
-                 'which is unrealistic.')
+                 'which is unrealistic and set to 24.')
+            hpd = 24
         self.uptime_ratio = hpd / 24 # ratio of uptime (all items are per hour)
 
         # # Energy balance, not really being used
