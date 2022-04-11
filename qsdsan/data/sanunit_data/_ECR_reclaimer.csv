@@ -11,4 +11,4 @@ COD_removal,,fraction of COD removal,0.57515,0.28481,0.876453,triangular,Duke Da
 MCF_decay,,fraction of anaerobic conversion of degraded COD,1,,,constant,"IPCC, 2006"
 N_max_decay,,fraction of N removal,1,,,constant,Report
 N2O_EF_decay,,fraction of of degraded N emitted as N2O,0.005,0.0005,0.006,triangular,"IPCC, 2006; Leeds"
-power_demand,,W,36,24,48,uniform,Duke
+power_demand_ecr,,W,36,24,48,uniform,Duke
