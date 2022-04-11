@@ -14,36 +14,40 @@ for license details.
 '''
 
 
-# %%
-
-import numpy as np
-from warnings import warn
 from qsdsan import SanUnit, Construction
 from ._decay import Decay
 from ..utils import ospath, load_data, data_path, price_ratio
 
 __all__ = ('PrimaryReclaimer',)
 
-
-# %%
-
 primary_reclaimer_path = ospath.join(data_path, 'sanunit_data/_primary_reclaimer.csv')
+
 
 @price_ratio(default_price_ratio=1)
 class PrimaryReclaimer(SanUnit, Decay):
     '''
     Anaerobic digestion of waste in septic tank.
 
+    The following impact items should be pre-constructed for life cycle assessment:
+    FRP, Pump.
+
     Parameters
     ----------
-    ins : WasteStream
-        Waste for treatment.
-    outs : WasteStream
-        Treated waste, fugitive CH4, and fugitive N2O.
     if_include_front_end: bool
         If front end is included in analysis.
     ppl: int
         Total number of users for scaling of costs.
+
+    ins:
+        waste: liquid waste stream to be treated by septic tank unit
+        MgOH2: input Mg(OH)2 for struvite precipitation
+
+    outs:
+        treated: treated liquid leaving septic tank
+        CH4: fugitive CH4 emissions
+        N2O: fugitive N2O emissions
+        sludge: solid waste to be sent to sludge pasteurization
+        struvite: precipitated struvite recovered
 
     References
     ----------
@@ -61,7 +65,8 @@ class PrimaryReclaimer(SanUnit, Decay):
     # Exponential scaling constant for scaling cost and LCA with change in users
     exponent_scale = 0.6  # exponential scaling constant
     
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', if_include_front_end=True, ppl=1, **kwargs):
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 if_include_front_end=True, ppl=1, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
 
@@ -99,23 +104,21 @@ class PrimaryReclaimer(SanUnit, Decay):
         struvite.imass['Struvite'] = struvite_production_time
         
         # COD removal
-        COD_deg = treated.COD*treated.F_vol/1e3*self.COD_removal # kg/hr
+        COD_deg = treated.COD*treated.F_vol/1e3*self.COD_removal  # kg/hr
         treated._COD = waste.COD * (1-self.COD_removal)
         
-        CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
+        CH4_prcd = COD_deg * self.MCF_decay * self.max_CH4_emission
         CH4.imass['CH4'] = CH4_prcd
-        N_loss = self.first_order_decay(k=self.decay_k_N,                               
-                                            t=self.tau/365,
-                                            max_decay=self.N_max_decay)
+        N_loss = self.first_order_decay(k=self.decay_k_N, t=self.tau/365, max_decay=self.N_max_decay)
         
         N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol 
         NH3_rmd, NonNH3_rmd = \
             self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
-        treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
+        treated.imass['NH3'] = waste.imass['NH3'] - NH3_rmd
         treated.imass['NonNH3'] = waste.imass['NonNH3'] - NonNH3_rmd
-        N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28 #check units
+        N2O.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44/28
         
-        #sludge production
+        # sludge production
         self.sludge_TN = waste.imass['N'] * self.N_max_decay
         self.sludge_TN_F_mass = self.sludge_TN * waste.F_vol * 1e-3
         sludge.imass['N'] = self.sludge_TN

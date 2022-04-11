@@ -14,16 +14,16 @@ This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
 for license details.
 '''
-# %%
+
 
 import numpy as np
 from qsdsan import SanUnit, Construction
-from chaospy import distributions as shape
-from ..utils import ospath, load_data, data_path, price_ratio
+from ..utils import ospath, load_data, data_path
 
 __all__ = ('UltrafiltrationReclaimer',)
 
 ultrafiltration_data_path = ospath.join(data_path, 'sanunit_data/_ultrafiltration_reclaimer.csv')
+
 
 class UltrafiltrationReclaimer(SanUnit):
     '''
@@ -49,7 +49,7 @@ class UltrafiltrationReclaimer(SanUnit):
 
     References
     ----------
-    [insert references]
+    [1] Duke Reclaimer team data
 
     '''
 

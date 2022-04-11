@@ -16,17 +16,13 @@ for license details.
 '''
 
 
-# %%
-
 from .. import SanUnit, Construction
 from ..utils import ospath, load_data, data_path, price_ratio
 
 __all__ = ('SludgePasteurizationReclaimer',)
 
-
-# %%
-
 sludge_data_path = ospath.join(data_path, 'sanunit_data/_sludge_pasteurization_reclaimer.tsv')
+
 
 @price_ratio(default_price_ratio=1)
 class SludgePasteurizationReclaimer(SanUnit):
@@ -34,6 +30,9 @@ class SludgePasteurizationReclaimer(SanUnit):
     '''
     Sludge Pasteurization of sludge from AnMBR and using biogas from AnMBR,
     and/or LPG. Biogas is combusted when pasteurization occurs.
+
+    The following impact items should be pre-constructed for life cycle assessment:
+    Steel.
 
     Parameters
     ----------
@@ -85,7 +84,6 @@ class SludgePasteurizationReclaimer(SanUnit):
     `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
     '''
 
-
     # Constants
     # Specific Heat capacity of water
     Cp_w = 4.184  # kJ kg^-1 C^-1
@@ -93,7 +91,10 @@ class SludgePasteurizationReclaimer(SanUnit):
     Cp_dm = 1.231  # kJ kg^-1 C^-1
     # Specific latent heat of vaporization of water
     l_w = 2260  # kJ kg^-1
-
+    # Baseline population served by a single septic tank
+    baseline_ppl = 100
+    # Exponential scaling constant for scaling cost and LCA with change in users
+    exponent_scale = 0.6  # exponential scaling constant
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', 
                  heat_loss=0.1, target_MC=0.1, sludge_temp=283.15,
@@ -108,10 +109,10 @@ class SludgePasteurizationReclaimer(SanUnit):
         self.ppl = ppl
         self.if_sludge_service = if_sludge_service
 
-        if self.ppl < 100:
-            self.user_scale_up = 1  # users are within the capacity of a septic tank
+        if self.ppl < self.baseline_ppl:
+            self.user_scale_up = 1  # users are within the capacity of a septic tank (100 users)
         else:
-            self.user_scale_up = self.ppl / 100  # users exceed the capacity of a standard septic tank
+            self.user_scale_up = self.ppl / self.baseline_ppl  # users exceed the capacity of a standard septic tank
 
         
         data = load_data(path=sludge_data_path)
@@ -170,11 +171,11 @@ class SludgePasteurizationReclaimer(SanUnit):
         C = self.baseline_purchase_costs
 
         if self.if_sludge_service:
-            C['Dryer'] = self.sludge_dryer / 10 * self.user_scale_up
-            C['Barrel'] = self.sludge_barrel / 10 * self.user_scale_up
+            C['Dryer'] = self.sludge_dryer / 10 * (self.user_scale_up ** self.exponent_scale)
+            C['Barrel'] = self.sludge_barrel / 10 * (self.user_scale_up ** self.exponent_scale)
         else:
-            C['Dryer'] = self.sludge_dryer * self.user_scale_up
-            C['Barrel'] = self.sludge_barrel * self.user_scale_up
+            C['Dryer'] = self.sludge_dryer * (self.user_scale_up ** self.exponent_scale)
+            C['Barrel'] = self.sludge_barrel * (self.user_scale_up ** self.exponent_scale)
 
         ratio = self.price_ratio
         for equipment, cost in C.items():
@@ -189,7 +190,7 @@ class SludgePasteurizationReclaimer(SanUnit):
         return sludge_replacement_cost / (365 * 24) * self.price_ratio  # USD/hr
 
     def _calc_labor_cost(self):
-        labor_cost = (self.wages * self.sludge_labor_maintenance) * self.user_scale_up
+        labor_cost = (self.wages * self.sludge_labor_maintenance) * (self.user_scale_up ** self.exponent_scale)
         return labor_cost/(365 * 24)  # USD/hr
 
     @property
