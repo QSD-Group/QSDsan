@@ -54,6 +54,12 @@ class PrimaryReclaimer(SanUnit, Decay):
     :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
     
     '''
+
+    # Constants
+    # Baseline population served by a single septic tank
+    baseline_ppl = 100
+    # Exponential scaling constant for scaling cost and LCA with change in users
+    exponent_scale = 0.6  # exponential scaling constant
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', if_include_front_end=True, ppl=1, **kwargs):
 
@@ -61,6 +67,11 @@ class PrimaryReclaimer(SanUnit, Decay):
 
         self.if_include_front_end = if_include_front_end
         self.ppl = ppl
+
+        if self.ppl < 25:
+            self.user_scale_up = 0.25  # don't scale smaller than 1/4 original septic tank
+        else:
+            self.user_scale_up = self.ppl / self.baseline_ppl  # users exceed the capacity of a standard septic tank
 
         data = load_data(path=primary_reclaimer_path)
         for para in data.index:
@@ -117,8 +128,8 @@ class PrimaryReclaimer(SanUnit, Decay):
 
     def _design(self):
         design = self.design_results
-        design['FRP'] = FRP_quant = self.FRP_per_tank  # Fibre-reinforced plastic material
-        design['Pump'] = pump_quant = self.pump_lca * 2
+        design['FRP'] = FRP_quant = self.FRP_per_tank * self.user_scale_up  # Fibre-reinforced plastic material
+        design['Pump'] = pump_quant = self.pump_lca * 2 * self.user_scale_up
 
         self.construction = (Construction(item='FRP', quantity=FRP_quant, quantity_unit='kg'),
                              Construction(item='Pump', quantity=pump_quant, quantity_unit='each'))
@@ -126,18 +137,10 @@ class PrimaryReclaimer(SanUnit, Decay):
         self.add_construction(add_cost=False)
  
     def _cost(self):
-
-        # Scaling the septic tank for number of users. Original design assumes 100 users.
-        # Use 0.25 scale for anything under 25 users and then manually calculate the scale for anything above 25.
-        if self.ppl <= 25:
-            ppl_scale = 1/4
-        else:
-            ppl_scale = self.ppl/100
-
         if self.if_include_front_end:
             C = self.baseline_purchase_costs
-            C['Tanks'] = self.FRP_tank_cost * ppl_scale
-            C['Pump'] = self.pump
+            C['Tanks'] = self.FRP_tank_cost * (self.user_scale_up ** self.exponent_scale)
+            C['Pump'] = self.pump * (self.user_scale_up ** self.exponent_scale)
             ratio = self.price_ratio
             for equipment, cost in C.items():
                 C[equipment] = cost * ratio

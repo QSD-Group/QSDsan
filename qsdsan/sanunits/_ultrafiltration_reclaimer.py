@@ -107,7 +107,7 @@ class UltrafiltrationReclaimer(SanUnit):
                         + self.one_one_NB_MTA + self.one_onehalf_NB_MTA + self.foot_valve \
                         + self.one_onehalf_in_SCH80_threadedtee + self.three_in_pipe_clamp + self.one_in_pipe_clamp \
                         + self.onehalf_in_pipe_clamp + self.two_way_valve + self.UF_brush
-        C['UF_unit'] = self.UF_unit * self.qty_reclaimers
+        C['UF_unit'] = self.UF_unit
 
         # Exponentially scale capital cost with number of users
         scale = (self.ppl / self.baseline_ppl) ** self.exponent_scale
@@ -143,6 +143,6 @@ class UltrafiltrationReclaimer(SanUnit):
                                                         + self.three_in_pipe_clamp + self.one_in_pipe_clamp
                                                         + self.onehalf_in_pipe_clamp + self.two_way_valve
                                                         + self.UF_brush)
-        uf_replacement_cost = capital_om_ratio * (self.UF_unit * self.qty_reclaimers)
+        uf_replacement_cost = capital_om_ratio * self.UF_unit
         total_replacement_cost = scale * (pipe_replacement_cost + fittings_replacement_cost + uf_replacement_cost)  # USD/year
         return total_replacement_cost / (365 * 24)  # USD/hr
