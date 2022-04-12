@@ -5,12 +5,9 @@ MCF_decay,,fraction of anaerobic conversion of degraded COD,1,,,constant,"IPCC, 
 N2O_EF_decay,,fraction of of degraded N emitted as N2O,0.005,0.0005,0.006,triangular,"IPCC, 2006; Leeds"
 FRP_tank_cost,estimated cost of three tanks,USD,1100,825,1375,triangular,Eco-san BOM
 FRP_per_tank,estimated kg of FRP for all three tanks,kg,4589.866667,3442.4,5737.333334,uniform,BMGF Report
-pump,2 pump (regulating tank) 40PU2.15S(One for each use),USD/set,462,415.8,508.2,triangular,Eco-san BOM
-pump_lca,amount of pumps,#,2,,,constant,UIUC assumptions
+qty_pump,,ea,2,,,constant,BOM
+pump_cost,2 pump (regulating tank) 40PU2.15S(One for each use),USD/set,462,415.8,508.2,triangular,Eco-san BOM
 N_max_decay,fraction of N removal,,0.23,0.1725,0.2875,triangular,"Orner and Mihelcic, 2017"
-operator_wages,,USD/day,29,5.37,52.59,triangular,
-OM,,times/year,5,4,6,uniform,
-pump_ammount,,ea,2,,,constant,BOM
 MW_P,molar weight of phosphorous,g/mol,30.97,,,constant,
 MW_N,molar weight of nitrogen,g/mol,14.01,,,constant,
 MW_struvite,molar weight of struvite,g/mol,245.41,,,constant,

@@ -55,10 +55,12 @@ class ECR_Reclaimer(SanUnit):
     baseline_ppl = 30  # baseline population served by Reclaimer
     exponent_scale = 0.6  # exponential scaling constant
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', ppl=1, **kwargs):
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 if_gridtied=True, ppl=1, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
         
         self.ppl = ppl
+        self.if_gridtied = if_gridtied
 
         self.qty_reclaimers = np.ceil(self.ppl / self.baseline_ppl)  # number of reclaimer units required
         self.qty_reclaimers = self.qty_reclaimers.astype(int)  # convert from float to integer

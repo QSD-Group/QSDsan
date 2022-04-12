@@ -132,7 +132,7 @@ class PrimaryReclaimer(SanUnit, Decay):
     def _design(self):
         design = self.design_results
         design['FRP'] = FRP_quant = self.FRP_per_tank * self.user_scale_up  # Fibre-reinforced plastic material
-        design['Pump'] = pump_quant = self.pump_lca * 2 * self.user_scale_up
+        design['Pump'] = pump_quant = self.qty_pump * self.user_scale_up
 
         self.construction = (Construction(item='FRP', quantity=FRP_quant, quantity_unit='kg'),
                              Construction(item='Pump', quantity=pump_quant, quantity_unit='each'))
@@ -143,7 +143,7 @@ class PrimaryReclaimer(SanUnit, Decay):
         if self.if_include_front_end:
             C = self.baseline_purchase_costs
             C['Tanks'] = self.FRP_tank_cost * (self.user_scale_up ** self.exponent_scale)
-            C['Pump'] = self.pump * (self.user_scale_up ** self.exponent_scale)
+            C['Pump'] = self.pump_cost * (self.user_scale_up ** self.exponent_scale)
             ratio = self.price_ratio
             for equipment, cost in C.items():
                 C[equipment] = cost * ratio

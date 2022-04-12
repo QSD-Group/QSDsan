@@ -130,19 +130,30 @@ class UltrafiltrationReclaimer(SanUnit):
             
         self.power_utility(self.power_demand)
     
-    def _calc_replacement_cost(self):  # assume annual replacement cost is 10% capital
-        capital_om_ratio = 0.1
+    def _calc_replacement_cost(self):
         scale = (self.ppl / self.baseline_ppl) ** self.exponent_scale
-        pipe_replacement_cost = capital_om_ratio * (self.one_in_pipe_SCH40 + self.onehalf_in_pipe_SCH40
-                                                    + self.three_in_pipe_SCH80)
-        fittings_replacement_cost = capital_om_ratio * (self.one_in_elbow_SCH80 + self.one_in_tee_SCH80
-                                                        + self.one_in_SCH80 + self.one_onehalf_in_SCH80
-                                                        + self.onehalf_in_SCH80 + self.three_in_SCH80_endcap
-                                                        + self.one_one_NB_MTA + self.one_onehalf_NB_MTA
-                                                        + self.foot_valve + self.one_onehalf_in_SCH80_threadedtee
-                                                        + self.three_in_pipe_clamp + self.one_in_pipe_clamp
-                                                        + self.onehalf_in_pipe_clamp + self.two_way_valve
-                                                        + self.UF_brush)
-        uf_replacement_cost = capital_om_ratio * self.UF_unit
+
+        pipe_replacement_cost = (self.one_in_pipe_SCH40 / self.one_in_pipe_SCH40_lifetime +
+                                 self.onehalf_in_pipe_SCH40 / self.onehalf_in_pipe_SCH40_lifetime +
+                                 self.three_in_pipe_SCH80 / self.three_in_pipe_SCH80_lifetime)
+
+        fittings_replacement_cost = (self.one_in_elbow_SCH80 / self.one_in_elbow_SCH80_lifetime +
+                                     self.one_in_tee_SCH80 / self.one_in_tee_SCH80_lifetime +
+                                     self.one_in_SCH80 / self.one_in_SCH80_lifetime +
+                                     self.one_onehalf_in_SCH80 / self.one_onehalf_in_SCH80_lifetime +
+                                     self.onehalf_in_SCH80 / self.onehalf_in_SCH80_lifetime +
+                                     self.three_in_SCH80_endcap / self.three_in_SCH80_endcap_lifetime +
+                                     self.one_one_NB_MTA / self.one_one_NB_MTA_lifetime +
+                                     self.one_onehalf_NB_MTA / self.one_onehalf_NB_MTA_lifetime +
+                                     self.foot_valve / self.foot_valve_lifetime +
+                                     self.one_onehalf_in_SCH80_threadedtee / self.one_onehalf_in_SCH80_threadedtee_lifetime +
+                                     self.three_in_pipe_clamp / self.three_in_pipe_clamp_lifetime +
+                                     self.one_in_pipe_clamp / self.one_in_pipe_clamp_lifetime +
+                                     self.onehalf_in_pipe_clamp / self.onehalf_in_pipe_clamp_lifetime +
+                                     self.two_way_valve / self.two_way_valve_lifetime +
+                                     self.UF_brush / self.UF_brush_lifetime)
+
+        uf_replacement_cost = self.UF_unit / self.UF_unit_lifetime
+
         total_replacement_cost = scale * (pipe_replacement_cost + fittings_replacement_cost + uf_replacement_cost)  # USD/year
         return total_replacement_cost / (365 * 24)  # USD/hr

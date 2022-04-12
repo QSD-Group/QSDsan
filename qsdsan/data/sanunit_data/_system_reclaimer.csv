@@ -20,9 +20,9 @@ plate,3D Printed Plate,USD,8.2,7.38,9.02,triangular,Duke BOM
 pump,Kirsloskar Pump ( HL37),USD,106.67,96.003,117.337,triangular,Duke BOM
 three_way_valve,3-way valve,USD,70.04,63.036,77.044,triangular,Duke BOM
 lofted_tank,Lofted tank 1000 ltr capacity,USD,28.21,25.389,31.031,triangular,Duke BOM
-lifetime,,"lifetime project/ ,lifetime parts/",4,2,6,uniform,SI
+lifetime,,part replacement lifetime,4,2,6,uniform,SI
 steel_weight,,kg,3,1.5,4.5,uniform,Duke BOM
 brass_weight,,kg,1,0.5,1.5,uniform,Duke BOM
-power_demand,,W,40,36,44,triangular,Brian's email
+power_demand_system,,W,40,36,44,triangular,Brian's email
 working_time,,hr,15,10,20,uniform,
-replacement_costs,,USD/lifetime,28.364,14.182,42.546,uniform,Sum of costs * .1 with 50% uncertainty
+om_capital_ratio,annual O&M as a percent of capital,ratio,0.04,0.02,0.06,uniform,assumption

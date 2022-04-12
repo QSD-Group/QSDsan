@@ -114,7 +114,6 @@ class SludgePasteurizationReclaimer(SanUnit):
         else:
             self.user_scale_up = self.ppl / self.baseline_ppl  # users exceed the capacity of a standard septic tank
 
-        
         data = load_data(path=sludge_data_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])

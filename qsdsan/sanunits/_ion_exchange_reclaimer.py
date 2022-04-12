@@ -102,17 +102,17 @@ class IonExchangeReclaimer(SanUnit):
         KCl.phase = 's'
         
         # Zeolite
-        zeolite_demand_time = (self.zeolite_weight / (self.zeolite_lifetime*365*24)) * self.qty_reclaimers  # kg zeolite / hr
+        zeolite_demand_time = (self.zeolite_weight / (self.zeolite_lifetime * 365 * 24)) * self.qty_reclaimers  # kg zeolite/hr
         zeolite_in.imass['Zeolite'] = zeolite_demand_time
         zeolite_out.imass['Zeolite'] = zeolite_demand_time
         
         # GAC
-        gac_demand_time = ((self.gac_weight * self.gac_annual_replacement) / (365*24)) * self.qty_reclaimers  # kg gac / hr
+        gac_demand_time = (self.gac_weight / (self.gac_lifetime * 365 * 24)) * self.qty_reclaimers  # kg GAC/hr
         gac_in.imass['GAC'] = gac_demand_time
         gac_out.imass['GAC'] = gac_demand_time
         
         # KCl
-        self.KCl_demand_time = ((self.KCl_weight * self.regen_freq_per_yr) / (365*24)) * self.qty_reclaimers  # kg KCl / hr
+        self.KCl_demand_time = (self.KCl_weight / (self.KCl_regeneration_freq * 365 * 24)) * self.qty_reclaimers  # kg KCl/hr
         KCl.imass['PotassiumChloride'] = self.KCl_demand_time
 
         self.N_removed = waste.imass['NH3'] * self.TN_removal
@@ -140,11 +140,11 @@ class IonExchangeReclaimer(SanUnit):
         
         C = self.baseline_purchase_costs
         C['Pipes'] = (self.four_in_pipe_SCH40 + self.four_in_pipe_SCH80)
-        C['fittings'] = (self.four_in_pipe_SCH80_endcap + self.NRV + self.connector +
+        C['Fittings'] = (self.four_in_pipe_SCH80_endcap + self.NRV + self.connector +
                          self.ball_valve + self.three_eight_elbow + self.ten_ten_mm_tee + self.OD_tube +
                          self.four_in_pipe_clamp)
                                            
-        C['GAC_Zeolite'] = (self.GAC_zeolite_mesh + self.GAC_cost + self.Zeolite_cost)
+        C['GAC_Zeolite'] = self.GAC_zeolite_mesh + (self.GAC_cost * self.gac_weight) + (self.Zeolite_cost * self.zeolite_weight)
         C['Regeneration Solution'] = (self.KCl_cost * self.KCl_weight)
 
         # Exponentially scale capital cost with number of users
@@ -152,17 +152,24 @@ class IonExchangeReclaimer(SanUnit):
         for equipment, cost in C.items():
             C[equipment] = cost * scale
 
-        self.add_OPEX = self._calc_replacement_cost()
+        self.add_OPEX = self._calc_replacement_cost() + self._calc_labor_cost()
 
     def _calc_replacement_cost(self):
         scale = (self.ppl / self.baseline_ppl) ** self.exponent_scale
-        ion_exchange_replacement_cost = scale * ((self.Zeolite_cost * self.gac_annual_replacement)
-                                                 + (self.KCl_cost * self.KCl_weight + self.regen_freq_per_yr)
-                                                 + (self.GAC_cost * self.gac_annual_replacement)
-                                                 + (self.ion_exchange_replacement_other_parts / 10))  # USD/yr
-        return ion_exchange_replacement_cost / (365 * 24)  # USD/hr
+        zeolite_replacement_cost = self.Zeolite_cost * self.zeolite_weight / self.zeolite_lifetime  # USD/year
+        gac_replacement_cost = self.GAC_cost * self.gac_weight / self.gac_lifetime  # USD/year
+        kcl_replacement_cost = self.KCl_cost * self.KCl_weight / self.KCl_regeneration_freq  # USD/year
+        # replacement parts for everything else, assume 2-6% of capital as annual cost
+        other_replacement_cost = self.om_capital_ratio * (self.four_in_pipe_SCH40 + self.four_in_pipe_SCH80 +
+                                                          self.four_in_pipe_SCH80_endcap + self.NRV + self.connector +
+                                                          self.ball_valve + self.three_eight_elbow +
+                                                          self.ten_ten_mm_tee + self.OD_tube + self.four_in_pipe_clamp +
+                                                          self.GAC_zeolite_mesh)  # USD/year
+        ion_exchange_replacement_cost = scale * (zeolite_replacement_cost + gac_replacement_cost + kcl_replacement_cost
+                                                 + other_replacement_cost) / (365 * 24)  # USD/hr
+        return ion_exchange_replacement_cost
 
     def _calc_labor_cost(self):
         scale = (self.ppl / self.baseline_ppl) ** self.exponent_scale
-        labor_cost = (self.wages * self.labor_maintenance_zeolite_regeneration) * scale
+        labor_cost = (self.wages * self.labor_maintenance_zeolite_regeneration) * scale  # USD/year
         return labor_cost / (365 * 24)  # USD/hr
