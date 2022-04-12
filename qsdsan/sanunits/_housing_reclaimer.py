@@ -57,6 +57,7 @@ class HousingReclaimer(SanUnit):
         self.ppl = ppl
 
         self.qty_reclaimers = np.ceil(self.ppl / self.baseline_ppl)  # number of reclaimer units required
+        self.qty_toilet = np.ceil(self.ppl / 25)  # assume 25 people per MURT toilet
   
         data = load_data(path=housing_data_path)
         for para in data.index:
@@ -82,7 +83,8 @@ class HousingReclaimer(SanUnit):
     def _cost(self):
         C = self.baseline_purchase_costs
         C['Housing'] = (self.frame + self.extrusion + self.angle_frame + self.angle + self.door_sheet +
-                        self.plate_valve + self.powder) * (1 + 0.1 * (self.qty_reclaimers - 1))
+                        self.plate_valve + self.powder) * (1 + 0.1 * (self.qty_reclaimers - 1)) + \
+                        self.portable_toilet * self.qty_toilet
         
         ratio = self.price_ratio
         for equipment, cost in C.items():
