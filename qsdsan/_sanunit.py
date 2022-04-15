@@ -571,8 +571,8 @@ class SanUnit(Unit, isabstract=True):
     @uptime_ratio.setter
     def uptime_ratio(self, i):
         if not 0 <=i<= 1:
-            raise ValueError(f'Uptime must be between 0 and 1 (100%), not {i}.')
-        self._uptime_ratio = float(i)
+            warn(f'`uptime_ratio` of {i:.2f} for unit {self.ID} is not in 0 and 1 (100%).')
+        self._uptime_ratio = i
 
     @property
     def lifetime(self):
