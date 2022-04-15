@@ -18,7 +18,6 @@ for license details.
 
 
 import thermosteam as tmo
-from warnings import warn
 from thermo import TDependentProperty
 from chemicals.elements import (
     mass_fractions as get_mass_frac,
@@ -96,8 +95,6 @@ component_units_of_measure = {
 
 # %%
 
-#!!! What should the gas/solid-phase Component value (e.g., CH4 in biogas)
-# for particle_size and degradability? Can we put None or NA?
 allowed_values = {
     'particle_size': ('Dissolved gas', 'Soluble', 'Colloidal', 'Particulate'),
     'degradability': ('Readily', 'Slowly', 'Undegradable'),
@@ -618,15 +615,18 @@ class Component(Chemical):
         return missing
 
 
-    #TODO: possible to directly use `Chemical.copy`?
+    # Cann't directly use `Chemical.copy`
     def copy(self, new_ID, **data):
         '''
         Return a new :class:`Component` object with the same settings with
         alternative data set by kwargs.
         '''
-        new = self.__class__.__new__(cls=self.__class__, ID=new_ID)
-        new = copy_attr(new, self, skip=('_ID', '_CAS', '_N_solutes', '_locked_state'))
+        new = self.__class__.__new__(cls=self.__class__, ID=new_ID, search_db=False)
+        skip = ('_ID', '_N_solutes', '_locked_state') # not sure why at some point want to skip CAS
+        new = copy_attr(new, self, skip=skip)
         new._ID = new_ID
+
+        if hasattr(self, '_N_solutes'): new.N_solutes = self.N_solutes
 
         phase = data.get('phase') or self._locked_state
         new._locked_state = phase
@@ -639,8 +639,7 @@ class Component(Chemical):
         new._label_handles()
 
         for i,j in data.items():
-            if i == 'phase':
-                continue
+            if i == 'phase': continue
             setattr(new, i , j)
         return new
 
