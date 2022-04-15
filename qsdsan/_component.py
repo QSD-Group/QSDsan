@@ -661,7 +661,24 @@ class Component(Chemical):
                       f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
                       description=None, particle_size=None, degradability=None,
                       organic=None, **data):
-        '''Return a new :class:`Component` from a :class:`thermosteam.Chemical` object.'''
+        '''
+        Return a new :class:`Component` from a :class:`thermosteam.Chemical` object.
+
+        .. note::
+
+            If you don't have a pre-constructed chemical, you are recommend to use
+            the kwargs `ID`, or `search_ID` in :class:`Component` to search the database
+            instead of using this :func:`Component.from_chemical`.
+
+            E.g., do
+
+                `S_O = Component(ID='S_O', search_ID='O2', ...)`
+
+            instead of
+
+                `S_O = Component.from_chemical(ID='S_O', chemical='O2', ...)`
+
+        '''
         new = cls.__new__(cls, ID=ID, phase=phase)
 
         if chemical is None: chemical = ID
