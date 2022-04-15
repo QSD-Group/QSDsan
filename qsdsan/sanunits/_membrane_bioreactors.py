@@ -114,12 +114,14 @@ class AnMBR(SanUnit):
     include_degassing_membrane : bool
         If to include a degassing membrane to enhance methane
         (generated through the digestion reaction) recovery.
+    Y_biogas : float
+        Biogas yield, [kg biogas/kg consumed COD].
+    Y_biomass : float
+        Biomass yield, [kg biomass/kg consumed COD].
     biodegradability : float or dict
         Biodegradability of components,
         when shown as a float, all biodegradable components are assumed to have
         the same degradability.
-    Y : float
-        Biomass yield, [kg biomass/kg consumed COD].
     solids : Iterable(str)
         IDs of the solid components.
         If not provided, will be set to the default `solids` attribute of the components.
@@ -258,7 +260,9 @@ class AnMBR(SanUnit):
                  include_aerobic_filter=False,
                  add_GAC=False,
                  include_degassing_membrane=True,
-                 biodegradability=1.0, Y=0.05, # from the 0.02-0.08 uniform range in ref [1]
+                 Y_biogas = 0.86,
+                 Y_biomass=0.05, # from the 0.02-0.08 uniform range in ref [1]
+                 biodegradability=1.0,
                  solids=(), split={},
                  biomass_ID='WWTsludge', solids_conc=10.5,
                  T=35+273.15,
@@ -276,7 +280,8 @@ class AnMBR(SanUnit):
         self.add_GAC = add_GAC
         self.include_degassing_membrane = include_degassing_membrane
         self.biodegradability = biodegradability
-        self.Y = Y
+        self.Y_biogas = Y_biogas
+        self.Y_biomass = Y_biomass
         cmps = self.components
         self.split = split if split else default_component_dict(
             cmps=cmps, gas=0.15, solubles=0.125, solids=0) # ref[2]
@@ -926,7 +931,7 @@ class AnMBR(SanUnit):
 
     @property
     def N_mod_tot(self):
-        '''[int] Total number of memberane modules.'''
+        '''[int] Total number of membrane modules.'''
         return self.N_train * self.cas_per_tank * self.mod_per_cas
 
     @property
@@ -1275,19 +1280,19 @@ class AnMBR(SanUnit):
         return self._biodegradability
     @biodegradability.setter
     def biodegradability(self, i):
-        if isinstance(i, float):
+        if not isinstance(i, dict):
             if not 0<=i<=1:
                 raise ValueError('`biodegradability` should be within [0, 1], '
                                  f'the input value {i} is outside the range.')
-            self._biodegradability = i
-            return
-
-        for k, v in i.items():
-            if not 0<=v<=1:
-                raise ValueError('`biodegradability` should be within [0, 1], '
-                                 f'the input value for component "{k}" is '
-                                 'outside the range.')
-        self._biodegradability = i
+            self._biodegradability = dict.fromkeys(self.chemicals.IDs, i)
+        else:
+            for k, v in i.items():
+                if not 0<=v<=1:
+                    raise ValueError('`biodegradability` should be within [0, 1], '
+                                     f'the input value for chemical "{k}" is '
+                                     'outside the range.')
+            self._biodegradability = dict.fromkeys(self.chemicals.IDs, i).update(i)
+        self._refresh_rxns()
 
     @property
     def biomass_ID(self):
@@ -1304,17 +1309,6 @@ class AnMBR(SanUnit):
     @solids_conc.setter
     def solids_conc(self, i):
         self._solids_conc = i
-
-    @property
-    def Y(self):
-        '''[float] Biomass yield, [kg biomass/kg consumed COD].'''
-        return self._Y
-    @Y.setter
-    def Y(self, i):
-        if not 0 <= i <= 1:
-            raise ValueError('`Y` should be within [0, 1], '
-                             f'the input value {i} is outside the range.')
-        self._Y = i
 
     @property
     def i_rm(self):
