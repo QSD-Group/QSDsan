@@ -204,9 +204,13 @@ class Components(Chemicals):
         '''
         isa = isinstance
         get = getattr
+
         sol = Chemical(soluble_ref)
         gas = Chemical(gas_ref)
         par = Chemical(particulate_ref)
+        # 0.8559 at 90 °C https://pubchem.ncbi.nlm.nih.gov/compound/Tristearin#section=Density
+        # avg ~0.9 http://www.dgfett.de/material/physikalische_eigenschaften.pdf
+        add_V_from_rho(par, 0.9, 'g/ml', 's')
         water = Chemical('Water')
         for cmp in self:
             particle_size = cmp.particle_size
