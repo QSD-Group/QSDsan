@@ -70,6 +70,9 @@ class Toilet(SanUnit, Decay, isabstract=True):
         Capital cost of a single toilet.
     OPEX_over_CAPEX : float
         Fraction of annual operating cost over total capital cost.
+    price_ratio : float
+        Calculated capital cost will be multiplied by this number
+        to consider the effect in cost difference from different locations.
 
     References
     ----------
@@ -88,7 +91,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
                  degraded_components=('OtherSS',), N_user=1, N_toilet=1, N_tot_user=None,
                  if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=False, if_air_emission=True, if_ideal_emptying=True,
-                 CAPEX=None, OPEX_over_CAPEX=None):
+                 CAPEX=None, OPEX_over_CAPEX=None, price_ratio=1.):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
         self.degraded_components = tuple(degraded_components)
@@ -104,6 +107,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         self.if_ideal_emptying = if_ideal_emptying
         self.CAPEX = CAPEX
         self.OPEX_over_CAPEX = OPEX_over_CAPEX
+        self.price_ratio = price_ratio
 
         data = load_data(path=toilet_path)
         for para in data.index:
@@ -137,7 +141,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         }
 
     def _cost(self):
-        self.baseline_purchase_costs['Total toilets'] = self.CAPEX * self.N_toilet
+        self.baseline_purchase_costs['Total toilets'] = self.CAPEX * self.N_toilet * self.price_ratio
         add_OPEX = self.baseline_purchase_costs['Total toilets']*self.OPEX_over_CAPEX/365/24
         self._add_OPEX = {'Additional OPEX': add_OPEX}
 

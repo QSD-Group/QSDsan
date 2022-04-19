@@ -418,15 +418,15 @@ class LCA:
             if ws in exclude: continue
 
             for m, n in j.CFs.items():
-                if kind == 'all':
+                if kind in ('all', 'total', 'net'):
                     pass
-                elif kind == 'direct_emission':
+                elif kind in ('direct', 'direct_emission'):
                     n = max(n, 0)
                 elif kind == 'offset':
                     n = min(n, 0)
                 else:
                     raise ValueError('kind can only be "all", "direct_emission", or "offset", '
-                                     f'not {kind}.')
+                                     f'not "{kind}".')
                 if m not in impacts.keys():
                     continue
                 impacts[m] += n*time*ws.F_mass

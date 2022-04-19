@@ -954,8 +954,8 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box', adjust_hue=False
 # Plot correlations
 # =============================================================================
 
-def _plot_corr_tornado(corr_df, top):
-    fig, ax = plot_spearman(corr_df.iloc[:,0], top=top)
+def _plot_corr_tornado(corr_df, top, **kwargs):
+    fig, ax = plot_spearman(corr_df.iloc[:,0], top=top, **kwargs)
 
     ax.set_xlabel(corr_df.columns[0])
 
@@ -1064,7 +1064,7 @@ def plot_correlations(result_df, parameters=(), metrics=(), top=None,
         raise ValueError('No correlation data for plotting.')
 
     elif len(metric_names) == 1: # one metric, tornado plot
-        fig, ax = _plot_corr_tornado(df, top)
+        fig, ax = _plot_corr_tornado(df, top, **kwargs)
         return _save_fig_return(fig, ax, file, close_fig)
 
     else: # multiple metrics, bubble plot
