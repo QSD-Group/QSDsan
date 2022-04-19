@@ -60,7 +60,6 @@ def create_asm1_cmps(pickle=False):
     S_NO.description = 'Nitrate and nitrite nitrogen'
 
     S_NH = cmps.S_NH4.copy('S_NH')
-
     S_ND = cmps.S_F.copy('S_ND')
     S_ND.description = 'Soluble biodegradable organic nitrogen'
     S_ND.measured_as = 'N'

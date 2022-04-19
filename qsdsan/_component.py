@@ -615,17 +615,24 @@ class Component(Chemical):
         return missing
 
 
-    # Cann't directly use `Chemical.copy`
+    # Cannot directly use `Chemical.copy`
     def copy(self, new_ID, **data):
         '''
         Return a new :class:`Component` object with the same settings with
         alternative data set by kwargs.
+
+        Note that aliases will not be copied.
         '''
         new = self.__class__.__new__(cls=self.__class__, ID=new_ID, search_db=False)
-        skip = ('_ID', '_N_solutes', '_locked_state') # not sure why at some point want to skip CAS
+        skip = ('_ID', '_N_solutes', '_locked_state', '_CAS', '_aliases',)
         new = copy_attr(new, self, skip=skip)
-        new._ID = new_ID
-
+        CAS = self.CAS
+        if CAS != self.ID: # for those without actual CAS, it'll be the same as ID
+            num_list = CAS.split('-')
+            if len(num_list) == 3:
+                if (i.isnumeric for i in num_list):
+                    # Only copy CAS when it's an actual CAS (three hyphen-divided parts)
+                    if new.CAS != CAS: new._CAS = CAS
         if hasattr(self, '_N_solutes'): new.N_solutes = self.N_solutes
 
         phase = data.get('phase') or self._locked_state
