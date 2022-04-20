@@ -1053,7 +1053,6 @@ def plot_correlations(result_df, parameters=(), metrics=(), top=None,
     param_names = _update_input(parameters, df.index)
     param_names = param_names if isinstance(param_names[0], str) \
                               else [p.name for p in param_names]
-
     metric_names = _update_input(metrics, df.columns)
     metric_names = metric_names if isinstance(metric_names[0], str) \
                                 else [m.name for m in metric_names]
@@ -1166,7 +1165,7 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
         for x, y, label in zip(x_data, y_data, labels):
             ax.annotate(label, (x, y), xytext=(10, 10), textcoords='offset points',
                         ha='center')
-        
+
         lines, legends = [], []
         line_color = kwargs.get('line_color') or color
         if k3:
