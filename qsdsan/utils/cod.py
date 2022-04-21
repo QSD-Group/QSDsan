@@ -280,7 +280,7 @@ def get_bmp_stoichiometry(component, **replace):
         C_vH_wO_xN_yS_z + \frac{4v-w-2x+3y+2z}{2}H2O ->
         \frac{4v+w-2x-3y-2z}{8}CH4 + \frac{(4v-w+2x+3y+2z)}{8}CO2 + yNH_3 + zH_2S
 
-    For organic components, elements other than "C", "H", "O", "N", "S", and "P" will
+    For organic components, elements other than "C", "H", "O", "N", and "S" will
     be turned into "Ash" with a molecular weight of 1 g/mol.
 
     For inorganic components, all dict values will be 0.

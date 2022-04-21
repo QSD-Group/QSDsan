@@ -135,6 +135,11 @@ class SanUnit(Unit, isabstract=True):
             Regardless of `F_BM_default`, design (F_D), pressure (F_P),
             and material (F_M) factors are all defaulted to 1.
 
+    isdynamic : bool
+        If this unit is simulated dynamically with rate equations.
+    kwargs : dict
+        Additional keyword arguments that can be set for this unit.
+    
     See Also
     --------
     `biosteam.Unit <https://biosteam.readthedocs.io/en/latest/Unit.html>`_
@@ -229,7 +234,7 @@ class SanUnit(Unit, isabstract=True):
             self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
         if not hasattr(self, '_state_header'):
             self._state_header = [f'{cmp.ID} [mg/L]' for cmp in self.components] + ['Q [m3/d]']
-        # Shouldn't need to re-create the mock system everytime
+        # Shouldn't need to re-create the mock system every time
         # if hasattr(self, '_mock_dyn_sys'):
         #     sys = self._mock_dyn_sys
         #     sys.registry.discard(sys)
@@ -571,8 +576,8 @@ class SanUnit(Unit, isabstract=True):
     @uptime_ratio.setter
     def uptime_ratio(self, i):
         if not 0 <=i<= 1:
-            raise ValueError(f'Uptime must be between 0 and 1 (100%), not {i}.')
-        self._uptime_ratio = float(i)
+            warn(f'`uptime_ratio` of {i:.2f} for unit {self.ID} is not in 0 and 1 (100%).')
+        self._uptime_ratio = i
 
     @property
     def lifetime(self):

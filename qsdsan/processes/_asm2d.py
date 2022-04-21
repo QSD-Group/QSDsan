@@ -12,8 +12,8 @@ for license details.
 
 from thermosteam.utils import chemicals_user
 from thermosteam import settings
-from qsdsan import Components, Process, Processes, _pk
-from ..utils import ospath, data_path, save_pickle, load_pickle
+from qsdsan import Components, Process, Processes
+from ..utils import ospath, data_path, save_pickle, load_pickled_cmps
 
 __all__ = ('load_asm2d_cmps', 'ASM2d')
 
@@ -61,20 +61,16 @@ def create_asm2d_cmps(pickle=False):
                              X_PHA, X_AUT, X_MeOH, X_MeP, cmps.H2O])
 
     cmps_asm2d.compile()
-
-    if pickle:
-        save_pickle(cmps_asm2d, _path_cmps)
+    if pickle: save_pickle(cmps_asm2d, _path_cmps)
+    
     return cmps_asm2d
 _create_asm2d_cmps = create_asm2d_cmps
 
-
 # create_asm2d_cmps(True)
 
-def load_asm2d_cmps():
-    if _pk:
-        return load_pickle(_path_cmps)
-    else:
-        return create_asm2d_cmps(pickle=False)
+
+def load_asm2d_cmps(pickle=None):
+    return load_pickled_cmps(create_asm2d_cmps, _path_cmps, pickle)
 
 
 ############ Processes in ASM2d #################

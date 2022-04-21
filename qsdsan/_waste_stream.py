@@ -1087,7 +1087,6 @@ class WasteStream(SanStream):
                  'flow might not be set correctly.')
 
         M_bulk_max = Q_tot * den * 100 # L/hr * kg/L = kg/hr
-
         M_bulk = flx.IQ_interpolation(f=self._Q_obj_f,
                                       x0=0, x1=M_bulk_max,
                                       xtol=0.01, ytol=atol, # ytol here is actually Q, but should be fine

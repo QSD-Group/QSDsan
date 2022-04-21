@@ -30,7 +30,6 @@ def _add_aeration_to_growth_model(aer, model):
         processes = Processes(model.tuple)
         processes.append(aer)
         processes.compile()
-        processes.set_parameters(**aer.parameters, **model.parameters)
     else:
         processes = model
         processes.compile()
@@ -56,7 +55,7 @@ def dydt_cstr_no_rxn_controlled_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, Cs
     Q_e_arr[:] = Q_ins.sum(axis=0)
     _dstate[-1] = dQC_ins[:, -1].sum(axis=0)
     flow_out = Q_e_arr * Cs / V_arr
-    _dstate[:-1] = flow_in - flow_out 
+    _dstate[:-1] = flow_in - flow_out
 
 #%%
 class CSTR(SanUnit):
@@ -254,13 +253,13 @@ class CSTR(SanUnit):
         else:
             processes = _add_aeration_to_growth_model(self._aeration, self._model)
             r_eqs = list(processes.production_rates.rate_of_production)
-            r = lambdify(C, r_eqs)
+            r = lambdify(C, r_eqs, 'numpy')
 
         _dstate = self._dstate
-        _update_dstate = self._update_dstate      
+        _update_dstate = self._update_dstate
         V_arr = np.full(m, self._V_max)
         Q_e_arr = np.zeros(m)
-        
+
         if isa(self._aeration, (float, int)):
             i = self.components.index(self._DO_ID)
             fixed_DO = self._aeration

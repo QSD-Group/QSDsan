@@ -4,6 +4,11 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
+Ongoing
+-------
+- Read the preprint of QSDsan on `arXiv <https://arxiv.org/abs/2203.06243>`_!
+
+
 `1.1.0`
 -------
 - Fully tested dynamic simulation capacity, refer to the `BSM1 system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_ in EXPOsan for an example implementation.
