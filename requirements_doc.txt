@@ -1,8 +1,8 @@
 # Needed by qsdsan
 git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git
 git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@dyn_sim
-biosteam>=2.32.2
-thermosteam>=0.28.4
+biosteam>=2.32.4
+thermosteam>=0.28.7
 SALib
 seaborn
 sympy

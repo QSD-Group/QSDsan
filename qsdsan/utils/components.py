@@ -23,7 +23,7 @@ from . import auom
 __all__ = ('add_V_from_rho', 'correct_param_with_T', 'default_component_dict', )
 
 
-def add_V_from_rho(component, rho, rho_unit='kg/m3'):
+def add_V_from_rho(component, rho, rho_unit='kg/m3', add_model_to=None):
     '''
     Add a constant molar volume model to the component with the given rho.
 
@@ -32,9 +32,12 @@ def add_V_from_rho(component, rho, rho_unit='kg/m3'):
     component : obj
         The component for which the molar volume model will be added.
     rho : float
-        The density of the component.
+        Density of the component.
     rho_unit : str
         Unit of the density rho.
+    add_model_to : str
+        Which state this constant molar volume model should be added to.
+        Can be "g", "l", or "s".
 
     Examples
     --------
@@ -50,10 +53,15 @@ def add_V_from_rho(component, rho, rho_unit='kg/m3'):
     '''
     rho = auom(rho_unit).convert(rho, 'kg/m3')
     V_model = rho_to_V(rho, component.MW)
-    try: component.V.add_model(V_model)
-    except AttributeError:
-        handle = getattr(component.V, component.locked_state)
-        handle.add_model(V_model)
+    if add_model_to:
+        getattr(component.V, add_model_to).add_model(V_model)
+        return
+    locked_state = component.locked_state
+    if locked_state: component.V.add_model(V_model)
+    else:
+        raise RuntimeError(f'The component {component.ID} is not locked at any phase, '
+                           'please use `add_model_to` to indicate '
+                           'which phase the density should be added to.')
 
 
 def correct_param_with_T(k0, T0, T, theta):

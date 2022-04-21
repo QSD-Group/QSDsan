@@ -51,6 +51,9 @@ class Trucking(SanUnit):
         If material loss occurs during transportation.
     loss_ratio : float or dict
         Fractions of material losses due to transportation.
+    price_ratio : float.
+        Calculated transportation cost will be multiplied by this number
+        to consider the effect in cost difference from different locations.
 
     Examples
     --------
@@ -69,7 +72,7 @@ class Trucking(SanUnit):
                  distance=1., distance_unit='km',
                  interval=1., interval_unit='hr',
                  fee=0., fee_unit=currency,
-                 if_material_loss=True, loss_ratio=0.02):
+                 if_material_loss=True, loss_ratio=0.02, price_ratio=1.):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.single_truck = single = \
             Transportation('single_truck', linked_unit=self, item='Trucking',
@@ -81,6 +84,7 @@ class Trucking(SanUnit):
         self._update_fee(fee, fee_unit)
         self.if_material_loss = if_material_loss
         self.loss_ratio = loss_ratio
+        self.price_ratio = price_ratio
 
     _N_ins = 1
     _N_outs = 2
@@ -120,7 +124,7 @@ class Trucking(SanUnit):
         total, = self.transportation
         copy_attr(total, single, skip=('_ID', '_item')) # in case attributes have been updated
         total.load = single.load * N
-        self._add_OPEX = {'Total fee': self.fee/total.interval*N}
+        self._add_OPEX = {'Total fee': self.fee/total.interval*N*self.price_ratio}
 
     @property
     def fee(self):

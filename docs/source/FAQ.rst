@@ -44,18 +44,6 @@ or
     If you have already installed graphviz (both the actual software and the Python interface) but still getting the same error, your probably need to add the path of the graphviz software to your system path. To do that, you need to firstly locate where the graphviz software is, add the graphviz path to your system path (for Windows, the post above has instruction on how to add to your path; for macOS, you add ``export PATH="<REPLACE_WITH_GRAPHVIZ_PATH>:$PATH"`` to your shell profile).
 
 
-``UnicodeDecodeError``
-**********************
-When using non-English operating systems, you may run into errors similar to (cp949 is the case of Korean Windows):
-
-   .. code::
-
-       UnicodeDecodeError: 'cp949' codec can't decode byte Oxe2 in position 3426: multibyte sequence
-
-
-To fix this, Windows users can look at this `thread <https://stackoverflow.com/questions/57131654/using-utf-8-encoding-chcp-65001-in-command-prompt-windows-powershell-window>`_ on updating the character encoding in the Windows console to UTF-8. We are not sure if this error will appear for Mac users, but let us know if you run into this and we will be happy to help with troubleshooting.
-
-
 ``ModuleNotFoundError``
 ***********************
 Sometimes (even though you have downloaded/cloned/installed ``qsdsan``), you still cannot see:
@@ -76,7 +64,7 @@ There are multiple possible reasons:
 
         .. code::
 
-            python -m ipykernel install --user --name <KERNEL NAME>
+            python -m ipykernel install --user --name <KERNEL_NAME>
 
 
         .. note::
@@ -87,8 +75,38 @@ There are multiple possible reasons:
         Then when you open the Jupyter Notebook, select the ``<KERNEL NAME>`` kernel when you create a new notebook you can find more details in this post about `enabling multiple kernels in Jupyter Notebook <https://medium.com/@ace139/enable-multiple-kernels-in-jupyter-notebooks-6098c738fe72>`_.
 
 
+``UnicodeDecodeError``
+**********************
+When using non-English operating systems, you may run into errors similar to (cp949 is the case of Korean Windows):
+
+   .. code::
+
+       UnicodeDecodeError: 'cp949' codec can't decode byte Oxe2 in position 3426: multibyte sequence
+
+
+To fix this, Windows users can look at this `thread <https://stackoverflow.com/questions/57131654/using-utf-8-encoding-chcp-65001-in-command-prompt-windows-powershell-window>`_ on updating the character encoding in the Windows console to UTF-8. We are not sure if this error will appear for Mac users, but let us know if you run into this and we will be happy to help with troubleshooting.
+
+
 Tips
 ----
+
+Archive Branch
+**************
+If you want to archive a branch but don't want to let it clutter your branch list, you can `archive it <https://stackoverflow.com/questions/1307114/how-can-i-archive-git-branches>`_. Essentially, you would need to
+
+.. code::
+
+    git checkout <BRANCH_TO_BE_ARCHIVED>
+    git tag archive/<BRANCH_TO_BE_ARCHIVED> # "archive/<BRANCH_TO_BE_ARCHIVED>" will be the tag name, you can change it however you like
+    git push origin archive/<BRANCH_TO_BE_ARCHIVED>
+
+Then you'll see the new tag appears on GitHub and you can safely remove the archived branch from local and remote.
+
+
+Pickle Protocol
+***************
+``QSDsan`` saves some of the default components and processes as `pickle <https://docs.python.org/3/library/pickle.html>`_ files to reduce the loading time, Python pickle has different protocols, and Protocol 5 is used in ``QSDsan``. The default ``pickle`` module in Python 3.5-3.7 uses Protocol 4 thus not compatible. For Python 3.5-3.7 users, ``QSDsan`` will prompt a warning to install the `package <https://pypi.org/project/pickle5/>`_ ``pickle5`` for compatibility. For Python 3.4 and below, longer loading time is expected as no pre-saved data files are used.
+
 
 Private Fork
 ************
@@ -166,8 +184,3 @@ Upgrade Python
 ``QSDsan`` is currently compatible with and tested for Python 3.7 and 3.8. However, with ``BioSTEAM`` moving to Python 3.8 (see this `issue <https://github.com/BioSTEAMDevelopmentGroup/biosteam/issues/56>`_), qsdsan may be only compatible with Python 3.8 and higher in the future. 
 
 If you need to upgrade Python but having a lot of existing packages, creating a virtual environment may be the best way to avoid conflicts. If you are using ``conda``, its has related documentations on `Python upgrading <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-python.html>`_.
-
-
-Pickle Protocol
-***************
-``QSDsan`` saves some of the default components and processes as `pickle <https://docs.python.org/3/library/pickle.html>`_ files to reduce the loading time, Python pickle has different protocols, and Protocol 5 is used in ``QSDsan``. The default ``pickle`` module in Python 3.5-3.7 uses Protocol 4 thus not compatible. For Python 3.5-3.7 users, ``QSDsan`` will prompt a warning to install the `package <https://pypi.org/project/pickle5/>`_ ``pickle5`` for compatibility. For Python 3.4 and below, longer loading time is expected as no pre-saved data files are used.
