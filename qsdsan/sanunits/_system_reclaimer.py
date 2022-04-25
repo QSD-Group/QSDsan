@@ -97,7 +97,7 @@ class SystemReclaimer(SanUnit):
         self.add_OPEX = self._calc_replacement_cost()
 
         if self.if_gridtied:
-            self.power_demand = (self.power_demand_system * 24 / 1000) * self.qty_reclaimers  # [W/day][24 hr operation][1 kW/1000 W] = [kWh/d]
+            self.power_demand = (self.power_demand_system / 1000) * self.qty_reclaimers  # [W/day][1 kW/1000 W] = [kWh/d]
         else:
             self.power_demand = 0
 

@@ -118,18 +118,18 @@ class UltrafiltrationReclaimer(SanUnit):
 
         if self.if_gridtied:
             if self.qty_reclaimers == 1:
-                self.power_demand = self.power_demand_1 * 24 / 1000  # [W/day][24 hr operation][1 kW/1000 W] = [kWh/d]
+                self.power_demand = self.power_demand_1 / 1000  # [W/day][1 kW/1000 W] = [kW/d]
             elif self.qty_reclaimers == 2:
-                self.power_demand = self.power_demand_2 * 24 / 1000  # [W/day][24 hr operation][1 kW/1000 W] = [kWh/d]
+                self.power_demand = self.power_demand_2 / 1000  # [W/day][1 kW/1000 W] = [kW/d]
             elif self.qty_reclaimers == 3:
-                self.power_demand = self.power_demand_3 * 24 / 1000  # [W/day][24 hr operation][1 kW/1000 W] = [kWh/d]
+                self.power_demand = self.power_demand_3 / 1000  # [W/day][1 kW/1000 W] = [kW/d]
             else:
-                self.power_demand = self.power_demand_4 * 24 / 1000  # [W/day][24 hr operation][1 kW/1000 W] = [kWh/d]
+                self.power_demand = self.power_demand_4 / 1000  # [W/day][1 kW/1000 W] = [kW/d]
         else:
             self.power_demand = 0
             
         self.power_utility(self.power_demand)
-    
+
     def _calc_replacement_cost(self):
         scale = (self.ppl / self.baseline_ppl) ** self.exponent_scale
 
