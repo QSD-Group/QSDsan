@@ -432,7 +432,7 @@ class LCA:
                 impacts[m] += n*time*ws.F_mass
         return impacts
 
-    def get_other_impacts(self):
+    def get_other_impacts(self, time=None, time_unit='hr'):
         '''
         Return all additional impacts from "other" :class:`ImpactItems` objects,
         based on defined quantity.
@@ -440,23 +440,29 @@ class LCA:
         self.refresh_other_items()
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         other_dct = self.other_items
+        if not time:
+            time = self.lifetime_hr
+        else:
+            time = auom(time_unit).convert(float(time), 'hr')
+        factor = time / self.lifetime_hr
         for i in other_dct.keys():
             item = ImpactItem.get_item(i)
             for m, n in item.CFs.items():
                 if m not in impacts.keys():
                     continue
-                impacts[m] += n*other_dct[i]['quantity']
+                impacts[m] += n*other_dct[i]['quantity']*factor
         return impacts
 
     def get_total_impacts(self, exclude=None, time=None, time_unit='hr'):
         '''Return total impacts, normalized to a certain time frame.'''
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
+        constr = self.get_construction_impacts(self.construction_units, time=time, time_unit=time_unit)
+        trans = self.get_transportation_impacts(self.transportation_units, time=time, time_unit=time_unit)
         ws_impacts = self.get_stream_impacts(stream_items=self.stream_inventory,
                                              exclude=exclude, time=time, time_unit=time_unit)
-        for i in (self.total_construction_impacts,
-                  self.total_transportation_impacts,
-                  ws_impacts,
-                  self.total_other_impacts):
+        other = self.get_other_impacts(time=time, time_unit=time_unit)
+
+        for i in (constr, trans, ws_impacts, other):
             for m, n in i.items():
                 if m not in impacts.keys():
                     continue

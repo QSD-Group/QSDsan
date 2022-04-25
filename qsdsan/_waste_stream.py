@@ -363,13 +363,19 @@ class WasteStream(SanStream):
         return new
 
 
-    def show(self, T='K', P='Pa', flow='g/hr', composition=False, N=15,
+    def show(self, layout=None, T='K', P='Pa', flow='g/hr', composition=False, N=15,
              stream_info=True, details=True, concentrations='mg/L'):
         '''
         Print information related to this :class:`WasteStream`.
 
         Parameters
         ----------
+        layout : str
+            Shorthand to pass composition, flow, and N information.
+            Should be in the form of {'c' or ''}{'wt', 'mol' or 'vol'}{# or ''}.
+            For example: 'cwt100' corresponds to composition=True, flow='kg/hr', and N=100;
+            'mol' corresponds to compostion=False, flow='kmol/hr', and N=None.
+            Specifying `layout` will ignore `flow`, `composition`, and `N`.
         T : str, optional
             The unit for temperature. The default is 'K'.
         P : float, optional
@@ -386,12 +392,16 @@ class WasteStream(SanStream):
             Whether to print stream-specific information. The default is True.
         details : bool, optional
             Whether to show the all composite variables of this waste stream. The default is True.
-
         '''
 
         info = ''
         # Stream-related specifications
         if stream_info:
+            if layout:
+                default_N = N
+                flow = composition = N = None
+                flow, composition, N = self._translate_layout(layout, flow, composition, N)
+                N = N or default_N
             super().show(None, T, P, flow, composition, N)
         else:
             info += self._basic_info()
