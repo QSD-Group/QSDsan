@@ -101,10 +101,10 @@ class SludgePasteurizationReclaimer(SanUnit):
                  temp_pasteurization=343.15, lhv_lpg=48.5, ppl=1, if_sludge_service=True, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
-        self._heat_loss = heat_loss  
-        self._target_MC = target_MC      
-        self._sludge_temp = sludge_temp
-        self._temp_pasteurization = temp_pasteurization
+        self.heat_loss = heat_loss
+        self.target_MC = target_MC
+        self.sludge_temp = sludge_temp
+        self.temp_pasteurization = temp_pasteurization
         self.lhv_lpg = lhv_lpg
         self.ppl = ppl
         self.if_sludge_service = if_sludge_service
@@ -180,7 +180,7 @@ class SludgePasteurizationReclaimer(SanUnit):
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
         
-        self.add_OPEX = self._calc_replacement_cost() + self._calc_labor_cost()  # USD/hr
+        self.add_OPEX = self._calc_replacement_cost() + self._calc_maintenance_labor_cost()  # USD/hr
         self.power_demand = 0
         self.power_utility(self.power_demand)  # kWh
 
@@ -188,7 +188,7 @@ class SludgePasteurizationReclaimer(SanUnit):
         sludge_replacement_cost = 0  # Assume dryer and barrel have 25 year lifetime so will not need to be replaced
         return sludge_replacement_cost / (365 * 24) * self.price_ratio  # USD/hr
 
-    def _calc_labor_cost(self):
+    def _calc_maintenance_labor_cost(self):
         labor_cost = (self.wages * self.sludge_labor_maintenance) * (self.user_scale_up ** self.exponent_scale)
         return labor_cost/(365 * 24)  # USD/hr
 

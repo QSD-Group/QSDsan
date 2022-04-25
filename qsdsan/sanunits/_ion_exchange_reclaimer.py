@@ -152,7 +152,7 @@ class IonExchangeReclaimer(SanUnit):
         for equipment, cost in C.items():
             C[equipment] = cost * scale
 
-        self.add_OPEX = self._calc_replacement_cost() + self._calc_labor_cost()
+        self.add_OPEX = self._calc_replacement_cost() + self._calc_maintenance_labor_cost()
 
     def _calc_replacement_cost(self):
         scale = (self.ppl / self.baseline_ppl) ** self.exponent_scale
@@ -169,7 +169,7 @@ class IonExchangeReclaimer(SanUnit):
                                                  + other_replacement_cost) / (365 * 24)  # USD/hr
         return ion_exchange_replacement_cost
 
-    def _calc_labor_cost(self):
+    def _calc_maintenance_labor_cost(self):
         scale = (self.ppl / self.baseline_ppl) ** self.exponent_scale
         labor_cost = (self.wages * self.labor_maintenance_zeolite_regeneration) * scale  # USD/year
         return labor_cost / (365 * 24)  # USD/hr
