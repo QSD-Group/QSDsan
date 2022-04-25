@@ -150,15 +150,15 @@ class Kinetics(DynamicParameter):
                          params=params)
         self.process = process
 
-    @property
-    def process(self):
-        '''[:class:`Process`] The process whose reaction rate is defined by this Kinetics object.'''
-        return self._process
-    @process.setter
-    def process(self, pc):
-        if not isinstance(pc, Process):
-            raise TypeError(f'processes must be of type `Process`, not {type(pc)}')
-        self._process = pc
+    # @property
+    # def process(self):
+    #     '''[:class:`Process`] The process whose reaction rate is defined by this Kinetics object.'''
+    #     return self._process
+    # @process.setter
+    # def process(self, pc):
+    #     if not isinstance(pc, Process):
+    #         raise TypeError(f'processes must be of type `Process`, not {type(pc)}')
+    #     self._process = pc
 
     def copy(self, new_process=None):
         '''Return a copy.'''
@@ -201,17 +201,17 @@ class MultiKinetics:
         self.function = function
         self._params = params
 
-    @property
-    def processes(self):
-        '''[:class:`Processes`] The process whose reaction rate is defined
-        by this Kinetics object.'''
-        return self._processes
-    @processes.setter
-    def processes(self, pc):
-        if not isinstance(pc, (Processes, CompiledProcesses)):
-            raise TypeError(f'processes must be of type `Processes` or '
-                            f'`CompiledProcesses`, not {type(pc)}')
-        self._processes = pc
+    # @property
+    # def processes(self):
+    #     '''[:class:`Processes`] The process whose reaction rate is defined
+    #     by this Kinetics object.'''
+    #     return self._processes
+    # @processes.setter
+    # def processes(self, pc):
+    #     if not isinstance(pc, (Processes, CompiledProcesses)):
+    #         raise TypeError(f'processes must be of type `Processes` or '
+    #                         f'`CompiledProcesses`, not {type(pc)}')
+    #     self._processes = pc
 
     @property
     def function(self):
@@ -221,7 +221,7 @@ class MultiKinetics:
     @function.setter
     def function(self, f):
         if callable(f):
-            nargs = f.__code__co_argcount
+            nargs = f.__code__.co_argcount
             if nargs > 2:
                 raise ValueError(f'function for the {self.__repr__()} must take '
                                  f'at most 2 positional arguments: an array '
@@ -1213,8 +1213,7 @@ class CompiledProcesses(Processes):
             self._collect_rate_func()
         return self._rate_function
 
-    @rate_function.setter
-    def rate_function(self, k):
+    def set_rate_function(self, k):
         dct = self.__dict__
         if k is None:
             dct['_rate_function'] = None
@@ -1231,9 +1230,9 @@ class CompiledProcesses(Processes):
     def _collect_rate_func(self):
         self.__dict__['_rate_function'] = MultiKinetics(self)
 
-    def rate_eval(self, state_arr):
-        '''Return the kinetic rates given an array of state variables.'''
-        return self.rate_function(state_arr)
+    # def rate_eval(self, state_arr):
+    #     '''Return the kinetic rates given an array of state variables.'''
+    #     return self.rate_function(state_arr)
 
     @property
     def production_rates(self):
@@ -1248,7 +1247,7 @@ class CompiledProcesses(Processes):
         '''Return the rates of production or consumption of the components.'''
         self.params_eval(state_arr)
         M_stoichio = self.stoichio_eval()
-        rho_arr = self.rate_eval(state_arr)
+        rho_arr = self.rate_function(state_arr)
         return np.dot(M_stoichio.T, rho_arr)
 
     def subgroup(self, IDs):
