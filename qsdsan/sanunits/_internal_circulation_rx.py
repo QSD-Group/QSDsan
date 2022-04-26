@@ -75,6 +75,10 @@ class InternalCirculationRx(MixTank):
 
     Parameters
     ----------
+    ins : Inlets(obj)
+        Influent.
+    outs : Outlets(obj)
+        Biogas, effluent, waste sludge.
     method : str
         Either "separate" to design the bottom and top reactors separately as in [2]_ ,
         or "lumped" to design the entire IC reactor as a black box following [3]_ .
@@ -88,12 +92,14 @@ class InternalCirculationRx(MixTank):
         ID of the Component that represents the biomass.
     OLRall : float
         Overall organic loading rate, [kg COD/m3/hr].
+    Y_biogas : float
+        Biogas yield, [kg biogas/kg consumed COD].
+    Y_biomass : float
+        Biomass yield, [kg biomass/kg consumed COD].
     biodegradability : float or dict
         Biodegradability of components,
         when shown as a float, all biodegradable components are assumed to have
         the same degradability.
-    Y : float
-        Biomass yield, [kg biomass/kg consumed COD].
     q_Qw : float
         Ratio between the bottom reactor waste flow and the influent.
     q_Xw : float
@@ -155,7 +161,7 @@ class InternalCirculationRx(MixTank):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
                  method='lumped', biomass_ID='WWTsludge',
-                 OLRall=1.25, biodegradability=1., Y=0.07,
+                 OLRall=1.25, Y_biogas=0.86, Y_biomass=0.07, biodegradability={},
                  vessel_type='IC', vessel_material='Stainless steel',
                  V_wf=0.8, kW_per_m3=0., T=35+273.15, init_with='WasteStream',
                  **kwargs):
@@ -165,8 +171,9 @@ class InternalCirculationRx(MixTank):
         self._gas = self.outs[0].copy(f'{ID}_gas')
         self.method = method
         self.OLRall = OLRall
+        self.Y_biogas = Y_biogas
+        self.Y_biomass = Y_biomass
         self.biodegradability = biodegradability
-        self.Y = Y
         self.V_wf = V_wf or self._default_V_wf
         self.vessel_type = 'IC'
         self.vessel_material = vessel_material
@@ -189,14 +196,14 @@ class InternalCirculationRx(MixTank):
             setattr(self, k, v)
 
 
-    def _refresh_rxns(self, X_biogas=None, X_growth=None):
-        X_biogas = X_biogas if X_biogas else 1 - self.Y
-        X_growth = X_growth if X_growth else self.Y
+    def _refresh_rxns(self, Y_biogas=None, Y_biomass=None):
+        Y_biogas = Y_biogas if Y_biogas else self.Y_biogas
+        Y_biomass = Y_biomass if Y_biomass else self.Y_biomass
         xcmp_ID = self._xcmp.ID
         self._biogas_rxns = get_digestion_rxns(self.ins[0], self.biodegradability,
-                                               X_biogas, 0., xcmp_ID)
+                                               Y_biogas, 0., xcmp_ID)
         self._growth_rxns = get_digestion_rxns(self.ins[0], self.biodegradability,
-                                               0., X_growth, xcmp_ID)
+                                               0., Y_biomass, xcmp_ID)
         self._i_rm = self._biogas_rxns.X + self._growth_rxns.X
 
 
@@ -220,7 +227,7 @@ class InternalCirculationRx(MixTank):
         degassing(inf, gas)
         Se = compute_stream_COD(inf, 'kg/m3')
 
-        Qi, Si, Xi, Qe, Y = self.Qi, self.Si, self.Xi, self.Qe, self.Y
+        Qi, Si, Xi, Qe, Y = self.Qi, self.Si, self.Xi, self.Qe, self.Y_biomass
         method = self.method.lower()
         if method == 'separate':
             run_inputs = (Qi, Si, Xi, Qe, Se, self.Vliq, Y,
@@ -386,35 +393,24 @@ class InternalCirculationRx(MixTank):
         return self._biodegradability
     @biodegradability.setter
     def biodegradability(self, i):
-        if isinstance(i, float):
+        if not isinstance(i, dict):
             if not 0<=i<=1:
                 raise ValueError('`biodegradability` should be within [0, 1], '
                                  f'the input value {i} is outside the range.')
-            self._biodegradability = i
-            return
-
-        for k, v in i.items():
-            if not 0<=v<=1:
-                raise ValueError('`biodegradability` should be within [0, 1], '
-                                 f'the input value for component "{k}" is '
-                                 'outside the range.')
-        self._biodegradability = i
+            self._biodegradability = dict.fromkeys(self.chemicals.IDs, i)
+        else:
+            for k, v in i.items():
+                if not 0<=v<=1:
+                    raise ValueError('`biodegradability` should be within [0, 1], '
+                                     f'the input value for chemical "{k}" is '
+                                     'outside the range.')
+            self._biodegradability = dict.fromkeys(self.chemicals.IDs, i).update(i)
+        self._refresh_rxns()
 
     @property
     def i_rm(self):
         '''[:class:`np.array`] Removal of each component in this reactor.'''
         return self._i_rm
-
-    @property
-    def Y(self):
-        '''[float] Biomass yield, [kg biomass/kg consumed COD].'''
-        return self._Y
-    @Y.setter
-    def Y(self, i):
-        if not 0 <= i <= 1:
-            raise ValueError('`Y` should be within [0, 1], '
-                             f'the input value {i} is outside the range.')
-        self._Y = i
 
     @property
     def q_Qw(self):
@@ -472,7 +468,7 @@ class InternalCirculationRx(MixTank):
     @property
     def Fxb(self):
         '''
-        [float] Biomass transfer ratio from the bottom reacor to the top reactor,
+        [float] Biomass transfer ratio from the bottom reactor to the top reactor,
         should be within [0, 1] (ideal to no retention),
         only relevant when the "separate" method is used.
         '''
@@ -487,7 +483,7 @@ class InternalCirculationRx(MixTank):
     @property
     def Fxt(self):
         '''
-        [float] Biomass transfer ratio from the top reacor to the effluent,
+        [float] Biomass transfer ratio from the top reactor to the effluent,
         should be within [0, 1] (ideal to no retention),
         only relevant when the "separate" method is used.
         '''

@@ -42,7 +42,7 @@ class LCA:
         Lifetime of the LCA.
     lifetime_unit : str
         Unit of lifetime.
-    indicators : iterable
+    indicators : Iterable(obj)
         `ImpactIndicator` objects or their IDs/aliases.
     uptime_ratio : float
         Fraction of time that the system is operating.
@@ -150,7 +150,7 @@ class LCA:
     >>> methanol_item = qs.StreamImpactItem(linked_stream=methanol, GWP=2, FEC=13)
     >>> ethanol_item = qs.StreamImpactItem(linked_stream=ethanol, GWP=2.1, FEC=25)
     >>> alcohols_item = qs.StreamImpactItem(linked_stream=alcohols, GWP=-0.2, FEC=-5)
-    >>> brine_item = qs.StreamImpactItem(linked_stream=methanol, GWP=2, FEC=3)
+    >>> brine_item = qs.StreamImpactItem(linked_stream=waste_brine, GWP=2, FEC=3)
 
     Finally, there might be other impacts we want to include in the LCA,
     for example, the electricity needed to operate the system.
@@ -171,8 +171,8 @@ class LCA:
     LCA: sys (lifetime 10 yr)
     ...
     >>> # Retrieve impacts associated with a specific indicator
-    >>> lca.get_total_impacts()[GWP.ID] # doctest: +NUMBER
-    4944207.976508295
+    >>> lca.get_total_impacts()[GWP.ID] # doctest: +ELLIPSIS
+    349737807.9765445...
     >>> # Or breakdowns of the different category
     >>> lca.get_impact_table('Construction') # doctest: +SKIP
     >>> # Below is for testing purpose, you do not need it
@@ -187,18 +187,18 @@ class LCA:
 
     You can also allocate the impact based on mass, energy, value, or a ratio you like
 
-    >>> lca.get_allocated_impacts(sys.products, allocate_by='mass')['waste_brine']['FossilEnergyConsumption'] # doctest: +NUMBER
-    28761581.933170985
-    >>> lca.get_allocated_impacts(sys.products, allocate_by='energy')['alcohols']['GlobalWarming'] # doctest: +NUMBER
-    11063009.556015274
+    >>> lca.get_allocated_impacts(sys.products, allocate_by='mass')['waste_brine']['FossilEnergyConsumption'] # doctest: +ELLIPSIS
+    46018518.870...
+    >>> lca.get_allocated_impacts(sys.products, allocate_by='energy')['alcohols']['GlobalWarming'] # doctest: +ELLIPSIS
+    11063009.556...
     >>> alcohols.price = 5
     >>> waste_brine.price = 1
     >>> GWP_alcohols = lca.get_allocated_impacts(sys.products, allocate_by='value')['alcohols']['GlobalWarming']
     >>> GWP_brine = lca.get_allocated_impacts(sys.products, allocate_by='value')['waste_brine']['GlobalWarming']
-    >>> GWP_alcohols + GWP_brine # doctest: +NUMBER
-    5469807.976508294
-    >>> lca.get_total_impacts(exclude=sys.products)['GlobalWarming'] # doctest: +NUMBER
-    5469807.976508295
+    >>> GWP_alcohols + GWP_brine # doctest: +ELLIPSIS
+    5469807.9765...
+    >>> lca.get_total_impacts(exclude=sys.products)['GlobalWarming'] # doctest: +ELLIPSIS
+    5469807.9765...
 
     See Also
     --------
@@ -418,21 +418,21 @@ class LCA:
             if ws in exclude: continue
 
             for m, n in j.CFs.items():
-                if kind == 'all':
+                if kind in ('all', 'total', 'net'):
                     pass
-                elif kind == 'direct_emission':
+                elif kind in ('direct', 'direct_emission'):
                     n = max(n, 0)
                 elif kind == 'offset':
                     n = min(n, 0)
                 else:
                     raise ValueError('kind can only be "all", "direct_emission", or "offset", '
-                                     f'not {kind}.')
+                                     f'not "{kind}".')
                 if m not in impacts.keys():
                     continue
                 impacts[m] += n*time*ws.F_mass
         return impacts
 
-    def get_other_impacts(self):
+    def get_other_impacts(self, time=None, time_unit='hr'):
         '''
         Return all additional impacts from "other" :class:`ImpactItems` objects,
         based on defined quantity.
@@ -440,23 +440,29 @@ class LCA:
         self.refresh_other_items()
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         other_dct = self.other_items
+        if not time:
+            time = self.lifetime_hr
+        else:
+            time = auom(time_unit).convert(float(time), 'hr')
+        factor = time / self.lifetime_hr
         for i in other_dct.keys():
             item = ImpactItem.get_item(i)
             for m, n in item.CFs.items():
                 if m not in impacts.keys():
                     continue
-                impacts[m] += n*other_dct[i]['quantity']
+                impacts[m] += n*other_dct[i]['quantity']*factor
         return impacts
 
     def get_total_impacts(self, exclude=None, time=None, time_unit='hr'):
         '''Return total impacts, normalized to a certain time frame.'''
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
+        constr = self.get_construction_impacts(self.construction_units, time=time, time_unit=time_unit)
+        trans = self.get_transportation_impacts(self.transportation_units, time=time, time_unit=time_unit)
         ws_impacts = self.get_stream_impacts(stream_items=self.stream_inventory,
                                              exclude=exclude, time=time, time_unit=time_unit)
-        for i in (self.total_construction_impacts,
-                  self.total_transportation_impacts,
-                  ws_impacts,
-                  self.total_other_impacts):
+        other = self.get_other_impacts(time=time, time_unit=time_unit)
+
+        for i in (constr, trans, ws_impacts, other):
             for m, n in i.items():
                 if m not in impacts.keys():
                     continue
@@ -473,16 +479,16 @@ class LCA:
 
         Parameters
         ----------
-        streams : :class:`WasteStream` or iterable
-            One or a iterable of streams. Note that impacts of these streams will be
+        streams : Iterable(obj)
+            One or a Iterable of streams. Note that impacts of these streams will be
             excluded in calculating the total impacts.
-        allocate_by : str, iterable, or function to generate an iterable
+        allocate_by : str, Iterable, or function to generate an Iterable
             If provided as a str, can be "mass" (`F_mass`), "energy" (`HHV`),
             or 'value' (`F_mass`*`price`) to allocate the impacts accordingly.
-            If provided as an iterable (no need to normalize so that sum of the iterable is 1),
-            will allocate impacts according to the iterable.
+            If provided as an Iterable (no need to normalize so that sum of the Iterable is 1),
+            will allocate impacts according to the Iterable.
             If provided as a function,  will call the function to generate an
-            iterable to allocate the impacts accordingly.
+            Iterable to allocate the impacts accordingly.
 
         .. note::
 
@@ -511,8 +517,8 @@ class LCA:
             ratios = allocate_by()
         else:
             raise ValueError('allocate_by can only be "mass", "energy", "value", '
-                             'an iterable (with the same length as `streams`), '
-                             'or a function to generate an iterable.')
+                             'an Iterable (with the same length as `streams`), '
+                             'or a function to generate an Iterable.')
         if ratios.sum() == 0:
             raise ValueError('Calculated allocation ratios are all zero, cannot allocate.')
         ratios = ratios/ratios.sum()
@@ -778,7 +784,7 @@ class LCA:
 
     @property
     def construction_units(self):
-        '''[set] All units in the linked system with constrution activity.'''
+        '''[set] All units in the linked system with construction activity.'''
         return self._construction_units
 
     @property

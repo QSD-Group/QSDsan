@@ -182,7 +182,7 @@ class Components(Chemicals):
             can be 'g', 'l', 's', or left as empty to avoid locking state.
             Components that have already been locked will not be affected.
         soluble_ref : str
-            ID of the reference component for those with `particle_size` == 'Souble'.
+            ID of the reference component for those with `particle_size` == 'Soluble'.
         gas_ref : str
             ID of the reference component for those with `particle_size` == 'Dissolved gas'.
         particulate_ref : str
@@ -204,9 +204,13 @@ class Components(Chemicals):
         '''
         isa = isinstance
         get = getattr
+
         sol = Chemical(soluble_ref)
         gas = Chemical(gas_ref)
         par = Chemical(particulate_ref)
+        # 0.8559 at 90 °C https://pubchem.ncbi.nlm.nih.gov/compound/Tristearin#section=Density
+        # avg ~0.9 http://www.dgfett.de/material/physikalische_eigenschaften.pdf
+        add_V_from_rho(par, 0.9, 'g/ml', 's')
         water = Chemical('Water')
         for cmp in self:
             particle_size = cmp.particle_size
