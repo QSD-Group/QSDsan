@@ -150,7 +150,7 @@ class LCA:
     >>> methanol_item = qs.StreamImpactItem(linked_stream=methanol, GWP=2, FEC=13)
     >>> ethanol_item = qs.StreamImpactItem(linked_stream=ethanol, GWP=2.1, FEC=25)
     >>> alcohols_item = qs.StreamImpactItem(linked_stream=alcohols, GWP=-0.2, FEC=-5)
-    >>> brine_item = qs.StreamImpactItem(linked_stream=methanol, GWP=2, FEC=3)
+    >>> brine_item = qs.StreamImpactItem(linked_stream=waste_brine, GWP=2, FEC=3)
 
     Finally, there might be other impacts we want to include in the LCA,
     for example, the electricity needed to operate the system.
@@ -172,7 +172,7 @@ class LCA:
     ...
     >>> # Retrieve impacts associated with a specific indicator
     >>> lca.get_total_impacts()[GWP.ID] # doctest: +ELLIPSIS
-    4944207.9765...
+    349737807.9765445...
     >>> # Or breakdowns of the different category
     >>> lca.get_impact_table('Construction') # doctest: +SKIP
     >>> # Below is for testing purpose, you do not need it
@@ -188,7 +188,7 @@ class LCA:
     You can also allocate the impact based on mass, energy, value, or a ratio you like
 
     >>> lca.get_allocated_impacts(sys.products, allocate_by='mass')['waste_brine']['FossilEnergyConsumption'] # doctest: +ELLIPSIS
-    28761581.9...
+    46018518.870...
     >>> lca.get_allocated_impacts(sys.products, allocate_by='energy')['alcohols']['GlobalWarming'] # doctest: +ELLIPSIS
     11063009.556...
     >>> alcohols.price = 5
