@@ -45,14 +45,9 @@ class SolarReclaimer(SanUnit):
 
     '''
 
-    # Constants
-    baseline_ppl = 30  # baseline population served by Reclaimer
-    exponent_scale = 0.6  # exponential scaling constant
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', ppl=1, **kwargs):
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
-
-        self.ppl = ppl
 
         data = load_data(path=solar_data_path)
         for para in data.index:
@@ -70,8 +65,8 @@ class SolarReclaimer(SanUnit):
 
     def _design(self):
         design = self.design_results
-        design['Solar'] = solar_quant = self.solar_capacity * (self.ppl / self.baseline_ppl)  # linear scale
-        design['Battery'] = battery_quant = self.battery_kg * (self.ppl / self.baseline_ppl)  # linear scale
+        design['Solar'] = solar_quant = self.solar_capacity
+        design['Battery'] = battery_quant = self.battery_kg
 
         self.construction = Construction(item='Solar', quantity=solar_quant, quantity_unit='m2')
         self.construction = Construction(item='Battery', quantity=battery_quant, quantity_unit='kg')
@@ -84,21 +79,18 @@ class SolarReclaimer(SanUnit):
         C['Solar Cost'] = ((self.solar_cost * self.power_demand_30users) + self.solar_module_system
                            + self.inverter_cost)
 
-        scale = (self.ppl / self.baseline_ppl) ** self.exponent_scale
         ratio = self.price_ratio
         for equipment, cost in C.items():
-            C[equipment] = cost * ratio * scale
+            C[equipment] = cost * ratio
 
         self.add_OPEX = self._calc_replacement_cost() + self._calc_maintenance_labor_cost()
 
     def _calc_maintenance_labor_cost(self):
-        scale = (self.ppl / self.baseline_ppl) ** self.exponent_scale
-        labor_cost = (self.wages * self.pannel_cleaning) * scale  # USD/year
+        labor_cost = (self.wages * self.pannel_cleaning)  # USD/year
         return labor_cost / (365 * 24)  # USD/hr
 
     def _calc_replacement_cost(self):
-        scale = (self.ppl / self.baseline_ppl) ** self.exponent_scale
         solar_panel_replacement_cost = (self.solar_cost * self.power_demand_30users) / self.solar_lifetime  # USD/year
         battery_replacement_cost = self.battery_storage_cost / self.battery_lifetime  # USD/year
-        replacement_cost = (solar_panel_replacement_cost + battery_replacement_cost) / (365 * 24) * self.price_ratio * scale  # USD/hr
+        replacement_cost = (solar_panel_replacement_cost + battery_replacement_cost) / (365 * 24) * self.price_ratio  # USD/hr
         return replacement_cost

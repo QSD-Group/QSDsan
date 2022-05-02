@@ -75,6 +75,8 @@ class MURTToilet(Toilet):
         self._safety_factor = safety_factor
         self.if_include_front_end = if_include_front_end
 
+        self._mixed = WasteStream(f'{self.ID}_mixed')
+
         data = load_data(path=murt_toilet_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
@@ -92,7 +94,7 @@ class MURTToilet(Toilet):
         waste, CH4, N2O = self.outs
         CH4.phase = N2O.phase = 'g'
 
-        mixed = WasteStream(f'{self.ID}_mixed')
+        mixed = self._mixed
         mixed.mix_from(self.ins)
         tot_COD_kg = sum(float(getattr(i, 'COD')) * i.F_vol for i in self.ins) / 1e3
         
