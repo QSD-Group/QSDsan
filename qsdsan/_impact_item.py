@@ -709,14 +709,17 @@ class StreamImpactItem(ImpactItem):
         if self._linked_stream:
             old_s = self._linked_stream
             self._linked_stream.stream_impact_item = None
-            warn(f'`StreamImpactItem` {self.ID} is unlinked from {old_s.ID} and ' \
-                 f'linked to {new_s.ID}.', stacklevel=2)
+            if old_s is not new_s:
+                warn(f'`StreamImpactItem` {self.ID} is unlinked from {old_s.ID} and ' \
+                     f'linked to {new_s.ID}.')
         if new_s:
-            if hasattr(self, '_ID'):
-                if new_s.stream_impact_item and new_s.stream_impact_item.ID != self.ID:
-                    msg = f'The original `StreamImpactItem` linked to stream {new_s} ' \
-                        f'is replaced with {self}.'
-                    warn(message=msg, stacklevel=2)
+            if new_s.stream_impact_item and new_s.stream_impact_item is not self:
+                if hasattr(self, '_ID'):
+                    warn(f'The original `StreamImpactItem` linked to stream {new_s.ID} '
+                         f'is replaced with {self.ID}.')
+                else:
+                    warn(f'The original `StreamImpactItem` linked to stream {new_s.ID} '
+                         f'is replaced with upon the creation of a new stream.')
             new_s._stream_impact_item = self
         self._linked_stream = new_s
 

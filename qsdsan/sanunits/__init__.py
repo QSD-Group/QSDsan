@@ -9,6 +9,8 @@ This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
     Joy Zhang <joycheung1994@gmail.com>
     Lewis Rowles <stetsonsc@gmail.com>
+    Tori Morgan <tvlmorgan@gmail.com>
+    Hannah Lohman <hlohman94@gmail.com>
     Lane To <lane20@illinois.edu>
     Smiti Mittal <smitimittal@gmail.com>
 
@@ -56,6 +58,22 @@ from ._sedimentation import *
 from ._toilets import *
 from ._treatment_beds import *
 
+from ._murt_toilet import *
+from ._primary_reclaimer import *
+from ._ultrafiltration_reclaimer import *
+from ._ion_exchange_reclaimer import *
+from ._ecr_reclaimer import *
+from ._housing_reclaimer import *
+from ._system_reclaimer import *
+from ._sludge_pasteurization_reclaimer import*
+from ._solar_reclaimer import*
+from ._primaryMBR import*
+from ._aerobic_ES_bio import*
+from ._anaerobic_ES_bio import*
+from ._MBR import*
+from ._MBR_ECR import*
+from ._recycling_controls import*
+from ._solar import*
 
 # From then on the order doesn't matter, listed alphabetically
 from . import (
@@ -92,6 +110,22 @@ from . import (
 	    _toilets,
 	    _treatment_beds,
 	    _trucking,
+        _murt_toilet,
+        _primary_reclaimer,
+        _ultrafiltration_reclaimer,
+        _ion_exchange_reclaimer,
+        _ecr_reclaimer,
+        _housing_reclaimer,
+        _system_reclaimer,
+        _sludge_pasteurization_reclaimer,
+        _solar_reclaimer,
+        _primaryMBR,
+        _aerobic_ES_bio,
+        _anaerobic_ES_bio,
+        _MBR,
+        _MBR_ECR,
+        _recycling_controls,
+        _solar,
 	    )
 
 
@@ -129,4 +163,21 @@ __all__ = (
 	    *_toilets.__all__,
 	    *_treatment_beds.__all__,
 	    *_trucking.__all__,
+        *_murt_toilet.__all__,
+        *_primary_reclaimer.__all__,
+        *_ultrafiltration_reclaimer.__all__,
+        *_ion_exchange_reclaimer.__all__,
+        *_ecr_reclaimer.__all__,
+        *_housing_reclaimer.__all__,
+        *_system_reclaimer.__all__,
+        *_sludge_pasteurization_reclaimer.__all__,
+        *_solar_reclaimer.__all__,
+        *_primaryMBR.__all__,
+        *_aerobic_ES_bio.__all__,
+        *_anaerobic_ES_bio.__all__,
+        *_MBR.__all__,
+        *_MBR_ECR.__all__,
+        *_recycling_controls.__all__,
+        *_solar.__all__,
 	    )
+

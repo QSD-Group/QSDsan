@@ -150,7 +150,7 @@ class LCA:
     >>> methanol_item = qs.StreamImpactItem(linked_stream=methanol, GWP=2, FEC=13)
     >>> ethanol_item = qs.StreamImpactItem(linked_stream=ethanol, GWP=2.1, FEC=25)
     >>> alcohols_item = qs.StreamImpactItem(linked_stream=alcohols, GWP=-0.2, FEC=-5)
-    >>> brine_item = qs.StreamImpactItem(linked_stream=methanol, GWP=2, FEC=3)
+    >>> brine_item = qs.StreamImpactItem(linked_stream=waste_brine, GWP=2, FEC=3)
 
     Finally, there might be other impacts we want to include in the LCA,
     for example, the electricity needed to operate the system.
@@ -172,7 +172,7 @@ class LCA:
     ...
     >>> # Retrieve impacts associated with a specific indicator
     >>> lca.get_total_impacts()[GWP.ID] # doctest: +ELLIPSIS
-    4944207.9765...
+    349737807.9765445...
     >>> # Or breakdowns of the different category
     >>> lca.get_impact_table('Construction') # doctest: +SKIP
     >>> # Below is for testing purpose, you do not need it
@@ -188,7 +188,7 @@ class LCA:
     You can also allocate the impact based on mass, energy, value, or a ratio you like
 
     >>> lca.get_allocated_impacts(sys.products, allocate_by='mass')['waste_brine']['FossilEnergyConsumption'] # doctest: +ELLIPSIS
-    28761581.9...
+    46018518.870...
     >>> lca.get_allocated_impacts(sys.products, allocate_by='energy')['alcohols']['GlobalWarming'] # doctest: +ELLIPSIS
     11063009.556...
     >>> alcohols.price = 5
@@ -432,7 +432,7 @@ class LCA:
                 impacts[m] += n*time*ws.F_mass
         return impacts
 
-    def get_other_impacts(self):
+    def get_other_impacts(self, time=None, time_unit='hr'):
         '''
         Return all additional impacts from "other" :class:`ImpactItems` objects,
         based on defined quantity.
@@ -440,23 +440,29 @@ class LCA:
         self.refresh_other_items()
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         other_dct = self.other_items
+        if not time:
+            time = self.lifetime_hr
+        else:
+            time = auom(time_unit).convert(float(time), 'hr')
+        factor = time / self.lifetime_hr
         for i in other_dct.keys():
             item = ImpactItem.get_item(i)
             for m, n in item.CFs.items():
                 if m not in impacts.keys():
                     continue
-                impacts[m] += n*other_dct[i]['quantity']
+                impacts[m] += n*other_dct[i]['quantity']*factor
         return impacts
 
     def get_total_impacts(self, exclude=None, time=None, time_unit='hr'):
         '''Return total impacts, normalized to a certain time frame.'''
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
+        constr = self.get_construction_impacts(self.construction_units, time=time, time_unit=time_unit)
+        trans = self.get_transportation_impacts(self.transportation_units, time=time, time_unit=time_unit)
         ws_impacts = self.get_stream_impacts(stream_items=self.stream_inventory,
                                              exclude=exclude, time=time, time_unit=time_unit)
-        for i in (self.total_construction_impacts,
-                  self.total_transportation_impacts,
-                  ws_impacts,
-                  self.total_other_impacts):
+        other = self.get_other_impacts(time=time, time_unit=time_unit)
+
+        for i in (constr, trans, ws_impacts, other):
             for m, n in i.items():
                 if m not in impacts.keys():
                     continue
