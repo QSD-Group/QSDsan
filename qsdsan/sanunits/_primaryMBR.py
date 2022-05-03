@@ -153,7 +153,7 @@ class PrimaryMBR(SanUnit, Decay):
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
         
-         #certain parts need to be replaced based on an expected lifefime
+         #certain parts need to be replaced based on an expected lifetime
         #the cost of these parts is considered along with the cost of the labor to replace the
         PrimaryMBR_replacement_costs = (self.Mg_dose * self.MgOH2_cost / 365 / 24) * self.price_ratio
        

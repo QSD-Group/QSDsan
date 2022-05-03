@@ -3,7 +3,6 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-Copyright (C) 2020, Quantitative Sustainable Design Group
 
 This module is developed by:
     Tori Morgan <tvlmorgan@gmail.com>
@@ -11,7 +10,7 @@ This module is developed by:
     Lewis Rowles <stetsonsc@gmail.com>
     
 This module is under the University of Illinois/NCSA Open Source License.
-Please refer to https://github.com/QSD-Group/QSDsan/blob/master/LICENSE.txt
+Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
@@ -27,7 +26,7 @@ ultrafiltration_data_path = ospath.join(data_path, 'sanunit_data/_ultrafiltratio
 
 class UltrafiltrationReclaimer(SanUnit):
     '''
-    Ultrafiltration for removing suspended solids with automted backwash
+    Ultrafiltration for removing suspended solids with automated backwash
     to prolong filter
 
     The following impact items should be pre-constructed for life cycle assessment:

@@ -28,7 +28,7 @@ data_path += 'sanunit_data/_recycling_controls.tsv'
 
 class RecyclingControls(SanUnit, Decay):
     '''
-    All of the costs and impacts associated with recyling after the ECR and the controls and any other mischelaneous parts that may come up
+    All of the costs and impacts associated with recycling after the ECR and the controls and any other miscellaneous parts that may come up
 
     Parameters
     ----------
@@ -102,7 +102,7 @@ class RecyclingControls(SanUnit, Decay):
         ratio = self.price_ratio
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
-        #certain parts need to be replaced based on an expected lifefime
+        #certain parts need to be replaced based on an expected lifetime
         #the cost of these parts is considered along with the cost of the labor to replace them
         #rc_replacement_parts_annual_cost = (self.filter_replacement * self.filter_cost) # USD/yr only accounts for time running
         #self.add_OPEX =  (rc_replacement_parts_annual_cost) / (365 * 24) # USD/hr (all items are per hour)

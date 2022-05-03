@@ -5,6 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 This module is developed by:
     Yalin Li <zoe.yalin.li@gmail.com>
+    
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
@@ -27,7 +28,7 @@ class SludgePasteurizationService(SanUnit):
     Parameters
     ----------
     if_combustion : bool
-         If include combusion reaction during simulation.
+         If include combustion reaction during simulation.
     temp_pasteurization : float
         Pasteurization temperature (Kelvin)
     Examples
@@ -163,7 +164,7 @@ class SludgePasteurizationService(SanUnit):
         # #AND FINAL TEMP OF SLUDGE, AT WHAT TEMP IS WATER REMOVED. 
         
         # #water will be evaporated and goes into the atmosphere 
-        # #temperature of evaportaed water will be sludge pasterurizaiton tempearture 
+        # #temperature of evaporated water will be sludge pasteurization temperature 
         # #no heat is recovered
         # #final temperature is 25 degrees
         # #water temp removed is the same as the sludge pasteurization temperature 

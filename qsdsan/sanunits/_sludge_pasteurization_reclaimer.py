@@ -37,7 +37,7 @@ class SludgePasteurizationReclaimer(SanUnit):
     Parameters
     ----------
     if_combustion : bool
-        If include combusion reaction during simulation.
+        If include combustion reaction during simulation.
     temp_pasteurization : float
         Pasteurization temperature is 70C or 343.15 Kelvin
     sludge_temp : float

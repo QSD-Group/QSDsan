@@ -112,5 +112,5 @@ class ECR(SanUnit, Decay):
         
         #self.power_utility(self.power_demand * self.working_time)
         
-        # costs associated with full time opperators can be added in the TEA as staff
+        # costs associated with full time operators can be added in the TEA as staff
         # Yalin is looking into how to account for annual LCA impact of replacement parts based on lifetime
