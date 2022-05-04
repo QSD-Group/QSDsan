@@ -1179,7 +1179,7 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
             legends.append(r'$\sigma/\mu^*$'+f'={k2}')
 
         if k1:
-            line1 = ax.plot(xy1=(0,0), slope=k1, color=line_color, linestyle='-.')
+            line1 = ax.axline(xy1=(0,0), slope=k1, color=line_color, linestyle='-.')
             lines.append(line1)
             legends.append(r'$\sigma/\mu^*$'+f'={k1}')
 
