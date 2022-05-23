@@ -26,9 +26,12 @@ def create_asm2d_cmps(pickle=False):
     cmps = Components.load_default()
 
     S_A = cmps.S_Ac.copy('S_A')
+    S_A.i_charge = -1/64
     S_ALK = cmps.S_CO3.copy('S_ALK')      # measured as g C
     S_F = cmps.S_F.copy('S_F')
     S_I = cmps.S_U_E.copy('S_I')
+    S_NH4 = cmps.S_NH4.copy('S_NH4')
+    S_NH4.i_charge = 1/14
 
     X_AUT = cmps.X_AOO.copy('X_AUT')
     X_H = cmps.X_OHO.copy('X_H')
@@ -38,6 +41,7 @@ def create_asm2d_cmps(pickle=False):
     X_PAO = cmps.X_PAO.copy('X_PAO')
     X_PHA = cmps.X_PAO_PHA.copy('X_PHA')
     X_PP = cmps.X_PAO_PP_Lo.copy('X_PP')
+    X_PP.i_charge = -1/31
     X_S = cmps.X_B_Subst.copy('X_S')
 
     S_I.i_N = 0.01
@@ -56,7 +60,7 @@ def create_asm2d_cmps(pickle=False):
     X_S.i_mass = 0.75
     X_H.i_mass = X_PAO.i_mass = X_AUT.i_mass = 0.9
 
-    cmps_asm2d = Components([cmps.S_O2, cmps.S_N2, cmps.S_NH4, cmps.S_NO3, cmps.S_PO4,
+    cmps_asm2d = Components([cmps.S_O2, cmps.S_N2, S_NH4, cmps.S_NO3, cmps.S_PO4,
                              S_F, S_A, S_I, S_ALK, X_I, X_S, X_H, X_PAO, X_PP,
                              X_PHA, X_AUT, X_MeOH, X_MeP, cmps.H2O])
 
@@ -64,6 +68,7 @@ def create_asm2d_cmps(pickle=False):
     if pickle: save_pickle(cmps_asm2d, _path_cmps)
     
     return cmps_asm2d
+
 _create_asm2d_cmps = create_asm2d_cmps
 
 # create_asm2d_cmps(True)
