@@ -225,7 +225,7 @@ def load_asm2d_cmps(pickle=None):
 @chemicals_user
 class ASM2d(Processes):
     '''
-    Activated Sludge Model No. 2d in orginal notation. [1]_, [2]_
+    Activated Sludge Model No. 2d in original notation. [1]_, [2]_
 
     Parameters
     ----------
