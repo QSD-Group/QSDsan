@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
     Lewis Rowles <stetsonsc@gmail.com>
     Lane To <lane20@illinois.edu>
 
@@ -485,7 +485,7 @@ class ScrewPress(SludgeSeparator):
         liq, cake_sol = self.outs
         SludgeSeparator._run(self)
 
-        #*** is this needed in both places???? Will it be pulled into the function? Isnt cake solids TS needed too?
+        #*** is this needed in both places???? Will it be pulled into the function? Isn't cake solids TS needed too?
         # self.dewatering_solids_capture = self.settled_frac
         liq, cake_sol = self._adjust_solid_water(waste, liq, cake_sol)
 
@@ -495,7 +495,7 @@ class ScrewPress(SludgeSeparator):
 
         # note to self change these once confirm outputs from above function...
 
-        # Does the funtion above for self._adjust_solid_water take care of these equations?
+        # Does the function above for self._adjust_solid_water take care of these equations?
         # self.waste_sol_flow = waste.F_mass # kg TS/hr
         # dewatering_solids_conc = (self.waste_sol_flow) * self.dewatering_solids_capture    # kg TS/hr
         # dewatering_solids_flowrate = dewatering_solids_conc / (1.06 * self.cake_solids_TS * 1000) # m3 / hr

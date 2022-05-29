@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -161,7 +161,7 @@ class InternalCirculationRx(MixTank):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
                  method='lumped', biomass_ID='WWTsludge',
-                 OLRall=1.25, Y_biogas=0.86, Y_biomass=0.07, biodegradability={},
+                 OLRall=1.25, Y_biogas=0.86, Y_biomass=0.05, biodegradability=1.,
                  vessel_type='IC', vessel_material='Stainless steel',
                  V_wf=0.8, kW_per_m3=0., T=35+273.15, init_with='WasteStream',
                  **kwargs):

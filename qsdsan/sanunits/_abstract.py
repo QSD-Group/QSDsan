@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
     Joy Zhang <joycheung1994@gmail.com>
 
 Part of this module is based on the biosteam package:
@@ -34,7 +34,7 @@ __all__ = (
 class Mixer(SanUnit, Mixer):
     '''
     Similar to :class:`biosteam.units.Mixer`,
-    but can be initilized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`,
+    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`,
     and allows dynamic simulation.
 
     See Also
@@ -117,7 +117,7 @@ class Mixer(SanUnit, Mixer):
 class Splitter(SanUnit, Splitter):
     '''
     Similar to :class:`biosteam.units.Splitter`,
-    but can be initilized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`,
+    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`,
     and allows dynamic simulation.
 
     See Also
@@ -182,7 +182,7 @@ class Splitter(SanUnit, Splitter):
 class FakeSplitter(SanUnit, FakeSplitter):
     '''
     Similar to :class:`biosteam.units.FakeSplitter`,
-    but can be initilized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
+    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
 
     See Also
     --------
@@ -193,7 +193,7 @@ class FakeSplitter(SanUnit, FakeSplitter):
 class ReversedSplitter(SanUnit, ReversedSplitter):
     '''
     Similar to :class:`biosteam.units.ReversedSplitter`,
-    but can be initilized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
+    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
 
     See Also
     --------
@@ -209,11 +209,11 @@ class ComponentSplitter(SanUnit):
     Parameters
     ----------
     split_keys : iterable
-        IDs of components to be splitted to different effluents.
+        IDs of components to be split to different effluents.
         Element of the item in the iterable can be str or another iterable
         containing component IDs.
         If the item is also iterable, all components whose ID are in the iterable
-        will be splitted to the same effluent.
+        will be split to the same effluent.
         The split is always 1 for a certain component to an effluent (i.e., complete split).
 
         .. note::
@@ -269,11 +269,11 @@ class ComponentSplitter(SanUnit):
     @property
     def split_keys(self):
         '''
-        [iterable] IDs of components to be splitted to different effluents.
+        [iterable] IDs of components to be split to different effluents.
         Element of the item in the iterable can be str or another iterable
         containing component IDs.
         If the item is also iterable, all components whose ID are in the iterable
-        will be splitted to the same effluent.
+        will be split to the same effluent.
         The split is always 1 for a certain component to an effluent (i.e., complete split).
 
         .. note::

@@ -6,7 +6,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Smiti Mittal <smitimittal@gmail.com>
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
     Anna Kogler <akogler@stanford.edu>
     Joy Zhang <joycheung1994@gmail.com>
 
