@@ -6,7 +6,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Joy Zhang <joycheung1994@gmail.com>
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -61,13 +61,13 @@ def cod_test_stoichiometry(atoms, charge=0, MW=None, missing_handling='elemental
     missing_handling : str, optional
         How to handle compounds which do not appear in the stoichiometric
         reaction below. If 'elemental', return those atoms in the monatomic
-        state; if 'ash', converts all missing attoms to 'Ash' in the output at
+        state; if 'ash', converts all missing atoms to 'Ash' in the output at
         a `MW` of 1 g/mol, [-]
 
     Returns
     -------
     stoichiometry : dict[str, float]
-        Stoichiometric coefficients of the redox reaction. May inlcude the following
+        Stoichiometric coefficients of the redox reaction. May include the following
         keys for complete oxidation: 'H2O', 'CO2', 'NH4+', 'SO4-2', 'PO4-3';
         if `missing_handling` is 'elemental' can include the other elements;
         if `missing_handling` is 'ash', Ash will be present in the output
