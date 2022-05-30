@@ -662,7 +662,7 @@ class Component(Chemical):
     #     return new
 
     @classmethod
-    def from_chemical(cls, ID, chemical=None, phase=None, measured_as=None,
+    def from_chemical(cls, ID, chemical=None, formula=None, phase=None, measured_as=None,
                       i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
                       i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
                       f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
@@ -684,23 +684,52 @@ class Component(Chemical):
             instead of
 
                 `S_O = Component.from_chemical(ID='S_O', chemical='O2', ...)`
-
+                
+        Examples
+        --------
+        >>> from qsdsan import Component
+        >>> Struvite = Component.from_chemical('Struvite',
+        ...                                    chemical='MagnesiumAmmoniumPhosphate',
+        ...                                    formula='NH4MgPO4·H12O6',
+        ...                                    phase='l', particle_size='Particulate',
+        ...                                    degradability='Undegradable', organic=False)
+        >>> Struvite.show()
+        Component: Struvite (phase_ref='l') at phase='l'
+        Component-specific properties:
+        [Others] measured_as: None
+                 description: None
+                 particle_size: Particulate
+                 degradability: Undegradable
+                 organic: False
+                 i_C: 0 g C/g 
+                 i_N: 0.057076 g N/g 
+                 i_P: 0.12621 g P/g 
+                 i_K: 0 g K/g 
+                 i_Mg: 0.09904 g Mg/g 
+                 i_Ca: 0 g Ca/g 
+                 i_mass: 1 g mass/g 
+                 i_charge: 0 mol +/g 
+                 i_COD: 0 g COD/g 
+                 i_NOD: 0 g NOD/g 
+                 f_BOD5_COD: 0
+                 f_uBOD_COD: 0
+                 f_Vmass_Totmass: 0
         '''
         new = cls.__new__(cls, ID=ID, phase=phase)
 
         if chemical is None: chemical = ID
 
-        formula = None
+        # formula = None
         if isinstance(chemical, str):
-            formula = data.pop('formula', None)
+            # formula = data.pop('formula', None)
             chemical = Chemical(chemical, **data)
-        if formula: new._formula = formula
 
         for field in chemical.__slots__:
             value = getattr(chemical, field, None)
             setattr(new, field, copy_maybe(value))
-        new._ID = ID
 
+        new._ID = ID
+        if formula: new._formula = formula
         if phase: new._locked_state = phase
 
         TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = False
