@@ -687,14 +687,39 @@ class Component(Chemical):
                 
         Examples
         --------
-        >>> from qsdsan import Component
-        >>> Struvite = Component.from_chemical('Struvite',
-        ...                                    chemical='MagnesiumAmmoniumPhosphate',
-        ...                                    formula='NH4MgPO4·H12O6',
-        ...                                    phase='l', particle_size='Particulate',
-        ...                                    degradability='Undegradable', organic=False)
-        >>> Struvite.show()
         Component: Struvite (phase_ref='l') at phase='l'
+        [Names]  CAS: 7785-21-9
+                 InChI: Mg.H3N.H3O4P/c;;1-5(...
+                 InChI_key: MXZRMHIULZDAKC-U...
+                 common_name: 7785-21-9
+                 iupac_name: ('azanium;magne...
+                 pubchemid: 1.7873e+05
+                 smiles: [NH4+].[O-]P(=O)([O...
+                 formula: NH4MgPO4·H12O6
+        [Groups] Dortmund: <Empty>
+                 UNIFAC: <Empty>
+                 PSRK: <Empty>
+                 NIST: <Empty>
+        [Data]   MW: 245.41 g/mol
+                 Tm: None
+                 Tb: None
+                 Tt: None
+                 Tc: None
+                 Pt: None
+                 Pc: None
+                 Vc: None
+                 Hf: None
+                 S0: 0 J/K/mol
+                 LHV: None
+                 HHV: None
+                 Hfus: 0 J/mol
+                 Sfus: None
+                 omega: None
+                 dipole: None
+                 similarity_variable: 0.080108
+                 iscyclic_aliphatic: 0
+                 combustion: None
+        
         Component-specific properties:
         [Others] measured_as: None
                  description: None
@@ -719,9 +744,7 @@ class Component(Chemical):
 
         if chemical is None: chemical = ID
 
-        # formula = None
         if isinstance(chemical, str):
-            # formula = data.pop('formula', None)
             chemical = Chemical(chemical, **data)
 
         for field in chemical.__slots__:
@@ -729,7 +752,12 @@ class Component(Chemical):
             setattr(new, field, copy_maybe(value))
 
         new._ID = ID
-        if formula: new._formula = formula
+        if formula and formula != chemical.formula:
+            new._formula = formula
+            if new._Hf is None:
+                new._MW = molecular_weight(new.atoms)
+            else:
+                new.reset_combustion_data()
         if phase: new._locked_state = phase
 
         TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = False
