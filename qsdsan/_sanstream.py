@@ -341,8 +341,6 @@ class SanStream(Stream):
                 new_ID = ''
             new.__init__(ID=new_ID)
 
-            new._islinked = stream._islinked
-
             source = new._source = stream._source
             if source:
                 source._outs[source._outs.index(stream)] = new
@@ -361,7 +359,6 @@ class SanStream(Stream):
             for attr, val in kwargs.items():
                 setattr(new, attr, val)
 
-            stream._islinked = False
             stream._sink = stream._source = None
             return new
         else:
