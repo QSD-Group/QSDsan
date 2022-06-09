@@ -1049,7 +1049,7 @@ class WasteStream(SanStream):
     def set_flow_by_concentration(self, flow_tot, concentrations, units=('L/hr', 'mg/L'),
                                   bulk_liquid_ID='H2O', atol=1e-5, maxiter=50):
         '''
-        Set the mass flows of the WasteStream by specifying total volumetric flow and
+        Set the mass flows of the liquid WasteStream by specifying total volumetric flow and
         concentrations as well as identifying the component that constitutes the bulk liquid.
 
         Parameters
@@ -1073,6 +1073,7 @@ class WasteStream(SanStream):
 
 
         '''
+        if self.phase != 'l': raise RuntimeError('only valid for liquid streams')
         if flow_tot == 0: raise RuntimeError(f'{repr(self)} is empty')
         if bulk_liquid_ID in concentrations.keys():
             for i in range(8):
@@ -1090,7 +1091,8 @@ class WasteStream(SanStream):
 
         # Density of the mixture should be larger than the pure bulk liquid,
         # give it a factor of 100 for safety
-        den = self.components[bulk_liquid_ID].rho(phase=self.phase, T=self.T, P=self.P)*1e-3  # bulk liquid density in [kg/L]
+        # den = self.components[bulk_liquid_ID].rho(phase=self.phase, T=self.T, P=self.P)*1e-3  # bulk liquid density in [kg/L]
+        den = self.components[bulk_liquid_ID].rho(T=self.T, P=self.P)*1e-3  # bulk liquid density in [kg/L]
         bulk_ref_phase = self.components[bulk_liquid_ID].phase_ref
         if bulk_ref_phase != 'l':
             warn(f'Reference phase of liquid is "{bulk_ref_phase}", not "l", '
@@ -1167,10 +1169,11 @@ class WasteStream(SanStream):
         self.dstate = np.zeros_like(self.state)
 
     def _state2flows(self):
-        Q = self.state[-1]
-        Cs = dict(zip(self.components.IDs, self.state[:-1]))
-        Cs.pop('H2O', None)
-        self.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
+        if self.phase == 'l':
+            Q = self.state[-1]
+            Cs = dict(zip(self.components.IDs, self.state[:-1]))
+            Cs.pop('H2O', None)
+            self.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
 
     @classmethod
     def codstates_inf_model(cls, ID='', flow_tot=0., units = ('L/hr', 'mg/L'),
