@@ -228,6 +228,9 @@ class Component(Chemical):
         if formula:
             self._formula = None
             self.formula = formula
+        else:
+            if self.formula:
+                self._chem_MW = molecular_weight(self.atoms)
         if phase: lock_phase(self, phase)
 
         self._measured_as = measured_as
