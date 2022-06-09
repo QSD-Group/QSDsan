@@ -14,14 +14,16 @@ for license details.
 
 
 from math import ceil, pi
+import numpy as np
 from . import Decay
-from .. import SanUnit, Construction
-from ..sanunits import HXutility, WWTpump
+from .. import SanUnit, Construction, WasteStream
+from ..sanunits import HXutility, WWTpump, CSTR
 from ..utils import ospath, load_data, data_path, auom, calculate_excavation_volume
 __all__ = (
     'AnaerobicBaffledReactor',
     'AnaerobicDigestion',
     'SludgeDigester',
+    'AnaerobicCSTR'
     )
 
 
@@ -744,3 +746,256 @@ class SludgeDigester(SanUnit):
     @constr_access.setter
     def constr_access(self, i):
         self._constr_access = i
+
+# %%
+
+class AnaerobicCSTR(CSTR):
+    
+    _N_ins = 1
+    _N_outs = 2
+    _ins_size_is_fixed = True
+    _outs_size_is_fixed = True
+    _R = 8.3144598e-2 # Universal gas constant, [bar/M/K]
+    
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+                 init_with='WasteStream', V_liq=3400, V_gas=300, model=None,  
+                 T=308.15, headspace_P=1.013, external_P=1.013, 
+                 pipe_resistance=5.0e4, fixed_headspace_P=False,
+                 isdynamic=True, **kwargs):
+    
+        super().__init__(ID=ID, ins=ins, outs=outs, thermo=thermo,
+                         init_with=init_with, V_max=V_liq, aeration=None,
+                         DO_ID=None, suspended_growth_model=None,
+                         isdynamic=isdynamic, **kwargs)
+        self.V_gas = V_gas
+        self.T = T
+        # self._S_gas = None
+        self._q_gas = 0
+        self._n_gas = None
+        self._gas_cmp_idx = None
+        self._state_keys = None
+        self._S_vapor = None
+        self.model = model
+        self._biogas = WasteStream(phase='g')
+        self.headspace_P = headspace_P
+        self.external_P = external_P
+        self.pipe_resistance = pipe_resistance
+        self.fixed_headspace_P = fixed_headspace_P
+    
+    def ideal_gas_law(self, p=None, S=None):
+        # p in bar, S in M
+        if p: return p/self._R/self.T
+        elif S: return S*self._R*self.T
+    
+    def p_vapor(self, convert_to_bar=True):
+        p = self.components.H2O.Psat(self.T)
+        if convert_to_bar:
+            return p*auom('Pa').conversion_factor('bar')
+        else: return p
+        
+    @property
+    def DO_ID(self):
+        '''Not applicable.'''
+        return None
+    @DO_ID.setter
+    def DO_ID(self, doid):
+        '''Does nothing.'''
+        pass
+    
+    @property
+    def aeration(self):
+        '''Not applicable'''
+        return None
+    @aeration.setter
+    def aeration(self, ae):
+        '''Does nothing.'''
+        pass
+    
+    V_liq = property(CSTR.V_max.fget)
+    @V_liq.setter
+    def V_liq(self, V):
+        CSTR.V_max.fset(self, V)
+    
+    model = property(CSTR.suspended_growth_model.fget)
+    @model.setter
+    def model(self, model):
+        CSTR.suspended_growth_model.fset(self, model)
+        if model is not None:
+            #!!! how to make unit conversion generalizable to all models?
+            self._S_vapor = self.ideal_gas_law(p=self.p_vapor())
+            self._n_gas = len(model._biogas_IDs)
+            self._state_keys = list(self.components.IDs) \
+                + [ID+'_gas' for ID in self.model._biogas_IDs] \
+                + ['Q', 'T_op']
+            self._gas_cmp_idx = self.components.indices(self.model._biogas_IDs)
+            self._state_header = self._state_keys
+    
+    @property
+    def split(self):
+        '''Not applicable.'''
+        return None
+    @split.setter
+    def split(self, split):
+        '''Does nothing.'''
+        pass
+    
+    @property
+    def headspace_P(self):
+        '''Headspace total pressure [bar].'''
+        return self._P_gas
+    @headspace_P.setter
+    def headspace_P(self, P):
+        self._P_gas = P
+        
+    @property
+    def external_P(self):
+        '''External (atmospheric) pressure [bar].'''
+        return self._P_atm
+    @external_P.setter
+    def external_P(self, P):
+        self._P_atm = P
+    
+    @property
+    def pipe_resistance(self):
+        '''Gas pipe resistance coefficient [m3/d/bar].'''
+        return self._k_p
+    @pipe_resistance.setter
+    def pipe_resistance(self, k):
+        self._k_p = k
+
+    @property
+    def fixed_headspace_P(self):
+        '''Headspace total pressure [bar].'''
+        return self._fixed_P_gas
+    @fixed_headspace_P.setter
+    def fixed_headspace_P(self, b):
+        self._fixed_P_gas = bool(b)
+        
+    @property
+    def state(self):
+        '''The state of the anaerobic CSTR, including component concentrations [kg/m3],
+        biogas concentrations in the headspace [M biogas], liquid flow rate [m^3/d],
+        and temperature [K].'''
+        if self._state is None: return None
+        else:
+            return dict(zip(self._state_keys, self._state))
+
+    @state.setter
+    def state(self, arr):
+        arr = np.asarray(arr)
+        n_state = len(self._state_keys)
+        if arr.shape != (n_state, ):
+            raise ValueError(f'state must be a 1D array of length {n_state}')
+        self._state = arr
+
+    def _run(self):
+        '''Only to converge volumetric flows.'''
+        inf, = self.ins
+        gas, liquid = self.outs
+        liquid.copy_like(inf)
+        gas.copy_like(self._biogas)
+        if self._fixed_P_gas: 
+            gas.P = self.headspace_P * auom('bar').conversion_factor('Pa')
+        gas.T = self.T
+        
+    def _init_state(self):
+        inf, = self._ins
+        Q = inf.get_total_flow('m3/d')
+        #!!! how to make unit conversion generalizable to all models?
+        if self._concs is not None: Cs = self._concs * 1e-3 # mg/L to kg/m3
+        else: Cs = inf.conc * 1e-3 # mg/L to kg/m3
+        self._state = np.append(Cs, [0]*self._n_gas + [Q, self.T]).astype('float64')
+        self._dstate = self._state * 0.
+
+    def _update_state(self):
+        arr = self._state
+        gas, liquid = self._outs
+        y = arr.copy()
+        i_mass = self.components.i_mass
+        chem_MW = self.components.chem_MW
+        n_cmps = len(self.components)
+        if liquid.state is None:
+            liquid.state = np.append(y[:n_cmps]*1e3, y[-1])
+        else:
+            liquid.state[:n_cmps] = y[:n_cmps]*1e3  # kg/m3 to mg/L
+            liquid.state[-1] = y[-1]
+        if gas.state is None:
+            gas.state = np.zeros(n_cmps+1)
+        gas.state[self._gas_cmp_idx] = y[n_cmps:(n_cmps + self._n_gas)]
+        gas.state[self.components.index('H2O')] = self._S_vapor
+        gas.state[-1] = self._q_gas
+        gas.state[:n_cmps] = gas.state[:n_cmps] * chem_MW / i_mass # i.e., M biogas to g (measured_unit) / L
+
+    def _update_dstate(self):
+        arr = self._dstate
+        gas, liquid = self._outs
+        dy = arr.copy()
+        n_cmps = len(self.components)
+        if liquid.dstate is None:
+            liquid.dstate = np.append(dy[:n_cmps]*1e3, dy[-1])
+        else:
+            liquid.dstate[:n_cmps] = dy[:n_cmps]*1e3
+            liquid.dstate[-1] = dy[-1]
+        if gas.dstate is None:
+            # contains no info on dstate
+            gas.dstate = np.zeros(n_cmps+1)
+
+    
+    def f_q_gas_fixed_P_headspace(self, rhoTs, S_gas, T):
+        cmps = self.components
+        gas_mass2mol_conversion = (cmps.i_mass / cmps.chem_MW)[self._gas_cmp_idx]
+        self._q_gas = self._R*T/(self.P_gas-self.p_vapor(convert_to_bar=True))\
+                                *self.V_liq*sum(rhoTs*gas_mass2mol_conversion)
+        return self._q_gas
+
+    def f_q_gas_var_P_headspace(self, rhoTs, S_gas, T):
+        p_gas = S_gas * self._R * T
+        self._P_gas = P = sum(p_gas) + self.p_vapor(convert_to_bar=True) 
+        self._q_gas = self._k_p * (P - self._P_atm) * P/self._P_atm # converted to gas flowrate at atm pressure
+        return self._q_gas
+
+    @property
+    def ODE(self):
+        if self._ODE is None:
+            self._compile_ODE()
+        return self._ODE
+    
+    def _compile_ODE(self):
+        if self._model is None:
+            CSTR._compile_ODE(self)
+        else:
+            cmps = self.components
+            _dstate = self._dstate
+            _update_dstate = self._update_dstate
+            _f_rhos = self.model.rate_function
+            _f_param = self.model.params_eval
+            _M_stoichio = self.model.stoichio_eval
+            n_cmps = len(cmps)
+            n_gas = self._n_gas
+            V_liq = self.V_liq
+            V_gas = self.V_gas
+            gas_mass2mol_conversion = (cmps.i_mass / cmps.chem_MW)[self._gas_cmp_idx]
+            if self._fixed_P_gas:
+                f_qgas = self.f_q_gas_fixed_P_headspace
+            else:
+                f_qgas = self.f_q_gas_var_P_headspace
+            def dy_dt(t, QC_ins, QC, dQC_ins):
+                S_liq = QC[:n_cmps]
+                S_gas = QC[n_cmps: (n_cmps+n_gas)]
+                Q, T = QC[-2:]
+                S_in = QC_ins[0,:-1] * 1e-3  # mg/L to kg/m3
+                Q_in = QC_ins[0,-1]
+                _f_param(QC)
+                M_stoichio = _M_stoichio()
+                rhos =_f_rhos(QC)
+                try:                
+                    _dstate[:n_cmps] = (Q_in*S_in - Q*S_liq)/V_liq + np.dot(M_stoichio.T, rhos)
+                except: breakpoint()
+                q_gas = f_qgas(rhos[-3:], S_gas, T)
+                _dstate[n_cmps: (n_cmps+n_gas)] = - q_gas*S_gas/V_gas \
+                    + rhos[-3:] * V_liq/V_gas * gas_mass2mol_conversion
+                _dstate[-2] = dQC_ins[0,-1]
+                _dstate[-1] = 0
+                # !!! currently no info on dT/dt
+                _update_dstate()
+            self._ODE = dy_dt
