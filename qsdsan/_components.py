@@ -235,7 +235,7 @@ class Components(Chemicals):
                     except:
                         V_model = ref.V # ref locked state
                         V_const = V_model(locked_state, T=298.15, P=101325)
-                    V_const *= (cmp.MW/ref.MW)
+                    V_const *= (cmp.chem_MW/ref.MW)
                     cmp.V.add_model(V_const)
                 else:
                     for phase in ('g', 'l', 's'): # iterate through phases
@@ -246,7 +246,7 @@ class Components(Chemicals):
                         except:
                             V_model = get(backup_ref.V, phase)
                             V_const = V_model(T=298.15, P=101325)
-                        V_const *= (cmp.MW/ref.MW)
+                        V_const *= (cmp.chem_MW/ref.MW)
                         get(cmp.V, phase).add_model(V_const)
 
             if not cmp.Hvap.valid_methods():
@@ -320,8 +320,11 @@ class Components(Chemicals):
                                               measured_as = cmp.measured_as)
             for j in _component_properties:
                 field = '_' + j
-                if pd.isna(cmp[j]): setattr(component, j, None)
-                else: setattr(component, field, cmp[j])
+                try:
+                    if pd.isna(cmp[j]): setattr(component, j, None)
+                    else: setattr(component, field, cmp[j])
+                except KeyError:
+                    continue
             new.append(component)
 
         if store_data:
@@ -631,6 +634,7 @@ class CompiledComponents(CompiledChemicals):
         org = dct['org'] = np.asarray([int(cmp.organic) for cmp in components])
         inorg = dct['inorg'] = np.ones_like(org) - org
         ID_arr = dct['_ID_arr'] = np.asarray([i.ID for i in components])
+        dct['chem_MW'] = np.asarray([i.chem_MW for i in components])
 
         # Inorganic degradable non-gas, incorrect
         inorg_b = inorg * b * (s+c)
