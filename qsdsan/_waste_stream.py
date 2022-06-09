@@ -1091,8 +1091,8 @@ class WasteStream(SanStream):
 
         # Density of the mixture should be larger than the pure bulk liquid,
         # give it a factor of 100 for safety
-        # den = self.components[bulk_liquid_ID].rho(phase=self.phase, T=self.T, P=self.P)*1e-3  # bulk liquid density in [kg/L]
-        den = self.components[bulk_liquid_ID].rho(T=self.T, P=self.P)*1e-3  # bulk liquid density in [kg/L]
+        den = self.components[bulk_liquid_ID].rho(phase=self.phase, T=self.T, P=self.P)*1e-3  # bulk liquid density in [kg/L]
+        # den = self.components[bulk_liquid_ID].rho(T=self.T, P=self.P)*1e-3  # bulk liquid density in [kg/L]
         bulk_ref_phase = self.components[bulk_liquid_ID].phase_ref
         if bulk_ref_phase != 'l':
             warn(f'Reference phase of liquid is "{bulk_ref_phase}", not "l", '
