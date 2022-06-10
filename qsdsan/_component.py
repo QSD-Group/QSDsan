@@ -772,11 +772,13 @@ class Component(Chemical):
 
         new._ID = ID
         if formula and formula != chemical.formula:
-            new._formula = formula
+            new.formula = formula
             if new._Hf is None:
-                new._MW = molecular_weight(new.atoms)
+                new._chem_MW = molecular_weight(new.atoms)
             else:
                 new.reset_combustion_data()
+        else:
+            new._chem_MW = molecular_weight(new.atoms)
         if phase: new._locked_state = phase
 
         TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = False

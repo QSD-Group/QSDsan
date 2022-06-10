@@ -149,6 +149,7 @@ def create_adm1_cmps(pickle=False):
         save_pickle(cmps_adm1, _path_cmps)
     return cmps_adm1
 
+# cmps = create_adm1_cmps(False)
 # create_adm1_cmps(True)
 
 def load_adm1_cmps():
