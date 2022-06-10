@@ -951,6 +951,9 @@ def wwtpump(ID, ins=(), prefix='', pump_type='', Q_mgd=None, add_inputs=(),
 def add_pump(cls, ID, ins, prefix, pump_type, Q_mgd, add_inputs,
              capacity_factor, include_pump_cost, include_building_cost,
              include_OM_cost, F_BM, lifetime, **kwargs):
+    if getattr(cls, 'system', None):                    
+        if not main_f is cls.system.flowsheet:
+            main_f.set_flowsheet(cls.system.flowsheet)
     pump = WWTpump(
         ID, ins=ins,
         prefix=prefix, pump_type=pump_type, Q_mgd=Q_mgd, add_inputs=add_inputs,
