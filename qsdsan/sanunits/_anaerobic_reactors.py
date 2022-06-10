@@ -915,10 +915,10 @@ class AnaerobicCSTR(CSTR):
         chem_MW = self.components.chem_MW
         n_cmps = len(self.components)
         if liquid.state is None:
-            liquid.state = np.append(y[:n_cmps]*1e3, y[-1])
+            liquid.state = np.append(y[:n_cmps]*1e3, y[-2])
         else:
             liquid.state[:n_cmps] = y[:n_cmps]*1e3  # kg/m3 to mg/L
-            liquid.state[-1] = y[-1]
+            liquid.state[-1] = y[-2]
         if gas.state is None:
             gas.state = np.zeros(n_cmps+1)
         gas.state[self._gas_cmp_idx] = y[n_cmps:(n_cmps + self._n_gas)]
@@ -932,10 +932,10 @@ class AnaerobicCSTR(CSTR):
         dy = arr.copy()
         n_cmps = len(self.components)
         if liquid.dstate is None:
-            liquid.dstate = np.append(dy[:n_cmps]*1e3, dy[-1])
+            liquid.dstate = np.append(dy[:n_cmps]*1e3, dy[-2])
         else:
             liquid.dstate[:n_cmps] = dy[:n_cmps]*1e3
-            liquid.dstate[-1] = dy[-1]
+            liquid.dstate[-1] = dy[-2]
         if gas.dstate is None:
             # contains no info on dstate
             gas.dstate = np.zeros(n_cmps+1)
