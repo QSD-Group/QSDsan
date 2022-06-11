@@ -55,7 +55,7 @@ class AttrGetter:
 
 class FuncGetter:
     __slots__ = ('func', 'params')
-    def __init__(self, func, params):
+    def __init__(self, func, params=()):
         self.func = func
         self.params = params
 
