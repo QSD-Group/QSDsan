@@ -15,9 +15,9 @@ for license details.
 
 from thermosteam.utils import chemicals_user
 from thermosteam import settings
-from qsdsan import Component, Components, Process, Processes, CompiledProcesses, _pk
+from qsdsan import Component, Components, Process, Processes, CompiledProcesses
 import numpy as np
-from qsdsan.utils import ospath, data_path, save_pickle, load_pickle
+from qsdsan.utils import ospath, data_path, save_pickle, load_pickled_cmps
 from scipy.optimize import fsolve, least_squares as lq, Bounds
 from math import log10
 from warnings import warn
@@ -33,118 +33,118 @@ _load_components = settings.get_default_chemicals
 # =============================================================================
 def create_adm1_cmps(pickle=False):
     cmps_all = Components.load_default()
-    
+
     # varies
     X_c = cmps_all.X_OHO.copy('X_c')
     X_c.description = 'Composite'
     X_c.i_C = 0.02786 * 12
     X_c.i_N = 0.0376
-    
-    
+
+
     X_ch = Component.from_chemical('X_ch', chemical='glycogen', Tc=1011.4, # glucan
                                     description='Carbohydrates',
                                     measured_as='COD',
                                     particle_size='Particulate',
                                     degradability='Slowly',
                                     organic=True)
-    
+
     # varies
     X_pr = cmps_all.X_B_Subst.copy('X_pr')
     X_pr.i_N = 0.007 * 14
-    
+
     X_li = Component.from_chemical('X_li', chemical='tripalmitin',
                                     description='Lipids',
                                     measured_as='COD',
                                     particle_size='Particulate',
                                     degradability='Slowly',
                                     organic=True)
-    
+
     # both varies
     X_I = cmps_all.X_U_Inf.copy('X_I')
     S_I = cmps_all.S_U_Inf.copy('S_I')
     X_I.i_N = S_I.i_N = 0.06
-    
+
     S_su = Component.from_chemical('S_su', chemical='glucose',
                                     description='Monosaccharides',
                                     measured_as='COD',
                                     particle_size='Soluble',
                                     degradability='Readily',
                                     organic=True)
-      
+
     # varies
     S_aa = cmps_all.S_F.copy('S_aa')
     S_aa.i_N = 0.007 * 14
     S_aa.i_P = 0
     S_aa.i_C = 0.313
-    
+
     S_fa = Component.from_chemical('S_fa', chemical='palmitate',
                                     description='Total long-chain fatty acids',
                                     measured_as='COD',
                                     particle_size='Soluble',
                                     degradability='Readily',
                                     organic=True)
-    
+
     S_va = Component.from_chemical('S_va', chemical='valerate',
                                     description='Total valerate',
                                     measured_as='COD',
                                     particle_size='Soluble',
                                     degradability='Readily',
                                     organic=True)
-    
+
     S_bu = Component.from_chemical('S_bu', chemical='butyrate',
                                     description='Total butyrate',
                                     measured_as='COD',
                                     particle_size='Soluble',
                                     degradability='Readily',
                                     organic=True)
-    
+
     S_pro = cmps_all.S_Prop.copy('S_pro')
     S_ac = cmps_all.S_Ac.copy('S_ac')
     S_h2 = cmps_all.S_H2.copy('S_h2')
     S_ch4 = cmps_all.S_CH4.copy('S_ch4')
-    
+
     S_IC = Component.from_chemical('S_IC', chemical='CO2',
                                     measured_as='C',
                                     description='Inorganic carbon',
                                     particle_size='Dissolved gas',
                                     degradability='Undegradable',
                                     organic=False)
-    
+
     S_IN = Component.from_chemical('S_IN', chemical='NH3',
-                                    measured_as='N',                                   
+                                    measured_as='N',
                                     description='Inorganic nitrogen',
                                     particle_size='Soluble',
                                     degradability='Undegradable',
                                     organic=False)
-    
+
     X_su = cmps_all.X_FO.copy('X_su')
     X_su.description = 'Biomass uptaking sugars'
-    
+
     X_aa = cmps_all.X_FO.copy('X_aa')
     X_aa.description = 'Biomass uptaking amino acids'
-    
+
     X_fa = cmps_all.X_FO.copy('X_fa')
     X_fa.description = 'Biomass uptaking long chain fatty acids'
-    
+
     X_c4 = cmps_all.X_FO.copy('X_c4')
     X_c4.description = 'Biomass uptaking c4 fatty acids'
-    
+
     X_pro = cmps_all.X_PRO.copy('X_pro')
     X_ac = cmps_all.X_ACO.copy('X_ac')
     X_h2 = cmps_all.X_HMO.copy('X_h2')
-    
+
     for bio in (X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2): bio.formula = 'C5H7O2N'
-    
+
     S_cat = cmps_all.S_CAT.copy('S_cat')
     S_an = cmps_all.S_AN.copy('S_an')
     S_cat.i_mass = S_an.i_mass = 1
-    
+
     cmps_adm1 = Components([S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2,
                             S_ch4, S_IC, S_IN, S_I, X_c, X_ch, X_pr, X_li,
                             X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I,
                             S_cat, S_an, cmps_all.H2O])
     cmps_adm1.default_compile()
-    
+
     if pickle:
         save_pickle(cmps_adm1, _path_cmps)
     return cmps_adm1
@@ -152,11 +152,9 @@ def create_adm1_cmps(pickle=False):
 # cmps = create_adm1_cmps(False)
 # create_adm1_cmps(True)
 
-def load_adm1_cmps():
-    if _pk:
-        return load_pickle(_path_cmps)
-    else:
-        return create_adm1_cmps(pickle=False)     
+def load_adm1_cmps(pickle=None):
+    return load_pickled_cmps(create_adm1_cmps, _path_cmps, pickle)
+
 
 #%%
 # =============================================================================
@@ -203,7 +201,7 @@ def acid_base_rxn(mols, weak_acids_tot, Kas):
     rhs[12] = h*bu - Ka_bu*hbu
     rhs[13] = h*va - Ka_va*hva
     return rhs
-    
+
 # 7 acid-base pairs
 jac0 = np.zeros((14, 14))
 jac0[0,[0,2]] = 1
@@ -261,7 +259,7 @@ def rhos_adm1(state_arr, params):
     ab_0 = params['root'].data.copy()
     # f = params['f_abrxn']
     # f_prime = params['f_prime']
-    # Cs_ids = cmps.indices(['X_c', 'X_ch', 'X_pr', 'X_li', 'X_su', 'X_aa', 
+    # Cs_ids = cmps.indices(['X_c', 'X_ch', 'X_pr', 'X_li', 'X_su', 'X_aa',
     #                        'X_fa', 'X_c4', 'X_c4', 'X_pro', 'X_ac', 'X_h2',
     #                        'X_su', 'X_aa', 'X_fa', 'X_c4', 'X_pro', 'X_ac', 'X_h2'])
     # Cs = state_arr[Cs_ids]
@@ -269,7 +267,7 @@ def rhos_adm1(state_arr, params):
     Cs[:8] = state_arr[12:20]
     Cs[8:12] = state_arr[19:23]
     Cs[12:] = state_arr[16:23]
-    # substrates_ids = cmps.indices(['S_su', 'S_aa', 'S_fa', 'S_va', 
+    # substrates_ids = cmps.indices(['S_su', 'S_aa', 'S_fa', 'S_va',
     #                                'S_bu', 'S_pro', 'S_ac', 'S_h2'])
     # substrates = state_arr[substrates_ids]
     substrates = state_arr[:8]
@@ -278,7 +276,7 @@ def rhos_adm1(state_arr, params):
     unit_conversion = mass2mol_conversion(cmps)
     cmps_in_M = state_arr[:27] * unit_conversion
     weak_acids = cmps_in_M[[24, 25, 10, 9, 6, 5, 4, 3]]
-    
+
     T_op = state_arr[-1]
     biogas_S = state_arr[7:10]
     biogas_M = state_arr[27:30]
@@ -299,21 +297,21 @@ def rhos_adm1(state_arr, params):
     ab_root = result.x
     # if any(ab_root < 0): breakpoint()
     params['root'].data[:] = ab_root
-    
+
     try: pH = - log10(ab_root[0])
     except: breakpoint()
     rhos[4:12] *= pH_inhibit(pH, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
     rhos[6:10] *= non_compet_inhibit(S_h2, KIs_h2)
     rhos[10] *= non_compet_inhibit(S_IN, KI_nh3)
     rhos[-3:] = kLa * (biogas_S - KH * biogas_p)
-    
+
     return rhos
 
 # =============================================================================
 # ADM1 class
 # =============================================================================
 class TempState:
-    
+
     def __init__(self, length):
         self.data = np.zeros(length)
 
@@ -327,14 +325,14 @@ class ADM1(CompiledProcesses):
                         'f_ac_fa', 'f_pro_va', 'f_ac_va', 'f_ac_bu', 'f_ac_pro',
                         'Y_su', 'Y_aa', 'Y_fa', 'Y_c4', 'Y_pro', 'Y_ac', 'Y_h2')
     _kinetic_params = ('rate_constants', 'half_sat_coeffs', 'pH_ULs', 'pH_LLs',
-                       'KS_IN', 'KI_nh3', 'KIs_h2', 
+                       'KS_IN', 'KI_nh3', 'KIs_h2',
                        'Ka_base', 'Ka_theta', 'K_H_base', 'K_H_theta', 'kLa',
                        'T_base', 'components', 'root')
-    _acid_base_pairs = (('H+', 'OH-'), ('NH4+', 'NH3'), ('CO2', 'HCO3-'), 
-                        ('HAc', 'Ac-'), ('HPr', 'Pr-'), 
+    _acid_base_pairs = (('H+', 'OH-'), ('NH4+', 'NH3'), ('CO2', 'HCO3-'),
+                        ('HAc', 'Ac-'), ('HPr', 'Pr-'),
                         ('HBu', 'Bu-'), ('HVa', 'Va-'))
     _biogas_IDs = ('S_h2', 'S_ch4', 'S_IC')
-    
+
     def __new__(cls, components=None, path=None, N_xc=2.69e-3, N_I=4.29e-3, N_aa=7e-3,
                 f_ch_xc=0.2, f_pr_xc=0.2, f_li_xc=0.3, f_xI_xc=0.2,
                 f_fa_li=0.95, f_bu_su=0.13, f_pro_su=0.27, f_ac_su=0.41,
@@ -347,24 +345,24 @@ class ADM1(CompiledProcesses):
                 b_su=0.02, b_aa=0.02, b_fa=0.02, b_c4=0.02, b_pro=0.02, b_ac=0.02, b_h2=0.02,
                 KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_nh3=1.8e-3, KS_IN=1e-4,
                 pH_limits_aa=(4,5.5), pH_limits_ac=(6,7), pH_limits_h2=(5,6),
-                T_base=298.15, pKa_base=[14, 9.25, 6.35, 4.76, 4.88, 4.82, 4.86], 
+                T_base=298.15, pKa_base=[14, 9.25, 6.35, 4.76, 4.88, 4.82, 4.86],
                 Ka_theta=[0.076, 0.070, 0.010, 0, 0, 0, 0],
-                kLa=200, K_H_base=[7.8e-4, 1.4e-3, 3.5e-2], 
+                kLa=200, K_H_base=[7.8e-4, 1.4e-3, 3.5e-2],
                 K_H_theta=[-5.66e-3, -1.929e-2, -2.629e-2],
                 **kwargs):
-        
+
         cmps = _load_components(components)
         cmps.X_c.i_N = N_xc * 14
         cmps.X_I.i_N = N_I * 14
         cmps.S_aa.i_N = cmps.X_pr.i_N = N_aa * 14
-        
+
         if not path: path = _path
         self = Processes.load_from_file(path,
                                         components=cmps,
                                         conserved_for=('COD', 'C', 'N'),
                                         parameters=cls._stoichio_params,
                                         compile=False)
-        
+
         gas_transfer = []
         for i in cls._biogas_IDs:
             new_p = Process('%s_transfer' % i.lstrip('S_'),
@@ -375,7 +373,7 @@ class ADM1(CompiledProcesses):
             gas_transfer.append(new_p)
         self.extend(gas_transfer)
         self.compile()
-        
+
         stoichio_vals = (f_ch_xc, f_pr_xc, f_li_xc, f_xI_xc,
                          f_fa_li, f_bu_su, f_pro_su, f_ac_su,
                          f_va_aa, f_bu_aa, f_pro_aa, f_ac_aa,
@@ -395,15 +393,15 @@ class ADM1(CompiledProcesses):
         root = TempState(len(cls._acid_base_pairs) * 2)
         dct = self.__dict__
         dct.update(kwargs)
-        
+
         self.set_rate_function(rhos_adm1)
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_vals))
-        self.rate_function._params = dict(zip(cls._kinetic_params, 
-                                              [ks, Ks, pH_ULs, pH_LLs, KS_IN*14, 
+        self.rate_function._params = dict(zip(cls._kinetic_params,
+                                              [ks, Ks, pH_ULs, pH_LLs, KS_IN*14,
                                                KI_nh3*14, KIs_h2, Ka_base, Ka_theta,
-                                               K_H_base, K_H_theta, kLa, 
+                                               K_H_base, K_H_theta, kLa,
                                                T_base, self._components, root]))
-        
+
         dct.update({
             '_stoichio_params':cls._stoichio_params,
             '_kinetic_params':cls._kinetic_params,
@@ -412,14 +410,14 @@ class ADM1(CompiledProcesses):
                     })
 
         return self
-    
+
     def set_pKas(self, pKas):
-        if len(pKas) != 7: 
+        if len(pKas) != 7:
             raise ValueError(f'pKas must be an array of 7 elements, one for each '
                              f'acid-base pair, not {len(pKas)} elements.')
         dct = self.rate_function._params
         dct['Ka_base'] = np.array([10**(-pKa) for pKa in pKas])
-        
+
     def _find_index(self, process):
         isa = isinstance
         if isa(process, int): return process
@@ -427,15 +425,15 @@ class ADM1(CompiledProcesses):
         elif isa(process, Process): return self.index(process.ID)
         else: raise TypeError(f'must input an int or str or :class:`Process`, '
                               f'not {type(process)}')
-    
+
     def set_rate_constant(self, k, process):
         i = self._find_index(process)
         self.rate_function._params['ks'][i] = k
-    
+
     def set_half_sat_K(self, K, process):
         i = self._find_index(process)
         self.rate_function._params['Ks'][i-4] = K
-    
+
     def set_pH_inhibit_bounds(self, process, lower=None, upper=None):
         i = self._find_index(process)
         dct = self.rate_function._params
@@ -446,16 +444,16 @@ class ADM1(CompiledProcesses):
         if lower >= upper:
             raise ValueError(f'lower limit for pH inhibition of {process} must '
                              f'be lower than the upper limit, not {[lower, upper]}')
-    
+
     def set_h2_inhibit_K(self, KI, process):
         i = self._find_index(process)
         self.rate_function._params['KIs_h2'][i-6] = KI
-    
+
     def set_KS_IN(self, K):
-        '''Set inhibition coefficient for inorganic nitrogen as a secondary 
+        '''Set inhibition coefficient for inorganic nitrogen as a secondary
         substrate [M nitrogen].'''
         self.rate_function._params['KS_IN'] = K * 14
-    
+
     def set_KI_nh3(self, K):
         '''Set inhibition coefficient for ammonia-nitrogen [M nitrogen].'''
         self.rate_function._params['KI_nh3'] = K * 14
@@ -464,22 +462,21 @@ class ADM1(CompiledProcesses):
         '''Set values to stoichiometric parameters.'''
         non_stoichio = {}
         for k,v in parameters.items():
-            if k in self._stoichio_params: 
+            if k in self._stoichio_params:
                 if v >= 0 : self._parameters[k] = v
                 else: raise ValueError(f'{k} must >= 0, not {v}')
             else: non_stoichio[k] = v
-        if non_stoichio: 
+        if non_stoichio:
             warn(f'ignored value setting for non-stoichiometric parameters {non_stoichio}')
         self.check_stoichiometric_parameters()
         if self._stoichio_lambdified is not None:
             self.__dict__['_stoichio_lambdified'] = None
-    
+
     def check_stoichiometric_parameters(self):
-        stoichio = self.parameters   
+        stoichio = self.parameters
         subst = ('xc', 'li', 'su', 'aa', 'fa', 'va', 'bu', 'pro')
         for s in subst:
             f_tot = sum([stoichio[k] for k in self._stoichio_params[:17] \
                          if k.endswith(s)])
-            if f_tot > 1: 
+            if f_tot > 1:
                 raise ValueError(f"the sum of 'f_()_{s}' values mustn't exceed 1")
-        
