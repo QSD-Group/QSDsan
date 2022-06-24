@@ -1,6 +1,6 @@
 # Needed by qsdsan
-git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git
-git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@dyn_sim
+git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git@qsdsan
+git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@qsdsan
 biosteam>=2.32.4
 thermosteam>=0.28.7
 SALib
