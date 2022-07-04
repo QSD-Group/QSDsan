@@ -338,7 +338,7 @@ class Process:
     Process: aerobic_hetero_growth
     [stoichiometry]      S_S: -1/Y_H
                          X_BH: 1.00
-                         S_O: (1.0 - Y_H)/Y_H
+                         S_O: -1.0 + 1/Y_H
                          S_NH: -0.0860
     [reference]          X_BH
     [rate equation]      S_NH*S_O*S_S*X_BH*mu_H/((K_N...
