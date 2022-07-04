@@ -921,11 +921,14 @@ class Processes:
         """
         return Process([getattr(self, i) for i in IDs])
 
-    def compile(self, skip_checks=False):
-        '''Cast as a :class:`CompiledProcesses` object.'''
+    def compile(self, skip_checks=False, to_class=None):
+        '''Cast as a :class:`CompiledProcesses` object unless otherwise specified.'''
         processes = tuple(self)
         setattr(self, '__class__', CompiledProcesses)
-        try: self._compile(processes, skip_checks)
+        try: 
+            self._compile(processes, skip_checks)
+            if to_class is not None:
+                setattr(self, '__class__', to_class)
         except Exception as error:
             setattr(self, '__class__', Processes)
             setattr(self, '__dict__', {i.ID: i for i in processes})
@@ -960,7 +963,8 @@ class Processes:
     @classmethod
     def load_from_file(cls, path='', components=None,
                        conserved_for=('COD', 'N', 'P', 'charge'), parameters=(),
-                       use_default_data=False, store_data=False, compile=True):
+                       use_default_data=False, store_data=False, compile=True,
+                       **compile_kwargs):
         """
         Create :class:`CompiledProcesses` object from a table of process IDs, stoichiometric
         coefficients, and rate equations stored in a .tsv, .csv, or Excel file.
@@ -1038,7 +1042,7 @@ class Processes:
         if store_data:
             cls._default_data = data
 
-        if compile: new.compile()
+        if compile: new.compile(**compile_kwargs)
         return new
 
 

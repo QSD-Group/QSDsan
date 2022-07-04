@@ -755,7 +755,7 @@ class AnaerobicCSTR(CSTR):
     _N_outs = 2
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
-    _R = 8.3144598e-2 # Universal gas constant, [bar/M/K]
+    _R = 8.3145e-2 # Universal gas constant, [bar/M/K]
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', V_liq=3400, V_gas=300, model=None,  
@@ -786,12 +786,14 @@ class AnaerobicCSTR(CSTR):
         # p in bar, S in M
         if p: return p/self._R/self.T
         elif S: return S*self._R*self.T
-    
+
     def p_vapor(self, convert_to_bar=True):
         p = self.components.H2O.Psat(self.T)
         if convert_to_bar:
             return p*auom('Pa').conversion_factor('bar')
         else: return p
+        #!!! for debugging    
+        # return 0.0557
         
     @property
     def DO_ID(self):
@@ -988,9 +990,7 @@ class AnaerobicCSTR(CSTR):
                 _f_param(QC)
                 M_stoichio = _M_stoichio()
                 rhos =_f_rhos(QC)
-                try:                
-                    _dstate[:n_cmps] = (Q_in*S_in - Q*S_liq)/V_liq + np.dot(M_stoichio.T, rhos)
-                except: breakpoint()
+                _dstate[:n_cmps] = (Q_in*S_in - Q*S_liq)/V_liq + np.dot(M_stoichio.T, rhos)
                 q_gas = f_qgas(rhos[-3:], S_gas, T)
                 _dstate[n_cmps: (n_cmps+n_gas)] = - q_gas*S_gas/V_gas \
                     + rhos[-3:] * V_liq/V_gas * gas_mass2mol_conversion
