@@ -67,7 +67,7 @@ def copy_attr(new, original, skip=(), same=(), slots=None):
 
 def ords(string):
     '''
-    Return the sum of unicode of a string, more for fun.
+    Return the sum of Unicode of a string, more for fun.
 
     Examples
     --------

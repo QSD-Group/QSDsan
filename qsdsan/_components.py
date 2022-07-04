@@ -181,12 +181,12 @@ class Components(Chemicals):
             Lock the state of components at a certain phase,
             can be 'g', 'l', 's', or left as empty to avoid locking state.
             Components that have already been locked will not be affected.
-        soluble_ref : str
-            ID of the reference component for those with `particle_size` == 'Soluble'.
-        gas_ref : str
-            ID of the reference component for those with `particle_size` == 'Dissolved gas'.
-        particulate_ref : str
-            ID of the reference component for those with `particle_size` == 'Particulate'.
+        soluble_ref : obj or str
+            Reference component (or chemical ID) for those with `particle_size` == 'Soluble'.
+        gas_ref : obj or str
+            Reference component (or chemical ID) for those with `particle_size` == 'Dissolved gas'.
+        particulate_ref : obj or str
+            Reference component (or chemical ID) for those with `particle_size` == 'Particulate'.
 
         Examples
         --------
@@ -204,48 +204,50 @@ class Components(Chemicals):
         '''
         isa = isinstance
         get = getattr
+        if isa(soluble_ref, str):
+            sol = Chemical(soluble_ref)
+            if soluble_ref.lower() == 'urea': sol.at_state('l')
+        if isa(gas_ref, str):
+            gas = Chemical(gas_ref)
+            if gas_ref.lower() == 'co2': gas.at_state('g')
+        if isa(particulate_ref, str):
+            par = Chemical(particulate_ref)
+            if particulate_ref.lower() == 'stearin':
+                # 0.8559 at 90 °C https://pubchem.ncbi.nlm.nih.gov/compound/Tristearin#section=Density
+                # avg ~0.9 http://www.dgfett.de/material/physikalische_eigenschaften.pdf
+                add_V_from_rho(par, 0.9, 'g/ml', 's')
+                par.at_state('s')
 
-        sol = Chemical(soluble_ref)
-        gas = Chemical(gas_ref)
-        par = Chemical(particulate_ref)
-        # 0.8559 at 90 °C https://pubchem.ncbi.nlm.nih.gov/compound/Tristearin#section=Density
-        # avg ~0.9 http://www.dgfett.de/material/physikalische_eigenschaften.pdf
-        add_V_from_rho(par, 0.9, 'g/ml', 's')
+        TPkwargs = dict(T=298.15, P=101325)
+        def get_constant_V_model(ref_cmp, phase=''):
+            if ref.locked_state: return ref.V(**TPkwargs)
+            else: return ref.V(phase, **TPkwargs)
+
         water = Chemical('Water')
         for cmp in self:
             particle_size = cmp.particle_size
             ref = sol if particle_size=='Soluble' \
                 else gas if particle_size=='Dissolved gas' else par
-            if lock_state_at :
+            if lock_state_at:
                 try: cmp.at_state(lock_state_at)
                 except TypeError: pass
             cmp.Tb = cmp.Tb or ref.Tb
+
             # If don't have model for molar volume, set those to default
             COPY_V = False
-            if isa(cmp.V, _PH):
-                if not cmp.V.l.valid_methods(298.15): COPY_V = True
-            else:
-                if not cmp.V.valid_methods(298.15): COPY_V = True
+            cmp_V = cmp.V if cmp.locked_state else cmp.V.l
+            try: cmp_V(**TPkwargs)
+            except: COPY_V = True
             if COPY_V:
                 locked_state = cmp.locked_state
                 if locked_state:
-                    try:
-                        V_model = get(ref.V, locked_state) # ref not locked state
-                        V_const = V_model(T=298.15, P=101325)
-                    except:
-                        V_model = ref.V # ref locked state
-                        V_const = V_model(locked_state, T=298.15, P=101325)
-                    V_const *= (cmp.chem_MW/ref.MW)
+                    V_const = get_constant_V_model(ref, locked_state)*(cmp.chem_MW/ref.MW)
                     cmp.V.add_model(V_const)
                 else:
                     for phase in ('g', 'l', 's'): # iterate through phases
                         backup_ref = gas if phase=='g' else sol if phase=='l' else par
-                        try:
-                            V_model = get(ref.V, phase) # the default ref has the model
-                            V_const = V_model(T=298.15, P=101325)
-                        except:
-                            V_model = get(backup_ref.V, phase)
-                            V_const = V_model(T=298.15, P=101325)
+                        try: V_const = get_constant_V_model(ref, phase)
+                        except: V_const = get_constant_V_model(backup_ref, phase)
                         V_const *= (cmp.chem_MW/ref.MW)
                         get(cmp.V, phase).add_model(V_const)
 

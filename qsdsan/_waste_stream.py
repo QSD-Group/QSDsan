@@ -1091,9 +1091,11 @@ class WasteStream(SanStream):
 
         # Density of the mixture should be larger than the pure bulk liquid,
         # give it a factor of 100 for safety
-        den = self.components[bulk_liquid_ID].rho(phase=self.phase, T=self.T, P=self.P)*1e-3  # bulk liquid density in [kg/L]
-        # den = self.components[bulk_liquid_ID].rho(T=self.T, P=self.P)*1e-3  # bulk liquid density in [kg/L]
-        bulk_ref_phase = self.components[bulk_liquid_ID].phase_ref
+        bulk_cmp = self.components[bulk_liquid_ID]
+        den_kwargs = dict(T=self.T, P=self.P)
+        if not bulk_cmp.locked_state: den_kwargs['phase'] = self.phase
+        den = bulk_cmp.rho(**den_kwargs)*1e-3  # bulk liquid density in [kg/L]
+        bulk_ref_phase = bulk_cmp.phase_ref
         if bulk_ref_phase != 'l':
             warn(f'Reference phase of liquid is "{bulk_ref_phase}", not "l", '
                  'flow might not be set correctly.')
@@ -1109,6 +1111,7 @@ class WasteStream(SanStream):
 
     def _Q_obj_f(self, M_bulk, bulk_liquid_ID, target_Q):
         self.set_flow(M_bulk, 'kg/hr', bulk_liquid_ID)
+        self.F_vol*1e3 - target_Q
         return self.F_vol*1e3 - target_Q
 
     @property

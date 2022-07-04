@@ -65,7 +65,7 @@ def component_identity(component, pretty=False):
 # Will stored as an array when compiled
 _num_component_properties = ('i_C', 'i_N', 'i_P', 'i_K', 'i_Mg', 'i_Ca',
                              'i_mass', 'i_charge', 'i_COD', 'i_NOD',
-                             'f_BOD5_COD', 'f_uBOD_COD', 'f_Vmass_Totmass', 
+                             'f_BOD5_COD', 'f_uBOD_COD', 'f_Vmass_Totmass',
                              'chem_MW')
 
 # Fields that cannot be left as None
@@ -589,7 +589,8 @@ class Component(Chemical):
             super().show()
         else:
             info = component_identity(self, pretty=True)
-        info += '\nComponent-specific properties:\n'
+            info += '\n'
+        info += 'Component-specific properties:\n'
         header = '[Others] '
         section = []
         for field in _component_properties:
@@ -698,14 +699,21 @@ class Component(Chemical):
 
             E.g., do
 
-                `S_O = Component(ID='S_O', search_ID='O2', ...)`
+                ``S_O = Component(ID='S_O', search_ID='O2', ...)``
 
             instead of
 
-                `S_O = Component.from_chemical(ID='S_O', chemical='O2', ...)`
-                
+                ``S_O = Component.from_chemical(ID='S_O', chemical='O2', ...)``
+
         Examples
         --------
+        >>> from qsdsan import Component
+        >>> Struvite = Component.from_chemical('Struvite',
+        ...                                    chemical='MagnesiumAmmoniumPhosphate',
+        ...                                    formula='NH4MgPO4·H12O6',
+        ...                                    phase='l', particle_size='Particulate',
+        ...                                    degradability='Undegradable', organic=False)
+        >>> Struvite.show(chemical_info=True)
         Component: Struvite (phase_ref='l') at phase='l'
         [Names]  CAS: 7785-21-9
                  InChI: Mg.H3N.H3O4P/c;;1-5(...
@@ -719,7 +727,7 @@ class Component(Chemical):
                  UNIFAC: <Empty>
                  PSRK: <Empty>
                  NIST: <Empty>
-        [Data]   MW: 245.41 g/mol
+        [Data]   MW: 137.31 g/mol
                  Tm: None
                  Tb: None
                  Tt: None
@@ -738,7 +746,6 @@ class Component(Chemical):
                  similarity_variable: 0.080108
                  iscyclic_aliphatic: 0
                  combustion: None
-        
         Component-specific properties:
         [Others] measured_as: None
                  description: None
@@ -758,6 +765,7 @@ class Component(Chemical):
                  f_BOD5_COD: 0
                  f_uBOD_COD: 0
                  f_Vmass_Totmass: 0
+                 chem_MW: 245.41
         '''
         new = cls.__new__(cls, ID=ID, phase=phase)
 
@@ -772,7 +780,7 @@ class Component(Chemical):
 
         new._ID = ID
         if formula and formula != chemical.formula:
-            new.formula = formula
+            new._formula = formula
             if new._Hf is None:
                 new._chem_MW = molecular_weight(new.atoms)
             else:
