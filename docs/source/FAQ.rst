@@ -184,3 +184,15 @@ Upgrade Python
 ``QSDsan`` is currently compatible with and tested for Python 3.7 and 3.8. However, with ``BioSTEAM`` moving to Python 3.8 (see this `issue <https://github.com/BioSTEAMDevelopmentGroup/biosteam/issues/56>`_), qsdsan may be only compatible with Python 3.8 and higher in the future. 
 
 If you need to upgrade Python but having a lot of existing packages, creating a virtual environment may be the best way to avoid conflicts. If you are using ``conda``, its has related documentations on `Python upgrading <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-python.html>`_.
+
+
+Styling
+=======
+``QSDsan`` vs. ``qsdsan``? We prefer to use the capitalized version when not in coding settings (e.g., ``QSDsan`` instead of ``qsdsan``) because:
+
+- It refers to the platform, not just the core package (i.e., it includes the entire ecosystem that supports the core package).
+- We style the name to convey the name's meaning (e.g., the "QSD" part stands for "quantitative sustainable design").
+
+But names of the actual packages are all in lower cases per `PEP-8 <https://www.python.org/dev/peps/pep-0008/#package-and-module-names>`_:
+
+   *Modules should have short, all-lowercase names. Underscores can be used in the module name if it improves readability. Python packages should also have short, all-lowercase names, although the use of underscores is discouraged.*

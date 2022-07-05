@@ -23,6 +23,7 @@ def test_exposan():
     print(get_SRT(bsm1, biomass_IDs=('X_BH', 'X_BA'))) # to test the `get_SRT` function
 
     from exposan import bwaise as bw
+    bw.load()
     bw.print_summaries((bw.sysA, bw.sysB, bw.sysC))
 
     from exposan import cas

@@ -278,6 +278,9 @@ class MultiKinetics:
     def __call__(self, state_arr):
         '''Return the evaluated array of kinetic rates when given
         an array of state variables.'''
+        #!!! consider allow function to return multiple outputs including rho values,
+        # updated parameter value, and/or intermediate variables that are useful but
+        # don't need integration
         return self.function(state_arr, self.params)
 
     def __repr__(self):
