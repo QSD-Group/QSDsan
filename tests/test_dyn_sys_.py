@@ -21,8 +21,7 @@ def test_dyn_sys():
     import numpy as np
     from numpy.testing import assert_allclose
 
-    cmps = pc.load_asm1_cmps()
-    set_thermo(cmps)
+    cmps = pc.create_asm1_cmps()
     DI = su.DynamicInfluent('Dyn_Inf')
     S1 = su.Splitter('Split', ins=DI-0, split=0.3, init_with='WasteStream')
     M1 = su.Mixer('Mix', ins=(S1-0, S1-1), outs=('Dyn_Eff'))

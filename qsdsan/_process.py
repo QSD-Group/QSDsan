@@ -326,8 +326,7 @@ class Process:
     can be solved automatically based on conservation of materials.
 
     >>> import qsdsan as qs
-    >>> cmps = qs.processes.load_asm1_cmps()
-    >>> qs.set_thermo(cmps)
+    >>> cmps = qs.processes.create_asm1_cmps()
     >>> pc1 = qs.Process(ID='aerobic_hetero_growth',
     ...                  reaction='[1/Y_H]S_S + [1-1/Y_H]S_O + [?]S_NH + [?]S_ALK -> X_BH',
     ...                  ref_component='X_BH',
@@ -784,8 +783,7 @@ class Processes:
     Examples
     --------
     >>> import qsdsan as qs
-    >>> cmps = qs.processes.load_asm1_cmps()
-    >>> qs.set_thermo(cmps)
+    >>> cmps = qs.processes.create_asm1_cmps()
     >>> pc1 = qs.Process(ID='aerobic_hetero_growth',
     ...                  reaction='[1/Y_H]S_S + [1-1/Y_H]S_O + [?]S_NH + [?]S_ALK -> X_BH',
     ...                  ref_component='X_BH',
@@ -925,7 +923,7 @@ class Processes:
         '''Cast as a :class:`CompiledProcesses` object unless otherwise specified.'''
         processes = tuple(self)
         setattr(self, '__class__', CompiledProcesses)
-        try: 
+        try:
             self._compile(processes, skip_checks)
             if to_class is not None:
                 setattr(self, '__class__', to_class)
