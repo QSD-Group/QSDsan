@@ -4,7 +4,7 @@ Developed Systems
 This page documents the systems that have been/is being developed using ``QSDsan`` with links to the source codes in GitHub and publications.
 
 +-------------------------+--------------------+--------------------------------+-------------------+
-| System                  | Source Codes [*]_  |  Publication                   | Module Status     |
+| System                  | Source Codes       |  Publication                   | Module Status     |
 +=========================+====================+================================+===================+
 | Biogenic Refinery       | - Archived `br1`_  | - `Rowles`_ et al., 2022       | Completed         |
 |                         | - Current  `br2`_  |                                |                   |
@@ -18,17 +18,17 @@ This page documents the systems that have been/is being developed using ``QSDsan
 | CAS (conventional       | - Current  `cas`_  | - `Shoener`_ et al., 2016      | Under development |
 | activated sludge)       |                    |                                |                   |
 +-------------------------+--------------------+--------------------------------+-------------------+
-| NEWgenerator            | - Under NDA `ng`_  | - Watabe et al., *In Prep.*    | Under development |
+| NEWgenerator            | - Archived `ng1`_  | - Watabe et al., *In Prep.*    | Under development |
+| (under NDA)             | - Current  `ng2`_  |                                |                   |
 +-------------------------+--------------------+--------------------------------+-------------------+
 | Reclaimer               | - Current   `re`_  | - `Trotochaud`_ et al., 2020   | Under development |
 +-------------------------+--------------------+--------------------------------+-------------------+
 
+Notes:
+    - "Under NDA" indicates that the system is under non-disclosure agreement with the technology design team and unfortunately we are not able to share the codes in full at this stage. The source link code will lead to a private repository that only individuals who have signed the NDA can access.
+    - "Archived" is the version used when the linked literature is published.
+    - "Current" is the version that has been updated to be compatible with the most up-to-date version of ``QSDsan``.
 
-.. [*] 
-    Notes:
-        - "Archived" is the version used when the linked literature is published.
-        - "Current" is the version that has been updated to be compatible with the most up-to-date version of ``QSDsan``.
-        - "Under NDA" indicates that the system is under non-disclosure agreement with the technology design team and unfortunately we are not able to share the codes in full at this stage. The source link code will lead to a private repository that only individuals who have signed the NDA can access.
 
 .. Links
 .. _br1: https://github.com/QSD-Group/EXPOsan/tree/BR_OmniProcessor/exposan/OmniProcessor_BiogenicRefinery
@@ -47,7 +47,8 @@ This page documents the systems that have been/is being developed using ``QSDsan
 .. _cas: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/cas
 .. _Shoener: https://pubs.rsc.org/en/content/articlelanding/2016/ee/c5ee03715h
 
-.. _ng: https://github.com/QSD-Group/EXPOsan-private/tree/gates/exposan/newgen
+.. _ng1: https://github.com/QSD-Group/EXPOsan-private/tree/newgen/exposan/newgen
+.. _ng2: https://github.com/QSD-Group/EXPOsan-private/tree/gates/exposan/newgen
 
 .. _re: https://github.com/QSD-Group/EXPOsan/tree/gates/exposan/reclaimer
 .. _Trotochaud: https://doi.org/10.1021/acs.est.0c02755
