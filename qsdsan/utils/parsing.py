@@ -122,7 +122,9 @@ def symbolize(coeff_dct, components, conserved_for, parameters):
         v = Matrix(sympify(v_arr, parameters))
         ic = get_ic(components.subgroup(IDs), conserved_for)
         sol = solve(simplify(ic * v).as_expr(), unknowns)
-        coeff_dct = dict(zip(IDs, simplify(v.subs(sol))))
+        # sol = solve(ic * v, unknowns)
+        # coeff_dct = dict(zip(IDs, simplify(v.subs(sol))))
+        coeff_dct = dict(zip(IDs, v.subs(sol)))
         del unknowns
     else:
         isa = isinstance
