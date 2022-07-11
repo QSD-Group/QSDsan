@@ -12,7 +12,7 @@ for license details.
 
 from thermosteam.utils import chemicals_user
 from thermosteam import settings
-from qsdsan import Components, Processes
+from qsdsan import Components, Processes, CompiledProcesses
 from ..utils import ospath, data_path
 
 __all__ = ('create_asm1_cmps', 'ASM1')
@@ -139,7 +139,7 @@ def create_asm1_cmps(set_thermo=True):
 #     )
 
 @chemicals_user
-class ASM1(Processes):
+class ASM1(CompiledProcesses):
     '''
     Activated Sludge Model No. 1 in original notation. [1]_, [2]_
 
@@ -204,7 +204,7 @@ class ASM1(Processes):
     >>> cmps = pc.create_asm1_cmps()
     >>> asm1 = pc.ASM1()
     >>> asm1.show()
-    CompiledProcesses([aero_growth_hetero, anox_growth_hetero, aero_growth_auto, decay_hetero, decay_auto, ammonification, hydrolysis, hydrolysis_N])
+    ASM1([aero_growth_hetero, anox_growth_hetero, aero_growth_auto, decay_hetero, decay_auto, ammonification, hydrolysis, hydrolysis_N])
 
     References
     ----------
@@ -239,7 +239,8 @@ class ASM1(Processes):
                                         conserved_for=('COD', 'charge', 'N'),
                                         parameters=cls._params,
                                         components=cmps,
-                                        compile=True)
+                                        compile=False)
+        self.compile(to_class=cls)
 
         self.set_parameters(Y_A=Y_A, Y_H=Y_H, f_P=f_P, mu_H=mu_H, K_S=K_S, K_O_H=K_O_H,
                             K_NO=K_NO, b_H=b_H, eta_g=eta_g, eta_h=eta_h, k_h=k_h,

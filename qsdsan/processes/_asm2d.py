@@ -12,7 +12,7 @@ for license details.
 
 from thermosteam.utils import chemicals_user
 from thermosteam import settings
-from qsdsan import Components, Process, Processes
+from qsdsan import Components, Process, Processes, CompiledProcesses
 from ..utils import ospath, data_path
 
 __all__ = ('create_asm2d_cmps', 'ASM2d')
@@ -221,7 +221,7 @@ def create_asm2d_cmps(set_thermo=True):
 #     )
 
 @chemicals_user
-class ASM2d(Processes):
+class ASM2d(CompiledProcesses):
     '''
     Activated Sludge Model No. 2d in original notation. [1]_, [2]_
 
@@ -407,7 +407,7 @@ class ASM2d(Processes):
     >>> cmps = pc.create_asm2d_cmps()
     >>> asm2d = pc.ASM2d()
     >>> asm2d.show()
-    CompiledProcesses([aero_hydrolysis, anox_hydrolysis, anae_hydrolysis, hetero_growth_S_F, hetero_growth_S_A, denitri_S_F, denitri_S_A, ferment, hetero_lysis, PAO_storage_PHA, aero_storage_PP, PAO_aero_growth_PHA, PAO_lysis, PP_lysis, PHA_lysis, auto_aero_growth, auto_lysis, precipitation, redissolution, anox_storage_PP, PAO_anox_growth])
+    ASM2d([aero_hydrolysis, anox_hydrolysis, anae_hydrolysis, hetero_growth_S_F, hetero_growth_S_A, denitri_S_F, denitri_S_A, ferment, hetero_lysis, PAO_storage_PHA, aero_storage_PP, PAO_aero_growth_PHA, PAO_lysis, PP_lysis, PHA_lysis, auto_aero_growth, auto_lysis, precipitation, redissolution, anox_storage_PP, PAO_anox_growth])
 
     References
     ----------
@@ -491,7 +491,7 @@ class ASM2d(Processes):
                            conserved_for=('COD', 'N', 'P', 'NOD', 'charge'))
             self.extend([_p12, _p14])
 
-        self.compile()
+        self.compile(to_class=cls)
         self.set_parameters(f_SI=f_SI, Y_H=Y_H, f_XI_H=f_XI_H, Y_PAO=Y_PAO, Y_PO4=Y_PO4,
                             Y_PHA=Y_PHA, f_XI_PAO=f_XI_PAO, Y_A=Y_A, f_XI_AUT=f_XI_AUT,
                             K_h=K_h, eta_NO3=eta_NO3, eta_fe=eta_fe, K_O2=K_O2,
