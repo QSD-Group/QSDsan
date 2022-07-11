@@ -926,7 +926,7 @@ class AnaerobicCSTR(CSTR):
         gas.state[self._gas_cmp_idx] = y[n_cmps:(n_cmps + self._n_gas)]
         gas.state[self.components.index('H2O')] = self._S_vapor
         gas.state[-1] = self._q_gas
-        gas.state[:n_cmps] = gas.state[:n_cmps] * chem_MW / i_mass # i.e., M biogas to g (measured_unit) / L
+        gas.state[:n_cmps] = gas.state[:n_cmps] * chem_MW / i_mass * 1e3 # i.e., M biogas to mg (measured_unit) / L
 
     def _update_dstate(self):
         arr = self._dstate
@@ -953,7 +953,7 @@ class AnaerobicCSTR(CSTR):
     def f_q_gas_var_P_headspace(self, rhoTs, S_gas, T):
         p_gas = S_gas * self._R * T
         self._P_gas = P = sum(p_gas) + self.p_vapor(convert_to_bar=True) 
-        self._q_gas = self._k_p * (P - self._P_atm) * P/self._P_atm # converted to gas flowrate at atm pressure
+        self._q_gas = self._k_p * (P - self._P_atm)
         return self._q_gas
 
     @property
