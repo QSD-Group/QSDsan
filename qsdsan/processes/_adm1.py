@@ -240,7 +240,6 @@ def rhos_adm1(state_arr, params):
     Ka_dH = params['Ka_dH']
     kLa = params['kLa']
     T_base = params['T_base']
-    # h_0 = params['root'].data
 
     # Cs_ids = cmps.indices(['X_c', 'X_ch', 'X_pr', 'X_li', 'X_su', 'X_aa',
     #                        'X_fa', 'X_c4', 'X_c4', 'X_pro', 'X_ac', 'X_h2',
@@ -271,20 +270,14 @@ def rhos_adm1(state_arr, params):
     if S_va > 0: rhos[7] *= 1/(1+S_bu/S_va)
     if S_bu > 0: rhos[8] *= 1/(1+S_va/S_bu)
 
-    # params['root'].data = h = newton(acid_base_rxn, h_0, fprime=fprime_abr,
-    #                                   args=(weak_acids, Kas),
-    #                                   tol=1e-12, maxiter=100)
     h = brenth(acid_base_rxn, 1e-14, 1.0,
                args=(weak_acids, Kas),
                xtol=1e-12, maxiter=100)
-    # pH = 7.4655
-    # params['root'].data = h = 10**(-pH)
-    #!!! nh3 != IN, CO2 != IC
+
     nh3 = Kas[1] * weak_acids[2] / (Kas[1] + h)
     co2 = weak_acids[3] - Kas[2] * weak_acids[3] / (Kas[2] + h)
     biogas_S[-1] = co2 / unit_conversion[9]
 
-    # rhos[4:12] *= pH_inhibit(pH, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
     rhos[4:12] *= Hill_inhibit(h, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
     rhos[6:10] *= non_compet_inhibit(S_h2, KIs_h2)
     rhos[10] *= non_compet_inhibit(nh3, KI_nh3)
@@ -305,6 +298,200 @@ class TempState:
 
 @chemicals_user
 class ADM1(CompiledProcesses):
+    """
+    Anaerobic Digestion Model No.1. [1]_, [2]_
+
+    Parameters
+    ----------
+    components : class:`CompiledComponents`, optional
+        Components corresponding to each entry in the stoichiometry array,
+        defaults to thermosteam.settings.chemicals.
+    path : str, optional
+        Alternative file path for the Petersen matrix. The default is None.
+    N_xc : float, optional
+        Nitrogen content of composite materials [kmol N/kg COD]. The default is 2.686e-3.
+    N_I : float, optional
+        Nitrogen content of inert organics [kmol N/kg COD]. The default is 4.286e-3.
+    N_aa : float, optional
+        Nitrogen content of amino acids [kmol N/kg COD]. The default is 7e-3.
+    f_ch_xc : float, optional
+        Fraction of carbohydrates from composite disintegration [kg COD/kg COD]. 
+        The default is 0.2.
+    f_pr_xc : float, optional
+        Fraction of proteins from composite disintegration [kg COD/kg COD].
+        The default is 0.2.
+    f_li_xc : float, optional
+        Fraction of lipids from composite disintegration [kg COD/kg COD]. 
+        The default is 0.3.
+    f_xI_xc : float, optional
+        Fraction of inert particulates from composite disintegration 
+        [kg COD/kg COD]. The default is 0.2.
+    f_fa_li : float, optional
+        Fraction of long chain fatty acids (LCFAs) from hydrolysis of lipids
+        [kg COD/kg COD]. The default is 0.95.
+    f_bu_su : float, optional
+        Fraction of butyrate from sugars [kg COD/kg COD]. The default is 0.13.
+    f_pro_su : float, optional
+        Fraction of propionate from sugars [kg COD/kg COD]. The default is 0.27.
+    f_ac_su : float, optional
+        Fraction of acetate from sugars [kg COD/kg COD]. The default is 0.41.
+    f_va_aa : float, optional
+        Fraction of valerate from amino acids [kg COD/kg COD]. The default is 0.23.
+    f_bu_aa : float, optional
+        Fraction of butyrate from amino acids [kg COD/kg COD]. The default is 0.26.
+    f_pro_aa : float, optional
+        Fraction of propionate from amino acids [kg COD/kg COD]. The default is 0.05.
+    f_ac_aa : float, optional
+        Fraction of acetate from amino acids [kg COD/kg COD]. The default is 0.4.
+    f_ac_fa : float, optional
+        Fraction of acetate from LCFAs [kg COD/kg COD]. The default is 0.7.
+    f_pro_va : float, optional
+        Fraction of propionate from LCFAs [kg COD/kg COD]. The default is 0.54.
+    f_ac_va : float, optional
+        Fraction of acetate from valerate [kg COD/kg COD]. The default is 0.31.
+    f_ac_bu : float, optional
+        Fraction of acetate from butyrate [kg COD/kg COD]. The default is 0.8.
+    f_ac_pro : float, optional
+        Fraction of acetate from propionate [kg COD/kg COD]. The default is 0.57.
+    Y_su : float, optional
+        Biomass yield of sugar uptake [kg COD/kg COD]. The default is 0.1.
+    Y_aa : float, optional
+        Biomass yield of amino acid uptake [kg COD/kg COD]. The default is 0.08.
+    Y_fa : float, optional
+        Biomass yield of LCFA uptake [kg COD/kg COD]. The default is 0.06.
+    Y_c4 : float, optional
+        Biomass yield of butyrate or valerate uptake [kg COD/kg COD]. 
+        The default is 0.06.
+    Y_pro : float, optional
+        Biomass yield of propionate uptake [kg COD/kg COD]. The default is 0.04.
+    Y_ac : float, optional
+        Biomass yield of acetate uptake [kg COD/kg COD]. The default is 0.05.
+    Y_h2 : float, optional
+        Biomass yield of H2 uptake [kg COD/kg COD]. The default is 0.06.
+    q_dis : float, optional
+        Composites disintegration rate constant [d^(-1)]. The default is 0.5.
+    q_ch_hyd : float, optional
+        Carbohydrate hydrolysis rate constant [d^(-1)]. The default is 10.
+    q_pr_hyd : float, optional
+        Protein hydrolysis rate constant [d^(-1)]. The default is 10.
+    q_li_hyd : float, optional
+        Lipid hydrolysis rate constant [d^(-1)]. The default is 10.
+    k_su : float, optional
+        Sugar uptake rate constant [d^(-1)]. The default is 30.
+    k_aa : float, optional
+        Amino acid uptake rate constant [d^(-1)]. The default is 50.
+    k_fa : float, optional
+        LCFA uptake rate constant [d^(-1)]. The default is 6.
+    k_c4 : float, optional
+        Butyrate or valerate uptake rate constant [d^(-1)]. The default is 20.
+    k_pro : float, optional
+        Propionate uptake rate constant [d^(-1)]. The default is 13.
+    k_ac : float, optional
+        Acetate uptake rate constant [d^(-1)]. The default is 8.
+    k_h2 : float, optional
+        H2 uptake rate constant [d^(-1)]. The default is 35.
+    K_su : float, optional
+        Half saturation coefficient of sugar uptake [kg COD/m3]. 
+        The default is 0.5.
+    K_aa : float, optional
+        Half saturation coefficient of amino acid uptake [kg COD/m3]. 
+        The default is 0.3.
+    K_fa : float, optional
+        Half saturation coefficient of LCFA uptake [kg COD/m3]. 
+        The default is 0.4.
+    K_c4 : float, optional
+        Half saturation coefficient of butyrate or valerate uptake [kg COD/m3]. 
+        The default is 0.2.
+    K_pro : float, optional
+        Half saturation coefficient of propionate uptake [kg COD/m3]. 
+        The default is 0.1.
+    K_ac : float, optional
+        Half saturation coefficient of acetate uptake [kg COD/m3]. 
+        The default is 0.15.
+    K_h2 : float, optional
+        Half saturation coefficient of H2 uptake [kg COD/m3]. 
+        The default is 7e-6.
+    b_su : float, optional
+        Decay rate constant of sugar-uptaking biomass [d^(-1)]. 
+        The default is 0.02.
+    b_aa : float, optional
+        Decay rate constant of amino-acid-uptaking biomass [d^(-1)]. 
+        The default is 0.02.
+    b_fa : float, optional
+        Decay rate constant of LCFA-uptaking biomass [d^(-1)].
+        The default is 0.02.
+    b_c4 : float, optional
+        Decay rate constant of valerate- or butyrate-uptaking biomass [d^(-1)]. 
+        The default is 0.02.
+    b_pro : float, optional
+        Decay rate constant of propionate-uptaking biomass [d^(-1)]. 
+        The default is 0.02.
+    b_ac : float, optional
+        Decay rate constant of acetate-uptaking biomass [d^(-1)]. 
+        The default is 0.02.
+    b_h2 : float, optional
+        Decay rate constant of H2-uptaking biomass [d^(-1)]. The default is 0.02.
+    KI_h2_fa : float, optional
+        H2 inhibition coefficient for LCFA uptake [kg COD/m3]. The default is 5e-6.
+    KI_h2_c4 : float, optional
+        H2 inhibition coefficient for butyrate or valerate uptake [kg COD/m3]. 
+        The default is 1e-5.
+    KI_h2_pro : float, optional
+        H2 inhibition coefficient for propionate uptake [kg COD/m3]. 
+        The default is 3.5e-6.
+    KI_nh3 : float, optional
+        Free ammonia inhibition coefficient for acetate uptake [M]. 
+        The default is 1.8e-3.
+    KS_IN : float, optional
+        Inorganic nitrogen (nutrient) inhibition coefficient for soluble 
+        substrate uptake [M]. The default is 1e-4.
+    pH_limits_aa : 2-tuple, optional
+        Lower and upper limits of pH inhibition for acidogens and acetogens, 
+        unitless. The default is (4,5.5).
+    pH_limits_ac : 2-tuple, optional
+        Lower and upper limits of pH inhibition for aceticlastic methanogens, 
+        unitless. The default is (6,7).
+    pH_limits_h2 : 2-tuple, optional
+        Lower and upper limits of pH inhibition for H2-utilizing methanogens, 
+        unitless. The default is (5,6).
+    T_base : float, optional
+        Base temperature for kinetic parameters [K]. The default is 298.15.
+    pKa_base : iterable[float], optional
+        pKa (equilibrium coefficient) values of acid-base pairs at the base 
+        temperature, unitless, following the order of `ADM1._acid_base_pairs`.
+        The default is [14, 9.25, 6.35, 4.76, 4.88, 4.82, 4.86].
+    Ka_dH : iterable[float], optional
+        Heat of reaction of each acid-base pair at base temperature [J/mol], 
+        following the order of `ADM1._acid_base_pairs`0. The default is 
+        [55900, 51965, 7646, 0, 0, 0, 0].
+    kLa : float, optional
+        Liquid-gas mass transfer coefficient [d^(-1)]. The default is 200.
+    K_H_base : iterable[float], optional
+        Henry's Law coefficients of biogas species at the base temperature 
+        [M dissolved in liquid/bar]. Follows the order of `ADM1._biogas_IDs`. 
+        The default is [7.8e-4, 1.4e-3, 3.5e-2].
+    K_H_dH : iterable[float], optional
+        Heat of reaction of liquid-gas transfer of biogas species [J/mol]. 
+        Follows the order of `ADM1._biogas_IDs`. The default is 
+        [-4180, -14240, -19410].
+    
+    Examples
+    --------
+    >>> from qsdsan import processes as pc
+    >>> cmps = pc.create_adm1_cmps()
+    >>> adm1 = pc.ADM1()
+    >>> adm1.show()
+    ADM1([disintegration, hydrolysis_carbs, hydrolysis_proteins, hydrolysis_lipids, uptake_sugars, uptake_amino_acids, uptake_LCFA, uptake_valerate, uptake_butyrate, uptake_propionate, uptake_acetate, uptake_h2, decay_Xsu, decay_Xaa, decay_Xfa, decay_Xc4, decay_Xpro, decay_Xac, decay_Xh2, h2_transfer, ch4_transfer, IC_transfer])
+    
+    References
+    ----------
+    .. [1] Batstone, D. J.; Keller, J.; Angelidaki, I.; Kalyuzhnyi, S. V; 
+        Pavlostathis, S. G.; Rozzi, A.; Sanders, W. T. M.; Siegrist, H.; 
+        Vavilin, V. A. The IWA Anaerobic Digestion Model No 1 (ADM1). 
+        Water Sci. Technol. 2002, 45 (10), 65–73.
+    .. [2] Rosen, C.; Jeppsson, U. Aspects on ADM1 Implementation within 
+        the BSM2 Framework; Lund, 2006.
+    """
 
     _stoichio_params = ('f_ch_xc', 'f_pr_xc', 'f_li_xc', 'f_xI_xc', 'f_sI_xc',
                         'f_fa_li', 'f_bu_su', 'f_pro_su', 'f_ac_su', 'f_h2_su',
@@ -334,14 +521,11 @@ class ADM1(CompiledProcesses):
                 KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_nh3=1.8e-3, KS_IN=1e-4,
                 pH_limits_aa=(4,5.5), pH_limits_ac=(6,7), pH_limits_h2=(5,6),
                 T_base=298.15, pKa_base=[14, 9.25, 6.35, 4.76, 4.88, 4.82, 4.86],
-                # Ka_theta=[0.076, 0.070, 0.010, 0, 0, 0, 0],
                 Ka_dH=[55900, 51965, 7646, 0, 0, 0, 0],
                 kLa=200, K_H_base=[7.8e-4, 1.4e-3, 3.5e-2],
-                # K_H_theta=[-5.66e-3, -1.929e-2, -2.629e-2],
-                # !!! assume R unit is bar/M/K
                 K_H_dH=[-4180, -14240, -19410],
                 **kwargs):
-
+        
         cmps = _load_components(components)
         cmps.X_c.i_N = N_xc * N_mw
         cmps.X_I.i_N = cmps.S_I.i_N = N_I * N_mw
