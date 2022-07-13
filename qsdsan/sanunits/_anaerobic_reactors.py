@@ -751,6 +751,42 @@ class SludgeDigester(SanUnit):
 
 class AnaerobicCSTR(CSTR):
     
+    '''
+    An anaerpbic continuous stirred tank reactor with biogas in headspace. [1]_, [2]_
+
+    Parameters
+    ----------
+    ins : :class:`WasteStream`
+        Influent to the reactor.
+    outs : Iterable
+        Biogas and treated effluent.
+    V_liq : float, optional
+        Liquid-phase volume [m^3]. The default is 3400.
+    V_gas : float, optional
+        Headspace volume [m^3]. The default is 300.
+    model : :class:`Processes`, optional
+        The kinetic model, typically ADM1-like. The default is None.
+    T : float, optional
+        Operation temperature [K]. The default is 308.15.
+    headspace_P : float, optional
+        Headspace pressure, if fixed [bar]. The default is 1.013.
+    external_P : float, optional
+        External pressure, typically atmospheric pressure [bar]. The default is 1.013.
+    pipe_resistance : float, optional
+        Biogas extraction pipe resistance [m3/d/bar]. The default is 5.0e4.
+    fixed_headspace_P : bool, optional
+        Whether to assume fixed headspace pressure. The default is False.
+    
+    References
+    ----------
+    .. [1] Batstone, D. J.; Keller, J.; Angelidaki, I.; Kalyuzhnyi, S. V; 
+        Pavlostathis, S. G.; Rozzi, A.; Sanders, W. T. M.; Siegrist, H.; 
+        Vavilin, V. A. The IWA Anaerobic Digestion Model No 1 (ADM1). 
+        Water Sci. Technol. 2002, 45 (10), 65–73.
+    .. [2] Rosen, C.; Jeppsson, U. Aspects on ADM1 Implementation within 
+        the BSM2 Framework; Lund, 2006.
+    '''
+    
     _N_ins = 1
     _N_outs = 2
     _ins_size_is_fixed = True
@@ -762,7 +798,7 @@ class AnaerobicCSTR(CSTR):
                  T=308.15, headspace_P=1.013, external_P=1.013, 
                  pipe_resistance=5.0e4, fixed_headspace_P=False,
                  isdynamic=True, **kwargs):
-    
+        
         super().__init__(ID=ID, ins=ins, outs=outs, thermo=thermo,
                          init_with=init_with, V_max=V_liq, aeration=None,
                          DO_ID=None, suspended_growth_model=None,
@@ -783,17 +819,18 @@ class AnaerobicCSTR(CSTR):
         self.fixed_headspace_P = fixed_headspace_P
     
     def ideal_gas_law(self, p=None, S=None):
+        '''Calculates partial pressure [bar] given concentration [M] at 
+        operation temperature or vice versa according to the ideal gas law .'''
         # p in bar, S in M
         if p: return p/self._R/self.T
         elif S: return S*self._R*self.T
 
     def p_vapor(self, convert_to_bar=True):
+        '''Calculates the saturated vapor pressure at operation temperature.'''
         p = self.components.H2O.Psat(self.T)
         if convert_to_bar:
             return p*auom('Pa').conversion_factor('bar')
         else: return p
-        #!!! for debugging    
-        # return 0.0557
         
     @property
     def DO_ID(self):
@@ -816,11 +853,13 @@ class AnaerobicCSTR(CSTR):
     V_liq = property(CSTR.V_max.fget)
     @V_liq.setter
     def V_liq(self, V):
+        '''[float] The liquid-phase volume, in m^3.'''
         CSTR.V_max.fset(self, V)
     
     model = property(CSTR.suspended_growth_model.fget)
     @model.setter
     def model(self, model):
+        '''[:class:`CompiledProcesses` or NoneType] Anaerobic digestion model.'''
         CSTR.suspended_growth_model.fset(self, model)
         if model is not None:
             #!!! how to make unit conversion generalizable to all models?

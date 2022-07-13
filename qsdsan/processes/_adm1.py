@@ -582,6 +582,7 @@ class ADM1(CompiledProcesses):
         return self
 
     def set_pKas(self, pKas):
+        '''Set the pKa values of the acid-base reactions at the base temperature.'''
         if len(pKas) != 7:
             raise ValueError(f'pKas must be an array of 7 elements, one for each '
                              f'acid-base pair, not {len(pKas)} elements.')
@@ -597,14 +598,17 @@ class ADM1(CompiledProcesses):
                               f'not {type(process)}')
 
     def set_rate_constant(self, k, process):
+        '''Set the reaction rate constant [d^(-1)] for a process given its ID.'''
         i = self._find_index(process)
         self.rate_function._params['ks'][i] = k
 
     def set_half_sat_K(self, K, process):
+        '''Set the substrate half saturation coefficient [kg/m3] for a process given its ID.'''
         i = self._find_index(process)
         self.rate_function._params['Ks'][i-4] = K
 
     def set_pH_inhibit_bounds(self, process, lower=None, upper=None):
+        '''Set the upper and/or lower limit(s) of pH inhibition [unitless] for a process given its ID.'''
         i = self._find_index(process)
         dct = self.rate_function._params
         if lower is None: lower = dct['pH_LLs'][i-4]
@@ -616,6 +620,7 @@ class ADM1(CompiledProcesses):
                              f'be lower than the upper limit, not {[lower, upper]}')
 
     def set_h2_inhibit_K(self, KI, process):
+        '''Set the H2 inhibition coefficient [kg/m3] for a process given its ID.'''
         i = self._find_index(process)
         self.rate_function._params['KIs_h2'][i-6] = KI
 
@@ -629,7 +634,7 @@ class ADM1(CompiledProcesses):
         self.rate_function._params['KI_nh3'] = K
 
     def set_parameters(self, **parameters):
-        '''Set values to stoichiometric parameters.'''
+        '''Set values to stoichiometric parameters in `ADM1._stoichio_params`.'''
         non_stoichio = {}
         for k,v in parameters.items():
             if k in self._stoichio_params:
@@ -643,6 +648,7 @@ class ADM1(CompiledProcesses):
             self.__dict__['_stoichio_lambdified'] = None
 
     def check_stoichiometric_parameters(self):
+        '''Check whether product COD fractions sum up to 1 for each process.'''
         stoichio = self.parameters
         subst = ('xc', 'su', 'aa', 'fa', 'va', 'bu', 'pro')
         for s in subst:
