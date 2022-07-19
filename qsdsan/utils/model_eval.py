@@ -157,13 +157,13 @@ def copy_samples(original, new, exclude=()):
     >>> original.parameters = original.parameters[:3]
     >>> original.parameters
     (<Parameter: [Stream-salt water] Salt flow rate (kg/hr)>,
-     <Parameter: [HXutility-H1] Heat exchanger temperature (K)>,
-     <Parameter: [Stream-salt water] Salt solution price (USD/kg)>)
-    >>> new.parameters = new.parameters[1:4]
-    >>> new.parameters
-    (<Parameter: [HXutility-H1] Heat exchanger temperature (K)>,
      <Parameter: [Stream-salt water] Salt solution price (USD/kg)>,
      <Parameter: [Mix tank-M1] Mix tank retention time (hr)>)
+    >>> new.parameters = new.parameters[1:4]
+    >>> new.parameters
+    (<Parameter: [Stream-salt water] Salt solution price (USD/kg)>,
+     <Parameter: [Mix tank-M1] Mix tank retention time (hr)>,
+     <Parameter: [Mix tank-M1] Mix tank mixer power usage (kW/m3)>)
 
     Before copying, none of the samples of the shared parameter is the same
 
@@ -181,7 +181,7 @@ def copy_samples(original, new, exclude=()):
     >>> # parameter are the same
     >>> (original.table.values[:, 1]==new.table.values[:, 0]).all()
     True
-    >>> # But none of the samples are the same for the excluded
+    >>> # But none of the samples are the same for the excluded parameter
     >>> # "Salt solution price" parameter
     >>> (original.table.values[:, 2]==new.table.values[:, 1]).any()
     False
