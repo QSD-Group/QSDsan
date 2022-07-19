@@ -7,6 +7,7 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 Ongoing
 -------
 - Read the preprint of QSDsan on `arXiv <https://arxiv.org/abs/2203.06243>`_!
+- Added the anaerobic digestion model no. 1 (ADM1) process model and the unit :class:`~.sanunits.AnaerobicCSTR`, the corresponding `system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/adm>`_ can be found in EXPOsan.
 
 
 `1.1.0`
@@ -26,7 +27,6 @@ Ongoing
 	- :class:`~.sanunits.WWTpump`
 
 - Continue to enhance documentation (e.g., :class:`~.Process`, `~.stats`, util functions).
-- Building the `official website <https://qsdsan.com>`_ of ``QSDsan``! The first version is expected to go live Spring, 2022.
 
 
 `1.0.0`_
