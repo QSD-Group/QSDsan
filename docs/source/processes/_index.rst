@@ -18,7 +18,7 @@ List of Process Models
 +----------------+------------------+-----------------------+
 
 .. Links
-.. _adm: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/asm
+.. _adm: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/adm
 .. _Alex: http://iwa-mia.org/wp-content/uploads/2019/04/BSM_TG_Tech_Report_no_1_BSM1_General_Description.pdf
 .. _asm: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/asm
 .. _bsm1: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1
