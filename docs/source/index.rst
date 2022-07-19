@@ -110,7 +110,7 @@ Under the Hood
    streams
    Transportation
    equipments/_index
-   processes/processes
+   processes/_index
    sanunits/_index
    stats
    utils/_index

@@ -4,7 +4,7 @@ Developed Systems
 This page documents the systems that have been/is being developed using ``QSDsan`` with links to the source codes in GitHub and publications.
 
 +-------------------------+--------------------+--------------------------------+-------------------+
-| System                  | Source Codes       |  Publication                   | Module Status     |
+| System                  | Source Codes       | Publication                    | Module Status     |
 +=========================+====================+================================+===================+
 | Biogenic Refinery       | - Archived `br1`_  | - `Rowles`_ et al., 2022       | Completed         |
 |                         | - Current  `br2`_  |                                |                   |
