@@ -326,8 +326,7 @@ class Process:
     can be solved automatically based on conservation of materials.
 
     >>> import qsdsan as qs
-    >>> cmps = qs.processes.load_asm1_cmps()
-    >>> qs.set_thermo(cmps)
+    >>> cmps = qs.processes.create_asm1_cmps()
     >>> pc1 = qs.Process(ID='aerobic_hetero_growth',
     ...                  reaction='[1/Y_H]S_S + [1-1/Y_H]S_O + [?]S_NH + [?]S_ALK -> X_BH',
     ...                  ref_component='X_BH',
@@ -338,7 +337,7 @@ class Process:
     Process: aerobic_hetero_growth
     [stoichiometry]      S_S: -1/Y_H
                          X_BH: 1.00
-                         S_O: (1.0 - Y_H)/Y_H
+                         S_O: -1.0 + 1/Y_H
                          S_NH: -0.0860
     [reference]          X_BH
     [rate equation]      S_NH*S_O*S_S*X_BH*mu_H/((K_N...
@@ -784,8 +783,7 @@ class Processes:
     Examples
     --------
     >>> import qsdsan as qs
-    >>> cmps = qs.processes.load_asm1_cmps()
-    >>> qs.set_thermo(cmps)
+    >>> cmps = qs.processes.create_asm1_cmps()
     >>> pc1 = qs.Process(ID='aerobic_hetero_growth',
     ...                  reaction='[1/Y_H]S_S + [1-1/Y_H]S_O + [?]S_NH + [?]S_ALK -> X_BH',
     ...                  ref_component='X_BH',
@@ -921,11 +919,14 @@ class Processes:
         """
         return Process([getattr(self, i) for i in IDs])
 
-    def compile(self, skip_checks=False):
-        '''Cast as a :class:`CompiledProcesses` object.'''
+    def compile(self, skip_checks=False, to_class=None):
+        '''Cast as a :class:`CompiledProcesses` object unless otherwise specified.'''
         processes = tuple(self)
         setattr(self, '__class__', CompiledProcesses)
-        try: self._compile(processes, skip_checks)
+        try:
+            self._compile(processes, skip_checks)
+            if to_class is not None:
+                setattr(self, '__class__', to_class)
         except Exception as error:
             setattr(self, '__class__', Processes)
             setattr(self, '__dict__', {i.ID: i for i in processes})
@@ -960,7 +961,8 @@ class Processes:
     @classmethod
     def load_from_file(cls, path='', components=None,
                        conserved_for=('COD', 'N', 'P', 'charge'), parameters=(),
-                       use_default_data=False, store_data=False, compile=True):
+                       use_default_data=False, store_data=False, compile=True,
+                       **compile_kwargs):
         """
         Create :class:`CompiledProcesses` object from a table of process IDs, stoichiometric
         coefficients, and rate equations stored in a .tsv, .csv, or Excel file.
@@ -1038,7 +1040,7 @@ class Processes:
         if store_data:
             cls._default_data = data
 
-        if compile: new.compile()
+        if compile: new.compile(**compile_kwargs)
         return new
 
 

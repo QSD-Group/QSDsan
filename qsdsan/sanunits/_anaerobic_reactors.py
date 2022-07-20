@@ -751,18 +751,54 @@ class SludgeDigester(SanUnit):
 
 class AnaerobicCSTR(CSTR):
     
+    '''
+    An anaerpbic continuous stirred tank reactor with biogas in headspace. [1]_, [2]_
+
+    Parameters
+    ----------
+    ins : :class:`WasteStream`
+        Influent to the reactor.
+    outs : Iterable
+        Biogas and treated effluent.
+    V_liq : float, optional
+        Liquid-phase volume [m^3]. The default is 3400.
+    V_gas : float, optional
+        Headspace volume [m^3]. The default is 300.
+    model : :class:`Processes`, optional
+        The kinetic model, typically ADM1-like. The default is None.
+    T : float, optional
+        Operation temperature [K]. The default is 308.15.
+    headspace_P : float, optional
+        Headspace pressure, if fixed [bar]. The default is 1.013.
+    external_P : float, optional
+        External pressure, typically atmospheric pressure [bar]. The default is 1.013.
+    pipe_resistance : float, optional
+        Biogas extraction pipe resistance [m3/d/bar]. The default is 5.0e4.
+    fixed_headspace_P : bool, optional
+        Whether to assume fixed headspace pressure. The default is False.
+    
+    References
+    ----------
+    .. [1] Batstone, D. J.; Keller, J.; Angelidaki, I.; Kalyuzhnyi, S. V; 
+        Pavlostathis, S. G.; Rozzi, A.; Sanders, W. T. M.; Siegrist, H.; 
+        Vavilin, V. A. The IWA Anaerobic Digestion Model No 1 (ADM1). 
+        Water Sci. Technol. 2002, 45 (10), 65–73.
+    .. [2] Rosen, C.; Jeppsson, U. Aspects on ADM1 Implementation within 
+        the BSM2 Framework; Lund, 2006.
+    '''
+    
     _N_ins = 1
     _N_outs = 2
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
-    _R = 8.3144598e-2 # Universal gas constant, [bar/M/K]
+    _R = 8.3145e-2 # Universal gas constant, [bar/M/K]
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', V_liq=3400, V_gas=300, model=None,  
                  T=308.15, headspace_P=1.013, external_P=1.013, 
                  pipe_resistance=5.0e4, fixed_headspace_P=False,
                  isdynamic=True, **kwargs):
-    
+        
         super().__init__(ID=ID, ins=ins, outs=outs, thermo=thermo,
                          init_with=init_with, V_max=V_liq, aeration=None,
                          DO_ID=None, suspended_growth_model=None,
@@ -783,11 +819,14 @@ class AnaerobicCSTR(CSTR):
         self.fixed_headspace_P = fixed_headspace_P
     
     def ideal_gas_law(self, p=None, S=None):
+        '''Calculates partial pressure [bar] given concentration [M] at 
+        operation temperature or vice versa according to the ideal gas law .'''
         # p in bar, S in M
         if p: return p/self._R/self.T
         elif S: return S*self._R*self.T
-    
+
     def p_vapor(self, convert_to_bar=True):
+        '''Calculates the saturated vapor pressure at operation temperature.'''
         p = self.components.H2O.Psat(self.T)
         if convert_to_bar:
             return p*auom('Pa').conversion_factor('bar')
@@ -814,11 +853,13 @@ class AnaerobicCSTR(CSTR):
     V_liq = property(CSTR.V_max.fget)
     @V_liq.setter
     def V_liq(self, V):
+        '''[float] The liquid-phase volume, in m^3.'''
         CSTR.V_max.fset(self, V)
     
     model = property(CSTR.suspended_growth_model.fget)
     @model.setter
     def model(self, model):
+        '''[:class:`CompiledProcesses` or NoneType] Anaerobic digestion model.'''
         CSTR.suspended_growth_model.fset(self, model)
         if model is not None:
             #!!! how to make unit conversion generalizable to all models?
@@ -924,7 +965,7 @@ class AnaerobicCSTR(CSTR):
         gas.state[self._gas_cmp_idx] = y[n_cmps:(n_cmps + self._n_gas)]
         gas.state[self.components.index('H2O')] = self._S_vapor
         gas.state[-1] = self._q_gas
-        gas.state[:n_cmps] = gas.state[:n_cmps] * chem_MW / i_mass # i.e., M biogas to g (measured_unit) / L
+        gas.state[:n_cmps] = gas.state[:n_cmps] * chem_MW / i_mass * 1e3 # i.e., M biogas to mg (measured_unit) / L
 
     def _update_dstate(self):
         arr = self._dstate
@@ -951,7 +992,7 @@ class AnaerobicCSTR(CSTR):
     def f_q_gas_var_P_headspace(self, rhoTs, S_gas, T):
         p_gas = S_gas * self._R * T
         self._P_gas = P = sum(p_gas) + self.p_vapor(convert_to_bar=True) 
-        self._q_gas = self._k_p * (P - self._P_atm) * P/self._P_atm # converted to gas flowrate at atm pressure
+        self._q_gas = self._k_p * (P - self._P_atm)
         return self._q_gas
 
     @property
@@ -988,9 +1029,7 @@ class AnaerobicCSTR(CSTR):
                 _f_param(QC)
                 M_stoichio = _M_stoichio()
                 rhos =_f_rhos(QC)
-                try:                
-                    _dstate[:n_cmps] = (Q_in*S_in - Q*S_liq)/V_liq + np.dot(M_stoichio.T, rhos)
-                except: breakpoint()
+                _dstate[:n_cmps] = (Q_in*S_in - Q*S_liq)/V_liq + np.dot(M_stoichio.T, rhos)
                 q_gas = f_qgas(rhos[-3:], S_gas, T)
                 _dstate[n_cmps: (n_cmps+n_gas)] = - q_gas*S_gas/V_gas \
                     + rhos[-3:] * V_liq/V_gas * gas_mass2mol_conversion

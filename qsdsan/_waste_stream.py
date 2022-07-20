@@ -1172,12 +1172,15 @@ class WasteStream(SanStream):
         self.dstate = np.zeros_like(self.state)
 
     def _state2flows(self):
+        Q = self.state[-1] # m3/d
         if self.phase == 'l':
-            Q = self.state[-1]
             Cs = dict(zip(self.components.IDs, self.state[:-1]))
             Cs.pop('H2O', None)
             self.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
-
+        elif self.phase == 'g':
+            Ms = self.state[:-1] * Q # g/d
+            self.set_flow(Ms, units='g/d')
+    
     @classmethod
     def codstates_inf_model(cls, ID='', flow_tot=0., units = ('L/hr', 'mg/L'),
                             phase='l', T=298.15, P=101325., price=0., thermo=None,

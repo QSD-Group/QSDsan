@@ -182,11 +182,11 @@ def load_example_model(evaluate=False, N=100, rule='L', seed=554, **sample_kwarg
      <Splitter: S2>)
     >>> model.parameters
     (<Parameter: [Stream-salt water] Salt flow rate (kg/hr)>,
-     <Parameter: [HXutility-H1] Heat exchanger temperature (K)>,
      <Parameter: [Stream-salt water] Salt solution price (USD/kg)>,
      <Parameter: [Mix tank-M1] Mix tank retention time (hr)>,
      <Parameter: [Mix tank-M1] Mix tank mixer power usage (kW/m3)>,
-     <Parameter: [Pump-P1] Pump design head (kPa)>)
+     <Parameter: [Pump-P1] Pump design head (kPa)>,
+     <Parameter: [HXutility-H1] Heat exchanger temperature (K)>)
     >>> model.metrics
     (<Metric: [System] Total heating duty (kJ/yr)>,
      <Metric: [System] Total electricity consumption (kWh/yr)>,

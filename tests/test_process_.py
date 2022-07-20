@@ -15,13 +15,11 @@ for license details.
 __all__ = ('test_process',)
 
 def test_process():
-    import pytest
-    import os
+    import pytest, os, qsdsan.processes as pc
     from sympy import symbols, Eq
     from sympy.parsing.sympy_parser import parse_expr
     from math import isclose
     from qsdsan import set_thermo, Components, Process, Processes, CompiledProcesses
-    import qsdsan.processes as pc
 
     cmps = Components.load_default()
 
@@ -116,8 +114,9 @@ def test_process():
     assert p12 in asm2d
     assert set(asm2d.parameters.keys()) == set(params)
 
-    pc.load_asm1_cmps()
-    pc.load_asm2d_cmps()
+    pc.create_adm1_cmps()
+    pc.create_asm1_cmps()
+    pc.create_asm2d_cmps()
         
 
 if __name__ == '__main__':
