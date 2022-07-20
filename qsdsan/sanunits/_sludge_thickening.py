@@ -49,6 +49,9 @@ class SludgeThickening(SanUnit, Splitter):
     Note that if the moisture content of the incoming feeds are smaller than
     the target moisture content, the target moisture content will be ignored.
 
+    The following components should be included in system thermo object for simulation:
+    Water.
+
     Parameters
     ----------
     ins : Iterable(obj)
@@ -188,6 +191,9 @@ class BeltThickener(SludgeThickening):
     The bare module (installation) factor is from Table 25 in Humbird et al. [2]_
     (solids handling equipment).
 
+    The following components should be included in system thermo object for simulation:
+    Water.
+
     Parameters
     ----------
     sludge_moisture : float
@@ -212,10 +218,10 @@ class BeltThickener(SludgeThickening):
         https://www.nrel.gov/docs/fy11osti/47764.pdf
     '''
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  sludge_moisture=0.96, solids=(),
                  max_capacity=100, power_demand=4.1):
-        SludgeThickening.__init__(self, ID, ins, outs, thermo,
+        SludgeThickening.__init__(self, ID, ins, outs, thermo, init_with,
                                 sludge_moisture=sludge_moisture,
                                 solids=solids)
         self.max_capacity = max_capacity
@@ -248,6 +254,9 @@ class SludgeCentrifuge(SludgeThickening, SolidsCentrifuge):
 
     The 0th outs is the water-rich supernatant (effluent) and
     the 1st outs is the solid-rich sludge.
+
+    The following components should be included in system thermo object for simulation:
+    Water.
 
     Parameters
     ----------
@@ -283,6 +292,9 @@ class SludgeSeparator(SanUnit):
     For sludge separation based on
     `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_,
     note that no default cost or environmental impacts are included.
+
+    The following components should be included in system thermo object for simulation:
+    Water.
 
     Parameters
     ----------
