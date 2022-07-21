@@ -299,7 +299,7 @@ class SludgeSeparator(SanUnit):
     note that no default cost or environmental impacts are included.
 
     The following components should be included in system thermo object for simulation:
-    H2O.
+    Water.
 
     Parameters
     ----------
