@@ -102,7 +102,7 @@ class SanUnit(Unit, isabstract=True):
         :class:`~.Transportation` with transportation information.
     equipments: Iterable(obj)
         :class:`~.Equipment` with equipment information.
-    add_OPEX : float or dict
+    add_OPEX : float/int or dict
         Operating expense per hour in addition to utility cost (assuming 100% uptime).
         Float input will be automatically converted to a dict with the key being
         "Additional OPEX".
@@ -527,12 +527,12 @@ class SanUnit(Unit, isabstract=True):
         Float input will be automatically converted to a dict with the key being
         "Additional OPEX".
         '''
-        return {'Additional OPEX': self._add_OPEX} if isinstance(self._add_OPEX, float) \
+        return {'Additional OPEX': self._add_OPEX} if isinstance(self._add_OPEX, (float, in)) \
             else self._add_OPEX
     @add_OPEX.setter
     def add_OPEX(self, i):
         isa = isinstance
-        if isa(i, float):
+        if isa(i, (float, int)):
             i = {'Additional OPEX': i}
         if not isa(i, dict):
             raise TypeError(
