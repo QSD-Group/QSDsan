@@ -38,14 +38,16 @@ class Copier(SanUnit):
         Any number of effluents, all copied from the corresponding influents.
     '''
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', **kwargs):
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+                 init_with='WasteStream', F_BM_default=1, **kwargs):
         if isinstance(ins, str) or (not isinstance(ins, Iterable)):
             self._N_outs = self._N_ins = 1
         else:
             self._N_outs = self._N_ins = len(ins)
         self._graphics = UnitGraphics.box(self._N_ins, self._N_outs)
 
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with,
+                         F_BM_default=F_BM_default)
 
         for attr, val in kwargs.items():
             setattr(self, attr, val)
