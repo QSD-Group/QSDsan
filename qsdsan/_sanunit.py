@@ -527,7 +527,7 @@ class SanUnit(Unit, isabstract=True):
         Float input will be automatically converted to a dict with the key being
         "Additional OPEX".
         '''
-        return {'Additional OPEX': self._add_OPEX} if isinstance(self._add_OPEX, (float, in)) \
+        return {'Additional OPEX': self._add_OPEX} if isinstance(self._add_OPEX, (float, int)) \
             else self._add_OPEX
     @add_OPEX.setter
     def add_OPEX(self, i):
