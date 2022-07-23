@@ -107,7 +107,7 @@ def ords(string):
     return added
 
 
-def price_ratio(default_price_ratio):
+def price_ratio(default_price_ratio=1):
     '''
     Add a `price_ratio` attribute to a unit that can be used to adjust
     capital and operating cost.
