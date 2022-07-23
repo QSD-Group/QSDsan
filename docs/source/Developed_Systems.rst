@@ -47,8 +47,8 @@ Notes:
 .. _cas: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/cas
 .. _Shoener: https://pubs.rsc.org/en/content/articlelanding/2016/ee/c5ee03715h
 
-.. _ng1: https://github.com/QSD-Group/EXPOsan-private/tree/newgen/exposan/newgen
-.. _ng2: https://github.com/QSD-Group/EXPOsan-private/tree/gates/exposan/newgen
+.. _ng1: https://github.com/QSD-Group/EXPOsan-private/tree/newgen/exposan/new_generator
+.. _ng2: https://github.com/QSD-Group/EXPOsan-private/tree/gates/exposan/new_generator
 
 .. _re: https://github.com/QSD-Group/EXPOsan/tree/gates/exposan/reclaimer
 .. _Trotochaud: https://doi.org/10.1021/acs.est.0c02755
