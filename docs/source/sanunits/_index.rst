@@ -30,8 +30,8 @@ Links to docs
    heat_exchanging
    InternalCirculationRx
    Lagoon
-   LumpedCost
    membrane_bioreactors
+   non_reactive
    PolishingFilter
    pumping
    Screening

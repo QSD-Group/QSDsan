@@ -27,7 +27,7 @@ from ._electrochemical_cell import *
 from ._encapsulation_bioreactor import *
 from ._excretion import *
 from ._heat_exchanging import *
-from ._lumped_cost import *
+from ._non_reactive import *
 from ._pumping import *
 from ._screening import *
 from ._sludge_thickening import *
@@ -62,8 +62,8 @@ from . import (
     _heat_exchanging,
     _internal_circulation_rx,
     _lagoon,
-    _lumped_cost,
     _membrane_bioreactors,
+    _non_reactive,
     _polishing_filter,
     _pumping,
     _screening,
@@ -91,8 +91,8 @@ __all__ = (
     *_heat_exchanging.__all__,
     *_internal_circulation_rx.__all__,
     *_lagoon.__all__,
-    *_lumped_cost.__all__,
     *_membrane_bioreactors.__all__,
+    *_non_reactive.__all__,
     *_polishing_filter.__all__,
     *_pumping.__all__,
     *_screening.__all__,
