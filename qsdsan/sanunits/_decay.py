@@ -136,7 +136,7 @@ class Decay:
 
     @property
     def max_CH4_emission(self):
-        '''[float] Maximum methane emssion as a fraction of degraded COD, [g CH4/g COD].'''
+        '''[float] Maximum methane emission as a fraction of degraded COD, [g CH4/g COD].'''
         return self._max_CH4_emission
     @max_CH4_emission.setter
     def max_CH4_emission(self, i):

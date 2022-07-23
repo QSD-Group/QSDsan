@@ -32,18 +32,10 @@ class Copier(SanUnit):
 
     Parameters
     ----------
-    cost_item_name : str
-        The name of this unit that will be shown in design, cost, and result dicts.
-    CAPEX : float
-        Total installed capital cost.
-    power : float
-        Total electricity usage.
-    add_OPEX : float
-        Additional operating cost per hour.
-
-    Examples
-    --------
-    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    ins : Iterable(obj)
+        Any number of influents, all will be copied to the effluents.
+    ins : Iterable(obj)
+        Any number of effluents, all copied from the corresponding influents.
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', **kwargs):
@@ -78,6 +70,10 @@ class LumpedCost(Copier):
         Total electricity usage.
     add_OPEX : float
         Additional operating cost per hour.
+
+    See Also
+    --------
+    :ref:`qsdsan.sanunits.Copier <sanunits_NonReactive>`
 
     Examples
     --------
