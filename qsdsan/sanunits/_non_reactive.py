@@ -30,6 +30,10 @@ class Copier(SanUnit):
     A non-reactive unit that simply copy all the influents to the effluents
     (in the same order), i.e., it does not affect stream flow.
 
+    Note that for a unit without the `_run` function and with only one influent,
+    the effluent will be automatically copied from the influent, but this
+    `Copier` class will work for any number of influents.
+
     Parameters
     ----------
     ins : Iterable(obj)

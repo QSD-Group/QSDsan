@@ -1,5 +1,3 @@
-.. _sanunits_NonReactive:
-
 Non-Reactive Units
 ==================
 
