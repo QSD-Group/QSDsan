@@ -131,6 +131,17 @@ class Toilet(SanUnit, Decay, isabstract=True):
         cw.imass['H2O'] = int(self.if_cleansing)*self.cleansing_water
         des.imass['WoodAsh'] = int(self.if_desiccant)*self.desiccant
 
+    def _scale_up_outs(self):
+        '''
+        Scale up the effluent based on the number of user per toilet and
+        toilet number.
+        '''
+        N_tot_user = self.N_tot_user or self.N_toilet*self.N_user
+        for i in self.outs:
+            if not i.F_mass == 0:
+                i.F_mass *= N_tot_user
+
+
     density_dct = {
         'Sand': 1442,
         'Gravel': 1600,
@@ -489,13 +500,8 @@ class PitLatrine(Toilet):
             mixed._COD = mixed_COD / mixed.F_vol
 
         waste.copy_like(mixed)
+        self._scale_up_outs()
 
-        # Scale up the effluent based on the number of user per toilet and
-        # toilet number
-        N_tot_user = self.N_tot_user or self.N_toilet*self.N_user
-        for i in self.outs:
-            if not i.F_mass == 0:
-                i.F_mass *= N_tot_user
 
     _units = {
         'Emptying period': 'yr',
@@ -866,12 +872,7 @@ class UDDT(Toilet):
                 CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
 
-        # Scale up the effluent based on the number of user per toilet and
-        # toilet number
-        N_tot_user = self.N_tot_user or self.N_toilet*self.N_user
-        for i in self.outs:
-            if not i.F_mass == 0:
-                i.F_mass *= N_tot_user
+        self._scale_up_outs()
 
 
     _units = {
