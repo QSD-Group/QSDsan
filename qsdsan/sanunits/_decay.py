@@ -16,6 +16,7 @@ for license details.
 # %%
 
 from math import exp
+from .. import SanUnit
 
 __all__ = ('Decay',)
 
@@ -34,6 +35,14 @@ class Decay:
     _N_max_decay = None
     _decay_k_N = None
     _N2O_EF_decay = None
+
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+                 init_with='WasteStream', F_BM_default=1,
+                 degraded_components=('OtherSS',)):
+        SanUnit.__init__(self, ID, ins, outs, thermo=thermo,
+                         init_with=init_with, F_BM_default=F_BM_default)
+        self.degraded_components = degraded_components
 
 
     # TODOs: enable COD calc by decay; enable sludge calc with moisture; enable biogas or not
@@ -94,7 +103,9 @@ class Decay:
         _COD = waste._COD or waste.COD
         COD_deg = _COD*treated.F_vol/1e3*self.COD_removal # kg/hr
         treated._COD *= (1-self.COD_removal)
-        treated.imass[self.degraded_components] *= (1-self.COD_removal)
+
+        degraded_components = degraded_components or self.degraded_components
+        treated.imass[degraded_components] *= (1-self.COD_removal)
 
         CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
         if if_capture_biogas:
