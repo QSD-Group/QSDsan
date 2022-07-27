@@ -95,7 +95,7 @@ class Decay:
             treated, biogas, CH4, N2O = self.outs
         else:
             treated, CH4, N2O = self.outs
-            biogas = CH4.copy('biogas')
+            biogas = CH4.copy() # this stream doesn't matter
         treated.copy_like(waste)
         biogas.phase = CH4.phase = N2O.phase = 'g'
 
