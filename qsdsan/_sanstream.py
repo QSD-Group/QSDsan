@@ -99,11 +99,12 @@ class SanStream(Stream):
         new = super().copy(ID=new_ID)
         if copy_price:
             new.price = self.price
-        if hasattr(self, '_stream_impact_item'):
-            if self.stream_impact_item is not None:
-                self.stream_impact_item.copy(stream=new)
-            else:
-                new._stream_impact_item = None
+        if copy_impact_item:
+            if hasattr(self, '_stream_impact_item'):
+                if self.stream_impact_item is not None:
+                    self.stream_impact_item.copy(stream=new)
+                else:
+                    new._stream_impact_item = None
         return new
 
     __copy__ = copy

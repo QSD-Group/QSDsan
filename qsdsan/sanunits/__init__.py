@@ -36,9 +36,13 @@ from ._excretion import *
 from ._grinder import *
 from ._housing import *
 from ._heat_exchanging import *
+<<<<<<< HEAD
 from ._ion_exchanges import *
 from ._lumped_cost import *
 from ._pollution_control_device import *
+=======
+from ._non_reactive import *
+>>>>>>> 007e8f9d46d8b4f1ffceea915c7efc2490f943ea
 from ._pumping import *
 from ._screening import *
 from ._sludge_thickening import *
@@ -77,6 +81,7 @@ from ._solar import*
 
 # From then on the order doesn't matter, listed alphabetically
 from . import (
+<<<<<<< HEAD
 	    _abstract,
 	    _activated_sludge_process,
 	    _anaerobic_reactors,
@@ -181,3 +186,61 @@ __all__ = (
         *_solar.__all__,
 	    )
 
+=======
+    _abstract,
+    _activated_sludge_process,
+    _anaerobic_reactors,
+    _clarifier,
+    _combustion,
+    _crop_application,
+    _decay,
+    _dynamic_influent,
+    _electrochemical_cell,
+    _encapsulation_bioreactor,
+    _excretion,
+    _heat_exchanging,
+    _internal_circulation_rx,
+    _lagoon,
+    _membrane_bioreactors,
+    _non_reactive,
+    _polishing_filter,
+    _pumping,
+    _screening,
+    _sedimentation,
+    _sludge_thickening,
+    _suspended_growth_bioreactor,
+    _tanks,
+    _toilets,
+    _treatment_beds,
+    _trucking,
+    )
+
+__all__ = (
+    *_abstract.__all__,
+    *_activated_sludge_process.__all__,
+    *_anaerobic_reactors.__all__,
+    *_clarifier.__all__,
+    *_combustion.__all__,
+    *_crop_application.__all__,
+    *_decay.__all__,
+    *_dynamic_influent.__all__,
+    *_electrochemical_cell.__all__,
+    *_encapsulation_bioreactor.__all__,
+    *_excretion.__all__,
+    *_heat_exchanging.__all__,
+    *_internal_circulation_rx.__all__,
+    *_lagoon.__all__,
+    *_membrane_bioreactors.__all__,
+    *_non_reactive.__all__,
+    *_polishing_filter.__all__,
+    *_pumping.__all__,
+    *_screening.__all__,
+    *_sedimentation.__all__,
+    *_sludge_thickening.__all__,
+    *_suspended_growth_bioreactor.__all__,
+    *_tanks.__all__,
+    *_toilets.__all__,
+    *_treatment_beds.__all__,
+    *_trucking.__all__,
+    )
+>>>>>>> 007e8f9d46d8b4f1ffceea915c7efc2490f943ea
