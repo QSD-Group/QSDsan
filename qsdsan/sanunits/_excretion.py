@@ -19,9 +19,7 @@ from ..utils import ospath, load_data, data_path
 
 __all__ = ('Excretion',)
 
-import os
-data_path = os.path.join(data_path, 'sanunit_data/_excretion.tsv')
-
+excretion_path = ospath.join(data_path, 'sanunit_data/_excretion.tsv')
 
 
 # %%
@@ -57,7 +55,7 @@ class Excretion(SanUnit):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.waste_ratio = waste_ratio
 
-        data = load_data(path=data_path)
+        data = load_data(path=excretion_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, '_'+para, value)

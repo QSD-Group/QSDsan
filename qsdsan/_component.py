@@ -216,12 +216,12 @@ class Component(Chemical):
                 description=None, particle_size=None,
                 degradability=None, organic=None, **chemical_properties):
         if search_ID:
-            self = Chemical.__new__(cls, ID=ID, search_ID=search_ID,
-                                    search_db=True, **chemical_properties)
+            self = super().__new__(cls, ID=ID, search_ID=search_ID,
+                                   search_db=True, **chemical_properties)
         else: # still try to search nonetheless
-            try: self = Chemical.__new__(cls, ID=ID, **chemical_properties)
+            try: self = super().__new__(cls, ID=ID, **chemical_properties)
             except LookupError:
-                self = Chemical.__new__(cls, ID=ID, search_db=False, **chemical_properties)
+                self = super().__new__(cls, ID=ID, search_db=False, **chemical_properties)
 
         self._ID = ID
         self._chem_MW = 1

@@ -139,7 +139,7 @@ class SanUnit(Unit, isabstract=True):
         If this unit is simulated dynamically with rate equations.
     kwargs : dict
         Additional keyword arguments that can be set for this unit.
-    
+
     See Also
     --------
     `biosteam.Unit <https://biosteam.readthedocs.io/en/latest/Unit.html>`_
@@ -345,7 +345,7 @@ class SanUnit(Unit, isabstract=True):
         See Also
         --------
         :func:`~.System.simulate`
-        
+
         `scipy.integrate.solve_ivp <https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html>`_
         '''
         super().simulate()
@@ -440,10 +440,10 @@ class SanUnit(Unit, isabstract=True):
         if not hasattr(self, '_scope'):
             self._scope = SanUnitScope(self)
         return self._scope
-    
+
     @scope.setter
     def scope(self, s):
-        if not isinstance(s, Scope): 
+        if not isinstance(s, Scope):
             raise TypeError(f'{s} must be an {Scope} not {type(s)}.')
         if self is not s.subject:
             raise ValueError(f'The subject of {s} must be {self} not {s.subject}.')

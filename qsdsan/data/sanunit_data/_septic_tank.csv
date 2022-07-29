@@ -8,11 +8,6 @@ FRP_per_tank,estimated kg of FRP for all three tanks,kg,4589.866667,3442.4,5737.
 qty_pump,,ea,2,,,constant,BOM
 pump_cost,2 pump (regulating tank) 40PU2.15S(One for each use),USD/set,462,415.8,508.2,triangular,Eco-san BOM
 N_max_decay,fraction of N removal,,0.23,0.1725,0.2875,triangular,"Orner and Mihelcic, 2017"
-MW_P,molar weight of phosphorous,g/mol,30.97,,,constant,
-MW_N,molar weight of nitrogen,g/mol,14.01,,,constant,
-MW_struvite,molar weight of struvite,g/mol,245.41,,,constant,
-MW_MgOH2,molar weight of magnesium hydroxide,g/mol,58.32,,,constant,
-N_P_ratio_struvite,nitrogen to phosphotous ratio in struvite,,1,,,constant,
 orthoP_post,phosphorous concentration post,mg/L,13.2,,,constant,
 P_recovery,,%,0.9,,,constant,
 Mg_dose,magneisum dose,mg/L,22.37137875,,,constant,

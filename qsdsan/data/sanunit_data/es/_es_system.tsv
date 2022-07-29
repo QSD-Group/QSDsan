@@ -5,7 +5,7 @@ level_guage_cost	4	USD	40	36	44	triangular	BOM
 filter_cost	set	USD	30	27	33.3	triangular	BOM
 UPVC_pipe_cost	set	USD	65	58.5	72.15	triangular	BOM
 control_system_cost	set	USD	3754	3378.6	4166.94	triangular	BOM
-pump_ammount		each	1			constant	BOM
+pump_amount		each	1			constant	BOM
 filter_replacement		times/year	18	12	24	uniform	BOM
 shell_cost	1 pc	USD	10	9	11	triangular	BMGF
 OM	cleaning and replacement	times/year	18	12	24	uniform	BMGF
