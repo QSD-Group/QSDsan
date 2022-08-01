@@ -1,0 +1,21 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+tank_cost		USD	4727	4254.3	5199.7	triangular	BOM
+middle_tank_pump_cost		USD	646	581.4	710.6	triangular	BOM
+fan_cost	fan for pre-treatment dcevice	set	320	288	352	triangular	BOM
+level_guage_cost	4 guages	each	40	36	44	triangular	BOM
+pipe_cost	UPVC	set	300	270	330	triangular	BOM
+regulating_tank_pump_cost		USD	462	415.8	508.2	triangular	BOM
+pump_replacement_cost		USD	360	324	580	triangular	Question's reply
+bio_tube_diffuser_replacement_cost		USD	250	225	275	triangular	Question's reply
+guage_life		times/year	4	3.6	4.4	uniform	BOM
+pump_life		times/year	0.4	0.3	0.5	uniform	BOM
+diffuser_life		times/year	0.5	0.4	0.5	uniform	
+pump_ammount		each	4			constant	BOM
+fan_amount	fan ammount depends on aerobic conditions	each	1			constant	BOM
+level_guage_ammount		each	4			constant	BOM
+pipe_ammount		set	1			constant	BOM
+FRP		kg	12936	9702	16170	uniform	BMGF Report
+OM		times/year	18	12	24	uniform	BMGF REport
+operator_wages		USD/day	29	5.37	52.59	triangular	
+power_demand		kW	2.75	2.475	3.025	triangular	
+working_time		hr/day	0.833333333	0.75	0.916666667	triangular	

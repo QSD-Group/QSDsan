@@ -1,0 +1,16 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+booster_pump_cost	set	USD	111	99.9	123.21	triangular	BOM
+high_level_tank_cost	3 pcs	USD	831	747.9	914.1	triangular	BOM
+level_guage_cost	4	USD	40	36	44	triangular	BOM
+filter_cost	set	USD	30	27	33.3	triangular	BOM
+UPVC_pipe_cost	set	USD	65	58.5	72.15	triangular	BOM
+control_system_cost	set	USD	3754	3378.6	4166.94	triangular	BOM
+pump_amount		each	1			constant	BOM
+filter_replacement		times/year	18	12	24	uniform	BOM
+shell_cost	1 pc	USD	10	9	11	triangular	BMGF
+OM	cleaning and replacement	times/year	18	12	24	uniform	BMGF
+container_cost	container body	USD	8600	7740	9460	triangular	Ecosan BOM
+door_cost	9 doors	USD/door	1314	1182.6	1445.4	triangular	Ecosan BOM
+packaging		USD	385	346.5	423.5	triangular	Ecosan BOM
+operator_wages		USD/day	29	5.37	52.59	triangular	
+heat_preservation			1846	1661.4	2030.6	triangular	

@@ -1,0 +1,13 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+battery_storage_cost	energy storage colloidal battery (set has 24 pieces)	set	6360	5724	6996	triangular	BOM
+battery_holder_cost		set	538	484.2	591.8	triangular	BOM
+solar_cost	solar module (5445 W)	USD/W	2722.5	2450.25	2994.75	triangular	BOM
+solar_module_system	solar module bracket system base	set	438	394.2	481.8	triangular	BOM
+inverter_cost	inverter control integrated machine	set	2909	2618.1	3199.9	triangular	BOM
+pannel_cleaning		set	10	5	15	uniform	BOM
+solar_replacement		times/year	0.5	0.45	0.55	uniform	BOM
+battery_replacement		times/year	0.1	0.09	0.11	triangular	BOM
+solar_capacity		m2	19.8	14.85	24.75	uniform	BOM
+battery_kg		kg	68.7	51.525	85.875	uniform	6-CNJ-250
+OM		times/year	10	5	15	uniform	BOm
+operator_wages		USD/day	29	5.37	52.59	triangular	

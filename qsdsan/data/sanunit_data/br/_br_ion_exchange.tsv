@@ -1,0 +1,18 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+N_rec	N_rec_2	%	0.95	0.9	1	uniform	Lohman et al. 2020
+resin_mass_column		g per column	601	575.8	626.2	uniform	Lohman et al. 2020
+material_tubing		m	3	2	5	uniform	Lohman et al. 2020
+cost_PVC_column		USD/m	0.579	0.499	0.658	uniform	Lohman et al. 2020
+cost_tubing		USD/m	0.15	0.1	0.2	uniform	Lohman et al. 2020
+cost_H2SO4		USD/metric ton	300	200	400	uniform	Lohman et al. 2020
+cost_resin		USD/kg	3.335	2.5	4.17	uniform	Lohman et al. 2020
+ad_density		mmol N/g resin	4.02	3.83	4.21	triangular	Lohman et al. 2020
+resin_lifetime		cycles	100	10	101	triangular	Lohman et al. 2020
+vol_H2SO4	U_regenerant	(L/(g resin * cycle)) 98% H2SO4 regenerant volume	0.000135	0.0001215	0.0001485	constant	Lohman et al. 2020
+column_daily_loading_rate		L/d	100	90	110	constant	Lohman et al. 2020
+column_length		m/column	0.4	0.36	0.44	constant	Lohman et al. 2020
+tubing_length		m/column	3	2	5	uniform	Lohman et al. 2020
+pvc_mass		kg PVC/m	0.472	0.354	0.59	uniform	http://www.midcoonline.com/web/Pages/Products/Pipe/Info/PVC_CPVC/
+tubing_mass		kg PE /m	0.053	0.03975	0.06625	uniform	https://www.parker.com/parkerimages/schrader/cat/english/FRL4J004.pdf
+tank_mass		kg PE/300 L tank	60	45	75	uniform	https://www.alibaba.com/product-detail/Water-Tank-Plastic-Water-PE-Chemical_1600118359256.html?spm=a2700.7724857.normal_offer.d_title.63de667c1FlTgk&s=p
+tank_cost		USD/tank	271	252	290	uniform	https://www.alibaba.com/product-detail/Water-Tank-Plastic-Water-PE-Chemical_1600118359256.html?spm=a2700.7724857.normal_offer.d_title.63de667c1FlTgk&s=p

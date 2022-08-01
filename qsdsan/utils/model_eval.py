@@ -185,7 +185,6 @@ def copy_samples(original, new, exclude=()):
     >>> # "Salt solution price" parameter
     >>> (original.table.values[:, 2]==new.table.values[:, 1]).any()
     False
-
     '''
     try: iter(exclude)
     except: exclude = (exclude,)
