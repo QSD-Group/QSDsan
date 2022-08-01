@@ -189,6 +189,13 @@ class ReclaimerHousing(SanUnit):
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
 
+        self.add_OPEX = self._calc_replacement_cost()
+
+    def _calc_replacement_cost(self):
+        toilet_replacement_cost = self.portable_toilet * self.N_toilets * self.portable_toilet_om
+        toilet_replacement_cost = toilet_replacement_cost / (365 * 24)  # convert from USD/year to USD/hour
+        return toilet_replacement_cost
+    
     @property
     def N_reclaimers(self):
         '''[int] Number of the reclaimer units needed, calculated by `ppl`/`baseline_ppl`.'''
