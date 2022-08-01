@@ -290,7 +290,7 @@ class BiogenicRefineryControls(SanUnit):
         design['Electronics'] = constr[0].quantity = 2
         design['ElectricConnectors'] = constr[1].quantity = 0.5
         design['ElectricCables'] = constr[2].quantity = 3
-        self.add_construction()
+        self.add_construction(add_cost=False)
 
 
     def _cost(self):
@@ -503,7 +503,7 @@ class BiogenicRefineryHHX(SanUnit):
         design['Steel'] = constr[1].quantity  = self.heat_exchanger_hydronic_steel
         design['HydronicHeatExchanger'] = constr[2].quantity = 1
         design['Pump'] = constr[3].quantity = 17.2/2.72
-        self.add_construction()
+        self.add_construction(add_cost=False)
 
 
     def _cost(self):
@@ -706,7 +706,7 @@ class BiogenicRefineryHousing(SanUnit):
         design['Steel'] = constr[0].quantity = 2000 + 4000
         design['StainlessSteelSheet'] = constr[1].quantity = 4.88 * 2 * 3 * 4.5
         design['Concrete'] = constr[2].quantity = self.concrete_thickness * self.footprint
-        self.add_construction()
+        self.add_construction(add_cost=False)
 
 
     def _cost(self):
@@ -714,7 +714,6 @@ class BiogenicRefineryHousing(SanUnit):
         C = self.baseline_purchase_costs
         C['Containers'] = self.container20ft_cost + self.container40ft_cost
         C['Equip Housing'] = D['StainlessSteelSheet'] / 4.88 * self.stainless_steel_housing
-        #!!! Double-counting the concrete cost?
         C['Concrete'] = D['Concrete'] * self.concrete_cost
         ratio = self.price_ratio
         for equipment, cost in C.items():
@@ -787,14 +786,11 @@ class BiogenicRefineryIonExchange(SanUnit):
         treated, resin_out, conc_NH3 = self.outs
         treated.copy_like(waste)
 
-        #!!! During storage most N as urea goes to NH3, should that
-        # conversion be added or just use total N here?
         N_recovered = waste.imass['NH3'] * self.N_rec # kg N / hr
         treated.imass['NH3'] =  waste.imass['NH3'] - N_recovered # kg N / hr
-        conc_NH3.imass['NH3'] = N_recovered # kg N / hr
 
-        # !!! need to add SO4 as a component?
-        # conc_NH3.imass['SO4'] = 0.1 * 98 * conc_NH3.F_vol # kg SO4 / hr
+        #!!! Technically, here should be using (NH4)2SO4
+        conc_NH3.imass['NH3'] = N_recovered # kg N / hr
 
         resin_demand_influent = waste.TN / self.resin_lifetime / self.ad_density / 14 # kg resin / m3 treated
         resin_demand_time = resin_demand_influent * waste.F_vol # kg resin / hr
@@ -815,7 +811,7 @@ class BiogenicRefineryIonExchange(SanUnit):
         tubing_quant = N_column * self.tubing_length * self.tubing_mass # kg PE
         design['PE'] = constr[1].quantity = tubing_quant + self.N_tank*self.tank_mass
 
-        self.add_construction()
+        self.add_construction(add_cost=False)
 
 
     def _cost(self):
@@ -934,7 +930,7 @@ class BiogenicRefineryOHX(SanUnit):
         constr = self.construction
         design['OilHeatExchanger'] = constr[0].quantity = 4/200
         design['Pump'] = constr[1].quantity = 2.834/2.27
-        self.add_construction()
+        self.add_construction(add_cost=False)
 
 
     def _cost(self):
@@ -1106,6 +1102,10 @@ class BiogenicRefineryScrewPress(SludgeSeparator):
     [2] Rowles et al., Financial viability and environmental sustainability of
     fecal sludge treatment with Omni Processors, ChemRxiv,
     DOI:10.26434/chemrxiv-2022-r7443.
+
+    See Also
+    --------
+    :class:`qsdsan.sanunits.SludgeThickening`
     '''
 
     def __init__(self, ID='', ins=None, outs=(),thermo=None, init_with='WasteStream',
@@ -1125,10 +1125,6 @@ class BiogenicRefineryScrewPress(SludgeSeparator):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-        #!!! What is this doing?
-        #**** how can I use this distribution for solids capture?
-        #change name in csv to settled_frac
-        # self.dewatering_solids_capture = self.settled_frac
 
     _N_ins = 2
     _N_outs = 2
@@ -1138,23 +1134,15 @@ class BiogenicRefineryScrewPress(SludgeSeparator):
         liq, cake_sol = self.outs
         SludgeSeparator._run(self)
 
-        #*** is this needed in both places???? Will it be pulled into the function? Isn't cake solids TS needed too?
-        # self.dewatering_solids_capture = self.settled_frac
-        liq, cake_sol = self._adjust_solid_water(waste, liq, cake_sol)
+        sol_COD = cake_sol.COD * cake_sol.F_vol if cake_sol.COD else 0
+        cake_sol.imass['H2O'] = 0
+        cake_sol_mass = cake_sol.F_mass / self.cake_solids_TS
+        cake_sol.imass['H2O'] = cake_water = cake_sol_mass - cake_sol.F_mass
+        if sol_COD: cake_sol._COD = sol_COD / cake_sol.F_vol
 
-        #!!! Notes still useful?
-        # need the flowrate of the liquid stream or use equations below with dewatering_solids_flowrate
-        # self.dewatering_solids_flowrate = liq.F_vol
-
-        # note to self change these once confirm outputs from above function...
-
-        # Does the function above for self._adjust_solid_water take care of these equations?
-        # self.waste_sol_flow = waste.F_mass # kg TS/hr
-        # dewatering_solids_conc = (self.waste_sol_flow) * self.dewatering_solids_capture    # kg TS/hr
-        # dewatering_solids_flowrate = dewatering_solids_conc / (1.06 * self.cake_solids_TS * 1000) # m3 / hr
-        # liq.F_vol = self.dewatering_centrate_flowrate = (waste.F_vol - dewatering_solids_flowrate)   # m3 / hr
-        # dewatering_centrate_conc = (self.waste_sol_flow) * (1 - self.dewatering_solids_capture) # kg / d
-        # dewatering_total_solids = dewatering_solids_conc / dewatering_solids_flowrate # kg / m3
+        liq_COD = liq.COD * liq.F_vol if liq.COD else 0
+        liq.imass['H2O'] = waste.imass['H2O'] - cake_water
+        if liq_COD: liq._COD = liq_COD / liq.F_vol
 
         waste_TS = waste.F_mass - waste.imass['H2O']
         polymer.imass['Polyacrylamide'] = self.dewatering_polymer_dose * waste_TS / 1000 # kg polymer / hr
@@ -1162,7 +1150,7 @@ class BiogenicRefineryScrewPress(SludgeSeparator):
 
     def _design(self):
         self.construction[0].quantity = self.dewatering_screw_press_steel
-        self.add_construction()
+        self.add_construction(add_cost=False)
 
     def _cost(self):
         self.baseline_purchase_costs['Screw Press'] = self.dewatering_screw_press_cost*self.price_ratio
@@ -1269,7 +1257,7 @@ class BiogenicRefineryStruvitePrecipitation(SanUnit):
         N_tank = self.N_tank
         design['StainlessSteel'] = constr[0].quantity = N_tank * self.reactor_weight # kg SS
         design['PVC'] = constr[1].quantity = N_tank * self.material_P_pipe * self.pvc_mass # kg PVC
-        self.add_construction()
+        self.add_construction(add_cost=False)
 
     def _cost(self):
         C = self.baseline_purchase_costs
