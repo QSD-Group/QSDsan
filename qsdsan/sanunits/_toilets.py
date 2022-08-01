@@ -1133,7 +1133,7 @@ class MURT(Toilet):
 
             self.construction = (
                 Construction(item='Ceramic', quantity=Ceramic_quant * N, quantity_unit='kg'),
-                Construction(item='Fan', quantity=Fan_quant * N, quantity_unit='ea'),
+                Construction(item='Fan', quantity=Fan_quant * N, quantity_unit='kg'),
             )
 
             self.add_construction()
