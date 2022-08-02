@@ -43,12 +43,12 @@ def test_exposan():
     bw.load()
     bw.print_summaries((bw.sysA, bw.sysB, bw.sysC))
 
+    from exposan import cas
+    cas.sys.simulate()
+
     from exposan import eco_san as es
     es.load()
     es.print_summaries((es.sysA, es.sysB, es.sysC))
-
-    from exposan import cas
-    cas.sys.simulate()
 
     from exposan import reclaimer as re
     re.load()
