@@ -105,9 +105,9 @@ class SimpleTEA(TEA):
     A system should be constructed prior to TEA, here we import a pre-constructed one.
 
     >>> import qsdsan as qs
-    >>> from qsdsan.utils import load_example_cmps, load_example_sys
-    >>> cmps = load_example_cmps()
-    >>> sys = load_example_sys(cmps)
+    >>> from qsdsan.utils import load_example_components, load_example_system
+    >>> cmps = load_example_components()
+    >>> sys = load_example_system(cmps)
     >>> # Uncomment the line below to see the system diagram
     >>> # sys.diagram()
     >>> sys.simulate()
