@@ -33,7 +33,6 @@ __all__ = (
 
 re_su_data_path = ospath.join(data_path, 'sanunit_data/re')
 
-#!!! Need to update the references throughout
 
 # %%
 
@@ -57,7 +56,11 @@ class ReclaimerECR(SanUnit):
 
     References
     ----------
-    [1] 2019.06 Technical report for BMGF V3 _ CC 2019.06.13.pdf
+    [1] Trotochaud et al., Laboratory Demonstration and Preliminary Techno-Economic Analysis of an Onsite
+    Wastewater Treatment System Environ. Sci. Technol. 2020, 54, (24), 16147–16155.
+    https://dx.doi.org/10.1021/acs.est.0c02755
+    [2] Duke Center for WaSH-AID Reclaimer design team data and guidance
+    https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
     '''
 
     # Constants
@@ -142,7 +145,13 @@ class ReclaimerHousing(SanUnit):
 
     References
     ----------
-    [1] Duke Reclaimer team data.
+    [1] Trotochaud et al., Laboratory Demonstration and Preliminary Techno-Economic Analysis of an Onsite
+    Wastewater Treatment System Environ. Sci. Technol. 2020, 54, (24), 16147–16155.
+    https://dx.doi.org/10.1021/acs.est.0c02755
+    [2] Duke Center for WaSH-AID Reclaimer design team data and guidance
+    https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
+    [3] Eco-san water recycling toilet Reinvented Toilet design team bill of materials
+    https://sanitation.ansi.org/EcoSanToilet
     '''
 
     baseline_ppl = 30  # baseline population served by Reclaimer
@@ -169,7 +178,11 @@ class ReclaimerHousing(SanUnit):
             self.framework_weight/4 +
             self.fittings_weight
             ) * (self.ppl / self.baseline_ppl)  # linear scale
-        self.construction = Construction(item='Steel', quantity=steel_quant, quantity_unit='kg')
+        design['Metal'] = metal_quant = self.aluminum_weight * (self.ppl / self.baseline_ppl)  # linear scale
+        self.construction = (
+            Construction(item='Steel', quantity=steel_quant, quantity_unit='kg'),
+            Construction(item='Metal', quantity=metal_quant, quantity_unit='kg')
+            )
         self.add_construction(add_cost=False)
 
     def _cost(self):
@@ -181,21 +194,15 @@ class ReclaimerHousing(SanUnit):
             self.angle +
             self.door_sheet +
             self.plate_valve +
-            self.powder
+            self.powder +
+            self.container
             ) * (1 + 0.1 * (self.N_reclaimers-1))
-        C['Housing'] += self.portable_toilet * self.N_toilets
 
         ratio = self.price_ratio
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
 
-        self.add_OPEX = self._calc_replacement_cost()
 
-    def _calc_replacement_cost(self):
-        toilet_replacement_cost = self.portable_toilet * self.N_toilets * self.portable_toilet_om
-        toilet_replacement_cost = toilet_replacement_cost / (365 * 24)  # convert from USD/year to USD/hour
-        return toilet_replacement_cost
-    
     @property
     def N_reclaimers(self):
         '''[int] Number of the reclaimer units needed, calculated by `ppl`/`baseline_ppl`.'''
@@ -245,7 +252,11 @@ class ReclaimerIonExchange(SanUnit):
     source-separated urine in Nairobi, Kenya. Development Engineering. 2018,
     3, 188–195.
     https://doi.org/10.1016/j.deveng.2018.07.002
-    [3] Duke University Reclaimer team data.
+    [3] Trotochaud et al., Laboratory Demonstration and Preliminary Techno-Economic Analysis of an Onsite
+    Wastewater Treatment System Environ. Sci. Technol. 2020, 54, (24), 16147–16155.
+    https://dx.doi.org/10.1021/acs.est.0c02755
+    [4] Duke Center for WaSH-AID Reclaimer design team data and guidance
+    https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
     '''
 
     # Constants
@@ -383,7 +394,14 @@ class ReclaimerSolar(SanUnit):
 
     References
     ----------
-    [1] Duke Reclaimer team data.
+    [1] Trotochaud et al., Laboratory Demonstration and Preliminary Techno-Economic Analysis of an Onsite
+    Wastewater Treatment System Environ. Sci. Technol. 2020, 54, (24), 16147–16155.
+    https://dx.doi.org/10.1021/acs.est.0c02755
+    [2] Duke Center for WaSH-AID Reclaimer design team data and guidance
+    https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
+    [3] Eco-san water recycling toilet Reinvented Toilet design team bill of materials
+    https://sanitation.ansi.org/EcoSanToilet
+
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', **kwargs):
@@ -458,7 +476,11 @@ class ReclaimerSystem(SanUnit):
 
     References
     ----------
-    [1] Duke Reclaimer team data.
+    [1] Trotochaud et al., Laboratory Demonstration and Preliminary Techno-Economic Analysis of an Onsite
+    Wastewater Treatment System Environ. Sci. Technol. 2020, 54, (24), 16147–16155.
+    https://dx.doi.org/10.1021/acs.est.0c02755
+    [2] Duke Center for WaSH-AID Reclaimer design team data and guidance
+    https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
     '''
 
     baseline_ppl = 30 # baseline population served by the Reclaimer system
@@ -559,7 +581,11 @@ class ReclaimerUltrafiltration(SanUnit):
 
     References
     ----------
-    [1] Duke University Reclaimer team data.
+    [1] Trotochaud et al., Laboratory Demonstration and Preliminary Techno-Economic Analysis of an Onsite
+    Wastewater Treatment System Environ. Sci. Technol. 2020, 54, (24), 16147–16155.
+    https://dx.doi.org/10.1021/acs.est.0c02755
+    [2] Duke Center for WaSH-AID Reclaimer design team data and guidance
+    https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
     '''
 
     # Constants
