@@ -46,6 +46,7 @@ except pkg_resources.DistributionNotFound:  # pragma: no cover
 del sys, py_version, pkg_resources
 
 
+# BioSTEAM/Thermosteam APIs
 import thermosteam as tmo
 import biosteam as bst
 Chemical = tmo.Chemical
@@ -70,7 +71,12 @@ CEPCI = bst.CE # Chemical Engineering Plant Cost Index
 CEPCI_by_year = bst.units.design_tools.CEPCI_by_year
 del tmo, bst
 
+
+# Global variables
 currency = 'USD'
+CHECK_IMPACT_INDICATOR_CONSISTENCY = True
+CHECK_IMPACT_ITEM_CONSISTENCY = True
+
 
 from . import utils
 from ._component import *

@@ -39,10 +39,10 @@ def clear_lca_registries(print_msg=False):
     --------
     >>> from qsdsan.utils import clear_lca_registries
     >>> clear_lca_registries(True)
-    All impact indicators have been removed from registry.
-    All impact items have been removed from registry.
-    All construction activities have been removed from registry.
-    All transportation activities have been removed from registry.
+    All impact indicators have been removed from the registry.
+    All impact items have been removed from the registry.
+    All construction activities have been removed from the registry.
+    All transportation activities have been removed from the registry.
     '''
     # Only import when this function is called to avoid circular import during package initialization
     from qsdsan import ImpactIndicator, ImpactItem, Construction, Transportation

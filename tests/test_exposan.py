@@ -17,6 +17,7 @@ for license details.
 __all__ = ('test_exposan',)
 
 def test_exposan():
+    ##### Systems without costs/impacts #####
     from exposan import adm
     # adm.load()
     adm.sys.simulate(state_reset_hook='reset_cache', t_span=(0, 200), method='BDF')
@@ -35,6 +36,10 @@ def test_exposan():
     bsm1.simulate(t_span=(0,10), method='BDF')
     print(get_SRT(bsm1, biomass_IDs=('X_BH', 'X_BA'))) # to test the `get_SRT` function
 
+    from exposan import cas
+    cas.sys.simulate()
+
+    ##### Systems with costs/impacts #####
     from exposan import biogenic_refinery as br
     br.load()
     br.print_summaries((br.sysA, br.sysB, br.sysC, br.sysD))
@@ -42,9 +47,6 @@ def test_exposan():
     from exposan import bwaise as bw
     bw.load()
     bw.print_summaries((bw.sysA, bw.sysB, bw.sysC))
-
-    from exposan import cas
-    cas.sys.simulate()
 
     from exposan import eco_san as es
     es.load()

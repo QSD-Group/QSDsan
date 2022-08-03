@@ -24,6 +24,7 @@ from warnings import warn
 from . import ImpactIndicator, ImpactItem, Stream, SanStream, SanUnit
 from .utils import (
     auom,
+    clear_lca_registries,
     format_number as f_num
     )
 
@@ -199,6 +200,9 @@ class LCA:
     5469807.9765...
     >>> lca.get_total_impacts(exclude=sys.products)['GlobalWarming'] # doctest: +ELLIPSIS
     5469807.9765...
+    >>> # Clear all registries for testing purpose
+    >>> from qsdsan.utils import clear_lca_registries
+    >>> clear_lca_registries()
 
     See Also
     --------
@@ -238,6 +242,7 @@ class LCA:
                     raise e
             self.add_other_item(item, f_quantity, unit)
 
+    clear_lca_registries = clear_lca_registries
 
     def _update_system(self, system):
         for u in system.units:

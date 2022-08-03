@@ -1020,6 +1020,9 @@ class MURT(Toilet):
     The following components should be included in system thermo object for simulation:
     Tissue, WoodAsh, H2O, NH3, NonNH3, P, K, Mg, CH4, N2O.
 
+    The following impact items should be pre-constructed for life cycle assessment:
+    Ceramic, Fan.
+
     Parameters
     ----------
     ins : Iterable(stream)
@@ -1029,7 +1032,7 @@ class MURT(Toilet):
         CH4: fugitive CH4.
         N2O: fugitive N2O.
     N_squatting_pan_per_toilet : int
-        The number of suqatting pan per toilet.
+        The number of squatting pan per toilet.
     N_urinal_per_toilet : int
         The number of urinals per toilet.
     if_include_front_end : bool
