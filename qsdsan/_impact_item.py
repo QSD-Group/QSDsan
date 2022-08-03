@@ -220,6 +220,8 @@ class ImpactItem:
         if source: self.source = source
         else:
             self._functional_unit = auom(functional_unit)
+            self._source = None
+            self._CFs = {}
             self.price = price
             for indicator, (value, unit) in CF_dct.items():
                 self.add_indicator(indicator, value, unit)
