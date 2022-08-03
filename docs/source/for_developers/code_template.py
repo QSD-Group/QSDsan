@@ -5,7 +5,6 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-
     Author 1 <email address (optional)>
 
     Author 2 <email address (optional)>
