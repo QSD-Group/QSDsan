@@ -12,6 +12,7 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+import pandas as pd
 
 __all__ = (
     'AttrGetter', 'FuncGetter',
@@ -128,10 +129,10 @@ class DictAttrSetter:
 # Sample Manipulation
 # =============================================================================
 
-def copy_samples(original, new, exclude=()):
+def copy_samples(original, new, exclude=(), only_same_baseline=False):
     '''
     Copy samples of the shared parameters in the original model to the new model.
-    Parameters in `exclude` will be excluded (i.e., not copied).
+    Parameters in `exclude` will be excluded (i.e., will not be copied).
 
     Parameters
     ----------
@@ -142,16 +143,19 @@ def copy_samples(original, new, exclude=()):
         will be copied from the original model.
     exclude : tuple(obj)
         Parameters that will be excluded from copying.
+    only_same_baseline : bool
+        If True, will only copy parameters with the same
+        name, units, and baseline values.
 
     Examples
     --------
     Create two models with shared and different parameters
 
-    >>> from qsdsan.utils import load_example_model
+    >>> from qsdsan.utils import load_example_model, copy_samples
     >>> original = load_example_model()
-    >>> new = original.copy()
+    >>> new = load_example_model()
 
-    The 1st/2nd parameters of the original model are the same as
+    Let's make the 1st/2nd parameters of the original model the same as
     the 0th/1st parameters of the new model.
 
     >>> original.parameters = original.parameters[:3]
@@ -177,12 +181,23 @@ def copy_samples(original, new, exclude=()):
     Let's copy the samples, but exclude the "Salt solution price" parameter
 
     >>> copy_samples(original, new, exclude=(original.parameters[-1],))
-    >>> # After copying, all of the samples of the "Heat exchanger temperature"
+    >>> # After copying, all of the samples of the "Salt solution price"
     >>> # parameter are the same
     >>> (original.table.values[:, 1]==new.table.values[:, 0]).all()
     True
     >>> # But none of the samples are the same for the excluded parameter
-    >>> # "Salt solution price" parameter
+    >>> # "Mix tank retention time" parameter
+    >>> (original.table.values[:, 2]==new.table.values[:, 1]).any()
+    False
+
+    When `only_same_baseline` is True, only values for samples with the same
+    name and unit will not be copied if their baseline values are different.
+
+    >>> # Let's change the baseline values for the "Mix tank retention time" parameter
+    >>> # to be different for the two models
+    >>> new.parameters[1].baseline = original.parameters[2].baseline + 10
+    >>> copy_samples(original, new, exclude=(), only_same_baseline=True)
+    >>> # Samples are not copied even if they have the same names due to unequal baseline
     >>> (original.table.values[:, 2]==new.table.values[:, 1]).any()
     False
     '''
@@ -192,6 +207,14 @@ def copy_samples(original, new, exclude=()):
     col1 = new.table.columns.get_level_values(1)[:len(new.parameters)]
     shared = col0.intersection(col1)
     shared = shared.difference([i.name_with_units for i in exclude])
+    if only_same_baseline:
+        original_b = {p.name_with_units: p.baseline for p in original.parameters
+                      if p.name_with_units in shared}
+        original_b = pd.DataFrame.from_dict(original_b, columns=['val'], orient='index')
+        new_b = {p.name_with_units: p.baseline for p in new.parameters
+                 if p.name_with_units in shared}
+        new_b = pd.DataFrame.from_dict(new_b, columns=['val'], orient='index')
+        shared = original_b[original_b.val==new_b.val].index
     idx0 = original.table.columns.get_locs([slice(None), shared])
     idx1 = new.table.columns.get_locs([slice(None), shared])
     new.table[new.table.columns[idx1]] = new._samples[:, idx1] \
