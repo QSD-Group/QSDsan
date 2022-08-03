@@ -7,6 +7,12 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 Ongoing
 -------
 - Read the preprint of QSDsan on `arXiv <https://arxiv.org/abs/2203.06243>`_!
+- Added multiple systems (including their unit operations), check out the details on the `Developed System <https://qsdsan.readthedocs.io/en/latest/Developed_Systems.html>`_ page!
+
+	- Biogenic Refinery
+	- Eco-San
+	- Reclaimer
+
 - Added the anaerobic digestion model no. 1 (ADM1) process model and the unit :class:`~.sanunits.AnaerobicCSTR`, the corresponding `system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/adm>`_ can be found in EXPOsan.
 - Other new unit operations:
 
