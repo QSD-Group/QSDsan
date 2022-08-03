@@ -61,7 +61,7 @@ class EcoSanAerobic(SanUnit, Decay):
 
     References
     ----------
-    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
+    [1] Ma Li and Zhou Xiaokang. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
 
     See Also
     --------
@@ -113,7 +113,7 @@ class EcoSanAnaerobic(SanUnit, Decay):
 
     References
     ----------
-    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
+    [1] Ma Li and Zhou Xiaokang. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
 
     See Also
     --------
@@ -165,7 +165,7 @@ class EcoSanAnoxic(SanUnit, Decay):
 
     References
     ----------
-    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
+    [1] Ma Li and Zhou Xiaokang. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
 
     See Also
     --------
@@ -207,6 +207,10 @@ class EcoSanBioCost(SanUnit):
 
     The following impact items should be pre-constructed for life cycle assessment:
     FRP, Pump.
+
+    References
+    ----------
+    [1] Ma Li and Zhou Xiaokang. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
@@ -279,7 +283,7 @@ class EcoSanECR(SanUnit, Decay):
 
     References
     ----------
-    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
+    [1] Ma Li and Zhou Xiaokang. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
 
     See Also
     --------
@@ -405,7 +409,7 @@ class EcoSanMBR(SanUnit, Decay):
 
     References
     ----------
-    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
+    [1] Ma Li and Zhou Xiaokang. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
 
     See Also
     --------
@@ -487,7 +491,7 @@ class EcoSanPrimary(SepticTank):
 
     References
     ----------
-    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
+    [1] Ma Li and Zhou Xiaokang. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
 
     See Also
     --------
@@ -579,7 +583,7 @@ class EcoSanSolar(SanUnit):
 
     References
     ----------
-    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
+    [1] Ma Li and Zhou Xiaokang. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
@@ -614,7 +618,7 @@ class EcoSanSolar(SanUnit):
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
 
-        #!!! The following is originally commented out
+        # The following was originally commented out, but OPEX should be included - Yalin Li 2022-08-03
         self.add_OPEX =  self.solar_replacement * self.solar_cost / (365 * 24) # USD/hr
 
 
@@ -633,7 +637,7 @@ class EcoSanSystem(SanUnit):
 
     References
     ----------
-    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
+    [1] Ma Li and Zhou Xiaokang. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
@@ -673,5 +677,5 @@ class EcoSanSystem(SanUnit):
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
 
-        #!!! The following is originally commented out
+        # The following was originally commented out, but OPEX should be included - Yalin Li 2022-08-03
         self.add_OPEX =  self.filter_replacement * self.filter_cost / (365 * 24) # USD/hr
