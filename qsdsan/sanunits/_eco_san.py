@@ -24,11 +24,11 @@ from ..utils import ospath, load_data, data_path, price_ratio
 
 __all__ = (
     'EcoSanAerobic',
-    'EcoSanAeMBR',
     'EcoSanAnaerobic',
     'EcoSanAnoxic',
     'EcoSanBioCost',
     'EcoSanECR',
+    'EcoSanMBR',
     'EcoSanPrimary',
     'EcoSanSolar',
     'EcoSanSystem',
@@ -92,12 +92,12 @@ class EcoSanAerobic(SanUnit, Decay):
 
 # %%
 
-aembr_path = ospath.join(es_su_data_path, '_es_aembr.tsv')
+mbr_path = ospath.join(es_su_data_path, '_es_mbr.tsv')
 
 @price_ratio()
-class EcoSanAeMBR(SanUnit, Decay):
+class EcoSanMBR(SanUnit, Decay):
     '''
-    Aerobic memberane bioreactor for the Eco-San system.
+    Aerobic membrane bioreactor for the Eco-San system.
 
     The following impact items should be pre-constructed for life cycle assessment:
     FRP.
@@ -126,7 +126,7 @@ class EcoSanAeMBR(SanUnit, Decay):
                        init_with=init_with, F_BM_default=1,
                        degraded_components=degraded_components)
 
-        data = load_data(path=aembr_path)
+        data = load_data(path=mbr_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
