@@ -13,11 +13,11 @@ primary_tank_cost		USD	1100	990	1210	triangular
 MCF_decay			1			constant	
 regulating_pump_cost			231	207.9	254.1	triangular	
 fan_cost			320	288	352	triangular	
-guage_cost			40	36	44	triangular	
+gauge_cost			40	36	44	triangular	
 pipe_cost			300	270	330	triangular	
 mid_tank_pump			140	126	154	triangular	
 power_demand		kW	1.38	1.242	1.518	triangular	
 working_time		hr/day	0.833333333	0.75	0.916666667	triangular	
-guage_life		times/year	4	3.6	4.4	triangular	
+gauge_life		times/year	4	3.6	4.4	triangular	
 pump_life		times/year	0.4	0.3	0.5	triangular	
 diffuser_life		times/year	0.45	0.4	0.5	triangular	

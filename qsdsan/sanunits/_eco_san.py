@@ -154,7 +154,7 @@ class EcoSanMBR(SanUnit, Decay):
         C['Primary tank'] = self.primary_tank_cost
         C['Regulating pump'] = self.regulating_pump_cost
         C['Fan'] = self.fan_cost
-        C['Guage'] = self.guage_cost
+        C['Gauge'] = self.gauge_cost
         C['Pipe'] = self.pipe_cost
         C['Mid tank pump'] = self.mid_tank_pump
 
@@ -164,7 +164,7 @@ class EcoSanMBR(SanUnit, Decay):
 
         MBR_replacement_parts_annual_cost = (
             self.MBR_cost * self.MBR_replacement +
-            self.guage_cost * self.guage_life
+            self.gauge_cost * self.gauge_life
             )
 
         self.add_OPEX =  MBR_replacement_parts_annual_cost / (365 * 24) * self.price_ratio # USD/hr
