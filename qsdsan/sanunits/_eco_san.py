@@ -8,9 +8,11 @@ This module is developed by:
     Yalin Li <mailto.yalin.li@gmail.com>
     Hannah Lohman <hlohman94@gmail.com>
 
-This module contains unit operations used in the Reclaimer system
-as described in http://washaid.pratt.duke.edu/sites/washaid.pratt.duke.edu/files/u71/Reclaimer_July2021.pdf
-and `Trotochaud et al. <https://doi.org/10.1021/acs.est.0c02755>`_
+This module contains unit operations used in the Eco-San system as described in
+Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
+Note that the report is not publicly available, but information about the Eco-San system can be found at:
+https://sanitation.ansi.org/EcoSanToilet
+http://www.eco-san.cn/e_main.html
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -36,7 +38,6 @@ __all__ = (
 
 es_su_data_path = ospath.join(data_path, 'sanunit_data/es')
 
-#!!! Need to update the references throughout
 
 # %%
 
@@ -60,7 +61,7 @@ class EcoSanAerobic(SanUnit, Decay):
 
     References
     ----------
-    [1] 2019.06 Technical report for BMGF V3 _ CC 2019.06.13.pdf
+    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
 
     See Also
     --------
@@ -112,7 +113,7 @@ class EcoSanAnaerobic(SanUnit, Decay):
 
     References
     ----------
-    [1] 2019.06 Technical report for BMGF V3 _ CC 2019.06.13.pdf
+    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
 
     See Also
     --------
@@ -164,7 +165,7 @@ class EcoSanAnoxic(SanUnit, Decay):
 
     References
     ----------
-    [1] 2019.06 Technical report for BMGF V3 _ CC 2019.06.13.pdf
+    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
 
     See Also
     --------
@@ -278,7 +279,7 @@ class EcoSanECR(SanUnit, Decay):
 
     References
     ----------
-    [1] 2019.06 Technical report for BMGF V3 _ CC 2019.06.13.pdf
+    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
 
     See Also
     --------
@@ -404,7 +405,7 @@ class EcoSanMBR(SanUnit, Decay):
 
     References
     ----------
-    [1] 2019.06 Technical report for BMGF V3 _ CC 2019.06.13.pdf
+    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
 
     See Also
     --------
@@ -469,7 +470,7 @@ primary_path = ospath.join(es_su_data_path, '_es_primary.xlsx')
 class EcoSanPrimary(SepticTank):
     '''
     The primary treatment of the Eco-San system uses anaerobic digestion
-    to treat wates (similar to a septic tank).
+    to treat wastes (similar to a septic tank).
 
     It can be used in conjunction with a membrane bioreactor (MBR)
     to recovery N and P as struvite.
@@ -486,7 +487,7 @@ class EcoSanPrimary(SepticTank):
 
     References
     ----------
-    [1] 2019.06 Technical report for BMGF V3 _ CC 2019.06.13.pdf
+    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
 
     See Also
     --------
@@ -575,6 +576,10 @@ class EcoSanSolar(SanUnit):
 
     The following impact items should be pre-constructed for life cycle assessment:
     FRP, Pump.
+
+    References
+    ----------
+    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
@@ -625,6 +630,10 @@ class EcoSanSystem(SanUnit):
 
     The following impact items should be pre-constructed for life cycle assessment:
     Pump.
+
+    References
+    ----------
+    [1] Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
