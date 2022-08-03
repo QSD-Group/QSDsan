@@ -35,9 +35,9 @@ Notes:
 
 
 .. Links
-.. _br1: https://github.com/QSD-Group/EXPOsan/tree/BR_OmniProcessor/exposan/OmniProcessor_BiogenicRefinery
+.. _br1: https://github.com/QSD-Group/EXPOsan/releases/tag/archive%2FBR_OmniProcessor
 .. _br2: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/biogenic_refinery
-.. _Rowles: https://chemrxiv.org/engage/chemrxiv/article-details/624ccb31855ee57a9fe327bd
+.. _Rowles: https://doi.org/10.1021/acsenvironau.2c00022
 
 .. _bsm1: https://pypi.org/project/exposan/1.1.4/
 .. _bsm2: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1
