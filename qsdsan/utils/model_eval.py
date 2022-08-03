@@ -210,10 +210,10 @@ def copy_samples(original, new, exclude=(), only_same_baseline=False):
     if only_same_baseline:
         original_b = {p.name_with_units: p.baseline for p in original.parameters
                       if p.name_with_units in shared}
-        original_b = pd.DataFrame.from_dict(original_b, columns=['val'], orient='index')
+        original_b = pd.DataFrame.from_dict(original_b, columns=['val'], orient='index').sort_index()
         new_b = {p.name_with_units: p.baseline for p in new.parameters
                  if p.name_with_units in shared}
-        new_b = pd.DataFrame.from_dict(new_b, columns=['val'], orient='index')
+        new_b = pd.DataFrame.from_dict(new_b, columns=['val'], orient='index').sort_index()
         shared = original_b[original_b.val==new_b.val].index
     idx0 = original.table.columns.get_locs([slice(None), shared])
     idx1 = new.table.columns.get_locs([slice(None), shared])
