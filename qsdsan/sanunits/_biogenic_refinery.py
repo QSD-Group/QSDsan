@@ -3,14 +3,18 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
+
 This module is developed by:
     Lewis Rowles <stetsonsc@gmail.com>
+
     Yalin Li <mailto.yalin.li@gmail.com>
+
     Hannah Lohman <hlohman94@gmail.com>
+
     Lane To <lane20@illinois.edu>
 
 This module contains unit operations used in the Biogenic Refinery system
-as described in `Rowles et al. <https://chemrxiv.org/engage/chemrxiv/article-details/624ccb31855ee57a9fe327bd>`_
+as described in `Rowles et al. <https://doi.org/10.1021/acsenvironau.2c00022>`_
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -81,8 +85,8 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
     References
     ----------
     [1] Rowles et al., Financial viability and environmental sustainability of
-    fecal sludge treatment with Omni Processors, ChemRxiv,
-    DOI:10.26434/chemrxiv-2022-r7443.
+    fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
+    https://doi.org/10.1021/acsenvironau.2c00022
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -258,8 +262,8 @@ class BiogenicRefineryControls(SanUnit):
     References
     ----------
     [1] Rowles et al., Financial viability and environmental sustainability of
-    fecal sludge treatment with Omni Processors, ChemRxiv,
-    DOI:10.26434/chemrxiv-2022-r7443.
+    fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
+    https://doi.org/10.1021/acsenvironau.2c00022
     '''
 
     _N_ins = _N_outs = 1
@@ -353,8 +357,8 @@ class BiogenicRefineryGrinder(SanUnit):
     References
     ----------
     [1] Rowles et al., Financial viability and environmental sustainability of
-    fecal sludge treatment with Omni Processors, ChemRxiv,
-    DOI:10.26434/chemrxiv-2022-r7443.
+    fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
+    https://doi.org/10.1021/acsenvironau.2c00022
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -445,8 +449,8 @@ class BiogenicRefineryHHX(SanUnit):
     References
     ----------
     [1] Rowles et al., Financial viability and environmental sustainability of
-    fecal sludge treatment with Omni Processors, ChemRxiv,
-    DOI:10.26434/chemrxiv-2022-r7443.
+    fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
+    https://doi.org/10.1021/acsenvironau.2c00022
 
     See Also
     --------
@@ -575,8 +579,8 @@ class BiogenicRefineryHHXdryer(SanUnit):
     References
     ----------
     [1] Rowles et al., Financial viability and environmental sustainability of
-    fecal sludge treatment with Omni Processors, ChemRxiv,
-    DOI:10.26434/chemrxiv-2022-r7443.
+    fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
+    https://doi.org/10.1021/acsenvironau.2c00022
 
     See Also
     --------
@@ -674,8 +678,8 @@ class BiogenicRefineryHousing(SanUnit):
     References
     ----------
     [1] Rowles et al., Financial viability and environmental sustainability of
-    fecal sludge treatment with Omni Processors, ChemRxiv,
-    DOI:10.26434/chemrxiv-2022-r7443.
+    fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
+    https://doi.org/10.1021/acsenvironau.2c00022
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -752,10 +756,15 @@ class BiogenicRefineryIonExchange(SanUnit):
     through Investments in Human-Derived Nutrient Systems.
     Environ. Sci. Technol. 2020, 54, (15), 9217-9227.
     https://dx.doi.org/10.1021/acs.est.0c03764
+
     [2] Tarpeh et al., Evaluating ion exchange for nitrogen recovery from
     source-separated urine in Nairobi, Kenya. Development Engineering. 2018,
     3, 188–195.
     https://doi.org/10.1016/j.deveng.2018.07.002
+
+    [3] Rowles et al., Financial viability and environmental sustainability of
+    fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
+    https://doi.org/10.1021/acsenvironau.2c00022
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -882,8 +891,8 @@ class BiogenicRefineryOHX(SanUnit):
     References
     ----------
     [1] Rowles et al., Financial viability and environmental sustainability of
-    fecal sludge treatment with Omni Processors, ChemRxiv,
-    DOI:10.26434/chemrxiv-2022-r7443.
+    fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
+    https://doi.org/10.1021/acsenvironau.2c00022
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  **kwargs):
@@ -974,8 +983,8 @@ class BiogenicRefineryPollutionControl(SanUnit):
     References
     ----------
     [1] Rowles et al., Financial viability and environmental sustainability of
-    fecal sludge treatment with Omni Processors, ChemRxiv,
-    DOI:10.26434/chemrxiv-2022-r7443.
+    fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
+    https://doi.org/10.1021/acsenvironau.2c00022
     '''
 
 
@@ -1099,9 +1108,10 @@ class BiogenicRefineryScrewPress(SludgeSeparator):
     [1] Tchobanoglous, G.; Stensel, H. D.; Tsuchihashi, R.; Burton, F.; Abu-Orf,
     M.; Bowden, G.; Pfrang, W. Wastewater Engineering: Treatment and Resource
     Recovery, 5th ed.; Metcalf & Eddy, Inc., AECOM, McGraw-Hill: New York, 2014.
+    
     [2] Rowles et al., Financial viability and environmental sustainability of
-    fecal sludge treatment with Omni Processors, ChemRxiv,
-    DOI:10.26434/chemrxiv-2022-r7443.
+    fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
+    https://doi.org/10.1021/acsenvironau.2c00022
 
     See Also
     --------
@@ -1190,13 +1200,15 @@ class BiogenicRefineryStruvitePrecipitation(SanUnit):
     through Investments in Human-Derived Nutrient Systems.
     Environ. Sci. Technol. 2020, 54, (15), 9217-9227.
     https://dx.doi.org/10.1021/acs.est.0c03764
+
     [2] Tarpeh et al., Evaluating ion exchange for nitrogen recovery from
     source-separated urine in Nairobi, Kenya. Development Engineering. 2018,
     3, 188–195.
     https://doi.org/10.1016/j.deveng.2018.07.002
+    
     [3] Rowles et al., Financial viability and environmental sustainability of
-    fecal sludge treatment with Omni Processors, ChemRxiv,
-    DOI:10.26434/chemrxiv-2022-r7443.
+    fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
+    https://doi.org/10.1021/acsenvironau.2c00022
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',

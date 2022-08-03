@@ -5,13 +5,21 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+    
     Yalin Li <mailto.yalin.li@gmail.com>
+    
     Joy Zhang <joycheung1994@gmail.com>
+    
     Lewis Rowles <stetsonsc@gmail.com>
+    
     Hannah Lohman <hlohman94@gmail.com>
+    
     Tori Morgan <vlmorgan@illinois.edu>
+    
     Shion Watabe <swatabe2@illinois.edu>
+    
     Lane To <lane20@illinois.edu>
+    
     Smiti Mittal <smitimittal@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.

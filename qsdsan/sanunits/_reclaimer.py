@@ -3,10 +3,15 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
+
 This module is developed by:
+
     Tori Morgan <vlmorgan@illinois.edu>
+
     Yalin Li <mailto.yalin.li@gmail.com>
+
     Hannah Lohman <hlohman94@gmail.com>
+
     Lewis Rowles <stetsonsc@gmail.com>
 
 This module contains unit operations used in the Reclaimer system
@@ -60,6 +65,7 @@ class ReclaimerECR(SanUnit):
     [1] Trotochaud et al., Laboratory Demonstration and Preliminary Techno-Economic Analysis of an Onsite
     Wastewater Treatment System Environ. Sci. Technol. 2020, 54, (24), 16147–16155.
     https://dx.doi.org/10.1021/acs.est.0c02755
+
     [2] Duke Center for WaSH-AID Reclaimer design team data and guidance
     https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
     '''
@@ -149,8 +155,10 @@ class ReclaimerHousing(SanUnit):
     [1] Trotochaud et al., Laboratory Demonstration and Preliminary Techno-Economic Analysis of an Onsite
     Wastewater Treatment System Environ. Sci. Technol. 2020, 54, (24), 16147–16155.
     https://dx.doi.org/10.1021/acs.est.0c02755
+
     [2] Duke Center for WaSH-AID Reclaimer design team data and guidance
     https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
+    
     [3] Eco-san water recycling toilet Reinvented Toilet design team bill of materials
     https://sanitation.ansi.org/EcoSanToilet
     '''
@@ -215,7 +223,6 @@ class ReclaimerHousing(SanUnit):
         return ceil(self.ppl / self.ppl_per_MURT)
 
 
-
 # %%
 
 ion_exchange_path = ospath.join(re_su_data_path, '_re_ion_exchange.csv')
@@ -249,13 +256,16 @@ class ReclaimerIonExchange(SanUnit):
     through Investments in Human-Derived Nutrient Systems.
     Environ. Sci. Technol. 2020, 54, (15), 9217-9227.
     https://dx.doi.org/10.1021/acs.est.0c03764
+
     [2] Tarpeh et al., Evaluating ion exchange for nitrogen recovery from
     source-separated urine in Nairobi, Kenya. Development Engineering. 2018,
     3, 188–195.
     https://doi.org/10.1016/j.deveng.2018.07.002
+    
     [3] Trotochaud et al., Laboratory Demonstration and Preliminary Techno-Economic Analysis of an Onsite
     Wastewater Treatment System Environ. Sci. Technol. 2020, 54, (24), 16147–16155.
     https://dx.doi.org/10.1021/acs.est.0c02755
+    
     [4] Duke Center for WaSH-AID Reclaimer design team data and guidance
     https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
     '''
@@ -398,8 +408,10 @@ class ReclaimerSolar(SanUnit):
     [1] Trotochaud et al., Laboratory Demonstration and Preliminary Techno-Economic Analysis of an Onsite
     Wastewater Treatment System Environ. Sci. Technol. 2020, 54, (24), 16147–16155.
     https://dx.doi.org/10.1021/acs.est.0c02755
+
     [2] Duke Center for WaSH-AID Reclaimer design team data and guidance
     https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
+    
     [3] Eco-san water recycling toilet Reinvented Toilet design team bill of materials
     https://sanitation.ansi.org/EcoSanToilet
 
@@ -480,6 +492,7 @@ class ReclaimerSystem(SanUnit):
     [1] Trotochaud et al., Laboratory Demonstration and Preliminary Techno-Economic Analysis of an Onsite
     Wastewater Treatment System Environ. Sci. Technol. 2020, 54, (24), 16147–16155.
     https://dx.doi.org/10.1021/acs.est.0c02755
+
     [2] Duke Center for WaSH-AID Reclaimer design team data and guidance
     https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
     '''
@@ -585,6 +598,7 @@ class ReclaimerUltrafiltration(SanUnit):
     [1] Trotochaud et al., Laboratory Demonstration and Preliminary Techno-Economic Analysis of an Onsite
     Wastewater Treatment System Environ. Sci. Technol. 2020, 54, (24), 16147–16155.
     https://dx.doi.org/10.1021/acs.est.0c02755
+    
     [2] Duke Center for WaSH-AID Reclaimer design team data and guidance
     https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
     '''

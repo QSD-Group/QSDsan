@@ -18,7 +18,7 @@ This page documents the systems that have been/is being developed using ``QSDsan
 | CAS (conventional        | - Current  `cas`_  | - `Shoener`_ et al., 2016      | Completed         |
 | activated sludge)        |                    |                                |                   |
 +--------------------------+--------------------+--------------------------------+-------------------+
-| Eco-San (under NDA)      | - Current   `es`_  | NA                             | Completed         |
+| Eco-San                  | - Current   `es`_  | NA                             | Completed         |
 +--------------------------+--------------------+--------------------------------+-------------------+
 | NEWgenerator             | - Archived `ng1`_  | - Watabe et al., *In Prep.*    | Completed         |
 | (under NDA)              | - Current  `ng2`_  |                                |                   |

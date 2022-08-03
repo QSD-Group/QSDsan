@@ -13,8 +13,18 @@ List of Units
 #. Abstract units do not have design and cost algorithms, they are for simulation purpose only.
 
 
-Links to docs
--------------
+Unit Operations for a System
+----------------------------
+.. toctree::
+   :maxdepth: 1
+
+   biogenic_refinery
+   eco_san
+   reclaimer
+
+
+Individual Unit Operations
+--------------------------
 .. toctree::
    :maxdepth: 1
 
