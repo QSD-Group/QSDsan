@@ -92,87 +92,6 @@ class EcoSanAerobic(SanUnit, Decay):
 
 # %%
 
-mbr_path = ospath.join(es_su_data_path, '_es_mbr.tsv')
-
-@price_ratio()
-class EcoSanMBR(SanUnit, Decay):
-    '''
-    Aerobic membrane bioreactor for the Eco-San system.
-
-    The following impact items should be pre-constructed for life cycle assessment:
-    FRP.
-
-    Parameters
-    ----------
-    ins : Iterable(stream)
-        waste: waste stream to be treated.
-    outs : Iterable(stream)
-        treated: treated liquid leaving septic tank.
-        CH4: fugitive CH4 emissions.
-        N2O: fugitive N2O emissions.
-
-    References
-    ----------
-    [1] 2019.06 Technical report for BMGF V3 _ CC 2019.06.13.pdf
-
-    See Also
-    --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
-    '''
-
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 degraded_components=('OtherSS',), **kwargs):
-        Decay.__init__(self, ID, ins, outs, thermo=thermo,
-                       init_with=init_with, F_BM_default=1,
-                       degraded_components=degraded_components)
-
-        data = load_data(path=mbr_path)
-        for para in data.index:
-            value = float(data.loc[para]['expected'])
-            setattr(self, para, value)
-        del data
-
-        for attr, value in kwargs.items():
-            setattr(self, attr, value)
-
-    _N_ins = 1
-    _N_outs = 3
-
-    def _run(self):
-        Decay._first_order_run(self, if_capture_biogas=False, if_N2O_emission=True)
-
-
-    def _design(self):
-        self.design_results['FRP'] = FRP_quant = self.FRP_per_tank
-        self.construction = (Construction(item='FRP', quantity = FRP_quant, quantity_unit = 'kg'),)
-        self.add_construction(add_cost=False)
-
-    def _cost(self):
-        C = self.baseline_purchase_costs
-        C['MBR tank'] = self.MBR_cost
-        C['Bio tank'] = self.tank_cost
-        C['Primary tank'] = self.primary_tank_cost
-        C['Regulating pump'] = self.regulating_pump_cost
-        C['Fan'] = self.fan_cost
-        C['Gauge'] = self.gauge_cost
-        C['Pipe'] = self.pipe_cost
-        C['Mid tank pump'] = self.mid_tank_pump
-
-        ratio = self.price_ratio
-        for equipment, cost in C.items():
-            C[equipment] = cost * ratio
-
-        MBR_replacement_parts_annual_cost = (
-            self.MBR_cost * self.MBR_replacement +
-            self.gauge_cost * self.gauge_life
-            )
-
-        self.add_OPEX =  MBR_replacement_parts_annual_cost / (365 * 24) * self.price_ratio # USD/hr
-        self.power_utility(self.power_demand * self.working_time)
-
-
-# %%
-
 anaerobic_path = ospath.join(es_su_data_path, '_es_anaerobic.tsv')
 
 class EcoSanAnaerobic(SanUnit, Decay):
@@ -460,6 +379,87 @@ class EcoSanECR(SanUnit, Decay):
             self._if_after_MBR = i
             self._refresh_data()
         return self._if_after_MBR
+
+
+# %%
+
+mbr_path = ospath.join(es_su_data_path, '_es_mbr.tsv')
+
+@price_ratio()
+class EcoSanMBR(SanUnit, Decay):
+    '''
+    Membrane bioreactor for the Eco-San system.
+
+    The following impact items should be pre-constructed for life cycle assessment:
+    FRP.
+
+    Parameters
+    ----------
+    ins : Iterable(stream)
+        waste: waste stream to be treated.
+    outs : Iterable(stream)
+        treated: treated liquid leaving septic tank.
+        CH4: fugitive CH4 emissions.
+        N2O: fugitive N2O emissions.
+
+    References
+    ----------
+    [1] 2019.06 Technical report for BMGF V3 _ CC 2019.06.13.pdf
+
+    See Also
+    --------
+    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    '''
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 degraded_components=('OtherSS',), **kwargs):
+        Decay.__init__(self, ID, ins, outs, thermo=thermo,
+                       init_with=init_with, F_BM_default=1,
+                       degraded_components=degraded_components)
+
+        data = load_data(path=mbr_path)
+        for para in data.index:
+            value = float(data.loc[para]['expected'])
+            setattr(self, para, value)
+        del data
+
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+
+    _N_ins = 1
+    _N_outs = 3
+
+    def _run(self):
+        Decay._first_order_run(self, if_capture_biogas=False, if_N2O_emission=True)
+
+
+    def _design(self):
+        self.design_results['FRP'] = FRP_quant = self.FRP_per_tank
+        self.construction = (Construction(item='FRP', quantity = FRP_quant, quantity_unit = 'kg'),)
+        self.add_construction(add_cost=False)
+
+    def _cost(self):
+        C = self.baseline_purchase_costs
+        C['MBR tank'] = self.MBR_cost
+        C['Bio tank'] = self.tank_cost
+        C['Primary tank'] = self.primary_tank_cost
+        C['Regulating pump'] = self.regulating_pump_cost
+        C['Fan'] = self.fan_cost
+        C['Gauge'] = self.gauge_cost
+        C['Pipe'] = self.pipe_cost
+        C['Mid tank pump'] = self.mid_tank_pump
+
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+            C[equipment] = cost * ratio
+
+        MBR_replacement_parts_annual_cost = (
+            self.MBR_cost * self.MBR_replacement +
+            self.gauge_cost * self.gauge_life
+            )
+
+        self.add_OPEX =  MBR_replacement_parts_annual_cost / (365 * 24) * self.price_ratio # USD/hr
+        self.power_utility(self.power_demand * self.working_time)
 
 
 # %%
