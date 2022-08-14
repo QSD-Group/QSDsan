@@ -40,7 +40,10 @@ from . import (
     scope,
     )
 
-from biosteam.utils import NotImplementedMethod
+try: from biosteam.utils import NotImplementedMethod
+except:
+    from biosteam.utils import AbstractMethod
+    NotImplementedMethod = AbstractMethod
 
 from .cod import *
 from .colors import *
