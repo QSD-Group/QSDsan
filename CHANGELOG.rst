@@ -4,9 +4,10 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
-Ongoing
+`1.2.0`
 -------
-- Read the preprint of QSDsan on `arXiv <https://arxiv.org/abs/2203.06243>`_!
+- The QSDsan paper is accepted by *`Environmental Science: Water Research & Technology <https://www.doi.org/10.1039/d2ew00455k>`_*!
+- The first paper using QSDsan for the design of sanitation is accepted by `ACS Environmental Au <https://pubs.acs.org/doi/10.1021/acsenvironau.2c00022>`_! The Biogenic Refinery system described in this paper is 
 - Added multiple systems (including their unit operations), check out the details on the `Developed System <https://qsdsan.readthedocs.io/en/latest/Developed_Systems.html>`_ page!
 
 	- Biogenic Refinery
@@ -166,9 +167,10 @@ Official release of ``QSDsan`` v1.0.0!
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
-.. _1.1.0: https://github.com/QSD-Group/QSDsan/commit/9061ae5529963cf057487f8a66d9231b129bec4d
-.. _1.0.0: https://github.com/QSD-Group/QSDsan/commit/559a0e43428411b23319ffd087e04c5d08f46d4a
-.. _0.3.0: https://github.com/QSD-Group/QSDsan/commit/3c19aebd5503433120217228c3388533cee4bd30
+.. _1.2.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.2.0
+.. _1.1.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.1.0
+.. _1.0.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.0.0
+.. _0.3.0: https://github.com/QSD-Group/QSDsan/releases/tag/v0.3.0
 .. _0.2.0: https://github.com/QSD-Group/QSDsan/commit/286943eb206ebd89f58e50b9fdd1bed486e894ae
 .. _0.1.0: https://github.com/QSD-Group/QSDsan/commit/1c3d11d9f72421c8b5dbdf6b537775ca35ec65c0
 .. _0.0.3: https://github.com/QSD-Group/QSDsan/commit/e20222caccc58d9ee414ca08d8ec55f3a44ffca7
