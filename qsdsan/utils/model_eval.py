@@ -153,41 +153,47 @@ def copy_samples(original, new, exclude=(), only_same_baseline=False):
 
     >>> from qsdsan.utils import load_example_model, copy_samples
     >>> original = load_example_model()
+    >>> # You might get some replacing warnings as we are making two exact systems,
+    >>> # it's OK
     >>> new = load_example_model()
+    >>> # Sort the parameter orders
+    >>> for model in (original, new):
+    ...    model.parameters = sorted(model.parameters, key=lambda p: p.name)
+
 
     Let's make the 1st/2nd parameters of the original model the same as
     the 0th/1st parameters of the new model.
 
     >>> original.parameters = original.parameters[:3]
-    >>> original.parameters
-    (<Parameter: [Stream-salt water] Salt flow rate (kg/hr)>,
-     <Parameter: [Stream-salt water] Salt solution price (USD/kg)>,
+    >>> original.parameters # doctest: +SKIP
+    (<Parameter: [HXutility-H1] Heat exchanger temperature (K)>,
+     <Parameter: [Mix tank-M1] Mix tank mixer power usage (kW/m3)>,
      <Parameter: [Mix tank-M1] Mix tank retention time (hr)>)
     >>> new.parameters = new.parameters[1:4]
-    >>> new.parameters
-    (<Parameter: [Stream-salt water] Salt solution price (USD/kg)>,
+    >>> new.parameters # doctest: +SKIP
+    (<Parameter: [Mix tank-M1] Mix tank mixer power usage (kW/m3)>,
      <Parameter: [Mix tank-M1] Mix tank retention time (hr)>,
-     <Parameter: [Mix tank-M1] Mix tank mixer power usage (kW/m3)>)
+     <Parameter: [Pump-P1] Pump design head (kPa)>)
 
-    Before copying, none of the samples of the shared parameter is the same
+    Before copying, samples of the shared parameter are not the same
 
     >>> original_samples = original.sample(N=100, rule='L')
     >>> original.load_samples(original_samples)
     >>> new_samples = new.sample(N=100, rule='L')
     >>> new.load_samples(new_samples)
-    >>> (original.table.values[:, 1:3]==new.table.values[:, 0:2]).any()
+    >>> (original.table.values[:, 1:3]==new.table.values[:, 0:2]).all()
     False
 
-    Let's copy the samples, but exclude the "Salt solution price" parameter
+    Let's copy the samples, but exclude the "Mix tank retention time"
 
-    >>> copy_samples(original, new, exclude=(original.parameters[-1],))
-    >>> # After copying, all of the samples of the "Salt solution price"
+    >>> copy_samples(original, new, exclude=(original.parameters[2],))
+    >>> # After copying, all of the samples of the "Mix tank mixer power usage"
     >>> # parameter are the same
     >>> (original.table.values[:, 1]==new.table.values[:, 0]).all()
     True
-    >>> # But none of the samples are the same for the excluded parameter
+    >>> # But the samples are not the same for the excluded parameter
     >>> # "Mix tank retention time" parameter
-    >>> (original.table.values[:, 2]==new.table.values[:, 1]).any()
+    >>> (original.table.values[:, 2]==new.table.values[:, 1]).all()
     False
 
     When `only_same_baseline` is True, only values for samples with the same
@@ -197,7 +203,7 @@ def copy_samples(original, new, exclude=(), only_same_baseline=False):
     >>> # to be different for the two models
     >>> new.parameters[1].baseline = original.parameters[2].baseline + 10
     >>> copy_samples(original, new, exclude=(), only_same_baseline=True)
-    >>> # Samples are not copied even if they have the same names due to unequal baseline
+    >>> # Samples are not copied even if they have the same names due to the unequal baselines
     >>> (original.table.values[:, 2]==new.table.values[:, 1]).any()
     False
     '''
