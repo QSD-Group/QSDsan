@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -17,7 +17,7 @@ from setuptools import setup
 setup(
     name='qsdsan',
     packages=['qsdsan'],
-    version='1.1.4',
+    version='1.2.0',
     license='UIUC',
     author='Quantitative Sustainable Design Group',
     author_email='quantitative.sustainable.design@gmail.com',
@@ -27,7 +27,7 @@ setup(
     project_urls={
         'Documentation': 'https://qsdsan.readthedocs.io/',
     },
-    install_requires=['biosteam>=2.32.4', 'thermosteam>=0.28.7',
+    install_requires=['biosteam==2.32.18', 'thermosteam==0.28.13',
                       'pandas>=1.3.2', 'matplotlib>=3.3.2', 'scikit-learn', 'scipy>=1.7.1',
                       'SALib>=1.4.5', 'seaborn', 'sympy>=1.8'],
     package_data=
@@ -35,6 +35,9 @@ setup(
                     'data/*',
                     'data/process_data/*',
                     'data/sanunit_data/*',
+                    'data/sanunit_data/br/*',
+                    'data/sanunit_data/es/*',
+                    'data/sanunit_data/re/*',
                     'equipments/*',
                     'processes/*',
                     'sanunits/*',

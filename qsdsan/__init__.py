@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
     Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -46,6 +46,7 @@ except pkg_resources.DistributionNotFound:  # pragma: no cover
 del sys, py_version, pkg_resources
 
 
+# BioSTEAM/Thermosteam APIs
 import thermosteam as tmo
 import biosteam as bst
 Chemical = tmo.Chemical
@@ -62,13 +63,20 @@ Unit = bst.Unit
 System = bst.System
 Scope = bst.utils.Scope
 Model = bst.Model
+Metric = bst.Metric
+Parameter = bst.Parameter
 Flowsheet = bst.Flowsheet
 main_flowsheet = bst.main_flowsheet
 CEPCI = bst.CE # Chemical Engineering Plant Cost Index
 CEPCI_by_year = bst.units.design_tools.CEPCI_by_year
 del tmo, bst
 
+
+# Global variables
 currency = 'USD'
+CHECK_IMPACT_INDICATOR_CONSISTENCY = True
+CHECK_IMPACT_ITEM_CONSISTENCY = True
+
 
 from . import utils
 from ._component import *

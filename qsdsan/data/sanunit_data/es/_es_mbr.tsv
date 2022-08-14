@@ -1,0 +1,23 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+tau		days	1	0.75	1.25	uniform	assumption based on original design
+COD_removal		fraction of total COD	0.37	0.2775	0.4625	uniform	Eco-san data slides
+N_max_decay		fraction of N removed	0.09	0.0675	0.1125	uniform	"EAWAG, 2014"
+P_removal		fraction of P removed	0.15	0.1125	0.1875	uniform	"IPCC, 2006"
+energy		kW	0.72	0.54	0.9	uniform	Eco-san data slides
+MBR_cost		USD	180	162	198	triangular	Newgen MBR
+MBR_replacement		times/year	1.75	1.5	2	uniform	BMGF Report
+N2O_EF_decay		fraction of of degraded N emitted as N2O	0.005	0.0005	0.006	triangular	"IPCC, 2006; Leeds"
+FRP_per_tank		kg	2294.933333	2065.44	2524.426667	uniform	
+tank_cost		USD	1575.7	1418.13	1733.27	triangular	
+primary_tank_cost		USD	1100	990	1210	triangular	
+MCF_decay			1			constant	
+regulating_pump_cost			231	207.9	254.1	triangular	
+fan_cost			320	288	352	triangular	
+gauge_cost			40	36	44	triangular	
+pipe_cost			300	270	330	triangular	
+mid_tank_pump			140	126	154	triangular	
+power_demand		kW	1.38	1.242	1.518	triangular	
+working_time		hr/day	0.833333333	0.75	0.916666667	triangular	
+gauge_life		times/year	4	3.6	4.4	triangular	
+pump_life		times/year	0.4	0.3	0.5	triangular	
+diffuser_life		times/year	0.45	0.4	0.5	triangular	

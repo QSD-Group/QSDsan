@@ -1,0 +1,30 @@
+parameter,name,unit,expected,low,high,distribution,reference
+four_in_pipe_SCH40,"4"" Pipe SCH 40 x 3000 mm Long",USD,61.28,55.152,67.408,triangular,Duke Center for WaSH-AID design team bill of materials
+four_in_pipe_SCH80,"4"" SCH 80 Union",USD,62.88,56.592,69.168,triangular,Duke Center for WaSH-AID design team bill of materials
+four_in_pipe_SCH80_endcap,"4"" SCH 80 End cap",USD,16.64,14.976,18.304,triangular,Duke Center for WaSH-AID design team bill of materials
+NRV,"1/4"" NRV",USD,24.33,21.897,26.763,triangular,Duke Center for WaSH-AID design team bill of materials
+connector,"1/4"" x 10 mm Male connector",USD,8,7.2,8.8,triangular,Duke Center for WaSH-AID design team bill of materials
+ball_valve,"3/8"" Ball valve with knob (F)",USD,19.52,17.568,21.472,triangular,Duke Center for WaSH-AID design team bill of materials
+three_eight_elbow,"Male elbow 3/8"" x 10 mm",USD,26.67,24.003,29.337,triangular,Duke Center for WaSH-AID design team bill of materials
+ten_ten_mm_tee,10 mm x 10 mm union TEE,USD,4.59,4.131,5.049,triangular,Duke Center for WaSH-AID design team bill of materials
+OD_tube,OD 10 x ID 8 transparent tube x 6 mtr long,USD,7.87,7.083,8.657,triangular,Duke Center for WaSH-AID design team bill of materials
+four_in_pipe_clamp,"4"" NB Pipe Clamp",USD,4.92,4.428,5.412,triangular,Duke Center for WaSH-AID design team bill of materials
+GAC_zeolite_mesh,GAC and Zeolite Mesh Bags,USD,20,18,22,triangular,Duke Center for WaSH-AID design team bill of materials
+KCl_cost,KCl cost,USD/kg,15,11.25,18.75,uniform,Average of values observed at https://www.alibaba.com/
+GAC_cost,,USD/kg,2.645,0.29,5,uniform,Duke Center for WaSH-AID design team
+Zeolite_cost,,USD/kg,0.91,0.28,1.54,uniform,Duke Center for WaSH-AID design team
+TN_removal,total nitrogen removal,ratio,0.99,0.891,1,triangular,Lena Trotochaud (Duke Center for WaSH-AID) recommendation
+zeolite_weight,weight of clinoptolite,kg,8,,,constant,Lena Trotochaud (Duke Center for WaSH-AID) recommendation
+zeolite_lifetime,replacement of clinoptolite,year,0.25,0.166666667,0.5,triangular,Lena Trotochaud (Duke Center for WaSH-AID) recommendation
+gac_weight,weight of GAC,kg,16,,,constant,Lena Trotochaud (Duke Center for WaSH-AID) recommendation
+gac_lifetime,lifetime of GAC,year,0.142857143,0.083333333,0.5,uniform,Lena Trotochaud (Duke Center for WaSH-AID) recommendation
+KCl_weight,weight of KCl,kg,1.005932,0.67,1.341864,triangular,Lena Trotochaud (Duke Center for WaSH-AID) recommendation
+KCl_regeneration_freq,regeneration of zeolite per year,year,0.142857143,0.083333333,0.5,triangular,Lena Trotochaud (Duke Center for WaSH-AID) recommendation
+desorption_recovery_efficiency,,ratio,0.95,0.9,1,uniform,Lena Trotochaud (Duke Center for WaSH-AID) recommendation
+PVC_weight,,kg,10,5,15,uniform,Duke Center for WaSH-AID design team bill of materials
+Steel_weight,,kg,0.45,0.225,0.675,uniform,Duke Center for WaSH-AID design team bill of materials
+Plastic_weight,,kg,1,0.9,2.1,uniform,Duke Center for WaSH-AID design team bill of materials
+contact_time,,hr,2,,,constant,Lena Trotochaud (Duke Center for WaSH-AID) recommendation
+labor_maintenance_zeolite_regeneration,labor_maintenance_zeolite_regeneration,hr/y,20,10,30,triangular,"Assumption - it takes 5 hours to replace Zeolite, GAC, and Regeneration Solution - 50% uncertainty"
+om_capital_ratio,annual O&M as a percent of capital,ratio,0.04,0.02,0.06,uniform,Assumption
+wages,,USD/cap/hr,3.64,1.82,5.46,uniform,International Labor Organization average monthly earnings of employees by sex and economic activity

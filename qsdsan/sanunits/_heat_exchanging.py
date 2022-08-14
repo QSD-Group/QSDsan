@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
     Joy Zhang <joycheung1994@gmail.com>
 
 Part of this module is based on the biosteam package:
@@ -80,6 +80,7 @@ class HXprocess(SanUnit, HXprocess):
 
         self.material = material
         self.heat_exchanger_type = heat_exchanger_type
+        self.reset_source = True
 
 
 class HXutility(SanUnit, HXutility):
@@ -97,7 +98,8 @@ class HXutility(SanUnit, HXutility):
                  *, T=None, V=None, rigorous=False, U=None, H=None,
                  heat_exchanger_type="Floating head",
                  material="Carbon steel/carbon steel",
-                 N_shells=2, ft=None, heat_only=None, cool_only=None):
+                 N_shells=2, ft=None, heat_only=None, cool_only=None,
+                 heat_transfer_efficiency=None):
         SanUnit.__init__(self, ID, ins, outs, thermo,
                          init_with=init_with, F_BM_default=F_BM_default)
         self.T = T #: [float] Temperature of outlet stream (K).
@@ -124,3 +126,4 @@ class HXutility(SanUnit, HXutility):
 
         self.material = material
         self.heat_exchanger_type = heat_exchanger_type
+        self.heat_transfer_efficiency = heat_transfer_efficiency

@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -102,7 +102,7 @@ def concrete(ID, L_concrete=0, W_concrete=0, D_concrete=0,
     Examples
     --------
     >>> from qsdsan import SanUnit, set_thermo
-    >>> from qsdsan.utils import load_example_cmps, concrete
+    >>> from qsdsan.utils import load_example_components, concrete
     >>> # Create the class
     >>> @concrete('Pump building', L_concrete=20, W_concrete=10, D_concrete=5)
     ... @concrete('Blower building', L_concrete=20, W_concrete=10, D_concrete=5,
@@ -113,7 +113,7 @@ def concrete(ID, L_concrete=0, W_concrete=0, D_concrete=0,
     ...     def _cost(self):
     ...         self._add_concrete_cost()
     >>> # Use the class
-    >>> cmps = load_example_cmps()
+    >>> cmps = load_example_components()
     >>> set_thermo(cmps)
     >>> U1 = FakeUnit('U1', ins='ws1', outs='ws2')
     >>> U1.simulate()
@@ -312,7 +312,7 @@ def excavation(ID, L_excav=0, W_excav=0, D_excav=0,
     Examples
     --------
     >>> from qsdsan import SanUnit, set_thermo
-    >>> from qsdsan.utils import load_example_cmps, excavation
+    >>> from qsdsan.utils import load_example_components, excavation
     >>> # Create the class
     >>> @excavation('Reactor building', L_excav=100, W_excav=150, D_excav=20,
     ...             excav_unit_cost=8/27)
@@ -323,7 +323,7 @@ def excavation(ID, L_excav=0, W_excav=0, D_excav=0,
     ...     def _cost(self):
     ...         self._add_excavation_cost()
     >>> # Use the class
-    >>> cmps = load_example_cmps()
+    >>> cmps = load_example_components()
     >>> set_thermo(cmps)
     >>> U1 = FakeUnit('U1', ins='ws1', outs='ws2')
     >>> U1.simulate()

@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 Part of the code is based on modules in BioSTEAM,
 https://github.com/BioSTEAMDevelopmentGroup/biosteam
@@ -47,7 +47,7 @@ def add_V_from_rho(component, rho, rho_unit='kg/m3', add_model_to=None):
     ...                   particle_size='Particulate', degradability='Undegradable')
     >>> add_V_from_rho(P4O10, 2.39, rho_unit='g/mL') # http://www.chemspider.com/Chemical-Structure.14128.html
     >>> P4O10.V
-    VolumeSolid(CASRN="16752-60-6 (P4O10)", MW=283.889048, extrapolation="linear", method="USER_METHOD")
+    VolumeSolid(CASRN="16752-60-6", MW=283.889048, extrapolation="linear", method="USER_METHOD")
     >>> P4O10.V(330) # doctest: +ELLIPSIS
     0.0001187...
     '''

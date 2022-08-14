@@ -1,0 +1,23 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references	
+icp_controller_board		USD	1019.02	716.04	1322	uniform	https://www.grainger.com/product/115Z37?cm_mmc=PPC:+Google+PLA&ef_id=CjwKCAiA_9r_BRBZEiwAHZ_v16P5IATQ0XqZyWSEnWFuGGSvpBw3GpgGBBAS93_enYRIIoTzjYqoMxoCZ4wQAvD_BwE:G:s&s_kwcid=AL!2966!3!264955916048!!!g!502441189157!&gucid=N:N:PS:Paid:GGL:CSM-2295:4P7A1P:20501231	https://www.grainger.com/product/115T86?cm_mmc=PPC:+Google+PLA&ef_id=CjwKCAiA_9r_BRBZEiwAHZ_v12nN10hvig2QPQvXeEcg9sU2NR-mIWbQD7Baic51A_-jSuKfrMhsNhoCCWIQAvD_BwE:G:s&s_kwcid=AL!2966!3!264955916051!!!g!437083570253!&gucid=N:N:PS:Paid:GGL:CSM-2295:4P7A1P:20501231
+icp_variable_frequence_drives		USD	708	594	822	uniform	https://www.wolfautomation.com/ac-drive-10hp-35a-ct-vt-230vac-3-phase-1/	https://plc-direct.com/products/atv212h075m3x?variant=32435322945667
+icp_power_meter		USD	391.765	249	534.53	uniform	https://www.globaltestsupply.com/product/onset-t-wnb-3y-208-p-wattnode-kwh-transducer-208-240vac-wye-opt-p3	https://www.instrumentation2000.com/ccs-wattnode-plus-wnc-3y-400-ft10-power-energy-meter.html?fee=2&fep=4303
+icp_line_filter		USD	159.43	53.73	265.13	uniform	https://www.te.com/usa-en/product-1-6609037-4.html	https://americas.rsdelivers.com/product/te-connectivity/6609070-9/te-connectivity-corcom-fcd-150a-277-ph-to-g-v-ac/8813823?cm_mmc=US-PLA-DS3A-_-google-_--_--_-&matchtype=&pla-673461199350
+icp_transformer		USD	17.62	13.215	22.025	constant	https://www.arrow.com/en/products/fd7-24/triad-magnetics	
+icp_power_meter_transformer		USD	204.05	176.1	232	uniform	https://www.grainger.com/product/38M512?cm_mmc=PPC:+Google+PLA&ef_id=CjwKCAiA_9r_BRBZEiwAHZ_v1yv0dmv14qb6tNaLoIlGwq2N58tgz35mXW2gSIo3pwkljhfy4yFYLhoCb3QQAvD_BwE:G:s&s_kwcid=AL!2966!3!264955915667!!!g!461787464874!&gucid=N:N:PS:Paid:GGL:CSM-2295:4P7A1P:20501231	
+icp_AC_to_DC		USD	84.99	63.7425	106.2375	constant	http://www.nextwarehouse.com/item/?1959961_g10e	
+icp_DC_to_AC		USD	64	48	80	constant	https://www.radwell.com/Shop?source=GoogleShopping&IgnoreRedirect=true&ItemSingleId=52627420&utm_source=google&utm_medium=cpc&adpos=&scid=scplp52627420&sc_intid=52627420	
+icp_touch_screen		USD	294.145	58.29	530	uniform	https://www.seeedstudio.com/7inch-HDMI-LCD-H-1024x600-IPS-supports-various-systems-capacitive-touch-supports-Raspberry-Pi-4-p-4376.html	https://www.superlogics.com/computer-accessories/lcds/15-industrial-touchscreen/sl-lcd-15a-rtouch-2.html
+icp_controller_board_power		kW	0.086	0.0645	0.1075	constant	Pilot Study	
+icp_variable_frequence_drives_power		kW	0.22	0.165	0.275	constant	Pilot Study	
+electrician_replacecables_icp	min / corrective maintenance		200	60	600	uniform	Pilot Study	
+electrician_replacewires_icp	min / corrective maintenance		200	60	600	uniform	Pilot Study	
+service_team_replacetouchscreen_icp	min / corrective maintenance		150	30	300	uniform	Pilot Study	
+facility_manager_configurevariable_icp	min / corrective maintenance		50	10	100	uniform	Pilot Study	
+biomass_controls_replaceboard_icp	min / corrective maintenance		200	60	360	uniform	Pilot Study	
+biomass_controls_codemalfunctioning_icp	min / corrective maintenance		200	60	360	uniform	Pilot Study	
+frequency_corrective_maintenance		y / occurance	3.5	0.5	5	uniform	*assumed	
+service_team_wages		usd per cap per hr	6.05	3.37	10.35	triangular	https://www.salaryexpert.com/salary/job/utility-serviceman/	"China 10.35, South Africa 4.3, India 3.37  "
+certified_electrician_wages		usd per cap per hr	6.75	2.02	9.91	triangular	https://www.salaryexpert.com/salary http://www.salaryexplorer.com/salary-survey.php?loc=225&loctype=1&job=176&jobtype=3	"China 9.91, South Africa 8.32, Uganda 2.02"
+facility_manager_wages		usd per cap per hr	17.39	7.8	23.2	triangular	https://www.salaryexpert.com/salary/job/export-manager/china	"China 23.2, South Africa 21.18, India 7.8"
+biomass_controls_wages		usd per cap per hr	17.88	8.8	19.95	triangular	https://www.salaryexpert.com/	"China 19.95, South Africa 17.88, India 8.8"

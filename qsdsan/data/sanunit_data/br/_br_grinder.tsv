@@ -1,0 +1,4 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+grinder		usd	7000	3000	5000	uniform	Pilot study
+grinder_steel		kg	150	125	175	uniform	https://www.alibaba.com/product-detail/Wholesale-price-Industrial-small-automatic-solid_60841954894.html?spm=a2700.details.0.0.383742a3XiskPr
+grinder_electricity		kwh/kg	0.35	0.25	0.35	uniform	https://www.alibaba.com/product-detail/Wholesale-price-Industrial-small-automatic-solid_60841954894.html?spm=a2700.details.0.0.383742a3XiskPr

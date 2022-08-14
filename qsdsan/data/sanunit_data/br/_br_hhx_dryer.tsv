@@ -1,0 +1,17 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+drying_energy_demand		kW	61.7	46.275	77.125	uniform	Meyers et al 2019
+drying_CO2_emissions		% of total C	0.016	0	0.032	uniform	Trimmer et al 2020
+drying_CH4_emissions		% of total C	0.0003	0	0.0006	uniform	Trimmer et al 2020
+drying_NH3_emissions		% of total N	0.0026	0	0.0052	uniform	Trimmer et al 2020
+NH3_to_N2O		% of NH3	0.01	0	0.02	uniform	Trimmer et al 2020
+energy_required_to_dry_sludge		MJ/kg water	3.5	2.625	4.375	uniform	Tchobanoglous et al.
+heat_transfer_coeff		MJ / (h m2 K)	0.018			constant	Meyers et al 2019
+radiative_emissivity		none	1			constant	Meyers et al 2019
+ambient_temp		C	25.6	25.14	26.06	uniform	Meyers et al 2019
+water_air_hx_temp		C	83.4			constant	Meyers et al 2019
+water_air_hx_area		m2	0.655368			constant	Meyers et al 2019
+dryer_heat_transfer_coeff		MJ / (h m2 K)	17.28	3.96	30.6	uniform	Metcalf and Eddy pg 1840 Feed water heater
+area_surface		m2	1.5			constant	*assumed
+water_out_temp		C	81.7	76.3	87.1	uniform	Meyers et al 2019
+feedstock_temp		C	35			constant	Pilot Study
+carbon_COD_ratio		g C*g COD-1	0.35	0.25	0.4	triangular	Metcalf and Eddy 

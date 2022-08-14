@@ -6,7 +6,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Joy Zhang <joycheung1994@gmail.com>
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 Part of this module is based on the Thermosteam package:
 https://github.com/BioSTEAMDevelopmentGroup/thermosteam
@@ -363,13 +363,19 @@ class WasteStream(SanStream):
         return new
 
 
-    def show(self, T='K', P='Pa', flow='g/hr', composition=False, N=15,
+    def show(self, layout=None, T='K', P='Pa', flow='g/hr', composition=False, N=15,
              stream_info=True, details=True, concentrations='mg/L'):
         '''
         Print information related to this :class:`WasteStream`.
 
         Parameters
         ----------
+        layout : str
+            Shorthand to pass composition, flow, and N information.
+            Should be in the form of {'c' or ''}{'wt', 'mol' or 'vol'}{# or ''}.
+            For example: 'cwt100' corresponds to composition=True, flow='kg/hr', and N=100;
+            'mol' corresponds to compostion=False, flow='kmol/hr', and N=None.
+            Specifying `layout` will ignore `flow`, `composition`, and `N`.
         T : str, optional
             The unit for temperature. The default is 'K'.
         P : float, optional
@@ -386,12 +392,16 @@ class WasteStream(SanStream):
             Whether to print stream-specific information. The default is True.
         details : bool, optional
             Whether to show the all composite variables of this waste stream. The default is True.
-
         '''
 
         info = ''
         # Stream-related specifications
         if stream_info:
+            if layout:
+                default_N = N
+                flow = composition = N = None
+                flow, composition, N = self._translate_layout(layout, flow, composition, N)
+                N = N or default_N
             super().show(None, T, P, flow, composition, N)
         else:
             info += self._basic_info()
@@ -888,8 +898,8 @@ class WasteStream(SanStream):
         Examples
         --------
         >>> from qsdsan import set_thermo, WasteStream
-        >>> from qsdsan.utils import load_example_cmps
-        >>> cmps = load_example_cmps()
+        >>> from qsdsan.utils import load_example_components
+        >>> cmps = load_example_components()
         >>> set_thermo(cmps)
         >>> ws1 = WasteStream('ws1', Water=100, NaCl=1)
         >>> ws2 = ws1.proxy('ws2')
@@ -1039,7 +1049,7 @@ class WasteStream(SanStream):
     def set_flow_by_concentration(self, flow_tot, concentrations, units=('L/hr', 'mg/L'),
                                   bulk_liquid_ID='H2O', atol=1e-5, maxiter=50):
         '''
-        Set the mass flows of the WasteStream by specifying total volumetric flow and
+        Set the mass flows of the liquid WasteStream by specifying total volumetric flow and
         concentrations as well as identifying the component that constitutes the bulk liquid.
 
         Parameters
@@ -1063,6 +1073,7 @@ class WasteStream(SanStream):
 
 
         '''
+        if self.phase != 'l': raise RuntimeError('only valid for liquid streams')
         if flow_tot == 0: raise RuntimeError(f'{repr(self)} is empty')
         if bulk_liquid_ID in concentrations.keys():
             for i in range(8):
@@ -1080,8 +1091,11 @@ class WasteStream(SanStream):
 
         # Density of the mixture should be larger than the pure bulk liquid,
         # give it a factor of 100 for safety
-        den = self.components[bulk_liquid_ID].rho(phase=self.phase, T=self.T, P=self.P)*1e-3  # bulk liquid density in [kg/L]
-        bulk_ref_phase = self.components[bulk_liquid_ID].phase_ref
+        bulk_cmp = self.components[bulk_liquid_ID]
+        den_kwargs = dict(T=self.T, P=self.P)
+        if not bulk_cmp.locked_state: den_kwargs['phase'] = self.phase
+        den = bulk_cmp.rho(**den_kwargs)*1e-3  # bulk liquid density in [kg/L]
+        bulk_ref_phase = bulk_cmp.phase_ref
         if bulk_ref_phase != 'l':
             warn(f'Reference phase of liquid is "{bulk_ref_phase}", not "l", '
                  'flow might not be set correctly.')
@@ -1097,6 +1111,7 @@ class WasteStream(SanStream):
 
     def _Q_obj_f(self, M_bulk, bulk_liquid_ID, target_Q):
         self.set_flow(M_bulk, 'kg/hr', bulk_liquid_ID)
+        self.F_vol*1e3 - target_Q
         return self.F_vol*1e3 - target_Q
 
     @property
@@ -1157,11 +1172,15 @@ class WasteStream(SanStream):
         self.dstate = np.zeros_like(self.state)
 
     def _state2flows(self):
-        Q = self.state[-1]
-        Cs = dict(zip(self.components.IDs, self.state[:-1]))
-        Cs.pop('H2O', None)
-        self.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
-
+        Q = self.state[-1] # m3/d
+        if self.phase == 'l':
+            Cs = dict(zip(self.components.IDs, self.state[:-1]))
+            Cs.pop('H2O', None)
+            self.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
+        elif self.phase == 'g':
+            Ms = self.state[:-1] * Q # g/d
+            self.set_flow(Ms, units='g/d')
+    
     @classmethod
     def codstates_inf_model(cls, ID='', flow_tot=0., units = ('L/hr', 'mg/L'),
                             phase='l', T=298.15, P=101325., price=0., thermo=None,

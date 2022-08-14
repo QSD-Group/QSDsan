@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
     Joy Zhang <joycheung1994@gmail.com>
 
 Part of this module is based on the biosteam package:
@@ -255,6 +255,11 @@ class WWTpump(SanUnit):
     _N_ins = 1
     _N_outs = 1
 
+    _N_pump = 1
+    _H_ts = 0. # total static head
+    _H_p = 0. # total pressure head
+    _H_sf = 0. # suction friction
+    _H_df = 0. # discharge friction
     _v = 3 # fluid velocity, [ft/s]
     _C = 110 # Hazen-Williams coefficient for stainless steel (SS)
 
@@ -311,8 +316,7 @@ class WWTpump(SanUnit):
             self._default_equipment_lifetime = \
                 {prefix+' '+[k][0].lower()+k[1:]:v for k, v in self._default_equipment_lifetime.items()}
 
-        for attr, val in kwargs.items():
-            setattr(self, attr, val)
+        for attr, val in kwargs.items(): setattr(self, attr, val)
 
     def _run(self):
         self.outs[0].copy_like(self.ins[0])
@@ -401,8 +405,12 @@ class WWTpump(SanUnit):
 
 
     # Generic algorithms that will be called by all design functions
-    def _design_generic(self, Q_mgd, N_pump, L_s=0., L_d=0., H_ts=0., H_p=0.):
-        self.Q_mgd, self._H_ts, self._H_p = Q_mgd, H_ts, H_p
+    def _design_generic(self, Q_mgd, N_pump=None, L_s=0., L_d=0., H_ts=0., H_p=0.):
+        self.Q_mgd = Q_mgd
+        self._H_ts = H_ts or self.H_ts
+        self._H_p = H_p or self.H_p
+        N_pump = N_pump or self.N_pump
+
         v, C, Q_cfs = self.v, self.C, self.Q_cfs # [ft/s], -, [ft3/s]
 
         ### Suction side ###
@@ -828,7 +836,7 @@ class WWTpump(SanUnit):
     @property
     def N_pump(self):
         '''[int] Number of pumps.'''
-        return self._N_pump or 1
+        return self._N_pump
     @N_pump.setter
     def N_pump(self, i):
         self._N_pump = ceil(i)
@@ -943,6 +951,9 @@ def wwtpump(ID, ins=(), prefix='', pump_type='', Q_mgd=None, add_inputs=(),
 def add_pump(cls, ID, ins, prefix, pump_type, Q_mgd, add_inputs,
              capacity_factor, include_pump_cost, include_building_cost,
              include_OM_cost, F_BM, lifetime, **kwargs):
+    if getattr(cls, 'system', None):                    
+        if not main_f is cls.system.flowsheet:
+            main_f.set_flowsheet(cls.system.flowsheet)
     pump = WWTpump(
         ID, ins=ins,
         prefix=prefix, pump_type=pump_type, Q_mgd=Q_mgd, add_inputs=add_inputs,

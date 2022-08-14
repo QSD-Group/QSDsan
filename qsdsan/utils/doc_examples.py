@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -18,7 +18,11 @@ from .. import (
     )
 from chaospy import distributions as shape
 
-__all__ = ('load_example_cmps', 'load_example_sys', 'load_example_model',)
+__all__ = (
+    'load_example_components', 'load_example_cmps',
+    'load_example_system', 'load_example_sys',
+    'load_example_model',
+    )
 
 
 # %%
@@ -27,7 +31,7 @@ __all__ = ('load_example_cmps', 'load_example_sys', 'load_example_model',)
 # Example components
 # =============================================================================
 
-def load_example_cmps():
+def load_example_components():
     '''
     Load pre-constructed components for documentation purpose.
 
@@ -38,8 +42,8 @@ def load_example_cmps():
 
     Examples
     --------
-    >>> from qsdsan.utils import load_example_cmps
-    >>> cmps = load_example_cmps()
+    >>> from qsdsan.utils import load_example_components
+    >>> cmps = load_example_components()
     >>> cmps.show()
     CompiledComponents([H2O, CO2, N2O, NaCl, H2SO4, CH4, Methanol, Ethanol])
     '''
@@ -82,13 +86,17 @@ def load_example_cmps():
 
     return cmps
 
+# Legacy name
+load_example_cmps = load_example_components
+
+
 # %%
 
 # =============================================================================
 # Example systems
 # =============================================================================
 
-def load_example_sys(cmps=None):
+def load_example_system(components=None):
     '''
     Load a pre-constructed system for documentation purpose.
 
@@ -99,17 +107,17 @@ def load_example_sys(cmps=None):
 
     Parameters
     ----------
-    cmps : obj
-        If given, will call :func:`qsdsan.set_thermo(cmps)` to set components
+    components : obj
+        If given, will call :func:`qsdsan.set_thermo(components)` to set components
         used in system simulation.
-        The provided `cmps` must have "Water", "NaCl", "Methanol", and "Ethanol"
+        The provided `components` must have "Water", "NaCl", "Methanol", and "Ethanol"
         components, which are used in the construction of the system.
 
     Examples
     --------
-    >>> from qsdsan.utils import load_example_cmps, load_example_sys
-    >>> cmps = load_example_cmps()
-    >>> sys = load_example_sys(cmps)
+    >>> from qsdsan.utils import load_example_components, load_example_system
+    >>> cmps = load_example_components()
+    >>> sys = load_example_system(cmps)
     >>> sys.path
     (<MixTank: M1>,
      <Pump: P1>,
@@ -120,8 +128,7 @@ def load_example_sys(cmps=None):
     >>> sys.diagram() # doctest: +SKIP
     '''
 
-    if cmps:
-        set_thermo(cmps)
+    if components: set_thermo(components)
 
     salt_water = SanStream('salt_water', Water=2000, NaCl=50, units='kg/hr')
     methanol = SanStream('methanol', Methanol=20, units='kg/hr')
@@ -136,6 +143,9 @@ def load_example_sys(cmps=None):
     sys = System('sys', path=(M1, P1, H1, S1, M2, S2))
 
     return sys
+
+# Legacy name
+load_example_sys = load_example_system
 
 
 # %%
@@ -180,22 +190,22 @@ def load_example_model(evaluate=False, N=100, rule='L', seed=554, **sample_kwarg
      <ComponentSplitter: S1>,
      <Mixer: M2>,
      <Splitter: S2>)
-    >>> model.parameters
+    >>> model.parameters # doctest: +SKIP
     (<Parameter: [Stream-salt water] Salt flow rate (kg/hr)>,
-     <Parameter: [HXutility-H1] Heat exchanger temperature (K)>,
      <Parameter: [Stream-salt water] Salt solution price (USD/kg)>,
      <Parameter: [Mix tank-M1] Mix tank retention time (hr)>,
      <Parameter: [Mix tank-M1] Mix tank mixer power usage (kW/m3)>,
-     <Parameter: [Pump-P1] Pump design head (kPa)>)
-    >>> model.metrics
+     <Parameter: [Pump-P1] Pump design head (kPa)>,
+     <Parameter: [HXutility-H1] Heat exchanger temperature (K)>)
+    >>> model.metrics # doctest: +SKIP
     (<Metric: [System] Total heating duty (kJ/yr)>,
      <Metric: [System] Total electricity consumption (kWh/yr)>,
      <Metric: [Simple TEA] Total capital expenditure (USD)>,
      <Metric: [Simple TEA] Net present value (USD)>)
     '''
 
-    cmps = load_example_cmps()
-    sys = load_example_sys(cmps)
+    cmps = load_example_components()
+    sys = load_example_system(cmps)
     M1, P1, H1, S1, M2, S2 = sys.path
     sys.simulate()
     tea = SimpleTEA(sys)

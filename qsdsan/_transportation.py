@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -17,7 +17,7 @@ for license details.
 
 import pandas as pd
 from thermosteam.utils import registered
-from . import currency, ImpactItem
+from . import currency, ImpactItem, main_flowsheet
 from .utils import (
     auom, copy_attr,
     format_number as f_num,
@@ -88,7 +88,7 @@ class Transportation:
     >>> shipping.register()
     The transportation activity "shipping" has been added to the registry.
     >>> Transportation.clear_registry()
-    All transportation activities have been removed from registry.
+    All transportation activities have been removed from the registry.
     '''
 
     __slots__ = ('_ID', '_linked_unit', '_item', '_load_type', '_load', '_distance', '_interval',
@@ -99,8 +99,15 @@ class Transportation:
                  distance=1., distance_unit='km',
                  interval=1., interval_unit='hr'):
         self._linked_unit = linked_unit
-        prefix = self.linked_unit.ID if self.linked_unit else ''
+        if linked_unit:
+            if linked_unit in main_flowsheet.unit: flowsheet = main_flowsheet
+            else:
+                for flowsheet in main_flowsheet.flowsheet:
+                    if linked_unit in flowsheet.unit: break
+            prefix = f'{flowsheet.ID}_{linked_unit.ID}'
+        else: prefix = ''
         register_with_prefix(self, prefix, ID)
+
         self.item = item
         self.default_units = {
             'distance': 'km',
@@ -196,7 +203,7 @@ class Transportation:
         '''Remove all existing transportation activities from the registry.'''
         cls.registry.clear()
         if print_msg:
-            print('All transportation activities have been removed from registry.')
+            print('All transportation activities have been removed from the registry.')
 
 
     @property

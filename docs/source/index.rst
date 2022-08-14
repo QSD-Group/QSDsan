@@ -9,25 +9,16 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 What is ``QSDsan``?
 -------------------
-``QSDsan`` is an open-source, community-led platform for the quantitative sustainable design (QSD) of sanitation and resource recovery systems [1]_. It is one of a series of platforms that are being developed for the execution of QSD - a methodology for the research, design, and deployment of technologies and inform decision-making [2]_. It leverages the structure and modules developed in the `BioSTEAM <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_ platform [3]_ with additional functions tailored to sanitation processes.
-
-As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
-
-All systems developed with ``QSDsan`` are included in the package `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ - exposition of sanitation and resource recovery systems.
-
-Additionally, another package, `DMsan <https://github.com/QSD-Group/DMsan>`_ (decision-making for sanitation and resource recovery systems), is being developed for decision-making among multiple dimensions of sustainability with consideration of location-specific contextual parameters.
+``QSDsan`` is an open-source, community-led platform for the quantitative sustainable design (QSD) [1]_ of sanitation and resource recovery systems [2]_. It leverages existing platforms such as `BioSTEAM <https://biosteam.readthedocs.io>`_ [3]_  with enhanced features tailored to sanitation an resource recovery technologies. Through the integration with `DMsan <https://github.com/QSD-Group/DMsan>`_ (decision-making for sanitation and resource recovery systems), this platform can be used to guide the research, development, and deployment (RD&D) of early-stage technologies considering location-specific parameters and stakeholder priorities.
 
 
-To capitalize, or not to capitalize?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-That is a good question. We prefer to use the capitalized version (e.g., ``QSDsan`` instead of ``qsdsan``) because:
+All systems developed with ``QSDsan`` are included in the package `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ - exposition of sanitation and resource recovery systems. Refer to the `Developed Systems <https://qsdsan.readthedocs.io/en/latest/Developed_Systems.html>`_ page for a list of the developed systems and the related literature.
 
-- It refers to the platform, not just the core package (i.e., it includes the entire ecosystem that supports the core package).
-- We style the name to convey the name's meaning (e.g., the "QSD" part stands for "quantitative sustainable design").
+.. toctree::
+   :maxdepth: 1
+   :caption: List of Systems
 
-But names of the actual packages are all in lower cases per `PEP-8 <https://www.python.org/dev/peps/pep-0008/#package-and-module-names>`_:
-
-   *Modules should have short, all-lowercase names. Underscores can be used in the module name if it improves readability. Python packages should also have short, all-lowercase names, although the use of underscores is discouraged.*
+   Developed_Systems
 
 
 Installation
@@ -95,24 +86,13 @@ For each of these tutorials and examples, we are also recording videos where one
    tutorials/12_Chlorination
 
 
-How does ``QSDsan`` work?
--------------------------
+Under the Hood
+--------------
 .. figure:: https://lucid.app/publicSegments/view/c8de361f-7292-47e3-8870-d6f668691728/image.png
 
    Simplified unified modeling language (UML) diagram of ``QSDsan``
 
-The core package ``QSDsan`` follows the structure of `biosteam <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_, a rapid and agile package for the design, simulation, and techno-economic analysis of biorefineries under uncertainty, but ``QSDsan`` is enhanced with features geared toward quantitative sustainable design of sanitation systems.
-
-Work is also in progress to develop the package ``DMsan`` and connect ``QSDsan`` to ``DMsan`` for decision-making under different contexts.
-
-The above Unified Modeling Language (UML) diagram of the package shows the relationship between ``QSDsan`` and its dependencies.
-
-In particular, ``QSDsan`` introduces:
-
-- :class:`~.Component`, a subclass of :class:`thermosteam.Chemical`, instance of this class does not necessarily corresponds to a specific chemical, but represents commonly used/modeled component such as biodegradable colloidal substrate.
-- :class:`~.SanStream` and :class:`~.WasteStream`. :class:`~.SanStream` is a sublcass of :class:`thermosteam.Stream` that has an additional attribute ``impact_item`` for life cycle assessment. :class:`~.WasteStream` is a subclass of :class:`~.SanStream` with additional composite properties such as chemical oxygen demand (COD) that are widely used in sanitation systems.
-- :class:`~.Process`, a new class that describes a certain biological, chemical, or physical process in a unit operation, it is similar in concept with :class:`thermosteam.Reaction`, but has unique features and utilities.
-
+|
 
 .. toctree::
    :maxdepth: 1
@@ -130,7 +110,7 @@ In particular, ``QSDsan`` introduces:
    streams
    Transportation
    equipments/_index
-   processes/processes
+   processes/_index
    sanunits/_index
    stats
    utils/_index
@@ -162,8 +142,8 @@ Roles
 **Tutorials and videos:**
    - `Yalin Li`_
    - `Joy Zhang`_
-   - `Tori Morgan <https://qsdsan.readthedocs.io/en/beta/authors/Tori_Morgan.html>`_
-   - `Hannah Lohman <https://qsdsan.readthedocs.io/en/beta/authors/Hannah_Lohman.html>`_
+   - `Tori Morgan <https://qsdsan.readthedocs.io/en/latest/authors/Tori_Morgan.html>`_
+   - `Hannah Lohman <https://qsdsan.readthedocs.io/en/latest/authors/Hannah_Lohman.html>`_
 
 
 **Module development:** `developers <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ that have contributed to the repository.
@@ -171,7 +151,7 @@ Roles
 
 **Funding support:**
    - `Jeremy Guest <mailto:jsguest@illinois.edu>`_
-   - `Ro Cusick <mailto:rcusick@illinois.edu>`_
+   - `Roland Cusick <mailto:rcusick@illinois.edu>`_
    - `William Tarpeh <mailto:wtarpeh@stanford.edu>`_
 
 
@@ -239,13 +219,13 @@ Additionally, to get the full value of ``QSDsan``, we highly recommend reading t
 
 References
 ----------
-.. [1] Li, Y.; Zhang, X.; Morgan, V.L.; Lohman, H.A.C.; Rowles, L.S.; Mittal, S.; Kogler, A.; Cusick, R.D.; Tarpeh, W.A.; Guest, J.S. QSDsan: An integrated platform for quantitative sustainable design of sanitation and resource recovery systems. arXiv: `2203.06243 <https://arxiv.org/abs/2203.06243>`_ [cs.CY], March 7, 2022.
+.. [1] Li, Y.; Trimmer, J.T.; Hand, S.; Zhang, X.; Chambers, K.G.; Lohman, H.A.C.; Shi, R.; Byrne, D.M.; Cook, S.M.; Guest, J.S. Quantitative Sustainable Design (QSD) for the Prioritization of Research, Development, and Deployment of Technologies: A Tutorial and Review, ChemRxiv, DOI:10.26434/chemrxiv-2022-rjqbn.
 
-.. [2] Li, Y.; Trimmer, J.T.; Hand, S.; Zhang, X.; Chambers, K.G.; Lohman, H.A.C.; Shi, R.; Byrne, D.M.; Cook, S.M.; Guest, J.S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. Submitted to Environmental Science & Technology, 2022.
+.. [2] Li, Y.; Zhang, X.; Morgan, V.L.; Lohman, H.A.C.; Rowles, L.S.; Mittal, S.; Kogler, A.; Cusick, R.D.; Tarpeh, W.A.; Guest, J.S. QSDsan: An integrated platform for quantitative sustainable design of sanitation and resource recovery systems. arXiv: `2203.06243 <https://arxiv.org/abs/2203.06243>`_ [cs.CY], March 7, 2022.
 
 .. [3] Cortés-Peña, Y.; Kumar, D.; Singh, V.; Guest, J.S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020, 8 (8), 3302–3310. https://doi.org/10.1021/acssuschemeng.9b07040.
 
 
 .. Links
-.. _Yalin Li: https://qsdsan.readthedocs.io/en/beta/authors/Yalin_Li.html
-.. _Joy Zhang: https://qsdsan.readthedocs.io/en/beta/authors/Joy_Zhang.html
+.. _Yalin Li: https://qsdsan.readthedocs.io/en/latest/authors/Yalin_Li.html
+.. _Joy Zhang: https://qsdsan.readthedocs.io/en/latest/authors/Joy_Zhang.html

@@ -4,7 +4,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -15,12 +15,39 @@ from datetime import timedelta
 from biosteam.utils import TicToc
 
 __all__ = (
+    'clear_lca_registries',
     'copy_attr',
     'ords',
-    'clear_lca_registries',
+    'price_ratio',
     'register_with_prefix',
     'time_printer',
     )
+
+
+def clear_lca_registries(print_msg=False):
+    '''
+    Clear registries related to LCA, including instances of
+    :class:`~.ImpactIndicator`, :class:`~.ImpactItem`, :class:`~.Construction`,
+    and :class:`~.Transportation`
+
+    Parameters
+    ----------
+    print_msg : bool
+        Whether to print registry clear notice.
+
+    Examples
+    --------
+    >>> from qsdsan.utils import clear_lca_registries
+    >>> clear_lca_registries(True)
+    All impact indicators have been removed from the registry.
+    All impact items have been removed from the registry.
+    All construction activities have been removed from the registry.
+    All transportation activities have been removed from the registry.
+    '''
+    # Only import when this function is called to avoid circular import during package initialization
+    from qsdsan import ImpactIndicator, ImpactItem, Construction, Transportation
+    for lca_cls in (ImpactIndicator, ImpactItem, Construction, Transportation):
+        lca_cls.clear_registry(print_msg)
 
 
 def copy_attr(new, original, skip=(), same=(), slots=None):
@@ -67,7 +94,7 @@ def copy_attr(new, original, skip=(), same=(), slots=None):
 
 def ords(string):
     '''
-    Return the sum of unicode of a string, more for fun.
+    Return the sum of Unicode of a string, more for fun.
 
     Examples
     --------
@@ -80,30 +107,33 @@ def ords(string):
     return added
 
 
-def clear_lca_registries(print_msg=False):
+def price_ratio(default_price_ratio=1):
     '''
-    Clear registries related to LCA, including instances of
-    :class:`~.ImpactIndicator`, :class:`~.ImpactItem`, :class:`~.Construction`,
-    and :class:`~.Transportation`
+    Add a `price_ratio` attribute to a unit that can be used to adjust
+    capital and operating cost.
 
     Parameters
     ----------
-    print_msg : bool
-        Whether to print registry clear notice.
+    default_price_ratio : float
+        Default value of the price ratio.
 
     Examples
     --------
-    >>> from qsdsan.utils import clear_lca_registries
-    >>> clear_lca_registries(True)
-    All impact indicators have been removed from registry.
-    All impact items have been removed from registry.
-    All construction activities have been removed from registry.
-    All transportation activities have been removed from registry.
+    >>> from qsdsan import SanUnit, Components, set_thermo
+    >>> from qsdsan.utils import price_ratio
+    >>> @price_ratio(default_price_ratio=0.5)
+    ... class Foo(SanUnit):
+    ...     pass
+    >>> set_thermo(Components.load_default())
+    >>> F1 = Foo()
+    >>> print(F1.price_ratio)
+    0.5
     '''
-    # Only import when this function is called to avoid circular import during package initialization
-    from qsdsan import ImpactIndicator, ImpactItem, Construction, Transportation
-    for lca_cls in (ImpactIndicator, ImpactItem, Construction, Transportation):
-        lca_cls.clear_registry(print_msg)
+    return lambda cls: add_price_ratio(cls, default_price_ratio)
+
+def add_price_ratio(cls, default_price_ratio=1):
+    cls.price_ratio = default_price_ratio
+    return cls
 
 
 def register_with_prefix(obj, prefix, ID):

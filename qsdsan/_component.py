@@ -6,7 +6,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Joy Zhang <joycheung1994@gmail.com>
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 Part of this module is based on the Thermosteam package:
 https://github.com/BioSTEAMDevelopmentGroup/thermosteam
@@ -26,6 +26,7 @@ from chemicals.elements import (
     )
 from . import Chemical
 from .utils import auom, copy_attr, cod_test_stoichiometry, electron_acceptor_cod
+from warnings import warn
 
 __all__ = ('Component',)
 
@@ -64,7 +65,8 @@ def component_identity(component, pretty=False):
 # Will stored as an array when compiled
 _num_component_properties = ('i_C', 'i_N', 'i_P', 'i_K', 'i_Mg', 'i_Ca',
                              'i_mass', 'i_charge', 'i_COD', 'i_NOD',
-                             'f_BOD5_COD', 'f_uBOD_COD', 'f_Vmass_Totmass', )
+                             'f_BOD5_COD', 'f_uBOD_COD', 'f_Vmass_Totmass',
+                             'chem_MW')
 
 # Fields that cannot be left as None
 _key_component_properties = ('particle_size', 'degradability', 'organic',
@@ -222,9 +224,13 @@ class Component(Chemical):
                 self = super().__new__(cls, ID=ID, search_db=False, **chemical_properties)
 
         self._ID = ID
+        self._chem_MW = 1
         if formula:
             self._formula = None
             self.formula = formula
+        else:
+            if self.formula:
+                self._chem_MW = molecular_weight(self.atoms)
         if phase: lock_phase(self, phase)
 
         self._measured_as = measured_as
@@ -330,11 +336,11 @@ class Component(Chemical):
                 if self.measured_as in self.atoms:
                     i = 1/get_mass_frac(self.atoms)[self.measured_as]
                 elif self.measured_as == 'COD':
-                    chem_MW = molecular_weight(self.atoms)
+                    # chem_MW = molecular_weight(self.atoms)
                     chem_charge = charge_from_formula(self.formula)
                     Cr2O7 = - cod_test_stoichiometry(self.atoms, chem_charge)['Cr2O7-2']
                     cod = Cr2O7 * 1.5 * molecular_weight({'O':2})
-                    i = chem_MW/cod
+                    i = self.chem_MW/cod
                 elif self.measured_as:
                     raise AttributeError(f'Must specify i_mass for component {self.ID} '
                                          f'measured as {self.measured_as}.')
@@ -359,8 +365,7 @@ class Component(Chemical):
         if not self._i_charge:
             if self.formula:
                 charge = charge_from_formula(self.formula)
-                chem_MW = molecular_weight(self.atoms)
-                i = charge/chem_MW * self.i_mass
+                i = charge/self.chem_MW * self.i_mass
                 self._i_charge = check_return_property('i_charge', i)
             else: self._i_charge = 0.
 
@@ -432,8 +437,9 @@ class Component(Chemical):
                                      f"either COD or one of its constituent atoms, "
                                      f"if not as itself.")
         else:
-            if self.atoms: self._MW = molecular_weight(self.atoms)
-            else: self._MW = 1
+            # if self.atoms: self._MW = molecular_weight(self.atoms)
+            # else: self._MW = 1
+            self._MW = self.chem_MW
 
         if self._measured_as != measured_as:
             self._convert_i_attr(measured_as)
@@ -444,6 +450,7 @@ class Component(Chemical):
     @formula.setter
     def formula(self, formula):
         Chemical.formula.fset(self, formula)
+        self._chem_MW = molecular_weight(self.atoms)
         if hasattr(self, '_measured_as'):
             _ms = self._measured_as
             self.measured_as = None
@@ -451,6 +458,18 @@ class Component(Chemical):
                 if field.startswith('i_'):
                     setattr(self, field, None)
             self.measured_as = _ms
+
+    @property
+    def chem_MW(self):
+        return self._chem_MW
+    @chem_MW.setter
+    def chem_MW(self, MW):
+        if self.formula:
+            warn(f'Component {self.ID} has a formula {self.formula}, '
+                 f'ignored chem_MW setting')
+        else:
+            if MW >= 0: self._chem_MW = MW
+            else: raise ValueError('chem_MW cannot be less than 0')
 
     def _convert_i_attr(self, new):
         if new is None:
@@ -519,14 +538,14 @@ class Component(Chemical):
                     raise AttributeError(f"Must specify `i_COD` for organic component {self.ID}, "
                                          f"which is not measured as COD and has no formula.")
                 else:
-                    chem_MW = molecular_weight(self.atoms)
+                    # chem_MW = molecular_weight(self.atoms)
                     chem_charge = charge_from_formula(self.formula)
                     if self.formula in ('O2', 'N2', 'NO2-', 'NO3-'):
                         cod = electron_acceptor_cod(self.atoms, chem_charge) * molecular_weight({'O':2})
                     else:
                         Cr2O7 = - cod_test_stoichiometry(self.atoms, chem_charge)['Cr2O7-2']
                         cod = Cr2O7 * 1.5 * molecular_weight({'O':2})
-                    self._i_COD = check_return_property('i_COD', cod/chem_MW * self.i_mass)
+                    self._i_COD = check_return_property('i_COD', cod/self.chem_MW * self.i_mass)
             else: self._i_COD = 0.
 
     @property
@@ -570,7 +589,8 @@ class Component(Chemical):
             super().show()
         else:
             info = component_identity(self, pretty=True)
-        info += '\nComponent-specific properties:\n'
+            info += '\n'
+        info += 'Component-specific properties:\n'
         header = '[Others] '
         section = []
         for field in _component_properties:
@@ -662,7 +682,7 @@ class Component(Chemical):
     #     return new
 
     @classmethod
-    def from_chemical(cls, ID, chemical=None, phase=None, measured_as=None,
+    def from_chemical(cls, ID, chemical=None, formula=None, phase=None, measured_as=None,
                       i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
                       i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
                       f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
@@ -679,28 +699,94 @@ class Component(Chemical):
 
             E.g., do
 
-                `S_O = Component(ID='S_O', search_ID='O2', ...)`
+                ``S_O = Component(ID='S_O', search_ID='O2', ...)``
 
             instead of
 
-                `S_O = Component.from_chemical(ID='S_O', chemical='O2', ...)`
+                ``S_O = Component.from_chemical(ID='S_O', chemical='O2', ...)``
 
+        Examples
+        --------
+        >>> from qsdsan import Component
+        >>> Struvite = Component.from_chemical('Struvite',
+        ...                                    chemical='MagnesiumAmmoniumPhosphate',
+        ...                                    formula='NH4MgPO4·H12O6',
+        ...                                    phase='l', particle_size='Particulate',
+        ...                                    degradability='Undegradable', organic=False)
+        >>> Struvite.show(chemical_info=True)
+        Component: Struvite (phase_ref='l') at phase='l'
+        [Names]  CAS: 7785-21-9
+                 InChI: Mg.H3N.H3O4P/c;;1-5(...
+                 InChI_key: MXZRMHIULZDAKC-U...
+                 common_name: 7785-21-9
+                 iupac_name: ('azanium;magne...
+                 pubchemid: 1.7873e+05
+                 smiles: [NH4+].[O-]P(=O)([O...
+                 formula: NH4MgPO4·H12O6
+        [Groups] Dortmund: <Empty>
+                 UNIFAC: <Empty>
+                 PSRK: <Empty>
+                 NIST: <Empty>
+        [Data]   MW: 137.31 g/mol
+                 Tm: None
+                 Tb: None
+                 Tt: None
+                 Tc: None
+                 Pt: None
+                 Pc: None
+                 Vc: None
+                 Hf: None
+                 S0: 0 J/K/mol
+                 LHV: None
+                 HHV: None
+                 Hfus: 0 J/mol
+                 Sfus: None
+                 omega: None
+                 dipole: None
+                 similarity_variable: 0.080108
+                 iscyclic_aliphatic: 0
+                 combustion: None
+        Component-specific properties:
+        [Others] measured_as: None
+                 description: None
+                 particle_size: Particulate
+                 degradability: Undegradable
+                 organic: False
+                 i_C: 0 g C/g 
+                 i_N: 0.057076 g N/g 
+                 i_P: 0.12621 g P/g 
+                 i_K: 0 g K/g 
+                 i_Mg: 0.09904 g Mg/g 
+                 i_Ca: 0 g Ca/g 
+                 i_mass: 1 g mass/g 
+                 i_charge: 0 mol +/g 
+                 i_COD: 0 g COD/g 
+                 i_NOD: 0 g NOD/g 
+                 f_BOD5_COD: 0
+                 f_uBOD_COD: 0
+                 f_Vmass_Totmass: 0
+                 chem_MW: 245.41
         '''
         new = cls.__new__(cls, ID=ID, phase=phase)
 
         if chemical is None: chemical = ID
 
-        formula = None
         if isinstance(chemical, str):
-            formula = data.pop('formula', None)
             chemical = Chemical(chemical, **data)
-        if formula: new._formula = formula
 
         for field in chemical.__slots__:
             value = getattr(chemical, field, None)
             setattr(new, field, copy_maybe(value))
-        new._ID = ID
 
+        new._ID = ID
+        if formula and formula != chemical.formula:
+            new._formula = formula
+            if new._Hf is None:
+                new._chem_MW = molecular_weight(new.atoms)
+            else:
+                new.reset_combustion_data()
+        else:
+            new._chem_MW = molecular_weight(new.atoms)
         if phase: new._locked_state = phase
 
         TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = False

@@ -324,7 +324,7 @@ class SBR(SanUnit):
     underflow : float, optional
         Designed wasted activated sludge flowrate, in [m^3/d]. The default is None.
     X_threshold : float, optional
-        Threshold suspended solid cocentration, in [g/m^3]. The default is 3000.
+        Threshold suspended solid concentration, in [g/m^3]. The default is 3000.
     v_max : float, optional
         Maximum theoretical (i.e. Vesilind) settling velocity, in [m/d]. The
         default is 474.

@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -99,11 +99,12 @@ class SanStream(Stream):
         new = super().copy(ID=new_ID)
         if copy_price:
             new.price = self.price
-        if hasattr(self, '_stream_impact_item'):
-            if self.stream_impact_item is not None:
-                self.stream_impact_item.copy(stream=new)
-            else:
-                new._stream_impact_item = None
+        if copy_impact_item:
+            if hasattr(self, '_stream_impact_item'):
+                if self.stream_impact_item is not None:
+                    self.stream_impact_item.copy(stream=new)
+                else:
+                    new._stream_impact_item = None
         return new
 
     __copy__ = copy
@@ -181,8 +182,8 @@ class SanStream(Stream):
         Examples
         --------
         >>> from qsdsan import set_thermo, SanStream
-        >>> from qsdsan.utils import load_example_cmps
-        >>> cmps = load_example_cmps()
+        >>> from qsdsan.utils import load_example_components
+        >>> cmps = load_example_components()
         >>> set_thermo(cmps)
         >>> ss1 = SanStream('ss1', Water=100, NaCl=1, price=3.18)
         >>> ss2 = ss1.flow_proxy('ss2')
@@ -213,8 +214,8 @@ class SanStream(Stream):
         Examples
         --------
         >>> from qsdsan import set_thermo, SanStream
-        >>> from qsdsan.utils import load_example_cmps
-        >>> cmps = load_example_cmps()
+        >>> from qsdsan.utils import load_example_components
+        >>> cmps = load_example_components()
         >>> set_thermo(cmps)
         >>> ss1 = SanStream('ss1', Water=100, NaCl=1, price=3.18)
         >>> ss2 = ss1.proxy('ss2')
@@ -341,8 +342,6 @@ class SanStream(Stream):
                 new_ID = ''
             new.__init__(ID=new_ID)
 
-            new._islinked = stream._islinked
-
             source = new._source = stream._source
             if source:
                 source._outs[source._outs.index(stream)] = new
@@ -361,7 +360,6 @@ class SanStream(Stream):
             for attr, val in kwargs.items():
                 setattr(new, attr, val)
 
-            stream._islinked = False
             stream._sink = stream._source = None
             return new
         else:

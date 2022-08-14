@@ -1,0 +1,7 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+sludge_dryer_weight		kg	35	24.5	45.5	uniform	https://s3.amazonaws.com/s3.supplyhouse.com/product_files/Wayne-Combustion-64466-User-Guide.pdf
+sludge_barrel_weight		kg	16.8	11.8	21.8	uniform	https://www.uline.com/Product/Detail/S-10759/Drums/Steel-Drum-55-Gallon-Closed-Top-Unlined
+sludge_dryer		USD	710	497	923	uniform	https://www.supplyhouse.com/Wayne-Combustion-64466-P250AF-NG-Burner-120v-DI-50000-250000-BTU
+sludge_barrel		USD	110	77	143	uniform	https://www.uline.com/Product/Detail/S-10759/Drums/Steel-Drum-55-Gallon-Closed-Top-Unlined
+sludge_labor_maintenance		h	3	2.1	3.9	uniform	assumption based on NEWgenerator Maintenance Schedule
+wages		USD/cap/h	3.64	1.82	5.46	uniform	Gates Scenario Specific Report 2022

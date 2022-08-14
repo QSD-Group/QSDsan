@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -17,7 +17,7 @@ for license details.
 
 import pandas as pd
 from thermosteam.utils import registered
-from . import currency, ImpactItem
+from . import currency, ImpactItem, main_flowsheet
 from .utils import (
     auom, copy_attr,
     format_number as f_num,
@@ -57,7 +57,7 @@ class Construction:
     >>> GWP = qs.ImpactIndicator('GlobalWarming', alias='GWP', unit='kg CO2-eq')
     >>> FEC = qs.ImpactIndicator('FossilEnergyConsumption', alias='FEC', unit='MJ')
     >>> # Make impact item
-    >>> Steel = qs.ImpactItem('Steel', 'kg', GWP=2.55, FEC=0.5)
+    >>> Steel = qs.ImpactItem('Steel', 'kg', GlobalWarming=2.55, FossilEnergyConsumption=0.5)
     >>> # Make a construction activity that uses 100 g of steel
     >>> steel_100_g = qs.Construction('steel_100_g', item=Steel, quantity=100,
     ...                               quantity_unit='g')
@@ -77,7 +77,10 @@ class Construction:
     >>> steel_100_g.register()
     The construction activity "steel_100_g" has been added to the registry.
     >>> Construction.clear_registry()
-    All construction activities have been removed from registry.
+    All construction activities have been removed from the registry.
+    >>> # Clear all registries for testing purpose
+    >>> from qsdsan.utils import clear_lca_registries
+    >>> clear_lca_registries()
     '''
 
     __slots__ = ('_ID', '_linked_unit', '_item', '_quantity', '_lifetime')
@@ -85,8 +88,15 @@ class Construction:
     def __init__(self, ID='', linked_unit=None, item=None, quantity=0., quantity_unit='',
                  lifetime=None, lifetime_unit='yr'):
         self._linked_unit = linked_unit
-        prefix = self.linked_unit.ID if self.linked_unit else ''
+        if linked_unit:
+            if linked_unit in main_flowsheet.unit: flowsheet = main_flowsheet
+            else:
+                for flowsheet in main_flowsheet.flowsheet:
+                    if linked_unit in flowsheet.unit: break
+            prefix = f'{flowsheet.ID}_{linked_unit.ID}'
+        else: prefix = ''
         register_with_prefix(self, prefix, ID)
+
         self.item = item
         self._update_quantity(quantity, quantity_unit)
         self._lifetime = None
@@ -156,7 +166,7 @@ class Construction:
         '''Remove all existing construction activities from the registry.'''
         cls.registry.clear()
         if print_msg:
-            print('All construction activities have been removed from registry.')
+            print('All construction activities have been removed from the registry.')
 
     @property
     def linked_unit(self):

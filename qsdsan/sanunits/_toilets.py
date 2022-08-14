@@ -5,7 +5,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
+    Lewis Rowles <stetsonsc@gmail.com>
+    Lane To <lane20@illinois.edu>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -20,9 +22,9 @@ from math import ceil
 from warnings import warn
 from . import Decay
 from .. import SanUnit, WasteStream, Construction
-from ..utils import ospath, load_data, data_path, dct_from_str
+from ..utils import ospath, load_data, data_path, dct_from_str, price_ratio
 
-__all__ = ('Toilet', 'PitLatrine', 'UDDT',)
+__all__ = ('Toilet', 'PitLatrine', 'UDDT', 'MURT',)
 
 
 # %%
@@ -130,6 +132,17 @@ class Toilet(SanUnit, Decay, isabstract=True):
         fw.imass['H2O'] = int(self.if_flushing)*self.flushing_water
         cw.imass['H2O'] = int(self.if_cleansing)*self.cleansing_water
         des.imass['WoodAsh'] = int(self.if_desiccant)*self.desiccant
+
+    def _scale_up_outs(self):
+        '''
+        Scale up the effluent based on the number of user per toilet and
+        toilet number.
+        '''
+        N_tot_user = self.N_tot_user or self.N_toilet*self.N_user
+        for i in self.outs:
+            if not i.F_mass == 0:
+                i.F_mass *= N_tot_user
+
 
     density_dct = {
         'Sand': 1442,
@@ -489,13 +502,8 @@ class PitLatrine(Toilet):
             mixed._COD = mixed_COD / mixed.F_vol
 
         waste.copy_like(mixed)
+        self._scale_up_outs()
 
-        # Scale up the effluent based on the number of user per toilet and
-        # toilet number
-        N_tot_user = self.N_tot_user or self.N_toilet*self.N_user
-        for i in self.outs:
-            if not i.F_mass == 0:
-                i.F_mass *= N_tot_user
 
     _units = {
         'Emptying period': 'yr',
@@ -866,12 +874,7 @@ class UDDT(Toilet):
                 CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
 
-        # Scale up the effluent based on the number of user per toilet and
-        # toilet number
-        N_tot_user = self.N_tot_user or self.N_toilet*self.N_user
-        for i in self.outs:
-            if not i.F_mass == 0:
-                i.F_mass *= N_tot_user
+        self._scale_up_outs()
 
 
     _units = {
@@ -1003,3 +1006,191 @@ class UDDT(Toilet):
     @fec_moi_red_rate.setter
     def fec_moi_red_rate(self, i):
         self._fec_moi_red_rate = i
+
+
+# %%
+
+murt_path = ospath.join(data_path, 'sanunit_data/_murt.tsv')
+
+@price_ratio()
+class MURT(Toilet):
+    '''
+    Multi-unit reinvented toilet.
+
+    The following components should be included in system thermo object for simulation:
+    Tissue, WoodAsh, H2O, NH3, NonNH3, P, K, Mg, CH4, N2O.
+
+    The following impact items should be pre-constructed for life cycle assessment:
+    Ceramic, Fan.
+
+    Parameters
+    ----------
+    ins : Iterable(stream)
+        waste_in: mixed excreta.
+    Outs : Iterable(stream)
+        waste_out: degraded mixed excreta.
+        CH4: fugitive CH4.
+        N2O: fugitive N2O.
+    N_squatting_pan_per_toilet : int
+        The number of squatting pan per toilet.
+    N_urinal_per_toilet : int
+        The number of urinals per toilet.
+    if_include_front_end : bool
+        If False, will not consider the capital and operating costs of this unit.
+
+    See Also
+    --------
+    :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
+    '''
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 degraded_components=('OtherSS',), N_user=1, N_tot_user=1,
+                 N_toilet=None, if_toilet_paper=True, if_flushing=True, if_cleansing=False,
+                 if_desiccant=True, if_air_emission=True, if_ideal_emptying=True,
+                 CAPEX=0, OPEX_over_CAPEX=0, lifetime=8,
+                 N_squatting_pan_per_toilet=1, N_urinal_per_toilet=1,
+                 if_include_front_end=True, **kwargs):
+
+        Toilet.__init__(
+            self, ID, ins, outs, thermo=thermo, init_with=init_with,
+            degraded_components=degraded_components,
+            N_user=N_user, N_tot_user=N_tot_user, N_toilet=N_toilet,
+            if_toilet_paper=if_toilet_paper, if_flushing=if_flushing,
+            if_cleansing=if_cleansing, if_desiccant=if_desiccant,
+            if_air_emission=if_air_emission, if_ideal_emptying=if_ideal_emptying,
+            CAPEX=CAPEX, OPEX_over_CAPEX=OPEX_over_CAPEX
+            )
+        self.N_squatting_pan_per_toilet = N_squatting_pan_per_toilet
+        self.N_urinal_per_toilet = N_urinal_per_toilet
+        self.if_include_front_end = if_include_front_end
+        self._mixed = WasteStream(f'{self.ID}_mixed')
+
+        data = load_data(path=murt_path)
+        for para in data.index:
+            value = float(data.loc[para]['expected'])
+            setattr(self, para, value)
+        del data
+
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+
+    _N_outs = 3
+
+    def _run(self):
+        Toilet._run(self)
+        waste, CH4, N2O = self.outs
+        CH4.phase = N2O.phase = 'g'
+
+        mixed = self._mixed
+        mixed.mix_from(self.ins)
+        tot_COD_kg = sum(float(getattr(i, 'COD')) * i.F_vol for i in self.ins) / 1e3
+
+        # Air emission
+        if self.if_air_emission:
+            # N loss due to ammonia volatilization
+            NH3_rmd, NonNH3_rmd = \
+                self.allocate_N_removal(mixed.TN / 1e3 * mixed.F_vol * self.N_volatilization,
+                                        mixed.imass['NH3'])
+            mixed.imass['NH3'] -= NH3_rmd
+            mixed.imass['NonNH3'] -= NonNH3_rmd
+            # Energy/N loss due to degradation
+            COD_loss = self.first_order_decay(k=self.decay_k_COD,
+                                              t=self.collection_period / 365,
+                                              max_decay=self.COD_max_decay)
+            COD_loss_kg = tot_COD_kg * COD_loss
+            CH4.imass['CH4'] = COD_loss_kg * self.max_CH4_emission * self.MCF_decay
+            mixed.imass[self.degraded_components] *= 1 - COD_loss
+
+            N_loss = self.first_order_decay(k=self.decay_k_N,
+                                            t=self.collection_period / 365,
+                                            max_decay=self.N_max_decay)
+            N_loss_tot = mixed.TN / 1e3 * mixed.F_vol * N_loss
+            NH3_rmd, NonNH3_rmd = \
+                self.allocate_N_removal(N_loss_tot, mixed.imass['NH3'])
+            mixed.imass['NH3'] -= NH3_rmd
+            mixed.imass['NonNH3'] -= NonNH3_rmd
+            N2O.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44 / 28
+            mixed._COD = (tot_COD_kg - COD_loss_kg) * 1e3 / mixed.F_vol
+        else:
+            CH4.empty()
+            N2O.empty()
+
+        # Non-ideal emptying
+        if not self.if_ideal_emptying:
+            mixed, CH4, N2O = self.get_emptying_emission(
+                waste=mixed, CH4=CH4, N2O=N2O,
+                empty_ratio=self.empty_ratio,
+                CH4_factor=self.COD_max_decay * self.MCF_aq * self.max_CH4_emission,
+                N2O_factor=self.N2O_EF_decay * 44 / 28)
+
+        waste.copy_like(mixed)
+        self._scale_up_outs()
+
+    _units = {
+        'Collection period': 'd',
+        }
+
+    def _design(self):
+        design = self.design_results
+        if self.if_include_front_end:
+            design['Number of users per toilet'] = self.N_user
+            design['Parallel toilets'] = N = self.N_toilet
+            design['Collection period'] = self.collection_period
+            design['Ceramic'] = Ceramic_quant = (
+                self.squatting_pan_weight * self.N_squatting_pan_per_toilet+
+                self.urinal_weight * self.N_urinal_per_toilet
+                )
+            design['Fan'] = Fan_quant = 1  # assume fan quantity is 1
+
+            self.construction = (
+                Construction(item='Ceramic', quantity=Ceramic_quant * N, quantity_unit='kg'),
+                Construction(item='Fan', quantity=Fan_quant * N, quantity_unit='kg'),
+            )
+
+            self.add_construction(add_cost=False)
+        else:
+            design.clear()
+            self.construction = ()
+
+    def _cost(self):
+        C = self.baseline_purchase_costs
+        if self.if_include_front_end:
+            N_toilet = self.N_toilet
+            C['Ceramic Toilets'] = (
+                self.squatting_pan_cost * self.N_squatting_pan_per_toilet +
+                self.urinal_cost * self.N_urinal_per_toilet
+                ) * N_toilet
+            C['Fan'] = self.fan_cost * N_toilet
+            C['Misc. parts'] = (
+                self.led_cost +
+                self.anticor_floor_cost +
+                self.circuit_change_cost +
+                self.pipe_cost
+                ) * N_toilet
+
+            ratio = self.price_ratio
+            for equipment, cost in C.items():
+                C[equipment] = cost * ratio
+        else:
+            self.baseline_purchase_costs.clear()
+
+        sum_purchase_costs = sum(v for v in C.values())
+        self.add_OPEX = (
+            self._calc_replacement_cost() +
+            self._calc_maintenance_labor_cost() +
+            sum_purchase_costs * self.OPEX_over_CAPEX / (365 * 24)
+            )
+
+    def _calc_replacement_cost(self):
+        return 0
+
+    def _calc_maintenance_labor_cost(self):
+        return 0
+
+    @property
+    def collection_period(self):
+        '''[float] Time interval between storage tank collection, [d].'''
+        return self._collection_period
+    @collection_period.setter
+    def collection_period(self, i):
+        self._collection_period = float(i)

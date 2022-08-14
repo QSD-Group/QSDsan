@@ -1,0 +1,48 @@
+﻿parameter,name,unit,expected,low,high,distribution,reference
+one_in_pipe_SCH40,"1"" Pipe SCH 40 x 3000 mm Long",USD,13.8,12.42,15.18,triangular,Duke Center for WaSH-AID design team bill of materials
+onehalf_in_pipe_SCH40,"1/2"" Pipe SCH 40 x 3000 mm Long",USD,2.43,2.187,2.673,triangular,Duke Center for WaSH-AID design team bill of materials
+one_in_elbow_SCH80,"1"" 90 Deg Elbow SCH 80",USD,6.24,5.616,6.864,triangular,Duke Center for WaSH-AID design team bill of materials
+one_in_tee_SCH80,"1"" TEE SCH 80",USD,1.01,0.909,1.111,triangular,Duke Center for WaSH-AID design team bill of materials
+one_in_SCH80,"1"" SCH 80 Union",USD,8.32,7.488,9.152,triangular,Duke Center for WaSH-AID design team bill of materials
+one_onehalf_in_SCH80,"1"" x 1/2"" SCH 80 Union",USD,0.59,0.531,0.649,triangular,Duke Center for WaSH-AID design team bill of materials
+onehalf_in_SCH80,"1/2"" Union SCH 80",USD,0.69,0.621,0.759,triangular,Duke Center for WaSH-AID design team bill of materials
+three_in_pipe_SCH80,"3"" SCH 40 Pipe x 3000 mm Long",USD,15.73,14.157,17.303,triangular,Duke Center for WaSH-AID design team bill of materials
+three_in_SCH80_endcap,"3"" SCH 80 End cap",USD,5.87,5.283,6.457,triangular,Duke Center for WaSH-AID design team bill of materials
+one_one_NB_MTA,"1"" x 1"" NB MTA",USD,8.8,7.92,9.68,triangular,Duke Center for WaSH-AID design team bill of materials
+one_onehalf_NB_MTA,"1"" x1/2"" NB MTA",USD,11.73,10.557,12.903,triangular,Duke Center for WaSH-AID design team bill of materials
+foot_valve,"Foot valve 1"" Brass",USD,8.2,7.38,9.02,triangular,Duke Center for WaSH-AID design team bill of materials
+one_onehalf_in_SCH80_threadedtee,"1"" SCH 80 x 1/2"" Threaded TEE",USD,8.84,7.956,9.724,triangular,Duke Center for WaSH-AID design team bill of materials
+three_in_pipe_clamp,"3"" NB Pipe clamp",USD,1.15,1.035,1.265,triangular,Duke Center for WaSH-AID design team bill of materials
+one_in_pipe_clamp,"1"" Pipe Clamp Sheet Metal",USD,1.67,1.503,1.837,triangular,Duke Center for WaSH-AID design team bill of materials
+onehalf_in_pipe_clamp,"1/2"" pipe clamp sheet metal",USD,0.48,0.432,0.528,triangular,Duke Center for WaSH-AID design team bill of materials
+UF_brush,Nylon bush for Ultra filteration,USD,9.84,8.856,10.824,triangular,Duke Center for WaSH-AID design team bill of materials
+two_way_valve,2-way valve ( Modulating),USD,153.62,138.258,168.982,triangular,Duke Center for WaSH-AID design team bill of materials
+UF_unit,Ultrafilteration Unit,USD,2580.8,2322.72,2838.88,triangular,Duke Center for WaSH-AID design team bill of materials
+one_in_pipe_SCH40_lifetime,"1"" Pipe SCH 40 x 3000 mm Long",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+onehalf_in_pipe_SCH40_lifetime,"1/2"" Pipe SCH 40 x 3000 mm Long",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+one_in_elbow_SCH80_lifetime,"1"" 90 Deg Elbow SCH 80",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+one_in_tee_SCH80_lifetime,"1"" TEE SCH 80",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+one_in_SCH80_lifetime,"1"" SCH 80 Union",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+one_onehalf_in_SCH80_lifetime,"1"" x 1/2"" SCH 80 Union",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+onehalf_in_SCH80_lifetime,"1/2"" Union SCH 80",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+three_in_pipe_SCH80_lifetime,"3"" SCH 40 Pipe x 3000 mm Long",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+three_in_SCH80_endcap_lifetime,"3"" SCH 80 End cap",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+one_one_NB_MTA_lifetime,"1"" x 1"" NB MTA",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+one_onehalf_NB_MTA_lifetime,"1"" x1/2"" NB MTA",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+foot_valve_lifetime,"Foot valve 1"" Brass",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+one_onehalf_in_SCH80_threadedtee_lifetime,"1"" SCH 80 x 1/2"" Threaded TEE",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+three_in_pipe_clamp_lifetime,"3"" NB Pipe clamp",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+one_in_pipe_clamp_lifetime,"1"" Pipe Clamp Sheet Metal",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+onehalf_in_pipe_clamp_lifetime,"1/2"" pipe clamp sheet metal",y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+UF_brush_lifetime,Nylon bush for Ultra filteration,y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+two_way_valve_lifetime,2-way valve ( Modulating),y,3,2.7,3.3,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+UF_unit_lifetime,Ultrafilteration Unit,y,5,2.5,7.5,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+Plastic_weight,,kg,12.5,6.25,18.75,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+Brass_weight,,kg,0.3855535,0.289165125,0.481941875,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+Steel_weight,,kg,3,2.25,3.75,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+Nylon_weight,,kg,1.21,0.9075,1.5125,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+TSS_removal,,%,0.756501,0.108696,1,triangular,Duke Center for WaSH-AID design team data
+power_demand_1,power demand with 1 ultrafiltration units,W,750,675,825,triangular,Duke Center for WaSH-AID design team data
+power_demand_2,power demand with 2 ultrafiltration units,W,540,405,675,triangular,Duke Center for WaSH-AID design team data
+power_demand_3,power demand with 3 ultrafiltration units,W,510,382.5,637.5,triangular,Duke Center for WaSH-AID design team data
+power_demand_4,power demand with 4 ultrafiltration units,W,480,360,600,triangular,Duke Center for WaSH-AID design team data

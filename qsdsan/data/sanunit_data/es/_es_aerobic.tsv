@@ -1,0 +1,11 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+tau		days	1			constant	CIDI
+COD_removal		fraction of COD removal	0.44	0.33	0.55	uniform	"Tchobanoglous et al,. 2014 (EAWAG: 80-85fraction of BOD removal)"
+N_max_decay		fraction of N removal	0.13	0.0975	0.1625	triangular	"Orner and Mihelcic, 2017"
+N2O_EF_decay		fraction of of degraded N emitted as N2O	0.005	0.0005	0.006	triangular	"IPCC, 2006; Leeds"
+FRP_per_tank		kg	1721.2	1290.9	2151.5	uniform	BMGF report
+FRP_cost		USD/tank	7121.166667	478.275	797.125	uniform	BOM
+OM_cleaning		year	0.1	0.09	0.11	uniform	BMGF report
+volume		m^3	2.156			constant	
+energy		kW	1.38	1.035	1.725	uniform	Eco-san data slides
+MCF_decay			0.03			constant	"IPCC, 2006; Leeds"

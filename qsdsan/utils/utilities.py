@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -45,8 +45,8 @@ def sum_system_utility(system, operating_hours=None, exclude_units=(),
 
     Examples
     --------
-    >>> from qsdsan.utils import load_example_cmps, load_example_sys, sum_system_utility
-    >>> sys = load_example_sys(load_example_cmps())
+    >>> from qsdsan.utils import load_example_components, load_example_system, sum_system_utility
+    >>> sys = load_example_system(load_example_components())
     >>> sys.simulate()
     >>> sum_system_utility(sys, utility='heating', result_unit='kJ/yr') # doctest: +ELLIPSIS
     463359.875...

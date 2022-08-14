@@ -1,0 +1,85 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+loading_rate		kg TSS/hr	30			constant	manual
+energy_required_to_dry_sludge		MJ/kg water	3.5	3.15	3.85	uniform	Tchobanoglous et al.
+dry_feces_heat_of_combustion		MJ/kg dry	16.6	10.9	22.3	uniform	Gates Report on energy balance
+pyrolysis_pot_cost_cb		USD	437.695	225.04	650.35	uniform	Pilot study
+char_auger_motor_cost_cb		USD	286.35	249	323.7	uniform	Pilot study
+fuel_auger_motor_cost_cb		USD	319.7	278	361.4	uniform	Pilot study
+primary_air_blower_cost_cb		USD	193.2	168	218.4	uniform	Pilot study
+thermocouple_cost_cb_pcd		USD	38.5	32	45	uniform	Pilot study
+thermistor_cost_cb_pcd		USD	11.79	7.86	15.72	uniform	Pilot study
+forced_air_fan_cost_cb		USD	622.5	415	830	uniform	Pilot study
+airlock_motor_cost_cb		USD	218.5	190	247	uniform	Pilot study
+inducer_fan_cost_cb		USD	375	250	500	uniform	Pilot study
+biochar_collection_box_cost_cb		USD	275	250	300	uniform	https://www.alibaba.com/product-detail/2-M3-Steel-Skip-Bin-Stainless_1600100985567.html?spm=a2700.gallery_search_cps.normalList.45.5803288doSLA3f
+drive_chain_cost_cb		USD	290.7			constant	https://www.grainger.com/search/power-transmission/power-transmission-chains-and-sprockets/roller-chains?sst=4&ts_optout=true&searchQuery=%2340+drive+chain
+chain_guards_cost_cb		USD	208	143	273	uniform	https://www.grainger.com/product/5PCC6?cm_mmc=PPC:+Google+PLA&ef_id=CjwKCAiAi_D_BRApEiwASslbJ4xrZDuC3qyHSaYg_YAbKlREzxUj-1byLlOYeIW6el14Om0EfRTfEBoC1VwQAvD_BwE:G:s&s_kwcid=AL!2966!3!264955916378!!!g!437270349779!&gucid=N:N:PS:Paid:GGL:CSM-2295:4P7A1P:20501231
+door_cost_cb		USD	437	276	598	uniform	https://www.grainger.com/product/6EJA9?cm_mmc=PPC:+Google+PLA&ef_id=CjwKCAiAi_D_BRApEiwASslbJ9ONdr_pWJzS-38WreiKIqjRmFR0CbulqwVwnFflKyr21Azs1EtNfBoChtcQAvD_BwE:G:s&s_kwcid=AL!2966!3!264955916048!!!g!502441189157!&gucid=N:N:PS:Paid:GGL:CSM-2295:4P7A1P:20501231
+agitator_cost_cb		USD	548.355	403.76	692.95	uniform	https://www.grainger.com/product/38C890?cm_mmc=PPC:+Google+PLA&ef_id=CjwKCAiAi_D_BRApEiwASslbJ_IRw16dD0vgfEHQYkvnjeyN-kvmWyVfLsIjZK5jKYVa0dxK8wOE3hoCjtYQAvD_BwE:G:s&s_kwcid=AL!2966!3!264955916105!!!g!437575797294!&gucid=N:N:PS:Paid:GGL:CSM-2295:4P7A1P:20501231
+combusion_chamber_cost_cb		USD	314.5	230	399	uniform	https://www.tractorsupply.com/tsc/product/us-stove-single-firebrick-3112783?store=2525&cm_mmc=feed-_-GoogleShopping-_-Product-_-3112783
+sprayer_cost_cb		USD	22.325	7.65	37	uniform	https://www.grainger.com/product/1MDF9?cm_mmc=PPC:+Google+PLA&ef_id=CjwKCAiAi_D_BRApEiwASslbJ_mVrl6HfdnzeqnD1IbXjJpy0xUQ-ckr48pGhyTrqaL4P0iOOa3DDxoCU8UQAvD_BwE:G:s&s_kwcid=AL!2966!3!264955916312!!!g!438970240545!&gucid=N:N:PS:Paid:GGL:CSM-2295:4P7A1P:20501231
+vent_cost_cb		USD	61.75	18	105.5	uniform	https://www.homedepot.com/p/Sunstone-15-in-x-0-125-in-x-4-5-in-Stainless-Steel-Venting-Panel-Vent-S/305117218
+carbonizer_base_assembly_steel		kg	195.1			constant	Pilot study
+carbonizer_base_assembly_stainless		kg	99.6			constant	Pilot study
+carbonizer_base_squarebox_steel		kg	13			constant	Pilot study
+carbonizer_base_squarebox_stainless		kg	78			constant	Pilot study
+carbonizer_base_charbox_steel		kg	37			constant	Pilot study
+carbonizer_base_charbox_stainless		kg	4.2			constant	Pilot study
+biochar_production_rate		kg biochar / kg TS bio	0.18			constant	Technical Description
+SO2_emissions		mg/Nm3	62.245	38.61	85.88	uniform	Pilot study
+NOx_emissions		mg/Nm3	0			constant	Pilot study
+CO_emissions		mg/Nm3	976.61	833.83	1119.39	uniform	Pilot study
+Hg_emissions		mg/Nm3	0.005	0	0.01	uniform	Pilot study
+Cd_emissions		mg/Nm3	0.02	0.01	0.03	uniform	Pilot study
+As_emissions		mg/Nm3	0.015	0.01	0.02	uniform	Pilot study
+Dioxin_Furans_emissions		ng/Nm3	0.32	0.24	0.4	uniform	Pilot study
+cb_N2O_emissions		% of total N	0.015	0.0007	0.0295	uniform	Barton & Atwater
+carbonizer_biochar_auger_power		kW	0.043			constant	
+carbonizer_fuel_auger_power		kW	0.043			constant	
+carbonizer_primary_air_blower_power		kW	0.021			constant	
+steel_cost		USD/kg	7.485	3.81	11.16	uniform	BOM
+stainless_steel_cost		USD/kg	23.585	5.08	42.09	uniform	BOM
+pyrolysis_pot_lifetime_cb		h	500			constant	Basline Data
+char_auger_motor_lifetime_cb		h	10000			constant	Basline Data
+fuel_auger_motor_lifetime_cb		h	10000			constant	Basline Data
+primary_air_blower_lifetime_cb		y	3.5	0.5	5	uniform	*assumed
+thermocouple_lifetime_cb_2pcd		y	1.5	1	2	uniform	Basline Data
+thermistor_lifetime_cb_2pcd		y	3			constant	Basline Data
+forced_air_fan_lifetime_cb		y	3.5	0.5	5	uniform	*assumed
+airlock_motor_lifetime_cb		y	3.5	0.5	5	uniform	*assumed
+inducer_fan_lifetime_cb		y	3.5	0.5	5	uniform	*assumed
+service_team_replacegasket_cb		min / corrective maintenance	330	60	600	uniform	Maintenance Activity Schedule
+service_team_replacedoor_cb		min / corrective maintenance	27.5	5	50	uniform	Maintenance Activity Schedule
+service_team_replacechain_cb		min / corrective maintenance	110	20	200	uniform	Maintenance Activity Schedule
+service_team_changefirepot_cb		min / corrective maintenance	660	120	1200	uniform	Maintenance Activity Schedule
+service_team_replacecharaugers_cb		min / corrective maintenance	660	120	1200	uniform	Maintenance Activity Schedule
+service_team_replacecatalyst_pcd		min / corrective maintenance	82.5	15	150	uniform	Maintenance Activity Schedule
+service_team_replacebrick_pcd		min / corrective maintenance	82.5	15	150	uniform	Maintenance Activity Schedule
+service_team_replacefuelauger_pcd		min / corrective maintenance	247.5	45	450	uniform	Maintenance Activity Schedule
+service_team_replacewaterpump_hhx		min / corrective maintenance	165	30	300	uniform	Maintenance Activity Schedule
+service_team_purgewaterloop_hhx		min / corrective maintenance	27.5	5	50	uniform	Maintenance Activity Schedule
+service_team_replacecharmotor_cb		min / corrective maintenance	82.5	15	150	uniform	Maintenance Activity Schedule
+service_team_replacefuelmotor_cb		min / corrective maintenance	82.5	15	150	uniform	Maintenance Activity Schedule
+service_team_replaceblower_cb		min / corrective maintenance	82.5	15	150	uniform	Maintenance Activity Schedule
+service_team_replacefan_cb		min / corrective maintenance	110	20	200	uniform	Maintenance Activity Schedule
+service_team_replaceo2sensor_pcd		min / corrective maintenance	55	10	100	uniform	Maintenance Activity Schedule
+service_team_replacepaddleswitch_cb		min / corrective maintenance	110	20	200	uniform	Maintenance Activity Schedule
+service_team_replaceairlock_cb		min / corrective maintenance	82.5	15	150	uniform	Maintenance Activity Schedule
+service_team_greasebearing_cb		min / month	5.5	1	10	uniform	Maintenance Activity Schedule
+service_team_tighten_cb		min / month	27.5	5	50	uniform	Maintenance Activity Schedule
+service_team_adjustdoor_cb		min / month	330	60	600	uniform	Maintenance Activity Schedule
+service_team_adjustdoor_pcd		min / month	110	20	200	uniform	Maintenance Activity Schedule
+service_team_adjustdoor_hhx		min / month	330	60	600	uniform	Maintenance Activity Schedule
+frequency_corrective_maintenance		y / occurance	3.5	0.5	5	uniform	*assumed
+service_team_wages		usd per cap per hr	6.05	3.37	10.35	triangular	https://www.salaryexpert.com/salary/job/utility-serviceman/india
+biochar_calorific_value		MJ/kg dry	33.8	25.35	42.25	uniform	energy balance report from Yang 2017
+pyrolysis_temp		C	888.6041667	880.4704617	896.7378716	triangular	energy balance report
+pyrolysis_C_loss		fraction of total C	0.6	0.5	0.7	uniform	Krueger et al 2020
+pyrolysis_N_loss		fraction of total N	0.8	0.7	0.9	uniform	Krueger et al 2020
+pyrolysis_K_loss		fraction of total K	0.25	0.1	0.4	uniform	Krueger et al 2020
+pyrolysis_P_loss		fraction of total P	0.25	0.1	0.4	uniform	Krueger et al 2020
+N_to_NH3		fraction of N	0.03	0.01	0.04	uniform	Becidan et al 2007
+N_to_HCNO		fraction of N	0.03	0.005	0.1	uniform	Becidan et al 2007
+HCNO_to_NH3		fraction of HCNO	0.5	0.25	0.75	uniform	Becidan et al 2007
+NH3_to_N2O		fraction of NH3	0.01	0	0.02	uniform	Becidan et al 2007
+carbon_COD_ratio		g C*g COD-1	0.35	0.25	0.4	triangular	Tchobanoglous et al.

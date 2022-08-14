@@ -1,6 +1,6 @@
 ﻿Unit,Dynamic,Abstract,Status
 ﻿AnMBR (anaerobic membrane bioreactor),No,No,Completed
-ActivatedSludgeProcess,No,No,Under development
+ActivatedSludgeProcess,No,No,Completed
 AnaerobicBaffledReactor,No,No,Completed
 AnaerobicDigestion,No,No,Completed
 BeltThickener,No,No,Completed
@@ -8,10 +8,11 @@ BiogasCombustion,No,Yes,Completed
 CHP,No,No,Completed
 CSTR (continuously stirred tank reactor),Yes,No,Completed
 ComponentSplitter,No,Yes,Completed
+Copier,No,Yes,Completed
 CropApplication,No,Yes,Completed
-Decay,No,Yes,First order only
+Decay,No,Yes,Completed (first order)
 DryingBed,No,No,Completed
-DynamicInfluent,Yes,No,Under development
+DynamicInfluent,Yes,No,Completed
 ElectrochemicalCell,No,No,Completed
 Excretion,No,No,Completed
 FakeSplitter,No,Yes,Completed
@@ -23,18 +24,19 @@ IdealClarifier,No,No,Completed
 InternalCirculationRx,No,No,Completed
 Lagoon,No,No,Completed
 LiquidTreatmentBed,No,No,Completed
-LumpedCost,No,Yes,Completed
+LumpedCost,No,No,Completed
 MixTank,No,No,Completed
 Mixer,Yes,Yes,Completed
 PitLatrine,No,No,Completed
 PolishingFilter,No,No,Completed
 Pump,Yes,No,Completed
 ReversedSplitter,No,Yes,Completed
+Sampler,Yes,No,Completed
 SBR (sequential batch reactor),Yes,No,Under development
 Screening,No,No,Completed
 Sedimentation,No,No,Completed
 SludgeCentrifuge,No,No,Completed
-﻿SludgeDigester,No,Yes,Under development
+﻿SludgeDigester,No,Yes,Completed
 SludgeThickening,No,Yes,Completed
 SludgeSeparator,No,Yes,Completed
 Splitter,Yes,Yes,Completed

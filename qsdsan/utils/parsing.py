@@ -5,7 +5,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Joy Zhang <joycheung1994@gmail.com>
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -122,7 +122,9 @@ def symbolize(coeff_dct, components, conserved_for, parameters):
         v = Matrix(sympify(v_arr, parameters))
         ic = get_ic(components.subgroup(IDs), conserved_for)
         sol = solve(simplify(ic * v).as_expr(), unknowns)
-        coeff_dct = dict(zip(IDs, simplify(v.subs(sol))))
+        # sol = solve(ic * v, unknowns)
+        # coeff_dct = dict(zip(IDs, simplify(v.subs(sol))))
+        coeff_dct = dict(zip(IDs, v.subs(sol)))
         del unknowns
     else:
         isa = isinstance

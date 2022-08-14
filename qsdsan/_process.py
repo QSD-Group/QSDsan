@@ -150,15 +150,15 @@ class Kinetics(DynamicParameter):
                          params=params)
         self.process = process
 
-    @property
-    def process(self):
-        '''[:class:`Process`] The process whose reaction rate is defined by this Kinetics object.'''
-        return self._process
-    @process.setter
-    def process(self, pc):
-        if not isinstance(pc, Process):
-            raise TypeError(f'processes must be of type `Process`, not {type(pc)}')
-        self._process = pc
+    # @property
+    # def process(self):
+    #     '''[:class:`Process`] The process whose reaction rate is defined by this Kinetics object.'''
+    #     return self._process
+    # @process.setter
+    # def process(self, pc):
+    #     if not isinstance(pc, Process):
+    #         raise TypeError(f'processes must be of type `Process`, not {type(pc)}')
+    #     self._process = pc
 
     def copy(self, new_process=None):
         '''Return a copy.'''
@@ -201,17 +201,17 @@ class MultiKinetics:
         self.function = function
         self._params = params
 
-    @property
-    def processes(self):
-        '''[:class:`Processes`] The process whose reaction rate is defined
-        by this Kinetics object.'''
-        return self._processes
-    @processes.setter
-    def processes(self, pc):
-        if not isinstance(pc, (Processes, CompiledProcesses)):
-            raise TypeError(f'processes must be of type `Processes` or '
-                            f'`CompiledProcesses`, not {type(pc)}')
-        self._processes = pc
+    # @property
+    # def processes(self):
+    #     '''[:class:`Processes`] The process whose reaction rate is defined
+    #     by this Kinetics object.'''
+    #     return self._processes
+    # @processes.setter
+    # def processes(self, pc):
+    #     if not isinstance(pc, (Processes, CompiledProcesses)):
+    #         raise TypeError(f'processes must be of type `Processes` or '
+    #                         f'`CompiledProcesses`, not {type(pc)}')
+    #     self._processes = pc
 
     @property
     def function(self):
@@ -221,7 +221,7 @@ class MultiKinetics:
     @function.setter
     def function(self, f):
         if callable(f):
-            nargs = f.__code__co_argcount
+            nargs = f.__code__.co_argcount
             if nargs > 2:
                 raise ValueError(f'function for the {self.__repr__()} must take '
                                  f'at most 2 positional arguments: an array '
@@ -278,6 +278,9 @@ class MultiKinetics:
     def __call__(self, state_arr):
         '''Return the evaluated array of kinetic rates when given
         an array of state variables.'''
+        #!!! consider allow function to return multiple outputs including rho values,
+        # updated parameter value, and/or intermediate variables that are useful but
+        # don't need integration
         return self.function(state_arr, self.params)
 
     def __repr__(self):
@@ -323,8 +326,7 @@ class Process:
     can be solved automatically based on conservation of materials.
 
     >>> import qsdsan as qs
-    >>> cmps = qs.processes.load_asm1_cmps()
-    >>> qs.set_thermo(cmps)
+    >>> cmps = qs.processes.create_asm1_cmps()
     >>> pc1 = qs.Process(ID='aerobic_hetero_growth',
     ...                  reaction='[1/Y_H]S_S + [1-1/Y_H]S_O + [?]S_NH + [?]S_ALK -> X_BH',
     ...                  ref_component='X_BH',
@@ -335,7 +337,7 @@ class Process:
     Process: aerobic_hetero_growth
     [stoichiometry]      S_S: -1/Y_H
                          X_BH: 1.00
-                         S_O: (1.0 - Y_H)/Y_H
+                         S_O: -1.0 + 1/Y_H
                          S_NH: -0.0860
     [reference]          X_BH
     [rate equation]      S_NH*S_O*S_S*X_BH*mu_H/((K_N...
@@ -781,8 +783,7 @@ class Processes:
     Examples
     --------
     >>> import qsdsan as qs
-    >>> cmps = qs.processes.load_asm1_cmps()
-    >>> qs.set_thermo(cmps)
+    >>> cmps = qs.processes.create_asm1_cmps()
     >>> pc1 = qs.Process(ID='aerobic_hetero_growth',
     ...                  reaction='[1/Y_H]S_S + [1-1/Y_H]S_O + [?]S_NH + [?]S_ALK -> X_BH',
     ...                  ref_component='X_BH',
@@ -918,11 +919,14 @@ class Processes:
         """
         return Process([getattr(self, i) for i in IDs])
 
-    def compile(self, skip_checks=False):
-        '''Cast as a :class:`CompiledProcesses` object.'''
+    def compile(self, skip_checks=False, to_class=None):
+        '''Cast as a :class:`CompiledProcesses` object unless otherwise specified.'''
         processes = tuple(self)
         setattr(self, '__class__', CompiledProcesses)
-        try: self._compile(processes, skip_checks)
+        try:
+            self._compile(processes, skip_checks)
+            if to_class is not None:
+                setattr(self, '__class__', to_class)
         except Exception as error:
             setattr(self, '__class__', Processes)
             setattr(self, '__dict__', {i.ID: i for i in processes})
@@ -957,7 +961,8 @@ class Processes:
     @classmethod
     def load_from_file(cls, path='', components=None,
                        conserved_for=('COD', 'N', 'P', 'charge'), parameters=(),
-                       use_default_data=False, store_data=False, compile=True):
+                       use_default_data=False, store_data=False, compile=True,
+                       **compile_kwargs):
         """
         Create :class:`CompiledProcesses` object from a table of process IDs, stoichiometric
         coefficients, and rate equations stored in a .tsv, .csv, or Excel file.
@@ -1035,7 +1040,7 @@ class Processes:
         if store_data:
             cls._default_data = data
 
-        if compile: new.compile()
+        if compile: new.compile(**compile_kwargs)
         return new
 
 
@@ -1213,8 +1218,7 @@ class CompiledProcesses(Processes):
             self._collect_rate_func()
         return self._rate_function
 
-    @rate_function.setter
-    def rate_function(self, k):
+    def set_rate_function(self, k):
         dct = self.__dict__
         if k is None:
             dct['_rate_function'] = None
@@ -1231,9 +1235,9 @@ class CompiledProcesses(Processes):
     def _collect_rate_func(self):
         self.__dict__['_rate_function'] = MultiKinetics(self)
 
-    def rate_eval(self, state_arr):
-        '''Return the kinetic rates given an array of state variables.'''
-        return self.rate_function(state_arr)
+    # def rate_eval(self, state_arr):
+    #     '''Return the kinetic rates given an array of state variables.'''
+    #     return self.rate_function(state_arr)
 
     @property
     def production_rates(self):
@@ -1248,7 +1252,7 @@ class CompiledProcesses(Processes):
         '''Return the rates of production or consumption of the components.'''
         self.params_eval(state_arr)
         M_stoichio = self.stoichio_eval()
-        rho_arr = self.rate_eval(state_arr)
+        rho_arr = self.rate_function(state_arr)
         return np.dot(M_stoichio.T, rho_arr)
 
     def subgroup(self, IDs):

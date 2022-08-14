@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -17,9 +17,16 @@ for license details.
 
 from warnings import warn
 from thermosteam.utils import registered
+from . import CHECK_IMPACT_INDICATOR_CONSISTENCY
 from .utils import parse_unit, load_data, copy_attr
 
 __all__ = ('ImpactIndicator', )
+
+
+def raise_inconsistency_error(ID, attr, exist_val, new_val):
+    warn (f'The impact indicator "{ID}" already exists '
+         f'and has a different {attr} ({exist_val}) '
+         f'than the provided one ({new_val}).')
 
 
 @registered(ticket_name='ind')
@@ -32,13 +39,7 @@ class ImpactIndicator:
     ID : str
         ID of this impact indicator.
     alias : str
-        Alternative ID of this impact indicator.
-
-        .. note::
-
-            "synonym" was used before v0.2.2 it is still supported, but may be
-            removed in the future.
-
+        Alternative name of this impact indicator.
     method : str
         Impact assessment method, e.g., 'TRACI'.
     category : str
@@ -94,9 +95,12 @@ class ImpactIndicator:
     {'FossilEnergyConsumption': <ImpactIndicator: FossilEnergyConsumption>,
      'GlobalWarming': <ImpactIndicator: GlobalWarming>}
     >>> qs.ImpactIndicator.clear_registry()
-    All impact indicators have been removed from registry.
+    All impact indicators have been removed from the registry.
     >>> qs.ImpactIndicator.get_all_indicators()
     {}
+    >>> # Clear all registries for testing purpose
+    >>> from qsdsan.utils import clear_lca_registries
+    >>> clear_lca_registries()
     '''
 
     __slots__ = ('_ID', '_alias', '_method', '_category', '_unit', '_ureg_unit',
@@ -104,24 +108,44 @@ class ImpactIndicator:
 
     def __init__(self, ID='', alias='', method='', category='', unit='', description='',
                  **kwargs):
+        # Check consistency in attr values.
+        exist_indicator = ImpactIndicator.get_indicator(ID)
+        if exist_indicator and CHECK_IMPACT_INDICATOR_CONSISTENCY:
+            self._ID = ID
+            val_dct = {
+                'alias': alias,
+                'method': method,
+                'category': category,
+                'unit': unit,
+                'description': description,
+                }
+            for attr, new_val in val_dct.items():
+                exist_val = getattr(exist_indicator, attr)
+                if not exist_val:
+                    if new_val: # has new_val but no exist_val, all set to new_val
+                        exist_val = new_val
+                    else: # no new_val and new_exist_val, all to default ('')
+                        exist_val = new_val = ''
+                else:
+                    if not new_val: # has exist_val but no new_val, all set to exist_val
+                        new_val = exist_val
+                    elif exist_val != new_val:
+                        raise_inconsistency_error(ID, attr, exist_val, new_val)
+                setattr(exist_indicator, attr, exist_val)
+                setattr(self, attr, new_val)
+            for slot in ImpactIndicator.__slots__:
+                if slot[1:] in val_dct: continue
+                setattr(self, slot, getattr(exist_indicator, slot))
+            return
+        else:
+            self._register(ID)
 
-        self._register(ID)
         self.alias = alias
-
         self._unit = str(unit)
         self._ureg_unit, self._unit_remaining = parse_unit(unit)
         self._method = method
         self._category = category
         self._description = description
-
-        if 'synonym' in kwargs.keys():
-            synonym = kwargs['synonym']
-            if (not alias or str(alias)=='nan'):
-                raise DeprecationWarning('`synonym` has been changed to `alias` for qsdsan v0.2.2 and above.')
-                alias = synonym
-            else:
-                raise DeprecationWarning('`synonym` has been changed to `alias` for qsdsan v0.2.2 and above, ' \
-                                         f'the given `synonym` "{synonym}" is ignored as `alias` "{alias}" is provided.')
 
 
     def __repr__(self):
@@ -189,7 +213,7 @@ class ImpactIndicator:
         new = cls.__new__(cls)
         new.__init__(new_ID)
         new = copy_attr(new, self, skip=('_ID', '_alias'))
-        return new        
+        return new
 
     def register(self, print_msg=True):
         '''Add this impact indicator to the registry.'''
@@ -210,7 +234,7 @@ class ImpactIndicator:
         '''Remove all existing impact indicators from the registry.'''
         cls.registry.clear()
         if print_msg:
-            print('All impact indicators have been removed from registry.')
+            print('All impact indicators have been removed from the registry.')
 
 
     @classmethod
@@ -310,7 +334,7 @@ class ImpactIndicator:
     @property
     def alias(self):
         '''[str] Alias of this impact indicator.'''
-        if not hasattr(self, '_alias'): # for initiation
+        if not hasattr(self, '_alias'): # for initialization
             self._alias = None
         return self._alias
     @alias.setter

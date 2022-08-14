@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Yalin Li <zoe.yalin.li@gmail.com>
+    Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -105,9 +105,9 @@ class SimpleTEA(TEA):
     A system should be constructed prior to TEA, here we import a pre-constructed one.
 
     >>> import qsdsan as qs
-    >>> from qsdsan.utils import load_example_cmps, load_example_sys
-    >>> cmps = load_example_cmps()
-    >>> sys = load_example_sys(cmps)
+    >>> from qsdsan.utils import load_example_components, load_example_system
+    >>> cmps = load_example_components()
+    >>> sys = load_example_system(cmps)
     >>> # Uncomment the line below to see the system diagram
     >>> # sys.diagram()
     >>> sys.simulate()
@@ -136,11 +136,11 @@ class SimpleTEA(TEA):
     >>> tea = qs.SimpleTEA(system=sys, discount_rate=0.05, start_year=2021,
     ...                     lifetime=10, uptime_ratio=0.9,
     ...                     system_add_OPEX=0.03)
-    >>> # Your results maybe slightly different depending on the version of 
+    >>> # Your results maybe slightly different depending on the version of
     >>> # QSDsan's dependent packages (e.g., thermo)
     >>> tea.show()
     SimpleTEA: sys
-    NPV  : -258,734 USD at 5.0% discount rate
+    NPV  : -258,786 USD at 5.0% discount rate
 
 
     See Also
