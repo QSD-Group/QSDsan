@@ -1,0 +1,14 @@
+parameter,name (if diff),unit,expected,low,high,distribution,references
+battery_storage_cost,energy storage colloidal battery (set has 24 pieces),USD/set,6360,5724,6996,triangular,Eco-san water recycling system Reinvented Toilet bill of materials
+battery_holder_cost,,USD/set,538,484.2,591.8,triangular,Eco-san water recycling system Reinvented Toilet bill of materials
+solar_cost,solar module (5445 W),USD/W,0.5,0.45,0.55,triangular,Eco-san water recycling system Reinvented Toilet bill of materials
+solar_module_system,solar module bracket system base,USD/set,438,394.2,481.8,triangular,Eco-san water recycling system Reinvented Toilet bill of materials
+inverter_cost,inverter control integrated machine,USD/set,2909,2618.1,3199.9,triangular,Eco-san water recycling system Reinvented Toilet bill of materials
+pannel_cleaning,,hr/yr,10,5,15,uniform,Eco-san water recycling system Reinvented Toilet bill of materials
+solar_lifetime,,year,2,1,3,uniform,Eco-san water recycling system Reinvented Toilet bill of materials
+battery_lifetime,,year,10,9,11,uniform,Eco-san water recycling system Reinvented Toilet bill of materials
+solar_capacity,,m2,19.8,14.85,24.75,uniform,Eco-san water recycling system Reinvented Toilet bill of materials
+battery_kg,,kg,68.7,51.525,85.875,uniform,https://cdn.enfsolar.com/z/pp/jiu60e28377f32e6/250.pdf
+wages,,USD/cap/hr,3.64,1.82,5.46,uniform,International Labor Organization average monthly earnings of employees by sex and economic activity
+power_demand_120users,,W,720,540,900,uniform,Duke Center for WaSH-AID design team notes
+power_demand_30users,,W,838,628.5,1047.5,uniform,Duke Center for WaSH-AID design team notes

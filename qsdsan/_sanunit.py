@@ -102,7 +102,7 @@ class SanUnit(Unit, isabstract=True):
         :class:`~.Transportation` with transportation information.
     equipments: Iterable(obj)
         :class:`~.Equipment` with equipment information.
-    add_OPEX : float or dict
+    add_OPEX : float/int or dict
         Operating expense per hour in addition to utility cost (assuming 100% uptime).
         Float input will be automatically converted to a dict with the key being
         "Additional OPEX".
@@ -139,7 +139,7 @@ class SanUnit(Unit, isabstract=True):
         If this unit is simulated dynamically with rate equations.
     kwargs : dict
         Additional keyword arguments that can be set for this unit.
-    
+
     See Also
     --------
     `biosteam.Unit <https://biosteam.readthedocs.io/en/latest/Unit.html>`_
@@ -345,7 +345,7 @@ class SanUnit(Unit, isabstract=True):
         See Also
         --------
         :func:`~.System.simulate`
-        
+
         `scipy.integrate.solve_ivp <https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html>`_
         '''
         super().simulate()
@@ -440,10 +440,10 @@ class SanUnit(Unit, isabstract=True):
         if not hasattr(self, '_scope'):
             self._scope = SanUnitScope(self)
         return self._scope
-    
+
     @scope.setter
     def scope(self, s):
-        if not isinstance(s, Scope): 
+        if not isinstance(s, Scope):
             raise TypeError(f'{s} must be an {Scope} not {type(s)}.')
         if self is not s.subject:
             raise ValueError(f'The subject of {s} must be {self} not {s.subject}.')
@@ -527,12 +527,12 @@ class SanUnit(Unit, isabstract=True):
         Float input will be automatically converted to a dict with the key being
         "Additional OPEX".
         '''
-        return {'Additional OPEX': self._add_OPEX} if isinstance(self._add_OPEX, float) \
+        return {'Additional OPEX': self._add_OPEX} if isinstance(self._add_OPEX, (float, int)) \
             else self._add_OPEX
     @add_OPEX.setter
     def add_OPEX(self, i):
         isa = isinstance
-        if isa(i, float):
+        if isa(i, (float, int)):
             i = {'Additional OPEX': i}
         if not isa(i, dict):
             raise TypeError(

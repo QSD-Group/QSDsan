@@ -1,0 +1,9 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+dewatering_screw_press_cost		usd	15000	10000	20000	uniform	Pilot Study
+dewatering_screw_press_steel		kg	220	165	275	uniform	manual from https://www.fan-separator.de/en/products/separators-pss/pss-11-300
+dewatering_energy_demand		kwh/kg solids	0.11	0.02	0.15	uniform	http://screwpresssludgedewatering.com/cn/product/Screw-Press-Sludge-Dewatering-ST132.html https://lutpub.lut.fi/bitstream/handle/10024/159910/Master%27s_thesis_Saastamoinen_Heidi.pdf?sequence=1&isAllowed=y
+dewatering_polymer_dose		g/kg dry TS	13	8.5	17.5	uniform	"Tchobanoglous et al., 2014"
+cake_solids_TS		fraction	0.27	0.22	0.32	uniform	Pilot Study
+settled_frac		fraction	0.925	0.9	0.95	uniform	"Tchobanoglous et al., 2014"
+wwt_cost		usd per m3	5	4.5	5.5	uniform	Pilot Study
+polymer_cost		usd per kg	0.75	0.5	1	uniform	https://www.alibaba.com/trade/search?fsb=y&IndexArea=product_en&CatId=&SearchText=Polyacrylamide&SearchScene=cps&spm=a27aq.13817715

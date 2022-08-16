@@ -1,0 +1,13 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+P_rec	P_rec_1	fraction P recovered	0.9			constant	Lohman et al. 2020
+K_rec	K_rec_1	fraction K recovered	0			constant	Lohman et al. 2020
+Mg_dose		_mol Mg per mol P	1.1			constant	Lohman et al. 2020
+cycles_per_day		cycles per day (assuming 1 per hour)	8			constant	Lohman et al. 2020
+reactor_volume		L	500			constant	Lohman et al. 2020
+material_P_pipe		m	3	2	5	uniform	Lohman et al. 2020
+cost_P_reactor		USD	1300	1170	1430	uniform	Lohman et al. 2020
+cost_P_stirrer		USD/m2	3.5	2.48	4.51	uniform	Lohman et al. 2020
+cost_P_pipe		USD/m	0.15	0.1	0.2	uniform	Lohman et al. 2020
+filter_reuse		# times reused	10	5	20	uniform	Lohman et al. 2020
+reactor_weight		kg	50	25	75	uniform	general search in Alibaba; https://www.alibaba.com/product-detail/Yuzhen-Stainless-Steel-Jacketed-Heating-Storage_1600377306729.html
+pvc_mass		kg PVC/m	0.472	0.354	0.59	uniform	http://www.midcoonline.com/web/Pages/Products/Pipe/Info/PVC_CPVC/

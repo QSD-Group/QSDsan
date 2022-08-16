@@ -1,0 +1,9 @@
+﻿parameter,name,unit,expected,low,high,distribution,reference
+EC_brush,Nylon bush for EC Cell,USD,19.68,17.712,21.648,triangular,Duke Center for WaSH-AID design team bill of materials
+EC_cell,EC Cell,USD,575,517.5,632.5,triangular,Duke Center for WaSH-AID design team bill of materials
+energy_demand,watts*hour/L,Wh/L,1.1,0.825,1.375,uniform,Duke Center for WaSH-AID design team presentation
+EC_cell_lifetime,,yr,2,1.5,2.5,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+Titanium_weight,,kg,1.029,0.5145,1.5435,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+nylon_weight,,kg,0.78,0.663,0.897,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+EC_brush_lifetime,,yr,10,7.5,12.5,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+power_demand_ecr,,W,36,24,48,uniform,Duke Center for WaSH-AID design team presentation

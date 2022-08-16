@@ -12,21 +12,6 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-'''
-TODO:
-    - Add algorithms for other configurations
-    (AF, submerged, sparging, GAC, flat sheet, hollow fiber)
-    - Maybe add AeMBR as well (make an MBR superclass)
-        - AeMBR can use higher flux and allows for lower transmembrane pressure
-
-References
-----------
-[1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
-Valorization of Dilute Organic Carbon Waste Streams.
-Energy Environ. Sci. 2016, 9 (3), 1102–1112.
-https://doi.org/10.1039/C5EE03715H.
-'''
-
 from math import ceil, floor
 from biosteam.exceptions import DesignError
 from . import HXutility, WWTpump, InternalCirculationRx
@@ -53,13 +38,10 @@ _cmh_to_mgd = _m3_to_gal * 24 / 1e6 # cubic meter per hour to million gallon per
 _lb_to_kg = auom('lb').conversion_factor('kg')
 
 F_BM_pump = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
-#!!! Take out the blower-related ones once finish updating the equipment
 default_F_BM = {
         'Membrane': 1+0.15, # assume 15% for replacement labor
         'Pumps': F_BM_pump,
         'Pump building': F_BM_pump,
-#        'Blowers': 2.11,
-#        'Blower building': 1.11,
         }
 default_equipment_lifetime = {
     'Membrane': 10,
@@ -67,7 +49,6 @@ default_equipment_lifetime = {
     'Pump pipe stainless steel': 15,
     'Pump stainless steel': 15,
     'Pump chemical storage HDPE': 30,
-#    'Blowers': 15,
     }
 
 
@@ -154,6 +135,14 @@ class AnMBR(SanUnit):
         Hydrolysis of Corn Stover; Technical Report NREL/TP-5100-47764;
         National Renewable Energy Lab (NREL), 2011.
         https://www.nrel.gov/docs/fy11osti/47764.pdf
+
+    .. note::
+
+        TODO
+            - Add algorithms for other configurations (AF, submerged, sparging, GAC, flat sheet, hollow fiber)
+            - Maybe add AeMBR as well (and make an MBR superclass)
+            
+                - AeMBR can use higher flux and allows for lower transmembrane pressure
 
     See Also
     --------

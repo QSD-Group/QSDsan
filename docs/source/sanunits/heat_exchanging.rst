@@ -1,4 +1,4 @@
-Heat Exchanging
+Heat Exchangers
 ===============
 
 HXprocess

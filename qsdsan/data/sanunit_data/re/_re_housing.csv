@@ -1,0 +1,13 @@
+﻿parameter,name,unit,expected,low,high,distribution,reference
+frame,Aluminium extrusion frame (800x900x1700),USD,287.59,258.831,316.349,triangular,Duke Center for WaSH-AID design team bill of materials
+extrusion,Black strip for 30x30 extrusion,USD,4.92,4.428,5.412,triangular,Duke Center for WaSH-AID design team bill of materials
+angle_frame,Angle frame for Motor Mtg ,USD,13.93,12.537,15.323,triangular,Duke Center for WaSH-AID design team bill of materials
+angle,Aluminium Angle 40x 5 thk x 3000 long,USD,17.2,15.48,18.92,triangular,Duke Center for WaSH-AID design team bill of materials
+door_sheet,Sheet for door & side panels 1.6 mm thk,USD,220.93,198.837,243.023,triangular,Duke Center for WaSH-AID design team bill of materials
+plate_valve,SS304 Plate for valve mtg 120 x 120 x 5 thk,USD,7.2,6.48,7.92,triangular,Duke Center for WaSH-AID design team bill of materials
+powder,Powder coating,USD,33.33,29.997,36.663,triangular,Duke Center for WaSH-AID design team bill of materials
+container,Container of entire system,USD,6538,4903.5,8172.5,uniform,Based on containers from Eco-San Reinvented Toilet system with 25% uncertainty
+aluminum_weight,,kg,1.125,1.0125,1.2375,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+steel_weight,,kg,1.603,1.4427,1.7633,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+framework_weight,Housing framework steel weight,kg,1270,1016,1524,uniform,https://www.seabox.com/cutsheets/SB822.0.pdf
+fittings_weight,Housing fittings steel weight,kg,1,0.8,1.2,uniform,Assumption

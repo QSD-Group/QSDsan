@@ -726,6 +726,37 @@ class CompiledComponents(CompiledChemicals):
         arr[self.indices(IDs)] = 1
         return arr
 
+
+    def remove_alias(self, component, alias):
+        '''
+        Remove the alias of a component.
+
+        Parameters
+        ----------
+        component : str or obj
+            The component (or the ID of which) whose alias will be removed.
+        alias : str
+            The alias of the component to be removed.
+
+        Examples
+        --------
+        >>> from qsdsan.utils import load_example_components
+        >>> cmps = load_example_components()
+        >>> cmps.H2O is cmps.Water
+        True
+        >>> cmps.remove_alias(cmps.H2O, 'Water')
+        >>> cmps.Water # doctest: +IGNORE_EXCEPTION_DETAIL
+        Traceback (most recent call last):
+        AttributeError: 'CompiledComponents' object has no attribute 'Water'
+        '''
+        if isinstance(component, str): component = getattr(self, component)
+        if alias not in component.aliases:
+            raise ValueError(f'The component "{component.ID}" does not have the alias "{alias}".')
+        self._index.pop(alias)
+        self.__dict__.pop(alias)
+    remove_synonym = remove_alias
+
+
     @property
     def gases(self):
         '''[list] Gas components.'''

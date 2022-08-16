@@ -19,7 +19,7 @@ import sys
 import pandas as pd
 from warnings import warn
 from thermosteam.utils import registered
-from . import currency, SanStream, WasteStream, ImpactIndicator
+from . import currency, CHECK_IMPACT_ITEM_CONSISTENCY, SanStream, WasteStream, ImpactIndicator
 from .utils import (
     auom, parse_unit, copy_attr,
     format_number as f_num
@@ -28,16 +28,22 @@ from .utils import (
 
 __all__ = ('ImpactItem', 'StreamImpactItem')
 
-def check_source(item, return_item=False, raise_error=True):
-    if item.source:
-        if raise_error:
-            raise ValueError(f'This impact item is copied from {item.source.ID}, '
-                             'value cannot be set.')
-        else:
-            item = item.source
 
-    if return_item:
-        return item
+def raise_inconsistency_error(ID, attr, exist_val, new_val):
+    warn(f'The impact item "{ID}" already exists '
+         f'and has a different {attr} ({exist_val}) '
+         f'than the provided one ({new_val}).')
+
+
+def check_source(item, return_item=False, raise_error=True):
+    if hasattr(item, '_source'):
+        if item.source:
+            if raise_error:
+                raise ValueError(f'This impact item is copied from {item.source.ID}, '
+                                 'value cannot be set.')
+            else: item = item.source
+    if return_item: return item
+
 
 @registered(ticket_name='item')
 class ImpactItem:
@@ -52,8 +58,6 @@ class ImpactItem:
         Functional unit of the impact item.
     price : float
         Price of the item per functional unit.
-    price_unit : str
-        Unit of the price.
     source : :class:`ImpactItem`
         If provided, all attributions and properties of this impact item will
         be copied from the provided source.
@@ -147,41 +151,86 @@ class ImpactItem:
      'Steel3': <ImpactItem: Steel3>,
      'Steel2': <ImpactItem: Steel2>}
     >>> qs.ImpactItem.clear_registry()
-    All impact items have been removed from registry.
+    All impact items have been removed from the registry.
     >>> qs.ImpactItem.get_all_items()
     {}
+    >>> # Clear all registries for testing purpose
+    >>> from qsdsan.utils import clear_lca_registries
+    >>> clear_lca_registries()
     '''
 
     _items = {}
 
     __slots__ = ('_ID', '_functional_unit', '_price', '_CFs', '_source')
 
-    def __init__(self, ID='', functional_unit='kg', price=0., price_unit='',
-                 source=None, **indicator_CFs):
+    def _format_CF_vals(self, **indicator_CFs):
+        CF_dct = {}
+        for indicator, value in indicator_CFs.items():
+            try: # unit provided for CF
+                CF_value, CF_unit = value
+                CF_dct[indicator] = CF_value, CF_unit
+            except Exception as e: # no unit
+                if 'unpack' in str(sys.exc_info()[1]):
+                    CF_value, CF_unit = value, ''
+                    CF_dct[indicator] = CF_value, CF_unit
+                else:
+                    raise e
+        return CF_dct
 
-        self._register(ID)
+    def _register_with_consistency_check(self, ID, functional_unit, price, source, CF_dct):
+        '''Check consistency in attr values.'''
+        exist_item = ImpactItem.get_item(ID)
+        if exist_item and CHECK_IMPACT_ITEM_CONSISTENCY:
+            self._ID = ID
+            val_dct = {
+                'functional_unit': functional_unit,
+                'price': price,
+                'source': source,
+                }
+            for attr, new_val in val_dct.items():
+                exist_val = getattr(exist_item, attr)
+                if exist_val != new_val and str(exist_val) != str(new_val): # functional_unit as auom
+                    raise_inconsistency_error(ID, attr, exist_val, new_val)
 
-        if source:
-            self.source = source
+            for indicator, (value, unit) in CF_dct.items():
+                indicator_ID = ImpactIndicator.get_indicator(indicator).ID
+                exist_CF = exist_item.CFs.get(indicator_ID)
+                if exist_CF: # indicator already added
+                    if exist_CF != value:
+                        raise_inconsistency_error(ID, 'CF value', exist_CF, value)
+                else: # add the CF value for the new indicator
+                    exist_item.add_indicator(indicator, value, unit)
+            for slot in ImpactItem.__slots__:
+                if slot[1:] in val_dct: continue
+                setattr(self, slot, getattr(exist_item, slot))
+            return exist_item
         else:
-            self._source = None
+            self._register(ID)
+            return self
+
+    def __init__(self, ID='', functional_unit='kg', price=0.,
+                 source=None, **indicator_CFs):
+        CF_dct = self._format_CF_vals(**indicator_CFs)
+
+        returned = self._register_with_consistency_check(
+            ID, functional_unit, price, source, CF_dct
+            )
+        if returned is not self: return
+
+        if source: self.source = source
+        else:
             self._functional_unit = auom(functional_unit)
-            self._update_price(price, price_unit)
+            self._source = None
             self._CFs = {}
-            for indicator, value in indicator_CFs.items():
-                try:
-                    CF_value, CF_unit = value # unit provided for CF
-                    self.add_indicator(indicator, CF_value, CF_unit)
-                except Exception as e:
-                    if 'unpack' in str(sys.exc_info()[1]):
-                        self.add_indicator(indicator, value)
-                    else:
-                        raise e
+            self.price = price
+            for indicator, (value, unit) in CF_dct.items():
+                self.add_indicator(indicator, value, unit)
 
 
     # This makes sure it won't be shown as memory location of the object
     def __repr__(self):
         return f'<ImpactItem: {self.ID}>'
+
 
     def show(self):
         '''Show basic information of this impact item.'''
@@ -203,16 +252,10 @@ class ImpactItem:
 
     _ipython_display_ = show
 
-    def _update_price(self, price=0., unit=''):
-        source_item = check_source(self, True)
-        if not unit or unit == currency:
-            source_item._price = float(price)
-        else:
-            converted = auom(unit).convert(float(price), currency)
-            source_item._price = converted
 
     def add_indicator(self, indicator, CF_value, CF_unit=''):
         '''Add an indicator with characterization factor values.'''
+        if not hasattr(self, '_source'): self._source = None
         source_item = check_source(self, True)
         if isinstance(indicator, str):
             ind = ImpactIndicator.get_indicator(indicator)
@@ -229,6 +272,7 @@ class ImpactItem:
                 raise ValueError(f'Conversion of the given unit {CF_unit} to '
                                   f'the default unit {indicator.unit} is not supported.')
 
+        if not hasattr(source_item, '_CFs'): source_item._CFs = {}
         source_item._CFs[indicator.ID] = CF_value
 
     def remove_indicator(self, indicator):
@@ -312,7 +356,7 @@ class ImpactItem:
         '''Remove all existing impact items from the registry.'''
         cls.registry.clear()
         if print_msg:
-            print('All impact items have been removed from registry.')
+            print('All impact items have been removed from the registry.')
 
 
     @classmethod
@@ -432,7 +476,10 @@ class ImpactItem:
     @property
     def functional_unit(self):
         '''[str] Functional unit of this item.'''
-        return check_source(self, True, False)._functional_unit.units
+        source_item = check_source(self, True, False)
+        if not hasattr(source_item, '_functional_unit'):
+            source_item._functional_unit = auom('kg')
+        return source_item._functional_unit.units
     @functional_unit.setter
     def functional_unit(self, i):
         check_source(self, True)._functional_unit = auom(i)
@@ -446,18 +493,19 @@ class ImpactItem:
     @property
     def price(self):
         '''Price of this item per functional unit.'''
-        return check_source(self, True, False)._price
+        source_item = check_source(self, True, False)
+        if not hasattr(source_item, '_price'): source_item._price = 0.
+        return source_item._price
     @price.setter
-    def price(self, price, unit=''):
-        check_source(self, True)._update_price(price, unit)
+    def price(self, price):
+        source_item = check_source(self, True)
+        source_item._price = float(price)
 
     @property
     def CFs(self):
         '''[dict] Characterization factors of this item for different impact indicators.'''
-        if self.source:
-            return self.source._CFs.copy()
-        else:
-            return self._CFs
+        if self.source: return self.source._CFs.copy()
+        else: return self._CFs
     @CFs.setter
     def CFs(self, indicator, CF_value, CF_unit=''):
         check_source(self, True).add_indicator(indicator, CF_value, CF_unit)
@@ -515,7 +563,7 @@ class StreamImpactItem(ImpactItem):
                                Characterization factors
     GlobalWarming (kg CO2-eq)                        28
     >>> # Make a stream and link the stream to the impact item
-    >>> cmps = qs.utils.load_example_cmps()
+    >>> cmps = qs.utils.load_example_components()
     >>> qs.set_thermo(cmps)
     >>> methane = qs.SanStream('methane', Methane=1, units='kg/hr',
     ...                        stream_impact_item=methane_item)
@@ -563,9 +611,16 @@ class StreamImpactItem(ImpactItem):
     __slots__ = ('_ID', '_linked_stream', '_functional_unit', '_CFs', '_source')
 
     def __init__(self, ID='', linked_stream=None, source=None, **indicator_CFs):
-
         self._linked_stream = None
         self.linked_stream = linked_stream
+
+        CF_dct = self._format_CF_vals(**indicator_CFs)
+
+        price = linked_stream.price if linked_stream else 0.
+        returned = self._register_with_consistency_check(
+            ID, 'kg', price, source, CF_dct
+            )
+        if returned is not self: return
         self._register(ID)
 
         if not ID and linked_stream:
@@ -578,15 +633,8 @@ class StreamImpactItem(ImpactItem):
             self._source = None
             self._functional_unit = auom('kg')
             self._CFs = {}
-            for CF, value in indicator_CFs.items():
-                try:
-                    CF_value, CF_unit = value # unit provided for CF
-                    self.add_indicator(CF, CF_value, CF_unit)
-                except Exception as e:
-                    if 'unpack' in str(sys.exc_info()[1]):
-                        self.add_indicator(CF, value)
-                    else:
-                        raise e
+            for indicator, (value, unit) in CF_dct.items():
+                self.add_indicator(indicator, value, unit)
 
 
     def __repr__(self):
@@ -746,3 +794,4 @@ class StreamImpactItem(ImpactItem):
             return self.linked_stream.price
         else:
             return 0.
+    _price = price

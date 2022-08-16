@@ -15,7 +15,10 @@ for license details.
 
 # %%
 
-from biosteam.utils import NotImplementedMethod
+try: from biosteam.utils import NotImplementedMethod
+except:
+    from biosteam.utils import AbstractMethod
+    NotImplementedMethod = AbstractMethod
 from thermosteam.utils import registered
 from .utils import (auom, register_with_prefix)
 

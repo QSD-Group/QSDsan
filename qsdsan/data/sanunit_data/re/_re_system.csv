@@ -1,0 +1,28 @@
+﻿parameter,name,unit,expected,low,high,distribution,reference
+T_nut,T Nut M6,USD,13.33,11.997,14.663,triangular,Duke Center for WaSH-AID design team bill of materials
+die_cast_hinge,Die cast Hinge 50x50 mm ( SDHI 50 HH),USD,6.16,5.544,6.776,triangular,Duke Center for WaSH-AID design team bill of materials
+SLS_locks,SLS 11-MC12-KM Locks,USD,3.09,2.781,3.399,triangular,Duke Center for WaSH-AID design team bill of materials
+DC_round_key,D.C Round Key,USD,0.72,0.648,0.792,triangular,Duke Center for WaSH-AID design team bill of materials
+handle_rod,Polyamide Handle rod type 117 mm with insert,USD,1.39,1.251,1.529,triangular,Duke Center for WaSH-AID design team bill of materials
+eight_mm_bolt,SS304 Allen Bolt M6 x 8 mm long,USD,16,14.4,17.6,triangular,Duke Center for WaSH-AID design team bill of materials
+button_headed_nut,SS304 Button Headed M6 x 16 mm long with nut,USD,4.8,4.32,5.28,triangular,Duke Center for WaSH-AID design team bill of materials
+twelve_mm_bolt,SS304 Allen Bolt M6 x 12 mm long,USD,0.64,0.576,0.704,triangular,Duke Center for WaSH-AID design team bill of materials
+ten_mm_CSK,MS Allen CSK M6 x 10 mm long ,USD,1.28,1.152,1.408,triangular,Duke Center for WaSH-AID design team bill of materials
+sixteen_mm_CSK,MS Allen CSK M6 x 16 mm long with nut,USD,1.92,1.728,2.112,triangular,Duke Center for WaSH-AID design team bill of materials
+sixteen_mm_bolt,MS Allen bolt M5 x 16 mm long with Nut,USD,0.37,0.333,0.407,triangular,Duke Center for WaSH-AID design team bill of materials
+coupling_brass,"1/2"" (M) x 3/8"" (F) coupling Brass",USD,7.84,7.056,8.624,triangular,Duke Center for WaSH-AID design team bill of materials
+coupling_threaded,"1/2"" (M) x 1/4""(F) Threaded coupling",USD,2.48,2.232,2.728,triangular,Duke Center for WaSH-AID design team bill of materials
+socket,"SS304 1/4"" (F) Socket",USD,0.49,0.441,0.539,triangular,Duke Center for WaSH-AID design team bill of materials
+onehalf_tank_nipple,"1/2"" tank nipple",USD,2.48,2.232,2.728,triangular,Duke Center for WaSH-AID design team bill of materials
+onehalf_in_coupling_brass,"1/2"" Male x 1/2"" Female Coupling Brass",USD,4.92,4.428,5.412,triangular,Duke Center for WaSH-AID design team bill of materials
+onehalf_in_fitting,"1/2"" Female x 1/2"" barbed male fitting",USD,2.61,2.349,2.871,triangular,Duke Center for WaSH-AID design team bill of materials
+plate,3D Printed Plate,USD,8.2,7.38,9.02,triangular,Duke Center for WaSH-AID design team bill of materials
+pump,Kirsloskar Pump ( HL37),USD,106.67,96.003,117.337,triangular,Duke Center for WaSH-AID design team bill of materials
+three_way_valve,3-way valve,USD,70.04,63.036,77.044,triangular,Duke Center for WaSH-AID design team bill of materials
+lofted_tank,Lofted tank 1000 ltr capacity,USD,28.21,25.389,31.031,triangular,Duke Center for WaSH-AID design team bill of materials
+lifetime,,part replacement lifetime,4,2,6,uniform,"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
+steel_weight,,kg,3,1.5,4.5,uniform,Duke Center for WaSH-AID design team bill of materials
+brass_weight,,kg,1,0.5,1.5,uniform,Duke Center for WaSH-AID design team bill of materials
+power_demand_system,,W,40,36,44,triangular,Duke Center for WaSH-AID design team
+working_time,,hr,15,10,20,uniform,Duke Center for WaSH-AID design team
+om_capital_ratio,annual O&M as a percent of capital,ratio,0.04,0.02,0.06,uniform,Assumption

@@ -5,7 +5,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+    
     Yalin Li <mailto.yalin.li@gmail.com>
+    
     Joy Zhang <joycheung1994@gmail.com>
 
 Part of this module is based on the biosteam package:
@@ -23,9 +25,12 @@ from .. import SanUnit
 
 __all__ = (
     'Mixer',
-    'Splitter', 'FakeSplitter', 'ReversedSplitter',
-    'ComponentSplitter',
     'Sampler',
+    # Splitters
+    'Splitter',
+    'ComponentSplitter',
+    'FakeSplitter',
+    'ReversedSplitter',
     )
 
 
@@ -111,6 +116,63 @@ class Mixer(SanUnit, Mixer):
         self._AE = yt
 
 
+# %%
+
+class Sampler(SanUnit):
+    '''
+    A non-reactive (i.e., all the outs at the same as the ins) unit that
+    is used in dynamic simulation to record the unit/stream states.
+    '''
+
+    _N_ins = 1
+    _N_outs = 1
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
+                 init_with='WasteStream', F_BM_default=None, isdynamic=False):
+        SanUnit.__init__(self, ID, ins, outs, thermo,
+                         init_with=init_with, F_BM_default=F_BM_default,
+                         isdynamic=isdynamic)
+
+    def _run(self):
+        inf, = self.ins
+        out, = self.outs
+        out.copy_like(inf)
+
+    @property
+    def state(self):
+        '''The sampled state, including component concentrations [mg/L] and flow rate [m^3/d].'''
+        if self._state is None: return None
+        else:
+            return dict(zip(list(self.components.IDs) + ['Q'], self._state))
+
+    def _init_state(self):
+        self._state = self._ins_QC[0]
+        self._dstate = self._state * 0.
+
+    def _update_state(self):
+        self._outs[0].state = self._state
+
+    def _update_dstate(self):
+        self._outs[0].dstate = self._dstate
+
+    @property
+    def AE(self):
+        if self._AE is None:
+            self._compile_AE()
+        return self._AE
+
+    def _compile_AE(self):
+        _state = self._state
+        _dstate = self._dstate
+        _update_state = self._update_state
+        _update_dstate = self._update_dstate
+        def yt(t, QC_ins, dQC_ins):
+            _state[:] = QC_ins[0]
+            _dstate[:] = dQC_ins[0]
+            _update_state()
+            _update_dstate()
+        self._AE = yt
+
 
 # %%
 
@@ -177,28 +239,6 @@ class Splitter(SanUnit, Splitter):
             _update_state()
             _update_dstate()
         self._AE = yt
-
-
-class FakeSplitter(SanUnit, FakeSplitter):
-    '''
-    Similar to :class:`biosteam.units.FakeSplitter`,
-    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
-
-    See Also
-    --------
-    `biosteam.units.FakeSplitter <https://biosteam.readthedocs.io/en/latest/units/splitting.html>`_
-    '''
-
-
-class ReversedSplitter(SanUnit, ReversedSplitter):
-    '''
-    Similar to :class:`biosteam.units.ReversedSplitter`,
-    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
-
-    See Also
-    --------
-    `biosteam.units.ReversedSplitter <https://biosteam.readthedocs.io/en/latest/units/splitting.html>`_
-    '''
 
 
 class ComponentSplitter(SanUnit):
@@ -292,53 +332,24 @@ class ComponentSplitter(SanUnit):
 
         self._split_keys = i
 
-class Sampler(SanUnit):
-    
-    _N_ins = 1
-    _N_outs = 1
-    
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
-                 init_with='WasteStream', F_BM_default=None, isdynamic=False):
-        SanUnit.__init__(self, ID, ins, outs, thermo,
-                         init_with=init_with, F_BM_default=F_BM_default,
-                         isdynamic=isdynamic)
 
-    def _run(self):
-        inf, = self.ins
-        out, = self.outs
-        out.copy_like(inf)
+class FakeSplitter(SanUnit, FakeSplitter):
+    '''
+    Similar to :class:`biosteam.units.FakeSplitter`,
+    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
 
-    @property
-    def state(self):
-        '''The sampled state, including component concentrations [mg/L] and flow rate [m^3/d].'''
-        if self._state is None: return None
-        else:
-            return dict(zip(list(self.components.IDs) + ['Q'], self._state))
+    See Also
+    --------
+    `biosteam.units.FakeSplitter <https://biosteam.readthedocs.io/en/latest/units/splitting.html>`_
+    '''
 
-    def _init_state(self):
-        self._state = self._ins_QC[0]
-        self._dstate = self._state * 0.
 
-    def _update_state(self):
-        self._outs[0].state = self._state
+class ReversedSplitter(SanUnit, ReversedSplitter):
+    '''
+    Similar to :class:`biosteam.units.ReversedSplitter`,
+    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
 
-    def _update_dstate(self):
-        self._outs[0].dstate = self._dstate
-
-    @property
-    def AE(self):
-        if self._AE is None:
-            self._compile_AE()
-        return self._AE
-
-    def _compile_AE(self):
-        _state = self._state
-        _dstate = self._dstate
-        _update_state = self._update_state
-        _update_dstate = self._update_dstate
-        def yt(t, QC_ins, dQC_ins):
-            _state[:] = QC_ins[0]
-            _dstate[:] = dQC_ins[0]
-            _update_state()
-            _update_dstate()
-        self._AE = yt
+    See Also
+    --------
+    `biosteam.units.ReversedSplitter <https://biosteam.readthedocs.io/en/latest/units/splitting.html>`_
+    '''

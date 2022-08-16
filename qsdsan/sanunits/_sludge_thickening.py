@@ -6,6 +6,8 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Yalin Li <mailto.yalin.li@gmail.com>
+    Lewis Rowles <stetsonsc@gmail.com>
+    Lane To <lane20@illinois.edu>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -17,9 +19,9 @@ from warnings import warn
 from math import ceil
 from biosteam import Splitter, SolidsCentrifuge
 from . import Decay
-from .. import SanUnit
+from .. import SanUnit, Construction
 from ..sanunits import Pump
-from ..utils import ospath, load_data, data_path, dct_from_str
+from ..utils import ospath, load_data, data_path, dct_from_str, price_ratio
 
 __all__ = (
     'SludgeThickening',
@@ -45,7 +47,7 @@ class SludgeThickening(SanUnit, Splitter):
     Separation split is determined by the moisture (i.e., water)
     content of the sludge, soluble components will have the same split as water,
     insolubles components will all go to the retentate.
-    
+
     Note that if the moisture content of the incoming feeds are smaller than
     the target moisture content, the target moisture content will be ignored.
 
@@ -82,7 +84,7 @@ class SludgeThickening(SanUnit, Splitter):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream',
-                 sludge_moisture=0.96, solids=(), 
+                 sludge_moisture=0.96, solids=(),
                  disposal_cost=125/907.18474): # from $/U.S. ton
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with)
         self.sludge_moisture = sludge_moisture
@@ -127,7 +129,7 @@ class SludgeThickening(SanUnit, Splitter):
                 split[idx] = eff.mass[idx]/mixed.mass[idx]
                 self.SKIPPED = False
         self._isplit = self.thermo.chemicals.isplit(split)
-        
+
 
     @staticmethod
     def _mc_at_split(split, solubles, mixed, eff, sludge, target_mc):
@@ -233,10 +235,10 @@ class BeltThickener(SludgeThickening):
         self.design_results['Number of thickeners'] = N
         self.F_BM['Thickeners'] = 1.7 # ref [2]
         self.baseline_purchase_costs['Thickeners'] = 4000 * N
-        
+
     def _cost(self):
         super()._cost()
-        self.power_utility.rate += self.power_demand * self.N_thickener 
+        self.power_utility.rate += self.power_demand * self.N_thickener
 
 
     @property

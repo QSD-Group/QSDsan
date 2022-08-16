@@ -898,8 +898,8 @@ class WasteStream(SanStream):
         Examples
         --------
         >>> from qsdsan import set_thermo, WasteStream
-        >>> from qsdsan.utils import load_example_cmps
-        >>> cmps = load_example_cmps()
+        >>> from qsdsan.utils import load_example_components
+        >>> cmps = load_example_components()
         >>> set_thermo(cmps)
         >>> ws1 = WasteStream('ws1', Water=100, NaCl=1)
         >>> ws2 = ws1.proxy('ws2')

@@ -99,11 +99,12 @@ class SanStream(Stream):
         new = super().copy(ID=new_ID)
         if copy_price:
             new.price = self.price
-        if hasattr(self, '_stream_impact_item'):
-            if self.stream_impact_item is not None:
-                self.stream_impact_item.copy(stream=new)
-            else:
-                new._stream_impact_item = None
+        if copy_impact_item:
+            if hasattr(self, '_stream_impact_item'):
+                if self.stream_impact_item is not None:
+                    self.stream_impact_item.copy(stream=new)
+                else:
+                    new._stream_impact_item = None
         return new
 
     __copy__ = copy
@@ -181,8 +182,8 @@ class SanStream(Stream):
         Examples
         --------
         >>> from qsdsan import set_thermo, SanStream
-        >>> from qsdsan.utils import load_example_cmps
-        >>> cmps = load_example_cmps()
+        >>> from qsdsan.utils import load_example_components
+        >>> cmps = load_example_components()
         >>> set_thermo(cmps)
         >>> ss1 = SanStream('ss1', Water=100, NaCl=1, price=3.18)
         >>> ss2 = ss1.flow_proxy('ss2')
@@ -213,8 +214,8 @@ class SanStream(Stream):
         Examples
         --------
         >>> from qsdsan import set_thermo, SanStream
-        >>> from qsdsan.utils import load_example_cmps
-        >>> cmps = load_example_cmps()
+        >>> from qsdsan.utils import load_example_components
+        >>> cmps = load_example_components()
         >>> set_thermo(cmps)
         >>> ss1 = SanStream('ss1', Water=100, NaCl=1, price=3.18)
         >>> ss2 = ss1.proxy('ss2')
