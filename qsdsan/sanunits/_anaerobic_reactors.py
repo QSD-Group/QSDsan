@@ -776,6 +776,11 @@ class AnaerobicCSTR(CSTR):
         Biogas extraction pipe resistance [m3/d/bar]. The default is 5.0e4.
     fixed_headspace_P : bool, optional
         Whether to assume fixed headspace pressure. The default is False.
+    retain_cmps : Iterable[str], optional
+        IDs of the components that are assumed to be retained in the reactor, ideally.
+        The default is ().
+    fraction_retain : float, optional
+        The assumed fraction of ideal retention of select components. The default is 0.95.
     
     References
     ----------
@@ -797,6 +802,7 @@ class AnaerobicCSTR(CSTR):
                  init_with='WasteStream', V_liq=3400, V_gas=300, model=None,  
                  T=308.15, headspace_P=1.013, external_P=1.013, 
                  pipe_resistance=5.0e4, fixed_headspace_P=False,
+                 retain_cmps=(), fraction_retain=0.95,
                  isdynamic=True, **kwargs):
         
         super().__init__(ID=ID, ins=ins, outs=outs, thermo=thermo,
@@ -817,6 +823,8 @@ class AnaerobicCSTR(CSTR):
         self.external_P = external_P
         self.pipe_resistance = pipe_resistance
         self.fixed_headspace_P = fixed_headspace_P
+        self._f_retain = np.array([fraction_retain if cmp.ID in retain_cmps \
+                                   else 0 for cmp in self.components])
     
     def ideal_gas_law(self, p=None, S=None):
         '''Calculates partial pressure [bar] given concentration [M] at 
@@ -951,14 +959,15 @@ class AnaerobicCSTR(CSTR):
     def _update_state(self):
         arr = self._state
         gas, liquid = self._outs
+        f_rtn = self._f_retain
         y = arr.copy()
         i_mass = self.components.i_mass
         chem_MW = self.components.chem_MW
         n_cmps = len(self.components)
         if liquid.state is None:
-            liquid.state = np.append(y[:n_cmps]*1e3, y[-2])
+            liquid.state = np.append(y[:n_cmps]*(1-f_rtn)*1e3, y[-2])
         else:
-            liquid.state[:n_cmps] = y[:n_cmps]*1e3  # kg/m3 to mg/L
+            liquid.state[:n_cmps] = y[:n_cmps]*(1-f_rtn)*1e3  # kg/m3 to mg/L
             liquid.state[-1] = y[-2]
         if gas.state is None:
             gas.state = np.zeros(n_cmps+1)
@@ -970,12 +979,13 @@ class AnaerobicCSTR(CSTR):
     def _update_dstate(self):
         arr = self._dstate
         gas, liquid = self._outs
+        f_rtn = self._f_retain
         dy = arr.copy()
         n_cmps = len(self.components)
         if liquid.dstate is None:
-            liquid.dstate = np.append(dy[:n_cmps]*1e3, dy[-2])
+            liquid.dstate = np.append(dy[:n_cmps]*(1-f_rtn)*1e3, dy[-2])
         else:
-            liquid.dstate[:n_cmps] = dy[:n_cmps]*1e3
+            liquid.dstate[:n_cmps] = dy[:n_cmps]*(1-f_rtn)*1e3
             liquid.dstate[-1] = dy[-2]
         if gas.dstate is None:
             # contains no info on dstate
@@ -1006,6 +1016,7 @@ class AnaerobicCSTR(CSTR):
             CSTR._compile_ODE(self)
         else:
             cmps = self.components
+            f_rtn = self._f_retain
             _dstate = self._dstate
             _update_dstate = self._update_dstate
             _f_rhos = self.model.rate_function
@@ -1029,7 +1040,8 @@ class AnaerobicCSTR(CSTR):
                 _f_param(QC)
                 M_stoichio = _M_stoichio()
                 rhos =_f_rhos(QC)
-                _dstate[:n_cmps] = (Q_in*S_in - Q*S_liq)/V_liq + np.dot(M_stoichio.T, rhos)
+                _dstate[:n_cmps] = (Q_in*S_in - Q*S_liq*(1-f_rtn))/V_liq \
+                    + np.dot(M_stoichio.T, rhos)
                 q_gas = f_qgas(rhos[-3:], S_gas, T)
                 _dstate[n_cmps: (n_cmps+n_gas)] = - q_gas*S_gas/V_gas \
                     + rhos[-3:] * V_liq/V_gas * gas_mass2mol_conversion

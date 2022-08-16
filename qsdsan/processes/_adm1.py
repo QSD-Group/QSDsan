@@ -600,12 +600,12 @@ class ADM1(CompiledProcesses):
     def set_rate_constant(self, k, process):
         '''Set the reaction rate constant [d^(-1)] for a process given its ID.'''
         i = self._find_index(process)
-        self.rate_function._params['ks'][i] = k
+        self.rate_function._params['rate_constants'][i] = k
 
     def set_half_sat_K(self, K, process):
         '''Set the substrate half saturation coefficient [kg/m3] for a process given its ID.'''
         i = self._find_index(process)
-        self.rate_function._params['Ks'][i-4] = K
+        self.rate_function._params['half_sat_coeffs'][i-4] = K
 
     def set_pH_inhibit_bounds(self, process, lower=None, upper=None):
         '''Set the upper and/or lower limit(s) of pH inhibition [unitless] for a process given its ID.'''
