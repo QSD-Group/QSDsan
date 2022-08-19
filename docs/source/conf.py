@@ -42,7 +42,6 @@ release = version
 # ones.
 extensions = [
 'nbsphinx',
-'sphinx_rtd_dark_mode',
 'sphinx.ext.autodoc',
 'sphinx.ext.intersphinx',
 'sphinx.ext.mathjax',
@@ -62,7 +61,7 @@ templates_path = ['_templates']
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'manni'
+# pygments_style = 'manni'
 
 # Webpage dark mode
 default_dark_mode = False
@@ -71,7 +70,7 @@ default_dark_mode = False
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'press'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -95,22 +94,28 @@ html_logo = '_static/logo_dark_small.png'
 # The name of an image file (relative to this directory) to use as a favicon of
 # the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = '_static/favicon.png'
+# html_favicon = '_static/favicon.png'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
-html_css_files = [
-	'css/qsdsan.css',
-	'css/copybutton.css',
-	'css/theme_overrides.css',
-	]
+# html_static_path = ['_static']
+# html_css_files = [
+# 	'css/qsdsan.css',
+# 	'css/copybutton.css',
+# 	'css/theme_overrides.css',
+# 	]
 #!!! Not seem to be working, using the extension now
 # html_js_files = [
 # 	'qsdsan.js', 
 # 	'https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js'
 # ]
+
+html_theme_options = {
+    'external_links': [
+        ('Github', 'https://github.com/QSD-Group/QSDsan'),
+    ],
+}
 
 # -- Extension settings -------------------------------------------------------
 # napoleon_custom_sections = ['Tips']
@@ -121,6 +126,6 @@ intersphinx_mapping = {
 	'thermosteam': ('https://biosteam.readthedocs.io/en/latest', None),
 	'BioSTEAM': ('https://biosteam.readthedocs.io/en/latest', None),
 	'Thermosteam': ('https://biosteam.readthedocs.io/en/latest', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
     'SALib': ('https://salib.readthedocs.io/en/latest', None),
 }
