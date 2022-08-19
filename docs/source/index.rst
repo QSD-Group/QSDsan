@@ -1,12 +1,6 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 ====================================================================================
 
-.. figure:: ./_static/logo_light_full.png
-   :width: 500
-   :align: center
-
-|
-
 What is ``QSDsan``?
 -------------------
 ``QSDsan`` is an open-source, community-led platform for the quantitative sustainable design (QSD) [1]_ of sanitation and resource recovery systems [2]_. It leverages existing platforms such as `BioSTEAM <https://biosteam.readthedocs.io>`_ [3]_  with enhanced features tailored to sanitation an resource recovery technologies. Through the integration with `DMsan <https://github.com/QSD-Group/DMsan>`_ (decision-making for sanitation and resource recovery systems), this platform can be used to guide the research, development, and deployment (RD&D) of early-stage technologies considering location-specific parameters and stakeholder priorities.
@@ -89,6 +83,7 @@ For each of these tutorials and examples, we are also recording videos where one
 Under the Hood
 --------------
 .. figure:: https://lucid.app/publicSegments/view/c8de361f-7292-47e3-8870-d6f668691728/image.png
+   :width: 100%
 
    Simplified unified modeling language (UML) diagram of ``QSDsan``
 
