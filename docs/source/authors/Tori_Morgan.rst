@@ -1,6 +1,6 @@
-======================
-Victoria (Tori) Morgan
-======================
+===========
+Tori Morgan
+===========
 
 .. figure:: Tori_Morgan.png
    :width: 50%
