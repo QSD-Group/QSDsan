@@ -2,7 +2,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 ====================================================================================
 
 .. figure:: ./_static/logo_light_full.png
-   :width: 500
+   :width: 50%
    :align: center
 
 |
@@ -89,6 +89,7 @@ For each of these tutorials and examples, we are also recording videos where one
 Under the Hood
 --------------
 .. figure:: https://lucid.app/publicSegments/view/c8de361f-7292-47e3-8870-d6f668691728/image.png
+   :width: 100%
 
    Simplified unified modeling language (UML) diagram of ``QSDsan``
 
