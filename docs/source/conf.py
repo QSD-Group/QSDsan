@@ -42,11 +42,12 @@ release = version
 # ones.
 extensions = [
 'nbsphinx',
+'sphinx_copybutton',
+'sphinx_design',
 'sphinx.ext.autodoc',
 'sphinx.ext.intersphinx',
 'sphinx.ext.mathjax',
 'sphinx.ext.napoleon',
-'sphinx_copybutton',
 ]
 
 # Allow exceptions to occur in notebooks
@@ -114,12 +115,15 @@ html_theme_options = {
 }
 
 
+# Output file base name for HTML help builder.
+htmlhelp_basename = 'QSDsan_documentation'
 
 
 # -- Extension settings -------------------------------------------------------
 # napoleon_custom_sections = ['Tips']
 copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
 copybutton_prompt_is_regexp = True
+
 
 # -- External mapping -------------------------------------------------------
 intersphinx_mapping = {

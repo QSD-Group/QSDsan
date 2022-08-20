@@ -9,9 +9,10 @@ sympy
 
 # Specifically for docs
 sphinx
-nbsphinx
-furo
 sphinx-copybutton
+sphinx-design
+furo
+nbsphinx
 ipywidgets
 jupyterlab-widgets
 widgetsnbextension

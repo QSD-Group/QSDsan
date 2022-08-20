@@ -1,3 +1,5 @@
+.. _calendar:
+
 QSDsan Calendar
 ===============
 
