@@ -126,7 +126,7 @@ We will keep the calendar up-to-date as we organize more events (office hours, w
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
 
    FAQ
