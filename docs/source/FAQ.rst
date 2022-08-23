@@ -1,5 +1,7 @@
-Errors and Tips
-===============
+.. _faq:
+
+FAQ
+===
 
 Common Errors
 -------------
@@ -187,7 +189,7 @@ If you need to upgrade Python but having a lot of existing packages, creating a 
 
 
 Styling
-=======
+-------
 ``QSDsan`` vs. ``qsdsan``? We prefer to use the capitalized version when not in coding settings (e.g., ``QSDsan`` instead of ``qsdsan``) because:
 
 - It refers to the platform, not just the core package (i.e., it includes the entire ecosystem that supports the core package).

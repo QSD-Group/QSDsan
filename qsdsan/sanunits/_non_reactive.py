@@ -79,7 +79,7 @@ class LumpedCost(Copier):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Copier <sanunits_NonReactive>`
+    :class:`qsdsan.sanunits.Copier`_
 
     Examples
     --------

@@ -188,7 +188,6 @@ class Toilet(SanUnit, Decay, isabstract=True):
             Fugitive CH4 gas (after emptying).
         N2O : WasteStream
             Fugitive N2O gas (after emptying).
-
         '''
         COD_rmd = waste.COD*(1-empty_ratio)/1e3*waste.F_vol
         CH4.imass['CH4'] += COD_rmd * CH4_factor
