@@ -12,7 +12,7 @@ Ongoing
 `1.2.0`_
 --------
 - The `QSDsan paper <https://www.doi.org/10.1039/d2ew00455k>`_ is accepted by *Environmental Science: Water Research & Technology*!
-- The first paper using QSDsan for the design of sanitation is accepted by `ACS Environmental Au <https://pubs.acs.org/doi/10.1021/acsenvironau.2c00022>`_! The Biogenic Refinery system described in this paper is also available in `QSDsan`/`EXPOsan` now.
+- The first paper using QSDsan for the design of sanitation is accepted by `ACS Environmental Au <https://pubs.acs.org/doi/10.1021/acsenvironau.2c00022>`_! The Biogenic Refinery system described in this paper is also available in ``QSDsan``/``EXPOsan`` now.
 - Added multiple systems (including their unit operations), check out the details on the `Developed System <https://qsdsan.readthedocs.io/en/latest/Developed_Systems.html>`_ page!
 
 	- Biogenic Refinery

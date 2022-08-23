@@ -6,7 +6,7 @@ What is ``QSDsan``?
 ``QSDsan`` is an open-source, community-led platform for the quantitative sustainable design (QSD) [1]_ of sanitation and resource recovery systems [2]_. It leverages existing platforms such as `BioSTEAM <https://biosteam.readthedocs.io>`_ [3]_  with enhanced features tailored to sanitation an resource recovery technologies. Through the integration with `DMsan <https://github.com/QSD-Group/DMsan>`_ (decision-making for sanitation and resource recovery systems), this platform can be used to guide the research, development, and deployment (RD&D) of early-stage technologies considering location-specific parameters and stakeholder priorities.
 
 
-.. grid:: 1 2 4 4
+.. grid:: 2 4 4 4
 
    .. grid-item-card::  Tutorials
       :text-align: center
@@ -155,9 +155,9 @@ We will keep the calendar up-to-date as we organize more events (office hours, w
 
 References
 ----------
-.. [1] Li, Y.; Trimmer, J.T.; Hand, S.; Zhang, X.; Chambers, K.G.; Lohman, H.A.C.; Shi, R.; Byrne, D.M.; Cook, S.M.; Guest, J.S. Quantitative Sustainable Design (QSD) for the Prioritization of Research, Development, and Deployment of Technologies: A Tutorial and Review, ChemRxiv, DOI:10.26434/chemrxiv-2022-rjqbn.
+.. [1] Li, Y.; Trimmer, J.T.; Hand, S.; Zhang, X.; Chambers, K.G.; Lohman, H.A.C.; Shi, R.; Byrne, D.M.; Cook, S.M.; Guest, J.S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. Available on `ChemRxiv <https://chemrxiv.org/engage/chemrxiv/article-details/629df71e97e76a377cc7f06e>`_.
 
-.. [2] Li, Y.; Zhang, X.; Morgan, V.L.; Lohman, H.A.C.; Rowles, L.S.; Mittal, S.; Kogler, A.; Cusick, R.D.; Tarpeh, W.A.; Guest, J.S. QSDsan: An integrated platform for quantitative sustainable design of sanitation and resource recovery systems. arXiv: `2203.06243 <https://arxiv.org/abs/2203.06243>`_ [cs.CY], March 7, 2022.
+.. [2] Li, Y.; Zhang, X.; Morgan, V.L.; Lohman, H.A.C.; Rowles, L.S.; Mittal, S.; Kogler, A.; Cusick, R.D.; Tarpeh, W.A.; Guest, J.S. QSDsan: An integrated platform for quantitative sustainable design of sanitation and resource recovery systems. Environ. Sci.: Water Res. Technol. Accepted, 2022. https://doi.org/10.1039/d2ew00455k.
 
 .. [3] Cortés-Peña, Y.; Kumar, D.; Singh, V.; Guest, J.S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020, 8 (8), 3302–3310. https://doi.org/10.1021/acssuschemeng.9b07040.
 
