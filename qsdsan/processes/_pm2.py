@@ -11,6 +11,7 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+from thermosteam import settings
 from qsdsan import Component, Components, Process, Processes, CompiledProcesses
 from qsdsan.utils import ospath, data_path
 import numpy as np
@@ -111,7 +112,7 @@ def create_pm2_cmps(set_thermo=True):
     
     cmps_pm2.default_compile()                   
 
-    if set_thermo: set_thermo(cmps_pm2)
+    if set_thermo: settings.set_thermo(cmps_pm2)
     return cmps_pm2
 
 # create_pm2_cmps()                
