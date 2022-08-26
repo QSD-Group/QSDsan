@@ -16,12 +16,14 @@ from ._aeration import *
 from ._asm1 import *
 from ._asm2d import *
 from ._adm1 import *
+from ._pm2 import *
 
 from . import (
     _aeration,
     _asm1,
     _asm2d,
-    _adm1
+    _adm1,
+    _pm2,
     )
 
 __all__ = (
@@ -29,4 +31,5 @@ __all__ = (
     *_asm1.__all__,
     *_asm2d.__all__,
     *_adm1.__all__,
+    *_pm2.__all__,
            )
