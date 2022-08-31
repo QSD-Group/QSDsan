@@ -31,7 +31,7 @@ copyright = f'2020-{time.gmtime().tm_year}, Quantitative Sustainable Design Grou
 # built documents.
 #
 # The short X.Y version.
-version = '1.1.4'
+version = '1.2.0'
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -42,12 +42,12 @@ release = version
 # ones.
 extensions = [
 'nbsphinx',
-'sphinx_rtd_dark_mode',
+'sphinx_copybutton',
+'sphinx_design',
 'sphinx.ext.autodoc',
 'sphinx.ext.intersphinx',
 'sphinx.ext.mathjax',
 'sphinx.ext.napoleon',
-'sphinx_copybutton',
 ]
 
 # Allow exceptions to occur in notebooks
@@ -62,16 +62,16 @@ templates_path = ['_templates']
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'manni'
+# pygments_style = 'manni'
 
 # Webpage dark mode
-default_dark_mode = False
+# default_dark_mode = False
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'furo'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -88,9 +88,6 @@ html_title = f'QSDsan {version}'
 # A shorter title for the navigation bar.  Default is the same as html_title.
 html_short_title = 'QSDsan'
 
-# The name of an image file (relative to this directory) to place at the top
-# of the sidebar.
-html_logo = '_static/logo_dark_small.png'
 
 # The name of an image file (relative to this directory) to use as a favicon of
 # the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -103,17 +100,30 @@ html_favicon = '_static/favicon.png'
 html_static_path = ['_static']
 html_css_files = [
 	'css/qsdsan.css',
-	'css/copybutton.css',
-	'css/theme_overrides.css',
-	]
-#!!! Not seem to be working, using the extension now
-# html_js_files = [
-# 	'qsdsan.js', 
-# 	'https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js'
-# ]
+ 	'css/copybutton.css',
+# 	'css/theme_overrides.css',
+ 	]
+
+# The name of an image file (relative to this directory) to place at the top
+# of the sidebar.
+# html_logo = 'logo_dark_small.png'
+html_theme_options = {
+    'dark_logo': 'logo_dark_mode_m.png',
+    'light_logo': 'logo_light_mode_m.png',
+	'sidebar_hide_name': True,
+	'top_of_page_button': 'edit', # only edit or None is supported
+}
+
+
+# Output file base name for HTML help builder.
+htmlhelp_basename = 'QSDsan_documentation'
+
 
 # -- Extension settings -------------------------------------------------------
 # napoleon_custom_sections = ['Tips']
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_is_regexp = True
+
 
 # -- External mapping -------------------------------------------------------
 intersphinx_mapping = {
@@ -121,6 +131,6 @@ intersphinx_mapping = {
 	'thermosteam': ('https://biosteam.readthedocs.io/en/latest', None),
 	'BioSTEAM': ('https://biosteam.readthedocs.io/en/latest', None),
 	'Thermosteam': ('https://biosteam.readthedocs.io/en/latest', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
     'SALib': ('https://salib.readthedocs.io/en/latest', None),
 }

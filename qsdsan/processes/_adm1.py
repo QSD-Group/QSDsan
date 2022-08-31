@@ -462,7 +462,7 @@ class ADM1(CompiledProcesses):
         The default is [14, 9.25, 6.35, 4.76, 4.88, 4.82, 4.86].
     Ka_dH : iterable[float], optional
         Heat of reaction of each acid-base pair at base temperature [J/mol], 
-        following the order of `ADM1._acid_base_pairs`0. The default is 
+        following the order of `ADM1._acid_base_pairs`. The default is 
         [55900, 51965, 7646, 0, 0, 0, 0].
     kLa : float, optional
         Liquid-gas mass transfer coefficient [d^(-1)]. The default is 200.
