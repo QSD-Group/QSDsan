@@ -392,8 +392,12 @@ def rhos_pm2(state_arr, params):
         # Q = state_arr[14]                             # Flow rate
         # t = state_arr[15]                             # time
         # light = calc_irrad(t)                         # when to use calculated light (I_0)
-    temp = state_arr[16]
-    light = state_arr[17]                               # imported from input file assumed
+    #!!! t will no longer be needed in the state_arr, light irradiance calculation 
+    # will be done externally in the PBR object
+    temp = state_arr[15]
+    light = state_arr[16]
+    # temp = state_arr[16]
+    # light = state_arr[17]                               # imported from input file assumed
 
     X_CHL, X_ALG, X_CH, X_LI, S_CO2, S_A, S_F, S_O2, S_NH, S_NO, S_P, X_N_ALG, X_P_ALG, H2O = c_arr
     
