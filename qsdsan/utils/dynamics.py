@@ -49,10 +49,9 @@ class ExogenousDynamicVariable:
     intpl_kwargs : dict, optional
         Keyword arguments for initiating the interpolant.
     
-    Note
-    ----
-    Extrapolation is allowed, assuming the time-series data are periodic and continuous 
-    at both bounds.
+    .. note::
+        Extrapolation is allowed, assuming the time-series data are periodic and continuous 
+        at both bounds.
 
     See Also
     --------
@@ -186,3 +185,5 @@ class ExogenousDynamicVariable:
                     intpl_kwargs=intpl_kwargs) \
                 for k, v in dct_y.items()]
         
+    def __repr__(self):
+        return f"{type(self).__name__}: {self._ID})"
