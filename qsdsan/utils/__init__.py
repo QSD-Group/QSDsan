@@ -30,6 +30,7 @@ from . import (
     colors,
     components,
     construction,
+    dynamics,
     formatting,
     loading,
     misc,
@@ -49,6 +50,7 @@ from .cod import *
 from .colors import *
 from .components import *
 from .construction import *
+from .dynamics import *
 from .formatting import *
 from .loading import *
 from .misc import *
@@ -65,6 +67,7 @@ __all__ = (
     *colors.__all__,
     *components.__all__,
     *construction.__all__,
+    *dynamics.__all__,
     *formatting.__all__,
     *loading.__all__,
     *model_eval.__all__,
