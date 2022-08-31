@@ -687,7 +687,7 @@ class Process:
         else: self._rate_equation = None
 
     def _rate_eq2func(self):
-        var = list(symbols(self._components.IDs))
+        var = list(symbols(self._components.IDs+('Q',)))
         lamb = lambdify(var, self.rate_equation, 'numpy')
         def f(state_arr, params={}):
             return lamb(*state_arr)

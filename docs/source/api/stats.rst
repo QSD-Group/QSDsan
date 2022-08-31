@@ -44,7 +44,7 @@ Box plot
 	for label in ax.get_xticklabels():
 	    label.set_rotation(45)
 
-.. figure:: ./images/stats/plot_uncer_box.png
+.. figure:: ../images/stats/plot_uncer_box.png
    :width: 50%
 
 
@@ -57,7 +57,7 @@ Histogram plot
 	fig, ax = s.plot_uncertainties(modelA, y_axis=key_metrics, kind='hist',
 	                               center_kws={'kde':True, 'log_scale': 10})
 
-.. figure:: ./images/stats/plot_uncer_hist.png
+.. figure:: ../images/stats/plot_uncer_hist.png
    :width: 60%
 
 
@@ -69,7 +69,7 @@ Histogram plot
 	                                 y_axis=key_metrics[-1], # GWP
 	                                 kind='hist-box')
 
-.. figure:: ./images/stats/plot_uncer_hist-box.png
+.. figure:: ../images/stats/plot_uncer_hist-box.png
    :width: 50%
 
 
@@ -81,7 +81,7 @@ Kernel density plots
 	fig, ax = s.plot_uncertainties(modelA, x_axis=key_metrics, kind='kde',
 	                               center_kws={'fill': True, 'log_scale': 2})                        
 
-.. figure:: ./images/stats/plot_uncer_kde.png
+.. figure:: ../images/stats/plot_uncer_kde.png
    :width: 60%
 
 
@@ -92,7 +92,7 @@ Kernel density plots
 	                                 y_axis=key_metrics[-1], kind='kde-kde',
 	                                 center_kws={'fill': True})
 
-.. figure:: ./images/stats/plot_uncer_kde-kde.png
+.. figure:: ../images/stats/plot_uncer_kde-kde.png
    :width: 50%
 
 
@@ -103,7 +103,7 @@ Kernel density plots
 	                                 center_kws={'fill': True},
 	                                 margin_kws={'kde': True, 'fill': False})
 
-.. figure:: ./images/stats/plot_uncer_kde-hist.png
+.. figure:: ../images/stats/plot_uncer_kde-hist.png
    :width: 50%
 
 
@@ -142,7 +142,7 @@ Bar plot for single metric
 	fig.subplots_adjust(left=0.25)
 
 
-.. figure:: ./images/stats/plot_corr_bar.png
+.. figure:: ../images/stats/plot_corr_bar.png
    :width: 60%
 
 
@@ -154,7 +154,7 @@ Bubble plot for multiple metrics
 	    spearman_rho, parameters=key_parameters, metrics=key_metrics)
 
 
-.. figure:: ./images/stats/plot_corr_bubble.png
+.. figure:: ../images/stats/plot_corr_bubble.png
    :width: 80%
 
 
@@ -196,7 +196,7 @@ Examples
 	fig.subplots_adjust(bottom=0.3)
 
 
-.. figure:: ./images/stats/plot_morris.png
+.. figure:: ../images/stats/plot_morris.png
    :width: 60%
 
 
@@ -216,7 +216,7 @@ Line plot with error bands for evolutionary of :math:`\mu^*`
 	                                    metric=key_metrics[-2], plot_rank=False)
 
 
-.. figure:: ./images/stats/plot_morris_conv.png
+.. figure:: ../images/stats/plot_morris_conv.png
    :width: 80%
 
 
@@ -229,7 +229,7 @@ Line plot for evolutionary of :math:`\mu^*` rank
 	                                    metric=key_metrics[-2], plot_rank=True)
 
 
-.. figure:: ./images/stats/plot_morris_conv_rank.png
+.. figure:: ../images/stats/plot_morris_conv_rank.png
    :width: 80%
 
 
@@ -259,7 +259,7 @@ Bar plot for (e)FAST
 	fig.subplots_adjust(left=0.4)
 
 
-.. figure:: ./images/stats/plot_fast.png
+.. figure:: ../images/stats/plot_fast.png
    :width: 60%
 
 
@@ -281,7 +281,7 @@ Bar plot for RBD-FAST
 	fig.subplots_adjust(left=0.4)
 
 
-.. figure:: ./images/stats/plot_rbd.png
+.. figure:: ../images/stats/plot_rbd.png
    :width: 60%
 
 
@@ -312,7 +312,7 @@ Bar plot for total and main effects
 	fig.subplots_adjust(left=0.4, top=0.95)
 
 
-.. figure:: ./images/stats/plot_sobol_sts1.png
+.. figure:: ../images/stats/plot_sobol_sts1.png
    :width: 60%
 
 
@@ -329,7 +329,7 @@ Heat map for total and second-order effects
 	fig.subplots_adjust(left=0.4, bottom=0.4)
 
 
-.. figure:: ./images/stats/plot_sobol_sts2.png
+.. figure:: ../images/stats/plot_sobol_sts2.png
    :width: 80%
 
 
@@ -340,4 +340,4 @@ Bar plot and heat map for total, main, and second-order effects
 	fig, ax = s.plot_sobol_results(dct, metric=key_metrics[-1], kind='all')
 
 
-.. figure:: ./images/stats/plot_sobol_all.png
+.. figure:: ../images/stats/plot_sobol_all.png

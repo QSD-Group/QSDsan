@@ -34,16 +34,16 @@ class DynamicInfluent(SanUnit):
         `.xlsx`, `.xls`, `.csv`, `.tsv`. If none specified, will load the default
         time-series data of dry-weather influent with components from ASM1.
     interpolator : str or int or callable, optional
-        Interpolator to use. It can be a string (e.g., 'slinear', 'quadratic', 'cubic')
+        Interpolation method to use. It can be a string (e.g., 'slinear', 'quadratic', 'cubic')
         or an integer within [1,5] to specify the order of a spline interpolation.  
         Other strings will be passed on to `scipy.interpolate.interp1d` as the 'kind'
         argument. It can also be a class in `scipy.interpolate` that takes time-series 
         data as input upon initiation. Interpolant that is not at least 
-        first-order differentiable is not recommended (e.g., linear 
-        interpolation).The default is `scipy.interpolate.CubicSpline`. 
+        first-order differentiable is not recommended (e.g., linear interpolation).
+        The default is `scipy.interpolate.CubicSpline`. 
     derivative_approximator : callable, optional
-        Function that returns derivative of state at given time. If none specified,
-        will use the `.derivative` method (if available) of the interpolator.
+        Function that returns derivative of the variable at given time. If none specified,
+        will use the `.derivative()` function of (if available) of the interpolant.
     load_data_kwargs : dict, optional
         Keyword arguments for loading the data file with the `qsdsan.utils.load_data()`
         function. The default is {}.

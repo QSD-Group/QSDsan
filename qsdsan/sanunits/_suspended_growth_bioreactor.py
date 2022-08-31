@@ -22,7 +22,6 @@ from numba import njit
 
 __all__ = ('CSTR',
            'SBR',
-           # 'PFR',
            )
 
 def _add_aeration_to_growth_model(aer, model):
@@ -38,23 +37,23 @@ def _add_aeration_to_growth_model(aer, model):
 # %%
 
 @njit(cache=True)
-def dydt_cstr_no_rxn_fixed_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, Cs):
+def dydt_cstr_no_rxn_fixed_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, QC):
     Q_ins = QC_ins[:, -1]
     C_ins = QC_ins[:, :-1]
     flow_in = Q_ins @ C_ins / V_arr
     Q_e_arr[:] = Q_ins.sum(axis=0)
     _dstate[-1] = dQC_ins[:, -1].sum(axis=0)
-    flow_out = Q_e_arr * Cs / V_arr
+    flow_out = Q_e_arr * QC[:-1] / V_arr
     _dstate[:-1] = flow_in - flow_out
 
 @njit(cache=True)
-def dydt_cstr_no_rxn_controlled_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, Cs):
+def dydt_cstr_no_rxn_controlled_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, QC):
     Q_ins = QC_ins[:, -1]
     C_ins = QC_ins[:, :-1]
     flow_in = Q_ins @ C_ins / V_arr
     Q_e_arr[:] = Q_ins.sum(axis=0)
     _dstate[-1] = dQC_ins[:, -1].sum(axis=0)
-    flow_out = Q_e_arr * Cs / V_arr
+    flow_out = Q_e_arr * QC[:-1] / V_arr
     _dstate[:-1] = flow_in - flow_out
 
 #%%
@@ -86,6 +85,10 @@ class CSTR(SanUnit):
         reactor is aerated. The default is 'S_O2'.
     suspended_growth_model : :class:`Processes`, optional
         The suspended growth biokinetic model. The default is None.
+    exogenous_var : iterable[:class:`ExogenousDynamicVariable`], optional
+        Any exogenous dynamic variables that affect the process mass balance,
+        e.g., temperature, sunlight irradiance. Must be independent of state 
+        variables of the suspended_growth_model (if has one).
     '''
 
     _N_ins = 3
@@ -95,9 +98,10 @@ class CSTR(SanUnit):
 
     def __init__(self, ID='', ins=None, outs=(), split=None, thermo=None,
                  init_with='WasteStream', V_max=1000, aeration=2.0,
-                 DO_ID='S_O2', suspended_growth_model=None,
-                 isdynamic=True, **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic)
+                 DO_ID='S_O2', suspended_growth_model=None, 
+                 isdynamic=True, exogenous_vars=(), **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic,
+                         exogenous_vars=exogenous_vars)
         self._V_max = V_max
         self._aeration = aeration
         self._DO_ID = DO_ID
@@ -249,32 +253,34 @@ class CSTR(SanUnit):
         if self._model is None:
             warn(f'{self.ID} was initialized without a suspended growth model, '
                  f'and thus run as a non-reactive unit')
-            r = lambda *args: np.zeros(m)
+            r = lambda state_arr: np.zeros(m)
+            
         else:
             processes = _add_aeration_to_growth_model(self._aeration, self._model)
-            r_eqs = list(processes.production_rates.rate_of_production)
-            r = lambdify(C, r_eqs, 'numpy')
+            r = processes.production_rates_eval
 
         _dstate = self._dstate
         _update_dstate = self._update_dstate
         V_arr = np.full(m, self._V_max)
         Q_e_arr = np.zeros(m)
-
+        hasexo = bool(len(self._exovars))
+        f_exovars = self.eval_exo_dynamic_vars
+        
         if isa(self._aeration, (float, int)):
             i = self.components.index(self._DO_ID)
             fixed_DO = self._aeration
             def dy_dt(t, QC_ins, QC, dQC_ins):
-                Cs = QC[:-1]
-                Cs[i] = fixed_DO
-                dydt_cstr_no_rxn_controlled_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, Cs)
-                _dstate[:-1] += r(*Cs)
+                QC[i] = fixed_DO
+                dydt_cstr_no_rxn_controlled_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, QC)
+                if hasexo: QC = np.append(QC, f_exovars(t))
+                _dstate[:-1] += r(QC)
                 _dstate[i] = 0
                 _update_dstate()
         else:
             def dy_dt(t, QC_ins, QC, dQC_ins):
-                Cs = QC[:-1]
-                dydt_cstr_no_rxn_fixed_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, Cs)
-                _dstate[:-1] += r(*Cs)
+                dydt_cstr_no_rxn_fixed_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, QC)
+                if hasexo: QC = np.append(QC, f_exovars(t))
+                _dstate[:-1] += r(QC)
                 _update_dstate()
 
         self._ODE = dy_dt
@@ -282,7 +288,7 @@ class CSTR(SanUnit):
     def _design(self):
         pass
 
-
+#%%
 class SBR(SanUnit):
     '''
     Sequential batch reactors operated in parallel. The number of reactors is

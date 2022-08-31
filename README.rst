@@ -1,5 +1,5 @@
 ====================================================================================
-QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
+QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Systems
 ====================================================================================
 
 .. License
@@ -14,9 +14,9 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 .. image:: https://img.shields.io/pypi/v/qsdsan?style=flat&color=blue
    :target: https://pypi.org/project/qsdsan
 
-.. arXiv
-.. image:: https://img.shields.io/badge/arXiv-2203.06243-b31b1b.svg?style=flat
-   :target: https://arxiv.org/abs/2203.06243
+.. DOI
+.. image:: https://img.shields.io/badge/DOI-10.1039%2Fd2ew00455k-blue?style=flat
+   :target: https://doi.org/10.1039/d2ew00455k
 
 .. Documentation build
 .. image:: https://readthedocs.org/projects/qsdsan/badge/?version=latest
@@ -183,9 +183,9 @@ Please refer to the ``LICENSE.txt`` for information on the terms & conditions fo
 
 References
 ----------
-.. [1] Li, Y.; Zhang, X.; Morgan, V.L.; Lohman, H.A.C.; Rowles, L.S.; Mittal, S.; Kogler, A.; Cusick, R.D.; Tarpeh, W.A.; Guest, J.S. QSDsan: An integrated platform for quantitative sustainable design of sanitation and resource recovery systems. arXiv: `2203.06243 <https://arxiv.org/abs/2203.06243>`_ [cs.CY], March 7, 2022.
+.. [1] Li, Y.; Zhang, X.; Morgan, V.L.; Lohman, H.A.C.; Rowles, L.S.; Mittal, S.; Kogler, A.; Cusick, R.D.; Tarpeh, W.A.; Guest, J.S. QSDsan: An integrated platform for quantitative sustainable design of sanitation and resource recovery systems. Environ. Sci.: Water Res. Technol. Accepted, 2022. https://doi.org/10.1039/d2ew00455k.
 
-.. [2] Li, Y.; Trimmer, J.T.; Hand, S.; Zhang, X.; Chambers, K.G.; Lohman, H.A.C.; Shi, R.; Byrne, D.M.; Cook, S.M.; Guest, J.S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. Submitted to Environmental Science & Technology, 2022.
+.. [2] Li, Y.; Trimmer, J.T.; Hand, S.; Zhang, X.; Chambers, K.G.; Lohman, H.A.C.; Shi, R.; Byrne, D.M.; Cook, S.M.; Guest, J.S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. Available on `ChemRxiv <https://chemrxiv.org/engage/chemrxiv/article-details/629df71e97e76a377cc7f06e>`_.
 
 .. [3] Cortés-Peña, Y.; Kumar, D.; Singh, V.; Guest, J.S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020, 8 (8), 3302–3310. https://doi.org/10.1021/acssuschemeng.9b07040.
 

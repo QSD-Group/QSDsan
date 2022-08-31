@@ -4,10 +4,15 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
-`1.2.0`
+Ongoing
 -------
+- ``QSDsan``'s `documentation <https://qsdsan.readthedocs.io/en/latest/index.html>`_ is getting a new look!
+
+
+`1.2.0`_
+--------
 - The `QSDsan paper <https://www.doi.org/10.1039/d2ew00455k>`_ is accepted by *Environmental Science: Water Research & Technology*!
-- The first paper using QSDsan for the design of sanitation is accepted by `ACS Environmental Au <https://pubs.acs.org/doi/10.1021/acsenvironau.2c00022>`_! The Biogenic Refinery system described in this paper is also available in `QSDsan`/`EXPOsan` now.
+- The first paper using QSDsan for the design of sanitation is accepted by `ACS Environmental Au <https://pubs.acs.org/doi/10.1021/acsenvironau.2c00022>`_! The Biogenic Refinery system described in this paper is also available in ``QSDsan``/``EXPOsan`` now.
 - Added multiple systems (including their unit operations), check out the details on the `Developed System <https://qsdsan.readthedocs.io/en/latest/Developed_Systems.html>`_ page!
 
 	- Biogenic Refinery
@@ -23,8 +28,8 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 		- :class:`~.sanunits.H2E`
 
 
-`1.1.0`
--------
+`1.1.0`_
+--------
 - Fully tested dynamic simulation capacity, refer to the `BSM1 system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_ in EXPOsan for an example implementation.
 - Added many new :class:`~.SanUnit` and reorganized package/documentation structure, new unit operations include:
 
