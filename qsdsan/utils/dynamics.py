@@ -10,8 +10,9 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-from . import load_data
+from .loading import load_data
 from scipy.interpolate import InterpolatedUnivariateSpline, CubicSpline, interp1d
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -27,7 +28,7 @@ class ExogenousDynamicVariable:
     ID : str
         Unique identifier of the variable.
     t : array_like
-        A 1-D array of time data.
+        A 1-D array of time data, must be sorted.
     y : array_like
         A 1-D array of the variable values at corresponding time points, length
         must match the t array.
@@ -63,6 +64,8 @@ class ExogenousDynamicVariable:
     def __init__(self, ID, t=None, y=None, function=None, interpolator=None, 
                  derivative_approximator=None, intpl_kwargs={}):
         self._ID = ID
+        self.t_data = t
+        self.y_data = y
         self._intpl_kwargs = intpl_kwargs
         self.interpolator = interpolator
         self.derivative_approximator = derivative_approximator
@@ -93,28 +96,30 @@ class ExogenousDynamicVariable:
 
     @interpolator.setter
     def interpolator(self, i):
-        isa = isinstance
-        if i is None:
-            self._intpl = CubicSpline
-            self._intpl_kwargs.update({'bc_type':'periodic'})
-        elif isa(i, (str, int)):
-            if i in ('slinear', 'quadratic', 'cubic', 1, 2, 3, 4, 5):
-                self._intpl = InterpolatedUnivariateSpline
-                if isa(i, str):
-                    if i == 'slinear': i = 1
-                    elif i == 'quadratic': i = 2
-                    else: i = 3
-                self._intpl_kwargs.update({'k':i})
-            else:
-                self._intpl = interp1d
-                self._intpl_kwargs.update({'kind': i})
-        elif isa(i, type) and hasattr(i, '__call__'):
-            self._intpl = i
+        if self.t_data is None: self._intpl = None
         else:
-            raise TypeError(f'interpolator must be None, or a str, or an int,'
-                            f'or a class that takes in the data points and returns'
-                            f'a callable interpolator (e.g., from scipy.interpolate), '
-                            f'not {type(i)}.')
+            isa = isinstance
+            if i is None:
+                self._intpl = CubicSpline
+                self._intpl_kwargs.update({'bc_type':'periodic'})
+            elif isa(i, (str, int)):
+                if i in ('slinear', 'quadratic', 'cubic', 1, 2, 3, 4, 5):
+                    self._intpl = InterpolatedUnivariateSpline
+                    if isa(i, str):
+                        if i == 'slinear': i = 1
+                        elif i == 'quadratic': i = 2
+                        else: i = 3
+                    self._intpl_kwargs.update({'k':i})
+                else:
+                    self._intpl = interp1d
+                    self._intpl_kwargs.update({'kind': i})
+            elif isa(i, type) and hasattr(i, '__call__'):
+                self._intpl = i
+            else:
+                raise TypeError(f'interpolator must be None, or a str, or an int,'
+                                f'or a class that takes in the data points and returns'
+                                f'a callable interpolator (e.g., from scipy.interpolate), '
+                                f'not {type(i)}.')
             
     @property
     def derivative_approximator(self):
@@ -138,6 +143,22 @@ class ExogenousDynamicVariable:
         '''Returns the derivative of the variable at time t'''
         t %= self._t_end
         return float(self._df(t))
+    
+    def plot(self):
+        fig, ax = plt.subplots(figsize=(8, 4.5))
+        t, y = self.t_data, self.y_data
+        if t: n_eval = len(t)*5
+        else: n_eval = 50
+        t_eval = np.linspace(0, self._t_end, n_eval)
+        y_eval = self._f(t_eval)
+        if t:
+            ax.plot(t, y, 'o', label='data')
+            ax.plot(t_eval, y_eval, '-', label='interpolation')
+            ax.legend(loc='best')
+        else:
+            ax.plot(t_eval, y_eval, '-')
+        ax.set(xlabel='Time', ylabel=self.ID)
+        return fig, ax
         
     @classmethod
     def batch_init(cls, data, interpolator=None, derivative_approximator=None, 
