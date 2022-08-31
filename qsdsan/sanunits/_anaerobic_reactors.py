@@ -298,12 +298,12 @@ class AnaerobicCSTR(CSTR):
                  T=308.15, headspace_P=1.013, external_P=1.013, 
                  pipe_resistance=5.0e4, fixed_headspace_P=False,
                  retain_cmps=(), fraction_retain=0.95,
-                 isdynamic=True, **kwargs):
+                 isdynamic=True, exogenous_var=(), **kwargs):
         
         super().__init__(ID=ID, ins=ins, outs=outs, thermo=thermo,
                          init_with=init_with, V_max=V_liq, aeration=None,
                          DO_ID=None, suspended_growth_model=None,
-                         isdynamic=isdynamic, **kwargs)
+                         isdynamic=isdynamic, exogenous_var=exogenous_var, **kwargs)
         self.V_gas = V_gas
         self.T = T
         # self._S_gas = None
@@ -370,7 +370,7 @@ class AnaerobicCSTR(CSTR):
             self._n_gas = len(model._biogas_IDs)
             self._state_keys = list(self.components.IDs) \
                 + [ID+'_gas' for ID in self.model._biogas_IDs] \
-                + ['Q', 'T_op']
+                + ['Q']
             self._gas_cmp_idx = self.components.indices(self.model._biogas_IDs)
             self._state_header = self._state_keys
     
@@ -418,8 +418,7 @@ class AnaerobicCSTR(CSTR):
     @property
     def state(self):
         '''The state of the anaerobic CSTR, including component concentrations [kg/m3],
-        biogas concentrations in the headspace [M biogas], liquid flow rate [m^3/d],
-        and temperature [K].'''
+        biogas concentrations in the headspace [M biogas], and liquid flow rate [m^3/d].'''
         if self._state is None: return None
         else:
             return dict(zip(self._state_keys, self._state))
@@ -448,7 +447,7 @@ class AnaerobicCSTR(CSTR):
         #!!! how to make unit conversion generalizable to all models?
         if self._concs is not None: Cs = self._concs * 1e-3 # mg/L to kg/m3
         else: Cs = inf.conc * 1e-3 # mg/L to kg/m3
-        self._state = np.append(Cs, [0]*self._n_gas + [Q, self.T]).astype('float64')
+        self._state = np.append(Cs, [0]*self._n_gas + [Q]).astype('float64')
         self._dstate = self._state * 0.
 
     def _update_state(self):
@@ -460,10 +459,10 @@ class AnaerobicCSTR(CSTR):
         chem_MW = self.components.chem_MW
         n_cmps = len(self.components)
         if liquid.state is None:
-            liquid.state = np.append(y[:n_cmps]*(1-f_rtn)*1e3, y[-2])
+            liquid.state = np.append(y[:n_cmps]*(1-f_rtn)*1e3, y[-1])
         else:
             liquid.state[:n_cmps] = y[:n_cmps]*(1-f_rtn)*1e3  # kg/m3 to mg/L
-            liquid.state[-1] = y[-2]
+            liquid.state[-1] = y[-1]
         if gas.state is None:
             gas.state = np.zeros(n_cmps+1)
         gas.state[self._gas_cmp_idx] = y[n_cmps:(n_cmps + self._n_gas)]
@@ -478,10 +477,10 @@ class AnaerobicCSTR(CSTR):
         dy = arr.copy()
         n_cmps = len(self.components)
         if liquid.dstate is None:
-            liquid.dstate = np.append(dy[:n_cmps]*(1-f_rtn)*1e3, dy[-2])
+            liquid.dstate = np.append(dy[:n_cmps]*(1-f_rtn)*1e3, dy[-1])
         else:
             liquid.dstate[:n_cmps] = dy[:n_cmps]*(1-f_rtn)*1e3
-            liquid.dstate[-1] = dy[-2]
+            liquid.dstate[-1] = dy[-1]
         if gas.dstate is None:
             # contains no info on dstate
             gas.dstate = np.zeros(n_cmps+1)
@@ -521,7 +520,10 @@ class AnaerobicCSTR(CSTR):
             n_gas = self._n_gas
             V_liq = self.V_liq
             V_gas = self.V_gas
+            T = self.T
             gas_mass2mol_conversion = (cmps.i_mass / cmps.chem_MW)[self._gas_cmp_idx]
+            hasexo = bool(len(self._exovars))
+            f_exovars = self.eval_exo_dynamic_vars
             if self._fixed_P_gas:
                 f_qgas = self.f_q_gas_fixed_P_headspace
             else:
@@ -529,9 +531,10 @@ class AnaerobicCSTR(CSTR):
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 S_liq = QC[:n_cmps]
                 S_gas = QC[n_cmps: (n_cmps+n_gas)]
-                Q, T = QC[-2:]
+                Q = QC[-1]
                 S_in = QC_ins[0,:-1] * 1e-3  # mg/L to kg/m3
                 Q_in = QC_ins[0,-1]
+                if hasexo: QC = np.append(QC, f_exovars(t))
                 _f_param(QC)
                 M_stoichio = _M_stoichio()
                 rhos =_f_rhos(QC)
@@ -540,9 +543,7 @@ class AnaerobicCSTR(CSTR):
                 q_gas = f_qgas(rhos[-3:], S_gas, T)
                 _dstate[n_cmps: (n_cmps+n_gas)] = - q_gas*S_gas/V_gas \
                     + rhos[-3:] * V_liq/V_gas * gas_mass2mol_conversion
-                _dstate[-2] = dQC_ins[0,-1]
-                _dstate[-1] = 0
-                # !!! currently no info on dT/dt
+                _dstate[-1] = dQC_ins[0,-1]
                 _update_dstate()
             self._ODE = dy_dt
 
