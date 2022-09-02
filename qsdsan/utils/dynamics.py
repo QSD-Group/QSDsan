@@ -76,6 +76,7 @@ class ExogenousDynamicVariable:
             self._t_end = t[-1]
             self._f = self._intpl(t, y, **self._intpl_kwargs)
         elif hasattr(function, '__call__'):
+            self._t_end = 10
             self._f = function
         
         if self._func_dydt is None and hasattr(self._f, 'derivative'):
@@ -126,7 +127,7 @@ class ExogenousDynamicVariable:
 
     @derivative_approximator.setter
     def derivative_approximator(self, f):
-        if (f is None and hasattr(self._intpl, 'derivative')) or hasattr(f, '__call__'):
+        if f is None or hasattr(f, '__call__'):
             self._func_dydt = f
         else:
             raise TypeError(f'derivative approximator must be None (i.e., inferred from '
