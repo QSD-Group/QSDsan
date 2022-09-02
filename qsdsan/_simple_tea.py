@@ -140,7 +140,7 @@ class SimpleTEA(TEA):
     >>> # QSDsan's dependent packages (e.g., thermo)
     >>> tea.show()
     SimpleTEA: sys
-    NPV  : -258,786 USD at 5.0% discount rate
+    NPV  : -258,688 USD at 5.0% discount rate
 
 
     See Also
