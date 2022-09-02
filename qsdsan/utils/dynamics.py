@@ -76,7 +76,7 @@ class ExogenousDynamicVariable:
             self._t_end = t[-1]
             self._f = self._intpl(t, y, **self._intpl_kwargs)
         elif hasattr(function, '__call__'):
-            self._t_end = 10
+            self._t_end = None
             self._f = function
         
         if self._func_dydt is None and hasattr(self._f, 'derivative'):
@@ -130,26 +130,26 @@ class ExogenousDynamicVariable:
         if f is None or hasattr(f, '__call__'):
             self._func_dydt = f
         else:
-            raise TypeError(f'derivative approximator must be None (i.e., inferred from '
-                            f'a differentiable interpolant), or a callable that takes in '
+            raise TypeError(f'derivative approximator must be None or a callable that takes in '
                             f'time and returns derivatives as a 1d numpy.array, not {type(f)}.')
             
     def __call__(self, t):
         '''Evaluates the variable at time t.'''
-        t %= self._t_end
+        if self._t_end: t %= self._t_end
         return float(self._f(t))
     
     def derivative(self, t):
         '''Returns the derivative of the variable at time t'''
-        t %= self._t_end
+        if self._t_end: t %= self._t_end
         return float(self._df(t))
     
-    def plot(self):
+    def plot(self, t_start=0, t_end=None):
         fig, ax = plt.subplots(figsize=(8, 4.5))
         t, y = self.t_data, self.y_data
         if t is not None: n_eval = len(t)*5
         else: n_eval = 50
-        t_eval = np.linspace(0, self._t_end, n_eval)
+        _t_end = t_end or self._t_end or 10
+        t_eval = np.linspace(t_start, _t_end, n_eval)
         y_eval = self._f(t_eval)
         if t is not None:
             ax.plot(t, y, 'o', label='data')
