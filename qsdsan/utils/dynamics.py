@@ -71,8 +71,8 @@ class ExogenousDynamicVariable:
         
         if t is not None and y is not None:
             if y[-1] != y[0]:
-                np.append(t, 2*t[-1] - t[-2])
-                np.append(y, y[0])
+                t = np.append(t, 2*t[-1] - t[-2])
+                y = np.append(y, y[0])
             self._t_end = t[-1]
             self._f = self._intpl(t, y, **self._intpl_kwargs)
         elif hasattr(function, '__call__'):
@@ -146,11 +146,11 @@ class ExogenousDynamicVariable:
     def plot(self):
         fig, ax = plt.subplots(figsize=(8, 4.5))
         t, y = self.t_data, self.y_data
-        if t: n_eval = len(t)*5
+        if t is not None: n_eval = len(t)*5
         else: n_eval = 50
         t_eval = np.linspace(0, self._t_end, n_eval)
         y_eval = self._f(t_eval)
-        if t:
+        if t is not None:
             ax.plot(t, y, 'o', label='data')
             ax.plot(t_eval, y_eval, '-', label='interpolation')
             ax.legend(loc='best')
@@ -174,16 +174,18 @@ class ExogenousDynamicVariable:
             Additional keyword arguments passed to `qsdsan.utils.load_data`.
         '''
         if isinstance(data, str):
+            idx_col = load_data_kwargs.pop('index_col', None)
+            load_data_kwargs['index_col'] = idx_col
             df = load_data(data, **load_data_kwargs)
         else:
             df = data
         df.sort_values('t', inplace=True)
         dct_y = df.loc[:, df.columns!='t'].to_dict('series')
         t = np.asarray(df.t)
-        return [cls(k, t, v, interpolator=interpolator, 
+        return [cls(k, t, np.asarray(v), interpolator=interpolator, 
                     derivative_approximator=derivative_approximator,
                     intpl_kwargs=intpl_kwargs) \
                 for k, v in dct_y.items()]
         
     def __repr__(self):
-        return f"{type(self).__name__}: {self._ID})"
+        return f"<{type(self).__name__}: {self._ID}>"
