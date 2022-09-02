@@ -137,6 +137,9 @@ class SanUnit(Unit, isabstract=True):
 
     isdynamic : bool
         If this unit is simulated dynamically with rate equations.
+    exogenous_var : iterable[:class:`ExogenousDynamicVariable`], optional
+        Any exogenously dynamic variables that affect the process mass balance. 
+        Must be independent of state variables of the process model (if has one). 
     kwargs : dict
         Additional keyword arguments that can be set for this unit.
 
@@ -152,7 +155,7 @@ class SanUnit(Unit, isabstract=True):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  construction=(), transportation=(), equipments=(),
                  add_OPEX={}, uptime_ratio=1., lifetime=None, F_BM_default=None,
-                 isdynamic=False, **kwargs):
+                 isdynamic=False, exogenous_vars=(), **kwargs):
         self._register(ID)
         self._specification = None
         self._load_thermo(thermo)
@@ -178,6 +181,7 @@ class SanUnit(Unit, isabstract=True):
             self.F_BM.update(F_BM)
         # For units with different state headers, should update it in the unit's ``__init__``
         self.isdynamic = isdynamic
+        self._exovars = exogenous_vars
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
@@ -434,6 +438,17 @@ class SanUnit(Unit, isabstract=True):
                 System.registry.discard(ID)
             self._mock_dyn_sys = System(self.ID+'_dynmock', path=(self,))
 
+    @property
+    def exo_dynamic_vars(self):
+        '''[iterable[:class:`ExogenousDynamicVariable`]] Exogenous dynamic 
+        variables that affect the process mass balance, e.g., temperature, 
+        sunlight irradiance.'''
+        return self._exovars
+
+    def eval_exo_dynamic_vars(self, t):
+        '''Evaluates the exogenous dynamic variables at time t.'''
+        return [var(t) for var in self._exovars]
+    
     @property
     def scope(self):
         """A tracker of the unit's time-series data during dynamic simulation."""
