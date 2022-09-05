@@ -663,8 +663,6 @@ class Component(Chemical):
                            new.Tm, new.Tb, new.eos, new.phase_ref)
         TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = True
 
-        new._label_handles()
-
         for i,j in data.items():
             if i == 'phase': continue
             setattr(new, i , j)
@@ -752,16 +750,16 @@ class Component(Chemical):
                  particle_size: Particulate
                  degradability: Undegradable
                  organic: False
-                 i_C: 0 g C/g 
-                 i_N: 0.057076 g N/g 
-                 i_P: 0.12621 g P/g 
-                 i_K: 0 g K/g 
-                 i_Mg: 0.09904 g Mg/g 
-                 i_Ca: 0 g Ca/g 
-                 i_mass: 1 g mass/g 
-                 i_charge: 0 mol +/g 
-                 i_COD: 0 g COD/g 
-                 i_NOD: 0 g NOD/g 
+                 i_C: 0 g C/g
+                 i_N: 0.057076 g N/g
+                 i_P: 0.12621 g P/g
+                 i_K: 0 g K/g
+                 i_Mg: 0.09904 g Mg/g
+                 i_Ca: 0 g Ca/g
+                 i_mass: 1 g mass/g
+                 i_charge: 0 mol +/g
+                 i_COD: 0 g COD/g
+                 i_NOD: 0 g NOD/g
                  f_BOD5_COD: 0
                  f_uBOD_COD: 0
                  f_Vmass_Totmass: 0
@@ -794,7 +792,6 @@ class Component(Chemical):
                             new.Tm, new.Tb, new.eos, new.phase_ref)
         TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = True
 
-        new._label_handles()
         new._measured_as = measured_as
         new.i_mass = i_mass
         new.i_C = i_C

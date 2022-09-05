@@ -138,9 +138,9 @@ class SimpleTEA(TEA):
     ...                     system_add_OPEX=0.03)
     >>> # Your results maybe slightly different depending on the version of
     >>> # QSDsan's dependent packages (e.g., thermo)
-    >>> tea.show()
+    >>> tea.show() # doctest: +ELLIPSIS
     SimpleTEA: sys
-    NPV  : -258,786 USD at 5.0% discount rate
+    NPV  : -258,...
 
 
     See Also
