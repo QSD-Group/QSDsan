@@ -750,7 +750,8 @@ class PM2(CompiledProcesses):
                            Y_CH_PHO, Y_LI_PHO, Y_X_ALG_PHO, 
                            Y_CH_NR_HET_ACE, Y_LI_NR_HET_ACE, Y_X_ALG_HET_ACE, 
                            Y_CH_NR_HET_GLU, Y_LI_NR_HET_GLU, Y_X_ALG_HET_GLU)
-        
+        Q_N_min = max(self.Th_Q_N_min, Q_N_min)
+        Q_P_min = max(self.Th_Q_P_min, Q_P_min)
         kinetic_values = (a_c, I_n, arr_a, arr_e, beta_1, beta_2, b_reactor, I_opt, k_gamma, 
                           K_N, K_P, K_A, K_F, rho, K_STO, f_CH_max, f_LI_max, m_ATP, mu_max, 
                           q_CH, q_LI, Q_N_max, Q_N_min, Q_P_max, Q_P_min, V_NH, V_NO, V_P, exponent, 
@@ -773,4 +774,20 @@ class PM2(CompiledProcesses):
         self._parameters.update(stoichio_only)
         if self._stoichio_lambdified is not None:
             self.__dict__['_stoichio_lambdified'] = None
+        if 'Q_N_min' in parameters.keys():
+            if parameters['Q_N_min'] < self.Th_Q_N_min: 
+                raise ValueError(f'Value for Q_N_min must not be less than the '
+                                 f'theoretical minimum {self.Th_Q_N_min}')
+        if 'Q_P_min' in parameters.keys():
+            if parameters['Q_P_min'] < self.Th_Q_P_min: 
+                raise ValueError(f'Value for Q_P_min must not be less than the '
+                                 f'theoretical minimum {self.Th_Q_P_min}')
         self.rate_function.set_param(**parameters)
+
+    @property
+    def Th_Q_N_min(self):
+        return abs(self.stoichiometry.loc['growth_pho', 'X_N_ALG'])
+    
+    @property
+    def Th_Q_P_min(self):
+        return abs(self.stoichiometry.loc['growth_pho', 'X_P_ALG'])
