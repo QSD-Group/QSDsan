@@ -138,8 +138,8 @@ class SanUnit(Unit, isabstract=True):
     isdynamic : bool
         If this unit is simulated dynamically with rate equations.
     exogenous_var : iterable[:class:`ExogenousDynamicVariable`], optional
-        Any exogenous dynamic variables that affect the process mass balance.
-        Must be independent of state variables of the process model (if has one).
+        Any exogenously dynamic variables that affect the process mass balance. 
+        Must be independent of state variables of the process model (if has one). 
     kwargs : dict
         Additional keyword arguments that can be set for this unit.
 
@@ -431,7 +431,7 @@ class SanUnit(Unit, isabstract=True):
             if self._isdynamic == bool(i):
                 return
         else: self._isdynamic = bool(i)
-        if self.hasae or self.hasode:
+        if self.hasode:
             self._init_dynamic()
             if hasattr(self, '_mock_dyn_sys'):
                 ID = self.ID+'_dynmock'
@@ -440,15 +440,15 @@ class SanUnit(Unit, isabstract=True):
 
     @property
     def exo_dynamic_vars(self):
-        '''[iterable[:class:`ExogenousDynamicVariable`]] Exogenous dynamic
-        variables that affect the process mass balance, e.g., temperature,
+        '''[iterable[:class:`ExogenousDynamicVariable`]] Exogenous dynamic 
+        variables that affect the process mass balance, e.g., temperature, 
         sunlight irradiance.'''
         return self._exovars
 
     def eval_exo_dynamic_vars(self, t):
         '''Evaluates the exogenous dynamic variables at time t.'''
         return [var(t) for var in self._exovars]
-
+    
     @property
     def scope(self):
         """A tracker of the unit's time-series data during dynamic simulation."""
@@ -463,11 +463,6 @@ class SanUnit(Unit, isabstract=True):
         if self is not s.subject:
             raise ValueError(f'The subject of {s} must be {self} not {s.subject}.')
         self._scope = s
-
-    @property
-    def hasae(self):
-        """Whether this unit's dynamic states are determined by auxiliary equations."""
-        return hasattr(self, '_compile_AE')
 
     @property
     def hasode(self):
@@ -523,7 +518,7 @@ class SanUnit(Unit, isabstract=True):
 
     @property
     def equipments(self):
-        '''Iterable(obj) :class:`~.Equipment` with equipment information.'''
+        '''Iterable(obj) :class:`~.Equipment` with equipments information.'''
         return self._equipments
     @equipments.setter
     def equipments(self, i):
