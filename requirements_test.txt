@@ -1,8 +1,4 @@
 # Needed by qsdsan
-git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git@qsdsan
-git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@qsdsan
-biosteam==2.32.18
-thermosteam==0.28.13
 exposan
 SALib>=1.4.5
 seaborn
