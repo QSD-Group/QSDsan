@@ -659,8 +659,12 @@ class Component(Chemical):
         new._locked_state = phase
 
         TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = False
-        new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus,
-                           new.Tm, new.Tb, new.eos, new.phase_ref, new.S0)
+        try: 
+            new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus,
+                               new.Tm, new.Tb, new.eos, new.phase_ref, new.S0)
+        except: #!!! this should be needed when biosteam is update appropriately
+            new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus,
+                               new.Tm, new.Tb, new.eos, new.phase_ref)
         TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = True
 
         for i,j in data.items():
@@ -788,8 +792,12 @@ class Component(Chemical):
         if phase: new.at_state(phase)
 
         TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = False
-        new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus,
-                            new.Tm, new.Tb, new.eos, new.phase_ref, new.S0)
+        try: 
+            new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus,
+                               new.Tm, new.Tb, new.eos, new.phase_ref, new.S0)
+        except: #!!! this should be needed when biosteam is update appropriately
+            new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus,
+                               new.Tm, new.Tb, new.eos, new.phase_ref)
         TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = True
 
         new._measured_as = measured_as
