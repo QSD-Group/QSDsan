@@ -138,8 +138,8 @@ class SanUnit(Unit, isabstract=True):
     isdynamic : bool
         If this unit is simulated dynamically with rate equations.
     exogenous_var : iterable[:class:`ExogenousDynamicVariable`], optional
-        Any exogenously dynamic variables that affect the process mass balance. 
-        Must be independent of state variables of the process model (if has one). 
+        Any exogenously dynamic variables that affect the process mass balance.
+        Must be independent of state variables of the process model (if has one).
     kwargs : dict
         Additional keyword arguments that can be set for this unit.
 
@@ -165,7 +165,8 @@ class SanUnit(Unit, isabstract=True):
         self._init_utils()
         self._init_results()
         self._init_specification()
-        self._assert_compatible_property_package()
+        if not kwargs.get('skip_property_package_check'):
+            self._assert_compatible_property_package()
         for i in (*construction, *transportation, *equipments):
             i._linked_unit = self
         # Make fresh ones for each unit
@@ -440,15 +441,15 @@ class SanUnit(Unit, isabstract=True):
 
     @property
     def exo_dynamic_vars(self):
-        '''[iterable[:class:`ExogenousDynamicVariable`]] Exogenous dynamic 
-        variables that affect the process mass balance, e.g., temperature, 
+        '''[iterable[:class:`ExogenousDynamicVariable`]] Exogenous dynamic
+        variables that affect the process mass balance, e.g., temperature,
         sunlight irradiance.'''
         return self._exovars
 
     def eval_exo_dynamic_vars(self, t):
         '''Evaluates the exogenous dynamic variables at time t.'''
         return [var(t) for var in self._exovars]
-    
+
     @property
     def scope(self):
         """A tracker of the unit's time-series data during dynamic simulation."""
