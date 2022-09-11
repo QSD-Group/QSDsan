@@ -428,7 +428,7 @@ class BiogenicRefineryHHX(SanUnit):
         The exponential scaling method might be considered for a better estimation.
 
 
-    This class should be used together with :class:`~.sanunits.HHXdryer`.
+    This class should be used together with :class:`~.sanunits.BiogenicRefineryHHXdryer`.
 
     The following components should be included in system thermo object for simulation:
     N2O.
@@ -489,11 +489,11 @@ class BiogenicRefineryHHX(SanUnit):
         hot_gas_out.T = self.hhx_temp
 
         # # The following codes can be used to calculate the heat that was delivered to the HHX
+        # # Yalin Li updated L. Stetson Rowles' codes on 2022-09-10
         # self.heat_output_water = \
-        #     self.water_flowrate * \
+        #     self.water_flowrate*60/1e3 * \ # L/min to kg/hr
         #     (self.water_out_temp-self.water_in_temp) * \
-        #     self.water_density_kg_m_3 * \
-        #     self.water_heat_capacity_k_j_kg_k * (60/1000)  # MJ/hr
+        #     self.water_heat_capacity_k_j_kg_k  # MJ/hr
 
         # # The following codes can be used to calculate losses through water pipe
         # self.heat_loss_water_pipe = \
@@ -558,7 +558,7 @@ br_hhx_dryer_path = ospath.join(br_su_data_path, '_br_hhx_dryer.tsv')
 @price_ratio()
 class BiogenicRefineryHHXdryer(SanUnit):
     '''
-    This dryer unit is used in combination with :class:`~.sanunits.HydronicHeatExchanger`
+    This dryer unit is used in combination with :class:`~.sanunits.BiogenicRefineryHHX`
     in the biogenic refinery.
 
     The following components should be included in system thermo object for simulation:
@@ -1109,7 +1109,7 @@ class BiogenicRefineryScrewPress(SludgeSeparator):
     [1] Tchobanoglous, G.; Stensel, H. D.; Tsuchihashi, R.; Burton, F.; Abu-Orf,
     M.; Bowden, G.; Pfrang, W. Wastewater Engineering: Treatment and Resource
     Recovery, 5th ed.; Metcalf & Eddy, Inc., AECOM, McGraw-Hill: New York, 2014.
-    
+
     [2] Rowles et al., Financial viability and environmental sustainability of
     fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
     https://doi.org/10.1021/acsenvironau.2c00022
@@ -1206,7 +1206,7 @@ class BiogenicRefineryStruvitePrecipitation(SanUnit):
     source-separated urine in Nairobi, Kenya. Development Engineering. 2018,
     3, 188–195.
     https://doi.org/10.1016/j.deveng.2018.07.002
-    
+
     [3] Rowles et al., Financial viability and environmental sustainability of
     fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
     https://doi.org/10.1021/acsenvironau.2c00022
