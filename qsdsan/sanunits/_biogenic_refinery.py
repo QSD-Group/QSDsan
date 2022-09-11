@@ -434,7 +434,7 @@ class BiogenicRefineryHHX(SanUnit):
     N2O.
 
     The following impact items should be pre-constructed for life cycle assessment:
-    OilHeatExchanger, Pump.
+    StainlessSteel, Steel, HydronicHeatExchanger, Pump.
 
     Parameters
     ----------
@@ -455,7 +455,7 @@ class BiogenicRefineryHHX(SanUnit):
 
     See Also
     --------
-    :class:`~.sanunits.HHXdryer`
+    :class:`~.sanunits.BiogenicRefineryHHXdryer`
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -585,7 +585,7 @@ class BiogenicRefineryHHXdryer(SanUnit):
 
     See Also
     --------
-    :class:`~.sanunits.HydronicHeatExchanger`
+    :class:`~.sanunits.BiogenicRefineryHHX`
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
