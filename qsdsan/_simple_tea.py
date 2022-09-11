@@ -516,5 +516,9 @@ class SimpleTEA(TEA):
         '''
         [float] Equivalent annual cost calculated as the sum of `annualized_CAPEX` and
         `AOC` (annual operating cost).
+
+        .. note::
+
+            Sales are not included.
         '''
         return self.annualized_CAPEX+self.AOC
