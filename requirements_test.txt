@@ -1,6 +1,4 @@
 # Needed by qsdsan
-biosteam==2.33.1
-thermosteam==0.29.1
 exposan
 SALib>=1.4.5
 seaborn
