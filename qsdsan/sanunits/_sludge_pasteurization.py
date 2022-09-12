@@ -81,7 +81,7 @@ class SludgePasteurization(SanUnit):
     lhv_methane : float
         Lower heating value of methane at 298.15K is 50-55 MJ/kg
         based on World Nuclear Organization.
-    hx_heat_recovery : float
+    hhx_heat_recovery : float
         Heat recovery efficiency of the heat exchanger.
     ppl: int
         Total number of users for scaling of costs.
@@ -219,7 +219,7 @@ class SludgePasteurization(SanUnit):
         temp_diff = self.temp_pasteurization - self.sludge_temp
         Q_d = (M_w * self.Cp_w + M_dm * self.Cp_dm) * temp_diff + M_we * self.l_w  # kJ/hr
         Q_tot = Q_d/(1-self.heat_loss)/1e3 # MJ/hr, 10% of the total generated is lost
-        Q_tot *= (1 - self.hx_heat_recovery) # some of the heat can be recovered
+        Q_tot *= (1 - self.hhx_heat_recovery) # some of the heat can be recovered
 
         lhv_methane = self.lhv_methane
         lhv_lpg = self.lhv_lpg
