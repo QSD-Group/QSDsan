@@ -242,9 +242,9 @@ class SludgePasteurization(SanUnit):
         design['Steel'] = constr[1].quantity  = self.heat_exchanger_hydronic_steel
         design['HydronicHeatExchanger'] = constr[2].quantity = 1
         design['Pump'] = constr[3].quantity = 17.2/2.72
-        if self.if_sludge_service:
-            for key, val in design.items():
-                design[key] = val / 10
+        service_factor = 0.1 if self.if_sludge_service else 1
+        for key, val in design.items():
+            design[key] = val * service_factor
         self.add_construction(add_cost=False)
         
         C = self.baseline_purchase_costs
@@ -270,11 +270,11 @@ class SludgePasteurization(SanUnit):
             )
 
         factor = (self.user_scale_up ** self.exponent_scale)
-        if self.if_sludge_service: factor /= 10
+        service_factor = 0.1 if self.if_sludge_service else 1
 
         ratio = self.price_ratio
         for equipment, cost in C.items():
-           C[equipment] = cost * ratio * factor
+           C[equipment] = cost * ratio * factor * service_factor
 
         # O&M cost converted to annual basis, labor included,
         # USD/yr only accounts for time running
@@ -284,9 +284,9 @@ class SludgePasteurization(SanUnit):
             num * (self.service_team_replacewaterpump_hhx+self.service_team_purgewaterloop_hhx)
             )
 
-        self.add_OPEX =  annual_maintenance * self.service_team_wages / 60 / (365 * 24) # USD/hr (all items are per hour)
+        self.add_OPEX =  annual_maintenance * self.service_team_wages / 60 / (365 * 24) * service_factor # USD/hr (all items are per hour)
 
-        self.power_utility(self.water_pump_power+self.hhx_inducer_fan_power) # kWh/hr
+        self.power_utility(self.water_pump_power+self.hhx_inducer_fan_power*service_factor) # kWh/hr
 
 
     # # Legacy codes for previous SludgePasteurization design
