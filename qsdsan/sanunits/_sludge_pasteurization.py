@@ -131,7 +131,7 @@ class SludgePasteurization(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                   if_biogas=True, heat_loss=0.1, target_MC=0.1, sludge_temp=283.15,
                   temp_pasteurization=343.15, if_combustion=False, biogas_loss=0.1,
-                  biogas_eff=0.55,lhv_lpg = 48.5, lhv_methane=52.5, hx_heat_recovery=0.6,
+                  biogas_eff=0.55,lhv_lpg = 48.5, lhv_methane=52.5,
                   ppl=100, baseline_ppl=100, user_scale_up=1, exponent_scale=0.6,
                   if_sludge_service=True, **kwargs):
 
@@ -147,7 +147,6 @@ class SludgePasteurization(SanUnit):
         self.temp_pasteurization = temp_pasteurization
         self.lhv_methane = lhv_methane
         self.lhv_lpg = lhv_lpg
-        self.hx_heat_recovery = hx_heat_recovery
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
         self.user_scale_up = user_scale_up
@@ -247,22 +246,6 @@ class SludgePasteurization(SanUnit):
             for key, val in design.items():
                 design[key] = val / 10
         self.add_construction(add_cost=False)
-
-
-    # # Legacy design
-    # def _design(self):
-    #     design = self.design_results
-    #     if self.if_sludge_service:
-    #         design['Steel'] = S_quant = (self.sludge_dryer_weight + self.sludge_barrel_weight)/10*self.user_scale_up
-    #     else:
-    #         design['Steel'] = S_quant = (self.sludge_dryer_weight + self.sludge_barrel_weight)*self.user_scale_up
-
-    #     self.construction = (
-    #         Construction(item='Steel', quantity = S_quant, quantity_unit = 'kg'),
-    #         )
-    #     self.add_construction(add_cost=False)
-
-        
         
         C = self.baseline_purchase_costs
         D = self.design_results
@@ -306,6 +289,18 @@ class SludgePasteurization(SanUnit):
         self.power_utility(self.water_pump_power+self.hhx_inducer_fan_power) # kWh/hr
 
 
+    # # Legacy codes for previous SludgePasteurization design
+    # def _design(self):
+    #     design = self.design_results
+    #     if self.if_sludge_service:
+    #         design['Steel'] = S_quant = (self.sludge_dryer_weight + self.sludge_barrel_weight)/10*self.user_scale_up
+    #     else:
+    #         design['Steel'] = S_quant = (self.sludge_dryer_weight + self.sludge_barrel_weight)*self.user_scale_up
+
+    #     self.construction = (
+    #         Construction(item='Steel', quantity = S_quant, quantity_unit = 'kg'),
+    #         )
+    #     self.add_construction(add_cost=False)
     # # Legacy cost
     # def _cost(self):
     #     C = self.baseline_purchase_costs
@@ -321,7 +316,6 @@ class SludgePasteurization(SanUnit):
     #         C[equipment] = cost * ratio
 
     #     self.add_OPEX = self._calc_replacement_cost() + self._calc_maintenance_labor_cost()
-
 
     # # Assume dryer and barrel have 25 year lifetime so will not need to be replaced
     # def _calc_replacement_cost(self):
