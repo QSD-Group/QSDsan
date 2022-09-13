@@ -247,6 +247,8 @@ class SludgePasteurization(SanUnit):
             design[key] = val * service_factor
         self.add_construction(add_cost=False)
         
+        
+    def _cost(self):
         C = self.baseline_purchase_costs
         D = self.design_results
         C['Stainless steel'] = self.stainless_steel_cost * D['StainlessSteel']
