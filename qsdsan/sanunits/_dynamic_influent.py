@@ -52,9 +52,11 @@ class DynamicInfluent(SanUnit):
 
     See Also
     --------
-    `scipy.interpolate.CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`
-    `scipy.interpolate.InterpolatedUnivariateSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.InterpolatedUnivariateSpline.html>`
-    `scipy.interpolate.interp1d <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html>`
+    `scipy.interpolate.CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`_
+
+    `scipy.interpolate.InterpolatedUnivariateSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.InterpolatedUnivariateSpline.html>`_
+    
+    `scipy.interpolate.interp1d <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html>`_
     """
     _N_ins = 0
     _N_outs = 1
@@ -127,7 +129,7 @@ class DynamicInfluent(SanUnit):
         y_IDs = self.components.IDs + ('Q',)
         diff_set = set(df.columns) - set(y_IDs) - {'t'}
         if diff_set: 
-            raise RuntimeError(f'The data file contains state variable(s) that are'
+            raise RuntimeError(f'The data file contains state variable(s) that are '
                                f'inconsistent with the thermo: {diff_set}')
         self._interpolant = [intpl(df.t, df.loc[:,y], **ikwargs) \
                              if y in df.columns else lambda t: 0 \
