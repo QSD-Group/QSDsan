@@ -242,9 +242,12 @@ class SludgePasteurization(SanUnit):
         design['Steel'] = constr[1].quantity  = self.heat_exchanger_hydronic_steel
         design['HydronicHeatExchanger'] = constr[2].quantity = 1
         design['Pump'] = constr[3].quantity = 17.2/2.72
+
+        factor = (self.user_scale_up ** self.exponent_scale)
         service_factor = 0.1 if self.if_sludge_service else 1
+        lumped_factor = factor * service_factor
         for key, val in design.items():
-            design[key] = val * service_factor
+            design[key] = val * lumped_factor
         self.add_construction(add_cost=False)
         
         
