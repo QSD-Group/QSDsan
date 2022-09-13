@@ -1,4 +1,4 @@
-# Needed by qsdsan, biosteam/thermosteam version noted in GitHub workflow
+# Needed by qsdsan, biosteam/thermosteam versions noted in GitHub workflow
 exposan
 SALib>=1.4.5
 seaborn

@@ -519,7 +519,7 @@ class SanUnit(Unit, isabstract=True):
 
     @property
     def equipments(self):
-        '''Iterable(obj) :class:`~.Equipment` with equipments information.'''
+        '''Iterable(obj) :class:`~.Equipment` with equipment information.'''
         return self._equipments
     @equipments.setter
     def equipments(self, i):
