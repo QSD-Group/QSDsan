@@ -242,11 +242,16 @@ class SludgePasteurization(SanUnit):
         design['Steel'] = constr[1].quantity  = self.heat_exchanger_hydronic_steel
         design['HydronicHeatExchanger'] = constr[2].quantity = 1
         design['Pump'] = constr[3].quantity = 17.2/2.72
+
+        factor = (self.user_scale_up ** self.exponent_scale)
         service_factor = 0.1 if self.if_sludge_service else 1
+        lumped_factor = factor * service_factor
         for key, val in design.items():
-            design[key] = val * service_factor
+            design[key] = val * lumped_factor
         self.add_construction(add_cost=False)
         
+        
+    def _cost(self):
         C = self.baseline_purchase_costs
         D = self.design_results
         C['Stainless steel'] = self.stainless_steel_cost * D['StainlessSteel']
@@ -269,12 +274,14 @@ class SludgePasteurization(SanUnit):
             self.hhx_overflow_tank
             )
 
+        #!!! Exponential scaling isn't use in other systems
         factor = (self.user_scale_up ** self.exponent_scale)
         service_factor = 0.1 if self.if_sludge_service else 1
+        lumped_factor = factor * service_factor
 
         ratio = self.price_ratio
         for equipment, cost in C.items():
-           C[equipment] = cost * ratio * factor * service_factor
+           C[equipment] = cost * ratio * lumped_factor
 
         # O&M cost converted to annual basis, labor included,
         # USD/yr only accounts for time running
@@ -284,9 +291,9 @@ class SludgePasteurization(SanUnit):
             num * (self.service_team_replacewaterpump_hhx+self.service_team_purgewaterloop_hhx)
             )
 
-        self.add_OPEX =  annual_maintenance * self.service_team_wages / 60 / (365 * 24) * service_factor # USD/hr (all items are per hour)
+        self.add_OPEX =  annual_maintenance * self.service_team_wages / 60 / (365 * 24) * lumped_factor # USD/hr (all items are per hour)
 
-        self.power_utility(self.water_pump_power+self.hhx_inducer_fan_power*service_factor) # kWh/hr
+        self.power_utility(self.water_pump_power+self.hhx_inducer_fan_power*lumped_factor) # kWh/hr
 
 
     # # Legacy codes for previous SludgePasteurization design
