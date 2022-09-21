@@ -186,6 +186,26 @@ class SanUnit(Unit, isabstract=True):
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
+    # For backward compatibility
+    def _init_specifications(self):
+        try: super()._init_specifications()
+        except: self._init_specification()
+
+    def add_specifications(self, function):
+        try: super().add_specifications(self, function)
+        except: self.specification = function
+    
+    @property
+    def run_after_specification(self):
+        if hasattr(self, 'run_after_specifications'): return self.run_after_specifications
+        else:
+            self._run_after_specification = False
+            return self._run_after_specification
+    @run_after_specification.setter
+    def run_after_specification(self, i):
+        if hasattr(self, 'run_after_specifications'): self.run_after_specifications = i
+        else: self._run_after_specification = i
+
 
     def _convert_stream(self, strm_inputs, streams, init_with, ins_or_outs):
         isa = isinstance
@@ -415,6 +435,7 @@ class SanUnit(Unit, isabstract=True):
                 self.baseline_purchase_costs[i.item.ID] = i.cost
             if add_lifetime and i.lifetime:
                 self._default_equipment_lifetime[i.item.ID] = i.lifetime
+
 
     @property
     def components(self):
