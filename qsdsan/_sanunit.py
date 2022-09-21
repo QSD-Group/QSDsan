@@ -188,23 +188,23 @@ class SanUnit(Unit, isabstract=True):
 
     # For backward compatibility
     def _init_specifications(self):
-        try: super()._init_specifications()
-        except: self._init_specification()
+        try: super()._init_specifications() # new biosteam
+        except: self._init_specification() # old biosteam
 
     def add_specifications(self, function):
-        try: super().add_specifications(self, function)
-        except: self.specification = function
+        try: super().add_specifications(self, function) # new biosteam
+        except: self.specification = function # old biosteam
     
     @property
     def run_after_specification(self):
-        if hasattr(self, 'run_after_specifications'): return self.run_after_specifications
-        else:
+        try: return self.run_after_specifications # new biosteam
+        except: # old biosteam
             self._run_after_specification = False
             return self._run_after_specification
     @run_after_specification.setter
     def run_after_specification(self, i):
-        if hasattr(self, 'run_after_specifications'): self.run_after_specifications = i
-        else: self._run_after_specification = i
+        if hasattr(self, 'add_specifications'): self.run_after_specifications = i # new biosteam
+        else: self._run_after_specification = i # old biosteam
 
 
     def _convert_stream(self, strm_inputs, streams, init_with, ins_or_outs):
