@@ -164,7 +164,7 @@ class SanUnit(Unit, isabstract=True):
         self._init_outs(outs, init_with)
         self._init_utils()
         self._init_results()
-        self._init_specification()
+        self._init_specifications()
         if not kwargs.get('skip_property_package_check'):
             self._assert_compatible_property_package()
         for i in (*construction, *transportation, *equipments):
