@@ -24,8 +24,8 @@ for license details.
 '''
 
 from qsdsan import SanUnit, Construction
-from ._decay import Decay
 from ._septic_tank import SepticTank
+from ..processes._decay import Decay
 from ..utils import ospath, load_data, data_path, price_ratio
 
 __all__ = (
@@ -69,7 +69,7 @@ class EcoSanAerobic(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
 
     :class:`qsdsan.sanunits.EcoSanBioCost`
     '''
@@ -121,7 +121,7 @@ class EcoSanAnaerobic(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
 
     :class:`qsdsan.sanunits.EcoSanBioCost`
     '''
@@ -173,7 +173,7 @@ class EcoSanAnoxic(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
 
     :class:`qsdsan.sanunits.EcoSanBioCost`
     '''
@@ -291,7 +291,7 @@ class EcoSanECR(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -417,7 +417,7 @@ class EcoSanMBR(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -499,7 +499,7 @@ class EcoSanPrimary(SepticTank):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
 
     :class:`qsdsan.sanunits.SepticTank`
     '''

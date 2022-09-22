@@ -14,7 +14,7 @@ for license details.
 '''
 
 from qsdsan import SanUnit, Construction
-from ._decay import Decay
+from ..processes._decay import Decay
 from ..utils import ospath, load_data, data_path, price_ratio
 
 __all__ = ('SepticTank',)
@@ -66,7 +66,7 @@ class SepticTank(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
 
     # Constants
