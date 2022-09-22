@@ -27,7 +27,7 @@ setup(
     project_urls={
         'Documentation': 'https://qsdsan.readthedocs.io/',
     },
-    install_requires=['biosteam==2.32.18', 'thermosteam==0.28.13',
+    install_requires=['biosteam==2.33.1', 'thermosteam==0.29.1',
                       'pandas>=1.3.2', 'matplotlib>=3.3.2', 'scikit-learn', 'scipy>=1.7.1',
                       'SALib>=1.4.5', 'seaborn', 'sympy>=1.8'],
     package_data=

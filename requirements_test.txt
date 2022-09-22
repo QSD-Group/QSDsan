@@ -1,6 +1,4 @@
-# Needed by qsdsan
-biosteam==2.32.18
-thermosteam==0.28.13
+# Needed by qsdsan, biosteam/thermosteam versions noted in GitHub workflow
 exposan
 SALib>=1.4.5
 seaborn

@@ -23,12 +23,28 @@ __all__ = ('SludgePasteurization',)
 
 pasteurization_path = ospath.join(data_path, 'sanunit_data/_sludge_pasteurization.tsv')
 
+br_su_data_path = ospath.join(data_path, 'sanunit_data/br')
+br_hhx_path = ospath.join(br_su_data_path, '_br_hhx.tsv')
+br_hhx_dryer_path = ospath.join(br_su_data_path, '_br_hhx_dryer.tsv')
+
+
 @price_ratio()
 class SludgePasteurization(SanUnit):
 
     '''
     Unit operation for the pasteurization of sludge using liquid petroleum gas (LPG)
-    biogas or biogas.
+    or biogas.
+
+    Cost and environmental impacts of this unit are based on the 
+    hydronic heat exchanger and dryer in the biogenic refinery.
+
+    The following impact items should be pre-constructed for life cycle assessment:
+    StainlessSteel, Steel, HydronicHeatExchanger, Pump.
+
+    .. note::
+
+        Cost and environmental impacts of this unit are fixed
+        (i.e., they DO NOT scale with mass or energy flows).
 
     Parameters
     ----------
@@ -65,6 +81,8 @@ class SludgePasteurization(SanUnit):
     lhv_methane : float
         Lower heating value of methane at 298.15K is 50-55 MJ/kg
         based on World Nuclear Organization.
+    hhx_heat_recovery : float
+        Heat recovery efficiency of the heat exchanger.
     ppl: int
         Total number of users for scaling of costs.
     baseline_ppl : int
@@ -92,6 +110,15 @@ class SludgePasteurization(SanUnit):
     Sludge Disposal: A Case Study.
     Front. Chem. Sci. Eng. 2018, 12 (4), 660–669.
     https://doi.org/10.1007/s11705-018-1773-0.
+    [3] Rowles et al., Financial viability and environmental sustainability of
+    fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
+    https://doi.org/10.1021/acsenvironau.2c00022
+
+    See Also
+    --------
+    :class:`~.sanunits.BiogenicRefineryHHX`
+
+    :class:`~.sanunits.BiogenicRefineryHHXdryer`
     '''
 
     # Specific Heat capacity of water
@@ -126,10 +153,19 @@ class SludgePasteurization(SanUnit):
         self.exponent_scale = exponent_scale
         self.if_sludge_service = if_sludge_service
 
-        data = load_data(path=pasteurization_path)
-        for para in data.index:
-            value = float(data.loc[para]['expected'])
-            setattr(self, para, value)
+        self.construction = (
+            Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            Construction('hydronic_heat_exchanger', linked_unit=self, item='HydronicHeatExchanger', quantity_unit='ea'),
+            Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
+            )
+
+        paths = (pasteurization_path, br_hhx_path, br_hhx_dryer_path)
+        for path in paths:
+            data = load_data(path=path)
+            for para in data.index:
+                value = float(data.loc[para]['expected'])
+                setattr(self, para, value)
         del data
 
         for attr, value in kwargs.items():
@@ -183,6 +219,7 @@ class SludgePasteurization(SanUnit):
         temp_diff = self.temp_pasteurization - self.sludge_temp
         Q_d = (M_w * self.Cp_w + M_dm * self.Cp_dm) * temp_diff + M_we * self.l_w  # kJ/hr
         Q_tot = Q_d/(1-self.heat_loss)/1e3 # MJ/hr, 10% of the total generated is lost
+        Q_tot *= (1 - self.hhx_heat_recovery) # some of the heat can be recovered
 
         lhv_methane = self.lhv_methane
         lhv_lpg = self.lhv_lpg
@@ -200,39 +237,100 @@ class SludgePasteurization(SanUnit):
 
     def _design(self):
         design = self.design_results
-        if self.if_sludge_service:
-            design['Steel'] = S_quant = (self.sludge_dryer_weight + self.sludge_barrel_weight)/10*self.user_scale_up
-        else:
-            design['Steel'] = S_quant = (self.sludge_dryer_weight + self.sludge_barrel_weight)*self.user_scale_up
+        constr = self.construction
+        design['StainlessSteel'] = constr[0].quantity = self.heat_exchanger_hydronic_stainless
+        design['Steel'] = constr[1].quantity  = self.heat_exchanger_hydronic_steel
+        design['HydronicHeatExchanger'] = constr[2].quantity = 1
+        design['Pump'] = constr[3].quantity = 17.2/2.72
 
-        self.construction = (
-            Construction(item='Steel', quantity = S_quant, quantity_unit = 'kg'),
-            )
+        factor = (self.user_scale_up ** self.exponent_scale)
+        service_factor = 0.1 if self.if_sludge_service else 1
+        lumped_factor = factor * service_factor
+        for key, val in design.items():
+            design[key] = val * lumped_factor
         self.add_construction(add_cost=False)
-
+        
+        
     def _cost(self):
         C = self.baseline_purchase_costs
-        factor = self.user_scale_up ** self.exponent_scale
-        if self.if_sludge_service:
-            C['Dryer'] = self.sludge_dryer / 10 * factor
-            C['Barrel'] = self.sludge_barrel / 10 * factor
-        else:
-            C['Dryer'] = self.sludge_dryer * factor
-            C['Barrel'] = self.sludge_barrel * factor
+        D = self.design_results
+        C['Stainless steel'] = self.stainless_steel_cost * D['StainlessSteel']
+        C['Steel'] = self.steel_cost * D['Steel']
+        C['Misc. parts'] = (
+            self.hhx_stack +
+            self.hhx_stack_thermocouple +
+            self.hhx_oxygen_sensor +
+            self.hhx_inducer_fan +
+            self.hhx_flow_meter +
+            self.hhx_pump +
+            self.hhx_water_in_thermistor +
+            self.hhx_water_out_thermistor +
+            self.hhx_load_tank +
+            self.hhx_expansion_tank +
+            self.hhx_heat_exchanger +
+            self.hhx_values +
+            self.hhx_thermal_well +
+            self.hhx_hot_water_tank +
+            self.hhx_overflow_tank
+            )
+
+        #!!! Exponential scaling isn't use in other systems
+        factor = (self.user_scale_up ** self.exponent_scale)
+        service_factor = 0.1 if self.if_sludge_service else 1
+        lumped_factor = factor * service_factor
+
         ratio = self.price_ratio
         for equipment, cost in C.items():
-            C[equipment] = cost * ratio
+           C[equipment] = cost * ratio * lumped_factor
 
-        self.add_OPEX = self._calc_replacement_cost() + self._calc_maintenance_labor_cost()
+        # O&M cost converted to annual basis, labor included,
+        # USD/yr only accounts for time running
+        num = 1 / self.frequency_corrective_maintenance
+        annual_maintenance = (
+            self.service_team_adjustdoor_hhx*12 +
+            num * (self.service_team_replacewaterpump_hhx+self.service_team_purgewaterloop_hhx)
+            )
+
+        self.add_OPEX =  annual_maintenance * self.service_team_wages / 60 / (365 * 24) * lumped_factor # USD/hr (all items are per hour)
+
+        self.power_utility(self.water_pump_power+self.hhx_inducer_fan_power*lumped_factor) # kWh/hr
 
 
-    # Assume dryer and barrel have 25 year lifetime so will not need to be replaced
-    def _calc_replacement_cost(self):
-        return 0
+    # # Legacy codes for previous SludgePasteurization design
+    # def _design(self):
+    #     design = self.design_results
+    #     if self.if_sludge_service:
+    #         design['Steel'] = S_quant = (self.sludge_dryer_weight + self.sludge_barrel_weight)/10*self.user_scale_up
+    #     else:
+    #         design['Steel'] = S_quant = (self.sludge_dryer_weight + self.sludge_barrel_weight)*self.user_scale_up
 
-    def _calc_maintenance_labor_cost(self):
-        sludge_maintenance_labor_cost = self.sludge_labor_maintenance * self.wages * (self.user_scale_up**self.exponent_scale)
-        return sludge_maintenance_labor_cost/(365 * 24)  # USD/hr
+    #     self.construction = (
+    #         Construction(item='Steel', quantity = S_quant, quantity_unit = 'kg'),
+    #         )
+    #     self.add_construction(add_cost=False)
+    # # Legacy cost
+    # def _cost(self):
+    #     C = self.baseline_purchase_costs
+    #     factor = self.user_scale_up ** self.exponent_scale
+    #     if self.if_sludge_service:
+    #         C['Dryer'] = self.sludge_dryer / 10 * factor
+    #         C['Barrel'] = self.sludge_barrel / 10 * factor
+    #     else:
+    #         C['Dryer'] = self.sludge_dryer * factor
+    #         C['Barrel'] = self.sludge_barrel * factor
+    #     ratio = self.price_ratio
+    #     for equipment, cost in C.items():
+    #         C[equipment] = cost * ratio
+
+    #     self.add_OPEX = self._calc_replacement_cost() + self._calc_maintenance_labor_cost()
+
+    # # Assume dryer and barrel have 25 year lifetime so will not need to be replaced
+    # def _calc_replacement_cost(self):
+    #     return 0
+
+    # def _calc_maintenance_labor_cost(self):
+    #     sludge_maintenance_labor_cost = self.sludge_labor_maintenance * self.wages * (self.user_scale_up**self.exponent_scale)
+    #     return sludge_maintenance_labor_cost/(365 * 24)  # USD/hr
 
 
     @property
