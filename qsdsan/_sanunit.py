@@ -138,8 +138,8 @@ class SanUnit(Unit, isabstract=True):
     isdynamic : bool
         If this unit is simulated dynamically with rate equations.
     exogenous_var : iterable[:class:`ExogenousDynamicVariable`], optional
-        Any exogenously dynamic variables that affect the process mass balance.
-        Must be independent of state variables of the process model (if has one).
+        Any exogenously dynamic variables that affect the process mass balance. 
+        Must be independent of state variables of the process model (if has one). 
     kwargs : dict
         Additional keyword arguments that can be set for this unit.
 
@@ -164,9 +164,8 @@ class SanUnit(Unit, isabstract=True):
         self._init_outs(outs, init_with)
         self._init_utils()
         self._init_results()
-        self._init_specifications()
-        if not kwargs.get('skip_property_package_check'):
-            self._assert_compatible_property_package()
+        self._init_specification()
+        self._assert_compatible_property_package()
         for i in (*construction, *transportation, *equipments):
             i._linked_unit = self
         # Make fresh ones for each unit
@@ -185,26 +184,6 @@ class SanUnit(Unit, isabstract=True):
         self._exovars = exogenous_vars
         for attr, val in kwargs.items():
             setattr(self, attr, val)
-
-    # For backward compatibility
-    def _init_specifications(self):
-        try: super()._init_specifications() # new biosteam
-        except: self._init_specification() # old biosteam
-
-    def add_specifications(self, function):
-        try: super().add_specifications(self, function) # new biosteam
-        except: self.specification = function # old biosteam
-    
-    @property
-    def run_after_specification(self):
-        try: return self.run_after_specifications # new biosteam
-        except: # old biosteam
-            self._run_after_specification = False
-            return self._run_after_specification
-    @run_after_specification.setter
-    def run_after_specification(self, i):
-        if hasattr(self, 'add_specifications'): self.run_after_specifications = i # new biosteam
-        else: self._run_after_specification = i # old biosteam
 
 
     def _convert_stream(self, strm_inputs, streams, init_with, ins_or_outs):
@@ -436,7 +415,6 @@ class SanUnit(Unit, isabstract=True):
             if add_lifetime and i.lifetime:
                 self._default_equipment_lifetime[i.item.ID] = i.lifetime
 
-
     @property
     def components(self):
         '''[Components] The :class:`~.Components` object associated with this unit.'''
@@ -462,15 +440,15 @@ class SanUnit(Unit, isabstract=True):
 
     @property
     def exo_dynamic_vars(self):
-        '''[iterable[:class:`ExogenousDynamicVariable`]] Exogenous dynamic
-        variables that affect the process mass balance, e.g., temperature,
+        '''[iterable[:class:`ExogenousDynamicVariable`]] Exogenous dynamic 
+        variables that affect the process mass balance, e.g., temperature, 
         sunlight irradiance.'''
         return self._exovars
 
     def eval_exo_dynamic_vars(self, t):
         '''Evaluates the exogenous dynamic variables at time t.'''
         return [var(t) for var in self._exovars]
-
+    
     @property
     def scope(self):
         """A tracker of the unit's time-series data during dynamic simulation."""
@@ -540,7 +518,7 @@ class SanUnit(Unit, isabstract=True):
 
     @property
     def equipments(self):
-        '''Iterable(obj) :class:`~.Equipment` with equipment information.'''
+        '''Iterable(obj) :class:`~.Equipment` with equipments information.'''
         return self._equipments
     @equipments.setter
     def equipments(self, i):

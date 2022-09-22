@@ -121,8 +121,9 @@ def symbolize(coeff_dct, components, conserved_for, parameters):
             else: v_arr.append(coeff_dct[cmp])
         v = Matrix(sympify(v_arr, parameters))
         ic = get_ic(components.subgroup(IDs), conserved_for)
-        if ic.shape[1] != v.shape[0]: ic = ic.T
         sol = solve(simplify(ic * v).as_expr(), unknowns)
+        # sol = solve(ic * v, unknowns)
+        # coeff_dct = dict(zip(IDs, simplify(v.subs(sol))))
         coeff_dct = dict(zip(IDs, v.subs(sol)))
         del unknowns
     else:
