@@ -607,7 +607,7 @@ class PM2(CompiledProcesses):
               The default is 0.092.
     Q_P_min : float, optional
               Phosphorus subsistence quota; assumes N:P ratio of 5:1, in [g P/g COD].
-              The default is 0.016.                                
+              The default is 0.0163.                                
     V_NH : float, optional
               Maximum specific ammonium uptake rate (calibrated in Guest et al., 2013), in [g N/g COD/d].
               The default is 0.254.
@@ -707,7 +707,7 @@ class PM2(CompiledProcesses):
                 a_c=0.049, I_n=250, arr_a=1.8*10**10, arr_e=6842, beta_1=2.90, beta_2=3.50, b_reactor=0.03, I_opt=300, k_gamma=0.00001, 
                 K_N=0.1, K_P=1.0, K_A=6.3, K_F=6.3, rho=1.186, K_STO=1.566, 
                 f_CH_max=0.819, f_LI_max=3.249, m_ATP=15.835, mu_max=1.969, q_CH=0.594, q_LI=0.910, 
-                Q_N_max=0.417, Q_N_min=0.082, Q_P_max=0.092, Q_P_min=0.016, V_NH=0.254, V_NO=0.254, V_P=0.016, exponent=4,
+                Q_N_max=0.417, Q_N_min=0.082, Q_P_max=0.092, Q_P_min=0.0163, V_NH=0.254, V_NO=0.254, V_P=0.016, exponent=4,
                 Y_ATP_PHO=55.073, Y_CH_PHO=0.754, Y_LI_PHO=0.901, Y_X_ALG_PHO=0.450,
                 Y_ATP_HET_ACE=39.623, Y_CH_NR_HET_ACE=0.625, Y_CH_ND_HET_ACE=0.600, 
                 Y_LI_NR_HET_ACE=1.105, Y_LI_ND_HET_ACE=0.713, Y_X_ALG_HET_ACE=0.216,
@@ -786,8 +786,8 @@ class PM2(CompiledProcesses):
 
     @property
     def Th_Q_N_min(self):
-        return abs(self.stoichiometry.loc['growth_pho', 'X_N_ALG'])
+        return abs(self.stoichiometry.loc['growth_pho', 'X_N_ALG'])*1.001
     
     @property
     def Th_Q_P_min(self):
-        return abs(self.stoichiometry.loc['growth_pho', 'X_P_ALG'])
+        return abs(self.stoichiometry.loc['growth_pho', 'X_P_ALG'])*1.001
