@@ -594,14 +594,9 @@ class PrimaryClarifier(SanUnit):
         params = (HRT, r, corr) = self._HRT, self._r, self._corr
         if (i is None for i in params):
             raise RuntimeError('must specify HRT, ratio of effluent to sludge, and correction factor')
-        
+        n_COD = (corr*(2.88*r - 0.118)) - (1.45 + 6.15*np.log(HRT*24*60))
         f_i = 1 - (n_COD/100)
-        
-        
-        
         Qs = Q_in*TSS_in*f_i/(self._MLSS-TSS_in)
-        
-       
         Zs = Ze = self.ins.conc * (1-cmps.x)
         Ce = dict(zip(cmps.IDs, Ze+Xe))
         Cs = dict(zip(cmps.IDs, Zs+Xs))
