@@ -710,7 +710,7 @@ class CompiledComponents(CompiledChemicals):
         Parameters
         ----------
         IDs : Iterable(str)
-            IDs of select components within this ``~.CompiledComponents``.
+            IDs of select components within this ``qsdsan.CompiledComponents``.
 
         Examples
         --------
