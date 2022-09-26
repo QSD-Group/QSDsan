@@ -535,3 +535,80 @@ class IdealClarifier(SanUnit):
 
     def _design(self):
         pass
+    
+class PrimaryClarifier(SanUnit):
+
+    _N_ins = 3
+    _N_outs = 2
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+                 isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time = 8, ratio_of_uf = 2,
+                 f_corr = 1, F_BM_default=None, **kwargs):
+
+        SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
+                         init_with=init_with, F_BM_default=F_BM_default)
+        self.Hydraulic_Retention_Time = Hydraulic_Retention_Time
+        self.ratio_of_uf = ratio_of_uf
+        self.f_corr = f_corr
+
+    @property
+    def Hydraulic_Retention_Time(self):
+        '''The Hydraulic Retention time in days.'''
+        return self._HRT
+
+    @Hydraulic_Retention_Time.setter
+    def Hydraulic_Retention_Time(self, HRT):
+        if HRT is not None: 
+            self._HRT = HRT
+        else: 
+            raise ValueError('HRT expected from user')
+
+    @property
+    def ratio_of_uf(self):
+        return self._r
+
+    @ratio_of_uf.setter
+    def ratio_of_uf(self, r):
+        if r is not None:
+            self._r = r
+        else:
+            raise ValueError('Effluent to Sludge ratio expected from user')
+            
+    @property
+    def f_corr(self):
+        return self._corr
+
+    @f_corr.setter
+    def f_corr(self, corr):
+        if corr is not None:
+            if corr > 1 or corr < 0:
+                raise ValueError(f'correction factor must be within [0, 1], not {corr}')
+            self._corr = corr
+
+    def _run(self):
+        q_inf, to, do = self.ins
+        uf, of = self.outs
+        cmps = self.components
+        Q_in = self.ins.get_total_flow('m3/d')
+        TSS_in = (self.ins.conc*cmps.x*cmps.i_mass).sum()
+        params = (HRT, r, corr) = self._HRT, self._r, self._corr
+        if (i is None for i in params):
+            raise RuntimeError('must specify HRT, ratio of effluent to sludge, and correction factor')
+        
+        f_i = 1 - (n_COD/100)
+        
+        
+        
+        Qs = Q_in*TSS_in*f_i/(self._MLSS-TSS_in)
+        
+       
+        Zs = Ze = self.ins.conc * (1-cmps.x)
+        Ce = dict(zip(cmps.IDs, Ze+Xe))
+        Cs = dict(zip(cmps.IDs, Zs+Xs))
+        Ce.pop('H2O', None)
+        Cs.pop('H2O', None)
+        of.set_flow_by_concentration(Q_in-Qs, Ce, units=('m3/d', 'mg/L'))
+        uf.set_flow_by_concentration(Qs, Cs, units=('m3/d', 'mg/L'))
+
+    def _design(self):
+        pass
