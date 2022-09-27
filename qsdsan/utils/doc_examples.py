@@ -14,7 +14,7 @@ for license details.
 
 from .. import (
     Component, Components, SanStream, System, SimpleTEA, Model,
-    set_thermo, sanunits as su
+    set_thermo, get_thermo, sanunits as su
     )
 from chaospy import distributions as shape
 
@@ -116,8 +116,8 @@ def load_example_system(components=None):
     Examples
     --------
     >>> from qsdsan.utils import load_example_components, load_example_system
-    >>> cmps = load_example_components()
-    >>> sys = load_example_system(cmps)
+    >>> # Components from `load_example_components` will be loaded if no components are set/given
+    >>> sys = load_example_system()
     >>> sys.path
     (<MixTank: M1>,
      <Pump: P1>,
@@ -127,8 +127,10 @@ def load_example_system(components=None):
      <Splitter: S2>)
     >>> sys.diagram() # doctest: +SKIP
     '''
-
     if components: set_thermo(components)
+    else:
+        try: get_thermo()
+        except: set_thermo(load_example_components())
 
     salt_water = SanStream('salt_water', Water=2000, NaCl=50, units='kg/hr')
     methanol = SanStream('methanol', Methanol=20, units='kg/hr')

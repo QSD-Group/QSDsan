@@ -14,7 +14,7 @@ for license details.
 '''
 
 from qsdsan import SanUnit, Construction
-from ._decay import Decay
+from ..processes._decay import Decay
 from ..utils import ospath, load_data, data_path, price_ratio
 
 __all__ = ('SepticTank',)
@@ -66,7 +66,7 @@ class SepticTank(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
 
     # Constants
@@ -153,7 +153,8 @@ class SepticTank(SanUnit, Decay):
         treated.imass['H2O'] = treated_water
 
         # Update the COD content of treated liquid and sludge
-        treated._COD = remaining_COD * ratio * 1e3 / treated.F_vol
+        if ratio == 0: treated._COD = 0
+        else: treated._COD = remaining_COD * ratio * 1e3 / treated.F_vol
         sludge._COD = remaining_COD * (1-ratio) * 1e3 / sludge.F_vol
 
 

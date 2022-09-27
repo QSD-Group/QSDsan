@@ -34,7 +34,6 @@ from ._abstract import *
 from ._clarifier import *
 from ._combustion import *
 from ._crop_application import *
-from ._decay import *
 from ._dynamic_influent import *
 from ._electrochemical_cell import *
 from ._encapsulation_bioreactor import *
@@ -74,7 +73,6 @@ from . import (
         _clarifier,
         _combustion,
         _crop_application,
-        _decay,
         _dynamic_influent,
         _electrochemical_cell,
         _encapsulation_bioreactor,
@@ -111,7 +109,6 @@ __all__ = (
         *_clarifier.__all__,
         *_combustion.__all__,
         *_crop_application.__all__,
-        *_decay.__all__,
         *_dynamic_influent.__all__,
         *_electrochemical_cell.__all__,
         *_encapsulation_bioreactor.__all__,

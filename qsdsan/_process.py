@@ -64,7 +64,7 @@ class DynamicParameter:
 
     @property
     def symbol(self):
-        '''[sympy.Symbol] Symbol of the dynamic parameter in stoichiometric coefficents.'''
+        '''[sympy.Symbol] Symbol of the dynamic parameter in stoichiometric coefficients.'''
         return self._symbol
     @symbol.setter
     def symbol(self, s):
@@ -130,7 +130,7 @@ class Kinetics(DynamicParameter):
     Parameters
     ----------
     process : :class:`Process`
-        The process that features this kinectis.
+        The process that features this kinetics.
     function : Callable or float or int, optional
         The function that evaluates the kinetic rate of reaction when given
         the array of state variables and additional parameters as positional
@@ -182,7 +182,7 @@ class MultiKinetics:
     Parameters
     ----------
     processes : :class:`Processes`
-        The process that features this kinectis.
+        The process that features this kinetics.
     function : Callable or Iterable[float or int], optional
         The function that returns the array of kinetic rates of the processes when
         given the array of state variables and additional parameters as positional

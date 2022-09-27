@@ -16,8 +16,8 @@ for license details.
 
 from math import ceil, pi
 import numpy as np
-from . import Decay
 from .. import SanUnit, Construction, WasteStream
+from ..processes import Decay
 from ..sanunits import HXutility, WWTpump, CSTR
 from ..utils import ospath, load_data, data_path, auom, calculate_excavation_volume
 __all__ = (
@@ -67,7 +67,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
 
     gravel_density = 1600
@@ -592,7 +592,7 @@ class AnaerobicDigestion(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',

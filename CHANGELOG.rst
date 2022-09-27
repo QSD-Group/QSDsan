@@ -6,6 +6,7 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 Ongoing
 -------
+- ``QSDsan`` now has a `website <https://qsdsan.com/>`_ to host all of the resources!
 - ``QSDsan``'s `documentation <https://qsdsan.readthedocs.io/en/latest/index.html>`_ is getting a new look!
 
 

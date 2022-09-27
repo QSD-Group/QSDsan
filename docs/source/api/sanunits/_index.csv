@@ -10,7 +10,6 @@ CSTR (continuously stirred tank reactor),Yes,No,Completed
 ComponentSplitter,No,Yes,Completed
 Copier,No,Yes,Completed
 CropApplication,No,Yes,Completed
-Decay,No,Yes,Completed (first order)
 DryingBed,No,No,Completed
 DynamicInfluent,Yes,No,Completed
 ElectrochemicalCell,No,No,Completed
