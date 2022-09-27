@@ -11,13 +11,13 @@
 *.pyo
 *.Rhistory
 *.sh
-.pypirc
 .coverage
 .coveralls.yml
+.pypirc
 _build
 build
 # conftest is used for local testing only
 conftest.py
-docs/build/*
 dist
+docs/build/*
 htmlcov
