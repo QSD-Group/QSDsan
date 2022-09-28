@@ -2107,8 +2107,8 @@ class MissingWasteStream(MissingSanStream):
         source = self._source
         sink = self._sink
         if not (source or sink):
-            raise RuntimeError("either a source or a sink is required to "
-                               "materialize connection")
+            raise RuntimeError('Either a source or a sink is required to '
+                               'materialize connection.')
         material_stream = WasteStream(ID, thermo=(source or sink).thermo)
         if source: source._outs.replace(self, material_stream)
         if sink: sink._ins.replace(self, material_stream)

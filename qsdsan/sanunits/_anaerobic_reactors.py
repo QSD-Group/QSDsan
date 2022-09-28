@@ -247,7 +247,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
 class AnaerobicCSTR(CSTR):
     
     '''
-    An anaerpbic continuous stirred tank reactor with biogas in headspace. [1]_, [2]_
+    An anaerobic continuous stirred tank reactor with biogas in headspace. [1]_, [2]_
 
     Parameters
     ----------
