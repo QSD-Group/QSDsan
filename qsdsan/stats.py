@@ -150,9 +150,9 @@ def get_correlations(model, input_x=None, input_y=None,
 
     >>> # Import a pre-constructed system model
     >>> from qsdsan import stats as s
-    >>> from qsdsan.utils import load_example_model
+    >>> from qsdsan.utils import create_example_model
     >>> # Use a small sample size for demonstrative purpose
-    >>> model = load_example_model(evaluate=True, N=100, rule='L', seed=554)
+    >>> model = create_example_model(evaluate=True, N=100, rule='L', seed=554)
     >>> p, m = model.parameters, model.metrics
     >>> # Correlations, p-values
     >>> r_df1, p_df1 = s.get_correlations(model, kind='Spearman')
@@ -350,8 +350,8 @@ def morris_analysis(model, inputs, metrics=None, nan_policy='propagate',
     --------
     >>> # Import a pre-constructed system model
     >>> from qsdsan import stats as s
-    >>> from qsdsan.utils import load_example_model
-    >>> model = load_example_model(evaluate=False)
+    >>> from qsdsan.utils import create_example_model
+    >>> model = create_example_model(evaluate=False)
     >>> # Morris analysis requires special samples
     >>> inputs = s.define_inputs(model)
     >>> # Use a small sample size for demonstrative purpose
@@ -446,8 +446,8 @@ def morris_till_convergence(model, inputs, metrics=None,
     --------
     >>> # Import a pre-constructed system model
     >>> from qsdsan import stats as s
-    >>> from qsdsan.utils import load_example_model
-    >>> model = load_example_model(evaluate=False)
+    >>> from qsdsan.utils import create_example_model
+    >>> model = create_example_model(evaluate=False)
     >>> # Morris analysis requires special samples
     >>> inputs = s.define_inputs(model)
     >>> # Use a small maximum trajectory number for demonstrative purpose
@@ -569,8 +569,8 @@ def fast_analysis(model, inputs, kind, metrics=None, nan_policy='propagate',
     --------
     >>> # Import a pre-constructed system model
     >>> from qsdsan import stats as s
-    >>> from qsdsan.utils import load_example_model
-    >>> model = load_example_model(evaluate=False)
+    >>> from qsdsan.utils import create_example_model
+    >>> model = create_example_model(evaluate=False)
     >>> # FAST analysis requires special samples
     >>> inputs = s.define_inputs(model)
     >>> # Use a small sample size for demonstrative purpose
@@ -680,8 +680,8 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
     --------
     >>> # Import a pre-constructed system model
     >>> from qsdsan import stats as s
-    >>> from qsdsan.utils import load_example_model
-    >>> model = load_example_model(evaluate=False)
+    >>> from qsdsan.utils import create_example_model
+    >>> model = create_example_model(evaluate=False)
     >>> # Sobol analysis requires special samples
     >>> inputs = s.define_inputs(model)
     >>> # Use a small sample size for demonstrative purpose

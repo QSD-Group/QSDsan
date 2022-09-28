@@ -362,8 +362,8 @@ def get_digestion_rxns(components, X_biogas, X_growth, biomass_ID, biodegradabil
     Examples
     --------
     >>> from qsdsan import Component, Components, set_thermo
-    >>> from qsdsan.utils import load_example_components, get_digestion_rxns
-    >>> example_cmps = load_example_components()
+    >>> from qsdsan.utils import create_example_components, get_digestion_rxns
+    >>> example_cmps = create_example_components()
     >>> NH3 = Component('NH3', phase='g', organic=False, particle_size='Dissolved gas',
     ...                 degradability='Undegradable')
     >>> H2S = Component('H2S', phase='g', organic=False, particle_size='Dissolved gas',

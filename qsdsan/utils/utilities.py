@@ -45,8 +45,8 @@ def sum_system_utility(system, operating_hours=None, exclude_units=(),
 
     Examples
     --------
-    >>> from qsdsan.utils import load_example_components, load_example_system, sum_system_utility
-    >>> sys = load_example_system(load_example_components())
+    >>> from qsdsan.utils import create_example_system, sum_system_utility
+    >>> sys = create_example_system()
     >>> sys.simulate()
     >>> sum_system_utility(sys, utility='heating', result_unit='kJ/yr') # doctest: +ELLIPSIS
     463359.875...
