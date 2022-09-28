@@ -539,13 +539,36 @@ class IdealClarifier(SanUnit):
         pass
     
 class PrimaryClarifier(SanUnit):
+    
+    """
+    A Primary clarifier based on BSM2 Layout. [1]
 
+    Parameters
+    ----------
+    ID : str
+        ID for the clarifier. The default is ''.
+    ins : class:`WasteStream`
+        Influent to the clarifier. Expected number of influent is 3. 
+    outs : class:`WasteStream`
+        Treated effluent and sludge.
+    Hydraulic Retention time : float
+        Hydraulic Retention Time in days. The default is 0.04268 days, based on IWA report. 
+    ratio_uf : float
+        The ratio of sludge to primary influent. The default is 0.65, based on IWA report. 
+    f_corr : float
+        Dimensionless correction factor for removal efficiency in the primary clarifier.
+
+    References
+    ----------
+    .. [1] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
+    Benchmarking of control strategies for wastewater treatment plants. IWA publishing, 2014.
+    """
     _N_ins = 3
     _N_outs = 2
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time = 8, ratio_uf = 0.5,
-                 f_corr = 1, F_BM_default=None, **kwargs):
+                 isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time = 0.04268, ratio_uf =0.007, 
+                 f_corr = 0.65, F_BM_default=None, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
                          init_with=init_with, F_BM_default=F_BM_default)
@@ -553,8 +576,6 @@ class PrimaryClarifier(SanUnit):
         self.ratio_uf = ratio_uf
         self.f_corr = f_corr
         
-        self.mixed = WasteStream('mixed')
-
     @property
     def Hydraulic_Retention_Time(self):
         '''The Hydraulic Retention time in days.'''
@@ -575,7 +596,7 @@ class PrimaryClarifier(SanUnit):
     def ratio_uf(self, r):
         if r is not None:
             if r > 1 or r < 0:
-                raise ValueError(f'correction factor must be within [0, 1], not {r}')
+                raise ValueError(f'Sludge to influent ratio must be within [0, 1], not {r}')
             self._r = r
         else:
             raise ValueError('Sludge to influent ratio expected from user')
@@ -592,42 +613,41 @@ class PrimaryClarifier(SanUnit):
             self._corr = corr
         else:
             raise ValueError('correction factor expected from user')
-
-    def _run(self):
-        q_inf, to, do = self.ins
-        
-        self.mixed.mix_from(self.ins)
+    
+    def _f_i(self):
         xcod = self.mixed.composite('COD', particle_size='x')
         fx = xcod/self.mixed.COD
         
-        uf, of = self.outs
-        
-        cmps = self.components
-        #Q_in = self.ins.get_total_flow('m3/d')
-        
-        #TSS_in = (self.ins.conc*cmps.x*cmps.i_mass).sum()
-        
-        params = (HRT, r, corr) = self._HRT, self._r, self._corr
+        params = (HRT, corr) = self._HRT, self._corr
         if sum([i is None for i in params]) > 0:
             raise RuntimeError('must specify HRT, sludge to influent ratio, and correction factor')
-       
-        n_COD = (corr*(2.88*fx - 0.118)) - (1.45 + 6.15*np.log(HRT*24*60))
+      
+        n_COD = corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(HRT*24*60))
         f_i = 1 - (n_COD/100)
+        return f_i
+    
+    def _run(self):
         
-        #Qs = Q_in*TSS_in*f_i/(self._MLSS-TSS_in)
+        q_inf, to, do = self.ins
+        uf, of = self.outs
+        cmps = self.components
+        self.mixed = WasteStream('mixed')
+        self.mixed.mix_from(self.ins)
+        
+        r = self._r
+        f_i = self._f_i()
+        
+        Xs = (1 - f_i)*self.mixed.mass*cmps.x
+        Xe = (f_i)*self.mixed.mass*cmps.x
         
         Zs = r*self.mixed.mass*cmps.s
         Ze = (1-r)*self.mixed.mass*cmps.s
         
-        Xe = (f_i)*self.mixed.mass*cmps.x
-        Xs = (1 - f_i)*self.mixed.mass*cmps.x
-        
         Ce = Ze + Xe 
         Cs = Zs + Xs
         
-        of.set_flow(Ce, 'kg/hr')
-        uf.set_flow(Cs, 'kg/hr')
+        of.set_flow(Ce,'kg/hr')
+        uf.set_flow(Cs,'kg/hr')
        
-
     def _design(self):
         pass
