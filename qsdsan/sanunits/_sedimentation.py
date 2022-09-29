@@ -16,8 +16,9 @@ for license details.
 # %%
 
 from math import ceil, pi, cos
-from . import Decay, SludgeSeparator
+from . import SludgeSeparator
 from .. import Construction
+from ..processes import Decay
 from ..utils import ospath, load_data, data_path
 
 __all__ = ('Sedimentation',)
@@ -57,7 +58,7 @@ class Sedimentation(SludgeSeparator, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
 
     def __init__(self, ID='', ins=None, outs=(),thermo=None, init_with='WasteStream',

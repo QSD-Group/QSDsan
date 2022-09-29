@@ -798,7 +798,7 @@ class WasteStream(SanStream):
 
     @property
     def density(self):
-        '''[float] Density of the stream, in mg/L (kg/m3).'''
+        '''[float] Density of the stream, in g/L (kg/m3).'''
         return self.F_mass/self.F_vol
 
 
@@ -898,8 +898,8 @@ class WasteStream(SanStream):
         Examples
         --------
         >>> from qsdsan import set_thermo, WasteStream
-        >>> from qsdsan.utils import load_example_components
-        >>> cmps = load_example_components()
+        >>> from qsdsan.utils import create_example_components
+        >>> cmps = create_example_components()
         >>> set_thermo(cmps)
         >>> ws1 = WasteStream('ws1', Water=100, NaCl=1)
         >>> ws2 = ws1.proxy('ws2')
@@ -1056,7 +1056,7 @@ class WasteStream(SanStream):
         ----------
         flow_tot : float
             Total volumetric flow of the WasteStream.
-        concentrations : dict[str, float]
+        concentrations : dict[str, float] | property_array(Stream.iconc)
             Concentrations of components.
         units : Iterable[str]
             The first indicates the unit for the input total flow, the second
@@ -1070,11 +1070,12 @@ class WasteStream(SanStream):
         maxiter : int, optional
             The maximum number of iterations to estimate the flow of the bulk-liquid
             component and overall density of the WasteStream. The default is 50.
-
-
         '''
         if self.phase != 'l': raise RuntimeError('only valid for liquid streams')
         if flow_tot == 0: raise RuntimeError(f'{repr(self)} is empty')
+        if not isinstance(concentrations, dict):
+            concentrations = dict(zip(concentrations.chemicals.IDs, concentrations.data))
+            concentrations.pop(bulk_liquid_ID, None)
         if bulk_liquid_ID in concentrations.keys():
             for i in range(8):
                 warn('\n', stacklevel=i)
@@ -2106,8 +2107,8 @@ class MissingWasteStream(MissingSanStream):
         source = self._source
         sink = self._sink
         if not (source or sink):
-            raise RuntimeError("either a source or a sink is required to "
-                               "materialize connection")
+            raise RuntimeError('Either a source or a sink is required to '
+                               'materialize connection.')
         material_stream = WasteStream(ID, thermo=(source or sink).thermo)
         if source: source._outs.replace(self, material_stream)
         if sink: sink._ins.replace(self, material_stream)

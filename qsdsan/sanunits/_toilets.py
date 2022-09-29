@@ -5,8 +5,11 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
+
     Lewis Rowles <stetsonsc@gmail.com>
+
     Lane To <lane20@illinois.edu>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -20,8 +23,8 @@ for license details.
 import numpy as np
 from math import ceil
 from warnings import warn
-from . import Decay
 from .. import SanUnit, WasteStream, Construction
+from ..processes import Decay
 from ..utils import ospath, load_data, data_path, dct_from_str, price_ratio
 
 __all__ = ('Toilet', 'PitLatrine', 'UDDT', 'MURT',)
@@ -85,7 +88,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
 
     '''
 

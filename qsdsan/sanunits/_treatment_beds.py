@@ -16,7 +16,7 @@ import numpy as np
 from math import ceil
 from warnings import warn
 from .. import SanUnit, Construction
-from ._decay import Decay
+from ..processes._decay import Decay
 from ..utils import ospath, load_data, data_path, dct_from_str
 
 __all__ = ('DryingBed', 'LiquidTreatmentBed')
@@ -60,7 +60,7 @@ class DryingBed(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -336,7 +336,7 @@ class LiquidTreatmentBed(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',

@@ -17,8 +17,8 @@ for license details.
 
 from warnings import warn
 from math import ceil
-from . import Decay
 from .. import SanUnit, Construction
+from ..processes import Decay
 from ..utils import ospath, load_data, data_path
 
 __all__ = ('Lagoon',)
@@ -63,7 +63,7 @@ class Lagoon(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',

@@ -151,11 +151,11 @@ def copy_samples(original, new, exclude=(), only_same_baseline=False):
     --------
     Create two models with shared and different parameters
 
-    >>> from qsdsan.utils import load_example_model, copy_samples
-    >>> original = load_example_model()
+    >>> from qsdsan.utils import create_example_model, copy_samples
+    >>> original = create_example_model()
     >>> # You might get some replacing warnings as we are making two exact systems,
     >>> # it's OK
-    >>> new = load_example_model()
+    >>> new = create_example_model()
     >>> # Sort the parameter orders
     >>> for model in (original, new):
     ...    model.parameters = sorted(model.parameters, key=lambda p: p.name)

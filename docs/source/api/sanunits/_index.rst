@@ -34,7 +34,6 @@ Individual Unit Operations
    clarifiers
    combustion
    CropApplication
-   Decay
    ElectrochemicalCell
    Excretion
    heat_exchanging

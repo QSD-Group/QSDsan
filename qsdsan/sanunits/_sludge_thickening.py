@@ -18,8 +18,8 @@ import numpy as np, flexsolve as flx
 from warnings import warn
 from math import ceil
 from biosteam import Splitter, SolidsCentrifuge
-from . import Decay
 from .. import SanUnit, Construction
+from ..processes import Decay
 from ..sanunits import Pump
 from ..utils import ospath, load_data, data_path, dct_from_str, price_ratio
 
