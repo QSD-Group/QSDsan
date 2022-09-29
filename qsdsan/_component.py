@@ -66,7 +66,7 @@ def component_identity(component, pretty=False):
 _num_component_properties = ('i_C', 'i_N', 'i_P', 'i_K', 'i_Mg', 'i_Ca',
                              'i_mass', 'i_charge', 'i_COD', 'i_NOD',
                              'f_BOD5_COD', 'f_uBOD_COD', 'f_Vmass_Totmass',
-                             'chem_MW')
+                             'chem_MW', 'f_Amass_Totmass')
 
 # Fields that cannot be left as None
 _key_component_properties = ('particle_size', 'degradability', 'organic',
@@ -166,6 +166,8 @@ class Component(Chemical):
         Ultimate BOD fraction in COD of the component, unitless.
     f_Vmass_Totmass : float
         Volatile fraction of the mass of the component, unitless.
+    f_Amass_Totmass: float
+        Ash fraction of total component mass, unitless.
     description : str
         Description of the component.
     measured_as : str
@@ -189,8 +191,8 @@ class Component(Chemical):
         be calculated based on `formula` and `measured_as` if given; and the ratio
         will be 1 if the component is measured as this element.
 
-        [2] For fractions including `f_BOD5_COD`, `f_uBOD_COD`, and `f_Vmass_Totmass`,
-        their values must be within [0, 1].
+        [2] For fractions including `f_BOD5_COD`, `f_uBOD_COD`, `f_Vmass_Totmass`, 
+        and 'f_Amass_Totmass', their values must be within [0, 1].
 
         [3] If no formula or MW is provided, then MW of this component is assumed to
         1 to avoid ZeroDivisionError exception in calculation.
@@ -212,7 +214,7 @@ class Component(Chemical):
     def __new__(cls, ID, search_ID=None, formula=None, phase=None, measured_as=None,
                 i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
                 i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
-                f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
+                f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None, f_Amass_Totmass=None,
                 description=None, particle_size=None,
                 degradability=None, organic=None, **chemical_properties):
         if search_ID:
@@ -245,6 +247,7 @@ class Component(Chemical):
         self.f_BOD5_COD = f_BOD5_COD
         self.f_uBOD_COD = f_uBOD_COD
         self.f_Vmass_Totmass = f_Vmass_Totmass
+        self.f_Amass_Totmass = f_Amass_Totmass
         self._particle_size = particle_size
         self._degradability = degradability
         self._organic = organic
@@ -404,7 +407,18 @@ class Component(Chemical):
     @f_Vmass_Totmass.setter
     def f_Vmass_Totmass(self, f):
         self._f_Vmass_Totmass = check_return_property('f_Vmass_Totmass', f)
-
+        
+    @property
+    def f_Amass_Totmass(self):
+         '''
+         [float] Ash fraction of the mass of the component, unitless.
+         Must be within [0, 1].
+         '''
+         return self._f_Amass_Totmass or 0.
+    @f_Amass_Totmass.setter
+    def f_Amass_Totmass(self, f):
+         self.Amass_Totmass = check_return_property('f_Amass_Totmass', f)
+         
     @property
     def description(self):
         '''[str] Description of the component.'''
@@ -687,7 +701,7 @@ class Component(Chemical):
     def from_chemical(cls, ID, chemical=None, formula=None, phase=None, measured_as=None,
                       i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
                       i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
-                      f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
+                      f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None, f_Amass_Totmass=None, 
                       description=None, particle_size=None, degradability=None,
                       organic=None, **data):
         '''
@@ -767,6 +781,7 @@ class Component(Chemical):
                  f_BOD5_COD: 0
                  f_uBOD_COD: 0
                  f_Vmass_Totmass: 0
+                 f_Amass_Totmass: 0
                  chem_MW: 245.41
         '''
         new = cls.__new__(cls, ID=ID, phase=phase)
@@ -812,6 +827,7 @@ class Component(Chemical):
         new.f_BOD5_COD = f_BOD5_COD
         new.f_uBOD_COD = f_uBOD_COD
         new.f_Vmass_Totmass = f_Vmass_Totmass
+        new.f_Amass_Totmass = f_Amass_Totmass
         new.description = description
         new._particle_size = particle_size
         new._degradability = degradability
