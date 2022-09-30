@@ -13,7 +13,6 @@ for license details.
 
 from numpy import maximum as npmax, minimum as npmin, exp as npexp
 from .. import SanUnit, WasteStream
-# from qsdsan import SanUnit, WasteStream
 import numpy as np
 
 __all__ = ('FlatBottomCircularClarifier',
@@ -648,15 +647,8 @@ class PrimaryClarifier(SanUnit):
         uf.set_flow(Cs,'kg/hr')
        
     def _design(self):
-<<<<<<< Updated upstream
         
         design = self.design_results
         HRT = self._HRT
         Q_inflow = self.mixed.get_total_flow('m3/hr')
         design['Volume'] = 24*HRT*Q_inflow
-=======
-        design = self.design_results
-        HRT=self._HRT
-        Q_in = self.mixed.get_total_flow('m3/hr')
-        design['Volume'] = HRT*Q_in
->>>>>>> Stashed changes
