@@ -650,4 +650,8 @@ class PrimaryClarifier(SanUnit):
         uf.set_flow(Cs,'kg/hr')
        
     def _design(self):
-        pass
+        
+        design = self.design_results
+        HRT = self._HRT
+        Q_inflow = self.mixed.get_total_flow('m3/hr')
+        design['Volume'] = 24*HRT*Q_inflow
