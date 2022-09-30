@@ -568,7 +568,7 @@ class PrimaryClarifier(SanUnit):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time = 0.04268, ratio_uf =0.007, 
-                 f_corr = 0.65, F_BM_default=None, **kwargs):
+                 f_corr=0.65, F_BM_default=None, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
                          init_with=init_with, F_BM_default=F_BM_default)
@@ -618,10 +618,8 @@ class PrimaryClarifier(SanUnit):
         xcod = self.mixed.composite('COD', particle_size='x')
         fx = xcod/self.mixed.COD
         
-        params = (HRT, corr) = self._HRT, self._corr
-        if sum([i is None for i in params]) > 0:
-            raise RuntimeError('must specify HRT, sludge to influent ratio, and correction factor')
-      
+        corr = self._corr
+        HRT = self._HRT
         n_COD = corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(HRT*24*60))
         f_i = 1 - (n_COD/100)
         return f_i
@@ -650,8 +648,15 @@ class PrimaryClarifier(SanUnit):
         uf.set_flow(Cs,'kg/hr')
        
     def _design(self):
+<<<<<<< Updated upstream
         
         design = self.design_results
         HRT = self._HRT
         Q_inflow = self.mixed.get_total_flow('m3/hr')
         design['Volume'] = 24*HRT*Q_inflow
+=======
+        design = self.design_results
+        HRT=self._HRT
+        Q_in = self.mixed.get_total_flow('m3/hr')
+        design['Volume'] = HRT*Q_in
+>>>>>>> Stashed changes
