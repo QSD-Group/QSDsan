@@ -270,7 +270,7 @@ class ImpactIndicator:
         cls.load_from_file(path_or_dict, index_col)
 
     @classmethod
-    def load_from_file(cls, path_or_df, index_col=None):
+    def load_from_file(cls, path_or_df, sheet=None, index_col=None, **kwargs):
         '''
         Load impact indicator from a datasheet.
 
@@ -293,16 +293,17 @@ class ImpactIndicator:
         ----------
         path_or_df : str or :class:`pandas.DataFrame`
             DataFrame or complete path of the datasheet, currently support tsv, csv, and xls/xlsx.
-        index_col : None or int
-            Index column of the :class:`pandas.DataFrame`.
 
         See Also
         --------
         Refer to the `Bwaise system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise/data>`_
         in the `Exposan` repository for a sample file.
+        
+        Refer to `qsdsan.utils.load_data` for keyword arguments.
         '''
 
-        data = load_data(path=path_or_df, index_col=index_col) if isinstance(path_or_df, str) else path_or_df
+        data = load_data(path=path_or_df, sheet=sheet, index_col=index_col, **kwargs) \
+            if isinstance(path_or_df, str) else path_or_df
 
         for num in data.index:
             new = cls.__new__(cls)
