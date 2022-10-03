@@ -47,6 +47,7 @@ from ._sludge_thickening import *
 from ._suspended_growth_bioreactor import *
 from ._tanks import *
 from ._trucking import *
+from ._sludge_treatment import *
 
 # Units that rely on other units
 from ._activated_sludge_process import *
@@ -99,6 +100,7 @@ from . import (
         _biogenic_refinery,
         _eco_san,
         _reclaimer,
+        _sludge_treatment,
         )
 
 
@@ -135,4 +137,5 @@ __all__ = (
         *_biogenic_refinery.__all__,
         *_reclaimer.__all__,
         *_eco_san.__all__,
+        *_sludge_treatment.__all__, 
         )
