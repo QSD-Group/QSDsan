@@ -71,34 +71,23 @@ class Thickener(SanUnit):
         
         def _run(self):
             
-            # self.inlet = WasteStream('inlet')
-            # self.inlet = self.ins
             inf, = self.ins
             uf, of = self.outs
-            
-            split = 
-            
-            inf.split_to(uf, of, split)
-            
-            
             cmps = self.components
             
-          
-                
-                
+            TSS_rmv = self._TSS_rmv
             
+            Ze = (1 - thinning_factor)/(thickner_factor - thinning_factor)*inf.mass*cmps.x
+            Zs = (thickner_factor - 1)/(thickner_factor - thinning_factor)*inf.mass*cmps.x
             
+            Xe = (TSS_rmv)*inf.mass*cmps.s
+            Xs = (1 - TSS_rmv)*inf.mass*cmps.s
             
+            Ce = Ze + Xe 
+            Cs = Zs + Xs
             
+            of.set_flow(Ce,'kg/hr')
+            uf.set_flow(Cs,'kg/hr')
             
-        
-                
-        
-                
-        
-                
-        
-        
-        
-        
-        
+            #inf.cmps.s.split_to(uf, of, split= (1 - thinning_factor)/(thickner_factor - thinning_factor))
+            #inf.cmps.x.split_to(uf, of, split = TSS_rmv)
