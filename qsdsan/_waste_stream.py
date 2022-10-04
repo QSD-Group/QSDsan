@@ -87,7 +87,7 @@ _load_components = settings.get_chemicals
 _load_thermo = settings.get_thermo
 
 def to_float(stream, slot):
-    return 0. if getattr(stream, slot) is None else float(getattr(stream, slot))
+    return None if getattr(stream, slot) is None else float(getattr(stream, slot))
 
 # functions for calibrations of N, P contents and BOD:COD ratio of certain components
 def _calib_SF_iN(components, concentrations, STKN):
@@ -970,7 +970,13 @@ class WasteStream(SanStream):
             # attributes like pH
             # tot = None
             try:
-                tot = sum(to_float(i, slot)*i.F_vol for i in others if hasattr(i, slot))
+                tot = None
+                for i in others:
+                    if hasattr(i, slot):
+                        v = to_float(i, slot)
+                        if v is None: continue
+                        elif tot is None: tot = v*i.F_vol
+                        else: tot += v*i.F_vol
                 setattr(self, slot, tot/self.F_vol)
             except:
                 setattr(self, slot, None)
