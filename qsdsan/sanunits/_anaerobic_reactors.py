@@ -289,7 +289,7 @@ class AnaerobicCSTR(CSTR):
     
     _N_ins = 1
     _N_outs = 2
-    _ins_size_is_fixed = True
+    _ins_size_is_fixed = False
     _outs_size_is_fixed = True
     _R = 8.3145e-2 # Universal gas constant, [bar/M/K]
     
@@ -320,6 +320,7 @@ class AnaerobicCSTR(CSTR):
         self.fixed_headspace_P = fixed_headspace_P
         self._f_retain = np.array([fraction_retain if cmp.ID in retain_cmps \
                                    else 0 for cmp in self.components])
+        self._mixed = WasteStream()
     
     def ideal_gas_law(self, p=None, S=None):
         '''Calculates partial pressure [bar] given concentration [M] at 
@@ -433,20 +434,21 @@ class AnaerobicCSTR(CSTR):
 
     def _run(self):
         '''Only to converge volumetric flows.'''
-        inf, = self.ins
+        mixed = self._mixed # avoid creating multiple new streams
+        mixed.mix_from(self.ins)
         gas, liquid = self.outs
-        liquid.copy_like(inf)
+        liquid.copy_like(mixed)
         gas.copy_like(self._biogas)
         if self._fixed_P_gas: 
             gas.P = self.headspace_P * auom('bar').conversion_factor('Pa')
         gas.T = self.T
         
     def _init_state(self):
-        inf, = self._ins
-        Q = inf.get_total_flow('m3/d')
+        mixed = self._mixed
+        Q = mixed.get_total_flow('m3/d')
         #!!! how to make unit conversion generalizable to all models?
         if self._concs is not None: Cs = self._concs * 1e-3 # mg/L to kg/m3
-        else: Cs = inf.conc * 1e-3 # mg/L to kg/m3
+        else: Cs = mixed.conc * 1e-3 # mg/L to kg/m3
         self._state = np.append(Cs, [0]*self._n_gas + [Q]).astype('float64')
         self._dstate = self._state * 0.
 
@@ -532,13 +534,16 @@ class AnaerobicCSTR(CSTR):
                 S_liq = QC[:n_cmps]
                 S_gas = QC[n_cmps: (n_cmps+n_gas)]
                 Q = QC[-1]
-                S_in = QC_ins[0,:-1] * 1e-3  # mg/L to kg/m3
-                Q_in = QC_ins[0,-1]
+                # S_in = QC_ins[0,:-1] * 1e-3  # mg/L to kg/m3
+                # Q_in = QC_ins[0,-1]
+                Q_ins = QC_ins[:, -1]
+                S_ins = QC_ins[:, :-1] * 1e-3  # mg/L to kg/m3
                 if hasexo: QC = np.append(QC, f_exovars(t))
                 _f_param(QC)
                 M_stoichio = _M_stoichio()
                 rhos =_f_rhos(QC)
-                _dstate[:n_cmps] = (Q_in*S_in - Q*S_liq*(1-f_rtn))/V_liq \
+                # _dstate[:n_cmps] = (Q_in*S_in - Q*S_liq*(1-f_rtn))/V_liq \
+                _dstate[:n_cmps] = (Q_ins @ S_ins - Q*S_liq*(1-f_rtn))/V_liq \
                     + np.dot(M_stoichio.T, rhos)
                 q_gas = f_qgas(rhos[-3:], S_gas, T)
                 _dstate[n_cmps: (n_cmps+n_gas)] = - q_gas*S_gas/V_gas \
