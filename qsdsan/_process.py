@@ -1098,7 +1098,10 @@ class CompiledProcesses(Processes):
         dct['size'] = size
         dct['IDs'] = IDs
         dct['_index'] = index = dict(zip(IDs, index))
-        cmps = Components([cmp for i in processes for cmp in i._components])
+        if len(set([i._components for i in processes])) > 1:
+            cmps = Components([cmp for i in processes for cmp in i._components])
+        else:
+            cmps = processes[0]._components
         dct['_components'] = _load_components(cmps)
         M_stch = []
         params = {}
