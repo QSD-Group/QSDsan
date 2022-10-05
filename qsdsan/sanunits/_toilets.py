@@ -1049,7 +1049,7 @@ class MURT(Toilet):
                  degraded_components=('OtherSS',), N_user=1, N_tot_user=1,
                  N_toilet=None, if_toilet_paper=True, if_flushing=True, if_cleansing=False,
                  if_desiccant=True, if_air_emission=True, if_ideal_emptying=True,
-                 CAPEX=0, OPEX_over_CAPEX=0, lifetime=8,
+                 CAPEX=0, OPEX_over_CAPEX=0, lifetime=10,
                  N_squatting_pan_per_toilet=1, N_urinal_per_toilet=1,
                  if_include_front_end=True, **kwargs):
 
