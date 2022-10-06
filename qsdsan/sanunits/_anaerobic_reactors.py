@@ -535,9 +535,12 @@ class AnaerobicCSTR(CSTR):
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 S_liq = QC[:n_cmps]
                 S_gas = QC[n_cmps: (n_cmps+n_gas)]
-                Q = QC[-1]
+                # Q = QC[-1]
+                # S_in = QC_ins[0,:-1] * 1e-3  # mg/L to kg/m3
+                # Q_in = QC_ins[0,-1]
                 Q_ins = QC_ins[:, -1]
                 S_ins = QC_ins[:, :-1] * 1e-3  # mg/L to kg/m3
+                Q = sum(Q_ins)
                 if hasexo: QC = np.append(QC, f_exovars(t))
                 _f_param(QC)
                 M_stoichio = _M_stoichio()
