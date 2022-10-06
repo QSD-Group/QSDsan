@@ -524,7 +524,6 @@ class AnaerobicCSTR(CSTR):
             n_gas = self._n_gas
             V_liq = self.V_liq
             V_gas = self.V_gas
-            T = self.T
             gas_mass2mol_conversion = (cmps.i_mass / cmps.chem_MW)[self._gas_cmp_idx]
             hasexo = bool(len(self._exovars))
             f_exovars = self.eval_exo_dynamic_vars
@@ -541,7 +540,11 @@ class AnaerobicCSTR(CSTR):
                 Q_ins = QC_ins[:, -1]
                 S_ins = QC_ins[:, :-1] * 1e-3  # mg/L to kg/m3
                 Q = sum(Q_ins)
-                if hasexo: QC = np.append(QC, f_exovars(t))
+                if hasexo: 
+                    exo_vars = f_exovars(t)
+                    QC = np.append(QC, exo_vars)
+                    T = exo_vars[0]
+                else: T = self.T
                 _f_param(QC)
                 M_stoichio = _M_stoichio()
                 rhos =_f_rhos(QC)
