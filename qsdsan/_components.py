@@ -37,10 +37,9 @@ DomainError = tmo.exceptions.DomainError
 
 # %%
 
-class UndefinedComponent(AttributeError):
+class UndefinedComponent(tmo.exceptions.UndefinedChemicalAlias):
     '''AttributeError regarding undefined :class:`Component` objects.'''
-    def __init__(self, ID):
-        super().__init__(repr(ID))
+
 
 def must_compile(*args, **kwargs): # pragma: no cover
     raise TypeError('Method valid only for CompiledChemicals, '
