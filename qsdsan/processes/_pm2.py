@@ -216,7 +216,7 @@ def photoadaptation(i_avg, X_CHL, X_carbon, I_n, k_gamma):
     '''
 
     if X_carbon > 0:
-        return 24 * ((0.2 * i_avg / I_n) / (k_gamma + (i_avg / I_n))) *\
+        return ((0.2 * i_avg / I_n) / (k_gamma + (i_avg / I_n))) *\
                (0.01 + 0.03 * ((np.log(i_avg / I_n + 0.005)) / (np.log(0.01))) - X_CHL/X_carbon) * X_carbon
     else:
         return 0
