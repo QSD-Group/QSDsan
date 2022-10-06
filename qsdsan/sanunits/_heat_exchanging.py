@@ -16,13 +16,13 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-from biosteam.units import HXprocess, HXutility
+from biosteam.units import HXprocess as HXP, HXutility as HXU
 from .. import SanUnit
 
 __all__ = ('HXprocess', 'HXutility',)
 
 
-class HXprocess(SanUnit, HXprocess):
+class HXprocess(SanUnit, HXP):
     '''
     Similar to :class:`biosteam.units.HXprocess`,
     but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
@@ -83,7 +83,7 @@ class HXprocess(SanUnit, HXprocess):
         self.reset_source = True
 
 
-class HXutility(SanUnit, HXutility):
+class HXutility(SanUnit, HXU):
     '''
     Similar to :class:`biosteam.units.HXutility`,
     but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.

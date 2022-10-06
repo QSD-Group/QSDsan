@@ -18,7 +18,7 @@ for license details.
 
 import numpy as np
 from math import pi, ceil
-from biosteam.units import Pump
+from biosteam.units import Pump as BSTPump
 from biosteam.units.design_tools.mechanical import (
     brake_efficiency as brake_eff,
     motor_efficiency as motor_eff
@@ -29,7 +29,7 @@ from ..utils import auom, select_pipe, format_str
 __all__ = ('Pump', 'HydraulicDelay', 'WWTpump', 'wwtpump')
 
 
-class Pump(SanUnit, Pump):
+class Pump(SanUnit, BSTPump):
     '''
     Similar to the :class:`biosteam.units.Pump`,
     but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`,
