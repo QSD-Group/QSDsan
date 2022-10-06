@@ -32,14 +32,18 @@ class Thickener(SanUnit):
     outs : class:`WasteStream`
         Treated effluent and sludge.
     thickener_perc : float
-        The percentage of Suspended Sludge in the underflow of the thickener.
+        The percentage of Suspended Sludge in the underflow of the thickener.[1]
     TSS_removal_perc : float
-        The percentage of suspended solids removed in the thickener. 
+        The percentage of suspended solids removed in the thickener.[1]
+    solids_loading_rate : float
+        Solid loading rate in the thickener.[2]
 
     References
     ----------
     .. [1] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
     Benchmarking of control strategies for wastewater treatment plants. IWA publishing, 2014.
+    [2] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
+    engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
     """
     
     _N_ins = 1
@@ -166,21 +170,65 @@ class DewateringUnit(Thickener):
     thickener_perc : float
         The percentage of Suspended Sludge in the underflow of the dewatering unit.
     TSS_removal_perc : float
-        The percentage of suspended solids removed in the dewatering unit. 
+        The percentage of suspended solids removed in the dewatering unit.
+    number_of_centrifuges : float
+        Number of centrifuges in the dewatering unit
+    specific_gravity_sludge: float
+        Specific gravity of influent sludge from secondary clarifier.
+    cake density: float
+        Density of effleunt dewatered sludge.
+    centrifugal_force : float
+        Centrifugal force in the centrifuge.
+    rotational_speed : float
+        rotational speed of the centrifuge. 
+    polymer_dosage_per_kg_of_sludge : float
+        mass of polymer utilised per kg of influent sludge. 
+    h_cylinderical: float
+        length of cylinderical portion of dewatering unit. 
+    h_conical: float
+        length of conical portion of dewatering unit. 
     
     References
     ----------
     .. [1] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
     Benchmarking of control strategies for wastewater treatment plants. IWA publishing, 2014.
+    [2] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
+    engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
     """
     
     _N_ins = 1
     _N_outs = 2
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
-                  init_with='WasteStream', F_BM_default=None, thickener_perc=28, TSS_removal_perc=98, **kwargs):
+                  init_with='WasteStream', F_BM_default=None, thickener_perc=28, TSS_removal_perc=98, 
+                  number_of_centrifuges=1, specific_gravity_sludge=1.03, cake_density=965, 
+                  centrifugal_force=2500, rotational_speed = 40, polymer_dosage_per_kg_of_sludge = 0.0075, 
+                  h_cylinderical=2, h_conical=1, **kwargs):
         Thickener.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, isdynamic=isdynamic,
-                      init_with=init_with, F_BM_default=F_BM_default, thickener_perc=thickener_perc, TSS_removal_perc=TSS_removal_perc, **kwargs)
+                      init_with=init_with, F_BM_default=F_BM_default, thickener_perc=thickener_perc, 
+                      TSS_removal_perc=TSS_removal_perc, **kwargs)
+        self.number_of_centrifuges=number_of_centrifuges
+        self.specific_gravity_sludge=specific_gravity_sludge
+        self.cake_density=cake_density #in kg/m3
+        self.centrifugal_force = centrifugal_force #in Newton
+        self.rotational_speed = rotational_speed #in revolution/sec 
+        self.polymer_dosage_per_kg_of_sludge = polymer_dosage_per_kg_of_sludge #in (kg,polymer/kg,sludge) unitless
+        self.h_cylinderical = h_cylinderical
+        self.h_conical = h_conical
         
     def _design(self):
-        pass
+        sludge_feed_rate = ((self.ins[0].get_TSS()*self.ins[0].F_vol)/1000)/self.number_of_centrifuges #in kg/hr
+        
+        #TSS_rmv = self._TSS_rmv
+        #recovery = 1 - TSS_rmv/100
+        #cake_mass_discharge_rate = sludge_feed_rate*recovery #in kg/hr
+        #wetcake_mass_discharge_rate = cake_mass_discharge_rate/(self.thickener_perc/100) #in kg/hr
+        #cake_density = self.cake_density 
+        #wetcake_flowrate = wetcake_mass_discharge_rate/cake_density #in m3/hr
+        #volume_reduction_perc= (1 - wetcake_flowrate/(self.ins[0].F_mass/(1000*self.specific_gravity_sludge*self.number_of_centrifuges)))*100
+        
+        design = self.design_results 
+        design['Diameter'] = 2*(self.centrifugal_force*9.81/np.square(2*np.pi*self.rotational_speed)) #in meter
+        design['Polymer feed rate'] = (self.polymer_dosage_per_kg_of_sludge*sludge_feed_rate) # in kg/hr
+        design['Volume'] = np.pi*np.square(design['Diameter']/2)*(self.h_cylinderical + (self.h_conical/3))
+        design['Curved Surface Area'] = np.pi*design['Diameter']/2*(2*self.h_cylinderical + np.sqrt(np.square(design['Diameter']/2) + np.square(self.h_conical)))
