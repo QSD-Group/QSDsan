@@ -551,29 +551,34 @@ class PrimaryClarifier(SanUnit):
     outs : class:`WasteStream`
         Treated effluent and sludge.
     Hydraulic Retention time : float
-        Hydraulic Retention Time in days. The default is 0.04268 days, based on IWA report. 
+        Hydraulic Retention Time in days. The default is 0.04268 days, based on IWA report.[1]
     ratio_uf : float
-        The ratio of sludge to primary influent. The default is 0.65, based on IWA report. 
+        The ratio of sludge to primary influent. The default is 0.65, based on IWA report.[1] 
     f_corr : float
-        Dimensionless correction factor for removal efficiency in the primary clarifier.
+        Dimensionless correction factor for removal efficiency in the primary clarifier.[1]
+    oveflow_rate : float
+        The design overflow rate in the primary sedimentation tank. Default value taken from sample design problem.[2]
 
     References
     ----------
     .. [1] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
     Benchmarking of control strategies for wastewater treatment plants. IWA publishing, 2014.
+    [2] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
+    engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
     """
     _N_ins = 3
     _N_outs = 2
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time = 0.04268, ratio_uf =0.007, 
-                 f_corr=0.65, F_BM_default=None, **kwargs):
+                 isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time=0.04268, 
+                 ratio_uf=0.007, f_corr=0.65, F_BM_default=None, oveflow_rate=40, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
                          init_with=init_with, F_BM_default=F_BM_default)
-        self.Hydraulic_Retention_Time = Hydraulic_Retention_Time
+        self.Hydraulic_Retention_Time = Hydraulic_Retention_Time #in days
         self.ratio_uf = ratio_uf
         self.f_corr = f_corr
+        self.oveflow_rate = oveflow_rate #in m3/(m2*day)
         
     @property
     def Hydraulic_Retention_Time(self):
@@ -649,6 +654,6 @@ class PrimaryClarifier(SanUnit):
     def _design(self):
         
         design = self.design_results
-        HRT = self._HRT
-        Q_inflow = self.mixed.get_total_flow('m3/hr')
-        design['Volume'] = 24*HRT*Q_inflow
+        design['Volume'] = 24*self._HRT*self.mixed.get_total_flow('m3/hr') #in m3
+        design['Area'] = self.mixed.get_total_flow('m3/hr')/self.oveflow_rate #in m2
+        design['Length'] = design['Volume']/design['Area'] #in m
