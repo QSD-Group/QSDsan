@@ -39,6 +39,7 @@ from ._electrochemical_cell import *
 from ._encapsulation_bioreactor import *
 from ._excretion import *
 from ._heat_exchanging import *
+from ._junction import *
 from ._non_reactive import *
 from ._pumping import *
 from ._screening import *
@@ -80,6 +81,7 @@ from . import (
         _excretion,
         _heat_exchanging,
         _internal_circulation_rx,
+        _junction,
         _lagoon,
         _membrane_bioreactors,
         _non_reactive,
@@ -117,6 +119,7 @@ __all__ = (
         *_excretion.__all__,
         *_heat_exchanging.__all__,
         *_internal_circulation_rx.__all__,
+        *_junction.__all__,
         *_lagoon.__all__,
         *_membrane_bioreactors.__all__,
         *_non_reactive.__all__,

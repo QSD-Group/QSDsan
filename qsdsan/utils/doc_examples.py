@@ -13,15 +13,22 @@ for license details.
 '''
 
 from .. import (
-    Component, Components, SanStream, System, SimpleTEA, Model,
-    set_thermo, get_thermo, sanunits as su
+    Component,
+    Components,
+    get_thermo,
+    Model,
+    SanStream,
+    sanunits as su,
+    set_thermo as qs_set_thermo,
+    SimpleTEA,
+    System,
     )
 from chaospy import distributions as shape
 
 __all__ = (
-    'load_example_components', 'load_example_cmps',
-    'load_example_system', 'load_example_sys',
-    'load_example_model',
+    'create_example_components',
+    'create_example_system',
+    'create_example_model',
     )
 
 
@@ -31,7 +38,7 @@ __all__ = (
 # Example components
 # =============================================================================
 
-def load_example_components():
+def create_example_components(set_thermo=True):
     '''
     Load pre-constructed components for documentation purpose.
 
@@ -42,8 +49,8 @@ def load_example_components():
 
     Examples
     --------
-    >>> from qsdsan.utils import load_example_components
-    >>> cmps = load_example_components()
+    >>> from qsdsan.utils import create_example_components
+    >>> cmps = create_example_components()
     >>> cmps.show()
     CompiledComponents([H2O, CO2, N2O, NaCl, H2SO4, CH4, Methanol, Ethanol])
     '''
@@ -83,11 +90,8 @@ def load_example_components():
     cmps.compile()
     cmps.set_synonym('H2O', 'Water')
     cmps.set_synonym('CH4', 'Methane')
-
+    if set_thermo: qs_set_thermo(cmps)
     return cmps
-
-# Legacy name
-load_example_cmps = load_example_components
 
 
 # %%
@@ -96,7 +100,7 @@ load_example_cmps = load_example_components
 # Example systems
 # =============================================================================
 
-def load_example_system(components=None):
+def create_example_system(components=None):
     '''
     Load a pre-constructed system for documentation purpose.
 
@@ -115,9 +119,9 @@ def load_example_system(components=None):
 
     Examples
     --------
-    >>> from qsdsan.utils import load_example_components, load_example_system
-    >>> # Components from `load_example_components` will be loaded if no components are set/given
-    >>> sys = load_example_system()
+    >>> from qsdsan.utils import create_example_components, create_example_system
+    >>> # Components from `create_example_components` will be loaded if no components are set/given
+    >>> sys = create_example_system()
     >>> sys.path
     (<MixTank: M1>,
      <Pump: P1>,
@@ -127,10 +131,13 @@ def load_example_system(components=None):
      <Splitter: S2>)
     >>> sys.diagram() # doctest: +SKIP
     '''
-    if components: set_thermo(components)
+    if components: qs_set_thermo(components)
     else:
-        try: get_thermo()
-        except: set_thermo(load_example_components())
+        try:
+            thermo = get_thermo()
+            if not ('H2O', 'Methanol', 'Ethanol', 'NaCl') in thermo.components.names:
+                qs_set_thermo(create_example_components())
+        except: qs_set_thermo(create_example_components())
 
     salt_water = SanStream('salt_water', Water=2000, NaCl=50, units='kg/hr')
     methanol = SanStream('methanol', Methanol=20, units='kg/hr')
@@ -146,9 +153,6 @@ def load_example_system(components=None):
 
     return sys
 
-# Legacy name
-load_example_sys = load_example_system
-
 
 # %%
 
@@ -156,7 +160,7 @@ load_example_sys = load_example_system
 # Example system model
 # =============================================================================
 
-def load_example_model(evaluate=False, N=100, rule='L', seed=554, **sample_kwargs):
+def create_example_model(evaluate=False, N=100, rule='L', seed=554, **sample_kwargs):
     '''
     Load a pre-constructed system model for documentation purpose.
 
@@ -183,8 +187,8 @@ def load_example_model(evaluate=False, N=100, rule='L', seed=554, **sample_kwarg
 
     Examples
     --------
-    >>> from qsdsan.utils import load_example_model
-    >>> model = load_example_model(N=100, rule='L', seed=554, evaluate=False)
+    >>> from qsdsan.utils import create_example_model
+    >>> model = create_example_model(N=100, rule='L', seed=554, evaluate=False)
     >>> model.system.path
     (<MixTank: M1>,
      <Pump: P1>,
@@ -205,9 +209,7 @@ def load_example_model(evaluate=False, N=100, rule='L', seed=554, **sample_kwarg
      <Metric: [Simple TEA] Total capital expenditure (USD)>,
      <Metric: [Simple TEA] Net present value (USD)>)
     '''
-
-    cmps = load_example_components()
-    sys = load_example_system(cmps)
+    sys = create_example_system()
     M1, P1, H1, S1, M2, S2 = sys.path
     sys.simulate()
     tea = SimpleTEA(sys)

@@ -87,7 +87,7 @@ _load_components = settings.get_chemicals
 _load_thermo = settings.get_thermo
 
 def to_float(stream, slot):
-    return 0. if getattr(stream, slot) is None else float(getattr(stream, slot))
+    return None if getattr(stream, slot) is None else float(getattr(stream, slot))
 
 # functions for calibrations of N, P contents and BOD:COD ratio of certain components
 def _calib_SF_iN(components, concentrations, STKN):
@@ -898,8 +898,8 @@ class WasteStream(SanStream):
         Examples
         --------
         >>> from qsdsan import set_thermo, WasteStream
-        >>> from qsdsan.utils import load_example_components
-        >>> cmps = load_example_components()
+        >>> from qsdsan.utils import create_example_components
+        >>> cmps = create_example_components()
         >>> set_thermo(cmps)
         >>> ws1 = WasteStream('ws1', Water=100, NaCl=1)
         >>> ws2 = ws1.proxy('ws2')
@@ -970,7 +970,13 @@ class WasteStream(SanStream):
             # attributes like pH
             # tot = None
             try:
-                tot = sum(to_float(i, slot)*i.F_vol for i in others if hasattr(i, slot))
+                tot = None
+                for i in others:
+                    if hasattr(i, slot):
+                        v = to_float(i, slot)
+                        if v is None: continue
+                        elif tot is None: tot = v*i.F_vol
+                        else: tot += v*i.F_vol
                 setattr(self, slot, tot/self.F_vol)
             except:
                 setattr(self, slot, None)
@@ -2107,8 +2113,8 @@ class MissingWasteStream(MissingSanStream):
         source = self._source
         sink = self._sink
         if not (source or sink):
-            raise RuntimeError("either a source or a sink is required to "
-                               "materialize connection")
+            raise RuntimeError('Either a source or a sink is required to '
+                               'materialize connection.')
         material_stream = WasteStream(ID, thermo=(source or sink).thermo)
         if source: source._outs.replace(self, material_stream)
         if sink: sink._ins.replace(self, material_stream)

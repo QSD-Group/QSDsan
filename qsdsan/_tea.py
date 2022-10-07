@@ -5,6 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+    
     Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -17,13 +18,25 @@ for license details.
 
 import qsdsan as qs
 from datetime import date
-from biosteam import TEA
+from biosteam import TEA as BSTTEA
 
-__all__ = ('SimpleTEA',)
+__all__ = ('TEA', 'SimpleTEA',)
 
 conflict_slots = ('lang_factor', 'system', 'units', 'feeds', 'products')
 
-class SimpleTEA(TEA):
+default_kwargs = dict(
+    startup_months=0,
+    startup_FOCfrac=0,
+    startup_VOCfrac=0,
+    startup_salesfrac=0,
+    WC_over_FCI=0,
+    finance_interest=0,
+    finance_years=0,
+    finance_fraction=0,
+    )
+
+
+class TEA(BSTTEA):
     '''
     Calculate an annualized cost for simple economic analysis that does not
     include loan payment (i.e., 100% equity).
@@ -50,7 +63,7 @@ class SimpleTEA(TEA):
 
         .. note::
 
-            As :class:`SimpleTEA` is a subclass of :class:`biosteam.TEA`,
+            As :class:`TEA` is a subclass of :class:`biosteam.TEA`,
             and :class:`biosteam.TEA` currently only supports certain
             depreciation schedules, lifetime must be larger than or equal to 6.
 
@@ -99,15 +112,19 @@ class SimpleTEA(TEA):
         "System additional OPEX".
     construction_schedule : tuple
         Construction progress prior to the start of the system (fraction of the construction that can be finished each year), must sum up to 1. Leave as the default (1,) if no special construction progress is expected.
+    add_kwargs : dict
+        Additional values that will be passed to :class:`biosteam.TEA`,
+        including ``startup_months``, ``startup_FOCfrac ``, ``startup_VOCfrac``,
+        ``startup_salesfrac``, ``WC_over_FCI``, ``finance_interest``,
+        ``finance_years``, and ``finance_fraction`` (all defaulted to 0).
 
     Examples
     --------
     A system should be constructed prior to TEA, here we import a pre-constructed one.
 
     >>> import qsdsan as qs
-    >>> from qsdsan.utils import load_example_components, load_example_system
-    >>> cmps = load_example_components()
-    >>> sys = load_example_system(cmps)
+    >>> from qsdsan.utils import create_example_system
+    >>> sys = create_example_system()
     >>> # Uncomment the line below to see the system diagram
     >>> # sys.diagram()
     >>> sys.simulate()
@@ -133,15 +150,14 @@ class SimpleTEA(TEA):
         phase: 'l', T: 350 K, P: 101325 Pa
         flow (kmol/hr): H2O   88.8
                         NaCl  0.684
-    >>> tea = qs.SimpleTEA(system=sys, discount_rate=0.05, start_year=2021,
-    ...                     lifetime=10, uptime_ratio=0.9,
-    ...                     system_add_OPEX=0.03)
+    >>> tea = qs.TEA(system=sys, discount_rate=0.05, start_year=2021,
+    ...              lifetime=10, uptime_ratio=0.9,
+    ...              system_add_OPEX=0.03)
     >>> # Your results maybe slightly different depending on the version of
     >>> # QSDsan's dependent packages (e.g., thermo)
     >>> tea.show() # doctest: +ELLIPSIS
-    SimpleTEA: sys
+    TEA: sys
     NPV  : -258,...
-
 
     See Also
     --------
@@ -150,7 +166,7 @@ class SimpleTEA(TEA):
     `TEA and LCA <https://qsdsan.readthedocs.io/en/latest/tutorials/TEA_and_LCA.html>`_
     '''
 
-    __slots__ = (*(i for i in TEA.__slots__ if i not in conflict_slots),
+    __slots__ = (*(i for i in BSTTEA.__slots__ if i not in conflict_slots),
                  '_system', '_units', '_feeds', '_products',
                  '_discount_rate', '_start_year', '_lifetime',
                  '_uptime_ratio', '_operating_hours', '_CAPEX', '_lang_factor',
@@ -160,7 +176,8 @@ class SimpleTEA(TEA):
                  start_year=date.today().year, lifetime=10, uptime_ratio=1.,
                  CAPEX=0., lang_factor=None,
                  annual_maintenance=0., annual_labor=0., system_add_OPEX={},
-                 depreciation='SL', construction_schedule=(1,)):
+                 depreciation='SL', construction_schedule=(1,),
+                 **add_kwargs):
         system.simulate()
         self.system = system
         system._TEA = self
@@ -181,17 +198,9 @@ class SimpleTEA(TEA):
         self.system_add_OPEX = {}.copy() if not system_add_OPEX else system_add_OPEX
         self.depreciation = depreciation
         self.construction_schedule = construction_schedule
-
-        ########## Not relevant to SimpleTEA but required by TEA ##########
-        self.startup_months = 0.
-        self.startup_FOCfrac = 0.
-        self.startup_VOCfrac = 0.
-        self.startup_salesfrac = 0.
-        self.WC_over_FCI = 0.
-        self.finance_interest = 0.
-        self.finance_years = 0
-        self.finance_fraction = 0
-
+        default_kwargs.update(add_kwargs)
+        for k, v in default_kwargs.items():
+            setattr(self, k, v)
 
     def __repr__(self):
         return f'<{type(self).__name__}: {self.system.ID}>'
@@ -522,3 +531,7 @@ class SimpleTEA(TEA):
             Sales are not included.
         '''
         return self.annualized_CAPEX+self.AOC
+    
+
+# For backward compatibility    
+SimpleTEA = TEA

@@ -1,5 +1,5 @@
 # Needed by qsdsan, biosteam/thermosteam versions noted in GitHub workflow
-exposan
+git+https://github.com/QSD-Group/EXPOsan.git
 SALib>=1.4.5
 seaborn
 sympy>=1.8

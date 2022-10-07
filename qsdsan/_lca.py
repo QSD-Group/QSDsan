@@ -64,9 +64,8 @@ class LCA:
     A system should be constructed prior to LCA, here we import a pre-constructed one.
 
     >>> import qsdsan as qs
-    >>> from qsdsan.utils import load_example_components, load_example_system
-    >>> cmps = load_example_components()
-    >>> sys = load_example_system(cmps)
+    >>> from qsdsan.utils import create_example_system
+    >>> sys = create_example_system()
     >>> sys.diagram() # doctest: +SKIP
     >>> sys.simulate()
     >>> sys.show()

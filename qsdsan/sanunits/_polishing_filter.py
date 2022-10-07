@@ -173,6 +173,8 @@ class PolishingFilter(SanUnit):
                  F_BM=default_F_BM, lifetime=default_equipment_lifetime,
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with, F_BM_default=1)
+        self._inf_raw = self.ins[0].copy()
+        self._inf = self._inf_raw.copy()
         self.filter_type = filter_type
         self.OLR = OLR
         self.HLR = HLR
@@ -228,9 +230,9 @@ class PolishingFilter(SanUnit):
         biogas.phase = 'g'
         biogas.empty()
 
-        inf = raw.copy()
+        inf = self._inf
         inf.mix_from((raw, recycled))
-        self._inf = inf.copy() # this stream will be preserved (i.e., no reaction)
+        self._inf_raw.copy_like(inf) # this stream will be preserved (i.e., no reaction)
 
         self.growth_rxns(inf.mol)
         self.decomp_rxns.force_reaction(inf.mol)
@@ -301,7 +303,7 @@ class PolishingFilter(SanUnit):
 
 
     def _design_aerobic(self):
-        inf, N = self._inf, self._N_filter_min
+        inf, N = self._inf_raw, self._N_filter_min
         Q = inf.F_vol
 
         ### Concrete ###
