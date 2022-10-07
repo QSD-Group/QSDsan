@@ -23,7 +23,7 @@ from .. import SanUnit
 __all__ = ('HeatExchangerNetwork', 'HXprocess', 'HXutility',)
 
         
-class HeatExchangerNetwork(HXN, SanUnit):
+class HeatExchangerNetwork(SanUnit, HXN):
     '''
     Similar to the :class:`biosteam.units.facilities.HeatExchangerNetwork`,
     but also a subclass of :class:`qsdsan.SanUnit`
@@ -65,6 +65,8 @@ class HeatExchangerNetwork(HXN, SanUnit):
     _N_heat_utilities = HXN._N_heat_utilities
     _units= HXN._units
     __init__ = HXN.__init__
+    _init_ins = HXN._init_ins
+    _init_outs = HXN._init_outs
 
 
 class HXprocess(SanUnit, HXP):
