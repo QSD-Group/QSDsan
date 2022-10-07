@@ -51,6 +51,16 @@ class HeatExchangerNetwork(SanUnit, HXN):
     >>> round(HXN.actual_heat_util_load/HXN.original_heat_util_load, 2)
     0.28
     >>> HXN.stream_life_cycles # doctest: +SKIP
+    [<StreamLifeCycle: Stream_0, cold
+     	life_cycle = [
+     		<LifeStage: <HXprocess: HX_0_1_hs>, H_in = 0 kJ, H_out = 3.15e+05 kJ>
+     		<LifeStage: <HXutility: Util_0_hs>, H_in = 3.15e+05 kJ, H_out = 4.4e+05 kJ>
+     	]>,
+     <StreamLifeCycle: Stream_1, hot
+     	life_cycle = [
+     		<LifeStage: <HXprocess: HX_0_1_hs>, H_in = 3.49e+05 kJ, H_out = 3.36e+04 kJ>
+     		<LifeStage: <HXutility: Util_1_cs>, H_in = 3.36e+04 kJ, H_out = -1.22e+05 kJ>
+     	]>]
 
     See Also
     --------
