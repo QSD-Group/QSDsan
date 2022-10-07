@@ -13,8 +13,15 @@ for license details.
 '''
 
 from .. import (
-    Component, Components, SanStream, System, SimpleTEA, Model,
-    set_thermo, get_thermo, sanunits as su
+    Component,
+    Components,
+    get_thermo,
+    Model,
+    SanStream,
+    sanunits as su,
+    set_thermo as qs_set_thermo,
+    SimpleTEA,
+    System,
     )
 from chaospy import distributions as shape
 
@@ -31,7 +38,7 @@ __all__ = (
 # Example components
 # =============================================================================
 
-def create_example_components():
+def create_example_components(set_thermo=True):
     '''
     Load pre-constructed components for documentation purpose.
 
@@ -83,7 +90,7 @@ def create_example_components():
     cmps.compile()
     cmps.set_synonym('H2O', 'Water')
     cmps.set_synonym('CH4', 'Methane')
-
+    if set_thermo: qs_set_thermo(cmps)
     return cmps
 
 
@@ -124,13 +131,13 @@ def create_example_system(components=None):
      <Splitter: S2>)
     >>> sys.diagram() # doctest: +SKIP
     '''
-    if components: set_thermo(components)
+    if components: qs_set_thermo(components)
     else:
         try:
             thermo = get_thermo()
             if not ('H2O', 'Methanol', 'Ethanol', 'NaCl') in thermo.components.names:
-                qs.set_thermo(create_example_components())
-        except: set_thermo(create_example_components())
+                qs_set_thermo(create_example_components())
+        except: qs_set_thermo(create_example_components())
 
     salt_water = SanStream('salt_water', Water=2000, NaCl=50, units='kg/hr')
     methanol = SanStream('methanol', Methanol=20, units='kg/hr')
