@@ -30,25 +30,26 @@ class HeatExchangerNetwork(SanUnit, HXN):
 
     Examples
     --------
-    >>> from qsdsan import Stream, sanunits as su, System
+    >>> import qsdsan as qs
+    >>> from qsdsan import Stream, sanunits as su
     >>> from qsdsan.utils import create_example_components
-    >>> create_example_components() # doctest: +SKIP
+    >>> qs.set_thermo(create_example_components())
     >>> salt_water = Stream('salt_water', Water=2000, NaCl=50, units='kg/hr')
     >>> methanol = Stream('methanol', Methanol=20, units='kg/hr')
     >>> ethanol = Stream('ethanol', Ethanol=10, units='kg/hr')
-    >>> with System('sys') as sys:
-    ...     M1 = su.MixTank('M1', ins=(salt_water, 'recycled_brine', methanol, ethanol), init_with='Stream')
-    ...     P1 = su.Pump('P1', ins=M1-0, init_with='Stream')
-    ...     H1 = su.HXutility('H1', ins=P1-0, T=350, init_with='Stream')
-    ...     S1 = su.ComponentSplitter('S1', ins=H1-0, split_keys=('Methanol', 'Ethanol'), init_with='Stream')
-    ...     M2 = su.Mixer('M2', ins=(S1-0, S1-1), outs='alcohols', init_with='Stream')
-    ...     S2 = su.Splitter('S2', ins=S1-2, outs=(1-M1, 'waste_brine'), split=0.2, init_with='Stream')
-    ...     H2 = su.HXutility('H2', ins=S2.outs[1], T=280, init_with='Stream')
-    ...     HXN = su.HeatExchangerNetwork('HXN')
+    >>> M1 = su.MixTank('M1', ins=(salt_water, 'recycled_brine', methanol, ethanol), init_with='Stream')
+    >>> P1 = su.Pump('P1', ins=M1-0, init_with='Stream')
+    >>> H1 = su.HXutility('H1', ins=P1-0, T=350, init_with='Stream')
+    >>> S1 = su.ComponentSplitter('S1', ins=H1-0, split_keys=('Methanol', 'Ethanol'), init_with='Stream')
+    >>> M2 = su.Mixer('M2', ins=(S1-0, S1-1), outs='alcohols', init_with='Stream')
+    >>> S2 = su.Splitter('S2', ins=S1-2, outs=(1-M1, 'waste_brine'), split=0.2, init_with='Stream')
+    >>> H2 = su.HXutility('H2', ins=S2.outs[1], T=280, init_with='Stream')
+    >>> HXN = su.HeatExchangerNetwork('HXN')
+    >>> sys = qs.System('sys', path=(M1, P1, H1, S1, M2, S2, H2), facilities=(HXN,))
     >>> sys.simulate()
     >>> # The actual utility usage is just 30% of the original one (i.e., without HXN)
-    >>> round(HXN.actual_heat_util_load/HXN.original_heat_util_load, 2) # doctest: +SKIP
-    0.3
+    >>> round(HXN.actual_heat_util_load/HXN.original_heat_util_load, 2)
+    0.28
     >>> HXN.stream_life_cycles # doctest: +SKIP
 
     See Also
