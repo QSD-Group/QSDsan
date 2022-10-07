@@ -210,7 +210,7 @@ class DewateringUnit(Thickener):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=None, thickener_perc=28, TSS_removal_perc=98, 
                   number_of_centrifuges=1, specific_gravity_sludge=1.03, cake_density=965, 
-                  centrifugal_force=2500, rotational_speed = 40, polymer_dosage_per_kg_of_sludge = 0.0075, 
+                  g_factor=2500, rotational_speed = 40, polymer_dosage_per_kg_of_sludge = 0.0075, 
                   h_cylinderical=2, h_conical=1, **kwargs):
         Thickener.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, isdynamic=isdynamic,
                       init_with=init_with, F_BM_default=F_BM_default, thickener_perc=thickener_perc, 
@@ -218,7 +218,7 @@ class DewateringUnit(Thickener):
         self.number_of_centrifuges=number_of_centrifuges
         self.specific_gravity_sludge=specific_gravity_sludge
         self.cake_density=cake_density #in kg/m3
-        self.centrifugal_force = centrifugal_force #in Newton
+        self.g_factor = g_factor #unitless, centrifugal acceleration = g_factor*9.81
         self.rotational_speed = rotational_speed #in revolution/sec 
         self.polymer_dosage_per_kg_of_sludge = polymer_dosage_per_kg_of_sludge #in (kg,polymer/kg,sludge) unitless
         self.h_cylinderical = h_cylinderical
@@ -236,9 +236,9 @@ class DewateringUnit(Thickener):
         #volume_reduction_perc= (1 - wetcake_flowrate/(self.ins[0].F_mass/(1000*self.specific_gravity_sludge*self.number_of_centrifuges)))*100
         
         design = self.design_results 
-        design['Diameter'] = 2*(self.centrifugal_force*9.81/np.square(2*np.pi*self.rotational_speed)) #in m
+        design['Diameter'] = 2*(self.g_factor*9.81/np.square(2*np.pi*self.rotational_speed)) #in m
         design['Polymer feed rate'] = (self.polymer_dosage_per_kg_of_sludge*sludge_feed_rate) # in kg/hr
         design['Projected Area at Inlet'] = np.pi*np.square(design['Diameter']/2) #in m2
-        design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Area'] #in m3/(m2*day)
+        design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Projected Area at Inlet'] #in m3/(m2*day)
         design['Volume'] = np.pi*np.square(design['Diameter']/2)*(self.h_cylinderical + (self.h_conical/3)) #in m3
         design['Curved Surface Area'] = np.pi*design['Diameter']/2*(2*self.h_cylinderical + np.sqrt(np.square(design['Diameter']/2) + np.square(self.h_conical))) #in m2
