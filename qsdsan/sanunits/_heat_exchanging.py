@@ -17,9 +17,53 @@ for license details.
 '''
 
 from biosteam.units import HXprocess as HXP, HXutility as HXU
+from biosteam.units.facilities import HeatExchangerNetwork as HXN
 from .. import SanUnit
 
-__all__ = ('HXprocess', 'HXutility',)
+__all__ = ('HeatExchangerNetwork', 'HXprocess', 'HXutility',)
+
+        
+class HeatExchangerNetwork(SanUnit, HXN):
+    '''
+    Similar to the :class:`biosteam.units.facilities.HeatExchangerNetwork`,
+    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
+
+    Examples
+    --------
+    >>> from qsdsan import Stream, sanunits as su, System
+    >>> from qsdsan.utils import create_example_components
+    >>> create_example_components() # doctest: +SKIP
+    >>> salt_water = Stream('salt_water', Water=2000, NaCl=50, units='kg/hr')
+    >>> methanol = Stream('methanol', Methanol=20, units='kg/hr')
+    >>> ethanol = Stream('ethanol', Ethanol=10, units='kg/hr')
+    >>> with System('sys') as sys:
+    ...     M1 = su.MixTank('M1', ins=(salt_water, 'recycled_brine', methanol, ethanol), init_with='Stream')
+    ...     P1 = su.Pump('P1', ins=M1-0, init_with='Stream')
+    ...     H1 = su.HXutility('H1', ins=P1-0, T=350, init_with='Stream')
+    ...     S1 = su.ComponentSplitter('S1', ins=H1-0, split_keys=('Methanol', 'Ethanol'), init_with='Stream')
+    ...     M2 = su.Mixer('M2', ins=(S1-0, S1-1), outs='alcohols', init_with='Stream')
+    ...     S2 = su.Splitter('S2', ins=S1-2, outs=(1-M1, 'waste_brine'), split=0.2, init_with='Stream')
+    ...     H2 = su.HXutility('H2', ins=S2.outs[1], T=280, init_with='Stream')
+    ...     HXN = su.HeatExchangerNetwork('HXN')
+    >>> sys.simulate()
+    >>> # The actual utility usage is just 30% of the original one (i.e., without HXN)
+    >>> round(HXN.actual_heat_util_load/HXN.original_heat_util_load, 2)
+    0.3
+    >>> HXN.stream_life_cycles # doctest: +SKIP
+
+    See Also
+    --------
+    `biosteam.units.facilities.HeatExchangerNetwork <https://biosteam.readthedocs.io/en/latest/API/units/facilities/HeatExchangerNetwork.html>`_
+    '''
+    ticket_name = HXN.ticket_name
+    acceptable_energy_balance_error = HXN.acceptable_energy_balance_error
+    raise_energy_balance_error = HXN.raise_energy_balance_error
+    network_priority = HXN.network_priority
+    _N_ins = HXN._N_ins
+    _N_outs = HXN._N_outs
+    _N_heat_utilities = HXN._N_heat_utilities
+    _units= HXN._units
+    __init__ = HXN.__init__
 
 
 class HXprocess(SanUnit, HXP):
@@ -31,6 +75,12 @@ class HXprocess(SanUnit, HXP):
     --------
     `biosteam.units.HXprocess <https://biosteam.readthedocs.io/en/latest/units/heat_exchange.html>`_
     '''
+
+    line = HXP.line
+    _graphics = HXP._graphics
+    _N_heat_utilities = HXP._N_heat_utilities
+    _N_ins = HXP._N_ins
+    _N_outs = HXP._N_outs
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='Stream', F_BM_default=None,
@@ -92,6 +142,9 @@ class HXutility(SanUnit, HXU):
     --------
     `biosteam.units.HXutility <https://biosteam.readthedocs.io/en/latest/units/heat_exchange.html>`_
     '''
+
+    line = HXU.line
+    _graphics = HXU._graphics
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='Stream', F_BM_default=None,
