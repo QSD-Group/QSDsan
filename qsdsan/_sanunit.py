@@ -149,9 +149,6 @@ class SanUnit(Unit, isabstract=True):
     `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
 
     '''
-
-    ticket_name = 'SU'
-
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  construction=(), transportation=(), equipments=(),
                  add_OPEX={}, uptime_ratio=1., lifetime=None, F_BM_default=None,

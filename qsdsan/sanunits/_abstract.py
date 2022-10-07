@@ -51,7 +51,7 @@ class Mixer(SanUnit, BSTMixer):
     --------
     `biosteam.units.Mixer <https://biosteam.readthedocs.io/en/latest/units/mixing.html>`_
     '''
-
+    _graphics = BSTMixer._graphics
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', F_BM_default=None, isdynamic=False,
                  rigorous=False):
@@ -191,7 +191,7 @@ class Splitter(SanUnit, BSTSplitter):
     --------
     `biosteam.units.Splitter <https://biosteam.readthedocs.io/en/latest/units/splitting.html>`_
     '''
-
+    _graphics = BSTSplitter._graphics
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *, split, order=None,
                   init_with='WasteStream', F_BM_default=None, isdynamic=False):
         SanUnit.__init__(self, ID, ins, outs, thermo,
