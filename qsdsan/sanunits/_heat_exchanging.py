@@ -23,10 +23,10 @@ from .. import SanUnit
 __all__ = ('HeatExchangerNetwork', 'HXprocess', 'HXutility',)
 
         
-class HeatExchangerNetwork(SanUnit, HXN):
+class HeatExchangerNetwork(HXN, SanUnit):
     '''
     Similar to the :class:`biosteam.units.facilities.HeatExchangerNetwork`,
-    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
+    but also a subclass of :class:`qsdsan.SanUnit`
 
     Examples
     --------
