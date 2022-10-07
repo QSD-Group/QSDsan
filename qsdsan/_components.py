@@ -37,7 +37,7 @@ DomainError = tmo.exceptions.DomainError
 
 # %%
 
-class UndefinedComponent(tmo.exceptions.UndefinedChemicalAlias):
+class UndefinedComponent(tmo.exceptions.UndefinedChemical):
     '''AttributeError regarding undefined :class:`Component` objects.'''
 
 
