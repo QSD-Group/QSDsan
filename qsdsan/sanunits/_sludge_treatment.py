@@ -37,6 +37,8 @@ class Thickener(SanUnit):
         The percentage of suspended solids removed in the thickener.[1]
     solids_loading_rate : float
         Solid loading rate in the thickener.[2]
+    h_cylinderical = float
+        Height of cylinder forming the thickener.[2]
 
     References
     ----------
@@ -51,13 +53,14 @@ class Thickener(SanUnit):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=None, thickener_perc=7, 
-                  TSS_removal_perc=98, solids_loading_rate = 50, **kwargs):
+                  TSS_removal_perc=98, solids_loading_rate = 50, h_cylinderical=2, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with, F_BM_default=F_BM_default)
         
         self.thickener_perc = thickener_perc 
         self.TSS_removal_perc = TSS_removal_perc
         self.solids_loading_rate = solids_loading_rate 
+        self.h_cylinderical = h_cylinderical
         
     @property
     def thickener_perc(self):
@@ -153,6 +156,9 @@ class Thickener(SanUnit):
         design['Area'] = ((self.ins[0].get_TSS()/1000)*self.ins[0].F_vol*24)/slr # in m2
         design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Area'] #in m3/(m2*day)
         design['Diameter'] = np.sqrt(4*design['Area']/np.pi) #in m
+        design['Volume'] = np.pi*np.square(design['Diameter']/2)*self.h_cylinderical #in m3
+        design['Curved Surface Area'] = np.pi*design['Diameter']*self.h_cylinderical #in m2
+        
             
 class DewateringUnit(Thickener):
     
@@ -168,25 +174,25 @@ class DewateringUnit(Thickener):
     outs : class:`WasteStream`
         Treated effluent and sludge.
     thickener_perc : float
-        The percentage of Suspended Sludge in the underflow of the dewatering unit.
+        The percentage of Suspended Sludge in the underflow of the dewatering unit.[1]
     TSS_removal_perc : float
-        The percentage of suspended solids removed in the dewatering unit.
+        The percentage of suspended solids removed in the dewatering unit.[1]
     number_of_centrifuges : float
-        Number of centrifuges in the dewatering unit
+        Number of centrifuges in the dewatering unit.[2,3]
     specific_gravity_sludge: float
-        Specific gravity of influent sludge from secondary clarifier.
+        Specific gravity of influent sludge from secondary clarifier.[2,3]
     cake density: float
-        Density of effleunt dewatered sludge.
+        Density of effleunt dewatered sludge.[2,3]
     centrifugal_force : float
-        Centrifugal force in the centrifuge.
+        Centrifugal force in the centrifuge.[2,3]
     rotational_speed : float
-        rotational speed of the centrifuge. 
+        rotational speed of the centrifuge.[2,3]
     polymer_dosage_per_kg_of_sludge : float
-        mass of polymer utilised per kg of influent sludge. 
+        mass of polymer utilised per kg of influent sludge.[2,3]
     h_cylinderical: float
-        length of cylinderical portion of dewatering unit. 
+        length of cylinderical portion of dewatering unit.[2,3]
     h_conical: float
-        length of conical portion of dewatering unit. 
+        length of conical portion of dewatering unit.[2,3]
     
     References
     ----------
@@ -194,6 +200,8 @@ class DewateringUnit(Thickener):
     Benchmarking of control strategies for wastewater treatment plants. IWA publishing, 2014.
     [2] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
     engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
+    [3]Design of Municipal Wastewater Treatment Plants: WEF Manual of Practice 
+    No. 8 ASCE Manuals and Reports on Engineering Practice No. 76, Fifth Edition. 
     """
     
     _N_ins = 1
@@ -228,7 +236,9 @@ class DewateringUnit(Thickener):
         #volume_reduction_perc= (1 - wetcake_flowrate/(self.ins[0].F_mass/(1000*self.specific_gravity_sludge*self.number_of_centrifuges)))*100
         
         design = self.design_results 
-        design['Diameter'] = 2*(self.centrifugal_force*9.81/np.square(2*np.pi*self.rotational_speed)) #in meter
+        design['Diameter'] = 2*(self.centrifugal_force*9.81/np.square(2*np.pi*self.rotational_speed)) #in m
         design['Polymer feed rate'] = (self.polymer_dosage_per_kg_of_sludge*sludge_feed_rate) # in kg/hr
-        design['Volume'] = np.pi*np.square(design['Diameter']/2)*(self.h_cylinderical + (self.h_conical/3))
-        design['Curved Surface Area'] = np.pi*design['Diameter']/2*(2*self.h_cylinderical + np.sqrt(np.square(design['Diameter']/2) + np.square(self.h_conical)))
+        design['Projected Area at Inlet'] = np.pi*np.square(design['Diameter']/2) #in m2
+        design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Area'] #in m3/(m2*day)
+        design['Volume'] = np.pi*np.square(design['Diameter']/2)*(self.h_cylinderical + (self.h_conical/3)) #in m3
+        design['Curved Surface Area'] = np.pi*design['Diameter']/2*(2*self.h_cylinderical + np.sqrt(np.square(design['Diameter']/2) + np.square(self.h_conical))) #in m2
