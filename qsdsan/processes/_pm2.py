@@ -214,7 +214,6 @@ def photoadaptation(i_avg, X_CHL, X_carbon, I_n, k_gamma):
     :param k_gamma: photoadaptation coefficient [unitless]        
     :return: photoadaptation rate [g Chl/m^3/d]                                           
     '''
-
     if X_carbon > 0:
         return 24 * ((0.2 * i_avg / I_n) / (k_gamma + (i_avg / I_n))) *\
                (0.01 + 0.03 * ((np.log(i_avg / I_n + 0.005)) / (np.log(0.01))) - X_CHL/X_carbon) * X_carbon
@@ -235,203 +234,164 @@ def nutrient_uptake(X_ALG, quota, substrate, uptake_rate, half_sat_const, maximu
     return uptake_rate * monod(substrate, half_sat_const, 1) * X_ALG * \
            ((maximum_quota - quota) / (maximum_quota - subsistence_quota)) ** 0.01              
 
-# Maximum total photoautotrophic or heterotrophic-acetate or heterotrophic-glucose growth rate
-def max_total_growth(X_ALG, mu_max, nutrient_inhibit, f_temp_corr):
-    '''
-    Calculates the maximum total growth rate for a particular mechanism, without
-    considering substrate or light inhibition.
-
-    Parameters
-    ----------
-    X_ALG : float
-        algae biomass concentration (i.e., no storage products) [g COD/m^3].
-    mu_max : float
-        maximum specific growth rate [d^(-1)].
-    nutrient_inhibit : float
-        Inhibition factor by nutrients [-], between 0 and 1.
-    f_temp_corr : float
-        Temperature correction factor, between 0 and 1.
-    '''
-    return mu_max * nutrient_inhibit * f_temp_corr * X_ALG
-    
-def growth_split(f_I, f_CH, f_LI, rho, Y_CH, Y_LI, K_STO):
-    '''
-    Splits the total growth rate between three processes -- growth, growth
-    on stored carbohydrates, and growth on stored lipid
-
-    Parameters
-    ----------
-    f_I : float
-        irradiance response function (calculated from 'irrad_response' method) [unitless].
-    f_CH : float
-        ratio of stored carbohydrates to cells (X_CH / X_ALG) [g COD/g COD].
-    f_LI : float
-        ratio of stored lipids to cells (X_LI / X_ALG) [g COD/g COD] .
-    rho : float
-        carbohydrate relative preference factor (calibrated in Guest et al., 2013) [unitless].
-    Y_CH : float
-        yield of storage carbohydrates (as polyglucose, PG) [g COD/g COD].
-    Y_LI : float
-        yield of storage lipids (as triacylglycerol, TAG)[g COD/g COD].
-    K_STO : float
-        half-saturation constant for stored organic carbon 
-        (calibrated in Guest et al., 2013) [g COD/g COD].
-    '''
-    numerators = np.asarray([K_STO*(1-f_I), rho*f_CH, f_LI*Y_CH/Y_LI])
-    return numerators/(sum(numerators))
-
-def max_total_maintenance(X_ALG, mu_ATP):
-    '''
-    Calculates the maximum total rate of maintenance for a particular mechanism.
-
-    Parameters
-    ----------
-    X_ALG : float
-        algae biomass concentration (i.e., no storage products) [g COD/m^3].
-    mu_ATP : float
-        specific maintenance rate [g ATP/g COD/d]
-    Y_substrate : float
-        yield of the substrate to be degraded, can be stored carbohydrates, stored
-        lipids, or algae biomass [g COD/g COD].
-    Y_ATP : float
-        yield of ATP [g ATP/g COD].
-    '''
-    return mu_ATP * X_ALG
-
-def maintenance_split(f_CH, f_LI, rho, Y_CH, Y_LI, Y_X_ALG, Y_ATP, K_STO):
-    '''
-    Splits the total maintenance rate between three processes -- stored carbohydrate 
-    degradation, stored lipid degradation, and endogenous respiration.
-
-    Parameters
-    ----------
-    f_CH : float
-        ratio of stored carbohydrates to cells (X_CH / X_ALG) [g COD/g COD].
-    f_LI : float
-        ratio of stored lipids to cells (X_LI / X_ALG) [g COD/g COD] .
-    rho : float
-        carbohydrate relative preference factor (calibrated in Guest et al., 2013) [unitless].
-    Y_CH : float
-        yield of storage carbohydrates (as polyglucose, PG) [g COD/g COD].
-    Y_LI : float
-        yield of storage lipids (as triacylglycerol, TAG)[g COD/g COD].
-    K_STO : float
-        half-saturation constant for stored organic carbon 
-        (calibrated in Guest et al., 2013) [g COD/g COD].
-    '''
-    numerators = np.asarray([rho*f_CH, f_LI*Y_CH/Y_LI, K_STO])
-    yield_ratios = np.asarray([Y_CH, Y_LI, Y_X_ALG])/Y_ATP
-    return numerators/(sum(numerators)) * yield_ratios
-
-# Growth (_p7, _p15, _p23)
-def growth(X_ALG, nutrient_inhibit, response, f_I, f_CH, f_LI, mu_max, 
-           rho, Y_CH, Y_LI, K_STO, f_temp_corr):
+# Maximum total photoautotrophic or heterotrophic-acetate or heterotrophic-glucose growth rate (_p7, _p10, _p11, _p15, _p18, _p19, _p23, _p26, _p27)
+def max_total_growth(X_ALG, mu_max, f_np, f_temp):
     '''
     :param X_ALG: algae biomass concentration (i.e., no storage products) [g COD/m^3]
-    :param Q_N: nitrogen quota [g N/g COD]                                                                      
-    :param Q_P: phosphorus quota [g P/g COD]                                                                   
-    :param response: f_I (irradiance response function, calculated from 'irrad_response' method), acetate_response (monod(S_A, K_A, 1)), or glucose_response (monod(S_F, K_F, 1)) [unitless]
+    :param mu_max: maximum specific growth rate [d^(-1)]
+    :param f_np: inhibition factor by nitrogen or phosphorus (between 0 and 1) [unitless]
+    :param f_temp: temperature correction factor (between 0 and 1) [unitless]
+    :return: maximum total growth rate for a particular mechanism, 
+             without considering carbon source or light inhibition (= product of shared terms in growth-related equations) [g COD/m^3/d]
+    '''
+    return mu_max * f_np * X_ALG * f_temp
+
+# Split the total growth rate between three processes (_p7, _p10, _p11, _p15, _p18, _p19, _p23, _p26, _p27)
+def growth_split(f_I, f_CH, f_LI, rho, Y_CH, Y_LI, K_STO):
+    '''
     :param f_I: irradiance response function (calculated from 'irrad_response' method) [unitless]
     :param f_CH: ratio of stored carbohydrates to cells (X_CH / X_ALG) [g COD/g COD]                        
     :param f_LI: ratio of stored lipids to cells (X_LI / X_ALG) [g COD/g COD]                               
-    :param temp: temperature (will be imported from input excel file) [K]                   
-    :param mu_max: maximum specific growth rate [d^(-1)]
-    :param exponent: exponent to allow for more rapid transitions from growth to storage (see Guest et al., 2013) [unitless]
-    :param Q_N_min: minimum nitrogen quota [g N/g COD]
-    :param Q_P_min: minimum phosphorus quota [g P/g COD]         
     :param rho: carbohydrate relative preference factor (calibrated in Guest et al., 2013) [unitless]
     :param Y_CH: yield of storage carbohydrates (as polyglucose, PG), Y_CH_PHO, Y_CH_NR_HET_ACE, or Y_CH_NR_HET_GLU [g COD/g COD]
     :param Y_LI: yield of storage lipids (as triacylglycerol, TAG), Y_LI_PHO, Y_LI_NR_HET_ACE, or Y_LI_NR_HET_GLU [g COD/g COD]
     :param K_STO: half-saturation constant for stored organic carbon (calibrated in Guest et al., 2013) [g COD/g COD]
-    :param arr_a: arrhenius constant (A) (Goldman et al., 1974) [unitless]
-    :param arr_e: arrhenius exponential constant (E/R) (Goldman et al., 1974) [K]    
-    :return: growth rate [g COD/m^3/d]
-    '''    
-    return mu_max * nutrient_inhibit * response * (1 - (rho * f_CH + f_LI * (Y_CH / Y_LI)) \
-           / (K_STO * (1 - f_I) + rho * f_CH + f_LI * (Y_CH / Y_LI))) * \
-           X_ALG * f_temp_corr
+    :return: splits the total growth rate between three processes,
+             growth, growth on stored carbohydrates, and growth on stored lipid (= process-specific terms) [unitless]
+    '''
+    numerators = np.asarray([K_STO * (1 - f_I), rho * f_CH, f_LI * Y_CH / Y_LI])
+    return numerators/(sum(numerators))
 
+# Part of storage equations (_p8, _p9, _p16, _p17, _p24, _p25) 
 def storage_saturation(f, f_max, beta):
     '''
     :param f: f_CH or f_LI [g COD/g COD]
     :param f_max: f_CH_max or f_LI_max [g COD/g COD]
     :param beta: beta_1 or beta_2 [unitless]
+    :return: part of storage equations [unitless]
     '''
     return 1 - (f / f_max) ** beta
 
-# Storage of carbohydrate/lipid (_p8, _p9, _p16, _p17, _p24, _p25)
-def storage(X_ALG, nutrient_inhibit, response, saturation, storage_rate):
+# Maximum total photoautotrophic or heterotrophic-acetate or heterotrophic-glucose maintenance rate (_p12, _p13, _p14, _p20, _p21, _p22, _p28, _p29, _p30)
+def max_total_maintenance(X_ALG, m_ATP):
     '''
     :param X_ALG: algae biomass concentration (i.e., no storage products) [g COD/m^3]
-    :param Q_N: nitrogen quota [g N/g COD]                            
-    :param Q_P: phosphorus quota [g P/g COD]                     
+    :param m_ATP: specific maintenance rate [g ATP/g COD/d]
+    :return: maximum total maintenance rate for a particular mechanism 
+             (= product of shared terms in maintenance-related equations) [g COD/m^3/d]
+    '''
+    return m_ATP * X_ALG
+
+# Split the total maintenance rate between three processes (_p12, _p13, _p14, _p20, _p21, _p22, _p28, _p29, _p30)
+def maintenance_split(f_CH, f_LI, rho, Y_CH, Y_LI, Y_X_ALG, Y_ATP, K_STO):
+    '''
+    :param f_CH: ratio of stored carbohydrates to cells (X_CH / X_ALG) [g COD/g COD]               
+    :param f_LI: ratio of stored lipids to cells (X_LI / X_ALG) [g COD/g COD]                   
+    :param rho: carbohydrate relative preference factor (calibrated in Guest et al., 2013) [unitless]
+    :param Y_CH: yield of storage carbohydrates (as polyglucose, PG), Y_CH_PHO, Y_CH_NR_HET_ACE, or Y_CH_NR_HET_GLU [g COD/g COD]
+    :param Y_LI: yield of storage lipids (as triacylglycerol, TAG), Y_LI_PHO, Y_LI_NR_HET_ACE, or Y_LI_NR_HET_GLU [g COD/g COD]
+    :param Y_X_ALG: yield of carbon-accumulating phototrophic organisms, Y_X_ALG_PHO, Y_X_ALG_HET_ACE, or Y_X_ALG_HET_GLU [g COD/g COD]
+    :param Y_ATP: yield of ATP, Y_ATP_PHO, Y_ATP_HET_ACE, or Y_ATP_HET_GLU [g ATP/g COD]
+    :param K_STO: half-saturation constant for stored organic carbon (calibrated in Guest et al., 2013) [g COD/g COD]
+    :return: splits the total maintenance rate between three processes,
+             stored carbohydrate degradation, stored lipid degradation, and endogenous respiration (= process-specific terms) [unitless]
+    '''
+    numerators = np.asarray([rho * f_CH, f_LI * Y_CH / Y_LI, K_STO])
+    yield_ratios = np.asarray([Y_CH, Y_LI, Y_X_ALG]) / Y_ATP
+    return numerators/(sum(numerators)) * yield_ratios
+
+'''
+=============================================================================
+ No longer needed
+=============================================================================
+
+# Growth (_p7, _p15, _p23)
+def growth(X_ALG, f_np, response, f_I, f_CH, f_LI, mu_max, 
+           rho, Y_CH, Y_LI, K_STO, f_temp):
+    
+    :param X_ALG: algae biomass concentration (i.e., no storage products) [g COD/m^3]
+    :param f_np: inhibition factor by nitrogen or phosphorus (between 0 and 1) [unitless]
     :param response: f_I (irradiance response function, calculated from 'irrad_response' method), acetate_response (monod(S_A, K_A, 1)), or glucose_response (monod(S_F, K_F, 1)) [unitless]
+    :param f_I: irradiance response function (calculated from 'irrad_response' method) [unitless]
+    :param f_CH: ratio of stored carbohydrates to cells (X_CH / X_ALG) [g COD/g COD]                        
+    :param f_LI: ratio of stored lipids to cells (X_LI / X_ALG) [g COD/g COD]                               
+    :param mu_max: maximum specific growth rate [d^(-1)]
+    :param rho: carbohydrate relative preference factor (calibrated in Guest et al., 2013) [unitless]
+    :param Y_CH: yield of storage carbohydrates (as polyglucose, PG), Y_CH_PHO, Y_CH_NR_HET_ACE, or Y_CH_NR_HET_GLU [g COD/g COD]
+    :param Y_LI: yield of storage lipids (as triacylglycerol, TAG), Y_LI_PHO, Y_LI_NR_HET_ACE, or Y_LI_NR_HET_GLU [g COD/g COD]
+    :param K_STO: half-saturation constant for stored organic carbon (calibrated in Guest et al., 2013) [g COD/g COD]
+    :param f_temp: temperature correction factor (between 0 and 1) [unitless]
+    :return: growth rate [g COD/m^3/d]
+        
+    return mu_max * f_np * response * (1 - (rho * f_CH + f_LI * (Y_CH / Y_LI)) \
+           / (K_STO * (1 - f_I) + rho * f_CH + f_LI * (Y_CH / Y_LI))) * \
+           X_ALG * f_temp
+'''
+
+# Storage of carbohydrate/lipid (_p8, _p9, _p16, _p17, _p24, _p25)
+def storage(X_ALG, f_np, response, saturation, storage_rate):
+    '''
+    :param X_ALG: algae biomass concentration (i.e., no storage products) [g COD/m^3]
+    :param f_np: inhibition factor by nitrogen or phosphorus (between 0 and 1) [unitless]
+    :param response: f_I (irradiance response function, calculated from 'irrad_response' method), acetate_response (monod(S_A, K_A, 1)), or glucose_response (monod(S_F, K_F, 1)) [unitless]
+    :param saturation: 1 - (f / f_max) ** beta (calculated from 'storage_saturation' method) [unitless]
     :param storage_rate: q_CH or q_LI [g COD/g COD/d]
-    :param Q_N_min: minimum nitrogen quota [g N/g COD]
-    :param Q_P_min: minimum phosphorus quota [g P/g COD]        
     :return: storage rate [g COD/m^3/d]
     '''
-    return storage_rate * saturation * (1-nutrient_inhibit) * response * X_ALG
-    
+    return storage_rate * saturation * (1 - f_np) * response * X_ALG
+
+'''
+=============================================================================
+ No longer needed
+=============================================================================
+
 # Growth on stored carbohydrates (_p10, _p18, _p26)
-def growth_on_carbohydrate(X_ALG, nutrient_inhibit, response, f_I, f_CH, f_LI, mu_max, 
-                           rho, Y_CH, Y_LI, K_STO, f_temp_corr):
-    '''
+def growth_on_carbohydrate(X_ALG, f_np, response, f_I, f_CH, f_LI, mu_max, 
+                           rho, Y_CH, Y_LI, K_STO, f_temp):
+
     :param X_ALG: algae biomass concentration (i.e., no storage products) [g COD/m^3]
-    :param Q_N: nitrogen quota [g N/g COD]                                                                 
-    :param Q_P: phosphorus quota [g P/g COD]                                                             
+    :param f_np: inhibition factor by nitrogen or phosphorus (between 0 and 1) [unitless]
     :param response: f_I (irradiance response function, calculated from 'irrad_response' method), acetate_response (monod(S_A, K_A, 1)), or glucose_response (monod(S_F, K_F, 1)) [unitless]
     :param f_I: irradiance response function (calculated from 'irrad_response' method) [unitless]
     :param f_CH: ratio of stored carbohydrates to cells (X_CH / X_ALG) [g COD/g COD]                     
     :param f_LI: ratio of stored lipids to cells (X_LI / X_ALG) [g COD/g COD]                          
-    :param temp: temperature (will be imported from input excel file) [K]          
     :param mu_max: maximum specific growth rate [d^(-1)]
-    :param exponent: exponent to allow for more rapid transitions from growth to storage (see Guest et al., 2013) [unitless]
-    :param Q_N_min: minimum nitrogen quota [g N/g COD]
-    :param Q_P_min: minimum phosphorus quota [g P/g COD]         
     :param rho: carbohydrate relative preference factor (calibrated in Guest et al., 2013) [unitless]
     :param Y_CH: yield of storage carbohydrates (as polyglucose, PG), Y_CH_PHO, Y_CH_NR_HET_ACE, or Y_CH_NR_HET_GLU [g COD/g COD]
     :param Y_LI: yield of storage lipids (as triacylglycerol, TAG), Y_LI_PHO, Y_LI_NR_HET_ACE, or Y_LI_NR_HET_GLU [g COD/g COD]
     :param K_STO: half-saturation constant for stored organic carbon (calibrated in Guest et al., 2013) [g COD/g COD]
-    :param arr_a: arrhenius constant (A) (Goldman et al., 1974) [unitless]
-    :param arr_e: arrhenius exponential constant (E/R) (Goldman et al., 1974) [K]    
+    :param f_temp: temperature correction factor (between 0 and 1) [unitless]
     :return: rate of growth on stored carbohydrates [g COD/m^3/d]
-    '''
-    return mu_max * nutrient_inhibit * response * \
+    
+    return mu_max * f_np * response * \
            (rho * f_CH) / (K_STO * (1 - f_I) + rho * f_CH + f_LI * (Y_CH / Y_LI)) * X_ALG * \
-           f_temp_corr
+           f_temp
 
 # Growth on stored lipids (_p11, _p19, _p27)
-def growth_on_lipid(X_ALG, nutrient_inhibit, response, f_I, f_CH, f_LI, mu_max, 
-                    rho, Y_CH, Y_LI, K_STO, f_temp_corr):
-    '''
+def growth_on_lipid(X_ALG, f_np, response, f_I, f_CH, f_LI, mu_max, 
+                    rho, Y_CH, Y_LI, K_STO, f_temp):
+    
     :param X_ALG: algae biomass concentration (i.e., no storage products) [g COD/m^3]
-    :param Q_N: nitrogen quota [g N/g COD]                                                    
-    :param Q_P: phosphorus quota [g P/g COD]                                                 
+    :param f_np: inhibition factor by nitrogen or phosphorus (between 0 and 1) [unitless]
     :param response: f_I (irradiance response function, calculated from 'irrad_response' method), acetate_response (monod(S_A, K_A, 1)), or glucose_response (monod(S_F, K_F, 1)) [unitless]
     :param f_I: irradiance response function (calculated from 'irrad_response' method) [unitless]
     :param f_CH: ratio of stored carbohydrates to cells (X_CH / X_ALG) [g COD/g COD]                
     :param f_LI: ratio of stored lipids to cells (X_LI / X_ALG) [g COD/g COD]                        
-    :param temp: temperature (will be imported from input excel file) [K]              
     :param mu_max: maximum specific growth rate [d^(-1)]
-    :param exponent: exponent to allow for more rapid transitions from growth to storage (see Guest et al., 2013) [unitless]
-    :param Q_N_min: minimum nitrogen quota [g N/g COD]
-    :param Q_P_min: minimum phosphorus quota [g P/g COD]         
     :param rho: carbohydrate relative preference factor (calibrated in Guest et al., 2013) [unitless]
     :param Y_CH: yield of storage carbohydrates (as polyglucose, PG), Y_CH_PHO, Y_CH_NR_HET_ACE, or Y_CH_NR_HET_GLU [g COD/g COD]
     :param Y_LI: yield of storage lipids (as triacylglycerol, TAG), Y_LI_PHO, Y_LI_NR_HET_ACE, or Y_LI_NR_HET_GLU [g COD/g COD]
     :param K_STO: half-saturation constant for stored organic carbon (calibrated in Guest et al., 2013) [g COD/g COD]
-    :param arr_a: arrhenius constant (A) (Goldman et al., 1974) [unitless]
-    :param arr_e: arrhenius exponential constant (E/R) (Goldman et al., 1974) [K]    
+    :param f_temp: temperature correction factor (between 0 and 1) [unitless]
     :return: rate of growth on stored lipids [g COD/m^3/d]
-    '''
-    return mu_max * nutrient_inhibit * response * \
+    
+    return mu_max * f_np * response * \
            (f_LI * (Y_CH / Y_LI)) / (K_STO * (1 - f_I) + rho * f_CH + f_LI * (Y_CH / Y_LI)) * X_ALG * \
-           f_temp_corr
+           f_temp
 
 # Stored carbohydrate degradation for maintenance (_p12, _p20, _p28)
 def carbohydrate_maintenance(X_ALG, f_CH, f_LI, m_ATP, rho, Y_CH, Y_LI, Y_ATP, K_STO):
-    '''
+    
     :param X_ALG: algae biomass concentration (i.e., no storage products) [g COD/m^3]
     :param f_CH: ratio of stored carbohydrates to cells (X_CH / X_ALG) [g COD/g COD]     
     :param f_LI: ratio of stored lipids to cells (X_LI / X_ALG) [g COD/g COD]               
@@ -442,12 +402,12 @@ def carbohydrate_maintenance(X_ALG, f_CH, f_LI, m_ATP, rho, Y_CH, Y_LI, Y_ATP, K
     :param Y_ATP: yield of ATP, Y_ATP_PHO, Y_ATP_HET_ACE, or Y_ATP_HET_GLU [g ATP/g COD]
     :param K_STO: half-saturation constant for stored organic carbon (calibrated in Guest et al., 2013) [g COD/g COD]
     :return: rate of stored carbohydrate degradation for maintenance [g COD/m^3/d]
-    '''
+    
     return m_ATP * (Y_CH / Y_ATP) * (rho * f_CH) / (K_STO + rho * f_CH + f_LI * (Y_CH / Y_LI)) * X_ALG
 
 # Stored lipid degradation for maintenance (_p13, _p21, _p29)
 def lipid_maintenance(X_ALG, f_CH, f_LI, m_ATP, rho, Y_CH, Y_LI, Y_ATP, K_STO):
-    '''
+    
     :param X_ALG: algae biomass concentration (i.e., no storage products) [g COD/m^3]
     :param f_CH: ratio of stored carbohydrates to cells (X_CH / X_ALG) [g COD/g COD]               
     :param f_LI: ratio of stored lipids to cells (X_LI / X_ALG) [g COD/g COD]                   
@@ -458,12 +418,12 @@ def lipid_maintenance(X_ALG, f_CH, f_LI, m_ATP, rho, Y_CH, Y_LI, Y_ATP, K_STO):
     :param Y_ATP: yield of ATP, Y_ATP_PHO, Y_ATP_HET_ACE, or Y_ATP_HET_GLU [g ATP/g COD]
     :param K_STO: half-saturation constant for stored organic carbon (calibrated in Guest et al., 2013) [g COD/g COD]
     :return: rate of stored lipid degradation for maintenance [g COD/m^3/d]
-    '''
+    
     return m_ATP * (Y_LI / Y_ATP) * (f_LI * (Y_CH / Y_LI)) / (K_STO + rho * f_CH + f_LI * (Y_CH / Y_LI)) * X_ALG
 
 # Endogenous respiration (_p14, _p22, _p30)
 def endogenous_respiration(X_ALG, f_CH, f_LI, m_ATP, rho, Y_CH, Y_LI, Y_ATP, Y_X_ALG, K_STO):
-    '''
+    
     :param X_ALG: algae biomass concentration (i.e., no storage products) [g COD/m^3]
     :param f_CH: ratio of stored carbohydrates to cells (X_CH / X_ALG) [g COD/g COD]    
     :param f_LI: ratio of stored lipids to cells (X_LI / X_ALG) [g COD/g COD]             
@@ -475,23 +435,22 @@ def endogenous_respiration(X_ALG, f_CH, f_LI, m_ATP, rho, Y_CH, Y_LI, Y_ATP, Y_X
     :param Y_X_ALG: yield of carbon-accumulating phototrophic organisms, Y_X_ALG_PHO, Y_X_ALG_HET_ACE, or Y_X_ALG_HET_GLU [g COD/g COD]
     :param K_STO: half-saturation constant for stored organic carbon (calibrated in Guest et al., 2013) [g COD/g COD]
     :return: rate of endogenous repiration [g COD/m^3/d]
-    '''
+    
     return m_ATP * (Y_X_ALG / Y_ATP) * (1 - (rho * f_CH + f_LI * (Y_CH / Y_LI)) / (K_STO + rho * f_CH + f_LI * (Y_CH / Y_LI))) * X_ALG
-
+'''
 
 def rhos_pm2(state_arr, params):
     
-# extract values of state variables
+    # extract values of state variables
     c_arr = state_arr[:14]
-        # Q = state_arr[14]                             # Flow rate
-        # t = state_arr[15]                             # time
-        # light = calc_irrad(t)                         # when to use calculated light (I_0)
-    #!!! t will no longer be needed in the state_arr, light irradiance calculation 
-    # will be done externally in the PBR object
     temp = state_arr[15]
-    light = state_arr[16]
-    # temp = state_arr[16]
-    # light = state_arr[17]                               # imported from input file assumed
+    light = state_arr[16]     # imported from input file assumed
+
+    # Q = state_arr[14]                             # Flow rate
+    # t = state_arr[15]                             # time
+        # !!! t will no longer be needed in the state_arr, light irradiance calculation 
+        # will be done externally in the PBR object
+    # light = calc_irrad(t)                         # when to use calculated light (I_0)
 
     X_CHL, X_ALG, X_CH, X_LI, S_CO2, S_A, S_F, S_O2, S_NH, S_NO, S_P, X_N_ALG, X_P_ALG, H2O = c_arr
     
@@ -571,11 +530,14 @@ def rhos_pm2(state_arr, params):
     dark_response = max(f_I, n_dark)
     acetate_response = monod(S_A, K_A, 1)
     glucose_response = monod(S_F, K_F, 1)
-    nutrient_inhibit = min(droop(Q_N, Q_N_min, exponent), droop(Q_P, Q_P_min, exponent))
-    f_temp_corr = temperature(temp, arr_a, arr_e)
+
+    f_np = min(droop(Q_N, Q_N_min, exponent), droop(Q_P, Q_P_min, exponent))
+    f_temp = temperature(temp, arr_a, arr_e)
+
     f_sat_CH = storage_saturation(f_CH, f_CH_max, beta_1)
     f_sat_LI = storage_saturation(f_LI, f_LI_max, beta_2)
-    max_total_growth_rho = max_total_growth(X_ALG, mu_max, nutrient_inhibit, f_temp_corr)
+
+    max_total_growth_rho = max_total_growth(X_ALG, mu_max, f_np, f_temp)
     max_maintenance_rho = max_total_maintenance(X_ALG, m_ATP)
     # light = calc_irrad(t)
     
@@ -612,24 +574,24 @@ def rhos_pm2(state_arr, params):
     rhos[[24,25,26]] = max_maintenance_rho \
         * maintenance_split(f_CH, f_LI, rho, Y_CH_NR_HET_GLU, Y_LI_NR_HET_GLU, Y_X_ALG_HET_GLU, Y_ATP_HET_GLU, K_STO)
 
-    rhos[4] = storage(X_ALG, nutrient_inhibit, f_I, f_sat_CH, q_CH)
-    rhos[5] = storage(X_ALG, nutrient_inhibit, f_I, f_sat_LI, q_LI) * (f_CH / f_CH_max)
-    rhos[12] = storage(X_ALG, nutrient_inhibit, acetate_response, f_sat_CH, q_CH)
-    rhos[13] = storage(X_ALG, nutrient_inhibit, acetate_response, f_sat_LI, q_LI) * (f_CH / f_CH_max)
-    rhos[20] = storage(X_ALG, nutrient_inhibit, glucose_response, f_sat_CH, q_CH)
-    rhos[21] = storage(X_ALG, nutrient_inhibit, glucose_response, f_sat_LI, q_LI) * (f_CH / f_CH_max)
+    rhos[4] = storage(X_ALG, f_np, f_I, f_sat_CH, q_CH)
+    rhos[5] = storage(X_ALG, f_np, f_I, f_sat_LI, q_LI) * (f_CH / f_CH_max)
+    rhos[12] = storage(X_ALG, f_np, acetate_response, f_sat_CH, q_CH)
+    rhos[13] = storage(X_ALG, f_np, acetate_response, f_sat_LI, q_LI) * (f_CH / f_CH_max)
+    rhos[20] = storage(X_ALG, f_np, glucose_response, f_sat_CH, q_CH)
+    rhos[21] = storage(X_ALG, f_np, glucose_response, f_sat_LI, q_LI) * (f_CH / f_CH_max)
 
-    # rhos[3]= growth(X_ALG, nutrient_inhibit, f_I, f_I, f_CH, f_LI, mu_max, rho, Y_CH_PHO, Y_LI_PHO, K_STO, f_temp_corr)
-    # rhos[11] = growth(X_ALG, nutrient_inhibit, acetate_response, f_I, f_CH, f_LI, mu_max, rho, Y_CH_NR_HET_ACE, Y_LI_NR_HET_ACE, K_STO, f_temp_corr)
-    # rhos[19] = growth(X_ALG, nutrient_inhibit, glucose_response, f_I, f_CH, f_LI, mu_max, rho, Y_CH_NR_HET_GLU, Y_LI_NR_HET_GLU, K_STO, f_temp_corr)
+    # rhos[3]= growth(X_ALG, f_np, f_I, f_I, f_CH, f_LI, mu_max, rho, Y_CH_PHO, Y_LI_PHO, K_STO, f_temp)
+    # rhos[11] = growth(X_ALG, f_np, acetate_response, f_I, f_CH, f_LI, mu_max, rho, Y_CH_NR_HET_ACE, Y_LI_NR_HET_ACE, K_STO, f_temp)
+    # rhos[19] = growth(X_ALG, f_np, glucose_response, f_I, f_CH, f_LI, mu_max, rho, Y_CH_NR_HET_GLU, Y_LI_NR_HET_GLU, K_STO, f_temp)
     
-    # rhos[6] = growth_on_carbohydrate(X_ALG, nutrient_inhibit, f_I, f_I, f_CH, f_LI, mu_max, rho, Y_CH_PHO, Y_LI_PHO, K_STO, f_temp_corr)
-    # rhos[14] = growth_on_carbohydrate(X_ALG, nutrient_inhibit, acetate_response, f_I, f_CH, f_LI, mu_max, rho, Y_CH_NR_HET_ACE, Y_LI_NR_HET_ACE, K_STO, f_temp_corr)
-    # rhos[22] = growth_on_carbohydrate(X_ALG, nutrient_inhibit, glucose_response, f_I, f_CH, f_LI, mu_max, rho, Y_CH_NR_HET_GLU, Y_LI_NR_HET_GLU, K_STO, f_temp_corr)
+    # rhos[6] = growth_on_carbohydrate(X_ALG, f_np, f_I, f_I, f_CH, f_LI, mu_max, rho, Y_CH_PHO, Y_LI_PHO, K_STO, f_temp)
+    # rhos[14] = growth_on_carbohydrate(X_ALG, f_np, acetate_response, f_I, f_CH, f_LI, mu_max, rho, Y_CH_NR_HET_ACE, Y_LI_NR_HET_ACE, K_STO, f_temp)
+    # rhos[22] = growth_on_carbohydrate(X_ALG, f_np, glucose_response, f_I, f_CH, f_LI, mu_max, rho, Y_CH_NR_HET_GLU, Y_LI_NR_HET_GLU, K_STO, f_temp)
     
-    # rhos[7] = growth_on_lipid(X_ALG, nutrient_inhibit, f_I, f_I, f_CH, f_LI, mu_max, rho, Y_CH_PHO, Y_LI_PHO, K_STO, f_temp_corr)
-    # rhos[15] = growth_on_lipid(X_ALG, nutrient_inhibit, acetate_response, f_I, f_CH, f_LI, mu_max, rho, Y_CH_NR_HET_ACE, Y_LI_NR_HET_ACE, K_STO, f_temp_corr)
-    # rhos[23] = growth_on_lipid(X_ALG, nutrient_inhibit, glucose_response, f_I, f_CH, f_LI, mu_max, rho, Y_CH_NR_HET_GLU, Y_LI_NR_HET_GLU, K_STO, f_temp_corr)
+    # rhos[7] = growth_on_lipid(X_ALG, f_np, f_I, f_I, f_CH, f_LI, mu_max, rho, Y_CH_PHO, Y_LI_PHO, K_STO, f_temp)
+    # rhos[15] = growth_on_lipid(X_ALG, f_np, acetate_response, f_I, f_CH, f_LI, mu_max, rho, Y_CH_NR_HET_ACE, Y_LI_NR_HET_ACE, K_STO, f_temp)
+    # rhos[23] = growth_on_lipid(X_ALG, f_np, glucose_response, f_I, f_CH, f_LI, mu_max, rho, Y_CH_NR_HET_GLU, Y_LI_NR_HET_GLU, K_STO, f_temp)
 
     # rhos[8] = carbohydrate_maintenance(X_ALG, f_CH, f_LI, m_ATP, rho, Y_CH_PHO, Y_LI_PHO, Y_ATP_PHO, K_STO)
     # rhos[16] = carbohydrate_maintenance(X_ALG, f_CH, f_LI, m_ATP, rho, Y_CH_NR_HET_ACE, Y_LI_NR_HET_ACE, Y_ATP_HET_ACE, K_STO)
@@ -792,6 +754,9 @@ class PM2(CompiledProcesses):
     Y_X_ALG_HET_GLU : float, optional
               Yield of carbon-accumulating phototrophic organisms on glucose fixed to G6P, in [g COD/g COD].
               The default is 0.317.
+    n_dark: float, optional
+              Dark growth reduction factor, in [unitless]
+              The default is 0.7.
     path : str, optional
               Alternative file path for the Petersen matrix. 
               The default is None.
