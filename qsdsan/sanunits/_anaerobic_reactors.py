@@ -291,7 +291,7 @@ class AnaerobicCSTR(CSTR):
     _N_ins = 1
     _N_outs = 2
     _ins_size_is_fixed = False
-    _outs_size_is_fixed = True
+    _outs_size_is_fixed = False
     _R = 8.3145e-2 # Universal gas constant, [bar/M/K]
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
@@ -377,14 +377,23 @@ class AnaerobicCSTR(CSTR):
             self._gas_cmp_idx = self.components.indices(self.model._biogas_IDs)
             self._state_header = self._state_keys
     
-    @property
-    def split(self):
-        '''Not applicable.'''
-        return None
+    # @property
+    # def split(self):
+    #     '''Not applicable.'''
+    #     return None
+    # @split.setter
+    # def split(self, split):
+    #     '''Does nothing.'''
+    #     pass
+
+    split = property(CSTR.split.fget)
     @split.setter
     def split(self, split):
-        '''Does nothing.'''
-        pass
+        if split is None: self._split = split
+        else:
+            if len(split) != len(self._outs)-1:
+                raise ValueError('split and outs must have the same size')
+            self._split = np.array(split)/sum(split)
     
     @property
     def headspace_P(self):
@@ -438,9 +447,16 @@ class AnaerobicCSTR(CSTR):
         '''Only to converge volumetric flows.'''
         mixed = self._mixed # avoid creating multiple new streams
         mixed.mix_from(self.ins)
-        gas, liquid = self.outs
-        liquid.copy_like(mixed)
-        gas.copy_like(self._biogas)
+        if self.split is None: 
+            gas, liquid = self.outs
+            liquid.copy_like(mixed)
+        else:
+            gas = self.outs[0]
+            liquids = self._outs[1:]
+            Q = mixed.F_vol # m3/hr
+            for liquid, spl in zip(liquids, self.split):
+                liquid.copy_like(mixed)
+                liquid.set_total_flow(Q*spl, 'm3/hr')
         if self._fixed_P_gas: 
             gas.P = self.headspace_P * auom('bar').conversion_factor('Pa')
         gas.T = self.T
@@ -456,17 +472,28 @@ class AnaerobicCSTR(CSTR):
 
     def _update_state(self):
         arr = self._state
-        gas, liquid = self._outs
         f_rtn = self._f_retain
         y = arr.copy()
         i_mass = self.components.i_mass
         chem_MW = self.components.chem_MW
         n_cmps = len(self.components)
-        if liquid.state is None:
-            liquid.state = np.append(y[:n_cmps]*(1-f_rtn)*1e3, y[-1])
+        Cs = y[:n_cmps]*(1-f_rtn)*1e3 # kg/m3 to mg/L
+        if self.split is None:
+            gas, liquid = self._outs
+            if liquid.state is None:
+                liquid.state = np.append(Cs, y[-1])
+            else:
+                liquid.state[:n_cmps] = Cs
+                liquid.state[-1] = y[-1]
         else:
-            liquid.state[:n_cmps] = y[:n_cmps]*(1-f_rtn)*1e3  # kg/m3 to mg/L
-            liquid.state[-1] = y[-1]
+            gas = self._outs[0]
+            liquids = self._outs[1:]
+            for liquid, spl in zip(liquids, self.split):
+                if liquid.state is None:
+                    liquid.state = np.append(Cs, y[-1]*spl)
+                else:
+                    liquid.state[:n_cmps] = Cs
+                    liquid.state[-1] = y[-1]*spl        
         if gas.state is None:
             gas.state = np.zeros(n_cmps+1)
         gas.state[self._gas_cmp_idx] = y[n_cmps:(n_cmps + self._n_gas)]
@@ -476,15 +503,26 @@ class AnaerobicCSTR(CSTR):
 
     def _update_dstate(self):
         arr = self._dstate
-        gas, liquid = self._outs
         f_rtn = self._f_retain
         dy = arr.copy()
         n_cmps = len(self.components)
-        if liquid.dstate is None:
-            liquid.dstate = np.append(dy[:n_cmps]*(1-f_rtn)*1e3, dy[-1])
+        dCs = dy[:n_cmps]*(1-f_rtn)*1e3
+        if self.split is None:
+            gas, liquid = self._outs
+            if liquid.dstate is None:
+                liquid.dstate = np.append(dCs, dy[-1])
+            else:
+                liquid.dstate[:n_cmps] = dCs
+                liquid.dstate[-1] = dy[-1]
         else:
-            liquid.dstate[:n_cmps] = dy[:n_cmps]*(1-f_rtn)*1e3
-            liquid.dstate[-1] = dy[-1]
+            gas = self._outs[0]
+            liquids = self._outs[1:]
+            for liquid, spl in zip(liquids, self.split):
+                if liquid.dstate is None:
+                    liquid.dstate = np.append(dCs, dy[-1]*spl)
+                else:
+                    liquid.dstate[:n_cmps] = dCs
+                    liquid.dstate[-1] = dy[-1]*spl
         if gas.dstate is None:
             # contains no info on dstate
             gas.dstate = np.zeros(n_cmps+1)
