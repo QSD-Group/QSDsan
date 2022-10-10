@@ -60,6 +60,7 @@ set_thermo = tmo.settings.set_thermo
 get_components = tmo.settings.get_chemicals
 get_thermo = tmo.settings.get_thermo
 
+HeatUtility = bst.HeatUtility
 PowerUtility = bst.PowerUtility
 Unit = bst.Unit
 System = bst.System
