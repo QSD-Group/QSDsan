@@ -255,7 +255,7 @@ class AnaerobicCSTR(CSTR):
     ins : :class:`WasteStream`
         Influent to the reactor.
     outs : Iterable
-        Biogas and treated effluent.
+        Biogas and treated effluent(s).
     V_liq : float, optional
         Liquid-phase volume [m^3]. The default is 3400.
     V_gas : float, optional
@@ -457,9 +457,10 @@ class AnaerobicCSTR(CSTR):
             for liquid, spl in zip(liquids, self.split):
                 liquid.copy_like(mixed)
                 liquid.set_total_flow(Q*spl, 'm3/hr')
+        gas.copy_like(self._biogas)
+        gas.T = self.T
         if self._fixed_P_gas: 
             gas.P = self.headspace_P * auom('bar').conversion_factor('Pa')
-        gas.T = self.T
         
     def _init_state(self):
         mixed = self._mixed
@@ -471,9 +472,8 @@ class AnaerobicCSTR(CSTR):
         self._dstate = self._state * 0.
 
     def _update_state(self):
-        arr = self._state
+        y = self._state
         f_rtn = self._f_retain
-        y = arr.copy()
         i_mass = self.components.i_mass
         chem_MW = self.components.chem_MW
         n_cmps = len(self.components)
@@ -502,9 +502,8 @@ class AnaerobicCSTR(CSTR):
         gas.state[:n_cmps] = gas.state[:n_cmps] * chem_MW / i_mass * 1e3 # i.e., M biogas to mg (measured_unit) / L
 
     def _update_dstate(self):
-        arr = self._dstate
+        dy = self._dstate
         f_rtn = self._f_retain
-        dy = arr.copy()
         n_cmps = len(self.components)
         dCs = dy[:n_cmps]*(1-f_rtn)*1e3
         if self.split is None:
