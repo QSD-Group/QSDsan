@@ -119,7 +119,7 @@ def create_example_system(components=None):
 
     Examples
     --------
-    >>> from qsdsan.utils import create_example_components, create_example_system
+    >>> from qsdsan.utils import create_example_system
     >>> # Components from `create_example_components` will be loaded if no components are set/given
     >>> sys = create_example_system()
     >>> sys.path
