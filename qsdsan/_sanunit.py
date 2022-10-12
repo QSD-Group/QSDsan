@@ -87,7 +87,7 @@ def _replace_missing_streams(port, missing):
         if s_type == 's': continue
         s = port[idx]
         stream_class = SanStream if s_type=='ss' else WasteStream
-        port.replace(s, stream_class.from_stream(stream_class, s))
+        port.replace(s, stream_class.from_stream(stream=s))
 
 
 def _get_inf_state(inf):
@@ -264,9 +264,9 @@ class SanUnit(Unit, isabstract=True):
             if v == 's': # stream/mockstream/multistream/temporarystream
                 converted.append(s) # no conversion for these types
             elif v == 'ss':
-                converted.append(SanStream.from_stream(SanStream, s))
+                converted.append(SanStream.from_stream(stream=s))
             else:
-                converted.append(WasteStream.from_stream(WasteStream, s))
+                converted.append(WasteStream.from_stream(stream=s))
 
         diff = len(converted) + len(missing) - len(streams)
         if diff != 0:

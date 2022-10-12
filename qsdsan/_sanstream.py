@@ -289,25 +289,38 @@ class SanStream(Stream):
 
 
     @staticmethod
-    def from_stream(cls, stream, ID='', **kwargs):
+    def from_stream(stream, ID='', **kwargs):
         '''
         Cast a :class:`thermosteam.Stream` or :class:`biosteam.utils.MissingStream`
         to :class:`SanStream` or :class:`MissingSanStream`.
+        
+        .. note::
+            
+            Price is not copied unless specified.
 
         Parameters
         ----------
-        cls : obj
-            class of the stream to be created.
         stream : :class:`thermosteam.Stream`
             The original stream.
         ID : str
-            If not provided, will use default ID.
-        kwargs
+            ID of the new stream (not applicable for missing streams),
+            default ID will be used if not provided.
+        kwargs: {}
             Additional properties of the new stream.
 
         Examples
         --------
-        >>> import qsdsan as qs
+        For missing streams, but it's almost always for unit initialization,
+        you don't really need to interact with this class
+        
+        >>> import biosteam as bst, qsdsan as qs
+        >>> ms = bst.utils.MissingStream()
+        >>> mss = qs.SanStream.from_stream(ms)
+        >>> mss
+        <MissingSanStream>
+        
+        For actual streams
+        
         >>> cmps = qs.Components.load_default()
         >>> qs.set_thermo(cmps)
         >>> s = qs.Stream('s', H2O=100, price=5)
@@ -317,7 +330,7 @@ class SanStream(Stream):
          flow (kmol/hr): H2O  100
         >>> s.price
         5.0
-        >>> ss = qs.SanStream.from_stream(qs.SanStream, s, ID='ss', T=350, price=10)
+        >>> ss = qs.SanStream.from_stream(stream=s, ID='ss', T=350, price=10)
         >>> ss.show()
         SanStream: ss
          phase: 'l', T: 350 K, P: 101325 Pa
@@ -331,39 +344,107 @@ class SanStream(Stream):
             new = MissingSanStream.__new__(MissingSanStream)
             new.__init__(stream._source, stream._sink)
             return new
+
         # An actual stream
-        if not isinstance(stream, cls):
-            if not ID:
-                stream.registry.discard(stream)
-                # stream.registry.untrack((stream,))
-            new = cls.__new__(cls)
-            new_ID = ID if ID else stream.ID
-            if new_ID[0]=='s' and new_ID[1:].isnumeric(): # old ID is default
-                new_ID = ''
-            new.__init__(ID=new_ID)
+        cls = kwargs.pop('cls', SanStream)
+        if isinstance(stream, cls): return stream
+        
+        if not ID:
+            stream.registry.discard(stream)
+            # stream.registry.untrack((stream,))
+        new = cls.__new__(cls)
+        new_ID = ID if ID else stream.ID
+        if new_ID[0]=='s' and new_ID[1:].isnumeric(): # old ID is default
+            new_ID = ''
+        new.__init__(ID=new_ID)
 
-            source = new._source = stream._source
-            if source:
-                source._outs[source._outs.index(stream)] = new
+        source = new._source = stream._source
+        if source:
+            source._outs[source._outs.index(stream)] = new
 
-            sink = new._sink = stream._sink
-            if sink:
-                sink._ins[sink._ins.index(stream)] = new
+        sink = new._sink = stream._sink
+        if sink:
+            sink._ins[sink._ins.index(stream)] = new
 
-            new._thermo = stream._thermo
-            new._imol = stream._imol.copy()
-            new._thermal_condition = stream._thermal_condition.copy()
-            new.reset_cache()
-            new.price = 0
-            new.stream_impact_item = None
+        new._thermo = stream._thermo
+        new._imol = stream._imol.copy()
+        new._thermal_condition = stream._thermal_condition.copy()
+        new.reset_cache()
+        new.price = 0
+        new.stream_impact_item = None
+        for attr, val in kwargs.items(): setattr(new, attr, val)
 
-            for attr, val in kwargs.items():
-                setattr(new, attr, val)
+        stream._sink = stream._source = None
+        return new
 
-            stream._sink = stream._source = None
+
+    def to_stream(self, ID='', **kwargs):
+        '''
+        Cast a :class:`SanStream` to :class:`thermosteam.Stream`.
+        Attributes and properties not applicable for :class:`thermosteam.Stream`
+        will be discarded.
+
+        Parameters
+        ----------
+        cls : obj
+            class of the stream to be created.
+        ID : str
+            If not provided, will use default ID.
+            
+        Examples
+        --------
+        >>> import qsdsan as qs        
+        >>> cmps = qs.Components.load_default()
+        >>> qs.set_thermo(cmps)
+        >>> ss = qs.SanStream('ss', H2O=100, price=5)
+        >>> ss.show()
+        SanStream: ss
+         phase: 'l', T: 298.15 K, P: 101325 Pa
+         flow (kmol/hr): H2O  5.55
+        >>> ss.price
+        5.0
+        >>> s = ss.to_stream(ID='s', T=350, price=10)
+        >>> s.show()
+        Stream: s
+         phase: 'l', T: 350 K, P: 101325 Pa
+         flow (kmol/hr): H2O  5.55
+        >>> s.price
+        10.0
+        '''        
+        # Missing stream, note that if to make updates here,
+        # it's likely that `WasteStream.from_stream` should be updated as well.
+        if isinstance(self, MissingSanStream):
+            new = MissingStream.__new__(MissingStream)
+            new.__init__(self._source, self._sink)
             return new
-        else:
-            return stream
+        
+        # An actual stream
+        if self.__class__.__name__ == 'Stream': return self
+        # if isinstance(self, Stream): return self # will not work since ``SanStream`` is also ``Stream``
+        
+        if not ID: self.registry.discard(self)
+        new = Stream.__new__(Stream)
+        new_ID = ID if ID else self.ID
+        if new_ID[0]=='ss' and new_ID[1:].isnumeric(): # old ID is default
+            new_ID = ''
+        new.__init__(ID=new_ID)
+
+        source = new._source = self._source
+        if source: source._outs[source._outs.index(self)] = new
+
+        sink = new._sink = self._sink
+        if sink: sink._ins[sink._ins.index(self)] = new
+
+        new._thermo = self._thermo
+        new._imol = self._imol.copy()
+        new._thermal_condition = self._thermal_condition.copy()
+        new.reset_cache()
+        for attr, val in kwargs.items(): setattr(new, attr, val)
+
+        self._sink = self._source = None
+        return new
+
+
 
     def mix_from(self, others, **kwargs):
         '''
