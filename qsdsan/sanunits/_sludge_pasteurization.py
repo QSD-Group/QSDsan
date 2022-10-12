@@ -132,7 +132,7 @@ class SludgePasteurization(SanUnit):
                   if_biogas=True, heat_loss=0.1, target_MC=0.1, sludge_temp=283.15,
                   temp_pasteurization=343.15, if_combustion=False, biogas_loss=0.1,
                   biogas_eff=0.55,lhv_lpg = 48.5, lhv_methane=52.5,
-                  ppl=100, baseline_ppl=100, user_scale_up=1, exponent_scale=0.6,
+                  ppl=100, baseline_ppl=100, user_scale_up=1, exponent_scale=1,
                   if_sludge_service=True, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with,
@@ -294,43 +294,6 @@ class SludgePasteurization(SanUnit):
         self.add_OPEX =  annual_maintenance * self.service_team_wages / 60 / (365 * 24) * lumped_factor # USD/hr (all items are per hour)
 
         self.power_utility(self.water_pump_power+self.hhx_inducer_fan_power*lumped_factor) # kWh/hr
-
-
-    # # Legacy codes for previous SludgePasteurization design
-    # def _design(self):
-    #     design = self.design_results
-    #     if self.if_sludge_service:
-    #         design['Steel'] = S_quant = (self.sludge_dryer_weight + self.sludge_barrel_weight)/10*self.user_scale_up
-    #     else:
-    #         design['Steel'] = S_quant = (self.sludge_dryer_weight + self.sludge_barrel_weight)*self.user_scale_up
-
-    #     self.construction = (
-    #         Construction(item='Steel', quantity = S_quant, quantity_unit = 'kg'),
-    #         )
-    #     self.add_construction(add_cost=False)
-    # # Legacy cost
-    # def _cost(self):
-    #     C = self.baseline_purchase_costs
-    #     factor = self.user_scale_up ** self.exponent_scale
-    #     if self.if_sludge_service:
-    #         C['Dryer'] = self.sludge_dryer / 10 * factor
-    #         C['Barrel'] = self.sludge_barrel / 10 * factor
-    #     else:
-    #         C['Dryer'] = self.sludge_dryer * factor
-    #         C['Barrel'] = self.sludge_barrel * factor
-    #     ratio = self.price_ratio
-    #     for equipment, cost in C.items():
-    #         C[equipment] = cost * ratio
-
-    #     self.add_OPEX = self._calc_replacement_cost() + self._calc_maintenance_labor_cost()
-
-    # # Assume dryer and barrel have 25 year lifetime so will not need to be replaced
-    # def _calc_replacement_cost(self):
-    #     return 0
-
-    # def _calc_maintenance_labor_cost(self):
-    #     sludge_maintenance_labor_cost = self.sludge_labor_maintenance * self.wages * (self.user_scale_up**self.exponent_scale)
-    #     return sludge_maintenance_labor_cost/(365 * 24)  # USD/hr
 
 
     @property

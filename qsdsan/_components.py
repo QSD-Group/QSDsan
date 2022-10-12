@@ -37,10 +37,9 @@ DomainError = tmo.exceptions.DomainError
 
 # %%
 
-class UndefinedComponent(AttributeError):
+class UndefinedComponent(tmo.exceptions.UndefinedChemical):
     '''AttributeError regarding undefined :class:`Component` objects.'''
-    def __init__(self, ID):
-        super().__init__(repr(ID))
+
 
 def must_compile(*args, **kwargs): # pragma: no cover
     raise TypeError('Method valid only for CompiledChemicals, '
@@ -710,7 +709,7 @@ class CompiledComponents(CompiledChemicals):
         Parameters
         ----------
         IDs : Iterable(str)
-            IDs of select components within this ``~.CompiledComponents``.
+            IDs of select components within this ``qsdsan.CompiledComponents``.
 
         Examples
         --------
@@ -740,8 +739,8 @@ class CompiledComponents(CompiledChemicals):
 
         Examples
         --------
-        >>> from qsdsan.utils import load_example_components
-        >>> cmps = load_example_components()
+        >>> from qsdsan.utils import create_example_components
+        >>> cmps = create_example_components()
         >>> cmps.H2O is cmps.Water
         True
         >>> cmps.remove_alias(cmps.H2O, 'Water')
@@ -756,6 +755,16 @@ class CompiledComponents(CompiledChemicals):
         self.__dict__.pop(alias)
     remove_synonym = remove_alias
 
+
+    @property
+    def aliases(self):
+        '''All of the aliases of the components.'''
+        return set(sum([list(cmp.aliases) for cmp in self], []))
+
+    @property
+    def names(self):
+        '''All of the names and aliases of the components.'''
+        return set(self.IDs).union(self.aliases)
 
     @property
     def gases(self):

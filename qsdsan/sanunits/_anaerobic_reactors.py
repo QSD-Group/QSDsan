@@ -16,10 +16,11 @@ for license details.
 
 from math import ceil, pi
 import numpy as np
-from . import Decay
 from .. import SanUnit, Construction, WasteStream
+from ..processes import Decay
 from ..sanunits import HXutility, WWTpump, CSTR
-from ..utils import ospath, load_data, data_path, auom, calculate_excavation_volume
+from ..utils import ospath, load_data, data_path, auom, \
+    calculate_excavation_volume, ExogenousDynamicVariable as EDV
 __all__ = (
     'AnaerobicBaffledReactor',
     'AnaerobicCSTR',
@@ -67,7 +68,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
 
     gravel_density = 1600
@@ -247,14 +248,14 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
 class AnaerobicCSTR(CSTR):
     
     '''
-    An anaerpbic continuous stirred tank reactor with biogas in headspace. [1]_, [2]_
+    An anaerobic continuous stirred tank reactor with biogas in headspace. [1]_, [2]_
 
     Parameters
     ----------
     ins : :class:`WasteStream`
         Influent to the reactor.
     outs : Iterable
-        Biogas and treated effluent.
+        Biogas and treated effluent(s).
     V_liq : float, optional
         Liquid-phase volume [m^3]. The default is 3400.
     V_gas : float, optional
@@ -289,8 +290,8 @@ class AnaerobicCSTR(CSTR):
     
     _N_ins = 1
     _N_outs = 2
-    _ins_size_is_fixed = True
-    _outs_size_is_fixed = True
+    _ins_size_is_fixed = False
+    _outs_size_is_fixed = False
     _R = 8.3145e-2 # Universal gas constant, [bar/M/K]
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
@@ -298,12 +299,13 @@ class AnaerobicCSTR(CSTR):
                  T=308.15, headspace_P=1.013, external_P=1.013, 
                  pipe_resistance=5.0e4, fixed_headspace_P=False,
                  retain_cmps=(), fraction_retain=0.95,
-                 isdynamic=True, exogenous_var=(), **kwargs):
-        
+                 isdynamic=True, exogenous_vars=(), **kwargs):
+        if len(exogenous_vars) == 0:
+            exogenous_vars = (EDV('T', function=lambda t: T), )
         super().__init__(ID=ID, ins=ins, outs=outs, thermo=thermo,
                          init_with=init_with, V_max=V_liq, aeration=None,
                          DO_ID=None, suspended_growth_model=None,
-                         isdynamic=isdynamic, exogenous_var=exogenous_var, **kwargs)
+                         isdynamic=isdynamic, exogenous_vars=exogenous_vars, **kwargs)
         self.V_gas = V_gas
         self.T = T
         # self._S_gas = None
@@ -320,6 +322,7 @@ class AnaerobicCSTR(CSTR):
         self.fixed_headspace_P = fixed_headspace_P
         self._f_retain = np.array([fraction_retain if cmp.ID in retain_cmps \
                                    else 0 for cmp in self.components])
+        self._mixed = WasteStream()
     
     def ideal_gas_law(self, p=None, S=None):
         '''Calculates partial pressure [bar] given concentration [M] at 
@@ -374,14 +377,23 @@ class AnaerobicCSTR(CSTR):
             self._gas_cmp_idx = self.components.indices(self.model._biogas_IDs)
             self._state_header = self._state_keys
     
-    @property
-    def split(self):
-        '''Not applicable.'''
-        return None
+    # @property
+    # def split(self):
+    #     '''Not applicable.'''
+    #     return None
+    # @split.setter
+    # def split(self, split):
+    #     '''Does nothing.'''
+    #     pass
+
+    split = property(CSTR.split.fget)
     @split.setter
     def split(self, split):
-        '''Does nothing.'''
-        pass
+        if split is None: self._split = split
+        else:
+            if len(split) != len(self._outs)-1:
+                raise ValueError('split and outs must have the same size')
+            self._split = np.array(split)/sum(split)
     
     @property
     def headspace_P(self):
@@ -433,36 +445,55 @@ class AnaerobicCSTR(CSTR):
 
     def _run(self):
         '''Only to converge volumetric flows.'''
-        inf, = self.ins
-        gas, liquid = self.outs
-        liquid.copy_like(inf)
+        mixed = self._mixed # avoid creating multiple new streams
+        mixed.mix_from(self.ins)
+        if self.split is None: 
+            gas, liquid = self.outs
+            liquid.copy_like(mixed)
+        else:
+            gas = self.outs[0]
+            liquids = self._outs[1:]
+            Q = mixed.F_vol # m3/hr
+            for liquid, spl in zip(liquids, self.split):
+                liquid.copy_like(mixed)
+                liquid.set_total_flow(Q*spl, 'm3/hr')
         gas.copy_like(self._biogas)
+        gas.T = self.T
         if self._fixed_P_gas: 
             gas.P = self.headspace_P * auom('bar').conversion_factor('Pa')
-        gas.T = self.T
         
     def _init_state(self):
-        inf, = self._ins
-        Q = inf.get_total_flow('m3/d')
+        mixed = self._mixed
+        Q = mixed.get_total_flow('m3/d')
         #!!! how to make unit conversion generalizable to all models?
         if self._concs is not None: Cs = self._concs * 1e-3 # mg/L to kg/m3
-        else: Cs = inf.conc * 1e-3 # mg/L to kg/m3
+        else: Cs = mixed.conc * 1e-3 # mg/L to kg/m3
         self._state = np.append(Cs, [0]*self._n_gas + [Q]).astype('float64')
         self._dstate = self._state * 0.
 
     def _update_state(self):
-        arr = self._state
-        gas, liquid = self._outs
+        y = self._state
         f_rtn = self._f_retain
-        y = arr.copy()
         i_mass = self.components.i_mass
         chem_MW = self.components.chem_MW
         n_cmps = len(self.components)
-        if liquid.state is None:
-            liquid.state = np.append(y[:n_cmps]*(1-f_rtn)*1e3, y[-1])
+        Cs = y[:n_cmps]*(1-f_rtn)*1e3 # kg/m3 to mg/L
+        if self.split is None:
+            gas, liquid = self._outs
+            if liquid.state is None:
+                liquid.state = np.append(Cs, y[-1])
+            else:
+                liquid.state[:n_cmps] = Cs
+                liquid.state[-1] = y[-1]
         else:
-            liquid.state[:n_cmps] = y[:n_cmps]*(1-f_rtn)*1e3  # kg/m3 to mg/L
-            liquid.state[-1] = y[-1]
+            gas = self._outs[0]
+            liquids = self._outs[1:]
+            for liquid, spl in zip(liquids, self.split):
+                if liquid.state is None:
+                    liquid.state = np.append(Cs, y[-1]*spl)
+                else:
+                    liquid.state[:n_cmps] = Cs
+                    liquid.state[-1] = y[-1]*spl        
         if gas.state is None:
             gas.state = np.zeros(n_cmps+1)
         gas.state[self._gas_cmp_idx] = y[n_cmps:(n_cmps + self._n_gas)]
@@ -471,16 +502,26 @@ class AnaerobicCSTR(CSTR):
         gas.state[:n_cmps] = gas.state[:n_cmps] * chem_MW / i_mass * 1e3 # i.e., M biogas to mg (measured_unit) / L
 
     def _update_dstate(self):
-        arr = self._dstate
-        gas, liquid = self._outs
+        dy = self._dstate
         f_rtn = self._f_retain
-        dy = arr.copy()
         n_cmps = len(self.components)
-        if liquid.dstate is None:
-            liquid.dstate = np.append(dy[:n_cmps]*(1-f_rtn)*1e3, dy[-1])
+        dCs = dy[:n_cmps]*(1-f_rtn)*1e3
+        if self.split is None:
+            gas, liquid = self._outs
+            if liquid.dstate is None:
+                liquid.dstate = np.append(dCs, dy[-1])
+            else:
+                liquid.dstate[:n_cmps] = dCs
+                liquid.dstate[-1] = dy[-1]
         else:
-            liquid.dstate[:n_cmps] = dy[:n_cmps]*(1-f_rtn)*1e3
-            liquid.dstate[-1] = dy[-1]
+            gas = self._outs[0]
+            liquids = self._outs[1:]
+            for liquid, spl in zip(liquids, self.split):
+                if liquid.dstate is None:
+                    liquid.dstate = np.append(dCs, dy[-1]*spl)
+                else:
+                    liquid.dstate[:n_cmps] = dCs
+                    liquid.dstate[-1] = dy[-1]*spl
         if gas.dstate is None:
             # contains no info on dstate
             gas.dstate = np.zeros(n_cmps+1)
@@ -489,7 +530,7 @@ class AnaerobicCSTR(CSTR):
     def f_q_gas_fixed_P_headspace(self, rhoTs, S_gas, T):
         cmps = self.components
         gas_mass2mol_conversion = (cmps.i_mass / cmps.chem_MW)[self._gas_cmp_idx]
-        self._q_gas = self._R*T/(self.P_gas-self.p_vapor(convert_to_bar=True))\
+        self._q_gas = self._R*T/(self._P_gas-self.p_vapor(convert_to_bar=True))\
                                 *self.V_liq*sum(rhoTs*gas_mass2mol_conversion)
         return self._q_gas
 
@@ -520,7 +561,6 @@ class AnaerobicCSTR(CSTR):
             n_gas = self._n_gas
             V_liq = self.V_liq
             V_gas = self.V_gas
-            T = self.T
             gas_mass2mol_conversion = (cmps.i_mass / cmps.chem_MW)[self._gas_cmp_idx]
             hasexo = bool(len(self._exovars))
             f_exovars = self.eval_exo_dynamic_vars
@@ -531,14 +571,21 @@ class AnaerobicCSTR(CSTR):
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 S_liq = QC[:n_cmps]
                 S_gas = QC[n_cmps: (n_cmps+n_gas)]
-                Q = QC[-1]
-                S_in = QC_ins[0,:-1] * 1e-3  # mg/L to kg/m3
-                Q_in = QC_ins[0,-1]
-                if hasexo: QC = np.append(QC, f_exovars(t))
+                # Q = QC[-1]
+                # S_in = QC_ins[0,:-1] * 1e-3  # mg/L to kg/m3
+                # Q_in = QC_ins[0,-1]
+                Q_ins = QC_ins[:, -1]
+                S_ins = QC_ins[:, :-1] * 1e-3  # mg/L to kg/m3
+                Q = sum(Q_ins)
+                if hasexo: 
+                    exo_vars = f_exovars(t)
+                    QC = np.append(QC, exo_vars)
+                    T = exo_vars[0]
+                else: T = self.T
                 _f_param(QC)
                 M_stoichio = _M_stoichio()
                 rhos =_f_rhos(QC)
-                _dstate[:n_cmps] = (Q_in*S_in - Q*S_liq*(1-f_rtn))/V_liq \
+                _dstate[:n_cmps] = (Q_ins @ S_ins - Q*S_liq*(1-f_rtn))/V_liq \
                     + np.dot(M_stoichio.T, rhos)
                 q_gas = f_qgas(rhos[-3:], S_gas, T)
                 _dstate[n_cmps: (n_cmps+n_gas)] = - q_gas*S_gas/V_gas \
@@ -592,7 +639,7 @@ class AnaerobicDigestion(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Decay <sanunits_Decay>`
+    :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',

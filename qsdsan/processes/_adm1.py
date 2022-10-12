@@ -22,7 +22,11 @@ from qsdsan.utils import ospath, data_path
 from scipy.optimize import brenth
 from warnings import warn
 
-__all__ = ('create_adm1_cmps', 'ADM1')
+__all__ = ('create_adm1_cmps', 'ADM1',
+           'non_compet_inhibit', 'substr_inhibit',
+           'T_correction_factor', 
+           'pH_inhibit', 'Hill_inhibit', 
+           'rhos_adm1')
 
 _path = ospath.join(data_path, 'process_data/_adm1.tsv')
 _load_components = settings.get_default_chemicals
@@ -186,9 +190,9 @@ def mass2mol_conversion(cmps):
 def T_correction_factor(T1, T2, delta_H):
     return np.exp(delta_H/(R*100) * (1/T1 - 1/T2))  # R converted to SI
 
-def calc_Kas(pKas, T_base, T_op, theta):
-    pKas = np.asarray(pKas)
-    return 10**(-pKas) * T_correction_factor(T_base, T_op, theta)
+# def calc_Kas(pKas, T_base, T_op, theta):
+#     pKas = np.asarray(pKas)
+#     return 10**(-pKas) * T_correction_factor(T_base, T_op, theta)
 
 def acid_base_rxn(h_ion, weak_acids_tot, Kas):
     # h, nh4, hco3, ac, pr, bu, va = mols

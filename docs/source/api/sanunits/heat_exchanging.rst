@@ -1,6 +1,12 @@
 Heat Exchangers
 ===============
 
+HeatExchangerNetwork
+--------------------
+.. autoclass:: qsdsan.sanunits.HeatExchangerNetwork
+   :members:
+
+
 HXprocess
 ---------
 .. autoclass:: qsdsan.sanunits.HXprocess

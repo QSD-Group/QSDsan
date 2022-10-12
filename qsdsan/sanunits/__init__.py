@@ -34,12 +34,12 @@ from ._abstract import *
 from ._clarifier import *
 from ._combustion import *
 from ._crop_application import *
-from ._decay import *
 from ._dynamic_influent import *
 from ._electrochemical_cell import *
 from ._encapsulation_bioreactor import *
 from ._excretion import *
 from ._heat_exchanging import *
+from ._junction import *
 from ._non_reactive import *
 from ._pumping import *
 from ._screening import *
@@ -74,13 +74,13 @@ from . import (
         _clarifier,
         _combustion,
         _crop_application,
-        _decay,
         _dynamic_influent,
         _electrochemical_cell,
         _encapsulation_bioreactor,
         _excretion,
         _heat_exchanging,
         _internal_circulation_rx,
+        _junction,
         _lagoon,
         _membrane_bioreactors,
         _non_reactive,
@@ -111,13 +111,13 @@ __all__ = (
         *_clarifier.__all__,
         *_combustion.__all__,
         *_crop_application.__all__,
-        *_decay.__all__,
         *_dynamic_influent.__all__,
         *_electrochemical_cell.__all__,
         *_encapsulation_bioreactor.__all__,
         *_excretion.__all__,
         *_heat_exchanging.__all__,
         *_internal_circulation_rx.__all__,
+        *_junction.__all__,
         *_lagoon.__all__,
         *_membrane_bioreactors.__all__,
         *_non_reactive.__all__,

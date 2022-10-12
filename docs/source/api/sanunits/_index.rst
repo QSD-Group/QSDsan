@@ -34,10 +34,10 @@ Individual Unit Operations
    clarifiers
    combustion
    CropApplication
-   Decay
    ElectrochemicalCell
    Excretion
    heat_exchanging
+   junctions
    InternalCirculationRx
    Lagoon
    membrane_bioreactors
@@ -46,7 +46,9 @@ Individual Unit Operations
    pumping
    Screening
    Sedimentation
+   SepticTank
    sludge_thickening
+   SludgePasteurization
    suspended_growth_bioreactors
    tanks
    toilets

@@ -8,6 +8,7 @@ Ongoing
 -------
 - ``QSDsan`` now has a `website <https://qsdsan.com/>`_ to host all of the resources!
 - ``QSDsan``'s `documentation <https://qsdsan.readthedocs.io/en/latest/index.html>`_ is getting a new look!
+- Add new units to enable dynamic simulation of systems with multiple process models. Check out :class:`~.sanunits.Junction`, :class:`~.sanunits.ADMtoASM`, :class:`~.sanunits.ASMtoADM` and their use in the `interface system demo <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/interface>`_.
 
 
 `1.2.0`_

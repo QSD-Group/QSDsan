@@ -25,7 +25,7 @@ from collections.abc import Iterable
 from warnings import warn
 from biosteam.utils import MissingStream, Inlets, Outlets
 from . import currency, Unit, Stream, SanStream, WasteStream, System, \
-    Construction, Transportation, Equipment
+    Construction, Transportation, Equipment, HeatUtility, PowerUtility
 from .utils import SanUnitScope
 from biosteam.utils import Scope
 
@@ -149,22 +149,31 @@ class SanUnit(Unit, isabstract=True):
     `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
 
     '''
-
-    ticket_name = 'SU'
-
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  construction=(), transportation=(), equipments=(),
                  add_OPEX={}, uptime_ratio=1., lifetime=None, F_BM_default=None,
                  isdynamic=False, exogenous_vars=(), **kwargs):
+        self._system = None
         self._register(ID)
         self._specification = None
         self._load_thermo(thermo)
         self._init_with = init_with
         self._init_ins(ins, init_with)
         self._init_outs(outs, init_with)
+        #: All heat utilities associated to unit. Cooling and heating requirements 
+        #: are stored here (including auxiliary requirements). The number of heat utilities created is given by the
+        #: class attribute :attr:`~Unit._N_heat_utilities`.
+        self.heat_utilities: tuple[HeatUtility, ...] = tuple([HeatUtility() for i in range(self._N_heat_utilities)])
+        
+        #: Electric utility associated to unit (including auxiliary requirements).
+        self.power_utility: PowerUtility = PowerUtility()
+
         self._init_utils()
         self._init_results()
         self._init_specifications()
+        #: Whether to prioritize unit operation specification within recycle loop (if any).
+        self.prioritize: bool = False
+
         if not kwargs.get('skip_property_package_check'):
             self._assert_compatible_property_package()
         for i in (*construction, *transportation, *equipments):
@@ -180,6 +189,7 @@ class SanUnit(Unit, isabstract=True):
             F_BM = self.F_BM
             self.F_BM = defaultdict(lambda: F_BM_default)
             self.F_BM.update(F_BM)
+
         # For units with different state headers, should update it in the unit's ``__init__``
         self.isdynamic = isdynamic
         self._exovars = exogenous_vars

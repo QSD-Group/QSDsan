@@ -1,8 +1,10 @@
 ﻿Unit,Dynamic,Abstract,Status
+ADMtoASM,Yes,Yes,Completed
 ﻿AnMBR (anaerobic membrane bioreactor),No,No,Completed
 ActivatedSludgeProcess,No,No,Completed
 AnaerobicBaffledReactor,No,No,Completed
 AnaerobicDigestion,No,No,Completed
+ASMtoADM,Yes,Yes,Completed
 BeltThickener,No,No,Completed
 BiogasCombustion,No,Yes,Completed
 CHP,No,No,Completed
@@ -10,7 +12,6 @@ CSTR (continuously stirred tank reactor),Yes,No,Completed
 ComponentSplitter,No,Yes,Completed
 Copier,No,Yes,Completed
 CropApplication,No,Yes,Completed
-Decay,No,Yes,Completed (first order)
 DryingBed,No,No,Completed
 DynamicInfluent,Yes,No,Completed
 ElectrochemicalCell,No,No,Completed
@@ -21,12 +22,14 @@ HXprocess,No,No,Completed
 HXutility,No,No,Completed
 HydraulicDelay,Yes,Yes,Completed
 IdealClarifier,No,No,Completed
+Junction,Yes,Yes,Completed
 InternalCirculationRx,No,No,Completed
 Lagoon,No,No,Completed
 LiquidTreatmentBed,No,No,Completed
 LumpedCost,No,No,Completed
 MixTank,No,No,Completed
 Mixer,Yes,Yes,Completed
+MURT (multi-unit reinvented toilet),No,No,Completed
 PitLatrine,No,No,Completed
 PolishingFilter,No,No,Completed
 Pump,Yes,No,Completed
@@ -35,8 +38,10 @@ Sampler,Yes,No,Completed
 SBR (sequential batch reactor),Yes,No,Under development
 Screening,No,No,Completed
 Sedimentation,No,No,Completed
+SepticTank,No,No,Completed
 SludgeCentrifuge,No,No,Completed
 ﻿SludgeDigester,No,Yes,Completed
+SludgePasteurization,No,No,Completed
 SludgeThickening,No,Yes,Completed
 SludgeSeparator,No,Yes,Completed
 Splitter,Yes,Yes,Completed

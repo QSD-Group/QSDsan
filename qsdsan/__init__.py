@@ -5,7 +5,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
+
     Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -58,6 +60,7 @@ set_thermo = tmo.settings.set_thermo
 get_components = tmo.settings.get_chemicals
 get_thermo = tmo.settings.get_thermo
 
+HeatUtility = bst.HeatUtility
 PowerUtility = bst.PowerUtility
 Unit = bst.Unit
 System = bst.System
@@ -90,26 +93,26 @@ from ._construction import *
 from ._equipment import *
 from ._transportation import *
 from ._sanunit import *
-from ._simple_tea import *
+from ._tea import *
 from ._lca import *
 
 
 from . import (
     _component,
     _components,
-    _sanstream,
-    _waste_stream,
-    _process,
-    _impact_indicator,
-    _impact_item,
     _construction,
     _equipment,
-    _transportation,
-    _sanunit,
-    _simple_tea,
+    _impact_indicator,
+    _impact_item,
     _lca,
-    processes,
+    _process,
+    _sanstream,
+    _sanunit,
+    _tea,
+    _transportation,
+    _waste_stream,
     equipments,
+    processes,
     sanunits,
     stats,
     )
@@ -127,15 +130,15 @@ setattr(utils, 'wwtpump', wwtpump)
 __all__ = (
     *_component.__all__,
     *_components.__all__,
-    *_sanstream.__all__,
-    *_waste_stream.__all__,
-    *_process.__all__,
+    *_construction.__all__,
+    *_equipment.__all__,
     *_impact_indicator.__all__,
     *_impact_item.__all__,
-    *_construction.__all__,
-    *_transportation.__all__,
-    *_equipment.__all__,
-    *_sanunit.__all__,
-    *_simple_tea.__all__,
     *_lca.__all__,
+    *_process.__all__,
+    *_sanstream.__all__,
+    *_sanunit.__all__,
+    *_tea.__all__,
+    *_transportation.__all__,
+    *_waste_stream.__all__,
     )
