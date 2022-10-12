@@ -367,7 +367,7 @@ class MURT(Toilet):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Toilet <sanunits_Toilet>`
+    :ref:`qsdsan.sanunits.Toilet <sanunits_toilets>`
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
