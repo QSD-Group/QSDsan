@@ -30,7 +30,6 @@ br_hhx_dryer_path = ospath.join(br_su_data_path, '_br_hhx_dryer.tsv')
 
 @price_ratio()
 class SludgePasteurization(SanUnit):
-
     '''
     Unit operation for the pasteurization of sludge using liquid petroleum gas (LPG)
     or biogas.
@@ -98,7 +97,7 @@ class SludgePasteurization(SanUnit):
     if_sludge_service: bool
         If share sludge pasteurization unit among multiple septic tanks
         (assume 1,000 users per sludge pasteurization unit,
-         or 10 septic tanks serving a population of 100 users per septic tank).
+        or 10 septic tanks serving a population of 100 users per septic tank).
 
     References
     ----------
@@ -106,10 +105,12 @@ class SludgePasteurization(SanUnit):
     Valorization of Dilute Organic Carbon Waste Streams.
     Energy Environ. Sci. 2016, 9 (3), 1102–1112.
     https://doi.org/10.1039/C5EE03715H.
+
     [2] Turek et al., Proposed EU Legislation to Force Changes in Sewage
     Sludge Disposal: A Case Study.
     Front. Chem. Sci. Eng. 2018, 12 (4), 660–669.
     https://doi.org/10.1007/s11705-018-1773-0.
+    
     [3] Rowles et al., Financial viability and environmental sustainability of
     fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
     https://doi.org/10.1021/acsenvironau.2c00022
