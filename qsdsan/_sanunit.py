@@ -23,11 +23,28 @@ import numpy as np
 from collections import defaultdict
 from collections.abc import Iterable
 from warnings import warn
-from biosteam.utils import MissingStream, Inlets, Outlets
-from . import currency, Unit, Stream, SanStream, WasteStream, System, \
-    Construction, Transportation, Equipment, HeatUtility, PowerUtility
+from biosteam.utils import (
+    Inlets,
+    MissingStream,
+    MockStream,
+    Outlets,
+    Scope,
+    TemporaryStream,
+    )
+from . import (
+    Construction,
+    currency,
+    Equipment,
+    HeatUtility,
+    PowerUtility,
+    SanStream,
+    Stream,
+    System,
+    Transportation,
+    Unit,
+    WasteStream,
+    )
 from .utils import SanUnitScope
-from biosteam.utils import Scope
 
 __all__ = ('SanUnit',)
 
@@ -48,11 +65,10 @@ def _update_init_with(init_with, ins_or_outs, size):
         new_init_with = {}
 
     for k, v in init_with.items():
-        if k in ('Else', 'else'):
-            continue
+        if k in ('Else', 'else'): continue
         v_lower = v.lower()
-        if v_lower in ('stream', 's'):
-            new_init_with[k] = 's'
+        if v_lower in ('mockstream', 'multistream', 'stream', 'temporarystream', 's', 'ms', 'ts'): 
+            new_init_with[k] = 's' # biosteam-native streams
         elif v_lower in ('sanstream', 'ss'):
             new_init_with[k] = 'ss'
         elif v_lower in ('wastestream', 'ws'):
@@ -66,8 +82,7 @@ def _update_init_with(init_with, ins_or_outs, size):
 
 def _replace_missing_streams(port, missing):
     for idx, s_type in missing:
-        if s_type == 's':
-            continue
+        if s_type == 's': continue
         s = port[idx]
         stream_class = SanStream if s_type=='ss' else WasteStream
         port.replace(s, stream_class.from_stream(stream_class, s))
@@ -244,8 +259,8 @@ class SanUnit(Unit, isabstract=True):
             if isa(s, MissingStream):
                 missing.append((num, v))
                 continue
-            if v == 's':
-                converted.append(s)
+            if v == 's': # stream/mockstream/multistream/temporarystream
+                converted.append(s) # no conversion for these types
             elif v == 'ss':
                 converted.append(SanStream.from_stream(SanStream, s))
             else:
