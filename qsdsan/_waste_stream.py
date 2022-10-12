@@ -333,7 +333,7 @@ class WasteStream(SanStream):
         you don't really need to interact with this class
         
         >>> import biosteam as bst, qsdsan as qs
-        >>> ms = bst.utils.MissingStream()
+        >>> ms = bst.utils.MissingStream(source=None, sink=None)
         >>> mws = qs.WasteStream.from_stream(ms)
         >>> mws
         <MissingWasteStream>

@@ -314,7 +314,7 @@ class SanStream(Stream):
         you don't really need to interact with this class
         
         >>> import biosteam as bst, qsdsan as qs
-        >>> ms = bst.utils.MissingStream()
+        >>> ms = bst.utils.MissingStream(source=None, sink=None)
         >>> mss = qs.SanStream.from_stream(ms)
         >>> mss
         <MissingSanStream>
