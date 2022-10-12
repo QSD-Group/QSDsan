@@ -29,8 +29,10 @@ from biosteam.utils import (
     MockStream,
     Outlets,
     Scope,
-    TemporaryStream,
     )
+try: from biosteam.utils import TemporaryStream
+except:
+    class TemporaryStream: pass
 from . import (
     Construction,
     currency,
