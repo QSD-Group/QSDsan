@@ -242,3 +242,82 @@ class DewateringUnit(Thickener):
         design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Projected Area at Inlet'] #in m3/(m2*day)
         design['Volume'] = np.pi*np.square(design['Diameter']/2)*(self.h_cylinderical + (self.h_conical/3)) #in m3
         design['Curved Surface Area'] = np.pi*design['Diameter']/2*(2*self.h_cylinderical + np.sqrt(np.square(design['Diameter']/2) + np.square(self.h_conical))) #in m2
+        
+class Incinerator(SanUnit):
+    
+    _N_ins = 3
+    _N_outs = 2
+    
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
+                  init_with='WasteStream', F_BM_default=None, process_efficiency=0.90, 
+                  calorific_value_sludge= 12, calorific_value_fuel=0.05, **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
+                         init_with=init_with, F_BM_default=F_BM_default)
+        
+        self.calorific_value_sludge = calorific_value_sludge #in MJ/kg
+        self.calorific_value_fuel  = calorific_value_fuel #in MJ/kg 
+        
+        @property
+        def process_efficiency(self):
+            '''Process efficiency of incinerator.'''
+            return self._process_efficiency
+
+        @process_efficiency.setter
+        def process_efficiency(self, process_efficiency):
+            if process_efficiency is not None:
+                if process_efficiency>=1 or process_efficiency<=0:
+                    raise ValueError(f'should be between 0 and 1 not {process_efficiency}')
+                self._process_efficiency = process_efficiency
+            else: 
+                raise ValueError('Process efficiency of incinerator expected from user')
+                
+        @property
+        def calorific_value_sludge(self):
+            '''Calorific value of sludge in MJ/kg.'''
+            return self._calorific_value_sludge
+
+        @calorific_value_sludge.setter
+        def calorific_value_sludge(self, calorific_value_sludge):
+            if calorific_value_sludge is not None: 
+                self._calorific_value_sludge = calorific_value_sludge
+            else: 
+                raise ValueError('Calorific value of sludge expected from user')
+                
+        @property
+        def calorific_value_fuel(self):
+            '''Calorific value of fuel in MJ/kg.'''
+            return self._calorific_value_fuel
+
+        @calorific_value_sludge.setter
+        def calorific_value_sludge(self, calorific_value_fuel):
+            if calorific_value_fuel is not None: 
+                self._calorific_value_fuel = calorific_value_fuel
+            else: 
+                raise ValueError('Calorific value of fuel expected from user')
+        
+    def _run(self):
+         
+         sludge, air, fuel = self.ins
+         flue_gas, ash = self.outs
+         
+         #mass balance 
+         mass_flowrate_sludge = sludge.get_total_flow('kg/hr')
+         mass_flowrate_air = air.get_total_flow('kg/hr')
+         mass_flowrate_fuel = fuel.get_total_flow('kg/hr')
+         mass_ash = sludge.get_ISS()*ash.F_vol/1000 #in kg/hr (mg/l)*(m3/hr) = (1/1000)kg/hr
+         
+         # By conservation of mass 
+         
+         mass_flue_gas = mass_flowrate_sludge+mass_flowrate_air+mass_flowrate_fuel-mass_ash
+         
+         Heat_sludge = sludge.dry_mass*sludge.F_vol*self.calorific_value_sludge #in KJ/hr (mg/L)*(m3/hr)*(MJ/kg)=KJ/hr
+         Cp_air = 1 #(Cp = 1 kJ/kg for air)
+         Heat_air = mass_flowrate_air*Cp_air #in KJ/hr 
+         Heat_fuel = mass_flowrate_fuel*self.calorific_value_fuel 
+         Heat_flue_gas = self.process_efficiency*(Heat_sludge + Heat_air + Heat_fuel)
+         
+         #By conservation of energy
+         Heat_loss = Heat_sludge+Heat_air+Heat_fuel-Heat_flue_gas
+         
+         
+            
