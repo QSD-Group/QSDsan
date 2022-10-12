@@ -417,7 +417,7 @@ class Component(Chemical):
          return self._f_Amass_Totmass or 0.
     @f_Amass_Totmass.setter
     def f_Amass_Totmass(self, f):
-         self.Amass_Totmass = check_return_property('f_Amass_Totmass', f)
+         self._f_Amass_Totmass = check_return_property('f_Amass_Totmass', f)
          
     @property
     def description(self):

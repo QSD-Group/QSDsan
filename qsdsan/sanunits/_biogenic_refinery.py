@@ -24,6 +24,7 @@ for license details.
 
 from warnings import warn
 import math
+from math import ceil
 from .. import SanUnit, Construction
 from ._sludge_thickening import SludgeSeparator
 from ..utils import ospath, load_data, data_path, price_ratio
@@ -130,7 +131,7 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
 
         biochar.empty()
         biochar_yield = 1.18 * waste.ash**0.843 + (1-waste.ash) * 2.106 * math.exp(-0.0066*self.pyrolysis_temp)
-        biochar_prcd = waste.F_mass * (1-mc) * self.biochar_production_rate # kg biochar /hr
+        biochar_prcd = waste.F_mass * (1-mc) * biochar_yield # % biochar dry basis /hr
         biochar.imass['C'] = waste.COD * self.carbon_COD_ratio * waste.F_vol / 1e3 * (1 - self.pyrolysis_C_loss)
         
         NPK = ('N', 'P', 'K')
