@@ -386,7 +386,7 @@ class WasteStream(SanStream):
             Shorthand to pass composition, flow, and N information.
             Should be in the form of {'c' or ''}{'wt', 'mol' or 'vol'}{# or ''}.
             For example: 'cwt100' corresponds to composition=True, flow='kg/hr', and N=100;
-            'mol' corresponds to compostion=False, flow='kmol/hr', and N=None.
+            'mol' corresponds to composition=False, flow='kmol/hr', and N=None.
             Specifying `layout` will ignore `flow`, `composition`, and `N`.
         T : str, optional
             The unit for temperature. The default is 'K'.
