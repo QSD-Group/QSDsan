@@ -373,30 +373,24 @@ class SanUnit(Unit, isabstract=True):
         else:
             warn(f'{self.ID} is not a dynamic unit, cannot set tracker.')
 
-    def simulate(self, t_span=(0, 0), state_reset_hook=True,
-                 solver='', **kwargs):
+    def simulate(self, **kwargs):
         '''
         Converge mass and energy flows, design, and cost the unit.
 
         .. note::
 
-            If this unit is a dynamic unit, ODEs will be run after ``_run``
+            If this unit is a dynamic unit, AEs/ODEs will be run after ``_run``
             and/or ``specification``.
 
         Parameters
         ----------
-        t_span : tuple(float, float)
-            Integration time span for dynamic units.
-        state_reset_hook: str or callable
-            Hook function to reset the cache state between simulations (for dynamic systems).
-            Can be "reset_cache" or "clear_state" to call `System.reset_cache` or `System.clear_state`,
-            or None to avoiding resetting.
         kwargs : dict
-            Other keyword arguments that will be passed to ``scipy.integrate.solve_ivp``
+            Keyword arguments that will be passed to ``biosteam.systeam.dynamic_run``
+            (useful when running dynamic simulation).
 
         See Also
         --------
-        :func:`~.System.simulate`
+        :func:`biosteam.System.dynamic_run`
 
         `scipy.integrate.solve_ivp <https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html>`_
         '''
@@ -405,9 +399,7 @@ class SanUnit(Unit, isabstract=True):
             sys = self._mock_dyn_sys
             sys._feeds = self.ins
             sys._products = self.outs
-            sys.simulate(t_span=t_span,
-                         state_reset_hook=state_reset_hook,
-                         **kwargs)
+            sys.simulate(**kwargs)
             self._summary()
 
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, IDs=None, stream_info=True):
