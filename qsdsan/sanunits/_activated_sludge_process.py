@@ -527,7 +527,8 @@ class ActivatedSludgeProcess(SanUnit):
             duty = -(inf.H - H_at_T)
         else:
             duty = 0
-        self.heat_exchanger.simulate_as_auxiliary_exchanger(inlet=inf, duty=duty)
+        try: self.heat_exchanger.simulate_as_auxiliary_exchanger(inlet=inf, duty=duty)
+        except: self.heat_exchanger.simulate_as_auxiliary_exchanger(duty, inf) # backward compatible
         # Power
         pumping = 0.
         for ID in self.pumps:
