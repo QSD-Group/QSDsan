@@ -861,9 +861,9 @@ class PM2(CompiledProcesses):
                            ref_component='X_N_ALG',
                            conserved_for=('COD', 'C'))
                            
-            self.insert([2], _p3)
-            self.insert([3], _p4)
-            self.insert([4], _p5)
+            self.insert(2, _p3)
+            self.insert(3, _p4)
+            self.insert(4, _p5)
 
         self.compile(to_class=cls)
       
