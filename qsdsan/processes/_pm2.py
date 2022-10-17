@@ -547,39 +547,70 @@ def rhos_pm2(state_arr, params):
     rhos[0] = photoadaptation(i_avg, X_CHL, X_carbon, I_n, k_gamma)
     
     rhos[1] = nutrient_uptake(X_ALG, Q_N, S_NH, V_NH, K_N, Q_N_max, Q_N_min)
-    rhos[27:] = nutrient_uptake(X_ALG, Q_N, S_NO, V_NO, K_N, Q_N_max, Q_N_min) * (K_N/(K_N + S_NH))
+    rhos[[2,3,4]] = nutrient_uptake(X_ALG, Q_N, S_NO, V_NO, K_N, Q_N_max, Q_N_min) * (K_N/(K_N + S_NH))
+    # rhos[27:] = nutrient_uptake(X_ALG, Q_N, S_NO, V_NO, K_N, Q_N_max, Q_N_min) * (K_N/(K_N + S_NH))
     # rhos[28] = nutrient_uptake(X_ALG, Q_N, S_NO, V_NO, K_N, Q_N_max, Q_N_min) * (K_N/(K_N + S_NH))
     # rhos[29] = nutrient_uptake(X_ALG, Q_N, S_NO, V_NO, K_N, Q_N_max, Q_N_min) * (K_N/(K_N + S_NH))
-    rhos[2] = nutrient_uptake(X_ALG, Q_P, S_P, V_P, K_P, Q_P_max, Q_P_min)
+    rhos[5] = nutrient_uptake(X_ALG, Q_P, S_P, V_P, K_P, Q_P_max, Q_P_min)
+    # rhos[2] = nutrient_uptake(X_ALG, Q_P, S_P, V_P, K_P, Q_P_max, Q_P_min)
     
-    rhos[[3,6,7]] = max_total_growth_rho \
+    rhos[[6,9,10]] = max_total_growth_rho \
         * growth_split(f_I, f_CH, f_LI, rho, Y_CH_PHO, Y_LI_PHO, K_STO)        
-    rhos[3] *= f_I
-    rhos[[6,7]] *= dark_response
+    rhos[6] *= f_I
+    rhos[[9,10]] *= dark_response    
     
-    rhos[[11,14,15]] = max_total_growth_rho \
+    # rhos[[3,6,7]] = max_total_growth_rho \
+    #     * growth_split(f_I, f_CH, f_LI, rho, Y_CH_PHO, Y_LI_PHO, K_STO)        
+    # rhos[3] *= f_I
+    # rhos[[6,7]] *= dark_response
+
+    rhos[[14,17,18]] = max_total_growth_rho \
         * acetate_response \
         * growth_split(f_I, f_CH, f_LI, rho, Y_CH_NR_HET_ACE, Y_LI_NR_HET_ACE, K_STO)
+    
+    # rhos[[11,14,15]] = max_total_growth_rho \
+    #     * acetate_response \
+    #     * growth_split(f_I, f_CH, f_LI, rho, Y_CH_NR_HET_ACE, Y_LI_NR_HET_ACE, K_STO)
         
-    rhos[[19,22,23]] = max_total_growth_rho \
+    rhos[[22,25,26]] = max_total_growth_rho \
         * glucose_response \
         * growth_split(f_I, f_CH, f_LI, rho, Y_CH_NR_HET_GLU, Y_LI_NR_HET_GLU, K_STO)
+
+    # rhos[[19,22,23]] = max_total_growth_rho \
+    #     * glucose_response \
+    #     * growth_split(f_I, f_CH, f_LI, rho, Y_CH_NR_HET_GLU, Y_LI_NR_HET_GLU, K_STO)
     
-    rhos[[8,9,10]] = max_maintenance_rho \
+    rhos[[11,12,13]] = max_maintenance_rho \
         * maintenance_split(f_CH, f_LI, rho, Y_CH_PHO, Y_LI_PHO, Y_X_ALG_PHO, Y_ATP_PHO, K_STO)
-    
-    rhos[[16,17,18]] = max_maintenance_rho \
+        
+    # rhos[[8,9,10]] = max_maintenance_rho \
+    #     * maintenance_split(f_CH, f_LI, rho, Y_CH_PHO, Y_LI_PHO, Y_X_ALG_PHO, Y_ATP_PHO, K_STO)
+        
+    rhos[[19,20,21]] = max_maintenance_rho \
         * maintenance_split(f_CH, f_LI, rho, Y_CH_NR_HET_ACE, Y_LI_NR_HET_ACE, Y_X_ALG_HET_ACE, Y_ATP_HET_ACE, K_STO)
 
-    rhos[[24,25,26]] = max_maintenance_rho \
+    # rhos[[16,17,18]] = max_maintenance_rho \
+    #     * maintenance_split(f_CH, f_LI, rho, Y_CH_NR_HET_ACE, Y_LI_NR_HET_ACE, Y_X_ALG_HET_ACE, Y_ATP_HET_ACE, K_STO)
+
+    rhos[[27,28,29]] = max_maintenance_rho \
         * maintenance_split(f_CH, f_LI, rho, Y_CH_NR_HET_GLU, Y_LI_NR_HET_GLU, Y_X_ALG_HET_GLU, Y_ATP_HET_GLU, K_STO)
 
-    rhos[4] = storage(X_ALG, f_np, f_I, f_sat_CH, q_CH)
-    rhos[5] = storage(X_ALG, f_np, f_I, f_sat_LI, q_LI) * (f_CH / f_CH_max)
-    rhos[12] = storage(X_ALG, f_np, acetate_response, f_sat_CH, q_CH)
-    rhos[13] = storage(X_ALG, f_np, acetate_response, f_sat_LI, q_LI) * (f_CH / f_CH_max)
-    rhos[20] = storage(X_ALG, f_np, glucose_response, f_sat_CH, q_CH)
-    rhos[21] = storage(X_ALG, f_np, glucose_response, f_sat_LI, q_LI) * (f_CH / f_CH_max)
+    # rhos[[24,25,26]] = max_maintenance_rho \
+    #     * maintenance_split(f_CH, f_LI, rho, Y_CH_NR_HET_GLU, Y_LI_NR_HET_GLU, Y_X_ALG_HET_GLU, Y_ATP_HET_GLU, K_STO)
+
+    rhos[7] = storage(X_ALG, f_np, f_I, f_sat_CH, q_CH)
+    rhos[8] = storage(X_ALG, f_np, f_I, f_sat_LI, q_LI) * (f_CH / f_CH_max)
+    rhos[15] = storage(X_ALG, f_np, acetate_response, f_sat_CH, q_CH)
+    rhos[16] = storage(X_ALG, f_np, acetate_response, f_sat_LI, q_LI) * (f_CH / f_CH_max)
+    rhos[23] = storage(X_ALG, f_np, glucose_response, f_sat_CH, q_CH)
+    rhos[24] = storage(X_ALG, f_np, glucose_response, f_sat_LI, q_LI) * (f_CH / f_CH_max)
+
+    # rhos[4] = storage(X_ALG, f_np, f_I, f_sat_CH, q_CH)
+    # rhos[5] = storage(X_ALG, f_np, f_I, f_sat_LI, q_LI) * (f_CH / f_CH_max)
+    # rhos[12] = storage(X_ALG, f_np, acetate_response, f_sat_CH, q_CH)
+    # rhos[13] = storage(X_ALG, f_np, acetate_response, f_sat_LI, q_LI) * (f_CH / f_CH_max)
+    # rhos[20] = storage(X_ALG, f_np, glucose_response, f_sat_CH, q_CH)
+    # rhos[21] = storage(X_ALG, f_np, glucose_response, f_sat_LI, q_LI) * (f_CH / f_CH_max)
 
     # rhos[3]= growth(X_ALG, f_np, f_I, f_I, f_CH, f_LI, mu_max, rho, Y_CH_PHO, Y_LI_PHO, K_STO, f_temp)
     # rhos[11] = growth(X_ALG, f_np, acetate_response, f_I, f_CH, f_LI, mu_max, rho, Y_CH_NR_HET_ACE, Y_LI_NR_HET_ACE, K_STO, f_temp)
@@ -830,7 +861,7 @@ class PM2(CompiledProcesses):
                            ref_component='X_N_ALG',
                            conserved_for=('COD', 'C'))
                            
-            self.extend([_p3, _p4, _p5])
+            self.insert([2,3,4], [_p3, _p4, _p5])
 
         self.compile(to_class=cls)
       
