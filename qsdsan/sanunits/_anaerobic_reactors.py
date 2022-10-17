@@ -991,8 +991,7 @@ class SludgeDigester(SanUnit):
         floor_loss = coeff['floor'] * A * (T-self.T_earth) # [W]
         ceiling_loss = coeff['ceiling'] * A * (T-self.T_air) # [W]
         duty += (wall_loss+floor_loss+ceiling_loss)*60*60/1e3 # kJ/hr
-        try: self.heat_exchanger.simulate_as_auxiliary_exchanger(inlet=sludge, duty=duty)
-        except: self.heat_exchanger.simulate_as_auxiliary_exchanger(duty, sludge) # backward compatible
+        self.heat_exchanger.simulate_as_auxiliary_exchanger(inlet=sludge, duty=duty)
 
         # Concrete usage
         ft_2_m = auom('ft').conversion_factor('m')
