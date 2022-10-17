@@ -31,7 +31,7 @@ jobs:
         pip install git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git@qsdsan
         pip install git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@qsdsan
         pip install git+https://github.com/QSD-Group/EXPOsan.git@main
-        pip install -r requirements_test.txt
+        pip install -r requirements.txt
     - name: Test and generate coverage report
       run: |
         pytest --cov=./ --cov-report=xml
