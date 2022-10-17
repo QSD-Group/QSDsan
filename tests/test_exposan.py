@@ -13,7 +13,6 @@ for license details.
 '''
 
 # Just making sure the systems can run is sufficient
-# TODO: change to the new loading routine
 __all__ = ('test_exposan',)
 
 def test_exposan():
