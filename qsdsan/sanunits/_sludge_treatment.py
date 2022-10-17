@@ -16,7 +16,7 @@ for license details.
 from .. import SanUnit
 import numpy as np
 
-__all__ = ('Thickener', 'DewateringUnit',)
+__all__ = ('Thickener', 'DewateringUnit', 'Incinerator')
 
 class Thickener(SanUnit):
     
@@ -245,6 +245,36 @@ class DewateringUnit(Thickener):
         
 class Incinerator(SanUnit):
     
+    """
+    Fluidized bed incinerator unit for metroWWTP.
+    
+    Parameters
+    ----------
+    ID : str
+        ID for the Incinerator Unit. The default is ''.
+    ins : class:`WasteStream`
+        Influent to the Incinerator Unit. Expected number of influent streams are 3. 
+    outs : class:`WasteStream`
+        Flue gas and ash. 
+    thickener_perc : float
+        The percentage of Suspended Sludge in the underflow of the dewatering unit.
+    process_efficiency : float
+        The process efficiency of the incinerator unit. Expected value between 0 and 1. 
+    calorific_value_sludge : float 
+        The calorific value of influent sludge in KJ/kg. The default value used is 12000 KJ/kg.
+    calorific_value_fuel : float 
+        The calorific value of fuel employed for combustion in KJ/kg. 
+        The default fuel is natural gas with calofific value of 50000 KJ/kg.
+    
+    References
+    ----------
+    .. [1] Khuriati, A., P. Purwanto, H. S. Huboyo, Suryono Sumariyah, S. Suryono, and A. B. Putranto. 
+    "Numerical calculation based on mass and energy balance of waste incineration in the fixed bed reactor." 
+    In Journal of Physics: Conference Series, vol. 1524, no. 1, p. 012002. IOP Publishing, 2020.
+    [2] Omari, Arthur, Karoli N. Njau, Geoffrey R. John, Joseph H. Kihedu, and Peter L. Mtui. 
+    "Mass And Energy Balance For Fixed Bed Incinerators A case of a locally designed incinerator in Tanzania."
+    """
+    
     #These are class attributes
     _N_ins = 3
     _N_outs = 2   
@@ -256,12 +286,12 @@ class Incinerator(SanUnit):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with, F_BM_default=F_BM_default)
         
-        self.calorific_value_sludge = calorific_value_sludge #in MJ/kg
-        self.calorific_value_fuel  = calorific_value_fuel #in MJ/kg 
+        self.calorific_value_sludge = calorific_value_sludge #in KJ/kg
+        self.calorific_value_fuel  = calorific_value_fuel #in KJ/kg (here the considered fuel is natural gas) 
         self.Heat_air = None 
         self.Heat_fuel = None
-        self.Heat_flue_gas = None
         self.Heat_sludge = None
+        self.Heat_flue_gas = None
         self.Heat_loss = None
     
     @property
@@ -302,7 +332,6 @@ class Incinerator(SanUnit):
         else: 
             raise ValueError('Calorific value of fuel expected from user')
         
-        
     def _run(self):
          
         sludge, air, fuel = self.ins
@@ -338,8 +367,3 @@ class Incinerator(SanUnit):
  #check if this method (set_flow) would work for non-arrays 
         flue_gas.set_flow(mass_flue_gas,'kg/hr') 
         ash.set_flow(mass_ash,'kg/hr')
-         
-         
-         
-         
-            
