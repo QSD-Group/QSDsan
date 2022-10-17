@@ -30,6 +30,8 @@ Topical Tutorials
 Additional Resources
 --------------------
 
+If you find yourself struggle with the installation of QSDsan/setting up the environment, this extended version of `installation instructions <_installation>`_ might be helpful to you.
+
 To get the full value of ``QSDsan``, we highly recommend reading through the documents of these packages:
 
 - `biosteam docs <https://biosteam.readthedocs.io/en/latest/index.html>`_
