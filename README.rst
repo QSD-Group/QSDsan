@@ -26,10 +26,6 @@ QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Sys
 .. image:: https://github.com/QSD-Group/QSDsan/actions/workflows/build-latest.yml/badge.svg?branch=main
    :target: https://github.com/QSD-Group/QSDsan/actions/workflows/build-latest.yml
 
-.. GitHub test and coverage of the stable branch (i.e., PyPI released package)
-.. image:: https://github.com/QSD-Group/QSDsan/actions/workflows/build-stable.yml/badge.svg?branch=stable
-   :target: https://github.com/QSD-Group/QSDsan/actions/workflows/build-stable.yml
-
 .. Codecov
 .. image:: https://codecov.io/gh/QSD-Group/QSDsan/branch/main/graph/badge.svg?token=Z1CASBXEOE
    :target: https://codecov.io/gh/QSD-Group/QSDsan
