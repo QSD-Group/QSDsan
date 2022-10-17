@@ -907,6 +907,18 @@ class Processes:
         else:
             for process in processes: self.append(process)
 
+    def insert(self, index, process):
+        """Insert a :class:`Process` object at a given index."""
+        if not isinstance(process, Process):
+            raise TypeError("only 'Process' objects can be inserted, "
+                           f"not '{type(process).__name__}'")
+        ID = process.ID
+        if ID in self.__dict__:
+            raise ValueError(f"{ID} already defined in processes")
+        processes = list(self.__dict__.values())
+        processes.insert(index, process)
+        setattr(self, '__dict__', {p.ID: p for p in processes})
+
     def subgroup(self, IDs):
         """
         Create a new subgroup of processes.

@@ -23,11 +23,30 @@ import numpy as np
 from collections import defaultdict
 from collections.abc import Iterable
 from warnings import warn
-from biosteam.utils import MissingStream, Inlets, Outlets
-from . import currency, Unit, Stream, SanStream, WasteStream, System, \
-    Construction, Transportation, Equipment, HeatUtility, PowerUtility
+from biosteam.utils import (
+    Inlets,
+    MissingStream,
+    MockStream,
+    Outlets,
+    Scope,
+    )
+try: from biosteam.utils import TemporaryStream
+except:
+    class TemporaryStream: pass
+from . import (
+    Construction,
+    currency,
+    Equipment,
+    HeatUtility,
+    PowerUtility,
+    SanStream,
+    Stream,
+    System,
+    Transportation,
+    Unit,
+    WasteStream,
+    )
 from .utils import SanUnitScope
-from biosteam.utils import Scope
 
 __all__ = ('SanUnit',)
 
@@ -48,11 +67,10 @@ def _update_init_with(init_with, ins_or_outs, size):
         new_init_with = {}
 
     for k, v in init_with.items():
-        if k in ('Else', 'else'):
-            continue
+        if k in ('Else', 'else'): continue
         v_lower = v.lower()
-        if v_lower in ('stream', 's'):
-            new_init_with[k] = 's'
+        if v_lower in ('mockstream', 'multistream', 'stream', 'temporarystream', 's', 'ms', 'ts'): 
+            new_init_with[k] = 's' # biosteam-native streams
         elif v_lower in ('sanstream', 'ss'):
             new_init_with[k] = 'ss'
         elif v_lower in ('wastestream', 'ws'):
@@ -66,11 +84,10 @@ def _update_init_with(init_with, ins_or_outs, size):
 
 def _replace_missing_streams(port, missing):
     for idx, s_type in missing:
-        if s_type == 's':
-            continue
+        if s_type == 's': continue
         s = port[idx]
         stream_class = SanStream if s_type=='ss' else WasteStream
-        port.replace(s, stream_class.from_stream(stream_class, s))
+        port.replace(s, stream_class.from_stream(stream=s))
 
 
 def _get_inf_state(inf):
@@ -244,12 +261,12 @@ class SanUnit(Unit, isabstract=True):
             if isa(s, MissingStream):
                 missing.append((num, v))
                 continue
-            if v == 's':
-                converted.append(s)
+            if v == 's': # stream/mockstream/multistream/temporarystream
+                converted.append(s) # no conversion for these types
             elif v == 'ss':
-                converted.append(SanStream.from_stream(SanStream, s))
+                converted.append(SanStream.from_stream(stream=s))
             else:
-                converted.append(WasteStream.from_stream(WasteStream, s))
+                converted.append(WasteStream.from_stream(stream=s))
 
         diff = len(converted) + len(missing) - len(streams)
         if diff != 0:
@@ -356,30 +373,24 @@ class SanUnit(Unit, isabstract=True):
         else:
             warn(f'{self.ID} is not a dynamic unit, cannot set tracker.')
 
-    def simulate(self, t_span=(0, 0), state_reset_hook=True,
-                 solver='', **kwargs):
+    def simulate(self, **kwargs):
         '''
         Converge mass and energy flows, design, and cost the unit.
 
         .. note::
 
-            If this unit is a dynamic unit, ODEs will be run after ``_run``
+            If this unit is a dynamic unit, AEs/ODEs will be run after ``_run``
             and/or ``specification``.
 
         Parameters
         ----------
-        t_span : tuple(float, float)
-            Integration time span for dynamic units.
-        state_reset_hook: str or callable
-            Hook function to reset the cache state between simulations (for dynamic systems).
-            Can be "reset_cache" or "clear_state" to call `System.reset_cache` or `System.clear_state`,
-            or None to avoiding resetting.
         kwargs : dict
-            Other keyword arguments that will be passed to ``scipy.integrate.solve_ivp``
+            Keyword arguments that will be passed to ``biosteam.systeam.dynamic_run``
+            (useful when running dynamic simulation).
 
         See Also
         --------
-        :func:`~.System.simulate`
+        :func:`biosteam.System.dynamic_run`
 
         `scipy.integrate.solve_ivp <https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html>`_
         '''
@@ -388,9 +399,7 @@ class SanUnit(Unit, isabstract=True):
             sys = self._mock_dyn_sys
             sys._feeds = self.ins
             sys._products = self.outs
-            sys.simulate(t_span=t_span,
-                         state_reset_hook=state_reset_hook,
-                         **kwargs)
+            sys.simulate(**kwargs)
             self._summary()
 
     def show(self, T=None, P=None, flow='g/hr', composition=None, N=15, IDs=None, stream_info=True):

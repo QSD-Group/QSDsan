@@ -308,25 +308,38 @@ class WasteStream(SanStream):
         self._dstate = None
 
     @staticmethod
-    def from_stream(cls, stream, ID=None, **kwargs):
+    def from_stream(stream, ID='', **kwargs):
         '''
         Cast a :class:`thermosteam.Stream` or :class:`biosteam.utils.MissingStream`
         to :class:`WasteStream` or :class:`MissingWasteStream`.
+        
+        .. note::
+            
+            Price is not copied unless specified.
 
         Parameters
         ----------
-        cls : obj
-            class of the stream to be created.
         stream : :class:`thermosteam.Stream`
             The original stream.
         ID : str
-            If not provided, will use the ID of the original stream.
-        kwargs
+            ID of the new stream (not applicable for missing streams),
+            default ID will be used if not provided.
+        kwargs: {}
             Additional properties of the new stream.
 
         Examples
         --------
-        >>> import qsdsan as qs
+        For missing streams, but it's almost always for unit initialization,
+        you don't really need to interact with this class
+        
+        >>> import biosteam as bst, qsdsan as qs
+        >>> ms = bst.utils.MissingStream(source=None, sink=None)
+        >>> mws = qs.WasteStream.from_stream(ms)
+        >>> mws
+        <MissingWasteStream>
+        
+        For actual streams
+
         >>> cmps = qs.Components.load_default()
         >>> qs.set_thermo(cmps)
         >>> s = qs.Stream('s', H2O=100, price=5)
@@ -336,8 +349,7 @@ class WasteStream(SanStream):
          flow (kmol/hr): H2O  100
         >>> s.price
         5.0
-        >>> ws = qs.WasteStream.from_stream(qs.WasteStream, s, ID='ws',
-        ...                                 T=250, price=8)
+        >>> ws = qs.WasteStream.from_stream(stream=s, ID='ws', T=250, price=8)
         >>> ws.show()
         WasteStream: ws
          phase: 'l', T: 250 K, P: 101325 Pa
@@ -356,10 +368,10 @@ class WasteStream(SanStream):
             return new
 
         # An actual stream
-        new = SanStream.from_stream(cls, stream, ID)
-        for attr, val in kwargs.items():
-            setattr(new, attr, val)
+        cls = kwargs.pop('cls', WasteStream)
+        new = SanStream.from_stream(stream=stream, ID=ID, cls=cls)
         new._init_ws()
+        for attr, val in kwargs.items(): setattr(new, attr, val)
         return new
 
 
@@ -374,7 +386,7 @@ class WasteStream(SanStream):
             Shorthand to pass composition, flow, and N information.
             Should be in the form of {'c' or ''}{'wt', 'mol' or 'vol'}{# or ''}.
             For example: 'cwt100' corresponds to composition=True, flow='kg/hr', and N=100;
-            'mol' corresponds to compostion=False, flow='kmol/hr', and N=None.
+            'mol' corresponds to composition=False, flow='kmol/hr', and N=None.
             Specifying `layout` will ignore `flow`, `composition`, and `N`.
         T : str, optional
             The unit for temperature. The default is 'K'.

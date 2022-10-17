@@ -17,7 +17,7 @@ from setuptools import setup
 setup(
     name='qsdsan',
     packages=['qsdsan'],
-    version='1.2.0',
+    version='1.2.1',
     license='UIUC',
     author='Quantitative Sustainable Design Group',
     author_email='quantitative.sustainable.design@gmail.com',
@@ -27,7 +27,7 @@ setup(
     project_urls={
         'Documentation': 'https://qsdsan.readthedocs.io/',
     },
-    install_requires=['biosteam==2.33.1', 'thermosteam==0.29.1',
+    install_requires=['biosteam==2.33.3', 'thermosteam==0.29.3',
                       'pandas>=1.3.2', 'matplotlib>=3.3.2', 'scikit-learn', 'scipy>=1.7.1',
                       'SALib>=1.4.5', 'seaborn', 'sympy>=1.8'],
     package_data=
@@ -41,7 +41,6 @@ setup(
                     'equipments/*',
                     'processes/*',
                     'sanunits/*',
-                    'sanunits/_toilets/*',
                     'utils/*',
                     ]},
     platforms=['Windows', 'Mac', 'Linux'],
