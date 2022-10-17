@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         # os: [ubuntu-latest, macos-latest, windows-latest] if want multiple os
-        python-version: ["3.9"] # does not work for 3.10 due to changes to `collections` (need to import Iterable from collections.abc)
+        python-version: ["3.9", "3.10"]
 
     steps:
     - uses: actions/checkout@v3

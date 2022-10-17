@@ -62,6 +62,7 @@ setup(
                  'Operating System :: POSIX :: Linux',
                  'Operating System :: Unix',
                  'Programming Language :: Python :: 3.9',
+                 'Programming Language :: Python :: 3.10',
                  ],
     keywords=['quantitative sustainable design', 'sanitation', 'resource recovery', 'techno-economic analysis', 'life cycle assessment'],
 )
