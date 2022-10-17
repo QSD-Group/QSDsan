@@ -288,6 +288,7 @@ class Incinerator(SanUnit):
         
         self.calorific_value_sludge = calorific_value_sludge #in KJ/kg
         self.calorific_value_fuel  = calorific_value_fuel #in KJ/kg (here the considered fuel is natural gas) 
+        self.process_efficiency = process_efficiency
         self.Heat_air = None 
         self.Heat_fuel = None
         self.Heat_sludge = None
