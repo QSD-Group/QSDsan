@@ -32,9 +32,12 @@ class Decay:
     _decay_k_COD = None
     _MCF_decay = None
     _max_CH4_emission = None
+    _N_removal = None
     _N_max_decay = None
     _decay_k_N = None
     _N2O_EF_decay = None
+    if_capture_biogas = False
+    if_N2O_emission = True
 
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
@@ -45,9 +48,7 @@ class Decay:
         self.degraded_components = degraded_components
 
 
-    # TODOs: enable COD calc by decay; enable sludge calc with moisture; enable biogas or not
-    def _first_order_run(self, degraded_components=('OtherSS',),
-                         if_capture_biogas=False, if_N2O_emission=True):
+    def _first_order_run(self, degraded_components=('OtherSS',)):
         '''
         A generic :func:`_run` considering first order decay of
         organics and N, including allocation of N to to the ammonia
@@ -55,13 +56,24 @@ class Decay:
 
         .. note::
 
-            COD degradation will be with `COD_removal` is used if it is given
-            (this removal will be treated as the final removal);
-            alternatively, `COD_max_decay` is used to calculate the
-            final removal with the retention time tau.
+            COD/N degradation will be calculated with `COD_removal`/`N_removal`
+            if they are given,
+            alternatively, `COD_max_decay` and `decay_k_COD` or 
+            `N_max_decay` and `decay_k_N` will be used to calculate the
+            final removals with the retention time tau.
 
         Parameters
         ----------
+        waste : obj
+            Waste stream to be treated.
+        treated : obj
+            Treated effluent.
+        biogas: obj
+            Biogas stream (when `if_capture_biogas is True).
+        CH4 : obj
+            Fugitive CH4 stream.
+        N2O : obj
+            Fugitive N2O stream.
         degraded_components : tuple
             IDs of components that will degrade (at the same removal as `COD_removal`).
         if_capture_biogas : bool
@@ -82,6 +94,8 @@ class Decay:
             [fraction of anaerobic conversion of degraded COD].
         max_CH4_emission : float
             Maximum methane emission, [g CH4/g COD].
+        N_removal : float
+            Removal of N.
         N_max_decay : float
             Maximum degradation of N.
         decay_k_N : float
@@ -89,17 +103,13 @@ class Decay:
         N2O_EF_decay : float
             N2O emission factor, [fraction of degraded N].
         '''
-
         waste = self.ins[0]
-        if if_capture_biogas:
-            treated, biogas, CH4, N2O = self.outs
-        else:
-            treated, CH4, N2O = self.outs
-            biogas = CH4.copy() # this stream doesn't matter
+        if len(self.outs) == 3: treated, CH4, N2O = self.outs
+        else: treated, biogas, CH4, N2O = self.outs
         treated.copy_like(waste)
-        biogas.phase = CH4.phase = N2O.phase = 'g'
 
         # COD removal
+        #!!! need to enable COD_decay calc
         _COD = waste._COD or waste.COD
         COD_deg = _COD*treated.F_vol/1e3*self.COD_removal # kg/hr
         treated._COD *= (1-self.COD_removal)
@@ -108,26 +118,33 @@ class Decay:
         treated.imass[degraded_components] *= (1-self.COD_removal)
 
         CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
-        if if_capture_biogas:
+        if self.if_capture_biogas:
             biogas.imass['CH4'] = CH4_prcd
+            biogas.phase = 'g'
             CH4.empty()
         else:
             CH4.imass['CH4'] = CH4_prcd
+            CH4.phase = 'g'
             biogas.empty()
 
-        if if_N2O_emission:
+        if self.N_removal:
+            N_tot = waste.TN/1e3 * waste.F_vol
+            N_loss_tot = N_tot * self.N_removal
+        else:
             N_loss = self.first_order_decay(k=self.decay_k_N,
                                             t=self.tau/365,
                                             max_decay=self.N_max_decay)
             N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol
-            NH3_rmd, NonNH3_rmd = \
-                self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
-            treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
-            treated.imass['NonNH3'] = waste.imass['NonNH3'] - NonNH3_rmd
+        NH3_rmd, NonNH3_rmd = \
+            self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
+        treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
+        treated.imass['NonNH3'] = waste.imass['NonNH3'] - NonNH3_rmd
+        
+        if self.if_N2O_emission:
             N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
+            N2O.phase = 'g'
         else:
             N2O.empty()
-
 
 
     @staticmethod
