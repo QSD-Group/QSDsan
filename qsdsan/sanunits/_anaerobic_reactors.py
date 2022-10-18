@@ -100,37 +100,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
     _N_ins = 1
     _N_outs = 4
 
-    def _run(self):
-        waste = self.ins[0]
-        treated, biogas, CH4, N2O = self.outs
-        treated.copy_like(self.ins[0])
-        biogas.phase = CH4.phase = N2O.phase = 'g'
-
-        # COD removal
-        _COD = waste._COD or waste.COD
-        COD_deg = _COD*waste.F_vol/1e3*self.COD_removal # kg/hr
-        treated._COD *= (1-self.COD_removal)
-        treated.imass[self.degraded_components] *= (1-self.COD_removal)
-
-        CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
-        if self.if_capture_biogas:
-            biogas.imass['CH4'] = CH4_prcd
-            CH4.empty()
-        else:
-            CH4.imass['CH4'] = CH4_prcd
-            biogas.empty()
-
-        N_tot = waste.TN/1e3 * waste.F_vol
-        N_loss_tot = N_tot * self.N_removal
-        NH3_rmd, NonNH3_rmd = \
-            self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
-        treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
-        treated.imass['NonNH3'] = waste.imass['NonNH3'] - NonNH3_rmd
-
-        if self.if_N2O_emission:
-            N2O.imass['N2O'] = N_loss_tot*self.N_max_decay*self.N2O_EF_decay*44/28
-        else:
-            N2O.empty()
+    _run = Decay._first_order_run
 
     _units = {
         'Residence time': 'd',
