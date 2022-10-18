@@ -824,7 +824,7 @@ class PM2(CompiledProcesses):
                        'Y_ATP_PHO', 'Y_ATP_HET_ACE', 'Y_ATP_HET_GLU', *_shared_params, 'n_dark', 'cmps')
 
     def __new__(cls, components=None,
-                a_c=0.049, I_n=250, arr_a=1.8*10**10, arr_e=6842, beta_1=2.90, beta_2=3.50, b_reactor=0.03, I_opt=300, k_gamma=0.00001, 
+                a_c=0.049, I_n=250, arr_a=1.8e10, arr_e=6842, beta_1=2.90, beta_2=3.50, b_reactor=0.03, I_opt=300, k_gamma=1e-5, 
                 K_N=0.1, K_P=1.0, K_A=6.3, K_F=6.3, rho=1.186, K_STO=1.566, 
                 f_CH_max=0.819, f_LI_max=3.249, m_ATP=15.835, mu_max=1.969, q_CH=0.594, q_LI=0.910, 
                 Q_N_max=0.417, Q_N_min=0.082, Q_P_max=0.092, Q_P_min=0.0163, V_NH=0.254, V_NO=0.254, V_P=0.016, exponent=4,
