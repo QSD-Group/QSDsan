@@ -51,7 +51,8 @@ class Decay:
         self.if_capture_biogas = if_capture_biogas
         self.if_N2O_emission = if_N2O_emission
 
-    def _first_order_run(self, waste=None, treated=None, biogas=None, **kwargs):
+    def _first_order_run(self, waste=None, treated=None, biogas=None, 
+                         CH4=None, N2O=None, **kwargs):
         '''
         A generic :func:`_run` considering first order decay of
         organics and N, including allocation of N to to the ammonia
@@ -67,13 +68,18 @@ class Decay:
 
         Parameters
         ----------
-        waste : obj
+        waste : stream
             Waste stream to be treated, will be ins[0] if not given.
-        treated : obj
+        treated : stream
             Treated effluent, will be outs[0] if not given.
-        biogas : obj
+        biogas : stream
             Generated biogas, will be ignored when `if_capture_biogas` is False,
             will be outs[1] if not given and `if_capture_biogas` is True.
+        CH4 : stream
+            Fugitive CH4 emission, will be outs[-2] if not given.
+        N2O : stream
+            Fugitive N2O emission, will be outs[-1] if not given,
+            will be empty when `if_N2O_emission` is False.
         degraded_components : Iterable(str)
             IDs of components that will degrade (at the same removal as `COD_removal`).
         if_capture_biogas : bool
@@ -108,14 +114,13 @@ class Decay:
         waste = waste or self.ins[0]
         treated = treated or self.outs[0]
         treated.copy_like(waste)
-
-        CH4, N2O = self.outs[-2:]
         if not self.if_capture_biogas: biogas = None
         else: biogas = biogas or self.outs[1]
+        CH4 = CH4 or self.outs[-2]
+        N2O = N2O or self.outs[-1]
 
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-
 
         # COD removal
         _COD = waste._COD or waste.COD
