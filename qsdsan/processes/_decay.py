@@ -36,19 +36,21 @@ class Decay:
     _N_max_decay = None
     _decay_k_N = None
     _N2O_EF_decay = None
-    if_capture_biogas = False
-    if_N2O_emission = True
 
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', F_BM_default=1,
-                 degraded_components=('OtherSS',)):
+                 degraded_components=('OtherSS',),
+                 if_capture_biogas=False,
+                 if_N2O_emission=True,
+                 ):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo,
                          init_with=init_with, F_BM_default=F_BM_default)
         self.degraded_components = degraded_components
+        self.if_capture_biogas = if_capture_biogas
+        self.if_N2O_emission = if_N2O_emission
 
-
-    def _first_order_run(self, degraded_components=('OtherSS',)):
+    def _first_order_run(self):
         '''
         A generic :func:`_run` considering first order decay of
         organics and N, including allocation of N to to the ammonia
@@ -104,7 +106,9 @@ class Decay:
             N2O emission factor, [fraction of degraded N].
         '''
         waste = self.ins[0]
-        if len(self.outs) == 3: treated, CH4, N2O = self.outs
+        if len(self.outs) == 3:
+            treated, CH4, N2O = self.outs
+            biogas = None
         else: treated, biogas, CH4, N2O = self.outs
         treated.copy_like(waste)
 
@@ -114,7 +118,7 @@ class Decay:
         COD_deg = _COD*treated.F_vol/1e3*self.COD_removal # kg/hr
         treated._COD *= (1-self.COD_removal)
 
-        degraded_components = degraded_components or self.degraded_components
+        degraded_components = self.degraded_components
         treated.imass[degraded_components] *= (1-self.COD_removal)
 
         CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
@@ -125,16 +129,16 @@ class Decay:
         else:
             CH4.imass['CH4'] = CH4_prcd
             CH4.phase = 'g'
-            biogas.empty()
+            if biogas is not None: biogas.empty()
 
-        if self.N_removal:
-            N_tot = waste.TN/1e3 * waste.F_vol
-            N_loss_tot = N_tot * self.N_removal
-        else:
+        if not hasattr(self, 'N_removal') and self._N_removal is None:
             N_loss = self.first_order_decay(k=self.decay_k_N,
                                             t=self.tau/365,
                                             max_decay=self.N_max_decay)
             N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol
+        else:
+            N_tot = waste.TN/1e3 * waste.F_vol
+            N_loss_tot = N_tot * self.N_removal
         NH3_rmd, NonNH3_rmd = \
             self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
         treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
