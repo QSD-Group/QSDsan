@@ -157,11 +157,11 @@ def electron_acceptor_cod(atoms, charge=0):
     if atoms == {'O':2}:
         return -1
     elif atoms == {'N':2}:
-        return 0
+        return -1.5
     elif atoms == {'N':1, 'O':2} and charge == -1:
-        return -3/4
+        return -1.5
     elif atoms == {'N':1, 'O':3} and charge == -1:
-        return -5/4
+        return -2
 
 
 def get_cod_stoichiometry(component, aqueous=False, **replace):
