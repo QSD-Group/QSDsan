@@ -1,13 +1,18 @@
 # Needed by qsdsan
-biosteam==2.33.1
-thermosteam==0.29.1
+git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git@qsdsan
+git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@qsdsan
+git+https://github.com/QSD-Group/EXPOsan.git
 SALib>=1.4.5
 seaborn
 sympy>=1.8
+matplotlib<=3.6.0
 
-# Packages for testing
-pytest-cov
-nbval
-
-# Needed for some tests and interactive modules
-exposan
+# Specifically for docs
+sphinx
+sphinx-copybutton
+sphinx-design
+furo
+nbsphinx
+ipywidgets
+jupyterlab-widgets
+widgetsnbextension

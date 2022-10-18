@@ -121,7 +121,7 @@ You can also download the package from `PyPI <https://pypi.org/project/qsdsan/>`
 
 Note that development of this package is currently under initial stage with limited backward compatibility, please feel free to `submit an issue <https://github.com/QSD-Group/QSDsan/issues>`_ for any questions regarding package upgrading.
 
-If you are a developer and want to contribute to ``QSDsan``, please follow the steps in the `Contributing to QSDsan <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ section of the documentation to clone the repository.
+If you are a developer and want to contribute to ``QSDsan``, please follow the steps in the `Contributing to QSDsan <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ section of the documentation to clone the repository. If you find yourself struggle with the installation of QSDsan/setting up the environment, this extended version of `installation instructions <https://qsdsan.readthedocs.io/en/latest/tutorials/_installation.html>`_ might be helpful to you.
 
 
 Documentation
@@ -133,8 +133,6 @@ You can find tutorials and documents at:
 All tutorials are written using Jupyter Notebook, you can run your own Jupyter environment, or you can click the ``launch binder`` badge on the top to launch the environment in your browser.
 
 For each of these tutorials, we are also recording videos where one of the QSD group members will go through the tutorial step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
-
-Additionally, we are actively developing education modules for QSDsan (and other libraries/packages developed by the QSD group, you can find them in the `QSDedu repository <https://github.com/QSD-Group/QSDedu>`_).
 
 
 About the authors
