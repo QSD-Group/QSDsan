@@ -589,13 +589,13 @@ class AnaerobicDigestion(SanUnit, Decay):
     flow_rate : float
         Total flow rate through the reactor (for sizing purpose), [m3/d].
         If not provided, will use F_vol_in.
-    degraded_components : tuple
+    degraded_components : Iterable(str)
         IDs of components that will degrade (at the same removal as `COD_removal`).
     if_capture_biogas : bool
         If produced biogas will be captured, otherwise it will be treated
         as fugitive CH4.
     if_N2O_emission : bool
-        If consider N2O emission from N degradation in the process.
+        If considering fugitive N2O generated from the degraded N.
 
     Examples
     --------
@@ -617,11 +617,11 @@ class AnaerobicDigestion(SanUnit, Decay):
                  flow_rate=None, degraded_components=('OtherSS',),
                  if_capture_biogas=True, if_N2O_emission=False,
                  **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        Decay.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1,
+                       degraded_components=degraded_components,
+                       if_capture_biogas=if_capture_biogas,
+                       if_N2O_emission=if_N2O_emission,)
         self._flow_rate = flow_rate
-        self.degraded_components = tuple(degraded_components)
-        self.if_capture_biogas = if_capture_biogas
-        self.if_N2O_emission = if_N2O_emission
 
         self.construction = (
             Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
@@ -642,38 +642,6 @@ class AnaerobicDigestion(SanUnit, Decay):
     _N_outs = 4
 
     _run = Decay._first_order_run
-    # def _run(self):
-    #     waste = self.ins[0]
-    #     treated, biogas, CH4, N2O = self.outs
-    #     treated.copy_like(self.ins[0])
-    #     biogas.phase = CH4.phase = N2O.phase = 'g'
-
-    #     # COD removal
-    #     _COD = waste._COD or waste.COD
-    #     COD_deg = _COD*treated.F_vol/1e3*self.COD_removal # kg/hr
-    #     treated._COD *= (1-self.COD_removal)
-    #     treated.imass[self.degraded_components] *= (1-self.COD_removal)
-
-    #     CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
-    #     if self.if_capture_biogas:
-    #         biogas.imass['CH4'] = CH4_prcd
-    #         CH4.empty()
-    #     else:
-    #         CH4.imass['CH4'] = CH4_prcd
-    #         biogas.empty()
-
-    #     if self.if_N2O_emission:
-    #         N_loss = self.first_order_decay(k=self.decay_k_N,
-    #                                         t=self.tau/365,
-    #                                         max_decay=self.N_max_decay)
-    #         N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol
-    #         NH3_rmd, NonNH3_rmd = \
-    #             self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
-    #         treated.imass['NH3'] = waste.imass['NH3'] - NH3_rmd
-    #         treated.imass['NonNH3'] = waste.imass['NonNH3'] - NonNH3_rmd
-    #         N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
-    #     else:
-    #         N2O.empty()
 
     _units = {
         'Volumetric flow rate': 'm3/hr',
