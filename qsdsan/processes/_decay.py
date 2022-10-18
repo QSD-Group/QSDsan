@@ -51,7 +51,7 @@ class Decay:
         self.if_capture_biogas = if_capture_biogas
         self.if_N2O_emission = if_N2O_emission
 
-    def _first_order_run(self):
+    def _first_order_run(self, waste=None, treated=None, biogas=None, **kwargs):
         '''
         A generic :func:`_run` considering first order decay of
         organics and N, including allocation of N to to the ammonia
@@ -68,15 +68,12 @@ class Decay:
         Parameters
         ----------
         waste : obj
-            Waste stream to be treated.
+            Waste stream to be treated, will be ins[0] if not given.
         treated : obj
-            Treated effluent.
-        biogas: obj
-            Biogas stream (when `if_capture_biogas is True).
-        CH4 : obj
-            Fugitive CH4 stream.
-        N2O : obj
-            Fugitive N2O stream.
+            Treated effluent, will be outs[0] if not given.
+        biogas : obj
+            Generated biogas, will be ignored when `if_capture_biogas` is False,
+            will be outs[1] if not given and `if_capture_biogas` is True.
         degraded_components : Iterable(str)
             IDs of components that will degrade (at the same removal as `COD_removal`).
         if_capture_biogas : bool
@@ -108,18 +105,27 @@ class Decay:
         N2O_EF_decay : float
             N2O emission factor, [fraction of degraded N].
         '''
-        waste = self.ins[0]
-        if len(self.outs) == 3:
-            treated, CH4, N2O = self.outs
-            biogas = None
-        else: treated, biogas, CH4, N2O = self.outs
+        waste = waste or self.ins[0]
+        treated = treated or self.outs[0]
         treated.copy_like(waste)
 
+        CH4, N2O = self.outs[-2:]
+        if not self.if_capture_biogas: biogas = None
+        else: biogas = biogas or self.outs[1]
+
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+
+
         # COD removal
-        #!!! need to enable COD_decay calc
         _COD = waste._COD or waste.COD
-        COD_removal = self.COD_removal * self.COD_decay
-        COD_deg = _COD*treated.F_vol/1e3*COD_removal # kg/hr
+        try:
+            COD_removal = self.COD_removal * 1. # to make sure self.N_removal is not None
+        except:
+            COD_removal = self.first_order_decay(k=self.decay_k_COD,
+                                                 t=self.tau/365,
+                                                 max_decay=self.COD_max_decay)
+        COD_deg = _COD*treated.F_vol/1e3*COD_removal*self.COD_decay # kg/hr
 
         degraded_components = self.degraded_components
         treated.imass[degraded_components] *= (1-COD_removal)
@@ -135,14 +141,14 @@ class Decay:
             if biogas is not None: biogas.empty()
         
         if self.if_N2O_emission:
-            if not hasattr(self, 'N_removal') and self._N_removal is None:
-                N_loss = self.first_order_decay(k=self.decay_k_N,
-                                                t=self.tau/365,
-                                                max_decay=self.N_max_decay)
-                N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol
-            else:
-                N_tot = waste.TN/1e3 * waste.F_vol
-                N_loss_tot = N_tot * self.N_removal
+            try:
+                N_removal = self.N_removal * 1. # to make sure self.N_removal is not None
+            except:
+                N_removal = self.first_order_decay(k=self.decay_k_N,
+                                                   t=self.tau/365,
+                                                   max_decay=self.N_max_decay)
+            N_loss_tot = N_removal*waste.TN/1e3*waste.F_vol
+
             NH3_rmd, NonNH3_rmd = \
                 self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
             treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
@@ -153,7 +159,7 @@ class Decay:
         else:
             N2O.empty()
             
-        treated._COD = _COD*waste.F_vol*(1-self.COD_removal)/treated.F_vol
+        treated._COD = _COD*waste.F_vol*(1-COD_removal)/treated.F_vol
 
 
     @staticmethod
