@@ -37,7 +37,9 @@ class Decay:
     _decay_k_N = None
     _N2O_EF_decay = None
     COD_decay = 1
-
+    degraded_components = ('OtherSS',)
+    if_capture_biogas = False
+    if_N2O_emission = True
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', F_BM_default=1,
@@ -124,12 +126,9 @@ class Decay:
 
         # COD removal
         _COD = waste._COD or waste.COD
-        try:
-            COD_removal = self.COD_removal * 1. # to make sure self.N_removal is not None
-        except:
-            COD_removal = self.first_order_decay(k=self.decay_k_COD,
-                                                 t=self.tau/365,
-                                                 max_decay=self.COD_max_decay)
+        COD_removal = self.COD_removal if hasattr(self, 'COD_removal') else None
+        COD_removal = COD_removal or self.first_order_decay(
+            k=self.decay_k_COD, t=self.tau/365, max_decay=self.COD_max_decay)
         COD_deg = _COD*treated.F_vol/1e3*COD_removal*self.COD_decay # kg/hr
 
         degraded_components = self.degraded_components
@@ -146,12 +145,9 @@ class Decay:
             if biogas is not None: biogas.empty()
         
         if self.if_N2O_emission:
-            try:
-                N_removal = self.N_removal * 1. # to make sure self.N_removal is not None
-            except:
-                N_removal = self.first_order_decay(k=self.decay_k_N,
-                                                   t=self.tau/365,
-                                                   max_decay=self.N_max_decay)
+            N_removal = self.N_removal if hasattr(self, 'N_removal') else None
+            N_removal = N_removal or self.first_order_decay(
+                k=self.decay_k_N, t=self.tau/365, max_decay=self.N_max_decay)
             N_loss_tot = N_removal*waste.TN/1e3*waste.F_vol
 
             NH3_rmd, NonNH3_rmd = \
