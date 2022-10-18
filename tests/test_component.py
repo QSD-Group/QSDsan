@@ -68,7 +68,7 @@ def test_component():
     cmps3 = Components.load_default()
     assert cmps3.S_H2.measured_as == 'COD'
     assert cmps3.S_H2.i_COD == 1
-    assert isclose(cmps3.S_N2.i_COD, - molecular_weight({'O':1.5})/molecular_weight({'N':1}), rel_tol=1e-3)
+    assert isclose(cmps3.S_NO2.i_COD, - molecular_weight({'O':3})/molecular_weight({'N':1}), rel_tol=1e-3)
     assert isclose(cmps3.S_NO3.i_COD, - molecular_weight({'O':4})/molecular_weight({'N':1}), rel_tol=1e-3)
     set_thermo(cmps3)
 
