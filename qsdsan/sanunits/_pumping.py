@@ -16,9 +16,9 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import numpy as np
+import numpy as np, qsdsan as qs
 from math import pi, ceil
-from biosteam.units import Pump
+from biosteam.units import Pump as BSTPump
 from biosteam.units.design_tools.mechanical import (
     brake_efficiency as brake_eff,
     motor_efficiency as motor_eff
@@ -29,7 +29,7 @@ from ..utils import auom, select_pipe, format_str
 __all__ = ('Pump', 'HydraulicDelay', 'WWTpump', 'wwtpump')
 
 
-class Pump(SanUnit, Pump):
+class Pump(SanUnit, BSTPump):
     '''
     Similar to the :class:`biosteam.units.Pump`,
     but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`,
@@ -952,8 +952,8 @@ def add_pump(cls, ID, ins, prefix, pump_type, Q_mgd, add_inputs,
              capacity_factor, include_pump_cost, include_building_cost,
              include_OM_cost, F_BM, lifetime, **kwargs):
     if getattr(cls, 'system', None):                    
-        if not main_f is cls.system.flowsheet:
-            main_f.set_flowsheet(cls.system.flowsheet)
+        if not qs.main_flowsheet is cls.system.flowsheet:
+            qs.main_flowsheet.set_flowsheet(cls.system.flowsheet)
     pump = WWTpump(
         ID, ins=ins,
         prefix=prefix, pump_type=pump_type, Q_mgd=Q_mgd, add_inputs=add_inputs,

@@ -15,6 +15,7 @@ Topical Tutorials
 .. toctree::
    :maxdepth: 1
 
+   _installation
    0_Quick_Overview
    1_Helpful_Basics
    2_Component

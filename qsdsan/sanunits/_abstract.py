@@ -20,7 +20,12 @@ for license details.
 
 import numpy as np
 from collections.abc import Iterable
-from biosteam.units import Mixer, Splitter, FakeSplitter, ReversedSplitter
+from biosteam.units import (
+    Mixer as BSTMixer,
+    Splitter as BSTSplitter,
+    FakeSplitter as BSTFakeSplitter,
+    ReversedSplitter as BSTReversedSplitter,
+    )
 from .. import SanUnit
 
 __all__ = (
@@ -36,7 +41,7 @@ __all__ = (
 
 # %%
 
-class Mixer(SanUnit, Mixer):
+class Mixer(SanUnit, BSTMixer):
     '''
     Similar to :class:`biosteam.units.Mixer`,
     but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`,
@@ -46,7 +51,7 @@ class Mixer(SanUnit, Mixer):
     --------
     `biosteam.units.Mixer <https://biosteam.readthedocs.io/en/latest/units/mixing.html>`_
     '''
-
+    _graphics = BSTMixer._graphics
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', F_BM_default=None, isdynamic=False,
                  rigorous=False):
@@ -176,7 +181,7 @@ class Sampler(SanUnit):
 
 # %%
 
-class Splitter(SanUnit, Splitter):
+class Splitter(SanUnit, BSTSplitter):
     '''
     Similar to :class:`biosteam.units.Splitter`,
     but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`,
@@ -186,7 +191,7 @@ class Splitter(SanUnit, Splitter):
     --------
     `biosteam.units.Splitter <https://biosteam.readthedocs.io/en/latest/units/splitting.html>`_
     '''
-
+    _graphics = BSTSplitter._graphics
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *, split, order=None,
                   init_with='WasteStream', F_BM_default=None, isdynamic=False):
         SanUnit.__init__(self, ID, ins, outs, thermo,
@@ -333,7 +338,7 @@ class ComponentSplitter(SanUnit):
         self._split_keys = i
 
 
-class FakeSplitter(SanUnit, FakeSplitter):
+class FakeSplitter(SanUnit, BSTFakeSplitter):
     '''
     Similar to :class:`biosteam.units.FakeSplitter`,
     but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
@@ -344,7 +349,7 @@ class FakeSplitter(SanUnit, FakeSplitter):
     '''
 
 
-class ReversedSplitter(SanUnit, ReversedSplitter):
+class ReversedSplitter(SanUnit, BSTReversedSplitter):
     '''
     Similar to :class:`biosteam.units.ReversedSplitter`,
     but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
