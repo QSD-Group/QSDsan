@@ -46,13 +46,6 @@ class SepticTank(SanUnit, Decay):
         N2O: fugitive N2O emissions.
         sludge: solid waste to be sent to sludge pasteurization, could include the precipitated struvite.
         struvite: a separate struvite stream when `if_generate_struvite` is True.
-    degraded_components : Iterable(str)
-        IDs of components that will degrade (at the same removal as `COD_removal`).
-    if_capture_biogas : bool
-        If produced biogas will be captured, otherwise it will be treated
-        as fugitive CH4.
-    if_N2O_emission : bool
-        If considering fugitive N2O generated from the degraded N.
     if_include_front_end : bool
         If the front end is included in the analysis.
     if_generate_struvite : bool

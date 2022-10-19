@@ -81,7 +81,7 @@ class Decay:
         degraded_components : Iterable(str)
             IDs of components that will degrade at the same rate as COD.
         if_capture_biogas : bool
-            If True, CH4 generated from COD degradation will be caputred as biogas;
+            If True, CH4 generated from COD degradation will be captured as biogas;
             if False, it will be treated as fugitive emission.
         if_N2O_emission : bool
             Whether to consider N2O emission.
@@ -332,7 +332,7 @@ class Decay:
     @property
     def if_capture_biogas(self):
         '''
-        [bool] If True, CH4 generated from COD degradation will be caputred as biogas;
+        [bool] If True, CH4 generated from COD degradation will be captured as biogas;
         if False, it will be treated as fugitive emission.
         '''
         return self._if_capture_biogas

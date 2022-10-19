@@ -56,13 +56,13 @@ class SludgeThickening(SanUnit, Splitter):
 
     Parameters
     ----------
-    ins : Iterable(obj)
+    ins : Iterable(stream)
         Dilute sludge stream.
-    outs : Iterable(obj)
+    outs : Iterable(stream)
         Water/bulk-liquid-rich stream, concentrated sludge.
     sludge_moisture : float
         Moisture content of the sludge, [wt% water].
-    solids : Iterable(str)
+    solids : Iterable(stream)
         IDs of the solid components.
         If not provided, will be set to the default `solids` attribute of the components.
     disposal_cost : float
@@ -300,9 +300,9 @@ class SludgeSeparator(SanUnit):
 
     Parameters
     ----------
-    ins : WasteStream
+    ins : Iterable(stream)
         Waste for treatment.
-    outs : WasteStream
+    outs : Iterable(stream)
         Liquid, settled solids.
     split : float or dict
         Fractions of material retention in the settled solids.

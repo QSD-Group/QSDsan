@@ -47,13 +47,6 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         Waste for treatment.
     outs : Iterable
         Treated waste, biogas, fugitive CH4, and fugitive N2O.
-    degraded_components : Iterable(str)
-        IDs of components that will degrade (at the same removal as `COD_removal`).
-    if_capture_biogas : bool
-        If produced biogas will be captured, otherwise it will be treated
-        as fugitive CH4.
-    if_N2O_emission : bool
-        If considering fugitive N2O generated from the degraded N.
 
     Examples
     --------
@@ -589,13 +582,6 @@ class AnaerobicDigestion(SanUnit, Decay):
     flow_rate : float
         Total flow rate through the reactor (for sizing purpose), [m3/d].
         If not provided, will use F_vol_in.
-    degraded_components : Iterable(str)
-        IDs of components that will degrade (at the same removal as `COD_removal`).
-    if_capture_biogas : bool
-        If produced biogas will be captured, otherwise it will be treated
-        as fugitive CH4.
-    if_N2O_emission : bool
-        If considering fugitive N2O generated from the degraded N.
 
     Examples
     --------

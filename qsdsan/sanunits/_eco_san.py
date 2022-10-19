@@ -62,13 +62,6 @@ class EcoSanAerobic(SanUnit, Decay):
         treated: treated liquid leaving septic tank.
         CH4: fugitive CH4 emissions.
         N2O: fugitive N2O emissions.
-    degraded_components : Iterable(str)
-        IDs of components that will degrade (at the same removal as `COD_removal`).
-    if_capture_biogas : bool
-        If produced biogas will be captured, otherwise it will be treated
-        as fugitive CH4.
-    if_N2O_emission : bool
-        If considering fugitive N2O generated from the degraded N.
 
     References
     ----------
@@ -125,13 +118,6 @@ class EcoSanAnaerobic(SanUnit, Decay):
         treated: treated liquid leaving septic tank.
         CH4: fugitive CH4 emissions.
         N2O: fugitive N2O emissions.
-    degraded_components : Iterable(str)
-        IDs of components that will degrade (at the same removal as `COD_removal`).
-    if_capture_biogas : bool
-        If produced biogas will be captured, otherwise it will be treated
-        as fugitive CH4.
-    if_N2O_emission : bool
-        If considering fugitive N2O generated from the degraded N.
 
     References
     ----------
@@ -188,13 +174,6 @@ class EcoSanAnoxic(SanUnit, Decay):
         treated: treated liquid leaving septic tank.
         CH4: fugitive CH4 emissions.
         N2O: fugitive N2O emissions.
-    degraded_components : Iterable(str)
-        IDs of components that will degrade (at the same removal as `COD_removal`).
-    if_capture_biogas : bool
-        If produced biogas will be captured, otherwise it will be treated
-        as fugitive CH4.
-    if_N2O_emission : bool
-        If considering fugitive N2O generated from the degraded N.
 
     References
     ----------
@@ -314,13 +293,6 @@ class EcoSanECR(SanUnit, Decay):
         treated: treated liquid leaving septic tank.
         CH4: fugitive CH4 emissions.
         N2O: fugitive N2O emissions.
-    degraded_components : Iterable(str)
-        IDs of components that will degrade (at the same removal as `COD_removal`).
-    if_capture_biogas : bool
-        If produced biogas will be captured, otherwise it will be treated
-        as fugitive CH4.
-    if_N2O_emission : bool
-        If considering fugitive N2O generated from the degraded N.
     if_after_MBR: bool
         If this unit is used after a membrane bioreactor (MBR),
         ECR after an MBR will have lower costs compared to the scenario without an MBR.
@@ -454,13 +426,6 @@ class EcoSanMBR(SanUnit, Decay):
         treated: treated liquid leaving septic tank.
         CH4: fugitive CH4 emissions.
         N2O: fugitive N2O emissions.
-    degraded_components : Iterable(str)
-        IDs of components that will degrade (at the same removal as `COD_removal`).
-    if_capture_biogas : bool
-        If produced biogas will be captured, otherwise it will be treated
-        as fugitive CH4.
-    if_N2O_emission : bool
-        If considering fugitive N2O generated from the degraded N.
 
     References
     ----------

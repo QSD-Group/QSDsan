@@ -36,14 +36,10 @@ class Sedimentation(SludgeSeparator, Decay):
 
     Parameters
     ----------
-    ins : Iterable(obj)
+    ins : Iterable(stream)
         Waste for treatment.
-    outs : Iterable(obj)
+    outs : Iterable(stream)
         Liquid, settled solids, fugitive CH4, and fugitive N2O.
-    degraded_components : Iterable(str)
-        IDs of components that will degrade (at the same removal as `COD_removal`).
-    if_N2O_emission : bool
-        Whether to consider N2O emission.
 
     Examples
     --------

@@ -45,10 +45,6 @@ class Lagoon(SanUnit, Decay):
     flow_rate : float
         Total flow rate through the lagoon (to calculate retention time), [m3/d].
         If not provided, will use F_vol_in.
-    degraded_components : Iterable(str)
-        IDs of components that will degrade (at the same removal as `COD_removal`).
-    if_N2O_emission : bool
-        Whether to consider N2O emission.
 
     Examples
     --------
