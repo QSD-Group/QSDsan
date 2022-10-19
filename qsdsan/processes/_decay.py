@@ -5,6 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+    
     Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -22,12 +23,13 @@ __all__ = ('Decay',)
 
 
 class Decay:
-    '''For non-steady state degradation.'''
+    '''A generate class for non-steady state degradation.'''
 
     # Put these as default class attributes
     _t0 = 0
     _tau = None
     _COD_removal = None
+    _COD_decay = 1
     _COD_max_decay = None
     _decay_k_COD = None
     _MCF_decay = None
@@ -36,22 +38,16 @@ class Decay:
     _N_max_decay = None
     _decay_k_N = None
     _N2O_EF_decay = None
-    COD_decay = 1
-    degraded_components = ('OtherSS',)
-    if_capture_biogas = False
-    if_N2O_emission = True
+    _degraded_components = ('OtherSS',)
+    _if_capture_biogas = False
+    _if_N2O_emission = True
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 init_with='WasteStream', F_BM_default=1,
-                 degraded_components=('OtherSS',),
-                 if_capture_biogas=False,
-                 if_N2O_emission=True,
-                 ):
+                 init_with='WasteStream', F_BM_default=1, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo,
                          init_with=init_with, F_BM_default=F_BM_default)
-        self.degraded_components = degraded_components
-        self.if_capture_biogas = if_capture_biogas
-        self.if_N2O_emission = if_N2O_emission
+        for attr, value in kwargs.items(): setattr(self, attr, value)
+
 
     def _first_order_run(self, waste=None, treated=None, biogas=None, 
                          CH4=None, N2O=None, **kwargs):
@@ -83,14 +79,14 @@ class Decay:
             Fugitive N2O emission, will be outs[-1] if not given,
             will be empty when `if_N2O_emission` is False.
         degraded_components : Iterable(str)
-            IDs of components that will degrade (at the same removal as `COD_removal`).
+            IDs of components that will degrade at the same rate as COD.
         if_capture_biogas : bool
-            If True, self.outs[1] would be biogas;
-            if False, the generated biogas will be considered as fugitive emission.
+            If True, CH4 generated from COD degradation will be caputred as biogas;
+            if False, it will be treated as fugitive emission.
         if_N2O_emission : bool
             Whether to consider N2O emission.
         tau : float
-            Retention time of the unit.
+            Retention time of the unit, [d].
         COD_removal : float
             Removal of organics as chemical oxygen demand (COD).
         COD_decay : float
@@ -121,13 +117,11 @@ class Decay:
         CH4 = CH4 or self.outs[-2]
         N2O = N2O or self.outs[-1]
 
-        for attr, value in kwargs.items():
-            setattr(self, attr, value)
+        for attr, value in kwargs.items(): setattr(self, attr, value)
 
         # COD removal
         _COD = waste._COD or waste.COD
-        COD_removal = self.COD_removal if hasattr(self, 'COD_removal') else None
-        COD_removal = COD_removal or self.first_order_decay(
+        COD_removal = self.COD_removal or self.first_order_decay(
             k=self.decay_k_COD, t=self.tau/365, max_decay=self.COD_max_decay)
         COD_deg = _COD*treated.F_vol/1e3*COD_removal*self.COD_decay # kg/hr
 
@@ -145,8 +139,7 @@ class Decay:
             if biogas is not None: biogas.empty()
         
         if self.if_N2O_emission:
-            N_removal = self.N_removal if hasattr(self, 'N_removal') else None
-            N_removal = N_removal or self.first_order_decay(
+            N_removal = self.N_removal or self.first_order_decay(
                 k=self.decay_k_N, t=self.tau/365, max_decay=self.N_max_decay)
             N_loss_tot = N_removal*waste.TN/1e3*waste.F_vol
 
@@ -242,7 +235,7 @@ class Decay:
 
     @property
     def tau(self):
-        '''[float] Retention time of the unit.'''
+        '''[float] Retention time of the unit, [d].'''
         return self._tau
     @tau.setter
     def tau(self, i):
@@ -255,10 +248,18 @@ class Decay:
     @COD_removal.setter
     def COD_removal(self, i):
         self._COD_removal = i
+        
+    @property
+    def COD_decay(self):
+        '''[float] Fraction of removed COD that degrades.'''
+        return self._COD_decay
+    @COD_decay.setter
+    def COD_decay(self, i):
+        self._COD_decay = i
 
     @property
     def COD_max_decay(self):
-        '''[float] Maximum fraction of COD removed during storage given sufficient time.'''
+        '''[float] Maximum fraction of COD degraded during storage given sufficient time.'''
         return self._COD_max_decay
     @COD_max_decay.setter
     def COD_max_decay(self, i):
@@ -266,7 +267,7 @@ class Decay:
 
     @property
     def decay_k_COD(self):
-        '''[float] Rate constant for COD decay.'''
+        '''[float] Rate constant for COD decay, the time unit is year.'''
         return self._decay_k_COD
     @decay_k_COD.setter
     def decay_k_COD(self, i):
@@ -289,6 +290,14 @@ class Decay:
         self._max_CH4_emission = i
 
     @property
+    def N_removal(self):
+        '''[float] Final N removal.'''
+        return self._N_removal
+    @N_removal.setter
+    def N_removal(self, i):
+        self._N_removal = i
+
+    @property
     def N_max_decay(self):
         '''[float] Maximum fraction of N degraded through denitrification during storage given sufficient time.'''
         return self._N_max_decay
@@ -298,7 +307,7 @@ class Decay:
 
     @property
     def decay_k_N(self):
-        '''[float] Rate constant for N decay.'''
+        '''[float] Rate constant for N decay, the time unit is year.'''
         return self._decay_k_N
     @decay_k_N.setter
     def decay_k_N(self, i):
@@ -311,3 +320,30 @@ class Decay:
     @N2O_EF_decay.setter
     def N2O_EF_decay(self, i):
         self._N2O_EF_decay = i
+        
+    @property
+    def degraded_components(self):
+        '''[Iterable(str)] IDs of components that will degrade at the same rate as COD.'''
+        return self._degraded_components
+    @degraded_components.setter
+    def degraded_components(self, i):
+        self._degraded_components = i
+        
+    @property
+    def if_capture_biogas(self):
+        '''
+        [bool] If True, CH4 generated from COD degradation will be caputred as biogas;
+        if False, it will be treated as fugitive emission.
+        '''
+        return self._if_capture_biogas
+    @if_capture_biogas.setter
+    def if_capture_biogas(self, i):
+        self._if_capture_biogas = i
+        
+    @property
+    def if_N2O_emission(self):
+        '''[bool] Whether to consider N degradation and fugitive N2O emission.'''
+        return self._if_N2O_emission
+    @if_N2O_emission.setter
+    def if_N2O_emission(self, i):
+        self._if_N2O_emission = i

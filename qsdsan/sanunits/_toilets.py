@@ -192,11 +192,10 @@ class Toilet(SanUnit, Decay, isabstract=True):
         N2O : WasteStream
             Fugitive N2O gas (after emptying).
         '''
-        COD_rmd = waste.COD*(1-empty_ratio)/1e3*waste.F_vol
-        CH4.imass['CH4'] += COD_rmd * CH4_factor
-        N2O.imass['N2O'] += COD_rmd * N2O_factor
+        COD_rmvd = waste.COD*(1-empty_ratio)/1e3*waste.F_vol
+        CH4.imass['CH4'] += COD_rmvd * CH4_factor
+        N2O.imass['N2O'] += COD_rmvd * N2O_factor
         waste.mass *= empty_ratio
-        return waste, CH4, N2O
 
     @property
     def N_user(self):
@@ -334,6 +333,15 @@ class Toilet(SanUnit, Decay, isabstract=True):
     def N2O_EF_aq(self, i):
         self._N2O_EF_aq = i
 
+    @property
+    def if_N2O_emission(self):
+        '''[bool] Whether to consider N degradation and fugitive N2O emission.'''
+        return self.if_air_emission
+    @if_N2O_emission.setter
+    def if_N2O_emission(self, i):
+        raise ValueError('Setting `if_N2O_emission` for `PitLatrine` is not supported, '
+                         'please set `if_air_emission` instead.')
+
 
 # %%
 
@@ -390,7 +398,7 @@ class MURT(Toilet):
         self.N_squatting_pan_per_toilet = N_squatting_pan_per_toilet
         self.N_urinal_per_toilet = N_urinal_per_toilet
         self.if_include_front_end = if_include_front_end
-        self._mixed = WasteStream(f'{self.ID}_mixed')
+        self._mixed_in = WasteStream(f'{self.ID}_mixed_in')
 
         data = load_data(path=murt_path)
         for para in data.index:
@@ -405,53 +413,38 @@ class MURT(Toilet):
 
     def _run(self):
         Toilet._run(self)
-        waste, CH4, N2O = self.outs
+        mixed_out, CH4, N2O = self.outs
         CH4.phase = N2O.phase = 'g'
 
-        mixed = self._mixed
-        mixed.mix_from(self.ins)
+        mixed_in = self._mixed_in
+        mixed_in.mix_from(self.ins)
         tot_COD_kg = sum(float(getattr(i, 'COD')) * i.F_vol for i in self.ins) / 1e3
 
         # Air emission
         if self.if_air_emission:
             # N loss due to ammonia volatilization
             NH3_rmd, NonNH3_rmd = \
-                self.allocate_N_removal(mixed.TN / 1e3 * mixed.F_vol * self.N_volatilization,
-                                        mixed.imass['NH3'])
-            mixed.imass['NH3'] -= NH3_rmd
-            mixed.imass['NonNH3'] -= NonNH3_rmd
+                self.allocate_N_removal(mixed_in.TN/1e3*mixed_in.F_vol*self.N_volatilization,
+                                        mixed_in.imass['NH3'])
+            mixed_in.imass ['NH3'] -= NH3_rmd
+            mixed_in.imass['NonNH3'] -= NonNH3_rmd
+            
             # Energy/N loss due to degradation
-            COD_loss = self.first_order_decay(k=self.decay_k_COD,
-                                              t=self.collection_period / 365,
-                                              max_decay=self.COD_max_decay)
-            COD_loss_kg = tot_COD_kg * COD_loss
-            CH4.imass['CH4'] = COD_loss_kg * self.max_CH4_emission * self.MCF_decay
-            mixed.imass[self.degraded_components] *= 1 - COD_loss
-
-            N_loss = self.first_order_decay(k=self.decay_k_N,
-                                            t=self.collection_period / 365,
-                                            max_decay=self.N_max_decay)
-            N_loss_tot = mixed.TN / 1e3 * mixed.F_vol * N_loss
-            NH3_rmd, NonNH3_rmd = \
-                self.allocate_N_removal(N_loss_tot, mixed.imass['NH3'])
-            mixed.imass['NH3'] -= NH3_rmd
-            mixed.imass['NonNH3'] -= NonNH3_rmd
-            N2O.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44 / 28
-            mixed._COD = (tot_COD_kg - COD_loss_kg) * 1e3 / mixed.F_vol
+            mixed_in._COD = tot_COD_kg * 1e3 / mixed_in.F_vol # accounting for COD loss in leachate
+            Decay._first_order_run(self, waste=mixed_in, treated=mixed_out, CH4=CH4, N2O=N2O)
         else:
             CH4.empty()
             N2O.empty()
-
-        # Non-ideal emptying
+            
+        # Aquatic emission when not ideally emptied
         if not self.if_ideal_emptying:
-            mixed, CH4, N2O = self.get_emptying_emission(
-                waste=mixed, CH4=CH4, N2O=N2O,
+           self.get_emptying_emission(
+                waste=mixed_out, CH4=CH4, N2O=N2O,
                 empty_ratio=self.empty_ratio,
-                CH4_factor=self.COD_max_decay * self.MCF_aq * self.max_CH4_emission,
-                N2O_factor=self.N2O_EF_decay * 44 / 28)
-
-        waste.copy_like(mixed)
+                CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
+                N2O_factor=self.N2O_EF_decay*44/28)
         self._scale_up_outs()
+
 
     _units = {
         'Collection period': 'd',
@@ -521,6 +514,14 @@ class MURT(Toilet):
     @collection_period.setter
     def collection_period(self, i):
         self._collection_period = float(i)
+        
+    @property
+    def tau(self):
+        '''[float] Retention time of the unit, same as `collection_period`.'''
+        return self.collection_period
+    @tau.setter
+    def tau(self, i):
+        self.collection_period = i
 
 
 # %%
@@ -593,7 +594,7 @@ class PitLatrine(Toilet):
         self._pit_depth = 4.57 # m
         self._pit_area = 0.8 # m2
         self._liq_leaching = None
-        self._mixed = WasteStream(f'{self.ID}_mixed')
+        self._mixed_in = WasteStream(f'{self.ID}_mixed_in')
 
         self.construction = (
             Construction('cement', linked_unit=self, item='Cement', quantity_unit='kg'),
@@ -623,75 +624,58 @@ class PitLatrine(Toilet):
 
     def _run(self):
         Toilet._run(self)
-        waste, leachate, CH4, N2O = self.outs
+        mixed_out, leachate, CH4, N2O = self.outs
         CH4.phase = N2O.phase = 'g'
 
-        mixed = self._mixed
-        mixed.mix_from(self.ins)
+        mixed_in = self._mixed_in
+        mixed_in.mix_from(self.ins)
         tot_COD_kg = sum(float(getattr(i, '_COD') or getattr(i, 'COD'))*i.F_vol for i in self.ins)/1e3
 
         # All composite variables in mg/L
-        # Leaching
-        # Here COD change due to leaching is not considered
+        # Leaching, COD changes due to leaching is not considered
         if self.if_leaching:
             # Additional assumption not in ref [1]
-            leachate.imass['H2O'] = mixed.imass['H2O'] * self.liq_leaching
+            leachate.imass['H2O'] = mixed_in.imass['H2O'] * self.liq_leaching
             leachate.imass['NH3'], leachate.imass['NonNH3'] = \
-                self.allocate_N_removal(mixed.TN/1e3*mixed.F_vol*self.N_leaching,
-                                        mixed.imass['NH3'])
-            leachate.imass['P'] = mixed.imass['P'] * self.P_leaching
-            leachate.imass['K'] = mixed.imass['K'] * self.K_leaching
-            mixed.mass -= leachate.mass
+                self.allocate_N_removal(mixed_in.TN/1e3*mixed_in.F_vol*self.N_leaching,
+                                        mixed_in.imass['NH3'])
+            leachate.imass['P'] = mixed_in.imass['P'] * self.P_leaching
+            leachate.imass['K'] = mixed_in.imass['K'] * self.K_leaching
+            mixed_in.mass -= leachate.mass
 
         # Air emission
         if self.if_air_emission:
             # N loss due to ammonia volatilization
             NH3_rmd, NonNH3_rmd = \
-                self.allocate_N_removal(mixed.TN/1e3*mixed.F_vol*self.N_volatilization,
-                                        mixed.imass['NH3'])
-            mixed.imass ['NH3'] -= NH3_rmd
-            mixed.imass['NonNH3'] -= NonNH3_rmd
+                self.allocate_N_removal(mixed_in.TN/1e3*mixed_in.F_vol*self.N_volatilization,
+                                        mixed_in.imass['NH3'])
+            mixed_in.imass ['NH3'] -= NH3_rmd
+            mixed_in.imass['NonNH3'] -= NonNH3_rmd
+            
             # Energy/N loss due to degradation
-            COD_loss = self.first_order_decay(k=self.decay_k_COD,
-                                              t=self.emptying_period,
-                                              max_decay=self.COD_max_decay)
-            COD_loss_kg = tot_COD_kg * COD_loss
-            CH4.imass['CH4'] = COD_loss_kg * self.max_CH4_emission * self.MCF_decay
-            mixed.imass[self.degraded_components] *= 1 - COD_loss
-
-            N_loss = self.first_order_decay(k=self.decay_k_N,
-                                            t=self.emptying_period,
-                                            max_decay=self.N_max_decay)
-            N_loss_tot = mixed.TN/1e3*mixed.F_vol*N_loss
-            NH3_rmd, NonNH3_rmd = \
-                self.allocate_N_removal(N_loss_tot,
-                                        mixed.imass['NH3'])
-            mixed.imass ['NH3'] -= NH3_rmd
-            mixed.imass['NonNH3'] -= NonNH3_rmd
-            N2O.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44/28
-            mixed._COD = (tot_COD_kg-COD_loss_kg)*1e3/mixed.F_vol
+            mixed_in._COD = tot_COD_kg * 1e3 / mixed_in.F_vol # accounting for COD loss in leachate
+            Decay._first_order_run(self, waste=mixed_in, treated=mixed_out, CH4=CH4, N2O=N2O)
         else:
             CH4.empty()
             N2O.empty()
 
         # Aquatic emission when not ideally emptied
         if not self.if_ideal_emptying:
-            mixed, CH4, N2O = self.get_emptying_emission(
-                waste=mixed, CH4=CH4, N2O=N2O,
+           self.get_emptying_emission(
+                waste=mixed_out, CH4=CH4, N2O=N2O,
                 empty_ratio=self.empty_ratio,
                 CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
 
         # Drain extra water, assume density of water to be 1 kg/L
         sludge = self.sludge_accum_rate/(365*24)
-        diff = mixed.F_mass - sludge
+        diff = mixed_out.F_mass - sludge
         if diff > 0:
-            mixed_COD = mixed._COD * mixed.F_vol
-            mixed.imass['H2O'] -= diff
-            mixed.imass['H2O'] = max(0, mixed.imass['H2O'])
-            mixed._COD = mixed_COD / mixed.F_vol
+            mixed_COD = mixed_out._COD * mixed_out.F_vol
+            mixed_out.imass['H2O'] -= diff
+            mixed_out.imass['H2O'] = max(0, mixed_out.imass['H2O'])
+            mixed_out._COD = mixed_COD / mixed_out.F_vol
 
-        waste.copy_like(mixed)
         self._scale_up_outs()
 
 
@@ -841,6 +825,14 @@ class PitLatrine(Toilet):
     @N2O_EF_decay.setter
     def N2O_EF_decay(self, i):
         self._N2O_EF_decay[self._return_MCF_EF()] = i
+        
+    @property
+    def tau(self):
+        '''[float] Retention time of the unit, same as `emptying_period` but in day.'''
+        return self.emptying_period*365
+    @tau.setter
+    def tau(self, i):
+        self.emptying_period = i/365
 
 
 # %%
@@ -910,6 +902,7 @@ class UDDT(Toilet):
         self._safety_factor = safety_factor
         self.if_prep_loss = if_prep_loss
         self.if_treatment = if_treatment
+        self._mixed_sol = WasteStream(f'{self.ID}_mixed_sol')
 
         self.construction = (
             Construction('cement', linked_unit=self, item='Cement', quantity_unit='kg'),
@@ -938,42 +931,31 @@ class UDDT(Toilet):
         Toilet._run(self)
         liq, sol, struvite, HAP, CH4, N2O = self.outs
         liq.copy_like(self.ins[0])
+        
         # Assume all of additives (toilet paper and desiccant) and water
         # (cleansing and flushing) go to feces
         _COD = self.ins[1]._COD or self.ins[1].COD
         sol_COD = _COD*self.ins[1].F_vol/1e3
-        sol.mix_from(self.ins[1:])
-        sol._COD = sol_COD*1e3/sol.F_vol
+        mixed_sol = self._mixed_sol
+        mixed_sol.mix_from(self.ins[1:])
+        mixed_sol._COD = sol_COD*1e3/mixed_sol.F_vol
+        sol.copy_like(mixed_sol)
+        
         struvite.phase = HAP.phase = 's'
         CH4.phase = N2O.phase = 'g'
 
         # Modified from ref [1], assume this only happens when air emission occurs
         # (to be consistent with pit latrine)
-        if self.if_air_emission:
+        if self.if_air_emission:            
             # N loss due to ammonia volatilization
             NH3_rmd, NonNH3_rmd = \
                 self.allocate_N_removal(liq.TN/1e3*liq.F_vol*self.N_volatilization,
                                         liq.imass['NH3'])
             liq.imass ['NH3'] -= NH3_rmd
             liq.imass['NonNH3'] -= NonNH3_rmd
+            
             # Energy/N loss due to degradation
-            COD_loss = self.first_order_decay(k=self.decay_k_COD,
-                                              t=self.collection_period/365,
-                                              max_decay=self.COD_max_decay)
-            CH4.imass['CH4'] = sol._COD/1e3*sol.F_vol*COD_loss * \
-                self.max_CH4_emission*self.MCF_decay # COD in mg/L (g/m3)
-            sol._COD *= 1 - COD_loss
-            sol.imass[self.degraded_components] *= 1 - COD_loss
-
-            N_loss = self.first_order_decay(k=self.decay_k_N,
-                                            t=self.collection_period/365,
-                                            max_decay=self.N_max_decay)
-            N_loss_tot = sol.TN/1e3*sol.F_vol*N_loss
-            NH3_rmd, NonNH3_rmd = \
-                self.allocate_N_removal(N_loss_tot, sol.imass['NH3'])
-            sol.imass ['NH3'] -= NH3_rmd
-            sol.imass['NonNH3'] -= NonNH3_rmd
-            N2O.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44/28
+            Decay._first_order_run(self, waste=mixed_sol, treated=sol, CH4=CH4, N2O=N2O)            
         else:
             CH4.empty()
             N2O.empty()
@@ -1053,12 +1035,12 @@ class UDDT(Toilet):
 
         # Non-ideal emptying
         if not self.if_ideal_emptying:
-            liq, CH4, N2O = self.get_emptying_emission(
+            self.get_emptying_emission(
                 waste=liq, CH4=CH4, N2O=N2O,
                 empty_ratio=self.empty_ratio,
                 CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
-            sol, CH4, N2O = self.get_emptying_emission(
+            self.get_emptying_emission(
                 waste=sol, CH4=CH4, N2O=N2O,
                 empty_ratio=self.empty_ratio,
                 CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
@@ -1196,3 +1178,11 @@ class UDDT(Toilet):
     @fec_moi_red_rate.setter
     def fec_moi_red_rate(self, i):
         self._fec_moi_red_rate = i
+        
+    @property
+    def tau(self):
+        '''[float] Retention time of the unit, same as `collection_period`.'''
+        return self.collection_period
+    @tau.setter
+    def tau(self, i):
+        self.collection_period = i
