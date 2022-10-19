@@ -25,8 +25,8 @@ Module Links
    LCA
    Process
    SanUnit
-   SimpleTEA
    streams
+   TEA
    Transportation
    equipments/_index
    processes/_index

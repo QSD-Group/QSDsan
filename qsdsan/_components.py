@@ -32,15 +32,13 @@ _num_component_properties = _component._num_component_properties
 _key_component_properties = _component._key_component_properties
 # _TMH = tmo.base.thermo_model_handle.ThermoModelHandle
 _PH = tmo.base.phase_handle.PhaseHandle
-DomainError = tmo.exceptions.DomainError
 
 
 # %%
 
-class UndefinedComponent(AttributeError):
+class UndefinedComponent(tmo.exceptions.UndefinedChemical):
     '''AttributeError regarding undefined :class:`Component` objects.'''
-    def __init__(self, ID):
-        super().__init__(repr(ID))
+
 
 def must_compile(*args, **kwargs): # pragma: no cover
     raise TypeError('Method valid only for CompiledChemicals, '

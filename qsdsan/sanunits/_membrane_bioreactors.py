@@ -258,7 +258,10 @@ class AnMBR(SanUnit):
                  F_BM=default_F_BM, lifetime=default_equipment_lifetime,
                  F_BM_default=1, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with, F_BM_default=1)
-        self._inf = self.ins[0].copy() # this stream will be preserved (i.e., no reaction)
+        self._inf = inf = self.ins[0].copy() # this stream will be preserved (i.e., no reaction)
+        # For pump design
+        self._retent = inf.copy(f'{ID}_rentent')
+        self._recir = inf.copy(f'{ID}_recir')
         self.reactor_type = reactor_type
         self.N_train = N_train
         self.include_aerobic_filter = include_aerobic_filter
@@ -369,7 +372,7 @@ class AnMBR(SanUnit):
         ID = self.ID
         self._compute_mod_case_tank_N()
         Q_R_mgd, Q_IR_mgd = self._compute_liq_flows()
-        retent, recir = inf.copy(f'{ID}_rentent'), inf.copy(f'{ID}_recir')
+        retent, recir = self._retent, self._recir
         retent.F_mass *= Q_R_mgd / self.Q_mgd
         recir.F_mass *= Q_IR_mgd / self.Q_mgd
         self._retent, self._recir = retent, recir

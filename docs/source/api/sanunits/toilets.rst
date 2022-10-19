@@ -9,6 +9,12 @@ Toilet
    :members:
 
 
+MURT
+----
+.. autoclass:: qsdsan.sanunits.MURT
+   :members:
+
+
 Pit latrine
 -----------
 .. autoclass:: qsdsan.sanunits.PitLatrine

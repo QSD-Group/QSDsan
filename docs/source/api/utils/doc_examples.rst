@@ -1,16 +1,19 @@
 Documentation Examples
 ======================
 
-load_example_components
------------------------
-.. autofunction:: qsdsan.utils.load_example_components
+This modules contain several quick functions for demonstration (e.g., quickly create a :class:`qsdsan.Model` to show the functions in the ``qsdsan.stats`` module).
 
 
-load_example_system
--------------------
-.. autofunction:: qsdsan.utils.load_example_system
+create_example_components
+-------------------------
+.. autofunction:: qsdsan.utils.create_example_components
 
 
-load_example_model
-------------------
-.. autofunction:: qsdsan.utils.load_example_model
+create_example_system
+---------------------
+.. autofunction:: qsdsan.utils.create_example_system
+
+
+create_example_model
+--------------------
+.. autofunction:: qsdsan.utils.create_example_model

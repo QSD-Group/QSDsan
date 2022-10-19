@@ -13,31 +13,36 @@ for license details.
 '''
 
 # Just making sure the systems can run is sufficient
-# TODO: change to the new loading routine
 __all__ = ('test_exposan',)
 
 def test_exposan():
     ##### Systems without costs/impacts #####
-    from exposan import adm
-    # adm.load()
-    adm.sys.simulate(state_reset_hook='reset_cache', t_span=(0, 200), method='BDF')
+    from exposan.adm import create_system as create_adm_system
+    adm_sys = create_adm_system()
+    adm_sys.simulate(state_reset_hook='reset_cache', t_span=(0, 200), method='BDF')
 
-    from exposan import asm
-    asm1_an = asm.create_asm_validation_system(process_model='ASM1', aerated=False)
-    asm1_aer = asm.create_asm_validation_system(process_model='ASM1', aerated=True)
-    asm2d_an = asm.create_asm_validation_system(process_model='ASM2d', aerated=False)
-    asm2d_aer = asm.create_asm_validation_system(process_model='ASM2d', aerated=True)
-    syses = (asm1_an, asm1_aer, asm2d_an, asm2d_aer)
-    for sys in syses: sys.simulate(state_reset_hook='reset_cache', t_span=(0, 10), method='BDF')
+    from exposan.asm import create_system as create_asm_system
+    for process_model in ('ASM1', 'ASM2d'):
+        for aerated in (False, True):
+            asm_sys = create_asm_system(process_model=process_model, aerated=aerated)
+            asm_sys.simulate(t_span=(0, 10), method='BDF')
 
     from qsdsan.utils import get_SRT
-    from exposan.bsm1 import bsm1
-    bsm1.reset_cache()
-    bsm1.simulate(t_span=(0,10), method='BDF')
-    print(get_SRT(bsm1, biomass_IDs=('X_BH', 'X_BA'))) # to test the `get_SRT` function
+    from exposan.bsm1 import create_system as create_bsm1_system, biomass_IDs
+    bsm1_sys = create_bsm1_system()
+    bsm1_sys.simulate(t_span=(0,10), method='BDF')
+    print(get_SRT(bsm1_sys, biomass_IDs=biomass_IDs)) # to test the `get_SRT` function
 
-    from exposan import cas
-    cas.sys.simulate()
+    from exposan.cas import create_system as create_cas_system
+    cas_sys = create_cas_system()
+    cas_sys.simulate()
+
+    try: # skip this test while GH is still using the outdated version of EXPOsan
+        from exposan.interface import create_system as create_inter_system
+        sys_inter = create_inter_system()
+        sys_inter.simulate(t_span=(0, 3))
+    except: pass
+
 
     ##### Systems with costs/impacts #####
     from exposan import biogenic_refinery as br
