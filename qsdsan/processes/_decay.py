@@ -88,13 +88,13 @@ class Decay:
         tau : float
             Retention time of the unit, [d].
         COD_removal : float
-            Removal of organics as chemical oxygen demand (COD).
+            Removal of organics as COD.
         COD_decay : float
             Fraction of the removed COD that degrades.
         COD_max_decay : float
             Maximum fraction of COD removed during storage given sufficient time.
         decay_k_COD : float
-            Rate constant for COD degradation.
+            Rate constant for COD degradation, the time unit is year.
         MCF_decay : float
             Methane correction factor for COD decay,
             [fraction of anaerobic conversion of degraded COD].
@@ -105,7 +105,7 @@ class Decay:
         N_max_decay : float
             Maximum degradation of N.
         decay_k_N : float
-            First order rate constant for N degradation.
+            Rate constant for N degradation, the time unit is year.
         N2O_EF_decay : float
             N2O emission factor, [fraction of degraded N].
         '''
