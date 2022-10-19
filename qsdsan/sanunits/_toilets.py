@@ -419,7 +419,7 @@ class MURT(Toilet):
         mixed_in = self._mixed_in
         mixed_in.mix_from(self.ins)
         tot_COD_kg = sum(float(getattr(i, 'COD')) * i.F_vol for i in self.ins) / 1e3
-
+        # breakpoint()
         # Air emission
         if self.if_air_emission:
             # N loss due to ammonia volatilization
@@ -433,6 +433,7 @@ class MURT(Toilet):
             mixed_in._COD = tot_COD_kg * 1e3 / mixed_in.F_vol # accounting for COD loss in leachate
             Decay._first_order_run(self, waste=mixed_in, treated=mixed_out, CH4=CH4, N2O=N2O)
         else:
+            mixed_out.copy_like(mixed_in)
             CH4.empty()
             N2O.empty()
             
@@ -656,6 +657,7 @@ class PitLatrine(Toilet):
             mixed_in._COD = tot_COD_kg * 1e3 / mixed_in.F_vol # accounting for COD loss in leachate
             Decay._first_order_run(self, waste=mixed_in, treated=mixed_out, CH4=CH4, N2O=N2O)
         else:
+            mixed_out.copy_like(mixed_in)
             CH4.empty()
             N2O.empty()
 
@@ -957,6 +959,7 @@ class UDDT(Toilet):
             # Energy/N loss due to degradation
             Decay._first_order_run(self, waste=mixed_sol, treated=sol, CH4=CH4, N2O=N2O)            
         else:
+            sol.copy_like(mixed_sol)
             CH4.empty()
             N2O.empty()
 
