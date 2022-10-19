@@ -130,8 +130,8 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
                 'larger than the maximum allowed level of 35%.')
 
         biochar.empty()
-        biochar_yield = 1.18 * waste.ash**0.843 + (1-waste.ash) * 2.106 * math.exp(-0.0066*self.pyrolysis_temp)
-        biochar_prcd = waste.F_mass * (1-mc) * biochar_yield # % biochar dry basis /hr
+        biochar_yield = 1.18 * self.f_Amass_Totmass **0.843 + (1-self.f_Amass_Totmass) * 2.106 * math.exp(-0.0066*self.pyrolysis_temp)
+        biochar_prcd = waste.F_mass * biochar_yield # * (1-mc) # % kg dry biochar /hr
         biochar.imass['C'] = waste.COD * self.carbon_COD_ratio * waste.F_vol / 1e3 * (1 - self.pyrolysis_C_loss)
         
         NPK = ('N', 'P', 'K')
