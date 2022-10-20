@@ -237,7 +237,7 @@ class CSTR(SanUnit):
 
     def get_retained_mass(self, biomass_IDs):
         cmps = self.components
-        mass = cmps.i_mass * self._state[:-1]
+        mass = cmps.i_mass * self._state[:len(cmps)]
         return self._V_max * mass[cmps.indices(biomass_IDs)].sum()
 
     @property

@@ -594,6 +594,10 @@ class AnaerobicCSTR(CSTR):
                 _update_dstate()
             self._ODE = dy_dt
 
+    def get_retained_mass(self, biomass_IDs):
+        cmps = self.components
+        mass = cmps.i_mass * self._state[:len(cmps)] * 1e3 # kg/m3 to mg/L
+        return self._V_max * mass[cmps.indices(biomass_IDs)].sum()
 
 # %%
 
