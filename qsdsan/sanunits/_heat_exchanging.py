@@ -86,7 +86,7 @@ class HXprocess(SanUnit, HXP):
 
     See Also
     --------
-    `biosteam.units.HXprocess <https://biosteam.readthedocs.io/en/latest/units/heat_exchange.html>`_
+    `biosteam.units.HXprocess <https://biosteam.readthedocs.io/en/latest/API/units/heat_exchange.html>`_
     '''
 
     line = HXP.line
@@ -153,7 +153,7 @@ class HXutility(SanUnit, HXU):
 
     See Also
     --------
-    `biosteam.units.HXutility <https://biosteam.readthedocs.io/en/latest/units/heat_exchange.html>`_
+    `biosteam.units.HXutility <https://biosteam.readthedocs.io/en/latest/API/units/heat_exchange.html>`_
     '''
 
     line = HXU.line
