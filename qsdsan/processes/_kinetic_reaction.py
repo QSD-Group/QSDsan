@@ -22,32 +22,32 @@ __all__ = ('KineticReaction',)
 
 class KineticReaction(Rxn):
     r'''
-    A generic class to handle reactions with common kinetics where the reaction
-    rate is controlled by the molar concentration of a single component
-    (i.e., the rate reactant) so when the concenration can be analytically solved.
+    A general class used to to handle reactions with common kinetics
+    where the reaction ate is controlled by the molar concentration of a single component
+    (i.e., the rate reactant) so the concenration can be analytically solved.
     
     With a rate constant of k and time of t, for nth-order reaction of
     the rate reactant with a starting molar concentration of :math:`[C]_0`,
-    the rate law is given as:
+    the rate law is given as
     
         .. math:: -\frac{d[C]}{dt} = k*[C]^n
     
-    and the integrated rate law is (n!=1):
+    and the integrated rate law is (n!=1)
         
         .. math:: [C]^{1-n} = [C]_0^{1-n} - (1-n)*k*t
     
-    when n==1, the integrated rate law is:
+    when n==1, the integrated rate law is
     
         .. math:: [C]= [C]_0*e^{-k*t}
         
     The linear plot that can be used to determine k is :math:`[C]^g` vs. t
     when n!=1 and :math:`ln([C])` vs. t when n==1.
     
-    Half-life of the component is (n!=1):
+    Half-life of the component is (n!=1)
     
         .. math:: t_{\frac{1}{2}} = \frac{[C]_0^g*(1-2^{n-1})}{(1-n)*k}
         
-    when n==1, the half-life is:
+    when n==1, the half-life is
     
         .. math:: t_{\frac{1}{2}} = \frac{ln(2)}{k}
         
@@ -110,17 +110,24 @@ class KineticReaction(Rxn):
     KineticReaction (by mol):
     stoichiometry        reactant    X[%]
     SO2Cl2 -> SO2 + Cl2  SO2Cl2     88.92
+    >>> # You can check the rate equation, integrated rate equation, and half-life
+    >>> # of the component
+    >>> rxn.rate_equation
+    -2.2e-5*C(t) - Derivative(C(t), t)
+    >>> rxn.integrated_rate_equation.evalf(n=5) # `evalf` is to limit the digits
+    0.035543/2.7183**(2.2e-5*t)
+    >>> round(rxn.half_life, 2)
+    31506.69
     >>> # You can also look at the conversion over time
     >>> fig = rxn.plot_conversion_over_time()
-    >>> fig # doctest: +ELLIPSIS
         
     References
     ----------
-    [1] https://chem.libretexts.org/Bookshelves/General_Chemistry/Map%3A_General_Chemistry_(Petrucci_et_al.)/14%3A_Chemical_Kinetics/14.05%3A_First-Order_Reactions
+    .. [1] https://chem.libretexts.org/Bookshelves/General_Chemistry/Map%3A_General_Chemistry_(Petrucci_et_al.)/14%3A_Chemical_Kinetics/14.05%3A_First-Order_Reactions
 
     See Also
     --------
-    :class:`thermosteam.Reaction`
+    `thermosteam.Reaction <https://biosteam.readthedocs.io/en/latest/API/thermosteam/reaction/Reaction.html>`_
     '''
     _t_sym = Symbol('t')
     _C_sym = Function('C')(_t_sym)
@@ -213,9 +220,10 @@ class KineticReaction(Rxn):
         
     @property
     def k(self):
-        '''
+        r'''
         [float] Kinetic rate constant, unit should match the one used for C/C0 and t
-        (:math:`\frac{unit_of_C/C0^g}{unit_of_t}`).'''
+        (:math:`\frac{{mol}^g}{unit\\ of\\ t}`).
+        '''
         return self._k
     @k.setter
     def k(self, i):
