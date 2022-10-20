@@ -18,6 +18,7 @@ from ._asm1 import *
 from ._asm2d import *
 from ._adm1 import *
 from ._decay import *
+from ._kinetic_reaction import *
 
 from . import (
     _aeration,
@@ -25,6 +26,7 @@ from . import (
     _asm2d,
     _adm1,
     _decay,
+    _kinetic_reaction,
     )
 
 __all__ = (
@@ -33,4 +35,5 @@ __all__ = (
     *_asm2d.__all__,
     *_adm1.__all__,
     *_decay.__all__,
+    *_kinetic_reaction.__all__,
     )
