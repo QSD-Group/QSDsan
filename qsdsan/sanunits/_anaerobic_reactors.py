@@ -450,6 +450,7 @@ class AnaerobicCSTR(CSTR):
         if self.split is None: 
             gas, liquid = self.outs
             liquid.copy_like(mixed)
+            liquid.T = self.T
         else:
             gas = self.outs[0]
             liquids = self._outs[1:]
@@ -457,6 +458,7 @@ class AnaerobicCSTR(CSTR):
             for liquid, spl in zip(liquids, self.split):
                 liquid.copy_like(mixed)
                 liquid.set_total_flow(Q*spl, 'm3/hr')
+                liquid.T = self.T
         gas.copy_like(self._biogas)
         gas.T = self.T
         if self._fixed_P_gas: 
