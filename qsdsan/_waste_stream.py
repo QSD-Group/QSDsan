@@ -785,7 +785,7 @@ class WasteStream(SanStream):
     @property
     def dry_mass(self):
         '''[float] Total solids, dry mass of dissolved and suspended solids, in mg/L.'''
-        return self._liq_sol_properties('solids', self.composite('solids'))
+        return self._liq_sol_properties('dry_mass', self.composite('solids'))
 
     # TODO: calibrate Charge when weak acids are involved
     # @property
