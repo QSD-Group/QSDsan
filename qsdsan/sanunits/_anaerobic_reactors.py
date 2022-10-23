@@ -410,7 +410,7 @@ class AnaerobicCSTR(CSTR):
     def _run(self):
         '''Only to converge volumetric flows.'''
         mixed = self._mixed # avoid creating multiple new streams
-        mixed.mix_from(self.ins)
+        mixed.mix_from(self.ins, energy_balance=False)
         if self.split is None: 
             gas, liquid = self.outs
             liquid.copy_like(mixed)
@@ -430,6 +430,9 @@ class AnaerobicCSTR(CSTR):
         
     def _init_state(self):
         mixed = self._mixed
+        # The first time `_run` is called self.ins[1] is empty,
+        # setting `energy_balance` to False because of bad liquid Cn model for CO2
+        mixed.mix_from(self.ins, energy_balance=False)
         Q = mixed.get_total_flow('m3/d')
         #!!! how to make unit conversion generalizable to all models?
         if self._concs is not None: Cs = self._concs * 1e-3 # mg/L to kg/m3
