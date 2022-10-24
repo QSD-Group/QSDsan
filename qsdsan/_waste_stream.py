@@ -1130,7 +1130,6 @@ class WasteStream(SanStream):
 
     def _Q_obj_f(self, M_bulk, bulk_liquid_ID, target_Q):
         self.set_flow(M_bulk, 'kg/hr', bulk_liquid_ID)
-        self.F_vol*1e3 - target_Q
         return self.F_vol*1e3 - target_Q
 
     @property

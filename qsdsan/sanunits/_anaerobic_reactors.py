@@ -410,11 +410,13 @@ class AnaerobicCSTR(CSTR):
     def _run(self):
         '''Only to converge volumetric flows.'''
         mixed = self._mixed # avoid creating multiple new streams
-        mixed.mix_from(self.ins)
+        # mixed.mix_from(self.ins)
+        mixed.mix_from(self.ins, energy_balance=False)
         if self.split is None: 
             gas, liquid = self.outs
             liquid.copy_like(mixed)
             liquid.T = self.T
+            # self._rQ = liquid.F_vol / mixed.F_vol
         else:
             gas = self.outs[0]
             liquids = self._outs[1:]
@@ -423,6 +425,7 @@ class AnaerobicCSTR(CSTR):
                 liquid.copy_like(mixed)
                 liquid.set_total_flow(Q*spl, 'm3/hr')
                 liquid.T = self.T
+            # self._rQ = sum([ws.F_vol for ws in liquids]) / mixed.F_vol
         gas.copy_like(self._biogas)
         gas.T = self.T
         if self._fixed_P_gas: 
@@ -530,6 +533,7 @@ class AnaerobicCSTR(CSTR):
             gas_mass2mol_conversion = (cmps.i_mass / cmps.chem_MW)[self._gas_cmp_idx]
             hasexo = bool(len(self._exovars))
             f_exovars = self.eval_exo_dynamic_vars
+            # _rQ = self._rQ
             if self._fixed_P_gas:
                 f_qgas = self.f_q_gas_fixed_P_headspace
             else:
@@ -537,13 +541,15 @@ class AnaerobicCSTR(CSTR):
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 S_liq = QC[:n_cmps]
                 S_gas = QC[n_cmps: (n_cmps+n_gas)]
-                # Q = QC[-1]
+                #!!! Volume change due to temperature difference accounted for 
+                # in _run and _init_state
+                Q = QC[-1]
                 # S_in = QC_ins[0,:-1] * 1e-3  # mg/L to kg/m3
                 # Q_in = QC_ins[0,-1]
                 Q_ins = QC_ins[:, -1]
                 S_ins = QC_ins[:, :-1] * 1e-3  # mg/L to kg/m3
-                Q = sum(Q_ins)
-                if hasexo: 
+                # Q = sum(Q_ins)
+                if hasexo:
                     exo_vars = f_exovars(t)
                     QC = np.append(QC, exo_vars)
                     T = exo_vars[0]
@@ -556,7 +562,7 @@ class AnaerobicCSTR(CSTR):
                 q_gas = f_qgas(rhos[-3:], S_gas, T)
                 _dstate[n_cmps: (n_cmps+n_gas)] = - q_gas*S_gas/V_gas \
                     + rhos[-3:] * V_liq/V_gas * gas_mass2mol_conversion
-                _dstate[-1] = dQC_ins[0,-1]
+                _dstate[-1] = dQC_ins[0,-1] #* _rQ
                 _update_dstate()
             self._ODE = dy_dt
 
