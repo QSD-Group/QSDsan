@@ -195,7 +195,7 @@ class PolishingFilter(SanUnit):
         # Initialize the attributes
         hx_in = Stream(f'{ID}_hx_in')
         hx_out = Stream(f'{ID}_hx_out')
-        self.heat_exchanger = HXutility(ID=f'{ID}_hx', ins=hx_in, outs=hx_out, T=T)
+        self.heat_exchanger = HXutility(ID=f'{ID}_hx', ins=hx_in, outs=hx_out)
         self._refresh_rxns()
 
         for k, v in kwargs.items():
@@ -478,7 +478,6 @@ class PolishingFilter(SanUnit):
 
         ### Heat and power ###
         T = self.T
-        hx = self.heat_exchanger
         # Heat loss
         if T is None:
             loss = 0.
@@ -495,6 +494,7 @@ class PolishingFilter(SanUnit):
         self._heat_loss = loss
         
         # Stream heating
+        hx = self.heat_exchanger
         inf = self._inf
         hx_ins0, hx_outs0 = hx.ins[0], hx.outs[0]
         hx_ins0.copy_flow(inf)

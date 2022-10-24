@@ -289,7 +289,7 @@ class AnMBR(SanUnit):
         self.AF = self.AeF = None
         hx_in = Stream(f'{ID}_hx_in')
         hx_out = Stream(f'{ID}_hx_out')
-        self.heat_exchanger = HXutility(ID=f'{ID}_hx', ins=hx_in, outs=hx_out, T=T)
+        self.heat_exchanger = HXutility(ID=f'{ID}_hx', ins=hx_in, outs=hx_out)
         self._refresh_rxns()
 
         for k, v in kwargs.items():
