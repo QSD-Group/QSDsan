@@ -41,11 +41,6 @@ from . import (
     scope,
     )
 
-try: from biosteam.utils import NotImplementedMethod
-except:
-    from biosteam.utils import AbstractMethod
-    NotImplementedMethod = AbstractMethod
-
 from .cod import *
 from .colors import *
 from .components import *

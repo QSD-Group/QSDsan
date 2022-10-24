@@ -157,7 +157,7 @@ class TEA(BSTTEA):
     >>> # QSDsan's dependent packages (e.g., thermo)
     >>> tea.show() # doctest: +ELLIPSIS
     TEA: sys
-    NPV  : -258,...
+    NPV  : -246,...
 
     See Also
     --------

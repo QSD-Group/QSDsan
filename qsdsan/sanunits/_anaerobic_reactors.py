@@ -13,9 +13,9 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-
-from math import ceil, pi
 import numpy as np
+from math import ceil, pi
+from biosteam import Stream
 from .. import SanUnit, Construction, WasteStream
 from ..processes import Decay
 from ..sanunits import HXutility, WWTpump, CSTR
@@ -43,9 +43,9 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
 
     Parameters
     ----------
-    ins : Iterable
+    ins : Iterable(stream)
         Waste for treatment.
-    outs : Iterable
+    outs : Iterable(stream)
         Treated waste, biogas, fugitive CH4, and fugitive N2O.
 
     Examples
@@ -751,9 +751,9 @@ class SludgeDigester(SanUnit):
 
     Parameters
     ----------
-    ins : Iterable
+    ins : Iterable(stream)
         Sludge for digestion.
-    outs : Iterable
+    outs : Iterable(stream)
         Digested sludge, generated biogas.
     HRT : float
         Hydraulic retention time, [d].
@@ -839,8 +839,10 @@ class SludgeDigester(SanUnit):
         self.methane_fraction = methane_fraction
         self.depth = depth
         self.heat_transfer_coeff = heat_transfer_coeff
-        self.heat_exchanger = hx = HXutility(None, None, None, T=T)
-        self.heat_utilities = hx.heat_utilities
+        ID = self.ID
+        hx_in = Stream(f'{ID}_hx_in')
+        hx_out = Stream(f'{ID}_hx_out')
+        self.heat_exchanger = HXutility(ID=f'{ID}_hx', ins=hx_in, outs=hx_out)
         self.wall_concrete_unit_cost = wall_concrete_unit_cost
         self.slab_concrete_unit_cost = slab_concrete_unit_cost
         self.excavation_unit_cost = excavation_unit_cost
@@ -911,21 +913,23 @@ class SludgeDigester(SanUnit):
 
         # Calculate needed heating
         T = self.T
-        sludge_T = sludge.T
-        sludge_H_in = sludge.H
-        sludge.T = T
-        sludge_H_at_T = sludge.H
-        sludge.T = sludge_T
-        duty = sludge_H_at_T - sludge_H_in
-
+        hx = self.heat_exchanger
+        hx_ins0, hx_outs0 = hx.ins[0], hx.outs[0]
+        hx_ins0.copy_flow(sludge)
+        hx_outs0.copy_flow(sludge)
+        hx_ins0.T = sludge.T
+        hx_outs0.T = T
+        hx_ins0.P = hx_outs0.P = sludge.P
+        
         # Heat loss
         coeff = self.heat_transfer_coeff
         A_wall = pi * dia * depth
         wall_loss = coeff['wall'] * A_wall * (T-self.T_air) # [W]
         floor_loss = coeff['floor'] * A * (T-self.T_earth) # [W]
         ceiling_loss = coeff['ceiling'] * A * (T-self.T_air) # [W]
-        duty += (wall_loss+floor_loss+ceiling_loss)*60*60/1e3 # kJ/hr
-        self.heat_exchanger.simulate_as_auxiliary_exchanger(inlet=sludge, duty=duty)
+        duty = (wall_loss+floor_loss+ceiling_loss)*60*60/1e3 # kJ/hr
+        hx.H = hx_ins0.H + duty # stream heating and heat loss
+        hx.simulate_as_auxiliary_exchanger(ins=hx.ins, outs=hx.outs)
 
         # Concrete usage
         ft_2_m = auom('ft').conversion_factor('m')

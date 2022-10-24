@@ -14,6 +14,7 @@ for license details.
 
 from warnings import warn
 from math import ceil
+from biosteam import Stream
 from .. import SanUnit
 from ..sanunits import HXutility, WWTpump
 from ..equipments import Blower, GasPiping
@@ -196,8 +197,9 @@ class ActivatedSludgeProcess(SanUnit):
         self.k2 = k2
         self.K_UAP = K_UAP
         self.K_BAP = K_BAP
-        self.heat_exchanger = hx = HXutility(None, None, None, T=T)
-        self.heat_utilities = hx.heat_utilities
+        hx_in = Stream(f'{ID}_hx_in')
+        hx_out = Stream(f'{ID}_hx_out')
+        self.heat_exchanger = HXutility(ID=f'{ID}_hx', ins=hx_in, outs=hx_out, T=T)
         self.blower = blower = Blower('blower', linked_unit=self, N_reactor=N_train)
         self.air_piping = air_piping = GasPiping('air_piping', linked_unit=self, N_reactor=N_train)
         self.equipments = (blower, air_piping)
@@ -211,7 +213,7 @@ class ActivatedSludgeProcess(SanUnit):
     # Equation/page numbers are noted for the 2001 Rittmann and McCarty book
     def _run(self):
         inf, air = self.ins
-        self._inf.copy_flow(inf)
+        self._inf.copy_like(inf)
         eff, was, emission = self.outs
         air.phase = emission.phase = 'g'
         Q = auom('m3/hr').convert(inf.F_vol, 'L/d')
@@ -520,14 +522,14 @@ class ActivatedSludgeProcess(SanUnit):
 
         ### Heat and power ###
         # Fluid heating
-        T, inf = self.T, self._inf
-        inf.copy_like(self.ins[0])
-        if T:
-            H_at_T = inf.thermo.mixture.H(mol=inf.mol, phase='l', T=T, P=101325)
-            duty = -(inf.H - H_at_T)
-        else:
-            duty = 0
-        self.heat_exchanger.simulate_as_auxiliary_exchanger(inlet=inf, duty=duty)
+        hx = self.heat_exchanger
+        ins0 = self.ins[0]
+        # duty = ins0.thermo.mixture.H(mol=ins0.mol, phase='l', T=self.T, P=ins0.P) # save for later reference
+        hx.ins[0].copy_flow(ins0)
+        hx.outs[0].copy_flow(ins0)
+        hx.ins[0].T = ins0.T
+        hx.ins[0].P = hx.outs[0].P = ins0.P
+        hx.simulate_as_auxiliary_exchanger(ins=hx.ins, outs=hx.outs)
         # Power
         pumping = 0.
         for ID in self.pumps:

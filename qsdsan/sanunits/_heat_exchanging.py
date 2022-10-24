@@ -72,7 +72,6 @@ class HeatExchangerNetwork(SanUnit, HXN):
     network_priority = HXN.network_priority
     _N_ins = HXN._N_ins
     _N_outs = HXN._N_outs
-    _N_heat_utilities = HXN._N_heat_utilities
     _units= HXN._units
     __init__ = HXN.__init__
     _init_ins = HXN._init_ins
@@ -91,7 +90,6 @@ class HXprocess(SanUnit, HXP):
 
     line = HXP.line
     _graphics = HXP._graphics
-    _N_heat_utilities = HXP._N_heat_utilities
     _N_ins = HXP._N_ins
     _N_outs = HXP._N_outs
 
@@ -111,8 +109,8 @@ class HXprocess(SanUnit, HXP):
         #: [float] Enforced overall heat transfer coefficient (kW/m^2/K)
         self.U = U
 
-        #: [float] Total heat transferred.
-        self.Q = None
+        #: [float] Total heat transferred in kW (not including losses).
+        self.total_heat_transfer = None
 
         #: Number of shells for LMTD correction factor method.
         self.N_shells = N_shells
@@ -143,7 +141,7 @@ class HXprocess(SanUnit, HXP):
 
         self.material = material
         self.heat_exchanger_type = heat_exchanger_type
-        self.reset_source = True
+        self.reset_streams_at_setup = False
 
 
 class HXutility(SanUnit, HXU):
@@ -192,4 +190,9 @@ class HXutility(SanUnit, HXU):
 
         self.material = material
         self.heat_exchanger_type = heat_exchanger_type
+        
+        #: [bool] User enforced heat transfer efficiency. A value less than 1
+        #: means that a fraction of heat transferred is lost to the environment.
+        #: If value is None, it defaults to the heat transfer efficiency of the 
+        #: heat utility.
         self.heat_transfer_efficiency = heat_transfer_efficiency
