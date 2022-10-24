@@ -569,7 +569,7 @@ class WasteStream(SanStream):
         >>> # set "flow=True"
         >>> ws.composite('BOD', flow=True, particle_size='x') # doctest: +ELLIPSIS
         0.15283
-        >>> Unit for flow rate can also be specified
+        >>> # Unit for flow rate can also be specified
         >>> ws.composite('BOD', flow=True, particle_size='x', unit='kg/d') # doctest: +ELLIPSIS
         3.66791...
         >>> # Biomass COD
