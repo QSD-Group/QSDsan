@@ -6,6 +6,7 @@ SALib>=1.4.5
 seaborn
 sympy>=1.8
 matplotlib<=3.6.0
+pint<=0.19.2
 
 # Specifically for docs
 sphinx
