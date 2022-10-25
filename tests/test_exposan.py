@@ -5,6 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -37,12 +38,9 @@ def test_exposan():
     cas_sys = create_cas_system()
     cas_sys.simulate()
 
-    try: # skip this test while GH is still using the outdated version of EXPOsan
-        from exposan.interface import create_system as create_inter_system
-        sys_inter = create_inter_system()
-        sys_inter.simulate(t_span=(0, 3))
-    except: pass
-
+    from exposan.interface import create_system as create_inter_system
+    sys_inter = create_inter_system()
+    sys_inter.simulate(t_span=(0, 3))
 
     ##### Systems with costs/impacts #####
     from exposan import biogenic_refinery as br
