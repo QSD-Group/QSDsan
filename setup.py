@@ -38,7 +38,7 @@ setup(
         'scikit-learn',
         'scipy>=1.7.1',
         'seaborn',
-        'sympy>=1.8'
+        'sympy>=1.8',
     ],
     package_data=
         {'qsdsan': [
@@ -53,7 +53,6 @@ setup(
             'sanunits/*',
             'utils/*',
         ]},
-    platforms=['Windows', 'Mac', 'Linux'],
     classifiers=[
         'License :: OSI Approved :: University of Illinois/NCSA Open Source License',
         'Environment :: Console',
@@ -75,6 +74,6 @@ setup(
         'sanitation',
         'resource recovery',
         'techno-economic analysis',
-        'life cycle assessment'
+        'life cycle assessment',
     ],
 )
