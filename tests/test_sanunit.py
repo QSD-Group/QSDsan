@@ -34,15 +34,13 @@ def test_sanunit():
     M2 = qs.sanunits.MixTank('M2', ins=(S1-0, P1-0), tau=2)
     sys = qs.System('sys', path=(M1, S1, P1, M2))
     sys.simulate()
-
     assert_allclose(M2.installed_cost, 41808.1524967656, rtol=1e-2)
 
     # Test mixing of different classes of streams
     ss1 = qs.SanStream(H2O=100)
     ss2 = ss1.copy()
-
     M3 = qs.sanunits.MixTank('M3', ins=ss1, init_with='WasteStream')
-    M3.F_BM['Tanks'] = 1
+    M3.F_BM['Tank'] = 1
     M3.simulate()
     M3.show()
     assert type(M3.ins[0]).__name__ == 'SanStream'

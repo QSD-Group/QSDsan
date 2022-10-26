@@ -6,9 +6,13 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 Ongoing
 -------
+- New modules
+
+	- :class:`qsdsan.processes.KineticReaction`
+
 - ``QSDsan`` now has a `website <https://qsdsan.com/>`_ to host all of the resources!
 - ``QSDsan``'s `documentation <https://qsdsan.readthedocs.io/en/latest/index.html>`_ is getting a new look!
-- Add new units to enable dynamic simulation of systems with multiple process models. Check out :class:`~.sanunits.Junction`, :class:`~.sanunits.ADMtoASM`, :class:`~.sanunits.ASMtoADM` and their use in the `interface system demo <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/interface>`_.
+- Add new units to enable dynamic simulation of systems with multiple process models. Check out :class:`qsdsan.sanunits.Junction`, :class:`qsdsan.sanunits.ADMtoASM`, :class:`qsdsan.sanunits.ASMtoADM` and their use in the `interface system demo <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/interface>`_.
 - In `online testing <https://github.com/QSD-Group/QSDsan/actions>`_, we dropped the test for Python 3.8 and added Python 3.10. The main developing environment for QSDsan is 3.9.
 
 
@@ -22,32 +26,32 @@ Ongoing
 	- Eco-San
 	- Reclaimer
 
-- Added the anaerobic digestion model no. 1 (ADM1) process model and the unit :class:`~.sanunits.AnaerobicCSTR`, the corresponding `system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/adm>`_ can be found in EXPOsan.
+- Added the anaerobic digestion model no. 1 (ADM1) process model and the unit :class:`qsdsan.sanunits.AnaerobicCSTR`, the corresponding `system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/adm>`_ can be found in EXPOsan.
 - Other new unit operations:
 
 	- Encapsulation Bioreactors:
 
-		- :class:`~.sanunits.CH4E`
-		- :class:`~.sanunits.H2E`
+		- :class:`qsdsan.sanunits.CH4E`
+		- :class:`qsdsan.sanunits.H2E`
 
 
 `1.1.0`_
 --------
 - Fully tested dynamic simulation capacity, refer to the `BSM1 system <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_ in EXPOsan for an example implementation.
-- Added many new :class:`~.SanUnit` and reorganized package/documentation structure, new unit operations include:
+- Added many new :class:`qsdsan.SanUnit` and reorganized package/documentation structure, new unit operations include:
 
-	- :class:`~.sanunits.AnMBR`
-	- :class:`~.sanunits.CHP`
-	- :class:`~.sanunits.InternalCirculationRx`
-	- :class:`~.sanunits.SludgeHandling`
+	- :class:`qsdsan.sanunits.AnMBR`
+	- :class:`qsdsan.sanunits.CHP`
+	- :class:`qsdsan.sanunits.InternalCirculationRx`
+	- :class:`qsdsan.sanunits.SludgeHandling`
 
-		- :class:`~.sanunits.BeltThickener`
-		- :class:`~.sanunits.SludgeCentrifuge`
+		- :class:`qsdsan.sanunits.BeltThickener`
+		- :class:`qsdsan.sanunits.SludgeCentrifuge`
 
-	- :class:`~.sanunits.PolishingFilter`
-	- :class:`~.sanunits.WWTpump`
+	- :class:`qsdsan.sanunits.PolishingFilter`
+	- :class:`qsdsan.sanunits.WWTpump`
 
-- Continue to enhance documentation (e.g., :class:`~.Process`, `~.stats`, util functions).
+- Continue to enhance documentation (e.g., :class:`qsdsan.Process`, `qsdsan.stats`, util functions).
 
 
 `1.0.0`_
@@ -62,40 +66,40 @@ Official release of ``QSDsan`` v1.0.0!
 `0.3.0`_
 --------
 - Now LCA data can be imported from external databases using the newly made `BW2QSD <https://github.com/QSD-Group/BW2QSD>`_ package.
-- New subclasses of :class:`~.SanUnit`:
+- New subclasses of :class:`qsdsan.SanUnit`:
 
-	- :class:`~.sanunits.Clarifier`
-	- :class:`~.sanunits.CSTR`
+	- :class:`qsdsan.sanunits.Clarifier`
+	- :class:`qsdsan.sanunits.CSTR`
 
-	- :class:`~.sanunits.ElectrochemicalCell` using the following :class:`~.Equipment`:
+	- :class:`qsdsan.sanunits.ElectrochemicalCell` using the following :class:`qsdsan.Equipment`:
 
-		- :class:`~.equipments.Column`
-		- :class:`~.equipments.Electrode`
-		- :class:`~.equipments.Machine`
-		- :class:`~.equipments.Membrane`
+		- :class:`qsdsan.equipments.Column`
+		- :class:`qsdsan.equipments.Electrode`
+		- :class:`qsdsan.equipments.Machine`
+		- :class:`qsdsan.equipments.Membrane`
 
-- New subclasses of :class:`~.Process`:
+- New subclasses of :class:`qsdsan.Process`:
 
-	- :class:`~.processes.DiffusedAeration`
-	- :class:`~.processes.ASM1`
-	- :class:`~.processes.ASM2d`
+	- :class:`qsdsan.processes.DiffusedAeration`
+	- :class:`qsdsan.processes.ASM1`
+	- :class:`qsdsan.processes.ASM2d`
 
-- Updated :class:`~.SanUnit` so that it can be initialized with any of :class:`thermosteam.Stream`, :class:`~.SanStream`, or :class:`~.WasteStream`.
+- Updated :class:`qsdsan.SanUnit` so that it can be initialized with any of :class:`thermosteam.Stream`, :class:`qsdsan.SanStream`, or :class:`qsdsan.WasteStream`.
 
 	- These three classes can now be mixed.
 
-- Added :class:`~.SanStream` for non-waste streams (e.g., gases).
-- Updated the ``add_OPEX`` attribute of :class:`~.SanUnit` and ``system_add_OPEX`` attribute of :class:`~.SimpleTEA` so that they take :class:`dict` as the default to allow display of multiple additional operating expenses.
+- Added :class:`qsdsan.SanStream` for non-waste streams (e.g., gases).
+- Updated the ``add_OPEX`` attribute of :class:`qsdsan.SanUnit` and ``system_add_OPEX`` attribute of :class:`qsdsan.SimpleTEA` so that they take :class:`dict` as the default to allow display of multiple additional operating expenses.
 - Split the ``systems`` module into an individual package `EXPOsan`_.
-- Now using :class:`thermosteam.utils.Registry` to manage :class:`~.ImpactIndicator` and :class:`~.ImpactItem`.
+- Now using :class:`thermosteam.utils.Registry` to manage :class:`qsdsan.ImpactIndicator` and :class:`qsdsan.ImpactItem`.
 - Added `AppVeyor CI <https://ci.appveyor.com/project/yalinli2/qsdsan>`_.
 - Renamed the ``master`` branch to ``main``.
 
 
 `0.2.0`_
 --------
-- Added :class:`~.Process`, :class:`~.Processes`, and :class:`~.CompiledProcesses` classes for stoichiometric process and its kinetics.
-- Added an :class:`~.Equipment` class for design and costing of unit equipment.
+- Added :class:`qsdsan.Process`, :class:`qsdsan.Processes`, and :class:`qsdsan.CompiledProcesses` classes for stoichiometric process and its kinetics.
+- Added an :class:`qsdsan.Equipment` class for design and costing of unit equipment.
 - For the ``stats`` module:
 
 	- More statistical tests:
@@ -129,7 +133,7 @@ Official release of ``QSDsan`` v1.0.0!
 	- Sobol sensitivity analysis: :func:`qsdsan.stats.sobol_analysis`.
 
 - Added all uncertainty parameters for all of the scenarios in the bwaise system, also added demonstrative Morris and Sobol analysis.
-- :func:`LCA.get_normalized_impacts` was replaced by :func:`qsdsan.LCA.get_allocated_impacts` for :class:`~.LCA` to enable flexible allocation options.
+- :func:`LCA.get_normalized_impacts` was replaced by :func:`qsdsan.LCA.get_allocated_impacts` for :class:`qsdsan.LCA` to enable flexible allocation options.
 - Reformatted all documents, added instructions on documentation.
 - Added brief instructions on contributing and code of conduct.
 - Updated UML diagram.
@@ -137,30 +141,30 @@ Official release of ``QSDsan`` v1.0.0!
 
 `0.0.3`_
 --------
-- More flexible setting of :class:`~.ImpactItem` for :class:`~.WasteStream`.
+- More flexible setting of :class:`qsdsan.ImpactItem` for :class:`qsdsan.WasteStream`.
 - Add status badge to README.rst
 - Add CHANGELOG.rst
 - Tutorial updates:
 
 	- New:
-		- :class:`~.TEA` and :class:`~.LCA`
+		- :class:`qsdsan.TEA` and :class:`qsdsan.LCA`
 	- Updated:
-		-  :class:`~.Component` and :class:`~.WasteStream`
-		-  :class:`~.SanUnit` and :class:`~.System`
+		-  :class:`qsdsan.Component` and :class:`qsdsan.WasteStream`
+		-  :class:`qsdsan.SanUnit` and :class:`qsdsan.System`
 
 
 `0.0.2`_
 --------
 - Added the all three sanitation scenarios as described in `Trimmer et al.`_, including uncertainty/sensitivity analyses with tutorial.
-- Inclusion of GPX models for estimation of :class:`~.WasteStream` properties.
+- Inclusion of GPX models for estimation of :class:`qsdsan.WasteStream` properties.
 - Live documentation for the `latest`_ and `beta`_ version.
 - New classes:
 
     - All units in `Trimmer et al.`_
     - Added descriptors (``qsdsan.utils.descriptors``) and decorators (``qsdsan.utils.checkers``) to check user-input values.
-    - :class:`~.utils.setters.AttrSetter`, :class:`~.utils.setters.DictAttrSetter`, and :class:`~.utils.getters.FuncGetter` for batch-setting of uncertainty analysis parameters.
+    - :class:`qsdsan.utils.setters.AttrSetter`, :class:`qsdsan.utils.setters.DictAttrSetter`, and :class:`qsdsan.utils.getters.FuncGetter` for batch-setting of uncertainty analysis parameters.
 
-- Added :func:`save_report` function to :class:`~.LCA` for report exporting.
+- Added :func:`save_report` function to :class:`qsdsan.LCA` for report exporting.
 
 
 `0.0.1`_

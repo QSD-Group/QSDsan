@@ -23,16 +23,13 @@ import numpy as np
 from collections import defaultdict
 from collections.abc import Iterable
 from warnings import warn
+from biosteam._unit import ProcessSpecification
 from biosteam.utils import (
     Inlets,
     MissingStream,
-    MockStream,
     Outlets,
     Scope,
     )
-try: from biosteam.utils import TemporaryStream
-except:
-    class TemporaryStream: pass
 from . import (
     Construction,
     currency,
@@ -170,17 +167,20 @@ class SanUnit(Unit, isabstract=True):
                  construction=(), transportation=(), equipments=(),
                  add_OPEX={}, uptime_ratio=1., lifetime=None, F_BM_default=None,
                  isdynamic=False, exogenous_vars=(), **kwargs):
+        ##### biosteam-specific #####
         self._system = None
         self._register(ID)
         self._specification = None
         self._load_thermo(thermo)
+        
         self._init_with = init_with
         self._init_ins(ins, init_with)
         self._init_outs(outs, init_with)
+        
         #: All heat utilities associated to unit. Cooling and heating requirements 
-        #: are stored here (including auxiliary requirements). The number of heat utilities created is given by the
-        #: class attribute :attr:`~Unit._N_heat_utilities`.
-        self.heat_utilities: tuple[HeatUtility, ...] = tuple([HeatUtility() for i in range(self._N_heat_utilities)])
+        #: are stored here (including auxiliary requirements).
+        self.heat_utilities: tuple[HeatUtility, ...] = \
+            tuple([HeatUtility() for i in range(getattr(self, '_N_heat_utilities', 0))])
         
         #: Electric utility associated to unit (including auxiliary requirements).
         self.power_utility: PowerUtility = PowerUtility()
@@ -190,9 +190,22 @@ class SanUnit(Unit, isabstract=True):
         self._init_specifications()
         #: Whether to prioritize unit operation specification within recycle loop (if any).
         self.prioritize: bool = False
+        
+        #: Safety toggle to prevent infinite recursion
+        self._active_specifications: set[ProcessSpecification] = set()
+
+        #: Name-number pairs of baseline purchase costs and auxiliary unit 
+        #: operations in parallel. Use 'self' to refer to the main unit. Capital 
+        #: and heat and power utilities in parallel will become propotional to this 
+        #: value.
+        self.parallel: dict[str, int] = {}
 
         if not kwargs.get('skip_property_package_check'):
             self._assert_compatible_property_package()
+            
+        self._utility_cost = None
+
+        ##### qsdsan-specific #####
         for i in (*construction, *transportation, *equipments):
             i._linked_unit = self
         # Make fresh ones for each unit
@@ -212,26 +225,6 @@ class SanUnit(Unit, isabstract=True):
         self._exovars = exogenous_vars
         for attr, val in kwargs.items():
             setattr(self, attr, val)
-
-    # For backward compatibility
-    def _init_specifications(self):
-        try: super()._init_specifications() # new biosteam
-        except: self._init_specification() # old biosteam
-
-    def add_specifications(self, function):
-        try: super().add_specifications(self, function) # new biosteam
-        except: self.specification = function # old biosteam
-    
-    @property
-    def run_after_specification(self):
-        try: return self.run_after_specifications # new biosteam
-        except: # old biosteam
-            self._run_after_specification = False
-            return self._run_after_specification
-    @run_after_specification.setter
-    def run_after_specification(self, i):
-        if hasattr(self, 'add_specifications'): self.run_after_specifications = i # new biosteam
-        else: self._run_after_specification = i # old biosteam
 
 
     def _convert_stream(self, strm_inputs, streams, init_with, ins_or_outs):

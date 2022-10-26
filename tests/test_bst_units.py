@@ -5,6 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+    
     Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -65,7 +66,9 @@ def check_results(bst_unit, qs_unit):
         assert_allclose(np.abs(s.mol-qs_ws[n].mol).sum(), 0, atol=1e-6)
 
     assert_allclose(bst_unit.installed_cost, qs_unit.installed_cost, atol=1e-6)
-    assert_allclose(bst_unit.utility_cost, qs_unit.utility_cost, atol=1e-6)
+    bst_unit_ucost = 0 if bst_unit.utility_cost is None else bst_unit.utility_cost
+    qs_unit_ucost = 0 if qs_unit.utility_cost is None else qs_unit.utility_cost   
+    assert_allclose(bst_unit_ucost, qs_unit_ucost, atol=1e-6)
     assert_allclose(bst_unit.power_utility.rate, qs_unit.power_utility.rate, atol=1e-6)
 
 

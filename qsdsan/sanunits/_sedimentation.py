@@ -36,14 +36,10 @@ class Sedimentation(SludgeSeparator, Decay):
 
     Parameters
     ----------
-    ins : WasteStream
+    ins : Iterable(stream)
         Waste for treatment.
-    outs : WasteStream
+    outs : Iterable(stream)
         Liquid, settled solids, fugitive CH4, and fugitive N2O.
-    degraded_components : tuple
-        IDs of components that will degrade (simulated by first-order decay).
-    if_N2O_emission : bool
-        If consider N2O emission from N degradation in the process.
 
     Examples
     --------
@@ -60,14 +56,16 @@ class Sedimentation(SludgeSeparator, Decay):
     --------
     :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
-
+    if_capture_biogas = False
+    
     def __init__(self, ID='', ins=None, outs=(),thermo=None, init_with='WasteStream',
                  split=None, settled_frac=None,
                  degraded_components=('OtherSS',), if_N2O_emission=False, **kwargs):
 
         SludgeSeparator.__init__(self, ID, ins, outs, thermo, init_with,
                                  split, settled_frac, F_BM_default=1)
-        self.degraded_components = tuple(degraded_components)
+        self._sol_copy = self.outs[1].copy()
+        self.degraded_components = degraded_components
         self.if_N2O_emission = if_N2O_emission
 
         self.construction = (
@@ -94,36 +92,15 @@ class Sedimentation(SludgeSeparator, Decay):
 
         # Retention in the settled solids
         SludgeSeparator._run(self)
-
-        # COD degradation in settled solids
-        COD_loss = self.first_order_decay(k=self.decay_k_COD,
-                                          t=self.tau/365,
-                                          max_decay=self.COD_max_decay)
-
-        _COD = sol._COD or sol.COD
-        tot_COD_kg = _COD * sol.F_vol / 1e3
-        sol.imass[self.degraded_components] *= 1 - COD_loss
+        
+        sol_copy = self._sol_copy
+        sol_copy.copy_like(sol)
+        Decay._first_order_run(self, waste=sol_copy, treated=sol)
 
         # Adjust total mass of of the settled solids by changing water content
+        sol_COD = sol.COD * sol.F_vol
         liq, sol = self._adjust_solid_water(waste, liq, sol)
-
-        COD_loss_kg = tot_COD_kg * COD_loss
-        CH4.imass['CH4'] = COD_loss_kg * self.max_CH4_emission * self.MCF_decay
-        sol._COD = tot_COD_kg*(1-COD_loss)/sol.F_vol*1e3
-
-        # N degradation
-        if self.if_N2O_emission:
-            N_loss = self.first_order_decay(k=self.decay_k_N,
-                                            t=self.tau/365,
-                                            max_decay=self.N_max_decay)
-            N_loss_tot = N_loss*sol.TN/1e3*sol.F_vol
-            NH3_rmd, NonNH3_rmd = \
-                self.allocate_N_removal(N_loss_tot, sol.imass['NH3'])
-            sol.imass ['NH3'] -=  NH3_rmd
-            sol.imass['NonNH3'] -= NonNH3_rmd
-            N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
-        else:
-            N2O.empty()
+        sol._COD = sol_COD / sol.F_vol
 
     _units = {
         'Single tank volume': 'm3',

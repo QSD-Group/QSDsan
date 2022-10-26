@@ -44,8 +44,6 @@ class DryingBed(SanUnit, Decay):
         Can be "unplanted" or "planted". The default unplanted process has
         a number of "covered", "uncovered", and "storage" beds. The storage
         bed is similar to the covered bed, but with higher wall height.
-    degraded_components : tuple
-        IDs of components that will degrade (simulated by first-order decay).
 
     Examples
     --------
@@ -65,8 +63,11 @@ class DryingBed(SanUnit, Decay):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  design_type='unplanted', degraded_components=('OtherSS',), **kwargs):
-
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        Decay.__init__(self, ID, ins, outs, thermo=thermo,
+                       init_with=init_with, F_BM_default=1,
+                       degraded_components=degraded_components,
+                       if_capture_biogas=False,
+                       if_N2O_emission=True,)
         N_unplanted = {'covered': 19,
                        'uncovered': 30,
                        'storage': 19,
@@ -78,8 +79,6 @@ class DryingBed(SanUnit, Decay):
             self._N_bed = dict.fromkeys(N_unplanted.keys(), 0)
             self._N_bed['planted'] = 2
             self.design_type = 'planted'
-
-        self.degraded_components = tuple(degraded_components)
 
         self.construction = (
             Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
@@ -105,29 +104,11 @@ class DryingBed(SanUnit, Decay):
     def _run(self):
         waste = self.ins[0]
         sol, evaporated, CH4, N2O = self.outs
-        sol.copy_like(waste)
         evaporated.phase = CH4.phase = N2O.phase = 'g'
 
-        # COD degradation in settled solids
-        COD_loss = self.first_order_decay(k=self.decay_k_COD,
-                                          t=self.tau/365,
-                                          max_decay=self.COD_max_decay)
-        _COD = sol._COD or sol.COD
-        sol_COD = _COD/1e3*sol.F_vol * (1-COD_loss)
-        sol.imass[self.degraded_components] *= 1 - COD_loss
-        CH4.imass['CH4'] = waste.COD/1e3*waste.F_vol*COD_loss * \
-            self.max_CH4_emission*self.MCF_decay # COD in mg/L (g/m3)
-
-        # N degradation
-        N_loss = self.first_order_decay(k=self.decay_k_N,
-                                        t=self.tau/365,
-                                        max_decay=self.N_max_decay)
-        N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol
-        NH3_rmd, NonNH3_rmd = \
-            self.allocate_N_removal(N_loss_tot, sol.imass['NH3'])
-        sol.imass ['NH3'] -=  NH3_rmd
-        sol.imass['NonNH3'] -= NonNH3_rmd
-        N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
+        # COD/N degradation in settled solids
+        Decay._first_order_run(self, waste=waste, treated=sol)
+        sol_COD = sol._COD/1e3*sol.F_vol
 
         # Adjust water content in the dried solids
         sol_frac = self.sol_frac
@@ -299,8 +280,6 @@ class DryingBed(SanUnit, Decay):
 
 # %%
 
-
-
 liquid_bed_path = ospath.join(data_path, 'sanunit_data/_liquid_treatment_bed.tsv')
 
 
@@ -318,10 +297,6 @@ class LiquidTreatmentBed(SanUnit, Decay):
         Waste for treatment.
     outs : WasteStream
         Treated waste, fugitive CH4, and fugitive N2O.
-    degraded_components : tuple
-        IDs of components that will degrade (at the same removal as `COD_removal`).
-    if_N2O_emission : bool
-        If consider N2O emission from N degradation in the process.
 
     Examples
     --------
@@ -340,11 +315,11 @@ class LiquidTreatmentBed(SanUnit, Decay):
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 degraded_components=('OtherSS',), if_N2O_emission=False, **kwargs):
-
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
-        self.degraded_components = tuple(degraded_components)
-        self.if_N2O_emission = if_N2O_emission
+                 **kwargs):
+        Decay.__init__(self, ID, ins, outs, thermo=thermo,
+                       init_with=init_with, F_BM_default=1,
+                       if_capture_biogas=False,
+                       if_N2O_emission=False,)
         self.construction = (Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'))
 
         data = load_data(path=liquid_bed_path)
@@ -358,38 +333,8 @@ class LiquidTreatmentBed(SanUnit, Decay):
 
     _N_ins = 1
     _N_outs = 3
-
-    def _run(self):
-        waste = self.ins[0]
-        treated, CH4, N2O = self.outs
-        treated.copy_like(self.ins[0])
-        CH4.phase = N2O.phase = 'g'
-
-        # COD removal
-        _COD = waste._COD or waste.COD
-        COD_loss = self.first_order_decay(k=self.decay_k_COD,
-                                          t=self.tau/365,
-                                          max_decay=self.COD_max_decay)
-        COD_loss_tot = COD_loss*_COD/1e3*waste.F_vol
-
-        treated._COD = _COD * (1-COD_loss)
-        treated.imass[self.degraded_components] *= (1-COD_loss)
-
-        CH4_prcd = COD_loss_tot*self.MCF_decay*self.max_CH4_emission
-        CH4.imass['CH4'] = CH4_prcd
-
-        if self.if_N2O_emission:
-            N_loss = self.first_order_decay(k=self.decay_k_N,
-                                            t=self.tau/365,
-                                            max_decay=self.N_max_decay)
-            N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol
-            NH3_rmd, NonNH3_rmd = \
-                self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
-            treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
-            treated.imass['NonNH3'] = waste.imass['NonNH3'] - NonNH3_rmd
-            N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
-        else:
-            N2O.empty()
+    
+    _run = Decay._first_order_run
 
     _units = {
         'Residence time': 'd',
