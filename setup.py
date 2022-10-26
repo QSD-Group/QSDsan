@@ -17,7 +17,7 @@ from setuptools import setup
 setup(
     name='qsdsan',
     packages=['qsdsan'],
-    version='1.2.1',
+    version='1.2.2',
     license='UIUC',
     author='Quantitative Sustainable Design Group',
     author_email='quantitative.sustainable.design@gmail.com',
