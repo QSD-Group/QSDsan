@@ -158,6 +158,46 @@ class Thickener(SanUnit):
         design['Diameter'] = np.sqrt(4*design['Area']/np.pi) #in m
         design['Volume'] = np.pi*np.square(design['Diameter']/2)*self.h_cylinderical #in m3
         design['Curved Surface Area'] = np.pi*design['Diameter']*self.h_cylinderical #in m2
+       
+    def _init_state(self):
+        if self._ins_QC.shape[0] <= 1:
+            # if only 1 inlet then simply copy the state of the influent wastestream
+            self._state = self._ins_QC[0]
+        else:
+            # if multiple wastestreams exist then concentration and total inlow 
+            # would be calculated assumping perfect mixing 
+            Qs = self._ins_QC[:,-1]
+            Cs = self._ins_QC[:,:-1]
+            self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
+        self._dstate = self._state * 0.
+        
+# =============================================================================
+#     def _update_state(self):
+#         
+#         #self._outs[0].state = self._state
+# 
+#     def _update_dstate(self):
+#         
+#         #self._outs[0].dstate = self._dstate
+#         
+#     @property
+#     def AE(self):
+#         if self._AE is None:
+#             self._compile_AE()
+#         return self._AE
+# 
+#     def _compile_AE(self):
+#         _state = self._state
+#         _dstate = self._dstate
+#         _update_state = self._update_state
+#         _update_dstate = self._update_dstate
+#         def yt(t, QC_ins, dQC_ins):
+#             
+#             _update_state()
+#             _update_dstate()
+#         self._AE = yt
+# =============================================================================
+
         
             
 class DewateringUnit(Thickener):
@@ -371,3 +411,15 @@ class Incinerator(SanUnit):
  
         flue_gas.set_flow( [air.imass['N2'], sludge.imass['H2O'], mass_flue_gas - air.imass['N2'] - sludge.imass['H2O']], 'kg/hr', ('S_N2', 'H2O', 'S_CO2'))
         ash.set_flow([mass_ash], 'kg/hr', (self.ash_component_ID))
+        
+    def _init_state(self):
+        if self._ins_QC.shape[0] <= 1:
+            # if only 1 inlet then simply copy the state of the influent wastestream
+            self._state = self._ins_QC[0]
+        else:
+            # if multiple wastestreams exist then concentration and total inlow 
+            # would be calculated assumping perfect mixing 
+            Qs = self._ins_QC[:,-1]
+            Cs = self._ins_QC[:,:-1]
+            self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
+        self._dstate = self._state * 0.
