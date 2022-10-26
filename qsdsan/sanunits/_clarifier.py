@@ -647,7 +647,6 @@ class PrimaryClarifier(SanUnit):
         
         Ce = Ze + Xe 
         Cs = Zs + Xs
-        
         of.set_flow(Ce,'kg/hr')
         uf.set_flow(Cs,'kg/hr')
        
@@ -657,3 +656,15 @@ class PrimaryClarifier(SanUnit):
         design['Volume'] = 24*self._HRT*self.mixed.get_total_flow('m3/hr') #in m3
         design['Area'] = self.mixed.get_total_flow('m3/hr')/self.oveflow_rate #in m2
         design['Length'] = design['Volume']/design['Area'] #in m
+        
+    def _init_state(self):
+        if self._ins_QC.shape[0] <= 1:
+            # if only 1 inlet then simply copy the state of the influent wastestream
+            self._state = self._ins_QC[0]
+        else:
+            # if multiple wastestreams exist then concentration and total inlow 
+            # would be calculated assumping perfect mixing 
+            Qs = self._ins_QC[:,-1]
+            Cs = self._ins_QC[:,:-1]
+            self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
+        self._dstate = self._state * 0.
