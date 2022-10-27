@@ -160,46 +160,44 @@ class Thickener(SanUnit):
         design['Curved Surface Area'] = np.pi*design['Diameter']*self.h_cylinderical #in m2
        
     def _init_state(self):
-        if self._ins_QC.shape[0] <= 1:
-            # if only 1 inlet then simply copy the state of the influent wastestream
-            self._state = self._ins_QC[0]
-        else:
-            # if multiple wastestreams exist then concentration and total inlow 
-            # would be calculated assumping perfect mixing 
-            Qs = self._ins_QC[:,-1]
-            Cs = self._ins_QC[:,:-1]
-            self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
+        # if only 1 inlet then simply copy the state of the influent wastestream
+        self._state = self._ins_QC[0]
         self._dstate = self._state * 0.
         
-# =============================================================================
-#     def _update_state(self):
-#         
-#         #self._outs[0].state = self._state
-# 
-#     def _update_dstate(self):
-#         
-#         #self._outs[0].dstate = self._dstate
-#         
-#     @property
-#     def AE(self):
-#         if self._AE is None:
-#             self._compile_AE()
-#         return self._AE
-# 
-#     def _compile_AE(self):
-#         _state = self._state
-#         _dstate = self._dstate
-#         _update_state = self._update_state
-#         _update_dstate = self._update_dstate
-#         def yt(t, QC_ins, dQC_ins):
-#             
-#             _update_state()
-#             _update_dstate()
-#         self._AE = yt
-# =============================================================================
-
+        uf, of = self.outs
+        s_flow = uf.F_vol/(uf.F_vol+of.F_vol)
+        s = uf.mass/(uf.mass + of.mass)
+        self._sludge = np.append(s/s_flow, s_flow)
+        self._effluent = np.append((1-s)/(1-s_flow), 1-s_flow)
         
-            
+    def _update_state(self):
+        '''updates conditions of output stream based on conditions of the Thickener''' 
+        self._outs[0].state = self._sludge * self._state
+        self._outs[1].state = self._effluent * self._state
+
+    def _update_dstate(self):
+        '''updates rates of change of output stream from rates of change of the Thickener'''
+        self._outs[0].dstate = self._sludge * self._dstate
+        self._outs[1].dstate = self._effluent * self._dstate
+     
+    @property
+    def AE(self):
+        if self._AE is None:
+            self._compile_AE()
+        return self._AE
+
+    def _compile_AE(self):
+        _state = self._state
+        _dstate = self._dstate
+        _update_state = self._update_state
+        _update_dstate = self._update_dstate
+        def yt(t, QC_ins, dQC_ins):
+            _state[:] = QC_ins[0]
+            _dstate[:] = dQC_ins[0]
+            _update_state()
+            _update_dstate()
+        self._AE = yt
+
 class DewateringUnit(Thickener):
     
     """
@@ -413,13 +411,9 @@ class Incinerator(SanUnit):
         ash.set_flow([mass_ash], 'kg/hr', (self.ash_component_ID))
         
     def _init_state(self):
-        if self._ins_QC.shape[0] <= 1:
-            # if only 1 inlet then simply copy the state of the influent wastestream
-            self._state = self._ins_QC[0]
-        else:
-            # if multiple wastestreams exist then concentration and total inlow 
-            # would be calculated assumping perfect mixing 
-            Qs = self._ins_QC[:,-1]
-            Cs = self._ins_QC[:,:-1]
-            self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
+        # if multiple wastestreams exist then concentration and total inlow 
+        # would be calculated assumping perfect mixing 
+        Qs = self._ins_QC[:,-1]
+        Cs = self._ins_QC[:,:-1]
+        self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
         self._dstate = self._state * 0.
