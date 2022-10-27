@@ -4,7 +4,8 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Joy Zhang <joycheung1994@gmail.com>
-    Yalin Li <mailto.yalin.li@gmail.com>    
+    Yalin Li <mailto.yalin.li@gmail.com>
+    Saumitra Rai <raisaumitra9@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -658,13 +659,55 @@ class PrimaryClarifier(SanUnit):
         design['Length'] = design['Volume']/design['Area'] #in m
         
     def _init_state(self):
-        if self._ins_QC.shape[0] <= 1:
-            # if only 1 inlet then simply copy the state of the influent wastestream
-            self._state = self._ins_QC[0]
-        else:
-            # if multiple wastestreams exist then concentration and total inlow 
-            # would be calculated assumping perfect mixing 
-            Qs = self._ins_QC[:,-1]
-            Cs = self._ins_QC[:,:-1]
-            self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
+        # if multiple wastestreams exist then concentration and total inlow 
+        # would be calculated assumping perfect mixing 
+        Qs = self._ins_QC[:,-1]
+        Cs = self._ins_QC[:,:-1]
+        self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
         self._dstate = self._state * 0.
+        
+        uf, of = self.outs
+        s_flow = uf.F_vol/(uf.F_vol+of.F_vol)
+        s = uf.mass/(uf.mass + of.mass)
+        self._sludge = np.append(s/s_flow, s_flow)
+        self._effluent = np.append((1-s)/(1-s_flow), 1-s_flow)
+        
+    def _update_state(self):
+        '''updates conditions of output stream based on conditions of the Primary Clarifier''' 
+        self._outs[0].state = self._sludge * self._state
+        self._outs[1].state = self._effluent * self._state
+
+    def _update_dstate(self):
+        '''updates rates of change of output stream from rates of change of the Primary Clarifier'''
+        self._outs[0].dstate = self._sludge * self._dstate
+        self._outs[1].dstate = self._effluent * self._dstate
+     
+    @property
+    def AE(self):
+        if self._AE is None:
+            self._compile_AE()
+        return self._AE
+
+    def _compile_AE(self):
+        _state = self._state
+        _dstate = self._dstate
+        _update_state = self._update_state
+        _update_dstate = self._update_dstate
+        def yt(t, QC_ins, dQC_ins):
+            #Because there are multiple inlets 
+            Q_ins = QC_ins[:, -1]
+            C_ins = QC_ins[:, :-1]
+            dQ_ins = dQC_ins[:, -1]
+            dC_ins = dQC_ins[:, :-1]
+            Q = Q_ins.sum()
+            C = Q_ins @ C_ins / Q
+            _state[-1] = Q
+            _state[:-1] = C
+            Q_dot = dQ_ins.sum()
+            C_dot = (dQ_ins @ C_ins + Q_ins @ dC_ins - Q_dot * C)/Q
+            _dstate[-1] = Q_dot
+            _dstate[:-1] = C_dot
+            _update_state()
+            _update_dstate()
+        self._AE = yt
+    
