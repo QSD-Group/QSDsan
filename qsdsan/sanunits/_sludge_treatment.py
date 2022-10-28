@@ -166,7 +166,9 @@ class Thickener(SanUnit):
         
         uf, of = self.outs
         s_flow = uf.F_vol/(uf.F_vol+of.F_vol)
-        s = uf.mass/(uf.mass + of.mass)
+        denominator = uf.mass + of.mass
+        denominator += (denominator == 0)
+        s = uf.mass/denominator
         self._sludge = np.append(s/s_flow, s_flow)
         self._effluent = np.append((1-s)/(1-s_flow), 1-s_flow)
         
