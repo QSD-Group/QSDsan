@@ -13,6 +13,7 @@ for license details.
 '''
 
 from math import ceil, floor
+from biosteam import Stream
 from biosteam.exceptions import DesignError
 from . import HXutility, WWTpump, InternalCirculationRx
 from .. import SanStream, SanUnit
@@ -284,10 +285,11 @@ class AnMBR(SanUnit):
         self.F_BM.update(F_BM)
         self._default_equipment_lifetime.update(lifetime)
 
-        # Initiate the attributes
+        # Initialize the attributes
         self.AF = self.AeF = None
-        self.heat_exchanger = hx = HXutility(None, None, None, T=T)
-        self.heat_utilities = hx.heat_utilities
+        hx_in = Stream(f'{ID}_hx_in')
+        hx_out = Stream(f'{ID}_hx_out')
+        self.heat_exchanger = HXutility(ID=f'{ID}_hx', ins=hx_in, outs=hx_out)
         self._refresh_rxns()
 
         for k, v in kwargs.items():
@@ -346,7 +348,7 @@ class AnMBR(SanUnit):
         raw, recycled, naocl, citric, bisulfite, air_in = self.ins
         biogas, perm, sludge, air_out = self.outs
 
-        # Initiate the streams
+        # Initialize the streams
         biogas.phase = 'g'
         biogas.empty()
 
@@ -369,7 +371,6 @@ class AnMBR(SanUnit):
         bisulfite.F_vol = (0.35/1e3/365/24) * (inf.F_vol*24) # m3/hr solution
 
         # For pump design
-        ID = self.ID
         self._compute_mod_case_tank_N()
         Q_R_mgd, Q_IR_mgd = self._compute_liq_flows()
         retent, recir = self._retent, self._recir
@@ -751,8 +752,8 @@ class AnMBR(SanUnit):
         # Heat loss
         T = self.T
         coeff = self.heat_transfer_coeff
-        if T is None:
-            duty = 0.
+        
+        if T is None: loss = 0.
         else:
             N_train, L_CSTR, W_tank, D_tank = \
                 self.N_train, self.L_CSTR, self.W_tank, self.D_tank
@@ -760,17 +761,23 @@ class AnMBR(SanUnit):
             A_F = L_CSTR * W_tank
             A_W *= N_train * _ft2_to_m2
             A_F *= N_train * _ft2_to_m2
-            duty = coeff['wall'] * (T-self.T_air) * A_W # [W]
-            duty += coeff['floor'] * (T-self.T_earth) # [W]
-            duty += coeff['ceiling'] * (T-self.T_air) # [W]
-            duty *= 60*60/1e3 # kJ/hr
-        self._heat_loss = duty
-        # Fluid heating
+            loss = coeff['wall'] * (T-self.T_air) * A_W # [W]
+            loss += coeff['floor'] * (T-self.T_earth) # [W]
+            loss += coeff['ceiling'] * (T-self.T_air) # [W]
+            loss *= 60*60/1e3 # kJ/hr
+        self._heat_loss = loss
+        
+        # Stream heating
+        hx = self.heat_exchanger
         inf = self._inf
-        if T:
-            H_at_T = inf.thermo.mixture.H(mol=inf.mol, phase='l', T=T, P=101325)
-            duty += -(inf.H - H_at_T)
-        self.heat_exchanger.simulate_as_auxiliary_exchanger(duty, inf)
+        hx_ins0, hx_outs0 = hx.ins[0], hx.outs[0]
+        hx_ins0.copy_flow(inf)
+        hx_outs0.copy_flow(inf)
+        hx_ins0.T = inf.T
+        hx_outs0.T = T
+        hx.H = hx_ins0.H + loss # stream heating and heat loss
+        hx.simulate_as_auxiliary_exchanger(ins=hx.ins, outs=hx.outs)
+        
         # Power for pumping and gas
         pumping = 0.
         for ID in self.pumps: #!!! check if cost/power of AF_pump/AeF_pump included in AF/AeF
