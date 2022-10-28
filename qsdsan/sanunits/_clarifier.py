@@ -558,8 +558,80 @@ class PrimaryClarifier(SanUnit):
     f_corr : float
         Dimensionless correction factor for removal efficiency in the primary clarifier.[1]
     oveflow_rate : float
-        The design overflow rate in the primary sedimentation tank. Default value taken from sample design problem.[2]
+        The design overflow rate in the primary sedimentation tank. 
+        Default value taken from sample design problem. Unit in m/hr[2]
 
+    Examples
+    --------
+    >>> from qsdsan import set_thermo, Components, WasteStream
+    >>> cmps = Components.load_default()
+    >>> cmps_test = cmps.subgroup(['S_F', 'S_NH4', 'X_OHO', 'H2O'])
+    >>> set_thermo(cmps_test)
+    >>> ws = WasteStream('ws', S_F = 10, S_NH4 = 20, X_OHO = 15, H2O=1000)
+    >>> from qsdsan.sanunits import PrimaryClarifier
+    >>> ps = PrimaryClarifier(ID='PC', ins= (ws), outs=())
+    >>> ps._run()
+    >>> uf, of = ps.outs
+    >>> uf.imass['X_OHO']/ws.imass['X_OHO'] # doctest: +ELLIPSIS
+    0.280...
+    >>> ps
+    PrimaryClarifier: PC
+    ins...
+    [0] ws
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): S_F    1e+04
+                     S_NH4  2e+04
+                     X_OHO  1.5e+04
+                     H2O    1e+06
+        WasteStream-specific properties:
+         pH         : 7.0
+         COD        : 23643.1 mg/L
+         BOD        : 14819.1 mg/L
+         TC         : 8218.3 mg/L
+         TOC        : 8218.3 mg/L
+         TN         : 20167.1 mg/L
+         TP         : 364.1 mg/L
+         TK         : 67.6 mg/L
+    [1] ws3
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow: 0
+        WasteStream-specific properties: None for empty waste streams
+    [2] ws4
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow: 0
+        WasteStream-specific properties: None for empty waste streams
+    outs...
+    [0] ws1
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): S_F    70
+                     S_NH4  140
+                     X_OHO  4.2e+03
+                     H2O    7e+03
+        WasteStream-specific properties:
+         pH         : 7.0
+         COD        : 425826.3 mg/L
+         BOD        : 242338.7 mg/L
+         TC         : 155531.6 mg/L
+         TOC        : 155531.6 mg/L
+         TN         : 42767.0 mg/L
+         TP         : 8027.9 mg/L
+         TK         : 1997.1 mg/L
+    [1] ws2
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): S_F    9.93e+03
+                     S_NH4  1.99e+04
+                     X_OHO  1.08e+04
+                     H2O    9.93e+05
+        WasteStream-specific properties:
+         pH         : 7.0
+         COD        : 19789.4 mg/L
+         BOD        : 12639.0 mg/L
+         TC         : 6806.8 mg/L
+         TOC        : 6806.8 mg/L
+         TN         : 19950.5 mg/L
+         TP         : 290.7 mg/L
+         TK         : 49.2 mg/L
+    
     References
     ----------
     .. [1] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
@@ -580,6 +652,7 @@ class PrimaryClarifier(SanUnit):
         self.ratio_uf = ratio_uf
         self.f_corr = f_corr
         self.oveflow_rate = oveflow_rate #in m3/(m2*day)
+        self.mixed = WasteStream('mixed')
         
     @property
     def Hydraulic_Retention_Time(self):
@@ -634,7 +707,6 @@ class PrimaryClarifier(SanUnit):
         q_inf, to, do = self.ins
         uf, of = self.outs
         cmps = self.components
-        self.mixed = WasteStream('mixed')
         self.mixed.mix_from(self.ins)
         
         r = self._r
@@ -710,4 +782,3 @@ class PrimaryClarifier(SanUnit):
             _update_state()
             _update_dstate()
         self._AE = yt
-    
