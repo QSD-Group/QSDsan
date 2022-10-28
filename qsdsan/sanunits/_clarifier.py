@@ -641,6 +641,7 @@ class PrimaryClarifier(SanUnit):
     """
     _N_ins = 3
     _N_outs = 2
+    _ins_size_is_fixed = False
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time=0.04268, 
@@ -703,8 +704,6 @@ class PrimaryClarifier(SanUnit):
         return f_i
     
     def _run(self):
-        
-        q_inf, to, do = self.ins
         uf, of = self.outs
         cmps = self.components
         self.mixed.mix_from(self.ins)
@@ -740,7 +739,9 @@ class PrimaryClarifier(SanUnit):
         
         uf, of = self.outs
         s_flow = uf.F_vol/(uf.F_vol+of.F_vol)
-        s = uf.mass/(uf.mass + of.mass)
+        denominator = uf.mass + of.mass
+        denominator += (denominator == 0)
+        s = uf.mass/denominator
         self._sludge = np.append(s/s_flow, s_flow)
         self._effluent = np.append((1-s)/(1-s_flow), 1-s_flow)
         
