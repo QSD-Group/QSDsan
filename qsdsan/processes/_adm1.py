@@ -123,7 +123,7 @@ def create_adm1_cmps(set_thermo=True):
                                     particle_size='Dissolved gas',
                                     degradability='Undegradable',
                                     organic=False)
-    # S_IC.copy_models_from(S_ch4, ('Cn',))
+    S_IC.copy_models_from(S_ch4, ('Cn',))
 
     S_IN = Component.from_chemical('S_IN', chemical='NH3',
                                     measured_as='N',
@@ -245,6 +245,7 @@ def rhos_adm1(state_arr, params):
     Ka_dH = params['Ka_dH']
     kLa = params['kLa']
     T_base = params['T_base']
+    # root = params['root']
 
     # Cs_ids = cmps.indices(['X_c', 'X_ch', 'X_pr', 'X_li', 'X_su', 'X_aa',
     #                        'X_fa', 'X_c4', 'X_c4', 'X_pro', 'X_ac', 'X_h2',
@@ -278,7 +279,7 @@ def rhos_adm1(state_arr, params):
     h = brenth(acid_base_rxn, 1e-14, 1.0,
                args=(weak_acids, Kas),
                xtol=1e-12, maxiter=100)
-
+    # root.append(-np.log10(h))
     nh3 = Kas[1] * weak_acids[2] / (Kas[1] + h)
     co2 = weak_acids[3] - Kas[2] * weak_acids[3] / (Kas[2] + h)
     biogas_S[-1] = co2 / unit_conversion[9]
@@ -287,7 +288,7 @@ def rhos_adm1(state_arr, params):
     rhos[6:10] *= non_compet_inhibit(S_h2, KIs_h2)
     rhos[10] *= non_compet_inhibit(nh3, KI_nh3)
     rhos[-3:] = kLa * (biogas_S - KH * biogas_p)
-
+    # print(rhos)
     return rhos
 
 #%%
@@ -295,11 +296,11 @@ def rhos_adm1(state_arr, params):
 # ADM1 class
 # =============================================================================
 class TempState:
-    def __init__(self, length=0):
-        if length > 0:
-            self.data = np.zeros(length)
-        else:
-            self.data = 0.
+    def __init__(self):
+        self.data = []
+    
+    def append(self, value):
+        self.data += [value]
 
 @chemicals_user
 class ADM1(CompiledProcesses):
@@ -572,7 +573,7 @@ class ADM1(CompiledProcesses):
         Ka_base = np.array([10**(-pKa) for pKa in pKa_base])
         Ka_dH = np.array(Ka_dH)
         root = TempState()
-        root.data = 10**(-7.4655)
+        # root.data = 10**(-7.4655)
         dct = self.__dict__
         dct.update(kwargs)
 

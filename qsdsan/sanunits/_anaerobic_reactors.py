@@ -341,14 +341,6 @@ class AnaerobicCSTR(CSTR):
             self._gas_cmp_idx = self.components.indices(self.model._biogas_IDs)
             self._state_header = self._state_keys
     
-    # @property
-    # def split(self):
-    #     '''Not applicable.'''
-    #     return None
-    # @split.setter
-    # def split(self, split):
-    #     '''Does nothing.'''
-    #     pass
 
     split = property(CSTR.split.fget)
     @split.setter
@@ -410,8 +402,8 @@ class AnaerobicCSTR(CSTR):
     def _run(self):
         '''Only to converge volumetric flows.'''
         mixed = self._mixed # avoid creating multiple new streams
-        # mixed.mix_from(self.ins)
-        mixed.mix_from(self.ins, energy_balance=False)
+        mixed.mix_from(self.ins)
+        # mixed.mix_from(self.ins, energy_balance=False)
         if self.split is None: 
             gas, liquid = self.outs
             liquid.copy_like(mixed)
