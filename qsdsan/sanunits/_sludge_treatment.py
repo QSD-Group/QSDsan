@@ -39,6 +39,71 @@ class Thickener(SanUnit):
         Solid loading rate in the thickener.[2]
     h_cylinderical = float
         Height of cylinder forming the thickener.[2]
+        
+        
+    Examples
+    --------
+    
+    >>> from qsdsan import set_thermo, Components, WasteStream
+    >>> cmps = Components.load_default()
+    >>> cmps_test = cmps.subgroup(['S_F', 'S_NH4', 'X_OHO', 'H2O'])
+    >>> set_thermo(cmps_test)
+    >>> ws = WasteStream('ws', S_F = 10, S_NH4 = 20, X_OHO = 15, H2O=1000)
+    >>> from qsdsan.sanunits import Thickener
+    >>> ps = Thickener(ID='TC', ins= (ws), outs=('Sludge', 'Effluent'))
+    >>> ps._run()
+    >>> uf, of = ps.outs
+    >>> uf.imass['X_OHO']/ws.imass['X_OHO'] # doctest: +ELLIPSIS
+    0.98
+    >>> ps
+    Thickener: TC
+    ins...
+    [0] ws
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): S_F    1e+04
+                     S_NH4  2e+04
+                     X_OHO  1.5e+04
+                     H2O    1e+06
+        WasteStream-specific properties:
+         pH         : 7.0
+         COD        : 23643.1 mg/L
+         BOD        : 14819.1 mg/L
+         TC         : 8218.3 mg/L
+         TOC        : 8218.3 mg/L
+         TN         : 20167.1 mg/L
+         TP         : 364.1 mg/L
+         TK         : 67.6 mg/L
+    outs...
+    [0] Sludge
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): S_F    8.46e+03
+                     S_NH4  1.69e+04
+                     X_OHO  1.47e+04
+                     H2O    8.46e+05
+        WasteStream-specific properties:
+         pH         : 7.0
+         COD        : 25857.3 mg/L
+         BOD        : 16071.7 mg/L
+         TC         : 9029.4 mg/L
+         TOC        : 9029.4 mg/L
+         TN         : 20291.5 mg/L
+         TP         : 406.3 mg/L
+         TK         : 78.3 mg/L
+    [1] Effluent
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): S_F    1.54e+03
+                     S_NH4  3.08e+03
+                     X_OHO  300
+                     H2O    1.54e+05
+        WasteStream-specific properties:
+         pH         : 7.0
+         COD        : 11387.0 mg/L
+         BOD        : 7885.7 mg/L
+         TC         : 3729.1 mg/L
+         TOC        : 3729.1 mg/L
+         TN         : 19478.3 mg/L
+         TP         : 130.6 mg/L
+         TK         : 8.8 mg/L
 
     References
     ----------
