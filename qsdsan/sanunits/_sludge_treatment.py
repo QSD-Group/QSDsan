@@ -473,9 +473,13 @@ class Incinerator(SanUnit):
         
         #By conservation of energy
         self.Heat_loss = self.Heat_sludge + self.Heat_air + self.Heat_fuel - self.Heat_flue_gas
- 
-        flue_gas.set_flow( [air.imass['N2'], sludge.imass['H2O'], mass_flue_gas - air.imass['N2'] - sludge.imass['H2O']], 'kg/hr', ('S_N2', 'H2O', 'S_CO2'))
-        ash.set_flow([mass_ash], 'kg/hr', (self.ash_component_ID))
+
+        n2 = air.imass['N2']
+        h2o = sludge.imass['H2O']
+        mass_co2 = mass_flue_gas - n2 - h2o
+        flue_gas.set_flow([n2, h2o, mass_co2/cmps.S_CO2.i_mass], 
+                          'kg/hr', ('S_N2', 'H2O', 'S_CO2'))
+        ash.set_flow(mass_ash, 'kg/hr', self.ash_component_ID)
         
     def _init_state(self):
         # if multiple wastestreams exist then concentration and total inlow 
@@ -495,13 +499,13 @@ class Incinerator(SanUnit):
         
     def _update_state(self):
         '''updates conditions of output stream based on conditions of the Thickener''' 
-        self._outs[0].state = self._sludge * self._state
-        self._outs[1].state = self._effluent * self._state
+        self._outs[0].state = self._flue_gas * self._state
+        self._outs[1].state = self._ash * self._state
 
     def _update_dstate(self):
         '''updates rates of change of output stream from rates of change of the Thickener'''
-        self._outs[0].dstate = self._sludge * self._dstate
-        self._outs[1].dstate = self._effluent * self._dstate
+        self._outs[0].dstate = self._flue_gas * self._dstate
+        self._outs[1].dstate = self._ash * self._dstate
      
     @property
     def AE(self):
