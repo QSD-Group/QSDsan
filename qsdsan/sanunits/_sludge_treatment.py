@@ -479,8 +479,55 @@ class Incinerator(SanUnit):
         
     def _init_state(self):
         # if multiple wastestreams exist then concentration and total inlow 
-        # would be calculated assumping perfect mixing 
+        # would be calculated assuming perfect mixing 
         Qs = self._ins_QC[:,-1]
         Cs = self._ins_QC[:,:-1]
         self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
         self._dstate = self._state * 0.
+        
+        flue_gas, ash = self.outs
+        s_flow = flue_gas.F_vol/(flue_gas.F_vol + ash.F_vol)
+        denominator = flue_gas.mass + ash.mass
+        denominator += (denominator == 0)
+        s = flue_gas.mass/denominator
+        self._flue_gas = np.append(s/s_flow, s_flow)
+        self._ash = np.append((1-s)/(1-s_flow), 1-s_flow)
+        
+    def _update_state(self):
+        '''updates conditions of output stream based on conditions of the Thickener''' 
+        self._outs[0].state = self._sludge * self._state
+        self._outs[1].state = self._effluent * self._state
+
+    def _update_dstate(self):
+        '''updates rates of change of output stream from rates of change of the Thickener'''
+        self._outs[0].dstate = self._sludge * self._dstate
+        self._outs[1].dstate = self._effluent * self._dstate
+     
+    @property
+    def AE(self):
+        if self._AE is None:
+            self._compile_AE()
+        return self._AE
+    
+    def _compile_AE(self):
+        _state = self._state
+        _dstate = self._dstate
+        _update_state = self._update_state
+        _update_dstate = self._update_dstate
+        def yt(t, QC_ins, dQC_ins):
+            #Because there are multiple inlets 
+            Q_ins = QC_ins[:, -1]
+            C_ins = QC_ins[:, :-1]
+            dQ_ins = dQC_ins[:, -1]
+            dC_ins = dQC_ins[:, :-1]
+            Q = Q_ins.sum()
+            C = Q_ins @ C_ins / Q
+            _state[-1] = Q
+            _state[:-1] = C
+            Q_dot = dQ_ins.sum()
+            C_dot = (dQ_ins @ C_ins + Q_ins @ dC_ins - Q_dot * C)/Q
+            _dstate[-1] = Q_dot
+            _dstate[:-1] = C_dot
+            _update_state()
+            _update_dstate()
+        self._AE = yt
