@@ -499,7 +499,8 @@ class WasteStream(SanStream):
             r[name] = ratio
         self._ratios = r
 
-    def composite(self, variable, flow=False, subgroup=None, particle_size=None,
+    def composite(self, variable, flow=False, exclude_gas=True, 
+                  subgroup=None, particle_size=None,
                   degradability=None, organic=None, volatile=None,
                   specification=None, unit=None):
         """
@@ -514,6 +515,9 @@ class WasteStream(SanStream):
         flow : bool
             Whether to return the composite variable in terms of flow
             or concentration. The default is concentration.
+        exclude_gas : bool
+            Whether to exclude dissolved gas species in calculations of 
+            oxygen demand or nitrogen variables.
         subgroup : tuple(str or obj), optional
             Iterable of :class:`CompiledComponents` (or their IDs)
             which the composite variable will be calculated for.
@@ -603,9 +607,10 @@ class WasteStream(SanStream):
                            f"Must be one of {_defined_composite_vars}.")
 
         # Can only be used for liquid
-        if not self.phase == 'l':
-            raise RuntimeError('Only liquid streams can use the `composite` method, '
-                               f'the current WasteStream {self.ID} is {self.phase}.')
+        if not (self.phase == 'l' or flow):
+            raise RuntimeError('Only liquid streams can use the `composite` method'
+                               'for concentration calculation, the current '
+                               f'WasteStream {self.ID} is {self.phase}.')
 
         isa = isinstance
         all_cmps = self.components
@@ -639,7 +644,7 @@ class WasteStream(SanStream):
         cmps = all_cmps.subgroup(IDs)
         if flow: cmp_c = self.imass[IDs] # [kg/hr]
         else: cmp_c = self.iconc[IDs] # [mg/L]
-        exclude_gas = cmps.s + cmps.c + cmps.x
+        exclude_gas = 1 - cmps.g * exclude_gas
 
         if variable == 'COD':
             var = cmps.i_COD * cmp_c * exclude_gas * (cmps.i_COD >= 0)
@@ -650,7 +655,7 @@ class WasteStream(SanStream):
         elif variable == 'NOD':
             var = cmps.i_NOD * cmp_c * exclude_gas
         elif variable == 'ThOD':
-            var = (cmps.i_NOD + cmps.i_COD * (cmps.i_COD >= 0)) * cmp_c
+            var = (cmps.i_NOD + cmps.i_COD * (cmps.i_COD >= 0)) * cmp_c * exclude_gas
         elif variable == 'cnBOD':
             var = (cmps.i_NOD + cmps.i_COD * cmps.f_BOD5_COD * (cmps.i_COD >= 0)) * cmp_c * exclude_gas
         elif variable == 'C':
@@ -666,7 +671,7 @@ class WasteStream(SanStream):
         elif variable == 'Ca':
             var = cmps.i_Ca * cmp_c
         elif variable == 'solids':
-            var = cmps.i_mass * cmp_c * exclude_gas
+            var = cmps.i_mass * cmp_c * (1-cmps.g)
             if volatile != None:
                 if volatile: var *= cmps.f_Vmass_Totmass
                 else: var *= 1-cmps.f_Vmass_Totmass

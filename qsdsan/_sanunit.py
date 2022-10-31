@@ -366,7 +366,7 @@ class SanUnit(Unit, isabstract=True):
         else:
             warn(f'{self.ID} is not a dynamic unit, cannot set tracker.')
 
-    def simulate(self, **kwargs):
+    def simulate(self, run=True, design_kwargs={}, cost_kwargs={}, **kwargs):
         '''
         Converge mass and energy flows, design, and cost the unit.
 
@@ -377,6 +377,13 @@ class SanUnit(Unit, isabstract=True):
 
         Parameters
         ----------
+        run :
+            Whether to run the `_run` method,
+            if not, will assume the same inlet and outlet conditions.
+        design_kwargs :
+            Keyword arguments passed to `_design` method.
+        cost_kwargs :
+            Keyword arguments passed to `_cost` method.
         kwargs : dict
             Keyword arguments that will be passed to ``biosteam.systeam.dynamic_run``
             (useful when running dynamic simulation).
@@ -387,7 +394,7 @@ class SanUnit(Unit, isabstract=True):
 
         `scipy.integrate.solve_ivp <https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html>`_
         '''
-        super().simulate()
+        super().simulate(run=run, design_kwargs=design_kwargs, cost_kwargs=cost_kwargs)
         if self.isdynamic:
             sys = self._mock_dyn_sys
             sys._feeds = self.ins
