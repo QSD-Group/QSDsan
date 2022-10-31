@@ -245,7 +245,7 @@ def rhos_adm1(state_arr, params):
     Ka_dH = params['Ka_dH']
     kLa = params['kLa']
     T_base = params['T_base']
-    # root = params['root']
+    root = params['root']
 
     # Cs_ids = cmps.indices(['X_c', 'X_ch', 'X_pr', 'X_li', 'X_su', 'X_aa',
     #                        'X_fa', 'X_c4', 'X_c4', 'X_pro', 'X_ac', 'X_h2',
@@ -279,13 +279,18 @@ def rhos_adm1(state_arr, params):
     h = brenth(acid_base_rxn, 1e-14, 1.0,
                args=(weak_acids, Kas),
                xtol=1e-12, maxiter=100)
-    # root.append(-np.log10(h))
+
     nh3 = Kas[1] * weak_acids[2] / (Kas[1] + h)
     co2 = weak_acids[3] - Kas[2] * weak_acids[3] / (Kas[2] + h)
     biogas_S[-1] = co2 / unit_conversion[9]
-
-    rhos[4:12] *= Hill_inhibit(h, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
-    rhos[6:10] *= non_compet_inhibit(S_h2, KIs_h2)
+    
+    Iph = Hill_inhibit(h, pH_ULs, pH_LLs)
+    Ih2 = non_compet_inhibit(S_h2, KIs_h2)
+    root.data = [-np.log10(h), Iph, Ih2]
+    rhos[4:12] *= Iph * substr_inhibit(S_IN, KS_IN)
+    rhos[6:10] *= Ih2
+    # rhos[4:12] *= Hill_inhibit(h, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
+    # rhos[6:10] *= non_compet_inhibit(S_h2, KIs_h2)
     rhos[10] *= non_compet_inhibit(nh3, KI_nh3)
     rhos[-3:] = kLa * (biogas_S - KH * biogas_p)
     # print(rhos)
@@ -299,8 +304,8 @@ class TempState:
     def __init__(self):
         self.data = []
     
-    def append(self, value):
-        self.data += [value]
+    # def append(self, value):
+    #     self.data += [value]
 
 @chemicals_user
 class ADM1(CompiledProcesses):
