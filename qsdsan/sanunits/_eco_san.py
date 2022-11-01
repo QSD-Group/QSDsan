@@ -74,10 +74,15 @@ class EcoSanAerobic(SanUnit, Decay):
     :class:`qsdsan.sanunits.EcoSanBioCost`
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 degraded_components=('OtherSS',), **kwargs):
+                 degraded_components=('OtherSS',), 
+                 if_capture_biogas=False,
+                 if_N2O_emission=True,
+                 **kwargs):
         Decay.__init__(self, ID, ins, outs, thermo=thermo,
                        init_with=init_with, F_BM_default=1,
-                       degraded_components=degraded_components)
+                       degraded_components=degraded_components,
+                       if_capture_biogas=if_capture_biogas,
+                       if_N2O_emission=if_N2O_emission,)
 
         data = load_data(path=aerobic_path)
         for para in data.index:
@@ -91,8 +96,7 @@ class EcoSanAerobic(SanUnit, Decay):
     _N_ins = 1
     _N_outs = 3
 
-    def _run(self):
-        Decay._first_order_run(self, if_capture_biogas=False, if_N2O_emission=True)
+    _run = Decay._first_order_run
 
 
 # %%
@@ -126,10 +130,15 @@ class EcoSanAnaerobic(SanUnit, Decay):
     :class:`qsdsan.sanunits.EcoSanBioCost`
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 degraded_components=('OtherSS',), **kwargs):
+                 degraded_components=('OtherSS',), 
+                 if_capture_biogas=False,
+                 if_N2O_emission=True,
+                 **kwargs):
         Decay.__init__(self, ID, ins, outs, thermo=thermo,
                        init_with=init_with, F_BM_default=1,
-                       degraded_components=degraded_components)
+                       degraded_components=degraded_components,
+                       if_capture_biogas=if_capture_biogas,
+                       if_N2O_emission=if_N2O_emission,)
 
         data = load_data(path=anaerobic_path)
         for para in data.index:
@@ -143,8 +152,7 @@ class EcoSanAnaerobic(SanUnit, Decay):
     _N_ins = 1
     _N_outs = 3
 
-    def _run(self):
-        Decay._first_order_run(self, if_capture_biogas=False, if_N2O_emission=True)
+    _run = Decay._first_order_run
 
 
 # %%
@@ -178,10 +186,15 @@ class EcoSanAnoxic(SanUnit, Decay):
     :class:`qsdsan.sanunits.EcoSanBioCost`
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 degraded_components=('OtherSS',), **kwargs):
+                 degraded_components=('OtherSS',), 
+                 if_capture_biogas=False,
+                 if_N2O_emission=True,
+                 **kwargs):
         Decay.__init__(self, ID, ins, outs, thermo=thermo,
                        init_with=init_with, F_BM_default=1,
-                       degraded_components=degraded_components)
+                       degraded_components=degraded_components,
+                       if_capture_biogas=if_capture_biogas,
+                       if_N2O_emission=if_N2O_emission,)
 
         data = load_data(path=anoxic_path)
         for para in data.index:
@@ -195,8 +208,7 @@ class EcoSanAnoxic(SanUnit, Decay):
     _N_ins = 1
     _N_outs = 3
 
-    def _run(self):
-        Decay._first_order_run(self, if_capture_biogas=False, if_N2O_emission=True)
+    _run = Decay._first_order_run
 
 
 # %%
@@ -296,10 +308,15 @@ class EcoSanECR(SanUnit, Decay):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  degraded_components=('OtherSS',),
-                 if_after_MBR=False, **kwargs):
+                 if_capture_biogas=False,
+                 if_N2O_emission=True,
+                 if_after_MBR=False,
+                 **kwargs):
         Decay.__init__(self, ID, ins, outs, thermo=thermo,
                        init_with=init_with, F_BM_default=1,
-                       degraded_components=degraded_components)
+                       degraded_components=degraded_components,
+                       if_capture_biogas=if_capture_biogas,
+                       if_N2O_emission=if_N2O_emission,)
 
         self._if_after_MBR = None # initialize the attr
         self.if_after_MBR = if_after_MBR
@@ -323,8 +340,7 @@ class EcoSanECR(SanUnit, Decay):
         HCl_density = 1.2 # g/ml
         self.ins[2].imass['HCl'] =  self.HCl_life/52/24/7 * HCl_density * 1000 # kg/h
 
-        Decay._first_order_run(self, degraded_components=('OtherSS',),
-                               if_capture_biogas=False, if_N2O_emission=True)
+        Decay._first_order_run(self)
 
 
     def _design(self):
@@ -421,10 +437,15 @@ class EcoSanMBR(SanUnit, Decay):
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 degraded_components=('OtherSS',), **kwargs):
+                 degraded_components=('OtherSS',),
+                 if_capture_biogas=False,
+                 if_N2O_emission=True,
+                 **kwargs):
         Decay.__init__(self, ID, ins, outs, thermo=thermo,
                        init_with=init_with, F_BM_default=1,
-                       degraded_components=degraded_components)
+                       degraded_components=degraded_components,
+                       if_capture_biogas=if_capture_biogas,
+                       if_N2O_emission=if_N2O_emission,)
 
         data = load_data(path=mbr_path)
         for para in data.index:
@@ -438,8 +459,7 @@ class EcoSanMBR(SanUnit, Decay):
     _N_ins = 1
     _N_outs = 3
 
-    def _run(self):
-        Decay._first_order_run(self, if_capture_biogas=False, if_N2O_emission=True)
+    _run = Decay._first_order_run
 
 
     def _design(self):
