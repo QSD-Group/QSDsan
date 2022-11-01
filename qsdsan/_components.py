@@ -258,6 +258,7 @@ class Components(Chemicals):
 
             # Copy all remaining properties from water
             cmp.copy_models_from(water)
+        for cmp in self: cmp.default()
         self.compile()
 
 
@@ -478,9 +479,11 @@ class Components(Chemicals):
                 ps = 'Dissolved gas' if phase == 'g' else 'Particulate' if phase=='s' else 'Soluble'
                 cmp = Component(ID, phase=phase, organic=False, particle_size=ps,
                                 degradability='Undegradable')
+                if isinstance(cmps, CompiledComponents): cmps = Components(cmps)
                 cmps.append(cmp)
         add_V_from_rho(cmps.P4O10, rho=2.39, rho_unit='g/mL') # http://www.chemspider.com/Chemical-Structure.14128.html
         try:
+            for cmp in cmps: cmp.default()
             cmps.compile()
         except RuntimeError: # cannot compile due to missing properties
             cmps.default_compile(**default_compile_kwargs)

@@ -13,9 +13,9 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-
-from math import ceil, pi
 import numpy as np
+from math import ceil, pi
+from biosteam import Stream
 from .. import SanUnit, Construction, WasteStream
 from ..processes import Decay
 from ..sanunits import HXutility, WWTpump, CSTR
@@ -43,17 +43,10 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
 
     Parameters
     ----------
-    ins : Iterable
+    ins : Iterable(stream)
         Waste for treatment.
-    outs : Iterable
+    outs : Iterable(stream)
         Treated waste, biogas, fugitive CH4, and fugitive N2O.
-    degraded_components : tuple
-        IDs of components that will degrade (at the same removal as `COD_removal`).
-    if_capture_biogas : bool
-        If produced biogas will be captured, otherwise it will be treated
-        as fugitive CH4.
-    if_N2O_emission : bool
-        If considering fugitive N2O generated from the degraded N.
 
     Examples
     --------
@@ -74,13 +67,14 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
     gravel_density = 1600
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 degraded_components=('OtherSS',), if_capture_biogas=True,
-                 if_N2O_emission=False, **kwargs):
-
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
-        self.degraded_components = tuple(degraded_components)
-        self.if_capture_biogas = if_capture_biogas
-        self.if_N2O_emission = if_N2O_emission
+                 degraded_components=('OtherSS',),
+                 if_capture_biogas=True,
+                 if_N2O_emission=False,
+                 **kwargs):
+        Decay.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1,
+                       degraded_components=degraded_components,
+                       if_capture_biogas=if_capture_biogas,
+                       if_N2O_emission=if_N2O_emission,)
 
         self.construction = (
             Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
@@ -100,37 +94,7 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
     _N_ins = 1
     _N_outs = 4
 
-    def _run(self):
-        waste = self.ins[0]
-        treated, biogas, CH4, N2O = self.outs
-        treated.copy_like(self.ins[0])
-        biogas.phase = CH4.phase = N2O.phase = 'g'
-
-        # COD removal
-        _COD = waste._COD or waste.COD
-        COD_deg = _COD*waste.F_vol/1e3*self.COD_removal # kg/hr
-        treated._COD *= (1-self.COD_removal)
-        treated.imass[self.degraded_components] *= (1-self.COD_removal)
-
-        CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
-        if self.if_capture_biogas:
-            biogas.imass['CH4'] = CH4_prcd
-            CH4.empty()
-        else:
-            CH4.imass['CH4'] = CH4_prcd
-            biogas.empty()
-
-        N_tot = waste.TN/1e3 * waste.F_vol
-        N_loss_tot = N_tot * self.N_removal
-        NH3_rmd, NonNH3_rmd = \
-            self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
-        treated.imass ['NH3'] = waste.imass['NH3'] - NH3_rmd
-        treated.imass['NonNH3'] = waste.imass['NonNH3'] - NonNH3_rmd
-
-        if self.if_N2O_emission:
-            N2O.imass['N2O'] = N_loss_tot*self.N_max_decay*self.N2O_EF_decay*44/28
-        else:
-            N2O.empty()
+    _run = Decay._first_order_run
 
     _units = {
         'Residence time': 'd',
@@ -446,10 +410,13 @@ class AnaerobicCSTR(CSTR):
     def _run(self):
         '''Only to converge volumetric flows.'''
         mixed = self._mixed # avoid creating multiple new streams
-        mixed.mix_from(self.ins)
+        # mixed.mix_from(self.ins)
+        mixed.mix_from(self.ins, energy_balance=False)
         if self.split is None: 
             gas, liquid = self.outs
             liquid.copy_like(mixed)
+            liquid.T = self.T
+            # self._rQ = liquid.F_vol / mixed.F_vol
         else:
             gas = self.outs[0]
             liquids = self._outs[1:]
@@ -457,6 +424,8 @@ class AnaerobicCSTR(CSTR):
             for liquid, spl in zip(liquids, self.split):
                 liquid.copy_like(mixed)
                 liquid.set_total_flow(Q*spl, 'm3/hr')
+                liquid.T = self.T
+            # self._rQ = sum([ws.F_vol for ws in liquids]) / mixed.F_vol
         gas.copy_like(self._biogas)
         gas.T = self.T
         if self._fixed_P_gas: 
@@ -564,6 +533,7 @@ class AnaerobicCSTR(CSTR):
             gas_mass2mol_conversion = (cmps.i_mass / cmps.chem_MW)[self._gas_cmp_idx]
             hasexo = bool(len(self._exovars))
             f_exovars = self.eval_exo_dynamic_vars
+            # _rQ = self._rQ
             if self._fixed_P_gas:
                 f_qgas = self.f_q_gas_fixed_P_headspace
             else:
@@ -571,13 +541,15 @@ class AnaerobicCSTR(CSTR):
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 S_liq = QC[:n_cmps]
                 S_gas = QC[n_cmps: (n_cmps+n_gas)]
-                # Q = QC[-1]
+                #!!! Volume change due to temperature difference accounted for 
+                # in _run and _init_state
+                Q = QC[-1]
                 # S_in = QC_ins[0,:-1] * 1e-3  # mg/L to kg/m3
                 # Q_in = QC_ins[0,-1]
                 Q_ins = QC_ins[:, -1]
                 S_ins = QC_ins[:, :-1] * 1e-3  # mg/L to kg/m3
-                Q = sum(Q_ins)
-                if hasexo: 
+                # Q = sum(Q_ins)
+                if hasexo:
                     exo_vars = f_exovars(t)
                     QC = np.append(QC, exo_vars)
                     T = exo_vars[0]
@@ -590,10 +562,14 @@ class AnaerobicCSTR(CSTR):
                 q_gas = f_qgas(rhos[-3:], S_gas, T)
                 _dstate[n_cmps: (n_cmps+n_gas)] = - q_gas*S_gas/V_gas \
                     + rhos[-3:] * V_liq/V_gas * gas_mass2mol_conversion
-                _dstate[-1] = dQC_ins[0,-1]
+                _dstate[-1] = dQC_ins[0,-1] #* _rQ
                 _update_dstate()
             self._ODE = dy_dt
 
+    def get_retained_mass(self, biomass_IDs):
+        cmps = self.components
+        mass = cmps.i_mass * self._state[:len(cmps)] * 1e3 # kg/m3 to mg/L
+        return self._V_max * mass[cmps.indices(biomass_IDs)].sum()
 
 # %%
 
@@ -618,13 +594,6 @@ class AnaerobicDigestion(SanUnit, Decay):
     flow_rate : float
         Total flow rate through the reactor (for sizing purpose), [m3/d].
         If not provided, will use F_vol_in.
-    degraded_components : tuple
-        IDs of components that will degrade (at the same removal as `COD_removal`).
-    if_capture_biogas : bool
-        If produced biogas will be captured, otherwise it will be treated
-        as fugitive CH4.
-    if_N2O_emission : bool
-        If consider N2O emission from N degradation in the process.
 
     Examples
     --------
@@ -646,11 +615,11 @@ class AnaerobicDigestion(SanUnit, Decay):
                  flow_rate=None, degraded_components=('OtherSS',),
                  if_capture_biogas=True, if_N2O_emission=False,
                  **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        Decay.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1,
+                       degraded_components=degraded_components,
+                       if_capture_biogas=if_capture_biogas,
+                       if_N2O_emission=if_N2O_emission,)
         self._flow_rate = flow_rate
-        self.degraded_components = tuple(degraded_components)
-        self.if_capture_biogas = if_capture_biogas
-        self.if_N2O_emission = if_N2O_emission
 
         self.construction = (
             Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
@@ -670,39 +639,7 @@ class AnaerobicDigestion(SanUnit, Decay):
     _N_ins = 1
     _N_outs = 4
 
-
-    def _run(self):
-        waste = self.ins[0]
-        treated, biogas, CH4, N2O = self.outs
-        treated.copy_like(self.ins[0])
-        biogas.phase = CH4.phase = N2O.phase = 'g'
-
-        # COD removal
-        _COD = waste._COD or waste.COD
-        COD_deg = _COD*treated.F_vol/1e3*self.COD_removal # kg/hr
-        treated._COD *= (1-self.COD_removal)
-        treated.imass[self.degraded_components] *= (1-self.COD_removal)
-
-        CH4_prcd = COD_deg*self.MCF_decay*self.max_CH4_emission
-        if self.if_capture_biogas:
-            biogas.imass['CH4'] = CH4_prcd
-            CH4.empty()
-        else:
-            CH4.imass['CH4'] = CH4_prcd
-            biogas.empty()
-
-        if self.if_N2O_emission:
-            N_loss = self.first_order_decay(k=self.decay_k_N,
-                                            t=self.tau/365,
-                                            max_decay=self.N_max_decay)
-            N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol
-            NH3_rmd, NonNH3_rmd = \
-                self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
-            treated.imass['NH3'] = waste.imass['NH3'] - NH3_rmd
-            treated.imass['NonNH3'] = waste.imass['NonNH3'] - NonNH3_rmd
-            N2O.imass['N2O'] = N_loss_tot*self.N2O_EF_decay*44/28
-        else:
-            N2O.empty()
+    _run = Decay._first_order_run
 
     _units = {
         'Volumetric flow rate': 'm3/hr',
@@ -817,9 +754,9 @@ class SludgeDigester(SanUnit):
 
     Parameters
     ----------
-    ins : Iterable
+    ins : Iterable(stream)
         Sludge for digestion.
-    outs : Iterable
+    outs : Iterable(stream)
         Digested sludge, generated biogas.
     HRT : float
         Hydraulic retention time, [d].
@@ -905,8 +842,10 @@ class SludgeDigester(SanUnit):
         self.methane_fraction = methane_fraction
         self.depth = depth
         self.heat_transfer_coeff = heat_transfer_coeff
-        self.heat_exchanger = hx = HXutility(None, None, None, T=T)
-        self.heat_utilities = hx.heat_utilities
+        ID = self.ID
+        hx_in = Stream(f'{ID}_hx_in')
+        hx_out = Stream(f'{ID}_hx_out')
+        self.heat_exchanger = HXutility(ID=f'{ID}_hx', ins=hx_in, outs=hx_out)
         self.wall_concrete_unit_cost = wall_concrete_unit_cost
         self.slab_concrete_unit_cost = slab_concrete_unit_cost
         self.excavation_unit_cost = excavation_unit_cost
@@ -977,21 +916,23 @@ class SludgeDigester(SanUnit):
 
         # Calculate needed heating
         T = self.T
-        sludge_T = sludge.T
-        sludge_H_in = sludge.H
-        sludge.T = T
-        sludge_H_at_T = sludge.H
-        sludge.T = sludge_T
-        duty = sludge_H_at_T - sludge_H_in
-
+        hx = self.heat_exchanger
+        hx_ins0, hx_outs0 = hx.ins[0], hx.outs[0]
+        hx_ins0.copy_flow(sludge)
+        hx_outs0.copy_flow(sludge)
+        hx_ins0.T = sludge.T
+        hx_outs0.T = T
+        hx_ins0.P = hx_outs0.P = sludge.P
+        
         # Heat loss
         coeff = self.heat_transfer_coeff
         A_wall = pi * dia * depth
         wall_loss = coeff['wall'] * A_wall * (T-self.T_air) # [W]
         floor_loss = coeff['floor'] * A * (T-self.T_earth) # [W]
         ceiling_loss = coeff['ceiling'] * A * (T-self.T_air) # [W]
-        duty += (wall_loss+floor_loss+ceiling_loss)*60*60/1e3 # kJ/hr
-        self.heat_exchanger.simulate_as_auxiliary_exchanger(inlet=sludge, duty=duty)
+        duty = (wall_loss+floor_loss+ceiling_loss)*60*60/1e3 # kJ/hr
+        hx.H = hx_ins0.H + duty # stream heating and heat loss
+        hx.simulate_as_auxiliary_exchanger(ins=hx.ins, outs=hx.outs)
 
         # Concrete usage
         ft_2_m = auom('ft').conversion_factor('m')

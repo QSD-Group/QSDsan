@@ -76,9 +76,14 @@ class SepticTank(SanUnit, Decay):
     exponent_scale = 0.6  # exponential scaling constant
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 degraded_components=('OtherSS',), if_capture_biogas=False, if_N2O_emission=True,
                  if_include_front_end=True, if_generate_struvite=True, if_struvite_in_sludge=True,
                  ppl=1, sludge_moisture_content=0.95, **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
+        Decay.__init__(self, ID, ins, outs, thermo=thermo,
+                       init_with=init_with, F_BM_default=1,
+                       degraded_components=degraded_components,
+                       if_capture_biogas=if_capture_biogas,
+                       if_N2O_emission=if_N2O_emission,)
         self.if_include_front_end = if_include_front_end
         self.if_generate_struvite = if_generate_struvite
         self.if_struvite_in_sludge = if_struvite_in_sludge
@@ -100,25 +105,10 @@ class SepticTank(SanUnit, Decay):
     def _run(self):
         waste, MgOH2 = self.ins
         treated, CH4, N2O, sludge, struvite = self.outs
-
-        treated.copy_like(waste)
-        CH4.phase = N2O.phase = 'g'
-
-        # COD decay
-        COD_deg = waste.COD*waste.F_vol/1e3*self.COD_removal  # kg/hr
-        remaining_COD = COD_deg * (1-self.COD_removal) # remaining COD in the treated liquid
-
-        CH4_prcd = COD_deg * self.MCF_decay * self.max_CH4_emission
-        CH4.imass['CH4'] = CH4_prcd
-
-        # N decay
-        N_loss = self.first_order_decay(k=self.decay_k_N, t=self.tau/365, max_decay=self.N_max_decay)
-        N_loss_tot = N_loss*waste.TN/1e3*waste.F_vol
-        NH3_rmd, NonNH3_rmd = \
-            self.allocate_N_removal(N_loss_tot, waste.imass['NH3'])
-        treated.imass['NH3'] = waste.imass['NH3'] - NH3_rmd
-        treated.imass['NonNH3'] = waste.imass['NonNH3'] - NonNH3_rmd
-        N2O.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44/28
+        
+        Decay._first_order_run(self, CH4=CH4, N2O=N2O)
+        treated.imass['OtherSS'] = waste.imass['OtherSS'] # affects other elements (e.g., K recovery)
+        remaining_COD = treated._COD * treated.F_vol / 1e3
 
         # P recovery
         P_recovery = self.P_recovery
@@ -152,6 +142,7 @@ class SepticTank(SanUnit, Decay):
         treated.mass = treated_after_allocation
         treated.imass['H2O'] = treated_water
 
+        # breakpoint()
         # Update the COD content of treated liquid and sludge
         if ratio == 0: treated._COD = 0
         else: treated._COD = remaining_COD * ratio * 1e3 / treated.F_vol

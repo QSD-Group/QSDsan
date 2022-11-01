@@ -123,6 +123,7 @@ def create_adm1_cmps(set_thermo=True):
                                     particle_size='Dissolved gas',
                                     degradability='Undegradable',
                                     organic=False)
+    # S_IC.copy_models_from(S_ch4, ('Cn',))
 
     S_IN = Component.from_chemical('S_IN', chemical='NH3',
                                     measured_as='N',
