@@ -458,13 +458,29 @@ class Incinerator(SanUnit):
         
         #mass balance 
         mass_flowrate_sludge = np.sum(sludge.mass*cmps.i_mass) 
+        # mass_flowrate_sludge = sludge.get_flow('kg/hr')
+        # mass_flowrate_air = air.get_flow('kg/hr')
+        # mass_flowrate_fuel = fuel.get_flow('kg/hr')
         mass_flowrate_air = np.sum(air.mass*cmps.i_mass)
         mass_flowrate_fuel = np.sum(fuel.mass*cmps.i_mass)
-        mass_ash = sludge.get_ISS()*sludge.F_vol/1000 #in kg/hr (mg/l)*(m3/hr) = (1/1000)kg/hr
+
+        n2 = air.imass['N2']
+        h2o = sludge.imass['H2O']
         
+        # mass_ash = sludge.get_ISS()*sludge.F_vol/1000 #in kg/hr (mg/l)*(m3/hr) = (1/1000)kg/hr
+        mass_ash = np.sum(sludge.mass*cmps.i_mass*(1-cmps.f_Vmass_Totmass)) \
+            - h2o*(1-cmps.H2O.f_Vmass_Totmass)
+
         # By conservation of mass 
         mass_flue_gas = mass_flowrate_sludge + mass_flowrate_air + mass_flowrate_fuel - mass_ash
         
+        mass_co2 = mass_flue_gas - n2 - h2o
+        flue_gas.set_flow([n2, h2o, (mass_co2/cmps.S_CO2.i_mass)], 
+                          'kg/hr', ('S_N2', 'H2O', 'S_CO2'))
+        ash_cmp_ID = self.ash_component_ID
+        ash_idx = cmps.index(ash_cmp_ID)
+        ash.set_flow([mass_ash/cmps.i_mass[ash_idx]/(1-cmps.f_Vmass_Totmass[ash_idx])], 
+                     'kg/hr', (ash_cmp_ID))
         #energy balance 
         self.Heat_sludge = sludge.dry_mass*sludge.F_vol*self.calorific_value_sludge/1000 #in KJ/hr (mg/L)*(m3/hr)*(KJ/kg)=KJ/hr*(1/1000)
         self.Heat_air = mass_flowrate_air*self.Cp_air #in KJ/hr 
@@ -473,13 +489,7 @@ class Incinerator(SanUnit):
         
         #By conservation of energy
         self.Heat_loss = self.Heat_sludge + self.Heat_air + self.Heat_fuel - self.Heat_flue_gas
-
-        n2 = air.imass['N2']
-        h2o = sludge.imass['H2O']
-        mass_co2 = mass_flue_gas - n2 - h2o
-        flue_gas.set_flow([n2, h2o, mass_co2/cmps.S_CO2.i_mass], 
-                          'kg/hr', ('S_N2', 'H2O', 'S_CO2'))
-        ash.set_flow(mass_ash, 'kg/hr', self.ash_component_ID)
+        
         
     def _init_state(self):
         # if multiple wastestreams exist then concentration and total inlow 
