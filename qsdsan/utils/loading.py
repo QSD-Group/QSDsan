@@ -34,7 +34,7 @@ __all__ = (
 # Datasheet
 # =============================================================================
 
-def load_data(path=None, sheet=None, index_col=0, **kwargs):
+def load_data(path=None, sheet=0, index_col=0, **kwargs):
     '''For data importing.'''
     if path.endswith(('.tsv', '.txt')):
         data = pd.read_csv(path, sep='\t', index_col=index_col, **kwargs)
