@@ -764,8 +764,7 @@ class AnMBR(SanUnit):
             loss = coeff['wall'] * (T-self.T_air) * A_W # [W]
             loss += coeff['floor'] * (T-self.T_earth) # [W]
             loss += coeff['ceiling'] * (T-self.T_air) # [W]
-            loss *= 60*60/1e3 # kJ/hr
-        self._heat_loss = loss
+            loss *= 60*60/1e3 # W (J/s) to kJ/hr
         
         # Stream heating
         hx = self.heat_exchanger

@@ -479,8 +479,7 @@ class PolishingFilter(SanUnit):
         ### Heat and power ###
         T = self.T
         # Heat loss
-        if T is None:
-            loss = 0.
+        if T is None: loss = 0.
         else:
             N_filter, d, D = self.N_filter, self.d, self.D
             A_W = pi * d * D
@@ -488,10 +487,10 @@ class PolishingFilter(SanUnit):
             A_W *= N_filter * _ft2_to_m2
             A_F *= N_filter * _ft2_to_m2
 
-            loss = self.H_wall * (T-self.T_air) * A_W / 1e3
-            loss += self.H_floor * (T-self.T_earth) * A_F / 1e3
-            loss += self.H_ceiling * (T-self.T_air) * A_F / 1e3
-        self._heat_loss = loss
+            loss = self.H_wall * (T-self.T_air) * A_W
+            loss += self.H_floor * (T-self.T_earth) * A_F
+            loss += self.H_ceiling * (T-self.T_air) * A_F
+            loss *= 60*60/1e3 # W (J/s) to kJ/hr
         
         # Stream heating
         hx = self.heat_exchanger
@@ -507,7 +506,7 @@ class PolishingFilter(SanUnit):
         # Degassing
         degassing = 3 * self.N_degasser # assume each uses 3 kW
 
-        self.power_utility.rate = loss + pumping_power + degassing
+        self.power_utility.rate = pumping_power + degassing
 
 
     @property
