@@ -179,20 +179,21 @@ class InternalCirculationRx(MixTank):
         self.kW_per_m3 = kW_per_m3
         self.T = T
         # Initialize the attributes
+        ID = self.ID
         hx_in = Stream(f'{ID}_hx_in')
         hx_out = Stream(f'{ID}_hx_out')
-        self.heat_exchanger = HXutility(ID=f'{ID}_hx', ins=hx_in, outs=hx_out, T=T)
+        # Add '.' in ID for auxiliary units
+        self.heat_exchanger = HXutility(ID=f'.{ID}_hx', ins=hx_in, outs=hx_out, T=T)
         self._refresh_rxns()
         # Conversion will be adjusted in the _run function
         self._xcmp = xcmp = getattr(self.components, biomass_ID)
         self._decay_rxn = xcmp.get_combustion_reaction(conversion=0.)
-        eff = self._eff = self.outs[1].proxy(f'{ID}_eff')
-        sludge = self._sludge = self.outs[2].proxy(f'{ID}_sludge')
-        self.effluent_pump = Pump(f'{self.ID}_eff', ins=eff, init_with=init_with)
-        self.sludge_pump = Pump(f'{self.ID}_sludge', ins=sludge, init_with=init_with)
+        eff = self.outs[1].proxy(f'{ID}_eff')
+        sludge = self.outs[2].proxy(f'{ID}_sludge')
+        self.effluent_pump = Pump(f'.{ID}_eff_pump', ins=eff, init_with=init_with)
+        self.sludge_pump = Pump(f'.{ID}_sludge_pump', ins=sludge, init_with=init_with)
 
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+        for k, v in kwargs.items(): setattr(self, k, v)
 
 
     def _refresh_rxns(self, Y_biogas=None, Y_biomass=None):
@@ -213,8 +214,6 @@ class InternalCirculationRx(MixTank):
         inf.copy_like(self.ins[0])
         biogas.phase = 'g'
         biogas.empty()
-        gas = self._gas
-        gas.copy_like(biogas)
 
         inf.split_to(waste, eff, self.q_Qw)
         biogas_rxns = self.biogas_rxns
@@ -223,7 +222,7 @@ class InternalCirculationRx(MixTank):
         growth_rxns(inf.mol)
         biogas_rxns(inf.mol)
 
-        degassing(inf, gas)
+        degassing(inf, biogas)
         Se = compute_stream_COD(inf, 'kg/m3')
 
         Qi, Si, Xi, Qe, Y = self.Qi, self.Si, self.Xi, self.Qe, self.Y_biomass

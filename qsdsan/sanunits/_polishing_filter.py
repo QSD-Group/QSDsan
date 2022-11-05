@@ -174,8 +174,6 @@ class PolishingFilter(SanUnit):
                  F_BM=default_F_BM, lifetime=default_equipment_lifetime,
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with, F_BM_default=1)
-        self._inf_raw = self.ins[0].copy()
-        self._inf = self._inf_raw.copy()
         self.filter_type = filter_type
         self.OLR = OLR
         self.HLR = HLR
@@ -193,13 +191,16 @@ class PolishingFilter(SanUnit):
         self._default_equipment_lifetime.update(lifetime)
 
         # Initialize the attributes
+        ID = self.ID
+        self._inf_raw = self.ins[0].copy(f'{ID}_inf_raw')
+        self._inf = self._inf_raw.copy(f'{ID}_inf')
         hx_in = Stream(f'{ID}_hx_in')
         hx_out = Stream(f'{ID}_hx_out')
-        self.heat_exchanger = HXutility(ID=f'{ID}_hx', ins=hx_in, outs=hx_out)
+        # Add '.' in ID for auxiliary units
+        self.heat_exchanger = HXutility(ID=f'.{ID}_hx', ins=hx_in, outs=hx_out)
         self._refresh_rxns()
 
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+        for k, v in kwargs.items(): setattr(self, k, v)
 
 
     def _refresh_rxns(self, X_decomp=None, X_growth=None):

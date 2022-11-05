@@ -197,17 +197,18 @@ class ActivatedSludgeProcess(SanUnit):
         self.k2 = k2
         self.K_UAP = K_UAP
         self.K_BAP = K_BAP
+        ID = self.ID
         hx_in = Stream(f'{ID}_hx_in')
         hx_out = Stream(f'{ID}_hx_out')
-        self.heat_exchanger = HXutility(ID=f'{ID}_hx', ins=hx_in, outs=hx_out, T=T)
+        # Add '.' in ID for auxiliary units
+        self.heat_exchanger = HXutility(ID=f'.{ID}_hx', ins=hx_in, outs=hx_out, T=T)
         self.blower = blower = Blower('blower', linked_unit=self, N_reactor=N_train)
         self.air_piping = air_piping = GasPiping('air_piping', linked_unit=self, N_reactor=N_train)
         self.equipments = (blower, air_piping)
         self.F_BM.update(F_BM)
         self._default_equipment_lifetime.update(lifetime)
 
-        for attr, value in kwargs.items():
-            setattr(self, attr, value)
+        for attr, value in kwargs.items(): setattr(self, attr, value)
 
 
     # Equation/page numbers are noted for the 2001 Rittmann and McCarty book
@@ -406,7 +407,7 @@ class ActivatedSludgeProcess(SanUnit):
         get_VSC = lambda L2: t * L2 * W_N_trains # get volume of slab concrete
 
         # Distribution channel, [ft3],
-        # double for both the tank and the clarifer
+        # double for both the tank and the clarifier
         W_dist, W_eff = self.W_dist, self.W_eff
         VWC = 2 * get_VWC(L1=(W_N_trains+W_dist), N=2)
         VSC = 2 * get_VSC(L2=(W_dist+2*t_wall))

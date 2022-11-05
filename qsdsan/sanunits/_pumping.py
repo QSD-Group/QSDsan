@@ -264,7 +264,7 @@ class WWTpump(SanUnit):
     _C = 110 # Hazen-Williams coefficient for stainless steel (SS)
 
     # Pump SS (for pumps within 300-1000 gpm)
-    # http://www.godwinpumps.com/images/uploads/ProductCatalog_Nov_2011_spread2.pdf
+    # https://www.godwinpumps.com/images/uploads/ProductCatalog_Nov_2011_spread2.pdf
     # assume 50% of the product weight is SS
     _SS_per_pump = 725 * 0.5
     _building_unit_cost = 90 # [$/ft2]

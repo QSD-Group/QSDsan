@@ -292,8 +292,7 @@ class AnMBR(SanUnit):
         self.heat_exchanger = HXutility(ID=f'{ID}_hx', ins=hx_in, outs=hx_out)
         self._refresh_rxns()
 
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+        for k, v in kwargs.items(): setattr(self, k, v)
 
         blower = self.blower = Blower(ID+'_blower', linked_unit=self)
         self.equipments = (blower,)
@@ -400,8 +399,7 @@ class AnMBR(SanUnit):
         # self._design_blower()
         self.add_equipment_design()
 
-        if self.T is not None:
-            perm.T = sludge.T = biogas.T = air_out.T = self.T
+        if self.T is not None: perm.T = sludge.T = biogas.T = air_out.T = self.T
 
 
     # Called by _run
@@ -672,7 +670,8 @@ class AnMBR(SanUnit):
                 p = getattr(self, f'{i}_pump')
                 setattr(p, 'add_inputs', inputs_dct[i])
             else:
-                ID = f'{ID}_{i}'
+                # Add '.' in ID for auxiliary units
+                ID = f'.{ID}_{i}'
                 capacity_factor=2. if i=='perm' else self.recir_ratio if i=='recir' else 1.
                 pump = WWTpump(
                     ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
@@ -687,8 +686,7 @@ class AnMBR(SanUnit):
         pipe_ss, pump_ss, hdpe = 0., 0., 0.
         for i in (*pumps, 'AF', 'AeF'):
             p = getattr(self, f'{i}_pump')
-            if p == None:
-                continue
+            if p == None: continue
             p.simulate()
             p_design = p.design_results
             pipe_ss += p_design['Pump pipe stainless steel']
@@ -781,8 +779,7 @@ class AnMBR(SanUnit):
         pumping = 0.
         for ID in self.pumps: #!!! check if cost/power of AF_pump/AeF_pump included in AF/AeF
             p = getattr(self, f'{ID}_pump')
-            if p is None:
-                continue
+            if p is None: continue
             pumping += p.power_utility.rate
         sparging = 0. #!!! output from submerge design
         degassing = 3 * self.N_degasser # assume each uses 3 kW
