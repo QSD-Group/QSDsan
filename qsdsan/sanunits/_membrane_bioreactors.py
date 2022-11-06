@@ -772,7 +772,7 @@ class AnMBR(SanUnit):
         hx_outs0.copy_flow(inf)
         hx_ins0.T = inf.T
         hx_outs0.T = T
-        hx.H = hx_ins0.H + loss # stream heating and heat loss
+        hx.H = hx_outs0.H + loss # stream heating and heat loss
         hx.simulate_as_auxiliary_exchanger(ins=hx.ins, outs=hx.outs)
         
         # Power for pumping and gas

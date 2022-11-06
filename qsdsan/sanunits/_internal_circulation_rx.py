@@ -335,16 +335,7 @@ class InternalCirculationRx(MixTank):
 
     def _cost(self):
         MixTank._cost(self)
-        for p in (self.effluent_pump, self.sludge_pump): p.simulate()
-        from warnings import warn
-        warn('Please make sure the power utility of effluent and sludge pumps are correctly added.')
         
-        # power_utility = self.power_utility
-        # pumps = (self.effluent_pump, self.sludge_pump)
-        # for p in pumps:
-        #     p.simulate()
-        #     power_utility.rate += p.power_utility.rate
-
         hx = self.heat_exchanger
         ins0 = self.ins[0]
         hx.ins[0].copy_flow(ins0)
@@ -352,6 +343,8 @@ class InternalCirculationRx(MixTank):
         hx.ins[0].T = ins0.T
         hx.ins[0].P = hx.outs[0].P = ins0.P
         hx.simulate_as_auxiliary_exchanger(ins=hx.ins, outs=hx.outs)
+
+        for p in (self.effluent_pump, self.sludge_pump): p.simulate()
 
 
     @property
