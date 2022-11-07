@@ -341,6 +341,7 @@ class InternalCirculationRx(MixTank):
         hx.ins[0].copy_flow(ins0)
         hx.outs[0].copy_flow(ins0)
         hx.ins[0].T = ins0.T
+        hx.outs[0].T = self.T
         hx.ins[0].P = hx.outs[0].P = ins0.P
         hx.simulate_as_auxiliary_exchanger(ins=hx.ins, outs=hx.outs)
 

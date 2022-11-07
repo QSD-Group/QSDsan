@@ -258,7 +258,7 @@ class ActivatedSludgeProcess(SanUnit):
         X_a = (SRT/HRT) * Y*(S_0-S)/(1+b*SRT)
 
         # Use mass balance on X within the entire control volume
-        # (aeration tank and the clarifer)
+        # (aeration tank and the clarifier)
         # to solve waste activated sludge flow, [L/d]
         dX_vdt = X_v * V / SRT # [mg VSS/d]
         Q_was = (dX_vdt-(Q*X_e))/(X_w-X_e)
@@ -529,6 +529,7 @@ class ActivatedSludgeProcess(SanUnit):
         hx.ins[0].copy_flow(ins0)
         hx.outs[0].copy_flow(ins0)
         hx.ins[0].T = ins0.T
+        hx.outs[0].T = self.T
         hx.ins[0].P = hx.outs[0].P = ins0.P
         hx.simulate_as_auxiliary_exchanger(ins=hx.ins, outs=hx.outs)
         # Power
@@ -538,8 +539,7 @@ class ActivatedSludgeProcess(SanUnit):
             if p is None:
                 continue
             pumping += p.power_utility.rate
-        self.power_utility.rate = \
-            self.blower.design_results['Total blower power'] + pumping
+        self.power_utility.rate = self.blower.design_results['Total blower power'] + pumping
 
 
     @property
