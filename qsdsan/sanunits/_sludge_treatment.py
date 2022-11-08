@@ -371,6 +371,63 @@ class Incinerator(SanUnit):
     calorific_value_fuel : float 
         The calorific value of fuel employed for combustion in KJ/kg. 
         The default fuel is natural gas with calofific value of 50000 KJ/kg.
+        
+    Examples
+    --------
+    
+    >>> import qsdsan as qs
+    >>> cmps = qs.Components.load_default()
+    >>> CO2 = qs.Component.from_chemical('S_CO2', search_ID='CO2', particle_size='Soluble', degradability='Undegradable', organic=False)
+    >>> cmps_test = qs.Components([cmps.S_F, cmps.S_NH4, cmps.X_OHO, cmps.H2O, cmps.S_CH4, cmps.S_O2, cmps.S_N2, cmps.S_H2, cmps.X_Ig_ISS, CO2])
+    >>> cmps_test.default_compile()
+    >>> qs.set_thermo(cmps_test)
+    >>> ws = qs.WasteStream('ws', S_F=10, S_NH4=20, X_OHO=15, H2O=1000)
+    >>> natural_gas = qs.WasteStream('nat_gas', phase='g', S_CH4=1000)
+    >>> air = qs.WasteStream('air', phase='g', S_O2=210, S_N2=780, S_H2=10)
+    >>> from qsdsan.sanunits import Incinerator
+    >>> ps = Incinerator(ID='PC', ins= (ws, air, natural_gas), outs=('flu_gas', 'ash'), 
+                     isdynamic=True)
+    >>> ps._run()
+    >>> ps
+       
+    Incinerator: PC
+    ins...
+    [0] ws
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): S_F    1e+04
+                     S_NH4  2e+04
+                     X_OHO  1.5e+04
+                     H2O    1e+06
+        WasteStream-specific properties:
+         pH         : 7.0
+         COD        : 23643.1 mg/L
+         BOD        : 14819.1 mg/L
+         TC         : 8218.3 mg/L
+         TOC        : 8218.3 mg/L
+         TN         : 20167.1 mg/L
+         TP         : 364.1 mg/L
+         TK         : 67.6 mg/L
+    [1] air
+        phase: 'g', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): S_O2  2.1e+05
+                     S_N2  7.8e+05
+                     S_H2  1e+04
+        WasteStream-specific properties: None for non-liquid waste streams
+    [2] nat_gas
+        phase: 'g', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): S_CH4  1e+06
+        WasteStream-specific properties: None for non-liquid waste streams
+    outs...
+    [0] flu_gas
+        phase: 'g', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): H2O    1e+06
+                     S_N2   7.8e+05
+                     S_CO2  4.77e+05
+        WasteStream-specific properties: None for non-liquid waste streams
+    [1] ash
+        phase: 's', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): X_Ig_ISS  2.58e+04
+        WasteStream-specific properties: None for non-liquid waste streams
     
     References: 
     ----------
