@@ -287,6 +287,7 @@ class AnaerobicCSTR(CSTR):
         self._f_retain = np.array([fraction_retain if cmp.ID in retain_cmps \
                                    else 0 for cmp in self.components])
         self._mixed = WasteStream()
+        self._tempstate = []
     
     def ideal_gas_law(self, p=None, S=None):
         '''Calculates partial pressure [bar] given concentration [M] at 
@@ -341,14 +342,6 @@ class AnaerobicCSTR(CSTR):
             self._gas_cmp_idx = self.components.indices(self.model._biogas_IDs)
             self._state_header = self._state_keys
     
-    # @property
-    # def split(self):
-    #     '''Not applicable.'''
-    #     return None
-    # @split.setter
-    # def split(self, split):
-    #     '''Does nothing.'''
-    #     pass
 
     split = property(CSTR.split.fget)
     @split.setter
@@ -410,8 +403,8 @@ class AnaerobicCSTR(CSTR):
     def _run(self):
         '''Only to converge volumetric flows.'''
         mixed = self._mixed # avoid creating multiple new streams
-        # mixed.mix_from(self.ins)
-        mixed.mix_from(self.ins, energy_balance=False)
+        mixed.mix_from(self.ins)
+        # mixed.mix_from(self.ins, energy_balance=False)
         if self.split is None: 
             gas, liquid = self.outs
             liquid.copy_like(mixed)
@@ -471,6 +464,7 @@ class AnaerobicCSTR(CSTR):
         gas.state[:n_cmps] = gas.state[:n_cmps] * chem_MW / i_mass * 1e3 # i.e., M biogas to mg (measured_unit) / L
 
     def _update_dstate(self):
+        self._tempstate = self.model.rate_function._params['root'].data.copy()
         dy = self._dstate
         f_rtn = self._f_retain
         n_cmps = len(self.components)

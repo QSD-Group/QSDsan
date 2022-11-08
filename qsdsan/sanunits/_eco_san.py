@@ -326,7 +326,7 @@ class EcoSanECR(SanUnit, Decay):
 
     def _refresh_data(self):
         sheet_name = 'standalone' if not self.if_after_MBR else 'after_MBR'
-        data = load_data(path=ecr_path, sheet_name=sheet_name)
+        data = load_data(path=ecr_path, sheet=sheet_name)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
@@ -536,7 +536,7 @@ class EcoSanPrimary(SepticTank):
 
     def _refresh_data(self):
         sheet_name = 'with_MBR' if not self.if_with_MBR else 'without_MBR'
-        data = load_data(path=primary_path, sheet_name=sheet_name)
+        data = load_data(path=primary_path, sheet=sheet_name)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
