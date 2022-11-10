@@ -33,6 +33,10 @@ class DynamicInfluent(SanUnit):
         The file path for the time-series data. Acceptable file extensions are
         `.xlsx`, `.xls`, `.csv`, `.tsv`. If none specified, will load the default
         time-series data of dry-weather influent with components from ASM1.
+    by_mass : bool, optional
+        Whether time-series data indicate mass flowrates. If True, all columns
+        assumed in kg/hr. If False, data are assumed to indicate concentrations
+        [mg/L] and total volumetric flowrate [m3/d]. The default is False.
     interpolator : str or int or callable, optional
         Interpolation method to use. It can be a string (e.g., 'slinear', 'quadratic', 'cubic')
         or an integer within [1,5] to specify the order of a spline interpolation.  
@@ -49,6 +53,12 @@ class DynamicInfluent(SanUnit):
         function. The default is {}.
     intpl_kwargs : dict, optional
         Keyword arguments for initiating the interpolant. The default is {}.
+    
+    .. note::
+
+        When `by_mass` is set to `True`, the state array of the unit as well as
+        the state array of its effluent by default indicate mass flowrates in g/d.
+        This may not consistent with downstream assumptions.
 
     See Also
     --------
@@ -61,10 +71,11 @@ class DynamicInfluent(SanUnit):
     _N_ins = 0
     _N_outs = 1
     
-    def __init__(self, ID='', ins=None, outs=(), data_file=None, interpolator=None, 
+    def __init__(self, ID='', ins=None, outs=(), data_file=None, by_mass=False, interpolator=None, 
                  derivative_approximator=None, thermo=None, init_with='WasteStream', 
                  isdynamic=True, load_data_kwargs={}, intpl_kwargs={}, **kwargs):
         SanUnit.__init__(self, ID, None, outs, thermo, init_with, isdynamic=isdynamic)
+        self.by_mass = by_mass
         self._intpl_kwargs = intpl_kwargs
         self.interpolator = interpolator
         self.derivative_approximator = derivative_approximator
@@ -134,8 +145,19 @@ class DynamicInfluent(SanUnit):
         self._interpolant = [intpl(df.t, df.loc[:,y], **ikwargs) \
                              if y in df.columns else lambda t: 0 \
                              for y in y_IDs]
+        if self.by_mass: 
+            # convert from kg/hr to g/d
+            self._interpolant = [intpl(df.t, df.loc[:,y]*24e3, **ikwargs) \
+                                 if y in df.columns else lambda t: 0 \
+                                 for y in y_IDs]
+            self._interpolant[-1] = lambda t: 1
+        else:
+            self._interpolant = [intpl(df.t, df.loc[:,y], **ikwargs) \
+                                 if y in df.columns else lambda t: 0 \
+                                 for y in y_IDs]
         if self._func_dydt is None:
-            self._derivative = [i.derivative() if hasattr(i, 'derivative') else lambda t: 0 \
+            self._derivative = [i.derivative() if hasattr(i, 'derivative') \
+                                else lambda t: 0 \
                                 for i in self._interpolant]
         else: self._derivative = None
 
@@ -163,10 +185,14 @@ class DynamicInfluent(SanUnit):
         '''Only to converge volumetric flows.'''
         out, = self._outs
         y0 = self._data.iloc[0,:].to_dict()
-        Q = y0.pop('Q')
         y0.pop('t', None)
-        y0.pop('H2O', None)
-        out.set_flow_by_concentration(flow_tot=Q, concentrations=y0, units=('m3/d', 'mg/L'))
+        Q = y0.pop('Q')
+        if self.by_mass:
+            out.set_flow(list(y0.values()), 'kg/hr', y0.keys())
+        else:
+            y0.pop('H2O', None)
+            out.set_flow_by_concentration(flow_tot=Q, concentrations=y0, 
+                                          units=('m3/d', 'mg/L'))
 
     @property
     def AE(self):
