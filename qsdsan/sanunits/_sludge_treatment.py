@@ -514,20 +514,24 @@ class Incinerator(SanUnit):
             raise ValueError(f'The phase of fuel is expected to be gas not {fuel.phase}')
         
         #mass balance 
-        mass_flowrate_sludge = np.sum(sludge.mass*cmps.i_mass) 
-        mass_flowrate_air = np.sum(air.mass*cmps.i_mass)
-        mass_flowrate_fuel = np.sum(fuel.mass*cmps.i_mass)
-
-        n2 = air.imass['N2']
-        h2o = sludge.imass['H2O']
+        # mass_flowrate_sludge = np.sum(sludge.mass*cmps.i_mass) 
+        # mass_flowrate_air = np.sum(air.mass*cmps.i_mass)
+        # mass_flowrate_fuel = np.sum(fuel.mass*cmps.i_mass)
+        inf = (sludge.mass + air.mass + fuel.mass)
+        idx_n2 = cmps.index('N2')
+        idx_h2o = cmps.index('H2O')
         
-        mass_ash = np.sum(sludge.mass*cmps.i_mass*(1-cmps.f_Vmass_Totmass)) \
-            - h2o*(1-cmps.H2O.f_Vmass_Totmass)
+        n2 = inf[idx_n2]
+        h2o = inf[idx_h2o]
+        
+        mass_ash = np.sum(inf*cmps.i_mass*(1-cmps.f_Vmass_Totmass)) \
+            - h2o*cmps.H2O.i_mass*(1-cmps.H2O.f_Vmass_Totmass)
 
         # By conservation of mass 
-        mass_flue_gas = mass_flowrate_sludge + mass_flowrate_air + mass_flowrate_fuel - mass_ash
+        # mass_flue_gas = mass_flowrate_sludge + mass_flowrate_air + mass_flowrate_fuel - mass_ash
+        mass_flue_gas = np.sum(inf*cmps.i_mass) - mass_ash
         
-        mass_co2 = mass_flue_gas - n2 - h2o
+        mass_co2 = mass_flue_gas - n2*cmps.N2.i_mass - h2o*cmps.H2O.i_mass
         flue_gas.set_flow([n2, h2o, (mass_co2/cmps.S_CO2.i_mass)], 
                           'kg/hr', ('S_N2', 'H2O', 'S_CO2'))
         ash_cmp_ID = self.ash_component_ID
@@ -537,13 +541,12 @@ class Incinerator(SanUnit):
         
         #energy balance 
         self.Heat_sludge = sludge.dry_mass*sludge.F_vol*self.calorific_value_sludge/1000 #in KJ/hr (mg/L)*(m3/hr)*(KJ/kg)=KJ/hr*(1/1000)
-        self.Heat_air = mass_flowrate_air*self.Cp_air #in KJ/hr 
-        self.Heat_fuel = mass_flowrate_fuel*self.calorific_value_fuel #in KJ/hr 
+        self.Heat_air = np.sum(air.mass*cmps.i_mass)*self.Cp_air #in KJ/hr 
+        self.Heat_fuel = np.sum(fuel.mass*cmps.i_mass)*self.calorific_value_fuel #in KJ/hr 
         self.Heat_flue_gas = self.process_efficiency*(self.Heat_sludge + self.Heat_air + self.Heat_fuel)
         
         #By conservation of energy
         self.Heat_loss = self.Heat_sludge + self.Heat_air + self.Heat_fuel - self.Heat_flue_gas
-        
         
     def _init_state(self):
         
@@ -551,6 +554,8 @@ class Incinerator(SanUnit):
         inf = sludge.mass + air.mass + fuel.mass
         self._state = (24*inf)/1000
         self._dstate = self._state * 0.
+        self._cached_state = self._state.copy()
+        self._cached_t = 0
         
     def _update_state(self):
         cmps = self.components
@@ -558,15 +563,28 @@ class Incinerator(SanUnit):
             if ws.state is None:
                 ws.state = np.zeros(len(self._state)+1)
         
-        self._outs[0].state[cmps.index('N2')] = self._state[cmps.index('N2')]
-        self._outs[0].state[cmps.index('H2O')] = self._state[cmps.index('H2O')]
-        self._outs[0].state[cmps.index('CO2')] = self._state[cmps.index('CO2')]
+        idx_h2o = cmps.index('H2O')
+        idx_n2 = cmps.index('N2')
+        idx_co2 = cmps.index('CO2')
+        ash_idx = cmps.index(self.ash_component_ID)
+        cmps_i_mass = cmps.i_mass
+        cmps_v2tmass = cmps.f_Vmass_Totmass    
+        
+        inf = self._state
+        #slg, air, fuel = M_ins = np.diag(QC_ins[:,-1]) @ QC_ins[:,:-1]
+        mass_in_tot = np.sum(inf*cmps_i_mass)       
+        self._outs[0].state[idx_h2o] = h2o = inf[idx_h2o]
+        self._outs[0].state[idx_n2] = n2 = inf[idx_n2]
+        
+        mass_ash = np.sum(inf*cmps_i_mass*(1-cmps_v2tmass)) \
+            - h2o*cmps.H2O.i_mass*(1-cmps_v2tmass[idx_h2o])
+        mass_flue_gas = mass_in_tot - mass_ash
+        mass_co2 = mass_flue_gas - n2 - h2o
+        
+        self._outs[0].state[idx_co2] = mass_co2/cmps_i_mass[idx_co2]
+        self._outs[1].state[ash_idx] = mass_ash/cmps_i_mass[ash_idx]/(1-cmps_v2tmass[ash_idx])
+
         self._outs[0].state[-1] = 1
-        
-        ash_cmp_ID = self.ash_component_ID
-        ash_idx = cmps.index(ash_cmp_ID)
-        
-        self._outs[1].state[ash_idx] = self._state[ash_idx]
         self._outs[1].state[-1] = 1
         
     def _update_dstate(self):
@@ -592,56 +610,40 @@ class Incinerator(SanUnit):
         return self._AE
     
     def _compile_AE(self):
-        cmps = self.components 
+        # cmps = self.components 
         _state = self._state
         _dstate = self._dstate
         _update_state = self._update_state
         _update_dstate = self._update_dstate
-        idx_h2o = cmps.index('H2O')
-        idx_n2 = cmps.index('N2')
-        idx_co2 = cmps.index('CO2')
-        ash_idx = cmps.index(self.ash_component_ID)
-        cmps_i_mass = cmps.i_mass
-        cmps_v2tmass = cmps.f_Vmass_Totmass       
+        _cached_state = self._cached_state
+        
+        # idx_h2o = cmps.index('H2O')
+        # idx_n2 = cmps.index('N2')
+        # idx_co2 = cmps.index('CO2')
+        # ash_idx = cmps.index(self.ash_component_ID)
+        # cmps_i_mass = cmps.i_mass
+        # cmps_v2tmass = cmps.f_Vmass_Totmass       
 
         def yt(t, QC_ins, dQC_ins):            
-            slg, air, fuel = M_ins = np.diag(QC_ins[:,-1]) @ QC_ins[:,:-1]
-            mass_in_tot = np.sum(M_ins @ cmps_i_mass)
+            # slg, air, fuel = M_ins = np.diag(QC_ins[:,-1]) @ QC_ins[:,:-1]
+            # mass_in_tot = np.sum(M_ins @ cmps_i_mass)
+            M_ins = np.diag(QC_ins[:,-1]) @ QC_ins[:,:-1]
+            _state[:] = np.sum(M_ins, axis=0)
+            # _state[idx_h2o] = h2o = slg[idx_h2o]
+            # _state[idx_n2] = n2 = air[idx_n2]
             
-            _state[idx_h2o] = h2o = slg[idx_h2o]
-            _state[idx_n2] = n2 = air[idx_n2]
+            # mass_ash = np.sum(slg*cmps_i_mass*(1-cmps_v2tmass)) \
+            #     - h2o*cmps.H2O.i_mass*(1-cmps_v2tmass[idx_h2o])
+            # mass_flue_gas = mass_in_tot - mass_ash
+            # mass_co2 = mass_flue_gas - n2 - h2o
             
-            mass_ash = np.sum(slg*cmps_i_mass*(1-cmps_v2tmass)) \
-                - h2o*(1-cmps_v2tmass[idx_h2o])
-            mass_flue_gas = mass_in_tot - mass_ash
-            mass_co2 = mass_flue_gas - n2 - h2o
+            # _state[idx_co2] = mass_co2/cmps_i_mass[idx_co2]
+            # _state[ash_idx] = mass_ash/cmps.i_mass[ash_idx]/(1-cmps_v2tmass[ash_idx])
             
-            _state[idx_co2] = mass_co2/cmps_i_mass[idx_co2]
-            _state[ash_idx] = mass_ash/cmps.i_mass[ash_idx]/(1-cmps_v2tmass[ash_idx])
-
-            # for m in range(len(dQC_ins)):
-            #     dQC_ins[m, :-1] = dQC_ins[m, :-1]*dQC_ins[m, -1]
-            #     m = m + 1
-            # dQC_ins[:, -1] = 1
-            
-            # dmass_flowrate_sludge = np.sum(dQC_ins[0, :-1]*cmps.i_mass)
-            # dmass_flowrate_air = np.sum(dQC_ins[1, :-1]*cmps.i_mass)
-            # dmass_flowrate_fuel = np.sum(dQC_ins[2, :-1]*cmps.i_mass)
-            
-            # _dstate[cmps.index('H2O')] = dQC_ins[0, cmps.index('H2O')]
-            # _dstate[cmps.index('N2')] = dQC_ins[1, cmps.index('N2')]
-            
-            # dmass_ash = np.sum(dQC_ins[0, :-1]*cmps.i_mass*(1-cmps.f_Vmass_Totmass)) \
-            #     - dQC_ins[0, cmps.index('H2O')]*(1-cmps.H2O.f_Vmass_Totmass)
-            # dmass_flue_gas = dmass_flowrate_sludge + dmass_flowrate_air + dmass_flowrate_fuel - dmass_ash
-            # dmass_co2 = dmass_flue_gas - dQC_ins[1, cmps.index('N2')] - dQC_ins[0, cmps.index('H2O')]
-
-            # _dstate[cmps.index('CO2')] = dmass_co2/cmps.S_CO2.i_mass
-            
-            # ash_cmp_ID = self.ash_component_ID
-            # ash_idx = cmps.index(ash_cmp_ID)
-            # _dstate[ash_idx] = dmass_ash/cmps.i_mass[ash_idx]/(1-cmps.f_Vmass_Totmass[ash_idx])
-
+            if t > self._cached_t:
+                _dstate[:] = (_state - _cached_state)/(t-self._cached_t)
+            _cached_state[:] = _state
+            self._cached_t = t
             _update_state()
             _update_dstate()
         self._AE = yt
