@@ -500,7 +500,7 @@ class AnaerobicCSTR(CSTR):
     def f_q_gas_var_P_headspace(self, rhoTs, S_gas, T):
         p_gas = S_gas * self._R * T
         self._P_gas = P = sum(p_gas) + self.p_vapor(convert_to_bar=True) 
-        self._q_gas = self._k_p * (P - self._P_atm)
+        self._q_gas = max(0, self._k_p * (P - self._P_atm))
         return self._q_gas
 
     @property
