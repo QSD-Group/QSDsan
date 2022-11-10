@@ -554,9 +554,9 @@ class Incinerator(SanUnit):
         
     def _update_state(self):
         cmps = self.components
-        
-        self._outs[0].state = np.zeros(len(self._state))
-        self._outs[1].state = np.zeros(len(self._state))
+        for ws in self.outs:
+            if ws.state is None:
+                ws.state = np.zeros(len(self._state)+1)
         
         self._outs[0].state[cmps.index('N2')] = self._state[cmps.index('N2')]
         self._outs[0].state[cmps.index('H2O')] = self._state[cmps.index('H2O')]
@@ -570,19 +570,19 @@ class Incinerator(SanUnit):
         self._outs[1].state[-1] = 1
         
     def _update_dstate(self):
-
         cmps = self.components
-        self._outs[0].dstate = np.zeros(len(self._state))
-        self._outs[1].dstate = np.zeros(len(self._state))
+        for ws in self.outs:
+            if ws.dstate is None:
+                ws.dstate = np.zeros(len(self._dstate)+1)
         
         #Everything will be zero anyway! 
         self._outs[0].dstate[cmps.index('N2')] = self._dstate[cmps.index('N2')]
         self._outs[0].dstate[cmps.index('H2O')] = self._dstate[cmps.index('H2O')]
         self._outs[0].dstate[cmps.index('CO2')] = self._dstate[cmps.index('CO2')]
-        
+
         ash_cmp_ID = self.ash_component_ID
         ash_idx = cmps.index(ash_cmp_ID)
-        
+
         self._outs[1].dstate[ash_idx] = self._dstate[ash_idx]
 
     @property
@@ -604,9 +604,8 @@ class Incinerator(SanUnit):
         cmps_i_mass = cmps.i_mass
         cmps_v2tmass = cmps.f_Vmass_Totmass       
 
-        def yt(t, QC_ins, dQC_ins):
+        def yt(t, QC_ins, dQC_ins):            
             slg, air, fuel = M_ins = np.diag(QC_ins[:,-1]) @ QC_ins[:,:-1]
-            
             mass_in_tot = np.sum(M_ins @ cmps_i_mass)
             
             _state[idx_h2o] = h2o = slg[idx_h2o]
