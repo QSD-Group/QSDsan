@@ -43,8 +43,8 @@ QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Sys
    :target: https://qsdsan.readthedocs.io/en/latest/Events.html
 
 .. YouTube video
-.. image:: https://img.shields.io/endpoint?color=%23ff0000&label=YouTube%20 Videos&url=https%3A%2F%2Fyoutube-channel-badge-blond.vercel.app%2Fapi%2Fvideos
-   :target: https://www.youtube.com/playlist?list=PL-tj_uM0mIdFv72MAULnWjS6lx_cCyi2N
+.. image:: https://img.shields.io/endpoint?color=%23ff0000&label=YouTube%20 @qsd-group&url=https%3A%2F%2Fyoutube-channel-badge-blond.vercel.app%2Fapi%2Fvideos
+   :target: https://www.youtube.com/@qsd-group
 
 .. Code of Conduct
 .. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
