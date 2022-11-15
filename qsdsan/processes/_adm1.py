@@ -272,7 +272,8 @@ def rhos_adm1(state_arr, params):
     KH = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[7:10]
 
     rhos[:-3] = ks * Cs
-    rhos[4:12] *= substr_inhibit(substrates, Ks)
+    Monod = substr_inhibit(substrates, Ks)
+    rhos[4:12] *= Monod
     if S_va > 0: rhos[7] *= 1/(1+S_bu/S_va)
     if S_bu > 0: rhos[8] *= 1/(1+S_va/S_bu)
 
@@ -285,13 +286,23 @@ def rhos_adm1(state_arr, params):
     biogas_S[-1] = co2 / unit_conversion[9]
     
     Iph = Hill_inhibit(h, pH_ULs, pH_LLs)
+    Iin = substr_inhibit(S_IN, KS_IN)
     Ih2 = non_compet_inhibit(S_h2, KIs_h2)
-    root.data = [-np.log10(h), Iph, Ih2]
-    rhos[4:12] *= Iph * substr_inhibit(S_IN, KS_IN)
+    Inh3 = non_compet_inhibit(nh3, KI_nh3)
+    rhos[4:12] *= Iph * Iin
     rhos[6:10] *= Ih2
     # rhos[4:12] *= Hill_inhibit(h, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
     # rhos[6:10] *= non_compet_inhibit(S_h2, KIs_h2)
-    rhos[10] *= non_compet_inhibit(nh3, KI_nh3)
+    rhos[10] *= Inh3
+    root.data = {
+        'pH':-np.log10(h), 
+        'Iph':Iph, 
+        'Ih2':Ih2, 
+        'Iin':Iin, 
+        'Inh3':Inh3,
+        'Monod':Monod,
+        'rhos':rhos[4:12].copy()
+        }
     rhos[-3:] = kLa * (biogas_S - KH * biogas_p)
     # print(rhos)
     return rhos
