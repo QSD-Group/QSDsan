@@ -645,14 +645,14 @@ class PrimaryClarifier(SanUnit):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time=0.04268, 
-                 ratio_uf=0.007, f_corr=0.65, F_BM_default=None, oveflow_rate=40, **kwargs):
+                 ratio_uf=0.007, f_corr=0.65, F_BM_default=None, overflow_rate=40, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
                          init_with=init_with, F_BM_default=F_BM_default)
         self.Hydraulic_Retention_Time = Hydraulic_Retention_Time #in days
         self.ratio_uf = ratio_uf
         self.f_corr = f_corr
-        self.oveflow_rate = oveflow_rate #in m3/(m2*day)
+        self.overflow_rate = overflow_rate #in m3/(m2*day)
         self.mixed = WasteStream('mixed')
         
     @property
@@ -726,7 +726,7 @@ class PrimaryClarifier(SanUnit):
         
         design = self.design_results
         design['Volume'] = 24*self._HRT*self.mixed.get_total_flow('m3/hr') #in m3
-        design['Area'] = self.mixed.get_total_flow('m3/hr')/self.oveflow_rate #in m2
+        design['Area'] = self.mixed.get_total_flow('m3/hr')/self.overflow_rate #in m2
         design['Length'] = design['Volume']/design['Area'] #in m
         
     def _init_state(self):
