@@ -223,9 +223,11 @@ class CHP(SanUnit, Facility):
             while H_excess_at_natural_gas_flow(ub) < H_needs:
                 lb = ub
                 ub *= 2
-            IQ_interpolation(H_excess_at_natural_gas_flow,
-                             x0=lb, x1=ub, xtol=1e-3, ytol=1,
-                             checkbounds=False)
+            natural_gas_flow = IQ_interpolation(
+                H_excess_at_natural_gas_flow,
+                x0=lb, x1=ub, xtol=1e-3, ytol=1,
+                checkbounds=False)
+            self.H_net_feed = react(natural_gas_flow)
             # Update heating and power utilities
             hus = HeatUtility.sum_by_agent(sum(self.sys_heating_utilities.values(), ()))
             for hu in hus:
