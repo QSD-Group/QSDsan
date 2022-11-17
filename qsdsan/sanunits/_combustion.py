@@ -211,9 +211,9 @@ class CHP(SanUnit, Facility):
         hus = self.heat_utilities
         pu = self.power_utility
         if supp_utility:
-            H_needs = self.H_needs = sum_system_utility(**kwds, utility='heating', result_unit='kJ')/self.combustion_eff
+            H_needs = self.H_needs = sum_system_utility(**kwds, utility='heating', result_unit='kJ/yr')/self.combustion_eff
             if supp_utility == 'power':
-                pu.production = sum_system_utility(**kwds, utility='power', result_unit='kWh')
+                pu.production = sum_system_utility(**kwds, utility='power', result_unit='kWh/yr')
                 H_needs += pu.production/self.combined_eff
             # Objective function to calculate the excess heat at a given natural gas flow rate
             def H_excess_at_natural_gas_flow(flow):
@@ -224,9 +224,10 @@ class CHP(SanUnit, Facility):
                 lb = ub
                 ub *= 2
             IQ_interpolation(H_excess_at_natural_gas_flow,
-                             x0=lb, x1=ub, xtol=1e-3, ytol=1)
+                             x0=lb, x1=ub, xtol=1e-3, ytol=1,
+                             checkbounds=False)
             # Update heating and power utilities
-            hus = HeatUtility.sum_by_agent(tuple([i for i in self.sys_heating_utilities]))
+            hus = HeatUtility.sum_by_agent(sum(self.sys_heating_utilities.values(), ()))
             for hu in hus:
                 hu.reverse()
 
