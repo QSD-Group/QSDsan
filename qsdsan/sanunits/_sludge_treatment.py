@@ -311,6 +311,7 @@ class DewateringUnit(Thickener):
     
     _N_ins = 1
     _N_outs = 2
+    _ins_size_is_fixed = False
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=None, thickener_perc=28, TSS_removal_perc=98, 
