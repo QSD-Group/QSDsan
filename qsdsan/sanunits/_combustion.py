@@ -102,9 +102,13 @@ class CHP(SanUnit, Facility):
     '''
     Combustion of all feed streams with simple estimation of the capital cost
     of a combined heat and power (CHP) unit based on Shoener et al. [1]_
-
-    Optionally, a natural gas stream can be included to supplement the heating
-    and electricity needs of a given system.
+    
+    This unit is designed to always satisfy the system's heating demand,
+    if there is not enough energy in the feed stream, natural gas will be purchased
+    to fill the gap.
+    
+    The unit can also be set to satisfy the system power (i.e., electricity) needs
+    if `supplement_power_utility` is set to True.
 
     Parameters
     ----------
@@ -129,10 +133,14 @@ class CHP(SanUnit, Facility):
     system : obj
         The linked system whose heating/power utility needs will be supplied
         by this CHP unit.
-    supplement_utility : str
-        Can be either "heating" to supplement only heating needs,
-        "power" to supplement both heating and power needs,
-        or left as empty to supplement neither of those.
+    supplement_power_utility : bool
+        Whether to purhcase additional natural gas to supplement energy demand.
+    
+        .. note::
+            
+            If energy in the feed (without natural gas) is sufficient enough,
+            the system could still be producing power even when
+            `supplement_power_utility` is False.
 
     References
     ----------
@@ -145,14 +153,14 @@ class CHP(SanUnit, Facility):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  unit_CAPEX=1225, CHP_type='Fuel cell',
                  combustion_eff=0.8, combined_eff=None,
-                 system=None, supplement_utility='', F_BM={'CHP': 1.}):
+                 system=None, supplement_power_utility=False, F_BM={'CHP': 1.}):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM=F_BM)
         self.unit_CAPEX = unit_CAPEX
         self.CHP_type = CHP_type
         self.combustion_eff = combustion_eff
         self.combined_eff = combined_eff
         self.system = None
-        self.supplement_utility = supplement_utility
+        self.supplement_power_utility = supplement_power_utility
         self._sys_heating_utilities = ()
         self._sys_power_utilities = ()
 
@@ -202,53 +210,54 @@ class CHP(SanUnit, Facility):
             emission.imol['N2'] = air.imol['N2'] = air.imol['O2']/0.21*0.79
             emission.imol['O2'] = 0
             H_net_feed = feed.H + feed.HHV - emission.H # subtracting the energy in emission
-            if natural_gas.imol['CH4'] != 0:
+            if natural_gas.imol['CH4'] != 0: # add natural gas H and HHV
                 H_net_feed += natural_gas.H + natural_gas.HHV
-            # add natural gas H and HHV
             return H_net_feed
 
-        # Calculate extra natural gas needed to supplement the utilities
-        supp_utility = self.supplement_utility
-        kwds = dict(system=self.system, operating_hours=1.,
-                    exclude_units=(self,))
+        # Calculate the amount of energy in the feed (no natural gas) and needs
+        self.H_net_feeds_no_natural_gas = react(0)
+        
+        # Calculate all energy needs in kJ/hr as in H_net_feeds
+        kwds = dict(system=self.system, operating_hours=1., exclude_units=(self,))
         hus = self.heat_utilities
         pu = self.power_utility
-        if supp_utility:
-            H_needs = self.H_needs = sum_system_utility(**kwds, utility='heating', result_unit='kJ/hr')/self.combustion_eff
-            # H_net_feed unit is kJ/hr, so here should be kJ/hr, same for pu.production below
-            if supp_utility == 'power':
-                pu.production = sum_system_utility(**kwds, utility='power', result_unit='kJ/hr')/self.combined_eff
-                # kJ/hr here to match up with units of H_needs?
-                H_needs += pu.production
-            # Objective function to calculate the excess heat at a given natural gas flow rate
-            def H_excess_at_natural_gas_flow(flow):
-                return H_needs-react(flow)
-            lb = 0
-            ub = react()/cmps.CH4.LHV*2
-            if H_excess_at_natural_gas_flow(ub) > 0:
-                while H_excess_at_natural_gas_flow(ub) > 0:
-                # while H_needs > react(flow): not enough natural gas
-                    lb = ub
-                    ub *= 2
-                # just solve natural_gas_flow when H_excess_at_natural_gas_flow(ub) > 0
-                natural_gas_flow = IQ_interpolation(
-                    H_excess_at_natural_gas_flow,
-                    x0=lb, x1=ub, xtol=1e-3, ytol=1,
-                    checkbounds=False)
-                self.H_net_feed = react(natural_gas_flow)
-            else:
-                natural_gas_flow = 0
-                self.H_net_feed = react(natural_gas_flow)
-            # Update heating and power utilities
-            hus = HeatUtility.sum_by_agent(sum(self.sys_heating_utilities.values(), ()))
-            for hu in hus:
-                hu.reverse()
+        H_heating_needs = sum_system_utility(**kwds, utility='heating', result_unit='kJ/hr')/self.combustion_eff
+        H_power_needs = sum_system_utility(**kwds, utility='power', result_unit='kJ/hr')/self.combined_eff
+        
+        # Calculate the amount of energy needs to be provided
+        H_supp = H_heating_needs+H_power_needs if self.supplement_power_utility else H_heating_needs
+                      
+        # Objective function to calculate the heat deficit at a given natural gas flow rate
+        def H_deficit_at_natural_gas_flow(flow):
+            return H_supp-react(flow)
+        # Initial lower and upper bounds for the solver
+        lb = 0
+        ub = react()/cmps.CH4.LHV*2
+        if H_deficit_at_natural_gas_flow(0) > 0: # energy in the feeds is not enough
+            while H_deficit_at_natural_gas_flow(ub) > 0: # increase bounds if not enough energy
+                lb = ub
+                ub *= 2
+            natural_gas_flow = IQ_interpolation(
+                H_deficit_at_natural_gas_flow,
+                x0=lb, x1=ub, xtol=1e-3, ytol=1,
+                checkbounds=False)
+            H_net_feeds = react(natural_gas_flow)
+        else: # enough energy in the feed, set natural_gas_flow to 0
+            H_net_feeds = react(0)
 
-        else:
-            H_needs = self.H_needs = 0.
-            self.H_net_feed = react(0)
-            hus = ()
+        # Update heating utilities
+        hus = HeatUtility.sum_by_agent(sum(self.sys_heating_utilities.values(), ()))
+        for hu in hus: hu.reverse()
+        
+        # Power production if there is sufficient energy
+        if H_net_feeds <= H_heating_needs:
             pu.production = 0
+        else:
+            pu.production = (H_net_feeds-H_heating_needs)/3600*self.combined_eff
+
+        self.H_heating_needs = H_heating_needs
+        self.H_power_needs = H_power_needs
+        self.H_net_feeds = H_net_feeds
 
         ash_IDs = [i.ID for i in cmps if not i.formula]
         ash.copy_flow(emission, IDs=tuple(ash_IDs), remove=True)
@@ -257,9 +266,7 @@ class CHP(SanUnit, Facility):
     def _cost(self):
         unit_CAPEX = self.unit_CAPEX
         unit_CAPEX /= 3600 # convert to $ per kJ
-        # don't need to /self.combined_eff here since already considered when calculating H_needs
-        H_net_feed = self.H_net_feed
-        self.baseline_purchase_costs['CHP'] = unit_CAPEX * H_net_feed
+        self.baseline_purchase_costs['CHP'] = unit_CAPEX * self.H_net_feeds
 
 
     def _refresh_sys(self):
@@ -366,24 +373,9 @@ class CHP(SanUnit, Facility):
         return self._sys_power_utilities
 
     @property
-    def supplement_utility(self):
+    def H_needs(self):
         '''
-        [str] Can be either "heating" to supplement only heating needs,
-        "power" to supplement both heating and power needs,
-        or left as empty to supplement neither of those.
+        Total energy needs of the system in kJ/hr,
+        already divided by the combustion/combined efficiency.
         '''
-        return self._supplement_utility
-    @supplement_utility.setter
-    def supplement_utility(self, i):
-        if not i:
-            self._supplement_utility = ''
-            return
-        i = i.lower()
-        if i in ('heating', 'power'):
-            self._supplement_utility = i
-            return
-        if i == 'electricity':
-            self._supplement_utility = i
-        else:
-            raise ValueError('`suppply_utility` can only be "heating", "power", '
-                             f'or left as empty, not "{i}".')
+        return self.H_heating_needs + self.H_power_needs
