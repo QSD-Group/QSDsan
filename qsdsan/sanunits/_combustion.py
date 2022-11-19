@@ -202,6 +202,9 @@ class CHP(SanUnit, Facility):
             emission.imol['N2'] = air.imol['N2'] = air.imol['O2']/0.21*0.79
             emission.imol['O2'] = 0
             H_net_feed = feed.H + feed.HHV - emission.H # subtracting the energy in emission
+            if natural_gas.imol['CH4'] != 0:
+                H_net_feed += natural_gas.H + natural_gas.HHV
+            # add natural gas H and HHV
             return H_net_feed
 
         # Calculate extra natural gas needed to supplement the utilities
@@ -211,23 +214,31 @@ class CHP(SanUnit, Facility):
         hus = self.heat_utilities
         pu = self.power_utility
         if supp_utility:
-            H_needs = self.H_needs = sum_system_utility(**kwds, utility='heating', result_unit='kJ/yr')/self.combustion_eff
+            H_needs = self.H_needs = sum_system_utility(**kwds, utility='heating', result_unit='kJ/hr')/self.combustion_eff
+            # H_net_feed unit is kJ/hr, so here should be kJ/hr, same for pu.production below
             if supp_utility == 'power':
-                pu.production = sum_system_utility(**kwds, utility='power', result_unit='kWh/yr')
-                H_needs += pu.production/self.combined_eff
+                pu.production = sum_system_utility(**kwds, utility='power', result_unit='kJ/hr')/self.combined_eff
+                # kJ/hr here to match up with units of H_needs?
+                H_needs += pu.production
             # Objective function to calculate the excess heat at a given natural gas flow rate
             def H_excess_at_natural_gas_flow(flow):
                 return H_needs-react(flow)
             lb = 0
             ub = react()/cmps.CH4.LHV*2
-            while H_excess_at_natural_gas_flow(ub) < H_needs:
-                lb = ub
-                ub *= 2
-            natural_gas_flow = IQ_interpolation(
-                H_excess_at_natural_gas_flow,
-                x0=lb, x1=ub, xtol=1e-3, ytol=1,
-                checkbounds=False)
-            self.H_net_feed = react(natural_gas_flow)
+            if H_excess_at_natural_gas_flow(ub) > 0:
+                while H_excess_at_natural_gas_flow(ub) > 0:
+                # while H_needs > react(flow): not enough natural gas
+                    lb = ub
+                    ub *= 2
+                # just solve natural_gas_flow when H_excess_at_natural_gas_flow(ub) > 0
+                natural_gas_flow = IQ_interpolation(
+                    H_excess_at_natural_gas_flow,
+                    x0=lb, x1=ub, xtol=1e-3, ytol=1,
+                    checkbounds=False)
+                self.H_net_feed = react(natural_gas_flow)
+            else:
+                natural_gas_flow = 0
+                self.H_net_feed = react(natural_gas_flow)
             # Update heating and power utilities
             hus = HeatUtility.sum_by_agent(sum(self.sys_heating_utilities.values(), ()))
             for hu in hus:
@@ -245,7 +256,8 @@ class CHP(SanUnit, Facility):
 
     def _cost(self):
         unit_CAPEX = self.unit_CAPEX
-        unit_CAPEX /= (3600/self.combined_eff) # convert to $ per kJ
+        unit_CAPEX /= 3600 # convert to $ per kJ
+        # don't need to /self.combined_eff here since already considered when calculating H_needs
         H_net_feed = self.H_net_feed
         self.baseline_purchase_costs['CHP'] = unit_CAPEX * H_net_feed
 
