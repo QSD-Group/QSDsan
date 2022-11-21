@@ -219,7 +219,6 @@ class CHP(SanUnit, Facility):
         
         # Calculate all energy needs in kJ/hr as in H_net_feeds
         kwds = dict(system=self.system, operating_hours=1., exclude_units=(self,))
-        hus = self.heat_utilities
         pu = self.power_utility
         H_heating_needs = sum_system_utility(**kwds, utility='heating', result_unit='kJ/hr')/self.combustion_eff
         H_power_needs = sum_system_utility(**kwds, utility='power', result_unit='kJ/hr')/self.combined_eff
@@ -246,8 +245,9 @@ class CHP(SanUnit, Facility):
             H_net_feeds = react(0)
 
         # Update heating utilities
-        hus = HeatUtility.sum_by_agent(sum(self.sys_heating_utilities.values(), ()))
-        for hu in hus: hu.reverse()
+        self.heat_utilities = HeatUtility.sum_by_agent(sum(self.sys_heating_utilities.values(), ()))
+        for hu in self.heat_utilities: hu.reverse()
+            
         
         # Power production if there is sufficient energy
         if H_net_feeds <= H_heating_needs:
