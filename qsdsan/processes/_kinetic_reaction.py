@@ -23,8 +23,8 @@ __all__ = ('KineticReaction',)
 class KineticReaction(Rxn):
     r'''
     A general class used to to handle reactions with common kinetics
-    where the reaction ate is controlled by the molar concentration of a single component
-    (i.e., the rate reactant) so the concenration can be analytically solved.
+    where the reaction rate is controlled by the molar concentration of a single component
+    (i.e., the rate reactant) so the concentration can be analytically solved.
     
     With a rate constant of k and time of t, for nth-order reaction of
     the rate reactant with a starting molar concentration of :math:`[C]_0`,
