@@ -558,8 +558,8 @@ class Process:
     def ref_component(self, ref_cmp):
         if ref_cmp:
             self._ref_component = str(ref_cmp) # in case a component obj is passed
-            self._normalize_stoichiometry(ref_cmp)
             self._normalize_rate_eq(ref_cmp)
+            self._normalize_stoichiometry(ref_cmp)
 
     @property
     def components(self):
@@ -704,7 +704,7 @@ class Process:
             self._stoichiometry = [v/factor for v in stoich]
 
     def _normalize_rate_eq(self, new_ref):
-        factor = self._stoichiometry[self._components.index(str(new_ref))]
+        factor = abs(self._stoichiometry[self._components.index(str(new_ref))])
         self._rate_equation *= factor
 
     def show(self):
