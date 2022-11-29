@@ -447,7 +447,8 @@ class Incinerator(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=None, process_efficiency=0.90, 
                   calorific_value_sludge= 12000, calorific_value_fuel=50000, 
-                  ash_component_ID = 'X_Ig_ISS', **kwargs):
+                  ash_component_ID = 'X_Ig_ISS', nitrogen_ID = 'S_N2', water_ID = 'H2O',
+                  carbon_di_oxide_ID = 'S_CO2', **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with, F_BM_default=F_BM_default)
         
@@ -455,6 +456,9 @@ class Incinerator(SanUnit):
         self.calorific_value_fuel  = calorific_value_fuel #in KJ/kg (here the considered fuel is natural gas) 
         self.process_efficiency = process_efficiency
         self.ash_component_ID = ash_component_ID
+        self.nitrogen_ID = nitrogen_ID
+        self.water_ID = water_ID
+        self.carbon_di_oxide_ID = carbon_di_oxide_ID
         self.Heat_air = None 
         self.Heat_fuel = None
         self.Heat_sludge = None
@@ -506,7 +510,10 @@ class Incinerator(SanUnit):
         flue_gas.phase = 'g'
         ash.phase = 's'
         cmps = self.components
-
+        nitrogen_ID = self.nitrogen_ID
+        water_ID = self.water_ID
+        carbon_di_oxide_ID = self.carbon_di_oxide_ID
+        
         if sludge.phase != 'l':
             raise ValueError(f'The phase of incoming sludge is expected to be liquid not {sludge.phase}')
         if air.phase != 'g':
@@ -515,8 +522,8 @@ class Incinerator(SanUnit):
             raise ValueError(f'The phase of fuel is expected to be gas not {fuel.phase}')
         
         inf = (sludge.mass + air.mass + fuel.mass)
-        idx_n2 = cmps.index('N2')
-        idx_h2o = cmps.index('H2O')
+        idx_n2 = cmps.index(nitrogen_ID)
+        idx_h2o = cmps.index(water_ID)
         
         n2 = inf[idx_n2]
         h2o = inf[idx_h2o]
@@ -529,7 +536,7 @@ class Incinerator(SanUnit):
         
         mass_co2 = mass_flue_gas - n2*cmps.N2.i_mass - h2o*cmps.H2O.i_mass
         flue_gas.set_flow([n2, h2o, (mass_co2/cmps.S_CO2.i_mass)], 
-                          'kg/hr', ('S_N2', 'H2O', 'S_CO2'))
+                          'kg/hr', (nitrogen_ID, water_ID, carbon_di_oxide_ID))
         ash_cmp_ID = self.ash_component_ID
         ash_idx = cmps.index(ash_cmp_ID)
         ash.set_flow([mass_ash/cmps.i_mass[ash_idx]/(1-cmps.f_Vmass_Totmass[ash_idx])], 
@@ -559,9 +566,13 @@ class Incinerator(SanUnit):
             if ws.state is None:
                 ws.state = np.zeros(len(self._state)+1)
         
-        idx_h2o = cmps.index('H2O')
-        idx_n2 = cmps.index('N2')
-        idx_co2 = cmps.index('CO2')
+        nitrogen_ID = self.nitrogen_ID
+        water_ID = self.water_ID
+        carbon_di_oxide_ID = self.carbon_di_oxide_ID
+        
+        idx_h2o = cmps.index(water_ID)
+        idx_n2 = cmps.index(nitrogen_ID)
+        idx_co2 = cmps.index(carbon_di_oxide_ID)
         ash_idx = cmps.index(self.ash_component_ID)
         cmps_i_mass = cmps.i_mass
         cmps_v2tmass = cmps.f_Vmass_Totmass    
@@ -585,9 +596,13 @@ class Incinerator(SanUnit):
     def _update_dstate(self):
         
         cmps = self.components
-        idx_h2o = cmps.index('H2O')
-        idx_n2 = cmps.index('N2')
-        idx_co2 = cmps.index('CO2')
+        nitrogen_ID = self.nitrogen_ID
+        water_ID = self.water_ID
+        carbon_di_oxide_ID = self.carbon_di_oxide_ID
+        
+        idx_h2o = cmps.index(water_ID)
+        idx_n2 = cmps.index(nitrogen_ID)
+        idx_co2 = cmps.index(carbon_di_oxide_ID)
         ash_idx = cmps.index(self.ash_component_ID)
         d_state = self._dstate
         cmps_i_mass = cmps.i_mass
