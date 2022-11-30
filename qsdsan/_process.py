@@ -687,11 +687,12 @@ class Process:
         else: self._rate_equation = None
 
     def _rate_eq2func(self):
-        var = list(symbols(self._components.IDs+('Q',)))
-        lamb = lambdify(var, self.rate_equation, 'numpy')
+        var = list(symbols(self._components.IDs+('Q',))) \
+            + [symbols(p) for p in self._parameters.keys()]
+        lamb = lambdify(var, self._rate_equation, 'numpy')
         def f(state_arr, params={}):
-            return lamb(*state_arr)
-        self.kinetics(function=f)
+            return lamb(*state_arr, **params)
+        self.kinetics(function=f, parameters=self.parameters)
 
     def _normalize_stoichiometry(self, new_ref):
         isa = isinstance
@@ -1175,7 +1176,7 @@ class CompiledProcesses(Processes):
     def params_eval(self, state_arr):
         '''Evaluate the dynamic parameters in the stoichiometry given an array of state variables.'''
         dct = self._parameters
-        for k, p in self._dyn_params:
+        for k, p in self._dyn_params.items():
             dct[k] = p(state_arr)
 
     @property
@@ -1198,7 +1199,7 @@ class CompiledProcesses(Processes):
         dct_vals = self._parameters
         if dct:
             sbs = [i.symbol for i in dct.values()]
-            lamb = lambdify(sbs, self.stoichiometry.to_numpy(), 'numpy')
+            lamb = lambdify(sbs, self._stoichiometry, 'numpy')
             arr = np.empty((self.size, len(self._components)))
             def f():
                 v = [v for k,v in dct_vals.items() if k in dct.keys()]
