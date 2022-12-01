@@ -23,6 +23,7 @@ TODO:
 
 import sympy as sp
 from math import pi
+from biosteam import Stream
 from biosteam.exceptions import DesignError
 from biosteam.utils import ExponentialFunctor
 from biosteam.units.design_tools.tank_design import (
@@ -154,8 +155,6 @@ class InternalCirculationRx(MixTank):
     _default_vessel_type = 'IC'
     _default_vessel_material = 'Stainless steel'
     purchase_cost_algorithms = IC_purchase_cost_algorithms
-
-    # Other equipment, only capital cost will be automatically accounted for
     auxiliary_unit_names = ('heat_exchanger', 'effluent_pump', 'sludge_pump')
 
 
@@ -180,20 +179,21 @@ class InternalCirculationRx(MixTank):
         self.kW_per_m3 = kW_per_m3
         self.T = T
         # Initialize the attributes
-        self.heat_exchanger = hx = HXutility(None, None, None, T=T)
-        self.heat_utilities = hx.heat_utilities
+        ID = self.ID
+        hx_in = Stream(f'{ID}_hx_in')
+        hx_out = Stream(f'{ID}_hx_out')
+        # Add '.' in ID for auxiliary units
+        self.heat_exchanger = HXutility(ID=f'.{ID}_hx', ins=hx_in, outs=hx_out, T=T)
         self._refresh_rxns()
         # Conversion will be adjusted in the _run function
         self._xcmp = xcmp = getattr(self.components, biomass_ID)
         self._decay_rxn = xcmp.get_combustion_reaction(conversion=0.)
-        #!!! Double-check if this would interfere
-        eff = self._eff = self.outs[1].proxy(f'{ID}_eff')
-        sludge = self._sludge = self.outs[2].proxy(f'{ID}_sludge')
-        self.effluent_pump = Pump(f'{self.ID}_eff', ins=eff, init_with=init_with)
-        self.sludge_pump = Pump(f'{self.ID}_sludge', ins=sludge, init_with=init_with)
+        eff = self.outs[1].proxy(f'{ID}_eff')
+        sludge = self.outs[2].proxy(f'{ID}_sludge')
+        self.effluent_pump = Pump(f'.{ID}_eff_pump', ins=eff, init_with=init_with)
+        self.sludge_pump = Pump(f'.{ID}_sludge_pump', ins=sludge, init_with=init_with)
 
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+        for k, v in kwargs.items(): setattr(self, k, v)
 
 
     def _refresh_rxns(self, Y_biogas=None, Y_biomass=None):
@@ -214,8 +214,6 @@ class InternalCirculationRx(MixTank):
         inf.copy_like(self.ins[0])
         biogas.phase = 'g'
         biogas.empty()
-        gas = self._gas
-        gas.copy_like(biogas)
 
         inf.split_to(waste, eff, self.q_Qw)
         biogas_rxns = self.biogas_rxns
@@ -224,7 +222,7 @@ class InternalCirculationRx(MixTank):
         growth_rxns(inf.mol)
         biogas_rxns(inf.mol)
 
-        degassing(inf, gas)
+        degassing(inf, biogas)
         Se = compute_stream_COD(inf, 'kg/m3')
 
         Qi, Si, Xi, Qe, Y = self.Qi, self.Si, self.Xi, self.Qe, self.Y_biomass
@@ -337,20 +335,17 @@ class InternalCirculationRx(MixTank):
 
     def _cost(self):
         MixTank._cost(self)
+        
+        hx = self.heat_exchanger
+        ins0 = self.ins[0]
+        hx.ins[0].copy_flow(ins0)
+        hx.outs[0].copy_flow(ins0)
+        hx.ins[0].T = ins0.T
+        hx.outs[0].T = self.T
+        hx.ins[0].P = hx.outs[0].P = ins0.P
+        hx.simulate_as_auxiliary_exchanger(ins=hx.ins, outs=hx.outs)
 
-        power_utility = self.power_utility
-        pumps = (self.effluent_pump, self.sludge_pump)
-        for p in pumps:
-            p.simulate()
-            power_utility.rate += p.power_utility.rate
-
-        inf, T = self.ins[0], self.T
-        if T:
-            H_at_T = inf.thermo.mixture.H(mol=inf.mol, phase='l', T=T, P=101325)
-            duty = -(inf.H - H_at_T) if self.T else 0.
-        else:
-            duty = 0.
-        self.heat_exchanger.simulate_as_auxiliary_exchanger(duty, inf)
+        for p in (self.effluent_pump, self.sludge_pump): p.simulate()
 
 
     @property

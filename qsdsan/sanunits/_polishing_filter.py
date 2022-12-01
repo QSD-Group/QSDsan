@@ -14,6 +14,7 @@ for license details.
 
 from warnings import warn
 from math import pi, ceil
+from biosteam import Stream
 from thermosteam.reaction import ParallelReaction as PRxn
 from . import HXutility
 from ._pumping import WWTpump
@@ -173,8 +174,6 @@ class PolishingFilter(SanUnit):
                  F_BM=default_F_BM, lifetime=default_equipment_lifetime,
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with, F_BM_default=1)
-        self._inf_raw = self.ins[0].copy()
-        self._inf = self._inf_raw.copy()
         self.filter_type = filter_type
         self.OLR = OLR
         self.HLR = HLR
@@ -191,13 +190,17 @@ class PolishingFilter(SanUnit):
         self.F_BM.update(F_BM)
         self._default_equipment_lifetime.update(lifetime)
 
-        # Initiate the attributes
-        self.heat_exchanger = hx = HXutility(None, None, None, T=T)
-        self.heat_utilities = hx.heat_utilities
+        # Initialize the attributes
+        ID = self.ID
+        self._inf_raw = self.ins[0].copy(f'{ID}_inf_raw')
+        self._inf = self._inf_raw.copy(f'{ID}_inf')
+        hx_in = Stream(f'{ID}_hx_in')
+        hx_out = Stream(f'{ID}_hx_out')
+        # Add '.' in ID for auxiliary units
+        self.heat_exchanger = HXutility(ID=f'.{ID}_hx', ins=hx_in, outs=hx_out)
         self._refresh_rxns()
 
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+        for k, v in kwargs.items(): setattr(self, k, v)
 
 
     def _refresh_rxns(self, X_decomp=None, X_growth=None):
@@ -226,7 +229,7 @@ class PolishingFilter(SanUnit):
         raw, recycled, air_in = self.ins
         biogas, eff, waste, air_out = self.outs
 
-        # Initiate the streams
+        # Initialize the streams
         biogas.phase = 'g'
         biogas.empty()
 
@@ -476,8 +479,8 @@ class PolishingFilter(SanUnit):
 
         ### Heat and power ###
         T = self.T
-        if T is None:
-            loss = 0.
+        # Heat loss
+        if T is None: loss = 0.
         else:
             N_filter, d, D = self.N_filter, self.d, self.D
             A_W = pi * d * D
@@ -485,24 +488,26 @@ class PolishingFilter(SanUnit):
             A_W *= N_filter * _ft2_to_m2
             A_F *= N_filter * _ft2_to_m2
 
-            loss = self.H_wall * (T-self.T_air) * A_W / 1e3
-            loss += self.H_floor * (T-self.T_earth) * A_F / 1e3
-            loss += self.H_ceiling * (T-self.T_air) * A_F / 1e3
-        self._heat_loss = loss
-
-        # Fluid heating
+            loss = self.H_wall * (T-self.T_air) * A_W
+            loss += self.H_floor * (T-self.T_earth) * A_F
+            loss += self.H_ceiling * (T-self.T_air) * A_F
+            loss *= 60*60/1e3 # W (J/s) to kJ/hr
+        
+        # Stream heating
+        hx = self.heat_exchanger
         inf = self._inf
-        if T:
-            H_at_T = inf.thermo.mixture.H(mol=inf.mol, phase='l', T=T, P=101325)
-            duty = -(inf.H - H_at_T)
-        else:
-            duty = 0
-        self.heat_exchanger.simulate_as_auxiliary_exchanger(duty, inf)
+        hx_ins0, hx_outs0 = hx.ins[0], hx.outs[0]
+        hx_ins0.copy_flow(inf)
+        hx_outs0.copy_flow(inf)
+        hx_ins0.T = inf.T
+        hx_outs0.T = T
+        hx.H = hx_outs0.H + loss # stream heating and heat loss
+        hx.simulate_as_auxiliary_exchanger(ins=hx.ins, outs=hx.outs)
 
         # Degassing
         degassing = 3 * self.N_degasser # assume each uses 3 kW
 
-        self.power_utility.rate = loss + pumping_power + degassing
+        self.power_utility.rate = pumping_power + degassing
 
 
     @property

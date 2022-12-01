@@ -56,13 +56,13 @@ class SludgeThickening(SanUnit, Splitter):
 
     Parameters
     ----------
-    ins : Iterable(obj)
+    ins : Iterable(stream)
         Dilute sludge stream.
-    outs : Iterable(obj)
+    outs : Iterable(stream)
         Water/bulk-liquid-rich stream, concentrated sludge.
     sludge_moisture : float
         Moisture content of the sludge, [wt% water].
-    solids : Iterable(str)
+    solids : Iterable(stream)
         IDs of the solid components.
         If not provided, will be set to the default `solids` attribute of the components.
     disposal_cost : float
@@ -92,11 +92,13 @@ class SludgeThickening(SanUnit, Splitter):
         self.solids = solids or tuple((cmp.ID for cmp in cmps.solids))
         self.solubles = tuple([i.ID for i in cmps if i.ID not in self.solids])
         self.disposal_cost = disposal_cost
-        eff = self._eff = self.outs[0].proxy(f'{ID}_eff')
-        sludge = self._sludge = self.outs[1].proxy(f'{ID}_sludge')
-        self.effluent_pump = Pump(f'{self.ID}_eff', ins=eff, init_with=init_with)
-        self.sludge_pump = Pump(f'{self.ID}_sludge', ins=sludge, init_with=init_with)
-        self._mixed = self.ins[0].copy()
+        ID = self.ID
+        eff = self.outs[0].proxy(f'{ID}_eff')
+        sludge = self.outs[1].proxy(f'{ID}_sludge')
+        # Add '.' in ID for auxiliary units
+        self.effluent_pump = Pump(f'.{ID}_eff_pump', ins=eff, init_with=init_with)
+        self.sludge_pump = Pump(f'.{ID}_sludge_pump', ins=sludge, init_with=init_with)
+        self._mixed = self.ins[0].copy(f'{ID}_mixed')
         self._set_split_at_mc()
 
 
@@ -161,11 +163,7 @@ class SludgeThickening(SanUnit, Splitter):
         if self.SKIPPED == False:
             m_solids = self.outs[-1].F_mass
             self.add_OPEX = {'Sludge disposal': m_solids*self.disposal_cost}
-            power = 0
-            for p in (self.effluent_pump, self.sludge_pump):
-                p.simulate()
-                power += p.power_utility.rate
-            self.power_utility.rate = power
+            for p in (self.effluent_pump, self.sludge_pump): p.simulate()
         else:
             self.add_OPEX = {}
             self.baseline_purchase_costs.clear()
@@ -300,9 +298,9 @@ class SludgeSeparator(SanUnit):
 
     Parameters
     ----------
-    ins : WasteStream
+    ins : Iterable(stream)
         Waste for treatment.
-    outs : WasteStream
+    outs : Iterable(stream)
         Liquid, settled solids.
     split : float or dict
         Fractions of material retention in the settled solids.

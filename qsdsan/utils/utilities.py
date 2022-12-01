@@ -54,9 +54,9 @@ def sum_system_utility(system, operating_hours=None, exclude_units=(),
     0.0
     >>> # Exclude a certain unit
     >>> sum_system_utility(sys, utility='power') # doctest: +ELLIPSIS
-    8026.73435...
+    0.9156667...
     >>> sum_system_utility(sys, utility='power', exclude_units=(sys.units[0],)) # doctest: +ELLIPSIS
-    5795.72596...
+    0.6611597...
     '''
 
     hrs = operating_hours or getattr(system, 'operating_hours') or 1.
@@ -69,10 +69,10 @@ def sum_system_utility(system, operating_hours=None, exclude_units=(),
         unit = 'kWh/yr' if not result_unit else result_unit
         attr = 'consumption' if not calculate_net_utility else 'rate'
         tot = sum([get(i.power_utility, attr) for i in units if i.power_utility])*hrs
-        return auom('kWh/hr').convert(tot, unit)
+        return auom('kWh/yr').convert(tot, unit)
     elif utility == 'heating':
         unit = 'GJ/yr' if not result_unit else result_unit
-        hu = sum([i.heat_utilities for i in units], ())
+        hu = sum([i.heat_utilities for i in units], [])
         if not calculate_net_utility:
             tot = sum([i.duty for i in hu if i.flow*i.duty>0])/1e6*hrs
         else:
@@ -80,7 +80,7 @@ def sum_system_utility(system, operating_hours=None, exclude_units=(),
         return auom('GJ/yr').convert(tot, unit)
     elif utility == 'cooling':
         unit = 'GJ/yr' if not result_unit else result_unit
-        cu = sum([i.heat_utilities for i in units], ())
+        cu = sum([i.heat_utilities for i in units], [])
         if not calculate_net_utility:
             tot = sum([i.duty for i in cu if i.flow*i.duty<0])/1e6*hrs
         else:

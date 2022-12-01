@@ -69,7 +69,7 @@ Model = bst.Model
 Metric = bst.Metric
 Parameter = bst.Parameter
 Flowsheet = bst.Flowsheet
-main_flowsheet = bst.main_flowsheet
+F = main_flowsheet = bst.main_flowsheet
 CEPCI = bst.CE # Chemical Engineering Plant Cost Index
 CEPCI_by_year = bst.units.design_tools.CEPCI_by_year
 del tmo, bst

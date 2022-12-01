@@ -16,21 +16,21 @@ for license details.
 '''
 
 
-from biosteam.units import Tank, MixTank, StorageTank
+from biosteam.units import Tank as BSTTank, MixTank as BSTMixTank, StorageTank as BSTStorageTank
 from .. import SanUnit
 
 
 __all__ = ('Tank', 'MixTank', 'StorageTank', )
 
 
-class Tank(SanUnit, Tank, isabstract=True):
+class Tank(SanUnit, BSTTank, isabstract=True):
     '''
     Similar to the :class:`biosteam.units.Tank`,
     but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
 
     See Also
     --------
-    `biosteam.units.Tank <https://biosteam.readthedocs.io/en/latest/units/Tank.html>`_
+    :class:`biosteam.units.Tank`
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
@@ -48,7 +48,7 @@ class Tank(SanUnit, Tank, isabstract=True):
         self.kW_per_m3 = kW_per_m3 or self._default_kW_per_m3
 
 
-class MixTank(Tank, MixTank):
+class MixTank(Tank, BSTMixTank):
     '''
     Similar to the :class:`biosteam.units.MixTank`,
     but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
@@ -59,16 +59,16 @@ class MixTank(Tank, MixTank):
 
     See Also
     --------
-    `biosteam.units.MixTank <https://biosteam.readthedocs.io/en/latest/units/Tank.html>`_
+    :class:`biosteam.units.MixTank`
     '''
 
 
-class StorageTank(Tank, StorageTank):
+class StorageTank(Tank, BSTStorageTank):
     '''
     Similar to the :class:`biosteam.units.StorageTank`,
     but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`.
 
     See Also
     --------
-    `biosteam.units.StorageTank <https://biosteam.readthedocs.io/en/latest/units/Tank.html>`_
+    :class:`biosteam.units.StorageTank`
     '''

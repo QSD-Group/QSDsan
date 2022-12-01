@@ -499,7 +499,8 @@ class WasteStream(SanStream):
             r[name] = ratio
         self._ratios = r
 
-    def composite(self, variable, subgroup=None, particle_size=None,
+    def composite(self, variable, flow=False, exclude_gas=True, 
+                  subgroup=None, particle_size=None,
                   degradability=None, organic=None, volatile=None,
                   specification=None, unit=None):
         """
@@ -511,6 +512,12 @@ class WasteStream(SanStream):
             The composite variable to calculate. One of the followings:
             ("COD", "BOD5", "BOD", "uBOD", "NOD", "ThOD", "cnBOD",
             "C", "N", "P", "K", "Mg", "Ca", "solids", "charge").
+        flow : bool
+            Whether to return the composite variable in terms of flow
+            or concentration. The default is concentration.
+        exclude_gas : bool
+            Whether to exclude dissolved gas species in calculations of 
+            oxygen demand or nitrogen variables.
         subgroup : tuple(str or obj), optional
             Iterable of :class:`CompiledComponents` (or their IDs)
             which the composite variable will be calculated for.
@@ -540,7 +547,9 @@ class WasteStream(SanStream):
             (i.e., `subgroup`, `particle_size`, `degradability`, `organic`, `volatile`, and `specification`).
         unit : str
             The unit that the result will be returned in.
-            If not provided, result will be in mg/L except for charge (mmol/L).
+            If not provided, result will be in mg/L for concentration
+            and kg/hr for flow, except for charge (mmol/L for concentration,
+            kmol/hr for flow).
 
         Returns
         -------
@@ -553,13 +562,20 @@ class WasteStream(SanStream):
         >>> cmps = Components.load_default()
         >>> set_thermo(cmps)
         >>> ws = WasteStream.codstates_inf_model('ws', flow_tot=1000, pH=6.8, COD=500, TP=11)
-        >>> # To calculate the particulate BOD (i.e., xBOD) of the WasteStream object,
+        >>> # To calculate the particulate BOD (i.e., xBOD) concentration of the WasteStream object,
         >>> # you just need to specify the composite variable as "BOD", and particle size as "x"
         >>> ws.composite('BOD', particle_size='x') # doctest: +ELLIPSIS
         152.83...
         >>> # You can also adjust the unit you want the result to be in
         >>> ws.composite('BOD', particle_size='x', unit='g/L') # doctest: +ELLIPSIS
         0.15283...
+        >>> # To return the particulate BOD mass flow of the WasteStream object,
+        >>> # set "flow=True"
+        >>> ws.composite('BOD', flow=True, particle_size='x') # doctest: +ELLIPSIS
+        0.15283
+        >>> # Unit for flow rate can also be specified
+        >>> ws.composite('BOD', flow=True, particle_size='x', unit='kg/d') # doctest: +ELLIPSIS
+        3.66791...
         >>> # Biomass COD
         >>> ws.composite('COD', specification='X_Bio')
         0.0
@@ -591,9 +607,10 @@ class WasteStream(SanStream):
                            f"Must be one of {_defined_composite_vars}.")
 
         # Can only be used for liquid
-        if not self.phase == 'l':
-            raise RuntimeError('Only liquid streams can use the `composite` method, '
-                               f'the current WasteStream {self.ID} is {self.phase}.')
+        if not (self.phase == 'l' or flow):
+            raise RuntimeError('Only liquid streams can use the `composite` method'
+                               'for concentration calculation, the current '
+                               f'WasteStream {self.ID} is {self.phase}.')
 
         isa = isinstance
         all_cmps = self.components
@@ -625,8 +642,9 @@ class WasteStream(SanStream):
             IDs = tuple(subgroup_IDs)
 
         cmps = all_cmps.subgroup(IDs)
-        cmp_c = self.iconc[IDs] # [mg/L]
-        exclude_gas = cmps.s + cmps.c + cmps.x
+        if flow: cmp_c = self.imass[IDs] # [kg/hr]
+        else: cmp_c = self.iconc[IDs] # [mg/L]
+        exclude_gas = 1 - cmps.g * exclude_gas
 
         if variable == 'COD':
             var = cmps.i_COD * cmp_c * exclude_gas * (cmps.i_COD >= 0)
@@ -637,7 +655,7 @@ class WasteStream(SanStream):
         elif variable == 'NOD':
             var = cmps.i_NOD * cmp_c * exclude_gas
         elif variable == 'ThOD':
-            var = (cmps.i_NOD + cmps.i_COD * (cmps.i_COD >= 0)) * cmp_c
+            var = (cmps.i_NOD + cmps.i_COD * (cmps.i_COD >= 0)) * cmp_c * exclude_gas
         elif variable == 'cnBOD':
             var = (cmps.i_NOD + cmps.i_COD * cmps.f_BOD5_COD * (cmps.i_COD >= 0)) * cmp_c * exclude_gas
         elif variable == 'C':
@@ -653,7 +671,7 @@ class WasteStream(SanStream):
         elif variable == 'Ca':
             var = cmps.i_Ca * cmp_c
         elif variable == 'solids':
-            var = cmps.i_mass * cmp_c * exclude_gas
+            var = cmps.i_mass * cmp_c * (1-cmps.g)
             if volatile != None:
                 if volatile: var *= cmps.f_Vmass_Totmass
                 else: var *= 1-cmps.f_Vmass_Totmass
@@ -680,9 +698,12 @@ class WasteStream(SanStream):
         result = (dummy*var).sum()
         if not unit:
             return result
-
-        converted = auom('mg/L').convert(result, unit) if variable != 'charge' \
-            else auom('mmol/L').convert(result, unit)
+        if flow:
+            converted = auom('kg/hr').convert(result, unit) if variable != 'charge' \
+                else auom('kmol/hr').convert(result, unit)
+        else:
+            converted = auom('mg/L').convert(result, unit) if variable != 'charge' \
+                else auom('mmol/L').convert(result, unit)
         return converted
 
 
@@ -1130,7 +1151,6 @@ class WasteStream(SanStream):
 
     def _Q_obj_f(self, M_bulk, bulk_liquid_ID, target_Q):
         self.set_flow(M_bulk, 'kg/hr', bulk_liquid_ID)
-        self.F_vol*1e3 - target_Q
         return self.F_vol*1e3 - target_Q
 
     @property
