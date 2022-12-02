@@ -27,7 +27,7 @@ Example
         sys.simulate(t_span=(0, 3))
         BE.scope.plot_time_series(('X_BH', 'X_BA', 'X_S'))
 
-.. figure:: ../images/batch_experiment.png
+.. figure:: ../../images/batch_experiment.png
    :width: 50%
 
 
