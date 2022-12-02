@@ -21,6 +21,7 @@ import pandas as pd
 from numba import njit
 
 __all__ = ('CSTR',
+           'BatchExperiment',
            'SBR',
            )
 
@@ -291,6 +292,100 @@ class CSTR(SanUnit):
         pass
 
 #%%
+class BatchExperiment(SanUnit):
+    
+    _N_ins = 0
+    _N_outs = 0
+    # _ins_size_is_fixed = True
+    # _outs_size_is_fixed = True
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', 
+                 model=None, isdynamic=True, exogenous_vars=(), **kwargs):
+        '''
+        A batch reactor in experimental settings.
+
+        Parameters
+        ----------
+        model : :class:`CompiledProcesses`, optional
+            Process model that describes the dynamics of state variables. 
+            The `state` of the batch reactor is entirely determined by the 
+            stoichiometry and rate function in this model.
+        '''
+        SanUnit.__init__(self, ID, None, (), thermo, init_with, isdynamic=isdynamic,
+                         exogenous_vars=exogenous_vars)
+        self._model = model
+        self._concs = None
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+    
+    model = property(CSTR.suspended_growth_model.fget, CSTR.suspended_growth_model.fset)
+    
+    @property
+    def state(self):
+        '''The state of the BatchExperiment, i.e., component concentrations.'''
+        if self._state is None: return None
+        else:
+            return dict(zip(self.components.IDs, self._state[:-1]))
+
+    @state.setter
+    def state(self, concs):
+        concs = np.asarray(concs)
+        if concs.shape != (len(self.components), ):
+            raise ValueError(f'state must be a 1D array of length {len(self.components)},'
+                              'indicating component concentrations.')
+        self._state[:-1] = concs
+    
+    def set_init_conc(self, **kwargs):
+        '''set the initial concentrations of the BatchExperiment.'''
+        Cs = np.zeros(len(self.components))
+        cmpx = self.components.index
+        for k, v in kwargs.items(): Cs[cmpx(k)] = v
+        self._concs = Cs
+    
+    def _init_state(self):
+        if self._concs is None: 
+            raise RuntimeError('must `set_init_conc` before starting simulation.')
+        self._state = np.append(self._concs, 0)
+        self._dstate = self._state * 0.
+
+    def _update_state(self):
+        pass
+
+    def _update_dstate(self):
+        pass
+
+    def _run(self):
+        pass
+
+    @property
+    def ODE(self):
+        if self._ODE is None:
+            self._compile_ODE()
+        return self._ODE
+
+    #!!! how to considered sealed vs. open batch reactor (e.g., gaseous products/reactants)
+    def _compile_ODE(self):
+        if self._model is None:
+            warn(f'{self.ID} was initialized without a kinetic model, '
+                 f'and thus run as a non-reactive unit')
+            rs = np.zeros(len(self.components)+1) 
+            r = lambda state_arr: rs
+        else:
+            r = self.model.production_rates_eval
+
+        _dstate = self._dstate
+        hasexo = bool(len(self._exovars))
+        f_exovars = self.eval_exo_dynamic_vars
+        
+        def dy_dt(t, QC_ins, QC, dQC_ins):
+            if hasexo: QC = np.append(QC, f_exovars(t))
+            _dstate[:-1] = r(QC)
+            
+        self._ODE = dy_dt
+        
+    #TODO: add functions for convenient model calibration
+    
+#%% NOT READY
 class SBR(SanUnit):
     '''
     Sequential batch reactors operated in parallel. The number of reactors is
