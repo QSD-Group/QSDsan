@@ -23,8 +23,8 @@ QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Sys
    :target: https://qsdsan.readthedocs.io/en/latest
 
 .. GitHub test and coverage of the main branch
-.. image:: https://github.com/QSD-Group/QSDsan/actions/workflows/build-latest.yml/badge.svg?branch=main
-   :target: https://github.com/QSD-Group/QSDsan/actions/workflows/build-latest.yml
+.. image:: https://github.com/QSD-Group/QSDsan/actions/workflows/build-coverage.yml/badge.svg?branch=main
+   :target: https://github.com/QSD-Group/QSDsan/actions/workflows/build-coverage.yml
 
 .. Codecov
 .. image:: https://codecov.io/gh/QSD-Group/QSDsan/branch/main/graph/badge.svg?token=Z1CASBXEOE
