@@ -3,8 +3,10 @@ ADMtoASM,Yes,Yes,Completed
 ﻿AnMBR (anaerobic membrane bioreactor),No,No,Completed
 ActivatedSludgeProcess,No,No,Completed
 AnaerobicBaffledReactor,No,No,Completed
+AnaerobicCSTR,Yes,No,Under development
 AnaerobicDigestion,No,No,Completed
 ASMtoADM,Yes,Yes,Completed
+BatchExperiment,Yes,Yes,Completed
 BeltThickener,No,No,Completed
 BiogasCombustion,No,Yes,Completed
 CHP,No,No,Completed
@@ -13,7 +15,7 @@ ComponentSplitter,No,Yes,Completed
 Copier,No,Yes,Completed
 CropApplication,No,Yes,Completed
 DryingBed,No,No,Completed
-DynamicInfluent,Yes,No,Completed
+DynamicInfluent,Yes,Yes,Completed
 ElectrochemicalCell,No,No,Completed
 Excretion,No,No,Completed
 FakeSplitter,No,Yes,Completed

@@ -425,7 +425,7 @@ class ASM2d(CompiledProcesses):
                'mu_H', 'q_fe', 'eta_NO3_H', 'b_H', 'K_O2_H', 'K_F', 'K_fe', 'K_A_H',
                'K_NO3_H', 'K_NH4_H', 'K_P_H', 'K_ALK_H',
                'q_PHA', 'q_PP', 'mu_PAO', 'eta_NO3_PAO', 'b_PAO', 'b_PP', 'b_PHA',
-               'K_O2_PAO', 'K_NO3_PAO', 'K_A_PAO', 'K_NH4_PAO', 'K_PS',' K_P_PAO',
+               'K_O2_PAO', 'K_NO3_PAO', 'K_A_PAO', 'K_NH4_PAO', 'K_PS','K_P_PAO',
                'K_ALK_PAO', 'K_PP', 'K_MAX', 'K_IPP', 'K_PHA',
                'mu_AUT', 'b_AUT', 'K_O2_AUT', 'K_NH4_AUT', 'K_ALK_AUT', 'K_P_AUT',
                'k_PRE', 'k_RED', 'K_ALK_PRE')
