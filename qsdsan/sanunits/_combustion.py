@@ -218,7 +218,7 @@ class CHP(SanUnit, Facility):
         self.H_net_feeds_no_natural_gas = react(0)
         
         # Calculate all energy needs in kJ/hr as in H_net_feeds
-        kwds = dict(system=self.system, operating_hours=1., exclude_units=(self,))
+        kwds = dict(system=self.system, operating_hours=self.system.operating_hours, exclude_units=(self,))
         pu = self.power_utility
         H_heating_needs = sum_system_utility(**kwds, utility='heating', result_unit='kJ/hr')/self.combustion_eff
         H_power_needs = sum_system_utility(**kwds, utility='power', result_unit='kJ/hr')/self.combined_eff
@@ -265,7 +265,7 @@ class CHP(SanUnit, Facility):
 
     def _cost(self):
         unit_CAPEX = self.unit_CAPEX
-        unit_CAPEX /= 3600 # convert to $ per kJ
+        unit_CAPEX /= 3600 # convert to $ per kJ/hr
         self.baseline_purchase_costs['CHP'] = unit_CAPEX * self.H_net_feeds
 
 
