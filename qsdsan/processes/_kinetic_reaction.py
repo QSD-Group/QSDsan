@@ -93,7 +93,7 @@ class KineticReaction(Rxn):
     which is a first order equation at 320°C [1]_
     
     >>> rxn = KRxn('SO2Cl2', n=1, k=2.2e-5, t=1e5, reaction='SO2Cl2 -> SO2 +  Cl2')
-    >>> # The conversion is 0 at this stage (because we don't konw the concentration of SO2Cl2 yet)
+    >>> # The conversion is 0 at this stage (because we don't know the concentration of SO2Cl2 yet)
     >>> rxn.show()
     KineticReaction (by mol):
     stoichiometry        reactant    X[%]

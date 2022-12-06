@@ -645,7 +645,7 @@ class WWTpump(SanUnit):
         val_dct.update(kwargs)
 
         M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
-            Q_mgd=Q_mgd, N_pump=N_pump, **kwargs)
+            Q_mgd=Q_mgd, N_pump=N_pump, **val_dct)
 
         return M_SS_IR_pipe, M_SS_IR_pump, 0
 
@@ -684,7 +684,7 @@ class WWTpump(SanUnit):
         val_dct.update(kwargs)
 
         M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
-            Q_mgd=Q_mgd, N_pump=N_pump, **kwargs)
+            Q_mgd=Q_mgd, N_pump=N_pump, **val_dct)
 
         return M_SS_IR_pipe, M_SS_IR_pump, 0
 
@@ -715,7 +715,7 @@ class WWTpump(SanUnit):
         val_dct.update(kwargs)
 
         M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
-            Q_mgd=Q_mgd, N_pump=N_pump, **kwargs)
+            Q_mgd=Q_mgd, N_pump=N_pump, **val_dct)
 
         return M_SS_IR_pipe, M_SS_IR_pump, 0
 
@@ -768,7 +768,7 @@ class WWTpump(SanUnit):
         val_dct.update(kwargs)
 
         M_SS_CHEM_pipe, M_SS_CHEM_pump = self._design_generic(
-            Q_mgd=Q_CHEM_mgd, N_pump=N_pump, **kwargs)
+            Q_mgd=Q_CHEM_mgd, N_pump=N_pump, **val_dct)
 
         return M_SS_CHEM_pipe, M_SS_CHEM_pump, V_HDPE
 

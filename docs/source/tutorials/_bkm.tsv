@@ -1,0 +1,4 @@
+	X_S	S_S	O2	CO2	X_B	H2O	
+hydrolysis	-1	1	0	0	0	0	k_hyd*X_S
+growth	0	(-1)/y_B	?	?	1	0	mu_B*S_S/(K_S + S_S)*X_B
+decay	1	0	0	0	-1	0	b*X_B
