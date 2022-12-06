@@ -798,17 +798,7 @@ class PM2(CompiledProcesses):
     >>> cmps = pc.create_pm2_cmps()
     >>> pm2 = pc.PM2()
     >>> pm2.show()
-    PM2([photoadaptation, ammonium_uptake, phosphorus_uptake, growth_pho, 
-         carbohydrate_storage_pho, lipid_storage_pho, carbohydrate_growth_pho, 
-         lipid_growth_pho, carbohydrate_maintenance_pho, lipid_maintenance_pho, 
-         endogenous_respiration_pho, growth_ace, carbohydrate_storage_ace, 
-         lipid_storage_ace, carbohydrate_growth_ace, lipid_growth_ace, 
-         carbohydrate_maintenance_ace, lipid_maintenance_ace, 
-         endogenous_respiration_ace, growth_glu, carbohydrate_storage_glu, 
-         lipid_storage_glu, carbohydrate_growth_glu, lipid_growth_glu, 
-         carbohydrate_maintenance_glu, lipid_maintenance_glu, 
-         endogenous_respiration_glu, nitrate_uptake_pho, 
-         nitrate_uptake_ace, nitrate_uptake_glu])
+    PM2([photoadaptation, ammonium_uptake, nitrate_uptake_pho, nitrate_uptake_ace, nitrate_uptake_glu, phosphorus_uptake, growth_pho, carbohydrate_storage_pho, lipid_storage_pho, carbohydrate_growth_pho, lipid_growth_pho, carbohydrate_maintenance_pho, lipid_maintenance_pho, endogenous_respiration_pho, growth_ace, carbohydrate_storage_ace, lipid_storage_ace, carbohydrate_growth_ace, lipid_growth_ace, carbohydrate_maintenance_ace, lipid_maintenance_ace, endogenous_respiration_ace, growth_glu, carbohydrate_storage_glu, lipid_storage_glu, carbohydrate_growth_glu, lipid_growth_glu, carbohydrate_maintenance_glu, lipid_maintenance_glu, endogenous_respiration_glu])
     '''
 
     _shared_params = ('Y_CH_PHO', 'Y_LI_PHO', 'Y_X_ALG_PHO',
