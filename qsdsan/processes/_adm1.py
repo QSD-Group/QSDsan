@@ -53,6 +53,7 @@ def create_adm1_cmps(set_thermo=True):
                                     particle_size='Particulate',
                                     degradability='Slowly',
                                     organic=True)
+    X_ch.copy_models_from(X_c, names=('mu',))
     # X_ch = cmps_all.X_B_Subst.copy('X_ch')
     # X_ch.i_N = 0
     # X_ch.i_C = 0.0313 * C_mw
