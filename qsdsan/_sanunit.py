@@ -516,6 +516,8 @@ class SanUnit(Unit, isabstract=True):
         if self.hasode or dynamic_system:
             self._init_dynamic()
             for s in self.outs:
+                #!!! temporary fix to avoid rewriting feed streams
+                s.unlink()
                 s.empty()
 
     def get_retained_mass(self, biomass_IDs):
