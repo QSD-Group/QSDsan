@@ -64,11 +64,11 @@ class Pump(SanUnit, BSTPump):
         self._dstate = self._state * 0.
 
     def _update_state(self):
-        '''updates conditions of output stream based on conditions of the Mixer'''
+        '''updates conditions of output stream based on conditions of the Pump'''
         self._outs[0].state = self._state
 
     def _update_dstate(self):
-        '''updates rates of change of output stream from rates of change of the Mixer'''
+        '''updates rates of change of output stream from rates of change of the Pump'''
         self._outs[0].dstate = self._dstate
 
     @property
