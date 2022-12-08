@@ -276,7 +276,7 @@ class CHP(SanUnit, Facility):
             hu_dct = self._sys_heating_utilities = {}
             pu_dct = self._sys_power_utilities = {}
             for u in units:
-                hu_dct[u.ID] = tuple([i for i in u.heat_utilities if i.duty>0])
+                hu_dct[u.ID] = tuple([i for i in u.heat_utilities if i.duty*i.flow>0])
                 pu_dct[u.ID] = u.power_utility
 
 
