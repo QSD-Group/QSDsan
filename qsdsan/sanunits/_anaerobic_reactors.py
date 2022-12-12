@@ -565,6 +565,16 @@ class AnaerobicCSTR(CSTR):
         mass = cmps.i_mass * self._state[:len(cmps)] * 1e3 # kg/m3 to mg/L
         return self._V_max * mass[cmps.indices(biomass_IDs)].sum()
 
+    def _design(self):
+        inf = self.ins[0]
+        T_in = inf.T
+        T_target = self.T
+        if T_target > T_in:
+            unit_duty = inf.F_mass * inf.Cp * (T_target - T_in) #kJ/hr
+            self.add_heat_utility(unit_duty, T_in, T_out=T_target, 
+                                  heat_transfer_efficiency=0.8)
+
+
 # %%
 
 ad_path = ospath.join(data_path, 'sanunit_data/_anaerobic_digestion.tsv')
