@@ -13,8 +13,9 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-from .. import SanUnit
+from .. import SanUnit, WasteStream
 import numpy as np
+
 
 __all__ = ('Thickener', 'DewateringUnit', 'Incinerator')
 
@@ -23,7 +24,6 @@ class Thickener(SanUnit):
     """
     Thickener based on BSM2 Layout. [1]
 
-    Parameters
     ----------
     ID : str
         ID for the Thickener. The default is ''.
@@ -126,6 +126,7 @@ class Thickener(SanUnit):
         self.TSS_removal_perc = TSS_removal_perc
         self.solids_loading_rate = solids_loading_rate 
         self.h_cylinderical = h_cylinderical
+        self.mixed = WasteStream()
         
     @property
     def thickener_perc(self):
@@ -169,7 +170,8 @@ class Thickener(SanUnit):
             
     @property
     def thickener_factor(self):
-        inf, = self.ins
+        self.mixed.mix_from(self.ins)
+        inf = self.mixed
         if not self.ins: return
         elif inf.isempty(): return
         else: 
@@ -193,7 +195,8 @@ class Thickener(SanUnit):
     
     def _run(self):
         
-        inf, = self.ins
+        self.mixed.mix_from(self.ins)
+        inf = self.mixed
         uf, of = self.outs
         cmps = self.components
         
@@ -529,11 +532,10 @@ class Incinerator(SanUnit):
         h2o = inf[idx_h2o]
         
         mass_ash = np.sum(inf*cmps.i_mass*(1-cmps.f_Vmass_Totmass)) \
-            - h2o*cmps.H2O.i_mass*(1-cmps.H2O.f_Vmass_Totmass)
+                   - h2o*cmps.H2O.i_mass*(1-cmps.H2O.f_Vmass_Totmass) - n2*cmps.N2.i_mass*(1-cmps.N2.f_Vmass_Totmass)
 
         # Conservation of mass 
         mass_flue_gas = np.sum(inf*cmps.i_mass) - mass_ash
-        
         mass_co2 = mass_flue_gas - n2*cmps.N2.i_mass - h2o*cmps.H2O.i_mass
         flue_gas.set_flow([n2, h2o, (mass_co2/cmps.S_CO2.i_mass)], 
                           'kg/hr', (nitrogen_ID, water_ID, carbon_di_oxide_ID))
@@ -583,7 +585,7 @@ class Incinerator(SanUnit):
         self._outs[0].state[idx_n2] = n2 = inf[idx_n2]
         
         mass_ash = np.sum(inf*cmps_i_mass*(1-cmps_v2tmass)) \
-            - h2o*cmps.H2O.i_mass*(1-cmps_v2tmass[idx_h2o])
+                   - h2o*cmps.H2O.i_mass*(1-cmps_v2tmass[idx_h2o]) - n2*cmps.N2.i_mass*(1-cmps_v2tmass[idx_n2])
         mass_flue_gas = mass_in_tot - mass_ash
         mass_co2 = mass_flue_gas - n2 - h2o
         
@@ -620,7 +622,7 @@ class Incinerator(SanUnit):
         d_mass_in_tot = np.sum(d_state*cmps_i_mass)
         
         d_mass_ash = np.sum(d_state*cmps_i_mass*(1-cmps_v2tmass)) \
-            - d_h2o*cmps.H2O.i_mass*(1-cmps_v2tmass[idx_h2o])
+            - d_h2o*cmps.H2O.i_mass*(1-cmps_v2tmass[idx_h2o]) - d_n2*cmps.N2.i_mass*(1-cmps_v2tmass[idx_n2])
         d_mass_flue_gas = d_mass_in_tot - d_mass_ash
         d_mass_co2 = d_mass_flue_gas - d_n2  - d_h2o
         
