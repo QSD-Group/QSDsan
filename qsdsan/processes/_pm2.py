@@ -596,7 +596,6 @@ class PM2(CompiledProcesses):
     --------
     >>> from qsdsan import processes as pc
     >>> cmps = pc.create_pm2_cmps()
-    CompiledComponents([X_CHL, X_ALG, X_CH, X_LI, S_CO2, S_A, S_F, S_O2, S_NH, S_NO, S_P, X_N_ALG, X_P_ALG, H2O])
     >>> pm2 = pc.PM2()
     >>> pm2.show()
     PM2([photoadaptation, ammonium_uptake, nitrate_uptake_pho, nitrate_uptake_ace, nitrate_uptake_glu, phosphorus_uptake, 
