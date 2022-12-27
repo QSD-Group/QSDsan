@@ -14,13 +14,17 @@ for license details.
 
 # %%
 
+import qsdsan as qs
 from warnings import warn
 from biosteam.utils import MissingStream
 from . import Stream
+from .utils import auom
 
 __all__ = ('SanStream', 'MissingSanStream')
 
 setattr = object.__setattr__
+
+excluded_slots = ('characterization_factors',)
 
 class SanStream(Stream):
     '''
@@ -47,7 +51,11 @@ class SanStream(Stream):
 
     '''
 
-    __slots__ = (*Stream.__slots__, '_impact_item', '_stream_impact_item')
+    __slots__ = (
+        *[i for i in Stream.__slots__ if i not in excluded_slots],
+        '_impact_item',
+        '_stream_impact_item',
+        )
     ticket_name = 'ss'
 
     def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
@@ -73,7 +81,7 @@ class SanStream(Stream):
 
         Both ``copy`` and ``copy_like`` makes the new stream the same as the original one
         (other than that the new stream does not have the cost),
-        but when using ``copy``, you do now need to pre-create the new stream,
+        but when using ``copy``, you do not need to pre-create the new stream,
         (i.e., you can just do ``new_stream = original_stream.copy('new_ID')``),
         but to use ``copy_like``, you need to firstly create the new stream, then
         ``new_stream.copy_like(original_stream)``.
@@ -501,9 +509,124 @@ class SanStream(Stream):
              'please use `stream_impact_item` instead.')
         return self.stream_impact_item
 
+    # BioSTEAM/Thermosteam related properties,
+    # modified and issue warnings when necessary to prevent misuse
     @property
     def components(self):
         return self.chemicals
+    
+    def add_indicators(self, **indicator_CFs):
+        '''
+        Add impact characterization factors for the stream.
+        
+        Parameters
+        ----------
+        indicator_CFs : kwargs
+            Impact indicators and their characterization factors (CFs),
+            can be in the form of str=float or str=(float, unit).
+            
+        See Also
+        --------
+        :func:`get_impacts` for examples.
+        '''
+        Item = qs.StreamImpactItem
+        item = self.stream_impact_item or Item(ID='', linked_stream=self)
+        CF_dct = Item._format_CF_vals(item, **indicator_CFs)
+        for indicator, (value, unit) in CF_dct.items():
+            item.add_indicator(indicator, value, unit)
+    
+    def get_impact(self, indicator, time=1, time_unit='hour'):
+        '''
+        Calculate the impact of the stream for an indicator for a given time frame,
+        the result will be returned as a float.
+        
+        Parameters
+        ----------
+        indicator : obj or str
+            :class:`ImpactIndicator` of interest or its ID/alias.
+        time : float
+            Time for the impact to be calculated.
+        time_unit : str
+            Unit of the time.
+            
+        See Also
+        --------
+        :func:`get_impacts` for examples.
+        '''
+        if time_unit not in ('hour', 'hr', 'h'):
+            time = auom(time_unit).convert(time, 'hour')
+        if not self.stream_impact_item: return 0.
+        Indicator = qs.ImpactIndicator
+        if isinstance(indicator, Indicator):
+            CF = self.stream_impact_item.CFs.get(indicator.ID, 0.)
+        else:
+            try: CF = self.stream_impact_item.CFs[indicator]
+            except KeyError:
+                CF = self.stream_impact_item.CFs.get(Indicator.get_indicator(indicator).ID, 0.)
+        return CF * time
+    
+    def get_impacts(self, indicators=(), time=1, time_unit='hour'):
+        '''
+        Calculate the impact of the stream for different indicators for a given time frame,
+        results will be returned as a dict.
+        
+        Parameters
+        ----------
+        indicators : Iterable
+            IDs of the impact indicators to be calculated,
+            all impact indicators linked to the stream will be calcualted if not given.
+        time : float
+            Time for the impact to be calculated.
+        time_unit : str
+            Unit of the time.
+        
+        Examples
+        --------
+        >>> import qsdsan as qs
+        >>> GWP = qs.ImpactIndicator('GlobalWarming', alias='GWP', unit='kg CO2-eq')
+        >>> FEC = qs.ImpactIndicator('FossilEnergyConsumption', alias='FEC', unit='MJ')
+        >>> sys = qs.utils.create_example_system()
+        >>> ethanol = sys.flowsheet.stream.ethanol
+        >>> ethanol.add_indicators(GWP=2, FEC=(5000, 'kJ'),)
+        >>> ethanol.stream_impact_item.show()
+        StreamImpactItem: ethanol_item [per kg]
+        Linked to       : ethanol
+        Price           : None USD
+        ImpactIndicators:
+                                      Characterization factors
+        GlobalWarming (kg CO2-eq)                            2
+        FossilEnergyConsumption (MJ)                         5
+        >>> # `get_impact` returns a float
+        >>> ethanol.get_impact('GWP', time=5, time_unit='day')
+        240.0
+        >>> # `get_impacts` returns a dict
+        >>> ethanol.get_impacts()
+        {'GlobalWarming': 2, 'FossilEnergyConsumption': 5.0}
+        '''
+        indicators = indicators or self.stream_impact_item.indicators or ()
+        get_impact = self.get_impact
+        return {indicator.ID: get_impact(indicator) for indicator in indicators}
+
+    
+    @property
+    def characterization_factors(self):
+        warn('The property `characterization_factors` is used in biosteam/thermosteam, '
+             ' not qsdsan. Use `stream_impact_item` instead.')
+    @characterization_factors.setter
+    def characterization_factors(self, i):
+        if not i: return
+        warn('The property `characterization_factors` is used in biosteam/thermosteam, '
+             ' not qsdsan. Use `add_impact` instead.')
+    
+    def get_CF(self):
+        warn('The property `get_CF` is used in biosteam/thermosteam, '
+             ' not qsdsan. Use `stream_impact_item` instead.')
+    
+    def set_CF(self):
+        warn('The property `set_CF` is used in biosteam/thermosteam, '
+             ' not qsdsan. Use `stream_impact_item` instead.')
+
+
 
 
 # %%
