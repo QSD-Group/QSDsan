@@ -69,6 +69,8 @@ class ReclaimerECR(SanUnit):
     [2] Duke Center for WaSH-AID Reclaimer design team data and guidance
     https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
     '''
+    _N_ins = 1
+    _N_outs = 1
 
     # Constants
     baseline_ppl = 30  # baseline population served by Reclaimer
@@ -89,14 +91,12 @@ class ReclaimerECR(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    _N_ins = 1
-    _N_outs = 1
-
+    def _init_lca(self):
+        self.construction = Construction(item='Titanium', linked_unit=self, quantity_unit='kg')
 
     def _design(self):
         design = self.design_results
-        design['Titanium'] = electrode_quant = self.Titanium_weight * (self.ppl / self.baseline_ppl)  # linear scale
-        self.construction = Construction(item='Titanium', quantity=electrode_quant, quantity_unit='kg')
+        design['Titanium'] = self.construction[0].quantity = self.Titanium_weight * (self.ppl / self.baseline_ppl)  # linear scale
         self.add_construction(add_cost=False)
 
     def _cost(self):
@@ -179,19 +179,22 @@ class ReclaimerHousing(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+    def _init_lca(self):
+        self.construction = (
+            Construction(item='Steel', linked_unit=self, quantity_unit='kg'),
+            Construction(item='Metal', linked_unit=self, quantity_unit='kg'),
+            )
+
 
     def _design(self):
         design = self.design_results
-        design['Steel'] = steel_quant = (
+        constr = self.construction
+        design['Steel'] = constr[0].quantity = (
             self.steel_weight +
             self.framework_weight/4 +
             self.fittings_weight
             ) * (self.ppl / self.baseline_ppl)  # linear scale
-        design['Metal'] = metal_quant = self.aluminum_weight * (self.ppl / self.baseline_ppl)  # linear scale
-        self.construction = (
-            Construction(item='Steel', quantity=steel_quant, quantity_unit='kg'),
-            Construction(item='Metal', quantity=metal_quant, quantity_unit='kg')
-            )
+        design['Metal'] = constr[1].quantity = self.aluminum_weight * (self.ppl / self.baseline_ppl)  # linear scale
         self.add_construction(add_cost=False)
 
     def _cost(self):
@@ -287,6 +290,13 @@ class ReclaimerIonExchange(SanUnit):
 
         for attr, value in kwargs.items():
             setattr(self, attr, value)
+            
+    def _init_lca(self):
+        self.construction = (
+            Construction(item='Plastic', linked_unit=self, quantity_unit='kg'),
+            Construction(item='PVC', linked_unit=self, quantity_unit='kg'),
+            Construction(item='Steel', linked_unit=self, quantity_unit='kg'),
+            )
 
     _N_ins = 4
     _N_outs = 4
@@ -321,16 +331,11 @@ class ReclaimerIonExchange(SanUnit):
 
     def _design(self):
         design = self.design_results
+        constr = self.construction
         factor = self.ppl / self.baseline_ppl # linear scale
-        design['Plastic'] = P_quant = self.Plastic_weight * factor
-        design['PVC'] = PVC_quant = self.PVC_weight * factor
-        design['Steel'] = S_quant = self.Steel_weight * factor
-
-        self.construction = (
-            Construction(item='Plastic', quantity=P_quant, quantity_unit='kg'),
-            Construction(item='PVC', quantity=PVC_quant, quantity_unit='kg'),
-            Construction(item='Steel', quantity=S_quant, quantity_unit='kg'),
-            )
+        design['Plastic'] = constr[0].quantity = self.Plastic_weight * factor
+        design['PVC'] = constr[1].quantity = self.PVC_weight * factor
+        design['Steel'] = constr[2].quantity = self.Steel_weight * factor
         self.add_construction(add_cost=False)
 
     def _cost(self):
@@ -429,15 +434,17 @@ class ReclaimerSolar(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-
+    def _init_lca(self):
+        self.construction = (
+            Construction(item='Solar', linked_unit=self, quantity_unit='m2'),
+            Construction(item='Battery', linked_unit=self, quantity_unit='kg'),
+            )
+        
     def _design(self):
         design = self.design_results
-        design['Solar'] = solar_quant = self.solar_capacity
-        design['Battery'] = battery_quant = self.battery_kg
-
-        self.construction = Construction(item='Solar', quantity=solar_quant, quantity_unit='m2')
-        self.construction = Construction(item='Battery', quantity=battery_quant, quantity_unit='kg')
-
+        constr = self.construction
+        design['Solar'] = constr[0].quantity = self.solar_capacity
+        design['Battery'] = constr[1].quantity = self.battery_kg
         self.add_construction(add_cost=False)
 
     def _cost(self):
@@ -514,11 +521,12 @@ class ReclaimerSystem(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+    def _init_lca(self):
+        self.construction = (Construction(item='Steel', linked_unit=self, quantity_unit='kg'),)
 
     def _design(self):
         design = self.design_results
-        design['Steel'] = steel_quant = self.steel_weight * (self.ppl / self.baseline_ppl)  # linear scale
-        self.construction = Construction(item='Steel', quantity=steel_quant, quantity_unit='kg')
+        design['Steel'] = self.construction[0].quantity = self.steel_weight * (self.ppl / self.baseline_ppl)  # linear scale
         self.add_construction(add_cost=False)
 
     def _cost(self):
@@ -602,6 +610,8 @@ class ReclaimerUltrafiltration(SanUnit):
     [2] Duke Center for WaSH-AID Reclaimer design team data and guidance
     https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
     '''
+    _N_ins = 1
+    _N_outs = 2
 
     # Constants
     baseline_ppl = 30  # baseline population served by Reclaimer
@@ -623,8 +633,11 @@ class ReclaimerUltrafiltration(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    _N_ins = 1
-    _N_outs = 2
+    def _init_lca(self):
+        self.construction = (
+            Construction(item='Plastic', linked_unit=self, quantity_unit='kg'),
+            Construction(item='Steel', linked_unit=self, quantity_unit='kg'),
+            )
 
     def _run(self):
         waste = self.ins[0]
@@ -636,13 +649,10 @@ class ReclaimerUltrafiltration(SanUnit):
 
     def _design(self):
         design = self.design_results
+        constr = self.construction
         factor = self.ppl / self.baseline_ppl # linear scale
-        design['Plastic'] = plastic_quant = self.Plastic_weight * factor
-        design['Steel'] = steel_quant = self.Steel_weight * factor
-
-        self.construction = (Construction(item='Plastic', quantity=plastic_quant, quantity_unit='kg'),
-                             Construction(item='Steel', quantity=steel_quant, quantity_unit='kg'))
-
+        design['Plastic'] = constr[0].quantity = self.Plastic_weight * factor
+        design['Steel'] = constr[1].quantity = self.Steel_weight * factor
         self.add_construction(add_cost=False)
 
     def _cost(self):

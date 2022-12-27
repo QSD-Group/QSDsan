@@ -254,7 +254,18 @@ class ImpactItem:
 
 
     def add_indicator(self, indicator, CF_value, CF_unit=''):
-        '''Add an indicator with characterization factor values.'''
+        '''
+        Add an indicator with characterization factor values.
+
+        Parameters
+        ----------
+        indicator : obj or str
+            :class:`ImpactIndicator` or its ID.
+        CF_value : float
+            Characterization factor of the indicator.
+        CF_unit : str
+            Unit of the characterization factor value.
+        '''
         if not hasattr(self, '_source'): self._source = None
         source_item = check_source(self, True)
         if isinstance(indicator, str):

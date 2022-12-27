@@ -18,10 +18,10 @@ import numpy as np, flexsolve as flx
 from warnings import warn
 from math import ceil
 from biosteam import Splitter, SolidsCentrifuge
-from .. import SanUnit, Construction
+from .. import SanUnit
 from ..processes import Decay
 from ..sanunits import Pump
-from ..utils import ospath, load_data, data_path, dct_from_str, price_ratio
+from ..utils import ospath, load_data, data_path, dct_from_str
 
 __all__ = (
     'SludgeThickening',
