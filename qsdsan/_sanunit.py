@@ -25,6 +25,7 @@ from collections.abc import Iterable
 from warnings import warn
 from biosteam._unit import ProcessSpecification
 from biosteam.utils import (
+    AbstractMethod,
     Inlets,
     MissingStream,
     Outlets,
@@ -163,6 +164,8 @@ class SanUnit(Unit, isabstract=True):
     `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
 
     '''
+    _init_lca = AbstractMethod
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  construction=(), transportation=(), equipments=(),
                  add_OPEX={}, uptime_ratio=1., lifetime=None, F_BM_default=None,
@@ -196,7 +199,7 @@ class SanUnit(Unit, isabstract=True):
 
         #: Name-number pairs of baseline purchase costs and auxiliary unit 
         #: operations in parallel. Use 'self' to refer to the main unit. Capital 
-        #: and heat and power utilities in parallel will become propotional to this 
+        #: and heat and power utilities in parallel will become proportional to this 
         #: value.
         self.parallel: dict[str, int] = {}
 
@@ -211,6 +214,7 @@ class SanUnit(Unit, isabstract=True):
         # Make fresh ones for each unit
         self.construction = () if not construction else construction
         self.transportation = () if not transportation else transportation
+        self._init_lca()
         self.equipments = () if not equipments else equipments
         self.add_OPEX = add_OPEX.copy()
         self.uptime_ratio = 1.
