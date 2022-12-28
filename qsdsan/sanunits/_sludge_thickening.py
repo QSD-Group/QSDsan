@@ -321,6 +321,8 @@ class SludgeSeparator(SanUnit):
     https://doi.org/10.1021/acs.est.0c03296.
 
     '''
+    _N_ins = 1
+    _outs_size_is_fixed = False
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  split=None, settled_frac=None, **kwargs):
@@ -331,9 +333,6 @@ class SludgeSeparator(SanUnit):
         self.settled_frac = settled_frac or float(data.loc['settled_frac']['expected'])
         del data
 
-
-    _N_ins = 1
-    _outs_size_is_fixed = False
 
     def _adjust_solid_water(self, influent, liq, sol):
         sol.imass['H2O'] = 0

@@ -238,10 +238,10 @@ class EcoSanBioCost(SanUnit):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction(item='Pump', linked_unit=self, quantity_unit='ea'),
             Construction(item='FRP', linked_unit=self, quantity_unit='kg'),
-            )
+            ]
 
     def _design(self):
         design = self.design_results
@@ -326,10 +326,10 @@ class EcoSanECR(SanUnit, Decay):
             setattr(self, attr, value)
             
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction(item='Pump', linked_unit=self, quantity_unit='ea'),
             Construction(item='Metal', linked_unit=self, quantity_unit='kg'),
-        )
+        ]
 
     def _refresh_data(self):
         sheet_name = 'standalone' if not self.if_after_MBR else 'after_MBR'
@@ -462,7 +462,7 @@ class EcoSanMBR(SanUnit, Decay):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (Construction(item='FRP', linked_unit=self, quantity_unit='kg'),)
+        self.construction = [Construction(item='FRP', linked_unit=self, quantity_unit='kg'),]
 
 
     def _design(self):
@@ -537,7 +537,7 @@ class EcoSanPrimary(SepticTank):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (Construction(item='FRP', linked_unit=self, quantity_unit='kg'),)
+        self.construction = [Construction(item='FRP', linked_unit=self, quantity_unit='kg'),]
 
     def _refresh_data(self):
         sheet_name = 'with_MBR' if not self.if_with_MBR else 'without_MBR'
@@ -626,10 +626,10 @@ class EcoSanSolar(SanUnit):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction(item='Solar', linked_unit=self, quantity_unit='m2'),
             Construction(item='Battery', linked_unit=self, quantity_unit='kg'),
-            )
+            ]
 
 
     def _design(self):
@@ -683,7 +683,7 @@ class EcoSanSystem(SanUnit):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (Construction(item='Pump', linked_unit=self, quantity_unit='ea'),)
+        self.construction = [Construction(item='Pump', linked_unit=self, quantity_unit='ea'),]
 
     def _design(self):
         self.design_results['Pump'] = self.construction[0].quantity = self.pump_amount

@@ -102,10 +102,10 @@ class SepticTank(SanUnit, Decay):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction(item='FRP', linked_unit=self, quantity_unit='kg'),
             Construction(item='Pump', linked_unit=self, quantity_unit='each'),
-            )
+            ]
 
     def _run(self):
         waste, MgOH2 = self.ins

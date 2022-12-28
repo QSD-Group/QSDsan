@@ -108,12 +108,12 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
             Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
             Construction('electric_motor', linked_unit=self, item='ElectricMotor', quantity_unit='ea'),
             Construction('electronics', linked_unit=self, item='Electronics', quantity_unit='kg'),
-            )
+            ]
 
     def _run(self):
         waste = self.ins[0]
@@ -135,7 +135,7 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
         for element in NPK:
             biochar.imass[element] *= 1 - getattr(self, f'pyrolysis_{element}_loss')
         biochar.imass['OtherSS'] = biochar_prcd - biochar.imass[('C', *NPK)].sum()
-        biochar.imass['H2O'] = 0.025 * biochar.F_mass # kg H20 / hr with 2.5% moisture content
+        biochar.imass['H2O'] = 0.025 * biochar.F_mass # kg H2O / hr with 2.5% moisture content
 
         # Daily run time for the influent waste
         # One unit is capable of treating 550 kg/d (35% moisture based on 20 hr of run time) or 18 kg dry/hr
@@ -281,11 +281,11 @@ class BiogenicRefineryControls(SanUnit):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction('electronics', linked_unit=self, item='Electronics', quantity_unit='kg'),
             Construction('electric_connectors', linked_unit=self, item='ElectricConnectors', quantity_unit='kg'),
             Construction('electric_cables', linked_unit=self, item='ElectricCables', quantity_unit='m'),
-            )
+            ]
 
     def _design(self):
         design = self.design_results
@@ -379,9 +379,9 @@ class BiogenicRefineryGrinder(SanUnit):
             setattr(self, attr, value)
             
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
-            )
+            ]
 
     def _run(self):
         waste_in = self.ins[0]
@@ -475,12 +475,12 @@ class BiogenicRefineryHHX(SanUnit):
             setattr(self, attr, value)
     
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
             Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
             Construction('hydronic_heat_exchanger', linked_unit=self, item='HydronicHeatExchanger', quantity_unit='ea'),
             Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
-            )
+            ]
 
     def _run(self):
         hot_gas_in = self.ins[0]
@@ -699,11 +699,11 @@ class BiogenicRefineryHousing(SanUnit):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
             Construction('stainless_steel_sheet', item='StainlessSteelSheet', linked_unit=self, quantity_unit='kg'),
             Construction('concrete', item='Concrete', linked_unit=self, quantity_unit='m3'),
-            )
+            ]
 
     def _design(self):
         design = self.design_results
@@ -785,10 +785,10 @@ class BiogenicRefineryIonExchange(SanUnit):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction('pvc', linked_unit=self, item='PVC', quantity_unit='kg'),
             Construction('pe', linked_unit=self, item='PE', quantity_unit='kg'),
-            )
+            ]
 
 
     def _run(self):
@@ -913,10 +913,10 @@ class BiogenicRefineryOHX(SanUnit):
 
     
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction('oil_heat_exchanger', linked_unit=self, item='OilHeatExchanger', quantity_unit='ea'),
             Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
-            )
+            ]
     
 
     def _run(self):
@@ -1008,12 +1008,12 @@ class BiogenicRefineryPollutionControl(SanUnit):
             setattr(self, attr, value)
             
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
             Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
             Construction('electric_motor', linked_unit=self, item='ElectricMotor', quantity_unit='ea'),
             Construction('catalytic_converter', linked_unit=self, item='CatalyticConverter', quantity_unit='ea'),
-            )
+            ]
 
 
     def _run(self):
@@ -1139,8 +1139,9 @@ class BiogenicRefineryScrewPress(SludgeSeparator):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (
-            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'))
+        self.construction = [
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            ]
 
 
     def _run(self):
@@ -1233,10 +1234,10 @@ class BiogenicRefineryStruvitePrecipitation(SanUnit):
             setattr(self, attr, value)
 
     def _init_lca(self):            
-        self.construction = (
+        self.construction = [
             Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
             Construction('pvc', linked_unit=self, item='PVC', quantity_unit='kg'),
-            )
+            ]
 
 
     def _run(self):

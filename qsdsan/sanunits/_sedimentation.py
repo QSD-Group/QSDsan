@@ -88,10 +88,10 @@ class Sedimentation(SludgeSeparator, Decay):
 
 
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
             Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
-            )
+            ]
 
     def _run(self):
         waste = self.ins[0]

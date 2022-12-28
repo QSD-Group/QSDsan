@@ -96,11 +96,11 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
 
 
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
             Construction('gravel', linked_unit=self, item='Gravel', quantity_unit='kg'),
             Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
-            )
+            ]
 
 
     def _design(self):
@@ -634,10 +634,10 @@ class AnaerobicDigestion(SanUnit, Decay):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
             Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
-            )
+            ]
 
 
     def _design(self):

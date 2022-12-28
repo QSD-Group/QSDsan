@@ -86,10 +86,10 @@ class Lagoon(SanUnit, Decay):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction('liner', linked_unit=self, item='Plastic', quantity_unit='kg'),
             Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
-            )
+            ]
 
     def _run(self):
         Decay._first_order_run(self)
