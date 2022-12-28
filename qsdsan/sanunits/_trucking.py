@@ -82,7 +82,7 @@ class Trucking(SanUnit):
                            distance=distance, distance_unit=distance_unit,
                            interval=interval, interval_unit=interval_unit)
         total = single.copy('total_truck', linked_unit=self)
-        self.transportation = (total,)
+        self.transportation = [total,]
         self._update_fee(fee, fee_unit)
         self.if_material_loss = if_material_loss
         self.loss_ratio = loss_ratio

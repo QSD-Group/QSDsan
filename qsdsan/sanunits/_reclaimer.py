@@ -92,7 +92,7 @@ class ReclaimerECR(SanUnit):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = Construction(item='Titanium', linked_unit=self, quantity_unit='kg')
+        self.construction = [Construction(item='Titanium', linked_unit=self, quantity_unit='kg'),]
 
     def _design(self):
         design = self.design_results
@@ -180,10 +180,10 @@ class ReclaimerHousing(SanUnit):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction(item='Steel', linked_unit=self, quantity_unit='kg'),
             Construction(item='Metal', linked_unit=self, quantity_unit='kg'),
-            )
+            ]
 
 
     def _design(self):
@@ -272,6 +272,8 @@ class ReclaimerIonExchange(SanUnit):
     [4] Duke Center for WaSH-AID Reclaimer design team data and guidance
     https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
     '''
+    _N_ins = 4
+    _N_outs = 4
 
     # Constants
     baseline_ppl = 30  # baseline population served by Reclaimer
@@ -292,14 +294,11 @@ class ReclaimerIonExchange(SanUnit):
             setattr(self, attr, value)
             
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction(item='Plastic', linked_unit=self, quantity_unit='kg'),
             Construction(item='PVC', linked_unit=self, quantity_unit='kg'),
             Construction(item='Steel', linked_unit=self, quantity_unit='kg'),
-            )
-
-    _N_ins = 4
-    _N_outs = 4
+            ]
 
     def _run(self):
         waste, zeolite_in, gac_in, KCl = self.ins
@@ -435,10 +434,10 @@ class ReclaimerSolar(SanUnit):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction(item='Solar', linked_unit=self, quantity_unit='m2'),
             Construction(item='Battery', linked_unit=self, quantity_unit='kg'),
-            )
+            ]
         
     def _design(self):
         design = self.design_results
@@ -522,7 +521,7 @@ class ReclaimerSystem(SanUnit):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (Construction(item='Steel', linked_unit=self, quantity_unit='kg'),)
+        self.construction = [Construction(item='Steel', linked_unit=self, quantity_unit='kg'),]
 
     def _design(self):
         design = self.design_results
@@ -634,10 +633,10 @@ class ReclaimerUltrafiltration(SanUnit):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction(item='Plastic', linked_unit=self, quantity_unit='kg'),
             Construction(item='Steel', linked_unit=self, quantity_unit='kg'),
-            )
+            ]
 
     def _run(self):
         waste = self.ins[0]

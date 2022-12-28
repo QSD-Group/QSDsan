@@ -169,12 +169,12 @@ class SludgePasteurization(SanUnit):
 
 
     def _init_lca(self):
-        self.construction = (
+        self.construction = [
             Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
             Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
             Construction('hydronic_heat_exchanger', linked_unit=self, item='HydronicHeatExchanger', quantity_unit='ea'),
             Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
-            )
+            ]
 
     def _run(self):
         biogas, air, sludge, lpg = self.ins
