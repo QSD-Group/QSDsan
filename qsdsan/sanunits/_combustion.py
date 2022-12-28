@@ -48,6 +48,8 @@ class BiogasCombustion(SanUnit):
     --------
     `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
     '''
+    _N_ins = 2
+    _N_outs = 3
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  if_combustion=False, biogas_loss=0.1, biogas_eff=0.55):
@@ -57,9 +59,6 @@ class BiogasCombustion(SanUnit):
         self._biogas_loss = biogas_loss
         self._biogas_eff = biogas_eff
 
-
-    _N_ins = 2
-    _N_outs = 3
 
     def _run(self):
         biogas, air = self.ins
@@ -149,6 +148,15 @@ class CHP(SanUnit, Facility):
         Energy Environ. Sci. 2016, 9 (3), 1102–1112.
         https://doi.org/10.1039/C5EE03715H.
     '''
+    _N_ins = 3
+    _N_outs = 2
+    network_priority = 0
+    default_combined_eff = {
+        'Fuel cell': 0.405,
+        'Microturbine': 0.27,
+        'Internal combustion': 0.36,
+        'Combustion gas': 0.315,
+        }
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  unit_CAPEX=1225, CHP_type='Fuel cell',
@@ -164,20 +172,9 @@ class CHP(SanUnit, Facility):
         self._sys_heating_utilities = ()
         self._sys_power_utilities = ()
 
-    network_priority = 0
-    _N_ins = 3
-    _N_outs = 2
-
-    default_combined_eff = {
-        'Fuel cell': 0.405,
-        'Microturbine': 0.27,
-        'Internal combustion': 0.36,
-        'Combustion gas': 0.315,
-        }
 
     # Only simulate in design stage to ensure capturing all system-wise utility
-    def _run(self):
-        pass
+    def _run(self): pass
 
 
     def _design(self):

@@ -121,7 +121,9 @@ class SludgePasteurization(SanUnit):
 
     :class:`~.sanunits.BiogenicRefineryHHXdryer`
     '''
-
+    _N_ins = 4
+    _N_outs = 4
+    
     # Specific Heat capacity of water
     Cp_w = 4.184 # kJ kg^-1 K^-1
     # Specific Heat capacity of dry matter (sludge)
@@ -154,13 +156,6 @@ class SludgePasteurization(SanUnit):
         self.exponent_scale = exponent_scale
         self.if_sludge_service = if_sludge_service
 
-        self.construction = (
-            Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
-            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
-            Construction('hydronic_heat_exchanger', linked_unit=self, item='HydronicHeatExchanger', quantity_unit='ea'),
-            Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
-            )
-
         paths = (pasteurization_path, br_hhx_path, br_hhx_dryer_path)
         for path in paths:
             data = load_data(path=path)
@@ -172,9 +167,14 @@ class SludgePasteurization(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    _N_ins = 4
-    _N_outs = 4
 
+    def _init_lca(self):
+        self.construction = (
+            Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            Construction('hydronic_heat_exchanger', linked_unit=self, item='HydronicHeatExchanger', quantity_unit='ea'),
+            Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
+            )
 
     def _run(self):
         biogas, air, sludge, lpg = self.ins

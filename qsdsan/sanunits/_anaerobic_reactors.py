@@ -63,7 +63,16 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
     --------
     :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
-
+    _N_ins = 1
+    _N_outs = 4
+    _run = Decay._first_order_run
+    _units = {
+        'Residence time': 'd',
+        'Reactor length': 'm',
+        'Reactor width': 'm',
+        'Reactor height': 'm',
+        'Single reactor volume': 'm3'
+        }
     gravel_density = 1600
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -76,12 +85,6 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
                        if_capture_biogas=if_capture_biogas,
                        if_N2O_emission=if_N2O_emission,)
 
-        self.construction = (
-            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
-            Construction('gravel', linked_unit=self, item='Gravel', quantity_unit='kg'),
-            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
-            )
-
         data = load_data(path=abr_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
@@ -91,18 +94,14 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    _N_ins = 1
-    _N_outs = 4
 
-    _run = Decay._first_order_run
+    def _init_lca(self):
+        self.construction = (
+            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
+            Construction('gravel', linked_unit=self, item='Gravel', quantity_unit='kg'),
+            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
+            )
 
-    _units = {
-        'Residence time': 'd',
-        'Reactor length': 'm',
-        'Reactor width': 'm',
-        'Reactor height': 'm',
-        'Single reactor volume': 'm3'
-        }
 
     def _design(self):
         design = self.design_results
@@ -604,6 +603,16 @@ class AnaerobicDigestion(SanUnit, Decay):
     --------
     :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
+    _N_ins = 1
+    _N_outs = 4
+    _run = Decay._first_order_run
+    _units = {
+        'Volumetric flow rate': 'm3/hr',
+        'Residence time': 'd',
+        'Single reactor volume': 'm3',
+        'Reactor diameter': 'm',
+        'Reactor height': 'm'
+        }
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  flow_rate=None, degraded_components=('OtherSS',),
@@ -615,11 +624,6 @@ class AnaerobicDigestion(SanUnit, Decay):
                        if_N2O_emission=if_N2O_emission,)
         self._flow_rate = flow_rate
 
-        self.construction = (
-            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
-            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
-            )
-
         data = load_data(path=ad_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
@@ -629,19 +633,12 @@ class AnaerobicDigestion(SanUnit, Decay):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+    def _init_lca(self):
+        self.construction = (
+            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
+            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
+            )
 
-    _N_ins = 1
-    _N_outs = 4
-
-    _run = Decay._first_order_run
-
-    _units = {
-        'Volumetric flow rate': 'm3/hr',
-        'Residence time': 'd',
-        'Single reactor volume': 'm3',
-        'Reactor diameter': 'm',
-        'Reactor height': 'm'
-        }
 
     def _design(self):
         design = self.design_results

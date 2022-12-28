@@ -68,6 +68,8 @@ class SepticTank(SanUnit, Decay):
     --------
     :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
+    _N_ins = 2
+    _N_outs = 5
 
     # Constants
     # Baseline population served by a single septic tank, 100 instead of the 30 of other units
@@ -99,8 +101,11 @@ class SepticTank(SanUnit, Decay):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    _N_ins = 2
-    _N_outs = 5
+    def _init_lca(self):
+        self.construction = (
+            Construction(item='FRP', linked_unit=self, quantity_unit='kg'),
+            Construction(item='Pump', linked_unit=self, quantity_unit='each'),
+            )
 
     def _run(self):
         waste, MgOH2 = self.ins
@@ -151,12 +156,9 @@ class SepticTank(SanUnit, Decay):
 
     def _design(self):
         design = self.design_results
-        design['FRP'] = FRP_quant = self.FRP_per_tank * self.user_scale_up  # fiber-reinforced plastic material
-        design['Pump'] = pump_quant = self.qty_pump * self.user_scale_up
-
-        self.construction = (Construction(item='FRP', quantity=FRP_quant, quantity_unit='kg'),
-                             Construction(item='Pump', quantity=pump_quant, quantity_unit='each'))
-
+        constr = self.construction
+        design['FRP'] = constr[0].quantity = self.FRP_per_tank * self.user_scale_up  # fiber-reinforced plastic material
+        design['Pump'] = constr[1].quantity = self.qty_pump * self.user_scale_up
         self.add_construction(add_cost=False)
 
     def _cost(self):
