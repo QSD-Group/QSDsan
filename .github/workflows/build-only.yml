@@ -32,6 +32,6 @@ jobs:
         pip install --no-cache-dir git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@qsdsan
         pip install --no-cache-dir git+https://github.com/QSD-Group/EXPOsan.git@main
         pip install --no-cache-dir -r requirements.txt
-    - name: Test and generate coverage report
+    - name: Test with pytest
       run: |
         pytest
