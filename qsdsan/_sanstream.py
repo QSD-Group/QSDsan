@@ -515,12 +515,14 @@ class SanStream(Stream):
     def components(self):
         return self.chemicals
     
-    def add_indicators(self, **indicator_CFs):
+    def add_indicators(self, ID='', **indicator_CFs):
         '''
         Add impact characterization factors for the stream.
         
         Parameters
         ----------
+        ID : str
+            Alternative ID of the impact item.
         indicator_CFs : kwargs
             Impact indicators and their characterization factors (CFs),
             can be in the form of str=float or str=(float, unit).
@@ -530,7 +532,7 @@ class SanStream(Stream):
         :func:`get_impacts` for examples.
         '''
         Item = qs.StreamImpactItem
-        item = self.stream_impact_item or Item(ID='', linked_stream=self)
+        item = self.stream_impact_item or Item(ID=ID, linked_stream=self)
         CF_dct = Item._format_CF_vals(item, **indicator_CFs)
         for indicator, (value, unit) in CF_dct.items():
             item.add_indicator(indicator, value, unit)
@@ -574,7 +576,7 @@ class SanStream(Stream):
         ----------
         indicators : Iterable
             IDs of the impact indicators to be calculated,
-            all impact indicators linked to the stream will be calcualted if not given.
+            all impact indicators linked to the stream will be calculated if not given.
         time : float
             Time for the impact to be calculated.
         time_unit : str
