@@ -327,9 +327,9 @@ class SanUnit(Unit, isabstract=True):
             if _stream_info:
                 stream_info = stream._info(None, T, P, flow, composition, N, IDs) #+ \
                     # '\n' # this breaks the code block in sphinx
-                stream_info += ('\n' + ws_info) if ws_info else ''
+                stream_info += ('\n' + ws_info) if ws_info else '\n'
             else:
-                stream_info = stream._wastestream_info()
+                stream_info = stream._wastestream_info() + '\n'
             su = stream._source if ins_or_outs=='ins' else stream._sink
             index = stream_info.index('\n')
             from_or_to = 'from' if ins_or_outs=='ins' else 'to'
