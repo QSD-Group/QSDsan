@@ -238,7 +238,7 @@ class HXutility(SanUnit, HXU):
         HXU._design(self)
         
         D = self.design_results
-        if not getattr(D, 'Area', 0): total_steel = 0. # no HX needs
+        if not D.get('Area', 0): total_steel = 0. # no HX needs
         elif D['Area'] < 150: # double pipe
             # Assume use 1 1/4 nominal size of inner tube, based on [1] page 365
             # Table 12.3, when use Schedule 40, surface area per foot is 0.435 ft2
@@ -278,9 +278,9 @@ class HXutility(SanUnit, HXU):
             D['Tube weight'] = D['Total tube length']*0.520*_lb_to_kg
             
             total_steel = D['Total steel weight'] = D['Shell steel weight'] + D['Tube weight']
-            
+
         if self.include_construction:
-            construction = getattr(self, 'construction', ())
+            construction = getattr(self, 'construction', [])
             if construction: construction[0].quantity = total_steel
             else:
                 self.construction = [
