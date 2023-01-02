@@ -918,7 +918,6 @@ class WWTpump(SanUnit):
         self._building_unit_cost = i
 
 
-#!!! Make it possible to use `include_construction`
 class SludgePump(Pump):
     '''
     Pumps used in HTL system
@@ -956,19 +955,20 @@ class SludgePump(Pump):
 
     def _design(self):
         super()._design()
-        breakpoint()
         pipe, pumps, hdpe = self.design_sludge()
 
         D = self.design_results
         D['Pump pipe stainless steel'] = pipe
         D['Pump stainless steel'] = pumps
-        construction = getattr(self, 'construction', ()) # would work for both biosteam/qsdsan units
-        if construction: construction[0].quantity = pipe + pumps
-        else:
-            self.construction = [
-                Construction('stainless_steel', linked_unit=self, item='Stainless_steel', 
-                             quantity=pipe + pumps, quantity_unit='kg'),
-                ]
+        
+        if self.include_construction:
+            construction = getattr(self, 'construction', []) # would work for both biosteam/qsdsan units
+            if construction: construction[0].quantity = pipe + pumps
+            else:
+                self.construction = [
+                    Construction('stainless_steel', linked_unit=self, item='Stainless_steel', 
+                                 quantity=pipe + pumps, quantity_unit='kg'),
+                    ]
 
     def design_sludge(self, Q_mgd=None, N_pump=None, **kwargs):
         '''
