@@ -108,6 +108,7 @@ class MembraneDistillation(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream',
                  include_construction=True,
+                 lifetime={'Membrane': 7920},
                  influent_pH=8.16, # CHG effluent pH: 8.16 ± 0.25 [1]
                  target_pH=10,
                  N_S_ratio=2,
@@ -127,11 +128,12 @@ class MembraneDistillation(SanUnit):
                  capacity=6.01, # kg/m2/h [6]
                  # permeate flux, similar values can be found in many other papers ([176], [222] ,[223] in [7])
                  # [177], [223] in [7] show high nitrogen recovery ratio (>85% under optimal conditions)
-                 membrane_price=93.29,
-                 yearly_operation_hour=7920,
-                 ): # $90/m2 2008 [6]
+                 membrane_price=93.29,  # $90/m2 2008 [6]
+                 ):
         
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, include_construction=include_construction)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with,
+                         include_construction=include_construction,
+                         lifetime=lifetime)
         self.influent_pH = influent_pH
         self.target_pH = target_pH
         self.N_S_ratio = N_S_ratio
@@ -237,9 +239,7 @@ class MembraneDistillation(SanUnit):
             ammoniumsulfate.P = ammoniumsulfatesolution.P = acid.P
             # ammonium sulfate has the same T and P as acid
             
-            #!!! Use the lifetime attr
-            breakpoint()
-            mem_in.imass['Membrane'] = 0.15*self.membrane_area/7920 # kg/hr (m2/hr)
+            mem_in.imass['Membrane'] = 0.15*self.membrane_area/self.lifetime['Membrane'] # kg/hr (m2/hr)
             mem_out.copy_like(mem_in)
             # add membrane as streams to include 15% membrane replacement per year [6]
     

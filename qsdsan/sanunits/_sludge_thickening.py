@@ -26,7 +26,7 @@ import biosteam as bst
 from biosteam import Splitter, SolidsCentrifuge
 from .. import SanUnit, Construction
 from ..processes import Decay
-from ..sanunits import Pump
+from ..sanunits import SludgePump
 from ..utils import ospath, load_data, data_path, dct_from_str, auom
 
 __all__ = (
@@ -104,8 +104,8 @@ class SludgeThickening(SanUnit, Splitter):
         eff = self.outs[0].proxy(f'{ID}_eff')
         sludge = self.outs[1].proxy(f'{ID}_sludge')
         # Add '.' in ID for auxiliary units
-        self.effluent_pump = Pump(f'.{ID}_eff_pump', ins=eff, init_with=init_with)
-        self.sludge_pump = Pump(f'.{ID}_sludge_pump', ins=sludge, init_with=init_with)
+        self.effluent_pump = SludgePump(f'.{ID}_eff_pump', ins=eff, init_with=init_with)
+        self.sludge_pump = SludgePump(f'.{ID}_sludge_pump', ins=sludge, init_with=init_with)
         self._mixed = self.ins[0].copy(f'{ID}_mixed')
         self._set_split_at_mc()
 
@@ -294,8 +294,8 @@ class SludgeCentrifuge(SludgeThickening, bst.units.SolidsCentrifuge):
         ID = self.ID
         eff = self.outs[0].proxy(f'{ID}_eff')
         sludge = self.outs[1].proxy(f'{ID}_sludge')
-        self.effluent_pump = Pump(f'.{ID}_eff_pump', ins=eff, init_with=init_with)
-        self.sludge_pump = Pump(f'.{ID}_sludge_pump', ins=sludge, init_with=init_with)
+        self.effluent_pump = SludgePump(f'.{ID}_eff_pump', ins=eff, init_with=init_with)
+        self.sludge_pump = SludgePump(f'.{ID}_sludge_pump', ins=sludge, init_with=init_with)
 
     _run = SludgeThickening._run
 
@@ -320,8 +320,8 @@ class SludgeCentrifuge(SludgeThickening, bst.units.SolidsCentrifuge):
         else:
             D['Number of large centrifuge'] += 1
         
-        D['Centrifige stainless steel'] = (4000*D['Number of large centrifuge'] + 2500*D['Number of small centrifuge'])*_lb_to_kg
-        total_steel = D['Total stainless steel'] = D['Total pump stainless steel'] + D['Total pipe stainless steel'] + D['Centrifige stainless steel']
+        D['Centrifuge stainless steel'] = (4000*D['Number of large centrifuge'] + 2500*D['Number of small centrifuge'])*_lb_to_kg
+        total_steel = D['Total stainless steel'] = D['Total pump stainless steel'] + D['Total pipe stainless steel'] + D['Centrifuge stainless steel']
         
         if self.include_construction:
             construction = getattr(self, 'construction', ())
