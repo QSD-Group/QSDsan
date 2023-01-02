@@ -619,7 +619,8 @@ class LCA:
                 dct = item_dct[item.ID]
                 dct['SanUnit'].append('Total')
                 dct['Quantity'] = np.append(dct['Quantity'], sum(dct['Quantity']))
-                dct['Item Ratio'] = dct['Quantity']/dct['Quantity'].sum()*2
+                if dct['Quantity'].sum() == 0.: dct['Item Ratio'] = 0
+                else: dct['Item Ratio'] = dct['Quantity']/dct['Quantity'].sum()*2
                 for i in self.indicators:
                     if i.ID in item.CFs:
                         dct[f'{i.ID} [{i.unit}]'] = impact = dct['Quantity']*item.CFs[i.ID]
