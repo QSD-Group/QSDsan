@@ -26,7 +26,7 @@ class IsothermalCompressor(bst.units.IsothermalCompressor):
 
     See Also
     --------
-    :class:`biosteam.units.IsothermalCompressor`
+    `biosteam.units.IsothermalCompressor <https://biosteam.readthedocs.io/en/latest/API/units/compressor.html>`_
     '''
     
     def _design(self):

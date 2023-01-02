@@ -284,11 +284,12 @@ class SludgeCentrifuge(SludgeThickening, bst.units.SolidsCentrifuge):
               'Total stainless steel': 'kg'}
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 sludge_moisture=0.8, solids=(),
+                 include_construction=True, sludge_moisture=0.8, solids=(),
                  centrifuge_type='scroll_solid_bowl'):
         SludgeThickening.__init__(self, ID, ins, outs, thermo, init_with,
-                                sludge_moisture=sludge_moisture,
-                                solids=solids)
+                                  sludge_moisture=sludge_moisture,
+                                  solids=solids)
+        self.include_construction = include_construction
         self.centrifuge_type = centrifuge_type
         ID = self.ID
         eff = self.outs[0].proxy(f'{ID}_eff')
@@ -322,13 +323,14 @@ class SludgeCentrifuge(SludgeThickening, bst.units.SolidsCentrifuge):
         D['Centrifige stainless steel'] = (4000*D['Number of large centrifuge'] + 2500*D['Number of small centrifuge'])*_lb_to_kg
         total_steel = D['Total stainless steel'] = D['Total pump stainless steel'] + D['Total pipe stainless steel'] + D['Centrifige stainless steel']
         
-        construction = getattr(self, 'construction', ())
-        if construction: construction[0].quantity = total_steel
-        else:
-            self.construction = (
-                Construction('stainless_steel', linked_unit=self, item='Stainless_steel', 
-                             quantity=total_steel, quantity_unit='kg'),
-                )
+        if self.include_construction:
+            construction = getattr(self, 'construction', ())
+            if construction: construction[0].quantity = total_steel
+            else:
+                self.construction = [
+                    Construction('stainless_steel', linked_unit=self, item='Stainless_steel', 
+                                 quantity=total_steel, quantity_unit='kg'),
+                    ]
         
     def _cost(self):
         SludgeThickening._cost(self)

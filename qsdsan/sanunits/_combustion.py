@@ -173,10 +173,10 @@ class CombinedHeatPower(SanUnit, Facility):
               'Reinforcing steel': 'kg'}
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 unit_CAPEX=1225, CHP_type='Fuel cell',
+                 include_construction=True, unit_CAPEX=1225, CHP_type='Fuel cell',
                  combustion_eff=0.8, combined_eff=None,
                  system=None, supplement_power_utility=False, F_BM={'CHP': 1.}):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM=F_BM)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM=F_BM, include_construction=include_construction)
         self.unit_CAPEX = unit_CAPEX
         self.CHP_type = CHP_type
         self.combustion_eff = combustion_eff
@@ -280,21 +280,22 @@ class CombinedHeatPower(SanUnit, Facility):
         ash_IDs = [i.ID for i in cmps if not i.formula]
         ash.copy_flow(emission, IDs=tuple(ash_IDs), remove=True)
         
-        D = self.design_results
-        constr = self.construction
-        
-        # material calculation based on [2], linearly scaled on power (kW)
-        # in [2], a 580 kW CHP:
-        # steel: 20098 kg
-        # furnace: 12490 kg
-        # reinforced concrete: 15000 kg (concrete + reinforcing steel)
-        # 1 m3 reinforced concrete: 98 v/v% concrete with a density of 2500 kg/m3 (2450 kg)
-        #                            2 v/v% reinforcing steel with a density of 7850 kg/m3 (157kg)
-        factor = self.H_net_feeds/3600/580
-        constr[0].quantity = D['Steel'] = factor*20098
-        constr[1].quantity = D['Furnace'] = factor*12490
-        constr[2].quantity = D['Concrete'] = factor*15000*2450/(2450 + 157)
-        constr[3].quantity = D['Reinforcing steel'] = factor*15000*157/(2450 + 157)
+        if self.include_construction:
+            D = self.design_results
+            constr = self.construction
+            
+            # material calculation based on [2], linearly scaled on power (kW)
+            # in [2], a 580 kW CHP:
+            # steel: 20098 kg
+            # furnace: 12490 kg
+            # reinforced concrete: 15000 kg (concrete + reinforcing steel)
+            # 1 m3 reinforced concrete: 98 v/v% concrete with a density of 2500 kg/m3 (2450 kg)
+            #                            2 v/v% reinforcing steel with a density of 7850 kg/m3 (157kg)
+            factor = self.H_net_feeds/3600/580
+            constr[0].quantity = D['Steel'] = factor*20098
+            constr[1].quantity = D['Furnace'] = factor*12490
+            constr[2].quantity = D['Concrete'] = factor*15000*2450/(2450 + 157)
+            constr[3].quantity = D['Reinforcing steel'] = factor*15000*157/(2450 + 157)
 
 
     def _cost(self):

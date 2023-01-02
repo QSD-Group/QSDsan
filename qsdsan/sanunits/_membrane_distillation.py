@@ -107,6 +107,7 @@ class MembraneDistillation(SanUnit):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream',
+                 include_construction=True,
                  influent_pH=8.16, # CHG effluent pH: 8.16 ± 0.25 [1]
                  target_pH=10,
                  N_S_ratio=2,
@@ -130,7 +131,7 @@ class MembraneDistillation(SanUnit):
                  yearly_operation_hour=7920,
                  ): # $90/m2 2008 [6]
         
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, include_construction=include_construction)
         self.influent_pH = influent_pH
         self.target_pH = target_pH
         self.N_S_ratio = N_S_ratio
@@ -251,7 +252,7 @@ class MembraneDistillation(SanUnit):
         Design['Area'] = self.membrane_area
         Design['Total volume'] = Design['Area']*self.m2_2_m3
         
-        self.construction[0].quantity = Design['Area']
+        if self.include_construction: self.construction[0].quantity = Design['Area']
     
     def _cost(self):
         self.ins[3].price = self.membrane_price

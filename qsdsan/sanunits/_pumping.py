@@ -918,6 +918,7 @@ class WWTpump(SanUnit):
         self._building_unit_cost = i
 
 
+#!!! Make it possible to use `include_construction`
 class SludgePump(Pump):
     '''
     Pumps used in HTL system

@@ -161,7 +161,9 @@ class HXprocess(SanUnit, HXP):
 
 class HXutility(SanUnit, HXU):
     '''
-    Similar to biosteam.units.HXutility, but can calculate material usage.
+    Similar to :class:`biosteam.units.HXutility`,
+    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`
+    and calculate material usage.
     
     References
     ----------
@@ -171,7 +173,7 @@ class HXutility(SanUnit, HXU):
 
     See Also
     --------
-    :class:`biosteam.units.HXutility`
+    `biosteam.units.HXutility <https://biosteam.readthedocs.io/en/latest/API/units/heat_exchange.html>`_
     '''
     
     line = HXU.line
@@ -190,25 +192,54 @@ class HXutility(SanUnit, HXU):
                'Horizontal vessel diameter': (3, 21),
                'Vertical vessel length': (12, 40)}
     
-    def _design(self, duty=None):
-        # Set duty and run heat utility
-        if duty is None: duty = self.Hnet # Includes heat of formation
-        inlet = self.ins[0]
-        outlet = self.outs[0] 
-        T_in = inlet.T
-        T_out = outlet.T
-        iscooling = duty < 0.
-        if iscooling: # Assume there is a pressure drop before the heat exchanger
-            if T_out > T_in: T_in = T_out
-        else:
-            if T_out < T_in: T_out = T_in
-        self.add_heat_utility(duty, T_in, T_out, 
-                              heat_transfer_efficiency=self.heat_transfer_efficiency,
-                              hxn_ok=True)
-        bst.units.HX._design(self)
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+                 init_with='Stream', F_BM_default=None,
+                 include_construction=True,
+                 *, T=None, V=None, rigorous=False, U=None, H=None,
+                 heat_exchanger_type="Floating head",
+                 material="Carbon steel/carbon steel",
+                 N_shells=2, ft=None, heat_only=None, cool_only=None,
+                 heat_transfer_efficiency=None):
+            SanUnit.__init__(self, ID, ins, outs, thermo,
+                             init_with=init_with, F_BM_default=F_BM_default,
+                             include_construction=include_construction,)
+            self.T = T #: [float] Temperature of outlet stream (K).
+            self.V = V #: [float] Vapor fraction of outlet stream.
+            self.H = H #: [float] Enthalpy of outlet stream.
 
+            #: [bool] If true, calculate vapor liquid equilibrium
+            self.rigorous = rigorous
+
+            #: [float] Enforced overall heat transfer coefficient (kW/m^2/K)
+            self.U = U
+
+            #: Number of shells for LMTD correction factor method.
+            self.N_shells = N_shells
+
+            #: User imposed correction factor.
+            self.ft = ft
+
+            #: [bool] If True, heat exchanger can only heat.
+            self.heat_only = heat_only
+
+            #: [bool] If True, heat exchanger can only cool.
+            self.cool_only = cool_only
+
+            self.material = material
+            self.heat_exchanger_type = heat_exchanger_type
+
+            #: [bool] User enforced heat transfer efficiency. A value less than 1
+            #: means that a fraction of heat transferred is lost to the environment.
+            #: If value is None, it defaults to the heat transfer efficiency of the 
+            #: heat utility.
+            self.heat_transfer_efficiency = heat_transfer_efficiency
+
+    def _design(self, duty=None):
+        HXU._design(self)
+        
         D = self.design_results
-        if D['Area'] < 150: # double pipe
+        if not getattr(D, 'Area', 0): total_steel = 0. # no HX needs
+        elif D['Area'] < 150: # double pipe
             # Assume use 1 1/4 nominal size of inner tube, based on [1] page 365
             # Table 12.3, when use Schedule 40, surface area per foot is 0.435 ft2
             # and weight is 2.28 lb steel per foot
@@ -248,13 +279,14 @@ class HXutility(SanUnit, HXU):
             
             total_steel = D['Total steel weight'] = D['Shell steel weight'] + D['Tube weight']
             
-        construction = getattr(self, 'construction', ())
-        if construction: construction[0].quantity = total_steel
-        else:
-            self.construction = (
-                Construction('stainless_steel', linked_unit=self, item='Stainless_steel', 
-                             quantity=total_steel, quantity_unit='kg'),
-                )
+        if self.include_construction:
+            construction = getattr(self, 'construction', ())
+            if construction: construction[0].quantity = total_steel
+            else:
+                self.construction = [
+                    Construction('stainless_steel', linked_unit=self, item='Stainless_steel', 
+                                 quantity=total_steel, quantity_unit='kg'),
+                    ]
             
     def _horizontal_vessel_design(self, pressure, diameter, length) -> dict:
         pressure = pressure

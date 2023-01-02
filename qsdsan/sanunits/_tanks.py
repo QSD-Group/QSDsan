@@ -43,12 +43,14 @@ class Tank(SanUnit, BSTTank, isabstract=True):
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
-                  vessel_type=None, tau=None, V_wf=None,
-                  vessel_material=None, kW_per_m3=0.,
-                  init_with='WasteStream', F_BM_default=None):
+                 vessel_type=None, tau=None, V_wf=None,
+                 vessel_material=None, kW_per_m3=0.,
+                 init_with='WasteStream', F_BM_default=None,
+                 include_construction=True,):
 
         SanUnit.__init__(self, ID, ins, outs, thermo,
-                         init_with=init_with, F_BM_default=F_BM_default)
+                         init_with=init_with, F_BM_default=F_BM_default,
+                         include_construction=include_construction,)
 
         self.vessel_type = vessel_type or self._default_vessel_type
         self.tau = tau or self._default_tau
@@ -84,7 +86,7 @@ class StorageTank(Tank, BSTStorageTank):
     _units = {'Diameter': 'ft',
               'Length': 'ft',
               'Wall thickness': 'in',
-              'Weight': 'kg'}
+              'Weight': 'lb'}
     _bounds = {'Vertical vessel weight': (4200, 1e6),
                'Horizontal vessel weight': (1e3, 9.2e5),
                'Horizontal vessel diameter': (3, 21),
@@ -92,13 +94,15 @@ class StorageTank(Tank, BSTStorageTank):
     _vessel_material = 'Stainless steel'
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                  vessel_type=None, tau=None, V_wf=None,
-                  vessel_material=None, kW_per_m3=0.,
-                  init_with='WasteStream', F_BM_default=None, length_to_diameter=2):
-        BSTStorageTank.__init__(ID=ID, ins=ins, outs=outs, thermo=thermo,
+                 vessel_type=None, tau=None, V_wf=None,
+                 vessel_material=None, kW_per_m3=0.,
+                 init_with='WasteStream', F_BM_default=None,
+                 include_construction=True, length_to_diameter=2):
+        Tank.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo,
+                      init_with=init_with, F_BM_default=F_BM_default,
+                      include_construction=include_construction,
                       vessel_type=vessel_type, tau=tau, V_wf=V_wf,
-                      vessel_material=vessel_material, kW_per_m3=kW_per_m3,
-                      init_with=init_with, F_BM_default=F_BM_default)
+                      vessel_material=vessel_material, kW_per_m3=kW_per_m3,)
         self.length_to_diameter = length_to_diameter
         
     def _init_lca(self):
@@ -109,20 +113,15 @@ class StorageTank(Tank, BSTStorageTank):
         
     
     def _design(self):
-        BSTStorageTank._design()
+        BSTStorageTank._design(self)
         D = self.design_results
         
         Diameter = (4*D['Total volume']/pi/self.length_to_diameter)**(1/3)
         Diameter *= _m_to_ft # convert from m to ft
         L = Diameter * self.length_to_diameter # ft
-
-        Tank_design = self._horizontal_vessel_design(self.ins[0].P*_Pa_to_psi, Diameter, L)
-        
-        D['Diameter'] = Diameter
-        D['Length'] = L
-        D['Wall thickness'] = Tank_design['Wall thickness']
+        D.update(self._horizontal_vessel_design(self.ins[0].P*_Pa_to_psi, Diameter, L))
         D['Material'] = self.vessel_material
-        self.construction[0].quantity = D['Weight'] = Tank_design['Weight']*_lb_to_kg
+        if self.include_construction: self.construction[0].quantity = D['Weight']*_lb_to_kg
 
 
     def _horizontal_vessel_design(self, pressure, diameter, length) -> dict:

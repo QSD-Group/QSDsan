@@ -93,14 +93,14 @@ class Reactor(SanUnit, PressureVessel, isabstract=True):
 
     _vessel_material = 'Stainless steel 316'
 
-    def __init__(self, ID='', ins=None, outs=(), *,
+    def __init__(self, ID='', ins=None, outs=(), include_construction=True, *,
                  P=101325, tau=0.5, V_wf=0.8,
                  length_to_diameter=2, N=None, V=None, auxiliary=False,
                  mixing_intensity=None, kW_per_m3=0.0985,
                  wall_thickness_factor=1,
                  vessel_material='Stainless steel 316',
                  vessel_type='Vertical'):
-        SanUnit.__init__(self, ID, ins, outs)
+        SanUnit.__init__(self, ID, ins, outs, include_construction=include_construction)
         self.P = P
         self.tau = tau
         self.V_wf = V_wf
@@ -184,8 +184,9 @@ class Reactor(SanUnit, PressureVessel, isabstract=True):
              Design['Wall thickness'] *= wall_thickness_factor
              # Weight is proportional to wall thickness in PressureVessel design
              Design['Weight'] = round(Design['Weight']*wall_thickness_factor, 2)
-             
-        self.construction[0].quantity = Design['Weight']*Design['Number of reactors']*_lb_to_kg
+        
+        if self.include_construction:
+            self.construction[0].quantity = Design['Weight']*Design['Number of reactors']*_lb_to_kg
 
 
     def _cost(self):

@@ -27,7 +27,7 @@ class BinaryDistillation(bst.units.BinaryDistillation):
     
     See Also
     --------
-    :class:`biosteam.units.BinaryDistillation`
+    `biosteam.units.BinaryDistillation <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
     '''
     
     def _design(self):

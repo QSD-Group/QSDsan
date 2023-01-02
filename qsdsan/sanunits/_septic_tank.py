@@ -78,11 +78,13 @@ class SepticTank(SanUnit, Decay):
     exponent_scale = 0.6  # exponential scaling constant
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 include_construction=True,
                  degraded_components=('OtherSS',), if_capture_biogas=False, if_N2O_emission=True,
                  if_include_front_end=True, if_generate_struvite=True, if_struvite_in_sludge=True,
                  ppl=1, sludge_moisture_content=0.95, **kwargs):
         Decay.__init__(self, ID, ins, outs, thermo=thermo,
                        init_with=init_with, F_BM_default=1,
+                       include_construction=include_construction,
                        degraded_components=degraded_components,
                        if_capture_biogas=if_capture_biogas,
                        if_N2O_emission=if_N2O_emission,)
@@ -147,7 +149,6 @@ class SepticTank(SanUnit, Decay):
         treated.mass = treated_after_allocation
         treated.imass['H2O'] = treated_water
 
-        # breakpoint()
         # Update the COD content of treated liquid and sludge
         if ratio == 0: treated._COD = 0
         else: treated._COD = remaining_COD * ratio * 1e3 / treated.F_vol
@@ -156,10 +157,12 @@ class SepticTank(SanUnit, Decay):
 
     def _design(self):
         design = self.design_results
-        constr = self.construction
-        design['FRP'] = constr[0].quantity = self.FRP_per_tank * self.user_scale_up  # fiber-reinforced plastic material
-        design['Pump'] = constr[1].quantity = self.qty_pump * self.user_scale_up
-        self.add_construction(add_cost=False)
+        if self.include_construction:
+            constr = self.construction
+            design['FRP'] = constr[0].quantity = self.FRP_per_tank * self.user_scale_up  # fiber-reinforced plastic material
+            design['Pump'] = constr[1].quantity = self.qty_pump * self.user_scale_up
+            self.add_construction(add_cost=False)
+        else: design.clear()
 
     def _cost(self):
         if self.if_include_front_end:
