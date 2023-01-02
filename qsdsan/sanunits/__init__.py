@@ -33,6 +33,7 @@ for license details.
 from ._abstract import *
 from ._clarifier import *
 from ._combustion import *
+from ._compressor import *
 from ._crop_application import *
 from ._dynamic_influent import *
 from ._electrochemical_cell import *
@@ -42,6 +43,7 @@ from ._heat_exchanging import *
 from ._junction import *
 from ._non_reactive import *
 from ._pumping import *
+from ._reactor import *
 from ._screening import *
 from ._sludge_pasteurization import *
 from ._sludge_thickening import *
@@ -52,9 +54,14 @@ from ._trucking import *
 # Units that rely on other units
 from ._activated_sludge_process import *
 from ._anaerobic_reactors import *
+from ._distillation import *
+from ._flash import *
+from ._hydroprocessing import *
+from ._hydrothermal import *
 from ._internal_circulation_rx import *
 from ._lagoon import *
 from ._membrane_bioreactors import *
+from ._membrane_distillation import *
 from ._polishing_filter import *
 from ._sedimentation import *
 from ._septic_tank import *
@@ -73,19 +80,26 @@ from . import (
         _anaerobic_reactors,
         _clarifier,
         _combustion,
+        _compressor,
         _crop_application,
+        _distillation,
         _dynamic_influent,
         _electrochemical_cell,
         _encapsulation_bioreactor,
         _excretion,
+        _flash,
         _heat_exchanging,
+        _hydroprocessing,
+        _hydrothermal,
         _internal_circulation_rx,
         _junction,
         _lagoon,
         _membrane_bioreactors,
+        _membrane_distillation,
         _non_reactive,
         _polishing_filter,
         _pumping,
+        _reactor,
         _screening,
         _sedimentation,
         _septic_tank,
@@ -110,19 +124,26 @@ __all__ = (
         *_anaerobic_reactors.__all__,
         *_clarifier.__all__,
         *_combustion.__all__,
+        *_compressor.__all__,
         *_crop_application.__all__,
+        *_distillation.__all__,
         *_dynamic_influent.__all__,
         *_electrochemical_cell.__all__,
         *_encapsulation_bioreactor.__all__,
         *_excretion.__all__,
+        *_flash.__all__,
         *_heat_exchanging.__all__,
+        *_hydroprocessing.__all__,
+        *_hydrothermal.__all__,
         *_internal_circulation_rx.__all__,
         *_junction.__all__,
         *_lagoon.__all__,
         *_membrane_bioreactors.__all__,
+        *_membrane_distillation.__all__,
         *_non_reactive.__all__,
         *_polishing_filter.__all__,
         *_pumping.__all__,
+        *_reactor.__all__,
         *_screening.__all__,
         *_sedimentation.__all__,
         *_septic_tank.__all__,

@@ -36,6 +36,7 @@ __all__ = (
     'ComponentSplitter',
     'FakeSplitter',
     'ReversedSplitter',
+    'PhaseChanger',
     )
 
 
@@ -358,3 +359,46 @@ class ReversedSplitter(SanUnit, BSTReversedSplitter):
     --------
     `biosteam.units.ReversedSplitter <https://biosteam.readthedocs.io/en/latest/units/splitting.html>`_
     '''
+
+
+class PhaseChanger(SanUnit):
+    '''
+    Change the effluent phase to the desired one, also allow the switch between stream types.
+    
+    Parameters
+    ----------
+    ins : Iterable(stream)
+        influent
+    outs : Iterable(stream)
+        effluent
+    phase : str
+        Desired phase, can only be one of ("g", "l", or "s").
+    '''
+    _N_ins = 1
+    _N_outs = 1
+    _ins_size_is_fixed = False
+    _outs_size_is_fixed = False
+    
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+                 init_with='WasteStream', phase='l'):
+        
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        self.phase = phase
+
+        
+    def _run(self):
+        
+        influent = self.ins[0]
+        effluent = self.outs[0]
+        effluent.copy_like(influent)
+        effluent.phase = self.phase
+        
+    @property
+    def phase(self):
+        return self._phase
+    @phase.setter
+    def phase(self, i):
+        if not i in ('g', 'l', 's'):
+            raise ValueError('`phase` must be one of ("g", "l", or "s"), '
+                             f'not "{i}".')
+        self._phase = i

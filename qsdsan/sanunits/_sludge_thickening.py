@@ -16,12 +16,13 @@ for license details.
 
 import numpy as np, flexsolve as flx
 from warnings import warn
-from math import ceil
+from math import ceil, floor
+import biosteam as bst
 from biosteam import Splitter, SolidsCentrifuge
-from .. import SanUnit
+from .. import SanUnit, Construction
 from ..processes import Decay
 from ..sanunits import Pump
-from ..utils import ospath, load_data, data_path, dct_from_str
+from ..utils import ospath, load_data, data_path, dct_from_str, auom
 
 __all__ = (
     'SludgeThickening',
@@ -30,6 +31,8 @@ __all__ = (
     'SludgeSeparator',
     )
 
+_lb_to_kg = auom('lb').conversion_factor('kg')
+_m3_to_gal = auom('m3').conversion_factor('gallon')
 
 # %%
 
@@ -245,27 +248,20 @@ class BeltThickener(SludgeThickening):
         return self._N_thickener
 
 
-class SludgeCentrifuge(SludgeThickening, SolidsCentrifuge):
+    
+class SludgeCentrifuge(SludgeThickening, bst.units.SolidsCentrifuge):
     '''
-    Solid centrifuge for sludge dewatering.
-
-    `_run` and `_cost` are based on `SludgeThickening` and `_design`
-    is based on `SolidsCentrifuge`.
-
-    The 0th outs is the water-rich supernatant (effluent) and
-    the 1st outs is the solid-rich sludge.
-
-    The following components should be included in system thermo object for simulation:
-    Water.
-
-    Parameters
+    Sludge Centrifuge with material usage.
+    
+    References
     ----------
-    sludge_moisture : float
-        Moisture content of the thickened sludge, [wt% water].
-    solids : Iterable(str)
-        IDs of the solid components.
-        If not provided, will be set to the default `solids` attribute of the components.
+    .. [1] https://dolphincentrifuge.com/wastewater-centrifuge/ (accessed 12-4-2022).
     '''
+    
+    _units = {'Total pump stainless steel': 'kg',
+              'Total pipe stainless steel': 'kg',
+              'Centrifige stainless steel': 'kg',
+              'Total stainless steel': 'kg'}
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  sludge_moisture=0.8, solids=(),
@@ -274,12 +270,48 @@ class SludgeCentrifuge(SludgeThickening, SolidsCentrifuge):
                                 sludge_moisture=sludge_moisture,
                                 solids=solids)
         self.centrifuge_type = centrifuge_type
+        ID = self.ID
+        eff = self.outs[0].proxy(f'{ID}_eff')
+        sludge = self.outs[1].proxy(f'{ID}_sludge')
+        self.effluent_pump = Pump(f'.{ID}_eff_pump', ins=eff, init_with=init_with)
+        self.sludge_pump = Pump(f'.{ID}_sludge_pump', ins=sludge, init_with=init_with)
 
     _run = SludgeThickening._run
 
-    _design = SolidsCentrifuge._design
-
-    _cost = SludgeThickening._cost
+    def _design(self):
+        bst.units.SolidsCentrifuge._design(self)
+        D = self.design_results
+        self.effluent_pump.simulate()
+        self.sludge_pump.simulate()
+        D['Total pump stainless steel'] = self.effluent_pump.design_results['Pump stainless steel'] +\
+                                          self.sludge_pump.design_results['Pump stainless steel']
+        D['Total pipe stainless steel'] = self.effluent_pump.design_results['Pump pipe stainless steel'] +\
+                                          self.sludge_pump.design_results['Pump pipe stainless steel']
+        # based on [1]:
+        # when rated capacity <= 80 GPM: weight = 2500 lb
+        # when rated capacity (80, 170]: weight = 4000 lb
+        # when rated capacity > 170 GPM, use a combination of large and small centrifuges
+        
+        D['Number of large centrifuge'] = floor(self.F_vol_in*_m3_to_gal/60/170)
+        D['Number of small centrifuge'] = 0
+        if self.F_vol_in*_m3_to_gal/60 - D['Number of large centrifuge']*170 <= 80:
+            D['Number of small centrifuge'] = 1
+        else:
+            D['Number of large centrifuge'] += 1
+        
+        D['Centrifige stainless steel'] = (4000*D['Number of large centrifuge'] + 2500*D['Number of small centrifuge'])*_lb_to_kg
+        total_steel = D['Total stainless steel'] = D['Total pump stainless steel'] + D['Total pipe stainless steel'] + D['Centrifige stainless steel']
+        
+        construction = getattr(self, 'construction', ())
+        if construction: construction[0].quantity = total_steel
+        else:
+            self.construction = (
+                Construction('stainless_steel', linked_unit=self, item='Stainless_steel', 
+                             quantity=total_steel, quantity_unit='kg'),
+                )
+        
+    def _cost(self):
+        SludgeThickening._cost(self)
 
 
 # %%
