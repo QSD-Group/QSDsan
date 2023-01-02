@@ -15,15 +15,15 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-
+from warnings import warn
+from math import pi
 from biosteam.units import Tank as BSTTank, MixTank as BSTMixTank, StorageTank as BSTStorageTank
 from biosteam.exceptions import bounds_warning, DesignWarning
 from biosteam.units.design_tools import flash_vessel_design
 from biosteam.units.design_tools.specification_factors import material_densities_lb_per_ft3
 from .. import SanUnit, Construction
 from ..utils import auom
-from warnings import warn
-from math import pi
+
 
 __all__ = ('Tank', 'MixTank', 'StorageTank', )
 
@@ -74,7 +74,11 @@ class MixTank(Tank, BSTMixTank):
 
 class StorageTank(Tank, BSTStorageTank):
     '''
-    Similar to qsdsan.sanunits.StorageTank, but can calculate material usage.
+    Similar to the :class:`biosteam.units.MixTank`, but can calculate material usage.
+
+    See Also
+    --------
+    :class:`biosteam.units.StorageTank`
     '''
     
     _units = {'Diameter': 'ft',

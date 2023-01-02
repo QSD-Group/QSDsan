@@ -5,7 +5,10 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+    
     Yalin Li <mailto.yalin.li@gmail.com>
+    
+    Jianan Feng <jiananf2@illinois.edu>
 
 Part of this module is based on the BioSTEAM package:
 https://github.com/bioSTEAMDevelopmentGroup/biosteam
@@ -25,7 +28,7 @@ from thermosteam.reaction import ParallelReaction
 from .. import SanUnit, Construction
 from ..utils import sum_system_utility
 
-__all__ = ('BiogasCombustion', 'CHP',)
+__all__ = ('BiogasCombustion', 'CombinedHeatPower',)
 
 
 class BiogasCombustion(SanUnit):
@@ -97,7 +100,7 @@ class BiogasCombustion(SanUnit):
         self._biogas_eff = i
 
 
-class CHP(SanUnit, Facility):
+class CombinedHeatPower(SanUnit, Facility):
     '''
     Combustion of all feed streams with simple estimation of the capital cost
     of a combined heat and power (CHP) unit based on Shoener et al. [1]_
@@ -280,7 +283,7 @@ class CHP(SanUnit, Facility):
         D = self.design_results
         constr = self.construction
         
-        # material calculation based on [1], linearly scaled on power (kW)
+        # material calculation based on [2], linearly scaled on power (kW)
         # in [2], a 580 kW CHP:
         # steel: 20098 kg
         # furnace: 12490 kg
@@ -314,7 +317,8 @@ class CHP(SanUnit, Facility):
     @property
     def CHP_type(self):
         '''
-        [str] Type of the CHP to adjust the heat-to-power efficiency.
+        [str] Type of the combined heat and power (CHP) type
+        to adjust the heat-to-power efficiency.
         Can be "Fuel cell" (40.5%), "Microturbine" (27%),
         "Internal combustion" (36%), "Combustion gas" (31.5%),
         or None and define an efficiency.

@@ -29,8 +29,8 @@ __all__ = ('MembraneDistillation',)
 class MembraneDistillation(SanUnit):
     '''
     Membrane distillation recovers nitrogen as ammonia sulfate based on vapor
-    pressure difference across the hydrophobic membrane. Ignore water flux across
-    membrane since it will not affect system performance (either TEA or LCA).
+    pressure difference across the hydrophobic membrane. Water flux across
+    membrane is ignored.
     
     Parameters
     ----------
@@ -47,7 +47,7 @@ class MembraneDistillation(SanUnit):
     m2_2_m3: float
         m2 to m3 factor, 1/specific surface area, [m3/m2].
     Dm: float
-        NH3 molecular diffusity in air, [m2/s]. 
+        NH3 molecular diffusivity in air, [m2/s]. 
     porosity: float
         Membrane porosity.
     thickness: float
@@ -59,7 +59,7 @@ class MembraneDistillation(SanUnit):
     Ka: float
         Overall mass transfer coefficient, [m/s].
     capacity: float
-        Membrane treatement capacity (permeate flux), [kg/m2/h].
+        Membrane treatment capacity (permeate flux), [kg/m2/h].
     membrane_price: float
         Membrane price, [$/kg] ([$/m2]).
         
@@ -110,10 +110,10 @@ class MembraneDistillation(SanUnit):
                  influent_pH=8.16, # CHG effluent pH: 8.16 ± 0.25 [1]
                  target_pH=10,
                  N_S_ratio=2,
-                 # S is excess since not all N can be transfered to form ammonia sulfate
+                 # S is excess since not all N can be transferred to form ammonia sulfate
                  # for now, assume N_S_ratio = 2 is ok
                  m2_2_m3=1/1200, # specific surface area, for hollow fiber membrane [2]
-                 Dm=2.28*10**(-5), # (2.28 ± 0.12)*10^-5 m^2/s NH3 molecular diffusity in air [3]
+                 Dm=2.28*10**(-5), # (2.28 ± 0.12)*10^-5 m^2/s NH3 molecular diffusivity in air [3]
                  # (underestimate, this value may be at 15 or 25 C, our feed is 60 C, should be higher)
                  porosity=0.9, # [4]
                  thickness=7*10**(-5), # m [4]
@@ -234,9 +234,10 @@ class MembraneDistillation(SanUnit):
             
             ammoniumsulfate.T = ammoniumsulfatesolution.T = acid.T
             ammoniumsulfate.P = ammoniumsulfatesolution.P = acid.P
-            # ammoniumsulfate has the same T and P as acid
+            # ammonium sulfate has the same T and P as acid
             
             #!!! Use the lifetime attr
+            breakpoint()
             mem_in.imass['Membrane'] = 0.15*self.membrane_area/7920 # kg/hr (m2/hr)
             mem_out.copy_like(mem_in)
             # add membrane as streams to include 15% membrane replacement per year [6]

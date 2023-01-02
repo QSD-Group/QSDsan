@@ -5,9 +5,14 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
+
     Lewis Rowles <stetsonsc@gmail.com>
+
     Lane To <lane20@illinois.edu>
+
+    Jianan Feng <jiananf2@illinois.edu>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -252,6 +257,21 @@ class BeltThickener(SludgeThickening):
 class SludgeCentrifuge(SludgeThickening, bst.units.SolidsCentrifuge):
     '''
     Sludge Centrifuge with material usage.
+
+    The 0th outs is the water-rich supernatant (effluent) and
+    the 1st outs is the solid-rich sludge.
+
+    The following components should be included in system thermo object for simulation:
+    Water.
+
+    Parameters
+    ----------
+    sludge_moisture : float
+    .. [1] https://dolphincentrifuge.com/wastewater-centrifuge/ (accessed 12-4-2022).
+        Moisture content of the thickened sludge, [wt% water].
+    solids : Iterable(str)
+        IDs of the solid components.
+        If not provided, will be set to the default `solids` attribute of the components.
     
     References
     ----------

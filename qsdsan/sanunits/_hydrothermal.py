@@ -35,7 +35,6 @@ _m3_to_gal = auom('m3').conversion_factor('gallon')
 # CHG
 # =============================================================================
 
-# hydrocyclone
 @cost(basis='Treatment capacity', ID='Hydrocyclone', units='lb/h',
       cost=5000000, S=968859,
       CE=CEPCI_by_year[2009], n=0.65, BM=2.1)
@@ -311,7 +310,7 @@ class KnockOutDrum(Reactor):
         pass
 
 # =============================================================================
-# HTL (ignore three phase separator for now, ask Yalin)
+# HTL
 # =============================================================================
 
 # separator

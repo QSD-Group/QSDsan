@@ -23,6 +23,10 @@ __all__ = ('IsothermalCompressor',)
 class IsothermalCompressor(bst.units.IsothermalCompressor):
     '''
     Similar to biosteam.units.IsothermalCompressor, but can calculate number of units.
+
+    See Also
+    --------
+    :class:`biosteam.units.IsothermalCompressor`
     '''
     
     def _design(self):

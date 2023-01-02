@@ -5,8 +5,12 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+    
     Yalin Li <mailto.yalin.li@gmail.com>
+
     Joy Zhang <joycheung1994@gmail.com>
+
+    Jianan Feng <jiananf2@illinois.edu>
 
 Part of this module is based on the biosteam package:
 https://github.com/BioSTEAMDevelopmentGroup/biosteam
@@ -17,6 +21,8 @@ for license details.
 '''
 
 import biosteam as bst
+from warnings import warn
+from math import ceil, pi
 from biosteam.units import HXprocess as HXP, HXutility as HXU
 from biosteam.units.facilities import HeatExchangerNetwork as HXN
 from biosteam.units.design_tools.specification_factors import material_densities_lb_per_ft3
@@ -24,8 +30,6 @@ from biosteam.exceptions import bounds_warning, DesignWarning
 from biosteam.units.design_tools import flash_vessel_design
 from .. import SanUnit, Construction
 from ..utils import auom
-from math import ceil, pi
-from warnings import warn
 
 __all__ = ('HeatExchangerNetwork', 'HXprocess', 'HXutility',)
 
@@ -157,13 +161,17 @@ class HXprocess(SanUnit, HXP):
 
 class HXutility(SanUnit, HXU):
     '''
-    Similar to qsdsan.sanunits.HXutility, but can calculate material usage.
+    Similar to biosteam.units.HXutility, but can calculate material usage.
     
     References
     ----------
     .. [1] Seider, W. D., Lewin, D. R., Seader, J. D., Widagdo, S., Gani, R., &
            Ng, M. K. (2017). Product and Process Design Principles. Wiley.
            Chapter 12: Heat Exchanger Design.
+
+    See Also
+    --------
+    :class:`biosteam.units.HXutility`
     '''
     
     line = HXU.line
