@@ -43,6 +43,8 @@ def test_exposan():
     sys_inter.simulate(t_span=(0, 3))
 
     ##### Systems with costs/impacts #####
+    from qsdsan.utils import clear_lca_registries
+    clear_lca_registries()
     from exposan import biogenic_refinery as br
     br.load()
     br.print_summaries((br.sysA, br.sysB, br.sysC, br.sysD))
