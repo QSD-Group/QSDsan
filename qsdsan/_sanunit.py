@@ -111,6 +111,8 @@ class SanUnit(Unit, isabstract=True):
         when provided as a dict, use "ins" or "outs" followed with the order number
         (i.e., ins0, outs-1) as keys; you can use ":" to denote a range (e.g., ins2:4);
         you can also use "else" to specify the stream class for non-provided ones.
+    include_construction : bool
+        Whether to include construction-related design (if applicable) in simulation.
     construction : list(obj)
         :class:`~.Construction` with construction information.
     transportation : list(obj)
@@ -167,7 +169,8 @@ class SanUnit(Unit, isabstract=True):
     _init_lca = AbstractMethod
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 construction=[], transportation=[], equipment=[],
+                 include_construction=True, construction=[],
+                 transportation=[], equipment=[],
                  add_OPEX={}, uptime_ratio=1., lifetime=None, F_BM_default=None,
                  isdynamic=False, exogenous_vars=(), **kwargs):
         ##### biosteam-specific #####
@@ -212,6 +215,7 @@ class SanUnit(Unit, isabstract=True):
         for i in (*construction, *transportation, *equipment):
             i._linked_unit = self
         # Make fresh ones for each unit
+        self.include_construction = include_construction
         self.construction = [] if not construction else construction
         self.transportation = [] if not transportation else transportation
         self._init_lca()
@@ -528,6 +532,7 @@ class SanUnit(Unit, isabstract=True):
     @property
     def construction(self):
         '''list(obj) :class:`~.Construction` with construction information.'''
+        if not self.include_construction: return []
         return self._construction
     @construction.setter
     def construction(self, i):

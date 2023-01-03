@@ -76,14 +76,17 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
     gravel_density = 1600
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 include_construction=True,
                  degraded_components=('OtherSS',),
                  if_capture_biogas=True,
                  if_N2O_emission=False,
                  **kwargs):
         Decay.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1,
+                       include_construction=include_construction,
                        degraded_components=degraded_components,
                        if_capture_biogas=if_capture_biogas,
-                       if_N2O_emission=if_N2O_emission,)
+                       if_N2O_emission=if_N2O_emission,
+                       )
 
         data = load_data(path=abr_path)
         for para in data.index:
@@ -113,13 +116,14 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         design['Reactor height'] = H = self.reactor_H
         design['Single reactor volume'] = V = L*W*H
 
-        constr = self.construction
-        concrete = N*self.concrete_thickness*(2*L*W+2*L*H+(2+N_b)*W*H)*self.add_concrete
-        constr[0].quantity = concrete
-        constr[1].quantity = N*V/(N_b+1) * self.gravel_density
-        constr[2].quantity = N * V # excavation
+        if self.include_construction:
+            constr = self.construction
+            concrete = N*self.concrete_thickness*(2*L*W+2*L*H+(2+N_b)*W*H)*self.add_concrete
+            constr[0].quantity = concrete
+            constr[1].quantity = N*V/(N_b+1) * self.gravel_density
+            constr[2].quantity = N * V # excavation
 
-        self.add_construction()
+            self.add_construction()
 
 
     @property
@@ -615,10 +619,12 @@ class AnaerobicDigestion(SanUnit, Decay):
         }
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 include_construction=True,
                  flow_rate=None, degraded_components=('OtherSS',),
                  if_capture_biogas=True, if_N2O_emission=False,
                  **kwargs):
         Decay.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1,
+                       include_construction=include_construction,
                        degraded_components=degraded_components,
                        if_capture_biogas=if_capture_biogas,
                        if_N2O_emission=if_N2O_emission,)
@@ -654,12 +660,13 @@ class AnaerobicDigestion(SanUnit, Decay):
         design['Reactor diameter'] = D = (4*V_single*self.aspect_ratio/pi)**(1/3)
         design['Reactor height'] = H = self.aspect_ratio * D
 
-        constr = self.construction
-        concrete =  N*self.concrete_thickness*(2*pi/4*(D**2)+pi*D*H)
-        constr[0].quantity = concrete
-        constr[1].quantity = V_tot # excavation
+        if self.include_construction:
+            constr = self.construction
+            concrete =  N*self.concrete_thickness*(2*pi/4*(D**2)+pi*D*H)
+            constr[0].quantity = concrete
+            constr[1].quantity = V_tot # excavation
 
-        self.add_construction()
+            self.add_construction()
 
 
     @property
@@ -811,6 +818,7 @@ class SludgeDigester(SanUnit):
     auxiliary_unit_names = ('heat_exchanger',)
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 include_construction=False, F_BM_default=1,
                  HRT=20, SRT=20, T=35+273.15, Y=0.08, b=0.03,
                  organics_conversion=0.7, COD_factor=1.42,
                  methane_yield=0.4, methane_fraction=0.65,
@@ -820,8 +828,9 @@ class SludgeDigester(SanUnit):
                  slab_concrete_unit_cost=13, # from $350/yd3
                  excavation_unit_cost=0.3, # from $8/yd3
                  F_BM=default_F_BM, lifetime=default_equipment_lifetime,
-                 F_BM_default=1, **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
+                 **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1,
+                         include_construction=include_construction)
         self.HRT = HRT
         self.SRT = SRT
         self.T = T

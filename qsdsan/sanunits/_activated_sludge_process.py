@@ -165,14 +165,16 @@ class ActivatedSludgeProcess(SanUnit):
     auxiliary_unit_names = ('heat_exchanger',)
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 F_BM_default=1, include_construction=False,
                  N_train=2, T=35+273.15, X_i0=None, X_v=1210, X_e=15, X_w=10000,
                  SLR=20, SF=4, aeration_power=1, # p337 of ref 1
                  q_hat=12, K=20, Y=0.5, b=0.396, f_d=0.8, # change from 0.2 of ref 2 based on p171 of ref 1
                  COD_factor=1.42, # p8 of Complex Systems in ref 1
                  q_UAP=1.8, q_BAP=0.1, k1=0.12, k2=0.09, K_UAP=100, K_BAP=85,
                  F_BM=default_F_BM, lifetime=default_equipment_lifetime,
-                 F_BM_default=1, **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
+                 **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1,
+                         include_construction=include_construction)
         ID, ins0 = self.ID, self.ins[0]
         self._inf = ins0.copy(f'{ID}_inf')
         self._ras = ins0.copy(f'{ID}_ras')
@@ -201,7 +203,8 @@ class ActivatedSludgeProcess(SanUnit):
         hx_in = Stream(f'{ID}_hx_in')
         hx_out = Stream(f'{ID}_hx_out')
         # Add '.' in ID for auxiliary units
-        self.heat_exchanger = HXutility(ID=f'.{ID}_hx', ins=hx_in, outs=hx_out, T=T)
+        self.heat_exchanger = HXutility(ID=f'.{ID}_hx', include_construction=include_construction,
+                                        ins=hx_in, outs=hx_out, T=T)
         self.blower = blower = Blower('blower', linked_unit=self, N_reactor=N_train)
         self.air_piping = air_piping = GasPiping('air_piping', linked_unit=self, N_reactor=N_train)
         self.equipments = (blower, air_piping)
