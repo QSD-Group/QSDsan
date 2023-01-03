@@ -23,8 +23,8 @@ __all__ = ('KineticReaction',)
 class KineticReaction(Rxn):
     r'''
     A general class used to to handle reactions with common kinetics
-    where the reaction ate is controlled by the molar concentration of a single component
-    (i.e., the rate reactant) so the concenration can be analytically solved.
+    where the reaction rate is controlled by the molar concentration of a single component
+    (i.e., the rate reactant) so the concentration can be analytically solved.
     
     With a rate constant of k and time of t, for nth-order reaction of
     the rate reactant with a starting molar concentration of :math:`[C]_0`,
@@ -93,7 +93,7 @@ class KineticReaction(Rxn):
     which is a first order equation at 320°C [1]_
     
     >>> rxn = KRxn('SO2Cl2', n=1, k=2.2e-5, t=1e5, reaction='SO2Cl2 -> SO2 +  Cl2')
-    >>> # The conversion is 0 at this stage (because we don't konw the concentration of SO2Cl2 yet)
+    >>> # The conversion is 0 at this stage (because we don't know the concentration of SO2Cl2 yet)
     >>> rxn.show()
     KineticReaction (by mol):
     stoichiometry        reactant    X[%]

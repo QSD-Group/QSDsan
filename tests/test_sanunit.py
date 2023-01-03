@@ -16,7 +16,8 @@ __all__ = ('test_sanunit',)
 
 def test_sanunit():
     from numpy.testing import assert_allclose
-    import qsdsan as qs
+    import biosteam as bst, qsdsan as qs
+    bst.CE = qs.CEPCI = 567.5
     components = qs.Components.load_default()
     qs.set_thermo(components)
 

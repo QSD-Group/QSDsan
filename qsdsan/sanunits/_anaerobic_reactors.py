@@ -63,24 +63,30 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
     --------
     :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
-
+    _N_ins = 1
+    _N_outs = 4
+    _run = Decay._first_order_run
+    _units = {
+        'Residence time': 'd',
+        'Reactor length': 'm',
+        'Reactor width': 'm',
+        'Reactor height': 'm',
+        'Single reactor volume': 'm3'
+        }
     gravel_density = 1600
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 include_construction=True,
                  degraded_components=('OtherSS',),
                  if_capture_biogas=True,
                  if_N2O_emission=False,
                  **kwargs):
         Decay.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1,
+                       include_construction=include_construction,
                        degraded_components=degraded_components,
                        if_capture_biogas=if_capture_biogas,
-                       if_N2O_emission=if_N2O_emission,)
-
-        self.construction = (
-            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
-            Construction('gravel', linked_unit=self, item='Gravel', quantity_unit='kg'),
-            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
-            )
+                       if_N2O_emission=if_N2O_emission,
+                       )
 
         data = load_data(path=abr_path)
         for para in data.index:
@@ -91,18 +97,14 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    _N_ins = 1
-    _N_outs = 4
 
-    _run = Decay._first_order_run
+    def _init_lca(self):
+        self.construction = [
+            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
+            Construction('gravel', linked_unit=self, item='Gravel', quantity_unit='kg'),
+            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
+            ]
 
-    _units = {
-        'Residence time': 'd',
-        'Reactor length': 'm',
-        'Reactor width': 'm',
-        'Reactor height': 'm',
-        'Single reactor volume': 'm3'
-        }
 
     def _design(self):
         design = self.design_results
@@ -114,13 +116,14 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
         design['Reactor height'] = H = self.reactor_H
         design['Single reactor volume'] = V = L*W*H
 
-        constr = self.construction
-        concrete = N*self.concrete_thickness*(2*L*W+2*L*H+(2+N_b)*W*H)*self.add_concrete
-        constr[0].quantity = concrete
-        constr[1].quantity = N*V/(N_b+1) * self.gravel_density
-        constr[2].quantity = N * V # excavation
+        if self.include_construction:
+            constr = self.construction
+            concrete = N*self.concrete_thickness*(2*L*W+2*L*H+(2+N_b)*W*H)*self.add_concrete
+            constr[0].quantity = concrete
+            constr[1].quantity = N*V/(N_b+1) * self.gravel_density
+            constr[2].quantity = N * V # excavation
 
-        self.add_construction()
+            self.add_construction()
 
 
     @property
@@ -287,6 +290,7 @@ class AnaerobicCSTR(CSTR):
         self._f_retain = np.array([fraction_retain if cmp.ID in retain_cmps \
                                    else 0 for cmp in self.components])
         self._mixed = WasteStream()
+        self._tempstate = []
     
     def ideal_gas_law(self, p=None, S=None):
         '''Calculates partial pressure [bar] given concentration [M] at 
@@ -341,14 +345,6 @@ class AnaerobicCSTR(CSTR):
             self._gas_cmp_idx = self.components.indices(self.model._biogas_IDs)
             self._state_header = self._state_keys
     
-    # @property
-    # def split(self):
-    #     '''Not applicable.'''
-    #     return None
-    # @split.setter
-    # def split(self, split):
-    #     '''Does nothing.'''
-    #     pass
 
     split = property(CSTR.split.fget)
     @split.setter
@@ -410,8 +406,8 @@ class AnaerobicCSTR(CSTR):
     def _run(self):
         '''Only to converge volumetric flows.'''
         mixed = self._mixed # avoid creating multiple new streams
-        # mixed.mix_from(self.ins)
-        mixed.mix_from(self.ins, energy_balance=False)
+        mixed.mix_from(self.ins)
+        # mixed.mix_from(self.ins, energy_balance=False)
         if self.split is None: 
             gas, liquid = self.outs
             liquid.copy_like(mixed)
@@ -471,6 +467,7 @@ class AnaerobicCSTR(CSTR):
         gas.state[:n_cmps] = gas.state[:n_cmps] * chem_MW / i_mass * 1e3 # i.e., M biogas to mg (measured_unit) / L
 
     def _update_dstate(self):
+        self._tempstate = self.model.rate_function._params['root'].data.copy()
         dy = self._dstate
         f_rtn = self._f_retain
         n_cmps = len(self.components)
@@ -506,7 +503,7 @@ class AnaerobicCSTR(CSTR):
     def f_q_gas_var_P_headspace(self, rhoTs, S_gas, T):
         p_gas = S_gas * self._R * T
         self._P_gas = P = sum(p_gas) + self.p_vapor(convert_to_bar=True) 
-        self._q_gas = self._k_p * (P - self._P_atm)
+        self._q_gas = max(0, self._k_p * (P - self._P_atm))
         return self._q_gas
 
     @property
@@ -610,21 +607,28 @@ class AnaerobicDigestion(SanUnit, Decay):
     --------
     :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
+    _N_ins = 1
+    _N_outs = 4
+    _run = Decay._first_order_run
+    _units = {
+        'Volumetric flow rate': 'm3/hr',
+        'Residence time': 'd',
+        'Single reactor volume': 'm3',
+        'Reactor diameter': 'm',
+        'Reactor height': 'm'
+        }
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 include_construction=True,
                  flow_rate=None, degraded_components=('OtherSS',),
                  if_capture_biogas=True, if_N2O_emission=False,
                  **kwargs):
         Decay.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1,
+                       include_construction=include_construction,
                        degraded_components=degraded_components,
                        if_capture_biogas=if_capture_biogas,
                        if_N2O_emission=if_N2O_emission,)
         self._flow_rate = flow_rate
-
-        self.construction = (
-            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
-            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
-            )
 
         data = load_data(path=ad_path)
         for para in data.index:
@@ -635,19 +639,12 @@ class AnaerobicDigestion(SanUnit, Decay):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+    def _init_lca(self):
+        self.construction = [
+            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
+            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
+            ]
 
-    _N_ins = 1
-    _N_outs = 4
-
-    _run = Decay._first_order_run
-
-    _units = {
-        'Volumetric flow rate': 'm3/hr',
-        'Residence time': 'd',
-        'Single reactor volume': 'm3',
-        'Reactor diameter': 'm',
-        'Reactor height': 'm'
-        }
 
     def _design(self):
         design = self.design_results
@@ -663,12 +660,13 @@ class AnaerobicDigestion(SanUnit, Decay):
         design['Reactor diameter'] = D = (4*V_single*self.aspect_ratio/pi)**(1/3)
         design['Reactor height'] = H = self.aspect_ratio * D
 
-        constr = self.construction
-        concrete =  N*self.concrete_thickness*(2*pi/4*(D**2)+pi*D*H)
-        constr[0].quantity = concrete
-        constr[1].quantity = V_tot # excavation
+        if self.include_construction:
+            constr = self.construction
+            concrete =  N*self.concrete_thickness*(2*pi/4*(D**2)+pi*D*H)
+            constr[0].quantity = concrete
+            constr[1].quantity = V_tot # excavation
 
-        self.add_construction()
+            self.add_construction()
 
 
     @property
@@ -820,6 +818,7 @@ class SludgeDigester(SanUnit):
     auxiliary_unit_names = ('heat_exchanger',)
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 include_construction=False, F_BM_default=1,
                  HRT=20, SRT=20, T=35+273.15, Y=0.08, b=0.03,
                  organics_conversion=0.7, COD_factor=1.42,
                  methane_yield=0.4, methane_fraction=0.65,
@@ -829,8 +828,9 @@ class SludgeDigester(SanUnit):
                  slab_concrete_unit_cost=13, # from $350/yd3
                  excavation_unit_cost=0.3, # from $8/yd3
                  F_BM=default_F_BM, lifetime=default_equipment_lifetime,
-                 F_BM_default=1, **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
+                 **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1,
+                         include_construction=include_construction)
         self.HRT = HRT
         self.SRT = SRT
         self.T = T

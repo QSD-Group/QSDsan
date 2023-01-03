@@ -34,19 +34,21 @@ __all__ = (
 # Datasheet
 # =============================================================================
 
-def load_data(path=None, sheet=None, index_col=0, **kwargs):
+def load_data(path=None, sheet=0, index_col=0, **kwargs):
     '''For data importing.'''
     if path.endswith(('.tsv', '.txt')):
         data = pd.read_csv(path, sep='\t', index_col=index_col, **kwargs)
     elif path.endswith('.csv'):
         data = pd.read_csv(path, index_col=index_col, **kwargs)
     elif path.endswith(('.xlsx', '.xls')):
-        if sheet:
-            data = pd.read_excel(path, sheet_name=sheet, engine='openpyxl',
-                                 index_col=index_col, **kwargs)
-        else:
-            data = pd.read_excel(path, engine='openpyxl',
-                                 index_col=index_col, **kwargs)
+        # if sheet:
+        #     data = pd.read_excel(path, sheet_name=sheet, engine='openpyxl',
+        #                          index_col=index_col, **kwargs)
+        # else:
+        #     data = pd.read_excel(path, engine='openpyxl',
+        #                          index_col=index_col, **kwargs)
+        data = pd.read_excel(path, sheet_name=sheet, engine='openpyxl',
+                             index_col=index_col, **kwargs)
     elif path.endswith('.npy'):
         arr = np.load(path)
         index = arr[:, index_col]

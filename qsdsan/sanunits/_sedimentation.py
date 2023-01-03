@@ -56,6 +56,15 @@ class Sedimentation(SludgeSeparator, Decay):
     --------
     :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
+    _N_ins = 1
+    _N_outs = 4
+    _units = {
+        'Single tank volume': 'm3',
+        'Single tank height': 'm',
+        'Single tank width': 'm',
+        'Single tank length': 'm',
+        'Single roof area': 'm2'
+        }
     if_capture_biogas = False
     
     def __init__(self, ID='', ins=None, outs=(),thermo=None, init_with='WasteStream',
@@ -68,11 +77,6 @@ class Sedimentation(SludgeSeparator, Decay):
         self.degraded_components = degraded_components
         self.if_N2O_emission = if_N2O_emission
 
-        self.construction = (
-            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
-            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
-            )
-
         data = load_data(path=sedmentation_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
@@ -82,8 +86,12 @@ class Sedimentation(SludgeSeparator, Decay):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    _N_ins = 1
-    _N_outs = 4
+
+    def _init_lca(self):
+        self.construction = [
+            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            ]
 
     def _run(self):
         waste = self.ins[0]
@@ -102,13 +110,6 @@ class Sedimentation(SludgeSeparator, Decay):
         liq, sol = self._adjust_solid_water(waste, liq, sol)
         sol._COD = sol_COD / sol.F_vol
 
-    _units = {
-        'Single tank volume': 'm3',
-        'Single tank height': 'm',
-        'Single tank width': 'm',
-        'Single tank length': 'm',
-        'Single roof area': 'm2'
-        }
 
     def _design(self):
         design = self.design_results

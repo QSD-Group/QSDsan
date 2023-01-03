@@ -247,9 +247,9 @@ class LCA:
         for u in system.units:
             if not isinstance (u, SanUnit):
                 continue
-            if u.construction:
+            if getattr(u, 'construction', []):
                 self._construction_units.add(u)
-            if u.transportation:
+            if getattr(u, 'transportation', []):
                 self._transportation_units.add(u)
         self._construction_units = sorted(self._construction_units,
                                           key=lambda u: u.ID)
@@ -619,7 +619,8 @@ class LCA:
                 dct = item_dct[item.ID]
                 dct['SanUnit'].append('Total')
                 dct['Quantity'] = np.append(dct['Quantity'], sum(dct['Quantity']))
-                dct['Item Ratio'] = dct['Quantity']/dct['Quantity'].sum()*2
+                if dct['Quantity'].sum() == 0.: dct['Item Ratio'] = 0
+                else: dct['Item Ratio'] = dct['Quantity']/dct['Quantity'].sum()*2
                 for i in self.indicators:
                     if i.ID in item.CFs:
                         dct[f'{i.ID} [{i.unit}]'] = impact = dct['Quantity']*item.CFs[i.ID]
@@ -794,7 +795,7 @@ class LCA:
     @property
     def construction_inventory(self):
         '''[tuple] All construction activities.'''
-        return sum((i.construction for i in self.construction_units), ())
+        return sum((i.construction for i in self.construction_units), [])
 
     @property
     def total_construction_impacts(self):
@@ -809,7 +810,7 @@ class LCA:
     @property
     def transportation_inventory(self):
         '''[tuple] All transportation activities.'''
-        return sum((i.transportation for i in self.transportation_units), ())
+        return sum((i.transportation for i in self.transportation_units), [])
 
     @property
     def total_transportation_impacts(self):

@@ -1,12 +1,12 @@
 # This workflow will install Python dependencies, run tests with a variety of Python versions, and report coverage
 
-name: build-latest
+name: build-coverage
 
 on:
   push:
-    branches: [main, beta, dev]
+    branches: [main]
   pull_request:
-    branches: [main, beta, dev]
+    branches: [main]
 
 jobs:
   build:

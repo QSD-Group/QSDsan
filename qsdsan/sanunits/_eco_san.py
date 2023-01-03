@@ -73,6 +73,10 @@ class EcoSanAerobic(SanUnit, Decay):
 
     :class:`qsdsan.sanunits.EcoSanBioCost`
     '''
+    _N_ins = 1
+    _N_outs = 3
+    _run = Decay._first_order_run
+    
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  degraded_components=('OtherSS',), 
                  if_capture_biogas=False,
@@ -92,11 +96,6 @@ class EcoSanAerobic(SanUnit, Decay):
 
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-
-    _N_ins = 1
-    _N_outs = 3
-
-    _run = Decay._first_order_run
 
 
 # %%
@@ -129,6 +128,10 @@ class EcoSanAnaerobic(SanUnit, Decay):
 
     :class:`qsdsan.sanunits.EcoSanBioCost`
     '''
+    _N_ins = 1
+    _N_outs = 3
+    _run = Decay._first_order_run
+    
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  degraded_components=('OtherSS',), 
                  if_capture_biogas=False,
@@ -148,11 +151,6 @@ class EcoSanAnaerobic(SanUnit, Decay):
 
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-
-    _N_ins = 1
-    _N_outs = 3
-
-    _run = Decay._first_order_run
 
 
 # %%
@@ -185,6 +183,10 @@ class EcoSanAnoxic(SanUnit, Decay):
 
     :class:`qsdsan.sanunits.EcoSanBioCost`
     '''
+    _N_ins = 1
+    _N_outs = 3
+    _run = Decay._first_order_run
+    
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  degraded_components=('OtherSS',), 
                  if_capture_biogas=False,
@@ -204,11 +206,6 @@ class EcoSanAnoxic(SanUnit, Decay):
 
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-
-    _N_ins = 1
-    _N_outs = 3
-
-    _run = Decay._first_order_run
 
 
 # %%
@@ -240,15 +237,17 @@ class EcoSanBioCost(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+    def _init_lca(self):
+        self.construction = [
+            Construction(item='Pump', linked_unit=self, quantity_unit='ea'),
+            Construction(item='FRP', linked_unit=self, quantity_unit='kg'),
+            ]
 
     def _design(self):
         design = self.design_results
-        design['FRP'] = FRP_quant = self.FRP
-        design['Pump'] = pump_quant = self.pump_ammount
-        self.construction = (
-            Construction(item='Pump', quantity = pump_quant, quantity_unit = 'ea'),
-            Construction(item='FRP', quantity = FRP_quant, quantity_unit = 'kg')
-            )
+        constr = self.construction
+        design['FRP'] = constr[0].quantity = self.FRP
+        design['Pump'] = constr[1].quantity = self.pump_ammount
         self.add_construction(add_cost=False)
 
     def _cost(self):
@@ -305,6 +304,8 @@ class EcoSanECR(SanUnit, Decay):
     --------
     :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
+    _N_ins = 3
+    _N_outs = 3
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  degraded_components=('OtherSS',),
@@ -323,17 +324,21 @@ class EcoSanECR(SanUnit, Decay):
 
         for attr, value in kwargs.items():
             setattr(self, attr, value)
+            
+    def _init_lca(self):
+        self.construction = [
+            Construction(item='Pump', linked_unit=self, quantity_unit='ea'),
+            Construction(item='Metal', linked_unit=self, quantity_unit='kg'),
+        ]
 
     def _refresh_data(self):
         sheet_name = 'standalone' if not self.if_after_MBR else 'after_MBR'
-        data = load_data(path=ecr_path, sheet_name=sheet_name)
+        data = load_data(path=ecr_path, sheet=sheet_name)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
         del data
 
-    _N_ins = 3
-    _N_outs = 3
 
     def _run(self):
         self.ins[1].imass['NaCl'] = self.salt_dosing / 24 # NaCl
@@ -345,12 +350,9 @@ class EcoSanECR(SanUnit, Decay):
 
     def _design(self):
         design = self.design_results
-        design['Metal'] = electrode_quant = self.electrode
-        design['Pump'] = pump_quant = self.pump
-        self.construction = (
-            Construction(item='Pump', quantity = pump_quant, quantity_unit = 'ea'),
-            Construction(item='Metal', quantity = electrode_quant, quantity_unit = 'kg')
-        )
+        constr = self.construction
+        design['Metal'] = constr[0].quantity = self.electrode
+        design['Pump'] = constr[1].quantity = self.pump
         self.add_construction(add_cost=False)
 
 
@@ -435,6 +437,9 @@ class EcoSanMBR(SanUnit, Decay):
     --------
     :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
+    _N_ins = 1
+    _N_outs = 3
+    _run = Decay._first_order_run
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  degraded_components=('OtherSS',),
@@ -456,15 +461,12 @@ class EcoSanMBR(SanUnit, Decay):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    _N_ins = 1
-    _N_outs = 3
-
-    _run = Decay._first_order_run
+    def _init_lca(self):
+        self.construction = [Construction(item='FRP', linked_unit=self, quantity_unit='kg'),]
 
 
     def _design(self):
-        self.design_results['FRP'] = FRP_quant = self.FRP_per_tank
-        self.construction = (Construction(item='FRP', quantity = FRP_quant, quantity_unit = 'kg'),)
+        self.design_results['FRP'] = self.construction[0].quantity = self.FRP_per_tank
         self.add_construction(add_cost=False)
 
     def _cost(self):
@@ -534,9 +536,12 @@ class EcoSanPrimary(SepticTank):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+    def _init_lca(self):
+        self.construction = [Construction(item='FRP', linked_unit=self, quantity_unit='kg'),]
+
     def _refresh_data(self):
         sheet_name = 'with_MBR' if not self.if_with_MBR else 'without_MBR'
-        data = load_data(path=primary_path, sheet_name=sheet_name)
+        data = load_data(path=primary_path, sheet=sheet_name)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
@@ -544,8 +549,7 @@ class EcoSanPrimary(SepticTank):
 
 
     def _design(self):
-        self.design_results['FRP'] = FRP_quant = self.FRP_per_tank
-        self.construction = (Construction(item='FRP', quantity=FRP_quant, quantity_unit='kg'),)
+        self.design_results['FRP'] = self.construction[0].quantity = self.FRP_per_tank
         self.add_construction(add_cost=False)
 
 
@@ -621,15 +625,18 @@ class EcoSanSolar(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+    def _init_lca(self):
+        self.construction = [
+            Construction(item='Solar', linked_unit=self, quantity_unit='m2'),
+            Construction(item='Battery', linked_unit=self, quantity_unit='kg'),
+            ]
+
 
     def _design(self):
         design = self.design_results
-        design['Solar system'] = solar_quant = self.solar_capacity
-        design['Battery'] = battery_quant = self.battery_kg
-        self.construction = (
-            Construction(item='Solar', quantity = solar_quant, quantity_unit = 'm2'),
-            Construction(item='Battery', quantity = battery_quant, quantity_unit = 'kg')
-            )
+        constr = self.construction
+        design['Solar system'] = constr[0].quantity = self.solar_capacity
+        design['Battery'] = constr[1].quantity = self.battery_kg
         self.add_construction(add_cost=False)
 
 
@@ -675,10 +682,11 @@ class EcoSanSystem(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+    def _init_lca(self):
+        self.construction = [Construction(item='Pump', linked_unit=self, quantity_unit='ea'),]
 
     def _design(self):
-        self.design_results['Pump'] = pump_quant = self.pump_amount
-        self.construction = (Construction(item='Pump', quantity = pump_quant, quantity_unit = 'ea'),)
+        self.design_results['Pump'] = self.construction[0].quantity = self.pump_amount
         self.add_construction(add_cost=False)
 
 

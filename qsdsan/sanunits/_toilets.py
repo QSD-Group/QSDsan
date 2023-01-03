@@ -91,6 +91,16 @@ class Toilet(SanUnit, Decay, isabstract=True):
     :ref:`qsdsan.processes.Decay <processes_Decay>`
 
     '''
+    _N_ins = 6
+    _outs_size_is_fixed = False
+    density_dct = {
+        'Sand': 1442,
+        'Gravel': 1600,
+        'Brick': 1750,
+        'Plastic': 0.63,
+        'Steel': 7900,
+        'StainlessSteelSheet': 2.64
+        }
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  degraded_components=('OtherSS',), N_user=1, N_toilet=1, N_tot_user=None,
@@ -125,9 +135,6 @@ class Toilet(SanUnit, Decay, isabstract=True):
 
         self._empty_ratio = 0.59
 
-    _N_ins = 6
-    _outs_size_is_fixed = False
-
 
     def _run(self):
         ur, fec, tp, fw, cw, des = self.ins
@@ -146,15 +153,6 @@ class Toilet(SanUnit, Decay, isabstract=True):
             if not i.F_mass == 0:
                 i.F_mass *= N_tot_user
 
-
-    density_dct = {
-        'Sand': 1442,
-        'Gravel': 1600,
-        'Brick': 1750,
-        'Plastic': 0.63,
-        'Steel': 7900,
-        'StainlessSteelSheet': 2.64
-        }
 
     def _cost(self):
         self.baseline_purchase_costs['Total toilets'] = self.CAPEX * self.N_toilet * self.price_ratio
@@ -377,6 +375,10 @@ class MURT(Toilet):
     --------
     :ref:`qsdsan.sanunits.Toilet <sanunits_toilets>`
     '''
+    _N_outs = 3
+    _units = {
+        'Collection period': 'd',
+        }
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  degraded_components=('OtherSS',), N_user=1, N_tot_user=1,
@@ -409,7 +411,12 @@ class MURT(Toilet):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    _N_outs = 3
+    def _init_lca(self):
+        self.construction = [
+            Construction(item='Ceramic', linked_unit=self, quantity_unit='kg'),
+            Construction(item='Fan', linked_unit=self, quantity_unit='kg'),
+        ]
+
 
     def _run(self):
         Toilet._run(self)
@@ -447,12 +454,9 @@ class MURT(Toilet):
         self._scale_up_outs()
 
 
-    _units = {
-        'Collection period': 'd',
-        }
-
     def _design(self):
         design = self.design_results
+        constr = self.construction
         if self.if_include_front_end:
             design['Number of users per toilet'] = self.N_user
             design['Parallel toilets'] = N = self.N_toilet
@@ -462,16 +466,13 @@ class MURT(Toilet):
                 self.urinal_weight * self.N_urinal_per_toilet
                 )
             design['Fan'] = Fan_quant = 1  # assume fan quantity is 1
-
-            self.construction = (
-                Construction(item='Ceramic', quantity=Ceramic_quant * N, quantity_unit='kg'),
-                Construction(item='Fan', quantity=Fan_quant * N, quantity_unit='kg'),
-            )
-
+            constr[0].quantity = Ceramic_quant * N
+            constr[1].quantity = Fan_quant * N
             self.add_construction(add_cost=False)
         else:
             design.clear()
-            self.construction = ()
+            for i in constr: i.quantity = 0
+            
 
     def _cost(self):
         C = self.baseline_purchase_costs
@@ -571,8 +572,15 @@ class PitLatrine(Toilet):
     --------
     :ref:`qsdsan.sanunits.Toilet <sanunits_toilets>`
     '''
-
-    # Legacy code to add checkers
+    _N_outs = 4
+    _units = {
+        'Emptying period': 'yr',
+        'Single pit volume': 'm3',
+        'Single pit area': 'm2',
+        'Single pit depth': 'm'
+        }
+    
+    # # Legacy code to add checkers
     # _P_leaching = Frac_D(name='P_leaching')
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
@@ -597,17 +605,6 @@ class PitLatrine(Toilet):
         self._liq_leaching = None
         self._mixed_in = WasteStream(f'{self.ID}_mixed_in')
 
-        self.construction = (
-            Construction('cement', linked_unit=self, item='Cement', quantity_unit='kg'),
-            Construction('sand', linked_unit=self, item='Sand', quantity_unit='kg'),
-            Construction('gravel', linked_unit=self, item='Gravel', quantity_unit='kg'),
-            Construction('brick', linked_unit=self, item='Brick', quantity_unit='kg'),
-            Construction('liner', linked_unit=self, item='Plastic', quantity_unit='kg'),
-            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
-            Construction('wood', linked_unit=self, item='Wood', quantity_unit='m3'),
-            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
-            )
-
         data = load_data(path=pit_path)
         for para in data.index:
             if para in ('MCF_decay', 'N2O_EF_decay'):
@@ -620,8 +617,17 @@ class PitLatrine(Toilet):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-
-    _N_outs = 4
+    def _init_lca(self):
+        self.construction = [
+            Construction('cement', linked_unit=self, item='Cement', quantity_unit='kg'),
+            Construction('sand', linked_unit=self, item='Sand', quantity_unit='kg'),
+            Construction('gravel', linked_unit=self, item='Gravel', quantity_unit='kg'),
+            Construction('brick', linked_unit=self, item='Brick', quantity_unit='kg'),
+            Construction('liner', linked_unit=self, item='Plastic', quantity_unit='kg'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            Construction('wood', linked_unit=self, item='Wood', quantity_unit='m3'),
+            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
+            ]
 
     def _run(self):
         Toilet._run(self)
@@ -680,13 +686,6 @@ class PitLatrine(Toilet):
 
         self._scale_up_outs()
 
-
-    _units = {
-        'Emptying period': 'yr',
-        'Single pit volume': 'm3',
-        'Single pit area': 'm2',
-        'Single pit depth': 'm'
-        }
 
     def _design(self):
         design = self.design_results
@@ -886,6 +885,14 @@ class UDDT(Toilet):
     --------
     :ref:`qsdsan.sanunits.Toilet <sanunits_toilets>`
     '''
+    _N_outs = 6
+    _units = {
+        'Collection period': 'd',
+        'Single tank volume': 'm3',
+        'Single vault volume': 'm3',
+        'Treatment time': 'd',
+        'Treatment volume': 'm3'
+        }
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  degraded_components=('OtherSS',), N_user=1, N_toilet=1, N_tot_user=None,
@@ -906,17 +913,6 @@ class UDDT(Toilet):
         self.if_treatment = if_treatment
         self._mixed_sol = WasteStream(f'{self.ID}_mixed_sol')
 
-        self.construction = (
-            Construction('cement', linked_unit=self, item='Cement', quantity_unit='kg'),
-            Construction('sand', linked_unit=self, item='Sand', quantity_unit='kg'),
-            Construction('gravel', linked_unit=self, item='Gravel', quantity_unit='kg'),
-            Construction('brick', linked_unit=self, item='Brick', quantity_unit='kg'),
-            Construction('liner', linked_unit=self, item='Plastic', quantity_unit='kg'),
-            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
-            Construction('ss_sheet', linked_unit=self, item='StainlessSteelSheet', quantity_unit='kg'),
-            Construction('wood', linked_unit=self, item='Wood', quantity_unit='m3'),
-            )
-
         data = load_data(path=uddt_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
@@ -927,7 +923,18 @@ class UDDT(Toilet):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    _N_outs = 6
+
+    def _init_lca(self):
+        self.construction = [
+            Construction('cement', linked_unit=self, item='Cement', quantity_unit='kg'),
+            Construction('sand', linked_unit=self, item='Sand', quantity_unit='kg'),
+            Construction('gravel', linked_unit=self, item='Gravel', quantity_unit='kg'),
+            Construction('brick', linked_unit=self, item='Brick', quantity_unit='kg'),
+            Construction('liner', linked_unit=self, item='Plastic', quantity_unit='kg'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            Construction('ss_sheet', linked_unit=self, item='StainlessSteelSheet', quantity_unit='kg'),
+            Construction('wood', linked_unit=self, item='Wood', quantity_unit='m3'),
+            ]
 
     def _run(self):
         Toilet._run(self)
@@ -1051,14 +1058,6 @@ class UDDT(Toilet):
 
         self._scale_up_outs()
 
-
-    _units = {
-        'Collection period': 'd',
-        'Single tank volume': 'm3',
-        'Single vault volume': 'm3',
-        'Treatment time': 'd',
-        'Treatment volume': 'm3'
-        }
 
     def _design(self):
         design = self.design_results
