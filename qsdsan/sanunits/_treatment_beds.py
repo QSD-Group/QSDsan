@@ -60,6 +60,16 @@ class DryingBed(SanUnit, Decay):
     --------
     :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
+    _N_ins = 1
+    _N_outs = 4
+    _units = {
+        'Single covered bed volume': 'm3',
+        'Single uncovered bed volume': 'm3',
+        'Single storage bed volume': 'm3',
+        'Single planted bed volume': 'm3',
+        'Total cover area': 'm2',
+        'Total column length': 'm'
+        }
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  design_type='unplanted', degraded_components=('OtherSS',), **kwargs):
@@ -80,11 +90,6 @@ class DryingBed(SanUnit, Decay):
             self._N_bed['planted'] = 2
             self.design_type = 'planted'
 
-        self.construction = (
-            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
-            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
-            )
-
         data = load_data(path=drying_bed_path)
         for para in data.index:
             if para == 'N_bed': continue
@@ -97,9 +102,12 @@ class DryingBed(SanUnit, Decay):
 
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-
-    _N_ins = 1
-    _N_outs = 4
+    
+    def _init_lca(self):
+        self.construction = [
+            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            ]
 
     def _run(self):
         waste = self.ins[0]
@@ -124,14 +132,6 @@ class DryingBed(SanUnit, Decay):
             evaporated.imass['H2O'] = waste.imass['H2O'] - sol.imass['H2O']
         sol._COD = sol_COD*1e3/sol.F_vol
 
-    _units = {
-        'Single covered bed volume': 'm3',
-        'Single uncovered bed volume': 'm3',
-        'Single storage bed volume': 'm3',
-        'Single planted bed volume': 'm3',
-        'Total cover area': 'm2',
-        'Total column length': 'm'
-        }
 
     def _design(self):
         design = self.design_results
@@ -313,6 +313,16 @@ class LiquidTreatmentBed(SanUnit, Decay):
     --------
     :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
+    _N_ins = 1
+    _N_outs = 3
+    _run = Decay._first_order_run
+    _units = {
+        'Residence time': 'd',
+        'Bed length': 'm',
+        'Bed width': 'm',
+        'Bed height': 'm',
+        'Single bed volume': 'm3'
+        }
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  **kwargs):
@@ -320,7 +330,6 @@ class LiquidTreatmentBed(SanUnit, Decay):
                        init_with=init_with, F_BM_default=1,
                        if_capture_biogas=False,
                        if_N2O_emission=False,)
-        self.construction = (Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'))
 
         data = load_data(path=liquid_bed_path)
         for para in data.index:
@@ -331,18 +340,10 @@ class LiquidTreatmentBed(SanUnit, Decay):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    _N_ins = 1
-    _N_outs = 3
-    
-    _run = Decay._first_order_run
-
-    _units = {
-        'Residence time': 'd',
-        'Bed length': 'm',
-        'Bed width': 'm',
-        'Bed height': 'm',
-        'Single bed volume': 'm3'
-        }
+    def _init_lca(self):
+        self.construction = [
+            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='m3'),
+            ]
 
     def _design(self):
         design = self.design_results

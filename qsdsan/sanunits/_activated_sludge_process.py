@@ -165,14 +165,16 @@ class ActivatedSludgeProcess(SanUnit):
     auxiliary_unit_names = ('heat_exchanger',)
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 F_BM_default=1, include_construction=False,
                  N_train=2, T=35+273.15, X_i0=None, X_v=1210, X_e=15, X_w=10000,
                  SLR=20, SF=4, aeration_power=1, # p337 of ref 1
                  q_hat=12, K=20, Y=0.5, b=0.396, f_d=0.8, # change from 0.2 of ref 2 based on p171 of ref 1
                  COD_factor=1.42, # p8 of Complex Systems in ref 1
                  q_UAP=1.8, q_BAP=0.1, k1=0.12, k2=0.09, K_UAP=100, K_BAP=85,
                  F_BM=default_F_BM, lifetime=default_equipment_lifetime,
-                 F_BM_default=1, **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)
+                 **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1,
+                         include_construction=include_construction)
         ID, ins0 = self.ID, self.ins[0]
         self._inf = ins0.copy(f'{ID}_inf')
         self._ras = ins0.copy(f'{ID}_ras')
@@ -197,17 +199,19 @@ class ActivatedSludgeProcess(SanUnit):
         self.k2 = k2
         self.K_UAP = K_UAP
         self.K_BAP = K_BAP
+        ID = self.ID
         hx_in = Stream(f'{ID}_hx_in')
         hx_out = Stream(f'{ID}_hx_out')
-        self.heat_exchanger = HXutility(ID=f'{ID}_hx', ins=hx_in, outs=hx_out, T=T)
+        # Add '.' in ID for auxiliary units
+        self.heat_exchanger = HXutility(ID=f'.{ID}_hx', include_construction=include_construction,
+                                        ins=hx_in, outs=hx_out, T=T)
         self.blower = blower = Blower('blower', linked_unit=self, N_reactor=N_train)
         self.air_piping = air_piping = GasPiping('air_piping', linked_unit=self, N_reactor=N_train)
         self.equipments = (blower, air_piping)
         self.F_BM.update(F_BM)
         self._default_equipment_lifetime.update(lifetime)
 
-        for attr, value in kwargs.items():
-            setattr(self, attr, value)
+        for attr, value in kwargs.items(): setattr(self, attr, value)
 
 
     # Equation/page numbers are noted for the 2001 Rittmann and McCarty book
@@ -257,7 +261,7 @@ class ActivatedSludgeProcess(SanUnit):
         X_a = (SRT/HRT) * Y*(S_0-S)/(1+b*SRT)
 
         # Use mass balance on X within the entire control volume
-        # (aeration tank and the clarifer)
+        # (aeration tank and the clarifier)
         # to solve waste activated sludge flow, [L/d]
         dX_vdt = X_v * V / SRT # [mg VSS/d]
         Q_was = (dX_vdt-(Q*X_e))/(X_w-X_e)
@@ -406,7 +410,7 @@ class ActivatedSludgeProcess(SanUnit):
         get_VSC = lambda L2: t * L2 * W_N_trains # get volume of slab concrete
 
         # Distribution channel, [ft3],
-        # double for both the tank and the clarifer
+        # double for both the tank and the clarifier
         W_dist, W_eff = self.W_dist, self.W_eff
         VWC = 2 * get_VWC(L1=(W_N_trains+W_dist), N=2)
         VSC = 2 * get_VSC(L2=(W_dist+2*t_wall))
@@ -528,6 +532,7 @@ class ActivatedSludgeProcess(SanUnit):
         hx.ins[0].copy_flow(ins0)
         hx.outs[0].copy_flow(ins0)
         hx.ins[0].T = ins0.T
+        hx.outs[0].T = self.T
         hx.ins[0].P = hx.outs[0].P = ins0.P
         hx.simulate_as_auxiliary_exchanger(ins=hx.ins, outs=hx.outs)
         # Power
@@ -537,8 +542,7 @@ class ActivatedSludgeProcess(SanUnit):
             if p is None:
                 continue
             pumping += p.power_utility.rate
-        self.power_utility.rate = \
-            self.blower.design_results['Total blower power'] + pumping
+        self.power_utility.rate = self.blower.design_results['Total blower power'] + pumping
 
 
     @property

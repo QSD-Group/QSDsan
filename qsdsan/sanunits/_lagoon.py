@@ -61,6 +61,8 @@ class Lagoon(SanUnit, Decay):
     --------
     :ref:`qsdsan.processes.Decay <processes_Decay>`
     '''
+    _N_ins = 1
+    _N_outs = 3
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  design_type='anaerobic', flow_rate=None,
@@ -80,16 +82,14 @@ class Lagoon(SanUnit, Decay):
         self.design_type = design_type
         self._flow_rate = flow_rate
 
-        self.construction = (
-            Construction('liner', linked_unit=self, item='Plastic', quantity_unit='kg'),
-            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
-            )
-
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    _N_ins = 1
-    _N_outs = 3
+    def _init_lca(self):
+        self.construction = [
+            Construction('liner', linked_unit=self, item='Plastic', quantity_unit='kg'),
+            Construction('excavation', linked_unit=self, item='Excavation', quantity_unit='m3'),
+            ]
 
     def _run(self):
         Decay._first_order_run(self)
