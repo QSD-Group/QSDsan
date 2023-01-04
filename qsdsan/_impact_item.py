@@ -254,7 +254,18 @@ class ImpactItem:
 
 
     def add_indicator(self, indicator, CF_value, CF_unit=''):
-        '''Add an indicator with characterization factor values.'''
+        '''
+        Add an indicator with characterization factor values.
+
+        Parameters
+        ----------
+        indicator : obj or str
+            :class:`ImpactIndicator` or its ID.
+        CF_value : float
+            Characterization factor of the indicator.
+        CF_unit : str
+            Unit of the characterization factor value.
+        '''
         if not hasattr(self, '_source'): self._source = None
         source_item = check_source(self, True)
         if isinstance(indicator, str):
@@ -452,14 +463,15 @@ class ImpactItem:
         impact item will be copied from the provided source.
         ID of the impact item can be provided instead of the object.
         '''
-        return self._source
+        if hasattr(self, '_source'): return self._source
+        else:
+            self._source = None
+            return self._source
     @source.setter
     def source(self, i):
         if not isinstance(i, ImpactItem):
-            if isinstance(i, str):
-                i = self.get_item(i)
-            elif not i:
-                i = None
+            if isinstance(i, str): i = self.get_item(i)
+            elif not i: i = None
             else:
                 raise ValueError('`source` can only be an `ImpactItem` or its ID, '
                                  f'not {type(i).__name__}.')
@@ -505,7 +517,10 @@ class ImpactItem:
     def CFs(self):
         '''[dict] Characterization factors of this item for different impact indicators.'''
         if self.source: return self.source._CFs.copy()
-        else: return self._CFs
+        elif hasattr(self, '_CFs'): return self._CFs
+        else:
+            self._CFs = None
+            return self._CFs
     @CFs.setter
     def CFs(self, indicator, CF_value, CF_unit=''):
         check_source(self, True).add_indicator(indicator, CF_value, CF_unit)
@@ -716,15 +731,16 @@ class StreamImpactItem(ImpactItem):
             Since the price is copied from the price of the `linked_stream`, it
             can be different from the source.
         '''
-        return self._source
+        if hasattr(self, '_source'): return self._source
+        else:
+            self._source = None
+            return self._source
     @source.setter
     def source(self, i):
-        if isinstance(i, str):
-            i = self.get_item(i)
+        if isinstance(i, str): i = self.get_item(i)
 
         if not isinstance(i, StreamImpactItem):
-            if not i:
-                i = None
+            if not i: i = None
             else:
                 raise ValueError('`source` can only be a StreamImpactItem, ' \
                                  f'not a {type(i).__name__}.')

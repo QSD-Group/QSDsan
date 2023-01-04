@@ -5,9 +5,14 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
+
     Lewis Rowles <stetsonsc@gmail.com>
+
     Lane To <lane20@illinois.edu>
+
+    Jianan Feng <jiananf2@illinois.edu>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -16,12 +21,13 @@ for license details.
 
 import numpy as np, flexsolve as flx
 from warnings import warn
-from math import ceil
+from math import ceil, floor
+import biosteam as bst
 from biosteam import Splitter, SolidsCentrifuge
 from .. import SanUnit, Construction
 from ..processes import Decay
-from ..sanunits import Pump
-from ..utils import ospath, load_data, data_path, dct_from_str, price_ratio
+from ..sanunits import SludgePump
+from ..utils import ospath, load_data, data_path, dct_from_str, auom
 
 __all__ = (
     'SludgeThickening',
@@ -30,6 +36,8 @@ __all__ = (
     'SludgeSeparator',
     )
 
+_lb_to_kg = auom('lb').conversion_factor('kg')
+_m3_to_gal = auom('m3').conversion_factor('gallon')
 
 # %%
 
@@ -96,8 +104,8 @@ class SludgeThickening(SanUnit, Splitter):
         eff = self.outs[0].proxy(f'{ID}_eff')
         sludge = self.outs[1].proxy(f'{ID}_sludge')
         # Add '.' in ID for auxiliary units
-        self.effluent_pump = Pump(f'.{ID}_eff_pump', ins=eff, init_with=init_with)
-        self.sludge_pump = Pump(f'.{ID}_sludge_pump', ins=sludge, init_with=init_with)
+        self.effluent_pump = SludgePump(f'.{ID}_eff_pump', ins=eff, init_with=init_with)
+        self.sludge_pump = SludgePump(f'.{ID}_sludge_pump', ins=sludge, init_with=init_with)
         self._mixed = self.ins[0].copy(f'{ID}_mixed')
         self._set_split_at_mc()
 
@@ -245,12 +253,10 @@ class BeltThickener(SludgeThickening):
         return self._N_thickener
 
 
-class SludgeCentrifuge(SludgeThickening, SolidsCentrifuge):
+    
+class SludgeCentrifuge(SludgeThickening, bst.units.SolidsCentrifuge):
     '''
-    Solid centrifuge for sludge dewatering.
-
-    `_run` and `_cost` are based on `SludgeThickening` and `_design`
-    is based on `SolidsCentrifuge`.
+    Sludge Centrifuge with material usage.
 
     The 0th outs is the water-rich supernatant (effluent) and
     the 1st outs is the solid-rich sludge.
@@ -261,25 +267,73 @@ class SludgeCentrifuge(SludgeThickening, SolidsCentrifuge):
     Parameters
     ----------
     sludge_moisture : float
+    .. [1] https://dolphincentrifuge.com/wastewater-centrifuge/ (accessed 12-4-2022).
         Moisture content of the thickened sludge, [wt% water].
     solids : Iterable(str)
         IDs of the solid components.
         If not provided, will be set to the default `solids` attribute of the components.
+    
+    References
+    ----------
+    .. [1] https://dolphincentrifuge.com/wastewater-centrifuge/ (accessed 12-4-2022).
     '''
+    
+    _units = {'Total pump stainless steel': 'kg',
+              'Total pipe stainless steel': 'kg',
+              'Centrifige stainless steel': 'kg',
+              'Total stainless steel': 'kg'}
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 sludge_moisture=0.8, solids=(),
+                 include_construction=True, sludge_moisture=0.8, solids=(),
                  centrifuge_type='scroll_solid_bowl'):
         SludgeThickening.__init__(self, ID, ins, outs, thermo, init_with,
-                                sludge_moisture=sludge_moisture,
-                                solids=solids)
+                                  sludge_moisture=sludge_moisture,
+                                  solids=solids)
+        self.include_construction = include_construction
         self.centrifuge_type = centrifuge_type
+        ID = self.ID
+        eff = self.outs[0].proxy(f'{ID}_eff')
+        sludge = self.outs[1].proxy(f'{ID}_sludge')
+        self.effluent_pump = SludgePump(f'.{ID}_eff_pump', ins=eff, init_with=init_with)
+        self.sludge_pump = SludgePump(f'.{ID}_sludge_pump', ins=sludge, init_with=init_with)
 
     _run = SludgeThickening._run
 
-    _design = SolidsCentrifuge._design
-
-    _cost = SludgeThickening._cost
+    def _design(self):
+        bst.units.SolidsCentrifuge._design(self)
+        D = self.design_results
+        self.effluent_pump.simulate()
+        self.sludge_pump.simulate()
+        D['Total pump stainless steel'] = self.effluent_pump.design_results['Pump stainless steel'] +\
+                                          self.sludge_pump.design_results['Pump stainless steel']
+        D['Total pipe stainless steel'] = self.effluent_pump.design_results['Pump pipe stainless steel'] +\
+                                          self.sludge_pump.design_results['Pump pipe stainless steel']
+        # based on [1]:
+        # when rated capacity <= 80 GPM: weight = 2500 lb
+        # when rated capacity (80, 170]: weight = 4000 lb
+        # when rated capacity > 170 GPM, use a combination of large and small centrifuges
+        
+        D['Number of large centrifuge'] = floor(self.F_vol_in*_m3_to_gal/60/170)
+        D['Number of small centrifuge'] = 0
+        if self.F_vol_in*_m3_to_gal/60 - D['Number of large centrifuge']*170 <= 80:
+            D['Number of small centrifuge'] = 1
+        else:
+            D['Number of large centrifuge'] += 1
+        
+        D['Centrifuge stainless steel'] = (4000*D['Number of large centrifuge'] + 2500*D['Number of small centrifuge'])*_lb_to_kg
+        total_steel = D['Total stainless steel'] = D['Total pump stainless steel'] + D['Total pipe stainless steel'] + D['Centrifuge stainless steel']
+        
+        if self.include_construction:
+            construction = getattr(self, 'construction', ())
+            if construction: construction[0].quantity = total_steel
+            else:
+                self.construction = [
+                    Construction('stainless_steel', linked_unit=self, item='Stainless_steel', 
+                                 quantity=total_steel, quantity_unit='kg'),
+                    ]
+        
+    def _cost(self):
+        SludgeThickening._cost(self)
 
 
 # %%
@@ -321,6 +375,8 @@ class SludgeSeparator(SanUnit):
     https://doi.org/10.1021/acs.est.0c03296.
 
     '''
+    _N_ins = 1
+    _outs_size_is_fixed = False
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  split=None, settled_frac=None, **kwargs):
@@ -331,9 +387,6 @@ class SludgeSeparator(SanUnit):
         self.settled_frac = settled_frac or float(data.loc['settled_frac']['expected'])
         del data
 
-
-    _N_ins = 1
-    _outs_size_is_fixed = False
 
     def _adjust_solid_water(self, influent, liq, sol):
         sol.imass['H2O'] = 0

@@ -66,6 +66,8 @@ class Trucking(SanUnit):
     Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
     https://doi.org/10.1021/acs.est.0c03296.
     '''
+    _N_ins = 1
+    _N_outs = 2
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  load_type='mass', load=1., load_unit='kg',
@@ -80,14 +82,12 @@ class Trucking(SanUnit):
                            distance=distance, distance_unit=distance_unit,
                            interval=interval, interval_unit=interval_unit)
         total = single.copy('total_truck', linked_unit=self)
-        self.transportation = (total,)
+        self.transportation = [total,]
         self._update_fee(fee, fee_unit)
         self.if_material_loss = if_material_loss
         self.loss_ratio = loss_ratio
         self.price_ratio = price_ratio
 
-    _N_ins = 1
-    _N_outs = 2
 
     def _update_fee(self, fee=0., unit=''):
         if not unit or unit == currency:

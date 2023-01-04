@@ -5,7 +5,10 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+    
     Yalin Li <mailto.yalin.li@gmail.com>
+    
+    Jianan Feng <jiananf2@illinois.edu>
 
 Part of this module is based on the BioSTEAM package:
 https://github.com/bioSTEAMDevelopmentGroup/biosteam
@@ -22,10 +25,10 @@ from warnings import warn
 from flexsolve import IQ_interpolation
 from biosteam import HeatUtility, Facility
 from thermosteam.reaction import ParallelReaction
-from .. import SanUnit
+from .. import SanUnit, Construction
 from ..utils import sum_system_utility
 
-__all__ = ('BiogasCombustion', 'CHP',)
+__all__ = ('BiogasCombustion', 'CombinedHeatPower',)
 
 
 class BiogasCombustion(SanUnit):
@@ -48,6 +51,8 @@ class BiogasCombustion(SanUnit):
     --------
     `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
     '''
+    _N_ins = 2
+    _N_outs = 3
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  if_combustion=False, biogas_loss=0.1, biogas_eff=0.55):
@@ -57,9 +62,6 @@ class BiogasCombustion(SanUnit):
         self._biogas_loss = biogas_loss
         self._biogas_eff = biogas_eff
 
-
-    _N_ins = 2
-    _N_outs = 3
 
     def _run(self):
         biogas, air = self.ins
@@ -98,7 +100,7 @@ class BiogasCombustion(SanUnit):
         self._biogas_eff = i
 
 
-class CHP(SanUnit, Facility):
+class CombinedHeatPower(SanUnit, Facility):
     '''
     Combustion of all feed streams with simple estimation of the capital cost
     of a combined heat and power (CHP) unit based on Shoener et al. [1]_
@@ -148,13 +150,33 @@ class CHP(SanUnit, Facility):
         Valorization of Dilute Organic Carbon Waste Streams.
         Energy Environ. Sci. 2016, 9 (3), 1102–1112.
         https://doi.org/10.1039/C5EE03715H.
+        
+    .. [2] Havukainen, J.; Nguyen, M. T.; Väisänen, S.; Horttanainen, M.
+        Life Cycle Assessment of Small-Scale Combined Heat and Power Plant:
+        Environmental Impacts of Different Forest Biofuels and Replacing
+        District Heat Produced from Natural Gas. Journal of Cleaner
+        Production 2018, 172, 837–846.
+        https://doi.org/10.1016/j.jclepro.2017.10.241.
     '''
+    _N_ins = 3
+    _N_outs = 2
+    network_priority = 0
+    default_combined_eff = {
+        'Fuel cell': 0.405,
+        'Microturbine': 0.27,
+        'Internal combustion': 0.36,
+        'Combustion gas': 0.315,
+        }
+    _units = {'Steel': 'kg',
+              'Furnace': 'kg',
+              'Concrete': 'kg',
+              'Reinforcing steel': 'kg'}
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 unit_CAPEX=1225, CHP_type='Fuel cell',
+                 include_construction=True, unit_CAPEX=1225, CHP_type='Fuel cell',
                  combustion_eff=0.8, combined_eff=None,
                  system=None, supplement_power_utility=False, F_BM={'CHP': 1.}):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM=F_BM)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM=F_BM, include_construction=include_construction)
         self.unit_CAPEX = unit_CAPEX
         self.CHP_type = CHP_type
         self.combustion_eff = combustion_eff
@@ -163,21 +185,17 @@ class CHP(SanUnit, Facility):
         self.supplement_power_utility = supplement_power_utility
         self._sys_heating_utilities = ()
         self._sys_power_utilities = ()
-
-    network_priority = 0
-    _N_ins = 3
-    _N_outs = 2
-
-    default_combined_eff = {
-        'Fuel cell': 0.405,
-        'Microturbine': 0.27,
-        'Internal combustion': 0.36,
-        'Combustion gas': 0.315,
-        }
+        
+    def _init_lca(self):
+        self.construction = [
+            Construction('carbon_steel', linked_unit=self, item='Carbon_steel', quantity_unit='kg'),
+            Construction('furnace', linked_unit=self, item='Furnace', quantity_unit='kg'),
+            Construction('concrete', linked_unit=self, item='Concrete', quantity_unit='kg'),
+            Construction('reinforcing_steel', linked_unit=self, item='Reinforcing_steel', quantity_unit='kg'),
+            ]
 
     # Only simulate in design stage to ensure capturing all system-wise utility
-    def _run(self):
-        pass
+    def _run(self): pass
 
 
     def _design(self):
@@ -218,7 +236,7 @@ class CHP(SanUnit, Facility):
         self.H_net_feeds_no_natural_gas = react(0)
         
         # Calculate all energy needs in kJ/hr as in H_net_feeds
-        kwds = dict(system=self.system, operating_hours=1., exclude_units=(self,))
+        kwds = dict(system=self.system, operating_hours=self.system.operating_hours, exclude_units=(self,))
         pu = self.power_utility
         H_heating_needs = sum_system_utility(**kwds, utility='heating', result_unit='kJ/hr')/self.combustion_eff
         H_power_needs = sum_system_utility(**kwds, utility='power', result_unit='kJ/hr')/self.combined_eff
@@ -261,11 +279,28 @@ class CHP(SanUnit, Facility):
 
         ash_IDs = [i.ID for i in cmps if not i.formula]
         ash.copy_flow(emission, IDs=tuple(ash_IDs), remove=True)
+        
+        if self.include_construction:
+            D = self.design_results
+            constr = self.construction
+            
+            # material calculation based on [2], linearly scaled on power (kW)
+            # in [2], a 580 kW CHP:
+            # steel: 20098 kg
+            # furnace: 12490 kg
+            # reinforced concrete: 15000 kg (concrete + reinforcing steel)
+            # 1 m3 reinforced concrete: 98 v/v% concrete with a density of 2500 kg/m3 (2450 kg)
+            #                            2 v/v% reinforcing steel with a density of 7850 kg/m3 (157kg)
+            factor = self.H_net_feeds/3600/580
+            constr[0].quantity = D['Steel'] = factor*20098
+            constr[1].quantity = D['Furnace'] = factor*12490
+            constr[2].quantity = D['Concrete'] = factor*15000*2450/(2450 + 157)
+            constr[3].quantity = D['Reinforcing steel'] = factor*15000*157/(2450 + 157)
 
 
     def _cost(self):
         unit_CAPEX = self.unit_CAPEX
-        unit_CAPEX /= 3600 # convert to $ per kJ
+        unit_CAPEX /= 3600 # convert to $ per kJ/hr
         self.baseline_purchase_costs['CHP'] = unit_CAPEX * self.H_net_feeds
 
 
@@ -276,14 +311,15 @@ class CHP(SanUnit, Facility):
             hu_dct = self._sys_heating_utilities = {}
             pu_dct = self._sys_power_utilities = {}
             for u in units:
-                hu_dct[u.ID] = tuple([i for i in u.heat_utilities if i.duty>0])
+                hu_dct[u.ID] = tuple([i for i in u.heat_utilities if i.duty*i.flow>0])
                 pu_dct[u.ID] = u.power_utility
 
 
     @property
     def CHP_type(self):
         '''
-        [str] Type of the CHP to adjust the heat-to-power efficiency.
+        [str] Type of the combined heat and power (CHP) type
+        to adjust the heat-to-power efficiency.
         Can be "Fuel cell" (40.5%), "Microturbine" (27%),
         "Internal combustion" (36%), "Combustion gas" (31.5%),
         or None and define an efficiency.

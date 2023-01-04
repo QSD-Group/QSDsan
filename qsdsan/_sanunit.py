@@ -25,6 +25,7 @@ from collections.abc import Iterable
 from warnings import warn
 from biosteam._unit import ProcessSpecification
 from biosteam.utils import (
+    AbstractMethod,
     Inlets,
     MissingStream,
     Outlets,
@@ -110,11 +111,13 @@ class SanUnit(Unit, isabstract=True):
         when provided as a dict, use "ins" or "outs" followed with the order number
         (i.e., ins0, outs-1) as keys; you can use ":" to denote a range (e.g., ins2:4);
         you can also use "else" to specify the stream class for non-provided ones.
-    construction : Iterable(obj)
+    include_construction : bool
+        Whether to include construction-related design (if applicable) in simulation.
+    construction : list(obj)
         :class:`~.Construction` with construction information.
-    transportation : Iterable(obj)
+    transportation : list(obj)
         :class:`~.Transportation` with transportation information.
-    equipments: Iterable(obj)
+    equipment: list(obj)
         :class:`~.Equipment` with equipment information.
     add_OPEX : float/int or dict
         Operating expense per hour in addition to utility cost (assuming 100% uptime).
@@ -163,8 +166,11 @@ class SanUnit(Unit, isabstract=True):
     `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
 
     '''
+    _init_lca = AbstractMethod
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 construction=(), transportation=(), equipments=(),
+                 include_construction=True, construction=[],
+                 transportation=[], equipment=[],
                  add_OPEX={}, uptime_ratio=1., lifetime=None, F_BM_default=None,
                  isdynamic=False, exogenous_vars=(), **kwargs):
         ##### biosteam-specific #####
@@ -196,7 +202,7 @@ class SanUnit(Unit, isabstract=True):
 
         #: Name-number pairs of baseline purchase costs and auxiliary unit 
         #: operations in parallel. Use 'self' to refer to the main unit. Capital 
-        #: and heat and power utilities in parallel will become propotional to this 
+        #: and heat and power utilities in parallel will become proportional to this 
         #: value.
         self.parallel: dict[str, int] = {}
 
@@ -206,12 +212,14 @@ class SanUnit(Unit, isabstract=True):
         self._utility_cost = None
 
         ##### qsdsan-specific #####
-        for i in (*construction, *transportation, *equipments):
+        for i in (*construction, *transportation, *equipment):
             i._linked_unit = self
         # Make fresh ones for each unit
-        self.construction = () if not construction else construction
-        self.transportation = () if not transportation else transportation
-        self.equipments = () if not equipments else equipments
+        self.include_construction = include_construction
+        self.construction = [] if not construction else construction
+        self.transportation = [] if not transportation else transportation
+        self._init_lca()
+        self.equipment = [] if not equipment else equipment
         self.add_OPEX = add_OPEX.copy()
         self.uptime_ratio = 1.
         self.lifetime = lifetime
@@ -323,9 +331,9 @@ class SanUnit(Unit, isabstract=True):
             if _stream_info:
                 stream_info = stream._info(None, T, P, flow, composition, N, IDs) #+ \
                     # '\n' # this breaks the code block in sphinx
-                stream_info += ('\n' + ws_info) if ws_info else ''
+                stream_info += ('\n' + ws_info) if ws_info else '\n'
             else:
-                stream_info = stream._wastestream_info()
+                stream_info = stream._wastestream_info() + '\n'
             su = stream._source if ins_or_outs=='ins' else stream._sink
             index = stream_info.index('\n')
             from_or_to = 'from' if ins_or_outs=='ins' else 'to'
@@ -418,7 +426,7 @@ class SanUnit(Unit, isabstract=True):
                 unit_attr.update(equip_attr)
             else:
                 unit_attr[equip_ID] = equip_attr
-        for equip in self.equipments:
+        for equip in self.equipment:
             equip_ID = equip.ID
             equip_design = equip._design_results = equip._design()
             equip_design = {} if not equip_design else equip_design
@@ -435,7 +443,7 @@ class SanUnit(Unit, isabstract=True):
 
     def add_equipment_cost(self):
         unit_cost = self.baseline_purchase_costs
-        for equip in self.equipments:
+        for equip in self.equipment:
             equip_cost = equip._baseline_purchase_costs = equip._cost()
             if isinstance(equip_cost, dict):
                 unit_cost.update(equip_cost)
@@ -525,12 +533,13 @@ class SanUnit(Unit, isabstract=True):
 
     @property
     def construction(self):
-        '''Iterable(obj) :class:`~.Construction` with construction information.'''
+        '''list(obj) :class:`~.Construction` with construction information.'''
+        if not self.include_construction: return []
         return self._construction
     @construction.setter
     def construction(self, i):
         if isinstance(i, Construction):
-            i = (i,)
+            i = [i]
         else:
             if not isinstance(i, Iterable):
                 raise TypeError(
@@ -539,16 +548,16 @@ class SanUnit(Unit, isabstract=True):
                 if not isinstance(j, Construction):
                     raise TypeError(
                         f'Only `Construction` object can be included, not {type(j).__name__}.')
-        self._construction = i
+        self._construction = list(i)
 
     @property
     def transportation(self):
-        '''Iterable(obj) :class:`~.Transportation` with transportation information.'''
+        '''list(obj) :class:`~.Transportation` with transportation information.'''
         return self._transportation
     @transportation.setter
     def transportation(self, i):
         if isinstance(i, Transportation):
-            i = (i,)
+            i = [i]
         else:
             if not isinstance(i, Iterable):
                 raise TypeError(
@@ -557,17 +566,17 @@ class SanUnit(Unit, isabstract=True):
                 if not isinstance(j, Transportation):
                     raise TypeError(
                         f'Only `Transportation` can be included, not {type(j).__name__}.')
-        self._transportation = i
+        self._transportation = list(i)
 
     @property
-    def equipments(self):
-        '''Iterable(obj) :class:`~.Equipment` with equipment information.'''
-        return self._equipments
-    @equipments.setter
-    def equipments(self, i):
+    def equipment(self):
+        '''list(obj) :class:`~.Equipment` with equipment information.'''
+        return self._equipment
+    @equipment.setter
+    def equipment(self, i):
         isa = isinstance
         if isa(i, Equipment):
-            i = (i,)
+            i = [i]
         else:
             if not isa(i, Iterable):
                 raise TypeError(
@@ -576,7 +585,7 @@ class SanUnit(Unit, isabstract=True):
                 if not isa(j, Equipment):
                     raise TypeError(
                         f'Only `Equipment` can be included, not {type(j).__name__}.')
-        self._equipments = i
+        self._equipment = list(i)
 
     @property
     def add_OPEX(self):

@@ -43,6 +43,8 @@ class CropApplication(SanUnit):
     Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
     https://doi.org/10.1021/acs.est.0c03296.
     '''
+    _N_ins = 1
+    _N_outs = 2
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  if_material_loss=True, loss_ratio=0.02):
@@ -51,8 +53,6 @@ class CropApplication(SanUnit):
         self.if_material_loss = if_material_loss
         self.loss_ratio = loss_ratio
 
-    _N_ins = 1
-    _N_outs = 2
 
     def _run(self):
         applied, loss = self.outs
