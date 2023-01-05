@@ -540,12 +540,12 @@ class AnaerobicCSTR(CSTR):
                 S_gas = QC[n_cmps: (n_cmps+n_gas)]
                 #!!! Volume change due to temperature difference accounted for 
                 # in _run and _init_state
-                Q = QC[-1]
+                # Q = QC[-1]
                 # S_in = QC_ins[0,:-1] * 1e-3  # mg/L to kg/m3
                 # Q_in = QC_ins[0,-1]
                 Q_ins = QC_ins[:, -1]
                 S_ins = QC_ins[:, :-1] * 1e-3  # mg/L to kg/m3
-                # Q = sum(Q_ins)
+                Q = sum(Q_ins)
                 if hasexo:
                     exo_vars = f_exovars(t)
                     QC = np.append(QC, exo_vars)

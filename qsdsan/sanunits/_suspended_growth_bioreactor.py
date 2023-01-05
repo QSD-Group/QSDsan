@@ -42,8 +42,8 @@ def dydt_cstr_no_rxn_fixed_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, QC):
     Q_ins = QC_ins[:, -1]
     C_ins = QC_ins[:, :-1]
     flow_in = Q_ins @ C_ins / V_arr
-    # Q_e_arr[:] = Q_ins.sum(axis=0)
-    Q_e_arr[:] = QC[-1]
+    Q_e_arr[:] = Q_ins.sum(axis=0)
+    # Q_e_arr[:] = QC[-1]
     _dstate[-1] = dQC_ins[:, -1].sum(axis=0)
     flow_out = Q_e_arr * QC[:-1] / V_arr
     _dstate[:-1] = flow_in - flow_out
@@ -53,8 +53,8 @@ def dydt_cstr_no_rxn_controlled_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, QC
     Q_ins = QC_ins[:, -1]
     C_ins = QC_ins[:, :-1]
     flow_in = Q_ins @ C_ins / V_arr
-    # Q_e_arr[:] = Q_ins.sum(axis=0)
-    Q_e_arr[:] = QC[-1]
+    Q_e_arr[:] = Q_ins.sum(axis=0)
+    # Q_e_arr[:] = QC[-1]
     _dstate[-1] = dQC_ins[:, -1].sum(axis=0)
     flow_out = Q_e_arr * QC[:-1] / V_arr
     _dstate[:-1] = flow_in - flow_out
