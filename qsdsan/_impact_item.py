@@ -208,7 +208,7 @@ class ImpactItem:
             self._register(ID)
             return self
 
-    def __init__(self, ID='', functional_unit='kg', price=0.,
+    def __init__(self, ID='', functional_unit='', price=0.,
                  source=None, **indicator_CFs):
         CF_dct = self._format_CF_vals(**indicator_CFs)
 

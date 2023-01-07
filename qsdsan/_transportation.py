@@ -16,6 +16,7 @@ for license details.
 # %%
 
 import pandas as pd
+from warnings import warn
 from thermosteam.utils import registered
 from . import currency, ImpactItem, main_flowsheet
 from .utils import (
@@ -130,11 +131,16 @@ class Transportation:
         self._update_value('interval', interval, interval_unit)
 
         if item:
+            item_unit = self.item.functional_unit
+            if not item_unit:
+                warn(f'Impact item {item_unit.ID} does not have functional unit, '
+                     'which may cause unit mismatch and wrong results during simulation.')
+                return
             try:
-                auom(str(load_unit)+'*'+str(distance_unit)).convert(1, self.item.functional_unit)
+                auom(str(load_unit)+'*'+str(distance_unit)).convert(1, item_unit)
             except:
                 raise ValueError(f'Units of `load` {load_unit} and `distance` {distance_unit} '
-                                 f'do not match the item `functional_unit` {self.item.functional_unit}.')
+                                 f'do not match the item `functional_unit` {item_unit}.')
 
 
     def _update_value(self, var, value, unit=''):
@@ -289,9 +295,11 @@ class Transportation:
     @property
     def quantity(self):
         '''[float] Quantity of item functional unit.'''
-        quantity = auom(self.default_units['quantity']). \
-            convert(self.load*self.distance, self.item.functional_unit)
-        return quantity
+        item_unit = self.item.functional_unit
+        quantity = self.load*self.distance
+        if not item_unit: return quantity
+        converted = auom(self.default_units['quantity']).convert(quantity, item_unit)
+        return converted
 
     @property
     def interval(self):
