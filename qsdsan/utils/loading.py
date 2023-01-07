@@ -12,15 +12,11 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+import numpy as np, pandas as pd, pickle as pk
 from os import path as ospath
 path = ospath.dirname(ospath.realpath(__file__))
 qs_path = ospath.realpath(ospath.join(ospath.dirname(__file__), '../'))
 data_path = ospath.join(qs_path, 'data')
-
-import pandas as pd
-import numpy as np
-from warnings import warn
-from .. import _pk
 
 __all__ = (
     'ospath', 'load_data', 'data_path',
@@ -69,21 +65,14 @@ def load_data(path=None, sheet=0, index_col=0, **kwargs):
 
 def save_pickle(obj, path):
     '''Save object as a pickle file using Pickle Protocol 5.'''
-    if _pk is None:
-        raise RuntimeError('Current environment does not support Pickle Protocol 5, '
-                           'cannot save pickle files.')
     f = open(path, 'wb')
-    _pk.dump(obj, f, protocol=5)
+    pk.dump(obj, f, protocol=5)
     f.close()
-
 
 def load_pickle(path):
     '''Load object saved as a pickle file using Pickle Protocol 5.'''
-    if _pk is None:
-        raise RuntimeError('Current environment does not support Pickle Protocol 5, '
-                           'cannot load pickle files.')
     f = open(path, 'rb')
-    obj = _pk.load(f)
+    obj = pk.load(f)
     f.close()
     return obj
 
@@ -106,10 +95,6 @@ def load_pickled_cmps(components_creation_f, pickle_path, pickle=None):
         except: # want to repickle if there's no pickled file
             pickle = True if pickle==None else False
     if pickle is not False:
-        if _pk: # repickle if can
-            return components_creation_f(pickle=True)
-        else:
-            warn('Pickle Protocol 5 is required to pickle the components.')
-            return components_creation_f(pickle=False)
+        return components_creation_f(pickle=True)
     else:
         return components_creation_f(pickle=False)
