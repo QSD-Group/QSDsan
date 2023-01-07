@@ -23,18 +23,20 @@ _lb_to_kg = qs.utils.auom('lb').conversion_factor('kg')
 
 class Flash(bst.units.Flash):
     '''
-    Similar to biosteam.units.Flash, but includes construction.
+    Similar to biosteam.units.Flash, but can include construction impact calculation.
     
     See Also
     --------
-    :class:`biosteam.units.Flash`
+    `biosteam.units.Flash <https://biosteam.readthedocs.io/en/latest/API/units/Flash.html>`_
     '''
+
+    include_construction = False
     
     def _design(self):
         super()._design()
         D = self.design_results
         
-        if self.outs[0].F_mass != 0:
+        if self.outs[0].F_mass!=0 and self.include_construction:
             construction = getattr(self, 'construction', [])
             if construction: construction[0].quantity = D['Weight']*_lb_to_kg
             # N = 1, don't have to * numbers of the reactor

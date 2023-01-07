@@ -265,7 +265,7 @@ class CatalyticHydrothermalGasification(Reactor):
 
 class KnockOutDrum(Reactor):
     '''
-    Konckout drum is an auxiliary unit for :class:`HydrothermalLiquefaction`.
+    Knockout drum is an auxiliary unit for :class:`HydrothermalLiquefaction`.
     
     References
     ----------
