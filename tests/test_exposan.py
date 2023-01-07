@@ -18,6 +18,9 @@ __all__ = ('test_exposan',)
 
 def test_exposan():
     ##### Systems without costs/impacts #####
+    from qsdsan import default
+    default()
+    
     from exposan.adm import create_system as create_adm_system
     adm_sys = create_adm_system()
     adm_sys.simulate(state_reset_hook='reset_cache', t_span=(0, 200), method='BDF')

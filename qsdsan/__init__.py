@@ -24,28 +24,28 @@ del pkg_resources
 
 
 # BioSTEAM/Thermosteam APIs
-import thermosteam as tmo, biosteam as bst
-Chemical = tmo.Chemical
-Chemicals = tmo.Chemicals
-CompiledChemicals = tmo.CompiledChemicals
-Stream = tmo.Stream
-MultiStream = tmo.MultiStream
-set_thermo = tmo.settings.set_thermo
-get_components = tmo.settings.get_chemicals
-get_thermo = tmo.settings.get_thermo
+import biosteam as _bst
+Chemical = _bst.Chemical
+Chemicals = _bst.Chemicals
+CompiledChemicals = _bst.CompiledChemicals
+Stream = _bst.Stream
+MultiStream = _bst.MultiStream
+set_thermo = _bst.settings.set_thermo
+get_components = _bst.settings.get_chemicals
+get_thermo = _bst.settings.get_thermo
 
-HeatUtility = bst.HeatUtility
-PowerUtility = bst.PowerUtility
-Unit = bst.Unit
-System = bst.System
-Scope = bst.utils.Scope
-Model = bst.Model
-Metric = bst.Metric
-Parameter = bst.Parameter
-Flowsheet = bst.Flowsheet
-main_flowsheet = bst.main_flowsheet
-CEPCI_by_year = bst.units.design_tools.CEPCI_by_year
-del tmo, bst
+HeatUtility = _bst.HeatUtility
+PowerUtility = _bst.PowerUtility
+Unit = _bst.Unit
+System = _bst.System
+Scope = _bst.utils.Scope
+Model = _bst.Model
+Metric = _bst.Metric
+Parameter = _bst.Parameter
+Flowsheet = _bst.Flowsheet
+main_flowsheet = _bst.main_flowsheet
+default_utilities = _bst.default_utilities
+CEPCI_by_year = _bst.units.design_tools.CEPCI_by_year
 
 # Global variables
 currency = 'USD'
@@ -97,6 +97,10 @@ for _slot in utils.doc_examples.__all__:
 from .sanunits import wwtpump
 utils.__all__ = (*utils.__all__, 'wwtpump')
 setattr(utils, 'wwtpump', wwtpump)
+
+def default():
+    _bst.default()
+    utils.clear_lca_registries()
 
 
 __all__ = (
