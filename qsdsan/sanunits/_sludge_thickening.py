@@ -19,10 +19,9 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import numpy as np, flexsolve as flx
+import numpy as np, flexsolve as flx, biosteam as bst
 from warnings import warn
 from math import ceil, floor
-import biosteam as bst
 from biosteam import Splitter, SolidsCentrifuge
 from .. import SanUnit, Construction
 from ..processes import Decay
