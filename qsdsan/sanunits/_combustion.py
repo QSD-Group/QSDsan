@@ -104,6 +104,7 @@ class CombinedHeatPower(SanUnit, Facility):
     '''
     Combustion of all feed streams with simple estimation of the capital cost
     of a combined heat and power (CHP) unit based on Shoener et al. [1]_
+    and Havukainen et al. [2]_
     
     This unit is designed to always satisfy the system's heating demand,
     if there is not enough energy in the feed stream, natural gas will be purchased
@@ -136,7 +137,7 @@ class CombinedHeatPower(SanUnit, Facility):
         The linked system whose heating/power utility needs will be supplied
         by this CHP unit.
     supplement_power_utility : bool
-        Whether to purhcase additional natural gas to supplement energy demand.
+        Whether to purchase additional natural gas to supplement energy demand.
     
         .. note::
             
@@ -150,7 +151,6 @@ class CombinedHeatPower(SanUnit, Facility):
         Valorization of Dilute Organic Carbon Waste Streams.
         Energy Environ. Sci. 2016, 9 (3), 1102–1112.
         https://doi.org/10.1039/C5EE03715H.
-        
     .. [2] Havukainen, J.; Nguyen, M. T.; Väisänen, S.; Horttanainen, M.
         Life Cycle Assessment of Small-Scale Combined Heat and Power Plant:
         Environmental Impacts of Different Forest Biofuels and Replacing

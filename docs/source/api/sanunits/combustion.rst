@@ -7,7 +7,7 @@ BiogasCombustion
    :members:
 
 
-CHP
----
-.. autoclass:: qsdsan.sanunits.CHP
+CombinedHeatPower
+-----------------
+.. autoclass:: qsdsan.sanunits.CombinedHeatPower
    :members:
