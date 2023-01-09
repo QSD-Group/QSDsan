@@ -577,7 +577,6 @@ class ADMtoASM(ADMjunction):
             # Step 5: charge balance for alkalinity
             S_NH = asm_vals[asm_ions_idx[0]]
             S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC], alpha_vfa)) - S_NH/14)*(-12)
-            if S_ALK < 0: breakpoint()
             asm_vals[asm_ions_idx[1]] = S_ALK
             
             return asm_vals
@@ -854,7 +853,6 @@ class ASMtoADM(ADMjunction):
             # but VFAs concentrations are assumed zero per previous steps??
             S_IN = adm_vals[adm_ions_idx[0]]
             S_IC = (asm_charge_tot -  S_IN*alpha_IN)/alpha_IC
-            if S_IC < 0: breakpoint()
             net_Scat = asm_charge_tot + proton_charge
             if net_Scat > 0:  
                 S_cat = net_Scat
