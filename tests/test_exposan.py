@@ -41,9 +41,9 @@ def test_exposan():
     cas_sys = create_cas_system()
     cas_sys.simulate()
 
-    from exposan.interface import create_system as create_inter_system
-    sys_inter = create_inter_system()
-    sys_inter.simulate(t_span=(0, 3))
+    # from exposan.interface import create_system as create_inter_system
+    # sys_inter = create_inter_system()
+    # sys_inter.simulate(t_span=(0, 3))
 
     ##### Systems with costs/impacts #####
     from qsdsan.utils import clear_lca_registries

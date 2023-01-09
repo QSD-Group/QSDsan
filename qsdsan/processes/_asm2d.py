@@ -25,12 +25,12 @@ def create_asm2d_cmps(set_thermo=True):
     cmps = Components.load_default()
 
     S_A = cmps.S_Ac.copy('S_A')
-    S_A.i_charge = -1/64
+    # S_A.i_charge = -1/64
     S_ALK = cmps.S_CO3.copy('S_ALK')      # measured as g C
     S_F = cmps.S_F.copy('S_F')
     S_I = cmps.S_U_E.copy('S_I')
     S_NH4 = cmps.S_NH4.copy('S_NH4')
-    S_NH4.i_charge = 1/14
+    # S_NH4.i_charge = 1/14
 
     X_AUT = cmps.X_AOO.copy('X_AUT')
     X_H = cmps.X_OHO.copy('X_H')

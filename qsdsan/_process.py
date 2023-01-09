@@ -339,6 +339,7 @@ class Process:
                          X_BH: 1.00
                          S_O: -1.0 + 1/Y_H
                          S_NH: -0.0860
+                         S_ALK: -0.0737
     [reference]          X_BH
     [rate equation]      S_NH*S_O*S_S*X_BH*mu_H/((K_N...
     [parameters]         Y_H: Y_H

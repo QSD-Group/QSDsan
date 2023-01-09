@@ -557,7 +557,7 @@ class Component(Chemical):
     @i_NOD.setter
     def i_NOD(self, i):
         if i == None:
-            if self.degradability in ('Readily', 'Slowly') or self.formula in ('H3N', 'NH4', 'NH3', 'NH4+'):
+            if self.degradability in ('Readily', 'Slowly') or self.formula in ('H3N', 'NH4', 'NH3', 'NH4+', 'H4N+'):
                 i = self.i_N * molecular_weight({'O':4}) / molecular_weight({'N':1})
             elif self.formula in ('NO2-', 'HNO2'):
                 i = self.i_N * molecular_weight({'O':1}) / molecular_weight({'N':1})

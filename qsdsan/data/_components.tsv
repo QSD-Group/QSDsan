@@ -2,8 +2,8 @@ ID	description	formula	particle_size	degradability	organic	measured_as	i_C	i_N	i
 S_H2	Dissolved dihydrogen gas	H2	Dissolved gas	Readily	FALSE	COD											0	0	1	1333-74-0	783
 S_CH4	Dissolved Methane	CH4	Dissolved gas	Readily	TRUE	COD											0	0	1	74-82-8	297
 S_CH3OH	Methanol	CH3OH	Soluble	Readily	TRUE	COD											0.717	0.862804	1	67-56-1	887
-S_Ac	Acetate	CH3COO(-)	Soluble	Readily	TRUE	COD											0.717	0.862804	1	64-19-7	176
-S_Prop	Propionate	C2H5COO-	Soluble	Readily	TRUE	COD											0.717	0.862804	1	79-09-3	1032
+S_Ac	Acetate	CH3COO(-)	Soluble	Readily	TRUE	COD											0.717	0.862804	1	71-50-1	175
+S_Prop	Propionate	C2H5COO-	Soluble	Readily	TRUE	COD											0.717	0.862804	1	72-03-7	104745
 S_F	Fermentable soluble organic matters		Soluble	Readily	TRUE	COD	0.32	0.03	0.01	0	0	0	0.502512563	0			0.717	0.862804	1		
 S_U_Inf	Undegradable soluble compound originating from the influent		Soluble	Undegradable	TRUE	COD	0.32	0.05	0.01	0	0	0	0.5	0			0	0	1		
 S_U_E	Endogenous undegradable soluble product		Soluble	Undegradable	TRUE	COD	0.32	0.05	0.01	0	0	0	0.5	0			0	0	1		
@@ -42,7 +42,7 @@ X_AlOH	Aluminum hydroxide	Al(OH)3	Particulate	Undegradable	FALSE												0	0	
 X_FeOH	Iron hydroxide	Fe(OH)3	Particulate	Undegradable	FALSE												0	0	0	1309-33-7	445709
 X_PAO_PP_Lo	Low molecular weight poly-phosphate in phosphorus accumulating organisms	(K0.33Mg0.33PO3)n	Particulate	Undegradable	FALSE	P											0	0	0		
 X_PAO_PP_Hi	High molecular weight poly-phosphate in phosphorus accumulating organisms	(K0.33Mg0.33PO3)n	Particulate	Undegradable	FALSE	P											0	0	0		
-S_NH4	Ammonia nitrogen	NH4+	Soluble	Undegradable	FALSE	N											0	0	0	7664-41-7	222
+S_NH4	Ammonia nitrogen	NH4+	Soluble	Undegradable	FALSE	N											0	0	0	14798-03-9	223
 S_NO2	Nitrite	NO2-	Soluble	Undegradable	FALSE	N											0	0	0	14797-65-0	946
 S_NO3	Nitrate	NO3-	Soluble	Undegradable	FALSE	N											0	0	0	14797-55-8	943
 S_PO4	"Orthophosphate, assumed 50% H2PO4-, 50% HPO4-2"	H3P2O8-3	Soluble	Undegradable	FALSE	P											0	0	0		
