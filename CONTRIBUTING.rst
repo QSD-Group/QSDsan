@@ -276,7 +276,7 @@ If you want to verify if Python can now find the cloned packages successfully, y
 	   	['C:\\Users\\<YOUR_USERNAME>\\Documents\\Coding\\QSDsan\\qsdsan']
 
 
-After configuring the path, you can simply run the test locally using `pytest <https://docs.pytest.org>`_:
+After configuring the path, in your CLI, navigate to the cloned QSDsan package directory, then you can simply run the test locally using `pytest <https://docs.pytest.org>`_:
 
 	.. code:: bash
 
