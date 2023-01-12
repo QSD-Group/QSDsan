@@ -16,7 +16,7 @@ for license details.
 
 # %%
 
-import qsdsan as qs
+import biosteam as bst, qsdsan as qs
 from datetime import date
 from biosteam import TEA as BSTTEA
 
@@ -93,7 +93,10 @@ class TEA(BSTTEA):
             For example, if the system operates 100% of time but a pump only works
             50% of the pump at 50 kW. Set the pump `power_utility` to be 50*50%=25 kW.
 
-
+    
+    CEPCI : float
+        Chemical Engineering Plant Cost Index, default to that of year 2017 (567.5).
+        Values for alternative years can be checked by `qsdsan.CEPCI_by_year`.
     CAPEX : float
         Capital expenditure, if not provided, is set to be the same as `installed_equipment_cost`.
     lang_factor : float or None
@@ -173,7 +176,8 @@ class TEA(BSTTEA):
                  '_annual_maintenance', '_annual_labor', '_system_add_OPEX')
 
     def __init__(self, system, discount_rate=0.05, income_tax=0.,
-                 start_year=date.today().year, lifetime=10, uptime_ratio=1.,
+                 CEPCI=bst.CE, start_year=date.today().year,
+                 lifetime=10, uptime_ratio=1.,
                  CAPEX=0., lang_factor=None,
                  annual_maintenance=0., annual_labor=0., system_add_OPEX={},
                  depreciation='SL', construction_schedule=(1,),
@@ -181,12 +185,13 @@ class TEA(BSTTEA):
         system.simulate()
         self.system = system
         system._TEA = self
-        self.income_tax = income_tax
         # IRR (internal rate of return) is the discount rate when net present value is 0
         self.IRR = discount_rate
         self._IRR = discount_rate # guess IRR for solve_IRR method
+        self.income_tax = income_tax
         self._sales = 0 # guess cost for solve_price method
         self._depreciation = None # initialize this attribute
+        self.CEPCI = CEPCI
         self.start_year = start_year
         self.lifetime = lifetime
         self.uptime_ratio = 1.
@@ -265,6 +270,22 @@ class TEA(BSTTEA):
     @discount_rate.setter
     def discount_rate(self, i):
         self.IRR = i
+
+    @property
+    def CEPCI(self):
+        '''[float] Chemical Engineering Plant Cost Index.'''
+        return bst.CE
+    @CEPCI.setter
+    def CEPCI(self, i):
+        bst.CE = i
+
+    @property
+    def CEPCI_by_year(self):
+        '''
+        [dict] Chemical Engineering Plant Cost Index with key being the year
+        and values being the index.
+        '''
+        return bst.units.design_tools.CEPCI_by_year
 
     @property
     def start_year(self):

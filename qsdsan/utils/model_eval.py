@@ -16,7 +16,7 @@ import pandas as pd
 
 __all__ = (
     'AttrGetter', 'FuncGetter',
-    'AttrSetter', 'AttrFuncSetter', 'DictAttrSetter',
+    'AttrSetter', 'AttrFuncSetter', 'DictAttrSetter', 'MethodSetter',
     'copy_samples',
     )
 
@@ -121,6 +121,26 @@ class DictAttrSetter:
     def __call__(self, value):
         for key in self.keys:
             self.dict_attr[key] = value
+
+class MethodSetter:
+    __slots__ = ('obj', 'method', 'key', 'kwargs')
+    def __init__(self, obj, method, key=None, **kwargs):
+        self.obj = obj
+        if isinstance(method, str): self.method = method
+        else: raise TypeError(f'must input name of the method as a str, not {type(method)}')
+        self.key = key
+        self.kwargs = kwargs
+    
+    def __call__(self, value):
+        obj = self.obj
+        attr = self.method
+        key = self.key
+        kwargs = self.kwargs
+        func = getattr(obj, attr)
+        if key: 
+            kwargs[key] = value
+            func(**kwargs)
+        else: func(value, **kwargs)
 
 
 # %%

@@ -18,6 +18,9 @@ __all__ = ('test_exposan',)
 
 def test_exposan():
     ##### Systems without costs/impacts #####
+    from qsdsan import default
+    default()
+    
     from exposan.adm import create_system as create_adm_system
     adm_sys = create_adm_system()
     adm_sys.simulate(state_reset_hook='reset_cache', t_span=(0, 200), method='BDF')
@@ -40,7 +43,7 @@ def test_exposan():
 
     from exposan.interface import create_system as create_inter_system
     sys_inter = create_inter_system()
-    sys_inter.simulate(t_span=(0, 3))
+    sys_inter.simulate(method='BDF', t_span=(0, 3)) # the default 'RK45' method can't solve it
 
     ##### Systems with costs/impacts #####
     from qsdsan.utils import clear_lca_registries

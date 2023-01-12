@@ -104,7 +104,8 @@ class Construction:
             self._lifetime = auom(lifetime_unit).convert(lifetime, 'yr')
 
     def _update_quantity(self, quantity=0., quantity_unit=''):
-        if not quantity_unit or quantity_unit == self.item.functional_unit:
+        item_unit = self.item.functional_unit
+        if not quantity_unit or not item_unit or quantity_unit==item_unit:
             self._quantity = float(quantity)
         else:
             converted = auom(quantity_unit).convert(float(quantity), self.item.functional_unit)

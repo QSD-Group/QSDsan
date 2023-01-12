@@ -19,10 +19,9 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import numpy as np, flexsolve as flx
+import numpy as np, flexsolve as flx, biosteam as bst
 from warnings import warn
 from math import ceil, floor
-import biosteam as bst
 from biosteam import Splitter, SolidsCentrifuge
 from .. import SanUnit, Construction
 from ..processes import Decay
@@ -267,7 +266,6 @@ class SludgeCentrifuge(SludgeThickening, bst.units.SolidsCentrifuge):
     Parameters
     ----------
     sludge_moisture : float
-    .. [1] https://dolphincentrifuge.com/wastewater-centrifuge/ (accessed 12-4-2022).
         Moisture content of the thickened sludge, [wt% water].
     solids : Iterable(str)
         IDs of the solid components.
@@ -275,7 +273,7 @@ class SludgeCentrifuge(SludgeThickening, bst.units.SolidsCentrifuge):
     
     References
     ----------
-    .. [1] https://dolphincentrifuge.com/wastewater-centrifuge/ (accessed 12-4-2022).
+    [1] https://dolphincentrifuge.com/wastewater-centrifuge/ (accessed 12-4-2022).
     '''
     
     _units = {'Total pump stainless steel': 'kg',

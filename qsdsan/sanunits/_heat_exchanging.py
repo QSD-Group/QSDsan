@@ -163,7 +163,7 @@ class HXutility(SanUnit, HXU):
     '''
     Similar to :class:`biosteam.units.HXutility`,
     but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`
-    and calculate material usage.
+    and calculate material usage based on [1]_.
     
     References
     ----------

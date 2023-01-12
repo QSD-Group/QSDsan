@@ -20,14 +20,17 @@ from math import ceil, floor
 
 __all__ = ('IsothermalCompressor',)
 
-class IsothermalCompressor(bst.units.IsothermalCompressor):
+class IsothermalCompressor(bst.units.IsothermalCompressor, qs.SanUnit):
     '''
-    Similar to biosteam.units.IsothermalCompressor, but can calculate number of units.
+    Similar to biosteam.units.IsothermalCompressor, but can calculate number of units
+    and construction impacts.
 
     See Also
     --------
     `biosteam.units.IsothermalCompressor <https://biosteam.readthedocs.io/en/latest/API/units/compressor.html>`_
     '''
+    
+    include_construction = False
     
     def _design(self):
         super()._design()
@@ -43,12 +46,13 @@ class IsothermalCompressor(bst.units.IsothermalCompressor):
         else:
             D['Number of 300 kW unit'] += 1
         
-        construction = getattr(self, 'construction', [])
-        if construction:
-            construction[0].quantity = D['Number of 4 kW unit']
-            construction[1].quantity = D['Number of 300 kW unit']
-        else:
-            self.construction = [
-                qs.Construction('compressor_4kW', linked_unit=self, item='Compressor_4kW', quantity_unit='ea', quantity=D['Number of 4 kW unit']),
-                qs.Construction('compressor_300kW', linked_unit=self, item='Compressor_300kW', quantity_unit='ea', quantity=D['Number of 4 kW unit'])
-                ]
+        if self.include_construction:
+            construction = getattr(self, 'construction', [])
+            if construction:
+                construction[0].quantity = D['Number of 4 kW unit']
+                construction[1].quantity = D['Number of 300 kW unit']
+            else:
+                self.construction = [
+                    qs.Construction('compressor_4kW', linked_unit=self, item='Compressor_4kW', quantity_unit='ea', quantity=D['Number of 4 kW unit']),
+                    qs.Construction('compressor_300kW', linked_unit=self, item='Compressor_300kW', quantity_unit='ea', quantity=D['Number of 4 kW unit'])
+                    ]
