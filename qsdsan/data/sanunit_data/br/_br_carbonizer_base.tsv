@@ -83,4 +83,4 @@ N_to_HCNO		fraction of N	0.03	0.005	0.1	uniform	Becidan et al 2007
 HCNO_to_NH3		fraction of HCNO	0.5	0.25	0.75	uniform	Becidan et al 2007
 NH3_to_N2O		fraction of NH3	0.01	0	0.02	uniform	Becidan et al 2007
 carbon_COD_ratio		g C*g COD-1	0.35	0.25	0.4	triangular	Tchobanoglous et al.
-f_Amass_Totmass	ash content	fraction of total dry feedstock mass	0.327	0.157	0.473	triangular	lit review (variety of sources)
+f_ash_content	feedstock ash content	% mass fraction of ash in feedstock	32.7	15.7	47.3	triangular	lit review (variety of sources)

@@ -119,7 +119,7 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
     def _run(self):
         waste = self.ins[0]
         biochar, gas, N2O = self.outs
-        biochar.copy_like(self.ins[0])
+        biochar.phase = 's'
         gas.phase = N2O.phase = 'g'
         gas.T = self.pyrolysis_temp
 
@@ -128,9 +128,9 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
         if mc > 0.351: # allow a small error
             warn(f'Moisture content of the influent is {mc:.1%}, '
                 'larger than the maximum allowed level of 35%.')
-
+        
         biochar.empty()
-        biochar_yield = 1.18 * self.f_Amass_Totmass **0.843 + (1-self.f_Amass_Totmass) * 2.106 * math.exp(-0.0066*self.pyrolysis_temp)
+        biochar_yield = 1.18 * self.f_ash_content **0.843 + (1-self.f_ash_content) * 2.106 * math.exp(-0.0066*self.pyrolysis_temp)
         biochar_prcd = waste.F_mass * biochar_yield # * (1-mc) # % kg dry biochar /hr
         biochar.imass['C'] = waste.COD * self.carbon_COD_ratio * waste.F_vol / 1e3 * (1 - self.pyrolysis_C_loss)
         
@@ -158,6 +158,21 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
         N2O_emissions = N2O_from_HCNO + N20_from_NH3 # kg N2O / hr
         N2O.imass['N2O'] = N2O_emissions
 
+    @property
+    def pyrolysis_temp(self):
+        '''[int] Pyrolysis highest heating temperature, [deg C]'''
+        return self._pyrolysis_temp
+    @pyrolysis_temp.setter
+    def pyrolysis_temp(self, i):
+        self._pyrolysis_temp = i
+        
+    @property
+    def f_ash_content(self):
+        '''[float] Ash content of feedstock, [% mass fraction]'''
+        return self._f_ash_content
+    @f_ash_content.setter
+    def f_ash_content(self, i):
+        self._f_ash_content = i 
 
     def _design(self):
         design = self.design_results
