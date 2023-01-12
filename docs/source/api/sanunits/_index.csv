@@ -8,8 +8,10 @@ AnaerobicDigestion,No,No,Completed
 ASMtoADM,Yes,Yes,Completed
 BatchExperiment,Yes,Yes,Completed
 BeltThickener,No,No,Completed
+BinaryDistillation,No,No,Completed
 BiogasCombustion,No,Yes,Completed
-CHP,No,No,Completed
+CatalyticHydrothermalGasification,No,No,Completed
+CombinedHeatPower,No,No,Completed
 CSTR (continuously stirred tank reactor),Yes,No,Completed
 ComponentSplitter,No,Yes,Completed
 Copier,No,Yes,Completed
@@ -19,11 +21,17 @@ DynamicInfluent,Yes,Yes,Completed
 ElectrochemicalCell,No,No,Completed
 Excretion,No,No,Completed
 FakeSplitter,No,Yes,Completed
+Flash,No,No,Completed
 FlatBottomCircularClarifier,Yes,No,Completed
+HeatExchangerNetwork,No,No,Completed
 HXprocess,No,No,Completed
 HXutility,No,No,Completed
 HydraulicDelay,Yes,Yes,Completed
+Hydrocracking,No,No,Completed
+HydrothermalLiquefaction,No,No,Completed
+Hydrotreating,No,No,Completed
 IdealClarifier,No,No,Completed
+IsothermalCompressor,No,No,Completed
 Junction,Yes,Yes,Completed
 InternalCirculationRx,No,No,Completed
 Lagoon,No,No,Completed
@@ -32,9 +40,11 @@ LumpedCost,No,No,Completed
 MixTank,No,No,Completed
 Mixer,Yes,Yes,Completed
 MURT (multi-unit reinvented toilet),No,No,Completed
+PhaseChanger,No,Yes,Completed
 PitLatrine,No,No,Completed
 PolishingFilter,No,No,Completed
 Pump,Yes,No,Completed
+Reactor,No,No,Completed
 ReversedSplitter,No,Yes,Completed
 Sampler,Yes,No,Completed
 SBR (sequential batch reactor),Yes,No,Under development
@@ -44,6 +54,7 @@ SepticTank,No,No,Completed
 SludgeCentrifuge,No,No,Completed
 ﻿SludgeDigester,No,Yes,Completed
 SludgePasteurization,No,No,Completed
+SludgePump,No,No,Completed
 SludgeThickening,No,Yes,Completed
 SludgeSeparator,No,Yes,Completed
 Splitter,Yes,Yes,Completed

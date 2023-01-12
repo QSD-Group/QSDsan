@@ -23,20 +23,23 @@ _lb_to_kg = qs.utils.auom('lb').conversion_factor('kg')
 
 class BinaryDistillation(bst.units.BinaryDistillation):
     '''
-    Similar to biosteam.units.BinaryDistillation, but includes construction.
+    Similar to biosteam.units.BinaryDistillation, but can include construction impact calculation.
     
     See Also
     --------
     `biosteam.units.BinaryDistillation <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
     '''
+
+    include_construction = False
     
     def _design(self):
         super()._design()
         D = self.design_results
-        construction = getattr(self, 'construction', [])
-        if construction: construction[0].quantity = (D['Rectifier weight'] + D['Stripper weight'])*_lb_to_kg
-        else:
-            self.construction = [
-                qs.Construction('carbon_steel', linked_unit=self, item='Carbon_steel', 
-                                quantity=(D['Rectifier weight'] + D['Stripper weight'])*_lb_to_kg, quantity_unit='kg'),
-                ]
+        if self.include_construction:
+            construction = getattr(self, 'construction', [])
+            if construction: construction[0].quantity = (D['Rectifier weight'] + D['Stripper weight'])*_lb_to_kg
+            else:
+                self.construction = [
+                    qs.Construction('carbon_steel', linked_unit=self, item='Carbon_steel', 
+                                    quantity=(D['Rectifier weight'] + D['Stripper weight'])*_lb_to_kg, quantity_unit='kg'),
+                    ]

@@ -53,6 +53,7 @@ def create_adm1_cmps(set_thermo=True):
                                     particle_size='Particulate',
                                     degradability='Slowly',
                                     organic=True)
+    X_ch.copy_models_from(X_c, names=('mu',))
     # X_ch = cmps_all.X_B_Subst.copy('X_ch')
     # X_ch.i_N = 0
     # X_ch.i_C = 0.0313 * C_mw
@@ -278,8 +279,9 @@ def rhos_adm1(state_arr, params):
     if S_bu > 0: rhos[8] *= 1/(1+S_va/S_bu)
 
     h = brenth(acid_base_rxn, 1e-14, 1.0,
-               args=(weak_acids, Kas),
-               xtol=1e-12, maxiter=100)
+            args=(weak_acids, Kas),
+            xtol=1e-12, maxiter=100)
+    # h = 10**(-7.46)
 
     nh3 = Kas[1] * weak_acids[2] / (Kas[1] + h)
     co2 = weak_acids[3] - Kas[2] * weak_acids[3] / (Kas[2] + h)

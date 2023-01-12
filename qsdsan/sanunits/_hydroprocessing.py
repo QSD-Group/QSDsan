@@ -16,7 +16,8 @@ for license details.
 '''
 
 from biosteam.units.decorators import cost
-from qsdsan import SanUnit, Stream, CEPCI_by_year
+from biosteam.units.design_tools import CEPCI_by_year
+from qsdsan import SanUnit, Stream
 from qsdsan.utils import auom
 from . import Reactor, IsothermalCompressor, HXutility
 

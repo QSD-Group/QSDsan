@@ -153,10 +153,10 @@ To see screenshots of the different interface, visit GitHub's documentations on 
 
 Note
 ^^^^
-#. We use fork as the default way for collaboration (i.e., for all first-time contributors). If you are a constant contributor and have independently made at least one successful and meaningful contribution through forking, you will be given the write access to ``QSDsan`` and you can use branch for easier code syncing. We will also jinvite you to join the ``QSDsan`` team.
+#. We use fork as the default way for collaboration (i.e., for all first-time contributors). If you are a constant contributor and have independently made at least one successful and meaningful contribution through forking, you will be given the write access to ``QSDsan`` and you can use branch for easier code syncing. We will also invite you to join the ``QSDsan`` team.
 #. GitHub has really detailed documentation on `forking <https://docs.github.com/en/github/getting-started-with-github/fork-a-repo>`_ (and almost everything else).
 #. As QSDsan is public, all created forks would be public as well. We would appreciate if you make your work public and contribute back, but we understand it if you would like to create a private fork of QSDsan. To do so, please check our tip on creating the `private fork <https://qsdsan.readthedocs.io/en/latest/FAQ.html#private-fork>`_.
-
+#. As we are constantly developing ``QSDsan`` with its core dependencies ``BioSTEAM`` and ``Thermosteam``, it'll be good to clone those two repositories and use the ``qsdsan`` branch of both.
 
 Developing Modules
 ------------------
@@ -236,17 +236,51 @@ Tutorials are prepared in `Jupyter Notebook <https://jupyter.org/>`_ and potenti
 
 Testing
 -------
-``QSDsan`` uses `AppVeyor <https://www.appveyor.com/>`_ to test all pushes and pull requests. A pull request will only be accepted when:
+``QSDsan`` uses `GitHub Action <https://github.com/QSD-Group/QSDsan/actions>`_ to test all pushes and pull requests. A pull request will only be accepted when:
 
 #. Meaningful contributions have been made.
 #. The branch has no conflicts with the root repository.
 #. All tests have been passed.
 
-You can run the test locally using `pytest <https://docs.pytest.org/en/6.2.x/>`_:
+To run pytest, first make sure you have all the packages needed for testing. If you've already have QSDsan running locally, you just need `pytest-cov <https://pytest-cov.readthedocs.io>`_ and `nbval <https://nbval.readthedocs.io>`_. You'll also need `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ (the cloned repository would be better) if you do not have it.
+
+Then you'll need to let your CLI know where to find your clone packages. The easiest way to do it is to add a ``.pth`` file in the path of your python package libraries (e.g., the `site-packages` folder of your conda environment), you can usually `find the path by <https://stackoverflow.com/questions/31003994/where-is-site-packages-located-in-a-conda-environment>`_
 
 	.. code:: bash
 
-	    python3 -m pytest
+		python # to launch Python
+	   	from distutils.sysconfig import get_python_lib
+	   	print(get_python_lib())
+
+The name of the .pth file does not matter just make sure you'll remember what it's used for (e.g., cloned_pkgs.pth), and it just needs to include the path for your cloned packages, for example, a working one could be:
+
+
+	C:\Users\<YOUR_USERNAME>\Documents\Coding\thermosteam
+
+	C:\Users\<YOUR_USERNAME>\Documents\Coding\biosteam
+
+	C:\Users\<YOUR_USERNAME>\Documents\Coding\QSDsan
+
+	C:\Users\<YOUR_USERNAME>\Documents\Coding\EXPOsan
+
+
+Note that the ``<YOUR_USERNAME>`` is just a placeholder for the actual user name of your computer, and the format of the path would be different depending on your OS (the example is Windows, note that only one backward slash ``\`` is needed).
+
+If you want to verify if Python can now find the cloned packages successfully, you can try to import ``QSDsan`` in your Python shell:
+
+	.. code:: bash
+
+		python
+	   	import qsdsan
+	   	print(qsdsan.__path__)
+	   	['C:\\Users\\<YOUR_USERNAME>\\Documents\\Coding\\QSDsan\\qsdsan']
+
+
+After configuring the path, in your CLI, navigate to the cloned QSDsan package directory, then you can simply run the test locally using `pytest <https://docs.pytest.org>`_:
+
+	.. code:: bash
+
+	    pytest # if this doesn't work, try `python -m pytest` or `python3 -m pytest`
 
 This runs all tests under the QSDsan/tests directory as well as all examples in the documentation through `doctest`_. Test results will be similar to the screenshot below, where a green dot indicates the test has been successfully passed and a red F indicates a failure. The number of dots and Fs indicate how many test functions or doctests are run for each moduel. Detailed error traceback on each failed test will be listed to help you fix the bug.
 
