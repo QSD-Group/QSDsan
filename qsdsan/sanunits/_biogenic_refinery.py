@@ -130,14 +130,23 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
                 'larger than the maximum allowed level of 35%.')
         
         biochar.empty()
-        biochar_yield = 1.18 * self.f_ash_content **0.843 + (1-self.f_ash_content) * 2.106 * math.exp(-0.0066*self.pyrolysis_temp)
-        biochar_prcd = waste.F_mass * biochar_yield # * (1-mc) # % kg dry biochar /hr
-        biochar.imass['C'] = waste.COD * self.carbon_COD_ratio * waste.F_vol / 1e3 * (1 - self.pyrolysis_C_loss)
+        f_AC_dec = self.f_ash_content/10 #converts % ash content of feedstock to decimal
         
-        NPK = ('N', 'P', 'K')
-        for element in NPK:
-            biochar.imass[element] *= 1 - getattr(self, f'pyrolysis_{element}_loss')
-        biochar.imass['OtherSS'] = biochar_prcd - biochar.imass[('C', *NPK)].sum()
+        # predictive equation for biochar % yield (dry basis) based on feedstock ash content and pyrolysis temperature
+        dry_basis_yield = 1.18 * f_AC_dec ** 0.843 + (1 - f_AC_dec) * 2.106 * math.exp(-0.0066 * self.pyrolysis_temp)
+        biochar_prcd = waste.F_mass * dry_basis_yield * (1-mc) # % kg dry biochar /hr
+        
+        # predictive equation for ash-free biochar yield (Neves et al. 2011)
+        ash_free_yield = 100 * (0.106 + 2.43 * math.exp(-0.0066 * self.pyrolysis_temp))
+        
+        # predictive equation for biochar fixed carbon content 
+        b_fixed_carbon = 87.786 * ash_free_yield ** -0.483
+        biochar.imass['FixedCarbon'] = b_fixed_carbon
+        # calculate biochar volatile matter and ash content 
+        b_ash_content = (dry_basis_yield - ash_free_yield) * 100 / dry_basis_yield
+        biochar.imass['AshContent'] = b_ash_content
+        biochar.imass['VolatileMatter'] = 100 - b_ash_content - b_fixed_carbon
+        
         biochar.imass['H2O'] = 0.025 * biochar.F_mass # kg H2O / hr with 2.5% moisture content
 
         # Daily run time for the influent waste
