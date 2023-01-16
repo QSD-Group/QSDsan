@@ -96,7 +96,7 @@ def _get_inf_state(inf):
 add2list = lambda lst, item: lst.extend(item) if isinstance(item, Iterable) \
     else lst.append(item)
     
-add_prefix = lambda dct, prefix: {f'{prefix} - {k}':v for k,v in dct}
+add_prefix = lambda dct, prefix: {f'{prefix} - {k}':v for k,v in dct.items()}
 
 class SanUnit(Unit, isabstract=True):
 
