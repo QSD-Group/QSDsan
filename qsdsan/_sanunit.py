@@ -95,6 +95,8 @@ def _get_inf_state(inf):
 
 add2list = lambda lst, item: lst.extend(item) if isinstance(item, Iterable) \
     else lst.append(item)
+    
+add_prefix = lambda dct, prefix: {f'{prefix} - {k}':v for k,v in dct}
 
 class SanUnit(Unit, isabstract=True):
 
@@ -428,12 +430,13 @@ class SanUnit(Unit, isabstract=True):
                 unit_attr[equip_ID] = equip_attr
         for equip in self.equipment:
             equip_ID = equip.ID
+            prefix = f'{equip.__class__.__name__} {equip_ID}'
             equip_design = equip._design_results = equip._design()
             equip_design = {} if not equip_design else equip_design
-            unit_design.update(equip_design)
+            unit_design.update(add_prefix(equip_design, prefix))
 
             equip_units = {} if not equip.units else equip.units
-            unit_units.update(equip_units)
+            unit_units.update(add_prefix(equip_units, prefix))
             for unit_attr, equip_attr in zip(
                     (F_BM, F_D, F_P, F_M, lifetime),
                     ('F_BM', 'F_D', 'F_P', 'F_M', 'lifetime'),
@@ -444,9 +447,10 @@ class SanUnit(Unit, isabstract=True):
     def add_equipment_cost(self):
         unit_cost = self.baseline_purchase_costs
         for equip in self.equipment:
+            prefix = f'{equip.__class__.__name__} {equip.ID}'
             equip_cost = equip._baseline_purchase_costs = equip._cost()
             if isinstance(equip_cost, dict):
-                unit_cost.update(equip_cost)
+                unit_cost.update(add_prefix(equip_cost, prefix))
             else:
                 unit_cost[equip.ID] = equip_cost
 
