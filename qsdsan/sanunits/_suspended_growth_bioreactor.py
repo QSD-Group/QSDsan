@@ -104,7 +104,7 @@ class CSTR(SanUnit):
                  DO_ID='S_O2', suspended_growth_model=None, 
                  isdynamic=True, exogenous_vars=(), **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic,
-                         exogenous_vars=exogenous_vars)
+                         exogenous_vars=exogenous_vars, **kwargs)
         self._V_max = V_max
         self._aeration = aeration
         self._DO_ID = DO_ID
@@ -112,8 +112,8 @@ class CSTR(SanUnit):
         self._concs = None
         self._mixed = WasteStream()
         self.split = split
-        for attr, value in kwargs.items():
-            setattr(self, attr, value)
+        # for attr, value in kwargs.items():
+        #     setattr(self, attr, value)
 
     @property
     def V_max(self):

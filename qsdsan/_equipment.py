@@ -107,13 +107,15 @@ class Equipment:
         self.F_D = F_D
         self.F_P = F_P
         self.F_M = F_M
-        if isinstance(lifetime, dict):
-            equip_lifetime = {}
-            for k, v in lifetime:
-                equip_lifetime[k] = auom(lifetime_unit).convert(v, 'yr')
-        else:
-            equip_lifetime = auom(lifetime_unit).convert(lifetime, 'yr')
-        self.lifetime = equip_lifetime
+        if lifetime:
+            if isinstance(lifetime, dict):
+                equip_lifetime = {}
+                for k, v in lifetime.items():
+                    equip_lifetime[k] = auom(lifetime_unit).convert(v, 'yr')
+            else:
+                equip_lifetime = auom(lifetime_unit).convert(lifetime, 'yr')
+            self.lifetime = equip_lifetime
+        else: self.lifetime = None
 
     def __repr__(self):
         return f'<Equipment: {self.ID}>'
