@@ -420,7 +420,7 @@ class SanUnit(Unit, isabstract=True):
         unit_design = self.design_results
         unit_units = self._units
         F_BM, F_D, F_P, F_M, lifetime = \
-            self.F_BM, self.F_D, self.F_P, self.F_M, self.equipment_lifetime
+            self.F_BM, self.F_D, self.F_P, self.F_M, self._default_equipment_lifetime
         isa = isinstance
         get = getattr
         def update_unit_attr(unit_attr, equip_ID, equip_attr):
@@ -442,7 +442,6 @@ class SanUnit(Unit, isabstract=True):
                     ('F_BM', 'F_D', 'F_P', 'F_M', 'lifetime'),
                     ):
                 update_unit_attr(unit_attr, equip_ID, get(equip, equip_attr))
-
 
     def add_equipment_cost(self):
         unit_cost = self.baseline_purchase_costs
