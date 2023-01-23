@@ -878,7 +878,9 @@ class SludgeDigester(SanUnit):
         Y, b, SRT = self.Y, self.b, self.SRT
         organics_conversion, COD_factor = self.organics_conversion, self.COD_factor
         methane_yield, methane_fraction = self.methane_yield, self.methane_fraction
-        biomass_COD = sludge.imass['active_biomass'].sum()*1e3*24*1.42 # [g/d], 1.42 converts VSS to COD
+        tot = sludge.imass['active_biomass']
+        tot = tot if isinstance(tot, (int, float)) else tot.sum()
+        biomass_COD = tot*1e3*24*1.42 # [g/d], 1.42 converts VSS to COD
 
         digested.mass = sludge.mass
         digested.imass['active_biomass'] = 0 # biomass-derived COD calculated separately

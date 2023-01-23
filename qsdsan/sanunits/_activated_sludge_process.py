@@ -227,13 +227,14 @@ class ActivatedSludgeProcess(SanUnit):
         X_i0 = self.X_i0
         if not X_i0:
             try:
-                X_i0 = inf.iconc['inert_biomass'].sum()
+                inf_iconc = inf.iconc['inert_biomass']
             except AttributeError: # group not defined
                 raise AttributeError('The `inert_biomass` group of current `CompiledComponents` '
                                      'has not been defined. '
                                      'Please either define it using the `define_group` function of '
                                      '`CompiledComponents` or provide `X_i0` for this '
                                      f'`{self.__class__.__name__}` unit.')
+            X_i0 = inf_iconc if isinstance(inf_iconc, (int, float)) else inf_iconc.sum()
 
         X_v, X_e, X_w, SF = self.X_v, self.X_e, self.X_w, self.SF
         K, Y, b, f_d, COD_factor, q_hat = \
