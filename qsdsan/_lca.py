@@ -53,7 +53,11 @@ class LCA:
         If True, then the impacts from construction will be annualized using
         the lifetime of the equipment;
         if False, then the total number of the equipment needed throughout this
-        LCA will be calculated using `ceil(LCA lifetime/equipment lifetime`.
+        LCA will be calculated using `ceil(LCA lifetime/equipment lifetime)`.
+    simulate_system : bool
+        Whether to simulate the system before creating the LCA object.
+    simulate_kwargs : dict
+        Keyword arguments for system simulation (used when `simulate_system` is True).
     item_quantities : kwargs, :class:`ImpactItem` or str = float/callable or (float/callable, unit)
         Other :class:`ImpactItem` objects (e.g., electricity) and their quantities.
         Note that callable functions are used so that quantity of items can be updated.
@@ -218,8 +222,9 @@ class LCA:
 
     def __init__(self, system, lifetime, lifetime_unit='yr',
                  indicators=(), uptime_ratio=1, annualize_construction=False,
+                 simulate_system=True, simulate_kwargs={},
                  **item_quantities):
-        system.simulate()
+        if simulate_system: system.simulate(**simulate_kwargs)
         self._construction_units = set()
         self._transportation_units = set()
         self._lca_streams = set()

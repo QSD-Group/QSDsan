@@ -114,8 +114,14 @@ class TEA(BSTTEA):
         Float input will be automatically converted to a dict with the key being
         "System additional OPEX".
     construction_schedule : tuple
-        Construction progress prior to the start of the system (fraction of the construction that can be finished each year), must sum up to 1. Leave as the default (1,) if no special construction progress is expected.
-    add_kwargs : dict
+        Construction progress prior to the start of the system
+        (fraction of the construction that can be finished each year),
+        must sum up to 1. Leave as the default (1,) if no special construction progress is expected.
+    simulate_system : bool
+        Whether to simulate the system before creating the LCA object.
+    simulate_kwargs : dict
+        Keyword arguments for system simulation (used when `simulate_system` is True).
+    **tea_kwargs
         Additional values that will be passed to :class:`biosteam.TEA`,
         including ``startup_months``, ``startup_FOCfrac ``, ``startup_VOCfrac``,
         ``startup_salesfrac``, ``WC_over_FCI``, ``finance_interest``,
@@ -181,8 +187,9 @@ class TEA(BSTTEA):
                  CAPEX=0., lang_factor=None,
                  annual_maintenance=0., annual_labor=0., system_add_OPEX={},
                  depreciation='SL', construction_schedule=(1,),
-                 **add_kwargs):
-        system.simulate()
+                 simulate_system=True, simulate_kwargs={},
+                 **tea_kwargs):
+        if simulate_system: system.simulate(**simulate_kwargs)
         self.system = system
         system._TEA = self
         # IRR (internal rate of return) is the discount rate when net present value is 0
@@ -203,7 +210,7 @@ class TEA(BSTTEA):
         self.system_add_OPEX = {}.copy() if not system_add_OPEX else system_add_OPEX
         self.depreciation = depreciation
         self.construction_schedule = construction_schedule
-        default_kwargs.update(add_kwargs)
+        default_kwargs.update(tea_kwargs)
         for k, v in default_kwargs.items():
             setattr(self, k, v)
 
