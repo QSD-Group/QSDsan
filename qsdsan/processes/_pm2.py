@@ -373,8 +373,13 @@ def rhos_pm2(state_arr, params):
 # intermediate variables
     f_CH = ratio(X_CH, X_ALG, 0, f_CH_max)
     f_LI = ratio(X_LI, X_ALG, 0, f_LI_max)
-    Q_N = ratio(X_N_ALG, X_ALG, Q_N_min, Q_N_max)
-    Q_P = ratio(X_P_ALG, X_ALG, Q_P_min, Q_P_max)
+       
+    # Q_N = ratio(X_N_ALG, X_ALG, Q_N_min, Q_N_max)
+    # Q_P = ratio(X_P_ALG, X_ALG, Q_P_min, Q_P_max)
+    
+    alg_iN, alg_iP = cmps.X_ALG.i_N, cmps.X_ALG.i_P
+    Q_N = ratio(X_N_ALG+X_ALG*alg_iN, X_ALG, Q_N_min, Q_N_max)
+    Q_P = ratio(X_P_ALG+X_ALG*alg_iP, X_ALG, Q_P_min, Q_P_max)
     
     idx = cmps.indices(['X_ALG', 'X_CH', 'X_LI'])
     X_bio = np.array([X_ALG, X_CH, X_LI])
