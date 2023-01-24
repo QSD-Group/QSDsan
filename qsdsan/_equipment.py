@@ -111,9 +111,9 @@ class Equipment:
             if isinstance(lifetime, dict):
                 equip_lifetime = {}
                 for k, v in lifetime.items():
-                    equip_lifetime[k] = auom(lifetime_unit).convert(v, 'yr')
+                    equip_lifetime[k] = int(auom(lifetime_unit).convert(v, 'yr'))
             else:
-                equip_lifetime = auom(lifetime_unit).convert(lifetime, 'yr')
+                equip_lifetime = int(auom(lifetime_unit).convert(lifetime, 'yr'))
             self.lifetime = equip_lifetime
         else: self.lifetime = None
 
