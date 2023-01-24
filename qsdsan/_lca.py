@@ -704,9 +704,10 @@ class LCA:
             file = f'{self.system.ID}_lca.xlsx'
         tables = [self.get_impact_table(cat, time, time_unit)
                   for cat in ('Construction', 'Transportation',
-                              'Stream', 'Other')]
+                              'Stream', 'other')]
         with pd.ExcelWriter(file) as writer:
             for table in tables:
+                if isinstance(table, str): continue
                 table.to_excel(writer, sheet_name=sheet_name, startrow=n_row)
                 n_row += table.shape[0] + row_space + len(table.columns.names) # extra lines for the heading
 
