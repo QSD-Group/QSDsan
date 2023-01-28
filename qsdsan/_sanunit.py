@@ -482,8 +482,8 @@ class SanUnit(Unit, isabstract=True):
         if hasfield(self, '_isdynamic'):
             if self._isdynamic == bool(i):
                 return
-        else: self._isdynamic = bool(i)
-        if self.hasode:
+        self._isdynamic = bool(i)
+        if self.hasode and self._isdynamic:
             self._init_dynamic()
             if hasattr(self, '_mock_dyn_sys'):
                 ID = self.ID+'_dynmock'
