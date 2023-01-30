@@ -44,7 +44,7 @@ from . import (
     Unit,
     WasteStream,
     )
-from .utils import SanUnitScope
+from .utils import SanUnitScope, ExogenousDynamicVariable as EDV
 
 __all__ = ('SanUnit',)
 
@@ -496,6 +496,18 @@ class SanUnit(Unit, isabstract=True):
         variables that affect the process mass balance, e.g., temperature,
         sunlight irradiance.'''
         return self._exovars
+    @exo_dynamic_vars.setter
+    def exo_dynamic_vars(self, exovars):
+        isa = isinstance
+        if isa(exovars, EDV):
+            self._exovars = (exovars, )
+        else:
+            vs = []
+            for i in iter(exovars):
+                if not isa(i, EDV): 
+                    raise TypeError(f'{i} must be {EDV.__name__}, not {type(i)}')
+                vs.append(i)
+            self._exovars = tuple(vs)
 
     def eval_exo_dynamic_vars(self, t):
         '''Evaluates the exogenous dynamic variables at time t.'''
