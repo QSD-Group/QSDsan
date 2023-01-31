@@ -17,7 +17,7 @@ from setuptools import setup
 setup(
     name='qsdsan',
     packages=['qsdsan'],
-    version='1.2.2',
+    version='1.2.3',
     license='UIUC',
     author='Quantitative Sustainable Design Group',
     author_email='quantitative.sustainable.design@gmail.com',
@@ -30,8 +30,8 @@ setup(
         'Repository': 'https://github.com/QSD-Group/QSDsan',
     },
     install_requires=[
-        'biosteam>=2.34.1',
-        'thermosteam>=0.30.1',
+        'biosteam>=2.36.1',
+        'thermosteam>=0.32.0',
         'matplotlib>=3.3.2',
         'pandas>=1.3.2',
         'SALib>=1.4.5',
