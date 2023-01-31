@@ -23,6 +23,11 @@ class ExogenousDynamicVariable:
     Creates an exogenously dynamic variable by interpolating time-series data
     or providing a function of time.
 
+    .. note::
+        
+        Extrapolation is allowed, assuming the time-series data are periodic  
+        and continuous at both bounds.
+
     Parameters
     ----------
     ID : str
@@ -38,26 +43,24 @@ class ExogenousDynamicVariable:
     interpolator : str or int or callable, optional
         Interpolation method to use. It can be a string (e.g., 'slinear', 'quadratic', 'cubic')
         or an integer within [1,5] to specify the order of a spline interpolation.  
-        Other strings will be passed on to `scipy.interpolate.interp1d` as the 'kind'
+        Other strings will be passed on to :class:`scipy.interpolate.interp1d` as the 'kind'
         argument. It can also be a class in `scipy.interpolate` that takes time-series 
         data as input upon initiation. Interpolant that is not at least 
         first-order differentiable is not recommended (e.g., linear interpolation).
-        The default is `scipy.interpolate.CubicSpline`. 
+        The default is :class:`scipy.interpolate.CubicSpline`. 
     derivative_approximator : callable, optional
         A function that returns derivative of the variable at given time. If none specified,
-        will use the `.derivative()` function of (if available) of the interpolant.
+        will use the :func:`derivative` method (if available) of the interpolant.
     intpl_kwargs : dict, optional
         Keyword arguments for initiating the interpolant.
     
-    .. note::
-        Extrapolation is allowed, assuming the time-series data are periodic and continuous 
-        at both bounds.
-
     See Also
     --------
-    `scipy.interpolate.CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`
-    `scipy.interpolate.InterpolatedUnivariateSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.InterpolatedUnivariateSpline.html>`
-    `scipy.interpolate.interp1d <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html>`
+    `scipy.interpolate.CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`_
+    
+    `scipy.interpolate.InterpolatedUnivariateSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.InterpolatedUnivariateSpline.html>`_
+    
+    `scipy.interpolate.interp1d <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html>`_
     """
     
     def __init__(self, ID, t=None, y=None, function=None, interpolator=None, 
@@ -172,7 +175,7 @@ class ExogenousDynamicVariable:
             Time series data of multiple variables. If provided as a file,
             file extension should be one of (".cvs", ".xls", "xlsx").
         load_data_kwargs : optional
-            Additional keyword arguments passed to `qsdsan.utils.load_data`.
+            Additional keyword arguments passed to :func:`qsdsan.utils.load_data`.
         '''
         if isinstance(data, str):
             idx_col = load_data_kwargs.pop('index_col', None)

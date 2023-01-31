@@ -165,8 +165,8 @@ class SanUnit(Unit, isabstract=True):
     See Also
     --------
     `biosteam.Unit <https://biosteam.readthedocs.io/en/latest/Unit.html>`_
+    
     `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
-
     '''
     _init_lca = AbstractMethod
 

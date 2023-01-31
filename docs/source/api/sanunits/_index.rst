@@ -34,6 +34,7 @@ Individual Unit Operations
    clarifiers
    combustion
    CropApplication
+   DynamicInfluent
    ElectrochemicalCell
    Excretion
    heat_exchanging
