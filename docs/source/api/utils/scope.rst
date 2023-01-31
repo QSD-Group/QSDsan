@@ -17,6 +17,6 @@ biosteam.utils.Scope
    :members:
 
 biosteam.utils.SystemScope
---------------------
+--------------------------
 .. autoclass:: biosteam.utils.SystemScope
    :members:

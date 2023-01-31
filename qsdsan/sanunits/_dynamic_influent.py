@@ -20,7 +20,7 @@ dynamic_inf_path = ospath.join(data_path, 'sanunit_data/_inf_dry_2006.tsv')
 
 class DynamicInfluent(SanUnit):
     """
-    A fake SanUnit to generate a dynamic :class:`WasteStream ` at its outlet 
+    A fake SanUnit to generate a dynamic :class:`WasteStream` at its outlet 
     by interpolating time-series data.
 
     Parameters
