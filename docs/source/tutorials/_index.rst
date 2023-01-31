@@ -26,6 +26,8 @@ Topical Tutorials
    7_TEA
    8_LCA
    9_Uncertainty_and_Sensitivity_Analyses
+   10_Process
+   11_Dynamic_Simulation
 
 
 Additional Resources
