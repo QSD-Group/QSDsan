@@ -121,7 +121,7 @@ class TEA(BSTTEA):
         Whether to simulate the system before creating the LCA object.
     simulate_kwargs : dict
         Keyword arguments for system simulation (used when `simulate_system` is True).
-    **tea_kwargs
+    tea_kwargs
         Additional values that will be passed to :class:`biosteam.TEA`,
         including ``startup_months``, ``startup_FOCfrac ``, ``startup_VOCfrac``,
         ``startup_salesfrac``, ``WC_over_FCI``, ``finance_interest``,
