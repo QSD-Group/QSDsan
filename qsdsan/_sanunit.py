@@ -44,7 +44,7 @@ from . import (
     Unit,
     WasteStream,
     )
-from .utils import SanUnitScope
+from .utils import SanUnitScope, ExogenousDynamicVariable as EDV
 
 __all__ = ('SanUnit',)
 
@@ -482,8 +482,8 @@ class SanUnit(Unit, isabstract=True):
         if hasfield(self, '_isdynamic'):
             if self._isdynamic == bool(i):
                 return
-        else: self._isdynamic = bool(i)
-        if self.hasode:
+        self._isdynamic = bool(i)
+        if self.hasode and self._isdynamic:
             self._init_dynamic()
             if hasattr(self, '_mock_dyn_sys'):
                 ID = self.ID+'_dynmock'
@@ -496,6 +496,18 @@ class SanUnit(Unit, isabstract=True):
         variables that affect the process mass balance, e.g., temperature,
         sunlight irradiance.'''
         return self._exovars
+    @exo_dynamic_vars.setter
+    def exo_dynamic_vars(self, exovars):
+        isa = isinstance
+        if isa(exovars, EDV):
+            self._exovars = (exovars, )
+        else:
+            vs = []
+            for i in iter(exovars):
+                if not isa(i, EDV): 
+                    raise TypeError(f'{i} must be {EDV.__name__}, not {type(i)}')
+                vs.append(i)
+            self._exovars = tuple(vs)
 
     def eval_exo_dynamic_vars(self, t):
         '''Evaluates the exogenous dynamic variables at time t.'''
@@ -616,21 +628,19 @@ class SanUnit(Unit, isabstract=True):
         results = super().results(with_units, include_utilities,
                                   include_total_cost, include_installed_cost,
                                   include_zeros, external_utilities, key_hook)
-        if not self.add_OPEX:
-            results.loc[('Additional OPEX', ''), :] = ('USD/hr', 0)
-        else:
-            for k, v in self.add_OPEX.items():
-                if not with_units:
-                    results.loc[(k, '')] = v
-                else:
-                    try: results.loc[(k, ''), :] = ('USD/hr', v)
-                    # When `results` is a series instead of dataframe,
-                    # might not need this
-                    except ValueError:
-                        results = results.to_frame(name=self.ID)
-                        results.insert(0, 'Units', '')
-                        results.loc[(k, ''), :] = ('USD/hr', v)
-                        results.columns.name = type(self).__name__
+        if not self.add_OPEX: self.add_OPEX = {'Additional OPEX': 0}
+        for k, v in self.add_OPEX.items():
+            if not with_units:
+                results.loc[(k, '')] = v
+            else:
+                try: results.loc[(k, ''), :] = ('USD/hr', v)
+                # When `results` is a series instead of dataframe,
+                # might not need this
+                except ValueError:
+                    results = results.to_frame(name=self.ID)
+                    results.insert(0, 'Units', '')
+                    results.loc[(k, ''), :] = ('USD/hr', v)
+                    results.columns.name = type(self).__name__
         if with_units:
             results.replace({'USD': f'{currency}', 'USD/hr': f'{currency}/hr'},
                             inplace=True)
