@@ -5,7 +5,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+    
     Joy Zhang <joycheung1994@gmail.com>
+    
     Yalin Li <mailto.yalin.li@gmail.com>
 
 Part of this module is based on the Thermosteam package:
@@ -21,16 +23,19 @@ for license details.
 
 import numpy as np
 import flexsolve as flx
-from free_properties import PropertyFactory, property_array
-from thermosteam import settings, indexer
+from thermosteam import indexer, settings
+from thermosteam.base import DictionaryView, SparseVector
 from biosteam.utils import MissingStream
 from . import SanStream, MissingSanStream
 from .utils import auom, copy_attr, WasteStreamScope
 from biosteam.utils import Scope
 from warnings import warn
 
+
 __all__ = ('WasteStream', 'MissingWasteStream',)
 
+_load_components = settings.get_chemicals
+_load_thermo = settings.get_thermo
 
 _defined_composite_vars = ('COD', 'BOD5', 'BOD', 'uBOD', 'NOD', 'ThOD', 'cnBOD',
                            'C', 'N', 'P', 'K', 'Mg', 'Ca', 'solids', 'charge')
@@ -72,7 +77,6 @@ _default_ratios = {'iHi_XPAOPP': 0,
                    'iSUInf_SU': 1.,
                    'iXUOHOE_XUE': None,}
 
-
 vol_unit = auom('L/hr')
 conc_unit = auom('mg/L')
 
@@ -82,9 +86,6 @@ conc_unit = auom('mg/L')
 # =============================================================================
 # Util functions
 # =============================================================================
-
-_load_components = settings.get_chemicals
-_load_thermo = settings.get_thermo
 
 def to_float(stream, slot):
     return None if getattr(stream, slot) is None else float(getattr(stream, slot))
@@ -139,54 +140,53 @@ ComponentConcentrationIndexer, ConcentrationIndexer = \
 
 ChemicalMolarFlowIndexer = indexer.ChemicalMolarFlowIndexer
 
-@PropertyFactory(slots=('name', 'mol', 'index', 'F_vol', 'MW',
-                        'phase', 'phase_container'))
-def ConcentrationProperty(self):
-    '''Concentration flows, in mg/L (g/m3).'''
-    f_mass = self.mol[self.index] * self.MW
-    phase = self.phase or self.phase_container.phase
-    if phase != 'l':
-        raise AttributeError('Concentration only valid for liquid phase.')
-    V_sum = self.F_vol
-    # if V_sum==0:
-    #     raise RuntimeError('WasteStream is empty, concentration cannot be calculated.')
-    return 1000. * f_mass / V_sum if f_mass else 0.
-@ConcentrationProperty.setter
-def ConcentrationProperty(self, value):
-    raise AttributeError('Cannot set flow rate by concentration.')
+class ConcentrationDict(DictionaryView):
+    __slots__ = ('dct', 'F_vol', 'MW', 'phase', 'phase_container')
+
+    def __init__(self, dct, F_vol, MW, phase, phase_container):
+        self.dct = dct
+        self.F_vol = F_vol
+        self.MW = MW
+        self.phase = phase
+        self.phase_container = phase_container
+    
+    def output(self, index, value):
+        '''Concentration flows, in mg/L (g/m3).'''
+        f_mass = value * self.MW[index]
+        phase = self.phase or self.phase_container.phase
+        if phase != 'l':
+            raise AttributeError('Concentration only valid for liquid phase.')
+        V_sum = self.F_vol
+        return 1000. * f_mass / V_sum
+    
+    def input(self, index, value):
+        raise AttributeError('Cannot set flow rate by concentration.')
+
 
 def by_conc(self, TP):
     '''
-    Return a ComponentConcentrationIndexer that references this object's
-    molar and volume data (volume relies on molar).
-
+    Return a `ComponentConcentrationIndexer` that references this object's
+    molar and volume data (volume relies on molar flow).
+    
     Parameters
     ----------
     TP : ThermalCondition
-
     '''
-    cmps = self.chemicals
-    mol = self.data
+    chemicals = self._chemicals
+    phase = self._phase
     F_vol = self.by_volume(TP).data.sum()
-    conc = np.zeros_like(mol, dtype=object)
-    for i, cmp in enumerate(cmps):
-        conc[i] = ConcentrationProperty(cmp.ID, mol, i, F_vol, cmp.MW,
-                                        None, self._phase)
-    self._data_cache['conc', TP] = \
-    conc = ComponentConcentrationIndexer.from_data(
-        property_array(conc), self._phase, cmps, False)
+    self._data_cache['conc', TP] = conc = ComponentConcentrationIndexer.from_data(
+        data=SparseVector.from_dict(
+            ConcentrationDict(self.data.dct, F_vol, self.chemicals.MW, None, phase),
+            chemicals.size
+        ),
+        phase=phase, 
+        chemicals=chemicals,
+        check_data=False,
+        )
     return conc
 indexer.ChemicalMolarFlowIndexer.by_conc = by_conc
-
-def by_conc(self, TP):
-    '''
-    Raise an error for attempt multi-phase usage
-    as concentration only valid for liquid).
-    '''
-    raise AttributeError('Concentration only valid for liquid phase.')
-
-indexer.MolarFlowIndexer.by_conc = by_conc
-del by_conc, PropertyFactory
+del by_conc
 
 
 # %%
