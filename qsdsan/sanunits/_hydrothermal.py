@@ -636,8 +636,8 @@ class HydrothermalLiquefaction(Reactor):
         hx_outs0.T = hx.T
         hx_ins0.P = hx_outs0.P = self.outs[0].P # cooling before depressurized, heating after pressurized
         # in other words, both heating and cooling are performed under relatively high pressure
-        hx_ins0.vle(T=hx_ins0.T, P=hx_ins0.P)
-        hx_outs0.vle(T=hx_outs0.T, P=hx_outs0.P)
+        # hx_ins0.vle(T=hx_ins0.T, P=hx_ins0.P)
+        # hx_outs0.vle(T=hx_outs0.T, P=hx_outs0.P)
         hx.simulate_as_auxiliary_exchanger(ins=hx.ins, outs=hx.outs)
 
         self.P = self.ins[0].P
