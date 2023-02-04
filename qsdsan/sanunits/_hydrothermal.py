@@ -512,28 +512,28 @@ class HydrothermalLiquefaction(Reactor):
                                 dewatered_sludge.imass['Sludge_carbo']
         # just use afdw in revised MCA model, other places use dw
         
-        afdw_lipid_ratio = self.WWTP.sludge_afdw_lipid
-        afdw_protein_ratio = self.WWTP.sludge_afdw_protein
-        afdw_carbo_ratio = self.WWTP.sludge_afdw_carbo
+        self.afdw_lipid_ratio = self.WWTP.sludge_afdw_lipid
+        self.afdw_protein_ratio = self.WWTP.sludge_afdw_protein
+        self.afdw_carbo_ratio = self.WWTP.sludge_afdw_carbo
 
         # the following calculations are based on revised MCA model
-        biochar.imass['Biochar'] = 0.377*afdw_carbo_ratio*dewatered_sludge_afdw
+        biochar.imass['Biochar'] = 0.377*self.afdw_carbo_ratio*dewatered_sludge_afdw
         
-        HTLaqueous.imass['HTLaqueous'] = (0.481*afdw_protein_ratio +\
-                                          0.154*afdw_lipid_ratio)*\
+        HTLaqueous.imass['HTLaqueous'] = (0.481*self.afdw_protein_ratio +\
+                                          0.154*self.afdw_lipid_ratio)*\
                                           dewatered_sludge_afdw
         # HTLaqueous is TDS in aqueous phase
         # 0.377, 0.481, and 0.154 don't have uncertainties because they are calculated values
          
-        gas_mass = (self.protein_2_gas*afdw_protein_ratio + self.carbo_2_gas*afdw_carbo_ratio)*\
+        gas_mass = (self.protein_2_gas*self.afdw_protein_ratio + self.carbo_2_gas*self.afdw_carbo_ratio)*\
                        dewatered_sludge_afdw
                        
         for name, ratio in self.gas_composition.items():
             offgas.imass[name] = gas_mass*ratio
             
-        biocrude.imass['Biocrude'] = (self.protein_2_biocrude*afdw_protein_ratio +\
-                                      self.lipid_2_biocrude*afdw_lipid_ratio +\
-                                      self.carbo_2_biocrude*afdw_carbo_ratio)*\
+        biocrude.imass['Biocrude'] = (self.protein_2_biocrude*self.afdw_protein_ratio +\
+                                      self.lipid_2_biocrude*self.afdw_lipid_ratio +\
+                                      self.carbo_2_biocrude*self.afdw_carbo_ratio)*\
                                       dewatered_sludge_afdw
         biocrude.imass['H2O'] = biocrude.imass['Biocrude']/(1 -\
                                 self.biocrude_moisture_content) -\
@@ -553,6 +553,24 @@ class HydrothermalLiquefaction(Reactor):
         offgas.P = self.offgas_pre
         
         for stream in self.outs : stream.T = self.heat_exchanger.T
+        
+    @property
+    def biocrude_yield(self):
+        return self.protein_2_biocrude*self.afdw_protein_ratio +\
+               self.lipid_2_biocrude*self.afdw_lipid_ratio +\
+               self.carbo_2_biocrude*self.afdw_carbo_ratio
+
+    @property
+    def aqueous_yield(self):
+        return 0.481*self.afdw_protein_ratio + 0.154*self.afdw_lipid_ratio
+    
+    @property
+    def biochar_yield(self):
+        return 0.377*self.afdw_carbo_ratio
+    
+    @property
+    def gas_yield(self):
+        return self.protein_2_gas*self.afdw_protein_ratio + self.carbo_2_gas*self.afdw_carbo_ratio
 
     @property
     def biocrude_C_ratio(self):
