@@ -289,7 +289,10 @@ class LCA:
         if not callable(f_quantity):
             f = lambda: f_quantity
         else:
-            f = f_quantity
+            nargs = f_quantity.__code__.co_argcount
+            if nargs == 0: f = f_quantity
+            else: f = lambda: f_quantity(self)
+            # f = f_quantity
         quantity = f()
         if unit and unit != fu:
             try:
@@ -425,7 +428,9 @@ class LCA:
                 ws = j.linked_stream
 
             if ws in exclude: continue
-
+            
+            try: F_mass = j.flow_getter(ws)
+            except: breakpoint()
             for m, n in j.CFs.items():
                 if kind in ('all', 'total', 'net'):
                     pass
@@ -438,7 +443,7 @@ class LCA:
                                      f'not "{kind}".')
                 if m not in impacts.keys():
                     continue
-                impacts[m] += n*time*ws.F_mass
+                impacts[m] += n*time*F_mass
         return impacts
 
     def get_other_impacts(self, time=None, time_unit='hr'):
@@ -654,7 +659,7 @@ class LCA:
             for ws_item in self.stream_inventory:
                 ws = ws_item.linked_stream
                 item_dct['Stream'].append(ws.ID)
-                mass = ws.F_mass * time
+                mass = ws_item.flow_getter(ws) * time
                 item_dct['Mass [kg]'].append(mass)
                 for ind in self.indicators:
                     if ind.ID in ws_item.CFs.keys():
