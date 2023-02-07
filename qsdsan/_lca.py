@@ -554,7 +554,7 @@ class LCA:
         trans = self.get_transportation_impacts(units, time, time_unit)
         stream_items = set(i for i in
                        sum((tuple(unit.ins+unit.outs) for unit in units), ())
-                       if i.impact_item)
+                       if i.stream_impact_item)
 
         s = self.get_stream_impacts(stream_items=stream_items, exclude=exclude,
                                      time=time, time_unit=time_unit)
