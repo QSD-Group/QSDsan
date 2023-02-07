@@ -429,8 +429,7 @@ class LCA:
 
             if ws in exclude: continue
             
-            try: F_mass = j.flow_getter(ws)
-            except: breakpoint()
+            F_mass = j.flow_getter(ws)
             for m, n in j.CFs.items():
                 if kind in ('all', 'total', 'net'):
                     pass
