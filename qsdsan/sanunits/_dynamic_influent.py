@@ -186,10 +186,10 @@ class DynamicInfluent(SanUnit):
         out, = self._outs
         y0 = self._data.iloc[0,:].to_dict()
         y0.pop('t', None)
+        Q = y0.pop('Q')
         if self.by_mass:
-            out.set_flow(y0.values(), 'kg/hr', y0.keys())
+            out.set_flow(list(y0.values()), 'kg/hr', y0.keys())
         else:
-            Q = y0.pop('Q')
             y0.pop('H2O', None)
             out.set_flow_by_concentration(flow_tot=Q, concentrations=y0, 
                                           units=('m3/d', 'mg/L'))
