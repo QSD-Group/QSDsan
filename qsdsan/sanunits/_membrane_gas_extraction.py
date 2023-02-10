@@ -64,7 +64,7 @@ class GasExtractionMembrane(SanUnit):
         }
     
     # Constructor: Initialize the instance variables
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
+    def __init__(self, ID='GEM', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=None,   FiberID=190e-6, 
                   FiberOD=300e-6, NumTubes=1512, ShellDia=1.89e-2, SurfArea=0.1199,   
                   GasID = ['H2', 'CO2', 'CH4', 'O2', 'N2', 'H2O'], PVac = 97.325, 
