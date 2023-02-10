@@ -230,6 +230,9 @@ class GasExtractionMembrane(SanUnit):
         D = 0.0001*(7.4*10**(-8))*np.sqrt(MWH2O*Phi)*self.ins[0].T/(mu*V1**(0.6))
         return D
     
+    def _run(self):
+        pass
+    
     def _init_state(self):
         inf, = self.ins
         cmps = inf.components
