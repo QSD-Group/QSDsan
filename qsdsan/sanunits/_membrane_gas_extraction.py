@@ -19,8 +19,6 @@ __all__ = ('GasExtractionMembrane')
 from qsdsan import SanUnit
 import numpy as np
 
-__all__ = ('Membrane')
-
 class GasExtractionMembrane(SanUnit):
     
     _N_ins = 1
