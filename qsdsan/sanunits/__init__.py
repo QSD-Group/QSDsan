@@ -40,6 +40,7 @@ from ._encapsulation_bioreactor import *
 from ._excretion import *
 from ._heat_exchanging import *
 from ._junction import *
+from ._membrane_gas_extraction import *
 from ._non_reactive import *
 from ._pumping import *
 from ._screening import *
@@ -49,6 +50,7 @@ from ._suspended_growth_bioreactor import *
 from ._tanks import *
 from ._trucking import *
 from ._sludge_treatment import *
+
 
 # Units that rely on other units
 from ._activated_sludge_process import *
@@ -84,6 +86,7 @@ from . import (
         _junction,
         _lagoon,
         _membrane_bioreactors,
+        _membrane_gas_extraction,
         _non_reactive,
         _polishing_filter,
         _pumping,
@@ -140,5 +143,6 @@ __all__ = (
         *_biogenic_refinery.__all__,
         *_reclaimer.__all__,
         *_eco_san.__all__,
-        *_sludge_treatment.__all__, 
+        *_sludge_treatment.__all__,
+        *_membrane_gas_extraction.__all__,
         )
