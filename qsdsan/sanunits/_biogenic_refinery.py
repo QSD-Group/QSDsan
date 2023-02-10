@@ -144,8 +144,12 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
         biochar.imass['FixedCarbon'] = b_fixed_carbon
         # calculate biochar volatile matter and ash content 
         b_ash_content = (dry_basis_yield - ash_free_yield) * 100 / dry_basis_yield
+        b_volatile_matter = 100 - b_ash_content - b_fixed_carbon
         biochar.imass['AshContent'] = b_ash_content
-        biochar.imass['VolatileMatter'] = 100 - b_ash_content - b_fixed_carbon
+        biochar.imass['VolatileMatter'] = b_volatile_matter
+        
+        Cafb = (0.474 * b_volatile_matter + 0.963 * b_fixed_carbon + 0.067 * b_ash_content) / (100 - b_ash_content)
+        recalcitrance_potential = 0.17 * Cafb + 0.00479
         
         biochar.imass['H2O'] = 0.025 * biochar.F_mass # kg H2O / hr with 2.5% moisture content
 
