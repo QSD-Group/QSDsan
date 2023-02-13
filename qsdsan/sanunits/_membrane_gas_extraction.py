@@ -15,11 +15,10 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 """
 
-
 from qsdsan import SanUnit
 import numpy as np
 
-__all__ = ('GasExtractionMembrane')
+__all__ = ('GasExtractionMembrane',)
 
 class GasExtractionMembrane(SanUnit):
     
@@ -84,7 +83,7 @@ class GasExtractionMembrane(SanUnit):
         self.PVac = PVac              # Operating Vacuum Pressure [-kPa]
         self.segs = segs              # Number of segments ??Ask Ian??
         #self.Volume = VolBatchTank   # Volume of the bioreactor (Don't think this is needed)
-        
+                
         dct_gas_perm = GasPerm or self._GasPerm
         self.set_GasPerm(**dct_gas_perm)
         dct_gas_hpf =  HenryPreFac or self._HenryPreFac
@@ -105,6 +104,7 @@ class GasExtractionMembrane(SanUnit):
             if ID == 'H2O': 
                 self.h2o_j = i
                 break
+    
     @property 
     def FiberOD(self):
         return self._FiberOD
@@ -159,25 +159,6 @@ class GasExtractionMembrane(SanUnit):
             self._SurfArea = SurfArea
         else:
             raise ValueError('Surface Area of Membrane expected from user')
-    
-    def set_GasPerm(self, **kwargs):
-        self.set_prop('_gasp', **kwargs)
-            
-    def set_WilkeChang(self, **kwargs):
-        self.set_prop('_wc', **kwargs)
-            
-    def set_HenryPreFac(self, **kwargs):
-        self.set_prop('_hpf', **kwargs)
-            
-    def set_HenrySlope(self, **kwargs):
-        self.set_prop('_hs', **kwargs)
-            
-    def set_prop(self, attr_name, **kwargs):
-        idxr = self.indexer
-        try: attr = getattr(self, attr_name)
-        except: attr = self.__dict__[attr_name] = np.zeros(len(self.chemicals))
-        for k, v in kwargs.items():
-            attr[idxr(k)] = v
         
     # Calculate the volume fraction of the lumen to the shell. 
     @property
@@ -228,29 +209,64 @@ class GasExtractionMembrane(SanUnit):
         V1 = 0.285*(self._Vc*1000000)**(1.048) # unit conversion from m^3/mol (QSDsan) to cm^3/mol (here)
         # Diffusion Coefficient [m^2/s]
         D = 0.0001*(7.4*10**(-8))*np.sqrt(MWH2O*Phi)*self.ins[0].T/(mu*V1**(0.6))
-        return D
+        return D    
     
-    def _run(self):
-        pass
-    
-    def _init_state(self):
+    def set_GasPerm(self, **kwargs):
+        self.set_prop('_gasp', **kwargs)
+            
+    def set_WilkeChang(self, **kwargs):
+        self.set_prop('_wc', **kwargs)
+            
+    def set_HenryPreFac(self, **kwargs):
+        self.set_prop('_hpf', **kwargs)
+            
+    def set_HenrySlope(self, **kwargs):
+        self.set_prop('_hs', **kwargs)
+            
+    def set_prop(self, attr_name, **kwargs):
         inf, = self.ins
         cmps = inf.components
-        # ASSUMPTION: Only 1 influent 
-        C = self._ins_QC[:-1]/cmps.chem_MW*cmps.i_mass # conc. in mol/m^3 as defined by Ian 
-        Cs = C[self.idx]     #self.idx ensures its only for gases 
-        #Q = self._ins_QC[-1]
+        self.indexer = cmps.index
+        idxr = self.indexer
+        try: attr = getattr(self, attr_name)
+        except: attr = self.__dict__[attr_name] = np.zeros(len(self.chemicals))
+        for k, v in kwargs.items():
+            attr[idxr(k)] = v
+            
+    def _init_state(self):
+        inf = self.ins
+        cmps = inf.components
+        C = self._ins_QC[:-1]/cmps.chem_MW*cmps.i_mass
+        Cs = C[self.idx] #idx selects only gases 
         Seg = self.segments
         numGas = len(self.GasID)
-        
         self._state = np.zeros(2*Seg*numGas)
         for i in range(0, 2*Seg*numGas, 2*numGas):
             for j in range(numGas):
-                self._state[j+i] = Cs[j] 
-                
+                self._state[j+i] = Cs[j]
         self._dstate = self._state*0
-        
-            
+        self._cached_state = self._state.copy()
+        self._cached_t = 0
+
+    def _update_state(self):
+        eff, = self.outs    # assuming this SanUnit has one outlet only
+        numGas = len(self.GasID)
+        eff.state[:] = self._state[-numGas:]
+
+    def _update_dstate(self):
+        eff, = self.outs  
+        numGas = len(self.GasID)
+        eff.dstate[:] = self._dstate[-numGas:]
+
+    def _run(self):
+        pass
+    
+    @property
+    def ODE(self):
+        if self._ODE is None:
+            self._compile_ODE()
+        return self._ODE    
+    
     #def transientGasExtraction(t, C, ExpCond, GasVec, Mem, Segs, SS):
     def _compile_ODE(self):
         # Synthesizes the ODEs to simulate a batch reactor with side-flow gas extraction. The code takes in an object of class Membrane (Mem) and an array of objects of class Gas (GasVec). It also takes in an array of experimental conditions ExpCond. 
@@ -279,13 +295,6 @@ class GasExtractionMembrane(SanUnit):
         # Pre-allocate vectors for gas thermophysical properties
         numGas = len(self.GasID)
         numVec = 2*numGas
-# =============================================================================
-#         Diff = np.zeros(numGas)
-#         Perm_SI = np.zeros(numGas)
-#         H = np.zeros(numGas)
-#         Cin = np.zeros(numGas)
-#         MM = np.zeros(numGas)
-# =============================================================================
 
         inf, = self.ins
         cmps = inf.components
@@ -319,7 +328,6 @@ class GasExtractionMembrane(SanUnit):
         Sc = nu/Diff
         # Sherwood
         Sh = 1.615*(Re*Sc*D/L)**(1/3)
-        
         
         # Calculate Mass Transfer Coefficients
         KMem = Perm_SI/l
@@ -385,6 +393,30 @@ class GasExtractionMembrane(SanUnit):
                 
                 # Calculate the actual difference of concentration that the function will output
                 dC[numVec*(i)+j+numGas] = newCp- C[numVec*(i)+j+numGas]
+                # Return the difference in concentration
+                return dC
 
-        # Return the difference in concentration
-        return dC
+        def dy_dt(t, QC_ins, dQC_ins):
+            inf = self.ins
+            cmps = inf.components
+            
+            _update_state = self._update_state
+            _update_dstate = self._update_dstate
+            _cached_state = self._cached_state
+            
+            C = self._ins_QC[:-1]/cmps.chem_MW*cmps.i_mass
+            Cs = C[self.idx] #idx selects only gases 
+            Seg = self.segments
+            numGas = len(self.GasID)
+            _state = np.zeros(2*Seg*numGas)
+            for i in range(0, 2*Seg*numGas, 2*numGas):
+                for j in range(numGas):
+                    _state[j+i] = Cs[j]
+            
+            if t > self._cached_t:
+                _dstate[:] = (_state - _cached_state)/(t - self._cached_t)
+            _cached_state[:] = _state
+            self._cached_t = t
+            _update_state()
+            _update_dstate()
+            self._ODE = dy_dt   
