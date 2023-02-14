@@ -386,7 +386,12 @@ class AnaerobicCSTR(CSTR):
     @fixed_headspace_P.setter
     def fixed_headspace_P(self, b):
         self._fixed_P_gas = bool(b)
-        
+    
+    def set_retention_efficacy(self, i):
+        if i < 0 or i > 1:
+            raise ValueError('retention efficacy must be within [0,1]')
+        self._f_retain = (self._f_retain > 0) * i
+    
     @property
     def state(self):
         '''The state of the anaerobic CSTR, including component concentrations [kg/m3],
