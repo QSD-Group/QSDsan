@@ -241,16 +241,20 @@ class GasExtractionMembrane(SanUnit):
         Seg = self.segments
         numGas = len(self.GasID)
         self._state = np.zeros(2*Seg*numGas)
+        
         for i in range(0, 2*Seg*numGas, 2*numGas):
             for j in range(numGas):
                 self._state[j+i] = Cs[j]
         self._dstate = self._state*0
-        self._cached_state = self._state.copy()
-        self._cached_t = 0
+# =============================================================================
+#         self._cached_state = self._state.copy()
+#         self._cached_t = 0
+# =============================================================================
 
     def _update_state(self):
         eff, = self.outs    # assuming this SanUnit has one outlet only
         numGas = len(self.GasID)
+        # Need to add effluent streams for liquid (this includes all cmps of influent ws) and gas (the multiplication should give out kg/hr values)
         eff.state[:] = self._state[-numGas:]
 
     def _update_dstate(self):
@@ -395,28 +399,13 @@ class GasExtractionMembrane(SanUnit):
                 dC[numVec*(i)+j+numGas] = newCp- C[numVec*(i)+j+numGas]
                 # Return the difference in concentration
                 return dC
-
-        def dy_dt(t, QC_ins, dQC_ins):
-            inf = self.ins
-            cmps = inf.components
+        
+        _dstate = self._dstate    
+        _update_dstate = self._update_dstate 
             
-            _update_state = self._update_state
-            _update_dstate = self._update_dstate
-            _cached_state = self._cached_state
+        def dy_dt(t, QC_ins, QC, dQC_ins):
+            # QC is exactly the state as we define in _init_
+            C = QC
             
-            C = self._ins_QC[:-1]/cmps.chem_MW*cmps.i_mass
-            Cs = C[self.idx] #idx selects only gases 
-            Seg = self.segments
-            numGas = len(self.GasID)
-            _state = np.zeros(2*Seg*numGas)
-            for i in range(0, 2*Seg*numGas, 2*numGas):
-                for j in range(numGas):
-                    _state[j+i] = Cs[j]
-            
-            if t > self._cached_t:
-                _dstate[:] = (_state - _cached_state)/(t - self._cached_t)
-            _cached_state[:] = _state
-            self._cached_t = t
-            _update_state()
             _update_dstate()
-            self._ODE = dy_dt   
+        self._ODE = dy_dt   
