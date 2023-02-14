@@ -128,7 +128,7 @@ class Thickener(SanUnit):
         self.TSS_removal_perc = TSS_removal_perc
         self.solids_loading_rate = solids_loading_rate 
         self.h_cylinderical = h_cylinderical
-        self.mixed = WasteStream()
+        self.mixed = WasteStream(thermo=thermo)
         
     @property
     def thickener_perc(self):
