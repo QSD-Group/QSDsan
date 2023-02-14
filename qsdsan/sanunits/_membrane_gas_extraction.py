@@ -352,54 +352,6 @@ class GasExtractionMembrane(SanUnit):
         C = self._ins_QC[:-1]/cmps.chem_MW*cmps.i_mass # conc. in mol/m^3 as defined by Ian 
         Cs = C[self.idx] #self.idx ensures its only for gases 
         
-        # For the first segment:
-        for j in range(0, numGas):
-            #if GasVec[j].Name == 'H2O':
-            if j == self.h2o_j:
-                dC[j+numGas] = (KTot[j]/(D/4))*(PVapH2O- (C[j+numGas]/sumCp_init)*P)*vFrac
-                dC[j] = 0
-            else:
-                dC[j] = (u/dx)*(Cs[j] - C[j]) - (KTot[j]/(D/4))*(C[j] - (C[j+numGas]/sumCp_init)*P/H[j])
-                dC[j+numGas] = (KTot[j]/(D/4))*(C[j]-(C[j+numGas]/sumCp_init)*P/H[j])*vFrac
-
-            # Calculate the total gas concentration in the shell after the change
-            sumCp_fin[0] += C[j+numGas] + dC[j+numGas]
-
-        for i in range(1,Segs):
-            # For the remaining segments:
-            # Calculate the rate of change of the shell and lumen for all remaining segments.
-            for j in range(0, numGas):
-                
-                # Lumen
-                dC[numVec*(i)+j] =  (u/dx)*(C[numVec*(i-1)+j] - C[numVec*(i)+j]) - (KTot[j]/(D/4))*(C[numVec*(i)+j] - (C[numVec*(i)+j+numGas]/sumCp_init)*(P/H[j]))
-
-                # Shell
-                dC[numVec*(i)+j+numGas] = (KTot[j]/(D/4))*(C[numVec*(i)+j] - (C[numVec*(i)+j+numGas]/sumCp_init)*(P/H[j]))*vFrac
-                
-                # If the gas is H2O, then it follows a different formula:
-                #if GasVec[j].Name == 'H2O':
-                if j == self.h2o_j:
-                    dC[numVec*i+j+numGas] = (KTot[j]/(D/4))*(PVapH2O-(C[numVec*i+j+numGas]/sumCp_init)*P)*vFrac
-                    dC[numVec*i+j] = 0
-
-                # Calculate the total gas concentration in the shell after the change
-                sumCp_fin[i] += C[numVec*(i)+j+numGas] + dC[numVec*(i)+j+numGas]
-
-        # Re-scale the shell concentration so that vacuum pressure stays constant during the entire process. Given the change of concentration that we have calculated above for the shell, we can re-scale the shell concentrations with the sumCp at each segment. 
-            
-        for i in range(0, Segs):
-            for j in range(0, numGas):
-                # Calculate the new concentration of gases in the shell
-                newCp = (C[numVec*(i)+j+numGas] + dC[numVec*(i)+j+numGas])
-                
-                # Re-scale the concentration to vacuum pressure
-                newCp = (newCp/sumCp_fin[i])*P/(R*T)
-                
-                # Calculate the actual difference of concentration that the function will output
-                dC[numVec*(i)+j+numGas] = newCp- C[numVec*(i)+j+numGas]
-                # Return the difference in concentration
-                return dC
-        
         _dstate = self._dstate    
         _update_dstate = self._update_dstate 
             
@@ -407,5 +359,53 @@ class GasExtractionMembrane(SanUnit):
             # QC is exactly the state as we define in _init_
             C = QC
             
+            # For the first segment:
+            for j in range(0, numGas):
+                #if GasVec[j].Name == 'H2O':
+                if j == self.h2o_j:
+                    dC[j+numGas] = (KTot[j]/(D/4))*(PVapH2O- (C[j+numGas]/sumCp_init)*P)*vFrac
+                    dC[j] = 0
+                else:
+                    dC[j] = (u/dx)*(Cs[j] - C[j]) - (KTot[j]/(D/4))*(C[j] - (C[j+numGas]/sumCp_init)*P/H[j])
+                    dC[j+numGas] = (KTot[j]/(D/4))*(C[j]-(C[j+numGas]/sumCp_init)*P/H[j])*vFrac
+
+                # Calculate the total gas concentration in the shell after the change
+                sumCp_fin[0] += C[j+numGas] + dC[j+numGas]
+
+            for i in range(1,Segs):
+                # For the remaining segments:
+                # Calculate the rate of change of the shell and lumen for all remaining segments.
+                for j in range(0, numGas):
+                    
+                    # Lumen
+                    dC[numVec*(i)+j] =  (u/dx)*(C[numVec*(i-1)+j] - C[numVec*(i)+j]) - (KTot[j]/(D/4))*(C[numVec*(i)+j] - (C[numVec*(i)+j+numGas]/sumCp_init)*(P/H[j]))
+
+                    # Shell
+                    dC[numVec*(i)+j+numGas] = (KTot[j]/(D/4))*(C[numVec*(i)+j] - (C[numVec*(i)+j+numGas]/sumCp_init)*(P/H[j]))*vFrac
+                    
+                    # If the gas is H2O, then it follows a different formula:
+                    #if GasVec[j].Name == 'H2O':
+                    if j == self.h2o_j:
+                        dC[numVec*i+j+numGas] = (KTot[j]/(D/4))*(PVapH2O-(C[numVec*i+j+numGas]/sumCp_init)*P)*vFrac
+                        dC[numVec*i+j] = 0
+
+                    # Calculate the total gas concentration in the shell after the change
+                    sumCp_fin[i] += C[numVec*(i)+j+numGas] + dC[numVec*(i)+j+numGas]
+                    
+            # Re-scale the shell concentration so that vacuum pressure stays constant during the entire process. Given the change of concentration that we have calculated above for the shell, we can re-scale the shell concentrations with the sumCp at each segment. 
+                
+            for i in range(0, Segs):
+                for j in range(0, numGas):
+                    # Calculate the new concentration of gases in the shell
+                    newCp = (C[numVec*(i)+j+numGas] + dC[numVec*(i)+j+numGas])
+                    
+                    # Re-scale the concentration to vacuum pressure
+                    newCp = (newCp/sumCp_fin[i])*P/(R*T)
+                    
+                    # Calculate the actual difference of concentration that the function will output
+                    dC[numVec*(i)+j+numGas] = newCp- C[numVec*(i)+j+numGas]
+                    # Return the difference in concentration
+                    
+                    #return dC
             _update_dstate()
         self._ODE = dy_dt   
