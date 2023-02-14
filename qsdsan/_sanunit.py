@@ -202,7 +202,7 @@ class SanUnit(Unit, isabstract=True):
 
         if not kwargs.get('skip_property_package_check'):
             self._assert_compatible_property_package()
-            
+        
         self._utility_cost = None
 
         ##### qsdsan-specific #####
