@@ -941,10 +941,10 @@ class WasteStream(SanStream):
         >>> # Note that concentration is always calculated (mass/vol) upon request,
         >>> # so `ws2.conc is ws1.conc` will return False
         >>> import numpy as np
-        >>> np.all(ws2.conc==ws1.conc)
+        >>> np.all(list(ws2.conc==ws1.conc))
         True
         >>> ws1.imol['Water'] = 10000
-        >>> np.all(ws2.conc==ws1.conc)
+        >>> np.all(list(ws2.conc==ws1.conc))
         True
         '''
         new = SanStream.proxy(self, ID=ID)
