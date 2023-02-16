@@ -554,7 +554,7 @@ class PrimaryClarifier(SanUnit):
     Hydraulic Retention time : float
         Hydraulic Retention Time in days. The default is 0.04268 days, based on IWA report.[1]
     ratio_uf : float
-        The ratio of sludge to primary influent. The default is 0.65, based on IWA report.[1] 
+        The ratio of sludge to primary influent. The default is 0.007, based on IWA report.[1] 
     f_corr : float
         Dimensionless correction factor for removal efficiency in the primary clarifier.[1]
     oveflow_rate : float
