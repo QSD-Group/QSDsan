@@ -254,9 +254,16 @@ class GasExtractionMembrane(SanUnit):
     def _update_state(self):
         eff, = self.outs    # assuming this SanUnit has one outlet only
         numGas = len(self.GasID)
-        # Need to add effluent streams for liquid (this includes all cmps of influent ws) and gas (the multiplication should give out kg/hr values)
-        eff.state[:] = self._state[-numGas:]
-
+        # Need to add effluent streams for liquid (this includes all cmps of influent ws) 
+        # and gas (the multiplication should give out kg/hr values)
+        
+        # The state of effluent Gas in the extraction membrane is the difference 
+        # between lumen concentration of the last and first segment
+        self._outs[0].state = self._state[ -2*numGas: -numGas] - self._state[ :numGas]
+        # The state of effluent Liquid stream is simply the concentration of 
+        # the last lumen segment in the extraction membrane 
+        self._outs[1].state = self._state[-2*numGas: -numGas]
+        
     def _update_dstate(self):
         eff, = self.outs  
         numGas = len(self.GasID)
@@ -356,7 +363,7 @@ class GasExtractionMembrane(SanUnit):
         _update_dstate = self._update_dstate 
             
         def dy_dt(t, QC_ins, QC, dQC_ins):
-            # QC is exactly the state as we define in _init_
+            # QC is exactly 'the state' as we define in _init_
             C = QC
             
             # For the first segment:
