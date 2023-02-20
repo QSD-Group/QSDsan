@@ -20,7 +20,8 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import numpy as np
+import numpy as np, thermosteam as tmo
+from warnings import warn
 from collections.abc import Iterable
 from biosteam.units import (
     Mixer as BSTMixer,
@@ -154,6 +155,9 @@ class PhaseChanger(SanUnit):
     def _run(self):
         influent = self.ins[0]
         effluent = self.outs[0]
+        if isinstance(influent, tmo.MultiStream): # issue a warning
+            warn(f'MultiStream {influent.ID} converted to Stream in {self.ID}')
+            influent.as_stream()
         effluent.copy_like(influent)
         effluent.phase = self.phase
         
