@@ -130,13 +130,13 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
                 'larger than the maximum allowed level of 35%.')
         
         biochar.empty()
-        f_AC_dec = self.f_ash_content/10 #converts % ash content of feedstock to decimal
+        f_AC_dec = self.f_ash_content/100 #converts % ash content of feedstock to decimal
         
-        # predictive equation for biochar % yield (dry basis) based on feedstock ash content and pyrolysis temperature
-        dry_basis_yield = 1.18 * f_AC_dec ** 0.843 + (1 - f_AC_dec) * 2.106 * math.exp(-0.0066 * self.pyrolysis_temp)
+        # predictive equation for biochar yield (dry basis) based on feedstock ash content and pyrolysis temperature
+        dry_basis_yield = 100 * (1.18 * f_AC_dec ** 0.843 + (1 - f_AC_dec) * 2.106 * math.exp(-0.0066 * self.pyrolysis_temp))
         biochar_prcd = waste.F_mass * dry_basis_yield * (1-mc) # % kg dry biochar /hr
         
-        # predictive equation for ash-free biochar yield (Neves et al. 2011)
+        # predictive equation for ash-free biochar yield percentage (Neves et al. 2011)
         ash_free_yield = 100 * (0.106 + 2.43 * math.exp(-0.0066 * self.pyrolysis_temp))
         
         # predictive equation for biochar fixed carbon content 
