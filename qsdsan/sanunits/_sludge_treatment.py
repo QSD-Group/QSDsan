@@ -174,28 +174,57 @@ class Thickener(SanUnit):
     def thickener_factor(self):
         self.mixed.mix_from(self.ins)
         inf = self.mixed
+        _cal_thickener_factor = self._cal_thickener_factor
         if not self.ins: return
         elif inf.isempty(): return
         else: 
             TSS_in = inf.get_TSS()
-            if TSS_in > 0:
-                #thickener_factor = self._tp*10000/self.ins[0].get_TSS()
-                thickener_factor = self._tp*10000/inf.get_TSS()
-                if thickener_factor<1:
-                    thickener_factor=1
-                return thickener_factor
-            else: return None
+            thickener_factor = _cal_thickener_factor(TSS_in)
+        return thickener_factor
     
     @property
     def thinning_factor(self):
-        thickener_factor = self.thickener_factor
+        self.mixed.mix_from(self.ins)
+        inf = self.mixed
+        TSS_in = inf.get_TSS()
+        _cal_thickener_factor = self._cal_thickener_factor
+        thickener_factor = _cal_thickener_factor(TSS_in)
+        _cal_parameters = self._cal_parameters
+        Qu_factor, thinning_factor = _cal_parameters(thickener_factor)
+        return thinning_factor
+    
+    def _cal_thickener_factor(self, TSS_in):
+        if TSS_in > 0:
+            thickener_factor = self._tp*10000/TSS_in
+            if thickener_factor<1:
+                thickener_factor=1
+            return thickener_factor
+        else: return None
+            
+    def _cal_parameters(self, thickener_factor):
         if thickener_factor<1:
+            Qu_factor = 1
             thinning_factor=0
         else:
             Qu_factor = self._TSS_rmv/(100*thickener_factor)
             thinning_factor = (1 - (self._TSS_rmv/100))/(1 - Qu_factor)
-        return thinning_factor
+        return Qu_factor, thinning_factor
     
+    def _update_parameters(self):
+        
+        # Thickener_factor, Thinning_factor, and Qu_factor need to be 
+        # updated again and again. while dynamic simulations 
+        
+        cmps = self.components 
+    
+        TSS_in = np.sum(self._state[:-1]*cmps.i_mass*cmps.x)
+        _cal_thickener_factor = self._cal_thickener_factor
+        self.updated_thickener_factor = _cal_thickener_factor(TSS_in)
+        _cal_parameters = self._cal_parameters
+        
+        updated_thickener_factor = self.updated_thickener_factor
+        self.updated_Qu_factor, self.updated_thinning_factor = _cal_parameters(updated_thickener_factor)
+        
     def _run(self):
         
         self.mixed.mix_from(self.ins)
@@ -207,15 +236,16 @@ class Thickener(SanUnit):
         thinning_factor = self.thinning_factor
         thickener_factor = self.thickener_factor
         
-        # Ze = (1 - thinning_factor)/(thickener_factor - thinning_factor)*inf.mass*cmps.s
-        # Zs = (thickener_factor - 1)/(thickener_factor - thinning_factor)*inf.mass*cmps.s
+        # The following are splits by mass of particulates and solubles 
         
+        # Note: (1 - thinning_factor)/(thickener_factor - thinning_factor) = Qu_factor
         Zs = (1 - thinning_factor)/(thickener_factor - thinning_factor)*inf.mass*cmps.s
         Ze = (thickener_factor - 1)/(thickener_factor - thinning_factor)*inf.mass*cmps.s
         
         Xe = (1 - TSS_rmv/100)*inf.mass*cmps.x
         Xs = (TSS_rmv/100)*inf.mass*cmps.x
         
+        # e stands for effluent, s stands for sludge 
         Ce = Ze + Xe 
         Cs = Zs + Xs
     
@@ -234,37 +264,73 @@ class Thickener(SanUnit):
         design['Curved Surface Area'] = np.pi*design['Diameter']*self.h_cylinderical #in m2
        
     def _init_state(self):
-        # # if only 1 inlet then simply copy the state of the influent wastestream
-        # self._state = self._ins_QC[0]
-        # self._dstate = self._state * 0.
-         
+       
+        # This function is run only once during dynamic simulations 
+    
+        # Since there could be multiple influents, the state of the unit is 
+        # obtained assuming perfect mixing 
         Qs = self._ins_QC[:,-1]
         Cs = self._ins_QC[:,:-1]
         self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
         self._dstate = self._state * 0.
         
-        uf, of = self.outs
-        s_flow = uf.F_vol/(uf.F_vol+of.F_vol)
-        denominator = uf.mass + of.mass
-        denominator += (denominator == 0)
-        s = uf.mass/denominator
-        self._sludge = np.append(s/s_flow, s_flow)
-        self._effluent = np.append((1-s)/(1-s_flow), 1-s_flow)
+        # To initialize the updated_thickener_factor, updated_thinning_factor
+        # and updated_Qu_factor for dynamic simulation 
+        self._update_parameters()
         
     def _update_state(self):
         '''updates conditions of output stream based on conditions of the Thickener''' 
-        # self._state is mixed influent stream's state
-        # multiply the particulates by thickener factor, the solubles by 1, and
-        # flowrate by Qu factor 
         
-        # self._outs[0].state = self._sludge * self._state
-        # self._outs[1].state = self._effluent * self._state
+        # This function is run multiple times during dynamic simulation 
+        
+        # Remember that here we are updating the state array of size n, which is made up 
+        # of component concentrations in the first (n-1) cells and the last cell is flowrate. 
+        
+        # So, while in the run function the effluent and sludge are split by mass, 
+        # here they are split by concentration. Therefore, the split factors are different. 
+        
+        # Updated intrinsic modelling parameters are used for dynamic simulation 
+        thickener_factor = self.updated_thickener_factor
+        thinning_factor = self.updated_thinning_factor
+        Qu_factor = self.updated_Qu_factor
+        cmps = self.components
+        
+        # For sludge, the particulate concentrations are multipled by thickener factor, and
+        # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
+        self._outs[0].state[:-1] = self._state[:-1]*cmps.s*1 + self._state[:-1]*cmps.x*thickener_factor
+        self._outs[0].state[-1] = self._state[-1]*Qu_factor
+        
+        # For effluent, the particulate concentrations are multipled by thinning factor, and
+        # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
+        self._outs[1].state[:-1] = self._state[:-1]*cmps.s*1 + self._state[:-1]*cmps.x*thinning_factor
+        self._outs[1].state[-1] = self._state[-1]*(1 - Qu_factor)
 
     def _update_dstate(self):
         '''updates rates of change of output stream from rates of change of the Thickener'''
         
-        # self._outs[0].dstate = self._sludge * self._dstate
-        # self._outs[1].dstate = self._effluent * self._dstate
+        # This function is run multiple times during dynamic simulation 
+        
+        # Remember that here we are updating the state array of size n, which is made up 
+        # of component concentrations in the first (n-1) cells and the last cell is flowrate. 
+        
+        # So, while in the run function the effluent and sludge are split by mass, 
+        # here they are split by concentration. Therefore, the split factors are different. 
+        
+        # Updated intrinsic modelling parameters are used for dynamic simulation
+        thickener_factor = self.updated_thickener_factor
+        thinning_factor = self.updated_thinning_factor
+        Qu_factor = self.updated_Qu_factor
+        cmps = self.components
+        
+        # For sludge, the particulate concentrations are multipled by thickener factor, and
+        # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
+        self._outs[0].dstate[:-1] = self._dstate[:-1]*cmps.s*1 + self._dstate[:-1]*cmps.x*thickener_factor
+        self._outs[0].dstate[-1] = self._dstate[-1]*Qu_factor
+        
+        # For effluent, the particulate concentrations are multipled by thinning factor, and
+        # flowrate is multiplied by Qu_factor. The soluble concentrations remains same.
+        self._outs[1].dstate[:-1] = self._dstate[:-1]*cmps.s*1 + self._dstate[:-1]*cmps.x*thinning_factor
+        self._outs[1].dstate[-1] = self._dstate[-1]*(1 - Qu_factor)
      
     @property
     def AE(self):
@@ -273,14 +339,15 @@ class Thickener(SanUnit):
         return self._AE
 
     def _compile_AE(self):
+        
+        # This function is run multiple times during dynamic simulation 
+        
         _state = self._state
         _dstate = self._dstate
         _update_state = self._update_state
         _update_dstate = self._update_dstate
+        _update_parameters = self._update_parameters
         def yt(t, QC_ins, dQC_ins):
-            # _state[:] = QC_ins[0]
-            # _dstate[:] = dQC_ins[0]
-            
             Q_ins = QC_ins[:, -1]
             C_ins = QC_ins[:, :-1]
             dQ_ins = dQC_ins[:, -1]
@@ -293,7 +360,8 @@ class Thickener(SanUnit):
             C_dot = (dQ_ins @ C_ins + Q_ins @ dC_ins - Q_dot * C)/Q
             _dstate[-1] = Q_dot
             _dstate[:-1] = C_dot
-            
+    
+            _update_parameters()
             _update_state()
             _update_dstate()
         self._AE = yt
