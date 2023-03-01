@@ -44,7 +44,7 @@ def get_SRT(system, biomass_IDs, active_unit_IDs=None):
     `bsm1 system <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bsm1/system.py>`_
     """
     waste = sum([ws.composite('solids', subgroup=biomass_IDs)*ws.F_vol*24 \
-                 for ws in system.products if ws.phase in ('l','s')])
+                 for ws in system.products if ws.phase=='l'])
     units = system.units if active_unit_IDs is None \
         else [u for u in system.units if u.ID in active_unit_IDs]
     retain = sum([u.get_retained_mass(biomass_IDs) for u in units if u.isdynamic])
