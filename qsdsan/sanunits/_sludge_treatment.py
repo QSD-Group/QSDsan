@@ -179,7 +179,8 @@ class Thickener(SanUnit):
         else: 
             TSS_in = inf.get_TSS()
             if TSS_in > 0:
-                thickener_factor = self._tp*10000/self.ins[0].get_TSS()
+                #thickener_factor = self._tp*10000/self.ins[0].get_TSS()
+                thickener_factor = self._tp*10000/inf.get_TSS()
                 if thickener_factor<1:
                     thickener_factor=1
                 return thickener_factor
@@ -206,8 +207,11 @@ class Thickener(SanUnit):
         thinning_factor = self.thinning_factor
         thickener_factor = self.thickener_factor
         
-        Ze = (1 - thinning_factor)/(thickener_factor - thinning_factor)*inf.mass*cmps.s
-        Zs = (thickener_factor - 1)/(thickener_factor - thinning_factor)*inf.mass*cmps.s
+        # Ze = (1 - thinning_factor)/(thickener_factor - thinning_factor)*inf.mass*cmps.s
+        # Zs = (thickener_factor - 1)/(thickener_factor - thinning_factor)*inf.mass*cmps.s
+        
+        Zs = (1 - thinning_factor)/(thickener_factor - thinning_factor)*inf.mass*cmps.s
+        Ze = (thickener_factor - 1)/(thickener_factor - thinning_factor)*inf.mass*cmps.s
         
         Xe = (1 - TSS_rmv/100)*inf.mass*cmps.x
         Xs = (TSS_rmv/100)*inf.mass*cmps.x
@@ -230,8 +234,13 @@ class Thickener(SanUnit):
         design['Curved Surface Area'] = np.pi*design['Diameter']*self.h_cylinderical #in m2
        
     def _init_state(self):
-        # if only 1 inlet then simply copy the state of the influent wastestream
-        self._state = self._ins_QC[0]
+        # # if only 1 inlet then simply copy the state of the influent wastestream
+        # self._state = self._ins_QC[0]
+        # self._dstate = self._state * 0.
+         
+        Qs = self._ins_QC[:,-1]
+        Cs = self._ins_QC[:,:-1]
+        self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
         self._dstate = self._state * 0.
         
         uf, of = self.outs
@@ -244,13 +253,18 @@ class Thickener(SanUnit):
         
     def _update_state(self):
         '''updates conditions of output stream based on conditions of the Thickener''' 
-        self._outs[0].state = self._sludge * self._state
-        self._outs[1].state = self._effluent * self._state
+        # self._state is mixed influent stream's state
+        # multiply the particulates by thickener factor, the solubles by 1, and
+        # flowrate by Qu factor 
+        
+        # self._outs[0].state = self._sludge * self._state
+        # self._outs[1].state = self._effluent * self._state
 
     def _update_dstate(self):
         '''updates rates of change of output stream from rates of change of the Thickener'''
-        self._outs[0].dstate = self._sludge * self._dstate
-        self._outs[1].dstate = self._effluent * self._dstate
+        
+        # self._outs[0].dstate = self._sludge * self._dstate
+        # self._outs[1].dstate = self._effluent * self._dstate
      
     @property
     def AE(self):
@@ -264,8 +278,22 @@ class Thickener(SanUnit):
         _update_state = self._update_state
         _update_dstate = self._update_dstate
         def yt(t, QC_ins, dQC_ins):
-            _state[:] = QC_ins[0]
-            _dstate[:] = dQC_ins[0]
+            # _state[:] = QC_ins[0]
+            # _dstate[:] = dQC_ins[0]
+            
+            Q_ins = QC_ins[:, -1]
+            C_ins = QC_ins[:, :-1]
+            dQ_ins = dQC_ins[:, -1]
+            dC_ins = dQC_ins[:, :-1]
+            Q = Q_ins.sum()
+            C = Q_ins @ C_ins / Q
+            _state[-1] = Q
+            _state[:-1] = C
+            Q_dot = dQ_ins.sum()
+            C_dot = (dQ_ins @ C_ins + Q_ins @ dC_ins - Q_dot * C)/Q
+            _dstate[-1] = Q_dot
+            _dstate[:-1] = C_dot
+            
             _update_state()
             _update_dstate()
         self._AE = yt
