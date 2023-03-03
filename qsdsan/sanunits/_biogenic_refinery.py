@@ -153,8 +153,7 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
         Cafb = (0.474 * VM_biochar + 0.963 * FC_biochar + 0.067 * AC_biochar) / (100 - AC_biochar) # Klasson 2017
         C_feedstock = -0.50 * self.f_ash_content + 54.51 # Krueger et al. 2021
         R50 = 0.17 * Cafb + 0.00479 # Klasson 2017
-        global CS 
-        CS = yield_db * (C_biochar*100) * R50 / C_feedstock # Zhao et al. 2013
+        CS = self.CS = yield_db * (C_biochar*100) * R50 / C_feedstock # Zhao et al. 2013
         biochar.imass['C'] = (CS/100) * biochar_prcd 
         
         biochar.imass['H2O'] = 0.025 * biochar.F_mass # kg H2O / hr with 2.5% moisture content
