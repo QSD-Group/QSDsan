@@ -132,24 +132,30 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
         biochar.empty()
         f_AC_dec = self.f_ash_content/100 #converts % ash content of feedstock to decimal
         
-        # predictive equation for biochar yield (dry basis) based on feedstock ash content and pyrolysis temperature
-        dry_basis_yield = 100 * (1.18 * f_AC_dec ** 0.843 + (1 - f_AC_dec) * 2.106 * math.exp(-0.0066 * self.pyrolysis_temp))
-        biochar_prcd = waste.F_mass * dry_basis_yield * (1-mc) # % kg dry biochar /hr
+        # predictive equation for % biochar dry basis (db) yield - derived via Excel solver
+        yield_db = 100 * (1.18 * f_AC_dec ** 0.843 + (1 - f_AC_dec) * 2.106 * math.exp(-0.0066 * self.pyrolysis_temp))
+        biochar_prcd = waste.F_mass * (yield_db/100) * (1-mc) # % kg dry biochar /hr
         
-        # predictive equation for ash-free biochar yield percentage (Neves et al. 2011)
-        ash_free_yield = 100 * (0.106 + 2.43 * math.exp(-0.0066 * self.pyrolysis_temp))
+        # predictive equation for % biochar dry ash-free (daf) yield - Neves et al. 2011
+        yield_daf = 100 * (0.106 + 2.43 * math.exp(-0.0066 * self.pyrolysis_temp))
         
-        # predictive equation for biochar fixed carbon content 
-        b_fixed_carbon = 87.786 * ash_free_yield ** -0.483
-        biochar.imass['FixedCarbon'] = b_fixed_carbon
-        # calculate biochar volatile matter and ash content 
-        b_ash_content = (dry_basis_yield - ash_free_yield) * 100 / dry_basis_yield
-        b_volatile_matter = 100 - b_ash_content - b_fixed_carbon
-        biochar.imass['AshContent'] = b_ash_content
-        biochar.imass['VolatileMatter'] = b_volatile_matter
+        # predictive equation for % biochar fixed carbon - derived via Excel solver
+        FC_biochar = 87.786 * yield_daf ** -0.483
+        biochar.imass['FixedCarbon'] = FC_biochar
+        # calculate biochar volatile matter and ash content using calculated values from above eqns
+        AC_biochar = (yield_db - yield_daf) * 100 / yield_db
+        VM_biochar = 100 - AC_biochar - FC_biochar
+        biochar.imass['AshContent'] = AC_biochar
+        biochar.imass['VolatileMatter'] = VM_biochar
         
-        Cafb = (0.474 * b_volatile_matter + 0.963 * b_fixed_carbon + 0.067 * b_ash_content) / (100 - b_ash_content)
-        recalcitrance_potential = 0.17 * Cafb + 0.00479
+        # calculations for carbon sequestration (CS) potential [% mass C/mass biochar] 
+        C_biochar = (0.474 * VM_biochar + 0.963 * FC_biochar + 0.067 * AC_biochar) / 100 # Klasson 2017
+        Cafb = (0.474 * VM_biochar + 0.963 * FC_biochar + 0.067 * AC_biochar) / (100 - AC_biochar) # Klasson 2017
+        C_feedstock = -0.50 * self.f_ash_content + 54.51 # Krueger et al. 2021
+        R50 = 0.17 * Cafb + 0.00479 # Klasson 2017
+        global CS 
+        CS = yield_db * (C_biochar*100) * R50 / C_feedstock # Zhao et al. 2013
+        biochar.imass['C'] = (CS/100) * biochar_prcd 
         
         biochar.imass['H2O'] = 0.025 * biochar.F_mass # kg H2O / hr with 2.5% moisture content
 
