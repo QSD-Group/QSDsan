@@ -13,7 +13,7 @@ for license details.
 
 __all__ = ('get_SRT',)
 
-def get_SRT(system, biomass_IDs, active_unit_IDs=None):
+def get_SRT(system, biomass_IDs, wastage=None, active_unit_IDs=None):
     """
     Estimate sludge residence time (SRT) of an activated sludge system.
 
@@ -23,6 +23,8 @@ def get_SRT(system, biomass_IDs, active_unit_IDs=None):
         The system whose SRT will be calculated for.
     biomass_IDs : tuple[str]
         Component IDs of active biomass
+    wastage : iterable[:class:`WasteStream`]
+        Streams with wasted biomass.
     active_unit_IDs : tuple[str], optional
         IDs of activated sludge units. The default is None, meaning to include
         all units in the system.
@@ -43,8 +45,9 @@ def get_SRT(system, biomass_IDs, active_unit_IDs=None):
     --------
     `bsm1 system <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bsm1/system.py>`_
     """
+    if wastage is None: wastage = [ws for ws in system.products if ws.phase in ('l','s')]
     waste = sum([ws.composite('solids', subgroup=biomass_IDs)*ws.F_vol*24 \
-                 for ws in system.products if ws.phase=='l'])
+                 for ws in wastage])
     units = system.units if active_unit_IDs is None \
         else [u for u in system.units if u.ID in active_unit_IDs]
     retain = sum([u.get_retained_mass(biomass_IDs) for u in units if u.isdynamic])
