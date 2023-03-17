@@ -133,7 +133,7 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
         f_AC_dec = self.f_ash_content/100 #converts % ash content of feedstock to decimal
         
         # predictive equation for % biochar dry basis (db) yield - derived via Excel solver
-        yield_db = 100 * (1.18 * f_AC_dec ** 0.843 + (1 - f_AC_dec) * 2.106 * math.exp(-0.0066 * self.pyrolysis_temp))
+        yield_db = self.yield_db = 100 * (1.18 * f_AC_dec ** 0.843 + (1 - f_AC_dec) * 2.106 * math.exp(-0.0066 * self.pyrolysis_temp))
         biochar_prcd = waste.F_mass * (yield_db/100) * (1-mc) # % kg dry biochar /hr
         
         # predictive equation for % biochar dry ash-free (daf) yield - Neves et al. 2011
