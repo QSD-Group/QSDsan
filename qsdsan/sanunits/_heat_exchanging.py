@@ -23,8 +23,7 @@ for license details.
 import biosteam as bst
 from warnings import warn
 from math import ceil, pi
-from biosteam.facilities import HeatExchangerNetwork as HXN
-from biosteam.units import HXprocess as HXP, HXutility as HXU
+from biosteam import HeatExchangerNetwork as HXN, HXprocess as HXP, HXutility as HXU
 from biosteam.units.design_tools.specification_factors import material_densities_lb_per_ft3
 from biosteam.exceptions import bounds_warning, DesignWarning
 from biosteam.units.design_tools import flash_vessel_design
