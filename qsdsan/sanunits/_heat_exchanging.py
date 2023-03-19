@@ -20,7 +20,6 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import biosteam as bst
 from warnings import warn
 from math import ceil, pi
 from biosteam import HeatExchangerNetwork as HXN, HXprocess as HXP, HXutility as HXU
