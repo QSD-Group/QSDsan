@@ -43,10 +43,11 @@ def create_adm1_cmps(set_thermo=True):
     cmps_all = Components.load_default()
 
     # varies
-    X_c = cmps_all.X_OHO.copy('X_c')
-    X_c.description = 'Composite'
-    X_c.i_C = 0.02786 * C_mw
-    X_c.i_N = 0.0376
+    # X_c = cmps_all.X_OHO.copy('X_c')
+    # X_c.description = 'Composite'
+    # X_c.i_C = 0.02786 * C_mw
+    # X_c.i_N = 0.0376
+    
     X_ch = Component.from_chemical('X_ch', chemical='glycogen', Tc=1011.4, # glucan
                                     description='Carbohydrates',
                                     measured_as='COD',
