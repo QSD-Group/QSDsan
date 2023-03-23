@@ -132,7 +132,9 @@ def create_adm1_cmps(set_thermo=True):
                                     particle_size='Soluble',
                                     degradability='Undegradable',
                                     organic=False)
-
+    
+    S_IP = cmps_all.S_PO4.copy('S_IP')
+  
     X_su = cmps_all.X_FO.copy('X_su')
     X_su.description = 'Biomass uptaking sugars'
 
@@ -148,6 +150,26 @@ def create_adm1_cmps(set_thermo=True):
     X_pro = cmps_all.X_PRO.copy('X_pro')
     X_ac = cmps_all.X_ACO.copy('X_ac')
     X_h2 = cmps_all.X_HMO.copy('X_h2')
+    
+    X_PHA = cmps_all.X_PAO_PHA.copy('X_PHA')
+    
+    X_PP = cmps_all.X_PAO_PP_Lo.copy('X_PP')
+    
+    X_PAO = cmps_all.X_PAO.copy('X_PAO')
+    
+    S_K = Component.from_chemical('S_K', chemical='K',
+                                    measured_as='K',
+                                    description='Potassium',
+                                    particle_size='Soluble',
+                                    degradability='Undegradable',
+                                    organic=False)
+    
+    S_Mg = Component.from_chemical('S_Mg', chemical='Mg',
+                                    measured_as='Mg',
+                                    description='Magnesium',
+                                    particle_size='Soluble',
+                                    degradability='Undegradable',
+                                    organic=False)
 
     for bio in (X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2):
         # bio.formula = 'C5H7O2N'
@@ -159,8 +181,9 @@ def create_adm1_cmps(set_thermo=True):
     S_cat.i_mass = S_an.i_mass = 1
 
     cmps_adm1 = Components([S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2,
-                            S_ch4, S_IC, S_IN, S_I, X_c, X_ch, X_pr, X_li,
+                            S_ch4, S_IC, S_IN, S_I, S_IP, X_ch, X_pr, X_li,
                             X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I,
+                            X_PHA, X_PP, X_PAO, S_K, S_Mg, 
                             S_cat, S_an, cmps_all.H2O])
     cmps_adm1.default_compile()
     if set_thermo: settings.set_thermo(cmps_adm1)
