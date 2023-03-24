@@ -687,8 +687,8 @@ class PrimaryClarifier(SanUnit):
     @f_corr.setter
     def f_corr(self, corr):
         if corr is not None:
-            if corr > 1 or corr < 0:
-                raise ValueError(f'correction factor must be within [0, 1], not {corr}')
+            # if corr > 1 or corr < 0:
+            #     raise ValueError(f'correction factor must be within [0, 1], not {corr}')
             self._corr = corr
         else:
             raise ValueError('correction factor expected from user')
