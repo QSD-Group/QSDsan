@@ -22,8 +22,45 @@ __all__ = ('GasExtractionMembrane',)
 
 class GasExtractionMembrane(SanUnit):
     
+    """
+    A Primary clarifier based on BSM2 Layout. [1]
+
+    Parameters
+    ----------
+    ID : str
+        ID for the Gas Extraction Membrane. The default is 'GEM'.
+    ins : class:`WasteStream`
+        Influent to the Gas Extraction Membrane. Expected number of influent is 3. 
+    outs : class:`WasteStream`
+        Gas and Liquid streams are expected effluents.
+    FiberID : float
+        Inner diameter of the membrane [m].
+    FiberOD : float
+        Outer diameter of the membrane [m].
+    NumTubes : float
+        The number of fibers in the membrane.  
+    ShellDia : float
+        The diameter of the shell [m]. 
+    SurfArea : float
+        Surface area of membrane [m^2]. 
+    GasID : array
+        Array containing IDs of gases to be extracted. 
+    PVac : float
+        Operating vaccum pressure in the membrane [Pa].
+    segs : float
+        Number of segments considered in the membrane. 
+    GasPerm : dict
+        Dictionary of permeability of gases.
+    HenryPreFac : dict
+        Dictionary of Henry's Law Factor for gases. 
+    HenrySlope : dict
+        Dictionary of Henry's Slope for gases. 
+    WilkeChang : dict
+        Dictionary of Wilke Chang correlation for gases. 
+    """
+    
     _N_ins = 1
-    _N_outs = 1
+    _N_outs = 2
     
     # All gas properties are in form of dictionaries
     
@@ -182,7 +219,7 @@ class GasExtractionMembrane(SanUnit):
     @property
     def HeL(self):
         # Define the constant properties of gas
-        TRefH = 298.15              # Reference T for Henry's Law [K]
+        TRefH = 298.15 # Reference T for Henry's Law [K]
         NIST_HeL = self._hpf*(np.exp(self._hs*(1/self.ins[0].T - 1/TRefH)))
         return 1/NIST_HeL
     
@@ -246,28 +283,30 @@ class GasExtractionMembrane(SanUnit):
             for j in range(numGas):
                 self._state[j+i] = Cs[j]
         self._dstate = self._state*0
-# =============================================================================
-#         self._cached_state = self._state.copy()
-#         self._cached_t = 0
-# =============================================================================
+
 
     def _update_state(self):
         eff, = self.outs    # assuming this SanUnit has one outlet only
         numGas = len(self.GasID)
-        # Need to add effluent streams for liquid (this includes all cmps of influent ws) 
-        # and gas (the multiplication should give out kg/hr values)
+        # Need to add effluent streams for liquid (this includes all cmps of influent ws) and gas (the multiplication should give out kg/hr values)
         
-        # The state of effluent Gas in the extraction membrane is the difference 
-        # between lumen concentration of the last and first segment
+        # THE STATE OF THE GAS IN EXTRACTION MEMBRANE is the difference between lumen concentration between the last
+        # and first segment
         self._outs[0].state = self._state[ -2*numGas: -numGas] - self._state[ :numGas]
-        # The state of effluent Liquid stream is simply the concentration of 
-        # the last lumen segment in the extraction membrane 
         self._outs[1].state = self._state[-2*numGas: -numGas]
         
+        # Gas flowrate = Liquid flowrate = Qin
+
+
     def _update_dstate(self):
         eff, = self.outs  
         numGas = len(self.GasID)
-        eff.dstate[:] = self._dstate[-numGas:]
+        
+        #eff.dstate[:] = self._dstate[-numGas:]
+        self._outs[0].dstate = self._dstate[ -2*numGas: -numGas] - self._dstate[ :numGas]
+        
+        self._outs[1].dstate = self._dstate[-2*numGas: -numGas]
+
 
     def _run(self):
         pass
@@ -401,6 +440,7 @@ class GasExtractionMembrane(SanUnit):
                     
             # Re-scale the shell concentration so that vacuum pressure stays constant during the entire process. Given the change of concentration that we have calculated above for the shell, we can re-scale the shell concentrations with the sumCp at each segment. 
                 
+            # This FOR LOOP maintains consistent pressure in the shell
             for i in range(0, Segs):
                 for j in range(0, numGas):
                     # Calculate the new concentration of gases in the shell
