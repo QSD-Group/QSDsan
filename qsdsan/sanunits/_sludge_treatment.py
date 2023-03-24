@@ -32,7 +32,7 @@ class Thickener(SanUnit):
     outs : class:`WasteStream`
         Treated effluent and sludge.
     thickener_perc : float
-        The percentage of Suspended Sludge in the underflow of the thickener.[1]
+        The percentage of solids in the underflow of the thickener.[1]
     TSS_removal_perc : float
         The percentage of suspended solids removed in the thickener.[1]
     solids_loading_rate : float
