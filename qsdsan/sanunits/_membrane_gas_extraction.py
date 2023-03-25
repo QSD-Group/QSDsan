@@ -286,18 +286,42 @@ class GasExtractionMembrane(SanUnit):
 
 
     def _update_state(self):
-        eff, = self.outs    # assuming this SanUnit has one outlet only
+        
+        inf = self.ins
+        cmps = inf.components
+        self.indexer = cmps.index
+        self.idx = cmps.indices(self.GasID) 
         numGas = len(self.GasID)
-        # Need to add effluent streams for liquid (this includes all cmps of influent ws) and gas (the multiplication should give out kg/hr values)
+        # Need to add effluent streams for liquid (this includes all cmps of influent ws) and gas
+        # The multiplication of any of the first n-1 array element with last element should give out kg/hr values
         
-        # THE STATE OF THE GAS IN EXTRACTION MEMBRANE is the difference between lumen concentration between the last
-        # and first segment
-        self._outs[0].state = self._state[ -2*numGas: -numGas] - self._state[ :numGas]
-        self._outs[1].state = self._state[-2*numGas: -numGas]
+        self._outs[0].state = np.zeros(len(cmps) + 1)
+        # The of the effluent gas in extraction membrane is the difference 
+        # between lumen concentration in the last and first segment
+        gas_state_in_unit = self._state[ -2*numGas: -numGas] - self._state[ :numGas] # in mol/m3
+        gas_state_in_unit = (gas_state_in_unit*cmps.chem_MW[self.idx])/cmps.i_mass[self.idx] # (mol/m3)*(g/mol) = g/m3 = mg/l
+        for i in range(0, len(cmps), 1):
+            for j in self.idx:
+                if i == j:
+                    self._outs[0].state[i] =  gas_state_in_unit[np.where(self.idx == j)]
+                    
+        # Q_gas = ??Ian??
+        # self._outs[0].state[-1] = Q_gas
         
-        # Gas flowrate = Liquid flowrate = Qin
-
-
+        self._outs[1].state = np.zeros(len(cmps) + 1)
+        # The state of effluent Liquid stream is simply the concentration of 
+        # the last lumen segment in the extraction membrane 
+        liquid_state_in_unit = self._state[-2*numGas: -numGas]  # in mol/m3
+        liquid_state_in_unit = (liquid_state_in_unit*cmps.chem_MW[self.idx])/cmps.i_mass[self.idx] # (mol/m3)*(g/mol) = g/m3 = mg/l
+        for i in range(0, len(cmps), 1):
+            for j in self.idx:
+                if i == j:
+                    self._outs[1].state[i] = liquid_state_in_unit[np.where(self.idx == j)]
+                else:
+                    self._outs[1].state[i] = self._ins_QC[i]
+        
+        self._outs[1].state[i] = self._ins_QC[-1]
+        
     def _update_dstate(self):
         eff, = self.outs  
         numGas = len(self.GasID)
@@ -306,7 +330,6 @@ class GasExtractionMembrane(SanUnit):
         self._outs[0].dstate = self._dstate[ -2*numGas: -numGas] - self._dstate[ :numGas]
         
         self._outs[1].dstate = self._dstate[-2*numGas: -numGas]
-
 
     def _run(self):
         pass
