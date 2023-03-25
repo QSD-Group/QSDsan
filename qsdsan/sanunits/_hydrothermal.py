@@ -165,7 +165,9 @@ class CatalyticHydrothermalGasification(Reactor):
         catalyst_out.copy_like(catalyst_in)
         # catalysts amount is quite low compared to the main stream, therefore do not consider
         # heating/cooling of catalysts
-            
+        
+        chg_out.phase='g'
+        
         cmps = self.components
         gas_C_ratio = 0
         for name, ratio in self.gas_composition.items():
@@ -181,7 +183,9 @@ class CatalyticHydrothermalGasification(Reactor):
         
         chg_out.T = self.cool_temp
         chg_out.P = self.pump_pressure
-        
+
+        # chg_out.vle(T=chg_out.T, P=chg_out.P)
+
     @property
     def CHGout_C(self):
         # not include carbon in gas phase
