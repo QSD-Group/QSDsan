@@ -289,8 +289,7 @@ class GasExtractionMembrane(SanUnit):
         
         inf = self.ins
         cmps = inf.components
-        self.indexer = cmps.index
-        self.idx = cmps.indices(self.GasID) 
+        idx = self.idx  
         numGas = len(self.GasID)
         
         # Need to add effluent streams for liquid (this includes all cmps of influent ws) and gas.
@@ -301,10 +300,8 @@ class GasExtractionMembrane(SanUnit):
         # between lumen concentration in the last and first segment
         gas_state_in_unit = self._state[ -2*numGas: -numGas] - self._state[ :numGas] # in mol/m3
         gas_state_in_unit = (gas_state_in_unit*cmps.chem_MW[self.idx])/cmps.i_mass[self.idx] # (mol/m3)*(g/mol) = g/m3 = mg/l
-        for i in range(0, len(cmps), 1):
-            for j in self.idx:
-                if i == j:
-                    self._outs[0].state[i] =  gas_state_in_unit[np.where(self.idx == j)]
+        
+        self._outs[0].state[idx] =  gas_state_in_unit
                     
         # Q_gas = ??Ian??
         # self._outs[0].state[-1] = Q_gas
@@ -314,35 +311,28 @@ class GasExtractionMembrane(SanUnit):
         # the last lumen segment in the extraction membrane 
         liquid_state_in_unit = self._state[-2*numGas: -numGas]  # in mol/m3
         liquid_state_in_unit = (liquid_state_in_unit*cmps.chem_MW[self.idx])/cmps.i_mass[self.idx] # (mol/m3)*(g/mol) = g/m3 = mg/l
-        for i in range(0, len(cmps), 1):
-            for j in self.idx:
-                if i == j:
-                    self._outs[1].state[i] = liquid_state_in_unit[np.where(self.idx == j)]
-                else:
-                    self._outs[1].state[i] = self._ins_QC[i]
         
-        self._outs[1].state[-1] = self._ins_QC[-1]
+        self._outs[1].state = self._ins_QC
+        self._outs[1].state[idx] = liquid_state_in_unit
+        
+        # self._outs[1].state[-1] = self._ins_QC[-1]
         
     def _update_dstate(self):
         
         inf = self.ins
         cmps = inf.components
-        self.indexer = cmps.index
-        self.idx = cmps.indices(self.GasID) 
         numGas = len(self.GasID)
+        idx = self.idx
         
         # Need to add effluent streams for liquid (this includes all cmps of influent ws) and gas.
         # The multiplication of any of the first n-1 array element with last element should give out kg/hr values.
         
-        self._outs[0].dstate = np.zeros(len(cmps) + 1)
         # The of the effluent gas in extraction membrane is the difference 
         # between lumen concentration in the last and first segment
         gas_dstate_in_unit = self._dstate[ -2*numGas: -numGas] - self._dstate[ :numGas] # in mol/m3
         gas_dstate_in_unit = (gas_dstate_in_unit*cmps.chem_MW[self.idx])/cmps.i_mass[self.idx] # (mol/m3)*(g/mol) = g/m3 = mg/l
-        for i in range(0, len(cmps), 1):
-            for j in self.idx:
-                if i == j:
-                    self._outs[0].dstate[i] =  gas_dstate_in_unit[np.where(self.idx == j)]
+        
+        self._outs[0].dstate[idx] = gas_dstate_in_unit
                     
         # Q_gas = ??Ian??
         # self._outs[0].state[-1] = Q_gas
@@ -352,17 +342,15 @@ class GasExtractionMembrane(SanUnit):
         # the last lumen segment in the extraction membrane 
         liquid_dstate_in_unit = self._dstate[-2*numGas: -numGas]  # in mol/m3
         liquid_dstate_in_unit = (liquid_dstate_in_unit*cmps.chem_MW[self.idx])/cmps.i_mass[self.idx] # (mol/m3)*(g/mol) = g/m3 = mg/l
-        for i in range(0, len(cmps), 1):
-            for j in self.idx:
-                if i == j:
-                    self._outs[1].dstate[i] = liquid_dstate_in_unit[np.where(self.idx == j)]
-                else:
-                    self._outs[1].dstate[i] = self._ins_dQC[i]
         
-        self._outs[1].dstate[-1] = self._ins_dQC[-1]
+        self._outs[1].dstate = self._ins_dQC
+        self._outs[0].dstate[idx] = liquid_dstate_in_unit
+        # self._outs[1].dstate[-1] = self._ins_dQC[-1]
 
     def _run(self):
-        pass
+        s_in, = self.ins
+        gas, liq = self.outs
+        liq.copy(s_in)
     
     @property
     def ODE(self):
