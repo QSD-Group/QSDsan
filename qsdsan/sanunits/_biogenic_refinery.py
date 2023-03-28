@@ -29,6 +29,7 @@ from .. import SanUnit, Construction
 from ._sludge_thickening import SludgeSeparator
 from ..utils import ospath, load_data, data_path, price_ratio
 
+
 __all__ = (
     'BiogenicRefineryCarbonizerBase',
     'BiogenicRefineryControls',
@@ -45,6 +46,9 @@ __all__ = (
 
 br_su_data_path = ospath.join(data_path, 'sanunit_data/br')
 
+# Filter out warnings related to uptime ratio
+import warnings
+warnings.filterwarnings('ignore', message='uptime_ratio') 
 
 # %%
 
@@ -134,7 +138,7 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
         
         # predictive equation for % biochar dry basis (db) yield - derived via Excel solver
         yield_db = self.yield_db = 100 * (1.18 * f_AC_dec ** 0.843 + (1 - f_AC_dec) * 2.106 * math.exp(-0.0066 * self.pyrolysis_temp))
-        biochar_prcd = waste.F_mass * (yield_db/100) * (1-mc) # % kg dry biochar /hr
+        biochar_prcd = self.biochar_prcd = waste.F_mass * (yield_db/100) * (1-mc) # % kg dry biochar /hr
         
         # predictive equation for % biochar dry ash-free (daf) yield - Neves et al. 2011
         yield_daf = 100 * (0.106 + 2.43 * math.exp(-0.0066 * self.pyrolysis_temp))
@@ -154,9 +158,9 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
         C_feedstock = -0.50 * self.f_ash_content + 54.51 # Krueger et al. 2021
         R50 = 0.17 * Cafb + 0.00479 # Klasson 2017
         CS = self.CS = yield_db * (C_biochar*100) * R50 / C_feedstock # Zhao et al. 2013
-        biochar.imass['C'] = (CS/100) * biochar_prcd 
+        biochar.imass['C'] = (CS/100) * biochar_prcd
         
-        biochar.imass['H2O'] = 0.025 * biochar.F_mass # kg H2O / hr with 2.5% moisture content
+        biochar.imass['H2O'] = 0.025 * biochar_prcd # kg H2O / hr with 2.5% moisture content
 
         # Daily run time for the influent waste
         # One unit is capable of treating 550 kg/d (35% moisture based on 20 hr of run time) or 18 kg dry/hr
