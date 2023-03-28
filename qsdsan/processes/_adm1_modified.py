@@ -523,7 +523,7 @@ class ADM1(CompiledProcesses):
                         'f_ac_fa', 'f_h2_fa', 'f_pro_va', 'f_ac_va', 'f_h2_va',
                         'f_ac_bu', 'f_h2_bu', 'f_ac_pro', 'f_h2_pro',
                         'f_ac_PHA', 'f_bu_PHA', 'f_pro_PHA', 'f_va_PHA', 
-                        'Y_su', 'Y_aa', 'Y_fa', 'Y_c4', 'Y_pro', 'Y_ac', 'Y_h2')
+                        'Y_su', 'Y_aa', 'Y_fa', 'Y_c4', 'Y_pro', 'Y_ac', 'Y_h2', 'Y_po4')
     _kinetic_params = ('rate_constants', 'half_sat_coeffs', 'pH_ULs', 'pH_LLs',
                        'KS_IN', 'KI_nh3', 'KIs_h2',
                        'Ka_base', 'Ka_dH', 'K_H_base', 'K_H_dH', 'kLa',
@@ -539,7 +539,7 @@ class ADM1(CompiledProcesses):
                 f_va_aa=0.23, f_bu_aa=0.26, f_pro_aa=0.05, f_ac_aa=0.4,
                 f_ac_fa=0.7, f_pro_va=0.54, f_ac_va=0.31, f_ac_bu=0.8, f_ac_pro=0.57,
                 f_ac_PHA=0.4, f_bu_PHA=0.1, f_pro_PHA=0.4,
-                Y_su=0.1, Y_aa=0.08, Y_fa=0.06, Y_c4=0.06, Y_pro=0.04, Y_ac=0.05, Y_h2=0.06,
+                Y_su=0.1, Y_aa=0.08, Y_fa=0.06, Y_c4=0.06, Y_pro=0.04, Y_ac=0.05, Y_h2=0.06, Y_po4=0.013,
                 q_dis=0.5, q_ch_hyd=10, q_pr_hyd=10, q_li_hyd=10,
                 k_su=30, k_aa=50, k_fa=6, k_c4=20, k_pro=13, k_ac=8, k_h2=35,
                 K_su=0.5, K_aa=0.3, K_fa=0.4, K_c4=0.2, K_pro=0.1, K_ac=0.15, K_h2=7e-6,
@@ -582,7 +582,7 @@ class ADM1(CompiledProcesses):
                          f_ac_fa, 1-f_ac_fa, f_pro_va, f_ac_va, 1-f_pro_va-f_ac_va,
                          f_ac_bu, 1-f_ac_bu, f_ac_pro, 1-f_ac_pro,
                          f_ac_PHA, f_bu_PHA, f_pro_PHA, 1-f_ac_PHA-f_bu_PHA-f_pro_PHA,
-                         Y_su, Y_aa, Y_fa, Y_c4, Y_pro, Y_ac, Y_h2)
+                         Y_su, Y_aa, Y_fa, Y_c4, Y_pro, Y_ac, Y_h2, Y_po4)
         pH_LLs = np.array([pH_limits_aa[0]]*6 + [pH_limits_ac[0], pH_limits_h2[0]])
         pH_ULs = np.array([pH_limits_aa[1]]*6 + [pH_limits_ac[1], pH_limits_h2[1]])
         
