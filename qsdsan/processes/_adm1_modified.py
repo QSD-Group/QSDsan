@@ -544,6 +544,7 @@ class ADM1(CompiledProcesses):
                 k_su=30, k_aa=50, k_fa=6, k_c4=20, k_pro=13, k_ac=8, k_h2=35,
                 K_su=0.5, K_aa=0.3, K_fa=0.4, K_c4=0.2, K_pro=0.1, K_ac=0.15, K_h2=7e-6,
                 b_su=0.02, b_aa=0.02, b_fa=0.02, b_c4=0.02, b_pro=0.02, b_ac=0.02, b_h2=0.02,
+                q_PHA=3, b_PAO=0.2, b_PP=0.2, b_PHA=0.2, 
                 KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_nh3=1.8e-3, KS_IN=1e-4,
                 pH_limits_aa=(4,5.5), pH_limits_ac=(6,7), pH_limits_h2=(5,6),
                 T_base=298.15, pKa_base=[14, 9.25, 6.35, 4.76, 4.88, 4.82, 4.86],
@@ -584,9 +585,12 @@ class ADM1(CompiledProcesses):
                          Y_su, Y_aa, Y_fa, Y_c4, Y_pro, Y_ac, Y_h2)
         pH_LLs = np.array([pH_limits_aa[0]]*6 + [pH_limits_ac[0], pH_limits_h2[0]])
         pH_ULs = np.array([pH_limits_aa[1]]*6 + [pH_limits_ac[1], pH_limits_h2[1]])
-        ks = np.array((q_dis, q_ch_hyd, q_pr_hyd, q_li_hyd,
+        
+        ks = np.array((q_ch_hyd, q_pr_hyd, q_li_hyd,
                        k_su, k_aa, k_fa, k_c4, k_c4, k_pro, k_ac, k_h2,
-                       b_su, b_aa, b_fa, b_c4, b_pro, b_ac, b_h2))
+                       b_su, b_aa, b_fa, b_c4, b_pro, b_ac, b_h2,
+                       q_PHA, q_PHA, q_PHA, q_PHA, b_PAO, b_PP, b_PHA))
+        
         Ks = np.array((K_su, K_aa, K_fa, K_c4, K_c4, K_pro, K_ac, K_h2))
         KIs_h2 = np.array((KI_h2_fa, KI_h2_c4, KI_h2_c4, KI_h2_pro))
         K_H_base = np.array(K_H_base)
