@@ -4,6 +4,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Joy Zhang <joycheung1994@gmail.com>
+    
 
 Part of this module is based on the Thermosteam package:
 https://github.com/BioSTEAMDevelopmentGroup/thermosteam
@@ -181,7 +182,7 @@ def create_adm1_cmps(set_thermo=True):
     S_cat.i_mass = S_an.i_mass = 1
 
     cmps_adm1 = Components([S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2,
-                            S_ch4, S_IC, S_IN, S_I, S_IP, X_ch, X_pr, X_li,
+                            S_ch4, S_IC, S_IN, S_IP, S_I, X_ch, X_pr, X_li,
                             X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I,
                             X_PHA, X_PP, X_PAO, S_K, S_Mg, 
                             S_cat, S_an, cmps_all.H2O])
@@ -349,18 +350,6 @@ class ADM1(CompiledProcesses):
         Nitrogen content of inert organics [kmol N/kg COD]. The default is 4.286e-3.
     N_aa : float, optional
         Nitrogen content of amino acids [kmol N/kg COD]. The default is 7e-3.
-    f_ch_xc : float, optional
-        Fraction of carbohydrates from composite disintegration [kg COD/kg COD]. 
-        The default is 0.2.
-    f_pr_xc : float, optional
-        Fraction of proteins from composite disintegration [kg COD/kg COD].
-        The default is 0.2.
-    f_li_xc : float, optional
-        Fraction of lipids from composite disintegration [kg COD/kg COD]. 
-        The default is 0.3.
-    f_xI_xc : float, optional
-        Fraction of inert particulates from composite disintegration 
-        [kg COD/kg COD]. The default is 0.2.
     f_fa_li : float, optional
         Fraction of long chain fatty acids (LCFAs) from hydrolysis of lipids
         [kg COD/kg COD]. The default is 0.95.
@@ -528,8 +517,7 @@ class ADM1(CompiledProcesses):
         the BSM2 Framework; Lund, 2006.
     """
 
-    _stoichio_params = ('f_ch_xc', 'f_pr_xc', 'f_li_xc', 'f_xI_xc', 'f_sI_xc',
-                        'f_fa_li', 'f_bu_su', 'f_pro_su', 'f_ac_su', 'f_h2_su',
+    _stoichio_params = ('f_fa_li', 'f_bu_su', 'f_pro_su', 'f_ac_su', 'f_h2_su',
                         'f_va_aa', 'f_bu_aa', 'f_pro_aa', 'f_ac_aa', 'f_h2_aa',
                         'f_ac_fa', 'f_h2_fa', 'f_pro_va', 'f_ac_va', 'f_h2_va',
                         'f_ac_bu', 'f_h2_bu', 'f_ac_pro', 'f_h2_pro',
@@ -569,7 +557,7 @@ class ADM1(CompiledProcesses):
         if not path: path = _path
         self = Processes.load_from_file(path,
                                         components=cmps,
-                                        conserved_for=('C', 'N'),
+                                        conserved_for=('C', 'N', 'P'),
                                         parameters=cls._stoichio_params,
                                         compile=False)
 
