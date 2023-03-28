@@ -517,10 +517,12 @@ class ADM1(CompiledProcesses):
         the BSM2 Framework; Lund, 2006.
     """
 
-    _stoichio_params = ('f_fa_li', 'f_bu_su', 'f_pro_su', 'f_ac_su', 'f_h2_su',
+    _stoichio_params = ('f_sI_xb', 'f_ch_xb', 'f_pr_xb', 'f_li_xb', 'f_xI_xb', 
+                        'f_fa_li', 'f_bu_su', 'f_pro_su', 'f_ac_su', 'f_h2_su',
                         'f_va_aa', 'f_bu_aa', 'f_pro_aa', 'f_ac_aa', 'f_h2_aa',
                         'f_ac_fa', 'f_h2_fa', 'f_pro_va', 'f_ac_va', 'f_h2_va',
                         'f_ac_bu', 'f_h2_bu', 'f_ac_pro', 'f_h2_pro',
+                        'f_ac_PHA', 'f_bu_PHA', 'f_pro_PHA', 'f_va_PHA', 
                         'Y_su', 'Y_aa', 'Y_fa', 'Y_c4', 'Y_pro', 'Y_ac', 'Y_h2')
     _kinetic_params = ('rate_constants', 'half_sat_coeffs', 'pH_ULs', 'pH_LLs',
                        'KS_IN', 'KI_nh3', 'KIs_h2',
@@ -532,10 +534,11 @@ class ADM1(CompiledProcesses):
     _biogas_IDs = ('S_h2', 'S_ch4', 'S_IC')
 
     def __new__(cls, components=None, path=None, N_xc=2.686e-3, N_I=4.286e-3, N_aa=7e-3,
-                f_ch_xc=0.2, f_pr_xc=0.2, f_li_xc=0.3, f_xI_xc=0.2,
+                f_sI_xb=0, f_ch_xb=0.275, f_pr_xb=0.275, f_li_xb=0.350,
                 f_fa_li=0.95, f_bu_su=0.13, f_pro_su=0.27, f_ac_su=0.41,
                 f_va_aa=0.23, f_bu_aa=0.26, f_pro_aa=0.05, f_ac_aa=0.4,
                 f_ac_fa=0.7, f_pro_va=0.54, f_ac_va=0.31, f_ac_bu=0.8, f_ac_pro=0.57,
+                f_ac_PHA=0.4, f_bu_PHA=0.1, f_pro_PHA=0.4,
                 Y_su=0.1, Y_aa=0.08, Y_fa=0.06, Y_c4=0.06, Y_pro=0.04, Y_ac=0.05, Y_h2=0.06,
                 q_dis=0.5, q_ch_hyd=10, q_pr_hyd=10, q_li_hyd=10,
                 k_su=30, k_aa=50, k_fa=6, k_c4=20, k_pro=13, k_ac=8, k_h2=35,
@@ -572,11 +575,12 @@ class ADM1(CompiledProcesses):
         self.extend(gas_transfer)
         self.compile(to_class=cls)
 
-        stoichio_vals = (f_ch_xc, f_pr_xc, f_li_xc, f_xI_xc, 1-f_ch_xc-f_pr_xc-f_li_xc-f_xI_xc,
+        stoichio_vals = (f_sI_xb, f_ch_xb, f_pr_xb, f_li_xb, 1-f_sI_xb-f_ch_xb-f_pr_xb-f_li_xb,
                          f_fa_li, f_bu_su, f_pro_su, f_ac_su, 1-f_bu_su-f_pro_su-f_ac_su,
                          f_va_aa, f_bu_aa, f_pro_aa, f_ac_aa, 1-f_va_aa-f_bu_aa-f_pro_aa-f_ac_aa,
                          f_ac_fa, 1-f_ac_fa, f_pro_va, f_ac_va, 1-f_pro_va-f_ac_va,
                          f_ac_bu, 1-f_ac_bu, f_ac_pro, 1-f_ac_pro,
+                         f_ac_PHA, f_bu_PHA, f_pro_PHA, 1-f_ac_PHA-f_bu_PHA-f_pro_PHA,
                          Y_su, Y_aa, Y_fa, Y_c4, Y_pro, Y_ac, Y_h2)
         pH_LLs = np.array([pH_limits_aa[0]]*6 + [pH_limits_ac[0], pH_limits_h2[0]])
         pH_ULs = np.array([pH_limits_aa[1]]*6 + [pH_limits_ac[1], pH_limits_h2[1]])
@@ -673,7 +677,7 @@ class ADM1(CompiledProcesses):
     def check_stoichiometric_parameters(self):
         '''Check whether product COD fractions sum up to 1 for each process.'''
         stoichio = self.parameters
-        subst = ('xc', 'su', 'aa', 'fa', 'va', 'bu', 'pro')
+        subst = ('xb', 'su', 'aa', 'fa', 'va', 'bu', 'pro', 'PHA')
         for s in subst:
             f_tot = sum([stoichio[k] for k in self._stoichio_params[:-7] \
                          if k.endswith(s)])
