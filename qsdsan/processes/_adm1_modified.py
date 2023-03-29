@@ -283,6 +283,7 @@ def rhos_adm1(state_arr, params):
     #                                'S_bu', 'S_pro', 'S_ac', 'S_h2'])
     # substrates = state_arr[substrates_ids]
     substrates = state_arr[:8]
+    
     # S_va, S_bu, S_h2, S_IN = state_arr[cmps.indices(['S_va', 'S_bu', 'S_h2', 'S_IN'])]
     # S_va, S_bu, S_h2, S_ch4, S_IC, S_IN = state_arr[[3,4,7,8,9,10]]
     S_va, S_bu, S_h2, S_IN = state_arr[[3,4,7,10]]
@@ -300,6 +301,14 @@ def rhos_adm1(state_arr, params):
     rhos[4:12] *= substr_inhibit(substrates, Ks)
     if S_va > 0: rhos[7] *= 1/(1+S_bu/S_va)
     if S_bu > 0: rhos[8] *= 1/(1+S_va/S_bu)
+    
+    
+    substartes_modified = state_arr[:]
+    
+    substrates_ids = cmps.indices(['S_va', 'S_bu', 'S_pro', 'S_ac'])
+    substrates_modified = state_arr[substrates_ids]
+    Ks_modified = Ks[-4:]
+    rhos[18:21] *= substr_inhibit(substrates_modified, Ks_modified)
 
     h = brenth(acid_base_rxn, 1e-14, 1.0,
                args=(weak_acids, Kas),
@@ -455,6 +464,12 @@ class ADM1(CompiledProcesses):
     K_h2 : float, optional
         Half saturation coefficient of H2 uptake [kg COD/m3]. 
         The default is 7e-6.
+    K_a : float, optional
+        Saturation coefficient for acetate [kg COD/m3].
+        The default is 0.004.
+    K_pp : float, optional
+        Saturation coefficient for polyphosphate [kg COD/m3].
+        The default is 0.00032.
     b_su : float, optional
         Decay rate constant of sugar-uptaking biomass [d^(-1)]. 
         The default is 0.02.
@@ -533,7 +548,7 @@ class ADM1(CompiledProcesses):
     >>> cmps = pc.create_adm1_cmps()
     >>> adm1 = pc.ADM1()
     >>> adm1.show()
-    ADM1([disintegration, hydrolysis_carbs, hydrolysis_proteins, hydrolysis_lipids, uptake_sugars, uptake_amino_acids, uptake_LCFA, uptake_valerate, uptake_butyrate, uptake_propionate, uptake_acetate, uptake_h2, decay_Xsu, decay_Xaa, decay_Xfa, decay_Xc4, decay_Xpro, decay_Xac, decay_Xh2, h2_transfer, ch4_transfer, IC_transfer])
+    ADM1([hydrolysis_carbs, hydrolysis_proteins, hydrolysis_lipids, uptake_sugars, uptake_amino_acids, uptake_LCFA, uptake_valerate, uptake_butyrate, uptake_propionate, uptake_acetate, uptake_h2, decay_Xsu, decay_Xaa, decay_Xfa, decay_Xc4, decay_Xpro, decay_Xac, decay_Xh2, storage_Sva_in_XPHA, storage_Sbu_in_XPHA, storage_Spro_in_XPHA, storage_Sac_in_XPHA, lysis_XPAO, lysis_XPP, lysis_XPHA, h2_transfer, ch4_transfer, IC_transfer])
     
     References
     ----------
@@ -559,6 +574,7 @@ class ADM1(CompiledProcesses):
     _acid_base_pairs = (('H+', 'OH-'), ('NH4+', 'NH3'), ('CO2', 'HCO3-'),
                         ('HAc', 'Ac-'), ('HPr', 'Pr-'),
                         ('HBu', 'Bu-'), ('HVa', 'Va-'))
+    
     _biogas_IDs = ('S_h2', 'S_ch4', 'S_IC')
 
     def __new__(cls, components=None, path=None, N_xc=2.686e-3, N_I=4.286e-3, N_aa=7e-3,
@@ -570,7 +586,7 @@ class ADM1(CompiledProcesses):
                 Y_su=0.1, Y_aa=0.08, Y_fa=0.06, Y_c4=0.06, Y_pro=0.04, Y_ac=0.05, Y_h2=0.06, Y_po4=0.013,
                 q_dis=0.5, q_ch_hyd=10, q_pr_hyd=10, q_li_hyd=10,
                 k_su=30, k_aa=50, k_fa=6, k_c4=20, k_pro=13, k_ac=8, k_h2=35,
-                K_su=0.5, K_aa=0.3, K_fa=0.4, K_c4=0.2, K_pro=0.1, K_ac=0.15, K_h2=7e-6,
+                K_su=0.5, K_aa=0.3, K_fa=0.4, K_c4=0.2, K_pro=0.1, K_ac=0.15, K_h2=7e-6, K_a=4e-3, K_pp=32e-5,
                 b_su=0.02, b_aa=0.02, b_fa=0.02, b_c4=0.02, b_pro=0.02, b_ac=0.02, b_h2=0.02,
                 q_PHA=3, b_PAO=0.2, b_PP=0.2, b_PHA=0.2, 
                 KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_nh3=1.8e-3, KS_IN=1e-4,
@@ -594,7 +610,49 @@ class ADM1(CompiledProcesses):
                                         compile=False)
         
         # Need to add 5 processes separately for stoichiometry. See ASM2d for reference. 
-
+        if path == _path:
+            _p19 = Process('storage_Sva_in_XPHA',
+                           'S_va + [Y_po4]X_PP -> X_PHA + [?]S_K + [?]S_Mg',
+                           components=cmps,
+                           ref_component='X_PHA',
+                           rate_equation='q_PHA * S_va/(K_a+S_va) * (X_PP/X_PAO)/(K_PP+(X_PP/X_PAO)) * X_PAO * S_va/(S_va+S_bu+S_pro+S_ac)',
+                           parameters=('Y_po4', 'q_PHA', 'K_a', 'K_PP'),
+                           conserved_for=('K', 'Mg'))
+            
+            _p20 = Process('storage_Sbu_in_XPHA',
+                           'S_bu + [Y_po4]X_PP -> X_PHA + [?]S_K + [?]S_Mg',
+                           components=cmps,
+                           ref_component='X_PHA',
+                           rate_equation='q_PHA * S_bu/(K_a+S_bu) * (X_PP/X_PAO)/(K_PP+(X_PP/X_PAO)) * X_PAO * S_bu/(S_va+S_bu+S_pro+S_ac)',
+                           parameters=('Y_po4', 'q_PHA', 'K_a', 'K_PP'),
+                           conserved_for=('K', 'Mg'))
+            
+            _p21 = Process('storage_Spro_in_XPHA',
+                           'S_pro + [Y_po4]X_PP -> X_PHA + [?]S_K + [?]S_Mg',
+                           components=cmps,
+                           ref_component='X_PHA',
+                           rate_equation='q_PHA * S_pro/(K_a+S_pro) * (X_PP/X_PAO)/(K_PP+(X_PP/X_PAO)) * X_PAO * S_pro/(S_va+S_bu+S_pro+S_ac)',
+                           parameters=('Y_po4', 'q_PHA', 'K_a', 'K_PP'),
+                           conserved_for=('K', 'Mg'))
+            
+            _p22 = Process('storage_Sac_in_XPHA',
+                           'S_ac + [Y_po4]X_PP -> X_PHA + [?]S_K + [?]S_Mg',
+                           components=cmps,
+                           ref_component='X_PHA',
+                           rate_equation='q_PHA * S_ac/(K_a+S_ac) * (X_PP/X_PAO)/(K_PP+(X_PP/X_PAO)) * X_PAO * S_ac/(S_va+S_bu+S_pro+S_ac)',
+                           parameters=('Y_po4', 'q_PHA', 'K_a', 'K_PP'),
+                           conserved_for=('K', 'Mg'))
+            
+            _p24 = Process('lysis_XPP',
+                           'X_pp -> [?]S_K + [?]S_Mg',
+                           components=cmps,
+                           ref_component='X_PP',
+                           rate_equation='b_PP*X_PP',
+                           parameters=('b_PP'),
+                           conserved_for=('K', 'Mg'))
+        
+            self.extend([_p19, _p20, _p21, _p22, _p24])
+            
         gas_transfer = []
         for i in cls._biogas_IDs:
             new_p = Process('%s_transfer' % i.lstrip('S_'),
@@ -621,7 +679,7 @@ class ADM1(CompiledProcesses):
                        b_su, b_aa, b_fa, b_c4, b_pro, b_ac, b_h2,
                        q_PHA, q_PHA, q_PHA, q_PHA, b_PAO, b_PP, b_PHA))
         
-        Ks = np.array((K_su, K_aa, K_fa, K_c4, K_c4, K_pro, K_ac, K_h2))
+        Ks = np.array((K_su, K_aa, K_fa, K_c4, K_c4, K_pro, K_ac, K_h2, K_a, K_pp))
         KIs_h2 = np.array((KI_h2_fa, KI_h2_c4, KI_h2_c4, KI_h2_pro))
         K_H_base = np.array(K_H_base)
         K_H_dH = np.array(K_H_dH)
