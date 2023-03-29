@@ -302,14 +302,23 @@ def rhos_adm1(state_arr, params):
     if S_va > 0: rhos[7] *= 1/(1+S_bu/S_va)
     if S_bu > 0: rhos[8] *= 1/(1+S_va/S_bu)
     
+    # substrates_ids = cmps.indices(['S_va', 'S_bu', 'S_pro', 'S_ac'])
+    # substrates_modified = state_arr[substrates_ids]
+    substrates_modified = state_arr[3:7]
+    # Ka = K_a 
+    Ka = Ks[-2]
+    rhos[18:22] *= substr_inhibit(substrates_modified, Ka)
     
-    substartes_modified = state_arr[:]
+    # PP_PAO = X_PP/X_PAO
+    PP_PAO = state_arr[25]/state_arr[26]
+    # Kpp = K_pp
+    Kpp = Ks[-1]
+    rhos[18:22] *= substr_inhibit(PP_PAO, Kpp)
     
-    substrates_ids = cmps.indices(['S_va', 'S_bu', 'S_pro', 'S_ac'])
-    substrates_modified = state_arr[substrates_ids]
-    Ks_modified = Ks[-4:]
-    rhos[18:21] *= substr_inhibit(substrates_modified, Ks_modified)
-
+    # Multiplication by {Sva, Sbu, Spro, Sac}/(Sva + Sbu + Spro + Sac)
+    transformation_array = state_arr[3:7]/sum(state_arr[3:7])
+    rhos[18:22] *= transformation_array
+    
     h = brenth(acid_base_rxn, 1e-14, 1.0,
                args=(weak_acids, Kas),
                xtol=1e-12, maxiter=100)
