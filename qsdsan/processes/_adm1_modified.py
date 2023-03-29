@@ -368,7 +368,7 @@ class TempState:
 @chemicals_user
 class ADM1(CompiledProcesses):
     """
-    Anaerobic Digestion Model No.1. [1]_, [2]_
+    Anaerobic Digestion Model No.1. [1]_, [2]_, [3]_
 
     Parameters
     ----------
@@ -585,6 +585,11 @@ class ADM1(CompiledProcesses):
         Water Sci. Technol. 2002, 45 (10), 65–73.
     .. [2] Rosen, C.; Jeppsson, U. Aspects on ADM1 Implementation within 
         the BSM2 Framework; Lund, 2006.
+    .. [3] Flores-Alsina, X.; Solon, K.; Kazadi Mbamba, C.; Tait, S.; 
+        Gernaey, K. V.; Jeppsson, U.; Batstone, D. J. 
+        Modelling phosphorus (P), sulfur (S) and iron (FE) interactions for 
+        dynamic simulations of anaerobic digestion processes. Water Research. 2016,
+        95, 370–382.
     """
 
     _stoichio_params = ('f_sI_xb', 'f_ch_xb', 'f_pr_xb', 'f_li_xb', 'f_xI_xb', 
