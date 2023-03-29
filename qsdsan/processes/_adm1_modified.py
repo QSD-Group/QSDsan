@@ -39,6 +39,7 @@ _load_components = settings.get_default_chemicals
 
 C_mw = get_mw({'C':1})
 N_mw = get_mw({'N':1})
+P_mw = get_mw({'P':1})
 
 def create_adm1_cmps(set_thermo=True):
     cmps_all = Components.load_default()
@@ -220,6 +221,7 @@ def T_correction_factor(T1, T2, delta_H):
 #     pKas = np.asarray(pKas)
 #     return 10**(-pKas) * T_correction_factor(T_base, T_op, theta)
 
+# What about this? Any changes needed? (Saumitra)
 def acid_base_rxn(h_ion, weak_acids_tot, Kas):
     # h, nh4, hco3, ac, pr, bu, va = mols
     # S_cat, S_an, S_IN, S_IC, S_ac, S_pro, S_bu, S_va = weak_acids_tot  # in M
@@ -262,6 +264,7 @@ def rhos_adm1(state_arr, params):
     pH_ULs = params['pH_ULs']
     pH_LLs = params['pH_LLs']
     KS_IN = params['KS_IN']
+    KS_IP = params['KS_IP']
     KI_nh3 = params['KI_nh3']
     KIs_h2 = params['KIs_h2']
     KHb = params['K_H_base']
@@ -296,7 +299,7 @@ def rhos_adm1(state_arr, params):
     
     # S_va, S_bu, S_h2, S_IN = state_arr[cmps.indices(['S_va', 'S_bu', 'S_h2', 'S_IN'])]
     # S_va, S_bu, S_h2, S_ch4, S_IC, S_IN = state_arr[[3,4,7,8,9,10]]
-    S_va, S_bu, S_h2, S_IN = state_arr[[3,4,7,10]]
+    S_va, S_bu, S_h2, S_IN, S_IP = state_arr[[3,4,7,10,11]]
     unit_conversion = mass2mol_conversion(cmps)
     cmps_in_M = state_arr[:27] * unit_conversion
     weak_acids = cmps_in_M[[24, 25, 10, 9, 6, 5, 4, 3]]
@@ -340,15 +343,17 @@ def rhos_adm1(state_arr, params):
     Iph = Hill_inhibit(h, pH_ULs, pH_LLs)
     Ih2 = non_compet_inhibit(S_h2, KIs_h2)
     root.data = [-np.log10(h), Iph, Ih2]
-    rhos[3:11] *= Iph * substr_inhibit(S_IN, KS_IN)
+    rhos[3:11] *= Iph * substr_inhibit(S_IN, KS_IN) * substr_inhibit(S_IP, KS_IP)
     rhos[5:9] *= Ih2
     # rhos[4:12] *= Hill_inhibit(h, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
     # rhos[6:10] *= non_compet_inhibit(S_h2, KIs_h2)
     rhos[9] *= non_compet_inhibit(nh3, KI_nh3)
+    
+    
+    
     rhos[-3:] = kLa * (biogas_S - KH * biogas_p)
     # print(rhos)
     return rhos
-
 #%%
 # =============================================================================
 # ADM1 class
@@ -531,6 +536,9 @@ class ADM1(CompiledProcesses):
     KS_IN : float, optional
         Inorganic nitrogen (nutrient) inhibition coefficient for soluble 
         substrate uptake [M]. The default is 1e-4.
+    KS_IP : float, optional
+        P limitation for inorganic phosphorous [kmol P/m3]. 
+        The default is 2e-5. 
     pH_limits_aa : 2-tuple, optional
         Lower and upper limits of pH inhibition for acidogens and acetogens, 
         unitless. The default is (4,5.5).
@@ -587,7 +595,7 @@ class ADM1(CompiledProcesses):
                         'f_ac_PHA', 'f_bu_PHA', 'f_pro_PHA', 'f_va_PHA', 
                         'Y_su', 'Y_aa', 'Y_fa', 'Y_c4', 'Y_pro', 'Y_ac', 'Y_h2', 'Y_po4')
     _kinetic_params = ('rate_constants', 'half_sat_coeffs', 'pH_ULs', 'pH_LLs',
-                       'KS_IN', 'KI_nh3', 'KIs_h2',
+                       'KS_IN', 'KS_IP', 'KI_nh3', 'KIs_h2',
                        'Ka_base', 'Ka_dH', 'K_H_base', 'K_H_dH', 'kLa',
                        'T_base', 'components', 'root')
     _acid_base_pairs = (('H+', 'OH-'), ('NH4+', 'NH3'), ('CO2', 'HCO3-'),
@@ -608,7 +616,7 @@ class ADM1(CompiledProcesses):
                 K_su=0.5, K_aa=0.3, K_fa=0.4, K_c4=0.2, K_pro=0.1, K_ac=0.15, K_h2=7e-6, K_a=4e-3, K_pp=32e-5,
                 b_su=0.02, b_aa=0.02, b_fa=0.02, b_c4=0.02, b_pro=0.02, b_ac=0.02, b_h2=0.02,
                 q_PHA=3, b_PAO=0.2, b_PP=0.2, b_PHA=0.2, 
-                KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_nh3=1.8e-3, KS_IN=1e-4,
+                KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_nh3=1.8e-3, KS_IN=1e-4, KS_IP=2e-5, 
                 pH_limits_aa=(4,5.5), pH_limits_ac=(6,7), pH_limits_h2=(5,6),
                 T_base=298.15, pKa_base=[14, 9.25, 6.35, 4.76, 4.88, 4.82, 4.86],
                 Ka_dH=[55900, 51965, 7646, 0, 0, 0, 0],
@@ -617,6 +625,7 @@ class ADM1(CompiledProcesses):
                 **kwargs):
         
         cmps = _load_components(components)
+        # Sure that some things are missing here! (Saumitra)
         cmps.X_c.i_N = N_xc * N_mw
         cmps.X_I.i_N = cmps.S_I.i_N = N_I * N_mw
         cmps.S_aa.i_N = cmps.X_pr.i_N = N_aa * N_mw
@@ -716,7 +725,7 @@ class ADM1(CompiledProcesses):
         self.set_rate_function(rhos_adm1)
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_vals))
         self.rate_function._params = dict(zip(cls._kinetic_params,
-                                              [ks, Ks, pH_ULs, pH_LLs, KS_IN*N_mw,
+                                              [ks, Ks, pH_ULs, pH_LLs, KS_IN*N_mw, KS_IP*P_mw, 
                                                KI_nh3, KIs_h2, Ka_base, Ka_dH,
                                                K_H_base, K_H_dH, kLa,
                                                T_base, self._components, root]))
@@ -770,6 +779,11 @@ class ADM1(CompiledProcesses):
         '''Set inhibition coefficient for inorganic nitrogen as a secondary
         substrate [M nitrogen].'''
         self.rate_function._params['KS_IN'] = K * N_mw
+        
+    def set_KS_IP(self, K):
+        '''Set inhibition coefficient for inorganic phosphorous as a secondary
+        substrate [M phosphorous].'''
+        self.rate_function._params['KS_IP'] = K * P_mw
 
     def set_KI_nh3(self, K):
         '''Set inhibition coefficient for free ammonia [M].'''
