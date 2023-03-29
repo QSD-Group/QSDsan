@@ -350,6 +350,16 @@ class ADM1(CompiledProcesses):
         Nitrogen content of inert organics [kmol N/kg COD]. The default is 4.286e-3.
     N_aa : float, optional
         Nitrogen content of amino acids [kmol N/kg COD]. The default is 7e-3.
+    f_sI_xb : float, optional
+        fraction of soluble inerts from biomass. The default is 0.
+    f_ch_xb : float, optional
+        fraction of carbohydrates from biomass. The default is 0.275. 
+    f_pr_xb : float, optional
+        fraction of proteins from biomass. The default is 0.275. 
+    f_li_xb : float, optional
+        fraction of lipids from biomass. The default is 0.35. 
+    f_xI_xb : float, optional
+        fraction of particulate inerts from biomass. The default is 0.1. 
     f_fa_li : float, optional
         Fraction of long chain fatty acids (LCFAs) from hydrolysis of lipids
         [kg COD/kg COD]. The default is 0.95.
@@ -377,6 +387,14 @@ class ADM1(CompiledProcesses):
         Fraction of acetate from butyrate [kg COD/kg COD]. The default is 0.8.
     f_ac_pro : float, optional
         Fraction of acetate from propionate [kg COD/kg COD]. The default is 0.57.
+    f_ac_PHA : float, optional
+        Yield of acetate on PHA [kg COD/kg COD]. The default is 0.4.
+    f_bu_PHA : float, optional
+        Yield of butyrate on PHA [kg COD/kg COD]. The default is 0.1.
+    f_pro_PHA : float, optional
+        Yield of propionate on PHA [kg COD/kg COD]. The default is 0.4.
+    f_va_PHA : float, optional
+        Yield of valerate on PHA [kg COD/kg COD]. The default is 0.1.
     Y_su : float, optional
         Biomass yield of sugar uptake [kg COD/kg COD]. The default is 0.1.
     Y_aa : float, optional
@@ -455,6 +473,14 @@ class ADM1(CompiledProcesses):
         The default is 0.02.
     b_h2 : float, optional
         Decay rate constant of H2-uptaking biomass [d^(-1)]. The default is 0.02.
+    q_PHA : float, optional
+        Rate constant for storage of PHA [d^(-1)]. The default is 3.
+    b_PAO : float, optional
+        Lysis rate of PAOs [d^(-1)]. The default is 0.2.
+    b_PP : float, optional
+        Lysis rate of polyphosphates [d^(-1)]. The default is 0.2.
+    b_PHA : float, optional
+        Lysis rate of PHAs [d^(-1)]. The default is 0.2.
     KI_h2_fa : float, optional
         H2 inhibition coefficient for LCFA uptake [kg COD/m3]. The default is 5e-6.
     KI_h2_c4 : float, optional
@@ -564,6 +590,8 @@ class ADM1(CompiledProcesses):
                                         conserved_for=('C', 'N', 'P'),
                                         parameters=cls._stoichio_params,
                                         compile=False)
+        
+        # Need to add 5 processes separately for stoichiometry. See ASM2d for reference. 
 
         gas_transfer = []
         for i in cls._biogas_IDs:
