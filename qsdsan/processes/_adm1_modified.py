@@ -410,6 +410,8 @@ class ADM1(CompiledProcesses):
         Biomass yield of acetate uptake [kg COD/kg COD]. The default is 0.05.
     Y_h2 : float, optional
         Biomass yield of H2 uptake [kg COD/kg COD]. The default is 0.06.
+    Y_po4 : float, optional
+        Yield of biomass on phosphate [kmol P/kg COD]. The default is 0.013. 
     q_dis : float, optional
         Composites disintegration rate constant [d^(-1)]. The default is 0.5.
     q_ch_hyd : float, optional
