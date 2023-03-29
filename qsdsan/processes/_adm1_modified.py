@@ -251,8 +251,8 @@ def Hill_inhibit(H_ion, ul, ll):
     K = 10**(-(ul+ll)/2)
     return 1/(1+(H_ion/K) ** n)
 
-rhos = np.zeros(22) # 22 kinetic processes
-Cs = np.empty(19)
+rhos = np.zeros(28) # 28 kinetic processes (25 as defined in modified ADM1 + 3 for gases)
+Cs = np.empty(25) # 25 processes as defined in modified ADM1
 
 def rhos_adm1(state_arr, params):
     ks = params['rate_constants']
@@ -308,9 +308,9 @@ def rhos_adm1(state_arr, params):
     KH = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[7:10]
 
     rhos[:-3] = ks * Cs
-    rhos[4:12] *= substr_inhibit(substrates, Ks)
-    if S_va > 0: rhos[7] *= 1/(1+S_bu/S_va)
-    if S_bu > 0: rhos[8] *= 1/(1+S_va/S_bu)
+    rhos[3:11] *= substr_inhibit(substrates, Ks)
+    if S_va > 0: rhos[6] *= 1/(1+S_bu/S_va)
+    if S_bu > 0: rhos[7] *= 1/(1+S_va/S_bu)
     
     # substrates_ids = cmps.indices(['S_va', 'S_bu', 'S_pro', 'S_ac'])
     # substrates_modified = state_arr[substrates_ids]
@@ -340,11 +340,11 @@ def rhos_adm1(state_arr, params):
     Iph = Hill_inhibit(h, pH_ULs, pH_LLs)
     Ih2 = non_compet_inhibit(S_h2, KIs_h2)
     root.data = [-np.log10(h), Iph, Ih2]
-    rhos[4:12] *= Iph * substr_inhibit(S_IN, KS_IN)
-    rhos[6:10] *= Ih2
+    rhos[3:11] *= Iph * substr_inhibit(S_IN, KS_IN)
+    rhos[5:9] *= Ih2
     # rhos[4:12] *= Hill_inhibit(h, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
     # rhos[6:10] *= non_compet_inhibit(S_h2, KIs_h2)
-    rhos[10] *= non_compet_inhibit(nh3, KI_nh3)
+    rhos[9] *= non_compet_inhibit(nh3, KI_nh3)
     rhos[-3:] = kLa * (biogas_S - KH * biogas_p)
     # print(rhos)
     return rhos
