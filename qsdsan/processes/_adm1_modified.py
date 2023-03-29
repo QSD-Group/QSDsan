@@ -271,14 +271,24 @@ def rhos_adm1(state_arr, params):
     kLa = params['kLa']
     T_base = params['T_base']
     root = params['root']
-
-    # Cs_ids = cmps.indices(['X_c', 'X_ch', 'X_pr', 'X_li', 'X_su', 'X_aa',
+    
+    # state_arr_cmps stated just for readability of code 
+    # state_arr_cmps = [S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2, S_ch4, S_IC, S_IN,
+    #             S_IP, S_I, X_ch, X_pr, X_li, X_su, X_aa, X_fa, X_c4, X_pro, X_ac, 
+    #             X_h2, X_I, X_PHA, X_PP, X_PAO, S_K, S_Mg]
+    
+    # Cs_ids = cmps.indices(['X_ch', 'X_pr', 'X_li', 'X_su', 'X_aa',
     #                        'X_fa', 'X_c4', 'X_c4', 'X_pro', 'X_ac', 'X_h2',
-    #                        'X_su', 'X_aa', 'X_fa', 'X_c4', 'X_pro', 'X_ac', 'X_h2'])
+    #                        'X_su', 'X_aa', 'X_fa', 'X_c4', 'X_pro', 'X_ac', 'X_h2',
+    #                        'X_PAO', 'X_PAO', 'X_PAO', 'X_PAO', 'X_PAO', 'X_PP', 'X_PHA'])
     # Cs = state_arr[Cs_ids]
-    Cs[:8] = state_arr[12:20]
-    Cs[8:12] = state_arr[19:23]
-    Cs[12:] = state_arr[16:23]
+    Cs[:7] = state_arr[13:20]
+    Cs[7:11] = state_arr[19:23]
+    Cs[11:18] = state_arr[16:23]
+    Cs[18:23] = state_arr[26]
+    Cs[23] = state_arr[25]
+    Cs[24] = state_arr[24]
+    
     # substrates_ids = cmps.indices(['S_su', 'S_aa', 'S_fa', 'S_va',
     #                                'S_bu', 'S_pro', 'S_ac', 'S_h2'])
     # substrates = state_arr[substrates_ids]
@@ -659,8 +669,12 @@ class ADM1(CompiledProcesses):
                            rate_equation='b_PP*X_PP',
                            parameters=('b_PP'),
                            conserved_for=('K', 'Mg'))
-        
-            self.extend([_p19, _p20, _p21, _p22, _p24])
+            
+            self.insert(18, _p19)
+            self.insert(19, _p20)
+            self.insert(20, _p21)
+            self.insert(21, _p22)
+            self.insert(23, _p24)
             
         gas_transfer = []
         for i in cls._biogas_IDs:
