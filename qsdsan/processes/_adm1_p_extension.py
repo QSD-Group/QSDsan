@@ -378,8 +378,6 @@ class ADM1_p_extension(CompiledProcesses):
         defaults to thermosteam.settings.chemicals.
     path : str, optional
         Alternative file path for the Petersen matrix. The default is None.
-    N_xc : float, optional
-        Nitrogen content of composite materials [kmol N/kg COD]. The default is 2.686e-3.
     N_I : float, optional
         Nitrogen content of inert organics [kmol N/kg COD]. The default is 4.286e-3.
     N_aa : float, optional
@@ -632,7 +630,7 @@ class ADM1_p_extension(CompiledProcesses):
         
         cmps = _load_components(components)
         # Sure that some things are missing here! (Saumitra)
-        cmps.X_c.i_N = N_xc * N_mw
+        # cmps.X_c.i_N = N_xc * N_mw
         cmps.X_I.i_N = cmps.S_I.i_N = N_I * N_mw
         cmps.S_aa.i_N = cmps.X_pr.i_N = N_aa * N_mw
 
@@ -678,7 +676,7 @@ class ADM1_p_extension(CompiledProcesses):
                            conserved_for=('K', 'Mg'))
             
             _p24 = Process('lysis_XPP',
-                           'X_pp -> [?]S_K + [?]S_Mg',
+                           'X_PP -> [?]S_K + [?]S_Mg',
                            components=cmps,
                            ref_component='X_PP',
                            rate_equation='b_PP*X_PP',
