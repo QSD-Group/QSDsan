@@ -4,6 +4,7 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 
 This module is developed by:
     Joy Zhang <joycheung1994@gmail.com>
+    Saumitra Rai <raisaumitra9@gmail.com>
     
 
 Part of this module is based on the Thermosteam package:
@@ -23,25 +24,25 @@ from qsdsan.utils import ospath, data_path
 from scipy.optimize import brenth
 from warnings import warn
 
-__all__ = ('create_adm1_cmps', 'ADM1',
+__all__ = ('create_adm1_p_extension_cmps', 'ADM1_p_extension',
            'non_compet_inhibit', 'substr_inhibit',
            'T_correction_factor', 
            'pH_inhibit', 'Hill_inhibit', 
-           'rhos_adm1')
+           'rhos_adm1_p_extension')
 
-_path = ospath.join(data_path, 'process_data/_adm1.tsv')
+_path = ospath.join(data_path, 'process_data/_adm1_p_extension.tsv')
 _load_components = settings.get_default_chemicals
 
 #%%
 # =============================================================================
-# ADM1-specific components
+# ADM1 (with P extension) -specific components
 # =============================================================================
 
 C_mw = get_mw({'C':1})
 N_mw = get_mw({'N':1})
 P_mw = get_mw({'P':1})
 
-def create_adm1_cmps(set_thermo=True):
+def create_adm1_p_extension_cmps(set_thermo=True):
     cmps_all = Components.load_default()
 
     # varies
@@ -182,16 +183,16 @@ def create_adm1_cmps(set_thermo=True):
     S_an = cmps_all.S_AN.copy('S_an')
     S_cat.i_mass = S_an.i_mass = 1
 
-    cmps_adm1 = Components([S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2,
+    cmps_adm1_p_extension = Components([S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2,
                             S_ch4, S_IC, S_IN, S_IP, S_I, X_ch, X_pr, X_li,
                             X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I,
                             X_PHA, X_PP, X_PAO, S_K, S_Mg, 
                             S_cat, S_an, cmps_all.H2O])
-    cmps_adm1.default_compile()
-    if set_thermo: settings.set_thermo(cmps_adm1)
-    return cmps_adm1
+    cmps_adm1_p_extension.default_compile()
+    if set_thermo: settings.set_thermo(cmps_adm1_p_extension)
+    return cmps_adm1_p_extension
 
-# create_adm1_cmps()
+# create_adm1_p_extension_cmps()
 
 
 #%%
@@ -256,7 +257,7 @@ def Hill_inhibit(H_ion, ul, ll):
 rhos = np.zeros(28) # 28 kinetic processes (25 as defined in modified ADM1 + 3 for gases)
 Cs = np.empty(25) # 25 processes as defined in modified ADM1
 
-def rhos_adm1(state_arr, params):
+def rhos_adm1_p_extension(state_arr, params):
     ks = params['rate_constants']
     Ks = params['half_sat_coeffs']
     cmps = params['components']
@@ -356,7 +357,7 @@ def rhos_adm1(state_arr, params):
     return rhos
 #%%
 # =============================================================================
-# ADM1 class
+# ADM1_p_extension class
 # =============================================================================
 class TempState:
     def __init__(self):
@@ -366,7 +367,7 @@ class TempState:
     #     self.data += [value]
 
 @chemicals_user
-class ADM1(CompiledProcesses):
+class ADM1_p_extension(CompiledProcesses):
     """
     Anaerobic Digestion Model No.1. [1]_, [2]_, [3]_
 
@@ -572,8 +573,8 @@ class ADM1(CompiledProcesses):
     Examples
     --------
     >>> from qsdsan import processes as pc
-    >>> cmps = pc.create_adm1_cmps()
-    >>> adm1 = pc.ADM1()
+    >>> cmps = pc.create_adm1_p_extension_cmps()
+    >>> adm1 = pc.ADM1_p_extension()
     >>> adm1.show()
     ADM1([hydrolysis_carbs, hydrolysis_proteins, hydrolysis_lipids, uptake_sugars, uptake_amino_acids, uptake_LCFA, uptake_valerate, uptake_butyrate, uptake_propionate, uptake_acetate, uptake_h2, decay_Xsu, decay_Xaa, decay_Xfa, decay_Xc4, decay_Xpro, decay_Xac, decay_Xh2, storage_Sva_in_XPHA, storage_Sbu_in_XPHA, storage_Spro_in_XPHA, storage_Sac_in_XPHA, lysis_XPAO, lysis_XPP, lysis_XPHA, h2_transfer, ch4_transfer, IC_transfer])
     
@@ -727,7 +728,7 @@ class ADM1(CompiledProcesses):
         dct = self.__dict__
         dct.update(kwargs)
 
-        self.set_rate_function(rhos_adm1)
+        self.set_rate_function(rhos_adm1_p_extension)
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_vals))
         self.rate_function._params = dict(zip(cls._kinetic_params,
                                               [ks, Ks, pH_ULs, pH_LLs, KS_IN*N_mw, KS_IP*P_mw, 
