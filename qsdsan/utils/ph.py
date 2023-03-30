@@ -9,6 +9,7 @@ This is a pH solver, currently under development.
 
 import sympy as sym, numpy as np
 from math import log, sqrt
+from qsdsan.utils.ph_chemical_inventory import chemical_inventory
 
 __all__ = ('pH_solver',)
 
@@ -16,16 +17,40 @@ def pH_solver(kw=10**-14,
               activity=True,
               check_precipitation = True,
               precise = 2,
-              chemicals={}):
+              weak_chemicals={},
+              other_chemicals={}):
     '''
-    The chemical input should be a dict, e.g.,
-    chemicals = {
-     (('H3PO4', 0), ('H2PO4', -1), ('HPO4', -2), ('PO4', -3)): (1.1*10**-2, 2.0*10**-7, 3.6*10**-13, 0.5),
-     (('NH4', 1), ('NH3', 0)): (1.76*10**-5, -0.5),
+    weak_chemicals={'H3PO4':0.5,
+                      'NH4':0.5}
+
+    other_chemicals = {
      (('Mg', 2),): (0.5,)
       }
+    
+    e.g.,
+    from qsdsan.utils.ph import pH_solver
+    pH_solver(precise=6, activity=True,
+              weak_chemicals={'PO4':0.05, 'NH3':0.05},
+              other_chemicals={(('Cl', -1),): (0.05,), (('Mg', 2),): (0.05,)})
+    
     '''
     
+    if weak_chemicals == {} and other_chemicals == {}:
+        raise RuntimeError('no chemical is given')
+    
+    chemicals = {}
+    
+    for chemical in weak_chemicals.items():
+        try:
+            chemicals[list(chemical_inventory[chemical[0]].keys())[0]] = list(chemical_inventory[chemical[0]].values())[0]+(chemical[1],)
+        except KeyError:
+            raise KeyError(f'{chemical[0]} is not in the chemical inventory, check the inventory or manually import the chemical')
+
+    for chemical in other_chemicals.items():
+        if chemical[0][0][0] == 'SO4':
+            raise ValueError('SO4 is treated as HSO4, which is a weak acid, please add in weak_chemicals')
+        chemicals[chemical[0]] = chemical[1]
+
     H = sym.symbols('H')
 
     eqn_list=[]
@@ -48,7 +73,7 @@ def pH_solver(kw=10**-14,
             for i in range(len(chemical)-1):
                 eqn_list.append(sym.Eq(eqn_dict[chemical[i+1][0]]*H - chemicals[chemical][i]*eqn_dict[chemical[i][0]],0))
 
-    pH = iterator(eqn_list, eqn_dict, chemicals,0,14, kw=kw)
+    pH = iterator(eqn_list, eqn_dict, chemicals, kw=kw)
     for i in range(precise+1):
         pH = iterator(eqn_list, eqn_dict, chemicals,*pH[:2], kw=kw)
     
@@ -56,15 +81,17 @@ def pH_solver(kw=10**-14,
         pH = iterator(eqn_list, eqn_dict, chemicals,*pH[:2], kw=kw)
 
     if activity == True:
-        I = (pH[2]+pH[3])/2 
+        I = (pH[2]+pH[3])/2
+        if I>0.5:
+            Warning('I is larger than 0.5, Davies equation may lead to wrong answer')
         delta_pH = 0.51*(sqrt(I)/(1+sqrt(I))-0.3*I) # Davies equation requires I<0.5
-        pH = round((min(round(pH[0], precise), round(pH[1], precise)) + delta_pH), precise)
+        pH = round((min(round(pH[0]+delta_pH, precise), round(pH[1]+delta_pH, precise))), precise)
     else:
         pH = min(round(pH[0], precise), round(pH[1], precise))
 
     return pH
     
-def iterator(eqn_list=None, eqn_dict=None, chemicals={}, minimum=0, maximum=14, kw=None):
+def iterator(eqn_list=None, eqn_dict=None, chemicals={}, minimum=-10, maximum=24, kw=None):
     
     step = max(maximum-minimum+1, 11)
     # step = 11
