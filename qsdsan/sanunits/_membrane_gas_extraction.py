@@ -293,18 +293,17 @@ class GasExtractionMembrane(SanUnit):
         numGas = len(self.GasID)
         
         # Need to add effluent streams for liquid (this includes all cmps of influent ws) and gas.
-        # The multiplication of any of the first n-1 array element with last element should give out kg/hr values.
+        # The multiplication of any of the first n-1 array element with last element should give out g/day values.
         
         self._outs[0].state = np.zeros(len(cmps) + 1)
         # The of the effluent gas in extraction membrane is the difference 
         # between lumen concentration in the last and first segment
         gas_state_in_unit = self._state[ -2*numGas: -numGas] - self._state[ :numGas] # in mol/m3
-        gas_state_in_unit = (gas_state_in_unit*cmps.chem_MW[self.idx])/cmps.i_mass[self.idx] # (mol/m3)*(g/mol) = g/m3 = mg/l
+        Molar_flow_gases = self._ins_QC[-1]*gas_state_in_unit # (m3/day)*(mol/m3) = mol/day
+        Mass_flow_gases = Molar_flow_gases*cmps.chem_MW[self.idx] #(mol/day)*(g/mol) = (g/day)
         
-        self._outs[0].state[idx] =  gas_state_in_unit
-                    
-        # Q_gas = ??Ian??
-        # self._outs[0].state[-1] = Q_gas
+        self._outs[0].state[idx] =  Mass_flow_gases # (g/day)
+        self._outs[0].state[-1] = 1 #(So the mutiplication with Q would give out g/day values)
         
         self._outs[1].state = np.zeros(len(cmps) + 1)
         # The state of effluent Liquid stream is simply the concentration of 
@@ -324,18 +323,16 @@ class GasExtractionMembrane(SanUnit):
         numGas = len(self.GasID)
         idx = self.idx
         
-        # Need to add effluent streams for liquid (this includes all cmps of influent ws) and gas.
-        # The multiplication of any of the first n-1 array element with last element should give out kg/hr values.
-        
+     
+        self._outs[0].dstate = np.zeros(len(cmps) + 1)
         # The of the effluent gas in extraction membrane is the difference 
         # between lumen concentration in the last and first segment
         gas_dstate_in_unit = self._dstate[ -2*numGas: -numGas] - self._dstate[ :numGas] # in mol/m3
-        gas_dstate_in_unit = (gas_dstate_in_unit*cmps.chem_MW[self.idx])/cmps.i_mass[self.idx] # (mol/m3)*(g/mol) = g/m3 = mg/l
+        Molar_dflow_gases = self._ins_dQC[-1]*gas_dstate_in_unit # (m3/day)*(mol/m3) = mol/day
+        Mass_dflow_gases = Molar_dflow_gases*cmps.chem_MW[self.idx] #(mol/day)*(g/mol) = (g/day)
         
-        self._outs[0].dstate[idx] = gas_dstate_in_unit
-                    
-        # Q_gas = ??Ian??
-        # self._outs[0].state[-1] = Q_gas
+        self._outs[0].dstate[idx] =  Mass_dflow_gases # (g/day)
+        self._outs[0].dstate[-1] = 0 # Just differentiating constant 1 to 0 
         
         self._outs[1].dstate = np.zeros(len(cmps) + 1)
         # The state of effluent Liquid stream is simply the concentration of 
