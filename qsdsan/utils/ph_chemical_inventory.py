@@ -7,9 +7,7 @@ This is a pH solver, currently under development.
 @author: Jianan Feng <jiananf2@illinois.edu>
 """
 
-
-__all__ = ('chemical_inventory',)
-
+__all__ = ('chemical_inventory','precipitation_inventory')
 
 chemical_inventory = {
     
@@ -33,26 +31,10 @@ chemical_inventory = {
     'HSO3': {(('H2SO3', 0), ('HSO3', -1), ('SO3', -2)): (1.54*10**-2, 1.02*10**-7)},
     'SO3': {(('H2SO3', 0), ('HSO3', -1), ('SO3', -2)): (1.54*10**-2, 1.02*10**-7)},
 
-
-
     'sulfuric': {(('HSO4', -1), ('SO4', -2)): (1.2*10**-2,)},
     'H2SO4': {(('HSO4', -1), ('SO4', -2)): (1.2*10**-2,)},
-    'HSO4': {(('HSO4', 0), ('SO4', -2)): (1.2*10**-2,)},
-    'SO4': {(('HSO4', 0), ('SO4', -2)): (1.2*10**-2,)},
-   
-
-
-
-
-
-
-
-
-
-
-
-
-
+    'HSO4': {(('HSO4', -1), ('SO4', -2)): (1.2*10**-2,)},
+    'SO4': {(('HSO4', -1), ('SO4', -2)): (1.2*10**-2,)},
 
     'chlorous': {(('HClO2', 0), ('ClO2', -1)): (1.1*10**-2,)},
     'HClO2': {(('HClO2', 0), ('ClO2', -1)): (1.1*10**-2,)},
@@ -156,4 +138,40 @@ chemical_inventory = {
     'hydrogen peroxide': {(('H2O2', 0), ('HO2', -1)): (2.4*10**-12,)},  
     'H2O2': {(('H2O2', 0), ('HO2', -1)): (2.4*10**-12,)},
     'HO2': {(('H2O2', 0), ('HO2', -1)): (2.4*10**-12,)},
+    }
+
+
+
+precipitation_inventory = {
+    'Mg': ('PO4', 'OH'),
+    'Fe':  ('PO4', 'OH'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     }

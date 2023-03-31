@@ -9,7 +9,7 @@ This is a pH solver, currently under development.
 
 import sympy as sym, numpy as np
 from math import log, sqrt
-from qsdsan.utils.ph_chemical_inventory import chemical_inventory
+from qsdsan.utils.ph_chemical_inventory import chemical_inventory, precipitation_inventory
 
 __all__ = ('pH_solver',)
 
@@ -73,25 +73,35 @@ def pH_solver(kw=10**-14,
             for i in range(len(chemical)-1):
                 eqn_list.append(sym.Eq(eqn_dict[chemical[i+1][0]]*H - chemicals[chemical][i]*eqn_dict[chemical[i][0]],0))
 
-    pH = iterator(eqn_list, eqn_dict, chemicals, kw=kw)
+    pH = iterator(eqn_list, eqn_dict, chemicals, kw=kw, precipitation=check_precipitation)
     for i in range(precise+1):
-        pH = iterator(eqn_list, eqn_dict, chemicals,*pH[:2], kw=kw)
+        pH = iterator(eqn_list, eqn_dict, chemicals,*pH[:2], kw=kw, precipitation=check_precipitation)
     
     while abs((pH[2]-pH[3])/pH[2]) > 0.01 or abs((pH[2]-pH[3])/pH[3]) > 0.01:
-        pH = iterator(eqn_list, eqn_dict, chemicals,*pH[:2], kw=kw)
+        pH = iterator(eqn_list, eqn_dict, chemicals,*pH[:2], kw=kw, precipitation=check_precipitation)
 
     if activity == True:
+        ions_sym = pH[4]
         I = (pH[2]+pH[3])/2
         if I>0.5:
             Warning('I is larger than 0.5, Davies equation may lead to wrong answer')
         delta_pH = 0.51*(sqrt(I)/(1+sqrt(I))-0.3*I) # Davies equation requires I<0.5
         pH = round((min(round(pH[0]+delta_pH, precise), round(pH[1]+delta_pH, precise))), precise)
     else:
+        ions_sym = pH[4]
         pH = min(round(pH[0], precise), round(pH[1], precise))
-
-    return pH
     
-def iterator(eqn_list=None, eqn_dict=None, chemicals={}, minimum=-10, maximum=24, kw=None):
+    ions = {}
+    for ion_sym in ions_sym.items():
+        ions[str(ion_sym[0])] = ion_sym[1]
+    ions['OH'] = kw/ions['H']
+    
+    
+    
+    
+    return pH, ions
+    
+def iterator(eqn_list=None, eqn_dict=None, chemicals={}, minimum=-10, maximum=24, kw=None, precipitation=None):
     
     step = max(maximum-minimum+1, 11)
     # step = 11
@@ -101,7 +111,7 @@ def iterator(eqn_list=None, eqn_dict=None, chemicals={}, minimum=-10, maximum=24
         eqn_list.append(sym.Eq(H,10**(-potential_pH)))
         
         eqn_dict['H'] = H
-        
+
         ans = sym.solve(eqn_list,tuple(eqn_dict.values()), dict=True)
         
         ans=ans[0]
@@ -115,18 +125,59 @@ def iterator(eqn_list=None, eqn_dict=None, chemicals={}, minimum=-10, maximum=24
                         charge += chemical[i][1]*float(ans[list(ans.keys())[j]])
                         I += 0.5*float(ans[list(ans.keys())[j]])*(chemical[i][1]**2)
         del eqn_list[-1]
-        charge_dict[potential_pH] = (charge, I)
+        charge_dict[potential_pH] = (charge, I, ans)
         
         if len(charge_dict) > 1:
             charge_values = list(charge_dict.values())
             if charge_values[-1][0]*charge_values[-2][0] <= 0:
                 break
             
-    return list(charge_dict.keys())[-2],list(charge_dict.keys())[-1], list(charge_dict.values())[-2][1], list(charge_dict.values())[-1][1]
-
-
-
-
+    if precipitation:   
+        # get all ions   
+        ions = {}
+        for item in ans.items():
+            ions[str(item[0])] =item[1]
+        ions['OH'] = kw/ions['H']
+        
+        # get ion:charge dict
+        chemical_ion = {}
+        for chemical in chemicals.keys():
+            for i in chemical:
+                chemical_ion[i[0]] = i[1]
+        chemical_ion['H'] = 1
+        chemical_ion['OH'] = -1
+    
+        # separate ions to cations and anions and also remove neutral ones
+        cations = {}
+        anions = {}
+        for ion in ions.items():
+            if chemical_ion[ion[0]] > 0:
+                cations[ion[0]] = ion[1]
+            else:
+                anions[ion[0]] = ion[1]
+    
+    
+    
+    
+        # identify possible precipitations:
+        for cation in cations.items():
+            if cation[0] in list(precipitation_inventory.keys()):
+                for anion in anions.items():
+                    if anion[0] in precipitation_inventory[cation[0]]:
+                        print(cation[0]+anion[0])
+                    
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+    return list(charge_dict.keys())[-2],list(charge_dict.keys())[-1],list(charge_dict.values())[-2][1], list(charge_dict.values())[-1][1],list(charge_dict.values())[-2][2]
 
 
 
