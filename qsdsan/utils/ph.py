@@ -51,9 +51,13 @@ def pH_solver(kw=10**-14,
         chemicals[chemical[0]] = chemical[1]
 
     H = sym.symbols('H')
+    OH = sym.symbols('OH')
 
     eqn_list=[]
     eqn_dict={}
+    eqn_dict['H'] = H
+    eqn_dict['OH'] = OH
+    eqn_list.append(sym.Eq(H*OH, kw))
 
     for chemical in list(chemicals):
         for i in range(len(chemical)):
@@ -71,36 +75,43 @@ def pH_solver(kw=10**-14,
         if len(chemical) > 1:
             for i in range(len(chemical)-1):
                 eqn_list.append(sym.Eq(eqn_dict[chemical[i+1][0]]*H - chemicals[chemical][i]*eqn_dict[chemical[i][0]],0))
-
-    pH = iterator(eqn_list, eqn_dict, chemicals, kw=kw)
-    for i in range(3):
-        pH = iterator(eqn_list, eqn_dict, chemicals,*pH[:2], kw=kw)
+                
+    # charge balance
+    chemical_ion = {}
+    for chemical in chemicals.keys():
+        for i in chemical:
+            chemical_ion[i[0]] = i[1]
+    chemical_ion['H'] = 1
+    chemical_ion['OH'] = -1
+    tot_charge = 0
+    for chemical in chemical_ion.keys():
+        tot_charge += chemical_ion[chemical]*eqn_dict[chemical]
+    eqn_list.append(sym.Eq(tot_charge, 0))
+            
+            
+    for i in range(0, 10): # !!! what if i=9 and leave the loop? check?
+        try:
+            ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), [i]*len(eqn_dict), dict=True, maxsteps=100)
+        except Exception:
+            pass
+        else:
+            if all(i>=0 for i in list(ans[0].values())) == True:
+                break
         
-    pH_value = min(round(pH[0], 2), round(pH[1], 2))
-    
-    
-        
-        
-        
-        
-        
-        
-        
+    ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), list(ans[0].values()), dict=True, maxsteps=100) # repeat once to increase precise
         
     if check_precipitation:   
         # get all ions   
         ions = {}
-        for item in pH[2].items():
+        for item in ans[0].items():
             ions[str(item[0])] =item[1]
         ions['OH'] = kw/ions['H']
         
-        # get ion:charge dict
-        chemical_ion = {}
-        for chemical in chemicals.keys():
-            for i in chemical:
-                chemical_ion[i[0]] = i[1]
-        chemical_ion['H'] = 1
-        chemical_ion['OH'] = -1
+    
+    
+    
+    
+def precipitation_iterator(ions):
     
         # separate ions to cations and anions and also remove neutral ones
         cations = {}
@@ -110,14 +121,14 @@ def pH_solver(kw=10**-14,
                 cations[ion[0]] = ion[1]
             else:
                 anions[ion[0]] = ion[1]
-    
-    
-    
-        eqn_list=[sym.Eq(sym.symbols('OH')*sym.symbols('H'),10**-14),] # change to kw
+
+        eqn_list=[sym.Eq(sym.symbols('OH')*sym.symbols('H'), kw),]
         eqn_dict={
             'H': sym.symbols('H'),
             'OH': sym.symbols('OH'),
                   }
+        
+        precipitation_SI = {}
         
         # identify possible precipitations:
         for cation in cations.items():
@@ -128,33 +139,32 @@ def pH_solver(kw=10**-14,
                         ksp = precipitation_inventory[cation[0]][index+1]
                         
                         least_common = lcm(abs(chemical_ion[cation[0]]), abs(chemical_ion[anion[0]]))
-                        cation_cof = int(least_common/abs(chemical_ion[cation[0]]))
-                        anion_cof = int(least_common/abs(chemical_ion[anion[0]]))
-                            
-
+                        cation_coef = int(least_common/abs(chemical_ion[cation[0]]))
+                        anion_coef = int(least_common/abs(chemical_ion[anion[0]]))
                         
-                        if (ions[cation[0]]**cation_cof)*(ions[anion[0]]**anion_cof) > ksp:
+                        if (ions[cation[0]]**cation_coef)*(ions[anion[0]]**anion_coef) > ksp:
                             # add new equations here?
-                            eqn_list.append(sym.Eq((sym.symbols(cation[0])**cation_cof)*(sym.symbols(anion[0])**anion_cof),ksp))
-                            eqn_dict[f'({cation[0]}){cation_cof}({anion[0]}){anion_cof}'] = sym.symbols(f'({cation[0]}){cation_cof}({anion[0]}){anion_cof}')
+                            eqn_list.append(sym.Eq((sym.symbols(cation[0])**cation_coef)*(sym.symbols(anion[0])**anion_coef),ksp))
+                            eqn_dict[f'({cation[0]}){cation_coef}({anion[0]}){anion_coef}'] = sym.symbols(f'({cation[0]}){cation_coef}({anion[0]}){anion_coef}')
                             
-                            # substract from the MB:
-                            for chemical in chemicals.items():
-                                if cation[0] in list(dict(chemical[0]).keys()):
-                                    new_tot = chemicals[chemical[0]][-1] - cation_cof*sym.symbols(f'({cation[0]}){cation_cof}({anion[0]}){anion_cof}')
-                                    tempo_list = list(chemicals[chemical[0]])
-                                    tempo_list[-1] = new_tot
-                                    tempo_dict = {chemical[0]: tuple(tempo_list)}
-                                    chemicals.update(tempo_dict)
-                            
-                                if anion[0] in list(dict(chemical[0]).keys()):
-                                    new_tot = chemicals[chemical[0]][-1] - anion_cof*sym.symbols(f'({cation[0]}){cation_cof}({anion[0]}){anion_cof}')
-                                    tempo_list = list(chemicals[chemical[0]])
-                                    tempo_list[-1] = new_tot
-                                    tempo_dict = {chemical[0]: tuple(tempo_list)}
-                                    chemicals.update(tempo_dict)
-                            
-                            
+                            # storage saturation index (SI) = log(K/Ksp), where K is the concentratilon products (not consider activity for now)
+                            precipitation_SI[sym.symbols(f'({cation[0]}){cation_coef}({anion[0]}){anion_coef}')] = [(cation[0], cation_coef), (anion[0], anion_coef), log((ions[cation[0]]**cation_coef)*(ions[anion[0]]**anion_coef)/ksp)]
+
+        # substract from the MB, but just for the ones with the largest SI
+        SI_list = [precipitation[1][-1] for precipitation in precipitation_SI.items()]
+        first_precipitation_index = SI_list.index(max(SI_list))
+        first_precipitation = list(precipitation_SI.values())[first_precipitation_index]
+        precipitate_name = f'({first_precipitation[0][0]}){first_precipitation[0][1]}({first_precipitation[1][0]}){first_precipitation[1][1]}'
+
+        for chemical in chemicals.items():
+            for ion in first_precipitation[:-1]:
+                if ion[0] in list(dict(chemical[0]).keys()):
+                    new_tot = chemicals[chemical[0]][-1] - ion[1]*sym.symbols(precipitate_name) # don't need to use different name here since just one precipitation per time
+                    # new_tot = chemicals[chemical[0]][-1] - ion[1]*0.01 # don't need to use different name here since just one precipitation per time
+                    tempo_list = list(chemicals[chemical[0]])
+                    tempo_list[-1] = new_tot
+                    tempo_dict = {chemical[0]: tuple(tempo_list)}
+                    chemicals.update(tempo_dict)
                             
 # !!! forget activitiy for precipitation for now
 
@@ -167,7 +177,7 @@ def pH_solver(kw=10**-14,
                     MB+=eqn_dict[chemical[i][0]]
                 except NameError:
                     MB=eqn_dict[chemical[i][0]]
-            eqn_list.append(sym.Eq(MB, chemicals[chemical][-1]))
+            eqn_list.append(sym.simplify(sym.Eq(MB, chemicals[chemical][-1])))
             MB-=MB
 
         # equilibrium
@@ -175,8 +185,121 @@ def pH_solver(kw=10**-14,
                 for i in range(len(chemical)-1):
                     eqn_list.append(sym.Eq(eqn_dict[chemical[i+1][0]]*H - chemicals[chemical][i]*eqn_dict[chemical[i][0]],0))
 
-# !!! add a charge balance equation
+        chemical_ion = {}
+        for chemical in chemicals.keys():
+            for i in chemical:
+                chemical_ion[i[0]] = i[1]
+        chemical_ion['H'] = 1
+        chemical_ion['OH'] = -1
+        tot_charge = 0
+        for chemical in chemical_ion.keys():
+            tot_charge += chemical_ion[chemical]*eqn_dict[chemical]
+        eqn_list.append(sym.Eq(tot_charge, 0))
+        
+        
+        for i in range(0, 10): # !!! what if i=9 and leave the loop? check?
+            try:
+                ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), [i]*len(eqn_dict), dict=True, maxsteps=100)
+            except Exception:
+                pass
+            else:
+                if all(i>=0 for i in list(ans[0].values())) == True:
+                    break
+            
+        ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), list(ans[0].values()), dict=True, maxsteps=100) # repeat once to increase precise
+        
+        ans[0].pop(sym.symbols(precipitate_name))
+        
+        ions = {}
+        for item in ans[0].items():
+            ions[str(item[0])] =item[1]
+        
+        return ions  # TODO when to stop use this iterator and return final pH?
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+# =============================================================================
+# Below are waste code
+# =============================================================================
+        
+        
+        for i in range(0, 10):
+            try:
+                ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), [i]*len(eqn_dict), dict=True, maxsteps=100)
+            except Exception:
+                pass
+            else:
+                if all(i>=0 for i in list(ans[0].values())) == True:
+                    break
+            
+        ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), list(ans[0].values()), dict=True, maxsteps=100) # repeat once to increase precise
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        while all(i>0 for i in list(ans[0].values())) == False:
+            for item in ans[0].keys():
+                if ans[0][item] <= 0:
+                    ans[0][item] = 0.01
+            ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), list(ans[0].values()), dict=True, maxsteps=100)
+        
+        
 
+        
+        
+        
         
                             
         pH = iterator(eqn_list, eqn_dict, chemicals, kw=kw)
@@ -209,7 +332,7 @@ def pH_solver(kw=10**-14,
         
         
         
-        
+
         
         
         
@@ -325,27 +448,27 @@ def iterator(eqn_list=None, eqn_dict=None, chemicals={}, minimum=-10, maximum=24
                         ksp = precipitation_inventory[cation[0]][index+1]
                         
                         least_common = lcm(abs(chemical_ion[cation[0]]), abs(chemical_ion[anion[0]]))
-                        cation_cof = int(least_common/abs(chemical_ion[cation[0]]))
-                        anion_cof = int(least_common/abs(chemical_ion[anion[0]]))
+                        cation_coef = int(least_common/abs(chemical_ion[cation[0]]))
+                        anion_coef = int(least_common/abs(chemical_ion[anion[0]]))
                             
 
                         
-                        if (ions[cation[0]]**cation_cof)*(ions[anion[0]]**anion_cof) > ksp:
+                        if (ions[cation[0]]**cation_coef)*(ions[anion[0]]**anion_coef) > ksp:
                             # add new equations here?
-                            eqn_list.append(sym.Eq((sym.symbols(cation[0])**cation_cof)*(sym.symbols(anion[0])**anion_cof),ksp))
-                            eqn_dict[f'({cation[0]}){cation_cof}({anion[0]}){anion_cof}'] = sym.symbols(f'({cation[0]}){cation_cof}({anion[0]}){anion_cof}')
+                            eqn_list.append(sym.Eq((sym.symbols(cation[0])**cation_coef)*(sym.symbols(anion[0])**anion_coef),ksp))
+                            eqn_dict[f'({cation[0]}){cation_coef}({anion[0]}){anion_coef}'] = sym.symbols(f'({cation[0]}){cation_coef}({anion[0]}){anion_coef}')
                             
                             # substract from the MB:
                             for chemical in chemicals.items():
                                 if cation[0] in list(dict(chemical[0]).keys()):
-                                    new_tot = chemicals[chemical[0]][-1] - cation_cof*sym.symbols(f'({cation[0]}){cation_cof}({anion[0]}){anion_cof}')
+                                    new_tot = chemicals[chemical[0]][-1] - cation_coef*sym.symbols(f'({cation[0]}){cation_coef}({anion[0]}){anion_coef}')
                                     tempo_list = list(chemicals[chemical[0]])
                                     tempo_list[-1] = new_tot
                                     tempo_dict = {chemical[0]: tuple(tempo_list)}
                                     chemicals.update(tempo_dict)
                             
                                 if anion[0] in list(dict(chemical[0]).keys()):
-                                    new_tot = chemicals[chemical[0]][-1] - anion_cof*sym.symbols(f'({cation[0]}){cation_cof}({anion[0]}){anion_cof}')
+                                    new_tot = chemicals[chemical[0]][-1] - anion_coef*sym.symbols(f'({cation[0]}){cation_coef}({anion[0]}){anion_coef}')
                                     tempo_list = list(chemicals[chemical[0]])
                                     tempo_list[-1] = new_tot
                                     tempo_dict = {chemical[0]: tuple(tempo_list)}
