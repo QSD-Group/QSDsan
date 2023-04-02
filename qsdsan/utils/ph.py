@@ -111,7 +111,7 @@ def pH_solver(kw=10**-14,
     while check == 1:
         all_precipitates.append(precipitate)
         breakpoint()
-        ions, precipitate, chemicals, check = precipitation_iterator(ions, chemicals, chemical_ion, kw)
+        ions, precipitate, chemicals, check = precipitation_iterator(ions, chemicals, chemical_ion, kw) # !!! keep being the first precipitate, start from here (for 4/2/2023)
     return ions, all_precipitates
 
 def precipitation_iterator(ions, chemicals, chemical_ion, kw):
