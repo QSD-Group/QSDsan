@@ -208,7 +208,7 @@ class ImpactItem:
             self._register(ID)
             return self
 
-    def __init__(self, ID='', functional_unit='kg', price=0.,
+    def __init__(self, ID='', functional_unit='', price=0.,
                  source=None, **indicator_CFs):
         CF_dct = self._format_CF_vals(**indicator_CFs)
 
@@ -254,7 +254,18 @@ class ImpactItem:
 
 
     def add_indicator(self, indicator, CF_value, CF_unit=''):
-        '''Add an indicator with characterization factor values.'''
+        '''
+        Add an indicator with characterization factor values.
+
+        Parameters
+        ----------
+        indicator : obj or str
+            :class:`ImpactIndicator` or its ID.
+        CF_value : float
+            Characterization factor of the indicator.
+        CF_unit : str
+            Unit of the characterization factor value.
+        '''
         if not hasattr(self, '_source'): self._source = None
         source_item = check_source(self, True)
         if isinstance(indicator, str):
@@ -452,14 +463,15 @@ class ImpactItem:
         impact item will be copied from the provided source.
         ID of the impact item can be provided instead of the object.
         '''
-        return self._source
+        if hasattr(self, '_source'): return self._source
+        else:
+            self._source = None
+            return self._source
     @source.setter
     def source(self, i):
         if not isinstance(i, ImpactItem):
-            if isinstance(i, str):
-                i = self.get_item(i)
-            elif not i:
-                i = None
+            if isinstance(i, str): i = self.get_item(i)
+            elif not i: i = None
             else:
                 raise ValueError('`source` can only be an `ImpactItem` or its ID, '
                                  f'not {type(i).__name__}.')
@@ -505,7 +517,10 @@ class ImpactItem:
     def CFs(self):
         '''[dict] Characterization factors of this item for different impact indicators.'''
         if self.source: return self.source._CFs.copy()
-        else: return self._CFs
+        elif hasattr(self, '_CFs'): return self._CFs
+        else:
+            self._CFs = None
+            return self._CFs
     @CFs.setter
     def CFs(self, indicator, CF_value, CF_unit=''):
         check_source(self, True).add_indicator(indicator, CF_value, CF_unit)
@@ -531,9 +546,13 @@ class StreamImpactItem(ImpactItem):
         the ID will be set as ID of the `linked_stream` with a suffix '_item'
     linked_stream : :class:`SanStream`
         The associated :class:`SanStream` for environmental impact calculation.
+    functional_unit : str
+        Functional unit of the impact item. The default is 'kg'.
     source : :class:`StreamImpactItem`
         If provided, all attributions and properties of this
         :class:`StreamImpactItem` will be copied from the provided source.
+    flow_getter : callable|float|int
+        If none specified, default to `SanStream.F_mass`.
     indicator_CFs : kwargs
         ImpactIndicators and their characterization factors (CFs).
 
@@ -608,9 +627,11 @@ class StreamImpactItem(ImpactItem):
     GlobalWarming (kg CO2-eq)                        28
     '''
 
-    __slots__ = ('_ID', '_linked_stream', '_functional_unit', '_CFs', '_source')
+    __slots__ = ('_ID', '_linked_stream', '_functional_unit', 
+                 '_CFs', '_source', '_flow_getter')
 
-    def __init__(self, ID='', linked_stream=None, source=None, **indicator_CFs):
+    def __init__(self, ID='', linked_stream=None, functional_unit='kg', 
+                 source=None, flow_getter=None, **indicator_CFs):
         self._linked_stream = None
         self.linked_stream = linked_stream
 
@@ -631,10 +652,12 @@ class StreamImpactItem(ImpactItem):
             self.source = source
         else:
             self._source = None
-            self._functional_unit = auom('kg')
+            self._functional_unit = auom(functional_unit)
+            # self._functional_unit = auom('kg')
             self._CFs = {}
+            self.flow_getter = flow_getter
             for indicator, (value, unit) in CF_dct.items():
-                self.add_indicator(indicator, value, unit)
+                self.add_indicator(indicator, value, unit)        
 
 
     def __repr__(self):
@@ -703,6 +726,32 @@ class StreamImpactItem(ImpactItem):
         return new
 
     __copy__ = copy
+    
+    @property
+    def flow_getter(self):
+        '''[callable] A function taking a `SanStream` object and returns the 
+        flow [functional unit/hr] for impact calculation. If None specified, default to
+        `SanStream.F_mass`.'''
+        if not hasattr(self, '_flow_getter'):
+            try: return self.source._flow_getter
+            except: self.flow_getter = None
+        return self._flow_getter
+    @flow_getter.setter
+    def flow_getter(self, f):
+        if f is None:
+            self._flow_getter = lambda ws: ws.F_mass
+        else:
+            if callable(f):
+                nargs = f.__code__.co_argcount
+                if nargs != 1:
+                    raise ValueError('flow_getter must take exactly 1 positional argument,'
+                                     'which is expected to be a `SanStream` object')
+                self._flow_getter = f
+            elif isinstance(f, (float, int)):
+                self._flow_getter = lambda ws: f
+            else:
+                raise TypeError('flow_getter must be a callable, or a number, or None, '
+                                f'not {type(f)}')
 
     @property
     def source(self):
@@ -716,15 +765,16 @@ class StreamImpactItem(ImpactItem):
             Since the price is copied from the price of the `linked_stream`, it
             can be different from the source.
         '''
-        return self._source
+        if hasattr(self, '_source'): return self._source
+        else:
+            self._source = None
+            return self._source
     @source.setter
     def source(self, i):
-        if isinstance(i, str):
-            i = self.get_item(i)
+        if isinstance(i, str): i = self.get_item(i)
 
         if not isinstance(i, StreamImpactItem):
-            if not i:
-                i = None
+            if not i: i = None
             else:
                 raise ValueError('`source` can only be a StreamImpactItem, ' \
                                  f'not a {type(i).__name__}.')
@@ -782,10 +832,10 @@ class StreamImpactItem(ImpactItem):
     def ID(self, i):
         self._ID = i
 
-    @property
-    def functional_unit(self):
-        '''[str] Functional unit of the item, set to 'kg'.'''
-        return auom('kg')
+    # @property
+    # def functional_unit(self):
+    #     '''[str] Functional unit of the item, set to 'kg'.'''
+    #     return auom('kg')
 
     @property
     def price(self):

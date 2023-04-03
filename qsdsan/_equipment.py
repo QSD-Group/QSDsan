@@ -101,18 +101,21 @@ class Equipment:
         prefix = linked_unit.ID if linked_unit else ''
         register_with_prefix(self, prefix, ID)
         self._units = units
-        self._design_results = self._baseline_purchase_costs = {}
+        self._design_results = {}
+        self._baseline_purchase_costs = {}
         self.F_BM = F_BM
         self.F_D = F_D
         self.F_P = F_P
         self.F_M = F_M
-        if isinstance(lifetime, dict):
-            equip_lifetime = {}
-            for k, v in lifetime:
-                equip_lifetime[v] = auom(lifetime_unit).convert(v, 'yr')
-        else:
-            equip_lifetime = auom(lifetime_unit).convert(lifetime, 'yr')
-        self.lifetime = equip_lifetime
+        if lifetime:
+            if isinstance(lifetime, dict):
+                equip_lifetime = {}
+                for k, v in lifetime.items():
+                    equip_lifetime[k] = int(auom(lifetime_unit).convert(v, 'yr'))
+            else:
+                equip_lifetime = int(auom(lifetime_unit).convert(lifetime, 'yr'))
+            self.lifetime = equip_lifetime
+        else: self.lifetime = None
 
     def __repr__(self):
         return f'<Equipment: {self.ID}>'

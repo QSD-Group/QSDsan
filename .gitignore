@@ -16,8 +16,6 @@
 .pypirc
 _build
 build
-# conftest is used for local testing only
-conftest.py
 dist
 docs/build/*
 htmlcov

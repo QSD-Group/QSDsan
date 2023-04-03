@@ -3,10 +3,15 @@
 
 '''
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
+
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
+
     Shion Watabe <shionwatabe@gmail.com>
+
     Hannah Lohman <hlohman94@gmail.com>
+
     Tori Morgan <vlmorgan@illinois.edu>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -121,7 +126,9 @@ class SludgePasteurization(SanUnit):
 
     :class:`~.sanunits.BiogenicRefineryHHXdryer`
     '''
-
+    _N_ins = 4
+    _N_outs = 4
+    
     # Specific Heat capacity of water
     Cp_w = 4.184 # kJ kg^-1 K^-1
     # Specific Heat capacity of dry matter (sludge)
@@ -130,14 +137,15 @@ class SludgePasteurization(SanUnit):
     l_w = 2260 # kJ kg^-1
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                  if_biogas=True, heat_loss=0.1, target_MC=0.1, sludge_temp=283.15,
-                  temp_pasteurization=343.15, if_combustion=False, biogas_loss=0.1,
-                  biogas_eff=0.55,lhv_lpg = 48.5, lhv_methane=52.5,
-                  ppl=100, baseline_ppl=100, user_scale_up=1, exponent_scale=1,
-                  if_sludge_service=True, **kwargs):
+                 include_construction=True,
+                 if_biogas=True, heat_loss=0.1, target_MC=0.1, sludge_temp=283.15,
+                 temp_pasteurization=343.15, if_combustion=False, biogas_loss=0.1,
+                 biogas_eff=0.55,lhv_lpg = 48.5, lhv_methane=52.5,
+                 ppl=100, baseline_ppl=100, user_scale_up=1, exponent_scale=1,
+                 if_sludge_service=True, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with,
-                          F_BM_default=1)
+                          F_BM_default=1, include_construction=include_construction)
         self.if_combustion = if_combustion
         self.biogas_loss = biogas_loss
         self.biogas_eff = biogas_eff
@@ -154,13 +162,6 @@ class SludgePasteurization(SanUnit):
         self.exponent_scale = exponent_scale
         self.if_sludge_service = if_sludge_service
 
-        self.construction = (
-            Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
-            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
-            Construction('hydronic_heat_exchanger', linked_unit=self, item='HydronicHeatExchanger', quantity_unit='ea'),
-            Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
-            )
-
         paths = (pasteurization_path, br_hhx_path, br_hhx_dryer_path)
         for path in paths:
             data = load_data(path=path)
@@ -172,9 +173,14 @@ class SludgePasteurization(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    _N_ins = 4
-    _N_outs = 4
 
+    def _init_lca(self):
+        self.construction = [
+            Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            Construction('hydronic_heat_exchanger', linked_unit=self, item='HydronicHeatExchanger', quantity_unit='ea'),
+            Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
+            ]
 
     def _run(self):
         biogas, air, sludge, lpg = self.ins
@@ -238,18 +244,20 @@ class SludgePasteurization(SanUnit):
 
     def _design(self):
         design = self.design_results
-        constr = self.construction
-        design['StainlessSteel'] = constr[0].quantity = self.heat_exchanger_hydronic_stainless
-        design['Steel'] = constr[1].quantity  = self.heat_exchanger_hydronic_steel
-        design['HydronicHeatExchanger'] = constr[2].quantity = 1
-        design['Pump'] = constr[3].quantity = 17.2/2.72
+        if self.include_construction:
+            constr = self.construction
+            design['StainlessSteel'] = constr[0].quantity = self.heat_exchanger_hydronic_stainless
+            design['Steel'] = constr[1].quantity  = self.heat_exchanger_hydronic_steel
+            design['HydronicHeatExchanger'] = constr[2].quantity = 1
+            design['Pump'] = constr[3].quantity = 17.2/2.72
 
-        factor = (self.user_scale_up ** self.exponent_scale)
-        service_factor = 0.1 if self.if_sludge_service else 1
-        lumped_factor = factor * service_factor
-        for key, val in design.items():
-            design[key] = val * lumped_factor
-        self.add_construction(add_cost=False)
+            factor = (self.user_scale_up ** self.exponent_scale)
+            service_factor = 0.1 if self.if_sludge_service else 1
+            lumped_factor = factor * service_factor
+            for key, val in design.items():
+                design[key] = val * lumped_factor
+            self.add_construction(add_cost=False)
+        else: design.clear()
         
         
     def _cost(self):

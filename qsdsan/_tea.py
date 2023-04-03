@@ -16,7 +16,7 @@ for license details.
 
 # %%
 
-import qsdsan as qs
+import biosteam as bst, qsdsan as qs
 from datetime import date
 from biosteam import TEA as BSTTEA
 
@@ -93,7 +93,10 @@ class TEA(BSTTEA):
             For example, if the system operates 100% of time but a pump only works
             50% of the pump at 50 kW. Set the pump `power_utility` to be 50*50%=25 kW.
 
-
+    
+    CEPCI : float
+        Chemical Engineering Plant Cost Index, default to that of year 2017 (567.5).
+        Values for alternative years can be checked by `qsdsan.CEPCI_by_year`.
     CAPEX : float
         Capital expenditure, if not provided, is set to be the same as `installed_equipment_cost`.
     lang_factor : float or None
@@ -111,8 +114,14 @@ class TEA(BSTTEA):
         Float input will be automatically converted to a dict with the key being
         "System additional OPEX".
     construction_schedule : tuple
-        Construction progress prior to the start of the system (fraction of the construction that can be finished each year), must sum up to 1. Leave as the default (1,) if no special construction progress is expected.
-    add_kwargs : dict
+        Construction progress prior to the start of the system
+        (fraction of the construction that can be finished each year),
+        must sum up to 1. Leave as the default (1,) if no special construction progress is expected.
+    simulate_system : bool
+        Whether to simulate the system before creating the LCA object.
+    simulate_kwargs : dict
+        Keyword arguments for system simulation (used when `simulate_system` is True).
+    tea_kwargs
         Additional values that will be passed to :class:`biosteam.TEA`,
         including ``startup_months``, ``startup_FOCfrac ``, ``startup_VOCfrac``,
         ``startup_salesfrac``, ``WC_over_FCI``, ``finance_interest``,
@@ -173,20 +182,23 @@ class TEA(BSTTEA):
                  '_annual_maintenance', '_annual_labor', '_system_add_OPEX')
 
     def __init__(self, system, discount_rate=0.05, income_tax=0.,
-                 start_year=date.today().year, lifetime=10, uptime_ratio=1.,
+                 CEPCI=bst.CE, start_year=date.today().year,
+                 lifetime=10, uptime_ratio=1.,
                  CAPEX=0., lang_factor=None,
                  annual_maintenance=0., annual_labor=0., system_add_OPEX={},
                  depreciation='SL', construction_schedule=(1,),
-                 **add_kwargs):
-        system.simulate()
+                 simulate_system=True, simulate_kwargs={},
+                 **tea_kwargs):
+        if simulate_system: system.simulate(**simulate_kwargs)
         self.system = system
         system._TEA = self
-        self.income_tax = income_tax
         # IRR (internal rate of return) is the discount rate when net present value is 0
         self.IRR = discount_rate
         self._IRR = discount_rate # guess IRR for solve_IRR method
+        self.income_tax = income_tax
         self._sales = 0 # guess cost for solve_price method
         self._depreciation = None # initialize this attribute
+        self.CEPCI = CEPCI
         self.start_year = start_year
         self.lifetime = lifetime
         self.uptime_ratio = 1.
@@ -198,7 +210,7 @@ class TEA(BSTTEA):
         self.system_add_OPEX = {}.copy() if not system_add_OPEX else system_add_OPEX
         self.depreciation = depreciation
         self.construction_schedule = construction_schedule
-        default_kwargs.update(add_kwargs)
+        default_kwargs.update(tea_kwargs)
         for k, v in default_kwargs.items():
             setattr(self, k, v)
 
@@ -265,6 +277,22 @@ class TEA(BSTTEA):
     @discount_rate.setter
     def discount_rate(self, i):
         self.IRR = i
+
+    @property
+    def CEPCI(self):
+        '''[float] Chemical Engineering Plant Cost Index.'''
+        return bst.CE
+    @CEPCI.setter
+    def CEPCI(self, i):
+        bst.CE = i
+
+    @property
+    def CEPCI_by_year(self):
+        '''
+        [dict] Chemical Engineering Plant Cost Index with key being the year
+        and values being the index.
+        '''
+        return bst.units.design_tools.CEPCI_by_year
 
     @property
     def start_year(self):

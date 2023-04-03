@@ -24,6 +24,7 @@ __all__ = (
     'ADMjunction', 'ADMtoASM', 'ASMtoADM',
     )
 
+#%%
 class Junction(SanUnit):
     '''
     A non-reactive class that serves to convert a stream with one set of components

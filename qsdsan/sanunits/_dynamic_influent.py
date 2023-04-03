@@ -20,7 +20,7 @@ dynamic_inf_path = ospath.join(data_path, 'sanunit_data/_inf_dry_2006.tsv')
 
 class DynamicInfluent(SanUnit):
     """
-    A fake SanUnit to generate a dynamic :class:`WasteStream ` at its outlet 
+    A fake SanUnit to generate a dynamic :class:`WasteStream` at its outlet 
     by interpolating time-series data.
 
     Parameters
@@ -37,28 +37,30 @@ class DynamicInfluent(SanUnit):
         Whether time-series data indicate mass flowrates. If True, all columns
         assumed in kg/hr. If False, data are assumed to indicate concentrations
         [mg/L] and total volumetric flowrate [m3/d]. The default is False.
-    interpolator : str or int or callable, optional
+        
+        .. note::
+            
+            When `by_mass` is set to `True`, the state array of the unit as well as 
+            the state array of its effluent by default indicate mass flow rates in g/d. 
+            This may not be consistent with downstream assumptions.
+            
+    
+    interpolator : str|int|callable, optional
         Interpolation method to use. It can be a string (e.g., 'slinear', 'quadratic', 'cubic')
         or an integer within [1,5] to specify the order of a spline interpolation.  
-        Other strings will be passed on to `scipy.interpolate.interp1d` as the 'kind'
+        Other strings will be passed on to :class:`scipy.interpolate.interp1d` as the 'kind'
         argument. It can also be a class in `scipy.interpolate` that takes time-series 
         data as input upon initiation. Interpolant that is not at least 
         first-order differentiable is not recommended (e.g., linear interpolation).
-        The default is `scipy.interpolate.CubicSpline`. 
+        The default is :class:`scipy.interpolate.CubicSpline`. 
     derivative_approximator : callable, optional
         Function that returns derivative of the variable at given time. If none specified,
-        will use the `.derivative()` function of (if available) of the interpolant.
+        will use the :func:`derivative` method of (if available) of the interpolant.
     load_data_kwargs : dict, optional
-        Keyword arguments for loading the data file with the `qsdsan.utils.load_data()`
+        Keyword arguments for loading the data file with the :func:`qsdsan.utils.load_data`
         function. The default is {}.
     intpl_kwargs : dict, optional
         Keyword arguments for initiating the interpolant. The default is {}.
-    
-    .. note::
-
-        When `by_mass` is set to `True`, the state array of the unit as well as
-        the state array of its effluent by default indicate mass flowrates in g/d.
-        This may not consistent with downstream assumptions.
 
     See Also
     --------
@@ -85,6 +87,7 @@ class DynamicInfluent(SanUnit):
 
     @property
     def interpolator(self):
+        '''[callable] The interpolation method. '''
         return self._intpl
 
     @interpolator.setter
@@ -114,6 +117,7 @@ class DynamicInfluent(SanUnit):
 
     @property
     def derivative_approximator(self):
+        '''[callable] The function to estimate time derivatives.'''
         return self._func_dydt
 
     @derivative_approximator.setter
@@ -162,10 +166,12 @@ class DynamicInfluent(SanUnit):
         else: self._derivative = None
 
     def interpolant(self, t):
+        '''Returns the interpolated values at time t.'''
         t %= self._t_end
         return np.array([f(t) for f in self._interpolant])
     
     def derivative(self, t):
+        '''Returns the estimated time derivatives at time t.'''
         if self._derivative is None: return self.derivative_approximator(t)
         else: 
             t %= self._t_end

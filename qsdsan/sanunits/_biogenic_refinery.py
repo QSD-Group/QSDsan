@@ -89,18 +89,14 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
     fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
     https://doi.org/10.1021/acsenvironau.2c00022
     '''
+    
+    _N_ins = 1
+    _N_outs = 3
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with,
                          F_BM_default=1)
-
-        self.construction = (
-            Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
-            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
-            Construction('electric_motor', linked_unit=self, item='ElectricMotor', quantity_unit='ea'),
-            Construction('electronics', linked_unit=self, item='Electronics', quantity_unit='kg'),
-            )
 
         data = load_data(path=br_carbonizer_path)
         for para in data.index:
@@ -111,9 +107,13 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-
-    _N_ins = 1
-    _N_outs = 3
+    def _init_lca(self):
+        self.construction = [
+            Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            Construction('electric_motor', linked_unit=self, item='ElectricMotor', quantity_unit='ea'),
+            Construction('electronics', linked_unit=self, item='Electronics', quantity_unit='kg'),
+            ]
 
     def _run(self):
         waste = self.ins[0]
@@ -135,7 +135,7 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
         for element in NPK:
             biochar.imass[element] *= 1 - getattr(self, f'pyrolysis_{element}_loss')
         biochar.imass['OtherSS'] = biochar_prcd - biochar.imass[('C', *NPK)].sum()
-        biochar.imass['H2O'] = 0.025 * biochar.F_mass # kg H20 / hr with 2.5% moisture content
+        biochar.imass['H2O'] = 0.025 * biochar.F_mass # kg H2O / hr with 2.5% moisture content
 
         # Daily run time for the influent waste
         # One unit is capable of treating 550 kg/d (35% moisture based on 20 hr of run time) or 18 kg dry/hr
@@ -170,7 +170,6 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
         design['ElectricMotor'] =  constr[2].quantity = 2.7/5.8 + 6/5.8
         design['Electronics'] = constr[3].quantity = 1
         self.add_construction(add_cost=False)
-
 
     def _cost(self):
         D = self.design_results
@@ -272,13 +271,6 @@ class BiogenicRefineryControls(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
-
-        self.construction = (
-            Construction('electronics', linked_unit=self, item='Electronics', quantity_unit='kg'),
-            Construction('electric_connectors', linked_unit=self, item='ElectricConnectors', quantity_unit='kg'),
-            Construction('electric_cables', linked_unit=self, item='ElectricCables', quantity_unit='m'),
-            )
-
         data = load_data(path=br_control_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
@@ -288,6 +280,12 @@ class BiogenicRefineryControls(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+    def _init_lca(self):
+        self.construction = [
+            Construction('electronics', linked_unit=self, item='Electronics', quantity_unit='kg'),
+            Construction('electric_connectors', linked_unit=self, item='ElectricConnectors', quantity_unit='kg'),
+            Construction('electric_cables', linked_unit=self, item='ElectricCables', quantity_unit='m'),
+            ]
 
     def _design(self):
         design = self.design_results
@@ -362,14 +360,14 @@ class BiogenicRefineryGrinder(SanUnit):
     https://doi.org/10.1021/acsenvironau.2c00022
     '''
 
+    _N_ins = 1
+    _N_outs = 1
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  moisture_content_out=0.65, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with,
                          F_BM_default=1)
         self.moisture_content_out = moisture_content_out
-        self.construction = (
-            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
-            )
 
         data = load_data(path=br_grinder_path)
         for para in data.index:
@@ -379,9 +377,11 @@ class BiogenicRefineryGrinder(SanUnit):
 
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-
-    _N_ins = 1
-    _N_outs = 1
+            
+    def _init_lca(self):
+        self.construction = [
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            ]
 
     def _run(self):
         waste_in = self.ins[0]
@@ -458,16 +458,12 @@ class BiogenicRefineryHHX(SanUnit):
     :class:`~.sanunits.BiogenicRefineryHHXdryer`
     '''
 
+    _N_ins = 1
+    _N_outs = 1
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
-
-        self.construction = (
-            Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
-            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
-            Construction('hydronic_heat_exchanger', linked_unit=self, item='HydronicHeatExchanger', quantity_unit='ea'),
-            Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
-            )
 
         data = load_data(path=br_hhx_path)
         for para in data.index:
@@ -477,9 +473,14 @@ class BiogenicRefineryHHX(SanUnit):
 
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-
-    _N_ins = 1
-    _N_outs = 1
+    
+    def _init_lca(self):
+        self.construction = [
+            Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            Construction('hydronic_heat_exchanger', linked_unit=self, item='HydronicHeatExchanger', quantity_unit='ea'),
+            Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
+            ]
 
     def _run(self):
         hot_gas_in = self.ins[0]
@@ -587,6 +588,8 @@ class BiogenicRefineryHHXdryer(SanUnit):
     --------
     :class:`~.sanunits.BiogenicRefineryHHX`
     '''
+    _N_ins = 2
+    _N_outs = 3
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  moisture_content_out=0.35, **kwargs):
@@ -602,9 +605,6 @@ class BiogenicRefineryHHXdryer(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-
-    _N_ins = 2
-    _N_outs = 3
 
     def _run(self):
         waste_in, heat_in = self.ins
@@ -689,12 +689,6 @@ class BiogenicRefineryHousing(SanUnit):
         self.const_wage = const_wage
         self.const_person_days = const_person_days
 
-        self.construction = (
-            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
-            Construction('stainless_steel_sheet', item='StainlessSteelSheet', linked_unit=self, quantity_unit='kg'),
-            Construction('concrete', item='Concrete', linked_unit=self, quantity_unit='m3'),
-            )
-
         data = load_data(path=br_housing_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
@@ -704,6 +698,12 @@ class BiogenicRefineryHousing(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+    def _init_lca(self):
+        self.construction = [
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            Construction('stainless_steel_sheet', item='StainlessSteelSheet', linked_unit=self, quantity_unit='kg'),
+            Construction('concrete', item='Concrete', linked_unit=self, quantity_unit='m3'),
+            ]
 
     def _design(self):
         design = self.design_results
@@ -767,16 +767,13 @@ class BiogenicRefineryIonExchange(SanUnit):
     fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
     https://doi.org/10.1021/acsenvironau.2c00022
     '''
+    _N_ins = 3
+    _N_outs = 3
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with,
                          F_BM_default=1)
-
-        self.construction = (
-            Construction('pvc', linked_unit=self, item='PVC', quantity_unit='kg'),
-            Construction('pe', linked_unit=self, item='PE', quantity_unit='kg'),
-            )
 
         data = load_data(path=br_ix_path)
         for para in data.index:
@@ -787,9 +784,12 @@ class BiogenicRefineryIonExchange(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+    def _init_lca(self):
+        self.construction = [
+            Construction('pvc', linked_unit=self, item='PVC', quantity_unit='kg'),
+            Construction('pe', linked_unit=self, item='PE', quantity_unit='kg'),
+            ]
 
-    _N_ins = 3
-    _N_outs = 3
 
     def _run(self):
         waste, resin_in, H2SO4 = self.ins
@@ -895,14 +895,12 @@ class BiogenicRefineryOHX(SanUnit):
     fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
     https://doi.org/10.1021/acsenvironau.2c00022
     '''
+    _N_ins = 1
+    _N_outs = 1
+    
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with, F_BM_default=1)
-
-        self.construction = (
-            Construction('oil_heat_exchanger', linked_unit=self, item='OilHeatExchanger', quantity_unit='ea'),
-            Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
-            )
 
         data = load_data(path=br_ohx_path)
         for para in data.index:
@@ -913,8 +911,13 @@ class BiogenicRefineryOHX(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    _N_ins = 1
-    _N_outs = 1
+    
+    def _init_lca(self):
+        self.construction = [
+            Construction('oil_heat_exchanger', linked_unit=self, item='OilHeatExchanger', quantity_unit='ea'),
+            Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
+            ]
+    
 
     def _run(self):
         hot_gas_in = self.ins[0]
@@ -987,19 +990,13 @@ class BiogenicRefineryPollutionControl(SanUnit):
     fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
     https://doi.org/10.1021/acsenvironau.2c00022
     '''
-
+    _N_ins = 2
+    _N_outs = 2
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with,
                          F_BM_default=1)
-
-        self.construction = (
-            Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
-            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
-            Construction('electric_motor', linked_unit=self, item='ElectricMotor', quantity_unit='ea'),
-            Construction('catalytic_converter', linked_unit=self, item='CatalyticConverter', quantity_unit='ea'),
-            )
 
         data = load_data(path=br_pollution_control_path)
         for para in data.index:
@@ -1009,9 +1006,15 @@ class BiogenicRefineryPollutionControl(SanUnit):
 
         for attr, value in kwargs.items():
             setattr(self, attr, value)
+            
+    def _init_lca(self):
+        self.construction = [
+            Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            Construction('electric_motor', linked_unit=self, item='ElectricMotor', quantity_unit='ea'),
+            Construction('catalytic_converter', linked_unit=self, item='CatalyticConverter', quantity_unit='ea'),
+            ]
 
-    _N_ins = 2
-    _N_outs = 2
 
     def _run(self):
         gas_in, N2O_in = self.ins
@@ -1118,14 +1121,13 @@ class BiogenicRefineryScrewPress(SludgeSeparator):
     --------
     :class:`qsdsan.sanunits.SludgeThickening`
     '''
+    _N_ins = 2
+    _N_outs = 2
 
     def __init__(self, ID='', ins=None, outs=(),thermo=None, init_with='WasteStream',
                  split=None, settled_frac=None, if_N2O_emission=False, **kwargs):
         SludgeSeparator.__init__(self, ID, ins, outs, thermo, init_with,
                                  split, settled_frac, F_BM_default=1)
-
-        self.construction = (
-            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'))
 
         data = load_data(path=br_screw_path)
         for para in data.index:
@@ -1136,9 +1138,11 @@ class BiogenicRefineryScrewPress(SludgeSeparator):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+    def _init_lca(self):
+        self.construction = [
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            ]
 
-    _N_ins = 2
-    _N_outs = 2
 
     def _run(self):
         waste, polymer = self.ins
@@ -1211,17 +1215,14 @@ class BiogenicRefineryStruvitePrecipitation(SanUnit):
     fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
     https://doi.org/10.1021/acsenvironau.2c00022
     '''
+    _N_ins = 4
+    _N_outs = 2
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  Mg_molar_split=(1,0), **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with,
                          F_BM_default=1)
         self.Mg_molar_split = Mg_molar_split
-
-        self.construction = (
-            Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
-            Construction('pvc', linked_unit=self, item='PVC', quantity_unit='kg'),
-            )
 
         data = load_data(path=br_struvite_path)
         for para in data.index:
@@ -1232,9 +1233,12 @@ class BiogenicRefineryStruvitePrecipitation(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+    def _init_lca(self):            
+        self.construction = [
+            Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
+            Construction('pvc', linked_unit=self, item='PVC', quantity_unit='kg'),
+            ]
 
-    _N_ins = 4
-    _N_outs = 2
 
     def _run(self):
         waste, magnesium_hydroxide, magnesium_carbonate, bag_filter = self.ins

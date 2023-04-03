@@ -38,7 +38,7 @@ class ElectrochemicalCell(SanUnit):
         Keys refer to chemical component IDs. Values refer to recovery fractions (with 1 being 100%) for the respective chemicals.
     removal : dict
         Keys refer to chemical component IDs. Values refer to removal fractions (with 1 being 100%) for the respective chemicals.
-    equipments : list
+    equipment : list(obj)
         List of Equipment objects part of the Electrochemical Cell.
     OPEX_over_CAPEX : float
         Ratio with which operating costs are calculated as a fraction of capital costs
@@ -148,7 +148,7 @@ class ElectrochemicalCell(SanUnit):
         self.recovery = recovery
         self.removal = removal
         self.OPEX_over_CAPEX = OPEX_over_CAPEX
-        self.equipments = (
+        self.equipment = [
             Column('column', linked_unit=self, N=3,
                    material='resin', unit_cost=2, surface_area=20),
             Electrode('anode', linked_unit=self, N=1, electrode_type='anode',
@@ -158,7 +158,7 @@ class ElectrochemicalCell(SanUnit):
             Machine('fan', linked_unit=self, N=1, unit_cost=3),
             Membrane('membrane', linked_unit=self, N=2,
                      material='polyethylene', unit_cost=0.2, surface_area=1),
-            )
+            ]
 
     def _run(self):
         influent, cleaner = self.ins

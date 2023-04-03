@@ -19,7 +19,6 @@ import matplotlib.pyplot as plt
 
 __all__ = ('WasteStreamScope', 'SanUnitScope')
 
-#!!! TODO: add link to "see also"
 class WasteStreamScope(Scope):    
     """
     A tracker of the dynamic component concentrations and volumetric flowrates
@@ -33,8 +32,9 @@ class WasteStreamScope(Scope):
 
     See Also
     --------
-    `biosteam.utils.Scope <>`
-    `WasteStream <https://qsdsan.readthedocs.io/en/latest/streams.html#id1>`
+    :class:`biosteam.utils.Scope`
+    
+    `WasteStream <https://qsdsan.readthedocs.io/en/latest/streams.html>`_
     """
     def __init__(self, wastestream):
         names = [f'{ID} [mg/L]' for ID in wastestream.components.IDs] + ['Q [m3/d]']
@@ -45,7 +45,15 @@ class WasteStreamScope(Scope):
         return f'<WasteStreamScope: {self.subject.ID}>'
     
     def plot_time_series(self, state_var=()):
-        """Plot the time series data of specified state variables."""
+        '''
+        Plot the time series data of specified state variables.
+        
+        Parameters
+        ----------
+        state_var : str or Iterable[str]
+            Name of the state variables to plot. 
+            
+        '''
         state_var = [state_var] if isinstance(state_var, str) else state_var
         cmps_idx = self.subject.components.index
         ids = [-1 if var == 'Q' else cmps_idx(var) for var in state_var]
@@ -71,8 +79,9 @@ class SanUnitScope(Scope):
 
     See Also
     --------
-    `biosteam.utils.Scope <>`
-    `WasteStream <https://qsdsan.readthedocs.io/en/latest/streams.html#id1>`
+    :class:`biosteam.utils.Scope`
+    
+    `SanUnit <https://qsdsan.readthedocs.io/en/latest/api/SanUnit.html>`_
     """    
     def __init__(self, unit):
         names = unit._state_header
@@ -83,6 +92,15 @@ class SanUnitScope(Scope):
         return f'<SanUnitScope: {self.subject.ID}>'
     
     def plot_time_series(self, state_var=()):
+        '''
+        Plot the time series data of specified state variables.
+        
+        Parameters
+        ----------
+        state_var : str or Iterable[str]
+            Name of the state variables to plot. 
+            
+        '''
         state_var = [state_var] if isinstance(state_var, str) else state_var
         idx_label = [[i, header[1]] for i, header in enumerate(self.header) \
                      if header[1].split(' ')[0] in state_var]

@@ -14,8 +14,8 @@
 import os, sys
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../..'))
-sys.path.insert(0, os.path.abspath('../../../tmo'))
-sys.path.insert(0, os.path.abspath('../../../bst'))
+# sys.path.insert(0, os.path.abspath('../../../thermosteam'))
+# sys.path.insert(0, os.path.abspath('../../../biosteam'))
 del os, sys
 
 # -- Project information -----------------------------------------------------
@@ -31,7 +31,7 @@ copyright = f'2020-{time.gmtime().tm_year}, Quantitative Sustainable Design Grou
 # built documents.
 #
 # The short X.Y version.
-version = '1.2.1'
+version = '1.2.5'
 # The full version, including alpha/beta/rc tags.
 release = version
 

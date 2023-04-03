@@ -6,6 +6,10 @@ AnaerobicBaffledReactor
 .. autoclass:: qsdsan.sanunits.AnaerobicBaffledReactor
    :members:
 
+AnaerobicCSTR
+-------------
+.. autoclass:: qsdsan.sanunits.AnaerobicCSTR
+   :members:
 
 AnaerobicDigestion
 ------------------

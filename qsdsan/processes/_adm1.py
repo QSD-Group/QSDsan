@@ -53,6 +53,7 @@ def create_adm1_cmps(set_thermo=True):
                                     particle_size='Particulate',
                                     degradability='Slowly',
                                     organic=True)
+    X_ch.copy_models_from(X_c, names=('mu',))
     # X_ch = cmps_all.X_B_Subst.copy('X_ch')
     # X_ch.i_N = 0
     # X_ch.i_C = 0.0313 * C_mw
@@ -272,26 +273,38 @@ def rhos_adm1(state_arr, params):
     KH = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[7:10]
 
     rhos[:-3] = ks * Cs
-    rhos[4:12] *= substr_inhibit(substrates, Ks)
+    Monod = substr_inhibit(substrates, Ks)
+    rhos[4:12] *= Monod
     if S_va > 0: rhos[7] *= 1/(1+S_bu/S_va)
     if S_bu > 0: rhos[8] *= 1/(1+S_va/S_bu)
 
     h = brenth(acid_base_rxn, 1e-14, 1.0,
-               args=(weak_acids, Kas),
-               xtol=1e-12, maxiter=100)
+            args=(weak_acids, Kas),
+            xtol=1e-12, maxiter=100)
+    # h = 10**(-7.46)
 
     nh3 = Kas[1] * weak_acids[2] / (Kas[1] + h)
     co2 = weak_acids[3] - Kas[2] * weak_acids[3] / (Kas[2] + h)
     biogas_S[-1] = co2 / unit_conversion[9]
     
     Iph = Hill_inhibit(h, pH_ULs, pH_LLs)
+    Iin = substr_inhibit(S_IN, KS_IN)
     Ih2 = non_compet_inhibit(S_h2, KIs_h2)
-    root.data = [-np.log10(h), Iph, Ih2]
-    rhos[4:12] *= Iph * substr_inhibit(S_IN, KS_IN)
+    Inh3 = non_compet_inhibit(nh3, KI_nh3)
+    rhos[4:12] *= Iph * Iin
     rhos[6:10] *= Ih2
     # rhos[4:12] *= Hill_inhibit(h, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
     # rhos[6:10] *= non_compet_inhibit(S_h2, KIs_h2)
-    rhos[10] *= non_compet_inhibit(nh3, KI_nh3)
+    rhos[10] *= Inh3
+    root.data = {
+        'pH':-np.log10(h), 
+        'Iph':Iph, 
+        'Ih2':Ih2, 
+        'Iin':Iin, 
+        'Inh3':Inh3,
+        'Monod':Monod,
+        'rhos':rhos[4:12].copy()
+        }
     rhos[-3:] = kLa * (biogas_S - KH * biogas_p)
     # print(rhos)
     return rhos

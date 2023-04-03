@@ -22,7 +22,7 @@ def get_SRT(system, biomass_IDs, wastage=None, active_unit_IDs=None):
     system : obj
         The system whose SRT will be calculated for.
     biomass_IDs : tuple[str]
-        Component IDs of active biomass
+        Component IDs of active biomass.
     wastage : iterable[:class:`WasteStream`]
         Streams with wasted biomass.
     active_unit_IDs : tuple[str], optional

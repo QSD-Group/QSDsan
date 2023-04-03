@@ -20,6 +20,7 @@ from ._adm1 import *
 from ._adm1_p_extension import *
 from ._decay import *
 from ._kinetic_reaction import *
+from ._pm2 import *
 
 from . import (
     _aeration,
@@ -39,4 +40,5 @@ __all__ = (
     *_adm1_p_extension.__all__,
     *_decay.__all__,
     *_kinetic_reaction.__all__,
+    *_pm2.__all__,
     )

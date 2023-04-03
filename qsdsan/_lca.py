@@ -53,7 +53,11 @@ class LCA:
         If True, then the impacts from construction will be annualized using
         the lifetime of the equipment;
         if False, then the total number of the equipment needed throughout this
-        LCA will be calculated using `ceil(LCA lifetime/equipment lifetime`.
+        LCA will be calculated using `ceil(LCA lifetime/equipment lifetime)`.
+    simulate_system : bool
+        Whether to simulate the system before creating the LCA object.
+    simulate_kwargs : dict
+        Keyword arguments for system simulation (used when `simulate_system` is True).
     item_quantities : kwargs, :class:`ImpactItem` or str = float/callable or (float/callable, unit)
         Other :class:`ImpactItem` objects (e.g., electricity) and their quantities.
         Note that callable functions are used so that quantity of items can be updated.
@@ -218,8 +222,9 @@ class LCA:
 
     def __init__(self, system, lifetime, lifetime_unit='yr',
                  indicators=(), uptime_ratio=1, annualize_construction=False,
+                 simulate_system=True, simulate_kwargs={},
                  **item_quantities):
-        system.simulate()
+        if simulate_system: system.simulate(**simulate_kwargs)
         self._construction_units = set()
         self._transportation_units = set()
         self._lca_streams = set()
@@ -247,9 +252,9 @@ class LCA:
         for u in system.units:
             if not isinstance (u, SanUnit):
                 continue
-            if u.construction:
+            if getattr(u, 'construction', []):
                 self._construction_units.add(u)
-            if u.transportation:
+            if getattr(u, 'transportation', []):
                 self._transportation_units.add(u)
         self._construction_units = sorted(self._construction_units,
                                           key=lambda u: u.ID)
@@ -284,7 +289,10 @@ class LCA:
         if not callable(f_quantity):
             f = lambda: f_quantity
         else:
-            f = f_quantity
+            nargs = f_quantity.__code__.co_argcount
+            if nargs == 0: f = f_quantity
+            else: f = lambda: f_quantity(self)
+            # f = f_quantity
         quantity = f()
         if unit and unit != fu:
             try:
@@ -420,7 +428,8 @@ class LCA:
                 ws = j.linked_stream
 
             if ws in exclude: continue
-
+            
+            F_mass = j.flow_getter(ws)
             for m, n in j.CFs.items():
                 if kind in ('all', 'total', 'net'):
                     pass
@@ -433,7 +442,7 @@ class LCA:
                                      f'not "{kind}".')
                 if m not in impacts.keys():
                     continue
-                impacts[m] += n*time*ws.F_mass
+                impacts[m] += n*time*F_mass
         return impacts
 
     def get_other_impacts(self, time=None, time_unit='hr'):
@@ -544,7 +553,7 @@ class LCA:
         trans = self.get_transportation_impacts(units, time, time_unit)
         stream_items = set(i for i in
                        sum((tuple(unit.ins+unit.outs) for unit in units), ())
-                       if i.impact_item)
+                       if i.stream_impact_item)
 
         s = self.get_stream_impacts(stream_items=stream_items, exclude=exclude,
                                      time=time, time_unit=time_unit)
@@ -619,7 +628,8 @@ class LCA:
                 dct = item_dct[item.ID]
                 dct['SanUnit'].append('Total')
                 dct['Quantity'] = np.append(dct['Quantity'], sum(dct['Quantity']))
-                dct['Item Ratio'] = dct['Quantity']/dct['Quantity'].sum()*2
+                if dct['Quantity'].sum() == 0.: dct['Item Ratio'] = 0
+                else: dct['Item Ratio'] = dct['Quantity']/dct['Quantity'].sum()*2
                 for i in self.indicators:
                     if i.ID in item.CFs:
                         dct[f'{i.ID} [{i.unit}]'] = impact = dct['Quantity']*item.CFs[i.ID]
@@ -648,7 +658,7 @@ class LCA:
             for ws_item in self.stream_inventory:
                 ws = ws_item.linked_stream
                 item_dct['Stream'].append(ws.ID)
-                mass = ws.F_mass * time
+                mass = ws_item.flow_getter(ws) * time
                 item_dct['Mass [kg]'].append(mass)
                 for ind in self.indicators:
                     if ind.ID in ws_item.CFs.keys():
@@ -698,9 +708,10 @@ class LCA:
             file = f'{self.system.ID}_lca.xlsx'
         tables = [self.get_impact_table(cat, time, time_unit)
                   for cat in ('Construction', 'Transportation',
-                              'Stream', 'Other')]
+                              'Stream', 'other')]
         with pd.ExcelWriter(file) as writer:
             for table in tables:
+                if isinstance(table, str): continue
                 table.to_excel(writer, sheet_name=sheet_name, startrow=n_row)
                 n_row += table.shape[0] + row_space + len(table.columns.names) # extra lines for the heading
 
@@ -794,7 +805,7 @@ class LCA:
     @property
     def construction_inventory(self):
         '''[tuple] All construction activities.'''
-        return sum((i.construction for i in self.construction_units), ())
+        return sum((i.construction for i in self.construction_units), [])
 
     @property
     def total_construction_impacts(self):
@@ -809,7 +820,7 @@ class LCA:
     @property
     def transportation_inventory(self):
         '''[tuple] All transportation activities.'''
-        return sum((i.transportation for i in self.transportation_units), ())
+        return sum((i.transportation for i in self.transportation_units), [])
 
     @property
     def total_transportation_impacts(self):

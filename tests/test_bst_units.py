@@ -13,14 +13,16 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import numpy as np
-import biosteam as bst
-import qsdsan as qs
+import numpy as np, biosteam as bst, qsdsan as qs
 from numpy.testing import assert_allclose
 
 __all__ = (
+    'test_default',
+    'test_BinaryDistillation',
+    'test_Flash',
     'test_HXprocess',
     'test_HXutility',
+    'test_IsothermalCompressor',
     'test_MixTank',
     'test_Pump',
     'test_Splitter',
@@ -28,16 +30,27 @@ __all__ = (
     )
 
 
-bst.default_utilities()
-chems = bst.Chemicals(('Methanol', 'Ethanol'))
+bst.default()
+chems = bst.Chemicals(('Water', 'Methanol', 'Ethanol', 'Glycerol', 'H2'))
 
 ws_data = {
     'particle_size': 'Soluble',
     'degradability': 'Readily',
     'organic': True
     }
-cmps = qs.Components((qs.Component('Methanol', search_ID='Methanol', **ws_data),
-                      qs.Component('Ethanol', search_ID='Ethanol', **ws_data)))
+cmps = qs.Components([
+    qs.Component('Water',
+                 particle_size='Soluble',
+                 degradability='Undegradable',
+                 organic=False),
+    qs.Component('Methanol', **ws_data),
+    qs.Component('Ethanol', **ws_data),
+    qs.Component('Glycerol', **ws_data),
+    qs.Component('H2',
+                 particle_size='Dissolved gas',
+                 degradability='Readily',
+                 organic=True),
+    ])
 
 
 def create_streams(num):
@@ -56,11 +69,13 @@ def create_streams(num):
     return bst_s, qs_ws
 
 
-def check_results(bst_unit, qs_unit):
+def check_results(biosteam_unit, qsdsan_unit):
+    global bst_unit, qs_unit
+    bst_unit, qs_unit = biosteam_unit, qsdsan_unit
     bst_unit.simulate()
     qs_unit.simulate()
 
-    bst_s = bst_unit.ins + qs_unit.outs
+    bst_s = bst_unit.ins + bst_unit.outs
     qs_ws = qs_unit.ins + qs_unit.outs
     for n, s in enumerate(bst_s):
         assert_allclose(np.abs(s.mol-qs_ws[n].mol).sum(), 0, atol=1e-6)
@@ -79,6 +94,42 @@ def check_results(bst_unit, qs_unit):
 # Testing functions
 # =============================================================================
 
+def test_default():
+    qs.default() # default everything
+
+
+def test_BinaryDistillation():
+    bst.settings.set_thermo(chems)
+    stream_kwargs = dict(Water=80, Methanol=100, Glycerol=25, units='kmol/hr')
+    bst_s = bst.Stream(**stream_kwargs)
+    bst_s.T = T = bst_s.bubble_point_at_P().T # Feed at bubble point T
+    unit_kwargs = dict(LHK=('Methanol', 'Water'), y_top=0.99, x_bot=0.01, k=2, is_divided=True)
+    bst_unit = bst.units.BinaryDistillation(ins=bst_s, **unit_kwargs)
+    bst_unit.simulate() # need extra simulation for better convergence
+    
+    qs.set_thermo(cmps)
+    qs_s = qs.WasteStream(T=T, **stream_kwargs)
+    qs_unit = qs.sanunits.BinaryDistillation(ins=qs_s, **unit_kwargs)
+    qs_unit.simulate()
+    
+    check_results(bst_unit, qs_unit)
+
+
+def test_Flash():
+    bst.settings.set_thermo(chems)
+    stream_kwargs = dict(Glycerol=300, Water=1000, units='kmol/hr')
+    bst_s = bst.Stream(**stream_kwargs)
+    bst_s.T = T = bst_s.bubble_point_at_P().T # Feed at bubble point T
+    unit_kwargs = dict(P=101325, T=410.15)
+    bst_unit = bst.units.Flash(ins=bst_s, **unit_kwargs)
+    
+    qs.set_thermo(cmps)
+    qs_s = qs.WasteStream(T=T, **stream_kwargs)
+    qs_unit = qs.sanunits.Flash(ins=qs_s, **unit_kwargs)
+    
+    check_results(bst_unit, qs_unit)
+
+
 def test_HXprocess():
     bst_s, qs_ws = create_streams(2)
     bst_s[0].T = qs_ws[0].T = 400
@@ -95,11 +146,25 @@ def test_HXprocess():
 def test_HXutility():
     bst_s, qs_ws = create_streams(1)
     bst.settings.set_thermo(chems)
-    bst_unit = bst.units.HXutility(ins=bst_s, T=400, rigorous=False) #!!! Try True
+    bst_unit = bst.units.HXutility(ins=bst_s, T=400, rigorous=True)
 
     qs.set_thermo(cmps)
-    qs_unit = qs.sanunits.HXutility(ins=qs_ws, T=400, rigorous=False) #!!! Try True
+    qs_unit = qs.sanunits.HXutility(ins=qs_ws, T=400, rigorous=True)
 
+    check_results(bst_unit, qs_unit)
+
+
+def test_IsothermalCompressor():
+    bst.settings.set_thermo(chems)
+    stream_kwargs = dict(H2=1, T=298.15, P=20e5, units='kmol/hr', phase='g')
+    bst_s = bst.Stream(**stream_kwargs)
+    unit_kwargs = dict(P=350e5, eta=1)
+    bst_unit = bst.units.IsothermalCompressor(ins=bst_s, **unit_kwargs)
+    
+    qs.set_thermo(cmps)
+    qs_s = qs.WasteStream(**stream_kwargs)
+    qs_unit = qs.sanunits.IsothermalCompressor(ins=qs_s, **unit_kwargs)
+    
     check_results(bst_unit, qs_unit)
 
 
@@ -148,8 +213,12 @@ def test_StorageTank():
 
 
 if __name__ == '__main__':
+    test_default()
+    test_BinaryDistillation()
+    test_Flash()
     test_HXprocess()
     test_HXutility()
+    test_IsothermalCompressor()
     test_MixTank()
     test_Pump()
     test_Splitter()
