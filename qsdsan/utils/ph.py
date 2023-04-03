@@ -107,14 +107,13 @@ def pH_solver(kw=10**-14,
         ions['OH'] = kw/ions['H']
     
     all_precipitates = []
-    ions, precipitate, chemicals, check = precipitation_iterator(ions, chemicals, chemical_ion, kw)
+    ions, precipitate, chemicals, check = precipitation_iterator(ions, chemicals, chemical_ion, all_precipitates, kw)
     while check == 1:
         all_precipitates.append(precipitate)
-        breakpoint()
-        ions, precipitate, chemicals, check = precipitation_iterator(ions, chemicals, chemical_ion, kw) # !!! keep being the first precipitate, start from here (for 4/2/2023)
+        ions, precipitate, chemicals, check = precipitation_iterator(ions, chemicals, chemical_ion, all_precipitates, kw) # !!! keep being the first precipitate, start from here (for 4/2/2023)
     return ions, all_precipitates
 
-def precipitation_iterator(ions, chemicals, chemical_ion, kw):
+def precipitation_iterator(ions, chemicals, chemical_ion, existed_precipitate, kw):
     
         # separate ions to cations and anions and also remove neutral ones
         cations = {}
@@ -145,10 +144,13 @@ def precipitation_iterator(ions, chemicals, chemical_ion, kw):
                         cation_coef = int(least_common/abs(chemical_ion[cation[0]]))
                         anion_coef = int(least_common/abs(chemical_ion[anion[0]]))
                         
-                        if (ions[cation[0]]**cation_coef)*(ions[anion[0]]**anion_coef) > ksp:
+                        if (ions[cation[0]]**cation_coef)*(ions[anion[0]]**anion_coef) > 1.01*ksp: # allow 1% calculation error, consistent with below sym.nsolve until relative error is smaller than 0.01
                             # storage saturation index (SI) = log(K/Ksp), where K is the concentratilon products (not consider activity for now)
-                            precipitation_SI[sym.symbols(f'({cation[0]}){cation_coef}({anion[0]}){anion_coef}')] = [(cation[0], cation_coef), (anion[0], anion_coef), log((ions[cation[0]]**cation_coef)*(ions[anion[0]]**anion_coef)/ksp)]
+                            SI = log((ions[cation[0]]**cation_coef)*(ions[anion[0]]**anion_coef)/ksp, 10)
+                            if f'({cation[0]}){cation_coef}({anion[0]}){anion_coef}' not in existed_precipitate:
+                                precipitation_SI[sym.symbols(f'({cation[0]}){cation_coef}({anion[0]}){anion_coef}')] = [(cation[0], cation_coef), (anion[0], anion_coef), ksp, SI]
         
+        # breakpoint()
         if len(precipitation_SI) == 0:
             return ions, '', {}, 0
         else:
@@ -158,11 +160,11 @@ def precipitation_iterator(ions, chemicals, chemical_ion, kw):
             first_precipitation = list(precipitation_SI.values())[first_precipitation_index]
             precipitate_name = f'({first_precipitation[0][0]}){first_precipitation[0][1]}({first_precipitation[1][0]}){first_precipitation[1][1]}'
 
-            eqn_list.append(sym.Eq((sym.symbols(first_precipitation[0][0])**first_precipitation[0][1])*(sym.symbols(first_precipitation[1][0])**first_precipitation[1][1]),ksp))
+            eqn_list.append(sym.Eq((sym.symbols(first_precipitation[0][0])**first_precipitation[0][1])*(sym.symbols(first_precipitation[1][0])**first_precipitation[1][1]), first_precipitation[-2]))
             eqn_dict[f'({first_precipitation[0][0]}){first_precipitation[0][1]}({first_precipitation[1][0]}){first_precipitation[1][1]}'] = sym.symbols(f'({first_precipitation[0][0]}){first_precipitation[0][1]}({first_precipitation[1][0]}){first_precipitation[1][1]}')
             
             for chemical in chemicals.items():
-                for ion in first_precipitation[:-1]:
+                for ion in first_precipitation[:-2]:
                     if ion[0] in list(dict(chemical[0]).keys()):
                         new_tot = chemicals[chemical[0]][-1] - ion[1]*sym.symbols(precipitate_name)
                         tempo_list = list(chemicals[chemical[0]])
@@ -170,7 +172,7 @@ def precipitation_iterator(ions, chemicals, chemical_ion, kw):
                         tempo_dict = {chemical[0]: tuple(tempo_list)}
                         chemicals.update(tempo_dict)
                                 
-    # TODO forget activitiy for precipitation for now
+            # TODO forget activitiy for precipitation for now
     
             for chemical in list(chemicals):
                 for i in range(len(chemical)):
@@ -200,20 +202,37 @@ def precipitation_iterator(ions, chemicals, chemical_ion, kw):
                 tot_charge += chemical_ion[chemical]*eqn_dict[chemical]
             eqn_list.append(sym.Eq(tot_charge, 0))
             
-            for i in range(0, 10): # TODO what if i=9 and leave the loop? check?
+            dict_i_relative_error = {}
+            
+            
+            # how about except precipitate, other initial guesses follow the previous results?
+            
+            for i in [10**-10, 10**-9, 10**-8, 10**-7, 10**-6, 10**-5, 10**-4, 10**-3, 10**-2, 10**-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 100]: # TODO what if i=9 and leave the loop? check?
                 try:
                     ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), [i]*len(eqn_dict), dict=True, maxsteps=100)
                 except Exception:
                     pass
                 else:
-                    if all(i>=0 for i in list(ans[0].values())) == True:
-                        break
+                    if all(j>=0 for j in list(ans[0].values())) == True:
+                        # store relative error and select the minimum one to iterate below
+                        dict_i_relative_error[i] = abs(((ans[0][sym.symbols(first_precipitation[0][0])]**first_precipitation[0][1]*ans[0][sym.symbols(first_precipitation[1][0])]**first_precipitation[1][1])-first_precipitation[-2])/first_precipitation[-2])
+                        
+            min_error_index = list(dict_i_relative_error.values()).index(min(list(dict_i_relative_error.values())))
             
-            ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), list(ans[0].values()), dict=True, maxsteps=100) # repeat once to increase precise
+            i = list(dict_i_relative_error.keys())[min_error_index]
+            
+            ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), [i]*len(eqn_dict), dict=True, maxsteps=100)
+
+            iteration_times = 0
+            while abs(((ans[0][sym.symbols(first_precipitation[0][0])]**first_precipitation[0][1]*ans[0][sym.symbols(first_precipitation[1][0])]**first_precipitation[1][1])-first_precipitation[-2])/first_precipitation[-2]) > 0.01:
+                ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), list(ans[0].values()), dict=True, maxsteps=100)
+                iteration_times += 1
+                if iteration_times == 5:
+                    break
 
             # update chemicals
             for chemical in chemicals.items():
-                for ion in first_precipitation[:-1]:
+                for ion in first_precipitation[:-2]:
                     if ion[0] in list(dict(chemical[0]).keys()):
                         new_tot = chemicals[chemical[0]][-1] + ion[1]*sym.symbols(precipitate_name) - ion[1]*ans[0][sym.symbols(precipitate_name)]
                         tempo_list = list(chemicals[chemical[0]])
