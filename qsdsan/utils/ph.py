@@ -111,7 +111,16 @@ def pH_solver(kw=10**-14,
     while check == 1:
         all_precipitates.append(precipitate)
         ions, precipitate, chemicals, check = precipitation_iterator(ions, chemicals, chemical_ion, all_precipitates, kw) # !!! keep being the first precipitate, start from here (for 4/2/2023)
-    return ions, all_precipitates
+    
+    pH = -log(ions['H'], 10)
+
+    ions_round = {}
+    for item in ions.items():
+        ions_round[item[0]] = precision_round(float(item[1]), digits=2)
+
+    print(f'\npH: {pH:.2f}\n\nions in the system: {ions_round}\n\nprecipitates: {all_precipitates}')
+
+    # return pH, ions, all_precipitates
 
 def precipitation_iterator(ions, chemicals, chemical_ion, existed_precipitate, kw):
     
@@ -150,10 +159,18 @@ def precipitation_iterator(ions, chemicals, chemical_ion, existed_precipitate, k
                             if f'({cation[0]}){cation_coef}({anion[0]}){anion_coef}' not in existed_precipitate:
                                 precipitation_SI[sym.symbols(f'({cation[0]}){cation_coef}({anion[0]}){anion_coef}')] = [(cation[0], cation_coef), (anion[0], anion_coef), ksp, SI]
         
+        
+        for ion in ions.items():
+            if ion[1] < 0:
+                ions[ion[0]] = 0
         # breakpoint()
         if len(precipitation_SI) == 0:
             return ions, '', {}, 0
         else:
+            
+          
+            
+            
             # substract from the MB, but just for the ones with the largest SI
             SI_list = [precipitation[1][-1] for precipitation in precipitation_SI.items()]
             first_precipitation_index = SI_list.index(max(SI_list))
@@ -212,9 +229,15 @@ def precipitation_iterator(ions, chemicals, chemical_ion, existed_precipitate, k
                 except Exception:
                     pass
                 else:
-                    if all(j >= -0.001 for j in list(ans[0].values())) == True: # !!! is it reasonable to set -0.001 here as tolerance? we may also need to change this values to 0 in the final answer?
-                        # store relative error and select the minimum one to iterate below
-                        dict_i_relative_error[i] = abs(((ans[0][sym.symbols(first_precipitation[0][0])]**first_precipitation[0][1]*ans[0][sym.symbols(first_precipitation[1][0])]**first_precipitation[1][1])-first_precipitation[-2])/first_precipitation[-2])
+                    # H and OH should be strictly larger than 0  
+                    if all(j >= -0.05 for j in list(ans[0].values())) == True: # !!! is it reasonable to set -0.05 here as tolerance? we may also need to change this values to 0 in the final answer?
+
+                    # add priority: what if some have negative values but less error?
+                    
+                        if ans[0][sym.symbols('H')] > 0:
+                            if ans[0][sym.symbols('OH')] > 0:
+                                # store relative error and select the minimum one to iterate below
+                                dict_i_relative_error[i] = abs(((ans[0][sym.symbols(first_precipitation[0][0])]**first_precipitation[0][1]*ans[0][sym.symbols(first_precipitation[1][0])]**first_precipitation[1][1])-first_precipitation[-2])/first_precipitation[-2])
                         
             min_error_index = list(dict_i_relative_error.values()).index(min(list(dict_i_relative_error.values())))
             
@@ -233,7 +256,7 @@ def precipitation_iterator(ions, chemicals, chemical_ion, existed_precipitate, k
             for chemical in chemicals.items():
                 for ion in first_precipitation[:-2]:
                     if ion[0] in list(dict(chemical[0]).keys()):
-                        new_tot = chemicals[chemical[0]][-1] + ion[1]*sym.symbols(precipitate_name) - ion[1]*ans[0][sym.symbols(precipitate_name)]
+                        new_tot = max(0, chemicals[chemical[0]][-1] + ion[1]*sym.symbols(precipitate_name) - ion[1]*ans[0][sym.symbols(precipitate_name)])
                         tempo_list = list(chemicals[chemical[0]])
                         tempo_list[-1] = new_tot
                         tempo_dict = {chemical[0]: tuple(tempo_list)}
@@ -243,6 +266,10 @@ def precipitation_iterator(ions, chemicals, chemical_ion, existed_precipitate, k
 
             ions = {}
             for item in ans[0].items():
-                ions[str(item[0])] =item[1]
+                ions[str(item[0])] = item[1]
             
             return ions, precipitate_name, chemicals, 1  # TODO when to stop use this iterator and return final pH?
+        
+def precision_round(number, digits=2):
+    power = '{:e}'.format(number).split('e')[1]
+    return round(number, -(int(power) - digits))

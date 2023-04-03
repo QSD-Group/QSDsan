@@ -6,7 +6,47 @@ Created on Fri Mar 31 08:30:34 2023
 @author: jiananfeng
 """
 
+from time import time
 from qsdsan.utils.ph import pH_solver
+
+start_time = time.time()
+
+pH_solver(kw=10**-14, activity=True, check_precipitation = True,
+          weak_chemicals={'PO4':0.05,},
+          other_chemicals={(('Mg', 2),): (0.05,), (('Fe3', 3),): (0.05,)}) # this one works
+
+end_time = time.time()
+
+print(f'\ntime: {(end_time-start_time):.2f} s')
+
+
+
+
+
+
+
+pH_solver(kw=10**-14, activity=True, check_precipitation = True,
+          weak_chemicals={'PO4':0.05, 'NH3':0.05, 'HF':0.05, 'acetate':0.05, 'propionic': 0.05, 'carbonic': 0.05, 'oxalic':0.05},
+          other_chemicals={(('cation', 2),): (0.05,), (('anion', -2),): (0.05,), (('NO3', -1),): (0.05,), (('Mg', 2),): (0.05,), (('Fe3', 3),): (0.05,), (('Al', 3),): (0.05,)}) # may work
+
+
+
+
+
+
+
+
+
+pH_solver(kw=10**-14, activity=True, check_precipitation = True,
+          weak_chemicals={'PO4':0.05, 'NH3':0.05, 'HF':0.05, 'acetate':0.05},
+          other_chemicals={(('cation', 2),): (0.05,), (('anion', -2),): (0.05,), (('Mg', 2),): (0.05,), (('Fe3', 3),): (0.05,)}) # may work, but has negative values
+
+
+
+
+
+
+
 
 pH_solver(kw=10**-14, activity=True, check_precipitation = True,
           weak_chemicals={'PO4':0.05, 'NH3':0.05, 'acetate':0.05},
