@@ -6,14 +6,14 @@ Created on Fri Mar 31 08:30:34 2023
 @author: jiananfeng
 """
 
-from time import time
+import time
 from qsdsan.utils.ph import pH_solver
 
 start_time = time.time()
 
 pH_solver(kw=10**-14, activity=True, check_precipitation = True,
           weak_chemicals={'PO4':0.05,},
-          other_chemicals={(('Mg', 2),): (0.05,), (('Fe3', 3),): (0.05,)}) # this one works
+          other_chemicals={(('Fe3', 3),): (0.05,)}) # may work
 
 end_time = time.time()
 

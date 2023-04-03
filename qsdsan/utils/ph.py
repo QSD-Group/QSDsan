@@ -88,7 +88,7 @@ def pH_solver(kw=10**-14,
         tot_charge += chemical_ion[chemical]*eqn_dict[chemical]
     eqn_list.append(sym.Eq(tot_charge, 0))
 
-    for i in range(0, 10): # TODO what if i=9 and leave the loop? check?
+    for i in [10**-2, 10**-1, 1, 10]: # TODO what if i=9 and leave the loop? check?
         try:
             ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), [i]*len(eqn_dict), dict=True, maxsteps=100)
         except Exception:
@@ -223,7 +223,8 @@ def precipitation_iterator(ions, chemicals, chemical_ion, existed_precipitate, k
             
             # how about except precipitate, other initial guesses follow the previous results?
             
-            for i in [10**-10, 10**-9, 10**-8, 10**-7, 10**-6, 10**-5, 10**-4, 10**-3, 10**-2, 10**-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 100]: # TODO what if i=9 and leave the loop? check?
+            # for i in [10**-10, 10**-9, 10**-8, 10**-7, 10**-6, 10**-5, 10**-4, 10**-3, 10**-2, 10**-1, 1, 10]: # TODO what if i=9 and leave the loop? check?
+            for i in [10**-5, 10**-4, 10**-3, 10**-2, 10**-1, 1, 10]: # TODO what if i=9 and leave the loop? check?
                 try:
                     ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), [i]*len(eqn_dict), dict=True, maxsteps=100)
                 except Exception:
@@ -238,6 +239,9 @@ def precipitation_iterator(ions, chemicals, chemical_ion, existed_precipitate, k
                             if ans[0][sym.symbols('OH')] > 0:
                                 # store relative error and select the minimum one to iterate below
                                 dict_i_relative_error[i] = abs(((ans[0][sym.symbols(first_precipitation[0][0])]**first_precipitation[0][1]*ans[0][sym.symbols(first_precipitation[1][0])]**first_precipitation[1][1])-first_precipitation[-2])/first_precipitation[-2])
+                                if abs(((ans[0][sym.symbols(first_precipitation[0][0])]**first_precipitation[0][1]*ans[0][sym.symbols(first_precipitation[1][0])]**first_precipitation[1][1])-first_precipitation[-2])/first_precipitation[-2]) <= 0.01:
+                                    break
+                        
                         
             min_error_index = list(dict_i_relative_error.values()).index(min(list(dict_i_relative_error.values())))
             
