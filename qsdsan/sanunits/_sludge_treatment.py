@@ -297,13 +297,16 @@ class Thickener(SanUnit):
         
         # For sludge, the particulate concentrations are multipled by thickener factor, and
         # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
-        self._outs[0].state[:-1] = self._state[:-1]*cmps.s*1 + self._state[:-1]*cmps.x*thickener_factor
-        self._outs[0].state[-1] = self._state[-1]*Qu_factor
+        uf, of = self.outs
+        if uf.state is None: uf.state = np.zeros(len(cmps)+1)
+        uf.state[:-1] = self._state[:-1]*cmps.s*1 + self._state[:-1]*cmps.x*thickener_factor
+        uf.state[-1] = self._state[-1]*Qu_factor
         
         # For effluent, the particulate concentrations are multipled by thinning factor, and
         # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
-        self._outs[1].state[:-1] = self._state[:-1]*cmps.s*1 + self._state[:-1]*cmps.x*thinning_factor
-        self._outs[1].state[-1] = self._state[-1]*(1 - Qu_factor)
+        if of.state is None: of.state = np.zeros(len(cmps)+1)
+        of.state[:-1] = self._state[:-1]*cmps.s*1 + self._state[:-1]*cmps.x*thinning_factor
+        of.state[-1] = self._state[-1]*(1 - Qu_factor)
 
     def _update_dstate(self):
         '''updates rates of change of output stream from rates of change of the Thickener'''
@@ -324,13 +327,16 @@ class Thickener(SanUnit):
         
         # For sludge, the particulate concentrations are multipled by thickener factor, and
         # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
-        self._outs[0].dstate[:-1] = self._dstate[:-1]*cmps.s*1 + self._dstate[:-1]*cmps.x*thickener_factor
-        self._outs[0].dstate[-1] = self._dstate[-1]*Qu_factor
+        uf, of = self.outs
+        if uf.dstate is None: uf.dstate = np.zeros(len(cmps)+1)
+        uf.dstate[:-1] = self._dstate[:-1]*cmps.s*1 + self._dstate[:-1]*cmps.x*thickener_factor
+        uf.dstate[-1] = self._dstate[-1]*Qu_factor
         
         # For effluent, the particulate concentrations are multipled by thinning factor, and
         # flowrate is multiplied by Qu_factor. The soluble concentrations remains same.
-        self._outs[1].dstate[:-1] = self._dstate[:-1]*cmps.s*1 + self._dstate[:-1]*cmps.x*thinning_factor
-        self._outs[1].dstate[-1] = self._dstate[-1]*(1 - Qu_factor)
+        if of.dstate is None: of.dstate = np.zeros(len(cmps)+1)
+        of.dstate[:-1] = self._dstate[:-1]*cmps.s*1 + self._dstate[:-1]*cmps.x*thinning_factor
+        of.dstate[-1] = self._dstate[-1]*(1 - Qu_factor)
      
     @property
     def AE(self):
