@@ -10,7 +10,7 @@ from qsdsan.utils.ph import pH_solver
 
 pH_solver(kw=10**-14, activity=True, check_precipitation = True,
           weak_chemicals={'PO4':0.05, 'NH3':0.05, 'acetate':0.05},
-          other_chemicals={(('NO3', -1),): (0.05,), (('anion', -2),): (0.05,), (('cation', 2),): (0.05,), (('Fe3', 3),): (0.05,)})
+          other_chemicals={(('anion', -2),): (0.05,), (('Mg', 2),): (0.05,), (('Fe3', 3),): (0.05,)}) # may work, but has negative values
 
 
 
@@ -18,7 +18,10 @@ pH_solver(kw=10**-14, activity=True, check_precipitation = True,
 
 pH_solver(kw=10**-14, activity=True, check_precipitation = True,
           weak_chemicals={'PO4':0.05,},
-          other_chemicals={(('Fe3', 3),): (0.05,)}) # this one works
+          other_chemicals={(('Fe3', 3),): (0.05,)}) # may work
+
+
+
 
 
 pH_solver(kw=10**-14, activity=True, check_precipitation = True,

@@ -204,7 +204,6 @@ def precipitation_iterator(ions, chemicals, chemical_ion, existed_precipitate, k
             
             dict_i_relative_error = {}
             
-            
             # how about except precipitate, other initial guesses follow the previous results?
             
             for i in [10**-10, 10**-9, 10**-8, 10**-7, 10**-6, 10**-5, 10**-4, 10**-3, 10**-2, 10**-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 100]: # TODO what if i=9 and leave the loop? check?
@@ -213,7 +212,7 @@ def precipitation_iterator(ions, chemicals, chemical_ion, existed_precipitate, k
                 except Exception:
                     pass
                 else:
-                    if all(j>=0 for j in list(ans[0].values())) == True:
+                    if all(j >= -0.001 for j in list(ans[0].values())) == True: # !!! is it reasonable to set -0.001 here as tolerance? we may also need to change this values to 0 in the final answer?
                         # store relative error and select the minimum one to iterate below
                         dict_i_relative_error[i] = abs(((ans[0][sym.symbols(first_precipitation[0][0])]**first_precipitation[0][1]*ans[0][sym.symbols(first_precipitation[1][0])]**first_precipitation[1][1])-first_precipitation[-2])/first_precipitation[-2])
                         
