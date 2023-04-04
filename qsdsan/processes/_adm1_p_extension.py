@@ -222,23 +222,22 @@ def T_correction_factor(T1, T2, delta_H):
 #     pKas = np.asarray(pKas)
 #     return 10**(-pKas) * T_correction_factor(T_base, T_op, theta)
 
-# What about this? Any changes needed? (Saumitra)
 def acid_base_rxn(h_ion, weak_acids_tot, Kas):
     # h, nh4, hco3, ac, pr, bu, va = mols
-    # S_cat, S_an, S_IN, S_IC, S_ac, S_pro, S_bu, S_va = weak_acids_tot  # in M
-    S_cat, S_an, S_IN = weak_acids_tot[:3]
-    # Kw, Ka_nh, Ka_co2, Ka_ac, Ka_pr, Ka_bu, Ka_va = Kas
+    # S_cat, S_K, S_Mg, S_an, S_IN, S_IP, S_IC, S_ac, S_pro, S_bu, S_va = weak_acids_tot  # in M
+    S_cat, S_K, S_Mg, S_an, S_IN, S_IP = weak_acids_tot[:6]
+    # Kw, Ka_nh, Ka_h3po4, Ka_co2, Ka_ac, Ka_pr, Ka_bu, Ka_va = Kas
     Kw = Kas[0]
     oh_ion = Kw/h_ion
-    nh3, hco3, ac, pro, bu, va = Kas[1:] * weak_acids_tot[2:] / (Kas[1:] + h_ion)
-    return S_cat + h_ion + (S_IN - nh3) - S_an - oh_ion - hco3 - ac - pro - bu - va
+    nh3, h2po4, hco3, ac, pro, bu, va = Kas[1:] * weak_acids_tot[4:] / (Kas[1:] + h_ion)
+    return S_cat + S_K + S_Mg + h_ion + (S_IN - nh3) - S_an - oh_ion - hco3 - ac - pro - bu - va - (3*S_IP + h2po4)
 
 def fprime_abr(h_ion, weak_acids_tot, Kas):
-    S_cat, S_an, S_IN = weak_acids_tot[:3]
+    S_cat, S_K, S_Mg, S_an, S_IN, S_IP = weak_acids_tot[:6]
     Kw = Kas[0]
     doh_ion = - Kw / h_ion ** 2
-    dnh3, dhco3, dac, dpro, dbu, dva = - Kas[1:] * weak_acids_tot[2:] / (Kas[1:] + h_ion)**2
-    return 1 + (-dnh3) - doh_ion - dhco3 - dhco3 - dac - dpro - dbu - dva
+    dnh3, dh2po4, dhco3, dac, dpro, dbu, dva = - Kas[1:] * weak_acids_tot[4:] / (Kas[1:] + h_ion)**2
+    return 1 + (-dnh3) - dh2po4 - doh_ion - dhco3 - dhco3 - dac - dpro - dbu - dva
 
 def pH_inhibit(pH, ul, ll, lower_only=True):
     if lower_only:
@@ -302,12 +301,14 @@ def rhos_adm1_p_extension(state_arr, params):
     # S_va, S_bu, S_h2, S_ch4, S_IC, S_IN = state_arr[[3,4,7,8,9,10]]
     S_va, S_bu, S_h2, S_IN, S_IP = state_arr[[3,4,7,10,11]]
     unit_conversion = mass2mol_conversion(cmps)
-    cmps_in_M = state_arr[:27] * unit_conversion
-    weak_acids = cmps_in_M[[24, 25, 10, 9, 6, 5, 4, 3]]
+    cmps_in_M = state_arr[:32] * unit_conversion
+    # weak acids (ADM1) = [S_ca, S_an, S_IN, S_IC, S_ac, S_pro, S_bu, S_va]
+    # weak acids (modified_ADM1) = [S_ca, S_an, S_IN, S_IP, S_IC, S_ac, S_pro, S_bu, S_va]
+    weak_acids = cmps_in_M[[29, 30, 10, 11, 9, 6, 5, 4, 3]]
 
     T_op = state_arr[-1]
     biogas_S = state_arr[7:10].copy()
-    biogas_p = R * T_op * state_arr[27:30]
+    biogas_p = R * T_op * state_arr[32:35] 
     Kas = Kab * T_correction_factor(T_base, T_op, Ka_dH)
     KH = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[7:10]
 
@@ -349,9 +350,6 @@ def rhos_adm1_p_extension(state_arr, params):
     # rhos[4:12] *= Hill_inhibit(h, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
     # rhos[6:10] *= non_compet_inhibit(S_h2, KIs_h2)
     rhos[9] *= non_compet_inhibit(nh3, KI_nh3)
-    
-    
-    
     rhos[-3:] = kLa * (biogas_S - KH * biogas_p)
     # print(rhos)
     return rhos
@@ -552,7 +550,7 @@ class ADM1_p_extension(CompiledProcesses):
     pKa_base : iterable[float], optional
         pKa (equilibrium coefficient) values of acid-base pairs at the base 
         temperature, unitless, following the order of `ADM1._acid_base_pairs`.
-        The default is [14, 9.25, 6.35, 4.76, 4.88, 4.82, 4.86].
+        The default is [14, 9.25, 2.12, 6.35, 4.76, 4.88, 4.82, 4.86].
     Ka_dH : iterable[float], optional
         Heat of reaction of each acid-base pair at base temperature [J/mol], 
         following the order of `ADM1._acid_base_pairs`. The default is 
@@ -602,8 +600,8 @@ class ADM1_p_extension(CompiledProcesses):
                        'KS_IN', 'KS_IP', 'KI_nh3', 'KIs_h2',
                        'Ka_base', 'Ka_dH', 'K_H_base', 'K_H_dH', 'kLa',
                        'T_base', 'components', 'root')
-    _acid_base_pairs = (('H+', 'OH-'), ('NH4+', 'NH3'), ('CO2', 'HCO3-'),
-                        ('HAc', 'Ac-'), ('HPr', 'Pr-'),
+    _acid_base_pairs = (('H+', 'OH-'), ('NH4+', 'NH3'), ('H3PO4', 'H2PO4-'), 
+                        ('CO2', 'HCO3-'), ('HAc', 'Ac-'), ('HPr', 'Pr-'),
                         ('HBu', 'Bu-'), ('HVa', 'Va-'))
     
     _biogas_IDs = ('S_h2', 'S_ch4', 'S_IC')
@@ -622,7 +620,7 @@ class ADM1_p_extension(CompiledProcesses):
                 q_PHA=3, b_PAO=0.2, b_PP=0.2, b_PHA=0.2, 
                 KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_nh3=1.8e-3, KS_IN=1e-4, KS_IP=2e-5, 
                 pH_limits_aa=(4,5.5), pH_limits_ac=(6,7), pH_limits_h2=(5,6),
-                T_base=298.15, pKa_base=[14, 9.25, 6.35, 4.76, 4.88, 4.82, 4.86],
+                T_base=298.15, pKa_base=[14, 9.25, 2.12, 6.35, 4.76, 4.88, 4.82, 4.86],
                 Ka_dH=[55900, 51965, 7646, 0, 0, 0, 0],
                 kLa=200, K_H_base=[7.8e-4, 1.4e-3, 3.5e-2],
                 K_H_dH=[-4180, -14240, -19410],
@@ -738,8 +736,8 @@ class ADM1_p_extension(CompiledProcesses):
 
     def set_pKas(self, pKas):
         '''Set the pKa values of the acid-base reactions at the base temperature.'''
-        if len(pKas) != 7:
-            raise ValueError(f'pKas must be an array of 7 elements, one for each '
+        if len(pKas) != 8:
+            raise ValueError(f'pKas must be an array of 8 elements, one for each '
                              f'acid-base pair, not {len(pKas)} elements.')
         dct = self.rate_function._params
         dct['Ka_base'] = np.array([10**(-pKa) for pKa in pKas])
