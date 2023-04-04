@@ -173,10 +173,7 @@ def precipitation_iterator(ions, chemicals, chemical_ion, existed_precipitate, k
         if len(precipitation_SI) == 0:
             return ions, '', {}, 0
         else:
-            
-          
-            
-            
+
             # substract from the MB, but just for the ones with the largest SI
             SI_list = [precipitation[1][-1] for precipitation in precipitation_SI.items()]
             first_precipitation_index = SI_list.index(max(SI_list))
