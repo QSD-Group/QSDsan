@@ -13,7 +13,7 @@ start_time = time.time()
 
 pH_solver(kw=10**-14, activity=True, check_precipitation = True,
           weak_chemicals={'PO4':0.05,},
-          other_chemicals={(('Fe3', 3),): (0.05,)}) # may work
+          other_chemicals={(('Mg', 2),): (0.05,), (('Fe3', 3),): (0.05,)}) # this one works
 
 end_time = time.time()
 
@@ -44,7 +44,9 @@ pH_solver(kw=10**-14, activity=True, check_precipitation = True,
 
 
 
-
+pH_solver(kw=10**-14, activity=True, check_precipitation = True,
+          weak_chemicals={'PO4':0.05, 'NH3':0.05, 'HF':0.001, 'acetate':0.05, 'carbonic': 0.05},
+          other_chemicals={(('Ca', 2),): (0.05,), (('NO3', -1),): (0.05,), (('Mg', 2),): (0.05,)}) # may work
 
 
 
