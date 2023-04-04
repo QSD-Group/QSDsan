@@ -230,8 +230,9 @@ def acid_base_rxn(h_ion, weak_acids_tot, Kas):
     Kw = Kas[0]
     oh_ion = Kw/h_ion
     nh3, h2po4, hco3, ac, pro, bu, va = Kas[1:] * weak_acids_tot[4:] / (Kas[1:] + h_ion)
-    return S_cat + S_K + S_Mg + h_ion + (S_IN - nh3) - S_an - oh_ion - hco3 - ac - pro - bu - va - (3*S_IP + h2po4)
+    return S_cat + S_K + 2*S_Mg + h_ion + (S_IN - nh3) - S_an - oh_ion - hco3 - ac - pro - bu - va - (3*S_IP + h2po4)
 
+# The function 'fprime_abr' is not used in the code
 def fprime_abr(h_ion, weak_acids_tot, Kas):
     S_cat, S_K, S_Mg, S_an, S_IN, S_IP = weak_acids_tot[:6]
     Kw = Kas[0]
@@ -303,8 +304,8 @@ def rhos_adm1_p_extension(state_arr, params):
     unit_conversion = mass2mol_conversion(cmps)
     cmps_in_M = state_arr[:32] * unit_conversion
     # weak acids (ADM1) = [S_ca, S_an, S_IN, S_IC, S_ac, S_pro, S_bu, S_va]
-    # weak acids (modified_ADM1) = [S_ca, S_an, S_IN, S_IP, S_IC, S_ac, S_pro, S_bu, S_va]
-    weak_acids = cmps_in_M[[29, 30, 10, 11, 9, 6, 5, 4, 3]]
+    # weak acids (modified_ADM1) = [S_ca, S_K, S_Mg, S_an, S_IN, S_IP, S_IC, S_ac, S_pro, S_bu, S_va]
+    weak_acids = cmps_in_M[[29, 27, 28, 30, 10, 11, 9, 6, 5, 4, 3]]
 
     T_op = state_arr[-1]
     biogas_S = state_arr[7:10].copy()
@@ -338,8 +339,8 @@ def rhos_adm1_p_extension(state_arr, params):
                args=(weak_acids, Kas),
                xtol=1e-12, maxiter=100)
 
-    nh3 = Kas[1] * weak_acids[2] / (Kas[1] + h)
-    co2 = weak_acids[3] - Kas[2] * weak_acids[3] / (Kas[2] + h)
+    nh3 = Kas[1] * weak_acids[4] / (Kas[1] + h)
+    co2 = weak_acids[6] - Kas[2] * weak_acids[6] / (Kas[2] + h)
     biogas_S[-1] = co2 / unit_conversion[9]
     
     Iph = Hill_inhibit(h, pH_ULs, pH_LLs)
