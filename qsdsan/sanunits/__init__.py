@@ -23,6 +23,8 @@ This module is developed by:
     Smiti Mittal <smitimittal@gmail.com>
 
     Jianan Feng <jiananf2@illinois.edu>
+    
+    Saumitra Rai <raisaumitra9@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
