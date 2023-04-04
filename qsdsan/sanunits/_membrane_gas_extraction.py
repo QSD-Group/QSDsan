@@ -23,7 +23,7 @@ __all__ = ('GasExtractionMembrane',)
 class GasExtractionMembrane(SanUnit):
     
     """
-    A Primary clarifier based on BSM2 Layout. [1]
+    Gas Extraction Membrane 
 
     Parameters
     ----------
