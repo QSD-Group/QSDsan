@@ -11,16 +11,20 @@ from qsdsan.utils.ph import pH_solver
 
 start_time = time.time()
 
+# wastewater compositions
 pH_solver(kw=10**-14, activity=True, check_precipitation = True,
-          weak_chemicals={'PO4':0.05, 'NH3':0.05, 'HF':0.05, 'acetate':0.05},
-          other_chemicals={(('cation', 2),): (0.05,), (('anion', -2),): (0.05,), (('Mg', 2),): (0.05,), (('Fe3', 3),): (0.05,)}) # may work, but has negative values
+          weak_chemicals={'PO4':0.05, 'NH3':0.05, 'HF':0.001, 'acetate':0.05, 'carbonic': 0.05},
+          other_chemicals={(('cation', 2),): (0.05,), (('anion', -2),): (0.05,), (('NO3', -1),): (0.05,), (('Mg', 2),): (0.05,), (('Fe3', 3),): (0.05,), (('Ca', 3),): (0.05,)})
 
 end_time = time.time()
 
 print(f'\ntime: {(end_time-start_time):.2f} s')
 
 
-
+# wastewater compositions (works fast)
+pH_solver(kw=10**-14, activity=True, check_precipitation = True,
+          weak_chemicals={'PO4':0.05, 'NH3':0.05, 'HF':0.001, 'acetate':0.05, 'carbonic': 0.05},
+          other_chemicals={(('cation', 2),): (0.05,), (('anion', -2),): (0.05,), (('NO3', -1),): (0.05,), (('Mg', 2),): (0.05,), (('Fe3', 3),): (0.05,), (('Ca', 3),): (0.05,)})
 
 
 
@@ -33,7 +37,9 @@ pH_solver(kw=10**-14, activity=True, check_precipitation = True,
 
 
 
-
+pH_solver(kw=10**-14, activity=True, check_precipitation = True,
+          weak_chemicals={'PO4':0.05, 'NH3':0.5},
+          other_chemicals={(('Mg', 2),): (0.05,)}) # work
 
 
 
