@@ -118,7 +118,7 @@ class GasExtractionMembrane(SanUnit):
         self.SurfArea = SurfArea      # Surface Area [m^2]
         self.GasID = GasID            # IDs of gas used in the process
         self.PVac = PVac              # Operating Vacuum Pressure [-kPa]
-        self.segs = segs              # Number of segments ??Ask Ian??
+        self.segs = segs              # Number of segments 
         #self.Volume = VolBatchTank   # Volume of the bioreactor (Don't think this is needed)
                 
         dct_gas_perm = GasPerm or self._GasPerm
@@ -173,7 +173,7 @@ class GasExtractionMembrane(SanUnit):
         if NumTubes is not None:
             self._NumTubes = NumTubes
         else:
-            raise ValueError('Outer diameter of fiber expected from user')
+            raise ValueError('Number of tubes expected from user')
     
     @property 
     def ShellDia(self):
@@ -360,7 +360,7 @@ class GasExtractionMembrane(SanUnit):
         # Synthesizes the ODEs to simulate a batch reactor with side-flow gas extraction. The code takes in an object of class Membrane (Mem) and an array of objects of class Gas (GasVec). It also takes in an array of experimental conditions ExpCond. 
         
         # Extract Operating Parameters from ExpCond
-        Q = self.ins.F_vol*(1000/60)  # Volumetric Flowrate [L/min]
+        Q = self.ins.F_vol  # Volumetric Flowrate [m3/sec]
         T = self.ins[0].T  # Temperature [K]
         P = self.PVac*1000 # Vacuum Pressure [Pa]
         #V = self.Volume  # Volume of the Batch Tank [L]
@@ -401,7 +401,7 @@ class GasExtractionMembrane(SanUnit):
         #Diff = np.array([0.0265e-7, 0.0296e-7, 0.0253e-7, 0.3199e-7])
         # Calculate dx and u
         dx = L/Segs # Length of Segments [m]
-        u = Q/((np.pi*D**2/4)*num_tubes*1000*60)    # Linear Flow Velocity [m/s]
+        u = Q/((np.pi*D**2/4)*num_tubes)    # Linear Flow Velocity [m/s]
 
         # Calculate the Kinematic Viscosity of Water
         Tb = T/300  # Reduced Temperature []
