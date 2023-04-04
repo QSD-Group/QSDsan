@@ -10,6 +10,7 @@ This is a pH solver, currently under development.
 import sympy as sym, numpy as np
 from math import log, sqrt, lcm
 from qsdsan.utils.ph_chemical_inventory import chemical_inventory, precipitation_inventory
+import time
 
 __all__ = ('pH_solver',)
 
@@ -33,7 +34,6 @@ def pH_solver(kw=10**-14,
               other_chemicals={(('Cl', -1),): (0.05,), (('Mg', 2),): (0.05,)})
     
     '''
-    
     if weak_chemicals == {} and other_chemicals == {}:
         raise ValueError('no chemical is given')
     
@@ -129,7 +129,7 @@ def pH_solver(kw=10**-14,
         # return pH, ions, all_precipitates
 
 def precipitation_iterator(ions, chemicals, chemical_ion, existed_precipitate, kw):
-    
+        guess = sum(chemical[-1] for chemical in list(chemicals.values()))/len(chemicals)
         # separate ions to cations and anions and also remove neutral ones
         cations = {}
         anions = {}
@@ -223,34 +223,36 @@ def precipitation_iterator(ions, chemicals, chemical_ion, existed_precipitate, k
             eqn_list.append(sym.Eq(tot_charge, 0))
             
             dict_i_relative_error = {}
+            print(time.time())
             
             # how about except precipitate, other initial guesses follow the previous results?
             
             # for i in [10**-10, 10**-9, 10**-8, 10**-7, 10**-6, 10**-5, 10**-4, 10**-3, 10**-2, 10**-1, 1, 10]: # TODO what if i=9 and leave the loop? check?
-            for i in [10**-5, 10**-2.5, 1]: # TODO what if i=9 and leave the loop? check?
-                try:
-                    ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), [i]*len(eqn_dict), dict=True, maxsteps=100)
-                except Exception:
-                    pass
-                else:
-                    # H and OH should be strictly larger than 0  
-                    if all(j >= -0.05 for j in list(ans[0].values())) == True: # !!! is it reasonable to set -0.05 here as tolerance? we may also need to change this values to 0 in the final answer?
+            # for i in [10**-5, 10**-2.5, 1]: # TODO what if i=9 and leave the loop? check?
+            #     try:
+            #         ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), [i]*len(eqn_dict), dict=True, maxsteps=100)
+            #     except Exception:
+            #         pass
+            #     else:
+            #         # H and OH should be strictly larger than 0  
+            #         if all(j >= -0.05 for j in list(ans[0].values())) == True: # !!! is it reasonable to set -0.05 here as tolerance? we may also need to change this values to 0 in the final answer?
 
-                    # add priority: what if some have negative values but less error?
+            #         # add priority: what if some have negative values but less error?
                     
-                        if ans[0][sym.symbols('H')] > 0:
-                            if ans[0][sym.symbols('OH')] > 0:
-                                # store relative error and select the minimum one to iterate below
-                                dict_i_relative_error[i] = abs(((ans[0][sym.symbols(first_precipitation[0][0])]**first_precipitation[0][1]*ans[0][sym.symbols(first_precipitation[1][0])]**first_precipitation[1][1])-first_precipitation[-2])/first_precipitation[-2])
-                                if abs(((ans[0][sym.symbols(first_precipitation[0][0])]**first_precipitation[0][1]*ans[0][sym.symbols(first_precipitation[1][0])]**first_precipitation[1][1])-first_precipitation[-2])/first_precipitation[-2]) <= 0.01:
-                                    break
-                        
-                        
-            min_error_index = list(dict_i_relative_error.values()).index(min(list(dict_i_relative_error.values())))
+            #             if ans[0][sym.symbols('H')] > 0:
+            #                 if ans[0][sym.symbols('OH')] > 0:
+            #                     # store relative error and select the minimum one to iterate below
+            #                     dict_i_relative_error[i] = abs(((ans[0][sym.symbols(first_precipitation[0][0])]**first_precipitation[0][1]*ans[0][sym.symbols(first_precipitation[1][0])]**first_precipitation[1][1])-first_precipitation[-2])/first_precipitation[-2])
+            #                     if abs(((ans[0][sym.symbols(first_precipitation[0][0])]**first_precipitation[0][1]*ans[0][sym.symbols(first_precipitation[1][0])]**first_precipitation[1][1])-first_precipitation[-2])/first_precipitation[-2]) <= 0.01:
+            #                         break
             
-            i = list(dict_i_relative_error.keys())[min_error_index]
+            ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), [guess]*len(eqn_dict), dict=True, maxsteps=100)           
+            print(time.time())
+            # min_error_index = list(dict_i_relative_error.values()).index(min(list(dict_i_relative_error.values())))
             
-            ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), [i]*len(eqn_dict), dict=True, maxsteps=100)
+            # i = list(dict_i_relative_error.keys())[min_error_index]
+            
+            # ans = sym.nsolve(eqn_list, tuple(eqn_dict.values()), [i]*len(eqn_dict), dict=True, maxsteps=100)
 
             # iteration_times = 0
             # while abs(((ans[0][sym.symbols(first_precipitation[0][0])]**first_precipitation[0][1]*ans[0][sym.symbols(first_precipitation[1][0])]**first_precipitation[1][1])-first_precipitation[-2])/first_precipitation[-2]) > 0.01:
@@ -258,7 +260,7 @@ def precipitation_iterator(ions, chemicals, chemical_ion, existed_precipitate, k
                 # iteration_times += 1
                 # if iteration_times == 5:
                 #     break
-
+            print(time.time())
             # update chemicals
             for chemical in chemicals.items():
                 for ion in first_precipitation[:-2]:
@@ -274,7 +276,6 @@ def precipitation_iterator(ions, chemicals, chemical_ion, existed_precipitate, k
             ions = {}
             for item in ans[0].items():
                 ions[str(item[0])] = item[1]
-            
             return ions, precipitate_name, chemicals, 1  # TODO when to stop use this iterator and return final pH?
         
 def precision_round(number, digits=2):
