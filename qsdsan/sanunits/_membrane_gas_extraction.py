@@ -101,7 +101,7 @@ class GasExtractionMembrane(SanUnit):
         }
     
     # Constructor: Initialize the instance variables
-    def __init__(self, ID='GEM', ins=None, outs=(), thermo=None, isdynamic=False, 
+    def __init__(self, ID='GEM', ins=None, outs=(), thermo=None, isdynamic=True, 
                   init_with='WasteStream', F_BM_default=None,   FiberID=190e-6, 
                   FiberOD=300e-6, NumTubes=1512, ShellDia=1.89e-2, SurfArea=0.1199,   
                   GasID = ['H2', 'CO2', 'CH4', 'O2', 'N2', 'H2O'], PVac = 97.325, 
@@ -271,11 +271,11 @@ class GasExtractionMembrane(SanUnit):
             attr[idxr(k)] = v
             
     def _init_state(self):
-        inf = self.ins
+        inf, = self.ins
         cmps = inf.components
-        C = self._ins_QC[:-1]/cmps.chem_MW*cmps.i_mass
+        C = self._ins_QC[0,:-1]/cmps.chem_MW*cmps.i_mass
         Cs = C[self.idx] #idx selects only gases 
-        Seg = self.segments
+        Seg = self.segs
         numGas = len(self.GasID)
         self._state = np.zeros(2*Seg*numGas)
         
@@ -286,8 +286,7 @@ class GasExtractionMembrane(SanUnit):
 
 
     def _update_state(self):
-        
-        inf = self.ins
+        inf, = self.ins
         cmps = inf.components
         idx = self.idx  
         numGas = len(self.GasID)
@@ -299,7 +298,7 @@ class GasExtractionMembrane(SanUnit):
         # The of the effluent gas in extraction membrane is the difference 
         # between lumen concentration in the last and first segment
         gas_state_in_unit = self._state[ -2*numGas: -numGas] - self._state[ :numGas] # in mol/m3
-        Molar_flow_gases = self._ins_QC[-1]*gas_state_in_unit # (m3/day)*(mol/m3) = mol/day
+        Molar_flow_gases = self._ins_QC[0,-1]*gas_state_in_unit # (m3/day)*(mol/m3) = mol/day
         Mass_flow_gases = Molar_flow_gases*cmps.chem_MW[self.idx] #(mol/day)*(g/mol) = (g/day)
         
         self._outs[0].state[idx] =  Mass_flow_gases # (g/day)
@@ -311,14 +310,14 @@ class GasExtractionMembrane(SanUnit):
         liquid_state_in_unit = self._state[-2*numGas: -numGas]  # in mol/m3
         liquid_state_in_unit = (liquid_state_in_unit*cmps.chem_MW[self.idx])/cmps.i_mass[self.idx] # (mol/m3)*(g/mol) = g/m3 = mg/l
         
-        self._outs[1].state = self._ins_QC
+        self._outs[1].state = self._ins_QC[0]
         self._outs[1].state[idx] = liquid_state_in_unit
         
         # self._outs[1].state[-1] = self._ins_QC[-1]
         
     def _update_dstate(self):
         
-        inf = self.ins
+        inf, = self.ins
         cmps = inf.components
         numGas = len(self.GasID)
         idx = self.idx
@@ -328,7 +327,7 @@ class GasExtractionMembrane(SanUnit):
         # The of the effluent gas in extraction membrane is the difference 
         # between lumen concentration in the last and first segment
         gas_dstate_in_unit = self._dstate[ -2*numGas: -numGas] - self._dstate[ :numGas] # in mol/m3
-        Molar_dflow_gases = self._ins_dQC[-1]*gas_dstate_in_unit # (m3/day)*(mol/m3) = mol/day
+        Molar_dflow_gases = self._ins_dQC[0,-1]*gas_dstate_in_unit # (m3/day)*(mol/m3) = mol/day
         Mass_dflow_gases = Molar_dflow_gases*cmps.chem_MW[self.idx] #(mol/day)*(g/mol) = (g/day)
         
         self._outs[0].dstate[idx] =  Mass_dflow_gases # (g/day)
@@ -340,14 +339,14 @@ class GasExtractionMembrane(SanUnit):
         liquid_dstate_in_unit = self._dstate[-2*numGas: -numGas]  # in mol/m3
         liquid_dstate_in_unit = (liquid_dstate_in_unit*cmps.chem_MW[self.idx])/cmps.i_mass[self.idx] # (mol/m3)*(g/mol) = g/m3 = mg/l
         
-        self._outs[1].dstate = self._ins_dQC
-        self._outs[0].dstate[idx] = liquid_dstate_in_unit
+        self._outs[1].dstate = self._ins_dQC[0]
+        self._outs[1].dstate[idx] = liquid_dstate_in_unit
         # self._outs[1].dstate[-1] = self._ins_dQC[-1]
 
     def _run(self):
         s_in, = self.ins
         gas, liq = self.outs
-        liq.copy(s_in)
+        liq.copy_like(s_in)
     
     @property
     def ODE(self):
@@ -360,7 +359,7 @@ class GasExtractionMembrane(SanUnit):
         # Synthesizes the ODEs to simulate a batch reactor with side-flow gas extraction. The code takes in an object of class Membrane (Mem) and an array of objects of class Gas (GasVec). It also takes in an array of experimental conditions ExpCond. 
         
         # Extract Operating Parameters from ExpCond
-        Q = self.ins.F_vol  # Volumetric Flowrate [m3/sec]
+        Q = self.ins[0].F_vol  # Volumetric Flowrate [m3/sec]
         T = self.ins[0].T  # Temperature [K]
         P = self.PVac*1000 # Vacuum Pressure [Pa]
         #V = self.Volume  # Volume of the Batch Tank [L]
@@ -377,7 +376,7 @@ class GasExtractionMembrane(SanUnit):
         l = self.MemThick           # Membrane Thickness [m]
         num_tubes = self.NumTubes   # Number of Tubes in the Module []
         L = self.Length             # Membrane Length [m]
-        Segs = self.segments        # Number of segments? Ask Ian
+        Segs = self.segs        # Number of segments? Ask Ian
         vFrac = self.VolFrac        # Lumen/Shell Volume Fraction [m^3/m^3]
 
         # Pre-allocate vectors for gas thermophysical properties
@@ -433,7 +432,7 @@ class GasExtractionMembrane(SanUnit):
         sumCp_init = P/(R*T)
         sumCp_fin = np.zeros(Segs)
         
-        C = self._ins_QC[:-1]/cmps.chem_MW*cmps.i_mass # conc. in mol/m^3 as defined by Ian 
+        C = self._ins_QC[0,:-1]/cmps.chem_MW*cmps.i_mass # conc. in mol/m^3 as defined by Ian 
         Cs = C[self.idx] #self.idx ensures its only for gases 
         
         _dstate = self._dstate    
