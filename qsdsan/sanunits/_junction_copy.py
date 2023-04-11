@@ -310,7 +310,7 @@ class ADMjunction(Junction):
     def pKa(self):
         '''
         [numpy.array] pKa array of the following acid-base pairs:
-        ('H+', 'OH-'), ('NH4+', 'NH3'), ('CO2', 'HCO3-'),
+        ('H+', 'OH-'), ('NH4+', 'NH3'), ('H3PO4', 'H2PO4-'), ('CO2', 'HCO3-'),
         ('HAc', 'Ac-'), ('HPr', 'Pr-'), ('HBu', 'Bu-'), ('HVa', 'Va-')
         '''
         return self.pKa_base-np.log10(np.exp(pc.T_correction_factor(self.T_base, self.T, self.Ka_dH)))
@@ -693,9 +693,10 @@ class ASMtoADM(ADMjunction):
         atol = self.atol
 
         cmps_asm = ins.components
-        S_NO_i_COD = cmps_asm.S_NO.i_COD
-        X_BH_i_N = cmps_asm.X_BH.i_N
-        X_BA_i_N = cmps_asm.X_BA.i_N
+        S_NO3_i_COD = cmps_asm.S_NO3.i_COD
+        X_H_i_N = cmps_asm.X_H.i_N
+        X_AUT_i_N = cmps_asm.X_AUT.i_N
+        X_PAO_i_N = cmps_asm.X_PAO.i_N
         asm_X_I_i_N = cmps_asm.X_I.i_N
         X_P_i_N = cmps_asm.X_P.i_N
         if cmps_asm.X_S.i_N > 0: 
@@ -721,38 +722,75 @@ class ASMtoADM(ADMjunction):
         f_corr = self.balance_cod_tkn
 
         def asm2adm(asm_vals):
-            S_I, S_S, X_I, X_S, X_BH, X_BA, X_P, S_O, S_NO, S_NH, S_ND, X_ND, S_ALK, S_N2, H2O = asm_vals
+            # S_I, S_S, X_I, X_S, X_BH, X_BA, X_P, S_O, S_NO, S_NH, S_ND, X_ND, S_ALK, S_N2, H2O = asm_vals
+            
+            S_O2, S_N2, S_NH4, S_NO3, S_PO4, S_F, S_A, S_I, S_ALK, X_I, X_S, X_H, \
+                X_PAO, X_PP, X_PHA, X_AUT, X_MeOH, X_MeP, H2O = asm_vals
 
             # Step 0: charged component snapshot
-            _sno = S_NO
-            _snh = S_NH
+            _sno3 = S_NO3
+            _snh4 = S_NH4
             _salk = S_ALK
-            
+            _spo4 = S_PO4
+              
             # Step 1: remove any remaining COD demand
-            O_coddm = S_O
-            NO_coddm = -S_NO*S_NO_i_COD
-            cod_spl = S_S + X_S + X_BH + X_BA
-            bioN = X_BH*X_BH_i_N + X_BA*X_BA_i_N
+            O2_coddm = S_O2
+            NO3_coddm = -S_NO3*S_NO3_i_COD
             
-            if cod_spl <= O_coddm:
-                S_O = O_coddm - cod_spl
-                S_S = X_S = X_BH = X_BA = 0
-            elif cod_spl <= O_coddm + NO_coddm:
-                S_O = 0
-                S_NO = -(O_coddm + NO_coddm - cod_spl)/S_NO_i_COD
-                S_S = X_S = X_BH = X_BA = 0
+            # cod_spl = S_S + X_S + X_BH + X_BA
+            # Replacing S_S with S_F + S_A + X_PHA (since all of them are measured as COD and are degradable)
+            # added X_PAO to X_H and X_AUT
+            
+            cod_spl = S_F + S_A + X_S + X_PHA + X_H + X_AUT + X_PAO
+            
+            #bioN = X_BH*X_BH_i_N + X_BA*X_BA_i_N
+            #Added PAO along with X_H and X_AUT to account for biological N removal
+            
+            bioN = X_H*X_H_i_N + X_AUT*X_AUT_i_N + X_PAO*X_PAO_i_N
+            
+            if cod_spl <= O2_coddm:
+                S_O2 = O2_coddm - cod_spl
+                # S_S = X_S = X_BH = X_BA = 0
+                S_F = S_A =  X_S = X_PHA = X_H = X_AUT = X_PAO = 0
+            elif cod_spl <= O2_coddm + NO3_coddm:
+                S_O2 = 0
+                S_NO3 = -(O2_coddm + NO3_coddm - cod_spl)/S_NO3_i_COD
+                #S_S = X_S = X_BH = X_BA = 0
+                
+                # X_PHA should come after X_S, since X_S >> X_PHA (Joy)
+                S_F = S_A = X_S = X_PHA = X_H = X_AUT = X_PAO = 0
             else:
-                S_S -= O_coddm + NO_coddm
-                if S_S < 0:
-                    X_S += S_S
-                    S_S = 0
-                    if X_S < 0:
-                        X_BH += X_S                        
-                        X_S = 0    
-                        if X_BH < 0:
-                            X_BA += X_BH
-                            X_BH = 0
-                S_O = S_NO = 0
+                # S_S -= O_coddm + NO_coddm
+                # if S_S < 0:
+                #     X_S += S_S
+                #     S_S = 0
+                #     if X_S < 0:
+                #         X_BH += X_S                        
+                #         X_S = 0    
+                #         if X_BH < 0:
+                #             X_BA += X_BH
+                #             X_BH = 0
+                # S_O = S_NO = 0
+                S_F -= O2_coddm + NO3_coddm
+                if S_F < 0:
+                    S_A += S_F
+                    S_F = 0
+                    if S_A < 0:
+                        X_S += S_A
+                        S_A = 0
+                        if X_S < 0:
+                            X_PHA += X_S
+                            X_S = 0
+                            if X_PHA < 0:
+                                X_H += X_PHA
+                                X_PHA = 0
+                                if X_H < 0:
+                                    X_AUT += X_H
+                                    X_H = 0
+                                    if X_AUT < 0:
+                                        X_PAO += X_AUT
+                                        X_AUT = 0
+                S_O2 = S_NO3 = 0
             
             # Step 2: convert any readily biodegradable 
             # COD and TKN into amino acids and sugars
