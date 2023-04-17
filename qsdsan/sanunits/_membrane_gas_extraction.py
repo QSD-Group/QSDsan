@@ -297,7 +297,7 @@ class GasExtractionMembrane(SanUnit):
         self._outs[0].state = np.zeros(len(cmps) + 1)
         # The of the effluent gas in extraction membrane is the difference 
         # between lumen concentration in the last and first segment
-        gas_state_in_unit = self._state[ -2*numGas: -numGas] - self._state[ :numGas] # in mol/m3
+        gas_state_in_unit = self._state[ :numGas] - self._state[ -2*numGas: -numGas]  # in mol/m3
         Molar_flow_gases = self._ins_QC[0,-1]*gas_state_in_unit # (m3/day)*(mol/m3) = mol/day
         Mass_flow_gases = Molar_flow_gases*cmps.chem_MW[self.idx] #(mol/day)*(g/mol) = (g/day)
         
@@ -326,7 +326,7 @@ class GasExtractionMembrane(SanUnit):
         self._outs[0].dstate = np.zeros(len(cmps) + 1)
         # The of the effluent gas in extraction membrane is the difference 
         # between lumen concentration in the last and first segment
-        gas_dstate_in_unit = self._dstate[ -2*numGas: -numGas] - self._dstate[ :numGas] # in mol/m3
+        gas_dstate_in_unit =  self._dstate[ :numGas] - self._dstate[ -2*numGas: -numGas]# in mol/m3
         Molar_dflow_gases = self._ins_dQC[0,-1]*gas_dstate_in_unit # (m3/day)*(mol/m3) = mol/day
         Mass_dflow_gases = Molar_dflow_gases*cmps.chem_MW[self.idx] #(mol/day)*(g/mol) = (g/day)
         
@@ -346,7 +346,9 @@ class GasExtractionMembrane(SanUnit):
     def _run(self):
         s_in, = self.ins
         gas, liq = self.outs
+        gas.phase = 'g'
         liq.copy_like(s_in)
+        
     
     @property
     def ODE(self):
