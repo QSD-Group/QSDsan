@@ -24,7 +24,7 @@ import biosteam as bst
 from warnings import warn
 from math import ceil, pi
 from biosteam.units import HXprocess as HXP, HXutility as HXU
-from biosteam.units.facilities import HeatExchangerNetwork as HXN
+from biosteam.facilities import HeatExchangerNetwork as HXN
 from biosteam.units.design_tools.specification_factors import material_densities_lb_per_ft3
 from biosteam.exceptions import bounds_warning, DesignWarning
 from biosteam.units.design_tools import flash_vessel_design
@@ -40,7 +40,7 @@ _Pa_to_psi = auom('Pa').conversion_factor('psi')
         
 class HeatExchangerNetwork(SanUnit, HXN):
     '''
-    Similar to the :class:`biosteam.units.facilities.HeatExchangerNetwork`,
+    Similar to the :class:`biosteam.facilities.HeatExchangerNetwork`,
     but also a subclass of :class:`qsdsan.SanUnit`
 
     Examples
@@ -79,7 +79,7 @@ class HeatExchangerNetwork(SanUnit, HXN):
 
     See Also
     --------
-    `biosteam.units.facilities.HeatExchangerNetwork <https://biosteam.readthedocs.io/en/latest/API/units/facilities/HeatExchangerNetwork.html>`_
+    `biosteam.facilities.HeatExchangerNetwork <https://biosteam.readthedocs.io/en/latest/API/units/facilities/HeatExchangerNetwork.html>`_
     '''
     ticket_name = HXN.ticket_name
     acceptable_energy_balance_error = HXN.acceptable_energy_balance_error
