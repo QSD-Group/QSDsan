@@ -697,6 +697,9 @@ class ASMtoADM(ADMjunction):
         X_H_i_N = cmps_asm.X_H.i_N
         X_AUT_i_N = cmps_asm.X_AUT.i_N
         X_PAO_i_N = cmps_asm.X_PAO.i_N
+        S_F_i_N = cmps_asm.S_F.i_N
+        X_S_i_N = cmps_asm.X_S.i_N
+        
         asm_X_I_i_N = cmps_asm.X_I.i_N
         X_P_i_N = cmps_asm.X_P.i_N
         if cmps_asm.X_S.i_N > 0: 
@@ -727,12 +730,13 @@ class ASMtoADM(ADMjunction):
             S_O2, S_N2, S_NH4, S_NO3, S_PO4, S_F, S_A, S_I, S_ALK, X_I, X_S, X_H, \
                 X_PAO, X_PP, X_PHA, X_AUT, X_MeOH, X_MeP, H2O = asm_vals
 
-            # Step 0: charged component snapshot
+            # Step 0: charged component snapshot (# pg. 84 of IWA ASM textbook)
             _sno3 = S_NO3
             _snh4 = S_NH4
-            _salk = S_ALK  # HCO3- (pg. 82 IWA ASM models handbook)
+            _salk = S_ALK  
             _spo4 = S_PO4
-            _sa = S_A # S_A is basically acetate (pg. 82 IWA ASM models handbook)
+            _sa = S_A 
+            _xpp = X_PP 
               
             # Step 1: remove any remaining COD demand
             O2_coddm = S_O2
@@ -749,6 +753,9 @@ class ASMtoADM(ADMjunction):
             
             bioN = X_H*X_H_i_N + X_AUT*X_AUT_i_N + X_PAO*X_PAO_i_N
             
+            S_ND_asm1 = S_F*S_F_i_N   #S_ND (in asm1) equals the N content in S_F (Joy)
+            X_ND_asm1 = X_S*X_S_i_N   #X_ND (in asm1) equals the N content in X_S (Joy)
+            
             if cod_spl <= O2_coddm:
                 S_O2 = O2_coddm - cod_spl
                 # S_S = X_S = X_BH = X_BA = 0
@@ -762,17 +769,6 @@ class ASMtoADM(ADMjunction):
                 # X_PHA should come after X_S, since X_S >> X_PHA (Joy)
                 S_A = S_F = X_S = X_PHA = X_H = X_AUT = X_PAO = 0
             else:
-                # S_S -= O_coddm + NO_coddm
-                # if S_S < 0:
-                #     X_S += S_S
-                #     S_S = 0
-                #     if X_S < 0:
-                #         X_BH += X_S                        
-                #         X_S = 0    
-                #         if X_BH < 0:
-                #             X_BA += X_BH
-                #             X_BH = 0
-                # S_O = S_NO = 0
                 S_A -= O2_coddm + NO3_coddm
                 if S_A < 0:
                     S_F += S_A
@@ -796,10 +792,8 @@ class ASMtoADM(ADMjunction):
             
             # Step 2: convert any readily biodegradable 
             # COD and TKN into amino acids and sugars
-            # Assumed S_S, X_S has no nitrogen
             
             S_S_asm1 = S_F + S_A # S_S (in asm1) equals to the sum of S_F and S_A (pg. 82 IWA ASM models handbook)
-            S_ND_asm1 = S_F*S_F.i_N  #S_ND (in asm1) equals the N content in S_F (Joy)
             
             req_scod = S_ND_asm1 / S_aa_i_N
             
@@ -814,8 +808,6 @@ class ASMtoADM(ADMjunction):
 
             # Step 3: convert slowly biodegradable COD and TKN
             # into proteins, lipids, and carbohydrates
-            
-            X_ND_asm1 = X_S*X_S.i_N #X_ND (in asm1) equals the N content in X_S (Joy)
             
             req_xcod = X_ND_asm1 / X_pr_i_N
             if X_S < req_xcod:
