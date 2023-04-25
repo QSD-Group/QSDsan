@@ -797,30 +797,36 @@ class ASMtoADM(ADMjunction):
             # Step 2: convert any readily biodegradable 
             # COD and TKN into amino acids and sugars
             # Assumed S_S, X_S has no nitrogen
-            req_scod = S_ND / S_aa_i_N
             
+            S_S_asm1 = S_F + S_A # S_S (in asm1) equals to the sum of S_F and S_A (pg. 82 IWA ASM models handbook)
+            S_ND_asm1 = S_F*S_F.i_N  #S_ND (in asm1) equals the N content in S_F (Joy)
             
-            if S_S < req_scod:
-                S_aa = S_S
+            req_scod = S_ND_asm1 / S_aa_i_N
+            
+            if S_S_asm1 < req_scod:
+                S_aa = S_S_asm1
                 S_su = 0
-                S_ND -= S_aa * S_aa_i_N
+                S_ND_asm1 -= S_aa * S_aa_i_N
             else:
                 S_aa = req_scod
-                S_su = S_S - S_aa
-                S_ND = 0
+                S_su = S_S_asm1 - S_aa
+                S_ND_asm1 = 0
 
             # Step 3: convert slowly biodegradable COD and TKN
             # into proteins, lipids, and carbohydrates
-            req_xcod = X_ND / X_pr_i_N
+            
+            X_ND_asm1 = X_S*X_S.i_N #X_ND (in asm1) equals the N content in X_S (Joy)
+            
+            req_xcod = X_ND_asm1 / X_pr_i_N
             if X_S < req_xcod:
                 X_pr = X_S
                 X_li = X_ch = 0
-                X_ND -= X_pr * X_pr_i_N
+                X_ND_asm1 -= X_pr * X_pr_i_N
             else:
                 X_pr = req_xcod
                 X_li = self.xs_to_li * (X_S - X_pr)
                 X_ch = (X_S - X_pr) - X_li
-                X_ND = 0
+                X_ND_asm1 = 0
             
             # Step 4: convert active biomass into protein, lipids, 
             # carbohydrates and potentially particulate TKN
