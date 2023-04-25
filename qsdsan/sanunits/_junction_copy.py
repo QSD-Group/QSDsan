@@ -888,7 +888,7 @@ class ASMtoADM(ADMjunction):
             adm_vals = f_corr(asm_vals, adm_vals)
             
             # Step 7: charge balance
-            asm_charge_tot = _snh/14 - _sno/14 - _salk/12
+            asm_charge_tot = - _sa/64 + _snh4/14 - _sno3/14 - 1.5*_spo4/31 - _salk - _xpp/31 #Based on page 84 of IWA ASM handbook
             #!!! charge balance should technically include VFAs, 
             # but VFAs concentrations are assumed zero per previous steps??
             S_IN = adm_vals[adm_ions_idx[0]]
