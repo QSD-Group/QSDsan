@@ -730,8 +730,9 @@ class ASMtoADM(ADMjunction):
             # Step 0: charged component snapshot
             _sno3 = S_NO3
             _snh4 = S_NH4
-            _salk = S_ALK
+            _salk = S_ALK  # HCO3- (pg. 82 IWA ASM models handbook)
             _spo4 = S_PO4
+            _sa = S_A # S_A is basically acetate (pg. 82 IWA ASM models handbook)
               
             # Step 1: remove any remaining COD demand
             O2_coddm = S_O2
@@ -741,10 +742,10 @@ class ASMtoADM(ADMjunction):
             # Replacing S_S with S_F + S_A + X_PHA (since all of them are measured as COD and are degradable)
             # added X_PAO to X_H and X_AUT
             
-            cod_spl = S_F + S_A + X_S + X_PHA + X_H + X_AUT + X_PAO
+            cod_spl = (S_A + S_F) + X_S + X_PHA + (X_H + X_AUT + X_PAO)
             
             #bioN = X_BH*X_BH_i_N + X_BA*X_BA_i_N
-            #Added PAO along with X_H and X_AUT to account for biological N removal
+            #Added X_PAO along with X_H and X_AUT 
             
             bioN = X_H*X_H_i_N + X_AUT*X_AUT_i_N + X_PAO*X_PAO_i_N
             
@@ -754,11 +755,12 @@ class ASMtoADM(ADMjunction):
                 S_F = S_A =  X_S = X_PHA = X_H = X_AUT = X_PAO = 0
             elif cod_spl <= O2_coddm + NO3_coddm:
                 S_O2 = 0
+                
                 S_NO3 = -(O2_coddm + NO3_coddm - cod_spl)/S_NO3_i_COD
                 #S_S = X_S = X_BH = X_BA = 0
                 
                 # X_PHA should come after X_S, since X_S >> X_PHA (Joy)
-                S_F = S_A = X_S = X_PHA = X_H = X_AUT = X_PAO = 0
+                S_A = S_F = X_S = X_PHA = X_H = X_AUT = X_PAO = 0
             else:
                 # S_S -= O_coddm + NO_coddm
                 # if S_S < 0:
@@ -771,13 +773,13 @@ class ASMtoADM(ADMjunction):
                 #             X_BA += X_BH
                 #             X_BH = 0
                 # S_O = S_NO = 0
-                S_F -= O2_coddm + NO3_coddm
-                if S_F < 0:
-                    S_A += S_F
-                    S_F = 0
-                    if S_A < 0:
-                        X_S += S_A
-                        S_A = 0
+                S_A -= O2_coddm + NO3_coddm
+                if S_A < 0:
+                    S_F += S_A
+                    S_A = 0
+                    if S_F < 0:
+                        X_S += S_F
+                        S_F = 0
                         if X_S < 0:
                             X_PHA += X_S
                             X_S = 0
@@ -796,6 +798,8 @@ class ASMtoADM(ADMjunction):
             # COD and TKN into amino acids and sugars
             # Assumed S_S, X_S has no nitrogen
             req_scod = S_ND / S_aa_i_N
+            
+            
             if S_S < req_scod:
                 S_aa = S_S
                 S_su = 0
