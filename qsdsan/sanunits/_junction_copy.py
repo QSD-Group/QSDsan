@@ -753,19 +753,17 @@ class ASMtoADM(ADMjunction):
             
             bioN = X_H*X_H_i_N + X_AUT*X_AUT_i_N + X_PAO*X_PAO_i_N
             
+            # To be used in Step 2
             S_ND_asm1 = S_F*S_F_i_N   #S_ND (in asm1) equals the N content in S_F (Joy)
+            # To be used in Step 3
             X_ND_asm1 = X_S*X_S_i_N   #X_ND (in asm1) equals the N content in X_S (Joy)
             
             if cod_spl <= O2_coddm:
                 S_O2 = O2_coddm - cod_spl
-                # S_S = X_S = X_BH = X_BA = 0
                 S_F = S_A =  X_S = X_PHA = X_H = X_AUT = X_PAO = 0
             elif cod_spl <= O2_coddm + NO3_coddm:
                 S_O2 = 0
-                
                 S_NO3 = -(O2_coddm + NO3_coddm - cod_spl)/S_NO3_i_COD
-                #S_S = X_S = X_BH = X_BA = 0
-                
                 # X_PHA should come after X_S, since X_S >> X_PHA (Joy)
                 S_A = S_F = X_S = X_PHA = X_H = X_AUT = X_PAO = 0
             else:
@@ -822,22 +820,22 @@ class ASMtoADM(ADMjunction):
             
             # Step 4: convert active biomass into protein, lipids, 
             # carbohydrates and potentially particulate TKN
-            available_bioN = bioN - (X_BH+X_BA) * (1-frac_deg) * adm_X_I_i_N
+            available_bioN = bioN - (X_H + X_AUT + X_PAO) * (1-frac_deg) * adm_X_I_i_N
             if available_bioN < 0:
                 raise RuntimeError('Not enough N in X_BA and X_BH to fully convert '
                                    'the non-biodegradable portion into X_I in ADM1.')
-            req_bioN = (X_BH+X_BA) * frac_deg * X_pr_i_N
-            if available_bioN + X_ND >= req_bioN:
-                X_pr += (X_BH+X_BA) * frac_deg
-                X_ND += available_bioN - req_bioN
+            req_bioN = (X_H + X_AUT + X_PAO) * frac_deg * X_pr_i_N
+            if available_bioN + X_ND_asm1 >= req_bioN:
+                X_pr += (X_H + X_AUT + X_PAO) * frac_deg
+                X_ND_asm1 += available_bioN - req_bioN
             else:
-                bio2pr = (available_bioN + X_ND)/X_pr_i_N
+                bio2pr = (available_bioN + X_ND_asm1)/X_pr_i_N
                 X_pr += bio2pr
-                bio_to_split = (X_BH+X_BA) * frac_deg - bio2pr
+                bio_to_split = (X_H + X_AUT + X_PAO) * frac_deg - bio2pr
                 bio_split_to_li = bio_to_split * self.bio_to_li
                 X_li += bio_split_to_li
                 X_ch += (bio_to_split - bio_split_to_li)
-                X_ND = 0
+                X_ND_asm1 = 0
             
             # Step 5: map particulate inerts
             xi_nsp = X_P_i_N * X_P + asm_X_I_i_N * X_I
