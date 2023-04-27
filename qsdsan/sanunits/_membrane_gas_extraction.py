@@ -75,28 +75,28 @@ class GasExtractionMembrane(SanUnit):
     
     _HenryPreFac = {
         'H2': 7.8e-6, 
-        'CO2' : 3.5e-4, 
-        'CH4': 1.3e-5,
         'O2': 1.2e-5, 
         'N2': 6e-6, 
+        'CO2' : 3.5e-4, 
+        'CH4': 1.3e-5,
         'H2O': 1
         }
     
     _HenrySlope = {
         'H2': 640, 
-        'CO2' : 2600, 
-        'CH4' : 1900,
         'O2': 1800, 
         'N2': 1300, 
+        'CO2' : 2600, 
+        'CH4' : 1900,
         'H2O': 1
         }
     
     _WilkeChang = {
         'H2': 9.84, 
-        'CO2': 2.6, 
-        'CH4': 2.2, 
         'O2': 1.90,
         'N2': 1.77, 
+        'CO2': 2.6, 
+        'CH4': 2.2, 
         'H2O': 1
         }
     
@@ -104,7 +104,7 @@ class GasExtractionMembrane(SanUnit):
     def __init__(self, ID='GEM', ins=None, outs=(), thermo=None, isdynamic=True, 
                   init_with='WasteStream', F_BM_default=None,   FiberID=190e-6, 
                   FiberOD=300e-6, NumTubes=1512, ShellDia=1.89e-2, SurfArea=0.1199,   
-                  GasID = ['H2', 'CO2', 'CH4', 'O2', 'N2', 'H2O'], PVac = 97.325, 
+                  GasID = ['H2', 'O2', 'N2', 'CO2', 'CH4', 'H2O'], PVac = 97.325, 
                   segs = 50, GasPerm = {}, HenryPreFac = {}, HenrySlope = {}, 
                   WilkeChang = {}):
         
