@@ -476,7 +476,7 @@ class GasExtractionMembrane(SanUnit):
         def dy_dt(t, QC_ins, QC, dQC_ins):
             # QC is exactly 'the state' as we define in _init_
             # C = QC
-            Q = QC_ins[0,-1]
+            Q = QC_ins[0,-1]/24/3600
             C_in = QC_ins[0, idx] * mass2mol  # mol/m^3
             u = Q/cross_section_A
             
@@ -558,9 +558,9 @@ class GasExtractionMembrane(SanUnit):
                     
             #         #return dC
             
-            new_C_shell = C_shell+dC_shell
+            new_C_shell = C_shell + dC_shell
             sumCp_fin = np.sum(new_C_shell, axis=1)
             dC_shell[:] = np.diag(sumCp_init/sumCp_fin) @ new_C_shell - C_shell
             dC[:] = np.hstack((dC_lumen, dC_shell)).flatten()
             _update_dstate()
-        self._ODE = dy_dt   
+        self._ODE = dy_dt
