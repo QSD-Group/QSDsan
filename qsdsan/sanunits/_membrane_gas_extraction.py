@@ -121,6 +121,7 @@ class GasExtractionMembrane(SanUnit):
         self.segs = segs              # Number of segments 
         #self.Volume = VolBatchTank   # Volume of the bioreactor (Don't think this is needed)
                 
+        self.indexer = GasID.index
         dct_gas_perm = GasPerm or self._GasPerm
         self.set_GasPerm(**dct_gas_perm)
         dct_gas_hpf =  HenryPreFac or self._HenryPreFac
@@ -132,7 +133,6 @@ class GasExtractionMembrane(SanUnit):
         
         cmps = self.thermo.chemicals
         # self.indexer = cmps.index
-        self.indexer = GasID.index
         # self.idx ensures that the indexing in further code is only for gases 
         # and not all components in the influent
         self.idx = cmps.indices(self.GasID) 
