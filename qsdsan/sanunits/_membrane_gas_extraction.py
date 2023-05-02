@@ -130,9 +130,9 @@ class GasExtractionMembrane(SanUnit):
         dct_gas_wc = WilkeChang or self._WilkeChang
         self.set_WilkeChang(**dct_gas_wc)
         
-        inf, = self.ins
-        cmps = inf.components
-        self.indexer = cmps.index
+        cmps = self.thermo.chemicals
+        # self.indexer = cmps.index
+        self.indexer = GasID.index
         # self.idx ensures that the indexing in further code is only for gases 
         # and not all components in the influent
         self.idx = cmps.indices(self.GasID) 
@@ -264,9 +264,6 @@ class GasExtractionMembrane(SanUnit):
         self.set_prop('_hs', **kwargs)
             
     def set_prop(self, attr_name, **kwargs):
-        inf, = self.ins
-        cmps = inf.components
-        self.indexer = cmps.index
         idxr = self.indexer
         try: attr = getattr(self, attr_name)
         except: attr = self.__dict__[attr_name] = np.zeros(len(self.chemicals))
