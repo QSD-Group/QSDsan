@@ -173,6 +173,12 @@ def create_adm1_p_extension_cmps(set_thermo=True):
                                     particle_size='Soluble',
                                     degradability='Undegradable',
                                     organic=False)
+    
+    # X_MeOH and X_MeP are added at a later iteration of p_extension ADM1. 
+    # They do not participate in any ADM1 process, and would be directly
+    # mapped to ASM2d components at the ASM-ADM-ASM interface. 
+    X_MeOH = cmps_all.X_FeOH.copy('X_MeOH')
+    X_MeP = cmps_all.X_FePO4.copy('X_MeP')
 
     for bio in (X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2):
         # bio.formula = 'C5H7O2N'
@@ -186,7 +192,7 @@ def create_adm1_p_extension_cmps(set_thermo=True):
     cmps_adm1_p_extension = Components([S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2,
                             S_ch4, S_IC, S_IN, S_IP, S_I, X_ch, X_pr, X_li,
                             X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I,
-                            X_PHA, X_PP, X_PAO, S_K, S_Mg, 
+                            X_PHA, X_PP, X_PAO, S_K, S_Mg, X_MeOH, X_MeP, 
                             S_cat, S_an, cmps_all.H2O])
     cmps_adm1_p_extension.default_compile()
     if set_thermo: settings.set_thermo(cmps_adm1_p_extension)
@@ -279,7 +285,7 @@ def rhos_adm1_p_extension(state_arr, params):
     # state_arr_cmps stated just for readability of code 
     # state_arr_cmps = [S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2, S_ch4, S_IC, S_IN,
     #             S_IP, S_I, X_ch, X_pr, X_li, X_su, X_aa, X_fa, X_c4, X_pro, X_ac, 
-    #             X_h2, X_I, X_PHA, X_PP, X_PAO, S_K, S_Mg]
+    #             X_h2, X_I, X_PHA, X_PP, X_PAO, S_K, S_Mg, X_MeOH, X_MeP]
     
     # Cs_ids = cmps.indices(['X_ch', 'X_pr', 'X_li', 'X_su', 'X_aa',
     #                        'X_fa', 'X_c4', 'X_c4', 'X_pro', 'X_ac', 'X_h2',
@@ -302,14 +308,15 @@ def rhos_adm1_p_extension(state_arr, params):
     # S_va, S_bu, S_h2, S_ch4, S_IC, S_IN = state_arr[[3,4,7,8,9,10]]
     S_va, S_bu, S_h2, S_IN, S_IP = state_arr[[3,4,7,10,11]]
     unit_conversion = mass2mol_conversion(cmps)
-    cmps_in_M = state_arr[:32] * unit_conversion
+    # Should I let X_MeOH, and X_MeP unit convert? (ask Joy)
+    cmps_in_M = state_arr[:34] * unit_conversion 
     # weak acids (ADM1) = [S_ca, S_an, S_IN, S_IC, S_ac, S_pro, S_bu, S_va]
     # weak acids (modified_ADM1) = [S_ca, S_K, S_Mg, S_an, S_IN, S_IP, S_IC, S_ac, S_pro, S_bu, S_va]
-    weak_acids = cmps_in_M[[29, 27, 28, 30, 10, 11, 9, 6, 5, 4, 3]]
+    weak_acids = cmps_in_M[[31, 27, 28, 32, 10, 11, 9, 6, 5, 4, 3]]
 
     T_op = state_arr[-1]
     biogas_S = state_arr[7:10].copy()
-    biogas_p = R * T_op * state_arr[32:35] 
+    biogas_p = R * T_op * state_arr[34:37] 
     Kas = Kab * T_correction_factor(T_base, T_op, Ka_dH)
     KH = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[7:10]
 
