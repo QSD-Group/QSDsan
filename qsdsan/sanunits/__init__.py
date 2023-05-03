@@ -41,7 +41,6 @@ from ._compressor import *
 from ._crop_application import *
 from ._dynamic_influent import *
 from ._electrochemical_cell import *
-from ._encapsulation_bioreactor import *
 from ._excretion import *
 from ._heat_exchanging import *
 from ._junction import *
@@ -92,7 +91,6 @@ from . import (
         _distillation,
         _dynamic_influent,
         _electrochemical_cell,
-        _encapsulation_bioreactor,
         _excretion,
         _flash,
         _heat_exchanging,
@@ -138,7 +136,6 @@ __all__ = (
         *_distillation.__all__,
         *_dynamic_influent.__all__,
         *_electrochemical_cell.__all__,
-        *_encapsulation_bioreactor.__all__,
         *_excretion.__all__,
         *_flash.__all__,
         *_heat_exchanging.__all__,
