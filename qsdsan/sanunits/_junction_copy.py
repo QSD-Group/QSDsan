@@ -786,29 +786,53 @@ class ASMtoADM(ADMjunction):
             # S_S (in asm1) equals to the sum of S_F and S_A (pg. 82 IWA ASM models handbook)
             S_S_asm1 = S_F + S_A 
             
+            # First we calculate the amount of amino acid required in ADM1
+            # if all available soluble organic N can be mapped to amino acid
             req_scod = S_ND_asm1 / S_aa_i_N
             
-            if S_S_asm1 < req_scod:
+            # if available S_S is not enough to fulfill that amino acid requirement 
+            if S_S_asm1 < req_scod: 
+                # then all available S_S is mapped to amino acids 
                 S_aa = S_S_asm1
+                # and no S_S would be available for conversion to sugars
                 S_su = 0
+                # This needs to be followed by a corresponding loss in soluble organic N 
                 S_ND_asm1 -= S_aa * S_aa_i_N
+            # if available S_S is more than enough to fulfill that amino acid requirement 
             else:
+                # All soluble organic N will be mapped to amino acid
                 S_aa = req_scod
+                # The line above implies that a certain portion of S_S would also be consumed to form amino acid
+                # The S_S which is left would form sugar 
+                # In simpler terms; S_S = S_S - S_aa; S_su = S_S 
                 S_su = S_S_asm1 - S_aa
+                # All soluble organic N would thus be consumed in amino acid formation
                 S_ND_asm1 = 0
 
             # Step 3: convert slowly biodegradable COD and TKN
             # into proteins, lipids, and carbohydrates
             
+            # First we calculate the amount of protein required in ADM1
+            # if all available particulate organic N can be mapped to amino acid
             req_xcod = X_ND_asm1 / X_pr_i_N
+            
+            # if available X_S is not enough to fulfill that protein requirement
             if X_S < req_xcod:
+                # then all available X_S is mapped to amino acids
                 X_pr = X_S
+                # and no X_S would be available for conversion to lipid or carbohydrates 
                 X_li = X_ch = 0
+                # This needs to be followed by a corresponding loss in particulate organic N 
                 X_ND_asm1 -= X_pr * X_pr_i_N
+            # if available X_S is more than enough to fulfill that protein requirement
             else:
+                # All particulate organic N will be mapped to amino acid
                 X_pr = req_xcod
+                # The line above implies that a certain portion of X_S would also be consumed to form protein
+                # The X_S which is left would form lipid and carbohydrates in a percentage define by the user  
                 X_li = self.xs_to_li * (X_S - X_pr)
                 X_ch = (X_S - X_pr) - X_li
+                # All particulate organic N would thus be consumed in amino acid formation
                 X_ND_asm1 = 0
             
             # Step 4: convert active biomass into protein, lipids, 
@@ -899,7 +923,7 @@ class ASMtoADM(ADMjunction):
                 X_ch, X_pr, X_li, 
                 0, 0, 0, 0, 0, 0, 0, # X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2,
                 X_I, X_PHA, X_PP, X_PAO, 
-                0, 0,  # S_K, S_Mg,
+                0, 0,  # S_K, S_Mg,  (since we are not aiming for K and Mg balance, confirm with Joy)
                 X_MeOH, X_MeP,
                 S_cat, S_an, H2O])
             
