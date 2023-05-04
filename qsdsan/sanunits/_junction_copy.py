@@ -874,6 +874,8 @@ class ASMtoADM(ADMjunction):
             S_IC = S_cat = S_an = 0
             
             # Step 9: Mapping common state variables directly
+            # The next three commented lines are executed when outputting
+            # array of ADM1 components 
             # X_PAO (ADM1) = X_PAO (ASM2d)
             # X_PP (ADM1) = X_PP (ASM2d)
             # X_PHA (ADM1) = X_PHA (ASM2d)
@@ -896,7 +898,10 @@ class ASMtoADM(ADMjunction):
                 S_IC, S_IN, S_IP, S_I, 
                 X_ch, X_pr, X_li, 
                 0, 0, 0, 0, 0, 0, 0, # X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2,
-                X_I, X_PHA, X_PP, X_PAO, S_K, S_Mg, S_cat, S_an, H2O])
+                X_I, X_PHA, X_PP, X_PAO, 
+                0, 0,  # S_K, S_Mg,
+                X_MeOH, X_MeP,
+                S_cat, S_an, H2O])
             
             adm_vals = f_corr(asm_vals, adm_vals)
             
