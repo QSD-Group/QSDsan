@@ -7,6 +7,8 @@ This module is developed by:
     Joy Zhang <joycheung1994@gmail.com>
     
     Yalin Li <mailto.yalin.li@gmail.com>
+    
+    Saumitra Rai <raisaumitra9@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -699,9 +701,8 @@ class ASMtoADM(ADMjunction):
         X_PAO_i_N = cmps_asm.X_PAO.i_N
         S_F_i_N = cmps_asm.S_F.i_N
         X_S_i_N = cmps_asm.X_S.i_N
-        
         asm_X_I_i_N = cmps_asm.X_I.i_N
-        X_P_i_N = cmps_asm.X_P.i_N
+        #X_P_i_N = cmps_asm.X_P.i_N (Doesn't exist in ASM2d)
         if cmps_asm.X_S.i_N > 0: 
             warn(f'X_S in ASM has positive nitrogen content: {cmps_asm.X_S.i_N} gN/gCOD. '
                  'These nitrogen will be ignored by the interface model '
@@ -743,15 +744,13 @@ class ASMtoADM(ADMjunction):
             NO3_coddm = -S_NO3*S_NO3_i_COD
             
             # cod_spl = S_S + X_S + X_BH + X_BA
-            # Replacing S_S with S_F + S_A + X_PHA (since all of them are measured as COD and are degradable)
-            # added X_PAO to X_H and X_AUT
+            # Replacing S_S with S_F + S_A (IWA ASM textbook)
             
-            cod_spl = (S_A + S_F) + X_S + X_PHA + (X_H + X_AUT + X_PAO)
+            cod_spl = (S_A + S_F) + X_S + (X_H + X_AUT)
             
-            #bioN = X_BH*X_BH_i_N + X_BA*X_BA_i_N
-            #Added X_PAO along with X_H and X_AUT 
+            # bioN = X_BH*X_BH_i_N + X_BA*X_BA_i_N
             
-            bioN = X_H*X_H_i_N + X_AUT*X_AUT_i_N + X_PAO*X_PAO_i_N
+            bioN = X_H*X_H_i_N + X_AUT*X_AUT_i_N
             
             # To be used in Step 2
             S_ND_asm1 = S_F*S_F_i_N   #S_ND (in asm1) equals the N content in S_F (Joy)
@@ -760,12 +759,11 @@ class ASMtoADM(ADMjunction):
             
             if cod_spl <= O2_coddm:
                 S_O2 = O2_coddm - cod_spl
-                S_F = S_A =  X_S = X_PHA = X_H = X_AUT = X_PAO = 0
+                S_F = S_A =  X_S = X_H = X_AUT = 0
             elif cod_spl <= O2_coddm + NO3_coddm:
                 S_O2 = 0
                 S_NO3 = -(O2_coddm + NO3_coddm - cod_spl)/S_NO3_i_COD
-                # X_PHA should come after X_S, since X_S >> X_PHA (Joy)
-                S_A = S_F = X_S = X_PHA = X_H = X_AUT = X_PAO = 0
+                S_A = S_F = X_S = X_H = X_AUT = 0
             else:
                 S_A -= O2_coddm + NO3_coddm
                 if S_A < 0:
@@ -775,23 +773,18 @@ class ASMtoADM(ADMjunction):
                         X_S += S_F
                         S_F = 0
                         if X_S < 0:
-                            X_PHA += X_S
+                            X_H += X_S
                             X_S = 0
-                            if X_PHA < 0:
-                                X_H += X_PHA
-                                X_PHA = 0
-                                if X_H < 0:
-                                    X_AUT += X_H
-                                    X_H = 0
-                                    if X_AUT < 0:
-                                        X_PAO += X_AUT
-                                        X_AUT = 0
+                            if X_H < 0:
+                                X_AUT += X_H
+                                X_H = 0
                 S_O2 = S_NO3 = 0
             
             # Step 2: convert any readily biodegradable 
             # COD and TKN into amino acids and sugars
             
-            S_S_asm1 = S_F + S_A # S_S (in asm1) equals to the sum of S_F and S_A (pg. 82 IWA ASM models handbook)
+            # S_S (in asm1) equals to the sum of S_F and S_A (pg. 82 IWA ASM models handbook)
+            S_S_asm1 = S_F + S_A 
             
             req_scod = S_ND_asm1 / S_aa_i_N
             
@@ -820,68 +813,84 @@ class ASMtoADM(ADMjunction):
             
             # Step 4: convert active biomass into protein, lipids, 
             # carbohydrates and potentially particulate TKN
-            available_bioN = bioN - (X_H + X_AUT + X_PAO) * (1-frac_deg) * adm_X_I_i_N
+            available_bioN = bioN - (X_H + X_AUT) * (1-frac_deg) * adm_X_I_i_N
             if available_bioN < 0:
                 raise RuntimeError('Not enough N in X_BA and X_BH to fully convert '
                                    'the non-biodegradable portion into X_I in ADM1.')
-            req_bioN = (X_H + X_AUT + X_PAO) * frac_deg * X_pr_i_N
+            req_bioN = (X_H + X_AUT) * frac_deg * X_pr_i_N
             if available_bioN + X_ND_asm1 >= req_bioN:
-                X_pr += (X_H + X_AUT + X_PAO) * frac_deg
+                X_pr += (X_H + X_AUT) * frac_deg
                 X_ND_asm1 += available_bioN - req_bioN
             else:
                 bio2pr = (available_bioN + X_ND_asm1)/X_pr_i_N
                 X_pr += bio2pr
-                bio_to_split = (X_H + X_AUT + X_PAO) * frac_deg - bio2pr
+                bio_to_split = (X_H + X_AUT) * frac_deg - bio2pr
                 bio_split_to_li = bio_to_split * self.bio_to_li
                 X_li += bio_split_to_li
                 X_ch += (bio_to_split - bio_split_to_li)
                 X_ND_asm1 = 0
             
             # Step 5: map particulate inerts
-            xi_nsp = X_P_i_N * X_P + asm_X_I_i_N * X_I
-            xi_ndm = (X_P+X_I) * adm_X_I_i_N
-            if xi_nsp + X_ND >= xi_ndm:
-                deficit = xi_ndm - xi_nsp
-                X_I += X_P + (X_BH+X_BA) * (1-frac_deg)
-                X_ND -= deficit
-            elif isclose(xi_nsp+X_ND, xi_ndm, rel_tol=rtol, abs_tol=atol):
-                X_I += X_P + (X_BH+X_BA) * (1-frac_deg)
-                X_ND = 0
+            # xi_nsp = X_P_i_N * X_P + asm_X_I_i_N * X_I
+            # Think about leftover N 
+            xi_nsp_asm2d = X_I * asm_X_I_i_N
+            xi_ndm = X_I * adm_X_I_i_N
+            
+            if xi_nsp_asm2d + X_ND_asm1 >= xi_ndm:
+                deficit = xi_ndm - xi_nsp_asm2d
+                # X_I += X_P + (X_H+X_AUT) * (1-frac_deg)
+                X_I += (X_H+X_AUT) * (1-frac_deg)
+                X_ND_asm1 -= deficit
+            elif isclose(xi_nsp_asm2d+X_ND_asm1, xi_ndm, rel_tol=rtol, abs_tol=atol):
+                # X_I += X_P + (X_H+X_AUT) * (1-frac_deg)
+                X_I += (X_H+X_AUT) * (1-frac_deg)
+                X_ND_asm1 = 0
             else:
                 raise RuntimeError('Not enough N in X_I, X_P, X_ND to fully '
                                    'convert X_I and X_P into X_I in ADM1.')
 
+            # S_I_i_N is for ADM1
             req_sn = S_I * S_I_i_N
-            if req_sn <= S_ND:
-                S_ND -= req_sn
-            elif req_sn <= S_ND + X_ND:
-                X_ND -= (req_sn - S_ND)
-                S_ND = 0
-            elif req_sn <= S_ND + X_ND + S_NH:
-                S_NH -= (req_sn - S_ND - X_ND)
-                S_ND = X_ND = 0
+            if req_sn <= S_ND_asm1:
+                S_ND_asm1 -= req_sn
+            elif req_sn <= S_ND_asm1 + X_ND_asm1:
+                X_ND_asm1 -= (req_sn - S_ND_asm1)
+                S_ND_asm1 = 0
+            elif req_sn <= S_ND_asm1 + X_ND_asm1 + S_NH4:
+                S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1)
+                S_ND_asm1 = X_ND_asm1 = 0
             else:
                 warn('Additional soluble inert COD is mapped to S_su.')
-                SI_cod = (S_ND + X_ND + S_NH)/S_I_i_N
+                SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4)/S_I_i_N
                 S_su += S_I - SI_cod
                 S_I = SI_cod
-                S_ND = X_ND = S_NH = 0
+                S_ND_asm1 = X_ND_asm1 = S_NH4 = 0
                 
             # Step 6: map any remaining TKN
-            S_IN = S_ND + X_ND + S_NH            
+            S_IN = S_ND_asm1 + X_ND_asm1 + S_NH4            
             
             # Step 8: check COD and TKN balance
             # has TKN: S_aa, S_IN, S_I, X_pr, X_I
             S_IC = S_cat = S_an = 0
+            # adm_vals = np.array([
+            #     S_su, S_aa, 
+            #     0, 0, 0, 0, 0, # S_fa, S_va, S_bu, S_pro, S_ac, 
+            #     0, 0, # S_h2, S_ch4,
+            #     S_IC, S_IN, S_I, 
+            #     0, # X_c, 
+            #     X_ch, X_pr, X_li, 
+            #     0, 0, 0, 0, 0, 0, 0, # X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2,
+            #     X_I, S_cat, S_an, H2O])
+            
+            
             adm_vals = np.array([
                 S_su, S_aa, 
                 0, 0, 0, 0, 0, # S_fa, S_va, S_bu, S_pro, S_ac, 
                 0, 0, # S_h2, S_ch4,
-                S_IC, S_IN, S_I, 
-                0, # X_c, 
+                S_IC, S_IN, S_IP, S_I, 
                 X_ch, X_pr, X_li, 
                 0, 0, 0, 0, 0, 0, 0, # X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2,
-                X_I, S_cat, S_an, H2O])
+                X_I, X_PHA, X_PP, X_PAO, S_K, S_Mg, S_cat, S_an, H2O])
             
             adm_vals = f_corr(asm_vals, adm_vals)
             
