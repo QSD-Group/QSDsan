@@ -872,6 +872,13 @@ class ASMtoADM(ADMjunction):
             # Step 8: check COD and TKN balance
             # has TKN: S_aa, S_IN, S_I, X_pr, X_I
             S_IC = S_cat = S_an = 0
+            
+            # Step 9: Mapping common state variables directly
+            # X_PAO (ADM1) = X_PAO (ASM2d)
+            # X_PP (ADM1) = X_PP (ASM2d)
+            # X_PHA (ADM1) = X_PHA (ASM2d)
+            S_IP = S_PO4
+            
             # adm_vals = np.array([
             #     S_su, S_aa, 
             #     0, 0, 0, 0, 0, # S_fa, S_va, S_bu, S_pro, S_ac, 
@@ -881,7 +888,6 @@ class ASMtoADM(ADMjunction):
             #     X_ch, X_pr, X_li, 
             #     0, 0, 0, 0, 0, 0, 0, # X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2,
             #     X_I, S_cat, S_an, H2O])
-            
             
             adm_vals = np.array([
                 S_su, S_aa, 
