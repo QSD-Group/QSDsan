@@ -837,30 +837,49 @@ class ASMtoADM(ADMjunction):
             
             # Step 4: convert active biomass into protein, lipids, 
             # carbohydrates and potentially particulate TKN
+            
+            # First the amount of biomass N available for protein, lipid etc is determined
+            # For this calculation, from total biomass N available the amount 
+            # of particulate inert expected in ADM1 is subtracted 
             available_bioN = bioN - (X_H + X_AUT) * (1-frac_deg) * adm_X_I_i_N
             if available_bioN < 0:
-                raise RuntimeError('Not enough N in X_BA and X_BH to fully convert '
+                raise RuntimeError('Not enough N in X_H and X_AUT to fully convert '
                                    'the non-biodegradable portion into X_I in ADM1.')
+            # Then the amount of biomass N  required for biomass conversion to protein is determined
             req_bioN = (X_H + X_AUT) * frac_deg * X_pr_i_N
+            # if available biomass N and particulate organic nitrogen is greater than required biomass N for conversion to protein
             if available_bioN + X_ND_asm1 >= req_bioN:
+                # then all biodegradable biomass N (corrsponding to protein demand) is converted to protein
                 X_pr += (X_H + X_AUT) * frac_deg
+                # the remaining biomass N is transfered as organic N 
                 X_ND_asm1 += available_bioN - req_bioN
+            # if available biomass N and organic nitrogen is less than required biomass N for conversion to protein
             else:
+                # all available N and particulate organic N is converted to protein
                 bio2pr = (available_bioN + X_ND_asm1)/X_pr_i_N
                 X_pr += bio2pr
+                # Biodegradable biomass available after conversion to protein is calculated 
                 bio_to_split = (X_H + X_AUT) * frac_deg - bio2pr
+                # Part of the remaining biomass is mapped to lipid based on user defined value 
                 bio_split_to_li = bio_to_split * self.bio_to_li
                 X_li += bio_split_to_li
+                # The other portion of the remanining biomass is mapped to carbohydrates 
                 X_ch += (bio_to_split - bio_split_to_li)
+                # Since all organic N has been mapped to protein, none is left
                 X_ND_asm1 = 0
             
             # Step 5: map particulate inerts
             # xi_nsp = X_P_i_N * X_P + asm_X_I_i_N * X_I
-            # Think about leftover N 
+            # Think about leftover N
+            # First determine the amount of particulate inert N available from ASM2d
             xi_nsp_asm2d = X_I * asm_X_I_i_N
+            # Then determine the amount of particulate inert N that could be produced 
+            # in ADM1 given the ASM1 X_I
             xi_ndm = X_I * adm_X_I_i_N
             
+            # if particulate inert N available in ASM1 is greater than ADM1 demand
             if xi_nsp_asm2d + X_ND_asm1 >= xi_ndm:
+                # deficit would be a -ive value 
                 deficit = xi_ndm - xi_nsp_asm2d
                 # X_I += X_P + (X_H+X_AUT) * (1-frac_deg)
                 X_I += (X_H+X_AUT) * (1-frac_deg)
@@ -870,8 +889,8 @@ class ASMtoADM(ADMjunction):
                 X_I += (X_H+X_AUT) * (1-frac_deg)
                 X_ND_asm1 = 0
             else:
-                raise RuntimeError('Not enough N in X_I, X_P, X_ND to fully '
-                                   'convert X_I and X_P into X_I in ADM1.')
+                raise RuntimeError('Not enough N in X_I, X_ND_asm1 to fully '
+                                   'convert X_I in ASM2d into X_I in ADM1.')
 
             # S_I_i_N is for ADM1
             req_sn = S_I * S_I_i_N
@@ -903,7 +922,7 @@ class ASMtoADM(ADMjunction):
             # X_PAO (ADM1) = X_PAO (ASM2d)
             # X_PP (ADM1) = X_PP (ASM2d)
             # X_PHA (ADM1) = X_PHA (ASM2d)
-            S_IP = S_PO4
+            S_IP = S_PO4 # correct, as they are both measured as P
             
             # adm_vals = np.array([
             #     S_su, S_aa, 
@@ -923,7 +942,7 @@ class ASMtoADM(ADMjunction):
                 X_ch, X_pr, X_li, 
                 0, 0, 0, 0, 0, 0, 0, # X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2,
                 X_I, X_PHA, X_PP, X_PAO, 
-                0, 0,  # S_K, S_Mg,  (since we are not aiming for K and Mg balance, confirm with Joy)
+                0, 0,  # S_K, S_Mg,
                 X_MeOH, X_MeP,
                 S_cat, S_an, H2O])
             
