@@ -118,3 +118,9 @@ __all__ = (
     *_transportation.__all__,
     *_waste_stream.__all__,
     )
+
+
+def __fun():
+    from .utils import __easter_eggs as __ee
+    __ee.__easter_eggs()
+    
