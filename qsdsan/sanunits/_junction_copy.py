@@ -891,6 +891,7 @@ class ASMtoADM(ADMjunction):
             else:
                 raise RuntimeError('Not enough N in X_I, X_ND_asm1 to fully '
                                    'convert X_I in ASM2d into X_I in ADM1.')
+                
 
             # S_I_i_N is for ADM1
             req_sn = S_I * S_I_i_N
@@ -922,17 +923,13 @@ class ASMtoADM(ADMjunction):
             # X_PAO (ADM1) = X_PAO (ASM2d)
             # X_PP (ADM1) = X_PP (ASM2d)
             # X_PHA (ADM1) = X_PHA (ASM2d)
+            # X_MeOH (ADM1) = X_MeOH (ASM2d)
+            # X_MeP (ADM1) = X_MeP (ASM2d)
             S_IP = S_PO4 # correct, as they are both measured as P
             
-            # adm_vals = np.array([
-            #     S_su, S_aa, 
-            #     0, 0, 0, 0, 0, # S_fa, S_va, S_bu, S_pro, S_ac, 
-            #     0, 0, # S_h2, S_ch4,
-            #     S_IC, S_IN, S_I, 
-            #     0, # X_c, 
-            #     X_ch, X_pr, X_li, 
-            #     0, 0, 0, 0, 0, 0, 0, # X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2,
-            #     X_I, S_cat, S_an, H2O])
+            # When mapping components directly in Step 9 ensure the values of
+            # cmps.i_N, cmps.i_P, and cmps.i_COD are same in both ASM2d and ADM1
+            # ^ Need to code this (05/08)
             
             adm_vals = np.array([
                 S_su, S_aa, 
