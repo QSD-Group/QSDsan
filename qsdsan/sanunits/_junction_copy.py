@@ -695,28 +695,48 @@ class ASMtoADM(ADMjunction):
         atol = self.atol
 
         cmps_asm = ins.components
+        
+        # For COD balance 
         S_NO3_i_COD = cmps_asm.S_NO3.i_COD
+        
+        # For N balance 
         X_H_i_N = cmps_asm.X_H.i_N
         X_AUT_i_N = cmps_asm.X_AUT.i_N
-        X_PAO_i_N = cmps_asm.X_PAO.i_N
         S_F_i_N = cmps_asm.S_F.i_N
         X_S_i_N = cmps_asm.X_S.i_N
         asm_X_I_i_N = cmps_asm.X_I.i_N
-        #X_P_i_N = cmps_asm.X_P.i_N (Doesn't exist in ASM2d)
+        
+        # For P balance
+        X_H_i_P = cmps_asm.X_H.i_P
+        X_AUT_i_P = cmps_asm.X_AUT.i_P
+        S_F_i_P = cmps_asm.S_F.i_P
+        X_S_i_P = cmps_asm.X_S.i_P
+        asm_X_I_i_P = cmps_asm.X_I.i_P
+        
         if cmps_asm.X_S.i_N > 0: 
             warn(f'X_S in ASM has positive nitrogen content: {cmps_asm.X_S.i_N} gN/gCOD. '
                  'These nitrogen will be ignored by the interface model '
                  'and could lead to imbalance of TKN after conversion.')
-        if cmps_asm.S_S.i_N > 0: 
-            warn(f'S_S in ASM has positive nitrogen content: {cmps_asm.S_S.i_N} gN/gCOD. '
+        if cmps_asm.S_A.i_N > 0: 
+            warn(f'S_A in ASM has positive nitrogen content: {cmps_asm.S_S.i_N} gN/gCOD. '
                  'These nitrogen will be ignored by the interface model '
                  'and could lead to imbalance of TKN after conversion.')
+        # We do not need to check if S_F.i_N != 0 since we take care of it using S_ND_asm1
         
         cmps_adm = outs.components
+        
+        # For nitrogen balance 
         S_aa_i_N = cmps_adm.S_aa.i_N
         X_pr_i_N = cmps_adm.X_pr.i_N
         S_I_i_N = cmps_adm.S_I.i_N
         adm_X_I_i_N = cmps_adm.X_I.i_N
+        
+        # For phosphorous balance 
+        X_pr_i_P = cmps_adm.X_pr.i_P
+        adm_S_I_i_P = cmps_adm.S_I.i_P
+        adm_X_I_i_P = cmps_adm.X_I.i_P
+        
+        
         adm_ions_idx = cmps_adm.indices(['S_IN', 'S_IC', 'S_cat', 'S_an'])
         
         frac_deg = self.frac_deg
@@ -751,11 +771,16 @@ class ASMtoADM(ADMjunction):
             # bioN = X_BH*X_BH_i_N + X_BA*X_BA_i_N
             
             bioN = X_H*X_H_i_N + X_AUT*X_AUT_i_N
+            bioP = X_H*X_H_i_P + X_AUT*X_AUT_i_P
             
             # To be used in Step 2
             S_ND_asm1 = S_F*S_F_i_N   #S_ND (in asm1) equals the N content in S_F (Joy)
             # To be used in Step 3
             X_ND_asm1 = X_S*X_S_i_N   #X_ND (in asm1) equals the N content in X_S (Joy)
+            # To be used in Step 5 (a)
+            X_S_P = X_S*X_S_i_P
+            # To be used in Step 5 (b)
+            S_F_P = S_F*S_F_i_P 
             
             if cod_spl <= O2_coddm:
                 S_O2 = O2_coddm - cod_spl
@@ -838,9 +863,11 @@ class ASMtoADM(ADMjunction):
             # Step 4: convert active biomass into protein, lipids, 
             # carbohydrates and potentially particulate TKN
             
+            # -------------------------------For N balance-------------------------
+            
             # First the amount of biomass N available for protein, lipid etc is determined
             # For this calculation, from total biomass N available the amount 
-            # of particulate inert expected in ADM1 is subtracted 
+            # of particulate inert N expected in ADM1 is subtracted 
             available_bioN = bioN - (X_H + X_AUT) * (1-frac_deg) * adm_X_I_i_N
             if available_bioN < 0:
                 raise RuntimeError('Not enough N in X_H and X_AUT to fully convert '
@@ -867,8 +894,52 @@ class ASMtoADM(ADMjunction):
                 X_ch += (bio_to_split - bio_split_to_li)
                 # Since all organic N has been mapped to protein, none is left
                 X_ND_asm1 = 0
+                
+            # ------------------------------For P balance--------------------------
+            
+            # First the amount of biomass P available for protein, lipid etc is determined
+            # For this calculation, from total biomass P available the amount 
+            # of particulate inert P expected in ADM1 is subtracted 
+            available_bioP = bioP - (X_H + X_AUT) * (1-frac_deg) * adm_X_I_i_P
+            if available_bioP < 0:
+                raise RuntimeError('Not enough P in X_H and X_AUT to fully convert '
+                                   'the non-biodegradable portion into X_I in ADM1.')
+            # Then the amount of biomass P  required for biomass conversion to protein is determined
+            req_bioP = (X_H + X_AUT) * frac_deg * X_pr_i_P
+            # if available biomass P and particulate organic P is greater than required biomass P for conversion to protein
+            if available_bioP + X_S_P >= req_bioP:
+                # then all biodegradable biomass N (corrsponding to protein demand) is converted to protein
+                
+                # THIS STEP SHOULD NOT BE EXECUTED
+                X_pr += (X_H + X_AUT) * frac_deg
+                
+                
+                # the remaining biomass N is transfered as organic N 
+                X_S_P += available_bioP - req_bioP
+            # if available biomass N and organic nitrogen is less than required biomass N for conversion to protein
+            else:
+                # all available N and particulate organic N is converted to protein
+                
+                # Because of different bio2pr value for P rest becomes different 
+                bio2pr = (available_bioP + X_S_P)/X_pr_i_P
+                X_pr += bio2pr
+                
+                # THIS STEP IS COMMON
+                # Biodegradable biomass available after conversion to protein is calculated 
+                bio_to_split = (X_H + X_AUT) * frac_deg - bio2pr
+                # Part of the remaining biomass is mapped to lipid based on user defined value 
+                bio_split_to_li = bio_to_split * self.bio_to_li
+                X_li += bio_split_to_li
+                # The other portion of the remanining biomass is mapped to carbohydrates 
+                X_ch += (bio_to_split - bio_split_to_li)
+                
+                # Since all organic N has been mapped to protein, none is left
+                X_S_P = 0
             
             # Step 5: map particulate inerts
+            
+            # -------------------For N and COD balance-----------------------------
+            
             # xi_nsp = X_P_i_N * X_P + asm_X_I_i_N * X_I
             # Think about leftover N
             # First determine the amount of particulate inert N available from ASM2d
@@ -882,17 +953,51 @@ class ASMtoADM(ADMjunction):
                 # deficit would be a -ive value 
                 deficit = xi_ndm - xi_nsp_asm2d
                 # X_I += X_P + (X_H+X_AUT) * (1-frac_deg)
+                # The next line is for COD balance 
                 X_I += (X_H+X_AUT) * (1-frac_deg)
+                # The next line is for N balance 
                 X_ND_asm1 -= deficit
             elif isclose(xi_nsp_asm2d+X_ND_asm1, xi_ndm, rel_tol=rtol, abs_tol=atol):
                 # X_I += X_P + (X_H+X_AUT) * (1-frac_deg)
+                # The next line is for COD balance 
                 X_I += (X_H+X_AUT) * (1-frac_deg)
+                # The next line is for N balance 
                 X_ND_asm1 = 0
             else:
                 raise RuntimeError('Not enough N in X_I, X_ND_asm1 to fully '
                                    'convert X_I in ASM2d into X_I in ADM1.')
                 
-
+            # --------------- For P balance ---------------------------------------
+            
+            # Look at the next 20 lines of code, it does not disturb the COD or N balance at all
+            # The code first determines the P content available/demanded in ASM2d/ADM1 respectively
+            # For ASM2d that P content is from X_I and X_S, and for ADM1 it'll go to X_I
+            # If P is not balanced, it's saved in the variable X_S_P
+            
+            # First determine the amount of particulate inert P available from ASM2d
+            xi_psp_asm2d = X_I * asm_X_I_i_P
+            # Then determine the amount of particulate inert N that could be produced 
+            # in ADM1 given the ASM1 X_I
+            xi_pdm = X_I * adm_X_I_i_P
+            
+            # if particulate inert P available in ASM1 is greater than ADM1 demand
+            if xi_psp_asm2d + X_S_P >= xi_pdm:
+                # deficit would be a -ive value 
+                deficit = xi_pdm - xi_psp_asm2d
+                # Don't need to repeat the next step since already been done
+                # X_I += (X_H+X_AUT) * (1-frac_deg)
+                X_S_P -= deficit
+            elif isclose(xi_psp_asm2d+X_S_P, xi_pdm, rel_tol=rtol, abs_tol=atol):
+                # X_I += X_P + (X_H+X_AUT) * (1-frac_deg)
+                # Don't need to repeat the next step since already been done
+                # X_I += (X_H+X_AUT) * (1-frac_deg)
+                X_S_P  = 0
+            else:
+                raise RuntimeError('Not enough P in X_I, X_S to fully '
+                                   'convert X_I in ASM2d into X_I in ADM1.')
+                
+            # -------------------For N and COD balance-----------------------------
+            
             # S_I_i_N is for ADM1
             req_sn = S_I * S_I_i_N
             if req_sn <= S_ND_asm1:
@@ -910,8 +1015,29 @@ class ASMtoADM(ADMjunction):
                 S_I = SI_cod
                 S_ND_asm1 = X_ND_asm1 = S_NH4 = 0
                 
-            # Step 6: map any remaining TKN
-            S_IN = S_ND_asm1 + X_ND_asm1 + S_NH4            
+
+            # --------------- For P and COD balance ---------------------------------------
+            req_sp = S_I * adm_S_I_i_P
+            
+            if req_sp <= S_F_P:
+                S_F_P -= req_sp
+            elif req_sp <= S_F_P + X_S_P:
+                X_S_P -= (req_sp - S_F_P)
+                S_F_P = 0
+            elif req_sp <= S_F_P + X_S_P + S_PO4:
+                S_PO4 -= (req_sp - S_F_P - X_S_P)
+                S_F_P = X_S_P = 0
+            else:
+                warn('Additional soluble inert COD is mapped to S_su.')
+                SI_cod = (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P
+                S_su += S_I - SI_cod
+                S_I = SI_cod
+                S_F_P = X_S_P = S_PO4 = 0
+                
+            # Step 6(a): map any remaining TKN
+            S_IN = S_ND_asm1 + X_ND_asm1 + S_NH4
+            # Step 6(b): map any remaining phosphorous 
+            S_IP = S_F_P + X_S_P + S_PO4            
             
             # Step 8: check COD and TKN balance
             # has TKN: S_aa, S_IN, S_I, X_pr, X_I
