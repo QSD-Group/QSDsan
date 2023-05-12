@@ -628,15 +628,17 @@ class Incinerator(SanUnit):
         if fuel.phase != 'g':
             raise ValueError(f'The phase of fuel is expected to be gas not {fuel.phase}')
         
-        inf = (sludge.mass + air.mass + fuel.mass)
+        inf = np.asarray(sludge.mass + air.mass + fuel.mass)
         idx_n2 = cmps.index(nitrogen_ID)
         idx_h2o = cmps.index(water_ID)
         
         n2 = inf[idx_n2]
         h2o = inf[idx_h2o]
         
+
         mass_ash = np.sum(inf*cmps.i_mass*(1-cmps.f_Vmass_Totmass)) \
-                   - h2o*cmps.H2O.i_mass*(1-cmps.H2O.f_Vmass_Totmass) - n2*cmps.N2.i_mass*(1-cmps.N2.f_Vmass_Totmass)
+               - h2o*cmps.H2O.i_mass*(1-cmps.H2O.f_Vmass_Totmass) \
+                   - n2*cmps.N2.i_mass*(1-cmps.N2.f_Vmass_Totmass)
 
         # Conservation of mass 
         mass_flue_gas = np.sum(inf*cmps.i_mass) - mass_ash
