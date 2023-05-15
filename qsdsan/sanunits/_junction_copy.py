@@ -863,25 +863,38 @@ class ASMtoADM(ADMjunction):
             # Step 4: convert active biomass into protein, lipids, 
             # carbohydrates and potentially particulate TKN
             
-            # -------------------------------For N balance-------------------------
-            
-            # First the amount of biomass N available for protein, lipid etc is determined
+            # First the amount of biomass N/P available for protein, lipid etc is determined
             # For this calculation, from total biomass N available the amount 
-            # of particulate inert N expected in ADM1 is subtracted 
+            # of particulate inert N/P expected in ADM1 is subtracted 
+            
             available_bioN = bioN - (X_H + X_AUT) * (1-frac_deg) * adm_X_I_i_N
             if available_bioN < 0:
                 raise RuntimeError('Not enough N in X_H and X_AUT to fully convert '
                                    'the non-biodegradable portion into X_I in ADM1.')
-            # Then the amount of biomass N  required for biomass conversion to protein is determined
+                
+            available_bioP = bioP - (X_H + X_AUT) * (1-frac_deg) * adm_X_I_i_P
+            if available_bioP < 0:
+                raise RuntimeError('Not enough P in X_H and X_AUT to fully convert '
+                                   'the non-biodegradable portion into X_I in ADM1.')
+                
+            # Then the amount of biomass N/P required for biomass conversion to protein is determined
             req_bioN = (X_H + X_AUT) * frac_deg * X_pr_i_N
-            # if available biomass N and particulate organic nitrogen is greater than required biomass N for conversion to protein
-            if available_bioN + X_ND_asm1 >= req_bioN:
-                # then all biodegradable biomass N (corrsponding to protein demand) is converted to protein
+            req_bioP = (X_H + X_AUT) * frac_deg * X_pr_i_P
+            
+            # Case I: if both available biomass N/P and particulate organic N/P is greater than 
+            # required biomass N/P for conversion to protein
+            if available_bioN + X_ND_asm1 >= req_bioN and available_bioP + X_S_P >= req_bioP:
+                # then all biodegradable biomass N/P (corrsponding to protein demand) is converted to protein
                 X_pr += (X_H + X_AUT) * frac_deg
-                # the remaining biomass N is transfered as organic N 
-                X_ND_asm1 += available_bioN - req_bioN
-            # if available biomass N and organic nitrogen is less than required biomass N for conversion to protein
-            else:
+                # the remaining biomass N/P is transfered as organic N/P
+                X_ND_asm1 += available_bioN - req_bioN 
+                X_S_P += available_bioP - req_bioP   
+            
+            # Case II: if available biomass N and particulate organic N is less than 
+            # required biomass N for conversion to protein, but available biomass P and  
+            # particulate organic P is greater than required biomass P for conversion to protein
+            elif available_bioN + X_ND_asm1 < req_bioN and available_bioP + X_S_P >= req_bioP:
+                
                 # all available N and particulate organic N is converted to protein
                 bio2pr = (available_bioN + X_ND_asm1)/X_pr_i_N
                 X_pr += bio2pr
@@ -895,36 +908,17 @@ class ASMtoADM(ADMjunction):
                 # Since all organic N has been mapped to protein, none is left
                 X_ND_asm1 = 0
                 
-            # ------------------------------For P balance--------------------------
-            
-            # First the amount of biomass P available for protein, lipid etc is determined
-            # For this calculation, from total biomass P available the amount 
-            # of particulate inert P expected in ADM1 is subtracted 
-            available_bioP = bioP - (X_H + X_AUT) * (1-frac_deg) * adm_X_I_i_P
-            if available_bioP < 0:
-                raise RuntimeError('Not enough P in X_H and X_AUT to fully convert '
-                                   'the non-biodegradable portion into X_I in ADM1.')
-            # Then the amount of biomass P  required for biomass conversion to protein is determined
-            req_bioP = (X_H + X_AUT) * frac_deg * X_pr_i_P
-            # if available biomass P and particulate organic P is greater than required biomass P for conversion to protein
-            if available_bioP + X_S_P >= req_bioP:
-                # then all biodegradable biomass N (corrsponding to protein demand) is converted to protein
+                # the remaining biomass P is transfered as organic P
+                X_S_P += available_bioP - (X_pr*X_pr_i_P)
+
+            # Case III: if available biomass P and particulate organic P is less than 
+            # required biomass P for conversion to protein, but available biomass N and  
+            # particulate organic N is greater than required biomass N for conversion to protein
+            elif available_bioN + X_ND_asm1 >= req_bioN and available_bioP + X_S_P < req_bioP:
                 
-                # THIS STEP SHOULD NOT BE EXECUTED
-                X_pr += (X_H + X_AUT) * frac_deg
-                
-                
-                # the remaining biomass N is transfered as organic N 
-                X_S_P += available_bioP - req_bioP
-            # if available biomass N and organic nitrogen is less than required biomass N for conversion to protein
-            else:
-                # all available N and particulate organic N is converted to protein
-                
-                # Because of different bio2pr value for P rest becomes different 
+                # all available P and particulate organic P is converted to protein
                 bio2pr = (available_bioP + X_S_P)/X_pr_i_P
                 X_pr += bio2pr
-                
-                # THIS STEP IS COMMON
                 # Biodegradable biomass available after conversion to protein is calculated 
                 bio_to_split = (X_H + X_AUT) * frac_deg - bio2pr
                 # Part of the remaining biomass is mapped to lipid based on user defined value 
@@ -932,9 +926,44 @@ class ASMtoADM(ADMjunction):
                 X_li += bio_split_to_li
                 # The other portion of the remanining biomass is mapped to carbohydrates 
                 X_ch += (bio_to_split - bio_split_to_li)
-                
-                # Since all organic N has been mapped to protein, none is left
+                # Since all organic P has been mapped to protein, none is left
                 X_S_P = 0
+                
+                # the remaining biomass N is transfered as organic N
+                X_ND_asm1 += available_bioN - (X_pr*X_pr_i_P)
+            
+            # Case IV: if both available biomass N/P and particulate organic N/P is less than 
+            # required biomass N/P for conversion to protein
+            elif available_bioN + X_ND_asm1 < req_bioN and available_bioP + X_S_P < req_bioP:
+                if X_pr_i_N > X_pr_i_P:
+                    bio2pr = (available_bioN + X_ND_asm1)/X_pr_i_N
+                    X_pr += bio2pr
+                    # Biodegradable biomass available after conversion to protein is calculated 
+                    bio_to_split = (X_H + X_AUT) * frac_deg - bio2pr
+                    # Part of the remaining biomass is mapped to lipid based on user defined value 
+                    bio_split_to_li = bio_to_split * self.bio_to_li
+                    X_li += bio_split_to_li
+                    # The other portion of the remanining biomass is mapped to carbohydrates 
+                    X_ch += (bio_to_split - bio_split_to_li)
+                    # Since all organic N has been mapped to protein, none is left
+                    X_ND_asm1 = 0
+                    # the remaining biomass P is transfered as organic P
+                    X_S_P += available_bioP - (X_pr*X_pr_i_P)
+                else:
+                    bio2pr = (available_bioP + X_ND_asm1)/X_pr_i_P
+                    X_pr += bio2pr
+                    # Biodegradable biomass available after conversion to protein is calculated 
+                    bio_to_split = (X_H + X_AUT) * frac_deg - bio2pr
+                    # Part of the remaining biomass is mapped to lipid based on user defined value 
+                    bio_split_to_li = bio_to_split * self.bio_to_li
+                    X_li += bio_split_to_li
+                    # The other portion of the remanining biomass is mapped to carbohydrates 
+                    X_ch += (bio_to_split - bio_split_to_li)
+                    # Since all organic P has been mapped to protein, none is left
+                    X_S_P = 0
+                    # the remaining biomass N is transfered as organic N
+                    X_ND_asm1 += available_bioN - (X_pr*X_pr_i_N)
+            
             
             # Step 5: map particulate inerts
             
