@@ -967,63 +967,55 @@ class ASMtoADM(ADMjunction):
             
             # Step 5: map particulate inerts
             
-            # -------------------For N and COD balance-----------------------------
-            
-            # xi_nsp = X_P_i_N * X_P + asm_X_I_i_N * X_I
-            # Think about leftover N
-            # First determine the amount of particulate inert N available from ASM2d
+            # 5 (a)
+            # First determine the amount of particulate inert N/P available from ASM2d
             xi_nsp_asm2d = X_I * asm_X_I_i_N
-            # Then determine the amount of particulate inert N that could be produced 
+            xi_psp_asm2d = X_I * asm_X_I_i_P
+            
+            # Then determine the amount of particulate inert N/P that could be produced 
             # in ADM1 given the ASM1 X_I
             xi_ndm = X_I * adm_X_I_i_N
-            
+            xi_pdm = X_I * adm_X_I_i_P
+
             # if particulate inert N available in ASM1 is greater than ADM1 demand
             if xi_nsp_asm2d + X_ND_asm1 >= xi_ndm:
                 # deficit would be a -ive value 
                 deficit = xi_ndm - xi_nsp_asm2d
-                # X_I += X_P + (X_H+X_AUT) * (1-frac_deg)
-                # The next line is for COD balance 
+                # COD balance 
                 X_I += (X_H+X_AUT) * (1-frac_deg)
-                # The next line is for N balance 
+                # N balance 
                 X_ND_asm1 -= deficit
+                # P balance 
+                if xi_psp_asm2d + X_S_P >= xi_pdm:
+                    # deficit would be a -ive value 
+                    deficit = xi_pdm - xi_psp_asm2d
+                    X_S_P -= deficit
+                elif isclose(xi_psp_asm2d+X_S_P, xi_pdm, rel_tol=rtol, abs_tol=atol):
+                    X_S_P  = 0
+                else:
+                    raise RuntimeError('Not enough P in X_I, X_S to fully '
+                                       'convert X_I in ASM2d into X_I in ADM1.')
             elif isclose(xi_nsp_asm2d+X_ND_asm1, xi_ndm, rel_tol=rtol, abs_tol=atol):
-                # X_I += X_P + (X_H+X_AUT) * (1-frac_deg)
-                # The next line is for COD balance 
+                # COD balance 
                 X_I += (X_H+X_AUT) * (1-frac_deg)
-                # The next line is for N balance 
+                # N balance 
                 X_ND_asm1 = 0
+                # P balance 
+                if xi_psp_asm2d + X_S_P >= xi_pdm:
+                    # deficit would be a -ive value 
+                    deficit = xi_pdm - xi_psp_asm2d
+                    X_S_P -= deficit
+                elif isclose(xi_psp_asm2d+X_S_P, xi_pdm, rel_tol=rtol, abs_tol=atol):
+                    X_S_P  = 0
+                else:
+                    raise RuntimeError('Not enough P in X_I, X_S to fully '
+                                       'convert X_I in ASM2d into X_I in ADM1.')
             else:
-                raise RuntimeError('Not enough N in X_I, X_ND_asm1 to fully '
+            # Since the N balance cannot hold, the P balance is not futher checked 
+                raise RuntimeError('Not enough N in X_I, X_ND_asm1, X_S_P to fully '
                                    'convert X_I in ASM2d into X_I in ADM1.')
                 
-            # --------------- For P balance ---------------------------------------
-            
-            # Look at the next 20 lines of code, it does not disturb the COD or N balance at all
-            # The code first determines the P content available/demanded in ASM2d/ADM1 respectively
-            # For ASM2d that P content is from X_I and X_S, and for ADM1 it'll go to X_I
-            # If P is not balanced, it's saved in the variable X_S_P
-            
-            # First determine the amount of particulate inert P available from ASM2d
-            xi_psp_asm2d = X_I * asm_X_I_i_P
-            # Then determine the amount of particulate inert N that could be produced 
-            # in ADM1 given the ASM1 X_I
-            xi_pdm = X_I * adm_X_I_i_P
-            
-            # if particulate inert P available in ASM1 is greater than ADM1 demand
-            if xi_psp_asm2d + X_S_P >= xi_pdm:
-                # deficit would be a -ive value 
-                deficit = xi_pdm - xi_psp_asm2d
-                # Don't need to repeat the next step since already been done
-                # X_I += (X_H+X_AUT) * (1-frac_deg)
-                X_S_P -= deficit
-            elif isclose(xi_psp_asm2d+X_S_P, xi_pdm, rel_tol=rtol, abs_tol=atol):
-                # X_I += X_P + (X_H+X_AUT) * (1-frac_deg)
-                # Don't need to repeat the next step since already been done
-                # X_I += (X_H+X_AUT) * (1-frac_deg)
-                X_S_P  = 0
-            else:
-                raise RuntimeError('Not enough P in X_I, X_S to fully '
-                                   'convert X_I in ASM2d into X_I in ADM1.')
+                
                 
             # -------------------For N and COD balance-----------------------------
             
