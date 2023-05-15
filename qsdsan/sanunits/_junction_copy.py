@@ -930,7 +930,7 @@ class ASMtoADM(ADMjunction):
                 X_S_P = 0
                 
                 # the remaining biomass N is transfered as organic N
-                X_ND_asm1 += available_bioN - (X_pr*X_pr_i_P)
+                X_ND_asm1 += available_bioN - (X_pr*X_pr_i_N)
             
             # Case IV: if both available biomass N/P and particulate organic N/P is less than 
             # required biomass N/P for conversion to protein
@@ -979,7 +979,6 @@ class ASMtoADM(ADMjunction):
 
             # if particulate inert N available in ASM1 is greater than ADM1 demand
             if xi_nsp_asm2d + X_ND_asm1 >= xi_ndm:
-                # deficit would be a -ive value 
                 deficit = xi_ndm - xi_nsp_asm2d
                 # COD balance 
                 X_I += (X_H+X_AUT) * (1-frac_deg)
@@ -987,7 +986,6 @@ class ASMtoADM(ADMjunction):
                 X_ND_asm1 -= deficit
                 # P balance 
                 if xi_psp_asm2d + X_S_P >= xi_pdm:
-                    # deficit would be a -ive value 
                     deficit = xi_pdm - xi_psp_asm2d
                     X_S_P -= deficit
                 elif isclose(xi_psp_asm2d+X_S_P, xi_pdm, rel_tol=rtol, abs_tol=atol):
@@ -1002,7 +1000,6 @@ class ASMtoADM(ADMjunction):
                 X_ND_asm1 = 0
                 # P balance 
                 if xi_psp_asm2d + X_S_P >= xi_pdm:
-                    # deficit would be a -ive value 
                     deficit = xi_pdm - xi_psp_asm2d
                     X_S_P -= deficit
                 elif isclose(xi_psp_asm2d+X_S_P, xi_pdm, rel_tol=rtol, abs_tol=atol):
@@ -1015,56 +1012,119 @@ class ASMtoADM(ADMjunction):
                 raise RuntimeError('Not enough N in X_I, X_ND_asm1, X_S_P to fully '
                                    'convert X_I in ASM2d into X_I in ADM1.')
                 
-                
-                
-            # -------------------For N and COD balance-----------------------------
+            # 5(b)
             
-            # S_I_i_N is for ADM1
+            # Then determine the amount of soluble inert N/P that could be produced 
+            # in ADM1 given the ASM1 X_I
+            # S_I_i_N is for ADM1 
             req_sn = S_I * S_I_i_N
+            req_sp = S_I * adm_S_I_i_P
+            
+            # N balance 
             if req_sn <= S_ND_asm1:
                 S_ND_asm1 -= req_sn
+                # P balance 
+                if req_sp <= S_F_P:
+                    S_F_P -= req_sp
+                elif req_sp <= S_F_P + X_S_P:
+                    X_S_P -= (req_sp - S_F_P)
+                    S_F_P = 0
+                elif req_sp <= S_F_P + X_S_P + S_PO4:
+                    S_PO4 -= (req_sp - S_F_P - X_S_P)
+                    S_F_P = X_S_P = 0
+                else:
+                    warn('Additional soluble inert COD is mapped to S_su.')
+                    # Can these be executed in this case? I think so
+                    SI_cod = (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P
+                    S_su += S_I - SI_cod
+                    S_I = SI_cod
+                    S_F_P = X_S_P = S_PO4 = 0
+            # N balance
             elif req_sn <= S_ND_asm1 + X_ND_asm1:
                 X_ND_asm1 -= (req_sn - S_ND_asm1)
                 S_ND_asm1 = 0
+                # P balance
+                if req_sp <= S_F_P:
+                    S_F_P -= req_sp
+                elif req_sp <= S_F_P + X_S_P:
+                    X_S_P -= (req_sp - S_F_P)
+                    S_F_P = 0
+                elif req_sp <= S_F_P + X_S_P + S_PO4:
+                    S_PO4 -= (req_sp - S_F_P - X_S_P)
+                    S_F_P = X_S_P = 0
+                else:
+                    warn('Additional soluble inert COD is mapped to S_su.')
+                    # Can these be executed in this case? I think so
+                    SI_cod = (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P
+                    S_su += S_I - SI_cod
+                    S_I = SI_cod
+                    S_F_P = X_S_P = S_PO4 = 0
+            # N balance
             elif req_sn <= S_ND_asm1 + X_ND_asm1 + S_NH4:
                 S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1)
                 S_ND_asm1 = X_ND_asm1 = 0
-            else:
+                # P balance 
+                if req_sp <= S_F_P:
+                    S_F_P -= req_sp
+                elif req_sp <= S_F_P + X_S_P:
+                    X_S_P -= (req_sp - S_F_P)
+                    S_F_P = 0
+                elif req_sp <= S_F_P + X_S_P + S_PO4:
+                    S_PO4 -= (req_sp - S_F_P - X_S_P)
+                    S_F_P = X_S_P = 0
+                else:
+                    warn('Additional soluble inert COD is mapped to S_su.')
+                    # Can these be executed in this case? I think so
+                    SI_cod = (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P
+                    S_su += S_I - SI_cod
+                    S_I = SI_cod
+                    S_F_P = X_S_P = S_PO4 = 0
+            elif req_sp <= S_F_P or req_sp <= S_F_P + X_S_P or req_sp <= S_F_P + X_S_P + S_PO4:
                 warn('Additional soluble inert COD is mapped to S_su.')
                 SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4)/S_I_i_N
                 S_su += S_I - SI_cod
                 S_I = SI_cod
                 S_ND_asm1 = X_ND_asm1 = S_NH4 = 0
-                
-
-            # --------------- For P and COD balance ---------------------------------------
-            req_sp = S_I * adm_S_I_i_P
-            
-            if req_sp <= S_F_P:
-                S_F_P -= req_sp
-            elif req_sp <= S_F_P + X_S_P:
-                X_S_P -= (req_sp - S_F_P)
-                S_F_P = 0
-            elif req_sp <= S_F_P + X_S_P + S_PO4:
-                S_PO4 -= (req_sp - S_F_P - X_S_P)
-                S_F_P = X_S_P = 0
+                req_sp = S_I * adm_S_I_i_P
+                if req_sp <= S_F_P:
+                    S_F_P -= req_sp
+                elif req_sp <= S_F_P + X_S_P:
+                    X_S_P -= (req_sp - S_F_P)
+                    S_F_P = 0
+                elif req_sp <= S_F_P + X_S_P + S_PO4:
+                    S_PO4 -= (req_sp - S_F_P - X_S_P)
+                    S_F_P = X_S_P = 0
             else:
-                warn('Additional soluble inert COD is mapped to S_su.')
-                SI_cod = (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P
-                S_su += S_I - SI_cod
-                S_I = SI_cod
-                S_F_P = X_S_P = S_PO4 = 0
+                if S_I_i_N > adm_S_I_i_P:
+                    warn('Additional soluble inert COD is mapped to S_su.')
+                    SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4)/S_I_i_N
+                    S_su += S_I - SI_cod
+                    S_I = SI_cod
+                    S_ND_asm1 = X_ND_asm1 = S_NH4 = 0
+                    
+                    req_sp = S_I * adm_S_I_i_P
+                    S_PO4 -= (req_sp - S_F_P - X_S_P)
+                    S_F_P = X_S_P = 0
+                else:
+                    warn('Additional soluble inert COD is mapped to S_su.')
+                    SI_cod = (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P
+                    S_su += S_I - SI_cod
+                    S_I = SI_cod
+                    S_F_P = X_S_P = S_PO4 = 0
+                    
+                    req_sn = S_I * S_I_i_N
+                    S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1)
+                    S_ND_asm1 = X_ND_asm1 = 0
                 
-            # Step 6(a): map any remaining TKN
+            # Step 6: Step map any remaining TKN/P
             S_IN = S_ND_asm1 + X_ND_asm1 + S_NH4
-            # Step 6(b): map any remaining phosphorous 
             S_IP = S_F_P + X_S_P + S_PO4            
             
             # Step 8: check COD and TKN balance
             # has TKN: S_aa, S_IN, S_I, X_pr, X_I
             S_IC = S_cat = S_an = 0
             
-            # Step 9: Mapping common state variables directly
+            # Step 9: Mapping common state variables directly    
             # The next three commented lines are executed when outputting
             # array of ADM1 components 
             # X_PAO (ADM1) = X_PAO (ASM2d)
