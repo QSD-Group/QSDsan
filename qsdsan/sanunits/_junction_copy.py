@@ -705,6 +705,7 @@ class ASMtoADM(ADMjunction):
         S_F_i_N = cmps_asm.S_F.i_N
         X_S_i_N = cmps_asm.X_S.i_N
         asm_X_I_i_N = cmps_asm.X_I.i_N
+        asm_S_I_i_N = cmps_asm.S_I.i_N
         
         # For P balance
         X_H_i_P = cmps_asm.X_H.i_P
@@ -1047,9 +1048,12 @@ class ASMtoADM(ADMjunction):
             req_sn = S_I * adm_S_I_i_N
             req_sp = S_I * adm_S_I_i_P
             
+            supply_inert_n_asm2d = S_I * asm_S_I_i_N
+            
             # N balance 
-            if req_sn <= S_ND_asm1:
-                S_ND_asm1 -= req_sn
+            if req_sn <= S_ND_asm1 + supply_inert_n_asm2d:
+                S_ND_asm1 -= (req_sn - supply_inert_n_asm2d)
+                supply_inert_n_asm2d = 0 
                 # P balance 
                 if req_sp <= S_F_P:
                     S_F_P -= req_sp
@@ -1068,9 +1072,9 @@ class ASMtoADM(ADMjunction):
                     S_F_P = X_S_P = S_PO4 = 0
                     # Should  I redo N balance here? 
             # N balance
-            elif req_sn <= S_ND_asm1 + X_ND_asm1:
-                X_ND_asm1 -= (req_sn - S_ND_asm1)
-                S_ND_asm1 = 0
+            elif req_sn <= S_ND_asm1 + X_ND_asm1 + supply_inert_n_asm2d:
+                X_ND_asm1 -= (req_sn - S_ND_asm1 - supply_inert_n_asm2d)
+                S_ND_asm1 = supply_inert_n_asm2d = 0
                 # P balance
                 if req_sp <= S_F_P:
                     S_F_P -= req_sp
@@ -1089,9 +1093,9 @@ class ASMtoADM(ADMjunction):
                     S_F_P = X_S_P = S_PO4 = 0
                     # Should  I redo N balance here? 
             # N balance
-            elif req_sn <= S_ND_asm1 + X_ND_asm1 + S_NH4:
-                S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1)
-                S_ND_asm1 = X_ND_asm1 = 0
+            elif req_sn <= S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d:
+                S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1 - supply_inert_n_asm2d)
+                S_ND_asm1 = X_ND_asm1 = supply_inert_n_asm2d = 0
                 # P balance 
                 if req_sp <= S_F_P:
                     S_F_P -= req_sp
@@ -1111,10 +1115,10 @@ class ASMtoADM(ADMjunction):
                     # Should  I redo N balance here? 
             elif req_sp <= S_F_P or req_sp <= S_F_P + X_S_P or req_sp <= S_F_P + X_S_P + S_PO4:
                 warn('Additional soluble inert COD is mapped to S_su.')
-                SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4)/adm_S_I_i_N
+                SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d)/adm_S_I_i_N
                 S_su += S_I - SI_cod
                 S_I = SI_cod
-                S_ND_asm1 = X_ND_asm1 = S_NH4 = 0
+                S_ND_asm1 = X_ND_asm1 = S_NH4 = supply_inert_n_asm2d = 0
                 req_sp = S_I * adm_S_I_i_P
                 if req_sp <= S_F_P:
                     S_F_P -= req_sp
@@ -1125,12 +1129,12 @@ class ASMtoADM(ADMjunction):
                     S_PO4 -= (req_sp - S_F_P - X_S_P)
                     S_F_P = X_S_P = 0
             else:
-                if (S_ND_asm1 + X_ND_asm1 + S_NH4)/adm_S_I_i_N < (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P:
+                if (S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d)/adm_S_I_i_N < (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P:
                     warn('Additional soluble inert COD is mapped to S_su.')
-                    SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4)/adm_S_I_i_N
+                    SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d)/adm_S_I_i_N
                     S_su += S_I - SI_cod
                     S_I = SI_cod
-                    S_ND_asm1 = X_ND_asm1 = S_NH4 = 0
+                    S_ND_asm1 = X_ND_asm1 = S_NH4 = supply_inert_n_asm2d = 0
                     
                     req_sp = S_I * adm_S_I_i_P
                     S_PO4 -= (req_sp - S_F_P - X_S_P)
@@ -1143,11 +1147,11 @@ class ASMtoADM(ADMjunction):
                     S_F_P = X_S_P = S_PO4 = 0
                     
                     req_sn = S_I * adm_S_I_i_N
-                    S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1)
-                    S_ND_asm1 = X_ND_asm1 = 0
+                    S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1 - supply_inert_n_asm2d)
+                    S_ND_asm1 = X_ND_asm1 = supply_inert_n_asm2d = 0
                 
             # Step 6: Step map any remaining TKN/P
-            S_IN = S_ND_asm1 + X_ND_asm1 + S_NH4
+            S_IN = S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d
             S_IP = S_F_P + X_S_P + S_PO4            
             
             # Step 8: check COD and TKN balance
