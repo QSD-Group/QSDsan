@@ -728,7 +728,7 @@ class ASMtoADM(ADMjunction):
         # For nitrogen balance 
         S_aa_i_N = cmps_adm.S_aa.i_N
         X_pr_i_N = cmps_adm.X_pr.i_N
-        S_I_i_N = cmps_adm.S_I.i_N
+        adm_S_I_i_N = cmps_adm.S_I.i_N
         adm_X_I_i_N = cmps_adm.X_I.i_N
         
         # For phosphorous balance 
@@ -963,7 +963,7 @@ class ASMtoADM(ADMjunction):
             # Case IV: if both available biomass N/P and particulate organic N/P is less than 
             # required biomass N/P for conversion to protein
             elif available_bioN + X_ND_asm1 < req_bioN and available_bioP + X_S_P < req_bioP:
-                if X_pr_i_N > X_pr_i_P:
+                if (available_bioN + X_ND_asm1)/X_pr_i_N < (available_bioP + X_S_P)/X_pr_i_P:
                     bio2pr = (available_bioN + X_ND_asm1)/X_pr_i_N
                     X_pr += bio2pr
                     # Biodegradable biomass available after conversion to protein is calculated 
@@ -976,7 +976,7 @@ class ASMtoADM(ADMjunction):
                     # Since all organic N has been mapped to protein, none is left
                     X_ND_asm1 = 0
                     # the remaining biomass P is transfered as organic P
-                    X_S_P += available_bioP - (X_pr*X_pr_i_P)
+                    X_S_P += available_bioP - (bio2pr*X_pr_i_P)
                 else:
                     bio2pr = (available_bioP + X_ND_asm1)/X_pr_i_P
                     X_pr += bio2pr
@@ -990,7 +990,7 @@ class ASMtoADM(ADMjunction):
                     # Since all organic P has been mapped to protein, none is left
                     X_S_P = 0
                     # the remaining biomass N is transfered as organic N
-                    X_ND_asm1 += available_bioN - (X_pr*X_pr_i_N)
+                    X_ND_asm1 += available_bioN - (bio2pr*X_pr_i_N)
             
             
             # Step 5: map particulate inerts
@@ -1044,8 +1044,7 @@ class ASMtoADM(ADMjunction):
             
             # Then determine the amount of soluble inert N/P that could be produced 
             # in ADM1 given the ASM1 X_I
-            # S_I_i_N is for ADM1 
-            req_sn = S_I * S_I_i_N
+            req_sn = S_I * adm_S_I_i_N
             req_sp = S_I * adm_S_I_i_P
             
             # N balance 
@@ -1112,7 +1111,7 @@ class ASMtoADM(ADMjunction):
                     # Should  I redo N balance here? 
             elif req_sp <= S_F_P or req_sp <= S_F_P + X_S_P or req_sp <= S_F_P + X_S_P + S_PO4:
                 warn('Additional soluble inert COD is mapped to S_su.')
-                SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4)/S_I_i_N
+                SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4)/adm_S_I_i_N
                 S_su += S_I - SI_cod
                 S_I = SI_cod
                 S_ND_asm1 = X_ND_asm1 = S_NH4 = 0
@@ -1126,9 +1125,9 @@ class ASMtoADM(ADMjunction):
                     S_PO4 -= (req_sp - S_F_P - X_S_P)
                     S_F_P = X_S_P = 0
             else:
-                if S_I_i_N > adm_S_I_i_P:
+                if (S_ND_asm1 + X_ND_asm1 + S_NH4)/adm_S_I_i_N < (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P:
                     warn('Additional soluble inert COD is mapped to S_su.')
-                    SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4)/S_I_i_N
+                    SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4)/adm_S_I_i_N
                     S_su += S_I - SI_cod
                     S_I = SI_cod
                     S_ND_asm1 = X_ND_asm1 = S_NH4 = 0
@@ -1143,7 +1142,7 @@ class ASMtoADM(ADMjunction):
                     S_I = SI_cod
                     S_F_P = X_S_P = S_PO4 = 0
                     
-                    req_sn = S_I * S_I_i_N
+                    req_sn = S_I * adm_S_I_i_N
                     S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1)
                     S_ND_asm1 = X_ND_asm1 = 0
                 
