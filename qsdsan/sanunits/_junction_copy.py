@@ -840,6 +840,7 @@ class ASMtoADM(ADMjunction):
             # First we calculate the amount of protein required in ADM1
             # if all available particulate organic N can be mapped to amino acid
             req_xcod = X_ND_asm1 / X_pr_i_N
+            # Since X_pr_i_N >> X_pr_i_P there's no need to check req_xcod for N and P separately (CONFIRM LATER 05/16)
             
             # if available X_S is not enough to fulfill that protein requirement
             if X_S < req_xcod:
@@ -849,6 +850,11 @@ class ASMtoADM(ADMjunction):
                 X_li = X_ch = 0
                 # This needs to be followed by a corresponding loss in particulate organic N 
                 X_ND_asm1 -= X_pr * X_pr_i_N
+                
+                # For P balance (CONFIRM LATER 05/16)
+                # This needs to be followed by a corresponding loss in particulate organic N 
+                X_S_P -= X_pr * X_pr_i_P
+                
             # if available X_S is more than enough to fulfill that protein requirement
             else:
                 # All particulate organic N will be mapped to amino acid
@@ -859,6 +865,10 @@ class ASMtoADM(ADMjunction):
                 X_ch = (X_S - X_pr) - X_li
                 # All particulate organic N would thus be consumed in amino acid formation
                 X_ND_asm1 = 0
+                
+                # For P balance (CONFIRM LATER 05/16)
+                # This needs to be followed by a corresponding loss in particulate organic N 
+                X_S_P -= X_pr * X_pr_i_P
             
             # Step 4: convert active biomass into protein, lipids, 
             # carbohydrates and potentially particulate TKN
@@ -909,28 +919,46 @@ class ASMtoADM(ADMjunction):
                 X_ND_asm1 = 0
                 
                 # the remaining biomass P is transfered as organic P
-                X_S_P += available_bioP - (X_pr*X_pr_i_P)
+                X_S_P += available_bioP - (bio2pr*X_pr_i_P)
 
             # Case III: if available biomass P and particulate organic P is less than 
             # required biomass P for conversion to protein, but available biomass N and  
             # particulate organic N is greater than required biomass N for conversion to protein
             elif available_bioN + X_ND_asm1 >= req_bioN and available_bioP + X_S_P < req_bioP:
                 
-                # all available P and particulate organic P is converted to protein
-                bio2pr = (available_bioP + X_S_P)/X_pr_i_P
-                X_pr += bio2pr
-                # Biodegradable biomass available after conversion to protein is calculated 
-                bio_to_split = (X_H + X_AUT) * frac_deg - bio2pr
-                # Part of the remaining biomass is mapped to lipid based on user defined value 
-                bio_split_to_li = bio_to_split * self.bio_to_li
-                X_li += bio_split_to_li
-                # The other portion of the remanining biomass is mapped to carbohydrates 
-                X_ch += (bio_to_split - bio_split_to_li)
-                # Since all organic P has been mapped to protein, none is left
-                X_S_P = 0
+                if (available_bioP + X_S_P)/X_pr_i_P < (available_bioN + X_ND_asm1)/X_pr_i_N:
+                    # all available P and particulate organic P is converted to protein
+                    bio2pr = (available_bioP + X_S_P)/X_pr_i_P
+                    X_pr += bio2pr
+                    # Biodegradable biomass available after conversion to protein is calculated 
+                    bio_to_split = (X_H + X_AUT) * frac_deg - bio2pr
+                    # Part of the remaining biomass is mapped to lipid based on user defined value 
+                    bio_split_to_li = bio_to_split * self.bio_to_li
+                    X_li += bio_split_to_li
+                    # The other portion of the remanining biomass is mapped to carbohydrates 
+                    X_ch += (bio_to_split - bio_split_to_li)
+                    # Since all organic P has been mapped to protein, none is left
+                    X_S_P = 0
+                    
+                    # the remaining biomass N is transfered as organic N
+                    X_ND_asm1 += available_bioN - (bio2pr*X_pr_i_N)
                 
-                # the remaining biomass N is transfered as organic N
-                X_ND_asm1 += available_bioN - (X_pr*X_pr_i_N)
+                else:
+                    # all available N and particulate organic N is converted to protein
+                    bio2pr = (available_bioN + X_ND_asm1)/X_pr_i_N
+                    X_pr += bio2pr
+                    # Biodegradable biomass available after conversion to protein is calculated 
+                    bio_to_split = (X_H + X_AUT) * frac_deg - bio2pr
+                    # Part of the remaining biomass is mapped to lipid based on user defined value 
+                    bio_split_to_li = bio_to_split * self.bio_to_li
+                    X_li += bio_split_to_li
+                    # The other portion of the remanining biomass is mapped to carbohydrates 
+                    X_ch += (bio_to_split - bio_split_to_li)
+                    # Since all organic N has been mapped to protein, none is left
+                    X_ND_asm1 = 0
+                    
+                    # the remaining biomass P is transfered as organic P
+                    X_S_P += available_bioP - (bio2pr*X_pr_i_P)
             
             # Case IV: if both available biomass N/P and particulate organic N/P is less than 
             # required biomass N/P for conversion to protein
@@ -1039,6 +1067,7 @@ class ASMtoADM(ADMjunction):
                     S_su += S_I - SI_cod
                     S_I = SI_cod
                     S_F_P = X_S_P = S_PO4 = 0
+                    # Should  I redo N balance here? 
             # N balance
             elif req_sn <= S_ND_asm1 + X_ND_asm1:
                 X_ND_asm1 -= (req_sn - S_ND_asm1)
@@ -1059,6 +1088,7 @@ class ASMtoADM(ADMjunction):
                     S_su += S_I - SI_cod
                     S_I = SI_cod
                     S_F_P = X_S_P = S_PO4 = 0
+                    # Should  I redo N balance here? 
             # N balance
             elif req_sn <= S_ND_asm1 + X_ND_asm1 + S_NH4:
                 S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1)
@@ -1079,6 +1109,7 @@ class ASMtoADM(ADMjunction):
                     S_su += S_I - SI_cod
                     S_I = SI_cod
                     S_F_P = X_S_P = S_PO4 = 0
+                    # Should  I redo N balance here? 
             elif req_sp <= S_F_P or req_sp <= S_F_P + X_S_P or req_sp <= S_F_P + X_S_P + S_PO4:
                 warn('Additional soluble inert COD is mapped to S_su.')
                 SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4)/S_I_i_N
@@ -1132,7 +1163,7 @@ class ASMtoADM(ADMjunction):
             # X_PHA (ADM1) = X_PHA (ASM2d)
             # X_MeOH (ADM1) = X_MeOH (ASM2d)
             # X_MeP (ADM1) = X_MeP (ASM2d)
-            S_IP = S_PO4 # correct, as they are both measured as P
+            # S_IP = S_PO4 # correct, but not using to balance P 
             
             # When mapping components directly in Step 9 ensure the values of
             # cmps.i_N, cmps.i_P, and cmps.i_COD are same in both ASM2d and ADM1
