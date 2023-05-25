@@ -628,40 +628,39 @@ class Incinerator(SanUnit):
         if fuel.phase != 'g':
             raise ValueError(f'The phase of fuel is expected to be gas not {fuel.phase}')
         
-        inf = sludge.mass + air.mass + fuel.mass
+        inf = np.asarray(sludge.mass + air.mass + fuel.mass)
         idx_n2 = cmps.index(nitrogen_ID)
         idx_h2o = cmps.index(water_ID)
         
         n2 = inf[idx_n2]
         h2o = inf[idx_h2o]
         
-        mass_ash = sum(inf*cmps.i_mass*(1-cmps.f_Vmass_Totmass)) \
-               - h2o*cmps.H2O.i_mass*(1-cmps.H2O.f_Vmass_Totmass) \
-                   - n2*cmps.N2.i_mass*(1-cmps.N2.f_Vmass_Totmass)
+        mass_ash = np.sum(inf*cmps.i_mass*(1-cmps.f_Vmass_Totmass)) \
+               - h2o*cmps.H2O.i_mass*(1-cmps.H2O.f_Vmass_Totmass) - n2*cmps.N2.i_mass*(1-cmps.N2.f_Vmass_Totmass)
 
         # Conservation of mass 
         mass_flue_gas = np.sum(inf*cmps.i_mass) - mass_ash
         mass_co2 = mass_flue_gas - n2*cmps.N2.i_mass - h2o*cmps.H2O.i_mass
+        
         flue_gas.set_flow([n2, h2o, (mass_co2/cmps.S_CO2.i_mass)], 
                           'kg/hr', (nitrogen_ID, water_ID, carbon_di_oxide_ID))
         ash_cmp_ID = self.ash_component_ID
         ash_idx = cmps.index(ash_cmp_ID)
-        ash.set_flow([mass_ash/cmps.i_mass[ash_idx]/(1-cmps.f_Vmass_Totmass[ash_idx])], 
-                     'kg/hr', (ash_cmp_ID))
+        ash.set_flow([mass_ash/cmps.i_mass[ash_idx]/(1-cmps.f_Vmass_Totmass[ash_idx])],'kg/hr', (ash_cmp_ID,))
         
         # Energy balance 
-        self.Heat_sludge = sludge.dry_mass*sludge.F_vol*self.calorific_value_sludge/1000 #in KJ/hr (mg/L)*(m3/hr)*(KJ/kg)=KJ/hr*(1/1000)
-        self.Heat_air = np.sum(air.mass*cmps.i_mass)*self.Cp_air #in KJ/hr 
-        self.Heat_fuel = np.sum(fuel.mass*cmps.i_mass)*self.calorific_value_fuel #in KJ/hr 
-        self.Heat_flue_gas = self.process_efficiency*(self.Heat_sludge + self.Heat_air + self.Heat_fuel)
+        # self.Heat_sludge = sludge.dry_mass*sludge.F_vol*self.calorific_value_sludge/1000 #in KJ/hr (mg/L)*(m3/hr)*(KJ/kg)=KJ/hr*(1/1000)
+        # self.Heat_air = np.sum(air.mass*cmps.i_mass)*self.Cp_air #in KJ/hr 
+        # self.Heat_fuel = np.sum(fuel.mass*cmps.i_mass)*self.calorific_value_fuel #in KJ/hr 
+        # self.Heat_flue_gas = self.process_efficiency*(self.Heat_sludge + self.Heat_air + self.Heat_fuel)
         
-        # Conservation of energy
-        self.Heat_loss = self.Heat_sludge + self.Heat_air + self.Heat_fuel - self.Heat_flue_gas
+        # # Conservation of energy
+        # self.Heat_loss = self.Heat_sludge + self.Heat_air + self.Heat_fuel - self.Heat_flue_gas
         
     def _init_state(self):
         
         sludge, air, fuel = self.ins
-        inf = sludge.mass + air.mass + fuel.mass
+        inf = np.asarray(sludge.mass + air.mass + fuel.mass)
         self._state = (24*inf)/1000
         self._dstate = self._state * 0.
         self._cached_state = self._state.copy()
