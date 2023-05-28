@@ -714,14 +714,15 @@ class ASMtoADM(ADMjunction):
         X_S_i_P = cmps_asm.X_S.i_P
         asm_X_I_i_P = cmps_asm.X_I.i_P
         
-        if cmps_asm.X_S.i_N > 0: 
-            warn(f'X_S in ASM has positive nitrogen content: {cmps_asm.X_S.i_N} gN/gCOD. '
-                 'These nitrogen will be ignored by the interface model '
-                 'and could lead to imbalance of TKN after conversion.')
         if cmps_asm.S_A.i_N > 0: 
             warn(f'S_A in ASM has positive nitrogen content: {cmps_asm.S_S.i_N} gN/gCOD. '
                  'These nitrogen will be ignored by the interface model '
                  'and could lead to imbalance of TKN after conversion.')
+        if cmps_asm.S_A.i_P > 0: 
+            warn(f'S_A in ASM has positive phosphorous content: {cmps_asm.S_S.i_P} gN/gCOD. '
+                 'These phosphorous will be ignored by the interface model '
+                 'and could lead to imbalance of TP after conversion.')
+        # We do not need to check if X_S.i_N != 0 since we take care of it using X_ND_asm1
         # We do not need to check if S_F.i_N != 0 since we take care of it using S_ND_asm1
         
         cmps_adm = outs.components
@@ -992,7 +993,7 @@ class ASMtoADM(ADMjunction):
                                        'convert X_I in ASM2d into X_I in ADM1.')
             else:
             # Since the N balance cannot hold, the P balance is not futher checked 
-                raise RuntimeError('Not enough N in X_I, X_ND_asm1 to fully '
+                raise RuntimeError('Not enough N in X_I, X_S to fully '
                                    'convert X_I in ASM2d into X_I in ADM1.')
                 
             # 5(b)
@@ -1120,7 +1121,6 @@ class ASMtoADM(ADMjunction):
             # X_PHA (ADM1) = X_PHA (ASM2d)
             # X_MeOH (ADM1) = X_MeOH (ASM2d)
             # X_MeP (ADM1) = X_MeP (ASM2d)
-            # S_IP = S_PO4 # correct, but not using to balance P 
             
             # When mapping components directly in Step 9 ensure the values of
             # cmps.i_N, cmps.i_P, and cmps.i_COD are same in both ASM2d and ADM1
