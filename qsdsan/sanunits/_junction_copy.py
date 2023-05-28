@@ -649,7 +649,7 @@ class ASMtoADM(ADMjunction):
         tol = max(self.rtol*lhs, self.rtol*rhs, self.atol)
         return abs(error) <= tol, error, tol, rhs
     
-    def balance_cod_tkn(self, asm_vals, adm_vals):
+    def balance_cod_tkn_tp(self, asm_vals, adm_vals):
         cmps_asm = self.ins[0].components
         cmps_adm = self.outs[0].components
         asm_i_COD = cmps_asm.i_COD
@@ -657,40 +657,86 @@ class ASMtoADM(ADMjunction):
         non_tkn_idx = cmps_asm.indices(('S_NO', 'S_N2'))
         asm_i_N = cmps_asm.i_N
         adm_i_N = cmps_adm.i_N
+        asm_i_P = cmps_asm.i_P
+        adm_i_P = cmps_adm.i_P
         asm_cod = sum(asm_vals*asm_i_COD)
         asm_tkn = sum(asm_vals*asm_i_N) - sum(asm_vals[non_tkn_idx])
+        asm_tp = sum(asm_vals*asm_i_P)
         cod_bl, cod_err, cod_tol, adm_cod = self.isbalanced(asm_cod, adm_vals, adm_i_COD)
         tkn_bl, tkn_err, tkn_tol, adm_tkn = self.isbalanced(asm_tkn, adm_vals, adm_i_N)
-        if cod_bl:
-            if tkn_bl: return adm_vals
+        tp_bl, tp_err, tp_tol, adm_tp = self.isbalanced(asm_tp, adm_vals, adm_i_P)
+        
+        if tkn_bl and tp_bl:
+            if cod_bl:
+                return adm_vals
+            else:
+                if cod_err > 0: dcod = -(cod_err - cod_tol)/adm_cod
+                else: dcod = -(cod_err + cod_tol)/adm_cod
+                _adm_vals = adm_vals * (1 + (adm_i_COD>0)*dcod)
+                _tkn_bl, _tkn_err, _tkn_tol, _adm_tkn = self.isbalanced(asm_tkn, _adm_vals, adm_i_N)
+                _tp_bl, _tp_err, _tp_tol, _adm_tp = self.isbalanced(asm_tp, _adm_vals, adm_i_P)
+                if _tkn_bl and _tp_bl: return _adm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same \n'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ASM) TKN is {asm_tkn}\n '
+                        f'effluent (ADM) TKN is {adm_tkn} or {_adm_tkn}\n '
+                        f'influent TP is {asm_tp}\n ' 
+                        f'effluent TP is {adm_tp} or {_adm_tp}. '
+                        f'influent COD is {asm_cod}\n ' 
+                        f'effluent COD is {adm_cod} or {adm_cod*(1+dcod)}. ')
+                    return adm_vals
+        elif cod_bl and tp_bl:
+            if tkn_bl:
+                return adm_vals
             else:
                 if tkn_err > 0: dtkn = -(tkn_err - tkn_tol)/adm_tkn
                 else: dtkn = -(tkn_err + tkn_tol)/adm_tkn
                 _adm_vals = adm_vals * (1 + (adm_i_N>0)*dtkn)
                 _cod_bl, _cod_err, _cod_tol, _adm_cod = self.isbalanced(asm_cod, _adm_vals, adm_i_COD)
-                if _cod_bl: return _adm_vals
+                _tp_bl, _tp_err, _tp_tol, _adm_tp = self.isbalanced(asm_tp, _adm_vals, adm_i_P)
+                if _cod_bl and _tp_bl: return _adm_vals
                 else: 
-                    warn('cannot balance COD and TKN at the same '
+                    warn('cannot balance COD, TKN, and TP at the same time'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ASM) COD is {asm_cod}\n '
+                        f'effluent (ADM) COD is {adm_cod} or {_adm_cod}\n '
+                        f'influent TP is {asm_tp}\n ' 
+                        f'effluent TP is {adm_tp} or {_adm_tp}. '
+                        f'influent TKN is {asm_tkn}\n ' 
+                        f'effluent TKN is {adm_tkn} or {adm_tkn*(1+dtkn)}. ')
+                    return adm_vals
+        elif cod_bl and tkn_bl:
+            if tp_bl:
+                return adm_vals
+            else:
+                if tp_err > 0: dtp = -(tp_err - tp_tol)/adm_tp
+                else: dtp = -(tp_err + tp_tol)/adm_tp
+                _adm_vals = adm_vals * (1 + (adm_i_P>0)*dtp)
+                _cod_bl, _cod_err, _cod_tol, _adm_cod = self.isbalanced(asm_cod, _adm_vals, adm_i_COD)
+                _tkn_bl, _tkn_err, _tkn_tol, _adm_tkn = self.isbalanced(asm_tkn, _adm_vals, adm_i_N)
+                if _cod_bl and _tkn_bl: return _adm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same time'
                         f'time with rtol={self.rtol} and atol={self.atol}.\n '
                         f'influent (ASM) COD is {asm_cod}\n '
                         f'effluent (ADM) COD is {adm_cod} or {_adm_cod}\n '
                         f'influent TKN is {asm_tkn}\n ' 
-                        f'effluent TKN is {adm_tkn} or {adm_tkn*(1+dtkn)}. ')
+                        f'effluent TKN is {adm_tkn} or {_adm_tkn}. '
+                        f'influent TP is {asm_tp}\n ' 
+                        f'effluent TP is {adm_tp} or {adm_tp*(1+dtp)}. ')
                     return adm_vals
         else:
-            if cod_err > 0: dcod = -(cod_err - cod_tol)/adm_cod
-            else: dcod = -(cod_err + cod_tol)/adm_cod
-            _adm_vals = adm_vals * (1 + (adm_i_COD>0)*dcod)
-            _tkn_bl, _tkn_err, _tkn_tol, _adm_tkn = self.isbalanced(asm_tkn, _adm_vals, adm_i_N)
-            if _tkn_bl: return _adm_vals
-            else:
-                warn('cannot balance COD and TKN at the same '
-                    f'time with rtol={self.rtol} and atol={self.atol}.\n '
-                    f'influent (ASM) COD is {asm_cod}\n '
-                    f'effluent (ADM) COD is {adm_cod} or {adm_cod*(1+dcod)}\n '
-                    f'influent TKN is {asm_tkn}\n ' 
-                    f'effluent TKN is {adm_tkn} or {_adm_tkn}. ')
-                return adm_vals
+            warn('cannot balance COD, TKN and TP at the same time. \n'
+                 'Atleast two of the three COD, TKN, and TP are not balanced \n'
+                f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                f'influent (ASM) COD is {asm_cod}\n '
+                f'effluent (ADM) COD is {adm_cod}\n '
+                f'influent TP is {asm_tp}\n ' 
+                f'effluent TP is {adm_tp}'
+                f'influent TKN is {asm_tkn}\n ' 
+                f'effluent TKN is {adm_tkn}. ')
+            return adm_vals
                 
     def _compile_reactions(self):
         # Retrieve constants
@@ -753,7 +799,7 @@ class ASMtoADM(ADMjunction):
         alpha_IN = self.alpha_IN
         alpha_IC = self.alpha_IC
         proton_charge = 10**(-self.pKa[0]+self.pH) - 10**(-self.pH) # self.pKa[0] is pKw
-        f_corr = self.balance_cod_tkn
+        f_corr = self.balance_cod_tkn_tp
 
         def asm2adm(asm_vals):
             # S_I, S_S, X_I, X_S, X_BH, X_BA, X_P, S_O, S_NO, S_NH, S_ND, X_ND, S_ALK, S_N2, H2O = asm_vals
