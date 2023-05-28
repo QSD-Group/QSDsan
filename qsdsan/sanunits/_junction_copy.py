@@ -793,6 +793,26 @@ class ASMtoADM(ADMjunction):
         adm_S_I_i_P = cmps_adm.S_I.i_P
         adm_X_I_i_P = cmps_adm.X_I.i_P
         
+        # Checks for direct mapping of X_PAO, X_PP, X_PHA
+        
+        # Check for X_PAO (measured as COD so i_COD = 1 in both ASM2d and ADM1)
+        asm_X_PAO_i_N = cmps_asm.X_PAO.i_N
+        adm_X_PAO_i_N = cmps_adm.X_PAO.i_N
+        if asm_X_PAO_i_N != adm_X_PAO_i_N:
+            raise RuntimeError('X_PAO cannot be directly mapped as N content'
+                               f'in asm2d_X_PAO_i_N = {asm_X_PAO_i_N} is not equal to'
+                               f'adm_X_PAO_i_N = {adm_X_PAO_i_N}')
+            
+        asm_X_PAO_i_P = cmps_asm.X_PAO.i_P
+        adm_X_PAO_i_P = cmps_adm.X_PAO.i_P
+        if asm_X_PAO_i_P != adm_X_PAO_i_P:
+            raise RuntimeError('X_PAO cannot be directly mapped as P content'
+                               f'in asm2d_X_PAO_i_P = {asm_X_PAO_i_P} is not equal to'
+                               f'adm_X_PAO_i_P = {adm_X_PAO_i_P}')
+        
+        # Checks not required for X_PP as measured as P in both, with i_COD = i_N = 0
+        # Checks not required for X_PHA as measured as COD in both, with i_N = i_P = 0
+        
         adm_ions_idx = cmps_adm.indices(['S_IN', 'S_IC', 'S_cat', 'S_an'])
         
         frac_deg = self.frac_deg
