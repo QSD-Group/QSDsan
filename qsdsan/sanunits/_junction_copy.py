@@ -813,9 +813,10 @@ class ASMtoADM(ADMjunction):
         # Checks not required for X_PP as measured as P in both, with i_COD = i_N = 0
         # Checks not required for X_PHA as measured as COD in both, with i_N = i_P = 0
         
-        adm_ions_idx = cmps_adm.indices(['S_IN', 'S_IC', 'S_cat', 'S_an'])
+        adm_ions_idx = cmps_adm.indices(['S_IN', 'S_IP', 'S_IC', 'S_cat', 'S_an'])
         
         frac_deg = self.frac_deg
+        alpha_IP = self.alpha_IP
         alpha_IN = self.alpha_IN
         alpha_IC = self.alpha_IC
         proton_charge = 10**(-self.pKa[0]+self.pH) - 10**(-self.pH) # self.pKa[0] is pKw
@@ -1187,6 +1188,9 @@ class ASMtoADM(ADMjunction):
             # has TKN: S_aa, S_IN, S_I, X_pr, X_I
             S_IC = S_cat = S_an = 0
             
+            # When mapping components directly in Step 9 ensure the values of
+            # cmps.i_N, cmps.i_P, and cmps.i_COD are same in both ASM2d and ADM1
+            
             # Step 9: Mapping common state variables directly    
             # The next three commented lines are executed when outputting
             # array of ADM1 components 
@@ -1195,10 +1199,6 @@ class ASMtoADM(ADMjunction):
             # X_PHA (ADM1) = X_PHA (ASM2d)
             # X_MeOH (ADM1) = X_MeOH (ASM2d)
             # X_MeP (ADM1) = X_MeP (ASM2d)
-            
-            # When mapping components directly in Step 9 ensure the values of
-            # cmps.i_N, cmps.i_P, and cmps.i_COD are same in both ASM2d and ADM1
-            # ^ Need to code this (05/08)
             
             adm_vals = np.array([
                 S_su, S_aa, 
@@ -1219,7 +1219,10 @@ class ASMtoADM(ADMjunction):
             #!!! charge balance should technically include VFAs, 
             # but VFAs concentrations are assumed zero per previous steps??
             S_IN = adm_vals[adm_ions_idx[0]]
-            S_IC = (asm_charge_tot -  S_IN*alpha_IN)/alpha_IC
+            S_IP = adm_vals[adm_ions_idx[1]]
+            #!!! charge balance from ADM1 should technically include S_K, and S_Mg,
+            #but since both are zero, it is acceptable 
+            S_IC = (asm_charge_tot -S_IN*alpha_IN -S_IP*alpha_IP)/alpha_IC
             net_Scat = asm_charge_tot + proton_charge
             if net_Scat > 0:  
                 S_cat = net_Scat
@@ -1228,7 +1231,7 @@ class ASMtoADM(ADMjunction):
                 S_cat = 0
                 S_an = -net_Scat
             
-            adm_vals[adm_ions_idx[1:]] = [S_IC, S_cat, S_an]
+            adm_vals[adm_ions_idx[2:]] = [S_IC, S_cat, S_an]
             
             return adm_vals
         
