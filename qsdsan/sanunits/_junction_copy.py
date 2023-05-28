@@ -604,7 +604,7 @@ class ASMtoADM(ADMjunction):
     downstream : stream or str
         Effluent stream with ADM components.
     adm1_model : obj
-        The anaerobic digestion process model (:class:`qsdsan.processes.ADM1`).
+        The anaerobic digestion process model (:class:`qsdsan.processes.ADM1_p_extension`).
     xs_to_li : float
         Split of slowly biodegradable substrate COD to lipid, 
         after all N is mapped into protein.
@@ -623,6 +623,11 @@ class ASMtoADM(ADMjunction):
     [1] Nopens, I.; Batstone, D. J.; Copp, J. B.; Jeppsson, U.; Volcke, E.; 
     Alex, J.; Vanrolleghem, P. A. An ASM/ADM Model Interface for Dynamic 
     Plant-Wide Simulation. Water Res. 2009, 43, 1913–1923.
+    
+    [2] Flores-Alsina, X., Solon, K., Kazadi Mbamba, C., Tait, S., Gernaey, K. V., 
+    Jeppsson, U., & Batstone, D. J. (2016). Modelling phosphorus (P), sulfur (S) 
+    and iron (FE) interactions for dynamic simulations of anaerobic digestion processes. 
+    Water Research, 95, 370–382. 
     
     See Also
     --------
@@ -722,6 +727,10 @@ class ASMtoADM(ADMjunction):
             warn(f'S_A in ASM has positive phosphorous content: {cmps_asm.S_S.i_P} gN/gCOD. '
                  'These phosphorous will be ignored by the interface model '
                  'and could lead to imbalance of TP after conversion.')
+        if cmps_asm.S_I.i_P > 0:
+            warn(f'S_I in ASM has positive phosphorous content: {cmps_asm.S_I.i_P} gN/gCOD. '
+                 'These phosphorous will be ignored by the interface model '
+                 'and could lead to imbalance of TP after conversion.')
         # We do not need to check if X_S.i_N != 0 since we take care of it using X_ND_asm1
         # We do not need to check if S_F.i_N != 0 since we take care of it using S_ND_asm1
         
@@ -737,7 +746,6 @@ class ASMtoADM(ADMjunction):
         X_pr_i_P = cmps_adm.X_pr.i_P
         adm_S_I_i_P = cmps_adm.S_I.i_P
         adm_X_I_i_P = cmps_adm.X_I.i_P
-        
         
         adm_ions_idx = cmps_adm.indices(['S_IN', 'S_IC', 'S_cat', 'S_an'])
         
