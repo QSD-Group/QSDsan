@@ -410,40 +410,87 @@ class ADMtoASM(ADMjunction):
         gas_idx = cmps_adm.indices(('S_h2', 'S_ch4'))
         asm_i_N = cmps_asm.i_N
         adm_i_N = cmps_adm.i_N
+        asm_i_P = cmps_asm.i_P
+        adm_i_P = cmps_adm.i_P
         adm_cod = sum(adm_vals*adm_i_COD) - sum(adm_vals[gas_idx])
         adm_tkn = sum(adm_vals*adm_i_N)
+        adm_tp = sum(adm_vals*adm_i_P)
+        
         cod_bl, cod_err, cod_tol, asm_cod = self.isbalanced(adm_cod, asm_vals, asm_i_COD)
         tkn_bl, tkn_err, tkn_tol, asm_tkn = self.isbalanced(adm_tkn, asm_vals, asm_i_N)
-        if cod_bl:
-            if tkn_bl: return asm_vals
+        tp_bl, tp_err, tp_tol, asm_tp = self.isbalanced(adm_tp, asm_vals, asm_i_P)
+        
+        if tkn_bl and tp_bl:
+            if cod_bl:
+                return asm_vals
+            else:
+                if cod_err > 0: dcod = -(cod_err - cod_tol)/asm_cod
+                else: dcod = -(cod_err + cod_tol)/asm_cod
+                _asm_vals = asm_vals * (1 + (asm_i_COD>0)*dcod)
+                _tkn_bl, _tkn_err, _tkn_tol, _asm_tkn = self.isbalanced(adm_tkn, _asm_vals, asm_i_N)
+                _tp_bl, _tp_err, _tp_tol, _asm_tp = self.isbalanced(adm_tp, _asm_vals, asm_i_P)
+                if _tkn_bl and _tp_bl: return _asm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same \n'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ADM) TKN is {adm_tkn}\n '
+                        f'effluent (ASM) TKN is {asm_tkn} or {_asm_tkn}\n '
+                        f'influent (ADM) TP is {adm_tp}\n ' 
+                        f'effluent (ASM) TP is {asm_tp} or {_asm_tp}. '
+                        f'influent (ADM) COD is {adm_cod}\n ' 
+                        f'effluent (ASM) COD is {asm_cod} or {asm_cod*(1+dcod)}. ')
+                    return asm_vals
+        elif cod_bl and tp_bl:
+            if tkn_bl:
+                return asm_vals
             else:
                 if tkn_err > 0: dtkn = -(tkn_err - tkn_tol)/asm_tkn
                 else: dtkn = -(tkn_err + tkn_tol)/asm_tkn
                 _asm_vals = asm_vals * (1 + (asm_i_N>0)*dtkn)
                 _cod_bl, _cod_err, _cod_tol, _asm_cod = self.isbalanced(adm_cod, _asm_vals, asm_i_COD)
-                if _cod_bl: return _asm_vals
+                _tp_bl, _tp_err, _tp_tol, _asm_tp = self.isbalanced(adm_tp, _asm_vals, asm_i_P)
+                if _cod_bl and _tp_bl: return _asm_vals
                 else: 
-                    warn('cannot balance COD and TKN at the same '
-                        f'time with rtol={self.rtol} and atol={self.atol}. '
-                        f'influent (ADM) COD is {adm_cod}, '
-                        f'effluent (ASM) COD is {asm_cod} or {_asm_cod}. '
-                        f'influent TKN is {adm_tkn}, ' 
-                        f'effluent TKN is {asm_tkn} or {asm_tkn*(1+dtkn)}. ')
+                    warn('cannot balance COD, TKN, and TP at the same time'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ADM) COD is {adm_cod}\n '
+                        f'effluent (ASM) COD is {asm_cod} or {_asm_cod}\n '
+                        f'influent (ADM) TP is {adm_tp}\n ' 
+                        f'effluent (ASM) TP is {asm_tp} or {_asm_tp}. '
+                        f'influent (ADM) TKN is {adm_tkn}\n ' 
+                        f'effluent (ASM) TKN is {asm_tkn} or {asm_tkn*(1+dtkn)}. ')
+                    return asm_vals
+        elif cod_bl and tkn_bl:
+            if tp_bl:
+                return asm_vals
+            else:
+                if tp_err > 0: dtp = -(tp_err - tp_tol)/asm_tp
+                else: dtp = -(tp_err + tp_tol)/asm_tp
+                _asm_vals = asm_vals * (1 + (asm_i_P>0)*dtp)
+                _cod_bl, _cod_err, _cod_tol, _asm_cod = self.isbalanced(adm_cod, _asm_vals, asm_i_COD)
+                _tkn_bl, _tkn_err, _tkn_tol, _asm_tkn = self.isbalanced(adm_tkn, _asm_vals, asm_i_N)
+                if _cod_bl and _tkn_bl: return _asm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same time'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ADM) COD is {adm_cod}\n '
+                        f'effluent (ASM) COD is {asm_cod} or {_asm_cod}\n '
+                        f'influent (ADM) TKN is {adm_tkn}\n ' 
+                        f'effluent (ASM) TKN is {asm_tkn} or {_asm_tkn}. '
+                        f'influent (ADM) TP is {adm_tp}\n ' 
+                        f'effluent (ASM) TP is {asm_tp} or {asm_tp*(1+dtp)}. ')
                     return asm_vals
         else:
-            if cod_err > 0: dcod = -(cod_err - cod_tol)/asm_cod
-            else: dcod = -(cod_err + cod_tol)/asm_cod
-            _asm_vals = asm_vals * (1 + (asm_i_COD>0)*dcod)
-            _tkn_bl, _tkn_err, _tkn_tol, _asm_tkn = self.isbalanced(adm_tkn, _asm_vals, asm_i_N)
-            if _tkn_bl: return _asm_vals
-            else:
-                warn('cannot balance COD and TKN at the same '
-                    f'time with rtol={self.rtol} and atol={self.atol}. '
-                    f'influent (ADM) COD is {adm_cod}, '
-                    f'effluent (ASM) COD is {asm_cod} or {asm_cod*(1+dcod)}. '
-                    f'influent TKN is {adm_tkn}, ' 
-                    f'effluent TKN is {asm_tkn} or {_asm_tkn}. ')
-                return asm_vals
+            warn('cannot balance COD, TKN and TP at the same time. \n'
+                 'Atleast two of the three COD, TKN, and TP are not balanced \n'
+                f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                f'influent (ADM) COD is {adm_cod}\n '
+                f'effluent (ASM) COD is {asm_cod}\n '
+                f'influent (ADM) TP is {adm_tp}\n ' 
+                f'effluent (ASM) TP is {asm_tp}'
+                f'influent (ADM) TKN is {adm_tkn}\n ' 
+                f'effluent (ASM) TKN is {asm_tkn}. ')
+            return asm_vals
     
     def _compile_reactions(self):
         # Retrieve constants
@@ -463,12 +510,12 @@ class ADMtoASM(ADMjunction):
                                               'X_c4', 'X_pro', 'X_ac', 'X_h2'))
 
         cmps_asm = outs.components
-        X_P_i_N = cmps_asm.X_P.i_N
+        # X_P_i_N = cmps_asm.X_P.i_N
         X_S_i_N = cmps_asm.X_S.i_N
         S_S_i_N = cmps_asm.S_S.i_N
         asm_X_I_i_N = cmps_asm.X_I.i_N
         asm_S_I_i_N = cmps_asm.S_I.i_N
-        asm_X_P_i_N = cmps_asm.X_P.i_N
+        # asm_X_P_i_N = cmps_asm.X_P.i_N
         asm_ions_idx = cmps_asm.indices(('S_NH', 'S_ALK'))
         
         alpha_IN = self.alpha_IN
@@ -486,63 +533,48 @@ class ADMtoASM(ADMjunction):
             _ions = np.array([S_IN, S_IC, S_IP, X_PP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
             
             # Step 1a: convert biomass into X_S+X_ND and X_P
-            # bio_cod = X_su + X_aa + X_fa + X_c4 + X_pro + X_ac + X_h2
-            # bio_n = sum((adm_vals*adm_i_N)[adm_bio_N_indices])
+            bio_cod = X_su + X_aa + X_fa + X_c4 + X_pro + X_ac + X_h2
+            bio_n = sum((adm_vals*adm_i_N)[adm_bio_N_indices])
+            
+            # There is no X_P (particulate products arising due to biomass decay)
+            # or equivalent component in ASM2d
             # xp_cod = bio_cod * (1-self.bio_to_xs)
             # xp_ndm = xp_cod*X_P_i_N
             # if xp_ndm > bio_n:
             #     warn('Not enough biomass N to map the specified proportion of '
-            #          'biomass COD into X_P. Mapped as much COD as possible, the rest '
-            #          'goes to X_S.')
+            #           'biomass COD into X_P. Mapped as much COD as possible, the rest '
+            #           'goes to X_S.')
             #     X_P = bio_n/asm_X_P_i_N
             #     bio_n = 0
             # else:
             #     X_P = xp_cod
             #     bio_n -= xp_ndm
+            
             # X_S = bio_cod - X_P
-            # xs_ndm = X_S*X_S_i_N
-            # if xs_ndm <= bio_n:
-            #     X_ND = bio_n - xs_ndm
-            #     bio_n = 0
-            # elif xs_ndm <= bio_n + S_IN:
-            #     X_ND = 0
-            #     S_IN -= (xs_ndm - bio_n)
-            #     bio_n = 0
-            # else:
-            #     if isclose(xs_ndm,  bio_n + S_IN, rel_tol=rtol, abs_tol=atol):
-            #         X_ND = S_IN = bio_n = 0
-            #     else:
-            #         raise RuntimeError('Not enough nitrogen (S_IN + biomass) to map '
-            #                            'all biomass COD into X_P and X_S')
-                    
-            bio_cod = X_su + X_aa + X_fa + X_c4 + X_pro + X_ac + X_h2
-            bio_n = sum((adm_vals*adm_i_N)[adm_bio_N_indices])
-            xp_cod = bio_cod * (1-self.bio_to_xs)
-            xp_ndm = xp_cod*X_P_i_N
-            if xp_ndm > bio_n:
-                warn('Not enough biomass N to map the specified proportion of '
-                     'biomass COD into X_P. Mapped as much COD as possible, the rest '
-                     'goes to X_S.')
-                X_P = bio_n/asm_X_P_i_N
+            
+            # COD balance
+            X_S = bio_cod
+            
+            # N balance 
+            X_S_N = X_S*X_S_i_N
+            if X_S_N <= bio_n:
+                # In ASM1-ADM1 interface if there was excess bio_n compared to
+                # X_S_N, it was transferred to X_ND. But since X_ND does not 
+                # exist in ASM2d, S_IN is used for N balance 
+                # Here, S_IN is also used based on the fact that in case of 
+                # deficit bio_N, S_IN is used to compensate for excess X_S_N
+                # in Nopens at al. 2009
+                S_IN += (bio_n - X_S_N)
+                bio_n = 0
+            elif X_S_N <= bio_n + S_IN:
+                S_IN -= (X_S_N - bio_n)
                 bio_n = 0
             else:
-                X_P = xp_cod
-                bio_n -= xp_ndm
-            X_S = bio_cod - X_P
-            xs_ndm = X_S*X_S_i_N
-            if xs_ndm <= bio_n:
-                X_ND = bio_n - xs_ndm
-                bio_n = 0
-            elif xs_ndm <= bio_n + S_IN:
-                X_ND = 0
-                S_IN -= (xs_ndm - bio_n)
-                bio_n = 0
-            else:
-                if isclose(xs_ndm,  bio_n + S_IN, rel_tol=rtol, abs_tol=atol):
-                    X_ND = S_IN = bio_n = 0
+                if isclose(X_S_N, bio_n + S_IN, rel_tol=rtol, abs_tol=atol):
+                    S_IN = bio_n = 0
                 else:
                     raise RuntimeError('Not enough nitrogen (S_IN + biomass) to map '
-                                       'all biomass COD into X_P and X_S')
+                                       'all biomass COD into X_S')
             
             # Step 1b: convert particulate substrates into X_S + X_ND
             xsub_cod = X_c + X_ch + X_pr + X_li
