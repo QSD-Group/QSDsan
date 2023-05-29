@@ -477,14 +477,44 @@ class ADMtoASM(ADMjunction):
         f_corr = self.balance_cod_tkn
 
         def adm2asm(adm_vals):    
-            S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2, S_ch4, S_IC, S_IN, S_I, \
-                X_c, X_ch, X_pr, X_li, X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I, \
-                S_cat, S_an, H2O = adm_vals
+            S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2, S_ch4, S_IC, S_IN, S_IP, S_I, \
+                X_ch, X_pr, X_li, X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I, \
+                X_PHA, X_PP, X_PAO, S_K, S_Mg, X_MeOH, X_MeP, S_cat, S_an, H2O = adm_vals
                        
             # Step 0: snapshot of charged components
-            _ions = np.array([S_IN, S_IC, S_ac, S_pro, S_bu, S_va])
+            # Not sure about charge on X_PP, S_Mg, S_K (PHA and PAO would have zero charge)
+            _ions = np.array([S_IN, S_IC, S_IP, X_PP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
             
             # Step 1a: convert biomass into X_S+X_ND and X_P
+            # bio_cod = X_su + X_aa + X_fa + X_c4 + X_pro + X_ac + X_h2
+            # bio_n = sum((adm_vals*adm_i_N)[adm_bio_N_indices])
+            # xp_cod = bio_cod * (1-self.bio_to_xs)
+            # xp_ndm = xp_cod*X_P_i_N
+            # if xp_ndm > bio_n:
+            #     warn('Not enough biomass N to map the specified proportion of '
+            #          'biomass COD into X_P. Mapped as much COD as possible, the rest '
+            #          'goes to X_S.')
+            #     X_P = bio_n/asm_X_P_i_N
+            #     bio_n = 0
+            # else:
+            #     X_P = xp_cod
+            #     bio_n -= xp_ndm
+            # X_S = bio_cod - X_P
+            # xs_ndm = X_S*X_S_i_N
+            # if xs_ndm <= bio_n:
+            #     X_ND = bio_n - xs_ndm
+            #     bio_n = 0
+            # elif xs_ndm <= bio_n + S_IN:
+            #     X_ND = 0
+            #     S_IN -= (xs_ndm - bio_n)
+            #     bio_n = 0
+            # else:
+            #     if isclose(xs_ndm,  bio_n + S_IN, rel_tol=rtol, abs_tol=atol):
+            #         X_ND = S_IN = bio_n = 0
+            #     else:
+            #         raise RuntimeError('Not enough nitrogen (S_IN + biomass) to map '
+            #                            'all biomass COD into X_P and X_S')
+                    
             bio_cod = X_su + X_aa + X_fa + X_c4 + X_pro + X_ac + X_h2
             bio_n = sum((adm_vals*adm_i_N)[adm_bio_N_indices])
             xp_cod = bio_cod * (1-self.bio_to_xs)
@@ -562,14 +592,19 @@ class ADMtoASM(ADMjunction):
                                        'substrates into ASM S_S')
                         
             # Step 6: check COD and TKN balance
+            # asm_vals = np.array(([
+            #     S_I, S_S, X_I, X_S, 
+            #     0, 0, # X_BH, X_BA, 
+            #     X_P, 
+            #     0, 0, # S_O, S_NO, 
+            #     S_NH, S_ND, X_ND,  
+            #     0, 0, # temporary S_ALK, S_N2, 
+            #     H2O]))
+            
             asm_vals = np.array(([
-                S_I, S_S, X_I, X_S, 
-                0, 0, # X_BH, X_BA, 
-                X_P, 
-                0, 0, # S_O, S_NO, 
-                S_NH, S_ND, X_ND,  
-                0, 0, # temporary S_ALK, S_N2, 
-                H2O]))
+                S_O2, S_N2, S_NH4, S_NO3, S_PO4, S_F, S_A,
+                S_I, S_ALK, X_I, X_S, X_H, X_PAO, X_PP, X_PHA,
+                X_AUT, X_MeOH, X_MeP, H2O]))
             
             if S_h2 > 0 or S_ch4 > 0:
                 warn('Ignored dissolved H2 or CH4.')
