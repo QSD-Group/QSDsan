@@ -532,7 +532,7 @@ class ADMtoASM(ADMjunction):
             # Not sure about charge on X_PP, S_Mg, S_K (PHA and PAO would have zero charge)
             _ions = np.array([S_IN, S_IC, S_IP, X_PP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
             
-            # Step 1a: convert biomass into X_S+X_ND and X_P
+            # Step 1a: convert biomass into X_S+X_ND
             bio_cod = X_su + X_aa + X_fa + X_c4 + X_pro + X_ac + X_h2
             bio_n = sum((adm_vals*adm_i_N)[adm_bio_N_indices])
             
@@ -577,10 +577,15 @@ class ADMtoASM(ADMjunction):
                                        'all biomass COD into X_S')
             
             # Step 1b: convert particulate substrates into X_S + X_ND
-            xsub_cod = X_c + X_ch + X_pr + X_li
-            xsub_n = X_c*X_c_i_N + X_pr*X_pr_i_N
+            xsub_cod = X_ch + X_pr + X_li
+            xsub_n = X_pr*X_pr_i_N
+            # COD balance 
             X_S += xsub_cod
-            X_ND += xsub_n - xsub_cod*X_S_i_N  # X_S.i_N should technically be zero
+            
+            # N balance 
+            X_S_N += xsub_cod*X_S_i_N
+            
+            
             if X_ND < 0:
                 if isclose(X_ND, 0, rel_tol=rtol, abs_tol=atol): X_ND = 0
                 else:
@@ -593,6 +598,13 @@ class ADMtoASM(ADMjunction):
             if S_IN < 0:
                 if isclose(S_IN, 0, rel_tol=rtol, abs_tol=atol): S_IN = 0
                 raise RuntimeError('Not enough nitrogen (X_I + S_IN) to map '
+                                   'all ADM X_I into ASM X_I')
+                
+            excess_XIp = X_I * (adm_X_I_i_P - asm_X_I_i_P)
+            S_IP += excess_XIp
+            if S_IP < 0:
+                if isclose(S_IP, 0, rel_tol=rtol, abs_tol=atol): S_IP = 0
+                raise RuntimeError('Not enough phosphorous (X_I + S_IN) to map '
                                    'all ADM X_I into ASM X_I')
             
             # Step 3: map ADM S_I into ASM S_I and S_NH
