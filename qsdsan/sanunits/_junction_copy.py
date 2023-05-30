@@ -500,7 +500,7 @@ class ADMtoASM(ADMjunction):
         atol = self.atol
         
         cmps_adm = ins.components
-        X_c_i_N = cmps_adm.X_c.i_N
+        # N balance 
         X_pr_i_N = cmps_adm.X_pr.i_N
         S_aa_i_N = cmps_adm.S_aa.i_N
         adm_X_I_i_N = cmps_adm.X_I.i_N
@@ -508,15 +508,25 @@ class ADMtoASM(ADMjunction):
         adm_i_N = cmps_adm.i_N
         adm_bio_N_indices = cmps_adm.indices(('X_su', 'X_aa', 'X_fa', 
                                               'X_c4', 'X_pro', 'X_ac', 'X_h2'))
-
+        
+        # P balance
+        X_pr_i_P = cmps_adm.X_pr.i_P
+        adm_X_I_i_P = cmps_adm.X_I.i_P
+        adm_i_P = cmps_adm.i_P
+        adm_bio_P_indices = cmps_adm.indices(('X_su', 'X_aa', 'X_fa', 
+                                              'X_c4', 'X_pro', 'X_ac', 'X_h2'))
+        
         cmps_asm = outs.components
-        # X_P_i_N = cmps_asm.X_P.i_N
+        # N balance 
         X_S_i_N = cmps_asm.X_S.i_N
         S_S_i_N = cmps_asm.S_S.i_N
         asm_X_I_i_N = cmps_asm.X_I.i_N
         asm_S_I_i_N = cmps_asm.S_I.i_N
-        # asm_X_P_i_N = cmps_asm.X_P.i_N
         asm_ions_idx = cmps_asm.indices(('S_NH', 'S_ALK'))
+        
+        # P balance 
+        X_S_i_P = cmps_asm.X_S.i_P
+        asm_X_I_i_P = cmps_asm.X_I.i_P 
         
         alpha_IN = self.alpha_IN
         alpha_IC = self.alpha_IC
@@ -535,6 +545,7 @@ class ADMtoASM(ADMjunction):
             # Step 1a: convert biomass into X_S+X_ND
             bio_cod = X_su + X_aa + X_fa + X_c4 + X_pro + X_ac + X_h2
             bio_n = sum((adm_vals*adm_i_N)[adm_bio_N_indices])
+            bio_p = sum((adm_vals*adm_i_P)[adm_bio_P_indices])
             
             # There is no X_P (particulate products arising due to biomass decay)
             # or equivalent component in ASM2d
@@ -571,32 +582,75 @@ class ADMtoASM(ADMjunction):
                 bio_n = 0
             else:
                 if isclose(X_S_N, bio_n + S_IN, rel_tol=rtol, abs_tol=atol):
-                    S_IN = bio_n = 0
+                    S_IN = bio_n = 0   
                 else:
                     raise RuntimeError('Not enough nitrogen (S_IN + biomass) to map '
                                        'all biomass COD into X_S')
             
+            # P balance 
+            X_S_P = X_S*X_S_i_P
+            if X_S_P <= bio_p:
+                # Here, S_IP is based on the fact that in case of 
+                # deficit bio_N, S_IN is used to compensate for excess X_S_N
+                # in Nopens at al. 2009
+                S_IP += (bio_p - X_S_P)
+                bio_p = 0
+            elif X_S_P <= bio_p + S_IP:
+                S_IP -= (X_S_P - bio_p)
+                bio_p = 0
+            else:
+                if isclose(X_S_P, bio_p + S_IP, rel_tol=rtol, abs_tol=atol):
+                    S_IP = bio_p = 0
+                else:
+                    raise RuntimeError('Not enough phosphorous (S_IP + biomass) to map '
+                                       'all biomass COD into X_S')
+            
             # Step 1b: convert particulate substrates into X_S + X_ND
+            
+            # First we calculate the COD, N, and P content in particulate substrate  
             xsub_cod = X_ch + X_pr + X_li
             xsub_n = X_pr*X_pr_i_N
-            # COD balance 
-            X_S += xsub_cod
+            xsub_p = X_pr*X_pr_i_P
             
-            # N balance 
-            X_S_N += xsub_cod*X_S_i_N
+            # Then we determine the amount of X_S required for COD, N, and P balance 
+            X_S_cod = xsub_cod
+            X_S_n = xsub_n/X_S_i_N
+            X_S_p = xsub_p/X_S_i_P
             
+            # Identify the limiting component and accordingly form X_S
+            X_S_add = min(X_S_cod, X_S_n, X_S_p)
+            X_S += X_S_add
             
-            if X_ND < 0:
-                if isclose(X_ND, 0, rel_tol=rtol, abs_tol=atol): X_ND = 0
-                else:
-                    raise RuntimeError('Not enough nitrogen (substrate + excess X_ND) '
-                                       'to map all particulate substrate COD into X_S')
+            # Calculate the imbalance in the non-limiting components 
+            if X_S_add == X_S_cod:
+                def_N = (xsub_n - X_S_add*X_S_i_N)
+                def_P = (xsub_p - X_S_add*X_S_i_P)
+                if isclose(def_N, 0, rel_tol=rtol, abs_tol=atol): def_N = 0
+                if isclose(def_P, 0, rel_tol=rtol, abs_tol=atol): def_P = 0
+            elif X_S_add == X_S_n:
+                def_COD = (xsub_cod - X_S_add)
+                def_P = (xsub_p - X_S_add*X_S_i_P)
+                if isclose(def_COD, 0, rel_tol=rtol, abs_tol=atol): def_COD = 0
+                if isclose(def_P, 0, rel_tol=rtol, abs_tol=atol): def_P = 0
+            else:
+                def_COD = (xsub_cod - X_S_add)
+                def_N = (xsub_n - X_S_add*X_S_i_N)
+                if isclose(def_COD, 0, rel_tol=rtol, abs_tol=atol): def_COD = 0
+                if isclose(def_N, 0, rel_tol=rtol, abs_tol=atol): def_N = 0
+                
+            # How should I balance deficit COD/N/P?
+            
+            # Alternatives:
+            # N, and P through S_IN and S_IP respectively based on precedent  
+            # COD through? 
+            
             
             # Step 2: map all X_I from ADM to ASM           
             excess_XIn = X_I * (adm_X_I_i_N - asm_X_I_i_N)
             S_IN += excess_XIn
             if S_IN < 0:
                 if isclose(S_IN, 0, rel_tol=rtol, abs_tol=atol): S_IN = 0
+                # This seems to be a typo. Should there be an else here? 
                 raise RuntimeError('Not enough nitrogen (X_I + S_IN) to map '
                                    'all ADM X_I into ASM X_I')
                 
@@ -604,6 +658,7 @@ class ADMtoASM(ADMjunction):
             S_IP += excess_XIp
             if S_IP < 0:
                 if isclose(S_IP, 0, rel_tol=rtol, abs_tol=atol): S_IP = 0
+                # This seems to be a typo. Should there be an else here? 
                 raise RuntimeError('Not enough phosphorous (X_I + S_IN) to map '
                                    'all ADM X_I into ASM X_I')
             
