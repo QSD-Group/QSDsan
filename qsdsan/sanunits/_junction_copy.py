@@ -367,10 +367,7 @@ class ADMtoASM(ADMjunction):
     downstream : stream or str
         Effluent stream with ASM components.
     adm1_model : obj
-        The anaerobic digestion process model (:class:`qsdsan.processes.ADM1`).
-    bio_to_xs : float
-        Split of the total biomass COD to slowly biodegradable substrate (X_S),
-        the rest is assumed to be mapped into X_P.
+        The anaerobic digestion process model (:class:`qsdsan.processes.ADM1_p_extension`).
     rtol : float
         Relative tolerance for COD and TKN balance.
     atol : float
@@ -391,7 +388,7 @@ class ADMtoASM(ADMjunction):
     `math.isclose <https://docs.python.org/3.8/library/math.html#math.isclose>`
     '''
     # User defined values
-    bio_to_xs = 0.7
+    # bio_to_xs = 0.7 (Not using this split since no X_P exists in ASM2d)
     
     # Should be constants
     cod_vfa = np.array([64, 112, 160, 208])
@@ -512,6 +509,7 @@ class ADMtoASM(ADMjunction):
         # P balance
         X_pr_i_P = cmps_adm.X_pr.i_P
         adm_X_I_i_P = cmps_adm.X_I.i_P
+        adm_S_I_i_P = cmps_adm.S_I.i_P
         adm_i_P = cmps_adm.i_P
         adm_bio_P_indices = cmps_adm.indices(('X_su', 'X_aa', 'X_fa', 
                                               'X_c4', 'X_pro', 'X_ac', 'X_h2'))
@@ -519,17 +517,20 @@ class ADMtoASM(ADMjunction):
         cmps_asm = outs.components
         # N balance 
         X_S_i_N = cmps_asm.X_S.i_N
-        S_S_i_N = cmps_asm.S_S.i_N
+        S_F_i_N = cmps_asm.S_F.i_N
+        S_A_i_N = cmps_asm.S_A.i_N
         asm_X_I_i_N = cmps_asm.X_I.i_N
         asm_S_I_i_N = cmps_asm.S_I.i_N
-        asm_ions_idx = cmps_asm.indices(('S_NH', 'S_ALK'))
+        asm_ions_idx = cmps_asm.indices(('S_NH4', 'S_ALK'))
         
         # P balance 
         X_S_i_P = cmps_asm.X_S.i_P
         asm_X_I_i_P = cmps_asm.X_I.i_P 
+        asm_S_I_i_P = cmps_asm.S_I.i_P
         
         alpha_IN = self.alpha_IN
         alpha_IC = self.alpha_IC
+        alpha_IP = self.alpha_IP
         alpha_vfa = self.alpha_vfa
         f_corr = self.balance_cod_tkn
 
@@ -625,32 +626,25 @@ class ADMtoASM(ADMjunction):
             if X_S_add == X_S_cod:
                 def_N = (xsub_n - X_S_add*X_S_i_N)
                 def_P = (xsub_p - X_S_add*X_S_i_P)
-                if isclose(def_N, 0, rel_tol=rtol, abs_tol=atol): def_N = 0
-                if isclose(def_P, 0, rel_tol=rtol, abs_tol=atol): def_P = 0
+                S_IN += def_N
+                S_IP += def_P
             elif X_S_add == X_S_n:
                 def_COD = (xsub_cod - X_S_add)
                 def_P = (xsub_p - X_S_add*X_S_i_P)
-                if isclose(def_COD, 0, rel_tol=rtol, abs_tol=atol): def_COD = 0
-                if isclose(def_P, 0, rel_tol=rtol, abs_tol=atol): def_P = 0
+                S_A = def_COD # suggested by Jeremy 
+                S_IP += def_P
             else:
                 def_COD = (xsub_cod - X_S_add)
                 def_N = (xsub_n - X_S_add*X_S_i_N)
-                if isclose(def_COD, 0, rel_tol=rtol, abs_tol=atol): def_COD = 0
-                if isclose(def_N, 0, rel_tol=rtol, abs_tol=atol): def_N = 0
-                
-            # How should I balance deficit COD/N/P?
-            
-            # Alternatives:
-            # N, and P through S_IN and S_IP respectively based on precedent  
-            # COD through? 
-            
+                S_A = def_COD # suggested by Jeremy
+                S_IN += def_N
             
             # Step 2: map all X_I from ADM to ASM           
             excess_XIn = X_I * (adm_X_I_i_N - asm_X_I_i_N)
             S_IN += excess_XIn
             if S_IN < 0:
                 if isclose(S_IN, 0, rel_tol=rtol, abs_tol=atol): S_IN = 0
-                # This seems to be a typo. Should there be an else here? 
+                # This seems to be a typo. Shouldn't there be an else here? 
                 raise RuntimeError('Not enough nitrogen (X_I + S_IN) to map '
                                    'all ADM X_I into ASM X_I')
                 
@@ -658,52 +652,66 @@ class ADMtoASM(ADMjunction):
             S_IP += excess_XIp
             if S_IP < 0:
                 if isclose(S_IP, 0, rel_tol=rtol, abs_tol=atol): S_IP = 0
-                # This seems to be a typo. Should there be an else here? 
-                raise RuntimeError('Not enough phosphorous (X_I + S_IN) to map '
+                # This seems to be a typo. Shouldn't there be an else here? 
+                raise RuntimeError('Not enough phosphorous (X_I + S_IP) to map '
                                    'all ADM X_I into ASM X_I')
             
-            # Step 3: map ADM S_I into ASM S_I and S_NH
+            # Step 3: map ADM S_I into ASM S_I and S_NH4
             excess_SIn = S_I * (adm_S_I_i_N - asm_S_I_i_N)
             if excess_SIn > 0:
-                S_NH = excess_SIn
+                S_NH4 = excess_SIn
             else:
-                S_NH = 0
+                S_NH4 = 0
                 S_IN += excess_SIn
                 if S_IN < 0:
                     if isclose(S_IN, 0, rel_tol=rtol, abs_tol=atol): S_IN = 0
+                    # This seems to be a typo. Shouldn't there be an else here? 
                     raise RuntimeError('Not enough nitrogen (S_I + S_IN) to map '
                                        'all ADM S_I into ASM S_I')
-            S_NH += S_IN
+            S_NH4 += S_IN
+            
+            excess_SIp = S_I * (adm_S_I_i_P - asm_S_I_i_P)
+            if excess_SIp > 0:
+                S_PO4 = excess_SIp
+            else:
+                S_PO4 = 0
+                S_IP += excess_SIp
+                if S_IP < 0:
+                    if isclose(S_IP, 0, rel_tol=rtol, abs_tol=atol): S_IP = 0
+                    # This seems to be a typo. Shouldn't there be an else here? 
+                    raise RuntimeError('Not enough nitrogen (S_I + S_IP) to map '
+                                       'all ADM S_I into ASM S_I')
+            S_PO4 += S_IP
                 
-            # Step 4: map all soluble substrates into S_S and S_ND        
+            # Step 4: map all soluble substrates into S_A and S_F        
             ssub_cod = S_su + S_aa + S_fa + S_va + S_bu + S_pro + S_ac
             ssub_n = S_aa * S_aa_i_N
-            if ssub_cod*S_S_i_N <= ssub_n:
-                S_S = ssub_cod
-                S_ND = ssub_n
-                if S_S_i_N != 0: S_ND -= S_S/S_S_i_N # S_S.i_N should technically be zero
-            else:
-                if isclose(ssub_cod*S_S_i_N, ssub_n, rel_tol=rtol, abs_tol=atol): 
-                    S_S = ssub_cod
-                    S_ND = 0
-                else:
-                    raise RuntimeError('Not enough nitrogen to map all soluble '
-                                       'substrates into ASM S_S')
-                        
-            # Step 6: check COD and TKN balance
-            # asm_vals = np.array(([
-            #     S_I, S_S, X_I, X_S, 
-            #     0, 0, # X_BH, X_BA, 
-            #     X_P, 
-            #     0, 0, # S_O, S_NO, 
-            #     S_NH, S_ND, X_ND,  
-            #     0, 0, # temporary S_ALK, S_N2, 
-            #     H2O]))
             
+            # P balance not required as all the 6 soluble substrates have no P
+            
+            # N balance
+            S_F = ssub_n/S_F_i_N
+            # COD balance 
+            S_A = ssub_cod - S_F
+            
+            if S_A_i_N == 0:
+                pass
+            else:
+                # excess N formed subtracted from S_NH
+                S_NH4 -= (S_A*S_A_i_N)
+                
+            # Step 6: check COD and TKN balance
             asm_vals = np.array(([
-                S_O2, S_N2, S_NH4, S_NO3, S_PO4, S_F, S_A,
-                S_I, S_ALK, X_I, X_S, X_H, X_PAO, X_PP, X_PHA,
-                X_AUT, X_MeOH, X_MeP, H2O]))
+                0, 0, # S_O2, S_N2,
+                S_NH4, 
+                0, 
+                S_PO4, S_F, S_A, S_I, 
+                0,  # S_ALK,
+                X_I, X_S, 
+                0,  # X_H,
+                X_PAO, X_PP, X_PHA, # directly mapped 
+                0, # X_AUT,
+                X_MeOH, X_MeP, H2O])) # directly mapped
             
             if S_h2 > 0 or S_ch4 > 0:
                 warn('Ignored dissolved H2 or CH4.')
@@ -711,8 +719,8 @@ class ADMtoASM(ADMjunction):
             asm_vals = f_corr(adm_vals, asm_vals)
             
             # Step 5: charge balance for alkalinity
-            S_NH = asm_vals[asm_ions_idx[0]]
-            S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC], alpha_vfa)) - S_NH/14)*(-12)
+            S_NH4 = asm_vals[asm_ions_idx[0]]
+            S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC, alpha_IP], alpha_vfa)) - S_NH4/14)*(-12)
             asm_vals[asm_ions_idx[1]] = S_ALK
             
             return asm_vals
@@ -721,6 +729,7 @@ class ADMtoASM(ADMjunction):
     
     @property
     def alpha_vfa(self):
+        # This may need change based on P-extension of ADM1
         return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[3:]-self.pH)))
         
         
