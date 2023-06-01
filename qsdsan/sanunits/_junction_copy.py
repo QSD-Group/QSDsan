@@ -379,6 +379,10 @@ class ADMtoASM(ADMjunction):
     Alex, J.; Vanrolleghem, P. A. An ASM/ADM Model Interface for Dynamic 
     Plant-Wide Simulation. Water Res. 2009, 43, 1913–1923.
     
+    [2] Flores-Alsina, X., Solon, K., Kazadi Mbamba, C., Tait, S., Gernaey, K. V., 
+    Jeppsson, U., & Batstone, D. J. (2016). Modelling phosphorus (P), sulfur (S) 
+    and iron (FE) interactions for dynamic simulations of anaerobic digestion processes. 
+    Water Research, 95, 370–382. 
     See Also
     --------
     :class:`qsdsan.sanunits.ADMjunction`
@@ -515,6 +519,7 @@ class ADMtoASM(ADMjunction):
                                               'X_c4', 'X_pro', 'X_ac', 'X_h2'))
         
         cmps_asm = outs.components
+        
         # N balance 
         X_S_i_N = cmps_asm.X_S.i_N
         S_F_i_N = cmps_asm.S_F.i_N
@@ -525,8 +530,30 @@ class ADMtoASM(ADMjunction):
         
         # P balance 
         X_S_i_P = cmps_asm.X_S.i_P
+        S_F_i_P = cmps_asm.S_F.i_P
+        S_A_i_P = cmps_asm.S_A.i_P
         asm_X_I_i_P = cmps_asm.X_I.i_P 
         asm_S_I_i_P = cmps_asm.S_I.i_P
+        
+        # Checks for direct mapping of X_PAO, X_PP, X_PHA
+        
+        # Check for X_PAO (measured as COD so i_COD = 1 in both ASM2d and ADM1)
+        asm_X_PAO_i_N = cmps_asm.X_PAO.i_N
+        adm_X_PAO_i_N = cmps_adm.X_PAO.i_N
+        if asm_X_PAO_i_N != adm_X_PAO_i_N:
+            raise RuntimeError('X_PAO cannot be directly mapped as N content'
+                               f'in asm2d_X_PAO_i_N = {asm_X_PAO_i_N} is not equal to'
+                               f'adm_X_PAO_i_N = {adm_X_PAO_i_N}')
+            
+        asm_X_PAO_i_P = cmps_asm.X_PAO.i_P
+        adm_X_PAO_i_P = cmps_adm.X_PAO.i_P
+        if asm_X_PAO_i_P != adm_X_PAO_i_P:
+            raise RuntimeError('X_PAO cannot be directly mapped as P content'
+                               f'in asm2d_X_PAO_i_P = {asm_X_PAO_i_P} is not equal to'
+                               f'adm_X_PAO_i_P = {adm_X_PAO_i_P}')
+        
+        # Checks not required for X_PP as measured as P in both, with i_COD = i_N = 0
+        # Checks not required for X_PHA as measured as COD in both, with i_N = i_P = 0
         
         alpha_IN = self.alpha_IN
         alpha_IC = self.alpha_IC
@@ -687,18 +714,24 @@ class ADMtoASM(ADMjunction):
             ssub_cod = S_su + S_aa + S_fa + S_va + S_bu + S_pro + S_ac
             ssub_n = S_aa * S_aa_i_N
             
-            # P balance not required as all the 6 soluble substrates have no P
+            # P balance not required as all the 7 soluble substrates have no P
             
             # N balance
             S_F = ssub_n/S_F_i_N
             # COD balance 
-            S_A = ssub_cod - S_F
+            S_A += ssub_cod - S_F
             
-            if S_A_i_N == 0:
-                pass
-            else:
-                # excess N formed subtracted from S_NH
-                S_NH4 -= (S_A*S_A_i_N)
+            # Technically both S_A_i_N and S_A_i_P would be 0
+            if S_A_i_N > 0 or S_A_i_P > 0:
+                # excess N formed subtracted from S_NH4
+                S_NH4 -= (ssub_cod - S_F)*S_A_i_N
+                # excess P (due to S_A) formed subtracted from S_PO4
+                S_PO4 -= (ssub_cod - S_F)*S_A_i_P
+                
+            if S_F_i_P > 0:
+                # excess P (due to S_F) formed subtracted from S_PO4
+                S_PO4 -= S_F*S_F_i_P
+                
                 
             # Step 6: check COD and TKN balance
             asm_vals = np.array(([
@@ -729,12 +762,13 @@ class ADMtoASM(ADMjunction):
     
     @property
     def alpha_vfa(self):
-        # This may need change based on P-extension of ADM1
+        # This may need change based on P-extension of ADM1 (ask Joy?)
         return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[3:]-self.pH)))
         
         
 # %%
 
+# While using this interface X_I.i_N in ASM2d should be 0.06, instead of 0.02. 
 class ASMtoADM(ADMjunction):
     '''
     Interface unit to convert activated sludge model (ASM) components
@@ -847,7 +881,8 @@ class ASMtoADM(ADMjunction):
                         f'influent TP is {asm_tp}\n ' 
                         f'effluent TP is {adm_tp} or {_adm_tp}. '
                         f'influent TKN is {asm_tkn}\n ' 
-                        f'effluent TKN is {adm_tkn} or {adm_tkn*(1+dtkn)}. ')
+                        f'effluent TKN is {adm_tkn} or {adm_tkn*(1+dtkn)}. '
+                        'To balance TKN please ensure ASM2d(X_I.i_N) = ADM1(X_I.i_N)')
                     return adm_vals
         elif cod_bl and tkn_bl:
             if tp_bl:
