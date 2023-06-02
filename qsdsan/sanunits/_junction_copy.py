@@ -526,7 +526,7 @@ class ADMtoASM(ADMjunction):
         S_A_i_N = cmps_asm.S_A.i_N
         asm_X_I_i_N = cmps_asm.X_I.i_N
         asm_S_I_i_N = cmps_asm.S_I.i_N
-        asm_ions_idx = cmps_asm.indices(('S_NH4', 'S_ALK'))
+        asm_ions_idx = cmps_asm.indices(('S_NH4', 'S_A', 'S_NO3', 'S_PO4', 'X_PP', 'S_ALK'))
         
         # P balance 
         X_S_i_P = cmps_asm.X_S.i_P
@@ -633,7 +633,7 @@ class ADMtoASM(ADMjunction):
                     raise RuntimeError('Not enough phosphorous (S_IP + biomass) to map '
                                        'all biomass COD into X_S')
             
-            # Step 1b: convert particulate substrates into X_S + X_ND
+            # Step 1b: convert particulate substrates into X_S
             
             # First we calculate the COD, N, and P content in particulate substrate  
             xsub_cod = X_ch + X_pr + X_li
@@ -753,8 +753,13 @@ class ADMtoASM(ADMjunction):
             
             # Step 5: charge balance for alkalinity
             S_NH4 = asm_vals[asm_ions_idx[0]]
-            S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC, alpha_IP], alpha_vfa)) - S_NH4/14)*(-12)
-            asm_vals[asm_ions_idx[1]] = S_ALK
+            S_A = asm_vals[asm_ions_idx[1]]
+            S_NO3 = asm_vals[asm_ions_idx[2]]
+            S_PO4 = asm_vals[asm_ions_idx[3]]
+            X_PP = asm_vals[asm_ions_idx[4]]
+            # Need to include S_K, S_Mg in the charge balance (Maybe ask Joy/Jeremy)
+            S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC, alpha_IP], alpha_vfa)) - (S_NH4/14 - S_A/64 - S_NO3/14 -1.5*S_PO4/31 - X_PP/31))*(-12)
+            asm_vals[asm_ions_idx[5]] = S_ALK
             
             return asm_vals
         
@@ -1029,9 +1034,9 @@ class ASMtoADM(ADMjunction):
             bioP = X_H*X_H_i_P + X_AUT*X_AUT_i_P
             
             # To be used in Step 2
-            S_ND_asm1 = S_F*S_F_i_N   #S_ND (in asm1) equals the N content in S_F (Joy)
+            S_ND_asm1 = S_F*S_F_i_N   #S_ND (in asm1) equals the N content in S_F
             # To be used in Step 3
-            X_ND_asm1 = X_S*X_S_i_N   #X_ND (in asm1) equals the N content in X_S (Joy)
+            X_ND_asm1 = X_S*X_S_i_N   #X_ND (in asm1) equals the N content in X_S
             # To be used in Step 5 (a)
             X_S_P = X_S*X_S_i_P
             # To be used in Step 5 (b)
