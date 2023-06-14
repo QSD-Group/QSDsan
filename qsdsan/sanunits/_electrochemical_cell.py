@@ -110,40 +110,48 @@ class ElectrochemicalCell(SanUnit):
       O2               3460.0
     >>> catalysts = qs.WasteStream('catalysts', H2SO4=0.00054697, units=('kg/hr'))
     >>> # kg/hr imass value derived from 0.145 moles used on average for one, 26 hour experiment in the model cell
-    >>> catalysts.price = 0.12
+    >>> catalysts.price = 8.4 #in $/kg
     >>> # electricity price for ECS experiments in the default model tested by the Tarpeh Lab
         power_utility.price = 0.1741
     
         # Set the unit
-    >>> U1 = qs.sanunits.ElectrochemicalCell('U1', ins=(influent, catalysts), outs=('recovered', 'removed', 'residual'))
+    >>> U1 = qs.sanunits.ElectrochemicalCell('unit_1', ins=(influent, catalysts), outs=('recovered', 'removed', 'residual'))
     >>> # Simulate and look at the results
     >>> U1.simulate()
-    >>> U1.diagram() # have a look at the diagram
     >>> U1.results()
-    Electrochemical cell                                      Units            U1
-    Design              Column U1_column - Number of col...                     3
-                        Column U1_column - Material of t...                 resin
-                        Column U1_column - Surface area ...      m2            20
-                        Electrode U1_anode - Number of a...    None             1
-                        Electrode U1_anode - Material of...    None      graphite
-                        Electrode U1_anode - Surface are...      m2            10
-                        Electrode U1_cathode - Number of...    None             1
-                        Electrode U1_cathode - Material ...    None        carbon
-                        Electrode U1_cathode - Surface a...      m2            10
-                        Machine U1_fan - Number of machines                     1
-                        Membrane U1_membrane - Number of...                     2
-                        Membrane U1_membrane - Material ...          polyethylene
-                        Membrane U1_membrane - Surface a...      m2             1
-    Purchase cost       U1_column                               USD           120
-                        U1_anode                                USD           0.1
-                        U1_cathode                              USD             1
-                        U1_fan                                  USD             3
-                        U1_membrane                             USD           0.4
-    Total purchase cost                                         USD           124
-    Utility cost                                             USD/hr             0
-    Additional OPEX                                          USD/hr             0
+    Electrochemical cell                                      Units                              unit_1
+    Electricity         Power                                    kW                            5.42e-05
+                        Cost                                 USD/hr                            4.24e-06
+    Design              Electrode unit_1_Main_Anode - Nu...    None                                   1
+                        Electrode unit_1_Main_Anode - Ma...    None  titanium grid catalyst welded t...
+                        Electrode unit_1_Main_Anode - Su...      m2                                   1
+                        Electrode unit_1_Main_Cathode - ...    None                                   1
+                        Electrode unit_1_Main_Cathode - ...    None  timesetl 3pcs stainless steel w...
+                        Electrode unit_1_Main_Cathode - ...      m2                                30.2
+                        Electrode unit_1_Current_Collect...    None                                   1
+                        Electrode unit_1_Current_Collect...    None    stainless steel 26 gauge 5.5 x 7
+                        Electrode unit_1_Current_Collect...      m2                                38.5
+                        Electrode unit_1_Reference_Elect...    None                                   1
+                        Electrode unit_1_Reference_Elect...    None  re-5b ag/agcl, 7.5 cm long, wit...
+                        Electrode unit_1_Reference_Elect...      m2                                   1
+                        Membrane unit_1_Cation_Exchange_...                                           1
+                        Membrane unit_1_Cation_Exchange_...          CMI-7000S, polystyrene 0.45mm t...
+                        Membrane unit_1_Cation_Exchange_...      m2                                30.2
+                        Membrane unit_1_Gas_Permeable_Me...                                           1
+                        Membrane unit_1_Gas_Permeable_Me...          Aquastill 0.3-micron polyethyle...
+                        Membrane unit_1_Gas_Permeable_Me...      m2                                30.2
+    Purchase cost       unit_1_Main_Anode                       USD                                 288
+                        unit_1_Main_Cathode                     USD                               0.847
+                        unit_1_Current_Collector_Cathode        USD                                39.9
+                        unit_1_Reference_Electrode              USD                                  94
+                        unit_1_Cation_Exchange_Membrane         USD                                 167
+                        unit_1_Gas_Permeable_Membrane           USD                                29.3
+                        Exterior                                USD                                60.5
+    Total purchase cost                                         USD                                 679
+    Utility cost                                             USD/hr                            4.24e-06
+    Additional OPEX                                          USD/hr                                 136
     >>> U1.show()
-    ElectrochemicalCell: U1
+    ElectrochemicalCell: unit_1
     ins...
     [0] influent
         phase: 'l', T: 298.15 K, P: 101325 Pa
@@ -169,21 +177,24 @@ class ElectrochemicalCell(SanUnit):
     outs...
     [0] recovered
         phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): NH3  0.0688
+        flow (g/hr): NH3  0.0802
         WasteStream-specific properties:
          pH         : 7.0
     [1] removed
         phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): NH3  0.0229
+        flow (g/hr): NH3  0.0951
+                     Na+  0.0389
+                     K+   0.0366
         WasteStream-specific properties:
          pH         : 7.0
+         TK         : 246680.3 mg/L
     [2] residual
         phase: 'l', T: 298.15 K, P: 101325 Pa
         flow (g/hr): H2O        29.5
-                     NH3        0.0229
+                     NH3        0.0195
                      H2SO4      0.547
-                     Na+        0.0486
-                     K+         0.0441
+                     Na+        0.00972
+                     K+         0.0075
                      Cl-        0.0918
                      Phosphate  0.00507
                      Sulfate    0.0504
@@ -191,9 +202,9 @@ class ElectrochemicalCell(SanUnit):
                      O2         0.104
         WasteStream-specific properties:
          pH         : 7.0
-         TC         : 1859.8 mg/L
-         TP         : 31.9 mg/L
-         TK         : 1469.8 mg/L
+         TC         : 1863.0 mg/L
+         TP         : 32.0 mg/L
+         TK         : 250.3 mg/L
     '''
 
     _N_ins = 2
@@ -209,22 +220,19 @@ class ElectrochemicalCell(SanUnit):
 
 
         self.equipment = [
-            Column('column', linked_unit=self, N=3,
-                   material='resin', unit_cost=2, surface_area=20),
-            Electrode('Main Anode', linked_unit=self, N=1, electrode_type='anode',
-                      material='iridium tantalum oxide coated titanium grid', surface_area=1, unit_cost=288), #in m^2
-            Electrode('Main Cathode', linked_unit=self, N=1, electrode_type='cathode',
-                      material='stainless steel wire mesh', surface_area=30.25, unit_cost=0.182), #in in^2
-            Electrode('Current Collector Cathode', linked_unit=self, N=1, electrode_type='cathode',
-                      material='stainless steel sheet', surface_area=38.5, unit_cost=1.037), #in in^2
-            Electrode('Reference Electrode', linked_unit=self, N=1, electrode_type='reference',
-                      material='Ag/AgCl with ceramic', surface_area=1, unit_cost=94), #in unknown units (94/unit, 1 unit)
-            Machine('Pump', linked_unit=self, N=3, unit_cost=2800), #$1075 per pump drive, $1095 per pump head
-            Membrane('Cation Exchange Membrane', linked_unit=self, N=1,
-                     material='0.45 mm Gel Polystyrene cross linked with divinylbenzene with sulphonic acid functional groups',
-                     unit_cost=0.182, surface_area=30.25), # in in^2
-            Membrane('Gas Permeable Membrane', linked_unit=self, N=1,
-                     material='Polyethylene 0.3 micron', unit_cost=0.032, surface_area=30.25), #in in^2
+            Electrode('Main_Anode', linked_unit=self, N=1, electrode_type='anode',
+                      material='Titanium grid catalyst welded to current collector tab both coated in iridium tantalum mixed metal oxide', surface_area=1, unit_cost=288), #288/unit, 1 unit
+            Electrode('Main_Cathode', linked_unit=self, N=1, electrode_type='cathode',
+                      material='TIMESETL 3pcs Stainless Steel Woven Wire 20 Mesh - 12"x8"(30x21cm) Metal Mesh Sheet 1mm Hole Great for Air Ventilation - A4', surface_area=30.25, unit_cost=0.847), #in in^2
+            Electrode('Current_Collector_Cathode', linked_unit=self, N=1, electrode_type='cathode',
+                      material='Stainless Steel 26 gauge 5.5'' x 7''', surface_area=38.5, unit_cost=39.9245), #in unknown units (94/unit, 1 unit)
+            Electrode('Reference_Electrode', linked_unit=self, N=1, electrode_type='reference',
+                      material='RE-5B Ag/AgCl, 7.5 cm long, with ceramic (MF-2056)', surface_area=1, unit_cost=94), #in unknown units (94/unit, 1 unit)
+            Membrane('Cation_Exchange_Membrane', linked_unit=self, N=1,
+                     material='CMI-7000S, polystyrene 0.45mm thick [48'' x 20'']',
+                     unit_cost=5.5055, surface_area=30.25), # in in^2
+            Membrane('Gas_Permeable_Membrane', linked_unit=self, N=1,
+                     material='Aquastill 0.3-micron polyethylene membrane', unit_cost=0.968, surface_area=30.25), #in in^2
             ]
 
 
