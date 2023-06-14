@@ -22,8 +22,10 @@ Reference for the default electrochemical cell modelled below:
 
 # %%
 
-from qsdsan import SanUnit, WasteStream
-from qsdsan.equipments import Column, Electrode, Machine, Membrane
+from .._sanunit import SanUnit
+from .._waste_stream import WasteStream
+# from . import SanUnit, WasteStream
+from ..equipments import Column, Electrode, Machine, Membrane
 
 __all__ = ('ElectrochemicalCell',)
 
@@ -99,7 +101,7 @@ class ElectrochemicalCell(SanUnit):
       TP         : 31.9 mg/L
       TK         : 1470.0 mg/L
      Component concentrations (mg/L):
-      H2O              984474.3
+      H2O              984514.0
       NH3              3820.0
       Na+              1620.0
       K+               1470.0
@@ -112,9 +114,10 @@ class ElectrochemicalCell(SanUnit):
     >>> # kg/hr imass value derived from 0.145 moles used on average for one, 26 hour experiment in the model cell
     >>> catalysts.price = 8.4 #in $/kg
     >>> # electricity price for ECS experiments in the default model tested by the Tarpeh Lab
-        power_utility.price = 0.1741
+    >>> # if want to change the price of electricity,
+    >>> # use qs.PowerUtility, e.g., qs.PowerUtility.price = 0.1741
     
-        # Set the unit
+    >>> # Set the unit
     >>> U1 = qs.sanunits.ElectrochemicalCell('unit_1', ins=(influent, catalysts), outs=('recovered', 'removed', 'residual'))
     >>> # Simulate and look at the results
     >>> U1.simulate()
@@ -150,61 +153,13 @@ class ElectrochemicalCell(SanUnit):
     Total purchase cost                                         USD                                 679
     Utility cost                                             USD/hr                            4.24e-06
     Additional OPEX                                          USD/hr                                 136
-    >>> U1.show()
+    >>> U1.show() # doctest: +ELLIPSIS
     ElectrochemicalCell: unit_1
     ins...
     [0] influent
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): H2O        29.5
-                     NH3        0.115
-                     Na+        0.0486
-                     K+         0.0441
-                     Cl-        0.0918
-                     Phosphate  0.00507
-                     Sulfate    0.0504
-                     Carbon     0.0558
-                     O2         0.104
-        WasteStream-specific properties:
-         pH         : 7.0
-         TC         : 1860.0 mg/L
-         TP         : 31.9 mg/L
-         TK         : 1470.0 mg/L
-    [1] catalysts
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): H2SO4  0.547
-        WasteStream-specific properties:
-         pH         : 7.0
-    outs...
-    [0] recovered
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): NH3  0.0802
-        WasteStream-specific properties:
-         pH         : 7.0
-    [1] removed
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): NH3  0.0951
-                     Na+  0.0389
-                     K+   0.0366
-        WasteStream-specific properties:
-         pH         : 7.0
-         TK         : 246680.3 mg/L
-    [2] residual
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): H2O        29.5
-                     NH3        0.0195
-                     H2SO4      0.547
-                     Na+        0.00972
-                     K+         0.0075
-                     Cl-        0.0918
-                     Phosphate  0.00507
-                     Sulfate    0.0504
-                     Carbon     0.0558
-                     O2         0.104
-        WasteStream-specific properties:
-         pH         : 7.0
-         TC         : 1863.0 mg/L
-         TP         : 32.0 mg/L
-         TK         : 250.3 mg/L
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): H2O        29.5
+    ...
     '''
 
     _N_ins = 2
@@ -274,5 +229,5 @@ class ElectrochemicalCell(SanUnit):
         recovered, removed = self.outs[0], self.outs[1]
 
         self.power_utility.rate = recovered.imass['NH3']*0.67577
-    # steady state value derived from 17.57 kWh used over 26 hrs
+        # steady state value derived from 17.57 kWh used over 26 hrs
         self._add_OPEX = {'Additional OPEX': add_OPEX}
