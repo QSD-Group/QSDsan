@@ -24,7 +24,6 @@ Reference for the default electrochemical cell modelled below:
 
 from .._sanunit import SanUnit
 from .._waste_stream import WasteStream
-# from . import SanUnit, WasteStream
 from ..equipments import Column, Electrode, Machine, Membrane
 
 __all__ = ('ElectrochemicalCell',)
