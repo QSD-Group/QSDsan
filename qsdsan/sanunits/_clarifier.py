@@ -557,7 +557,7 @@ class PrimaryClarifier(SanUnit):
         The ratio of sludge to primary influent. The default is 0.007, based on IWA report.[1] 
     f_corr : float
         Dimensionless correction factor for removal efficiency in the primary clarifier.[1]
-    oveflow_rate : float
+    overflow_rate : float
         The design overflow rate in the primary sedimentation tank. 
         Default value taken from sample design problem. Unit in m/hr[2]
 
@@ -721,13 +721,6 @@ class PrimaryClarifier(SanUnit):
         Cs = Zs + Xs
         of.set_flow(Ce,'kg/hr')
         uf.set_flow(Cs,'kg/hr')
-       
-    def _design(self):
-        
-        design = self.design_results
-        design['Volume'] = 24*self._HRT*self.mixed.get_total_flow('m3/hr') #in m3
-        design['Area'] = self.mixed.get_total_flow('m3/hr')/self.overflow_rate #in m2
-        design['Length'] = design['Volume']/design['Area'] #in m
         
     def _init_state(self):
         # if multiple wastestreams exist then concentration and total inlow 
@@ -783,3 +776,11 @@ class PrimaryClarifier(SanUnit):
             _update_state()
             _update_dstate()
         self._AE = yt
+        
+        
+    def _design(self):
+        
+        design = self.design_results
+        design['Volume'] = 24*self._HRT*self.mixed.get_total_flow('m3/hr') #in m3
+        design['Area'] = self.mixed.get_total_flow('m3/hr')/self.overflow_rate #in m2
+        design['Length'] = design['Volume']/design['Area'] #in m
