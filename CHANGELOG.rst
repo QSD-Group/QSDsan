@@ -4,8 +4,14 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
-Ongoing
--------
+`1.3.0`_
+--------
+- Enhance and use QSDsan's capacity for dynamic simulation for emerging and benchmark configurations (see EXPOsan METAB and PM2 (on the algae branch) modules).
+- New publications
+
+	- The paper introducing `DMsan <https://doi.org/10.1021/acsenvironau.2c00067>`_, the package developed for decision-making of sanitation and resource recovery technologies, is published in *ACS Environmental Au*!
+	- QSDsan was used to evaluate the sustainability of the `NEWgenerator <https://doi.org/10.1021/acsenvironau.3c00001>`_ system as in this paper on *ACS Environmental Au*!
+
 - New modules
 
 	- :class:`qsdsan.processes.KineticReaction`
@@ -19,7 +25,7 @@ Ongoing
 `1.2.0`_
 --------
 - The `QSDsan paper <https://www.doi.org/10.1039/d2ew00455k>`_ is accepted by *Environmental Science: Water Research & Technology*!
-- The first paper using QSDsan for the design of sanitation is accepted by `ACS Environmental Au <https://pubs.acs.org/doi/10.1021/acsenvironau.2c00022>`_! The Biogenic Refinery system described in this paper is also available in ``QSDsan``/``EXPOsan`` now.
+- The first paper using QSDsan for the design of sanitation is accepted by *ACS Environmental Au*! Read the `Biogenic Refinery <https://pubs.acs.org/doi/10.1021/acsenvironau.2c00022>`_ paper and check out the system module in ``QSDsan``/``EXPOsan``.
 - Added multiple systems (including their unit operations), check out the details on the `Developed System <https://qsdsan.readthedocs.io/en/latest/Developed_Systems.html>`_ page!
 
 	- Biogenic Refinery
@@ -179,6 +185,7 @@ Official release of ``QSDsan`` v1.0.0!
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
+.. _1.3.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.3.0
 .. _1.2.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.2.0
 .. _1.1.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.1.0
 .. _1.0.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.0.0
