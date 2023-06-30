@@ -6,7 +6,7 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 `1.3.0`_
 --------
-- Enhance and use QSDsan's capacity for dynamic simulation for emerging and benchmark configurations (see EXPOsan METAB and PM2 (on the algae branch) modules).
+- Enhance and use QSDsan's capacity for dynamic simulation for emerging technologies and benchmark configurations (see EXPOsan METAB and PM2 (on the algae branch, still under development) modules).
 - New publications
 
 	- The paper introducing `DMsan <https://doi.org/10.1021/acsenvironau.2c00067>`_, the package developed for decision-making of sanitation and resource recovery technologies, is published in *ACS Environmental Au*!
