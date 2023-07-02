@@ -557,7 +557,7 @@ class PrimaryClarifier(SanUnit):
         The ratio of sludge to primary influent. The default is 0.007, based on IWA report.[1] 
     f_corr : float
         Dimensionless correction factor for removal efficiency in the primary clarifier.[1]
-    oveflow_rate : float
+    overflow_rate : float
         The design overflow rate in the primary sedimentation tank. 
         Default value taken from sample design problem. Unit in m/hr[2]
 
@@ -776,6 +776,7 @@ class PrimaryClarifier(SanUnit):
             _update_state()
             _update_dstate()
         self._AE = yt
+
     
     _units = {
         'Cylinderical volume': 'm3',
@@ -845,8 +846,3 @@ class PrimaryClarifier(SanUnit):
         volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed **2)
         Density_stainless_steel = 7500 # in kg/m3
         D['Stainless steel'] = volume_center_feed*Density_stainless_steel # in kg
-        
-        
-        
-        
-        
