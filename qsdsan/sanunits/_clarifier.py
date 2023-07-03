@@ -20,6 +20,18 @@ __all__ = ('FlatBottomCircularClarifier',
            'IdealClarifier',
            'PrimaryClarifier')
 
+F_BM_pump = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
+default_F_BM = {
+        'Pumps': F_BM_pump,
+        'Pump building': F_BM_pump,
+        }
+
+default_equipment_lifetime = {
+    'Pumps': 15,
+    'Pump pipe stainless steel': 15,
+    'Pump stainless steel': 15,
+    }
+
 
 def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp, n0):
     X_star = npmax(X-X_min, n0)
@@ -918,3 +930,8 @@ class PrimaryClarifier(SanUnit):
         volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed **2)
         Density_stainless_steel = 7500 # in kg/m3
         D['Stainless steel'] = volume_center_feed*Density_stainless_steel # in kg
+        
+    def _cost(self):
+        self.baseline_purchase_costs['Tank'] = \
+            3 * self.design_results['Stainless steel']
+        self.power_utility.consumption = 0.1 * self.outs[0].F_vol
