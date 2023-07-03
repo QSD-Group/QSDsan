@@ -93,6 +93,7 @@ class FlatBottomCircularClarifier(SanUnit):
                  rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, isdynamic=True, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic)
+        self._h = height
         self._Qras = underflow
         self._Qwas = wastage
         self._sludge = WasteStream()
@@ -116,6 +117,14 @@ class FlatBottomCircularClarifier(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
+    @property
+    def height(self):
+        '''[float] Height of the clarifier in m.'''
+        return self._h
+
+    @height.setter
+    def height(self, h):
+        self._h = h
 
     @property
     def underflow(self):
@@ -434,11 +443,74 @@ class FlatBottomCircularClarifier(SanUnit):
             _update_dstate()
 
         self._ODE = dy_dt
-
+        
+    
+    _units = {
+        'Cylinderical volume': 'm3',
+        'Cylinderical depth': 'm',
+        'Cylinderical diameter': 'm',
+        
+        'Conical radius': 'm',
+        'Conical depth': 'm',
+        'Conical volume': 'm3',
+        
+        'Volume': 'm3',
+        'Center feed depth': 'm',
+        'Upflow velocity': 'm/hr',
+        'Center feed diameter': 'm',
+        'Concrete': 'kg',
+        'Stainless steel': 'kg'
+    }
+        
     def _design(self):
-        pass
+        
+        self.mixed.mix_from(self.ins)
+        
+        D = self.design_results
+        
+        D['Cylinderical volume'] = self._V # in m3
+        # Sidewater depth of a cylinderical clarifier lies between 2.5-5m
+        D['Cylinderical depth'] = self._h # in m 
+        # The tank diameter can lie anywhere between 3 m to 100 m
+        D['Cylinderical diameter'] = (4*D['Cylinderical Volume']/(3.14*D['Cylinderical Depth']))**(1/2) # in m
+        
+        D['Conical radius'] = D['Cylinderical Diameter']/2
+        # The slope of the bottom conical floor lies between 1:10 to 1:12
+        D['Conical depth'] = D['Conical radius']/10
+        D['Conical volume'] = (3.14/3)*(D['Conical radius']**2)*D['Conical depth']
+        
+        D['Volume'] = D['Cylinderical volume'] + D['Conical volume']
+        
+        # Primary clarifiers can be center feed or peripheral feed. The design here is for the more
+        # commonly deployed center feed.
+        
+        # Depth of the center feed lies between 30-75% of sidewater depth
+        D['Center feed depth'] = 0.5*D['Cylinderical depth']
+        # Typical conventional feed wells are designed for an average downflow velocity
+        # of 10-13 mm/s and maximum velocity of 25-30 mm/s
+        peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
+        upflow_velocity = 43.2 # in m/hr (converted from 12 mm/sec)
+        D['Upflow velocity'] = upflow_velocity*peak_flow_safety_factor # in m/hr
+        Center_feed_area = self.mixed.get_total_flow('m3/hr')/D['Upflow velocity'] # in m2
+        D['Center feed diameter'] = ((4*Center_feed_area)/3.14)**(1/2) # Sanity check: Diameter of the center feed lies between 15-25% of tank diameter
 
-
+        # Amount of concrete required 
+        thickness_concrete_wall = 3 # in m (!! NEED A RELIABLE SOURCE !!) 
+        inner_diameter = D['Cylinderical diameter']
+        outer_diameter = inner_diameter + thickness_concrete_wall
+        volume_cylindercal_wall = (3.14*D['Cylinderical depth']/4)*(outer_diameter**2 - inner_diameter**2)
+        volume_conical_wall = (3.14/3)*(D['Conical depth']/4)*(outer_diameter**2 - inner_diameter**2)
+        Density_concrete = 2400 # in kg/m3
+        D['Concrete'] = (volume_cylindercal_wall + volume_conical_wall)*Density_concrete # in kg
+        
+        # Amount of metal required for center feed
+        thickness_metal_wall = 0.5 # in m (!! NEED A RELIABLE SOURCE !!) 
+        inner_diameter_center_feed = D['Center feed diameter']
+        outer_diameter_center_feed = inner_diameter_center_feed + thickness_metal_wall
+        volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed **2)
+        Density_stainless_steel = 7500 # in kg/m3
+        D['Stainless steel'] = volume_center_feed*Density_stainless_steel # in kg
+    
 class IdealClarifier(SanUnit):
 
     _N_ins = 1
