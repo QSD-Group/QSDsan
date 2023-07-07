@@ -17,7 +17,6 @@ from .. import SanUnit, WasteStream
 import numpy as np
 
 from ..sanunits import WWTpump
-from ..utils import auom, calculate_excavation_volume
 
 __all__ = ('FlatBottomCircularClarifier',
            'IdealClarifier',
@@ -884,10 +883,46 @@ class PrimaryClarifier(SanUnit):
         'Upflow velocity': 'm/hr',
         'Center feed diameter': 'm',
         'Volume of concrete wall': 'm3',
-        'Stainless steel': 'kg'
+        'Stainless steel': 'kg',
+        'Pump pipe stainless steel' : 'kg',
+        'Pump stainless steel': 'kg'
     }
+    
    
+    def _design_pump(self):
        
+        ID, pumps = self.ID, self.pumps
+       
+        type_dct = dict.fromkeys(pumps, '')
+        inputs_dct = dict.fromkeys(pumps, (1,))
+       
+        for i in pumps:
+            if hasattr(self, f'{i}_pump'):
+                p = getattr(self, f'{i}_pump')
+                setattr(p, 'add_inputs', inputs_dct[i])
+            else:
+                ID = f'{ID}_{i}'
+                capacity_factor=1
+                pump = WWTpump(
+                    ID=ID, ins=self.ins[i], pump_type=type_dct[i],
+                    Q_mgd=None, add_inputs=inputs_dct[i],
+                    capacity_factor=capacity_factor,
+                    include_pump_cost=True,
+                    include_building_cost=False,
+                    include_OM_cost=False,
+                    )
+                setattr(self, f'{i}_pump', pump)
+
+        pipe_ss, pump_ss = 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p.simulate()
+            p_design = p.design_results
+            pipe_ss += p_design['Pump pipe stainless steel']
+            pump_ss += p_design['Pump stainless steel']
+        return pipe_ss, pump_ss
+    
+    
     def _design(self):
        
         self.mixed.mix_from(self.ins)
@@ -944,43 +979,42 @@ class PrimaryClarifier(SanUnit):
         D['Pump pipe stainless steel'] = pipe
         D['Pump stainless steel'] = pumps
        
-    def _design_pump(self):
-       
-        ID, pumps = self.ID, self.pumps
-       
-        type_dct = dict.fromkeys(pumps, '')
-        inputs_dct = dict.fromkeys(pumps, (1,))
-       
-        for i in pumps:
-            if hasattr(self, f'{i}_pump'):
-                p = getattr(self, f'{i}_pump')
-                setattr(p, 'add_inputs', inputs_dct[i])
-            else:
-                ID = f'{ID}_{i}'
-                capacity_factor=1
-                pump = WWTpump(
-                    ID=ID, ins=self.ins[i], pump_type=type_dct[i],
-                    Q_mgd=None, add_inputs=inputs_dct[i],
-                    capacity_factor=capacity_factor,
-                    include_pump_cost=True,
-                    include_building_cost=False,
-                    include_OM_cost=False,
-                    )
-                setattr(self, f'{i}_pump', pump)
-
-        pipe_ss, pump_ss = 0., 0.
-        for i in pumps:
-            p = getattr(self, f'{i}_pump')
-            p.simulate()
-            p_design = p.design_results
-            pipe_ss += p_design['Pump pipe stainless steel']
-            pump_ss += p_design['Pump stainless steel']
-        return pipe_ss, pump_ss
-       
     def _cost(self):
        
         D = self.design_results
         C = self.baseline_purchase_costs
-       
+        
+        # Construction of concrete and stainless steel walls
         C['Wall concrete'] = D['Volume of concrete wall']*self.wall_concrete_unit_cost
         C['Wall stainless steel'] = D['Stainless steel']*self.stainless_steel_unit_cost
+        
+        # Pump (construction and maintainance)
+        pumps = self.pumps
+        add_OPEX = self.add_OPEX
+        pump_cost = 0.
+        building_cost = 0.
+        opex_o = 0.
+        opex_m = 0. 
+        
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p_cost = p.baseline_purchase_costs
+            p_add_opex = p.add_OPEX
+            pump_cost += p_cost['Pump']
+            building_cost += p_cost['Pump building']
+            opex_o += p_add_opex['Pump operating']
+            opex_m += p_add_opex['Pump maintenance']
+
+        C['Pumps'] = pump_cost
+        C['Pump building'] = building_cost
+        add_OPEX['Pump operating'] = opex_o
+        add_OPEX['Pump maintenance'] = opex_m
+        
+        # Power
+        pumping = 0.
+        for ID in self.pumps:
+            p = getattr(self, f'{ID}_pump')
+            if p is None:
+                continue
+            pumping += p.power_utility.rate
+        self.power_utility.rate = pumping
