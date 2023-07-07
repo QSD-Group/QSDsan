@@ -1288,3 +1288,650 @@ class mADM1toASM2d(ADMjunction):
 
 # %%
 
+# While using this interface X_I.i_N in ASM2d should be 0.06, instead of 0.02. 
+class ASM2dtomADM1(ADMjunction):
+    '''
+    Interface unit to convert activated sludge model (ASM) components
+    to anaerobic digestion model (ADM) components.
+    
+    Parameters
+    ----------
+    upstream : stream or str
+        Influent stream with ASM components.
+    downstream : stream or str
+        Effluent stream with ADM components.
+    adm1_model : obj
+        The anaerobic digestion process model (:class:`qsdsan.processes.ADM1_p_extension`).
+    xs_to_li : float
+        Split of slowly biodegradable substrate COD to lipid, 
+        after all N is mapped into protein.
+    bio_to_li : float
+        Split of biomass COD to lipid, after all biomass N is
+        mapped into protein.
+    frac_deg : float
+        Biodegradable fraction of biomass COD.
+    rtol : float
+        Relative tolerance for COD and TKN balance.
+    atol : float
+        Absolute tolerance for COD and TKN balance.
+    
+    References
+    ----------
+    [1] Nopens, I.; Batstone, D. J.; Copp, J. B.; Jeppsson, U.; Volcke, E.; 
+    Alex, J.; Vanrolleghem, P. A. An ASM/ADM Model Interface for Dynamic 
+    Plant-Wide Simulation. Water Res. 2009, 43, 1913–1923.
+    
+    [2] Flores-Alsina, X., Solon, K., Kazadi Mbamba, C., Tait, S., Gernaey, K. V., 
+    Jeppsson, U., & Batstone, D. J. (2016). Modelling phosphorus (P), sulfur (S) 
+    and iron (FE) interactions for dynamic simulations of anaerobic digestion processes. 
+    Water Research, 95, 370–382. 
+    
+    See Also
+    --------
+    :class:`qsdsan.sanunits.ADMjunction`
+    
+    :class:`qsdsan.sanunits.ADMtoASM` 
+    
+    `math.isclose <https://docs.python.org/3.8/library/math.html#math.isclose>`
+    '''    
+    # User defined values
+    xs_to_li = 0.7
+    bio_to_li = 0.4
+    frac_deg = 0.68
+    
+    
+    def isbalanced(self, lhs, rhs_vals, rhs_i):
+        rhs = sum(rhs_vals*rhs_i)
+        error = rhs - lhs
+        tol = max(self.rtol*lhs, self.rtol*rhs, self.atol)
+        return abs(error) <= tol, error, tol, rhs
+    
+    def balance_cod_tkn_tp(self, asm_vals, adm_vals):
+        cmps_asm = self.ins[0].components
+        cmps_adm = self.outs[0].components
+        asm_i_COD = cmps_asm.i_COD
+        adm_i_COD = cmps_adm.i_COD
+        non_tkn_idx = cmps_asm.indices(('S_NO', 'S_N2'))
+        asm_i_N = cmps_asm.i_N
+        adm_i_N = cmps_adm.i_N
+        asm_i_P = cmps_asm.i_P
+        adm_i_P = cmps_adm.i_P
+        asm_cod = sum(asm_vals*asm_i_COD)
+        asm_tkn = sum(asm_vals*asm_i_N) - sum(asm_vals[non_tkn_idx])
+        asm_tp = sum(asm_vals*asm_i_P)
+        cod_bl, cod_err, cod_tol, adm_cod = self.isbalanced(asm_cod, adm_vals, adm_i_COD)
+        tkn_bl, tkn_err, tkn_tol, adm_tkn = self.isbalanced(asm_tkn, adm_vals, adm_i_N)
+        tp_bl, tp_err, tp_tol, adm_tp = self.isbalanced(asm_tp, adm_vals, adm_i_P)
+        
+        if tkn_bl and tp_bl:
+            if cod_bl:
+                return adm_vals
+            else:
+                if cod_err > 0: dcod = -(cod_err - cod_tol)/adm_cod
+                else: dcod = -(cod_err + cod_tol)/adm_cod
+                _adm_vals = adm_vals * (1 + (adm_i_COD>0)*dcod)
+                _tkn_bl, _tkn_err, _tkn_tol, _adm_tkn = self.isbalanced(asm_tkn, _adm_vals, adm_i_N)
+                _tp_bl, _tp_err, _tp_tol, _adm_tp = self.isbalanced(asm_tp, _adm_vals, adm_i_P)
+                if _tkn_bl and _tp_bl: return _adm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same \n'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ASM) TKN is {asm_tkn}\n '
+                        f'effluent (ADM) TKN is {adm_tkn} or {_adm_tkn}\n '
+                        f'influent TP is {asm_tp}\n ' 
+                        f'effluent TP is {adm_tp} or {_adm_tp}. '
+                        f'influent COD is {asm_cod}\n ' 
+                        f'effluent COD is {adm_cod} or {adm_cod*(1+dcod)}. ')
+                    return adm_vals
+        elif cod_bl and tp_bl:
+            if tkn_bl:
+                return adm_vals
+            else:
+                if tkn_err > 0: dtkn = -(tkn_err - tkn_tol)/adm_tkn
+                else: dtkn = -(tkn_err + tkn_tol)/adm_tkn
+                _adm_vals = adm_vals * (1 + (adm_i_N>0)*dtkn)
+                _cod_bl, _cod_err, _cod_tol, _adm_cod = self.isbalanced(asm_cod, _adm_vals, adm_i_COD)
+                _tp_bl, _tp_err, _tp_tol, _adm_tp = self.isbalanced(asm_tp, _adm_vals, adm_i_P)
+                if _cod_bl and _tp_bl: return _adm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same time'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ASM) COD is {asm_cod}\n '
+                        f'effluent (ADM) COD is {adm_cod} or {_adm_cod}\n '
+                        f'influent TP is {asm_tp}\n ' 
+                        f'effluent TP is {adm_tp} or {_adm_tp}. '
+                        f'influent TKN is {asm_tkn}\n ' 
+                        f'effluent TKN is {adm_tkn} or {adm_tkn*(1+dtkn)}. '
+                        'To balance TKN please ensure ASM2d(X_I.i_N) = ADM1(X_I.i_N)')
+                    return adm_vals
+        elif cod_bl and tkn_bl:
+            if tp_bl:
+                return adm_vals
+            else:
+                if tp_err > 0: dtp = -(tp_err - tp_tol)/adm_tp
+                else: dtp = -(tp_err + tp_tol)/adm_tp
+                _adm_vals = adm_vals * (1 + (adm_i_P>0)*dtp)
+                _cod_bl, _cod_err, _cod_tol, _adm_cod = self.isbalanced(asm_cod, _adm_vals, adm_i_COD)
+                _tkn_bl, _tkn_err, _tkn_tol, _adm_tkn = self.isbalanced(asm_tkn, _adm_vals, adm_i_N)
+                if _cod_bl and _tkn_bl: return _adm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same time'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ASM) COD is {asm_cod}\n '
+                        f'effluent (ADM) COD is {adm_cod} or {_adm_cod}\n '
+                        f'influent TKN is {asm_tkn}\n ' 
+                        f'effluent TKN is {adm_tkn} or {_adm_tkn}. '
+                        f'influent TP is {asm_tp}\n ' 
+                        f'effluent TP is {adm_tp} or {adm_tp*(1+dtp)}. ')
+                    return adm_vals
+        else:
+            warn('cannot balance COD, TKN and TP at the same time. \n'
+                 'Atleast two of the three COD, TKN, and TP are not balanced \n'
+                f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                f'influent (ASM) COD is {asm_cod}\n '
+                f'effluent (ADM) COD is {adm_cod}\n '
+                f'influent TP is {asm_tp}\n ' 
+                f'effluent TP is {adm_tp}'
+                f'influent TKN is {asm_tkn}\n ' 
+                f'effluent TKN is {adm_tkn}. ')
+            return adm_vals
+                
+    def _compile_reactions(self):
+        # Retrieve constants
+        ins = self.ins[0]
+        outs = self.outs[0]
+        rtol = self.rtol
+        atol = self.atol
+
+        cmps_asm = ins.components
+        
+        # For COD balance 
+        S_NO3_i_COD = cmps_asm.S_NO3.i_COD
+        
+        # For N balance 
+        X_H_i_N = cmps_asm.X_H.i_N
+        X_AUT_i_N = cmps_asm.X_AUT.i_N
+        S_F_i_N = cmps_asm.S_F.i_N
+        X_S_i_N = cmps_asm.X_S.i_N
+        asm_X_I_i_N = cmps_asm.X_I.i_N
+        asm_S_I_i_N = cmps_asm.S_I.i_N
+        
+        # For P balance
+        X_H_i_P = cmps_asm.X_H.i_P
+        X_AUT_i_P = cmps_asm.X_AUT.i_P
+        S_F_i_P = cmps_asm.S_F.i_P
+        X_S_i_P = cmps_asm.X_S.i_P
+        asm_X_I_i_P = cmps_asm.X_I.i_P
+        
+        if cmps_asm.S_A.i_N > 0: 
+            warn(f'S_A in ASM has positive nitrogen content: {cmps_asm.S_S.i_N} gN/gCOD. '
+                 'These nitrogen will be ignored by the interface model '
+                 'and could lead to imbalance of TKN after conversion.')
+        if cmps_asm.S_A.i_P > 0: 
+            warn(f'S_A in ASM has positive phosphorous content: {cmps_asm.S_S.i_P} gN/gCOD. '
+                 'These phosphorous will be ignored by the interface model '
+                 'and could lead to imbalance of TP after conversion.')
+        if cmps_asm.S_I.i_P > 0:
+            warn(f'S_I in ASM has positive phosphorous content: {cmps_asm.S_I.i_P} gN/gCOD. '
+                 'These phosphorous will be ignored by the interface model '
+                 'and could lead to imbalance of TP after conversion.')
+        # We do not need to check if X_S.i_N != 0 since we take care of it using X_ND_asm1
+        # We do not need to check if S_F.i_N != 0 since we take care of it using S_ND_asm1
+        
+        cmps_adm = outs.components
+        
+        # For nitrogen balance 
+        S_aa_i_N = cmps_adm.S_aa.i_N
+        X_pr_i_N = cmps_adm.X_pr.i_N
+        adm_S_I_i_N = cmps_adm.S_I.i_N
+        adm_X_I_i_N = cmps_adm.X_I.i_N
+        
+        # For phosphorous balance 
+        X_pr_i_P = cmps_adm.X_pr.i_P
+        adm_S_I_i_P = cmps_adm.S_I.i_P
+        adm_X_I_i_P = cmps_adm.X_I.i_P
+        
+        # Checks for direct mapping of X_PAO, X_PP, X_PHA
+        
+        # Check for X_PAO (measured as COD so i_COD = 1 in both ASM2d and ADM1)
+        asm_X_PAO_i_N = cmps_asm.X_PAO.i_N
+        adm_X_PAO_i_N = cmps_adm.X_PAO.i_N
+        if asm_X_PAO_i_N != adm_X_PAO_i_N:
+            raise RuntimeError('X_PAO cannot be directly mapped as N content'
+                               f'in asm2d_X_PAO_i_N = {asm_X_PAO_i_N} is not equal to'
+                               f'adm_X_PAO_i_N = {adm_X_PAO_i_N}')
+            
+        asm_X_PAO_i_P = cmps_asm.X_PAO.i_P
+        adm_X_PAO_i_P = cmps_adm.X_PAO.i_P
+        if asm_X_PAO_i_P != adm_X_PAO_i_P:
+            raise RuntimeError('X_PAO cannot be directly mapped as P content'
+                               f'in asm2d_X_PAO_i_P = {asm_X_PAO_i_P} is not equal to'
+                               f'adm_X_PAO_i_P = {adm_X_PAO_i_P}')
+        
+        # Checks not required for X_PP as measured as P in both, with i_COD = i_N = 0
+        # Checks not required for X_PHA as measured as COD in both, with i_N = i_P = 0
+        
+        adm_ions_idx = cmps_adm.indices(['S_IN', 'S_IP', 'S_IC', 'S_cat', 'S_an'])
+        
+        frac_deg = self.frac_deg
+        alpha_IP = self.alpha_IP
+        alpha_IN = self.alpha_IN
+        alpha_IC = self.alpha_IC
+        proton_charge = 10**(-self.pKa[0]+self.pH) - 10**(-self.pH) # self.pKa[0] is pKw
+        f_corr = self.balance_cod_tkn_tp
+
+        # To convert components from ASM2d to mADM1 (asm2d-2-madm1)
+        def asm2d2madm1(asm_vals):
+            # S_I, S_S, X_I, X_S, X_BH, X_BA, X_P, S_O, S_NO, S_NH, S_ND, X_ND, S_ALK, S_N2, H2O = asm_vals
+            
+            S_O2, S_N2, S_NH4, S_NO3, S_PO4, S_F, S_A, S_I, S_ALK, X_I, X_S, X_H, \
+                X_PAO, X_PP, X_PHA, X_AUT, X_MeOH, X_MeP, H2O = asm_vals
+
+            # Step 0: charged component snapshot (# pg. 84 of IWA ASM textbook)
+            _sno3 = S_NO3
+            _snh4 = S_NH4
+            _salk = S_ALK  
+            _spo4 = S_PO4
+            _sa = S_A 
+            _xpp = X_PP 
+              
+            # Step 1: remove any remaining COD demand
+            O2_coddm = S_O2
+            NO3_coddm = -S_NO3*S_NO3_i_COD
+            
+            # cod_spl = S_S + X_S + X_BH + X_BA
+            # Replacing S_S with S_F + S_A (IWA ASM textbook)
+            
+            cod_spl = (S_A + S_F) + X_S + (X_H + X_AUT)
+            
+            # bioN = X_BH*X_BH_i_N + X_BA*X_BA_i_N
+            
+            bioN = X_H*X_H_i_N + X_AUT*X_AUT_i_N
+            bioP = X_H*X_H_i_P + X_AUT*X_AUT_i_P
+            
+            # To be used in Step 2
+            S_ND_asm1 = S_F*S_F_i_N   #S_ND (in asm1) equals the N content in S_F
+            # To be used in Step 3
+            X_ND_asm1 = X_S*X_S_i_N   #X_ND (in asm1) equals the N content in X_S
+            # To be used in Step 5 (a)
+            X_S_P = X_S*X_S_i_P
+            # To be used in Step 5 (b)
+            S_F_P = S_F*S_F_i_P 
+            
+            if cod_spl <= O2_coddm:
+                S_O2 = O2_coddm - cod_spl
+                S_F = S_A =  X_S = X_H = X_AUT = 0
+            elif cod_spl <= O2_coddm + NO3_coddm:
+                S_O2 = 0
+                S_NO3 = -(O2_coddm + NO3_coddm - cod_spl)/S_NO3_i_COD
+                S_A = S_F = X_S = X_H = X_AUT = 0
+            else:
+                S_A -= O2_coddm + NO3_coddm
+                if S_A < 0:
+                    S_F += S_A
+                    S_A = 0
+                    if S_F < 0:
+                        X_S += S_F
+                        S_F = 0
+                        if X_S < 0:
+                            X_H += X_S
+                            X_S = 0
+                            if X_H < 0:
+                                X_AUT += X_H
+                                X_H = 0
+                S_O2 = S_NO3 = 0
+            
+            # Step 2: convert any readily biodegradable 
+            # COD and TKN into amino acids and sugars
+            
+            # S_S (in asm1) equals to the sum of S_F and S_A (pg. 82 IWA ASM models handbook)
+            S_S_asm1 = S_F + S_A 
+            
+            # First we calculate the amount of amino acid required in ADM1
+            # if all available soluble organic N can be mapped to amino acid
+            req_scod = S_ND_asm1 / S_aa_i_N
+            
+            # if available S_S is not enough to fulfill that amino acid requirement 
+            if S_S_asm1 < req_scod: 
+                # then all available S_S is mapped to amino acids 
+                S_aa = S_S_asm1
+                # and no S_S would be available for conversion to sugars
+                S_su = 0
+                # This needs to be followed by a corresponding loss in soluble organic N 
+                S_ND_asm1 -= S_aa * S_aa_i_N
+            # if available S_S is more than enough to fulfill that amino acid requirement 
+            else:
+                # All soluble organic N will be mapped to amino acid
+                S_aa = req_scod
+                # The line above implies that a certain portion of S_S would also be consumed to form amino acid
+                # The S_S which is left would form sugar 
+                # In simpler terms; S_S = S_S - S_aa; S_su = S_S 
+                S_su = S_S_asm1 - S_aa
+                # All soluble organic N would thus be consumed in amino acid formation
+                S_ND_asm1 = 0
+
+            # Step 3: convert slowly biodegradable COD and TKN
+            # into proteins, lipids, and carbohydrates
+            
+            # First we calculate the amount of protein required in ADM1
+            # if all available particulate organic N can be mapped to amino acid
+            req_xcod = X_ND_asm1 / X_pr_i_N
+            # Since X_pr_i_N >> X_pr_i_P there's no need to check req_xcod for N and P separately (CONFIRM LATER 05/16)
+            
+            # if available X_S is not enough to fulfill that protein requirement
+            if X_S < req_xcod:
+                # then all available X_S is mapped to amino acids
+                X_pr = X_S
+                # and no X_S would be available for conversion to lipid or carbohydrates 
+                X_li = X_ch = 0
+                # This needs to be followed by a corresponding loss in particulate organic N 
+                X_ND_asm1 -= X_pr * X_pr_i_N
+                
+                # For P balance (CONFIRM LATER 05/16)
+                # This needs to be followed by a corresponding loss in particulate organic N 
+                X_S_P -= X_pr * X_pr_i_P
+                
+            # if available X_S is more than enough to fulfill that protein requirement
+            else:
+                # All particulate organic N will be mapped to amino acid
+                X_pr = req_xcod
+                # The line above implies that a certain portion of X_S would also be consumed to form protein
+                # The X_S which is left would form lipid and carbohydrates in a percentage define by the user  
+                X_li = self.xs_to_li * (X_S - X_pr)
+                X_ch = (X_S - X_pr) - X_li
+                # All particulate organic N would thus be consumed in amino acid formation
+                X_ND_asm1 = 0
+                
+                # For P balance (CONFIRM LATER 05/16)
+                # This needs to be followed by a corresponding loss in particulate organic N 
+                X_S_P -= X_pr * X_pr_i_P
+            
+            # Step 4: convert active biomass into protein, lipids, 
+            # carbohydrates and potentially particulate TKN
+            
+            # First the amount of biomass N/P available for protein, lipid etc is determined
+            # For this calculation, from total biomass N available the amount 
+            # of particulate inert N/P expected in ADM1 is subtracted 
+            
+            available_bioN = bioN - (X_H + X_AUT) * (1-frac_deg) * adm_X_I_i_N
+            if available_bioN < 0:
+                raise RuntimeError('Not enough N in X_H and X_AUT to fully convert '
+                                   'the non-biodegradable portion into X_I in ADM1.')
+                
+            available_bioP = bioP - (X_H + X_AUT) * (1-frac_deg) * adm_X_I_i_P
+            if available_bioP < 0:
+                raise RuntimeError('Not enough P in X_H and X_AUT to fully convert '
+                                   'the non-biodegradable portion into X_I in ADM1.')
+                
+            # Then the amount of biomass N/P required for biomass conversion to protein is determined
+            req_bioN = (X_H + X_AUT) * frac_deg * X_pr_i_N
+            req_bioP = (X_H + X_AUT) * frac_deg * X_pr_i_P
+            
+            # Case I: if both available biomass N/P and particulate organic N/P is greater than 
+            # required biomass N/P for conversion to protein
+            if available_bioN + X_ND_asm1 >= req_bioN and available_bioP + X_S_P >= req_bioP:
+                # then all biodegradable biomass N/P (corrsponding to protein demand) is converted to protein
+                X_pr += (X_H + X_AUT) * frac_deg
+                # the remaining biomass N/P is transfered as organic N/P
+                X_ND_asm1 += available_bioN - req_bioN 
+                X_S_P += available_bioP - req_bioP 
+                
+            # Case II: if available biomass N and particulate organic N is less than 
+            # required biomass N for conversion to protein, but available biomass P and  
+            # particulate organic P is greater than required biomass P for conversion to protein
+            
+            # Case III: if available biomass P and particulate organic P is less than 
+            # required biomass P for conversion to protein, but available biomass N and  
+            # particulate organic N is greater than required biomass N for conversion to protein
+            
+            # Case IV: if both available biomass N/P and particulate organic N/P is less than 
+            # required biomass N/P for conversion to protein
+            else:
+                
+                if (available_bioP + X_S_P)/X_pr_i_P < (available_bioN + X_ND_asm1)/X_pr_i_N:
+                    # all available P and particulate organic P is converted to protein
+                    bio2pr = (available_bioP + X_S_P)/X_pr_i_P
+                    X_pr += bio2pr
+                    # Biodegradable biomass available after conversion to protein is calculated 
+                    bio_to_split = (X_H + X_AUT) * frac_deg - bio2pr
+                    # Part of the remaining biomass is mapped to lipid based on user defined value 
+                    bio_split_to_li = bio_to_split * self.bio_to_li
+                    X_li += bio_split_to_li
+                    # The other portion of the remanining biomass is mapped to carbohydrates 
+                    X_ch += (bio_to_split - bio_split_to_li)
+                    # Since all organic P has been mapped to protein, none is left
+                    X_S_P = 0
+                    
+                    # the remaining biomass N is transfered as organic N
+                    X_ND_asm1 += available_bioN - (bio2pr*X_pr_i_N)
+                
+                else:
+                    # all available N and particulate organic N is converted to protein
+                    bio2pr = (available_bioN + X_ND_asm1)/X_pr_i_N
+                    X_pr += bio2pr
+                    # Biodegradable biomass available after conversion to protein is calculated 
+                    bio_to_split = (X_H + X_AUT) * frac_deg - bio2pr
+                    # Part of the remaining biomass is mapped to lipid based on user defined value 
+                    bio_split_to_li = bio_to_split * self.bio_to_li
+                    X_li += bio_split_to_li
+                    # The other portion of the remanining biomass is mapped to carbohydrates 
+                    X_ch += (bio_to_split - bio_split_to_li)
+                    # Since all organic N has been mapped to protein, none is left
+                    X_ND_asm1 = 0
+                    
+                    # the remaining biomass P is transfered as organic P
+                    X_S_P += available_bioP - (bio2pr*X_pr_i_P)
+            
+            
+            # Step 5: map particulate inerts
+            
+            # 5 (a)
+            # First determine the amount of particulate inert N/P available from ASM2d
+            xi_nsp_asm2d = X_I * asm_X_I_i_N
+            xi_psp_asm2d = X_I * asm_X_I_i_P
+            
+            # Then determine the amount of particulate inert N/P that could be produced 
+            # in ADM1 given the ASM1 X_I
+            xi_ndm = X_I * adm_X_I_i_N
+            xi_pdm = X_I * adm_X_I_i_P
+
+            # if particulate inert N available in ASM1 is greater than ADM1 demand
+            if xi_nsp_asm2d + X_ND_asm1 >= xi_ndm:
+                deficit = xi_ndm - xi_nsp_asm2d
+                # COD balance 
+                X_I += (X_H+X_AUT) * (1-frac_deg)
+                # N balance 
+                X_ND_asm1 -= deficit
+                # P balance 
+                if xi_psp_asm2d + X_S_P >= xi_pdm:
+                    deficit = xi_pdm - xi_psp_asm2d
+                    X_S_P -= deficit
+                elif isclose(xi_psp_asm2d+X_S_P, xi_pdm, rel_tol=rtol, abs_tol=atol):
+                    X_S_P  = 0
+                else:
+                    raise RuntimeError('Not enough P in X_I, X_S to fully '
+                                       'convert X_I in ASM2d into X_I in ADM1.')
+            elif isclose(xi_nsp_asm2d+X_ND_asm1, xi_ndm, rel_tol=rtol, abs_tol=atol):
+                # COD balance 
+                X_I += (X_H+X_AUT) * (1-frac_deg)
+                # N balance 
+                X_ND_asm1 = 0
+                # P balance 
+                if xi_psp_asm2d + X_S_P >= xi_pdm:
+                    deficit = xi_pdm - xi_psp_asm2d
+                    X_S_P -= deficit
+                elif isclose(xi_psp_asm2d+X_S_P, xi_pdm, rel_tol=rtol, abs_tol=atol):
+                    X_S_P  = 0
+                else:
+                    raise RuntimeError('Not enough P in X_I, X_S to fully '
+                                       'convert X_I in ASM2d into X_I in ADM1.')
+            else:
+            # Since the N balance cannot hold, the P balance is not futher checked 
+                raise RuntimeError('Not enough N in X_I, X_S to fully '
+                                   'convert X_I in ASM2d into X_I in ADM1.')
+                
+            # 5(b)
+            
+            # Then determine the amount of soluble inert N/P that could be produced 
+            # in ADM1 given the ASM1 X_I
+            req_sn = S_I * adm_S_I_i_N
+            req_sp = S_I * adm_S_I_i_P
+            
+            supply_inert_n_asm2d = S_I * asm_S_I_i_N
+            
+            # N balance 
+            if req_sn <= S_ND_asm1 + supply_inert_n_asm2d:
+                S_ND_asm1 -= (req_sn - supply_inert_n_asm2d)
+                supply_inert_n_asm2d = 0 
+                # P balance 
+                if req_sp <= S_F_P:
+                    S_F_P -= req_sp
+                elif req_sp <= S_F_P + X_S_P:
+                    X_S_P -= (req_sp - S_F_P)
+                    S_F_P = 0
+                elif req_sp <= S_F_P + X_S_P + S_PO4:
+                    S_PO4 -= (req_sp - S_F_P - X_S_P)
+                    S_F_P = X_S_P = 0
+                else:
+                    warn('Additional soluble inert COD is mapped to S_su.')
+                    # Can these be executed in this case? I think so
+                    SI_cod = (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P
+                    S_su += S_I - SI_cod
+                    S_I = SI_cod
+                    S_F_P = X_S_P = S_PO4 = 0
+                    # Should  I redo N balance here? 
+            # N balance
+            elif req_sn <= S_ND_asm1 + X_ND_asm1 + supply_inert_n_asm2d:
+                X_ND_asm1 -= (req_sn - S_ND_asm1 - supply_inert_n_asm2d)
+                S_ND_asm1 = supply_inert_n_asm2d = 0
+                # P balance
+                if req_sp <= S_F_P:
+                    S_F_P -= req_sp
+                elif req_sp <= S_F_P + X_S_P:
+                    X_S_P -= (req_sp - S_F_P)
+                    S_F_P = 0
+                elif req_sp <= S_F_P + X_S_P + S_PO4:
+                    S_PO4 -= (req_sp - S_F_P - X_S_P)
+                    S_F_P = X_S_P = 0
+                else:
+                    warn('Additional soluble inert COD is mapped to S_su.')
+                    # Can these be executed in this case? I think so
+                    SI_cod = (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P
+                    S_su += S_I - SI_cod
+                    S_I = SI_cod
+                    S_F_P = X_S_P = S_PO4 = 0
+                    # Should  I redo N balance here? 
+            # N balance
+            elif req_sn <= S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d:
+                S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1 - supply_inert_n_asm2d)
+                S_ND_asm1 = X_ND_asm1 = supply_inert_n_asm2d = 0
+                # P balance 
+                if req_sp <= S_F_P:
+                    S_F_P -= req_sp
+                elif req_sp <= S_F_P + X_S_P:
+                    X_S_P -= (req_sp - S_F_P)
+                    S_F_P = 0
+                elif req_sp <= S_F_P + X_S_P + S_PO4:
+                    S_PO4 -= (req_sp - S_F_P - X_S_P)
+                    S_F_P = X_S_P = 0
+                else:
+                    warn('Additional soluble inert COD is mapped to S_su.')
+                    # Can these be executed in this case? I think so
+                    SI_cod = (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P
+                    S_su += S_I - SI_cod
+                    S_I = SI_cod
+                    S_F_P = X_S_P = S_PO4 = 0
+                    # Should  I redo N balance here? 
+            elif req_sp <= S_F_P or req_sp <= S_F_P + X_S_P or req_sp <= S_F_P + X_S_P + S_PO4:
+                warn('Additional soluble inert COD is mapped to S_su.')
+                SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d)/adm_S_I_i_N
+                S_su += S_I - SI_cod
+                S_I = SI_cod
+                S_ND_asm1 = X_ND_asm1 = S_NH4 = supply_inert_n_asm2d = 0
+                req_sp = S_I * adm_S_I_i_P
+                if req_sp <= S_F_P:
+                    S_F_P -= req_sp
+                elif req_sp <= S_F_P + X_S_P:
+                    X_S_P -= (req_sp - S_F_P)
+                    S_F_P = 0
+                elif req_sp <= S_F_P + X_S_P + S_PO4:
+                    S_PO4 -= (req_sp - S_F_P - X_S_P)
+                    S_F_P = X_S_P = 0
+            else:
+                if (S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d)/adm_S_I_i_N < (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P:
+                    warn('Additional soluble inert COD is mapped to S_su.')
+                    SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d)/adm_S_I_i_N
+                    S_su += S_I - SI_cod
+                    S_I = SI_cod
+                    S_ND_asm1 = X_ND_asm1 = S_NH4 = supply_inert_n_asm2d = 0
+                    
+                    req_sp = S_I * adm_S_I_i_P
+                    S_PO4 -= (req_sp - S_F_P - X_S_P)
+                    S_F_P = X_S_P = 0
+                else:
+                    warn('Additional soluble inert COD is mapped to S_su.')
+                    SI_cod = (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P
+                    S_su += S_I - SI_cod
+                    S_I = SI_cod
+                    S_F_P = X_S_P = S_PO4 = 0
+                    
+                    req_sn = S_I * adm_S_I_i_N
+                    S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1 - supply_inert_n_asm2d)
+                    S_ND_asm1 = X_ND_asm1 = supply_inert_n_asm2d = 0
+                
+            # Step 6: Step map any remaining TKN/P
+            S_IN = S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d
+            S_IP = S_F_P + X_S_P + S_PO4            
+            
+            # Step 8: check COD and TKN balance
+            # has TKN: S_aa, S_IN, S_I, X_pr, X_I
+            S_IC = S_cat = S_an = 0
+            
+            # When mapping components directly in Step 9 ensure the values of
+            # cmps.i_N, cmps.i_P, and cmps.i_COD are same in both ASM2d and ADM1
+            
+            # Step 9: Mapping common state variables directly    
+            # The next three commented lines are executed when outputting
+            # array of ADM1 components 
+            # X_PAO (ADM1) = X_PAO (ASM2d)
+            # X_PP (ADM1) = X_PP (ASM2d)
+            # X_PHA (ADM1) = X_PHA (ASM2d)
+            # X_MeOH (ADM1) = X_MeOH (ASM2d)
+            # X_MeP (ADM1) = X_MeP (ASM2d)
+            
+            adm_vals = np.array([
+                S_su, S_aa, 
+                0, 0, 0, 0, 0, # S_fa, S_va, S_bu, S_pro, S_ac, 
+                0, 0, # S_h2, S_ch4,
+                S_IC, S_IN, S_IP, S_I, 
+                X_ch, X_pr, X_li, 
+                0, 0, 0, 0, 0, 0, 0, # X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2,
+                X_I, X_PHA, X_PP, X_PAO, 
+                0, 0,  # S_K, S_Mg,
+                X_MeOH, X_MeP,
+                S_cat, S_an, H2O])
+            
+            adm_vals = f_corr(asm_vals, adm_vals)
+            
+            # Step 7: charge balance
+            asm_charge_tot = - _sa/64 + _snh4/14 - _sno3/14 - 1.5*_spo4/31 - _salk - _xpp/31 #Based on page 84 of IWA ASM handbook
+            #!!! charge balance should technically include VFAs, 
+            # but VFAs concentrations are assumed zero per previous steps??
+            S_IN = adm_vals[adm_ions_idx[0]]
+            S_IP = adm_vals[adm_ions_idx[1]]
+            #!!! charge balance from ADM1 should technically include S_K, and S_Mg,
+            #but since both are zero, it is acceptable 
+            S_IC = (asm_charge_tot -S_IN*alpha_IN -S_IP*alpha_IP)/alpha_IC
+            net_Scat = asm_charge_tot + proton_charge
+            if net_Scat > 0:  
+                S_cat = net_Scat
+                S_an = 0
+            else:
+                S_cat = 0
+                S_an = -net_Scat
+            
+            adm_vals[adm_ions_idx[2:]] = [S_IC, S_cat, S_an]
+            
+            return adm_vals
+        
+        self._reactions = asm2d2madm1    
