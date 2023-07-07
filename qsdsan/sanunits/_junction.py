@@ -865,4 +865,426 @@ class ASMtoADM(ADMjunction):
             
             return adm_vals
         
-        self._reactions = asm2adm    
+        self._reactions = asm2adm
+        
+        
+# %%
+
+class mADM1toASM2d(ADMjunction):
+    '''
+    Interface unit to convert modified anaerobic digestion model no. 1 (ADM1) components
+    to activated sludge model no. 2d (ASM2d) components.
+    
+    Parameters
+    ----------
+    upstream : stream or str
+        Influent stream with ADM components.
+    downstream : stream or str
+        Effluent stream with ASM components.
+    adm1_model : obj
+        The anaerobic digestion process model (:class:`qsdsan.processes.ADM1_p_extension`).
+    rtol : float
+        Relative tolerance for COD and TKN balance.
+    atol : float
+        Absolute tolerance for COD and TKN balance.
+    
+    References
+    ----------
+    [1] Nopens, I.; Batstone, D. J.; Copp, J. B.; Jeppsson, U.; Volcke, E.; 
+    Alex, J.; Vanrolleghem, P. A. An ASM/ADM Model Interface for Dynamic 
+    Plant-Wide Simulation. Water Res. 2009, 43, 1913–1923.
+    
+    [2] Flores-Alsina, X., Solon, K., Kazadi Mbamba, C., Tait, S., Gernaey, K. V., 
+    Jeppsson, U., & Batstone, D. J. (2016). Modelling phosphorus (P), sulfur (S) 
+    and iron (FE) interactions for dynamic simulations of anaerobic digestion processes. 
+    Water Research, 95, 370–382. 
+    See Also
+    --------
+    :class:`qsdsan.sanunits.ADMjunction`
+    
+    :class:`qsdsan.sanunits.ASMtoADM`  
+    
+    `math.isclose <https://docs.python.org/3.8/library/math.html#math.isclose>`
+    '''
+    # User defined values
+    # bio_to_xs = 0.7 (Not using this split since no X_P exists in ASM2d)
+    
+    # Should be constants
+    cod_vfa = np.array([64, 112, 160, 208])
+    
+    def isbalanced(self, lhs, rhs_vals, rhs_i):
+        rhs = sum(rhs_vals*rhs_i)
+        error = rhs - lhs
+        tol = max(self.rtol*lhs, self.rtol*rhs, self.atol)
+        return abs(error) <= tol, error, tol, rhs
+    
+    def balance_cod_tkn(self, adm_vals, asm_vals):
+        cmps_adm = self.ins[0].components
+        cmps_asm = self.outs[0].components
+        asm_i_COD = cmps_asm.i_COD
+        adm_i_COD = cmps_adm.i_COD
+        gas_idx = cmps_adm.indices(('S_h2', 'S_ch4'))
+        asm_i_N = cmps_asm.i_N
+        adm_i_N = cmps_adm.i_N
+        asm_i_P = cmps_asm.i_P
+        adm_i_P = cmps_adm.i_P
+        adm_cod = sum(adm_vals*adm_i_COD) - sum(adm_vals[gas_idx])
+        adm_tkn = sum(adm_vals*adm_i_N)
+        adm_tp = sum(adm_vals*adm_i_P)
+        
+        cod_bl, cod_err, cod_tol, asm_cod = self.isbalanced(adm_cod, asm_vals, asm_i_COD)
+        tkn_bl, tkn_err, tkn_tol, asm_tkn = self.isbalanced(adm_tkn, asm_vals, asm_i_N)
+        tp_bl, tp_err, tp_tol, asm_tp = self.isbalanced(adm_tp, asm_vals, asm_i_P)
+        
+        if tkn_bl and tp_bl:
+            if cod_bl:
+                return asm_vals
+            else:
+                if cod_err > 0: dcod = -(cod_err - cod_tol)/asm_cod
+                else: dcod = -(cod_err + cod_tol)/asm_cod
+                _asm_vals = asm_vals * (1 + (asm_i_COD>0)*dcod)
+                _tkn_bl, _tkn_err, _tkn_tol, _asm_tkn = self.isbalanced(adm_tkn, _asm_vals, asm_i_N)
+                _tp_bl, _tp_err, _tp_tol, _asm_tp = self.isbalanced(adm_tp, _asm_vals, asm_i_P)
+                if _tkn_bl and _tp_bl: return _asm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same \n'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ADM) TKN is {adm_tkn}\n '
+                        f'effluent (ASM) TKN is {asm_tkn} or {_asm_tkn}\n '
+                        f'influent (ADM) TP is {adm_tp}\n ' 
+                        f'effluent (ASM) TP is {asm_tp} or {_asm_tp}. '
+                        f'influent (ADM) COD is {adm_cod}\n ' 
+                        f'effluent (ASM) COD is {asm_cod} or {asm_cod*(1+dcod)}. ')
+                    return asm_vals
+        elif cod_bl and tp_bl:
+            if tkn_bl:
+                return asm_vals
+            else:
+                if tkn_err > 0: dtkn = -(tkn_err - tkn_tol)/asm_tkn
+                else: dtkn = -(tkn_err + tkn_tol)/asm_tkn
+                _asm_vals = asm_vals * (1 + (asm_i_N>0)*dtkn)
+                _cod_bl, _cod_err, _cod_tol, _asm_cod = self.isbalanced(adm_cod, _asm_vals, asm_i_COD)
+                _tp_bl, _tp_err, _tp_tol, _asm_tp = self.isbalanced(adm_tp, _asm_vals, asm_i_P)
+                if _cod_bl and _tp_bl: return _asm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same time'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ADM) COD is {adm_cod}\n '
+                        f'effluent (ASM) COD is {asm_cod} or {_asm_cod}\n '
+                        f'influent (ADM) TP is {adm_tp}\n ' 
+                        f'effluent (ASM) TP is {asm_tp} or {_asm_tp}. '
+                        f'influent (ADM) TKN is {adm_tkn}\n ' 
+                        f'effluent (ASM) TKN is {asm_tkn} or {asm_tkn*(1+dtkn)}. ')
+                    return asm_vals
+        elif cod_bl and tkn_bl:
+            if tp_bl:
+                return asm_vals
+            else:
+                if tp_err > 0: dtp = -(tp_err - tp_tol)/asm_tp
+                else: dtp = -(tp_err + tp_tol)/asm_tp
+                _asm_vals = asm_vals * (1 + (asm_i_P>0)*dtp)
+                _cod_bl, _cod_err, _cod_tol, _asm_cod = self.isbalanced(adm_cod, _asm_vals, asm_i_COD)
+                _tkn_bl, _tkn_err, _tkn_tol, _asm_tkn = self.isbalanced(adm_tkn, _asm_vals, asm_i_N)
+                if _cod_bl and _tkn_bl: return _asm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same time'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ADM) COD is {adm_cod}\n '
+                        f'effluent (ASM) COD is {asm_cod} or {_asm_cod}\n '
+                        f'influent (ADM) TKN is {adm_tkn}\n ' 
+                        f'effluent (ASM) TKN is {asm_tkn} or {_asm_tkn}. '
+                        f'influent (ADM) TP is {adm_tp}\n ' 
+                        f'effluent (ASM) TP is {asm_tp} or {asm_tp*(1+dtp)}. ')
+                    return asm_vals
+        else:
+            warn('cannot balance COD, TKN and TP at the same time. \n'
+                 'Atleast two of the three COD, TKN, and TP are not balanced \n'
+                f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                f'influent (ADM) COD is {adm_cod}\n '
+                f'effluent (ASM) COD is {asm_cod}\n '
+                f'influent (ADM) TP is {adm_tp}\n ' 
+                f'effluent (ASM) TP is {asm_tp}'
+                f'influent (ADM) TKN is {adm_tkn}\n ' 
+                f'effluent (ASM) TKN is {asm_tkn}. ')
+            return asm_vals
+    
+    def _compile_reactions(self):
+        # Retrieve constants
+        ins = self.ins[0]
+        outs = self.outs[0]
+        rtol = self.rtol
+        atol = self.atol
+        
+        cmps_adm = ins.components
+        # N balance 
+        X_pr_i_N = cmps_adm.X_pr.i_N
+        S_aa_i_N = cmps_adm.S_aa.i_N
+        adm_X_I_i_N = cmps_adm.X_I.i_N
+        adm_S_I_i_N = cmps_adm.S_I.i_N
+        adm_i_N = cmps_adm.i_N
+        adm_bio_N_indices = cmps_adm.indices(('X_su', 'X_aa', 'X_fa', 
+                                              'X_c4', 'X_pro', 'X_ac', 'X_h2'))
+        
+        # P balance
+        X_pr_i_P = cmps_adm.X_pr.i_P
+        adm_X_I_i_P = cmps_adm.X_I.i_P
+        adm_S_I_i_P = cmps_adm.S_I.i_P
+        adm_i_P = cmps_adm.i_P
+        adm_bio_P_indices = cmps_adm.indices(('X_su', 'X_aa', 'X_fa', 
+                                              'X_c4', 'X_pro', 'X_ac', 'X_h2'))
+        
+        cmps_asm = outs.components
+        
+        # N balance 
+        X_S_i_N = cmps_asm.X_S.i_N
+        S_F_i_N = cmps_asm.S_F.i_N
+        S_A_i_N = cmps_asm.S_A.i_N
+        asm_X_I_i_N = cmps_asm.X_I.i_N
+        asm_S_I_i_N = cmps_asm.S_I.i_N
+        asm_ions_idx = cmps_asm.indices(('S_NH4', 'S_A', 'S_NO3', 'S_PO4', 'X_PP', 'S_ALK'))
+        
+        # P balance 
+        X_S_i_P = cmps_asm.X_S.i_P
+        S_F_i_P = cmps_asm.S_F.i_P
+        S_A_i_P = cmps_asm.S_A.i_P
+        asm_X_I_i_P = cmps_asm.X_I.i_P 
+        asm_S_I_i_P = cmps_asm.S_I.i_P
+        
+        # Checks for direct mapping of X_PAO, X_PP, X_PHA
+        
+        # Check for X_PAO (measured as COD so i_COD = 1 in both ASM2d and ADM1)
+        asm_X_PAO_i_N = cmps_asm.X_PAO.i_N
+        adm_X_PAO_i_N = cmps_adm.X_PAO.i_N
+        if asm_X_PAO_i_N != adm_X_PAO_i_N:
+            raise RuntimeError('X_PAO cannot be directly mapped as N content'
+                               f'in asm2d_X_PAO_i_N = {asm_X_PAO_i_N} is not equal to'
+                               f'adm_X_PAO_i_N = {adm_X_PAO_i_N}')
+            
+        asm_X_PAO_i_P = cmps_asm.X_PAO.i_P
+        adm_X_PAO_i_P = cmps_adm.X_PAO.i_P
+        if asm_X_PAO_i_P != adm_X_PAO_i_P:
+            raise RuntimeError('X_PAO cannot be directly mapped as P content'
+                               f'in asm2d_X_PAO_i_P = {asm_X_PAO_i_P} is not equal to'
+                               f'adm_X_PAO_i_P = {adm_X_PAO_i_P}')
+        
+        # Checks not required for X_PP as measured as P in both, with i_COD = i_N = 0
+        # Checks not required for X_PHA as measured as COD in both, with i_N = i_P = 0
+        
+        alpha_IN = self.alpha_IN
+        alpha_IC = self.alpha_IC
+        alpha_IP = self.alpha_IP
+        alpha_vfa = self.alpha_vfa
+        f_corr = self.balance_cod_tkn
+
+        # To convert components from mADM1 to ASM2d (madm1-2-asm2d)
+        def madm12asm2d(adm_vals):    
+            S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2, S_ch4, S_IC, S_IN, S_IP, S_I, \
+                X_ch, X_pr, X_li, X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I, \
+                X_PHA, X_PP, X_PAO, S_K, S_Mg, X_MeOH, X_MeP, S_cat, S_an, H2O = adm_vals
+                       
+            # Step 0: snapshot of charged components
+            # Not sure about charge on X_PP, S_Mg, S_K (PHA and PAO would have zero charge)
+            _ions = np.array([S_IN, S_IC, S_IP, X_PP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
+            
+            # Step 1a: convert biomass into X_S+X_ND
+            bio_cod = X_su + X_aa + X_fa + X_c4 + X_pro + X_ac + X_h2
+            bio_n = sum((adm_vals*adm_i_N)[adm_bio_N_indices])
+            bio_p = sum((adm_vals*adm_i_P)[adm_bio_P_indices])
+            
+            # There is no X_P (particulate products arising due to biomass decay)
+            # or equivalent component in ASM2d
+            # xp_cod = bio_cod * (1-self.bio_to_xs)
+            # xp_ndm = xp_cod*X_P_i_N
+            # if xp_ndm > bio_n:
+            #     warn('Not enough biomass N to map the specified proportion of '
+            #           'biomass COD into X_P. Mapped as much COD as possible, the rest '
+            #           'goes to X_S.')
+            #     X_P = bio_n/asm_X_P_i_N
+            #     bio_n = 0
+            # else:
+            #     X_P = xp_cod
+            #     bio_n -= xp_ndm
+            
+            # X_S = bio_cod - X_P
+            
+            # COD balance
+            X_S = bio_cod
+            
+            # N balance 
+            X_S_N = X_S*X_S_i_N
+            if X_S_N <= bio_n:
+                # In ASM1-ADM1 interface if there was excess bio_n compared to
+                # X_S_N, it was transferred to X_ND. But since X_ND does not 
+                # exist in ASM2d, S_IN is used for N balance 
+                # Here, S_IN is also used based on the fact that in case of 
+                # deficit bio_N, S_IN is used to compensate for excess X_S_N
+                # in Nopens at al. 2009
+                S_IN += (bio_n - X_S_N)
+                bio_n = 0
+            elif X_S_N <= bio_n + S_IN:
+                S_IN -= (X_S_N - bio_n)
+                bio_n = 0
+            else:
+                if isclose(X_S_N, bio_n + S_IN, rel_tol=rtol, abs_tol=atol):
+                    S_IN = bio_n = 0   
+                else:
+                    raise RuntimeError('Not enough nitrogen (S_IN + biomass) to map '
+                                       'all biomass COD into X_S')
+            
+            # P balance 
+            X_S_P = X_S*X_S_i_P
+            if X_S_P <= bio_p:
+                # Here, S_IP is based on the fact that in case of 
+                # deficit bio_N, S_IN is used to compensate for excess X_S_N
+                # in Nopens at al. 2009
+                S_IP += (bio_p - X_S_P)
+                bio_p = 0
+            elif X_S_P <= bio_p + S_IP:
+                S_IP -= (X_S_P - bio_p)
+                bio_p = 0
+            else:
+                if isclose(X_S_P, bio_p + S_IP, rel_tol=rtol, abs_tol=atol):
+                    S_IP = bio_p = 0
+                else:
+                    raise RuntimeError('Not enough phosphorous (S_IP + biomass) to map '
+                                       'all biomass COD into X_S')
+            
+            # Step 1b: convert particulate substrates into X_S
+            
+            # First we calculate the COD, N, and P content in particulate substrate  
+            xsub_cod = X_ch + X_pr + X_li
+            xsub_n = X_pr*X_pr_i_N
+            xsub_p = X_pr*X_pr_i_P
+            
+            # Then we determine the amount of X_S required for COD, N, and P balance 
+            X_S_cod = xsub_cod
+            X_S_n = xsub_n/X_S_i_N
+            X_S_p = xsub_p/X_S_i_P
+            
+            # Identify the limiting component and accordingly form X_S
+            X_S_add = min(X_S_cod, X_S_n, X_S_p)
+            X_S += X_S_add
+            
+            # Calculate the imbalance in the non-limiting components 
+            if X_S_add == X_S_cod:
+                def_N = (xsub_n - X_S_add*X_S_i_N)
+                def_P = (xsub_p - X_S_add*X_S_i_P)
+                S_IN += def_N
+                S_IP += def_P
+            elif X_S_add == X_S_n:
+                def_COD = (xsub_cod - X_S_add)
+                def_P = (xsub_p - X_S_add*X_S_i_P)
+                S_A = def_COD # suggested by Jeremy 
+                S_IP += def_P
+            else:
+                def_COD = (xsub_cod - X_S_add)
+                def_N = (xsub_n - X_S_add*X_S_i_N)
+                S_A = def_COD # suggested by Jeremy
+                S_IN += def_N
+            
+            # Step 2: map all X_I from ADM to ASM           
+            excess_XIn = X_I * (adm_X_I_i_N - asm_X_I_i_N)
+            S_IN += excess_XIn
+            if S_IN < 0:
+                if isclose(S_IN, 0, rel_tol=rtol, abs_tol=atol): S_IN = 0
+                # This seems to be a typo. Shouldn't there be an else here? 
+                raise RuntimeError('Not enough nitrogen (X_I + S_IN) to map '
+                                   'all ADM X_I into ASM X_I')
+                
+            excess_XIp = X_I * (adm_X_I_i_P - asm_X_I_i_P)
+            S_IP += excess_XIp
+            if S_IP < 0:
+                if isclose(S_IP, 0, rel_tol=rtol, abs_tol=atol): S_IP = 0
+                # This seems to be a typo. Shouldn't there be an else here? 
+                raise RuntimeError('Not enough phosphorous (X_I + S_IP) to map '
+                                   'all ADM X_I into ASM X_I')
+            
+            # Step 3: map ADM S_I into ASM S_I and S_NH4
+            excess_SIn = S_I * (adm_S_I_i_N - asm_S_I_i_N)
+            if excess_SIn > 0:
+                S_NH4 = excess_SIn
+            else:
+                S_NH4 = 0
+                S_IN += excess_SIn
+                if S_IN < 0:
+                    if isclose(S_IN, 0, rel_tol=rtol, abs_tol=atol): S_IN = 0
+                    # This seems to be a typo. Shouldn't there be an else here? 
+                    raise RuntimeError('Not enough nitrogen (S_I + S_IN) to map '
+                                       'all ADM S_I into ASM S_I')
+            S_NH4 += S_IN
+            
+            excess_SIp = S_I * (adm_S_I_i_P - asm_S_I_i_P)
+            if excess_SIp > 0:
+                S_PO4 = excess_SIp
+            else:
+                S_PO4 = 0
+                S_IP += excess_SIp
+                if S_IP < 0:
+                    if isclose(S_IP, 0, rel_tol=rtol, abs_tol=atol): S_IP = 0
+                    # This seems to be a typo. Shouldn't there be an else here? 
+                    raise RuntimeError('Not enough nitrogen (S_I + S_IP) to map '
+                                       'all ADM S_I into ASM S_I')
+            S_PO4 += S_IP
+                
+            # Step 4: map all soluble substrates into S_A and S_F        
+            ssub_cod = S_su + S_aa + S_fa + S_va + S_bu + S_pro + S_ac
+            ssub_n = S_aa * S_aa_i_N
+            
+            # P balance not required as all the 7 soluble substrates have no P
+            
+            # N balance
+            S_F = ssub_n/S_F_i_N
+            # COD balance 
+            S_A += ssub_cod - S_F
+            
+            # Technically both S_A_i_N and S_A_i_P would be 0
+            if S_A_i_N > 0 or S_A_i_P > 0:
+                # excess N formed subtracted from S_NH4
+                S_NH4 -= (ssub_cod - S_F)*S_A_i_N
+                # excess P (due to S_A) formed subtracted from S_PO4
+                S_PO4 -= (ssub_cod - S_F)*S_A_i_P
+                
+            if S_F_i_P > 0:
+                # excess P (due to S_F) formed subtracted from S_PO4
+                S_PO4 -= S_F*S_F_i_P
+                
+                
+            # Step 6: check COD and TKN balance
+            asm_vals = np.array(([
+                0, 0, # S_O2, S_N2,
+                S_NH4, 
+                0, 
+                S_PO4, S_F, S_A, S_I, 
+                0,  # S_ALK,
+                X_I, X_S, 
+                0,  # X_H,
+                X_PAO, X_PP, X_PHA, # directly mapped 
+                0, # X_AUT,
+                X_MeOH, X_MeP, H2O])) # directly mapped
+            
+            if S_h2 > 0 or S_ch4 > 0:
+                warn('Ignored dissolved H2 or CH4.')
+            
+            asm_vals = f_corr(adm_vals, asm_vals)
+            
+            # Step 5: charge balance for alkalinity
+            S_NH4 = asm_vals[asm_ions_idx[0]]
+            S_A = asm_vals[asm_ions_idx[1]]
+            S_NO3 = asm_vals[asm_ions_idx[2]]
+            S_PO4 = asm_vals[asm_ions_idx[3]]
+            X_PP = asm_vals[asm_ions_idx[4]]
+            # Need to include S_K, S_Mg in the charge balance (Maybe ask Joy/Jeremy)
+            S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC, alpha_IP], alpha_vfa)) - (S_NH4/14 - S_A/64 - S_NO3/14 -1.5*S_PO4/31 - X_PP/31))*(-12)
+            asm_vals[asm_ions_idx[5]] = S_ALK
+            
+            return asm_vals
+        
+        self._reactions = madm12asm2d
+    
+    @property
+    def alpha_vfa(self):
+        # This may need change based on P-extension of ADM1 (ask Joy?)
+        return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[3:]-self.pH)))
+
+# %%
+
