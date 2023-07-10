@@ -1628,7 +1628,7 @@ class ASM2dtomADM1(ADMjunction):
                 X_ND_asm1 -= X_pr * X_pr_i_N
                 
                 # For P balance (CONFIRM LATER 05/16)
-                # This needs to be followed by a corresponding loss in particulate organic N 
+                # This needs to be followed by a corresponding loss in particulate organic P
                 X_S_P -= X_pr * X_pr_i_P
                 
             # if available X_S is more than enough to fulfill that protein requirement
@@ -1643,7 +1643,7 @@ class ASM2dtomADM1(ADMjunction):
                 X_ND_asm1 = 0
                 
                 # For P balance (CONFIRM LATER 05/16)
-                # This needs to be followed by a corresponding loss in particulate organic N 
+                # This needs to be followed by a corresponding loss in particulate organic P
                 X_S_P -= X_pr * X_pr_i_P
             
             # Step 4: convert active biomass into protein, lipids, 

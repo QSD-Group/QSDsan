@@ -16,8 +16,6 @@ from numpy import maximum as npmax, minimum as npmin, exp as npexp
 from .. import SanUnit, WasteStream
 import numpy as np
 
-from ..sanunits import WWTpump
-
 __all__ = ('FlatBottomCircularClarifier',
            'IdealClarifier',
            'PrimaryClarifier')
@@ -887,7 +885,7 @@ class PrimaryClarifier(SanUnit):
         'Pump pipe stainless steel' : 'kg',
         'Pump stainless steel': 'kg'
     }
-    
+   
    
     def _design_pump(self):
        
@@ -903,6 +901,7 @@ class PrimaryClarifier(SanUnit):
             else:
                 ID = f'{ID}_{i}'
                 capacity_factor=1
+                # No. of pumps = No. of influents
                 pump = WWTpump(
                     ID=ID, ins=self.ins[i], pump_type=type_dct[i],
                     Q_mgd=None, add_inputs=inputs_dct[i],
@@ -921,8 +920,8 @@ class PrimaryClarifier(SanUnit):
             pipe_ss += p_design['Pump pipe stainless steel']
             pump_ss += p_design['Pump stainless steel']
         return pipe_ss, pump_ss
-    
-    
+   
+   
     def _design(self):
        
         self.mixed.mix_from(self.ins)
@@ -983,19 +982,19 @@ class PrimaryClarifier(SanUnit):
        
         D = self.design_results
         C = self.baseline_purchase_costs
-        
+       
         # Construction of concrete and stainless steel walls
         C['Wall concrete'] = D['Volume of concrete wall']*self.wall_concrete_unit_cost
         C['Wall stainless steel'] = D['Stainless steel']*self.stainless_steel_unit_cost
-        
+       
         # Pump (construction and maintainance)
         pumps = self.pumps
         add_OPEX = self.add_OPEX
         pump_cost = 0.
         building_cost = 0.
         opex_o = 0.
-        opex_m = 0. 
-        
+        opex_m = 0.
+       
         for i in pumps:
             p = getattr(self, f'{i}_pump')
             p_cost = p.baseline_purchase_costs
@@ -1009,7 +1008,7 @@ class PrimaryClarifier(SanUnit):
         C['Pump building'] = building_cost
         add_OPEX['Pump operating'] = opex_o
         add_OPEX['Pump maintenance'] = opex_m
-        
+       
         # Power
         pumping = 0.
         for ID in self.pumps:
