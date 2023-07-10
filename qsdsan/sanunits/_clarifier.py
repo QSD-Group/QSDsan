@@ -66,6 +66,8 @@ class FlatBottomCircularClarifier(SanUnit):
         Surface area of the clarifier, in [m^2]. The default is 1500.
     height : float, optional
         Height of the clarifier, in [m]. The default is 4.
+    upflow_velocity : float, optional
+        Speed with which influent enters the center feed of the clarifier [m/hr]. The default is 43.2.
     N_layer : int, optional
         The number of layers to model settling. The default is 10.
     feed_layer : int, optional
@@ -97,15 +99,20 @@ class FlatBottomCircularClarifier(SanUnit):
 
     _N_ins = 1
     _N_outs = 3
+    
+    # Costs
+    wall_concrete_unit_cost = 650 / 0.765 # $/m3, 0.765 is to convert from $/yd3
+    stainless_steel_unit_cost=1.8 # $/kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', underflow=2000, wastage=385,
-                 surface_area=1500, height=4, N_layer=10, feed_layer=4,
+                 surface_area=1500, height=4, upflow_velocity=43.2, N_layer=10, feed_layer=4,
                  X_threshold=3000, v_max=474, v_max_practical=250,
                  rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, isdynamic=True, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic)
         self._h = height
+        self.upflow_velocity = upflow_velocity # in m/hr (converted from 12 mm/sec)
         self._Qras = underflow
         self._Qwas = wastage
         self._sludge = WasteStream()
@@ -455,8 +462,7 @@ class FlatBottomCircularClarifier(SanUnit):
             _update_dstate()
 
         self._ODE = dy_dt
-       
-   
+    
     _units = {
         'Cylinderical volume': 'm3',
         'Cylinderical depth': 'm',
@@ -470,10 +476,46 @@ class FlatBottomCircularClarifier(SanUnit):
         'Center feed depth': 'm',
         'Upflow velocity': 'm/hr',
         'Center feed diameter': 'm',
-        'Concrete': 'kg',
-        'Stainless steel': 'kg'
+        'Volume of concrete wall': 'm3',
+        'Stainless steel': 'kg',
+        'Pump pipe stainless steel' : 'kg',
+        'Pump stainless steel': 'kg'
     }
+    
+    def _design_pump(self):
        
+        ID, pumps = self.ID, self.pumps
+       
+        type_dct = dict.fromkeys(pumps, '')
+        inputs_dct = dict.fromkeys(pumps, (1,))
+       
+        for i in pumps:
+            if hasattr(self, f'{i}_pump'):
+                p = getattr(self, f'{i}_pump')
+                setattr(p, 'add_inputs', inputs_dct[i])
+            else:
+                ID = f'{ID}_{i}'
+                capacity_factor=1
+                # No. of pumps = No. of influents
+                pump = WWTpump(
+                    ID=ID, ins=self.ins[i], pump_type=type_dct[i],
+                    Q_mgd=None, add_inputs=inputs_dct[i],
+                    capacity_factor=capacity_factor,
+                    include_pump_cost=True,
+                    include_building_cost=False,
+                    include_OM_cost=False,
+                    )
+                setattr(self, f'{i}_pump', pump)
+
+        pipe_ss, pump_ss = 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p.simulate()
+            p_design = p.design_results
+            pipe_ss += p_design['Pump pipe stainless steel']
+            pump_ss += p_design['Pump stainless steel']
+        return pipe_ss, pump_ss
+    
     def _design(self):
        
         self.mixed.mix_from(self.ins)
@@ -493,7 +535,7 @@ class FlatBottomCircularClarifier(SanUnit):
        
         D['Volume'] = D['Cylinderical volume'] + D['Conical volume']
        
-        # Primary clarifiers can be center feed or peripheral feed. The design here is for the more
+        # Clarifiers can be center feed or peripheral feed. The design here is for the more
         # commonly deployed center feed.
        
         # Depth of the center feed lies between 30-75% of sidewater depth
@@ -501,8 +543,7 @@ class FlatBottomCircularClarifier(SanUnit):
         # Typical conventional feed wells are designed for an average downflow velocity
         # of 10-13 mm/s and maximum velocity of 25-30 mm/s
         peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
-        upflow_velocity = 43.2 # in m/hr (converted from 12 mm/sec)
-        D['Upflow velocity'] = upflow_velocity*peak_flow_safety_factor # in m/hr
+        D['Upflow velocity'] = self.upflow_velocity*peak_flow_safety_factor # in m/hr
         Center_feed_area = self.mixed.get_total_flow('m3/hr')/D['Upflow velocity'] # in m2
         D['Center feed diameter'] = ((4*Center_feed_area)/3.14)**(1/2) # Sanity check: Diameter of the center feed lies between 15-25% of tank diameter
 
@@ -512,16 +553,60 @@ class FlatBottomCircularClarifier(SanUnit):
         outer_diameter = inner_diameter + thickness_concrete_wall
         volume_cylindercal_wall = (3.14*D['Cylinderical depth']/4)*(outer_diameter**2 - inner_diameter**2)
         volume_conical_wall = (3.14/3)*(D['Conical depth']/4)*(outer_diameter**2 - inner_diameter**2)
-        Density_concrete = 2400 # in kg/m3
-        D['Concrete'] = (volume_cylindercal_wall + volume_conical_wall)*Density_concrete # in kg
-       
+        
+        D['Volume of concrete wall'] = volume_cylindercal_wall + volume_conical_wall # in m3
         # Amount of metal required for center feed
         thickness_metal_wall = 0.5 # in m (!! NEED A RELIABLE SOURCE !!)
         inner_diameter_center_feed = D['Center feed diameter']
         outer_diameter_center_feed = inner_diameter_center_feed + thickness_metal_wall
         volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed **2)
-        Density_stainless_steel = 7500 # in kg/m3
-        D['Stainless steel'] = volume_center_feed*Density_stainless_steel # in kg
+        density_ss = 7930 # kg/m3, 18/8 Chromium
+        D['Stainless steel'] = volume_center_feed*density_ss # in kg
+       
+        # Pumps
+        pipe, pumps = self._design_pump()
+        D['Pump pipe stainless steel'] = pipe
+        D['Pump stainless steel'] = pumps
+        
+    def _cost(self):
+       
+        D = self.design_results
+        C = self.baseline_purchase_costs
+       
+        # Construction of concrete and stainless steel walls
+        C['Wall concrete'] = D['Volume of concrete wall']*self.wall_concrete_unit_cost
+        C['Wall stainless steel'] = D['Stainless steel']*self.stainless_steel_unit_cost
+       
+        # Pump (construction and maintainance)
+        pumps = self.pumps
+        add_OPEX = self.add_OPEX
+        pump_cost = 0.
+        building_cost = 0.
+        opex_o = 0.
+        opex_m = 0.
+       
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p_cost = p.baseline_purchase_costs
+            p_add_opex = p.add_OPEX
+            pump_cost += p_cost['Pump']
+            building_cost += p_cost['Pump building']
+            opex_o += p_add_opex['Pump operating']
+            opex_m += p_add_opex['Pump maintenance']
+
+        C['Pumps'] = pump_cost
+        C['Pump building'] = building_cost
+        add_OPEX['Pump operating'] = opex_o
+        add_OPEX['Pump maintenance'] = opex_m
+       
+        # Power
+        pumping = 0.
+        for ID in self.pumps:
+            p = getattr(self, f'{ID}_pump')
+            if p is None:
+                continue
+            pumping += p.power_utility.rate
+        self.power_utility.rate = pumping
    
 class IdealClarifier(SanUnit):
 
@@ -641,9 +726,10 @@ class PrimaryClarifier(SanUnit):
         The ratio of sludge to primary influent. The default is 0.007, based on IWA report.[1]
     f_corr : float
         Dimensionless correction factor for removal efficiency in the primary clarifier.[1]
-    overflow_rate : float
-        The design overflow rate in the primary sedimentation tank.
-        Default value taken from sample design problem. Unit in m/hr[2]
+    cylinderical_depth : float, optional
+        The depth of the cylinderical portion of clarifier [in m].  
+    upflow_velocity : float, optional
+        Speed with which influent enters the center feed of the clarifier [m/hr]. The default is 43.2.
 
     Examples
     --------
@@ -734,14 +820,17 @@ class PrimaryClarifier(SanUnit):
    
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time=0.04268,
-                 ratio_uf=0.007, f_corr=0.65, F_BM_default=None, overflow_rate=40, **kwargs):
+                 ratio_uf=0.007, f_corr=0.65, cylinderical_depth = 3, upflow_velocity = 43.2, 
+                 F_BM_default=None, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
                          init_with=init_with, F_BM_default=F_BM_default)
         self.Hydraulic_Retention_Time = Hydraulic_Retention_Time #in days
         self.ratio_uf = ratio_uf
         self.f_corr = f_corr
-        self.overflow_rate = overflow_rate #in m3/(m2*day)
+        self.cylinderical_depth = cylinderical_depth # in m 
+        self.upflow_velocity = upflow_velocity # in m/hr (converted from 12 mm/sec)
+        
         self.mixed = WasteStream('mixed')
        
     @property
@@ -933,7 +1022,7 @@ class PrimaryClarifier(SanUnit):
        
         D['Cylinderical volume'] = working_volume
         # Sidewater depth of a cylinderical clarifier lies between 2.5-5m
-        D['Cylinderical depth'] = 3 # in m
+        D['Cylinderical depth'] = self.cylinderical_depth # in m
         # The tank diameter can lie anywhere between 3 m to 100 m
         D['Cylinderical diameter'] = (4*D['Cylinderical Volume']/(3.14*D['Cylinderical Depth']))**(1/2) # in m
        
@@ -952,7 +1041,7 @@ class PrimaryClarifier(SanUnit):
         # Typical conventional feed wells are designed for an average downflow velocity
         # of 10-13 mm/s and maximum velocity of 25-30 mm/s
         peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
-        upflow_velocity = 43.2 # in m/hr (converted from 12 mm/sec)
+        upflow_velocity = self.upflow_velocity # in m/hr (converted from 12 mm/sec)
         D['Upflow velocity'] = upflow_velocity*peak_flow_safety_factor # in m/hr
         Center_feed_area = self.mixed.get_total_flow('m3/hr')/D['Upflow velocity'] # in m2
         D['Center feed diameter'] = ((4*Center_feed_area)/3.14)**(1/2) # Sanity check: Diameter of the center feed lies between 15-25% of tank diameter
