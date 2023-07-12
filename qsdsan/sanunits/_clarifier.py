@@ -15,6 +15,7 @@ for license details.
 from numpy import maximum as npmax, minimum as npmin, exp as npexp
 from .. import SanUnit, WasteStream
 import numpy as np
+from ..sanunits import WWTpump
 
 __all__ = ('FlatBottomCircularClarifier',
            'IdealClarifier',
@@ -818,6 +819,8 @@ class PrimaryClarifier(SanUnit):
     wall_concrete_unit_cost = 650 / 0.765 # $/m3, 0.765 is to convert from $/yd3
     stainless_steel_unit_cost=1.8 # $/kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
    
+    pumps = ('inf',)
+    
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time=0.04268,
                  ratio_uf=0.007, f_corr=0.65, cylinderical_depth = 3, upflow_velocity = 43.2, 
@@ -873,8 +876,10 @@ class PrimaryClarifier(SanUnit):
    
     def _f_i(self):
         xcod = self.mixed.composite('COD', particle_size='x')
-        fx = xcod/self.mixed.COD
-       
+        try: fx = xcod/self.mixed.COD
+        except:
+            breakpoint()
+        # fx = xcod/self.mixed.COD
         corr = self._corr
         HRT = self._HRT
         n_COD = corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(HRT*24*60))
@@ -885,7 +890,7 @@ class PrimaryClarifier(SanUnit):
         uf, of = self.outs
         cmps = self.components
         self.mixed.mix_from(self.ins)
-       
+    
         r = self._r
         f_i = self._f_i()
        
@@ -979,6 +984,11 @@ class PrimaryClarifier(SanUnit):
     def _design_pump(self):
        
         ID, pumps = self.ID, self.pumps
+        inf = self.ins[0]
+        
+        ins_dct = {
+            'inf': inf,
+            }
        
         type_dct = dict.fromkeys(pumps, '')
         inputs_dct = dict.fromkeys(pumps, (1,))
@@ -992,7 +1002,7 @@ class PrimaryClarifier(SanUnit):
                 capacity_factor=1
                 # No. of pumps = No. of influents
                 pump = WWTpump(
-                    ID=ID, ins=self.ins[i], pump_type=type_dct[i],
+                    ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
                     Q_mgd=None, add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
@@ -1024,9 +1034,9 @@ class PrimaryClarifier(SanUnit):
         # Sidewater depth of a cylinderical clarifier lies between 2.5-5m
         D['Cylinderical depth'] = self.cylinderical_depth # in m
         # The tank diameter can lie anywhere between 3 m to 100 m
-        D['Cylinderical diameter'] = (4*D['Cylinderical Volume']/(3.14*D['Cylinderical Depth']))**(1/2) # in m
+        D['Cylinderical diameter'] = (4*D['Cylinderical volume']/(3.14*D['Cylinderical depth']))**(1/2) # in m
        
-        D['Conical radius'] = D['Cylinderical Diameter']/2
+        D['Conical radius'] = D['Cylinderical diameter']/2
         # The slope of the bottom conical floor lies between 1:10 to 1:12
         D['Conical depth'] = D['Conical radius']/10
         D['Conical volume'] = (3.14/3)*(D['Conical radius']**2)*D['Conical depth']
