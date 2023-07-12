@@ -53,8 +53,6 @@ from ._sludge_thickening import *
 from ._suspended_growth_bioreactor import *
 from ._tanks import *
 from ._trucking import *
-from ._sludge_treatment import *
-
 
 # Units that rely on other units
 from ._activated_sludge_process import *
@@ -70,6 +68,7 @@ from ._membrane_bioreactors import *
 from ._membrane_distillation import *
 from ._polishing_filter import *
 from ._sedimentation import *
+from ._sludge_treatment import *
 from ._septic_tank import *
 from ._toilets import *
 from ._treatment_beds import *
