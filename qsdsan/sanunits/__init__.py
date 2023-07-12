@@ -35,7 +35,6 @@ for license details.
 
 # Units that do not rely on other units
 from ._abstract import *
-from ._clarifier import *
 from ._combustion import *
 from ._compressor import *
 from ._crop_application import *
@@ -60,6 +59,7 @@ from ._sludge_treatment import *
 # Units that rely on other units
 from ._activated_sludge_process import *
 from ._anaerobic_reactors import *
+from ._clarifier import *
 from ._distillation import *
 from ._flash import *
 from ._hydroprocessing import *
