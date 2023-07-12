@@ -104,7 +104,9 @@ class FlatBottomCircularClarifier(SanUnit):
     # Costs
     wall_concrete_unit_cost = 650 / 0.765 # $/m3, 0.765 is to convert from $/yd3
     stainless_steel_unit_cost=1.8 # $/kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
-
+    
+    pumps = ('inf',)
+    
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', underflow=2000, wastage=385,
                  surface_area=1500, height=4, upflow_velocity=43.2, N_layer=10, feed_layer=4,
@@ -465,9 +467,9 @@ class FlatBottomCircularClarifier(SanUnit):
         self._ODE = dy_dt
     
     _units = {
-        'Cylinderical volume': 'm3',
-        'Cylinderical depth': 'm',
-        'Cylinderical diameter': 'm',
+        'Cylindrical volume': 'm3',
+        'Cylindrical depth': 'm',
+        'Cylindrical diameter': 'm',
        
         'Conical radius': 'm',
         'Conical depth': 'm',
@@ -486,6 +488,14 @@ class FlatBottomCircularClarifier(SanUnit):
     def _design_pump(self):
        
         ID, pumps = self.ID, self.pumps
+        
+        self.mixed.mix_from(self.ins)
+        
+        inf = self.mixed
+        
+        ins_dct = {
+            'inf': inf,
+            }
        
         type_dct = dict.fromkeys(pumps, '')
         inputs_dct = dict.fromkeys(pumps, (1,))
@@ -499,7 +509,7 @@ class FlatBottomCircularClarifier(SanUnit):
                 capacity_factor=1
                 # No. of pumps = No. of influents
                 pump = WWTpump(
-                    ID=ID, ins=self.ins[i], pump_type=type_dct[i],
+                    ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
                     Q_mgd=None, add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
@@ -523,24 +533,24 @@ class FlatBottomCircularClarifier(SanUnit):
        
         D = self.design_results
        
-        D['Cylinderical volume'] = self._V # in m3
+        D['Cylindrical volume'] = self._V # in m3
         # Sidewater depth of a cylinderical clarifier lies between 2.5-5m
-        D['Cylinderical depth'] = self._h # in m
+        D['Cylindrical depth'] = self._h # in m
         # The tank diameter can lie anywhere between 3 m to 100 m
-        D['Cylinderical diameter'] = (4*D['Cylinderical Volume']/(3.14*D['Cylinderical Depth']))**(1/2) # in m
+        D['Cylindrical diameter'] = (4*D['Cylindrical volume']/(3.14*D['Cylindrical depth']))**(1/2) # in m
        
-        D['Conical radius'] = D['Cylinderical Diameter']/2
+        D['Conical radius'] = D['Cylindrical diameter']/2 
         # The slope of the bottom conical floor lies between 1:10 to 1:12
         D['Conical depth'] = D['Conical radius']/10
         D['Conical volume'] = (3.14/3)*(D['Conical radius']**2)*D['Conical depth']
        
-        D['Volume'] = D['Cylinderical volume'] + D['Conical volume']
+        D['Volume'] = D['Cylindrical volume'] + D['Conical volume']
        
         # Clarifiers can be center feed or peripheral feed. The design here is for the more
         # commonly deployed center feed.
        
         # Depth of the center feed lies between 30-75% of sidewater depth
-        D['Center feed depth'] = 0.5*D['Cylinderical depth']
+        D['Center feed depth'] = 0.5*D['Cylindrical depth']
         # Typical conventional feed wells are designed for an average downflow velocity
         # of 10-13 mm/s and maximum velocity of 25-30 mm/s
         peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
@@ -550,12 +560,12 @@ class FlatBottomCircularClarifier(SanUnit):
 
         # Amount of concrete required
         thickness_concrete_wall = 3 # in m (!! NEED A RELIABLE SOURCE !!)
-        inner_diameter = D['Cylinderical diameter']
+        inner_diameter = D['Cylindrical diameter']
         outer_diameter = inner_diameter + thickness_concrete_wall
-        volume_cylindercal_wall = (3.14*D['Cylinderical depth']/4)*(outer_diameter**2 - inner_diameter**2)
+        volume_cylindrical_wall = (3.14*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
         volume_conical_wall = (3.14/3)*(D['Conical depth']/4)*(outer_diameter**2 - inner_diameter**2)
+        D['Volume of concrete wall'] = volume_cylindrical_wall + volume_conical_wall # in m3
         
-        D['Volume of concrete wall'] = volume_cylindercal_wall + volume_conical_wall # in m3
         # Amount of metal required for center feed
         thickness_metal_wall = 0.5 # in m (!! NEED A RELIABLE SOURCE !!)
         inner_diameter_center_feed = D['Center feed diameter']
@@ -962,9 +972,9 @@ class PrimaryClarifier(SanUnit):
 
    
     _units = {
-        'Cylinderical volume': 'm3',
-        'Cylinderical depth': 'm',
-        'Cylinderical diameter': 'm',
+        'Cylindrical volume': 'm3',
+        'Cylindrical depth': 'm',
+        'Cylindrical diameter': 'm',
        
         'Conical radius': 'm',
         'Conical depth': 'm',
@@ -1030,24 +1040,24 @@ class PrimaryClarifier(SanUnit):
         total_volume = 24*self._HRT*self.mixed.get_total_flow('m3/hr') #in m3
         working_volume = total_volume/0.8 # Assume 80% working volume
        
-        D['Cylinderical volume'] = working_volume
+        D['Cylindrical volume'] = working_volume
         # Sidewater depth of a cylinderical clarifier lies between 2.5-5m
-        D['Cylinderical depth'] = self.cylinderical_depth # in m
+        D['Cylindrical depth'] = self.cylindrical_depth # in m
         # The tank diameter can lie anywhere between 3 m to 100 m
-        D['Cylinderical diameter'] = (4*D['Cylinderical volume']/(3.14*D['Cylinderical depth']))**(1/2) # in m
+        D['Cylindrical diameter'] = (4*D['Cylindrical volume']/(3.14*D['Cylindrical depth']))**(1/2) # in m
        
-        D['Conical radius'] = D['Cylinderical diameter']/2
+        D['Conical radius'] = D['Cylindrical diameter']/2
         # The slope of the bottom conical floor lies between 1:10 to 1:12
         D['Conical depth'] = D['Conical radius']/10
         D['Conical volume'] = (3.14/3)*(D['Conical radius']**2)*D['Conical depth']
        
-        D['Volume'] = D['Cylinderical volume'] + D['Conical volume']
+        D['Volume'] = D['Cylindrical volume'] + D['Conical volume']
        
         # Primary clarifiers can be center feed or peripheral feed. The design here is for the more
         # commonly deployed center feed.
        
         # Depth of the center feed lies between 30-75% of sidewater depth
-        D['Center feed depth'] = 0.5*D['Cylinderical depth']
+        D['Center feed depth'] = 0.5*D['Cylindrical depth']
         # Typical conventional feed wells are designed for an average downflow velocity
         # of 10-13 mm/s and maximum velocity of 25-30 mm/s
         peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
@@ -1058,11 +1068,11 @@ class PrimaryClarifier(SanUnit):
 
         # Amount of concrete required
         thickness_concrete_wall = 3 # in m (!! NEED A RELIABLE SOURCE !!)
-        inner_diameter = D['Cylinderical diameter']
+        inner_diameter = D['Cylindrical diameter']
         outer_diameter = inner_diameter + thickness_concrete_wall
-        volume_cylindercal_wall = (3.14*D['Cylinderical depth']/4)*(outer_diameter**2 - inner_diameter**2)
+        volume_cylindrical_wall = (3.14*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
         volume_conical_wall = (3.14/3)*(D['Conical depth']/4)*(outer_diameter**2 - inner_diameter**2)
-        D['Volume of concrete wall'] = volume_cylindercal_wall + volume_conical_wall # in m3
+        D['Volume of concrete wall'] = volume_cylindrical_wall + volume_conical_wall # in m3
        
         # Amount of metal required for center feed
         thickness_metal_wall = 0.5 # in m (!! NEED A RELIABLE SOURCE !!)
