@@ -15,6 +15,7 @@ for license details.
 
 from .. import SanUnit, WasteStream
 import numpy as np
+from ..sanunits import WWTpump
 
 
 __all__ = ('Thickener', 'DewateringUnit', 'Incinerator')
@@ -39,7 +40,7 @@ class Thickener(SanUnit):
         Solid loading rate in the thickener in [(kg/day)/m2]. [2]
         Typical SLR value for thickener lies between 9.6-24 (lb/day)/ft2. 
         Here default value of 75 (kg/day)/m2 [15.36 (lb/day)/ft2] is used.
-    h_cylinderical = float
+    h_cylindrical = float
         Height of cylinder forming the thickener.[2]
     upflow_velocity : float, optional
         Speed with which influent enters the center feed of the clarifier [m/hr]. The default is 43.2.
@@ -125,9 +126,11 @@ class Thickener(SanUnit):
     wall_concrete_unit_cost = 650 / 0.765 # $/m3, 0.765 is to convert from $/yd3
     stainless_steel_unit_cost=1.8 # $/kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
     
+    pumps = ('inf',)
+    
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=None, thickener_perc=7, 
-                  TSS_removal_perc=98, solids_loading_rate = 75, h_cylinderical=2, 
+                  TSS_removal_perc=98, solids_loading_rate = 75, h_cylindrical=2, 
                   upflow_velocity=43.2, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with, F_BM_default=F_BM_default)
@@ -135,7 +138,7 @@ class Thickener(SanUnit):
         self.thickener_perc = thickener_perc 
         self.TSS_removal_perc = TSS_removal_perc
         self.solids_loading_rate = solids_loading_rate 
-        self.h_cylinderical = h_cylinderical
+        self.h_cylindrical = h_cylindrical
         self.upflow_velocity = upflow_velocity
         self.mixed = WasteStream(thermo=thermo)
         
@@ -375,9 +378,9 @@ class Thickener(SanUnit):
         'Daily mass of solids handled': 'kg',
         'Surface area': 'm2',
         
-        'Cylinderical diameter': 'm',
-        'Cylinderical depth': 'm',
-        'Cylinderical volume': 'm3',
+        'Cylindrical diameter': 'm',
+        'Cylindrical depth': 'm',
+        'Cylindrical volume': 'm3',
         
         'Conical radius': 'm',
         'Conical depth': 'm',
@@ -396,6 +399,14 @@ class Thickener(SanUnit):
     def _design_pump(self):
        
         ID, pumps = self.ID, self.pumps
+        
+        self.mixed.mix_from(self.ins)
+        
+        inf = self.mixed
+        
+        ins_dct = {
+            'inf': inf,
+            }
        
         type_dct = dict.fromkeys(pumps, '')
         inputs_dct = dict.fromkeys(pumps, (1,))
@@ -409,7 +420,7 @@ class Thickener(SanUnit):
                 capacity_factor=1
                 # No. of pumps = No. of influents
                 pump = WWTpump(
-                    ID=ID, ins=self.ins[i], pump_type=type_dct[i],
+                    ID=ID, ins= ins_dct[i], pump_type=type_dct[i],
                     Q_mgd=None, add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
@@ -437,21 +448,21 @@ class Thickener(SanUnit):
         D['Surface area'] = D['Daily mass of solids handled']/D['slr'] # in m2
         
         # design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Area'] #in m3/(m2*day)
-        D['Cylinderical diameter'] = np.sqrt(4*D['Surface area']/np.pi) #in m
-        D['Cylinderical depth'] = self.h_cylinderical #in m 
-        D['Cylinderical volume'] = np.pi*np.square(D['Diameter']/2)*D['Cylinderical depth'] #in m3
+        D['Cylindrical diameter'] = np.sqrt(4*D['Surface area']/np.pi) #in m
+        D['Cylindrical depth'] = self.h_cylindrical #in m 
+        D['Cylindrical volume'] = np.pi*np.square(D['Diameter']/2)*D['Cylindrical depth'] #in m3
         
-        D['Conical radius'] = D['Cylinderical Diameter']/2
+        D['Conical radius'] = D['Cylindrical diameter']/2
         # The slope of the bottom conical floor lies between 1:10 to 1:12
         D['Conical depth'] = D['Conical radius']/10
         D['Conical volume'] = (3.14/3)*(D['Conical radius']**2)*D['Conical depth']
        
-        D['Volume'] = D['Cylinderical volume'] + D['Conical volume']
+        D['Volume'] = D['Cylindrical volume'] + D['Conical volume']
         
         # The design here is for center feed thickener.
        
         # Depth of the center feed lies between 30-75% of sidewater depth
-        D['Center feed depth'] = 0.5*D['Cylinderical depth']
+        D['Center feed depth'] = 0.5*D['Cylindrical depth']
         # Typical conventional feed wells are designed for an average downflow velocity
         # of 10-13 mm/s and maximum velocity of 25-30 mm/s
         peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
@@ -461,9 +472,9 @@ class Thickener(SanUnit):
 
         # Amount of concrete required
         thickness_concrete_wall = 3 # in m (!! NEED A RELIABLE SOURCE !!)
-        inner_diameter = D['Cylinderical diameter']
+        inner_diameter = D['Cylindrical diameter']
         outer_diameter = inner_diameter + thickness_concrete_wall
-        volume_cylindercal_wall = (3.14*D['Cylinderical depth']/4)*(outer_diameter**2 - inner_diameter**2)
+        volume_cylindercal_wall = (3.14*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
         volume_conical_wall = (3.14/3)*(D['Conical depth']/4)*(outer_diameter**2 - inner_diameter**2)
         
         D['Volume of concrete wall'] = volume_cylindercal_wall + volume_conical_wall # in m3
@@ -549,8 +560,8 @@ class DewateringUnit(Thickener):
         rotational speed of the centrifuge.[2,3]
     polymer_dosage_per_kg_of_sludge : float
         mass of polymer utilised per kg of influent sludge.[2,3]
-    h_cylinderical: float
-        length of cylinderical portion of dewatering unit.[2,3]
+    h_cylindrical: float
+        length of cylindrical portion of dewatering unit.[2,3]
     h_conical: float
         length of conical portion of dewatering unit.[2,3]
     
@@ -572,7 +583,7 @@ class DewateringUnit(Thickener):
                   init_with='WasteStream', F_BM_default=None, thickener_perc=28, TSS_removal_perc=98, 
                   number_of_centrifuges=1, specific_gravity_sludge=1.03, cake_density=965, 
                   g_factor=2500, rotational_speed = 40, polymer_dosage_per_kg_of_sludge = 0.0075, 
-                  h_cylinderical=2, h_conical=1, **kwargs):
+                  h_cylindrical=2, h_conical=1, **kwargs):
         Thickener.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, isdynamic=isdynamic,
                       init_with=init_with, F_BM_default=F_BM_default, thickener_perc=thickener_perc, 
                       TSS_removal_perc=TSS_removal_perc, **kwargs)
@@ -582,7 +593,7 @@ class DewateringUnit(Thickener):
         self.g_factor = g_factor #unitless, centrifugal acceleration = g_factor*9.81
         self.rotational_speed = rotational_speed #in revolution/sec 
         self.polymer_dosage_per_kg_of_sludge = polymer_dosage_per_kg_of_sludge #in (kg,polymer/kg,sludge) unitless
-        self.h_cylinderical = h_cylinderical
+        self.h_cylindrical = h_cylindrical
         self.h_conical = h_conical
         
     def _design(self):
@@ -603,7 +614,7 @@ class DewateringUnit(Thickener):
         design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Projected Area at Inlet'] #in m3/(m2*day)
         design['Volume'] = np.pi*np.square(design['Diameter']/2)*(self.h_cylinderical + (self.h_conical/3)) #in m3
         design['Curved Surface Area'] = np.pi*design['Diameter']/2*(2*self.h_cylinderical + np.sqrt(np.square(design['Diameter']/2) + np.square(self.h_conical))) #in m2
-        
+
 class Incinerator(SanUnit):
     
     """
