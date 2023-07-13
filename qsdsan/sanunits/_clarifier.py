@@ -486,15 +486,10 @@ class FlatBottomCircularClarifier(SanUnit):
     }
     
     def _design_pump(self):
-       
         ID, pumps = self.ID, self.pumps
         
-        self.mixed.mix_from(self.ins)
-        
-        inf = self.mixed
-        
         ins_dct = {
-            'inf': inf,
+            'inf': self._inf,
             }
        
         type_dct = dict.fromkeys(pumps, '')
@@ -529,12 +524,12 @@ class FlatBottomCircularClarifier(SanUnit):
     
     def _design(self):
        
-        self.mixed.mix_from(self.ins)
+        self._mixed.mix_from(self.ins)
        
         D = self.design_results
        
         D['Cylindrical volume'] = self._V # in m3
-        # Sidewater depth of a cylinderical clarifier lies between 2.5-5m
+        # Sidewater depth of a cylindrical clarifier lies between 2.5-5m
         D['Cylindrical depth'] = self._h # in m
         # The tank diameter can lie anywhere between 3 m to 100 m
         D['Cylindrical diameter'] = (4*D['Cylindrical volume']/(3.14*D['Cylindrical depth']))**(1/2) # in m
@@ -555,7 +550,7 @@ class FlatBottomCircularClarifier(SanUnit):
         # of 10-13 mm/s and maximum velocity of 25-30 mm/s
         peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
         D['Upflow velocity'] = self.upflow_velocity*peak_flow_safety_factor # in m/hr
-        Center_feed_area = self.mixed.get_total_flow('m3/hr')/D['Upflow velocity'] # in m2
+        Center_feed_area = self._mixed.get_total_flow('m3/hr')/D['Upflow velocity'] # in m2
         D['Center feed diameter'] = ((4*Center_feed_area)/3.14)**(1/2) # Sanity check: Diameter of the center feed lies between 15-25% of tank diameter
 
         # Amount of concrete required
@@ -737,8 +732,8 @@ class PrimaryClarifier(SanUnit):
         The ratio of sludge to primary influent. The default is 0.007, based on IWA report.[1]
     f_corr : float
         Dimensionless correction factor for removal efficiency in the primary clarifier.[1]
-    cylinderical_depth : float, optional
-        The depth of the cylinderical portion of clarifier [in m].  
+    cylindrical_depth : float, optional
+        The depth of the cylindrical portion of clarifier [in m].  
     upflow_velocity : float, optional
         Speed with which influent enters the center feed of the clarifier [m/hr]. The default is 43.2.
 
@@ -833,7 +828,7 @@ class PrimaryClarifier(SanUnit):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time=0.04268,
-                 ratio_uf=0.007, f_corr=0.65, cylinderical_depth = 3, upflow_velocity = 43.2, 
+                 ratio_uf=0.007, f_corr=0.65, cylindrical_depth = 3, upflow_velocity = 43.2, 
                  F_BM_default=None, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
@@ -841,10 +836,11 @@ class PrimaryClarifier(SanUnit):
         self.Hydraulic_Retention_Time = Hydraulic_Retention_Time #in days
         self.ratio_uf = ratio_uf
         self.f_corr = f_corr
-        self.cylinderical_depth = cylinderical_depth # in m 
+        self.cylindrical_depth = cylindrical_depth # in m 
         self.upflow_velocity = upflow_velocity # in m/hr (converted from 12 mm/sec)
         
-        self.mixed = WasteStream('mixed')
+        self._mixed = self.ins[0].copy(f'{ID}_mixed')
+        self._inf = self.ins[0].copy(f'{ID}_inf')
        
     @property
     def Hydraulic_Retention_Time(self):
@@ -885,11 +881,8 @@ class PrimaryClarifier(SanUnit):
             raise ValueError('correction factor expected from user')
    
     def _f_i(self):
-        xcod = self.mixed.composite('COD', particle_size='x')
-        try: fx = xcod/self.mixed.COD
-        except:
-            breakpoint()
-        # fx = xcod/self.mixed.COD
+        xcod = self._mixed.composite('COD', particle_size='x')
+        fx = xcod/self._mixed.COD
         corr = self._corr
         HRT = self._HRT
         n_COD = corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(HRT*24*60))
@@ -899,16 +892,16 @@ class PrimaryClarifier(SanUnit):
     def _run(self):
         uf, of = self.outs
         cmps = self.components
-        self.mixed.mix_from(self.ins)
+        self._mixed.mix_from(self.ins)
     
         r = self._r
         f_i = self._f_i()
        
-        Xs = (1 - f_i)*self.mixed.mass*cmps.x
-        Xe = (f_i)*self.mixed.mass*cmps.x
+        Xs = (1 - f_i)*self._mixed.mass*cmps.x
+        Xe = (f_i)*self._mixed.mass*cmps.x
        
-        Zs = r*self.mixed.mass*cmps.s
-        Ze = (1-r)*self.mixed.mass*cmps.s
+        Zs = r*self._mixed.mass*cmps.s
+        Ze = (1-r)*self._mixed.mass*cmps.s
        
         Ce = Ze + Xe
         Cs = Zs + Xs
@@ -992,12 +985,11 @@ class PrimaryClarifier(SanUnit):
    
    
     def _design_pump(self):
-       
         ID, pumps = self.ID, self.pumps
-        inf = self.ins[0]
+        self._inf.copy_like(self._mixed)
         
         ins_dct = {
-            'inf': inf,
+            'inf': self._inf,
             }
        
         type_dct = dict.fromkeys(pumps, '')
@@ -1024,7 +1016,8 @@ class PrimaryClarifier(SanUnit):
         pipe_ss, pump_ss = 0., 0.
         for i in pumps:
             p = getattr(self, f'{i}_pump')
-            p.simulate()
+            try: p.simulate()
+            except: breakpoint()
             p_design = p.design_results
             pipe_ss += p_design['Pump pipe stainless steel']
             pump_ss += p_design['Pump stainless steel']
@@ -1033,15 +1026,15 @@ class PrimaryClarifier(SanUnit):
    
     def _design(self):
        
-        self.mixed.mix_from(self.ins)
+        self._mixed.mix_from(self.ins)
        
         D = self.design_results
        
-        total_volume = 24*self._HRT*self.mixed.get_total_flow('m3/hr') #in m3
+        total_volume = 24*self._HRT*self._mixed.get_total_flow('m3/hr') #in m3
         working_volume = total_volume/0.8 # Assume 80% working volume
        
         D['Cylindrical volume'] = working_volume
-        # Sidewater depth of a cylinderical clarifier lies between 2.5-5m
+        # Sidewater depth of a cylindrical clarifier lies between 2.5-5m
         D['Cylindrical depth'] = self.cylindrical_depth # in m
         # The tank diameter can lie anywhere between 3 m to 100 m
         D['Cylindrical diameter'] = (4*D['Cylindrical volume']/(3.14*D['Cylindrical depth']))**(1/2) # in m
@@ -1063,7 +1056,7 @@ class PrimaryClarifier(SanUnit):
         peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
         upflow_velocity = self.upflow_velocity # in m/hr (converted from 12 mm/sec)
         D['Upflow velocity'] = upflow_velocity*peak_flow_safety_factor # in m/hr
-        Center_feed_area = self.mixed.get_total_flow('m3/hr')/D['Upflow velocity'] # in m2
+        Center_feed_area = self._mixed.get_total_flow('m3/hr')/D['Upflow velocity'] # in m2
         D['Center feed diameter'] = ((4*Center_feed_area)/3.14)**(1/2) # Sanity check: Diameter of the center feed lies between 15-25% of tank diameter
 
         # Amount of concrete required
