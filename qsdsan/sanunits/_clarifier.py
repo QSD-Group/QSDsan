@@ -138,7 +138,10 @@ class FlatBottomCircularClarifier(SanUnit):
         self._state_header = list(header) + [f'TSS{i+1} [mg/L]' for i in range(N_layer)]
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-
+        
+        self._mixed = self.ins[0].copy(f'{ID}_mixed')
+        self._inf = self.ins[0].copy(f'{ID}_inf')
+        
     @property
     def height(self):
         '''[float] Height of the clarifier in m.'''
@@ -487,6 +490,7 @@ class FlatBottomCircularClarifier(SanUnit):
     
     def _design_pump(self):
         ID, pumps = self.ID, self.pumps
+        self._inf.copy_like(self._mixed)
         
         ins_dct = {
             'inf': self._inf,
@@ -1016,8 +1020,9 @@ class PrimaryClarifier(SanUnit):
         pipe_ss, pump_ss = 0., 0.
         for i in pumps:
             p = getattr(self, f'{i}_pump')
-            try: p.simulate()
-            except: breakpoint()
+            p.simulate()
+            # try: p.simulate()
+            # except: breakpoint()
             p_design = p.design_results
             pipe_ss += p_design['Pump pipe stainless steel']
             pump_ss += p_design['Pump stainless steel']
