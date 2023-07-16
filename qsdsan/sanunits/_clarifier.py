@@ -560,7 +560,7 @@ class FlatBottomCircularClarifier(SanUnit):
         # Amount of concrete required
         thickness_concrete_wall = 3 # in m (!! NEED A RELIABLE SOURCE !!)
         inner_diameter = D['Cylindrical diameter']
-        outer_diameter = inner_diameter + thickness_concrete_wall
+        outer_diameter = inner_diameter + 2*thickness_concrete_wall
         volume_cylindrical_wall = (3.14*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
         volume_conical_wall = (3.14/3)*(D['Conical depth']/4)*(outer_diameter**2 - inner_diameter**2)
         D['Volume of concrete wall'] = volume_cylindrical_wall + volume_conical_wall # in m3
@@ -568,7 +568,7 @@ class FlatBottomCircularClarifier(SanUnit):
         # Amount of metal required for center feed
         thickness_metal_wall = 0.5 # in m (!! NEED A RELIABLE SOURCE !!)
         inner_diameter_center_feed = D['Center feed diameter']
-        outer_diameter_center_feed = inner_diameter_center_feed + thickness_metal_wall
+        outer_diameter_center_feed = inner_diameter_center_feed + 2*thickness_metal_wall
         volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed **2)
         density_ss = 7930 # kg/m3, 18/8 Chromium
         D['Stainless steel'] = volume_center_feed*density_ss # in kg
@@ -1067,7 +1067,7 @@ class PrimaryClarifier(SanUnit):
         # Amount of concrete required
         thickness_concrete_wall = 3 # in m (!! NEED A RELIABLE SOURCE !!)
         inner_diameter = D['Cylindrical diameter']
-        outer_diameter = inner_diameter + thickness_concrete_wall
+        outer_diameter = inner_diameter + 2*thickness_concrete_wall
         volume_cylindrical_wall = (3.14*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
         volume_conical_wall = (3.14/3)*(D['Conical depth']/4)*(outer_diameter**2 - inner_diameter**2)
         D['Volume of concrete wall'] = volume_cylindrical_wall + volume_conical_wall # in m3
@@ -1075,7 +1075,7 @@ class PrimaryClarifier(SanUnit):
         # Amount of metal required for center feed
         thickness_metal_wall = 0.5 # in m (!! NEED A RELIABLE SOURCE !!)
         inner_diameter_center_feed = D['Center feed diameter']
-        outer_diameter_center_feed = inner_diameter_center_feed + thickness_metal_wall
+        outer_diameter_center_feed = inner_diameter_center_feed + 2*thickness_metal_wall
         volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed **2)
         density_ss = 7930 # kg/m3, 18/8 Chromium
         D['Stainless steel'] = volume_center_feed*density_ss # in kg
