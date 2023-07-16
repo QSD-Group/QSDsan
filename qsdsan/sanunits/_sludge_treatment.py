@@ -140,7 +140,7 @@ class Thickener(SanUnit):
         self.solids_loading_rate = solids_loading_rate 
         self.h_cylindrical = h_cylindrical
         self.upflow_velocity = upflow_velocity
-        self.mixed = WasteStream(thermo=thermo)
+        self._mixed = WasteStream(thermo=thermo)
         
     @property
     def thickener_perc(self):
@@ -184,8 +184,8 @@ class Thickener(SanUnit):
             
     @property
     def thickener_factor(self):
-        self.mixed.mix_from(self.ins)
-        inf = self.mixed
+        self._mixed.mix_from(self.ins)
+        inf = self._mixed
         _cal_thickener_factor = self._cal_thickener_factor
         if not self.ins: return
         elif inf.isempty(): return
@@ -196,8 +196,8 @@ class Thickener(SanUnit):
     
     @property
     def thinning_factor(self):
-        self.mixed.mix_from(self.ins)
-        inf = self.mixed
+        self._mixed.mix_from(self.ins)
+        inf = self._mixed
         TSS_in = inf.get_TSS()
         _cal_thickener_factor = self._cal_thickener_factor
         thickener_factor = _cal_thickener_factor(TSS_in)
@@ -239,8 +239,8 @@ class Thickener(SanUnit):
         
     def _run(self):
         
-        self.mixed.mix_from(self.ins)
-        inf = self.mixed
+        self._mixed.mix_from(self.ins)
+        inf = self._mixed
         uf, of = self.outs
         cmps = self.components
         
@@ -397,17 +397,14 @@ class Thickener(SanUnit):
     }
     
     def _design_pump(self):
-       
+        
         ID, pumps = self.ID, self.pumps
-        
-        self.mixed.mix_from(self.ins)
-        
-        inf = self.mixed
+        self._inf.copy_like(self._mixed)
         
         ins_dct = {
-            'inf': inf,
+            'inf': self._inf,
             }
-       
+        
         type_dct = dict.fromkeys(pumps, '')
         inputs_dct = dict.fromkeys(pumps, (1,))
        
@@ -440,11 +437,11 @@ class Thickener(SanUnit):
     
     def _design(self):
         
-        self.mixed.mix_from(self.ins)
+        self._mixed.mix_from(self.ins)
         
         D = self.design_results
         D['slr'] = self.solids_loading_rate # in (kg/day)/m2
-        D['Daily mass of solids handled'] =  (self.mixed.get_TSS()/1000)*self.mixed.get_total_flow('m3/hr')*24 # (mg/L)*[1/1000(kg*L)/(mg*m3)](m3/hr)*(24hr/day) = (kg/day)
+        D['Daily mass of solids handled'] =  (self._mixed.get_TSS()/1000)*self._mixed.get_total_flow('m3/hr')*24 # (mg/L)*[1/1000(kg*L)/(mg*m3)](m3/hr)*(24hr/day) = (kg/day)
         D['Surface area'] = D['Daily mass of solids handled']/D['slr'] # in m2
         
         # design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Area'] #in m3/(m2*day)
@@ -467,7 +464,7 @@ class Thickener(SanUnit):
         # of 10-13 mm/s and maximum velocity of 25-30 mm/s
         peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
         D['Upflow velocity'] = self.upflow_velocity*peak_flow_safety_factor # in m/hr
-        Center_feed_area = self.mixed.get_total_flow('m3/hr')/D['Upflow velocity'] # in m2
+        Center_feed_area = self._mixed.get_total_flow('m3/hr')/D['Upflow velocity'] # in m2
         D['Center feed diameter'] = ((4*Center_feed_area)/3.14)**(1/2) # Sanity check: Diameter of the center feed lies between 15-25% of tank diameter
 
         # Amount of concrete required
@@ -606,8 +603,8 @@ class DewateringUnit(Thickener):
                       init_with=init_with, F_BM_default=F_BM_default, thickener_perc=thickener_perc, 
                       TSS_removal_perc=TSS_removal_perc, **kwargs)
         
-        self._mixed = self.ins[0].copy(f'{ID}_mixed')
-        self._inf = self.ins[0].copy(f'{ID}_inf')
+        # self._mixed = self.ins[0].copy(f'{ID}_mixed')
+        # self._inf = self.ins[0].copy(f'{ID}_inf')
         
         self.solids_feed_rate = solids_feed_rate
         # self.specific_gravity_sludge=specific_gravity_sludge
@@ -628,13 +625,54 @@ class DewateringUnit(Thickener):
         'Volume of bowl': 'm3',
         
         'Stainless steel for bowl': 'kg',
-        'Diameter of screw conveyor': 'm',
+        'Stainless steel for conveyor': 'kg',
         
         'Polymer feed rate': 'kg/hr',
-        
         'Pump pipe stainless steel' : 'kg',
         'Pump stainless steel': 'kg'
     }        
+    
+    
+    def _design_pump(self):
+        ID, pumps = self.ID, self.pumps
+        self._inf.copy_like(self._mixed)
+        
+        ins_dct = {
+            'inf': self._inf,
+            }
+       
+        type_dct = dict.fromkeys(pumps, '')
+        inputs_dct = dict.fromkeys(pumps, (1,))
+       
+        for i in pumps:
+            if hasattr(self, f'{i}_pump'):
+                p = getattr(self, f'{i}_pump')
+                setattr(p, 'add_inputs', inputs_dct[i])
+            else:
+                ID = f'{ID}_{i}'
+                capacity_factor=1
+                # No. of pumps = No. of influents
+                pump = WWTpump(
+                    ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
+                    Q_mgd=None, add_inputs=inputs_dct[i],
+                    capacity_factor=capacity_factor,
+                    include_pump_cost=True,
+                    include_building_cost=False,
+                    include_OM_cost=False,
+                    )
+                setattr(self, f'{i}_pump', pump)
+
+        pipe_ss, pump_ss = 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p.simulate()
+            # try: p.simulate()
+            # except: breakpoint()
+            p_design = p.design_results
+            pipe_ss += p_design['Pump pipe stainless steel']
+            pump_ss += p_design['Pump stainless steel']
+        return pipe_ss, pump_ss
+    
     
     def _design(self):
         
@@ -656,11 +694,11 @@ class DewateringUnit(Thickener):
         
         fraction_cylindrical_portion = 0.8
         fraction_conical_portion = 1 - fraction_cylindrical_portion
-        D['Length of cylindrical portion'] = fraction_cylindrical_portion*D['Tiotal length of bowl']
-        D['Length of conical portion'] =  fraction_conical_portion*D['Tiotal length of bowl']
+        D['Length of cylindrical portion'] = fraction_cylindrical_portion*D['Total length of bowl']
+        D['Length of conical portion'] =  fraction_conical_portion*D['Total length of bowl']
         thickness_of_bowl_wall = 0.1 # in m (!!! NEED A RELIABLE SOURCE !!!)
         inner_diameter = D['Diameter of bowl']
-        outer_diameter = inner_diameter + thickness_of_bowl_wall
+        outer_diameter = inner_diameter + 2*thickness_of_bowl_wall
         volume_cylindrical_wall = (np.pi*D['Length of cylindrical portion']/4)*(outer_diameter**2 - inner_diameter**2)
         volume_conical_wall = (np.pi/3)*(D['Length of conical portion']/4)*(outer_diameter**2 - inner_diameter**2)
         D['Volume of bowl'] = volume_cylindrical_wall + volume_conical_wall # in m3
@@ -671,15 +709,16 @@ class DewateringUnit(Thickener):
         Inner_diameter_conveyor = 0.108 # in m (based on Alibaba's product)
         Length_screw_conveyor = D['Total length of bowl'] # in m
         thickness_conveyor_wall = 0.01 # in m (!!! NEED A RELIABLE SOURCE !!!)
-        Outer_diameter_conveyor = Inner_diameter_conveyor + thickness_conveyor_wall
+        Outer_diameter_conveyor = Inner_diameter_conveyor + 2*thickness_conveyor_wall
         Cylinder_conveyor_volume = np.pi*(np.square(Outer_diameter_conveyor/2) - np.square(Inner_diameter_conveyor/2))*Length_screw_conveyor # in m2
         
         outer_projection_screw = 0.05 # in m (!!! NEED A RELIABLE SOURCE !!!)
-        Outer_diameter_screw = Outer_diameter_conveyor + outer_projection_screw
-        thickness_screw = 0.05 # in m (!!! NEED A RELIABLE SOURCE !!!)
-        Number_of_circles_in_screw = D['Total length of bowl']*10 # !!! NEED A RELIABLE SOURCE !!! (assuming 10 circles every meter unit length)
-        Screw_volume = np.pi*(np.square(Outer_diameter_screw) - np.square(Outer_diameter_conveyor))*thickness_screw*Number_of_circles_in_screw # in m3
-        
+        Outer_diameter_screw = Outer_diameter_conveyor + 2*outer_projection_screw
+        thickness_screw = 0.01 # in m (!!! NEED A RELIABLE SOURCE !!!)
+        number_of_screws_per_unit_length = 10 # in m-1  (!!! NEED A RELIABLE SOURCE !!!)
+        Number_of_circles_in_screw = D['Total length of bowl']*number_of_screws_per_unit_length # !!! NEED A RELIABLE SOURCE !!! 
+        Screw_volume = np.pi*(np.square(Outer_diameter_screw/2) - np.square(Outer_diameter_conveyor/2))*thickness_screw*Number_of_circles_in_screw # in m3
+        D['Stainless steel for conveyor'] = (Cylinder_conveyor_volume + Screw_volume)*density_ss # in kg
         
         polymer_dosage_rate = 0.000453592*self.polymer_dosage # convert from (lbs, polymer/tonne, solids) to (kg, polymer/kg, solids)
         D['Polymer feed rate'] = (polymer_dosage_rate*solids_feed_rate) # in kg, polymer/hr
@@ -699,9 +738,8 @@ class DewateringUnit(Thickener):
        
         # Construction of concrete and stainless steel walls
         C['Bowl stainless steel'] = D['Stainless steel for bowl']*self.stainless_steel_unit_cost
+        C['Conveyor stainless steel'] = D['Stainless steel for conveyor']*self.screw_conveyor_unit_cost_by_weight
         
-        
-       
         # Pump (construction and maintainance)
         pumps = self.pumps
         add_OPEX = self.add_OPEX
@@ -733,7 +771,6 @@ class DewateringUnit(Thickener):
             pumping += p.power_utility.rate
         self.power_utility.rate = pumping
         
-
 class Incinerator(SanUnit):
     
     """
