@@ -512,8 +512,8 @@ class FlatBottomCircularClarifier(SanUnit):
                     Q_mgd=None, add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
-                    include_building_cost=False,
-                    include_OM_cost=False,
+                    include_building_cost=True,
+                    include_OM_cost=True,
                     )
                 setattr(self, f'{i}_pump', pump)
 
@@ -996,8 +996,8 @@ class PrimaryClarifier(SanUnit):
             'inf': self._inf,
             }
        
-        type_dct = dict.fromkeys(pumps, '')
-        inputs_dct = dict.fromkeys(pumps, (1,))
+        type_dct = dict.fromkeys(pumps, 'lift')
+        inputs_dct = dict.fromkeys(pumps, (1, 3),)
        
         for i in pumps:
             if hasattr(self, f'{i}_pump'):
@@ -1013,7 +1013,7 @@ class PrimaryClarifier(SanUnit):
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
                     include_building_cost=False,
-                    include_OM_cost=False,
+                    include_OM_cost=True,
                     )
                 setattr(self, f'{i}_pump', pump)
 
@@ -1123,4 +1123,5 @@ class PrimaryClarifier(SanUnit):
             if p is None:
                 continue
             pumping += p.power_utility.rate
-        self.power_utility.rate = pumping
+        self.power_utility.consumption += pumping
+        
