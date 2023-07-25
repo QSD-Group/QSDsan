@@ -830,7 +830,7 @@ class PrimaryClarifier(SanUnit):
     wall_concrete_unit_cost = 650 / 0.765 # $/m3, 0.765 is to convert from $/yd3
     stainless_steel_unit_cost=1.8 # $/kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
    
-    pumps = ('inf',)
+    pumps = ('sludge',)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time=0.04268,
@@ -846,7 +846,7 @@ class PrimaryClarifier(SanUnit):
         self.upflow_velocity = upflow_velocity # in m/hr (converted from 12 mm/sec)
         
         self._mixed = self.ins[0].copy(f'{ID}_mixed')
-        self._inf = self.ins[0].copy(f'{ID}_inf')
+        self._sludge = self.outs[1].copy(f'{ID}_sludge')
        
     @property
     def Hydraulic_Retention_Time(self):
@@ -992,14 +992,18 @@ class PrimaryClarifier(SanUnit):
    
     def _design_pump(self):
         ID, pumps = self.ID, self.pumps
-        self._inf.copy_like(self._mixed)
+        self._sludge.copy_like(self.outs[1])
         
         ins_dct = {
-            'inf': self._inf,
+            'sludge': self._sludge,
             }
+        
+        # ins_dct = {
+        #     'inf': self._inf,
+        #     }
        
-        type_dct = dict.fromkeys(pumps, 'lift')
-        inputs_dct = dict.fromkeys(pumps, (1, 3),)
+        type_dct = dict.fromkeys(pumps, 'sludge')
+        inputs_dct = dict.fromkeys(pumps, (1,),)
        
         for i in pumps:
             if hasattr(self, f'{i}_pump'):
