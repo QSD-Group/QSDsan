@@ -21,7 +21,8 @@ __all__ = ('FlatBottomCircularClarifier',
            'IdealClarifier',
            'PrimaryClarifier')
 
-F_BM_pump = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
+F_BM_pump = 1.18*(1 + 0.007/100) # 0.007 is for miscellaneous costs
+
 default_F_BM = {
         'Pumps': F_BM_pump,
         'Pump building': F_BM_pump,
@@ -111,9 +112,9 @@ class FlatBottomCircularClarifier(SanUnit):
                  init_with='WasteStream', underflow=2000, wastage=385,
                  surface_area=1500, height=4, upflow_velocity=43.2, N_layer=10, feed_layer=4,
                  X_threshold=3000, v_max=474, v_max_practical=250,
-                 rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, isdynamic=True, **kwargs):
+                 rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, F_BM_default=default_F_BM, isdynamic=True, **kwargs):
 
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic, F_BM_default=1)
         self._h = height
         self.upflow_velocity = upflow_velocity # in m/hr (converted from 12 mm/sec)
         self._Qras = underflow
@@ -841,10 +842,10 @@ class PrimaryClarifier(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time=0.04268,
                  ratio_uf=0.007, f_corr=0.65, cylindrical_depth = 5, upflow_velocity = 43.2, 
-                 design_flow = 3155, F_BM_default=None, **kwargs):
+                 design_flow = 3155, F_BM_default=default_F_BM, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
-                         init_with=init_with, F_BM_default=F_BM_default)
+                         init_with=init_with, F_BM_default=1)
         self.Hydraulic_Retention_Time = Hydraulic_Retention_Time #in days
         self.ratio_uf = ratio_uf
         self.f_corr = f_corr
