@@ -827,7 +827,7 @@ class PrimaryClarifier(SanUnit):
     [2] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater
     engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
     """
-   
+    
     _N_ins = 3
     _N_outs = 2
     _ins_size_is_fixed = False
@@ -840,8 +840,8 @@ class PrimaryClarifier(SanUnit):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time=0.04268,
-                 ratio_uf=0.007, f_corr=0.65, cylindrical_depth = 3, upflow_velocity = 43.2, 
-                 F_BM_default=None, **kwargs):
+                 ratio_uf=0.007, f_corr=0.65, cylindrical_depth = 5, upflow_velocity = 43.2, 
+                 design_flow = 3155, F_BM_default=None, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
                          init_with=init_with, F_BM_default=F_BM_default)
@@ -850,6 +850,7 @@ class PrimaryClarifier(SanUnit):
         self.f_corr = f_corr
         self.cylindrical_depth = cylindrical_depth # in m 
         self.upflow_velocity = upflow_velocity # in m/hr (converted from 12 mm/sec)
+        self.design_flow = design_flow # 20 MGD = 3155 m3/hr
         
         self._mixed = self.ins[0].copy(f'{ID}_mixed')
         self._sludge = self.outs[1].copy(f'{ID}_sludge')
@@ -1044,7 +1045,7 @@ class PrimaryClarifier(SanUnit):
         D = self.design_results
         
         # Assuming the capacity of one clarifier is 20 MGD = (20*3785.4118) m3/day = 3155 m3/hr
-        design_flow = 3155 # m3/hr
+        design_flow = self.design_flow # m3/hr
         D['Number of clarifiers'] = np.ceil(self._mixed.get_total_flow('m3/hr')/design_flow)
        
         total_volume = 24*self._HRT*design_flow #in m3
@@ -1101,13 +1102,27 @@ class PrimaryClarifier(SanUnit):
        
     def _cost(self):
        
+        self._mixed.mix_from(self.ins)
         D = self.design_results
         C = self.baseline_purchase_costs
        
         # Construction of concrete and stainless steel walls
         C['Wall concrete'] = D['Number of clarifiers']*D['Volume of concrete wall']*self.wall_concrete_unit_cost
         C['Wall stainless steel'] = D['Number of clarifiers']*D['Stainless steel']*self.stainless_steel_unit_cost
-       
+        
+        # Cost of equipment 
+        
+        # Source of scaling exponents: Process Design and Economics for Biochemical Conversion of Lignocellulosic Biomass to Ethanol by NREL.
+        
+        # Scraper 
+        # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
+        base_cost_scraper = 2500
+        base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
+        clarifier_flow = self._mixed.get_total_flow('m3/hr')/D['Number of clarifiers']
+        C['Scraper'] = D['Number of clarifiers']*base_cost_scraper*(clarifier_flow/base_flow_scraper)**0.6
+        base_power_scraper = 2.75 # in kW
+        scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
+        
         # Pump (construction and maintainance)
         pumps = self.pumps
         add_OPEX = self.add_OPEX
@@ -1139,3 +1154,5 @@ class PrimaryClarifier(SanUnit):
             pumping += p.power_utility.rate
         self.power_utility.consumption += pumping
         
+        
+        self.power_utility.consumption += scraper_power
