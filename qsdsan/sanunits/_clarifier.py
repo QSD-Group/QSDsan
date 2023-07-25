@@ -534,7 +534,10 @@ class FlatBottomCircularClarifier(SanUnit):
         self._mixed.mix_from(self.ins)
        
         D = self.design_results
-       
+        # Assuming the capacity of one clarifier is 20 MGD = (20*3785.4118) m3/day = 3155 m3/hr
+        design_flow = 3155 # m3/hr
+        D['Number of clarifiers'] = np.ceil(self._mixed.get_total_flow('m3/hr')/design_flow)
+        
         D['Cylindrical volume'] = self._V # in m3
         # Sidewater depth of a cylindrical clarifier lies between 2.5-5m
         D['Cylindrical depth'] = self._h # in m
@@ -557,7 +560,7 @@ class FlatBottomCircularClarifier(SanUnit):
         # of 10-13 mm/s and maximum velocity of 25-30 mm/s
         peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
         D['Upflow velocity'] = self.upflow_velocity*peak_flow_safety_factor # in m/hr
-        Center_feed_area = self._mixed.get_total_flow('m3/hr')/D['Upflow velocity'] # in m2
+        Center_feed_area = design_flow/D['Upflow velocity'] # in m2
         D['Center feed diameter'] = ((4*Center_feed_area)/3.14)**(1/2) # Sanity check: Diameter of the center feed lies between 15-25% of tank diameter
 
         # Amount of concrete required
@@ -589,8 +592,8 @@ class FlatBottomCircularClarifier(SanUnit):
         C = self.baseline_purchase_costs
        
         # Construction of concrete and stainless steel walls
-        C['Wall concrete'] = D['Volume of concrete wall']*self.wall_concrete_unit_cost
-        C['Wall stainless steel'] = D['Stainless steel']*self.stainless_steel_unit_cost
+        C['Wall concrete'] = D['Number of clarifiers']*D['Volume of concrete wall']*self.wall_concrete_unit_cost
+        C['Wall stainless steel'] = D['Number of clarifiers']*D['Stainless steel']*self.stainless_steel_unit_cost
        
         # Pump (construction and maintainance)
         pumps = self.pumps
@@ -1039,8 +1042,12 @@ class PrimaryClarifier(SanUnit):
         self._mixed.mix_from(self.ins)
        
         D = self.design_results
+        
+        # Assuming the capacity of one clarifier is 20 MGD = (20*3785.4118) m3/day = 3155 m3/hr
+        design_flow = 3155 # m3/hr
+        D['Number of clarifiers'] = np.ceil(self._mixed.get_total_flow('m3/hr')/design_flow)
        
-        total_volume = 24*self._HRT*self._mixed.get_total_flow('m3/hr') #in m3
+        total_volume = 24*self._HRT*design_flow #in m3
         working_volume = total_volume/0.8 # Assume 80% working volume
        
         D['Cylindrical volume'] = working_volume
@@ -1066,7 +1073,7 @@ class PrimaryClarifier(SanUnit):
         peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
         upflow_velocity = self.upflow_velocity # in m/hr (converted from 12 mm/sec)
         D['Upflow velocity'] = upflow_velocity*peak_flow_safety_factor # in m/hr
-        Center_feed_area = self._mixed.get_total_flow('m3/hr')/D['Upflow velocity'] # in m2
+        Center_feed_area = design_flow/D['Upflow velocity'] # in m2
         D['Center feed diameter'] = ((4*Center_feed_area)/3.14)**(1/2) # Sanity check: Diameter of the center feed lies between 15-25% of tank diameter
 
         # Amount of concrete required
@@ -1098,8 +1105,8 @@ class PrimaryClarifier(SanUnit):
         C = self.baseline_purchase_costs
        
         # Construction of concrete and stainless steel walls
-        C['Wall concrete'] = D['Volume of concrete wall']*self.wall_concrete_unit_cost
-        C['Wall stainless steel'] = D['Stainless steel']*self.stainless_steel_unit_cost
+        C['Wall concrete'] = D['Number of clarifiers']*D['Volume of concrete wall']*self.wall_concrete_unit_cost
+        C['Wall stainless steel'] = D['Number of clarifiers']*D['Stainless steel']*self.stainless_steel_unit_cost
        
         # Pump (construction and maintainance)
         pumps = self.pumps
