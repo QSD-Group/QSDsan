@@ -558,7 +558,9 @@ class FlatBottomCircularClarifier(SanUnit):
         D['Center feed diameter'] = ((4*Center_feed_area)/3.14)**(1/2) # Sanity check: Diameter of the center feed lies between 15-25% of tank diameter
 
         # Amount of concrete required
-        thickness_concrete_wall = 3 # in m (!! NEED A RELIABLE SOURCE !!)
+        D_tank = D['Cylindrical depth']*39.37 # m to inches 
+        # Thickness of the wall concrete, [m]. Default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
+        thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
         inner_diameter = D['Cylindrical diameter']
         outer_diameter = inner_diameter + 2*thickness_concrete_wall
         volume_cylindrical_wall = (3.14*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
@@ -1065,7 +1067,9 @@ class PrimaryClarifier(SanUnit):
         D['Center feed diameter'] = ((4*Center_feed_area)/3.14)**(1/2) # Sanity check: Diameter of the center feed lies between 15-25% of tank diameter
 
         # Amount of concrete required
-        thickness_concrete_wall = 3 # in m (!! NEED A RELIABLE SOURCE !!)
+        D_tank = D['Cylindrical depth']*39.37 # m to inches 
+        # Thickness of the wall concrete, [m]. Default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
+        thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
         inner_diameter = D['Cylindrical diameter']
         outer_diameter = inner_diameter + 2*thickness_concrete_wall
         volume_cylindrical_wall = (3.14*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
