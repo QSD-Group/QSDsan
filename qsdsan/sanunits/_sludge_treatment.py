@@ -132,6 +132,7 @@ class Thickener(SanUnit):
                   init_with='WasteStream', F_BM_default=None, thickener_perc=7, 
                   TSS_removal_perc=98, solids_loading_rate = 75, h_cylindrical=2, 
                   upflow_velocity=43.2, **kwargs):
+        
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with, F_BM_default=F_BM_default)
         
@@ -405,7 +406,7 @@ class Thickener(SanUnit):
             'inf': self._inf,
             }
         
-        type_dct = dict.fromkeys(pumps, '')
+        type_dct = dict.fromkeys(pumps, 'sludge')
         inputs_dct = dict.fromkeys(pumps, (1,))
        
         for i in pumps:
@@ -468,9 +469,11 @@ class Thickener(SanUnit):
         D['Center feed diameter'] = ((4*Center_feed_area)/3.14)**(1/2) # Sanity check: Diameter of the center feed lies between 15-25% of tank diameter
 
         # Amount of concrete required
-        thickness_concrete_wall = 3 # in m (!! NEED A RELIABLE SOURCE !!)
+        D_tank = D['Cylindrical depth']*39.37 # m to inches 
+        # Thickness of the wall concrete, [m]. Default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
+        thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
         inner_diameter = D['Cylindrical diameter']
-        outer_diameter = inner_diameter + thickness_concrete_wall
+        outer_diameter = inner_diameter + 2*thickness_concrete_wall
         volume_cylindercal_wall = (3.14*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
         volume_conical_wall = (3.14/3)*(D['Conical depth']/4)*(outer_diameter**2 - inner_diameter**2)
         
@@ -478,7 +481,7 @@ class Thickener(SanUnit):
         # Amount of metal required for center feed
         thickness_metal_wall = 0.5 # in m (!! NEED A RELIABLE SOURCE !!)
         inner_diameter_center_feed = D['Center feed diameter']
-        outer_diameter_center_feed = inner_diameter_center_feed + thickness_metal_wall
+        outer_diameter_center_feed = inner_diameter_center_feed + 2*thickness_metal_wall
         volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed **2)
         density_ss = 7930 # kg/m3, 18/8 Chromium
         D['Stainless steel'] = volume_center_feed*density_ss # in kg
@@ -590,6 +593,7 @@ class DewateringUnit(Thickener):
     # Costs
     stainless_steel_unit_cost=1.8 # $/kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
     screw_conveyor_unit_cost_by_weight = 1800/800 # $/kg (Source: https://www.alibaba.com/product-detail/Engineers-Available-Service-Stainless-Steel-U_60541536633.html?spm=a2700.galleryofferlist.normal_offer.d_title.1fea1f65v6R3OQ&s=p)
+    polymer_cost_by_weight = 5 # !!!Placeholder value!!!
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=None, thickener_perc=28, TSS_removal_perc=98, 
@@ -657,8 +661,8 @@ class DewateringUnit(Thickener):
                     Q_mgd=None, add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
-                    include_building_cost=False,
-                    include_OM_cost=False,
+                    include_building_cost=True,
+                    include_OM_cost=True,
                     )
                 setattr(self, f'{i}_pump', pump)
 
@@ -737,9 +741,9 @@ class DewateringUnit(Thickener):
         C = self.baseline_purchase_costs
        
         # Construction of concrete and stainless steel walls
-        C['Bowl stainless steel'] = D['Stainless steel for bowl']*self.stainless_steel_unit_cost
-        C['Conveyor stainless steel'] = D['Stainless steel for conveyor']*self.screw_conveyor_unit_cost_by_weight
-        
+        C['Bowl stainless steel'] = D['Number of centrifuges']*D['Stainless steel for bowl']*self.stainless_steel_unit_cost
+        C['Conveyor stainless steel'] = D['Number of centrifuges']*D['Stainless steel for conveyor']*self.screw_conveyor_unit_cost_by_weight
+        C['Polymer'] = D['Number of centrifuges']*D['Polymer feed rate']*self.polymer_cost_by_weight 
         # Pump (construction and maintainance)
         pumps = self.pumps
         add_OPEX = self.add_OPEX
