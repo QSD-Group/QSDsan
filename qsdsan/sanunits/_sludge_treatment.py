@@ -131,7 +131,7 @@ class Thickener(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=None, thickener_perc=7, 
                   TSS_removal_perc=98, solids_loading_rate = 75, h_cylindrical=2, 
-                  upflow_velocity=43.2, **kwargs):
+                  upflow_velocity=43.2, design_flow = 40, **kwargs):
         
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with, F_BM_default=F_BM_default)
@@ -141,6 +141,7 @@ class Thickener(SanUnit):
         self.solids_loading_rate = solids_loading_rate 
         self.h_cylindrical = h_cylindrical
         self.upflow_velocity = upflow_velocity
+        self.design_flow = design_flow # 0.25 MGD = 40 m3/hr
         self._mixed = WasteStream(thermo=thermo)
         
         self._sludge = self.outs[0].copy(f'{ID}_sludge')
@@ -443,8 +444,9 @@ class Thickener(SanUnit):
         self._mixed.mix_from(self.ins)
         
         D = self.design_results
+        D['Number of thickeners'] = np.ceil(self._mixed.get_total_flow('m3/hr')/self.design_flow)
         D['slr'] = self.solids_loading_rate # in (kg/day)/m2
-        D['Daily mass of solids handled'] =  (self._mixed.get_TSS()/1000)*self._mixed.get_total_flow('m3/hr')*24 # (mg/L)*[1/1000(kg*L)/(mg*m3)](m3/hr)*(24hr/day) = (kg/day)
+        D['Daily mass of solids handled'] =  ((self._mixed.get_TSS()/1000)*self._mixed.get_total_flow('m3/hr')*24)/D['Number of thickeners'] # (mg/L)*[1/1000(kg*L)/(mg*m3)](m3/hr)*(24hr/day) = (kg/day)
         D['Surface area'] = D['Daily mass of solids handled']/D['slr'] # in m2
         
         # design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Area'] #in m3/(m2*day)
@@ -494,13 +496,28 @@ class Thickener(SanUnit):
         D['Pump stainless steel'] = pumps
         
     def _cost(self):
+        
+        self._mixed.mix_from(self.ins)
        
         D = self.design_results
         C = self.baseline_purchase_costs
        
         # Construction of concrete and stainless steel walls
-        C['Wall concrete'] = D['Volume of concrete wall']*self.wall_concrete_unit_cost
-        C['Wall stainless steel'] = D['Stainless steel']*self.stainless_steel_unit_cost
+        C['Wall concrete'] = D['Number of thickeners']*D['Volume of concrete wall']*self.wall_concrete_unit_cost
+        C['Wall stainless steel'] = D['Number of thickeners']*D['Stainless steel']*self.stainless_steel_unit_cost
+       
+        # Cost of equipment 
+        
+        # Source of scaling exponents: Process Design and Economics for Biochemical Conversion of Lignocellulosic Biomass to Ethanol by NREL.
+        
+        # Scraper 
+        # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
+        base_cost_scraper = 2500
+        base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
+        clarifier_flow = self._mixed.get_total_flow('m3/hr')/D['Number of thickeners']
+        C['Scraper'] = D['Number of clarifiers']*base_cost_scraper*(clarifier_flow/base_flow_scraper)**0.6
+        base_power_scraper = 2.75 # in kW
+        scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
        
         # Pump (construction and maintainance)
         pumps = self.pumps
@@ -531,7 +548,9 @@ class Thickener(SanUnit):
             if p is None:
                 continue
             pumping += p.power_utility.rate
-        self.power_utility.rate = pumping
+        
+        self.power_utility.rate += pumping
+        self.power_utility.rate += scraper_power
 
 class DewateringUnit(Thickener):
     
