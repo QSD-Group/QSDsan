@@ -595,6 +595,25 @@ class FlatBottomCircularClarifier(SanUnit):
         # Construction of concrete and stainless steel walls
         C['Wall concrete'] = D['Number of clarifiers']*D['Volume of concrete wall']*self.wall_concrete_unit_cost
         C['Wall stainless steel'] = D['Number of clarifiers']*D['Stainless steel']*self.stainless_steel_unit_cost
+        
+        # Cost of equipment 
+        
+        # Source of scaling exponents: Process Design and Economics for Biochemical Conversion of Lignocellulosic Biomass to Ethanol by NREL.
+        
+        # Scraper 
+        # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
+        base_cost_scraper = 2500
+        base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
+        clarifier_flow = self._mixed.get_total_flow('m3/hr')/D['Number of clarifiers']
+        C['Scraper'] = D['Number of clarifiers']*base_cost_scraper*(clarifier_flow/base_flow_scraper)**0.6
+        base_power_scraper = 2.75 # in kW
+        scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
+        
+        # v notch weir
+        # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
+        base_cost_v_notch_weir = 6888
+        base_flow_v_notch_weir = 10 # in m3/hr
+        C['v notch weir'] = D['Number of clarifiers']*base_cost_v_notch_weir*(clarifier_flow/base_flow_v_notch_weir)**0.6
        
         # Pump (construction and maintainance)
         pumps = self.pumps
@@ -625,7 +644,9 @@ class FlatBottomCircularClarifier(SanUnit):
             if p is None:
                 continue
             pumping += p.power_utility.rate
-        self.power_utility.rate = pumping
+        
+        self.power_utility.rate += pumping
+        self.power_utility.consumption += scraper_power
    
 class IdealClarifier(SanUnit):
 
@@ -1124,6 +1145,12 @@ class PrimaryClarifier(SanUnit):
         base_power_scraper = 2.75 # in kW
         scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
         
+        # v notch weir
+        # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
+        base_cost_v_notch_weir = 6888
+        base_flow_v_notch_weir = 10 # in m3/hr
+        C['v notch weir'] = D['Number of clarifiers']*base_cost_v_notch_weir*(clarifier_flow/base_flow_v_notch_weir)**0.6
+        
         # Pump (construction and maintainance)
         pumps = self.pumps
         add_OPEX = self.add_OPEX
@@ -1153,7 +1180,6 @@ class PrimaryClarifier(SanUnit):
             if p is None:
                 continue
             pumping += p.power_utility.rate
+        
         self.power_utility.consumption += pumping
-        
-        
         self.power_utility.consumption += scraper_power
