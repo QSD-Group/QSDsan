@@ -106,7 +106,7 @@ class FlatBottomCircularClarifier(SanUnit):
     wall_concrete_unit_cost = 650 / 0.765 # $/m3, 0.765 is to convert from $/yd3
     stainless_steel_unit_cost=1.8 # $/kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
     
-    pumps = ('ras', 'was')
+    pumps = ('ras', 'was',)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', underflow=2000, wastage=385,
@@ -501,8 +501,8 @@ class FlatBottomCircularClarifier(SanUnit):
             'was': self._was,
             }
        
-        type_dct = dict.fromkeys(pumps, 'sludge', 'sludge')
-        inputs_dct = dict.fromkeys(pumps, (1,), (1,))
+        type_dct = dict.fromkeys(pumps, 'sludge')
+        inputs_dct = dict.fromkeys(pumps, (1,))
        
         for i in pumps:
             if hasattr(self, f'{i}_pump'):
@@ -516,7 +516,7 @@ class FlatBottomCircularClarifier(SanUnit):
                     Q_mgd=None, add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
-                    include_building_cost=True,
+                    include_building_cost=False,
                     include_OM_cost=True,
                     )
                 setattr(self, f'{i}_pump', pump)
@@ -1037,7 +1037,6 @@ class PrimaryClarifier(SanUnit):
             else:
                 ID = f'{ID}_{i}'
                 capacity_factor=1
-                # No. of pumps = No. of influents
                 pump = WWTpump(
                     ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
                     Q_mgd=None, add_inputs=inputs_dct[i],
