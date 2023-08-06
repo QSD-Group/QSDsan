@@ -531,8 +531,20 @@ class FlatBottomCircularClarifier(SanUnit):
         return pipe_ss, pump_ss
     
     def _design(self):
-       
+        
         self._mixed.mix_from(self.ins)
+       
+        D = self.design_results
+        total_flow = self._mixed.get_total_flow('m3/hr')
+        
+        if total_flow <= 1580: # 10 MGD
+            design_flow = 790  # 5 MGD
+        elif total_flow >1580 and total_flow <= 4730: # Between 10 and 30 MGD
+            design_flow = 2365 # 15 MGD
+        elif total_flow > 4730 and total_flow <= 15770: # Between 30 and 100 MGD
+            design_flow = 3940 # 25 MGD
+        else:
+            design_flow = 5520 # 35 MGD 
        
         D = self.design_results
         # Assuming the capacity of one clarifier is 20 MGD = (20*3785.4118) m3/day = 3155 m3/hr
@@ -863,7 +875,7 @@ class PrimaryClarifier(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time=0.04268,
                  ratio_uf=0.007, f_corr=0.65, cylindrical_depth = 5, upflow_velocity = 43.2, 
-                 design_flow = 3155, F_BM_default=default_F_BM, **kwargs):
+                 F_BM_default=default_F_BM, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
                          init_with=init_with, F_BM_default=1)
@@ -872,7 +884,6 @@ class PrimaryClarifier(SanUnit):
         self.f_corr = f_corr
         self.cylindrical_depth = cylindrical_depth # in m 
         self.upflow_velocity = upflow_velocity # in m/hr (converted from 12 mm/sec)
-        self.design_flow = design_flow # 20 MGD = 3155 m3/hr
         
         self._mixed = self.ins[0].copy(f'{ID}_mixed')
         self._sludge = self.outs[1].copy(f'{ID}_sludge')
@@ -1066,15 +1077,14 @@ class PrimaryClarifier(SanUnit):
         D = self.design_results
         total_flow = self._mixed.get_total_flow('m3/hr')
         
-        # Assuming the capacity of one clarifier is 20 MGD = (20*3785.4118) m3/day = 3155 m3/hr
-        if total_flow <= 1580:
-            design_flow = 790
-        elif total_flow >1580 and total_flow <= 4730:
-            design_flow = 2365
-        elif total_flow > 4730 and total_flow <= 15770:
-            design_flow = 3940
+        if total_flow <= 1580: # 10 MGD
+            design_flow = 790  # 5 MGD
+        elif total_flow >1580 and total_flow <= 4730: # Between 10 and 30 MGD
+            design_flow = 2365 # 15 MGD
+        elif total_flow > 4730 and total_flow <= 15770: # Between 30 and 100 MGD
+            design_flow = 3940 # 25 MGD
         else:
-            design_flow = 5520
+            design_flow = 5520 # 35 MGD 
         
         D['Number of clarifiers'] = np.ceil(total_flow/design_flow)
        
