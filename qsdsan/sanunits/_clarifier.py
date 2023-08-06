@@ -1064,10 +1064,19 @@ class PrimaryClarifier(SanUnit):
         self._mixed.mix_from(self.ins)
        
         D = self.design_results
+        total_flow = self._mixed.get_total_flow('m3/hr')
         
         # Assuming the capacity of one clarifier is 20 MGD = (20*3785.4118) m3/day = 3155 m3/hr
-        design_flow = self.design_flow # m3/hr
-        D['Number of clarifiers'] = np.ceil(self._mixed.get_total_flow('m3/hr')/design_flow)
+        if total_flow <= 1580:
+            design_flow = 790
+        elif total_flow >1580 and total_flow <= 4730:
+            design_flow = 2365
+        elif total_flow > 4730 and total_flow <= 15770:
+            design_flow = 3940
+        else:
+            design_flow = 5520
+        
+        D['Number of clarifiers'] = np.ceil(total_flow/design_flow)
        
         total_volume = 24*self._HRT*design_flow #in m3
         working_volume = total_volume/0.8 # Assume 80% working volume
