@@ -578,9 +578,9 @@ class ADM1_p_extension(CompiledProcesses):
     --------
     >>> from qsdsan import processes as pc
     >>> cmps = pc.create_adm1_p_extension_cmps()
-    >>> adm1 = pc.ADM1_p_extension()
-    >>> adm1.show()
-    ADM1([hydrolysis_carbs, hydrolysis_proteins, hydrolysis_lipids, uptake_sugars, uptake_amino_acids, uptake_LCFA, uptake_valerate, uptake_butyrate, uptake_propionate, uptake_acetate, uptake_h2, decay_Xsu, decay_Xaa, decay_Xfa, decay_Xc4, decay_Xpro, decay_Xac, decay_Xh2, storage_Sva_in_XPHA, storage_Sbu_in_XPHA, storage_Spro_in_XPHA, storage_Sac_in_XPHA, lysis_XPAO, lysis_XPP, lysis_XPHA, h2_transfer, ch4_transfer, IC_transfer])
+    >>> adm1_p = pc.ADM1_p_extension()
+    >>> adm1_p.show()
+    ADM1_p_extension([hydrolysis_carbs, hydrolysis_proteins, hydrolysis_lipids, uptake_sugars, uptake_amino_acids, uptake_LCFA, uptake_valerate, uptake_butyrate, uptake_propionate, uptake_acetate, uptake_h2, decay_Xsu, decay_Xaa, decay_Xfa, decay_Xc4, decay_Xpro, decay_Xac, decay_Xh2, storage_Sva_in_XPHA, storage_Sbu_in_XPHA, storage_Spro_in_XPHA, storage_Sac_in_XPHA, lysis_XPAO, lysis_XPP, lysis_XPHA, h2_transfer, ch4_transfer, IC_transfer])
     
     References
     ----------

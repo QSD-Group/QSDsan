@@ -16,15 +16,22 @@ for license details.
 from .. import SanUnit, WasteStream
 import numpy as np
 from ..sanunits import WWTpump
+from ..sanunits._pumping import default_F_BM as default_WWTpump_F_BM
 
 
 __all__ = ('Thickener', 'DewateringUnit', 'Incinerator')
+
+# Asign a bare module of 1 to all
+default_F_BM = {
+        'Wall concrete': 1.,
+        'Wall stainless steel': 1.,
+        }
+default_F_BM.update(default_WWTpump_F_BM)
 
 class Thickener(SanUnit):
     
     """
     Thickener based on BSM2 Layout. [1]
-
     ----------
     ID : str
         ID for the Thickener. The default is ''.
@@ -44,70 +51,71 @@ class Thickener(SanUnit):
         Height of cylinder forming the thickener.[2]
     upflow_velocity : float, optional
         Speed with which influent enters the center feed of the clarifier [m/hr]. The default is 43.2.
+    F_BM : dict
+        Equipment bare modules.
         
     Examples
     --------
-    
     >>> from qsdsan import set_thermo, Components, WasteStream
     >>> cmps = Components.load_default()
     >>> cmps_test = cmps.subgroup(['S_F', 'S_NH4', 'X_OHO', 'H2O'])
     >>> set_thermo(cmps_test)
     >>> ws = WasteStream('ws', S_F = 10, S_NH4 = 20, X_OHO = 15, H2O=1000)
     >>> from qsdsan.sanunits import Thickener
-    >>> ps = Thickener(ID='TC', ins= (ws), outs=('Sludge', 'Effluent'))
-    >>> ps._run()
-    >>> uf, of = ps.outs
-    >>> uf.imass['X_OHO']/ws.imass['X_OHO'] # doctest: +ELLIPSIS
+    >>> TC = Thickener(ID='TC', ins= (ws), outs=('sludge', 'effluent'))
+    >>> TC.simulate()
+    >>> sludge, effluent = TC.outs
+    >>> sludge.imass['X_OHO']/ws.imass['X_OHO']
     0.98
-    >>> ps
+    >>> TC.show() # doctest: +ELLIPSIS
     Thickener: TC
     ins...
     [0] ws
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): S_F    1e+04
-                     S_NH4  2e+04
-                     X_OHO  1.5e+04
-                     H2O    1e+06
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_F    1e+04
+                    S_NH4  2e+04
+                    X_OHO  1.5e+04
+                    H2O    1e+06
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 23643.1 mg/L
-         BOD        : 14819.1 mg/L
-         TC         : 8218.3 mg/L
-         TOC        : 8218.3 mg/L
-         TN         : 20167.1 mg/L
-         TP         : 364.1 mg/L
-         TK         : 67.6 mg/L
+         COD        : 23873.0 mg/L
+         BOD        : 14963.2 mg/L
+         TC         : 8298.3 mg/L
+         TOC        : 8298.3 mg/L
+         TN         : 20363.2 mg/L
+         TP         : 367.6 mg/L
+         TK         : 68.3 mg/L
     outs...
-    [0] Sludge
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): S_F    8.46e+03
-                     S_NH4  1.69e+04
-                     X_OHO  1.47e+04
-                     H2O    8.46e+05
+    [0] sludge
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_F    1.56e+03
+                    S_NH4  3.11e+03
+                    X_OHO  1.47e+04
+                    H2O    1.56e+05
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 25857.3 mg/L
-         BOD        : 16071.7 mg/L
-         TC         : 9029.4 mg/L
-         TOC        : 9029.4 mg/L
-         TN         : 20291.5 mg/L
-         TP         : 406.3 mg/L
-         TK         : 78.3 mg/L
-    [1] Effluent
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): S_F    1.54e+03
-                     S_NH4  3.08e+03
-                     X_OHO  300
-                     H2O    1.54e+05
+         COD        : 95050.4 mg/L
+         BOD        : 55228.4 mg/L
+         TC         : 34369.6 mg/L
+         TOC        : 34369.6 mg/L
+         TN         : 24354.4 mg/L
+         TP         : 1724.0 mg/L
+         TK         : 409.8 mg/L
+    [1] effluent
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_F    8.44e+03
+                    S_NH4  1.69e+04
+                    X_OHO  300
+                    H2O    8.44e+05
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 11387.0 mg/L
-         BOD        : 7885.7 mg/L
-         TC         : 3729.1 mg/L
-         TOC        : 3729.1 mg/L
-         TN         : 19478.3 mg/L
-         TP         : 130.6 mg/L
-         TK         : 8.8 mg/L
+         COD        : 9978.2 mg/L
+         BOD        : 7102.9 mg/L
+         TC         : 3208.8 mg/L
+         TOC        : 3208.8 mg/L
+         TN         : 19584.1 mg/L
+         TP         : 102.9 mg/L
+         TK         : 1.6 mg/L
 
     References
     ----------
@@ -131,16 +139,16 @@ class Thickener(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=None, thickener_perc=7, 
                   TSS_removal_perc=98, solids_loading_rate = 75, h_cylindrical=2, 
-                  upflow_velocity=43.2, **kwargs):
+                  upflow_velocity=43.2, F_BM=default_F_BM, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
-                         init_with=init_with, F_BM_default=F_BM_default)
-        
+                         init_with=init_with)
         self.thickener_perc = thickener_perc 
         self.TSS_removal_perc = TSS_removal_perc
         self.solids_loading_rate = solids_loading_rate 
         self.h_cylindrical = h_cylindrical
         self.upflow_velocity = upflow_velocity
-        self.mixed = WasteStream(thermo=thermo)
+        self.F_BM.update(F_BM)
+        self._mixed = WasteStream(f'{ID}_mixed')
         
     @property
     def thickener_perc(self):
@@ -184,8 +192,8 @@ class Thickener(SanUnit):
             
     @property
     def thickener_factor(self):
-        self.mixed.mix_from(self.ins)
-        inf = self.mixed
+        self._mixed.mix_from(self.ins)
+        inf = self._mixed
         _cal_thickener_factor = self._cal_thickener_factor
         if not self.ins: return
         elif inf.isempty(): return
@@ -196,8 +204,8 @@ class Thickener(SanUnit):
     
     @property
     def thinning_factor(self):
-        self.mixed.mix_from(self.ins)
-        inf = self.mixed
+        self._mixed.mix_from(self.ins)
+        inf = self._mixed
         TSS_in = inf.get_TSS()
         _cal_thickener_factor = self._cal_thickener_factor
         thickener_factor = _cal_thickener_factor(TSS_in)
@@ -238,10 +246,9 @@ class Thickener(SanUnit):
         self.updated_Qu_factor, self.updated_thinning_factor = _cal_parameters(updated_thickener_factor)
         
     def _run(self):
-        
-        self.mixed.mix_from(self.ins)
-        inf = self.mixed
-        uf, of = self.outs
+        self._mixed.mix_from(self.ins)
+        inf = self._mixed
+        sludge, eff = self.outs
         cmps = self.components
         
         TSS_rmv = self._TSS_rmv
@@ -261,8 +268,8 @@ class Thickener(SanUnit):
         Ce = Ze + Xe 
         Cs = Zs + Xs
     
-        of.set_flow(Ce,'kg/hr')
-        uf.set_flow(Cs,'kg/hr')
+        eff.set_flow(Ce,'kg/hr')
+        sludge.set_flow(Cs,'kg/hr')
        
     def _init_state(self):
        
@@ -397,17 +404,11 @@ class Thickener(SanUnit):
     }
     
     def _design_pump(self):
-       
         ID, pumps = self.ID, self.pumps
-        
-        self.mixed.mix_from(self.ins)
-        
-        inf = self.mixed
-        
+        inf = self._mixed
         ins_dct = {
             'inf': inf,
             }
-       
         type_dct = dict.fromkeys(pumps, '')
         inputs_dct = dict.fromkeys(pumps, (1,))
        
@@ -439,18 +440,16 @@ class Thickener(SanUnit):
         return pipe_ss, pump_ss
     
     def _design(self):
-        
-        self.mixed.mix_from(self.ins)
-        
         D = self.design_results
         D['slr'] = self.solids_loading_rate # in (kg/day)/m2
-        D['Daily mass of solids handled'] =  (self.mixed.get_TSS()/1000)*self.mixed.get_total_flow('m3/hr')*24 # (mg/L)*[1/1000(kg*L)/(mg*m3)](m3/hr)*(24hr/day) = (kg/day)
+        mixed = self._mixed
+        D['Daily mass of solids handled'] =  (mixed.get_TSS()/1000)*mixed.get_total_flow('m3/hr')*24 # (mg/L)*[1/1000(kg*L)/(mg*m3)](m3/hr)*(24hr/day) = (kg/day)
         D['Surface area'] = D['Daily mass of solids handled']/D['slr'] # in m2
         
         # design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Area'] #in m3/(m2*day)
         D['Cylindrical diameter'] = np.sqrt(4*D['Surface area']/np.pi) #in m
         D['Cylindrical depth'] = self.h_cylindrical #in m 
-        D['Cylindrical volume'] = np.pi*np.square(D['Diameter']/2)*D['Cylindrical depth'] #in m3
+        D['Cylindrical volume'] = np.pi*np.square(D['Cylindrical diameter']/2)*D['Cylindrical depth'] #in m3
         
         D['Conical radius'] = D['Cylindrical diameter']/2
         # The slope of the bottom conical floor lies between 1:10 to 1:12
@@ -467,7 +466,7 @@ class Thickener(SanUnit):
         # of 10-13 mm/s and maximum velocity of 25-30 mm/s
         peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
         D['Upflow velocity'] = self.upflow_velocity*peak_flow_safety_factor # in m/hr
-        Center_feed_area = self.mixed.get_total_flow('m3/hr')/D['Upflow velocity'] # in m2
+        Center_feed_area = mixed.get_total_flow('m3/hr')/D['Upflow velocity'] # in m2
         D['Center feed diameter'] = ((4*Center_feed_area)/3.14)**(1/2) # Sanity check: Diameter of the center feed lies between 15-25% of tank diameter
 
         # Amount of concrete required
@@ -530,6 +529,9 @@ class Thickener(SanUnit):
                 continue
             pumping += p.power_utility.rate
         self.power_utility.rate = pumping
+
+
+# %%
 
 class DewateringUnit(Thickener):
     
@@ -615,6 +617,9 @@ class DewateringUnit(Thickener):
         design['Volume'] = np.pi*np.square(design['Diameter']/2)*(self.h_cylinderical + (self.h_conical/3)) #in m3
         design['Curved Surface Area'] = np.pi*design['Diameter']/2*(2*self.h_cylinderical + np.sqrt(np.square(design['Diameter']/2) + np.square(self.h_conical))) #in m2
 
+
+# %%
+
 class Incinerator(SanUnit):
     
     """
@@ -640,8 +645,7 @@ class Incinerator(SanUnit):
         The default fuel is natural gas with calofific value of 50000 KJ/kg.
         
     Examples
-    --------
-    
+    --------    
     >>> import qsdsan as qs
     >>> cmps = qs.Components.load_default()
     >>> CO2 = qs.Component.from_chemical('S_CO2', search_ID='CO2', particle_size='Soluble', degradability='Undegradable', organic=False)
@@ -652,48 +656,47 @@ class Incinerator(SanUnit):
     >>> natural_gas = qs.WasteStream('nat_gas', phase='g', S_CH4=1000)
     >>> air = qs.WasteStream('air', phase='g', S_O2=210, S_N2=780, S_H2=10)
     >>> from qsdsan.sanunits import Incinerator
-    >>> ps = Incinerator(ID='PC', ins= (ws, air, natural_gas), outs=('flu_gas', 'ash'), 
-                     isdynamic=True)
-    >>> ps._run()
-    >>> ps
-       
-    Incinerator: PC
+    >>> Inc = Incinerator(ID='Inc', ins= (ws, air, natural_gas), outs=('flu_gas', 'ash'), 
+    ...                 isdynamic=False)
+    >>> Inc.simulate()
+    >>> Inc.show()
+    Incinerator: Inc
     ins...
     [0] ws
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): S_F    1e+04
-                     S_NH4  2e+04
-                     X_OHO  1.5e+04
-                     H2O    1e+06
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_F    1e+04
+                    S_NH4  2e+04
+                    X_OHO  1.5e+04
+                    H2O    1e+06
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 23643.1 mg/L
-         BOD        : 14819.1 mg/L
-         TC         : 8218.3 mg/L
-         TOC        : 8218.3 mg/L
-         TN         : 20167.1 mg/L
-         TP         : 364.1 mg/L
-         TK         : 67.6 mg/L
+         COD        : 23873.0 mg/L
+         BOD        : 14963.2 mg/L
+         TC         : 8298.3 mg/L
+         TOC        : 8298.3 mg/L
+         TN         : 20363.2 mg/L
+         TP         : 367.6 mg/L
+         TK         : 68.3 mg/L
     [1] air
-        phase: 'g', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): S_O2  2.1e+05
-                     S_N2  7.8e+05
-                     S_H2  1e+04
+    phase: 'g', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_O2  2.1e+05
+                    S_N2  7.8e+05
+                    S_H2  1e+04
         WasteStream-specific properties: None for non-liquid waste streams
     [2] nat_gas
-        phase: 'g', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): S_CH4  1e+06
+    phase: 'g', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_CH4  1e+06
         WasteStream-specific properties: None for non-liquid waste streams
     outs...
     [0] flu_gas
-        phase: 'g', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): H2O    1e+06
-                     S_N2   7.8e+05
-                     S_CO2  4.77e+05
+    phase: 'g', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): H2O    1e+06
+                    S_N2   7.8e+05
+                    S_CO2  2.67e+05
         WasteStream-specific properties: None for non-liquid waste streams
     [1] ash
-        phase: 's', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): X_Ig_ISS  2.58e+04
+    phase: 's', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): X_Ig_ISS  2.37e+05
         WasteStream-specific properties: None for non-liquid waste streams
     
     References: 

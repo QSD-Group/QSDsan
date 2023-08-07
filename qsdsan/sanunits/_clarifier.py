@@ -16,6 +16,7 @@ from numpy import maximum as npmax, minimum as npmin, exp as npexp
 from .. import SanUnit, WasteStream
 import numpy as np
 from ..sanunits import WWTpump
+from ..sanunits._pumping import default_F_BM as default_WWTpump_F_BM
 
 __all__ = ('FlatBottomCircularClarifier',
            'IdealClarifier',
@@ -134,6 +135,7 @@ class FlatBottomCircularClarifier(SanUnit):
         self._solubles = None
         self._X_comp = np.zeros(len(self.components))
         self._dX_comp = self._X_comp.copy()
+        self._mixed = WasteStream(f'{ID}_mixed')
         header = self._state_header
         self._state_header = list(header) + [f'TSS{i+1} [mg/L]' for i in range(N_layer)]
         for attr, value in kwargs.items():
@@ -489,7 +491,7 @@ class FlatBottomCircularClarifier(SanUnit):
         ID, pumps = self.ID, self.pumps
         
         ins_dct = {
-            'inf': self._inf,
+            'inf': self._mixed,
             }
        
         type_dct = dict.fromkeys(pumps, '')
@@ -614,6 +616,9 @@ class FlatBottomCircularClarifier(SanUnit):
             pumping += p.power_utility.rate
         self.power_utility.rate = pumping
    
+    
+# %% 
+   
 class IdealClarifier(SanUnit):
 
     _N_ins = 1
@@ -713,6 +718,16 @@ class IdealClarifier(SanUnit):
     def _design(self):
         pass
    
+    
+# %%
+
+# Asign a bare module of 1 to all
+default_F_BM = {
+        'Wall concrete': 1.,
+        'Wall stainless steel': 1.,
+        }
+default_F_BM.update(default_WWTpump_F_BM)
+    
 class PrimaryClarifier(SanUnit):
    
     """
@@ -736,6 +751,8 @@ class PrimaryClarifier(SanUnit):
         The depth of the cylindrical portion of clarifier [in m].  
     upflow_velocity : float, optional
         Speed with which influent enters the center feed of the clarifier [m/hr]. The default is 43.2.
+    F_BM : dict
+        Equipment bare modules.
 
     Examples
     --------
@@ -745,68 +762,60 @@ class PrimaryClarifier(SanUnit):
     >>> set_thermo(cmps_test)
     >>> ws = WasteStream('ws', S_F = 10, S_NH4 = 20, X_OHO = 15, H2O=1000)
     >>> from qsdsan.sanunits import PrimaryClarifier
-    >>> ps = PrimaryClarifier(ID='PC', ins= (ws), outs=())
-    >>> ps._run()
-    >>> uf, of = ps.outs
-    >>> uf.imass['X_OHO']/ws.imass['X_OHO'] # doctest: +ELLIPSIS
+    >>> PC = PrimaryClarifier(ID='PC', ins= (ws,), outs=('eff', 'sludge'))
+    >>> PC.simulate()
+    >>> eff, sludge = PC.outs
+    >>> eff.imass['X_OHO']/ws.imass['X_OHO'] # doctest: +ELLIPSIS
     0.280...
-    >>> ps
+    >>> PC.show() 
     PrimaryClarifier: PC
     ins...
     [0] ws
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): S_F    1e+04
-                     S_NH4  2e+04
-                     X_OHO  1.5e+04
-                     H2O    1e+06
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_F    1e+04
+                    S_NH4  2e+04
+                    X_OHO  1.5e+04
+                    H2O    1e+06
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 23643.1 mg/L
-         BOD        : 14819.1 mg/L
-         TC         : 8218.3 mg/L
-         TOC        : 8218.3 mg/L
-         TN         : 20167.1 mg/L
-         TP         : 364.1 mg/L
-         TK         : 67.6 mg/L
-    [1] ws3
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow: 0
-        WasteStream-specific properties: None for empty waste streams
-    [2] ws4
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow: 0
-        WasteStream-specific properties: None for empty waste streams
+         COD        : 23873.0 mg/L
+         BOD        : 14963.2 mg/L
+         TC         : 8298.3 mg/L
+         TOC        : 8298.3 mg/L
+         TN         : 20363.2 mg/L
+         TP         : 367.6 mg/L
+         TK         : 68.3 mg/L
     outs...
-    [0] ws1
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): S_F    70
-                     S_NH4  140
-                     X_OHO  4.2e+03
-                     H2O    7e+03
+    [0] eff
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_F    70
+                    S_NH4  140
+                    X_OHO  4.2e+03
+                    H2O    7e+03
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 425826.3 mg/L
-         BOD        : 242338.7 mg/L
-         TC         : 155531.6 mg/L
-         TOC        : 155531.6 mg/L
-         TN         : 42767.0 mg/L
-         TP         : 8027.9 mg/L
-         TK         : 1997.1 mg/L
-    [1] ws2
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): S_F    9.93e+03
-                     S_NH4  1.99e+04
-                     X_OHO  1.08e+04
-                     H2O    9.93e+05
+         COD        : 428873.3 mg/L
+         BOD        : 244072.7 mg/L
+         TC         : 156644.5 mg/L
+         TOC        : 156644.5 mg/L
+         TN         : 43073.0 mg/L
+         TP         : 8085.4 mg/L
+         TK         : 2011.4 mg/L
+    [1] sludge
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_F    9.93e+03
+                    S_NH4  1.99e+04
+                    X_OHO  1.08e+04
+                    H2O    9.93e+05
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 19789.4 mg/L
-         BOD        : 12639.0 mg/L
-         TC         : 6806.8 mg/L
-         TOC        : 6806.8 mg/L
-         TN         : 19950.5 mg/L
-         TP         : 290.7 mg/L
-         TK         : 49.2 mg/L
+         COD        : 19982.3 mg/L
+         BOD        : 12762.2 mg/L
+         TC         : 6873.2 mg/L
+         TOC        : 6873.2 mg/L
+         TN         : 20145.0 mg/L
+         TP         : 293.5 mg/L
+         TK         : 49.6 mg/L
    
     References
     ----------
@@ -829,16 +838,15 @@ class PrimaryClarifier(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time=0.04268,
                  ratio_uf=0.007, f_corr=0.65, cylindrical_depth = 3, upflow_velocity = 43.2, 
-                 F_BM_default=None, **kwargs):
-
+                 F_BM=default_F_BM, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
-                         init_with=init_with, F_BM_default=F_BM_default)
+                         init_with=init_with)
         self.Hydraulic_Retention_Time = Hydraulic_Retention_Time #in days
         self.ratio_uf = ratio_uf
         self.f_corr = f_corr
         self.cylindrical_depth = cylindrical_depth # in m 
         self.upflow_velocity = upflow_velocity # in m/hr (converted from 12 mm/sec)
-        
+        self.F_BM.update(default_F_BM)
         self._mixed = self.ins[0].copy(f'{ID}_mixed')
         self._inf = self.ins[0].copy(f'{ID}_inf')
        
@@ -890,23 +898,24 @@ class PrimaryClarifier(SanUnit):
         return f_i
    
     def _run(self):
-        uf, of = self.outs
+        eff, sludge = self.outs
         cmps = self.components
-        self._mixed.mix_from(self.ins)
+        mixed = self._mixed
+        mixed.mix_from(self.ins)
     
         r = self._r
         f_i = self._f_i()
        
-        Xs = (1 - f_i)*self._mixed.mass*cmps.x
-        Xe = (f_i)*self._mixed.mass*cmps.x
+        Xs = (1 - f_i)*mixed.mass*cmps.x
+        Xe = (f_i)*mixed.mass*cmps.x
        
-        Zs = r*self._mixed.mass*cmps.s
-        Ze = (1-r)*self._mixed.mass*cmps.s
+        Zs = r*mixed.mass*cmps.s
+        Ze = (1-r)*mixed.mass*cmps.s
        
         Ce = Ze + Xe
         Cs = Zs + Xs
-        of.set_flow(Ce,'kg/hr')
-        uf.set_flow(Cs,'kg/hr')
+        sludge.set_flow(Ce,'kg/hr')
+        eff.set_flow(Cs,'kg/hr')
        
     def _init_state(self):
         # if multiple wastestreams exist then concentration and total inlow
@@ -916,11 +925,11 @@ class PrimaryClarifier(SanUnit):
         self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
         self._dstate = self._state * 0.
        
-        uf, of = self.outs
-        s_flow = uf.F_vol/(uf.F_vol+of.F_vol)
-        denominator = uf.mass + of.mass
+        eff, sludge = self.outs
+        s_flow = eff.F_vol/(eff.F_vol+sludge.F_vol)
+        denominator = eff.mass + sludge.mass
         denominator += (denominator == 0)
-        s = uf.mass/denominator
+        s = eff.mass/denominator
         self._sludge = np.append(s/s_flow, s_flow)
         self._effluent = np.append((1-s)/(1-s_flow), 1-s_flow)
        
@@ -1037,7 +1046,7 @@ class PrimaryClarifier(SanUnit):
         # Sidewater depth of a cylindrical clarifier lies between 2.5-5m
         D['Cylindrical depth'] = self.cylindrical_depth # in m
         # The tank diameter can lie anywhere between 3 m to 100 m
-        D['Cylindrical diameter'] = (4*D['Cylindrical volume']/(3.14*D['Cylindrical depth']))**(1/2) # in m
+        D['Cylindrical diameter'] = (4*working_volume/(3.14*D['Cylindrical depth']))**(1/2) # in m
        
         D['Conical radius'] = D['Cylindrical diameter']/2
         # The slope of the bottom conical floor lies between 1:10 to 1:12
