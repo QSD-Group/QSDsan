@@ -16,7 +16,10 @@ for license details.
 from .. import SanUnit, WasteStream
 import numpy as np
 from ..sanunits import WWTpump
-from ..sanunits._pumping import default_F_BM as default_WWTpump_F_BM
+from ..sanunits._pumping import (
+    default_F_BM as default_WWTpump_F_BM,
+    default_equipment_lifetime as default_WWTpump_equipment_lifetime,
+    )
 
 
 __all__ = ('Thickener', 'DewateringUnit', 'Incinerator')
@@ -27,6 +30,7 @@ default_F_BM = {
         'Wall stainless steel': 1.,
         }
 default_F_BM.update(default_WWTpump_F_BM)
+
 
 class Thickener(SanUnit):
     
@@ -134,12 +138,12 @@ class Thickener(SanUnit):
     wall_concrete_unit_cost = 650 / 0.765 # $/m3, 0.765 is to convert from $/yd3
     stainless_steel_unit_cost=1.8 # $/kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
     
-    pumps = ('inf',)
+    pumps = ('sludge',)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
-                  init_with='WasteStream', F_BM_default=None, thickener_perc=7, 
+                  init_with='WasteStream', F_BM_default=default_F_BM, thickener_perc=7, 
                   TSS_removal_perc=98, solids_loading_rate = 75, h_cylindrical=2, 
-                  upflow_velocity=43.2, F_BM=default_F_BM, **kwargs):
+                  upflow_velocity=43.2, design_flow = 113, F_BM=default_F_BM, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with)
         self.thickener_perc = thickener_perc 
@@ -147,8 +151,10 @@ class Thickener(SanUnit):
         self.solids_loading_rate = solids_loading_rate 
         self.h_cylindrical = h_cylindrical
         self.upflow_velocity = upflow_velocity
+        self.design_flow = design_flow # 0.60 MGD = 113 m3/hr
         self.F_BM.update(F_BM)
-        self._mixed = WasteStream(f'{ID}_mixed')
+        self._mixed = WasteStream(f'{ID}_mixed')        
+        self._sludge = self.outs[0].copy(f'{ID}_sludge')
         
     @property
     def thickener_perc(self):
@@ -405,12 +411,17 @@ class Thickener(SanUnit):
     
     def _design_pump(self):
         ID, pumps = self.ID, self.pumps
-        inf = self._mixed
+        self._sludge.copy_like(self.outs[0])
+        sludge = self._sludge
         ins_dct = {
-            'inf': inf,
+            'sludge': sludge,
             }
-        type_dct = dict.fromkeys(pumps, '')
+        type_dct = dict.fromkeys(pumps, 'sludge')
         inputs_dct = dict.fromkeys(pumps, (1,))
+        
+        D = self.design_results
+        influent_Q = sludge.get_total_flow('m3/hr')/D['Number of thickeners']
+        influent_Q_mgd = influent_Q*0.00634 # m3/hr to MGD
        
         for i in pumps:
             if hasattr(self, f'{i}_pump'):
@@ -422,11 +433,11 @@ class Thickener(SanUnit):
                 # No. of pumps = No. of influents
                 pump = WWTpump(
                     ID=ID, ins= ins_dct[i], pump_type=type_dct[i],
-                    Q_mgd=None, add_inputs=inputs_dct[i],
+                    Q_mgd=influent_Q_mgd, add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
                     include_building_cost=False,
-                    include_OM_cost=False,
+                    include_OM_cost=True,
                     )
                 setattr(self, f'{i}_pump', pump)
 
@@ -441,9 +452,10 @@ class Thickener(SanUnit):
     
     def _design(self):
         D = self.design_results
+        D['Number of thickeners'] = np.ceil(self._mixed.get_total_flow('m3/hr')/self.design_flow)
         D['slr'] = self.solids_loading_rate # in (kg/day)/m2
         mixed = self._mixed
-        D['Daily mass of solids handled'] =  (mixed.get_TSS()/1000)*mixed.get_total_flow('m3/hr')*24 # (mg/L)*[1/1000(kg*L)/(mg*m3)](m3/hr)*(24hr/day) = (kg/day)
+        D['Daily mass of solids handled'] =  ((mixed.get_TSS()/1000)*mixed.get_total_flow('m3/hr')*24)/D['Number of thickeners'] # (mg/L)*[1/1000(kg*L)/(mg*m3)](m3/hr)*(24hr/day) = (kg/day)
         D['Surface area'] = D['Daily mass of solids handled']/D['slr'] # in m2
         
         # design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Area'] #in m3/(m2*day)
@@ -470,9 +482,11 @@ class Thickener(SanUnit):
         D['Center feed diameter'] = ((4*Center_feed_area)/3.14)**(1/2) # Sanity check: Diameter of the center feed lies between 15-25% of tank diameter
 
         # Amount of concrete required
-        thickness_concrete_wall = 3 # in m (!! NEED A RELIABLE SOURCE !!)
+        D_tank = D['Cylindrical depth']*39.37 # m to inches 
+        # Thickness of the wall concrete, [m]. Default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
+        thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
         inner_diameter = D['Cylindrical diameter']
-        outer_diameter = inner_diameter + thickness_concrete_wall
+        outer_diameter = inner_diameter + 2*thickness_concrete_wall
         volume_cylindercal_wall = (3.14*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
         volume_conical_wall = (3.14/3)*(D['Conical depth']/4)*(outer_diameter**2 - inner_diameter**2)
         
@@ -480,7 +494,7 @@ class Thickener(SanUnit):
         # Amount of metal required for center feed
         thickness_metal_wall = 0.5 # in m (!! NEED A RELIABLE SOURCE !!)
         inner_diameter_center_feed = D['Center feed diameter']
-        outer_diameter_center_feed = inner_diameter_center_feed + thickness_metal_wall
+        outer_diameter_center_feed = inner_diameter_center_feed + 2*thickness_metal_wall
         volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed **2)
         density_ss = 7930 # kg/m3, 18/8 Chromium
         D['Stainless steel'] = volume_center_feed*density_ss # in kg
@@ -490,15 +504,290 @@ class Thickener(SanUnit):
         D['Pump pipe stainless steel'] = pipe
         D['Pump stainless steel'] = pumps
         
+        #For thickeners
+        D['Number of pumps'] = D['Number of thickeners']
+        
+    def _cost(self):
+        
+        self._mixed.mix_from(self.ins)
+       
+        D = self.design_results
+        C = self.baseline_purchase_costs
+       
+        # Construction of concrete and stainless steel walls
+        C['Wall concrete'] = D['Number of thickeners']*D['Volume of concrete wall']*self.wall_concrete_unit_cost
+        C['Wall stainless steel'] = D['Number of thickeners']*D['Stainless steel']*self.stainless_steel_unit_cost
+       
+        # Cost of equipment 
+        
+        # Source of scaling exponents: Process Design and Economics for Biochemical Conversion of Lignocellulosic Biomass to Ethanol by NREL.
+        
+        # Scraper 
+        # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
+        base_cost_scraper = 2500
+        base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
+        thickener_flow = self._mixed.get_total_flow('m3/hr')/D['Number of thickeners']
+        C['Scraper'] = D['Number of thickeners']*base_cost_scraper*(thickener_flow/base_flow_scraper)**0.6
+        base_power_scraper = 2.75 # in kW
+        scraper_power = D['Number of thickeners']*base_power_scraper*(thickener_flow/base_flow_scraper)**0.6
+        
+        # v notch weir
+        # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
+        base_cost_v_notch_weir = 6888
+        base_flow_v_notch_weir = 10 # in m3/hr
+        C['v notch weir'] = D['Number of thickeners']*base_cost_v_notch_weir*(thickener_flow/base_flow_v_notch_weir)**0.6
+       
+        # Pump (construction and maintainance)
+        pumps = self.pumps
+        add_OPEX = self.add_OPEX
+        pump_cost = 0.
+        building_cost = 0.
+        opex_o = 0.
+        opex_m = 0.
+       
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p_cost = p.baseline_purchase_costs
+            p_add_opex = p.add_OPEX
+            pump_cost += p_cost['Pump']
+            building_cost += p_cost['Pump building']
+            opex_o += p_add_opex['Pump operating']
+            opex_m += p_add_opex['Pump maintenance']
+
+        C['Pumps'] = pump_cost*D['Number of thickeners']
+        C['Pump building'] = building_cost*D['Number of thickeners']
+        add_OPEX['Pump operating'] = opex_o*D['Number of thickeners']
+        add_OPEX['Pump maintenance'] = opex_m*D['Number of thickeners']
+       
+        # Power
+        pumping = 0.
+        for ID in self.pumps:
+            p = getattr(self, f'{ID}_pump')
+            if p is None:
+                continue
+            pumping += p.power_utility.rate
+        
+        pumping = pumping*D['Number of thickeners']
+        
+        self.power_utility.rate += pumping
+        self.power_utility.rate += scraper_power
+
+
+# %%
+
+class DewateringUnit(Thickener):
+    
+    """
+    Dewatering Unit based on BSM2 Layout. [1]
+    
+    Parameters
+    ----------
+    ID : str
+        ID for the Dewatering Unit. The default is ''.
+    ins : class:`WasteStream`
+        Influent to the Dewatering Unit. Expected number of influent is 1. 
+    outs : class:`WasteStream`
+        Treated effluent and sludge.
+    thickener_perc : float
+        The percentage of Suspended Sludge in the underflow of the dewatering unit.[1]
+    TSS_removal_perc : float
+        The percentage of suspended solids removed in the dewatering unit.[1]
+    solids_feed_rate : float
+        Rate of solids processed by one centrifuge in dry tonne per day (dtpd).
+        Default value is 70 dtpd. 
+    
+    # specific_gravity_sludge: float
+    #     Specific gravity of influent sludge from secondary clarifier.[2,3]
+    # cake density: float
+    #     Density of effleunt dewatered sludge.[2,3]
+    
+    g_factor : float
+        Factor by which g (9.81 m/s2) is multiplied to obtain centrifugal acceleration. 
+        g_factor typically lies between 1500 and 3000. 
+        centrifugal acceleration = g * g_factor = k * (RPM)^2 * diameter [3]
+    rotational_speed : float
+        rotational speed of the centrifuge in rpm. [3]
+    LtoD: The ratio of length to diameter of the centrifuge.
+        The value typically lies between 3-4. [4]
+    polymer_dosage : float
+        mass of polymer utilised (lb) per tonne of dry solid waste (lbs/tonne).[5]
+        Depends on the type of influents, please refer to [5] for appropriate values. 
+    h_cylindrical: float
+        length of cylindrical portion of dewatering unit.
+    h_conical: float
+        length of conical portion of dewatering unit.[
+    
+    
+    References
+    ----------
+    .. [1] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
+    Benchmarking of control strategies for wastewater treatment plants. IWA publishing, 2014.
+    [2] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
+    engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
+    [3]Design of Municipal Wastewater Treatment Plants: WEF Manual of Practice 
+    No. 8 ASCE Manuals and Reports on Engineering Practice No. 76, Fifth Edition. 
+    [4] https://www.alibaba.com/product-detail/Multifunctional-Sludge-Dewatering-Decanter-Centrifuge_1600285055254.html?spm=a2700.galleryofferlist.normal_offer.d_title.1cd75229sPf1UW&s=p
+    [5] United States Environmental Protection Agency (EPA) 'Biosolids Technology Fact Sheet Centrifuge Thickening and Dewatering'  
+    """
+    
+    _N_ins = 1
+    _N_outs = 2
+    _ins_size_is_fixed = False
+    
+    # Costs
+    stainless_steel_unit_cost=1.8 # $/kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
+    screw_conveyor_unit_cost_by_weight = 1800/800 # $/kg (Source: https://www.alibaba.com/product-detail/Engineers-Available-Service-Stainless-Steel-U_60541536633.html?spm=a2700.galleryofferlist.normal_offer.d_title.1fea1f65v6R3OQ&s=p)
+    polymer_cost_by_weight = 5 # !!!Placeholder value!!!
+    
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
+                  init_with='WasteStream', F_BM_default=default_F_BM, thickener_perc=28, TSS_removal_perc=98, 
+                  
+                  solids_feed_rate = 70, 
+                  # specific_gravity_sludge=1.03, cake_density=965, 
+                  g_factor=2500, rotational_speed = 40, LtoD = 4, 
+                  polymer_dosage = 0.0075, h_cylindrical=2, h_conical=1, 
+                  **kwargs):
+        Thickener.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, isdynamic=isdynamic,
+                      init_with=init_with, F_BM_default=1, thickener_perc=thickener_perc, 
+                      TSS_removal_perc=TSS_removal_perc, **kwargs)
+        
+        # self._mixed = self.ins[0].copy(f'{ID}_mixed')
+        # self._inf = self.ins[0].copy(f'{ID}_inf')
+        
+        self.solids_feed_rate = solids_feed_rate
+        # self.specific_gravity_sludge=specific_gravity_sludge
+        # self.cake_density=cake_density #in kg/m3
+        self.g_factor = g_factor #unitless, centrifugal acceleration = g_factor*9.81
+        self.rotational_speed = rotational_speed #in revolution/min
+        self.LtoD = LtoD 
+        self.polymer_dosage = polymer_dosage #in (lbs,polymer/tonne,solids)
+        self.h_cylindrical = h_cylindrical
+        self.h_conical = h_conical
+        
+    _units = {
+        'Number of centrifuges': '?',
+        'Diameter of bowl': 'm',
+        'Total length of bowl': 'm',
+        'Length of cylindrical portion': 'm',
+        'Length of conical portion': 'm',
+        'Volume of bowl': 'm3',
+        
+        'Stainless steel for bowl': 'kg',
+        'Stainless steel for conveyor': 'kg',
+        
+        'Polymer feed rate': 'kg/hr',
+        'Pump pipe stainless steel' : 'kg',
+        'Pump stainless steel': 'kg'
+    }        
+    
+    
+    def _design_pump(self):
+        ID, pumps = self.ID, self.pumps
+        self._inf.copy_like(self._mixed)
+        
+        ins_dct = {
+            'inf': self._inf,
+            }
+       
+        type_dct = dict.fromkeys(pumps, '')
+        inputs_dct = dict.fromkeys(pumps, (1,))
+       
+        for i in pumps:
+            if hasattr(self, f'{i}_pump'):
+                p = getattr(self, f'{i}_pump')
+                setattr(p, 'add_inputs', inputs_dct[i])
+            else:
+                ID = f'{ID}_{i}'
+                capacity_factor=1
+                # No. of pumps = No. of influents
+                pump = WWTpump(
+                    ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
+                    Q_mgd=None, add_inputs=inputs_dct[i],
+                    capacity_factor=capacity_factor,
+                    include_pump_cost=True,
+                    include_building_cost=True,
+                    include_OM_cost=True,
+                    )
+                setattr(self, f'{i}_pump', pump)
+
+        pipe_ss, pump_ss = 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p.simulate()
+            # try: p.simulate()
+            # except: breakpoint()
+            p_design = p.design_results
+            pipe_ss += p_design['Pump pipe stainless steel']
+            pump_ss += p_design['Pump stainless steel']
+        return pipe_ss, pump_ss
+    
+    
+    def _design(self):
+        
+        self._mixed.mix_from(self.ins)
+        
+        D = self.design_results 
+        TSS_rmv = self._TSS_rmv
+        solids_feed_rate = 44.66*self.solids_feed_rate # 44.66 is factor to convert tonne/day to kg/hr
+        # Cake's total solids and TSS are essentially the same (pg. 24-6 [3])
+        # If TSS_rmv = 98, then total_mass_dry_solids_removed  = (0.98)*(influent TSS mass)
+        total_mass_dry_solids_removed = (TSS_rmv/100)*((self._mixed.get_TSS()*self.ins[0].F_vol)/1000) # in kg/hr
+        D['Number of centrifuges'] = np.ceil(total_mass_dry_solids_removed/solids_feed_rate)
+        k = 0.00000056 # Based on emprical formula (pg. 24-23 of [3])
+        g = 9.81 # m/s2
+        # The inner diameterof the bowl is calculated based on an empirical formula. 1000 is used to convert mm to m.
+        D['Diameter of bowl'] = (self.g_factor*g)/(k*np.square(self.rotational_speed)*1000) # in m
+        D['Total length of bowl'] =  self.LtoD*D['Diameter'] 
+        # Sanity check: L should be between 1-7 m, diameter should be around 0.25-0.8 m (Source: [4])
+        
+        fraction_cylindrical_portion = 0.8
+        fraction_conical_portion = 1 - fraction_cylindrical_portion
+        D['Length of cylindrical portion'] = fraction_cylindrical_portion*D['Total length of bowl']
+        D['Length of conical portion'] =  fraction_conical_portion*D['Total length of bowl']
+        thickness_of_bowl_wall = 0.1 # in m (!!! NEED A RELIABLE SOURCE !!!)
+        inner_diameter = D['Diameter of bowl']
+        outer_diameter = inner_diameter + 2*thickness_of_bowl_wall
+        volume_cylindrical_wall = (np.pi*D['Length of cylindrical portion']/4)*(outer_diameter**2 - inner_diameter**2)
+        volume_conical_wall = (np.pi/3)*(D['Length of conical portion']/4)*(outer_diameter**2 - inner_diameter**2)
+        D['Volume of bowl'] = volume_cylindrical_wall + volume_conical_wall # in m3
+        
+        density_ss = 7930 # kg/m3, 18/8 Chromium
+        D['Stainless steel for bowl'] = D['Volume of bowl']*density_ss # in kg
+        
+        Inner_diameter_conveyor = 0.108 # in m (based on Alibaba's product)
+        Length_screw_conveyor = D['Total length of bowl'] # in m
+        thickness_conveyor_wall = 0.01 # in m (!!! NEED A RELIABLE SOURCE !!!)
+        Outer_diameter_conveyor = Inner_diameter_conveyor + 2*thickness_conveyor_wall
+        Cylinder_conveyor_volume = np.pi*(np.square(Outer_diameter_conveyor/2) - np.square(Inner_diameter_conveyor/2))*Length_screw_conveyor # in m2
+        
+        outer_projection_screw = 0.05 # in m (!!! NEED A RELIABLE SOURCE !!!)
+        Outer_diameter_screw = Outer_diameter_conveyor + 2*outer_projection_screw
+        thickness_screw = 0.01 # in m (!!! NEED A RELIABLE SOURCE !!!)
+        number_of_screws_per_unit_length = 10 # in m-1  (!!! NEED A RELIABLE SOURCE !!!)
+        Number_of_circles_in_screw = D['Total length of bowl']*number_of_screws_per_unit_length # !!! NEED A RELIABLE SOURCE !!! 
+        Screw_volume = np.pi*(np.square(Outer_diameter_screw/2) - np.square(Outer_diameter_conveyor/2))*thickness_screw*Number_of_circles_in_screw # in m3
+        D['Stainless steel for conveyor'] = (Cylinder_conveyor_volume + Screw_volume)*density_ss # in kg
+        
+        polymer_dosage_rate = 0.000453592*self.polymer_dosage # convert from (lbs, polymer/tonne, solids) to (kg, polymer/kg, solids)
+        D['Polymer feed rate'] = (polymer_dosage_rate*solids_feed_rate) # in kg, polymer/hr
+        
+        # Pumps
+        pipe, pumps = self._design_pump()
+        D['Pump pipe stainless steel'] = pipe
+        D['Pump stainless steel'] = pumps
+        
+        # design['Projected Area at Inlet'] = np.pi*np.square(design['Diameter']/2) #in m2
+        # design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Projected Area at Inlet'] #in m3/(m2*day)
+        
     def _cost(self):
        
         D = self.design_results
         C = self.baseline_purchase_costs
        
         # Construction of concrete and stainless steel walls
-        C['Wall concrete'] = D['Volume of concrete wall']*self.wall_concrete_unit_cost
-        C['Wall stainless steel'] = D['Stainless steel']*self.stainless_steel_unit_cost
-       
+        C['Bowl stainless steel'] = D['Number of centrifuges']*D['Stainless steel for bowl']*self.stainless_steel_unit_cost
+        C['Conveyor stainless steel'] = D['Number of centrifuges']*D['Stainless steel for conveyor']*self.screw_conveyor_unit_cost_by_weight
+        C['Polymer'] = D['Number of centrifuges']*D['Polymer feed rate']*self.polymer_cost_by_weight 
         # Pump (construction and maintainance)
         pumps = self.pumps
         add_OPEX = self.add_OPEX
@@ -529,95 +818,7 @@ class Thickener(SanUnit):
                 continue
             pumping += p.power_utility.rate
         self.power_utility.rate = pumping
-
-
-# %%
-
-class DewateringUnit(Thickener):
-    
-    """
-    Dewatering Unit based on BSM2 Layout. [1]
-    
-    Parameters
-    ----------
-    ID : str
-        ID for the Dewatering Unit. The default is ''.
-    ins : class:`WasteStream`
-        Influent to the Dewatering Unit. Expected number of influent is 1. 
-    outs : class:`WasteStream`
-        Treated effluent and sludge.
-    thickener_perc : float
-        The percentage of Suspended Sludge in the underflow of the dewatering unit.[1]
-    TSS_removal_perc : float
-        The percentage of suspended solids removed in the dewatering unit.[1]
-    number_of_centrifuges : float
-        Number of centrifuges in the dewatering unit.[2,3]
-    specific_gravity_sludge: float
-        Specific gravity of influent sludge from secondary clarifier.[2,3]
-    cake density: float
-        Density of effleunt dewatered sludge.[2,3]
-    centrifugal_force : float
-        Centrifugal force in the centrifuge.[2,3]
-    rotational_speed : float
-        rotational speed of the centrifuge.[2,3]
-    polymer_dosage_per_kg_of_sludge : float
-        mass of polymer utilised per kg of influent sludge.[2,3]
-    h_cylindrical: float
-        length of cylindrical portion of dewatering unit.[2,3]
-    h_conical: float
-        length of conical portion of dewatering unit.[2,3]
-    
-    References
-    ----------
-    .. [1] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
-    Benchmarking of control strategies for wastewater treatment plants. IWA publishing, 2014.
-    [2] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
-    engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
-    [3]Design of Municipal Wastewater Treatment Plants: WEF Manual of Practice 
-    No. 8 ASCE Manuals and Reports on Engineering Practice No. 76, Fifth Edition. 
-    """
-    
-    _N_ins = 1
-    _N_outs = 2
-    _ins_size_is_fixed = False
-    
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
-                  init_with='WasteStream', F_BM_default=None, thickener_perc=28, TSS_removal_perc=98, 
-                  number_of_centrifuges=1, specific_gravity_sludge=1.03, cake_density=965, 
-                  g_factor=2500, rotational_speed = 40, polymer_dosage_per_kg_of_sludge = 0.0075, 
-                  h_cylindrical=2, h_conical=1, **kwargs):
-        Thickener.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, isdynamic=isdynamic,
-                      init_with=init_with, F_BM_default=F_BM_default, thickener_perc=thickener_perc, 
-                      TSS_removal_perc=TSS_removal_perc, **kwargs)
-        self.number_of_centrifuges=number_of_centrifuges
-        self.specific_gravity_sludge=specific_gravity_sludge
-        self.cake_density=cake_density #in kg/m3
-        self.g_factor = g_factor #unitless, centrifugal acceleration = g_factor*9.81
-        self.rotational_speed = rotational_speed #in revolution/sec 
-        self.polymer_dosage_per_kg_of_sludge = polymer_dosage_per_kg_of_sludge #in (kg,polymer/kg,sludge) unitless
-        self.h_cylindrical = h_cylindrical
-        self.h_conical = h_conical
         
-    def _design(self):
-        sludge_feed_rate = ((self.ins[0].get_TSS()*self.ins[0].F_vol)/1000)/self.number_of_centrifuges #in kg/hr
-        
-        #TSS_rmv = self._TSS_rmv
-        #recovery = 1 - TSS_rmv/100
-        #cake_mass_discharge_rate = sludge_feed_rate*recovery #in kg/hr
-        #wetcake_mass_discharge_rate = cake_mass_discharge_rate/(self.thickener_perc/100) #in kg/hr
-        #cake_density = self.cake_density 
-        #wetcake_flowrate = wetcake_mass_discharge_rate/cake_density #in m3/hr
-        #volume_reduction_perc= (1 - wetcake_flowrate/(self.ins[0].F_mass/(1000*self.specific_gravity_sludge*self.number_of_centrifuges)))*100
-        
-        design = self.design_results 
-        design['Diameter'] = 2*(self.g_factor*9.81/np.square(2*np.pi*self.rotational_speed)) #in m
-        design['Polymer feed rate'] = (self.polymer_dosage_per_kg_of_sludge*sludge_feed_rate) # in kg/hr
-        design['Projected Area at Inlet'] = np.pi*np.square(design['Diameter']/2) #in m2
-        design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Projected Area at Inlet'] #in m3/(m2*day)
-        design['Volume'] = np.pi*np.square(design['Diameter']/2)*(self.h_cylinderical + (self.h_conical/3)) #in m3
-        design['Curved Surface Area'] = np.pi*design['Diameter']/2*(2*self.h_cylinderical + np.sqrt(np.square(design['Diameter']/2) + np.square(self.h_conical))) #in m2
-
-
 # %%
 
 class Incinerator(SanUnit):
