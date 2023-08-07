@@ -20,6 +20,20 @@ from ..sanunits import WWTpump
 
 __all__ = ('Thickener', 'DewateringUnit', 'Incinerator')
 
+
+F_BM_pump = 1.18*(1 + 0.007/100) # 0.007 is for miscellaneous costs
+
+default_F_BM = {
+        'Pumps': F_BM_pump,
+        'Pump building': F_BM_pump,
+        }
+
+default_equipment_lifetime = {
+    'Pumps': 15,
+    'Pump pipe stainless steel': 15,
+    'Pump stainless steel': 15,
+    }
+
 class Thickener(SanUnit):
     
     """
@@ -129,12 +143,12 @@ class Thickener(SanUnit):
     pumps = ('sludge',)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
-                  init_with='WasteStream', F_BM_default=None, thickener_perc=7, 
+                  init_with='WasteStream', F_BM_default=default_F_BM, thickener_perc=7, 
                   TSS_removal_perc=98, solids_loading_rate = 75, h_cylindrical=2, 
                   upflow_velocity=43.2, design_flow = 113, **kwargs):
         
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
-                         init_with=init_with, F_BM_default=F_BM_default)
+                         init_with=init_with, F_BM_default=1)
         
         self.thickener_perc = thickener_perc 
         self.TSS_removal_perc = TSS_removal_perc
@@ -632,7 +646,7 @@ class DewateringUnit(Thickener):
     polymer_cost_by_weight = 5 # !!!Placeholder value!!!
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
-                  init_with='WasteStream', F_BM_default=None, thickener_perc=28, TSS_removal_perc=98, 
+                  init_with='WasteStream', F_BM_default=default_F_BM, thickener_perc=28, TSS_removal_perc=98, 
                   
                   solids_feed_rate = 70, 
                   # specific_gravity_sludge=1.03, cake_density=965, 
@@ -640,7 +654,7 @@ class DewateringUnit(Thickener):
                   polymer_dosage = 0.0075, h_cylindrical=2, h_conical=1, 
                   **kwargs):
         Thickener.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, isdynamic=isdynamic,
-                      init_with=init_with, F_BM_default=F_BM_default, thickener_perc=thickener_perc, 
+                      init_with=init_with, F_BM_default=1, thickener_perc=thickener_perc, 
                       TSS_removal_perc=TSS_removal_perc, **kwargs)
         
         # self._mixed = self.ins[0].copy(f'{ID}_mixed')
