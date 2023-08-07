@@ -1011,6 +1011,7 @@ class PrimaryClarifier(SanUnit):
 
    
     _units = {
+        'Number of clarifiers': '?',
         'Cylindrical volume': 'm3',
         'Cylindrical depth': 'm',
         'Cylindrical diameter': 'm',
@@ -1026,7 +1027,8 @@ class PrimaryClarifier(SanUnit):
         'Volume of concrete wall': 'm3',
         'Stainless steel': 'kg',
         'Pump pipe stainless steel' : 'kg',
-        'Pump stainless steel': 'kg'
+        'Pump stainless steel': 'kg',
+        'Number of pumps': '?'
     }
    
    
@@ -1040,6 +1042,10 @@ class PrimaryClarifier(SanUnit):
        
         type_dct = dict.fromkeys(pumps, 'sludge')
         inputs_dct = dict.fromkeys(pumps, (1,),)
+        
+        D = self.design_results
+        influent_Q = self._sludge.get_total_flow('m3/hr')/D['Number of clarifiers']
+        influent_Q_mgd = influent_Q*0.00634 # m3/hr to MGD 
        
         for i in pumps:
             if hasattr(self, f'{i}_pump'):
@@ -1050,7 +1056,7 @@ class PrimaryClarifier(SanUnit):
                 capacity_factor=1
                 pump = WWTpump(
                     ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
-                    Q_mgd=None, add_inputs=inputs_dct[i],
+                    Q_mgd=influent_Q_mgd, add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
                     include_building_cost=False,
@@ -1062,8 +1068,6 @@ class PrimaryClarifier(SanUnit):
         for i in pumps:
             p = getattr(self, f'{i}_pump')
             p.simulate()
-            # try: p.simulate()
-            # except: breakpoint()
             p_design = p.design_results
             pipe_ss += p_design['Pump pipe stainless steel']
             pump_ss += p_design['Pump stainless steel']
@@ -1139,6 +1143,8 @@ class PrimaryClarifier(SanUnit):
         pipe, pumps = self._design_pump()
         D['Pump pipe stainless steel'] = pipe
         D['Pump stainless steel'] = pumps
+        # For primary clarifier 
+        D['Number of pumps'] = D['Number of clarifiers']
        
     def _cost(self):
        
@@ -1186,10 +1192,10 @@ class PrimaryClarifier(SanUnit):
             opex_o += p_add_opex['Pump operating']
             opex_m += p_add_opex['Pump maintenance']
 
-        C['Pumps'] = pump_cost
-        C['Pump building'] = building_cost
-        add_OPEX['Pump operating'] = opex_o
-        add_OPEX['Pump maintenance'] = opex_m
+        C['Pumps'] = pump_cost*D['Number of pumps']
+        C['Pump building'] = building_cost*D['Number of pumps']
+        add_OPEX['Pump operating'] = opex_o*D['Number of pumps']
+        add_OPEX['Pump maintenance'] = opex_m*D['Number of pumps']
        
         # Power
         pumping = 0.
@@ -1198,6 +1204,8 @@ class PrimaryClarifier(SanUnit):
             if p is None:
                 continue
             pumping += p.power_utility.rate
+            
+        pumping = pumping*D['Number of pumps']
         
         self.power_utility.consumption += pumping
         self.power_utility.consumption += scraper_power
