@@ -21,6 +21,8 @@ This module is developed by:
     Lane To <lane20@illinois.edu>
     
     Smiti Mittal <smitimittal@gmail.com>
+    
+    Anna Kogler <akogler@stanford.edu>
 
     Jianan Feng <jiananf2@illinois.edu>
     

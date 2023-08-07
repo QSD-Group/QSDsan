@@ -357,7 +357,7 @@ class WasteStream(SanStream):
          WasteStream-specific properties:
           pH         : 7.0
          Component concentrations (mg/L):
-          H2O          1012485.4
+          H2O          992181.4
         >>> ws.price
         8.0
         '''
@@ -991,8 +991,8 @@ class WasteStream(SanStream):
          WasteStream-specific properties:
           pH         : 7.0
          Component concentrations (mg/L):
-          S_O2         303021.4
-          H2O          303021.4
+          S_O2         450614.6
+          H2O          450614.6
         '''
         SanStream.mix_from(self, others, **kwargs)
 
