@@ -131,7 +131,7 @@ class Thickener(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=None, thickener_perc=7, 
                   TSS_removal_perc=98, solids_loading_rate = 75, h_cylindrical=2, 
-                  upflow_velocity=43.2, design_flow = 40, **kwargs):
+                  upflow_velocity=43.2, design_flow = 113, **kwargs):
         
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with, F_BM_default=F_BM_default)
@@ -141,7 +141,7 @@ class Thickener(SanUnit):
         self.solids_loading_rate = solids_loading_rate 
         self.h_cylindrical = h_cylindrical
         self.upflow_velocity = upflow_velocity
-        self.design_flow = design_flow # 0.25 MGD = 40 m3/hr
+        self.design_flow = design_flow # 0.60 MGD = 113 m3/hr
         self._mixed = WasteStream(thermo=thermo)
         
         self._sludge = self.outs[0].copy(f'{ID}_sludge')
@@ -411,6 +411,10 @@ class Thickener(SanUnit):
         
         type_dct = dict.fromkeys(pumps, 'sludge')
         inputs_dct = dict.fromkeys(pumps, (1,))
+        
+        D = self.design_results
+        influent_Q = self._sludge.get_total_flow('m3/hr')/D['Number of thickeners']
+        influent_Q_mgd = influent_Q*0.00634 # m3/hr to MGD
        
         for i in pumps:
             if hasattr(self, f'{i}_pump'):
@@ -422,11 +426,11 @@ class Thickener(SanUnit):
                 # No. of pumps = No. of influents
                 pump = WWTpump(
                     ID=ID, ins= ins_dct[i], pump_type=type_dct[i],
-                    Q_mgd=None, add_inputs=inputs_dct[i],
+                    Q_mgd=influent_Q_mgd, add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
                     include_building_cost=False,
-                    include_OM_cost=False,
+                    include_OM_cost=True,
                     )
                 setattr(self, f'{i}_pump', pump)
 
@@ -452,7 +456,7 @@ class Thickener(SanUnit):
         # design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Area'] #in m3/(m2*day)
         D['Cylindrical diameter'] = np.sqrt(4*D['Surface area']/np.pi) #in m
         D['Cylindrical depth'] = self.h_cylindrical #in m 
-        D['Cylindrical volume'] = np.pi*np.square(D['Diameter']/2)*D['Cylindrical depth'] #in m3
+        D['Cylindrical volume'] = np.pi*np.square(D['Cylindrical diameter']/2)*D['Cylindrical depth'] #in m3
         
         D['Conical radius'] = D['Cylindrical diameter']/2
         # The slope of the bottom conical floor lies between 1:10 to 1:12
@@ -495,6 +499,9 @@ class Thickener(SanUnit):
         D['Pump pipe stainless steel'] = pipe
         D['Pump stainless steel'] = pumps
         
+        #For thickeners
+        D['Number of pumps'] = D['Number of thickeners']
+        
     def _cost(self):
         
         self._mixed.mix_from(self.ins)
@@ -514,10 +521,16 @@ class Thickener(SanUnit):
         # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
         base_cost_scraper = 2500
         base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
-        clarifier_flow = self._mixed.get_total_flow('m3/hr')/D['Number of thickeners']
-        C['Scraper'] = D['Number of clarifiers']*base_cost_scraper*(clarifier_flow/base_flow_scraper)**0.6
+        thickener_flow = self._mixed.get_total_flow('m3/hr')/D['Number of thickeners']
+        C['Scraper'] = D['Number of thickeners']*base_cost_scraper*(thickener_flow/base_flow_scraper)**0.6
         base_power_scraper = 2.75 # in kW
-        scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
+        scraper_power = D['Number of thickeners']*base_power_scraper*(thickener_flow/base_flow_scraper)**0.6
+        
+        # v notch weir
+        # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
+        base_cost_v_notch_weir = 6888
+        base_flow_v_notch_weir = 10 # in m3/hr
+        C['v notch weir'] = D['Number of thickeners']*base_cost_v_notch_weir*(thickener_flow/base_flow_v_notch_weir)**0.6
        
         # Pump (construction and maintainance)
         pumps = self.pumps
@@ -536,10 +549,10 @@ class Thickener(SanUnit):
             opex_o += p_add_opex['Pump operating']
             opex_m += p_add_opex['Pump maintenance']
 
-        C['Pumps'] = pump_cost
-        C['Pump building'] = building_cost
-        add_OPEX['Pump operating'] = opex_o
-        add_OPEX['Pump maintenance'] = opex_m
+        C['Pumps'] = pump_cost*D['Number of thickeners']
+        C['Pump building'] = building_cost*D['Number of thickeners']
+        add_OPEX['Pump operating'] = opex_o*D['Number of thickeners']
+        add_OPEX['Pump maintenance'] = opex_m*D['Number of thickeners']
        
         # Power
         pumping = 0.
@@ -548,6 +561,8 @@ class Thickener(SanUnit):
             if p is None:
                 continue
             pumping += p.power_utility.rate
+        
+        pumping = pumping*D['Number of thickeners']
         
         self.power_utility.rate += pumping
         self.power_utility.rate += scraper_power
