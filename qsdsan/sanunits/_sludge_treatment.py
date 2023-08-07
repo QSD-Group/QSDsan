@@ -575,10 +575,10 @@ class Thickener(SanUnit):
 
 # %%
 
-class DewateringUnit(Thickener):
-    
+class Centrifuge(Thickener):
+
     """
-    Dewatering Unit based on BSM2 Layout. [1]
+    Centrifuge based on BSM2 Layout. [1]
     
     Parameters
     ----------
@@ -641,7 +641,6 @@ class DewateringUnit(Thickener):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=default_F_BM, thickener_perc=28, TSS_removal_perc=98, 
-                  
                   solids_feed_rate = 70, 
                   # specific_gravity_sludge=1.03, cake_density=965, 
                   g_factor=2500, rotational_speed = 40, LtoD = 4, 
@@ -835,8 +834,6 @@ class Incinerator(SanUnit):
         Please remember the order of influents as {wastestream, air, fuel} 
     outs : class:`WasteStream`
         Flue gas and ash. 
-    thickener_perc : float
-        The percentage of Suspended Sludge in the underflow of the dewatering unit.
     process_efficiency : float
         The process efficiency of the incinerator unit. Expected value between 0 and 1. 
     calorific_value_sludge : float 
