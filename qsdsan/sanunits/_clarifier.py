@@ -495,14 +495,15 @@ class FlatBottomCircularClarifier(SanUnit):
     
     def _design_pump(self):
         ID, pumps = self.ID, self.pumps
+    
         self._ras.copy_like(self.outs[1])
         self._was.copy_like(self.outs[2])
         
         ins_dct = {
-            'inf': self._mixed,
             'ras': self._ras,
             'was': self._was,
             }
+        
         type_dct = dict.fromkeys(pumps, 'sludge')
         inputs_dct = dict.fromkeys(pumps, (1,))
        
@@ -549,8 +550,7 @@ class FlatBottomCircularClarifier(SanUnit):
             design_flow = 5520 # 35 MGD 
        
         D = self.design_results
-        # Assuming the capacity of one clarifier is 20 MGD = (20*3785.4118) m3/day = 3155 m3/hr
-        design_flow = 3155 # m3/hr
+        
         D['Number of clarifiers'] = np.ceil(self._mixed.get_total_flow('m3/hr')/design_flow)
         
         D['Cylindrical volume'] = self._V # in m3
@@ -600,6 +600,8 @@ class FlatBottomCircularClarifier(SanUnit):
         pipe, pumps = self._design_pump()
         D['Pump pipe stainless steel'] = pipe
         D['Pump stainless steel'] = pumps
+        # For secondary clarifier
+        D['Number of pumps'] = 2*D['Number of clarifiers']
         
     def _cost(self):
        
