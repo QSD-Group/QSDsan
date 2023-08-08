@@ -22,7 +22,7 @@ from ..sanunits._pumping import (
     )
 
 
-__all__ = ('Thickener', 'DewateringUnit', 'Incinerator')
+__all__ = ('Thickener', 'Centrifuge', 'Incinerator')
 
 # Asign a bare module of 1 to all
 default_F_BM = {
