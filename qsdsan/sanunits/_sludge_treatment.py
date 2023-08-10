@@ -672,24 +672,26 @@ class Centrifuge(Thickener):
         'Volume of bowl': 'm3',
         
         'Stainless steel for bowl': 'kg',
-        'Stainless steel for conveyor': 'kg',
         
         'Polymer feed rate': 'kg/hr',
         'Pump pipe stainless steel' : 'kg',
-        'Pump stainless steel': 'kg'
+        'Pump stainless steel': 'kg',
+        'Number of pumps': '?'
     }        
-    
     
     def _design_pump(self):
         ID, pumps = self.ID, self.pumps
-        self._inf.copy_like(self._mixed)
-        
+        self._sludge.copy_like(self.outs[0])
+        sludge = self._sludge
         ins_dct = {
-            'inf': self._inf,
+            'sludge': sludge,
             }
-       
-        type_dct = dict.fromkeys(pumps, '')
+        type_dct = dict.fromkeys(pumps, 'sludge')
         inputs_dct = dict.fromkeys(pumps, (1,))
+        
+        D = self.design_results
+        influent_Q = sludge.get_total_flow('m3/hr')/D['Number of centrifuges']
+        influent_Q_mgd = influent_Q*0.00634 # m3/hr to MGD
        
         for i in pumps:
             if hasattr(self, f'{i}_pump'):
@@ -700,11 +702,11 @@ class Centrifuge(Thickener):
                 capacity_factor=1
                 # No. of pumps = No. of influents
                 pump = WWTpump(
-                    ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
-                    Q_mgd=None, add_inputs=inputs_dct[i],
+                    ID=ID, ins= ins_dct[i], pump_type=type_dct[i],
+                    Q_mgd=influent_Q_mgd, add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
-                    include_building_cost=True,
+                    include_building_cost=False,
                     include_OM_cost=True,
                     )
                 setattr(self, f'{i}_pump', pump)
@@ -713,30 +715,28 @@ class Centrifuge(Thickener):
         for i in pumps:
             p = getattr(self, f'{i}_pump')
             p.simulate()
-            # try: p.simulate()
-            # except: breakpoint()
             p_design = p.design_results
             pipe_ss += p_design['Pump pipe stainless steel']
             pump_ss += p_design['Pump stainless steel']
         return pipe_ss, pump_ss
     
-    
     def _design(self):
         
         self._mixed.mix_from(self.ins)
+        mixed = self._mixed
         
         D = self.design_results 
         TSS_rmv = self._TSS_rmv
         solids_feed_rate = 44.66*self.solids_feed_rate # 44.66 is factor to convert tonne/day to kg/hr
         # Cake's total solids and TSS are essentially the same (pg. 24-6 [3])
         # If TSS_rmv = 98, then total_mass_dry_solids_removed  = (0.98)*(influent TSS mass)
-        total_mass_dry_solids_removed = (TSS_rmv/100)*((self._mixed.get_TSS()*self.ins[0].F_vol)/1000) # in kg/hr
+        total_mass_dry_solids_removed = (TSS_rmv/100)*((mixed.get_TSS()*self.ins[0].F_vol)/1000) # in kg/hr
         D['Number of centrifuges'] = np.ceil(total_mass_dry_solids_removed/solids_feed_rate)
         k = 0.00000056 # Based on emprical formula (pg. 24-23 of [3])
         g = 9.81 # m/s2
         # The inner diameterof the bowl is calculated based on an empirical formula. 1000 is used to convert mm to m.
         D['Diameter of bowl'] = (self.g_factor*g)/(k*np.square(self.rotational_speed)*1000) # in m
-        D['Total length of bowl'] =  self.LtoD*D['Diameter'] 
+        D['Total length of bowl'] =  self.LtoD*D['Diameter of bowl'] 
         # Sanity check: L should be between 1-7 m, diameter should be around 0.25-0.8 m (Source: [4])
         
         fraction_cylindrical_portion = 0.8
@@ -753,20 +753,6 @@ class Centrifuge(Thickener):
         density_ss = 7930 # kg/m3, 18/8 Chromium
         D['Stainless steel for bowl'] = D['Volume of bowl']*density_ss # in kg
         
-        Inner_diameter_conveyor = 0.108 # in m (based on Alibaba's product)
-        Length_screw_conveyor = D['Total length of bowl'] # in m
-        thickness_conveyor_wall = 0.01 # in m (!!! NEED A RELIABLE SOURCE !!!)
-        Outer_diameter_conveyor = Inner_diameter_conveyor + 2*thickness_conveyor_wall
-        Cylinder_conveyor_volume = np.pi*(np.square(Outer_diameter_conveyor/2) - np.square(Inner_diameter_conveyor/2))*Length_screw_conveyor # in m2
-        
-        outer_projection_screw = 0.05 # in m (!!! NEED A RELIABLE SOURCE !!!)
-        Outer_diameter_screw = Outer_diameter_conveyor + 2*outer_projection_screw
-        thickness_screw = 0.01 # in m (!!! NEED A RELIABLE SOURCE !!!)
-        number_of_screws_per_unit_length = 10 # in m-1  (!!! NEED A RELIABLE SOURCE !!!)
-        Number_of_circles_in_screw = D['Total length of bowl']*number_of_screws_per_unit_length # !!! NEED A RELIABLE SOURCE !!! 
-        Screw_volume = np.pi*(np.square(Outer_diameter_screw/2) - np.square(Outer_diameter_conveyor/2))*thickness_screw*Number_of_circles_in_screw # in m3
-        D['Stainless steel for conveyor'] = (Cylinder_conveyor_volume + Screw_volume)*density_ss # in kg
-        
         polymer_dosage_rate = 0.000453592*self.polymer_dosage # convert from (lbs, polymer/tonne, solids) to (kg, polymer/kg, solids)
         D['Polymer feed rate'] = (polymer_dosage_rate*solids_feed_rate) # in kg, polymer/hr
         
@@ -774,19 +760,31 @@ class Centrifuge(Thickener):
         pipe, pumps = self._design_pump()
         D['Pump pipe stainless steel'] = pipe
         D['Pump stainless steel'] = pumps
-        
-        # design['Projected Area at Inlet'] = np.pi*np.square(design['Diameter']/2) #in m2
-        # design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Projected Area at Inlet'] #in m3/(m2*day)
+        # For centrifuges 
+        D['Number of pumps'] = D['Number of centrifuges']
         
     def _cost(self):
        
         D = self.design_results
         C = self.baseline_purchase_costs
+        
+        self._mixed.mix_from(self.ins)
+        mixed = self._mixed
        
         # Construction of concrete and stainless steel walls
         C['Bowl stainless steel'] = D['Number of centrifuges']*D['Stainless steel for bowl']*self.stainless_steel_unit_cost
-        C['Conveyor stainless steel'] = D['Number of centrifuges']*D['Stainless steel for conveyor']*self.screw_conveyor_unit_cost_by_weight
+        # C['Conveyor stainless steel'] = D['Number of centrifuges']*D['Stainless steel for conveyor']*self.screw_conveyor_unit_cost_by_weight
         C['Polymer'] = D['Number of centrifuges']*D['Polymer feed rate']*self.polymer_cost_by_weight 
+        
+        # Conveyor 
+        # Source: https://www.alibaba.com/product-detail/Engineers-Available-Service-Stainless-Steel-U_60541536633.html?spm=a2700.galleryofferlist.normal_offer.d_title.1fea1f65v6R3OQ&s=p
+        base_cost_conveyor = 1800
+        base_flow_conveyor = 10 # in m3/hr
+        thickener_flow = mixed.get_total_flow('m3/hr')/D['Number of centrifuges']
+        C['Conveyor'] = D['Number of centrifuges']*base_cost_conveyor*(thickener_flow/base_flow_conveyor)**0.6
+        base_power_conveyor = 2.2 # in kW
+        conveyor_power = D['Number of centrifuges']*base_power_conveyor*(thickener_flow/base_flow_conveyor)**0.6
+        
         # Pump (construction and maintainance)
         pumps = self.pumps
         add_OPEX = self.add_OPEX
@@ -804,10 +802,10 @@ class Centrifuge(Thickener):
             opex_o += p_add_opex['Pump operating']
             opex_m += p_add_opex['Pump maintenance']
 
-        C['Pumps'] = pump_cost
-        C['Pump building'] = building_cost
-        add_OPEX['Pump operating'] = opex_o
-        add_OPEX['Pump maintenance'] = opex_m
+        C['Pumps'] = pump_cost*D['Number of pumps']
+        C['Pump building'] = building_cost*D['Number of pumps']
+        add_OPEX['Pump operating'] = opex_o*D['Number of pumps']
+        add_OPEX['Pump maintenance'] = opex_m*D['Number of pumps']
        
         # Power
         pumping = 0.
@@ -816,8 +814,10 @@ class Centrifuge(Thickener):
             if p is None:
                 continue
             pumping += p.power_utility.rate
-        self.power_utility.rate = pumping
-        
+            
+        pumping = pumping*D['Number of pumps']
+        self.power_utility.rate += pumping
+        self.power_utility.rate += conveyor_power
 # %%
 
 class Incinerator(SanUnit):
@@ -840,7 +840,7 @@ class Incinerator(SanUnit):
         The calorific value of influent sludge in KJ/kg. The default value used is 12000 KJ/kg.
     calorific_value_fuel : float 
         The calorific value of fuel employed for combustion in KJ/kg. 
-        The default fuel is natural gas with calofific value of 50000 KJ/kg.
+        The default fuel is natural gas with calorific value of 50000 KJ/kg.
         
     Examples
     --------    
