@@ -504,6 +504,13 @@ class FlatBottomCircularClarifier(SanUnit):
             'was': self._was,
             }
         
+        D = self.design_results
+        
+        Q_mgd = {
+            'ras': self._ras.get_total_flow('m3/hr')/D['Number of clarifiers']*0.00634,
+            'was': self._was.get_total_flow('m3/hr')/D['Number of clarifiers']*0.00634,
+            }
+        
         type_dct = dict.fromkeys(pumps, 'sludge')
         inputs_dct = dict.fromkeys(pumps, (1,))
        
@@ -516,7 +523,7 @@ class FlatBottomCircularClarifier(SanUnit):
                 capacity_factor=1
                 pump = WWTpump(
                     ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
-                    Q_mgd=None, add_inputs=inputs_dct[i],
+                    Q_mgd=Q_mgd, add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
                     include_building_cost=False,
@@ -788,7 +795,7 @@ class PrimaryClarifier(SanUnit):
     ins : class:`WasteStream`
         Influent to the clarifier. Expected number of influent is 3.
     outs : class:`WasteStream`
-        Treated effluent and sludge.
+        Sludge (uf) and treated effluent (of).
     Hydraulic Retention time : float
         Hydraulic Retention Time in days. The default is 0.04268 days, based on IWA report.[1]
     ratio_uf : float
@@ -812,8 +819,8 @@ class PrimaryClarifier(SanUnit):
     >>> from qsdsan.sanunits import PrimaryClarifier
     >>> PC = PrimaryClarifier(ID='PC', ins= (ws,), outs=('eff', 'sludge'))
     >>> PC.simulate()
-    >>> eff, sludge = PC.outs
-    >>> eff.imass['X_OHO']/ws.imass['X_OHO'] # doctest: +ELLIPSIS
+    >>> uf, of = PC.outs
+    >>> uf.imass['X_OHO']/ws.imass['X_OHO'] # doctest: +ELLIPSIS
     0.280...
     >>> PC.show() 
     PrimaryClarifier: PC
@@ -834,7 +841,7 @@ class PrimaryClarifier(SanUnit):
          TP         : 367.6 mg/L
          TK         : 68.3 mg/L
     outs...
-    [0] eff
+    [0] uf
     phase: 'l', T: 298.15 K, P: 101325 Pa
     flow (g/hr): S_F    70
                     S_NH4  140
@@ -849,7 +856,7 @@ class PrimaryClarifier(SanUnit):
          TN         : 43073.0 mg/L
          TP         : 8085.4 mg/L
          TK         : 2011.4 mg/L
-    [1] sludge
+    [1] of
     phase: 'l', T: 298.15 K, P: 101325 Pa
     flow (g/hr): S_F    9.93e+03
                     S_NH4  1.99e+04
@@ -946,7 +953,7 @@ class PrimaryClarifier(SanUnit):
         return f_i
    
     def _run(self):
-        eff, sludge = self.outs
+        uf, of = self.outs
         cmps = self.components
         mixed = self._mixed
         mixed.mix_from(self.ins)
@@ -962,8 +969,8 @@ class PrimaryClarifier(SanUnit):
        
         Ce = Ze + Xe
         Cs = Zs + Xs
-        sludge.set_flow(Ce,'kg/hr')
-        eff.set_flow(Cs,'kg/hr')
+        of.set_flow(Ce,'kg/hr')
+        uf.set_flow(Cs,'kg/hr')
        
     def _init_state(self):
         # if multiple wastestreams exist then concentration and total inlow
@@ -973,11 +980,11 @@ class PrimaryClarifier(SanUnit):
         self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
         self._dstate = self._state * 0.
        
-        eff, sludge = self.outs
-        s_flow = eff.F_vol/(eff.F_vol+sludge.F_vol)
-        denominator = eff.mass + sludge.mass
+        uf, of = self.outs
+        s_flow = uf.F_vol/(uf.F_vol+of.F_vol)
+        denominator = uf.mass + of.mass
         denominator += (denominator == 0)
-        s = eff.mass/denominator
+        s = uf.mass/denominator
         self._sludge = np.append(s/s_flow, s_flow)
         self._effluent = np.append((1-s)/(1-s_flow), 1-s_flow)
        
