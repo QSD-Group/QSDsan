@@ -152,13 +152,13 @@ class BiogenicRefineryCarbonizerBase(SanUnit):
         biochar.imass['AshContent'] = AC_biochar
         biochar.imass['VolatileMatter'] = VM_biochar
         
-        # calculations for carbon sequestration (CS) potential [% mass C/mass biochar] 
-        C_biochar = (0.474 * VM_biochar + 0.963 * FC_biochar + 0.067 * AC_biochar) / 100 # Klasson 2017
+        # calculations for carbon sequestration (CS) potential [% mass C/mass feedstock] 
+        C_biochar = 0.474 * VM_biochar + 0.963 * FC_biochar + 0.067 * AC_biochar # Klasson 2017
         Cafb = (0.474 * VM_biochar + 0.963 * FC_biochar + 0.067 * AC_biochar) / (100 - AC_biochar) # Klasson 2017
         C_feedstock = -0.50 * self.f_ash_content + 54.51 # Krueger et al. 2021
         R50 = 0.17 * Cafb + 0.00479 # Klasson 2017
-        CS = self.CS = yield_db * (C_biochar*100) * R50 / C_feedstock # Zhao et al. 2013
-        biochar.imass['C'] = (CS/100) * biochar_prcd
+        CS = self.CS = yield_db * C_biochar * R50 / C_feedstock # Zhao et al. 2013
+        biochar.imass['C'] = (CS/100) * (C_feedstock/100) * waste.F_mass * (1-mc) # kg C / hr sequestered from feedstock
         
         biochar.imass['H2O'] = 0.025 * biochar_prcd # kg H2O / hr with 2.5% moisture content
 
