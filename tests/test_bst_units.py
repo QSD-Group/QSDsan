@@ -124,7 +124,7 @@ def test_Flash():
     bst_unit = bst.units.Flash(ins=bst_s, **unit_kwargs)
     
     qs.set_thermo(cmps)
-    qs_s = qs.WasteStream(T=T, **stream_kwargs)
+    qs_s = qs.Stream(T=T, **stream_kwargs)
     qs_unit = qs.sanunits.Flash(ins=qs_s, **unit_kwargs)
     
     check_results(bst_unit, qs_unit)

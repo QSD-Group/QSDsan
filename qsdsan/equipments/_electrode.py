@@ -1,3 +1,4 @@
+# modifying electrode script to include 'reference' option
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -30,7 +31,7 @@ class Electrode(Equipment):
     N : int
         Number of units of the given electrode.
     electrode_type : str
-        Type of the electrode, can only be "anode" or "cathode".
+        Type of the electrode, can only be "anode", "cathode" or "reference".
     material: str
         Material of the electrode.
     unit_cost: float
@@ -85,14 +86,14 @@ class Electrode(Equipment):
 
     @property
     def electrode_type(self):
-        '''[str] Type of the electrode, either "anode" or "cathode".'''
+        '''[str] Type of the electrode, either "anode", "cathode" or "reference".'''
         return self._electrode_type
     @electrode_type.setter
     def electrode_type(self, i):
-        if i.lower() in ('anode', 'cathode'):
+        if i.lower() in ('anode', 'cathode', 'reference'):
             self._electrode_type = i
         else:
-            raise ValueError(f'Electrode can only be "anode" or "cathode", not "{i}".')
+            raise ValueError(f'Electrode can only be "anode", "cathode" or "reference", not "{i}".')
 
     @property
     def unit_cost(self):
