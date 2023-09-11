@@ -506,9 +506,15 @@ class FlatBottomCircularClarifier(SanUnit):
         
         D = self.design_results
         
+        ras_flow = self._ras.get_total_flow('m3/hr')
+        was_flow = self._was.get_total_flow('m3/hr')
+        
+        ras_flow_u = ras_flow/D['Number of clarifiers']*0.00634
+        was_flow_u = was_flow/D['Number of clarifiers']*0.00634
+        
         Q_mgd = {
-            'ras': self._ras.get_total_flow('m3/hr')/D['Number of clarifiers']*0.00634,
-            'was': self._was.get_total_flow('m3/hr')/D['Number of clarifiers']*0.00634,
+            'ras': ras_flow_u,
+            'was': was_flow_u,
             }
         
         type_dct = dict.fromkeys(pumps, 'sludge')
@@ -523,7 +529,7 @@ class FlatBottomCircularClarifier(SanUnit):
                 capacity_factor=1
                 pump = WWTpump(
                     ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
-                    Q_mgd=Q_mgd, add_inputs=inputs_dct[i],
+                    Q_mgd=Q_mgd[i], add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
                     include_building_cost=False,
