@@ -89,7 +89,10 @@ def get_oxygen_heterotrophs(system, influent=None, eff_COD_soluble = None, f_d =
     if eff_COD_soluble is None:
         eff_COD_soluble = np.array([eff.composite('COD', particle_size='s', unit = 'mg/L') for eff in system.products if eff.phase in 'l'])
         
-    mass_COD_treated = np.sum(influent_flow*(influent_COD - eff_COD_soluble)/1000) # kg/day
+    mass_influent_COD = np.sum(influent_flow*influent_COD/1000) # in kg/day
+    mass_effluent_COD = np.sum(influent_flow*eff_COD_soluble/1000) # in kg/day
+    
+    mass_COD_treated =  mass_influent_COD - mass_effluent_COD # kg/day
     aeration_factor = 1 - (1 + f_d*b_H*SRT)*Y_H/(1 + b_H*SRT)
     
     return mass_COD_treated*aeration_factor
@@ -135,8 +138,7 @@ def get_oxygen_autotrophs(system, influent=None, eff_COD_soluble = None, f_d = 0
         Oxygen requirement for heterotrophs in kg/day.
 
     """
-   
-    
+
     if influent is None:
         influent = [inf for inf in system.feeds if inf.phase in ('l')]
         
@@ -147,11 +149,11 @@ def get_oxygen_autotrophs(system, influent=None, eff_COD_soluble = None, f_d = 0
         eff_COD_soluble = np.array([eff.composite('COD', particle_size='s', unit = 'mg/L') for eff in system.products if eff.phase in 'l'])
     
     NR = 0.087*(1 + f_d*b_H*SRT)*Y_H/(1 + b_H*SRT)
-    S_NHO = np.array([inf.iconc[ammonia_component_ID] for inf in influent])
-    S_N_a = S_NHO - NR*(influent_COD - eff_COD_soluble)
+    TKN = np.array([inf.TKN for inf in influent])
+    S_N_a = np.array([TKN]) - np.array([NR*(influent_COD - eff_COD_soluble)])
     S_NH = K_NH*(1/SRT  + b_AUT)/(U_AUT/SF_DO - (1 + b_AUT/SRT))
     aeration_factor = 4.57 - (1 + f_d*b_AUT*SRT)*Y_AUT/(1 + b_AUT*SRT)
-    mass_N_removed = influent_flow*(S_N_a - S_NH)/1000 # kg/day
+    mass_N_removed = np.sum(influent_flow*(S_N_a - S_NH)/1000) # kg/day
     
     return mass_N_removed*aeration_factor
 
