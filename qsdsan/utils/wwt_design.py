@@ -13,7 +13,7 @@ for license details.
 
 import numpy as np
 
-__all__ = ('get_SRT', 'get_oxygen_heterotrophs', 'get_oxygen_autotrophs', 'get_airflow')
+__all__ = ('get_SRT', 'get_oxygen_heterotrophs', 'get_oxygen_autotrophs', 'get_airflow', 'get_P_blower')
 
 def get_SRT(system, biomass_IDs, wastage=None, active_unit_IDs=None):
     """
@@ -179,4 +179,40 @@ def get_airflow(oxygen_heterotrophs, oxygen_autotrophs, oxygen_transfer_efficien
     Q_air = 6*required_oxygen/oxygen_transfer_efficiency
     
     return Q_air
+
+
+def get_P_blower(T=20, p_atm=101.325, q_air=None, P_inlet_loss=1, P_diffuser_loss=7, h_submergance=5.18, efficiency=0.8):
+    """
     
+    Parameters
+    ----------
+    T : float
+        Air temperature. (Degree celsius)
+    p_atm : float
+        Atmostpheric pressure. (atm)
+    q_air : m3/min
+        Air flow.
+    P_inlet_loss : float
+        Head loss at inlet. kPa.
+    P_diffuser_loss : float
+        Head loss due to diffuser. kPa.
+    h_submergance : float
+        Height of submergance in m. The default is 17 feet (5.18 m)
+    efficiency : TYPE
+        Blower efficiency. Default is 0.8. 
+
+    Returns
+    -------
+    Power of blower (kW).
+
+    """
+    
+    p_in = p_atm - P_inlet_loss
+    
+    p_out = p_atm + 9.81*h_submergance + P_diffuser_loss
+    
+    Q_air = q_air*(24*60) # m3/min to m3/day
+    
+    P_blower = 1.4161*np.power(1/10, 5)*(T + 273.15)*Q_air*(np.power(p_out/p_in, 0.283) - 1)/efficiency
+    
+    return P_blower
