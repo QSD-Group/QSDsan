@@ -78,6 +78,11 @@ def get_oxygen_heterotrophs(system, influent=None, eff_COD_soluble = None, f_d =
     -------
     float
         Oxygen requirement for heterotrophs in kg/day.
+        
+    References
+    ----------
+    [1] Adapted from Equation 10.10 in GDLF [Grady, Jr., C.P.L.; Daigger, G.T.; Love, N.G.; Filipe, C.D.M. Biological 
+    Wastewater Treatment. 3rd ed. Boca Raton, FL: CRC Press 2011.]
 
     """
     if influent is None:
@@ -136,6 +141,11 @@ def get_oxygen_autotrophs(system, influent=None, eff_COD_soluble = None, f_d = 0
     -------
     float
         Oxygen requirement for heterotrophs in kg/day.
+    
+    References
+    ----------
+    [1] Adapted from Equation 11.16-11.19 in GDLF [Grady, Jr., C.P.L.; Daigger, G.T.; Love, N.G.; Filipe, C.D.M. 
+    Biological Wastewater Treatment. 3rd ed. Boca Raton, FL: CRC Press 2011.]
 
     """
 
@@ -172,6 +182,11 @@ def get_airflow(oxygen_heterotrophs, oxygen_autotrophs, oxygen_transfer_efficien
     Returns
     -------
     Airflow in m3/min. 
+    
+    References
+    ----------
+    [1] Adapted from Equation 11.2 in GDLF [Grady, Jr., C.P.L.; Daigger, G.T.; Love, N.G.; Filipe, C.D.M. 
+    Biological Wastewater Treatment. 3rd ed. Boca Raton, FL: CRC Press 2011.]
 
     """
     
@@ -204,6 +219,10 @@ def get_P_blower(T=20, p_atm=101.325, q_air=None, P_inlet_loss=1, P_diffuser_los
     Returns
     -------
     Power of blower (kW).
+    
+    References
+    ----------
+    [1] Equation 13.1 from GPS-X user manual.
 
     """
     
