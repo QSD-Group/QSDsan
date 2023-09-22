@@ -166,7 +166,7 @@ class CatalyticHydrothermalGasification(Reactor):
         # catalysts amount is quite low compared to the main stream, therefore do not consider
         # heating/cooling of catalysts
         
-        chg_out.phase='g'
+        # chg_out.phase='g'
         
         cmps = self.components
         gas_C_ratio = 0
@@ -461,7 +461,8 @@ class HydrothermalLiquefaction(Reactor):
                  wall_thickness_factor=1,
                  vessel_material='Stainless steel 316',
                  vessel_type='Vertical',
-                 CAPEX_factor=1):
+                 CAPEX_factor=1,
+                 dewatered_unit_exist_in_the_system=False):
         
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.lipid_2_biocrude = lipid_2_biocrude
@@ -501,15 +502,18 @@ class HydrothermalLiquefaction(Reactor):
         self.vessel_material = vessel_material
         self.vessel_type = vessel_type
         self.CAPEX_factor = CAPEX_factor
+        self.dewatered_unit_exist_in_the_system = dewatered_unit_exist_in_the_system
 
-    
     def _run(self):
         
         dewatered_sludge = self.ins[0]
         biochar, HTLaqueous, biocrude, offgas = self.outs
         
-        self.WWTP = self.ins[0]._source.ins[0]._source.ins[0].\
-                         _source.ins[0]._source
+        if self.dewatered_unit_exist_in_the_system == True:
+            self.WWTP = self.ins[0]._source.ins[0]._source.ins[0].\
+                             _source.ins[0]._source
+        else:
+            self.WWTP = self.ins[0]._source.ins[0]._source.ins[0]._source
         
         dewatered_sludge_afdw = dewatered_sludge.imass['Sludge_lipid'] +\
                                 dewatered_sludge.imass['Sludge_protein'] +\

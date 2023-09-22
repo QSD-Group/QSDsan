@@ -172,7 +172,7 @@ class Hydrocracking(Reactor):
         hc_out.P = heavy_oil.P
         hc_out.T = self.HCrxn_T
         
-        # hc_out.vle(T=hc_out.T, P=hc_out.P)
+        hc_out.vle(T=hc_out.T, P=hc_out.P)
 
         cmps = self.components
         C_in = 0
@@ -430,7 +430,7 @@ class Hydrotreating(Reactor):
         
         ht_out.T = self.HTrxn_T
         
-        # ht_out.vle(T=ht_out.T, P=ht_out.P)
+        ht_out.vle(T=ht_out.T, P=ht_out.P)
         
         if self.HTaqueous_C < -0.1*self.HTL.WWTP.sludge_C:
             raise Exception('carbon mass balance is out of +/- 10% for the whole system')
