@@ -143,7 +143,6 @@ class FlatBottomCircularClarifier(SanUnit):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
         
-        self._mixed = self.ins[0].copy(f'{ID}_mixed')
         self._inf = self.ins[0].copy(f'{ID}_inf')
         self._ras = self.outs[1].copy(f'{ID}_ras')
         self._was = self.outs[2].copy(f'{ID}_was')
