@@ -324,7 +324,7 @@ class KnockOutDrum(Reactor):
       CE=CEPCI_by_year[2011], n=0.68, BM=1.9)
 class HydrothermalLiquefaction(Reactor):
     '''
-    HTL converts dewatered sludge to biocrude, aqueous, off-gas, and biochar
+    HTL converts dewatered sludge to biocrude, aqueous, off-gas, and hydrochar
     under elevated temperature (350°C) and pressure. The products percentage
     (wt%) can be evaluated using revised MCA model (Li et al., 2017,
     Leow et al., 2018) with known sludge composition (protein%, lipid%,
@@ -345,7 +345,7 @@ class HydrothermalLiquefaction(Reactor):
     ins : Iterable(stream)
         dewatered_sludge.
     outs : Iterable(stream)
-        biochar, HTLaqueous, biocrude, offgas.
+        hydrochar, HTLaqueous, biocrude, offgas.
     lipid_2_biocrude: float
         Lipid to biocrude factor.
     protein_2_biocrude: float
@@ -370,16 +370,16 @@ class HydrothermalLiquefaction(Reactor):
         HTLaqueous carbon content slope.
     TOC_TC: float   
         HTL TOC/TC.
-    biochar_C_slope: float
-        Biochar carbon content slope.
+    hydrochar_C_slope: float
+        Hydrochar carbon content slope.
     biocrude_moisture_content: float
         Biocrude moisture content.
-    biochar_P_recovery_ratio: float
-        Biochar phosphorus to total phosphorus ratio.
+    hydrochar_P_recovery_ratio: float
+        Hydrochar phosphorus to total phosphorus ratio.
     gas_composition: dict
         HTL offgas compositions.
-    biochar_pre: float
-        Biochar pressure, [Pa].
+    hydrochar_pre: float
+        Hydrochar pressure, [Pa].
     HTLaqueous_pre: float
         HTL aqueous phase pressure, [Pa].
     biocrude_pre: float
@@ -445,12 +445,12 @@ class HydrothermalLiquefaction(Reactor):
                  biocrude_H_intercept=8.20, # [2]
                  HTLaqueous_C_slope=478, # [2]
                  TOC_TC=0.764, # [3]
-                 biochar_C_slope=1.75, # [2]
+                 hydrochar_C_slope=1.75, # [2]
                  biocrude_moisture_content=0.063, # [4]
-                 biochar_P_recovery_ratio=0.86, # [5]
+                 hydrochar_P_recovery_ratio=0.86, # [5]
                  gas_composition={'CH4':0.050, 'C2H6':0.032,
                                   'CO2':0.918}, # [4]
-                 biochar_pre=3029.7*6894.76, # [4]
+                 hydrochar_pre=3029.7*6894.76, # [4]
                  HTLaqueous_pre=30*6894.76, # [4]
                  biocrude_pre=30*6894.76, # [4]
                  offgas_pre=30*6894.76, # [4]
@@ -477,11 +477,11 @@ class HydrothermalLiquefaction(Reactor):
         self.biocrude_H_intercept = biocrude_H_intercept
         self.HTLaqueous_C_slope = HTLaqueous_C_slope
         self.TOC_TC = TOC_TC
-        self.biochar_C_slope = biochar_C_slope
+        self.hydrochar_C_slope = hydrochar_C_slope
         self.biocrude_moisture_content = biocrude_moisture_content
-        self.biochar_P_recovery_ratio = biochar_P_recovery_ratio
+        self.hydrochar_P_recovery_ratio = hydrochar_P_recovery_ratio
         self.gas_composition = gas_composition
-        self.biochar_pre = biochar_pre
+        self.hydrochar_pre = hydrochar_pre
         self.HTLaqueous_pre = HTLaqueous_pre
         self.biocrude_pre = biocrude_pre
         self.offgas_pre = offgas_pre
@@ -507,7 +507,7 @@ class HydrothermalLiquefaction(Reactor):
     def _run(self):
         
         dewatered_sludge = self.ins[0]
-        biochar, HTLaqueous, biocrude, offgas = self.outs
+        hydrochar, HTLaqueous, biocrude, offgas = self.outs
         
         if self.dewatered_unit_exist_in_the_system == True:
             self.WWTP = self.ins[0]._source.ins[0]._source.ins[0].\
@@ -525,7 +525,7 @@ class HydrothermalLiquefaction(Reactor):
         self.afdw_carbo_ratio = self.WWTP.sludge_afdw_carbo
 
         # the following calculations are based on revised MCA model
-        biochar.imass['Biochar'] = 0.377*self.afdw_carbo_ratio*dewatered_sludge_afdw
+        hydrochar.imass['Hydrochar'] = 0.377*self.afdw_carbo_ratio*dewatered_sludge_afdw
         
         HTLaqueous.imass['HTLaqueous'] = (0.481*self.afdw_protein_ratio +\
                                           0.154*self.afdw_lipid_ratio)*\
@@ -547,15 +547,15 @@ class HydrothermalLiquefaction(Reactor):
                                 self.biocrude_moisture_content) -\
                                 biocrude.imass['Biocrude']
                                 
-        HTLaqueous.imass['H2O'] = dewatered_sludge.F_mass - biochar.F_mass -\
+        HTLaqueous.imass['H2O'] = dewatered_sludge.F_mass - hydrochar.F_mass -\
                                   biocrude.F_mass - gas_mass - HTLaqueous.imass['HTLaqueous']
         # assume ash (all soluble based on Jones) goes to water
         
-        biochar.phase = 's'
+        hydrochar.phase = 's'
         offgas.phase = 'g'
         HTLaqueous.phase = biocrude.phase = 'l'
         
-        biochar.P = self.biochar_pre
+        hydrochar.P = self.hydrochar_pre
         HTLaqueous.P = self.HTLaqueous_pre
         biocrude.P = self.biocrude_pre
         offgas.P = self.offgas_pre
@@ -573,7 +573,7 @@ class HydrothermalLiquefaction(Reactor):
         return 0.481*self.afdw_protein_ratio + 0.154*self.afdw_lipid_ratio
     
     @property
-    def biochar_yield(self):
+    def hydrochar_yield(self):
         return 0.377*self.afdw_carbo_ratio
     
     @property
@@ -629,17 +629,17 @@ class HydrothermalLiquefaction(Reactor):
         return min(carbon, self.WWTP.sludge_C - self.biocrude_C - self.HTLaqueous_C)
         
     @property
-    def biochar_C_ratio(self):
-        return min(self.biochar_C_slope*self.WWTP.sludge_dw_carbo, 0.65) # [2]
+    def hydrochar_C_ratio(self):
+        return min(self.hydrochar_C_slope*self.WWTP.sludge_dw_carbo, 0.65) # [2]
 
     @property
-    def biochar_C(self):
-        return min(self.outs[0].F_mass*self.biochar_C_ratio, self.WWTP.sludge_C -\
+    def hydrochar_C(self):
+        return min(self.outs[0].F_mass*self.hydrochar_C_ratio, self.WWTP.sludge_C -\
                    self.biocrude_C - self.HTLaqueous_C - self.offgas_C)
 
     @property
-    def biochar_P(self):
-        return min(self.WWTP.sludge_P*self.biochar_P_recovery_ratio, self.outs[0].F_mass)
+    def hydrochar_P(self):
+        return min(self.WWTP.sludge_P*self.hydrochar_P_recovery_ratio, self.outs[0].F_mass)
 
     @property
     def HTLaqueous_N(self):
@@ -647,7 +647,7 @@ class HydrothermalLiquefaction(Reactor):
         
     @property
     def HTLaqueous_P(self):
-        return self.WWTP.sludge_P*(1 - self.biochar_P_recovery_ratio)
+        return self.WWTP.sludge_P*(1 - self.hydrochar_P_recovery_ratio)
 
     def _design(self):
         
