@@ -45,7 +45,7 @@ class Pump(SanUnit, BSTPump):
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
                   P=None, pump_type='Default', material='Cast iron',
-                  dP_design=405300, ignore_NPSH=True,
+                  dP_design=101325, ignore_NPSH=True,
                   init_with='Stream', F_BM_default=None, isdynamic=False):
         SanUnit.__init__(self, ID, ins, outs, thermo,
                          init_with=init_with, F_BM_default=F_BM_default,
