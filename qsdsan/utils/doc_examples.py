@@ -144,7 +144,7 @@ def create_example_system(components=None):
     ethanol = SanStream('ethanol', Ethanol=10, units='kg/hr')
 
     M1 = su.MixTank('M1', ins=(salt_water, 'recycled_brine', methanol, ethanol))
-    P1 = su.Pump('P1', ins=M1-0)
+    P1 = su.Pump('P1', dP_design=405300,ins=M1-0)
     H1 = su.HXutility('H1', ins=P1-0, T=350)
     S1 = su.ComponentSplitter('S1', ins=H1-0, split_keys=('Methanol', 'Ethanol'))
     M2 = su.Mixer('M2', ins=(S1-0, S1-1), outs='alcohols')
