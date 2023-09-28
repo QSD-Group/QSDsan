@@ -62,9 +62,9 @@ def get_SRT(system, biomass_IDs, wastage=None, active_unit_IDs=None):
     retain = sum([u.get_retained_mass(biomass_IDs) for u in units if u.isdynamic])
     return retain/waste
 
-def get_oxygen_heterotrophs(system, influent=None, eff_COD_soluble = None, f_d = 0.1, b_H = 0.4, SRT = 10, Y_H = 0.625):
-# def get_oxygen_heterotrophs(flow, influent_COD, eff_COD_soluble, 
-#                             f_d=0.1, b_H=0.4, SRT=10, Y_H=0.625):
+# def get_oxygen_heterotrophs(system, influent=None, eff_COD_soluble = None, f_d = 0.1, b_H = 0.4, SRT = 10, Y_H = 0.625):
+def get_oxygen_heterotrophs(flow, influent_COD, eff_COD_soluble, 
+                            f_d=0.1, b_H=0.4, SRT=10, Y_H=0.625):
     """
     Parameters
     ----------
@@ -74,7 +74,6 @@ def get_oxygen_heterotrophs(system, influent=None, eff_COD_soluble = None, f_d =
         Volumetric flow rate through the system [m3/d].
     influent_COD : float
         Influent COD concentration [mg/L]. The default is None. 
-    #!!! why soluble only??
     eff_COD_soluble : float
         Maximum effluent soluble COD concentration [mg/L]. 
     f_d : float, optional
@@ -98,31 +97,31 @@ def get_oxygen_heterotrophs(system, influent=None, eff_COD_soluble = None, f_d =
     Wastewater Treatment. 3rd ed. Boca Raton, FL: CRC Press 2011.]
 
     """
-    if influent is None:
-        influent = [inf for inf in system.feeds if inf.phase == 'l']
+    # if influent is None:
+    #     influent = [inf for inf in system.feeds if inf.phase == 'l']
     
-    influent_flow = np.array([inf.F_vol*24 for inf in influent]) # in m3/day
-    influent_COD = np.array([inf.COD for inf in influent]) # in mg/L
+    # influent_flow = np.array([inf.F_vol*24 for inf in influent]) # in m3/day
+    # influent_COD = np.array([inf.COD for inf in influent]) # in mg/L
     
-    if eff_COD_soluble is None:
-        eff_COD_soluble = np.array([eff.composite('COD', particle_size='s', unit = 'mg/L') \
-                                    for eff in system.products if eff.phase == 'l'])
+    # if eff_COD_soluble is None:
+    #     eff_COD_soluble = np.array([eff.composite('COD', particle_size='s', unit = 'mg/L') \
+    #                                 for eff in system.products if eff.phase == 'l'])
         
-    mass_influent_COD = np.sum(influent_flow*influent_COD/1000) # in kg/day
-    mass_effluent_COD = np.sum(influent_flow*eff_COD_soluble/1000) # in kg/day
+    # mass_influent_COD = np.sum(influent_flow*influent_COD/1000) # in kg/day
+    # mass_effluent_COD = np.sum(influent_flow*eff_COD_soluble/1000) # in kg/day
     
-    mass_COD_treated =  mass_influent_COD - mass_effluent_COD # kg/day
+    # mass_COD_treated =  mass_influent_COD - mass_effluent_COD # kg/day
     
-    # mass_COD_treated = flow * (influent_COD - eff_COD_soluble) * 1e-3 # kg/day
+    mass_COD_treated = flow * (influent_COD - eff_COD_soluble) * 1e-3 # kg/day
     aeration_factor = 1 - (1 + f_d*b_H*SRT)*Y_H/(1 + b_H*SRT)
     
     return mass_COD_treated*aeration_factor
 
-def get_oxygen_autotrophs(system, influent=None, eff_COD_soluble = None, f_d = 0.1, b_H = 0.4, b_AUT = 0.15, SRT = 10, 
-                           Y_H = 0.625, Y_AUT = 0.24, K_NH = 1, U_AUT = 1, SF_DO = 1.375, ammonia_component_ID = 'S_NH4'):
-# def get_oxygen_autotrophs(flow, influent_COD, eff_COD_soluble, influent_TKN,
-#                           f_d=0.1, b_H=0.4, b_AUT=0.15, SRT=10, 
-#                           Y_H=0.625, Y_AUT=0.24, K_NH=1, U_AUT=1, SF_DO=1.375):
+# def get_oxygen_autotrophs(system, influent=None, eff_COD_soluble = None, f_d = 0.1, b_H = 0.4, b_AUT = 0.15, SRT = 10, 
+#                            Y_H = 0.625, Y_AUT = 0.24, K_NH = 1, U_AUT = 1, SF_DO = 1.375, ammonia_component_ID = 'S_NH4'):
+def get_oxygen_autotrophs(flow, influent_COD, eff_COD_soluble, influent_TKN,
+                          f_d=0.1, b_H=0.4, b_AUT=0.15, SRT=10, 
+                          Y_H=0.625, Y_AUT=0.24, K_NH=1, U_AUT=1, SF_DO=1.375):
     """
     
     Parameters
@@ -174,27 +173,26 @@ def get_oxygen_autotrophs(system, influent=None, eff_COD_soluble = None, f_d = 0
 
     """
 
-    if influent is None:
-        influent = [inf for inf in system.feeds if inf.phase == 'l']
+    # if influent is None:
+    #     influent = [inf for inf in system.feeds if inf.phase == 'l']
         
-    influent_flow = np.array([inf.F_vol*24 for inf in influent]) # in m3/day
-    influent_COD = np.array([inf.COD for inf in influent]) # in mg/L
+    # influent_flow = np.array([inf.F_vol*24 for inf in influent]) # in m3/day
+    # influent_COD = np.array([inf.COD for inf in influent]) # in mg/L
     
-    if eff_COD_soluble is None:
-        eff_COD_soluble = np.array([eff.composite('COD', particle_size='s', unit='mg/L') \
-                                    for eff in system.products if eff.phase == 'l'])
+    # if eff_COD_soluble is None:
+    #     eff_COD_soluble = np.array([eff.composite('COD', particle_size='s', unit='mg/L') \
+    #                                 for eff in system.products if eff.phase == 'l'])
     
     NR = 0.087*(1 + f_d*b_H*SRT)*Y_H/(1 + b_H*SRT)
-    TKN = np.array([inf.composite('N', organic=True) + 
-                    inf.composite('N', subgroup=(ammonia_component_ID,)) \
-                        for inf in influent])
-    # TKN = np.array([inf.TKN for inf in influent])
-    # TKN = influent_TKN
+    # TKN = np.array([inf.composite('N', organic=True) + 
+    #                 inf.composite('N', subgroup=(ammonia_component_ID,)) \
+    #                     for inf in influent])
+    TKN = influent_TKN
     S_N_a = TKN - NR*(influent_COD - eff_COD_soluble)
     S_NH = K_NH*(1/SRT  + b_AUT)/(U_AUT/SF_DO - (1 + b_AUT/SRT))
     aeration_factor = 4.57 - (1 + f_d*b_AUT*SRT)*Y_AUT/(1 + b_AUT*SRT)
-    mass_N_removed = np.sum(influent_flow*(S_N_a - S_NH)/1000) # kg/day
-    # mass_N_removed = flow*(S_N_a - S_NH)/1000 # kg/day
+    # mass_N_removed = np.sum(influent_flow*(S_N_a - S_NH)/1000) # kg/day
+    mass_N_removed = flow*(S_N_a - S_NH)/1000 # kg/day
     
     return mass_N_removed*aeration_factor
 
