@@ -78,14 +78,12 @@ You can also download the package from `PyPI <https://pypi.org/project/qsdsan/>`
 
 Note that development of this package is currently under initial stage with limited backward compatibility, please feel free to `submit an issue <https://github.com/QSD-Group/QSDsan/issues>`_ for any questions regarding package upgrading.
 
-If you are a developer and want to contribute to ``QSDsan``, please follow the steps in the `contributing`_ section of the documentation to clone the repository.
-
 
 Join the Community
 ------------------
 We would like to build an open and welcoming community, you can always post issues on our `GitHub homepage <https://github.com/QSD-Group/QSDsan/issues>`_ or contact any of the Quantitative Sustainable Design Group members. We are always excited to have new members in our team.
 
-If you would like to contribute, please follow our `contributing`_ guidelines and the `code of conduct <https://github.com/QSD-Group/QSDsan/blob/beta/CODE_OF_CONDUCT.md>`_ (a bonus if you use our `templates <https://github.com/QSD-Group/QSDsan/tree/main/docs/source/templates>`_), thank you for making ``QSDsan`` better!
+If you would like to contribute, please follow our `Contributing Guidelines`_ and the `Code of Conduct <CODE_OF_CONDUCT.html>`_ (a bonus if you use our `templates <https://github.com/QSD-Group/QSDsan/tree/main/docs/source/templates>`_), thank you for making ``QSDsan`` better!
 
 
 ``QSDsan`` is and will stay open source under University of Illinois/NCSA Open Source License. Any third-party packages copied from ``QSDsan`` must be strictly open-source (not copy-left nor open-access). Please refer to the `license <https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt>`_ page for details.
@@ -145,6 +143,13 @@ We will keep the calendar up-to-date as we organize more events (office hours, w
    :maxdepth: 1
    :hidden:
 
+   CODE_OF_CONDUCT
+
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
    calendar
 
 
@@ -165,4 +170,4 @@ References
 
 
 .. Links
-.. _contributing: CONTRIBUTING.html
+.. _Contributing Guidelines: CONTRIBUTING.html#contributing-guidelines
