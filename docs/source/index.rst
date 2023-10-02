@@ -145,13 +145,6 @@ We will keep the calendar up-to-date as we organize more events (office hours, w
    :maxdepth: 1
    :hidden:
 
-   developers
-
-
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-
    calendar
 
 

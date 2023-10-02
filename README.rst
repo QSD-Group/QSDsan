@@ -117,7 +117,7 @@ You can also download the package from `PyPI <https://pypi.org/project/qsdsan/>`
 
 Note that development of this package is currently under initial stage with limited backward compatibility, please feel free to `submit an issue <https://github.com/QSD-Group/QSDsan/issues>`_ for any questions regarding package upgrading.
 
-If you are a developer and want to contribute to ``QSDsan``, please follow the steps in the `Contributing to QSDsan <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ section of the documentation to clone the repository. If you find yourself struggle with the installation of QSDsan/setting up the environment, this extended version of `installation instructions <https://qsdsan.readthedocs.io/en/latest/tutorials/_installation.html>`_ might be helpful to you.
+If you want to contribute to ``QSDsan``, please follow the steps in the `Contributing Guidelines <CONTRIBUTING#contributing-guidelines>`_ section of the documentation to clone the repository. If you find yourself struggle with the installation of QSDsan/setting up the environment, this extended version of `installation instructions <https://qsdsan.readthedocs.io/en/latest/tutorials/_installation.html>`_ might be helpful to you.
 
 
 Documentation
@@ -131,14 +131,14 @@ All tutorials are written using Jupyter Notebook, you can run your own Jupyter e
 For each of these tutorials, we are also recording videos where one of the QSD group members will go through the tutorial step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
 
 
-About the developers
---------------------
-Please refer to `Developers <https://qsdsan.readthedocs.io/en/latest/Developers.html>`_ page for the list of contributors.
+About the Authors
+-----------------
+Please refer to `Contributors <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html#contributors>`_ section for a list of contributors.
 
 
 Contributing
 ------------
-Please refer to the `Contributing to QSDsan <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ section of the documentation for instructions and guidelines.
+Please refer to the `Contributing Guidelines <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html#contributing-guidelines>`_ section of the documentation for instructions and guidelines.
 
 
 Stay Connected
@@ -151,7 +151,7 @@ QSDsan Events
 We will keep this `calendar <https://calendar.google.com/calendar/embed?src=ep1au561lj8knfumpcd2a7ml08%40group.calendar.google.com&ctz=America%2FChicago>`_ up-to-date as we organize more events (office hours, workshops, etc.), click on the events in the calendar to see the details (including meeting links).
 
 
-License information
+License Information
 -------------------
 Please refer to the ``LICENSE.txt`` for information on the terms & conditions for usage of this software, and a DISCLAIMER OF ALL WARRANTIES.
 
