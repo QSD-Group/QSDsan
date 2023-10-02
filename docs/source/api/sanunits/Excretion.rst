@@ -1,4 +1,4 @@
 Excretion
 =========
-.. autoclass:: qsdsan.sanunits.Excretion
-   :members:
+.. automodule:: qsdsan.sanunits._excretion
+    :members:

@@ -1,4 +1,4 @@
 Sedimentation
 =============
-.. autoclass:: qsdsan.sanunits.Sedimentation
-   :members:
+.. automodule:: qsdsan.sanunits._sedimentation
+    :members:

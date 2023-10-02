@@ -1,4 +1,4 @@
 Trucking
 ========
-.. autoclass:: qsdsan.sanunits.Trucking
-   :members:
+.. automodule:: qsdsan.sanunits._trucking
+    :members:

@@ -1,4 +1,4 @@
-SludgePasteurization
-====================
-.. autoclass:: qsdsan.sanunits.SludgePasteurization
-   :members:
+Sludge Pasteurization
+=====================
+.. automodule:: qsdsan.sanunits._sludge_pasteurization
+    :members:
