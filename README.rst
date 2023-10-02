@@ -117,7 +117,7 @@ You can also download the package from `PyPI <https://pypi.org/project/qsdsan/>`
 
 Note that development of this package is currently under initial stage with limited backward compatibility, please feel free to `submit an issue <https://github.com/QSD-Group/QSDsan/issues>`_ for any questions regarding package upgrading.
 
-If you want to contribute to ``QSDsan``, please follow the steps in the `Contributing Guidelines <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html#contributing-guidelines>`_ section of the documentation to clone the repository. If you find yourself struggle with the installation of QSDsan/setting up the environment, this extended version of `installation instructions <https://qsdsan.readthedocs.io/en/latest/tutorials/_installation.html>`_ might be helpful to you.
+If you want to contribute to ``QSDsan``, please follow the steps in the `Contributing Guidelines <CONTRIBUTING.rst#contributing-guidelines>`_ section of the documentation to clone the repository. If you find yourself struggle with the installation of QSDsan/setting up the environment, this extended version of `installation instructions <docs/source/tutorials/_installation.rst>`_ might be helpful to you.
 
 
 Documentation
@@ -133,12 +133,12 @@ For each of these tutorials, we are also recording videos where one of the QSD g
 
 About the Authors
 -----------------
-Please refer to `Contributors <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html#contributors>`_ section for a list of contributors.
+Please refer to `Contributors <CONTRIBUTING.rst#contributors>`_ section for a list of contributors.
 
 
 Contributing
 ------------
-Please refer to the `Contributing Guidelines <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html#contributing-guidelines>`_ section of the documentation for instructions and guidelines.
+Please refer to the `Contributing Guidelines <CONTRIBUTING.rst#contributing-guidelines>`_ section of the documentation for instructions and guidelines.
 
 
 Stay Connected

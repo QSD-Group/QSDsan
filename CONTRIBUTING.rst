@@ -47,7 +47,7 @@ Systems constructed using ``QSDsan`` are stored in the `EXPOsan <https://github.
 
 Contributing Guidelines
 -----------------------
-Below are some brief instructions on how to contribute to ``QSDsan``. If you find yourself struggle with the installation of QSDsan/setting up the environment, this extended version of `installation instructions <https://qsdsan.readthedocs.io/en/latest/tutorials/_installation.html>`_ might be helpful to you. If you have any questions regarding the process, feel free to `submit an issue on GitHub <https://github.com/QSD-Group/QSDsan/issues>`_. Thank you in advance for your contribution!
+Below are some brief instructions on how to contribute to ``QSDsan``. If you find yourself struggle with the installation of QSDsan/setting up the environment, this extended version of `installation instructions <tutorials/_installation.html>`_ might be helpful to you. If you have any questions regarding the process, feel free to `submit an issue on GitHub <https://github.com/QSD-Group/QSDsan/issues>`_. Thank you in advance for your contribution!
 
 
 Authorship
@@ -198,7 +198,7 @@ Note
 ****
 #. We use fork as the default way for collaboration (i.e., for all first-time contributors). If you are a constant contributor and have independently made at least one successful and meaningful contribution through forking, you will be given the write access to ``QSDsan`` and you can use branch for easier code syncing. We will also invite you to join the ``QSDsan`` team.
 #. GitHub has really detailed documentation on `forking <https://docs.github.com/en/github/getting-started-with-github/fork-a-repo>`_ (and almost everything else).
-#. As QSDsan is public, all created forks would be public as well. We would appreciate if you make your work public and contribute back, but we understand it if you would like to create a private fork of QSDsan. To do so, please check our tip on creating the `private fork <https://qsdsan.readthedocs.io/en/latest/FAQ.html#private-fork>`_.
+#. As QSDsan is public, all created forks would be public as well. We would appreciate if you make your work public and contribute back, but we understand it if you would like to create a private fork of QSDsan. To do so, please check our tip on creating the `private fork <FAQ.html#private-fork>`_.
 #. As we are constantly developing ``QSDsan`` with its core dependencies ``BioSTEAM`` and ``Thermosteam``, it'll be good to clone those two repositories and use the ``qsdsan`` branch of both.
 
 
