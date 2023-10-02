@@ -1,10 +1,57 @@
-Contributing to ``QSDsan``
-==========================
+Contributors and Guidelines
+===========================
 
-Below are some brief instructions on how to contribute to ``QSDsan``. If you find yourself struggle with the installation of QSDsan/setting up the environment, this extended version of `installation instructions <https://qsdsan.readthedocs.io/en/latest/tutorials/_installation.html>`_ might be helpful to you. If you have any questions regarding the process, feel free to `submit an issue on GitHub <https://github.com/QSD-Group/QSDsan/issues>`_. Thank you in advance for your contribution!
+Contributors
+------------
+While main developers of ``QSDsan`` are listed below, we thank all `contributors <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ who have supported the development and maintenance of this platform. If you would like to join the effort, please review our guidelines and instructions below.
+
+
+Lead Developers
+^^^^^^^^^^^^^^^
+   - `Yalin Li`_ (current maintainer)
+   - `Xinyi (Joy) Zhang`_ (process models & benchmarking)
+
+
+Tutorials and Videos
+^^^^^^^^^^^^^^^^^^^^
+   - `Yalin Li`_
+   - `Xinyi (Joy) Zhang`_
+   - `Hannah Lohman`_
+   - `Victoria (Tori) Morgan`_
+   - `Ga-Yeong Kim`_
+
+
+System Modules
+^^^^^^^^^^^^^^
+Systems constructed using ``QSDsan`` are stored in the `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ repository.
+
+   - `Jianan Feng <https://www.linkedin.com/in/jianan-f-120899193/>`_
+   - `Ga-Yeong Kim`_
+   - `Yalin Li`_
+   - `Hannah Lohman`_
+   - `Victoria (Tori) Morgan`_
+   - `Saumitra Rai <https://www.linkedin.com/in/raisaumitra/>`_
+   - `L. Stetson Rowles <https://www.linkedin.com/in/lewis-stetson-rowles-40b24245/>`_
+   - `Shion Watabe <https://www.linkedin.com/in/shion-watabe-93a978183/>`_
+   - `Xinyi (Joy) Zhang`_
+
+
+.. Links
+.. _Ga-Yeong Kim: https://www.linkedin.com/in/ga-yeong-kim-8a2b4a141/
+.. _Yalin Li: https://yalinli.group
+.. _Hannah Lohman: https://www.linkedin.com/in/hannahlohman/
+.. _Victoria (Tori) Morgan: https://www.linkedin.com/in/victoria-morgan-ph-d-a8493271/
+.. _Xinyi (Joy) Zhang: https://www.linkedin.com/in/xinyi-joy-zhang/
+
+
+
+Contributing Guidelines
+-----------------------
+Below are some brief instructions on how to contribute to ``QSDsan``. If you find yourself struggle with the installation of QSDsan/setting up the environment, this extended version of `installation instructions <tutorials/_installation.html>`_ might be helpful to you. If you have any questions regarding the process, feel free to `submit an issue on GitHub <https://github.com/QSD-Group/QSDsan/issues>`_. Thank you in advance for your contribution!
+
 
 Authorship
-----------
+^^^^^^^^^^
 The following guideline is adapted from `BioSTEAM <https://biosteam.readthedocs.io/en/latest/CONTRIBUTING.html#authorship>`_, we welcome inputs from the community for enhancement. If you feel that your contributions are not acknowledged or adequately acknowledged, please do contact us.
 
 #. Contributions must be acknowledged at the module-level with a short description for:
@@ -13,19 +60,16 @@ The following guideline is adapted from `BioSTEAM <https://biosteam.readthedocs.
 	- Module development (i.e., math algorithms, codes in other languages).
 	- Instrumental comments and suggestions through discussion.
 
-#. All contributors will be added to the `author list <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_.
-
 #. If any code or implementation was copied from a third party, it should be noted in the module-level documentation.
 
 #. Any third-party packages copied from ``QSDsan`` must be strictly open-source (not copy-left nor open-access). If license of the third-part package is different from ``QSDsan``, the module should add the third-party license as an option (i.e., dual licensing).
 
 
 Forking and Cloning
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 Via command-line interface
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+**************************
 #. Fork ``QSDsan`` by going to its `GitHub homepage <https://github.com/QSD-Group/QSDsan>`_ and click the "Fork" button at the top right corner.
 
 #. GitHub will open a new page showing your fork, click the green "Code" button on the top and copy the HTTPS address (there's a handy copy button next to the address), it should be something like:
@@ -128,8 +172,7 @@ Via command-line interface
 
 
 Via GitHub Desktop
-^^^^^^^^^^^^^^^^^^
-
+******************
 If you are new to command-line interface, `GitHub Desktop <https://desktop.github.com/>`_ can be a good way to get started as it has a graphic interface, though less powerful.
 
 To see screenshots of the different interface, visit GitHub's documentations on `Cloning a repository from GitHub to GitHub Desktop <https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/adding-and-cloning-repositories/cloning-a-repository-from-github-to-github-desktop>`_
@@ -152,14 +195,15 @@ To see screenshots of the different interface, visit GitHub's documentations on 
 
 
 Note
-^^^^
+****
 #. We use fork as the default way for collaboration (i.e., for all first-time contributors). If you are a constant contributor and have independently made at least one successful and meaningful contribution through forking, you will be given the write access to ``QSDsan`` and you can use branch for easier code syncing. We will also invite you to join the ``QSDsan`` team.
 #. GitHub has really detailed documentation on `forking <https://docs.github.com/en/github/getting-started-with-github/fork-a-repo>`_ (and almost everything else).
-#. As QSDsan is public, all created forks would be public as well. We would appreciate if you make your work public and contribute back, but we understand it if you would like to create a private fork of QSDsan. To do so, please check our tip on creating the `private fork <https://qsdsan.readthedocs.io/en/latest/FAQ.html#private-fork>`_.
+#. As QSDsan is public, all created forks would be public as well. We would appreciate if you make your work public and contribute back, but we understand it if you would like to create a private fork of QSDsan. To do so, please check our tip on creating the `private fork <FAQ.html#private-fork>`_.
 #. As we are constantly developing ``QSDsan`` with its core dependencies ``BioSTEAM`` and ``Thermosteam``, it'll be good to clone those two repositories and use the ``qsdsan`` branch of both.
 
+
 Developing Modules
-------------------
+^^^^^^^^^^^^^^^^^^
 #. Adding/modifying modules locally.
 
 #. `Commit <https://git-scm.com/docs/git-commit>`_ your changes and concisely summarize your changes in the commit message.
@@ -180,7 +224,7 @@ Developing Modules
 
 
 Submitting Pull Request
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 #. Once you are satisfied with your changes and push all commits to your fork, go to you GitHub fork of ``QSDsan``, and submit a `pull request <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request>`_.
 
 	- You can confirm that you have pulled all updates from the root repository if there's a message showing that your branch is X commits ahead of QSD-Group:main (not X commits ahead, Y commits behind).
@@ -189,7 +233,7 @@ Submitting Pull Request
 
 
 Documentation
--------------
+^^^^^^^^^^^^^
 Whenever new modules or functions are added, concise and thorough documents should be added with examples for `doctest`_. Please also include yourself (contact method is optional) to the list of contributors on the top of the module.
 
 ``QSDsan`` uses `numpydoc docstring style <https://numpydoc.readthedocs.io/en/latest/format.html>`_ with some modifications for better rendering. Some important notes:
@@ -235,7 +279,7 @@ Tutorials are prepared in `Jupyter Notebook <https://jupyter.org/>`_ and potenti
 
 
 Testing
--------
+^^^^^^^
 ``QSDsan`` uses `GitHub Action <https://github.com/QSD-Group/QSDsan/actions>`_ to test all pushes and pull requests. A pull request will only be accepted when:
 
 #. Meaningful contributions have been made.

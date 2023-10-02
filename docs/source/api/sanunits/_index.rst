@@ -30,18 +30,24 @@ Individual Unit Operations
 
    abstract
    ActivatedSludgeProcess
-   anaerobic_reactors
-   clarifiers
+   anaerobic_reactor
+   clarifier
    combustion
+   compressor
    CropApplication
    DynamicInfluent
    ElectrochemicalCell
+   encapsulation_bioreactor
    Excretion
+   Flash
    heat_exchanging
-   junctions
+   hydroprocessing
+   hydrothermal
    InternalCirculationRx
+   junction
    Lagoon
-   membrane_bioreactors
+   membrane_bioreactor
+   MembraneDistillation
    non_reactive
    PolishingFilter
    pumping
@@ -50,8 +56,8 @@ Individual Unit Operations
    SepticTank
    sludge_thickening
    SludgePasteurization
-   suspended_growth_bioreactors
-   tanks
-   toilets
-   treatment_beds
+   suspended_growth_bioreactor
+   tank
+   toilet
+   treatment_bed
    Trucking

@@ -20,8 +20,3 @@ save_pickle
 load_pickle
 ^^^^^^^^^^^
 .. autofunction:: qsdsan.utils.load_pickle
-
-
-load_pickled_cmps
-^^^^^^^^^^^^^^^^^
-.. autofunction:: qsdsan.utils.load_pickled_cmps

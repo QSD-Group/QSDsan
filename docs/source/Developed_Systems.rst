@@ -5,6 +5,17 @@ Developed Systems
 
 This page documents the systems that have been/is being developed using ``QSDsan`` with links to the source codes in GitHub and publications.
 
+
+Benchmarking Systems
+--------------------
+Work is underway to model the 25 distinct Water Resource Recovery Facility (WRRF) configurations identified as “typical” across North America (`Tarallo`_ et al., 2015; Zhang et al., *In Prep*, 2023).
+
+.. figure:: images/benchmarking_configs.png
+
+
+Non-Sewered Sanitation Systems
+------------------------------
+
 +--------------------------+--------------------+--------------------------------+-------------------+
 | System                   | Source Codes       | Publication                    | Module Status     |
 +==========================+====================+================================+===================+
@@ -37,6 +48,8 @@ Notes:
 
 
 .. Links
+.. _Tarallo: https://doi.org/10.2166/9781780407685 
+
 .. _br_archived: https://github.com/QSD-Group/EXPOsan/releases/tag/archive%2FBR_OmniProcessor
 .. _br_current: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/biogenic_refinery
 .. _Rowles: https://doi.org/10.1021/acsenvironau.2c00022

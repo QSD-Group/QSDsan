@@ -1,4 +1,4 @@
-ActivatedSludgeProcess
-======================
-.. autoclass:: qsdsan.sanunits.ActivatedSludgeProcess
-   :members:
+Activated Sludge Process
+========================
+.. automodule:: qsdsan.sanunits._activated_sludge_process
+    :members:

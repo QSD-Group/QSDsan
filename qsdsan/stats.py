@@ -989,8 +989,10 @@ def _plot_corr_bubble(corr_df, ratio, **kwargs):
     for label in g.ax.get_xticklabels():
         label.set_rotation(90)
 
-    for artist in g.legend.legendHandles:
-        artist.set_edgecolor('0.5')
+    # # Originally `artist.set_edgecolor('0.5')`, but would trigger an error
+    # # with `seaborn` v0.13.0, and unclear what this is doing, took out
+    # for artist in g.legend.legendHandles:
+    #     artist.set_markeredgecolor('0.5')
 
     for key in g.ax.spines.keys():
         g.ax.spines[key].set(color='k', linewidth=0.5, visible=True)

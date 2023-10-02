@@ -65,36 +65,36 @@ class MembraneDistillation(SanUnit):
         
     References
     ----------
-    .. [1] Li, Y.; Tarpeh, W. A.; Nelson, K. L.; Strathmann, T. J. 
+    [1] Li, Y.; Tarpeh, W. A.; Nelson, K. L.; Strathmann, T. J. 
         Quantitative Evaluation of an Integrated System for Valorization of
         Wastewater Algae as Bio-Oil, Fuel Gas, and Fertilizer Products. 
         Environ. Sci. Technol. 2018, 52 (21), 12717–12727. 
         https://doi.org/10.1021/acs.est.8b04035.
-    .. [2] Doran, P. M. Chapter 11 - Unit Operations. In Bioprocess Engineering
+    [2] Doran, P. M. Chapter 11 - Unit Operations. In Bioprocess Engineering
         Principles (Second Edition); Doran, P. M., Ed.; Academic Press: London,
         2013; pp 445–595. https://doi.org/10.1016/B978-0-12-220851-5.00011-3.
-    .. [3] Spiller, L. L. Determination of Ammonia/Air Diffusion Coefficient Using
+    [3] Spiller, L. L. Determination of Ammonia/Air Diffusion Coefficient Using
         Nafion Lined Tube. Analytical Letters 1989, 22 (11–12), 2561–2573.
         https://doi.org/10.1080/00032718908052375.
-    .. [4] Scheepers, D. M.; Tahir, A. J.; Brunner, C.; Guillen-Burrieza, E.
+    [4] Scheepers, D. M.; Tahir, A. J.; Brunner, C.; Guillen-Burrieza, E.
         Vacuum Membrane Distillation Multi-Component Numerical Model for Ammonia
         Recovery from Liquid Streams. Journal of Membrane Science
         2020, 614, 118399. https://doi.org/10.1016/j.memsci.2020.118399.
-    .. [5] Ding, Z.; Liu, L.; Li, Z.; Ma, R.; Yang, Z. Experimental Study of Ammonia
+    [5] Ding, Z.; Liu, L.; Li, Z.; Ma, R.; Yang, Z. Experimental Study of Ammonia
         Removal from Water by Membrane Distillation (MD): The Comparison of Three
         Configurations. Journal of Membrane Science 2006, 286 (1), 93–103.
         https://doi.org/10.1016/j.memsci.2006.09.015.
-    .. [6] Al-Obaidani, S.; Curcio, E.; Macedonio, F.; Di Profio, G.; Al-Hinai, H.;
+    [6] Al-Obaidani, S.; Curcio, E.; Macedonio, F.; Di Profio, G.; Al-Hinai, H.;
         Drioli, E. Potential of Membrane Distillation in Seawater Desalination:
         Thermal Efficiency, Sensitivity Study and Cost Estimation.
         Journal of Membrane Science 2008, 323 (1), 85–98.
         https://doi.org/10.1016/j.memsci.2008.06.006.
-    .. [7] Kogler, A.; Farmer, M.; Simon, J. A.; Tilmans, S.; Wells, G. F.;
+    [7] Kogler, A.; Farmer, M.; Simon, J. A.; Tilmans, S.; Wells, G. F.;
         Tarpeh, W. A. Systematic Evaluation of Emerging Wastewater Nutrient Removal
         and Recovery Technologies to Inform Practice and Advance Resource
         Efficiency. ACS EST Eng. 2021, 1 (4), 662–684.
         https://doi.org/10.1021/acsestengg.0c00253.
-    .. [8] Pikaar, I.; Guest, J.; Ganigue, R.; Jensen, P.; Rabaey, K.; Seviour, T.;
+    [8] Pikaar, I.; Guest, J.; Ganigue, R.; Jensen, P.; Rabaey, K.; Seviour, T.;
         Trimmer, J.; van der Kolk, O.; Vaneeckhaute, C.; Verstraete, W.; Resource
         Recovery from Water: Principles and Applicaiton. IWA 2022.
     '''
