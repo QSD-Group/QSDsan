@@ -1,4 +1,4 @@
-PolishingFilter
-===============
-.. autoclass:: qsdsan.sanunits.PolishingFilter
-   :members:
+Polishing Filter
+================
+.. automodule:: qsdsan.sanunits._polishing_filter
+    :members:

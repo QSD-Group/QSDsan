@@ -1,28 +1,8 @@
 Pumping
 =======
-
-Pump
-----
-.. autoclass:: qsdsan.sanunits.Pump
-   :members:
-
-
-HydraulicDelay
---------------
-.. autoclass:: qsdsan.sanunits.HydraulicDelay
-   :members:
-
-
-WWTpump
--------
-.. autoclass:: qsdsan.sanunits.WWTpump
-   :members:
-
-wwtpump
--------
+.. automodule:: qsdsan.sanunits._pumping
+    :members:
 
 Note
 ^^^^
-This is a decorator function to add the :class:`WWTpump` to a ``SanUnit``.
-
-.. autofunction:: qsdsan.sanunits.wwtpump
+``wwtpump`` is a decorator function to add the :class:`WWTpump` to a ``SanUnit``.
