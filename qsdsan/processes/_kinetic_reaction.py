@@ -115,7 +115,7 @@ class KineticReaction(Rxn):
     >>> rxn.rate_equation
     -2.2e-5*C(t) - Derivative(C(t), t)
     >>> rxn.integrated_rate_equation.evalf(n=5) # `evalf` is to limit the digits
-    0.035543/2.7183**(2.2e-5*t)
+    0.037578/2.7183**(2.2e-5*t)
     >>> round(rxn.half_life, 2)
     31506.69
     >>> # You can also look at the conversion over time
