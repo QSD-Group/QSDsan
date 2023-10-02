@@ -1,20 +1,20 @@
-Core Developers
-===============
+Developers
+==========
 Development and maintenance of the platform is supported by many `contributors <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_.
 
 
 Lead Developers
 ---------------
    - `Yalin Li`_ (current maintainer)
-   - `Joy Zhang`_ (process models & benchmarking)
+   - `Xinyi (Joy) Zhang`_ (process models & benchmarking)
 
 
 Tutorials and Videos
 --------------------
    - `Yalin Li`_
-   - `Joy Zhang`_
+   - `Xinyi (Joy) Zhang`_
    - `Hannah Lohman`_
-   - `Tori Morgan`_
+   - `Victoria (Tori) Morgan`_
    - `Ga-Yeong Kim`_
 
 
@@ -37,5 +37,5 @@ Systems constructed using ``QSDsan`` are stored in the `EXPOsan <https://github.
 .. _Ga-Yeong Kim: https://www.linkedin.com/in/ga-yeong-kim-8a2b4a141/
 .. _Yalin Li: https://yalinli.group
 .. _Hannah Lohman: https://www.linkedin.com/in/hannahlohman/
-.. _Tori Morgan: https://www.linkedin.com/in/victoria-morgan-ph-d-a8493271/
-.. _Joy Zhang: https://www.linkedin.com/in/xinyi-joy-zhang/
+.. _Victoria (Tori) Morgan: https://www.linkedin.com/in/victoria-morgan-ph-d-a8493271/
+.. _Xinyi (Joy) Zhang: https://www.linkedin.com/in/xinyi-joy-zhang/

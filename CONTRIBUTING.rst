@@ -13,8 +13,6 @@ The following guideline is adapted from `BioSTEAM <https://biosteam.readthedocs.
 	- Module development (i.e., math algorithms, codes in other languages).
 	- Instrumental comments and suggestions through discussion.
 
-#. All contributors will be added to the `author list <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_.
-
 #. If any code or implementation was copied from a third party, it should be noted in the module-level documentation.
 
 #. Any third-party packages copied from ``QSDsan`` must be strictly open-source (not copy-left nor open-access). If license of the third-part package is different from ``QSDsan``, the module should add the third-party license as an option (i.e., dual licensing).

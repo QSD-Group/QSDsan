@@ -131,28 +131,9 @@ All tutorials are written using Jupyter Notebook, you can run your own Jupyter e
 For each of these tutorials, we are also recording videos where one of the QSD group members will go through the tutorial step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
 
 
-About the authors
------------------
-Development and maintenance of the package is supported by the Quantitative Sustainable Design Group led by members of the `Guest Group <http://engineeringforsustainability.com/>`_ at the `University of Illinois Urbana-Champaign (UIUC) <https://illinois.edu/>`_. Core contributors are listed below, please refer to the `author page <https://qsdsan.readthedocs.io/en/latest/AUTHORS.html>`_ for the full list of authors.
-
-**Lead developers:**
-   - `Yalin Li`_ (current maintainer)
-   - `Joy Zhang`_
-
-
-**Tutorials and videos:**
-   - `Yalin Li`_ (current maintainer)
-   - `Joy Zhang`_
-   - `Tori Morgan <https://qsdsan.readthedocs.io/en/beta/authors/Tori_Morgan.html>`_
-   - `Hannah Lohman <https://qsdsan.readthedocs.io/en/beta/authors/Hannah_Lohman.html>`_
-
-
-**Project conception & funding support:**
-   - `Jeremy Guest <mailto:jsguest@illinois.edu>`_
-
-
-**Special acknowledgement:**
-   - Yoel Cortés-Peña for helping many of the ``QSDsan`` members get started on Python and package development.
+About the developers
+--------------------
+Please refer to `Developers <https://qsdsan.readthedocs.io/en/latest/Developers.html>`_ page for the list of contributors.
 
 
 Contributing
@@ -182,8 +163,3 @@ References
 .. [2] Li, Y.; Trimmer, J.T.; Hand, S.; Zhang, X.; Chambers, K.G.; Lohman, H.A.C.; Shi, R.; Byrne, D.M.; Cook, S.M.; Guest, J.S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. (Tutorial Review) Environ. Sci.: Water Res. Technol. 2022, 8 (11), 2439–2465. https://doi.org/10.1039/D2EW00431C.
 
 .. [3] Cortés-Peña, Y.; Kumar, D.; Singh, V.; Guest, J.S. BioSTEAM: A Fast and Flexible Platform for the Design, Simulation, and Techno-Economic Analysis of Biorefineries under Uncertainty. ACS Sustainable Chem. Eng. 2020, 8 (8), 3302–3310. https://doi.org/10.1021/acssuschemeng.9b07040.
-
-
-.. Links
-.. _Yalin Li: https://qsdsan.readthedocs.io/en/beta/authors/Yalin_Li.html
-.. _Joy Zhang: https://qsdsan.readthedocs.io/en/beta/authors/Joy_Zhang.html
