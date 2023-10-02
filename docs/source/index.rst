@@ -47,6 +47,8 @@ What is ``QSDsan``?
 
 Installation
 ------------
+If you are new to Python, we are developing `beginner tutorials <https://uofi.box.com/s/49wf5usk5hz3gdjmcswo3voiokmbzekb>`_ with step-to-step guidance starting from setting up your Python environment.
+
 The easiest way is through ``pip``, in command-line interface (Anaconda prompt, terminal):
 
 .. code::

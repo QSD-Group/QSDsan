@@ -1,9 +1,9 @@
 Extended Installation Instructions
 ==================================
 
-If you are new to Python and not even sure how to set up your Python environment, or if you find the pip-installed ``QSDsan`` cannot satisfy your needs but you are not sure how to clone it, then the following instructions might be of help.
+If you are new to Python and not even sure how to set up your Python environment, please also refer to our `beginner tutorials <https://uofi.box.com/s/49wf5usk5hz3gdjmcswo3voiokmbzekb>`_ (work in progress).
 
-Note that this is just ONE way to set up your environment, not THE way.
+Note that this is just ONE way to set up your environment and cloning the latest ``QSDsan``-related packages (not the pip-installed version which are only released periodically), not THE way.
 
 #. Download and install `Anaconda <https://www.anaconda.com/products/distribution>`_
 
