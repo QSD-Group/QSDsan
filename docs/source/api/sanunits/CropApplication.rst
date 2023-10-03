@@ -1,4 +1,4 @@
-CropApplication
-===============
-.. autoclass:: qsdsan.sanunits.CropApplication
-   :members:
+Crop Application
+================
+.. automodule:: qsdsan.sanunits._crop_application
+    :members:
