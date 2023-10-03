@@ -28,7 +28,7 @@ What is ``QSDsan``?
 
    .. grid-item-card::  Systems
       :text-align: center
-      :link: developed_systems
+      :link: systems
       :link-type: ref
 
       .. figure:: images/systems_icon.svg
@@ -122,7 +122,7 @@ We will keep the calendar up-to-date as we organize more events (office hours, w
    :maxdepth: 1
    :hidden:
 
-   Developed_Systems
+   Systems
 
 
 .. toctree::
