@@ -190,6 +190,7 @@ def get_oxygen_autotrophs(system, influent=None, eff_COD_soluble = None, f_d = 0
                         for inf in influent])
     # TKN = np.array([inf.TKN for inf in influent])
     # TKN = influent_TKN
+    
     S_N_a = TKN - NR*(influent_COD - eff_COD_soluble)
     S_NH = K_NH*(1/SRT  + b_AUT)/(U_AUT/SF_DO - (1 + b_AUT/SRT))
     aeration_factor = 4.57 - (1 + f_d*b_AUT*SRT)*Y_AUT/(1 + b_AUT*SRT)
