@@ -1232,6 +1232,9 @@ class PrimaryClarifierBSM2(SanUnit):
 default_F_BM = {
         'Wall concrete': 1.,
         'Wall stainless steel': 1.,
+        'Scraper': 1,
+        'v notch weir': 1,
+        'Pumps': 1
         }
 default_F_BM.update(default_WWTpump_F_BM)
 
@@ -1261,7 +1264,7 @@ class PrimaryClarifier(SanUnit):
         Default value of 4.5 m would be used here. 
     upflow_velocity : float, optional
         Speed with which influent enters the center feed of the clarifier [m/hr]. [4]
-        The default is 43.2 m/hr. (12 mm/sec)
+        The default is 36 m/hr. (10 mm/sec)
     F_BM : dict
         Equipment bare modules.
         
@@ -1353,7 +1356,7 @@ class PrimaryClarifier(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', thickener_perc=7, 
                   TSS_removal_perc=98, surface_overflow_rate = 41, depth_clarifier=4.5, 
-                  upflow_velocity=43.2, F_BM=default_F_BM, **kwargs):
+                  upflow_velocity=36, F_BM=default_F_BM, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with)
         self.thickener_perc = thickener_perc 
@@ -1379,17 +1382,17 @@ class PrimaryClarifier(SanUnit):
         else: 
             raise ValueError('percentage of SS in the underflow of the thickener expected from user')
             
-    @property
-    def solids_loading_rate(self):
-        '''solids_loading_rate is the loading in the clarifier'''
-        return self._slr
+    # @property
+    # def solids_loading_rate(self):
+    #     '''solids_loading_rate is the loading in the clarifier'''
+    #     return self._slr
 
-    @solids_loading_rate.setter
-    def solids_loading_rate(self, slr):
-        if slr is not None:
-            self._slr = slr
-        else: 
-            raise ValueError('solids_loading_rate of the clarifier expected from user')
+    # @solids_loading_rate.setter
+    # def solids_loading_rate(self, slr):
+    #     if slr is not None:
+    #         self._slr = slr
+    #     else: 
+    #         raise ValueError('solids_loading_rate of the clarifier expected from user')
             
     @property
     def TSS_removal_perc(self):
@@ -1668,7 +1671,8 @@ class PrimaryClarifier(SanUnit):
         mixed = self._mixed
         D = self.design_results
         
-        # Number of clarifiers based on tentative suggestions by Jeremy (would be verified through collaboration with industry)
+        # Number of clarifiers based on tentative suggestions by Jeremy 
+        # (would be verified through collaboration with industry)
         total_flow = (mixed.get_total_flow('m3/hr')*24)/3785 # in MGD
         if total_flow <= 3:
             D['Number of clarifiers'] = 2
@@ -1730,7 +1734,8 @@ class PrimaryClarifier(SanUnit):
         D['Center feed diameter'] = np.sqrt(4*Center_feed_area/np.pi) 
 
         #Sanity check: Diameter of the center feed lies between 15-25% of tank diameter [4]
-        if D['Center feed diameter'] < 0.15*D['Cylindrical diameter'] or D['Center feed diameter']  > 0.25*D['Cylindrical diameter']:
+        #The lower limit of this check has been modified to 10% based on advised range of upflow velocity in [4]. 
+        if D['Center feed diameter'] < 0.10*D['Cylindrical diameter'] or D['Center feed diameter']  > 0.25*D['Cylindrical diameter']:
             cf_dia = D['Center feed diameter'] 
             tank_dia = D['Cylindrical diameter']
             warn(f'Diameter of the center feed does not lie between 15-25% of tank diameter. It is {cf_dia*100/tank_dia}% of tank diameter')
