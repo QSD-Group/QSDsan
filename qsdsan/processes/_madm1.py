@@ -165,12 +165,161 @@ def create_madm1_cmps(set_thermo=True):
 def rhos_madm1():
     pass
 
+
 #%% modified ADM1 class
 _load_components = settings.get_default_chemicals
 
 @chemicals_user
 class ModifiedADM1(CompiledProcesses):
-    
+    """
+    Modified Anaerobic Digestion Model no.1 [1]_
+
+    Parameters
+    ----------
+    f_ch_xb : float, optional
+        Fraction of carbohydrates as biomass decay product. The default is 0.275.
+    f_pr_xb : flaot, optional
+        Fraction of proteins as biomass decay product. The default is 0.275.
+    f_li_xb : float, optional
+        Fraction of lipids as biomass decay product. The default is 0.35.
+    f_xI_xb : float, optional
+        Fraction of inert particulates as biomass decay product. The default is 0.1.
+    f_va_pha : float, optional
+        Fraction of valerate as PHA lysis product. The default is 0.1.
+    f_bu_pha : float, optional
+        Fraction of butyrate as PHA lysis product. The default is 0.1.
+    f_pro_pha : float, optional
+        Fraction of propionate as PHA lysis product. The default is 0.4.
+    Y_PO4 : float, optional
+        Poly-phosphorus (PP) required for PHA storage [kg P/kg COD]. The default is 0.4.
+    Y_hSRB : float, optional
+        Sulfide-reducing biomass (SRB) yield of hydrogen uptake [kg COD/kg COD]. 
+        The default is 0.05.
+    Y_aSRB : float, optional
+        SRB yield of acetate uptake [kg COD/kg COD]. The default is 0.05.
+    Y_pSRB : float, optional
+        SRB yield of propionate uptake [kg COD/kg COD]. The default is 0.04.
+    Y_c4SRB : float, optional
+        SRB yield of butyrate or valerate uptake [kg COD/kg COD]. 
+        The default is 0.06.
+    q_pha : float, optional
+        Maximum specific rate constant for PHA storage by phosphorus-accumulating
+        organisms (PAOs) [d^(-1)]. The default is 3.0.
+    b_pao : float, optional
+        PAO lysis rate constant [d^(-1)]. The default is 0.2.
+    b_pp : float, optional
+        PP lysis rate constant [d^(-1)]. The default is 0.2.
+    b_pha : float, optional
+        PHA lysis rate constant [d^(-1)]. The default is 0.2.
+    K_A : float, optional
+        Substrate half saturation coefficient for PHA storage [kg COD/m3]. 
+        The default is 4e-3.
+    K_PP : float, optional
+        PP half saturation coefficient for PHA storage [kg P (X_PP)/kg COD (X_PHA)]. 
+        The default is 0.01.
+    k_hSRB : float, optional
+        Maximum specific growth rate constant of hydrogen-uptaking SRB [d^(-1)]. 
+        The default is 41.125.
+    k_aSRB : float, optional
+        Maximum specific growth rate constant of acetate-uptaking SRB [d^(-1)]. 
+        The default is 10..
+    k_pSRB : float, optional
+        Maximum specific growth rate constant of propionate-uptaking SRB [d^(-1)]. 
+        The default is 16.25.
+    k_c4SRB : float, optional
+        Maximum specific growth rate constant of butyrate- or valerate-uptaking 
+        SRB [d^(-1)]. The default is 23.
+    b_hSRB : float, optional
+        Hydrogen-uptaking SRB decay rate constant [d^(-1)]. The default is 0.02.
+    b_aSRB : float, optional
+        Acetate-uptaking SRB decay rate constant [d^(-1)]. The default is 0.02.
+    b_pSRB : float, optional
+        Propionate-uptaking SRB decay rate constant [d^(-1)]. The default is 0.02.
+    b_c4SRB : float, optional
+        Butyrate- or valerate-uptaking SRB decay rate constant [d^(-1)]. 
+        The default is 0.02.
+    K_hSRB : float, optional
+        Substrate half saturation coefficient of hydrogen uptake by SRB 
+        [kg COD/m3]. The default is 5.96e-6.
+    K_aSRB : float, optional
+        Substrate half saturation coefficient of acetate uptake by SRB 
+        [kg COD/m3]. The default is 0.176.
+    K_pSRB : float, optional
+        Substrate half saturation coefficient of propionate uptake by SRB 
+        [kg COD/m3]. The default is 0.088.
+    K_c4SRB : float, optional
+        Substrate half saturation coefficient of butyrate or valerate uptake by  
+        SRB [kg COD/m3]. The default is 0.1739.
+    K_so4_hSRB : float, optional
+        Sulfate half saturation coefficient of SRB uptaking hydrogen [kg S/m3]. 
+        The default is 3.335e-3.
+    K_so4_aSRB : float, optional
+        Sulfate half saturation coefficient of SRB uptaking acetate [kg S/m3]. 
+        The default is 6.413e-3.
+    K_so4_pSRB : float, optional
+        Sulfate half saturation coefficient of SRB uptaking propionate [kg S/m3]. 
+        The default is 6.413e-3.
+    K_so4_c4SRB : float, optional
+        Sulfate half saturation coefficient of SRB uptaking butyrate or valerate  
+        [kg S/m3]. The default is 6.413e-3.
+    k_Fe3t2 : float, optional
+        Fe(3+) reduction rate constant [m3∙kg^(-1) Fe(III)∙d^(-1)]. 
+        The default is 1.79e7.
+    KS_IP : float, optional
+        Inorganic phosphorus (nutrient) inhibition coefficient for soluble 
+        substrate uptake [M]. The default is 2e-5.
+    KI_h2s_c4 : float, optional
+        H2S half inhibition coefficient for butyrate or valerate uptake 
+        [kg COD/m3]. The default is 0.481.
+    KI_h2s_pro : float, optional
+        H2S half inhibition coefficient for propionate uptake [kg COD/m3]. 
+        The default is 0.481.
+    KI_h2s_ac : float, optional
+        H2S half inhibition coefficient for acetate uptake [kg COD/m3]. 
+        The default is 0.460.
+    KI_h2s_h2 : float, optional
+        H2S half inhibition coefficient for hydrogen uptake [kg COD/m3]. 
+        The default is 0.400.
+    KI_h2s_c4SRB : float, optional
+        H2S half inhibition coefficient for butyrate or valerate uptake by SRB
+        [kg COD/m3]. The default is 0.520.
+    KI_h2s_pSRB : float, optional
+        H2S half inhibition coefficient for propionate uptake by SRB [kg COD/m3]. 
+        The default is 0.520.
+    KI_h2s_aSRB : float, optional
+        H2S half inhibition coefficient for acetate uptake by SRB [kg COD/m3]. 
+        The default is 0.499.
+    KI_h2s_hSRB : float, optional
+        H2S half inhibition coefficient for hydrogen uptake by SRB [kg COD/m3]. 
+        The default is 0.499.        
+    pH_limits_aa_SRB : 2-tuple, optional
+        Lower and upper limits of pH inhibition for acetogenosis by SRB, 
+        unitless. The default is (6,7).
+    pH_limits_ac_SRB : 2-tuple, optional
+        Lower and upper limits of pH inhibition for acetate uptake by SRB, 
+        unitless. The default is (6,7).
+    pH_limits_h2_SRB : 2-tuple, optional
+        Lower and upper limits of pH inhibition for hydrogen uptake by SRB, 
+        unitless. The default is (5,6).
+
+    Examples
+    --------
+    ...
+
+    References
+    ----------
+    .. [1] Flores-Alsina, X., Solon, K., Kazadi Mbamba, C., Tait, S., 
+        Gernaey, K. V., Jeppsson, U., ; Batstone, D. J. (2016). 
+        Modelling phosphorus (P), sulfur (S) and iron (Fe) interactions 
+        for dynamic simulations of anaerobic digestion processes. 
+        Water Research, 95, 370–382. https://doi.org/10.1016/J.WATRES.2016.03.012
+            
+    See Also
+    --------
+    `qsdsan.processes.ADM1 <https://qsdsan.readthedocs.io/en/latest/api/processes/ADM1.html>`_  
+
+    """
+        
     _cmp_dependent_stoichio = ('K_XPP', 'Mg_XPP', 
                                'MW_S0', 'MW_IS', 
                                'i_mass_S0', 'i_mass_IS', 'i_mass_Fe2')
@@ -216,10 +365,8 @@ class ModifiedADM1(CompiledProcesses):
                 KI_h2s_c4SRB=0.520, KI_h2s_pSRB=0.520, KI_h2s_aSRB=0.499, KI_h2s_hSRB=0.499,
                 pH_limits_aa=(4,5.5), pH_limits_ac=(6,7), pH_limits_h2=(5,6),
                 pH_limits_aa_SRB=(6,7), pH_limits_ac_SRB=(6,7), pH_limits_h2_SRB=(5,6),
-                kLa=200,
-                pKa_base=[14, 9.25, 6.35, 4.76, 4.88, 4.82, 4.86],
-                Ka_dH=[55900, 51965, 7646, 0, 0, 0, 0],
-                **kwargs):
+                kLa=200, pKa_base=[14, 9.25, 6.35, 4.76, 4.88, 4.82, 4.86],
+                Ka_dH=[55900, 51965, 7646, 0, 0, 0, 0],**kwargs):
         
         cmps = _load_components(components)
 
