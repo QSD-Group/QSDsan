@@ -16,6 +16,16 @@ from chemicals.elements import molecular_weight as get_mw
 from qsdsan import Component, Components, Process, Processes, CompiledProcesses
 import numpy as np, qsdsan.processes as pc, qsdsan as qs
 from qsdsan.utils import ospath, data_path
+from qsdsan.processes._adm1 import (
+    R,
+    create_adm1_cmps, 
+    ADM1,
+    mass2mol_conversion,
+    T_correction_factor,
+    substr_inhibit,
+    non_compet_inhibit,
+    Hill_inhibit
+    )
 # from scipy.optimize import brenth
 # from warnings import warn
 
@@ -23,7 +33,6 @@ from qsdsan.utils import ospath, data_path
 __all__ = ('create_madm1_cmps', 'ModifiedADM1')
 
 _path = ospath.join(data_path, 'process_data/_madm1.tsv')
-
 
 #%% components
 # C_mw = get_mw({'C':1})
@@ -37,7 +46,7 @@ def create_madm1_cmps(set_thermo=True):
     
     # Components from the original ADM1
     # *********************************
-    _cmps = pc.create_adm1_cmps(False)
+    _cmps = create_adm1_cmps(False)
     S_aa = _cmps.S_aa
     X_pr = _cmps.X_pr
     S_aa.i_C = X_pr.i_C = 0.36890
@@ -161,10 +170,138 @@ def create_madm1_cmps(set_thermo=True):
     return cmps_madm1
 
 #%% rate functions
+{'S_su': 0,
+ 'S_aa': 1,
+ 'S_fa': 2,
+ 'S_va': 3,
+ 'S_bu': 4,
+ 'S_pro': 5,
+ 'S_ac': 6,
+ 'S_h2': 7,
+ 'S_ch4': 8,
+ 'S_IC': 9,
+ 'S_IN': 10,
+ 'S_IP': 11,
+ 'S_I': 12,
+ 'X_ch': 13,
+ 'X_pr': 14,
+ 'X_li': 15,
+ 'X_su': 16,
+ 'X_aa': 17,
+ 'X_fa': 18,
+ 'X_c4': 19,
+ 'X_pro': 20,
+ 'X_ac': 21,
+ 'X_h2': 22,
+ 'X_I': 23,
+ 'X_PHA': 24,
+ 'X_PP': 25,
+ 'X_PAO': 26,
+ 'S_K': 27,
+ 'S_Mg': 28,
+ 'S_SO4': 29,
+ 'S_IS': 30,
+ 'X_hSRB': 31,
+ 'X_aSRB': 32,
+ 'X_pSRB': 33,
+ 'X_c4SRB': 34,
+ 'S_S0': 35,
+ 'S_Fe3': 36,
+ 'S_Fe2': 37,
+ 'H2O': 38}
 
-def rhos_madm1():
+def calc_pH():
     pass
 
+def calc_biogas():
+    pass
+
+rhos = np.zeros(40) # 36 biochemical processes + 4 gas transfer processes
+Cs = np.empty(36)
+
+def rhos_madm1(state_arr, params):
+    ks = params['rate_constants']
+    Ks = params['half_sat_coeffs']
+    K_PP = params['K_PP']
+    K_so4 = params['K_so4']
+    cmps = params['components']
+    # n = len(cmps)
+    pH_LLs, pH_ULs = params['pH_limits']
+    KS_IN = params['KS_IN']
+    KS_IP = params['KS_IP']
+    KI_nh3 = params['KI_nh3']
+    KIs_h2 = params['KIs_h2']
+    KIs_h2s = params['KIs_h2s']
+    KHb = params['K_H_base']
+    Kab = params['Ka_base']
+    KH_dH = params['K_H_dH']
+    Ka_dH = params['Ka_dH']
+    kLa = params['kLa']
+    T_base = params['T_base']
+    
+    Cs[:7] = state_arr[13:20]                   # original ADM1 processes
+    Cs[7:11] = state_arr[19:23]
+    Cs[11:18] = state_arr[16:23]
+    Cs[18:23] = X_PAO = state_arr[26]           # P extension processes
+    Cs[23:25] = X_PP, X_PHA = state_arr[[25,24]]
+    Cs[25:27] = state_arr[31]                   # S extension processes
+    Cs[27:29] = state_arr[32]
+    Cs[29:31] = state_arr[33]
+    Cs[31:34] = state_arr[34]
+    Cs[34:36] = state_arr[36]                   # Fe extension processes
+    
+    rhos[:-4] = ks * Cs
+    primary_substrates = state_arr[:8]
+    
+    rhos[3:11] *= substr_inhibit(primary_substrates, Ks[:8])
+    c4 = primary_substrates[[3,4]]
+    if sum(c4) > 0: rhos[[6,7]] *= c4/sum(c4)
+    
+    vfas = primary_substrates[3:7]
+    rhos[18:22] *= substr_inhibit(vfas, Ks[8])
+    if sum(vfas) > 0: rhos[18:22] *= vfas/sum(vfas)
+    if X_PAO > 0: rhos[18:22] *= substr_inhibit(X_PP/X_PAO, K_PP)
+    
+    srb_subs = np.flip(primary_substrates[3:])
+    S_SO4, S_IS = state_arr[29:31]
+    rhos[[25,27,29,31,32]] *= substr_inhibit(srb_subs, Ks[-4:]) * substr_inhibit(S_SO4, K_so4)
+    if sum(srb_subs[-2:]) > 0: rhos[[31,32]] *= srb_subs[-2:]/sum(srb_subs[-2:])
+    
+    #!!! why divide by 16 or 64?
+    S_h2 = primary_substrates[-1]
+    rhos[34] *= S_h2 / 16 
+    rhos[35] *= S_IS / 64
+    
+# =============================================================================
+#   inhibition factors
+# =============================================================================
+    
+    S_IN, S_IP = state_arr[[10,11]]
+    I_nutrients = substr_inhibit(S_IN, KS_IN) * substr_inhibit(S_IP, KS_IP)
+    rhos[3:11] *= I_nutrients
+    rhos[[25,27,29,31,32]] *= I_nutrients
+    
+# =============================================================================
+#     #!!! place holder for pH
+# =============================================================================
+    pH, nh3 = calc_pH(state_arr, params)
+    Is_pH = Hill_inhibit(10**(-pH), pH_ULs, pH_LLs)
+    rhos[3:9] *= Is_pH[0]
+    rhos[9:11] *= Is_pH[1:3]
+    rhos[[25,27]] *= Is_pH[3:5]
+    rhos[[29,31,32]] *= Is_pH[-1]
+    
+    Is_h2 = non_compet_inhibit(S_h2, KIs_h2)
+    rhos[5:9] *= Is_h2
+    Inh3 = non_compet_inhibit(nh3, KI_nh3)
+    rhos[9] *= Inh3
+    
+    Z_h2s = calc_biogas()
+    Is_h2s = non_compet_inhibit(Z_h2s, KIs_h2s)
+    rhos[6:11] *= Is_h2s[:5]
+    rhos[[25,27,29,31,32]] *= Is_h2s[5:]
+    
+    
 
 #%% modified ADM1 class
 _load_components = settings.get_default_chemicals
@@ -323,7 +460,7 @@ class ModifiedADM1(CompiledProcesses):
     _cmp_dependent_stoichio = ('K_XPP', 'Mg_XPP', 
                                'MW_S0', 'MW_IS', 
                                'i_mass_S0', 'i_mass_IS', 'i_mass_Fe2')
-    _stoichio_params = (*pc.ADM1._stoichio_params[5:],
+    _stoichio_params = (*ADM1._stoichio_params[5:],
                         'f_ch_xb', 'f_pr_xb', 'f_li_xb', 'f_xI_xb', 'f_sI_xb',
                         'f_va_pha',	'f_bu_pha',	'f_pro_pha', 'f_ac_pha',
                         'f_is_pro', 'f_is_bu', 'f_is_va',
@@ -331,13 +468,14 @@ class ModifiedADM1(CompiledProcesses):
                         *_cmp_dependent_stoichio
                         )
     _kinetic_params = ('rate_constants', 'half_sat_coeffs', 'K_PP', 'K_so4', 
-                       'pH_limits', 'KS_IN', 'KI_nh3', 'KIs_h2',
+                       'pH_limits', 'KS_IN', 'KS_IP', 'KI_nh3', 'KIs_h2', 'KIs_h2s'
                        'Ka_base', 'Ka_dH', 'K_H_base', 'K_H_dH', 'kLa',
-                       'T_base', 'components', 'root',
+                       'T_base', 'components', 
+                       # 'root'
                        )
-    _acid_base_pairs = pc.ADM1._acid_base_pairs
-    _biogas_IDs = (*pc.ADM1._biogas_IDs, 'S_IS')
-    _biomass_IDs = (*pc.ADM1._biomass_IDs, 'X_PAO', 'X_hSRB', 'X_aSRB', 'X_pSRB', 'X_c4SRB')
+    _acid_base_pairs = ADM1._acid_base_pairs
+    _biogas_IDs = (*ADM1._biogas_IDs, 'S_IS')
+    _biomass_IDs = (*ADM1._biomass_IDs, 'X_PAO', 'X_hSRB', 'X_aSRB', 'X_pSRB', 'X_c4SRB')
     _T_base = 298.15
     _K_H_base = [7.8e-4, 1.4e-3, 3.5e-2, 0.105]    # biogas species Henry's Law constant [M/bar]
     _K_H_dH = [-4180, -14240, -19410, -19180]      # Heat of reaction of liquid-gas transfer of biogas species [J/mol]
