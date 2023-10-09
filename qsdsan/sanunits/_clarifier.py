@@ -101,9 +101,14 @@ class FlatBottomCircularClarifier(SanUnit):
     fns : float, optional
         Non-settleable fraction of the suspended solids, dimensionless. Must be within
         [0, 1]. The default is 2.28e-3.
+    
     downward_flow_velocity : float, optional
         Speed on the basis of which center feed diameter is designed [m/hr]. The default is 42 m/hr (0.7 m/min). [2]
-    solids_loading_rate : float, optional
+    design_influent_TSS : float, optional
+        The design TSS concentration [mg/L] in the influent going to the secondary clarifier. 
+    design_influent_flow : float, optional
+        The design influent tptal volumetric flow [m3/hr] going to the secondary clarifier. 
+    design_solids_loading_rate : float, optional
         Rate of total suspended solids entering the secondary clarifier (kg/(m2*hr)). 
         The default is 5 kg/(m2*hr) [3, 4]
     
@@ -134,15 +139,23 @@ class FlatBottomCircularClarifier(SanUnit):
                  surface_area=1500, height=4, N_layer=10, feed_layer=4,
                  X_threshold=3000, v_max=474, v_max_practical=250,
                  rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, F_BM_default=default_F_BM, isdynamic=True,
-                 downward_flow_velocity=42, solids_loading_rate = 6, **kwargs):
+                 downward_flow_velocity=42, design_influent_TSS = None, design_influent_flow = None,
+                 design_solids_loading_rate = 6, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic, F_BM_default=1)
         self._h = height
         self._Qras = underflow
         self._Qwas = wastage
         self._sludge = WasteStream()
-        self._V = surface_area * height
-        self._A = surface_area
+        
+        if surface_area != None:
+            self._A = surface_area
+        elif design_influent_TSS != None and design_influent_flow != None:
+            self._A = (design_influent_TSS*design_influent_flow)/(design_solids_loading_rate*1000) # 1000 in denominator for unit conversion
+        else:
+            RuntimeError('Either surface_area, or design_influent_TSS and design_influent_flow expected from user')
+        
+        self._V = self._A * height
         self._hj = height/N_layer
         self._N_layer = N_layer
         self.feed_layer = feed_layer
@@ -158,7 +171,9 @@ class FlatBottomCircularClarifier(SanUnit):
         self._dX_comp = self._X_comp.copy()
         
         self._downward_flow_velocity = downward_flow_velocity # in m/hr (converted from 12 mm/sec)
-        self._slr = solids_loading_rate
+        self._design_tss = design_influent_TSS
+        self._design_flow = design_influent_flow
+        self._slr = design_solids_loading_rate
         
         self._mixed = WasteStream(f'{ID}_mixed')
         header = self._state_header
@@ -513,10 +528,10 @@ class FlatBottomCircularClarifier(SanUnit):
         'Number of clarifiers': 'Unitless',
         'Volumetric flow': 'm3/day',
         'Clarifier depth': 'm',
-        'Solids loading rate': 'kg/m2/hr',
         'Surface area': 'm2',
         'Clarifier diameter': 'm',
-        'Volume': 'm3',
+        'Clarifier volume': 'm3',
+        'Design solids loading rate': 'kg/m2/hr',
         'Surface overflow rate': 'm3/day/m2',
         'Hydraulic Retention Time': 'hr', 
         'Center feed depth': 'm',
@@ -607,28 +622,37 @@ class FlatBottomCircularClarifier(SanUnit):
         # Sidewater depth of a cylindrical clarifier lies between 4-5 m (MOP 8)
         D['Clarifier depth'] = self._h # in m
         
+        # Area of clarifier 
+        # D['Surface area'] = solids_clarifier/D['Solids loading rate'] #m2
+        D['Surface area'] = self._A/D['Number of clarifiers']
+        D['Clarifier diameter'] = np.sqrt(4*D['Surface area']/np.pi) # in m
+        D['Clarifier volume'] = D['Surface area']*D['Clarifier depth'] # in m3
+        
+        # Checks on SLR,, SOR, and HRT 
+        
+        D['Design solids loading rate'] = self._slr # kg/(m2*hr)
+        
         total_solids = mixed.get_TSS()*mixed.get_total_flow('m3/hr')/1000 # in kg/hr (mg/l * m3/hr)
         solids_clarifier = total_solids/D['Number of clarifiers'] # in kg/hr
-        D['Solids loading rate'] = self._slr # kg/(m2*hr)
+        simulated_slr = solids_clarifier/D['Surface area'] # in kg/(m2*hr)
+        
+        # Consult Joy on the margin or error
+        if simulated_slr < 0.8*D['Design solids loading rate'] or simulated_slr > 1.2*D['Design solids loading rate']:
+            design_slr = D['Design solids loading rate']
+            warn(f'Solids loading rate = {simulated_slr} is not within 20% of the recommended design level of {design_slr} kg/hr/m2')
+        
+        # Check on SLR [3, 4, 5] 
+        if simulated_slr > 14:
+            warn(f'Solids loading rate = {simulated_slr} is above recommended level of 14 kg/hr/m2')
         
         # Check on SOR [3, 4, 5]
-        if D['Solids loading rate'] > 14:
-            slr = D['Solids loading rate']
-            warn(f'Solids loading rate = {slr} is above recommended level of 14 kg/hr/m2')
-    
-        # Area of clarifier decided based on solids loading rate 
-        D['Surface area'] = solids_clarifier/D['Solids loading rate'] #m2
-        D['Clarifier diameter'] = np.sqrt(4*D['Surface area']/np.pi) # in m
-        D['Volume'] = D['Surface area']*D['Clarifier depth'] # in m3
-        
-        # Check on SOR [3, 4, 5]
-        D['Surface overflow rate'] = D['Volumetric flow']/D['Surface area'] 
+        D['Surface overflow rate'] = D['Volumetric flow']/D['Surface area']  # in m3/m2/hr
         if D['Surface overflow rate'] > 49:
             sor = D['Surface overflow rate']
             warn(f'Surface overflow rate = {sor} is above recommended level of 49 m3/day/m2')
         
         # HRT
-        D['Hydraulic Retention Time'] = D['Volume']*24/D['Volumetric flow'] # in hr
+        D['Hydraulic Retention Time'] = D['Clarifier volume']*24/D['Volumetric flow'] # in hr
         
         # Clarifiers can be center feed or peripheral feed. The design here is for the more commonly deployed center feed.
         # Depth of the center feed lies between 30-75% of sidewater depth. [2]
