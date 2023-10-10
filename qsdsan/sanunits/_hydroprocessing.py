@@ -47,7 +47,7 @@ class Hydrocracking(Reactor):
     WHSV: float
         Weight Hourly Space velocity, [kg feed/hr/kg catalyst].
     catalyst_lifetime: float
-        CHG catalyst lifetime, [hr].
+        HC catalyst lifetime, [hr].
     hydrogen_P: float
         Hydrogen pressure, [Pa].
     hydrogen_rxned_to_heavy_oil: float
@@ -252,7 +252,7 @@ class Hydrotreating(Reactor):
     WHSV: float
         Weight Hourly Space velocity, [kg feed/hr/kg catalyst].
     catalyst_lifetime: float
-        CHG catalyst lifetime, [hr].
+        HT catalyst lifetime, [hr].
     hydrogen_P: float
         Hydrogen pressure, [Pa].
     hydrogen_rxned_to_biocrude: float
