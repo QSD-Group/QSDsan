@@ -42,7 +42,7 @@ S_mw = get_mw({'S':1})
 Fe_mw = get_mw({'Fe':1})
 O_mw = get_mw({'O':1})
 
-def create_madm1_cmps(set_thermo=True):
+def create_madm1_cmps(set_thermo=True, ASF_L=0.31, ASF_H=1.2):
     
     # Components from the original ADM1
     # *********************************
@@ -101,24 +101,17 @@ def create_madm1_cmps(set_thermo=True):
     # Additional components for P, S, Fe extensions
     # *********************************************
     S_IP = asm_cmps.S_PO4.copy('S_IP')
-    S_K = Component.from_chemical('S_K', chemical='K+',
-                                  description='Potassium ion',
-                                  measured_as='K',
-                                  particle_size='Soluble',
-                                  degradability='Undegradable',
-                                  organic=False)
-    S_Mg = Component.from_chemical('S_Mg', chemical='Mg2+',
-                                  description='Magnesium ion',
-                                  measured_as='Mg',
-                                  particle_size='Soluble',
-                                  degradability='Undegradable',
-                                  organic=False)
-    S_SO4 = Component.from_chemical('S_SO4', chemical='SO4-2',
-                                  description='Sulfate',
-                                  measured_as='S',
-                                  particle_size='Soluble',
-                                  degradability='Undegradable',
-                                  organic=False)
+    
+    ion_properties = dict(
+        particle_size='Soluble',
+        degradability='Undegradable',
+        organic=False)
+    S_K = Component.from_chemical('S_K', chemical='K+', description='Potassium ion', 
+                                  measured_as='K', **ion_properties)
+    S_Mg = Component.from_chemical('S_Mg', chemical='Mg2+', description='Magnesium ion',
+                                  measured_as='Mg',**ion_properties)
+    S_SO4 = Component.from_chemical('S_SO4', chemical='SO4-2', description='Sulfate',
+                                  measured_as='S', **ion_properties)
     S_IS = Component.from_chemical('S_IS', chemical='H2S',
                                   description='Hydrogen sulfide',
                                   measured_as='COD',
@@ -136,25 +129,68 @@ def create_madm1_cmps(set_thermo=True):
     X_c4SRB.description = 'sulfate-reducing biomass, utilizing butyrate and valerate'
     
     S_S0 = Component.from_chemical('S_S0', chemical='S',
-                                  description='Sulfur',
+                                  description='Elemental sulfur',
                                   measured_as='COD',
                                   particle_size='Soluble',
                                   degradability='Undegradable',
                                   organic=False)
-    S_Fe3 = Component.from_chemical('S_Fe3', chemical='Fe3+',
-                                  description='Iron (III)',
-                                  measured_as='Fe',
-                                  particle_size='Soluble',
-                                  degradability='Undegradable',
-                                  organic=False)
-    S_Fe2 = Component.from_chemical('S_Fe2', chemical='Fe2+',
-                                  description='Iron (II)',
-                                  measured_as='Fe',
-                                  particle_size='Soluble',
-                                  degradability='Undegradable',
-                                  organic=False)
+    S_Fe3 = Component.from_chemical('S_Fe3', chemical='Fe3+', description='Iron (III)',
+                                  measured_as='Fe',**ion_properties)
+    S_Fe2 = Component.from_chemical('S_Fe2', chemical='Fe2+', description='Iron (II)',
+                                  measured_as='Fe',**ion_properties)
     S_Fe2.i_COD = 0.5*O_mw/Fe_mw
     S_Fe2.measured_as = 'COD'
+    
+    # Multiple mineral precipitation
+    # ******************************
+    mineral_properties = dict(
+        particle_size='Particulate',
+        degradability='Undegradable',
+        organic=False)
+    
+    X_HFO_H = Component('X_HFO_H', formula='FeO(OH)',
+                        description='Hydrous ferric oxide with high number of active sites',
+                        measured_as='Fe',**mineral_properties)
+    X_HFO_L = X_HFO_H.copy('X_HFO_L')
+    X_HFO_L.description = 'Hydrous ferric oxide with low number of active sites'
+    
+    X_HFO_old = X_HFO_H.copy('X_HFO_old')
+    X_HFO_old.description = 'Inactive hydrous ferric oxide'
+    
+    X_HFO_HP = Component('X_HFO_HP', formula=f'FeO(OH)P{ASF_H}',
+                         description='X_HFO_H with phosphorus-bounded adsorption sites',
+                         measured_as='Fe', **mineral_properties)
+    X_HFO_HP_old = X_HFO_HP.copy('X_HFO_HP_old')
+    X_HFO_HP_old.description = 'Old ' + X_HFO_HP.description
+    
+    X_HFO_LP = Component('X_HFO_LP', formula=f'FeO(OH)P{ASF_L}',
+                         description='X_HFO_L with phosphorus-bounded adsorption sites',
+                         measured_as='Fe', **mineral_properties)
+    X_HFO_LP_old = X_HFO_LP.copy('X_HFO_LP_old')
+    X_HFO_LP_old.description = 'Old ' + X_HFO_LP.description
+    
+    X_CCM = Component.from_chemical('X_CCM', chemical='calcite', description='Calcite', **mineral_properties)
+    X_ACC = Component.from_chemical('X_ACC', chemical='aragonite', description='Aragonite', **mineral_properties)
+    X_ACP = Component.from_chemical('X_ACP', chemical='Ca3(PO4)2', description='Amorphous calcium phosphate', **mineral_properties)
+    X_HAP = Component.from_chemical('X_HAP', chemical='hydroxylapatite', description='Hydroxylapatite', **mineral_properties)
+    X_DCPD = Component.from_chemical('X_DCPD', chemical='CaHPO4', description='Dicalcium phosphate', **mineral_properties)
+    X_OCP = Component('X_OCP', formula='Ca4HP3O12', description='Octacalcium phosphate', **mineral_properties)
+    X_struv = Component.from_chemical('X_struv', chemical='MgNH4PO4', description='Struvite', **mineral_properties)
+    X_newb = Component.from_chemical('X_newb', chemical='MgHPO4', description='Newberyite', **mineral_properties)
+    X_magn = Component.from_chemical('X_magn', chemical='MgCO3', description='Magnesite', **mineral_properties)
+    X_kstruv = Component('X_kstruv', formula='MgKPO4', description='K-struvite', **mineral_properties)
+    X_FeS = Component.from_chemical('X_FeS', chemical='FeS', description='Iron sulfide', **mineral_properties)
+    X_Fe3PO42 = Component('X_Fe3PO42', formula='Fe3(PO4)2', description='Ferrous phosphate', **mineral_properties)
+    X_AlPO4 = Component.from_chemical('X_AlPO4', chemical='AlPO4', description='Aluminum phosphate', **mineral_properties)
+
+    S_Ca = Component.from_chemical('S_Ca', chemical='Ca2+', description='Calsium ion',
+                                   measured_as='Ca', **ion_properties)
+    S_Al = Component.from_chemical('S_Al', chemical='Al3+', description='Aluminum ion',
+                                   measured_as='Al', **ion_properties)
+    S_Na = Component.from_chemical('S_Na', chemical='Na+', description='Sodium ion',
+                                   measured_as='Na', **ion_properties)
+    S_Cl = Component.from_chemical('S_Cl', chemical='Cl-', description='Chloride',
+                                   measured_as='Cl', **ion_properties)
     
     cmps_madm1 = Components([_cmps.S_su, S_aa, S_fa, _cmps.S_va, S_bu, 
                              S_pro, S_ac, _cmps.S_h2, _cmps.S_ch4, 
@@ -162,8 +198,12 @@ def create_madm1_cmps(set_thermo=True):
                              X_ch, X_pr, X_li, *adm1_biomass, X_I,
                              X_PHA, asm_cmps.X_PP, X_PAO, S_K, S_Mg, 
                              S_SO4, S_IS, X_hSRB, X_aSRB, X_pSRB, X_c4SRB,
-                             S_S0, S_Fe3, S_Fe2,
-                             _cmps.H2O])
+                             S_S0, S_Fe3, S_Fe2, X_HFO_H, X_HFO_L, X_HFO_old,
+                             X_HFO_HP, X_HFO_LP, X_HFO_HP_old, X_HFO_LP_old,
+                             S_Ca, S_Al, X_CCM, X_ACC, X_ACP, X_HAP, X_DCPD,
+                             X_OCP, X_struv, X_newb, X_magn, X_kstruv, X_FeS,
+                             X_Fe3PO42, X_AlPO4, 
+                             S_Na, S_Cl, _cmps.H2O])
     cmps_madm1.default_compile()
     
     if set_thermo: qs.set_thermo(cmps_madm1)
@@ -296,7 +336,10 @@ def rhos_madm1(state_arr, params):
     Inh3 = non_compet_inhibit(nh3, KI_nh3)
     rhos[9] *= Inh3
     
-    Z_h2s = calc_biogas()
+# =============================================================================
+#     !!! place holder for gas-liquid transfer
+# =============================================================================
+    Z_h2s = calc_biogas() # should be a function of pH
     Is_h2s = non_compet_inhibit(Z_h2s, KIs_h2s)
     rhos[6:11] *= Is_h2s[:5]
     rhos[[25,27,29,31,32]] *= Is_h2s[5:]
@@ -309,7 +352,7 @@ _load_components = settings.get_default_chemicals
 @chemicals_user
 class ModifiedADM1(CompiledProcesses):
     """
-    Modified Anaerobic Digestion Model no.1 [1]_
+    Modified Anaerobic Digestion Model no.1 [1]_, [2]_
 
     Parameters
     ----------
@@ -446,11 +489,17 @@ class ModifiedADM1(CompiledProcesses):
     References
     ----------
     .. [1] Flores-Alsina, X., Solon, K., Kazadi Mbamba, C., Tait, S., 
-        Gernaey, K. V., Jeppsson, U., ; Batstone, D. J. (2016). 
+        Gernaey, K. V., Jeppsson, U., Batstone, D. J. (2016). 
         Modelling phosphorus (P), sulfur (S) and iron (Fe) interactions 
         for dynamic simulations of anaerobic digestion processes. 
         Water Research, 95, 370–382. https://doi.org/10.1016/J.WATRES.2016.03.012
-            
+    .. [2] Solon, K., Flores-Alsina, X., Kazadi Mbamba, C., Ikumi, D., 
+        Volcke, E. I. P., Vaneeckhaute, C., Ekama, G., Vanrolleghem, P. A., 
+        Batstone, D. J., Gernaey, K. v., Jeppsson, U. (2017). Plant-wide 
+        modelling of phosphorus transformations in wastewater treatment systems: 
+        Impacts of control and operational strategies. Water Research, 
+        113, 97–110. https://doi.org/10.1016/J.WATRES.2017.02.007</div>
+    
     See Also
     --------
     `qsdsan.processes.ADM1 <https://qsdsan.readthedocs.io/en/latest/api/processes/ADM1.html>`_  
@@ -476,6 +525,9 @@ class ModifiedADM1(CompiledProcesses):
     _acid_base_pairs = ADM1._acid_base_pairs
     _biogas_IDs = (*ADM1._biogas_IDs, 'S_IS')
     _biomass_IDs = (*ADM1._biomass_IDs, 'X_PAO', 'X_hSRB', 'X_aSRB', 'X_pSRB', 'X_c4SRB')
+    _precipitate_IDs = ('X_CCM', 'X_ACC', 'X_ACP', 'X_HAP', 'X_DCPD', 'X_OCP',
+                        'X_struv', 'X_newb', 'X_magn', 'X_kstruv', 
+                        'X_FeS', 'X_Fe3PO42', 'X_AlPO4')
     _T_base = 298.15
     _K_H_base = [7.8e-4, 1.4e-3, 3.5e-2, 0.105]    # biogas species Henry's Law constant [M/bar]
     _K_H_dH = [-4180, -14240, -19410, -19180]      # Heat of reaction of liquid-gas transfer of biogas species [J/mol]
@@ -515,6 +567,47 @@ class ModifiedADM1(CompiledProcesses):
                                         parameters=cls._stoichio_params,
                                         compile=False)
         
+        precipitation = []
+        for i in cls._precipitate_IDs[:-3]:
+            new_p = Process('precipitation_%s' % i.lstrip('X_'),
+                            reaction='[?]S_IC + [?]S_IN + [?]S_IP + [?]S_K + [?]S_Mg + [?]S_Ca -> %s' % i,
+                            ref_component=i,
+                            conserved_for=('C', 'N', 'P', 'K', 'Mg', 'Ca'),
+                            parameters=())
+            precipitation.append(new_p)
+        
+        i_mass_IS = cmps.S_IS.i_mass
+        i_mass_Fe2 = cmps.S_Fe2.i_mass
+        FeS_mw = cmps.X_FeS.chem_MW
+        new_p = Process('precipitation_FeS',
+                        reaction={'S_Fe2': -Fe_mw/FeS_mw/i_mass_Fe2,
+                                  'S_IS': -S_mw/FeS_mw/i_mass_IS,
+                                  'X_FeS': 1},
+                        ref_component='X_FeS',
+                        conserved_for=())
+        precipitation.append(new_p)
+        
+        Fe3PO42_mw = cmps.X_Fe3PO42.chem_MW
+        new_p = Process('precipitation_Fe3PO42',
+                        reaction={'S_Fe2': -3*Fe_mw/Fe3PO42_mw/i_mass_Fe2,
+                                  'S_IP': '?',
+                                  'X_Fe3PO42': 1},
+                        ref_component='X_Fe3PO42',
+                        conserved_for=('P',))
+        precipitation.append(new_p)
+        
+        AlPO4_mw = cmps.X_AlPO4.chem_MW
+        Al_mw = cmps.S_Al.chem_MW
+        new_p = Process('precipitation_AlPO4',
+                        reaction={'S_Al': -Al_mw/AlPO4_mw,
+                                  'S_IP': '?',
+                                  'X_AlPO4': 1},
+                        ref_component='X_AlPO4',
+                        conserved_for=('P',))        
+        precipitation.append(new_p)
+
+        self.extend(precipitation)
+        
         gas_transfer = []
         for i in cls._biogas_IDs:
             new_p = Process('%s_transfer' % i.lstrip('S_'),
@@ -537,7 +630,7 @@ class ModifiedADM1(CompiledProcesses):
                          Y_PO4, Y_hSRB, Y_aSRB, Y_pSRB, Y_c4SRB,
                          cmps.X_PP.i_K, cmps.X_PP.i_Mg,
                          cmps.S_S0.chem_MW, cmps.S_IS.chem_MW, 
-                         cmps.S_S0.i_mass, cmps.S_IS.i_mass, cmps.S_Fe2.i_mass)
+                         cmps.S_S0.i_mass, i_mass_IS, i_mass_Fe2)
         
         pH_limits = np.array([pH_limits_aa, pH_limits_ac, pH_limits_h2, 
                               pH_limits_h2_SRB, pH_limits_ac_SRB, pH_limits_aa_SRB]).T
@@ -565,14 +658,14 @@ class ModifiedADM1(CompiledProcesses):
         dct = self.__dict__
         dct.update(kwargs)
 
-        self.set_rate_function(rhos_madm1)
+        # self.set_rate_function(rhos_madm1)
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_vals))
-        self.rate_function._params = dict(zip(cls._kinetic_params,
-                                              [ks, Ks, K_PP, K_so4, 
-                                               pH_limits, KS_IN*N_mw, KS_IP*P_mw,
-                                               KI_nh3, KIs_h2, KIs_h2s, 
-                                               Ka_base, Ka_dH, K_H_base, K_H_dH, kLa,
-                                               cls.T_base, self._components, 
-                                               # root,
-                                               ]))
+        # self.rate_function._params = dict(zip(cls._kinetic_params,
+        #                                       [ks, Ks, K_PP, K_so4, 
+        #                                        pH_limits, KS_IN*N_mw, KS_IP*P_mw,
+        #                                        KI_nh3, KIs_h2, KIs_h2s, 
+        #                                        Ka_base, Ka_dH, K_H_base, K_H_dH, kLa,
+        #                                        cls.T_base, self._components, 
+        #                                        # root,
+        #                                        ]))
         return self
