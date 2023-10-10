@@ -70,13 +70,13 @@ class CatalyticHydrothermalGasification(Reactor):
         
     References
     ----------
-    .. [1] Jones, S. B.; Zhu, Y.; Anderson, D. B.; Hallen, R. T.; Elliott, D. C.; 
+    [1] Jones, S. B.; Zhu, Y.; Anderson, D. B.; Hallen, R. T.; Elliott, D. C.; 
         Schmidt, A. J.; Albrecht, K. O.; Hart, T. R.; Butcher, M. G.; Drennan, C.; 
         Snowden-Swan, L. J.; Davis, R.; Kinchin, C. 
         Process Design and Economics for the Conversion of Algal Biomass to
         Hydrocarbons: Whole Algae Hydrothermal Liquefaction and Upgrading;
         PNNL--23227, 1126336; 2014; https://doi.org/10.2172/1126336.
-    .. [2] Davis, R. E.; Grundl, N. J.; Tao, L.; Biddy, M. J.; Tan, E. C.;
+    [2] Davis, R. E.; Grundl, N. J.; Tao, L.; Biddy, M. J.; Tan, E. C.;
         Beckham, G. T.; Humbird, D.; Thompson, D. N.; Roni, M. S. Process
         Design and Economics for the Conversion of Lignocellulosic Biomass
         to Hydrocarbon Fuels and Coproducts: 2018 Biochemical Design Case
@@ -84,7 +84,7 @@ class CatalyticHydrothermalGasification(Reactor):
         and Products via Integrated Biorefinery Pathways; NREL/TP--5100-71949,
         1483234; 2018; p NREL/TP--5100-71949, 1483234.
         https://doi.org/10.2172/1483234.
-    .. [3] Elliott, D. C.; Neuenschwander, G. G.; Hart, T. R.; Rotness, L. J.;
+    [3] Elliott, D. C.; Neuenschwander, G. G.; Hart, T. R.; Rotness, L. J.;
         Zacher, A. H.; Santosa, D. M.; Valkenburg, C.; Jones, S. B.;
         Rahardjo, S. A. T. Catalytic Hydrothermal Gasification of Lignin-Rich
         Biorefinery Residues and Algae Final Report. 87.
@@ -273,7 +273,7 @@ class KnockOutDrum(Reactor):
     
     References
     ----------
-    .. [1] Knorr, D.; Lukas, J.; Schoen, P. Production of Advanced Biofuels via
+    [1] Knorr, D.; Lukas, J.; Schoen, P. Production of Advanced Biofuels via
         Liquefaction - Hydrothermal Liquefaction Reactor Design: April 5, 2013;
         NREL/SR-5100-60462, 1111191; 2013; p NREL/SR-5100-60462, 1111191.
         https://doi.org/10.2172/1111191.
@@ -393,30 +393,30 @@ class HydrothermalLiquefaction(Reactor):
         
     References
     ----------
-    .. [1] Leow, S.; Witter, J. R.; Vardon, D. R.; Sharma, B. K.;
+    [1] Leow, S.; Witter, J. R.; Vardon, D. R.; Sharma, B. K.;
         Guest, J. S.; Strathmann, T. J. Prediction of Microalgae Hydrothermal
         Liquefaction Products from Feedstock Biochemical Composition.
         Green Chem. 2015, 17 (6), 3584–3599. https://doi.org/10.1039/C5GC00574D.
-    .. [2] Li, Y.; Leow, S.; Fedders, A. C.; Sharma, B. K.; Guest, J. S.;
+    [2] Li, Y.; Leow, S.; Fedders, A. C.; Sharma, B. K.; Guest, J. S.;
         Strathmann, T. J. Quantitative Multiphase Model for Hydrothermal
         Liquefaction of Algal Biomass. Green Chem. 2017, 19 (4), 1163–1174.
         https://doi.org/10.1039/C6GC03294J.
-    .. [3] Li, Y.; Tarpeh, W. A.; Nelson, K. L.; Strathmann, T. J.
+    [3] Li, Y.; Tarpeh, W. A.; Nelson, K. L.; Strathmann, T. J.
         Quantitative Evaluation of an Integrated System for Valorization of
         Wastewater Algae as Bio-Oil, Fuel Gas, and Fertilizer Products.
         Environ. Sci. Technol. 2018, 52 (21), 12717–12727.
         https://doi.org/10.1021/acs.est.8b04035.
-    .. [4] Jones, S. B.; Zhu, Y.; Anderson, D. B.; Hallen, R. T.; Elliott, D. C.; 
+    [4] Jones, S. B.; Zhu, Y.; Anderson, D. B.; Hallen, R. T.; Elliott, D. C.; 
         Schmidt, A. J.; Albrecht, K. O.; Hart, T. R.; Butcher, M. G.; Drennan, C.; 
         Snowden-Swan, L. J.; Davis, R.; Kinchin, C. 
         Process Design and Economics for the Conversion of Algal Biomass to
         Hydrocarbons: Whole Algae Hydrothermal Liquefaction and Upgrading;
         PNNL--23227, 1126336; 2014; https://doi.org/10.2172/1126336.
-    .. [5] Matayeva, A.; Rasmussen, S. R.; Biller, P. Distribution of Nutrients and
+    [5] Matayeva, A.; Rasmussen, S. R.; Biller, P. Distribution of Nutrients and
         Phosphorus Recovery in Hydrothermal Liquefaction of Waste Streams.
         BiomassBioenergy 2022, 156, 106323.
         https://doi.org/10.1016/j.biombioe.2021.106323.
-    .. [6] Knorr, D.; Lukas, J.; Schoen, P. Production of Advanced Biofuels
+    [6] Knorr, D.; Lukas, J.; Schoen, P. Production of Advanced Biofuels
         via Liquefaction - Hydrothermal Liquefaction Reactor Design:
         April 5, 2013; NREL/SR-5100-60462, 1111191; 2013; p NREL/SR-5100-60462,
         1111191. https://doi.org/10.2172/1111191.

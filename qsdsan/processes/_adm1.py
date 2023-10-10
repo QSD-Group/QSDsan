@@ -315,7 +315,7 @@ def rhos_adm1(state_arr, params):
 # =============================================================================
 class TempState:
     def __init__(self):
-        self.data = []
+        self.data = {}
     
     # def append(self, value):
     #     self.data += [value]
@@ -531,6 +531,7 @@ class ADM1(CompiledProcesses):
                         ('HAc', 'Ac-'), ('HPr', 'Pr-'),
                         ('HBu', 'Bu-'), ('HVa', 'Va-'))
     _biogas_IDs = ('S_h2', 'S_ch4', 'S_IC')
+    _biomass_IDs = ('X_su', 'X_aa', 'X_fa', 'X_c4', 'X_pro', 'X_ac', 'X_h2')
 
     def __new__(cls, components=None, path=None, N_xc=2.686e-3, N_I=4.286e-3, N_aa=7e-3,
                 f_ch_xc=0.2, f_pr_xc=0.2, f_li_xc=0.3, f_xI_xc=0.2,
@@ -591,7 +592,6 @@ class ADM1(CompiledProcesses):
         Ka_base = np.array([10**(-pKa) for pKa in pKa_base])
         Ka_dH = np.array(Ka_dH)
         root = TempState()
-        # root.data = 10**(-7.4655)
         dct = self.__dict__
         dct.update(kwargs)
 

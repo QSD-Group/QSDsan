@@ -186,7 +186,7 @@ default_equipment_lifetime = {
 
 class WWTpump(SanUnit):
     '''
-    Generic class for pumps used in wastewater treatment, [1]_
+    Generic class for pumps used in wastewater treatment,
     all pumps are assumed be made of stainless steel.
 
     This class is intended to be used as a part of other units
@@ -247,7 +247,7 @@ class WWTpump(SanUnit):
 
     References
     ----------
-    .. [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
+    [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
         Valorization of Dilute Organic Carbon Waste Streams.
         Energy Environ. Sci. 2016, 9 (3), 1102–1112.
         https://doi.org/10.1039/C5EE03715H.
@@ -932,7 +932,7 @@ class SludgePump(Pump):
         
     References
     ----------
-    .. [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
+    [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
         Valorization of Dilute Organic Carbon Waste Streams.
         Energy Environ. Sci. 2016, 9 (3), 1102–1112.
         https://doi.org/10.1039/C5EE03715H.
@@ -1111,9 +1111,9 @@ def wwtpump(ID, ins=(), prefix='', pump_type='', Q_mgd=None, add_inputs=(),
     References
     ----------
     [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
-    Valorization of Dilute Organic Carbon Waste Streams.
-    Energy Environ. Sci. 2016, 9 (3), 1102–1112.
-    https://doi.org/10.1039/C5EE03715H.
+        Valorization of Dilute Organic Carbon Waste Streams.
+        Energy Environ. Sci. 2016, 9 (3), 1102–1112.
+        https://doi.org/10.1039/C5EE03715H.
     '''
     return lambda cls: add_pump(cls, ID, ins, prefix, pump_type, Q_mgd, add_inputs,
                                 capacity_factor, include_pump_cost, include_building_cost,
