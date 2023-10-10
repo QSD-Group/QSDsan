@@ -352,7 +352,7 @@ _load_components = settings.get_default_chemicals
 @chemicals_user
 class ModifiedADM1(CompiledProcesses):
     """
-    Modified Anaerobic Digestion Model no.1 [1]_, [2]_
+    Modified Anaerobic Digestion Model no.1 [1]_, [2]_, [3]_
 
     Parameters
     ----------
@@ -498,7 +498,10 @@ class ModifiedADM1(CompiledProcesses):
         Batstone, D. J., Gernaey, K. v., Jeppsson, U. (2017). Plant-wide 
         modelling of phosphorus transformations in wastewater treatment systems: 
         Impacts of control and operational strategies. Water Research, 
-        113, 97–110. https://doi.org/10.1016/J.WATRES.2017.02.007</div>
+        113, 97–110. https://doi.org/10.1016/J.WATRES.2017.02.007
+    .. [3] Hauduc, H., Takács, I., Smith, S., Szabo, A., Murthy, S., Daigger, G. T., 
+        Spérandio, M. (2015). A dynamic physicochemical model for chemical phosphorus 
+        removal. Water Research, 73, 157–170. https://doi.org/10.1016/J.WATRES.2014.12.053
     
     See Also
     --------
@@ -658,8 +661,8 @@ class ModifiedADM1(CompiledProcesses):
         dct = self.__dict__
         dct.update(kwargs)
 
-        # self.set_rate_function(rhos_madm1)
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_vals))
+        # self.set_rate_function(rhos_madm1)
         # self.rate_function._params = dict(zip(cls._kinetic_params,
         #                                       [ks, Ks, K_PP, K_so4, 
         #                                        pH_limits, KS_IN*N_mw, KS_IP*P_mw,
