@@ -567,6 +567,10 @@ class ModifiedADM1(CompiledProcesses):
                                         parameters=cls._stoichio_params,
                                         compile=False)
         
+        for i in ('fast_P_binding', 'slow_P_sorption', 'dissolution_HFO_HP', 'dissolution_HFO_LP'):
+            p = getattr(self, i)
+            p.ref_component = 'S_IP'
+        
         precipitation = []
         for i in cls._precipitate_IDs[:-3]:
             new_p = Process('precipitation_%s' % i.lstrip('X_'),
