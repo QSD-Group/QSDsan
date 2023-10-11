@@ -43,6 +43,23 @@ Fe_mw = get_mw({'Fe':1})
 O_mw = get_mw({'O':1})
 
 def create_madm1_cmps(set_thermo=True, ASF_L=0.31, ASF_H=1.2):
+    '''
+    Create a set of components for the modified ADM1.
+
+    Parameters
+    ----------
+    set_thermo : bool, optional
+        Whether to set thermo with the returned set of components. The default is True.
+    ASF_L : float, optional
+        Active site factor for X_HFO_L [mol P sites/mol Fe]. The default is 0.31.
+    ASF_H : float, optional
+        Active site factor for X_HFO_H [mol P sites/mol Fe]. The default is 1.2.
+
+    Returns
+    -------
+    cmps_madm1 : class:`CompiledComponents`
+
+    '''
     
     # Components from the original ADM1
     # *********************************
@@ -210,45 +227,23 @@ def create_madm1_cmps(set_thermo=True, ASF_L=0.31, ASF_H=1.2):
     return cmps_madm1
 
 #%% rate functions
-{'S_su': 0,
- 'S_aa': 1,
- 'S_fa': 2,
- 'S_va': 3,
- 'S_bu': 4,
- 'S_pro': 5,
- 'S_ac': 6,
- 'S_h2': 7,
- 'S_ch4': 8,
- 'S_IC': 9,
- 'S_IN': 10,
- 'S_IP': 11,
- 'S_I': 12,
- 'X_ch': 13,
- 'X_pr': 14,
- 'X_li': 15,
- 'X_su': 16,
- 'X_aa': 17,
- 'X_fa': 18,
- 'X_c4': 19,
- 'X_pro': 20,
- 'X_ac': 21,
- 'X_h2': 22,
- 'X_I': 23,
- 'X_PHA': 24,
- 'X_PP': 25,
- 'X_PAO': 26,
- 'S_K': 27,
- 'S_Mg': 28,
- 'S_SO4': 29,
- 'S_IS': 30,
- 'X_hSRB': 31,
- 'X_aSRB': 32,
- 'X_pSRB': 33,
- 'X_c4SRB': 34,
- 'S_S0': 35,
- 'S_Fe3': 36,
- 'S_Fe2': 37,
- 'H2O': 38}
+
+"https://wiki.dynamita.com/en/biokinetic_process_models#chemical-phosphorus-removal-with-metal-salts-addition-iron-or-aluminium"
+
+{'S_su': 0, 'S_aa': 1, 'S_fa': 2, 'S_va': 3, 'S_bu': 4, 'S_pro': 5, 'S_ac': 6, 'S_h2': 7,
+ 'S_ch4': 8, 'S_IC': 9, 'S_IN': 10, 'S_IP': 11, 'S_I': 12,
+ 'X_ch': 13, 'X_pr': 14, 'X_li': 15, 
+ 'X_su': 16, 'X_aa': 17, 'X_fa': 18, 'X_c4': 19, 'X_pro': 20, 'X_ac': 21, 'X_h2': 22, 'X_I': 23,
+ 'X_PHA': 24, 'X_PP': 25, 'X_PAO': 26, 'S_K': 27, 'S_Mg': 28,
+ 'S_SO4': 29, 'S_IS': 30, 'X_hSRB': 31, 'X_aSRB': 32, 'X_pSRB': 33, 'X_c4SRB': 34,
+ 'S_S0': 35, 'S_Fe3': 36, 'S_Fe2': 37,
+ 'X_HFO_H': 38, 'X_HFO_L': 39, 'X_HFO_old': 40, 'X_HFO_HP': 41, 'X_HFO_LP': 42, 'X_HFO_HP_old': 43, 'X_HFO_LP_old': 44,
+ 'S_Ca': 45, 'S_Al': 46,
+ 'X_CCM': 47, 'X_ACC': 48, 'X_ACP': 49, 'X_HAP': 50, 'X_DCPD': 51, 'X_OCP': 52,
+ 'X_struv': 53, 'X_newb': 54, 'X_magn': 55, 'X_kstruv': 56, 
+ 'X_FeS': 57, 'X_Fe3PO42': 58,
+ 'X_AlPO4': 59,
+ 'S_Na': 60, 'S_Cl': 61, 'H2O': 62}
 
 def calc_pH():
     pass
@@ -256,8 +251,8 @@ def calc_pH():
 def calc_biogas():
     pass
 
-rhos = np.zeros(40) # 36 biochemical processes + 4 gas transfer processes
-Cs = np.empty(36)
+rhos = np.zeros(38+8+13+4) # 38 biological + 8 chemical P removal by HFO + 13 MMP + 4 gas transfer
+Cs = np.empty(38)
 
 def rhos_madm1(state_arr, params):
     ks = params['rate_constants']
@@ -288,9 +283,9 @@ def rhos_madm1(state_arr, params):
     Cs[27:29] = state_arr[32]
     Cs[29:31] = state_arr[33]
     Cs[31:34] = state_arr[34]
-    Cs[34:36] = state_arr[36]                   # Fe extension processes
+    Cs[34:36] = Cs[36:38] = state_arr[38:40]                # Fe extension processes
     
-    rhos[:-4] = ks * Cs
+    rhos[:38] = ks * Cs
     primary_substrates = state_arr[:8]
     
     rhos[3:11] *= substr_inhibit(primary_substrates, Ks[:8])
@@ -309,12 +304,11 @@ def rhos_madm1(state_arr, params):
     
     #!!! why divide by 16 or 64?
     S_h2 = primary_substrates[-1]
-    rhos[34] *= S_h2 / 16 
-    rhos[35] *= S_IS / 64
+    rhos[34:36] *= S_h2 / 16 
+    rhos[36:38] *= S_IS / 64
     
-# =============================================================================
-#   inhibition factors
-# =============================================================================
+    # inhibition factors
+    # ******************
     
     S_IN, S_IP = state_arr[[10,11]]
     I_nutrients = substr_inhibit(S_IN, KS_IN) * substr_inhibit(S_IP, KS_IP)
@@ -322,7 +316,7 @@ def rhos_madm1(state_arr, params):
     rhos[[25,27,29,31,32]] *= I_nutrients
     
 # =============================================================================
-#     #!!! place holder for pH
+#     !!! place holder for pH
 # =============================================================================
     pH, nh3 = calc_pH(state_arr, params)
     Is_pH = Hill_inhibit(10**(-pH), pH_ULs, pH_LLs)
@@ -339,7 +333,7 @@ def rhos_madm1(state_arr, params):
 # =============================================================================
 #     !!! place holder for gas-liquid transfer
 # =============================================================================
-    Z_h2s = calc_biogas() # should be a function of pH
+    Z_h2s = calc_biogas() # should be a function of pH, like co2 and nh3
     Is_h2s = non_compet_inhibit(Z_h2s, KIs_h2s)
     rhos[6:11] *= Is_h2s[:5]
     rhos[[25,27,29,31,32]] *= Is_h2s[5:]
@@ -442,9 +436,12 @@ class ModifiedADM1(CompiledProcesses):
     K_so4_c4SRB : float, optional
         Sulfate half saturation coefficient of SRB uptaking butyrate or valerate  
         [kg S/m3]. The default is 6.413e-3.
-    k_Fe3t2 : float, optional
-        Fe(3+) reduction rate constant [m3∙kg^(-1) Fe(III)∙d^(-1)]. 
-        The default is 1.79e7.
+    k_Fe3t2_h2 : float, optional
+        Fe(3+) reduction rate constant [m3∙kg^(-1) Fe(III)∙d^(-1)] using hydrogen
+        as electron donor. The default is 1.79e7.
+    k_Fe3t2_is : float, optional
+        Fe(3+) reduction rate constant [m3∙kg^(-1) Fe(III)∙d^(-1)] using sulfide
+        as electron donor. The default is 1.79e7.
     KS_IP : float, optional
         Inorganic phosphorus (nutrient) inhibition coefficient for soluble 
         substrate uptake [M]. The default is 2e-5.
@@ -552,7 +549,7 @@ class ModifiedADM1(CompiledProcesses):
                 b_hSRB=0.02, b_aSRB=0.02, b_pSRB=0.02, b_c4SRB=0.02,
                 K_hSRB=5.96e-6, K_aSRB=0.176, K_pSRB=0.088, K_c4SRB=0.1739,
                 K_so4_hSRB=1.04e-4*S_mw, K_so4_aSRB=2e-4*S_mw, K_so4_pSRB=2e-4*S_mw, K_so4_c4SRB=2e-4*S_mw,
-                k_Fe3t2=1e9/Fe_mw,
+                k_Fe3t2_h2=1e9/Fe_mw, k_Fe3t2_is=1e9/Fe_mw,
                 KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_nh3=1.8e-3, KS_IN=1e-4, KS_IP=2e-5,
                 KI_h2s_c4=0.481, KI_h2s_pro=0.481, KI_h2s_ac=0.460, KI_h2s_h2=0.400,
                 KI_h2s_c4SRB=0.520, KI_h2s_pSRB=0.520, KI_h2s_aSRB=0.499, KI_h2s_hSRB=0.499,
@@ -643,7 +640,7 @@ class ModifiedADM1(CompiledProcesses):
                        b_su, b_aa, b_fa, b_c4, b_pro, b_ac, b_h2,               # original ADM1
                        q_pha, q_pha, q_pha, q_pha, b_pao, b_pp, b_pha,          # P extension
                        k_hSRB, b_hSRB, k_aSRB, b_aSRB, k_pSRB, b_pSRB, k_c4SRB, k_c4SRB, b_c4SRB, # S extension
-                       k_Fe3t2, k_Fe3t2))                                       # Fe extension
+                       k_Fe3t2_h2, k_Fe3t2_h2, k_Fe3t2_is, k_Fe3t2_is))         # Fe extension + HFO
         
         Ks = np.array((K_su, K_aa, K_fa, K_c4, K_c4, K_pro, K_ac, K_h2,         # original ADM1
                        K_A,                                                     # P extension
