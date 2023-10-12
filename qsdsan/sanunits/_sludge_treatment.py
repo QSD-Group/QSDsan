@@ -16,6 +16,7 @@ for license details.
 from .. import SanUnit, WasteStream
 import numpy as np
 from ..sanunits import WWTpump
+from warnings import warn
 from ..sanunits._pumping import (
     default_F_BM as default_WWTpump_F_BM,
     default_equipment_lifetime as default_WWTpump_equipment_lifetime,
@@ -48,13 +49,17 @@ class Thickener(SanUnit):
     TSS_removal_perc : float
         The percentage of suspended solids removed in the thickener.[1]
     solids_loading_rate : float
-        Solid loading rate in the thickener in [(kg/day)/m2]. [2]
-        Typical SLR value for thickener lies between 9.6-24 (lb/day)/ft2. 
-        Here default value of 75 (kg/day)/m2 [15.36 (lb/day)/ft2] is used.
-    h_cylindrical = float
-        Height of cylinder forming the thickener.[2]
-    upflow_velocity : float, optional
-        Speed with which influent enters the center feed of the clarifier [m/hr]. The default is 43.2.
+        Solid loading rate in the thickener in [(kg/hr)/m2]. Default is 4 kg/(m2*hr) [2]
+        If the thickener is treating:
+        Only Primary clarifier sludge, then expected range: 4-6 kg/(m2*hr)
+        Only WAS (treated with air or oxygen): 0.5-1.5 kg/(m2*hr)
+        Primary clarfier sludge + WAS: 1.5-3.5 kg/(m2/hr)
+    h_thickener = float
+        Side water depth of the thickener. Typically lies between 3-4 m. [2]
+        Height of tank forming the thickener.
+    downward_flow_velocity : float, optional
+        Speed on the basis of which center feed diameter is designed [m/hr]. [3]
+        The default is 36 m/hr. (10 mm/sec)
     F_BM : dict
         Equipment bare modules.
         
@@ -125,7 +130,10 @@ class Thickener(SanUnit):
     ----------
     .. [1] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
     Benchmarking of control strategies for wastewater treatment plants. IWA publishing, 2014.
-    [2] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
+    .. [2] Chapter-21: Solids Thicknening (Table 21.3). WEF Manual of Practice No. 8. 
+    6th Edition. Virginia: McGraw-Hill, 2018. 
+    .. [3] Introduction to Wastewater Clarifier Design by Nikolay Voutchkov, PE, BCEE.
+    .. [4] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
     engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
     """
     
@@ -135,23 +143,23 @@ class Thickener(SanUnit):
     _outs_size_is_fixed = False
     
     # Costs
-    wall_concrete_unit_cost = 650 / 0.765 # $/m3, 0.765 is to convert from $/yd3
-    stainless_steel_unit_cost=1.8 # $/kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
+    wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
+    slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
+    stainless_steel_unit_cost=1.8 # Alibaba. Brushed Stainless Steel Plate 304. https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
     
     pumps = ('sludge',)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=default_F_BM, thickener_perc=7, 
-                  TSS_removal_perc=98, solids_loading_rate = 75, h_cylindrical=2, 
-                  upflow_velocity=43.2, design_flow = 113, F_BM=default_F_BM, **kwargs):
+                  TSS_removal_perc=98, solids_loading_rate =4, h_thickener=4, 
+                  upflow_velocity= 36, F_BM=default_F_BM, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with)
         self.thickener_perc = thickener_perc 
         self.TSS_removal_perc = TSS_removal_perc
         self.solids_loading_rate = solids_loading_rate 
-        self.h_cylindrical = h_cylindrical
+        self.h_thickener = h_thickener
         self.upflow_velocity = upflow_velocity
-        self.design_flow = design_flow # 0.60 MGD = 113 m3/hr
         self.F_BM.update(F_BM)
         self._mixed = WasteStream(f'{ID}_mixed')        
         self._sludge = self.outs[0].copy(f'{ID}_sludge')
@@ -385,37 +393,16 @@ class Thickener(SanUnit):
             _update_state()
             _update_dstate()
         self._AE = yt
-        
-    _units = {
-        'slr': 'kg/m2',
-        'Daily mass of solids handled': 'kg',
-        'Surface area': 'm2',
-        
-        'Cylindrical diameter': 'm',
-        'Cylindrical depth': 'm',
-        'Cylindrical volume': 'm3',
-        
-        'Conical radius': 'm',
-        'Conical depth': 'm',
-        'Conical volume': 'm3',
-       
-        'Volume': 'm3',
-        'Center feed depth': 'm',
-        'Upflow velocity': 'm/hr',
-        'Center feed diameter': 'm',
-        'Volume of concrete wall': 'm3',
-        'Stainless steel': 'kg',
-        'Pump pipe stainless steel' : 'kg',
-        'Pump stainless steel': 'kg'
-    }
-    
+         
     def _design_pump(self):
         ID, pumps = self.ID, self.pumps
         self._sludge.copy_like(self.outs[0])
         sludge = self._sludge
+        
         ins_dct = {
             'sludge': sludge,
             }
+        
         type_dct = dict.fromkeys(pumps, 'sludge')
         inputs_dct = dict.fromkeys(pumps, (1,))
         
@@ -450,52 +437,115 @@ class Thickener(SanUnit):
             pump_ss += p_design['Pump stainless steel']
         return pipe_ss, pump_ss
     
+    _units = {
+        'Design solids loading rate': 'kg/m2/hr',
+        'Total mass of solids handled': 'kg',
+        'Surface area': 'm2',
+        'Thickener diameter': 'm',
+        'Number of thickeners' : 'Unitless',
+        'Thickener depth': 'm',
+        'Conical depth': 'm',
+        'Cylindrical depth': 'm',
+        'Cylindrical volume': 'm3',
+        'Conical volume': 'm3',
+        'Thickener volume': 'm3',
+        
+        'Center feed depth': 'm',
+        'Downward flow velocity': 'm/hr',
+        'Volumetric flow': 'm3/hr', 
+        'Center feed diameter': 'm',
+        'Thickener depth': 'm',
+        'Volume of concrete wall': 'm3',
+        'Volume of concrete slab': 'm3',
+        'Stainless steel': 'kg',
+        'Pump pipe stainless steel' : 'kg',
+        'Pump stainless steel': 'kg',
+        'Number of pumps': 'Unitless'
+    }
+    
     def _design(self):
-        D = self.design_results
-        D['Number of thickeners'] = np.ceil(self._mixed.get_total_flow('m3/hr')/self.design_flow)
-        D['slr'] = self.solids_loading_rate # in (kg/day)/m2
+        
+        self._mixed.mix_from(self.ins)
         mixed = self._mixed
-        D['Daily mass of solids handled'] =  ((mixed.get_TSS()/1000)*mixed.get_total_flow('m3/hr')*24)/D['Number of thickeners'] # (mg/L)*[1/1000(kg*L)/(mg*m3)](m3/hr)*(24hr/day) = (kg/day)
-        D['Surface area'] = D['Daily mass of solids handled']/D['slr'] # in m2
+        D = self.design_results
         
-        # design['Hydraulic_Loading'] = (self.ins[0].F_vol*24)/design['Area'] #in m3/(m2*day)
-        D['Cylindrical diameter'] = np.sqrt(4*D['Surface area']/np.pi) #in m
-        D['Cylindrical depth'] = self.h_cylindrical #in m 
-        D['Cylindrical volume'] = np.pi*np.square(D['Cylindrical diameter']/2)*D['Cylindrical depth'] #in m3
+        # D['Number of thickeners'] = np.ceil(self._mixed.get_total_flow('m3/hr')/self.design_flow)
+        D['Design solids loading rate'] = self.solids_loading_rate # in (kg/hr)/m2
+        D['Total mass of solids handled'] = (mixed.get_TSS()/1000)*mixed.get_total_flow('m3/hr') # (mg/L)*[1/1000(kg*L)/(mg*m3)](m3/hr) = (kg/hr)
         
-        D['Conical radius'] = D['Cylindrical diameter']/2
-        # The slope of the bottom conical floor lies between 1:10 to 1:12
-        D['Conical depth'] = D['Conical radius']/10
-        D['Conical volume'] = (3.14/3)*(D['Conical radius']**2)*D['Conical depth']
-       
-        D['Volume'] = D['Cylindrical volume'] + D['Conical volume']
+        # Common gravity thickener configurations have tanks with diameter between 21-24m (MOP 8)
+        diameter_thickener = 24
+        number_of_thickeners = 0
+        while diameter_thickener >= 22:
+            number_of_thickeners += 1
+            total_surface_area =  D['Total mass of solids handled']/D['Design solids loading rate'] #m2
+            surface_area_thickener = total_surface_area/number_of_thickeners
+            diameter_thickener = np.sqrt(4*surface_area_thickener/np.pi)
+            
+        D['Surface area'] = surface_area_thickener #in m2
+        D['Thickener diameter'] = diameter_thickener #in m
+        D['Number of thickeners'] = number_of_thickeners
+    
+        # Common gravity thickener configurations have sidewater depth between 3-4m (MOP 8)
+        D['Thickener depth'] = self.h_thickener #in m 
+        # The thickener tank floor generally has slope between 2:12 and 3:12 (MOP 8)
+        D['Conical depth'] = (2/12)*(D['Thickener diameter']/2)
+        D['Cylindrical depth'] = D['Thickener depth'] - D['Conical depth']
         
-        # The design here is for center feed thickener.
-       
-        # Depth of the center feed lies between 30-75% of sidewater depth
+        # Checks on depth
+        if D['Cylindrical depth'] < 0:
+            cyl_depth = D['Cylindrical depth']
+            RuntimeError(f'Cylindrical depth (= {cyl_depth} ) is negative')
+            
+        if D['Cylindrical depth'] < D['Conical depth']:
+            cyl_depth = D['Cylindrical depth']
+            con_depth = D['Conical depth'] 
+            RuntimeError(f'Cylindrical depth (= {cyl_depth} ) is lower than Conical depth (= {con_depth})')
+             
+        D['Cylindrical volume'] = np.pi*np.square(D['Thickener diameter']/2)*D['Cylindrical depth'] #in m3
+        D['Conical volume'] = (np.pi/3)*(D['Thickener diameter']/2)**2*D['Conical depth']
+        D['Thickener volume'] = D['Cylindrical volume'] + D['Conical volume']
+        
+        #Check on SOR is pending
+        
+        # The design here is for center feed of thickener.
+        # Depth of the center feed lies between 30-75% of sidewater depth. [2]
         D['Center feed depth'] = 0.5*D['Cylindrical depth']
         # Typical conventional feed wells are designed for an average downflow velocity
-        # of 10-13 mm/s and maximum velocity of 25-30 mm/s
+        # of 10-13 mm/s and maximum velocity of 25-30 mm/s. [4]
         peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
-        D['Upflow velocity'] = self.upflow_velocity*peak_flow_safety_factor # in m/hr
-        Center_feed_area = mixed.get_total_flow('m3/hr')/D['Upflow velocity'] # in m2
-        D['Center feed diameter'] = ((4*Center_feed_area)/3.14)**(1/2) # Sanity check: Diameter of the center feed lies between 15-25% of tank diameter
+        D['Downward flow velocity'] = self.downward_flow_velocity*peak_flow_safety_factor # in m/hr
+        
+        D['Volumetric flow'] =  mixed.get_total_flow('m3/hr')/D['Number of clarifiers'] # m3/hr
+        Center_feed_area = D['Volumetric flow']/D['Downward flow velocity'] # in m2
+        D['Center feed diameter'] = np.sqrt(4*Center_feed_area/np.pi) # in m
+
+        #Diameter of the center feed does not exceed 40% of tank diameter [2]
+        if D['Center feed diameter'] > 0.40*D['Thickener diameter']:
+            cf_dia = D['Center feed diameter'] 
+            tank_dia = D['Thickener diameter']
+            warn(f'Diameter of the center feed exceeds 40% of tank diameter. It is {cf_dia*100/tank_dia}% of tank diameter')
 
         # Amount of concrete required
-        D_tank = D['Cylindrical depth']*39.37 # m to inches 
-        # Thickness of the wall concrete, [m]. Default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
+        D_tank = D['Thickener depth']*39.37 # m to inches 
+        # Thickness of the wall concrete [m]. Default to be minimum of 1 feet with 1 inch added for every feet of depth over 12 feet.
         thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
-        inner_diameter = D['Cylindrical diameter']
+        inner_diameter = D['Thickener diameter']
         outer_diameter = inner_diameter + 2*thickness_concrete_wall
-        volume_cylindercal_wall = (3.14*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
-        volume_conical_wall = (3.14/3)*(D['Conical depth']/4)*(outer_diameter**2 - inner_diameter**2)
+        volume_cylindercal_wall = (np.pi*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
+        D['Volume of concrete wall'] = volume_cylindercal_wall # in m3
         
-        D['Volume of concrete wall'] = volume_cylindercal_wall + volume_conical_wall # in m3
+        # Concrete slab thickness, [ft], default to be 2 in thicker than the wall thickness. (Brian's code)
+        thickness_concrete_slab = thickness_concrete_wall + (2/12)*0.3048 # from inch to m
+        outer_diameter_cone = inner_diameter + 2*(thickness_concrete_wall + thickness_concrete_slab)
+        volume_conical_wall = (np.pi/(3*4))*(((D['Conical depth'] + thickness_concrete_wall + thickness_concrete_slab)*(outer_diameter_cone**2)) - (D['Conical depth']*(inner_diameter)**2))
+        D['Volume of concrete slab'] = volume_conical_wall
+        
         # Amount of metal required for center feed
-        thickness_metal_wall = 0.5 # in m (!! NEED A RELIABLE SOURCE !!)
+        thickness_metal_wall = 0.3048 # equal to 1 feet, in m (!! NEED A RELIABLE SOURCE !!)
         inner_diameter_center_feed = D['Center feed diameter']
         outer_diameter_center_feed = inner_diameter_center_feed + 2*thickness_metal_wall
-        volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed **2)
+        volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed**2)
         density_ss = 7930 # kg/m3, 18/8 Chromium
         D['Stainless steel'] = volume_center_feed*density_ss # in kg
        
@@ -504,29 +554,30 @@ class Thickener(SanUnit):
         D['Pump pipe stainless steel'] = pipe
         D['Pump stainless steel'] = pumps
         
-        #For thickeners
+        #For thickener 
         D['Number of pumps'] = D['Number of thickeners']
         
     def _cost(self):
         
         self._mixed.mix_from(self.ins)
+        mixed = self._mixed
        
         D = self.design_results
         C = self.baseline_purchase_costs
        
         # Construction of concrete and stainless steel walls
         C['Wall concrete'] = D['Number of thickeners']*D['Volume of concrete wall']*self.wall_concrete_unit_cost
+        C['Slab concrete'] = D['Number of thickeners']*D['Volume of concrete slab']*self.slab_concrete_unit_cost
         C['Wall stainless steel'] = D['Number of thickeners']*D['Stainless steel']*self.stainless_steel_unit_cost
        
         # Cost of equipment 
-        
         # Source of scaling exponents: Process Design and Economics for Biochemical Conversion of Lignocellulosic Biomass to Ethanol by NREL.
         
         # Scraper 
         # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
         base_cost_scraper = 2500
         base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
-        thickener_flow = self._mixed.get_total_flow('m3/hr')/D['Number of thickeners']
+        thickener_flow = mixed.get_total_flow('m3/hr')/D['Number of thickeners']
         C['Scraper'] = D['Number of thickeners']*base_cost_scraper*(thickener_flow/base_flow_scraper)**0.6
         base_power_scraper = 2.75 # in kW
         scraper_power = D['Number of thickeners']*base_power_scraper*(thickener_flow/base_flow_scraper)**0.6
@@ -1026,6 +1077,27 @@ class Incinerator(SanUnit):
         self._cached_state = self._state.copy()
         self._cached_t = 0
         
+    # def _cost(self):
+        
+    #     C = self.baseline_purchase_costs
+        
+    #     sludge, air, fuel = self.ins
+        
+    #     solids_load_treated = sludge.get_total_flow('m3/hr')*sludge.get_TSS('mg/L')/1000 # in kg/hr
+        
+    #     C = self.baseline_purchase_costs
+        
+    #     # Based on regression equations obtained from CapdetWorks
+    #     C['Construction and equipment costs'] = 119629*(solids_load_treated)**0.9282 
+    #     C['Installed incinerator costs'] = 114834*(solids_load_treated)**0.9284
+    #     C['Slab concrete costs'] = 782.28*(solids_load_treated)**0.9111
+    #     C['Building costs'] = 4429.8*(solids_load_treated)**0.911
+        
+    #     # Based on regression equations obtained from CapdetWorks
+    #     add_OPEX = self.add_OPEX 
+    #     add_OPEX['Material and supply costs'] = 0.0614*(solids_load_treated)**0.9282
+    #     add_OPEX['Energy costs'] = 1.3079*(solids_load_treated)**0.9901
+        
     def _update_state(self):
         cmps = self.components
         for ws in self.outs:
@@ -1124,3 +1196,6 @@ class Incinerator(SanUnit):
             _update_state()
             _update_dstate()
         self._AE = yt
+        
+        
+        
