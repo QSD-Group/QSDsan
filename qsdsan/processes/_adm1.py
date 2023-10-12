@@ -190,6 +190,8 @@ def mass2mol_conversion(cmps):
 #     return np.exp(theta * (T2-T1))
 
 def T_correction_factor(T1, T2, delta_H):
+    """compute temperature correction factor for equilibrium constants based on
+    the Van't Holf equation."""
     if T1 == T2: return 1
     return np.exp(delta_H/(R*100) * (1/T1 - 1/T2))  # R converted to SI
 
@@ -268,10 +270,24 @@ def rhos_adm1(state_arr, params):
     weak_acids = cmps_in_M[[24, 25, 10, 9, 6, 5, 4, 3]]
 
     T_op = state_arr[-1]
+    if T_op == T_base:
+        Ka = Kab
+        KH = KHb / unit_conversion[7:10]
+    else:
+        T_temp = params.pop('T_op', None)
+        if T_op == T_temp:
+            params['T_op'] = T_op
+            Ka = params['Ka']
+            KH = params['KH']
+        else:
+            params['T_op'] = T_op
+            Ka = params['Ka'] = Kab * T_correction_factor(T_base, T_op, Ka_dH)
+            KH = params['KH'] = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[7:10]
+
     biogas_S = state_arr[7:10].copy()
     biogas_p = R * T_op * state_arr[27:30]
-    Kas = Kab * T_correction_factor(T_base, T_op, Ka_dH)
-    KH = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[7:10]
+    # Kas = Kab * T_correction_factor(T_base, T_op, Ka_dH)
+    # KH = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[7:10]
 
     rhos[:-3] = ks * Cs
     Monod = substr_inhibit(substrates, Ks)
@@ -280,12 +296,12 @@ def rhos_adm1(state_arr, params):
     if S_bu > 0: rhos[8] *= 1/(1+S_va/S_bu)
 
     h = brenth(acid_base_rxn, 1e-14, 1.0,
-            args=(weak_acids, Kas),
+            args=(weak_acids, Ka),
             xtol=1e-12, maxiter=100)
     # h = 10**(-7.46)
 
-    nh3 = Kas[1] * weak_acids[2] / (Kas[1] + h)
-    co2 = weak_acids[3] - Kas[2] * weak_acids[3] / (Kas[2] + h)
+    nh3 = Ka[1] * weak_acids[2] / (Ka[1] + h)
+    co2 = weak_acids[3] - Ka[2] * weak_acids[3] / (Ka[2] + h)
     biogas_S[-1] = co2 / unit_conversion[9]
     
     Iph = Hill_inhibit(h, pH_ULs, pH_LLs)
