@@ -258,6 +258,8 @@ def calc_biogas():
 def pcm():
     pass
 
+def saturation_index():
+    pass
 
 rhos = np.zeros(38+8+13+4) # 38 biological + 8 chemical P removal by HFO + 13 MMP + 4 gas transfer
 Cs = np.empty(38+8)
@@ -352,9 +354,9 @@ def rhos_madm1(state_arr, params, T_op):
     rhos[[25,27,29,31,32]] *= I_nutrients
     
 # =============================================================================
-#     !!! place holder for pH
+#     !!! place holder for PCM (speciation)
 # =============================================================================
-    pH, nh3 = calc_pH(state_arr, params)
+    pH, nh3, co2, acts = pcm(state_arr, params)
     Is_pH = Hill_inhibit(10**(-pH), pH_ULs, pH_LLs)
     rhos[3:9] *= Is_pH[0]
     rhos[9:11] *= Is_pH[1:3]
@@ -366,20 +368,25 @@ def rhos_madm1(state_arr, params, T_op):
     Inh3 = non_compet_inhibit(nh3, KI_nh3)
     rhos[9] *= Inh3
     
-# =============================================================================
-#     !!! place holder for gas-liquid transfer
-# =============================================================================
     Z_h2s = calc_biogas() # should be a function of pH, like co2 and nh3
     Is_h2s = non_compet_inhibit(Z_h2s, KIs_h2s)
     rhos[6:11] *= Is_h2s[:5]
     rhos[[25,27,29,31,32]] *= Is_h2s[5:]
     
-# =============================================================================
-#     !!! place holder for PCM (speciation)
-# =============================================================================
-    acts = pcm(state_arr)
+    # multiple mineral precipitation
+    # ******************************
     SIs = np.maximum(1.0, saturation_index(acts, Ksp))  # should be an array
     rhos[46:59] = k_cryst * state_arr[47:60] * (SIs**(1/sum_stoichios) - 1)**n_cryst
+    
+    # gas transfer
+    # ************
+    biogas_S = state_arr[[7,8,9,30]].copy()
+    biogas_S[2] = co2 / unit_conversion[9]
+    biogas_S[3] = Z_h2s / unit_conversion[30]
+    biogas_p = R * T_op * state_arr[63:67]
+    rhos[-4:] = kLa * (biogas_S - KH * biogas_p)
+    
+    return rhos
 
 #%% modified ADM1 class
 _load_components = settings.get_default_chemicals
