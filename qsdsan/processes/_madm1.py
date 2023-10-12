@@ -263,7 +263,7 @@ rhos = np.zeros(38+8+13+4) # 38 biological + 8 chemical P removal by HFO + 13 MM
 Cs = np.empty(38+8)
 sum_stoichios = np.array([2, 2, 5, 9, 3, 8, 3, 3, 2, 3, 2, 2])
 
-def rhos_madm1(state_arr, params):
+def rhos_madm1(state_arr, params, T_op):
     ks = params['rate_constants']
     Ks = params['half_sat_coeffs']
     K_PP = params['K_PP']
@@ -283,8 +283,9 @@ def rhos_madm1(state_arr, params):
     kLa = params['kLa']
     k_cryst = params['k_cryst']
     n_cryst = params['n_cryst']
+    Kspb = params['Ksp_base']
+    Ksp_dH = params['Ksp_dH']
     T_base = params['T_base']
-    # T_temp = params.pop('T_temp', T_base)
     
     Cs[:7] = state_arr[13:20]                   # original ADM1 processes
     Cs[7:11] = state_arr[19:23]
@@ -327,7 +328,24 @@ def rhos_madm1(state_arr, params):
     
     # inhibition factors
     # ******************
-    
+    unit_conversion = mass2mol_conversion(cmps)    
+    if T_op == T_base:
+        Ka = Kab
+        KH = KHb / unit_conversion[[7,8,9,30]]
+        Ksp = Kspb
+    else:
+        T_temp = params.pop('T_op', None)
+        if T_op == T_temp:
+            params['T_op'] = T_op
+            Ka = params['Ka']
+            KH = params['KH']
+            Ksp = params['Ksp']
+        else:
+            params['T_op'] = T_op
+            Ka = params['Ka'] = Kab * T_correction_factor(T_base, T_op, Ka_dH)
+            KH = params['KH'] = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[[7,8,9,30]]
+            Ksp = params['Ksp'] = Kspb * T_correction_factor(T_base, T_op, Ksp_dH)
+            
     S_IN, S_IP = state_arr[[10,11]]
     I_nutrients = substr_inhibit(S_IN, KS_IN) * substr_inhibit(S_IP, KS_IP)
     rhos[3:11] *= I_nutrients
@@ -360,7 +378,7 @@ def rhos_madm1(state_arr, params):
 #     !!! place holder for PCM (speciation)
 # =============================================================================
     acts = pcm(state_arr)
-    SIs = np.maximum(1.0, saturation_index(acts))  # should be an array
+    SIs = np.maximum(1.0, saturation_index(acts, Ksp))  # should be an array
     rhos[46:59] = k_cryst * state_arr[47:60] * (SIs**(1/sum_stoichios) - 1)**n_cryst
 
 #%% modified ADM1 class
