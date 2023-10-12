@@ -228,22 +228,26 @@ def create_madm1_cmps(set_thermo=True, ASF_L=0.31, ASF_H=1.2):
 
 #%% rate functions
 
-"https://wiki.dynamita.com/en/biokinetic_process_models#chemical-phosphorus-removal-with-metal-salts-addition-iron-or-aluminium"
+# https://wiki.dynamita.com/en/biokinetic_process_models#chemical-phosphorus-removal-with-metal-salts-addition-iron-or-aluminium
 
-{'S_su': 0, 'S_aa': 1, 'S_fa': 2, 'S_va': 3, 'S_bu': 4, 'S_pro': 5, 'S_ac': 6, 'S_h2': 7,
- 'S_ch4': 8, 'S_IC': 9, 'S_IN': 10, 'S_IP': 11, 'S_I': 12,
- 'X_ch': 13, 'X_pr': 14, 'X_li': 15, 
- 'X_su': 16, 'X_aa': 17, 'X_fa': 18, 'X_c4': 19, 'X_pro': 20, 'X_ac': 21, 'X_h2': 22, 'X_I': 23,
- 'X_PHA': 24, 'X_PP': 25, 'X_PAO': 26, 'S_K': 27, 'S_Mg': 28,
- 'S_SO4': 29, 'S_IS': 30, 'X_hSRB': 31, 'X_aSRB': 32, 'X_pSRB': 33, 'X_c4SRB': 34,
- 'S_S0': 35, 'S_Fe3': 36, 'S_Fe2': 37,
- 'X_HFO_H': 38, 'X_HFO_L': 39, 'X_HFO_old': 40, 'X_HFO_HP': 41, 'X_HFO_LP': 42, 'X_HFO_HP_old': 43, 'X_HFO_LP_old': 44,
- 'S_Ca': 45, 'S_Al': 46,
- 'X_CCM': 47, 'X_ACC': 48, 'X_ACP': 49, 'X_HAP': 50, 'X_DCPD': 51, 'X_OCP': 52,
- 'X_struv': 53, 'X_newb': 54, 'X_magn': 55, 'X_kstruv': 56, 
- 'X_FeS': 57, 'X_Fe3PO42': 58,
- 'X_AlPO4': 59,
- 'S_Na': 60, 'S_Cl': 61, 'H2O': 62}
+# =============================================================================
+# state_variable_indices = {
+#     'S_su': 0, 'S_aa': 1, 'S_fa': 2, 'S_va': 3, 'S_bu': 4, 'S_pro': 5, 'S_ac': 6, 'S_h2': 7,
+#     'S_ch4': 8, 'S_IC': 9, 'S_IN': 10, 'S_IP': 11, 'S_I': 12,
+#     'X_ch': 13, 'X_pr': 14, 'X_li': 15, 
+#     'X_su': 16, 'X_aa': 17, 'X_fa': 18, 'X_c4': 19, 'X_pro': 20, 'X_ac': 21, 'X_h2': 22, 'X_I': 23,
+#     'X_PHA': 24, 'X_PP': 25, 'X_PAO': 26, 'S_K': 27, 'S_Mg': 28,
+#     'S_SO4': 29, 'S_IS': 30, 'X_hSRB': 31, 'X_aSRB': 32, 'X_pSRB': 33, 'X_c4SRB': 34,
+#     'S_S0': 35, 'S_Fe3': 36, 'S_Fe2': 37,
+#     'X_HFO_H': 38, 'X_HFO_L': 39, 'X_HFO_old': 40, 'X_HFO_HP': 41, 'X_HFO_LP': 42, 'X_HFO_HP_old': 43, 'X_HFO_LP_old': 44,
+#     'S_Ca': 45, 'S_Al': 46,
+#     'X_CCM': 47, 'X_ACC': 48, 'X_ACP': 49, 'X_HAP': 50, 'X_DCPD': 51, 'X_OCP': 52,
+#     'X_struv': 53, 'X_newb': 54, 'X_magn': 55, 'X_kstruv': 56, 
+#     'X_FeS': 57, 'X_Fe3PO42': 58,
+#     'X_AlPO4': 59,
+#     'S_Na': 60, 'S_Cl': 61, 'H2O': 62
+#     }
+# =============================================================================
 
 def calc_pH():
     pass
@@ -251,8 +255,13 @@ def calc_pH():
 def calc_biogas():
     pass
 
+def pcm():
+    pass
+
+
 rhos = np.zeros(38+8+13+4) # 38 biological + 8 chemical P removal by HFO + 13 MMP + 4 gas transfer
-Cs = np.empty(38)
+Cs = np.empty(38+8)
+sum_stoichios = np.array([2, 2, 5, 9, 3, 8, 3, 3, 2, 3, 2, 2])
 
 def rhos_madm1(state_arr, params):
     ks = params['rate_constants']
@@ -272,7 +281,10 @@ def rhos_madm1(state_arr, params):
     KH_dH = params['K_H_dH']
     Ka_dH = params['Ka_dH']
     kLa = params['kLa']
+    k_cryst = params['k_cryst']
+    n_cryst = params['n_cryst']
     T_base = params['T_base']
+    # T_temp = params.pop('T_temp', T_base)
     
     Cs[:7] = state_arr[13:20]                   # original ADM1 processes
     Cs[7:11] = state_arr[19:23]
@@ -283,9 +295,10 @@ def rhos_madm1(state_arr, params):
     Cs[27:29] = state_arr[32]
     Cs[29:31] = state_arr[33]
     Cs[31:34] = state_arr[34]
-    Cs[34:36] = Cs[36:38] = state_arr[38:40]                # Fe extension processes
+    Cs[34:36] = Cs[36:38] = Cs[38:40] = Cs[40:42] = state_arr[38:40]   # Fe extension processes + HFO module
+    Cs[42:44] = Cs[44:46] = state_arr[41:43]
     
-    rhos[:38] = ks * Cs
+    rhos[:46] = ks * Cs
     primary_substrates = state_arr[:8]
     
     rhos[3:11] *= substr_inhibit(primary_substrates, Ks[:8])
@@ -299,13 +312,18 @@ def rhos_madm1(state_arr, params):
     
     srb_subs = np.flip(primary_substrates[3:])
     S_SO4, S_IS = state_arr[29:31]
-    rhos[[25,27,29,31,32]] *= substr_inhibit(srb_subs, Ks[-4:]) * substr_inhibit(S_SO4, K_so4)
+    rhos[[25,27,29,31,32]] *= substr_inhibit(srb_subs, Ks[9:13]) * substr_inhibit(S_SO4, K_so4)
     if sum(srb_subs[-2:]) > 0: rhos[[31,32]] *= srb_subs[-2:]/sum(srb_subs[-2:])
     
     #!!! why divide by 16 or 64?
     S_h2 = primary_substrates[-1]
     rhos[34:36] *= S_h2 / 16 
     rhos[36:38] *= S_IS / 64
+    
+    KPbind, KPdiss = Ks[-2:]
+    S_IP = state_arr[11]
+    rhos[40:42] *= substr_inhibit(S_IP, KPbind)
+    rhos[44:46] *= non_compet_inhibit(S_IP, KPdiss)
     
     # inhibition factors
     # ******************
@@ -338,11 +356,31 @@ def rhos_madm1(state_arr, params):
     rhos[6:11] *= Is_h2s[:5]
     rhos[[25,27,29,31,32]] *= Is_h2s[5:]
     
-    
+# =============================================================================
+#     !!! place holder for PCM (speciation)
+# =============================================================================
+    acts = pcm(state_arr)
+    SIs = np.maximum(1.0, saturation_index(acts))  # should be an array
+    rhos[46:59] = k_cryst * state_arr[47:60] * (SIs**(1/sum_stoichios) - 1)**n_cryst
 
 #%% modified ADM1 class
 _load_components = settings.get_default_chemicals
 
+def fun(q_aging_H=450.0, q_aging_L=0.1, q_Pcoprec=360, q_Pbinding=0.3, q_diss_H=36.0, q_diss_L=36.0,
+        K_Pbind=37.2, K_Pdiss=0.93):
+    '''
+    
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    None.
+
+    '''
+    pass    
+    
 @chemicals_user
 class ModifiedADM1(CompiledProcesses):
     """
@@ -445,6 +483,25 @@ class ModifiedADM1(CompiledProcesses):
     KS_IP : float, optional
         Inorganic phosphorus (nutrient) inhibition coefficient for soluble 
         substrate uptake [M]. The default is 2e-5.
+    q_aging_H : float, optional
+        Aging rate constant of X_HFO_H and X_HFO_HP [d^(-1)]. The default is 450.0.
+    q_aging_L : float, optional
+        Aging rate constant of X_HFO_L and X_HFO_LP [d^(-1)]. The default is 0.1.
+    q_Pcoprec : float, optional
+        Rate constant of P binding and coprecipitation on X_HFO_H [d^(-1)]. 
+        The default is 360.
+    q_Pbinding : float, optional
+        Rate constant of P binding on X_HFO_L [d^(-1)]. The default is 0.3.
+    q_diss_H : float, optional
+        Dissolution rate constant of X_HFO_HP [d^(-1)]. The default is 36.0.
+    q_diss_L : float, optional
+        Dissolution rate constant of X_HFO_HP [d^(-1)]. The default is 36.0.
+    K_Pbind : float, optional
+        S_IP half saturation coefficient for binding with X_HFO_H or X_HFO_L
+        [kg P/m3]. The default is 37.2, i.e., 1.20 kmol P/m3.
+    K_Pdiss : float, optional
+        S_IP half inhibition coefficient for dissolution of X_HFO_HP or X_HFO_LP
+        [kg P/m3]. The default is 0.93, i.e., 0.03 kmol P/m3.
     KI_h2s_c4 : float, optional
         H2S half inhibition coefficient for butyrate or valerate uptake 
         [kg COD/m3]. The default is 0.481.
@@ -478,7 +535,16 @@ class ModifiedADM1(CompiledProcesses):
     pH_limits_h2_SRB : 2-tuple, optional
         Lower and upper limits of pH inhibition for hydrogen uptake by SRB, 
         unitless. The default is (5,6).
-
+    k_cryst : iterable[float], optional
+        Mineral precipitation rate constants [h^(-1)], following the order of 
+        `ModifiedADM1._precipitates`. The default is 
+        [0.35, 1e-3, 3.0, 1e-3, 2.0, 0.76, 5.0, 1e-3, 1e-3, 1e-3, 1e2, 1e-3, 1e-3].
+    n_cryst : iterable[int], optional
+        The effect orders of mineral precipitation reactions [unitless], following 
+        the order of `ModifiedADM1._precipitates`. The default is 
+        [2, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2].
+    
+    
     Examples
     --------
     ...
@@ -518,19 +584,27 @@ class ModifiedADM1(CompiledProcesses):
                         )
     _kinetic_params = ('rate_constants', 'half_sat_coeffs', 'K_PP', 'K_so4', 
                        'pH_limits', 'KS_IN', 'KS_IP', 'KI_nh3', 'KIs_h2', 'KIs_h2s'
-                       'Ka_base', 'Ka_dH', 'K_H_base', 'K_H_dH', 'kLa',
+                       'Ka_base', 'Ka_dH', 'K_H_base', 'K_H_dH', 'kLa', 
+                       'k_cryst', 'n_cryst', 'Ksp_base', 'Ksp_dH',
                        'T_base', 'components', 
                        # 'root'
                        )
     _acid_base_pairs = ADM1._acid_base_pairs
     _biogas_IDs = (*ADM1._biogas_IDs, 'S_IS')
     _biomass_IDs = (*ADM1._biomass_IDs, 'X_PAO', 'X_hSRB', 'X_aSRB', 'X_pSRB', 'X_c4SRB')
-    _precipitate_IDs = ('X_CCM', 'X_ACC', 'X_ACP', 'X_HAP', 'X_DCPD', 'X_OCP',
-                        'X_struv', 'X_newb', 'X_magn', 'X_kstruv', 
-                        'X_FeS', 'X_Fe3PO42', 'X_AlPO4')
+    _precipitates = ('X_CCM', 'X_ACC', 'X_ACP', 'X_HAP', 'X_DCPD', 'X_OCP',
+                    'X_struv', 'X_newb', 'X_magn', 'X_kstruv', 
+                    'X_FeS', 'X_Fe3PO42', 'X_AlPO4')
     _T_base = 298.15
     _K_H_base = [7.8e-4, 1.4e-3, 3.5e-2, 0.105]    # biogas species Henry's Law constant [M/bar]
     _K_H_dH = [-4180, -14240, -19410, -19180]      # Heat of reaction of liquid-gas transfer of biogas species [J/mol]
+    
+    _pKsp_base = [8.48, 8.3, 28.92, 44.333, 18.995, 47.08, 
+                  13.6, 18.175, 7.46, 11.5508, 
+                  2.95, 37.76, 18.2]
+    _Ksp_dH = [8000, -12000, 54000, 0, 31000, 0, 
+               -22600, -22600, -20000, -22600, 
+               -11000, 5060, 0]
     
     def __new__(cls, components=None, path=None, 
                 f_ch_xb=0.275, f_pr_xb=0.275, f_li_xb=0.35, f_xI_xb=0.1,
@@ -550,13 +624,18 @@ class ModifiedADM1(CompiledProcesses):
                 K_hSRB=5.96e-6, K_aSRB=0.176, K_pSRB=0.088, K_c4SRB=0.1739,
                 K_so4_hSRB=1.04e-4*S_mw, K_so4_aSRB=2e-4*S_mw, K_so4_pSRB=2e-4*S_mw, K_so4_c4SRB=2e-4*S_mw,
                 k_Fe3t2_h2=1e9/Fe_mw, k_Fe3t2_is=1e9/Fe_mw,
+                q_aging_H=450.0, q_aging_L=0.1, q_Pcoprec=360, q_Pbinding=0.3, q_diss_H=36.0, q_diss_L=36.0,
+                K_Pbind=37.2, K_Pdiss=0.93, # 1.20 and 0.03 in MATLAB, assuming in kmol-P/m3 ?
                 KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_nh3=1.8e-3, KS_IN=1e-4, KS_IP=2e-5,
                 KI_h2s_c4=0.481, KI_h2s_pro=0.481, KI_h2s_ac=0.460, KI_h2s_h2=0.400,
                 KI_h2s_c4SRB=0.520, KI_h2s_pSRB=0.520, KI_h2s_aSRB=0.499, KI_h2s_hSRB=0.499,
                 pH_limits_aa=(4,5.5), pH_limits_ac=(6,7), pH_limits_h2=(5,6),
                 pH_limits_aa_SRB=(6,7), pH_limits_ac_SRB=(6,7), pH_limits_h2_SRB=(5,6),
                 kLa=200, pKa_base=[14, 9.25, 6.35, 4.76, 4.88, 4.82, 4.86],
-                Ka_dH=[55900, 51965, 7646, 0, 0, 0, 0],**kwargs):
+                Ka_dH=[55900, 51965, 7646, 0, 0, 0, 0],
+                k_cryst=[0.35, 1e-3, 3.0, 1e-3, 2.0, 0.76, 5.0, 1e-3, 1e-3, 1e-3, 1e2, 1e-3, 1e-3],
+                n_cryst=[2, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2],
+                **kwargs):
         
         cmps = _load_components(components)
 
@@ -572,7 +651,7 @@ class ModifiedADM1(CompiledProcesses):
             p.ref_component = 'S_IP'
         
         precipitation = []
-        for i in cls._precipitate_IDs[:-3]:
+        for i in cls._precipitates[:-3]:
             new_p = Process('precipitation_%s' % i.lstrip('X_'),
                             reaction='[?]S_IC + [?]S_IN + [?]S_IP + [?]S_K + [?]S_Mg + [?]S_Ca -> %s' % i,
                             ref_component=i,
@@ -644,11 +723,14 @@ class ModifiedADM1(CompiledProcesses):
                        b_su, b_aa, b_fa, b_c4, b_pro, b_ac, b_h2,               # original ADM1
                        q_pha, q_pha, q_pha, q_pha, b_pao, b_pp, b_pha,          # P extension
                        k_hSRB, b_hSRB, k_aSRB, b_aSRB, k_pSRB, b_pSRB, k_c4SRB, k_c4SRB, b_c4SRB, # S extension
-                       k_Fe3t2_h2, k_Fe3t2_h2, k_Fe3t2_is, k_Fe3t2_is))         # Fe extension + HFO
+                       k_Fe3t2_h2, k_Fe3t2_h2, k_Fe3t2_is, k_Fe3t2_is,          # Fe extension
+                       q_aging_H, q_aging_L, q_Pcoprec, q_Pbinding,             # HFO module
+                       q_aging_H, q_aging_L, q_diss_H, q_diss_L))         
         
         Ks = np.array((K_su, K_aa, K_fa, K_c4, K_c4, K_pro, K_ac, K_h2,         # original ADM1
                        K_A,                                                     # P extension
-                       K_hSRB, K_aSRB, K_pSRB, K_c4SRB))                        # S extension                       
+                       K_hSRB, K_aSRB, K_pSRB, K_c4SRB,                         # S extension  
+                       K_Pbind, K_Pdiss))                                       # HFO module                             
         K_so4 = np.array((K_so4_hSRB, K_so4_aSRB, K_so4_pSRB, K_so4_c4SRB))
         
         KIs_h2 = np.array((KI_h2_fa, KI_h2_c4, KI_h2_c4, KI_h2_pro))
@@ -658,18 +740,23 @@ class ModifiedADM1(CompiledProcesses):
         K_H_dH = np.array(cls._K_H_dH)
         Ka_base = np.array([10**(-pKa) for pKa in pKa_base])
         Ka_dH = np.array(Ka_dH)
+        k_cryst = np.array(k_cryst) * 24    # converted to d^(-1)
+        n_cryst = np.array(n_cryst)
+        Ksp_base = np.array([10**(-pK) for pK in cls.pKsp_base])
+        Ksp_dH = np.array(cls.Ksp_dH)
         # root = TempState()
         dct = self.__dict__
         dct.update(kwargs)
 
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_vals))
-        # self.set_rate_function(rhos_madm1)
-        # self.rate_function._params = dict(zip(cls._kinetic_params,
-        #                                       [ks, Ks, K_PP, K_so4, 
-        #                                        pH_limits, KS_IN*N_mw, KS_IP*P_mw,
-        #                                        KI_nh3, KIs_h2, KIs_h2s, 
-        #                                        Ka_base, Ka_dH, K_H_base, K_H_dH, kLa,
-        #                                        cls.T_base, self._components, 
-        #                                        # root,
-        #                                        ]))
+        self.set_rate_function(rhos_madm1)
+        self.rate_function._params = dict(zip(cls._kinetic_params,
+                                              [ks, Ks, K_PP, K_so4, 
+                                                pH_limits, KS_IN*N_mw, KS_IP*P_mw,
+                                                KI_nh3, KIs_h2, KIs_h2s, 
+                                                Ka_base, Ka_dH, K_H_base, K_H_dH, kLa, 
+                                                k_cryst, n_cryst, Ksp_base, Ksp_dH,
+                                                cls.T_base, self._components, 
+                                                # root,
+                                                ]))
         return self

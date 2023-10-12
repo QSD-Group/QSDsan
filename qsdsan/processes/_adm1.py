@@ -190,6 +190,7 @@ def mass2mol_conversion(cmps):
 #     return np.exp(theta * (T2-T1))
 
 def T_correction_factor(T1, T2, delta_H):
+    if T1 == T2: return 1
     return np.exp(delta_H/(R*100) * (1/T1 - 1/T2))  # R converted to SI
 
 # def calc_Kas(pKas, T_base, T_op, theta):
