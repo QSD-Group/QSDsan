@@ -129,8 +129,9 @@ class FlatBottomCircularClarifier(SanUnit):
     _N_outs = 3
     
     # Costs
-    wall_concrete_unit_cost = 650 / 0.765 # $/m3, 0.765 is to convert from $/yd3
-    stainless_steel_unit_cost=1.8 # $/kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
+    wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
+    slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
+    stainless_steel_unit_cost=1.8 # Alibaba. Brushed Stainless Steel Plate 304. https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
     
     pumps = ('ras', 'was',)
     
@@ -670,11 +671,16 @@ class FlatBottomCircularClarifier(SanUnit):
             
         # Amount of concrete required
         D_tank = D['Clarifier depth']*39.37 # m to inches 
-        # Thickness of the wall concrete, [m]. Default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
+        # Thickness of the wall concrete, [m]. Default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft. (Brian's code)
         thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
         inner_diameter = D['Clarifier diameter']
         outer_diameter = inner_diameter + 2*thickness_concrete_wall
         D['Volume of concrete wall']  = (np.pi*D['Clarifier depth']/4)*(outer_diameter**2 - inner_diameter**2)
+        
+        # Concrete slab thickness, [ft], default to be 2 in thicker than the wall thickness. (Brian's code)
+        thickness_concrete_slab = thickness_concrete_wall + (2/12)*0.3048 # from inch to m
+        # From Brian's code
+        D['Volume of concrete slab']  = (thickness_concrete_slab + thickness_concrete_wall)*D['Surface area']
         
         # Amount of metal required for center feed
         thickness_metal_wall = 0.3048 # equal to 1 feet, in m (!! NEED A RELIABLE SOURCE !!)
@@ -699,6 +705,9 @@ class FlatBottomCircularClarifier(SanUnit):
        
         # Construction of concrete and stainless steel walls
         C['Wall concrete'] = D['Number of clarifiers']*D['Volume of concrete wall']*self.wall_concrete_unit_cost
+        
+        C['Slab concrete'] = D['Number of clarifiers']*D['Volume of concrete slab']*self.slab_concrete_unit_cost
+        
         C['Wall stainless steel'] = D['Number of clarifiers']*D['Stainless steel']*self.stainless_steel_unit_cost
         
         # Cost of equipment 
@@ -1427,8 +1436,9 @@ class PrimaryClarifier(SanUnit):
     _outs_size_is_fixed = False
     
     # Costs
-    wall_concrete_unit_cost = 650 / 0.765 # $/m3, 0.765 is to convert from $/yd3
-    stainless_steel_unit_cost=1.8 # $/kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
+    wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
+    slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
+    stainless_steel_unit_cost=1.8 # Alibaba. Brushed Stainless Steel Plate 304. https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
     
     pumps = ('sludge',)
     
@@ -1738,6 +1748,7 @@ class PrimaryClarifier(SanUnit):
         'Downward flow velocity': 'm/hr',
         'Center feed diameter': 'm',
         'Volume of concrete wall': 'm3',
+        'Volume of concrete slab': 'm3',
         'Stainless steel': 'kg',
         'Pump pipe stainless steel' : 'kg',
         'Pump stainless steel': 'kg',
@@ -1806,7 +1817,6 @@ class PrimaryClarifier(SanUnit):
         peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
         D['Downward flow velocity'] = self.downward_flow_velocity*peak_flow_safety_factor # in m/hr
         
-        
         Center_feed_area = (D['Volumetric flow']/24)/D['Downward flow velocity'] # in m2
         
         D['Center feed diameter'] = np.sqrt(4*Center_feed_area/np.pi) 
@@ -1825,9 +1835,13 @@ class PrimaryClarifier(SanUnit):
         inner_diameter = D['Cylindrical diameter']
         outer_diameter = inner_diameter + 2*thickness_concrete_wall
         volume_cylindercal_wall = (np.pi*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
-        volume_conical_wall = (np.pi/3)*(D['Conical depth']/4)*(outer_diameter**2 - inner_diameter**2)
+        D['Volume of concrete wall'] = volume_cylindercal_wall # in m3
         
-        D['Volume of concrete wall'] = volume_cylindercal_wall + volume_conical_wall # in m3
+        # Concrete slab thickness, [ft], default to be 2 in thicker than the wall thickness. (Brian's code)
+        thickness_concrete_slab = thickness_concrete_wall + (2/12)*0.3048 # from inch to m
+        outer_diameter_cone = inner_diameter + 2*(thickness_concrete_wall + thickness_concrete_slab)
+        volume_conical_wall = (np.pi/(3*4))*(((D['Conical depth'] + thickness_concrete_wall + thickness_concrete_slab)*(outer_diameter_cone**2)) - (D['Conical depth']*(inner_diameter)**2))
+        D['Volume of concrete slab'] = volume_conical_wall
         
         # Amount of metal required for center feed
         thickness_metal_wall = 0.3048 # equal to 1 feet, in m (!! NEED A RELIABLE SOURCE !!)
@@ -1854,6 +1868,9 @@ class PrimaryClarifier(SanUnit):
        
         # Construction of concrete and stainless steel walls
         C['Wall concrete'] = D['Number of clarifiers']*D['Volume of concrete wall']*self.wall_concrete_unit_cost
+        
+        C['Slab concrete'] = D['Number of clarifiers']*D['Volume of concrete slab']*self.slab_concrete_unit_cost
+        
         C['Wall stainless steel'] = D['Number of clarifiers']*D['Stainless steel']*self.stainless_steel_unit_cost
        
         # Cost of equipment 
