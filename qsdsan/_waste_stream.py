@@ -40,12 +40,13 @@ _load_thermo = settings.get_thermo
 _defined_composite_vars = ('COD', 'BOD5', 'BOD', 'uBOD', 'NOD', 'ThOD', 'cnBOD',
                            'C', 'N', 'P', 'K', 'Mg', 'Ca', 'solids', 'charge')
 
-_common_composite_vars = ('_COD', '_BOD', '_uBOD', '_TC', '_TOC', '_TN',
+_common_composite_vars = ('_COD', '_BOD', '_uBOD', '_ThOD', '_cnBOD',
+                          '_TC', '_TOC', '_TN',
                           '_TKN', '_TP', '_TK', '_TMg', '_TCa',
-                          '_dry_mass', '_charge', '_ThOD', '_cnBOD')
+                          '_dry_mass', '_charge',)
 
 _ws_specific_slots = (*_common_composite_vars,
-                      '_pH', '_SAlk', '_ratios',
+                      '_pH', '_SAlk', '_ratios', 'additional_properties',
                       # '_stream_impact_item', (pls keep this here, might be useful in debugging)
                       '_state', '_dstate', '_scope')
 
@@ -249,7 +250,9 @@ class WasteStream(SanStream):
         TO BE IMPLEMENTED
     stream_impact_item : :class:`StreamImpactItem`
         The :class:`StreamImpactItem` this stream is linked to.
-    component_flows : kwargs
+    additional_properties : dict
+        Additional properties (e.g., turbidity).
+    component_flows : dict
         Component flow data.
 
 
@@ -271,20 +274,28 @@ class WasteStream(SanStream):
                  pH=7., SAlk=2.5, COD=None, BOD=None, uBOD=None,
                  ThOD=None, cnBOD=None,
                  TC=None, TOC=None, TN=None, TKN=None, TP=None, TK=None,
-                 TMg=None, TCa=None, dry_mass=None, charge=None, ratios=None,
-                 stream_impact_item=None, **component_flows):
+                 TMg=None, TCa=None,
+                 dry_mass=None, charge=None, ratios=None,
+                 stream_impact_item=None, additional_properties={},
+                 **component_flows):
         SanStream.__init__(self=self, ID=ID, flow=flow, phase=phase, T=T, P=P,
                            units=units, price=price, thermo=thermo,
                            stream_impact_item=stream_impact_item, **component_flows)
 
-        self._init_ws(pH, SAlk, COD, BOD, uBOD, TC, TOC, TN, TKN,
-                      TP, TK, TMg, TCa, ThOD, cnBOD, dry_mass, charge, ratios)
+        self._init_ws(pH=pH, SAlk=SAlk, COD=COD, BOD=BOD, uBOD=uBOD,
+                      ThOD=ThOD, cnBOD=cnBOD, 
+                      TC=TC, TOC=TOC, TN=TN, TKN=TKN,
+                      TP=TP, TK=TK, TMg=TMg, TCa=TCa,
+                      dry_mass=dry_mass, charge=charge, ratios=ratios,
+                      additional_properties=additional_properties,
+                      )
 
     def _init_ws(self, pH=7., SAlk=None, COD=None, BOD=None,
                  uBOD=None, ThOD=None, cnBOD=None,
                  TC=None, TOC=None, TN=None, TKN=None,
                  TP=None, TK=None, TMg=None, TCa=None,
-                 dry_mass=None, charge=None, ratios=None):
+                 dry_mass=None, charge=None, ratios=None,
+                 additional_properties={}):
 
         self._pH = pH
         self._SAlk = SAlk
@@ -306,6 +317,7 @@ class WasteStream(SanStream):
         self._ratios = ratios
         self._state = None
         self._dstate = None
+        self.additional_properties = {}
 
     @staticmethod
     def from_stream(stream, ID='', **kwargs):
@@ -2241,6 +2253,11 @@ class MissingWasteStream(MissingSanStream):
     def density(self):
         '''[float] Density of the stream, in mg/L (kg/m3).'''
         return 0.
+    
+    @property
+    def additional_property(self):
+        '''[dict] Additional properties (e.g., turbidity).'''
+        return {}
 
     #!!! Keep this up-to-date with WasteStream
     # @property

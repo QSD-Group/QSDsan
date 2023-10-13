@@ -233,6 +233,10 @@ class Component(Chemical):
                 self._chem_MW = molecular_weight(self.atoms)
         if phase: lock_phase(self, phase)
 
+        self._particle_size = particle_size
+        self._degradability = degradability
+        self._organic = organic
+        self.description = description
         self._measured_as = measured_as
         self.i_mass = i_mass
         self.i_C = i_C
@@ -245,10 +249,7 @@ class Component(Chemical):
         self.f_BOD5_COD = f_BOD5_COD
         self.f_uBOD_COD = f_uBOD_COD
         self.f_Vmass_Totmass = f_Vmass_Totmass
-        self._particle_size = particle_size
-        self._degradability = degradability
-        self._organic = organic
-        self.description = description
+
         if not self.MW and not self.formula: self.MW = 1.
         self.i_COD = i_COD
         self.i_NOD = i_NOD
@@ -340,7 +341,8 @@ class Component(Chemical):
                     chem_charge = charge_from_formula(self.formula)
                     Cr2O7 = - cod_test_stoichiometry(self.atoms, chem_charge)['Cr2O7-2']
                     cod = Cr2O7 * 1.5 * molecular_weight({'O':2})
-                    i = self.chem_MW/cod
+                    try: i = self.chem_MW/cod
+                    except: breakpoint()
                 elif self.measured_as:
                     raise AttributeError(f'Must specify i_mass for component {self.ID} '
                                          f'measured as {self.measured_as}.')
@@ -532,7 +534,7 @@ class Component(Chemical):
     def i_COD(self, i):
         if i is not None: self._i_COD = check_return_property('i_COD', i)
         else:
-            if self.organic or self.formula in ('H2', 'O2', 'N2', 'NO2-', 'NO3-'):
+            if self.organic or self.formula in ('H2', 'O2', 'N2', 'NO2-', 'NO3-', 'H2S', 'S'):
                 if self.measured_as == 'COD': self._i_COD = 1.
                 elif not self.atoms:
                     raise AttributeError(f"Must specify `i_COD` for organic component {self.ID}, "
@@ -792,6 +794,10 @@ class Component(Chemical):
                            new.Tm, new.Tb, new.eos, new.phase_ref, new.S0)
         TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = True
 
+        new.description = description
+        new._particle_size = particle_size
+        new._degradability = degradability
+        new._organic = organic
         new._measured_as = measured_as
         new.i_mass = i_mass
         new.i_C = i_C
@@ -804,10 +810,7 @@ class Component(Chemical):
         new.f_BOD5_COD = f_BOD5_COD
         new.f_uBOD_COD = f_uBOD_COD
         new.f_Vmass_Totmass = f_Vmass_Totmass
-        new.description = description
-        new._particle_size = particle_size
-        new._degradability = degradability
-        new._organic = organic
+
         new.i_COD = i_COD
         new.i_NOD = i_NOD
         return new

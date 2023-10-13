@@ -1,0 +1,47 @@
+	S_su	S_aa	S_fa	S_va	S_bu	S_pro	S_ac	S_h2	S_ch4	S_IC	S_IN	S_IP	S_I	X_ch	X_pr	X_li	X_su	X_aa	X_fa	X_c4	X_pro	X_ac	X_h2	X_I	X_PHA	X_PP	X_PAO	S_K	S_Mg	S_SO4	S_IS	X_hSRB	X_aSRB	X_pSRB	X_c4SRB	S_S0	S_Fe3	S_Fe2	X_HFO_H	X_HFO_L	X_HFO_old	X_HFO_HP	X_HFO_LP	X_HFO_HP_old	X_HFO_LP_old
+hydrolysis_carbs	1									?	?	?		-1																															
+hydrolysis_proteins		1								?	?	?			-1																														
+hydrolysis_lipids	1-f_fa_li		f_fa_li							?	?	?				-1																													
+uptake_sugars	-1				(1-Y_su)*f_bu_su	(1-Y_su)*f_pro_su	(1-Y_su)*f_ac_su	(1-Y_su)*f_h2_su		?	?	?					Y_su																												
+uptake_amino_acids		-1		(1-Y_aa)*f_va_aa	(1-Y_aa)*f_bu_aa	(1-Y_aa)*f_pro_aa	(1-Y_aa)*f_ac_aa	(1-Y_aa)*f_h2_aa		?	?	?						Y_aa																											
+uptake_LCFA			-1				(1-Y_fa)*f_ac_fa	(1-Y_fa)*f_h2_fa		?	?	?							Y_fa																										
+uptake_valerate				-1		(1-Y_c4)*f_pro_va	(1-Y_c4)*f_ac_va	(1-Y_c4)*f_h2_va		?	?	?								Y_c4																									
+uptake_butyrate					-1		(1-Y_c4)*f_ac_bu	(1-Y_c4)*f_h2_bu		?	?	?								Y_c4																									
+uptake_propionate						-1	(1-Y_pro)*f_ac_pro	(1-Y_pro)*f_h2_pro		?	?	?									Y_pro																								
+uptake_acetate							-1		1-Y_ac	?	?	?										Y_ac																							
+uptake_h2								-1	1-Y_h2	?	?	?											Y_h2																						
+decay_Xsu										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb	-1							f_xI_xb																					
+decay_Xaa										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb		-1						f_xI_xb																					
+decay_Xfa										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb			-1					f_xI_xb																					
+decay_Xc4										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb				-1				f_xI_xb																					
+decay_Xpro										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb					-1			f_xI_xb																					
+decay_Xac										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb						-1		f_xI_xb																					
+decay_Xh2										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb							-1	f_xI_xb																					
+storage_PHA_valerate				-1						?	?	?													1	-Y_PO4		Y_PO4*K_XPP	Y_PO4*Mg_XPP																
+storage_PHA_butyrate					-1					?	?	?													1	-Y_PO4		Y_PO4*K_XPP	Y_PO4*Mg_XPP																
+storage_PHA_propionate						-1				?	?	?													1	-Y_PO4		Y_PO4*K_XPP	Y_PO4*Mg_XPP																
+storage_PHA_actate							-1			?	?	?													1	-Y_PO4		Y_PO4*K_XPP	Y_PO4*Mg_XPP																
+lysis_XPAO										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb								f_xI_xb			-1																		
+lysis_XPP										?	?	?														-1		K_XPP	Mg_XPP																
+lysis_XPHA				f_va_pha	f_bu_pha	f_pro_pha	f_ac_pha			?	?	?													-1																				
+growth_SRB_h2								-1		?	?	?																		-1*(1-Y_hSRB)*i_mass_IS*(MW_S0/MW_IS)	1-Y_hSRB	Y_hSRB													
+decay_XhSRB										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb								f_xI_xb								-1													
+growth_SRB_acetate							-1			?	?	?																		-1*(1-Y_aSRB)*i_mass_IS*(MW_S0/MW_IS)	1-Y_aSRB		Y_aSRB												
+decay_XaSRB										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb								f_xI_xb									-1												
+growth_SRB_propionate						-1	(1-Y_pSRB)*f_ac_pro			?	?	?																		-1*(1-Y_pSRB)*f_is_pro*i_mass_IS*(MW_S0/MW_IS)	(1-Y_pSRB)*f_is_pro			Y_pSRB											
+decay_XpSRB										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb								f_xI_xb										-1											
+growth_SRB_butyrate					-1		(1-Y_c4SRB)*f_ac_bu			?	?	?																		-1*(1-Y_c4SRB)*f_is_bu*i_mass_IS*(MW_S0/MW_IS)	(1-Y_c4SRB)*f_is_bu				Y_c4SRB										
+growth_SRB_valerate				-1		(1-Y_c4SRB)*f_pro_va	(1-Y_c4SRB)*f_ac_va			?	?	?																		-1*(1-Y_c4SRB)*f_is_va*i_mass_IS*(MW_S0/MW_IS)	(1-Y_c4SRB)*f_is_va				Y_c4SRB										
+decay_Xc4SRB										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb								f_xI_xb											-1										
+reduction_HFO_H_h2								-1																														1	-1*i_mass_Fe2						
+reduction_HFO_L_h2								-1																														1		-1*i_mass_Fe2					
+reduction_HFO_H_IS																															-1					(MW_S0/i_mass_S0)/(MW_IS/i_mass_IS)		1-(MW_S0/i_mass_S0)/(MW_IS/i_mass_IS)	i_mass_Fe2*((MW_S0/i_mass_S0)/(MW_IS/i_mass_IS)-1)						
+reduction_HFO_L_IS																															-1					(MW_S0/i_mass_S0)/(MW_IS/i_mass_IS)		1-(MW_S0/i_mass_S0)/(MW_IS/i_mass_IS)		i_mass_Fe2*((MW_S0/i_mass_S0)/(MW_IS/i_mass_IS)-1)					
+aging_HFO_H																																							-1	1					
+aging_HFO_L																																								-1	1				
+fast_P_binding												?																											-1			1			
+slow_P_sorption												?																												-1			1		
+aging_HFO_HP																																										-1		1	
+aging_HFO_LP																																											-1		1
+dissolution_HFO_HP												?																											1			-1			
+dissolution_HFO_LP												?																												1			-1		
