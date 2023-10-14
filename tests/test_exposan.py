@@ -59,8 +59,6 @@ def test_exposan():
     bw.load()
     bw.print_summaries((bw.sysA, bw.sysB, bw.sysC))
 
-    from exposan import reclaimer as re
-    re.load()
     clear_lca_registries()
     from exposan import eco_san as es
     es.load()
