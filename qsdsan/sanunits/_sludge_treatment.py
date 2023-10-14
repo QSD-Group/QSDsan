@@ -152,14 +152,14 @@ class Thickener(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=default_F_BM, thickener_perc=7, 
                   TSS_removal_perc=98, solids_loading_rate =4, h_thickener=4, 
-                  upflow_velocity= 36, F_BM=default_F_BM, **kwargs):
+                  downward_flow_velocity= 36, F_BM=default_F_BM, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with)
         self.thickener_perc = thickener_perc 
         self.TSS_removal_perc = TSS_removal_perc
         self.solids_loading_rate = solids_loading_rate 
         self.h_thickener = h_thickener
-        self.upflow_velocity = upflow_velocity
+        self.downward_flow_velocity = downward_flow_velocity
         self.F_BM.update(F_BM)
         self._mixed = WasteStream(f'{ID}_mixed')        
         self._sludge = self.outs[0].copy(f'{ID}_sludge')
@@ -516,7 +516,7 @@ class Thickener(SanUnit):
         peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
         D['Downward flow velocity'] = self.downward_flow_velocity*peak_flow_safety_factor # in m/hr
         
-        D['Volumetric flow'] =  mixed.get_total_flow('m3/hr')/D['Number of clarifiers'] # m3/hr
+        D['Volumetric flow'] =  mixed.get_total_flow('m3/hr')/D['Number of thickeners'] # m3/hr
         Center_feed_area = D['Volumetric flow']/D['Downward flow velocity'] # in m2
         D['Center feed diameter'] = np.sqrt(4*Center_feed_area/np.pi) # in m
 

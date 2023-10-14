@@ -880,7 +880,7 @@ class PrimaryClarifierBSM2(SanUnit):
     Parameters
     ----------
     ID : str
-        ID for the clarifier. The default is ''.
+        ID for the clarifier.
     ins : class:`WasteStream`
         Influent to the clarifier. Expected number of influent is 3.
     outs : class:`WasteStream`
@@ -906,14 +906,14 @@ class PrimaryClarifierBSM2(SanUnit):
     >>> cmps_test = cmps.subgroup(['S_F', 'S_NH4', 'X_OHO', 'H2O'])
     >>> set_thermo(cmps_test)
     >>> ws = WasteStream('ws', S_F = 10, S_NH4 = 20, X_OHO = 15, H2O=1000)
-    >>> from qsdsan.sanunits import PrimaryClarifier
-    >>> PC = PrimaryClarifier(ID='PC', ins= (ws,), outs=('eff', 'sludge'))
+    >>> from qsdsan.sanunits import PrimaryClarifierBSM2
+    >>> PC = PrimaryClarifierBSM2(ID='PC', ins= (ws,), outs=('eff', 'sludge'))
     >>> PC.simulate()
     >>> uf, of = PC.outs
     >>> uf.imass['X_OHO']/ws.imass['X_OHO'] # doctest: +ELLIPSIS
     0.280...
     >>> PC.show() 
-    PrimaryClarifier: PC
+    PrimaryClarifierBSM2: PC
     ins...
     [0] ws
     phase: 'l', T: 298.15 K, P: 101325 Pa
@@ -922,49 +922,49 @@ class PrimaryClarifierBSM2(SanUnit):
                     X_OHO  1.5e+04
                     H2O    1e+06
         WasteStream-specific properties:
-          pH         : 7.0
-          COD        : 23873.0 mg/L
-          BOD        : 14963.2 mg/L
-          TC         : 8298.3 mg/L
-          TOC        : 8298.3 mg/L
-          TN         : 20363.2 mg/L
-          TP         : 367.6 mg/L
-          TK         : 68.3 mg/L
+         pH         : 7.0
+         COD        : 23873.0 mg/L
+         BOD        : 14963.2 mg/L
+         TC         : 8298.3 mg/L
+         TOC        : 8298.3 mg/L
+         TN         : 20363.2 mg/L
+         TP         : 367.6 mg/L
+         TK         : 68.3 mg/L
     outs...
-    [0] uf
+    [0] eff
     phase: 'l', T: 298.15 K, P: 101325 Pa
     flow (g/hr): S_F    70
                     S_NH4  140
                     X_OHO  4.2e+03
                     H2O    7e+03
         WasteStream-specific properties:
-          pH         : 7.0
-          COD        : 428873.3 mg/L
-          BOD        : 244072.7 mg/L
-          TC         : 156644.5 mg/L
-          TOC        : 156644.5 mg/L
-          TN         : 43073.0 mg/L
-          TP         : 8085.4 mg/L
-          TK         : 2011.4 mg/L
-    [1] of
+         pH         : 7.0
+         COD        : 428873.3 mg/L
+         BOD        : 244072.7 mg/L
+         TC         : 156644.5 mg/L
+         TOC        : 156644.5 mg/L
+         TN         : 43073.0 mg/L
+         TP         : 8085.4 mg/L
+         TK         : 2011.4 mg/L
+    [1] sludge
     phase: 'l', T: 298.15 K, P: 101325 Pa
     flow (g/hr): S_F    9.93e+03
                     S_NH4  1.99e+04
                     X_OHO  1.08e+04
                     H2O    9.93e+05
         WasteStream-specific properties:
-          pH         : 7.0
-          COD        : 19982.3 mg/L
-          BOD        : 12762.2 mg/L
-          TC         : 6873.2 mg/L
-          TOC        : 6873.2 mg/L
-          TN         : 20145.0 mg/L
-          TP         : 293.5 mg/L
-          TK         : 49.6 mg/L
+         pH         : 7.0
+         COD        : 19982.3 mg/L
+         BOD        : 12762.2 mg/L
+         TC         : 6873.2 mg/L
+         TOC        : 6873.2 mg/L
+         TN         : 20145.0 mg/L
+         TP         : 293.5 mg/L
+         TK         : 49.6 mg/L
    
     References
     ----------
-    .. [1] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
+    [1] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
     Benchmarking of control strategies for wastewater treatment plants. IWA publishing, 2014.
     [2] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater
     engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
@@ -1734,7 +1734,7 @@ class PrimaryClarifier(SanUnit):
         return pipe_ss, pump_ss
     
     _units = {
-        'Number of clarifiers': 'Unitless',
+        'Number of clarifiers': 'ea',
         'SOR': 'm3/day/m2',
         'Volumetric flow': 'm3/day',
         'Surface area': 'm2',

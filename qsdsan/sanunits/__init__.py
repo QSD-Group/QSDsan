@@ -58,7 +58,7 @@ from ._trucking import *
 
 # Units that rely on other units
 from ._activated_sludge_process import *
-from ._anaerobic_reactors import *
+from ._anaerobic_reactor import *
 from ._clarifier import *
 from ._distillation import *
 from ._flash import *
@@ -100,7 +100,7 @@ from . import (
         _internal_circulation_rx,
         _junction,
         _lagoon,
-        _membrane_bioreactors,
+        _membrane_bioreactor,
         _membrane_distillation,
         _membrane_gas_extraction,
         _non_reactive,
