@@ -107,10 +107,12 @@ def cod_test_stoichiometry(atoms, charge=0, MW=None, missing_handling='elemental
     nC, nH, nO, nN, nS, nP = get_CHONSP(atoms)
     ne = - charge
 
-    if nC <= 0 or nH <= 0:
-        if not (len(atoms) == 1 and nH == 2): # H2
-            return {'Cr2O7-2': 0.}
-
+    # if nC <= 0 or nH <= 0:
+    #     if not (len(atoms) == 1 and nH == 2): # H2
+    #         return {'Cr2O7-2': 0.}
+    if nC + nH + nS + nP <= 0: 
+        return {'Cr2O7-2': 0.}
+    
     nCO2 = nC
     nNH4 = nN
     nSO4 = nS

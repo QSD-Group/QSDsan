@@ -706,8 +706,9 @@ class Process:
             self._stoichiometry = [v/factor for v in stoich]
 
     def _normalize_rate_eq(self, new_ref):
-        factor = abs(self._stoichiometry[self._components.index(str(new_ref))])
-        self._rate_equation *= factor
+        if self._rate_equation:
+            factor = abs(self._stoichiometry[self._components.index(str(new_ref))])
+            self._rate_equation *= factor
 
     def show(self):
         info = f"Process: {self.ID}"

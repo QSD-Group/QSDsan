@@ -1,4 +1,4 @@
 Lagoon
 ======
-.. autoclass:: qsdsan.sanunits.Lagoon
-   :members:
+.. automodule:: qsdsan.sanunits._lagoon
+    :members:
