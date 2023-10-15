@@ -25,7 +25,7 @@ from ..sanunits._pumping import (
 
 __all__ = ('Thickener', 'Centrifuge', 'Incinerator')
 
-# Asign a bare module of 1 to all
+# Assign a bare module of 1 to all
 default_F_BM = {
         'Wall concrete': 1.,
         'Wall stainless steel': 1.,
