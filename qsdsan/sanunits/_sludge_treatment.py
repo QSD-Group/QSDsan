@@ -53,7 +53,7 @@ class Thickener(SanUnit):
         If the thickener is treating:
         Only Primary clarifier sludge, then expected range: 4-6 kg/(m2*hr)
         Only WAS (treated with air or oxygen): 0.5-1.5 kg/(m2*hr)
-        Primary clarfier sludge + WAS: 1.5-3.5 kg/(m2/hr)
+        Primary clarifier sludge + WAS: 1.5-3.5 kg/(m2/hr)
     h_thickener = float
         Side water depth of the thickener. Typically lies between 3-4 m. [2]
         Height of tank forming the thickener.
