@@ -22,16 +22,13 @@ from ..sanunits._pumping import (
     default_equipment_lifetime as default_WWTpump_equipment_lifetime,
     )
 
+
 __all__ = ('Thickener', 'Centrifuge', 'Incinerator')
 
-# Asign a bare module of 1 to all
+# Assign a bare module of 1 to all
 default_F_BM = {
         'Wall concrete': 1.,
-        'Slab concrete': 1.,
         'Wall stainless steel': 1.,
-        'Scraper': 1,
-        'v notch weir': 1,
-        'Pumps': 1
         }
 default_F_BM.update(default_WWTpump_F_BM)
 
@@ -56,10 +53,7 @@ class Thickener(SanUnit):
         If the thickener is treating:
         Only Primary clarifier sludge, then expected range: 4-6 kg/(m2*hr)
         Only WAS (treated with air or oxygen): 0.5-1.5 kg/(m2*hr)
-        Primary clarfier sludge + WAS: 1.5-3.5 kg/(m2/hr)
-    design_diameter: float
-        The design diameter of the thickener. Used to determine number of thickner units required given a SLR [m].
-        Common gravity thickener configurations have tanks with diameter between 21-24m [2]
+        Primary clarifier sludge + WAS: 1.5-3.5 kg/(m2/hr)
     h_thickener = float
         Side water depth of the thickener. Typically lies between 3-4 m. [2]
         Height of tank forming the thickener.
@@ -157,14 +151,13 @@ class Thickener(SanUnit):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=default_F_BM, thickener_perc=7, 
-                  TSS_removal_perc=98, solids_loading_rate =4, design_diameter=22, 
-                  h_thickener=4, downward_flow_velocity= 36, F_BM=default_F_BM, **kwargs):
+                  TSS_removal_perc=98, solids_loading_rate =4, h_thickener=4, 
+                  downward_flow_velocity= 36, F_BM=default_F_BM, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with)
         self.thickener_perc = thickener_perc 
         self.TSS_removal_perc = TSS_removal_perc
         self.solids_loading_rate = solids_loading_rate 
-        self.design_diameter = design_diameter 
         self.h_thickener = h_thickener
         self.downward_flow_velocity = downward_flow_velocity
         self.F_BM.update(F_BM)
@@ -481,9 +474,9 @@ class Thickener(SanUnit):
         D['Total mass of solids handled'] = (mixed.get_TSS()/1000)*mixed.get_total_flow('m3/hr') # (mg/L)*[1/1000(kg*L)/(mg*m3)](m3/hr) = (kg/hr)
         
         # Common gravity thickener configurations have tanks with diameter between 21-24m (MOP 8)
-        diameter_thickener = self.design_diameter
+        diameter_thickener = 24
         number_of_thickeners = 0
-        while diameter_thickener >= self.design_diameter: # make this user defined 
+        while diameter_thickener >= 22:
             number_of_thickeners += 1
             total_surface_area =  D['Total mass of solids handled']/D['Design solids loading rate'] #m2
             surface_area_thickener = total_surface_area/number_of_thickeners
@@ -650,9 +643,8 @@ class Centrifuge(Thickener):
         The percentage of Suspended Sludge in the underflow of the dewatering unit.[1]
     TSS_removal_perc : float
         The percentage of suspended solids removed in the dewatering unit.[1]
-        
     solids_feed_rate : float
-        Rate at which solids are processed by a centrifuge in dry tonne per day (dtpd).
+        Rate of solids processed by one centrifuge in dry tonne per day (dtpd).
         Default value is 70 dtpd. 
     
     # specific_gravity_sludge: float
@@ -783,15 +775,13 @@ class Centrifuge(Thickener):
         
         self._mixed.mix_from(self.ins)
         mixed = self._mixed
-        D = self.design_results 
         
+        D = self.design_results 
         TSS_rmv = self._TSS_rmv
         solids_feed_rate = 44.66*self.solids_feed_rate # 44.66 is factor to convert tonne/day to kg/hr
-        
         # Cake's total solids and TSS are essentially the same (pg. 24-6 [3])
         # If TSS_rmv = 98, then total_mass_dry_solids_removed  = (0.98)*(influent TSS mass)
         total_mass_dry_solids_removed = (TSS_rmv/100)*((mixed.get_TSS()*self.ins[0].F_vol)/1000) # in kg/hr
-        
         D['Number of centrifuges'] = np.ceil(total_mass_dry_solids_removed/solids_feed_rate)
         k = 0.00000056 # Based on emprical formula (pg. 24-23 of [3])
         g = 9.81 # m/s2

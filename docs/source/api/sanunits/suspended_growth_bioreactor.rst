@@ -1,18 +1,11 @@
-Suspended Growth Bioreactors
-============================
+Suspended Growth Bioreactor
+===========================
+.. automodule:: qsdsan.sanunits._suspended_growth_bioreactor
+    :members:
 
-CSTR
-----
-.. autoclass:: qsdsan.sanunits.CSTR
-   :members:
-
-BatchExperiment
----------------
-.. autoclass:: qsdsan.sanunits.BatchExperiment
-   :members:
 
 Example
-^^^^^^^
+-------
 .. code:: python
 
         import qsdsan.processes as pc, qsdsan.sanunits as su
@@ -29,9 +22,3 @@ Example
 
 .. figure:: ../../images/batch_experiment.png
    :width: 50%
-
-
-SBR
----
-.. autoclass:: qsdsan.sanunits.SBR
-   :members:

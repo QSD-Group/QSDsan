@@ -115,11 +115,12 @@ class KineticReaction(Rxn):
     >>> rxn.rate_equation
     -2.2e-5*C(t) - Derivative(C(t), t)
     >>> rxn.integrated_rate_equation.evalf(n=5) # `evalf` is to limit the digits
-    0.035543/2.7183**(2.2e-5*t)
+    0.037578/2.7183**(2.2e-5*t)
     >>> round(rxn.half_life, 2)
     31506.69
-    >>> # You can also look at the conversion over time
-    >>> fig = rxn.plot_conversion_over_time()
+    >>> # You can also look at the conversion over time,
+    >>> # set `show` to "True" or use fig.show() to see the figure
+    >>> fig = rxn.plot_conversion_over_time(show=False)
         
     References
     ----------
@@ -183,7 +184,8 @@ class KineticReaction(Rxn):
         All keyword arguments will be passed to :func:`sympy.plot`.
         '''
         ylabel = kwargs.pop('ylabel', 'Conversion')
-        plot(self._X_t, (self._t_sym, 0, self.t), ylabel=ylabel)
+        fig = plot(self._X_t, (self._t_sym, 0, self.t), ylabel=ylabel, **kwargs)
+        return fig
         
     @property
     def rate_reactant(self):

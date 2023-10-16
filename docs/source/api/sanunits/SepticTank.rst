@@ -1,4 +1,4 @@
-SepticTank
-==========
-.. autoclass:: qsdsan.sanunits.SepticTank
-   :members:
+Septic Tank
+===========
+.. automodule:: qsdsan.sanunits._septic_tank
+    :members:

@@ -1,4 +1,4 @@
 Screening
 =========
-.. autoclass:: qsdsan.sanunits.Screening
-   :members:
+.. automodule:: qsdsan.sanunits._screening
+    :members:
