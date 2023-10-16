@@ -623,6 +623,7 @@ class Thickener(SanUnit):
         self.power_utility.rate += pumping
         self.power_utility.rate += scraper_power
 
+# blank comment
 
 # %%
 
