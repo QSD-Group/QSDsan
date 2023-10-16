@@ -49,10 +49,10 @@ def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp, n0):
 #     v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star)))
 #     return X*max(v, 0)
 
-
 # Asign a bare module of 1 to all
 default_F_BM = {
         'Wall concrete': 1.,
+        'Slab concrete': 1.,
         'Wall stainless steel': 1.,
         'Scraper': 1,
         'v notch weir': 1,
@@ -889,12 +889,12 @@ class PrimaryClarifierBSM2(SanUnit):
     f_corr : float
         Dimensionless correction factor for removal efficiency in the primary clarifier.[1]
     
-    cylindrical_depth : float, optional
-        The depth of the cylindrical portion of clarifier [in m].  
-    upflow_velocity : float, optional
-        Speed with which influent enters the center feed of the clarifier [m/hr]. The default is 43.2.
-    F_BM : dict
-        Equipment bare modules.
+    # cylindrical_depth : float, optional
+    #     The depth of the cylindrical portion of clarifier [in m].  
+    # upflow_velocity : float, optional
+    #     Speed with which influent enters the center feed of the clarifier [m/hr]. The default is 43.2.
+    # F_BM : dict
+    #     Equipment bare modules.
 
     Examples
     --------
@@ -965,6 +965,8 @@ class PrimaryClarifierBSM2(SanUnit):
     Benchmarking of control strategies for wastewater treatment plants. IWA publishing, 2014.
     [2] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater
     engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
+    [3] Otterpohl R. and Freund M. (1992). Dynamic Models for clarifiers of activated sludge 
+    plants with dry and wet weather flows. Water Sci. Technol., 26(5-6), 1391-1400. 
     """
     
     _N_ins = 3
@@ -1319,6 +1321,7 @@ class PrimaryClarifierBSM2(SanUnit):
 # Asign a bare module of 1 to all
 default_F_BM = {
         'Wall concrete': 1.,
+        'Slab concrete': 1.,
         'Wall stainless steel': 1.,
         'Scraper': 1,
         'v notch weir': 1,
