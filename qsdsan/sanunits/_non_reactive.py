@@ -5,6 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -92,7 +93,7 @@ class LumpedCost(Copier):
         Copier.__init__(self, ID, ins, outs, thermo, init_with)
         self.F_BM = {cost_item_name: 1}
         self.CAPEX_dct = {cost_item_name: CAPEX}
-        self.power_utility(power)
+        self.power = power
         self._add_OPEX = add_OPEX
         for attr, val in kwargs.items():
             setattr(self, attr, val)
@@ -100,3 +101,4 @@ class LumpedCost(Copier):
 
     def _cost(self):
         self.baseline_purchase_costs.update(self.CAPEX_dct)
+        self.power_utility.consumption = self.power

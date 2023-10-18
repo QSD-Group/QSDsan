@@ -20,7 +20,8 @@ data_path = ospath.join(qs_path, 'data')
 
 __all__ = (
     'ospath', 'load_data', 'data_path',
-    'save_pickle', 'load_pickle', 'load_pickled_cmps',
+    'save_pickle', 'load_pickle',
+    # 'load_pickled_cmps',
     )
 
 
@@ -76,25 +77,28 @@ def load_pickle(path):
     f.close()
     return obj
 
+# # Legacy function no longer in use, DO NOT DELETE for now
+# def load_pickled_cmps(components_creation_f, pickle_path, pickle=None):
+#     '''
+#     Load components from pickle, update the pickled files if needed.
+#     This function is for util testing and 
 
-def load_pickled_cmps(components_creation_f, pickle_path, pickle=None):
-    '''
-    Load components from pickle, update the pickled files if needed.
-
-    Parameters
-    ----------
-    pickle: bool or None.
-        Whether to pickle the generated components.
-        If set to None, will pickle when there is no valid pickle file
-        (either the file is non-existing or it's outdated).
-    '''
-    if pickle == True: # repickle if asked to
-        return components_creation_f(pickle=True)
-    if ospath.isfile(pickle_path): # try to load pickled file
-        try: return load_pickle(pickle_path)
-        except: # want to repickle if there's no pickled file
-            pickle = True if pickle==None else False
-    if pickle is not False:
-        return components_creation_f(pickle=True)
-    else:
-        return components_creation_f(pickle=False)
+#     Parameters
+#     ----------
+#     pickle: bool or None.
+#         Whether to pickle the generated components.
+#         If set to None, will pickle when there is no valid pickle file
+#         (either the file is non-existing or it's outdated).
+#     components_creation_f : callable.
+#         Function used to create the components.
+#     '''
+#     if pickle == True: # repickle if asked to
+#         return components_creation_f(pickle=True)
+#     if ospath.isfile(pickle_path): # try to load pickled file
+#         try: return load_pickle(pickle_path)
+#         except: # want to repickle if there's no pickled file
+#             pickle = True if pickle==None else False
+#     if pickle is not False:
+#         return components_creation_f(pickle=True)
+#     else:
+#         return components_creation_f(pickle=False)

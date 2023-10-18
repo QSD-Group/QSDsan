@@ -383,8 +383,12 @@ class ImpactItem:
     @classmethod
     def _load_from_df(cls, name, df):
         if name.lower() == 'info':
+            if 'kind' not in df.columns: df['kind'] = 'ImpactItem'
             for num in df.index:
-                new = cls.__new__(cls)
+                kind = df.iloc[num].kind.lower()
+                if kind == 'streamimpactitem':
+                    new = StreamImpactItem.__new__(StreamImpactItem)
+                else: new = cls.__new__(cls)
                 new.__init__(ID=df.iloc[num].ID,
                              functional_unit=df.iloc[num].functional_unit)
         else:
@@ -409,8 +413,9 @@ class ImpactItem:
 
         This Excel should have multiple sheets:
 
-            - The "info" sheet should have two columns: "ID" (e.g., Cement) \
-            and "functional_unit" (e.g., kg) of different impact items.
+            - The "info" sheet should have three columns: "ID" (e.g., Cement) \
+             "functional_unit" (e.g., kg), and "kind" ("ImpactItem" or "StreamImpactItem") \
+             of different impact items.
 
             - The remaining sheets should contain characterization factors of \
             impact indicators.

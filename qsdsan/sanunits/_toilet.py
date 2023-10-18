@@ -373,7 +373,7 @@ class MURT(Toilet):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Toilet <sanunits_toilets>`
+    :ref:`qsdsan.sanunits.Toilet <sanunits_toilet>`
     '''
     _N_outs = 3
     _units = {
@@ -570,7 +570,7 @@ class PitLatrine(Toilet):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Toilet <sanunits_toilets>`
+    :ref:`qsdsan.sanunits.Toilet <sanunits_toilet>`
     '''
     _N_outs = 4
     _units = {
@@ -883,7 +883,7 @@ class UDDT(Toilet):
 
     See Also
     --------
-    :ref:`qsdsan.sanunits.Toilet <sanunits_toilets>`
+    :ref:`qsdsan.sanunits.Toilet <sanunits_toilet>`
     '''
     _N_outs = 6
     _units = {
