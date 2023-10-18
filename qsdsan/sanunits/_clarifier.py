@@ -529,7 +529,7 @@ class FlatBottomCircularClarifier(SanUnit):
         self._ODE = dy_dt
     
     _units = {
-        'Number of clarifiers': 'Unitless',
+        'Number of clarifiers': 'ea',
         'Volumetric flow': 'm3/day',
         'Clarifier depth': 'm',
         'Surface area': 'm2',
@@ -545,7 +545,7 @@ class FlatBottomCircularClarifier(SanUnit):
         'Stainless steel': 'kg',
         'Pump pipe stainless steel' : 'kg',
         'Pump stainless steel': 'kg',
-        'Number of pumps': 'Unitless'
+        'Number of pumps': 'ea'
     }
      
     def _design_pump(self):
@@ -1065,8 +1065,8 @@ class PrimaryClarifierBSM2(SanUnit):
         uf.set_flow(Cs,'kg/hr')
        
     def _init_state(self):
-        # if multiple wastestreams exist then concentration and total inlow
-        # would be calculated assumping perfect mixing
+        # if multiple wastestreams exist then concentration and total flow
+        # would be calculated assuming perfect mixing
         Qs = self._ins_QC[:,-1]
         Cs = self._ins_QC[:,:-1]
         self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
@@ -1285,7 +1285,7 @@ class PrimaryClarifierBSM2(SanUnit):
     #     base_flow_v_notch_weir = 10 # in m3/hr
     #     C['v notch weir'] = D['Number of clarifiers']*base_cost_v_notch_weir*(clarifier_flow/base_flow_v_notch_weir)**0.6
         
-    #     # Pump (construction and maintainance)
+    #     # Pump (construction and maintenance)
     #     pumps = self.pumps
     #     add_OPEX = self.add_OPEX
     #     pump_cost = 0.
@@ -1321,7 +1321,7 @@ class PrimaryClarifierBSM2(SanUnit):
     #     self.power_utility.consumption += scraper_power
         
     
-# Asign a bare module of 1 to all
+# Assign a bare module of 1 to all
 default_F_BM = {
         'Wall concrete': 1.,
         'Slab concrete': 1.,
@@ -1616,14 +1616,14 @@ class PrimaryClarifier(SanUnit):
         Qu_factor = self.updated_Qu_factor
         cmps = self.components
         
-        # For sludge, the particulate concentrations are multipled by thickener factor, and
+        # For sludge, the particulate concentrations are multiplied by thickener factor, and
         # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
         uf, of = self.outs
         if uf.state is None: uf.state = np.zeros(len(cmps)+1)
         uf.state[:-1] = self._state[:-1]*cmps.s*1 + self._state[:-1]*cmps.x*thickener_factor
         uf.state[-1] = self._state[-1]*Qu_factor
         
-        # For effluent, the particulate concentrations are multipled by thinning factor, and
+        # For effluent, the particulate concentrations are multiplied by thinning factor, and
         # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
         if of.state is None: of.state = np.zeros(len(cmps)+1)
         of.state[:-1] = self._state[:-1]*cmps.s*1 + self._state[:-1]*cmps.x*thinning_factor
@@ -1646,14 +1646,14 @@ class PrimaryClarifier(SanUnit):
         Qu_factor = self.updated_Qu_factor
         cmps = self.components
         
-        # For sludge, the particulate concentrations are multipled by thickener factor, and
+        # For sludge, the particulate concentrations are multiplied by thickener factor, and
         # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
         uf, of = self.outs
         if uf.dstate is None: uf.dstate = np.zeros(len(cmps)+1)
         uf.dstate[:-1] = self._dstate[:-1]*cmps.s*1 + self._dstate[:-1]*cmps.x*thickener_factor
         uf.dstate[-1] = self._dstate[-1]*Qu_factor
         
-        # For effluent, the particulate concentrations are multipled by thinning factor, and
+        # For effluent, the particulate concentrations are multiplied by thinning factor, and
         # flowrate is multiplied by Qu_factor. The soluble concentrations remains same.
         if of.dstate is None: of.dstate = np.zeros(len(cmps)+1)
         of.dstate[:-1] = self._dstate[:-1]*cmps.s*1 + self._dstate[:-1]*cmps.x*thinning_factor
@@ -1758,7 +1758,7 @@ class PrimaryClarifier(SanUnit):
         'Stainless steel': 'kg',
         'Pump pipe stainless steel' : 'kg',
         'Pump stainless steel': 'kg',
-        'Number of pumps': 'Unitless'
+        'Number of pumps': 'ea'
     }
     
     def _design(self):
@@ -1786,7 +1786,7 @@ class PrimaryClarifier(SanUnit):
         D['Surface area'] = D['Volumetric flow']/D['SOR'] # in m2
         D['Cylindrical diameter'] = np.sqrt(4*D['Surface area']/np.pi) #in m
         
-        #Check on cylinderical diameter [2, 3]
+        #Check on cylindrical diameter [2, 3]
         if D['Cylindrical diameter'] < 3 or D['Cylindrical diameter'] > 60:
             Cylindrical_dia = D['Cylindrical diameter']
             warn(f'Cylindrical diameter = {Cylindrical_dia} is not between 3 m and 60 m')
@@ -1797,7 +1797,7 @@ class PrimaryClarifier(SanUnit):
         D['Clarifier depth'] = self.depth_clarifier #in m 
         D['Cylindrical depth'] = D['Clarifier depth'] -  D['Conical depth']
         
-        # Check on cylinderical and conical depths 
+        # Check on cylindrical and conical depths 
         if D['Cylindrical depth'] < D['Conical depth']:
             Cylindrical_depth = D['Cylindrical depth']
             Conical_depth = D['Conical depth']
