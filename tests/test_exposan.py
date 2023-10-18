@@ -59,10 +59,10 @@ def test_exposan():
     bw.load()
     bw.print_summaries((bw.sysA, bw.sysB, bw.sysC))
 
-    clear_lca_registries()
-    from exposan import eco_san as es
-    es.load()
-    es.print_summaries((es.sysA, es.sysB, es.sysC))
+    # clear_lca_registries()
+    # from exposan import eco_san as es
+    # es.load()
+    # es.print_summaries((es.sysA, es.sysB, es.sysC))
     
     clear_lca_registries()
     from exposan import htl
@@ -90,6 +90,11 @@ def test_exposan():
     from exposan import pou_disinfection as pou
     pou.load()
     pou.print_summaries((pou.sysA, pou.sysB, pou.sysC, pou.sysD))
+
+    clear_lca_registries()
+    from exposan import eco_san as es
+    es.load()
+    es.print_summaries((es.sysA, es.sysB, es.sysC))
 
 
 if __name__ == '__main__':
