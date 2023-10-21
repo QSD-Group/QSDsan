@@ -37,14 +37,14 @@ def test_exposan():
     bsm1_sys.simulate(t_span=(0,10), method='BDF')
     print(get_SRT(bsm1_sys, biomass_IDs=biomass_IDs)) # to test the `get_SRT` function
 
+    #!!! Will use bsm2 to test the junction models
+    # from exposan.interface import create_system as create_inter_system
+    # sys_inter = create_inter_system()
+    # sys_inter.simulate(method='BDF', t_span=(0, 3)) # the default 'RK45' method can't solve it
+
     from exposan.cas import create_system as create_cas_system
     cas_sys = create_cas_system()
     cas_sys.simulate()
-
-    from exposan.interface import create_system as create_inter_system
-    sys_inter = create_inter_system()
-    #!!! Temporarily disable this test while trying to fix the issue
-    # sys_inter.simulate(method='BDF', t_span=(0, 3)) # the default 'RK45' method can't solve it
 
     ##### Systems with costs/impacts #####
     from qsdsan.utils import clear_lca_registries
@@ -54,7 +54,7 @@ def test_exposan():
     br.load()
     br.print_summaries((br.sysA, br.sysB, br.sysC, br.sysD))
 
-    clear_lca_registries()    
+    clear_lca_registries()
     from exposan import bwaise as bw
     bw.load()
     bw.print_summaries((bw.sysA, bw.sysB, bw.sysC))
@@ -67,11 +67,29 @@ def test_exposan():
     clear_lca_registries()
     from exposan import htl
     htl.load()
+    
+    clear_lca_registries()
+    from exposan import metab
+    UASB_M = metab.create_system(n_stages=2, reactor_type='UASB', gas_extraction='M', tot_HRT=4)
+    UASB_M.simulate(state_reset_hook='reset_cache', method='BDF', t_span=(0, 400))
+    FB_H = metab.create_system(n_stages=2, reactor_type='FB', gas_extraction='H', tot_HRT=4)
+    # # Just simulate one system to save testing time
+    # # (all configurations are included in EXPOsan test)
+    # FB_H.simulate(state_reset_hook='reset_cache', method='BDF', t_span=(0, 400))
+    PB_P = metab.create_system(n_stages=2, reactor_type='PB', gas_extraction='P', tot_HRT=4)
+    # Might fail the first time it runs, re-running will usually fix the problem
+    # try: PB_P.simulate(state_reset_hook='reset_cache', method='BDF', t_span=(0, 400))
+    # except: PB_P.simulate(state_reset_hook='reset_cache', method='BDF', t_span=(0, 400))
 
     clear_lca_registries()
     from exposan import reclaimer as re
     re.load()
     re.print_summaries((re.sysA, re.sysB, re.sysC, re.sysD))
+    
+    clear_lca_registries()
+    from exposan import pou_disinfection as pou
+    pou.load()
+    pou.print_summaries((pou.sysA, pou.sysB, pou.sysC, pou.sysD))
 
 
 if __name__ == '__main__':
