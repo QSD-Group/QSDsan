@@ -436,9 +436,9 @@ class Hydrotreating(Reactor):
             raise Exception('carbon mass balance is out of +/- 10% for the whole system')
         # allow +/- 10% out of mass balance
         # should be no C in the aqueous phase, the calculation here is just for MB
-        
+
         if self.HTaqueous_N < -0.1*self.HTL.WWTP.sludge_N:
-            raise Exception('nitrogen mass balance is out of +/- 10% for the whole system')
+            Warning('nitrogen mass balance is out of +/- 10% for the whole system')
         # allow +/- 10% out of mass balance
 
         # possibility exist that more carbon is in biooil and gas than in

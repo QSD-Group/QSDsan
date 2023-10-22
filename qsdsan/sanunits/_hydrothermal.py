@@ -462,7 +462,7 @@ class HydrothermalLiquefaction(Reactor):
                  vessel_material='Stainless steel 316',
                  vessel_type='Vertical',
                  CAPEX_factor=1,
-                 dewatered_unit_exist_in_the_system=False):
+                 mositure_adjustment_exist_in_the_system=False):
         
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.lipid_2_biocrude = lipid_2_biocrude
@@ -502,14 +502,14 @@ class HydrothermalLiquefaction(Reactor):
         self.vessel_material = vessel_material
         self.vessel_type = vessel_type
         self.CAPEX_factor = CAPEX_factor
-        self.dewatered_unit_exist_in_the_system = dewatered_unit_exist_in_the_system
+        self.mositure_adjustment_exist_in_the_system = mositure_adjustment_exist_in_the_system
 
     def _run(self):
         
         dewatered_sludge = self.ins[0]
         hydrochar, HTLaqueous, biocrude, offgas = self.outs
         
-        if self.dewatered_unit_exist_in_the_system == True:
+        if self.mositure_adjustment_exist_in_the_system == True:
             self.WWTP = self.ins[0]._source.ins[0]._source.ins[0].\
                              _source.ins[0]._source
         else:
