@@ -1,6 +1,6 @@
 # This workflow will install Python dependencies, run tests with a variety of Python versions, and report coverage
 
-name: build-only
+name: build-only-trial
 
 on:
   push:
