@@ -22,7 +22,6 @@ from ..sanunits._pumping import (
     default_equipment_lifetime as default_WWTpump_equipment_lifetime,
     )
 
-
 __all__ = ('Thickener', 'Centrifuge', 'Incinerator')
 
 # Asign a bare module of 1 to all
@@ -32,7 +31,11 @@ default_F_BM = {
         'Wall stainless steel': 1.,
         'Scraper': 1,
         'v notch weir': 1,
-        'Pumps': 1
+        'Pumps': 1,
+        
+        # Centrifuge
+        'Bowl stainless steel': 1, 
+        'Conveyor': 1
         }
 default_F_BM.update(default_WWTpump_F_BM)
 
@@ -628,6 +631,15 @@ class Thickener(SanUnit):
 
 # %%
 
+# Asign a bare module of 1 to all
+
+# default_F_BM = {
+#     'Bowl stainless steel': 1, 
+#     'Conveyor': 1, 
+#     'Pumps': 1,
+#         }
+# default_F_BM.update(default_WWTpump_F_BM)
+
 class Centrifuge(Thickener):
 
     """
@@ -647,28 +659,23 @@ class Centrifuge(Thickener):
         The percentage of suspended solids removed in the dewatering unit.[1]
     solids_feed_rate : float
         Rate of solids processed by one centrifuge in dry tonne per day (dtpd).
-        Default value is 70 dtpd. 
-    
-    # specific_gravity_sludge: float
-    #     Specific gravity of influent sludge from secondary clarifier.[2,3]
-    # cake density: float
-    #     Density of effleunt dewatered sludge.[2,3]
-    
+        Default value is 150 dtpd. [6]  
     g_factor : float
         Factor by which g (9.81 m/s2) is multiplied to obtain centrifugal acceleration. 
         g_factor typically lies between 1500 and 3000. 
         centrifugal acceleration = g * g_factor = k * (RPM)^2 * diameter [3]
     rotational_speed : float
-        rotational speed of the centrifuge in rpm. [3]
+        rotational speed of the centrifuge in rpm. Typical rpm is between 2000-3000 rpm [MOP-8, PAGE 1733]
     LtoD: The ratio of length to diameter of the centrifuge.
         The value typically lies between 3-4. [4]
     polymer_dosage : float
         mass of polymer utilised (lb) per tonne of dry solid waste (lbs/tonne).[5]
         Depends on the type of influents, please refer to [5] for appropriate values. 
+        Default value of 20 lbs/tonne is taken from [5], based on Primary + WAS aerated undigested value.  
     h_cylindrical: float
         length of cylindrical portion of dewatering unit.
     h_conical: float
-        length of conical portion of dewatering unit.[
+        length of conical portion of dewatering unit.
     
     
     References
@@ -681,6 +688,8 @@ class Centrifuge(Thickener):
     No. 8 ASCE Manuals and Reports on Engineering Practice No. 76, Fifth Edition. 
     [4] https://www.alibaba.com/product-detail/Multifunctional-Sludge-Dewatering-Decanter-Centrifuge_1600285055254.html?spm=a2700.galleryofferlist.normal_offer.d_title.1cd75229sPf1UW&s=p
     [5] United States Environmental Protection Agency (EPA) 'Biosolids Technology Fact Sheet Centrifuge Thickening and Dewatering'  
+    [6] San Diego (.gov) Chapter - 3 'Solids Treatment Facility' 
+    (https://www.sandiego.gov/sites/default/files/legacy/mwwd/pdf/mbc/chapterthree.pdf)
     """
     
     _N_ins = 1
@@ -688,27 +697,19 @@ class Centrifuge(Thickener):
     _ins_size_is_fixed = False
     
     # Costs
-    stainless_steel_unit_cost=1.8 # $/kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
-    screw_conveyor_unit_cost_by_weight = 1800/800 # $/kg (Source: https://www.alibaba.com/product-detail/Engineers-Available-Service-Stainless-Steel-U_60541536633.html?spm=a2700.galleryofferlist.normal_offer.d_title.1fea1f65v6R3OQ&s=p)
-    polymer_cost_by_weight = 5 # !!!Placeholder value!!!
+    stainless_steel_unit_cost=1.8 # $/Kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
+    polymer_cost_by_weight = 2.2 # $/Kg (Source: https://www.alibaba.com/product-detail/dewatering-pool-chemicals-cationic-polyacrylamide-cas_1600194474507.html?spm=a2700.galleryofferlist.topad_classic.i5.5de8615c4zGAhg)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=default_F_BM, thickener_perc=28, TSS_removal_perc=98, 
-                  solids_feed_rate = 70, 
-                  # specific_gravity_sludge=1.03, cake_density=965, 
-                  g_factor=2500, rotational_speed = 40, LtoD = 4, 
-                  polymer_dosage = 0.0075, h_cylindrical=2, h_conical=1, 
-                  **kwargs):
+                  solids_feed_rate = 70, g_factor=2500, rotational_speed = 2500, LtoD = 4, F_BM = default_F_BM,
+                  polymer_dosage = 20, h_cylindrical=2, h_conical=1, **kwargs):
+        
         Thickener.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, isdynamic=isdynamic,
                       init_with=init_with, F_BM_default=1, thickener_perc=thickener_perc, 
                       TSS_removal_perc=TSS_removal_perc, **kwargs)
         
-        # self._mixed = self.ins[0].copy(f'{ID}_mixed')
-        # self._inf = self.ins[0].copy(f'{ID}_inf')
-        
         self.solids_feed_rate = solids_feed_rate
-        # self.specific_gravity_sludge=specific_gravity_sludge
-        # self.cake_density=cake_density #in kg/m3
         self.g_factor = g_factor #unitless, centrifugal acceleration = g_factor*9.81
         self.rotational_speed = rotational_speed #in revolution/min
         self.LtoD = LtoD 
@@ -717,19 +718,17 @@ class Centrifuge(Thickener):
         self.h_conical = h_conical
         
     _units = {
-        'Number of centrifuges': '?',
+        'Number of centrifuges': 'ea',
         'Diameter of bowl': 'm',
         'Total length of bowl': 'm',
         'Length of cylindrical portion': 'm',
         'Length of conical portion': 'm',
         'Volume of bowl': 'm3',
-        
         'Stainless steel for bowl': 'kg',
-        
         'Polymer feed rate': 'kg/hr',
         'Pump pipe stainless steel' : 'kg',
         'Pump stainless steel': 'kg',
-        'Number of pumps': '?'
+        'Number of pumps': 'ea'
     }        
     
     def _design_pump(self):
@@ -773,8 +772,7 @@ class Centrifuge(Thickener):
             pump_ss += p_design['Pump stainless steel']
         return pipe_ss, pump_ss
     
-    def _design(self):
-        
+    def _design(self):   
         self._mixed.mix_from(self.ins)
         mixed = self._mixed
         
@@ -785,6 +783,7 @@ class Centrifuge(Thickener):
         # If TSS_rmv = 98, then total_mass_dry_solids_removed  = (0.98)*(influent TSS mass)
         total_mass_dry_solids_removed = (TSS_rmv/100)*((mixed.get_TSS()*self.ins[0].F_vol)/1000) # in kg/hr
         D['Number of centrifuges'] = np.ceil(total_mass_dry_solids_removed/solids_feed_rate)
+        
         k = 0.00000056 # Based on emprical formula (pg. 24-23 of [3])
         g = 9.81 # m/s2
         # The inner diameterof the bowl is calculated based on an empirical formula. 1000 is used to convert mm to m.
@@ -799,6 +798,7 @@ class Centrifuge(Thickener):
         thickness_of_bowl_wall = 0.1 # in m (!!! NEED A RELIABLE SOURCE !!!)
         inner_diameter = D['Diameter of bowl']
         outer_diameter = inner_diameter + 2*thickness_of_bowl_wall
+        
         volume_cylindrical_wall = (np.pi*D['Length of cylindrical portion']/4)*(outer_diameter**2 - inner_diameter**2)
         volume_conical_wall = (np.pi/3)*(D['Length of conical portion']/4)*(outer_diameter**2 - inner_diameter**2)
         D['Volume of bowl'] = volume_cylindrical_wall + volume_conical_wall # in m3
@@ -806,13 +806,14 @@ class Centrifuge(Thickener):
         density_ss = 7930 # kg/m3, 18/8 Chromium
         D['Stainless steel for bowl'] = D['Volume of bowl']*density_ss # in kg
         
-        polymer_dosage_rate = 0.000453592*self.polymer_dosage # convert from (lbs, polymer/tonne, solids) to (kg, polymer/kg, solids)
-        D['Polymer feed rate'] = (polymer_dosage_rate*solids_feed_rate) # in kg, polymer/hr
+        polymer_dosage_rate = 0.000453592*self.polymer_dosage # convert from (polymer (lbs)/solids (tonne)) to (polymer (kg)/solids (kg))
+        D['Polymer feed rate'] = (polymer_dosage_rate*solids_feed_rate) # in polymer (kg)/hr
         
         # Pumps
         pipe, pumps = self._design_pump()
         D['Pump pipe stainless steel'] = pipe
         D['Pump stainless steel'] = pumps
+        
         # For centrifuges 
         D['Number of pumps'] = D['Number of centrifuges']
         
@@ -826,8 +827,6 @@ class Centrifuge(Thickener):
        
         # Construction of concrete and stainless steel walls
         C['Bowl stainless steel'] = D['Number of centrifuges']*D['Stainless steel for bowl']*self.stainless_steel_unit_cost
-        # C['Conveyor stainless steel'] = D['Number of centrifuges']*D['Stainless steel for conveyor']*self.screw_conveyor_unit_cost_by_weight
-        C['Polymer'] = D['Number of centrifuges']*D['Polymer feed rate']*self.polymer_cost_by_weight 
         
         # Conveyor 
         # Source: https://www.alibaba.com/product-detail/Engineers-Available-Service-Stainless-Steel-U_60541536633.html?spm=a2700.galleryofferlist.normal_offer.d_title.1fea1f65v6R3OQ&s=p
@@ -845,6 +844,8 @@ class Centrifuge(Thickener):
         building_cost = 0.
         opex_o = 0.
         opex_m = 0.
+        
+        add_OPEX['Polymer'] = D['Number of centrifuges']*D['Polymer feed rate']*self.polymer_cost_by_weight 
        
         for i in pumps:
             p = getattr(self, f'{i}_pump')
