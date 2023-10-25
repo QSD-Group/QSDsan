@@ -25,13 +25,16 @@ from ..sanunits._pumping import (
 
 __all__ = ('Thickener', 'Centrifuge', 'Incinerator')
 
-# Assign a bare module of 1 to all
+# Asign a bare module of 1 to all
 default_F_BM = {
         'Wall concrete': 1.,
+        'Slab concrete': 1.,
         'Wall stainless steel': 1.,
+        'Scraper': 1,
+        'v notch weir': 1,
+        'Pumps': 1
         }
 default_F_BM.update(default_WWTpump_F_BM)
-
 
 class Thickener(SanUnit):
     
@@ -622,8 +625,6 @@ class Thickener(SanUnit):
         
         self.power_utility.rate += pumping
         self.power_utility.rate += scraper_power
-
-# blank comment
 
 # %%
 
