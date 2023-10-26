@@ -116,7 +116,6 @@ class Reactor(SanUnit, PressureVessel, isabstract=True):
         self.wall_thickness_factor = wall_thickness_factor
         self.vessel_material = vessel_material
         self.vessel_type = vessel_type
-
         
     def _init_lca(self):
         for i in self.construction: i.registry.discard(i)
@@ -193,7 +192,6 @@ class Reactor(SanUnit, PressureVessel, isabstract=True):
         
         if self.include_construction:
             self.construction[0].quantity = Design['Weight']*Design['Number of reactors']*_lb_to_kg
-
 
     def _cost(self):
         Design = self.design_results
