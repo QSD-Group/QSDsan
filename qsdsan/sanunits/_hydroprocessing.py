@@ -106,7 +106,8 @@ class Hydrocracking(Reactor):
                  #combine C20H42 and PHYTANE as C20H42
                  # will not be a variable in uncertainty/sensitivity analysis
                  P=None, tau=5, void_fraciton=0.4, # Towler
-                 length_to_diameter=2, N=None, V=None, auxiliary=False, mixing_intensity=None, kW_per_m3=0,
+                 length_to_diameter=2, diameter=None,
+                 N=None, V=None, auxiliary=False, mixing_intensity=None, kW_per_m3=0,
                  wall_thickness_factor=1.5,
                  vessel_material='Stainless steel 316',
                  vessel_type='Vertical'):
@@ -135,6 +136,7 @@ class Hydrocracking(Reactor):
         self.tau = tau
         self.void_fraciton = void_fraciton
         self.length_to_diameter = length_to_diameter
+        self.diameter = diameter
         self.N = N
         self.V = V
         self.auxiliary = auxiliary
@@ -337,7 +339,8 @@ class Hydrotreating(Reactor):
                  # spreadsheet HT calculation
                  # will not be a variable in uncertainty/sensitivity analysis
                  P=None, tau=0.5, void_fraciton=0.4, # [2]
-                 length_to_diameter=2, N=None, V=None, auxiliary=False,
+                 length_to_diameter=2, diameter=None,
+                 N=None, V=None, auxiliary=False,
                  mixing_intensity=None, kW_per_m3=0,
                  wall_thickness_factor=1,
                  vessel_material='Stainless steel 316',
@@ -371,6 +374,7 @@ class Hydrotreating(Reactor):
         self.tau = tau
         self.void_fraciton = void_fraciton
         self.length_to_diameter = length_to_diameter
+        self.diameter = diameter
         self.N = N
         self.V = V
         self.auxiliary = auxiliary
@@ -529,10 +533,3 @@ class Hydrotreating(Reactor):
         
         for item in purchase_costs.keys():
             purchase_costs[item] *= CAPEX_factor
-        
-        for aux_unit in self.auxiliary_units:
-            purchase_costs = aux_unit.baseline_purchase_costs
-            installed_costs = aux_unit.installed_costs
-            for item in purchase_costs.keys():
-                purchase_costs[item] *= CAPEX_factor
-                installed_costs[item] *= CAPEX_factor

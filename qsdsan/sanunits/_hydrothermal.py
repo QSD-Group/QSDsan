@@ -28,7 +28,7 @@ __all__ = (
 
 _lb_to_kg = auom('lb').conversion_factor('kg')
 _m3_to_gal = auom('m3').conversion_factor('gallon')
-
+_in_to_m = auom('inch').conversion_factor('m')
 
 # %%
 
@@ -114,7 +114,8 @@ class CatalyticHydrothermalGasification(Reactor):
                                   'H2':0.0001}, # [1]
                   gas_C_2_total_C=0.5981, # [1]
                   P=None, tau=20/60, void_fraction=0.5, # [2, 3]
-                  length_to_diameter=2, N=6, V=None, auxiliary=False,
+                  length_to_diameter=2, diameter=None,
+                  N=6, V=None, auxiliary=False,
                   mixing_intensity=None, kW_per_m3=0,
                   wall_thickness_factor=1,
                   vessel_material='Stainless steel 316',
@@ -144,6 +145,7 @@ class CatalyticHydrothermalGasification(Reactor):
         self.V_wf = void_fraction
         # no headspace, gases produced will be vented, so V_wf = void fraction [2, 3]
         self.length_to_diameter = length_to_diameter
+        self.diameter = diameter
         self.N = N
         self.V = V
         self.auxiliary = auxiliary
@@ -153,7 +155,6 @@ class CatalyticHydrothermalGasification(Reactor):
         self.vessel_material = vessel_material
         self.vessel_type = vessel_type
         self.CAPEX_factor = CAPEX_factor
-        
         
     def _run(self):
         
@@ -253,14 +254,6 @@ class CatalyticHydrothermalGasification(Reactor):
         for item in purchase_costs.keys():
             purchase_costs[item] *= self.CAPEX_factor
         
-        for aux_unit in self.auxiliary_units:
-            purchase_costs = aux_unit.baseline_purchase_costs
-            installed_costs = aux_unit.installed_costs
-            for item in purchase_costs.keys():
-                purchase_costs[item] *= self.CAPEX_factor
-                installed_costs[item] *= self.CAPEX_factor
-                
-
 # %%
 
 # =============================================================================
@@ -290,18 +283,25 @@ class KnockOutDrum(Reactor):
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='Stream',
                  P=3049.7*6894.76, tau=0, V_wf=0,
-                 length_to_diameter=2, N=4, V=None,
+                 length_to_diameter=2, diameter=None,
+                 N=4, V=None,
                  auxiliary=True,
                  mixing_intensity=None, kW_per_m3=0,
                  wall_thickness_factor=1,
                  vessel_material='Stainless steel 316',
-                 vessel_type='Vertical'):
+                 vessel_type='Vertical',
+                 drum_steel_cost_factor=1.5):
+        # drum_steel_cost_factor: so the cost matches [1]
+        # when do comparison, if fully consider scaling factor (2000 tons/day to 100 tons/day),
+        # drum_steel_cost_factor should be around 3
+        # but that is too high, we use 1.5 instead.
         
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.P = P
         self.tau = tau
         self.V_wf = V_wf
         self.length_to_diameter = length_to_diameter
+        self.diameter = diameter
         self.N = N
         self.V = V
         self.auxiliary = auxiliary
@@ -310,9 +310,16 @@ class KnockOutDrum(Reactor):
         self.wall_thickness_factor = wall_thickness_factor
         self.vessel_material = vessel_material
         self.vessel_type = vessel_type
+        self.drum_steel_cost_factor = drum_steel_cost_factor
     
     def _run(self):
         pass
+    
+    def _cost(self):
+        Reactor._cost(self)
+        
+        purchase_costs = self.baseline_purchase_costs
+        purchase_costs['Vertical pressure vessel'] *= self.drum_steel_cost_factor
 
 # =============================================================================
 # HTL
@@ -455,13 +462,15 @@ class HydrothermalLiquefaction(Reactor):
                  biocrude_pre=30*6894.76, # [4]
                  offgas_pre=30*6894.76, # [4]
                  eff_T=60+273.15, # [4]
-                 P=None, tau=15/60, V_wf=0.3,
-                 length_to_diameter=2, N=4, V=None, auxiliary=False,
+                 P=None, tau=15/60, V_wf=0.45,
+                 length_to_diameter=None, diameter=6.875*_in_to_m,
+                 N=4, V=None, auxiliary=False,
                  mixing_intensity=None, kW_per_m3=0,
                  wall_thickness_factor=1,
                  vessel_material='Stainless steel 316',
-                 vessel_type='Vertical',
+                 vessel_type='Horizontal',
                  CAPEX_factor=1,
+                 HTL_steel_cost_factor=2.7, # so the cost matches [6]
                  mositure_adjustment_exist_in_the_system=False):
         
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
@@ -493,6 +502,7 @@ class HydrothermalLiquefaction(Reactor):
         self.tau = tau
         self.V_wf = V_wf
         self.length_to_diameter = length_to_diameter
+        self.diameter = diameter
         self.N = N
         self.V = V
         self.auxiliary = auxiliary
@@ -502,6 +512,7 @@ class HydrothermalLiquefaction(Reactor):
         self.vessel_material = vessel_material
         self.vessel_type = vessel_type
         self.CAPEX_factor = CAPEX_factor
+        self.HTL_steel_cost_factor = HTL_steel_cost_factor
         self.mositure_adjustment_exist_in_the_system = mositure_adjustment_exist_in_the_system
 
     def _run(self):
@@ -687,6 +698,8 @@ class HydrothermalLiquefaction(Reactor):
         purchase_costs = self.baseline_purchase_costs
         for item in purchase_costs.keys():
             purchase_costs[item] *= self.CAPEX_factor
+            
+        purchase_costs['Horizontal pressure vessel'] *= self.HTL_steel_cost_factor
         
         for aux_unit in self.auxiliary_units:
             purchase_costs = aux_unit.baseline_purchase_costs
