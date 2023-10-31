@@ -725,3 +725,224 @@ class ActivatedSludgeProcess(SanUnit):
     @constr_access.setter
     def constr_access(self, i):
         self._constr_access = i
+        
+        
+class TreatmentChain(Mixer):
+    
+    # Costs
+    wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
+    slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
+    
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 F_BM_default=1, N_train=2, V_tank=1000, 
+                 W_tank = 6.4, D_tank = 3.66, freeboard = 0.61, W_dist = 1.37, W_eff = 1.5, # all in meter  (converted from feet to m, Shoener et al.2016)
+                 W_RAS = 1.5, # in m (assumed same as W_eff)
+                 excav_slope = 1.5, # horizontal/vertical (Shoener et al.2016)
+                 constr_access = 0.92, # in meter  (converted from feet to m, Shoener et al. 2016)
+                 F_BM=default_F_BM, lifetime=default_equipment_lifetime,
+                 **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)   
+        
+        self.N_train = N_train
+        self.V_tank = V_tank
+        self.W_tank = W_tank
+        self.D_tank = D_tank
+        self.freeboard = freeboard
+        self.W_dist = W_dist
+        self.W_eff = W_eff
+        self.W_RAS = W_RAS
+        self.excav_slope = excav_slope
+        self.constr_access = constr_access
+        self.F_BM.update(F_BM)
+        
+    @property
+    def N_train(self):
+        '''
+        [int] Number of treatment train, should be at least two in case one failing.
+        '''
+        return self._N_train
+    
+    @N_train.setter
+    def N_train(self, i):
+        i = ceil(i)
+        if i < 2:
+            raise ValueError('`N_train` should be at least 2.')
+        self._N_train = i
+        
+    @property
+    def V_tank(self):
+        '''[float] Volume of tank, [m3].'''
+        return self._V_tank
+    
+    @V_tank.setter
+    def V_tank(self, i):
+        self._V_tank = i
+
+    @property
+    def W_tank(self):
+        '''[float] Width of one tank, [m].'''
+        return self._W_tank
+    
+    @W_tank.setter
+    def W_tank(self, i):
+        self._W_tank = i
+
+    @property
+    def D_tank(self):
+        '''[float] Depth of one tank, [m].'''
+        return self._D_tank
+    
+    @D_tank.setter
+    def D_tank(self, i):
+        self._D_tank = i
+
+    @property
+    def W_dist(self):
+        '''[float] Width of the distribution channel, [m].'''
+        return self._W_dist
+    
+    @W_dist.setter
+    def W_dist(self, i):
+        self._W_dist = i
+
+    @property
+    def W_eff(self):
+        '''[float] Width of the effluent channel, [m].'''
+        return self._W_eff
+    
+    @W_eff.setter
+    def W_eff(self, i):
+        self._W_eff = i
+        
+    @property
+    def W_RAS(self):
+        '''[float] Width of the recirculation channel, [m].'''
+        return self._W_RAS
+    
+    @W_RAS.setter
+    def W_eff(self, i):
+        self._W_RAS = i
+
+    @property
+    def freeboard(self):
+        '''[float] Freeboard added to the depth of the reactor tank, [m].'''
+        return self._freeboard
+    
+    @freeboard.setter
+    def freeboard(self, i):
+        self._freeboard = i
+        
+    @property
+    def t_wall(self):
+        '''
+        [float] Thickness of the wall concrete, [m].
+        default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
+        '''
+        D_tank = self.D_tank*39.37 # m to inches 
+        return self._t_wall or (1 + max(D_tank - 12, 0)/12)*0.3048 # from feet to m
+    
+    @t_wall.setter
+    def t_wall(self, i):
+        self._t_wall = i
+
+    @property
+    def t_slab(self):
+        '''
+        [float] Concrete slab thickness, [m],
+        default to be 2 in thicker than the wall thickness.
+        '''
+        return self._t_slab or (self.t_wall + 2/12)*0.3048 # from feet to m
+    
+    @t_slab.setter
+    def t_slab(self, i):
+        self._t_slab = i
+
+    @property
+    def excav_slope(self):
+        '''[float] Slope for excavation (horizontal/vertical).'''
+        return self._excav_slope
+    
+    @excav_slope.setter
+    def excav_slope(self, i):
+        self._excav_slope = i
+        
+    @property
+    def constr_access(self):
+        '''[float] Extra room for construction access, [m].'''
+        return self._constr_access
+    
+    @constr_access.setter
+    def constr_access(self, i):
+        self._constr_access = i
+        
+    def _run(self):
+        pass
+    
+    def _design(self):
+        self._mixed.mix_from(self.ins)
+        mixed = self._mixed
+        
+        D = self.design_results 
+        
+        D['N_train'] = self.N_train
+        D['Tank volume'] = self.V_tank # in m3
+        D['HRT'] = D['Tank volume']/mixed.get_total_flow('m3/hr') # in hr
+        D['Tank width'] = self.W_tank # in m
+        D['Tank depth'] = self.D_tank # in m 
+        D['Tank length'] = D['Tank volume']/(D['Aeration tank width']*D['Aeration tank depth']) # in m 
+        
+        
+        t_wall, t_slab = self.t_wall, self.t_slab
+        W_N_trains = (D['Aeration tank width'] + 2*t_wall)*D['N_train'] - t_wall*(D['N_train']-1)
+
+        D_tot = D['Tank depth'] + self.freeboard
+        t = t_wall + t_slab
+
+        get_VWC = lambda L1, N: N * t_wall * L1 * D_tot # get volume of wall concrete
+        get_VSC = lambda L2: t * L2 * W_N_trains # get volume of slab concrete
+        
+        # Aeration tanks, [m3]
+        VWC = get_VWC(L1= D['Tank length'], N=(D['N_train'] + 1))
+        VSC = get_VSC(L2= D['Tank length'])
+
+        # Distribution channel, [m3]
+        W_dist, W_eff, W_RAS = self.W_dist, self.W_eff, self.W_RAS
+        VWC += get_VWC(L1=(W_N_trains+W_dist), N=2) # N =2 for two walls
+        VSC += get_VSC(L2=(W_dist + 2*t_wall))
+
+        # Effluent channel, [m3]
+        VWC += get_VWC(L1=(W_N_trains + W_eff), N=2) # N =2 for two walls
+        VSC += get_VSC(L2=(W_eff + 2*t_wall))
+
+        # RAS channel, [m3]
+        VWC += get_VWC(L1=(W_N_trains + W_RAS), N=2) # N =2 for two walls
+        VSC += get_VSC(L2=(W_RAS + 2*t_wall))
+
+        D['Wall concrete'] = VWC
+        D['Slab concrete'] = VSC
+
+        # Excavation
+        excav_slope, constr_access = self.excav_slope, self.constr_access
+        
+        # Aeration tank and clarifier
+        VEX = calculate_excavation_volume(
+            L=(W_dist + D['Tank length']), W = W_N_trains, D = D['Tank depth'],
+            excav_slope=excav_slope, constr_access=constr_access)
+        
+        D['Excavation'] = VEX
+        
+        # Pumps
+        pipe, pumps = self._design_pump()
+        D['Pump pipe stainless steel'] = pipe
+        D['Pump stainless steel'] = pumps
+        
+        
+        
+    
+
+
+    
+    
+    
+    
+    
