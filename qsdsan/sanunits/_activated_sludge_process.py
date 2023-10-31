@@ -739,6 +739,7 @@ class TreatmentChain(Mixer):
                  W_RAS = 1.5, # in m (assumed same as W_eff)
                  excav_slope = 1.5, # horizontal/vertical (Shoener et al.2016)
                  constr_access = 0.92, # in meter  (converted from feet to m, Shoener et al. 2016)
+                 Q_air_design  = 1000, # in m3/hr  **NO SOURCE FOR DEFAULT VALUE YET**
                  F_BM=default_F_BM, lifetime=default_equipment_lifetime,
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)   
@@ -753,6 +754,12 @@ class TreatmentChain(Mixer):
         self.W_RAS = W_RAS
         self.excav_slope = excav_slope
         self.constr_access = constr_access
+        self.Q_air_design = Q_air_design # **NO SOURCE FOR DEFAULT VALUE YET**
+        
+        self.blower = blower = Blower('blower', linked_unit=self, N_reactor=N_train)
+        self.air_piping = air_piping = GasPiping('air_piping', linked_unit=self, N_reactor=N_train)
+        self.equipments = (blower, air_piping)
+        
         self.F_BM.update(F_BM)
         
     @property
@@ -875,6 +882,15 @@ class TreatmentChain(Mixer):
     def constr_access(self, i):
         self._constr_access = i
         
+    @property
+    def Q_air_design(self):
+        '''[float] Air flow required for one treatment train, [m3/hr].'''
+        return self._Q_air_design
+    
+    @Q_air_design.setter
+    def Q_air_design(self, i):
+        self._Q_air_design = i
+        
     def _run(self):
         pass
     
@@ -930,6 +946,14 @@ class TreatmentChain(Mixer):
             excav_slope=excav_slope, constr_access=constr_access)
         
         D['Excavation'] = VEX
+        
+        Q_air_design = self.Q_air_design
+        # Blower and gas piping (taken from 'ActivatedSludgeProcess' SanUnit)
+        air_cfm = auom('m3/hr').convert(Q_air_design, 'cfm')
+        blower, piping = self.equipments
+        blower.N_reactor = piping.N_reactor = D['N_train']
+        blower.gas_demand_per_reactor = piping.gas_demand_per_reactor = air_cfm
+        self.add_equipment_design()
         
         # Pumps
         pipe, pumps = self._design_pump()
