@@ -728,15 +728,73 @@ class ActivatedSludgeProcess(SanUnit):
         
 
 class TreatmentChain(Mixer):
+    '''
+    Dummy unit with no run function of its own. To be used to calculate the 
+    design and cost of treatment chains. Code largely dereived from code scripts 
+    for [2]_.
+
+    Parameters
+    ----------
+    ins : Iterable
+        None expected (dummy unit).
+    outs : Iterable
+        None expected (dummy unit).
+    N_train : int
+        Number of treatment train, should be at least two in case one failing.
+    V_tank : float
+        Volume of tank, [m3]. Default is 1000 m3. 
+    W_tank : float
+        Width of tank, [m]. Default is 6.4 m. [1]
+    D_tank : float
+        Depth of tank, [m]. Default is 3.66 m. [1]
+    freeboard : float
+        Freeboard added to the depth of the reactor tank, [m]. Default is 0.61 m. [1]
+    W_dist : float
+        Width of distribution channel, [m]. Default is 1.37 m. [1]
+    W_eff: float
+        Width of effluent channel, [m]. Default is 1.5 m. [1]
+    W_recirculation: float
+        Width of recirculation channel, [m]. Default is 1.5 m.  
+    excav_slope: float
+        Slope for excavation (horizontal/vertical). Default is 1.5. [1] 
+    constr_access: float
+        Extra room for construction access, [m]. Default is 0.92 m. [1]
+    Q_air_design: float
+        Used to calculate the power of blower. 
+        Air flow required for one treatment train [m3/hr].
+    Q_recirculation: float
+        Used to calculate pumping power. 
+        Design recirculated flow in the treatment train [m3/day].
+    kwargs : dict
+        Other attributes to be set.
+
+    References
+    ----------
+    .. [1] Rittmann, B.; McCarty, P.; McCarty, P. L.; Bruce, R.
+        Environmental Biotechnology: Principles and Applications;
+        McGraw-Hill Companies,Incorporated, 2001.
+    .. [2] Shoener, B. D.; Zhong, C.; Greiner, A. D.; Khunjar, W. O.; Hong, P.-Y.; Guest, J. S.
+        Design of Anaerobic Membrane Bioreactors for the Valorization
+        of Dilute Organic Carbon Waste Streams.
+        Energy Environ. Sci. 2016, 9 (3), 1102–1112.
+        https://doi.org/10.1039/C5EE03715H.
+
+    See Also
+    --------
+    `MATLAB codes <https://github.com/QSD-Group/AnMBR>`_ used in ref 1,
+    especially the system layout `diagrams <https://github.com/QSD-Group/AnMBR/blob/main/System_Design.pdf>`_.
+
+    '''
     
     # Costs
     wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
     slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
+    excav_unit_cost = (8+0.3) / 0.765 # $/m3, 0.765 is to convert from $/yd3 **NOT UPDATED** (taken from Shoener et al.)
     
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+    def __init__(self, ID='', ins=None, outs=None, thermo=None, init_with='WasteStream',
                  F_BM_default=1, N_train=2, V_tank=1000, 
                  W_tank = 6.4, D_tank = 3.66, freeboard = 0.61, W_dist = 1.37, W_eff = 1.5, # all in meter  (converted from feet to m, Shoener et al.2016)
-                 W_RAS = 1.5, # in m (assumed same as W_eff)
+                 W_recirculation = 1.5, # in m (assumed same as W_eff)
                  excav_slope = 1.5, # horizontal/vertical (Shoener et al.2016)
                  constr_access = 0.92, # in meter  (converted from feet to m, Shoener et al. 2016)
                  Q_air_design  = 1000, # in m3/hr  **NO SOURCE FOR DEFAULT VALUE YET**
@@ -752,7 +810,7 @@ class TreatmentChain(Mixer):
         self.freeboard = freeboard
         self.W_dist = W_dist
         self.W_eff = W_eff
-        self.W_RAS = W_RAS
+        self.W_recirculation = W_recirculation
         self.excav_slope = excav_slope
         self.constr_access = constr_access
         self.Q_air_design = Q_air_design # **NO SOURCE FOR DEFAULT VALUE YET**
@@ -823,13 +881,13 @@ class TreatmentChain(Mixer):
         self._W_eff = i
         
     @property
-    def W_RAS(self):
+    def W_recirculation(self):
         '''[float] Width of the recirculation channel, [m].'''
-        return self._W_RAS
+        return self._W_recirculation
     
-    @W_RAS.setter
-    def W_eff(self, i):
-        self._W_RAS = i
+    @W_recirculation.setter
+    def W_recirculation(self, i):
+        self._W_recirculation = i
 
     @property
     def freeboard(self):
@@ -894,7 +952,7 @@ class TreatmentChain(Mixer):
     
     @property
     def Q_recirculation(self):
-        '''[float] Recirculated waste flow in the treatment train, [m3/day].'''
+        '''[float] Design recirculated flow in the treatment train, [m3/day].'''
         return self._Q_recirculation
     
     @Q_recirculation.setter
@@ -955,17 +1013,12 @@ class TreatmentChain(Mixer):
         'Tank width': 'm',
         'Tank depth': 'm',
         'Tank length': 'm',
-        
         'Wall concrete': 'm3',
         'Slab concrete': 'm3',
         'Excavation': 'm3',
-       
         'Q_recirculation': 'm3/day', 
-       
         'Pump pipe stainless steel': 'kg',
         'Pump stainless steel': 'kg',
-    
-        
         }
     
     def _design(self):
@@ -996,7 +1049,7 @@ class TreatmentChain(Mixer):
         VSC = get_VSC(L2= D['Tank length'])
 
         # Distribution channel, [m3]
-        W_dist, W_eff, W_RAS = self.W_dist, self.W_eff, self.W_RAS
+        W_dist, W_eff, W_recirculation = self.W_dist, self.W_eff, self.W_recirculation
         VWC += get_VWC(L1=(W_N_trains+W_dist), N=2) # N =2 for two walls
         VSC += get_VSC(L2=(W_dist + 2*t_wall))
 
@@ -1005,8 +1058,8 @@ class TreatmentChain(Mixer):
         VSC += get_VSC(L2=(W_eff + 2*t_wall))
 
         # RAS channel, [m3]
-        VWC += get_VWC(L1=(W_N_trains + W_RAS), N=2) # N =2 for two walls
-        VSC += get_VSC(L2=(W_RAS + 2*t_wall))
+        VWC += get_VWC(L1=(W_N_trains + W_recirculation), N=2) # N =2 for two walls
+        VSC += get_VSC(L2=(W_recirculation + 2*t_wall))
 
         D['Wall concrete'] = VWC
         D['Slab concrete'] = VSC
@@ -1034,3 +1087,48 @@ class TreatmentChain(Mixer):
         pipe, pumps = self._design_pump()
         D['Pump pipe stainless steel'] = pipe
         D['Pump stainless steel'] = pumps
+        
+    def _cost(self):
+        D = self.design_results, 
+        C = self.baseline_purchase_costs
+        
+        ### Capital ###
+        # Concrete and excavation
+        VWC = D['Wall concrete']
+        VSC = D['Slab concrete']
+        VEX = D['Excavation']
+
+        C['Wall concrete'] = VWC * self.wall_concrete_unit_cost
+        C['Slab concrete'] = VSC * self.slab_concrete_unit_cost
+        C['Reactor excavation'] = VEX * self.excav_unit_cost
+
+        # Pump
+        pumps, add_OPEX = self.pumps, self.add_OPEX
+        pump_cost, building_cost, opex_o, opex_m = 0., 0., 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p_cost, p_add_opex = p.baseline_purchase_costs, p.add_OPEX
+            pump_cost += p_cost['Pump']
+            building_cost += p_cost['Pump building']
+            opex_o += p_add_opex['Pump operating']
+            opex_m += p_add_opex['Pump maintenance']
+
+        C['Pumps'] = pump_cost
+        C['Pump building'] = building_cost
+        add_OPEX['Pump operating'] = opex_o
+        add_OPEX['Pump maintenance'] = opex_m
+
+        # Blower
+        self.add_equipment_cost()
+
+        ### Heat and power ###
+        
+        # Power
+        pumping = 0.
+        for ID in self.pumps:
+            p = getattr(self, f'{ID}_pump')
+            if p is None:
+                continue
+            pumping += p.power_utility.rate
+            
+        self.power_utility.rate = self.blower.design_results['Total blower power'] + pumping
