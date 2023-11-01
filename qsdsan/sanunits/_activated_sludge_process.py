@@ -17,10 +17,10 @@ from warnings import warn
 from math import ceil
 from biosteam import Stream
 from .. import SanUnit
-from ..sanunits import HXutility, WWTpump
+from ..sanunits import HXutility, WWTpump, Mixer
 from ..equipments import Blower, GasPiping
 from ..utils import auom, calculate_excavation_volume
-__all__ = ('ActivatedSludgeProcess',)
+__all__ = ('ActivatedSludgeProcess','TreatmentTrains',)
 
 _ft2_to_m2 = auom('ft2').conversion_factor('m2')
 F_BM_pump = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
@@ -727,10 +727,10 @@ class ActivatedSludgeProcess(SanUnit):
         self._constr_access = i
         
 
-class TreatmentChain(Mixer):
+class TreatmentTrains(Mixer):
     '''
     Dummy unit with no run function of its own. To be used to calculate the 
-    design and cost of treatment chains. Code largely dereived from code scripts 
+    design and cost of treatment trains in ASP. Code largely dereived from code scripts 
     for [2]_.
 
     Parameters
@@ -742,7 +742,7 @@ class TreatmentChain(Mixer):
     N_train : int
         Number of treatment train, should be at least two in case one failing.
     V_tank : float
-        Volume of tank, [m3]. Default is 1000 m3. 
+        Volume of tank (represents one treatment chain), [m3]. Default is 1000 m3. 
     W_tank : float
         Width of tank, [m]. Default is 6.4 m. [1]
     D_tank : float
@@ -764,16 +764,13 @@ class TreatmentChain(Mixer):
         Air flow required for one treatment train [m3/hr].
     Q_recirculation: float
         Used to calculate pumping power. 
-        Design recirculated flow in the treatment train [m3/day].
+        Design recirculated flow for one treatment train [m3/day]. ** confirm the logic of 'one' **
     kwargs : dict
         Other attributes to be set.
 
     References
     ----------
-    .. [1] Rittmann, B.; McCarty, P.; McCarty, P. L.; Bruce, R.
-        Environmental Biotechnology: Principles and Applications;
-        McGraw-Hill Companies,Incorporated, 2001.
-    .. [2] Shoener, B. D.; Zhong, C.; Greiner, A. D.; Khunjar, W. O.; Hong, P.-Y.; Guest, J. S.
+    .. [1] Shoener, B. D.; Zhong, C.; Greiner, A. D.; Khunjar, W. O.; Hong, P.-Y.; Guest, J. S.
         Design of Anaerobic Membrane Bioreactors for the Valorization
         of Dilute Organic Carbon Waste Streams.
         Energy Environ. Sci. 2016, 9 (3), 1102–1112.
@@ -789,10 +786,10 @@ class TreatmentChain(Mixer):
     # Costs
     wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
     slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
-    excav_unit_cost = (8+0.3) / 0.765 # $/m3, 0.765 is to convert from $/yd3 **NOT UPDATED** (taken from Shoener et al.)
-    
-    def __init__(self, ID='', ins=None, outs=None, thermo=None, init_with='WasteStream',
-                 F_BM_default=1, N_train=2, V_tank=1000, 
+    excav_unit_cost = (8 + 0.3) / 0.765 # $/m3, 0.765 is to convert from $/yd3 **NOT UPDATED** (taken from Shoener et al.)
+        
+    def __init__(self, ID='', ins=None, outs= (), thermo=None, init_with='WasteStream',
+                 F_BM_default=1, isdynamic=False, N_train=2, V_tank=1000, 
                  W_tank = 6.4, D_tank = 3.66, freeboard = 0.61, W_dist = 1.37, W_eff = 1.5, # all in meter  (converted from feet to m, Shoener et al.2016)
                  W_recirculation = 1.5, # in m (assumed same as W_eff)
                  excav_slope = 1.5, # horizontal/vertical (Shoener et al.2016)
@@ -801,7 +798,8 @@ class TreatmentChain(Mixer):
                  Q_recirculation = 1000, # in m3/day  **NO SOURCE FOR DEFAULT VALUE YET**
                  F_BM=default_F_BM, lifetime=default_equipment_lifetime,
                  **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)   
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with,
+                         F_BM_default=F_BM_default, isdynamic=isdynamic)
         
         self.N_train = N_train
         self.V_tank = V_tank
@@ -958,9 +956,6 @@ class TreatmentChain(Mixer):
     @Q_recirculation.setter
     def Q_recirculation(self, i):
         self._Q_recirculation = i
-
-    def _run(self):
-        pass
     
     def _design_pump(self):
         
@@ -972,6 +967,7 @@ class TreatmentChain(Mixer):
         Tank_length = D['Tank length']*meter_to_feet # in ft
         
         Q_recirculation_mgd = Q_recirculation*0.000264 #m3/day to MGD
+        
         Q_mgd = {
             'recirculation': Q_recirculation_mgd,
             }
@@ -1120,8 +1116,6 @@ class TreatmentChain(Mixer):
 
         # Blower
         self.add_equipment_cost()
-
-        ### Heat and power ###
         
         # Power
         pumping = 0.
