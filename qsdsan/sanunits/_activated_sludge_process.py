@@ -726,7 +726,7 @@ class ActivatedSludgeProcess(SanUnit):
     def constr_access(self, i):
         self._constr_access = i
         
-        
+
 class TreatmentChain(Mixer):
     
     # Costs
@@ -740,6 +740,7 @@ class TreatmentChain(Mixer):
                  excav_slope = 1.5, # horizontal/vertical (Shoener et al.2016)
                  constr_access = 0.92, # in meter  (converted from feet to m, Shoener et al. 2016)
                  Q_air_design  = 1000, # in m3/hr  **NO SOURCE FOR DEFAULT VALUE YET**
+                 Q_recirculation = 1000, # in m3/day  **NO SOURCE FOR DEFAULT VALUE YET**
                  F_BM=default_F_BM, lifetime=default_equipment_lifetime,
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, F_BM_default=1)   
@@ -755,11 +756,11 @@ class TreatmentChain(Mixer):
         self.excav_slope = excav_slope
         self.constr_access = constr_access
         self.Q_air_design = Q_air_design # **NO SOURCE FOR DEFAULT VALUE YET**
+        self.Q_recirculation = Q_recirculation
         
         self.blower = blower = Blower('blower', linked_unit=self, N_reactor=N_train)
         self.air_piping = air_piping = GasPiping('air_piping', linked_unit=self, N_reactor=N_train)
         self.equipments = (blower, air_piping)
-        
         self.F_BM.update(F_BM)
         
     @property
@@ -890,9 +891,82 @@ class TreatmentChain(Mixer):
     @Q_air_design.setter
     def Q_air_design(self, i):
         self._Q_air_design = i
-        
+    
+    @property
+    def Q_recirculation(self):
+        '''[float] Recirculated waste flow in the treatment train, [m3/day].'''
+        return self._Q_recirculation
+    
+    @Q_recirculation.setter
+    def Q_recirculation(self, i):
+        self._Q_recirculation = i
+
     def _run(self):
         pass
+    
+    def _design_pump(self):
+        
+        ID, pumps = self.ID, self.pumps
+        D = self.design_results
+        
+        Q_recirculation  = D['Q_recirculation'] 
+        meter_to_feet = 3.28
+        Tank_length = D['Tank length']*meter_to_feet # in ft
+        
+        Q_recirculation_mgd = Q_recirculation*0.000264 #m3/day to MGD
+        Q_mgd = {
+            'recirculation': Q_recirculation_mgd,
+            }
+      
+        type_dct = dict.fromkeys(pumps, 'recirculation_CSTR')
+        inputs_dct = dict.fromkeys(pumps, (self.N_train, Tank_length,))
+       
+        for i in pumps:
+            if hasattr(self, f'{i}_pump'):
+                p = getattr(self, f'{i}_pump')
+                setattr(p, 'add_inputs', inputs_dct[i])
+            else:
+                ID = f'{ID}_{i}'
+                capacity_factor=1
+                pump = WWTpump(
+                    ID=ID, ins= None, pump_type=type_dct[i],
+                    Q_mgd=Q_mgd[i], add_inputs=inputs_dct[i],
+                    capacity_factor=capacity_factor,
+                    include_pump_cost=True,
+                    include_building_cost=False,
+                    include_OM_cost=True,
+                    )
+                setattr(self, f'{i}_pump', pump)
+
+        pipe_ss, pump_ss = 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p.simulate()
+            p_design = p.design_results
+            pipe_ss += p_design['Pump pipe stainless steel']
+            pump_ss += p_design['Pump stainless steel']
+            
+        return pipe_ss, pump_ss
+    
+    _units = {
+        'Number of trains': 'ea',
+        'Tank volume': 'm3',
+        'HRT': 'd',
+        'Tank width': 'm',
+        'Tank depth': 'm',
+        'Tank length': 'm',
+        
+        'Wall concrete': 'm3',
+        'Slab concrete': 'm3',
+        'Excavation': 'm3',
+       
+        'Q_recirculation': 'm3/day', 
+       
+        'Pump pipe stainless steel': 'kg',
+        'Pump stainless steel': 'kg',
+    
+        
+        }
     
     def _design(self):
         self._mixed.mix_from(self.ins)
@@ -900,16 +974,16 @@ class TreatmentChain(Mixer):
         
         D = self.design_results 
         
-        D['N_train'] = self.N_train
+        D['Number of trains'] = self.N_train
         D['Tank volume'] = self.V_tank # in m3
         D['HRT'] = D['Tank volume']/mixed.get_total_flow('m3/hr') # in hr
         D['Tank width'] = self.W_tank # in m
         D['Tank depth'] = self.D_tank # in m 
-        D['Tank length'] = D['Tank volume']/(D['Aeration tank width']*D['Aeration tank depth']) # in m 
+        D['Tank length'] = D['Tank volume']/(D['Tank width']*D['Tank depth']) # in m 
         
         
         t_wall, t_slab = self.t_wall, self.t_slab
-        W_N_trains = (D['Aeration tank width'] + 2*t_wall)*D['N_train'] - t_wall*(D['N_train']-1)
+        W_N_trains = (D['Tank width'] + 2*t_wall)*D['Number of trains'] - t_wall*(D['Number of trains'] - 1)
 
         D_tot = D['Tank depth'] + self.freeboard
         t = t_wall + t_slab
@@ -918,7 +992,7 @@ class TreatmentChain(Mixer):
         get_VSC = lambda L2: t * L2 * W_N_trains # get volume of slab concrete
         
         # Aeration tanks, [m3]
-        VWC = get_VWC(L1= D['Tank length'], N=(D['N_train'] + 1))
+        VWC = get_VWC(L1= D['Tank length'], N=(D['Number of trains'] + 1))
         VSC = get_VSC(L2= D['Tank length'])
 
         # Distribution channel, [m3]
@@ -939,16 +1013,17 @@ class TreatmentChain(Mixer):
 
         # Excavation
         excav_slope, constr_access = self.excav_slope, self.constr_access
-        
-        # Aeration tank and clarifier
+        # Aeration tank
         VEX = calculate_excavation_volume(
             L=(W_dist + D['Tank length']), W = W_N_trains, D = D['Tank depth'],
             excav_slope=excav_slope, constr_access=constr_access)
         
         D['Excavation'] = VEX
         
-        Q_air_design = self.Q_air_design
+        D['Q_recirculation'] = self.Q_recirculation
+        
         # Blower and gas piping (taken from 'ActivatedSludgeProcess' SanUnit)
+        Q_air_design = self.Q_air_design # in m3
         air_cfm = auom('m3/hr').convert(Q_air_design, 'cfm')
         blower, piping = self.equipments
         blower.N_reactor = piping.N_reactor = D['N_train']
@@ -959,14 +1034,3 @@ class TreatmentChain(Mixer):
         pipe, pumps = self._design_pump()
         D['Pump pipe stainless steel'] = pipe
         D['Pump stainless steel'] = pumps
-        
-        
-        
-    
-
-
-    
-    
-    
-    
-    
