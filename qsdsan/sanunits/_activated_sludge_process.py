@@ -16,7 +16,7 @@ for license details.
 from warnings import warn
 from math import ceil
 from biosteam import Stream
-from .. import SanUnit
+from .. import SanUnit, WasteStream
 from ..sanunits import HXutility, WWTpump, Mixer
 from ..equipments import Blower, GasPiping
 from ..utils import auom, calculate_excavation_volume
@@ -787,6 +787,11 @@ class TreatmentTrains(Mixer):
     wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
     slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
     excav_unit_cost = (8 + 0.3) / 0.765 # $/m3, 0.765 is to convert from $/yd3 **NOT UPDATED** (taken from Shoener et al.)
+    
+    _t_wall = None
+    _t_slab = None
+    
+    pumps = ('recirculation_CSTR',)
         
     def __init__(self, ID='', ins=None, outs= (), thermo=None, init_with='WasteStream',
                  F_BM_default=1, isdynamic=False, N_train=2, V_tank=1000, 
@@ -796,11 +801,13 @@ class TreatmentTrains(Mixer):
                  constr_access = 0.92, # in meter  (converted from feet to m, Shoener et al. 2016)
                  Q_air_design  = 1000, # in m3/hr  **NO SOURCE FOR DEFAULT VALUE YET**
                  Q_recirculation = 1000, # in m3/day  **NO SOURCE FOR DEFAULT VALUE YET**
-                 F_BM=default_F_BM, lifetime=default_equipment_lifetime,
+                 F_BM=default_F_BM, lifetime=default_equipment_lifetime, rigorous=False,
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with,
                          F_BM_default=F_BM_default, isdynamic=isdynamic)
         
+        self.rigorous = rigorous
+        self._mixed = WasteStream(f'{ID}_mixed')      
         self.N_train = N_train
         self.V_tank = V_tank
         self.W_tank = W_tank
@@ -1005,7 +1012,7 @@ class TreatmentTrains(Mixer):
     _units = {
         'Number of trains': 'ea',
         'Tank volume': 'm3',
-        'HRT': 'd',
+        'HRT': 'hr',
         'Tank width': 'm',
         'Tank depth': 'm',
         'Tank length': 'm',
@@ -1075,7 +1082,8 @@ class TreatmentTrains(Mixer):
         Q_air_design = self.Q_air_design # in m3
         air_cfm = auom('m3/hr').convert(Q_air_design, 'cfm')
         blower, piping = self.equipments
-        blower.N_reactor = piping.N_reactor = D['N_train']
+        
+        blower.N_reactor = piping.N_reactor = D['Number of trains']
         blower.gas_demand_per_reactor = piping.gas_demand_per_reactor = air_cfm
         self.add_equipment_design()
         
