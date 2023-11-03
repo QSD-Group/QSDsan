@@ -1716,7 +1716,6 @@ class PrimaryClarifier(SanUnit):
             else:
                 ID = f'{ID}_{i}'
                 capacity_factor=1
-                # No. of pumps = No. of influents
                 pump = WWTpump(
                     ID=ID, ins= ins_dct[i], pump_type=type_dct[i],
                     Q_mgd=influent_Q_mgd, add_inputs=inputs_dct[i],
