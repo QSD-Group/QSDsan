@@ -18,6 +18,12 @@ from math import ceil
 from biosteam import Stream
 from .. import SanUnit, WasteStream
 from ..sanunits import HXutility, WWTpump, Mixer
+
+from ..sanunits._pumping import (
+    default_F_BM as default_WWTpump_F_BM,
+    default_equipment_lifetime as default_WWTpump_equipment_lifetime,
+    )
+
 from ..equipments import Blower, GasPiping
 from ..utils import auom, calculate_excavation_volume
 __all__ = ('ActivatedSludgeProcess','TreatmentTrains',)
@@ -793,7 +799,7 @@ class TreatmentTrains(Mixer):
     
     pumps = ('recirculation_CSTR',)
         
-    def __init__(self, ID='', ins=None, outs= (), thermo=None, init_with='WasteStream',
+    def __init__(self, ID='', ins= None, outs= (), thermo=None, init_with='WasteStream',
                  F_BM_default=1, isdynamic=False, N_train=2, V_tank=1000, 
                  W_tank = 6.4, D_tank = 3.66, freeboard = 0.61, W_dist = 1.37, W_eff = 1.5, # all in meter  (converted from feet to m, Shoener et al.2016)
                  W_recirculation = 1.5, # in m (assumed same as W_eff)
@@ -806,6 +812,7 @@ class TreatmentTrains(Mixer):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with,
                          F_BM_default=F_BM_default, isdynamic=isdynamic)
         
+        self._effluent = self.outs[0].copy(f'{ID}_effluent')
         self.rigorous = rigorous
         self._mixed = WasteStream(f'{ID}_mixed')      
         self.N_train = N_train
@@ -969,14 +976,21 @@ class TreatmentTrains(Mixer):
         ID, pumps = self.ID, self.pumps
         D = self.design_results
         
-        Q_recirculation  = D['Q_recirculation'] 
+        self._effluent.copy_like(self.outs[0])
+        effluent = self._effluent
+        
+        ins_dct = {
+            'recirculation_CSTR': effluent,
+            }
+        
+        Q_recirculation  = D['Q recirculation'] 
         meter_to_feet = 3.28
         Tank_length = D['Tank length']*meter_to_feet # in ft
         
         Q_recirculation_mgd = Q_recirculation*0.000264 #m3/day to MGD
         
         Q_mgd = {
-            'recirculation': Q_recirculation_mgd,
+            'recirculation_CSTR': Q_recirculation_mgd,
             }
       
         type_dct = dict.fromkeys(pumps, 'recirculation_CSTR')
@@ -990,7 +1004,7 @@ class TreatmentTrains(Mixer):
                 ID = f'{ID}_{i}'
                 capacity_factor=1
                 pump = WWTpump(
-                    ID=ID, ins= None, pump_type=type_dct[i],
+                    ID=ID, ins= ins_dct[i], pump_type=type_dct[i],
                     Q_mgd=Q_mgd[i], add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
@@ -1019,7 +1033,7 @@ class TreatmentTrains(Mixer):
         'Wall concrete': 'm3',
         'Slab concrete': 'm3',
         'Excavation': 'm3',
-        'Q_recirculation': 'm3/day', 
+        'Q recirculation': 'm3/day', 
         'Pump pipe stainless steel': 'kg',
         'Pump stainless steel': 'kg',
         }
@@ -1076,7 +1090,7 @@ class TreatmentTrains(Mixer):
         
         D['Excavation'] = VEX
         
-        D['Q_recirculation'] = self.Q_recirculation
+        D['Q recirculation'] = self.Q_recirculation
         
         # Blower and gas piping (taken from 'ActivatedSludgeProcess' SanUnit)
         Q_air_design = self.Q_air_design # in m3
@@ -1093,18 +1107,14 @@ class TreatmentTrains(Mixer):
         D['Pump stainless steel'] = pumps
         
     def _cost(self):
-        D = self.design_results, 
+        D = self.design_results
         C = self.baseline_purchase_costs
         
         ### Capital ###
         # Concrete and excavation
-        VWC = D['Wall concrete']
-        VSC = D['Slab concrete']
-        VEX = D['Excavation']
-
-        C['Wall concrete'] = VWC * self.wall_concrete_unit_cost
-        C['Slab concrete'] = VSC * self.slab_concrete_unit_cost
-        C['Reactor excavation'] = VEX * self.excav_unit_cost
+        C['Wall concrete'] = D['Wall concrete'] * self.wall_concrete_unit_cost
+        C['Slab concrete'] = D['Slab concrete'] * self.slab_concrete_unit_cost
+        C['Reactor excavation'] = D['Excavation'] * self.excav_unit_cost
 
         # Pump
         pumps, add_OPEX = self.pumps, self.add_OPEX
