@@ -24,7 +24,7 @@ from ..sanunits._pumping import (
 
 __all__ = ('Thickener', 'Centrifuge', 'Incinerator')
 
-# Asign a bare module of 1 to all
+# Assign a bare module of 1 to all
 default_F_BM = {
         'Wall concrete': 1.,
         'Slab concrete': 1.,
@@ -239,7 +239,7 @@ class Thickener(SanUnit):
             if thickener_factor<1:
                 thickener_factor=1
             return thickener_factor
-        else: return None
+        else: raise ValueError(f'Influent TSS is not valid ({TSS_in:.2f} mg/L).')
             
     def _cal_parameters(self, thickener_factor):
         if thickener_factor<1:

@@ -52,7 +52,7 @@ def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp, n0):
 #     v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star)))
 #     return X*max(v, 0)
 
-# Asign a bare module of 1 to all
+# Assign a bare module of 1 to all
 default_F_BM = {
         'Wall concrete': 1.,
         'Slab concrete': 1.,
@@ -1040,12 +1040,13 @@ class PrimaryClarifierBSM2(SanUnit):
         fx = xcod/self._mixed.COD
         corr = self._corr
         HRT = self._HRT
-        n_COD = corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(HRT*24*60))
+        # n_COD should not be negative
+        n_COD = max(0, corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(HRT*24*60)))
         f_i = 1 - (n_COD/100)
         return f_i
    
     def _run(self):
-        uf, of = self.outs
+        uf, of = self.outs # underflow, overflow
         cmps = self.components
         mixed = self._mixed
         mixed.mix_from(self.ins)
@@ -1335,7 +1336,7 @@ default_F_BM.update(default_WWTpump_F_BM)
 class PrimaryClarifier(SanUnit):
     
     """
-    Primary clarifier adapted from the design of thickener as defined in BSM-2. [1]
+    Primary clarifier adapted from the design of thickener as defined in BSM2. [1]
     ----------
     ID : str
         ID for the Primary Clarifier. The default is ''.
@@ -1532,7 +1533,7 @@ class PrimaryClarifier(SanUnit):
             if thickener_factor<1:
                 thickener_factor=1
             return thickener_factor
-        else: return None
+        else: raise ValueError(f'Influent TSS is not valid ({TSS_in:.2f} mg/L).')
             
     def _cal_parameters(self, thickener_factor):
         if thickener_factor<1:
@@ -1897,7 +1898,7 @@ class PrimaryClarifier(SanUnit):
         base_flow_v_notch_weir = 10 # in m3/hr
         C['v notch weir'] = D['Number of clarifiers']*base_cost_v_notch_weir*(clarifier_flow/base_flow_v_notch_weir)**0.6
        
-        # Pump (construction and maintainance)
+        # Pump (construction and maintenance)
         pumps = self.pumps
         add_OPEX = self.add_OPEX
         pump_cost = 0.
