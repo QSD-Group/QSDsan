@@ -871,7 +871,8 @@ class IdealClarifier(SanUnit):
         pass
    
     
-# %%    
+# %%
+
 class PrimaryClarifierBSM2(SanUnit):
    
     """
@@ -885,19 +886,14 @@ class PrimaryClarifierBSM2(SanUnit):
         Influent to the clarifier. Expected number of influent is 3.
     outs : class:`WasteStream`
         Sludge (uf) and treated effluent (of).
-    Hydraulic Retention time : float
-        Hydraulic Retention Time in days. The default is 0.04268 days, based on IWA report.[1]
+    HRT : float
+        Hydraulic retention time in days. The default is 0.04268 days, based on IWA report.[1]
     ratio_uf : float
-        The ratio of sludge to primary influent. The default is 0.007, based on IWA report.[1]
+        The ratio of sludge flowrate to primary influent flowrate. The default is 0.007, based on IWA report.[1]
     f_corr : float
         Dimensionless correction factor for removal efficiency in the primary clarifier.[1]
-    
-    # cylindrical_depth : float, optional
-    #     The depth of the cylindrical portion of clarifier [in m].  
-    # upflow_velocity : float, optional
-    #     Speed with which influent enters the center feed of the clarifier [m/hr]. The default is 43.2.
-    # F_BM : dict
-    #     Equipment bare modules.
+    F_BM : dict
+        Equipment bare modules.
 
     Examples
     --------
@@ -983,67 +979,46 @@ class PrimaryClarifierBSM2(SanUnit):
     pumps = ('sludge',)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                  isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time=0.04268,
-                  ratio_uf=0.007, f_corr=0.65, cylindrical_depth = 5, upflow_velocity = 43.2, 
-                  F_BM=default_F_BM, **kwargs):
+                  isdynamic=False, init_with='WasteStream', HRT=0.04268,
+                  ratio_uf=0.007, f_corr=0.65,
+                  F_BM=default_F_BM):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
                           init_with=init_with)
-        self.Hydraulic_Retention_Time = Hydraulic_Retention_Time #in days
+        self.HRT = HRT #in days
         self.ratio_uf = ratio_uf
         self.f_corr = f_corr
-        self.cylindrical_depth = cylindrical_depth # in m 
-        self.upflow_velocity = upflow_velocity # in m/hr (converted from 12 mm/sec)
         self.F_BM.update(default_F_BM)
         self._mixed = self.ins[0].copy(f'{ID}_mixed')
         self._sludge = self.outs[1].copy(f'{ID}_sludge')
-       
-    @property
-    def Hydraulic_Retention_Time(self):
-        '''The Hydraulic Retention time in days.'''
-        return self._HRT
-
-    @Hydraulic_Retention_Time.setter
-    def Hydraulic_Retention_Time(self, HRT):
-        if HRT is not None:
-            self._HRT = HRT
-        else:
-            raise ValueError('HRT expected from user')
 
     @property
     def ratio_uf(self):
-        return self._r
-
+        '''The ratio of sludge flowrate to primary influent flowrate'''
+        return self._ratio_uf
     @ratio_uf.setter
     def ratio_uf(self, r):
-        if r is not None:
-            if r > 1 or r < 0:
-                raise ValueError(f'Sludge to influent ratio must be within [0, 1], not {r}')
-            self._r = r
-        else:
-            raise ValueError('Sludge to influent ratio expected from user')
+        if not r: ValueError('`ratio_uf` should be a number between 0 and 1.')
+        if r > 1 or r < 0:
+            raise ValueError(f'`ratio_uf` must be within [0, 1], not {r}')
+        self._ratio_uf = r
            
     @property
     def f_corr(self):
-        return self._corr
-
+        '''Correction factor removal efficiency (tuning parameter)'''
+        return self._f_corr
     @f_corr.setter
     def f_corr(self, corr):
-        if corr is not None:
-            # if corr > 1 or corr < 0:
-            #     raise ValueError(f'correction factor must be within [0, 1], not {corr}')
-            self._corr = corr
-        else:
-            raise ValueError('correction factor expected from user')
-   
-    def _f_i(self):
-        xcod = self._mixed.composite('COD', particle_size='x')
-        fx = xcod/self._mixed.COD
-        corr = self._corr
-        HRT = self._HRT
-        # n_COD should not be negative
-        n_COD = max(0, corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(HRT*24*60)))
-        f_i = 1 - (n_COD/100)
-        return f_i
+        if not corr: ValueError('`f_corr` should be a number between 0 and 1.')
+        self._f_corr = corr
+        
+    @property
+    def f_k(self):
+        '''COD ratio for particulates (effluent over influent)'''
+        mixed = self._mixed
+        fx = mixed.composite('COD', particle_size='x')/mixed.COD
+        # COD removal efficiency, should not be negative
+        eta_COD = max(0, self.f_corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(self.HRT*24*60)))
+        return 1 - (eta_COD/100)
    
     def _run(self):
         uf, of = self.outs # underflow, overflow
@@ -1051,11 +1026,11 @@ class PrimaryClarifierBSM2(SanUnit):
         mixed = self._mixed
         mixed.mix_from(self.ins)
     
-        r = self._r
-        f_i = self._f_i()
+        r = self.ratio_uf
+        f_k = self.f_k
        
-        Xs = (1 - f_i)*mixed.mass*cmps.x
-        Xe = (f_i)*mixed.mass*cmps.x
+        Xs = (1 - f_k)*mixed.mass*cmps.x
+        Xe = (f_k)*mixed.mass*cmps.x
        
         Zs = r*mixed.mass*cmps.s
         Ze = (1-r)*mixed.mass*cmps.s
@@ -1337,14 +1312,16 @@ class PrimaryClarifier(SanUnit):
     
     """
     Primary clarifier adapted from the design of thickener as defined in BSM2. [1]
+    
+    Parameters
     ----------
     ID : str
-        ID for the Primary Clarifier. The default is ''.
+        ID. The default is ''.
     ins : class:`WasteStream`
-        Influent to the clarifier. Expected number of influent is 1. 
+        Influent. Expected number of influent is 1. 
     outs : class:`WasteStream`
         Sludge and treated effluent.
-    thickener_perc : float
+    thickening_perc : float
         The percentage of solids in the underflow of the clarifier.[1]
     TSS_removal_perc : float
         The percentage of suspended solids removed in the clarifier.[1]
@@ -1370,14 +1347,14 @@ class PrimaryClarifier(SanUnit):
     >>> cmps_test = cmps.subgroup(['S_F', 'S_NH4', 'X_OHO', 'H2O'])
     >>> set_thermo(cmps_test)
     >>> ws = WasteStream('ws', S_F = 10, S_NH4 = 20, X_OHO = 15, H2O=1000)
-    >>> from qsdsan.sanunits import Thickener
-    >>> TC = Thickener(ID='TC', ins= (ws), outs=('sludge', 'effluent'))
-    >>> TC.simulate()
-    >>> sludge, effluent = TC.outs
+    >>> from qsdsan.sanunits import PrimaryClarifier
+    >>> PC = PrimaryClarifier(ID='PC', ins= (ws), outs=('sludge', 'effluent'))
+    >>> PC.simulate()
+    >>> sludge, effluent = PC.outs
     >>> sludge.imass['X_OHO']/ws.imass['X_OHO']
     0.98
-    >>> TC.show() # doctest: +ELLIPSIS
-    Thickener: TC
+    >>> PC.show() # doctest: +ELLIPSIS
+    PrimaryClarifier: PC
     ins...
     [0] ws
     phase: 'l', T: 298.15 K, P: 101325 Pa
@@ -1428,7 +1405,7 @@ class PrimaryClarifier(SanUnit):
 
     References
     ----------
-    .. [1] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
+    [1] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
     Benchmarking of control strategies for wastewater treatment plants. IWA publishing, 2014.
     [2] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
     engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
@@ -1450,12 +1427,12 @@ class PrimaryClarifier(SanUnit):
     pumps = ('sludge',)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
-                  init_with='WasteStream', thickener_perc=7, 
+                  init_with='WasteStream', thickening_perc=7, 
                   TSS_removal_perc=98, surface_overflow_rate = 41, depth_clarifier=4.5, 
-                  downward_flow_velocity=36, F_BM=default_F_BM, **kwargs):
+                  downward_flow_velocity=36, F_BM=default_F_BM,):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with)
-        self.thickener_perc = thickener_perc 
+        self.thickening_perc = thickening_perc 
         self.TSS_removal_perc = TSS_removal_perc
         self.surface_overflow_rate = surface_overflow_rate
         self.depth_clarifier = depth_clarifier
@@ -1465,115 +1442,72 @@ class PrimaryClarifier(SanUnit):
         self._sludge = self.outs[0].copy(f'{ID}_sludge')
         
     @property
-    def thickener_perc(self):
-        '''tp is the percentage of Suspended Sludge in the underflow of the clarifier'''
-        return self._tp
+    def thickening_perc(self):
+        '''The percentage of solids in the underflow.'''
+        return self._thickening_perc
+    @thickening_perc.setter
+    def thickening_perc(self, tp):
+        if not tp: ValueError('`thickening_perc` should be a number between 0 and 100.')
+        if tp>=100 or tp<=0:
+            raise ValueError(f'`thickening_perc` should be between 0 and 100, not {tp}.')
+        self._thickening_perc = tp
 
-    @thickener_perc.setter
-    def thickener_perc(self, tp):
-        if tp is not None:
-            if tp>=100 or tp<=0:
-                raise ValueError(f'should be between 0 and 100 not {tp}')
-            self._tp = tp
-        else: 
-            raise ValueError('percentage of SS in the underflow of the thickener expected from user')
-            
-    # @property
-    # def solids_loading_rate(self):
-    #     '''solids_loading_rate is the loading in the clarifier'''
-    #     return self._slr
-
-    # @solids_loading_rate.setter
-    # def solids_loading_rate(self, slr):
-    #     if slr is not None:
-    #         self._slr = slr
-    #     else: 
-    #         raise ValueError('solids_loading_rate of the clarifier expected from user')
-            
     @property
     def TSS_removal_perc(self):
-        '''The percentage of suspended solids removed in the clarifier'''
-        return self._TSS_rmv
-
+        '''The percentage of suspended solids removed.'''
+        return self._TSS_removal_perc
     @TSS_removal_perc.setter
     def TSS_removal_perc(self, TSS_rmv):
-        if TSS_rmv is not None:
-            if TSS_rmv>=100 or TSS_rmv<=0:
-                raise ValueError(f'should be between 0 and 100 not {TSS_rmv}')
-            self._TSS_rmv = TSS_rmv
-        else: 
-            raise ValueError('percentage of suspended solids removed in the clarifier expected from user')
+        if not TSS_rmv: ValueError('`TSS_removal_perc` should be a number between 0 and 100.')
+        if TSS_rmv>=100 or TSS_rmv<=0:
+            raise ValueError(f'should be between 0 and 100 not {TSS_rmv}')
+        self._TSS_removal_perc = TSS_rmv  
             
     @property
-    def thickener_factor(self):
-        self._mixed.mix_from(self.ins)
-        inf = self._mixed
-        _cal_thickener_factor = self._cal_thickener_factor
-        if not self.ins: return
-        elif inf.isempty(): return
-        else: 
+    def thickening_factor(self, TSS_in=None):
+        '''f_thick calculated as `thickening_perc`*10000/influent TSS.'''
+        return self._calc_thickening_factor()
+        
+    def _calc_thickening_factor(self, TSS_in=None):
+        # In order to update the parameter while running dynamic simulation
+        if not TSS_in:
+            inf = self._mixed
+            inf.mix_from(self.ins)
             TSS_in = inf.get_TSS()
-            thickener_factor = _cal_thickener_factor(TSS_in)
-        return thickener_factor
+        if TSS_in > 0:
+            thickening_factor = self.thickening_perc*10000/TSS_in
+            if thickening_factor >= 1: return thickening_factor
+            # if thickening_factor<1:
+            #     Qu_factor = 1
+            #     thinning_factor=0
+            raise ValueError(f'Calculated `thickening_factor` for {self.ID} is <1 ({thickening_factor}), not valid.')
+        else: raise ValueError(f'Influent TSS for {self.ID} is <=0 ({TSS_in} mg/L), not valid.')
+
+
+    @property
+    def Qu_factor(self):
+        '''f_q_pu calculated as TSS_removal_perc/100/thickening_factor.'''
+        return self.TSS_removal_perc/(100*self.thickening_factor)
     
     @property
     def thinning_factor(self):
-        self._mixed.mix_from(self.ins)
-        inf = self._mixed
-        TSS_in = inf.get_TSS()
-        _cal_thickener_factor = self._cal_thickener_factor
-        thickener_factor = _cal_thickener_factor(TSS_in)
-        _cal_parameters = self._cal_parameters
-        Qu_factor, thinning_factor = _cal_parameters(thickener_factor)
-        return thinning_factor
-    
-    def _cal_thickener_factor(self, TSS_in):
-        if TSS_in > 0:
-            thickener_factor = self._tp*10000/TSS_in
-            if thickener_factor<1:
-                thickener_factor=1
-            return thickener_factor
-        else: raise ValueError(f'Influent TSS is not valid ({TSS_in:.2f} mg/L).')
-            
-    def _cal_parameters(self, thickener_factor):
-        if thickener_factor<1:
-            Qu_factor = 1
-            thinning_factor=0
-        else:
-            Qu_factor = self._TSS_rmv/(100*thickener_factor)
-            thinning_factor = (1 - (self._TSS_rmv/100))/(1 - Qu_factor)
-        return Qu_factor, thinning_factor
-    
-    def _update_parameters(self):
-        
-        # Thickener_factor, Thinning_factor, and Qu_factor need to be 
-        # updated again and again. while dynamic simulations 
-        
-        cmps = self.components 
-    
-        TSS_in = np.sum(self._state[:-1]*cmps.i_mass*cmps.x)
-        _cal_thickener_factor = self._cal_thickener_factor
-        self.updated_thickener_factor = _cal_thickener_factor(TSS_in)
-        _cal_parameters = self._cal_parameters
-        
-        updated_thickener_factor = self.updated_thickener_factor
-        self.updated_Qu_factor, self.updated_thinning_factor = _cal_parameters(updated_thickener_factor)
+        '''f_thin calculated as (1-TSS_removal_perc/100)/(1-Qu_factor).'''
+        return (1 - (self.TSS_removal_perc/100))/(1 - self.Qu_factor)
         
     def _run(self):
         self._mixed.mix_from(self.ins)
         inf = self._mixed
         sludge, eff = self.outs
         cmps = self.components
-        
-        TSS_rmv = self._TSS_rmv
+        TSS_rmv = self.TSS_removal_perc
         thinning_factor = self.thinning_factor
-        thickener_factor = self.thickener_factor
+        thickening_factor = self.thickening_factor
         
         # The following are splits by mass of particulates and solubles 
         
-        # Note: (1 - thinning_factor)/(thickener_factor - thinning_factor) = Qu_factor
-        Zs = (1 - thinning_factor)/(thickener_factor - thinning_factor)*inf.mass*cmps.s
-        Ze = (thickener_factor - 1)/(thickener_factor - thinning_factor)*inf.mass*cmps.s
+        # Note: (1 - thinning_factor)/(thickening_factor - thinning_factor) = Qu_factor
+        Zs = (1 - thinning_factor)/(thickening_factor - thinning_factor)*inf.mass*cmps.s
+        Ze = (thickening_factor - 1)/(thickening_factor - thinning_factor)*inf.mass*cmps.s
         
         Xe = (1 - TSS_rmv/100)*inf.mass*cmps.x
         Xs = (TSS_rmv/100)*inf.mass*cmps.x
@@ -1595,33 +1529,25 @@ class PrimaryClarifier(SanUnit):
         Cs = self._ins_QC[:,:-1]
         self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
         self._dstate = self._state * 0.
-        
-        # To initialize the updated_thickener_factor, updated_thinning_factor
-        # and updated_Qu_factor for dynamic simulation 
-        self._update_parameters()
+
         
     def _update_state(self):
-        '''updates conditions of output stream based on conditions of the Thickener''' 
-        
-        # This function is run multiple times during dynamic simulation 
-        
-        # Remember that here we are updating the state array of size n, which is made up 
-        # of component concentrations in the first (n-1) cells and the last cell is flowrate. 
-        
-        # So, while in the run function the effluent and sludge are split by mass, 
+        '''Update conditions of output stream based on conditions of the unit.''' 
+        # While in the run function the effluent and sludge are split by mass, 
         # here they are split by concentration. Therefore, the split factors are different. 
         
-        # Updated intrinsic modelling parameters are used for dynamic simulation 
-        thickener_factor = self.updated_thickener_factor
-        thinning_factor = self.updated_thinning_factor
-        Qu_factor = self.updated_Qu_factor
-        cmps = self.components
+        # Updated intrinsic modelling parameters are used for dynamic simulation
+        cmps = self.components 
+        TSS_in = np.sum(self._state[:-1]*cmps.i_mass*cmps.x)
+        thickening_factor = self._calc_thickening_factor(TSS_in=TSS_in)
+        thinning_factor = self.thinning_factor
+        Qu_factor = self.Qu_factor
         
         # For sludge, the particulate concentrations are multiplied by thickener factor, and
         # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
         uf, of = self.outs
         if uf.state is None: uf.state = np.zeros(len(cmps)+1)
-        uf.state[:-1] = self._state[:-1]*cmps.s*1 + self._state[:-1]*cmps.x*thickener_factor
+        uf.state[:-1] = self._state[:-1]*cmps.s*1 + self._state[:-1]*cmps.x*thickening_factor
         uf.state[-1] = self._state[-1]*Qu_factor
         
         # For effluent, the particulate concentrations are multiplied by thinning factor, and
@@ -1631,27 +1557,22 @@ class PrimaryClarifier(SanUnit):
         of.state[-1] = self._state[-1]*(1 - Qu_factor)
 
     def _update_dstate(self):
-        '''updates rates of change of output stream from rates of change of the Thickener'''
-        
-        # This function is run multiple times during dynamic simulation 
-        
-        # Remember that here we are updating the state array of size n, which is made up 
-        # of component concentrations in the first (n-1) cells and the last cell is flowrate. 
-        
-        # So, while in the run function the effluent and sludge are split by mass, 
+        '''Update rates of change of output stream from rates of change of the unit.'''
+        # While in the run function the effluent and sludge are split by mass, 
         # here they are split by concentration. Therefore, the split factors are different. 
         
         # Updated intrinsic modelling parameters are used for dynamic simulation
-        thickener_factor = self.updated_thickener_factor
-        thinning_factor = self.updated_thinning_factor
-        Qu_factor = self.updated_Qu_factor
-        cmps = self.components
+        cmps = self.components 
+        TSS_in = np.sum(self._state[:-1]*cmps.i_mass*cmps.x)
+        thickening_factor = self._calc_thickening_factor(TSS_in=TSS_in)
+        thinning_factor = self.thinning_factor
+        Qu_factor = self.Qu_factor
         
         # For sludge, the particulate concentrations are multiplied by thickener factor, and
         # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
         uf, of = self.outs
         if uf.dstate is None: uf.dstate = np.zeros(len(cmps)+1)
-        uf.dstate[:-1] = self._dstate[:-1]*cmps.s*1 + self._dstate[:-1]*cmps.x*thickener_factor
+        uf.dstate[:-1] = self._dstate[:-1]*cmps.s*1 + self._dstate[:-1]*cmps.x*thickening_factor
         uf.dstate[-1] = self._dstate[-1]*Qu_factor
         
         # For effluent, the particulate concentrations are multiplied by thinning factor, and
@@ -1667,14 +1588,11 @@ class PrimaryClarifier(SanUnit):
         return self._AE
 
     def _compile_AE(self):
-        
-        # This function is run multiple times during dynamic simulation 
-        
         _state = self._state
         _dstate = self._dstate
         _update_state = self._update_state
         _update_dstate = self._update_dstate
-        _update_parameters = self._update_parameters
+        # _update_parameters = self._update_parameters
         def yt(t, QC_ins, dQC_ins):
             Q_ins = QC_ins[:, -1]
             C_ins = QC_ins[:, :-1]
@@ -1689,7 +1607,7 @@ class PrimaryClarifier(SanUnit):
             _dstate[-1] = Q_dot
             _dstate[:-1] = C_dot
     
-            _update_parameters()
+            # _update_parameters()
             _update_state()
             _update_dstate()
         self._AE = yt
