@@ -213,24 +213,23 @@ class Thickener(SanUnit):
         self._solids_loading_rate = slr
             
     @property
-    def thickening_factor(self, TSS_in=None):
+    def thickening_factor(self):
         '''f_thick calculated as `thickening_perc`*10000/influent TSS.'''
-        return self._calc_thickening_factor()
+        inf = self._mixed
+        inf.mix_from(self.ins)
+        TSS_in = inf.get_TSS()
+        if TSS_in < 0: raise ValueError(f'Influent TSS for {self.ID} is <=0 ({TSS_in} mg/L), not valid.')
+        return self._calc_thickening_factor(TSS_in)
         
-    def _calc_thickening_factor(self, TSS_in=None):
+    def _calc_thickening_factor(self, TSS_in):
         # In order to update the parameter while running dynamic simulation
-        if not TSS_in:
-            inf = self._mixed
-            inf.mix_from(self.ins)
-            TSS_in = inf.get_TSS()
-        if TSS_in > 0:
-            thickening_factor = self.thickening_perc*10000/TSS_in
-            if thickening_factor >= 1: return thickening_factor
-            # if thickening_factor<1:
-            #     Qu_factor = 1
-            #     thinning_factor=0
-            raise ValueError(f'Calculated `thickening_factor` for {self.ID} is <1 ({thickening_factor}), not valid.')
-        else: raise ValueError(f'Influent TSS for {self.ID} is <=0 ({TSS_in} mg/L), not valid.')
+        thickening_factor = self.thickening_perc*10000/TSS_in
+        if thickening_factor >= 1: return thickening_factor
+        # if thickening_factor<1:
+        #     Qu_factor = 1
+        #     thinning_factor=0
+        raise ValueError(f'Calculated `thickening_factor` for {self.ID} is <1 ({thickening_factor}), not valid.')
+        
 
 
     @property
@@ -243,21 +242,6 @@ class Thickener(SanUnit):
         '''f_thin calculated as (1-TSS_removal_perc/100)/(1-Qu_factor).'''
         return (1 - (self.TSS_removal_perc/100))/(1 - self.Qu_factor)
     
-    
-    # def _update_parameters(self):
-        
-    #     # thickening_factor, Thinning_factor, and Qu_factor need to be 
-    #     # updated again and again. while dynamic simulations 
-        
-    #     cmps = self.components 
-    
-    #     TSS_in = np.sum(self._state[:-1]*cmps.i_mass*cmps.x)
-    #     _cal_thickening_factor = self._cal_thickening_factor
-    #     self.updated_thickening_factor = _cal_thickening_factor(TSS_in)
-    #     _cal_parameters = self._cal_parameters
-        
-    #     updated_thickening_factor = self.updated_thickening_factor
-    #     self.updated_Qu_factor, self.updated_thinning_factor = _cal_parameters(updated_thickening_factor)
         
     def _run(self):
         self._mixed.mix_from(self.ins)
@@ -443,9 +427,8 @@ class Thickener(SanUnit):
     }
     
     def _design(self):
-        
-        self._mixed.mix_from(self.ins)
-        mixed = self._mixed
+        mixed = self._mixed        
+        mixed.mix_from(self.ins)
         D = self.design_results
         
         # D['Number of thickeners'] = np.ceil(self._mixed.get_total_flow('m3/hr')/self.design_flow)
@@ -537,9 +520,8 @@ class Thickener(SanUnit):
         D['Number of pumps'] = D['Number of thickeners']
         
     def _cost(self):
-        
-        self._mixed.mix_from(self.ins)
-        mixed = self._mixed
+        mixed = self._mixed        
+        mixed.mix_from(self.ins)
        
         D = self.design_results
         C = self.baseline_purchase_costs

@@ -150,7 +150,7 @@ class FlatBottomCircularClarifier(SanUnit):
         self._h = height
         self._Qras = underflow
         self._Qwas = wastage
-        self._sludge = WasteStream()
+        self._sludge = WasteStream(f'{self.ID}_sludge')
         
         if surface_area != None:
             self._A = surface_area
@@ -886,8 +886,8 @@ class PrimaryClarifierBSM2(SanUnit):
         Influent to the clarifier. Expected number of influent is 3.
     outs : class:`WasteStream`
         Sludge (uf) and treated effluent (of).
-    HRT : float
-        Hydraulic retention time in days. The default is 0.04268 days, based on IWA report.[1]
+    V : float
+        Volume of the clarifier in m3, the default is 900 m3.[1]
     ratio_uf : float
         The ratio of sludge flowrate to primary influent flowrate. The default is 0.007, based on IWA report.[1]
     f_corr : float
@@ -979,17 +979,16 @@ class PrimaryClarifierBSM2(SanUnit):
     pumps = ('sludge',)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                  isdynamic=False, init_with='WasteStream', HRT=0.04268,
-                  ratio_uf=0.007, f_corr=0.65,
+                  isdynamic=False, init_with='WasteStream',
+                  V=900, ratio_uf=0.007, f_corr=0.65,
                   F_BM=default_F_BM):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
                           init_with=init_with)
-        self.HRT = HRT #in days
+        self.V = V
         self.ratio_uf = ratio_uf
         self.f_corr = f_corr
         self.F_BM.update(default_F_BM)
         self._mixed = self.ins[0].copy(f'{ID}_mixed')
-        self._sludge = self.outs[1].copy(f'{ID}_sludge')
 
     @property
     def ratio_uf(self):
@@ -1012,33 +1011,44 @@ class PrimaryClarifierBSM2(SanUnit):
         self._f_corr = corr
         
     @property
+    def HRT(self):
+        '''Hydraulic retention time in days'''
+        return self.V/(self.F_vol_in*24)
+        
+    @property
     def f_k(self):
         '''COD ratio for particulates (effluent over influent)'''
+        # Make sure mixed stream is updated during simulation
         mixed = self._mixed
         fx = mixed.composite('COD', particle_size='x')/mixed.COD
         # COD removal efficiency, should not be negative
-        eta_COD = max(0, self.f_corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(self.HRT*24*60)))
-        return 1 - (eta_COD/100)
+        n_COD = max(0, self.f_corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(self.HRT*24*60)))
+        return 1 - (n_COD/100)
    
     def _run(self):
         uf, of = self.outs # underflow, overflow
         cmps = self.components
+        cmps_x = cmps.x
+        cmps_s = cmps.s
+        
         mixed = self._mixed
         mixed.mix_from(self.ins)
-    
+        mixed_mass = mixed.mass
+        
         r = self.ratio_uf
         f_k = self.f_k
        
-        Xs = (1 - f_k)*mixed.mass*cmps.x
-        Xe = (f_k)*mixed.mass*cmps.x
+        Xs = (1 - f_k)*mixed_mass*cmps_x
+        Xe = (f_k)*mixed_mass*cmps_x
        
-        Zs = r*mixed.mass*cmps.s
-        Ze = (1-r)*mixed.mass*cmps.s
+        Zs = r*mixed_mass*cmps_s
+        Ze = (1-r)*mixed_mass*cmps_s
        
         Ce = Ze + Xe
         Cs = Zs + Xs
         of.set_flow(Ce,'kg/hr')
         uf.set_flow(Cs,'kg/hr')
+        
        
     def _init_state(self):
         # if multiple wastestreams exist then concentration and total flow
@@ -1046,25 +1056,30 @@ class PrimaryClarifierBSM2(SanUnit):
         Qs = self._ins_QC[:,-1]
         Cs = self._ins_QC[:,:-1]
         self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
-        self._dstate = self._state * 0.
-       
+        self._r_sludge = self._r_eff = self._dstate = self._state * 0.
+        
+    def _update_out_mass_ratios(self):
         uf, of = self.outs
         s_flow = uf.F_vol/(uf.F_vol+of.F_vol)
         denominator = uf.mass + of.mass
         denominator += (denominator == 0)
         s = uf.mass/denominator
-        self._sludge = np.append(s/s_flow, s_flow)
-        self._effluent = np.append((1-s)/(1-s_flow), 1-s_flow)
+        r_sludge = self._r_sludge
+        r_sludge[:-1] = s/s_flow
+        r_sludge[-1] = s_flow
+        r_eff = self._r_eff
+        r_eff[:-1] = (1-s)/(1-s_flow)
+        r_eff[-1] = 1-s_flow
        
     def _update_state(self):
         '''updates conditions of output stream based on conditions of the Primary Clarifier'''
-        self._outs[0].state = self._sludge * self._state
-        self._outs[1].state = self._effluent * self._state
+        self._outs[0].state = self._r_sludge * self._state
+        self._outs[1].state = self._r_eff * self._state
 
     def _update_dstate(self):
         '''updates rates of change of output stream from rates of change of the Primary Clarifier'''
-        self._outs[0].dstate = self._sludge * self._dstate
-        self._outs[1].dstate = self._effluent * self._dstate
+        self._outs[0].dstate = self._r_sludge * self._dstate
+        self._outs[1].dstate = self._r_eff * self._dstate
      
     @property
     def AE(self):
@@ -1073,10 +1088,19 @@ class PrimaryClarifierBSM2(SanUnit):
         return self._AE
 
     def _compile_AE(self):
-        _state = self._state
+        _state = self._state #!!! the mixed stream, retrieve the COD informatino from here
         _dstate = self._dstate
         _update_state = self._update_state
         _update_dstate = self._update_dstate
+        _update_out_mass_ratios = self._update_out_mass_ratios
+        V = self.V
+        f_corr = self.f_corr
+        r = self.ratio_uf
+        mixed = self._mixed
+        uf, of = self.outs
+        cmps = self.components
+        cmps_x = cmps.x
+        cmps_s = cmps.s
         def yt(t, QC_ins, dQC_ins):
             #Because there are multiple inlets
             Q_ins = QC_ins[:, -1]
@@ -1091,6 +1115,33 @@ class PrimaryClarifierBSM2(SanUnit):
             C_dot = (dQ_ins @ C_ins + Q_ins @ dC_ins - Q_dot * C)/Q
             _dstate[-1] = Q_dot
             _dstate[:-1] = C_dot
+            
+            fx = mixed.composite('COD', particle_size='x')/mixed.COD
+            n_COD = max(0, f_corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(V/Q*24*60)))
+            f_k = 1 - (n_COD/100)
+            
+            # C_x = C * cmps_x
+            # Xs = (1 - f_k)*C_x
+            # Xe = (f_k)*C_x
+           
+            # C_s = C * cmps_s
+            # Zs = r * C_s
+            # Ze = (1-r) * C_s
+
+            # This isn't good, need to optimize
+            mixed_mass = mixed.mass
+            Xs = (1 - f_k)*mixed_mass*cmps_x
+            Xe = (f_k)*mixed_mass*cmps_x
+           
+            Zs = r*mixed_mass*cmps_s
+            Ze = (1-r)*mixed_mass*cmps_s
+           
+            Ce = Ze + Xe
+            Cs = Zs + Xs
+            of.set_flow(Ce,'kg/hr')
+            uf.set_flow(Cs,'kg/hr')
+            _update_out_mass_ratios()
+            
             _update_state()
             _update_dstate()
         self._AE = yt
