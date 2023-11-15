@@ -40,19 +40,7 @@ default_equipment_lifetime = {
     'Pump stainless steel': 15,
     }
 
-
-def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp, n0):
-    X_star = npmax(X-X_min, n0)
-    v = npmin(v_max_practical, v_max*(npexp(-rh*X_star) - npexp(-rp*X_star)))
-    return X*npmax(v, n0)
-
-# from math import exp
-# def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp, n0):
-#     X_star = max(X-X_min, 0)
-#     v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star)))
-#     return X*max(v, 0)
-
-# Asign a bare module of 1 to all
+# Assign a bare module of 1 to all
 default_F_BM = {
         'Wall concrete': 1.,
         'Slab concrete': 1.,
@@ -62,6 +50,13 @@ default_F_BM = {
         'Pumps': 1
         }
 default_F_BM.update(default_WWTpump_F_BM)
+
+#%% Takács Clarifer
+
+def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp, n0):
+    X_star = npmax(X-X_min, n0)
+    v = npmin(v_max_practical, v_max*(npexp(-rh*X_star) - npexp(-rp*X_star)))
+    return X*npmax(v, n0)
 
 class FlatBottomCircularClarifier(SanUnit):
     """
@@ -1320,7 +1315,7 @@ class PrimaryClarifierBSM2(SanUnit):
     #     self.power_utility.consumption += pumping
     #     self.power_utility.consumption += scraper_power
         
-    
+#%%
 # Assign a bare module of 1 to all
 default_F_BM = {
         'Wall concrete': 1.,
