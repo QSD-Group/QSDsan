@@ -39,6 +39,7 @@ default_F_BM = {
         }
 default_F_BM.update(default_WWTpump_F_BM)
 
+#%% Thickener
 class Thickener(SanUnit):
     
     """
@@ -169,6 +170,9 @@ class Thickener(SanUnit):
         self.F_BM.update(F_BM)
         self._mixed = WasteStream(f'{ID}_mixed')        
         self._sludge = self.outs[0].copy(f'{ID}_sludge')
+        self._thickener_factor = None
+        self._thinning_factor = None
+        self._Qu_factor = None
         
     @property
     def thickener_perc(self):
@@ -212,36 +216,32 @@ class Thickener(SanUnit):
             
     @property
     def thickener_factor(self):
-        self._mixed.mix_from(self.ins)
-        inf = self._mixed
-        _cal_thickener_factor = self._cal_thickener_factor
-        if not self.ins: return
-        elif inf.isempty(): return
-        else: 
-            TSS_in = inf.get_TSS()
-            thickener_factor = _cal_thickener_factor(TSS_in)
-        return thickener_factor
+        if self._thickener_factor is None:
+            self._mixed.mix_from(self.ins)
+            inf = self._mixed
+            _cal_thickener_factor = self._cal_thickener_factor
+            if not self.ins: return
+            elif inf.isempty(): return
+            else: 
+                TSS_in = inf.get_TSS()
+                self._thickener_factor = _cal_thickener_factor(TSS_in)
+        return self._thickener_factor
     
     @property
     def thinning_factor(self):
-        self._mixed.mix_from(self.ins)
-        inf = self._mixed
-        TSS_in = inf.get_TSS()
-        _cal_thickener_factor = self._cal_thickener_factor
-        thickener_factor = _cal_thickener_factor(TSS_in)
-        _cal_parameters = self._cal_parameters
-        Qu_factor, thinning_factor = _cal_parameters(thickener_factor)
-        return thinning_factor
+        if self._thinning_factor is None:
+            self._Qu_factor, self._thinning_factor = self._cal_Qu_fthin(self.thickener_factor)
+        return self._thinning_factor
     
     def _cal_thickener_factor(self, TSS_in):
         if TSS_in > 0:
             thickener_factor = self._tp*10000/TSS_in
-            if thickener_factor<1:
-                thickener_factor=1
+            if thickener_factor < 1: thickener_factor = 1
             return thickener_factor
-        else: raise ValueError(f'Influent TSS is not valid ({TSS_in:.2f} mg/L).')
+        else: 
+            raise ValueError(f'Influent TSS is not valid: ({TSS_in:.2f} mg/L).')
             
-    def _cal_parameters(self, thickener_factor):
+    def _cal_Qu_fthin(self, thickener_factor):
         if thickener_factor<1:
             Qu_factor = 1
             thinning_factor=0
@@ -251,19 +251,12 @@ class Thickener(SanUnit):
         return Qu_factor, thinning_factor
     
     def _update_parameters(self):
-        
         # Thickener_factor, Thinning_factor, and Qu_factor need to be 
-        # updated again and again. while dynamic simulations 
-        
+        # updated again and again. while dynamic simulations
         cmps = self.components 
-    
         TSS_in = np.sum(self._state[:-1]*cmps.i_mass*cmps.x)
-        _cal_thickener_factor = self._cal_thickener_factor
-        self.updated_thickener_factor = _cal_thickener_factor(TSS_in)
-        _cal_parameters = self._cal_parameters
-        
-        updated_thickener_factor = self.updated_thickener_factor
-        self.updated_Qu_factor, self.updated_thinning_factor = _cal_parameters(updated_thickener_factor)
+        self._thickener_factor = f_thick = self._cal_thickener_factor(TSS_in)
+        self._Qu_factor, self._thinning_factor = self._cal_Qu_fthin(f_thick)
         
     def _run(self):
         self._mixed.mix_from(self.ins)
@@ -318,9 +311,9 @@ class Thickener(SanUnit):
         # here they are split by concentration. Therefore, the split factors are different. 
         
         # Updated intrinsic modelling parameters are used for dynamic simulation 
-        thickener_factor = self.updated_thickener_factor
-        thinning_factor = self.updated_thinning_factor
-        Qu_factor = self.updated_Qu_factor
+        thickener_factor = self.thickener_factor
+        thinning_factor = self.thinning_factor
+        Qu_factor = self._Qu_factor
         cmps = self.components
         
         # For sludge, the particulate concentrations are multipled by thickener factor, and
@@ -629,7 +622,7 @@ class Thickener(SanUnit):
         self.power_utility.rate += pumping
         self.power_utility.rate += scraper_power
 
-# %%
+#%% Centrifuge
 
 # Asign a bare module of 1 to all
 
@@ -872,7 +865,7 @@ class Centrifuge(Thickener):
         pumping = pumping*D['Number of pumps']
         self.power_utility.rate += pumping
         self.power_utility.rate += conveyor_power
-# %%
+#%% Incinerator
 
 class Incinerator(SanUnit):
     
