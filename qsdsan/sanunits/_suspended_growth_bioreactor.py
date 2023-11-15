@@ -375,38 +375,39 @@ class CSTR(SanUnit):
         }
 
     def _design(self):
-        self._mixed.mix_from(self.ins)
-        mixed = self._mixed
-        D = self.design_results
+        pass
+        # self._mixed.mix_from(self.ins)
+        # # mixed = self._mixed
+        # D = self.design_results
         
-        D['Tank volume'] = self.V_max
-        D['Tank width'] = self.W_tank
-        D['Tank depth'] = self.D_tank
-        D['Tank length'] = D['Volume']/(D['Tank width']*D['Tank depth'])
+        # D['Tank volume'] = V = self.V_max
+        # D['Tank width'] = W = self.W_tank
+        # D['Tank depth'] = depth = self.D_tank
+        # D['Tank length'] = L = V/(W*depth)
         
-        t_wall, t_slab = self.t_wall, self.t_slab
-        t = t_wall + t_slab
-        D_tot = D['Tank depth'] + self.freeboard 
+        # t_wall, t_slab = self.t_wall, self.t_slab
+        # t = t_wall + t_slab
+        # D_tot = depth + self.freeboard 
         
-        # get volume of wall concrete
-        VWC = 2*((D['Tank length'] + 2*t_wall)*t_wall*D_tot) + 2*(D['Tank width']*t_wall*D_tot)
+        # # get volume of wall concrete
+        # VWC = 2*((L + 2*t_wall)*t_wall*D_tot) + 2*(W*t_wall*D_tot)
         
-        # get volume of slab concrete
-        VSC = (D['Tank length'] + 2*t_wall)*(D['Tank width'] + 2*t_wall)*t
+        # # get volume of slab concrete
+        # VSC = (L + 2*t_wall)*(W + 2*t_wall)*t
         
-        D['Volume of concrete wall'] = VWC
-        D['Volume of concrete slab'] = VSC
+        # D['Volume of concrete wall'] = VWC
+        # D['Volume of concrete slab'] = VSC
             
     def _cost(self):
-        
-        self._mixed.mix_from(self.ins)
+        pass
+        # self._mixed.mix_from(self.ins)
        
-        D = self.design_results
-        C = self.baseline_purchase_costs
+        # D = self.design_results
+        # C = self.baseline_purchase_costs
        
-        # Construction of concrete and stainless steel walls
-        C['Wall concrete'] = D['Volume of concrete wall']*self.wall_concrete_unit_cost
-        C['Slab concrete'] = D['Volume of concrete slab']*self.slab_concrete_unit_cost
+        # # Construction of concrete and stainless steel walls
+        # C['Wall concrete'] = D['Volume of concrete wall']*self.wall_concrete_unit_cost
+        # C['Slab concrete'] = D['Volume of concrete slab']*self.slab_concrete_unit_cost
 
 #%%
 class BatchExperiment(SanUnit):
