@@ -31,7 +31,7 @@ copyright = f'2020-{time.gmtime().tm_year}, Quantitative Sustainable Design Grou
 # built documents.
 #
 # The short X.Y version.
-version = '1.3.1'
+version = '1.3.0'
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -127,10 +127,10 @@ copybutton_prompt_is_regexp = True
 
 # -- External mapping -------------------------------------------------------
 intersphinx_mapping = {
-	'biosteam': ('https://biosteam.readthedocs.io', None),
-	'thermosteam': ('https://biosteam.readthedocs.io', None),
-	'BioSTEAM': ('https://biosteam.readthedocs.io', None),
-	'Thermosteam': ('https://biosteam.readthedocs.io', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy', None),
-    'SALib': ('https://salib.readthedocs.io', None),
+	'biosteam': ('https://biosteam.readthedocs.io/en/latest', None),
+	'thermosteam': ('https://biosteam.readthedocs.io/en/latest', None),
+	'BioSTEAM': ('https://biosteam.readthedocs.io/en/latest', None),
+	'Thermosteam': ('https://biosteam.readthedocs.io/en/latest', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+    'SALib': ('https://salib.readthedocs.io/en/latest', None),
 }

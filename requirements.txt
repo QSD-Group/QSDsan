@@ -14,3 +14,6 @@ sphinx-design
 furo
 nbsphinx
 pandoc
+ipywidgets
+jupyterlab-widgets
+widgetsnbextension
