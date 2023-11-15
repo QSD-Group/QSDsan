@@ -26,6 +26,10 @@ from ..sanunits._pumping import (
 
 from ..equipments import Blower, GasPiping
 from ..utils import auom, calculate_excavation_volume
+
+from qsdsan.utils import ospath, time_printer, load_data, get_SRT, get_oxygen_heterotrophs, get_oxygen_autotrophs, get_airflow, get_P_blower
+
+
 __all__ = ('ActivatedSludgeProcess','TreatmentTrains',)
 
 _ft2_to_m2 = auom('ft2').conversion_factor('m2')
@@ -367,6 +371,7 @@ class ActivatedSludgeProcess(SanUnit):
         'Pump pipe stainless steel': 'kg',
         'Pump stainless steel': 'kg',
         }
+    
     def _design(self):
         D = self.design_results
         D['HRT'] = self.HRT
@@ -1093,8 +1098,23 @@ class TreatmentTrains(Mixer):
         D['Q recirculation'] = self.Q_recirculation
         
         # Blower and gas piping (taken from 'ActivatedSludgeProcess' SanUnit)
-        Q_air_design = self.Q_air_design # in m3
-        air_cfm = auom('m3/hr').convert(Q_air_design, 'cfm')
+        
+        
+        # oxygen_autotroph = get_oxygen_autotrophs(inf.F_vol*24, inf.COD, eff_sCOD, 
+        #                                          inf_TKN, SRT=srt, Y_H=0.625, U_AUT=1.0, 
+        #                                          b_H=0.4, b_AUT=0.15, f_d=0.1, SF_DO=1.25)
+        
+        # oxygen_autotroph = get_oxygen_autotrophs(inf.F_vol*24, inf.COD, eff_sCOD, 
+        #                                          inf_TKN, SRT=srt, Y_H=0.625, U_AUT=1.0, 
+        #                                          b_H=0.4, b_AUT=0.15, f_d=0.1, SF_DO=1.25)
+        
+        # airflow = get_airflow(oxygen_heterotrophs = oxygen_heterotroph, oxygen_autotrophs = oxygen_autotroph, 
+        #                       oxygen_transfer_efficiency = 15) # in m3/min
+        
+        
+        
+        Q_air_design = self.Q_air_design # in m3/min
+        air_cfm = auom('m3/min').convert(Q_air_design, 'cfm')
         blower, piping = self.equipments
         
         blower.N_reactor = piping.N_reactor = D['Number of trains']

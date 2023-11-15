@@ -37,7 +37,6 @@ Individual Unit Operations
    CropApplication
    DynamicInfluent
    ElectrochemicalCell
-   encapsulation_bioreactor
    Excretion
    Flash
    heat_exchanging

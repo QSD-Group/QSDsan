@@ -414,7 +414,7 @@ class ImpactItem:
         This Excel should have multiple sheets:
 
             - The "info" sheet should have three columns: "ID" (e.g., Cement) \
-             "functional_unit" (e.g., kg), and "kind" ("ImpactItem" or "StreamImpactItem") 
+             "functional_unit" (e.g., kg), and "kind" ("ImpactItem" or "StreamImpactItem") \
              of different impact items.
 
             - The remaining sheets should contain characterization factors of \
