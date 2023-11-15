@@ -341,9 +341,9 @@ class Thickener(SanUnit):
         # here they are split by concentration. Therefore, the split factors are different. 
         
         # Updated intrinsic modelling parameters are used for dynamic simulation
-        thickener_factor = self.updated_thickener_factor
-        thinning_factor = self.updated_thinning_factor
-        Qu_factor = self.updated_Qu_factor
+        thickener_factor = self.thickener_factor
+        thinning_factor = self.thinning_factor
+        Qu_factor = self._Qu_factor
         cmps = self.components
         
         # For sludge, the particulate concentrations are multipled by thickener factor, and
