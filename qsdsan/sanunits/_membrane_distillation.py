@@ -207,8 +207,8 @@ class MembraneDistillation(SanUnit):
             # Values%20for%20Henry's%20law%20constants,gas%20constant%20(8.20575%\
             # 20%C3%97%2010 (accessed 11-11-2022)
             
-            kf = 1/(1/self.Ka - 1/dimensionless_Henry/km*(1 + 10**(-pKa)*10**\
-                 (-self.target_pH)/(10**(-14))))
+            kf = 1/(1/self.Ka - 1/dimensionless_Henry/km*(1 + (10**-14/10**(-pKa))*10**\
+                  (-self.target_pH)/(10**(-14))))
             
             J = kf*ammonia/influent.F_mass*1000*log(X_NH3_f_m/X_NH3_f)*3600 # in kg/m2/h
             

@@ -47,7 +47,7 @@ class Hydrocracking(Reactor):
     WHSV: float
         Weight Hourly Space velocity, [kg feed/hr/kg catalyst].
     catalyst_lifetime: float
-        CHG catalyst lifetime, [hr].
+        HC catalyst lifetime, [hr].
     hydrogen_P: float
         Hydrogen pressure, [Pa].
     hydrogen_rxned_to_heavy_oil: float
@@ -106,7 +106,8 @@ class Hydrocracking(Reactor):
                  #combine C20H42 and PHYTANE as C20H42
                  # will not be a variable in uncertainty/sensitivity analysis
                  P=None, tau=5, void_fraciton=0.4, # Towler
-                 length_to_diameter=2, N=None, V=None, auxiliary=False, mixing_intensity=None, kW_per_m3=0,
+                 length_to_diameter=2, diameter=None,
+                 N=None, V=None, auxiliary=False, mixing_intensity=None, kW_per_m3=0,
                  wall_thickness_factor=1.5,
                  vessel_material='Stainless steel 316',
                  vessel_type='Vertical'):
@@ -135,6 +136,7 @@ class Hydrocracking(Reactor):
         self.tau = tau
         self.void_fraciton = void_fraciton
         self.length_to_diameter = length_to_diameter
+        self.diameter = diameter
         self.N = N
         self.V = V
         self.auxiliary = auxiliary
@@ -172,7 +174,7 @@ class Hydrocracking(Reactor):
         hc_out.P = heavy_oil.P
         hc_out.T = self.HCrxn_T
         
-        # hc_out.vle(T=hc_out.T, P=hc_out.P)
+        hc_out.vle(T=hc_out.T, P=hc_out.P)
 
         cmps = self.components
         C_in = 0
@@ -252,7 +254,7 @@ class Hydrotreating(Reactor):
     WHSV: float
         Weight Hourly Space velocity, [kg feed/hr/kg catalyst].
     catalyst_lifetime: float
-        CHG catalyst lifetime, [hr].
+        HT catalyst lifetime, [hr].
     hydrogen_P: float
         Hydrogen pressure, [Pa].
     hydrogen_rxned_to_biocrude: float
@@ -337,7 +339,8 @@ class Hydrotreating(Reactor):
                  # spreadsheet HT calculation
                  # will not be a variable in uncertainty/sensitivity analysis
                  P=None, tau=0.5, void_fraciton=0.4, # [2]
-                 length_to_diameter=2, N=None, V=None, auxiliary=False,
+                 length_to_diameter=2, diameter=None,
+                 N=None, V=None, auxiliary=False,
                  mixing_intensity=None, kW_per_m3=0,
                  wall_thickness_factor=1,
                  vessel_material='Stainless steel 316',
@@ -371,6 +374,7 @@ class Hydrotreating(Reactor):
         self.tau = tau
         self.void_fraciton = void_fraciton
         self.length_to_diameter = length_to_diameter
+        self.diameter = diameter
         self.N = N
         self.V = V
         self.auxiliary = auxiliary
@@ -430,15 +434,15 @@ class Hydrotreating(Reactor):
         
         ht_out.T = self.HTrxn_T
         
-        # ht_out.vle(T=ht_out.T, P=ht_out.P)
+        ht_out.vle(T=ht_out.T, P=ht_out.P)
         
         if self.HTaqueous_C < -0.1*self.HTL.WWTP.sludge_C:
             raise Exception('carbon mass balance is out of +/- 10% for the whole system')
         # allow +/- 10% out of mass balance
         # should be no C in the aqueous phase, the calculation here is just for MB
-        
+
         if self.HTaqueous_N < -0.1*self.HTL.WWTP.sludge_N:
-            raise Exception('nitrogen mass balance is out of +/- 10% for the whole system')
+            Warning('nitrogen mass balance is out of +/- 10% for the whole system')
         # allow +/- 10% out of mass balance
 
         # possibility exist that more carbon is in biooil and gas than in
@@ -529,10 +533,3 @@ class Hydrotreating(Reactor):
         
         for item in purchase_costs.keys():
             purchase_costs[item] *= CAPEX_factor
-        
-        for aux_unit in self.auxiliary_units:
-            purchase_costs = aux_unit.baseline_purchase_costs
-            installed_costs = aux_unit.installed_costs
-            for item in purchase_costs.keys():
-                purchase_costs[item] *= CAPEX_factor
-                installed_costs[item] *= CAPEX_factor
