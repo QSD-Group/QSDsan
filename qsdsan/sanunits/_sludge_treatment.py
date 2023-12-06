@@ -574,12 +574,13 @@ class Thickener(SanUnit):
         
         # Scraper 
         # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
-        base_cost_scraper = 2500
-        base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
+        # base_cost_scraper = 2500
+        # base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
         thickener_flow = mixed.get_total_flow('m3/hr')/D['Number of thickeners']
-        C['Scraper'] = D['Number of thickeners']*base_cost_scraper*(thickener_flow/base_flow_scraper)**0.6
-        base_power_scraper = 2.75 # in kW
-        scraper_power = D['Number of thickeners']*base_power_scraper*(thickener_flow/base_flow_scraper)**0.6
+        # C['Scraper'] = D['Number of thickeners']*base_cost_scraper*(thickener_flow/base_flow_scraper)**0.6
+        # base_power_scraper = 2.75 # in kW
+        # THE EQUATION BELOW IS NOT CORRECT TO SCALE SCRAPER POWER REQUIREMENTS 
+        # scraper_power = D['Number of thickeners']*base_power_scraper*(thickener_flow/base_flow_scraper)**0.6
         
         # v notch weir
         # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
@@ -620,7 +621,7 @@ class Thickener(SanUnit):
         pumping = pumping*D['Number of thickeners']
         
         self.power_utility.rate += pumping
-        self.power_utility.rate += scraper_power
+        # self.power_utility.rate += scraper_power
 
 #%% Centrifuge
 
@@ -688,6 +689,8 @@ class Centrifuge(Thickener):
     _N_ins = 1
     _N_outs = 2
     _ins_size_is_fixed = False
+    
+    pumps = ('sludge',)
     
     # Costs
     stainless_steel_unit_cost=1.8 # $/Kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
@@ -777,27 +780,30 @@ class Centrifuge(Thickener):
         total_mass_dry_solids_removed = (TSS_rmv/100)*((mixed.get_TSS()*self.ins[0].F_vol)/1000) # in kg/hr
         D['Number of centrifuges'] = np.ceil(total_mass_dry_solids_removed/solids_feed_rate)
         
-        k = 0.00000056 # Based on emprical formula (pg. 24-23 of [3])
-        g = 9.81 # m/s2
-        # The inner diameterof the bowl is calculated based on an empirical formula. 1000 is used to convert mm to m.
-        D['Diameter of bowl'] = (self.g_factor*g)/(k*np.square(self.rotational_speed)*1000) # in m
-        D['Total length of bowl'] =  self.LtoD*D['Diameter of bowl'] 
-        # Sanity check: L should be between 1-7 m, diameter should be around 0.25-0.8 m (Source: [4])
         
-        fraction_cylindrical_portion = 0.8
-        fraction_conical_portion = 1 - fraction_cylindrical_portion
-        D['Length of cylindrical portion'] = fraction_cylindrical_portion*D['Total length of bowl']
-        D['Length of conical portion'] =  fraction_conical_portion*D['Total length of bowl']
-        thickness_of_bowl_wall = 0.1 # in m (!!! NEED A RELIABLE SOURCE !!!)
-        inner_diameter = D['Diameter of bowl']
-        outer_diameter = inner_diameter + 2*thickness_of_bowl_wall
+        # HAVE COMMENTED ALL OF THIS SINCE CENTRIFUGE WOULD PROBABLY BE BROUGHT NOT CONSTRUCTED AT THE FACILITY
         
-        volume_cylindrical_wall = (np.pi*D['Length of cylindrical portion']/4)*(outer_diameter**2 - inner_diameter**2)
-        volume_conical_wall = (np.pi/3)*(D['Length of conical portion']/4)*(outer_diameter**2 - inner_diameter**2)
-        D['Volume of bowl'] = volume_cylindrical_wall + volume_conical_wall # in m3
+        # k = 0.00000056 # Based on emprical formula (pg. 24-23 of [3])
+        # g = 9.81 # m/s2
+        # # The inner diameterof the bowl is calculated based on an empirical formula. 1000 is used to convert mm to m.
+        # D['Diameter of bowl'] = (self.g_factor*g)/(k*np.square(self.rotational_speed)*1000) # in m
+        # D['Total length of bowl'] =  self.LtoD*D['Diameter of bowl'] 
+        # # Sanity check: L should be between 1-7 m, diameter should be around 0.25-0.8 m (Source: [4])
         
-        density_ss = 7930 # kg/m3, 18/8 Chromium
-        D['Stainless steel for bowl'] = D['Volume of bowl']*density_ss # in kg
+        # fraction_cylindrical_portion = 0.8
+        # fraction_conical_portion = 1 - fraction_cylindrical_portion
+        # D['Length of cylindrical portion'] = fraction_cylindrical_portion*D['Total length of bowl']
+        # D['Length of conical portion'] =  fraction_conical_portion*D['Total length of bowl']
+        # thickness_of_bowl_wall = 0.1 # in m (!!! NEED A RELIABLE SOURCE !!!)
+        # inner_diameter = D['Diameter of bowl']
+        # outer_diameter = inner_diameter + 2*thickness_of_bowl_wall
+        
+        # volume_cylindrical_wall = (np.pi*D['Length of cylindrical portion']/4)*(outer_diameter**2 - inner_diameter**2)
+        # volume_conical_wall = (np.pi/3)*(D['Length of conical portion']/4)*(outer_diameter**2 - inner_diameter**2)
+        # D['Volume of bowl'] = volume_cylindrical_wall + volume_conical_wall # in m3
+        
+        # density_ss = 7930 # kg/m3, 18/8 Chromium
+        # D['Stainless steel for bowl'] = D['Volume of bowl']*density_ss # in kg
         
         polymer_dosage_rate = 0.000453592*self.polymer_dosage # convert from (polymer (lbs)/solids (tonne)) to (polymer (kg)/solids (kg))
         D['Polymer feed rate'] = (polymer_dosage_rate*solids_feed_rate) # in polymer (kg)/hr
@@ -818,17 +824,22 @@ class Centrifuge(Thickener):
         self._mixed.mix_from(self.ins)
         mixed = self._mixed
        
+        # HAVE COMMENTED SINCE CENTRIFUGE WOULD PROBABLY BE BROUGHT NOT CONSTRUCTED AT THE FACILITY
         # Construction of concrete and stainless steel walls
-        C['Bowl stainless steel'] = D['Number of centrifuges']*D['Stainless steel for bowl']*self.stainless_steel_unit_cost
+        # C['Bowl stainless steel'] = D['Number of centrifuges']*D['Stainless steel for bowl']*self.stainless_steel_unit_cost
         
         # Conveyor 
-        # Source: https://www.alibaba.com/product-detail/Engineers-Available-Service-Stainless-Steel-U_60541536633.html?spm=a2700.galleryofferlist.normal_offer.d_title.1fea1f65v6R3OQ&s=p
-        base_cost_conveyor = 1800
-        base_flow_conveyor = 10 # in m3/hr
-        thickener_flow = mixed.get_total_flow('m3/hr')/D['Number of centrifuges']
-        C['Conveyor'] = D['Number of centrifuges']*base_cost_conveyor*(thickener_flow/base_flow_conveyor)**0.6
-        base_power_conveyor = 2.2 # in kW
-        conveyor_power = D['Number of centrifuges']*base_power_conveyor*(thickener_flow/base_flow_conveyor)**0.6
+        # Source: https://www.alibaba.com/product-detail/Sludge-Dewatering-Centrifuge-Decanter-Centrifuge-For_60448094522.html?spm=a2700.galleryofferlist.p_offer.d_title.1c5c5229I5pQeP&s=p
+        base_cost_centrifuge = 16000
+        base_mass_flow_centrifuge = 80 # in tonne/hr
+        thickener_mass_flow = (mixed.get_total_flow('m3/hr')*mixed.get_TSS())/D['Number of centrifuges'] # IN gm/hr
+        gm_to_tonne = 0.000001
+        thickener_mass_flow = thickener_mass_flow*gm_to_tonne
+        C['Centrifuge'] = D['Number of centrifuges']*base_cost_centrifuge*(thickener_mass_flow/base_mass_flow_centrifuge)**0.6
+        
+        # base_power_conveyor = 55 # in kW
+        # THIS IS NOT THE CORRECT EXPRESSION TO SCALE UP POWER OF CENTRIFUGE
+        # conveyor_power = D['Number of centrifuges']*base_power_conveyor*(thickener_flow/base_flow_conveyor)**0.6
         
         # Pump (construction and maintainance)
         pumps = self.pumps
@@ -864,7 +875,7 @@ class Centrifuge(Thickener):
             
         pumping = pumping*D['Number of pumps']
         self.power_utility.rate += pumping
-        self.power_utility.rate += conveyor_power
+        # self.power_utility.rate += conveyor_power
 #%% Incinerator
 
 class Incinerator(SanUnit):
