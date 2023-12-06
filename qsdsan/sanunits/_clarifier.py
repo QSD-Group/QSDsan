@@ -714,12 +714,13 @@ class FlatBottomCircularClarifier(SanUnit):
         
         # Scraper 
         # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
-        base_cost_scraper = 2500
-        base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
+        # base_cost_scraper = 2500
+        # base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
         clarifier_flow =  D['Volumetric flow']/24 # in m3/hr
-        C['Scraper'] = D['Number of clarifiers']*base_cost_scraper*(clarifier_flow/base_flow_scraper)**0.6
-        base_power_scraper = 2.75 # in kW
-        scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
+        # C['Scraper'] = D['Number of clarifiers']*base_cost_scraper*(clarifier_flow/base_flow_scraper)**0.6
+        # base_power_scraper = 2.75 # in kW
+        # THE EQUATION BELOW IS NOT CORRECT TO SCALE SCRAPER POWER REQUIREMENTS 
+        # scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
         
         # v notch weir
         # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
@@ -762,7 +763,7 @@ class FlatBottomCircularClarifier(SanUnit):
         pumping = pumping*D['Number of clarifiers']
         
         self.power_utility.rate += pumping
-        self.power_utility.consumption += scraper_power
+        # self.power_utility.consumption += scraper_power
         
 # %% 
    
@@ -1879,12 +1880,15 @@ class PrimaryClarifier(SanUnit):
         
         # Scraper 
         # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
-        base_cost_scraper = 2500
-        base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
+        # base_cost_scraper = 2500
+        # base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
         clarifier_flow = D['Volumetric flow']/24
-        C['Scraper'] =  D['Number of clarifiers']*base_cost_scraper*(clarifier_flow/base_flow_scraper)**0.6
-        base_power_scraper = 2.75 # in kW
-        scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
+        
+        # C['Scraper'] =  D['Number of clarifiers']*base_cost_scraper*(clarifier_flow/base_flow_scraper)**0.6
+        
+        # base_power_scraper = 2.75 # in kW
+        # THE EQUATION BELOW IS NOT CORRECT TO SCALE SCRAPER POWER REQUIREMENTS 
+        # scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
         
         # v notch weir
         # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
@@ -1925,4 +1929,4 @@ class PrimaryClarifier(SanUnit):
         pumping = pumping*D['Number of clarifiers']
         
         self.power_utility.rate += pumping
-        self.power_utility.rate += scraper_power
+        # self.power_utility.rate += scraper_power
