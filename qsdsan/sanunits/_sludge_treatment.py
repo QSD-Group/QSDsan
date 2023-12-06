@@ -837,9 +837,9 @@ class Centrifuge(Thickener):
         thickener_mass_flow = thickener_mass_flow*gm_to_tonne
         C['Centrifuge'] = D['Number of centrifuges']*base_cost_centrifuge*(thickener_mass_flow/base_mass_flow_centrifuge)**0.6
         
-        # base_power_conveyor = 55 # in kW
+        base_power_motor = 55 # in kW
         # THIS IS NOT THE CORRECT EXPRESSION TO SCALE UP POWER OF CENTRIFUGE
-        # conveyor_power = D['Number of centrifuges']*base_power_conveyor*(thickener_flow/base_flow_conveyor)**0.6
+        motor_power = D['Number of centrifuges']*base_power_motor*(thickener_mass_flow/base_mass_flow_centrifuge)
         
         # Pump (construction and maintainance)
         pumps = self.pumps
@@ -875,7 +875,7 @@ class Centrifuge(Thickener):
             
         pumping = pumping*D['Number of pumps']
         self.power_utility.rate += pumping
-        # self.power_utility.rate += conveyor_power
+        self.power_utility.rate += motor_power
 #%% Incinerator
 
 class Incinerator(SanUnit):
