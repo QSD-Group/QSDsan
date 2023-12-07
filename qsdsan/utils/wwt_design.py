@@ -18,10 +18,11 @@ __all__ = ('get_SRT',
            'get_oxygen_heterotrophs', 
            'get_oxygen_autotrophs', 
            'get_airflow', 
-           'get_P_blower')
+           'get_P_blower',
+           'get_power_utility')
 
 #%%
-
+    
 def get_SRT(system, biomass_IDs, wastage=None, active_unit_IDs=None):
     """
     Estimate sludge residence time (SRT) of an activated sludge system.
@@ -276,4 +277,26 @@ def get_P_blower(q_air, T=20, p_atm=101.325, P_inlet_loss=1,
     Q_air = q_air/60 # m3/min to m3/s
     WP = (Q_air / air_molar_vol) * R * T / K * ((p_out/p_in)**K - 1) / efficiency  # in W
     return WP/1000
+
+def get_power_utility(system, active_unit_IDs=None):
+    '''
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system whose power will be calculated.
+    active_unit_IDs : tuple[str], optional
+        IDs of all units whose power needs to be accounted for. The default is None, meaning to include
+        all units in the system.
+
+    Returns
+    -------
+    Required power [kW].
+    '''
     
+    power_consumption = 0
+        
+    for y in system.flowsheet.unit:
+        if y.ID in active_unit_IDs:
+            power_consumption += y.power_utility.power
+        
+    return power_consumption
