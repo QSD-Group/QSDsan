@@ -246,7 +246,7 @@ def get_P_blower(q_air, T=20, p_atm=101.325, P_inlet_loss=1,
     h_submergance : float
         Diffuser submergance depth in m. The default is 17 feet (5.18 m)
     efficiency : float
-        Blower efficiency. Default is 0.8. 
+        Blower efficiency. Default is 0.7. 
     K : float, optional
         Equal to (kappa - 1)/kappa, where kappa is the adiabatic exponent of air.
         Default is 0.283, equivalent to kappa = 1.3947.
