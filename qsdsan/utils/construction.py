@@ -522,22 +522,30 @@ pipe_dct = {
 def select_pipe(Q, v):
     '''
     Select pipe based on Q (flow in ft3/s) and velocity (ft/s).
+    Note that the liquid velocity is the minimum permissible liquid velocity,
+    which means the pipe diameter will be selected so that the actual velocity
+    will be no less than the provided velocity.
 
     Parameters
     ----------
     Q : float
         Flow rate of the fluid, [ft3/s] (cfs).
     v : float
-        Velocity of the fluid, [ft/s].
+        Minimum permissible liquid velocity of the fluid, [ft/s].
 
     Returns
     -------
     Outer diameter, thickness, and inner diameter of the pipe (three floats), all in ft.
+    
+    See Also
+    --------
+    Issue #118 on the discussion: https://github.com/QSD-Group/QSDsan/issues/118
     '''
     A = Q / v # cross-section area
     d = (4*A/np.pi) ** 0.5 # minimum inner diameter, [ft]
     d *= 12 # minimum inner diameter, [in]
-    d_index = np.searchsorted(boundaries, d, side='left') # a[i-1] < v <= a[i]
+    d_index = np.searchsorted(boundaries, d, side='left') # a[i-1] <= v < a[i]
+    if d not in boundaries: d_index -= 1 # to ensure the actual v is larger than the given v
     d_index = d_index-1 if d_index==size else d_index # if beyond the largest size
     OD, t = pipe_dct[boundaries[d_index]]
     ID = OD - 2*t # inner diameter, [in]
