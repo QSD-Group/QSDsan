@@ -397,6 +397,10 @@ class HydrothermalLiquefaction(Reactor):
         HTL effluent temperature, [K].
     CAPEX_factor: float
         Factor used to adjust CAPEX.
+    HTL_steel_cost_factor: float
+        Factor used to adjust the cost of stainless steel.
+    mositure_adjustment_exist_in_the_system: bool
+        If a moisture adjustment unit exists, set to true.
         
     References
     ----------
