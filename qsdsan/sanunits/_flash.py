@@ -21,7 +21,7 @@ __all__ = ('Flash',)
 
 _lb_to_kg = qs.utils.auom('lb').conversion_factor('kg')
 
-class Flash(bst.units.Flash):
+class Flash(bst.units.Flash, qs.SanUnit):
     '''
     Similar to biosteam.units.Flash, but can include construction impact calculation.
     

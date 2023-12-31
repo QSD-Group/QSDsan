@@ -21,7 +21,7 @@ __all__ = ('BinaryDistillation',)
 
 _lb_to_kg = qs.utils.auom('lb').conversion_factor('kg')
 
-class BinaryDistillation(bst.units.BinaryDistillation):
+class BinaryDistillation(bst.units.BinaryDistillation, qs.SanUnit):
     '''
     Similar to biosteam.units.BinaryDistillation, but can include construction impact calculation.
     

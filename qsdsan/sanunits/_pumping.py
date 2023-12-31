@@ -952,7 +952,9 @@ class SludgePump(Pump):
     _SS_per_pump = 725 * 0.5
     _units = {'Pump pipe stainless steel': 'kg',
               'Pump stainless steel': 'kg'}
-
+    
+    include_construction = False
+    
     def _design(self):
         super()._design()
         pipe, pumps, hdpe = self.design_sludge()
