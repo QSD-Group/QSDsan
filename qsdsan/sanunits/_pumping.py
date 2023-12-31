@@ -973,7 +973,7 @@ class SludgePump(Pump):
     _units = {'Pump pipe stainless steel': 'kg',
               'Pump stainless steel': 'kg'}
     
-    include_construction = False
+    include_construction = True
     
     def _design(self):
         super()._design()

@@ -30,7 +30,7 @@ class BinaryDistillation(bst.units.BinaryDistillation, qs.SanUnit):
     `biosteam.units.BinaryDistillation <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
     '''
 
-    include_construction = False
+    include_construction = True
     
     def _design(self):
         super()._design()

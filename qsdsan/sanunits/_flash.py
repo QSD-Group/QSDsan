@@ -30,7 +30,7 @@ class Flash(bst.units.Flash, qs.SanUnit):
     `biosteam.units.Flash <https://biosteam.readthedocs.io/en/latest/API/units/Flash.html>`_
     '''
 
-    include_construction = False
+    include_construction = True
     
     def _design(self):
         super()._design()
