@@ -7,6 +7,8 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 This module is developed by:
 
     Yalin Li <mailto.yalin.li@gmail.com>
+    
+    Saumitra Rai <raisaumitra9@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -742,7 +744,7 @@ class TreatmentTrains(Mixer):
     '''
     Dummy unit with no run function of its own. To be used to calculate the 
     design and cost of treatment trains in ASP. Code largely dereived from code scripts 
-    for [2]_.
+    for [1]_.
 
     Parameters
     ----------
