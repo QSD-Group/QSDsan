@@ -168,7 +168,7 @@ class Thickener(SanUnit):
         self.h_thickener = h_thickener
         self.downward_flow_velocity = downward_flow_velocity
         self.F_BM.update(F_BM)
-        self._mixed = WasteStream(f'{ID}_mixed')        
+        self._mixed = WasteStream(f'{ID}_mixed', thermo = thermo)        
         self._sludge = self.outs[0].copy(f'{ID}_sludge')
         self._thickener_factor = None
         self._thinning_factor = None
