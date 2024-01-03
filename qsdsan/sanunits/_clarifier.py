@@ -578,7 +578,7 @@ class FlatBottomCircularClarifier(SanUnit):
                 ID = f'{ID}_{i}'
                 capacity_factor=1
                 pump = WWTpump(
-                    ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
+                    ID=ID, ins=ins_dct[i], thermo = self.thermo, pump_type=type_dct[i],
                     Q_mgd=Q_mgd[i], add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
@@ -1713,13 +1713,14 @@ class PrimaryClarifier(SanUnit):
                 ID = f'{ID}_{i}'
                 capacity_factor=1
                 pump = WWTpump(
-                    ID=ID, ins= ins_dct[i], pump_type=type_dct[i],
+                    ID=ID, ins= ins_dct[i], thermo = self.thermo, pump_type=type_dct[i],
                     Q_mgd=influent_Q_mgd, add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
                     include_building_cost=False,
-                    include_OM_cost=True,
+                    include_OM_cost=True, 
                     )
+                    
                 setattr(self, f'{i}_pump', pump)
 
         pipe_ss, pump_ss = 0., 0.
