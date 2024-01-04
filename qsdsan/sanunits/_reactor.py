@@ -15,16 +15,17 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-from math import pi, ceil
 from biosteam.units.design_tools import PressureVessel
 from biosteam.exceptions import DesignError
 from qsdsan import SanUnit, Stream, Construction
 from qsdsan.utils import auom
+from math import pi, ceil
 
 __all__ = ('Reactor',)
 
 _lb_to_kg = auom('lb').conversion_factor('kg')
 _m_to_ft = auom('m').conversion_factor('ft')
+_in_to_m = auom('inch').conversion_factor('m')
 _Pa_to_psi = auom('Pa').conversion_factor('psi')
 
 class Reactor(SanUnit, PressureVessel, isabstract=True):
@@ -95,7 +96,7 @@ class Reactor(SanUnit, PressureVessel, isabstract=True):
 
     def __init__(self, ID='', ins=None, outs=(), include_construction=True, *,
                  P=101325, tau=0.5, V_wf=0.8,
-                 length_to_diameter=2, N=None, V=None, auxiliary=False,
+                 length_to_diameter=2, diameter=None, N=None, V=None, auxiliary=False,
                  mixing_intensity=None, kW_per_m3=0.0985,
                  wall_thickness_factor=1,
                  vessel_material='Stainless steel 316',
@@ -105,6 +106,7 @@ class Reactor(SanUnit, PressureVessel, isabstract=True):
         self.tau = tau
         self.V_wf = V_wf
         self.length_to_diameter = length_to_diameter
+        self.diameter = diameter
         self.N = N
         self.V = V
         self.auxiliary = auxiliary
@@ -114,7 +116,6 @@ class Reactor(SanUnit, PressureVessel, isabstract=True):
         self.wall_thickness_factor = wall_thickness_factor
         self.vessel_material = vessel_material
         self.vessel_type = vessel_type
-
         
     def _init_lca(self):
         for i in self.construction: i.registry.discard(i)
@@ -151,7 +152,11 @@ class Reactor(SanUnit, PressureVessel, isabstract=True):
                 Design['Number of reactors'] = self.N
             else:
                 V_reactor = V_total/self.N
-                D = (4*V_reactor/pi/length_to_diameter)**(1/3)
+                if self.diameter:
+                    D = self.diameter
+                    length_to_diameter = 4*V_reactor/pi/D**3
+                else:
+                    D = (4*V_reactor/pi/length_to_diameter)**(1/3)
                 D *= _m_to_ft # convert from m to ft
                 L = D * length_to_diameter
 
@@ -187,7 +192,6 @@ class Reactor(SanUnit, PressureVessel, isabstract=True):
         
         if self.include_construction:
             self.construction[0].quantity = Design['Weight']*Design['Number of reactors']*_lb_to_kg
-
 
     def _cost(self):
         Design = self.design_results

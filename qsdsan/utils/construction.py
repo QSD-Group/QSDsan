@@ -5,7 +5,12 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+    
     Yalin Li <mailto.yalin.li@gmail.com>
+    
+    Saumitra Rai <raisaumitra9@gmail.com>
+    
+    Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -468,77 +473,83 @@ def calculate_pipe_material(OD, t, ID, L, density=None):
 
 # Based on ANSI (American National Standards Institute) pipe chart
 # the original code has a bug (no data for 22) and has been fixed here
-boundaries = np.concatenate([
-    np.arange(1/8, 0.5, 1/8),
-    np.arange(0.5, 1.5, 1/4),
-    np.arange(1.5, 5,   0.5),
-    np.arange(5,   12,  1),
-    np.arange(12,  36,  2),
-    np.arange(36,  54,  6)
+IDs = np.array([
+    0.307, 0.410, 0.545, 0.674, 0.884, 1.097, 1.442, 1.682, 2.157, 
+    2.635, 3.260, 3.760, 4.260, 4.760, 5.295, 6.357, 7.357, 8.329, 
+    9.329, 10.420, 11.420, 12.390, 13.624, 15.602, 17.624, 19.564, 21.500, 
+    23.500, 25.500, 27.500, 29.376, 31.376, 33.376, 35.376, 41.376, 47.376 
     ])
 
-size = boundaries.shape[0]
+size = IDs.shape[0]
 
+# Schedule 10 pipes @ https://amerpipe.com/wp-content/uploads/2015/10/APP-chart-v7-web.pdf
 pipe_dct = {
-    1/8 : (0.405,  0.049), # OD (outer diameter), t (wall thickness)
-    1/4 : (0.540,  0.065),
-    3/8 : (0.675,  0.065),
-    1/2 : (0.840,  0.083),
-    3/4 : (1.050,  0.083),
-    1   : (1.315,  0.109),
-    1.25: (1.660,  0.109),
-    1.5 : (1.900,  0.109),
-    2   : (2.375,  0.109),
-    2.5 : (2.875,  0.120),
-    3   : (3.500,  0.120),
-    3.5 : (4.000,  0.120),
-    4   : (4.500,  0.120),
-    4.5 : (5.000,  0.120),
-    5   : (5.563,  0.134),
-    6   : (6.625,  0.134),
-    7   : (7.625,  0.134),
-    8   : (8.625,  0.148),
-    9   : (9.625,  0.148),
-    10  : (10.750, 0.165),
-    11  : (11.750, 0.165),
-    12  : (12.750, 0.180),
-    14  : (14.000, 0.188),
-    16  : (16.000, 0.199),
-    18  : (18.000, 0.188),
-    20  : (20.000, 0.218),
-    22  : (22.000, 0.250),
-    24  : (24.000, 0.250),
-    26  : (26.000, 0.250),
-    28  : (28.000, 0.250),
-    30  : (30.000, 0.312),
-    32  : (32.000, 0.312),
-    34  : (34.000, 0.312),
-    36  : (36.000, 0.312),
-    42  : (42.000, 0.312),
-    48  : (48.000, 0.312)
+    0.307 : (0.405,  0.049), # OD (outer diameter), t (wall thickness)
+    0.410 : (0.540,  0.065),
+    0.545 : (0.675,  0.065),
+    0.674 : (0.840,  0.083),
+    0.884 : (1.050,  0.083),
+    1.097 : (1.315,  0.109),
+    1.442 : (1.660,  0.109),
+    1.682 : (1.900,  0.109),
+    2.157 : (2.375,  0.109),
+    2.635 : (2.875,  0.120),
+    3.260 : (3.500,  0.120),
+    3.760 : (4.000,  0.120),
+    4.260 : (4.500,  0.120),
+    4.760 : (5.000,  0.120),
+    5.295 : (5.563,  0.134),
+    6.357 : (6.625,  0.134),
+    7.357 : (7.625,  0.134),
+    8.329 : (8.625,  0.148),
+    9.329 : (9.625,  0.148),
+    10.420: (10.750, 0.165),
+    11.420: (11.750, 0.165),
+    12.390: (12.750, 0.180),
+    13.624: (14.000, 0.188),
+    15.602: (16.000, 0.199),
+    17.624: (18.000, 0.188),
+    19.564: (20.000, 0.218),
+    21.500: (22.000, 0.250),
+    23.500: (24.000, 0.250),
+    25.500: (26.000, 0.250),
+    27.500: (28.000, 0.250),
+    29.376: (30.000, 0.312),
+    31.376: (32.000, 0.312),
+    33.376: (34.000, 0.312),
+    35.376: (36.000, 0.312),
+    41.376: (42.000, 0.312),
+    47.376: (48.000, 0.312)
     }
-
 
 def select_pipe(Q, v):
     '''
     Select pipe based on Q (flow in ft3/s) and velocity (ft/s).
+
+    Note that the velocity is the minimum permissible liquid velocity,
+    which means the pipe diameter will be selected so that the actual velocity
+    will be no less than the provided velocity.
 
     Parameters
     ----------
     Q : float
         Flow rate of the fluid, [ft3/s] (cfs).
     v : float
-        Velocity of the fluid, [ft/s].
+        Minimum permissible velocity of the fluid, [ft/s].
 
     Returns
     -------
     Outer diameter, thickness, and inner diameter of the pipe (three floats), all in ft.
     '''
     A = Q / v # cross-section area
-    d = (4*A/np.pi) ** 0.5 # minimum inner diameter, [ft]
-    d *= 12 # minimum inner diameter, [in]
-    d_index = np.searchsorted(boundaries, d, side='left') # a[i-1] < v <= a[i]
-    d_index = d_index-1 if d_index==size else d_index # if beyond the largest size
-    OD, t = pipe_dct[boundaries[d_index]]
-    ID = OD - 2*t # inner diameter, [in]
+    ID = (4*A/np.pi) ** 0.5 # maximum inner diameter, [ft]
+    ID *= 12 # maximum inner diameter, [in]
+    
+    ids = IDs[IDs <= ID]
+    if ids.size == 0: 
+        ID = IDs[0] # inch
+    else: 
+        ID = ids[-1]
+    OD, t = pipe_dct[ID]
+
     return OD, t, ID
