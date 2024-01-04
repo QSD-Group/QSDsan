@@ -122,8 +122,7 @@ def cod_test_stoichiometry(atoms, charge=0, MW=None, missing_handling='elemental
     nH2O = nO - 7*nCr2O7 - 2*nC - 4*nS - 4*nP
     n_proton = 8*nCr2O7 - nN + 2*nS + 3*nP - ne
 
-    if nCr2O7 != 0.0:
-        products['Cr2O7-2'] = nCr2O7
+    products['Cr2O7-2'] = nCr2O7
     if n_proton != 0.0:
         products['H+'] = n_proton
     if nCr != 0.0:
