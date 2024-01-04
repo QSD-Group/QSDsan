@@ -418,7 +418,7 @@ class Thickener(SanUnit):
                 capacity_factor=1
                 # No. of pumps = No. of influents
                 pump = WWTpump(
-                    ID=ID, ins= ins_dct[i], pump_type=type_dct[i],
+                    ID=ID, ins= ins_dct[i], thermo = self.thermo, pump_type=type_dct[i],
                     Q_mgd=influent_Q_mgd, add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
@@ -750,7 +750,7 @@ class Centrifuge(Thickener):
                 capacity_factor=1
                 # No. of pumps = No. of influents
                 pump = WWTpump(
-                    ID=ID, ins= ins_dct[i], pump_type=type_dct[i],
+                    ID=ID, ins= ins_dct[i], thermo = self.thermo, pump_type=type_dct[i],
                     Q_mgd=influent_Q_mgd, add_inputs=inputs_dct[i],
                     capacity_factor=capacity_factor,
                     include_pump_cost=True,
