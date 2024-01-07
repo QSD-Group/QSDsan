@@ -172,7 +172,7 @@ class TEA(BSTTEA):
     --------
     `SanUnit and System <https://qsdsan.readthedocs.io/en/latest/tutorials/SanUnit_and_System.html>`_
 
-    `TEA and LCA <https://qsdsan.readthedocs.io/en/latest/tutorials/TEA_and_LCA.html>`_
+    `TEA <https://qsdsan.readthedocs.io/en/latest/tutorials/7_TEA.html>`_
     '''
 
     __slots__ = (*(i for i in BSTTEA.__slots__ if i not in conflict_slots),
