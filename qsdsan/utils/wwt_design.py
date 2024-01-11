@@ -19,7 +19,8 @@ __all__ = ('get_SRT',
            'get_oxygen_autotrophs', 
            'get_airflow', 
            'get_P_blower',
-           'get_power_utility')
+           'get_power_utility',
+           'get_GHG_emissions_sec_treatment')
 
 #%%
     
@@ -285,8 +286,7 @@ def get_power_utility(system, active_unit_IDs=None):
     system : :class:`biosteam.System`
         The system whose power will be calculated.
     active_unit_IDs : tuple[str], optional
-        IDs of all units whose power needs to be accounted for. The default is None, meaning to include
-        all units in the system.
+        IDs of all units whose power needs to be accounted for. The default is None.
 
     Returns
     -------
@@ -300,3 +300,53 @@ def get_power_utility(system, active_unit_IDs=None):
             power_consumption += y.power_utility.power
         
     return power_consumption
+
+def get_GHG_emissions_sec_treatment(system, influent=None, sludge = None,
+                                    CH4_EF=0.0075, N2O_EF=0.016):
+    '''    
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system for which emissions during secondary treatment are being calculated. 
+    influent : : iterable[:class:`WasteStream`], optional
+        Influent wastestreams to the system whose wastewater composition determine the potential for GHG emissions. The default is None.
+    sludge  : : iterable[:class:`WasteStream`], optional
+        The wastestream which represents the sludge to be disposed. The default is None.
+    CH4_EF :  float, optional.
+        The emission factor used to calculate methane emissions in secondary treatment. The default is 0.0075 kg CH4/ kg rCOD. [1]
+    N2O_EF : float, optional
+        The emission factor used to calculate nitrous oxide emissions in secondary treatment. The default is 0.016 kg N2O-N/ kg N. [1]
+
+    Returns
+    -------
+    CH4_emitted : float
+        The amount of methane emitted during secondary treatment (kg/day).
+    N2O_emitted : float
+        The amount of nitrous oxide emitted during secondary treatment (kg/day).
+        
+    References
+    ----------
+    [1] Chapter - 6, IPCC. (2019). In 2019 Refinement to the 2006 IPCC Guidelines for National Greenhouse Gas Inventories.
+
+    '''
+    
+    if influent is None:
+        influent = [inf for inf in system.feeds if inf.phase == 'l']
+
+    influent_flow = np.array([inf.F_vol*24 for inf in influent]) # in m3/day
+    influent_COD = np.array([inf.COD for inf in influent]) # in mg/L
+    mass_influent_COD = np.sum(influent_flow*influent_COD/1000) # in kg/day
+    
+    sludge_flow = np.array([sludge.F_vol*24]) # in m3/day
+    sludge_COD = np.array([sludge.COD]) # in mg/L
+    mass_sludge_COD = np.sum(sludge_flow*sludge_COD/1000) # in kg/day
+    
+    mass_removed_COD = mass_influent_COD - mass_sludge_COD
+    CH4_emitted = CH4_EF*mass_removed_COD
+    
+    influent_N = np.array([inf.TN for inf in influent]) # in mg/L
+    mass_influent_N = np.sum(influent_flow*influent_N/1000) # in kg/day
+    
+    N2O_emitted = N2O_EF*mass_influent_N
+    
+    return CH4_emitted, N2O_emitted
