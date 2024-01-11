@@ -777,9 +777,18 @@ class Centrifuge(Thickener):
         solids_feed_rate = 44.66*self.solids_feed_rate # 44.66 is factor to convert tonne/day to kg/hr
         # Cake's total solids and TSS are essentially the same (pg. 24-6 [3])
         # If TSS_rmv = 98, then total_mass_dry_solids_removed  = (0.98)*(influent TSS mass)
+        
+        print(f'TSS_rmv = {TSS_rmv}')
+        print(f'mixed.get_TSS() = {mixed.get_TSS()}')
+        print(f'self.ins[0].F_vol = {self.ins[0].F_vol}')
+        
         total_mass_dry_solids_removed = (TSS_rmv/100)*((mixed.get_TSS()*self.ins[0].F_vol)/1000) # in kg/hr
+        print(f'total_mass_dry_solids_removed = {total_mass_dry_solids_removed}')
+        print(f'solids_feed_rate = {solids_feed_rate}')
         D['Number of centrifuges'] = np.ceil(total_mass_dry_solids_removed/solids_feed_rate)
         
+        m = D['Number of centrifuges']
+        print(f'D[Number of centrifuges] = {m}')
         
         # HAVE COMMENTED ALL OF THIS SINCE CENTRIFUGE WOULD PROBABLY BE BROUGHT NOT CONSTRUCTED AT THE FACILITY
         
