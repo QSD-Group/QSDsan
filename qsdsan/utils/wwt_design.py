@@ -312,7 +312,7 @@ def get_GHG_emissions_sec_treatment(system, influent=None, sludge = None,
     influent : : iterable[:class:`WasteStream`], optional
         Influent wastestreams to the system whose wastewater composition determine the potential for GHG emissions. The default is None.
     sludge  : : iterable[:class:`WasteStream`], optional
-        The wastestream which represents the sludge to be disposed. The default is None.
+        The wastestreams which represents the sludge to be disposed. The default is None.
     CH4_EF :  float, optional.
         The emission factor used to calculate methane emissions in secondary treatment. The default is 0.0075 kg CH4/ kg rCOD. [1]
     N2O_EF : float, optional
@@ -338,9 +338,9 @@ def get_GHG_emissions_sec_treatment(system, influent=None, sludge = None,
     influent_COD = np.array([inf.COD for inf in influent]) # in mg/L
     mass_influent_COD = np.sum(influent_flow*influent_COD/1000) # in kg/day
     
-    sludge_flow = sludge.F_vol*24 # in m3/day
-    sludge_COD = sludge.COD # in mg/L
-    mass_sludge_COD = sludge_flow*sludge_COD/1000 # in kg/day
+    sludge_flow = np.array([sludge.F_vol*24 for sludge in sludge])
+    sludge_COD =  np.array([sludge.COD for sludge in sludge]) # in mg/L
+    mass_sludge_COD = np.sum(sludge_flow*sludge_COD/1000) # in kg/day
     
     mass_removed_COD = mass_influent_COD - mass_sludge_COD
     CH4_emitted = CH4_EF*mass_removed_COD
@@ -356,12 +356,8 @@ def get_GHG_emissions_discharge(effluent=None, CH4_EF=0.0075, N2O_EF=0.016):
     '''    
     Parameters
     ----------
-    system : :class:`biosteam.System`
-        The system for which emissions during secondary treatment are being calculated. 
-    influent : : iterable[:class:`WasteStream`], optional
-        Influent wastestreams to the system whose wastewater composition determine the potential for GHG emissions. The default is None.
-    sludge  : : iterable[:class:`WasteStream`], optional
-        The wastestream which represents the sludge to be disposed. The default is None.
+    effluent : : iterable[:class:`WasteStream`], optional
+        Effluent wastestreams from the system whose wastewater composition determine the potential for GHG emissions at discharge. The default is None.
     CH4_EF :  float, optional.
         The emission factor used to calculate methane emissions in secondary treatment. The default is 0.0075 kg CH4/ kg rCOD. [1]
     N2O_EF : float, optional
@@ -370,9 +366,9 @@ def get_GHG_emissions_discharge(effluent=None, CH4_EF=0.0075, N2O_EF=0.016):
     Returns
     -------
     CH4_emitted : float
-        The amount of methane emitted during secondary treatment (kg/day).
+        The amount of methane emitted at discharge (kg/day).
     N2O_emitted : float
-        The amount of nitrous oxide emitted during secondary treatment (kg/day).
+        The amount of nitrous oxide emitted at discharge (kg/day).
         
     References
     ----------
@@ -380,14 +376,14 @@ def get_GHG_emissions_discharge(effluent=None, CH4_EF=0.0075, N2O_EF=0.016):
 
     '''
 
-    effluent_flow = effluent.F_vol*24 # in m3/day
-    effluent_COD = effluent.COD # in mg/L
-    mass_effluent_COD = effluent_flow*effluent_COD/1000 # in kg/day
+    effluent_flow = np.array([eff.F_vol*24 for eff in effluent]) # in m3/day
+    effluent_COD = np.array([eff.COD for eff in effluent]) # in mg/L
+    mass_effluent_COD = np.sum(effluent_flow*effluent_COD/1000) # in kg/day
     
     CH4_emitted = CH4_EF*mass_effluent_COD
     
-    effluent_N = effluent.TN # in mg/L
-    mass_effluent_N = effluent_flow*effluent_N/1000 # in kg/day
+    effluent_N = np.array([eff.TN for eff in effluent]) # in mg/L
+    mass_effluent_N = np.sum(effluent_flow*effluent_N/1000) # in kg/day
     
     N2O_emitted = N2O_EF*mass_effluent_N
     
