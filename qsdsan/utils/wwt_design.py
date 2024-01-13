@@ -21,7 +21,8 @@ __all__ = ('get_SRT',
            'get_P_blower',
            'get_power_utility',
            'get_GHG_emissions_sec_treatment',
-           'get_GHG_emissions_discharge')
+           'get_GHG_emissions_discharge',
+           'get_GHG_emissions_electricity')
 
 #%%
     
@@ -388,4 +389,38 @@ def get_GHG_emissions_discharge(effluent=None, CH4_EF=0.0075, N2O_EF=0.016):
     N2O_emitted = N2O_EF*mass_effluent_N
     
     return CH4_emitted, N2O_emitted
+    
+def get_GHG_emissions_electricity(system, power_blower, power_pump, CO2_EF=0.668):
+    '''
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system for which tier-2 GHG emissions due to electricity consumption are being calculated. 
+    power_blower : float
+        Power of blower [kW].
+    power_pump : float
+        Power required for pumping and other utilities at treatment facility [kW].
+    CO2_EF : float
+        The emission factor used to calculate tier-2 CO2 emissions due to electricity consumption. The default is 0.668 kg-CO2-Eq/kWh. [1]
+        The emission factor is dependent on the region, and is as follows for USA:
+            
+            {SERC Reliability Corporation (SERC): 0.612 kg-CO2-Eq/kWh
+            ReliabilityFirst (RFC): 0.618 kg-CO2-Eq/kWh
+            Western Electricity Coordinating Council (WECC): 0.428 kg-CO2-Eq/kWh
+            Texas Reliability Entity (TRE): 0.565 kg-CO2-Eq/kWh
+            Southwest Power Pool (SPP): 0.724 kg-CO2-Eq/kWh
+            Midwest Reliability Organization (MRO): 0.668 kg-CO2-Eq/kWh
+            Florida Reliability Coordinating Council (FRCC): 0.531 kg-CO2-Eq/kWh
+            Northeast Power Coordinating Council (NPCC): 0.242 kg-CO2-Eq/kWh}
+            
+    Returns
+    -------
+    CO2_emitted : float
+        The amount of eq. CO2 emitted due to electrity consumption (kg-CO2-Eq/day).
 
+    '''
+    
+    total_energy_consumed = (power_blower + power_pump)*24 # in kWh/day
+    CO2_emissions = total_energy_consumed*CO2_EF # in kg-CO2-Eq/day
+    
+    return CO2_emissions
