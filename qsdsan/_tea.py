@@ -26,9 +26,9 @@ conflict_slots = ('lang_factor', 'system', 'units', 'feeds', 'products')
 
 default_kwargs = dict(
     startup_months=0,
-    startup_FOCfrac=0,
-    startup_VOCfrac=0,
-    startup_salesfrac=0,
+    startup_FOCfrac=1,
+    startup_VOCfrac=1,
+    startup_salesfrac=1,
     WC_over_FCI=0,
     finance_interest=0,
     finance_years=0,
@@ -101,7 +101,7 @@ class TEA(BSTTEA):
         Capital expenditure, if not provided, is set to be the same as `installed_equipment_cost`.
     lang_factor : float or None
         A factor to estimate the total installation cost based on equipment purchase cost,
-        leave as ``None`` if providing ``CAPEX``.
+        leave as `None` if providing `CAPEX`.
         If neither ``CAPEX`` nor ``lang_factor`` is provided,
         ``installed_equipment_cost`` will be calculated as the sum of purchase costs
         of all units within the system.
@@ -116,16 +116,25 @@ class TEA(BSTTEA):
     construction_schedule : tuple
         Construction progress prior to the start of the system
         (fraction of the construction that can be finished each year),
-        must sum up to 1. Leave as the default (1,) if no special construction progress is expected.
+        must sum up to 1. Leave as the default (0,1) if no special construction progress is expected.
+    accumulate_interest_during_construction  : bool
+        Whether loan interest during the construction period will be accumulated
+        onto the loan principal.
+        If False (default), interest accumulated during the construction stage
+        will be paid using equity/cash (i.e., not added to the loan);
+        if True, the loan principal will include the interest accumulated during construction.
+        See BioSTEAM issue #180 for details:
+        https://github.com/BioSTEAMDevelopmentGroup/biosteam/issues/180
     simulate_system : bool
         Whether to simulate the system before creating the LCA object.
     simulate_kwargs : dict
         Keyword arguments for system simulation (used when `simulate_system` is True).
     tea_kwargs
         Additional values that will be passed to :class:`biosteam.TEA`,
-        including ``startup_months``, ``startup_FOCfrac ``, ``startup_VOCfrac``,
-        ``startup_salesfrac``, ``WC_over_FCI``, ``finance_interest``,
-        ``finance_years``, and ``finance_fraction`` (all defaulted to 0).
+        including (default values in parentheses)
+        `startup_months` (0), `startup_FOCfrac` (1), `startup_VOCfrac` (1),
+        `startup_salesfrac` (1), `WC_over_FCI` (0), `finance_interest` (0),
+        `finance_years` (0), and `finance_fraction` (0).
 
     Examples
     --------
@@ -170,9 +179,7 @@ class TEA(BSTTEA):
 
     See Also
     --------
-    `SanUnit and System <https://qsdsan.readthedocs.io/en/latest/tutorials/SanUnit_and_System.html>`_
-
-    `TEA and LCA <https://qsdsan.readthedocs.io/en/latest/tutorials/TEA_and_LCA.html>`_
+    `TEA <https://qsdsan.readthedocs.io/en/latest/tutorials/7_TEA.html>`_
     '''
 
     __slots__ = (*(i for i in BSTTEA.__slots__ if i not in conflict_slots),
@@ -186,7 +193,8 @@ class TEA(BSTTEA):
                  lifetime=10, uptime_ratio=1.,
                  CAPEX=0., lang_factor=None,
                  annual_maintenance=0., annual_labor=0., system_add_OPEX={},
-                 depreciation='SL', construction_schedule=(1,),
+                 depreciation='SL',
+                 construction_schedule=(0, 1), accumulate_interest_during_construction=False,
                  simulate_system=True, simulate_kwargs={},
                  **tea_kwargs):
         if simulate_system: system.simulate(**simulate_kwargs)
@@ -202,17 +210,18 @@ class TEA(BSTTEA):
         self.start_year = start_year
         self.lifetime = lifetime
         self.uptime_ratio = 1.
-        self._lang_factor = None
-        self._CAPEX = CAPEX
-        self.lang_factor = lang_factor
         self.annual_maintenance = annual_maintenance
         self.annual_labor = annual_labor
         self.system_add_OPEX = {}.copy() if not system_add_OPEX else system_add_OPEX
         self.depreciation = depreciation
         self.construction_schedule = construction_schedule
+        self.accumulate_interest_during_construction = accumulate_interest_during_construction 
         default_kwargs.update(tea_kwargs)
         for k, v in default_kwargs.items():
             setattr(self, k, v)
+        self._lang_factor = None
+        self._CAPEX = CAPEX
+        self.lang_factor = lang_factor
 
     def __repr__(self):
         return f'<{type(self).__name__}: {self.system.ID}>'
@@ -383,27 +392,27 @@ class TEA(BSTTEA):
 
     @property
     def DPI(self):
-        '''[float] Direct permanent investment, same as `installed_equipment_cost`.'''
+        '''[float] Direct permanent investment, calculated using `self._DPI` as a function of `installed_equipment_cost`.'''
         return self._DPI(self.installed_equipment_cost)
 
     @property
     def TDC(self):
-        '''[float] Total depreciable capital, same as `installed_equipment_cost`.'''
+        '''[float] Total depreciable capital, calculated using `self._TDC` as a function of `self.DPI`.'''
         return self._TDC(self.DPI)
 
     @property
     def FCI(self):
-        '''[float] Fixed capital investment, same as `installed_equipment_cost`.'''
+        '''[float] Fixed capital investment, calculated using `self._FCI` as a function of `self.TDC`.'''
         return self._FCI(self.TDC)
 
     @property
     def TCI(self):
-        '''[float] Total capital investment, same as `installed_equipment_cost`.'''
-        return self.FCI
+        '''[float] Total capital investment, calculated as `self._FCI*(1+self.WC_over_FCI)` (WC for working capital).'''
+        return self.FCI*(1+self.WC_over_FCI)
 
     @property
     def CAPEX(self):
-        '''[float] Capital expenditure, if not provided, is set to be the same as `installed_equipment_cost`.'''
+        '''[float] Capital expenditure, if not provided, is set to be the same as `self.TCI`.'''
         return self.TCI
 
     @property
