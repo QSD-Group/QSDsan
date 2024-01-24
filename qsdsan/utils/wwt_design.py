@@ -22,7 +22,8 @@ __all__ = ('get_SRT',
            'get_power_utility',
            'get_GHG_emissions_sec_treatment',
            'get_GHG_emissions_discharge',
-           'get_GHG_emissions_electricity')
+           'get_GHG_emissions_electricity',
+           'get_GHG_emissions_sludge_disposal')
 
 #%%
     
@@ -424,3 +425,54 @@ def get_GHG_emissions_electricity(system, power_blower, power_pump, CO2_EF=0.668
     CO2_emissions = total_energy_consumed*CO2_EF # in kg-CO2-Eq/day
     
     return CO2_emissions
+
+# r_VSS_TSS, r_BOD_VSS
+
+def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.5, MCF = 0.8, k = 0.185, F=0.5, t=3):
+    '''
+    Parameters
+    ----------
+    sludge : : iterable[:class:`WasteStream`], optional
+        Effluent sludge from the system for which GHG emissions are being calculated. The default is None.
+    DOC_f : float, optional
+        fraction of DOC that can decompose (fraction). The default value is 0.5.
+    MCF : float, optional
+        CH4 correction factor for aerobic decomposition in the year of deposition (fraction). The default is 0.8.
+    k : TYPE, optional
+        Methane generation rate (k). The default is 0.185. (1/year)
+        
+        The decomposition of carbon is assumed to follow first-order kinetics 
+        (with rate constant k), and methane generation is dependent on the amount of remaining decomposable carbon 
+        in the waste. For North America (boreal and temperate climate) the default values for wet and dry climate 
+        are:
+            k (dry climate) = 0.06
+            k (wet climate) = 0.185
+    F : float, optional
+        Fraction of methane in generated landfill gas (volume fraction).  The default is 0.5.
+    t : float, optional
+        The number of years whose cumulative waste generation is being considered for methane emmissions. (years)
+        The default is 3.
+
+    Returns
+    -------
+    CH4_emitted : float
+        The amount of methane emitted during sludge disposal (kg/year).
+
+    '''
+    sludge_flow = np.array([slg.F_vol*24 for slg in sludge]) # in m3/day
+    sludge_COD = np.array([slg.COD for slg in sludge]) # in mg/L
+
+    annual_sludge_mass = 365*np.sum(sludge_flow*sludge_COD/100) # in kg/year
+
+    annual_DDOC = annual_sludge_mass*DOC_f*MCF
+
+    acc_DOC = 0
+    for i in range(t + 1):
+        acc_DOC += annual_DDOC*np.exp(-1*k*t)
+        
+    decomposed_DOC = acc_DOC*(1 - np.exp(-1*k)) # in the last one year
+    CH4_emitted = decomposed_DOC*F*16/12
+
+    return CH4_emitted
+    
+    
