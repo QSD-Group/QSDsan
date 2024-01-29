@@ -14,6 +14,7 @@ for license details.
 
 import numpy as np
 
+
 __all__ = ('get_SRT', 
            'get_oxygen_heterotrophs', 
            'get_oxygen_autotrophs', 
@@ -374,7 +375,8 @@ def get_GHG_emissions_discharge(effluent=None, CH4_EF=0.0075, N2O_EF=0.016):
         
     References
     ----------
-    [1] Chapter - 6, IPCC. (2019). In 2019 Refinement to the 2006 IPCC Guidelines for National Greenhouse Gas Inventories.
+    [1] Chapter - 6, IPCC. (2019). In 2019 Refinement to the 2006 IPCC Guidelines 
+    for National Greenhouse Gas Inventories.
 
     '''
 
@@ -428,7 +430,7 @@ def get_GHG_emissions_electricity(system, power_blower, power_pump, CO2_EF=0.668
 
 # r_VSS_TSS, r_BOD_VSS
 
-def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.5, MCF = 0.8, k = 0.185, F=0.5, t=3):
+def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.5, MCF = 0.8, k = 0.185, F=0.5, pl=30):
     '''
     Parameters
     ----------
@@ -449,30 +451,44 @@ def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.5, MCF = 0.8, k = 0
             k (wet climate) = 0.185
     F : float, optional
         Fraction of methane in generated landfill gas (volume fraction).  The default is 0.5.
-    t : float, optional
-        The number of years whose cumulative waste generation is being considered for methane emmissions. (years)
-        The default is 3.
+    pl : float, optional
+        The project lifetime over which methane emissions would be calculated. (years)
+        The default is 30 years.
 
     Returns
     -------
     CH4_emitted : float
-        The amount of methane emitted during sludge disposal (kg/year).
+        The average amount of methane emitted during sludge disposal (kg/year).
+        
+     References
+     ----------
+     [1] Chapter - 3: Solid Waste Disposal, IPCC. (2019). In 2019 Refinement to
+     the 2006 IPCC Guidelines for National Greenhouse Gas Inventories.
 
     '''
-    sludge_flow = np.array([slg.F_vol*24 for slg in sludge]) # in m3/day
-    sludge_COD = np.array([slg.COD for slg in sludge]) # in mg/L
+    # sludge_flow = np.array([slg.F_vol*24 for slg in sludge]) # in m3/day
+    # sludge_COD = np.array([slg.COD for slg in sludge]) # in mg/L
+    
+    for slg in sludge:
+        DOC_mass_flow = slg.composite("C", flow=True, exclude_gas=True, 
+                      subgroup=None, particle_size=None,
+                      degradability="b", organic=True, volatile=None,
+                      specification=None, unit="kg/day")
 
-    annual_sludge_mass = 365*np.sum(sludge_flow*sludge_COD/100) # in kg/year
+    annual_DOC_mass = 365*np.array(DOC_mass_flow) # in kg/year
 
-    annual_DDOC = annual_sludge_mass*DOC_f*MCF
-
-    acc_DOC = 0
-    for i in range(t + 1):
-        acc_DOC += annual_DDOC*np.exp(-1*k*t)
+    annual_DDOC = annual_DOC_mass*DOC_f*MCF
+    
+    decomposed_DOC = 0
+    
+    # sum of sum of geometric series
+    for t in range(pl + 1):
+        # sum of a geometric series where acc_DOC 
+        acc_DOC = annual_DDOC * (1 - np.exp(-1 * k * t)) / (1 - np.exp(-1 * k)) 
+        # all the acc_DOC at the start of the year is the only one contributing 
+        # to decomposition in that one year
+        decomposed_DOC += acc_DOC*(1 - np.exp(-1*k)) 
         
-    decomposed_DOC = acc_DOC*(1 - np.exp(-1*k)) # in the last one year
     CH4_emitted = decomposed_DOC*F*16/12
 
-    return CH4_emitted
-    
-    
+    return CH4_emitted/pl
