@@ -334,17 +334,17 @@ def get_normalized_energy(system, aeration_power, pumping_power, miscellaneous_p
 
     return normalized_energy_WRRF
 
-def get_GHG_emissions_sec_treatment(system, influent=None, sludge = None,
+def get_GHG_emissions_sec_treatment(system = None, influent=None, effluent = None,
                                     CH4_EF=0.0075, N2O_EF=0.016):
     '''    
     Parameters
     ----------
     system : :class:`biosteam.System`
-        The system for which emissions during secondary treatment are being calculated. 
+        The system for which emissions during secondary treatment are being calculated. The default is None.
     influent : : iterable[:class:`WasteStream`], optional
         Influent wastestreams to the system whose wastewater composition determine the potential for GHG emissions. The default is None.
-    sludge  : : iterable[:class:`WasteStream`], optional
-        The wastestreams which represents the sludge to be disposed. The default is None.
+    effluent  : : iterable[:class:`WasteStream`], optional
+        The wastestreams which represents the effluent from the treatment process. The default is None.
     CH4_EF :  float, optional.
         The emission factor used to calculate methane emissions in secondary treatment. The default is 0.0075 kg CH4/ kg rCOD. [1]
     N2O_EF : float, optional
@@ -370,11 +370,11 @@ def get_GHG_emissions_sec_treatment(system, influent=None, sludge = None,
     influent_COD = np.array([inf.COD for inf in influent]) # in mg/L
     mass_influent_COD = np.sum(influent_flow*influent_COD/1000) # in kg/day
     
-    sludge_flow = np.array([sludge.F_vol*24 for sludge in sludge])
-    sludge_COD =  np.array([sludge.COD for sludge in sludge]) # in mg/L
-    mass_sludge_COD = np.sum(sludge_flow*sludge_COD/1000) # in kg/day
+    effluent_flow = np.array([eff.F_vol*24 for eff in effluent])
+    effluent_COD =  np.array([eff.COD for eff in effluent]) # in mg/L
+    mass_effluent_COD = np.sum(effluent_flow*effluent_COD/1000) # in kg/day
     
-    mass_removed_COD = mass_influent_COD - mass_sludge_COD
+    mass_removed_COD = mass_influent_COD - mass_effluent_COD
     CH4_emitted = CH4_EF*mass_removed_COD
     
     influent_N = np.array([inf.TN for inf in influent]) # in mg/L
