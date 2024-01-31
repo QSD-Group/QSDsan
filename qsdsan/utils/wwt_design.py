@@ -21,10 +21,12 @@ __all__ = ('get_SRT',
            'get_airflow', 
            'get_P_blower',
            'get_power_utility',
+           'get_normalized_energy', 
            'get_GHG_emissions_sec_treatment',
            'get_GHG_emissions_discharge',
            'get_GHG_emissions_electricity',
-           'get_GHG_emissions_sludge_disposal')
+           'get_GHG_emissions_sludge_disposal',
+           'get_CO2_eq_WRRF')
 
 #%%
     
@@ -294,7 +296,7 @@ def get_power_utility(system, active_unit_IDs=None):
 
     Returns
     -------
-    Required power [kW].
+    Power of blower [kW].
     '''
     
     power_consumption = 0
@@ -304,6 +306,33 @@ def get_power_utility(system, active_unit_IDs=None):
             power_consumption += y.power_utility.power
         
     return power_consumption
+
+def get_normalized_energy(system, aeration_power, pumping_power, miscellaneous_power):
+    '''
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system for which normalized energy consumption is being determined.
+    aeration_power : float, optional
+        Power of blower [kW].
+    pumping_power : float, optional
+        Power rquired for sludge pumping and other equipments [kW].
+    miscellaneous_power : float, optional
+        Any other power requirement in the system [kW].
+
+    Returns
+    -------
+    Normalized energy consumption associated with WRRF (kWh/m3). [numpy array] 
+
+    '''
+    
+    normalized_aeration_energy = aeration_power/sum([s.F_vol for s in system.feeds])
+    normalized_pumping_energy = pumping_power/sum([s.F_vol for s in system.feeds])
+    normalized_miscellaneous_energy = miscellaneous_power/sum([s.F_vol for s in system.feeds])
+
+    normalized_energy_WRRF = np.array([normalized_aeration_energy, normalized_pumping_energy, normalized_miscellaneous_energy])
+
+    return normalized_energy_WRRF
 
 def get_GHG_emissions_sec_treatment(system, influent=None, sludge = None,
                                     CH4_EF=0.0075, N2O_EF=0.016):
@@ -404,7 +433,8 @@ def get_GHG_emissions_electricity(system, power_blower, power_pump, CO2_EF=0.668
     power_pump : float
         Power required for pumping and other utilities at treatment facility [kW].
     CO2_EF : float
-        The emission factor used to calculate tier-2 CO2 emissions due to electricity consumption. The default is 0.668 kg-CO2-Eq/kWh. [1]
+        The emission factor used to calculate tier-2 CO2 emissions due to electricity consumption. 
+        The default is 0.668 kg-CO2-Eq/kWh. [1]
         The emission factor is dependent on the region, and is as follows for USA:
             
             {SERC Reliability Corporation (SERC): 0.612 kg-CO2-Eq/kWh
@@ -458,7 +488,7 @@ def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.5, MCF = 0.8, k = 0
     Returns
     -------
     CH4_emitted : float
-        The average amount of methane emitted during sludge disposal (kg/year).
+        The average amount of methane emitted during sludge disposal (kg/day).
         
      References
      ----------
@@ -468,18 +498,21 @@ def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.5, MCF = 0.8, k = 0
     '''
     # sludge_flow = np.array([slg.F_vol*24 for slg in sludge]) # in m3/day
     # sludge_COD = np.array([slg.COD for slg in sludge]) # in mg/L
+    DOC_mass_flow = 0
     
     for slg in sludge:
-        DOC_mass_flow = slg.composite("C", flow=True, exclude_gas=True, 
+        DOC_mass_flow += slg.composite("C", flow=True, exclude_gas=True, 
                       subgroup=None, particle_size=None,
                       degradability="b", organic=True, volatile=None,
                       specification=None, unit="kg/day")
 
-    annual_DOC_mass = 365*np.array(DOC_mass_flow) # in kg/year
+    annual_DOC_mass = 365*DOC_mass_flow # in kg/year
 
     annual_DDOC = annual_DOC_mass*DOC_f*MCF
     
     decomposed_DOC = 0
+    
+    DOC_ARRAY = np.arange(pl + 1)
     
     # sum of sum of geometric series
     for t in range(pl + 1):
@@ -489,6 +522,56 @@ def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.5, MCF = 0.8, k = 0
         # to decomposition in that one year
         decomposed_DOC += acc_DOC*(1 - np.exp(-1*k)) 
         
+        # make annumpy  array from 0 to pl + 1 outside the for loop
+        
+        # replace t with DOC_ARRAY 
+        
     CH4_emitted = decomposed_DOC*F*16/12
+    
+    days_in_year = 365
 
-    return CH4_emitted/pl
+    return CH4_emitted/(pl*days_in_year)
+
+def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity, 
+                     GHG_sludge_disposal, GHG_AD, CH4_CO2eq=29.8, N2O_CO2eq=273):
+    '''
+
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system for which normalized GHG emission is being determined.
+    GHG_treatment : tuple[int], optional
+        The amount of methane and nitrous oxide emitted during secondary treatment (kg/day).
+    GHG_discharge : tuple[int], optional
+        The amount of methane and nitrous oxide emitted during effluent discharge (kg/day).
+    GHG_electricity : float
+        The amount of eq. CO2 emitted due to electrity consumption (kg-CO2-Eq/day).
+    GHG_sludge_disposal : int
+        The average amount of methane emitted during sludge disposal (kg/day).
+    GHG_AD : int
+        The average amount of methane emitted during anaerobic (kg/day).
+    CH4_CO2eq : TYPE, optional
+        DESCRIPTION. The default is 29.8 kg CO2eq/kg CH4 [1].
+    N2O_CO2eq : TYPE, optional
+        DESCRIPTION. The default is 273 kg CO2eq/kg CH4 [1].
+
+    Returns
+    -------
+    Normalized GHG emissions from onsite and offsite operations associated with WRRF (kg CO2 eq./m3). [numpy array] 
+    
+    References
+    ----------
+    [1] IPCC 2021 – 6th Assessment Report Values. 
+
+    '''
+    
+    CO2_eq_treatment = GHG_treatment[0]*CH4_CO2eq + GHG_treatment[1]*N2O_CO2eq 
+    CO2_eq_discharge = GHG_discharge[0]*CH4_CO2eq + GHG_discharge[1]*N2O_CO2eq 
+    CO2_eq_electricity = GHG_electricity
+    CO2_eq_sludge_disposal = GHG_sludge_disposal*CH4_CO2eq
+    CO2_eq_AD = GHG_AD*CH4_CO2eq
+    
+    CO2_eq_WRRF = np.array([CO2_eq_treatment, CO2_eq_AD, CO2_eq_discharge, CO2_eq_sludge_disposal, CO2_eq_electricity])
+    normalized_CO2_eq_WRRF = CO2_eq_WRRF/sum([24*s.F_vol for s in system.feeds])
+    
+    return normalized_CO2_eq_WRRF
