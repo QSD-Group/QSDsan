@@ -127,10 +127,10 @@ copybutton_prompt_is_regexp = True
 
 # -- External mapping -------------------------------------------------------
 intersphinx_mapping = {
-	'biosteam': ('https://biosteam.readthedocs.io', None),
-	'thermosteam': ('https://biosteam.readthedocs.io', None),
-	'BioSTEAM': ('https://biosteam.readthedocs.io', None),
-	'Thermosteam': ('https://biosteam.readthedocs.io', None),
+	'biosteam': ('https://biosteam.readthedocs.io/en/latest/', None),
+	'thermosteam': ('https://biosteam.readthedocs.io/en/latest/', None),
+	'BioSTEAM': ('https://biosteam.readthedocs.io/en/latest/', None),
+	'Thermosteam': ('https://biosteam.readthedocs.io/en/latest/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy', None),
-    'SALib': ('https://salib.readthedocs.io', None),
+    'SALib': ('https://salib.readthedocs.io/en/latest/', None),
 }

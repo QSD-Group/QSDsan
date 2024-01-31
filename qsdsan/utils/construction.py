@@ -5,7 +5,12 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+    
     Yalin Li <mailto.yalin.li@gmail.com>
+    
+    Saumitra Rai <raisaumitra9@gmail.com>
+    
+    Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -520,6 +525,10 @@ pipe_dct = {
 def select_pipe(Q, v):
     '''
     Select pipe based on Q (flow in ft3/s) and velocity (ft/s).
+
+    Note that the velocity is the minimum permissible liquid velocity,
+    which means the pipe diameter will be selected so that the actual velocity
+    will be no less than the provided velocity.
 
     Parameters
     ----------

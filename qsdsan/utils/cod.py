@@ -156,14 +156,25 @@ def cod_test_stoichiometry(atoms, charge=0, MW=None, missing_handling='elemental
 
 
 def electron_acceptor_cod(atoms, charge=0):
+    r'''
+    .. math::
+        
+        NO_2^- + 3e^- + 4H^+ -> \frac{1}{2}N_2 + 2H_2O
+        
+        NO_3^- + 5e^- + 6H^+ -> \frac{1}{2}N_2 + 3H_2O
+        
+        O_2 + 4e^- + 4H^+ -> 2H_2O
+    
+    '''
     if atoms == {'O':2}:
         return -1
     elif atoms == {'N':2}:
         return 0
     elif atoms == {'N':1, 'O':2} and charge == -1:
-        return -1.5
+        return -3/4
     elif atoms == {'N':1, 'O':3} and charge == -1:
-        return -2
+        return -5/4
+
 
 
 def get_cod_stoichiometry(component, aqueous=False, **replace):
