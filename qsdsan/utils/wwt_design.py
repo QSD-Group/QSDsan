@@ -510,24 +510,24 @@ def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.5, MCF = 0.8, k = 0
 
     annual_DDOC = annual_DOC_mass*DOC_f*MCF
     
-    decomposed_DOC = 0
+    # decomposed_DOC = 0
     
-    DOC_ARRAY = np.arange(pl + 1)
-    
-    # sum of sum of geometric series
-    for t in range(pl + 1):
-        # sum of a geometric series where acc_DOC 
-        acc_DOC = annual_DDOC * (1 - np.exp(-1 * k * t)) / (1 - np.exp(-1 * k)) 
-        # all the acc_DOC at the start of the year is the only one contributing 
-        # to decomposition in that one year
-        decomposed_DOC += acc_DOC*(1 - np.exp(-1*k)) 
+    # # sum of sum of geometric series
+    # for t in range(pl + 1):
+    #     # sum of a geometric series where acc_DOC 
+    #     acc_DOC = annual_DDOC * (1 - np.exp(-1 * k * t)) / (1 - np.exp(-1 * k)) 
+    #     # all the acc_DOC at the start of the year is the only one contributing 
+    #     # to decomposition in that one year
+    #     decomposed_DOC += acc_DOC*(1 - np.exp(-1*k)) 
         
-        # make annumpy  array from 0 to pl + 1 outside the for loop
+    #     # make annumpy  array from 0 to pl + 1 outside the for loop
         
-        # replace t with DOC_ARRAY 
+    #     # replace t with DOC_ARRAY 
         
+    t_vary = np.arange(pl + 1)
+    acc_DOC = annual_DDOC * (1 - np.exp(-1 * k * t_vary))
+    decomposed_DOC = np.sum(acc_DOC)
     CH4_emitted = decomposed_DOC*F*16/12
-    
     days_in_year = 365
 
     return CH4_emitted/(pl*days_in_year)
