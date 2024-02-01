@@ -309,7 +309,7 @@ def get_power_utility(system, active_unit_IDs=None):
         
     return power_consumption
 
-def get_cost_sludge_disposal(system, sludge, unit_weight_disposal_cost = 400):
+def get_cost_sludge_disposal(sludge, unit_weight_disposal_cost = 400):
     '''
     Parameters
     ----------
@@ -366,7 +366,7 @@ def get_normalized_energy(system, aeration_power, pumping_power, miscellaneous_p
 
     return normalized_energy_WRRF
 
-def get_daily_operational_cost(system, aeration_power, pumping_power, miscellaneous_power, \
+def get_daily_operational_cost(aeration_power, pumping_power, miscellaneous_power, \
                                     sludge_disposal_cost, unit_electricity_cost = 0.161):
     '''
     Parameters
