@@ -576,13 +576,13 @@ class HydrothermalLiquefaction(Reactor):
         offgas.P = self.offgas_pre
         
         for stream in self.outs : stream.T = self.heat_exchanger.T
-        
+    
     @property
     def biocrude_yield(self):
         return self.protein_2_biocrude*self.afdw_protein_ratio +\
                self.lipid_2_biocrude*self.afdw_lipid_ratio +\
                self.carbo_2_biocrude*self.afdw_carbo_ratio
-
+    
     @property
     def aqueous_yield(self):
         return 0.481*self.afdw_protein_ratio + 0.154*self.afdw_lipid_ratio
@@ -594,7 +594,7 @@ class HydrothermalLiquefaction(Reactor):
     @property
     def gas_yield(self):
         return self.protein_2_gas*self.afdw_protein_ratio + self.carbo_2_gas*self.afdw_carbo_ratio
-
+    
     @property
     def biocrude_C_ratio(self):
         return (self.WWTP.AOSc*self.biocrude_C_slope + self.biocrude_C_intercept)/100 # [2]
@@ -602,7 +602,7 @@ class HydrothermalLiquefaction(Reactor):
     @property
     def biocrude_H_ratio(self):
         return (self.WWTP.AOSc*self.biocrude_H_slope + self.biocrude_H_intercept)/100 # [2]
-
+    
     @property
     def biocrude_N_ratio(self):
         return self.biocrude_N_slope*self.WWTP.sludge_dw_protein # [2]
@@ -610,18 +610,17 @@ class HydrothermalLiquefaction(Reactor):
     @property
     def biocrude_C(self):
         return min(self.outs[2].F_mass*self.biocrude_C_ratio, self.WWTP.sludge_C)
-
-
+    
     @property
     def HTLaqueous_C(self):
         return min(self.outs[1].F_vol*1000*self.HTLaqueous_C_slope*\
                    self.WWTP.sludge_dw_protein*100/1000000/self.TOC_TC,
                    self.WWTP.sludge_C - self.biocrude_C)
-
+    
     @property
     def biocrude_H(self):
         return self.outs[2].F_mass*self.biocrude_H_ratio
-
+    
     @property
     def biocrude_N(self):
         return min(self.outs[2].F_mass*self.biocrude_N_ratio, self.WWTP.sludge_N)
@@ -630,40 +629,40 @@ class HydrothermalLiquefaction(Reactor):
     def biocrude_HHV(self):
         return 30.74 - 8.52*self.WWTP.AOSc +\
                0.024*self.WWTP.sludge_dw_protein # [2]
-               
+    
     @property
     def energy_recovery(self):
         return self.biocrude_HHV*self.outs[2].imass['Biocrude']/\
                (self.WWTP.outs[0].F_mass -\
                self.WWTP.outs[0].imass['H2O'])/self.WWTP.sludge_HHV # [2]
-        
+    
     @property
     def offgas_C(self):
         carbon = sum(self.outs[3].imass[self.gas_composition]*
                      [cmp.i_C for cmp in self.components[self.gas_composition]])
         return min(carbon, self.WWTP.sludge_C - self.biocrude_C - self.HTLaqueous_C)
-        
+    
     @property
     def hydrochar_C_ratio(self):
         return min(self.hydrochar_C_slope*self.WWTP.sludge_dw_carbo, 0.65) # [2]
-
+    
     @property
     def hydrochar_C(self):
         return min(self.outs[0].F_mass*self.hydrochar_C_ratio, self.WWTP.sludge_C -\
                    self.biocrude_C - self.HTLaqueous_C - self.offgas_C)
-
+    
     @property
     def hydrochar_P(self):
         return min(self.WWTP.sludge_P*self.hydrochar_P_recovery_ratio, self.outs[0].F_mass)
-
+    
     @property
     def HTLaqueous_N(self):
         return self.WWTP.sludge_N - self.biocrude_N
-        
+    
     @property
     def HTLaqueous_P(self):
         return self.WWTP.sludge_P*(1 - self.hydrochar_P_recovery_ratio)
-
+    
     def _design(self):
         
         Design = self.design_results
