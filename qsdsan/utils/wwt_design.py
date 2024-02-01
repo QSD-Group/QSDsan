@@ -21,7 +21,9 @@ __all__ = ('get_SRT',
            'get_airflow', 
            'get_P_blower',
            'get_power_utility',
+           'get_cost_sludge_disposal',
            'get_normalized_energy', 
+           'get_daily_operational_cost',
            'get_GHG_emissions_sec_treatment',
            'get_GHG_emissions_discharge',
            'get_GHG_emissions_electricity',
@@ -307,6 +309,35 @@ def get_power_utility(system, active_unit_IDs=None):
         
     return power_consumption
 
+def get_cost_sludge_disposal(system, sludge, unit_weight_disposal_cost = 400):
+    '''
+    Parameters
+    ----------
+    sludge : : iterable[:class:`WasteStream`], optional
+        Effluent sludge from the system for which treatment and disposal costs are being calculated. The default is None.
+    unit_weight_disposal_cost : float
+        The sludge treatment and disposal cost per unit weight (USD/ton).
+        The default is 400 USD/ton [1]. 
+        Feasible range for this value lies between 300-800 USD/ton [1]. 
+
+    Returns
+    -------
+    Cost of sludge treatment and disposal (USD/day).
+    
+    References
+    -------
+    [1] Seiple, T. E., Skaggs, R. L., Fillmore, L., & Coleman, A. M. (2020). Municipal 
+    wastewater sludge as a renewable, cost-effective feedstock for transportation 
+    biofuels using hydrothermal liquefaction. Journal of Environmental Management, 270, 110852. 
+    https://doi.org/10.1016/j.jenvman.2020.110852 
+
+    '''
+    
+    sludge_prod = np.array([sludge.composite('solids', True, particle_size='x', unit='ton/d') \
+                            for sludge in sludge]) # in ton/day
+    cost_sludge_disposal = np.sum(sludge_prod)*unit_weight_disposal_cost   #in USD/day
+    return cost_sludge_disposal
+
 def get_normalized_energy(system, aeration_power, pumping_power, miscellaneous_power):
     '''
     Parameters
@@ -330,10 +361,45 @@ def get_normalized_energy(system, aeration_power, pumping_power, miscellaneous_p
     normalized_pumping_energy = pumping_power/sum([s.F_vol for s in system.feeds])
     normalized_miscellaneous_energy = miscellaneous_power/sum([s.F_vol for s in system.feeds])
 
-    normalized_energy_WRRF = np.array([normalized_aeration_energy, normalized_pumping_energy, normalized_miscellaneous_energy])
+    normalized_energy_WRRF = np.array([normalized_aeration_energy, normalized_pumping_energy, \
+                                       normalized_miscellaneous_energy])
 
     return normalized_energy_WRRF
 
+def get_daily_operational_cost(system, aeration_power, pumping_power, miscellaneous_power, \
+                                    sludge_disposal_cost, unit_electricity_cost = 0.161):
+    '''
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system for which normalized energy consumption is being determined.
+    aeration_power : float, optional
+        Power of blower [kW].
+    pumping_power : float, optional
+        Power rquired for sludge pumping and other equipments [kW].
+    miscellaneous_power : float, optional
+        Any other power requirement in the system [kW].
+    sludge_disposal_cost : float
+        Cost of sludge treatment and disposal (USD/day).
+    unit_electricity_cost : float
+        Unit cost of electricity. Default value is taken as $0.161/kWh [1]. 
+
+    Returns
+    -------
+    Normalized operational cost associated with WRRF (USD/day). [numpy array]
+    
+    [1] https://www.bls.gov/regions/midwest/data/averageenergyprices_selectedareas_table.htm
+    
+    '''
+    aeration_cost = aeration_power*24*unit_electricity_cost # in (kWh/day)*(USD/kWh) = USD/day
+    pumping_cost = pumping_power*24*unit_electricity_cost # in (kWh/day)*(USD/kWh) = USD/day
+    sludge_disposal_costs = sludge_disposal_cost
+    miscellaneous_cost = miscellaneous_power*24*unit_electricity_cost # in (kWh/day)*(USD/kWh) = USD/day
+    
+    operational_costs_WRRF = np.array([aeration_cost, pumping_cost, sludge_disposal_costs, miscellaneous_cost])                        #5
+    
+    return operational_costs_WRRF
+    
 def get_GHG_emissions_sec_treatment(system = None, influent=None, effluent = None,
                                     CH4_EF=0.0075, N2O_EF=0.016):
     '''    
