@@ -565,13 +565,29 @@ def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity,
 
     '''
     
-    CO2_eq_treatment = GHG_treatment[0]*CH4_CO2eq + GHG_treatment[1]*N2O_CO2eq 
-    CO2_eq_discharge = GHG_discharge[0]*CH4_CO2eq + GHG_discharge[1]*N2O_CO2eq 
-    CO2_eq_electricity = GHG_electricity
-    CO2_eq_sludge_disposal = GHG_sludge_disposal*CH4_CO2eq
-    CO2_eq_AD = GHG_AD*CH4_CO2eq
+    # source 1 (on-site)
+    CH4_CO2_eq_treatment = GHG_treatment[0]*CH4_CO2eq
+    N2O_CO2_eq_treatment = GHG_treatment[1]*N2O_CO2eq 
     
-    CO2_eq_WRRF = np.array([CO2_eq_treatment, CO2_eq_AD, CO2_eq_discharge, CO2_eq_sludge_disposal, CO2_eq_electricity])
+    # source 2 (on-site)
+    CH4_CO2_eq_AD = GHG_AD*CH4_CO2eq
+    
+    # source 3 (off-site)
+    CH4_CO2_eq_discharge = GHG_discharge[0]*CH4_CO2eq
+    N2O_CO2_eq_discharge = GHG_discharge[1]*N2O_CO2eq 
+    
+    # source 4 (off-site)
+    CH4_CO2_eq_sludge_disposal = GHG_sludge_disposal*CH4_CO2eq
+    
+    # source 5 (off-site)
+    CO2_eq_electricity = GHG_electricity*1
+    
+    CO2_eq_WRRF = np.array([CH4_CO2_eq_treatment, N2O_CO2_eq_treatment, #1
+                            CH4_CO2_eq_AD,                              #2
+                            CH4_CO2_eq_discharge, N2O_CO2_eq_discharge, #3
+                            CH4_CO2_eq_sludge_disposal,                 #4
+                            CO2_eq_electricity])                        #5
+    
     normalized_CO2_eq_WRRF = CO2_eq_WRRF/sum([24*s.F_vol for s in system.feeds])
     
     return normalized_CO2_eq_WRRF
