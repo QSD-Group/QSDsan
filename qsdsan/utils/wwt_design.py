@@ -487,7 +487,7 @@ def get_GHG_emissions_discharge(effluent=None, CH4_EF=0.0075, N2O_EF=0.016):
     
     return CH4_emitted, N2O_emitted
     
-def get_GHG_emissions_electricity(system, power_blower, power_pump, CO2_EF=0.668):
+def get_GHG_emissions_electricity(system, power_blower, power_pump, CO2_EF=0.675):
     '''
     Parameters
     ----------
@@ -499,17 +499,20 @@ def get_GHG_emissions_electricity(system, power_blower, power_pump, CO2_EF=0.668
         Power required for pumping and other utilities at treatment facility [kW].
     CO2_EF : float
         The emission factor used to calculate tier-2 CO2 emissions due to electricity consumption. 
-        The default is 0.668 kg-CO2-Eq/kWh. [1]
+        The default is 0.675 kg-CO2-Eq/kWh. [1]
         The emission factor is dependent on the region, and is as follows for USA:
             
-            {SERC Reliability Corporation (SERC): 0.612 kg-CO2-Eq/kWh
-            ReliabilityFirst (RFC): 0.618 kg-CO2-Eq/kWh
-            Western Electricity Coordinating Council (WECC): 0.428 kg-CO2-Eq/kWh
-            Texas Reliability Entity (TRE): 0.565 kg-CO2-Eq/kWh
-            Southwest Power Pool (SPP): 0.724 kg-CO2-Eq/kWh
-            Midwest Reliability Organization (MRO): 0.668 kg-CO2-Eq/kWh
+            {SERC Reliability Corporation (SERC): 0.618 kg-CO2-Eq/kWh
+            ReliabilityFirst (RFC): 0.619 kg-CO2-Eq/kWh
+            Western Electricity Coordinating Council (WECC): 0.436 kg-CO2-Eq/kWh
+            Texas Reliability Entity (TRE): 0.574 kg-CO2-Eq/kWh
+            Southwest Power Pool (SPP): 0.733 kg-CO2-Eq/kWh
+            Midwest Reliability Organization (MRO): 0.675 kg-CO2-Eq/kWh
             Florida Reliability Coordinating Council (FRCC): 0.531 kg-CO2-Eq/kWh
-            Northeast Power Coordinating Council (NPCC): 0.242 kg-CO2-Eq/kWh}
+            Northeast Power Coordinating Council (NPCC): 0.244 kg-CO2-Eq/kWh}
+            (HICC): 0.814 kg-CO2-Eq/kWh}
+            (ASCC): 0.599 kg-CO2-Eq/kWh}
+            
             
     Returns
     -------
