@@ -314,11 +314,12 @@ def get_cost_sludge_disposal(sludge, unit_weight_disposal_cost = 400):
     Parameters
     ----------
     sludge : : iterable[:class:`WasteStream`], optional
-        Effluent sludge from the system for which treatment and disposal costs are being calculated. The default is None.
+        Effluent sludge from the system for which treatment and disposal costs are being calculated.
+        The default is None.
     unit_weight_disposal_cost : float
         The sludge treatment and disposal cost per unit weight (USD/ton).
-        The default is 400 USD/ton [1]. 
-        Feasible range for this value lies between 300-800 USD/ton [1]. 
+        The default is 400 USD/ton. 
+        Feasible range for this value lies between 110-890 USD/ton [1]. 
 
     Returns
     -------
@@ -326,10 +327,10 @@ def get_cost_sludge_disposal(sludge, unit_weight_disposal_cost = 400):
     
     References
     -------
-    [1] Seiple, T. E., Skaggs, R. L., Fillmore, L., & Coleman, A. M. (2020). Municipal 
-    wastewater sludge as a renewable, cost-effective feedstock for transportation 
-    biofuels using hydrothermal liquefaction. Journal of Environmental Management, 270, 110852. 
-    https://doi.org/10.1016/j.jenvman.2020.110852 
+    [1] Feng, J., Li, Y., Strathmann, T. J., & Guest, J. S. (2024b). 
+    Characterizing the opportunity space for sustainable hydrothermal valorization 
+    of Wet Organic Wastes. Environmental Science &amp; Technology. 
+    https://doi.org/10.1021/acs.est.3c07394 
 
     '''
     
@@ -371,8 +372,6 @@ def get_daily_operational_cost(aeration_power, pumping_power, miscellaneous_powe
     '''
     Parameters
     ----------
-    system : :class:`biosteam.System`
-        The system for which normalized energy consumption is being determined.
     aeration_power : float, optional
         Power of blower [kW].
     pumping_power : float, optional
