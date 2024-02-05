@@ -318,8 +318,13 @@ def get_cost_sludge_disposal(sludge, unit_weight_disposal_cost = 400):
         The default is None.
     unit_weight_disposal_cost : float
         The sludge treatment and disposal cost per unit weight (USD/ton).
-        The default is 400 USD/ton. 
-        Feasible range for this value lies between 110-890 USD/ton [1]. 
+        Feasible range for this value lies between 110-880 USD/ton [1]. 
+        
+    Land application: 330 - 880 USD/ton. [2]
+    Landfill: 110 - 715 USD/ton. [2]
+    Incineration: 330 - 550 USD/ton. [2]
+    
+    The default is 400 USD/ton, which is the close to average of lanfill. 
 
     Returns
     -------
@@ -329,8 +334,12 @@ def get_cost_sludge_disposal(sludge, unit_weight_disposal_cost = 400):
     -------
     [1] Feng, J., Li, Y., Strathmann, T. J., & Guest, J. S. (2024b). 
     Characterizing the opportunity space for sustainable hydrothermal valorization 
-    of Wet Organic Wastes. Environmental Science &amp; Technology. 
+    of Wet Organic Wastes. Environmental Science &; Technology. 
     https://doi.org/10.1021/acs.est.3c07394 
+    
+    [2] Peccia, J., & Westerhoff, P. (2015). We should expect more out of our sewage 
+    sludge. Environmental Science &amp; Technology, 49(14), 8271–8276. 
+    https://doi.org/10.1021/acs.est.5b01931 
 
     '''
     
