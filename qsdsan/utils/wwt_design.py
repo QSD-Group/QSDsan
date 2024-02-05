@@ -338,7 +338,7 @@ def get_cost_sludge_disposal(sludge, unit_weight_disposal_cost = 400):
     https://doi.org/10.1021/acs.est.3c07394 
     
     [2] Peccia, J., & Westerhoff, P. (2015). We should expect more out of our sewage 
-    sludge. Environmental Science &amp; Technology, 49(14), 8271–8276. 
+    sludge. Environmental Science & Technology, 49(14), 8271–8276. 
     https://doi.org/10.1021/acs.est.5b01931 
 
     '''
@@ -602,12 +602,16 @@ def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.5, MCF = 0.8, k = 0
     #     # replace t with DOC_ARRAY 
         
     t_vary = np.arange(pl + 1)
-    acc_DOC = annual_DDOC * (1 - np.exp(-1 * k * t_vary))
-    decomposed_DOC = np.sum(acc_DOC)
-    CH4_emitted = decomposed_DOC*F*16/12
+    decomposed_DOC = annual_DDOC * (1 - np.exp(-1 * k * t_vary))
+    total_decomposed_DOC = np.sum(decomposed_DOC)
+    CH4_emitted_during_pl = total_decomposed_DOC*F*16/12
+    
+    accumulated_DOC_at_pl = annual_DDOC* (1 - np.exp(-1 * k * pl)) / (1 - np.exp(-1 * k)) 
+    CH4_emitted_after_pl = accumulated_DOC_at_pl*F*16/12
+    
     days_in_year = 365
 
-    return CH4_emitted/(pl*days_in_year)
+    return CH4_emitted_during_pl/(pl*days_in_year), CH4_emitted_after_pl/(pl*days_in_year)
 
 def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity, 
                      GHG_sludge_disposal, GHG_AD, CH4_CO2eq=29.8, N2O_CO2eq=273):
@@ -654,7 +658,8 @@ def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity,
     N2O_CO2_eq_discharge = GHG_discharge[1]*N2O_CO2eq 
     
     # source 4 (off-site)
-    CH4_CO2_eq_sludge_disposal = GHG_sludge_disposal*CH4_CO2eq
+    CH4_CO2_eq_sludge_disposal_pl = GHG_sludge_disposal[0]*CH4_CO2eq
+    CH4_CO2_eq_sludge_disposal_after_pl = GHG_sludge_disposal[1]*CH4_CO2eq
     
     # source 5 (off-site)
     CO2_eq_electricity = GHG_electricity*1
@@ -662,7 +667,8 @@ def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity,
     CO2_eq_WRRF = np.array([CH4_CO2_eq_treatment, N2O_CO2_eq_treatment, #1
                             CH4_CO2_eq_AD,                              #2
                             CH4_CO2_eq_discharge, N2O_CO2_eq_discharge, #3
-                            CH4_CO2_eq_sludge_disposal,                 #4
+                            CH4_CO2_eq_sludge_disposal_pl,              #4
+                            CH4_CO2_eq_sludge_disposal_after_pl,        #4
                             CO2_eq_electricity])                        #5
     
     normalized_CO2_eq_WRRF = CO2_eq_WRRF/sum([24*s.F_vol for s in system.feeds])
