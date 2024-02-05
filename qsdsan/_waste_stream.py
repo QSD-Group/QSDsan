@@ -633,7 +633,7 @@ class WasteStream(SanStream):
         if specification:
             try:
                 specified_IDs = set(_get(all_cmps, specification))
-            except AttributeError: # no pre-defined groups
+            except AttributeError: # no predefined groups
                 try:
                     specified_IDs = _specific_groups[specification]
                 except KeyError: # specification not in the default ones
@@ -1073,7 +1073,7 @@ class WasteStream(SanStream):
         return VSS
 
     def get_ISS(self):
-        '''[float] Inorganic/involatile suspended solids, in mg/L.'''
+        '''[float] Inorganic/non-volatile suspended solids, in mg/L.'''
         return self.composite('solids', particle_size='x', volatile=False)
 
 
@@ -1219,7 +1219,11 @@ class WasteStream(SanStream):
         self._scope = s
 
     def _init_state(self):
-        self.state = np.append(self.conc.astype('float64'), self.get_total_flow('m3/d'))
+        if self.phase == 'l':
+            self.state = np.append(self.conc.astype('float64'), self.get_total_flow('m3/d'))
+        else:
+            Q = self.F_vol # m3/hr
+            self.state = np.append(self.mass.astype('float64')/Q*1e3, Q*24)
         self.dstate = np.zeros_like(self.state)
 
     def _state2flows(self):
