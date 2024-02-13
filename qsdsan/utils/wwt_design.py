@@ -345,7 +345,9 @@ def get_cost_sludge_disposal(sludge, unit_weight_disposal_cost = 400):
     
     sludge_prod = np.array([sludge.composite('solids', True, particle_size='x', unit='ton/d') \
                             for sludge in sludge]) # in ton/day
+        
     cost_sludge_disposal = np.sum(sludge_prod)*unit_weight_disposal_cost   #in USD/day
+    
     return cost_sludge_disposal
 
 def get_normalized_energy(system, aeration_power, pumping_power, miscellaneous_power):
@@ -601,17 +603,19 @@ def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.5, MCF = 0.8, k = 0
         
     #     # replace t with DOC_ARRAY 
         
-    t_vary = np.arange(pl + 1)
+    t_vary = np.arange(pl)
     decomposed_DOC = annual_DDOC * (1 - np.exp(-1 * k * t_vary))
     total_decomposed_DOC = np.sum(decomposed_DOC)
     CH4_emitted_during_pl = total_decomposed_DOC*F*16/12
     
-    accumulated_DOC_at_pl = annual_DDOC* (1 - np.exp(-1 * k * pl)) / (1 - np.exp(-1 * k)) 
+    accumulated_DOC_at_pl = annual_DDOC* (1 - np.exp(-1 * k * (pl-1))) / (1 - np.exp(-1 * k)) 
     CH4_emitted_after_pl = accumulated_DOC_at_pl*F*16/12
+    
+    total_CH4 = annual_DDOC*(pl)*F*16/12
     
     days_in_year = 365
 
-    return CH4_emitted_during_pl/(pl*days_in_year), CH4_emitted_after_pl/(pl*days_in_year)
+    return CH4_emitted_during_pl/(pl*days_in_year), CH4_emitted_after_pl/(pl*days_in_year), total_CH4/(pl*days_in_year)
 
 def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity, 
                      GHG_sludge_disposal, GHG_AD, CH4_CO2eq=29.8, N2O_CO2eq=273):
