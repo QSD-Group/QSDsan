@@ -1204,6 +1204,3 @@ class Incinerator(SanUnit):
             _update_state()
             _update_dstate()
         self._AE = yt
-        
-        
-        
