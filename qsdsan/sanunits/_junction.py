@@ -394,6 +394,10 @@ class ADMtoASM(ADMjunction):
     # Should be constants
     cod_vfa = np.array([64, 112, 160, 208])
     
+    # whether to conserve the nitrogen split between soluble and particulate components
+    conserve_particulate_N = False
+    
+    
     def isbalanced(self, lhs, rhs_vals, rhs_i):
         rhs = sum(rhs_vals*rhs_i)
         error = rhs - lhs
@@ -473,6 +477,7 @@ class ADMtoASM(ADMjunction):
         alpha_IC = self.alpha_IC
         alpha_vfa = self.alpha_vfa
         f_corr = self.balance_cod_tkn
+        conserve_particulate_N = self.conserve_particulate_N
 
         def adm2asm(adm_vals):    
             S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2, S_ch4, S_IC, S_IN, S_I, \
@@ -497,20 +502,33 @@ class ADMtoASM(ADMjunction):
                 X_P = xp_cod
                 bio_n -= xp_ndm
             X_S = bio_cod - X_P
-            xs_ndm = X_S*X_S_i_N
-            if xs_ndm <= bio_n:
-                X_ND = bio_n - xs_ndm
-                bio_n = 0
-            elif xs_ndm <= bio_n + S_IN:
-                X_ND = 0
-                S_IN -= (xs_ndm - bio_n)
-                bio_n = 0
-            else:
-                if isclose(xs_ndm,  bio_n + S_IN, rel_tol=rtol, abs_tol=atol):
-                    X_ND = S_IN = bio_n = 0
+            if conserve_particulate_N:
+                xs_ndm = X_S*X_S_i_N
+                if xs_ndm <= bio_n:
+                    X_ND = bio_n - xs_ndm
+                    bio_n = 0
+                elif xs_ndm <= bio_n + S_IN:
+                    X_ND = 0
+                    S_IN -= (xs_ndm - bio_n)
+                    bio_n = 0
                 else:
-                    raise RuntimeError('Not enough nitrogen (S_IN + biomass) to map '
-                                       'all biomass COD into X_P and X_S')
+                    if isclose(xs_ndm,  bio_n + S_IN, rel_tol=rtol, abs_tol=atol):
+                        X_ND = S_IN = bio_n = 0
+                    else:
+                        raise RuntimeError('Not enough nitrogen (S_IN + biomass) to map '
+                                           'all biomass COD into X_P and X_S')
+            else:
+                xs_ndm = X_S*X_c_i_N  # requires X_S.i_N = 0
+                if xs_ndm <= bio_n + S_IN:
+                    X_ND = xs_ndm
+                    S_IN += bio_n - X_ND
+                    bio_n = 0
+                else:
+                    if isclose(xs_ndm,  bio_n + S_IN, rel_tol=rtol, abs_tol=atol):
+                        X_ND = S_IN = bio_n = 0
+                    else:
+                        raise RuntimeError('Not enough nitrogen (S_IN + biomass) to map '
+                                           'all biomass COD into X_P and X_S')
             
             # Step 1b: convert particulate substrates into X_S + X_ND
             xsub_cod = X_c + X_ch + X_pr + X_li
