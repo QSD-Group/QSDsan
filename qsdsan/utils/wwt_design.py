@@ -30,6 +30,7 @@ __all__ = ('get_SRT',
            'get_GHG_emissions_sludge_disposal',
            'get_CO2_eq_WRRF')
 
+
 #%%
     
 def get_SRT(system, biomass_IDs, wastage=None, active_unit_IDs=None):
@@ -320,11 +321,11 @@ def get_cost_sludge_disposal(sludge, unit_weight_disposal_cost = 400):
         The sludge treatment and disposal cost per unit weight (USD/ton).
         Feasible range for this value lies between 110-880 USD/ton [1]. 
         
-    Land application: 330 - 880 USD/ton. [2]
-    Landfill: 110 - 715 USD/ton. [2]
-    Incineration: 330 - 550 USD/ton. [2]
+    Land application: 300 - 800 USD/US ton. [2]
+    Landfill: 100 - 650 USD/US ton. [2]
+    Incineration: 300 - 500 USD/US ton. [2]
     
-    The default is 400 USD/ton, which is the close to average of lanfill. 
+    The default is 375 USD/US ton, which is the close to average of lanfill. 
 
     Returns
     -------
