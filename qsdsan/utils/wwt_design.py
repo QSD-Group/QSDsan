@@ -24,11 +24,13 @@ __all__ = ('get_SRT',
            'get_cost_sludge_disposal',
            'get_normalized_energy', 
            'get_daily_operational_cost',
+           'get_total_operational_cost',
            'get_GHG_emissions_sec_treatment',
            'get_GHG_emissions_discharge',
            'get_GHG_emissions_electricity',
            'get_GHG_emissions_sludge_disposal',
-           'get_CO2_eq_WRRF')
+           'get_CO2_eq_WRRF',
+           'get_total_CO2_eq')
 
 
 #%%
@@ -235,7 +237,6 @@ def get_airflow(oxygen_heterotrophs, oxygen_autotrophs, oxygen_transfer_efficien
     
     return Q_air
 
-
 def get_P_blower(q_air, T=20, p_atm=101.325, P_inlet_loss=1, 
                  P_diffuser_loss=7, h_submergance=5.18, efficiency=0.7,
                  K=0.283):
@@ -299,7 +300,7 @@ def get_power_utility(system, active_unit_IDs=None):
 
     Returns
     -------
-    Power of blower [kW].
+    Cumulative power of sludge pumps [kW].
     '''
     
     power_consumption = 0
@@ -310,7 +311,7 @@ def get_power_utility(system, active_unit_IDs=None):
         
     return power_consumption
 
-def get_cost_sludge_disposal(sludge, unit_weight_disposal_cost = 400):
+def get_cost_sludge_disposal(sludge, unit_weight_disposal_cost = 375):
     '''
     Parameters
     ----------
@@ -319,7 +320,7 @@ def get_cost_sludge_disposal(sludge, unit_weight_disposal_cost = 400):
         The default is None.
     unit_weight_disposal_cost : float
         The sludge treatment and disposal cost per unit weight (USD/ton).
-        Feasible range for this value lies between 110-880 USD/ton [1]. 
+        Feasible range for this value lies between 100-800 USD/ton [1]. 
         
     Land application: 300 - 800 USD/US ton. [2]
     Landfill: 100 - 650 USD/US ton. [2]
@@ -410,7 +411,112 @@ def get_daily_operational_cost(aeration_power, pumping_power, miscellaneous_powe
     operational_costs_WRRF = np.array([aeration_cost, pumping_cost, sludge_disposal_costs, miscellaneous_cost])                        #5
     
     return operational_costs_WRRF
+
+def get_total_operational_cost(q_air, # aeration (blower) power 
+                                     sludge,  # sludge disposal costs 
+                                     system, active_unit_IDs=None,  # sludge pumping power 
+                                     T=20, p_atm=101.325, P_inlet_loss=1, P_diffuser_loss=7, 
+                                     h_submergance=5.18, efficiency=0.7, K=0.283, # aeration (blower) power 
+                                     miscellaneous_power = 0, 
+                                     unit_weight_disposal_cost = 375, # sludge disposal costs 
+                                     unit_electricity_cost = 0.161): 
+    '''
+    Parameters
+    ----------
     
+    q_air : float
+        Air volumetric flow rate [m3/min].
+    T : float
+        Air temperature [degree Celsius].
+    p_atm : float
+        Atmostpheric pressure [kPa]
+    P_inlet_loss : float
+        Head loss at inlet [kPa]. The default is 1 kPa. 
+    P_diffuser_loss : float
+        Head loss due to piping and diffuser [kPa]. The default is 7 kPa. 
+    h_submergance : float
+        Diffuser submergance depth in m. The default is 17 feet (5.18 m)
+    efficiency : float
+        Blower efficiency. Default is 0.7. 
+    K : float, optional
+        Equal to (kappa - 1)/kappa, where kappa is the adiabatic exponent of air.
+        Default is 0.283, equivalent to kappa = 1.3947.  
+        
+    ------------------------------------------------------------------------------ 
+    
+    system : :class:`biosteam.System`
+        The system whose power will be calculated.
+    active_unit_IDs : tuple[str], optional
+        IDs of all units whose power needs to be accounted for. The default is None.
+        
+    ------------------------------------------------------------------------------ 
+    
+    sludge : : iterable[:class:`WasteStream`], optional
+        Effluent sludge from the system for which treatment and disposal costs are being calculated.
+        The default is None.
+    unit_weight_disposal_cost : float
+        The sludge treatment and disposal cost per unit weight (USD/ton).
+        Feasible range for this value lies between 100-800 USD/ton [1]. 
+        
+    Land application: 300 - 800 USD/US ton. [2]
+    Landfill: 100 - 650 USD/US ton. [2]
+    Incineration: 300 - 500 USD/US ton. [2]
+    
+    The default is 375 USD/US ton, which is the close to average of lanfill. 
+    
+    ------------------------------------------------------------------------------ 
+        
+    miscellaneous_power : float, optional
+        Any other power requirement in the system [kW].
+        
+    unit_electricity_cost : float
+        Unit cost of electricity. Default value is taken as $0.161/kWh [1]. 
+
+    Returns
+    -------
+    Normalized operational cost associated with WRRF (USD/day). [int]
+    
+    '''
+    
+    T += 273.15
+    air_molar_vol = 22.4e-3 * (T/273.15)/(p_atm/101.325)   # m3/mol
+    R = 8.31446261815324 # J/mol/K, universal gas constant
+    
+    p_in = p_atm - P_inlet_loss
+    p_out = p_atm + 9.81*h_submergance + P_diffuser_loss
+    
+    # Q_air = q_air*(24*60) # m3/min to m3/day
+    # P_blower = 1.4161e-5*(T + 273.15)*Q_air*((p_out/p_in)**0.283 - 1)/efficiency
+    # return P_blower
+    
+    Q_air = q_air/60 # m3/min to m3/s
+    WP = (Q_air / air_molar_vol) * R * T / K * ((p_out/p_in)**K - 1) / efficiency  # in W
+    
+    aeration_power = WP/1000 # in kW
+    
+    power_consumption = 0
+        
+    for y in system.flowsheet.unit:
+        if y.ID in active_unit_IDs:
+            power_consumption += y.power_utility.power
+            
+    pumping_power = power_consumption
+    
+    aeration_cost = aeration_power*24*unit_electricity_cost # in (kWh/day)*(USD/kWh) = USD/day
+    pumping_cost = pumping_power*24*unit_electricity_cost # in (kWh/day)*(USD/kWh) = USD/day
+    
+    sludge_prod = np.array([sludge.composite('solids', True, particle_size='x', unit='ton/d') \
+                            for sludge in sludge]) # in ton/day
+    sludge_disposal_costs = np.sum(sludge_prod)*unit_weight_disposal_cost   #in USD/day
+    
+    miscellaneous_cost = miscellaneous_power*24*unit_electricity_cost # in (kWh/day)*(USD/kWh) = USD/day
+    
+    operational_costs_WRRF = np.array([aeration_cost, pumping_cost, sludge_disposal_costs, miscellaneous_cost])      
+
+    total_operational_cost = np.sum(operational_costs_WRRF)             #5
+    
+    return total_operational_cost 
+
 def get_GHG_emissions_sec_treatment(system = None, influent=None, effluent = None,
                                     CH4_EF=0.0075, N2O_EF=0.016):
     '''    
@@ -461,7 +567,7 @@ def get_GHG_emissions_sec_treatment(system = None, influent=None, effluent = Non
     
     return CH4_emitted, N2O_emitted
 
-def get_GHG_emissions_discharge(effluent=None, CH4_EF=0.0075, N2O_EF=0.016):
+def get_GHG_emissions_discharge(effluent=None, CH4_EF=0.009, N2O_EF=0.005):
     '''    
     Parameters
     ----------
@@ -538,9 +644,7 @@ def get_GHG_emissions_electricity(system, power_blower, power_pump, CO2_EF=0.675
     
     return CO2_emissions
 
-# r_VSS_TSS, r_BOD_VSS
-
-def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.5, MCF = 0.8, k = 0.185, F=0.5, pl=30):
+def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.38, MCF = 0.8, k = 0.06, F=0.5, pl=30):
     '''
     Parameters
     ----------
@@ -612,14 +716,12 @@ def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.5, MCF = 0.8, k = 0
     accumulated_DOC_at_pl = annual_DDOC* (1 - np.exp(-1 * k * (pl-1))) / (1 - np.exp(-1 * k)) 
     CH4_emitted_after_pl = accumulated_DOC_at_pl*F*16/12
     
-    total_CH4 = annual_DDOC*(pl)*F*16/12
-    
     days_in_year = 365
 
-    return CH4_emitted_during_pl/(pl*days_in_year), CH4_emitted_after_pl/(pl*days_in_year), total_CH4/(pl*days_in_year)
+    return CH4_emitted_during_pl/(pl*days_in_year), CH4_emitted_after_pl/(pl*days_in_year)
 
 def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity, 
-                     GHG_sludge_disposal, GHG_AD, CH4_CO2eq=29.8, N2O_CO2eq=273):
+                     GHG_sludge_disposal, CH4_CO2eq=29.8, N2O_CO2eq=273):
     '''
 
     Parameters
@@ -634,8 +736,6 @@ def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity,
         The amount of eq. CO2 emitted due to electrity consumption (kg-CO2-Eq/day).
     GHG_sludge_disposal : int
         The average amount of methane emitted during sludge disposal (kg/day).
-    GHG_AD : int
-        The average amount of methane emitted during anaerobic (kg/day).
     CH4_CO2eq : TYPE, optional
         DESCRIPTION. The default is 29.8 kg CO2eq/kg CH4 [1].
     N2O_CO2eq : TYPE, optional
@@ -655,8 +755,6 @@ def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity,
     CH4_CO2_eq_treatment = GHG_treatment[0]*CH4_CO2eq
     N2O_CO2_eq_treatment = GHG_treatment[1]*N2O_CO2eq 
     
-    # source 2 (on-site)
-    CH4_CO2_eq_AD = GHG_AD*CH4_CO2eq
     
     # source 3 (off-site)
     CH4_CO2_eq_discharge = GHG_discharge[0]*CH4_CO2eq
@@ -670,7 +768,6 @@ def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity,
     CO2_eq_electricity = GHG_electricity*1
     
     CO2_eq_WRRF = np.array([CH4_CO2_eq_treatment, N2O_CO2_eq_treatment, #1
-                            CH4_CO2_eq_AD,                              #2
                             CH4_CO2_eq_discharge, N2O_CO2_eq_discharge, #3
                             CH4_CO2_eq_sludge_disposal_pl,              #4
                             CH4_CO2_eq_sludge_disposal_after_pl,        #4
@@ -678,4 +775,215 @@ def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity,
     
     normalized_CO2_eq_WRRF = CO2_eq_WRRF/sum([24*s.F_vol for s in system.feeds])
     
-    return normalized_CO2_eq_WRRF
+    return normalized_CO2_eq_WRRF 
+
+def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, effluent_sys =None, active_unit_IDs=None, sludge=None, 
+                     CH4_EF_sc =0.0075, N2O_EF_sc =0.016, CH4_EF_discharge=0.009, N2O_EF_discharge=0.005,
+                     T=20, p_atm=101.325, K=0.283, F=0.5,CH4_CO2eq=29.8, N2O_CO2eq=273,
+                     
+                     # uncertain parameters 
+                     P_inlet_loss=1, P_diffuser_loss=7, h_submergance=5.18, efficiency=0.7,
+                     
+                     CO2_EF=0.675, DOC_f = 0.38, MCF = 0.8, k = 0.06, pl=30
+                     ):
+    
+    '''
+
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system for which normalized GHG emission is being determined.
+        
+    ----Secondary treatment----
+     
+     influent_sc : : iterable[:class:`WasteStream`], optional
+         Influent wastestreams to secondary treatment whose wastewater composition determine the potential for GHG emissions. The default is None.
+     effluent_sc  : : iterable[:class:`WasteStream`], optional
+         The wastestreams which represents the effluent from the secondary treatment process. The default is None.
+     CH4_EF_sc :  float, optional.
+         The emission factor used to calculate methane emissions in secondary treatment. The default is 0.0075 kg CH4/ kg rCOD. [1]
+     N2O_EF_sc : float, optional
+         The emission factor used to calculate nitrous oxide emissions in secondary treatment. The default is 0.016 kg N2O-N/ kg N. [1]
+        
+    ----Discharge----
+        
+    effluent_sys : : iterable[:class:`WasteStream`], optional
+        Effluent wastestreams from the system whose wastewater composition determine the potential for GHG emissions at discharge. The default is None.
+    CH4_EF_discharge :  float, optional.
+        The emission factor used to calculate methane emissions in secondary treatment. The default is 0.0075 kg CH4/ kg rCOD. [1]
+    N2O_EF_discharge : float, optional
+        The emission factor used to calculate nitrous oxide emissions in secondary treatment. The default is 0.016 kg N2O-N/ kg N. [1]
+        
+    
+    ----Electricity---
+    
+    --blower power-
+    q_air : float
+        Air volumetric flow rate [m3/min].
+    T : float
+        Air temperature [degree Celsius].
+    p_atm : float
+        Atmostpheric pressure [kPa]
+    P_inlet_loss : float
+        Head loss at inlet [kPa].
+    P_diffuser_loss : float
+        Head loss due to piping and diffuser [kPa].
+    h_submergance : float
+        Diffuser submergance depth in m. The default is 17 feet (5.18 m)
+    efficiency : float
+        Blower efficiency. Default is 0.7. 
+    K : float, optional
+        Equal to (kappa - 1)/kappa, where kappa is the adiabatic exponent of air.
+        Default is 0.283, equivalent to kappa = 1.3947.
+        
+    --pump power--
+    active_unit_IDs : tuple[str], optional
+        IDs of all units whose power needs to be accounted for. The default is None.
+        
+    
+    ----Sludge disposal---
+    
+    sludge : : iterable[:class:`WasteStream`], optional
+        Effluent sludge from the system for which GHG emissions are being calculated. The default is None.
+    DOC_f : float, optional
+        fraction of DOC that can decompose (fraction). The default value is 0.5.
+    MCF : float, optional
+        CH4 correction factor for aerobic decomposition in the year of deposition (fraction). The default is 0.8.
+    k : TYPE, optional
+        Methane generation rate (k). The default is 0.185. (1/year)
+        
+        The decomposition of carbon is assumed to follow first-order kinetics 
+        (with rate constant k), and methane generation is dependent on the amount of remaining decomposable carbon 
+        in the waste. For North America (boreal and temperate climate) the default values for wet and dry climate 
+        are:
+            k (dry climate) = 0.06
+            k (wet climate) = 0.185
+    F : float, optional
+        Fraction of methane in generated landfill gas (volume fraction).  The default is 0.5.
+    pl : float, optional
+        The project lifetime over which methane emissions would be calculated. (years)
+        The default is 30 years.
+        
+        
+    --------- Eq CO2 EFs --------- 
+   
+    CH4_CO2eq : TYPE, optional
+        DESCRIPTION. The default is 29.8 kg CO2eq/kg CH4 [1].
+    N2O_CO2eq : TYPE, optional
+        DESCRIPTION. The default is 273 kg CO2eq/kg CH4 [1].
+
+    Returns
+    -------
+    Total Normalized GHG emissions from onsite and offsite operations associated with WRRF (kg CO2 eq./m3) [int].
+    
+
+    '''
+    
+    # source 1 (on-site)
+    if influent_sc is None:
+        influent_sc = [inf for inf in system.feeds if inf.phase == 'l']
+
+    influent_sc_flow = np.array([inf.F_vol*24 for inf in influent_sc]) # in m3/day
+    influent_sc_COD = np.array([inf.COD for inf in influent_sc]) # in mg/L
+    mass_influent_COD_sc = np.sum(influent_sc_flow*influent_sc_COD/1000) # in kg/day
+    
+    effluent_sc_flow = np.array([eff.F_vol*24 for eff in effluent_sc])
+    effluent_sc_COD =  np.array([eff.COD for eff in effluent_sc]) # in mg/L
+    mass_effluent_COD_sc = np.sum(effluent_sc_flow*effluent_sc_COD/1000) # in kg/day
+    
+    mass_removed_COD_sc = mass_influent_COD_sc - mass_effluent_COD_sc
+    CH4_emitted_sc = CH4_EF_sc*mass_removed_COD_sc
+    
+    influent_N_sc = np.array([inf.TN for inf in influent_sc]) # in mg/L
+    mass_influent_N = np.sum(influent_sc_flow*influent_N_sc/1000) # in kg/day
+    
+    N2O_emitted_sc = N2O_EF_sc*mass_influent_N
+    
+    # source 1 (on-site)
+    CH4_CO2_eq_treatment = CH4_emitted_sc*CH4_CO2eq
+    N2O_CO2_eq_treatment = N2O_emitted_sc*N2O_CO2eq 
+    
+    # source 3 (off-site)
+    effluent_flow = np.array([eff.F_vol*24 for eff in effluent_sys]) # in m3/day
+    effluent_COD = np.array([eff.COD for eff in effluent_sys]) # in mg/L
+    mass_effluent_COD = np.sum(effluent_flow*effluent_COD/1000) # in kg/day
+    
+    CH4_emitted_discharge = CH4_EF_discharge*mass_effluent_COD
+    
+    effluent_N = np.array([eff.TN for eff in effluent_sys]) # in mg/L
+    mass_effluent_N = np.sum(effluent_flow*effluent_N/1000) # in kg/day
+    
+    N2O_emitted_discharge = N2O_EF_discharge*mass_effluent_N
+    
+    # source 3 (off-site)
+    CH4_CO2_eq_discharge = CH4_emitted_discharge*CH4_CO2eq
+    N2O_CO2_eq_discharge = N2O_emitted_discharge*N2O_CO2eq 
+    
+    
+    # source 5 (off-site)
+    T += 273.15
+    air_molar_vol = 22.4e-3 * (T/273.15)/(p_atm/101.325)   # m3/mol
+    R = 8.31446261815324 # J/mol/K, universal gas constant
+    
+    p_in = p_atm - P_inlet_loss
+    p_out = p_atm + 9.81*h_submergance + P_diffuser_loss
+    
+    # Q_air = q_air*(24*60) # m3/min to m3/day
+    # P_blower = 1.4161e-5*(T + 273.15)*Q_air*((p_out/p_in)**0.283 - 1)/efficiency
+    # return P_blower
+    
+    Q_air = q_air/60 # m3/min to m3/s
+    WP = (Q_air / air_molar_vol) * R * T / K * ((p_out/p_in)**K - 1) / efficiency  # in W
+    
+    blower_power = WP/1000
+    
+    pumping_power = 0
+        
+    for y in system.flowsheet.unit:
+        if y.ID in active_unit_IDs:
+            pumping_power += y.power_utility.power # in kW
+        
+    total_energy_consumed = (blower_power + pumping_power)*24 # in kWh/day
+    
+    GHG_electricity = total_energy_consumed*CO2_EF # in kg-CO2-Eq/day
+    
+    # source 5 (off-site)
+    CO2_eq_electricity = GHG_electricity*1
+    
+    # source 4 (off-site)
+
+    DOC_mass_flow = 0
+    
+    for slg in sludge:
+        DOC_mass_flow += slg.composite("C", flow=True, exclude_gas=True, 
+                      subgroup=None, particle_size=None,
+                      degradability="b", organic=True, volatile=None,
+                      specification=None, unit="kg/day")
+
+    annual_DOC_mass = 365*DOC_mass_flow # in kg/year
+
+    annual_DDOC = annual_DOC_mass*DOC_f*MCF
+        
+    t_vary = np.arange(pl)
+    decomposed_DOC = annual_DDOC * (1 - np.exp(-1 * k * t_vary))
+    total_decomposed_DOC = np.sum(decomposed_DOC)
+    CH4_emitted_during_pl = total_decomposed_DOC*F*16/12
+    
+    accumulated_DOC_at_pl = annual_DDOC* (1 - np.exp(-1 * k * (pl-1))) / (1 - np.exp(-1 * k)) 
+    CH4_emitted_after_pl = accumulated_DOC_at_pl*F*16/12
+    
+    days_in_year = 365
+
+    GHG_sludge_disposal = (CH4_emitted_during_pl + CH4_emitted_after_pl)/(pl*days_in_year)
+
+    CH4_CO2_eq_sludge_disposal_pl = GHG_sludge_disposal*CH4_CO2eq
+    
+    
+    CO2_eq_WRRF = np.array([CH4_CO2_eq_treatment, N2O_CO2_eq_treatment, #1
+                            CH4_CO2_eq_discharge, N2O_CO2_eq_discharge, #3
+                            CH4_CO2_eq_sludge_disposal_pl,              #4
+                            CO2_eq_electricity])                        #5
+    
+    normalized_total_CO2_eq_WRRF = np.sum(CO2_eq_WRRF)/sum([24*s.F_vol for s in system.feeds])
+    
+    return normalized_total_CO2_eq_WRRF
