@@ -573,10 +573,10 @@ def get_GHG_emissions_discharge(effluent=None, CH4_EF=0.009, N2O_EF=0.005):
     ----------
     effluent : : iterable[:class:`WasteStream`], optional
         Effluent wastestreams from the system whose wastewater composition determine the potential for GHG emissions at discharge. The default is None.
-    CH4_EF :  float, optional.
-        The emission factor used to calculate methane emissions in secondary treatment. The default is 0.0075 kg CH4/ kg rCOD. [1]
-    N2O_EF : float, optional
-        The emission factor used to calculate nitrous oxide emissions in secondary treatment. The default is 0.016 kg N2O-N/ kg N. [1]
+    CH4_EF_discharge :  float, optional.
+        The emission factor used to calculate methane emissions in discharge. The default is 0.009 kg CH4/ kg effluent COD. [1]
+    N2O_EF_discharge : float, optional
+        The emission factor used to calculate nitrous oxide emissions in discharge. The default is 0.005 kg N2O-N/ kg effluent N. [1]
 
     Returns
     -------
@@ -778,8 +778,10 @@ def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity,
     return normalized_CO2_eq_WRRF 
 
 def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, effluent_sys =None, active_unit_IDs=None, sludge=None, 
-                     CH4_EF_sc =0.0075, N2O_EF_sc =0.016, CH4_EF_discharge=0.009, N2O_EF_discharge=0.005,
-                     T=20, p_atm=101.325, K=0.283, F=0.5,CH4_CO2eq=29.8, N2O_CO2eq=273,
+                      p_atm=101.325, K=0.283, CH4_CO2eq=29.8, N2O_CO2eq=273,
+                      
+                      CH4_EF_sc =0.0075, N2O_EF_sc =0.016, CH4_EF_discharge=0.009, N2O_EF_discharge=0.005,
+                      T=20, F=0.5, 
                      
                      # uncertain parameters 
                      P_inlet_loss=1, P_diffuser_loss=7, h_submergance=5.18, efficiency=0.7,
@@ -810,9 +812,9 @@ def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, efflu
     effluent_sys : : iterable[:class:`WasteStream`], optional
         Effluent wastestreams from the system whose wastewater composition determine the potential for GHG emissions at discharge. The default is None.
     CH4_EF_discharge :  float, optional.
-        The emission factor used to calculate methane emissions in secondary treatment. The default is 0.0075 kg CH4/ kg rCOD. [1]
+        The emission factor used to calculate methane emissions in discharge. The default is 0.009 kg CH4/ kg effluent COD. [1]
     N2O_EF_discharge : float, optional
-        The emission factor used to calculate nitrous oxide emissions in secondary treatment. The default is 0.016 kg N2O-N/ kg N. [1]
+        The emission factor used to calculate nitrous oxide emissions in discharge. The default is 0.005 kg N2O-N/ kg effluent N. [1]
         
     
     ----Electricity---
