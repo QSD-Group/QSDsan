@@ -572,6 +572,9 @@ class ADM1(CompiledProcesses):
         cmps.X_c.i_N = round(N_xc * N_mw, 4)
         cmps.X_I.i_N = cmps.S_I.i_N = round(N_I * N_mw, 4)
         cmps.S_aa.i_N = cmps.X_pr.i_N = round(N_aa * N_mw, 4)
+        # cmps.X_c.i_N = N_xc * N_mw
+        # cmps.X_I.i_N = cmps.S_I.i_N = N_I * N_mw
+        # cmps.S_aa.i_N = cmps.X_pr.i_N = N_aa * N_mw
 
         if not path: path = _path
         self = Processes.load_from_file(path,
