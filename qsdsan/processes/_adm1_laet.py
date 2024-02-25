@@ -599,12 +599,12 @@ class ADM1_laet(CompiledProcesses):
     """
     #'f_la_su', 'f_et_su', 'f_pro_la', 'f_ac_la', 'f_h2_la', 'f_ac_et', 'f_h2_et', 'Y_la', 'Y_et'added below
     _stoichio_params = ('f_ch_xc', 'f_pr_xc', 'f_li_xc', 'f_xI_xc', 'f_sI_xc',
-                        'f_fa_li', 'f_la_su', 'f_et_su', 'f_bu_su', 'f_pro_su',
+                        'f_fa_li', 'f_la_su', 'f_et_su', 'f_bu_su',
                         'f_ac_su', 'f_h2_su', 'f_va_aa', 'f_bu_aa', 'f_pro_aa',
                         'f_ac_aa', 'f_h2_aa', 'f_ac_fa', 'f_h2_fa', 'f_pro_la',
                         'f_ac_la', 'f_h2_la', 'f_ac_et', 'f_h2_et', 'f_pro_va',
                         'f_ac_va', 'f_h2_va', 'f_ac_bu', 'f_h2_bu', 'f_ac_pro',
-                        'f_h2_pro',
+                        'f_h2_pro', 'f_pro_h2',
                         'Y_su', 'Y_aa', 'Y_fa', 'Y_la', 'Y_et', 'Y_c4', 'Y_pro', 'Y_ac', 'Y_h2')
     #'KIs_ac' added below
     _kinetic_params = ('rate_constants', 'half_sat_coeffs', 'pH_ULs', 'pH_LLs',
@@ -638,7 +638,7 @@ class ADM1_laet(CompiledProcesses):
                 K_H_dH=[-4180, -14240, -19410],
                 **kwargs):
     '''
-    #why f_h2_su not include below?
+    
     #f_la_su, f_et_su, f_pro_la, f_ac_la,  f_ac_et, Y_la, Y_et added with valued randomly below
     def __new__(cls, components=None, path=None, N_xc=2.686e-3, N_I=4.286e-3, N_aa=7e-3,
                 f_ch_xc=0.2, f_pr_xc=0.2, f_li_xc=0.3, f_xI_xc=0.2,
@@ -682,7 +682,7 @@ class ADM1_laet(CompiledProcesses):
             gas_transfer.append(new_p)
         self.extend(gas_transfer)
         self.compile(to_class=cls)
-        # add equation for additional f below
+        ## How to put these below equations?
         #f_pro_h2 = [(1-Y_aa)*f_pro_la]*(16/96)
         #f_pro_h2 = [(1-Y_aa)*element*(16/96) for element in f_pro_la]
         #f_pro_h2 = [(1-Y_aa)*x*(16/96) for x in f_pro_la]
@@ -696,14 +696,14 @@ class ADM1_laet(CompiledProcesses):
         #f_h2_su = [0.17 * 5e-4 / (5e-4 + biogas_p_h2) * biogas_p_h2] + [0.5 * 5e-4 / (5e-4 + biogas_p_h2) * 2e-3 / (2e-3 + biogas_p_h2)]
         #f_h2_la = 0.33 * 2e-3 / (2e-3 + biogas_p_h2)
         stoichio_vals = (f_ch_xc, f_pr_xc, f_li_xc, f_xI_xc, 1-f_ch_xc-f_pr_xc-f_li_xc-f_xI_xc,
-                         f_fa_li, f_la_su, f_et_su, f_bu_su, f_pro_su, f_ac_su, 1-f_la_su-f_et_su-f_bu_su-f_pro_su-f_ac_su,
+                         f_fa_li, f_la_su, f_et_su, f_bu_su, f_ac_su, 1-f_la_su-f_et_su-f_bu_su,
                          f_va_aa, f_bu_aa, f_pro_aa, f_ac_aa, 1-f_va_aa-f_bu_aa-f_pro_aa-f_ac_aa,
                          f_ac_fa, 1-f_ac_fa,
                          f_pro_la, f_ac_la, 1-f_pro_la-f_ac_la,
                          f_ac_et, 1-f_ac_et,
                          f_pro_va, f_ac_va, 1-f_pro_va-f_ac_va,
                          f_ac_bu, 1-f_ac_bu, f_ac_pro, 1-f_ac_pro,
-                         f_pro_h2,
+                         f_pro_h2, -f_pro_h2,
                          Y_su, Y_aa, Y_fa, Y_la, Y_et, Y_c4, Y_pro, Y_ac, Y_h2)
         #Above, how to assign f_pro_h2, 1-Y_h2-f_pro_h2?
         pH_LLs = np.array([pH_limits_aa[0]]*6 + [pH_limits_ac[0], pH_limits_h2[0]])
@@ -775,7 +775,7 @@ class ADM1_laet(CompiledProcesses):
         i = self._find_index(process)
         self.rate_function._params['KIs_h2'][i-6] = KI
         
-        # Find if the inhibition is related to process or component 
+        ## I need to add this ac inhibit, is it right to put i-6, and what does i mean?
     def set_acetate_inhibit_K(self, KI, process):
         '''Set the acetate inhibition coefficient [kg/m3] for a process given its ID.'''
         i = self._find_index(process)
