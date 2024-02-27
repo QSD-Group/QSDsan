@@ -22,24 +22,24 @@ from qsdsan.utils import ospath, data_path
 from scipy.optimize import brenth
 from warnings import warn
 
-__all__ = ('create_adm1_laet_cmps', 'ADM1_laet',
+__all__ = ('create_adm1_vfa_cmps', 'ADM1_vfa',
            'non_compet_inhibit', 'substr_inhibit',
            'T_correction_factor', 
            'pH_inhibit', 'Hill_inhibit', 
-           'rhos_adm1_laet')
+           'rhos_adm1_vfa')
 
 _path = ospath.join(data_path, 'process_data/_adm1_laet.tsv')
 _load_components = settings.get_default_chemicals
 
 #%%
 # =============================================================================
-# ADM1_laet-specific components
+# ADM1_vfa-specific components
 # =============================================================================
 
 C_mw = get_mw({'C':1})
 N_mw = get_mw({'N':1})
 
-def create_adm1_laet_cmps(set_thermo=True):
+def create_adm1_vfa_cmps(set_thermo=True):
     cmps_all = Components.load_default()
 
     # varies
@@ -183,15 +183,15 @@ def create_adm1_laet_cmps(set_thermo=True):
     S_an = cmps_all.S_AN.copy('S_an')
     S_cat.i_mass = S_an.i_mass = 1
 
-    cmps_adm1_laet = Components([S_su, S_aa, S_fa, S_la, S_et, S_va, S_bu, S_pro, S_ac, S_h2,
+    cmps_adm1_vfa = Components([S_su, S_aa, S_fa, S_la, S_et, S_va, S_bu, S_pro, S_ac, S_h2,
                             S_ch4, S_IC, S_IN, S_I, X_c, X_ch, X_pr, X_li,
                             X_su, X_aa, X_fa, X_la, X_et, X_c4, X_pro, X_ac, X_h2, X_I,
                             S_cat, S_an, cmps_all.H2O])
-    cmps_adm1_laet.default_compile()
-    if set_thermo: settings.set_thermo(cmps_adm1_laet)
-    return cmps_adm1_laet
+    cmps_adm1_vfa.default_compile()
+    if set_thermo: settings.set_thermo(cmps_adm1_vfa)
+    return cmps_adm1_vfa
 
-create_adm1_laet_cmps()
+create_adm1_vfa_cmps()
 
 
 #%%
@@ -260,7 +260,7 @@ def Hill_inhibit(H_ion, ul, ll):
 rhos = np.zeros(26) # 23 kinetic processes(3 for gases) + 4 kinetic (uptake la, uptake et, decay la, decay et)
 Cs = np.empty(23) # 락테이트와 에탄올 추가로 19개에서 23개로 됨
 
-def rhos_adm1_laet(state_arr, params):
+def rhos_adm1_vfa(state_arr, params):
     ks = params['rate_constants']
     Ks = params['half_sat_coeffs']
     cmps = params['components']
@@ -287,7 +287,7 @@ def rhos_adm1_laet(state_arr, params):
     #                       S_I:11, X_c:12, X_ch:13, X_pr:14, X_li:15,  X_su:16, X_aa:17, X_fa:18, X_c4:19, X_pro:20, X_ac:21,
     #                       X_h2:22, X_I:23, S_cat:24, S_an:25, H20:26]
     
-    # adm1_laet_state_arr = [S_su:0, S_aa:1 , S_fa:2, S_la:3, S_et:4, S_va:5, S_bu:6, S_pro:7, S_ac:8, S_h2:9,
+    # adm1_vfa_state_arr = [S_su:0, S_aa:1 , S_fa:2, S_la:3, S_et:4, S_va:5, S_bu:6, S_pro:7, S_ac:8, S_h2:9,
     #                       S_ch4:10, S_IC:11, S_IN:12, S_I:13, X_c:14, X_ch:15, X_pr:16, X_li: 17, X_su:18,
     #                       X_aa:19, X_fa:20, X_la:21, X_et:22, X_c4:23, X_pro:24, X_ac:25, X_h2:26, X_I:27,
     #                       S_cat:28, S_an:29, H20:30]
@@ -296,7 +296,7 @@ def rhos_adm1_laet(state_arr, params):
     #                                 'X_fa', 'X_c4', 'X_c4', 'X_pro', 'X_ac', 'X_h2',
     #                                 'X_su', 'X_aa', 'X_fa', 'X_c4', 'X_pro', 'X_ac', 'X_h2'])
     
-    # adm1_laet_Cs_ids = cmps.indices(['X_c', 'X_ch', 'X_pr', 'X_li', 'X_su', 'X_aa', 'X_fa', 'X_la', 'X_et', 'X_c4',/
+    # adm1_vfa_Cs_ids = cmps.indices(['X_c', 'X_ch', 'X_pr', 'X_li', 'X_su', 'X_aa', 'X_fa', 'X_la', 'X_et', 'X_c4',/
     #                                 'X_c4', 'X_pro', 'X_ac', 'X_h2',/ 'X_su', 'X_aa', 'X_fa', 'X_la',
     #                                 'X_et', 'X_c4', 'X_pro', 'X_ac', 'X_h2'])
     # Cs = state_arr[Cs_ids]
@@ -398,7 +398,7 @@ class TempState:
     #     self.data += [value]
 
 @chemicals_user
-class ADM1_laet(CompiledProcesses):
+class ADM1_vfa(CompiledProcesses):
     """
     Anaerobic Digestion Model No.1. [1]_, [2]_
 
@@ -642,9 +642,9 @@ class ADM1_laet(CompiledProcesses):
     #f_la_su, f_et_su, f_pro_la, f_ac_la,  f_ac_et, Y_la, Y_et added with valued randomly below
     def __new__(cls, components=None, path=None, N_xc=2.686e-3, N_I=4.286e-3, N_aa=7e-3,
                 f_ch_xc=0.2, f_pr_xc=0.2, f_li_xc=0.3, f_xI_xc=0.2,
-                f_fa_li=0.95, f_la_su=0.233, f_et_su= 0.004, f_bu_su=0.13, f_pro_su=0.037,
+                f_fa_li=0.95, f_la_su=0.233, f_et_su= 0.004, f_bu_su=0.13,
                 f_ac_su=0.41, f_va_aa=0.23, f_bu_aa=0.26, f_pro_aa=0.05, f_ac_aa=0.4,
-                f_ac_fa=0.7, f_pro_la=0.33, f_ac_la=0.33, f_ac_et=0.5, f_pro_va=0.54,
+                f_ac_fa=0.7, f_pro_la=0.33, f_ac_la=0.24, f_ac_et=0.5, f_pro_va=0.54,
                 f_ac_va=0.31, f_ac_bu=0.8, f_ac_pro=0.57, f_pro_h2=0.05,
                 Y_su=0.1, Y_aa=0.08, Y_fa=0.06, Y_la=0.06, Y_et=0.04, Y_c4=0.06, Y_pro=0.04, Y_ac=0.05, Y_h2=0.06,
                 q_dis=0.5, q_ch_hyd=10, q_pr_hyd=10, q_li_hyd=10,
@@ -682,28 +682,16 @@ class ADM1_laet(CompiledProcesses):
             gas_transfer.append(new_p)
         self.extend(gas_transfer)
         self.compile(to_class=cls)
-        ## How to put these below equations?
-        #f_pro_h2 = [(1-Y_aa)*f_pro_la]*(16/96)
-        #f_pro_h2 = [(1-Y_aa)*element*(16/96) for element in f_pro_la]
-        #f_pro_h2 = [(1-Y_aa)*x*(16/96) for x in f_pro_la]
-        #root = TempState()
-        #biogas_p_h2 = root.data.get('biogas_p_h2', 0)
-        #f_la_su = biogas_p_h2 / (5e-4 + biogas_p_h2) if biogas_p_h2 else 0
-        #f_bu_su = 0.83 * 5e-4 / (5e-4 + biogas_p_h2) * biogas_p_h2 / (2e-3 + biogas_p_h2) if biogas_p_h2 else 0
-        #f_ac_su = 0.5 * 5e-4 / (5e-4 + biogas_p_h2) * 2e-3 / (2e-3 + biogas_p_h2)
-        #f_pro_la = biogas_p_h2 / (2e-3 + biogas_p_h2)
-        #f_ac_la = 0.67 * 2e-3 / (2e-3 + biogas_p_h2)
-        #f_h2_su = [0.17 * 5e-4 / (5e-4 + biogas_p_h2) * biogas_p_h2] + [0.5 * 5e-4 / (5e-4 + biogas_p_h2) * 2e-3 / (2e-3 + biogas_p_h2)]
-        #f_h2_la = 0.33 * 2e-3 / (2e-3 + biogas_p_h2)
+
         stoichio_vals = (f_ch_xc, f_pr_xc, f_li_xc, f_xI_xc, 1.0-f_ch_xc-f_pr_xc-f_li_xc-f_xI_xc,
-                         f_fa_li, f_la_su, f_et_su, f_bu_su, f_ac_su, 1.0-f_la_su-f_et_su-f_bu_su,
+                         f_fa_li, f_la_su, f_et_su, f_bu_su, f_ac_su, 1.0-f_la_su-f_et_su-f_bu_su-f_ac_su,
                          f_va_aa, f_bu_aa, f_pro_aa, f_ac_aa, 1.0-f_va_aa-f_bu_aa-f_pro_aa-f_ac_aa,
                          f_ac_fa, 1.0-f_ac_fa,
                          f_pro_la, f_ac_la, 1.0-f_pro_la-f_ac_la,
                          f_ac_et, 1.0-f_ac_et,
                          f_pro_va, f_ac_va, 1.0-f_pro_va-f_ac_va,
                          f_ac_bu, 1.0-f_ac_bu, f_ac_pro, 1.0-f_ac_pro,
-                         f_pro_h2, -f_pro_h2,
+                         f_pro_h2,
                          Y_su, Y_aa, Y_fa, Y_la, Y_et, Y_c4, Y_pro, Y_ac, Y_h2)
         #dynamic parameters excluded above, random value assigned
         #Above, how to assign f_pro_h2, 1-Y_h2-f_pro_h2?
@@ -722,10 +710,17 @@ class ADM1_laet(CompiledProcesses):
         root = TempState()
         dct = self.__dict__
         dct.update(kwargs)
-        
+        #f_pro_h2 = [(1-Y_aa)*f_pro_la]*(16/96)
+        #f_pro_h2 = [(1-Y_aa)*element*(16/96) for element in f_pro_la]
+        #f_pro_h2 = [(1-Y_aa)*x*(16/96) for x in f_pro_la]
+        # >>>>>> NEW INSERTION >>>>>>
+        # provide a complete list of dynamic stoichiometrix parameters below
         #@self.dynamic_parameter(symbol='f_la_su', params={K_VFA_lac : 1.2})
         #def f_lac_su_eval
-        self.set_rate_function(rhos_adm1_laet)
+        dct['_dyn_params'] = dict.fromkeys(('f_la_su', 'f_ac_pro_la', 'f_ac_la', 'f_pro_h2'))
+        # <<<<<<<<<<<<
+        
+        self.set_rate_function(rhos_adm1_vfa)
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_vals))
         self.rate_function._params = dict(zip(cls._kinetic_params,
                                               [ks, Ks, pH_ULs, pH_LLs, KS_IN*N_mw,
@@ -734,7 +729,29 @@ class ADM1_laet(CompiledProcesses):
                                                T_base, self._components, root]))
 
         return self
-
+    # >>> MODIFIED METHOD >>>
+    def params_eval(self, state_arr):
+        dct = self._parameters
+        
+        # extract state variables 
+        S_va, S_bu, S_pro, S_ac, S_h2 = state_arr[[5,6,7,8,9]]
+        
+        # calculate stoichiometric parameter values and record them in the parameter dictionary
+        K_vfa_la = 0.5
+        dct['f_la_su'] = 1.0 - K_vfa_la / ((S_va + S_bu + S_pro + S_ac) + K_vfa_la)
+        K_h2_la = 1e-5
+        
+        f_ac_pro_la = 0.57
+        f_pro_la = 0.3
+        f_ac_la = f_ac_pro_la - f_pro_la
+        
+        dct['f_ac_pro_la'] = f_pro_la + f_ac_la
+        dct['f_ac_la'] = (K_h2_la / (K_h2_la + S_h2)) * f_ac_pro_la
+        
+        Y_aa=0.08
+        dct['f_pro_h2'] = [(1-Y_aa) * f_pro_la] * (16/96)
+    # <<<<<<<<<
+        
     def set_pKas(self, pKas):
         '''Set the pKa values of the acid-base reactions at the base temperature.'''
         if len(pKas) != 7:
@@ -778,10 +795,8 @@ class ADM1_laet(CompiledProcesses):
         i = self._find_index(process)
         self.rate_function._params['KIs_h2'][i-6] = KI
         
-        ## I need to add this ac inhibit, is it right to put i-6, and what does i mean?
     def set_acetate_inhibit_K(self, KI):
         '''Set the acetate inhibition coefficient [kg/m3] for a process given its ID.'''
-        
         self.rate_function._params['KI_ac'] = KI
 
     def set_KS_IN(self, K):
@@ -806,6 +821,7 @@ class ADM1_laet(CompiledProcesses):
         self.check_stoichiometric_parameters()
         if self._stoichio_lambdified is not None:
             self.__dict__['_stoichio_lambdified'] = None
+            
         #add la and et below
     def check_stoichiometric_parameters(self):
         '''Check whether product COD fractions sum up to 1 for each process.'''
