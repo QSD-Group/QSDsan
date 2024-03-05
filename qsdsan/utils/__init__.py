@@ -13,17 +13,31 @@ for license details.
 '''
 
 # Units of measure
-import os
 from thermosteam.units_of_measure import (
     ureg,
     AbsoluteUnitsOfMeasure as auom,
     RelativeUnitsOfMeasure as ruom,
     )
 
-path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                    'units_definition.txt')
-ureg.load_definitions(path)
-
+# Additional unit definition
+ureg.define('sq_m = m2')
+ureg.define('cu_m = m3')
+ureg.define('sq_cm = cm2')
+ureg.define('cu_cm = cm3')
+ureg.define('sq_ft = ft2')
+ureg.define('cu_ft = ft3')
+ureg.define('cu_in = in3')
+ureg.define('yd3 = yard**3 = yd3 = cu_yd')
+ureg.define('cfm = cf/minute = CFM')
+ureg.define('cfs = cf/second = CFS')
+ureg.define('yr = year = yr = y')
+ureg.define('hr = hour = hr = h')
+ureg.define('d = day')
+ureg.define('each = count = ea')
+ureg.define('unit = count')
+ureg.define('point = points')
+ureg.define('MGD = 1e6 * gallon / day')
+ureg.define('mgd = MGD')
 
 from . import (
     cod,
