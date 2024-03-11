@@ -17,12 +17,12 @@ warnings.simplefilter(action='ignore', category=FutureWarning)        # to ignor
 
 #%%
 # Components
-cmps = pc.create_adm1_laet_cmps()      # create state variables for laetADM1
+cmps = pc.create_adm1_vfa_cmps()      # create state variables for laetADM1
 cmps.show()                            # 26 components in ADM1 + water
 
 #%%
 # Processes
-adm1 = pc.ADM1(flex_rate_function=flex_rhos_adm1)                       # create ADM1 processes
+adm1 = pc.ADM1_vfa()                       # create ADM1 processes
 adm1.show()                            # 22 processes in ADM1
 
 adm1.__dict__                          # adm1 is composed of...
@@ -34,7 +34,7 @@ adm1.stoichiometry
 # Flow rate, temperature, HRT
 # Q = 0.00007                                          # influent flowrate [m3/d]
 Q = 7                                               #!!! increasing Q shouldn't affect process simulation, but it'd increase numerical stability
-Temp = 273.15+40                                    # temperature [K]
+Temp = 273.15 + 35                                    # temperature [K]
 HRT = 20                                            # HRT [d]
 
 #%%

@@ -21,7 +21,7 @@ from ._madm1 import *
 from ._decay import *
 from ._kinetic_reaction import *
 from ._pm2 import *
-from ._adm1_laet import *
+from ._adm1_vfa import *
 
 from . import (
     _aeration,
@@ -31,7 +31,8 @@ from . import (
     _madm1,
     _decay,
     _kinetic_reaction,
-    _adm1_laet
+    _pm2,
+    _adm1_vfa
     )
 
 __all__ = (
@@ -43,5 +44,5 @@ __all__ = (
     *_decay.__all__,
     *_kinetic_reaction.__all__,
     *_pm2.__all__,
-    *_adm1_laet.__all__
+    *_adm1_vfa.__all__
     )

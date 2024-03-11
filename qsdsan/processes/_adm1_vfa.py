@@ -158,11 +158,11 @@ def create_adm1_vfa_cmps(set_thermo=True):
     X_fa = cmps_all.X_FO.copy('X_fa')
     X_fa.description = 'Biomass uptaking long chain fatty acids'
     
-    # 락테이트 추가
+    #Add X_la
     X_la = cmps_all.X_FO.copy('X_la')
     X_la.description = 'Biomass uptaking lactate'
     
-    #에탄올 추가
+    #Add X_et
     X_et = cmps_all.X_FO.copy('X_et')
     X_et.description = 'Biomass uptaking ethanol'
 
@@ -173,7 +173,7 @@ def create_adm1_vfa_cmps(set_thermo=True):
     X_ac = cmps_all.X_ACO.copy('X_ac')
     X_h2 = cmps_all.X_HMO.copy('X_h2')
     
-    #Add 락테이트와 에탄올 in bio
+    #Add lactate and ethanol in bio
     for bio in (X_su, X_aa, X_fa, X_la, X_et, X_c4, X_pro, X_ac, X_h2):
         # bio.formula = 'C5H7O2N'
         bio.i_C = 0.0313 * C_mw
@@ -225,9 +225,10 @@ def T_correction_factor(T1, T2, delta_H):
 #     return 10**(-pKas) * T_correction_factor(T_base, T_op, theta)
 
 def acid_base_rxn(h_ion, weak_acids_tot, Kas):
-    # 락테이트 추가
+    #weak_acids = cmps_in_M[[28, 29, 12, 11, 8, 7, 6, 5, 3]] # added S_la:3
+    # add lactate
     # h, nh4, hco3, ac, pr, bu, va = mols
-    # S_cat, S_an, S_IN, S_IC, S_ac, S_pro, S_bu, S_va = weak_acids_tot  # in M
+    # S_cat, S_an, S_IN, S_IC, S_ac, S_pro, S_bu, S_va, S_la = weak_acids_tot  # in M
     S_cat, S_an, S_IN = weak_acids_tot[:3]
     # Kw, Ka_nh, Ka_co2, Ka_ac, Ka_pr, Ka_bu, Ka_va, Ka_la = Kas
     Kw = Kas[0]
@@ -236,7 +237,7 @@ def acid_base_rxn(h_ion, weak_acids_tot, Kas):
     return S_cat + h_ion + (S_IN - nh3) - S_an - oh_ion - hco3 - ac - pro - bu - va - la
 
 def fprime_abr(h_ion, weak_acids_tot, Kas):
-    # 락테이트 추가
+    # add lactate
     S_cat, S_an, S_IN = weak_acids_tot[:3]
     Kw = Kas[0]
     doh_ion = - Kw / h_ion ** 2
@@ -281,15 +282,15 @@ def rhos_adm1_vfa(state_arr, params):
     root = params['root']
     
     # add lactate below
-    # Cs is process, state_arr is list of components
+    # Cs is process coefficient for rate function, state_arr is list of components
     # original_state_arr = [S_su:0, S_aa:1, S_fa:2, S_va:3, S_bu:4, S_pro:5, S_ac:6, S_h2:7, S_ch4:8, S_IC:9, S_IN:10, 
     #                       S_I:11, X_c:12, X_ch:13, X_pr:14, X_li:15, X_su:16, X_aa:17, X_fa:18, X_c4:19, X_pro:20, X_ac:21,
-    #                       X_h2:22, X_I:23, S_cat:24, S_an:25, H2O:26]
+    #                       X_h2:22, X_I:23, S_cat:24, S_an:25, H2O: 26]
     
     # adm1_vfa_state_arr = [S_su:0, S_aa:1 , S_fa:2, S_la:3, S_et:4, S_va:5, S_bu:6, S_pro:7, S_ac:8, S_h2:9,
     #                       S_ch4:10, S_IC:11, S_IN:12, S_I:13, X_c:14, X_ch:15, X_pr:16, X_li: 17, X_su:18,
-    #                       X_aa:19, X_fa:20, X_la:21, X_et:22, X_c4:23, X_pro:24, X_ac:25, X_h2:26, X_I:27,
-    #                       S_cat:28, S_an:29, H2O:30]
+    #                       X_aa:19, X_fa:20, X_la:21, X_et:22, X_c4:23, X_pro:24, X_ac:25, X_h2:26, X_I:27
+    #                       S_cat:28, S_an:29, H2O: 30]
 
     # original_Cs_ids = cmps.indices(['X_c', 'X_ch', 'X_pr', 'X_li', 'X_su', 'X_aa',
     #                                 'X_fa', 'X_c4', 'X_c4', 'X_pro', 'X_ac', 'X_h2',
@@ -302,7 +303,7 @@ def rhos_adm1_vfa(state_arr, params):
     # Cs = state_arr[Cs_ids]
     Cs[:10] = state_arr[14:24]
     Cs[10:14] = state_arr[23:27]
-    Cs[14:23] = state_arr[18:27]
+    Cs[14:] = state_arr[18:27]
     # substrates_ids = cmps.indices(['S_su', 'S_aa', 'S_fa', 'S_la', 'S_et',
     #                                'S_va', 'S_bu', 'S_pro', 'S_ac', 'S_h2'])
     # substrates = state_arr[substrates_ids]
@@ -312,9 +313,9 @@ def rhos_adm1_vfa(state_arr, params):
     # S_va, S_bu, S_h2, S_ch4, S_IC, S_IN = state_arr[[5,6,9,10,11,12]]
     S_va, S_bu, S_ac, S_h2, S_IN = state_arr[[5,6,8,9,12]] #S_ac:8 added, why we need to add this?
     unit_conversion = mass2mol_conversion(cmps)
-    cmps_in_M = state_arr[:31] * unit_conversion
+    cmps_in_M = state_arr[:31] * unit_conversion #Total Components: 31
     weak_acids = cmps_in_M[[28, 29, 12, 11, 8, 7, 6, 5, 3]] # added S_la:3
-    T_op = state_arr[-1] #cmps the last is H2O
+    T_op = 273.15 + 35
     if T_op == T_base:
         Ka = Kab
         KH = KHb / unit_conversion[9:12] #S_h2:7, S_ch4:8, S_IC:9 in original
@@ -348,12 +349,12 @@ def rhos_adm1_vfa(state_arr, params):
     if S_va > 0: rhos[9] *= 1/(1+S_bu/S_va) #rhos[9]=uptake_va
     if S_bu > 0: rhos[10] *= 1/(1+S_va/S_bu) #rhos[10]=uptake_bu
 
-    h = brenth(acid_base_rxn, 1e-14, 1.0,
-            args=(weak_acids, Ka),
-            xtol=1e-12, maxiter=100)
-    # h = 10**(-7.46)
+    #h = brenth(acid_base_rxn, 1e-14, 1.0,
+    #        args=(weak_acids, Ka),
+    #        xtol=1e-12, maxiter=100)
+    h = 10**(-7.46)
 
-    nh3 = Ka[1] * weak_acids[2] / (Ka[1] + h) #Ka[1]이 뭐야?
+    nh3 = Ka[1] * weak_acids[2] / (Ka[1] + h)
     co2 = weak_acids[3] - Ka[2] * weak_acids[3] / (Ka[2] + h)
     biogas_S[-1] = co2 / unit_conversion[11] #S_IC=9->S_IC=11
     
@@ -366,8 +367,8 @@ def rhos_adm1_vfa(state_arr, params):
     Iac = non_compet_inhibit(S_ac, KI_ac) #Inhibit h2 and la uptake by ac (Iac_h2 or Iac_la)
     #Ih2_la = non_compet_inhibit(S_h2, KI_h2_la) #Inhibit la uptake by h2
     rhos[4:14] *= Iph * Iin #uptake_la, uptake_et added
-    rhos[6:11] *= Ih2
-    rhos[7] *= Iac #Ih2_la = Ih2?
+    rhos[6:11] *= Ih2 #Ih2_la = Ih2?
+    rhos[7] *= Iac
     # rhos[4:12] *= Hill_inhibit(h, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
     # rhos[6:10] *= non_compet_inhibit(S_h2, KIs_h2)
     rhos[12] *= Inh3 #rhos[12]=uptake_acetate
