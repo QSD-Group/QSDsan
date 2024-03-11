@@ -1191,8 +1191,12 @@ class CompiledProcesses(Processes):
         if isa(stoichio, list) and len(v_params) > 0:
             stoichio_vals = []
             for row in stoichio:
-                stoichio_vals.append([v.subs(v_params) if not isa(v, (float, int)) else v for v in row])
-            try: stoichio_vals = np.asarray(stoichio_vals, dtype=float)
+                # stoichio_vals.append([v.subs(v_params) if not isa(v, (float, int)) else v for v in row])
+                stoichio_vals.append([v.evalf(subs=v_params) if not isa(v, (float, int)) else v for v in row])
+            try: 
+                stoichio_vals = np.asarray(stoichio_vals, dtype=float)
+                #!!! round-off error
+                # stoichio_vals[np.abs(stoichio_vals) < 2.22044604925e-16] = 0.0
             except TypeError: pass
             return pd.DataFrame(stoichio_vals, index=self.IDs, columns=self._components.IDs)
         else: return pd.DataFrame(stoichio, index=self.IDs, columns=self._components.IDs)
