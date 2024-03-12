@@ -21,6 +21,7 @@ import numpy as np
 from qsdsan.utils import ospath, data_path
 from scipy.optimize import brenth
 from warnings import warn
+from math import log10
 
 __all__ = ('create_adm1_vfa_cmps', 'ADM1_vfa',
            'non_compet_inhibit', 'substr_inhibit',
@@ -191,7 +192,7 @@ def create_adm1_vfa_cmps(set_thermo=True):
     if set_thermo: settings.set_thermo(cmps_adm1_vfa)
     return cmps_adm1_vfa
 
-create_adm1_vfa_cmps()
+# create_adm1_vfa_cmps()
 
 
 #%%
@@ -261,7 +262,7 @@ def Hill_inhibit(H_ion, ul, ll):
 rhos = np.zeros(26) # 26 kinetic processes (23 as defined in modified ADM1 + 3 for gases)
 Cs = np.empty(23) # 23 kinetic processes as defined in modified ADM1
 
-def rhos_adm1_vfa(state_arr, params):
+def flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+35, pH=False, gas_transfer=True):
     ks = params['rate_constants']
     Ks = params['half_sat_coeffs']
     cmps = params['components']
@@ -315,24 +316,22 @@ def rhos_adm1_vfa(state_arr, params):
     unit_conversion = mass2mol_conversion(cmps)
     cmps_in_M = state_arr[:31] * unit_conversion #Total Components: 31
     weak_acids = cmps_in_M[[28, 29, 12, 11, 8, 7, 6, 5, 3]] # added S_la:3
-    T_op = 273.15 + 35
+
     if T_op == T_base:
-        Ka = Kab
+        Kas = Kab
         KH = KHb / unit_conversion[9:12] #S_h2:7, S_ch4:8, S_IC:9 in original
                                          #S_h2:9, S_ch4:10, S_IC:11
     else:
         T_temp = params.pop('T_op', None)
         if T_op == T_temp:
             params['T_op'] = T_op
-            Ka = params['Ka']
+            Kas = params['Ka']
             KH = params['KH']
         else:
             params['T_op'] = T_op
-            Ka = params['Ka'] = Kab * T_correction_factor(T_base, T_op, Ka_dH)
+            Kas = params['Ka'] = Kab * T_correction_factor(T_base, T_op, Ka_dH)
             KH = params['KH'] = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[9:12]
 
-    biogas_S = state_arr[9:12].copy()
-    biogas_p = R * T_op * state_arr[31:34]
     #Specific definition
     #biogas_p_h2 = R * T_op * state_arr[31]
     #root.data['biogas_p_h2'] = biogas_p_h2
@@ -352,11 +351,20 @@ def rhos_adm1_vfa(state_arr, params):
     #h = brenth(acid_base_rxn, 1e-14, 1.0,
     #        args=(weak_acids, Ka),
     #        xtol=1e-12, maxiter=100)
-    h = 10**(-7.46)
+    # h = 10**(-7.46)
+    if pH: 
+        h = 10**(-pH)
+        delta = acid_base_rxn(h, weak_acids, Kas)
+        S_cat = weak_acids[0] - delta
+        root.data['S_cat'] = S_cat
+    else: 
+        h = brenth(acid_base_rxn, 1e-14, 1.0,
+                   args=(weak_acids, Kas),
+                   xtol=1e-12, maxiter=100)
+        root.data['pH'] = -log10(h)
 
-    nh3 = Ka[1] * weak_acids[2] / (Ka[1] + h)
-    co2 = weak_acids[3] - Ka[2] * weak_acids[3] / (Ka[2] + h)
-    biogas_S[-1] = co2 / unit_conversion[11] #S_IC=9->S_IC=11
+    nh3 = Kas[1] * weak_acids[2] / (Kas[1] + h)
+    # co2 = weak_acids[3] - Kas[2] * weak_acids[3] / (Kas[2] + h)
     
     #Inhibition factors
     Iph = Hill_inhibit(h, pH_ULs, pH_LLs)
@@ -366,15 +374,14 @@ def rhos_adm1_vfa(state_arr, params):
     #Ila_ac = non_compet_inhibit(S_la, KI_la_ac) #Inhibit ac uptake by lac <-In EthanolX, Ila_ac just defined, not used
     Iac = non_compet_inhibit(S_ac, KI_ac) #Inhibit h2 and la uptake by ac (Iac_h2 or Iac_la)
     #Ih2_la = non_compet_inhibit(S_h2, KI_h2_la) #Inhibit la uptake by h2
-    rhos[4:14] *= Iph * Iin #uptake_la, uptake_et added
+    rhos[4:14] *= Iph * Iin #uptake_la, uptake_et added  #!!! Iph and Iin have different lengths
     rhos[6:11] *= Ih2 #Ih2_la = Ih2?
     rhos[7] *= Iac
     # rhos[4:12] *= Hill_inhibit(h, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
     # rhos[6:10] *= non_compet_inhibit(S_h2, KIs_h2)
     rhos[12] *= Inh3 #rhos[12]=uptake_acetate
     rhos[13] *= Iac #rhos[13]=uptake_h2
-    root.data = {
-        'pH':-np.log10(h),
+    root.data.update({
         'Iph':Iph, 
         'Ih2':Ih2, 
         'Iin':Iin,
@@ -382,10 +389,20 @@ def rhos_adm1_vfa(state_arr, params):
         'Iac':Iac, #Iac 추가
         'Monod':Monod,
         'rhos':rhos[4:14].copy() #uptake_la, uptake_et added
-        }
-    rhos[-3:] = kLa * (biogas_S - KH * biogas_p) #biogas_p:partial pressure(bar)
+        })
     # print(rhos)
-    return rhos
+    if gas_transfer:
+        biogas_S = state_arr[9:12].copy()
+        biogas_p = R * T_op * state_arr[31:34]
+        co2 = weak_acids[3] - Kas[2] * weak_acids[3] / (Kas[2] + h)
+        biogas_S[-1] = co2 / unit_conversion[11] # S_IC=9->S_IC=11
+        rhos[-3:] = kLa * (biogas_S - KH * biogas_p) #biogas_p:partial pressure(bar)
+        return rhos
+    else: 
+        return rhos[:-3]
+    
+def rhos_adm1_vfa(state_arr, params):
+    return flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+35, pH=False, gas_transfer=True)
 
 #%%
 # =============================================================================
@@ -722,7 +739,9 @@ class ADM1_vfa(CompiledProcesses):
         # <<<<<<<<<<<<
         
         self.set_rate_function(rhos_adm1_vfa)
+        dct['flex_rate_function'] = flex_rhos_adm1_vfa
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_vals))
+        dct['_parameters']['f_ac_pro_la'] = 0.57
         self.rate_function._params = dict(zip(cls._kinetic_params,
                                               [ks, Ks, pH_ULs, pH_LLs, KS_IN*N_mw,
                                                KI_nh3, KIs_h2, KI_ac, Ka_base, Ka_dH,
@@ -750,7 +769,7 @@ class ADM1_vfa(CompiledProcesses):
         dct['f_ac_la'] = (K_h2_la / (K_h2_la + S_h2)) * f_ac_pro_la
         
         Y_aa=0.08
-        dct['f_pro_h2'] = [(1-Y_aa) * f_pro_la] * (16/96)
+        dct['f_pro_h2'] = (1-Y_aa) * f_pro_la * (16/96)
     # <<<<<<<<<
         
     def set_pKas(self, pKas):

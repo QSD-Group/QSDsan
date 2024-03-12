@@ -1205,11 +1205,16 @@ class CompiledProcesses(Processes):
         dct = self._dyn_params
         dct_vals = self._parameters
         if dct:
-            sbs = [i.symbol for i in dct.values()]
-            lamb = lambdify(sbs, self._stoichiometry, 'numpy')
+            static_params = {k:v for k,v in dct_vals.items() if k not in dct}
+            stoichio = []
+            isa = isinstance
+            for row in self._stoichiometry:
+                stoichio.append([v.evalf(subs=static_params) if not isa(v, (float, int)) else v for v in row])
+            sbs = [symbols(i) for i in dct.keys()]
+            lamb = lambdify(sbs, stoichio, 'numpy')
             arr = np.empty((self.size, len(self._components)))
             def f():
-                v = [v for k,v in dct_vals.items() if k in dct.keys()]
+                v = [dct_vals[k] for k in dct.keys()]
                 arr[:,:] = lamb(*v)
                 return arr
             self.__dict__['_stoichio_lambdified'] = f
