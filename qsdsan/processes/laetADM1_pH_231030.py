@@ -10,7 +10,7 @@ from chemicals.elements import molecular_weight as get_mw
 from qsdsan import processes as pc, WasteStream, System
 # from qsdsan.utils import time_printer
 
-from exposan.metab import UASB, flex_rhos_adm1
+from exposan.metab import UASB
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)        # to ignore Pandas future warning
