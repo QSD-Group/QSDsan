@@ -100,7 +100,7 @@ def create_adm1_vfa_cmps(set_thermo=True):
                                     degradability='Readily',
                                     organic=True)
     
-    # Define 락테이트
+    # Define lactate
     S_la = Component.from_chemical('S_la', chemical='lactate',
                                 description='Lactate',
                                 measured_as='COD',
@@ -108,7 +108,7 @@ def create_adm1_vfa_cmps(set_thermo=True):
                                 degradability='Readily',
                                 organic=True)
     
-    # Define 에탄올
+    # Define ethanol
     S_et = Component.from_chemical('S_et', chemical='Ethanol',
                                     description='Ethanol',
                                     measured_as='COD',
@@ -271,7 +271,7 @@ def flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+35, pH=False, gas_transfer
     pH_LLs = params['pH_LLs']
     KS_IN = params['KS_IN']
     KI_nh3 = params['KI_nh3']
-    KIs_h2 = params['KIs_h2'] #KI_h2_la = params['KI_h2_la']도 포함
+    KIs_h2 = params['KIs_h2'] #Include KI_h2_la = params['KI_h2_la']
     #KIs_la = params['KIs_la'] #added(KI_la_ac;ac by lactate) <-In EthanolX, Ila_ac just defined, not used
     KI_ac = params['KI_ac'] #added(la and h2 by acetate)
     KHb = params['K_H_base']
@@ -402,7 +402,7 @@ def flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+35, pH=False, gas_transfer
         return rhos[:-3]
     
 def rhos_adm1_vfa(state_arr, params):
-    return flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+35, pH=False, gas_transfer=True)
+    return flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+40, pH=False, gas_transfer=True)
 
 #%%
 # =============================================================================
