@@ -374,7 +374,7 @@ def flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+35, pH=False, gas_transfer
     #Ila_ac = non_compet_inhibit(S_la, KI_la_ac) #Inhibit ac uptake by lac <-In EthanolX, Ila_ac just defined, not used
     Iac = non_compet_inhibit(S_ac, KI_ac) #Inhibit h2 and la uptake by ac (Iac_h2 or Iac_la)
     #Ih2_la = non_compet_inhibit(S_h2, KI_h2_la) #Inhibit la uptake by h2
-    rhos[4:14] *= Iph * Iin #uptake_la, uptake_et added  #!!! Iph and Iin have different lengths
+    rhos[4:14] *= Iph * Iin #uptake_la, uptake_et added
     rhos[6:11] *= Ih2 #Ih2_la = Ih2?
     rhos[7] *= Iac
     # rhos[4:12] *= Hill_inhibit(h, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
@@ -713,8 +713,10 @@ class ADM1_vfa(CompiledProcesses):
                          Y_su, Y_aa, Y_fa, Y_la, Y_et, Y_c4, Y_pro, Y_ac, Y_h2)
         #dynamic parameters excluded above, random value assigned
         #Above, how to assign f_pro_h2, 1-Y_h2-f_pro_h2?
-        pH_LLs = np.array([pH_limits_aa[0]]*6 + [pH_limits_ac[0], pH_limits_h2[0]])
-        pH_ULs = np.array([pH_limits_aa[1]]*6 + [pH_limits_ac[1], pH_limits_h2[1]])
+        # pH_LLs = np.array([pH_limits_aa[0]]*6 + [pH_limits_ac[0], pH_limits_h2[0]])
+        # pH_ULs = np.array([pH_limits_aa[1]]*6 + [pH_limits_ac[1], pH_limits_h2[1]])
+        pH_LLs = np.array([pH_limits_aa[0]]*8 + [pH_limits_ac[0], pH_limits_h2[0]])
+        pH_ULs = np.array([pH_limits_aa[1]]*8 + [pH_limits_ac[1], pH_limits_h2[1]])
         ks = np.array((q_dis, q_ch_hyd, q_pr_hyd, q_li_hyd,
                        k_su, k_aa, k_fa, k_la, k_et, k_c4, k_c4, k_pro, k_ac, k_h2,
                        b_su, b_aa, b_fa, b_la, b_et, b_c4, b_pro, b_ac, b_h2))
