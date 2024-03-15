@@ -386,7 +386,7 @@ def flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+35, pH=False, gas_transfer
         'Ih2':Ih2, 
         'Iin':Iin,
         'Inh3':Inh3,
-        'Iac':Iac, #Iac 추가
+        'Iac':Iac, #Iac added
         'Monod':Monod,
         'rhos':rhos[4:14].copy() #uptake_la, uptake_et added
         })
