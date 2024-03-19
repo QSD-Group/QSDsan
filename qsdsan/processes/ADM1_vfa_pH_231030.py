@@ -157,11 +157,11 @@ sys.simulate(state_reset_hook='reset_cache',
 # sys                                                                      # now you have 'outs' info.
 
 #%%
-eff.scope.plot_time_series(('S_aa', 'S_fa', 'S_va', 'S_bu', 'S_pro', 'S_ac'))  # you can plot how each state variable changes over time
+eff.scope.plot_time_series(('S_aa', 'S_fa', 'S_la', 'S_et', 'S_va', 'S_bu', 'S_pro', 'S_ac'))  # you can plot how each state variable changes over time
 
 eff.scope.plot_time_series(('S_IC'))
 
-eff.scope.plot_time_series(('X_aa', 'X_fa', 'X_c4', 'X_pro', 'X_ac', 'X_h2'))
+eff.scope.plot_time_series(('X_aa', 'X_fa', 'X_la', 'X_et', 'X_c4', 'X_pro', 'X_ac', 'X_h2'))
 
 gas.scope.plot_time_series(('S_h2'))
 
