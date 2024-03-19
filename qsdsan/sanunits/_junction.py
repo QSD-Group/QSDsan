@@ -900,7 +900,6 @@ class ASM2dtoADM1(ADMjunction):
         Effluent stream with ADM components.
     adm1_model : obj
         The anaerobic digestion process model (:class:`qsdsan.processes.ADM1`).
-        
     xs_to_li : float
         Split of slowly biodegradable substrate COD to lipid, 
         after all N is mapped into protein.
@@ -945,7 +944,7 @@ class ASM2dtoADM1(ADMjunction):
         cmps_adm = self.outs[0].components
         asm_i_COD = cmps_asm.i_COD
         adm_i_COD = cmps_adm.i_COD
-        non_tkn_idx = cmps_asm.indices(('S_NO', 'S_N2'))
+        non_tkn_idx = cmps_asm.indices(('S_N2', 'S_NO3'))
         asm_i_N = cmps_asm.i_N
         adm_i_N = cmps_adm.i_N
         asm_cod = sum(asm_vals*asm_i_COD)
@@ -1002,11 +1001,11 @@ class ASM2dtoADM1(ADMjunction):
         asm_X_I_i_N = cmps_asm.X_I.i_N
         
         if cmps_asm.X_S.i_N > 0: 
-            warn(f'X_S in ASM has positive nitrogen content: {cmps_asm.X_S.i_N} gN/gCOD. '
+            warn(f'X_S in ASM2d has positive nitrogen content: {cmps_asm.X_S.i_N} gN/gCOD. '
                  'These nitrogen will be ignored by the interface model '
                  'and could lead to imbalance of TKN after conversion.')
-        if cmps_asm.S_S.i_N > 0: 
-            warn(f'S_S in ASM has positive nitrogen content: {cmps_asm.S_S.i_N} gN/gCOD. '
+        if cmps_asm.S_A.i_N > 0: 
+            warn(f'S_A in ASM2d has positive nitrogen content: {cmps_asm.S_S.i_N} gN/gCOD. '
                  'These nitrogen will be ignored by the interface model '
                  'and could lead to imbalance of TKN after conversion.')
         
