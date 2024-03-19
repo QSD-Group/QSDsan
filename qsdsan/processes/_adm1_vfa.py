@@ -375,7 +375,7 @@ def flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+35, pH=False, gas_transfer
     Iac = non_compet_inhibit(S_ac, KI_ac) #Inhibit h2 and la uptake by ac (Iac_h2 or Iac_la)
     #Ih2_la = non_compet_inhibit(S_h2, KI_h2_la) #Inhibit la uptake by h2
     rhos[4:14] *= Iph * Iin #uptake_la, uptake_et added  #!!! Iph and Iin have different lengths
-    rhos[6:11] *= Ih2 #Ih2_la = Ih2?
+    rhos[6:12] *= Ih2 #Ih2_la = Ih2?
     rhos[7] *= Iac
     # rhos[4:12] *= Hill_inhibit(h, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
     # rhos[6:10] *= non_compet_inhibit(S_h2, KIs_h2)
@@ -669,7 +669,7 @@ class ADM1_vfa(CompiledProcesses):
                 k_su=30, k_aa=50, k_fa=6, k_la=5, k_et=6.41, k_c4=20, k_pro=13, k_ac=8, k_h2=35,
                 K_su=0.5, K_aa=0.3, K_fa=0.4, K_la=0.25, K_et=0.91, K_c4=0.2, K_pro=0.1, K_ac=0.15, K_h2=7e-6,
                 b_su=0.02, b_aa=0.02, b_fa=0.02, b_la=0.02, b_et=0.02, b_c4=0.02, b_pro=0.02, b_ac=0.02, b_h2=0.02,
-                KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_h2_la=3e-4, KI_nh3=1.8e-3, KS_IN=1e-4,
+                KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_h2_la=3e-4, KI_h2_et=1e-5, KI_nh3=1.8e-3, KS_IN=1e-4,
                 KI_la_ac=12, KI_ac=0.01,
                 pH_limits_aa=(4,5.5), pH_limits_ac=(6,7), pH_limits_h2=(5,6),
                 T_base=298.15, pKa_base=[14, 9.25, 6.35, 4.76, 4.88, 4.82, 4.86, 3.85],
@@ -713,13 +713,13 @@ class ADM1_vfa(CompiledProcesses):
                          Y_su, Y_aa, Y_fa, Y_la, Y_et, Y_c4, Y_pro, Y_ac, Y_h2)
         #dynamic parameters excluded above, random value assigned
         #Above, how to assign f_pro_h2, 1-Y_h2-f_pro_h2?
-        pH_LLs = np.array([pH_limits_aa[0]]*6 + [pH_limits_ac[0], pH_limits_h2[0]])
-        pH_ULs = np.array([pH_limits_aa[1]]*6 + [pH_limits_ac[1], pH_limits_h2[1]])
+        pH_LLs = np.array([pH_limits_aa[0]]*8 + [pH_limits_ac[0], pH_limits_h2[0]]) #rhos[4:14] *= Iph * Iin, total 10
+        pH_ULs = np.array([pH_limits_aa[1]]*8 + [pH_limits_ac[1], pH_limits_h2[1]]) #rhos[4:14] *= Iph * Iin, total 10
         ks = np.array((q_dis, q_ch_hyd, q_pr_hyd, q_li_hyd,
                        k_su, k_aa, k_fa, k_la, k_et, k_c4, k_c4, k_pro, k_ac, k_h2,
                        b_su, b_aa, b_fa, b_la, b_et, b_c4, b_pro, b_ac, b_h2))
         Ks = np.array((K_su, K_aa, K_fa, K_la, K_et, K_c4, K_c4, K_pro, K_ac, K_h2))
-        KIs_h2 = np.array((KI_h2_fa, KI_h2_c4, KI_h2_c4, KI_h2_pro))
+        KIs_h2 = np.array((KI_h2_fa, KI_h2_la, KI_h2_et, KI_h2_c4, KI_h2_c4, KI_h2_pro)) #rhos[6:12] *= Ih2, total 6
         
         K_H_base = np.array(K_H_base)
         K_H_dH = np.array(K_H_dH)
