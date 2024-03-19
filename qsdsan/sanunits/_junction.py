@@ -1252,19 +1252,13 @@ class ASM2dtoADM1(ADMjunction):
             adm_vals = f_corr(asm_vals, adm_vals)
             
             # Step 7: charge balance
-            asm_charge_tot = _snh/14 - _sno/14 - _salk/12
-            
-            _sa = S_A
-            _snh4 = S_NH4
-            _sno3 = S_NO3
-            _spo4 = S_PO4
-            _salk = S_ALK
-            _xpp = X_PP
-            
+            asm_charge_tot = - _sa/64 + _snh4/14 - _sno3/14 - 1.5*_spo4/31 - _salk - _xpp/31 #Based on page 84 of IWA ASM handbook
             #!!! charge balance should technically include VFAs, 
             # but VFAs concentrations are assumed zero per previous steps??
             S_IN = adm_vals[adm_ions_idx[0]]
-            S_IC = (asm_charge_tot -  S_IN*alpha_IN)/alpha_IC
+            
+            S_IC = (asm_charge_tot -S_IN*alpha_IN)/alpha_IC
+            
             net_Scat = asm_charge_tot + proton_charge
             if net_Scat > 0:  
                 S_cat = net_Scat
@@ -1273,7 +1267,7 @@ class ASM2dtoADM1(ADMjunction):
                 S_cat = 0
                 S_an = -net_Scat
             
-            adm_vals[adm_ions_idx[1:]] = [S_IC, S_cat, S_an]
+            adm_vals[adm_ions_idx[2:]] = [S_IC, S_cat, S_an]
             
             return adm_vals
         
