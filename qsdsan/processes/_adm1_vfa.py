@@ -254,10 +254,10 @@ def pH_inhibit(pH, ul, ll, lower_only=True):
     else:
         return (1+2*10**(0.5*(ll-ul)))/(1+10**(pH-ul)+10**(ll-pH))
 
-def Hill_inhibit(H_ion, ul, ll):
+def Hill_inhibit(h_ion, ul, ll):
     n = 3/(ul-ll)
     K = 10**(-(ul+ll)/2)
-    return 1/(1+(H_ion/K) ** n)
+    return 1/(1+(h_ion/K) ** n)
 
 rhos = np.zeros(26) # 26 kinetic processes (23 as defined in modified ADM1 + 3 for gases)
 Cs = np.empty(23) # 23 kinetic processes as defined in modified ADM1
@@ -351,7 +351,7 @@ def flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+35, pH=False, gas_transfer
     #h = brenth(acid_base_rxn, 1e-14, 1.0,
     #        args=(weak_acids, Ka),
     #        xtol=1e-12, maxiter=100)
-    # h = 10**(-7.46)
+    #h = 10**(-7.46)
     if pH: 
         h = 10**(-pH)
         delta = acid_base_rxn(h, weak_acids, Kas)
