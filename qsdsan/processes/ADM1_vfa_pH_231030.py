@@ -18,17 +18,17 @@ warnings.simplefilter(action='ignore', category=FutureWarning)        # to ignor
 #%%
 # Components
 cmps = pc.create_adm1_vfa_cmps()      # create state variables for laetADM1
-cmps.show()                            # 26 components in ADM1 + water
+# cmps.show()                            # 26 components in ADM1 + water
 
 #%%
 # Processes
 adm1 = pc.ADM1_vfa()                       # create ADM1 processes
-adm1.show()                            # 22 processes in ADM1
+# adm1.show()                            # 22 processes in ADM1
 
-adm1.__dict__                          # adm1 is composed of...
+# adm1.__dict__                          # adm1 is composed of...
 
 # Petersen stoichiometric matrix
-adm1.stoichiometry
+# adm1.stoichiometry
 
 #%%
 # Flow rate, temperature, HRT
@@ -80,7 +80,7 @@ default_inf_kwargs = {
     }                                                           # concentration of each state variable in influent
 
 inf.set_flow_by_concentration(Q, **default_inf_kwargs)          # set influent concentration
-inf
+# inf
 
 #%%
 # SanUnit
@@ -93,9 +93,9 @@ U1 = UASB('UASB', ins=inf, outs=(gas, eff), model=adm1,
                                                                #     The assumed fraction of ideal retention of select components. The default is 0.95.
                                                                #     To make all solids sent to effluent
 
-U1                                                             # anaerobic CSTR with influent, effluent, and biogas
+# U1                                                             # anaerobic CSTR with influent, effluent, and biogas
                                                                # before running the simulation, 'outs' have nothing
-print(f"The liquid volume of the reactor is: {U1.V_liq} m^3")
+# print(f"The liquid volume of the reactor is: {U1.V_liq} m^3")
 
 # Set initial condition of the reactor
 default_init_conds = {
@@ -130,7 +130,7 @@ U1.set_init_conc(**default_init_conds)                          # set initial co
 # System
 sys = System('Anaerobic_Digestion', path=(U1,))                 # aggregation of sanunits
 sys.set_dynamic_tracker(eff, gas, U1)                           # what you want to track changes in concentration
-sys                                                             # before running the simulation, 'outs' have nothing
+# sys                                                             # before running the simulation, 'outs' have nothing
 
 #%%
 # Simulation settings
@@ -153,8 +153,8 @@ sys.simulate(state_reset_hook='reset_cache',
              method=method,
              export_state_to=f'sol_{t}d_{method}_AD.xlsx',               # export simulation result as excel file
             )
-
-sys                                                                      # now you have 'outs' info.
+#
+# sys                                                                      # now you have 'outs' info.
 
 #%%
 eff.scope.plot_time_series(('S_aa', 'S_fa', 'S_va', 'S_bu', 'S_pro', 'S_ac'))  # you can plot how each state variable changes over time
