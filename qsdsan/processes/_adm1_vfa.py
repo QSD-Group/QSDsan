@@ -770,8 +770,8 @@ class ADM1_vfa(CompiledProcesses):
         dct['f_ac_pro_la'] = f_pro_la + f_ac_la
         dct['f_ac_la'] = (K_h2_la / (K_h2_la + S_h2)) * f_ac_pro_la
         
-        Y_aa=0.08
-        dct['f_pro_h2'] = (1-Y_aa) * f_pro_la * (16/96)
+        Y_la=0.06
+        dct['f_pro_h2'] = (1-Y_la) * f_pro_la * (16/96)
     # <<<<<<<<<
         
     def set_pKas(self, pKas):
