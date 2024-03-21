@@ -951,6 +951,7 @@ class ASM2dtoADM1(ADMjunction):
         asm_tkn = sum(asm_vals*asm_i_N) - sum(asm_vals[non_tkn_idx])
         cod_bl, cod_err, cod_tol, adm_cod = self.isbalanced(asm_cod, adm_vals, adm_i_COD)
         tkn_bl, tkn_err, tkn_tol, adm_tkn = self.isbalanced(asm_tkn, adm_vals, adm_i_N)
+        
         if cod_bl:
             if tkn_bl: return adm_vals
             else:
@@ -1273,6 +1274,7 @@ class ASM2dtoADM1(ADMjunction):
         self._reactions = asm2adm
         
 #%%
+
 class ADM1toASM2d(ADMjunction):
     '''
     Interface unit to convert anaerobic digestion model no. 1 (ADM1) components
@@ -1555,8 +1557,7 @@ class ADM1toASM2d(ADMjunction):
     @property
     def alpha_vfa(self):
         return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[3:]-self.pH)))
-
-        
+    
 #%%
 
 class mADM1toASM2d(ADMjunction):
@@ -2156,10 +2157,12 @@ class ASM2dtomADM1(ADMjunction):
             warn(f'S_A in ASM has positive nitrogen content: {cmps_asm.S_S.i_N} gN/gCOD. '
                  'These nitrogen will be ignored by the interface model '
                  'and could lead to imbalance of TKN after conversion.')
+            
         if cmps_asm.S_A.i_P > 0: 
             warn(f'S_A in ASM has positive phosphorous content: {cmps_asm.S_S.i_P} gN/gCOD. '
                  'These phosphorous will be ignored by the interface model '
                  'and could lead to imbalance of TP after conversion.')
+            
         if cmps_asm.S_I.i_P > 0:
             warn(f'S_I in ASM has positive phosphorous content: {cmps_asm.S_I.i_P} gN/gCOD. '
                  'These phosphorous will be ignored by the interface model '
