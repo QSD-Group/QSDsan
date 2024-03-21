@@ -2485,13 +2485,8 @@ class ASM2dtomADM1(ADMjunction):
                     S_PO4 -= (req_sp - S_F_P - X_S_P)
                     S_F_P = X_S_P = 0
                 else:
-                    warn('Additional soluble inert COD is mapped to S_su.')
-                    # Can these be executed in this case? I think so
-                    SI_cod = (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P
-                    S_su += S_I - SI_cod
-                    S_I = SI_cod
-                    S_F_P = X_S_P = S_PO4 = 0
-                    # Should  I redo N balance here? 
+                    S_PO4 -= (req_sp - S_F_P - X_S_P)
+                    S_F_P =  X_S_P = 0
             # N balance
             elif req_sn <= S_ND_asm1 + X_ND_asm1 + supply_inert_n_asm2d:
                 X_ND_asm1 -= (req_sn - S_ND_asm1 - supply_inert_n_asm2d)
@@ -2506,13 +2501,8 @@ class ASM2dtomADM1(ADMjunction):
                     S_PO4 -= (req_sp - S_F_P - X_S_P)
                     S_F_P = X_S_P = 0
                 else:
-                    warn('Additional soluble inert COD is mapped to S_su.')
-                    # Can these be executed in this case? I think so
-                    SI_cod = (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P
-                    S_su += S_I - SI_cod
-                    S_I = SI_cod
-                    S_F_P = X_S_P = S_PO4 = 0
-                    # Should  I redo N balance here? 
+                    S_PO4 -= (req_sp - S_F_P - X_S_P)
+                    S_F_P =  X_S_P = 0
             # N balance
             elif req_sn <= S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d:
                 S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1 - supply_inert_n_asm2d)
@@ -2527,20 +2517,13 @@ class ASM2dtomADM1(ADMjunction):
                     S_PO4 -= (req_sp - S_F_P - X_S_P)
                     S_F_P = X_S_P = 0
                 else:
-                    warn('Additional soluble inert COD is mapped to S_su.')
-                    # Can these be executed in this case? I think so
-                    SI_cod = (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P
-                    S_su += S_I - SI_cod
-                    S_I = SI_cod
-                    S_F_P = X_S_P = S_PO4 = 0
-                    # Should  I redo N balance here? 
+                    S_PO4 -= (req_sp - S_F_P - X_S_P)
+                    S_F_P =  X_S_P = 0
             elif req_sp <= S_F_P or req_sp <= S_F_P + X_S_P or req_sp <= S_F_P + X_S_P + S_PO4:
-                warn('Additional soluble inert COD is mapped to S_su.')
-                SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d)/adm_S_I_i_N
-                S_su += S_I - SI_cod
-                S_I = SI_cod
-                S_ND_asm1 = X_ND_asm1 = S_NH4 = supply_inert_n_asm2d = 0
-                req_sp = S_I * adm_S_I_i_P
+                
+                S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1 - supply_inert_n_asm2d)
+                S_ND_asm1 = X_ND_asm1 = supply_inert_n_asm2d = 0
+                
                 if req_sp <= S_F_P:
                     S_F_P -= req_sp
                 elif req_sp <= S_F_P + X_S_P:
@@ -2570,7 +2553,17 @@ class ASM2dtomADM1(ADMjunction):
                     req_sn = S_I * adm_S_I_i_N
                     S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1 - supply_inert_n_asm2d)
                     S_ND_asm1 = X_ND_asm1 = supply_inert_n_asm2d = 0
+            
+            if S_PO4 < 0:
+                raise RuntimeError('Not enough P in S_F_P, X_S_P and S_PO4 to fully '
+                                   'convert S_I in ASM2d into S_I in ADM1. Consider '
+                                   'increasing the value of P content in S_I (ASM2d)')
                 
+            if S_NH4 < 0:
+                raise RuntimeError('Not enough N in S_I, S_ND_asm1, X_ND_asm1, and S_NH4 to fully '
+                                   'convert S_I in ASM2d into S_I in ADM1. Consider '
+                                   'increasing the value of N content in S_I (ASM2d)')
+        
             # Step 6: Step map any remaining TKN/P
             S_IN = S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d
             S_IP = S_F_P + X_S_P + S_PO4            
