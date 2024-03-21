@@ -2615,16 +2615,17 @@ class ASM2dtomADM1(ADMjunction):
             
             # Step 7: charge balance
             asm_charge_tot = - _sa/64 + _snh4/14 - _sno3/14 - 1.5*_spo4/31 - _salk - _xpp/31 #Based on page 84 of IWA ASM handbook
-            #!!! charge balance should technically include VFAs, 
-            # but VFAs concentrations are assumed zero per previous steps??
+            
+            #!!! charge balance should technically include VFAs, S_K, S_Mg,
+            # but since their concentrations are assumed zero it is acceptable.
             
             S_IN = adm_vals[adm_ions_idx[0]]
             S_IP = adm_vals[adm_ions_idx[1]]
-            #!!! charge balance from ADM1 should technically include S_K, and S_Mg,
-            #but since both are zero, it is acceptable 
             
             S_IC = (asm_charge_tot -S_IN*alpha_IN -S_IP*alpha_IP)/alpha_IC
             
+            # proton_charge = (OH)^-1 - (H)^+1
+            # net_Scat = Scat - San
             net_Scat = asm_charge_tot + proton_charge
             
             if net_Scat > 0:  
