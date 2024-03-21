@@ -262,7 +262,7 @@ def Hill_inhibit(h_ion, ul, ll):
 rhos = np.zeros(26) # 26 kinetic processes (23 as defined in modified ADM1 + 3 for gases)
 Cs = np.empty(23) # 23 kinetic processes as defined in modified ADM1
 
-def flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+35, pH=False, gas_transfer=True):
+def flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+40, pH=False, gas_transfer=True):
     ks = params['rate_constants']
     Ks = params['half_sat_coeffs']
     cmps = params['components']

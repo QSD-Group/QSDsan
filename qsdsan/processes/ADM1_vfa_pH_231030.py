@@ -34,7 +34,7 @@ adm1 = pc.ADM1_vfa()                       # create ADM1 processes
 # Flow rate, temperature, HRT
 # Q = 0.00007                                          # influent flowrate [m3/d]
 Q = 7                                               #!!! increasing Q shouldn't affect process simulation, but it'd increase numerical stability
-Temp = 273.15 + 35                                    # temperature [K]
+Temp = 273.15 + 40                                    # temperature [K]
 HRT = 20                                            # HRT [d]
 
 #%%
@@ -168,7 +168,7 @@ gas.scope.plot_time_series(('S_h2'))
 gas.scope.plot_time_series(('S_ch4','S_IC', 'S_h2'))
 #%%
 # Total VFAs = 'S_va' + 'S_bu' + 'S_pro' + 'S_ac'    (you can change the equations based on your assumption)
-idx_vfa = cmps.indices(['S_va', 'S_bu', 'S_pro', 'S_ac'])
+idx_vfa = cmps.indices(['S_va', 'S_la', 'S_bu', 'S_pro', 'S_ac']) #S_la as vfa
 idx_h2 = cmps.indices(['S_h2'])
 idx_ch4 = cmps.indices(['S_ch4'])
 idx_co2 = cmps.indices(['S_IC'])
