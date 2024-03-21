@@ -2029,6 +2029,11 @@ class ASM2dtomADM1(ADMjunction):
     bio_to_li = 0.4
     frac_deg = 0.68
     
+    # Since we are matching PAOs directly from ASM2d to mADM1, it is important 
+    # for PAOs to have identical N/P content across models
+    
+    adm_X_PAO_i_N = 0.07 
+    adm_X_PAO_i_P = 0.02
     
     def isbalanced(self, lhs, rhs_vals, rhs_i):
         rhs = sum(rhs_vals*rhs_i)
@@ -2187,14 +2192,24 @@ class ASM2dtomADM1(ADMjunction):
         
         # Check for X_PAO (measured as COD so i_COD = 1 in both ASM2d and ADM1)
         asm_X_PAO_i_N = cmps_asm.X_PAO.i_N
-        adm_X_PAO_i_N = cmps_adm.X_PAO.i_N
+        
+        if self.adm_X_PAO_i_N == None:
+            adm_X_PAO_i_N = cmps_adm.X_PAO.i_N
+        else:
+            adm_X_PAO_i_N = self.adm_X_PAO_i_N
+            
         if asm_X_PAO_i_N != adm_X_PAO_i_N:
             raise RuntimeError('X_PAO cannot be directly mapped as N content'
                                f'in asm2d_X_PAO_i_N = {asm_X_PAO_i_N} is not equal to'
                                f'adm_X_PAO_i_N = {adm_X_PAO_i_N}')
             
         asm_X_PAO_i_P = cmps_asm.X_PAO.i_P
-        adm_X_PAO_i_P = cmps_adm.X_PAO.i_P
+        
+        if self.adm_X_PAO_i_P == None:
+            adm_X_PAO_i_P = cmps_adm.X_PAO.i_P
+        else:
+            adm_X_PAO_i_P = self.adm_X_PAO_i_P
+        
         if asm_X_PAO_i_P != adm_X_PAO_i_P:
             raise RuntimeError('X_PAO cannot be directly mapped as P content'
                                f'in asm2d_X_PAO_i_P = {asm_X_PAO_i_P} is not equal to'
@@ -2602,12 +2617,16 @@ class ASM2dtomADM1(ADMjunction):
             asm_charge_tot = - _sa/64 + _snh4/14 - _sno3/14 - 1.5*_spo4/31 - _salk - _xpp/31 #Based on page 84 of IWA ASM handbook
             #!!! charge balance should technically include VFAs, 
             # but VFAs concentrations are assumed zero per previous steps??
+            
             S_IN = adm_vals[adm_ions_idx[0]]
             S_IP = adm_vals[adm_ions_idx[1]]
             #!!! charge balance from ADM1 should technically include S_K, and S_Mg,
             #but since both are zero, it is acceptable 
+            
             S_IC = (asm_charge_tot -S_IN*alpha_IN -S_IP*alpha_IP)/alpha_IC
+            
             net_Scat = asm_charge_tot + proton_charge
+            
             if net_Scat > 0:  
                 S_cat = net_Scat
                 S_an = 0
