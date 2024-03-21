@@ -22,6 +22,7 @@ from .. import SanUnit, processes as pc
 __all__ = (
     'Junction',
     'ADMjunction', 
+    'mADMjunction',
     'ADMtoASM', 
     'ASMtoADM', 
     'ASM2dtoADM1', 
@@ -292,7 +293,7 @@ class ADMjunction(Junction):
     def adm1_model(self, model):
         if not isinstance(model, pc.ADM1):
             raise ValueError('`adm1_model` must be an `AMD1` object, '
-                             f'the given object is {type(model).__name__}.')
+                              f'the given object is {type(model).__name__}.')
         self._adm1_model = model
         
     @property
@@ -334,6 +335,127 @@ class ADMjunction(Junction):
         pKa_IN = self.pKa[1]
         return 10**(pKa_IN-pH)/(1+10**(pKa_IN-pH))/14
     
+    def _compile_AE(self):
+        _state = self._state
+        _dstate = self._dstate
+        _cached_state = self._cached_state
+        _update_state = self._update_state
+        _update_dstate = self._update_dstate
+        rxn = self.reactions
+               
+        def yt(t, QC_ins, dQC_ins):
+            before_vals = QC_ins[0,:-1]
+            _state[:-1] = rxn(before_vals)
+            _state[-1] = QC_ins[0,-1]
+            if t > self._cached_t:
+                _dstate[:] = (_state - _cached_state)/(t-self._cached_t)
+            _cached_state[:] = _state
+            self._cached_t = t
+            _update_state()
+            _update_dstate()
+        
+        self._AE = yt
+#%%
+
+class mADMjunction(Junction):
+    '''
+    An abstract superclass holding common properties of ADM interface classes.
+    Users should use its subclasses (e.g., ``ASMtoADM``, ``ADMtoASM``) instead.
+    
+    See Also
+    --------
+    :class:`qsdsan.sanunits.Junction`
+    
+    :class:`qsdsan.sanunits.ADMtoASM`
+    
+    :class:`qsdsan.sanunits.ASMtoADM`
+    '''
+    _parse_reactions = Junction._no_parse_reactions
+    rtol = 1e-2
+    atol = 1e-6
+    
+    def __init__(self, ID='', upstream=None, downstream=(), thermo=None,
+                 init_with='WasteStream', F_BM_default=None, isdynamic=False,
+                 adm1_model=None):
+        self.adm1_model = adm1_model # otherwise there won't be adm1_model when `_compile_reactions` is called
+        if thermo is None:
+            warn('No `thermo` object is provided and is prone to raise error. '
+                 'If you are not sure how to get the `thermo` object, '
+                 'use `thermo = qsdsan.set_thermo` after setting thermo with the `Components` object.')
+        super().__init__(ID=ID, upstream=upstream, downstream=downstream,
+                         thermo=thermo, init_with=init_with, 
+                         F_BM_default=F_BM_default, isdynamic=isdynamic)
+        
+   
+    @property
+    def T(self):
+        '''[float] Temperature of the upstream/downstream [K].'''
+        return self.ins[0].T
+    @T.setter
+    def T(self, T):
+        self.ins[0].T = self.outs[0].T = T
+    
+    @property
+    def pH(self):
+        '''[float] pH of the upstream/downstream.'''
+        return self.ins[0].pH
+    
+    @property
+    def adm1_model(self):
+        '''[qsdsan.Process] ADM process model.'''
+        return self._adm1_model
+    @adm1_model.setter
+    def adm1_model(self, model):
+        if not isinstance(model, pc.ADM1_p_extension):
+            raise ValueError('`adm1_model` must be an `AMD1` object, '
+                              f'the given object is {type(model).__name__}.')
+        self._adm1_model = model
+        
+    @property
+    def T_base(self):
+        '''[float] Base temperature in the ADM1 model.'''
+        return self.adm1_model.rate_function.params['T_base']
+    
+    @property
+    def pKa_base(self):
+        '''[float] pKa of the acid-base pairs at the base temperature in the ADM1 model.'''
+        Ka_base = self.adm1_model.rate_function.params['Ka_base']
+        return -np.log10(Ka_base)
+    
+    @property
+    def Ka_dH(self):
+        '''[float] Heat of reaction for Ka.'''
+        return self.adm1_model.rate_function.params['Ka_dH']
+    
+    @property
+    def pKa(self):
+        '''
+        [numpy.array] pKa array of the following acid-base pairs:
+        ('H+', 'OH-'), ('NH4+', 'NH3'), ('CO2', 'HCO3-'),
+        ('HAc', 'Ac-'), ('HPr', 'Pr-'), ('HBu', 'Bu-'), ('HVa', 'Va-')
+        '''
+        return self.pKa_base-np.log10(np.exp(pc.T_correction_factor(self.T_base, self.T, self.Ka_dH)))
+    
+    @property
+    def alpha_IC(self):
+        '''[float] Charge per g of C.'''
+        pH = self.pH
+        pKa_IC = self.pKa[3]
+        return -1/(1+10**(pKa_IC-pH))/12
+
+    @property
+    def alpha_IN(self):
+        '''[float] Charge per g of N.'''
+        pH = self.pH
+        pKa_IN = self.pKa[1]
+        return 10**(pKa_IN-pH)/(1+10**(pKa_IN-pH))/14
+    
+    @property
+    def alpha_IP(self):
+        '''[float] Charge per g of P.'''
+        pH = self.pH
+        pKa_IP = self.pKa[2]
+        return 10**(pKa_IP-pH)/(1+10**(pKa_IP-pH))/31
         
     def _compile_AE(self):
         _state = self._state
