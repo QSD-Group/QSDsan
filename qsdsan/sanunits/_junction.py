@@ -431,17 +431,10 @@ class mADMjunction(Junction):
     def pKa(self):
         '''
         [numpy.array] pKa array of the following acid-base pairs:
-        ('H+', 'OH-'), ('NH4+', 'NH3'), ('CO2', 'HCO3-'),
+        ('H+', 'OH-'), ('NH4+', 'NH3'), ('H3PO4', 'H2PO4 2-'), ('CO2', 'HCO3-'),
         ('HAc', 'Ac-'), ('HPr', 'Pr-'), ('HBu', 'Bu-'), ('HVa', 'Va-')
         '''
         return self.pKa_base-np.log10(np.exp(pc.T_correction_factor(self.T_base, self.T, self.Ka_dH)))
-    
-    @property
-    def alpha_IC(self):
-        '''[float] Charge per g of C.'''
-        pH = self.pH
-        pKa_IC = self.pKa[3]
-        return -1/(1+10**(pKa_IC-pH))/12
 
     @property
     def alpha_IN(self):
@@ -456,6 +449,13 @@ class mADMjunction(Junction):
         pH = self.pH
         pKa_IP = self.pKa[2]
         return 10**(pKa_IP-pH)/(1+10**(pKa_IP-pH))/31
+    
+    @property
+    def alpha_IC(self):
+        '''[float] Charge per g of C.'''
+        pH = self.pH
+        pKa_IC = self.pKa[3]
+        return -1/(1+10**(pKa_IC-pH))/12
         
     def _compile_AE(self):
         _state = self._state
@@ -2106,7 +2106,7 @@ class mADM1toASM2d(ADMjunction):
 # %%
 
 # While using this interface X_I.i_N in ASM2d should be 0.06, instead of 0.02. 
-class ASM2dtomADM1(ADMjunction):
+class ASM2dtomADM1(mADMjunction):
     '''
     Interface unit to convert activated sludge model (ASM) components
     to anaerobic digestion model (ADM) components.
