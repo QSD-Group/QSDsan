@@ -21,7 +21,12 @@ from .. import SanUnit, processes as pc
 
 __all__ = (
     'Junction',
-    'ADMjunction', 'ADMtoASM', 'ASMtoADM', 'ASM2dtoADM1', 'ADM1toASM2d'
+    'ADMjunction', 
+    'ADMtoASM', 
+    'ASMtoADM', 
+    'ASM2dtoADM1', 
+    'ADM1toASM2d',
+    'ASM2dtomADM1',
           )
 
 #%%
@@ -2149,7 +2154,6 @@ class ASM2dtomADM1(ADMjunction):
         X_AUT_i_N = cmps_asm.X_AUT.i_N
         S_F_i_N = cmps_asm.S_F.i_N
         X_S_i_N = cmps_asm.X_S.i_N
-        
         
         # Due to issue with mapping of X_I across ASM2d and ADM1, making this user dependent is important
         if self.asm_X_I_i_N == None:
