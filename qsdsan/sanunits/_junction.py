@@ -2034,6 +2034,7 @@ class ASM2dtomADM1(ADMjunction):
     
     adm_X_PAO_i_N = 0.07 
     adm_X_PAO_i_P = 0.02
+    asm_X_I_i_N = 0.06
     
     def isbalanced(self, lhs, rhs_vals, rhs_i):
         rhs = sum(rhs_vals*rhs_i)
@@ -2046,7 +2047,7 @@ class ASM2dtomADM1(ADMjunction):
         cmps_adm = self.outs[0].components
         asm_i_COD = cmps_asm.i_COD
         adm_i_COD = cmps_adm.i_COD
-        non_tkn_idx = cmps_asm.indices(('S_NO', 'S_N2'))
+        non_tkn_idx = cmps_asm.indices(('S_N2', 'S_NO3'))
         asm_i_N = cmps_asm.i_N
         adm_i_N = cmps_adm.i_N
         asm_i_P = cmps_asm.i_P
@@ -2148,7 +2149,14 @@ class ASM2dtomADM1(ADMjunction):
         X_AUT_i_N = cmps_asm.X_AUT.i_N
         S_F_i_N = cmps_asm.S_F.i_N
         X_S_i_N = cmps_asm.X_S.i_N
-        asm_X_I_i_N = cmps_asm.X_I.i_N
+        
+        
+        # Due to issue with mapping of X_I across ASM2d and ADM1, making this user dependent is important
+        if self.asm_X_I_i_N == None:
+            asm_X_I_i_N = cmps_asm.X_I.i_N
+        else:
+            asm_X_I_i_N = self.asm_X_I_i_N
+        
         asm_S_I_i_N = cmps_asm.S_I.i_N
         
         # For P balance
