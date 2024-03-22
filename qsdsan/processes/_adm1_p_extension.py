@@ -562,7 +562,9 @@ class ADM1_p_extension(CompiledProcesses):
     Ka_dH : iterable[float], optional
         Heat of reaction of each acid-base pair at base temperature [J/mol], 
         following the order of `ADM1._acid_base_pairs`. The default is 
-        [55900, 51965, 7646, 0, 0, 0, 0].
+        [55900, 51965, 5000, 7646, 0, 0, 0, 0].
+        ('H+', 'OH-'), ('NH4+', 'NH3'), ('H3PO4', 'H2PO4 2-'), ('CO2', 'HCO3-'),
+        ('HAc', 'Ac-'), ('HPr', 'Pr-'), ('HBu', 'Bu-'), ('HVa', 'Va-')
     kLa : float, optional
         Liquid-gas mass transfer coefficient [d^(-1)]. The default is 200.
     K_H_base : iterable[float], optional
@@ -629,7 +631,7 @@ class ADM1_p_extension(CompiledProcesses):
                 KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_nh3=1.8e-3, KS_IN=1e-4, KS_IP=2e-5, 
                 pH_limits_aa=(4,5.5), pH_limits_ac=(6,7), pH_limits_h2=(5,6),
                 T_base=298.15, pKa_base=[14, 9.25, 2.12, 6.35, 4.76, 4.88, 4.82, 4.86],
-                Ka_dH=[55900, 51965, 7646, 0, 0, 0, 0],
+                Ka_dH=[55900, 51965, 5000, 7646, 0, 0, 0, 0],
                 kLa=200, K_H_base=[7.8e-4, 1.4e-3, 3.5e-2],
                 K_H_dH=[-4180, -14240, -19410],
                 **kwargs):
