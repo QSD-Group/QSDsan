@@ -378,6 +378,7 @@ class mADMjunction(Junction):
                  init_with='WasteStream', F_BM_default=None, isdynamic=False,
                  adm1_model=None):
         self.adm1_model = adm1_model # otherwise there won't be adm1_model when `_compile_reactions` is called
+        
         if thermo is None:
             warn('No `thermo` object is provided and is prone to raise error. '
                  'If you are not sure how to get the `thermo` object, '
@@ -2180,7 +2181,12 @@ class ASM2dtomADM1(mADMjunction):
         asm_i_P = cmps_asm.i_P
         adm_i_P = cmps_adm.i_P
         asm_cod = sum(asm_vals*asm_i_COD)
-        asm_tkn = sum(asm_vals*asm_i_N) - sum(asm_vals[non_tkn_idx])
+        
+        # to ensure correct mechanism to check TN balance in case of mADM1 interfaces 
+        X_I_asm = cmps_asm.indices(('X_I',))
+        X_I_adm = cmps_adm.indices(('X_I',))
+        asm_tkn = sum(asm_vals*asm_i_N) - sum(asm_vals[non_tkn_idx]) - asm_vals[X_I_asm]*asm_i_N[X_I_asm] + asm_vals[X_I_asm]*adm_i_N[X_I_adm]
+        
         asm_tp = sum(asm_vals*asm_i_P)
         cod_bl, cod_err, cod_tol, adm_cod = self.isbalanced(asm_cod, adm_vals, adm_i_COD)
         tkn_bl, tkn_err, tkn_tol, adm_tkn = self.isbalanced(asm_tkn, adm_vals, adm_i_N)
@@ -2227,7 +2233,7 @@ class ASM2dtomADM1(mADMjunction):
                         f'effluent TKN is {adm_tkn} or {adm_tkn*(1+dtkn)}. '
                         'To balance TKN please ensure ASM2d(X_I.i_N) = ADM1(X_I.i_N)')
                     return adm_vals
-        elif cod_bl and tkn_bl:
+        elif cod_bl and tkn_bl: 
             if tp_bl:
                 return adm_vals
             else:
