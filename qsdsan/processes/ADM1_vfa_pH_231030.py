@@ -44,13 +44,13 @@ eff = WasteStream('Effluent', T=Temp)               # effluent
 gas = WasteStream('Biogas')                         # gas
 
 #%%
-# Set influent concentration
+# Set influent concentration (growth medium (glucose))
 C_mw = get_mw({'C':1})        # molecular weight of carbon
 N_mw = get_mw({'N':1})        # molecular weight of nitrogen
 
 default_inf_kwargs = {
     'concentrations': {
-        'S_su':20,
+        'S_su':20.168,                                              # fixed according to R3G20
         'S_aa':0,
         'S_fa':0,
         'S_la':0,
@@ -80,7 +80,7 @@ default_inf_kwargs = {
         'S_cat':2,
         'S_an':1,
         },
-    'units': ('m3/d', 'kg/m3'),
+    'units': ('m3/d', 'kg/m3'),                                 # kg/m3 = g/L
     }                                                           # concentration of each state variable in influent
 
 inf.set_flow_by_concentration(Q, **default_inf_kwargs)          # set influent concentration
@@ -101,7 +101,7 @@ U1 = UASB('UASB', ins=inf, outs=(gas, eff), model=adm1,
                                                                # before running the simulation, 'outs' have nothing
 # print(f"The liquid volume of the reactor is: {U1.V_liq} m^3")
 
-# Set initial condition of the reactor
+# Set initial condition of the reactor (Cow manure (Inoculum) in bioreactor)
 default_init_conds = {
     'S_su': 0,
     'S_aa': 0,
@@ -109,9 +109,9 @@ default_init_conds = {
     'S_la': 0,
     'S_et': 0,
     'S_va': 0,
-    'S_bu': 0,
-    'S_pro': 0,
-    'S_ac': 0,
+    'S_bu': 0.49*1e3,                                       # fixed according to R3G20
+    'S_pro': 1.015*1e3,                                     # fixed according to R3G20
+    'S_ac': 1.721*1e3,                                      # fixed according to R3G20
     'S_h2': 0,
     'S_ch4': 0,
     'S_IC': 0,
@@ -120,16 +120,16 @@ default_init_conds = {
     'X_ch': 10*1e3,
     'X_pr': 10*1e3,
     'X_li': 10*1e3,
-    'X_su': 0.5*1e3,
-    'X_aa': 0.5*1e3,
-    'X_fa': 0.5*1e3,
-    'X_la': 0,
-    'X_et': 0,
-    'X_c4': 0.5*1e3,
-    'X_pro': 0.5*1e3,
-    'X_ac': 1*1e3,
-    'X_h2': 1*1e3,
-    'X_I': 0.5*1e3
+    'X_su': 5.0*1e3,
+    'X_aa': 1.0*1e3,
+    'X_fa': 5.0*1e3,
+    'X_la': 10*1e3,
+    'X_et': 1.0*1e3,
+    'X_c4': 5.0*1e3,
+    'X_pro': 5.0*1e3,
+    'X_ac': 0.1*1e1,
+    'X_h2': 0.1*1e2,
+    'X_I': 0.5*1e2
     }                   # in mg/L
 
 U1.set_init_conc(**default_init_conds)                          # set initial condition of AD
