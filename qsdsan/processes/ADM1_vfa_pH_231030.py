@@ -18,11 +18,11 @@ warnings.simplefilter(action='ignore', category=FutureWarning)        # to ignor
 #%%
 # Components
 cmps = pc.create_adm1_vfa_cmps()      # create state variables for laetADM1
-# cmps.show()                            # 26 components in ADM1 + water
+# cmps.show()                         # 30 components in ADM1_vfa + water
 
 #%%
 # Processes
-adm1 = pc.ADM1_vfa()                       # create ADM1 processes
+adm1 = pc.ADM1_vfa()                     # create ADM1 processes
 # adm1.show()                            # 22 processes in ADM1
 
 # adm1.__dict__                          # adm1 is composed of...
@@ -31,10 +31,10 @@ adm1 = pc.ADM1_vfa()                       # create ADM1 processes
 # adm1.stoichiometry
 
 #%%
-# Flow rate, temperature, HRT
-# Q = 0.00007                                          # influent flowrate [m3/d]
+# Flow rate, temperature, HRT (R3G20)
+# Q = 0.00007                                       # influent flowrate [m3/d]
 Q = 7                                               #!!! increasing Q shouldn't affect process simulation, but it'd increase numerical stability
-Temp = 273.15 + 40                                    # temperature [K]
+Temp = 273.15 + 40                                  # temperature [K]
 HRT = 20                                            # HRT [d]
 
 #%%
@@ -53,6 +53,8 @@ default_inf_kwargs = {
         'S_su':20,
         'S_aa':0,
         'S_fa':0,
+        'S_la':0,
+        'S_et':0,
         'S_va':0,
         'S_bu':0,
         'S_pro':0,
@@ -68,6 +70,8 @@ default_inf_kwargs = {
         'X_li':0,
         'X_aa':0,
         'X_fa':0,
+        'X_la':0,
+        'X_et':0,
         'X_c4':0,
         'X_pro':0,
         'X_ac':0,
@@ -86,8 +90,8 @@ inf.set_flow_by_concentration(Q, **default_inf_kwargs)          # set influent c
 # SanUnit
 U1 = UASB('UASB', ins=inf, outs=(gas, eff), model=adm1,
           V_liq=Q*HRT, V_gas=Q*HRT*0.1,
-          T=Temp, pH_ctrl=5,
-          fraction_retain=0)                                   # needs to set this value properly to represent solid retention efficacy
+          T=Temp, pH_ctrl=False,                               # pH adjustment X
+          fraction_retain=0.95)                                # needs to set this value properly to represent solid retention efficacy
 
                                                                # fraction_retain : float, optional
                                                                #     The assumed fraction of ideal retention of select components. The default is 0.95.
@@ -102,6 +106,8 @@ default_init_conds = {
     'S_su': 0,
     'S_aa': 0,
     'S_fa': 0,
+    'S_la': 0,
+    'S_et': 0,
     'S_va': 0,
     'S_bu': 0,
     'S_pro': 0,
@@ -117,6 +123,8 @@ default_init_conds = {
     'X_su': 0.5*1e3,
     'X_aa': 0.5*1e3,
     'X_fa': 0.5*1e3,
+    'X_la': 0,
+    'X_et': 0,
     'X_c4': 0.5*1e3,
     'X_pro': 0.5*1e3,
     'X_ac': 1*1e3,
@@ -134,7 +142,7 @@ sys.set_dynamic_tracker(eff, gas, U1)                           # what you want 
 
 #%%
 # Simulation settings
-t = 20                         # total time for simulation
+t = 40                        # total time for simulation
 t_step = 1                    # times at which to store the computed solution
 
 method = 'BDF'                  # integration method to use
@@ -159,13 +167,15 @@ sys.simulate(state_reset_hook='reset_cache',
 #%%
 eff.scope.plot_time_series(('S_aa', 'S_fa', 'S_la', 'S_et', 'S_va', 'S_bu', 'S_pro', 'S_ac'))  # you can plot how each state variable changes over time
 
+eff.scope.plot_time_series(('S_su', 'S_et'))
+
 eff.scope.plot_time_series(('S_IC'))
 
 eff.scope.plot_time_series(('X_aa', 'X_fa', 'X_la', 'X_et', 'X_c4', 'X_pro', 'X_ac', 'X_h2'))
 
 gas.scope.plot_time_series(('S_h2'))
 
-gas.scope.plot_time_series(('S_ch4','S_IC', 'S_h2'))
+gas.scope.plot_time_series(('S_h2','S_ch4', 'S_IC'))
 #%%
 # Total VFAs = 'S_va' + 'S_bu' + 'S_pro' + 'S_ac'    (you can change the equations based on your assumption)
 idx_vfa = cmps.indices(['S_va', 'S_la', 'S_bu', 'S_pro', 'S_ac']) #S_la as vfa
@@ -189,6 +199,28 @@ plt.ylabel("Total VFA [mg/l]")
 # print(f"Maximum total VFA during the simulation is: {max_vfa:.2f} mg/L")
 
 
+#%%
+#!!!Plot for varying pH over time
+pH_values = []
+time_steps = np.arange(0, 41, 1)  # 예를 들어, 0일부터 40일까지 시뮬레이션
+
+# 시뮬레이션 루프 (가상의 코드)
+for time in time_steps:
+    # 시뮬레이션 로직...
+    # pH 계산 부분을 포함하여 시뮬레이션 실행
+    # 예시: pH = calculate_pH(...)  # calculate_pH는 pH를 계산하는 가상의 함수
+    
+    # 계산된 pH 값을 리스트에 추가
+    pH_values.append(adm1.rate_function._params.root.data['pH'])  # 실제 코드에서는 calculate_pH 함수의 결과를 사용
+
+# 시간에 따른 pH 변화 그래프 그리기
+plt.figure(figsize=(10, 6))
+plt.plot(time_steps, pH_values, marker='o', linestyle='-', color='blue')
+plt.title('pH Variation Over Time')
+plt.xlabel('Time (days)')
+plt.ylabel('pH')
+plt.grid(True)
+plt.show()
 #%%
 # pH levels
 pH_levels = [4, 5, 6, 7, 8]
@@ -274,4 +306,48 @@ plt.xlabel("Time [day]")
 plt.ylabel("CO2 [mg/L]")
 plt.legend()
 plt.grid(True)
+plt.show()
+#%%
+
+# Extracting indices for each component
+idx_s_aa = cmps.indices(['S_aa'])[0]
+idx_s_fa = cmps.indices(['S_fa'])[0]
+idx_s_la = cmps.indices(['S_la'])[0]
+idx_s_et = cmps.indices(['S_et'])[0]
+idx_s_va = cmps.indices(['S_va'])[0]
+idx_s_bu = cmps.indices(['S_bu'])[0]
+idx_s_pro = cmps.indices(['S_pro'])[0]
+idx_s_ac = cmps.indices(['S_ac'])[0]
+
+# Extracting concentration data for each component
+data_s_aa = eff.scope.record[:, idx_s_aa]
+data_s_fa = eff.scope.record[:, idx_s_fa]
+data_s_la = eff.scope.record[:, idx_s_la]
+data_s_et = eff.scope.record[:, idx_s_et]
+data_s_va = eff.scope.record[:, idx_s_va]
+data_s_bu = eff.scope.record[:, idx_s_bu]
+data_s_pro = eff.scope.record[:, idx_s_pro]
+data_s_ac = eff.scope.record[:, idx_s_ac]
+
+# Time stamps
+time_stamps = eff.scope.time_series
+
+# Stacking data for cumulative plotting
+cumulative_data = np.vstack((data_s_aa, data_s_fa, data_s_la, data_s_et, data_s_va, data_s_bu, data_s_pro, data_s_ac)).T
+cumulative_sums = np.cumsum(cumulative_data, axis=1)
+
+# Plotting
+plt.figure(figsize=(12, 8))
+components = ['S_aa', 'S_fa', 'S_la', 'S_et', 'S_va', 'S_bu', 'S_pro', 'S_ac']
+colors = plt.cm.tab10(np.linspace(0, 1, len(components)))  # Optional: specify a colormap for the bars
+
+for i, (component, color) in enumerate(zip(components, colors)):
+    plt.bar(time_stamps, cumulative_sums[:, i] if i == 0 else cumulative_sums[:, i] - cumulative_sums[:, i-1],
+            bottom=None if i == 0 else cumulative_sums[:, i-1],
+            label=component, color=color)
+
+plt.xlabel('Time [day]')
+plt.ylabel('Concentration [mg/L]')
+plt.title('Cumulative Concentration of Components Over Time')
+plt.legend()
 plt.show()
