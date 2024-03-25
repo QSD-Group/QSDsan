@@ -120,16 +120,16 @@ default_init_conds = {
     'X_ch': 10*1e3,
     'X_pr': 10*1e3,
     'X_li': 10*1e3,
-    'X_su': 5.0*1e3,
-    'X_aa': 1.0*1e3,
-    'X_fa': 5.0*1e3,
-    'X_la': 10*1e3,
-    'X_et': 1.0*1e3,
-    'X_c4': 5.0*1e3,
-    'X_pro': 5.0*1e3,
-    'X_ac': 0.1*1e1,
-    'X_h2': 0.1*1e2,
-    'X_I': 0.5*1e2
+    'X_su': 10*1e3,
+    'X_aa': 10*1e3,
+    'X_fa': 10*1e3,
+    'X_la': 0.1*1e2,
+    'X_et': 0.1*1e2,
+    'X_c4': 0.1*1e2,
+    'X_pro': 0.1*1e2,
+    'X_ac': 10*1e5,
+    'X_h2': 10*1e3,
+    'X_I': 10*1e3
     }                   # in mg/L
 
 U1.set_init_conc(**default_init_conds)                          # set initial condition of AD
