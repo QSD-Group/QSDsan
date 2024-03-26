@@ -1907,57 +1907,61 @@ class mADM1toASM2d(ADMjunction):
             _ions = np.array([S_IN, S_IC, S_IP, X_PP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
             
             # Step 1a: convert biomass into X_S+X_ND
+            
+            # What is available
             bio_cod = X_su + X_aa + X_fa + X_c4 + X_pro + X_ac + X_h2
             bio_n = sum((adm_vals*adm_i_N)[adm_bio_N_indices])
             bio_p = sum((adm_vals*adm_i_P)[adm_bio_P_indices])
             
-            # X_S = bio_cod - X_P
             
-            # COD balance
-            X_S = bio_cod
+            #!!! In default ASM2d stoichiometry, biomass decay (cell lysis)
+            #!!! yields 90% particulate substrate + 10% X_I
+            #!!! so: convert both biomass and X_I in adm to X_S and X_I in asm
             
-            # N balance 
-            X_S_N = X_S*X_S_i_N
-            if X_S_N <= bio_n:
-                # In ASM1-ADM1 interface if there was excess bio_n compared to
-                # X_S_N, it was transferred to X_ND. But since X_ND does not 
-                # exist in ASM2d, S_IN is used for N balance 
-                # Here, S_IN is also used based on the fact that in case of 
-                # deficit bio_N, S_IN is used to compensate for excess X_S_N
-                # in Nopens at al. 2009
-                S_IN += (bio_n - X_S_N)
+            # What is available
+            xi_n = X_I*adm_X_I_i_N
+            xi_p = X_I*adm_X_I_i_P
+        
+            # What would be formed by X_S
+            xs_cod = bio_cod * 0.9
+            xs_ndm = xs_cod * X_S_i_N
+            xs_pdm = xs_cod * X_S_i_P
+            
+            # What would be formed by X_I (ASM2d)
+            xi_cod = bio_cod * 0.1 + X_I
+            xi_ndm = xi_cod * asm_X_I_i_N
+            xi_pdm = xi_cod * asm_X_I_i_P
+                
+            if xs_ndm <= bio_n and xs_pdm <= bio_p:
+                X_S = xs_cod
+                xs_cod = 0
+                bio_n -= xs_ndm
+                bio_p -= xs_pdm
+            elif xs_ndm > bio_n and xs_pdm <= bio_p:
+                warn('Not enough biomass N to map the specified proportion of '
+                     'biomass COD into X_S. Rest of the biomass COD goes to S_A in last step')
+                X_S = bio_n / X_S_i_N
+                xs_cod -= X_S
                 bio_n = 0
-            elif X_S_N <= bio_n + S_IN:
-                S_IN -= (X_S_N - bio_n)
-                bio_n = 0
-            else:
-                if isclose(X_S_N, bio_n + S_IN, rel_tol=rtol, abs_tol=atol):
-                    S_IN = bio_n = 0   
-                else:
-                    raise RuntimeError('Not enough nitrogen (S_IN + biomass) to map '
-                                       'all biomass COD into X_S')
-            
-            # P balance 
-            X_S_P = X_S*X_S_i_P
-            if X_S_P <= bio_p:
-                # Here, S_IP is based on the fact that in case of 
-                # deficit bio_N, S_IN is used to compensate for excess X_S_N
-                # in Nopens at al. 2009
-                S_IP += (bio_p - X_S_P)
+                bio_p -= X_S*X_S_i_P # Here bio_p would certainly remain positive
+            elif xs_ndm <= bio_n and xs_pdm > bio_p:
+                warn('Not enough biomass P to map the specified proportion of '
+                     'biomass COD into X_S. Rest of the biomass COD goes to S_A in last step')
+                X_S = bio_p / X_S_i_P
+                xs_cod -= X_S
                 bio_p = 0
-            elif X_S_P <= bio_p + S_IP:
-                S_IP -= (X_S_P - bio_p)
-                bio_p = 0
+                bio_n -= X_S*X_S_i_N # Here bio_n would certainly remain positive
             else:
-                if isclose(X_S_P, bio_p + S_IP, rel_tol=rtol, abs_tol=atol):
-                    S_IP = bio_p = 0
+                if bio_p / X_S_i_P < bio_n / X_S_i_N:
+                    X_S = bio_p / X_S_i_P
+                    xs_cod -= X_S
+                    bio_p = 0
+                    bio_n -= X_S*X_S_i_N # mathematically, bio_n can become negative at this point
                 else:
-                    raise RuntimeError('Not enough phosphorous (S_IP + biomass) to map '
-                                       'all biomass COD into X_S')
-            
-            
-            
-            
+                    X_S = bio_n / X_S_i_N
+                    xs_cod -= X_S
+                    bio_n = 0
+                    bio_p -= X_S*X_S_i_P # mathematically, bio_p can become negative at this point
             
             # Step 1b: convert particulate substrates into X_S
             
