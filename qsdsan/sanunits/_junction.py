@@ -1906,7 +1906,7 @@ class mADM1toASM2d(ADMjunction):
             # Not sure about charge on X_PP, S_Mg, S_K (PHA and PAO would have zero charge)
             _ions = np.array([S_IN, S_IC, S_IP, X_PP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
             
-            # Step 1a: convert biomass into X_S+X_ND
+            # Step 1a: convert biomass and inert particulates into X_S and X_I 
             
             # What is available
             bio_cod = X_su + X_aa + X_fa + X_c4 + X_pro + X_ac + X_h2
@@ -2023,37 +2023,41 @@ class mADM1toASM2d(ADMjunction):
                             bio_n = 0
             
             # Step 1b: convert particulate substrates into X_S
-            
-            # First we calculate the COD, N, and P content in particulate substrate  
-            xsub_cod = X_ch + X_pr + X_li
+                
+            xsub_cod = X_ch + X_pr + X_li 
             xsub_n = X_pr*X_pr_i_N
             xsub_p = X_pr*X_pr_i_P
             
-            # Then we determine the amount of X_S required for COD, N, and P balance 
-            X_S_cod = xsub_cod
-            X_S_n = xsub_n/X_S_i_N
-            X_S_p = xsub_p/X_S_i_P
+            xs_ndm = xsub_cod * X_S_i_N
+            xs_pdm = xsub_cod * X_S_i_P
             
-            # Identify the limiting component and accordingly form X_S
-            X_S_add = min(X_S_cod, X_S_n, X_S_p)
-            X_S += X_S_add
-            
-            # Calculate the imbalance in the non-limiting components 
-            if X_S_add == X_S_cod:
-                def_N = (xsub_n - X_S_add*X_S_i_N)
-                def_P = (xsub_p - X_S_add*X_S_i_P)
-                S_IN += def_N
-                S_IP += def_P
-            elif X_S_add == X_S_n:
-                def_COD = (xsub_cod - X_S_add)
-                def_P = (xsub_p - X_S_add*X_S_i_P)
-                S_A = def_COD # suggested by Jeremy 
-                S_IP += def_P
+            if xs_ndm <= xsub_n + bio_n and xs_pdm <= xsub_p + bio_p:
+                X_S += xsub_cod
+                xsub_cod = 0
+                xsub_n -= xs_ndm
+                xsub_p -= xs_pdm
             else:
-                def_COD = (xsub_cod - X_S_add)
-                def_N = (xsub_n - X_S_add*X_S_i_N)
-                S_A = def_COD # suggested by Jeremy
-                S_IN += def_N
+                if (xsub_n + bio_n)/X_S_i_N < (xsub_p + bio_p)/X_S_i_P:
+                    X_S_temp = (xsub_n + bio_n)/X_S_i_N 
+                    X_S += X_S_temp
+                    xsub_cod -= X_S_temp
+                    xsub_n = bio_n = 0
+                    
+                    xsub_p -= X_S_temp*X_S_i_P
+                    if xsub_p < 0: 
+                        bio_p += xsub_p
+                        xsub_p = 0
+                    
+                else: 
+                    X_S_temp = (xsub_p + bio_p)/X_S_i_P
+                    X_S += X_S_temp
+                    xsub_cod -= X_S_temp
+                    xsub_p = bio_p = 0
+                    
+                    xsub_n -= X_S_temp*X_S_i_N
+                    if xsub_n < 0: 
+                        bio_n += xsub_n
+                        xsub_n = 0
             
             # Step 2: map all X_I from ADM to ASM           
             excess_XIn = X_I * (adm_X_I_i_N - asm_X_I_i_N)
