@@ -1849,6 +1849,7 @@ class mADM1toASM2d(ADMjunction):
         X_pr_i_P = cmps_adm.X_pr.i_P
         adm_X_I_i_P = cmps_adm.X_I.i_P
         adm_S_I_i_P = cmps_adm.S_I.i_P
+        S_aa_i_P = cmps_adm.S_aa.i_P
         adm_i_P = cmps_adm.i_P
         adm_bio_P_indices = cmps_adm.indices(('X_su', 'X_aa', 'X_fa', 
                                               'X_c4', 'X_pro', 'X_ac', 'X_h2'))
@@ -2059,31 +2060,45 @@ class mADM1toASM2d(ADMjunction):
                         bio_n += xsub_n
                         xsub_n = 0
             
-            
-            
-                
-            # Step 4: map all soluble substrates into S_A and S_F        
-            ssub_cod = S_su + S_aa + S_fa + S_va + S_bu + S_pro + S_ac
+            # P balance not required as S_su, S_aa, S_fa do not have P
+            ssub_cod = S_su + S_aa + S_fa
             ssub_n = S_aa * S_aa_i_N
+            ssub_p = S_aa * S_aa_i_P # which would be 0
             
-            # P balance not required as all the 7 soluble substrates have no P
             
-            # N balance
-            S_F = ssub_n/S_F_i_N
-            # COD balance 
-            S_A += ssub_cod - S_F
+            sf_ndm = ssub_cod * S_F_i_N
+            sf_pdm = ssub_cod * S_F_i_P
             
-            # Technically both S_A_i_N and S_A_i_P would be 0
-            if S_A_i_N > 0 or S_A_i_P > 0:
-                # excess N formed subtracted from S_NH4
-                S_NH4 -= (ssub_cod - S_F)*S_A_i_N
-                # excess P (due to S_A) formed subtracted from S_PO4
-                S_PO4 -= (ssub_cod - S_F)*S_A_i_P
+            if sf_ndm > ssub_n + xsub_n + bio_n and sf_pdm > ssub_p + xsub_p + bio_p:
                 
-            if S_F_i_P > 0:
-                # excess P (due to S_F) formed subtracted from S_PO4
-                S_PO4 -= S_F*S_F_i_P
+                S_F = ssub_cod
+                ssub_cod = 0
                 
+                ssub_n -= sf_ndm
+                if ssub_n < 0:
+                    xsub_n += ssub_n
+                    ssub_n = 0
+                    if xsub_n < 0:
+                        bio_n += xsub_n
+                        xsub_n = 0
+            else:
+                if (ssub_n + xsub_n + bio_n) / S_F_i_N < (ssub_p + xsub_p + bio_p) / S_F_i_P:
+                    
+                    S_F = (ssub_n + xsub_n + bio_n) / S_F_i_N
+                    ssub_cod -= S_F
+                    ssub_n = xsub_n = bio_n = 0
+                    
+                    ssub_p -= sf_pdm
+                    
+                    if ssub_p < 0:
+                        xsub_p += ssub_p
+                        ssub_p = 0
+                        if xsub_p < 0:
+                            bio_p += xsub_p
+                            xsub_p = 0
+                
+            # N and P balance not required as S_su, S_aa, S_fa do not have N and P
+            S_A = S_ac + S_pro + S_bu + S_va
                 
             # Step 6: check COD and TKN balance
             asm_vals = np.array(([
