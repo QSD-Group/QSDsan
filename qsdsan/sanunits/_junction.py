@@ -1931,37 +1931,96 @@ class mADM1toASM2d(ADMjunction):
             xi_cod = bio_cod * 0.1 + X_I
             xi_ndm = xi_cod * asm_X_I_i_N
             xi_pdm = xi_cod * asm_X_I_i_P
-                
+            
+            # MAPPING OF X_S
+            
+            # Case I: Both bio_N and bio_P are sufficient 
             if xs_ndm <= bio_n and xs_pdm <= bio_p:
                 X_S = xs_cod
                 xs_cod = 0
                 bio_n -= xs_ndm
                 bio_p -= xs_pdm
-            elif xs_ndm > bio_n and xs_pdm <= bio_p:
-                warn('Not enough biomass N to map the specified proportion of '
-                     'biomass COD into X_S. Rest of the biomass COD goes to S_A in last step')
-                X_S = bio_n / X_S_i_N
-                xs_cod -= X_S
-                bio_n = 0
-                bio_p -= X_S*X_S_i_P # Here bio_p would certainly remain positive
-            elif xs_ndm <= bio_n and xs_pdm > bio_p:
-                warn('Not enough biomass P to map the specified proportion of '
-                     'biomass COD into X_S. Rest of the biomass COD goes to S_A in last step')
-                X_S = bio_p / X_S_i_P
-                xs_cod -= X_S
-                bio_p = 0
-                bio_n -= X_S*X_S_i_N # Here bio_n would certainly remain positive
             else:
-                if bio_p / X_S_i_P < bio_n / X_S_i_N:
-                    X_S = bio_p / X_S_i_P
-                    xs_cod -= X_S
-                    bio_p = 0
-                    bio_n -= X_S*X_S_i_N # mathematically, bio_n can become negative at this point
-                else:
+            # Case II, III, and, IV: At least one of the two biological N/P is not sufficient
+                if bio_p / X_S_i_P > bio_n / X_S_i_N:
+                    warn('Not enough biomass N to map the specified proportion of '
+                         'biomass COD into X_S. Rest of the biomass COD goes to S_A in last step')
                     X_S = bio_n / X_S_i_N
                     xs_cod -= X_S
                     bio_n = 0
-                    bio_p -= X_S*X_S_i_P # mathematically, bio_p can become negative at this point
+                    bio_p -= X_S*X_S_i_P #mathematically, bio_p can become negative at this point
+                    if bio_p < 0:
+                        S_IP += bio_p
+                        bio_p = 0
+                else:
+                    warn('Not enough biomass P to map the specified proportion of '
+                         'biomass COD into X_S. Rest of the biomass COD goes to S_A in last step')
+                    X_S = bio_p / X_S_i_P
+                    xs_cod -= X_S
+                    bio_p = 0
+                    bio_n -= X_S*X_S_i_N #mathematically, bio_n can become negative at this point
+                    if bio_n < 0:
+                        S_IN += bio_n
+                        bio_n = 0
+                    
+            
+            # MAPPING OF X_I
+            
+            if xi_ndm < bio_n + xi_n + S_IN and xi_pdm < bio_p + xi_p + S_IP:
+                
+                X_I = xi_cod
+                xi_cod = 0
+                
+                xi_n -= xi_ndm
+                if xi_n < 0:
+                    bio_n += xi_n
+                    xi_n = 0
+                    if bio_n < 0:
+                        S_IN += bio_n
+                        bio_n = 0
+                
+                xi_p -= xi_pdm
+                if xi_p < 0:
+                    bio_p += xi_p
+                    xi_p = 0
+                    if bio_p < 0:
+                        S_IP += bio_p
+                        bio_p = 0
+                        
+            else:
+                if (bio_p + xi_p + S_IP) / asm_X_I_i_P  >  (bio_n + xi_n + S_IN) / asm_X_I_i_N:
+                    
+                    warn('Not enough N in biomass and X_I to map the specified proportion of'
+                         'biomass COD into X_I. Rest of the biomass COD goes to S_A')
+                    X_I =  (bio_n + xi_n + S_IN) / asm_X_I_i_N
+                    xi_cod -= X_I
+                    
+                    bio_n = xi_n = S_IN = 0
+                    
+                    xi_p -= X_I*asm_X_I_i_P
+                    if xi_p < 0:
+                        bio_p += xi_p
+                        xi_p = 0
+                        if bio_p < 0:
+                            S_IP += bio_p
+                            bio_p = 0
+                
+                else:
+                    
+                    warn('Not enough P in biomass and X_I to map the specified proportion of'
+                         'biomass COD into X_I. Rest of the biomass COD goes to S_A')
+                    X_I =  (bio_p + xi_p + S_IP) / asm_X_I_i_P
+                    xi_cod -= X_I
+                    
+                    bio_p = xi_p = S_IP = 0
+                    
+                    xi_n -= X_I*asm_X_I_i_N
+                    if xi_n < 0:
+                        bio_n += xi_n
+                        xi_n = 0
+                        if bio_n < 0:
+                            S_IN += bio_n
+                            bio_n = 0
             
             # Step 1b: convert particulate substrates into X_S
             
