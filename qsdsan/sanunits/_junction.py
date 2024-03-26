@@ -2059,49 +2059,8 @@ class mADM1toASM2d(ADMjunction):
                         bio_n += xsub_n
                         xsub_n = 0
             
-            # Step 2: map all X_I from ADM to ASM           
-            excess_XIn = X_I * (adm_X_I_i_N - asm_X_I_i_N)
-            S_IN += excess_XIn
-            if S_IN < 0:
-                if isclose(S_IN, 0, rel_tol=rtol, abs_tol=atol): S_IN = 0
-                # This seems to be a typo. Shouldn't there be an else here? 
-                raise RuntimeError('Not enough nitrogen (X_I + S_IN) to map '
-                                   'all ADM X_I into ASM X_I')
-                
-            excess_XIp = X_I * (adm_X_I_i_P - asm_X_I_i_P)
-            S_IP += excess_XIp
-            if S_IP < 0:
-                if isclose(S_IP, 0, rel_tol=rtol, abs_tol=atol): S_IP = 0
-                # This seems to be a typo. Shouldn't there be an else here? 
-                raise RuntimeError('Not enough phosphorous (X_I + S_IP) to map '
-                                   'all ADM X_I into ASM X_I')
             
-            # Step 3: map ADM S_I into ASM S_I and S_NH4
-            excess_SIn = S_I * (adm_S_I_i_N - asm_S_I_i_N)
-            if excess_SIn > 0:
-                S_NH4 = excess_SIn
-            else:
-                S_NH4 = 0
-                S_IN += excess_SIn
-                if S_IN < 0:
-                    if isclose(S_IN, 0, rel_tol=rtol, abs_tol=atol): S_IN = 0
-                    # This seems to be a typo. Shouldn't there be an else here? 
-                    raise RuntimeError('Not enough nitrogen (S_I + S_IN) to map '
-                                       'all ADM S_I into ASM S_I')
-            S_NH4 += S_IN
             
-            excess_SIp = S_I * (adm_S_I_i_P - asm_S_I_i_P)
-            if excess_SIp > 0:
-                S_PO4 = excess_SIp
-            else:
-                S_PO4 = 0
-                S_IP += excess_SIp
-                if S_IP < 0:
-                    if isclose(S_IP, 0, rel_tol=rtol, abs_tol=atol): S_IP = 0
-                    # This seems to be a typo. Shouldn't there be an else here? 
-                    raise RuntimeError('Not enough nitrogen (S_I + S_IP) to map '
-                                       'all ADM S_I into ASM S_I')
-            S_PO4 += S_IP
                 
             # Step 4: map all soluble substrates into S_A and S_F        
             ssub_cod = S_su + S_aa + S_fa + S_va + S_bu + S_pro + S_ac
