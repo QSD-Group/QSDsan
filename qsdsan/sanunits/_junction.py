@@ -7,6 +7,8 @@ This module is developed by:
     Joy Zhang <joycheung1994@gmail.com>
     
     Yalin Li <mailto.yalin.li@gmail.com>
+    
+    Saumitra Rai <mailto.raisaumitra9@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -1909,20 +1911,6 @@ class mADM1toASM2d(ADMjunction):
             bio_n = sum((adm_vals*adm_i_N)[adm_bio_N_indices])
             bio_p = sum((adm_vals*adm_i_P)[adm_bio_P_indices])
             
-            # There is no X_P (particulate products arising due to biomass decay)
-            # or equivalent component in ASM2d
-            # xp_cod = bio_cod * (1-self.bio_to_xs)
-            # xp_ndm = xp_cod*X_P_i_N
-            # if xp_ndm > bio_n:
-            #     warn('Not enough biomass N to map the specified proportion of '
-            #           'biomass COD into X_P. Mapped as much COD as possible, the rest '
-            #           'goes to X_S.')
-            #     X_P = bio_n/asm_X_P_i_N
-            #     bio_n = 0
-            # else:
-            #     X_P = xp_cod
-            #     bio_n -= xp_ndm
-            
             # X_S = bio_cod - X_P
             
             # COD balance
@@ -1966,6 +1954,10 @@ class mADM1toASM2d(ADMjunction):
                 else:
                     raise RuntimeError('Not enough phosphorous (S_IP + biomass) to map '
                                        'all biomass COD into X_S')
+            
+            
+            
+            
             
             # Step 1b: convert particulate substrates into X_S
             
