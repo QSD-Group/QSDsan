@@ -17,7 +17,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)        # to ignor
 
 #%%
 # Components
-cmps = pc.create_adm1_vfa_cmps()      # create state variables for laetADM1
+cmps = pc.create_adm1_vfa_cmps()      # create state variables for ADM1_vfa
 # cmps.show()                         # 30 components in ADM1_vfa + water
 
 #%%
@@ -101,33 +101,33 @@ U1 = UASB('UASB', ins=inf, outs=(gas, eff), model=adm1,
                                                                # before running the simulation, 'outs' have nothing
 # print(f"The liquid volume of the reactor is: {U1.V_liq} m^3")
 
-# Set initial condition of the reactor (Cow manure (Inoculum) in bioreactor)
+# Set initial condition of the reactor (Cow manure (Inoculum) in bioreactor, 10% of total volume)
 default_init_conds = {
-    'S_su': 0,
-    'S_aa': 0,
-    'S_fa': 0,
-    'S_la': 0,
-    'S_et': 0,
-    'S_va': 0,
-    'S_bu': 0.49*1e3,                                       # fixed according to R3G20
-    'S_pro': 1.015*1e3,                                     # fixed according to R3G20
+    'S_su': 1.5*1e3,                                        # fixed according to R3G20 (No glucose)
+    'S_aa': 1.0*1e2,
+    'S_fa': 1.0*1e2,
+    'S_la': 1.0*1e2,
+    'S_et': 0.1*1e2,
+    'S_va': 0.1*1e2,
+    'S_bu': 0.4899637*1e3,                                  # fixed according to R3G20
+    'S_pro': 1.015067*1e3,                                  # fixed according to R3G20
     'S_ac': 1.721*1e3,                                      # fixed according to R3G20
     'S_h2': 0,
     'S_ch4': 0,
     'S_IC': 0,
     'S_IN': 0,
     'S_I': 0,
-    'X_ch': 10*1e3,
-    'X_pr': 10*1e3,
-    'X_li': 10*1e3,
-    'X_su': 0.5*1e3,
-    'X_aa': 0.5*1e3,
-    'X_fa': 0.5*1e3,
-    'X_la': 0.1*1e1,
+    'X_ch': 0.5*1e2,
+    'X_pr': 0.5*1e2,
+    'X_li': 0.5*1e2,
+    'X_su': 1.5*1e1,
+    'X_aa': 1.5*1e1,
+    'X_fa': 1.5*1e1,
+    'X_la': 0.01*1e1,
     'X_et': 0.1*1e1,
-    'X_c4': 0.1*1e2,
-    'X_pro': 0.1*1e2,
-    'X_ac': 1.0*1e3,
+    'X_c4': 2.0*1e2,
+    'X_pro': 2.0*1e2,
+    'X_ac': 4.0*1e3,
     'X_h2': 1.0*1e3,
     'X_I': 1.0*1e3
     }                   # in mg/L
@@ -202,18 +202,13 @@ plt.ylabel("Total VFA [mg/l]")
 #%%
 #!!!Plot for varying pH over time
 pH_values = []
-time_steps = np.arange(0, 41, 1)  # 예를 들어, 0일부터 40일까지 시뮬레이션
+time_steps = np.arange(0, 41, 1)
 
-# 시뮬레이션 루프 (가상의 코드)
 for time in time_steps:
-    # 시뮬레이션 로직...
-    # pH 계산 부분을 포함하여 시뮬레이션 실행
-    # 예시: pH = calculate_pH(...)  # calculate_pH는 pH를 계산하는 가상의 함수
-    
-    # 계산된 pH 값을 리스트에 추가
-    pH_values.append(adm1.rate_function._params.root.data['pH'])  # 실제 코드에서는 calculate_pH 함수의 결과를 사용
 
-# 시간에 따른 pH 변화 그래프 그리기
+    pH_values.append(adm1.rate_function._params.root.data['pH'])
+
+
 plt.figure(figsize=(10, 6))
 plt.plot(time_steps, pH_values, marker='o', linestyle='-', color='blue')
 plt.title('pH Variation Over Time')
