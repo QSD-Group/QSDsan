@@ -1906,6 +1906,8 @@ class mADM1toASM2d(ADMjunction):
                        
             # Step 0: snapshot of charged components
             # Not sure about charge on X_PP, S_Mg, S_K (PHA and PAO would have zero charge)
+            # Step 0: snapshot of charged components
+            # _ions = np.array([S_IN, S_IC, S_ac, S_pro, S_bu, S_va])
             _ions = np.array([S_IN, S_IC, S_IP, X_PP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
             
             # Step 1a: convert biomass and inert particulates into X_S and X_I 
@@ -2153,15 +2155,13 @@ class mADM1toASM2d(ADMjunction):
             S_PO4 = S_IP + si_p + ssub_p + xsub_p + xi_p + bio_p
             S_A += si_cod + ssub_cod + xsub_cod + xi_cod + xs_cod
             
-            S_ALK = S_IC
-            
             # Step 6: check COD and TKN balance
             asm_vals = np.array(([
                 0, 0, # S_O2, S_N2,
                 S_NH4, 
                 0, # S_NO3
                 S_PO4, S_F, S_A, S_I, 
-                S_ALK,  
+                0,  # S_ALK(for now)
                 X_I, X_S, 
                 0,  # X_H,
                 X_PAO, X_PP, X_PHA, # directly mapped 
@@ -2175,14 +2175,22 @@ class mADM1toASM2d(ADMjunction):
             
             # Step 5: charge balance for alkalinity
             
+            # asm_ions_idx = cmps_asm.indices(('S_NH4', 'S_A', 'S_NO3', 'S_PO4', 'X_PP', 'S_ALK'))
+            
             S_NH4 = asm_vals[asm_ions_idx[0]]
             S_A = asm_vals[asm_ions_idx[1]]
             S_NO3 = asm_vals[asm_ions_idx[2]]
             S_PO4 = asm_vals[asm_ions_idx[3]]
             X_PP = asm_vals[asm_ions_idx[4]]
             
-            # Need to include S_K, S_Mg in the charge balance (Maybe ask Joy/Jeremy)
-            S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC, alpha_IP], alpha_vfa)) - (S_NH4/14 - S_A/64 - S_NO3/14 -1.5*S_PO4/31 - X_PP/31))*(-12)
+            # Need to include S_K, S_Mg in the charge balance
+            
+            # _ions = np.array([S_IN, S_IC, S_ac, S_pro, S_bu, S_va])
+            # S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC], alpha_vfa)) - S_NH/14)*(-12)
+            
+            _ions = np.array([S_IN, S_IC, S_IP, X_PP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
+            
+            S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC, alpha_IP], -1/31, 2, 1, alpha_vfa)) - (S_NH4/14 - S_A/64 - S_NO3/14 -1.5*S_PO4/31 - X_PP/31))*(-12)
             asm_vals[asm_ions_idx[5]] = S_ALK
             
             return asm_vals
