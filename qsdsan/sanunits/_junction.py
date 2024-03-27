@@ -2329,16 +2329,12 @@ class ASM2dtomADM1(mADMjunction):
         adm_i_COD = cmps_adm.i_COD
         non_tkn_idx = cmps_asm.indices(('S_N2', 'S_NO3'))
         asm_i_N = cmps_asm.i_N
+        
         adm_i_N = cmps_adm.i_N
         asm_i_P = cmps_asm.i_P
         adm_i_P = cmps_adm.i_P
         asm_cod = sum(asm_vals*asm_i_COD)
-        
-        # to ensure correct mechanism to check TN balance in case of mADM1 interfaces 
-        X_I_asm_idx = cmps_asm.indices(('X_I',))
-        X_I_adm_idx = cmps_adm.indices(('X_I',))
-        asm_tkn = sum(asm_vals*asm_i_N) - sum(asm_vals[non_tkn_idx]) - asm_vals[X_I_asm_idx]*asm_i_N[X_I_asm_idx] + asm_vals[X_I_asm_idx]*adm_i_N[X_I_adm_idx]
-        
+        asm_tkn = sum(asm_vals*asm_i_N) - sum(asm_vals[non_tkn_idx])
         asm_tp = sum(asm_vals*asm_i_P)
         cod_bl, cod_err, cod_tol, adm_cod = self.isbalanced(asm_cod, adm_vals, adm_i_COD)
         tkn_bl, tkn_err, tkn_tol, adm_tkn = self.isbalanced(asm_tkn, adm_vals, adm_i_N)
@@ -2346,6 +2342,7 @@ class ASM2dtomADM1(mADMjunction):
         
         if tkn_bl and tp_bl:
             if cod_bl:
+                print('Sab changa si')
                 return adm_vals
             else:
                 if cod_err > 0: dcod = -(cod_err - cod_tol)/adm_cod
