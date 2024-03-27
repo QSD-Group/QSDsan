@@ -661,7 +661,7 @@ class ADM1_vfa(CompiledProcesses):
     #f_la_su, f_et_su, f_pro_la, f_ac_la,  f_ac_et, Y_la, Y_et added with valued randomly below
     def __new__(cls, components=None, path=None, N_xc=2.686e-3, N_I=4.286e-3, N_aa=7e-3,
                 f_ch_xc=0.2, f_pr_xc=0.2, f_li_xc=0.3, f_xI_xc=0.2,
-                f_fa_li=0.95, f_la_su=0.233, f_et_su= 0.004, f_bu_su=0.13,
+                f_fa_li=0.95, f_la_su=0.433, f_et_su= 0.004, f_bu_su=0.13,
                 f_ac_su=0.31, f_va_aa=0.23, f_bu_aa=0.26, f_pro_aa=0.05, f_ac_aa=0.4,
                 f_ac_fa=0.7, f_pro_la=0.33, f_ac_la=0.24, f_ac_et=0.5, f_pro_va=0.54,
                 f_ac_va=0.31, f_ac_bu=0.8, f_ac_pro=0.57, f_pro_h2=0.05,
