@@ -1736,7 +1736,6 @@ class mADM1toASM2d(mADMjunction):
     
     adm_X_PAO_i_N = 0.07 
     adm_X_PAO_i_P = 0.02
-    asm_X_I_i_N = 0.06
     
     # Should be constants
     cod_vfa = np.array([64, 112, 160, 208])
@@ -1759,7 +1758,13 @@ class mADM1toASM2d(mADMjunction):
         asm_i_P = cmps_asm.i_P
         adm_i_P = cmps_adm.i_P
         adm_cod = sum(adm_vals*adm_i_COD) - sum(adm_vals[gas_idx])
-        adm_tkn = sum(adm_vals*adm_i_N)
+        
+        # to ensure correct mechanism to check TN balance in case of mADM1 interfaces 
+        X_PAO_asm_idx = cmps_asm.indices(('X_PAO',))
+        X_PAO_adm_idx = cmps_adm.indices(('X_PAO',))
+        adm_tkn = sum(adm_vals*adm_i_N) - adm_vals[X_PAO_adm_idx]*adm_i_N[X_PAO_adm_idx] - adm_vals[X_PAO_adm_idx]*asm_i_N[X_PAO_asm_idx]
+   
+        # adm_tkn = sum(adm_vals*adm_i_N)
         adm_tp = sum(adm_vals*adm_i_P)
         
         cod_bl, cod_err, cod_tol, asm_cod = self.isbalanced(adm_cod, asm_vals, asm_i_COD)
@@ -1787,9 +1792,7 @@ class mADM1toASM2d(mADMjunction):
                         f'effluent (ASM) COD is {asm_cod} or {asm_cod*(1+dcod)}. ')
                     return asm_vals
         elif cod_bl and tp_bl:
-            print('sahi pakde hein')
             if tkn_bl:
-                print('bilkul sahi pakde hein')
                 return asm_vals
             else:
                 if tkn_err > 0: dtkn = -(tkn_err - tkn_tol)/asm_tkn
@@ -2161,7 +2164,7 @@ class mADM1toASM2d(mADMjunction):
             si_ndm = si_cod * asm_S_I_i_N
             si_pdm = si_cod * asm_S_I_i_P
             
-            if si_ndm < si_n + xi_n + S_IN and si_pdm < si_p + xi_p + S_IP:
+            if si_ndm <= si_n + xi_n + S_IN and si_pdm <= si_p + xi_p + S_IP:
                 S_I = si_cod
                 si_cod = 0
                 si_n -= si_ndm
@@ -2332,9 +2335,9 @@ class ASM2dtomADM1(mADMjunction):
         asm_cod = sum(asm_vals*asm_i_COD)
         
         # to ensure correct mechanism to check TN balance in case of mADM1 interfaces 
-        X_I_asm = cmps_asm.indices(('X_I',))
-        X_I_adm = cmps_adm.indices(('X_I',))
-        asm_tkn = sum(asm_vals*asm_i_N) - sum(asm_vals[non_tkn_idx]) - asm_vals[X_I_asm]*asm_i_N[X_I_asm] + asm_vals[X_I_asm]*adm_i_N[X_I_adm]
+        X_I_asm_idx = cmps_asm.indices(('X_I',))
+        X_I_adm_idx = cmps_adm.indices(('X_I',))
+        asm_tkn = sum(asm_vals*asm_i_N) - sum(asm_vals[non_tkn_idx]) - asm_vals[X_I_asm_idx]*asm_i_N[X_I_asm_idx] + asm_vals[X_I_asm_idx]*adm_i_N[X_I_adm_idx]
         
         asm_tp = sum(asm_vals*asm_i_P)
         cod_bl, cod_err, cod_tol, adm_cod = self.isbalanced(asm_cod, adm_vals, adm_i_COD)
