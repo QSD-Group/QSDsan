@@ -1899,6 +1899,7 @@ class mADM1toASM2d(ADMjunction):
 
         # To convert components from mADM1 to ASM2d (madm1-2-asm2d)
         def madm12asm2d(adm_vals):    
+            
             S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2, S_ch4, S_IC, S_IN, S_IP, S_I, \
                 X_ch, X_pr, X_li, X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I, \
                 X_PHA, X_PP, X_PAO, S_K, S_Mg, X_MeOH, X_MeP, S_cat, S_an, H2O = adm_vals
@@ -2099,14 +2100,68 @@ class mADM1toASM2d(ADMjunction):
                 
             # N and P balance not required as S_su, S_aa, S_fa do not have N and P
             S_A = S_ac + S_pro + S_bu + S_va
-                
+            
+            si_cod = S_I    
+            si_n = S_I * adm_S_I_i_N
+            si_p = S_I * adm_S_I_i_P
+            
+            si_ndm = si_cod * asm_S_I_i_N
+            si_pdm = si_cod * asm_S_I_i_P
+            
+            if si_ndm < si_n + xi_n + S_IN and si_pdm < si_p + xi_p + S_IP:
+                S_I = si_cod
+                si_cod = 0
+                si_n -= si_ndm
+                if si_n < 0:
+                    xi_n += si_n
+                    si_n = 0
+                    if xi_n < 0:
+                        S_IN += xi_n
+                        xi_n = 0
+                si_p -= si_pdm
+                if si_p < 0:
+                    xi_p += si_p
+                    si_p = 0
+                    if xi_p < 0:
+                        S_IP += xi_p
+                        xi_p = 0
+            else:
+                if (si_n + xi_n + S_IN) / asm_S_I_i_N < (si_p + xi_p + S_IP) / asm_S_I_i_P:
+                    S_I = (si_n + xi_n + S_IN) / asm_S_I_i_N
+                    si_cod -= S_I
+                    si_n = xi_n = S_IN = 0
+                    si_p -= S_I * asm_S_I_i_P
+                    if si_p < 0:
+                        xi_p += si_p
+                        si_p = 0
+                        if xi_p < 0:
+                            S_IP += xi_p
+                            xi_p = 0
+                else:
+                    S_I = (si_p + xi_p + S_IP) / asm_S_I_i_P
+                    si_cod -= S_I
+                    si_p = xi_p = S_IP = 0
+                    si_n -= S_I * asm_S_I_i_N
+                    if si_n < 0:
+                        xi_n += si_n
+                        si_n = 0
+                        if xi_n < 0:
+                            S_IN += xi_n
+                            xi_n = 0
+            
+            S_NH4 = S_IN + si_n + ssub_n + xsub_n + xi_n + bio_n
+            S_PO4 = S_IP + si_p + ssub_p + xsub_p + xi_p + bio_p
+            S_A += si_cod + ssub_cod + xsub_cod + xi_cod + xs_cod
+            
+            S_ALK = S_IC
+            
             # Step 6: check COD and TKN balance
             asm_vals = np.array(([
                 0, 0, # S_O2, S_N2,
                 S_NH4, 
-                0, 
+                0, # S_NO3
                 S_PO4, S_F, S_A, S_I, 
-                0,  # S_ALK,
+                S_ALK,  
                 X_I, X_S, 
                 0,  # X_H,
                 X_PAO, X_PP, X_PHA, # directly mapped 
@@ -2119,11 +2174,13 @@ class mADM1toASM2d(ADMjunction):
             asm_vals = f_corr(adm_vals, asm_vals)
             
             # Step 5: charge balance for alkalinity
+            
             S_NH4 = asm_vals[asm_ions_idx[0]]
             S_A = asm_vals[asm_ions_idx[1]]
             S_NO3 = asm_vals[asm_ions_idx[2]]
             S_PO4 = asm_vals[asm_ions_idx[3]]
             X_PP = asm_vals[asm_ions_idx[4]]
+            
             # Need to include S_K, S_Mg in the charge balance (Maybe ask Joy/Jeremy)
             S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC, alpha_IP], alpha_vfa)) - (S_NH4/14 - S_A/64 - S_NO3/14 -1.5*S_PO4/31 - X_PP/31))*(-12)
             asm_vals[asm_ions_idx[5]] = S_ALK
