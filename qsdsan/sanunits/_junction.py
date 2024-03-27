@@ -1753,8 +1753,9 @@ class mADM1toASM2d(mADMjunction):
         asm_i_COD = cmps_asm.i_COD
         adm_i_COD = cmps_adm.i_COD
         gas_idx = cmps_adm.indices(('S_h2', 'S_ch4'))
+        
         asm_i_N = cmps_asm.i_N
-        adm_i_N = cmps_adm.i_N
+        adm_i_N = cmps_adm.i_N    
         asm_i_P = cmps_asm.i_P
         adm_i_P = cmps_adm.i_P
         adm_cod = sum(adm_vals*adm_i_COD) - sum(adm_vals[gas_idx])
@@ -1788,6 +1789,7 @@ class mADM1toASM2d(mADMjunction):
         elif cod_bl and tp_bl:
             print('sahi pakde hein')
             if tkn_bl:
+                print('bilkul sahi pakde hein')
                 return asm_vals
             else:
                 if tkn_err > 0: dtkn = -(tkn_err - tkn_tol)/asm_tkn
@@ -1870,13 +1872,8 @@ class mADM1toASM2d(mADMjunction):
         X_S_i_N = cmps_asm.X_S.i_N
         S_F_i_N = cmps_asm.S_F.i_N
         S_A_i_N = cmps_asm.S_A.i_N
-        
-        # Due to issue with mapping of X_I across ASM2d and ADM1, making this user dependent is important
-        if self.asm_X_I_i_N == None:
-            asm_X_I_i_N = cmps_asm.X_I.i_N
-        else:
-            asm_X_I_i_N = self.asm_X_I_i_N
-        
+            
+        asm_X_I_i_N = cmps_asm.X_I.i_N
         asm_S_I_i_N = cmps_asm.S_I.i_N
         asm_ions_idx = cmps_asm.indices(('S_NH4', 'S_A', 'S_NO3', 'S_PO4', 'X_PP', 'S_ALK'))
         
@@ -1932,6 +1929,8 @@ class mADM1toASM2d(mADMjunction):
             S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2, S_ch4, S_IC, S_IN, S_IP, S_I, \
                 X_ch, X_pr, X_li, X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I, \
                 X_PHA, X_PP, X_PAO, S_K, S_Mg, X_MeOH, X_MeP, S_cat, S_an, H2O = adm_vals
+                
+            # print(f'adm_vals = {adm_vals}')
                        
             # Step 0: snapshot of charged components
             # Not sure about charge on X_PP, S_Mg, S_K (PHA and PAO would have zero charge)
@@ -2097,11 +2096,10 @@ class mADM1toASM2d(mADMjunction):
             ssub_n = S_aa * S_aa_i_N
             ssub_p = S_aa * S_aa_i_P # which would be 0
             
-            
             sf_ndm = ssub_cod * S_F_i_N
             sf_pdm = ssub_cod * S_F_i_P
             
-            if sf_ndm > ssub_n + xsub_n + bio_n and sf_pdm > ssub_p + xsub_p + bio_p:
+            if sf_ndm <= ssub_n + xsub_n + bio_n and sf_pdm <= ssub_p + xsub_p + bio_p:
                 
                 S_F = ssub_cod
                 ssub_cod = 0
@@ -2113,6 +2111,15 @@ class mADM1toASM2d(mADMjunction):
                     if xsub_n < 0:
                         bio_n += xsub_n
                         xsub_n = 0
+                        
+                ssub_p -= sf_pdm
+                if ssub_p < 0:
+                    xsub_p += ssub_p
+                    ssub_p = 0
+                    if xsub_p < 0:
+                        bio_p += xsub_p
+                        xsub_p = 0
+                        
             else:
                 if (ssub_n + xsub_n + bio_n) / S_F_i_N < (ssub_p + xsub_p + bio_p) / S_F_i_P:
                     
@@ -2120,7 +2127,7 @@ class mADM1toASM2d(mADMjunction):
                     ssub_cod -= S_F
                     ssub_n = xsub_n = bio_n = 0
                     
-                    ssub_p -= sf_pdm
+                    ssub_p -= S_F*S_F_i_P
                     
                     if ssub_p < 0:
                         xsub_p += ssub_p
@@ -2135,7 +2142,7 @@ class mADM1toASM2d(mADMjunction):
                     ssub_cod -= S_F
                     ssub_p = xsub_p = bio_p = 0
                     
-                    ssub_n -= sf_ndm
+                    ssub_n -= S_F*S_F_i_N
                     
                     if ssub_n < 0:
                         xsub_n += ssub_n
