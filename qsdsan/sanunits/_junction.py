@@ -30,6 +30,7 @@ __all__ = (
     'ASM2dtoADM1', 
     'ADM1toASM2d',
     'ASM2dtomADM1',
+    'mADM1toASM2d',
           )
 
 #%%
@@ -1690,7 +1691,7 @@ class ADM1toASM2d(ADMjunction):
     
 #%%
 
-class mADM1toASM2d(ADMjunction):
+class mADM1toASM2d(mADMjunction):
     '''
     Interface unit to convert modified anaerobic digestion model no. 1 (ADM1) components
     to activated sludge model no. 2d (ASM2d) components.
@@ -1726,8 +1727,15 @@ class mADM1toASM2d(ADMjunction):
     
     `math.isclose <https://docs.python.org/3.8/library/math.html#math.isclose>`
     '''
+    
     # User defined values
-    # bio_to_xs = 0.7 (Not using this split since no X_P exists in ASM2d)
+    bio_to_xs = 0.9
+    
+    # Since we are matching PAOs directly from ASM2d to mADM1, it is important 
+    # for PAOs to have identical N/P content across models
+    
+    adm_X_PAO_i_N = 0.07 
+    adm_X_PAO_i_P = 0.02
     
     # Should be constants
     cod_vfa = np.array([64, 112, 160, 208])
@@ -1874,8 +1882,15 @@ class mADM1toASM2d(ADMjunction):
         # Checks for direct mapping of X_PAO, X_PP, X_PHA
         
         # Check for X_PAO (measured as COD so i_COD = 1 in both ASM2d and ADM1)
+        
         asm_X_PAO_i_N = cmps_asm.X_PAO.i_N
         adm_X_PAO_i_N = cmps_adm.X_PAO.i_N
+        
+        if self.adm_X_PAO_i_N == None:
+            adm_X_PAO_i_N = cmps_adm.X_PAO.i_N
+        else:
+            adm_X_PAO_i_N = self.adm_X_PAO_i_N
+        
         if asm_X_PAO_i_N != adm_X_PAO_i_N:
             raise RuntimeError('X_PAO cannot be directly mapped as N content'
                                f'in asm2d_X_PAO_i_N = {asm_X_PAO_i_N} is not equal to'
@@ -1883,6 +1898,12 @@ class mADM1toASM2d(ADMjunction):
             
         asm_X_PAO_i_P = cmps_asm.X_PAO.i_P
         adm_X_PAO_i_P = cmps_adm.X_PAO.i_P
+        
+        if self.adm_X_PAO_i_P == None:
+            adm_X_PAO_i_P = cmps_adm.X_PAO.i_P
+        else:
+            adm_X_PAO_i_P = self.adm_X_PAO_i_P
+        
         if asm_X_PAO_i_P != adm_X_PAO_i_P:
             raise RuntimeError('X_PAO cannot be directly mapped as P content'
                                f'in asm2d_X_PAO_i_P = {asm_X_PAO_i_P} is not equal to'
@@ -1927,12 +1948,12 @@ class mADM1toASM2d(ADMjunction):
             xi_p = X_I*adm_X_I_i_P
         
             # What would be formed by X_S
-            xs_cod = bio_cod * 0.9
+            xs_cod = bio_cod * self.bio_to_xs
             xs_ndm = xs_cod * X_S_i_N
             xs_pdm = xs_cod * X_S_i_P
             
             # What would be formed by X_I (ASM2d)
-            xi_cod = bio_cod * 0.1 + X_I
+            xi_cod = bio_cod * (1 - self.bio_to_xs) + X_I
             xi_ndm = xi_cod * asm_X_I_i_N
             xi_pdm = xi_cod * asm_X_I_i_P
             
