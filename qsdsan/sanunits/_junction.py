@@ -1736,6 +1736,7 @@ class mADM1toASM2d(mADMjunction):
     
     adm_X_PAO_i_N = 0.07 
     adm_X_PAO_i_P = 0.02
+    asm_X_I_i_N = 0.06
     
     # Should be constants
     cod_vfa = np.array([64, 112, 160, 208])
@@ -1785,6 +1786,7 @@ class mADM1toASM2d(mADMjunction):
                         f'effluent (ASM) COD is {asm_cod} or {asm_cod*(1+dcod)}. ')
                     return asm_vals
         elif cod_bl and tp_bl:
+            print('sahi pakde hein')
             if tkn_bl:
                 return asm_vals
             else:
@@ -1868,7 +1870,13 @@ class mADM1toASM2d(mADMjunction):
         X_S_i_N = cmps_asm.X_S.i_N
         S_F_i_N = cmps_asm.S_F.i_N
         S_A_i_N = cmps_asm.S_A.i_N
-        asm_X_I_i_N = cmps_asm.X_I.i_N
+        
+        # Due to issue with mapping of X_I across ASM2d and ADM1, making this user dependent is important
+        if self.asm_X_I_i_N == None:
+            asm_X_I_i_N = cmps_asm.X_I.i_N
+        else:
+            asm_X_I_i_N = self.asm_X_I_i_N
+        
         asm_S_I_i_N = cmps_asm.S_I.i_N
         asm_ions_idx = cmps_asm.indices(('S_NH4', 'S_A', 'S_NO3', 'S_PO4', 'X_PP', 'S_ALK'))
         
@@ -2120,6 +2128,21 @@ class mADM1toASM2d(mADMjunction):
                         if xsub_p < 0:
                             bio_p += xsub_p
                             xsub_p = 0
+                            
+                else:
+                    
+                    S_F = (ssub_p + xsub_p + bio_p) / S_F_i_P
+                    ssub_cod -= S_F
+                    ssub_p = xsub_p = bio_p = 0
+                    
+                    ssub_n -= sf_ndm
+                    
+                    if ssub_n < 0:
+                        xsub_n += ssub_n
+                        ssub_n = 0
+                        if xsub_n < 0:
+                            bio_n += xsub_n
+                            xsub_n = 0
                 
             # N and P balance not required as S_su, S_aa, S_fa do not have N and P
             S_A = S_ac + S_pro + S_bu + S_va
@@ -2209,9 +2232,10 @@ class mADM1toASM2d(mADMjunction):
             # _ions = np.array([S_IN, S_IC, S_ac, S_pro, S_bu, S_va])
             # S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC], alpha_vfa)) - S_NH/14)*(-12)
             
-            _ions = np.array([S_IN, S_IC, S_IP, X_PP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
+            # _ions = np.array([S_IN, S_IC, S_IP, X_PP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
             
-            S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC, alpha_IP], -1/31, 2, 1, alpha_vfa)) - (S_NH4/14 - S_A/64 - S_NO3/14 -1.5*S_PO4/31 - X_PP/31))*(-12)
+            S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC, alpha_IP, -1/31, 2, 1],  alpha_vfa)) - (S_NH4/14 - S_A/64 - S_NO3/14 -1.5*S_PO4/31 - X_PP/31))*(-12)
+    
             asm_vals[asm_ions_idx[5]] = S_ALK
             
             return asm_vals
@@ -2220,8 +2244,7 @@ class mADM1toASM2d(mADMjunction):
     
     @property
     def alpha_vfa(self):
-        # This may need change based on P-extension of ADM1 (ask Joy?)
-        return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[3:]-self.pH)))
+        return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[4:]-self.pH)))
 
 # %%
 
