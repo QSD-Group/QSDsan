@@ -232,7 +232,7 @@ def acid_base_rxn(h_ion, weak_acids_tot, Kas):
     # h, nh4, hco3, ac, pr, bu, va = mols
     # S_cat, S_K, S_Mg, S_an, S_IN, S_IP, S_IC, S_ac, S_pro, S_bu, S_va = weak_acids_tot  # in M
     S_cat, S_K, S_Mg, S_an, S_IN, S_IP = weak_acids_tot[:6]
-    # Kw, Ka_nh, Ka_h3po4, Ka_co2, Ka_ac, Ka_pr, Ka_bu, Ka_va = Kas
+    # Kw, Ka_nh, Ka_h2po4, Ka_co2, Ka_ac, Ka_pr, Ka_bu, Ka_va = Kas
     Kw = Kas[0]
     oh_ion = Kw/h_ion
     nh3, h2po4, hco3, ac, pro, bu, va = Kas[1:] * weak_acids_tot[4:] / (Kas[1:] + h_ion)
@@ -558,12 +558,12 @@ class ADM1_p_extension(CompiledProcesses):
     pKa_base : iterable[float], optional
         pKa (equilibrium coefficient) values of acid-base pairs at the base 
         temperature, unitless, following the order of `ADM1._acid_base_pairs`.
-        The default is [14, 9.25, 2.12, 6.35, 4.76, 4.88, 4.82, 4.86].
+        The default is [14, 9.25, 7.20, 6.35, 4.76, 4.88, 4.82, 4.86].
     Ka_dH : iterable[float], optional
         Heat of reaction of each acid-base pair at base temperature [J/mol], 
         following the order of `ADM1._acid_base_pairs`. The default is 
         [55900, 51965, 5000, 7646, 0, 0, 0, 0].
-        ('H+', 'OH-'), ('NH4+', 'NH3'), ('H3PO4', 'H2PO4 2-'), ('CO2', 'HCO3-'),
+        ('H+', 'OH-'), ('NH4+', 'NH3'), ('H2PO4 2-', 'HPO4 2-'), ('CO2', 'HCO3-'),
         ('HAc', 'Ac-'), ('HPr', 'Pr-'), ('HBu', 'Bu-'), ('HVa', 'Va-')
     kLa : float, optional
         Liquid-gas mass transfer coefficient [d^(-1)]. The default is 200.
@@ -610,7 +610,7 @@ class ADM1_p_extension(CompiledProcesses):
                        'KS_IN', 'KS_IP', 'KI_nh3', 'KIs_h2',
                        'Ka_base', 'Ka_dH', 'K_H_base', 'K_H_dH', 'kLa',
                        'T_base', 'components', 'root')
-    _acid_base_pairs = (('H+', 'OH-'), ('NH4+', 'NH3'), ('H3PO4', 'H2PO4-'), 
+    _acid_base_pairs = (('H+', 'OH-'), ('NH4+', 'NH3'), ('H2PO4-', 'HPO4 -2'), 
                         ('CO2', 'HCO3-'), ('HAc', 'Ac-'), ('HPr', 'Pr-'),
                         ('HBu', 'Bu-'), ('HVa', 'Va-'))
     
@@ -630,7 +630,7 @@ class ADM1_p_extension(CompiledProcesses):
                 q_PHA=3, b_PAO=0.2, b_PP=0.2, b_PHA=0.2, 
                 KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_nh3=1.8e-3, KS_IN=1e-4, KS_IP=2e-5, 
                 pH_limits_aa=(4,5.5), pH_limits_ac=(6,7), pH_limits_h2=(5,6),
-                T_base=298.15, pKa_base=[14, 9.25, 2.12, 6.35, 4.76, 4.88, 4.82, 4.86],
+                T_base=298.15, pKa_base=[14, 9.25, 7.20, 6.35, 4.76, 4.88, 4.82, 4.86],
                 Ka_dH=[55900, 51965, 5000, 7646, 0, 0, 0, 0],
                 kLa=200, K_H_base=[7.8e-4, 1.4e-3, 3.5e-2],
                 K_H_dH=[-4180, -14240, -19410],
