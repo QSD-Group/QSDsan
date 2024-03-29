@@ -266,6 +266,7 @@ Cs = np.empty(25) # 25 processes as defined in modified ADM1
 def rhos_adm1_p_extension(state_arr, params):
     ks = params['rate_constants']
     Ks = params['half_sat_coeffs']
+    
     cmps = params['components']
     # n = len(cmps)
     pH_ULs = params['pH_ULs']
@@ -321,22 +322,21 @@ def rhos_adm1_p_extension(state_arr, params):
     KH = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[7:10]
 
     rhos[:-3] = ks * Cs
-    rhos[3:11] *= substr_inhibit(substrates, Ks)
+    rhos[3:11] *= substr_inhibit(substrates, Ks[0:8])
     if S_va > 0: rhos[6] *= 1/(1+S_bu/S_va)
     if S_bu > 0: rhos[7] *= 1/(1+S_va/S_bu)
     
     # substrates_ids = cmps.indices(['S_va', 'S_bu', 'S_pro', 'S_ac'])
     # substrates_modified = state_arr[substrates_ids]
     substrates_modified = state_arr[3:7]
-    # Ka = K_a 
-    Ka = Ks[-2]
-    rhos[18:22] *= substr_inhibit(substrates_modified, Ka)
     
-    # PP_PAO = X_PP/X_PAO
+    
+    K_a = Ks[-2]
+    rhos[18:22] *= substr_inhibit(substrates_modified, K_a)
     PP_PAO = state_arr[25]/state_arr[26]
-    # Kpp = K_pp
-    Kpp = Ks[-1]
-    rhos[18:22] *= substr_inhibit(PP_PAO, Kpp)
+    
+    K_pp = Ks[-1]
+    rhos[18:22] *= substr_inhibit(PP_PAO, K_pp)
     
     # Multiplication by {Sva, Sbu, Spro, Sac}/(Sva + Sbu + Spro + Sac)
     transformation_array = state_arr[3:7]/sum(state_arr[3:7])
@@ -606,10 +606,12 @@ class ADM1_p_extension(CompiledProcesses):
                         'f_ac_bu', 'f_h2_bu', 'f_ac_pro', 'f_h2_pro',
                         'f_ac_PHA', 'f_bu_PHA', 'f_pro_PHA', 'f_va_PHA', 
                         'Y_su', 'Y_aa', 'Y_fa', 'Y_c4', 'Y_pro', 'Y_ac', 'Y_h2', 'Y_po4')
+    
     _kinetic_params = ('rate_constants', 'half_sat_coeffs', 'pH_ULs', 'pH_LLs',
                        'KS_IN', 'KS_IP', 'KI_nh3', 'KIs_h2',
                        'Ka_base', 'Ka_dH', 'K_H_base', 'K_H_dH', 'kLa',
                        'T_base', 'components', 'root')
+    
     _acid_base_pairs = (('H+', 'OH-'), ('NH4+', 'NH3'), ('H2PO4-', 'HPO4 -2'), 
                         ('CO2', 'HCO3-'), ('HAc', 'Ac-'), ('HPr', 'Pr-'),
                         ('HBu', 'Bu-'), ('HVa', 'Va-'))
@@ -724,6 +726,7 @@ class ADM1_p_extension(CompiledProcesses):
                        q_PHA, q_PHA, q_PHA, q_PHA, b_PAO, b_PP, b_PHA))
         
         Ks = np.array((K_su, K_aa, K_fa, K_c4, K_c4, K_pro, K_ac, K_h2, K_a, K_pp))
+        
         KIs_h2 = np.array((KI_h2_fa, KI_h2_c4, KI_h2_c4, KI_h2_pro))
         K_H_base = np.array(K_H_base)
         K_H_dH = np.array(K_H_dH)
