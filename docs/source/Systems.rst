@@ -67,6 +67,7 @@ A variety of other sanitation and resource recovery systems have been developed 
     * `metab EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/metab>`_
 
 #. EcoRecover system: Microalgae-based tertiary P recovery process
+
     * Manuscript: Kim et al., Development and validation of a Phototrophic-Mixotrophic Process Model (PM2) and a process simulator for microalgae-based wastewater treatment, In Prep.
     * `pm2_ecorecover EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/pm2_ecorecover>`_
 
