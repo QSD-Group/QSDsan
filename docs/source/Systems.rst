@@ -66,8 +66,8 @@ A variety of other sanitation and resource recovery systems have been developed 
     * Manuscript: Zhang et al., Sustainable design of a modular anaerobic system for distributed energy recovery from industrial wastewaters, In Prep.
     * `metab EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/metab>`_
 
-#. EcoRecover system: Microalgae-based tertiary P recovery process
-
+#. EcoRecover system: microalgae-based tertiary P recovery process
+    
     * Manuscript: Kim et al., Development and validation of a Phototrophic-Mixotrophic Process Model (PM2) and a process simulator for microalgae-based wastewater treatment, In Prep.
     * `pm2_ecorecover EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/pm2_ecorecover>`_
 
