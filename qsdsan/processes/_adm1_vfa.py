@@ -332,13 +332,13 @@ def flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+40, pH=False, gas_transfer
             Kas = params['Ka'] = Kab * T_correction_factor(T_base, T_op, Ka_dH)
             KH = params['KH'] = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[9:12]
 
-    #Specific definition
-    #biogas_p_h2 = R * T_op * state_arr[31]
-    #root.data['biogas_p_h2'] = biogas_p_h2
-    #biogas_p_ch4 = R * T_op * state_arr[32]
-    #root.data['biogas_p_ch4'] = biogas_p_ch4
-    #biogas_p_IC = R * T_op * state_arr[33]
-    #root.data['biogas_p_IC'] = biogas_p_IC
+    #Specific definition for plot
+    biogas_p_h2 = R * T_op * state_arr[31] #Pa
+    root.data['biogas_p_h2'] = biogas_p_h2
+    biogas_p_ch4 = R * T_op * state_arr[32]
+    root.data['biogas_p_ch4'] = biogas_p_ch4
+    biogas_p_IC = R * T_op * state_arr[33]
+    root.data['biogas_p_IC'] = biogas_p_IC
     # Kas = Kab * T_correction_factor(T_base, T_op, Ka_dH)
     # KH = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[9:12]
 
