@@ -2616,7 +2616,7 @@ class ASM2dtomADM1(mADMjunction):
                 # This needs to be followed by a corresponding loss in particulate organic N 
                 X_ND_asm1 -= X_pr * X_pr_i_N
                 
-                # For P balance (CONFIRM LATER 05/16)
+                # For P balance 
                 # This needs to be followed by a corresponding loss in particulate organic P
                 X_S_P -= X_pr * X_pr_i_P
                 
@@ -2631,7 +2631,7 @@ class ASM2dtomADM1(mADMjunction):
                 # All particulate organic N would thus be consumed in amino acid formation
                 X_ND_asm1 = 0
                 
-                # For P balance (CONFIRM LATER 05/16)
+                # For P balance 
                 # This needs to be followed by a corresponding loss in particulate organic P
                 X_S_P -= X_pr * X_pr_i_P
             
