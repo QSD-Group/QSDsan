@@ -688,7 +688,7 @@ class ADM1_vfa(CompiledProcesses):
                 f_ac_fa=0.7, f_pro_la=0.33, f_ac_la=0.24, f_ac_et=0.5, f_pro_va=0.54,
                 f_ac_va=0.31, f_ac_bu=0.8, f_ac_pro=0.57, f_pro_h2=0.05,
                 Y_su=0.1, Y_aa=0.08, Y_fa=0.06, Y_la=0.06, Y_et=0.04, Y_c4=0.06, Y_pro=0.04, Y_ac=0.05, Y_h2=0.06,
-                q_dis=0.05, q_ch_hyd=0.31, q_pr_hyd=0.31, q_li_hyd=0.31,
+                q_dis=0.05, q_ch_hyd=5.0, q_pr_hyd=5.0, q_li_hyd=5.0,
                 k_su=30, k_aa=50, k_fa=6, k_la=5, k_et=6.41, k_c4=20, k_pro=5.5, k_ac=7.1, k_h2=35,
                 K_su=0.5, K_aa=0.3, K_fa=0.4, K_la=0.25, K_et=0.91, K_c4=0.357, K_pro=0.392, K_ac=0.15, K_h2=3e-5,
                 b_su=0.02, b_aa=0.02, b_fa=0.02, b_la=0.02, b_et=0.02, b_c4=0.02, b_pro=0.02, b_ac=0.02, b_h2=0.02,
