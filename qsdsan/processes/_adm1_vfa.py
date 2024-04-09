@@ -692,7 +692,7 @@ class ADM1_vfa(CompiledProcesses):
                 k_su=10, k_aa=50, k_fa=10, k_la=8.0, k_et=5.0, k_c4=20, k_pro=5.5, k_ac=4.0, k_h2=40,
                 K_su=0.5, K_aa=0.3, K_fa=0.4, K_la=0.5, K_et=0.7, K_c4=0.457, K_pro=0.4, K_ac=0.01, K_h2=7e-7,
                 b_su=0.02, b_aa=0.02, b_fa=0.02, b_la=0.02, b_et=0.02, b_c4=0.02, b_pro=0.02, b_ac=0.02, b_h2=0.02,
-                KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_h2_la=3e-4, KI_h2_et=1e-5, KI_nh3=1.8e-3, KS_IN=1e-4,
+                KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_h2_la=4e-4, KI_h2_et=1e-5, KI_nh3=1.8e-3, KS_IN=1e-4,
                 KI_la_ac=12, KI_ac=0.01,
                 pH_limits_aa=(4,5.5), pH_limits_ac=(6,7), pH_limits_h2=(5,6),
                 T_base=298.15, pKa_base=[14, 9.25, 6.25, 4.66, 4.77, 4.72, 4.86, 3.76], # pKa based by Tamis
