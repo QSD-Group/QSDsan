@@ -333,10 +333,12 @@ def rhos_adm1_p_extension(state_arr, params):
     
     K_a = Ks[-2]
     rhos[18:22] *= substr_inhibit(substrates_modified, K_a)
-    PP_PAO = state_arr[25]/state_arr[26]
     
     K_pp = Ks[-1]
-    rhos[18:22] *= substr_inhibit(PP_PAO, K_pp)
+    S_conc = state_arr[25]
+    K_half_sat = K_pp*state_arr[26]
+    
+    rhos[18:22] *= substr_inhibit(S_conc, K_half_sat)
     
     # Multiplication by {Sva, Sbu, Spro, Sac}/(Sva + Sbu + Spro + Sac)
     transformation_array = state_arr[3:7]/sum(state_arr[3:7])
