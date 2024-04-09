@@ -785,8 +785,8 @@ class ADM1_vfa(CompiledProcesses):
         dct['f_la_su'] = 1.0 - K_vfa_la / ((S_va + S_bu + S_pro + S_ac) + K_vfa_la)
         K_h2_la = 1e-5
         
-        f_ac_pro_la = 0.57
-        f_pro_la = 0.3
+        f_ac_pro_la = 0.4
+        f_pro_la = 0.38
         f_ac_la = f_ac_pro_la - f_pro_la
         
         dct['f_ac_pro_la'] = f_pro_la + f_ac_la
