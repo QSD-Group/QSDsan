@@ -2424,6 +2424,7 @@ class ASM2dtomADM1(mADMjunction):
         X_AUT_i_N = cmps_asm.X_AUT.i_N
         S_F_i_N = cmps_asm.S_F.i_N
         X_S_i_N = cmps_asm.X_S.i_N
+        S_A_i_N = cmps_asm.S_A.i_N
         
         # Due to issue with mapping of X_I across ASM2d and ADM1, making this user dependent is important
         if self.asm_X_I_i_N == None:
@@ -2439,6 +2440,7 @@ class ASM2dtomADM1(mADMjunction):
         S_F_i_P = cmps_asm.S_F.i_P
         X_S_i_P = cmps_asm.X_S.i_P
         asm_X_I_i_P = cmps_asm.X_I.i_P
+        S_A_i_P = cmps_asm.S_A.I_P
         
         if cmps_asm.S_A.i_N > 0: 
             warn(f'S_A in ASM has positive nitrogen content: {cmps_asm.S_S.i_N} gN/gCOD. '
@@ -2460,12 +2462,14 @@ class ASM2dtomADM1(mADMjunction):
         cmps_adm = outs.components
         
         # For nitrogen balance 
+        S_ac_i_N = cmps_adm.S_ac.i_N
         S_aa_i_N = cmps_adm.S_aa.i_N
         X_pr_i_N = cmps_adm.X_pr.i_N
         adm_S_I_i_N = cmps_adm.S_I.i_N
         adm_X_I_i_N = cmps_adm.X_I.i_N
         
         # For phosphorous balance 
+        S_ac_i_P = cmps_adm.S_ac.i_P
         X_pr_i_P = cmps_adm.X_pr.i_P
         adm_S_I_i_P = cmps_adm.S_I.i_P
         adm_X_I_i_P = cmps_adm.X_I.i_P
@@ -2573,29 +2577,32 @@ class ASM2dtomADM1(mADMjunction):
             # Step 2: convert any readily biodegradable 
             # COD and TKN into amino acids and sugars
             
-            # S_S (in asm1) equals to the sum of S_F and S_A (pg. 82 IWA ASM models handbook)
-            S_S_asm1 = S_F + S_A 
+            # Directly map acetate
+            if S_ac_i_N == S_A_i_N and S_ac_i_P == S_A_i_P:
+                S_ac = S_A
+            else:
+                raise RuntimeError('N and P content should be the same in S_A and S_ac for direct translation')
             
             # First we calculate the amount of amino acid required in ADM1
             # if all available soluble organic N can be mapped to amino acid
             req_scod = S_ND_asm1 / S_aa_i_N
             
-            # if available S_S is not enough to fulfill that amino acid requirement 
-            if S_S_asm1 < req_scod: 
-                # then all available S_S is mapped to amino acids 
-                S_aa = S_S_asm1
+            # if available S_F is not enough to fulfill that amino acid requirement 
+            if S_F < req_scod: 
+                # then all available S_F is mapped to amino acids 
+                S_aa = S_F
                 # and no S_S would be available for conversion to sugars
                 S_su = 0
                 # This needs to be followed by a corresponding loss in soluble organic N 
                 S_ND_asm1 -= S_aa * S_aa_i_N
-            # if available S_S is more than enough to fulfill that amino acid requirement 
+            # if available S_F is more than enough to fulfill that amino acid requirement 
             else:
                 # All soluble organic N will be mapped to amino acid
                 S_aa = req_scod
                 # The line above implies that a certain portion of S_S would also be consumed to form amino acid
                 # The S_S which is left would form sugar 
-                # In simpler terms; S_S = S_S - S_aa; S_su = S_S 
-                S_su = S_S_asm1 - S_aa
+                # In simpler terms; S_F = S_F - S_aa; S_su = S_F 
+                S_su = S_F - S_aa
                 # All soluble organic N would thus be consumed in amino acid formation
                 S_ND_asm1 = 0
 
@@ -2759,6 +2766,8 @@ class ASM2dtomADM1(mADMjunction):
                 raise RuntimeError('Not enough N in X_I, X_S to fully '
                                    'convert X_I in ASM2d into X_I in ADM1.')
                 
+            # print(f'S_NH4 = {S_NH4}\n')
+            
             # 5(b)
             
             # Then determine the amount of soluble inert N/P that could be produced 
@@ -2852,17 +2861,18 @@ class ASM2dtomADM1(mADMjunction):
                     S_ND_asm1 = X_ND_asm1 = supply_inert_n_asm2d = 0
             
             if S_PO4 < 0:
-                raise RuntimeError('Not enough P in S_F_P, X_S_P and S_PO4 to fully '
+                raise RuntimeError(f'S_PO4 = {S_PO4}\n''Not enough P in S_F_P, X_S_P and S_PO4 to fully '
                                    'convert S_I in ASM2d into S_I in ADM1. Consider '
                                    'increasing the value of P content in S_I (ASM2d)')
                 
             if S_NH4 < 0:
-                raise RuntimeError('Not enough N in S_I, S_ND_asm1, X_ND_asm1, and S_NH4 to fully '
-                                   'convert S_I in ASM2d into S_I in ADM1. Consider '
-                                   'increasing the value of N content in S_I (ASM2d)')
+                raise RuntimeError(f'S_NH4 = {S_NH4}\n''Not enough N in S_I, S_ND_asm1, X_ND_asm1, and S_NH4 to fully '
+                                    'convert S_I in ASM2d into S_I in ADM1. Consider '
+                                    'increasing the value of N content in S_I (ASM2d)')
         
             # Step 6: Step map any remaining TKN/P
             S_IN = S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d
+            # print(f'S_IN = {S_IN}')
             S_IP = S_F_P + X_S_P + S_PO4            
             
             # Step 8: check COD and TKN balance
