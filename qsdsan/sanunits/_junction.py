@@ -2303,12 +2303,16 @@ class ASM2dtomADM1(mADMjunction):
     bio_to_li = 0.4
     frac_deg = 0.68
     
-    # Since we are matching PAOs directly from ASM2d to mADM1, it is important 
+    # Since we are matching PAOs, X_I, S_I, directly from ASM2d to mADM1, it is important 
     # for PAOs to have identical N/P content across models
     
     adm_X_PAO_i_N = 0.07 
     adm_X_PAO_i_P = 0.02
-    asm_X_I_i_N = 0.06
+    
+    asm_X_I_i_N = 0.0600327162
+    asm_X_I_i_P = 0.01
+    asm_S_I_i_N = 0.06
+    asm_S_I_i_P = 0.01
     
     def isbalanced(self, lhs, rhs_vals, rhs_i):
         rhs = sum(rhs_vals*rhs_i)
@@ -2415,6 +2419,7 @@ class ASM2dtomADM1(mADMjunction):
         atol = self.atol
 
         cmps_asm = ins.components
+        cmps_adm = outs.components
         
         # For COD balance 
         S_NO3_i_COD = cmps_asm.S_NO3.i_COD
@@ -2431,16 +2436,28 @@ class ASM2dtomADM1(mADMjunction):
             asm_X_I_i_N = cmps_asm.X_I.i_N
         else:
             asm_X_I_i_N = self.asm_X_I_i_N
+            
+        if self.asm_X_I_i_P == None:
+            asm_X_I_i_P = cmps_asm.X_I.i_P
+        else:
+            asm_X_I_i_P = self.asm_X_I_i_P
         
-        asm_S_I_i_N = cmps_asm.S_I.i_N
+        if self.asm_S_I_i_N == None:
+            asm_S_I_i_N = cmps_asm.S_I.i_N
+        else:
+            asm_S_I_i_N = self.asm_X_I_i_N
+            
+        if self.asm_S_I_i_P == None:
+            asm_S_I_i_P = cmps_asm.S_I.i_P
+        else:
+            asm_S_I_i_P = self.asm_S_I_i_P
         
         # For P balance
         X_H_i_P = cmps_asm.X_H.i_P
         X_AUT_i_P = cmps_asm.X_AUT.i_P
         S_F_i_P = cmps_asm.S_F.i_P
         X_S_i_P = cmps_asm.X_S.i_P
-        asm_X_I_i_P = cmps_asm.X_I.i_P
-        S_A_i_P = cmps_asm.S_A.I_P
+        S_A_i_P = cmps_asm.S_A.i_P
         
         if cmps_asm.S_A.i_N > 0: 
             warn(f'S_A in ASM has positive nitrogen content: {cmps_asm.S_S.i_N} gN/gCOD. '
@@ -2451,15 +2468,16 @@ class ASM2dtomADM1(mADMjunction):
             warn(f'S_A in ASM has positive phosphorous content: {cmps_asm.S_S.i_P} gN/gCOD. '
                  'These phosphorous will be ignored by the interface model '
                  'and could lead to imbalance of TP after conversion.')
-            
-        if cmps_asm.S_I.i_P > 0:
-            warn(f'S_I in ASM has positive phosphorous content: {cmps_asm.S_I.i_P} gN/gCOD. '
-                 'These phosphorous will be ignored by the interface model '
-                 'and could lead to imbalance of TP after conversion.')
+        
+        # ------------------------------Rai Version---------------------------------------------
+        # if cmps_asm.S_I.i_P > 0:
+        #     warn(f'S_I in ASM has positive phosphorous content: {cmps_asm.S_I.i_P} gN/gCOD. '
+        #          'These phosphorous will be ignored by the interface model '
+        #          'and could lead to imbalance of TP after conversion.')
+        # ------------------------------Rai Version---------------------------------------------
+        
         # We do not need to check if X_S.i_N != 0 since we take care of it using X_ND_asm1
         # We do not need to check if S_F.i_N != 0 since we take care of it using S_ND_asm1
-        
-        cmps_adm = outs.components
         
         # For nitrogen balance 
         S_ac_i_N = cmps_adm.S_ac.i_N
@@ -2503,6 +2521,26 @@ class ASM2dtomADM1(mADMjunction):
         
         # Checks not required for X_PP as measured as P in both, with i_COD = i_N = 0
         # Checks not required for X_PHA as measured as COD in both, with i_N = i_P = 0
+        
+        if asm_X_I_i_N != adm_X_I_i_N:
+            raise RuntimeError('X_I cannot be directly mapped as N content'
+                               f'in asm2d_X_I_i_N = {asm_X_I_i_N} is not equal to'
+                               f'adm_X_I_i_N = {adm_X_I_i_N}')
+            
+        if asm_X_I_i_P != adm_X_I_i_P:
+            raise RuntimeError('X_I cannot be directly mapped as P content'
+                               f'in asm2d_X_I_i_P = {asm_X_I_i_P} is not equal to'
+                               f'adm_X_I_i_P = {adm_X_I_i_P}')
+        
+        if asm_S_I_i_N != adm_X_I_i_N:
+            raise RuntimeError('S_I cannot be directly mapped as N content'
+                               f'in asm2d_S_I_i_N = {asm_S_I_i_N} is not equal to'
+                               f'adm_S_I_i_N = {adm_S_I_i_N}')
+            
+        if asm_S_I_i_P != adm_S_I_i_P:
+            raise RuntimeError('S_I cannot be directly mapped as P content'
+                               f'in asm2d_S_I_i_P = {asm_S_I_i_P} is not equal to \n'
+                               f'adm_S_I_i_P = {adm_S_I_i_P}')
         
         adm_ions_idx = cmps_adm.indices(['S_IN', 'S_IP', 'S_IC', 'S_cat', 'S_an'])
         
@@ -2722,6 +2760,8 @@ class ASM2dtomADM1(mADMjunction):
             # Step 5: map particulate inerts
             
             # 5 (a)
+            
+            # --------------------------Rai version--------------------------------------
             # # First determine the amount of particulate inert N/P available from ASM2d
             # xi_nsp_asm2d = X_I * asm_X_I_i_N
             # xi_psp_asm2d = X_I * asm_X_I_i_P
@@ -2765,121 +2805,132 @@ class ASM2dtomADM1(mADMjunction):
             # # Since the N balance cannot hold, the P balance is not futher checked 
             #     raise RuntimeError('Not enough N in X_I, X_S to fully '
             #                        'convert X_I in ASM2d into X_I in ADM1.')
+            # --------------------------Rai version--------------------------------------
             
-            if asm_X_I_i_N == adm_X_I_i_N and asm_X_I_i_P == adm_X_I_i_P:
-                pass
-            else:
-                raise RuntimeError('N and P content in X_I should be the same for direct translation')
+            # --------------------------Flores Alsina et al. 2016 version--------------------------------------
+            # X_I = X_I
             # COD balance 
             X_I += (X_H+X_AUT) * (1-frac_deg)
+            # --------------------------Flores Alsina et al. 2016 version--------------------------------------
             
-            # print(f'S_NH4 = {S_NH4}\n')
+            # # 5(b)
             
-            # 5(b)
+            # --------------------------Rai version--------------------------------------
+            # # Then determine the amount of soluble inert N/P that could be produced 
+            # # in ADM1 given the ASM1 X_I
+            # req_sn = S_I * adm_S_I_i_N
+            # req_sp = S_I * adm_S_I_i_P
             
-            # Then determine the amount of soluble inert N/P that could be produced 
-            # in ADM1 given the ASM1 X_I
-            req_sn = S_I * adm_S_I_i_N
-            req_sp = S_I * adm_S_I_i_P
+            # supply_inert_n_asm2d = S_I * asm_S_I_i_N
             
-            supply_inert_n_asm2d = S_I * asm_S_I_i_N
-            
-            # N balance 
-            if req_sn <= S_ND_asm1 + supply_inert_n_asm2d:
-                S_ND_asm1 -= (req_sn - supply_inert_n_asm2d)
-                supply_inert_n_asm2d = 0 
-                # P balance 
-                if req_sp <= S_F_P:
-                    S_F_P -= req_sp
-                elif req_sp <= S_F_P + X_S_P:
-                    X_S_P -= (req_sp - S_F_P)
-                    S_F_P = 0
-                elif req_sp <= S_F_P + X_S_P + S_PO4:
-                    S_PO4 -= (req_sp - S_F_P - X_S_P)
-                    S_F_P = X_S_P = 0
-                else:
-                    S_PO4 -= (req_sp - S_F_P - X_S_P)
-                    S_F_P =  X_S_P = 0
-            # N balance
-            elif req_sn <= S_ND_asm1 + X_ND_asm1 + supply_inert_n_asm2d:
-                X_ND_asm1 -= (req_sn - S_ND_asm1 - supply_inert_n_asm2d)
-                S_ND_asm1 = supply_inert_n_asm2d = 0
-                # P balance
-                if req_sp <= S_F_P:
-                    S_F_P -= req_sp
-                elif req_sp <= S_F_P + X_S_P:
-                    X_S_P -= (req_sp - S_F_P)
-                    S_F_P = 0
-                elif req_sp <= S_F_P + X_S_P + S_PO4:
-                    S_PO4 -= (req_sp - S_F_P - X_S_P)
-                    S_F_P = X_S_P = 0
-                else:
-                    S_PO4 -= (req_sp - S_F_P - X_S_P)
-                    S_F_P =  X_S_P = 0
-            # N balance
-            elif req_sn <= S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d:
-                S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1 - supply_inert_n_asm2d)
-                S_ND_asm1 = X_ND_asm1 = supply_inert_n_asm2d = 0
-                # P balance 
-                if req_sp <= S_F_P:
-                    S_F_P -= req_sp
-                elif req_sp <= S_F_P + X_S_P:
-                    X_S_P -= (req_sp - S_F_P)
-                    S_F_P = 0
-                elif req_sp <= S_F_P + X_S_P + S_PO4:
-                    S_PO4 -= (req_sp - S_F_P - X_S_P)
-                    S_F_P = X_S_P = 0
-                else:
-                    S_PO4 -= (req_sp - S_F_P - X_S_P)
-                    S_F_P =  X_S_P = 0
-            elif req_sp <= S_F_P or req_sp <= S_F_P + X_S_P or req_sp <= S_F_P + X_S_P + S_PO4:
+            # # N balance 
+            # if req_sn <= S_ND_asm1 + supply_inert_n_asm2d:
+            #     S_ND_asm1 -= (req_sn - supply_inert_n_asm2d)
+            #     supply_inert_n_asm2d = 0 
+            #     # P balance 
+            #     if req_sp <= S_F_P:
+            #         S_F_P -= req_sp
+            #     elif req_sp <= S_F_P + X_S_P:
+            #         X_S_P -= (req_sp - S_F_P)
+            #         S_F_P = 0
+            #     elif req_sp <= S_F_P + X_S_P + S_PO4:
+            #         S_PO4 -= (req_sp - S_F_P - X_S_P)
+            #         S_F_P = X_S_P = 0
+            #     else:
+            #         S_PO4 -= (req_sp - S_F_P - X_S_P)
+            #         S_F_P =  X_S_P = 0
+            # # N balance
+            # elif req_sn <= S_ND_asm1 + X_ND_asm1 + supply_inert_n_asm2d:
+            #     X_ND_asm1 -= (req_sn - S_ND_asm1 - supply_inert_n_asm2d)
+            #     S_ND_asm1 = supply_inert_n_asm2d = 0
+            #     # P balance
+            #     if req_sp <= S_F_P:
+            #         S_F_P -= req_sp
+            #     elif req_sp <= S_F_P + X_S_P:
+            #         X_S_P -= (req_sp - S_F_P)
+            #         S_F_P = 0
+            #     elif req_sp <= S_F_P + X_S_P + S_PO4:
+            #         S_PO4 -= (req_sp - S_F_P - X_S_P)
+            #         S_F_P = X_S_P = 0
+            #     else:
+            #         S_PO4 -= (req_sp - S_F_P - X_S_P)
+            #         S_F_P =  X_S_P = 0
+            # # N balance
+            # elif req_sn <= S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d:
+            #     S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1 - supply_inert_n_asm2d)
+            #     S_ND_asm1 = X_ND_asm1 = supply_inert_n_asm2d = 0
+            #     # P balance 
+            #     if req_sp <= S_F_P:
+            #         S_F_P -= req_sp
+            #     elif req_sp <= S_F_P + X_S_P:
+            #         X_S_P -= (req_sp - S_F_P)
+            #         S_F_P = 0
+            #     elif req_sp <= S_F_P + X_S_P + S_PO4:
+            #         S_PO4 -= (req_sp - S_F_P - X_S_P)
+            #         S_F_P = X_S_P = 0
+            #     else:
+            #         S_PO4 -= (req_sp - S_F_P - X_S_P)
+            #         S_F_P =  X_S_P = 0
+            # elif req_sp <= S_F_P or req_sp <= S_F_P + X_S_P or req_sp <= S_F_P + X_S_P + S_PO4:
                 
-                S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1 - supply_inert_n_asm2d)
-                S_ND_asm1 = X_ND_asm1 = supply_inert_n_asm2d = 0
+            #     S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1 - supply_inert_n_asm2d)
+            #     S_ND_asm1 = X_ND_asm1 = supply_inert_n_asm2d = 0
                 
-                if req_sp <= S_F_P:
-                    S_F_P -= req_sp
-                elif req_sp <= S_F_P + X_S_P:
-                    X_S_P -= (req_sp - S_F_P)
-                    S_F_P = 0
-                elif req_sp <= S_F_P + X_S_P + S_PO4:
-                    S_PO4 -= (req_sp - S_F_P - X_S_P)
-                    S_F_P = X_S_P = 0
-            else:
-                if (S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d)/adm_S_I_i_N < (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P:
-                    warn('Additional soluble inert COD is mapped to S_su.')
-                    SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d)/adm_S_I_i_N
-                    S_su += S_I - SI_cod
-                    S_I = SI_cod
-                    S_ND_asm1 = X_ND_asm1 = S_NH4 = supply_inert_n_asm2d = 0
+            #     if req_sp <= S_F_P:
+            #         S_F_P -= req_sp
+            #     elif req_sp <= S_F_P + X_S_P:
+            #         X_S_P -= (req_sp - S_F_P)
+            #         S_F_P = 0
+            #     elif req_sp <= S_F_P + X_S_P + S_PO4:
+            #         S_PO4 -= (req_sp - S_F_P - X_S_P)
+            #         S_F_P = X_S_P = 0
+            # else:
+            #     if (S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d)/adm_S_I_i_N < (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P:
+            #         warn('Additional soluble inert COD is mapped to S_su.')
+            #         SI_cod = (S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d)/adm_S_I_i_N
+            #         S_su += S_I - SI_cod
+            #         S_I = SI_cod
+            #         S_ND_asm1 = X_ND_asm1 = S_NH4 = supply_inert_n_asm2d = 0
                     
-                    req_sp = S_I * adm_S_I_i_P
-                    S_PO4 -= (req_sp - S_F_P - X_S_P)
-                    S_F_P = X_S_P = 0
-                else:
-                    warn('Additional soluble inert COD is mapped to S_su.')
-                    SI_cod = (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P
-                    S_su += S_I - SI_cod
-                    S_I = SI_cod
-                    S_F_P = X_S_P = S_PO4 = 0
+            #         req_sp = S_I * adm_S_I_i_P
+            #         S_PO4 -= (req_sp - S_F_P - X_S_P)
+            #         S_F_P = X_S_P = 0
+            #     else:
+            #         warn('Additional soluble inert COD is mapped to S_su.')
+            #         SI_cod = (S_F_P + X_S_P + S_PO4)/adm_S_I_i_P
+            #         S_su += S_I - SI_cod
+            #         S_I = SI_cod
+            #         S_F_P = X_S_P = S_PO4 = 0
                     
-                    req_sn = S_I * adm_S_I_i_N
-                    S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1 - supply_inert_n_asm2d)
-                    S_ND_asm1 = X_ND_asm1 = supply_inert_n_asm2d = 0
+            #         req_sn = S_I * adm_S_I_i_N
+            #         S_NH4 -= (req_sn - S_ND_asm1 - X_ND_asm1 - supply_inert_n_asm2d)
+            #         S_ND_asm1 = X_ND_asm1 = supply_inert_n_asm2d = 0
             
-            if S_PO4 < 0:
-                raise RuntimeError(f'S_PO4 = {S_PO4}\n''Not enough P in S_F_P, X_S_P and S_PO4 to fully '
-                                   'convert S_I in ASM2d into S_I in ADM1. Consider '
-                                   'increasing the value of P content in S_I (ASM2d)')
+            # if S_PO4 < 0:
+            #     raise RuntimeError(f'S_PO4 = {S_PO4}\n''Not enough P in S_F_P, X_S_P and S_PO4 to fully '
+            #                        'convert S_I in ASM2d into S_I in ADM1. Consider '
+            #                        'increasing the value of P content in S_I (ASM2d)')
                 
-            if S_NH4 < 0:
-                raise RuntimeError(f'S_NH4 = {S_NH4}\n''Not enough N in S_I, S_ND_asm1, X_ND_asm1, and S_NH4 to fully '
-                                    'convert S_I in ASM2d into S_I in ADM1. Consider '
-                                    'increasing the value of N content in S_I (ASM2d)')
+            # if S_NH4 < 0:
+            #     raise RuntimeError(f'S_NH4 = {S_NH4}\n''Not enough N in S_I, S_ND_asm1, X_ND_asm1, and S_NH4 to fully '
+            #                         'convert S_I in ASM2d into S_I in ADM1. Consider '
+            #                         'increasing the value of N content in S_I (ASM2d)')
+            # --------------------------Rai version--------------------------------------
+            
+            # --------------------------Flores Alsina et al. 2016 version--------------------------------------
+            # S_I = S_I
+            # --------------------------Flores Alsina et al. 2016 version--------------------------------------
         
             # Step 6: Step map any remaining TKN/P
-            S_IN = S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d
-            # print(f'S_IN = {S_IN}')
+            
+            # --------------------------Rai version--------------------------------------
+            # S_IN = S_ND_asm1 + X_ND_asm1 + S_NH4 + supply_inert_n_asm2d
+            # --------------------------Rai version--------------------------------------
+            
+            # --------------------------Flores Alsina et al. 2016 version--------------------------------------
+            S_IN = S_ND_asm1 + X_ND_asm1 + S_NH4
+            # --------------------------Flores Alsina et al. 2016 version--------------------------------------
+            
             S_IP = S_F_P + X_S_P + S_PO4            
             
             # Step 8: check COD and TKN balance
