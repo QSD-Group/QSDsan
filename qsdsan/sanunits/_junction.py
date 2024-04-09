@@ -2722,50 +2722,57 @@ class ASM2dtomADM1(mADMjunction):
             # Step 5: map particulate inerts
             
             # 5 (a)
-            # First determine the amount of particulate inert N/P available from ASM2d
-            xi_nsp_asm2d = X_I * asm_X_I_i_N
-            xi_psp_asm2d = X_I * asm_X_I_i_P
+            # # First determine the amount of particulate inert N/P available from ASM2d
+            # xi_nsp_asm2d = X_I * asm_X_I_i_N
+            # xi_psp_asm2d = X_I * asm_X_I_i_P
             
-            # Then determine the amount of particulate inert N/P that could be produced 
-            # in ADM1 given the ASM1 X_I
-            xi_ndm = X_I * adm_X_I_i_N
-            xi_pdm = X_I * adm_X_I_i_P
+            # # Then determine the amount of particulate inert N/P that could be produced 
+            # # in ADM1 given the ASM1 X_I
+            # xi_ndm = X_I * adm_X_I_i_N
+            # xi_pdm = X_I * adm_X_I_i_P
 
-            # if particulate inert N available in ASM1 is greater than ADM1 demand
-            if xi_nsp_asm2d + X_ND_asm1 >= xi_ndm:
-                deficit = xi_ndm - xi_nsp_asm2d
-                # COD balance 
-                X_I += (X_H+X_AUT) * (1-frac_deg)
-                # N balance 
-                X_ND_asm1 -= deficit
-                # P balance 
-                if xi_psp_asm2d + X_S_P >= xi_pdm:
-                    deficit = xi_pdm - xi_psp_asm2d
-                    X_S_P -= deficit
-                elif isclose(xi_psp_asm2d+X_S_P, xi_pdm, rel_tol=rtol, abs_tol=atol):
-                    X_S_P  = 0
-                else:
-                    raise RuntimeError('Not enough P in X_I, X_S to fully '
-                                       'convert X_I in ASM2d into X_I in ADM1.')
-            elif isclose(xi_nsp_asm2d+X_ND_asm1, xi_ndm, rel_tol=rtol, abs_tol=atol):
-                # COD balance 
-                X_I += (X_H+X_AUT) * (1-frac_deg)
-                # N balance 
-                X_ND_asm1 = 0
-                # P balance 
-                if xi_psp_asm2d + X_S_P >= xi_pdm:
-                    deficit = xi_pdm - xi_psp_asm2d
-                    X_S_P -= deficit
-                elif isclose(xi_psp_asm2d+X_S_P, xi_pdm, rel_tol=rtol, abs_tol=atol):
-                    X_S_P  = 0
-                else:
-                    raise RuntimeError('Not enough P in X_I, X_S to fully '
-                                       'convert X_I in ASM2d into X_I in ADM1.')
+            # # if particulate inert N available in ASM1 is greater than ADM1 demand
+            # if xi_nsp_asm2d + X_ND_asm1 >= xi_ndm:
+            #     deficit = xi_ndm - xi_nsp_asm2d
+            #     # COD balance 
+            #     X_I += (X_H+X_AUT) * (1-frac_deg)
+            #     # N balance 
+            #     X_ND_asm1 -= deficit
+            #     # P balance 
+            #     if xi_psp_asm2d + X_S_P >= xi_pdm:
+            #         deficit = xi_pdm - xi_psp_asm2d
+            #         X_S_P -= deficit
+            #     elif isclose(xi_psp_asm2d+X_S_P, xi_pdm, rel_tol=rtol, abs_tol=atol):
+            #         X_S_P  = 0
+            #     else:
+            #         raise RuntimeError('Not enough P in X_I, X_S to fully '
+            #                            'convert X_I in ASM2d into X_I in ADM1.')
+            # elif isclose(xi_nsp_asm2d+X_ND_asm1, xi_ndm, rel_tol=rtol, abs_tol=atol):
+            #     # COD balance 
+            #     X_I += (X_H+X_AUT) * (1-frac_deg)
+            #     # N balance 
+            #     X_ND_asm1 = 0
+            #     # P balance 
+            #     if xi_psp_asm2d + X_S_P >= xi_pdm:
+            #         deficit = xi_pdm - xi_psp_asm2d
+            #         X_S_P -= deficit
+            #     elif isclose(xi_psp_asm2d+X_S_P, xi_pdm, rel_tol=rtol, abs_tol=atol):
+            #         X_S_P  = 0
+            #     else:
+            #         raise RuntimeError('Not enough P in X_I, X_S to fully '
+            #                            'convert X_I in ASM2d into X_I in ADM1.')
+            # else:
+            # # Since the N balance cannot hold, the P balance is not futher checked 
+            #     raise RuntimeError('Not enough N in X_I, X_S to fully '
+            #                        'convert X_I in ASM2d into X_I in ADM1.')
+            
+            if asm_X_I_i_N == adm_X_I_i_N and asm_X_I_i_P == adm_X_I_i_P:
+                pass
             else:
-            # Since the N balance cannot hold, the P balance is not futher checked 
-                raise RuntimeError('Not enough N in X_I, X_S to fully '
-                                   'convert X_I in ASM2d into X_I in ADM1.')
-                
+                raise RuntimeError('N and P content in X_I should be the same for direct translation')
+            # COD balance 
+            X_I += (X_H+X_AUT) * (1-frac_deg)
+            
             # print(f'S_NH4 = {S_NH4}\n')
             
             # 5(b)
@@ -2893,7 +2900,7 @@ class ASM2dtomADM1(mADMjunction):
             
             adm_vals = np.array([
                 S_su, S_aa, 
-                0, 0, 0, 0, 0, # S_fa, S_va, S_bu, S_pro, S_ac, 
+                0, 0, 0, 0, S_ac, # S_fa, S_va, S_bu, S_pro,
                 0, 0, # S_h2, S_ch4,
                 S_IC, S_IN, S_IP, S_I, 
                 X_ch, X_pr, X_li, 
