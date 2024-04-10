@@ -607,7 +607,8 @@ class ADM1_p_extension(CompiledProcesses):
                         'f_ac_fa', 'f_h2_fa', 'f_pro_va', 'f_ac_va', 'f_h2_va',
                         'f_ac_bu', 'f_h2_bu', 'f_ac_pro', 'f_h2_pro',
                         'f_ac_PHA', 'f_bu_PHA', 'f_pro_PHA', 'f_va_PHA', 
-                        'Y_su', 'Y_aa', 'Y_fa', 'Y_c4', 'Y_pro', 'Y_ac', 'Y_h2', 'Y_po4')
+                        'Y_su', 'Y_aa', 'Y_fa', 'Y_c4', 'Y_pro', 'Y_ac', 'Y_h2', 'Y_po4', 
+                        'K_XPP', 'Mg_XPP')
     
     _kinetic_params = ('rate_constants', 'half_sat_coeffs', 'pH_ULs', 'pH_LLs',
                        'KS_IN', 'KS_IP', 'KI_nh3', 'KIs_h2',
@@ -718,7 +719,7 @@ class ADM1_p_extension(CompiledProcesses):
                          f_ac_fa, 1-f_ac_fa, f_pro_va, f_ac_va, 1-f_pro_va-f_ac_va,
                          f_ac_bu, 1-f_ac_bu, f_ac_pro, 1-f_ac_pro,
                          f_ac_PHA, f_bu_PHA, f_pro_PHA, 1-f_ac_PHA-f_bu_PHA-f_pro_PHA,
-                         Y_su, Y_aa, Y_fa, Y_c4, Y_pro, Y_ac, Y_h2, Y_po4)
+                         Y_su, Y_aa, Y_fa, Y_c4, Y_pro, Y_ac, Y_h2, Y_po4, cmps.X_PP.i_K, cmps.X_PP.i_Mg)
         pH_LLs = np.array([pH_limits_aa[0]]*6 + [pH_limits_ac[0], pH_limits_h2[0]])
         pH_ULs = np.array([pH_limits_aa[1]]*6 + [pH_limits_ac[1], pH_limits_h2[1]])
         
