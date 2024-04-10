@@ -656,44 +656,44 @@ class ADM1_p_extension(CompiledProcesses):
         # Need to add 5 processes separately for stoichiometry. See ASM2d for reference. 
         if path == _path:
             _p19 = Process('storage_Sva_in_XPHA',
-                           'S_va + [Y_po4]X_PP -> X_PHA + [?]S_K + [?]S_Mg',
+                           'S_va + [Y_po4]X_PP -> [?]S_IC + [?]S_IN + [?]S_IP + X_PHA + [Y_po4*K_XPP]S_K + [Y_po4*Mg_XPP]S_Mg',
                            components=cmps,
                            ref_component='X_PHA',
                            rate_equation='q_PHA * S_va/(K_a+S_va) * (X_PP/X_PAO)/(K_PP+(X_PP/X_PAO)) * X_PAO * S_va/(S_va+S_bu+S_pro+S_ac)',
                            parameters=('Y_po4', 'q_PHA', 'K_a', 'K_PP'),
-                           conserved_for=('K', 'Mg'))
+                           conserved_for=('C', 'N', 'P'))
             
             _p20 = Process('storage_Sbu_in_XPHA',
-                           'S_bu + [Y_po4]X_PP -> X_PHA + [?]S_K + [?]S_Mg',
+                           'S_bu + [Y_po4]X_PP -> [?]S_IC + [?]S_IN + [?]S_IP + X_PHA + [Y_po4*K_XPP]S_K + [Y_po4*Mg_XPP]S_Mg',
                            components=cmps,
                            ref_component='X_PHA',
                            rate_equation='q_PHA * S_bu/(K_a+S_bu) * (X_PP/X_PAO)/(K_PP+(X_PP/X_PAO)) * X_PAO * S_bu/(S_va+S_bu+S_pro+S_ac)',
                            parameters=('Y_po4', 'q_PHA', 'K_a', 'K_PP'),
-                           conserved_for=('K', 'Mg'))
+                           conserved_for=('C', 'N', 'P'))
             
             _p21 = Process('storage_Spro_in_XPHA',
-                           'S_pro + [Y_po4]X_PP -> X_PHA + [?]S_K + [?]S_Mg',
+                           'S_pro + [Y_po4]X_PP -> [?]S_IC + [?]S_IN + [?]S_IP + X_PHA + [Y_po4*K_XPP]S_K + [Y_po4*Mg_XPP]S_Mg',
                            components=cmps,
                            ref_component='X_PHA',
                            rate_equation='q_PHA * S_pro/(K_a+S_pro) * (X_PP/X_PAO)/(K_PP+(X_PP/X_PAO)) * X_PAO * S_pro/(S_va+S_bu+S_pro+S_ac)',
                            parameters=('Y_po4', 'q_PHA', 'K_a', 'K_PP'),
-                           conserved_for=('K', 'Mg'))
+                           conserved_for=('C', 'N', 'P'))
             
             _p22 = Process('storage_Sac_in_XPHA',
-                           'S_ac + [Y_po4]X_PP -> X_PHA + [?]S_K + [?]S_Mg',
+                           'S_ac + [Y_po4]X_PP -> [?]S_IC + [?]S_IN + [?]S_IP + X_PHA + [Y_po4*K_XPP]S_K + [Y_po4*Mg_XPP]S_Mg',
                            components=cmps,
                            ref_component='X_PHA',
                            rate_equation='q_PHA * S_ac/(K_a+S_ac) * (X_PP/X_PAO)/(K_PP+(X_PP/X_PAO)) * X_PAO * S_ac/(S_va+S_bu+S_pro+S_ac)',
                            parameters=('Y_po4', 'q_PHA', 'K_a', 'K_PP'),
-                           conserved_for=('K', 'Mg'))
+                           conserved_for=('C', 'N', 'P'))
             
             _p24 = Process('lysis_XPP',
-                           'X_PP -> [?]S_K + [?]S_Mg',
+                           'X_PP -> [?]S_IC + [?]S_IN + [?]S_IP + [K_XPP]S_K + [Mg_XPP]S_Mg',
                            components=cmps,
                            ref_component='X_PP',
                            rate_equation='b_PP*X_PP',
                            parameters=('b_PP'),
-                           conserved_for=('K', 'Mg'))
+                           conserved_for=('C', 'N', 'P'))
             
             self.insert(18, _p19)
             self.insert(19, _p20)
