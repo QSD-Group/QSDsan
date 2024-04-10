@@ -17,5 +17,5 @@ decay_Xc4										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb				-1				f_xI_xb
 decay_Xpro										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb					-1			f_xI_xb							
 decay_Xac										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb						-1		f_xI_xb							
 decay_Xh2										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb							-1	f_xI_xb							
-lysis_XPAO													f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb								f_xI_xb			-1				
-lysis_XPHA				f_va_PHA	f_bu_PHA	f_pro_PHA	f_ac_PHA																		-1						
+lysis_XPAO										?	?	?	f_sI_xb	f_ch_xb	f_pr_xb	f_li_xb								f_xI_xb			-1				
+lysis_XPHA				f_va_PHA	f_bu_PHA	f_pro_PHA	f_ac_PHA			?	?	?													-1						
