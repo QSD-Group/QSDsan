@@ -659,7 +659,7 @@ class ADM1_p_extension(CompiledProcesses):
                            'S_va + [Y_po4]X_PP -> [?]S_IC + [?]S_IN + [?]S_IP + X_PHA + [Y_po4*K_XPP]S_K + [Y_po4*Mg_XPP]S_Mg',
                            components=cmps,
                            ref_component='X_PHA',
-                           rate_equation='q_PHA * S_va/(K_a+S_va) * (X_PP/X_PAO)/(K_PP+(X_PP/X_PAO)) * X_PAO * S_va/(S_va+S_bu+S_pro+S_ac)',
+                           rate_equation='q_PHA * S_va/(K_a+S_va) * (X_PP)/((K_PP*X_PAO) + X_PP) * X_PAO * S_va/(S_va+S_bu+S_pro+S_ac)',
                            parameters=('Y_po4', 'q_PHA', 'K_a', 'K_PP'),
                            conserved_for=('C', 'N', 'P'))
             
@@ -667,7 +667,7 @@ class ADM1_p_extension(CompiledProcesses):
                            'S_bu + [Y_po4]X_PP -> [?]S_IC + [?]S_IN + [?]S_IP + X_PHA + [Y_po4*K_XPP]S_K + [Y_po4*Mg_XPP]S_Mg',
                            components=cmps,
                            ref_component='X_PHA',
-                           rate_equation='q_PHA * S_bu/(K_a+S_bu) * (X_PP/X_PAO)/(K_PP+(X_PP/X_PAO)) * X_PAO * S_bu/(S_va+S_bu+S_pro+S_ac)',
+                           rate_equation='q_PHA * S_bu/(K_a+S_bu) * (X_PP)/((K_PP*X_PAO) + X_PP) * X_PAO * S_bu/(S_va+S_bu+S_pro+S_ac)',
                            parameters=('Y_po4', 'q_PHA', 'K_a', 'K_PP'),
                            conserved_for=('C', 'N', 'P'))
             
@@ -675,7 +675,7 @@ class ADM1_p_extension(CompiledProcesses):
                            'S_pro + [Y_po4]X_PP -> [?]S_IC + [?]S_IN + [?]S_IP + X_PHA + [Y_po4*K_XPP]S_K + [Y_po4*Mg_XPP]S_Mg',
                            components=cmps,
                            ref_component='X_PHA',
-                           rate_equation='q_PHA * S_pro/(K_a+S_pro) * (X_PP/X_PAO)/(K_PP+(X_PP/X_PAO)) * X_PAO * S_pro/(S_va+S_bu+S_pro+S_ac)',
+                           rate_equation='q_PHA * S_pro/(K_a+S_pro) * (X_PP)/((K_PP*X_PAO) + X_PP) * X_PAO * S_pro/(S_va+S_bu+S_pro+S_ac)',
                            parameters=('Y_po4', 'q_PHA', 'K_a', 'K_PP'),
                            conserved_for=('C', 'N', 'P'))
             
@@ -683,7 +683,7 @@ class ADM1_p_extension(CompiledProcesses):
                            'S_ac + [Y_po4]X_PP -> [?]S_IC + [?]S_IN + [?]S_IP + X_PHA + [Y_po4*K_XPP]S_K + [Y_po4*Mg_XPP]S_Mg',
                            components=cmps,
                            ref_component='X_PHA',
-                           rate_equation='q_PHA * S_ac/(K_a+S_ac) * (X_PP/X_PAO)/(K_PP+(X_PP/X_PAO)) * X_PAO * S_ac/(S_va+S_bu+S_pro+S_ac)',
+                           rate_equation='q_PHA * S_ac/(K_a+S_ac) * (X_PP)/((K_PP*X_PAO) + X_PP) * X_PAO * S_ac/(S_va+S_bu+S_pro+S_ac)',
                            parameters=('Y_po4', 'q_PHA', 'K_a', 'K_PP'),
                            conserved_for=('C', 'N', 'P'))
             
