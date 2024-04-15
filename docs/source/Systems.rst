@@ -15,7 +15,7 @@ When publishing the paper that introduces QSDsan (`Li and Zhang`_ et al., 2022),
 
 Water Resource Recovery Facilities
 ----------------------------------
-Work is underway to model the 25 distinct Water Resource Recovery Facility (WRRF) configurations identified as “typical” across North America (`Tarallo <https://doi.org/10.2166/9781780407685>`_ et al., 2015; Zhang et al., *In Prep*, 2023).
+Work is underway to model the 25 distinct Water Resource Recovery Facility (WRRF) configurations identified as “typical” across North America (`Tarallo <https://doi.org/10.2166/9781780407685>`_ et al., 2015; Zhang et al., *In Prep*, 2024).
 
 .. figure:: images/wrrf_configs.png
 
@@ -58,13 +58,18 @@ A variety of other sanitation and resource recovery systems have been developed 
 
 #. Hydrothermal systems for fuel and fertilizer production from wet organic wastes
     
-    * Manuscript: Feng et al., Characterizing the Opportunity Space for Sustainable Hydrothermal Valorization of Wet Organic Wastes, Submitted.
+    * Publication: `Feng <https://pubs.acs.org/doi/10.1021/acs.est.3c07394>`_ et al., 2024.
     * `htl EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/htl>`_
 
-#. Modular encapsulated two-stage anaerobic biological system
+#. Modular encapsulated two-stage anaerobic biological (METAB) system
     
     * Manuscript: Zhang et al., Sustainable design of a modular anaerobic system for distributed energy recovery from industrial wastewaters, In Prep.
     * `metab EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/metab>`_
+
+#. EcoRecover system: microalgae-based tertiary P recovery process
+    
+    * Manuscript: Kim et al., Development and validation of a Phototrophic-Mixotrophic Process Model (PM2) and a process simulator for microalgae-based wastewater treatment, In Prep.
+    * `pm2_ecorecover EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/pm2_ecorecover>`_
 
 
 **Notes:**
