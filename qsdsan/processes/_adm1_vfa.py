@@ -332,7 +332,7 @@ def flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+40, pH=False, gas_transfer
             Kas = params['Ka'] = Kab * T_correction_factor(T_base, T_op, Ka_dH)
             KH = params['KH'] = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[9:12]
 
-    #Specific definition for plot
+    #!!!Specific definition for plot
     biogas_p_h2 = R * T_op * state_arr[31] #Pa
     root.data['biogas_p_h2'] = biogas_p_h2
     biogas_p_ch4 = R * T_op * state_arr[32]
@@ -755,7 +755,7 @@ class ADM1_vfa(CompiledProcesses):
         #f_pro_h2 = [(1-Y_aa)*f_pro_la]*(16/96)
         #f_pro_h2 = [(1-Y_aa)*element*(16/96) for element in f_pro_la]
         #f_pro_h2 = [(1-Y_aa)*x*(16/96) for x in f_pro_la]
-        # >>>>>> NEW INSERTION >>>>>>
+        # !!!>>>>>> NEW INSERTION >>>>>>
         # provide a complete list of dynamic stoichiometrix parameters below
         #@self.dynamic_parameter(symbol='f_la_su', params={K_VFA_lac : 1.2})
         #def f_lac_su_eval
