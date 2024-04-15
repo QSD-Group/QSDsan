@@ -13,7 +13,7 @@ for license details.
 '''
 
 import numpy as np
-
+from warnings import warn
 
 __all__ = ('get_SRT', 
            'get_oxygen_heterotrophs', 
@@ -70,6 +70,9 @@ def get_SRT(system, biomass_IDs, wastage=None, active_unit_IDs=None):
     if wastage is None: wastage = [ws for ws in system.products if ws.phase in ('l','s')]
     waste = sum([ws.composite('solids', subgroup=biomass_IDs)*ws.F_vol*24 \
                  for ws in wastage])
+    if waste == 0:
+        warn('Wasted biomass calculated to be 0.')
+        return
     units = system.units if active_unit_IDs is None \
         else [u for u in system.units if u.ID in active_unit_IDs]
     retain = sum([u.get_retained_mass(biomass_IDs) for u in units if u.isdynamic])
