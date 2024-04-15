@@ -881,19 +881,18 @@ class PrimaryClarifierBSM2(SanUnit):
         Influent to the clarifier. Expected number of influent is 3.
     outs : class:`WasteStream`
         Sludge (uf) and treated effluent (of).
-    Hydraulic Retention time : float
-        Hydraulic Retention Time in days. The default is 0.04268 days, based on IWA report.[1]
+    HRT : float
+        Hydraulic retention time in days. The default is 0.04268 days, based on IWA report.[1]
     ratio_uf : float
         The ratio of sludge to primary influent. The default is 0.007, based on IWA report.[1]
     f_corr : float
         Dimensionless correction factor for removal efficiency in the primary clarifier.[1]
-    
-    # cylindrical_depth : float, optional
-    #     The depth of the cylindrical portion of clarifier [in m].  
-    # upflow_velocity : float, optional
-    #     Speed with which influent enters the center feed of the clarifier [m/hr]. The default is 43.2.
-    # F_BM : dict
-    #     Equipment bare modules.
+    cylindrical_depth : float, optional
+        The depth of the cylindrical portion of clarifier [in m].  
+    upflow_velocity : float, optional
+        Speed with which influent enters the center feed of the clarifier [m/hr]. The default is 43.2.
+    F_BM : dict
+        Equipment bare modules.
 
     Examples
     --------
@@ -979,12 +978,12 @@ class PrimaryClarifierBSM2(SanUnit):
     pumps = ('sludge',)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                  isdynamic=False, init_with='WasteStream', Hydraulic_Retention_Time=0.04268,
+                  isdynamic=False, init_with='WasteStream', HRT=0.04268,
                   ratio_uf=0.007, f_corr=0.65, cylindrical_depth = 5, upflow_velocity = 43.2, 
                   F_BM=default_F_BM, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
                           init_with=init_with)
-        self.Hydraulic_Retention_Time = Hydraulic_Retention_Time #in days
+        self.HRT = HRT # in days
         self.ratio_uf = ratio_uf
         self.f_corr = f_corr
         self.cylindrical_depth = cylindrical_depth # in m 
@@ -992,51 +991,22 @@ class PrimaryClarifierBSM2(SanUnit):
         self.F_BM.update(default_F_BM)
         self._mixed = self.ins[0].copy(f'{ID}_mixed')
         self._sludge = self.outs[1].copy(f'{ID}_sludge')
-       
-    @property
-    def Hydraulic_Retention_Time(self):
-        '''The Hydraulic Retention time in days.'''
-        return self._HRT
-
-    @Hydraulic_Retention_Time.setter
-    def Hydraulic_Retention_Time(self, HRT):
-        if HRT is not None:
-            self._HRT = HRT
-        else:
-            raise ValueError('HRT expected from user')
+    
 
     @property
     def ratio_uf(self):
         return self._r
-
     @ratio_uf.setter
     def ratio_uf(self, r):
-        if r is not None:
-            if r > 1 or r < 0:
-                raise ValueError(f'Sludge to influent ratio must be within [0, 1], not {r}')
-            self._r = r
-        else:
-            raise ValueError('Sludge to influent ratio expected from user')
+        if r > 1 or r < 0:
+            raise ValueError(f'Sludge to influent ratio must be within [0, 1], not {r}')
+        self._r = r
            
-    @property
-    def f_corr(self):
-        return self._corr
-
-    @f_corr.setter
-    def f_corr(self, corr):
-        if corr is not None:
-            # if corr > 1 or corr < 0:
-            #     raise ValueError(f'correction factor must be within [0, 1], not {corr}')
-            self._corr = corr
-        else:
-            raise ValueError('correction factor expected from user')
    
     def _f_i(self):
         xcod = self._mixed.composite('COD', particle_size='x')
         fx = xcod/self._mixed.COD
-        corr = self._corr
-        HRT = self._HRT
-        n_COD = corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(HRT*24*60))
+        n_COD = self.f_corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(self.HRT*24*60))
         f_i = 1 - (n_COD/100)
         return f_i
    
@@ -1115,206 +1085,6 @@ class PrimaryClarifierBSM2(SanUnit):
             _update_dstate()
         self._AE = yt
 
-   
-    # _units = {
-    #     'Number of clarifiers': '?',
-    #     'Cylindrical volume': 'm3',
-    #     'Cylindrical depth': 'm',
-    #     'Cylindrical diameter': 'm',
-       
-    #     'Conical radius': 'm',
-    #     'Conical depth': 'm',
-    #     'Conical volume': 'm3',
-       
-    #     'Volume': 'm3',
-    #     'Center feed depth': 'm',
-    #     'Upflow velocity': 'm/hr',
-    #     'Center feed diameter': 'm',
-    #     'Volume of concrete wall': 'm3',
-    #     'Stainless steel': 'kg',
-    #     'Pump pipe stainless steel' : 'kg',
-    #     'Pump stainless steel': 'kg',
-    #     'Number of pumps': '?'
-    # }
-   
-   
-    # def _design_pump(self):
-    #     ID, pumps = self.ID, self.pumps
-    #     self._sludge.copy_like(self.outs[1])
-        
-    #     ins_dct = {
-    #         'sludge': self._sludge,
-    #         }
-       
-    #     type_dct = dict.fromkeys(pumps, 'sludge')
-    #     inputs_dct = dict.fromkeys(pumps, (1,),)
-        
-    #     D = self.design_results
-    #     influent_Q = self._sludge.get_total_flow('m3/hr')/D['Number of clarifiers']
-    #     influent_Q_mgd = influent_Q*0.00634 # m3/hr to MGD 
-       
-    #     for i in pumps:
-    #         if hasattr(self, f'{i}_pump'):
-    #             p = getattr(self, f'{i}_pump')
-    #             setattr(p, 'add_inputs', inputs_dct[i])
-    #         else:
-    #             ID = f'{ID}_{i}'
-    #             capacity_factor=1
-    #             pump = WWTpump(
-    #                 ID=ID, ins=ins_dct[i], pump_type=type_dct[i],
-    #                 Q_mgd=influent_Q_mgd, add_inputs=inputs_dct[i],
-    #                 capacity_factor=capacity_factor,
-    #                 include_pump_cost=True,
-    #                 include_building_cost=False,
-    #                 include_OM_cost=True,
-    #                 )
-    #             setattr(self, f'{i}_pump', pump)
-
-    #     pipe_ss, pump_ss = 0., 0.
-    #     for i in pumps:
-    #         p = getattr(self, f'{i}_pump')
-    #         p.simulate()
-    #         p_design = p.design_results
-    #         pipe_ss += p_design['Pump pipe stainless steel']
-    #         pump_ss += p_design['Pump stainless steel']
-    #     return pipe_ss, pump_ss
-   
-   
-    # def _design(self):
-       
-    #     self._mixed.mix_from(self.ins)
-       
-    #     D = self.design_results
-    #     total_flow = self._mixed.get_total_flow('m3/hr')
-        
-    #     if total_flow <= 1580: # 10 MGD
-    #         design_flow = 790  # 5 MGD
-    #     elif total_flow >1580 and total_flow <= 4730: # Between 10 and 30 MGD
-    #         design_flow = 2365 # 15 MGD
-    #     elif total_flow > 4730 and total_flow <= 15770: # Between 30 and 100 MGD
-    #         design_flow = 3940 # 25 MGD
-    #     else:
-    #         design_flow = 5520 # 35 MGD 
-        
-    #     D['Number of clarifiers'] = np.ceil(total_flow/design_flow)
-       
-    #     total_volume = 24*self._HRT*design_flow #in m3
-    #     working_volume = total_volume/0.8 # Assume 80% working volume
-       
-    #     D['Cylindrical volume'] = working_volume
-    #     # Sidewater depth of a cylindrical clarifier lies between 2.5-5m
-    #     D['Cylindrical depth'] = self.cylindrical_depth # in m
-    #     # The tank diameter can lie anywhere between 3 m to 100 m
-    #     D['Cylindrical diameter'] = (4*working_volume/(3.14*D['Cylindrical depth']))**(1/2) # in m
-       
-    #     D['Conical radius'] = D['Cylindrical diameter']/2
-    #     # The slope of the bottom conical floor lies between 1:10 to 1:12
-    #     D['Conical depth'] = D['Conical radius']/10
-    #     D['Conical volume'] = (3.14/3)*(D['Conical radius']**2)*D['Conical depth']
-       
-    #     D['Volume'] = D['Cylindrical volume'] + D['Conical volume']
-       
-    #     # Primary clarifiers can be center feed or peripheral feed. The design here is for the more
-    #     # commonly deployed center feed.
-       
-    #     # Depth of the center feed lies between 30-75% of sidewater depth
-    #     D['Center feed depth'] = 0.5*D['Cylindrical depth']
-    #     # Typical conventional feed wells are designed for an average downflow velocity
-    #     # of 10-13 mm/s and maximum velocity of 25-30 mm/s
-    #     peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
-    #     upflow_velocity = self.upflow_velocity # in m/hr (converted from 12 mm/sec)
-    #     D['Upflow velocity'] = upflow_velocity*peak_flow_safety_factor # in m/hr
-    #     Center_feed_area = design_flow/D['Upflow velocity'] # in m2
-    #     D['Center feed diameter'] = ((4*Center_feed_area)/3.14)**(1/2) # Sanity check: Diameter of the center feed lies between 15-25% of tank diameter
-
-    #     # Amount of concrete required
-    #     D_tank = D['Cylindrical depth']*39.37 # m to inches 
-    #     # Thickness of the wall concrete, [m]. Default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
-    #     thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
-    #     inner_diameter = D['Cylindrical diameter']
-    #     outer_diameter = inner_diameter + 2*thickness_concrete_wall
-    #     volume_cylindrical_wall = (3.14*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
-    #     volume_conical_wall = (3.14/3)*(D['Conical depth']/4)*(outer_diameter**2 - inner_diameter**2)
-    #     D['Volume of concrete wall'] = volume_cylindrical_wall + volume_conical_wall # in m3
-       
-    #     # Amount of metal required for center feed
-    #     thickness_metal_wall = 0.5 # in m (!! NEED A RELIABLE SOURCE !!)
-    #     inner_diameter_center_feed = D['Center feed diameter']
-    #     outer_diameter_center_feed = inner_diameter_center_feed + 2*thickness_metal_wall
-    #     volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed **2)
-    #     density_ss = 7930 # kg/m3, 18/8 Chromium
-    #     D['Stainless steel'] = volume_center_feed*density_ss # in kg
-       
-    #     # Pumps
-    #     pipe, pumps = self._design_pump()
-    #     D['Pump pipe stainless steel'] = pipe
-    #     D['Pump stainless steel'] = pumps
-    #     # For primary clarifier 
-    #     D['Number of pumps'] = D['Number of clarifiers']
-       
-    # def _cost(self):
-       
-    #     self._mixed.mix_from(self.ins)
-    #     D = self.design_results
-    #     C = self.baseline_purchase_costs
-       
-    #     # Construction of concrete and stainless steel walls
-    #     C['Wall concrete'] = D['Number of clarifiers']*D['Volume of concrete wall']*self.wall_concrete_unit_cost
-    #     C['Wall stainless steel'] = D['Number of clarifiers']*D['Stainless steel']*self.stainless_steel_unit_cost
-        
-    #     # Cost of equipment 
-        
-    #     # Source of scaling exponents: Process Design and Economics for Biochemical Conversion of Lignocellulosic Biomass to Ethanol by NREL.
-        
-    #     # Scraper 
-    #     # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
-    #     base_cost_scraper = 2500
-    #     base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
-    #     clarifier_flow = self._mixed.get_total_flow('m3/hr')/D['Number of clarifiers']
-    #     C['Scraper'] = D['Number of clarifiers']*base_cost_scraper*(clarifier_flow/base_flow_scraper)**0.6
-    #     base_power_scraper = 2.75 # in kW
-    #     scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
-        
-    #     # v notch weir
-    #     # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
-    #     base_cost_v_notch_weir = 6888
-    #     base_flow_v_notch_weir = 10 # in m3/hr
-    #     C['v notch weir'] = D['Number of clarifiers']*base_cost_v_notch_weir*(clarifier_flow/base_flow_v_notch_weir)**0.6
-        
-    #     # Pump (construction and maintenance)
-    #     pumps = self.pumps
-    #     add_OPEX = self.add_OPEX
-    #     pump_cost = 0.
-    #     building_cost = 0.
-    #     opex_o = 0.
-    #     opex_m = 0.
-       
-    #     for i in pumps:
-    #         p = getattr(self, f'{i}_pump')
-    #         p_cost = p.baseline_purchase_costs
-    #         p_add_opex = p.add_OPEX
-    #         pump_cost += p_cost['Pump']
-    #         building_cost += p_cost['Pump building']
-    #         opex_o += p_add_opex['Pump operating']
-    #         opex_m += p_add_opex['Pump maintenance']
-
-    #     C['Pumps'] = pump_cost*D['Number of pumps']
-    #     C['Pump building'] = building_cost*D['Number of pumps']
-    #     add_OPEX['Pump operating'] = opex_o*D['Number of pumps']
-    #     add_OPEX['Pump maintenance'] = opex_m*D['Number of pumps']
-       
-    #     # Power
-    #     pumping = 0.
-    #     for ID in self.pumps:
-    #         p = getattr(self, f'{ID}_pump')
-    #         if p is None:
-    #             continue
-    #         pumping += p.power_utility.rate
-            
-    #     pumping = pumping*D['Number of pumps']
-        
-    #     self.power_utility.consumption += pumping
-    #     self.power_utility.consumption += scraper_power
         
 #%%
 # Assign a bare module of 1 to all
