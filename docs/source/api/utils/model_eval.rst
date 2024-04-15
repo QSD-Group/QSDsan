@@ -32,6 +32,11 @@ DictAttrSetter
 .. autofunction:: qsdsan.utils.DictAttrSetter
 
 
+MethodSetter
+^^^^^^^^^^^^
+.. autofunction:: qsdsan.utils.MethodSetter
+
+
 Sample Manipulation
 -------------------
 

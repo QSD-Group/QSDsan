@@ -15,6 +15,10 @@ List of Biological Kinetic Models
 +----------+------------------+-----------------------------+
 | ASM2d    | `asm`_ & `bsm1`_ | `Henze`_ et al., 2006       |
 +----------+------------------+-----------------------------+
+| PM2      | `pm2_ecorecover`_| N/A                         |
+|          | & `pm2_batch`_   |				    |
++----------+------------------+-----------------------------+
+
 
 
 List of Other Kinetic Modules
@@ -38,6 +42,8 @@ List of Other Kinetic Modules
 .. _asm: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/asm
 .. _bsm1: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1
 .. _bwaise: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise
+.. _pm2_batch: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/pm2_batch
+.. _pm2_ecorecover: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/pm2_ecorecover
 
 .. _Batstone: https://iwaponline.com/ebooks/book/152/Anaerobic-Digestion-Model-No-1-ADM1
 .. _EPA design manual: https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=3000464S.TXT
@@ -58,3 +64,4 @@ Links to docs
    ASM2d
    Decay
    KineticReaction
+   PM2
