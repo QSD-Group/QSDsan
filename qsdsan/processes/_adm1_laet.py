@@ -191,7 +191,7 @@ def create_adm1_laet_cmps(set_thermo=True):
     if set_thermo: settings.set_thermo(cmps_adm1_laet)
     return cmps_adm1_laet
 
-create_adm1_laet_cmps()
+# create_adm1_laet_cmps()
 
 
 #%%

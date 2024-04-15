@@ -201,16 +201,24 @@ plt.ylabel("Total VFA [mg/l]")
 
 #%%
 #!!!Plot for varying pH over time
-pH_values = []
-time_steps = np.arange(0, 41, 1)
+from scipy.optimize import brenth
+from qsdsan.processes._adm1_laet import mass2mol_conversion, acid_base_rxn
+unit_conversion = mass2mol_conversion(cmps)
+Ka = adm1.rate_function._params['Ka']
 
-for time in time_steps:
+def calc_pH(state_arr):
+    cmps_in_M = state_arr[:31] * unit_conversion
+    weak_acids = cmps_in_M[[28, 29, 12, 11, 8, 7, 6, 5, 3]]
+    h = brenth(acid_base_rxn, 1e-14, 1.0,
+                args=(weak_acids, Ka),
+                xtol=1e-12, maxiter=100)
+    pH = -np.log10(h)
+    return pH
 
-    pH_values.append(adm1.rate_function._params.root.data['pH'])
-
+pH_values = [calc_pH(arr) for arr in eff.scope.record]
 
 plt.figure(figsize=(10, 6))
-plt.plot(time_steps, pH_values, marker='o', linestyle='-', color='blue')
+plt.plot(t_stamp, pH_values, marker='o', linestyle='-', color='blue')
 plt.title('pH Variation Over Time')
 plt.xlabel('Time (days)')
 plt.ylabel('pH')
