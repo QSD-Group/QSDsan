@@ -536,7 +536,6 @@ class AnaerobicCSTR(CSTR):
             gas_mass2mol_conversion = (cmps.i_mass / cmps.chem_MW)[self._gas_cmp_idx]
             hasexo = bool(len(self._exovars))
             f_exovars = self.eval_exo_dynamic_vars
-            # _rQ = self._rQ
             if self._fixed_P_gas:
                 f_qgas = self.f_q_gas_fixed_P_headspace
             else:
@@ -546,9 +545,6 @@ class AnaerobicCSTR(CSTR):
                 S_gas = QC[n_cmps: (n_cmps+n_gas)]
                 #!!! Volume change due to temperature difference accounted for 
                 # in _run and _init_state
-                # Q = QC[-1]
-                # S_in = QC_ins[0,:-1] * 1e-3  # mg/L to kg/m3
-                # Q_in = QC_ins[0,-1]
                 Q_ins = QC_ins[:, -1]
                 S_ins = QC_ins[:, :-1] * 1e-3  # mg/L to kg/m3
                 Q = sum(Q_ins)
@@ -565,7 +561,7 @@ class AnaerobicCSTR(CSTR):
                 q_gas = f_qgas(rhos[-3:], S_gas, T)
                 _dstate[n_cmps: (n_cmps+n_gas)] = - q_gas*S_gas/V_gas \
                     + rhos[-3:] * V_liq/V_gas * gas_mass2mol_conversion
-                _dstate[-1] = dQC_ins[0,-1] #* _rQ
+                _dstate[-1] = dQC_ins[0,-1]
                 _update_dstate()
             self._ODE = dy_dt
 
