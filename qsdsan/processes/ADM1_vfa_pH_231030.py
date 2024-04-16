@@ -90,7 +90,7 @@ inf.set_flow_by_concentration(Q, **default_inf_kwargs)          # set influent c
 # SanUnit
 U1 = UASB('UASB', ins=inf, outs=(gas, eff), model=adm1,
           V_liq=Q*HRT, V_gas=Q*HRT*0.1,
-          T=Temp, pH_ctrl=False,                               # pH adjustment X
+          T=Temp, pH_ctrl=4.3,                               # pH adjustment X
           fraction_retain=0.95)                                # needs to set this value properly to represent solid retention efficacy
 
                                                                # fraction_retain : float, optional
@@ -155,12 +155,14 @@ method = 'BDF'                  # integration method to use
 # https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html
 
 # Run simulation
+
 sys.simulate(state_reset_hook='reset_cache',
              t_span=(0,t),
              t_eval=np.arange(0, t+t_step, t_step),
              method=method,
              export_state_to=f'sol_{t}d_{method}_AD.xlsx',               # export simulation result as excel file
             )
+
 #
 # sys                                                                      # now you have 'outs' info.
 
