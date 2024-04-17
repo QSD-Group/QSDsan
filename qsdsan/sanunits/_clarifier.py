@@ -867,7 +867,17 @@ class IdealClarifier(SanUnit):
         pass
    
     
-# %%    
+# %%
+# Total COD removal efficiency
+nCOD = lambda f_corr, fx, HRT: f_corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(HRT*24*60))
+
+def calc_f_i(fx, f_corr, HRT):
+    '''calculates the effluent-to-influent ratio of solid concentrations'''
+    nX = nCOD(f_corr, fx, HRT)/fx
+    if nX > 100: nX = 100
+    if nX < 0: nX = 0
+    return 1-(nX/100)
+        
 class PrimaryClarifierBSM2(SanUnit):
    
     """
@@ -968,7 +978,7 @@ class PrimaryClarifierBSM2(SanUnit):
     """
     
     _N_ins = 3
-    _N_outs = 2
+    _N_outs = 2   # [0] effluent; [1] underflow
     _ins_size_is_fixed = False
 
     # Costs
@@ -976,22 +986,27 @@ class PrimaryClarifierBSM2(SanUnit):
     stainless_steel_unit_cost=1.8 # $/kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
    
     pumps = ('sludge',)
+    t_m = 0.125 # Smoothing time constant for qm calculation
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                  isdynamic=False, init_with='WasteStream', HRT=0.04268,
-                  ratio_uf=0.007, f_corr=0.65, cylindrical_depth = 5, upflow_velocity = 43.2, 
+                  isdynamic=True, init_with='WasteStream', 
+                  volume=900, ratio_uf=0.007, mean_f_x=0.85,
+                  f_corr=0.65, cylindrical_depth = 5, upflow_velocity=43.2, 
                   F_BM=default_F_BM, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic,
-                          init_with=init_with)
-        self.HRT = HRT # in days
+                         init_with=init_with)
+        # self.HRT = HRT # in days
+        self._mixed = self.ins[0].copy(f'{ID}_mixed')
+        self._sludge = np.ones(len(self.components)+1)
+        self._effluent = np.ones(len(self.components)+1)
+        self.V = volume
         self.ratio_uf = ratio_uf
+        self.f_x = mean_f_x
         self.f_corr = f_corr
         self.cylindrical_depth = cylindrical_depth # in m 
         self.upflow_velocity = upflow_velocity # in m/hr (converted from 12 mm/sec)
         self.F_BM.update(default_F_BM)
-        self._mixed = self.ins[0].copy(f'{ID}_mixed')
-        self._sludge = self.outs[1].copy(f'{ID}_sludge')
-    
+        self._concs = None
 
     @property
     def ratio_uf(self):
@@ -1001,90 +1016,174 @@ class PrimaryClarifierBSM2(SanUnit):
         if r > 1 or r < 0:
             raise ValueError(f'Sludge to influent ratio must be within [0, 1], not {r}')
         self._r = r
-           
-   
-    def _f_i(self):
-        xcod = self._mixed.composite('COD', particle_size='x')
-        fx = xcod/self._mixed.COD
-        n_COD = self.f_corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(self.HRT*24*60))
-        f_i = 1 - (n_COD/100)
-        return f_i
-   
+        self._sludge[-1] = r
+        self._effluent[-1] = 1-r
+
+    # def _f_i(self):
+    #     xcod = self._mixed.composite('COD', particle_size='x')
+    #     fx = xcod/self._mixed.COD
+    #     n_COD = self.f_corr*(2.88*fx - 0.118)*(1.45 + 6.15*np.log(self.HRT*24*60))
+    #     f_i = 1 - (n_COD/100)
+    #     return f_i
+    
+    # def _run(self):
+    #     uf, of = self.outs
+    #     cmps = self.components
+    #     mixed = self._mixed
+    #     mixed.mix_from(self.ins)
+    
+    #     r = self._r
+    #     f_i = self._f_i()
+       
+    #     Xs = (1 - f_i)*mixed.mass*cmps.x
+    #     Xe = (f_i)*mixed.mass*cmps.x
+       
+    #     Zs = r*mixed.mass*cmps.s
+    #     Ze = (1-r)*mixed.mass*cmps.s
+       
+    #     Ce = Ze + Xe
+    #     Cs = Zs + Xs
+    #     of.set_flow(Ce,'kg/hr')
+    #     uf.set_flow(Cs,'kg/hr')
+
+    @property
+    def f_x(self):
+        '''[float] Fraction of particulate COD [-].'''
+        if self._f_x: return self._f_x
+        else:
+            concs = self._mixed.conc
+            cmps = self._mixed.components
+            cod_concs = concs*cmps.i_COD
+            if sum(cod_concs) == 0: return
+            return sum(cod_concs*cmps.x)/sum(cod_concs)
+    @f_x.setter
+    def f_x(self, f):
+        if isinstance(f, (float, int)) and (f < 0 or f > 1): 
+            raise ValueError('f_x must be within [0,1]')
+        self._f_x = f
+                
     def _run(self):
-        uf, of = self.outs
-        cmps = self.components
+        of, uf = self.outs
         mixed = self._mixed
         mixed.mix_from(self.ins)
-    
+        x = self.components.x
         r = self._r
-        f_i = self._f_i()
-       
-        Xs = (1 - f_i)*mixed.mass*cmps.x
-        Xe = (f_i)*mixed.mass*cmps.x
-       
-        Zs = r*mixed.mass*cmps.s
-        Ze = (1-r)*mixed.mass*cmps.s
-       
-        Ce = Ze + Xe
-        Cs = Zs + Xs
-        of.set_flow(Ce,'kg/hr')
-        uf.set_flow(Cs,'kg/hr')
-       
+        f_i = calc_f_i(self.f_x, self.f_corr, self.t_m)
+        split_to_uf = (1-x)*r + x*(1-(1-r)*f_i)
+        mixed.split_to(uf, of, split_to_uf)
+
+    def set_init_conc(self, **kwargs):
+        '''set the initial concentrations [mg/L].'''
+        self._concs = self.components.kwarray(kwargs)
+
     def _init_state(self):
-        # if multiple wastestreams exist then concentration and total flow
-        # would be calculated assuming perfect mixing
-        Qs = self._ins_QC[:,-1]
-        Cs = self._ins_QC[:,:-1]
-        self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
+        mixed = self._mixed
+        Q = mixed.get_total_flow('m3/d')
+        if self._concs is not None: Cs = self._concs
+        else: Cs = mixed.conc
+        self._state = np.append(Cs, Q).astype('float64')
         self._dstate = self._state * 0.
-       
-        uf, of = self.outs
-        s_flow = uf.F_vol/(uf.F_vol+of.F_vol)
-        denominator = uf.mass + of.mass
-        denominator += (denominator == 0)
-        s = uf.mass/denominator
-        self._sludge = np.append(s/s_flow, s_flow)
-        self._effluent = np.append((1-s)/(1-s_flow), 1-s_flow)
-       
+    
+    def _update_parameters(self):
+        x = self.components.x
+        r = self._r
+        Q = self._state[-1]
+        f_i = calc_f_i(self.f_x, self.f_corr, self.V/Q)
+        self._sludge[:-1] = x * ((1-f_i)/r+f_i) + (1-x)
+        self._effluent[:-1] = x * f_i + (1-x)
+    
     def _update_state(self):
         '''updates conditions of output stream based on conditions of the Primary Clarifier'''
-        self._outs[0].state = self._sludge * self._state
-        self._outs[1].state = self._effluent * self._state
-
+        of, uf = self.outs
+        uf.state = self._sludge * self._state
+        of.state = self._effluent * self._state
+    
     def _update_dstate(self):
         '''updates rates of change of output stream from rates of change of the Primary Clarifier'''
-        self._outs[0].dstate = self._sludge * self._dstate
-        self._outs[1].dstate = self._effluent * self._dstate
-     
-    @property
-    def AE(self):
-        if self._AE is None:
-            self._compile_AE()
-        return self._AE
+        of, uf = self.outs
+        uf.dstate = self._sludge * self._dstate
+        of.dstate = self._effluent * self._dstate
+       
+    # def _init_state(self):
+    #     # if multiple wastestreams exist then concentration and total flow
+    #     # would be calculated assuming perfect mixing
+    #     Qs = self._ins_QC[:,-1]
+    #     Cs = self._ins_QC[:,:-1]
+    #     self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
+    #     self._dstate = self._state * 0.
+       
+    #     uf, of = self.outs
+    #     s_flow = uf.F_vol/(uf.F_vol+of.F_vol)
+    #     denominator = uf.mass + of.mass
+    #     denominator += (denominator == 0)
+    #     s = uf.mass/denominator
+    #     self._sludge = np.append(s/s_flow, s_flow)
+    #     self._effluent = np.append((1-s)/(1-s_flow), 1-s_flow)
+       
+    # def _update_state(self):
+    #     '''updates conditions of output stream based on conditions of the Primary Clarifier'''
+    #     self._outs[0].state = self._sludge * self._state
+    #     self._outs[1].state = self._effluent * self._state
 
-    def _compile_AE(self):
-        _state = self._state
+    # def _update_dstate(self):
+    #     '''updates rates of change of output stream from rates of change of the Primary Clarifier'''
+    #     self._outs[0].dstate = self._sludge * self._dstate
+    #     self._outs[1].dstate = self._effluent * self._dstate
+     
+    # @property
+    # def AE(self):
+    #     if self._AE is None:
+    #         self._compile_AE()
+    #     return self._AE
+
+    # def _compile_AE(self):
+    #     _state = self._state
+    #     _dstate = self._dstate
+    #     _update_state = self._update_state
+    #     _update_dstate = self._update_dstate
+    #     def yt(t, QC_ins, dQC_ins):
+    #         #Because there are multiple inlets
+    #         Q_ins = QC_ins[:, -1]
+    #         C_ins = QC_ins[:, :-1]
+    #         dQ_ins = dQC_ins[:, -1]
+    #         dC_ins = dQC_ins[:, :-1]
+    #         Q = Q_ins.sum()
+    #         C = Q_ins @ C_ins / Q
+    #         _state[-1] = Q
+    #         _state[:-1] = C
+    #         Q_dot = dQ_ins.sum()
+    #         C_dot = (dQ_ins @ C_ins + Q_ins @ dC_ins - Q_dot * C)/Q
+    #         _dstate[-1] = Q_dot
+    #         _dstate[:-1] = C_dot
+    #         _update_state()
+    #         _update_dstate()
+    #     self._AE = yt
+    @property
+    def ODE(self):
+        if self._ODE is None:
+            self._compile_ODE()
+        return self._ODE
+    
+    def _compile_ODE(self):
         _dstate = self._dstate
-        _update_state = self._update_state
+        _update_parameters = self._update_parameters
         _update_dstate = self._update_dstate
-        def yt(t, QC_ins, dQC_ins):
-            #Because there are multiple inlets
+        V = self.V
+        t_m = self.t_m
+        def dy_dt(t, QC_ins, QC, dQC_ins):
             Q_ins = QC_ins[:, -1]
             C_ins = QC_ins[:, :-1]
-            dQ_ins = dQC_ins[:, -1]
-            dC_ins = dQC_ins[:, :-1]
-            Q = Q_ins.sum()
-            C = Q_ins @ C_ins / Q
-            _state[-1] = Q
-            _state[:-1] = C
-            Q_dot = dQ_ins.sum()
-            C_dot = (dQ_ins @ C_ins + Q_ins @ dC_ins - Q_dot * C)/Q
-            _dstate[-1] = Q_dot
-            _dstate[:-1] = C_dot
-            _update_state()
+            # dQ_ins = dQC_ins[:, -1]
+            # dC_ins = dQC_ins[:, :-1]
+            Q_in = Q_ins.sum()
+            C_in = Q_ins @ C_ins / Q_in
+            C = QC[:-1]
+            Q = QC[-1]
+            _dstate[:-1] = Q_in*(C_in - C)/V
+            _dstate[-1] = (Q_in-Q)/t_m
+            _update_parameters()
             _update_dstate()
-        self._AE = yt
-
+        self._ODE = dy_dt
         
 #%%
 # Assign a bare module of 1 to all
