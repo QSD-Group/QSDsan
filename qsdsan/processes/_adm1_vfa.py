@@ -29,7 +29,7 @@ __all__ = ('create_adm1_vfa_cmps', 'ADM1_vfa',
            'pH_inhibit', 'Hill_inhibit', 
            'rhos_adm1_vfa')
 
-_path = ospath.join(data_path, 'process_data/_adm1_laet.tsv')
+_path = ospath.join(data_path, 'process_data/_adm1_vfa.tsv')
 _load_components = settings.get_default_chemicals
 
 #%%
