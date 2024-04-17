@@ -690,13 +690,11 @@ class Process:
     def _rate_eq2func(self):
         var_kw = self._components.IDs
         var = list(symbols(var_kw)) + [symbols(p) for p in self._parameters.keys()]
-        # var = list(symbols(self._components.IDs+('Q',))) \
-        #     + [symbols(p) for p in self._parameters.keys()]
         lamb = lambdify(var, self._rate_equation, 'numpy')
         def f(state_arr, params={}):
             states = dict(zip(var_kw, state_arr))
             return lamb(**states, **params)
-            # return lamb(*state_arr, **params)
+
         self.kinetics(function=f, parameters=self.parameters)
 
     def _normalize_stoichiometry(self, new_ref):
