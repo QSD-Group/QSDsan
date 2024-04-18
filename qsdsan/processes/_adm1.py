@@ -569,9 +569,12 @@ class ADM1(CompiledProcesses):
                 **kwargs):
         
         cmps = _load_components(components)
-        cmps.X_c.i_N = N_xc * N_mw
-        cmps.X_I.i_N = cmps.S_I.i_N = N_I * N_mw
-        cmps.S_aa.i_N = cmps.X_pr.i_N = N_aa * N_mw
+        cmps.X_c.i_N = round(N_xc * N_mw, 4)
+        cmps.X_I.i_N = cmps.S_I.i_N = round(N_I * N_mw, 4)
+        cmps.S_aa.i_N = cmps.X_pr.i_N = round(N_aa * N_mw, 4)
+        # cmps.X_c.i_N = N_xc * N_mw
+        # cmps.X_I.i_N = cmps.S_I.i_N = N_I * N_mw
+        # cmps.S_aa.i_N = cmps.X_pr.i_N = N_aa * N_mw
 
         if not path: path = _path
         self = Processes.load_from_file(path,
@@ -591,11 +594,11 @@ class ADM1(CompiledProcesses):
         self.extend(gas_transfer)
         self.compile(to_class=cls)
 
-        stoichio_vals = (f_ch_xc, f_pr_xc, f_li_xc, f_xI_xc, 1-f_ch_xc-f_pr_xc-f_li_xc-f_xI_xc,
-                         f_fa_li, f_bu_su, f_pro_su, f_ac_su, 1-f_bu_su-f_pro_su-f_ac_su,
-                         f_va_aa, f_bu_aa, f_pro_aa, f_ac_aa, 1-f_va_aa-f_bu_aa-f_pro_aa-f_ac_aa,
-                         f_ac_fa, 1-f_ac_fa, f_pro_va, f_ac_va, 1-f_pro_va-f_ac_va,
-                         f_ac_bu, 1-f_ac_bu, f_ac_pro, 1-f_ac_pro,
+        stoichio_vals = (f_ch_xc, f_pr_xc, f_li_xc, f_xI_xc, 1.0-f_ch_xc-f_pr_xc-f_li_xc-f_xI_xc,
+                         f_fa_li, f_bu_su, f_pro_su, f_ac_su, 1.0-f_bu_su-f_pro_su-f_ac_su,
+                         f_va_aa, f_bu_aa, f_pro_aa, f_ac_aa, 1.0-f_va_aa-f_bu_aa-f_pro_aa-f_ac_aa,
+                         f_ac_fa, 1.0-f_ac_fa, f_pro_va, f_ac_va, 1.0-f_pro_va-f_ac_va,
+                         f_ac_bu, 1.0-f_ac_bu, f_ac_pro, 1.0-f_ac_pro,
                          Y_su, Y_aa, Y_fa, Y_c4, Y_pro, Y_ac, Y_h2)
         pH_LLs = np.array([pH_limits_aa[0]]*6 + [pH_limits_ac[0], pH_limits_h2[0]])
         pH_ULs = np.array([pH_limits_aa[1]]*6 + [pH_limits_ac[1], pH_limits_h2[1]])
