@@ -444,6 +444,7 @@ class AnaerobicCSTR(CSTR):
 
     def _update_state(self):
         y = self._state
+        y[-1] = sum(ws.state[-1] for ws in self.ins)
         f_rtn = self._f_retain
         i_mass = self.components.i_mass
         chem_MW = self.components.chem_MW
@@ -540,6 +541,14 @@ class AnaerobicCSTR(CSTR):
                 f_qgas = self.f_q_gas_fixed_P_headspace
             else:
                 f_qgas = self.f_q_gas_var_P_headspace
+
+            if self.model._dyn_params:
+                def M_stoichio(state_arr):
+                    _f_param(state_arr)
+                    return self.model.stoichio_eval().T
+            else:
+                _M_stoichio = self.model.stoichio_eval().T
+                M_stoichio = lambda state_arr: _M_stoichio
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 S_liq = QC[:n_cmps]
                 S_gas = QC[n_cmps: (n_cmps+n_gas)]
@@ -553,15 +562,14 @@ class AnaerobicCSTR(CSTR):
                     QC = np.append(QC, exo_vars)
                     T = exo_vars[0]
                 else: T = self.T
-                _f_param(QC)
-                M_stoichio = _M_stoichio()
                 rhos =_f_rhos(QC)
                 _dstate[:n_cmps] = (Q_ins @ S_ins - Q*S_liq*(1-f_rtn))/V_liq \
-                    + np.dot(M_stoichio.T, rhos)
+                    + np.dot(M_stoichio(QC), rhos)
                 q_gas = f_qgas(rhos[-3:], S_gas, T)
                 _dstate[n_cmps: (n_cmps+n_gas)] = - q_gas*S_gas/V_gas \
                     + rhos[-3:] * V_liq/V_gas * gas_mass2mol_conversion
-                _dstate[-1] = dQC_ins[0,-1]
+                # _dstate[-1] = dQC_ins[0,-1]
+                _dstate[-1] = 0.
                 _update_dstate()
             self._ODE = dy_dt
 
