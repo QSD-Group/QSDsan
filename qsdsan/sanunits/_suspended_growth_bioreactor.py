@@ -272,10 +272,7 @@ class CSTR(SanUnit):
 
     def set_init_conc(self, **kwargs):
         '''set the initial concentrations [mg/L] of the CSTR.'''
-        Cs = np.zeros(len(self.components))
-        cmpx = self.components.index
-        for k, v in kwargs.items(): Cs[cmpx(k)] = v
-        self._concs = Cs
+        self._concs = self.components.kwarray(kwargs)
 
     def _init_state(self):
         mixed = self._mixed
