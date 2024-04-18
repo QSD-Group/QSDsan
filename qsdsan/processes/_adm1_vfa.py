@@ -682,11 +682,11 @@ class ADM1_vfa(CompiledProcesses):
 
     #f_la_su, f_et_su, f_pro_la, f_ac_la,  f_ac_et, Y_la, Y_et added with valued randomly below
     def __new__(cls, components=None, path=None, N_xc=2.686e-3, N_I=4.286e-3, N_aa=7e-3,
-                f_ch_xc=0.2, f_pr_xc=0.2, f_li_xc=0.3, f_xI_xc=0.3,
+                f_ch_xc=0.2, f_pr_xc=0.2, f_li_xc=0.3, f_xI_xc=0.2,
                 f_fa_li=0.95, f_la_su=0.533, f_et_su= 0.1, f_bu_su=0.05,
                 f_ac_su=0.02, f_va_aa=0.33, f_bu_aa=0.17, f_pro_aa=0.17, f_ac_aa=0.16,
                 f_ac_fa=0.7, f_pro_la=0.45, f_ac_la=0.07, f_ac_et=0.3, f_pro_va=0.64,
-                f_ac_va=0.12, f_ac_bu=0.12, f_ac_pro=0.57, f_pro_h2=0.15,
+                f_ac_va=0.2, f_ac_bu=0.2, f_ac_pro=0.57, f_pro_h2=0.15,
                 Y_su=0.1, Y_aa=0.08, Y_fa=0.06, Y_la=0.06, Y_et=0.04, Y_c4=0.06, Y_pro=0.04, Y_ac=0.05, Y_h2=0.07,
                 q_dis=0.5, q_ch_hyd=10.0, q_pr_hyd=4.0, q_li_hyd=5.0,
                 k_su=5.0, k_aa=50, k_fa=10, k_la=8.0, k_et=5.0, k_c4=20.6, k_pro=5.5, k_ac=4.0, k_h2=44,
