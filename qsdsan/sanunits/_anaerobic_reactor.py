@@ -474,7 +474,7 @@ class AnaerobicCSTR(CSTR):
         gas.state[:n_cmps] = gas.state[:n_cmps] * chem_MW / i_mass * 1e3 # i.e., M biogas to mg (measured_unit) / L
 
     def _update_dstate(self):
-        self._tempstate = self.model.rate_function._params['root'].data.copy()
+        # self._tempstate = self.model.rate_function._params['root'].data.copy()
         dy = self._dstate
         f_rtn = self._f_retain
         n_cmps = len(self.components)
