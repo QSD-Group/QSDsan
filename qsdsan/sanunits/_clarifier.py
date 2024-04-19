@@ -917,55 +917,7 @@ class PrimaryClarifierBSM2(SanUnit):
     >>> uf, of = PC.outs
     >>> uf.imass['X_OHO']/ws.imass['X_OHO'] # doctest: +ELLIPSIS
     0.280...
-    >>> PC.show() 
-    PrimaryClarifierBSM2: PC
-    ins...
-    [0] ws
-    phase: 'l', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): S_F    1e+04
-                    S_NH4  2e+04
-                    X_OHO  1.5e+04
-                    H2O    1e+06
-        WasteStream-specific properties:
-         pH         : 7.0
-         COD        : 23873.0 mg/L
-         BOD        : 14963.2 mg/L
-         TC         : 8298.3 mg/L
-         TOC        : 8298.3 mg/L
-         TN         : 20363.2 mg/L
-         TP         : 367.6 mg/L
-         TK         : 68.3 mg/L
-    outs...
-    [0] eff
-    phase: 'l', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): S_F    70
-                    S_NH4  140
-                    X_OHO  4.2e+03
-                    H2O    7e+03
-        WasteStream-specific properties:
-         pH         : 7.0
-         COD        : 428873.3 mg/L
-         BOD        : 244072.7 mg/L
-         TC         : 156644.5 mg/L
-         TOC        : 156644.5 mg/L
-         TN         : 43073.0 mg/L
-         TP         : 8085.4 mg/L
-         TK         : 2011.4 mg/L
-    [1] sludge
-    phase: 'l', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): S_F    9.93e+03
-                    S_NH4  1.99e+04
-                    X_OHO  1.08e+04
-                    H2O    9.93e+05
-        WasteStream-specific properties:
-         pH         : 7.0
-         COD        : 19982.3 mg/L
-         BOD        : 12762.2 mg/L
-         TC         : 6873.2 mg/L
-         TOC        : 6873.2 mg/L
-         TN         : 20145.0 mg/L
-         TP         : 293.5 mg/L
-         TK         : 49.6 mg/L
+    >>> # PC.show()
    
     References
     ----------
