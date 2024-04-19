@@ -444,6 +444,7 @@ class AnaerobicCSTR(CSTR):
 
     def _update_state(self):
         y = self._state
+        y[-1] = sum(ws.state[-1] for ws in self.ins)
         f_rtn = self._f_retain
         i_mass = self.components.i_mass
         chem_MW = self.components.chem_MW
@@ -473,7 +474,7 @@ class AnaerobicCSTR(CSTR):
         gas.state[:n_cmps] = gas.state[:n_cmps] * chem_MW / i_mass * 1e3 # i.e., M biogas to mg (measured_unit) / L
 
     def _update_dstate(self):
-        self._tempstate = self.model.rate_function._params['root'].data.copy()
+        # self._tempstate = self.model.rate_function._params['root'].data.copy()
         dy = self._dstate
         f_rtn = self._f_retain
         n_cmps = len(self.components)
@@ -536,19 +537,23 @@ class AnaerobicCSTR(CSTR):
             gas_mass2mol_conversion = (cmps.i_mass / cmps.chem_MW)[self._gas_cmp_idx]
             hasexo = bool(len(self._exovars))
             f_exovars = self.eval_exo_dynamic_vars
-            # _rQ = self._rQ
             if self._fixed_P_gas:
                 f_qgas = self.f_q_gas_fixed_P_headspace
             else:
                 f_qgas = self.f_q_gas_var_P_headspace
+
+            if self.model._dyn_params:
+                def M_stoichio(state_arr):
+                    _f_param(state_arr)
+                    return self.model.stoichio_eval().T
+            else:
+                _M_stoichio = self.model.stoichio_eval().T
+                M_stoichio = lambda state_arr: _M_stoichio
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 S_liq = QC[:n_cmps]
                 S_gas = QC[n_cmps: (n_cmps+n_gas)]
                 #!!! Volume change due to temperature difference accounted for 
                 # in _run and _init_state
-                # Q = QC[-1]
-                # S_in = QC_ins[0,:-1] * 1e-3  # mg/L to kg/m3
-                # Q_in = QC_ins[0,-1]
                 Q_ins = QC_ins[:, -1]
                 S_ins = QC_ins[:, :-1] * 1e-3  # mg/L to kg/m3
                 Q = sum(Q_ins)
@@ -557,15 +562,14 @@ class AnaerobicCSTR(CSTR):
                     QC = np.append(QC, exo_vars)
                     T = exo_vars[0]
                 else: T = self.T
-                _f_param(QC)
-                M_stoichio = _M_stoichio()
                 rhos =_f_rhos(QC)
                 _dstate[:n_cmps] = (Q_ins @ S_ins - Q*S_liq*(1-f_rtn))/V_liq \
-                    + np.dot(M_stoichio.T, rhos)
+                    + np.dot(M_stoichio(QC), rhos)
                 q_gas = f_qgas(rhos[-3:], S_gas, T)
                 _dstate[n_cmps: (n_cmps+n_gas)] = - q_gas*S_gas/V_gas \
                     + rhos[-3:] * V_liq/V_gas * gas_mass2mol_conversion
-                _dstate[-1] = dQC_ins[0,-1] #* _rQ
+                # _dstate[-1] = dQC_ins[0,-1]
+                _dstate[-1] = 0.
                 _update_dstate()
             self._ODE = dy_dt
 
