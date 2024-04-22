@@ -783,8 +783,9 @@ class ADM1_vfa(CompiledProcesses):
         # calculate stoichiometric parameter values and record them in the parameter dictionary
         K_vfa_la = 0.5 # R4G20 Day 10: VFA 0.00309 kg COD/m3
         dct['f_la_su'] = 1.0 - K_vfa_la / ((S_va + S_bu + S_pro + S_ac) + K_vfa_la)
-        K_h2_la = 1e-5
+        #!!! I already put f_la_su value in __new__, is f_la_su automatically changed or do I need to put nothing or calcualted value in __new__?
         
+        K_h2_la = 1e-5
         f_ac_pro_la = 0.52
         f_pro_la = 0.45
         f_ac_la = f_ac_pro_la - f_pro_la
@@ -792,10 +793,18 @@ class ADM1_vfa(CompiledProcesses):
         dct['f_ac_pro_la'] = f_pro_la + f_ac_la
         dct['f_ac_la'] = (K_h2_la / (K_h2_la + S_h2)) * f_ac_pro_la
         
+        #!!!Do I need to calculate initial values and put in __new__?
         Y_la=0.06
         dct['f_pro_h2'] = (1-Y_la) * f_pro_la * (16/96)
     # <<<<<<<<<
-        
+    '''
+    !!!line788-794 modified
+    If I defined as below, how I put f_ac_la and f_pro_la in __new_?, Does it automatically changed over days? Or Do I need to calculate initial values and put in __new__?
+        K_h2_la = 1e-5
+        f_ac_pro_la = 0.52
+        dct['f_ac_la'] = (K_h2_la / (K_h2_la + S_h2)) * f_ac_pro_la
+        dct['f_pro_la'] = f_ac_pro_la - f_ac_la
+    '''        
     def set_pKas(self, pKas):
         '''Set the pKa values of the acid-base reactions at the base temperature.'''
         if len(pKas) != 7:
