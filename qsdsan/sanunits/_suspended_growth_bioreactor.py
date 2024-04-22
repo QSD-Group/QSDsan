@@ -12,18 +12,18 @@ for license details.
 
 from .. import SanUnit, WasteStream, Process, Processes, CompiledProcesses
 from ._clarifier import _settling_flux
+from ..sanunits import dydt_cstr
 from sympy import symbols, lambdify, Matrix
 from scipy.integrate import solve_ivp
 from warnings import warn
 from math import floor, ceil
 import numpy as np
 import pandas as pd
-from numba import njit
+# from numba import njit
 
 __all__ = ('CSTR',
            'BatchExperiment',
            'SBR',
-           'dydt_cstr'
            )
 
 def _add_aeration_to_growth_model(aer, model):
@@ -36,13 +36,7 @@ def _add_aeration_to_growth_model(aer, model):
         processes.compile()
     return processes
 
-# %%
-@njit(cache=True)
-def dydt_cstr(QC_ins, QC, V, _dstate):
-    Q_ins = QC_ins[:, -1]
-    C_ins = QC_ins[:, :-1]
-    _dstate[-1] = 0
-    _dstate[:-1] = (Q_ins @ C_ins - sum(Q_ins)*QC[:-1])/V
+
 
 #%%
 class CSTR(SanUnit):
