@@ -261,6 +261,8 @@ class ADMjunction(Junction):
     _parse_reactions = Junction._no_parse_reactions
     rtol = 1e-2
     atol = 1e-6
+    # Should be constants
+    cod_vfa = np.array([64, 112, 160, 208])
     
     def __init__(self, ID='', upstream=None, downstream=(), thermo=None,
                  init_with='WasteStream', F_BM_default=None, isdynamic=False,
@@ -337,6 +339,11 @@ class ADMjunction(Junction):
         pH = self.pH
         pKa_IN = self.pKa[1]
         return 10**(pKa_IN-pH)/(1+10**(pKa_IN-pH))/14
+    
+    @property
+    def alpha_vfa(self):
+        '''[float] charge per g of VFA-COD.'''
+        return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[3:]-self.pH)))
     
     def _compile_AE(self):
         _state = self._state
@@ -481,8 +488,9 @@ class mADMjunction(Junction):
             _update_dstate()
         
         self._AE = yt
-    
-# %%
+
+
+#%%
 
 class ADMtoASM(ADMjunction):
     '''
@@ -521,9 +529,6 @@ class ADMtoASM(ADMjunction):
     '''
     # User defined values
     bio_to_xs = 0.7
-    
-    # Should be constants
-    cod_vfa = np.array([64, 112, 160, 208])
     
     # whether to conserve the nitrogen split between soluble and particulate components
     conserve_particulate_N = False
@@ -604,9 +609,6 @@ class ADMtoASM(ADMjunction):
         asm_X_P_i_N = cmps_asm.X_P.i_N
         asm_ions_idx = cmps_asm.indices(('S_NH', 'S_ALK'))
         
-        alpha_IN = self.alpha_IN
-        alpha_IC = self.alpha_IC
-        alpha_vfa = self.alpha_vfa
         f_corr = self.balance_cod_tkn
         conserve_particulate_N = self.conserve_particulate_N
 
@@ -724,6 +726,9 @@ class ADMtoASM(ADMjunction):
             asm_vals = f_corr(adm_vals, asm_vals)
             
             # Step 5: charge balance for alkalinity
+            alpha_IN = self.alpha_IN
+            alpha_IC = self.alpha_IC
+            alpha_vfa = self.alpha_vfa
             S_NH = asm_vals[asm_ions_idx[0]]
             S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC], alpha_vfa)) - S_NH/14)*(-12)
             asm_vals[asm_ions_idx[1]] = S_ALK
@@ -731,10 +736,8 @@ class ADMtoASM(ADMjunction):
             return asm_vals
         
         self._reactions = adm2asm
-    
-    @property
-    def alpha_vfa(self):
-        return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[3:]-self.pH)))
+
+
         
         
 # %%
@@ -864,9 +867,6 @@ class ASMtoADM(ADMjunction):
         adm_ions_idx = cmps_adm.indices(['S_IN', 'S_IC', 'S_cat', 'S_an'])
         
         frac_deg = self.frac_deg
-        alpha_IN = self.alpha_IN
-        alpha_IC = self.alpha_IC
-        proton_charge = 10**(-self.pKa[0]+self.pH) - 10**(-self.pH) # self.pKa[0] is pKw
         f_corr = self.balance_cod_tkn
 
         def asm2adm(asm_vals):
@@ -997,6 +997,9 @@ class ASMtoADM(ADMjunction):
             adm_vals = f_corr(asm_vals, adm_vals)
             
             # Step 7: charge balance
+            alpha_IN = self.alpha_IN
+            alpha_IC = self.alpha_IC
+            proton_charge = 10**(-self.pKa[0]+self.pH) - 10**(-self.pH) # self.pKa[0] is pKw
             asm_charge_tot = _snh/14 - _sno/14 - _salk/12
             #!!! charge balance should technically include VFAs, 
             # but VFAs concentrations are assumed zero per previous steps??
