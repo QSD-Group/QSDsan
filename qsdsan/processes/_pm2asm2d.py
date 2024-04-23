@@ -393,8 +393,8 @@ def rhos_pm2asm2d(state_arr, params):
     temp = state_arr[22]
     light = state_arr[23]     # imported from input file assumed
 
-    # Q = state_arr[14]                             # Flow rate
-    # t = state_arr[15]                             # time
+    # Q = state_arr[21]                             # Flow rate
+    # t = state_arr[22]                             # time
 
     X_CHL, X_ALG, X_CH, X_LI, S_CO2, S_A, S_F, S_O2, S_NH, S_NO, S_P, X_N_ALG, X_P_ALG, S_N2, S_ALK, S_I, X_I, X_S, X_H, X_AUT, H2O = c_arr
 
@@ -710,47 +710,94 @@ class PM2ASM2d(CompiledProcesses):
               The default is 0.317.
     n_dark: float, optional
               Dark growth reduction factor, in [unitless]
-              The default is 0.7.
-
-
-
-
-    f_SI = params['f_SI']
-    Y_H = params['Y_H']
-    f_XI_H = params['f_XI_H']
-    Y_A = params['Y_A']
-    f_XI_AUT = params['f_XI_AUT']
-    K_h = params['K_h']
-    eta_NO3 = params['eta_NO3']
-    eta_fe = params['eta_fe']
-    K_O2 = params['K_O2']
-    K_NO3 = params['K_NO3']
-    K_X = params['K_X']
-    mu_H = params['mu_H']
-    q_fe = params['q_fe']
-    eta_NO3_H = params['eta_NO3_H']
-    b_H = params['b_H']
-    K_O2_H = params['K_O2_H']
-    K_F_H = params['K_F_H']                 # K_F overlaps with PM2 -> change into K_F_H
-    K_fe = params['K_fe']
-    K_A_H = params['K_A_H']
-    K_NO3_H = params['K_NO3_H']
-    K_NH4_H = params['K_NH4_H']
-    K_P_H = params['K_P_H']
-    K_ALK_H = params['K_ALK_H']
-    mu_AUT = params['mu_AUT']
-    b_AUT = params['b_AUT']
-    K_O2_AUT = params['K_O2_AUT']
-    K_NH4_AUT = params['K_NH4_AUT']
-    K_ALK_AUT = params['K_ALK_AUT']
-    K_P_AUT = params['K_P_AUT']
-
-
-
-
-
-
-
+              The default is 0.7.              
+    f_SI : float, optional
+              Production of soluble inerts in hydrolysis, in [g COD/g COD]. 
+              The default is 0.0.
+    Y_H : float, optional
+              Heterotrophic yield coefficient, in[g COD/g COD]. 
+              The default is 0.625.
+    f_XI_H : float, optional
+              Fraction of inert COD generated in heterotrophic biomass lysis, in [g COD/g COD]. 
+              The default is 0.1.
+    Y_A : float, optional
+              Autotrophic yield, in [g COD/g N]. 
+              The default is 0.24.
+    f_XI_AUT : float, optional
+              Fraction of inert COD generated in autotrophic biomass lysis, in [g COD/g COD]. 
+              The default is 0.1.    
+    K_h : float, optional
+              Hydrolysis rate constant, in [d^(-1)]. 
+              The default is 3.0.
+    eta_NO3 : float, optional
+              Reduction factor for anoxic hydrolysis, dimensionless. 
+              The default is 0.6.
+    eta_fe : float, optional
+              Anaerobic hydrolysis reduction factor, dimensionless. 
+              The default is 0.4.
+    K_O2 : float, optional
+              O2 half saturation coefficient for hydrolysis, in [g O2/m^3]. 
+              The default is 0.2.
+    K_NO3 : float, optional
+              Nitrate half saturation coefficient for hydrolysis, in [g N/m^3].
+              The default is 0.5.
+    K_X : float, optional
+              Slowly biodegradable substrate half saturation coefficient for hydrolysis, in [g COD/g COD]. 
+              The default is 0.1.
+    mu_H : float, optional
+              Heterotrophic maximum specific growth rate, in [d^(-1)]. 
+              The default is 6.0.
+    q_fe : float, optional
+              Fermentation maximum rate, in [d^(-1)]. 
+              The default is 3.0.
+    eta_NO3_H : float, optional
+              Reduction factor for anoxic heterotrophic growth, dimensionless.
+              The default is 0.8.
+    b_H : float, optional
+              Lysis and decay rate constant, in [d^(-1)]. 
+              The default is 0.4.
+    K_O2_H : float, optional
+              O2 half saturation coefficient for heterotrophs, in [g O2/m^3].
+              The default is 0.2.
+    K_F_H : float, optional    
+              Fermentable substrate half saturation coefficient for heterotrophic growth (K_F in ASM2d), in [g COD/m^3]. 
+              The default is 4.0.
+    K_fe : float, optional
+              Fermentable substrate half saturation coefficient for fermentation, in [g COD/m^3]. 
+              The default is 4.0.
+    K_A_H : float, optional
+              VFA half saturation coefficient for heterotrophs, in [g COD/m^3].
+              The default is 4.0.
+    K_NO3_H : float, optional
+              Nitrate half saturation coefficient for heterotrophs, in [g N/m^3].
+              The default is 0.5.
+    K_NH4_H : float, optional
+              Ammonium (nutrient) half saturation coefficient for heterotrophs, in [g N/m^3].
+              The default is 0.05.
+    K_P_H : float, optional
+              Phosphorus (nutrient) half saturation coefficient for heterotrophs, in [g P/m^3]. 
+              The default is 0.01.
+    K_ALK_H : float, optional
+              Alkalinity half saturation coefficient for heterotrophs, in [mol(HCO3-)/m^3]. (user input unit, converted as C)
+              The default is 0.1.          
+    mu_AUT : float, optional
+              Autotrophic maximum specific growth rate, in [d^(-1)]. 
+              The default is 1.0.
+    b_AUT : float, optional
+              Autotrophic decay rate, in [d^(-1)]. 
+              The default is 0.15.
+    K_O2_AUT : float, optional
+              O2 half saturation coefficient for autotrophs, in [g O2/m^3].
+              The default is 0.5.
+    K_NH4_AUT : float, optional
+              Ammonium (nutrient) half saturation coefficient for autotrophs, in [g N/m^3].
+              The default is 1.0.
+    K_ALK_AUT : float, optional
+              Alkalinity half saturation coefficient for autotrophs, in [mol(HCO3-)/m^3]. (user input unit, converted as C)
+              The default is 0.5.
+    K_P_AUT : float, optional
+              Phosphorus (nutrient) half saturation coefficient for autotrophs, in [g P/m^3].
+              The default is 0.01.
     path : str, optional
               Alternative file path for the Petersen matrix.
               The default is None.
@@ -771,6 +818,17 @@ class PM2ASM2d(CompiledProcesses):
          aero_hydrolysis, anox_hydrolysis, anae_hydrolysis,
          hetero_growth_S_F, hetero_growth_S_A, denitri_S_F, denitri_S_A, ferment, hetero_lysis,
          auto_aero_growth, auto_lysis])
+    
+    References
+    ----------
+    .. [1] Henze, M.; Gujer, W.; Mino, T.; Loosdrecht, M. van. Activated Sludge
+        Models: ASM1, ASM2, ASM2d and ASM3; IWA task group on mathematical modelling
+        for design and operation of biological wastewater treatment, Ed.; IWA
+        Publishing: London, 2000.
+    .. [2] Rieger, L.; Gillot, S.; Langergraber, G.; Ohtsuki, T.; Shaw, A.; Takács,
+        I.; Winkler, S. Guidelines for Using Activated Sludge Models; IWA Publishing:
+        London, New York, 2012; Vol. 11.
+        https://doi.org/10.2166/9781780401164.    
     '''
 
     _shared_params = ('Y_CH_PHO', 'Y_LI_PHO', 'Y_X_ALG_PHO',
@@ -778,12 +836,16 @@ class PM2ASM2d(CompiledProcesses):
                'Y_CH_NR_HET_GLU', 'Y_LI_NR_HET_GLU', 'Y_X_ALG_HET_GLU')
 
     _stoichio_params = ('Y_CH_ND_HET_ACE', 'Y_LI_ND_HET_ACE', 'Y_CH_ND_HET_GLU', 'Y_LI_ND_HET_GLU',
+                        'f_SI', 'Y_H', 'f_XI_H', 'Y_A', 'f_XI_AUT',
                         *_shared_params)
 
     _kinetic_params = ('a_c', 'I_n', 'arr_a', 'arr_e', 'beta_1', 'beta_2', 'b_reactor', 'I_opt', 'k_gamma',
                        'K_N', 'K_P', 'K_A', 'K_F', 'rho', 'K_STO', 'f_CH_max', 'f_LI_max', 'm_ATP', 'mu_max',
                        'q_CH', 'q_LI', 'Q_N_max', 'Q_N_min', 'Q_P_max', 'Q_P_min', 'V_NH', 'V_NO', 'V_P', 'exponent',
-                       'Y_ATP_PHO', 'Y_ATP_HET_ACE', 'Y_ATP_HET_GLU', *_shared_params, 'n_dark', 'cmps')
+                       'Y_ATP_PHO', 'Y_ATP_HET_ACE', 'Y_ATP_HET_GLU', *_shared_params, 'n_dark', 'cmps',
+                       'K_h', 'eta_NO3', 'eta_fe', 'K_O2', 'K_NO3', 'K_X', 'mu_H', 'q_fe', 'eta_NO3_H', 
+                       'b_H', 'K_O2_H', 'K_F_H', 'K_fe', 'K_A_H', 'K_NO3_H', 'K_NH4_H', 'K_P_H', 
+                       'K_ALK_H', 'mu_AUT', 'b_AUT', 'K_O2_AUT', 'K_NH4_AUT', 'K_ALK_AUT', 'K_P_AUT')
 
     def __new__(cls, components=None,
                 a_c=0.049, I_n=250, arr_a=1.8e10, arr_e=6842, beta_1=2.90, beta_2=3.50, b_reactor=0.03, I_opt=300, k_gamma=1e-5,
@@ -795,12 +857,19 @@ class PM2ASM2d(CompiledProcesses):
                 Y_LI_NR_HET_ACE=1.105, Y_LI_ND_HET_ACE=0.713, Y_X_ALG_HET_ACE=0.216,
                 Y_ATP_HET_GLU=58.114, Y_CH_NR_HET_GLU=0.917, Y_CH_ND_HET_GLU=0.880,
                 Y_LI_NR_HET_GLU=1.620, Y_LI_ND_HET_GLU=1.046, Y_X_ALG_HET_GLU=0.317, n_dark=0.7,
+                f_SI=0.0, Y_H=0.625, f_XI_H=0.1, Y_A=0.24, f_XI_AUT=0.1,
+                K_h=3.0, eta_NO3=0.6, eta_fe=0.4, K_O2=0.2, K_NO3=0.5, K_X=0.1,
+                mu_H=6.0, q_fe=3.0, eta_NO3_H=0.8, b_H=0.4, K_O2_H=0.2, K_F_H=4.0,
+                K_fe=4.0, K_A_H=4.0, K_NO3_H=0.5, K_NH4_H=0.05, K_P_H=0.01, K_ALK_H=0.1,
+                mu_AUT=1.0, b_AUT=0.15, K_O2_AUT=0.5, K_NH4_AUT=1.0, K_ALK_AUT=0.5, K_P_AUT=0.01,
                 path=None, **kwargs):
 
         if not path: path = _path
+        
         self = Processes.load_from_file(path,
                                         components=components,
-                                        conserved_for=('COD', 'C', 'N', 'P'),
+                                        conserved_for=('COD', 'C', 'N', 'P', 'charge'),
+                                        #conserved_for=('COD', 'C', 'N', 'P'),
                                         parameters=cls._stoichio_params,
                                         compile=False)
 
@@ -834,14 +903,19 @@ class PM2ASM2d(CompiledProcesses):
                          Y_CH_NR_HET_ACE, Y_LI_NR_HET_ACE, Y_X_ALG_HET_ACE,
                          Y_CH_NR_HET_GLU, Y_LI_NR_HET_GLU, Y_X_ALG_HET_GLU)
         stoichio_values = (Y_CH_ND_HET_ACE, Y_LI_ND_HET_ACE, Y_CH_ND_HET_GLU, Y_LI_ND_HET_GLU,
-                           *shared_values)
+                           f_SI, Y_H, f_XI_H, Y_A, f_XI_AUT,
+                           *shared_values)       
         Q_N_min = max(self.Th_Q_N_min, Q_N_min)
         Q_P_min = max(self.Th_Q_P_min, Q_P_min)
         kinetic_values = (a_c, I_n, arr_a, arr_e, beta_1, beta_2, b_reactor, I_opt, k_gamma,
                           K_N, K_P, K_A, K_F, rho, K_STO, f_CH_max, f_LI_max, m_ATP, mu_max,
                           q_CH, q_LI, Q_N_max, Q_N_min, Q_P_max, Q_P_min, V_NH, V_NO, V_P, exponent,
                           Y_ATP_PHO, Y_ATP_HET_ACE, Y_ATP_HET_GLU,
-                          *shared_values, n_dark, self._components)
+                          *shared_values, n_dark, self._components,
+                          K_h, eta_NO3, eta_fe, K_O2, K_NO3, K_X, mu_H, q_fe, eta_NO3_H, 
+                          b_H, K_O2_H, K_F_H, K_fe, K_A_H, K_NO3_H, K_NH4_H, K_P_H, 
+                          K_ALK_H*12, mu_AUT, b_AUT, K_O2_AUT, K_NH4_AUT, K_ALK_AUT*12, K_P_AUT,
+                          )
 
         dct = self.__dict__
         dct.update(kwargs)
