@@ -19,7 +19,7 @@ import numpy as np
 from warnings import warn
 from math import isclose
 from biosteam.units import Junction as BSTjunction
-from .. import SanUnit, processes as pc
+from .. import Stream, SanUnit, processes as pc
 
 __all__ = (
     'Junction',
@@ -63,7 +63,7 @@ class Junction(SanUnit):
     def __init__(self, ID='', upstream=None, downstream=(), thermo=None,
                  init_with='WasteStream', F_BM_default=None, isdynamic=False,
                  reactions=None, **kwargs):
-        thermo = downstream.thermo if downstream else thermo
+        thermo = downstream.thermo if isinstance(downstream, Stream) else thermo
         SanUnit.__init__(self, ID, ins=upstream, outs=downstream, thermo=thermo,
                          init_with=init_with,
                          F_BM_default=F_BM_default, isdynamic=isdynamic,
