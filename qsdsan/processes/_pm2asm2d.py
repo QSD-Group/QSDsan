@@ -18,7 +18,9 @@ import numpy as np
 
 __all__ = ('create_pm2asm2d_cmps', 'PM2ASM2d')
 
-_path = ospath.join(data_path, 'process_data/_pm2asm2d.tsv')
+_path = ospath.join(data_path, 'process_data/_pm2asm2d_1.tsv')
+_path_2 = ospath.join(data_path, 'process_data/_pm2asm2d_2.tsv')
+
 # _load_components = settings.get_default_chemicals
 
 #%%
@@ -868,10 +870,16 @@ class PM2ASM2d(CompiledProcesses):
         
         self = Processes.load_from_file(path,
                                         components=components,
-                                        conserved_for=('COD', 'C', 'N', 'P', 'charge'),
-                                        #conserved_for=('COD', 'C', 'N', 'P'),
+                                        conserved_for=('COD', 'C', 'N', 'P'),
                                         parameters=cls._stoichio_params,
                                         compile=False)
+        
+        asm2d_processes = Processes.load_from_file(_path_2,
+                                        components=components,
+                                        conserved_for=('COD', 'N', 'P', 'charge'),
+                                        parameters=cls._stoichio_params,
+                                        compile=False)
+        self.extend(asm2d_processes)
 
         if path == _path:
             _p3 = Process('nitrate_uptake_pho',
