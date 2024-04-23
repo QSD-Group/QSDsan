@@ -291,7 +291,7 @@ class AnaerobicCSTR(CSTR):
         self._f_retain = np.array([fraction_retain if cmp.ID in retain_cmps \
                                    else 0 for cmp in self.components])
         self._mixed = WasteStream()
-        self._tempstate = []
+        self._tempstate = {}
     
     def ideal_gas_law(self, p=None, S=None):
         '''Calculates partial pressure [bar] given concentration [M] at 
@@ -450,6 +450,7 @@ class AnaerobicCSTR(CSTR):
         chem_MW = self.components.chem_MW
         n_cmps = len(self.components)
         Cs = y[:n_cmps]*(1-f_rtn)*1e3 # kg/m3 to mg/L
+        pH = self._tempstate.pop('pH', 7.2631)
         if self.split is None:
             gas, liquid = self._outs
             if liquid.state is None:
@@ -457,6 +458,7 @@ class AnaerobicCSTR(CSTR):
             else:
                 liquid.state[:n_cmps] = Cs
                 liquid.state[-1] = y[-1]
+            liquid._pH = pH
         else:
             gas = self._outs[0]
             liquids = self._outs[1:]
@@ -465,7 +467,8 @@ class AnaerobicCSTR(CSTR):
                     liquid.state = np.append(Cs, y[-1]*spl)
                 else:
                     liquid.state[:n_cmps] = Cs
-                    liquid.state[-1] = y[-1]*spl        
+                    liquid.state[-1] = y[-1]*spl
+                liquid._pH = pH
         if gas.state is None:
             gas.state = np.zeros(n_cmps+1)
         gas.state[self._gas_cmp_idx] = y[n_cmps:(n_cmps + self._n_gas)]
@@ -474,7 +477,7 @@ class AnaerobicCSTR(CSTR):
         gas.state[:n_cmps] = gas.state[:n_cmps] * chem_MW / i_mass * 1e3 # i.e., M biogas to mg (measured_unit) / L
 
     def _update_dstate(self):
-        # self._tempstate = self.model.rate_function._params['root'].data.copy()
+        self._tempstate = self.model.rate_function._params['root'].data.copy()
         dy = self._dstate
         f_rtn = self._f_retain
         n_cmps = len(self.components)
@@ -550,6 +553,7 @@ class AnaerobicCSTR(CSTR):
                 _M_stoichio = self.model.stoichio_eval().T
                 M_stoichio = lambda state_arr: _M_stoichio
             def dy_dt(t, QC_ins, QC, dQC_ins):
+                QC[QC < 2.2e-16] = 0.
                 S_liq = QC[:n_cmps]
                 S_gas = QC[n_cmps: (n_cmps+n_gas)]
                 #!!! Volume change due to temperature difference accounted for 
