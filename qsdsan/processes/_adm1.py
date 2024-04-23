@@ -36,8 +36,10 @@ _load_components = settings.get_default_chemicals
 # ADM1-specific components
 # =============================================================================
 
-C_mw = get_mw({'C':1})
-N_mw = get_mw({'N':1})
+# C_mw = get_mw({'C':1})
+# N_mw = get_mw({'N':1})
+C_mw = 12
+N_mw = 14
 
 def create_adm1_cmps(set_thermo=True):
     cmps_all = Components.load_default()

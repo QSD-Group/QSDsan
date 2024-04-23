@@ -322,7 +322,7 @@ class ADMjunction(Junction):
         ('H+', 'OH-'), ('NH4+', 'NH3'), ('CO2', 'HCO3-'),
         ('HAc', 'Ac-'), ('HPr', 'Pr-'), ('HBu', 'Bu-'), ('HVa', 'Va-')
         '''
-        return self.pKa_base-np.log10(np.exp(pc.T_correction_factor(self.T_base, self.T, self.Ka_dH)))
+        return self.pKa_base-np.log10(pc.T_correction_factor(self.T_base, self.T, self.Ka_dH))
     
     @property
     def alpha_IC(self):
@@ -438,7 +438,7 @@ class mADMjunction(Junction):
         ('H+', 'OH-'), ('NH4+', 'NH3'), ('H3PO4', 'H2PO4 2-'), ('CO2', 'HCO3-'),
         ('HAc', 'Ac-'), ('HPr', 'Pr-'), ('HBu', 'Bu-'), ('HVa', 'Va-')
         '''
-        return self.pKa_base-np.log10(np.exp(pc.T_correction_factor(self.T_base, self.T, self.Ka_dH)))
+        return self.pKa_base-np.log10(pc.T_correction_factor(self.T_base, self.T, self.Ka_dH))
 
     @property
     def alpha_IN(self):

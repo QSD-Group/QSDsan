@@ -450,7 +450,7 @@ class AnaerobicCSTR(CSTR):
         chem_MW = self.components.chem_MW
         n_cmps = len(self.components)
         Cs = y[:n_cmps]*(1-f_rtn)*1e3 # kg/m3 to mg/L
-        pH = self._tempstate.pop('pH', 7.2631)
+        pH = self._tempstate.pop('pH', 7)
         if self.split is None:
             gas, liquid = self._outs
             if liquid.state is None:
