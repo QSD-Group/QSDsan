@@ -383,9 +383,9 @@ class FlatBottomCircularClarifier(SanUnit):
         arr = self._state
         x = self.components.x
         n = self._N_layer
-        # arr[-(1+n)] = Q_in = self._ins_QC[0, -1]
-        # Q_e = Q_in - self._Qras - self._Qwas
-        Q_e = arr[-(1+n)] - self._Qras - self._Qwas
+        arr[-(1+n)] = Q_in = self._ins_QC[0, -1]
+        Q_e = Q_in - self._Qras - self._Qwas
+        # Q_e = arr[-(1+n)] - self._Qras - self._Qwas
         Z = arr[:len(x)]
         inf, = self.ins
         imass = self.components.i_mass
