@@ -40,6 +40,24 @@ default_F_BM = {
 default_F_BM.update(default_WWTpump_F_BM)
 
 #%% Thickener
+
+def calc_f_thick(thickener_perc, TSS_in):
+    if TSS_in > 0:
+        thickener_factor = thickener_perc*10000/TSS_in
+        if thickener_factor < 1: thickener_factor = 1
+        return thickener_factor
+    else: 
+        raise ValueError(f'Influent TSS is not valid: ({TSS_in:.2f} mg/L).')
+        
+def calc_f_Qu_thin(TSS_removal_perc, thickener_factor):
+    if thickener_factor <= 1:
+        Qu_factor = 1
+        thinning_factor=0
+    else:
+        Qu_factor = TSS_removal_perc/(100*thickener_factor)
+        thinning_factor = (1 - TSS_removal_perc/100)/(1 - Qu_factor)
+    return Qu_factor, thinning_factor
+    
 class Thickener(SanUnit):
     
     """
@@ -145,7 +163,7 @@ class Thickener(SanUnit):
     """
     
     _N_ins = 1
-    _N_outs = 2
+    _N_outs = 2   # [0] thickened sludge, [1] reject water
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False
     
@@ -176,7 +194,7 @@ class Thickener(SanUnit):
         
     @property
     def thickener_perc(self):
-        '''tp is the percentage of Suspended Sludge in the underflow of the thickener'''
+        '''The percentage of suspended solids in the thickened sludge, in %.'''
         return self._tp
 
     @thickener_perc.setter
@@ -216,73 +234,47 @@ class Thickener(SanUnit):
             
     @property
     def thickener_factor(self):
-        if self._thickener_factor is None:
-            self._mixed.mix_from(self.ins)
-            inf = self._mixed
-            _cal_thickener_factor = self._cal_thickener_factor
-            if not self.ins: return
-            elif inf.isempty(): return
-            else: 
-                TSS_in = inf.get_TSS()
-                self._thickener_factor = _cal_thickener_factor(TSS_in)
-        return self._thickener_factor
+        inf = self._mixed
+        inf.mix_from(self.ins)
+        if not self.ins: return
+        elif inf.isempty(): return
+        else: 
+            TSS_in = inf.get_TSS()
+            self._Qu_factor = None
+            return calc_f_thick(self._tp, TSS_in)
     
     @property
     def thinning_factor(self):
-        if self._thinning_factor is None:
-            self._Qu_factor, self._thinning_factor = self._cal_Qu_fthin(self.thickener_factor)
-        return self._thinning_factor
+        f_Qu, f_thin = calc_f_Qu_thin(self.TSS_removal_perc, self.thickener_factor)
+        return f_thin
     
-    def _cal_thickener_factor(self, TSS_in):
-        if TSS_in > 0:
-            thickener_factor = self._tp*10000/TSS_in
-            if thickener_factor < 1: thickener_factor = 1
-            return thickener_factor
-        else: 
-            raise ValueError(f'Influent TSS is not valid: ({TSS_in:.2f} mg/L).')
-            
-    def _cal_Qu_fthin(self, thickener_factor):
-        if thickener_factor<1:
-            Qu_factor = 1
-            thinning_factor=0
-        else:
-            Qu_factor = self._TSS_rmv/(100*thickener_factor)
-            thinning_factor = (1 - (self._TSS_rmv/100))/(1 - Qu_factor)
-        return Qu_factor, thinning_factor
-    
+    @property
+    def Qu_factor(self):
+        f_Qu, f_thin = calc_f_Qu_thin(self.TSS_removal_perc, self.thickener_factor)
+        return f_Qu
+
     def _update_parameters(self):
         # Thickener_factor, Thinning_factor, and Qu_factor need to be 
         # updated again and again. while dynamic simulations
         cmps = self.components 
         TSS_in = np.sum(self._state[:-1]*cmps.i_mass*cmps.x)
-        self._thickener_factor = f_thick = self._cal_thickener_factor(TSS_in)
-        self._Qu_factor, self._thinning_factor = self._cal_Qu_fthin(f_thick)
+        self._f_thick = f_thick = calc_f_thick(self._tp, TSS_in)
+        self._f_Qu, self._f_thin = calc_f_Qu_thin(self._TSS_rmv, f_thick)
         
     def _run(self):
-        self._mixed.mix_from(self.ins)
-        inf = self._mixed
-        sludge, eff = self.outs
-        cmps = self.components
+        mixed = self._mixed
+        mixed.mix_from(self.ins)
+        x = self.components.x
+        uf, of = self.outs
         
         TSS_rmv = self._TSS_rmv
-        thinning_factor = self.thinning_factor
-        thickener_factor = self.thickener_factor
+        TSS_in = mixed.get_TSS()
+        f_thick = calc_f_thick(self._tp, TSS_in)
+        f_Qu, f_thin = calc_f_Qu_thin(TSS_rmv, f_thick)
         
-        # The following are splits by mass of particulates and solubles 
-        
-        # Note: (1 - thinning_factor)/(thickener_factor - thinning_factor) = Qu_factor
-        Zs = (1 - thinning_factor)/(thickener_factor - thinning_factor)*inf.mass*cmps.s
-        Ze = (thickener_factor - 1)/(thickener_factor - thinning_factor)*inf.mass*cmps.s
-        
-        Xe = (1 - TSS_rmv/100)*inf.mass*cmps.x
-        Xs = (TSS_rmv/100)*inf.mass*cmps.x
-        
-        # e stands for effluent, s stands for sludge 
-        Ce = Ze + Xe 
-        Cs = Zs + Xs
-    
-        eff.set_flow(Ce,'kg/hr')
-        sludge.set_flow(Cs,'kg/hr')
+        if f_thick > 1: split_to_uf = (1-x)*f_Qu + x*TSS_rmv/100
+        else: split_to_uf = 1
+        mixed.split_to(uf, of, split_to_uf)
        
     def _init_state(self):
        
@@ -301,64 +293,57 @@ class Thickener(SanUnit):
         
     def _update_state(self):
         '''updates conditions of output stream based on conditions of the Thickener''' 
+
+        thickener_factor = self._f_thick
+        thinning_factor = self._f_thin
+        Qu_factor = self._f_Qu
+        x = self.components.x
         
-        # This function is run multiple times during dynamic simulation 
-        
-        # Remember that here we are updating the state array of size n, which is made up 
-        # of component concentrations in the first (n-1) cells and the last cell is flowrate. 
-        
-        # So, while in the run function the effluent and sludge are split by mass, 
-        # here they are split by concentration. Therefore, the split factors are different. 
-        
-        # Updated intrinsic modelling parameters are used for dynamic simulation 
-        thickener_factor = self.thickener_factor
-        thinning_factor = self.thinning_factor
-        Qu_factor = self._Qu_factor
-        cmps = self.components
-        
-        # For sludge, the particulate concentrations are multipled by thickener factor, and
-        # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
         uf, of = self.outs
-        if uf.state is None: uf.state = np.zeros(len(cmps)+1)
-        uf.state[:-1] = self._state[:-1]*cmps.s*1 + self._state[:-1]*cmps.x*thickener_factor
-        uf.state[-1] = self._state[-1]*Qu_factor
-        
-        # For effluent, the particulate concentrations are multipled by thinning factor, and
-        # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
-        if of.state is None: of.state = np.zeros(len(cmps)+1)
-        of.state[:-1] = self._state[:-1]*cmps.s*1 + self._state[:-1]*cmps.x*thinning_factor
-        of.state[-1] = self._state[-1]*(1 - Qu_factor)
+        if uf.state is None: uf.state = np.zeros(len(self.components)+1)
+        if of.state is None: of.state = np.zeros(len(self.components)+1)
+
+        arr = self._state
+        if thickener_factor <= 1: 
+            uf.state[:] = arr
+            of.state[:] = 0.
+        else:
+            # For sludge, the particulate concentrations (x) are multipled by thickener factor, and
+            # flowrate is multiplied by Qu_factor. The soluble concentrations (1-x) remains same. 
+            uf.state[:-1] = arr[:-1] * ((1-x) + x*thickener_factor)
+            uf.state[-1] = arr[-1] * Qu_factor
+            
+            # For effluent, the particulate concentrations (x) are multipled by thinning factor, and
+            # flowrate is multiplied by Qu_factor. The soluble concentrations (1-x) remains same. 
+            of.state[:-1] = arr[:-1] * ((1-x) + x*thinning_factor)
+            of.state[-1] = arr[-1] * (1 - Qu_factor)
 
     def _update_dstate(self):
         '''updates rates of change of output stream from rates of change of the Thickener'''
         
-        # This function is run multiple times during dynamic simulation 
-        
-        # Remember that here we are updating the state array of size n, which is made up 
-        # of component concentrations in the first (n-1) cells and the last cell is flowrate. 
-        
-        # So, while in the run function the effluent and sludge are split by mass, 
-        # here they are split by concentration. Therefore, the split factors are different. 
-        
-        # Updated intrinsic modelling parameters are used for dynamic simulation
-        thickener_factor = self.thickener_factor
-        thinning_factor = self.thinning_factor
-        Qu_factor = self._Qu_factor
-        cmps = self.components
-        
-        # For sludge, the particulate concentrations are multipled by thickener factor, and
-        # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
+        thickener_factor = self._f_thick
+        thinning_factor = self._f_thin
+        Qu_factor = self._f_Qu
+        x = self.components.x
+
         uf, of = self.outs
-        if uf.dstate is None: uf.dstate = np.zeros(len(cmps)+1)
-        uf.dstate[:-1] = self._dstate[:-1]*cmps.s*1 + self._dstate[:-1]*cmps.x*thickener_factor
-        uf.dstate[-1] = self._dstate[-1]*Qu_factor
-        
-        # For effluent, the particulate concentrations are multipled by thinning factor, and
-        # flowrate is multiplied by Qu_factor. The soluble concentrations remains same.
-        if of.dstate is None: of.dstate = np.zeros(len(cmps)+1)
-        of.dstate[:-1] = self._dstate[:-1]*cmps.s*1 + self._dstate[:-1]*cmps.x*thinning_factor
-        of.dstate[-1] = self._dstate[-1]*(1 - Qu_factor)
-     
+        if uf.dstate is None: uf.dstate = np.zeros(len(self.components)+1)
+        if of.dstate is None: of.dstate = np.zeros(len(self.components)+1)
+        arr = self._dstate
+        if thickener_factor <= 1:
+            uf.dstate[:] = arr
+            of.dstate[:] = 0.
+        else:
+            # For sludge, the particulate concentrations are multipled by thickener factor, and
+            # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
+            uf.dstate[:-1] = arr[:-1] * ((1-x) + x*thickener_factor)
+            uf.dstate[-1] = arr[-1] * Qu_factor
+            
+            # For effluent, the particulate concentrations are multipled by thinning factor, and
+            # flowrate is multiplied by Qu_factor. The soluble concentrations remains same.
+            of.dstate[:-1] = arr[:-1] * ((1-x) + x*thinning_factor)
+            of.dstate[-1] = arr[-1] * (1 - Qu_factor)
+    
     @property
     def AE(self):
         if self._AE is None:
@@ -697,12 +682,15 @@ class Centrifuge(Thickener):
     polymer_cost_by_weight = 2.2 # $/Kg (Source: https://www.alibaba.com/product-detail/dewatering-pool-chemicals-cationic-polyacrylamide-cas_1600194474507.html?spm=a2700.galleryofferlist.topad_classic.i5.5de8615c4zGAhg)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
-                  init_with='WasteStream', F_BM_default=default_F_BM, thickener_perc=28, TSS_removal_perc=98, 
-                  solids_feed_rate = 70, g_factor=2500, rotational_speed = 2500, LtoD = 4, F_BM = default_F_BM,
-                  polymer_dosage = 20, h_cylindrical=2, h_conical=1, **kwargs):
+                  init_with='WasteStream', F_BM_default=default_F_BM, 
+                  thickener_perc=28, TSS_removal_perc=98, 
+                  solids_feed_rate=70, g_factor=2500, rotational_speed = 2500, 
+                  LtoD=4, F_BM=default_F_BM,
+                  polymer_dosage=20, h_cylindrical=2, h_conical=1, **kwargs):
         
         Thickener.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, isdynamic=isdynamic,
-                      init_with=init_with, F_BM_default=1, thickener_perc=thickener_perc, 
+                      init_with=init_with, F_BM_default=F_BM_default, 
+                      thickener_perc=thickener_perc, 
                       TSS_removal_perc=TSS_removal_perc, **kwargs)
         
         self.solids_feed_rate = solids_feed_rate
