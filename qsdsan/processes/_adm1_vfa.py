@@ -786,11 +786,9 @@ class ADM1_vfa(CompiledProcesses):
         
         K_h2_la = 1e-5
         f_ac_pro_la = dct['f_ac_pro_la'] #use values in dct
-        dct['f_ac_la'] = (K_h2_la / (K_h2_la + S_h2)) * f_ac_pro_la
-        f_ac_la = dct['f_ac_la'] #use value above line
-        dct['f_pro_la'] = f_ac_pro_la - f_ac_la
+        dct['f_ac_la'] = f_ac_la = (K_h2_la / (K_h2_la + S_h2)) * f_ac_pro_la
+        dct['f_pro_la'] = f_pro_la = f_ac_pro_la - f_ac_la
         
-        f_pro_la = dct['f_pro_la'] #use value above line
         Y_la=0.06
         dct['f_pro_h2'] = (1-Y_la) * f_pro_la * (16/96)
     # <<<<<<<<<
