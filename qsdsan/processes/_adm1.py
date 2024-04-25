@@ -26,7 +26,9 @@ __all__ = ('create_adm1_cmps', 'ADM1',
            'non_compet_inhibit', 'substr_inhibit',
            'T_correction_factor', 
            'pH_inhibit', 'Hill_inhibit', 
-           'rhos_adm1')
+           'rhos_adm1', 
+           'solve_pH',
+           'dydt_Sh2_AD', 'grad_dydt_Sh2_AD')
 
 _path = ospath.join(data_path, 'process_data/_adm1.tsv')
 _load_components = settings.get_default_chemicals
@@ -325,7 +327,7 @@ def _rhos_adm1(state_arr, params, h=None):
     rhos[-3:] = kLa * (biogas_S - KH * biogas_p)
     return rhos
 
-def dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, S_h2_in, V_liq):
+def dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq, S_h2_in):
     state_arr[7] = S_h2
     Q = state_arr[30]
     rxn = _rhos_adm1(state_arr, params, h=h)
@@ -334,10 +336,11 @@ def dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, S_h2_in, V_liq):
 
 grad_rhos = np.zeros(5)
 X_bio = np.zeros(5)
-def grad_dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq):
+def grad_dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq, S_h2_in):
     state_arr[7] = S_h2
     ks = params['rate_constants'][[6,7,8,9,11]]
-    Ks = params['half_sat_coeffs'][6:10]
+    Ks = params['half_sat_coeffs'][2:6]
+    K_h2 = params['half_sat_coeffs'][7]
     pH_ULs = params['pH_ULs']
     pH_LLs = params['pH_LLs']
     KS_IN = params['KS_IN']
@@ -349,14 +352,13 @@ def grad_dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq):
     S_va, S_bu, S_IN = state_arr[[3,4,10]]
     Iph = Hill_inhibit(h, pH_ULs, pH_LLs)[[2,3,4,5,7]]
     Iin = substr_inhibit(S_IN, KS_IN)
-    gIh2 = grad_non_compet_inhibit(S_h2, KIs_h2)
+    grad_Ih2 = grad_non_compet_inhibit(S_h2, KIs_h2)
 
     grad_rhos[:] = ks * X_bio * Iph * Iin
-    grad_rhos[:4] *= substr_inhibit(substrates, Ks) * gIh2
+    grad_rhos[:-1] *= substr_inhibit(substrates, Ks) * grad_Ih2
     if S_va > 0: rhos[1] *= 1/(1+S_bu/S_va)
     if S_bu > 0: rhos[2] *= 1/(1+S_va/S_bu)
     
-    K_h2 = params['half_sat_coeffs'][11]
     grad_rhos[-1] *= grad_substr_inhibit(S_h2, K_h2)
     stoichio = f_stoichio(state_arr)
 

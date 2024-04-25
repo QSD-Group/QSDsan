@@ -352,8 +352,6 @@ class Thickener(SanUnit):
 
     def _compile_AE(self):
         
-        # This function is run multiple times during dynamic simulation 
-        
         _state = self._state
         _dstate = self._dstate
         _update_state = self._update_state
