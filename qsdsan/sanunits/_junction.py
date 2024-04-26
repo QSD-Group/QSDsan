@@ -275,20 +275,6 @@ class ADMjunction(Junction):
         super().__init__(ID=ID, upstream=upstream, downstream=downstream,
                          thermo=thermo, init_with=init_with, 
                          F_BM_default=F_BM_default, isdynamic=isdynamic)
-        
-   
-    @property
-    def T(self):
-        '''[float] Temperature of the upstream/downstream [K].'''
-        return self.ins[0].T
-    @T.setter
-    def T(self, T):
-        self.ins[0].T = self.outs[0].T = T
-    
-    @property
-    def pH(self):
-        '''[float] pH of the upstream/downstream.'''
-        return self.ins[0].pH
     
     @property
     def adm1_model(self):
@@ -531,8 +517,21 @@ class ADMtoASM(ADMjunction):
     bio_to_xs = 0.7
     
     # whether to conserve the nitrogen split between soluble and particulate components
-    conserve_particulate_N = False
+    conserve_particulate_N = False          
+   
+    @property
+    def T(self):
+        '''[float] Temperature of the upstream/downstream [K].'''
+        return self.ins[0].T
+    @T.setter
+    def T(self, T):
+        self.ins[0].T = self.outs[0].T = T
     
+    @property
+    def pH(self):
+        '''[float] pH of the upstream/downstream.'''
+        return self.ins[0].pH
+
     
     def isbalanced(self, lhs, rhs_vals, rhs_i):
         rhs = sum(rhs_vals*rhs_i)
@@ -786,6 +785,36 @@ class ASMtoADM(ADMjunction):
     xs_to_li = 0.7
     bio_to_li = 0.4
     frac_deg = 0.68
+    
+    def __init__(self, ID='', upstream=None, downstream=(), thermo=None,
+                 init_with='WasteStream', F_BM_default=None, isdynamic=False,
+                 adm1_model=None, T=298.15, pH=7):
+        self._T = T
+        self._pH = pH
+        super().__init__(ID=ID, upstream=upstream, downstream=downstream,
+                         thermo=thermo, init_with=init_with, 
+                         F_BM_default=F_BM_default, isdynamic=isdynamic,
+                         adm1_model=adm1_model)
+    
+    @property
+    def T(self):
+        '''[float] Temperature of the downstream [K].'''
+        try: return self.outs[0].sink.T
+        except: return self._T
+    @T.setter
+    def T(self, T):
+        self._T = self.outs[0].T = T
+    
+    @property
+    def pH(self):
+        '''[float] downstream pH.'''
+        if self._pH: return self._pH
+        else:
+            try: return self.outs[0].sink.outs[1].pH
+            except: return 7.
+    @pH.setter
+    def pH(self, ph):
+        self._pH = self.outs[0].pH = ph
     
     
     def isbalanced(self, lhs, rhs_vals, rhs_i):

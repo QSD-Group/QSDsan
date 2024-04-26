@@ -526,16 +526,13 @@ class FlatBottomCircularClarifier(SanUnit):
             flow_in = X_rolled * Q_jout
             VX = func_vx(X, X_min_arr)
             J[:] = npmin(VX[:-1], VX[1:])
-            # condition = (X_rolled[:jf]<X_t_arr)
             condition = (X_rolled[:jf]<X_t)
             J[:jf][condition] = VX[:jf][condition]
             settle_out[:-1] = J
             settle_in[1:] = J
-            # dQC[-n:] = ((flow_in - flow_out)/A_arr + settle_in - settle_out)/hj_arr       # (n,)
             dQC[-n:] = ((flow_in - flow_out)/A + settle_in - settle_out)/hj       # (n,)
             #*********solubles**********
-            # Q_in_arr[:] = Q_in
-            dQC[:m] = Q_in*(Z_in - Z)/V
+            dQC[:m] = Q_in/V*(Z_in - Z)
             # instrumental variables
             dX_comp[:] = (dC_in * X_in - dX_in * C_in) * x / X_in**2
             _update_dstate()
