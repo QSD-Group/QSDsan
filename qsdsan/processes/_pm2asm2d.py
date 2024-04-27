@@ -446,11 +446,11 @@ def rhos_pm2asm2d(state_arr, params):
     n_dark = params['n_dark']
 
     '''added from asm2d'''
-    f_SI = params['f_SI']
-    Y_H = params['Y_H']
-    f_XI_H = params['f_XI_H']
-    Y_A = params['Y_A']
-    f_XI_AUT = params['f_XI_AUT']
+    # f_SI = params['f_SI']
+    # Y_H = params['Y_H']
+    # f_XI_H = params['f_XI_H']
+    # Y_A = params['Y_A']
+    # f_XI_AUT = params['f_XI_AUT']
     K_h = params['K_h']
     eta_NO3 = params['eta_NO3']
     eta_fe = params['eta_fe']
@@ -551,9 +551,9 @@ def rhos_pm2asm2d(state_arr, params):
     rhos[31] = hydrolysis(X_S, X_H, K_h, K_X) * eta_NO3 * monod(K_O2, S_O2, 1) * monod(S_NO, K_NO3, 1)
     rhos[32] = hydrolysis(X_S, X_H, K_h, K_X) * eta_fe * monod(K_O2, S_O2, 1) * monod(K_NO3, S_NO, 1)
 
-    rhos[33] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * monod(S_O2, K_O2_H, 1) * monod(S_F, K_F, 1) * monod(S_F, S_A, 1)
+    rhos[33] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * monod(S_O2, K_O2_H, 1) * monod(S_F, K_F_H, 1) * monod(S_F, S_A, 1)
     rhos[34] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * monod(S_O2, K_O2_H, 1) * monod(S_A, K_A_H, 1) * monod(S_A, S_F, 1)
-    rhos[35] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * eta_NO3_H * monod(K_O2_H, S_O2, 1) * monod(S_NO, K_NO3_H, 1) * monod(S_F, K_F, 1) * monod(S_F, S_A, 1)
+    rhos[35] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * eta_NO3_H * monod(K_O2_H, S_O2, 1) * monod(S_NO, K_NO3_H, 1) * monod(S_F, K_F_H, 1) * monod(S_F, S_A, 1)
     rhos[36] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * eta_NO3_H * monod(K_O2_H, S_O2, 1) * monod(S_NO, K_NO3_H, 1) * monod(S_A, K_A_H, 1) * monod(S_A, S_F, 1)
     rhos[37] = q_fe * monod(K_O2_H, S_O2, 1) * monod(K_NO3_H, S_NO, 1) * monod(S_F, K_fe, 1) * monod(S_ALK, K_ALK_H, 1) * X_H
     rhos[38] = b_H * X_H
