@@ -934,12 +934,64 @@ class PrimaryClarifierBSM2(SanUnit):
     >>> ws = WasteStream('ws', S_F = 10, S_NH4 = 20, X_OHO = 15, H2O=1000)
     >>> from qsdsan.sanunits import PrimaryClarifierBSM2
     >>> PC = PrimaryClarifierBSM2(ID='PC', ins= (ws,), outs=('eff', 'sludge'),
-                                  isdynamic=False)
+    ...                           isdynamic=False)
     >>> PC.simulate()
     >>> of, uf = PC.outs
     >>> uf.imass['X_OHO']/ws.imass['X_OHO'] # doctest: +ELLIPSIS
     0.598...
-    >>> # PC.show()
+    >>> PC.show()
+    PrimaryClarifierBSM2: PC
+    ins...
+    [0] ws
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_F    1e+04
+                    S_NH4  2e+04
+                    X_OHO  1.5e+04
+                    H2O    1e+06
+        WasteStream-specific properties:
+         pH         : 7.0
+         Alkalinity : 2.5 mg/L
+         COD        : 23873.0 mg/L
+         BOD        : 14963.2 mg/L
+         TC         : 8298.3 mg/L
+         TOC        : 8298.3 mg/L
+         TN         : 20363.2 mg/L
+         TP         : 367.6 mg/L
+         TK         : 68.3 mg/L
+         TSS        : 11124.4 mg/L
+    outs...
+    [0] eff
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_F    9.93e+03
+                    S_NH4  1.99e+04
+                    X_OHO  6.03e+03
+                    H2O    9.93e+05
+        WasteStream-specific properties:
+         pH         : 7.0
+         COD        : 15436.7 mg/L
+         BOD        : 10190.8 mg/L
+         TC         : 5208.2 mg/L
+         TOC        : 5208.2 mg/L
+         TN         : 19890.2 mg/L
+         TP         : 206.9 mg/L
+         TK         : 27.8 mg/L
+         TSS        : 4531.6 mg/L
+    [1] sludge
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_F    70
+                    S_NH4  140
+                    X_OHO  8.97e+03
+                    H2O    7e+03
+        WasteStream-specific properties:
+         pH         : 7.0
+         COD        : 693717.8 mg/L
+         BOD        : 393895.8 mg/L
+         TC         : 253653.5 mg/L
+         TOC        : 253653.5 mg/L
+         TN         : 57923.7 mg/L
+         TP         : 13132.3 mg/L
+         TK         : 3282.0 mg/L
+         TSS        : 534594.2 mg/L
    
     References
     ----------
@@ -1078,60 +1130,6 @@ class PrimaryClarifierBSM2(SanUnit):
         uf.dstate = self._sludge * self._dstate
         of.dstate = self._effluent * self._dstate
        
-    # def _init_state(self):
-    #     # if multiple wastestreams exist then concentration and total flow
-    #     # would be calculated assuming perfect mixing
-    #     Qs = self._ins_QC[:,-1]
-    #     Cs = self._ins_QC[:,:-1]
-    #     self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
-    #     self._dstate = self._state * 0.
-       
-    #     uf, of = self.outs
-    #     s_flow = uf.F_vol/(uf.F_vol+of.F_vol)
-    #     denominator = uf.mass + of.mass
-    #     denominator += (denominator == 0)
-    #     s = uf.mass/denominator
-    #     self._sludge = np.append(s/s_flow, s_flow)
-    #     self._effluent = np.append((1-s)/(1-s_flow), 1-s_flow)
-       
-    # def _update_state(self):
-    #     '''updates conditions of output stream based on conditions of the Primary Clarifier'''
-    #     self._outs[0].state = self._sludge * self._state
-    #     self._outs[1].state = self._effluent * self._state
-
-    # def _update_dstate(self):
-    #     '''updates rates of change of output stream from rates of change of the Primary Clarifier'''
-    #     self._outs[0].dstate = self._sludge * self._dstate
-    #     self._outs[1].dstate = self._effluent * self._dstate
-     
-    # @property
-    # def AE(self):
-    #     if self._AE is None:
-    #         self._compile_AE()
-    #     return self._AE
-
-    # def _compile_AE(self):
-    #     _state = self._state
-    #     _dstate = self._dstate
-    #     _update_state = self._update_state
-    #     _update_dstate = self._update_dstate
-    #     def yt(t, QC_ins, dQC_ins):
-    #         #Because there are multiple inlets
-    #         Q_ins = QC_ins[:, -1]
-    #         C_ins = QC_ins[:, :-1]
-    #         dQ_ins = dQC_ins[:, -1]
-    #         dC_ins = dQC_ins[:, :-1]
-    #         Q = Q_ins.sum()
-    #         C = Q_ins @ C_ins / Q
-    #         _state[-1] = Q
-    #         _state[:-1] = C
-    #         Q_dot = dQ_ins.sum()
-    #         C_dot = (dQ_ins @ C_ins + Q_ins @ dC_ins - Q_dot * C)/Q
-    #         _dstate[-1] = Q_dot
-    #         _dstate[:-1] = C_dot
-    #         _update_state()
-    #         _update_dstate()
-    #     self._AE = yt
     @property
     def ODE(self):
         if self._ODE is None:
@@ -1193,68 +1191,6 @@ class PrimaryClarifier(SanUnit):
     F_BM : dict
         Equipment bare modules.
         
-    Examples
-    --------
-    >>> from qsdsan import set_thermo, Components, WasteStream
-    >>> cmps = Components.load_default()
-    >>> cmps_test = cmps.subgroup(['S_F', 'S_NH4', 'X_OHO', 'H2O'])
-    >>> set_thermo(cmps_test)
-    >>> ws = WasteStream('ws', S_F = 10, S_NH4 = 20, X_OHO = 15, H2O=1000)
-    >>> from qsdsan.sanunits import Thickener
-    >>> TC = Thickener(ID='TC', ins= (ws), outs=('sludge', 'effluent'))
-    >>> TC.simulate()
-    >>> sludge, effluent = TC.outs
-    >>> sludge.imass['X_OHO']/ws.imass['X_OHO']
-    0.98
-    >>> TC.show() # doctest: +ELLIPSIS
-    Thickener: TC
-    ins...
-    [0] ws
-    phase: 'l', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): S_F    1e+04
-                    S_NH4  2e+04
-                    X_OHO  1.5e+04
-                    H2O    1e+06
-        WasteStream-specific properties:
-         pH         : 7.0
-         COD        : 23873.0 mg/L
-         BOD        : 14963.2 mg/L
-         TC         : 8298.3 mg/L
-         TOC        : 8298.3 mg/L
-         TN         : 20363.2 mg/L
-         TP         : 367.6 mg/L
-         TK         : 68.3 mg/L
-    outs...
-    [0] sludge
-    phase: 'l', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): S_F    1.56e+03
-                    S_NH4  3.11e+03
-                    X_OHO  1.47e+04
-                    H2O    1.56e+05
-        WasteStream-specific properties:
-         pH         : 7.0
-         COD        : 95050.4 mg/L
-         BOD        : 55228.4 mg/L
-         TC         : 34369.6 mg/L
-         TOC        : 34369.6 mg/L
-         TN         : 24354.4 mg/L
-         TP         : 1724.0 mg/L
-         TK         : 409.8 mg/L
-    [1] effluent
-    phase: 'l', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): S_F    8.44e+03
-                    S_NH4  1.69e+04
-                    X_OHO  300
-                    H2O    8.44e+05
-        WasteStream-specific properties:
-         pH         : 7.0
-         COD        : 9978.2 mg/L
-         BOD        : 7102.9 mg/L
-         TC         : 3208.8 mg/L
-         TOC        : 3208.8 mg/L
-         TN         : 19584.1 mg/L
-         TP         : 102.9 mg/L
-         TK         : 1.6 mg/L
 
     References
     ----------

@@ -112,6 +112,7 @@ class Thickener(SanUnit):
                     H2O    1e+06
         WasteStream-specific properties:
          pH         : 7.0
+         Alkalinity : 2.5 mg/L
          COD        : 23873.0 mg/L
          BOD        : 14963.2 mg/L
          TC         : 8298.3 mg/L
@@ -119,6 +120,7 @@ class Thickener(SanUnit):
          TN         : 20363.2 mg/L
          TP         : 367.6 mg/L
          TK         : 68.3 mg/L
+         TSS        : 11124.4 mg/L
     outs...
     [0] sludge
     phase: 'l', T: 298.15 K, P: 101325 Pa
@@ -135,6 +137,7 @@ class Thickener(SanUnit):
          TN         : 24354.4 mg/L
          TP         : 1724.0 mg/L
          TK         : 409.8 mg/L
+         TSS        : 66748.0 mg/L
     [1] effluent
     phase: 'l', T: 298.15 K, P: 101325 Pa
     flow (g/hr): S_F    8.44e+03
@@ -150,6 +153,7 @@ class Thickener(SanUnit):
          TN         : 19584.1 mg/L
          TP         : 102.9 mg/L
          TK         : 1.6 mg/L
+         TSS        : 265.9 mg/L
 
     References
     ----------
@@ -891,16 +895,22 @@ class Incinerator(SanUnit):
     --------    
     >>> import qsdsan as qs
     >>> cmps = qs.Components.load_default()
-    >>> CO2 = qs.Component.from_chemical('S_CO2', search_ID='CO2', particle_size='Soluble', degradability='Undegradable', organic=False)
-    >>> cmps_test = qs.Components([cmps.S_F, cmps.S_NH4, cmps.X_OHO, cmps.H2O, cmps.S_CH4, cmps.S_O2, cmps.S_N2, cmps.S_H2, cmps.X_Ig_ISS, CO2])
+    >>> CO2 = qs.Component.from_chemical('S_CO2', search_ID='CO2', 
+    ...                                  particle_size='Soluble', 
+    ...                                  degradability='Undegradable', 
+    ...                                  organic=False)
+    >>> cmps_test = qs.Components([cmps.S_F, cmps.S_NH4, cmps.X_OHO, cmps.H2O, 
+    ...                            cmps.S_CH4, cmps.S_O2, cmps.S_N2, cmps.S_H2, 
+    ...                            cmps.X_Ig_ISS, CO2])
     >>> cmps_test.default_compile()
     >>> qs.set_thermo(cmps_test)
     >>> ws = qs.WasteStream('ws', S_F=10, S_NH4=20, X_OHO=15, H2O=1000)
     >>> natural_gas = qs.WasteStream('nat_gas', phase='g', S_CH4=1000)
     >>> air = qs.WasteStream('air', phase='g', S_O2=210, S_N2=780, S_H2=10)
     >>> from qsdsan.sanunits import Incinerator
-    >>> Inc = Incinerator(ID='Inc', ins= (ws, air, natural_gas), outs=('flu_gas', 'ash'), 
-    ...                 isdynamic=False)
+    >>> Inc = Incinerator(ID='Inc', ins= (ws, air, natural_gas), 
+    ...                   outs=('flu_gas', 'ash'), 
+    ...                   isdynamic=False)
     >>> Inc.simulate()
     >>> Inc.show()
     Incinerator: Inc
@@ -913,6 +923,7 @@ class Incinerator(SanUnit):
                     H2O    1e+06
         WasteStream-specific properties:
          pH         : 7.0
+         Alkalinity : 2.5 mg/L
          COD        : 23873.0 mg/L
          BOD        : 14963.2 mg/L
          TC         : 8298.3 mg/L
@@ -920,6 +931,7 @@ class Incinerator(SanUnit):
          TN         : 20363.2 mg/L
          TP         : 367.6 mg/L
          TK         : 68.3 mg/L
+         TSS        : 11124.4 mg/L
     [1] air
     phase: 'g', T: 298.15 K, P: 101325 Pa
     flow (g/hr): S_O2  2.1e+05
