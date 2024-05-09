@@ -12,18 +12,18 @@ for license details.
 
 from .. import SanUnit, WasteStream, Process, Processes, CompiledProcesses
 from ._clarifier import _settling_flux
+from ..sanunits import dydt_cstr
 from sympy import symbols, lambdify, Matrix
 from scipy.integrate import solve_ivp
 from warnings import warn
 from math import floor, ceil
 import numpy as np
 import pandas as pd
-from numba import njit
+# from numba import njit
 
 __all__ = ('CSTR',
            'BatchExperiment',
            'SBR',
-           'dydt_cstr'
            )
 
 def _add_aeration_to_growth_model(aer, model):
@@ -36,13 +36,7 @@ def _add_aeration_to_growth_model(aer, model):
         processes.compile()
     return processes
 
-# %%
-@njit(cache=True)
-def dydt_cstr(QC_ins, QC, V, _dstate):
-    Q_ins = QC_ins[:, -1]
-    C_ins = QC_ins[:, :-1]
-    _dstate[-1] = 0
-    _dstate[:-1] = (Q_ins @ C_ins - sum(Q_ins)*QC[:-1])/V
+
 
 #%%
 class CSTR(SanUnit):
@@ -64,6 +58,14 @@ class CSTR(SanUnit):
         The default is None.
     V_max : float
         Designed volume, in [m^3]. The default is 1000.
+        
+    # W_tank : float
+    #     The design width of the tank, in [m]. The default is 6.4 m (21 ft). [1, Yalin's adaptation of code]
+    # D_tank : float
+    #     The design depth of the tank in [m]. The default is 3.65 m (12 ft). [1, Yalin's adaptation of code]
+    # freeboard : float
+    #     Freeboard added to the depth of the reactor tank, [m]. The default is 0.61 m (2 ft). [1, Yalin's adaptation of code]
+        
     aeration : float or :class:`Process`, optional
         Aeration setting. Either specify a targeted dissolved oxygen concentration
         in [mg O2/L] or provide a :class:`Process` object to represent aeration,
@@ -77,17 +79,25 @@ class CSTR(SanUnit):
         Any exogenous dynamic variables that affect the process mass balance,
         e.g., temperature, sunlight irradiance. Must be independent of state 
         variables of the suspended_growth_model (if has one).
+    
+    References:
+        
+     [1] Shoener, B. D.; Zhong, C.; Greiner, A. D.; Khunjar, W. O.; Hong, P.-Y.; Guest, J. S.
+         Design of Anaerobic Membrane Bioreactors for the Valorization
+         of Dilute Organic Carbon Waste Streams.
+         Energy Environ. Sci. 2016, 9 (3), 1102–1112.
+         https://doi.org/10.1039/C5EE03715H.
+    
     '''
-
     _N_ins = 3
     _N_outs = 1
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False
 
     def __init__(self, ID='', ins=None, outs=(), split=None, thermo=None,
-                 init_with='WasteStream', V_max=1000, aeration=2.0,
-                 DO_ID='S_O2', suspended_growth_model=None, 
-                 isdynamic=True, exogenous_vars=(), **kwargs):
+                 init_with='WasteStream', V_max=1000, W_tank = 6.4, D_tank = 3.65,
+                 freeboard = 0.61, t_wall = None, t_slab = None, aeration=2.0, 
+                 DO_ID='S_O2', suspended_growth_model=None, isdynamic=True, exogenous_vars=(), **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic,
                          exogenous_vars=exogenous_vars, **kwargs)
         self._V_max = V_max
@@ -97,9 +107,17 @@ class CSTR(SanUnit):
         self._concs = None
         self._mixed = WasteStream()
         self.split = split
+
+        # # Design parameters 
+        # self._W_tank = W_tank
+        # self._D_tank = D_tank
+        # self._freeboard = freeboard
+        # self._t_wall = t_wall
+        # self._t_slab = t_slab
+    
         # for attr, value in kwargs.items():
         #     setattr(self, attr, value)
-
+    
     @property
     def V_max(self):
         '''[float] The designed maximum liquid volume, not accounting for increased volume due to aeration, in m^3.'''
@@ -108,7 +126,59 @@ class CSTR(SanUnit):
     @V_max.setter
     def V_max(self, Vm):
         self._V_max = Vm
+        
+    # @property
+    # def W_tank(self):
+    #     '''[float] The design width of the tank, in m.'''
+    #     return self._W_tank
 
+    # @W_tank.setter
+    # def W_tank(self, W_tank):
+    #     self._W_tank = W_tank
+        
+    # @property
+    # def D_tank(self):
+    #     '''[float] The design depth of the tank, in m.'''
+    #     return self._D_tank
+
+    # @D_tank.setter
+    # def D_tank(self, D_tank):
+    #     self._D_tank = D_tank
+        
+    # @property
+    # def freeboard(self):
+    #     '''[float] Freeboard added to the depth of the reactor tank, [m].'''
+    #     return self._freeboard
+    
+    # @freeboard.setter
+    # def freeboard(self, i):
+    #     self._freeboard = i
+        
+    # @property
+    # def t_wall(self):
+    #     '''
+    #     [float] Thickness of the wall concrete, [m].
+    #     default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
+    #     '''
+    #     D_tank = self.D_tank*39.37 # m to inches 
+    #     return self._t_wall or (1 + max(D_tank - 12, 0)/12)*0.3048 # from feet to m
+    
+    # @t_wall.setter
+    # def t_wall(self, i):
+    #     self._t_wall = i
+
+    # @property
+    # def t_slab(self):
+    #     '''
+    #     [float] Concrete slab thickness, [m],
+    #     default to be 2 in thicker than the wall thickness.
+    #     '''
+    #     return self._t_slab or (self.t_wall + 2/12)*0.3048 # from feet to m
+    
+    # @t_slab.setter
+    # def t_slab(self, i):
+    #     self._t_slab = i
+     
     @property
     def aeration(self):
         '''[:class:`Process` or float or NoneType] Aeration model.'''
@@ -181,10 +251,7 @@ class CSTR(SanUnit):
 
     def set_init_conc(self, **kwargs):
         '''set the initial concentrations [mg/L] of the CSTR.'''
-        Cs = np.zeros(len(self.components))
-        cmpx = self.components.index
-        for k, v in kwargs.items(): Cs[cmpx(k)] = v
-        self._concs = Cs
+        self._concs = self.components.kwarray(kwargs)
 
     def _init_state(self):
         mixed = self._mixed
@@ -272,9 +339,51 @@ class CSTR(SanUnit):
                 _update_dstate()
 
         self._ODE = dy_dt
+        
+    # _units = {
+    #     'Tank volume': 'm3',
+    #     'Tank width': 'm',
+    #     'Tank depth': 'm',
+    #     'Tank length': 'm',
+    #     'Volume of concrete wall': 'm3',
+    #     'Volume of concrete slab': 'm3' 
+    #     }
 
     def _design(self):
         pass
+        # self._mixed.mix_from(self.ins)
+        # # mixed = self._mixed
+        # D = self.design_results
+        
+        # D['Tank volume'] = V = self.V_max
+        # D['Tank width'] = W = self.W_tank
+        # D['Tank depth'] = depth = self.D_tank
+        # D['Tank length'] = L = V/(W*depth)
+        
+        # t_wall, t_slab = self.t_wall, self.t_slab
+        # t = t_wall + t_slab
+        # D_tot = depth + self.freeboard 
+        
+        # # get volume of wall concrete
+        # VWC = 2*((L + 2*t_wall)*t_wall*D_tot) + 2*(W*t_wall*D_tot)
+        
+        # # get volume of slab concrete
+        # VSC = (L + 2*t_wall)*(W + 2*t_wall)*t
+        
+        # D['Volume of concrete wall'] = VWC
+        # D['Volume of concrete slab'] = VSC
+            
+    def _cost(self):
+        pass
+        # self._mixed.mix_from(self.ins)
+       
+        # D = self.design_results
+        # C = self.baseline_purchase_costs
+       
+        # # Construction of concrete and stainless steel walls
+        # C['Wall concrete'] = D['Volume of concrete wall']*self.wall_concrete_unit_cost
+        # C['Slab concrete'] = D['Volume of concrete slab']*self.slab_concrete_unit_cost
+
 
 #%%
 class BatchExperiment(SanUnit):

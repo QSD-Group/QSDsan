@@ -694,6 +694,7 @@ class Process:
         def f(state_arr, params={}):
             states = dict(zip(var_kw, state_arr))
             return lamb(**states, **params)
+
         self.kinetics(function=f, parameters=self.parameters)
 
     def _normalize_stoichiometry(self, new_ref):

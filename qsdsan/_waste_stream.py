@@ -452,15 +452,16 @@ class WasteStream(SanStream):
             _ws_info += int(bool(self.pH))*f'  pH         : {self.pH:.1f}\n'
             _ws_info += int(bool(self.SAlk))*f'  Alkalinity : {self.SAlk:.1f} mg/L\n'
             if details:
-                _ws_info += int(bool(self.COD))   *f'  COD        : {self.COD:.1f} mg/L\n'
-                _ws_info += int(bool(self.BOD))   *f'  BOD        : {self.BOD:.1f} mg/L\n'
-                _ws_info += int(bool(self.TC))    *f'  TC         : {self.TC:.1f} mg/L\n'
-                _ws_info += int(bool(self.TOC))   *f'  TOC        : {self.TOC:.1f} mg/L\n'
-                _ws_info += int(bool(self.TN))    *f'  TN         : {self.TN:.1f} mg/L\n'
+                _ws_info += int(bool(self.COD))       *f'  COD        : {self.COD:.1f} mg/L\n'
+                _ws_info += int(bool(self.BOD))       *f'  BOD        : {self.BOD:.1f} mg/L\n'
+                _ws_info += int(bool(self.TC))        *f'  TC         : {self.TC:.1f} mg/L\n'
+                _ws_info += int(bool(self.TOC))       *f'  TOC        : {self.TOC:.1f} mg/L\n'
+                _ws_info += int(bool(self.TN))        *f'  TN         : {self.TN:.1f} mg/L\n'
                 # `TKN` not included as the users need to define that to include in TKN calculation
                 # _ws_info += int(bool(self.TKN))   *f'  TKN        : {self.TKN:.1f} mg/L\n'
-                _ws_info += int(bool(self.TP))    *f'  TP         : {self.TP:.1f} mg/L\n'
-                _ws_info += int(bool(self.TK))    *f'  TK         : {self.TK:.1f} mg/L\n'
+                _ws_info += int(bool(self.TP))        *f'  TP         : {self.TP:.1f} mg/L\n'
+                _ws_info += int(bool(self.TK))        *f'  TK         : {self.TK:.1f} mg/L\n'
+                _ws_info += int(bool(self.get_TSS())) *f'  TSS        : {self.get_TSS():.1f} mg/L\n'
                 # _ws_info += int(bool(self.charge))*f'  charge     : {self.charge:.1f} mmol/L\n'
             else:
                 _ws_info += '  ...\n'
@@ -633,7 +634,7 @@ class WasteStream(SanStream):
         if specification:
             try:
                 specified_IDs = set(_get(all_cmps, specification))
-            except AttributeError: # no pre-defined groups
+            except AttributeError: # no predefined groups
                 try:
                     specified_IDs = _specific_groups[specification]
                 except KeyError: # specification not in the default ones
@@ -729,6 +730,10 @@ class WasteStream(SanStream):
     def pH(self):
         '''[float] pH, unitless.'''
         return self._liq_sol_properties('pH', 7.)
+    @pH.setter
+    def pH(self, ph):
+        if self.phase != 'g':
+            self._pH = ph
 
     @property
     def SAlk(self):
@@ -1073,7 +1078,7 @@ class WasteStream(SanStream):
         return VSS
 
     def get_ISS(self):
-        '''[float] Inorganic/involatile suspended solids, in mg/L.'''
+        '''[float] Inorganic/non-volatile suspended solids, in mg/L.'''
         return self.composite('solids', particle_size='x', volatile=False)
 
 
@@ -1219,7 +1224,11 @@ class WasteStream(SanStream):
         self._scope = s
 
     def _init_state(self):
-        self.state = np.append(self.conc.astype('float64'), self.get_total_flow('m3/d'))
+        if self.phase == 'l':
+            self.state = np.append(self.conc.astype('float64'), self.get_total_flow('m3/d'))
+        else:
+            Q = self.F_vol # m3/hr
+            self.state = np.append(self.mass.astype('float64')/Q*1e3, Q*24)
         self.dstate = np.zeros_like(self.state)
 
     def _state2flows(self):

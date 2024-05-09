@@ -535,7 +535,7 @@ def select_pipe(Q, v):
     Q : float
         Flow rate of the fluid, [ft3/s] (cfs).
     v : float
-        Minimum permissible velocity of the fluid, [ft/s].
+        Minumum permissible velocity of the fluid, [ft/s].
 
     Returns
     -------
