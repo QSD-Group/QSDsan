@@ -32,6 +32,7 @@ from . import (
     _madm1,
     _decay,
     _kinetic_reaction,
+    _pm2
     )
 
 __all__ = (

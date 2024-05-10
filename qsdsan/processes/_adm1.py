@@ -24,10 +24,10 @@ from warnings import warn
 
 __all__ = ('create_adm1_cmps', 'ADM1',
            'non_compet_inhibit', 'substr_inhibit',
-           'T_correction_factor', 
+           'mass2mol_conversion', 'T_correction_factor', 
            'pH_inhibit', 'Hill_inhibit', 
            'rhos_adm1', 
-           'solve_pH',
+           'solve_pH', 'TempState',
            'dydt_Sh2_AD', 'grad_dydt_Sh2_AD')
 
 _path = ospath.join(data_path, 'process_data/_adm1.tsv')

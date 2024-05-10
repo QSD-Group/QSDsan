@@ -33,7 +33,7 @@ __all__ = (
     'mADM1toASM2d',
           )
 
-#%%
+#%% Junction
 class Junction(SanUnit):
     '''
     A non-reactive class that serves to convert a stream with one set of components
@@ -242,7 +242,7 @@ class Junction(SanUnit):
             self._compile_reactions()
             
             
-# %%
+# %% ADMjunction
 
 #TODO: add a `rtol` kwargs for error checking
 class ADMjunction(Junction):
@@ -351,84 +351,85 @@ class ADMjunction(Junction):
             _update_dstate()
         
         self._AE = yt
-#%%
 
-class mADMjunction(Junction):
+#%% mADMjunction
+class mADMjunction(ADMjunction):
     '''
-    An abstract superclass holding common properties of ADM interface classes.
-    Users should use its subclasses (e.g., ``ASMtoADM``, ``ADMtoASM``) instead.
+    An abstract superclass holding common properties of modified ADM interface classes.
+    Users should use its subclasses (e.g., ``ASM2dtomADM1``, ``mADM1toASM2d``) instead.
     
     See Also
     --------
-    :class:`qsdsan.sanunits.Junction`
+    :class:`qsdsan.sanunits.ADMJunction`
     
-    :class:`qsdsan.sanunits.ADMtoASM`
+    :class:`qsdsan.sanunits.mADM1toASM2d`
     
-    :class:`qsdsan.sanunits.ASMtoADM`
+    :class:`qsdsan.sanunits.ASM2dtomADM1`
     '''
     _parse_reactions = Junction._no_parse_reactions
     rtol = 1e-2
     atol = 1e-6
-    
-    def __init__(self, ID='', upstream=None, downstream=(), thermo=None,
-                 init_with='WasteStream', F_BM_default=None, isdynamic=False,
-                 adm1_model=None):
-        self.adm1_model = adm1_model # otherwise there won't be adm1_model when `_compile_reactions` is called
+    cod_vfa = np.array([64, 112, 160, 208])
+
+    # def __init__(self, ID='', upstream=None, downstream=(), thermo=None,
+    #              init_with='WasteStream', F_BM_default=None, isdynamic=False,
+    #              adm1_model=None):
+    #     self.adm1_model = adm1_model # otherwise there won't be adm1_model when `_compile_reactions` is called
         
-        if thermo is None:
-            warn('No `thermo` object is provided and is prone to raise error. '
-                 'If you are not sure how to get the `thermo` object, '
-                 'use `thermo = qsdsan.set_thermo` after setting thermo with the `Components` object.')
-        super().__init__(ID=ID, upstream=upstream, downstream=downstream,
-                         thermo=thermo, init_with=init_with, 
-                         F_BM_default=F_BM_default, isdynamic=isdynamic)
+    #     if thermo is None:
+    #         warn('No `thermo` object is provided and is prone to raise error. '
+    #              'If you are not sure how to get the `thermo` object, '
+    #              'use `thermo = qsdsan.set_thermo` after setting thermo with the `Components` object.')
+    #     super().__init__(ID=ID, upstream=upstream, downstream=downstream,
+    #                      thermo=thermo, init_with=init_with, 
+    #                      F_BM_default=F_BM_default, isdynamic=isdynamic)
         
    
-    @property
-    def T(self):
-        '''[float] Temperature of the upstream/downstream [K].'''
-        return self.ins[0].T
-    @T.setter
-    def T(self, T):
-        self.ins[0].T = self.outs[0].T = T
+    # @property
+    # def T(self):
+    #     '''[float] Temperature of the upstream/downstream [K].'''
+    #     return self.ins[0].T
+    # @T.setter
+    # def T(self, T):
+    #     self.ins[0].T = self.outs[0].T = T
     
-    @property
-    def pH(self):
-        '''[float] pH of the upstream/downstream.'''
-        return self.ins[0].pH
+    # @property
+    # def pH(self):
+    #     '''[float] pH of the upstream/downstream.'''
+    #     return self.ins[0].pH
     
     @property
     def adm1_model(self):
-        '''[qsdsan.Process] ADM process model.'''
+        '''[qsdsan.CompiledProcesses] mADM1 process model.'''
         return self._adm1_model
     @adm1_model.setter
     def adm1_model(self, model):
         if not isinstance(model, pc.ADM1_p_extension):
-            raise ValueError('`adm1_model` must be an `AMD1` object, '
+            raise ValueError('`adm1_model` must be an `AMD1` object, '   #!!! update error message
                               f'the given object is {type(model).__name__}.')
         self._adm1_model = model
         
-    @property
-    def T_base(self):
-        '''[float] Base temperature in the ADM1 model.'''
-        return self.adm1_model.rate_function.params['T_base']
+    # @property
+    # def T_base(self):
+    #     '''[float] Base temperature in the ADM1 model.'''
+    #     return self.adm1_model.rate_function.params['T_base']
     
-    @property
-    def pKa_base(self):
-        '''[float] pKa of the acid-base pairs at the base temperature in the ADM1 model.'''
-        Ka_base = self.adm1_model.rate_function.params['Ka_base']
-        return -np.log10(Ka_base)
+    # @property
+    # def pKa_base(self):
+    #     '''[float] pKa of the acid-base pairs at the base temperature in the ADM1 model.'''
+    #     Ka_base = self.adm1_model.rate_function.params['Ka_base']
+    #     return -np.log10(Ka_base)
     
-    @property
-    def Ka_dH(self):
-        '''[float] Heat of reaction for Ka.'''
-        return self.adm1_model.rate_function.params['Ka_dH']
+    # @property
+    # def Ka_dH(self):
+    #     '''[float] Heat of reaction for Ka.'''
+    #     return self.adm1_model.rate_function.params['Ka_dH']
     
     @property
     def pKa(self):
         '''
         [numpy.array] pKa array of the following acid-base pairs:
-        ('H+', 'OH-'), ('NH4+', 'NH3'), ('H3PO4', 'H2PO4 2-'), ('CO2', 'HCO3-'),
+        ('H+', 'OH-'), ('NH4+', 'NH3'), ('H2PO4-', 'HPO4-2'), ('CO2', 'HCO3-'),
         ('HAc', 'Ac-'), ('HPr', 'Pr-'), ('HBu', 'Bu-'), ('HVa', 'Va-')
         '''
         return self.pKa_base-np.log10(pc.T_correction_factor(self.T_base, self.T, self.Ka_dH))
@@ -445,7 +446,7 @@ class mADMjunction(Junction):
         '''[float] Charge per g of P.'''
         pH = self.pH
         pKa_IP = self.pKa[2]
-        return 10**(pKa_IP-pH)/(1+10**(pKa_IP-pH))/31
+        return 10**(pKa_IP-pH)/(1+10**(pKa_IP-pH))/31 #!!! alpha IP should be negative
     
     @property
     def alpha_IC(self):
@@ -476,8 +477,7 @@ class mADMjunction(Junction):
         self._AE = yt
 
 
-#%%
-
+#%% ADMtoASM
 class ADMtoASM(ADMjunction):
     '''
     Interface unit to convert anaerobic digestion model (ADM) components
@@ -735,12 +735,8 @@ class ADMtoASM(ADMjunction):
             return asm_vals
         
         self._reactions = adm2asm
-
-
         
-        
-# %%
-
+#%% ASMtoADM
 class ASMtoADM(ADMjunction):
     '''
     Interface unit to convert activated sludge model (ASM) components
@@ -1048,7 +1044,7 @@ class ASMtoADM(ADMjunction):
         
         self._reactions = asm2adm
         
-#%%
+#%% ASM2dtoADM1
 
 class ASM2dtoADM1(ADMjunction):
     '''
@@ -1436,7 +1432,7 @@ class ASM2dtoADM1(ADMjunction):
         
         self._reactions = asm2adm
         
-#%%
+#%% ADM1toASM2d
 
 class ADM1toASM2d(ADMjunction):
     '''
@@ -1721,7 +1717,7 @@ class ADM1toASM2d(ADMjunction):
     def alpha_vfa(self):
         return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[3:]-self.pH)))
     
-#%%
+#%% mADM1toASM2d
 
 class mADM1toASM2d(mADMjunction):
     '''
@@ -2282,7 +2278,7 @@ class mADM1toASM2d(mADMjunction):
     def alpha_vfa(self):
         return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[4:]-self.pH)))
 
-# %%
+#%% ASM2dtomADM1
 
 # While using this interface X_I.i_N in ASM2d should be 0.06, instead of 0.02. 
 class ASM2dtomADM1(mADMjunction):
