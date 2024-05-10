@@ -30,7 +30,13 @@ __all__ = ('get_SRT',
            'get_GHG_emissions_electricity',
            'get_GHG_emissions_sludge_disposal',
            'get_CO2_eq_WRRF',
-           'get_total_CO2_eq')
+           'get_total_CO2_eq',
+           
+           # Function for gates work (to be removed at a later date)
+           
+           'estimate_ww_treatment_energy_demand',
+           'estimate_N_removal_energy_demand',
+           'estimate_P_removal_energy_demand')
 
 
 #%%
@@ -383,11 +389,13 @@ def get_normalized_energy(system, aeration_power, pumping_power, miscellaneous_p
 
     return normalized_energy_WRRF
 
-def get_daily_operational_cost(aeration_power, pumping_power, miscellaneous_power, \
+def get_daily_operational_cost(system, aeration_power, pumping_power, miscellaneous_power, \
                                     sludge_disposal_cost, unit_electricity_cost = 0.161):
     '''
     Parameters
     ----------
+    system : :class:`biosteam.System`
+        The system for which normalized energy consumption is being determined.
     aeration_power : float, optional
         Power of blower [kW].
     pumping_power : float, optional
@@ -411,7 +419,9 @@ def get_daily_operational_cost(aeration_power, pumping_power, miscellaneous_powe
     sludge_disposal_costs = sludge_disposal_cost
     miscellaneous_cost = miscellaneous_power*24*unit_electricity_cost # in (kWh/day)*(USD/kWh) = USD/day
     
-    operational_costs_WRRF = np.array([aeration_cost, pumping_cost, sludge_disposal_costs, miscellaneous_cost])                        #5
+    operational_costs_WRRF = np.array([aeration_cost, pumping_cost, sludge_disposal_costs, miscellaneous_cost])
+    
+    operational_costs_WRRF = operational_costs_WRRF/sum([s.F_vol*24 for s in system.feeds])
     
     return operational_costs_WRRF
 
@@ -421,7 +431,7 @@ def get_total_operational_cost(q_air, # aeration (blower) power
                                      T=20, p_atm=101.325, P_inlet_loss=1, P_diffuser_loss=7, 
                                      h_submergance=5.18, efficiency=0.7, K=0.283, # aeration (blower) power 
                                      miscellaneous_power = 0, 
-                                     unit_weight_disposal_cost = 375, # sludge disposal costs 
+                                     unit_weight_disposal_cost = 350, # sludge disposal costs 
                                      unit_electricity_cost = 0.161): 
     '''
     Parameters
@@ -514,7 +524,9 @@ def get_total_operational_cost(q_air, # aeration (blower) power
     
     miscellaneous_cost = miscellaneous_power*24*unit_electricity_cost # in (kWh/day)*(USD/kWh) = USD/day
     
-    operational_costs_WRRF = np.array([aeration_cost, pumping_cost, sludge_disposal_costs, miscellaneous_cost])      
+    operational_costs_WRRF = np.array([aeration_cost, pumping_cost, sludge_disposal_costs, miscellaneous_cost]) 
+
+    operational_costs_WRRF = operational_costs_WRRF/sum([s.F_vol*24 for s in system.feeds])
 
     total_operational_cost = np.sum(operational_costs_WRRF)             #5
     
@@ -647,7 +659,7 @@ def get_GHG_emissions_electricity(system, power_blower, power_pump, CO2_EF=0.675
     
     return CO2_emissions
 
-def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.38, MCF = 0.8, k = 0.06, F=0.5, pl=30):
+def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.45, MCF = 0.8, k = 0.06, F=0.5, pl=30):
     '''
     Parameters
     ----------
@@ -781,15 +793,15 @@ def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity,
     return normalized_CO2_eq_WRRF 
 
 def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, effluent_sys =None, active_unit_IDs=None, sludge=None, 
-                      p_atm=101.325, K=0.283, CH4_CO2eq=29.8, N2O_CO2eq=273,
+                      p_atm=101.325, K=0.283, CH4_CO2eq=29.8, N2O_CO2eq=273, F=0.5, 
                       
                       CH4_EF_sc =0.0075, N2O_EF_sc =0.016, CH4_EF_discharge=0.009, N2O_EF_discharge=0.005,
-                      T=20, F=0.5, 
+                      T=20, 
                      
                      # uncertain parameters 
                      P_inlet_loss=1, P_diffuser_loss=7, h_submergance=5.18, efficiency=0.7,
                      
-                     CO2_EF=0.675, DOC_f = 0.38, MCF = 0.8, k = 0.06, pl=30
+                     CO2_EF=0.675, DOC_f = 0.45, MCF = 0.8, k = 0.06, pl=30
                      ):
     
     '''
@@ -983,12 +995,109 @@ def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, efflu
 
     CH4_CO2_eq_sludge_disposal_pl = GHG_sludge_disposal*CH4_CO2eq
     
-    
     CO2_eq_WRRF = np.array([CH4_CO2_eq_treatment, N2O_CO2_eq_treatment, #1
                             CH4_CO2_eq_discharge, N2O_CO2_eq_discharge, #3
-                            CH4_CO2_eq_sludge_disposal_pl,              #4
+                            
+                            # CH4_CO2_eq_sludge_disposal_pl,              #4
+                            
                             CO2_eq_electricity])                        #5
     
     normalized_total_CO2_eq_WRRF = np.sum(CO2_eq_WRRF)/sum([24*s.F_vol for s in system.feeds])
     
     return normalized_total_CO2_eq_WRRF
+
+def estimate_ww_treatment_energy_demand(daily_energy_demand, daily_flow = 37854, ww_pcpd = 0.175):
+    '''
+    Parameters
+    ----------
+    daily_energy_demand : float
+        Energy consumption at a centralized WRRF. (kWh/day)
+    daily_flow : TYPE
+        Daily wastewater flow. (m3/day)
+    ww_pcpd : TYPE, float
+        Average wastewater generated per capita per day. The default is 0.175. [1]
+
+    Returns
+    -------
+    None.
+    
+    [1] Jones, E. R., Van Vliet, M. T., Qadir, M., & Bierkens, M. F. (2021). Country-level and 
+    gridded estimates of wastewater production, collection, treatment and reuse. Earth System Science Data, 
+    13(2), 237-254.
+
+    '''
+    ed_pcpd = (daily_energy_demand/daily_flow)*ww_pcpd
+    
+    return ed_pcpd
+
+
+def estimate_N_removal_energy_demand(daily_energy_demand, effluent_N_conc, daily_flow = 37854, influent_N_conc = 40, 
+                           per_capita_protein_intake = 68.6, N_in_pro = 0.13, N_excreted = 1):
+    '''
+    Parameters
+    ----------
+    daily_energy_demand : float
+        Energy consumption at a centralized WRRF. (kWh/day)
+    daily_flow : TYPE
+        Daily wastewater flow. (m3/day)
+    influent_N_conc : float
+        TN concentration in the influent. (mg/L)
+    effluent_N_conc : float
+        N concentration in the effluent. (mg/L)
+    per_capita_protein_intake : float
+        Per capita protein intake. (g/cap/day)
+    N_in_pro : float
+        % of N in protein. (%)
+    N_excreted : float
+        % of N intake that is excreted. (%)
+
+    Returns
+    -------
+    None.
+
+    '''
+    daily_ed_N_removal = daily_energy_demand/(daily_flow*(influent_N_conc - effluent_N_conc))
+    
+    per_capita_per_day_N = per_capita_protein_intake*N_in_pro*N_excreted
+    
+    return daily_ed_N_removal*per_capita_per_day_N
+
+def estimate_P_removal_energy_demand(daily_energy_demand, effluent_TP_conc, 
+                                     daily_flow = 37854, influent_TP_conc = 7, 
+                                     pc_ani_protein_intake = 12.39, 
+                                     pc_plant_protein_intake = 40.29, 
+                                     P_ani_pro = 0.011, 
+                                     P_plant_pro = 0.022, 
+                                     P_excreted = 1):
+    '''
+    Parameters
+    ----------
+    daily_energy_demand : float
+        Energy consumption at a centralized WRRF. (kWh/day)
+    effluent_TP_conc : float
+        TN concentration in the effluent (mg/L). 
+    daily_flow : TYPE, optional
+        Daily wastewater flow (m3/day) The default is 37854.
+    influent_TP_conc : float, optional
+        TN concentration in the influent (mg/L). The default is 7.
+    pc_ani_protein_intake : float, optional
+        DESCRIPTION. The default is 12.39.
+    pc_plant_protein_intake : TYPE, optional
+        DESCRIPTION. The default is 40.29.
+    P_ani_pro : TYPE, optional
+        DESCRIPTION. The default is 0.011.
+    P_plant_pro : TYPE, optional
+        DESCRIPTION. The default is 0.022.
+    P_excreted : TYPE, optional
+        DESCRIPTION. The default is 1.
+
+    Returns
+    -------
+    None.
+
+    '''
+    daily_ed_P_removal = daily_energy_demand/(daily_flow*(influent_TP_conc - effluent_TP_conc))
+    per_capita_per_day_P = (pc_ani_protein_intake*P_ani_pro + pc_plant_protein_intake*P_plant_pro)*P_excreted
+    
+    return daily_ed_P_removal*per_capita_per_day_P
+    
