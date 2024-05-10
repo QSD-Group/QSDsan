@@ -7,6 +7,8 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 This module is developed by:
 
     Yalin Li <mailto.yalin.li@gmail.com>
+    
+    Saumitra Rai <raisaumitra9@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -16,11 +18,21 @@ for license details.
 from warnings import warn
 from math import ceil
 from biosteam import Stream
-from .. import SanUnit
-from ..sanunits import HXutility, WWTpump
+from .. import SanUnit, WasteStream
+from ..sanunits import HXutility, WWTpump, Mixer
+
+from ..sanunits._pumping import (
+    default_F_BM as default_WWTpump_F_BM,
+    default_equipment_lifetime as default_WWTpump_equipment_lifetime,
+    )
+
 from ..equipments import Blower, GasPiping
 from ..utils import auom, calculate_excavation_volume
-__all__ = ('ActivatedSludgeProcess',)
+
+from qsdsan.utils import ospath, time_printer, load_data, get_SRT, get_oxygen_heterotrophs, get_oxygen_autotrophs, get_airflow, get_P_blower
+
+
+__all__ = ('ActivatedSludgeProcess','TreatmentTrains',)
 
 _ft2_to_m2 = auom('ft2').conversion_factor('m2')
 F_BM_pump = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
@@ -361,6 +373,7 @@ class ActivatedSludgeProcess(SanUnit):
         'Pump pipe stainless steel': 'kg',
         'Pump stainless steel': 'kg',
         }
+    
     def _design(self):
         D = self.design_results
         D['HRT'] = self.HRT
@@ -725,3 +738,431 @@ class ActivatedSludgeProcess(SanUnit):
     @constr_access.setter
     def constr_access(self, i):
         self._constr_access = i
+        
+
+class TreatmentTrains(Mixer):
+    '''
+    Dummy unit with no run function of its own. To be used to calculate the 
+    design and cost of treatment trains in ASP. Code largely dereived from code scripts 
+    for [1]_.
+
+    Parameters
+    ----------
+    ins : Iterable
+        None expected (dummy unit).
+    outs : Iterable
+        None expected (dummy unit).
+    N_train : int
+        Number of treatment train, should be at least two in case one failing.
+    V_tank : float
+        Volume of tank (represents one treatment chain), [m3]. Default is 1000 m3. 
+    W_tank : float
+        Width of tank, [m]. Default is 6.4 m. [1]
+    D_tank : float
+        Depth of tank, [m]. Default is 3.66 m. [1]
+    freeboard : float
+        Freeboard added to the depth of the reactor tank, [m]. Default is 0.61 m. [1]
+    W_dist : float
+        Width of distribution channel, [m]. Default is 1.37 m. [1]
+    W_eff: float
+        Width of effluent channel, [m]. Default is 1.5 m. [1]
+    W_recirculation: float
+        Width of recirculation channel, [m]. Default is 1.5 m.  
+    excav_slope: float
+        Slope for excavation (horizontal/vertical). Default is 1.5. [1] 
+    constr_access: float
+        Extra room for construction access, [m]. Default is 0.92 m. [1]
+    Q_air_design: float
+        Used to calculate the power of blower. 
+        Air flow required for one treatment train [m3/hr].
+    Q_recirculation: float
+        Used to calculate pumping power. 
+        Design recirculated flow for one treatment train [m3/day]. ** confirm the logic of 'one' **
+    kwargs : dict
+        Other attributes to be set.
+
+    References
+    ----------
+    .. [1] Shoener, B. D.; Zhong, C.; Greiner, A. D.; Khunjar, W. O.; Hong, P.-Y.; Guest, J. S.
+        Design of Anaerobic Membrane Bioreactors for the Valorization
+        of Dilute Organic Carbon Waste Streams.
+        Energy Environ. Sci. 2016, 9 (3), 1102–1112.
+        https://doi.org/10.1039/C5EE03715H.
+
+    See Also
+    --------
+    `MATLAB codes <https://github.com/QSD-Group/AnMBR>`_ used in ref 1,
+    especially the system layout `diagrams <https://github.com/QSD-Group/AnMBR/blob/main/System_Design.pdf>`_.
+
+    '''
+    
+    # Costs
+    wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
+    slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
+    excav_unit_cost = (8 + 0.3) / 0.765 # $/m3, 0.765 is to convert from $/yd3 **NOT UPDATED** (taken from Shoener et al.)
+    
+    _t_wall = None
+    _t_slab = None
+    
+    pumps = ('recirculation_CSTR',)
+        
+    def __init__(self, ID='', ins= None, outs= (), thermo=None, init_with='WasteStream',
+                 F_BM_default=1, isdynamic=False, N_train=2, V_tank=1000, 
+                 W_tank = 6.4, D_tank = 3.66, freeboard = 0.61, W_dist = 1.37, W_eff = 1.5, # all in meter  (converted from feet to m, Shoener et al.2016)
+                 W_recirculation = 1.5, # in m (assumed same as W_eff)
+                 excav_slope = 1.5, # horizontal/vertical (Shoener et al.2016)
+                 constr_access = 0.92, # in meter  (converted from feet to m, Shoener et al. 2016)
+                 Q_air_design  = 1000, # in m3/hr  **NO SOURCE FOR DEFAULT VALUE YET**
+                 Q_recirculation = 1000, # in m3/day  **NO SOURCE FOR DEFAULT VALUE YET**
+                 F_BM=default_F_BM, lifetime=default_equipment_lifetime, rigorous=False,
+                 **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with,
+                         F_BM_default=F_BM_default, isdynamic=isdynamic)
+        
+        self._effluent = self.outs[0].copy(f'{ID}_effluent')
+        self.rigorous = rigorous
+        self._mixed = WasteStream(f'{ID}_mixed')      
+        self.N_train = N_train
+        self.V_tank = V_tank
+        self.W_tank = W_tank
+        self.D_tank = D_tank
+        self.freeboard = freeboard
+        self.W_dist = W_dist
+        self.W_eff = W_eff
+        self.W_recirculation = W_recirculation
+        self.excav_slope = excav_slope
+        self.constr_access = constr_access
+        self.Q_air_design = Q_air_design # **NO SOURCE FOR DEFAULT VALUE YET**
+        self.Q_recirculation = Q_recirculation
+        
+        self.blower = blower = Blower('blower', linked_unit=self, N_reactor=N_train)
+        self.air_piping = air_piping = GasPiping('air_piping', linked_unit=self, N_reactor=N_train)
+        self.equipments = (blower, air_piping)
+        self.F_BM.update(F_BM)
+        
+    @property
+    def N_train(self):
+        '''
+        [int] Number of treatment train, should be at least two in case one failing.
+        '''
+        return self._N_train
+    
+    @N_train.setter
+    def N_train(self, i):
+        i = ceil(i)
+        if i < 2:
+            raise ValueError('`N_train` should be at least 2.')
+        self._N_train = i
+        
+    @property
+    def V_tank(self):
+        '''[float] Volume of tank, [m3].'''
+        return self._V_tank
+    
+    @V_tank.setter
+    def V_tank(self, i):
+        self._V_tank = i
+
+    @property
+    def W_tank(self):
+        '''[float] Width of one tank, [m].'''
+        return self._W_tank
+    
+    @W_tank.setter
+    def W_tank(self, i):
+        self._W_tank = i
+
+    @property
+    def D_tank(self):
+        '''[float] Depth of one tank, [m].'''
+        return self._D_tank
+    
+    @D_tank.setter
+    def D_tank(self, i):
+        self._D_tank = i
+
+    @property
+    def W_dist(self):
+        '''[float] Width of the distribution channel, [m].'''
+        return self._W_dist
+    
+    @W_dist.setter
+    def W_dist(self, i):
+        self._W_dist = i
+
+    @property
+    def W_eff(self):
+        '''[float] Width of the effluent channel, [m].'''
+        return self._W_eff
+    
+    @W_eff.setter
+    def W_eff(self, i):
+        self._W_eff = i
+        
+    @property
+    def W_recirculation(self):
+        '''[float] Width of the recirculation channel, [m].'''
+        return self._W_recirculation
+    
+    @W_recirculation.setter
+    def W_recirculation(self, i):
+        self._W_recirculation = i
+
+    @property
+    def freeboard(self):
+        '''[float] Freeboard added to the depth of the reactor tank, [m].'''
+        return self._freeboard
+    
+    @freeboard.setter
+    def freeboard(self, i):
+        self._freeboard = i
+        
+    @property
+    def t_wall(self):
+        '''
+        [float] Thickness of the wall concrete, [m].
+        default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
+        '''
+        D_tank = self.D_tank*39.37 # m to inches 
+        return self._t_wall or (1 + max(D_tank - 12, 0)/12)*0.3048 # from feet to m
+    
+    @t_wall.setter
+    def t_wall(self, i):
+        self._t_wall = i
+
+    @property
+    def t_slab(self):
+        '''
+        [float] Concrete slab thickness, [m],
+        default to be 2 in thicker than the wall thickness.
+        '''
+        return self._t_slab or (self.t_wall + 2/12)*0.3048 # from feet to m
+    
+    @t_slab.setter
+    def t_slab(self, i):
+        self._t_slab = i
+
+    @property
+    def excav_slope(self):
+        '''[float] Slope for excavation (horizontal/vertical).'''
+        return self._excav_slope
+    
+    @excav_slope.setter
+    def excav_slope(self, i):
+        self._excav_slope = i
+        
+    @property
+    def constr_access(self):
+        '''[float] Extra room for construction access, [m].'''
+        return self._constr_access
+    
+    @constr_access.setter
+    def constr_access(self, i):
+        self._constr_access = i
+        
+    @property
+    def Q_air_design(self):
+        '''[float] Air flow required for one treatment train, [m3/hr].'''
+        return self._Q_air_design
+    
+    @Q_air_design.setter
+    def Q_air_design(self, i):
+        self._Q_air_design = i
+    
+    @property
+    def Q_recirculation(self):
+        '''[float] Design recirculated flow in the treatment train, [m3/day].'''
+        return self._Q_recirculation
+    
+    @Q_recirculation.setter
+    def Q_recirculation(self, i):
+        self._Q_recirculation = i
+    
+    def _design_pump(self):
+        
+        ID, pumps = self.ID, self.pumps
+        D = self.design_results
+        
+        self._effluent.copy_like(self.outs[0])
+        effluent = self._effluent
+        
+        ins_dct = {
+            'recirculation_CSTR': effluent,
+            }
+        
+        Q_recirculation  = D['Q recirculation'] 
+        meter_to_feet = 3.28
+        Tank_length = D['Tank length']*meter_to_feet # in ft
+        
+        Q_recirculation_mgd = Q_recirculation*0.000264 #m3/day to MGD
+        
+        Q_mgd = {
+            'recirculation_CSTR': Q_recirculation_mgd,
+            }
+      
+        type_dct = dict.fromkeys(pumps, 'recirculation_CSTR')
+        inputs_dct = dict.fromkeys(pumps, (self.N_train, Tank_length,))
+       
+        for i in pumps:
+            if hasattr(self, f'{i}_pump'):
+                p = getattr(self, f'{i}_pump')
+                setattr(p, 'add_inputs', inputs_dct[i])
+            else:
+                ID = f'{ID}_{i}'
+                capacity_factor=1
+                pump = WWTpump(
+                    ID=ID, ins= ins_dct[i], pump_type=type_dct[i],
+                    Q_mgd=Q_mgd[i], add_inputs=inputs_dct[i],
+                    capacity_factor=capacity_factor,
+                    include_pump_cost=True,
+                    include_building_cost=False,
+                    include_OM_cost=True,
+                    )
+                setattr(self, f'{i}_pump', pump)
+
+        pipe_ss, pump_ss = 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p.simulate()
+            p_design = p.design_results
+            pipe_ss += p_design['Pump pipe stainless steel']
+            pump_ss += p_design['Pump stainless steel']
+            
+        return pipe_ss, pump_ss
+    
+    _units = {
+        'Number of trains': 'ea',
+        'Tank volume': 'm3',
+        'HRT': 'hr',
+        'Tank width': 'm',
+        'Tank depth': 'm',
+        'Tank length': 'm',
+        'Wall concrete': 'm3',
+        'Slab concrete': 'm3',
+        'Excavation': 'm3',
+        'Q recirculation': 'm3/day', 
+        'Pump pipe stainless steel': 'kg',
+        'Pump stainless steel': 'kg',
+        }
+    
+    def _design(self):
+        self._mixed.mix_from(self.ins)
+        mixed = self._mixed
+        
+        D = self.design_results 
+        
+        D['Number of trains'] = self.N_train
+        D['Tank volume'] = self.V_tank # in m3
+        D['HRT'] = D['Tank volume']/mixed.get_total_flow('m3/hr') # in hr
+        D['Tank width'] = self.W_tank # in m
+        D['Tank depth'] = self.D_tank # in m 
+        D['Tank length'] = D['Tank volume']/(D['Tank width']*D['Tank depth']) # in m 
+        
+        
+        t_wall, t_slab = self.t_wall, self.t_slab
+        W_N_trains = (D['Tank width'] + 2*t_wall)*D['Number of trains'] - t_wall*(D['Number of trains'] - 1)
+
+        D_tot = D['Tank depth'] + self.freeboard
+        t = t_wall + t_slab
+
+        get_VWC = lambda L1, N: N * t_wall * L1 * D_tot # get volume of wall concrete
+        get_VSC = lambda L2: t * L2 * W_N_trains # get volume of slab concrete
+        
+        # Aeration tanks, [m3]
+        VWC = get_VWC(L1= D['Tank length'], N=(D['Number of trains'] + 1))
+        VSC = get_VSC(L2= D['Tank length'])
+
+        # Distribution channel, [m3]
+        W_dist, W_eff, W_recirculation = self.W_dist, self.W_eff, self.W_recirculation
+        VWC += get_VWC(L1=(W_N_trains+W_dist), N=2) # N =2 for two walls
+        VSC += get_VSC(L2=(W_dist + 2*t_wall))
+
+        # Effluent channel, [m3]
+        VWC += get_VWC(L1=(W_N_trains + W_eff), N=2) # N =2 for two walls
+        VSC += get_VSC(L2=(W_eff + 2*t_wall))
+
+        # RAS channel, [m3]
+        VWC += get_VWC(L1=(W_N_trains + W_recirculation), N=2) # N =2 for two walls
+        VSC += get_VSC(L2=(W_recirculation + 2*t_wall))
+
+        D['Wall concrete'] = VWC
+        D['Slab concrete'] = VSC
+
+        # Excavation
+        excav_slope, constr_access = self.excav_slope, self.constr_access
+        # Aeration tank
+        VEX = calculate_excavation_volume(
+            L=(W_dist + D['Tank length']), W = W_N_trains, D = D['Tank depth'],
+            excav_slope=excav_slope, constr_access=constr_access)
+        
+        D['Excavation'] = VEX
+        
+        D['Q recirculation'] = self.Q_recirculation
+        
+        # Blower and gas piping (taken from 'ActivatedSludgeProcess' SanUnit)
+        
+        
+        # oxygen_autotroph = get_oxygen_autotrophs(inf.F_vol*24, inf.COD, eff_sCOD, 
+        #                                          inf_TKN, SRT=srt, Y_H=0.625, U_AUT=1.0, 
+        #                                          b_H=0.4, b_AUT=0.15, f_d=0.1, SF_DO=1.25)
+        
+        # oxygen_autotroph = get_oxygen_autotrophs(inf.F_vol*24, inf.COD, eff_sCOD, 
+        #                                          inf_TKN, SRT=srt, Y_H=0.625, U_AUT=1.0, 
+        #                                          b_H=0.4, b_AUT=0.15, f_d=0.1, SF_DO=1.25)
+        
+        # airflow = get_airflow(oxygen_heterotrophs = oxygen_heterotroph, oxygen_autotrophs = oxygen_autotroph, 
+        #                       oxygen_transfer_efficiency = 15) # in m3/min
+        
+        
+        
+        Q_air_design = self.Q_air_design # in m3/min
+        air_cfm = auom('m3/min').convert(Q_air_design, 'cfm')
+        blower, piping = self.equipments
+        
+        blower.N_reactor = piping.N_reactor = D['Number of trains']
+        blower.gas_demand_per_reactor = piping.gas_demand_per_reactor = air_cfm
+        self.add_equipment_design()
+        
+        # Pumps
+        pipe, pumps = self._design_pump()
+        D['Pump pipe stainless steel'] = pipe
+        D['Pump stainless steel'] = pumps
+        
+    def _cost(self):
+        D = self.design_results
+        C = self.baseline_purchase_costs
+        
+        ### Capital ###
+        # Concrete and excavation
+        C['Wall concrete'] = D['Wall concrete'] * self.wall_concrete_unit_cost
+        C['Slab concrete'] = D['Slab concrete'] * self.slab_concrete_unit_cost
+        C['Reactor excavation'] = D['Excavation'] * self.excav_unit_cost
+
+        # Pump
+        pumps, add_OPEX = self.pumps, self.add_OPEX
+        pump_cost, building_cost, opex_o, opex_m = 0., 0., 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p_cost, p_add_opex = p.baseline_purchase_costs, p.add_OPEX
+            pump_cost += p_cost['Pump']
+            building_cost += p_cost['Pump building']
+            opex_o += p_add_opex['Pump operating']
+            opex_m += p_add_opex['Pump maintenance']
+
+        C['Pumps'] = pump_cost
+        C['Pump building'] = building_cost
+        add_OPEX['Pump operating'] = opex_o
+        add_OPEX['Pump maintenance'] = opex_m
+
+        # Blower
+        self.add_equipment_cost()
+        
+        # Power
+        pumping = 0.
+        for ID in self.pumps:
+            p = getattr(self, f'{ID}_pump')
+            if p is None:
+                continue
+            pumping += p.power_utility.rate
+            
+        self.power_utility.rate = self.blower.design_results['Total blower power'] + pumping
