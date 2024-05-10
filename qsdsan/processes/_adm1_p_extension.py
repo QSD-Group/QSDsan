@@ -264,6 +264,7 @@ rhos = np.zeros(28) # 28 kinetic processes (25 as defined in modified ADM1 + 3 f
 Cs = np.empty(25) # 25 processes as defined in modified ADM1
 
 def rhos_adm1_p_extension(state_arr, params):
+    
     ks = params['rate_constants']
     Ks = params['half_sat_coeffs']
     
@@ -286,7 +287,7 @@ def rhos_adm1_p_extension(state_arr, params):
     # state_arr_cmps stated just for readability of code 
     # state_arr_cmps = [S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2, S_ch4, S_IC, S_IN,
     #             S_IP, S_I, X_ch, X_pr, X_li, X_su, X_aa, X_fa, X_c4, X_pro, X_ac, 
-    #             X_h2, X_I, X_PHA, X_PP, X_PAO, S_K, S_Mg, X_MeOH, X_MeP]
+    #             X_h2, X_I, X_PHA, X_PP, X_PAO, S_K, S_Mg, X_MeOH, X_MeP] + 5 components
     
     # Cs_ids = cmps.indices(['X_ch', 'X_pr', 'X_li', 'X_su', 'X_aa',
     #                        'X_fa', 'X_c4', 'X_c4', 'X_pro', 'X_ac', 'X_h2',
@@ -316,10 +317,26 @@ def rhos_adm1_p_extension(state_arr, params):
     weak_acids = cmps_in_M[[31, 27, 28, 32, 10, 11, 9, 6, 5, 4, 3]]
 
     T_op = state_arr[-1]
+    # biogas_S = S_h2, S_ch4, S_IC
+    # biogas_p 
     biogas_S = state_arr[7:10].copy()
     biogas_p = R * T_op * state_arr[34:37] 
-    Kas = Kab * T_correction_factor(T_base, T_op, Ka_dH)
-    KH = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[7:10]
+    # Kas = Kab * T_correction_factor(T_base, T_op, Ka_dH)
+    # KH = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[7:10]
+    
+    if T_op == T_base:
+        Kas = Kab
+        KH = KHb / unit_conversion[7:10]
+    else:
+        T_temp = params.pop('T_op', None)
+        if T_op == T_temp:
+            params['T_op'] = T_op
+            Kas = params['Ka']
+            KH = params['KH']
+        else:
+            params['T_op'] = T_op
+            Kas = params['Ka'] = Kab * T_correction_factor(T_base, T_op, Ka_dH)
+            KH = params['KH'] = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[7:10]
 
     rhos[:-3] = ks * Cs
     rhos[3:11] *= substr_inhibit(substrates, Ks[0:8])
@@ -329,8 +346,6 @@ def rhos_adm1_p_extension(state_arr, params):
     # substrates_ids = cmps.indices(['S_va', 'S_bu', 'S_pro', 'S_ac'])
     # substrates_modified = state_arr[substrates_ids]
     substrates_modified = state_arr[3:7]
-    
-    
     K_a = Ks[-2]
     rhos[18:22] *= substr_inhibit(substrates_modified, K_a)
     
@@ -345,23 +360,25 @@ def rhos_adm1_p_extension(state_arr, params):
     rhos[18:22] *= transformation_array
     
     h = brenth(acid_base_rxn, 1e-14, 1.0,
-               args=(weak_acids, Kas),
-               xtol=1e-12, maxiter=100)
-
+                args=(weak_acids, Kas),
+                xtol=1e-12, maxiter=100)
+    
     nh3 = Kas[1] * weak_acids[4] / (Kas[1] + h)
     co2 = weak_acids[6] - Kas[2] * weak_acids[6] / (Kas[2] + h)
+    
     biogas_S[-1] = co2 / unit_conversion[9]
     
     Iph = Hill_inhibit(h, pH_ULs, pH_LLs)
+    
     Ih2 = non_compet_inhibit(S_h2, KIs_h2)
     root.data = [-np.log10(h), Iph, Ih2]
+    
     rhos[3:11] *= Iph * substr_inhibit(S_IN, KS_IN) * substr_inhibit(S_IP, KS_IP)
     rhos[5:9] *= Ih2
     # rhos[4:12] *= Hill_inhibit(h, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
     # rhos[6:10] *= non_compet_inhibit(S_h2, KIs_h2)
     rhos[9] *= non_compet_inhibit(nh3, KI_nh3)
     rhos[-3:] = kLa * (biogas_S - KH * biogas_p)
-    # print(rhos)
     return rhos
 #%%
 # =============================================================================
@@ -452,8 +469,6 @@ class ADM1_p_extension(CompiledProcesses):
         Biomass yield of H2 uptake [kg COD/kg COD]. The default is 0.06.
     Y_po4 : float, optional
         Yield of biomass on phosphate [kmol P/kg COD]. The default is 0.013. 
-    q_dis : float, optional
-        Composites disintegration rate constant [d^(-1)]. The default is 0.5.
     q_ch_hyd : float, optional
         Carbohydrate hydrolysis rate constant [d^(-1)]. The default is 10.
     q_pr_hyd : float, optional
@@ -617,6 +632,7 @@ class ADM1_p_extension(CompiledProcesses):
     
     _acid_base_pairs = (('H+', 'OH-'), ('NH4+', 'NH3'), ('H2PO4-', 'HPO4 -2'), 
                         ('CO2', 'HCO3-'), ('HAc', 'Ac-'), ('HPr', 'Pr-'),
+                        
                         ('HBu', 'Bu-'), ('HVa', 'Va-'))
     
     _biogas_IDs = ('S_h2', 'S_ch4', 'S_IC')
@@ -720,6 +736,7 @@ class ADM1_p_extension(CompiledProcesses):
                          f_ac_bu, 1-f_ac_bu, f_ac_pro, 1-f_ac_pro,
                          f_ac_PHA, f_bu_PHA, f_pro_PHA, 1-f_ac_PHA-f_bu_PHA-f_pro_PHA,
                          Y_su, Y_aa, Y_fa, Y_c4, Y_pro, Y_ac, Y_h2, Y_po4, cmps.X_PP.i_K, cmps.X_PP.i_Mg)
+        
         pH_LLs = np.array([pH_limits_aa[0]]*6 + [pH_limits_ac[0], pH_limits_h2[0]])
         pH_ULs = np.array([pH_limits_aa[1]]*6 + [pH_limits_ac[1], pH_limits_h2[1]])
         
@@ -742,6 +759,7 @@ class ADM1_p_extension(CompiledProcesses):
 
         self.set_rate_function(rhos_adm1_p_extension)
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_vals))
+        
         self.rate_function._params = dict(zip(cls._kinetic_params,
                                               [ks, Ks, pH_ULs, pH_LLs, KS_IN*N_mw, KS_IP*P_mw, 
                                                KI_nh3, KIs_h2, Ka_base, Ka_dH,
