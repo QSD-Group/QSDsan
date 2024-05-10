@@ -19,7 +19,7 @@ import numpy as np
 from warnings import warn
 from math import isclose
 from biosteam.units import Junction as BSTjunction
-from .. import SanUnit, processes as pc
+from .. import Stream, SanUnit, processes as pc
 
 __all__ = (
     'Junction',
@@ -63,7 +63,7 @@ class Junction(SanUnit):
     def __init__(self, ID='', upstream=None, downstream=(), thermo=None,
                  init_with='WasteStream', F_BM_default=None, isdynamic=False,
                  reactions=None, **kwargs):
-        thermo = downstream.thermo if downstream else thermo
+        thermo = downstream.thermo if isinstance(downstream, Stream) else thermo
         SanUnit.__init__(self, ID, ins=upstream, outs=downstream, thermo=thermo,
                          init_with=init_with,
                          F_BM_default=F_BM_default, isdynamic=isdynamic,
@@ -261,6 +261,8 @@ class ADMjunction(Junction):
     _parse_reactions = Junction._no_parse_reactions
     rtol = 1e-2
     atol = 1e-6
+    # Should be constants
+    cod_vfa = np.array([64, 112, 160, 208])
     
     def __init__(self, ID='', upstream=None, downstream=(), thermo=None,
                  init_with='WasteStream', F_BM_default=None, isdynamic=False,
@@ -273,20 +275,6 @@ class ADMjunction(Junction):
         super().__init__(ID=ID, upstream=upstream, downstream=downstream,
                          thermo=thermo, init_with=init_with, 
                          F_BM_default=F_BM_default, isdynamic=isdynamic)
-        
-   
-    @property
-    def T(self):
-        '''[float] Temperature of the upstream/downstream [K].'''
-        return self.ins[0].T
-    @T.setter
-    def T(self, T):
-        self.ins[0].T = self.outs[0].T = T
-    
-    @property
-    def pH(self):
-        '''[float] pH of the upstream/downstream.'''
-        return self.ins[0].pH
     
     @property
     def adm1_model(self):
@@ -322,7 +310,7 @@ class ADMjunction(Junction):
         ('H+', 'OH-'), ('NH4+', 'NH3'), ('CO2', 'HCO3-'),
         ('HAc', 'Ac-'), ('HPr', 'Pr-'), ('HBu', 'Bu-'), ('HVa', 'Va-')
         '''
-        return self.pKa_base-np.log10(np.exp(pc.T_correction_factor(self.T_base, self.T, self.Ka_dH)))
+        return self.pKa_base-np.log10(pc.T_correction_factor(self.T_base, self.T, self.Ka_dH))
     
     @property
     def alpha_IC(self):
@@ -337,6 +325,11 @@ class ADMjunction(Junction):
         pH = self.pH
         pKa_IN = self.pKa[1]
         return 10**(pKa_IN-pH)/(1+10**(pKa_IN-pH))/14
+    
+    @property
+    def alpha_vfa(self):
+        '''[float] charge per g of VFA-COD.'''
+        return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[3:]-self.pH)))
     
     def _compile_AE(self):
         _state = self._state
@@ -438,7 +431,7 @@ class mADMjunction(Junction):
         ('H+', 'OH-'), ('NH4+', 'NH3'), ('H3PO4', 'H2PO4 2-'), ('CO2', 'HCO3-'),
         ('HAc', 'Ac-'), ('HPr', 'Pr-'), ('HBu', 'Bu-'), ('HVa', 'Va-')
         '''
-        return self.pKa_base-np.log10(np.exp(pc.T_correction_factor(self.T_base, self.T, self.Ka_dH)))
+        return self.pKa_base-np.log10(pc.T_correction_factor(self.T_base, self.T, self.Ka_dH))
 
     @property
     def alpha_IN(self):
@@ -481,8 +474,9 @@ class mADMjunction(Junction):
             _update_dstate()
         
         self._AE = yt
-    
-# %%
+
+
+#%%
 
 class ADMtoASM(ADMjunction):
     '''
@@ -522,12 +516,22 @@ class ADMtoASM(ADMjunction):
     # User defined values
     bio_to_xs = 0.7
     
-    # Should be constants
-    cod_vfa = np.array([64, 112, 160, 208])
-    
     # whether to conserve the nitrogen split between soluble and particulate components
-    conserve_particulate_N = False
+    conserve_particulate_N = False          
+   
+    @property
+    def T(self):
+        '''[float] Temperature of the upstream/downstream [K].'''
+        return self.ins[0].T
+    @T.setter
+    def T(self, T):
+        self.ins[0].T = self.outs[0].T = T
     
+    @property
+    def pH(self):
+        '''[float] pH of the upstream/downstream.'''
+        return self.ins[0].pH
+
     
     def isbalanced(self, lhs, rhs_vals, rhs_i):
         rhs = sum(rhs_vals*rhs_i)
@@ -604,9 +608,6 @@ class ADMtoASM(ADMjunction):
         asm_X_P_i_N = cmps_asm.X_P.i_N
         asm_ions_idx = cmps_asm.indices(('S_NH', 'S_ALK'))
         
-        alpha_IN = self.alpha_IN
-        alpha_IC = self.alpha_IC
-        alpha_vfa = self.alpha_vfa
         f_corr = self.balance_cod_tkn
         conserve_particulate_N = self.conserve_particulate_N
 
@@ -724,6 +725,9 @@ class ADMtoASM(ADMjunction):
             asm_vals = f_corr(adm_vals, asm_vals)
             
             # Step 5: charge balance for alkalinity
+            alpha_IN = self.alpha_IN
+            alpha_IC = self.alpha_IC
+            alpha_vfa = self.alpha_vfa
             S_NH = asm_vals[asm_ions_idx[0]]
             S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC], alpha_vfa)) - S_NH/14)*(-12)
             asm_vals[asm_ions_idx[1]] = S_ALK
@@ -731,10 +735,8 @@ class ADMtoASM(ADMjunction):
             return asm_vals
         
         self._reactions = adm2asm
-    
-    @property
-    def alpha_vfa(self):
-        return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[3:]-self.pH)))
+
+
         
         
 # %%
@@ -783,6 +785,36 @@ class ASMtoADM(ADMjunction):
     xs_to_li = 0.7
     bio_to_li = 0.4
     frac_deg = 0.68
+    
+    def __init__(self, ID='', upstream=None, downstream=(), thermo=None,
+                 init_with='WasteStream', F_BM_default=None, isdynamic=False,
+                 adm1_model=None, T=298.15, pH=7):
+        self._T = T
+        self._pH = pH
+        super().__init__(ID=ID, upstream=upstream, downstream=downstream,
+                         thermo=thermo, init_with=init_with, 
+                         F_BM_default=F_BM_default, isdynamic=isdynamic,
+                         adm1_model=adm1_model)
+    
+    @property
+    def T(self):
+        '''[float] Temperature of the downstream [K].'''
+        try: return self.outs[0].sink.T
+        except: return self._T
+    @T.setter
+    def T(self, T):
+        self._T = self.outs[0].T = T
+    
+    @property
+    def pH(self):
+        '''[float] downstream pH.'''
+        if self._pH: return self._pH
+        else:
+            try: return self.outs[0].sink.outs[1].pH
+            except: return 7.
+    @pH.setter
+    def pH(self, ph):
+        self._pH = self.outs[0].pH = ph
     
     
     def isbalanced(self, lhs, rhs_vals, rhs_i):
@@ -864,9 +896,6 @@ class ASMtoADM(ADMjunction):
         adm_ions_idx = cmps_adm.indices(['S_IN', 'S_IC', 'S_cat', 'S_an'])
         
         frac_deg = self.frac_deg
-        alpha_IN = self.alpha_IN
-        alpha_IC = self.alpha_IC
-        proton_charge = 10**(-self.pKa[0]+self.pH) - 10**(-self.pH) # self.pKa[0] is pKw
         f_corr = self.balance_cod_tkn
 
         def asm2adm(asm_vals):
@@ -997,6 +1026,9 @@ class ASMtoADM(ADMjunction):
             adm_vals = f_corr(asm_vals, adm_vals)
             
             # Step 7: charge balance
+            alpha_IN = self.alpha_IN
+            alpha_IC = self.alpha_IC
+            proton_charge = 10**(-self.pKa[0]+self.pH) - 10**(-self.pH) # self.pKa[0] is pKw
             asm_charge_tot = _snh/14 - _sno/14 - _salk/12
             #!!! charge balance should technically include VFAs, 
             # but VFAs concentrations are assumed zero per previous steps??

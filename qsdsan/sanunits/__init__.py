@@ -32,7 +32,16 @@ This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
-
+# %%
+from numba import njit
+@njit(cache=True)
+def dydt_cstr(QC_ins, QC, V, _dstate):
+    Q_ins = QC_ins[:, -1]
+    C_ins = QC_ins[:, :-1]
+    _dstate[-1] = 0
+    _dstate[:-1] = (Q_ins @ C_ins - sum(Q_ins)*QC[:-1])/V
+    
+#%%
 # **NOTE** PLEASE ORDER THE MODULES ALPHABETICALLY #
 
 # Units that do not rely on other units
