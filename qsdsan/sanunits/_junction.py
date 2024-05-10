@@ -1769,6 +1769,8 @@ class mADM1toASM2d(mADMjunction):
             if cod_bl:
                 return asm_vals
             else:
+                print('COD not balanced')
+                breakpoint()
                 if cod_err > 0: dcod = -(cod_err - cod_tol)/asm_cod
                 else: dcod = -(cod_err + cod_tol)/asm_cod
                 _asm_vals = asm_vals * (1 + (asm_i_COD>0)*dcod)
@@ -1789,6 +1791,8 @@ class mADM1toASM2d(mADMjunction):
             if tkn_bl:
                 return asm_vals
             else:
+                print('TKN not balanced')
+                breakpoint()
                 if tkn_err > 0: dtkn = -(tkn_err - tkn_tol)/asm_tkn
                 else: dtkn = -(tkn_err + tkn_tol)/asm_tkn
                 _asm_vals = asm_vals * (1 + (asm_i_N>0)*dtkn)
@@ -1809,6 +1813,8 @@ class mADM1toASM2d(mADMjunction):
             if tp_bl:
                 return asm_vals
             else:
+                print('TP not balanced')
+                breakpoint()
                 if tp_err > 0: dtp = -(tp_err - tp_tol)/asm_tp
                 else: dtp = -(tp_err + tp_tol)/asm_tp
                 _asm_vals = asm_vals * (1 + (asm_i_P>0)*dtp)
@@ -1826,6 +1832,8 @@ class mADM1toASM2d(mADMjunction):
                         f'effluent (ASM) TP is {asm_tp} or {asm_tp*(1+dtp)}. ')
                     return asm_vals
         else:
+            print('At least two of COD, TKN, and TP not balanced')
+            breakpoint()
             warn('cannot balance COD, TKN and TP at the same time. \n'
                  'Atleast two of the three COD, TKN, and TP are not balanced \n'
                 f'time with rtol={self.rtol} and atol={self.atol}.\n '
@@ -1926,8 +1934,6 @@ class mADM1toASM2d(mADMjunction):
             S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2, S_ch4, S_IC, S_IN, S_IP, S_I, \
                 X_ch, X_pr, X_li, X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I, \
                 X_PHA, X_PP, X_PAO, S_K, S_Mg, X_MeOH, X_MeP, S_cat, S_an, H2O = adm_vals
-                
-            # print(f'adm_vals = {adm_vals}')
                        
             # Step 0: snapshot of charged components
             # Not sure about charge on X_PP, S_Mg, S_K (PHA and PAO would have zero charge)
@@ -1947,9 +1953,11 @@ class mADM1toASM2d(mADMjunction):
             #!!! yields 90% particulate substrate + 10% X_I
             #!!! so: convert both biomass and X_I in adm to X_S and X_I in asm
             
+            # ----------------------------Rai version---------------------------------------------
             # What is available
-            xi_n = X_I*adm_X_I_i_N
-            xi_p = X_I*adm_X_I_i_P
+            # xi_n = X_I*adm_X_I_i_N
+            # xi_p = X_I*adm_X_I_i_P
+            # ----------------------------Rai version---------------------------------------------
         
             # What would be formed by X_S
             xs_cod = bio_cod * self.bio_to_xs
@@ -1958,8 +1966,11 @@ class mADM1toASM2d(mADMjunction):
             
             # What would be formed by X_I (ASM2d)
             xi_cod = bio_cod * (1 - self.bio_to_xs) + X_I
-            xi_ndm = xi_cod * asm_X_I_i_N
-            xi_pdm = xi_cod * asm_X_I_i_P
+            
+            # ----------------------------Rai version---------------------------------------------
+            # xi_ndm = xi_cod * asm_X_I_i_N
+            # xi_pdm = xi_cod * asm_X_I_i_P
+            # ----------------------------Rai version---------------------------------------------
             
             # MAPPING OF X_S
             
@@ -1991,67 +2002,77 @@ class mADM1toASM2d(mADMjunction):
                     if bio_n < 0:
                         S_IN += bio_n
                         bio_n = 0
-                    
+               
+            # Step 2: MAPPING OF X_I
             
-            # MAPPING OF X_I
+            # Flores Alsina
             
-            if xi_ndm < bio_n + xi_n + S_IN and xi_pdm < bio_p + xi_p + S_IP:
-                
+            if asm_X_I_i_N == adm_X_I_i_N and asm_X_I_i_P == adm_X_I_i_P:
                 X_I = xi_cod
-                xi_cod = 0
-                
-                xi_n -= xi_ndm
-                if xi_n < 0:
-                    bio_n += xi_n
-                    xi_n = 0
-                    if bio_n < 0:
-                        S_IN += bio_n
-                        bio_n = 0
-                
-                xi_p -= xi_pdm
-                if xi_p < 0:
-                    bio_p += xi_p
-                    xi_p = 0
-                    if bio_p < 0:
-                        S_IP += bio_p
-                        bio_p = 0
-                        
+                excess_N = (bio_cod * (1 - self.bio_to_xs))*asm_X_I_i_N
+                excess_P = (bio_cod * (1 - self.bio_to_xs))*asm_X_I_i_P
             else:
-                if (bio_p + xi_p + S_IP) / asm_X_I_i_P  >  (bio_n + xi_n + S_IN) / asm_X_I_i_N:
-                    
-                    warn('Not enough N in biomass and X_I to map the specified proportion of'
-                         'biomass COD into X_I. Rest of the biomass COD goes to S_A')
-                    X_I =  (bio_n + xi_n + S_IN) / asm_X_I_i_N
-                    xi_cod -= X_I
-                    
-                    bio_n = xi_n = S_IN = 0
-                    
-                    xi_p -= X_I*asm_X_I_i_P
-                    if xi_p < 0:
-                        bio_p += xi_p
-                        xi_p = 0
-                        if bio_p < 0:
-                            S_IP += bio_p
-                            bio_p = 0
-                
-                else:
-                    
-                    warn('Not enough P in biomass and X_I to map the specified proportion of'
-                         'biomass COD into X_I. Rest of the biomass COD goes to S_A')
-                    X_I =  (bio_p + xi_p + S_IP) / asm_X_I_i_P
-                    xi_cod -= X_I
-                    
-                    bio_p = xi_p = S_IP = 0
-                    
-                    xi_n -= X_I*asm_X_I_i_N
-                    if xi_n < 0:
-                        bio_n += xi_n
-                        xi_n = 0
-                        if bio_n < 0:
-                            S_IN += bio_n
-                            bio_n = 0
+                raise RuntimeError('N and P content in X_I should be same')
             
-            # Step 1b: convert particulate substrates into X_S
+            # ----------------------------Rai version---------------------------------------------
+            # if xi_ndm < bio_n + xi_n + S_IN and xi_pdm < bio_p + xi_p + S_IP:
+                
+            #     X_I = xi_cod
+            #     xi_cod = 0
+                
+            #     xi_n -= xi_ndm
+            #     if xi_n < 0:
+            #         bio_n += xi_n
+            #         xi_n = 0
+            #         if bio_n < 0:
+            #             S_IN += bio_n
+            #             bio_n = 0
+                
+            #     xi_p -= xi_pdm
+            #     if xi_p < 0:
+            #         bio_p += xi_p
+            #         xi_p = 0
+            #         if bio_p < 0:
+            #             S_IP += bio_p
+            #             bio_p = 0
+                        
+            # else:
+            #     if (bio_p + xi_p + S_IP) / asm_X_I_i_P  >  (bio_n + xi_n + S_IN) / asm_X_I_i_N:
+                    
+            #         warn('Not enough N in biomass and X_I to map the specified proportion of'
+            #              'biomass COD into X_I. Rest of the biomass COD goes to S_A')
+            #         X_I =  (bio_n + xi_n + S_IN) / asm_X_I_i_N
+            #         xi_cod -= X_I
+                    
+            #         bio_n = xi_n = S_IN = 0
+                    
+            #         xi_p -= X_I*asm_X_I_i_P
+            #         if xi_p < 0:
+            #             bio_p += xi_p
+            #             xi_p = 0
+            #             if bio_p < 0:
+            #                 S_IP += bio_p
+            #                 bio_p = 0
+                
+            #     else:
+                    
+            #         warn('Not enough P in biomass and X_I to map the specified proportion of'
+            #              'biomass COD into X_I. Rest of the biomass COD goes to S_A')
+            #         X_I =  (bio_p + xi_p + S_IP) / asm_X_I_i_P
+            #         xi_cod -= X_I
+                    
+            #         bio_p = xi_p = S_IP = 0
+                    
+            #         xi_n -= X_I*asm_X_I_i_N
+            #         if xi_n < 0:
+            #             bio_n += xi_n
+            #             xi_n = 0
+            #             if bio_n < 0:
+            #                 S_IN += bio_n
+            #                 bio_n = 0
+            #------------------------------Rai version---------------------------------------------
+            
+            # Step 1(b)
                 
             xsub_cod = X_ch + X_pr + X_li 
             xsub_n = X_pr*X_pr_i_N
@@ -2067,6 +2088,7 @@ class mADM1toASM2d(mADMjunction):
                 xsub_p -= xs_pdm
             else:
                 if (xsub_n + bio_n)/X_S_i_N < (xsub_p + bio_p)/X_S_i_P:
+                    
                     X_S_temp = (xsub_n + bio_n)/X_S_i_N 
                     X_S += X_S_temp
                     xsub_cod -= X_S_temp
@@ -2087,6 +2109,8 @@ class mADM1toASM2d(mADMjunction):
                     if xsub_n < 0: 
                         bio_n += xsub_n
                         xsub_n = 0
+                        
+            # Step 3(A)
             
             # P balance not required as S_su, S_aa, S_fa do not have P
             ssub_cod = S_su + S_aa + S_fa
@@ -2148,60 +2172,78 @@ class mADM1toASM2d(mADMjunction):
                             bio_n += xsub_n
                             xsub_n = 0
                 
-            # N and P balance not required as S_su, S_aa, S_fa do not have N and P
+            # N and P balance not required as S_ac, S_pro, S_bu, and S_va do not have N and P
             S_A = S_ac + S_pro + S_bu + S_va
             
-            si_cod = S_I    
-            si_n = S_I * adm_S_I_i_N
-            si_p = S_I * adm_S_I_i_P
+            # Step 4
             
-            si_ndm = si_cod * asm_S_I_i_N
-            si_pdm = si_cod * asm_S_I_i_P
-            
-            if si_ndm <= si_n + xi_n + S_IN and si_pdm <= si_p + xi_p + S_IP:
-                S_I = si_cod
-                si_cod = 0
-                si_n -= si_ndm
-                if si_n < 0:
-                    xi_n += si_n
-                    si_n = 0
-                    if xi_n < 0:
-                        S_IN += xi_n
-                        xi_n = 0
-                si_p -= si_pdm
-                if si_p < 0:
-                    xi_p += si_p
-                    si_p = 0
-                    if xi_p < 0:
-                        S_IP += xi_p
-                        xi_p = 0
+            if asm_S_I_i_N == adm_S_I_i_N and asm_S_I_i_P == adm_S_I_i_P:
+                S_I = S_I
             else:
-                if (si_n + xi_n + S_IN) / asm_S_I_i_N < (si_p + xi_p + S_IP) / asm_S_I_i_P:
-                    S_I = (si_n + xi_n + S_IN) / asm_S_I_i_N
-                    si_cod -= S_I
-                    si_n = xi_n = S_IN = 0
-                    si_p -= S_I * asm_S_I_i_P
-                    if si_p < 0:
-                        xi_p += si_p
-                        si_p = 0
-                        if xi_p < 0:
-                            S_IP += xi_p
-                            xi_p = 0
-                else:
-                    S_I = (si_p + xi_p + S_IP) / asm_S_I_i_P
-                    si_cod -= S_I
-                    si_p = xi_p = S_IP = 0
-                    si_n -= S_I * asm_S_I_i_N
-                    if si_n < 0:
-                        xi_n += si_n
-                        si_n = 0
-                        if xi_n < 0:
-                            S_IN += xi_n
-                            xi_n = 0
+                raise RuntimeError('N and P content in S_I should be same')
             
-            S_NH4 = S_IN + si_n + ssub_n + xsub_n + xi_n + bio_n
-            S_PO4 = S_IP + si_p + ssub_p + xsub_p + xi_p + bio_p
-            S_A += si_cod + ssub_cod + xsub_cod + xi_cod + xs_cod
+            #------------------------------Rai version---------------------------------------------
+            # si_n = S_I * adm_S_I_i_N
+            # si_p = S_I * adm_S_I_i_P
+            
+            # si_ndm = si_cod * asm_S_I_i_N
+            # si_pdm = si_cod * asm_S_I_i_P
+            
+            # if si_ndm <= si_n + xi_n + S_IN and si_pdm <= si_p + xi_p + S_IP:
+            #     S_I = si_cod
+            #     si_cod = 0
+            #     si_n -= si_ndm
+            #     if si_n < 0:
+            #         xi_n += si_n
+            #         si_n = 0
+            #         if xi_n < 0:
+            #             S_IN += xi_n
+            #             xi_n = 0
+            #     si_p -= si_pdm
+            #     if si_p < 0:
+            #         xi_p += si_p
+            #         si_p = 0
+            #         if xi_p < 0:
+            #             S_IP += xi_p
+            #             xi_p = 0
+            # else:
+            #     if (si_n + xi_n + S_IN) / asm_S_I_i_N < (si_p + xi_p + S_IP) / asm_S_I_i_P:
+            #         S_I = (si_n + xi_n + S_IN) / asm_S_I_i_N
+            #         si_cod -= S_I
+            #         si_n = xi_n = S_IN = 0
+            #         si_p -= S_I * asm_S_I_i_P
+            #         if si_p < 0:
+            #             xi_p += si_p
+            #             si_p = 0
+            #             if xi_p < 0:
+            #                 S_IP += xi_p
+            #                 xi_p = 0
+            #     else:
+            #         S_I = (si_p + xi_p + S_IP) / asm_S_I_i_P
+            #         si_cod -= S_I
+            #         si_p = xi_p = S_IP = 0
+            #         si_n -= S_I * asm_S_I_i_N
+            #         if si_n < 0:
+            #             xi_n += si_n
+            #             si_n = 0
+            #             if xi_n < 0:
+            #                 S_IN += xi_n
+            #                 xi_n = 0
+            #------------------------------Rai version---------------------------------------------
+            
+            #------------------------------Rai version---------------------------------------------
+            # S_NH4 = S_IN + si_n + ssub_n + xsub_n + xi_n + bio_n
+            # S_PO4 = S_IP + si_p + ssub_p + xsub_p + xi_p + bio_p
+            #------------------------------Rai version---------------------------------------------
+            
+            S_NH4 = S_IN + ssub_n + xsub_n + bio_n - excess_N 
+            S_PO4 = S_IP + ssub_p + xsub_p + bio_p - excess_P
+            
+            #------------------------------Rai version---------------------------------------------
+            # S_A += si_cod + ssub_cod + xsub_cod + xi_cod + xs_cod
+            #------------------------------Rai version---------------------------------------------
+            
+            S_A += ssub_cod + xsub_cod + xs_cod
             
             # Step 6: check COD and TKN balance
             asm_vals = np.array(([
@@ -2432,6 +2474,8 @@ class ASM2dtomADM1(mADMjunction):
         S_A_i_N = cmps_asm.S_A.i_N
         
         # Due to issue with mapping of X_I across ASM2d and ADM1, making this user dependent is important
+        
+        # PUT A CHECK ON USER DEFINED N AND P CONTENT IN SI and XI here.
         if self.asm_X_I_i_N == None:
             asm_X_I_i_N = cmps_asm.X_I.i_N
         else:
