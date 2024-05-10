@@ -786,7 +786,7 @@ class FlatBottomCircularClarifier(SanUnit):
 class IdealClarifier(SanUnit):
 
     _N_ins = 1
-    _N_outs = 2
+    _N_outs = 2  # [0] effluent overflow, [1] sludge underflow
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  sludge_flow_rate=2000, solids_removal_efficiency=.995,
@@ -798,6 +798,9 @@ class IdealClarifier(SanUnit):
         self.sludge_flow_rate = sludge_flow_rate
         self.solids_removal_efficiency = solids_removal_efficiency
         self.sludge_MLSS = sludge_MLSS
+        self._mixed = WasteStream()
+        self._f_uf = None
+        self._f_of = None
 
     @property
     def sludge_flow_rate(self):
@@ -806,9 +809,7 @@ class IdealClarifier(SanUnit):
 
     @sludge_flow_rate.setter
     def sludge_flow_rate(self, Qs):
-        if Qs is not None: self._Qs = Qs
-        elif self.ins[0].isempty(): self._Qs = None
-        else: self._Qs = self._calc_Qs()
+        self._Qs = Qs
 
     @property
     def solids_removal_efficiency(self):
@@ -816,12 +817,9 @@ class IdealClarifier(SanUnit):
 
     @solids_removal_efficiency.setter
     def solids_removal_efficiency(self, f):
-        if f is not None:
-            if f > 1 or f < 0:
-                raise ValueError(f'solids removal efficiency must be within [0, 1], not {f}')
-            self._e_rmv = f
-        elif self.ins[0].isempty(): self._e_rmv = None
-        else: self._e_rmv = self._calc_ermv()
+        if f is not None and (f > 1 or f < 0):
+            raise ValueError(f'solids removal efficiency must be within [0, 1], not {f}')
+        self._e_rmv = f
 
     @property
     def sludge_MLSS(self):
@@ -829,58 +827,134 @@ class IdealClarifier(SanUnit):
 
     @sludge_MLSS.setter
     def sludge_MLSS(self, MLSS):
-        if MLSS is not None: self._MLSS = MLSS
-        elif self.ins[0].isempty(): self._MLSS = None
-        else: self._MLSS = self._calc_SS()[1]
+        if MLSS is not None:
+            warn(f'sludge MLSS {MLSS} mg/L is only used to estimate '
+                 f'sludge flowrate or solids removal efficiency, when either'
+                 f'one of them is unspecified.')
+        self._MLSS = MLSS
+
 
     def _calc_Qs(self, TSS_in=None, Q_in=None):
-        if Q_in is None: Q_in = self.ins[0].get_total_flow('m3/d')
-        if TSS_in is None: TSS_in = self.ins[0].get_TSS()
+        if Q_in is None: Q_in = self._mixed.get_total_flow('m3/d')
+        if TSS_in is None: TSS_in = self._mixed.get_TSS()
         return Q_in*TSS_in*self._e_rmv/(self._MLSS-TSS_in)
 
     def _calc_ermv(self, TSS_in=None, Q_in=None):
-        if Q_in is None: Q_in = self.ins[0].get_total_flow('m3/d')
-        if TSS_in is None: TSS_in = self.ins[0].get_TSS()
+        if Q_in is None: Q_in = self._mixed.get_total_flow('m3/d')
+        if TSS_in is None: TSS_in = self._mixed.get_TSS()
         return self._Qs*(self._MLSS-TSS_in)/TSS_in/(Q_in-self._Qs)
 
     def _calc_SS(self, SS_in=None, Q_in=None):
-        if Q_in is None: Q_in = self.ins[0].get_total_flow('m3/d')
-        if SS_in is None: SS_in = self.ins[0].get_TSS()
+        if Q_in is None: Q_in = self._mixed.get_total_flow('m3/d')
+        if SS_in is None: SS_in = self._mixed.get_TSS()
         SS_e = (1-self._e_rmv)*SS_in
         Qs = self._Qs
         Qe = Q_in - Qs
         return SS_e, (Q_in*SS_in - Qe*SS_e)/Qs
 
     def _run(self):
-        inf, = self.ins
-        eff, sludge = self.outs
-        cmps = self.components
-        Q_in = inf.get_total_flow('m3/d')
-        TSS_in = (inf.conc*cmps.x*cmps.i_mass).sum()
-        params = (Qs, e_rmv, MLSS) = self._Qs, self._e_rmv, self._MLSS
-        if sum([i is None for i in params]) > 1:
-            raise RuntimeError('must specify two of the following parameters: '
-                               'sludge_flow_rate, solids_removal_efficiency, sludge_MLSS')
-        if Qs is None:
-            Qs = self._calc_Qs(TSS_in, Q_in)
-            Xs = MLSS / TSS_in * inf.conc * cmps.x
-            Xe = (1-e_rmv) * inf.conc * cmps.x
-        elif e_rmv is None:
-            e_rmv = self._calc_ermv(TSS_in, Q_in)
-            Xs = MLSS / TSS_in * inf.conc * cmps.x
-            Xe = (1-e_rmv) * inf.conc * cmps.x
-        else:
-            Xe, Xs = self._calc_SS(inf.conc * cmps.x, Q_in)
-        Zs = Ze = inf.conc * (1-cmps.x)
-        Ce = dict(zip(cmps.IDs, Ze+Xe))
-        Cs = dict(zip(cmps.IDs, Zs+Xs))
-        Ce.pop('H2O', None)
-        Cs.pop('H2O', None)
-        eff.set_flow_by_concentration(Q_in-Qs, Ce, units=('m3/d', 'mg/L'))
-        sludge.set_flow_by_concentration(Qs, Cs, units=('m3/d', 'mg/L'))
+        inf = self._mixed
+        inf.mix_from(self.ins)
+        of, uf = self.outs
+        Qs, e_rmv = self._Qs, self._e_rmv
+        TSS_in = inf.get_TSS()
+        Q_in = inf.F_vol * 24 # m3/d
+        if Qs is None: Qs = self._calc_Qs(TSS_in, Q_in)
+        if e_rmv is None: e_rmv = self._calc_ermv(TSS_in, Q_in)
+        f_Qu = Qs/Q_in
+        x = inf.components.x
+        split_to_uf = (1-x)*f_Qu + x*e_rmv
+        if any(split_to_uf > 1): split_to_uf = 1
+        inf.split_to(uf, of, split_to_uf)
 
-    def _design(self):
-        pass
+    def _init_state(self):
+        inf = self._mixed
+        C_in = inf.conc
+        TSS_in = inf.get_TSS()
+        Q_in = inf.F_vol * 24
+        self._state = np.append(C_in, Q_in)
+        self._dstate = self._state * 0.
+        if not self._Qs: self._Qs = self._calc_Qs(TSS_in, Q_in)
+        if not self._e_rmv: self._e_rmv = self._calc_ermv(TSS_in, Q_in)
+        
+    def _update_state(self):
+        arr = self._state
+        Cs = arr[:-1]
+        Qi = arr[-1]
+        Qs = self._Qs
+        e_rmv = self._e_rmv
+        x = self.components.x
+
+        of, uf = self.outs
+        if uf.state is None: uf.state = np.zeros(len(x)+1)
+        if of.state is None: of.state = np.zeros(len(x)+1)
+
+        if Qs >= Qi: 
+            uf.state[:] = arr
+            of.state[:] = 0.
+        elif Qs <= 0:
+            uf.state[:] = 0.
+            of.state[:] = arr
+        else:
+            self._f_uf = fuf = e_rmv*Qi/Qs
+            self._f_of = fof = (1-e_rmv)/(1-Qi/Qs)
+            uf.state[:-1] = Cs * ((1-x) + x*fuf)
+            uf.state[-1] = Qs
+            of.state[:-1] = Cs * ((1-x) + x*fof)
+            of.state[-1] = Qi - Qs
+
+    def _update_dstate(self):
+        arr = self._dstate
+        dCs = arr[:-1]
+        dQi = arr[-1]
+        Cs = self._state[:-1]
+        Qi = self._state[-1]
+        Qs = self._Qs
+        e_rmv = self._e_rmv
+        x = self.components.x
+
+        uf, of = self.outs
+        if uf.dstate is None: uf.dstate = np.zeros(len(x)+1)
+        if of.dstate is None: of.dstate = np.zeros(len(x)+1)
+        if Qs >= Qi: 
+            uf.dstate[:] = arr
+            of.dstate[:] = 0.
+        elif Qs <= 0:
+            uf.dstate[:] = 0.
+            of.dstate[:] = arr
+        else:
+            uf.dstate[:-1] = dCs * ((1-x) + x*self._f_uf) + Cs*x*e_rmv*dQi/Qs
+            uf.dstate[-1] = 0.
+            of.dstate[:-1] = dCs * ((1-x) + x*self._f_of) - Cs*x*(1-e_rmv)*Qs/(Qi-Qs)**2 * dQi
+            of.dstate[-1] = dQi
+    
+    @property
+    def AE(self):
+        if self._AE is None:
+            self._compile_AE()
+        return self._AE
+
+    def _compile_AE(self):        
+        _state = self._state
+        _dstate = self._dstate
+        _update_state = self._update_state
+        _update_dstate = self._update_dstate
+        def yt(t, QC_ins, dQC_ins):
+            Q_ins = QC_ins[:, -1]
+            C_ins = QC_ins[:, :-1]
+            dQ_ins = dQC_ins[:, -1]
+            dC_ins = dQC_ins[:, :-1]
+            Q = Q_ins.sum()
+            C = Q_ins @ C_ins / Q
+            _state[-1] = Q
+            _state[:-1] = C
+            Q_dot = dQ_ins.sum()
+            C_dot = (dQ_ins @ C_ins + Q_ins @ dC_ins - Q_dot * C)/Q
+            _dstate[-1] = Q_dot
+            _dstate[:-1] = C_dot
+            _update_state()
+            _update_dstate()
+        self._AE = yt
    
     
 # %%
