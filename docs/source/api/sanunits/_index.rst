@@ -35,6 +35,7 @@ Individual Unit Operations
    combustion
    compressor
    CropApplication
+   distillation
    DynamicInfluent
    ElectrochemicalCell
    Excretion
@@ -50,6 +51,7 @@ Individual Unit Operations
    non_reactive
    PolishingFilter
    pumping
+   Reactor
    Screening
    Sedimentation
    SepticTank
