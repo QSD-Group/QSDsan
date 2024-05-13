@@ -386,7 +386,7 @@ def rhos_adm1_p_extension(state_arr, params):
 # =============================================================================
 class TempState:
     def __init__(self):
-        self.data = []
+        self.data = {}
     
     # def append(self, value):
     #     self.data += [value]
