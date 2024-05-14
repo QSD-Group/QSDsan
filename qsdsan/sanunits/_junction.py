@@ -242,7 +242,7 @@ class Junction(SanUnit):
             self._compile_reactions()
             
             
-# %% ADMjunction
+#%% ADMjunction
 
 #TODO: add a `rtol` kwargs for error checking
 class ADMjunction(Junction):
@@ -442,14 +442,14 @@ class mADMjunction(ADMjunction):
     #     '''[float] Heat of reaction for Ka.'''
     #     return self.adm1_model.rate_function.params['Ka_dH']
     
-    @property
-    def pKa(self):
-        '''
-        [numpy.array] pKa array of the following acid-base pairs:
-        ('H+', 'OH-'), ('NH4+', 'NH3'), ('H2PO4-', 'HPO4-2'), ('CO2', 'HCO3-'),
-        ('HAc', 'Ac-'), ('HPr', 'Pr-'), ('HBu', 'Bu-'), ('HVa', 'Va-')
-        '''
-        return self.pKa_base-np.log10(pc.T_correction_factor(self.T_base, self.T, self.Ka_dH))
+    # @property
+    # def pKa(self):
+    #     '''
+    #     [numpy.array] pKa array of the following acid-base pairs:
+    #     ('H+', 'OH-'), ('NH4+', 'NH3'), ('H2PO4-', 'HPO4-2'), ('CO2', 'HCO3-'),
+    #     ('HAc', 'Ac-'), ('HPr', 'Pr-'), ('HBu', 'Bu-'), ('HVa', 'Va-')
+    #     '''
+    #     return self.pKa_base-np.log10(pc.T_correction_factor(self.T_base, self.T, self.Ka_dH))
 
     @property
     def alpha_IN(self):
@@ -471,7 +471,11 @@ class mADMjunction(ADMjunction):
         pH = self.pH
         pKa_IC = self.pKa[3]
         return -1/(1+10**(pKa_IC-pH))/12
-        
+    
+    @property
+    def alpha_vfa(self):
+        return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[4:]-self.pH)))
+    
     # def _compile_AE(self):
     #     _state = self._state
     #     _dstate = self._dstate
@@ -492,6 +496,46 @@ class mADMjunction(ADMjunction):
     #         _update_dstate()
         
     #     self._AE = yt
+    
+    def check_component_properties(self, cmps_asm, cmps_adm):
+        get = getattr
+        setv = setattr
+        for name in ('X_PHA', 'X_PP', 'X_PAO', 'X_MeOH', 'X_MeP'):
+            casm = get(cmps_asm, name)
+            cadm = get(cmps_adm, name)
+            for attr in ('measured_as', 'i_COD', 'i_N', 'i_P'):
+                vasm = get(casm, attr)
+                if get(cadm, attr) != vasm:
+                    setv(cadm, attr, vasm)
+                    warn(f"ADM component {name}'s {attr} is changed to match "
+                         "the corresponding ASM component")
+        
+        for name in ('S_I', 'X_I'):
+            casm = get(cmps_asm, name)
+            cadm = get(cmps_adm, name)
+            for attr in ('measured_as', 'i_N', 'i_P'):
+                vadm = get(cadm, attr)
+                if get(casm, attr) != vadm:
+                    setv(casm, attr, vadm)
+                    warn(f"ASM component {name}'s {attr} is changed to match "
+                         "the corresponding ADM component")        
+        
+        for attr in ('i_N', 'i_P'):
+            vadm = get(cmps_adm.S_ac, attr)
+            if get(cmps_asm.S_A, attr) != vadm:
+                cmps_asm.S_A.i_N = vadm
+                warn(f"ASM component S_A's {attr} is changed to match "
+                     "the ADM component S_ac.") 
+        
+        if cmps_asm.S_ALK.measured_as != cmps_adm.S_IC.measured_as:
+            raise RuntimeError('S_ALK in ASM and S_IC in ADM must both be measured as "C".')
+        if cmps_asm.S_NH4.measured_as != cmps_adm.S_IN.measured_as:
+            raise RuntimeError('S_NH4 in ASM and S_IN in ADM must both be measured as "N".')
+        if cmps_asm.S_PO4.measured_as != cmps_adm.S_IP.measured_as:
+            raise RuntimeError('S_PO4 in ASM and S_IP in ADM must both be measured as "P".')
+        
+        cmps_asm.refresh_constants()
+        cmps_adm.refresh_constants()
 
 #%% ADMtoASM
 class ADMtoASM(ADMjunction):
@@ -547,13 +591,6 @@ class ADMtoASM(ADMjunction):
     def pH(self):
         '''[float] pH of the upstream/downstream.'''
         return self.ins[0].pH
-
-    
-    # def isbalanced(self, lhs, rhs_vals, rhs_i):
-    #     rhs = sum(rhs_vals*rhs_i)
-    #     error = rhs - lhs
-    #     tol = max(self.rtol*lhs, self.rtol*rhs, self.atol)
-    #     return abs(error) <= tol, error, tol, rhs
 
     def balance_cod_tkn(self, adm_vals, asm_vals):
         cmps_adm = self.ins[0].components
@@ -827,13 +864,6 @@ class ASMtoADM(ADMjunction):
     @pH.setter
     def pH(self, ph):
         self._pH = self.outs[0].pH = ph
-    
-    
-    # def isbalanced(self, lhs, rhs_vals, rhs_i):
-    #     rhs = sum(rhs_vals*rhs_i)
-    #     error = rhs - lhs
-    #     tol = max(self.rtol*lhs, self.rtol*rhs, self.atol)
-    #     return abs(error) <= tol, error, tol, rhs
     
     def balance_cod_tkn(self, asm_vals, adm_vals):
         cmps_asm = self.ins[0].components
@@ -1428,10 +1458,7 @@ class ASM2dtoADM1(ADMjunction):
             
             # Step 7: charge balance
             asm_charge_tot = - _sa/64 + _snh4/14 - _sno3/14 - 1.5*_spo4/31 - _salk - _xpp/31 #Based on page 84 of IWA ASM handbook
-            #!!! charge balance should technically include VFAs, 
-            # but VFAs concentrations are assumed zero per previous steps??
-            S_IN = adm_vals[adm_ions_idx[0]]
-            
+            S_IN = adm_vals[adm_ions_idx[0]]            
             S_IC = (asm_charge_tot -S_IN*alpha_IN)/alpha_IC
             
             net_Scat = asm_charge_tot + proton_charge
@@ -1762,33 +1789,14 @@ class mADM1toASM2d(mADMjunction):
     [2] Flores-Alsina, X., Solon, K., Kazadi Mbamba, C., Tait, S., Gernaey, K. V., 
     Jeppsson, U., & Batstone, D. J. (2016). Modelling phosphorus (P), sulfur (S) 
     and iron (FE) interactions for dynamic simulations of anaerobic digestion processes. 
-    Water Research, 95, 370–382. 
+    Water Research, 95, 370–382.
+    
     See Also
     --------
-    :class:`qsdsan.sanunits.ADMjunction`
+    :class:`qsdsan.sanunits.mADMjunction`
     
-    :class:`qsdsan.sanunits.ASMtoADM`  
-    
-    `math.isclose <https://docs.python.org/3.8/library/math.html#math.isclose>`
+    :class:`qsdsan.sanunits.ASM2dtomADM1`
     '''
-    
-    # User defined values
-    bio_to_xs = 0.9
-    
-    # Since we are matching PAOs directly from ASM2d to mADM1, it is important 
-    # for PAOs to have identical N/P content across models
-    
-    # adm_X_PAO_i_N = 0.07 
-    # adm_X_PAO_i_P = 0.02
-    
-    # Should be constants
-    cod_vfa = np.array([64, 112, 160, 208])
-    
-    def isbalanced(self, lhs, rhs_vals, rhs_i):
-        rhs = sum(rhs_vals*rhs_i)
-        error = rhs - lhs
-        tol = max(self.rtol*lhs, self.rtol*rhs, self.atol)
-        return abs(error) <= tol, error, tol, rhs
     
     def balance_cod_tkn(self, adm_vals, asm_vals):
         cmps_adm = self.ins[0].components
@@ -1883,369 +1891,430 @@ class mADM1toASM2d(mADMjunction):
     
     def _compile_reactions(self):
         # Retrieve constants
-        ins = self.ins[0]
-        outs = self.outs[0]
-        rtol = self.rtol
-        atol = self.atol
+        # ins = self.ins[0]
+        # outs = self.outs[0]
+        # rtol = self.rtol
+        # atol = self.atol
         
-        cmps_adm = ins.components
-        # N balance 
-        X_pr_i_N = cmps_adm.X_pr.i_N
-        S_aa_i_N = cmps_adm.S_aa.i_N
-        adm_X_I_i_N = cmps_adm.X_I.i_N
-        adm_S_I_i_N = cmps_adm.S_I.i_N
-        adm_i_N = cmps_adm.i_N
-        adm_bio_N_indices = cmps_adm.indices(('X_su', 'X_aa', 'X_fa', 
-                                              'X_c4', 'X_pro', 'X_ac', 'X_h2'))
+        cmps_asm = self.ins[0].components
+        cmps_adm = self.outs[0].components
+        self.check_component_properties(cmps_asm, cmps_adm)
         
-        # P balance
-        X_pr_i_P = cmps_adm.X_pr.i_P
-        adm_X_I_i_P = cmps_adm.X_I.i_P
-        adm_S_I_i_P = cmps_adm.S_I.i_P
-        S_aa_i_P = cmps_adm.S_aa.i_P
-        adm_i_P = cmps_adm.i_P
-        adm_bio_P_indices = cmps_adm.indices(('X_su', 'X_aa', 'X_fa', 
-                                              'X_c4', 'X_pro', 'X_ac', 'X_h2'))
+        _asm_ids = cmps_asm.indices(['S_F', 'X_S', 'S_A'])
+        _adm_ids = cmps_adm.indices(['S_su', 'S_aa', 'S_fa', 
+                                     'S_va', 'S_bu', 'S_pro', 'S_ac',
+                                     'X_pr', 'X_li', 'X_ch'])
+
+        # For carbon balance
+        C_SF, C_XS, C_SA = cmps_asm.i_C[_asm_ids]
+        C_su, C_aa, C_fa, C_va, C_bu, C_pro, C_ac, C_pr, C_li, C_ch = cmps_adm.i_C[_adm_ids]
         
-        cmps_asm = outs.components
+        # For nitrogen balance 
+        N_SF, N_XS, N_SA = cmps_asm.i_N[_asm_ids]
+        N_su, N_aa, N_fa, N_va, N_bu, N_pro, N_ac, N_pr, N_li, N_ch = cmps_adm.i_N[_adm_ids]
         
-        # N balance 
-        X_S_i_N = cmps_asm.X_S.i_N
-        S_F_i_N = cmps_asm.S_F.i_N
-        S_A_i_N = cmps_asm.S_A.i_N
+        # For phosphorous balance 
+        P_SF, P_XS, P_SA = cmps_asm.i_P[_asm_ids]
+        P_su, P_aa, P_fa, P_va, P_bu, P_pro, P_ac, P_pr, P_li, P_ch = cmps_adm.i_P[_adm_ids]
+
+        adm = self.adm1_model
+        adm_p1_idx = cmps_adm.indices(('X_su', 'X_aa', 'X_fa', 'X_c4', 
+                                       'X_pro', 'X_ac', 'X_h2', 
+                                       'X_PAO', 'X_PP', 'X_PHA'))
+        decay_idx = [i for i in adm.IDs if i.startswith(('decay', 'lysis'))]
+        decay_stoichio = np.asarray(adm.stoichiometry.loc[decay_idx])
+        
+        # # cmps_adm = ins.components
+        # # N balance 
+        # X_pr_i_N = cmps_adm.X_pr.i_N
+        # S_aa_i_N = cmps_adm.S_aa.i_N
+        # adm_X_I_i_N = cmps_adm.X_I.i_N
+        # adm_S_I_i_N = cmps_adm.S_I.i_N
+        # adm_i_N = cmps_adm.i_N
+        # adm_bio_N_indices = cmps_adm.indices(('X_su', 'X_aa', 'X_fa', 
+        #                                       'X_c4', 'X_pro', 'X_ac', 'X_h2'))
+        
+        # # P balance
+        # X_pr_i_P = cmps_adm.X_pr.i_P
+        # adm_X_I_i_P = cmps_adm.X_I.i_P
+        # adm_S_I_i_P = cmps_adm.S_I.i_P
+        # S_aa_i_P = cmps_adm.S_aa.i_P
+        # adm_i_P = cmps_adm.i_P
+        # adm_bio_P_indices = cmps_adm.indices(('X_su', 'X_aa', 'X_fa', 
+        #                                       'X_c4', 'X_pro', 'X_ac', 'X_h2'))
+        
+        # # cmps_asm = outs.components
+        
+        # # N balance 
+        # X_S_i_N = cmps_asm.X_S.i_N
+        # S_F_i_N = cmps_asm.S_F.i_N
+        # S_A_i_N = cmps_asm.S_A.i_N
             
-        asm_X_I_i_N = cmps_asm.X_I.i_N
-        asm_S_I_i_N = cmps_asm.S_I.i_N
-        asm_ions_idx = cmps_asm.indices(('S_NH4', 'S_A', 'S_NO3', 'S_PO4', 'X_PP', 'S_ALK'))
+        # asm_X_I_i_N = cmps_asm.X_I.i_N
+        # asm_S_I_i_N = cmps_asm.S_I.i_N
+        # asm_ions_idx = cmps_asm.indices(('S_NH4', 'S_A', 'S_NO3', 'S_PO4', 'X_PP', 'S_ALK'))
         
-        # P balance 
-        X_S_i_P = cmps_asm.X_S.i_P
-        S_F_i_P = cmps_asm.S_F.i_P
-        S_A_i_P = cmps_asm.S_A.i_P
-        asm_X_I_i_P = cmps_asm.X_I.i_P 
-        asm_S_I_i_P = cmps_asm.S_I.i_P
+        # # P balance 
+        # X_S_i_P = cmps_asm.X_S.i_P
+        # S_F_i_P = cmps_asm.S_F.i_P
+        # S_A_i_P = cmps_asm.S_A.i_P
+        # asm_X_I_i_P = cmps_asm.X_I.i_P 
+        # asm_S_I_i_P = cmps_asm.S_I.i_P
         
         # Checks for direct mapping of X_PAO, X_PP, X_PHA
         
         # Check for X_PAO (measured as COD so i_COD = 1 in both ASM2d and ADM1)
         
-        asm_X_PAO_i_N = cmps_asm.X_PAO.i_N
-        adm_X_PAO_i_N = cmps_adm.X_PAO.i_N
+        # asm_X_PAO_i_N = cmps_asm.X_PAO.i_N
+        # adm_X_PAO_i_N = cmps_adm.X_PAO.i_N
         
-        if self.adm_X_PAO_i_N == None:
-            adm_X_PAO_i_N = cmps_adm.X_PAO.i_N
-        else:
-            adm_X_PAO_i_N = self.adm_X_PAO_i_N
+        # if self.adm_X_PAO_i_N == None:
+        #     adm_X_PAO_i_N = cmps_adm.X_PAO.i_N
+        # else:
+        #     adm_X_PAO_i_N = self.adm_X_PAO_i_N
         
-        if asm_X_PAO_i_N != adm_X_PAO_i_N:
-            raise RuntimeError('X_PAO cannot be directly mapped as N content'
-                               f'in asm2d_X_PAO_i_N = {asm_X_PAO_i_N} is not equal to'
-                               f'adm_X_PAO_i_N = {adm_X_PAO_i_N}')
+        # if asm_X_PAO_i_N != adm_X_PAO_i_N:
+        #     raise RuntimeError('X_PAO cannot be directly mapped as N content'
+        #                        f'in asm2d_X_PAO_i_N = {asm_X_PAO_i_N} is not equal to'
+        #                        f'adm_X_PAO_i_N = {adm_X_PAO_i_N}')
             
-        asm_X_PAO_i_P = cmps_asm.X_PAO.i_P
-        adm_X_PAO_i_P = cmps_adm.X_PAO.i_P
+        # asm_X_PAO_i_P = cmps_asm.X_PAO.i_P
+        # adm_X_PAO_i_P = cmps_adm.X_PAO.i_P
         
-        if self.adm_X_PAO_i_P == None:
-            adm_X_PAO_i_P = cmps_adm.X_PAO.i_P
-        else:
-            adm_X_PAO_i_P = self.adm_X_PAO_i_P
+        # if self.adm_X_PAO_i_P == None:
+        #     adm_X_PAO_i_P = cmps_adm.X_PAO.i_P
+        # else:
+        #     adm_X_PAO_i_P = self.adm_X_PAO_i_P
         
-        if asm_X_PAO_i_P != adm_X_PAO_i_P:
-            raise RuntimeError('X_PAO cannot be directly mapped as P content'
-                               f'in asm2d_X_PAO_i_P = {asm_X_PAO_i_P} is not equal to'
-                               f'adm_X_PAO_i_P = {adm_X_PAO_i_P}')
+        # if asm_X_PAO_i_P != adm_X_PAO_i_P:
+        #     raise RuntimeError('X_PAO cannot be directly mapped as P content'
+        #                        f'in asm2d_X_PAO_i_P = {asm_X_PAO_i_P} is not equal to'
+        #                        f'adm_X_PAO_i_P = {adm_X_PAO_i_P}')
         
         # Checks not required for X_PP as measured as P in both, with i_COD = i_N = 0
         # Checks not required for X_PHA as measured as COD in both, with i_N = i_P = 0
         
-        alpha_IN = self.alpha_IN
-        alpha_IC = self.alpha_IC
-        alpha_IP = self.alpha_IP
-        alpha_vfa = self.alpha_vfa
+        # alpha_IN = self.alpha_IN
+        # alpha_IC = self.alpha_IC
+        # alpha_IP = self.alpha_IP
+        # alpha_vfa = self.alpha_vfa
         f_corr = self.balance_cod_tkn
 
         # To convert components from mADM1 to ASM2d (madm1-2-asm2d)
         def madm12asm2d(adm_vals):    
             
+            _adm_vals = adm_vals.copy()
+                
+            # PROCESS 1: decay of biomas, X_PP, X_PHA
+            bio_xpp_pha = _adm_vals[adm_p1_idx]
+            _adm_vals += bio_xpp_pha * decay_stoichio
+            
+            # PROCESS 2: strip biogas. Omitted because no S_ch4 or S_h2 in ASM2d components
+            
             S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2, S_ch4, S_IC, S_IN, S_IP, S_I, \
                 X_ch, X_pr, X_li, X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I, \
-                X_PHA, X_PP, X_PAO, S_K, S_Mg, X_MeOH, X_MeP, S_cat, S_an, H2O = adm_vals
-                
-            # print(f'adm_vals = {adm_vals}')
+                X_PHA, X_PP, X_PAO, S_K, S_Mg, X_MeOH, X_MeP, S_cat, S_an, H2O = _adm_vals            
+            
+            if S_h2 > 0 or S_ch4 > 0: warn('Ignored dissolved H2 or CH4.')
+
+            S_ALK = S_IC
+            S_NH4 = S_IN
+            S_PO4 = S_IP            
+
+            # CONV 1: convert X_pr, X_li, X_ch to X_S
+            X_S = X_pr + X_li + X_ch
+            S_ALK += X_pr*C_pr + X_li*C_li + X_ch*C_ch - X_S*C_XS
+            S_NH4 += X_pr*N_pr + X_li*N_li + X_ch*N_ch - X_S*N_XS
+            S_PO4 += X_pr*P_pr + X_li*P_li + X_ch*P_ch - X_S*P_XS
+
+            # CONV 2: convert S_su, S_aa, S_fa to S_F
+            S_F = S_su + S_aa + S_fa
+            S_ALK += S_su*C_su + S_aa*C_aa + S_fa*C_fa - S_F*C_SF
+            S_NH4 += S_su*N_su + S_aa*N_aa + S_fa*N_fa - S_F*N_SF
+            S_PO4 += S_su*P_su + S_aa*P_aa + S_fa*P_fa - S_F*P_SF
+            
+            # CONV 3: convert VFAs to S_A
+            S_A = S_va + S_bu + S_pro + S_ac
+            S_ALK += S_va*C_va + S_bu*C_bu + S_pro*C_pro + S_ac*C_ac - S_A*C_SA
+            # S_NH4 += S_va*N_va + S_bu*N_bu + S_pro*N_pro + S_ac*N_ac - S_A*N_SA
+            # S_PO4 += S_va*P_va + S_bu*P_bu + S_pro*P_pro + S_ac*P_ac - S_A*P_SA
+
+
+            # # print(f'adm_vals = {adm_vals}')
                        
-            # Step 0: snapshot of charged components
-            # Not sure about charge on X_PP, S_Mg, S_K (PHA and PAO would have zero charge)
-            # Step 0: snapshot of charged components
-            # _ions = np.array([S_IN, S_IC, S_ac, S_pro, S_bu, S_va])
-            _ions = np.array([S_IN, S_IC, S_IP, X_PP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
+            # # Step 0: snapshot of charged components
+            # # Not sure about charge on X_PP, S_Mg, S_K (PHA and PAO would have zero charge)
+            # # Step 0: snapshot of charged components
+            # # _ions = np.array([S_IN, S_IC, S_ac, S_pro, S_bu, S_va])
+            # _ions = np.array([S_IN, S_IC, S_IP, X_PP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
             
-            # Step 1a: convert biomass and inert particulates into X_S and X_I 
+            # # Step 1a: convert biomass and inert particulates into X_S and X_I 
             
-            # What is available
-            bio_cod = X_su + X_aa + X_fa + X_c4 + X_pro + X_ac + X_h2
-            bio_n = sum((adm_vals*adm_i_N)[adm_bio_N_indices])
-            bio_p = sum((adm_vals*adm_i_P)[adm_bio_P_indices])
+            # # What is available
+            # bio_cod = X_su + X_aa + X_fa + X_c4 + X_pro + X_ac + X_h2
+            # bio_n = sum((adm_vals*adm_i_N)[adm_bio_N_indices])
+            # bio_p = sum((adm_vals*adm_i_P)[adm_bio_P_indices])
             
             
-            #!!! In default ASM2d stoichiometry, biomass decay (cell lysis)
-            #!!! yields 90% particulate substrate + 10% X_I
-            #!!! so: convert both biomass and X_I in adm to X_S and X_I in asm
+            # #!!! In default ASM2d stoichiometry, biomass decay (cell lysis)
+            # #!!! yields 90% particulate substrate + 10% X_I
+            # #!!! so: convert both biomass and X_I in adm to X_S and X_I in asm
             
-            # What is available
-            xi_n = X_I*adm_X_I_i_N
-            xi_p = X_I*adm_X_I_i_P
+            # # What is available
+            # xi_n = X_I*adm_X_I_i_N
+            # xi_p = X_I*adm_X_I_i_P
         
-            # What would be formed by X_S
-            xs_cod = bio_cod * self.bio_to_xs
-            xs_ndm = xs_cod * X_S_i_N
-            xs_pdm = xs_cod * X_S_i_P
+            # # What would be formed by X_S
+            # xs_cod = bio_cod * self.bio_to_xs
+            # xs_ndm = xs_cod * X_S_i_N
+            # xs_pdm = xs_cod * X_S_i_P
             
-            # What would be formed by X_I (ASM2d)
-            xi_cod = bio_cod * (1 - self.bio_to_xs) + X_I
-            xi_ndm = xi_cod * asm_X_I_i_N
-            xi_pdm = xi_cod * asm_X_I_i_P
+            # # What would be formed by X_I (ASM2d)
+            # xi_cod = bio_cod * (1 - self.bio_to_xs) + X_I
+            # xi_ndm = xi_cod * asm_X_I_i_N
+            # xi_pdm = xi_cod * asm_X_I_i_P
             
-            # MAPPING OF X_S
+            # # MAPPING OF X_S
             
-            # Case I: Both bio_N and bio_P are sufficient 
-            if xs_ndm <= bio_n and xs_pdm <= bio_p:
-                X_S = xs_cod
-                xs_cod = 0
-                bio_n -= xs_ndm
-                bio_p -= xs_pdm
-            else:
-            # Case II, III, and, IV: At least one of the two biological N/P is not sufficient
-                if bio_p / X_S_i_P > bio_n / X_S_i_N:
-                    warn('Not enough biomass N to map the specified proportion of '
-                         'biomass COD into X_S. Rest of the biomass COD goes to S_A in last step')
-                    X_S = bio_n / X_S_i_N
-                    xs_cod -= X_S
-                    bio_n = 0
-                    bio_p -= X_S*X_S_i_P #mathematically, bio_p can become negative at this point
-                    if bio_p < 0:
-                        S_IP += bio_p
-                        bio_p = 0
-                else:
-                    warn('Not enough biomass P to map the specified proportion of '
-                         'biomass COD into X_S. Rest of the biomass COD goes to S_A in last step')
-                    X_S = bio_p / X_S_i_P
-                    xs_cod -= X_S
-                    bio_p = 0
-                    bio_n -= X_S*X_S_i_N #mathematically, bio_n can become negative at this point
-                    if bio_n < 0:
-                        S_IN += bio_n
-                        bio_n = 0
+            # # Case I: Both bio_N and bio_P are sufficient 
+            # if xs_ndm <= bio_n and xs_pdm <= bio_p:
+            #     X_S = xs_cod
+            #     xs_cod = 0
+            #     bio_n -= xs_ndm
+            #     bio_p -= xs_pdm
+            # else:
+            # # Case II, III, and, IV: At least one of the two biological N/P is not sufficient
+            #     if bio_p / X_S_i_P > bio_n / X_S_i_N:
+            #         warn('Not enough biomass N to map the specified proportion of '
+            #              'biomass COD into X_S. Rest of the biomass COD goes to S_A in last step')
+            #         X_S = bio_n / X_S_i_N
+            #         xs_cod -= X_S
+            #         bio_n = 0
+            #         bio_p -= X_S*X_S_i_P #mathematically, bio_p can become negative at this point
+            #         if bio_p < 0:
+            #             S_IP += bio_p
+            #             bio_p = 0
+            #     else:
+            #         warn('Not enough biomass P to map the specified proportion of '
+            #              'biomass COD into X_S. Rest of the biomass COD goes to S_A in last step')
+            #         X_S = bio_p / X_S_i_P
+            #         xs_cod -= X_S
+            #         bio_p = 0
+            #         bio_n -= X_S*X_S_i_N #mathematically, bio_n can become negative at this point
+            #         if bio_n < 0:
+            #             S_IN += bio_n
+            #             bio_n = 0
                     
             
-            # MAPPING OF X_I
+            # # MAPPING OF X_I
             
-            if xi_ndm < bio_n + xi_n + S_IN and xi_pdm < bio_p + xi_p + S_IP:
+            # if xi_ndm < bio_n + xi_n + S_IN and xi_pdm < bio_p + xi_p + S_IP:
                 
-                X_I = xi_cod
-                xi_cod = 0
+            #     X_I = xi_cod
+            #     xi_cod = 0
                 
-                xi_n -= xi_ndm
-                if xi_n < 0:
-                    bio_n += xi_n
-                    xi_n = 0
-                    if bio_n < 0:
-                        S_IN += bio_n
-                        bio_n = 0
+            #     xi_n -= xi_ndm
+            #     if xi_n < 0:
+            #         bio_n += xi_n
+            #         xi_n = 0
+            #         if bio_n < 0:
+            #             S_IN += bio_n
+            #             bio_n = 0
                 
-                xi_p -= xi_pdm
-                if xi_p < 0:
-                    bio_p += xi_p
-                    xi_p = 0
-                    if bio_p < 0:
-                        S_IP += bio_p
-                        bio_p = 0
+            #     xi_p -= xi_pdm
+            #     if xi_p < 0:
+            #         bio_p += xi_p
+            #         xi_p = 0
+            #         if bio_p < 0:
+            #             S_IP += bio_p
+            #             bio_p = 0
                         
-            else:
-                if (bio_p + xi_p + S_IP) / asm_X_I_i_P  >  (bio_n + xi_n + S_IN) / asm_X_I_i_N:
+            # else:
+            #     if (bio_p + xi_p + S_IP) / asm_X_I_i_P  >  (bio_n + xi_n + S_IN) / asm_X_I_i_N:
                     
-                    warn('Not enough N in biomass and X_I to map the specified proportion of'
-                         'biomass COD into X_I. Rest of the biomass COD goes to S_A')
-                    X_I =  (bio_n + xi_n + S_IN) / asm_X_I_i_N
-                    xi_cod -= X_I
+            #         warn('Not enough N in biomass and X_I to map the specified proportion of'
+            #              'biomass COD into X_I. Rest of the biomass COD goes to S_A')
+            #         X_I =  (bio_n + xi_n + S_IN) / asm_X_I_i_N
+            #         xi_cod -= X_I
                     
-                    bio_n = xi_n = S_IN = 0
+            #         bio_n = xi_n = S_IN = 0
                     
-                    xi_p -= X_I*asm_X_I_i_P
-                    if xi_p < 0:
-                        bio_p += xi_p
-                        xi_p = 0
-                        if bio_p < 0:
-                            S_IP += bio_p
-                            bio_p = 0
+            #         xi_p -= X_I*asm_X_I_i_P
+            #         if xi_p < 0:
+            #             bio_p += xi_p
+            #             xi_p = 0
+            #             if bio_p < 0:
+            #                 S_IP += bio_p
+            #                 bio_p = 0
                 
-                else:
+            #     else:
                     
-                    warn('Not enough P in biomass and X_I to map the specified proportion of'
-                         'biomass COD into X_I. Rest of the biomass COD goes to S_A')
-                    X_I =  (bio_p + xi_p + S_IP) / asm_X_I_i_P
-                    xi_cod -= X_I
+            #         warn('Not enough P in biomass and X_I to map the specified proportion of'
+            #              'biomass COD into X_I. Rest of the biomass COD goes to S_A')
+            #         X_I =  (bio_p + xi_p + S_IP) / asm_X_I_i_P
+            #         xi_cod -= X_I
                     
-                    bio_p = xi_p = S_IP = 0
+            #         bio_p = xi_p = S_IP = 0
                     
-                    xi_n -= X_I*asm_X_I_i_N
-                    if xi_n < 0:
-                        bio_n += xi_n
-                        xi_n = 0
-                        if bio_n < 0:
-                            S_IN += bio_n
-                            bio_n = 0
+            #         xi_n -= X_I*asm_X_I_i_N
+            #         if xi_n < 0:
+            #             bio_n += xi_n
+            #             xi_n = 0
+            #             if bio_n < 0:
+            #                 S_IN += bio_n
+            #                 bio_n = 0
             
-            # Step 1b: convert particulate substrates into X_S
+            # # Step 1b: convert particulate substrates into X_S
                 
-            xsub_cod = X_ch + X_pr + X_li 
-            xsub_n = X_pr*X_pr_i_N
-            xsub_p = X_pr*X_pr_i_P
+            # xsub_cod = X_ch + X_pr + X_li 
+            # xsub_n = X_pr*X_pr_i_N
+            # xsub_p = X_pr*X_pr_i_P
             
-            xs_ndm = xsub_cod * X_S_i_N
-            xs_pdm = xsub_cod * X_S_i_P
+            # xs_ndm = xsub_cod * X_S_i_N
+            # xs_pdm = xsub_cod * X_S_i_P
             
-            if xs_ndm <= xsub_n + bio_n and xs_pdm <= xsub_p + bio_p:
-                X_S += xsub_cod
-                xsub_cod = 0
-                xsub_n -= xs_ndm
-                xsub_p -= xs_pdm
-            else:
-                if (xsub_n + bio_n)/X_S_i_N < (xsub_p + bio_p)/X_S_i_P:
-                    X_S_temp = (xsub_n + bio_n)/X_S_i_N 
-                    X_S += X_S_temp
-                    xsub_cod -= X_S_temp
-                    xsub_n = bio_n = 0
+            # if xs_ndm <= xsub_n + bio_n and xs_pdm <= xsub_p + bio_p:
+            #     X_S += xsub_cod
+            #     xsub_cod = 0
+            #     xsub_n -= xs_ndm
+            #     xsub_p -= xs_pdm
+            # else:
+            #     if (xsub_n + bio_n)/X_S_i_N < (xsub_p + bio_p)/X_S_i_P:
+            #         X_S_temp = (xsub_n + bio_n)/X_S_i_N 
+            #         X_S += X_S_temp
+            #         xsub_cod -= X_S_temp
+            #         xsub_n = bio_n = 0
                     
-                    xsub_p -= X_S_temp*X_S_i_P
-                    if xsub_p < 0: 
-                        bio_p += xsub_p
-                        xsub_p = 0
+            #         xsub_p -= X_S_temp*X_S_i_P
+            #         if xsub_p < 0: 
+            #             bio_p += xsub_p
+            #             xsub_p = 0
                     
-                else: 
-                    X_S_temp = (xsub_p + bio_p)/X_S_i_P
-                    X_S += X_S_temp
-                    xsub_cod -= X_S_temp
-                    xsub_p = bio_p = 0
+            #     else: 
+            #         X_S_temp = (xsub_p + bio_p)/X_S_i_P
+            #         X_S += X_S_temp
+            #         xsub_cod -= X_S_temp
+            #         xsub_p = bio_p = 0
                     
-                    xsub_n -= X_S_temp*X_S_i_N
-                    if xsub_n < 0: 
-                        bio_n += xsub_n
-                        xsub_n = 0
+            #         xsub_n -= X_S_temp*X_S_i_N
+            #         if xsub_n < 0: 
+            #             bio_n += xsub_n
+            #             xsub_n = 0
             
-            # P balance not required as S_su, S_aa, S_fa do not have P
-            ssub_cod = S_su + S_aa + S_fa
-            ssub_n = S_aa * S_aa_i_N
-            ssub_p = S_aa * S_aa_i_P # which would be 0
+            # # P balance not required as S_su, S_aa, S_fa do not have P
+            # ssub_cod = S_su + S_aa + S_fa
+            # ssub_n = S_aa * S_aa_i_N
+            # ssub_p = S_aa * S_aa_i_P # which would be 0
             
-            sf_ndm = ssub_cod * S_F_i_N
-            sf_pdm = ssub_cod * S_F_i_P
+            # sf_ndm = ssub_cod * S_F_i_N
+            # sf_pdm = ssub_cod * S_F_i_P
             
-            if sf_ndm <= ssub_n + xsub_n + bio_n and sf_pdm <= ssub_p + xsub_p + bio_p:
+            # if sf_ndm <= ssub_n + xsub_n + bio_n and sf_pdm <= ssub_p + xsub_p + bio_p:
                 
-                S_F = ssub_cod
-                ssub_cod = 0
+            #     S_F = ssub_cod
+            #     ssub_cod = 0
                 
-                ssub_n -= sf_ndm
-                if ssub_n < 0:
-                    xsub_n += ssub_n
-                    ssub_n = 0
-                    if xsub_n < 0:
-                        bio_n += xsub_n
-                        xsub_n = 0
+            #     ssub_n -= sf_ndm
+            #     if ssub_n < 0:
+            #         xsub_n += ssub_n
+            #         ssub_n = 0
+            #         if xsub_n < 0:
+            #             bio_n += xsub_n
+            #             xsub_n = 0
                         
-                ssub_p -= sf_pdm
-                if ssub_p < 0:
-                    xsub_p += ssub_p
-                    ssub_p = 0
-                    if xsub_p < 0:
-                        bio_p += xsub_p
-                        xsub_p = 0
+            #     ssub_p -= sf_pdm
+            #     if ssub_p < 0:
+            #         xsub_p += ssub_p
+            #         ssub_p = 0
+            #         if xsub_p < 0:
+            #             bio_p += xsub_p
+            #             xsub_p = 0
                         
-            else:
-                if (ssub_n + xsub_n + bio_n) / S_F_i_N < (ssub_p + xsub_p + bio_p) / S_F_i_P:
+            # else:
+            #     if (ssub_n + xsub_n + bio_n) / S_F_i_N < (ssub_p + xsub_p + bio_p) / S_F_i_P:
                     
-                    S_F = (ssub_n + xsub_n + bio_n) / S_F_i_N
-                    ssub_cod -= S_F
-                    ssub_n = xsub_n = bio_n = 0
+            #         S_F = (ssub_n + xsub_n + bio_n) / S_F_i_N
+            #         ssub_cod -= S_F
+            #         ssub_n = xsub_n = bio_n = 0
                     
-                    ssub_p -= S_F*S_F_i_P
+            #         ssub_p -= S_F*S_F_i_P
                     
-                    if ssub_p < 0:
-                        xsub_p += ssub_p
-                        ssub_p = 0
-                        if xsub_p < 0:
-                            bio_p += xsub_p
-                            xsub_p = 0
+            #         if ssub_p < 0:
+            #             xsub_p += ssub_p
+            #             ssub_p = 0
+            #             if xsub_p < 0:
+            #                 bio_p += xsub_p
+            #                 xsub_p = 0
                             
-                else:
+            #     else:
                     
-                    S_F = (ssub_p + xsub_p + bio_p) / S_F_i_P
-                    ssub_cod -= S_F
-                    ssub_p = xsub_p = bio_p = 0
+            #         S_F = (ssub_p + xsub_p + bio_p) / S_F_i_P
+            #         ssub_cod -= S_F
+            #         ssub_p = xsub_p = bio_p = 0
                     
-                    ssub_n -= S_F*S_F_i_N
+            #         ssub_n -= S_F*S_F_i_N
                     
-                    if ssub_n < 0:
-                        xsub_n += ssub_n
-                        ssub_n = 0
-                        if xsub_n < 0:
-                            bio_n += xsub_n
-                            xsub_n = 0
+            #         if ssub_n < 0:
+            #             xsub_n += ssub_n
+            #             ssub_n = 0
+            #             if xsub_n < 0:
+            #                 bio_n += xsub_n
+            #                 xsub_n = 0
                 
-            # N and P balance not required as S_su, S_aa, S_fa do not have N and P
-            S_A = S_ac + S_pro + S_bu + S_va
+            # # N and P balance not required as S_su, S_aa, S_fa do not have N and P
+            # S_A = S_ac + S_pro + S_bu + S_va
             
-            si_cod = S_I    
-            si_n = S_I * adm_S_I_i_N
-            si_p = S_I * adm_S_I_i_P
+            # si_cod = S_I    
+            # si_n = S_I * adm_S_I_i_N
+            # si_p = S_I * adm_S_I_i_P
             
-            si_ndm = si_cod * asm_S_I_i_N
-            si_pdm = si_cod * asm_S_I_i_P
+            # si_ndm = si_cod * asm_S_I_i_N
+            # si_pdm = si_cod * asm_S_I_i_P
             
-            if si_ndm <= si_n + xi_n + S_IN and si_pdm <= si_p + xi_p + S_IP:
-                S_I = si_cod
-                si_cod = 0
-                si_n -= si_ndm
-                if si_n < 0:
-                    xi_n += si_n
-                    si_n = 0
-                    if xi_n < 0:
-                        S_IN += xi_n
-                        xi_n = 0
-                si_p -= si_pdm
-                if si_p < 0:
-                    xi_p += si_p
-                    si_p = 0
-                    if xi_p < 0:
-                        S_IP += xi_p
-                        xi_p = 0
-            else:
-                if (si_n + xi_n + S_IN) / asm_S_I_i_N < (si_p + xi_p + S_IP) / asm_S_I_i_P:
-                    S_I = (si_n + xi_n + S_IN) / asm_S_I_i_N
-                    si_cod -= S_I
-                    si_n = xi_n = S_IN = 0
-                    si_p -= S_I * asm_S_I_i_P
-                    if si_p < 0:
-                        xi_p += si_p
-                        si_p = 0
-                        if xi_p < 0:
-                            S_IP += xi_p
-                            xi_p = 0
-                else:
-                    S_I = (si_p + xi_p + S_IP) / asm_S_I_i_P
-                    si_cod -= S_I
-                    si_p = xi_p = S_IP = 0
-                    si_n -= S_I * asm_S_I_i_N
-                    if si_n < 0:
-                        xi_n += si_n
-                        si_n = 0
-                        if xi_n < 0:
-                            S_IN += xi_n
-                            xi_n = 0
+            # if si_ndm <= si_n + xi_n + S_IN and si_pdm <= si_p + xi_p + S_IP:
+            #     S_I = si_cod
+            #     si_cod = 0
+            #     si_n -= si_ndm
+            #     if si_n < 0:
+            #         xi_n += si_n
+            #         si_n = 0
+            #         if xi_n < 0:
+            #             S_IN += xi_n
+            #             xi_n = 0
+            #     si_p -= si_pdm
+            #     if si_p < 0:
+            #         xi_p += si_p
+            #         si_p = 0
+            #         if xi_p < 0:
+            #             S_IP += xi_p
+            #             xi_p = 0
+            # else:
+            #     if (si_n + xi_n + S_IN) / asm_S_I_i_N < (si_p + xi_p + S_IP) / asm_S_I_i_P:
+            #         S_I = (si_n + xi_n + S_IN) / asm_S_I_i_N
+            #         si_cod -= S_I
+            #         si_n = xi_n = S_IN = 0
+            #         si_p -= S_I * asm_S_I_i_P
+            #         if si_p < 0:
+            #             xi_p += si_p
+            #             si_p = 0
+            #             if xi_p < 0:
+            #                 S_IP += xi_p
+            #                 xi_p = 0
+            #     else:
+            #         S_I = (si_p + xi_p + S_IP) / asm_S_I_i_P
+            #         si_cod -= S_I
+            #         si_p = xi_p = S_IP = 0
+            #         si_n -= S_I * asm_S_I_i_N
+            #         if si_n < 0:
+            #             xi_n += si_n
+            #             si_n = 0
+            #             if xi_n < 0:
+            #                 S_IN += xi_n
+            #                 xi_n = 0
             
-            S_NH4 = S_IN + si_n + ssub_n + xsub_n + xi_n + bio_n
-            S_PO4 = S_IP + si_p + ssub_p + xsub_p + xi_p + bio_p
-            S_A += si_cod + ssub_cod + xsub_cod + xi_cod + xs_cod
+            # S_NH4 = S_IN + si_n + ssub_n + xsub_n + xi_n + bio_n
+            # S_PO4 = S_IP + si_p + ssub_p + xsub_p + xi_p + bio_p
+            # S_A += si_cod + ssub_cod + xsub_cod + xi_cod + xs_cod
             
             # Step 6: check COD and TKN balance
             asm_vals = np.array(([
@@ -2253,54 +2322,47 @@ class mADM1toASM2d(mADMjunction):
                 S_NH4, 
                 0, # S_NO3
                 S_PO4, S_F, S_A, S_I, 
-                0,  # S_ALK(for now)
+                S_ALK,
                 X_I, X_S, 
                 0,  # X_H,
-                X_PAO, X_PP, X_PHA, # directly mapped 
+                0,0,0,# X_PAO, X_PP, X_PHA, # directly mapped 
                 0, # X_AUT,
                 X_MeOH, X_MeP, H2O])) # directly mapped
-            
-            if S_h2 > 0 or S_ch4 > 0:
-                warn('Ignored dissolved H2 or CH4.')
-            
+                      
             asm_vals = f_corr(adm_vals, asm_vals)
             
-            # Step 5: charge balance for alkalinity
+            # # Step 5: charge balance for alkalinity
             
-            # asm_ions_idx = cmps_asm.indices(('S_NH4', 'S_A', 'S_NO3', 'S_PO4', 'X_PP', 'S_ALK'))
+            # # asm_ions_idx = cmps_asm.indices(('S_NH4', 'S_A', 'S_NO3', 'S_PO4', 'X_PP', 'S_ALK'))
             
-            S_NH4 = asm_vals[asm_ions_idx[0]]
-            S_A = asm_vals[asm_ions_idx[1]]
-            S_NO3 = asm_vals[asm_ions_idx[2]]
-            S_PO4 = asm_vals[asm_ions_idx[3]]
-            X_PP = asm_vals[asm_ions_idx[4]]
+            # S_NH4 = asm_vals[asm_ions_idx[0]]
+            # S_A = asm_vals[asm_ions_idx[1]]
+            # S_NO3 = asm_vals[asm_ions_idx[2]]
+            # S_PO4 = asm_vals[asm_ions_idx[3]]
+            # X_PP = asm_vals[asm_ions_idx[4]]
             
-            # Need to include S_K, S_Mg in the charge balance
+            # # Need to include S_K, S_Mg in the charge balance
             
-            # _ions = np.array([S_IN, S_IC, S_ac, S_pro, S_bu, S_va])
-            # S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC], alpha_vfa)) - S_NH/14)*(-12)
+            # # _ions = np.array([S_IN, S_IC, S_ac, S_pro, S_bu, S_va])
+            # # S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC], alpha_vfa)) - S_NH/14)*(-12)
             
-            # _ions = np.array([S_IN, S_IC, S_IP, X_PP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
+            # # _ions = np.array([S_IN, S_IC, S_IP, X_PP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
             
-            S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC, alpha_IP, -1/31, 2, 1],  alpha_vfa)) - (S_NH4/14 - S_A/64 - S_NO3/14 -1.5*S_PO4/31 - X_PP/31))*(-12)
+            # S_ALK = (sum(_ions * np.append([alpha_IN, alpha_IC, alpha_IP, -1/31, 2, 1],  alpha_vfa)) - (S_NH4/14 - S_A/64 - S_NO3/14 -1.5*S_PO4/31 - X_PP/31))*(-12)
     
-            asm_vals[asm_ions_idx[5]] = S_ALK
+            # asm_vals[asm_ions_idx[5]] = S_ALK
             
             return asm_vals
         
         self._reactions = madm12asm2d
     
-    @property
-    def alpha_vfa(self):
-        return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[4:]-self.pH)))
 
 #%% ASM2dtomADM1
 
-# While using this interface X_I.i_N in ASM2d should be 0.06, instead of 0.02. 
 class ASM2dtomADM1(mADMjunction):
     '''
     Interface unit to convert ASM2d state variables
-    to ADM1 components, following the A1 scenario in [1]_.
+    to ADM1 components, following the A1 scenario in [2]_.
     
     Parameters
     ----------
@@ -2313,11 +2375,6 @@ class ASM2dtomADM1(mADMjunction):
     xs_to_li : float
         Split of slowly biodegradable substrate COD to lipid, 
         after all N is mapped into protein.
-    bio_to_li : float
-        Split of biomass COD to lipid, after all biomass N is
-        mapped into protein.
-    frac_deg : float
-        Biodegradable fraction of biomass COD.
     rtol : float
         Relative tolerance for COD and TKN balance.
     atol : float
@@ -2336,11 +2393,10 @@ class ASM2dtomADM1(mADMjunction):
     
     See Also
     --------
-    :class:`qsdsan.sanunits.ADMjunction`
+    :class:`qsdsan.sanunits.mADMjunction`
     
-    :class:`qsdsan.sanunits.ADMtoASM` 
+    :class:`qsdsan.sanunits.mADM1toASM2d` 
     
-    `math.isclose <https://docs.python.org/3.8/library/math.html#math.isclose>`
     '''    
     # User defined values
     xs_to_li = 0.7
@@ -2462,6 +2518,7 @@ class ASM2dtomADM1(mADMjunction):
 
         cmps_asm = self.ins[0].components
         cmps_adm = self.outs[0].components
+        self.check_component_properties(cmps_asm, cmps_adm)
         
         # # For COD balance 
         # S_NO3_i_COD = cmps_asm.S_NO3.i_COD
@@ -2500,34 +2557,6 @@ class ASM2dtomADM1(mADMjunction):
         #     asm_S_I_i_P = cmps_asm.S_I.i_P
         # else:
         #     asm_S_I_i_P = self.asm_S_I_i_P
-        get = getattr
-        setv = setattr
-        for name in ('X_PHA', 'X_PP', 'X_PAO', 'X_MeOH', 'X_MeP'):
-            casm = get(cmps_asm, name)
-            cadm = get(cmps_adm, name)
-            for attr in ('measured_as', 'i_COD', 'i_N', 'i_P'):
-                vasm = get(casm, attr)
-                if get(cadm, attr) != vasm:
-                    setv(cadm, attr, vasm)
-                    warn(f"ADM component {name}'s {attr} is changed to match "
-                         "the corresponding ASM component")
-        
-        for name in ('S_I', 'X_I'):
-            casm = get(cmps_asm, name)
-            cadm = get(cmps_adm, name)
-            for attr in ('measured_as', 'i_N', 'i_P'):
-                vadm = get(cadm, attr)
-                if get(casm, attr) != vadm:
-                    setv(casm, attr, vadm)
-                    warn(f"ASM component {name}'s {attr} is changed to match "
-                         "the corresponding ADM component")        
-        
-        for attr in ('i_N', 'i_P'):
-            vadm = get(cmps_adm.S_ac, attr)
-            if get(cmps_asm.S_A, attr) != vadm:
-                cmps_asm.S_A.i_N = vadm
-                warn(f"ASM component S_A's {attr} is changed to match "
-                     "the ADM component S_ac.") 
         
         # if cmps_asm.S_A.i_N > 0: 
         #     warn(f'S_A in ASM has positive nitrogen content: {cmps_asm.S_S.i_N} gN/gCOD. '
@@ -2539,8 +2568,7 @@ class ASM2dtomADM1(mADMjunction):
         #          'These phosphorous will be ignored by the interface model '
         #          'and could lead to imbalance of TP after conversion.')
 
-        cmps_asm.refresh_constants()
-        cmps_adm.refresh_constants()
+
         # ------------------------------Rai Version---------------------------------------------
         # if cmps_asm.S_I.i_P > 0:
         #     warn(f'S_I in ASM has positive phosphorous content: {cmps_asm.S_I.i_P} gN/gCOD. '
