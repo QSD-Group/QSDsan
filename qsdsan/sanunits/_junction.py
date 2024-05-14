@@ -377,20 +377,15 @@ class mADMjunction(ADMjunction):
     atol = 1e-6
     cod_vfa = np.array([64, 112, 160, 208])
 
-    # def __init__(self, ID='', upstream=None, downstream=(), thermo=None,
-    #              init_with='WasteStream', F_BM_default=None, isdynamic=False,
-    #              adm1_model=None):
-    #     self.adm1_model = adm1_model # otherwise there won't be adm1_model when `_compile_reactions` is called
+    def __init__(self, ID='', upstream=None, downstream=(), thermo=None,
+                 init_with='WasteStream', F_BM_default=None, isdynamic=False,
+                 adm1_model=None, asm2d_model=None):
+        self.asm2d_model = asm2d_model
+        super().__init__(ID=ID, upstream=upstream, downstream=downstream,
+                         thermo=thermo, init_with=init_with, 
+                         F_BM_default=F_BM_default, isdynamic=isdynamic,
+                         adm1_model=adm1_model)
         
-    #     if thermo is None:
-    #         warn('No `thermo` object is provided and is prone to raise error. '
-    #              'If you are not sure how to get the `thermo` object, '
-    #              'use `thermo = qsdsan.set_thermo` after setting thermo with the `Components` object.')
-    #     super().__init__(ID=ID, upstream=upstream, downstream=downstream,
-    #                      thermo=thermo, init_with=init_with, 
-    #                      F_BM_default=F_BM_default, isdynamic=isdynamic)
-        
-   
     # @property
     # def T(self):
     #     '''[float] Temperature of the upstream/downstream [K].'''
@@ -1896,8 +1891,8 @@ class mADM1toASM2d(mADMjunction):
         # rtol = self.rtol
         # atol = self.atol
         
-        cmps_asm = self.ins[0].components
-        cmps_adm = self.outs[0].components
+        cmps_adm = self.ins[0].components
+        cmps_asm = self.outs[0].components
         self.check_component_properties(cmps_asm, cmps_adm)
         
         _asm_ids = cmps_asm.indices(['S_F', 'X_S', 'S_A'])
