@@ -2002,7 +2002,7 @@ class mADM1toASM2d(mADMjunction):
                 
             # PROCESS 1: decay of biomas, X_PP, X_PHA
             bio_xpp_pha = _adm_vals[adm_p1_idx]
-            _adm_vals += bio_xpp_pha * decay_stoichio
+            _adm_vals += np.dot(bio_xpp_pha, decay_stoichio)
             
             # PROCESS 2: strip biogas. Omitted because no S_ch4 or S_h2 in ASM2d components
             
