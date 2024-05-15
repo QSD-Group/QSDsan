@@ -12,14 +12,13 @@ for license details.
 
 from .. import SanUnit, WasteStream, Process, Processes, CompiledProcesses
 from ._clarifier import _settling_flux
-from ..sanunits import dydt_cstr
 from sympy import symbols, lambdify, Matrix
 from scipy.integrate import solve_ivp
 from warnings import warn
 from math import floor, ceil
 import numpy as np
 import pandas as pd
-# from numba import njit
+from numba import njit
 
 __all__ = ('CSTR',
            'BatchExperiment',
@@ -36,7 +35,29 @@ def _add_aeration_to_growth_model(aer, model):
         processes.compile()
     return processes
 
+# %%
 
+@njit(cache=True)
+def dydt_cstr_no_rxn_fixed_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, QC):
+    Q_ins = QC_ins[:, -1]
+    C_ins = QC_ins[:, :-1]
+    flow_in = Q_ins @ C_ins / V_arr
+    Q_e_arr[:] = Q_ins.sum(axis=0)
+    # Q_e_arr[:] = QC[-1]
+    _dstate[-1] = dQC_ins[:, -1].sum(axis=0)
+    flow_out = Q_e_arr * QC[:-1] / V_arr
+    _dstate[:-1] = flow_in - flow_out
+
+@njit(cache=True)
+def dydt_cstr_no_rxn_controlled_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, QC):
+    Q_ins = QC_ins[:, -1]
+    C_ins = QC_ins[:, :-1]
+    flow_in = Q_ins @ C_ins / V_arr
+    Q_e_arr[:] = Q_ins.sum(axis=0)
+    # Q_e_arr[:] = QC[-1]
+    _dstate[-1] = dQC_ins[:, -1].sum(axis=0)
+    flow_out = Q_e_arr * QC[:-1] / V_arr
+    _dstate[:-1] = flow_in - flow_out
 
 #%%
 class CSTR(SanUnit):
@@ -263,7 +284,6 @@ class CSTR(SanUnit):
 
     def _update_state(self):
         arr = self._state
-        arr[-1] = sum(ws.state[-1] for ws in self.ins)
         if self.split is None: self._outs[0].state = arr
         else:
             for ws, spl in zip(self._outs, self.split):
@@ -317,7 +337,8 @@ class CSTR(SanUnit):
 
         _dstate = self._dstate
         _update_dstate = self._update_dstate
-        V = self._V_max
+        V_arr = np.full(m, self._V_max)
+        Q_e_arr = np.zeros(m)
         hasexo = bool(len(self._exovars))
         f_exovars = self.eval_exo_dynamic_vars
         
@@ -326,14 +347,14 @@ class CSTR(SanUnit):
             fixed_DO = self._aeration
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 QC[i] = fixed_DO
-                dydt_cstr(QC_ins, QC, V, _dstate)
+                dydt_cstr_no_rxn_controlled_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, QC)
                 if hasexo: QC = np.append(QC, f_exovars(t))
                 _dstate[:-1] += r(QC)
                 _dstate[i] = 0
                 _update_dstate()
         else:
             def dy_dt(t, QC_ins, QC, dQC_ins):
-                dydt_cstr(QC_ins, QC, V, _dstate)
+                dydt_cstr_no_rxn_fixed_aer(QC_ins, dQC_ins, V_arr, Q_e_arr, _dstate, QC)
                 if hasexo: QC = np.append(QC, f_exovars(t))
                 _dstate[:-1] += r(QC)
                 _update_dstate()

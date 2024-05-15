@@ -17,12 +17,10 @@ for license details.
 
 from numpy import maximum as npmax, minimum as npmin, exp as npexp
 from warnings import warn
-from numba import njit
 from .. import SanUnit, WasteStream
 import numpy as np
 from ..sanunits import WWTpump
 from ..sanunits._pumping import default_F_BM as default_WWTpump_F_BM
-from ..sanunits import dydt_cstr
 
 __all__ = ('FlatBottomCircularClarifier',
            'IdealClarifier',
@@ -54,18 +52,11 @@ default_F_BM = {
 default_F_BM.update(default_WWTpump_F_BM)
 
 #%% Takács Clarifer
-@njit(cache=True)
+
 def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp, n0):
     X_star = npmax(X-X_min, n0)
     v = npmin(v_max_practical, v_max*(npexp(-rh*X_star) - npexp(-rp*X_star)))
     return X*npmax(v, n0)
-
-# from math import exp
-# def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp, n0):
-#     X_star = max(X-X_min, 0)
-#     v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star)))
-#     return X*max(v, 0)
-
 
 class FlatBottomCircularClarifier(SanUnit):
     """
@@ -383,9 +374,7 @@ class FlatBottomCircularClarifier(SanUnit):
         arr = self._state
         x = self.components.x
         n = self._N_layer
-        arr[-(1+n)] = Q_in = self._ins_QC[0, -1]
-        Q_e = Q_in - self._Qras - self._Qwas
-        # Q_e = arr[-(1+n)] - self._Qras - self._Qwas
+        Q_e = arr[-(1+n)] - self._Qras - self._Qwas
         Z = arr[:len(x)]
         inf, = self.ins
         imass = self.components.i_mass
@@ -483,28 +472,22 @@ class FlatBottomCircularClarifier(SanUnit):
         settle_in = nzeros.copy()
 
         # Make these constants into arrays so it'll be faster in `dy_dt`
-        # vmax_arr = np.full_like(nzeros, self._v_max)
-        # vmaxp_arr = np.full_like(nzeros, self._v_max_p)
-        # rh_arr = np.full_like(nzeros, self._rh)
-        # rp_arr = np.full_like(nzeros, self._rp)
-        vmax_arr = self._v_max
-        vmaxp_arr = self._v_max_p
-        rh_arr = self._rh
-        rp_arr = self._rp
+        vmax_arr = np.full_like(nzeros, self._v_max)
+        vmaxp_arr = np.full_like(nzeros, self._v_max_p)
+        rh_arr = np.full_like(nzeros, self._rh)
+        rp_arr = np.full_like(nzeros, self._rp)
         func_vx = lambda x_arr, xmin_arr : _settling_flux(x_arr, vmax_arr, vmaxp_arr, xmin_arr, rh_arr, rp_arr, nzeros)
-        
+       
         A, hj, V = self._A, self._hj, self._V
-        # A_arr = np.full_like(nzeros, A)
-        # hj_arr = np.full_like(nzeros, hj)
+        A_arr = np.full_like(nzeros, A)
+        hj_arr = np.full_like(nzeros, hj)
         J = np.zeros(n-1)
-        # X_t_arr = np.full(jf, self._X_t)
-        X_t = self._X_t
-        # Q_in_arr = np.zeros(m)
-        # V_arr = np.full(m, V)
+        X_t_arr = np.full(jf, self._X_t)
+        Q_in_arr = np.zeros(m)
+        V_arr = np.full(m, V)
 
         def dy_dt(t, QC_ins, QC, dQC_ins):
-            # dQC[-(n+1)] = dQC_ins[0,-1]
-            dQC[-(n+1)] = 0.
+            dQC[-(n+1)] = dQC_ins[0,-1]
             Q_in = QC_ins[0,-1]
             Q_e = Q_in - Q_s
             C_in = QC_ins[0,:-1]
@@ -526,13 +509,14 @@ class FlatBottomCircularClarifier(SanUnit):
             flow_in = X_rolled * Q_jout
             VX = func_vx(X, X_min_arr)
             J[:] = npmin(VX[:-1], VX[1:])
-            condition = (X_rolled[:jf]<X_t)
+            condition = (X_rolled[:jf]<X_t_arr)
             J[:jf][condition] = VX[:jf][condition]
             settle_out[:-1] = J
             settle_in[1:] = J
-            dQC[-n:] = ((flow_in - flow_out)/A + settle_in - settle_out)/hj       # (n,)
+            dQC[-n:] = ((flow_in - flow_out)/A_arr + settle_in - settle_out)/hj_arr       # (n,)
             #*********solubles**********
-            dQC[:m] = Q_in/V*(Z_in - Z)
+            Q_in_arr[:] = Q_in
+            dQC[:m] = Q_in_arr*(Z_in - Z)/V_arr
             # instrumental variables
             dX_comp[:] = (dC_in * X_in - dX_in * C_in) * x / X_in**2
             _update_dstate()
@@ -675,7 +659,7 @@ class FlatBottomCircularClarifier(SanUnit):
         # Criteria for downward velocity of flow determine 
         D['Downward flow velocity'] = self._downward_flow_velocity # in m/hr
         Center_feed_area = (D['Volumetric flow']/24)/D['Downward flow velocity'] # in m2
-        D['Center feed diameter'] = np.sqrt(4*Center_feed_area/np.pi)
+        D['Center feed diameter'] = np.sqrt(4*Center_feed_area/np.pi) 
 
         #Sanity check: Diameter of the center feed lies between 20-25% of tank diameter [2]
         if D['Center feed diameter'] < 0.20*D['Clarifier diameter'] or D['Center feed diameter']  > 0.25*D['Clarifier diameter']:
@@ -907,21 +891,16 @@ class PrimaryClarifierBSM2(SanUnit):
         Influent to the clarifier. Expected number of influent is 3.
     outs : class:`WasteStream`
         Sludge (uf) and treated effluent (of).
-    volume : float, optional
-        Clarifier volume, in m^3. The default is 900.
+    HRT : float
+        Hydraulic retention time in days. The default is 0.04268 days, based on IWA report.[1]
     ratio_uf : float
-        The volumetric ratio of sludge to primary influent. The default is 0.007, 
-        based on IWA report.[1]
-    mean_f_x : float, optional
-        The average fraction of particulate COD out of total COD in primary influent. 
-        The default is 0.85.
+        The ratio of sludge to primary influent. The default is 0.007, based on IWA report.[1]
     f_corr : float
-        Dimensionless correction factor for removal efficiency in the primary clarifier.[1]    
+        Dimensionless correction factor for removal efficiency in the primary clarifier.[1]
     cylindrical_depth : float, optional
         The depth of the cylindrical portion of clarifier [in m].  
     upflow_velocity : float, optional
-        Speed with which influent enters the center feed of the clarifier [m/hr]. 
-        The default is 43.2.
+        Speed with which influent enters the center feed of the clarifier [m/hr]. The default is 43.2.
     F_BM : dict
         Equipment bare modules.
 
@@ -933,12 +912,11 @@ class PrimaryClarifierBSM2(SanUnit):
     >>> set_thermo(cmps_test)
     >>> ws = WasteStream('ws', S_F = 10, S_NH4 = 20, X_OHO = 15, H2O=1000)
     >>> from qsdsan.sanunits import PrimaryClarifierBSM2
-    >>> PC = PrimaryClarifierBSM2(ID='PC', ins= (ws,), outs=('eff', 'sludge'),
-                                  isdynamic=False)
+    >>> PC = PrimaryClarifierBSM2(ID='PC', ins= (ws,), outs=('eff', 'sludge'))
     >>> PC.simulate()
-    >>> of, uf = PC.outs
+    >>> uf, of = PC.outs
     >>> uf.imass['X_OHO']/ws.imass['X_OHO'] # doctest: +ELLIPSIS
-    0.598...
+    0.280...
     >>> # PC.show()
    
     References
@@ -1145,8 +1123,16 @@ class PrimaryClarifierBSM2(SanUnit):
         V = self.V
         t_m = self.t_m
         def dy_dt(t, QC_ins, QC, dQC_ins):
-            dydt_cstr(QC_ins, QC, V, _dstate)
-            _dstate[-1] = (sum(QC_ins[:,-1])-QC[-1])/t_m
+            Q_ins = QC_ins[:, -1]
+            C_ins = QC_ins[:, :-1]
+            # dQ_ins = dQC_ins[:, -1]
+            # dC_ins = dQC_ins[:, :-1]
+            Q_in = Q_ins.sum()
+            C_in = Q_ins @ C_ins / Q_in
+            C = QC[:-1]
+            Q = QC[-1]
+            _dstate[:-1] = Q_in*(C_in - C)/V
+            _dstate[-1] = (Q_in-Q)/t_m
             _update_parameters()
             _update_dstate()
         self._ODE = dy_dt

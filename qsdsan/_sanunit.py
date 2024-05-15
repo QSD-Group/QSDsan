@@ -269,8 +269,7 @@ class SanUnit(Unit, isabstract=True):
             elif v == 'ss':
                 converted.append(SanStream.from_stream(stream=s))
             else:
-                if isa(s, WasteStream): converted.append(s)
-                else: converted.append(WasteStream.from_stream(stream=s))
+                converted.append(WasteStream.from_stream(stream=s))
 
         diff = len(converted) + len(missing) - len(streams)
         if diff != 0:
