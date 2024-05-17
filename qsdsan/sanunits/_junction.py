@@ -2320,7 +2320,7 @@ class mADM1toASM2d(mADMjunction):
                 S_ALK,
                 X_I, X_S, 
                 0,  # X_H,
-                0,0,0,# X_PAO, X_PP, X_PHA, # directly mapped 
+                X_PAO, X_PP, X_PHA, # directly mapped 
                 0, # X_AUT,
                 X_MeOH, X_MeP, H2O])) # directly mapped
                       
@@ -3036,4 +3036,462 @@ class ASM2dtomADM1(mADMjunction):
             
             return adm_vals
         
-        self._reactions = asm2d2madm1    
+        self._reactions = asm2d2madm1
+
+#%% ADM1ptoASM2d_A1
+class ADM1ptoASM2d_A1(mADMjunction):
+    '''
+    Interface unit to convert ADM1 state variables
+    to ASM2d components, following the A1 algorithm in [1]_.
+    
+    Parameters
+    ----------
+    upstream : stream or str
+        Influent stream with ADM components.
+    downstream : stream or str
+        Effluent stream with ASM components.
+    adm1_model : obj
+        The anaerobic digestion process model (:class:`qsdsan.processes.ADM1_p_extension`).
+    rtol : float
+        Relative tolerance for COD and TKN balance.
+    atol : float
+        Absolute tolerance for COD and TKN balance.
+    
+    References
+    ----------
+    [1] Flores-Alsina, X., Solon, K., Kazadi Mbamba, C., Tait, S., Gernaey, K. V., 
+    Jeppsson, U., & Batstone, D. J. (2016). Modelling phosphorus (P), sulfur (S) 
+    and iron (FE) interactions for dynamic simulations of anaerobic digestion processes. 
+    Water Research, 95, 370–382.
+    
+    See Also
+    --------
+    :class:`qsdsan.sanunits.mADMjunction`
+    
+    :class:`qsdsan.sanunits.ASM2dtoADM1p_A1`
+    '''
+    
+    def balance_cod_tkn(self, adm_vals, asm_vals):
+        cmps_adm = self.ins[0].components
+        cmps_asm = self.outs[0].components
+        asm_i_COD = cmps_asm.i_COD
+        adm_i_COD = cmps_adm.i_COD
+        gas_idx = cmps_adm.indices(('S_h2', 'S_ch4'))
+        
+        asm_i_N = cmps_asm.i_N
+        adm_i_N = cmps_adm.i_N    
+        asm_i_P = cmps_asm.i_P
+        adm_i_P = cmps_adm.i_P
+        adm_cod = sum(adm_vals*adm_i_COD) - sum(adm_vals[gas_idx])
+        adm_tkn = sum(adm_vals*adm_i_N)
+        adm_tp = sum(adm_vals*adm_i_P)
+        
+        cod_bl, cod_err, cod_tol, asm_cod = self.isbalanced(adm_cod, asm_vals, asm_i_COD)
+        tkn_bl, tkn_err, tkn_tol, asm_tkn = self.isbalanced(adm_tkn, asm_vals, asm_i_N)
+        tp_bl, tp_err, tp_tol, asm_tp = self.isbalanced(adm_tp, asm_vals, asm_i_P)
+        
+        if tkn_bl and tp_bl:
+            if cod_bl:
+                return asm_vals
+            else:
+                if cod_err > 0: dcod = -(cod_err - cod_tol)/asm_cod
+                else: dcod = -(cod_err + cod_tol)/asm_cod
+                _asm_vals = asm_vals * (1 + (asm_i_COD>0)*dcod)
+                _tkn_bl, _tkn_err, _tkn_tol, _asm_tkn = self.isbalanced(adm_tkn, _asm_vals, asm_i_N)
+                _tp_bl, _tp_err, _tp_tol, _asm_tp = self.isbalanced(adm_tp, _asm_vals, asm_i_P)
+                if _tkn_bl and _tp_bl: return _asm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same \n'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ADM) TKN is {adm_tkn}\n '
+                        f'effluent (ASM) TKN is {asm_tkn} or {_asm_tkn}\n '
+                        f'influent (ADM) TP is {adm_tp}\n ' 
+                        f'effluent (ASM) TP is {asm_tp} or {_asm_tp}. '
+                        f'influent (ADM) COD is {adm_cod}\n ' 
+                        f'effluent (ASM) COD is {asm_cod} or {asm_cod*(1+dcod)}. ')
+                    return asm_vals
+        elif cod_bl and tp_bl:
+            if tkn_bl:
+                return asm_vals
+            else:
+                if tkn_err > 0: dtkn = -(tkn_err - tkn_tol)/asm_tkn
+                else: dtkn = -(tkn_err + tkn_tol)/asm_tkn
+                _asm_vals = asm_vals * (1 + (asm_i_N>0)*dtkn)
+                _cod_bl, _cod_err, _cod_tol, _asm_cod = self.isbalanced(adm_cod, _asm_vals, asm_i_COD)
+                _tp_bl, _tp_err, _tp_tol, _asm_tp = self.isbalanced(adm_tp, _asm_vals, asm_i_P)
+                if _cod_bl and _tp_bl: return _asm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same time'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ADM) COD is {adm_cod}\n '
+                        f'effluent (ASM) COD is {asm_cod} or {_asm_cod}\n '
+                        f'influent (ADM) TP is {adm_tp}\n ' 
+                        f'effluent (ASM) TP is {asm_tp} or {_asm_tp}. '
+                        f'influent (ADM) TKN is {adm_tkn}\n ' 
+                        f'effluent (ASM) TKN is {asm_tkn} or {asm_tkn*(1+dtkn)}. ')
+                    return asm_vals
+        elif cod_bl and tkn_bl:
+            if tp_bl:
+                return asm_vals
+            else:
+                if tp_err > 0: dtp = -(tp_err - tp_tol)/asm_tp
+                else: dtp = -(tp_err + tp_tol)/asm_tp
+                _asm_vals = asm_vals * (1 + (asm_i_P>0)*dtp)
+                _cod_bl, _cod_err, _cod_tol, _asm_cod = self.isbalanced(adm_cod, _asm_vals, asm_i_COD)
+                _tkn_bl, _tkn_err, _tkn_tol, _asm_tkn = self.isbalanced(adm_tkn, _asm_vals, asm_i_N)
+                if _cod_bl and _tkn_bl: return _asm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same time'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ADM) COD is {adm_cod}\n '
+                        f'effluent (ASM) COD is {asm_cod} or {_asm_cod}\n '
+                        f'influent (ADM) TKN is {adm_tkn}\n ' 
+                        f'effluent (ASM) TKN is {asm_tkn} or {_asm_tkn}. '
+                        f'influent (ADM) TP is {adm_tp}\n ' 
+                        f'effluent (ASM) TP is {asm_tp} or {asm_tp*(1+dtp)}. ')
+                    return asm_vals
+        else:
+            warn('cannot balance COD, TKN and TP at the same time. \n'
+                 'Atleast two of the three COD, TKN, and TP are not balanced \n'
+                f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                f'influent (ADM) COD is {adm_cod}\n '
+                f'effluent (ASM) COD is {asm_cod}\n '
+                f'influent (ADM) TP is {adm_tp}\n ' 
+                f'effluent (ASM) TP is {asm_tp}'
+                f'influent (ADM) TKN is {adm_tkn}\n ' 
+                f'effluent (ASM) TKN is {asm_tkn}. ')
+            return asm_vals
+    
+    def _compile_reactions(self):        
+        cmps_adm = self.ins[0].components
+        cmps_asm = self.outs[0].components
+        self.check_component_properties(cmps_asm, cmps_adm)
+        
+        _asm_ids = cmps_asm.indices(['S_F', 'X_S', 'S_A'])
+        _adm_ids = cmps_adm.indices(['S_su', 'S_aa', 'S_fa', 
+                                     'S_va', 'S_bu', 'S_pro', 'S_ac',
+                                     'X_pr', 'X_li', 'X_ch'])
+
+        # For carbon balance
+        C_SF, C_XS, C_SA = cmps_asm.i_C[_asm_ids]
+        C_su, C_aa, C_fa, C_va, C_bu, C_pro, C_ac, C_pr, C_li, C_ch = cmps_adm.i_C[_adm_ids]
+        
+        # For nitrogen balance 
+        N_SF, N_XS, N_SA = cmps_asm.i_N[_asm_ids]
+        N_su, N_aa, N_fa, N_va, N_bu, N_pro, N_ac, N_pr, N_li, N_ch = cmps_adm.i_N[_adm_ids]
+        
+        # For phosphorous balance 
+        P_SF, P_XS, P_SA = cmps_asm.i_P[_asm_ids]
+        P_su, P_aa, P_fa, P_va, P_bu, P_pro, P_ac, P_pr, P_li, P_ch = cmps_adm.i_P[_adm_ids]
+
+        adm = self.adm1_model
+        adm_p1_idx = cmps_adm.indices(('X_su', 'X_aa', 'X_fa', 'X_c4', 
+                                       'X_pro', 'X_ac', 'X_h2', 
+                                       'X_PAO', 'X_PP', 'X_PHA'))
+        decay_idx = [i for i in adm.IDs if i.startswith(('decay', 'lysis'))]
+        decay_stoichio = np.asarray(adm.stoichiometry.loc[decay_idx])
+        f_corr = self.balance_cod_tkn
+
+        # To convert components from ADM1p to ASM2d (A1)
+        def madm12asm2d(adm_vals):    
+            
+            _adm_vals = adm_vals.copy()
+                
+            # PROCESS 1: decay of biomas, X_PP, X_PHA
+            bio_xpp_pha = _adm_vals[adm_p1_idx]
+            _adm_vals += np.dot(bio_xpp_pha, decay_stoichio)
+            
+            # PROCESS 2: strip biogas. Omitted because no S_ch4 or S_h2 in ASM2d components
+            
+            S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2, S_ch4, S_IC, S_IN, S_IP, S_I, \
+                X_ch, X_pr, X_li, X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I, \
+                X_PHA, X_PP, X_PAO, S_K, S_Mg, X_MeOH, X_MeP, S_cat, S_an, H2O = _adm_vals            
+            
+            if S_h2 > 0 or S_ch4 > 0: warn('Ignored dissolved H2 or CH4.')
+
+            S_ALK = S_IC
+            S_NH4 = S_IN
+            S_PO4 = S_IP            
+
+            # CONV 1: convert X_pr, X_li, X_ch to X_S
+            X_S = X_pr + X_li + X_ch
+            S_ALK += X_pr*C_pr + X_li*C_li + X_ch*C_ch - X_S*C_XS
+            S_NH4 += X_pr*N_pr + X_li*N_li + X_ch*N_ch - X_S*N_XS
+            S_PO4 += X_pr*P_pr + X_li*P_li + X_ch*P_ch - X_S*P_XS
+
+            # CONV 2: convert S_su, S_aa, S_fa to S_F
+            S_F = S_su + S_aa + S_fa
+            S_ALK += S_su*C_su + S_aa*C_aa + S_fa*C_fa - S_F*C_SF
+            S_NH4 += S_su*N_su + S_aa*N_aa + S_fa*N_fa - S_F*N_SF
+            S_PO4 += S_su*P_su + S_aa*P_aa + S_fa*P_fa - S_F*P_SF
+            
+            # CONV 3: convert VFAs to S_A
+            S_A = S_va + S_bu + S_pro + S_ac
+            S_ALK += S_va*C_va + S_bu*C_bu + S_pro*C_pro + S_ac*C_ac - S_A*C_SA
+            # S_NH4 += S_va*N_va + S_bu*N_bu + S_pro*N_pro + S_ac*N_ac - S_A*N_SA
+            # S_PO4 += S_va*P_va + S_bu*P_bu + S_pro*P_pro + S_ac*P_ac - S_A*P_SA
+
+            asm_vals = np.array(([
+                0, 0, # S_O2, S_N2,
+                S_NH4, 
+                0, # S_NO3
+                S_PO4, S_F, S_A, S_I, 
+                S_ALK,
+                X_I, X_S, 
+                0,  # X_H,
+                0,0,0,# X_PAO, X_PP, X_PHA, 
+                0, # X_AUT,
+                X_MeOH, X_MeP, H2O])) # directly mapped
+                      
+            asm_vals = f_corr(adm_vals, asm_vals)
+            return asm_vals
+        
+        self._reactions = madm12asm2d
+
+#%% ASM2dtoADM1p_A1
+
+class ASM2dtoADM1p_A1(mADMjunction):
+    '''
+    Interface unit to convert ASM2d state variables
+    to ADM1 components, following the A1 scenario in [1]_.
+    
+    Parameters
+    ----------
+    upstream : stream or str
+        Influent stream with ASM components.
+    downstream : stream or str
+        Effluent stream with ADM components.
+    adm1_model : :class:`qsdsan.processes.ADM1_p_extension`
+        The anaerobic digestion process model.
+    xs_to_li : float
+        Split of slowly biodegradable substrate COD to lipid, 
+        after all N is mapped into protein.
+    rtol : float
+        Relative tolerance for COD and TKN balance.
+    atol : float
+        Absolute tolerance for COD and TKN balance.
+    
+    References
+    ----------
+    [1] Flores-Alsina, X., Solon, K., Kazadi Mbamba, C., Tait, S., Gernaey, K. V., 
+    Jeppsson, U., & Batstone, D. J. (2016). Modelling phosphorus (P), sulfur (S) 
+    and iron (FE) interactions for dynamic simulations of anaerobic digestion processes. 
+    Water Research, 95, 370–382. 
+    
+    See Also
+    --------
+    :class:`qsdsan.sanunits.mADMjunction`
+    
+    :class:`qsdsan.sanunits.ADM1ptoASM2d_A1` 
+    
+    '''    
+    # User defined values
+    xs_to_li = 0.7
+    
+    def balance_cod_tkn_tp(self, asm_vals, adm_vals):
+        cmps_asm = self.ins[0].components
+        cmps_adm = self.outs[0].components
+        asm_i_COD = cmps_asm.i_COD
+        adm_i_COD = cmps_adm.i_COD
+        non_tkn_idx = cmps_asm.indices(('S_N2', 'S_NO3'))
+        asm_i_N = cmps_asm.i_N
+        
+        adm_i_N = cmps_adm.i_N
+        asm_i_P = cmps_asm.i_P
+        adm_i_P = cmps_adm.i_P
+        asm_cod = sum(asm_vals*asm_i_COD)
+        asm_tkn = sum(asm_vals*asm_i_N) - sum(asm_vals[non_tkn_idx])
+        asm_tp = sum(asm_vals*asm_i_P)
+        cod_bl, cod_err, cod_tol, adm_cod = self.isbalanced(asm_cod, adm_vals, adm_i_COD)
+        tkn_bl, tkn_err, tkn_tol, adm_tkn = self.isbalanced(asm_tkn, adm_vals, adm_i_N)
+        tp_bl, tp_err, tp_tol, adm_tp = self.isbalanced(asm_tp, adm_vals, adm_i_P)
+        
+        if tkn_bl and tp_bl:
+            if cod_bl:
+                return adm_vals
+            else:
+                if cod_err > 0: dcod = -(cod_err - cod_tol)/adm_cod
+                else: dcod = -(cod_err + cod_tol)/adm_cod
+                _adm_vals = adm_vals * (1 + (adm_i_COD>0)*dcod)
+                _tkn_bl, _tkn_err, _tkn_tol, _adm_tkn = self.isbalanced(asm_tkn, _adm_vals, adm_i_N)
+                _tp_bl, _tp_err, _tp_tol, _adm_tp = self.isbalanced(asm_tp, _adm_vals, adm_i_P)
+                if _tkn_bl and _tp_bl: return _adm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same \n'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ASM) TKN is {asm_tkn}\n '
+                        f'effluent (ADM) TKN is {adm_tkn} or {_adm_tkn}\n '
+                        f'influent TP is {asm_tp}\n ' 
+                        f'effluent TP is {adm_tp} or {_adm_tp}. '
+                        f'influent COD is {asm_cod}\n ' 
+                        f'effluent COD is {adm_cod} or {adm_cod*(1+dcod)}. ')
+                    return adm_vals
+        elif cod_bl and tp_bl:
+            if tkn_bl:
+                return adm_vals
+            else:
+                if tkn_err > 0: dtkn = -(tkn_err - tkn_tol)/adm_tkn
+                else: dtkn = -(tkn_err + tkn_tol)/adm_tkn
+                _adm_vals = adm_vals * (1 + (adm_i_N>0)*dtkn)
+                _cod_bl, _cod_err, _cod_tol, _adm_cod = self.isbalanced(asm_cod, _adm_vals, adm_i_COD)
+                _tp_bl, _tp_err, _tp_tol, _adm_tp = self.isbalanced(asm_tp, _adm_vals, adm_i_P)
+                if _cod_bl and _tp_bl: return _adm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same time'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ASM) COD is {asm_cod}\n '
+                        f'effluent (ADM) COD is {adm_cod} or {_adm_cod}\n '
+                        f'influent TP is {asm_tp}\n ' 
+                        f'effluent TP is {adm_tp} or {_adm_tp}. '
+                        f'influent TKN is {asm_tkn}\n ' 
+                        f'effluent TKN is {adm_tkn} or {adm_tkn*(1+dtkn)}. '
+                        'To balance TKN please ensure ASM2d(X_I.i_N) = ADM1(X_I.i_N)')
+                    return adm_vals
+        elif cod_bl and tkn_bl: 
+            if tp_bl:
+                return adm_vals
+            else:
+                if tp_err > 0: dtp = -(tp_err - tp_tol)/adm_tp
+                else: dtp = -(tp_err + tp_tol)/adm_tp
+                _adm_vals = adm_vals * (1 + (adm_i_P>0)*dtp)
+                _cod_bl, _cod_err, _cod_tol, _adm_cod = self.isbalanced(asm_cod, _adm_vals, adm_i_COD)
+                _tkn_bl, _tkn_err, _tkn_tol, _adm_tkn = self.isbalanced(asm_tkn, _adm_vals, adm_i_N)
+                if _cod_bl and _tkn_bl: return _adm_vals
+                else: 
+                    warn('cannot balance COD, TKN, and TP at the same time'
+                        f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                        f'influent (ASM) COD is {asm_cod}\n '
+                        f'effluent (ADM) COD is {adm_cod} or {_adm_cod}\n '
+                        f'influent TKN is {asm_tkn}\n ' 
+                        f'effluent TKN is {adm_tkn} or {_adm_tkn}. '
+                        f'influent TP is {asm_tp}\n ' 
+                        f'effluent TP is {adm_tp} or {adm_tp*(1+dtp)}. ')
+                    return adm_vals
+        else:
+            warn('cannot balance COD, TKN, and TP at the same time. \n'
+                 'Atleast two of the three COD, TKN, and TP are not balanced \n'
+                f'time with rtol={self.rtol} and atol={self.atol}.\n '
+                f'influent (ASM) COD is {asm_cod}\n '
+                f'effluent (ADM) COD is {adm_cod}\n '
+                f'influent TP is {asm_tp}\n ' 
+                f'effluent TP is {adm_tp}'
+                f'influent TKN is {asm_tkn}\n ' 
+                f'effluent TKN is {adm_tkn}. ')
+            return adm_vals
+                
+    def _compile_reactions(self):
+        cmps_asm = self.ins[0].components
+        cmps_adm = self.outs[0].components
+        self.check_component_properties(cmps_asm, cmps_adm)
+        
+        _asm_ids = cmps_asm.indices(['S_F', 'X_S', 'X_H', 'S_I', 'X_I'])
+        _adm_ids = cmps_adm.indices(['S_aa', 'S_su', 'X_pr', 'X_li', 'X_ch'])
+        # For carbon balance
+        C_SF, C_XS, C_XB, C_SI, C_XI = cmps_asm.i_C[_asm_ids]
+        C_aa, C_su, C_pr, C_li, C_ch = cmps_adm.i_C[_adm_ids]
+        
+        # For nitrogen balance 
+        N_SF, N_XS, N_XB, N_SI, N_XI = cmps_asm.i_N[_asm_ids]
+        N_aa, N_su, N_pr, N_li, N_ch = cmps_adm.i_N[_adm_ids]
+        
+        # For phosphorous balance 
+        P_SF, P_XS, P_XB, P_SI, P_XI = cmps_asm.i_P[_asm_ids]
+        P_aa, P_su, P_pr, P_li, P_ch = cmps_adm.i_P[_adm_ids]
+
+        S_O2_idx, S_NO3_idx = cmps_asm.indices(['S_O2', 'S_NO3'])
+        f_corr = self.balance_cod_tkn_tp
+
+        asm = self.asm2d_model
+        adm = self.adm1_model
+        p1_stoichio = np.asarray(asm.stoichiometry.loc['hetero_growth_S_A'])
+        p1_stoichio /= abs(p1_stoichio[S_O2_idx])
+        p2_stoichio = np.asarray(asm.stoichiometry.loc['denitri_S_A'])
+        p2_stoichio /= abs(p2_stoichio[S_NO3_idx])
+        p3_stoichio = np.array([adm.parameters[f'f_{k}_xb'] for k in ('sI', 'ch', 'pr', 'li', 'xI')])
+        
+        # To convert components from ASM2d to mADM1 (asm2d-2-madm1)
+        def asm2d2madm1(asm_vals):           
+            _asm_vals = asm_vals.copy()
+
+            # PROCESS 1: remove S_O2 with S_A with associated X_H growth (aerobic growth of X_H on S_A)
+            O2_coddm = _asm_vals[S_O2_idx]
+            _asm_vals += O2_coddm * p1_stoichio # makes S_O2 = 0
+            
+            # PROCESS 2: remove S_NO3 with S_A with associated X_H growth (denitrification on S_A)
+            NO3_coddm = _asm_vals[S_NO3_idx]
+            _asm_vals += NO3_coddm * p2_stoichio # makes S_NO3 = 0
+                      
+            S_O2, S_N2, S_NH4, S_NO3, S_PO4, S_F, S_A, S_I, S_ALK, X_I, X_S, X_H, \
+                X_PAO, X_PP, X_PHA, X_AUT, X_MeOH, X_MeP, H2O = _asm_vals
+                
+            S_IC = S_ALK
+            S_IN = S_NH4
+            S_IP = S_PO4
+            
+            # CONV 1: transform S_F into S_aa, S_su, S_fa
+            S_ND = S_F*N_SF   # N in S_F
+            req_scod = S_ND / N_aa
+                       
+            if S_F < req_scod: # if S_F cod is not enough to convert all organic soluble N into aa
+                S_aa = S_F
+                S_su = 0
+            else: # if S_F cod is more than enough to convert all organic soluble N into aa
+                S_aa = req_scod # All soluble organic N will be mapped to amino acid
+                S_su = S_F - S_aa
+            
+            S_IN += S_ND - S_aa*N_aa
+            S_IC += S_F*C_SF - (S_aa*C_aa + S_su*C_su) 
+            S_IP += S_F*P_SF
+            
+            # PROCESS 3: biomass decay (X_H, X_AUT lysis) anaerobic
+            bio = X_H + X_AUT
+            _si, _ch, _pr, _li, _xi = bio * p3_stoichio
+            S_IC += bio*C_XB - (_si*C_SI + _ch*C_ch + _pr*C_pr + _li*C_li + _xi*C_XI)
+            S_IN += bio*N_XB - (_si*N_SI + _ch*N_ch + _pr*N_pr + _li*N_li + _xi*N_XI)
+            S_IP += bio*P_XB - (_si*P_SI + _ch*P_ch + _pr*P_pr + _li*P_li + _xi*P_XI)
+                        
+            # CONV 2: transform asm X_S into X_pr, X_li, X_ch
+            X_ND = X_S*N_XS
+            req_xcod = X_ND / N_pr
+            # Since X_pr_i_N >> X_pr_i_P there's no need to check req_xcod for N and P separately (CONFIRM LATER 05/16)
+            
+            # if available X_S is not enough to fulfill that protein requirement
+            if X_S < req_xcod: # if X_S cod is not enough to convert all organic particulate N into pr
+                X_pr = X_S
+                X_li = X_ch = 0
+            else:
+                X_pr = req_xcod 
+                X_li = self.xs_to_li * (X_S - X_pr)
+                X_ch = (X_S - X_pr) - X_li
+
+            S_IN += X_ND - X_pr*N_pr
+            S_IC += X_S*C_XS - (X_pr*C_pr + X_li*C_li + X_ch*C_ch)
+            S_IP += X_S*P_XS - (X_pr*P_pr + X_li*P_li + X_ch*P_ch)
+
+            X_pr += _pr
+            X_li += _li
+            X_ch += _ch
+            S_I += _si
+            X_I += _xi
+
+            # PROCESS 4-5: omitted, PAO related components mapped directly
+            # CONV 3-5: convert S_A, S_I, X_I; conversion is immediate because identical component composition is enforced
+            S_ac = S_A
+            
+            adm_vals = np.array([
+                S_su, S_aa, 
+                0, 0, 0, 0, S_ac, # S_fa, S_va, S_bu, S_pro,
+                0, 0, # S_h2, S_ch4,
+                S_IC, S_IN, S_IP, S_I, 
+                X_ch, X_pr, X_li, 
+                0, 0, 0, 0, 0, 0, 0, # X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2,
+                X_I, X_PHA, X_PP, X_PAO, 
+                0, 0,  # S_K, S_Mg,
+                X_MeOH, X_MeP,
+                0, 0, H2O]) # S_cat, S_an
+            
+            # adm_vals = f_corr(asm_vals, adm_vals)
+            adm_vals = f_corr(_asm_vals, adm_vals)
+            return adm_vals
+        
+        self._reactions = asm2d2madm1
