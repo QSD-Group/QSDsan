@@ -295,10 +295,10 @@ def rhos_adm1(state_arr, params):
     if S_va > 0: rhos[7] *= 1/(1+S_bu/S_va)
     if S_bu > 0: rhos[8] *= 1/(1+S_va/S_bu)
 
-    h = brenth(acid_base_rxn, 1e-14, 1.0,
-            args=(weak_acids, Ka),
-            xtol=1e-12, maxiter=100)
-    # h = 10**(-7.46)
+    #h = brenth(acid_base_rxn, 1e-14, 1.0,
+    #        args=(weak_acids, Ka),
+    #        xtol=1e-12, maxiter=100)
+    h = 10**(-7.46)
 
     nh3 = Ka[1] * weak_acids[2] / (Ka[1] + h)
     co2 = weak_acids[3] - Ka[2] * weak_acids[3] / (Ka[2] + h)

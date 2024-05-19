@@ -351,17 +351,17 @@ def flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+40, pH=False, gas_transfer
     #h = brenth(acid_base_rxn, 1e-14, 1.0,
     #        args=(weak_acids, Ka),
     #        xtol=1e-12, maxiter=100)
-    #h = 10**(-7.46)
-    if pH: 
-        h = 10**(-pH)
-        delta = acid_base_rxn(h, weak_acids, Kas)
-        S_cat = weak_acids[0] - delta
-        root.data['S_cat'] = S_cat
-    else: 
-        h = brenth(acid_base_rxn, 1e-14, 1.0,
-                   args=(weak_acids, Kas),
-                   xtol=1e-12, maxiter=100)
-        root.data['pH'] = -log10(h)
+    h = 10**(-7.46)
+    #if pH: 
+    #    h = 10**(-pH)
+    #    delta = acid_base_rxn(h, weak_acids, Kas)
+    #    S_cat = weak_acids[0] - delta
+    #    root.data['S_cat'] = S_cat
+    #else: 
+    #    h = brenth(acid_base_rxn, 1e-14, 1.0,
+    #               args=(weak_acids, Kas),
+    #               xtol=1e-12, maxiter=100)
+    #    root.data['pH'] = -log10(h)
 
     nh3 = Kas[1] * weak_acids[2] / (Kas[1] + h)
     # co2 = weak_acids[3] - Kas[2] * weak_acids[3] / (Kas[2] + h)
@@ -682,7 +682,7 @@ class ADM1_vfa(CompiledProcesses):
 
     #f_la_su, f_et_su, f_pro_la, f_ac_la,  f_ac_et, Y_la, Y_et added with valued randomly below
     def __new__(cls, components=None, path=None, N_xc=2.686e-3, N_I=4.286e-3, N_aa=7e-3,
-                f_ch_xc=0.3, f_pr_xc=0.2, f_li_xc=0.3, f_xI_xc=0.2,
+                f_ch_xc=0.2, f_pr_xc=0.2, f_li_xc=0.3, f_xI_xc=0.2,
                 f_fa_li=0.95, f_la_su=0.533, f_et_su= 0.1, f_bu_su=0.05,
                 f_ac_su=0.02, f_va_aa=0.33, f_bu_aa=0.17, f_pro_aa=0.17, f_ac_aa=0.16,
                 f_ac_fa=0.7, f_pro_la=0.45, f_ac_la=0.07, f_ac_et=0.3, f_pro_va=0.64,
