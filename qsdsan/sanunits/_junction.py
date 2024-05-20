@@ -1783,6 +1783,14 @@ class mADM1toASM2d(mADMjunction):
     # adm_X_PAO_i_P = 0.02
     
     @property
+    def T(self):
+        '''[float] Temperature of the upstream/downstream [K].'''
+        return self.ins[0].T
+    @T.setter
+    def T(self, T):
+        self.ins[0].T = self.outs[0].T = T
+    
+    @property
     def pH(self):
         '''[float] pH of the upstream/downstream.'''
         return self.ins[0].pH
