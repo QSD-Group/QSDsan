@@ -1924,7 +1924,7 @@ class mADM1toASM2d(mADMjunction):
         S_F_i_N = cmps_asm.S_F.i_N
         # S_A_i_N = cmps_asm.S_A.i_N
             
-        # asm_X_I_i_N = cmps_asm.X_I.i_N
+        asm_X_I_i_N = cmps_asm.X_I.i_N
         # asm_S_I_i_N = cmps_asm.S_I.i_N
         asm_ions_idx = cmps_asm.indices(('S_NH4', 'S_A', 'S_NO3', 'S_PO4', 'S_ALK'))
         
@@ -1932,7 +1932,7 @@ class mADM1toASM2d(mADMjunction):
         X_S_i_P = cmps_asm.X_S.i_P
         S_F_i_P = cmps_asm.S_F.i_P
         # S_A_i_P = cmps_asm.S_A.i_P
-        # asm_X_I_i_P = cmps_asm.X_I.i_P 
+        asm_X_I_i_P = cmps_asm.X_I.i_P 
         # asm_S_I_i_P = cmps_asm.S_I.i_P
         
         #!!! All checks are now done in `check_component_property`
@@ -2054,6 +2054,8 @@ class mADM1toASM2d(mADMjunction):
             # Step 2: MAPPING OF X_I
             
             # Flores Alsina
+            excess_N = (bio_cod * (1 - self.bio_to_xs))*asm_X_I_i_N
+            excess_P = (bio_cod * (1 - self.bio_to_xs))*asm_X_I_i_P
             
             #!!! equality is enforced in `check_component_properties`
             # if asm_X_I_i_N == adm_X_I_i_N and asm_X_I_i_P == adm_X_I_i_P:
@@ -2285,8 +2287,8 @@ class mADM1toASM2d(mADMjunction):
             # S_PO4 = S_IP + si_p + ssub_p + xsub_p + xi_p + bio_p
             #------------------------------Rai version---------------------------------------------
             
-            S_NH4 = S_IN + ssub_n + xsub_n + bio_n #- excess_N 
-            S_PO4 = S_IP + ssub_p + xsub_p + bio_p #- excess_P
+            S_NH4 = S_IN + ssub_n + xsub_n + bio_n - excess_N 
+            S_PO4 = S_IP + ssub_p + xsub_p + bio_p - excess_P
             
             #------------------------------Rai version---------------------------------------------
             # S_A += si_cod + ssub_cod + xsub_cod + xi_cod + xs_cod
