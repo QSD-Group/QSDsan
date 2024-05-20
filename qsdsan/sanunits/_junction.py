@@ -1779,8 +1779,13 @@ class mADM1toASM2d(mADMjunction):
     
     # Since we are matching PAOs directly from ASM2d to mADM1, it is important 
     # for PAOs to have identical N/P content across models
-    adm_X_PAO_i_N = 0.07 
-    adm_X_PAO_i_P = 0.02
+    # adm_X_PAO_i_N = 0.07 
+    # adm_X_PAO_i_P = 0.02
+    
+    @property
+    def pH(self):
+        '''[float] pH of the upstream/downstream.'''
+        return self.ins[0].pH
     
     def balance_cod_tkn(self, adm_vals, asm_vals):
         cmps_adm = self.ins[0].components
@@ -2372,11 +2377,31 @@ class ASM2dtomADM1(mADMjunction):
     bio_to_li = 0.4
     frac_deg = 0.68
     
-    def isbalanced(self, lhs, rhs_vals, rhs_i):
-        rhs = sum(rhs_vals*rhs_i)
-        error = rhs - lhs
-        tol = max(self.rtol*lhs, self.rtol*rhs, self.atol)
-        return abs(error) <= tol, error, tol, rhs
+    @property
+    def T(self):
+        '''[float] Temperature of the downstream [K].'''
+        try: return self.outs[0].sink.T
+        except: return self._T
+    @T.setter
+    def T(self, T):
+        self._T = self.outs[0].T = T
+    
+    @property
+    def pH(self):
+        '''[float] downstream pH.'''
+        if self._pH: return self._pH
+        else:
+            try: return self.outs[0].sink.outs[1].pH
+            except: return 7.
+    @pH.setter
+    def pH(self, ph):
+        self._pH = self.outs[0].pH = ph
+    
+    # def isbalanced(self, lhs, rhs_vals, rhs_i):
+    #     rhs = sum(rhs_vals*rhs_i)
+    #     error = rhs - lhs
+    #     tol = max(self.rtol*lhs, self.rtol*rhs, self.atol)
+    #     return abs(error) <= tol, error, tol, rhs
     
     def balance_cod_tkn_tp(self, asm_vals, adm_vals):
         cmps_asm = self.ins[0].components
