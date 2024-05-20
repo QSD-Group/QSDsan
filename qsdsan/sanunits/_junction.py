@@ -2377,6 +2377,16 @@ class ASM2dtomADM1(mADMjunction):
     bio_to_li = 0.4
     frac_deg = 0.68
     
+    def __init__(self, ID='', upstream=None, downstream=(), thermo=None,
+                 init_with='WasteStream', F_BM_default=None, isdynamic=False,
+                 adm1_model=None, asm2d_model=None, T=298.15, pH=7):
+        self._T = T
+        self._pH = pH
+        super().__init__(ID=ID, upstream=upstream, downstream=downstream,
+                         thermo=thermo, init_with=init_with, 
+                         F_BM_default=F_BM_default, isdynamic=isdynamic,
+                         adm1_model=adm1_model, asm2d_model=asm2d_model)
+        
     @property
     def T(self):
         '''[float] Temperature of the downstream [K].'''
