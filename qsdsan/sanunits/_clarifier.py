@@ -913,7 +913,7 @@ class IdealClarifier(SanUnit):
             of.state[:] = arr
         else:
             self._f_uf = fuf = e_rmv*Qi/Qs
-            self._f_of = fof = (1-e_rmv)/(1-Qi/Qs)
+            self._f_of = fof = (1-e_rmv)/(1-Qs/Qi)
             uf.state[:-1] = Cs * ((1-x) + x*fuf)
             uf.state[-1] = Qs
             of.state[:-1] = Cs * ((1-x) + x*fof)
@@ -1248,23 +1248,22 @@ class PrimaryClarifier(IdealClarifier):
         
     Examples
     --------
-    >>> from qsdsan import set_thermo, Components, WasteStream
+    >>> from qsdsan import set_thermo, Components, WasteStream, System
     >>> cmps = Components.load_default()
     >>> cmps_test = cmps.subgroup(['S_F', 'S_NH4', 'X_OHO', 'H2O'])
     >>> set_thermo(cmps_test)
     >>> ws = WasteStream('ws', S_F = 10, S_NH4 = 20, X_OHO = 15, H2O=1000)
-    >>> from qsdsan.sanunits import PrimaryClarifier
-    >>> PC = PrimaryClarifier(ID='IC', ins=ws, outs=('effluent', 'sludge'),
+    >>> from qsdsan.sanunits import PrimaryClarifier, CSTR
+    >>> M1 = CSTR('mixer', ins=ws, outs='out', aeration=None)
+    >>> PC = PrimaryClarifier(ID='IC', ins=M1-0, outs=('effluent', 'sludge'),
     ...                       solids_removal_efficiency=0.6, 
     ...                       sludge_flow_rate=ws.F_vol*24*0.3)
-    >>> PC.simulate()
-    >>> effluent, sludge = PC.outs
-    >>> sludge.imass['X_OHO']/ws.imass['X_OHO']
-    0.6
+    >>> sys = System('sys', path=(M1, PC))
+    >>> sys.simulate(t_span=(0,10), method='BDF')  # doctest: +ELLIPSIS
     >>> PC.show() # doctest: +ELLIPSIS
     PrimaryClarifier: IC
     ins...
-    [0] ws
+    [0] out  from  CSTR-mixer
     phase: 'l', T: 298.15 K, P: 101325 Pa
     flow (g/hr): S_F    1e+04
                     S_NH4  2e+04
@@ -1287,35 +1286,34 @@ class PrimaryClarifier(IdealClarifier):
     flow (g/hr): S_F    7e+03
                     S_NH4  1.4e+04
                     X_OHO  6e+03
-                    H2O    7e+05
+                    H2O    7.03e+05
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 17804.5 mg/L
-         BOD        : 11530.2 mg/L
-         TC         : 6075.4 mg/L
-         TOC        : 6075.4 mg/L
-         TN         : 20022.9 mg/L
-         TP         : 252.0 mg/L
-         TK         : 39.2 mg/L
-         TSS        : 6382.0 mg/L
+         COD        : 17734.2 mg/L
+         BOD        : 11484.7 mg/L
+         TC         : 6051.5 mg/L
+         TOC        : 6051.5 mg/L
+         TN         : 19943.9 mg/L
+         TP         : 251.0 mg/L
+         TK         : 39.0 mg/L
+         TSS        : 6356.8 mg/L
     [1] sludge
     phase: 'l', T: 298.15 K, P: 101325 Pa
     flow (g/hr): S_F    3e+03
                     S_NH4  6e+03
                     X_OHO  9e+03
-                    H2O    3e+05
+                    H2O    2.97e+05
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 37848.4 mg/L
-         BOD        : 22869.1 mg/L
-         TC         : 13417.3 mg/L
-         TOC        : 13417.3 mg/L
-         TN         : 21146.9 mg/L
-         TP         : 634.0 mg/L
-         TK         : 135.3 mg/L
-         TSS        : 22045.9 mg/L
-
-
+         COD        : 38196.8 mg/L
+         BOD        : 23079.7 mg/L
+         TC         : 13540.8 mg/L
+         TOC        : 13540.8 mg/L
+         TN         : 21341.5 mg/L
+         TP         : 639.8 mg/L
+         TK         : 136.6 mg/L
+         TSS        : 22248.9 mg/L
+    
     References
     ----------
     [1] Chapter-10: Primary Treatment. Design of water resource recovery facilities. 
