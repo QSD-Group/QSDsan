@@ -2060,8 +2060,8 @@ class mADM1toASM2d(mADMjunction):
             #!!! equality is enforced in `check_component_properties`
             # if asm_X_I_i_N == adm_X_I_i_N and asm_X_I_i_P == adm_X_I_i_P:
             #     X_I = xi_cod
-            #     excess_N = (bio_cod * (1 - self.bio_to_xs))*asm_X_I_i_N
-            #     excess_P = (bio_cod * (1 - self.bio_to_xs))*asm_X_I_i_P
+            excess_N = (bio_cod * (1 - self.bio_to_xs))*asm_X_I_i_N
+            excess_P = (bio_cod * (1 - self.bio_to_xs))*asm_X_I_i_P
             # else:
             #     raise RuntimeError('N and P content in X_I should be same')
             
