@@ -1986,7 +1986,7 @@ class mADM1toASM2d(mADMjunction):
             # Step 0: snapshot of charged components
             # Not sure about charge on X_PP, S_Mg, S_K (PHA and PAO would have zero charge)
             # X_PP is charge-neutral
-            _ions = np.array([S_IN, S_IC, S_IP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
+            _ions = np.array([S_IN, S_IC, S_IP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va, X_PP])
             
             # Step 1a: convert biomass and inert particulates into X_S and X_I 
             
@@ -2324,7 +2324,7 @@ class mADM1toASM2d(mADMjunction):
             
             # _ions = np.array([S_IN, S_IC, S_IP, S_Mg, S_K, S_ac, S_pro, S_bu, S_va])
             
-            adm_alphas = np.array([self.alpha_IN, self.alpha_IC, self.alpha_IP, 2, 1, *self.alpha_vfa])
+            adm_alphas = np.array([self.alpha_IN, self.alpha_IC, self.alpha_IP, 2, 1, *self.alpha_vfa, -1/31])
             adm_charge = np.dot(_ions, adm_alphas)
             S_ALK = (adm_charge - (S_NH4/14 - S_A/64 - S_NO3/14 - 1.5*S_PO4/31))*(-12)
     
@@ -2664,7 +2664,7 @@ class ASM2dtomADM1(mADMjunction):
             _salk = S_ALK  
             _spo4 = S_PO4
             _sa = S_A 
-            # _xpp = X_PP
+            _xpp = X_PP
               
             # Step 1: remove any remaining COD demand
             O2_coddm = S_O2
@@ -3065,7 +3065,7 @@ class ASM2dtomADM1(mADMjunction):
             adm_vals = f_corr(asm_vals, adm_vals)
             
             # Step 7: charge balance
-            asm_charge = - _sa/64 + _snh4/14 - _sno3/14 - 1.5*_spo4/31 - _salk# - _xpp/31 #Based on page 84 of IWA ASM handbook
+            asm_charge = - _sa/64 + _snh4/14 - _sno3/14 - 1.5*_spo4/31 - _salk/12 - _xpp/31 #Based on page 84 of IWA ASM handbook
             
             #!!! charge balance should technically include VFAs, S_K, S_Mg,
             # but since their concentrations are assumed zero it is acceptable.
