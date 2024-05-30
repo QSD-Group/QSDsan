@@ -81,8 +81,8 @@ class CSTR(SanUnit):
         e.g., temperature, sunlight irradiance. Must be independent of state 
         variables of the suspended_growth_model (if has one).
     
-    References:
-        
+    References
+    ----------
      [1] Shoener, B. D.; Zhong, C.; Greiner, A. D.; Khunjar, W. O.; Hong, P.-Y.; Guest, J. S.
          Design of Anaerobic Membrane Bioreactors for the Valorization
          of Dilute Organic Carbon Waste Streams.
@@ -735,6 +735,103 @@ class SBR(SanUnit):
 
 #%%
 class PFR(SanUnit):
+    """
+    A plug flow reactor discretized into CSTRs in series with internal recycles and multiple influents.
+
+    Parameters
+    ----------
+    N_tanks_in_series : int, optional
+        The number of CSTRs or zones in which the PFR is discretized. The default is 5.
+    V_tanks : iterable[float], optional
+        The volume [m3] for each zone, length must match the number of CSTRs. 
+        The default is [1500, 1500, 3000, 3000, 3000].
+    influent_fractions : iterable[float], optional
+        The volume fractions fed to each zone for each influent. Number of rows 
+        must match the number of influents. Number of columns must match the number
+        of zones. The default is [[1.0, 0,0,0,0]].
+    internal_recycles : list[3-tuple[int, int, float]], optional
+        A list of three-element tuples (i, j, Q) indicating internal recycling
+        streams from zone i to zone j with a flowrate of Q [m3/d], respectively. 
+        Indices i,j start from 0 not 1. The default is [(4,0,35000),].
+    DO_setpoints : iterable[float], optional
+        Dissolve oxygen setpoints of each zone [mg-O2/L]. Length must match the
+        number of zones. 0 is treated as no active aeration. 
+        DO setpoints take priority over kLa values. The default is [].
+    kLa : iterable[float], optional
+        Oxygen transfer rate constant values of each zone [d^(-1)]. If DO
+        setpoints are specified, kLa values would be ignored in process simulation. 
+        The default is [0, 0, 120, 120, 60].
+    DO_sat : float, optional
+        Saturation dissolved oxygen concentration [mg/L]. The default is 8.0.
+
+    Examples
+    --------
+    >>> import qsdsan.sanunits as su, qsdsan.processes as pc
+    >>> from qsdsan import WasteStream
+    >>> cmps = pc.create_asm1_cmps()
+    >>> asm1 = pc.ASM1()
+    >>> inf = WasteStream('inf', H2O=1.53e6, S_I=46, S_S=54, X_I=1770, X_S=230, 
+    ...                   X_BH=3870, X_BA=225, X_P=680, S_O=0.377, S_NO=7.98, 
+    ...                   S_NH=25.6, S_ND=5.87, X_ND=13.4, S_ALK=103)
+    >>> AS = su.PFR('AS', ins=(inf,), outs=('eff',), V_tanks=[1000]*2+[1333]*3, 
+    ...         influent_fractions=[[1.0, 0,0,0,0]], DO_setpoints=[0]*2+[1.7, 2.4, 0.5],
+    ...         internal_recycles=[(4,0,55338)], DO_ID='S_O',
+    ...         suspended_growth_model=asm1)
+    >>> AS.set_init_conc(S_I=30, S_S=5, X_I=1000, X_S=100, X_BH=500, X_BA=100, 
+    ...                  X_P=100, S_O=2, S_NO=20, S_NH=2, S_ND=1, X_ND=1, S_ALK=84)
+    >>> AS.simulate(t_span=(0,100), method='BDF')
+    >>> eff, = AS.outs
+    >>> eff.show()
+    WasteStream: eff from <PFR: AS>
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_I    4.6e+04
+                 S_S    2.24e+03
+                 X_I    1.77e+06
+                 X_S    7.59e+04
+                 X_BH   3.94e+06
+                 X_BA   2.3e+05
+                 X_P    6.95e+05
+                 S_O    770
+                 S_NO   1.6e+04
+                 S_NH   2.68e+03
+                 S_ND   1.06e+03
+                 X_ND   5.42e+03
+                 S_ALK  7.65e+04
+                 S_N2   2.11e+04
+                 H2O    1.53e+09
+     WasteStream-specific properties:
+      pH         : 7.0
+      Alkalinity : 2.5 mg/L
+      COD        : 4389.1 mg/L
+      BOD        : 1563.3 mg/L
+      TC         : 1599.8 mg/L
+      TOC        : 1550.1 mg/L
+      TN         : 329.0 mg/L
+      TP         : 68.2 mg/L
+      TK         : 15.1 mg/L
+      TSS        : 3268.3 mg/L
+     Component concentrations (mg/L):
+      S_I    29.9
+      S_S    1.5
+      X_I    1150.0
+      X_S    49.3
+      X_BH   2557.0
+      X_BA   149.5
+      X_P    451.9
+      S_O    0.5
+      S_NO   10.4
+      S_NH   1.7
+      S_ND   0.7
+      X_ND   3.5
+      S_ALK  49.7
+      S_N2   13.7
+      H2O    994140.9
+  
+    See Also
+    --------
+    :class:`qsdsan.sanunits.CSTR`
+
+    """
 
     _N_ins = 1
     _N_outs = 1
@@ -746,9 +843,11 @@ class PFR(SanUnit):
                  influent_fractions=[[1.0, 0,0,0,0]], internal_recycles=[(4,0,35000),],
                  DO_setpoints=[], kLa=[0, 0, 120, 120, 60], DO_sat=8.0,
                  DO_ID='S_O2', suspended_growth_model=None, 
-                 isdynamic=True, exogenous_vars=(), **kwargs):
+                 isdynamic=True, **kwargs):
+        
+        exogenous_vars = kwargs.pop('exogenous_vars', None)
         if exogenous_vars:
-            warn(f'currently exogenous dynamic variables are not supported in process simulation for {self.ID}')
+            warn('currently exogenous dynamic variables are not supported in process simulation for PFR')
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic,
                          exogenous_vars=exogenous_vars, **kwargs)
         self.N_tanks_in_series = N_tanks_in_series
@@ -920,10 +1019,11 @@ class PFR(SanUnit):
                             'or "<component ID> = value" kwargs')
 
     def _init_state(self):
-        self._state_header = ny = list(self.components.IDs) + ['Q']
-        self._Qs_idx = list(len(ny) * np.arange(1, 1+self.N_tanks_in_series) - 1)
+        self._state_header = header = list(self.components.IDs) + ['Q']
+        self._ncol = ncol = len(header)
+        self._Qs_idx = list(ncol * np.arange(1, 1+self.N_tanks_in_series) - 1)
         out, = self.outs
-        y = np.zeros((self.N_tanks_in_series, len(ny)))
+        y = np.zeros((self.N_tanks_in_series, ncol))
         if self._concs is not None:
             y[:,:-1] = self._concs
         else: 
@@ -934,15 +1034,17 @@ class PFR(SanUnit):
 
     def _update_state(self):
         out, = self.outs
-        n_cmp = len(self.components)
+        ncol = self._ncol
         self._state[self._Qs_idx] = self._Qs
-        out.state[:-1] = self._state[-(n_cmp+1):-1]
+        if out.state is None: out.state = np.zeros(ncol)
+        out.state[:-1] = self._state[-ncol:-1]
         out.state[-1] = sum(ws.state[-1] for ws in self.ins)
 
     def _update_dstate(self):
         out, = self.outs
-        n_cmp = len(self.components)
-        out.dstate[:-1] = self._dstate[-(n_cmp+1):-1]
+        ncol = self._ncol
+        if out.dstate is None: out.dstate = np.zeros(ncol)
+        out.dstate[:-1] = self._dstate[-ncol:-1]
         out.dstate[-1] = sum(ws.dstate[-1] for ws in self.ins)
 
     @property
@@ -956,6 +1058,7 @@ class PFR(SanUnit):
         _dstate = self._dstate
         _update_dstate = self._update_dstate
         N = self.N_tanks_in_series
+        ncol = self._ncol
         _1_ov_V = np.diag(1/self.V_tanks)
         f_in = self.influent_fractions
         DO = self.DO_setpoints
@@ -965,7 +1068,7 @@ class PFR(SanUnit):
         DOsat = self.DO_sat
         Q_internal = np.zeros(N)
         for i_from, i_to, qr in rcy:
-            Q_internal[i_to: i_from] += qr
+            Q_internal[i_to: i_from+1] += qr
 
         if self._model is None:
             warn(f'{self.ID} was initialized without a suspended growth model, '
@@ -976,7 +1079,8 @@ class PFR(SanUnit):
             M_stoi = self._model.stoichio_eval()
             # @njit
             def Rs(Cs):
-                rhos = np.vstack([f_rho(c) for c in Cs])
+                # rhos = np.vstack([f_rho(c) for c in Cs])
+                rhos = np.apply_along_axis(f_rho, 1, Cs) # n_zone * n_process
                 rxn = rhos @ M_stoi
                 return rxn
         
@@ -985,7 +1089,7 @@ class PFR(SanUnit):
             aerated_DO = DO[aerated_zones]
             # @njit
             def dy_dt(t, QC_ins, QC, dQC_ins):
-                y = QC.reshape((N, int(len(QC)/N)))
+                y = QC.reshape((N, ncol))
                 Cs = y[:,:-1]
                 Cs[aerated_zones, DO_idx] = aerated_DO
                 _Qs[:] = Qs = np.dot(QC_ins[:,-1], f_in).cumsum() + Q_internal
@@ -1007,12 +1111,10 @@ class PFR(SanUnit):
             if not any(kLa): kLa = np.zeros(N)
             # @njit
             def dy_dt(t, QC_ins, QC, dQC_ins):
-                # breakpoint()
-                y = QC.reshape((N, int(len(QC)/N)))
-                Cs = y[:,:-1]    
+                y = QC.reshape((N, ncol))
+                Cs = y[:,:-1]
                 do = Cs[:, DO_idx]
                 aer = kLa*(DOsat-do)
-                # aer[aer < 0] = 0.
                 _Qs[:] = Qs = np.dot(QC_ins[:,-1], f_in).cumsum() + Q_internal
                 M_ins = f_in.T @ np.diag(QC_ins[:,-1]) @ QC_ins[:,:-1]  # N * n_cmps
                 M_outs = np.diag(Qs) @ Cs
