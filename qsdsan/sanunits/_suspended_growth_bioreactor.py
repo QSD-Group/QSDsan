@@ -946,12 +946,18 @@ class PFR(SanUnit):
         return self._kLa
     @kLa.setter
     def kLa(self, ks):
-        if not iter(ks): 
-            raise TypeError(f'V_tanks must be an iterable, not {type(ks).__name__}')
-        elif len(ks) != self.N_tanks_in_series:
-            raise RuntimeError(f'cannot set kLa of {self.N_tanks_in_series} tanks'
-                               f'in series with {len(ks)} value(s).')
-        else: self._kLa = np.asarray(ks)
+        if any(self._DOs):
+            if ks != []:
+                warn('kLa is ignored because DO setpoints have been specified. '
+                     'To specify kLa, first set DO_setpoints as []')
+            self._kLa = []
+        else:
+            if not iter(ks): 
+                raise TypeError(f'V_tanks must be an iterable, not {type(ks).__name__}')
+            elif len(ks) != self.N_tanks_in_series:
+                raise RuntimeError(f'cannot set kLa of {self.N_tanks_in_series} tanks'
+                                   f'in series with {len(ks)} value(s).')
+            else: self._kLa = np.asarray(ks)
 
     @property
     def suspended_growth_model(self):
@@ -986,7 +992,6 @@ class PFR(SanUnit):
                              f'i.e., one of {self.components.IDs}.')
         self._DO_ID = doid
 
-                
     def _run(self):
         out, = self.outs
         out.mix_from(self.ins)
