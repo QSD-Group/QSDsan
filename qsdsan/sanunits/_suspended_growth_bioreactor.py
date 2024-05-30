@@ -963,7 +963,17 @@ class PFR(SanUnit):
         if isinstance(model, CompiledProcesses) or model is None: self._model = model
         else: raise TypeError(f'suspended_growth_model must be one of the following '
                               f'types: CompiledProesses, NoneType. Not {type(model)}')
-
+        if model is not None:
+            self._state_keys = keys = list(self.components.IDs) + ['Q']
+            self._ncol = ncol = len(keys)
+            N = self.N_tanks_in_series
+            self._Qs_idx = list(ncol * np.arange(1, 1+N) - 1)
+            names = [f'{i} [mg/L]' for i in self.components.IDs] + ['Q [m3/d]']
+            names *= N
+            zones = [[f'zone {i}']*ncol for i in range(N)]
+            zones = sum(zones, [])
+            self._state_header = [f'{z} {n}' for z,n in zip(zones, names)]
+            
     @property
     def DO_ID(self):
         '''[str] The `Component` ID for dissolved oxygen used in the suspended growth model and the aeration model.'''
@@ -988,8 +998,8 @@ class PFR(SanUnit):
         else:
             N = self.N_tanks_in_series
             y = self._state.copy()
-            y = y.reshape((N, int(len(y)/N)))
-            y = pd.DataFrame(y, columns=self._state_header)
+            y = y.reshape((N, self._ncol))
+            y = pd.DataFrame(y, columns=self._state_keys)
             return y
 
     def set_init_conc(self, concentrations=None, i_zone=None, **kwargs):
@@ -1019,11 +1029,8 @@ class PFR(SanUnit):
                             'or "<component ID> = value" kwargs')
 
     def _init_state(self):
-        self._state_header = header = list(self.components.IDs) + ['Q']
-        self._ncol = ncol = len(header)
-        self._Qs_idx = list(ncol * np.arange(1, 1+self.N_tanks_in_series) - 1)
         out, = self.outs
-        y = np.zeros((self.N_tanks_in_series, ncol))
+        y = np.zeros((self.N_tanks_in_series, self._ncol))
         if self._concs is not None:
             y[:,:-1] = self._concs
         else: 
