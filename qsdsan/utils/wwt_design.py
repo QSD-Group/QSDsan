@@ -32,6 +32,17 @@ __all__ = ('get_SRT',
            'get_CO2_eq_WRRF',
            'get_total_CO2_eq',
            
+           'get_aeration_cost',
+           'get_pumping_cost',
+           'get_sludge_disposal_costs',
+           'get_CH4_CO2_eq_treatment',
+           'get_N2O_CO2_eq_treatment',
+           'get_CH4_CO2_eq_discharge',
+           'get_N2O_CO2_eq_discharge',
+           'get_CH4_emitted_during_pl',
+           'get_CH4_emitted_after_pl',
+           'get_CO2_eq_electricity',
+           
            # Function for gates work (to be removed at a later date)
            
            'estimate_ww_treatment_energy_demand',
