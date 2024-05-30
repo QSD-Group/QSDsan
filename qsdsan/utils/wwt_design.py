@@ -425,6 +425,141 @@ def get_daily_operational_cost(system, aeration_power, pumping_power, miscellane
     
     return operational_costs_WRRF
 
+def get_aeration_cost(q_air, # aeration (blower) power 
+                      system, # sludge pumping power 
+                      T=20, p_atm=101.325, P_inlet_loss=1, P_diffuser_loss=7, 
+                      h_submergance=5.18, efficiency=0.7, K=0.283, # aeration (blower) power
+                      unit_electricity_cost = 0.161): 
+    '''
+    Parameters
+    ----------
+    
+    q_air : float
+        Air volumetric flow rate [m3/min].
+    T : float
+        Air temperature [degree Celsius].
+    p_atm : float
+        Atmostpheric pressure [kPa]
+    P_inlet_loss : float
+        Head loss at inlet [kPa]. The default is 1 kPa. 
+    P_diffuser_loss : float
+        Head loss due to piping and diffuser [kPa]. The default is 7 kPa. 
+    h_submergance : float
+        Diffuser submergance depth in m. The default is 17 feet (5.18 m)
+    efficiency : float
+        Blower efficiency. Default is 0.7. 
+    K : float, optional
+        Equal to (kappa - 1)/kappa, where kappa is the adiabatic exponent of air.
+        Default is 0.283, equivalent to kappa = 1.3947.  
+        
+    ------------------------------------------------------------------------------ 
+    
+    system : :class:`biosteam.System`
+        The system whose power will be calculated.
+        
+    unit_electricity_cost : float
+        Unit cost of electricity. Default value is taken as $0.161/kWh [1]. 
+
+    Returns
+    -------
+    Normalized cost associated with aeration (USD/m3). [int]
+    
+    '''
+    
+    T += 273.15
+    air_molar_vol = 22.4e-3 * (T/273.15)/(p_atm/101.325)   # m3/mol
+    R = 8.31446261815324 # J/mol/K, universal gas constant
+    
+    p_in = p_atm - P_inlet_loss
+    p_out = p_atm + 9.81*h_submergance + P_diffuser_loss
+    
+    # Q_air = q_air*(24*60) # m3/min to m3/day
+    # P_blower = 1.4161e-5*(T + 273.15)*Q_air*((p_out/p_in)**0.283 - 1)/efficiency
+    # return P_blower
+    
+    Q_air = q_air/60 # m3/min to m3/s
+    WP = (Q_air / air_molar_vol) * R * T / K * ((p_out/p_in)**K - 1) / efficiency  # in W
+    
+    aeration_power = WP/1000 # in kW
+    
+    aeration_cost = aeration_power*24*unit_electricity_cost # in (kWh/day)*(USD/kWh) = USD/day
+    
+    operational_costs_WRRF = aeration_cost/sum([s.F_vol*24 for s in system.feeds])
+
+    return operational_costs_WRRF
+
+def get_pumping_cost(system, active_unit_IDs=None,  # sludge pumping power 
+                     unit_electricity_cost = 0.161): 
+    '''
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system whose power will be calculated.
+    active_unit_IDs : tuple[str], optional
+        IDs of all units whose power needs to be accounted for. The default is None.
+        
+    ------------------------------------------------------------------------------ 
+        
+    unit_electricity_cost : float
+        Unit cost of electricity. Default value is taken as $0.161/kWh [1]. 
+
+    Returns
+    -------
+    Normalized operational cost associated with sludge pumping (USD/m3). [int]
+    
+    '''
+    power_consumption = 0
+        
+    for y in system.flowsheet.unit:
+        if y.ID in active_unit_IDs:
+            power_consumption += y.power_utility.power
+            
+    pumping_power = power_consumption
+    
+    pumping_cost = pumping_power*24*unit_electricity_cost # in (kWh/day)*(USD/kWh) = USD/day
+
+    operational_costs_WRRF = pumping_cost/sum([s.F_vol*24 for s in system.feeds])
+    
+    return operational_costs_WRRF
+
+def get_sludge_disposal_costs(sludge,  # sludge disposal costs 
+                              system, unit_weight_disposal_cost = 350, # sludge disposal costs 
+                              ): 
+    '''
+    Parameters
+    ----------
+    
+    system : :class:`biosteam.System`
+        The system whose power will be calculated.
+        
+    ------------------------------------------------------------------------------ 
+    
+    sludge : : iterable[:class:`WasteStream`], optional
+        Effluent sludge from the system for which treatment and disposal costs are being calculated.
+        The default is None.
+    unit_weight_disposal_cost : float
+        The sludge treatment and disposal cost per unit weight (USD/ton).
+        Feasible range for this value lies between 100-800 USD/ton [1]. 
+        
+    Land application: 300 - 800 USD/US ton. [2]
+    Landfill: 100 - 650 USD/US ton. [2]
+    Incineration: 300 - 500 USD/US ton. [2]
+    
+    The default is 375 USD/US ton, which is the close to average of lanfill. 
+
+    Returns
+    -------
+    Normalized operational cost associated with WRRF (USD/m3). [int]
+    
+    '''
+    
+    sludge_prod = np.array([sludge.composite('solids', True, particle_size='x', unit='ton/d') \
+                            for sludge in sludge]) # in ton/day
+    sludge_disposal_costs = np.sum(sludge_prod)*unit_weight_disposal_cost   #in USD/day
+    operational_costs_WRRF = sludge_disposal_costs/sum([s.F_vol*24 for s in system.feeds])
+    
+    return operational_costs_WRRF
+
 def get_total_operational_cost(q_air, # aeration (blower) power 
                                      sludge,  # sludge disposal costs 
                                      system, active_unit_IDs=None,  # sludge pumping power 
@@ -487,7 +622,7 @@ def get_total_operational_cost(q_air, # aeration (blower) power
 
     Returns
     -------
-    Normalized operational cost associated with WRRF (USD/day). [int]
+    Normalized operational cost associated with WRRF (USD/m3). [int]
     
     '''
     
