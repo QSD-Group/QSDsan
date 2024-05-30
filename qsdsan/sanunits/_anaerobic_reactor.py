@@ -343,13 +343,13 @@ class AnaerobicCSTR(CSTR):
         if model is not None:
             #!!! how to make unit conversion generalizable to all models?
             self._S_vapor = self.ideal_gas_law(p=self.p_vapor())
-            self._n_gas = len(model._biogas_IDs)
-            self._state_keys = list(self.components.IDs) \
+            self._n_gas = ng = len(model._biogas_IDs)
+            self._state_keys = keys = list(self.components.IDs) \
                 + [ID+'_gas' for ID in self.model._biogas_IDs] \
                 + ['Q']
             self._gas_cmp_idx = self.components.indices(self.model._biogas_IDs)
-            self._state_header = self._state_keys
-    
+            units = ['kg/m3']*len(self.components) + ['M']*ng + ['m3/d']
+            self._state_header = [f'{name} [{unit}]' for name, unit in zip(keys, units)]
 
     split = property(CSTR.split.fget)
     @split.setter
