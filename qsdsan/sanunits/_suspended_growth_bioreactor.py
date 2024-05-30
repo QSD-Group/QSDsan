@@ -1017,7 +1017,7 @@ class PFR(SanUnit):
         elif isa(concentrations, pd.DataFrame):
             concentrations.index = range(N)
             dct = concentrations.to_dict('index')
-            for i, concs in dct:
+            for i, concs in dct.items():
                 self._concs[i] = cmps.kwarray(concs)
         elif isa(concentrations, np.ndarray):
             if concentrations.shape != self._concs.shape:
