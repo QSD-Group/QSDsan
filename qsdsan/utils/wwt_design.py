@@ -792,6 +792,175 @@ def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity,
     
     return normalized_CO2_eq_WRRF 
 
+def get_CH4_CO2_eq_treatment(system, influent_sc =None, effluent_sc = None, effluent_sys =None, active_unit_IDs=None, sludge=None, 
+                       CH4_CO2eq=29.8, CH4_EF_sc =0.0075):
+    
+    '''
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system for which normalized GHG emission is being determined.
+        
+    ----Secondary treatment----
+     
+     influent_sc : : iterable[:class:`WasteStream`], optional
+         Influent wastestreams to secondary treatment whose wastewater composition determine the potential for GHG emissions. The default is None.
+     effluent_sc  : : iterable[:class:`WasteStream`], optional
+         The wastestreams which represents the effluent from the secondary treatment process. The default is None.
+     CH4_EF_sc :  float, optional.
+         The emission factor used to calculate methane emissions in secondary treatment. The default is 0.0075 kg CH4/ kg rCOD. [1]
+        
+    --------- Eq CO2 EFs --------- 
+   
+    CH4_CO2eq : TYPE, optional
+        DESCRIPTION. The default is 29.8 kg CO2eq/kg CH4 [1].
+
+    Returns
+    -------
+    Total Normalized CH4 emissions from secondary treatment (kg CO2 eq./m3) [int].
+    '''
+    
+    # source 1 (on-site)
+    if influent_sc is None:
+        influent_sc = [inf for inf in system.feeds if inf.phase == 'l']
+
+    influent_sc_flow = np.array([inf.F_vol*24 for inf in influent_sc]) # in m3/day
+    influent_sc_COD = np.array([inf.COD for inf in influent_sc]) # in mg/L
+    mass_influent_COD_sc = np.sum(influent_sc_flow*influent_sc_COD/1000) # in kg/day
+    
+    effluent_sc_flow = np.array([eff.F_vol*24 for eff in effluent_sc])
+    effluent_sc_COD =  np.array([eff.COD for eff in effluent_sc]) # in mg/L
+    mass_effluent_COD_sc = np.sum(effluent_sc_flow*effluent_sc_COD/1000) # in kg/day
+    
+    mass_removed_COD_sc = mass_influent_COD_sc - mass_effluent_COD_sc
+    CH4_emitted_sc = CH4_EF_sc*mass_removed_COD_sc
+    
+    # source 1 (on-site)
+    CH4_CO2_eq_treatment = CH4_emitted_sc*CH4_CO2eq
+    
+    normalized_CO2_eq_WRRF = CH4_CO2_eq_treatment/sum([24*s.F_vol for s in system.feeds])
+    
+    return normalized_CO2_eq_WRRF
+
+def get_N2O_CO2_eq_treatment(system, influent_sc =None, N2O_CO2eq=273, F=0.5,  N2O_EF_sc =0.016):
+    
+    '''
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system for which normalized GHG emission is being determined.
+        
+    ----Secondary treatment----
+     
+     influent_sc : : iterable[:class:`WasteStream`], optional
+         Influent wastestreams to secondary treatment whose wastewater composition determine the potential for GHG emissions. The default is None.
+     N2O_EF_sc : float, optional
+         The emission factor used to calculate nitrous oxide emissions in secondary treatment. The default is 0.016 kg N2O-N/ kg N. [1]
+        
+    --------- Eq CO2 EFs --------- 
+   
+    N2O_CO2eq : TYPE, optional
+        DESCRIPTION. The default is 273 kg CO2eq/kg CH4 [1].
+
+    Returns
+    -------
+    Total Normalized N2O emissions from secondary treatment (kg CO2 eq./m3) [int].
+    '''
+    
+    # source 1 (on-site)
+    if influent_sc is None:
+        influent_sc = [inf for inf in system.feeds if inf.phase == 'l']
+
+    influent_sc_flow = np.array([inf.F_vol*24 for inf in influent_sc]) # in m3/day
+    
+    influent_N_sc = np.array([inf.TN for inf in influent_sc]) # in mg/L
+    mass_influent_N = np.sum(influent_sc_flow*influent_N_sc/1000) # in kg/day
+    
+    N2O_emitted_sc = N2O_EF_sc*mass_influent_N
+    
+    N2O_CO2_eq_treatment = N2O_emitted_sc*N2O_CO2eq 
+    
+    normalized_CO2_eq_WRRF = N2O_CO2_eq_treatment/sum([24*s.F_vol for s in system.feeds])
+    
+    return normalized_CO2_eq_WRRF
+
+def get_CH4_CO2_eq_discharge(system, effluent_sys =None, CH4_CO2eq=29.8, CH4_EF_discharge=0.009):
+    
+    '''
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system for which normalized GHG emission is being determined.
+        
+    ----Discharge----
+        
+    effluent_sys : : iterable[:class:`WasteStream`], optional
+        Effluent wastestreams from the system whose wastewater composition determine the potential for GHG emissions at discharge. The default is None.
+    CH4_EF_discharge :  float, optional.
+        The emission factor used to calculate methane emissions in discharge. The default is 0.009 kg CH4/ kg effluent COD. [1]
+
+    --------- Eq CO2 EFs --------- 
+   
+    CH4_CO2eq : TYPE, optional
+        DESCRIPTION. The default is 29.8 kg CO2eq/kg CH4 [1].
+
+    Returns
+    -------
+    Total Normalized GHG emissions from onsite and offsite operations associated with WRRF (kg CO2 eq./m3) [int].
+
+    '''
+    
+    # source 3 (off-site)
+    effluent_flow = np.array([eff.F_vol*24 for eff in effluent_sys]) # in m3/day
+    effluent_COD = np.array([eff.COD for eff in effluent_sys]) # in mg/L
+    mass_effluent_COD = np.sum(effluent_flow*effluent_COD/1000) # in kg/day
+    
+    CH4_emitted_discharge = CH4_EF_discharge*mass_effluent_COD
+
+    # source 3 (off-site)
+    CH4_CO2_eq_discharge = CH4_emitted_discharge*CH4_CO2eq
+    
+    normalized_total_CO2_eq_WRRF = CH4_CO2_eq_discharge/sum([24*s.F_vol for s in system.feeds])
+    
+    return normalized_total_CO2_eq_WRRF
+
+def get_N2O_CO2_eq_discharge(system, effluent_sys =None, N2O_CO2eq=273, F=0.5, N2O_EF_discharge=0.005):
+    '''
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system for which normalized GHG emission is being determined.
+        
+    ----Discharge----
+        
+    effluent_sys : : iterable[:class:`WasteStream`], optional
+        Effluent wastestreams from the system whose wastewater composition determine the potential for GHG emissions at discharge. The default is None.
+    N2O_EF_discharge : float, optional
+        The emission factor used to calculate nitrous oxide emissions in discharge. The default is 0.005 kg N2O-N/ kg effluent N. [1]
+    
+    --------- Eq CO2 EFs --------- 
+
+    N2O_CO2eq : TYPE, optional
+        DESCRIPTION. The default is 273 kg CO2eq/kg CH4 [1].
+
+    Returns
+    -------
+    Total Normalized GHG emissions from onsite and offsite operations associated with WRRF (kg CO2 eq./m3) [int].
+    
+
+    ''' 
+    
+    # source 3 (off-site)
+    effluent_flow = np.array([eff.F_vol*24 for eff in effluent_sys]) # in m3/day
+    effluent_N = np.array([eff.TN for eff in effluent_sys]) # in mg/L
+    mass_effluent_N = np.sum(effluent_flow*effluent_N/1000) # in kg/day
+    
+    N2O_emitted_discharge = N2O_EF_discharge*mass_effluent_N
+    N2O_CO2_eq_discharge = N2O_emitted_discharge*N2O_CO2eq 
+    normalized_total_CO2_eq_WRRF = N2O_CO2_eq_discharge/sum([24*s.F_vol for s in system.feeds])
+    
+    return normalized_total_CO2_eq_WRRF
+
 def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, effluent_sys =None, active_unit_IDs=None, sludge=None, 
                       p_atm=101.325, K=0.283, CH4_CO2eq=29.8, N2O_CO2eq=273, F=0.5, 
                       
