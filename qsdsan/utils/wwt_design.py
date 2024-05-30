@@ -961,6 +961,143 @@ def get_N2O_CO2_eq_discharge(system, effluent_sys =None, N2O_CO2eq=273, F=0.5, N
     
     return normalized_total_CO2_eq_WRRF
 
+def get_CH4_emitted_during_pl(system, sludge=None, CH4_CO2eq=29.8, F=0.5, DOC_f = 0.45, MCF = 0.8, k = 0.06, pl=30):
+    '''
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system for which normalized GHG emission is being determined.
+        
+    ----Sludge disposal---
+    
+    sludge : : iterable[:class:`WasteStream`], optional
+        Effluent sludge from the system for which GHG emissions are being calculated. The default is None.
+    DOC_f : float, optional
+        fraction of DOC that can decompose (fraction). The default value is 0.5.
+    MCF : float, optional
+        CH4 correction factor for aerobic decomposition in the year of deposition (fraction). The default is 0.8.
+    k : TYPE, optional
+        Methane generation rate (k). The default is 0.185. (1/year)
+        
+        The decomposition of carbon is assumed to follow first-order kinetics 
+        (with rate constant k), and methane generation is dependent on the amount of remaining decomposable carbon 
+        in the waste. For North America (boreal and temperate climate) the default values for wet and dry climate 
+        are:
+            k (dry climate) = 0.06
+            k (wet climate) = 0.185
+    F : float, optional
+        Fraction of methane in generated landfill gas (volume fraction).  The default is 0.5.
+    pl : float, optional
+        The project lifetime over which methane emissions would be calculated. (years)
+        The default is 30 years.
+        
+    --------- Eq CO2 EFs --------- 
+   
+    CH4_CO2eq : TYPE, optional
+        DESCRIPTION. The default is 29.8 kg CO2eq/kg CH4 [1].
+
+    Returns
+    -------
+    Total Normalized CH4 emissions from sludge disposal during project lifetime (kg CO2 eq./m3) [int].
+    
+    '''
+    DOC_mass_flow = 0
+    
+    for slg in sludge:
+        DOC_mass_flow += slg.composite("C", flow=True, exclude_gas=True, 
+                      subgroup=None, particle_size=None,
+                      degradability="b", organic=True, volatile=None,
+                      specification=None, unit="kg/day")
+
+    annual_DOC_mass = 365*DOC_mass_flow # in kg/year
+
+    annual_DDOC = annual_DOC_mass*DOC_f*MCF
+        
+    t_vary = np.arange(pl)
+    decomposed_DOC = annual_DDOC * (1 - np.exp(-1 * k * t_vary))
+    total_decomposed_DOC = np.sum(decomposed_DOC)
+    CH4_emitted_during_pl = total_decomposed_DOC*F*16/12
+    
+    days_in_year = 365
+
+    CH4_CO2_eq_sludge_disposal_pl = (CH4_emitted_during_pl/(pl*days_in_year))*CH4_CO2eq
+    
+    normalized_total_CO2_eq_WRRF = CH4_CO2_eq_sludge_disposal_pl/sum([24*s.F_vol for s in system.feeds])
+    
+    return normalized_total_CO2_eq_WRRF
+
+def get_CH4_emitted_after_pl(system, sludge=None, CH4_CO2eq=29.8, N2O_CO2eq=273, F=0.5,
+                     # uncertain parameters 
+                     DOC_f = 0.45, MCF = 0.8, k = 0.06, pl=30
+                     ):
+    
+    '''
+
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system for which normalized GHG emission is being determined.
+    
+    ----Sludge disposal---
+    
+    sludge : : iterable[:class:`WasteStream`], optional
+        Effluent sludge from the system for which GHG emissions are being calculated. The default is None.
+    DOC_f : float, optional
+        fraction of DOC that can decompose (fraction). The default value is 0.5.
+    MCF : float, optional
+        CH4 correction factor for aerobic decomposition in the year of deposition (fraction). The default is 0.8.
+    k : TYPE, optional
+        Methane generation rate (k). The default is 0.185. (1/year)
+        
+        The decomposition of carbon is assumed to follow first-order kinetics 
+        (with rate constant k), and methane generation is dependent on the amount of remaining decomposable carbon 
+        in the waste. For North America (boreal and temperate climate) the default values for wet and dry climate 
+        are:
+            k (dry climate) = 0.06
+            k (wet climate) = 0.185
+    F : float, optional
+        Fraction of methane in generated landfill gas (volume fraction).  The default is 0.5.
+    pl : float, optional
+        The project lifetime over which methane emissions would be calculated. (years)
+        The default is 30 years.
+        
+        
+    --------- Eq CO2 EFs --------- 
+   
+    CH4_CO2eq : TYPE, optional
+        DESCRIPTION. The default is 29.8 kg CO2eq/kg CH4 [1].
+
+    Returns
+    -------
+    Total Normalized CH4 emissions from acculumulated sludge disposal after project lifetime (kg CO2 eq./m3) [int].
+    
+
+    '''
+    # source 4 (off-site)
+
+    DOC_mass_flow = 0
+    
+    for slg in sludge:
+        DOC_mass_flow += slg.composite("C", flow=True, exclude_gas=True, 
+                      subgroup=None, particle_size=None,
+                      degradability="b", organic=True, volatile=None,
+                      specification=None, unit="kg/day")
+
+    annual_DOC_mass = 365*DOC_mass_flow # in kg/year
+
+    annual_DDOC = annual_DOC_mass*DOC_f*MCF
+        
+    accumulated_DOC_at_pl = annual_DDOC* (1 - np.exp(-1 * k * (pl-1))) / (1 - np.exp(-1 * k)) 
+    CH4_emitted_after_pl = accumulated_DOC_at_pl*F*16/12
+    
+    days_in_year = 365
+
+    CH4_CO2_eq_sludge_disposal_pl = (CH4_emitted_after_pl/(pl*days_in_year))*CH4_CO2eq
+    
+    normalized_total_CO2_eq_WRRF = CH4_CO2_eq_sludge_disposal_pl/sum([24*s.F_vol for s in system.feeds])
+    
+    return normalized_total_CO2_eq_WRRF
+
 def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, effluent_sys =None, active_unit_IDs=None, sludge=None, 
                       p_atm=101.325, K=0.283, CH4_CO2eq=29.8, N2O_CO2eq=273, F=0.5, 
                       
