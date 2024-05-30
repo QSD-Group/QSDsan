@@ -1098,6 +1098,82 @@ def get_CH4_emitted_after_pl(system, sludge=None, CH4_CO2eq=29.8, N2O_CO2eq=273,
     
     return normalized_total_CO2_eq_WRRF
 
+def get_CO2_eq_electricity(system, q_air, active_unit_IDs=None, p_atm=101.325, K=0.283, T=20,
+                     # uncertain parameters 
+                     P_inlet_loss=1, P_diffuser_loss=7, h_submergance=5.18, efficiency=0.7, CO2_EF=0.675):
+    '''
+
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system for which normalized GHG emission is being determined.
+    
+    ----Electricity---
+    
+    --blower power-
+    q_air : float
+        Air volumetric flow rate [m3/min].
+    T : float
+        Air temperature [degree Celsius].
+    p_atm : float
+        Atmostpheric pressure [kPa]
+    P_inlet_loss : float
+        Head loss at inlet [kPa].
+    P_diffuser_loss : float
+        Head loss due to piping and diffuser [kPa].
+    h_submergance : float
+        Diffuser submergance depth in m. The default is 17 feet (5.18 m)
+    efficiency : float
+        Blower efficiency. Default is 0.7. 
+    K : float, optional
+        Equal to (kappa - 1)/kappa, where kappa is the adiabatic exponent of air.
+        Default is 0.283, equivalent to kappa = 1.3947.
+        
+    --pump power--
+    active_unit_IDs : tuple[str], optional
+        IDs of all units whose power needs to be accounted for. The default is None.
+    
+
+    Returns
+    -------
+    Total Normalized CO2 emissions from electricity consumption (kg CO2 eq./m3) [int].
+    
+
+    '''    
+    # source 5 (off-site)
+    T += 273.15
+    air_molar_vol = 22.4e-3 * (T/273.15)/(p_atm/101.325)   # m3/mol
+    R = 8.31446261815324 # J/mol/K, universal gas constant
+    
+    p_in = p_atm - P_inlet_loss
+    p_out = p_atm + 9.81*h_submergance + P_diffuser_loss
+    
+    # Q_air = q_air*(24*60) # m3/min to m3/day
+    # P_blower = 1.4161e-5*(T + 273.15)*Q_air*((p_out/p_in)**0.283 - 1)/efficiency
+    # return P_blower
+    
+    Q_air = q_air/60 # m3/min to m3/s
+    WP = (Q_air / air_molar_vol) * R * T / K * ((p_out/p_in)**K - 1) / efficiency  # in W
+    
+    blower_power = WP/1000
+    
+    pumping_power = 0
+        
+    for y in system.flowsheet.unit:
+        if y.ID in active_unit_IDs:
+            pumping_power += y.power_utility.power # in kW
+        
+    total_energy_consumed = (blower_power + pumping_power)*24 # in kWh/day
+    
+    GHG_electricity = total_energy_consumed*CO2_EF # in kg-CO2-Eq/day
+    
+    # source 5 (off-site)
+    CO2_eq_electricity = GHG_electricity*1
+    
+    normalized_total_CO2_eq_WRRF = CO2_eq_electricity/sum([24*s.F_vol for s in system.feeds])
+    
+    return normalized_total_CO2_eq_WRRF
+
 def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, effluent_sys =None, active_unit_IDs=None, sludge=None, 
                       p_atm=101.325, K=0.283, CH4_CO2eq=29.8, N2O_CO2eq=273, F=0.5, 
                       
@@ -1303,9 +1379,7 @@ def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, efflu
     
     CO2_eq_WRRF = np.array([CH4_CO2_eq_treatment, N2O_CO2_eq_treatment, #1
                             CH4_CO2_eq_discharge, N2O_CO2_eq_discharge, #3
-                            
-                            # CH4_CO2_eq_sludge_disposal_pl,              #4
-                            
+                            CH4_CO2_eq_sludge_disposal_pl,              #4
                             CO2_eq_electricity])                        #5
     
     normalized_total_CO2_eq_WRRF = np.sum(CO2_eq_WRRF)/sum([24*s.F_vol for s in system.feeds])
