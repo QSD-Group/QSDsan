@@ -5,228 +5,301 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    Smiti Mittal <smitimittal@gmail.com>
-    Yalin Li <mailto.yalin.li@gmail.com>
-    Anna Kogler <akogler@stanford.edu>
+    Junhyung Park <junhyungparkenv@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 
-Reference for the default electrochemical cell modelled below: 
-    Evaluating Membrane Performance in Electrochemical Stripping Reactor for Nitrogen Removal
-    Julia Simon, Department of Chemical Engineering, Stanford University
-    Principal Investigator: Professor William Tarpeh
-    Second Reader: Professor Gerald Fuller
 '''
+from thermosteam.utils import chemicals_user
+from thermosteam import settings
+from chemicals.elements import molecular_weight as get_mw
+from qsdsan import Component, Components, WasteStream, SanUnit, Process, Processes, CompiledProcesses
+import numpy as np
+from qsdsan.utils import ospath, data_path
+from scipy.optimize import brenth
+from warnings import warn
+from math import log10
+from qsdsan import Component, Components
+from thermosteam import settings
+from chemicals.elements import molecular_weight as get_mw
+from qsdsan.utils import ospath, data_path
 
-# %%
+__all__ = ('create_ed_vfa_cmps', 'ED_vfa'
+           )
 
-from .._sanunit import SanUnit
-from .._waste_stream import WasteStream
-from ..equipments import Column, Electrode, Machine, Membrane
+#_path = ospath.join(data_path, 'process_data/_adm1_vfa.tsv')
+#_load_components = settings.get_default_chemicals
 
-__all__ = ('ElectrochemicalCell',)
+#%%
+# =============================================================================
+# ADM1_vfa-specific components
+# =============================================================================
 
-
-class ElectrochemicalCell(SanUnit):
-    '''
-    Electrochemical cell for nutrient recovery.
-
-    This unit has the following equipment:
-        - :class:`~.equipments.Column`
-        - :class:`~.equipments.Machine`
-        - :class:`~.equipments.Electrode`
-        - :class:`~.equipments.Membrane`
-
-    Parameters
-    ----------
-    recovery : dict
-        Keys refer to chemical component IDs. Values refer to recovery fractions (with 1 being 100%) for the respective chemicals.
-    removal : dict
-        Keys refer to chemical component IDs. Values refer to removal fractions (with 1 being 100%) for the respective chemicals.
-    equipment : list(obj)
-        List of Equipment objects part of the Electrochemical Cell.
-    OPEX_over_CAPEX : float
-        Ratio with which operating costs are calculated as a fraction of capital costs
-
-    Example
-    -------
-    >>> # Set components
-    >>> import qsdsan as qs
-    >>> kwargs = dict(particle_size='Soluble',
-    ...               degradability='Undegradable',
-    ...               organic=False)
-    >>> H2O = qs.Component.from_chemical('H2O', phase='l', **kwargs)
-    >>> NH3 = qs.Component.from_chemical('NH3', phase='g', **kwargs)
-    >>> NH3.particle_size = 'Dissolved gas'
-    >>> H2SO4 = qs.Component.from_chemical('H2SO4', phase='l', **kwargs)
-    >>> AmmoniumSulfate = qs.Component.from_chemical('AmmoniumSulfate', phase='l',
-    ...                                              **kwargs)
-    >>> Na_ion = qs.Component.from_chemical('Na+', phase='s', **kwargs)
-    >>> K_ion = qs.Component.from_chemical('K+', phase='s', **kwargs)
-    >>> Cl_ion = qs.Component.from_chemical('Cl-', phase='s', **kwargs)
-    >>> PO4_ion = qs.Component.from_chemical('Phosphate', phase='s', **kwargs)
-    >>> SO4_ion = qs.Component.from_chemical('Sulfate', phase='s', **kwargs)
-    >>> C = qs.Component.from_chemical('Carbon', phase='s', **kwargs)
-    >>> COD = qs.Component.from_chemical('O2', phase='s', **kwargs)
-    >>> cmps = qs.Components((H2O, NH3, H2SO4, AmmoniumSulfate, Na_ion, K_ion, Cl_ion, PO4_ion, SO4_ion, C, COD))
-    >>> # Assuming all has the same molar volume as water for demonstration purpose
-    >>> for cmp in cmps:
-    ...     cmp.copy_models_from(H2O, names=['V'])
-    ...     defaulted_properties = cmp.default()
-    >>> qs.set_thermo(cmps)
-    >>> # Set waste streams
-    >>> influent = qs.WasteStream('influent')
-    >>> influent.set_flow_by_concentration(flow_tot=0.5, concentrations={'NH3':3820,
-    ...                                     'Na+':1620, 'K+':1470, 'Cl-':3060, 'Phosphate':169,
-    ...                                     'Sulfate':1680, 'Carbon':1860, 'O2':3460}, units=('mL/min', 'mg/L'))
-    >>> influent.show()
-    WasteStream: influent
-     phase: 'l', T: 298.15 K, P: 101325 Pa
-     flow (g/hr): H2O        29.5
-                  NH3        0.115
-                  Na+        0.0486
-                  K+         0.0441
-                  Cl-        0.0918
-                  Phosphate  0.00507
-                  Sulfate    0.0504
-                  Carbon     0.0558
-                  O2         0.104
-     WasteStream-specific properties:
-      pH         : 7.0
-      Alkalinity : 2.5 mg/L
-      TC         : 1860.0 mg/L
-      TP         : 31.9 mg/L
-      TK         : 1470.0 mg/L
-     Component concentrations (mg/L):
-      H2O              984514.0
-      NH3              3820.0
-      Na+              1620.0
-      K+               1470.0
-      Cl-              3060.0
-      Phosphate        169.0
-      Sulfate          1680.0
-      Carbon           1860.0
-      O2               3460.0
-    >>> catalysts = qs.WasteStream('catalysts', H2SO4=0.00054697, units=('kg/hr'))
-    >>> # kg/hr imass value derived from 0.145 moles used on average for one, 26 hour experiment in the model cell
-    >>> catalysts.price = 8.4 #in $/kg
-    >>> # electricity price for ECS experiments in the default model tested by the Tarpeh Lab
-    >>> # if want to change the price of electricity,
-    >>> # use qs.PowerUtility, e.g., qs.PowerUtility.price = 0.1741
+# Define molecular weights for carbon (C) and nitrogen (N)
+C_mw = get_mw({'C': 1})
+N_mw = get_mw({'N': 1})
+Na_mw = get_mw({'Na': 1})
+Cl_mw = get_mw({'Cl': 1})
+def create_ed_vfa_cmps(set_thermo=True):
+    cmps_all = Components.load_default()
+    # Acetate (C2)
+    S_ac = Component.from_chemical('S_ac', chemical='acetic acid',
+                                   description='Acetate',
+                                   measured_as='COD',
+                                   particle_size='Soluble',
+                                   degradability='Readily',
+                                   organic=True)
     
-    >>> # Set the unit
-    >>> U1 = qs.sanunits.ElectrochemicalCell('unit_1', ins=(influent, catalysts), outs=('recovered', 'removed', 'residual'))
-    >>> # Simulate and look at the results
-    >>> U1.simulate()
-    >>> U1.results()
-    Electrochemical cell                                      Units                              unit_1
-    Electricity         Power                                    kW                            5.42e-05
-                        Cost                                 USD/hr                            4.24e-06
-    Design              Electrode unit_1_Main_Anode - Nu...    None                                   1
-                        Electrode unit_1_Main_Anode - Ma...    None  titanium grid catalyst welded t...
-                        Electrode unit_1_Main_Anode - Su...      m2                                   1
-                        Electrode unit_1_Main_Cathode - ...    None                                   1
-                        Electrode unit_1_Main_Cathode - ...    None  timesetl 3pcs stainless steel w...
-                        Electrode unit_1_Main_Cathode - ...      m2                                30.2
-                        Electrode unit_1_Current_Collect...    None                                   1
-                        Electrode unit_1_Current_Collect...    None    stainless steel 26 gauge 5.5 x 7
-                        Electrode unit_1_Current_Collect...      m2                                38.5
-                        Electrode unit_1_Reference_Elect...    None                                   1
-                        Electrode unit_1_Reference_Elect...    None  re-5b ag/agcl, 7.5 cm long, wit...
-                        Electrode unit_1_Reference_Elect...      m2                                   1
-                        Membrane unit_1_Cation_Exchange_...                                           1
-                        Membrane unit_1_Cation_Exchange_...          CMI-7000S, polystyrene 0.45mm t...
-                        Membrane unit_1_Cation_Exchange_...      m2                                30.2
-                        Membrane unit_1_Gas_Permeable_Me...                                           1
-                        Membrane unit_1_Gas_Permeable_Me...          Aquastill 0.3-micron polyethyle...
-                        Membrane unit_1_Gas_Permeable_Me...      m2                                30.2
-    Purchase cost       unit_1_Main_Anode                       USD                                 288
-                        unit_1_Main_Cathode                     USD                               0.847
-                        unit_1_Current_Collector_Cathode        USD                                39.9
-                        unit_1_Reference_Electrode              USD                                  94
-                        unit_1_Cation_Exchange_Membrane         USD                                 167
-                        unit_1_Gas_Permeable_Membrane           USD                                29.3
-                        Exterior                                USD                                60.5
-    Total purchase cost                                         USD                                 679
-    Utility cost                                             USD/hr                            4.24e-06
-    Additional OPEX                                          USD/hr                                 136
-    >>> U1.show() # doctest: +ELLIPSIS
-    ElectrochemicalCell: unit_1
-    ins...
-    [0] influent
-    phase: 'l', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): H2O        29.5
-    ...
-    '''
+    # Ethanol (C2)
+    S_et = Component.from_chemical('S_et', chemical='Ethanol',
+                                    description='Ethanol',
+                                    measured_as='COD',
+                                    particle_size='Soluble',
+                                    degradability='Readily',
+                                    organic=True)
+    
+    # Lactate (C3)
+    S_la = Component.from_chemical('S_la', chemical='lactic acid',
+                                description='Lactate',
+                                measured_as='COD',
+                                particle_size='Soluble',
+                                degradability='Readily',
+                                organic=True)
 
-    _N_ins = 2
-    _N_outs = 3
+    # Propionate (C3)
+    S_pro = Component.from_chemical('S_pro', chemical='propionic acid',
+                                    description='Propionate',
+                                    measured_as='COD',
+                                    particle_size='Soluble',
+                                    degradability='Readily',
+                                    organic=True)
 
+    # Butyrate (C4)
+    S_bu = Component.from_chemical('S_bu', chemical='butyric acid',
+                                   description='Butyrate',
+                                   measured_as='COD',
+                                   particle_size='Soluble',
+                                   degradability='Readily',
+                                   organic=True)
 
-    def __init__(self, ID='', ins=(), outs=(),
-                 recovery={'NH3':0.7}, removal={'NH3':0.83, 'K+':0.83, "Na+":0.8}, OPEX_over_CAPEX=0.2):
-        SanUnit.__init__(self=self, ID=ID, ins=ins, outs=outs)
-        self.recovery = recovery
-        self.removal = removal
-        self.OPEX_over_CAPEX = OPEX_over_CAPEX
+    # Valerate (C5)
+    S_va = Component.from_chemical('S_va', chemical='valeric acid',
+                                   description='Valerate',
+                                   measured_as='COD',
+                                   particle_size='Soluble',
+                                   degradability='Readily',
+                                   organic=True)
 
+    # Glucose (C6)
+    S_su = Component.from_chemical('S_su', chemical='glucose',
+                                   description='Monosaccharides',
+                                   measured_as='COD',
+                                   particle_size='Soluble',
+                                   degradability='Readily',
+                                   organic=True)
+    
+    # How I define molecular mass and unit?
+    Na = Component('Na+', formula='Na', i_charge = 1.0,
+                       particle_size='Soluble', degradability='Undegradable',
+                       organic=False)
 
-        self.equipment = [
-            Electrode('Main_Anode', linked_unit=self, N=1, electrode_type='anode',
-                      material='Titanium grid catalyst welded to current collector tab both coated in iridium tantalum mixed metal oxide', surface_area=1, unit_cost=288), #288/unit, 1 unit
-            Electrode('Main_Cathode', linked_unit=self, N=1, electrode_type='cathode',
-                      material='TIMESETL 3pcs Stainless Steel Woven Wire 20 Mesh - 12"x8"(30x21cm) Metal Mesh Sheet 1mm Hole Great for Air Ventilation - A4', surface_area=30.25, unit_cost=0.847), #in in^2
-            Electrode('Current_Collector_Cathode', linked_unit=self, N=1, electrode_type='cathode',
-                      material='Stainless Steel 26 gauge 5.5'' x 7''', surface_area=38.5, unit_cost=39.9245), #in unknown units (94/unit, 1 unit)
-            Electrode('Reference_Electrode', linked_unit=self, N=1, electrode_type='reference',
-                      material='RE-5B Ag/AgCl, 7.5 cm long, with ceramic (MF-2056)', surface_area=1, unit_cost=94), #in unknown units (94/unit, 1 unit)
-            Membrane('Cation_Exchange_Membrane', linked_unit=self, N=1,
-                     material='CMI-7000S, polystyrene 0.45mm thick [48'' x 20'']',
-                     unit_cost=5.5055, surface_area=30.25), # in in^2
-            Membrane('Gas_Permeable_Membrane', linked_unit=self, N=1,
-                     material='Aquastill 0.3-micron polyethylene membrane', unit_cost=0.968, surface_area=30.25), #in in^2
-            ]
+    Cl = Component('Cl-', formula='Cl', i_charge = -1.0,
+                        particle_size='Soluble', degradability='Undegradable',
+                        organic=False)
+    
+    Fi = Component('Fi', description='Ferricyanide ion', formula='Fe(CN)6', i_charge = -3.0,
+                       particle_size='Soluble', degradability='Undegradable',
+                       organic=False)
+    
+    Fo = Component('Fo', description='Ferrocyanide ion', formula='Fe(CN)6', i_charge = -4.0,
+                       particle_size='Soluble', degradability='Undegradable',
+                       organic=False)
 
+    # Create a Components instance
+    cmps_ed_vfa = Components([S_ac, S_et, S_la, S_pro, S_bu, S_va, S_su, Na, Cl, Fi, Fo, cmps_all.H2O])
+
+    # Compile the components
+    cmps_ed_vfa.default_compile()
+
+    # Set thermodynamic settings if specified
+    if set_thermo: settings.set_thermo(cmps_ed_vfa)
+
+    return cmps_ed_vfa
+cmps = create_ed_vfa_cmps()
+# C2 = cmps['S_ac']
+# C3 = cmps['S_la', 'S_pro']
+# C4 = cmps['S_bu']
+# C5 = cmps['S_va']
+# C6 = cmps['S_su']
+# ed_vfa_cmps = create_ed_vfa_cmps()
+# I need to group C2 to C6 later?
+#%%
+#WasteStream
+# I need to adjust later
+fc_inf = WasteStream()
+fc_inf.set_flow_by_concentration(flow_tot=100, concentrations={'S_su': .5, 'S_la': .5}, units=('L/hr', 'mg/L'))
+#fc_eff = WasteStream('FC_Effluent', X_GAO_Gly=.5, H2O=1000, units='kmol/hr')
+ac_inf = WasteStream()
+ac_inf.set_flow_by_concentration(flow_tot=100, concentrations={'Na+': 100, 'Cl-': 100}, units=('L/hr', 'mg/L'))
+#ac_eff = WasteStream('AC_Effluent', X_GAO_Gly=.5, H2O=1000, units='kmol/hr')
+
+#%%
+# SanUnit
+# Define the Faraday constant (Coulombs per mole)
+F = 96485.33212
+
+class ED_vfa(SanUnit):
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 current_density=1.0,  # default current density in A/m2
+                 time=3600,  # default time in seconds
+                 z_vfa=1,  # valence of VFAs, typically 1
+                 membrane_area=1.0, # default membrane area in m2
+                 spacer_thickness=1e-3, # default spacer thickness in m
+                 electrode_areal_resistance=1.0, # default in ohm
+                 conductivity_dc=1.0, # default in ohm
+                 conductivity_ac=1.0, # default in ohm
+                ):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        self.current_density = current_density
+        self.time = time
+        self.z_vfa = z_vfa
+        self.membrane_area = membrane_area
+        self.spacer_thickness = spacer_thickness
+        self.electrode_areal_resistance = electrode_areal_resistance
+        self.conductivity_dc = conductivity_dc
+        self.conductivity_ac = conductivity_ac
+        
+        # Assume a bare module factor of 2
+        self.F_BM = {'Membrane': 2}
+
+    _N_ins = 1
+    _N_outs = 1
 
     def _run(self):
-        influent, catalysts = self.ins
-        recovered, removed, residual = self.outs[0], self.outs[1], self.outs[2]
+        fc_inf, ac_inf = self.ins
+        fc_eff, ac_eff = self.outs
 
-        mixture = WasteStream()
-        mixture.mix_from(self.ins)
-        residual.copy_like(mixture)
+        # Calculate the concentrations of target ion (e.g., 'S_su') and counter ion (e.g., 'Na+') in feed and accumulated channels
+        C_F_T = fc_inf.imass['S_su'] / fc_inf.F_vol
+        C_F_X = fc_inf.imass['Na+'] / fc_inf.F_vol
+        C_A_X = ac_inf.imass['Na+'] / ac_inf.F_vol
 
-        for chemical, recovery_ratio in self.recovery.items():
-            recovered.imass[chemical] = mixture.imass[chemical]*recovery_ratio
-            
-        for chemical, removal_ratio in self.removal.items():
-            recovery_ratio = 0 if recovered.imass[chemical] is None else recovered.imass[chemical]
-            removed.imass[chemical] = mixture.imass[chemical]*removal_ratio - mixture.imass[chemical]*recovery_ratio
-            residual.imass[chemical] = residual.imass[chemical]-residual.imass[chemical]*removal_ratio
+        # Calculate the ion selectivity based on the known concentrations
+        self.ion_selectivity = (C_A_X * C_F_T) / (C_F_X * C_A_T)
+
+        # Calculate the final concentration of the target ion in the accumulated channel using ion selectivity formula
+        C_A_T = self.ion_selectivity * (C_F_T / C_F_X) * C_A_X
+        ac_inf.imass['S_su'] = C_A_T * ac_inf.F_vol
+
+        # Calculate the total ion flux based on the current density and the membrane area
+        membrane_area = self.membrane_area  # m2
+        current = self.current_density * membrane_area  # A
+
+        # Calculate the theoretical ion transport
+        Q_theoretical = current * self.time / (self.z_vfa * F)  # mol
+
+        # Calculate the actual ion transport based on feed and accumulation concentrations
+        actual_transport = 0
+        for cmp in fc_inf.components:
+            if cmp.ID in ['S_su']:
+                transported_mass = fc_inf.imass[cmp.ID] - ac_inf.imass[cmp.ID]
+                actual_transport += transported_mass / cmp.MW  # mol
+
+        # Calculate charge efficiency
+        self.charge_efficiency = actual_transport / Q_theoretical
+
+        # Calculate total target ion transport rate (Theoretical)
+        n_T = self.charge_efficiency * current / (self.z_vfa * F)  # mol/s
+
+        # Calculate actual target ion flux
+        J_T = self.ion_selectivity * n_T / membrane_area  # mol/m^2/s
+
+        # Update the concentration in the accumulation channel based on ion transport rate
+        for cmp in fc_inf.components:
+            if cmp.ID in ['S_su', 'Na+']:
+                transported_mass = n_T * cmp.MW * 1000  # g/s
+                ac_inf.imass[cmp.ID] += transported_mass * self.time  # update accumulation with ion transport rate
+                fc_inf.imass[cmp.ID] -= transported_mass * self.time  # decrease feed concentration accordingly
+
+        ac_eff.copy_like(ac_inf)  # output is the updated accumulation stream
+        fc_eff.copy_like(fc_inf)  # output is the updated feed stream
+
+    _units = {
+        'Membrane Area': 'm2',
+        'Electricity': 'kWh'
+    }
 
     def _design(self):
-        self.add_equipment_design()
+        D = self.design_results
+        total_ion_flux = self.current_density * self.time / (self.z_vfa * F)  # mol/s
+
+        # Assume a membrane area based on ion flux
+        membrane_area = total_ion_flux * self.time / (1e-6)  # m2, assuming 1 µm/s flux
+        D['Membrane Area'] = membrane_area
+        return D
 
     def _cost(self):
-        self.add_equipment_cost()
-        self.baseline_purchase_costs['Exterior'] = 60.52
-        '''
-        TOTAL CELL_EXTERIOR_COST = 60.52 USD
-        Breakdown:
-        Exterior frame (7'' x 7'' x 11/16'')	$21.46
-        Interior half-cells (5.5'' x 5.5'' x 11/16'')	$19.87
-        Rubber Sheets	$9.196
-        Threaded Rods	$2.9696
-        Wingnuts	$2.5504
-        Flat Washers	$0.728
-        Nylon Cable Glands	$3.744
-        '''
-        self.equip_costs = self.baseline_purchase_costs.values()
-        add_OPEX = sum(self.equip_costs)*self.OPEX_over_CAPEX
-        recovered, removed = self.outs[0], self.outs[1]
+        self.baseline_purchase_costs['Membrane'] = \
+            100 * self.design_results['Membrane Area']  # assume $100 per m2 membrane cost
 
-        self.power_utility.rate = recovered.imass['NH3']*0.67577
-        # steady state value derived from 17.57 kWh used over 26 hrs
-        self._add_OPEX = {'Additional OPEX': add_OPEX}
+        # Assume the electricity usage is proportional to the current and time
+        self.power_utility.consumption = self.current_density * self._design()['Membrane Area'] * self.time * 1e-3  # kWh
+
+    @property
+    def ion_selectivity(self):
+        '''[float] Selectivity of the target ions over counter ions.'''
+        return self._ion_selectivity
+    @ion_selectivity.setter
+    def ion_selectivity(self, i):
+        if i <= 0:
+            raise AttributeError('`ion_selectivity` must be positive, '
+                                f'the provided value {i} is not valid.')
+        self._ion_selectivity = i
+
+    @property
+    def charge_efficiency(self):
+        '''[float] Charge efficiency of the electrodialysis process.'''
+        return self._charge_efficiency
+
+    @property
+    def current_density(self):
+        '''[float] Electric current density applied to the system (A/m2).'''
+        return self._current_density
+    @current_density.setter
+    def current_density(self, i):
+        if i <= 0:
+            raise AttributeError('`current_density` must be positive, '
+                                f'the provided value {i} is not valid.')
+        self._current_density = i
+
+    @property
+    def time(self):
+        '''[float] Time duration of the electrodialysis process (s).'''
+        return self._time
+    @time.setter
+    def time(self, i):
+        if i <= 0:
+            raise AttributeError('`time` must be positive, '
+                                f'the provided value {i} is not valid.')
+        self._time = i
+
+    @property
+    def z_vfa(self):
+        '''[int] Valence of the VFAs.'''
+        return self._z_vfa
+    @z_vfa.setter
+    def z_vfa(self, i):
+        if not isinstance(i, int) or i == 0:
+            raise AttributeError('`z_vfa` must be a non-zero integer, '
+                                f'the provided value {i} is not valid.')
+        self._z_vfa = i
+
+# Usage example:
+fc_inf = WasteStream('fc_inf', flow_tot=100, concentrations={'S_su': 0.5, 'S_la': 0.5}, units=('L/hr', 'mg/L'))
+ac_inf = WasteStream('ac_inf', flow_tot=100, concentrations={'Na+': 100, 'Cl-': 100}, units=('L/hr', 'mg/L'))
+fc_eff = WasteStream('fc_eff')
+ac_eff = WasteStream('ac_eff')
+ed_unit = ED_vfa(ID='ED_vfa', ins=[fc_inf, ac_inf], outs=[fc_eff, ac_eff], current_density=1.0, time=3600)
+ed_unit.simulate()
