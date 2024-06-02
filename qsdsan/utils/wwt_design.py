@@ -42,6 +42,7 @@ __all__ = ('get_SRT',
            'get_CH4_emitted_during_pl',
            'get_CH4_emitted_after_pl',
            'get_CO2_eq_electricity',
+           'get_eq_natural_gas_price',
            
            # Function for gates work (to be removed at a later date)
            
@@ -571,6 +572,41 @@ def get_sludge_disposal_costs(sludge,  # sludge disposal costs
     
     return operational_costs_WRRF
 
+def get_eq_natural_gas_price(system, gas, natural_gas_price = 0.0041, CH4_nat_gas = 0.95): 
+    '''
+    Parameters
+    ----------
+    
+    system : :class:`biosteam.System`
+        The system whose power will be calculated.
+        
+    ------------------------------------------------------------------------------ 
+    
+    gas : : iterable[:class:`WasteStream`], optional
+        Effluent gas from anaerobic digestor. 
+        The default is None.
+    natural_gas_price : float
+        Price of Natural gas in USD/m3 (eia.gov). 
+        The default is 0.0041 USD/m3. 
+    CH4_nat_gas: Percentage of natural gas that is methane. 
+        The default is 0.95.
+
+    Returns
+    -------
+    Normalized natural gas equivalent cost (USD/m3). [int]
+    
+    '''
+    
+    CH4_produced = gas.F_vol*24 # m3/day
+    
+    eq_nat_gas_produced = CH4_produced/CH4_nat_gas # m3/day
+    
+    price_nat_gas = eq_nat_gas_produced*natural_gas_price # USD/day
+        
+    operational_costs_WRRF = price_nat_gas/sum([s.F_vol*24 for s in system.feeds])
+    
+    return operational_costs_WRRF
+
 def get_total_operational_cost(q_air, # aeration (blower) power 
                                      sludge,  # sludge disposal costs 
                                      system, active_unit_IDs=None,  # sludge pumping power 
@@ -938,7 +974,7 @@ def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity,
     
     return normalized_CO2_eq_WRRF 
 
-def get_CH4_CO2_eq_treatment(system, influent_sc =None, effluent_sc = None, effluent_sys =None, active_unit_IDs=None, sludge=None, 
+def get_CH4_CO2_eq_treatment(system, influent_sc =None, effluent_sc = None,
                        CH4_CO2eq=29.8, CH4_EF_sc =0.0075):
     
     '''
@@ -1497,31 +1533,34 @@ def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, efflu
     
     # source 4 (off-site)
 
-    DOC_mass_flow = 0
-    
-    for slg in sludge:
-        DOC_mass_flow += slg.composite("C", flow=True, exclude_gas=True, 
-                      subgroup=None, particle_size=None,
-                      degradability="b", organic=True, volatile=None,
-                      specification=None, unit="kg/day")
-
-    annual_DOC_mass = 365*DOC_mass_flow # in kg/year
-
-    annual_DDOC = annual_DOC_mass*DOC_f*MCF
+    if sludge == None:
+        CH4_CO2_eq_sludge_disposal_pl = 0
+    else:
+        DOC_mass_flow = 0
         
-    t_vary = np.arange(pl)
-    decomposed_DOC = annual_DDOC * (1 - np.exp(-1 * k * t_vary))
-    total_decomposed_DOC = np.sum(decomposed_DOC)
-    CH4_emitted_during_pl = total_decomposed_DOC*F*16/12
+        for slg in sludge:
+            DOC_mass_flow += slg.composite("C", flow=True, exclude_gas=True, 
+                          subgroup=None, particle_size=None,
+                          degradability="b", organic=True, volatile=None,
+                          specification=None, unit="kg/day")
     
-    accumulated_DOC_at_pl = annual_DDOC* (1 - np.exp(-1 * k * (pl-1))) / (1 - np.exp(-1 * k)) 
-    CH4_emitted_after_pl = accumulated_DOC_at_pl*F*16/12
+        annual_DOC_mass = 365*DOC_mass_flow # in kg/year
     
-    days_in_year = 365
-
-    GHG_sludge_disposal = (CH4_emitted_during_pl + CH4_emitted_after_pl)/(pl*days_in_year)
-
-    CH4_CO2_eq_sludge_disposal_pl = GHG_sludge_disposal*CH4_CO2eq
+        annual_DDOC = annual_DOC_mass*DOC_f*MCF
+            
+        t_vary = np.arange(pl)
+        decomposed_DOC = annual_DDOC * (1 - np.exp(-1 * k * t_vary))
+        total_decomposed_DOC = np.sum(decomposed_DOC)
+        CH4_emitted_during_pl = total_decomposed_DOC*F*16/12
+        
+        accumulated_DOC_at_pl = annual_DDOC* (1 - np.exp(-1 * k * (pl-1))) / (1 - np.exp(-1 * k)) 
+        CH4_emitted_after_pl = accumulated_DOC_at_pl*F*16/12
+        
+        days_in_year = 365
+    
+        GHG_sludge_disposal = (CH4_emitted_during_pl + CH4_emitted_after_pl)/(pl*days_in_year)
+    
+        CH4_CO2_eq_sludge_disposal_pl = GHG_sludge_disposal*CH4_CO2eq
     
     CO2_eq_WRRF = np.array([CH4_CO2_eq_treatment, N2O_CO2_eq_treatment, #1
                             CH4_CO2_eq_discharge, N2O_CO2_eq_discharge, #3

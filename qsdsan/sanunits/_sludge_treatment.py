@@ -40,27 +40,28 @@ default_F_BM = {
 default_F_BM.update(default_WWTpump_F_BM)
 
 #%% Thickener
-<<<<<<< Updated upstream
-=======
+# <<<<<<< Updated upstream
+# =======
 
-def calc_f_thick(thickener_perc, TSS_in):
-    if TSS_in > 0:
-        thickener_factor = thickener_perc*10000/TSS_in
-        if thickener_factor < 1: thickener_factor = 1
-        return thickener_factor
-    else:
-        raise ValueError(f'Influent TSS is not valid: ({TSS_in:.2f} mg/L).')
+# def calc_f_thick(thickener_perc, TSS_in):
+#     if TSS_in > 0:
+#         thickener_factor = thickener_perc*10000/TSS_in
+#         if thickener_factor < 1: thickener_factor = 1
+#         return thickener_factor
+#     else:
+#         raise ValueError(f'Influent TSS is not valid: ({TSS_in:.2f} mg/L).')
         
-def calc_f_Qu_thin(TSS_removal_perc, thickener_factor):
-    if thickener_factor <= 1:
-        Qu_factor = 1
-        thinning_factor=0
-    else:
-        Qu_factor = TSS_removal_perc/(100*thickener_factor)
-        thinning_factor = (1 - TSS_removal_perc/100)/(1 - Qu_factor)
-    return Qu_factor, thinning_factor
+# def calc_f_Qu_thin(TSS_removal_perc, thickener_factor):
+#     if thickener_factor <= 1:
+#         Qu_factor = 1
+#         thinning_factor=0
+#     else:
+#         Qu_factor = TSS_removal_perc/(100*thickener_factor)
+#         thinning_factor = (1 - TSS_removal_perc/100)/(1 - Qu_factor)
+#     return Qu_factor, thinning_factor
     
->>>>>>> Stashed changes
+# >>>>>>> Stashed changes
+
 class Thickener(SanUnit):
     
     """
