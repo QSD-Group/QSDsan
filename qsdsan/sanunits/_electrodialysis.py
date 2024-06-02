@@ -100,6 +100,14 @@ def create_ed_vfa_cmps(set_thermo=True):
                                    degradability='Readily',
                                    organic=True)
     
+    # Hexanoate (C6)
+    S_he = Component.from_chemical('S_he', chemical='caproic acid',
+                                   description='Hexanoate',
+                                   measured_as='COD',
+                                   particle_size='Soluble',
+                                   degradability='Readily',
+                                   organic=True)
+    
     # How I define molecular mass and unit?
     Na = Component('Na+', formula='Na', i_charge = 1.0,
                        particle_size='Soluble', degradability='Undegradable',
@@ -118,7 +126,7 @@ def create_ed_vfa_cmps(set_thermo=True):
                        organic=False)
 
     # Create a Components instance
-    cmps_ed_vfa = Components([S_ac, S_et, S_la, S_pro, S_bu, S_va, S_su, Na, Cl, Fi, Fo, cmps_all.H2O])
+    cmps_ed_vfa = Components([S_ac, S_et, S_la, S_pro, S_bu, S_va, S_su, S_he, Na, Cl, Fi, Fo, cmps_all.H2O])
 
     # Compile the components
     cmps_ed_vfa.default_compile()
