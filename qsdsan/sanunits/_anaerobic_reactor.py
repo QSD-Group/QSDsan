@@ -263,7 +263,7 @@ class AnaerobicCSTR(CSTR):
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False
     _R = 8.3145e-2 # Universal gas constant, [bar/M/K]
-    algebraic_h2 = True
+    algebraic_h2 = False
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', V_liq=3400, V_gas=300, model=None,  
