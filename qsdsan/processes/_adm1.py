@@ -23,12 +23,11 @@ from scipy.optimize import brenth
 from warnings import warn
 
 __all__ = ('create_adm1_cmps', 'ADM1',
-           'non_compet_inhibit', 'substr_inhibit',
+           'non_compet_inhibit', 'grad_non_compet_inhibit',
+           'substr_inhibit', 'grad_substr_inhibit',
            'mass2mol_conversion', 'T_correction_factor', 
            'pH_inhibit', 'Hill_inhibit', 
-           'rhos_adm1', 
-           'solve_pH', 'TempState',
-           'dydt_Sh2_AD', 'grad_dydt_Sh2_AD')
+           'rhos_adm1', 'TempState',)
 
 _path = ospath.join(data_path, 'process_data/_adm1.tsv')
 _load_components = settings.get_default_chemicals
@@ -356,8 +355,8 @@ def grad_dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq, S_h2_in):
 
     grad_rhos[:] = ks * X_bio * Iph * Iin
     grad_rhos[:-1] *= substr_inhibit(substrates, Ks) * grad_Ih2
-    if S_va > 0: rhos[1] *= 1/(1+S_bu/S_va)
-    if S_bu > 0: rhos[2] *= 1/(1+S_va/S_bu)
+    if S_va > 0: grad_rhos[1] *= 1/(1+S_bu/S_va)
+    if S_bu > 0: grad_rhos[2] *= 1/(1+S_va/S_bu)
     
     grad_rhos[-1] *= grad_substr_inhibit(S_h2, K_h2)
     stoichio = f_stoichio(state_arr)
@@ -663,6 +662,9 @@ class ADM1(CompiledProcesses):
                                                K_H_base, K_H_dH, kLa,
                                                T_base, self._components, root]))
 
+        dct['solve_pH'] = solve_pH
+        dct['dydt_Sh2_AD'] = dydt_Sh2_AD
+        dct['grad_dydt_Sh2_AD'] = grad_dydt_Sh2_AD
         return self
 
     def set_pKas(self, pKas):
