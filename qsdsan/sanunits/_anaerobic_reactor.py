@@ -18,8 +18,7 @@ import numpy as np
 from math import ceil, pi
 from biosteam import Stream
 from .. import SanUnit, Construction, WasteStream
-from ..processes import Decay, T_correction_factor, solve_pH, \
-    dydt_Sh2_AD, grad_dydt_Sh2_AD
+from ..processes import Decay, T_correction_factor
 from ..sanunits import HXutility, WWTpump, CSTR
 from ..utils import ospath, load_data, data_path, auom, \
     calculate_excavation_volume, ExogenousDynamicVariable as EDV
@@ -567,6 +566,9 @@ class AnaerobicCSTR(CSTR):
                     _h2_stoichio = _M_stoichio[h2_idx]
                     h2_stoichio = lambda state_arr: _h2_stoichio
                 unit_conversion = cmps.i_mass / cmps.chem_MW
+                solve_pH = self.model.solve_pH
+                dydt_Sh2_AD = self.model.dydt_Sh2_AD
+                grad_dydt_Sh2_AD = self.model.grad_dydt_Sh2_AD
                 def solve_h2(QC, S_in, T):
                     Ka = params['Ka_base'] * T_correction_factor(params['T_base'], T, params['Ka_dH'])
                     h, nh3, co2 = solve_pH(QC, Ka, unit_conversion)
