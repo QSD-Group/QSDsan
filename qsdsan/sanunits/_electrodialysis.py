@@ -34,7 +34,7 @@ __all__ = ('create_ed_vfa_cmps', 'ED_vfa'
 
 #%%
 # =============================================================================
-# ADM1_vfa-specific components
+# ED_vfa-specific components
 # =============================================================================
 
 # Define molecular weights for carbon (C) and nitrogen (N)
@@ -145,169 +145,103 @@ cmps = create_ed_vfa_cmps()
 # I need to group C2 to C6 later?
 #%%
 #WasteStream
-# I need to adjust later
-fc_inf = WasteStream()
-fc_inf.set_flow_by_concentration(flow_tot=100, concentrations={'S_su': .5, 'S_la': .5}, units=('L/hr', 'mg/L'))
+#Same as ADM1 Effluent Q
+inf_dc = WasteStream()
+inf_dc.set_flow_by_concentration(flow_tot=7, concentrations={'S_la': .5, 'S_bu': .5, 'S_he': .5}, units=('m3/d', 'mg/L'))
 #fc_eff = WasteStream('FC_Effluent', X_GAO_Gly=.5, H2O=1000, units='kmol/hr')
-ac_inf = WasteStream()
-ac_inf.set_flow_by_concentration(flow_tot=100, concentrations={'Na+': 100, 'Cl-': 100}, units=('L/hr', 'mg/L'))
+inf_ac = WasteStream()
+inf_ac.set_flow_by_concentration(flow_tot=7, concentrations={'Na+': 100, 'Cl-': 100}, units=('m3/d', 'mg/L'))
 #ac_eff = WasteStream('AC_Effluent', X_GAO_Gly=.5, H2O=1000, units='kmol/hr')
 
 #%%
 # SanUnit
-# Define the Faraday constant (Coulombs per mole)
-F = 96485.33212
-
 class ED_vfa(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 current_density=1.0,  # default current density in A/m2
-                 time=3600,  # default time in seconds
-                 z_vfa=1,  # valence of VFAs, typically 1
-                 membrane_area=1.0, # default membrane area in m2
-                 spacer_thickness=1e-3, # default spacer thickness in m
-                 electrode_areal_resistance=1.0, # default in ohm
-                 conductivity_dc=1.0, # default in ohm
-                 conductivity_ac=1.0, # default in ohm
+                 CE=0.5,  # Charge efficiency
+                 j=500,   # Current density in A/m^2
+                 t=3600,  # Time in seconds
+                 z_T=1,   # Valence of the target ion
+                 F=96485.33289,  # Faraday's constant in C/mol
+                 A_m=10,  # Membrane area in m^2
+                 V=1.0  # Volume of all tanks in m^3
                 ):
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
-        self.current_density = current_density
-        self.time = time
-        self.z_vfa = z_vfa
-        self.membrane_area = membrane_area
-        self.spacer_thickness = spacer_thickness
-        self.electrode_areal_resistance = electrode_areal_resistance
-        self.conductivity_dc = conductivity_dc
-        self.conductivity_ac = conductivity_ac
-        
-        # Assume a bare module factor of 2
-        self.F_BM = {'Membrane': 2}
+        super().__init__(ID, ins, outs, thermo, init_with)
+        self.CE = CE
+        self.j = j
+        self.t = t
+        self.z_T = z_T
+        self.F = F
+        self.A_m = A_m
+        self.V = V
 
-    _N_ins = 1
-    _N_outs = 1
+    _N_ins = 2
+    _N_outs = 2
 
     def _run(self):
-        fc_inf, ac_inf = self.ins
-        fc_eff, ac_eff = self.outs
+        inf_dc, inf_ac = self.ins
+        eff_dc, eff_ac = self.outs
 
-        # Calculate the concentrations of target ion (e.g., 'S_su') and counter ion (e.g., 'Na+') in feed and accumulated channels
-        C_F_T = fc_inf.imass['S_su'] / fc_inf.F_vol
-        C_F_X = fc_inf.imass['Na+'] / fc_inf.F_vol
-        C_A_X = ac_inf.imass['Na+'] / ac_inf.F_vol
-
-        # Calculate the ion selectivity based on the known concentrations
-        self.ion_selectivity = (C_A_X * C_F_T) / (C_F_X * C_A_T)
-
-        # Calculate the final concentration of the target ion in the accumulated channel using ion selectivity formula
-        C_A_T = self.ion_selectivity * (C_F_T / C_F_X) * C_A_X
-        ac_inf.imass['S_su'] = C_A_T * ac_inf.F_vol
-
-        # Calculate the total ion flux based on the current density and the membrane area
-        membrane_area = self.membrane_area  # m2
-        current = self.current_density * membrane_area  # A
-
-        # Calculate the theoretical ion transport
-        Q_theoretical = current * self.time / (self.z_vfa * F)  # mol
-
-        # Calculate the actual ion transport based on feed and accumulation concentrations
-        actual_transport = 0
-        for cmp in fc_inf.components:
-            if cmp.ID in ['S_su']:
-                transported_mass = fc_inf.imass[cmp.ID] - ac_inf.imass[cmp.ID]
-                actual_transport += transported_mass / cmp.MW  # mol
-
-        # Calculate charge efficiency
-        self.charge_efficiency = actual_transport / Q_theoretical
-
-        # Calculate total target ion transport rate (Theoretical)
-        n_T = self.charge_efficiency * current / (self.z_vfa * F)  # mol/s
-
-        # Calculate actual target ion flux
-        J_T = self.ion_selectivity * n_T / membrane_area  # mol/m^2/s
-
-        # Update the concentration in the accumulation channel based on ion transport rate
-        for cmp in fc_inf.components:
-            if cmp.ID in ['S_su', 'Na+']:
-                transported_mass = n_T * cmp.MW * 1000  # g/s
-                ac_inf.imass[cmp.ID] += transported_mass * self.time  # update accumulation with ion transport rate
-                fc_inf.imass[cmp.ID] -= transported_mass * self.time  # decrease feed concentration accordingly
-
-        ac_eff.copy_like(ac_inf)  # output is the updated accumulation stream
-        fc_eff.copy_like(fc_inf)  # output is the updated feed stream
+        # Calculate total current
+        I = self.j * self.A_m
+        
+        # Moles of target ion transported
+        n_T = self.CE * I / (self.z_T * self.F) * self.t
+        
+        # Target ion molar flux
+        J_T = self.CE * I / (self.z_T * self.F * self.A_m)
+        
+        # Obtain the flow rate from the influent dilute stream
+        Q = inf_dc.F_vol  # Flow rate from influent in m3/hr
+        
+        # Dilute stream concentration
+        C_inf_dc = inf_dc.conc[self.z_T]
+        C_out_dc = C_inf_dc - (J_T * self.A_m) / Q
+        
+        # Accumulated stream concentration
+        C_out_ac = (J_T * self.A_m) / Q * (1 - np.exp(-Q * self.t / self.V))
+        
+        # Update effluent streams
+        eff_dc.copy_like(inf_dc)
+        eff_dc.conc[self.z_T] = C_out_dc
+        
+        eff_ac.copy_like(inf_ac)
+        eff_ac.conc[self.z_T] = C_out_ac
 
     _units = {
-        'Membrane Area': 'm2',
-        'Electricity': 'kWh'
+        'Membrane area': 'm2',
+        'Total current': 'A',
+        'Accumulated volume': 'm3'
     }
 
     def _design(self):
         D = self.design_results
-        total_ion_flux = self.current_density * self.time / (self.z_vfa * F)  # mol/s
-
-        # Assume a membrane area based on ion flux
-        membrane_area = total_ion_flux * self.time / (1e-6)  # m2, assuming 1 µm/s flux
-        D['Membrane Area'] = membrane_area
-        return D
+        D['Membrane area'] = self.A_m
+        D['Total current'] = self.j * self.A_m
+        D['Accumulated volume'] = self.V_accum
 
     def _cost(self):
-        self.baseline_purchase_costs['Membrane'] = \
-            100 * self.design_results['Membrane Area']  # assume $100 per m2 membrane cost
+        self.baseline_purchase_costs['Membrane'] = 100 * self.design_results['Membrane area']  # Assume $100 per m2 for the membrane
+        self.power_utility.consumption = self.design_results['Total current'] * self.t / 3600  # Assuming kWh consumption based on current and time
 
-        # Assume the electricity usage is proportional to the current and time
-        self.power_utility.consumption = self.current_density * self._design()['Membrane Area'] * self.time * 1e-3  # kWh
-
-    @property
-    def ion_selectivity(self):
-        '''[float] Selectivity of the target ions over counter ions.'''
-        return self._ion_selectivity
-    @ion_selectivity.setter
-    def ion_selectivity(self, i):
-        if i <= 0:
-            raise AttributeError('`ion_selectivity` must be positive, '
-                                f'the provided value {i} is not valid.')
-        self._ion_selectivity = i
-
-    @property
-    def charge_efficiency(self):
-        '''[float] Charge efficiency of the electrodialysis process.'''
-        return self._charge_efficiency
-
-    @property
-    def current_density(self):
-        '''[float] Electric current density applied to the system (A/m2).'''
-        return self._current_density
-    @current_density.setter
-    def current_density(self, i):
-        if i <= 0:
-            raise AttributeError('`current_density` must be positive, '
-                                f'the provided value {i} is not valid.')
-        self._current_density = i
-
-    @property
-    def time(self):
-        '''[float] Time duration of the electrodialysis process (s).'''
-        return self._time
-    @time.setter
-    def time(self, i):
-        if i <= 0:
-            raise AttributeError('`time` must be positive, '
-                                f'the provided value {i} is not valid.')
-        self._time = i
-
-    @property
-    def z_vfa(self):
-        '''[int] Valence of the VFAs.'''
-        return self._z_vfa
-    @z_vfa.setter
-    def z_vfa(self, i):
-        if not isinstance(i, int) or i == 0:
-            raise AttributeError('`z_vfa` must be a non-zero integer, '
-                                f'the provided value {i} is not valid.')
-        self._z_vfa = i
-
-# Usage example:
-fc_inf = WasteStream('fc_inf', flow_tot=100, concentrations={'S_su': 0.5, 'S_la': 0.5}, units=('L/hr', 'mg/L'))
-ac_inf = WasteStream('ac_inf', flow_tot=100, concentrations={'Na+': 100, 'Cl-': 100}, units=('L/hr', 'mg/L'))
-fc_eff = WasteStream('fc_eff')
-ac_eff = WasteStream('ac_eff')
-ed_unit = ED_vfa(ID='ED_vfa', ins=[fc_inf, ac_inf], outs=[fc_eff, ac_eff], current_density=1.0, time=3600)
-ed_unit.simulate()
+#%%
+# Initialize the ED_vfa unit
+ed_vfa_unit = ED_vfa(
+    ID='ED1',
+    ins=(inf_dc, inf_ac),
+    outs=(WasteStream(), WasteStream()),
+    CE=0.85,
+    j=500,
+    t=3600,
+    z_T=1,
+    F=96485.33289,
+    A_m=10,
+    V=1.0
+)
+#%%
+# Run the unit
+ed_vfa_unit.simulate()
+ed_vfa_unit.show()
+#%%
+# Access and display the results
+print("Effluent dilute stream concentration:", ed_vfa_unit.outs[0].conc)
+print("Effluent accumulated stream concentration:", ed_vfa_unit.outs[1].conc)
