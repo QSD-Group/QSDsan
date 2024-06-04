@@ -53,7 +53,7 @@ from ._sludge_thickening import *
 from ._suspended_growth_bioreactor import *
 from ._tank import *
 from ._trucking import *
-
+from ._electrodialysis import *
 # Units that rely on other units
 from ._activated_sludge_process import *
 from ._anaerobic_reactor import *
@@ -112,7 +112,7 @@ from . import (
         _toilet,
         _treatment_bed,
         _trucking,
-
+        _electrodialysis,
         # System-specific units (public)
         _biogenic_refinery,
         _eco_san,
@@ -155,7 +155,7 @@ __all__ = (
         *_toilet.__all__,
         *_treatment_bed.__all__,
         *_trucking.__all__,
-
+        *_electrodialysis.__all__,
         # System-specific units (public)
         *_biogenic_refinery.__all__,
         *_reclaimer.__all__,
