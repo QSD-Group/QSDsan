@@ -15,7 +15,7 @@ for license details.
 from thermosteam.utils import chemicals_user
 from thermosteam import settings
 from chemicals.elements import molecular_weight as get_mw
-from qsdsan import Component, Components, WasteStream, SanUnit, Process, Processes, CompiledProcesses
+from qsdsan import Component, Components, WasteStream, SanUnit, Process, Processes, CompiledProcesses, System
 import numpy as np
 from qsdsan.utils import ospath, data_path
 from scipy.optimize import brenth
@@ -146,33 +146,38 @@ cmps = create_ed_vfa_cmps()
 #%%
 #WasteStream
 #Same as ADM1 Effluent Q
-inf_dc = WasteStream()
-inf_dc.set_flow_by_concentration(flow_tot=7, concentrations={'S_la': .5, 'S_bu': .5, 'S_he': .5}, units=('m3/d', 'mg/L'))
+inf_dc = WasteStream(ID='inf_dc')
+inf_dc.set_flow_by_concentration(flow_tot=7, concentrations={'S_pro': 0.5, 'S_bu': 0.5, 'S_he': 0.5}, units=('L/hr', 'mg/L'))
 #fc_eff = WasteStream('FC_Effluent', X_GAO_Gly=.5, H2O=1000, units='kmol/hr')
-inf_ac = WasteStream()
-inf_ac.set_flow_by_concentration(flow_tot=7, concentrations={'Na+': 100, 'Cl-': 100}, units=('m3/d', 'mg/L'))
+inf_ac = WasteStream(ID='inf_ac')
+inf_ac.set_flow_by_concentration(flow_tot=7, concentrations={'Na+': 100, 'Cl-': 100}, units=('L/hr', 'mg/L'))
 #ac_eff = WasteStream('AC_Effluent', X_GAO_Gly=.5, H2O=1000, units='kmol/hr')
-
+eff_dc = WasteStream(ID='eff_dc')               # effluent
+eff_ac = WasteStream(ID='eff_ac')               # effluent
 #%%
 # SanUnit
+
+# def mass2mol_conversion(cmps):
+#     '''conversion factor from kg[measured_as]/m3 to mol[component]/L'''
+#     return cmps.i_mass / cmps.chem_MW
+# unit_conversion = mass2mol_conversion(cmps)
+F=96485.33289  # Faraday's constant in C/mol
+
 class ED_vfa(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 CE=0.5,  # Charge efficiency
+                 CE_dict=None,  # Dictionary of charge efficiencies for each ion
                  j=500,   # Current density in A/m^2
                  t=3600,  # Time in seconds
-                 z_T=1,   # Valence of the target ion
-                 F=96485.33289,  # Faraday's constant in C/mol
                  A_m=10,  # Membrane area in m^2
-                 V=1.0  # Volume of all tanks in m^3
-                ):
-        super().__init__(ID, ins, outs, thermo, init_with)
-        self.CE = CE
+                 V=1.0,  # Volume of all tanks in m^3
+                 z_T=1.0):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        self.CE_dict = CE_dict or {'S_pro': 0.85, 'S_bu': 0.75, 'S_he': 0.65}  # Default CE for ions
         self.j = j
         self.t = t
-        self.z_T = z_T
-        self.F = F
         self.A_m = A_m
         self.V = V
+        self.z_T = z_T
 
     _N_ins = 2
     _N_outs = 2
@@ -180,68 +185,85 @@ class ED_vfa(SanUnit):
     def _run(self):
         inf_dc, inf_ac = self.ins
         eff_dc, eff_ac = self.outs
-
-        # Calculate total current
+        
+        # Calculate total current [A]    
         I = self.j * self.A_m
+        self.total_current = I
+        print(f"Total current (I): {I} A")
         
-        # Moles of target ion transported
-        n_T = self.CE * I / (self.z_T * self.F) * self.t
+        # Obtain the flow rates from the influent streams
+        Q_dc = inf_dc.F_vol  # Flow rate from influent dilute stream in m^3/hr
+        Q_ac = inf_ac.F_vol  # Flow rate from influent accumulated stream in m^3/hr
+        self.Q_dc = Q_dc
+        self.Q_ac = Q_ac
+        print(f"Flow rate (Q_dc): {Q_dc} m^3/hr")
+        print(f"Flow rate (Q_ac): {Q_ac} m^3/hr")
         
-        # Target ion molar flux
-        J_T = self.CE * I / (self.z_T * self.F * self.A_m)
-        
-        # Obtain the flow rate from the influent dilute stream
-        Q = inf_dc.F_vol  # Flow rate from influent in m3/hr
-        
-        # Dilute stream concentration
-        C_inf_dc = inf_dc.conc[self.z_T]
-        C_out_dc = C_inf_dc - (J_T * self.A_m) / Q
-        
-        # Accumulated stream concentration
-        C_out_ac = (J_T * self.A_m) / Q * (1 - np.exp(-Q * self.t / self.V))
-        
-        # Update effluent streams
-        eff_dc.copy_like(inf_dc)
-        eff_dc.conc[self.z_T] = C_out_dc
-        
-        eff_ac.copy_like(inf_ac)
-        eff_ac.conc[self.z_T] = C_out_ac
+        for ion, CE in self.CE_dict.items():        
+            # Moles of target ion transported [mol]
+            n_T = CE * I / (self.z_T * F) * self.t
+            self.n_T = n_T
+            print(f"Moles of {ion} transported (n_T): {n_T} mol")
+            
+            # Target ion molar flux [mol/(m2*s)]
+            J_T = CE * I / (self.z_T * F * self.A_m * self.t)
+            self.J_T = J_T
+            print(f"Target ion molar flux (J_T) for {ion}: {J_T} mol/m^2/s")
+            
+            # Dilute stream concentration [mol/L]
+            C_inf_dc = inf_dc.imass[ion] / inf_dc.F_vol  # Correctly accessing the mass and converting to concentration
+            delta_C = (J_T * self.A_m) / Q_dc
+            C_out_dc = C_inf_dc - delta_C
+            
+            # Accumulated stream concentration
+            C_out_ac = delta_C * (1 - np.exp(-Q_dc * self.t / self.V))
+            
+            # Update effluent streams
+            eff_dc.imass[ion] = C_out_dc * eff_dc.F_vol  # Update mass to match new concentration
+            eff_ac.imass[ion] = C_out_ac * eff_ac.F_vol  # Update mass to match new concentration
+
+        # eff_dc.copy_like(inf_dc)
+        # eff_ac.copy_like(inf_ac)
 
     _units = {
         'Membrane area': 'm2',
         'Total current': 'A',
-        'Accumulated volume': 'm3'
+        'Tank volume': 'm3'
     }
 
     def _design(self):
         D = self.design_results
         D['Membrane area'] = self.A_m
         D['Total current'] = self.j * self.A_m
-        D['Accumulated volume'] = self.V_accum
+        D['Tank volume'] = self.V
 
     def _cost(self):
-        self.baseline_purchase_costs['Membrane'] = 100 * self.design_results['Membrane area']  # Assume $100 per m2 for the membrane
+        self.baseline_purchase_costs['Membrane'] = 100 * self.design_results['Membrane area']  # Assume $100 per m^2 for the membrane
         self.power_utility.consumption = self.design_results['Total current'] * self.t / 3600  # Assuming kWh consumption based on current and time
-
 #%%
 # Initialize the ED_vfa unit
-ed_vfa_unit = ED_vfa(
+ed1 = ED_vfa(
     ID='ED1',
-    ins=(inf_dc, inf_ac),
-    outs=(WasteStream(), WasteStream()),
-    CE=0.85,
+    ins=('inf_dc', 'inf_ac'),
+    outs=('eff_dc', 'eff_ac'),
+    CE_dict={'S_pro': 0.85, 'S_bu': 0.75, 'S_he': 0.65},  # Separate CE for each ion
     j=500,
     t=3600,
-    z_T=1,
-    F=96485.33289,
     A_m=10,
     V=1.0
 )
 #%%
+# System
+'''
 # Run the unit
 ed_vfa_unit.simulate()
 ed_vfa_unit.show()
 #%%
-# Access and display the results
-print("Effluent dilute stream concentration:", ed_vfa_unit.outs[0].conc)
-print("Effluent accumulated stream concentration:", ed_vfa_unit.outs[1].conc)
+'''
+# Create the system
+sys = System('ED1', path=(ed1,))
+
+# Simulate the system
+sys.simulate()
+sys
+sys.diagram()
