@@ -152,8 +152,8 @@ inf_dc.set_flow_by_concentration(flow_tot=7, concentrations={'S_pro': 0.5, 'S_bu
 inf_ac = WasteStream(ID='inf_ac')
 inf_ac.set_flow_by_concentration(flow_tot=7, concentrations={'Na+': 100, 'Cl-': 100}, units=('L/hr', 'mg/L'))
 #ac_eff = WasteStream('AC_Effluent', X_GAO_Gly=.5, H2O=1000, units='kmol/hr')
-eff_dc = WasteStream(ID='eff_dc')               # effluent
-eff_ac = WasteStream(ID='eff_ac')               # effluent
+# eff_dc = WasteStream(ID='eff_dc')               # effluent
+# eff_ac = WasteStream(ID='eff_ac')               # effluent
 #%%
 # SanUnit
 
@@ -164,7 +164,7 @@ eff_ac = WasteStream(ID='eff_ac')               # effluent
 F=96485.33289  # Faraday's constant in C/mol
 
 class ED_vfa(SanUnit):
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+    def __init__(self, ID='', ins=None, outs=None, thermo=None, init_with='WasteStream',
                  CE_dict=None,  # Dictionary of charge efficiencies for each ion
                  j=500,   # Current density in A/m^2
                  t=3600,  # Time in seconds
@@ -196,34 +196,47 @@ class ED_vfa(SanUnit):
         Q_ac = inf_ac.F_vol  # Flow rate from influent accumulated stream in m^3/hr
         self.Q_dc = Q_dc
         self.Q_ac = Q_ac
+        
+        self.n_T_dict = {}
+        self.J_T_dict = {}
+        self.influent_dc_conc = {}
+        self.influent_ac_conc = {}
+        self.effluent_dc_conc = {}
+        self.effluent_ac_conc = {}
+        
         print(f"Flow rate (Q_dc): {Q_dc} m^3/hr")
         print(f"Flow rate (Q_ac): {Q_ac} m^3/hr")
         
         for ion, CE in self.CE_dict.items():        
             # Moles of target ion transported [mol]
             n_T = CE * I / (self.z_T * F) * self.t
-            self.n_T = n_T
+            self.n_T_dict[ion] = n_T
             print(f"Moles of {ion} transported (n_T): {n_T} mol")
             
             # Target ion molar flux [mol/(m2*s)]
             J_T = CE * I / (self.z_T * F * self.A_m * self.t)
-            self.J_T = J_T
+            self.J_T_dict[ion] = J_T
             print(f"Target ion molar flux (J_T) for {ion}: {J_T} mol/m^2/s")
             
             # Dilute stream concentration [mol/L]
             C_inf_dc = inf_dc.imass[ion] / inf_dc.F_vol  # Correctly accessing the mass and converting to concentration
+            C_inf_ac = inf_ac.imass[ion] / inf_ac.F_vol
+            self.influent_dc_conc = C_inf_dc
+            self.influent_ac_conc = C_inf_ac
+            
             delta_C = (J_T * self.A_m) / Q_dc
             C_out_dc = C_inf_dc - delta_C
             
             # Accumulated stream concentration
             C_out_ac = delta_C * (1 - np.exp(-Q_dc * self.t / self.V))
-            
+            self.effluent_dc_conc = C_out_dc
+            self.effluent_ac_conc = C_out_ac
             # Update effluent streams
             eff_dc.imass[ion] = C_out_dc * eff_dc.F_vol  # Update mass to match new concentration
             eff_ac.imass[ion] = C_out_ac * eff_ac.F_vol  # Update mass to match new concentration
 
-        # eff_dc.copy_like(inf_dc)
-        # eff_ac.copy_like(inf_ac)
+        eff_dc.copy_like(inf_dc)
+        eff_ac.copy_like(inf_ac)
 
     _units = {
         'Membrane area': 'm2',
@@ -244,8 +257,8 @@ class ED_vfa(SanUnit):
 # Initialize the ED_vfa unit
 ed1 = ED_vfa(
     ID='ED1',
-    ins=('inf_dc', 'inf_ac'),
-    outs=('eff_dc', 'eff_ac'),
+    ins=(inf_dc, inf_ac),
+    outs=(WasteStream(), WasteStream()),
     CE_dict={'S_pro': 0.85, 'S_bu': 0.75, 'S_he': 0.65},  # Separate CE for each ion
     j=500,
     t=3600,
