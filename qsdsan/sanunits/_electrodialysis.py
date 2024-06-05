@@ -147,10 +147,10 @@ cmps = create_ed_vfa_cmps()
 #WasteStream
 #Same as ADM1 Effluent Q
 inf_dc = WasteStream(ID='inf_dc')
-inf_dc.set_flow_by_concentration(flow_tot=7, concentrations={'S_pro': 500, 'S_bu': 500, 'S_he': 500}, units=('L/hr', 'mg/L'))
+inf_dc.set_flow_by_concentration(flow_tot=5, concentrations={'S_pro': 5000, 'S_bu': 5000, 'S_he': 5000}, units=('L/hr', 'mg/L'))
 #fc_eff = WasteStream('FC_Effluent', X_GAO_Gly=.5, H2O=1000, units='kmol/hr')
 inf_ac = WasteStream(ID='inf_ac')
-inf_ac.set_flow_by_concentration(flow_tot=7, concentrations={'Na+': 100, 'Cl-': 100}, units=('L/hr', 'mg/L'))
+inf_ac.set_flow_by_concentration(flow_tot=5, concentrations={'Na+': 500, 'Cl-': 500}, units=('L/hr', 'mg/L'))
 #ac_eff = WasteStream('AC_Effluent', X_GAO_Gly=.5, H2O=1000, units='kmol/hr')
 eff_dc = WasteStream(ID='eff_dc')               # effluent
 eff_ac = WasteStream(ID='eff_ac')               # effluent
@@ -170,7 +170,9 @@ class ED_vfa(SanUnit):
                  t=3600,  # Time in seconds
                  A_m=10,  # Membrane area in m^2
                  V=1.0,  # Volume of all tanks in m^3
-                 z_T=1.0):
+                 z_T=1.0,
+                 r_m=1.0,  # Membrane resistance in Ohm*m^2
+                 r_s=1.0):  # Solution resistance in Ohm*m^2
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.CE_dict = CE_dict or {'S_pro': 0.1, 'S_bu': 0.1, 'S_he': 0.1}  # Default CE for ions
         self.j = j
@@ -178,6 +180,8 @@ class ED_vfa(SanUnit):
         self.A_m = A_m
         self.V = V
         self.z_T = z_T
+        self.r_m = r_m
+        self.r_s = r_s
 
     _N_ins = 2
     _N_outs = 2
@@ -252,30 +256,52 @@ class ED_vfa(SanUnit):
             if comp.ID not in self.CE_dict:
                 eff_ac.imass[comp.ID] = inf_ac.imass[comp.ID]
                 
+                        
+        # Calculate system resistance [Ohm]
+        R_sys = self.A_m * (self.r_m + self.r_s)
+        self.R_sys = R_sys
+        
+        # Calculate system voltage [V]
+        V_sys = R_sys * I
+        self.V_sys = V_sys
+        
+        # Calculate power consumption [W]
+        P_sys = V_sys * I
+        self.P_sys = P_sys
+        print(f"System resistance (R_sys): {R_sys} Ohm")
+        print(f"System voltage (V_sys): {V_sys} V")
+        print(f"Power consumption (P_sys): {P_sys} W")
+                
     _units = {
         'Membrane area': 'm2',
         'Total current': 'A',
-        'Tank volume': 'm3'
+        'Tank volume': 'm3',
+        'System resistance': 'Ohm',
+        'System voltage': 'V',
+        'Power consumption': 'W'
     }
-
+        
     def _design(self):
         D = self.design_results
         D['Membrane area'] = self.A_m
         D['Total current'] = self.j * self.A_m
         D['Tank volume'] = self.V
+        D['System resistance'] = self.R_sys
+        D['System voltage'] = self.V_sys
+        D['Power consumption'] = self.P_sys
 
     def _cost(self):
         self.baseline_purchase_costs['Membrane'] = 100 * self.design_results['Membrane area']  # Assume $100 per m^2 for the membrane
-        self.power_utility.consumption = self.design_results['Total current'] * self.t / 3600  # Assuming kWh consumption based on current and time
+        self.power_utility.consumption = self.design_results['Power consumption'] / 1000  # Assuming kWh consumption based on power
 #%%
 # Initialize the ED_vfa unit
 ed1 = ED_vfa(
     ID='ED1',
     ins=(inf_dc, inf_ac),
     outs=(eff_dc, eff_ac),
-    CE_dict={'S_pro': 0.8, 'S_bu': 0.8, 'S_he': 0.8},  # Separate CE for each ion
-    j=0.5,
-    t=300,
+    CE_dict={'S_pro': 0.2, 'S_bu': 0.2, 'S_he': 0.2},  # Separate CE for each ion
+    j=5,
+    t=250000,
     A_m=0.5,
     V=0.1
 )
@@ -290,11 +316,29 @@ ed_vfa_unit.show()
 # Create the system
 sys = System('ED1', path=(ed1,))
 
-# Simulate the system
-sys.simulate()
-sys.diagram()
+# # Simulate the system
+# sys.simulate()
+# sys.diagram()
 #%%
-# Print the results
+# Simulation
+# Set the dynamic tracker
+sys.set_dynamic_tracker(inf_dc, inf_ac, eff_dc, eff_ac, ed1)
+sys
+# Simulation settings
+t = 250000  # total time for simulation in hours
+t_step = 3600  # times at which to store the computed solution in hours
+method = 'BDF'  # integration method to use
+
+# Enable dynamic simulation
+sys.isdynamic = True
+
+# Run simulation
+sys.simulate(state_reset_hook='reset_cache',
+             t_span=(0, t),
+             t_eval=np.arange(0, t + t_step, t_step),
+             method=method,
+             export_state_to='ED_vfa_simulation_results.xlsx')
+#%%
 # Print the results
 print("Effluent dilute stream concentrations (mol/L):")
 for ion in ed1.CE_dict.keys():
@@ -306,29 +350,28 @@ for ion in ed1.CE_dict.keys():
     eff_ac_conc = eff_ac.imol[ion] / (eff_ac.F_vol * 1000)  # Convert volume from m^3/hr to L/hr for concentration in mol/L
     print(f"{ion}: {eff_ac_conc} mol/L")
 #%%
-
-# 총 질량 계산 함수
+# Total Mass Calculation
 def calculate_total_mass(stream):
     total_mass = 0
     for component in stream.chemicals:
         total_mass += stream.imass[component.ID]
     return total_mass
 
-# 입력 스트림의 총 질량 계산
+# Total mass of inf
 total_mass_inf_dc = calculate_total_mass(inf_dc)
 total_mass_inf_ac = calculate_total_mass(inf_ac)
 
-# 출력 스트림의 총 질량 계산
+# Total mass of eff
 total_mass_eff_dc = calculate_total_mass(eff_dc)
 total_mass_eff_ac = calculate_total_mass(eff_ac)
 
-# 총 질량 출력
+# Total Mass
 print(f"Total mass of inf_dc: {total_mass_inf_dc} kg/hr")
 print(f"Total mass of inf_ac: {total_mass_inf_ac} kg/hr")
 print(f"Total mass of eff_dc: {total_mass_eff_dc} kg/hr")
 print(f"Total mass of eff_ac: {total_mass_eff_ac} kg/hr")
 
-# 질량 균형 확인
+# Check Mass Balance
 total_mass_in = total_mass_inf_dc + total_mass_inf_ac
 total_mass_out = total_mass_eff_dc + total_mass_eff_ac
 
