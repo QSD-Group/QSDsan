@@ -147,13 +147,13 @@ cmps = create_ed_vfa_cmps()
 #WasteStream
 #Same as ADM1 Effluent Q
 inf_dc = WasteStream(ID='inf_dc')
-inf_dc.set_flow_by_concentration(flow_tot=7, concentrations={'S_pro': 0.5, 'S_bu': 0.5, 'S_he': 0.5}, units=('L/hr', 'mg/L'))
+inf_dc.set_flow_by_concentration(flow_tot=7, concentrations={'S_pro': 500, 'S_bu': 500, 'S_he': 500}, units=('L/hr', 'mg/L'))
 #fc_eff = WasteStream('FC_Effluent', X_GAO_Gly=.5, H2O=1000, units='kmol/hr')
 inf_ac = WasteStream(ID='inf_ac')
 inf_ac.set_flow_by_concentration(flow_tot=7, concentrations={'Na+': 100, 'Cl-': 100}, units=('L/hr', 'mg/L'))
 #ac_eff = WasteStream('AC_Effluent', X_GAO_Gly=.5, H2O=1000, units='kmol/hr')
-# eff_dc = WasteStream(ID='eff_dc')               # effluent
-# eff_ac = WasteStream(ID='eff_ac')               # effluent
+eff_dc = WasteStream(ID='eff_dc')               # effluent
+eff_ac = WasteStream(ID='eff_ac')               # effluent
 #%%
 # SanUnit
 
@@ -172,7 +172,7 @@ class ED_vfa(SanUnit):
                  V=1.0,  # Volume of all tanks in m^3
                  z_T=1.0):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
-        self.CE_dict = CE_dict or {'S_pro': 0.85, 'S_bu': 0.75, 'S_he': 0.65}  # Default CE for ions
+        self.CE_dict = CE_dict or {'S_pro': 0.1, 'S_bu': 0.1, 'S_he': 0.1}  # Default CE for ions
         self.j = j
         self.t = t
         self.A_m = A_m
@@ -201,11 +201,15 @@ class ED_vfa(SanUnit):
         self.J_T_dict = {}
         self.influent_dc_conc = {}
         self.influent_ac_conc = {}
-        self.effluent_dc_conc = {}
-        self.effluent_ac_conc = {}
+        # self.effluent_dc_conc = {}
+        # self.effluent_ac_conc = {}
         
         print(f"Flow rate (Q_dc): {Q_dc} m^3/hr")
         print(f"Flow rate (Q_ac): {Q_ac} m^3/hr")
+        
+        # Initializing effluent streams with influent values
+        eff_dc.copy_like(inf_dc)
+        eff_ac.copy_like(inf_ac)
         
         for ion, CE in self.CE_dict.items():        
             # Moles of target ion transported [mol]
@@ -217,27 +221,34 @@ class ED_vfa(SanUnit):
             J_T = CE * I / (self.z_T * F * self.A_m * self.t)
             self.J_T_dict[ion] = J_T
             print(f"Target ion molar flux (J_T) for {ion}: {J_T} mol/m^2/s")
-            
-            # Dilute stream concentration [mol/L]
-            C_inf_dc = inf_dc.imass[ion] / inf_dc.F_vol  # Correctly accessing the mass and converting to concentration
-            C_inf_ac = inf_ac.imass[ion] / inf_ac.F_vol
-            self.influent_dc_conc = C_inf_dc
-            self.influent_ac_conc = C_inf_ac
-            
-            delta_C = (J_T * self.A_m) / Q_dc
-            C_out_dc = C_inf_dc - delta_C
-            
-            # Accumulated stream concentration
-            C_out_ac = delta_C * (1 - np.exp(-Q_dc * self.t / self.V))
-            self.effluent_dc_conc = C_out_dc
-            self.effluent_ac_conc = C_out_ac
+
+            # Change in moles due to ion transport
+            delta_n = J_T * self.A_m * self.t  # [mol]
+
+            # Effluent moles
+            n_out_dc = inf_dc.imol[ion] - delta_n
+            n_out_ac = delta_n * (1 - np.exp(-Q_dc * self.t / self.V))
+
+            # Ensure non-negative effluent moles
+            n_out_dc = max(n_out_dc, 0)
+            n_out_ac = max(n_out_ac, 0)
+
             # Update effluent streams
-            eff_dc.imass[ion] = C_out_dc * eff_dc.F_vol  # Update mass to match new concentration
-            eff_ac.imass[ion] = C_out_ac * eff_ac.F_vol  # Update mass to match new concentration
+            eff_dc.imol[ion] = n_out_dc
+            eff_ac.imol[ion] = n_out_ac
 
-        eff_dc.copy_like(inf_dc)
-        eff_ac.copy_like(inf_ac)
-
+        eff_dc.imol['H2O'] = inf_dc.imol['H2O']  # Maintain water balance
+        eff_ac.imol['H2O'] = inf_ac.imol['H2O']  # Maintain water balance
+        
+        # Adjust the mass balance to ensure it matches the influent
+        for comp in inf_dc.chemicals:
+            if comp.ID not in self.CE_dict:
+                eff_dc.imass[comp.ID] = inf_dc.imass[comp.ID]
+        
+        for comp in inf_ac.chemicals:
+            if comp.ID not in self.CE_dict:
+                eff_ac.imass[comp.ID] = inf_ac.imass[comp.ID]
+                
     _units = {
         'Membrane area': 'm2',
         'Total current': 'A',
@@ -258,12 +269,12 @@ class ED_vfa(SanUnit):
 ed1 = ED_vfa(
     ID='ED1',
     ins=(inf_dc, inf_ac),
-    outs=(WasteStream(), WasteStream()),
-    CE_dict={'S_pro': 0.85, 'S_bu': 0.75, 'S_he': 0.65},  # Separate CE for each ion
-    j=500,
-    t=3600,
-    A_m=10,
-    V=1.0
+    outs=(eff_dc, eff_ac),
+    CE_dict={'S_pro': 0.01, 'S_bu': 0.01, 'S_he': 0.01},  # Separate CE for each ion
+    j=0.05,
+    t=3,
+    A_m=0.1,
+    V=0.1
 )
 #%%
 # System
@@ -278,5 +289,15 @@ sys = System('ED1', path=(ed1,))
 
 # Simulate the system
 sys.simulate()
-sys
 sys.diagram()
+#%%
+# Print the results
+print("Effluent dilute stream concentrations (mol/L):")
+for ion in ed1.CE_dict.keys():
+    eff_dc_conc = eff_dc.imol[ion] / eff_dc.F_vol
+    print(f"{ion}: {eff_dc_conc}")
+
+print("Effluent accumulated stream concentrations (mol/L):")
+for ion in ed1.CE_dict.keys():
+    eff_ac_conc = eff_ac.imol[ion] / eff_ac.F_vol
+    print(f"{ion}: {eff_ac_conc}")
