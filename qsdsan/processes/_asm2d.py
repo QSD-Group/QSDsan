@@ -523,11 +523,6 @@ class mASM2d(CompiledProcesses):
 
     Examples
     --------
-    >>> from qsdsan import processes as pc, set_thermo
-    >>> cmps = pc.create_asm2d_cmps()
-    >>> asm2d = pc.ASM2d()
-    >>> asm2d.show()
-    ASM2d([aero_hydrolysis, anox_hydrolysis, anae_hydrolysis, hetero_growth_S_F, hetero_growth_S_A, denitri_S_F, denitri_S_A, ferment, hetero_lysis, PAO_storage_PHA, aero_storage_PP, PAO_aero_growth_PHA, PAO_lysis, PP_lysis, PHA_lysis, auto_aero_growth, auto_lysis, precipitation, redissolution, anox_storage_PP, PAO_anox_growth])
 
     References
     ----------
