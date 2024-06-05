@@ -596,6 +596,12 @@ def get_eq_natural_gas_price(system, gas, natural_gas_price = 0.0041, CH4_nat_ga
     
     '''
     
+    # Use mass based calculation -> use mass flowrate of methane fs.gas.imass['S_ch4']
+    
+    # 100% methane can also be assumed
+    
+    # Estimating calorific value of methane, and accordingly translating the price could be a way too
+    
     CH4_produced = gas.F_vol*24 # m3/day
     
     eq_nat_gas_produced = CH4_produced/CH4_nat_gas # m3/day
