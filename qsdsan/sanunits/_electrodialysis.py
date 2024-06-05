@@ -192,8 +192,8 @@ class ED_vfa(SanUnit):
         print(f"Total current (I): {I} A")
         
         # Obtain the flow rates from the influent streams
-        Q_dc = inf_dc.F_vol  # Flow rate from influent dilute stream in m^3/hr
-        Q_ac = inf_ac.F_vol  # Flow rate from influent accumulated stream in m^3/hr
+        Q_dc = inf_dc.F_vol # Flow rate from influent dilute stream in m^3/s
+        Q_ac = inf_ac.F_vol # Flow rate from influent accumulated stream in m^3/s
         self.Q_dc = Q_dc
         self.Q_ac = Q_ac
         
@@ -204,8 +204,8 @@ class ED_vfa(SanUnit):
         # self.effluent_dc_conc = {}
         # self.effluent_ac_conc = {}
         
-        print(f"Flow rate (Q_dc): {Q_dc} m^3/hr")
-        print(f"Flow rate (Q_ac): {Q_ac} m^3/hr")
+        print(f"Flow rate (Q_dc): {Q_dc} m^3/s")
+        print(f"Flow rate (Q_ac): {Q_ac} m^3/s")
         
         # Initializing effluent streams with influent values
         eff_dc.copy_like(inf_dc)
@@ -218,21 +218,20 @@ class ED_vfa(SanUnit):
             print(f"Moles of {ion} transported (n_T): {n_T} mol")
             
             # Target ion molar flux [mol/(m2*s)]
-            J_T = CE * I / (self.z_T * F * self.A_m * self.t)
+            J_T = CE * I / (self.z_T * F * self.A_m)
             self.J_T_dict[ion] = J_T
             print(f"Target ion molar flux (J_T) for {ion}: {J_T} mol/m^2/s")
 
-            # Change in moles due to ion transport
-            delta_n = J_T * self.A_m * self.t  # [mol]
+            # Effluent moles for dilute stream [mol]
+            n_out_dc = (inf_dc.imol[ion] * self.t) - (self.V * J_T * self.A_m) / Q_dc
 
-            # Effluent moles
-            n_out_dc = inf_dc.imol[ion] - delta_n
-            n_out_ac = delta_n * (1 - np.exp(-Q_dc * self.t / self.V))
+            # Effluent moles for accumulated stream [mol]
+            n_out_ac = (self.V * J_T * self.A_m) / Q_dc * (1 - np.exp(-Q_dc * self.t / self.V))
 
             # Ensure non-negative effluent moles
             n_out_dc = max(n_out_dc, 0)
             n_out_ac = max(n_out_ac, 0)
-
+            
             # Update effluent streams
             eff_dc.imol[ion] = n_out_dc
             eff_ac.imol[ion] = n_out_ac
@@ -270,10 +269,10 @@ ed1 = ED_vfa(
     ID='ED1',
     ins=(inf_dc, inf_ac),
     outs=(eff_dc, eff_ac),
-    CE_dict={'S_pro': 0.01, 'S_bu': 0.01, 'S_he': 0.01},  # Separate CE for each ion
-    j=0.05,
-    t=3,
-    A_m=0.1,
+    CE_dict={'S_pro': 0.8, 'S_bu': 0.8, 'S_he': 0.8},  # Separate CE for each ion
+    j=0.5,
+    t=300,
+    A_m=0.5,
     V=0.1
 )
 #%%
@@ -292,12 +291,43 @@ sys.simulate()
 sys.diagram()
 #%%
 # Print the results
+# Print the results
 print("Effluent dilute stream concentrations (mol/L):")
 for ion in ed1.CE_dict.keys():
-    eff_dc_conc = eff_dc.imol[ion] / eff_dc.F_vol
-    print(f"{ion}: {eff_dc_conc}")
+    eff_dc_conc = eff_dc.imol[ion] / (eff_dc.F_vol * 1000)  # Convert volume from m^3/hr to L/hr for concentration in mol/L
+    print(f"{ion}: {eff_dc_conc} mol/L")
 
 print("Effluent accumulated stream concentrations (mol/L):")
 for ion in ed1.CE_dict.keys():
-    eff_ac_conc = eff_ac.imol[ion] / eff_ac.F_vol
-    print(f"{ion}: {eff_ac_conc}")
+    eff_ac_conc = eff_ac.imol[ion] / (eff_ac.F_vol * 1000)  # Convert volume from m^3/hr to L/hr for concentration in mol/L
+    print(f"{ion}: {eff_ac_conc} mol/L")
+#%%
+
+# 총 질량 계산 함수
+def calculate_total_mass(stream):
+    total_mass = 0
+    for component in stream.chemicals:
+        total_mass += stream.imass[component.ID]
+    return total_mass
+
+# 입력 스트림의 총 질량 계산
+total_mass_inf_dc = calculate_total_mass(inf_dc)
+total_mass_inf_ac = calculate_total_mass(inf_ac)
+
+# 출력 스트림의 총 질량 계산
+total_mass_eff_dc = calculate_total_mass(eff_dc)
+total_mass_eff_ac = calculate_total_mass(eff_ac)
+
+# 총 질량 출력
+print(f"Total mass of inf_dc: {total_mass_inf_dc} kg/hr")
+print(f"Total mass of inf_ac: {total_mass_inf_ac} kg/hr")
+print(f"Total mass of eff_dc: {total_mass_eff_dc} kg/hr")
+print(f"Total mass of eff_ac: {total_mass_eff_ac} kg/hr")
+
+# 질량 균형 확인
+total_mass_in = total_mass_inf_dc + total_mass_inf_ac
+total_mass_out = total_mass_eff_dc + total_mass_eff_ac
+
+print(f"Total mass in (inf_dc + inf_ac): {total_mass_in} kg/hr")
+print(f"Total mass out (eff_dc + eff_ac): {total_mass_out} kg/hr")
+print(f"Mass balance check: {'Balanced' if total_mass_in == total_mass_out else 'Not balanced'}")
