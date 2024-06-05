@@ -192,20 +192,23 @@ class ED_vfa(SanUnit):
         print(f"Total current (I): {I} A")
         
         # Obtain the flow rates from the influent streams
-        Q_dc = inf_dc.F_vol # Flow rate from influent dilute stream in m^3/s
-        Q_ac = inf_ac.F_vol # Flow rate from influent accumulated stream in m^3/s
-        self.Q_dc = Q_dc
-        self.Q_ac = Q_ac
+        Q_dc = inf_dc.F_vol # Flow rate from influent dilute stream in m^3/hr
+        Q_ac = inf_ac.F_vol # Flow rate from influent accumulated stream in m^3/hr
+        self.Q_dc = Q_dc / 3600  # Convert to m^3/s
+        self.Q_ac = Q_ac / 3600  # Convert to m^3/s
         
         self.n_T_dict = {}
         self.J_T_dict = {}
         self.influent_dc_conc = {}
         self.influent_ac_conc = {}
-        # self.effluent_dc_conc = {}
-        # self.effluent_ac_conc = {}
         
-        print(f"Flow rate (Q_dc): {Q_dc} m^3/s")
-        print(f"Flow rate (Q_ac): {Q_ac} m^3/s")
+        # Print original flow rates [m3/hr]
+        print(f"Flow rate (Q_dc): {Q_dc} m^3/hr")
+        print(f"Flow rate (Q_ac): {Q_ac} m^3/hr")
+        
+        # Print the converted flow rates [m3/s]
+        print(f"Converted flow rate (Q_dc): {self.Q_dc} m^3/s")
+        print(f"Converted flow rate (Q_ac): {self.Q_ac} m^3/s")
         
         # Initializing effluent streams with influent values
         eff_dc.copy_like(inf_dc)
@@ -222,22 +225,23 @@ class ED_vfa(SanUnit):
             self.J_T_dict[ion] = J_T
             print(f"Target ion molar flux (J_T) for {ion}: {J_T} mol/m^2/s")
 
-            # Effluent moles for dilute stream [mol]
-            n_out_dc = (inf_dc.imol[ion] * self.t) - (self.V * J_T * self.A_m) / Q_dc
+            # Effluent moles for dilute stream [mole]
+            n_out_dc = (inf_dc.imol[ion] * self.t / 3600 * 1000) - (self.V * J_T * self.A_m) / self.Q_dc
 
-            # Effluent moles for accumulated stream [mol]
-            n_out_ac = (self.V * J_T * self.A_m) / Q_dc * (1 - np.exp(-Q_dc * self.t / self.V))
+            # Effluent moles for accumulated stream [moles]
+            n_out_ac = (self.V * J_T * self.A_m) / self.Q_dc * (1 - np.exp(-self.Q_ac * self.t / self.V))
 
-            # Ensure non-negative effluent moles
+            # Ensure non-negative effluent moles [mole]
             n_out_dc = max(n_out_dc, 0)
             n_out_ac = max(n_out_ac, 0)
-            
-            # Update effluent streams
-            eff_dc.imol[ion] = n_out_dc
-            eff_ac.imol[ion] = n_out_ac
 
-        eff_dc.imol['H2O'] = inf_dc.imol['H2O']  # Maintain water balance
-        eff_ac.imol['H2O'] = inf_ac.imol['H2O']  # Maintain water balance
+            # Update effluent streams [kmole/hr]
+            eff_dc.imol[ion] = n_out_dc / 1000 / self.t * 3600
+            eff_ac.imol[ion] = n_out_ac / 1000 / self.t * 3600
+
+        # Ensure non-negative effluent moles for H2O [kmole/hr]
+        eff_dc.imol['H2O'] = max(inf_dc.imol['H2O'], 0)
+        eff_ac.imol['H2O'] = max(inf_ac.imol['H2O'], 0)
         
         # Adjust the mass balance to ensure it matches the influent
         for comp in inf_dc.chemicals:
