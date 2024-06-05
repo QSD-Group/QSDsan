@@ -922,6 +922,63 @@ def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f = 0.45, MCF = 0.8, k = 
 
     return CH4_emitted_during_pl/(pl*days_in_year), CH4_emitted_after_pl/(pl*days_in_year)
 
+def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity, 
+                     GHG_sludge_disposal, CH4_CO2eq=29.8, N2O_CO2eq=273):
+    '''
+
+    Parameters
+    ----------
+    system : :class:`biosteam.System`
+        The system for which normalized GHG emission is being determined.
+    GHG_treatment : tuple[int], optional
+        The amount of methane and nitrous oxide emitted during secondary treatment (kg/day).
+    GHG_discharge : tuple[int], optional
+        The amount of methane and nitrous oxide emitted during effluent discharge (kg/day).
+    GHG_electricity : float
+        The amount of eq. CO2 emitted due to electrity consumption (kg-CO2-Eq/day).
+    GHG_sludge_disposal : int
+        The average amount of methane emitted during sludge disposal (kg/day).
+    CH4_CO2eq : TYPE, optional
+        DESCRIPTION. The default is 29.8 kg CO2eq/kg CH4 [1].
+    N2O_CO2eq : TYPE, optional
+        DESCRIPTION. The default is 273 kg CO2eq/kg CH4 [1].
+
+    Returns
+    -------
+    Normalized GHG emissions from onsite and offsite operations associated with WRRF (kg CO2 eq./m3). [numpy array] 
+    
+    References
+    ----------
+    [1] IPCC 2021 – 6th Assessment Report Values. 
+
+    '''
+    
+    # source 1 (on-site)
+    CH4_CO2_eq_treatment = GHG_treatment[0]*CH4_CO2eq
+    N2O_CO2_eq_treatment = GHG_treatment[1]*N2O_CO2eq 
+    
+    
+    # source 3 (off-site)
+    CH4_CO2_eq_discharge = GHG_discharge[0]*CH4_CO2eq
+    N2O_CO2_eq_discharge = GHG_discharge[1]*N2O_CO2eq 
+    
+    # source 4 (off-site)
+    CH4_CO2_eq_sludge_disposal_pl = GHG_sludge_disposal[0]*CH4_CO2eq
+    CH4_CO2_eq_sludge_disposal_after_pl = GHG_sludge_disposal[1]*CH4_CO2eq
+    
+    # source 5 (off-site)
+    CO2_eq_electricity = GHG_electricity*1
+    
+    CO2_eq_WRRF = np.array([CH4_CO2_eq_treatment, N2O_CO2_eq_treatment, #1
+                            CH4_CO2_eq_discharge, N2O_CO2_eq_discharge, #3
+                            CH4_CO2_eq_sludge_disposal_pl,              #4
+                            CH4_CO2_eq_sludge_disposal_after_pl,        #4
+                            CO2_eq_electricity])                        #5
+    
+    normalized_CO2_eq_WRRF = CO2_eq_WRRF/sum([24*s.F_vol for s in system.feeds])
+    
+    return normalized_CO2_eq_WRRF 
+
 def get_CH4_CO2_eq_treatment(system, influent_sc =None, effluent_sc = None,
                        CH4_CO2eq=29.8, CH4_EF_sc =0.0075):
     
@@ -1227,64 +1284,6 @@ def get_CH4_emitted_after_pl(system, sludge=None, CH4_CO2eq=29.8, N2O_CO2eq=273,
     normalized_total_CO2_eq_WRRF = CH4_CO2_eq_sludge_disposal_pl/sum([24*s.F_vol for s in system.feeds])
     
     return normalized_total_CO2_eq_WRRF
-
-def get_CO2_eq_WRRF (system, GHG_treatment, GHG_discharge, GHG_electricity, 
-                     GHG_sludge_disposal, CH4_CO2eq=29.8, N2O_CO2eq=273):
-    '''
-
-    Parameters
-    ----------
-    system : :class:`biosteam.System`
-        The system for which normalized GHG emission is being determined.
-    GHG_treatment : tuple[int], optional
-        The amount of methane and nitrous oxide emitted during secondary treatment (kg/day).
-    GHG_discharge : tuple[int], optional
-        The amount of methane and nitrous oxide emitted during effluent discharge (kg/day).
-    GHG_electricity : float
-        The amount of eq. CO2 emitted due to electrity consumption (kg-CO2-Eq/day).
-    GHG_sludge_disposal : int
-        The average amount of methane emitted during sludge disposal (kg/day).
-    CH4_CO2eq : TYPE, optional
-        DESCRIPTION. The default is 29.8 kg CO2eq/kg CH4 [1].
-    N2O_CO2eq : TYPE, optional
-        DESCRIPTION. The default is 273 kg CO2eq/kg CH4 [1].
-
-    Returns
-    -------
-    Normalized GHG emissions from onsite and offsite operations associated with WRRF (kg CO2 eq./m3). [numpy array] 
-    
-    References
-    ----------
-    [1] IPCC 2021 – 6th Assessment Report Values. 
-
-    '''
-    
-    # source 1 (on-site)
-    CH4_CO2_eq_treatment = GHG_treatment[0]*CH4_CO2eq
-    N2O_CO2_eq_treatment = GHG_treatment[1]*N2O_CO2eq 
-    
-    
-    # source 3 (off-site)
-    CH4_CO2_eq_discharge = GHG_discharge[0]*CH4_CO2eq
-    N2O_CO2_eq_discharge = GHG_discharge[1]*N2O_CO2eq 
-    
-    # source 4 (off-site)
-    CH4_CO2_eq_sludge_disposal_pl = GHG_sludge_disposal[0]*CH4_CO2eq
-    CH4_CO2_eq_sludge_disposal_after_pl = GHG_sludge_disposal[1]*CH4_CO2eq
-    
-    # source 5 (off-site)
-    CO2_eq_electricity = GHG_electricity*1
-    
-    CO2_eq_WRRF = np.array([CH4_CO2_eq_treatment, N2O_CO2_eq_treatment, #1
-                            CH4_CO2_eq_discharge, N2O_CO2_eq_discharge, #3
-                            CH4_CO2_eq_sludge_disposal_pl,              #4
-                            CH4_CO2_eq_sludge_disposal_after_pl,        #4
-                            CO2_eq_electricity])                        #5
-    
-    normalized_CO2_eq_WRRF = CO2_eq_WRRF/sum([24*s.F_vol for s in system.feeds])
-    
-    return normalized_CO2_eq_WRRF 
-
 
 def get_CO2_eq_electricity(system, q_air, active_unit_IDs=None, p_atm=101.325, K=0.283, T=20,
                      # uncertain parameters 
