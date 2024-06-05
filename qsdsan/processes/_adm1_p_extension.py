@@ -59,10 +59,10 @@ def create_adm1_p_extension_cmps(set_thermo=True):
     
     S_IP = c2d.S_PO4.copy('S_IP')
     
-    c1.S_su.i_mass = c1.X_ch.i_mass = 0.9375
-    c1.S_su.f_Vmass_Totmass = c1.X_ch.f_Vmass_Totmass = 0.68
-    c1.X_li.i_mass = 0.6375
-    c1.X_li.f_Vmass_Totmass = 1.
+    # c1.S_su.i_mass = c1.X_ch.i_mass = 0.9375
+    # c1.S_su.f_Vmass_Totmass = c1.X_ch.f_Vmass_Totmass = 0.68
+    # c1.X_li.i_mass = 0.6375
+    # c1.X_li.f_Vmass_Totmass = 1.
     
     c1.S_aa.i_C = c1.X_pr.i_C = 0.36890
     c1.S_aa.i_N = c1.X_pr.i_N = 0.11065
