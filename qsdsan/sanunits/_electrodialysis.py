@@ -280,7 +280,7 @@ class ED_vfa(SanUnit):
         'System voltage': 'V',
         'Power consumption': 'W'
     }
-        
+    
     def _design(self):
         D = self.design_results
         D['Membrane area'] = self.A_m
@@ -316,9 +316,9 @@ ed_vfa_unit.show()
 # Create the system
 sys = System('ED1', path=(ed1,))
 
-# # Simulate the system
-# sys.simulate()
-# sys.diagram()
+# Simulate the system
+sys.simulate()
+sys.diagram()
 #%%
 # Simulation
 # Set the dynamic tracker
@@ -328,9 +328,6 @@ sys
 t = 250000  # total time for simulation in hours
 t_step = 3600  # times at which to store the computed solution in hours
 method = 'BDF'  # integration method to use
-
-# Enable dynamic simulation
-sys.isdynamic = True
 
 # Run simulation
 sys.simulate(state_reset_hook='reset_cache',
