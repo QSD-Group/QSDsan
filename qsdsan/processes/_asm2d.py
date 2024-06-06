@@ -16,7 +16,7 @@ from qsdsan import Component, Components, Process, Processes, CompiledProcesses
 from ..utils import ospath, data_path
 
 __all__ = ('create_asm2d_cmps', 'ASM2d',
-           'create_masm2d_cmps', )
+           'create_masm2d_cmps', 'mASM2d')
 
 _path = ospath.join(data_path, 'process_data/_asm2d.tsv')
 _load_components = settings.get_default_chemicals
@@ -421,7 +421,7 @@ _mpath = ospath.join(data_path, 'process_data/_masm2d.tsv')
 Monod = lambda S, K: S/(S+K)
 
 rhos = np.zeros(19) # 19 biological processes, no precipitation/dissociation or gas stripping yet
-def rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
+def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
     if 'ks' not in params:
         k_h, mu_H, mu_PAO, mu_AUT, \
         q_fe, q_PHA, q_PP, \
@@ -588,18 +588,19 @@ class mASM2d(CompiledProcesses):
                                         parameters=cls._stoichio_params,
                                         compile=False)
 
-        if path == _path:
+        if path == _mpath:
             _p12 = Process('anox_storage_PP',
                            'S_PO4 + [K_XPP]S_K + [Mg_XPP]S_Mg +[Y_PHA]X_PHA + [?]S_NO3 -> X_PP + [?]S_N2 + [?]S_NH4 + [?]S_IC',
                            components=cmps,
                            ref_component='X_PP',
-                           conserved_for=('C', 'N', 'P', 'NOD',))
+                           conserved_for=('C', 'N', 'NOD', 'COD'))
 
             _p14 = Process('PAO_anox_growth',
                            '[1/Y_PAO]X_PHA + [?]S_NO3 + [?]S_PO4 -> X_PAO + [?]S_N2 + [?]S_NH4  + [?]S_IC',
                            components=cmps,
                            ref_component='X_PAO',
                            conserved_for=('C', 'N', 'P', 'NOD', 'COD'))
+            
             self.insert(11, _p12)
             self.insert(13, _p14)
 
@@ -613,6 +614,7 @@ class mASM2d(CompiledProcesses):
                          f_XI_H, f_XI_PAO, f_XI_AUT,
                          cmps.X_PP.i_K, cmps.X_PP.i_Mg)
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_vals))
+        rhos_masm2d = lambda state_arr, params: _rhos_masm2d(state_arr, params, cls.decay_dependon_electron_acceptor)
         self.set_rate_function(rhos_masm2d)
         kinetic_vals = (k_h, mu_H, mu_PAO, mu_AUT, 
                         q_fe, q_PHA, q_PP, 
