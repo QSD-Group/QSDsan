@@ -494,10 +494,11 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
     rhos[[2,7]] *= (1-aero[:2]) * (1-anox[:2])              # anaerobic/fermentation
     
     if X_H > 0: rhos[:3] *= Monod(X_S/X_H, Kx)
-    if S_F > 0: rhos[[3,5]] *= Monod(S_F, Kf) * S_F/(S_F+S_A)
-    else: rhos[[3,5]] = 0.        
-    if S_A > 0: rhos[[4,6]] *= Monod(S_A, Ka_H) * S_A/(S_F+S_A)
-    else: rhos[[4,6]] = 0.
+    if S_F+S_A == 0: 
+        rhos[3:7] = 0
+    else:
+        rhos[[3,5]] *= Monod(S_F, Kf) * S_F/(S_F+S_A)
+        rhos[[4,6]] *= Monod(S_A, Ka_H) * S_A/(S_F+S_A)
     
     rhos[7] *= Monod(S_F, Kfe)
     if X_PAO > 0:
@@ -556,9 +557,7 @@ class mASM2d(CompiledProcesses):
                        # 'K_ALK_PRE'
                        )
     
-    decay_dependon_electron_acceptor = True
-
-    def __new__(cls, components=None, path=None, 
+    def __new__(cls, components=None, path=None, electron_acceptor_dependent_decay=True,
                 f_SI=0.0, Y_H=0.625, Y_PAO=0.625, Y_PO4=0.4, Y_PHA=0.2, Y_A=0.24, 
                 f_XI_H=0.1, f_XI_PAO=0.1, f_XI_AUT=0.1,
                 k_h=3.0, mu_H=6.0, mu_PAO=1.0, mu_AUT=1.0, 
@@ -614,7 +613,7 @@ class mASM2d(CompiledProcesses):
                          f_XI_H, f_XI_PAO, f_XI_AUT,
                          cmps.X_PP.i_K, cmps.X_PP.i_Mg)
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_vals))
-        rhos_masm2d = lambda state_arr, params: _rhos_masm2d(state_arr, params, cls.decay_dependon_electron_acceptor)
+        rhos_masm2d = lambda state_arr, params: _rhos_masm2d(state_arr, params, electron_acceptor_dependent_decay)
         self.set_rate_function(rhos_masm2d)
         kinetic_vals = (k_h, mu_H, mu_PAO, mu_AUT, 
                         q_fe, q_PHA, q_PP, 
@@ -633,6 +632,16 @@ class mASM2d(CompiledProcesses):
         self.rate_function._params = dict(zip(cls._kinetic_params, kinetic_vals))
         
         return self
+    
+    @property
+    def electron_acceptor_dependent_decay(self):
+        '''[bool] Whether the decay rate is dependent on electron acceptor (O2, NO3-) concentrations'''
+        return self._edecay
+    @electron_acceptor_dependent_decay.setter
+    def electron_acceptor_dependent_decay(self, dependent):
+        self._edecay = edecay = bool(dependent)
+        rhos_masm2d = lambda state_arr, params: _rhos_masm2d(state_arr, params, edecay)
+        self.set_rate_function(rhos_masm2d)
     
     def set_parameters(self, **parameters):
         stoichio = self._parameters
