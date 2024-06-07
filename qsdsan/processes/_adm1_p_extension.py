@@ -21,7 +21,7 @@ from chemicals.elements import molecular_weight as get_mw
 from qsdsan import Component, Components, Process, Processes, CompiledProcesses
 from qsdsan.processes import (
     create_adm1_cmps, 
-    create_asm2d_cmps,
+    create_masm2d_cmps,
     T_correction_factor,
     non_compet_inhibit,
     grad_non_compet_inhibit,
@@ -55,36 +55,56 @@ P_mw = get_mw({'P':1})
 
 def create_adm1_p_extension_cmps(set_thermo=True):
     c1 = create_adm1_cmps(False)
-    c2d = create_asm2d_cmps(False)
+    c2d = create_masm2d_cmps(False)
     
     S_IP = c2d.S_PO4.copy('S_IP')
     
-    S_K = Component.from_chemical('S_K', chemical='K',
-                                  measured_as='K',
-                                  description='Potassium',
-                                  particle_size='Soluble',
-                                  degradability='Undegradable',
-                                  organic=False)
+    # c1.S_su.i_mass = c1.X_ch.i_mass = 0.9375
+    # c1.S_su.f_Vmass_Totmass = c1.X_ch.f_Vmass_Totmass = 0.68
+    # c1.X_li.i_mass = 0.6375
+    # c1.X_li.f_Vmass_Totmass = 1.
     
-    S_Mg = Component.from_chemical('S_Mg', chemical='Mg',
-                                   measured_as='Mg',
-                                   description='Magnesium',
-                                   particle_size='Soluble',
-                                   degradability='Undegradable',
-                                   organic=False)
+    c1.S_aa.i_C = c1.X_pr.i_C = 0.36890
+    c1.S_aa.i_N = c1.X_pr.i_N = 0.11065
+    c1.S_aa.i_P = c1.X_pr.i_P = 0.
+    c1.S_aa.i_mass = c1.X_pr.i_mass = 0.737648
+    c1.S_aa.f_Vmass_Totmass = c1.X_pr.f_Vmass_Totmass = 0.864
     
+    c1.S_fa._formula = None
+    c1.S_fa.chem_MW = 1.
+    c1.S_fa.i_C = 0.25685
+    # c1.S_fa.i_mass = 1/2.9200
+    
+    c1.S_I.i_C = c1.X_I.i_C = 0.36178
+    c1.S_I.i_N = c1.X_I.i_N = 0.06003
+    c1.S_I.i_P = c1.X_I.i_P = 6.49e-3
+    c1.S_I.i_mass = c1.X_I.i_mass = 0.75
+    c1.S_I.f_Vmass_Totmass = c1.X_I.f_Vmass_Totmass = 0.85
+    
+    for cmp in (c1.S_aa, c1.X_pr, c1.S_fa, c1.S_I, c1.X_I):
+        cmp.i_NOD = None
+    
+    for cmp in (c1.X_su, c1.X_aa, c1.X_fa, c1.X_c4, c1.X_pro, c1.X_ac, c1.X_h2,):
+        cmp.i_C = 0.36612
+        cmp.i_N = 0.08615
+        cmp.i_P = 0.02154
+        cmp.i_mass = 0.90
+        cmp.f_Vmass_Totmass = 0.85
+        cmp.i_NOD = None
+    
+    c1.refresh_constants()
     c = [*c1]
     Ss = c[:11]
     Xs = c[13:-3]   # X_c is excluded
     others = c[-3:]
 
-    cmps_adm1_p_extension = Components([*Ss, S_IP, c1.S_I,
-                                        *Xs, c2d.X_PHA, c2d.X_PP, c2d.X_PAO, 
-                                        S_K, S_Mg, c2d.X_MeOH, c2d.X_MeP,
-                                        *others])
-    cmps_adm1_p_extension.default_compile()
-    if set_thermo: settings.set_thermo(cmps_adm1_p_extension)
-    return cmps_adm1_p_extension
+    cmps_adm1p = Components([*Ss, S_IP, c1.S_I, *Xs, 
+                            c2d.X_PHA, c2d.X_PP, c2d.X_PAO, 
+                            c2d.S_K, c2d.S_Mg, c2d.X_MeOH, c2d.X_MeP,
+                            *others])
+    cmps_adm1p.default_compile()
+    if set_thermo: settings.set_thermo(cmps_adm1p)
+    return cmps_adm1p
 
 # create_adm1_p_extension_cmps()
 
@@ -399,7 +419,7 @@ class ADM1_p_extension(ADM1):
     
     _biogas_IDs = ('S_h2', 'S_ch4', 'S_IC')
 
-    def __new__(cls, components=None, path=None, N_xc=2.686e-3, N_I=4.286e-3, N_aa=7e-3,
+    def __new__(cls, components=None, path=None, 
                 f_sI_xb=0, f_ch_xb=0.275, f_pr_xb=0.275, f_li_xb=0.350,
                 f_fa_li=0.95, f_bu_su=0.13, f_pro_su=0.27, f_ac_su=0.41,
                 f_va_aa=0.23, f_bu_aa=0.26, f_pro_aa=0.05, f_ac_aa=0.4,
@@ -421,10 +441,6 @@ class ADM1_p_extension(ADM1):
                 **kwargs):
         
         cmps = _load_components(components)
-        # Sure that some things are missing here! (Saumitra)
-        # cmps.X_c.i_N = N_xc * N_mw
-        cmps.X_I.i_N = cmps.S_I.i_N = N_I * N_mw
-        cmps.S_aa.i_N = cmps.X_pr.i_N = N_aa * N_mw
 
         if not path: path = _path
         self = Processes.load_from_file(path,
