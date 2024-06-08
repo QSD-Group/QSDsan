@@ -315,14 +315,14 @@ ed_vfa_unit.show()
 # Create the system
 sys = System('ED1', path=(ed1,))
 
-# Simulate the system
-sys.simulate()
-sys.diagram()
+# # Simulate the system
+# sys.simulate()
+# sys.diagram()
 #%%
 # Simulation
 # Set the dynamic tracker
 sys.set_dynamic_tracker(inf_dc, inf_ac, eff_dc, eff_ac, ed1)
-sys
+# sys
 # Simulation settings
 t = 250000  # total time for simulation in hours
 t_step = 3600  # times at which to store the computed solution in hours
