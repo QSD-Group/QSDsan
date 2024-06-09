@@ -2826,39 +2826,39 @@ class ASM2dtomADM1(mADMjunction):
             # required biomass N/P for conversion to protein
             else:
                 
-                if (available_bioP + X_S_P)/X_pr_i_P < (available_bioN + X_ND_asm1)/X_pr_i_N:
-                    # all available P and particulate organic P is converted to protein
-                    bio2pr = (available_bioP + X_S_P)/X_pr_i_P
-                    X_pr += bio2pr
-                    # Biodegradable biomass available after conversion to protein is calculated 
-                    bio_to_split = (X_H + X_AUT) * frac_deg - bio2pr
-                    # Part of the remaining biomass is mapped to lipid based on user defined value 
-                    bio_split_to_li = bio_to_split * self.bio_to_li
-                    X_li += bio_split_to_li
-                    # The other portion of the remanining biomass is mapped to carbohydrates 
-                    X_ch += (bio_to_split - bio_split_to_li)
-                    # Since all organic P has been mapped to protein, none is left
-                    X_S_P = 0
+                # if (available_bioP + X_S_P)/X_pr_i_P < (available_bioN + X_ND_asm1)/X_pr_i_N:
+                #     # all available P and particulate organic P is converted to protein
+                #     bio2pr = (available_bioP + X_S_P)/X_pr_i_P
+                #     X_pr += bio2pr
+                #     # Biodegradable biomass available after conversion to protein is calculated 
+                #     bio_to_split = (X_H + X_AUT) * frac_deg - bio2pr
+                #     # Part of the remaining biomass is mapped to lipid based on user defined value 
+                #     bio_split_to_li = bio_to_split * self.bio_to_li
+                #     X_li += bio_split_to_li
+                #     # The other portion of the remanining biomass is mapped to carbohydrates 
+                #     X_ch += (bio_to_split - bio_split_to_li)
+                #     # Since all organic P has been mapped to protein, none is left
+                #     X_S_P = 0
                     
-                    # the remaining biomass N is transfered as organic N
-                    X_ND_asm1 += available_bioN - (bio2pr*X_pr_i_N)
+                #     # the remaining biomass N is transfered as organic N
+                #     X_ND_asm1 += available_bioN - (bio2pr*X_pr_i_N)
                 
-                else:
-                    # all available N and particulate organic N is converted to protein
-                    bio2pr = (available_bioN + X_ND_asm1)/X_pr_i_N
-                    X_pr += bio2pr
-                    # Biodegradable biomass available after conversion to protein is calculated 
-                    bio_to_split = (X_H + X_AUT) * frac_deg - bio2pr
-                    # Part of the remaining biomass is mapped to lipid based on user defined value 
-                    bio_split_to_li = bio_to_split * self.bio_to_li
-                    X_li += bio_split_to_li
-                    # The other portion of the remanining biomass is mapped to carbohydrates 
-                    X_ch += (bio_to_split - bio_split_to_li)
-                    # Since all organic N has been mapped to protein, none is left
-                    X_ND_asm1 = 0
-                    
-                    # the remaining biomass P is transfered as organic P
-                    X_S_P += available_bioP - (bio2pr*X_pr_i_P)
+                # else:
+                # all available N and particulate organic N is converted to protein
+                bio2pr = (available_bioN + X_ND_asm1)/X_pr_i_N
+                X_pr += bio2pr
+                # Biodegradable biomass available after conversion to protein is calculated 
+                bio_to_split = (X_H + X_AUT) * frac_deg - bio2pr
+                # Part of the remaining biomass is mapped to lipid based on user defined value 
+                bio_split_to_li = bio_to_split * self.bio_to_li
+                X_li += bio_split_to_li
+                # The other portion of the remanining biomass is mapped to carbohydrates 
+                X_ch += (bio_to_split - bio_split_to_li)
+                # Since all organic N has been mapped to protein, none is left
+                X_ND_asm1 = 0
+                
+                # the remaining biomass P is transfered as organic P
+                X_S_P += available_bioP - (bio2pr*X_pr_i_P)    
             
             
             # Step 5: map particulate inerts
