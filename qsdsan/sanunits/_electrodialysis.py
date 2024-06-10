@@ -181,10 +181,54 @@ class ED_vfa(SanUnit):
         self.z_T = z_T
         self.r_m = r_m
         self.r_s = r_s
-
+        self._state = None
+        self._dstate = None
+        self._ODE = None
+        
     _N_ins = 2
     _N_outs = 2
 
+    def _init_state(self):
+        inf_dc, inf_ac = self.ins
+        self._state = np.zeros(2 * len(self.CE_dict))
+        self._dstate = np.zeros_like(self._state)
+
+    def _update_state(self):
+        eff_dc, eff_ac = self.outs
+        for i, ion in enumerate(self.CE_dict.keys()):
+            eff_dc.state[i] = self._state[i]
+            eff_ac.state[i] = self._state[i + len(self.CE_dict)]
+            
+    def _update_dstate(self):
+        pass
+    
+    def ODE(self):
+        if self._ODE is None:
+            self._compile_ODE()
+        return self._ODE
+    
+    def _compile_ODE(self):
+        CE_dict = self.CE_dict
+        A_m = self.A_m
+        z_T = self.z_T
+        V = self.V
+        r_m = self.r_m
+        r_s = self.r_s
+        
+        def dy_dt(t, y):
+            I = self.j * A_m
+            dy = np.zeros_like(y)
+            
+            for i, ion in enumerate(CE_dict.keys()):
+                CE = CE_dict[ion]
+                J_T = CE * I / (z_T * F * A_m)
+                dy[i] = -J_T / V
+                dy[i + len(CE_dict)] = J_T / V
+                
+            return dy
+        
+        self._ODE = dy_dt
+        
     def _run(self):
         inf_dc, inf_ac = self.ins
         eff_dc, eff_ac = self.outs
