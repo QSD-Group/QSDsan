@@ -13,7 +13,10 @@ import numpy as np
 from thermosteam.utils import chemicals_user
 from thermosteam import settings
 from qsdsan import Component, Components, Process, Processes, CompiledProcesses
-from ..utils import ospath, data_path
+from ..utils import ospath, data_path, load_data
+from scipy.optimize import brenth
+from math import log10
+
 
 __all__ = ('create_asm2d_cmps', 'ASM2d',
            'create_masm2d_cmps', 'mASM2d')
@@ -73,21 +76,21 @@ def create_asm2d_cmps(set_thermo=True):
 
 def create_masm2d_cmps(set_thermo=True):
     c2d = create_asm2d_cmps(False)
-    S_K = Component.from_chemical('S_K', chemical='K',
-                                  measured_as='K',
-                                  description='Potassium',
-                                  particle_size='Soluble',
-                                  degradability='Undegradable',
-                                  organic=False)
+    ion_kwargs = dict(particle_size='Soluble',
+                         degradability='Undegradable',
+                         organic=False)
+    mineral_kwargs = dict(particle_size='Particulate',
+                         degradability='Undegradable',
+                         organic=False)
+    S_K = Component.from_chemical('S_K', chemical='K+', measured_as='K',
+                                  description='Potassium', **ion_kwargs)
     
-    S_Mg = Component.from_chemical('S_Mg', chemical='Mg',
-                                   measured_as='Mg',
-                                   description='Magnesium',
-                                   particle_size='Soluble',
-                                   degradability='Undegradable',
-                                   organic=False)
+    S_Mg = Component.from_chemical('S_Mg', chemical='Mg+2', measured_as='Mg',
+                                   description='Magnesium', **ion_kwargs)
 
     S_IC = c2d.S_ALK.copy('S_IC')
+    c2d.S_PO4.formula = 'HPO4-2'
+    c2d.S_PO4.measured_as = 'P'    
     
     c2d.S_F.i_C = c2d.X_S.i_C = 0.31843
     c2d.S_F.i_N = c2d.X_S.i_N = 0.03352
@@ -110,14 +113,42 @@ def create_masm2d_cmps(set_thermo=True):
     c2d.X_PHA.f_Vmass_Totmass = 0.92727
     c2d.X_PP.i_charge = 0
     
+    S_Ca = Component.from_chemical('S_Ca', chemical='Ca+2', measured_as='Ca',
+                                   description='Calcium', **ion_kwargs)
+    
+    X_CaCO3 = Component.from_chemical('X_CaCO3', chemical='CaCO3', 
+                                   description='Calcite', **mineral_kwargs)
+    X_struv = Component.from_chemical('X_struv', chemical='MgNH4PO4(H2O)6', 
+                                   description='Struvite', **mineral_kwargs)
+    X_newb = Component.from_chemical('X_newb', chemical='MgHPO4(H2O)3', 
+                                   description='Newberyite', **mineral_kwargs)
+    X_ACP = Component.from_chemical('X_ACP', chemical='Ca3P2O8', 
+                                   description='Amorphous calcium phosphate', 
+                                   **mineral_kwargs)
+    X_MgCO3 = Component.from_chemical('X_MgCO3', chemical='MgCO3', 
+                                   description='Magnesite', **mineral_kwargs)
+    X_AlOH = Component.from_chemical('X_AlOH', chemical='Al(OH)3', 
+                                   description='Aluminum hydroxide', **mineral_kwargs)
+    X_AlPO4 = Component.from_chemical('X_AlPO4', chemical='AlPO4', 
+                                   description='Aluminum phosphate', **mineral_kwargs)    
+    X_FeOH = c2d.X_MeOH.copy('X_FeOH')
+    X_FePO4 = c2d.X_MeP.copy('X_FePO4')
+    
+    S_Na = Component.from_chemical('S_Na', chemical='Na+', description='Sodium', **ion_kwargs)
+    S_Cl = Component.from_chemical('S_Cl', chemical='Cl-', description='Chloride', **ion_kwargs)
+    
+    H2O = c2d.H2O
+    
     for cmp in (c2d.S_F, c2d.X_S, c2d.S_I, c2d.X_I, c2d.X_H, c2d.X_AUT, c2d.X_PHA):
         cmp.i_NOD = None
     c2d.refresh_constants()
     c2d = [*c2d]
     solubles = c2d[:8]  # replace S_ALK with S_IC
-    others = c2d[9:]
+    particulates = c2d[9:-3] # exclude X_MeOH, X_MeP, H2O
     
-    cmps = Components([*solubles, S_IC, S_K, S_Mg, *others])
+    cmps = Components([*solubles, S_IC, S_K, S_Mg, *particulates, 
+                       S_Ca, X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3, 
+                       X_AlOH, X_AlPO4, X_FeOH, X_FePO4, S_Na, S_Cl, H2O])
     cmps.default_compile()
     if set_thermo: settings.set_thermo(cmps)
 
@@ -417,10 +448,39 @@ class ASM2d(CompiledProcesses):
     
 #%%
 _mpath = ospath.join(data_path, 'process_data/_masm2d.tsv')
+_mmp = ospath.join(data_path, 'process_data/_mmp.tsv')
+
+# partial pressure in air
+p_n2_air = 0.78         # atm
+p_co2_air = 3.947e-4
 
 Monod = lambda S, K: S/(S+K)
 
-rhos = np.zeros(19) # 19 biological processes, no precipitation/dissociation or gas stripping yet
+def acid_base_rxn(h_ion, ionic_states, Ka):
+    K, Mg, Ca, Na, Cl, NOx, NH, IC, IP, Ac = ionic_states  # in M
+    Kw, Knh, Kc1, Kc2, Kp1, Kp2, Kp3, Kac = Ka
+    oh_ion = Kw/h_ion
+    nh4 = NH * h_ion/(Knh + h_ion)
+    ac = Ac * Kac/(Kac + h_ion)
+    co2, hco3, co3 = ion_speciation(h_ion, Kc1, Kc2) * IC
+    h3po4, h2po4, hpo4, po4 = ion_speciation(h_ion, Kp1, Kp2, Kp3) * IP
+    return K + 2*Mg + 2*Ca + Na + h_ion + nh4 - Cl - NOx - oh_ion - ac - hco3 - co3*2 - h2po4 - 2*hpo4 - 3*po4
+
+def ion_speciation(h_ion, *Kas):
+    n = len(Kas)
+    out = h_ion ** np.arange(n, -1, -1) * np.cumprod([1.0, *Kas])
+    return out/sum(out)
+
+def solve_pH(state_arr, Ka, unit_conversion):
+    cmps_in_M = state_arr[:31] * unit_conversion *1e-3
+    # S_K, S_Mg, S_Ca, S_Na, S_Cl, S_NO3, S_NH4, S_IC, S_PO4, S_A
+    ions = cmps_in_M[[9, 10, 18, 28, 29, 3, 2, 8, 4, 6]]
+    h = brenth(acid_base_rxn, 1e-14, 1.0,
+               args=(ions, Ka),
+               xtol=1e-12, maxiter=100)
+    return h
+
+rhos = np.zeros(19+7+2) # 19 biological processes, 7 precipitation/dissociation, 2 gas stripping
 def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
     if 'ks' not in params:
         k_h, mu_H, mu_PAO, mu_AUT, \
@@ -434,7 +494,10 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
         K_NH4_H, K_NH4_PAO, K_NH4_AUT, \
         K_P_H, K_P_PAO, K_P_AUT, K_P_S, \
         K_PP, K_MAX, K_IPP, K_PHA, \
-            = params.values()
+            = list(params.values())[:45]
+        
+        cmps = params['cmps']
+        params['mass2mol'] = cmps.i_mass / cmps.chem_MW
         
         params['ks'] = ks = rhos * 0
         # rate constants
@@ -472,13 +535,19 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
     Kipp = params['K_IPP']
     Kpha = params['K_PHA']
     
-    S_O2, S_NH4, S_NO3, S_PO4, S_F, S_A, \
-        X_S, X_H, X_PAO, X_PP, X_PHA, X_AUT \
-            = state_arr[[0,2,3,4,5,6,12,13,14,15,16,17]]
+    S_O2, S_N2, S_NH4, S_NO3, S_PO4, S_F, S_A, S_I, S_IC, S_K, S_Mg, \
+        X_I, X_S, X_H, X_PAO, X_PP, X_PHA, X_AUT, \
+            S_Ca, X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3, \
+                X_AlOH, X_AlPO4, X_FeOH, X_FePO4, S_Na, S_Cl \
+                    = state_arr[:30]
     
+    # S_O2, S_N2, S_NH4, S_NO3, S_PO4, S_F, S_A = state_arr[:7]
+    # X_S, X_H, X_PAO, X_PP, X_PHA, X_AUT = state_arr[12:18]
+    
+    ############# biological processes ###############
     nutrients = Monod(S_NH4, Ks_nh4) * Monod(S_PO4, Ks_po4)
 
-    rhos[:] = ks
+    rhos[:19] = ks
     rhos[:9] *= X_H * nutrients[0]
     rhos[9:15] *= X_PAO
     rhos[12:14] *= nutrients[1]
@@ -511,7 +580,48 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
         rhos[8] *= (aero[1] + eta_decay[0]*(1-aero[1])*anox[1])
         rhos[14:17] *= (aero[3] +eta_decay[1:4]*(1-aero[3])*anox[3])
         rhos[18] *= (aero[5] + eta_decay[4]*(1-aero[5])*anox[5])        
-        
+    
+    # S_IC, S_Mg = state_arr[[8,10]]
+    # S_Ca, X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3, \
+    #     X_AlOH, X_AlPO4, X_FeOH, X_FePO4 = \
+    #         state_arr[18:28]
+    
+    ########## pH ############
+    mass2mol = params['mass2mol']
+    Ka = params['Ka']
+    Kw, Knh, Kc1, Kc2, Kp1, Kp2, Kp3, Kac = Ka
+    h = solve_pH(state_arr, Ka, mass2mol)
+    nh4 = state_arr[2] * h/(Knh + h)
+    co2, hco3, co3 = state_arr[8] * ion_speciation(h, Kc1, Kc2)
+    h3po4, h2po4, hpo4, po4 = state_arr[4] * ion_speciation(h, Kp1, Kp2, Kp3)
+    
+    ########## precipitation-dissolution #############
+    k_mmp = params['k_mmp']
+    Ksp = params['Ksp']
+    K_dis = params['K_dis']
+    K_AlOH = params['K_AlOH']
+    K_FeOH = params['K_FeOH']
+    f_dis = Monod(state_arr[19:24], K_dis[:5])
+    if X_CaCO3 > 0: rhos[19] = (S_Ca * co3 - Ksp[0]) * f_dis[0]
+    else: rhos[19] = S_Ca * co3
+    if X_struv > 0: rhos[20] = (S_Mg * nh4 * po4 - Ksp[1]) * f_dis[1]
+    else: rhos[20] = S_Mg * nh4 * po4
+    if X_newb > 0: rhos[21] = (S_Mg * hpo4 - Ksp[2]) * f_dis[2]
+    else: rhos[21] = S_Mg * hpo4
+    if X_ACP > 0: rhos[22] = (S_Ca**3 * po4**2 - Ksp[3]) * f_dis[3]
+    else: rhos[22] = S_Ca**3 * po4**2
+    if X_MgCO3 > 0: rhos[23] = (S_Mg * co3 - Ksp[4]) * f_dis[4]
+    else: rhos[23] = S_Mg * co3
+    rhos[24] = X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
+    rhos[25] = X_FeOH * po4 * Monod(X_FeOH, K_FeOH)
+    rhos[19:26] *= k_mmp
+    
+    ########### gas stripping ###########
+    kLa_n2, kLa_co2 = params['kLa']
+    KH_n2, KH_co2 = params['K_Henry']  # assume already temperature-corrected
+    rhos[26] = kLa_n2*(S_N2 - KH_n2*p_n2_air/mass2mol[1]*1e3)   # M/atm * atm / mol/g * 1000 mg/g = mg/L
+    rhos[27] = kLa_co2*(co2 - KH_co2*p_co2_air/mass2mol[1]*1e3)   # M/atm * atm / mol/g * 1000 mg/g = mg/L
+    
     return rhos
 
 @chemicals_user
@@ -545,7 +655,6 @@ class mASM2d(CompiledProcesses):
     _kinetic_params = ('k_h', 'mu_H', 'mu_PAO', 'mu_AUT', 
                        'q_fe', 'q_PHA', 'q_PP', 
                        'b_H', 'b_PAO', 'b_PP', 'b_PHA', 'b_AUT', 
-                       # k_PRE, k_RED, 
                        'eta_NO3', 'eta_fe', 'eta_NO3_H', 'eta_NO3_PAO', 
                        'eta_NO3_Hl', 'eta_NO3_PAOl', 'eta_NO3_PPl', 'eta_NO3_PHAl', 'eta_NO3_AUTl',
                        'K_O2', 'K_O2_H', 'K_O2_PAO', 'K_O2_AUT', 
@@ -554,8 +663,16 @@ class mASM2d(CompiledProcesses):
                        'K_NH4_H', 'K_NH4_PAO', 'K_NH4_AUT', 
                        'K_P_H', 'K_P_PAO', 'K_P_AUT', 'K_P_S', 
                        'K_PP', 'K_MAX', 'K_IPP', 'K_PHA',
-                       # 'K_ALK_PRE'
-                       )
+                       'k_mmp', 'Ksp', 'K_dis', 'K_AlOH', 'K_FeOH', 
+                       'kLa', 'K_Henry', 'Ka', 'cmps')
+    
+    _acid_base_pairs = (('H+', 'OH-'), ('NH4+', 'NH3'), 
+                        ('CO2', 'HCO3-'), ('HCO3-', 'CO3-2'), 
+                        ('H3PO4', 'H2PO4-'), ('H2PO4-', 'HPO4-2'), ('HPO4-2', 'PO4-3'),
+                        ('HAc', 'Ac-'),)
+    _precipitates = ('X_CaCO3', 'X_struv', 'X_newb', 'X_ACP', 'X_MgCO3', 'X_AlPO4', 'X_FePO4')
+    
+    _gas_stripping = ('S_N2', 'S_IC')
     
     def __new__(cls, components=None, path=None, electron_acceptor_dependent_decay=True,
                 f_SI=0.0, Y_H=0.625, Y_PAO=0.625, Y_PO4=0.4, Y_PHA=0.2, Y_A=0.24, 
@@ -563,7 +680,6 @@ class mASM2d(CompiledProcesses):
                 k_h=3.0, mu_H=6.0, mu_PAO=1.0, mu_AUT=1.0, 
                 q_fe=3.0, q_PHA=3.0, q_PP=1.5, 
                 b_H=0.4, b_PAO=0.2, b_PP=0.2, b_PHA=0.2, b_AUT=0.15, 
-                # k_PRE=1.0, k_RED=0.6, 
                 eta_NO3=0.6, eta_fe=0.4, eta_NO3_H=0.8, eta_NO3_PAO=0.6, 
                 eta_NO3_Hl=0.5, eta_NO3_PAOl=0.33, eta_NO3_PPl=0.33, eta_NO3_PHAl=0.33, eta_NO3_AUTl=0.33,
                 K_O2=0.2, K_O2_H=0.2, K_O2_PAO=0.2, K_O2_AUT=0.5, 
@@ -572,9 +688,14 @@ class mASM2d(CompiledProcesses):
                 K_NH4_H=0.05, K_NH4_PAO=0.05, K_NH4_AUT=1.0, 
                 K_P_H=0.01, K_P_PAO=0.01, K_P_AUT=0.01, K_P_S=0.2, 
                 K_PP=0.01, K_MAX=0.34, K_IPP=0.02, K_PHA=0.01,
-                # K_ALK_PRE=0.5,
                 #!!! kLa and/or solubility values for gas stripping
                 #!!! precipitation kinetics
+                k_mmp=(5.0, 300, 0.05, 150, 50, 1.0, 1.0),
+                pKsp=(6.45, 13.16, 5.8, 23, 7, 21, 26),
+                K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
+                K_AlOH=0.001, K_FeOH=0.001, 
+                kLa=(3.0, 3.0), K_Henry=(6.5e-4, 3.5e-2),
+                pKa=(14, 9.25, 6.37, 10.32, 2.12, 7.21, 12.32, 4.76),
                 **kwargs):
 
         if not path: path = _mpath
@@ -603,22 +724,51 @@ class mASM2d(CompiledProcesses):
             self.insert(11, _p12)
             self.insert(13, _p14)
 
-        #!!! add gas stripping
+        mmp = Processes.load_from_file(_mmp, components=cmps, 
+                                       conserved_for=(), compile=False)
+        mmp_stoichio = {}
+        df = load_data(_mmp)
+        for i, j in df.iterrows():
+            j.dropna(inplace=True)
+            key = j.index[j == 1][0]
+            j = j.to_dict()
+            j.pop(key)
+            mmp_stoichio[key] = j
+        mol_to_mass = cmps.chem_MW / cmps.i_mass
+        Ksp_mass = np.array([10**(-p) for p in pKsp])     # mass in mg/L or g/m3
+        i = 0
+        for pd, xid in zip(mmp, cls._precipitates):
+            for k,v in mmp_stoichio[xid].items():
+                m2m = mol_to_mass[cmps.index(k)] * 1e3
+                Ksp_mass[i] *= m2m**abs(v)
+            i += 1
+            pd._stoichiometry *= mol_to_mass
+            pd.ref_component = xid
+            
+        self.extend(mmp)
+        
+        for gas in cls._gas_stripping:
+            new_p = Process('%s_stripping' % gas.lstrip('S_'),
+                            reaction={gas:-1},
+                            ref_component=gas,
+                            conserved_for=(),)
+            self.append(new_p)
 
         self.compile(to_class=cls)
         
         dct = self.__dict__
         dct.update(kwargs)
+        dct['mmp_stoichio'] = mmp_stoichio
         stoichio_vals = (f_SI, Y_H, Y_PAO, Y_PO4, Y_PHA, Y_A, 
                          f_XI_H, f_XI_PAO, f_XI_AUT,
                          cmps.X_PP.i_K, cmps.X_PP.i_Mg)
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_vals))
         rhos_masm2d = lambda state_arr, params: _rhos_masm2d(state_arr, params, electron_acceptor_dependent_decay)
         self.set_rate_function(rhos_masm2d)
+        Ka = np.array([10**(-p) for p in pKa])
         kinetic_vals = (k_h, mu_H, mu_PAO, mu_AUT, 
                         q_fe, q_PHA, q_PP, 
                         b_H, b_PAO, b_PP, b_PHA, b_AUT, 
-                        # k_PRE, k_RED, 
                         eta_NO3, eta_fe, eta_NO3_H, eta_NO3_PAO, 
                         eta_NO3_Hl, eta_NO3_PAOl, eta_NO3_PPl, eta_NO3_PHAl, eta_NO3_AUTl,
                         K_O2, K_O2_H, K_O2_PAO, K_O2_AUT, 
@@ -627,10 +777,12 @@ class mASM2d(CompiledProcesses):
                         K_NH4_H, K_NH4_PAO, K_NH4_AUT, 
                         K_P_H, K_P_PAO, K_P_AUT, K_P_S, 
                         K_PP, K_MAX, K_IPP, K_PHA,
-                        # K_ALK_PRE
+                        np.array(k_mmp), Ksp_mass, 
+                        np.array(K_dis), K_AlOH, K_FeOH, 
+                        np.array(kLa), np.array(K_Henry), Ka, cmps,
                         )
         self.rate_function._params = dict(zip(cls._kinetic_params, kinetic_vals))
-        
+
         return self
     
     @property
@@ -654,3 +806,17 @@ class mASM2d(CompiledProcesses):
             else: stoichio[k] = v
         if self._stoichio_lambdified is not None:
             self.__dict__['_stoichio_lambdified'] = None
+    
+    def set_pKsps(self, ps):
+        cmps = self.components
+        mol_to_mass = cmps.chem_MW / cmps.i_mass
+        idxer = cmps.index
+        stoichio = self.mmp_stoichio
+        Ksp_mass = []    # mass in mg/L or g/m3
+        for xid, p in zip(self._precipitates, ps):
+            K = 10**(-p)
+            for cmp, v in stoichio[xid]:
+                m2m = mol_to_mass[idxer(cmp)] * 1e3
+                K *= m2m**abs(v)
+            Ksp_mass.append(K)
+        self.rate_function._params['Ksp'] = np.array(Ksp_mass)
