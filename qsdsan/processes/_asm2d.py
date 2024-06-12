@@ -367,7 +367,6 @@ class ASM2d(CompiledProcesses):
                'k_PRE', 'k_RED', 'K_ALK_PRE')
 
 
-
     def __new__(cls, components=None,
                 iN_SI=0.01, iN_SF=0.03, iN_XI=0.02, iN_XS=0.04, iN_BM=0.07,
                 iP_SI=0.0, iP_SF=0.01, iP_XI=0.01, iP_XS=0.01, iP_BM=0.02,
@@ -464,7 +463,7 @@ def acid_base_rxn(h_ion, ionic_states, Ka):
     ac = Ac * Kac/(Kac + h_ion)
     co2, hco3, co3 = ion_speciation(h_ion, Kc1, Kc2) * IC
     h3po4, h2po4, hpo4, po4 = ion_speciation(h_ion, Kp1, Kp2, Kp3) * IP
-    return K + 2*Mg + 2*Ca + Na + h_ion + nh4 - Cl - NOx - oh_ion - ac - hco3 - co3*2 - h2po4 - 2*hpo4 - 3*po4
+    return K + 2*Mg + 2*Ca + Na + h_ion + nh4 - Cl - NOx - oh_ion - ac - hco3 - 2*co3 - h2po4 - 2*hpo4 - 3*po4
 
 def ion_speciation(h_ion, *Kas):
     n = len(Kas)
@@ -620,20 +619,85 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
     kLa_n2, kLa_co2 = params['kLa']
     KH_n2, KH_co2 = params['K_Henry']  # assume already temperature-corrected
     rhos[26] = kLa_n2*(S_N2 - KH_n2*p_n2_air/mass2mol[1]*1e3)   # M/atm * atm / mol/g * 1000 mg/g = mg/L
-    rhos[27] = kLa_co2*(co2 - KH_co2*p_co2_air/mass2mol[1]*1e3)   # M/atm * atm / mol/g * 1000 mg/g = mg/L
+    rhos[27] = kLa_co2*(co2 - KH_co2*p_co2_air/mass2mol[8]*1e3)   # M/atm * atm / mol/g * 1000 mg/g = mg/L
     
     return rhos
 
+#%%
 @chemicals_user
 class mASM2d(CompiledProcesses):
     '''
     Modified ASM2d. [1]_, [2]_ Compatible with `ADM1p` for plant-wide simulations.
+    Includes an algebraic pH solver, precipitation/dissolution of common minerals,
+    and gas stripping/dissolution.
 
     Parameters
     ----------
+    components : :class:`CompiledComponents`, optional
+        Can be created with the `create_masm2d_cmps` function.
+    path : str, optional
+        File path for an alternative Petersen Matrix. The default is None.
+    electron_acceptor_dependent_decay : bool, optional
+        Whether biomass decay kinetics is dependent on concentrations of 
+        electron acceptors. The default is True.
+    k_h : float, optional
+        Hydrolysis rate constant, in [d^(-1)]. The default is 3.0.
+    eta_NO3_Hl : float, optional
+        Anoxic reduction factor for endogenous respiration of heterotrophs, 
+        unitless. The default is 0.5.
+    eta_NO3_PAOl : float, optional
+        Anoxic reduction factor for lysis of PAOs, unitless. The default is 0.33.
+    eta_NO3_PPl : float, optional
+        Anoxic reduction factor for lysis of PP, unitless. The default is 0.33.
+    eta_NO3_PHAl : float, optional
+        Anoxic reduction factor for lysis of PHA, unitless. The default is 0.33.
+    eta_NO3_AUTl : float, optional
+        Anoxic reduction factor for decay of autotrophs, unitless. The default is 0.33.
+    K_NO3_AUT : float, optional
+        Half saturation coefficient of NOx- for autotrophs [mg-N/L]. The default is 0.5.
+    K_P_S : float, optional
+        Half saturation coefficient of ortho-P for PP storage [mg-P/L]. The default is 0.2.
+    k_mmp : iterable[float], optional
+        Rate constants for multi-mineral precipitation/dissolution 
+        [mg-precipitate/L/(unit of solubility product)/d]. Follows the exact order
+        of `mASM2d._precipitates`. The default is (5.0, 300, 0.05, 150, 50, 1.0, 1.0).
+    pKsp : iterable[float], optional
+        Solubility of minerals, in order of `mASM2d._precipitates`. 
+        The default is (6.45, 13.16, 5.8, 23, 7, 21, 26).
+    K_dis : iterable[float], optional
+        Saturation coefficient for the switching function of mineral dissolution
+        [mg-precipitate/L]. The default is (1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0).
+    K_AlOH : float, optional
+        Half saturation coefficient of aluminum hydroxide for AlPO4 precipitation
+        [mg-Al(OH)3/L]. The default is 0.001.
+    K_FeOH : float, optional
+        Half saturation coefficient of ferric hydroxide for FePO4 precipitation
+        [mg-Fe(OH)3/L]. The default is 0.001.
+    kLa : iterable[float], optional
+        Gas transfer rate constant for gas stripping/dissolution [d^(-1)], 
+        following the order of `mASM2d._gas_stripping`. The default is (3.0, 3.0).
+    K_Henry : iterable[float], optional
+        Henry's law constants [mol/L/atm], following the order of 
+        `mASM2d._gas_stripping`. The default is (6.5e-4, 3.5e-2).
+    pKa : iterable[float], optional
+        Equilibrium coefficient values of acid-base pairs, unitless, 
+        following the order of `mASM2d._acid_base_pairs`. 
+        The default is (14, 9.25, 6.37, 10.32, 2.12, 7.21, 12.32, 4.76).
+    
+    
+    See Also
+    --------
+    :class:`qsdsan.processes.ASM2d`
+    :class:`qsdsan.processes.ADM1p`
 
     Examples
     --------
+    >>> import qsdsan.processes as pc
+    >>> cmps = pc.create_masm2d_cmps()
+    >>> asm = pc.mASM2d()
+    >>> asm.show()
+    mASM2d([aero_hydrolysis, anox_hydrolysis, anae_hydrolysis, hetero_growth_S_F, hetero_growth_S_A, denitri_S_F, denitri_S_A, ferment, hetero_lysis, storage_PHA, aero_storage_PP, anox_storage_PP, PAO_aero_growth_PHA, PAO_anox_growth, PAO_lysis, PP_lysis, PHA_lysis, auto_aero_growth, auto_lysis, CaCO3_precipitation_dissolution, struvite_precipitation_dissolution, newberyite_precipitation_dissolution, ACP_precipitation_dissolution, MgCO3_precipitation_dissolution, AlPO4_precipitation_dissolution, FePO4_precipitation_dissolution, N2_stripping, IC_stripping])
+
 
     References
     ----------
@@ -688,15 +752,14 @@ class mASM2d(CompiledProcesses):
                 K_NH4_H=0.05, K_NH4_PAO=0.05, K_NH4_AUT=1.0, 
                 K_P_H=0.01, K_P_PAO=0.01, K_P_AUT=0.01, K_P_S=0.2, 
                 K_PP=0.01, K_MAX=0.34, K_IPP=0.02, K_PHA=0.01,
-                #!!! kLa and/or solubility values for gas stripping
-                #!!! precipitation kinetics
                 k_mmp=(5.0, 300, 0.05, 150, 50, 1.0, 1.0),
                 pKsp=(6.45, 13.16, 5.8, 23, 7, 21, 26),
                 K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
                 K_AlOH=0.001, K_FeOH=0.001, 
                 kLa=(3.0, 3.0), K_Henry=(6.5e-4, 3.5e-2),
                 pKa=(14, 9.25, 6.37, 10.32, 2.12, 7.21, 12.32, 4.76),
-                **kwargs):
+                **kwargs):       
+        
 
         if not path: path = _mpath
 
@@ -779,7 +842,7 @@ class mASM2d(CompiledProcesses):
                         K_PP, K_MAX, K_IPP, K_PHA,
                         np.array(k_mmp), Ksp_mass, 
                         np.array(K_dis), K_AlOH, K_FeOH, 
-                        np.array(kLa), np.array(K_Henry), Ka, cmps,
+                        kLa, K_Henry, Ka, cmps,
                         )
         self.rate_function._params = dict(zip(cls._kinetic_params, kinetic_vals))
 
