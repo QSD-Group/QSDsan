@@ -185,6 +185,42 @@ class ED_vfa(SanUnit):
     _N_ins = 2
     _N_outs = 2
 
+    @property
+    def j(self):
+        return self._j
+    @j.setter
+    def j(self, value):
+        if value <= 0:
+            raise ValueError("Current density must be positive.")
+        self._j = value
+
+    @property
+    def t(self):
+        return self._t
+    @t.setter
+    def t(self, value):
+        if value <= 0:
+            raise ValueError("Time must be positive.")
+        self._t = value
+        
+    @property
+    def A_m(self):
+        return self._A_m
+    @A_m.setter
+    def A_m(self, value):
+        if value <= 0:
+            raise ValueError("Membrane area must be positive.")
+        self._A_m = value
+
+    @property
+    def V(self):
+        return self._V
+    @V.setter
+    def V(self, value):
+        if value <= 0:
+            raise ValueError("Volume must be positive.")
+        self._V = value
+        
     def _run(self):
         inf_dc, inf_ac = self.ins
         eff_dc, eff_ac = self.outs
@@ -317,6 +353,8 @@ sys = System('ED1', path=(ed1,))
 
 # # Simulate the system
 # sys.simulate()
+sys._setup()
+sys.converge()
 # sys.diagram()
 #%%
 # Simulation
