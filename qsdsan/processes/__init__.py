@@ -7,12 +7,46 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 This module is developed by:
 
     Yalin Li <mailto.yalin.li@gmail.com>
+    
+    Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+from numpy import arange, cumprod, exp
+
+def ion_speciation(h_ion, *Kas):
+    n = len(Kas)
+    out = h_ion ** arange(n, -1, -1) * cumprod([1.0, *Kas])
+    return out/sum(out)
+
+substr_inhibit = Monod = lambda S, K: S/(S+K)
+
+non_compet_inhibit = lambda S, K: K/(K+S)
+
+grad_non_compet_inhibit = lambda S, K: -K/(K+S)**2
+
+grad_substr_inhibit = lambda S, K: K/(K+S)**2
+
+def mass2mol_conversion(cmps):
+    '''conversion factor from kg[measured_as]/m3 to mol[component]/L'''
+    return cmps.i_mass / cmps.chem_MW
+
+R = 8.3145e-2 # Universal gas constant, [bar/M/K]
+
+def T_correction_factor(T1, T2, delta_H):
+    """compute temperature correction factor for equilibrium constants based on
+    the Van't Holf equation."""
+    if T1 == T2: return 1
+    return exp(delta_H/(R*100) * (1/T1 - 1/T2))  # R converted to SI
+
+class TempState:
+    def __init__(self):
+        self.data = {}
+
+#%%
 from ._aeration import *
 from ._asm1 import *
 from ._asm2d import *

@@ -15,19 +15,23 @@ for license details.
 
 from thermosteam.utils import chemicals_user
 from thermosteam import settings
-from chemicals.elements import molecular_weight as get_mw
+# from chemicals.elements import molecular_weight as get_mw
 from qsdsan import Component, Components, Process, Processes, CompiledProcesses
 import numpy as np
 from qsdsan.utils import ospath, data_path
 from scipy.optimize import brenth
 from warnings import warn
+from . import (
+    non_compet_inhibit, grad_non_compet_inhibit, 
+    substr_inhibit, grad_substr_inhibit,
+    mass2mol_conversion, 
+    T_correction_factor, R,
+    TempState
+    ) 
 
 __all__ = ('create_adm1_cmps', 'ADM1',
-           'non_compet_inhibit', 'grad_non_compet_inhibit',
-           'substr_inhibit', 'grad_substr_inhibit',
-           'mass2mol_conversion', 'T_correction_factor', 
            'pH_inhibit', 'Hill_inhibit', 
-           'rhos_adm1', 'TempState',)
+           'rhos_adm1', )
 
 _path = ospath.join(data_path, 'process_data/_adm1.tsv')
 _load_components = settings.get_default_chemicals
@@ -176,31 +180,6 @@ def create_adm1_cmps(set_thermo=True):
 # =============================================================================
 # kinetic rate functions
 # =============================================================================
-
-R = 8.3145e-2 # Universal gas constant, [bar/M/K]
-
-def non_compet_inhibit(Si, Ki):
-    return Ki/(Ki+Si)
-
-def grad_non_compet_inhibit(Si, Ki):
-    return -Ki/(Ki+Si)**2
-
-def substr_inhibit(Si, Ki):
-    return Si/(Ki+Si)
-
-def grad_substr_inhibit(Si, Ki):
-    return Ki/(Ki+Si)**2
-
-def mass2mol_conversion(cmps):
-    '''conversion factor from kg[measured_as]/m3 to mol[component]/L'''
-    return cmps.i_mass / cmps.chem_MW
-
-def T_correction_factor(T1, T2, delta_H):
-    """compute temperature correction factor for equilibrium constants based on
-    the Van't Holf equation."""
-    if T1 == T2: return 1
-    return np.exp(delta_H/(R*100) * (1/T1 - 1/T2))  # R converted to SI
-
 
 def acid_base_rxn(h_ion, weak_acids_tot, Kas):
     # h, nh4, hco3, ac, pr, bu, va = mols
@@ -369,12 +348,6 @@ def grad_dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq, S_h2_in):
 # =============================================================================
 # ADM1 class
 # =============================================================================
-class TempState:
-    def __init__(self):
-        self.data = {}
-    
-    # def append(self, value):
-    #     self.data += [value]
 
 @chemicals_user
 class ADM1(CompiledProcesses):

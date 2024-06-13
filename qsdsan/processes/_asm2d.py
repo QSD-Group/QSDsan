@@ -14,8 +14,9 @@ from thermosteam.utils import chemicals_user
 from thermosteam import settings
 from qsdsan import Component, Components, Process, Processes, CompiledProcesses
 from ..utils import ospath, data_path, load_data
+from . import Monod, ion_speciation
 from scipy.optimize import brenth
-from math import log10
+# from math import log10
 
 
 __all__ = ('create_asm2d_cmps', 'ASM2d',
@@ -453,8 +454,6 @@ _mmp = ospath.join(data_path, 'process_data/_mmp.tsv')
 p_n2_air = 0.78         # atm
 p_co2_air = 3.947e-4
 
-Monod = lambda S, K: S/(S+K)
-
 def acid_base_rxn(h_ion, ionic_states, Ka):
     K, Mg, Ca, Na, Cl, NOx, NH, IC, IP, Ac = ionic_states  # in M
     Kw, Knh, Kc1, Kc2, Kp1, Kp2, Kp3, Kac = Ka
@@ -464,11 +463,6 @@ def acid_base_rxn(h_ion, ionic_states, Ka):
     co2, hco3, co3 = ion_speciation(h_ion, Kc1, Kc2) * IC
     h3po4, h2po4, hpo4, po4 = ion_speciation(h_ion, Kp1, Kp2, Kp3) * IP
     return K + 2*Mg + 2*Ca + Na + h_ion + nh4 - Cl - NOx - oh_ion - ac - hco3 - 2*co3 - h2po4 - 2*hpo4 - 3*po4
-
-def ion_speciation(h_ion, *Kas):
-    n = len(Kas)
-    out = h_ion ** np.arange(n, -1, -1) * np.cumprod([1.0, *Kas])
-    return out/sum(out)
 
 def solve_pH(state_arr, Ka, unit_conversion):
     cmps_in_M = state_arr[:31] * unit_conversion *1e-3
@@ -540,9 +534,6 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
                 X_AlOH, X_AlPO4, X_FeOH, X_FePO4, S_Na, S_Cl \
                     = state_arr[:30]
     
-    # S_O2, S_N2, S_NH4, S_NO3, S_PO4, S_F, S_A = state_arr[:7]
-    # X_S, X_H, X_PAO, X_PP, X_PHA, X_AUT = state_arr[12:18]
-    
     ############# biological processes ###############
     nutrients = Monod(S_NH4, Ks_nh4) * Monod(S_PO4, Ks_po4)
 
@@ -578,12 +569,7 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
     if acceptor_dependent_decay:
         rhos[8] *= (aero[1] + eta_decay[0]*(1-aero[1])*anox[1])
         rhos[14:17] *= (aero[3] +eta_decay[1:4]*(1-aero[3])*anox[3])
-        rhos[18] *= (aero[5] + eta_decay[4]*(1-aero[5])*anox[5])        
-    
-    # S_IC, S_Mg = state_arr[[8,10]]
-    # S_Ca, X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3, \
-    #     X_AlOH, X_AlPO4, X_FeOH, X_FePO4 = \
-    #         state_arr[18:28]
+        rhos[18] *= (aero[5] + eta_decay[4]*(1-aero[5])*anox[5])
     
     ########## pH ############
     mass2mol = params['mass2mol']
