@@ -976,13 +976,14 @@ class Processes:
     _default_data = None
 
     @classmethod
-    def load_from_file(cls, path='', components=None,
+    def load_from_file(cls, path='', components=None, data=None,
                        conserved_for=('COD', 'N', 'P', 'charge'), parameters=(),
                        use_default_data=False, store_data=False, compile=True,
                        **compile_kwargs):
         """
         Create :class:`CompiledProcesses` object from a table of process IDs, stoichiometric
-        coefficients, and rate equations stored in a .tsv, .csv, or Excel file.
+        coefficients, and rate equations stored in a .tsv, .csv, or Excel file, or as 
+        a `DataFrame`.
 
         Parameters
         ----------
@@ -991,6 +992,8 @@ class Processes:
         components : :class:`CompiledComponents`, optional
             Components corresponding to the columns in the stoichiometry matrix,
             to all components set in the system (i.e., through :func:`set_thermo`).
+        data : :class:`pandas.DataFrame`, optional
+            Data frame of the Petersen matrix.
         conserved_for : tuple[str], optional
             Materials subject to conservation rules, must have corresponding 'i\_'
             attributes for the components. Applied to all processes.
@@ -1023,16 +1026,18 @@ class Processes:
         """
         if use_default_data and cls._default_data is not None:
             data = cls._default_data
+        elif path:
+            data = load_data(path=path, index_col=0, na_values=0)
         else:
-            data = load_data(path=path, index_col=None, na_values=0)
-
+            if data is None: return None
+        
         cmps = _load_components(components)
 
         cmp_IDs = [i for i in data.columns if i in cmps.IDs]
         data.dropna(how='all', subset=cmp_IDs, inplace=True)
         new = cls(())
         for i, proc in data.iterrows():
-            ID = proc[0]
+            ID = i
             stoichio = proc[cmp_IDs]
             if data.columns[-1] in cmp_IDs: rate_eq = None
             else:
