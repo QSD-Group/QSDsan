@@ -31,8 +31,9 @@ __all__ = (
     'ADM1toASM2d',
     'ASM2dtomADM1',
     'mADM1toASM2d',
-    'ADM1ptomASM2d_A1',
-    'mASM2dtoADM1p_A1'
+    'A1junction',
+    'ADM1ptomASM2d',
+    'mASM2dtoADM1p'
           )
 
 #%% Junction
@@ -472,46 +473,6 @@ class mADMjunction(ADMjunction):
     @property
     def alpha_vfa(self):
         return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[4:]-self.pH)))
-    
-    def check_component_properties(self, cmps_asm, cmps_adm):
-        get = getattr
-        setv = setattr
-        for name in ('X_PHA', 'X_PP', 'X_PAO', 'X_MeOH', 'X_MeP'):
-            casm = get(cmps_asm, name)
-            cadm = get(cmps_adm, name)
-            for attr in ('measured_as', 'i_COD', 'i_N', 'i_P'):
-                vasm = get(casm, attr)
-                if get(cadm, attr) != vasm:
-                    setv(cadm, attr, vasm)
-                    warn(f"ADM component {name}'s {attr} is changed to match "
-                         "the corresponding ASM component")
-        
-        for name in ('S_I', 'X_I'):
-            casm = get(cmps_asm, name)
-            cadm = get(cmps_adm, name)
-            for attr in ('measured_as', 'i_N', 'i_P'):
-                vadm = get(cadm, attr)
-                if get(casm, attr) != vadm:
-                    setv(casm, attr, vadm)
-                    warn(f"ASM component {name}'s {attr} is changed to match "
-                         "the corresponding ADM component")        
-        
-        for attr in ('i_N', 'i_P'):
-            vadm = get(cmps_adm.S_ac, attr)
-            if get(cmps_asm.S_A, attr) != vadm:
-                cmps_asm.S_A.i_N = vadm
-                warn(f"ASM component S_A's {attr} is changed to match "
-                     "the ADM component S_ac.") 
-        
-        if cmps_asm.S_ALK.measured_as != cmps_adm.S_IC.measured_as:
-            raise RuntimeError('S_ALK in ASM and S_IC in ADM must both be measured as "C".')
-        if cmps_asm.S_NH4.measured_as != cmps_adm.S_IN.measured_as:
-            raise RuntimeError('S_NH4 in ASM and S_IN in ADM must both be measured as "N".')
-        if cmps_asm.S_PO4.measured_as != cmps_adm.S_IP.measured_as:
-            raise RuntimeError('S_PO4 in ASM and S_IP in ADM must both be measured as "P".')
-        
-        cmps_asm.refresh_constants()
-        cmps_adm.refresh_constants()
 
 #%% ADMtoASM
 class ADMtoASM(ADMjunction):
@@ -2336,7 +2297,6 @@ class mADM1toASM2d(mADMjunction):
 
 
 #%% ASM2dtomADM1
-
 class ASM2dtomADM1(mADMjunction):
     '''
     Interface unit to convert activated sludge model (ASM) components
@@ -3088,8 +3048,99 @@ class ASM2dtomADM1(mADMjunction):
         
         self._reactions = asm2d2madm1
         
-#%% ADM1ptomASM2d_A1
-class ADM1ptomASM2d_A1(mADMjunction):
+#%% A1junction
+
+class A1junction(ADMjunction):
+    '''
+    An abstract superclass holding common properties of modified ADM interface classes.
+    Users should use its subclasses (e.g., ``mASM2dtoADM1p``, ``ADM1ptomASM2d``) instead.
+    
+    See Also
+    --------
+    :class:`qsdsan.sanunits.ADMJunction`
+    
+    :class:`qsdsan.sanunits.ADM1ptomASM2d`
+    
+    :class:`qsdsan.sanunits.mASM2dtoADM1p`
+    '''
+    _parse_reactions = Junction._no_parse_reactions
+    rtol = 1e-2
+    atol = 1e-6
+    cod_vfa = np.array([64, 112, 160, 208])
+
+    def __init__(self, ID='', upstream=None, downstream=(), thermo=None,
+                 init_with='WasteStream', F_BM_default=None, isdynamic=False,
+                 adm1_model=None, asm2d_model=None):
+        self.asm2d_model = asm2d_model
+        super().__init__(ID=ID, upstream=upstream, downstream=downstream,
+                         thermo=thermo, init_with=init_with, 
+                         F_BM_default=F_BM_default, isdynamic=isdynamic,
+                         adm1_model=adm1_model)
+    
+    @property
+    def asm2d_model(self):
+        '''[qsdsan.CompiledProcesses] ASM2d process model.'''
+        return self._asm2d_model
+    @asm2d_model.setter
+    def asm2d_model(self, model):
+        if not isinstance(model, (pc.ASM2d, pc.mASM2d)):
+            raise ValueError('`asm2d_model` must be an `ASM2d` object, '
+                              f'the given object is {type(model).__name__}.')
+        self._asm2d_model = model
+
+    @property
+    def adm1_model(self):
+        '''[qsdsan.CompiledProcesses] mADM1 process model.'''
+        return self._adm1_model
+    @adm1_model.setter
+    def adm1_model(self, model):
+        if not isinstance(model, (pc.ADM1_p_extension, pc.ADM1p)):
+            raise ValueError('`adm1_model` must be an `ADM1_p_extension` object, '   #!!! update error message
+                              f'the given object is {type(model).__name__}.')
+        self._adm1_model = model
+
+    def check_component_properties(self, cmps_asm, cmps_adm):
+        get = getattr
+        setv = setattr
+        for name in ('X_PHA', 'X_PP', 'X_PAO'):
+            casm = get(cmps_asm, name)
+            cadm = get(cmps_adm, name)
+            for attr in ('measured_as', 'i_COD', 'i_C', 'i_N', 'i_P'):
+                vasm = get(casm, attr)
+                if get(cadm, attr) != vasm:
+                    setv(cadm, attr, vasm)
+                    warn(f"ADM component {name}'s {attr} is changed to match "
+                         "the corresponding ASM component")
+        
+        for name in ('S_I', 'X_I'):
+            casm = get(cmps_asm, name)
+            cadm = get(cmps_adm, name)
+            for attr in ('measured_as', 'i_C', 'i_N', 'i_P'):
+                vadm = get(cadm, attr)
+                if get(casm, attr) != vadm:
+                    setv(casm, attr, vadm)
+                    warn(f"ASM component {name}'s {attr} is changed to match "
+                         "the corresponding ADM component")        
+        
+        for attr in ('i_N', 'i_P'):
+            vadm = get(cmps_adm.S_ac, attr)
+            if get(cmps_asm.S_A, attr) != vadm:
+                cmps_asm.S_A.i_N = vadm
+                warn(f"ASM component S_A's {attr} is changed to match "
+                     "the ADM component S_ac.") 
+        
+        if cmps_asm.S_IC.measured_as != cmps_adm.S_IC.measured_as:
+            raise RuntimeError('S_ALK in ASM and S_IC in ADM must both be measured as "C".')
+        if cmps_asm.S_NH4.measured_as != cmps_adm.S_IN.measured_as:
+            raise RuntimeError('S_NH4 in ASM and S_IN in ADM must both be measured as "N".')
+        if cmps_asm.S_PO4.measured_as != cmps_adm.S_IP.measured_as:
+            raise RuntimeError('S_PO4 in ASM and S_IP in ADM must both be measured as "P".')
+        cmps_asm.refresh_constants()
+        cmps_adm.refresh_constants()
+
+
+#%% ADM1ptomASM2d
+class ADM1ptomASM2d(A1junction):
     '''
     Interface unit to convert ADM1 state variables
     to ASM2d components, following the A1 algorithm in [1]_.
@@ -3116,9 +3167,9 @@ class ADM1ptomASM2d_A1(mADMjunction):
     
     See Also
     --------
-    :class:`qsdsan.sanunits.mADMjunction`
+    :class:`qsdsan.sanunits.A1junction`
     
-    :class:`qsdsan.sanunits.mASM2dtoADM1p_A1`
+    :class:`qsdsan.sanunits.mASM2dtoADM1p`
     '''
     
     def balance_cod_tkn(self, adm_vals, asm_vals):
@@ -3298,9 +3349,9 @@ class ADM1ptomASM2d_A1(mADMjunction):
         
         self._reactions = adm1p2masm2d
 
-#%% mASM2dtoADM1p_A1
+#%% mASM2dtoADM1p
 
-class mASM2dtoADM1p_A1(mADMjunction):
+class mASM2dtoADM1p(A1junction):
     '''
     Interface unit to convert ASM2d state variables
     to ADM1 components, following the A1 scenario in [1]_.
@@ -3330,13 +3381,13 @@ class mASM2dtoADM1p_A1(mADMjunction):
     
     See Also
     --------
-    :class:`qsdsan.sanunits.mADMjunction`
+    :class:`qsdsan.sanunits.A1junction`
     
-    :class:`qsdsan.sanunits.ADM1ptomASM2d_A1` 
+    :class:`qsdsan.sanunits.ADM1ptomASM2d` 
     
     '''    
     # User defined values
-    xs_to_li = 0.7
+    xs_to_li = 0.6
     
     def balance_cod_tkn_tp(self, asm_vals, adm_vals):
         cmps_asm = self.ins[0].components
@@ -3428,7 +3479,7 @@ class mASM2dtoADM1p_A1(mADMjunction):
                 f'influent TKN is {asm_tkn}\n ' 
                 f'effluent TKN is {adm_tkn}. ')
             return adm_vals
-                
+    
     def _compile_reactions(self):
         cmps_asm = self.ins[0].components
         cmps_adm = self.outs[0].components

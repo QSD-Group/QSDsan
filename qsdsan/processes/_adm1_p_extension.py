@@ -550,6 +550,11 @@ def create_adm1p_cmps(set_thermo=True):
     c1.S_I.i_mass = c1.X_I.i_mass = 0.75
     c1.S_I.f_Vmass_Totmass = c1.X_I.f_Vmass_Totmass = 0.85
     
+    c1.X_li._formula = None
+    c1.X_li.chem_MW = 1.
+    c1.X_li.i_C = 0.263112
+    c1.X_li.i_N = 0.
+    c1.X_li.i_P = 0.010664
     for cmp in (c1.S_aa, c1.X_pr, c1.S_fa, c1.S_I, c1.X_I):
         cmp.i_NOD = None
     

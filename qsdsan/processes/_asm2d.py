@@ -100,12 +100,15 @@ def create_masm2d_cmps(set_thermo=True):
     c2d.S_I.i_C = c2d.X_I.i_C = 0.36178
     c2d.S_I.i_N = c2d.X_I.i_N = 0.06003
     c2d.S_I.i_P = c2d.X_I.i_P = 6.49e-3
+    c2d.S_I.i_K = c2d.X_I.i_K = 0.0
     c2d.S_F.i_mass = c2d.X_S.i_mass = c2d.S_I.i_mass = c2d.X_I.i_mass = 0.75
     c2d.S_F.f_Vmass_Totmass = c2d.X_S.f_Vmass_Totmass = c2d.S_I.f_Vmass_Totmass = c2d.X_I.f_Vmass_Totmass = 0.85
     
     c2d.X_H.i_C = c2d.X_AUT.i_C = c2d.X_PAO.i_C = 0.36612
     c2d.X_H.i_N = c2d.X_AUT.i_N = c2d.X_PAO.i_N = 0.08615
     c2d.X_H.i_P = c2d.X_AUT.i_P = c2d.X_PAO.i_P = 0.02154
+    c2d.X_H.i_K = c2d.X_AUT.i_K = c2d.X_PAO.i_K = 0.0
+    c2d.X_H.i_Mg = c2d.X_AUT.i_Mg = c2d.X_PAO.i_Mg = 0.0
     c2d.X_H.i_mass = c2d.X_AUT.i_mass = c2d.X_PAO.i_mass = 0.90
     c2d.X_H.f_Vmass_Totmass = c2d.X_AUT.f_Vmass_Totmass = c2d.X_PAO.f_Vmass_Totmass = 0.85
     
