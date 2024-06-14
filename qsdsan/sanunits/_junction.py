@@ -31,8 +31,8 @@ __all__ = (
     'ADM1toASM2d',
     'ASM2dtomADM1',
     'mADM1toASM2d',
-    'ADM1ptoASM2d_A1',
-    'ASM2dtoADM1p_A1'
+    'ADM1ptomASM2d_A1',
+    'mASM2dtoADM1p_A1'
           )
 
 #%% Junction
@@ -407,7 +407,7 @@ class mADMjunction(ADMjunction):
         return self._asm2d_model
     @asm2d_model.setter
     def asm2d_model(self, model):
-        if not isinstance(model, pc.ASM2d):
+        if not isinstance(model, (pc.ASM2d, pc.mASM2d)):
             raise ValueError('`asm2d_model` must be an `ASM2d` object, '
                               f'the given object is {type(model).__name__}.')
         self._asm2d_model = model
@@ -418,7 +418,7 @@ class mADMjunction(ADMjunction):
         return self._adm1_model
     @adm1_model.setter
     def adm1_model(self, model):
-        if not isinstance(model, pc.ADM1_p_extension):
+        if not isinstance(model, (pc.ADM1_p_extension, pc.ADM1p)):
             raise ValueError('`adm1_model` must be an `ADM1_p_extension` object, '   #!!! update error message
                               f'the given object is {type(model).__name__}.')
         self._adm1_model = model
@@ -3088,8 +3088,8 @@ class ASM2dtomADM1(mADMjunction):
         
         self._reactions = asm2d2madm1
         
-#%% ADM1ptoASM2d_A1
-class ADM1ptoASM2d_A1(mADMjunction):
+#%% ADM1ptomASM2d_A1
+class ADM1ptomASM2d_A1(mADMjunction):
     '''
     Interface unit to convert ADM1 state variables
     to ASM2d components, following the A1 algorithm in [1]_.
@@ -3118,7 +3118,7 @@ class ADM1ptoASM2d_A1(mADMjunction):
     --------
     :class:`qsdsan.sanunits.mADMjunction`
     
-    :class:`qsdsan.sanunits.ASM2dtoADM1p_A1`
+    :class:`qsdsan.sanunits.mASM2dtoADM1p_A1`
     '''
     
     def balance_cod_tkn(self, adm_vals, asm_vals):
@@ -3243,7 +3243,7 @@ class ADM1ptoASM2d_A1(mADMjunction):
         f_corr = self.balance_cod_tkn
 
         # To convert components from ADM1p to ASM2d (A1)
-        def adm1p2asm2d(adm_vals):    
+        def adm1p2masm2d(adm_vals):    
             
             _adm_vals = adm_vals.copy()
                 
@@ -3255,29 +3255,30 @@ class ADM1ptoASM2d_A1(mADMjunction):
             
             S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac, S_h2, S_ch4, S_IC, S_IN, S_IP, S_I, \
                 X_ch, X_pr, X_li, X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I, \
-                X_PHA, X_PP, X_PAO, S_K, S_Mg, X_MeOH, X_MeP, S_cat, S_an, H2O = _adm_vals            
+                    X_PHA, X_PP, X_PAO, S_K, S_Mg, S_Ca, X_CaCO3, X_struv, \
+                        X_newb, X_ACP, X_MgCO3, X_AlOH, X_AlPO4, X_FeOH, X_FePO4, \
+                            S_Na, S_Cl, H2O = _adm_vals     
             
             if S_h2 > 0 or S_ch4 > 0: warn('Ignored dissolved H2 or CH4.')
 
-            S_ALK = S_IC
             S_NH4 = S_IN
             S_PO4 = S_IP            
 
             # CONV 1: convert X_pr, X_li, X_ch to X_S
             X_S = X_pr + X_li + X_ch
-            S_ALK += X_pr*C_pr + X_li*C_li + X_ch*C_ch - X_S*C_XS
+            S_IC += X_pr*C_pr + X_li*C_li + X_ch*C_ch - X_S*C_XS
             S_NH4 += X_pr*N_pr + X_li*N_li + X_ch*N_ch - X_S*N_XS
             S_PO4 += X_pr*P_pr + X_li*P_li + X_ch*P_ch - X_S*P_XS
 
             # CONV 2: convert S_su, S_aa, S_fa to S_F
             S_F = S_su + S_aa + S_fa
-            S_ALK += S_su*C_su + S_aa*C_aa + S_fa*C_fa - S_F*C_SF
+            S_IC += S_su*C_su + S_aa*C_aa + S_fa*C_fa - S_F*C_SF
             S_NH4 += S_su*N_su + S_aa*N_aa + S_fa*N_fa - S_F*N_SF
             S_PO4 += S_su*P_su + S_aa*P_aa + S_fa*P_fa - S_F*P_SF
             
             # CONV 3: convert VFAs to S_A
             S_A = S_va + S_bu + S_pro + S_ac
-            S_ALK += S_va*C_va + S_bu*C_bu + S_pro*C_pro + S_ac*C_ac - S_A*C_SA
+            S_IC += S_va*C_va + S_bu*C_bu + S_pro*C_pro + S_ac*C_ac - S_A*C_SA
             # S_NH4 += S_va*N_va + S_bu*N_bu + S_pro*N_pro + S_ac*N_ac - S_A*N_SA
             # S_PO4 += S_va*P_va + S_bu*P_bu + S_pro*P_pro + S_ac*P_ac - S_A*P_SA
 
@@ -3286,21 +3287,20 @@ class ADM1ptoASM2d_A1(mADMjunction):
                 S_NH4, 
                 0, # S_NO3
                 S_PO4, S_F, S_A, S_I, 
-                S_ALK,
+                S_IC, S_K, S_Mg,
                 X_I, X_S, 
-                0,  # X_H,
-                0,0,0,# X_PAO, X_PP, X_PHA, 
-                0, # X_AUT,
-                X_MeOH, X_MeP, H2O])) # directly mapped
+                0,0,0,0,0, # X_H, X_PAO, X_PP, X_PHA, X_AUT,
+                S_Ca, X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3, # directly mapped
+                X_AlOH, X_AlPO4, X_FeOH, X_FePO4, S_Na, S_Cl, H2O])) 
                       
             asm_vals = f_corr(adm_vals, asm_vals)
             return asm_vals
         
-        self._reactions = adm1p2asm2d
+        self._reactions = adm1p2masm2d
 
-#%% ASM2dtoADM1p_A1
+#%% mASM2dtoADM1p_A1
 
-class ASM2dtoADM1p_A1(mADMjunction):
+class mASM2dtoADM1p_A1(mADMjunction):
     '''
     Interface unit to convert ASM2d state variables
     to ADM1 components, following the A1 scenario in [1]_.
@@ -3332,7 +3332,7 @@ class ASM2dtoADM1p_A1(mADMjunction):
     --------
     :class:`qsdsan.sanunits.mADMjunction`
     
-    :class:`qsdsan.sanunits.ADM1ptoASM2d_A1` 
+    :class:`qsdsan.sanunits.ADM1ptomASM2d_A1` 
     
     '''    
     # User defined values
@@ -3459,8 +3459,10 @@ class ASM2dtoADM1p_A1(mADMjunction):
         p2_stoichio /= abs(p2_stoichio[S_NO3_idx])
         p3_stoichio = np.array([adm.parameters[f'f_{k}_xb'] for k in ('sI', 'ch', 'pr', 'li', 'xI')])
         
+        xs_to_li = self.xs_to_li
+        
         # To convert components from ASM2d to mADM1 (asm2d-2-madm1)
-        def asm2d2adm1p(asm_vals):           
+        def masm2d2adm1p(asm_vals):           
             _asm_vals = asm_vals.copy()
 
             # PROCESS 1: remove S_O2 with S_A with associated X_H growth (aerobic growth of X_H on S_A)
@@ -3471,10 +3473,11 @@ class ASM2dtoADM1p_A1(mADMjunction):
             NO3_coddm = _asm_vals[S_NO3_idx]
             _asm_vals += NO3_coddm * p2_stoichio # makes S_NO3 = 0
                       
-            S_O2, S_N2, S_NH4, S_NO3, S_PO4, S_F, S_A, S_I, S_ALK, X_I, X_S, X_H, \
-                X_PAO, X_PP, X_PHA, X_AUT, X_MeOH, X_MeP, H2O = _asm_vals
+            S_O2, S_N2, S_NH4, S_NO3, S_PO4, S_F, S_A, S_I, S_IC, S_K, S_Mg, \
+                X_I, X_S, X_H, X_PAO, X_PP, X_PHA, X_AUT, S_Ca, X_CaCO3, \
+                    X_struv, X_newb, X_ACP, X_MgCO3, X_AlOH, X_AlPO4, \
+                        X_FeOH, X_FePO4, S_Na, S_Cl, H2O = _asm_vals
                 
-            S_IC = S_ALK
             S_IN = S_NH4
             S_IP = S_PO4
             
@@ -3511,7 +3514,7 @@ class ASM2dtoADM1p_A1(mADMjunction):
                 X_li = X_ch = 0
             else:
                 X_pr = req_xcod 
-                X_li = self.xs_to_li * (X_S - X_pr)
+                X_li = xs_to_li * (X_S - X_pr)
                 X_ch = (X_S - X_pr) - X_li
 
             S_IN += X_ND - X_pr*N_pr
@@ -3536,12 +3539,11 @@ class ASM2dtoADM1p_A1(mADMjunction):
                 X_ch, X_pr, X_li, 
                 0, 0, 0, 0, 0, 0, 0, # X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2,
                 X_I, X_PHA, X_PP, X_PAO, 
-                0, 0,  # S_K, S_Mg,
-                X_MeOH, X_MeP,
-                0, 0, H2O]) # S_cat, S_an
+                S_K, S_Mg, S_Ca, X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3, 
+                X_AlOH, X_AlPO4, X_FeOH, X_FePO4, S_Na, S_Cl, H2O])
             
             # adm_vals = f_corr(asm_vals, adm_vals)
             adm_vals = f_corr(_asm_vals, adm_vals)
             return adm_vals
         
-        self._reactions = asm2d2adm1p
+        self._reactions = masm2d2adm1p

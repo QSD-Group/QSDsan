@@ -770,7 +770,7 @@ def _rhos_adm1p(state_arr, params, h=None):
 @chemicals_user
 class ADM1p(ADM1):
     """
-    Anaerobic Digestion Model No.1 with P extension. [1]_, [2]_, [3]_.
+    Anaerobic Digestion Model No.1 with P extension. [1]_, [2]_.
     Compatible with `mASM2d`.
 
     Parameters
@@ -867,6 +867,7 @@ class ADM1p(ADM1):
                         ('H3PO4', 'H2PO4-'), ('H2PO4-', 'HPO4-2'), ('HPO4-2', 'PO4-3'),
                         ('HAc', 'Ac-'),('HPr', 'Pr-'),
                         ('HBu', 'Bu-'), ('HVa', 'Va-'))
+    
     _precipitates = ('X_CaCO3', 'X_struv', 'X_newb', 'X_ACP', 'X_MgCO3', 'X_AlPO4', 'X_FePO4')
 
     _biogas_IDs = ('S_h2', 'S_ch4', 'S_IC')
