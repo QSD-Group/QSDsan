@@ -571,7 +571,7 @@ class AnaerobicCSTR(CSTR):
                 grad_dydt_Sh2_AD = self.model.grad_dydt_Sh2_AD
                 def solve_h2(QC, S_in, T):
                     Ka = params['Ka_base'] * T_correction_factor(params['T_base'], T, params['Ka_dH'])
-                    h, nh3, co2 = solve_pH(QC, Ka, unit_conversion)
+                    h = solve_pH(QC, Ka, unit_conversion)
                     S_h2_0 = QC[h2_idx]
                     S_h2_in = S_in[h2_idx]
                     S_h2 = newton(dydt_Sh2_AD, S_h2_0, grad_dydt_Sh2_AD,

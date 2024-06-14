@@ -114,9 +114,7 @@ def solve_pH(state_arr, Ka, unit_conversion):
     h = brenth(acid_base_rxn, 1e-14, 1.0,
             args=(weak_acids, Ka),
             xtol=1e-12, maxiter=100)
-    nh3 = Ka[1] * weak_acids[4] / (Ka[1] + h)
-    co2 = weak_acids[6] - Ka[3] * weak_acids[6] / (Ka[3] + h)
-    return h, nh3, co2
+    return h
 
 rhos_adm1_p_extension = lambda state_arr, params: _rhos_adm1_p_extension(state_arr, params, h=None)
 
@@ -219,13 +217,10 @@ def _rhos_adm1_p_extension(state_arr, params, h=None):
     biogas_S = state_arr[7:10].copy()
     biogas_p = R * T_op * state_arr[34:37]
 
-    if h is None:
-        h, nh3, co2 = solve_pH(state_arr, Ka, unit_conversion)
-    else:
-        nh3 = Ka[1] * S_IN * unit_conversion[10] / (Ka[1] + h)
-        S_IC = state_arr[9] * unit_conversion[9]
-        co2 = S_IC - Ka[3] * S_IC / (Ka[3] + h)
-    biogas_S[-1] = co2 / unit_conversion[9]
+    if h is None: h = solve_pH(state_arr, Ka, unit_conversion)
+    nh3 = S_IN * unit_conversion[10] * Ka[1] / (Ka[1] + h)
+    co2 = state_arr[9] * h / (Ka[3] + h)
+    biogas_S[-1] = co2
     
     Iph = Hill_inhibit(h, pH_ULs, pH_LLs)
     Iin = substr_inhibit(S_IN, KS_IN)
