@@ -562,6 +562,7 @@ def create_adm1p_cmps(set_thermo=True):
         cmp.i_C = 0.36612
         cmp.i_N = 0.08615
         cmp.i_P = 0.02154
+        cmp.i_K = cmp.i_Mg = 0.
         cmp.i_mass = 0.90
         cmp.f_Vmass_Totmass = 0.85
         cmp.i_NOD = None

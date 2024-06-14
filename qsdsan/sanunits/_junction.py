@@ -3313,7 +3313,7 @@ class ADM1ptomASM2d(A1junction):
             if S_h2 > 0 or S_ch4 > 0: warn('Ignored dissolved H2 or CH4.')
 
             S_NH4 = S_IN
-            S_PO4 = S_IP            
+            S_PO4 = S_IP
 
             # CONV 1: convert X_pr, X_li, X_ch to X_S
             X_S = X_pr + X_li + X_ch
