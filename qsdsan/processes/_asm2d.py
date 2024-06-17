@@ -495,7 +495,7 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
         cmps = params['cmps']
         params['mass2mol'] = cmps.i_mass / cmps.chem_MW
         
-        params['ks'] = ks = rhos * 0
+        params['ks'] = ks = np.zeros(19)
         # rate constants
         ks[:3] = k_h
         ks[3:7] = mu_H
