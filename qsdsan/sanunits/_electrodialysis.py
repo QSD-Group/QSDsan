@@ -29,7 +29,7 @@ from qsdsan.utils import ospath, data_path
 __all__ = ('create_ed_vfa_cmps', 'ED_vfa'
            )
 
-#_path = ospath.join(data_path, 'process_data/_adm1_vfa.tsv')
+#_path = ospath.join(data_path, 'process_data/_ed_vfa.tsv')
 #_load_components = settings.get_default_chemicals
 
 #%%
@@ -163,7 +163,7 @@ eff_ac = WasteStream(ID='eff_ac')               # effluent
 F=96485.33289  # Faraday's constant in C/mol
 
 class ED_vfa(SanUnit):
-    def __init__(self, ID='', ins=None, outs=None, thermo=None, init_with='WasteStream',
+    def __init__(self, ID='', ins=None, outs=None, thermo=None, isdynamic=True, init_with='WasteStream',
                  CE_dict=None,  # Dictionary of charge efficiencies for each ion
                  j=500,   # Current density in A/m^2
                  t=3600,  # Time in seconds
@@ -171,8 +171,10 @@ class ED_vfa(SanUnit):
                  V=1.0,  # Volume of all tanks in m^3
                  z_T=1.0,
                  r_m=1.0,  # Membrane resistance in Ohm*m^2
-                 r_s=1.0):  # Solution resistance in Ohm*m^2
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+                 r_s=1.0,
+                 **kwargs
+                 ):  # Solution resistance in Ohm*m^2
+        SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic)
         self.CE_dict = CE_dict or {'S_pro': 0.1, 'S_bu': 0.1, 'S_he': 0.1}  # Default CE for ions
         self.j = j
         self.t = t
@@ -224,89 +226,89 @@ class ED_vfa(SanUnit):
     def _run(self):
         inf_dc, inf_ac = self.ins
         eff_dc, eff_ac = self.outs
-        
-        # Calculate total current [A]    
+
+        # Calculate total current [A]
         I = self.j * self.A_m
         self.total_current = I
         print(f"Total current (I): {I} A")
-        
+
         # Obtain the flow rates from the influent streams
-        Q_dc = inf_dc.F_vol # Flow rate from influent dilute stream in m^3/hr
-        Q_ac = inf_ac.F_vol # Flow rate from influent accumulated stream in m^3/hr
+        Q_dc = inf_dc.F_vol  # Flow rate from influent dilute stream in m^3/hr
+        Q_ac = inf_ac.F_vol  # Flow rate from influent accumulated stream in m^3/hr
         self.Q_dc = Q_dc / 3600  # Convert to m^3/s
         self.Q_ac = Q_ac / 3600  # Convert to m^3/s
-        
+
         self.n_T_dict = {}
         self.J_T_dict = {}
         self.influent_dc_conc = {}
         self.influent_ac_conc = {}
-        
+
         # Print original flow rates [m3/hr]
         print(f"Flow rate (Q_dc): {Q_dc} m^3/hr")
         print(f"Flow rate (Q_ac): {Q_ac} m^3/hr")
-        
+
         # Print the converted flow rates [m3/s]
         print(f"Converted flow rate (Q_dc): {self.Q_dc} m^3/s")
         print(f"Converted flow rate (Q_ac): {self.Q_ac} m^3/s")
-        
+
         # Initializing effluent streams with influent values
         eff_dc.copy_like(inf_dc)
         eff_ac.copy_like(inf_ac)
-        
-        for ion, CE in self.CE_dict.items():        
+
+        for ion, CE in self.CE_dict.items():
             # Moles of target ion transported [mol]
             n_T = CE * I / (self.z_T * F) * self.t
             self.n_T_dict[ion] = n_T
             print(f"Moles of {ion} transported (n_T): {n_T} mol")
-            
+
             # Target ion molar flux [mol/(m2*s)]
             J_T = CE * I / (self.z_T * F * self.A_m)
             self.J_T_dict[ion] = J_T
             print(f"Target ion molar flux (J_T) for {ion}: {J_T} mol/m^2/s")
 
             # Effluent moles for dilute stream [mole]
-            n_out_dc = (inf_dc.imol[ion] * self.t / 3600 * 1000) - (self.V * J_T * self.A_m) / self.Q_dc
-
+            n_out_dc = max((inf_dc.imol[ion] * self.t / 3600 * 1000) - (self.V * J_T * self.A_m) / self.Q_dc, 0)
             # Effluent moles for accumulated stream [moles]
-            n_out_ac = (self.V * J_T * self.A_m) / self.Q_dc * (1 - np.exp(-self.Q_ac * self.t / self.V))
-
-            # Ensure non-negative effluent moles [mole]
-            n_out_dc = max(n_out_dc, 0)
-            n_out_ac = max(n_out_ac, 0)
+            n_out_ac = max((self.V * J_T * self.A_m) / self.Q_dc * (1 - np.exp(-self.Q_ac * self.t / self.V)), 0)
 
             # Update effluent streams [kmole/hr]
             eff_dc.imol[ion] = n_out_dc / 1000 / self.t * 3600
             eff_ac.imol[ion] = n_out_ac / 1000 / self.t * 3600
-
-        # Ensure non-negative effluent moles for H2O [kmole/hr]
-        eff_dc.imol['H2O'] = max(inf_dc.imol['H2O'], 0)
-        eff_ac.imol['H2O'] = max(inf_ac.imol['H2O'], 0)
-        
+            
         # Adjust the mass balance to ensure it matches the influent
         for comp in inf_dc.chemicals:
-            if comp.ID not in self.CE_dict:
+            if comp.ID not in self.CE_dict and comp.ID not in ['Na+', 'Cl-']:
                 eff_dc.imass[comp.ID] = inf_dc.imass[comp.ID]
-        
+
         for comp in inf_ac.chemicals:
-            if comp.ID not in self.CE_dict:
+            if comp.ID not in self.CE_dict and comp.ID not in ['Na+', 'Cl-']:
                 eff_ac.imass[comp.ID] = inf_ac.imass[comp.ID]
                 
-                        
+        # Set Na+ and Cl- concentrations in eff_ac to be the same as in inf_ac
+        eff_ac.imol['Na+'] = inf_ac.imol['Na+']
+        eff_ac.imol['Cl-'] = inf_ac.imol['Cl-']
+        eff_dc.imol['Na+'] = inf_dc.imol['Na+']
+        eff_dc.imol['Cl-'] = inf_dc.imol['Cl-']
+        
+        # Set flow rates of effluent streams to match influent streams
+        eff_dc.F_vol = inf_dc.F_vol
+        eff_ac.F_vol = inf_ac.F_vol
+
         # Calculate system resistance [Ohm]
         R_sys = self.A_m * (self.r_m + self.r_s)
         self.R_sys = R_sys
-        
+
         # Calculate system voltage [V]
         V_sys = R_sys * I
         self.V_sys = V_sys
-        
+
         # Calculate power consumption [W]
         P_sys = V_sys * I
         self.P_sys = P_sys
         print(f"System resistance (R_sys): {R_sys} Ohm")
         print(f"System voltage (V_sys): {V_sys} V")
         print(f"Power consumption (P_sys): {P_sys} W")
-                
+
     _units = {
         'Membrane area': 'm2',
         'Total current': 'A',
@@ -316,6 +318,70 @@ class ED_vfa(SanUnit):
         'Power consumption': 'W'
     }
     
+    def _init_state(self):
+        inf_dc, inf_ac = self.ins
+        n_components = len(inf_dc.components)  # Number of components
+        self._state = np.zeros(n_components + 1)  # Component concentrations and flow rate
+        self._dstate = np.zeros_like(self._state)
+        for stream in self.outs:
+            stream.state = np.zeros_like(self._state)
+            stream.dstate = np.zeros_like(self._dstate)
+
+    def _update_state(self):
+        y = self._state
+        n_outs = len(self.outs)
+        for ws in self.outs:
+            if ws.state is None: ws.state = y.copy()
+            else: ws.state[:-1] = y[:-1]
+            ws.state[-1] = y[-1] / n_outs
+
+    def _update_dstate(self):
+        dy = self._dstate
+        n_outs = len(self.outs)
+        for ws in self.outs:
+            if ws.dstate is None: ws.dstate = dy.copy()
+            else: ws.dstate[:-1] = dy[:-1]
+            ws.dstate[-1] = dy[-1] / n_outs
+
+    def _compile_ODE(self):
+        _state = self._state
+        _dstate = self._dstate
+        _update_state = self._update_state
+        _update_dstate = self._update_dstate
+
+
+        def dy_dt(t, QC_ins, QC, dQC_ins):
+            # 입구 스트림의 흐름률 및 농도
+            Q_ins = QC_ins[:, -1]
+            C_ins = QC_ins[:, :-1]
+            dQ_ins = dQC_ins[:, -1]
+            dC_ins = dQC_ins[:, :-1]
+
+            # 시스템의 총 흐름률 및 농도
+            Q = Q_ins.sum()
+            C = Q_ins @ C_ins / Q
+
+            # 상태 및 상태 변화율 업데이트
+            _state[-1] = Q
+            _state[:-1] = C
+            Q_dot = dQ_ins.sum()
+            C_dot = (dQ_ins @ C_ins + Q_ins @ dC_ins - Q_dot * C) / Q
+    
+            # 상태 변화율 벡터 업데이트
+            _dstate[-1] = Q_dot
+            _dstate[:-1] = C_dot
+    
+            _update_state()
+            _update_dstate()
+    
+        self._ODE = dy_dt
+
+    @property
+    def ODE(self):
+        if self._ODE is None:
+            self._compile_ODE()
+        return self._ODE
+
     def _design(self):
         D = self.design_results
         D['Membrane area'] = self.A_m
@@ -336,7 +402,7 @@ ed1 = ED_vfa(
     outs=(eff_dc, eff_ac),
     CE_dict={'S_pro': 0.2, 'S_bu': 0.2, 'S_he': 0.2},  # Separate CE for each ion
     j=5,
-    t=250000,
+    t=288000,
     A_m=0.5,
     V=0.1
 )
@@ -353,8 +419,8 @@ sys = System('ED1', path=(ed1,))
 
 # # Simulate the system
 # sys.simulate()
-sys._setup()
-sys.converge()
+# sys._setup()
+# sys.converge()
 # sys.diagram()
 #%%
 # Simulation
@@ -362,7 +428,7 @@ sys.converge()
 sys.set_dynamic_tracker(inf_dc, inf_ac, eff_dc, eff_ac, ed1)
 # sys
 # Simulation settings
-t = 250000  # total time for simulation in hours
+t = 288000  # total time for simulation in hours
 t_step = 3600  # times at which to store the computed solution in hours
 method = 'BDF'  # integration method to use
 
@@ -372,6 +438,7 @@ sys.simulate(state_reset_hook='reset_cache',
              t_eval=np.arange(0, t + t_step, t_step),
              method=method,
              export_state_to='ED_vfa_simulation_results.xlsx')
+sys
 #%%
 # Print the results
 print("Effluent dilute stream concentrations (mol/L):")
