@@ -35,6 +35,7 @@ __all__ = ('get_SRT',
            'get_aeration_cost',
            'get_pumping_cost',
            'get_sludge_disposal_costs',
+           'get_carbon_add_cost',
            'get_CH4_CO2_eq_treatment',
            'get_N2O_CO2_eq_treatment',
            'get_CH4_CO2_eq_discharge',
@@ -42,7 +43,6 @@ __all__ = ('get_SRT',
            'get_CH4_emitted_during_pl',
            'get_CH4_emitted_after_pl',
            'get_CO2_eq_electricity',
-           'get_eq_natural_gas_price',
            
            # Function for gates work (to be removed at a later date)
            
@@ -571,46 +571,28 @@ def get_sludge_disposal_costs(sludge,  # sludge disposal costs
     
     return operational_costs_WRRF
 
-def get_eq_natural_gas_price(system, gas, natural_gas_price = 0.0041, CH4_nat_gas = 0.95): 
+def get_carbon_add_cost(organic_carbon, system, unit_cost_carbon_source = 0.41):
     '''
     Parameters
     ----------
-    
+    organic_carbon : TYPE
+        DESCRIPTION.
     system : :class:`biosteam.System`
-        The system whose power will be calculated.
-        
-    ------------------------------------------------------------------------------ 
-    
-    gas : : iterable[:class:`WasteStream`], optional
-        Effluent gas from anaerobic digestor. 
-        The default is None.
-    natural_gas_price : float
-        Price of Natural gas in USD/m3 (eia.gov). 
-        The default is 0.0041 USD/m3. 
-    CH4_nat_gas: Percentage of natural gas that is methane. 
-        The default is 0.95.
+        The system for which external cost of carbon addition will be calculated.
+    unit_cost_carbon_source : float, optional
+        Unit cost of carbon source (USD/kg). The default is 0.41 USD/kg for acetic acid  [1].
 
     Returns
     -------
-    Normalized natural gas equivalent cost (USD/m3). [int]
-    
+    [1] https://businessanalytiq.com/procurementanalytics/index/acetic-acid-price-index/
+
     '''
     
-    # Use mass based calculation -> use mass flowrate of methane fs.gas.imass['S_ch4']
+    Mass_carbon = (organic_carbon.F_mass * 24)*organic_carbon.components.S_A.i_mass # kg/day
+    Daily_cost_carbon = Mass_carbon*unit_cost_carbon_source # USD/day
+    normalized_cost_carbon = Daily_cost_carbon/sum([s.F_vol*24 for s in system.feeds])
     
-    # 100% methane can also be assumed
-    
-    # Estimating calorific value of methane, and accordingly translating the price could be a way too
-    
-    CH4_produced = gas.F_vol*24 # m3/day
-    
-    eq_nat_gas_produced = CH4_produced/CH4_nat_gas # m3/day
-    
-    price_nat_gas = eq_nat_gas_produced*natural_gas_price # USD/day
-        
-    operational_costs_WRRF = price_nat_gas/sum([s.F_vol*24 for s in system.feeds])
-    
-    return operational_costs_WRRF
+    return normalized_cost_carbon
 
 def get_total_operational_cost(q_air, # aeration (blower) power 
                                      sludge,  # sludge disposal costs 
@@ -619,7 +601,10 @@ def get_total_operational_cost(q_air, # aeration (blower) power
                                      h_submergance=5.18, efficiency=0.7, K=0.283, # aeration (blower) power 
                                      miscellaneous_power = 0, 
                                      unit_weight_disposal_cost = 350, # sludge disposal costs 
-                                     unit_electricity_cost = 0.161): 
+                                     unit_electricity_cost = 0.161,
+                                     
+                                     organic_carbon = None, 
+                                     unit_cost_carbon_source = None): 
     '''
     Parameters
     ----------
@@ -711,7 +696,10 @@ def get_total_operational_cost(q_air, # aeration (blower) power
     
     miscellaneous_cost = miscellaneous_power*24*unit_electricity_cost # in (kWh/day)*(USD/kWh) = USD/day
     
-    operational_costs_WRRF = np.array([aeration_cost, pumping_cost, sludge_disposal_costs, miscellaneous_cost]) 
+    Mass_carbon = (organic_carbon.F_mass * 24)*organic_carbon.components.S_A.i_mass # kg/day
+    Daily_cost_carbon = Mass_carbon*unit_cost_carbon_source # USD/day
+    
+    operational_costs_WRRF = np.array([aeration_cost, pumping_cost, sludge_disposal_costs, Daily_cost_carbon, miscellaneous_cost]) 
 
     operational_costs_WRRF = operational_costs_WRRF/sum([s.F_vol*24 for s in system.feeds])
 
