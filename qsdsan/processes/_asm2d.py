@@ -453,10 +453,6 @@ class ASM2d(CompiledProcesses):
 _mpath = ospath.join(data_path, 'process_data/_masm2d.tsv')
 _mmp = ospath.join(data_path, 'process_data/_mmp.tsv')
 
-# partial pressure in air
-p_n2_air = 0.78         # atm
-p_co2_air = 3.947e-4
-
 def acid_base_rxn(h_ion, ionic_states, Ka):
     K, Mg, Ca, Na, Cl, NOx, NH, IC, IP, Ac = ionic_states  # in M
     Kw, Knh, Kc1, Kc2, Kp1, Kp2, Kp3, Kac = Ka
@@ -476,7 +472,8 @@ def solve_pH(state_arr, Ka, unit_conversion):
                xtol=1e-12, maxiter=100)
     return h
 
-rhos = np.zeros(19+7+2) # 19 biological processes, 7 precipitation/dissociation, 2 gas stripping
+# rhos = np.zeros(19+7+2) # 19 biological processes, 7 precipitation/dissociation, 2 gas stripping
+rhos = np.zeros(19+7) # 19 biological processes, 7 precipitation/dissociation
 def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
     if 'ks' not in params:
         k_h, mu_H, mu_PAO, mu_AUT, \
@@ -605,10 +602,10 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
     rhos[19:26] *= k_mmp
     
     ########### gas stripping ###########
-    kLa_n2, kLa_co2 = params['kLa']
-    KH_n2, KH_co2 = params['K_Henry']  # assume already temperature-corrected
-    rhos[26] = kLa_n2*(S_N2 - KH_n2*p_n2_air/mass2mol[1]*1e3)   # M/atm * atm / mol/g * 1000 mg/g = mg/L
-    rhos[27] = kLa_co2*(co2 - KH_co2*p_co2_air/mass2mol[8]*1e3)   # M/atm * atm / mol/g * 1000 mg/g = mg/L
+    # kLa_n2, kLa_co2 = params['kLa']
+    # KH_n2, KH_co2 = params['K_Henry']  # assume already temperature-corrected
+    # rhos[26] = kLa_n2*(S_N2 - KH_n2*p_n2_air/mass2mol[1]*1e3)   # M/atm * atm / mol/g * 1000 mg/g = mg/L
+    # rhos[27] = kLa_co2*(co2 - KH_co2*p_co2_air/mass2mol[8]*1e3)   # M/atm * atm / mol/g * 1000 mg/g = mg/L
     
     return rhos
 
@@ -662,12 +659,6 @@ class mASM2d(CompiledProcesses):
     K_FeOH : float, optional
         Half saturation coefficient of ferric hydroxide for FePO4 precipitation
         [mg-Fe(OH)3/L]. The default is 0.001.
-    kLa : iterable[float], optional
-        Gas transfer rate constant for gas stripping/dissolution [d^(-1)], 
-        following the order of `mASM2d._gas_stripping`. The default is (3.0, 3.0).
-    K_Henry : iterable[float], optional
-        Henry's law constants [mol/L/atm], following the order of 
-        `mASM2d._gas_stripping`. The default is (6.5e-4, 3.5e-2).
     pKa : iterable[float], optional
         Equilibrium coefficient values of acid-base pairs, unitless, 
         following the order of `mASM2d._acid_base_pairs`. 
@@ -717,7 +708,8 @@ class mASM2d(CompiledProcesses):
                        'K_P_H', 'K_P_PAO', 'K_P_AUT', 'K_P_S', 
                        'K_PP', 'K_MAX', 'K_IPP', 'K_PHA',
                        'k_mmp', 'Ksp', 'K_dis', 'K_AlOH', 'K_FeOH', 
-                       'kLa', 'K_Henry', 'Ka', 'cmps')
+                       # 'kLa_min', 'f_kLa', 'K_Henry', 
+                       'Ka', 'cmps')
     
     _acid_base_pairs = (('H+', 'OH-'), ('NH4+', 'NH3'), 
                         ('CO2', 'HCO3-'), ('HCO3-', 'CO3-2'), 
@@ -725,7 +717,11 @@ class mASM2d(CompiledProcesses):
                         ('HAc', 'Ac-'),)
     _precipitates = ('X_CaCO3', 'X_struv', 'X_newb', 'X_ACP', 'X_MgCO3', 'X_AlPO4', 'X_FePO4')
     
-    _gas_stripping = ('S_N2', 'S_IC')
+    gas_IDs = ['S_N2', 'S_IC']
+    kLa_min = [3.0, 3.0]
+    K_Henry = [6.5e-4, 3.5e-2]  # 20 degree C
+    D_gas = [1.88e-9, 1.92e-9]  # diffusivity
+    p_gas_atm = [0.78, 3.947e-4]# partial pressure in air
     
     def __new__(cls, components=None, path=None, electron_acceptor_dependent_decay=True,
                 f_SI=0.0, Y_H=0.625, Y_PAO=0.625, Y_PO4=0.4, Y_PHA=0.2, Y_A=0.24, 
@@ -745,7 +741,7 @@ class mASM2d(CompiledProcesses):
                 pKsp=(6.45, 13.16, 5.8, 23, 7, 21, 26),
                 K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
                 K_AlOH=0.001, K_FeOH=0.001, 
-                kLa=(3.0, 3.0), K_Henry=(6.5e-4, 3.5e-2),
+                # kLa_min=(3.0, 3.0), K_Henry=(6.5e-4, 3.5e-2),
                 pKa=(14, 9.25, 6.37, 10.32, 2.12, 7.21, 12.32, 4.76),
                 **kwargs):       
         
@@ -799,13 +795,13 @@ class mASM2d(CompiledProcesses):
             
         self.extend(mmp)
         
-        for gas in cls._gas_stripping:
-            new_p = Process('%s_stripping' % gas.lstrip('S_'),
-                            reaction={gas:-1},
-                            ref_component=gas,
-                            conserved_for=(),)
-            self.append(new_p)
-
+        # for gas in cls._gas_stripping:
+        #     new_p = Process('%s_stripping' % gas.lstrip('S_'),
+        #                     reaction={gas:-1},
+        #                     ref_component=gas,
+        #                     conserved_for=(),)
+        #     self.append(new_p)
+        self.K_Henry = [K*mol_to_mass[cmps.index(i)]*1000 for K, i in zip(cls.K_Henry, cls.gas_IDs)]
         self.compile(to_class=cls)
         
         dct = self.__dict__
@@ -818,6 +814,7 @@ class mASM2d(CompiledProcesses):
         rhos_masm2d = lambda state_arr, params: _rhos_masm2d(state_arr, params, electron_acceptor_dependent_decay)
         self.set_rate_function(rhos_masm2d)
         Ka = np.array([10**(-p) for p in pKa])
+        # f_kLa = np.array(cls.D_gas)/cls.D_O2
         kinetic_vals = (k_h, mu_H, mu_PAO, mu_AUT, 
                         q_fe, q_PHA, q_PP, 
                         b_H, b_PAO, b_PP, b_PHA, b_AUT, 
@@ -831,7 +828,8 @@ class mASM2d(CompiledProcesses):
                         K_PP, K_MAX, K_IPP, K_PHA,
                         np.array(k_mmp), Ksp_mass, 
                         np.array(K_dis), K_AlOH, K_FeOH, 
-                        kLa, K_Henry, Ka, cmps,
+                        # kLa_min, f_kLa, K_Henry, 
+                        Ka, cmps,
                         )
         self.rate_function._params = dict(zip(cls._kinetic_params, kinetic_vals))
 

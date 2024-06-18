@@ -94,17 +94,28 @@ class CSTR(SanUnit):
     _N_outs = 1
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False
+    
+    _D_O2 = 2.10e-9   # m2/s
 
     def __init__(self, ID='', ins=None, outs=(), split=None, thermo=None,
                  init_with='WasteStream', V_max=1000, W_tank = 6.4, D_tank = 3.65,
                  freeboard = 0.61, t_wall = None, t_slab = None, aeration=2.0, 
-                 DO_ID='S_O2', suspended_growth_model=None, isdynamic=True, exogenous_vars=(), **kwargs):
+                 DO_ID='S_O2', suspended_growth_model=None, 
+                 gas_stripping=False, gas_IDs=None, stripping_kLa_min=None, 
+                 K_Henry=None, D_gas=None, p_gas_atm=None,
+                 isdynamic=True, exogenous_vars=(), **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic,
                          exogenous_vars=exogenous_vars, **kwargs)
         self._V_max = V_max
         self._aeration = aeration
         self._DO_ID = DO_ID
         self._model = suspended_growth_model
+        self.gas_IDs = gas_IDs
+        self.stripping_kLa_min = stripping_kLa_min
+        self.K_Henry = K_Henry
+        self.D_gas = D_gas
+        self.p_gas_atm = p_gas_atm
+        self.gas_stripping = gas_stripping
         self._concs = None
         self._mixed = WasteStream()
         self.split = split
@@ -223,6 +234,26 @@ class CSTR(SanUnit):
         self._DO_ID = doid
 
     @property
+    def gas_stripping(self):
+        return self._gstrip
+    @gas_stripping.setter
+    def gas_stripping(self, strip):
+        self._gstrip = strip = bool(strip)
+        if strip:
+            if self.gas_IDs:
+                cmps = self.components.IDs
+                for i in self.gas_IDs:
+                    if i not in cmps:
+                        raise RuntimeError((f'gas ID {i} not in component set: {cmps}.'))
+            else:
+                mdl = self._model
+                self.gas_IDs = mdl.gas_IDs
+                self.stripping_kLa_min = mdl.kLa_min
+                self.D_gas = mdl.D_gas
+                self.K_Henry = mdl.K_Henry
+                self.p_gas_atm = mdl.p_gas_atm
+                
+    @property
     def split(self):
         '''[numpy.1darray or NoneType] The volumetric split of outs.'''
         return self._split
@@ -307,22 +338,31 @@ class CSTR(SanUnit):
         isa = isinstance
         C = list(symbols(self.components.IDs))
         m = len(C)
+        aer = self._aeration
         if self._model is None:
             warn(f'{self.ID} was initialized without a suspended growth model, '
                  f'and thus run as a non-reactive unit')
             r = lambda state_arr: np.zeros(m)
             
         else:
-            processes = _add_aeration_to_growth_model(self._aeration, self._model)
+            processes = _add_aeration_to_growth_model(aer, self._model)
             r = processes.production_rates_eval
 
         _dstate = self._dstate
         _update_dstate = self._update_dstate
         V = self._V_max
+        kLa = self.kLa
+        gstrip = self.gas_stripping
+        if gstrip:
+            gas_idx = self.components.indices(self.gas_IDs)
+            if isa(aer, Process): kLa = aer.kLa
+            else: kLa = 0.
+            S_gas_air = np.asarray(self.K_Henry)*np.asarray(self.p_gas_atm)
+            kLa_stripping = np.maximum(kLa*self.D_gas/self._D_O2, self.stripping_kLa_min)
         hasexo = bool(len(self._exovars))
         f_exovars = self.eval_exo_dynamic_vars
         
-        if isa(self._aeration, (float, int)):
+        if isa(aer, (float, int)):
             i = self.components.index(self._DO_ID)
             fixed_DO = self._aeration
             def dy_dt(t, QC_ins, QC, dQC_ins):
@@ -330,6 +370,7 @@ class CSTR(SanUnit):
                 dydt_cstr(QC_ins, QC, V, _dstate)
                 if hasexo: QC = np.append(QC, f_exovars(t))
                 _dstate[:-1] += r(QC)
+                if gstrip: _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
                 _dstate[i] = 0
                 _update_dstate()
         else:
@@ -337,6 +378,7 @@ class CSTR(SanUnit):
                 dydt_cstr(QC_ins, QC, V, _dstate)
                 if hasexo: QC = np.append(QC, f_exovars(t))
                 _dstate[:-1] += r(QC)
+                if gstrip: _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
                 _update_dstate()
 
         self._ODE = dy_dt
@@ -763,6 +805,21 @@ class PFR(SanUnit):
         The default is [0, 0, 120, 120, 60].
     DO_sat : float, optional
         Saturation dissolved oxygen concentration [mg/L]. The default is 8.0.
+    gas_stripping : bool, optional
+        Whether to model gas stripping. The default is False.
+    gas_IDs : iterable[str], optional
+        Component IDs of stripped gases. The default is None.
+    stripping_kLa_min : iterable[float], optional
+        Minimum gas transfer rate constants [d^(-1)] of each stripped gas component. 
+        The default is None.
+    K_Henry : iterable[float], optional
+        Henry's law constants [(conc)/atm], where "conc" indicate the concentration
+        unit for state variables in the suspended growth model. The default is None.
+    D_gas : iterable[float], optional
+        Gas diffusion coefficients in water [m2/s]. The default is None.
+    p_gas_atm : iterable[float], optional
+        Partial pressure of the stripped gases in the air [atm]. The default is None.
+
 
     Examples
     --------
@@ -838,12 +895,16 @@ class PFR(SanUnit):
     _N_outs = 1
     _ins_size_is_fixed = False
     _outs_size_is_fixed = True
-
+    
+    _D_O2 = 2.10e-9   # m2/s
+    
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  N_tanks_in_series=5, V_tanks=[1500, 1500, 3000, 3000, 3000], 
                  influent_fractions=[[1.0, 0,0,0,0]], internal_recycles=[(4,0,35000),],
                  DO_setpoints=[], kLa=[0, 0, 120, 120, 60], DO_sat=8.0,
                  DO_ID='S_O2', suspended_growth_model=None, 
+                 gas_stripping=False, gas_IDs=None, stripping_kLa_min=None, 
+                 K_Henry=None, D_gas=None, p_gas_atm=None,
                  isdynamic=True, **kwargs):
         
         exogenous_vars = kwargs.pop('exogenous_vars', None)
@@ -860,6 +921,12 @@ class PFR(SanUnit):
         self.DO_sat = DO_sat
         self.DO_ID = DO_ID
         self.suspended_growth_model = suspended_growth_model
+        self.gas_IDs = gas_IDs
+        self.stripping_kLa_min = stripping_kLa_min
+        self.K_Henry = K_Henry
+        self.D_gas = D_gas
+        self.p_gas_atm = p_gas_atm
+        self.gas_stripping = gas_stripping
         self._concs = None
         self._Qs = self.V_tanks * 0
 
@@ -951,14 +1018,13 @@ class PFR(SanUnit):
             if ks != []:
                 warn('kLa is ignored because DO setpoints have been specified. '
                      'To specify kLa, first set DO_setpoints as []')
-            self._kLa = []
         else:
             if not iter(ks): 
                 raise TypeError(f'V_tanks must be an iterable, not {type(ks).__name__}')
             elif len(ks) != self.N_tanks_in_series:
                 raise RuntimeError(f'cannot set kLa of {self.N_tanks_in_series} tanks'
                                    f'in series with {len(ks)} value(s).')
-            else: self._kLa = np.asarray(ks)
+        self._kLa = np.asarray(ks)
 
     @property
     def suspended_growth_model(self):
@@ -992,6 +1058,26 @@ class PFR(SanUnit):
             raise ValueError(f'DO_ID must be in the set of `CompiledComponents` used to set thermo, '
                              f'i.e., one of {self.components.IDs}.')
         self._DO_ID = doid
+        
+    @property
+    def gas_stripping(self):
+        return self._gstrip
+    @gas_stripping.setter
+    def gas_stripping(self, strip):
+        self._gstrip = strip = bool(strip)
+        if strip:
+            if self.gas_IDs:
+                cmps = self.components.IDs
+                for i in self.gas_IDs:
+                    if i not in cmps:
+                        raise RuntimeError((f'gas ID {i} not in component set: {cmps}.'))
+            else:
+                mdl = self._model
+                self.gas_IDs = mdl.gas_IDs
+                self.stripping_kLa_min = mdl.kLa_min
+                self.D_gas = mdl.D_gas
+                self.K_Henry = mdl.K_Henry
+                self.p_gas_atm = mdl.p_gas_atm
 
     def _run(self):
         out, = self.outs
@@ -1076,6 +1162,15 @@ class PFR(SanUnit):
         f_in = self.influent_fractions
         DO = self.DO_setpoints
         kLa = self.kLa
+        if not any(kLa): kLa = np.zeros(N)
+        gstrip = self.gas_stripping
+        if gstrip:
+            gas_idx = self.components.indices(self.gas_IDs)
+            S_gas_air = np.asarray(self.K_Henry)*np.asarray(self.p_gas_atm)
+            S_gas_air = np.tile(S_gas_air, (N, 1))
+            D_O2 = self._D_O2
+            kLa_stripping = np.array([np.maximum(kLa*D/D_O2, kmin) 
+                                      for D, kmin in zip(self.D_gas, self.stripping_kLa_min)]).T
         rcy = self.internal_recycles
         DO_idx = self.components.index(self.DO_ID)
         DOsat = self.DO_sat
@@ -1086,7 +1181,7 @@ class PFR(SanUnit):
         if self._model is None:
             warn(f'{self.ID} was initialized without a suspended growth model, '
                  f'and thus run as a non-reactive unit')
-            Rs = lambda Cs: 0.
+            Rs = lambda Cs : 0.
         else:
             f_rho = self._model.rate_function
             M_stoi = self._model.stoichio_eval()
@@ -1117,11 +1212,13 @@ class PFR(SanUnit):
                 dy = np.zeros_like(y)
                 dy[:,:-1] = _1_ov_V @ (M_ins - M_outs) + rxn
                 dy[aerated_zones, DO_idx] = 0.
+                if gstrip:
+                    S_liq = Cs[:, gas_idx]
+                    dy[:, gas_idx] -= kLa_stripping*(S_liq - S_gas_air)
                 _dstate[:] = dy.flatten()
                 _update_dstate()
 
         else:
-            if not any(kLa): kLa = np.zeros(N)
             # @njit
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 y = QC.reshape((N, ncol))
@@ -1139,7 +1236,10 @@ class PFR(SanUnit):
                 rxn = Rs(Cs)
                 dy = np.zeros_like(y)
                 dy[:,:-1] = _1_ov_V @ (M_ins - M_outs) + rxn
-                dy[:,DO_idx] += aer 
+                dy[:,DO_idx] += aer
+                if gstrip:
+                    S_liq = Cs[:, gas_idx]
+                    dy[:, gas_idx] -= kLa_stripping*(S_liq - S_gas_air)
                 _dstate[:] = dy.flatten()
                 _update_dstate()
                 

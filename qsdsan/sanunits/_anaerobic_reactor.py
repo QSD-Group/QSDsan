@@ -573,6 +573,7 @@ class AnaerobicCSTR(CSTR):
                     Ka = params['Ka_base'] * T_correction_factor(params['T_base'], T, params['Ka_dH'])
                     h = solve_pH(QC, Ka, unit_conversion)
                     S_h2_0 = QC[h2_idx]
+                    # S_h2_0 = 2.8309E-07
                     S_h2_in = S_in[h2_idx]
                     S_h2 = newton(dydt_Sh2_AD, S_h2_0, grad_dydt_Sh2_AD,
                                   args=(QC, h, params, h2_stoichio, V_liq, S_h2_in), 
