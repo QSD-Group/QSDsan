@@ -584,6 +584,8 @@ def get_carbon_add_cost(organic_carbon, system, unit_cost_carbon_source = 0.41):
 
     Returns
     -------
+    Daily normalized cost of carbon addition.
+    
     [1] https://businessanalytiq.com/procurementanalytics/index/acetic-acid-price-index/
 
     '''
@@ -649,6 +651,14 @@ def get_total_operational_cost(q_air, # aeration (blower) power
     
     The default is 375 USD/US ton, which is the close to average of lanfill. 
     
+    ------------------------------------------------------------------------------ 
+    
+    organic_carbon : : iterable[:class:`WasteStream`], optional
+        Wastestream representing organic carbon.
+    
+    unit_cost_carbon_source : float, optional
+        Unit cost of carbon source (USD/kg). The default is 0.41 USD/kg for acetic acid.
+        
     ------------------------------------------------------------------------------ 
         
     miscellaneous_power : float, optional
