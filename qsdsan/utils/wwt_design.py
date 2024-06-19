@@ -30,6 +30,7 @@ __all__ = ('get_SRT',
            'get_GHG_emissions_electricity',
            'get_GHG_emissions_sludge_disposal',
            'get_CO2_eq_WRRF',
+           'get_carbon_add_CO2_eq', 
            'get_total_CO2_eq',
            
            'get_aeration_cost',
@@ -706,8 +707,11 @@ def get_total_operational_cost(q_air, # aeration (blower) power
     
     miscellaneous_cost = miscellaneous_power*24*unit_electricity_cost # in (kWh/day)*(USD/kWh) = USD/day
     
-    Mass_carbon = (organic_carbon.F_mass * 24)*organic_carbon.components.S_A.i_mass # kg/day
-    Daily_cost_carbon = Mass_carbon*unit_cost_carbon_source # USD/day
+    if organic_carbon == None:
+        Daily_cost_carbon = 0
+    else:
+        Mass_carbon = (organic_carbon.F_mass * 24)*organic_carbon.components.S_A.i_mass # kg/day
+        Daily_cost_carbon = Mass_carbon*unit_cost_carbon_source # USD/day
     
     operational_costs_WRRF = np.array([aeration_cost, pumping_cost, sludge_disposal_costs, Daily_cost_carbon, miscellaneous_cost]) 
 
@@ -1359,6 +1363,31 @@ def get_CO2_eq_electricity(system, q_air, active_unit_IDs=None, p_atm=101.325, K
     
     return normalized_total_CO2_eq_WRRF
 
+def get_carbon_add_CO2_eq(organic_carbon, system, EF_external_carbon = 1.64):
+    '''
+    Parameters
+    ----------
+    organic_carbon : TYPE
+        DESCRIPTION.
+    system : :class:`biosteam.System`
+        The system for which external cost of carbon addition will be calculated.
+    EF_external_carbon : float, optional
+        EF for carbon source (kg CO2-Eq/kg for acetic acid). The default is 1.64 kg CO2-Eq/kg for acetic acid  [1].
+
+    Returns
+    -------
+    GHG emissions due to carbon addition.
+    
+    [1] Various reports of ecoinvent. 
+
+    '''
+    
+    Mass_carbon = (organic_carbon.F_mass * 24)*organic_carbon.components.S_A.i_mass # kg/day
+    Daily_emissions_carbon = Mass_carbon*EF_external_carbon # kg/day*kg CO2-Eq/kg for acetic acid = kg CO2 eq/day
+    normalized_emissions_carbon = Daily_emissions_carbon/sum([s.F_vol*24 for s in system.feeds]) # kg CO2 eq/m3
+    
+    return normalized_emissions_carbon
+
 def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, effluent_sys =None, active_unit_IDs=None, sludge=None, 
                       p_atm=101.325, K=0.283, CH4_CO2eq=29.8, N2O_CO2eq=273, F=0.5, 
                       
@@ -1368,7 +1397,9 @@ def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, efflu
                      # uncertain parameters 
                      P_inlet_loss=1, P_diffuser_loss=7, h_submergance=5.18, efficiency=0.7,
                      
-                     CO2_EF=0.675, DOC_f = 0.45, MCF = 0.8, k = 0.06, pl=30
+                     CO2_EF=0.675, DOC_f = 0.45, MCF = 0.8, k = 0.06, pl=30,
+                     
+                     organic_carbon=None, EF_external_carbon= 1.64
                      ):
     
     '''
@@ -1455,6 +1486,12 @@ def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, efflu
         DESCRIPTION. The default is 29.8 kg CO2eq/kg CH4 [1].
     N2O_CO2eq : TYPE, optional
         DESCRIPTION. The default is 273 kg CO2eq/kg CH4 [1].
+        
+    organic_carbon : : iterable[:class:`WasteStream`], optional
+        External organic carbon stream. 
+        
+    EF_external_carbon : float, optional
+        EF for carbon source (kg CO2-Eq/kg for acetic acid). The default is 1.64 kg CO2-Eq/kg for acetic acid
 
     Returns
     -------
@@ -1564,11 +1601,17 @@ def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, efflu
         GHG_sludge_disposal = (CH4_emitted_during_pl + CH4_emitted_after_pl)/(pl*days_in_year)
     
         CH4_CO2_eq_sludge_disposal_pl = GHG_sludge_disposal*CH4_CO2eq
+        
+    if organic_carbon == None:
+        Daily_emissions_carbon_add = 0
+    else:
+        Mass_carbon = (organic_carbon.F_mass * 24)*organic_carbon.components.S_A.i_mass # kg/day
+        Daily_emissions_carbon_add = Mass_carbon*EF_external_carbon # kg/day*kg CO2-Eq/kg for acetic acid = kg CO2 eq/day
     
     CO2_eq_WRRF = np.array([CH4_CO2_eq_treatment, N2O_CO2_eq_treatment, #1
                             CH4_CO2_eq_discharge, N2O_CO2_eq_discharge, #3
                             CH4_CO2_eq_sludge_disposal_pl,              #4
-                            CO2_eq_electricity])                        #5
+                            CO2_eq_electricity, Daily_emissions_carbon_add])                        #5
     
     normalized_total_CO2_eq_WRRF = np.sum(CO2_eq_WRRF)/sum([24*s.F_vol for s in system.feeds])
     
