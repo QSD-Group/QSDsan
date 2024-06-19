@@ -1169,7 +1169,7 @@ class PFR(SanUnit):
             S_gas_air = np.asarray(self.K_Henry)*np.asarray(self.p_gas_atm)
             S_gas_air = np.tile(S_gas_air, (N, 1))
             D_O2 = self._D_O2
-            kLa_stripping = np.array([np.maximum(kLa*D/D_O2, kmin) 
+            kLa_stripping = np.array([np.maximum(kLa*(D/D_O2)**0.5, kmin)
                                       for D, kmin in zip(self.D_gas, self.stripping_kLa_min)]).T
         rcy = self.internal_recycles
         DO_idx = self.components.index(self.DO_ID)
@@ -1181,7 +1181,7 @@ class PFR(SanUnit):
         if self._model is None:
             warn(f'{self.ID} was initialized without a suspended growth model, '
                  f'and thus run as a non-reactive unit')
-            Rs = lambda Cs : 0.
+            Rs = lambda Cs: 0.
         else:
             f_rho = self._model.rate_function
             M_stoi = self._model.stoichio_eval()

@@ -801,11 +801,11 @@ class mASM2d(CompiledProcesses):
         #                     ref_component=gas,
         #                     conserved_for=(),)
         #     self.append(new_p)
-        self.K_Henry = [K*mol_to_mass[cmps.index(i)]*1000 for K, i in zip(cls.K_Henry, cls.gas_IDs)]
         self.compile(to_class=cls)
         
         dct = self.__dict__
         dct.update(kwargs)
+        dct['K_Henry'] = [K*mol_to_mass[cmps.index(i)]*1000 for K, i in zip(cls.K_Henry, cls.gas_IDs)]
         dct['mmp_stoichio'] = mmp_stoichio
         stoichio_vals = (f_SI, Y_H, Y_PAO, Y_PO4, Y_PHA, Y_A, 
                          f_XI_H, f_XI_PAO, f_XI_AUT,
