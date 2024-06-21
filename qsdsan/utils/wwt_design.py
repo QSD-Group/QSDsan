@@ -591,10 +591,13 @@ def get_carbon_add_cost(organic_carbon, system, unit_cost_carbon_source = 0.41):
 
     '''
     
-    Mass_carbon = (organic_carbon.F_mass * 24)*organic_carbon.components.S_A.i_mass # kg/day
-    Daily_cost_carbon = Mass_carbon*unit_cost_carbon_source # USD/day
-    normalized_cost_carbon = Daily_cost_carbon/sum([s.F_vol*24 for s in system.feeds])
-    
+    if organic_carbon == None:
+        normalized_cost_carbon = 0
+    else:
+        Mass_carbon = (organic_carbon.F_mass * 24)*organic_carbon.components.S_A.i_mass # kg/day
+        Daily_cost_carbon = Mass_carbon*unit_cost_carbon_source # USD/day
+        normalized_cost_carbon = Daily_cost_carbon/sum([s.F_vol*24 for s in system.feeds])
+
     return normalized_cost_carbon
 
 def get_total_operational_cost(q_air, # aeration (blower) power 
@@ -1382,9 +1385,12 @@ def get_carbon_add_CO2_eq(organic_carbon, system, EF_external_carbon = 1.64):
 
     '''
     
-    Mass_carbon = (organic_carbon.F_mass * 24)*organic_carbon.components.S_A.i_mass # kg/day
-    Daily_emissions_carbon = Mass_carbon*EF_external_carbon # kg/day*kg CO2-Eq/kg for acetic acid = kg CO2 eq/day
-    normalized_emissions_carbon = Daily_emissions_carbon/sum([s.F_vol*24 for s in system.feeds]) # kg CO2 eq/m3
+    if organic_carbon == None:
+        normalized_emissions_carbon = 0
+    else:
+        Mass_carbon = (organic_carbon.F_mass * 24)*organic_carbon.components.S_A.i_mass # kg/day
+        Daily_emissions_carbon = Mass_carbon*EF_external_carbon # kg/day*kg CO2-Eq/kg for acetic acid = kg CO2 eq/day
+        normalized_emissions_carbon = Daily_emissions_carbon/sum([s.F_vol*24 for s in system.feeds]) # kg CO2 eq/m3
     
     return normalized_emissions_carbon
 
