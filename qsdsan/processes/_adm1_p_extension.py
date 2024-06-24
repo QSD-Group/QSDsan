@@ -736,24 +736,46 @@ def _rhos_adm1p(state_arr, params, h=None):
     ########## precipitation-dissolution #############
     k_mmp = params['k_mmp']
     Ksp = params['Ksp']
-    K_dis = params['K_dis']
-    K_AlOH = params['K_AlOH']
-    K_FeOH = params['K_FeOH']
+    # K_dis = params['K_dis']
+    # K_AlOH = params['K_AlOH']
+    # K_FeOH = params['K_FeOH']
     S_Mg, S_Ca, X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3 = state_arr[28:35]
     X_AlOH, X_FeOH = state_arr[[35,37]]
-    f_dis = Monod(state_arr[30:35], K_dis[:5])
-    if X_CaCO3 > 0: rhos_p[25] = (S_Ca * co3 - Ksp[0]) * f_dis[0]
-    else: rhos_p[25] = S_Ca * co3
-    if X_struv > 0: rhos_p[26] = (S_Mg * nh4 * po4 - Ksp[1]) * f_dis[1]
-    else: rhos_p[26] = S_Mg * nh4 * po4
-    if X_newb > 0: rhos_p[27] = (S_Mg * hpo4 - Ksp[2]) * f_dis[2]
-    else: rhos_p[27] = S_Mg * hpo4
-    if X_ACP > 0: rhos_p[28] = (S_Ca**3 * po4**2 - Ksp[3]) * f_dis[3]
-    else: rhos_p[28] = S_Ca**3 * po4**2
-    if X_MgCO3 > 0: rhos_p[29] = (S_Mg * co3 - Ksp[4]) * f_dis[4]
-    else: rhos_p[29] = S_Mg * co3
-    rhos_p[30] = X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
-    rhos_p[31] = X_FeOH * po4 * Monod(X_FeOH, K_FeOH)
+    # f_dis = Monod(state_arr[30:35], K_dis[:5])
+    # if X_CaCO3 > 0: rhos_p[25] = (S_Ca * co3 - Ksp[0]) * f_dis[0]
+    # else: rhos_p[25] = S_Ca * co3
+    # if X_struv > 0: rhos_p[26] = (S_Mg * nh4 * po4 - Ksp[1]) * f_dis[1]
+    # else: rhos_p[26] = S_Mg * nh4 * po4
+    # if X_newb > 0: rhos_p[27] = (S_Mg * hpo4 - Ksp[2]) * f_dis[2]
+    # else: rhos_p[27] = S_Mg * hpo4
+    # if X_ACP > 0: rhos_p[28] = (S_Ca**3 * po4**2 - Ksp[3]) * f_dis[3]
+    # else: rhos_p[28] = S_Ca**3 * po4**2
+    # if X_MgCO3 > 0: rhos_p[29] = (S_Mg * co3 - Ksp[4]) * f_dis[4]
+    # else: rhos_p[29] = S_Mg * co3
+        
+    # rhos_p[30] = X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
+    # rhos_p[31] = X_FeOH * po4 * Monod(X_FeOH, K_FeOH)
+    
+    SI = (S_Ca * co3 / Ksp[0])**(1/2)
+    if SI > 1: rhos_p[25] = X_CaCO3 * (SI-1)**2
+    else: rhos_p[25] = 0
+
+    SI = (S_Mg * nh4 * po4 / Ksp[1])**(1/3)
+    if SI > 1: rhos_p[26] = X_struv * (SI-1)**3
+    else: rhos_p[26] = 0
+
+    SI = (S_Mg * hpo4 / Ksp[2])**(1/2)
+    if SI > 1: rhos_p[27] =  X_newb * (SI-1)**2
+    else: rhos_p[27] = 0
+    
+    SI = (S_Ca**3 * po4**2 / Ksp[3])**(1/5)
+    if SI > 1: rhos_p[28] = X_ACP * (SI-1)**5
+    else: rhos_p[28] = 0
+    
+    SI = (S_Mg * co3 / Ksp[4])**(1/2)
+    if SI > 1: rhos_p[29] = X_MgCO3 * (SI-1)**2
+    else: rhos_p[29] = 0
+
     rhos_p[25:32] *= k_mmp
 
     biogas_S = state_arr[7:10].copy()
@@ -892,8 +914,10 @@ class ADM1p(ADM1):
                 Ka_dH=[55900, 51965, 17400, 14600, -7500, 3000, 15000, 0, 0, 0, 0],
                 kLa=200, K_H_base=[7.8e-4, 1.4e-3, 3.5e-2],
                 K_H_dH=[-4180, -14240, -19410],
-                k_mmp=(5.0, 300, 0.05, 150, 50, 1.0, 1.0),
-                pKsp=(6.45, 13.16, 5.8, 23, 7, 21, 26),
+                # k_mmp=(5.0, 300, 0.05, 150, 50, 1.0, 1.0),
+                # pKsp=(6.45, 13.16, 5.8, 23, 7, 21, 26),
+                k_mmp=(0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),           # Flores-Alsina 2016
+                pKsp=(8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76),  # Flores-Alsina 2016
                 K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
                 K_AlOH=0.001, K_FeOH=0.001, 
                 **kwargs):

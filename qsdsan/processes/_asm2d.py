@@ -78,8 +78,8 @@ def create_asm2d_cmps(set_thermo=True):
 def create_masm2d_cmps(set_thermo=True):
     c2d = create_asm2d_cmps(False)
     ion_kwargs = dict(particle_size='Soluble',
-                         degradability='Undegradable',
-                         organic=False)
+                      degradability='Undegradable',
+                      organic=False)
     mineral_kwargs = dict(particle_size='Particulate',
                          degradability='Undegradable',
                          organic=False)
