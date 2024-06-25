@@ -557,7 +557,7 @@ def create_adm1p_cmps(set_thermo=True):
         cmp.i_C = 0.36612
         cmp.i_N = 0.08615
         cmp.i_P = 0.02154
-        cmp.i_K = cmp.i_Mg = 0.
+        cmp.i_K = cmp.i_Mg = cmp.i_Ca = 0.
         cmp.i_mass = 0.90
         cmp.f_Vmass_Totmass = 0.85
         cmp.i_NOD = None
@@ -916,7 +916,7 @@ class ADM1p(ADM1):
                 K_H_dH=[-4180, -14240, -19410],
                 # k_mmp=(5.0, 300, 0.05, 150, 50, 1.0, 1.0),
                 # pKsp=(6.45, 13.16, 5.8, 23, 7, 21, 26),
-                k_mmp=(0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),           # Flores-Alsina 2016
+                k_mmp=(0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),  # Flores-Alsina 2016
                 pKsp=(8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76),  # Flores-Alsina 2016
                 K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
                 K_AlOH=0.001, K_FeOH=0.001, 

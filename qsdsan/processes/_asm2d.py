@@ -109,6 +109,7 @@ def create_masm2d_cmps(set_thermo=True):
     c2d.X_H.i_P = c2d.X_AUT.i_P = c2d.X_PAO.i_P = 0.02154
     c2d.X_H.i_K = c2d.X_AUT.i_K = c2d.X_PAO.i_K = 0.0
     c2d.X_H.i_Mg = c2d.X_AUT.i_Mg = c2d.X_PAO.i_Mg = 0.0
+    c2d.X_H.i_Ca = c2d.X_AUT.i_Ca = c2d.X_PAO.i_Ca = 0.0
     c2d.X_H.i_mass = c2d.X_AUT.i_mass = c2d.X_PAO.i_mass = 0.90
     c2d.X_H.f_Vmass_Totmass = c2d.X_AUT.f_Vmass_Totmass = c2d.X_PAO.f_Vmass_Totmass = 0.85
     

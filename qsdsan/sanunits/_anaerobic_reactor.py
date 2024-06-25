@@ -448,6 +448,7 @@ class AnaerobicCSTR(CSTR):
     def _update_state(self):
         y = self._state
         y[-1] = sum(ws.state[-1] for ws in self.ins)
+        y[y<0] = 0.
         f_rtn = self._f_retain
         i_mass = self.components.i_mass
         chem_MW = self.components.chem_MW
@@ -587,7 +588,6 @@ class AnaerobicCSTR(CSTR):
                     pass
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 QC[QC < 2.2e-16] = 0.
-                _state[_state < 2.2e-16] = 0.
                 Q_ins = QC_ins[:, -1]
                 S_ins = QC_ins[:, :-1] * 1e-3  # mg/L to kg/m3
                 Q = sum(Q_ins)
