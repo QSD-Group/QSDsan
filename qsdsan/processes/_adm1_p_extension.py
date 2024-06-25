@@ -737,8 +737,8 @@ def _rhos_adm1p(state_arr, params, h=None):
     k_mmp = params['k_mmp']
     Ksp = params['Ksp']
     # K_dis = params['K_dis']
-    # K_AlOH = params['K_AlOH']
-    # K_FeOH = params['K_FeOH']
+    K_AlOH = params['K_AlOH']
+    K_FeOH = params['K_FeOH']
     S_Mg, S_Ca, X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3 = state_arr[28:35]
     X_AlOH, X_FeOH = state_arr[[35,37]]
     # f_dis = Monod(state_arr[30:35], K_dis[:5])
@@ -753,8 +753,8 @@ def _rhos_adm1p(state_arr, params, h=None):
     # if X_MgCO3 > 0: rhos_p[29] = (S_Mg * co3 - Ksp[4]) * f_dis[4]
     # else: rhos_p[29] = S_Mg * co3
         
-    # rhos_p[30] = X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
-    # rhos_p[31] = X_FeOH * po4 * Monod(X_FeOH, K_FeOH)
+    rhos_p[30] = X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
+    rhos_p[31] = X_FeOH * po4 * Monod(X_FeOH, K_FeOH)
     
     SI = (S_Ca * co3 / Ksp[0])**(1/2)
     if SI > 1: rhos_p[25] = X_CaCO3 * (SI-1)**2
