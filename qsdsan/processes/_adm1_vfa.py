@@ -351,17 +351,17 @@ def flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+40, pH=False, gas_transfer
     #h = brenth(acid_base_rxn, 1e-14, 1.0,
     #        args=(weak_acids, Ka),
     #        xtol=1e-12, maxiter=100)
-    h = 10**(-7.46)
-    #if pH: 
-    #    h = 10**(-pH)
-    #    delta = acid_base_rxn(h, weak_acids, Kas)
-    #    S_cat = weak_acids[0] - delta
-    #    root.data['S_cat'] = S_cat
-    #else: 
-    #    h = brenth(acid_base_rxn, 1e-14, 1.0,
-    #               args=(weak_acids, Kas),
-    #               xtol=1e-12, maxiter=100)
-    #    root.data['pH'] = -log10(h)
+    #h = 10**(-7.46)
+    if pH: 
+        h = 10**(-pH)
+        delta = acid_base_rxn(h, weak_acids, Kas)
+        S_cat = weak_acids[0] - delta
+        root.data['S_cat'] = S_cat
+    else: 
+        h = brenth(acid_base_rxn, 1e-14, 1.0,
+                  args=(weak_acids, Kas),
+                  xtol=1e-12, maxiter=100)
+        root.data['pH'] = -log10(h)
 
     nh3 = Kas[1] * weak_acids[2] / (Kas[1] + h)
     # co2 = weak_acids[3] - Kas[2] * weak_acids[3] / (Kas[2] + h)
