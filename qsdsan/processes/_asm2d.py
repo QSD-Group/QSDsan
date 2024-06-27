@@ -762,7 +762,6 @@ class mASM2d(CompiledProcesses):
                 pKsp=(6.45, 13.16, 5.8, 23, 7, 21, 26),
                 K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
                 K_AlOH=0.001, K_FeOH=0.001, 
-                # kLa_min=(3.0, 3.0), K_Henry=(6.5e-4, 3.5e-2),
                 pKa=(14, 9.25, 6.37, 10.32, 2.12, 7.21, 12.32, 4.76),
                 **kwargs):       
         
@@ -832,6 +831,7 @@ class mASM2d(CompiledProcesses):
                          f_XI_H, f_XI_PAO, f_XI_AUT,
                          cmps.X_PP.i_K, cmps.X_PP.i_Mg)
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_vals))
+        dct['_edecay'] = bool(electron_acceptor_dependent_decay)
         rhos_masm2d = lambda state_arr, params: _rhos_masm2d(state_arr, params, electron_acceptor_dependent_decay)
         self.set_rate_function(rhos_masm2d)
         Ka = np.array([10**(-p) for p in pKa])

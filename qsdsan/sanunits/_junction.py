@@ -473,6 +473,46 @@ class mADMjunction(ADMjunction):
     @property
     def alpha_vfa(self):
         return 1.0/self.cod_vfa*(-1.0/(1.0 + 10**(self.pKa[4:]-self.pH)))
+    
+    def check_component_properties(self, cmps_asm, cmps_adm):
+        get = getattr
+        setv = setattr
+        for name in ('X_PHA', 'X_PP', 'X_PAO'):
+            casm = get(cmps_asm, name)
+            cadm = get(cmps_adm, name)
+            for attr in ('measured_as', 'i_COD', 'i_C', 'i_N', 'i_P'):
+                vasm = get(casm, attr)
+                if get(cadm, attr) != vasm:
+                    setv(cadm, attr, vasm)
+                    warn(f"ADM component {name}'s {attr} is changed to match "
+                         "the corresponding ASM component")
+        
+        for name in ('S_I', 'X_I'):
+            casm = get(cmps_asm, name)
+            cadm = get(cmps_adm, name)
+            for attr in ('measured_as', 'i_C', 'i_N', 'i_P'):
+                vadm = get(cadm, attr)
+                if get(casm, attr) != vadm:
+                    setv(casm, attr, vadm)
+                    warn(f"ASM component {name}'s {attr} is changed to match "
+                         "the corresponding ADM component")        
+        
+        for attr in ('i_N', 'i_P'):
+            vadm = get(cmps_adm.S_ac, attr)
+            if get(cmps_asm.S_A, attr) != vadm:
+                cmps_asm.S_A.i_N = vadm
+                warn(f"ASM component S_A's {attr} is changed to match "
+                     "the ADM component S_ac.") 
+        
+        if cmps_asm.S_ALK.measured_as != cmps_adm.S_IC.measured_as:
+            raise RuntimeError('S_ALK in ASM and S_IC in ADM must both be measured as "C".')
+        if cmps_asm.S_NH4.measured_as != cmps_adm.S_IN.measured_as:
+            raise RuntimeError('S_NH4 in ASM and S_IN in ADM must both be measured as "N".')
+        if cmps_asm.S_PO4.measured_as != cmps_adm.S_IP.measured_as:
+            raise RuntimeError('S_PO4 in ASM and S_IP in ADM must both be measured as "P".')
+        cmps_asm.refresh_constants()
+        cmps_adm.refresh_constants()
+
 
 #%% ADMtoASM
 class ADMtoASM(ADMjunction):
@@ -3291,7 +3331,7 @@ class ADM1ptomASM2d(A1junction):
                                        'X_PAO', 'X_PP', 'X_PHA'))
         decay_idx = [i for i in adm.IDs if i.startswith(('decay', 'lysis'))]
         decay_stoichio = np.asarray(adm.stoichiometry.loc[decay_idx])
-        f_corr = self.balance_cod_tkn
+        # f_corr = self.balance_cod_tkn
 
         # To convert components from ADM1p to ASM2d (A1)
         def adm1p2masm2d(adm_vals):    
@@ -3344,7 +3384,7 @@ class ADM1ptomASM2d(A1junction):
                 S_Ca, X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3, # directly mapped
                 X_AlOH, X_AlPO4, X_FeOH, X_FePO4, S_Na, S_Cl, H2O])) 
                       
-            asm_vals = f_corr(adm_vals, asm_vals)
+            # asm_vals = f_corr(adm_vals, asm_vals)
             return asm_vals
         
         self._reactions = adm1p2masm2d
@@ -3500,7 +3540,7 @@ class mASM2dtoADM1p(A1junction):
         P_aa, P_su, P_pr, P_li, P_ch = cmps_adm.i_P[_adm_ids]
 
         S_O2_idx, S_NO3_idx = cmps_asm.indices(['S_O2', 'S_NO3'])
-        f_corr = self.balance_cod_tkn_tp
+        # f_corr = self.balance_cod_tkn_tp
 
         asm = self.asm2d_model
         adm = self.adm1_model
@@ -3594,7 +3634,7 @@ class mASM2dtoADM1p(A1junction):
                 X_AlOH, X_AlPO4, X_FeOH, X_FePO4, S_Na, S_Cl, H2O])
             
             # adm_vals = f_corr(asm_vals, adm_vals)
-            adm_vals = f_corr(_asm_vals, adm_vals)
+            # adm_vals = f_corr(_asm_vals, adm_vals)
             return adm_vals
         
         self._reactions = masm2d2adm1p
