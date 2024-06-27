@@ -351,7 +351,6 @@ class CSTR(SanUnit):
         _dstate = self._dstate
         _update_dstate = self._update_dstate
         V = self._V_max
-        kLa = self.kLa
         gstrip = self.gas_stripping
         if gstrip:
             gas_idx = self.components.indices(self.gas_IDs)
@@ -366,6 +365,7 @@ class CSTR(SanUnit):
             i = self.components.index(self._DO_ID)
             fixed_DO = self._aeration
             def dy_dt(t, QC_ins, QC, dQC_ins):
+                # QC[QC < 2.2e-16] = 0.
                 QC[i] = fixed_DO
                 dydt_cstr(QC_ins, QC, V, _dstate)
                 if hasexo: QC = np.append(QC, f_exovars(t))
@@ -375,6 +375,7 @@ class CSTR(SanUnit):
                 _update_dstate()
         else:
             def dy_dt(t, QC_ins, QC, dQC_ins):
+                # QC[QC < 2.2e-16] = 0.
                 dydt_cstr(QC_ins, QC, V, _dstate)
                 if hasexo: QC = np.append(QC, f_exovars(t))
                 _dstate[:-1] += r(QC)
@@ -1199,6 +1200,7 @@ class PFR(SanUnit):
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 y = QC.reshape((N, ncol))
                 Cs = y[:,:-1]
+                Cs[Cs < 2.2e-16] = 0.
                 Cs[aerated_zones, DO_idx] = aerated_DO
                 _Qs[:] = Qs = np.dot(QC_ins[:,-1], f_in).cumsum() + Q_internal
                 M_ins = f_in.T @ np.diag(QC_ins[:,-1]) @ QC_ins[:,:-1]  # N * n_cmps
@@ -1223,6 +1225,7 @@ class PFR(SanUnit):
             def dy_dt(t, QC_ins, QC, dQC_ins):
                 y = QC.reshape((N, ncol))
                 Cs = y[:,:-1]
+                Cs[Cs < 2.2e-16] = 0.
                 do = Cs[:, DO_idx]
                 aer = kLa*(DOsat-do)
                 _Qs[:] = Qs = np.dot(QC_ins[:,-1], f_in).cumsum() + Q_internal

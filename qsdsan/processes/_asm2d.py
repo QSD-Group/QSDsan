@@ -853,7 +853,7 @@ class mASM2d(CompiledProcesses):
                         Ka, cmps,
                         )
         self.rate_function._params = dict(zip(cls._kinetic_params, kinetic_vals))
-
+        dct['solve_pH'] = solve_pH
         return self
     
     @property
