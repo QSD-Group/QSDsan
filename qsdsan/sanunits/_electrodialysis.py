@@ -543,11 +543,11 @@ class ED_vfa(SanUnit):
             Q = Q_ins.sum()
             C = (Q_ins[:, np.newaxis] * C_ins).sum(axis=0) / Q
             _state[-1] = Q
-            _state[:len(C)] = C  # 수정된 부분
+            _state[:len(C)] = C
             Q_dot = dQ_ins.sum()
             C_dot = ((Q_ins[:, np.newaxis] * dC_ins).sum(axis=0) + (dQ_ins[:, np.newaxis] * C_ins).sum(axis=0) - C * Q_dot) / Q
             _dstate[-1] = Q_dot
-            _dstate[:len(C_dot)] = C_dot  # 수정된 부분
+            _dstate[:len(C_dot)] = C_dot
     
             _update_state()
             _update_dstate()
