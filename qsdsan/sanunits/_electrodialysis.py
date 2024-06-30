@@ -307,19 +307,16 @@ class ED_vfa(SanUnit):
             print(f'eff_dc.imol[ion] = {eff_dc.imol[ion]}')
             eff_ac.imol[ion] = n_out_ac / 1000 / self.t * 3600
 
-<<<<<<< HEAD
         # # Ensure non-negative effluent moles for H2O [kmole/hr]
         # eff_dc.imol['H2O'] = max(inf_dc.imol['H2O'], 0)
         # eff_ac.imol['H2O'] = max(inf_ac.imol['H2O'], 0)
         
         # # Adjust the mass balance to ensure it matches the influent
-=======
         # Ensure non-negative effluent moles for H2O [kmole/hr]
         # eff_dc.imol['H2O'] = max(inf_dc.imol['H2O'], 0)
         # eff_ac.imol['H2O'] = max(inf_ac.imol['H2O'], 0)
         
         # Adjust the mass balance to ensure it matches the influent
->>>>>>> 89a85b778b8912f5a8f60063a5b386b704a84a0e
         # for comp in inf_dc.chemicals:
         #     if comp.ID not in self.CE_dict:
         #         eff_dc.imass[comp.ID] = inf_dc.imass[comp.ID]
@@ -364,14 +361,14 @@ class ED_vfa(SanUnit):
         # average_Cs = two_Qs @ two_Cs / two_Qs.sum()
         # total_Q = two_Qs.sum()
         self.I = self.j * self.A_m
-        print(f"Total current (I): {I} A")
+        print(f"Total current (I): {self.I} A")
     
-        self.CEs = CE_dict.values()
-        self.n_T = CEs * I / (self.z_T * F) * self.t
-        self.J_T = CEs * I / (self.z_T * F * self.A_m)
+        self.CEs = self.CE_dict.values()
+        self.n_T = self.CEs * self.I / (self.z_T * F) * self.t
+        self.J_T = self.CEs * self.I / (self.z_T * F * self.A_m)
         self.a = self.t / 3600 * 1000
-        self.b = self.V * J_T * self.A_m
-        self.indices = cmps.indices(CE_dict.keys())
+        self.b = self.V * self.J_T * self.A_m
+        self.indices = cmps.indices(self.CE_dict.keys())
         self.mass2mol = cmps.i_mass / cmps.chem_MW
         self._state = np.append(inf_dc, inf_ac)
         # self._state = np.append(average_Cs, total_Q)
