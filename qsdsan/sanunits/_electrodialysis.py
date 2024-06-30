@@ -325,20 +325,6 @@ class ED_vfa(SanUnit):
         #     if comp.ID not in self.CE_dict:
         #         eff_ac.imass[comp.ID] = inf_ac.imass[comp.ID]
                         
-        # Calculate system resistance [Ohm] -> design function
-        R_sys = self.A_m * (self.r_m + self.r_s)
-        self.R_sys = R_sys
-        
-        # Calculate system voltage [V] -> design method
-        V_sys = R_sys * I
-        self.V_sys = V_sys
-        
-        # Calculate power consumption [W] -> design
-        P_sys = V_sys * I
-        self.P_sys = P_sys
-        print(f"System resistance (R_sys): {R_sys} Ohm")
-        print(f"System voltage (V_sys): {V_sys} V")
-        print(f"Power consumption (P_sys): {P_sys} W")
 
 #%%
     def _init_state(self):
@@ -616,6 +602,20 @@ class ED_vfa(SanUnit):
         return self._AE
 #%%    
     def _design(self):
+        # Calculate system resistance [Ohm] -> design
+        R_sys = self.A_m * (self.r_m + self.r_s)
+        self.R_sys = R_sys
+        
+        # Calculate system voltage [V] -> design
+        V_sys = R_sys * self.I
+        self.V_sys = V_sys
+        
+        # Calculate power consumption [W] -> design
+        P_sys = V_sys * self.I
+        self.P_sys = P_sys
+        print(f"System resistance (R_sys): {R_sys} Ohm")
+        print(f"System voltage (V_sys): {V_sys} V")
+        print(f"Power consumption (P_sys): {P_sys} W")
         D = self.design_results
         D['Membrane area'] = self.A_m
         D['Total current'] = self.j * self.A_m
