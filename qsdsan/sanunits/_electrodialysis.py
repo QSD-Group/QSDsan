@@ -301,28 +301,28 @@ class ED_vfa(SanUnit):
             print(f'eff_dc.imol[ion] = {eff_dc.imol[ion]}')
             eff_ac.imol[ion] = n_out_ac / 1000 / self.t * 3600
 
-        # Ensure non-negative effluent moles for H2O [kmole/hr]
-        eff_dc.imol['H2O'] = max(inf_dc.imol['H2O'], 0)
-        eff_ac.imol['H2O'] = max(inf_ac.imol['H2O'], 0)
+        # # Ensure non-negative effluent moles for H2O [kmole/hr]
+        # eff_dc.imol['H2O'] = max(inf_dc.imol['H2O'], 0)
+        # eff_ac.imol['H2O'] = max(inf_ac.imol['H2O'], 0)
         
-        # Adjust the mass balance to ensure it matches the influent
-        for comp in inf_dc.chemicals:
-            if comp.ID not in self.CE_dict:
-                eff_dc.imass[comp.ID] = inf_dc.imass[comp.ID]
+        # # Adjust the mass balance to ensure it matches the influent
+        # for comp in inf_dc.chemicals:
+        #     if comp.ID not in self.CE_dict:
+        #         eff_dc.imass[comp.ID] = inf_dc.imass[comp.ID]
         
-        for comp in inf_ac.chemicals:
-            if comp.ID not in self.CE_dict:
-                eff_ac.imass[comp.ID] = inf_ac.imass[comp.ID]
+        # for comp in inf_ac.chemicals:
+        #     if comp.ID not in self.CE_dict:
+        #         eff_ac.imass[comp.ID] = inf_ac.imass[comp.ID]
                         
-        # Calculate system resistance [Ohm]
+        # Calculate system resistance [Ohm] -> design function
         R_sys = self.A_m * (self.r_m + self.r_s)
         self.R_sys = R_sys
         
-        # Calculate system voltage [V]
+        # Calculate system voltage [V] -> design method
         V_sys = R_sys * I
         self.V_sys = V_sys
         
-        # Calculate power consumption [W]
+        # Calculate power consumption [W] -> design
         P_sys = V_sys * I
         self.P_sys = P_sys
         print(f"System resistance (R_sys): {R_sys} Ohm")
