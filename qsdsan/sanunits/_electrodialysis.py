@@ -363,9 +363,9 @@ class ED_vfa(SanUnit):
         self.I = self.j * self.A_m
         print(f"Total current (I): {self.I} A")
     
-        self.CEs = self.CE_dict.values()
-        self.n_T = self.CEs * self.I / (self.z_T * F) * self.t
-        self.J_T = self.CEs * self.I / (self.z_T * F * self.A_m)
+        CEs = np.array(list(self.CE_dict.values()))
+        self.n_T = CEs * self.I / (self.z_T * F) * self.t
+        self.J_T = CEs * self.I / (self.z_T * F * self.A_m)
         self.a = self.t / 3600 * 1000
         self.b = self.V * self.J_T * self.A_m
         self.indices = cmps.indices(self.CE_dict.keys())
