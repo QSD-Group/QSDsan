@@ -332,8 +332,8 @@ class ED_vfa(SanUnit):
         if inf_dc is None or inf_ac is None:
             raise ValueError("Input streams must not be None")
     
-        Q_dc = inf_dc.F_vol / 3600
-        Q_ac = inf_ac.F_vol / 3600
+        Q_dc = inf_dc.F_vol / 3600 # Convert to m^3/s
+        Q_ac = inf_ac.F_vol / 3600 # Convert to m^3/s
         # [S_ac, S_et, S_la, S_pro, S_bu, S_va, S_su, S_he, Na, Cl, Fi, Fo, cmps_all.H2O]), total 14
         C_dc = np.array([inf_dc.imol[ion] for ion in inf_dc.chemicals.IDs])
         print(f'C_dc = {C_dc}')
@@ -350,14 +350,11 @@ class ED_vfa(SanUnit):
         print(f"Total current (I): {self.I} A")
     
         CEs = np.array(list(self.CE_dict.values()))
-        self.n_T = CEs * self.I / (self.z_T * F) * self.t
-        self.J_T = CEs * self.I / (self.z_T * F * self.A_m)
-        # # `self.J_T`가 딕셔너리를 반환하므로, 각 이온별로 `b` 값을 계산합니다.
-        # self.b = {ion: self.V * J_T * self.A_m for ion, J_T in self.J_T.items()}
-        self.a = self.t / 3600 * 1000
-        self.b = self.V * self.J_T * self.A_m
+        self.n_T = CEs * self.I / (self.z_T * F) * self.t # mol
+        self.J_T = CEs * self.I / (self.z_T * F * self.A_m) # mol/m^2/s
         self.indices = cmps.indices(self.CE_dict.keys())
         self.mass2mol = cmps.i_mass / cmps.chem_MW
+        self.mol2mass = cmps.chem_MW / cmps.i_mass
         self._state = np.append(inf_dc, inf_ac)
         # self._state = np.append(average_Cs, total_Q)
         self._dstate = np.zeros_like(self._state)  # Ensure _dstate is initialized
@@ -365,31 +362,8 @@ class ED_vfa(SanUnit):
         print(f"Initial state (average concentrations and total flow rate): {self._state}")
         print(f"Initial state change rate (dstate): {self._dstate}")
 #%%
-# def _update_state(self):
-#     arr = self._state   # retrieving the current state of the SanUnit
-#     eff, = self.outs    # assuming this SanUnit has one outlet only
-#     eff.state[:] = arr  # assume arr has the same shape as WasteStream.state
-# inf_dc, inf_ac = self.ins # this line is wrong because you can't use state of influent in update state
-        # # For sludge, the particulate concentrations are multiplied by thickener factor, and
-        # # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
-        # uf, of = self.outs
-        # if uf.state is None: uf.state = np.zeros(len(cmps)+1)
-        # uf.state[:-1] = self._state[:-1]*cmps.s*1 + self._state[:-1]*cmps.x*thickener_factor
-        # uf.state[-1] = self._state[-1]*Qu_factor
-        
-        # # For effluent, the particulate concentrations are multiplied by thinning factor, and
-        # # flowrate is multiplied by Qu_factor. The soluble concentrations remains same. 
-        # if of.state is None: of.state = np.zeros(len(cmps)+1)
-        # of.state[:-1] = self._state[:-1]*cmps.s*1 + self._state[:-1]*cmps.x*thinning_factor
-        # of.state[-1] = self._state[-1]*(1 - Qu_factor)
     def _update_state(self):
         eff_dc, eff_ac = self.outs
-        # Check if the effluent streams are initialized
-        if eff_dc.state is None:
-            eff_dc.state = np.zeros(len(self._state) // 2)  # 초기화
-        if eff_ac.state is None:
-            eff_ac.state = np.zeros(len(self._state) // 2)  # 초기화
-            
         # Assuming there are 14 compounds in each stream, update if different
         cmps = eff_dc.components
         n = len(cmps)+1
@@ -399,7 +373,12 @@ class ED_vfa(SanUnit):
         # Print to check the actual number of compounds
         print(f"Number of compounds in dilute stream: {n_compounds_dc}")
         print(f"Number of compounds in accumulated stream: {n_compounds_ac}")
-    
+        #!!! Adding below myself
+        # Initialize states if they are None
+        if eff_dc.state is None:
+            eff_dc.state = np.zeros(n)
+        if eff_ac.state is None:
+            eff_ac.state = np.zeros(n)
         # Unpack the state into effluent dilute and accumulated stream components
         # self._state == [Sac_inf_dc, Set_inf_dc,....., Q_inf_dc,Sac_inf_ac, Set_inf_ac,....., Q_inf_ac]
         eff_dc.state[:] = self._state[:14]
@@ -425,18 +404,33 @@ class ED_vfa(SanUnit):
         # CEs = CE_dict.values()
         # n_T = CEs * I / (self.z_T * F) * self.t
         # J_T = CEs * I / (self.z_T * F * self.A_m)
-        # a = self.t / 3600 * 1000
-        # b = self.V * J_T * self.A_m
+        # a = self.t / (3600 * 24) * 1000
+        # b = self.V * J_T * self.A_m (mol*m3/s)
         # indices = cmps.indices(CE_dict.keys())
         
-        a, b = self.a, self.b
         indices = self.indices
         mass2mol = self.mass2mol
-        n_ins_dc = eff_dc.state[indices] * Q_dc * mass2mol[indices]   # molar flowrate of ions in inf_dc [mol/d]
-        n_out_dc = ((n_ins_dc * a) - b / Q_dc) / mass2mol[indices]
-        eff_dc.state[indices] = n_out_dc / Q_dc
+        mol2mass = self.mol2mass
+        # n_ins_dc = eff_dc.state[indices] * Q_dc * self.t / (3600 * 24) * mass2mol[indices]   # [mol]
+        # n_out_dc = n_ins_dc * self.t - (self.V * self.J_T * self.A_m) * (3600 * 24) / Q_dc # [mol]
+        # eff_dc.state[indices] = n_out_dc / self.V
+        # Update effluent dilute stream
+        # eff_dc_conc = eff_dc.state[indices] * mass2mol[indices] - self.J_T * self.A_m / Q_dc
+        # eff_dc.state[indices] = eff_dc_conc / mass2mol[indices]
         
+        # # Update effluent accumulated stream
+        # eff_ac_conc = eff_ac.state[indices] * mass2mol[indices] + self.J_T * self.A_m / Q_ac
+        # eff_ac.state[indices] = eff_ac_conc / mass2mol[indices]
         
+        # # Update the overall state
+        # self._state[:n] = eff_dc.state
+        # self._state[n:] = eff_ac.state
+        # mg COD/L below
+        eff_dc.state[indices] = eff_dc.state[indices] * mass2mol[indices] * 1000 - self.J_T * self.A_m * 1000/ (Q_dc * 24 * 3600) * mol2mass[indices] * 1000
+        eff_ac.state[indices] = self.J_T * self.A_m / Q_ac * (1 - np.exp(-Q_ac * self.t / self.V))
+        
+        # n_out_ac = (self.V * self.J_T * self.A_m) * (3600 * 24) / Q_ac * (1 - np.exp(-Q_ac * self.t / self.V))
+        # eff_ac.state[indices] = n_out_ac / self.V
         # for ion, CE in self.CE_dict.items():
         #     idx = cmps.index(ion)
         #     # Moles of target ion transported [mol]
@@ -479,10 +473,10 @@ class ED_vfa(SanUnit):
         #         eff_ac.imass[comp.ID] = self.ins[1].imass[comp.ID]
     
         # Print updated effluent concentrations and flow rates for verification
-        print(f"Updated effluent dilute stream concentrations: {eff_dc.imol}")
-        print(f"Updated effluent dilute stream flow rate: {eff_dc.F_vol} m^3/hr")
-        print(f"Updated effluent accumulated stream concentrations: {eff_ac.imol}")
-        print(f"Updated effluent accumulated stream flow rate: {eff_ac.F_vol} m^3/hr")
+        # print(f"Updated effluent dilute stream concentrations: {eff_dc.imol}")
+        # print(f"Updated effluent dilute stream flow rate: {eff_dc.F_vol} m^3/hr")
+        # print(f"Updated effluent accumulated stream concentrations: {eff_ac.imol}")
+        # print(f"Updated effluent accumulated stream flow rate: {eff_ac.F_vol} m^3/hr")
 
 #%%
     def _update_dstate(self):
