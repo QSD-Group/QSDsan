@@ -223,23 +223,23 @@ class ED_vfa(SanUnit):
             raise ValueError("Volume must be positive.")
         self._V = value
         
-    @property
-    def n_T(self):
-        n_T_dict = {}
-        I = self.total_current
-        for ion, CE in self.CE_dict.items():
-            n_T = CE * I / (self.z_T * F) * self.t
-            n_T_dict[ion] = n_T
-        return n_T_dict
+    # @property
+    # def n_T(self):
+    #     n_T_dict = {}
+    #     I = self.total_current
+    #     for ion, CE in self.CE_dict.items():
+    #         n_T = CE * I / (self.z_T * F) * self.t
+    #         n_T_dict[ion] = n_T
+    #     return n_T_dict
 
-    @property
-    def J_T(self):
-        J_T_dict = {}
-        I = self.total_current
-        for ion, CE in self.CE_dict.items():
-            J_T = CE * I / (self.z_T * F * self.A_m)
-            J_T_dict[ion] = J_T
-        return J_T_dict
+    # @property
+    # def J_T(self):
+    #     J_T_dict = {}
+    #     I = self.total_current
+    #     for ion, CE in self.CE_dict.items():
+    #         J_T = CE * I / (self.z_T * F * self.A_m)
+    #         J_T_dict[ion] = J_T
+    #     return J_T_dict
     
     def _run(self):
         inf_dc, inf_ac = self.ins
@@ -352,6 +352,8 @@ class ED_vfa(SanUnit):
         CEs = np.array(list(self.CE_dict.values()))
         self.n_T = CEs * self.I / (self.z_T * F) * self.t
         self.J_T = CEs * self.I / (self.z_T * F * self.A_m)
+        # # `self.J_T`가 딕셔너리를 반환하므로, 각 이온별로 `b` 값을 계산합니다.
+        # self.b = {ion: self.V * J_T * self.A_m for ion, J_T in self.J_T.items()}
         self.a = self.t / 3600 * 1000
         self.b = self.V * self.J_T * self.A_m
         self.indices = cmps.indices(self.CE_dict.keys())
@@ -382,7 +384,12 @@ class ED_vfa(SanUnit):
         # of.state[-1] = self._state[-1]*(1 - Qu_factor)
     def _update_state(self):
         eff_dc, eff_ac = self.outs
-    
+        # Check if the effluent streams are initialized
+        if eff_dc.state is None:
+            eff_dc.state = np.zeros(len(self._state) // 2)  # 초기화
+        if eff_ac.state is None:
+            eff_ac.state = np.zeros(len(self._state) // 2)  # 초기화
+            
         # Assuming there are 14 compounds in each stream, update if different
         cmps = eff_dc.components
         n = len(cmps)+1
