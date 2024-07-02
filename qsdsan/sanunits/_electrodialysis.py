@@ -293,7 +293,6 @@ class ED_vfa(SanUnit):
             n_ins_dc = inf_dc.imass[ion] * mass2mol[idx] # kmol/hr
             n_out_dc = (n_ins_dc * self.t / 3600 * 1000) - (self.V * J_T * self.A_m) / self.Q_dc
             
-
             # Effluent moles for accumulated stream [moles]
             n_out_ac = (self.V * J_T * self.A_m) / self.Q_dc * (1 - np.exp(-self.Q_ac * self.t / self.V))
 
@@ -324,7 +323,6 @@ class ED_vfa(SanUnit):
         # for comp in inf_ac.chemicals:
         #     if comp.ID not in self.CE_dict:
         #         eff_ac.imass[comp.ID] = inf_ac.imass[comp.ID]
-                        
 
 #%%
     def _init_state(self):
@@ -334,7 +332,7 @@ class ED_vfa(SanUnit):
     
         Q_dc = inf_dc.F_vol / 3600 # Convert to m^3/s
         Q_ac = inf_ac.F_vol / 3600 # Convert to m^3/s
-        # [S_ac, S_et, S_la, S_pro, S_bu, S_va, S_su, S_he, Na, Cl, Fi, Fo, cmps_all.H2O]), total 14
+        # [S_ac, S_et, S_la, S_pro, S_bu, S_va, S_su, S_he, Na, Cl, Fi, Fo, cmps_all.H2O], total 14
         C_dc = np.array([inf_dc.imol[ion] for ion in inf_dc.chemicals.IDs])
         print(f'C_dc = {C_dc}')
         C_ac = np.array([inf_ac.imol[ion] for ion in inf_ac.chemicals.IDs])
@@ -356,11 +354,12 @@ class ED_vfa(SanUnit):
         self.mass2mol = cmps.i_mass / cmps.chem_MW
         self.mol2mass = cmps.chem_MW / cmps.i_mass
         self._state = np.append(inf_dc, inf_ac)
-        # self._state = np.append(average_Cs, total_Q)
         self._dstate = np.zeros_like(self._state)  # Ensure _dstate is initialized
-    
-        print(f"Initial state (average concentrations and total flow rate): {self._state}")
-        print(f"Initial state change rate (dstate): {self._dstate}")
+        
+        # Debugging: Print initial states
+        print(f"Initial state (inf_dc, inf_ac): {self._state}")
+        print(f"Shape of initial state: {self._state.shape}")
+        print(f"Initial dstate: {self._dstate}")
 #%%
     def _update_state(self):
         eff_dc, eff_ac = self.outs
@@ -429,6 +428,10 @@ class ED_vfa(SanUnit):
         eff_dc.state[indices] = eff_dc.state[indices] * mass2mol[indices] * 1000 - self.J_T * self.A_m * 1000/ (Q_dc * 24 * 3600) * mol2mass[indices] * 1000
         eff_ac.state[indices] = self.J_T * self.A_m / Q_ac * (1 - np.exp(-Q_ac * self.t / self.V))
         
+        # Debugging: Print updated states for verification
+        print(f"Updated state (eff_dc): {eff_dc.state}")
+        print(f"Updated state (eff_ac): {eff_ac.state}")
+        print(f"Updated state shape: {self._state.shape}")
         # n_out_ac = (self.V * self.J_T * self.A_m) * (3600 * 24) / Q_ac * (1 - np.exp(-Q_ac * self.t / self.V))
         # eff_ac.state[indices] = n_out_ac / self.V
         # for ion, CE in self.CE_dict.items():
@@ -591,8 +594,10 @@ class ED_vfa(SanUnit):
             _update_state()
             _update_dstate()
     
-            print(f"State and dState compiled at time {t}")
-            print(f"State derivative at time {t}: {_dstate}")
+            # Debugging: Print updated state and dstate
+            print(f"Time: {t}")
+            print(f"State: {_state}")
+            print(f"dState: {_dstate}")
             
         self._AE = yt
     
