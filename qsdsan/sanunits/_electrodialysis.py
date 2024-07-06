@@ -330,8 +330,8 @@ class ED_vfa(SanUnit):
         if inf_dc is None or inf_ac is None:
             raise ValueError("Input streams must not be None")
     
-        Q_dc = inf_dc.F_vol / 3600 # Convert to m^3/s
-        Q_ac = inf_ac.F_vol / 3600 # Convert to m^3/s
+        Q_dc = inf_dc.F_vol # Convert to m^3/h
+        Q_ac = inf_ac.F_vol # Convert to m^3/h
         # [S_ac, S_et, S_la, S_pro, S_bu, S_va, S_su, S_he, Na, Cl, Fi, Fo, cmps_all.H2O], total 14
         C_dc = np.array([inf_dc.imol[ion] for ion in inf_dc.chemicals.IDs])
         print(f'C_dc = {C_dc}')
@@ -424,9 +424,13 @@ class ED_vfa(SanUnit):
         # # Update the overall state
         # self._state[:n] = eff_dc.state
         # self._state[n:] = eff_ac.state
+        #!!! Adding below myself
+        Q_dc = inf_dc.F_vol # Convert to m^3/h
+        Q_ac = inf_ac.F_vol # Convert to m^3/h
         # mg COD/L below
-        eff_dc.state[indices] = eff_dc.state[indices] * mass2mol[indices] * 1000 - self.J_T * self.A_m * 1000/ (Q_dc * 24 * 3600) * mol2mass[indices] * 1000
-        eff_ac.state[indices] = self.J_T * self.A_m / Q_ac * (1 - np.exp(-Q_ac * self.t / self.V))
+        #!!! Adding below myself
+        eff_dc.state[indices] = eff_dc.state[indices] - (self.J_T * self.A_m / Q_dc * 3600/1000) * mol2mass[indices] * 1000
+        eff_ac.state[indices] = (self.J_T * self.A_m / Q_ac * 3600/1000 * (1 - np.exp(-Q_ac * self.t / self.V / 3600))) * mol2mass[indices] * 1000
         
         # Debugging: Print updated states for verification
         print(f"Updated state (eff_dc): {eff_dc.state}")
@@ -436,11 +440,11 @@ class ED_vfa(SanUnit):
         # eff_ac.state[indices] = n_out_ac / self.V
         # for ion, CE in self.CE_dict.items():
         #     idx = cmps.index(ion)
-        #     # Moles of target ion transported [mol]
+        #     Moles of target ion transported [mol]
         #     n_T = CE * I / (self.z_T * F) * self.t
         #     print(f"Moles of {ion} transported (n_T): {n_T} mol")
     
-        #     # Target ion molar flux [mol/(m2*s)]
+        #     Target ion molar flux [mol/(m2*s)]
         #     J_T = CE * I / (self.z_T * F * self.A_m)
         #     print(f"Target ion molar flux (J_T) for {ion}: {J_T} mol/m^2/s")
     
