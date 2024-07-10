@@ -369,7 +369,7 @@ class ASM2d(CompiledProcesses):
                'K_O2_PAO', 'K_NO3_PAO', 'K_A_PAO', 'K_NH4_PAO', 'K_PS','K_P_PAO',
                'K_ALK_PAO', 'K_PP', 'K_MAX', 'K_IPP', 'K_PHA',
                'mu_AUT', 'b_AUT', 'K_O2_AUT', 'K_NH4_AUT', 'K_ALK_AUT', 'K_P_AUT',
-               'k_PRE', 'k_RED', 'K_ALK_PRE')
+               'k_PRE', 'k_RED', 'K_ALK_PRE', 'COD_deN')
 
 
     def __new__(cls, components=None,
@@ -413,24 +413,6 @@ class ASM2d(CompiledProcesses):
                                         parameters=cls._params,
                                         compile=False)
 
-        if path == _path:
-            _p12 = Process('anox_storage_PP',
-                           'S_PO4 + [Y_PHA]X_PHA + [?]S_NO3 -> X_PP + [?]S_N2 + [?]S_NH4 + [?]S_ALK',
-                           components=cmps,
-                           ref_component='X_PP',
-                           rate_equation='q_PP * S_O2/(K_O2_PAO+S_O2) * S_PO4/(K_PS+S_PO4) * S_ALK/(K_ALK_PAO+S_ALK) * (X_PHA/X_PAO)/(K_PHA+X_PHA/X_PAO) * (K_MAX-X_PP/X_PAO)/(K_IPP+K_MAX-X_PP/X_PAO) * X_PAO * eta_NO3_PAO * K_O2_PAO/S_O2 * S_NO3/(K_NO3_PAO+S_NO3)',
-                           parameters=('Y_PHA', 'q_PP', 'K_O2_PAO', 'K_PS', 'K_ALK_PAO', 'K_PHA', 'eta_NO3_PAO', 'K_IPP', 'K_NO3_PAO'),
-                           conserved_for=('COD', 'N', 'P', 'NOD', 'charge'))
-
-            _p14 = Process('PAO_anox_growth',
-                           '[1/Y_PAO]X_PHA + [?]S_NO3 + [?]S_PO4 -> X_PAO + [?]S_N2 + [?]S_NH4  + [?]S_ALK',
-                           components=cmps,
-                           ref_component='X_PAO',
-                           rate_equation='mu_PAO * S_O2/(K_O2_PAO + S_O2) * S_NH4/(K_NH4_PAO + S_NH4) * S_PO4/(K_P_PAO + S_PO4) * S_ALK/(K_ALK_PAO + S_ALK) * (X_PHA/X_PAO)/(K_PHA + X_PHA/X_PAO) * X_PAO * eta_NO3_PAO * K_O2_PAO/S_O2 * S_NO3/(K_NO3_PAO + S_NO3)',
-                           parameters=('Y_PAO', 'mu_PAO', 'K_O2_PAO', 'K_NH4_PAO', 'K_P_PAO', 'K_ALK_PAO', 'K_PHA', 'eta_NO3_PAO', 'K_NO3_PAO'),
-                           conserved_for=('COD', 'N', 'P', 'NOD', 'charge'))
-            self.extend([_p12, _p14])
-
         self.compile(to_class=cls)
         self.set_parameters(f_SI=f_SI, Y_H=Y_H, f_XI_H=f_XI_H, Y_PAO=Y_PAO, Y_PO4=Y_PO4,
                             Y_PHA=Y_PHA, f_XI_PAO=f_XI_PAO, Y_A=Y_A, f_XI_AUT=f_XI_AUT,
@@ -446,7 +428,8 @@ class ASM2d(CompiledProcesses):
                             K_MAX=K_MAX, K_IPP=K_IPP, K_PHA=K_PHA,
                             mu_AUT=mu_AUT, b_AUT=b_AUT, K_O2_AUT=K_O2_AUT, K_NH4_AUT=K_NH4_AUT,
                             K_ALK_AUT=K_ALK_AUT*12, K_P_AUT=K_P_AUT,
-                            k_PRE=k_PRE, k_RED=k_RED, K_ALK_PRE=K_ALK_PRE*12,
+                            k_PRE=k_PRE, k_RED=k_RED, K_ALK_PRE=K_ALK_PRE*12, 
+                            COD_deN=cmps.S_N2.i_COD-cmps.S_NO3.i_COD,
                             **kwargs)
         return self
     
@@ -716,7 +699,7 @@ class mASM2d(CompiledProcesses):
     
     '''
     _stoichio_params = ('f_SI', 'Y_H', 'Y_PAO', 'Y_PO4', 'Y_PHA', 'Y_A', 
-                        'f_XI_H', 'f_XI_PAO', 'f_XI_AUT','K_XPP', 'Mg_XPP')
+                        'f_XI_H', 'f_XI_PAO', 'f_XI_AUT', 'COD_deN', 'K_XPP', 'Mg_XPP')
     _kinetic_params = ('k_h', 'mu_H', 'mu_PAO', 'mu_AUT', 
                        'q_fe', 'q_PHA', 'q_PP', 
                        'b_H', 'b_PAO', 'b_PP', 'b_PHA', 'b_AUT', 
@@ -776,32 +759,6 @@ class mASM2d(CompiledProcesses):
                                         parameters=cls._stoichio_params,
                                         compile=False)
 
-        if path == _mpath:
-            _p6 = Process('denitri_S_F',
-                          '[1/Y_H]S_F + [?]S_NH4 + [?]S_IC + [?]S_PO4 + [?]S_NO3 -> [?]S_N2 + X_H',
-                          components=cmps,
-                          ref_component='X_H',
-                          conserved_for=('C', 'N', 'P', 'NOD', 'COD'))
-            _p7 = Process('denitri_S_A',
-                          '[1/Y_H]S_A + [?]S_NH4 + [?]S_IC + [?]S_PO4 + [?]S_NO3 -> [?]S_N2 + X_H',
-                          components=cmps,
-                          ref_component='X_H',
-                          conserved_for=('C', 'N', 'P', 'NOD', 'COD'))
-            _p12 = Process('anox_storage_PP',
-                           'S_PO4 + [K_XPP]S_K + [Mg_XPP]S_Mg +[Y_PHA]X_PHA + [?]S_NO3 -> X_PP + [?]S_N2 + [?]S_NH4 + [?]S_IC',
-                           components=cmps,
-                           ref_component='X_PP',
-                           conserved_for=('C', 'N', 'NOD', 'COD'))
-            _p14 = Process('PAO_anox_growth',
-                           '[1/Y_PAO]X_PHA + [?]S_NO3 + [?]S_PO4 -> X_PAO + [?]S_N2 + [?]S_NH4  + [?]S_IC',
-                           components=cmps,
-                           ref_component='X_PAO',
-                           conserved_for=('C', 'N', 'P', 'NOD', 'COD'))
-            self.insert(5, _p6)            
-            self.insert(6, _p7)            
-            self.insert(11, _p12)
-            self.insert(13, _p14)
-
         mmp = Processes.load_from_file(_mmp, components=cmps, 
                                        conserved_for=(), compile=False)
         mmp_stoichio = {}
@@ -838,7 +795,7 @@ class mASM2d(CompiledProcesses):
         dct['K_Henry'] = [K*mol_to_mass[cmps.index(i)]*1000 for K, i in zip(cls.K_Henry, cls.gas_IDs)]
         dct['mmp_stoichio'] = mmp_stoichio
         stoichio_vals = (f_SI, Y_H, Y_PAO, Y_PO4, Y_PHA, Y_A, 
-                         f_XI_H, f_XI_PAO, f_XI_AUT,
+                         f_XI_H, f_XI_PAO, f_XI_AUT, cmps.S_N2.i_COD-cmps.S_NO3.i_COD,
                          cmps.X_PP.i_K, cmps.X_PP.i_Mg)
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_vals))
         dct['_edecay'] = bool(electron_acceptor_dependent_decay)

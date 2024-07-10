@@ -4,11 +4,15 @@ anox_hydrolysis		1-f_SI		f_SI	?			?	?				-1
 anae_hydrolysis		1-f_SI		f_SI	?			?	?				-1					
 hetero_growth_S_F	1-1/Y_H	(-1)/Y_H			?			?	?					1				
 hetero_growth_S_A	1-1/Y_H		(-1)/Y_H		?			?	?					1				
+denitri_S_F		(-1)/Y_H			?	(1-Y_H)/(COD_deN*Y_H)	(Y_H-1)/(COD_deN*Y_H)	?	?					1				
+denitri_S_A			(-1)/Y_H		?	(1-Y_H)/(COD_deN*Y_H)	(Y_H-1)/(COD_deN*Y_H)	?	?					1				
 ferment		-1	1		?			?	?									
 hetero_lysis					?			?	?			f_XI_H	1-f_XI_H	-1				
 storage_PHA			-1		?			Y_PO4	?	Y_PO4*K_XPP	Y_PO4*Mg_XPP					(-Y_PO4)	1	
-aero_storage_PP	(-Y_PHA)				?			-1	?	(-K_XPP)	(-Mg_XPP)					1	(-Y_PHA)	
+aero_storage_PP	(-Y_PHA)							-1	?	(-K_XPP)	(-Mg_XPP)					1	(-Y_PHA)	
+anox_storage_PP						Y_PHA/COD_deN	(-Y_PHA)/COD_deN	-1	?	(-K_XPP)	(-Mg_XPP)					1	(-Y_PHA)	
 PAO_aero_growth_PHA	?				?			?	?						1		(-1)/Y_PAO	
+PAO_anox_growth					?	(1-Y_PAO)/(COD_deN*Y_PAO)	(Y_PAO-1)/(COD_deN*Y_PAO)	?	?						1		(-1)/Y_PAO	
 PAO_lysis					?			?	?			f_XI_PAO	1-f_XI_PAO		-1			
 PP_lysis					?			1	?	K_XPP	Mg_XPP					-1		
 PHA_lysis			1		?				?								-1	
