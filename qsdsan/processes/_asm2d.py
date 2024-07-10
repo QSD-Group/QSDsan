@@ -772,23 +772,33 @@ class mASM2d(CompiledProcesses):
 
         self = Processes.load_from_file(path,
                                         components=cmps,
-                                        conserved_for=('COD', 'C', 'N', 'P',),
+                                        conserved_for=('COD', 'C', 'N', 'P'),
                                         parameters=cls._stoichio_params,
                                         compile=False)
 
         if path == _mpath:
+            _p6 = Process('denitri_S_F',
+                          '[1/Y_H]S_F + [?]S_NH4 + [?]S_IC + [?]S_PO4 + [?]S_NO3 -> [?]S_N2 + X_H',
+                          components=cmps,
+                          ref_component='X_H',
+                          conserved_for=('C', 'N', 'P', 'NOD', 'COD'))
+            _p7 = Process('denitri_S_A',
+                          '[1/Y_H]S_A + [?]S_NH4 + [?]S_IC + [?]S_PO4 + [?]S_NO3 -> [?]S_N2 + X_H',
+                          components=cmps,
+                          ref_component='X_H',
+                          conserved_for=('C', 'N', 'P', 'NOD', 'COD'))
             _p12 = Process('anox_storage_PP',
                            'S_PO4 + [K_XPP]S_K + [Mg_XPP]S_Mg +[Y_PHA]X_PHA + [?]S_NO3 -> X_PP + [?]S_N2 + [?]S_NH4 + [?]S_IC',
                            components=cmps,
                            ref_component='X_PP',
                            conserved_for=('C', 'N', 'NOD', 'COD'))
-
             _p14 = Process('PAO_anox_growth',
                            '[1/Y_PAO]X_PHA + [?]S_NO3 + [?]S_PO4 -> X_PAO + [?]S_N2 + [?]S_NH4  + [?]S_IC',
                            components=cmps,
                            ref_component='X_PAO',
                            conserved_for=('C', 'N', 'P', 'NOD', 'COD'))
-            
+            self.insert(5, _p6)            
+            self.insert(6, _p7)            
             self.insert(11, _p12)
             self.insert(13, _p14)
 
