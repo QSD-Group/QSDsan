@@ -208,6 +208,11 @@ class SanUnit(Unit, isabstract=True):
         #: value.
         self.parallel: dict[str, int] = {}
 
+        #: Unit design decisions that must be solved to satisfy specifications.
+        #: While adding responses is optional, simulations benefit from responses
+        #: by being able to predict better guesses.
+        self.responses: set[bst.GenericResponse] = set()
+
         if not kwargs.get('skip_property_package_check'):
             self._assert_compatible_property_package()
             
