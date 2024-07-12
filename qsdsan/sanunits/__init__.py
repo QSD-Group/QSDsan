@@ -42,6 +42,7 @@ from ._crop_application import *
 from ._dynamic_influent import *
 from ._electrochemical_cell import *
 from ._excretion import *
+from ._facilities import *
 from ._heat_exchanging import *
 from ._junction import *
 from ._non_reactive import *
@@ -89,6 +90,7 @@ from . import (
         _dynamic_influent,
         _electrochemical_cell,
         _excretion,
+        _facilities,
         _flash,
         _heat_exchanging,
         _hydroprocessing,
@@ -132,6 +134,7 @@ __all__ = (
         *_dynamic_influent.__all__,
         *_electrochemical_cell.__all__,
         *_excretion.__all__,
+        *_facilities.__all__,
         *_flash.__all__,
         *_heat_exchanging.__all__,
         *_hydroprocessing.__all__,

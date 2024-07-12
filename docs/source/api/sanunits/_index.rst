@@ -39,6 +39,7 @@ Individual Unit Operations
    DynamicInfluent
    ElectrochemicalCell
    Excretion
+   facilities
    Flash
    heat_exchanging
    hydroprocessing

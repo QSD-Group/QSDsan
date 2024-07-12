@@ -19,7 +19,7 @@ for license details.
 
 # %%
 
-import numpy as np
+import numpy as np, biosteam as bst
 from collections import defaultdict
 from collections.abc import Iterable
 from warnings import warn
