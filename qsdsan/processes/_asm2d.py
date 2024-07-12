@@ -555,61 +555,55 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
         rhos[14:17] *= (aero[3] +eta_decay[1:4]*(1-aero[3])*anox[3])
         rhos[18] *= (aero[5] + eta_decay[4]*(1-aero[5])*anox[5])
     
-    ########## pH ############
-    mass2mol = params['mass2mol']
-    Ka = params['Ka']
-    Kw, Knh, Kc1, Kc2, Kp1, Kp2, Kp3, Kac = Ka
-    h = solve_pH(state_arr, Ka, mass2mol)
-    nh4 = state_arr[2] * h/(Knh + h)
-    co2, hco3, co3 = state_arr[8] * ion_speciation(h, Kc1, Kc2)
-    h3po4, h2po4, hpo4, po4 = state_arr[4] * ion_speciation(h, Kp1, Kp2, Kp3)
+    # ########## pH ############
+    # mass2mol = params['mass2mol']
+    # Ka = params['Ka']
+    # Kw, Knh, Kc1, Kc2, Kp1, Kp2, Kp3, Kac = Ka
+    # h = solve_pH(state_arr, Ka, mass2mol)
+    # nh4 = state_arr[2] * h/(Knh + h)
+    # co2, hco3, co3 = state_arr[8] * ion_speciation(h, Kc1, Kc2)
+    # h3po4, h2po4, hpo4, po4 = state_arr[4] * ion_speciation(h, Kp1, Kp2, Kp3)
     
-    ########## precipitation-dissolution #############
-    k_mmp = params['k_mmp']
-    Ksp = params['Ksp']
-    # K_dis = params['K_dis']
-    K_AlOH = params['K_AlOH']
-    K_FeOH = params['K_FeOH']
-    # f_dis = Monod(state_arr[19:24], K_dis[:5])
-    # if X_CaCO3 > 0: rhos[19] = (S_Ca * co3 - Ksp[0]) * f_dis[0]
-    # else: rhos[19] = S_Ca * co3
-    # if X_struv > 0: rhos[20] = (S_Mg * nh4 * po4 - Ksp[1]) * f_dis[1]
-    # else: rhos[20] = S_Mg * nh4 * po4
-    # if X_newb > 0: rhos[21] = (S_Mg * hpo4 - Ksp[2]) * f_dis[2]
-    # else: rhos[21] = S_Mg * hpo4
-    # if X_ACP > 0: rhos[22] = (S_Ca**3 * po4**2 - Ksp[3]) * f_dis[3]
-    # else: rhos[22] = S_Ca**3 * po4**2
-    # if X_MgCO3 > 0: rhos[23] = (S_Mg * co3 - Ksp[4]) * f_dis[4]
-    # else: rhos[23] = S_Mg * co3
-    SI = (S_Ca * co3 / Ksp[0])**(1/2)
-    if SI > 1: rhos[19] = X_CaCO3 * (SI-1)**2
-    else: rhos[19] = 0
+    # ########## precipitation-dissolution #############
+    # k_mmp = params['k_mmp']
+    # Ksp = params['Ksp']
+    # # K_dis = params['K_dis']
+    # K_AlOH = params['K_AlOH']
+    # K_FeOH = params['K_FeOH']
+    # # f_dis = Monod(state_arr[19:24], K_dis[:5])
+    # # if X_CaCO3 > 0: rhos[19] = (S_Ca * co3 - Ksp[0]) * f_dis[0]
+    # # else: rhos[19] = S_Ca * co3
+    # # if X_struv > 0: rhos[20] = (S_Mg * nh4 * po4 - Ksp[1]) * f_dis[1]
+    # # else: rhos[20] = S_Mg * nh4 * po4
+    # # if X_newb > 0: rhos[21] = (S_Mg * hpo4 - Ksp[2]) * f_dis[2]
+    # # else: rhos[21] = S_Mg * hpo4
+    # # if X_ACP > 0: rhos[22] = (S_Ca**3 * po4**2 - Ksp[3]) * f_dis[3]
+    # # else: rhos[22] = S_Ca**3 * po4**2
+    # # if X_MgCO3 > 0: rhos[23] = (S_Mg * co3 - Ksp[4]) * f_dis[4]
+    # # else: rhos[23] = S_Mg * co3
+    # SI = (S_Ca * co3 / Ksp[0])**(1/2)
+    # if SI > 1: rhos[19] = X_CaCO3 * (SI-1)**2
+    # else: rhos[19] = 0
 
-    SI = (S_Mg * nh4 * po4 / Ksp[1])**(1/3)
-    if SI > 1: rhos[20] = X_struv * (SI-1)**3
-    else: rhos[20] = 0
+    # SI = (S_Mg * nh4 * po4 / Ksp[1])**(1/3)
+    # if SI > 1: rhos[20] = X_struv * (SI-1)**3
+    # else: rhos[20] = 0
 
-    SI = (S_Mg * hpo4 / Ksp[2])**(1/2)
-    if SI > 1: rhos[21] =  X_newb * (SI-1)**2
-    else: rhos[21] = 0
+    # SI = (S_Mg * hpo4 / Ksp[2])**(1/2)
+    # if SI > 1: rhos[21] =  X_newb * (SI-1)**2
+    # else: rhos[21] = 0
     
-    SI = (S_Ca**3 * po4**2 / Ksp[3])**(1/5)
-    if SI > 1: rhos[22] = X_ACP * (SI-1)**5
-    else: rhos[22] = 0
+    # SI = (S_Ca**3 * po4**2 / Ksp[3])**(1/5)
+    # if SI > 1: rhos[22] = X_ACP * (SI-1)**5
+    # else: rhos[22] = 0
     
-    SI = (S_Mg * co3 / Ksp[4])**(1/2)
-    if SI > 1: rhos[23] = X_MgCO3 * (SI-1)**2
-    else: rhos[23] = 0
+    # SI = (S_Mg * co3 / Ksp[4])**(1/2)
+    # if SI > 1: rhos[23] = X_MgCO3 * (SI-1)**2
+    # else: rhos[23] = 0
     
-    rhos[24] = X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
-    rhos[25] = X_FeOH * po4 * Monod(X_FeOH, K_FeOH)
-    rhos[19:26] *= k_mmp
-    
-    ########### gas stripping ###########
-    # kLa_n2, kLa_co2 = params['kLa']
-    # KH_n2, KH_co2 = params['K_Henry']  # assume already temperature-corrected
-    # rhos[26] = kLa_n2*(S_N2 - KH_n2*p_n2_air/mass2mol[1]*1e3)   # M/atm * atm / mol/g * 1000 mg/g = mg/L
-    # rhos[27] = kLa_co2*(co2 - KH_co2*p_co2_air/mass2mol[8]*1e3)   # M/atm * atm / mol/g * 1000 mg/g = mg/L
+    # rhos[24] = X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
+    # rhos[25] = X_FeOH * po4 * Monod(X_FeOH, K_FeOH)
+    # rhos[19:26] *= k_mmp
     
     return rhos
 
@@ -741,8 +735,10 @@ class mASM2d(CompiledProcesses):
                 K_NH4_H=0.05, K_NH4_PAO=0.05, K_NH4_AUT=1.0, 
                 K_P_H=0.01, K_P_PAO=0.01, K_P_AUT=0.01, K_P_S=0.2, 
                 K_PP=0.01, K_MAX=0.34, K_IPP=0.02, K_PHA=0.01,
-                k_mmp=(5.0, 300, 0.05, 150, 50, 1.0, 1.0),
-                pKsp=(6.45, 13.16, 5.8, 23, 7, 21, 26),
+                # k_mmp=(5.0, 300, 0.05, 150, 50, 1.0, 1.0),
+                # pKsp=(6.45, 13.16, 5.8, 23, 7, 21, 26),
+                k_mmp=(0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),  # Flores-Alsina 2016
+                pKsp=(8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76),  # Flores-Alsina 2016
                 K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
                 K_AlOH=0.001, K_FeOH=0.001, 
                 pKa=(14, 9.25, 6.37, 10.32, 2.12, 7.21, 12.32, 4.76),
