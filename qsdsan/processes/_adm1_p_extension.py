@@ -919,7 +919,7 @@ class ADM1p(ADM1):
                 k_mmp=(0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),  # Flores-Alsina 2016
                 pKsp=(8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76),  # Flores-Alsina 2016
                 K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
-                K_AlOH=0.001, K_FeOH=0.001, 
+                K_AlOH=1.0e-6, K_FeOH=1.0e-6,  # kg/m3
                 **kwargs):
         
         cmps = _load_components(components)
