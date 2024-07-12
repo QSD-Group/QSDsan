@@ -4,9 +4,9 @@ name: build-only
 
 on:
   push:
-    branches: [beta, dev]
+    branches: [beta, dev, trial]
   pull_request:
-    branches: [beta, dev]
+    branches: [beta, dev, trial]
 
 jobs:
   build:
