@@ -18,10 +18,12 @@ import numpy as np
 from math import ceil, pi
 from biosteam import Stream
 from .. import SanUnit, Construction, WasteStream
-from ..processes import Decay
+from ..processes import Decay, T_correction_factor
 from ..sanunits import HXutility, WWTpump, CSTR
 from ..utils import ospath, load_data, data_path, auom, \
     calculate_excavation_volume, ExogenousDynamicVariable as EDV
+from scipy.optimize import newton
+
 __all__ = (
     'AnaerobicBaffledReactor',
     'AnaerobicCSTR',
@@ -261,6 +263,7 @@ class AnaerobicCSTR(CSTR):
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False
     _R = 8.3145e-2 # Universal gas constant, [bar/M/K]
+    algebraic_h2 = False
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', V_liq=3400, V_gas=300, model=None,  
@@ -291,7 +294,7 @@ class AnaerobicCSTR(CSTR):
         self._f_retain = np.array([fraction_retain if cmp.ID in retain_cmps \
                                    else 0 for cmp in self.components])
         self._mixed = WasteStream()
-        self._tempstate = []
+        self._tempstate = {}
     
     def ideal_gas_law(self, p=None, S=None):
         '''Calculates partial pressure [bar] given concentration [M] at 
@@ -339,13 +342,13 @@ class AnaerobicCSTR(CSTR):
         if model is not None:
             #!!! how to make unit conversion generalizable to all models?
             self._S_vapor = self.ideal_gas_law(p=self.p_vapor())
-            self._n_gas = len(model._biogas_IDs)
-            self._state_keys = list(self.components.IDs) \
+            self._n_gas = ng = len(model._biogas_IDs)
+            self._state_keys = keys = list(self.components.IDs) \
                 + [ID+'_gas' for ID in self.model._biogas_IDs] \
                 + ['Q']
             self._gas_cmp_idx = self.components.indices(self.model._biogas_IDs)
-            self._state_header = self._state_keys
-    
+            units = ['kg/m3']*len(self.components) + ['M']*ng + ['m3/d']
+            self._state_header = [f'{name} [{unit}]' for name, unit in zip(keys, units)]
 
     split = property(CSTR.split.fget)
     @split.setter
@@ -444,11 +447,14 @@ class AnaerobicCSTR(CSTR):
 
     def _update_state(self):
         y = self._state
+        y[-1] = sum(ws.state[-1] for ws in self.ins)
+        y[y<0] = 0.
         f_rtn = self._f_retain
         i_mass = self.components.i_mass
         chem_MW = self.components.chem_MW
         n_cmps = len(self.components)
         Cs = y[:n_cmps]*(1-f_rtn)*1e3 # kg/m3 to mg/L
+        pH = self._tempstate.pop('pH', 7)
         if self.split is None:
             gas, liquid = self._outs
             if liquid.state is None:
@@ -456,6 +462,7 @@ class AnaerobicCSTR(CSTR):
             else:
                 liquid.state[:n_cmps] = Cs
                 liquid.state[-1] = y[-1]
+            liquid._pH = pH
         else:
             gas = self._outs[0]
             liquids = self._outs[1:]
@@ -464,7 +471,8 @@ class AnaerobicCSTR(CSTR):
                     liquid.state = np.append(Cs, y[-1]*spl)
                 else:
                     liquid.state[:n_cmps] = Cs
-                    liquid.state[-1] = y[-1]*spl        
+                    liquid.state[-1] = y[-1]*spl
+                liquid._pH = pH
         if gas.state is None:
             gas.state = np.zeros(n_cmps+1)
         gas.state[self._gas_cmp_idx] = y[n_cmps:(n_cmps + self._n_gas)]
@@ -515,15 +523,16 @@ class AnaerobicCSTR(CSTR):
     @property
     def ODE(self):
         if self._ODE is None:
-            self._compile_ODE()
+            self._compile_ODE(self.algebraic_h2)
         return self._ODE
     
-    def _compile_ODE(self):
+    def _compile_ODE(self, algebraic_h2=True):
         if self._model is None:
             CSTR._compile_ODE(self)
         else:
             cmps = self.components
             f_rtn = self._f_retain
+            _state = self._state
             _dstate = self._dstate
             _update_dstate = self._update_dstate
             _f_rhos = self.model.rate_function
@@ -536,37 +545,72 @@ class AnaerobicCSTR(CSTR):
             gas_mass2mol_conversion = (cmps.i_mass / cmps.chem_MW)[self._gas_cmp_idx]
             hasexo = bool(len(self._exovars))
             f_exovars = self.eval_exo_dynamic_vars
-            # _rQ = self._rQ
             if self._fixed_P_gas:
                 f_qgas = self.f_q_gas_fixed_P_headspace
             else:
                 f_qgas = self.f_q_gas_var_P_headspace
+            if self.model._dyn_params:
+                def M_stoichio(state_arr):
+                    _f_param(state_arr)
+                    return self.model.stoichio_eval().T
+            else:
+                _M_stoichio = self.model.stoichio_eval().T
+                M_stoichio = lambda state_arr: _M_stoichio
+            
+            h2_idx = cmps.index('S_h2')
+            if algebraic_h2:
+                params = self.model.rate_function.params
+                if self.model._dyn_params:
+                    def h2_stoichio(state_arr):
+                        return M_stoichio(state_arr)[h2_idx]
+                else:
+                    _h2_stoichio = _M_stoichio[h2_idx]
+                    h2_stoichio = lambda state_arr: _h2_stoichio
+                unit_conversion = cmps.i_mass / cmps.chem_MW
+                solve_pH = self.model.solve_pH
+                dydt_Sh2_AD = self.model.dydt_Sh2_AD
+                grad_dydt_Sh2_AD = self.model.grad_dydt_Sh2_AD
+                def solve_h2(QC, S_in, T):
+                    Ka = params['Ka_base'] * T_correction_factor(params['T_base'], T, params['Ka_dH'])
+                    h = solve_pH(QC, Ka, unit_conversion)
+                    # S_h2_0 = QC[h2_idx]
+                    S_h2_0 = 2.8309E-07
+                    S_h2_in = S_in[h2_idx]
+                    S_h2 = newton(dydt_Sh2_AD, S_h2_0, grad_dydt_Sh2_AD,
+                                  args=(QC, h, params, h2_stoichio, V_liq, S_h2_in), 
+                                  )
+                    return S_h2
+                def update_h2_dstate(dstate):
+                    dstate[h2_idx] = 0.
+            else:
+                solve_h2 = lambda QC, S_ins, T: QC[h2_idx]
+                def update_h2_dstate(dstate):
+                    pass
             def dy_dt(t, QC_ins, QC, dQC_ins):
-                S_liq = QC[:n_cmps]
-                S_gas = QC[n_cmps: (n_cmps+n_gas)]
-                #!!! Volume change due to temperature difference accounted for 
-                # in _run and _init_state
-                # Q = QC[-1]
-                # S_in = QC_ins[0,:-1] * 1e-3  # mg/L to kg/m3
-                # Q_in = QC_ins[0,-1]
+                QC[QC < 2.2e-16] = 0.
                 Q_ins = QC_ins[:, -1]
                 S_ins = QC_ins[:, :-1] * 1e-3  # mg/L to kg/m3
                 Q = sum(Q_ins)
+                S_in = Q_ins @ S_ins / Q
                 if hasexo:
                     exo_vars = f_exovars(t)
                     QC = np.append(QC, exo_vars)
                     T = exo_vars[0]
                 else: T = self.T
-                _f_param(QC)
-                M_stoichio = _M_stoichio()
+                QC[h2_idx] = _state[h2_idx] = solve_h2(QC, S_in, T)
                 rhos =_f_rhos(QC)
+                S_liq = QC[:n_cmps]
+                S_gas = QC[n_cmps: (n_cmps+n_gas)]
                 _dstate[:n_cmps] = (Q_ins @ S_ins - Q*S_liq*(1-f_rtn))/V_liq \
-                    + np.dot(M_stoichio.T, rhos)
+                    + np.dot(M_stoichio(QC), rhos)
                 q_gas = f_qgas(rhos[-3:], S_gas, T)
                 _dstate[n_cmps: (n_cmps+n_gas)] = - q_gas*S_gas/V_gas \
                     + rhos[-3:] * V_liq/V_gas * gas_mass2mol_conversion
-                _dstate[-1] = dQC_ins[0,-1] #* _rQ
+                # _dstate[-1] = dQC_ins[0,-1]
+                _dstate[-1] = 0.
+                update_h2_dstate(_dstate)
                 _update_dstate()
+                
             self._ODE = dy_dt
 
     def get_retained_mass(self, biomass_IDs):

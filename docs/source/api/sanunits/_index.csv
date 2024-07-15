@@ -3,7 +3,7 @@ ADMtoASM,Yes,Yes,Completed
 ﻿AnMBR (anaerobic membrane bioreactor),No,No,Completed
 ActivatedSludgeProcess,No,No,Completed
 AnaerobicBaffledReactor,No,No,Completed
-AnaerobicCSTR,Yes,No,Under development
+AnaerobicCSTR,Yes,No,Completed
 AnaerobicDigestion,No,No,Completed
 ASMtoADM,Yes,Yes,Completed
 BatchExperiment,Yes,Yes,Completed
