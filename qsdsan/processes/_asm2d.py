@@ -348,7 +348,7 @@ class ASM2d(CompiledProcesses):
     >>> cmps = pc.create_asm2d_cmps()
     >>> asm2d = pc.ASM2d()
     >>> asm2d.show()
-    ASM2d([aero_hydrolysis, anox_hydrolysis, anae_hydrolysis, hetero_growth_S_F, hetero_growth_S_A, denitri_S_F, denitri_S_A, ferment, hetero_lysis, PAO_storage_PHA, aero_storage_PP, PAO_aero_growth_PHA, PAO_lysis, PP_lysis, PHA_lysis, auto_aero_growth, auto_lysis, precipitation, redissolution, anox_storage_PP, PAO_anox_growth])
+    ASM2d([aero_hydrolysis, anox_hydrolysis, anae_hydrolysis, hetero_growth_S_F, hetero_growth_S_A, denitri_S_F, denitri_S_A, ferment, hetero_lysis, PAO_storage_PHA, aero_storage_PP, anox_storage_PP, PAO_aero_growth_PHA, PAO_anox_growth, PAO_lysis, PP_lysis, PHA_lysis, auto_aero_growth, auto_lysis, precipitation, redissolution])
 
     References
     ----------
@@ -612,8 +612,7 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
 class mASM2d(CompiledProcesses):
     '''
     Modified ASM2d. [1]_, [2]_ Compatible with `ADM1p` for plant-wide simulations.
-    Includes an algebraic pH solver, precipitation/dissolution of common minerals,
-    and gas stripping/dissolution.
+    Includes an algebraic pH solver and precipitation/dissolution of common minerals.
 
     Parameters
     ----------
@@ -674,7 +673,7 @@ class mASM2d(CompiledProcesses):
     >>> cmps = pc.create_masm2d_cmps()
     >>> asm = pc.mASM2d()
     >>> asm.show()
-    mASM2d([aero_hydrolysis, anox_hydrolysis, anae_hydrolysis, hetero_growth_S_F, hetero_growth_S_A, denitri_S_F, denitri_S_A, ferment, hetero_lysis, storage_PHA, aero_storage_PP, anox_storage_PP, PAO_aero_growth_PHA, PAO_anox_growth, PAO_lysis, PP_lysis, PHA_lysis, auto_aero_growth, auto_lysis, CaCO3_precipitation_dissolution, struvite_precipitation_dissolution, newberyite_precipitation_dissolution, ACP_precipitation_dissolution, MgCO3_precipitation_dissolution, AlPO4_precipitation_dissolution, FePO4_precipitation_dissolution, N2_stripping, IC_stripping])
+    mASM2d([aero_hydrolysis, anox_hydrolysis, anae_hydrolysis, hetero_growth_S_F, hetero_growth_S_A, denitri_S_F, denitri_S_A, ferment, hetero_lysis, storage_PHA, aero_storage_PP, anox_storage_PP, PAO_aero_growth_PHA, PAO_anox_growth, PAO_lysis, PP_lysis, PHA_lysis, auto_aero_growth, auto_lysis, CaCO3_precipitation_dissolution, struvite_precipitation_dissolution, newberyite_precipitation_dissolution, ACP_precipitation_dissolution, MgCO3_precipitation_dissolution, AlPO4_precipitation_dissolution, FePO4_precipitation_dissolution])
 
 
     References
