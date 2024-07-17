@@ -147,13 +147,17 @@ cmps = create_ed_vfa_cmps()
 # If we need in industrial application
 # feed_stream = qs.WasteStream(ID='feed_stream', T=298.15, P=101325, phase='l',
 #                              components={'Water': 965, 'NaCl': 35})
-Q = 5 # L/hr
-HRT = 5 # HRT of Tank in hr
-# HRT of Compartment may be needed
+Q_dc = 0.05 # L/hr, Q_dc, Q_ac may be needed
+Q_ac = 0.05
+HRT_dc = 5 # hr, HRT_dc, HRT_ac may be needed, V_ac should be smaller than V_dc due to upconcentration
+HRT_ac = 1
+
+#!!! Below is needed to be revised
 inf_dc = WasteStream(ID='inf_dc')
-inf_dc.set_flow_by_concentration(Q, concentrations={'S_pro': 5000, 'S_bu': 5000, 'S_he': 5000}, units=('L/hr', 'mg/L'))
+inf_dc.set_flow_by_concentration(concentrations={'S_pro': 5000, 'S_bu': 5000, 'S_he': 5000}, units=('L/hr', 'mg/L'))
 eff_dc = WasteStream(ID='eff_dc')
 eff_ac = WasteStream(ID='eff_ac')
+
 #WasteStream
 #Same as ADM1 Effluent Q
 # inf_dc = WasteStream(ID='inf_dc')
@@ -177,8 +181,8 @@ class ED_vfa(SanUnit):
                  j=500,  # Current density in A/m^2
                  t=3600,  # Time in seconds
                  A_m=0.5,  # Membrane area in m^2
-                 V_dc=Q*HRT/1000,  # Volume of dilute tank in m^3
-                 V_ac=Q*HRT/1000,  # Volume of accumulated tank in m^3
+                 V_dc=Q_dc*HRT_dc,  # Volume of dilute tank in m^3
+                 V_ac=Q_ac*HRT_ac,  # Volume of accumulated tank in m^3
                  z_T=1.0,
                  r_m=1.0,  # Membrane resistance in Ohm*m^2
                  r_s=1.0):  # Solution resistance in Ohm*m^2
@@ -339,7 +343,7 @@ class ED_vfa(SanUnit):
         'System voltage': 'V',
         'Power consumption': 'W'
     }
-
+            
     def _design(self):
         D = self.design_results
         D['Membrane area'] = self.A_m
