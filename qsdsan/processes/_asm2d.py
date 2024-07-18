@@ -522,7 +522,8 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
     nutrients = Monod(S_NH4, Ks_nh4) * Monod(S_PO4, Ks_po4)
 
     rhos[:19] = ks
-    rhos[:9] *= X_H * nutrients[0]
+    rhos[:9] *= X_H 
+    rhos[3:7] *= nutrients[0]
     rhos[9:15] *= X_PAO
     rhos[12:14] *= nutrients[1]
     rhos[15] *= X_PP
