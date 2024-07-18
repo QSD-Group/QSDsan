@@ -68,7 +68,7 @@ class Thickener(SanUnit):
     ins : class:`WasteStream`
         Influent to the clarifier. Expected number of influent is 1. 
     outs : class:`WasteStream`
-        Treated effluent and sludge.
+        Thickened sludge and effluent.
     thickener_perc : float
         The percentage of solids in the underflow of the thickener.[1]
     TSS_removal_perc : float

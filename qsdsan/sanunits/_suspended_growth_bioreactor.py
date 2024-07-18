@@ -1135,6 +1135,7 @@ class PFR(SanUnit):
     def _update_state(self):
         out, = self.outs
         ncol = self._ncol
+        self._state[self._state < 2.2e-16] = 0.
         self._state[self._Qs_idx] = self._Qs
         if out.state is None: out.state = np.zeros(ncol)
         out.state[:-1] = self._state[-ncol:-1]
@@ -1247,6 +1248,12 @@ class PFR(SanUnit):
                 _update_dstate()
                 
         self._ODE = dy_dt
+
+    def get_retained_mass(self, biomass_IDs):
+        cmps = self.components
+        idx = cmps.indices(biomass_IDs)
+        mass = self.state.iloc[:,idx] @ cmps.i_mass[idx]
+        return mass @ self.V_tanks
 
     def _design(self):
         pass
