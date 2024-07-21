@@ -24,6 +24,7 @@ from qsdsan import Component, Components
 from thermosteam import settings
 from chemicals.elements import molecular_weight as get_mw
 from qsdsan.utils import ospath, data_path
+import matplotlib.pyplot as plt
 
 __all__ = ('create_ed_vfa_cmps', 'ED_vfa'
            )
@@ -134,20 +135,22 @@ def create_ed_vfa_cmps(set_thermo=True):
     if set_thermo: settings.set_thermo(cmps_ed_vfa)
 
     return cmps_ed_vfa
+cmps = create_ed_vfa_cmps()
 # I need to group C2 to C6 later?
 #%%
 # If we need in industrial application
 # feed_stream = qs.WasteStream(ID='feed_stream', T=298.15, P=101325, phase='l',
 #                              components={'Water': 965, 'NaCl': 35})
-Q_dc = 0.05 # L/hr, Q_dc, Q_ac may be needed
-Q_ac = 0.05
-HRT_dc = 5 # hr, HRT_dc, HRT_ac may be needed, V_ac should be smaller than V_dc due to upconcentration
-HRT_ac = 1
+Q_dc = 0.3 # L/hr, Q_dc, Q_ac may be needed
+Q_ac = 0.3 # 5mL/min flow circulation (NY)
+HRT_dc = 3.33 # hr, HRT_dc, HRT_ac may be needed, V_ac should be smaller than V_dc due to upconcentration
+HRT_ac = 0.33 # DC: 1L, AC: 0.1L (NY)
 
 #WasteStream
 #Same as ADM1 Effluent Q
+#S_pro = S_bu = S_he = 25mM (NY&WS)
 inf_dc = WasteStream(ID='inf_dc')
-inf_dc.set_flow_by_concentration(flow_tot=Q_dc, concentrations={'S_pro': 5000, 'S_bu': 5000, 'S_he': 5000}, units=('L/hr', 'mg/L'))
+inf_dc.set_flow_by_concentration(flow_tot=Q_dc, concentrations={'S_pro': 2800, 'S_bu': 4000, 'S_he': 6400}, units=('L/hr', 'mg/L'))
 inf_ac = WasteStream(ID='inf_ac')
 inf_ac.set_flow_by_concentration(flow_tot=Q_ac, concentrations={'Na+': 500, 'Cl-': 500}, units=('L/hr', 'mg/L'))
 eff_dc = WasteStream(ID='eff_dc')               # effluent
@@ -164,16 +167,16 @@ F=96485.33289  # Faraday's constant in C/mol
 class ED_vfa(SanUnit):
     def __init__(self, ID='', ins=None, outs=None, thermo=None, init_with='WasteStream',
                  permselectivity=None,  # Dictionary of permselectivity for each ion pair
-                 j=500,  # Current density in A/m^2
-                 t=3600,  # Time in seconds
-                 A_m=0.5,  # Membrane area in m^2
+                 j=8.23,  # Current density in A/m^2 under 0.8 V (WS)
+                 t=3600*6,  # Time in seconds
+                 A_m=0.016,  # Membrane area in m^2 (NY&WS)
                  V_dc=Q_dc*HRT_dc,  # Volume of dilute tank in m^3
                  V_ac=Q_ac*HRT_ac,  # Volume of accumulated tank in m^3
                  z_T=1.0,
                  r_m=1.0,  # Membrane resistance in Ohm*m^2
                  r_s=1.0):  # Solution resistance in Ohm*m^2
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
-        self.permselectivity = permselectivity or {'S_pro/S_bu': 1.0, 'S_pro/S_he': 1.0, 'S_bu/S_he': 1.0}  # Default permselectivity
+        self.permselectivity = permselectivity or {'S_pro/S_bu': 1.063682, 'S_pro/S_he': 1.555841, 'S_bu/S_he': 1.462693}  # Default permselectivity
         self.j = j
         self.t = t
         self.A_m = A_m
@@ -201,13 +204,6 @@ class ED_vfa(SanUnit):
         I = self.j * self.A_m
         self.total_current = I
         print(f"Total current (I): {I} A")
-
-        # Obtain the flow rates from the influent streams
-        Q_dc = inf_dc.F_vol  # Flow rate from influent dilute stream in m^3/hr
-        self.Q_dc = Q_dc / 3600  # Convert to m^3/s
-
-        print(f"Flow rate (Q_dc): {Q_dc} m^3/hr")
-        print(f"Converted flow rate (Q_dc): {self.Q_dc} m^3/s")
 
         # Print volumes of the reactors
         print(f"Dilute tank volume (V_dc): {self.V_dc} m^3")
@@ -240,7 +236,7 @@ class ED_vfa(SanUnit):
         CE_dict = {'S_pro': ce_S_pro, 'S_bu': ce_S_bu, 'S_he': ce_S_he}
         self.CE_dict = CE_dict
         
-        print(f"Current efficiency dictionary: {CE_dict}")
+        print(f"Charge efficiency dictionary: {CE_dict}")
         
         for ion, CE in self.CE_dict.items():
             # Moles of target ion transported [mol]
@@ -264,8 +260,8 @@ class ED_vfa(SanUnit):
             # mol/L below
             C_D_tank = (n_D_tank_initial - J_T * self.A_m * self.t) / (self.V_dc * 1000)
             C_A_tank = J_T * self.A_m * self.t / (self.V_ac * 1000)
-            print(f"Concentration in dilute tank (C_D_tank) for {ion}: {C_D_tank}")
-            print(f"Concentration in accumulated tank (C_A_tank) for {ion}: {C_A_tank}")
+            print(f"Concentration in dilute tank (C_D_tank) for {ion}: {C_D_tank} mole/L")
+            print(f"Concentration in accumulated tank (C_A_tank) for {ion}: {C_A_tank} mole/L")
             
             # kmole/hr below
             eff_dc.imol[ion] = C_D_tank * self.V_dc / (self.t / 3600)
@@ -326,3 +322,42 @@ ed1 = ED_vfa(
 # Simulate the process
 ed1.simulate()
 print(ed1.results())
+#%%
+# Define the time durations for the simulations (in seconds)
+time_durations = [3600 * t for t in range(1, 21)]
+
+# Initialize a dictionary to store the C_A_tank values for each ion
+C_A_tank_values = {'S_pro': [], 'S_bu': [], 'S_he': []}
+
+# Loop over the defined time durations and run the simulation for each
+for t in time_durations:
+    # Create a new instance of the ED_vfa class for each simulation
+    ed = ED_vfa(
+        ID=f'ED_t_{t}',
+        ins=(inf_dc, inf_ac),
+        outs=(eff_dc, eff_ac),
+        t=t  # Set the time duration for this simulation
+    )
+    
+    # Run the simulation
+    ed.simulate()
+    
+    # Extract the C_A_tank values and store them
+    for ion in C_A_tank_values.keys():
+        initial_concentration = inf_dc.imol[ion] * 1000 / Q_dc
+        CE = ed.CE_dict[ion]
+        J_T = CE * ed.total_current / (ed.z_T * F * ed.A_m)
+        C_A_tank = J_T * ed.A_m * ed.t / (ed.V_ac * 1000)
+        C_A_tank_values[ion].append(C_A_tank)
+
+# Plot the results for C_A_tank
+plt.figure(figsize=(12, 8))
+for ion, values in C_A_tank_values.items():
+    plt.plot(range(1, 21), values, label=ion)
+
+plt.xlabel('Time (hours)')
+plt.ylabel('C_A_tank (mole/L)')
+plt.title('C_A_tank over time for different ions')
+plt.legend()
+plt.grid(True)
+plt.show()
