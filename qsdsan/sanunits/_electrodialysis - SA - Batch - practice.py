@@ -16,6 +16,7 @@ from thermosteam.utils import chemicals_user
 from thermosteam import settings
 from chemicals.elements import molecular_weight as get_mw
 from qsdsan import Component, Components, WasteStream, SanUnit, Process, Processes, CompiledProcesses, System
+from qsdsan.sanunits import _suspended_growth_bioreactor as sgb
 import numpy as np
 from qsdsan.utils import ospath, data_path
 from scipy.optimize import brenth
@@ -135,24 +136,35 @@ def create_ed_vfa_cmps(set_thermo=True):
     if set_thermo: settings.set_thermo(cmps_ed_vfa)
 
     return cmps_ed_vfa
+cmps = create_ed_vfa_cmps()
+# C2 = cmps['S_ac']
+# C3 = cmps['S_la', 'S_pro']
+# C4 = cmps['S_bu']
+# C5 = cmps['S_va']
+# C6 = cmps['S_su']
+# ed_vfa_cmps = create_ed_vfa_cmps()
 # I need to group C2 to C6 later?
 #%%
 # If we need in industrial application
 # feed_stream = qs.WasteStream(ID='feed_stream', T=298.15, P=101325, phase='l',
 #                              components={'Water': 965, 'NaCl': 35})
-Q_dc = 0.05 # L/hr, Q_dc, Q_ac may be needed
-Q_ac = 0.05
+Q_dc = 5 # L/hr, Q_dc, Q_ac may be needed
+Q_ac = 5
 HRT_dc = 5 # hr, HRT_dc, HRT_ac may be needed, V_ac should be smaller than V_dc due to upconcentration
 HRT_ac = 1
 
+#!!! Below is needed to be revised
+dc = WasteStream(ID='dc', 'S_pro': 5000, 'S_bu': 5000, 'S_he': 5000, H2O=100 units='kg/hr')
+ac = WasteStream(ID='ac')
+
 #WasteStream
 #Same as ADM1 Effluent Q
-inf_dc = WasteStream(ID='inf_dc')
-inf_dc.set_flow_by_concentration(flow_tot=Q_dc, concentrations={'S_pro': 5000, 'S_bu': 5000, 'S_he': 5000}, units=('L/hr', 'mg/L'))
-inf_ac = WasteStream(ID='inf_ac')
-inf_ac.set_flow_by_concentration(flow_tot=Q_ac, concentrations={'Na+': 500, 'Cl-': 500}, units=('L/hr', 'mg/L'))
-eff_dc = WasteStream(ID='eff_dc')               # effluent
-eff_ac = WasteStream(ID='eff_ac')               # effluent
+# inf_dc = WasteStream(ID='inf_dc')
+# inf_dc.set_flow_by_concentration(flow_tot=5, concentrations={'S_pro': 5000, 'S_bu': 5000, 'S_he': 5000}, units=('L/hr', 'mg/L'))
+# inf_ac = WasteStream(ID='inf_ac')
+# inf_ac.set_flow_by_concentration(flow_tot=5, concentrations={'Na+': 500, 'Cl-': 500}, units=('L/hr', 'mg/L'))
+# eff_dc = WasteStream(ID='eff_dc')               # effluent
+# eff_ac = WasteStream(ID='eff_ac')               # effluent
 #%%
 # SanUnit
 
@@ -161,8 +173,8 @@ eff_ac = WasteStream(ID='eff_ac')               # effluent
 #     return cmps.i_mass / cmps.chem_MW
 # unit_conversion = mass2mol_conversion(cmps)
 F=96485.33289  # Faraday's constant in C/mol
-
-class ED_vfa(SanUnit):
+BatchExperiment=sgb.BatchExperiment()
+class ED_vfa(sgb.BatchExperiment):
     def __init__(self, ID='', ins=None, outs=None, thermo=None, init_with='WasteStream',
                  permselectivity=None,  # Dictionary of permselectivity for each ion pair
                  j=500,  # Current density in A/m^2
@@ -187,16 +199,12 @@ class ED_vfa(SanUnit):
         # Initialize dictionaries to store transport data
         self.n_T_dict = {}
         self.J_T_dict = {}
-        # Initializing effluent streams with influent values
-        eff_dc.copy_like(inf_dc)
-        eff_ac.copy_like(inf_ac)
         
-    _N_ins = 2
+    _N_ins = 0
     _N_outs = 2
 
     def _run(self):
-        inf_dc, inf_ac = self.ins
-        eff_dc, eff_ac = self.outs
+        dc, ac = self.outs
 
         # Calculate total current [A]
         I = self.j * self.A_m
@@ -204,7 +212,7 @@ class ED_vfa(SanUnit):
         print(f"Total current (I): {I} A")
 
         # Obtain the flow rates from the influent streams
-        Q_dc = inf_dc.F_vol  # Flow rate from influent dilute stream in m^3/hr
+        Q_dc = dc.F_vol  # Flow rate from influent dilute stream in m^3/hr
         self.Q_dc = Q_dc / 3600  # Convert to m^3/s
 
         print(f"Flow rate (Q_dc): {Q_dc} m^3/hr")
@@ -218,9 +226,9 @@ class ED_vfa(SanUnit):
         # eff_ac.copy_like(inf_dc)
 
         initial_concentrations = {
-            'S_pro': inf_dc.imol['S_pro'] * 1000 / Q_dc, # = kmole/hr * 1000 * hr/L = mole/L
-            'S_bu': inf_dc.imol['S_bu'] * 1000 / Q_dc, # mole/L
-            'S_he': inf_dc.imol['S_he'] * 1000 / Q_dc # mole/L
+            'S_pro': dc.imol['S_pro'] * 1000 / Q_dc, # = kmole/hr * 1000 * hr/L = mole/L
+            'S_bu': dc.imol['S_bu'] * 1000 / Q_dc, # mole/L
+            'S_he': dc.imol['S_he'] * 1000 / Q_dc # mole/L
         }
         
         print(f"Initial concentrations: {initial_concentrations} mole/L")
@@ -256,25 +264,58 @@ class ED_vfa(SanUnit):
 
             # Initial target ion moles in dilute and accumulated tanks
             # mole = kmole/hr * 1000 * hr/m3 * m3
-            n_D_tank_initial = inf_dc.imol[ion] * 1000 / inf_dc.F_vol * self.V_dc
+            n_D_tank_initial = dc.imol[ion] * 1000 / dc.F_vol * self.V_dc
             n_A_tank_initial = 0
             
             print(f"Initial moles in dilute tank (n_D_tank_initial) for {ion}: {n_D_tank_initial} mol")
             print(f"Initial moles in accumulated tank (n_A_tank_initial) for {ion}: {n_A_tank_initial} mol") # Okay
             
             # mol/L below
-            C_D_tank = (n_D_tank_initial - J_T * self.A_m * self.t) / (self.V_dc * 1000)
-            C_A_tank = J_T * self.A_m * self.t / (self.V_ac * 1000)
-            print(f"Concentration in dilute tank (C_D_tank) for {ion}: {C_D_tank}")
-            print(f"Concentration in accumulated tank (C_A_tank) for {ion}: {C_A_tank}")
+            C_D_tank = (inf_dc.imol[ion] / 3600 * self.t - J_T * self.A_m * self.t) / (self.V_dc * 1000)
+            C_A_tank = J_T * self.A_m * self.t / (self.V_dc * 1000)
             
-            # kmole/hr below
-            eff_dc.imol[ion] = C_D_tank * self.V_dc / (self.t / 3600)
-            eff_ac.imol[ion] = C_A_tank * self.V_ac / (self.t / 3600)
+            # mol/hr below
+            eff_dc.imol[ion] = C_D_tank * self.V_dc * 1000 / (self.t / 3600)
+            eff_ac.imol[ion] = C_A_tank * self.V_ac * 1000 / (self.t / 3600)
             
             # Ensure non-negative values
             eff_dc.imol[ion] = max(eff_dc.imol[ion], 0)
             eff_ac.imol[ion] = max(eff_ac.imol[ion], 0)
+            
+            eff_dc.imol[ion] = inf_dc.imol[ion] - eff_ac.imol[ion]
+            # # Update moles in dilute and accumulated tanks [mole]
+            # n_D_tank = n_D_tank_initial - J_T * self.A_m * self.t
+            # n_A_tank = n_A_tank_initial + J_T * self.A_m * self.t
+
+            # # Ensure non-negative moles [mole]
+            # n_D_tank = max(n_D_tank, 0)
+            # n_A_tank = max(n_A_tank, 0)
+            
+            # print(f"Updated moles in dilute tank (n_D_tank) for {ion}: {n_D_tank}")
+            # print(f"Updated moles in accumulated tank (n_A_tank) for {ion}: {n_A_tank}")
+
+            # # Update effluent streams with moles [kmole/hr]
+            # eff_dc.imol[ion] = n_D_tank * 3600 / (1000 * self.t)
+            # eff_ac.imol[ion] = n_A_tank * 3600 / (1000 * self.t)
+
+            # # Calculate concentrations in dilute and accumulated tanks
+            # C_D_tank = n_D_tank / self.V_dc * 1000 # mol/L
+            # C_A_tank = n_A_tank / self.V_ac * 1000 # mol/L
+
+            # # Ensure non-negative concentrations
+            # C_D_tank = max(C_D_tank, 0)
+            # C_A_tank = max(C_A_tank, 0)
+            
+            print(f"Concentration in dilute tank (C_D_tank) for {ion}: {C_D_tank}")
+            print(f"Concentration in accumulated tank (C_A_tank) for {ion}: {C_A_tank}")
+        # # Adjust the mass balance to ensure it matches the influent
+        # for comp in inf_dc.chemicals:
+        #     if comp.ID not in self.CE_dict:
+        #         eff_dc.imass[comp.ID] = inf_dc.imass[comp.ID]
+
+        # for comp in eff_ac.chemicals:
+        #     if comp.ID not in self.CE_dict:
+        #         eff_ac.imass[comp.ID] = eff_ac.imass[comp.ID]
 
         # Calculate system resistance [Ohm]
         R_sys = self.A_m * (self.r_m + self.r_s)
@@ -319,10 +360,10 @@ class ED_vfa(SanUnit):
 # permselectivity={'S_pro/S_bu': 1.063682, 'S_pro/S_he': 1.555841, 'S_bu/S_he': 1.462693}
 ed1 = ED_vfa(
     ID='ED1',
-    ins=(inf_dc, inf_ac),
-    outs=(eff_dc, eff_ac),
+    outs=(dc, ac),
 )
 
+# ed1.set_init_conc(S_pro = 500)
 #%%
 # Simulate the process
 ed1.simulate()
