@@ -173,38 +173,33 @@ ac = WasteStream(ID='ac')
 #     return cmps.i_mass / cmps.chem_MW
 # unit_conversion = mass2mol_conversion(cmps)
 F=96485.33289  # Faraday's constant in C/mol
-BatchExperiment=sgb.BatchExperiment()
-class ED_vfa(sgb.BatchExperiment):
-    def __init__(self, ID='', ins=None, outs=None, thermo=None, init_with='WasteStream',
+SBR=sgb.SBR()
+class ED_vfa(sgb.SBR):
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  permselectivity=None,  # Dictionary of permselectivity for each ion pair
                  j=500,  # Current density in A/m^2
                  t=3600,  # Time in seconds
                  A_m=0.5,  # Membrane area in m^2
-                 V_dc=Q_dc*HRT_dc,  # Volume of dilute tank in m^3
-                 V_ac=Q_ac*HRT_ac,  # Volume of accumulated tank in m^3
+                 V_dc=None,  # Volume of dilute tank in m^3
+                 V_ac=None,  # Volume of accumulated tank in m^3
                  z_T=1.0,
                  r_m=1.0,  # Membrane resistance in Ohm*m^2
-                 r_s=1.0):  # Solution resistance in Ohm*m^2
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+                 r_s=1.0,  # Solution resistance in Ohm*m^2
+                 **kwargs):
+        super().__init__(ID, ins, outs, thermo, init_with, **kwargs)
         self.permselectivity = permselectivity or {'S_pro/S_bu': 1.0, 'S_pro/S_he': 1.0, 'S_bu/S_he': 1.0}  # Default permselectivity
         self.j = j
         self.t = t
         self.A_m = A_m
-        self.V_dc = V_dc
-        self.V_ac = V_ac
+        self.V_dc = V_dc or self._V  # Use reactor volume if not specified
+        self.V_ac = V_ac or self._V  # Use reactor volume if not specified
         self.z_T = z_T
         self.r_m = r_m
         self.r_s = r_s
-        
-        # Initialize dictionaries to store transport data
-        self.n_T_dict = {}
-        self.J_T_dict = {}
-        
-    _N_ins = 0
-    _N_outs = 2
 
     def _run(self):
-        dc, ac = self.outs
+        inf_dc, inf_ac = self.ins
+        eff_dc, eff_ac = self.outs
 
         # Calculate total current [A]
         I = self.j * self.A_m
@@ -212,7 +207,7 @@ class ED_vfa(sgb.BatchExperiment):
         print(f"Total current (I): {I} A")
 
         # Obtain the flow rates from the influent streams
-        Q_dc = dc.F_vol  # Flow rate from influent dilute stream in m^3/hr
+        Q_dc = inf_dc.F_vol  # Flow rate from influent dilute stream in m^3/hr
         self.Q_dc = Q_dc / 3600  # Convert to m^3/s
 
         print(f"Flow rate (Q_dc): {Q_dc} m^3/hr")
@@ -221,23 +216,20 @@ class ED_vfa(sgb.BatchExperiment):
         # Print volumes of the reactors
         print(f"Dilute tank volume (V_dc): {self.V_dc} m^3")
         print(f"Accumulated tank volume (V_ac): {self.V_ac} m^3")
-        
-        # eff_dc.copy_like(inf_dc)
-        # eff_ac.copy_like(inf_dc)
 
         initial_concentrations = {
-            'S_pro': dc.imol['S_pro'] * 1000 / Q_dc, # = kmole/hr * 1000 * hr/L = mole/L
-            'S_bu': dc.imol['S_bu'] * 1000 / Q_dc, # mole/L
-            'S_he': dc.imol['S_he'] * 1000 / Q_dc # mole/L
+            'S_pro': inf_dc.imol['S_pro'] * 1000 / Q_dc,  # mole/L
+            'S_bu': inf_dc.imol['S_bu'] * 1000 / Q_dc,  # mole/L
+            'S_he': inf_dc.imol['S_he'] * 1000 / Q_dc  # mole/L
         }
-        
+
         print(f"Initial concentrations: {initial_concentrations} mole/L")
 
         # Calculate the permselectivity based CE for each ion
         ce_S_pro = 0.2  # Example fixed CE value for S_pro
         ce_S_bu = ce_S_pro / self.permselectivity['S_pro/S_bu'] * (initial_concentrations['S_pro'] / initial_concentrations['S_bu'])
         ce_S_he = ce_S_pro / self.permselectivity['S_pro/S_he'] * (initial_concentrations['S_pro'] / initial_concentrations['S_he'])
-        
+
         # Adjust CE values if their sum exceeds 1
         total_ce = ce_S_pro + ce_S_bu + ce_S_he
         if total_ce > 1:
@@ -245,17 +237,17 @@ class ED_vfa(sgb.BatchExperiment):
             ce_S_pro *= scale_factor
             ce_S_bu *= scale_factor
             ce_S_he *= scale_factor
-            
+
         CE_dict = {'S_pro': ce_S_pro, 'S_bu': ce_S_bu, 'S_he': ce_S_he}
         self.CE_dict = CE_dict
-        
+
         print(f"Current efficiency dictionary: {CE_dict}")
-        
+
         for ion, CE in self.CE_dict.items():
             # Moles of target ion transported [mol]
             n_T = CE * I / (self.z_T * F) * self.t
             self.n_T_dict[ion] = n_T
-            print(f"Moles of {ion} transported (n_T): {n_T} mol") # Okay
+            print(f"Moles of {ion} transported (n_T): {n_T} mol")
 
             # Target ion molar flux [mol/(m^2*s)]
             J_T = CE * I / (self.z_T * F * self.A_m)
@@ -263,59 +255,21 @@ class ED_vfa(sgb.BatchExperiment):
             print(f"Target ion molar flux (J_T) for {ion}: {J_T} mol/m^2/s")
 
             # Initial target ion moles in dilute and accumulated tanks
-            # mole = kmole/hr * 1000 * hr/m3 * m3
-            n_D_tank_initial = dc.imol[ion] * 1000 / dc.F_vol * self.V_dc
+            n_D_tank_initial = inf_dc.imol[ion] * 1000 / inf_dc.F_vol * self.V_dc
             n_A_tank_initial = 0
-            
+
             print(f"Initial moles in dilute tank (n_D_tank_initial) for {ion}: {n_D_tank_initial} mol")
-            print(f"Initial moles in accumulated tank (n_A_tank_initial) for {ion}: {n_A_tank_initial} mol") # Okay
-            
-            # mol/L below
-            C_D_tank = (inf_dc.imol[ion] / 3600 * self.t - J_T * self.A_m * self.t) / (self.V_dc * 1000)
-            C_A_tank = J_T * self.A_m * self.t / (self.V_dc * 1000)
-            
-            # mol/hr below
-            eff_dc.imol[ion] = C_D_tank * self.V_dc * 1000 / (self.t / 3600)
-            eff_ac.imol[ion] = C_A_tank * self.V_ac * 1000 / (self.t / 3600)
-            
-            # Ensure non-negative values
-            eff_dc.imol[ion] = max(eff_dc.imol[ion], 0)
-            eff_ac.imol[ion] = max(eff_ac.imol[ion], 0)
-            
-            eff_dc.imol[ion] = inf_dc.imol[ion] - eff_ac.imol[ion]
-            # # Update moles in dilute and accumulated tanks [mole]
-            # n_D_tank = n_D_tank_initial - J_T * self.A_m * self.t
-            # n_A_tank = n_A_tank_initial + J_T * self.A_m * self.t
+            print(f"Initial moles in accumulated tank (n_A_tank_initial) for {ion}: {n_A_tank_initial} mol")
 
-            # # Ensure non-negative moles [mole]
-            # n_D_tank = max(n_D_tank, 0)
-            # n_A_tank = max(n_A_tank, 0)
-            
-            # print(f"Updated moles in dilute tank (n_D_tank) for {ion}: {n_D_tank}")
-            # print(f"Updated moles in accumulated tank (n_A_tank) for {ion}: {n_A_tank}")
-
-            # # Update effluent streams with moles [kmole/hr]
-            # eff_dc.imol[ion] = n_D_tank * 3600 / (1000 * self.t)
-            # eff_ac.imol[ion] = n_A_tank * 3600 / (1000 * self.t)
-
-            # # Calculate concentrations in dilute and accumulated tanks
-            # C_D_tank = n_D_tank / self.V_dc * 1000 # mol/L
-            # C_A_tank = n_A_tank / self.V_ac * 1000 # mol/L
-
-            # # Ensure non-negative concentrations
-            # C_D_tank = max(C_D_tank, 0)
-            # C_A_tank = max(C_A_tank, 0)
-            
+            # Calculate concentrations after transport
+            C_D_tank = (n_D_tank_initial - J_T * self.A_m * self.t) / (self.V_dc * 1000)
+            C_A_tank = J_T * self.A_m * self.t / (self.V_ac * 1000)
             print(f"Concentration in dilute tank (C_D_tank) for {ion}: {C_D_tank}")
             print(f"Concentration in accumulated tank (C_A_tank) for {ion}: {C_A_tank}")
-        # # Adjust the mass balance to ensure it matches the influent
-        # for comp in inf_dc.chemicals:
-        #     if comp.ID not in self.CE_dict:
-        #         eff_dc.imass[comp.ID] = inf_dc.imass[comp.ID]
 
-        # for comp in eff_ac.chemicals:
-        #     if comp.ID not in self.CE_dict:
-        #         eff_ac.imass[comp.ID] = eff_ac.imass[comp.ID]
+            # Update effluent streams
+            eff_dc.imol[ion] = max(C_D_tank * self.V_dc / (self.t / 3600), 0)
+            eff_ac.imol[ion] = max(C_A_tank * self.V_ac / (self.t / 3600), 0)
 
         # Calculate system resistance [Ohm]
         R_sys = self.A_m * (self.r_m + self.r_s)

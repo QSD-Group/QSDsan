@@ -13,7 +13,6 @@ for license details.
 
 '''
 from thermosteam.utils import chemicals_user
-from thermosteam import settings
 from chemicals.elements import molecular_weight as get_mw
 from qsdsan import Component, Components, WasteStream, SanUnit, Process, Processes, CompiledProcesses, System
 import numpy as np
