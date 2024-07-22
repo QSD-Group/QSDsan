@@ -150,7 +150,7 @@ HRT_ac = 0.33 # DC: 1L, AC: 0.1L (NY)
 #Same as ADM1 Effluent Q
 #S_pro = S_bu = S_he = 25mM (NY&WS)
 inf_dc = WasteStream(ID='inf_dc')
-inf_dc.set_flow_by_concentration(flow_tot=Q_dc, concentrations={'S_pro': 2800, 'S_bu': 4000, 'S_he': 6400}, units=('L/hr', 'mg/L'))
+inf_dc.set_flow_by_concentration(flow_tot=Q_dc, concentrations={'S_pro': 1852, 'S_bu': 2202, 'S_he': 2904}, units=('L/hr', 'mg/L'))
 inf_ac = WasteStream(ID='inf_ac')
 inf_ac.set_flow_by_concentration(flow_tot=Q_ac, concentrations={'Na+': 500, 'Cl-': 500}, units=('L/hr', 'mg/L'))
 eff_dc = WasteStream(ID='eff_dc')               # effluent
@@ -174,7 +174,8 @@ class ED_vfa(SanUnit):
                  V_ac=Q_ac*HRT_ac,  # Volume of accumulated tank in m^3
                  z_T=1.0,
                  r_m=1.0,  # Membrane resistance in Ohm*m^2
-                 r_s=1.0):  # Solution resistance in Ohm*m^2
+                 r_s=1.0,
+                 ce_S_pro=0.1):  # Solution resistance in Ohm*m^2
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.permselectivity = permselectivity or {'S_pro/S_bu': 1.063682, 'S_pro/S_he': 1.555841, 'S_bu/S_he': 1.462693}  # Default permselectivity
         self.j = j
@@ -185,7 +186,7 @@ class ED_vfa(SanUnit):
         self.z_T = z_T
         self.r_m = r_m
         self.r_s = r_s
-        
+        self.ce_S_pro = ce_S_pro
         # Initialize dictionaries to store transport data
         self.n_T_dict = {}
         self.J_T_dict = {}
@@ -221,7 +222,7 @@ class ED_vfa(SanUnit):
         print(f"Initial concentrations: {initial_concentrations} mole/L")
 
         # Calculate the permselectivity based CE for each ion
-        ce_S_pro = 0.2  # Example fixed CE value for S_pro
+        ce_S_pro = self.ce_S_pro  # Example fixed CE value for S_pro
         ce_S_bu = ce_S_pro / self.permselectivity['S_pro/S_bu'] * (initial_concentrations['S_pro'] / initial_concentrations['S_bu'])
         ce_S_he = ce_S_pro / self.permselectivity['S_pro/S_he'] * (initial_concentrations['S_pro'] / initial_concentrations['S_he'])
         
@@ -317,7 +318,6 @@ ed1 = ED_vfa(
     ins=(inf_dc, inf_ac),
     outs=(eff_dc, eff_ac),
 )
-
 #%%
 # Simulate the process
 ed1.simulate()
@@ -347,8 +347,19 @@ for t in time_durations:
         initial_concentration = inf_dc.imol[ion] * 1000 / Q_dc
         CE = ed.CE_dict[ion]
         J_T = CE * ed.total_current / (ed.z_T * F * ed.A_m)
-        C_A_tank = J_T * ed.A_m * ed.t / (ed.V_ac * 1000)
-        C_A_tank_values[ion].append(C_A_tank)
+        C_A_tank = J_T * ed.A_m * ed.t / ed.V_ac # M
+        C_A_tank_mM = C_A_tank * 1000  # Convert to mM
+        C_A_tank_values[ion].append(C_A_tank_mM)
+        
+# Set font sizes
+plt.rcParams.update({
+    'font.size': 14,
+    'axes.labelsize': 16,
+    'xtick.labelsize': 14,
+    'ytick.labelsize': 14,
+    'legend.fontsize': 14,
+    'axes.titlesize': 18,
+})
 
 # Plot the results for C_A_tank
 plt.figure(figsize=(12, 8))
@@ -356,8 +367,229 @@ for ion, values in C_A_tank_values.items():
     plt.plot(range(1, 21), values, label=ion)
 
 plt.xlabel('Time (hours)')
-plt.ylabel('C_A_tank (mole/L)')
-plt.title('C_A_tank over time for different ions')
+plt.ylabel('C_A_tank (mM)')
+plt.title('C_A_tank over time for different ions (in mM)')
 plt.legend()
 plt.grid(True)
+plt.show()
+#%%
+# Initialize a dictionary to store the C_D_tank values for each ion
+C_D_tank_values = {'S_pro': [], 'S_bu': [], 'S_he': []}
+
+# Loop over the defined time durations and run the simulation for each
+for t in time_durations:
+    # Create a new instance of the ED_vfa class for each simulation
+    ed = ED_vfa(
+        ID=f'ED_t_{t}',
+        ins=(inf_dc, inf_ac),
+        outs=(eff_dc, eff_ac),
+        t=t  # Set the time duration for this simulation
+    )
+    
+    # Run the simulation
+    ed.simulate()
+    
+    # Extract the C_D_tank values and store them
+    for ion in C_D_tank_values.keys():
+        initial_concentration = inf_dc.imol[ion] * 1000 / Q_dc
+        CE = ed.CE_dict[ion]
+        J_T = CE * ed.total_current / (ed.z_T * F * ed.A_m)
+        C_D_tank = (initial_concentration - J_T * ed.A_m * ed.t / ed.V_dc) # M
+        C_D_tank_mM = C_D_tank *1000
+        C_D_tank_values[ion].append(C_D_tank_mM)
+        
+# Set font sizes
+plt.rcParams.update({
+    'font.size': 18,
+    'axes.labelsize': 18,
+    'xtick.labelsize': 16,
+    'ytick.labelsize': 16,
+    'legend.fontsize': 16,
+    'axes.titlesize': 20,
+})
+
+# Plot the results for C_D_tank in mM
+plt.figure(figsize=(12, 8))
+for ion, values in C_D_tank_values.items():
+    plt.plot(range(1, 21), values, label=ion)
+
+plt.xlabel('Time (hours)')
+plt.ylabel('C_D_tank (mM)')
+plt.title('C_D_tank over time for different ions (in mM)')
+plt.legend()
+plt.grid(True)
+plt.show()
+#%%
+# Define the time duration for the simulation (20 hours in seconds)
+time_duration = 3600 * 20
+
+# Define the different membrane area values
+A_m_values = [0.016, 0.025, 0.036, 0.049, 0.064, 0.081, 0.1]
+
+# Initialize a dictionary to store the C_A_tank values for each ion and A_m
+C_A_tank_results = {ion: [] for ion in ['S_pro', 'S_bu', 'S_he']}
+
+# Loop over the different membrane area values and run the simulation for each
+for A_m in A_m_values:
+    # Create a new instance of the ED_vfa class for each simulation
+    ed = ED_vfa(
+        ID=f'ED_A_m_{A_m}',
+        ins=(inf_dc, inf_ac),
+        outs=(eff_dc, eff_ac),
+        t=time_duration,  # Set the time duration for this simulation
+        A_m=A_m,  # Set the membrane area for this simulation
+        ce_S_pro=0.4  # Set ce_S_pro to 0.1
+    )
+    
+    # Calculate the permselectivity-based CE for each ion
+    initial_concentrations = {
+        'S_pro': inf_dc.imol['S_pro'] * 1000 / Q_dc,  # mole/L
+        'S_bu': inf_dc.imol['S_bu'] * 1000 / Q_dc,  # mole/L
+        'S_he': inf_dc.imol['S_he'] * 1000 / Q_dc  # mole/L
+    }
+
+    ce_S_pro = ed.ce_S_pro  # Fixed CE value for S_pro
+    ce_S_bu = ce_S_pro / ed.permselectivity['S_pro/S_bu'] * (initial_concentrations['S_pro'] / initial_concentrations['S_bu'])
+    ce_S_he = ce_S_pro / ed.permselectivity['S_pro/S_he'] * (initial_concentrations['S_pro'] / initial_concentrations['S_he'])
+    
+    # Adjust CE values if their sum exceeds 1
+    total_ce = ce_S_pro + ce_S_bu + ce_S_he
+    if (total_ce > 1):
+        scale_factor = 1 / total_ce
+        ce_S_pro *= scale_factor
+        ce_S_bu *= scale_factor
+        ce_S_he *= scale_factor
+
+    CE_dict = {'S_pro': ce_S_pro, 'S_bu': ce_S_bu, 'S_he': ce_S_he}
+    ed.CE_dict = CE_dict
+    
+    # Run the simulation
+    ed.simulate()
+    
+    # Extract the C_A_tank values and store them
+    for ion in C_A_tank_results.keys():
+        CE = ed.CE_dict[ion]
+        J_T = CE * ed.total_current / (ed.z_T * F * ed.A_m)
+        
+        # Calculate C_A_tank and convert to mM
+        C_A_tank = J_T * ed.A_m * ed.t / ed.V_ac  # M
+        C_A_tank_mM = C_A_tank * 1000  # Convert to mM
+        C_A_tank_results[ion].append(C_A_tank_mM)
+
+# Plot the results for C_A_tank in mM as bar graph
+fig, ax = plt.subplots(figsize=(12, 8))
+bar_width = 0.2
+index = np.arange(len(A_m_values))
+
+# Plot C_A_tank
+for i, ion in enumerate(C_A_tank_results.keys()):
+    ax.bar(index + i * bar_width, C_A_tank_results[ion], bar_width, label=ion)
+
+ax.set_xlabel('Membrane Area (m^2)')
+ax.set_ylabel('C_A_tank (mM)')
+ax.set_title('C_A_tank over different membrane areas (in mM)')
+ax.set_xticks(index + bar_width)
+ax.set_xticklabels(A_m_values)
+ax.legend()
+ax.grid(True)
+
+# Set font sizes
+plt.rcParams.update({
+    'font.size': 14,
+    'axes.labelsize': 16,
+    'xtick.labelsize': 14,
+    'ytick.labelsize': 14,
+    'legend.fontsize': 14,
+    'axes.titlesize': 18,
+})
+
+plt.tight_layout()
+plt.show()
+#%%
+# Define the time duration for the simulation (20 hours in seconds)
+time_duration = 3600 * 20
+
+# Define the different ce_S_pro values
+ce_S_pro_values = [0.1, 0.2, 0.3, 0.4, 0.5]
+
+# Define the membrane area
+A_m = 0.016  # Example membrane area in m^2
+
+# Initialize a dictionary to store the C_A_tank values for each ion and ce_S_pro
+C_A_tank_results = {ion: [] for ion in ['S_pro', 'S_bu', 'S_he']}
+
+# Loop over the different ce_S_pro values and run the simulation for each
+for ce_S_pro in ce_S_pro_values:
+    # Create a new instance of the ED_vfa class for each simulation
+    ed = ED_vfa(
+        ID=f'ED_ce_S_pro_{ce_S_pro}',
+        ins=(inf_dc, inf_ac),
+        outs=(eff_dc, eff_ac),
+        t=time_duration,  # Set the time duration for this simulation
+        A_m=A_m,  # Set the membrane area for this simulation
+        ce_S_pro=ce_S_pro  # Set ce_S_pro
+    )
+    
+    # Calculate the permselectivity-based CE for each ion
+    initial_concentrations = {
+        'S_pro': inf_dc.imol['S_pro'] * 1000 / Q_dc,  # mole/L
+        'S_bu': inf_dc.imol['S_bu'] * 1000 / Q_dc,  # mole/L
+        'S_he': inf_dc.imol['S_he'] * 1000 / Q_dc  # mole/L
+    }
+
+    ce_S_bu = ce_S_pro / ed.permselectivity['S_pro/S_bu'] * (initial_concentrations['S_pro'] / initial_concentrations['S_bu'])
+    ce_S_he = ce_S_pro / ed.permselectivity['S_pro/S_he'] * (initial_concentrations['S_pro'] / initial_concentrations['S_he'])
+    
+    # Adjust CE values if their sum exceeds 1
+    total_ce = ce_S_pro + ce_S_bu + ce_S_he
+    if (total_ce > 1):
+        scale_factor = 1 / total_ce
+        ce_S_pro *= scale_factor
+        ce_S_bu *= scale_factor
+        ce_S_he *= scale_factor
+
+    CE_dict = {'S_pro': ce_S_pro, 'S_bu': ce_S_bu, 'S_he': ce_S_he}
+    ed.CE_dict = CE_dict
+    
+    # Run the simulation
+    ed.simulate()
+    
+    # Extract the C_A_tank values and store them
+    for ion in C_A_tank_results.keys():
+        CE = ed.CE_dict[ion]
+        J_T = CE * ed.total_current / (ed.z_T * F * ed.A_m)
+        
+        # Calculate C_A_tank and convert to mM
+        C_A_tank = J_T * ed.A_m * ed.t / ed.V_ac  # M
+        C_A_tank_mM = C_A_tank * 1000  # Convert to mM
+        C_A_tank_results[ion].append(C_A_tank_mM)
+
+# Plot the results for C_A_tank in mM as bar graph
+fig, ax = plt.subplots(figsize=(12, 8))
+bar_width = 0.15
+index = np.arange(len(ce_S_pro_values))
+
+# Plot C_A_tank
+for i, ion in enumerate(C_A_tank_results.keys()):
+    ax.bar(index + i * bar_width, C_A_tank_results[ion], bar_width, label=ion)
+
+ax.set_xlabel('CE of S_pro')
+ax.set_ylabel('C_A_tank (mM)')
+ax.set_title('C_A_tank over different CE of S_pro (in mM)')
+ax.set_xticks(index + bar_width)
+ax.set_xticklabels(ce_S_pro_values)
+ax.legend()
+ax.grid(True)
+
+# Set font sizes
+plt.rcParams.update({
+    'font.size': 14,
+    'axes.labelsize': 16,
+    'xtick.labelsize': 14,
+    'ytick.labelsize': 14,
+    'legend.fontsize': 14,
+    'axes.titlesize': 18,
+})
+
+plt.tight_layout()
 plt.show()
