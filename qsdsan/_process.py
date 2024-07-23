@@ -1229,7 +1229,7 @@ class CompiledProcesses(Processes):
                 stoichio_arr = self.stoichiometry.to_numpy(dtype=float)
             except TypeError:
                 isa = isinstance
-                undefined = [k for k, v in dct_vals if not isa(v, (float, int))]
+                undefined = [k for k, v in dct_vals.items() if not isa(v, (float, int))]
                 raise TypeError(f'Undefined static parameters: {undefined}')
             self.__dict__['_stoichio_lambdified'] = lambda : stoichio_arr
 

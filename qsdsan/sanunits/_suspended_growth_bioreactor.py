@@ -27,17 +27,15 @@ __all__ = ('CSTR',
            'PFR',
            )
 
-def _add_aeration_to_growth_model(aer, model):
-    if isinstance(aer, Process):
-        processes = Processes(model.tuple)
-        processes.append(aer)
-        processes.compile()
-    else:
-        processes = model
-        processes.compile()
-    return processes
-
-
+# def _add_aeration_to_growth_model(aer, model):
+#     if isinstance(aer, Process):
+#         processes = Processes(model.tuple)
+#         processes.append(aer)
+#         processes.compile()
+#     else:
+#         processes = model
+#         processes.compile()
+#     return processes
 
 #%%
 class CSTR(SanUnit):
@@ -248,10 +246,10 @@ class CSTR(SanUnit):
             else:
                 mdl = self._model
                 self.gas_IDs = mdl.gas_IDs
-                self.stripping_kLa_min = mdl.kLa_min
-                self.D_gas = mdl.D_gas
-                self.K_Henry = mdl.K_Henry
-                self.p_gas_atm = mdl.p_gas_atm
+                self.stripping_kLa_min = np.array(mdl.kLa_min)
+                self.D_gas = np.array(mdl.D_gas)
+                self.K_Henry = np.array(mdl.K_Henry)
+                self.p_gas_atm = np.array(mdl.p_gas_atm)
                 
     @property
     def split(self):
@@ -295,6 +293,7 @@ class CSTR(SanUnit):
 
     def _update_state(self):
         arr = self._state
+        arr[arr < 2.2e-16] = 0.
         arr[-1] = sum(ws.state[-1] for ws in self.ins)
         if self.split is None: self._outs[0].state = arr
         else:
@@ -336,8 +335,8 @@ class CSTR(SanUnit):
 
     def _compile_ODE(self):
         isa = isinstance
-        C = list(symbols(self.components.IDs))
-        m = len(C)
+        cmps = self.components
+        m = cmps.size
         aer = self._aeration
         if self._model is None:
             warn(f'{self.ID} was initialized without a suspended growth model, '
@@ -345,8 +344,8 @@ class CSTR(SanUnit):
             r = lambda state_arr: np.zeros(m)
             
         else:
-            processes = _add_aeration_to_growth_model(aer, self._model)
-            r = processes.production_rates_eval
+            # processes = _add_aeration_to_growth_model(aer, self._model)
+            r = self._model.production_rates_eval
 
         _dstate = self._dstate
         _update_dstate = self._update_dstate
@@ -372,6 +371,16 @@ class CSTR(SanUnit):
                 _dstate[:-1] += r(QC)
                 if gstrip: _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
                 _dstate[i] = 0
+                _update_dstate()
+        elif isa(aer, Process):
+            aer_stoi = aer._stoichiometry
+            aer_frho = aer.rate_function
+            def dy_dt(t, QC_ins, QC, dQC_ins):
+                # QC[QC < 2.2e-16] = 0.
+                dydt_cstr(QC_ins, QC, V, _dstate)
+                if hasexo: QC = np.append(QC, f_exovars(t))
+                _dstate[:-1] += r(QC) + aer_stoi * aer_frho(QC)
+                if gstrip: _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
                 _update_dstate()
         else:
             def dy_dt(t, QC_ins, QC, dQC_ins):
@@ -752,29 +761,29 @@ class SBR(SanUnit):
     def _design(self):
         pass
 
-    def _compile_dC_dt(self, V0, Qin, Cin, C, fill, aer):
-        isa = isinstance
-        processes = _add_aeration_to_growth_model(aer, self._model)
-        if fill:
-            t = symbols('t')
-            mass_balance_terms = list(zip(Cin, C, processes.production_rates.rate_of_production))
-            C_dot_eqs = [(cin-c)/(t+V0/Qin) + r for cin, c, r in mass_balance_terms]
-            if isa(aer, (float, int)): C_dot_eqs[self.components.index(self._DO_ID)] = 0
-            def dC_dt(t, y):
-                C_dot = lambdify([t]+C, C_dot_eqs)
-                return C_dot(t, *y)
-            J = Matrix(dC_dt(t, C)).jacobian(C)
-        else:
-            C_dot_eqs = processes.production_rates.rate_of_production
-            if isa(aer, (float, int)): C_dot_eqs[self.components.index(self._DO_ID)] = 0
-            def dC_dt(t, y):
-                C_dot = lambdify(C, C_dot_eqs)
-                return C_dot(*y)
-            J = Matrix(dC_dt(None, C)).jacobian(C)
-        def J_func(t, y):
-            J_func = lambdify(C, J)
-            return J_func(*y)
-        return (dC_dt, J_func)
+    # def _compile_dC_dt(self, V0, Qin, Cin, C, fill, aer):
+    #     isa = isinstance
+    #     processes = _add_aeration_to_growth_model(aer, self._model)
+    #     if fill:
+    #         t = symbols('t')
+    #         mass_balance_terms = list(zip(Cin, C, processes.production_rates.rate_of_production))
+    #         C_dot_eqs = [(cin-c)/(t+V0/Qin) + r for cin, c, r in mass_balance_terms]
+    #         if isa(aer, (float, int)): C_dot_eqs[self.components.index(self._DO_ID)] = 0
+    #         def dC_dt(t, y):
+    #             C_dot = lambdify([t]+C, C_dot_eqs)
+    #             return C_dot(t, *y)
+    #         J = Matrix(dC_dt(t, C)).jacobian(C)
+    #     else:
+    #         C_dot_eqs = processes.production_rates.rate_of_production
+    #         if isa(aer, (float, int)): C_dot_eqs[self.components.index(self._DO_ID)] = 0
+    #         def dC_dt(t, y):
+    #             C_dot = lambdify(C, C_dot_eqs)
+    #             return C_dot(*y)
+    #         J = Matrix(dC_dt(None, C)).jacobian(C)
+    #     def J_func(t, y):
+    #         J_func = lambdify(C, J)
+    #         return J_func(*y)
+    #     return (dC_dt, J_func)
 
 #%%
 class PFR(SanUnit):
