@@ -150,7 +150,7 @@ HRT_ac = 0.33 # DC: 1L, AC: 0.1L (NY)
 #Same as ADM1 Effluent Q
 #S_pro = S_bu = S_he = 25mM (NY&WS)
 inf_dc = WasteStream(ID='inf_dc')
-inf_dc.set_flow_by_concentration(flow_tot=Q_dc, concentrations={'S_pro': 1852, 'S_bu': 2202, 'S_he': 2904}, units=('L/hr', 'mg/L'))
+inf_dc.set_flow_by_concentration(flow_tot=Q_dc, concentrations={'S_pro': 2800, 'S_bu': 4000, 'S_he': 6400}, units=('L/hr', 'mg/L'))
 inf_ac = WasteStream(ID='inf_ac')
 inf_ac.set_flow_by_concentration(flow_tot=Q_ac, concentrations={'Na+': 500, 'Cl-': 500}, units=('L/hr', 'mg/L'))
 eff_dc = WasteStream(ID='eff_dc')               # effluent
@@ -163,18 +163,18 @@ eff_ac = WasteStream(ID='eff_ac')               # effluent
 #     return cmps.i_mass / cmps.chem_MW
 # unit_conversion = mass2mol_conversion(cmps)
 F=96485.33289  # Faraday's constant in C/mol
-
+ 
 class ED_vfa(SanUnit):
     def __init__(self, ID='', ins=None, outs=None, thermo=None, init_with='WasteStream',
                  permselectivity=None,  # Dictionary of permselectivity for each ion pair
                  j=8.23,  # Current density in A/m^2 under 0.8 V (WS)
                  t=3600*6,  # Time in seconds
                  A_m=0.016,  # Membrane area in m^2 (NY&WS)
-                 V_dc=Q_dc*HRT_dc,  # Volume of dilute tank in m^3
-                 V_ac=Q_ac*HRT_ac,  # Volume of accumulated tank in m^3
+                 V_dc=Q_dc*HRT_dc/1000,  # Volume of dilute tank in m^3, L to m3
+                 V_ac=Q_ac*HRT_ac/1000,  # Volume of accumulated tank in m^3, L to m3
                  z_T=1.0,
-                 r_m=1.0,  # Membrane resistance in Ohm*m^2
-                 r_s=1.0,
+                 r_m=3206.875,  # Areal Membrane resistance in Ohm*m^2
+                 r_s=4961.875,  # Areal Solution resistance in Ohm*m^2
                  ce_S_pro=0.1):  # Solution resistance in Ohm*m^2
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.permselectivity = permselectivity or {'S_pro/S_bu': 1.063682, 'S_pro/S_he': 1.555841, 'S_bu/S_he': 1.462693}  # Default permselectivity
@@ -190,9 +190,6 @@ class ED_vfa(SanUnit):
         # Initialize dictionaries to store transport data
         self.n_T_dict = {}
         self.J_T_dict = {}
-        # Initializing effluent streams with influent values
-        eff_dc.copy_like(inf_dc)
-        eff_ac.copy_like(inf_ac)
         
     _N_ins = 2
     _N_outs = 2
@@ -200,7 +197,11 @@ class ED_vfa(SanUnit):
     def _run(self):
         inf_dc, inf_ac = self.ins
         eff_dc, eff_ac = self.outs
-
+        
+        # Initializing effluent streams with influent values
+        eff_dc.copy_like(inf_dc)
+        eff_ac.copy_like(inf_ac)
+        
         # Calculate total current [A]
         I = self.j * self.A_m
         self.total_current = I
@@ -212,13 +213,20 @@ class ED_vfa(SanUnit):
         
         # eff_dc.copy_like(inf_dc)
         # eff_ac.copy_like(inf_dc)
-
+        cmps = inf_dc.components
+        idx=cmps.index
+        mass2mol = cmps.i_mass / cmps.chem_MW
+        # #iconc
+        # initial_concentrations = {
+        #     'S_pro': inf_dc.iconc['S_pro'] * mass2mol[idx('S_pro')], # = kmole/hr * 1000 * hr/L = mole/L
+        #     'S_bu': inf_dc.imol['S_bu'] * 1000 / Q_dc, # mole/L
+        #     'S_he': inf_dc.imol['S_he'] * 1000 / Q_dc # mole/L
+        # }
         initial_concentrations = {
-            'S_pro': inf_dc.imol['S_pro'] * 1000 / Q_dc, # = kmole/hr * 1000 * hr/L = mole/L
-            'S_bu': inf_dc.imol['S_bu'] * 1000 / Q_dc, # mole/L
-            'S_he': inf_dc.imol['S_he'] * 1000 / Q_dc # mole/L
+            'S_pro': inf_dc.iconc['S_pro'] * mass2mol[idx('S_pro')] / 1000, # mole/L
+            'S_bu': inf_dc.iconc['S_bu'] * mass2mol[idx('S_bu')] / 1000, # mole/L
+            'S_he': inf_dc.iconc['S_he'] * mass2mol[idx('S_he')] / 1000 # mole/L
         }
-        
         print(f"Initial concentrations: {initial_concentrations} mole/L")
 
         # Calculate the permselectivity based CE for each ion
@@ -238,6 +246,9 @@ class ED_vfa(SanUnit):
         self.CE_dict = CE_dict
         
         print(f"Charge efficiency dictionary: {CE_dict}")
+        # cmps = inf_dc.components
+        # idx=cmps.index
+        # mass2mol = cmps.i_mass / cmps.chem_MW
         
         for ion, CE in self.CE_dict.items():
             # Moles of target ion transported [mol]
@@ -252,43 +263,36 @@ class ED_vfa(SanUnit):
 
             # Initial target ion moles in dilute and accumulated tanks
             # mole = kmole/hr * 1000 * hr/m3 * m3
-            n_D_tank_initial = inf_dc.imol[ion] * 1000 / inf_dc.F_vol * self.V_dc
-            n_A_tank_initial = 0
+            # i=idx[ion]
+            # n_D_tank_initial = inf_dc.imol[ion] * 1000 / inf_dc.F_vol * self.V_dc
+            # n_D_tank_initial = inf_dc.iconc[ion] * mass2mol[i] * self.V_dc * 1000 # mg/L * m3
+            # n_A_tank_initial = 0
             
+            n_D_tank_initial = inf_dc.iconc[ion] * mass2mol[idx(ion)] * self.V_dc * 1000 # mol/L * m3 * 1000
+            n_A_tank_initial = 0
             print(f"Initial moles in dilute tank (n_D_tank_initial) for {ion}: {n_D_tank_initial} mol")
             print(f"Initial moles in accumulated tank (n_A_tank_initial) for {ion}: {n_A_tank_initial} mol") # Okay
             
             # mol/L below
-            C_D_tank = (n_D_tank_initial - J_T * self.A_m * self.t) / (self.V_dc * 1000)
+            C_D_tank = (n_D_tank_initial - J_T * self.A_m * self.t) / (self.V_dc * 1000) # mol / (m3 * 1000)
             C_A_tank = J_T * self.A_m * self.t / (self.V_ac * 1000)
             print(f"Concentration in dilute tank (C_D_tank) for {ion}: {C_D_tank} mole/L")
             print(f"Concentration in accumulated tank (C_A_tank) for {ion}: {C_A_tank} mole/L")
             
-            # kmole/hr below
+            # kmole/hr below ->changce iconc
             eff_dc.imol[ion] = C_D_tank * self.V_dc / (self.t / 3600)
             eff_ac.imol[ion] = C_A_tank * self.V_ac / (self.t / 3600)
             
-            # Ensure non-negative values
+            # Ensure non-negative values ->change iconc
             eff_dc.imol[ion] = max(eff_dc.imol[ion], 0)
             eff_ac.imol[ion] = max(eff_ac.imol[ion], 0)
 
-        # Calculate system resistance [Ohm]
-        R_sys = self.A_m * (self.r_m + self.r_s)
-        self.R_sys = R_sys
-
-        # Calculate system voltage [V]
-        V_sys = R_sys * I
-        self.V_sys = V_sys
-
-        # Calculate power consumption [W]
-        P_sys = V_sys * I
-        self.P_sys = P_sys
-        print(f"System resistance (R_sys): {R_sys} Ohm")
-        print(f"System voltage (V_sys): {V_sys} V")
-        print(f"Power consumption (P_sys): {P_sys} W")
-
     _units = {
         'Membrane area': 'm2',
+        'Electrode area': 'm2',
+        'Electrode Thickness': 'm',
+        'Electrode Density': 'kg/m3',
+        'Current Collector area': 'm2',
         'Total current': 'A',
         'Dilute tank volume': 'm3',
         'Accumulated tank volume': 'm3',
@@ -299,17 +303,114 @@ class ED_vfa(SanUnit):
             
     def _design(self):
         D = self.design_results
+        D['Cell Pair Membrane count'] = 3
         D['Membrane area'] = self.A_m
+        D['Cell Pair Electrode count'] = 2
+        D['Electrode area'] = self.A_m
+        D['Electrode Thickness'] = 0.0003 # m
+        D['Electrode Density'] = 200 # kg/m3
+        D['Cell Pair Current Collector count'] = 2
+        D['Current collector area'] = self.A_m
         D['Total current'] = self.j * self.A_m
         D['Dilute tank volume'] = self.V_dc
         D['Accumulated tank volume'] = self.V_ac
+
+        # Calculate system resistance [Ohm]
+        R_sys = self.A_m * (self.r_m + self.r_s)
+        self.R_sys = R_sys
+    
+        # Calculate system voltage [V]
+        V_sys = R_sys * self.total_current
+        self.V_sys = V_sys
+    
+        # Calculate power consumption [W]
+        P_sys = V_sys * self.total_current
+        self.P_sys = P_sys
+        print(f"System resistance (R_sys): {R_sys} Ohm")
+        print(f"System voltage (V_sys): {V_sys} V")
+        print(f"Power consumption (P_sys): {P_sys} W")
+    
         D['System resistance'] = self.R_sys
         D['System voltage'] = self.V_sys
-        D['Power consumption'] = self.P_sys
+        D['Power consumption'] = self.P_sys # W
 
     def _cost(self):
-        self.baseline_purchase_costs['Membrane'] = 100 * self.design_results['Membrane area']  # Assume $100 per m^2 for the membrane
-        self.power_utility.consumption = self.design_results['Power consumption'] / 1000  # Assuming kWh consumption based on power
+        self.baseline_purchase_costs['Membrane'] = 100 * self.design_results['Cell Pair Membrane count'] \
+            * self.design_results['Membrane area']  # Assume $100 per m^2 for the membrane
+        self.baseline_purchase_costs['Electrode'] = 20 * self.design_results['Cell Pair Electrode count'] \
+            * self.design_results['Electrode area'] * self.design_results['Electrode Thickness'] \
+                * self.design_results['Electrode Density']
+        self.baseline_purchase_costs['Current Collector'] = 5 * self.design_results['Cell Pair Current Collector count'] \
+            * self.design_results['Current collector area']  # Assume $100 per m^2 for the membrane
+        self.baseline_purchase_costs['Stack'] = 0.5 * (self.baseline_purchase_costs['Membrane']\
+                                                     + self.baseline_purchase_costs['Electrode']\
+                                                         +self.baseline_purchase_costs['Current Collector'])
+        self.baseline_purchase_costs['Ferricyanide'] = 0.000165 * 6
+        self.baseline_purchase_costs['Ferrocyanide'] = 0.000184 * 2
+        self.baseline_purchase_costs['NaCl'] = 0.0004383 * 0.08
+        self.power_utility.consumption = self.design_results['Power consumption'] / 1000  # kW
+        
+        # Electricity cost calculation
+        electricity_cost_per_kwh = 0.07  # USD/kWh
+        self.electricity_cost = self.power_utility.consumption * self.t / 3600 * electricity_cost_per_kwh
+        print(f"Electricity cost: {self.electricity_cost} USD")
+#%%
+    def plot_cost_breakdown(self):
+        # Calculate costs
+        membrane_cost = self.baseline_purchase_costs['Membrane']
+        electrode_cost = self.baseline_purchase_costs['Electrode']
+        current_collector_cost = self.baseline_purchase_costs['Current Collector']
+        stack_cost = self.baseline_purchase_costs['Stack']
+        ferricyanide_cost = self.baseline_purchase_costs['Ferricyanide']
+        ferrocyanide_cost = self.baseline_purchase_costs['Ferrocyanide']
+        nacl_cost = self.baseline_purchase_costs['NaCl']
+        electricity_cost = self.electricity_cost
+
+        # Costs breakdown
+        costs = {
+            'Membrane': membrane_cost,
+            'Electrode': electrode_cost,
+            'Current Collector': current_collector_cost,
+            'Stack': stack_cost,
+            'Ferricyanide': ferricyanide_cost,
+            'Ferrocyanide': ferrocyanide_cost,
+            'NaCl': nacl_cost,
+            'Electricity': electricity_cost
+        }
+
+        # Plotting
+        fig, ax = plt.subplots(figsize=(10, 6))
+        items = list(costs.keys())
+        values = list(costs.values())
+        
+        ax.barh(items, values, color='skyblue')
+        ax.set_xlabel('Cost (USD)')
+        ax.set_title('Cost Breakdown')
+        
+        for i, v in enumerate(values):
+            ax.text(v + 0.01, i, f"{v:.2f}", va='center')
+
+        plt.tight_layout()
+        plt.show()
+
+# Assuming necessary imports and Component definitions are provided
+# Assuming WasteStream, F, and other necessary definitions are already provided
+
+# Initialize the ED_vfa unit with permselectivity values and different tank volumes
+ed1 = ED_vfa(
+    ID='ED1',
+    ins=(inf_dc, inf_ac),
+    outs=(eff_dc, eff_ac),
+)
+
+# Simulate the process
+ed1.simulate()
+
+# Perform cost analysis
+ed1._cost()
+
+# Plot the cost breakdown
+ed1.plot_cost_breakdown()
 #%%
 # Initialize the ED_vfa unit with permselectivity values and different tank volumes
 # permselectivity={'S_pro/S_bu': 1.063682, 'S_pro/S_he': 1.555841, 'S_bu/S_he': 1.462693}
@@ -329,6 +430,11 @@ time_durations = [3600 * t for t in range(1, 21)]
 # Initialize a dictionary to store the C_A_tank values for each ion
 C_A_tank_values = {'S_pro': [], 'S_bu': [], 'S_he': []}
 
+# Assuming inf_dc and inf_ac are already defined and initialized appropriately
+cmps = inf_dc.components
+idx = cmps.index
+mass2mol = cmps.i_mass / cmps.chem_MW
+
 # Loop over the defined time durations and run the simulation for each
 for t in time_durations:
     # Create a new instance of the ED_vfa class for each simulation
@@ -344,10 +450,10 @@ for t in time_durations:
     
     # Extract the C_A_tank values and store them
     for ion in C_A_tank_values.keys():
-        initial_concentration = inf_dc.imol[ion] * 1000 / Q_dc
+        initial_concentration = inf_dc.iconc[ion] * mass2mol[idx(ion)]
         CE = ed.CE_dict[ion]
         J_T = CE * ed.total_current / (ed.z_T * F * ed.A_m)
-        C_A_tank = J_T * ed.A_m * ed.t / ed.V_ac # M
+        C_A_tank = J_T * ed.A_m * ed.t / (ed.V_ac * 1000) # M
         C_A_tank_mM = C_A_tank * 1000  # Convert to mM
         C_A_tank_values[ion].append(C_A_tank_mM)
         
@@ -376,6 +482,11 @@ plt.show()
 # Initialize a dictionary to store the C_D_tank values for each ion
 C_D_tank_values = {'S_pro': [], 'S_bu': [], 'S_he': []}
 
+# Assuming inf_dc, inf_ac, eff_dc, eff_ac, Q_dc are already defined and initialized appropriately
+cmps = inf_dc.components
+idx = cmps.index
+mass2mol = cmps.i_mass / cmps.chem_MW
+
 # Loop over the defined time durations and run the simulation for each
 for t in time_durations:
     # Create a new instance of the ED_vfa class for each simulation
@@ -391,11 +502,11 @@ for t in time_durations:
     
     # Extract the C_D_tank values and store them
     for ion in C_D_tank_values.keys():
-        initial_concentration = inf_dc.imol[ion] * 1000 / Q_dc
+        initial_concentration = inf_dc.iconc[ion] * mass2mol[idx(ion)] / 1000 #mole/L
         CE = ed.CE_dict[ion]
         J_T = CE * ed.total_current / (ed.z_T * F * ed.A_m)
-        C_D_tank = (initial_concentration - J_T * ed.A_m * ed.t / ed.V_dc) # M
-        C_D_tank_mM = C_D_tank *1000
+        C_D_tank = (initial_concentration - J_T * ed.A_m * ed.t / (ed.V_dc * 1000))  # Concentration in dilute tank
+        C_D_tank_mM = C_D_tank * 1000  # Convert to mM
         C_D_tank_values[ion].append(C_D_tank_mM)
         
 # Set font sizes
@@ -429,6 +540,11 @@ A_m_values = [0.016, 0.025, 0.036, 0.049, 0.064, 0.081, 0.1]
 # Initialize a dictionary to store the C_A_tank values for each ion and A_m
 C_A_tank_results = {ion: [] for ion in ['S_pro', 'S_bu', 'S_he']}
 
+# Assuming inf_dc, inf_ac, eff_dc, eff_ac, Q_dc, F are already defined and initialized appropriately
+cmps = inf_dc.components
+idx = cmps.index
+mass2mol = cmps.i_mass / cmps.chem_MW
+
 # Loop over the different membrane area values and run the simulation for each
 for A_m in A_m_values:
     # Create a new instance of the ED_vfa class for each simulation
@@ -443,9 +559,9 @@ for A_m in A_m_values:
     
     # Calculate the permselectivity-based CE for each ion
     initial_concentrations = {
-        'S_pro': inf_dc.imol['S_pro'] * 1000 / Q_dc,  # mole/L
-        'S_bu': inf_dc.imol['S_bu'] * 1000 / Q_dc,  # mole/L
-        'S_he': inf_dc.imol['S_he'] * 1000 / Q_dc  # mole/L
+        'S_pro': inf_dc.imol['S_pro'] * mass2mol[idx('S_pro')] / 1000,  # mole/L
+        'S_bu': inf_dc.imol['S_bu'] * mass2mol[idx('S_bu')] / 1000,  # mole/L
+        'S_he': inf_dc.imol['S_he'] * mass2mol[idx('S_he')] / 1000  # mole/L
     }
 
     ce_S_pro = ed.ce_S_pro  # Fixed CE value for S_pro
@@ -472,7 +588,7 @@ for A_m in A_m_values:
         J_T = CE * ed.total_current / (ed.z_T * F * ed.A_m)
         
         # Calculate C_A_tank and convert to mM
-        C_A_tank = J_T * ed.A_m * ed.t / ed.V_ac  # M
+        C_A_tank = J_T * ed.A_m * ed.t / (ed.V_ac * 1000)  # mole/L
         C_A_tank_mM = C_A_tank * 1000  # Convert to mM
         C_A_tank_results[ion].append(C_A_tank_mM)
 
@@ -518,6 +634,11 @@ A_m = 0.016  # Example membrane area in m^2
 # Initialize a dictionary to store the C_A_tank values for each ion and ce_S_pro
 C_A_tank_results = {ion: [] for ion in ['S_pro', 'S_bu', 'S_he']}
 
+# Assuming inf_dc, inf_ac, eff_dc, eff_ac, Q_dc, F are already defined and initialized appropriately
+cmps = inf_dc.components
+idx = cmps.index
+mass2mol = cmps.i_mass / cmps.chem_MW
+
 # Loop over the different ce_S_pro values and run the simulation for each
 for ce_S_pro in ce_S_pro_values:
     # Create a new instance of the ED_vfa class for each simulation
@@ -532,9 +653,9 @@ for ce_S_pro in ce_S_pro_values:
     
     # Calculate the permselectivity-based CE for each ion
     initial_concentrations = {
-        'S_pro': inf_dc.imol['S_pro'] * 1000 / Q_dc,  # mole/L
-        'S_bu': inf_dc.imol['S_bu'] * 1000 / Q_dc,  # mole/L
-        'S_he': inf_dc.imol['S_he'] * 1000 / Q_dc  # mole/L
+        'S_pro': inf_dc.imol['S_pro'] * mass2mol[idx('S_pro')] / 1000,  # mole/L
+        'S_bu': inf_dc.imol['S_bu'] * mass2mol[idx('S_bu')] / 1000,  # mole/L
+        'S_he': inf_dc.imol['S_he'] * mass2mol[idx('S_he')] / 1000 # mole/L
     }
 
     ce_S_bu = ce_S_pro / ed.permselectivity['S_pro/S_bu'] * (initial_concentrations['S_pro'] / initial_concentrations['S_bu'])
@@ -560,7 +681,7 @@ for ce_S_pro in ce_S_pro_values:
         J_T = CE * ed.total_current / (ed.z_T * F * ed.A_m)
         
         # Calculate C_A_tank and convert to mM
-        C_A_tank = J_T * ed.A_m * ed.t / ed.V_ac  # M
+        C_A_tank = J_T * ed.A_m * ed.t / (ed.V_ac * 1000)  # mole/L
         C_A_tank_mM = C_A_tank * 1000  # Convert to mM
         C_A_tank_results[ion].append(C_A_tank_mM)
 
