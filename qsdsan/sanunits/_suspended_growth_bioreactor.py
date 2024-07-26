@@ -1028,6 +1028,7 @@ class PFR(SanUnit):
             if ks != []:
                 warn('kLa is ignored because DO setpoints have been specified. '
                      'To specify kLa, first set DO_setpoints as []')
+                ks = []
         else:
             if not iter(ks): 
                 raise TypeError(f'V_tanks must be an iterable, not {type(ks).__name__}')
