@@ -108,7 +108,8 @@ class FlatBottomCircularClarifier(SanUnit):
     fns : float, optional
         Non-settleable fraction of the suspended solids, dimensionless. Must be within
         [0, 1]. The default is 2.28e-3.
-    
+    maximum_nonsettleable_solids : float, optional
+        Maximum non-settleable solids concentration, in mgTSS/L. The default is None.
     downward_flow_velocity : float, optional
         Speed on the basis of which center feed diameter is designed [m/hr]. The default is 42 m/hr (0.7 m/min). [2]
     design_influent_TSS : float, optional
@@ -146,7 +147,9 @@ class FlatBottomCircularClarifier(SanUnit):
                  init_with='WasteStream', underflow=2000, wastage=385,
                  surface_area=1500, height=4, N_layer=10, feed_layer=4,
                  X_threshold=3000, v_max=474, v_max_practical=250,
-                 rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, F_BM_default=default_F_BM, isdynamic=True,
+                 rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, 
+                 maximum_nonsettleable_solids=None,
+                 F_BM_default=default_F_BM, isdynamic=True,
                  downward_flow_velocity=42, design_influent_TSS = None, design_influent_flow = None,
                  design_solids_loading_rate = 6, **kwargs):
 
@@ -173,6 +176,7 @@ class FlatBottomCircularClarifier(SanUnit):
         self._rh = rh
         self._rp = rp
         self._fns = fns
+        self.maximum_nonsettleable_solids = maximum_nonsettleable_solids
         self._solids = None
         self._solubles = None
         self._X_comp = np.zeros(len(self.components))
@@ -326,7 +330,15 @@ class FlatBottomCircularClarifier(SanUnit):
     def fns(self, fns):
         if fns < 0 or fns > 1: raise ValueError('fns must be within [0,1].')
         self._fns = fns
-        
+    
+    @property
+    def maximum_nonsettleable_solids(self):
+        '''[float] Maximum non-settleable solids concentration, in mgTSS/L.'''
+        return self._max_ns
+    @maximum_nonsettleable_solids.setter
+    def maximum_nonsettleable_solids(self, ns):
+        self._max_ns = ns
+    
     @property
     def solids_loading_rate(self):
         '''solids_loading_rate is the loading in the clarifier'''
@@ -469,6 +481,7 @@ class FlatBottomCircularClarifier(SanUnit):
         m = len(x)
         imass = self.components.i_mass
         fns = self._fns
+        max_ns = self._max_ns or 1e6
         Q_s = self._Qras + self._Qwas
 
         dQC = self._dstate
@@ -512,7 +525,7 @@ class FlatBottomCircularClarifier(SanUnit):
             Z_in = C_in*(1-x)
             X_in = sum(C_in*imass*x)           # influent TSS
             dX_in = sum(dC_in*imass*x)
-            X_min_arr[:] = X_in * fns
+            X_min_arr[:] = min(X_in * fns, max_ns)
             X = QC[-n:]                        # (n, ), TSS for each layer
             Z = QC[:m] * (1-x)
             #***********TSS*************
