@@ -463,6 +463,7 @@ class ADM1_p_extension(ADM1):
                                                T_base, self._components, root, 
                                                #!!! new parameter
                                                KS_IP*P_mw]))
+        dct['flex_rhos'] = _rhos_adm1_p_extension
         dct['solve_pH'] = solve_pH
         dct['dydt_Sh2_AD'] = dydt_Sh2_AD
         dct['grad_dydt_Sh2_AD'] = grad_dydt_Sh2_AD
@@ -1041,6 +1042,7 @@ class ADM1p(ADM1):
             Q = state_arr[45]
             return -Q/V_liq + np.dot(grad_rhos, stoichio[[5,6,7,8,10]]) + kLa*stoichio[-3]
         
+        dct['flex_rhos'] = _rhos_adm1p
         dct['solve_pH'] = adm1p_solve_pH
         dct['dydt_Sh2_AD'] = dydt_Sh2_AD
         dct['grad_dydt_Sh2_AD'] = grad_dydt_Sh2_AD

@@ -270,7 +270,8 @@ class AnaerobicCSTR(CSTR):
                  T=308.15, headspace_P=1.013, external_P=1.013, 
                  pipe_resistance=5.0e4, fixed_headspace_P=False,
                  retain_cmps=(), fraction_retain=0.95,
-                 isdynamic=True, exogenous_vars=(), **kwargs):
+                 isdynamic=True, exogenous_vars=(), 
+                 pH_ctrl=None, **kwargs):
         if len(exogenous_vars) == 0:
             exogenous_vars = (EDV('T', function=lambda t: T), )
         super().__init__(ID=ID, ins=ins, outs=outs, thermo=thermo,
@@ -293,6 +294,7 @@ class AnaerobicCSTR(CSTR):
         self.fixed_headspace_P = fixed_headspace_P
         self._f_retain = np.array([fraction_retain if cmp.ID in retain_cmps \
                                    else 0 for cmp in self.components])
+        self.pH_ctrl = pH_ctrl
         self._mixed = WasteStream()
         self._tempstate = {}
     
@@ -523,10 +525,10 @@ class AnaerobicCSTR(CSTR):
     @property
     def ODE(self):
         if self._ODE is None:
-            self._compile_ODE(self.algebraic_h2)
+            self._compile_ODE(self.algebraic_h2, self.pH_ctrl)
         return self._ODE
     
-    def _compile_ODE(self, algebraic_h2=True):
+    def _compile_ODE(self, algebraic_h2=True, pH_ctrl=None):
         if self._model is None:
             CSTR._compile_ODE(self)
         else:
@@ -535,7 +537,11 @@ class AnaerobicCSTR(CSTR):
             _state = self._state
             _dstate = self._dstate
             _update_dstate = self._update_dstate
-            _f_rhos = self.model.rate_function
+            if pH_ctrl:
+                _params = self.model.rate_function.params
+                _f_rhos = lambda state_arr: self.model.flex_rhos(state_arr, _params, h=10**(-pH_ctrl))
+            else:
+                _f_rhos = self.model.rate_function
             _f_param = self.model.params_eval
             _M_stoichio = self.model.stoichio_eval
             n_cmps = len(cmps)

@@ -629,6 +629,7 @@ class ADM1(CompiledProcesses):
                                                K_H_base, K_H_dH, kLa,
                                                T_base, self._components, root]))
 
+        dct['flex_rhos'] = _rhos_adm1
         dct['solve_pH'] = solve_pH
         dct['dydt_Sh2_AD'] = dydt_Sh2_AD
         dct['grad_dydt_Sh2_AD'] = grad_dydt_Sh2_AD
