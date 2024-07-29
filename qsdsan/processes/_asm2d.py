@@ -458,7 +458,7 @@ def solve_pH(state_arr, Ka, unit_conversion):
 
 # rhos = np.zeros(19+7+2) # 19 biological processes, 7 precipitation/dissociation, 2 gas stripping
 rhos = np.zeros(19+7) # 19 biological processes, 7 precipitation/dissociation
-def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
+def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
     if 'ks' not in params:
         k_h, mu_H, mu_PAO, mu_AUT, \
         q_fe, q_PHA, q_PP, \
@@ -561,8 +561,7 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True):
     mass2mol = params['mass2mol']
     Ka = params['Ka']
     Kw, Knh, Kc1, Kc2, Kp1, Kp2, Kp3, Kac = Ka
-    # h = solve_pH(state_arr, Ka, mass2mol)
-    h = 1e-7
+    if h == None: h = solve_pH(state_arr, Ka, mass2mol)
     nh4 = state_arr[2] * h/(Knh + h)
     co2, hco3, co3 = state_arr[8] * ion_speciation(h, Kc1, Kc2)
     h3po4, h2po4, hpo4, po4 = state_arr[4] * ion_speciation(h, Kp1, Kp2, Kp3)
@@ -723,7 +722,8 @@ class mASM2d(CompiledProcesses):
     D_gas = [1.88e-9, 1.92e-9]  # diffusivity
     p_gas_atm = [0.78, 3.947e-4]# partial pressure in air
     
-    def __new__(cls, components=None, path=None, electron_acceptor_dependent_decay=True,
+    def __new__(cls, components=None, path=None, 
+                electron_acceptor_dependent_decay=True, pH_ctrl=7.0, 
                 f_SI=0.0, Y_H=0.625, Y_PAO=0.625, Y_PO4=0.4, Y_PHA=0.2, Y_A=0.24, 
                 f_XI_H=0.1, f_XI_PAO=0.1, f_XI_AUT=0.1,
                 k_h=3.0, mu_H=6.0, mu_PAO=1.0, mu_AUT=1.0, 
@@ -797,7 +797,10 @@ class mASM2d(CompiledProcesses):
                          cmps.X_PP.i_K, cmps.X_PP.i_Mg)
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_vals))
         dct['_edecay'] = bool(electron_acceptor_dependent_decay)
-        rhos_masm2d = lambda state_arr, params: _rhos_masm2d(state_arr, params, electron_acceptor_dependent_decay)
+        dct['pH_ctrl'] = pH_ctrl
+        if pH_ctrl: h = 10**(-pH_ctrl)
+        else: h = None
+        rhos_masm2d = lambda state_arr, params: _rhos_masm2d(state_arr, params, electron_acceptor_dependent_decay, h)
         self.set_rate_function(rhos_masm2d)
         Ka = np.array([10**(-p) for p in pKa])
         # f_kLa = np.array(cls.D_gas)/cls.D_O2
