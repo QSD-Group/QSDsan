@@ -537,9 +537,11 @@ class AnaerobicCSTR(CSTR):
             _state = self._state
             _dstate = self._dstate
             _update_dstate = self._update_dstate
+            h = None
             if pH_ctrl:
                 _params = self.model.rate_function.params
-                _f_rhos = lambda state_arr: self.model.flex_rhos(state_arr, _params, h=10**(-pH_ctrl))
+                h = 10**(-pH_ctrl)
+                _f_rhos = lambda state_arr: self.model.flex_rhos(state_arr, _params, h=h)
             else:
                 _f_rhos = self.model.rate_function
             _f_param = self.model.params_eval
@@ -576,9 +578,9 @@ class AnaerobicCSTR(CSTR):
                 solve_pH = self.model.solve_pH
                 dydt_Sh2_AD = self.model.dydt_Sh2_AD
                 grad_dydt_Sh2_AD = self.model.grad_dydt_Sh2_AD
-                def solve_h2(QC, S_in, T):
+                def solve_h2(QC, S_in, T, h=h):
                     Ka = params['Ka_base'] * T_correction_factor(params['T_base'], T, params['Ka_dH'])
-                    h = solve_pH(QC, Ka, unit_conversion)
+                    if h == None: h = solve_pH(QC, Ka, unit_conversion)
                     # S_h2_0 = QC[h2_idx]
                     S_h2_0 = 2.8309E-07
                     S_h2_in = S_in[h2_idx]
