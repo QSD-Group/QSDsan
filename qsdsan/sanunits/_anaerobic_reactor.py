@@ -444,19 +444,23 @@ class AnaerobicCSTR(CSTR):
         #!!! how to make unit conversion generalizable to all models?
         if self._concs is not None: Cs = self._concs * 1e-3 # mg/L to kg/m3
         else: Cs = mixed.conc * 1e-3 # mg/L to kg/m3
-        self._state = np.append(Cs, [0]*self._n_gas + [Q]).astype('float64')
+        Gs = [0]*self._n_gas  # initial gas phase concentrations [M]
+        Gs[0] = 0.041*0.01
+        Gs[1] = 0.041*0.57
+        Gs[2] = 0.041*0.4
+        self._state = np.append(Cs, Gs + [Q]).astype('float64')
         self._dstate = self._state * 0.
 
     def _update_state(self):
         y = self._state
         y[-1] = sum(ws.state[-1] for ws in self.ins)
-        y[y<0] = 0.
+        # y[y<0] = 0.
         f_rtn = self._f_retain
         i_mass = self.components.i_mass
         chem_MW = self.components.chem_MW
         n_cmps = len(self.components)
         Cs = y[:n_cmps]*(1-f_rtn)*1e3 # kg/m3 to mg/L
-        pH = self._tempstate.pop('pH', 7)
+        pH = self.pH_ctrl or self._tempstate.pop('pH', 7)
         if self.split is None:
             gas, liquid = self._outs
             if liquid.state is None:
@@ -595,7 +599,7 @@ class AnaerobicCSTR(CSTR):
                 def update_h2_dstate(dstate):
                     pass
             def dy_dt(t, QC_ins, QC, dQC_ins):
-                QC[QC < 2.2e-16] = 0.
+                QC[QC < 0] = 0.
                 Q_ins = QC_ins[:, -1]
                 S_ins = QC_ins[:, :-1] * 1e-3  # mg/L to kg/m3
                 Q = sum(Q_ins)
