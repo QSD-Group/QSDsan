@@ -754,28 +754,32 @@ def _rhos_adm1p(state_arr, params, h=None):
     # if X_MgCO3 > 0: rhos_p[29] = (S_Mg * co3 - Ksp[4]) * f_dis[4]
     # else: rhos_p[29] = S_Mg * co3
         
-    rhos_p[30] = X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
-    rhos_p[31] = X_FeOH * po4 * Monod(X_FeOH, K_FeOH)
+    rhos_p[25:32] = 0
+    if po4 > 0:
+        if X_AlOH > 0:
+            rhos_p[30] = X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
+        if X_FeOH > 0:
+            rhos_p[31] = X_FeOH * po4 * Monod(X_FeOH, K_FeOH)    
     
-    SI = (S_Ca * co3 / Ksp[0])**(1/2)
-    if SI > 1: rhos_p[25] = X_CaCO3 * (SI-1)**2
-    else: rhos_p[25] = 0
+    if S_Ca > 0 and co3 > 0:
+        SI = (S_Ca * co3 / Ksp[0])**(1/2)
+        if SI > 1: rhos_p[25] = X_CaCO3 * (SI-1)**2
 
-    SI = (S_Mg * nh4 * po4 / Ksp[1])**(1/3)
-    if SI > 1: rhos_p[26] = X_struv * (SI-1)**3
-    else: rhos_p[26] = 0
+    if S_Mg > 0 and nh4 > 0 and po4 > 0:
+        SI = (S_Mg * nh4 * po4 / Ksp[1])**(1/3)
+        if SI > 1: rhos_p[26] = X_struv * (SI-1)**3
 
-    SI = (S_Mg * hpo4 / Ksp[2])**(1/2)
-    if SI > 1: rhos_p[27] =  X_newb * (SI-1)**2
-    else: rhos_p[27] = 0
+    if S_Mg > 0 and hpo4 > 0:
+        SI = (S_Mg * hpo4 / Ksp[2])**(1/2)
+        if SI > 1: rhos_p[27] =  X_newb * (SI-1)**2
     
-    SI = (S_Ca**3 * po4**2 / Ksp[3])**(1/5)
-    if SI > 1: rhos_p[28] = X_ACP * (SI-1)**5
-    else: rhos_p[28] = 0
+    if S_Ca > 0 and po4 > 0:
+        SI = (S_Ca**3 * po4**2 / Ksp[3])**(1/5)
+        if SI > 1: rhos_p[28] = X_ACP * (SI-1)**5
     
-    SI = (S_Mg * co3 / Ksp[4])**(1/2)
-    if SI > 1: rhos_p[29] = X_MgCO3 * (SI-1)**2
-    else: rhos_p[29] = 0
+    if S_Mg > 0 and co3 > 0:
+        SI = (S_Mg * co3 / Ksp[4])**(1/2)
+        if SI > 1: rhos_p[29] = X_MgCO3 * (SI-1)**2
 
     rhos_p[25:32] *= k_mmp
 
