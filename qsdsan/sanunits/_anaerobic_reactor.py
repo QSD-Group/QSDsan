@@ -599,7 +599,7 @@ class AnaerobicCSTR(CSTR):
                 def update_h2_dstate(dstate):
                     pass
             def dy_dt(t, QC_ins, QC, dQC_ins):
-                QC[QC < 0] = 0.
+                # QC[QC < 0] = 0.
                 Q_ins = QC_ins[:, -1]
                 S_ins = QC_ins[:, :-1] * 1e-3  # mg/L to kg/m3
                 Q = sum(Q_ins)

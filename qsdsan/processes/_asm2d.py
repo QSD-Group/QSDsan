@@ -556,7 +556,6 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
         rhos[14:17] *= (aero[3] +eta_decay[1:4]*(1-aero[3])*anox[3])
         rhos[18] *= (aero[5] + eta_decay[4]*(1-aero[5])*anox[5])
     
-    # breakpoint()
     ######### pH ############
     mass2mol = params['mass2mol']
     Ka = params['Ka']
@@ -583,25 +582,22 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
     # else: rhos[22] = S_Ca**3 * po4**2
     # if X_MgCO3 > 0: rhos[23] = (S_Mg * co3 - Ksp[4]) * f_dis[4]
     # else: rhos[23] = S_Mg * co3
+
+    rhos[19:26] = 0.
     SI = (S_Ca * co3 / Ksp[0])**(1/2)
     if SI > 1: rhos[19] = X_CaCO3 * (SI-1)**2
-    else: rhos[19] = 0
 
     SI = (S_Mg * nh4 * po4 / Ksp[1])**(1/3)
     if SI > 1: rhos[20] = X_struv * (SI-1)**3
-    else: rhos[20] = 0
 
     SI = (S_Mg * hpo4 / Ksp[2])**(1/2)
     if SI > 1: rhos[21] =  X_newb * (SI-1)**2
-    else: rhos[21] = 0
     
     SI = (S_Ca**3 * po4**2 / Ksp[3])**(1/5)
     if SI > 1: rhos[22] = X_ACP * (SI-1)**5
-    else: rhos[22] = 0
     
     SI = (S_Mg * co3 / Ksp[4])**(1/2)
     if SI > 1: rhos[23] = X_MgCO3 * (SI-1)**2
-    else: rhos[23] = 0
     
     rhos[24] = X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
     rhos[25] = X_FeOH * po4 * Monod(X_FeOH, K_FeOH)
