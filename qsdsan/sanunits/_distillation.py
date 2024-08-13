@@ -17,11 +17,14 @@ for license details.
 
 import biosteam as bst, qsdsan as qs
 
-__all__ = ('BinaryDistillation',)
+__all__ = (
+    'BinaryDistillation',
+    'ShortcutColumn',
+    )
 
 _lb_to_kg = qs.utils.auom('lb').conversion_factor('kg')
 
-class BinaryDistillation(bst.units.BinaryDistillation):
+class BinaryDistillation(bst.units.BinaryDistillation, qs.SanUnit):
     '''
     Similar to biosteam.units.BinaryDistillation, but can include construction impact calculation.
     
@@ -30,7 +33,7 @@ class BinaryDistillation(bst.units.BinaryDistillation):
     `biosteam.units.BinaryDistillation <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
     '''
 
-    include_construction = False
+    include_construction = True
     
     def _design(self):
         super()._design()
@@ -43,3 +46,14 @@ class BinaryDistillation(bst.units.BinaryDistillation):
                     qs.Construction('carbon_steel', linked_unit=self, item='Carbon_steel', 
                                     quantity=(D['Rectifier weight'] + D['Stripper weight'])*_lb_to_kg, quantity_unit='kg'),
                     ]
+                
+                
+                
+class ShortcutColumn(bst.units.ShortcutColumn, qs.SanUnit):
+    '''
+    biosteam.units.ShortcutColumn with QSDsan properties.
+    
+    See Also
+    --------
+    `biosteam.units.ShortcutColumn <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
+    '''
