@@ -192,7 +192,7 @@ def rhos_asm2d(state_arr, params):
         _rhos[[3,5]] *= S_F/(K_F+S_F)*S_F/(S_F+S_A)
         _rhos[[4,6]] *= S_A/(K_A_H+S_A)*S_A/(S_F+S_A)
         _rhos[3:5] *= S_O2/(K_O2_H+S_O2)
-        _rhos[6] *= eta_NO3_H*K_O2_H/(K_O2_H+S_O2)*S_NO3/(K_NO3_H+S_NO3)
+        _rhos[5:7] *= eta_NO3_H*K_O2_H/(K_O2_H+S_O2)*S_NO3/(K_NO3_H+S_NO3)
     
         q_fe = params['q_fe']
         K_fe = params['K_fe']
