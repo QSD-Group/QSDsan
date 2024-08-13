@@ -893,7 +893,7 @@ class ASMtoADM(ADMjunction):
         atol = self.atol
 
         cmps_asm = ins.components
-        S_NO_i_COD = cmps_asm.S_NO.i_COD
+        S_NO_i_COD = -40/14
         X_BH_i_N = cmps_asm.X_BH.i_N
         X_BA_i_N = cmps_asm.X_BA.i_N
         asm_X_I_i_N = cmps_asm.X_I.i_N
@@ -1054,7 +1054,7 @@ class ASMtoADM(ADMjunction):
             S_IN = adm_vals[adm_ions_idx[0]]
             S_IC = (asm_charge_tot -  S_IN*alpha_IN)/alpha_IC
             net_Scat = asm_charge_tot + proton_charge
-            if net_Scat > 0:  
+            if net_Scat > 0:
                 S_cat = net_Scat
                 S_an = 0
             else:

@@ -293,7 +293,7 @@ class CSTR(SanUnit):
 
     def _update_state(self):
         arr = self._state
-        arr[arr < 2.2e-16] = 0.
+        arr[arr < 1e-16] = 0.
         arr[-1] = sum(ws.state[-1] for ws in self.ins)
         if self.split is None: self._outs[0].state = arr
         else:
@@ -364,7 +364,6 @@ class CSTR(SanUnit):
             i = self.components.index(self._DO_ID)
             fixed_DO = self._aeration
             def dy_dt(t, QC_ins, QC, dQC_ins):
-                # QC[QC < 2.2e-16] = 0.
                 QC[i] = fixed_DO
                 dydt_cstr(QC_ins, QC, V, _dstate)
                 if hasexo: QC = np.append(QC, f_exovars(t))
@@ -376,7 +375,6 @@ class CSTR(SanUnit):
             aer_stoi = aer._stoichiometry
             aer_frho = aer.rate_function
             def dy_dt(t, QC_ins, QC, dQC_ins):
-                # QC[QC < 2.2e-16] = 0.
                 dydt_cstr(QC_ins, QC, V, _dstate)
                 if hasexo: QC = np.append(QC, f_exovars(t))
                 _dstate[:-1] += r(QC) + aer_stoi * aer_frho(QC)
@@ -384,7 +382,6 @@ class CSTR(SanUnit):
                 _update_dstate()
         else:
             def dy_dt(t, QC_ins, QC, dQC_ins):
-                # QC[QC < 2.2e-16] = 0.
                 dydt_cstr(QC_ins, QC, V, _dstate)
                 if hasexo: QC = np.append(QC, f_exovars(t))
                 _dstate[:-1] += r(QC)
