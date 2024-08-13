@@ -454,7 +454,7 @@ class AnaerobicCSTR(CSTR):
     def _update_state(self):
         y = self._state
         y[-1] = sum(ws.state[-1] for ws in self.ins)
-        # y[y<0] = 0.
+        y[y<1e-16] = 0.
         f_rtn = self._f_retain
         i_mass = self.components.i_mass
         chem_MW = self.components.chem_MW
