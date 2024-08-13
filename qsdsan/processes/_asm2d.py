@@ -161,6 +161,95 @@ def create_masm2d_cmps(set_thermo=True):
 
 
 #%%
+_rhos = np.zeros(21)
+def rhos_asm2d(state_arr, params):
+    S_O2, S_N2, S_NH4, S_NO3, S_PO4, S_F, S_A, S_I, S_ALK, \
+        X_I, X_S, X_H, X_PAO, X_PP, X_PHA, X_AUT, X_MeOH, X_MeP = state_arr[:18]
+      
+    _rhos[:19] = 0.
+    if X_H > 0:
+        K_h = params['K_h']
+        K_O2 = params['K_O2']
+        K_X = params['K_X']
+        K_NO3 = params['K_NO3']
+        eta_NO3 = params['eta_NO3']
+        eta_fe = params['eta_fe']
+        _rhos[:3] = K_h*(X_S/X_H)/(K_X+X_S/X_H)*X_H
+        _rhos[0] *= S_O2/(K_O2+S_O2)
+        _rhos[1] *= eta_NO3*K_O2/(K_O2+S_O2)*S_NO3/(K_NO3+S_NO3)
+        _rhos[2] *= eta_fe*K_O2/(K_O2+S_O2)*K_NO3/(K_NO3+S_NO3)
+        
+        mu_H = params['mu_H']
+        K_O2_H = params['K_O2_H']
+        K_F = params['K_F']
+        K_A_H = params['K_A_H']
+        K_NH4_H = params['K_NH4_H']
+        K_P_H = params['K_P_H']
+        K_ALK_H = params['K_ALK_H']
+        K_NO3_H = params['K_NO3_H']
+        eta_NO3_H = params['eta_NO3_H']                
+        _rhos[3:7] = mu_H*S_NH4/(K_NH4_H+S_NH4)*S_PO4/(K_P_H+S_PO4)*S_ALK/(K_ALK_H+S_ALK)*X_H
+        _rhos[[3,5]] *= S_F/(K_F+S_F)*S_F/(S_F+S_A)
+        _rhos[[4,6]] *= S_A/(K_A_H+S_A)*S_A/(S_F+S_A)
+        _rhos[3:5] *= S_O2/(K_O2_H+S_O2)
+        _rhos[6] *= eta_NO3_H*K_O2_H/(K_O2_H+S_O2)*S_NO3/(K_NO3_H+S_NO3)
+    
+        q_fe = params['q_fe']
+        K_fe = params['K_fe']
+        b_H = params['b_H']
+        _rhos[7] = q_fe*K_O2_H/(K_O2_H+S_O2)*K_NO3_H/(K_NO3_H+S_NO3)*S_F/(K_fe+S_F)*S_ALK/(K_ALK_H+S_ALK)*X_H
+        _rhos[8] = b_H*X_H
+    
+    K_ALK_PAO = params['K_ALK_PAO']
+    if X_PAO > 0:
+        q_PHA = params['q_PHA']
+        K_A_PAO = params['K_A_PAO']
+        K_PP = params['K_PP']
+        _rhos[9] = q_PHA*S_A/(K_A_PAO+S_A)*S_ALK/(K_ALK_PAO+S_ALK)*(X_PP/X_PAO)/(K_PP+X_PP/X_PAO)*X_PAO
+    
+        q_PP = params['q_PP']
+        K_O2_PAO = params['K_O2_PAO']
+        K_PS = params['K_PS']
+        K_PHA = params['K_PHA']
+        K_MAX = params['K_MAX']
+        K_IPP = params['K_IPP']
+        eta_NO3_PAO = params['eta_NO3_PAO']
+        K_NO3_PAO = params['K_NO3_PAO']
+        mu_PAO = params['mu_PAO']
+        K_NH4_PAO = params['K_NH4_PAO']
+        K_P_PAO = params['K_P_PAO']
+        _rhos[10:12] = q_PP*S_PO4/(K_PS+S_PO4)*S_ALK/(K_ALK_PAO+S_ALK)*(X_PHA/X_PAO)/(K_PHA+X_PHA/X_PAO)*(K_MAX-X_PP/X_PAO)/(K_IPP+K_MAX-X_PP/X_PAO)*X_PAO
+        _rhos[12:14] = mu_PAO*S_NH4/(K_NH4_PAO+S_NH4)*S_PO4/(K_P_PAO+S_PO4)*S_ALK/(K_ALK_PAO+S_ALK)*(X_PHA/X_PAO)/(K_PHA+X_PHA/X_PAO)*X_PAO
+        _rhos[[10,12]] *= S_O2/(K_O2_PAO+S_O2)
+        _rhos[[11,13]] *= eta_NO3_PAO*K_O2_PAO/(K_O2_PAO+S_O2)*S_NO3/(K_NO3_PAO+S_NO3)
+
+        b_PAO = params['b_PAO']
+        _rhos[14] = b_PAO*X_PAO
+    
+    b_PP = params['b_PP']
+    b_PHA = params['b_PHA']
+    _rhos[15] = b_PP*X_PP
+    _rhos[16] = b_PHA*X_PHA
+    _rhos[14:17] *= S_ALK/(K_ALK_PAO+S_ALK)
+
+    if X_AUT > 0:
+        mu_AUT = params['mu_AUT']
+        K_O2_AUT = params['K_O2_AUT']
+        K_NH4_AUT = params['K_NH4_AUT']
+        K_P_AUT = params['K_P_AUT']
+        K_ALK_AUT = params['K_ALK_AUT']
+        b_AUT = params['b_AUT']
+        _rhos[17] = mu_AUT*S_O2/(K_O2_AUT+S_O2)*S_NH4/(K_NH4_AUT+S_NH4)*S_PO4/(K_P_AUT+S_PO4)*S_ALK/(K_ALK_AUT+S_ALK)*X_AUT
+        _rhos[18] = b_AUT*X_AUT
+    
+    k_PRE = params['k_PRE']
+    k_RED = params['k_RED']
+    K_ALK_PRE = params['K_ALK_PRE']
+    _rhos[19] = k_PRE*S_PO4*X_MeOH
+    _rhos[20] = k_RED*X_MeP*S_ALK/(K_ALK_PRE+S_ALK)
+    
+    return _rhos
+
 @chemicals_user
 class ASM2d(CompiledProcesses):
     '''
@@ -431,6 +520,9 @@ class ASM2d(CompiledProcesses):
                             k_PRE=k_PRE, k_RED=k_RED, K_ALK_PRE=K_ALK_PRE*12, 
                             COD_deN=cmps.S_N2.i_COD-cmps.S_NO3.i_COD,
                             **kwargs)
+        self.set_rate_function(rhos_asm2d)
+        self.rate_function._params = self.parameters
+
         return self
     
 #%%
