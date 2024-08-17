@@ -171,12 +171,12 @@ class Thickener(SanUnit):
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False
     
-    # Costs
-    wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
-    slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
-    stainless_steel_unit_cost=1.8 # Alibaba. Brushed Stainless Steel Plate 304. https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
+    # # Costs
+    # wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
+    # slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
+    # stainless_steel_unit_cost=1.8 # Alibaba. Brushed Stainless Steel Plate 304. https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
     
-    pumps = ('sludge',)
+    # pumps = ('sludge',)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=default_F_BM, thickener_perc=7, 
@@ -258,8 +258,6 @@ class Thickener(SanUnit):
         return f_Qu
 
     def _update_parameters(self):
-        # Thickener_factor, Thinning_factor, and Qu_factor need to be 
-        # updated again and again. while dynamic simulations
         cmps = self.components 
         TSS_in = np.sum(self._state[:-1]*cmps.i_mass*cmps.x)
         self._f_thick = f_thick = calc_f_thick(self._tp, TSS_in)
@@ -281,18 +279,10 @@ class Thickener(SanUnit):
         mixed.split_to(uf, of, split_to_uf)
        
     def _init_state(self):
-       
-        # This function is run only once during dynamic simulations 
-    
-        # Since there could be multiple influents, the state of the unit is 
-        # obtained assuming perfect mixing 
         Qs = self._ins_QC[:,-1]
         Cs = self._ins_QC[:,:-1]
         self._state = np.append(Qs @ Cs / Qs.sum(), Qs.sum())
         self._dstate = self._state * 0.
-        
-        # To initialize the updated_thickener_factor, updated_thinning_factor
-        # and updated_Qu_factor for dynamic simulation 
         self._update_parameters()
         
     def _update_state(self):
@@ -315,8 +305,7 @@ class Thickener(SanUnit):
             # For sludge, the particulate concentrations (x) are multipled by thickener factor, and
             # flowrate is multiplied by Qu_factor. The soluble concentrations (1-x) remains same. 
             uf.state[:-1] = arr[:-1] * ((1-x) + x*thickener_factor)
-            uf.state[-1] = arr[-1] * Qu_factor
-            
+            uf.state[-1] = arr[-1] * Qu_factor            
             # For effluent, the particulate concentrations (x) are multipled by thinning factor, and
             # flowrate is multiplied by Qu_factor. The soluble concentrations (1-x) remains same. 
             of.state[:-1] = arr[:-1] * ((1-x) + x*thinning_factor)
@@ -380,246 +369,237 @@ class Thickener(SanUnit):
             _update_dstate()
         self._AE = yt
          
-    def _design_pump(self):
-        ID, pumps = self.ID, self.pumps
-        self._sludge.copy_like(self.outs[0])
-        sludge = self._sludge
+    # def _design_pump(self):
+    #     ID, pumps = self.ID, self.pumps
+    #     self._sludge.copy_like(self.outs[0])
+    #     sludge = self._sludge
         
-        ins_dct = {
-            'sludge': sludge,
-            }
+    #     ins_dct = {
+    #         'sludge': sludge,
+    #         }
         
-        type_dct = dict.fromkeys(pumps, 'sludge')
-        inputs_dct = dict.fromkeys(pumps, (1,))
+    #     type_dct = dict.fromkeys(pumps, 'sludge')
+    #     inputs_dct = dict.fromkeys(pumps, (1,))
         
-        D = self.design_results
-        influent_Q = sludge.get_total_flow('m3/hr')/D['Number of thickeners']
-        influent_Q_mgd = influent_Q*0.00634 # m3/hr to MGD
+    #     D = self.design_results
+    #     influent_Q = sludge.get_total_flow('m3/hr')/D['Number of thickeners']
+    #     influent_Q_mgd = influent_Q*0.00634 # m3/hr to MGD
        
-        for i in pumps:
-            if hasattr(self, f'{i}_pump'):
-                p = getattr(self, f'{i}_pump')
-                setattr(p, 'add_inputs', inputs_dct[i])
-            else:
-                ID = f'{ID}_{i}'
-                capacity_factor=1
-                # No. of pumps = No. of influents
-                pump = WWTpump(
-                    ID=ID, ins= ins_dct[i], thermo = self.thermo, pump_type=type_dct[i],
-                    Q_mgd=influent_Q_mgd, add_inputs=inputs_dct[i],
-                    capacity_factor=capacity_factor,
-                    include_pump_cost=True,
-                    include_building_cost=False,
-                    include_OM_cost=True,
-                    )
-                setattr(self, f'{i}_pump', pump)
+    #     for i in pumps:
+    #         if hasattr(self, f'{i}_pump'):
+    #             p = getattr(self, f'{i}_pump')
+    #             setattr(p, 'add_inputs', inputs_dct[i])
+    #         else:
+    #             ID = f'{ID}_{i}'
+    #             capacity_factor=1
+    #             # No. of pumps = No. of influents
+    #             pump = WWTpump(
+    #                 ID=ID, ins= ins_dct[i], thermo = self.thermo, pump_type=type_dct[i],
+    #                 Q_mgd=influent_Q_mgd, add_inputs=inputs_dct[i],
+    #                 capacity_factor=capacity_factor,
+    #                 include_pump_cost=True,
+    #                 include_building_cost=False,
+    #                 include_OM_cost=True,
+    #                 )
+    #             setattr(self, f'{i}_pump', pump)
 
-        pipe_ss, pump_ss = 0., 0.
-        for i in pumps:
-            p = getattr(self, f'{i}_pump')
-            p.simulate()
-            p_design = p.design_results
-            pipe_ss += p_design['Pump pipe stainless steel']
-            pump_ss += p_design['Pump stainless steel']
-        return pipe_ss, pump_ss
+    #     pipe_ss, pump_ss = 0., 0.
+    #     for i in pumps:
+    #         p = getattr(self, f'{i}_pump')
+    #         p.simulate()
+    #         p_design = p.design_results
+    #         pipe_ss += p_design['Pump pipe stainless steel']
+    #         pump_ss += p_design['Pump stainless steel']
+    #     return pipe_ss, pump_ss
     
-    _units = {
-        'Design solids loading rate': 'kg/m2/hr',
-        'Total mass of solids handled': 'kg',
-        'Surface area': 'm2',
-        'Thickener diameter': 'm',
-        'Number of thickeners' : 'Unitless',
-        'Thickener depth': 'm',
-        'Conical depth': 'm',
-        'Cylindrical depth': 'm',
-        'Cylindrical volume': 'm3',
-        'Conical volume': 'm3',
-        'Thickener volume': 'm3',
+    # _units = {
+    #     'Design solids loading rate': 'kg/m2/hr',
+    #     'Total mass of solids handled': 'kg',
+    #     'Surface area': 'm2',
+    #     'Thickener diameter': 'm',
+    #     'Number of thickeners' : 'Unitless',
+    #     'Thickener depth': 'm',
+    #     'Conical depth': 'm',
+    #     'Cylindrical depth': 'm',
+    #     'Cylindrical volume': 'm3',
+    #     'Conical volume': 'm3',
+    #     'Thickener volume': 'm3',
         
-        'Center feed depth': 'm',
-        'Downward flow velocity': 'm/hr',
-        'Volumetric flow': 'm3/hr', 
-        'Center feed diameter': 'm',
-        'Thickener depth': 'm',
-        'Volume of concrete wall': 'm3',
-        'Volume of concrete slab': 'm3',
-        'Stainless steel': 'kg',
-        'Pump pipe stainless steel' : 'kg',
-        'Pump stainless steel': 'kg',
-        'Number of pumps': 'Unitless'
-    }
+    #     'Center feed depth': 'm',
+    #     'Downward flow velocity': 'm/hr',
+    #     'Volumetric flow': 'm3/hr', 
+    #     'Center feed diameter': 'm',
+    #     'Thickener depth': 'm',
+    #     'Volume of concrete wall': 'm3',
+    #     'Volume of concrete slab': 'm3',
+    #     'Stainless steel': 'kg',
+    #     'Pump pipe stainless steel' : 'kg',
+    #     'Pump stainless steel': 'kg',
+    #     'Number of pumps': 'Unitless'
+    # }
     
-    def _design(self):
+    # def _design(self):
         
-        self._mixed.mix_from(self.ins)
-        mixed = self._mixed
-        D = self.design_results
+    #     self._mixed.mix_from(self.ins)
+    #     mixed = self._mixed
+    #     D = self.design_results
         
-        # D['Number of thickeners'] = np.ceil(self._mixed.get_total_flow('m3/hr')/self.design_flow)
-        D['Design solids loading rate'] = self.solids_loading_rate # in (kg/hr)/m2
-        D['Total mass of solids handled'] = (mixed.get_TSS()/1000)*mixed.get_total_flow('m3/hr') # (mg/L)*[1/1000(kg*L)/(mg*m3)](m3/hr) = (kg/hr)
+    #     # D['Number of thickeners'] = np.ceil(self._mixed.get_total_flow('m3/hr')/self.design_flow)
+    #     D['Design solids loading rate'] = self.solids_loading_rate # in (kg/hr)/m2
+    #     D['Total mass of solids handled'] = (mixed.get_TSS()/1000)*mixed.get_total_flow('m3/hr') # (mg/L)*[1/1000(kg*L)/(mg*m3)](m3/hr) = (kg/hr)
         
-        # Common gravity thickener configurations have tanks with diameter between 21-24m (MOP 8)
-        diameter_thickener = 24
-        number_of_thickeners = 0
-        while diameter_thickener >= 22:
-            number_of_thickeners += 1
-            total_surface_area =  D['Total mass of solids handled']/D['Design solids loading rate'] #m2
-            surface_area_thickener = total_surface_area/number_of_thickeners
-            diameter_thickener = np.sqrt(4*surface_area_thickener/np.pi)
+    #     # Common gravity thickener configurations have tanks with diameter between 21-24m (MOP 8)
+    #     diameter_thickener = 24
+    #     number_of_thickeners = 0
+    #     while diameter_thickener >= 22:
+    #         number_of_thickeners += 1
+    #         total_surface_area =  D['Total mass of solids handled']/D['Design solids loading rate'] #m2
+    #         surface_area_thickener = total_surface_area/number_of_thickeners
+    #         diameter_thickener = np.sqrt(4*surface_area_thickener/np.pi)
             
-        D['Surface area'] = surface_area_thickener #in m2
-        D['Thickener diameter'] = diameter_thickener #in m
-        D['Number of thickeners'] = number_of_thickeners
+    #     D['Surface area'] = surface_area_thickener #in m2
+    #     D['Thickener diameter'] = diameter_thickener #in m
+    #     D['Number of thickeners'] = number_of_thickeners
     
-        # Common gravity thickener configurations have sidewater depth between 3-4m (MOP 8)
-        D['Thickener depth'] = self.h_thickener #in m 
-        # The thickener tank floor generally has slope between 2:12 and 3:12 (MOP 8)
-        D['Conical depth'] = (2/12)*(D['Thickener diameter']/2)
-        D['Cylindrical depth'] = D['Thickener depth'] - D['Conical depth']
+    #     # Common gravity thickener configurations have sidewater depth between 3-4m (MOP 8)
+    #     D['Thickener depth'] = self.h_thickener #in m 
+    #     # The thickener tank floor generally has slope between 2:12 and 3:12 (MOP 8)
+    #     D['Conical depth'] = (2/12)*(D['Thickener diameter']/2)
+    #     D['Cylindrical depth'] = D['Thickener depth'] - D['Conical depth']
         
-        # Checks on depth
-        if D['Cylindrical depth'] < 0:
-            cyl_depth = D['Cylindrical depth']
-            RuntimeError(f'Cylindrical depth (= {cyl_depth} ) is negative')
+    #     # Checks on depth
+    #     if D['Cylindrical depth'] < 0:
+    #         cyl_depth = D['Cylindrical depth']
+    #         RuntimeError(f'Cylindrical depth (= {cyl_depth} ) is negative')
             
-        if D['Cylindrical depth'] < D['Conical depth']:
-            cyl_depth = D['Cylindrical depth']
-            con_depth = D['Conical depth'] 
-            RuntimeError(f'Cylindrical depth (= {cyl_depth} ) is lower than Conical depth (= {con_depth})')
+    #     if D['Cylindrical depth'] < D['Conical depth']:
+    #         cyl_depth = D['Cylindrical depth']
+    #         con_depth = D['Conical depth'] 
+    #         RuntimeError(f'Cylindrical depth (= {cyl_depth} ) is lower than Conical depth (= {con_depth})')
              
-        D['Cylindrical volume'] = np.pi*np.square(D['Thickener diameter']/2)*D['Cylindrical depth'] #in m3
-        D['Conical volume'] = (np.pi/3)*(D['Thickener diameter']/2)**2*D['Conical depth']
-        D['Thickener volume'] = D['Cylindrical volume'] + D['Conical volume']
+    #     D['Cylindrical volume'] = np.pi*np.square(D['Thickener diameter']/2)*D['Cylindrical depth'] #in m3
+    #     D['Conical volume'] = (np.pi/3)*(D['Thickener diameter']/2)**2*D['Conical depth']
+    #     D['Thickener volume'] = D['Cylindrical volume'] + D['Conical volume']
         
-        #Check on SOR is pending
+    #     #Check on SOR is pending
         
-        # The design here is for center feed of thickener.
-        # Depth of the center feed lies between 30-75% of sidewater depth. [2]
-        D['Center feed depth'] = 0.5*D['Cylindrical depth']
-        # Typical conventional feed wells are designed for an average downflow velocity
-        # of 10-13 mm/s and maximum velocity of 25-30 mm/s. [4]
-        peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
-        D['Downward flow velocity'] = self.downward_flow_velocity*peak_flow_safety_factor # in m/hr
+    #     # The design here is for center feed of thickener.
+    #     # Depth of the center feed lies between 30-75% of sidewater depth. [2]
+    #     D['Center feed depth'] = 0.5*D['Cylindrical depth']
+    #     # Typical conventional feed wells are designed for an average downflow velocity
+    #     # of 10-13 mm/s and maximum velocity of 25-30 mm/s. [4]
+    #     peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
+    #     D['Downward flow velocity'] = self.downward_flow_velocity*peak_flow_safety_factor # in m/hr
         
-        D['Volumetric flow'] =  mixed.get_total_flow('m3/hr')/D['Number of thickeners'] # m3/hr
-        Center_feed_area = D['Volumetric flow']/D['Downward flow velocity'] # in m2
-        D['Center feed diameter'] = np.sqrt(4*Center_feed_area/np.pi) # in m
+    #     D['Volumetric flow'] =  mixed.get_total_flow('m3/hr')/D['Number of thickeners'] # m3/hr
+    #     Center_feed_area = D['Volumetric flow']/D['Downward flow velocity'] # in m2
+    #     D['Center feed diameter'] = np.sqrt(4*Center_feed_area/np.pi) # in m
 
-        #Diameter of the center feed does not exceed 40% of tank diameter [2]
-        if D['Center feed diameter'] > 0.40*D['Thickener diameter']:
-            cf_dia = D['Center feed diameter'] 
-            tank_dia = D['Thickener diameter']
-            warn(f'Diameter of the center feed exceeds 40% of tank diameter. It is {cf_dia*100/tank_dia}% of tank diameter')
+    #     #Diameter of the center feed does not exceed 40% of tank diameter [2]
+    #     if D['Center feed diameter'] > 0.40*D['Thickener diameter']:
+    #         cf_dia = D['Center feed diameter'] 
+    #         tank_dia = D['Thickener diameter']
+    #         warn(f'Diameter of the center feed exceeds 40% of tank diameter. It is {cf_dia*100/tank_dia}% of tank diameter')
 
-        # Amount of concrete required
-        D_tank = D['Thickener depth']*39.37 # m to inches 
-        # Thickness of the wall concrete [m]. Default to be minimum of 1 feet with 1 inch added for every feet of depth over 12 feet.
-        thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
-        inner_diameter = D['Thickener diameter']
-        outer_diameter = inner_diameter + 2*thickness_concrete_wall
-        volume_cylindercal_wall = (np.pi*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
-        D['Volume of concrete wall'] = volume_cylindercal_wall # in m3
+    #     # Amount of concrete required
+    #     D_tank = D['Thickener depth']*39.37 # m to inches 
+    #     # Thickness of the wall concrete [m]. Default to be minimum of 1 feet with 1 inch added for every feet of depth over 12 feet.
+    #     thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
+    #     inner_diameter = D['Thickener diameter']
+    #     outer_diameter = inner_diameter + 2*thickness_concrete_wall
+    #     volume_cylindercal_wall = (np.pi*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
+    #     D['Volume of concrete wall'] = volume_cylindercal_wall # in m3
         
-        # Concrete slab thickness, [ft], default to be 2 in thicker than the wall thickness. (Brian's code)
-        thickness_concrete_slab = thickness_concrete_wall + (2/12)*0.3048 # from inch to m
-        outer_diameter_cone = inner_diameter + 2*(thickness_concrete_wall + thickness_concrete_slab)
-        volume_conical_wall = (np.pi/(3*4))*(((D['Conical depth'] + thickness_concrete_wall + thickness_concrete_slab)*(outer_diameter_cone**2)) - (D['Conical depth']*(inner_diameter)**2))
-        D['Volume of concrete slab'] = volume_conical_wall
+    #     # Concrete slab thickness, [ft], default to be 2 in thicker than the wall thickness. (Brian's code)
+    #     thickness_concrete_slab = thickness_concrete_wall + (2/12)*0.3048 # from inch to m
+    #     outer_diameter_cone = inner_diameter + 2*(thickness_concrete_wall + thickness_concrete_slab)
+    #     volume_conical_wall = (np.pi/(3*4))*(((D['Conical depth'] + thickness_concrete_wall + thickness_concrete_slab)*(outer_diameter_cone**2)) - (D['Conical depth']*(inner_diameter)**2))
+    #     D['Volume of concrete slab'] = volume_conical_wall
         
-        # Amount of metal required for center feed
-        thickness_metal_wall = 0.3048 # equal to 1 feet, in m (!! NEED A RELIABLE SOURCE !!)
-        inner_diameter_center_feed = D['Center feed diameter']
-        outer_diameter_center_feed = inner_diameter_center_feed + 2*thickness_metal_wall
-        volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed**2)
-        density_ss = 7930 # kg/m3, 18/8 Chromium
-        D['Stainless steel'] = volume_center_feed*density_ss # in kg
+    #     # Amount of metal required for center feed
+    #     thickness_metal_wall = 0.3048 # equal to 1 feet, in m (!! NEED A RELIABLE SOURCE !!)
+    #     inner_diameter_center_feed = D['Center feed diameter']
+    #     outer_diameter_center_feed = inner_diameter_center_feed + 2*thickness_metal_wall
+    #     volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed**2)
+    #     density_ss = 7930 # kg/m3, 18/8 Chromium
+    #     D['Stainless steel'] = volume_center_feed*density_ss # in kg
        
-        # Pumps
-        pipe, pumps = self._design_pump()
-        D['Pump pipe stainless steel'] = pipe
-        D['Pump stainless steel'] = pumps
+    #     # Pumps
+    #     pipe, pumps = self._design_pump()
+    #     D['Pump pipe stainless steel'] = pipe
+    #     D['Pump stainless steel'] = pumps
         
-        #For thickener 
-        D['Number of pumps'] = D['Number of thickeners']
+    #     #For thickener 
+    #     D['Number of pumps'] = D['Number of thickeners']
         
-    def _cost(self):
+    # def _cost(self):
         
-        self._mixed.mix_from(self.ins)
-        mixed = self._mixed
+    #     self._mixed.mix_from(self.ins)
+    #     mixed = self._mixed
        
-        D = self.design_results
-        C = self.baseline_purchase_costs
+    #     D = self.design_results
+    #     C = self.baseline_purchase_costs
        
-        # Construction of concrete and stainless steel walls
-        C['Wall concrete'] = D['Number of thickeners']*D['Volume of concrete wall']*self.wall_concrete_unit_cost
-        C['Slab concrete'] = D['Number of thickeners']*D['Volume of concrete slab']*self.slab_concrete_unit_cost
-        C['Wall stainless steel'] = D['Number of thickeners']*D['Stainless steel']*self.stainless_steel_unit_cost
+    #     # Construction of concrete and stainless steel walls
+    #     C['Wall concrete'] = D['Number of thickeners']*D['Volume of concrete wall']*self.wall_concrete_unit_cost
+    #     C['Slab concrete'] = D['Number of thickeners']*D['Volume of concrete slab']*self.slab_concrete_unit_cost
+    #     C['Wall stainless steel'] = D['Number of thickeners']*D['Stainless steel']*self.stainless_steel_unit_cost
        
-        # Cost of equipment 
-        # Source of scaling exponents: Process Design and Economics for Biochemical Conversion of Lignocellulosic Biomass to Ethanol by NREL.
+    #     # Cost of equipment 
+    #     # Source of scaling exponents: Process Design and Economics for Biochemical Conversion of Lignocellulosic Biomass to Ethanol by NREL.
         
-        # Scraper 
-        # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
-        # base_cost_scraper = 2500
-        # base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
-        thickener_flow = mixed.get_total_flow('m3/hr')/D['Number of thickeners']
-        # C['Scraper'] = D['Number of thickeners']*base_cost_scraper*(thickener_flow/base_flow_scraper)**0.6
-        # base_power_scraper = 2.75 # in kW
-        # THE EQUATION BELOW IS NOT CORRECT TO SCALE SCRAPER POWER REQUIREMENTS 
-        # scraper_power = D['Number of thickeners']*base_power_scraper*(thickener_flow/base_flow_scraper)**0.6
+    #     # Scraper 
+    #     # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
+    #     # base_cost_scraper = 2500
+    #     # base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
+    #     thickener_flow = mixed.get_total_flow('m3/hr')/D['Number of thickeners']
+    #     # C['Scraper'] = D['Number of thickeners']*base_cost_scraper*(thickener_flow/base_flow_scraper)**0.6
+    #     # base_power_scraper = 2.75 # in kW
+    #     # THE EQUATION BELOW IS NOT CORRECT TO SCALE SCRAPER POWER REQUIREMENTS 
+    #     # scraper_power = D['Number of thickeners']*base_power_scraper*(thickener_flow/base_flow_scraper)**0.6
         
-        # v notch weir
-        # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
-        base_cost_v_notch_weir = 6888
-        base_flow_v_notch_weir = 10 # in m3/hr
-        C['v notch weir'] = D['Number of thickeners']*base_cost_v_notch_weir*(thickener_flow/base_flow_v_notch_weir)**0.6
+    #     # v notch weir
+    #     # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
+    #     base_cost_v_notch_weir = 6888
+    #     base_flow_v_notch_weir = 10 # in m3/hr
+    #     C['v notch weir'] = D['Number of thickeners']*base_cost_v_notch_weir*(thickener_flow/base_flow_v_notch_weir)**0.6
        
-        # Pump (construction and maintainance)
-        pumps = self.pumps
-        add_OPEX = self.add_OPEX
-        pump_cost = 0.
-        building_cost = 0.
-        opex_o = 0.
-        opex_m = 0.
+    #     # Pump (construction and maintainance)
+    #     pumps = self.pumps
+    #     add_OPEX = self.add_OPEX
+    #     pump_cost = 0.
+    #     building_cost = 0.
+    #     opex_o = 0.
+    #     opex_m = 0.
        
-        for i in pumps:
-            p = getattr(self, f'{i}_pump')
-            p_cost = p.baseline_purchase_costs
-            p_add_opex = p.add_OPEX
-            pump_cost += p_cost['Pump']
-            building_cost += p_cost['Pump building']
-            opex_o += p_add_opex['Pump operating']
-            opex_m += p_add_opex['Pump maintenance']
+    #     for i in pumps:
+    #         p = getattr(self, f'{i}_pump')
+    #         p_cost = p.baseline_purchase_costs
+    #         p_add_opex = p.add_OPEX
+    #         pump_cost += p_cost['Pump']
+    #         building_cost += p_cost['Pump building']
+    #         opex_o += p_add_opex['Pump operating']
+    #         opex_m += p_add_opex['Pump maintenance']
 
-        C['Pumps'] = pump_cost*D['Number of thickeners']
-        C['Pump building'] = building_cost*D['Number of thickeners']
-        add_OPEX['Pump operating'] = opex_o*D['Number of thickeners']
-        add_OPEX['Pump maintenance'] = opex_m*D['Number of thickeners']
+    #     C['Pumps'] = pump_cost*D['Number of thickeners']
+    #     C['Pump building'] = building_cost*D['Number of thickeners']
+    #     add_OPEX['Pump operating'] = opex_o*D['Number of thickeners']
+    #     add_OPEX['Pump maintenance'] = opex_m*D['Number of thickeners']
        
-        # Power
-        pumping = 0.
-        for ID in self.pumps:
-            p = getattr(self, f'{ID}_pump')
-            if p is None:
-                continue
-            pumping += p.power_utility.rate
+    #     # Power
+    #     pumping = 0.
+    #     for ID in self.pumps:
+    #         p = getattr(self, f'{ID}_pump')
+    #         if p is None:
+    #             continue
+    #         pumping += p.power_utility.rate
         
-        pumping = pumping*D['Number of thickeners']
+    #     pumping = pumping*D['Number of thickeners']
         
-        self.power_utility.rate += pumping
-        # self.power_utility.rate += scraper_power
+    #     self.power_utility.rate += pumping
+    #     # self.power_utility.rate += scraper_power
 
 #%% Centrifuge
-
-# Asign a bare module of 1 to all
-
-# default_F_BM = {
-#     'Bowl stainless steel': 1, 
-#     'Conveyor': 1, 
-#     'Pumps': 1,
-#         }
-# default_F_BM.update(default_WWTpump_F_BM)
 
 class Centrifuge(Thickener):
 
@@ -867,6 +847,7 @@ class Centrifuge(Thickener):
         pumping = pumping*D['Number of pumps']
         self.power_utility.rate += pumping
         self.power_utility.rate += total_motor_power
+        
 #%% Incinerator
 
 class Incinerator(SanUnit):
