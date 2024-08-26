@@ -588,8 +588,9 @@ class AnaerobicCSTR(CSTR):
                     # S_h2_0 = QC[h2_idx]
                     S_h2_0 = 2.8309E-07
                     S_h2_in = S_in[h2_idx]
-                    S_h2 = newton(dydt_Sh2_AD, S_h2_0, grad_dydt_Sh2_AD,
-                                  args=(QC, h, params, h2_stoichio, V_liq, S_h2_in), 
+                    S_h2 = newton(
+                        dydt_Sh2_AD, S_h2_0, grad_dydt_Sh2_AD,
+                        args=(QC, h, params, h2_stoichio, V_liq, S_h2_in), 
                                   )
                     return S_h2
                 def update_h2_dstate(dstate):

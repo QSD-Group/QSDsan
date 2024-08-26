@@ -898,7 +898,7 @@ class ADM1p(ADM1):
     
     _precipitates = ('X_CaCO3', 'X_struv', 'X_newb', 'X_ACP', 'X_MgCO3', 'X_AlPO4', 'X_FePO4')
 
-    _biogas_IDs = ('S_h2', 'S_ch4', 'S_IC')
+    _biomass_IDs = (*ADM1._biomass_IDs, 'X_PAO')
 
     def __new__(cls, components=None, path=None, 
                 f_sI_xb=0, f_ch_xb=0.275, f_pr_xb=0.275, f_li_xb=0.350,
