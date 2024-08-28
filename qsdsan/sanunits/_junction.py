@@ -2851,6 +2851,19 @@ class mASM2dtoADM1p(A1junction):
         p2f_stoichio /= abs(p2f_stoichio[S_NO3_idx])
         p3_stoichio = np.array([adm.parameters[f'f_{k}_xb'] for k in ('sI', 'ch', 'pr', 'li', 'xI')])
         
+        _mmp_idx = cmps_adm.indices(('X_CaCO3', 'X_struv', 'X_newb', 'X_ACP', 'X_MgCO3', 'X_AlPO4', 'X_FePO4'))
+        mmp_ic = cmps_adm.i_C[_mmp_idx]
+        mmp_in = cmps_adm.i_N[_mmp_idx]
+        mmp_ip = cmps_adm.i_P[_mmp_idx]
+        ic_idx, in_idx, ip_idx = cmps_adm.indices(['S_IC', 'S_IN', 'S_IP'])
+        cac_sto = np.asarray(adm.stoichiometry.loc['CaCO3_precipitation_dissolution'])
+        struv_sto = np.asarray(adm.stoichiometry.loc['struvite_precipitation_dissolution'])
+        newb_sto = np.asarray(adm.stoichiometry.loc['newberyite_precipitation_dissolution'])
+        acp_sto = np.asarray(adm.stoichiometry.loc['ACP_precipitation_dissolution'])
+        mgc_sto = np.asarray(adm.stoichiometry.loc['MgCO3_precipitation_dissolution'])        
+        alp_sto = np.asarray(adm.stoichiometry.loc['AlPO4_precipitation_dissolution'])
+        fep_sto = np.asarray(adm.stoichiometry.loc['FePO4_precipitation_dissolution'])
+        
         xs_to_li = self.xs_to_li
         
         # To convert components from ASM2d to mADM1 (asm2d-2-madm1)
@@ -2965,7 +2978,30 @@ class mASM2dtoADM1p(A1junction):
                 X_I, X_PHA, X_PP, X_PAO, 
                 S_K, S_Mg, S_Ca, X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3, 
                 X_AlOH, X_AlPO4, X_FeOH, X_FePO4, S_Na, S_Cl, H2O])
-            
+
+            # Dissolve precipitated minerals if S_IC, S_IN or S_IP becomes negative
+            if S_IC < 0:
+                xc_mmp = sum(adm_vals[_mmp_idx] * mmp_ic)
+                if xc_mmp > 0:
+                    fraction_dissolve = max(0, min(1, - S_IC / xc_mmp))
+                    adm_vals -= fraction_dissolve * X_CaCO3 * cac_sto
+                    adm_vals -= fraction_dissolve * X_MgCO3 * mgc_sto
+            if S_IN < 0:
+                xn_mmp = sum(adm_vals[_mmp_idx] * mmp_in)
+                if xn_mmp > 0:
+                    fraction_dissolve = max(0, min(1, - S_IN / xn_mmp))
+                    adm_vals -= fraction_dissolve * X_struv * struv_sto
+                    X_struv = adm_vals[_mmp_idx[0]]
+            if S_IP < 0:
+                xp_mmp = sum(adm_vals[_mmp_idx] * mmp_ip)
+                if xp_mmp > 0:
+                    fraction_dissolve = max(0, min(1, - S_IP / xp_mmp))
+                    adm_vals -= fraction_dissolve * X_struv * struv_sto
+                    adm_vals -= fraction_dissolve * X_newb * newb_sto
+                    adm_vals -= fraction_dissolve * X_ACP * acp_sto
+                    adm_vals -= fraction_dissolve * X_AlPO4 * alp_sto
+                    adm_vals -= fraction_dissolve * X_FePO4 * fep_sto
+
             # adm_vals = f_corr(asm_vals, adm_vals)
             # adm_vals = f_corr(_asm_vals, adm_vals)
             return adm_vals
