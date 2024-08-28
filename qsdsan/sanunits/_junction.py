@@ -2835,15 +2835,20 @@ class mASM2dtoADM1p(A1junction):
         P_SF, P_XS, P_XB, P_SI, P_XI = cmps_asm.i_P[_asm_ids]
         P_aa, P_su, P_pr, P_li, P_ch = cmps_adm.i_P[_adm_ids]
 
-        S_O2_idx, S_NO3_idx = cmps_asm.indices(['S_O2', 'S_NO3'])
+        S_O2_idx, S_NO3_idx, S_A_idx, S_F_idx, X_S_idx =\
+            cmps_asm.indices(['S_O2', 'S_NO3', 'S_A', 'S_F', 'X_S'])
         # f_corr = self.balance_cod_tkn_tp
 
         asm = self.asm2d_model
         adm = self.adm1_model
-        p1_stoichio = np.asarray(asm.stoichiometry.loc['hetero_growth_S_A'])
-        p1_stoichio /= abs(p1_stoichio[S_O2_idx])
-        p2_stoichio = np.asarray(asm.stoichiometry.loc['denitri_S_A'])
-        p2_stoichio /= abs(p2_stoichio[S_NO3_idx])
+        p1a_stoichio = np.asarray(asm.stoichiometry.loc['hetero_growth_S_A'])
+        p1a_stoichio /= abs(p1a_stoichio[S_O2_idx])
+        p1f_stoichio = np.asarray(asm.stoichiometry.loc['hetero_growth_S_F'])
+        p1f_stoichio /= abs(p1f_stoichio[S_O2_idx])
+        p2a_stoichio = np.asarray(asm.stoichiometry.loc['denitri_S_A'])
+        p2a_stoichio /= abs(p2a_stoichio[S_NO3_idx])
+        p2f_stoichio = np.asarray(asm.stoichiometry.loc['denitri_S_F'])
+        p2f_stoichio /= abs(p2f_stoichio[S_NO3_idx])
         p3_stoichio = np.array([adm.parameters[f'f_{k}_xb'] for k in ('sI', 'ch', 'pr', 'li', 'xI')])
         
         xs_to_li = self.xs_to_li
@@ -2851,14 +2856,46 @@ class mASM2dtoADM1p(A1junction):
         # To convert components from ASM2d to mADM1 (asm2d-2-madm1)
         def masm2d2adm1p(asm_vals):           
             _asm_vals = asm_vals.copy()
+            # breakpoint()
 
-            # PROCESS 1: remove S_O2 with S_A with associated X_H growth (aerobic growth of X_H on S_A)
+            # PROCESSES 1 & 2: remove S_O2 and S_NO3 with S_A, then S_F, X_S with associated stoichiometry
             O2_coddm = _asm_vals[S_O2_idx]
-            _asm_vals += O2_coddm * p1_stoichio # makes S_O2 = 0
-            
-            # PROCESS 2: remove S_NO3 with S_A with associated X_H growth (denitrification on S_A)
             NO3_coddm = _asm_vals[S_NO3_idx]
-            _asm_vals += NO3_coddm * p2_stoichio # makes S_NO3 = 0
+            
+            _asm_vals += O2_coddm * p1a_stoichio        # makes S_O2 = 0
+            if _asm_vals[S_A_idx] > 0:                  # enough S_A to comsume all S_O2 for X_H growth
+                _asm_vals += NO3_coddm * p2a_stoichio   # makes S_NO3 = 0
+                if _asm_vals[S_A_idx] < 0:              # not enough S_A for complete denitrification of S_NO3
+                    _asm_vals -= (_asm_vals[S_A_idx] / p2a_stoichio[S_A_idx])*p2a_stoichio # make S_A = 0
+                    NO3_coddm = _asm_vals[S_NO3_idx]
+                    _asm_vals += NO3_coddm * p2f_stoichio # makes S_NO3 = 0 thru X_H growth w S_F
+                    subst_cod = _asm_vals[X_S_idx] + _asm_vals[S_F_idx]
+                    if subst_cod < 0:                   # not enough S_F + X_S for complete denitrification of S_NO3
+                        _asm_vals -= (subst_cod / p2f_stoichio[S_F_idx])*p2f_stoichio  # S_NO3 stays positive
+                        _asm_vals[[S_F_idx, X_S_idx]] = 0
+                        warn('not enough S_A, S_F, X_S for complete denitrification of S_NO3')
+                    elif _asm_vals[S_F_idx] < 0:
+                        _asm_vals[X_S_idx] += _asm_vals[S_F_idx]
+                        _asm_vals[S_F_idx] = 0
+            else:
+                _asm_vals -= (_asm_vals[S_A_idx] / p1a_stoichio[S_A_idx])*p1a_stoichio # make S_A = 0
+                O2_coddm = _asm_vals[S_O2_idx]
+                _asm_vals += O2_coddm * p1f_stoichio    # makes S_O2 = 0 by consuming S_F
+                subst_cod = _asm_vals[X_S_idx] + _asm_vals[S_F_idx]
+                if subst_cod < 0:                       # not enough S_F + X_S for complete consumption of S_O2
+                    _asm_vals -= (subst_cod / p1f_stoichio[S_F_idx])*p1f_stoichio  # S_O2 and S_NO3 stays positive
+                    _asm_vals[[S_F_idx, X_S_idx]] = 0
+                    warn('not enough S_A, S_F, X_S for complete consumption of S_O2 and S_NO3')
+                else:
+                    _asm_vals += NO3_coddm * p2f_stoichio   # makes S_NO3 = 0 by consuming S_F
+                    subst_cod = _asm_vals[X_S_idx] + _asm_vals[S_F_idx]
+                    if subst_cod < 0:                       # not enough S_F + X_S for complete denitrification of S_NO3
+                        _asm_vals -= (subst_cod / p2f_stoichio[S_F_idx])*p2f_stoichio  # S_NO3 stays positive
+                        _asm_vals[[S_F_idx, X_S_idx]] = 0
+                        warn('not enough S_A, S_F, X_S for complete denitrification of S_NO3')
+                    elif _asm_vals[S_F_idx] < 0:
+                        _asm_vals[X_S_idx] += _asm_vals[S_F_idx]
+                        _asm_vals[S_F_idx] = 0
                       
             S_O2, S_N2, S_NH4, S_NO3, S_PO4, S_F, S_A, S_I, S_IC, S_K, S_Mg, \
                 X_I, X_S, X_H, X_PAO, X_PP, X_PHA, X_AUT, S_Ca, X_CaCO3, \
