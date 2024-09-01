@@ -25,6 +25,7 @@ __all__ = ('get_SRT',
            'get_normalized_energy', 
            'get_daily_operational_cost',
            'get_total_operational_cost',
+           'get_eq_natural_gas_price',
            'get_GHG_emissions_sec_treatment',
            'get_GHG_emissions_discharge',
            'get_GHG_emissions_electricity',
@@ -32,6 +33,7 @@ __all__ = ('get_SRT',
            'get_CO2_eq_WRRF',
            'get_carbon_add_CO2_eq', 
            'get_total_CO2_eq',
+           'get_eq_natural_gas_emission', 
            
            'get_aeration_cost',
            'get_pumping_cost',
@@ -723,6 +725,50 @@ def get_total_operational_cost(q_air, # aeration (blower) power
     total_operational_cost = np.sum(operational_costs_WRRF)             #5
     
     return total_operational_cost 
+
+def get_eq_natural_gas_price(system, gas, mass_density = 0.68, natural_gas_price = 0.0041): 
+    '''
+    Parameters
+    ----------
+    
+    system : :class:`biosteam.System`
+        The system whose power will be calculated.
+        
+    ------------------------------------------------------------------------------ 
+    
+    gas : : iterable[:class:`WasteStream`], optional
+        Effluent gas from anaerobic digestor. 
+        The default is None.
+    natural_gas_price : float
+        Price of Natural gas in USD/m3 (eia.gov). 
+        The default is 0.0041 USD/m3. 
+    mass_density : float
+        Mass density of natural gas in kg/m3. 
+        The default is 0.68 kg/m3. [1]
+
+    Returns
+    -------
+    Normalized natural gas equivalent cost (USD/m3). [int]
+    
+    References
+    -------
+    [1] https://www.unitrove.com/engineering/tools/gas/natural-gas-density
+    
+    '''
+    
+    # Use mass based calculation 
+    
+    # 100% methane is assumed
+    
+    mass_CH4_produced = gas.imass['S_ch4'] # kg/day
+    
+    eq_nat_gas_produced = mass_CH4_produced/mass_density # m3/day
+    
+    price_nat_gas = eq_nat_gas_produced*natural_gas_price # USD/day
+        
+    operational_costs_WRRF = price_nat_gas/sum([s.F_vol*24 for s in system.feeds])
+    
+    return operational_costs_WRRF
 
 def get_GHG_emissions_sec_treatment(system = None, influent=None, effluent = None,
                                     CH4_EF=0.0075, N2O_EF=0.016):
@@ -1622,6 +1668,48 @@ def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, efflu
     normalized_total_CO2_eq_WRRF = np.sum(CO2_eq_WRRF)/sum([24*s.F_vol for s in system.feeds])
     
     return normalized_total_CO2_eq_WRRF
+
+def get_eq_natural_gas_emission(system, gas, mass_density = 0.68, emission_factor = 0.454): 
+    '''
+    Parameters
+    ----------
+    
+    system : :class:`biosteam.System`
+        The system whose power will be calculated.
+        
+    ------------------------------------------------------------------------------ 
+    
+    gas : : iterable[:class:`WasteStream`], optional
+        Effluent gas from anaerobic digestor. 
+        The default is None.
+    mass_density : float
+        Mass density of natural gas in kg/m3. 
+        The default is 0.68 kg/m3. [1]
+    emission factor : float
+        The emission factor used to calculate inherent emission in production of natural gas.
+        The default is 0.454 kg CO2 eq/ m3 of natural gas. [1]
+
+    Returns
+    -------
+    Normalized natural gas equivalent cost (kg CO2 eq//m3 of treated wastewater). [int]
+    
+    References
+    -------
+    [1] Ecoinvent 
+    
+    '''
+    
+    # Use mass based calculation 
+    
+    # 100% methane is assumed
+    
+    mass_CH4_produced = gas.imass['S_ch4'] # kg/day
+    eq_nat_gas_produced = mass_CH4_produced/mass_density # m3/day
+    emission_nat_gas = eq_nat_gas_produced*emission_factor # kg CO2 eq/day
+        
+    emission_WRRF = emission_nat_gas/sum([s.F_vol*24 for s in system.feeds]) # kg CO2 eq/m3 
+    
+    return emission_WRRF
 
 def estimate_ww_treatment_energy_demand(daily_energy_demand, daily_flow = 37854, ww_pcpd = 0.175):
     '''
