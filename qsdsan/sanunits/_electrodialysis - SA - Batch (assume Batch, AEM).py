@@ -175,7 +175,7 @@ class ED_vfa(SanUnit):
                  z_T=1.0,
                  r_m=3206.875,  # Areal Membrane resistance in Ohm*m^2
                  r_s=4961.875,  # Areal Solution resistance in Ohm*m^2
-                 ce_S_pro=0.1):  # Solution resistance in Ohm*m^2
+                 ce_S_pro=0.4):  # Solution resistance in Ohm*m^2
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.permselectivity = permselectivity or {'S_pro/S_bu': 1.063682, 'S_pro/S_he': 1.555841, 'S_bu/S_he': 1.462693}  # Default permselectivity
         self.j = j
@@ -205,11 +205,11 @@ class ED_vfa(SanUnit):
         # Calculate total current [A]
         I = self.j * self.A_m
         self.total_current = I
-        print(f"Total current (I): {I} A")
+        # print(f"Total current (I): {I} A")
 
         # Print volumes of the reactors
-        print(f"Dilute tank volume (V_dc): {self.V_dc} m^3")
-        print(f"Accumulated tank volume (V_ac): {self.V_ac} m^3")
+        # print(f"Dilute tank volume (V_dc): {self.V_dc} m^3")
+        # print(f"Accumulated tank volume (V_ac): {self.V_ac} m^3")
         
         # eff_dc.copy_like(inf_dc)
         # eff_ac.copy_like(inf_dc)
@@ -227,7 +227,7 @@ class ED_vfa(SanUnit):
             'S_bu': inf_dc.iconc['S_bu'] * mass2mol[idx('S_bu')] / 1000, # mole/L
             'S_he': inf_dc.iconc['S_he'] * mass2mol[idx('S_he')] / 1000 # mole/L
         }
-        print(f"Initial concentrations: {initial_concentrations} mole/L")
+        # print(f"Initial concentrations: {initial_concentrations} mole/L")
 
         # Calculate the permselectivity based CE for each ion
         ce_S_pro = self.ce_S_pro  # Example fixed CE value for S_pro
@@ -245,7 +245,7 @@ class ED_vfa(SanUnit):
         CE_dict = {'S_pro': ce_S_pro, 'S_bu': ce_S_bu, 'S_he': ce_S_he}
         self.CE_dict = CE_dict
         
-        print(f"Charge efficiency dictionary: {CE_dict}")
+        # print(f"Charge efficiency dictionary: {CE_dict}")
         # cmps = inf_dc.components
         # idx=cmps.index
         # mass2mol = cmps.i_mass / cmps.chem_MW
@@ -254,12 +254,12 @@ class ED_vfa(SanUnit):
             # Moles of target ion transported [mol]
             n_T = CE * I / (self.z_T * F) * self.t
             self.n_T_dict[ion] = n_T
-            print(f"Moles of {ion} transported (n_T): {n_T} mol") # Okay
+            # print(f"Moles of {ion} transported (n_T): {n_T} mol") # Okay
 
             # Target ion molar flux [mol/(m^2*s)]
             J_T = CE * I / (self.z_T * F * self.A_m)
             self.J_T_dict[ion] = J_T
-            print(f"Target ion molar flux (J_T) for {ion}: {J_T} mol/m^2/s")
+            # print(f"Target ion molar flux (J_T) for {ion}: {J_T} mol/m^2/s")
 
             # Initial target ion moles in dilute and accumulated tanks
             # mole = kmole/hr * 1000 * hr/m3 * m3
@@ -270,16 +270,16 @@ class ED_vfa(SanUnit):
             
             n_D_tank_initial = inf_dc.iconc[ion] * mass2mol[idx(ion)] * self.V_dc * 1000 # mol/L * m3 * 1000
             n_A_tank_initial = 0
-            print(f"Initial moles in dilute tank (n_D_tank_initial) for {ion}: {n_D_tank_initial} mol")
-            print(f"Initial moles in accumulated tank (n_A_tank_initial) for {ion}: {n_A_tank_initial} mol") # Okay
+            # print(f"Initial moles in dilute tank (n_D_tank_initial) for {ion}: {n_D_tank_initial} mol")
+            # print(f"Initial moles in accumulated tank (n_A_tank_initial) for {ion}: {n_A_tank_initial} mol") # Okay
             
             # mol/L below
             C_D_tank = (n_D_tank_initial - J_T * self.A_m * self.t) / (self.V_dc * 1000) # mol / (m3 * 1000)
             C_A_tank = J_T * self.A_m * self.t / (self.V_ac * 1000)
-            print(f"Concentration in dilute tank (C_D_tank) for {ion}: {C_D_tank} mole/L")
-            print(f"Concentration in accumulated tank (C_A_tank) for {ion}: {C_A_tank} mole/L")
+            # print(f"Concentration in dilute tank (C_D_tank) for {ion}: {C_D_tank} mole/L")
+            # print(f"Concentration in accumulated tank (C_A_tank) for {ion}: {C_A_tank} mole/L")
             
-            # kmole/hr below ->changce iconc
+            # kmole/hr below ->change iconc
             eff_dc.imol[ion] = C_D_tank * self.V_dc / (self.t / 3600)
             eff_ac.imol[ion] = C_A_tank * self.V_ac / (self.t / 3600)
             
@@ -326,9 +326,9 @@ class ED_vfa(SanUnit):
         # Calculate power consumption [W]
         P_sys = V_sys * self.total_current
         self.P_sys = P_sys
-        print(f"System resistance (R_sys): {R_sys} Ohm")
-        print(f"System voltage (V_sys): {V_sys} V")
-        print(f"Power consumption (P_sys): {P_sys} W")
+        # print(f"System resistance (R_sys): {R_sys} Ohm")
+        # print(f"System voltage (V_sys): {V_sys} V")
+        # print(f"Power consumption (P_sys): {P_sys} W")
     
         D['System resistance'] = self.R_sys
         D['System voltage'] = self.V_sys
@@ -353,7 +353,7 @@ class ED_vfa(SanUnit):
         # Electricity cost calculation
         electricity_cost_per_kwh = 0.07  # USD/kWh
         self.electricity_cost = self.power_utility.consumption * self.t / 3600 * electricity_cost_per_kwh
-        print(f"Electricity cost: {self.electricity_cost} USD")
+        # print(f"Electricity cost: {self.electricity_cost} USD")
 #%%
     def plot_cost_breakdown(self):
         # Calculate costs
@@ -457,6 +457,17 @@ for t in time_durations:
         C_A_tank_mM = C_A_tank * 1000  # Convert to mM
         C_A_tank_values[ion].append(C_A_tank_mM)
         
+# Print final C_A_tank values after 6 hours
+six_hours_index = time_durations.index(3600 * 6)
+print("C_A_tank values after 6 hours (in mM):")
+for ion, values in C_A_tank_values.items():
+    print(f"{ion}: {values[six_hours_index]:.2f} mM")
+    
+# Print final C_A_tank values after 20 hours
+print("Final C_A_tank values after 20 hours (in mM):")
+for ion, values in C_A_tank_values.items():
+    print(f"{ion}: {values[-1]:.2f} mM")
+    
 # Set font sizes
 plt.rcParams.update({
     'font.size': 14,
