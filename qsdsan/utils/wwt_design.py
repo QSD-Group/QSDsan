@@ -760,7 +760,7 @@ def get_eq_natural_gas_price(system, gas, mass_density = 0.68, natural_gas_price
     
     # 100% methane is assumed
     
-    mass_CH4_produced = gas.imass['S_ch4']*24 # kg/day
+    mass_CH4_produced = gas.imass['S_ch4']*24*gas.components.S_ch4.i_mass # kg/day
     
     eq_nat_gas_produced = mass_CH4_produced/mass_density # m3/day
     
@@ -1703,7 +1703,7 @@ def get_eq_natural_gas_emission(system, gas, mass_density = 0.68, emission_facto
     
     # 100% methane is assumed
     
-    mass_CH4_produced = gas.imass['S_ch4']*24 # kg/day
+    mass_CH4_produced = gas.imass['S_ch4']*24*gas.components.S_ch4.i_mass # kg/day
     eq_nat_gas_produced = mass_CH4_produced/mass_density # m3/day
     emission_nat_gas = eq_nat_gas_produced*emission_factor # kg CO2 eq/day
         
