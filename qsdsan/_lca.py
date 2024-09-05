@@ -40,9 +40,7 @@ class LCA:
     system : :class:`biosteam.System`
         System for which this LCA is conducted for.
     lifetime : int
-        Lifetime of the LCA.
-    lifetime_unit : str
-        Unit of lifetime.
+        Lifetime of the LCA in years.
     indicators : Iterable(obj)
         `ImpactIndicator` objects or their IDs/aliases.
     uptime_ratio : float
@@ -201,7 +199,7 @@ class LCA:
     >>> GWP_brine = lca.get_allocated_impacts(sys.products, allocate_by='value')['waste_brine']['GlobalWarming']
     >>> GWP_alcohols + GWP_brine # doctest: +ELLIPSIS
     5469809...
-    >>> lca.get_total_impacts(exclude=sys.products)['GlobalWarming'] # doctest: +ELLIPSIS
+    >>> lca.get_total_impacts(exclude_streams=sys.products)['GlobalWarming'] # doctest: +ELLIPSIS
     5469809...
     >>> # Clear all registries for testing purpose
     >>> from qsdsan.utils import clear_lca_registries
@@ -220,7 +218,7 @@ class LCA:
                  '_other_items', '_other_items_f', 'annualize_construction')
 
 
-    def __init__(self, system, lifetime, lifetime_unit='yr',
+    def __init__(self, system, lifetime,
                  indicators=(), uptime_ratio=1, annualize_construction=False,
                  simulate_system=True, simulate_kwargs={},
                  **item_quantities):
@@ -229,13 +227,14 @@ class LCA:
         self._transportation_units = set()
         self._lca_streams = set()
         self._update_system(system)
-        self._update_lifetime(lifetime, lifetime_unit)
+        self.lifetime = lifetime
         self.indicators = indicators
         self.uptime_ratio = uptime_ratio
         self.annualize_construction = annualize_construction
         self._other_items = {}
         self._other_items_f = {}
         for item, val in item_quantities.items():
+            if item == 'lifetime_unit': continue # legacy codes
             try:
                 f_quantity, unit = val # unit provided for the quantity
             except Exception as e:
@@ -271,20 +270,14 @@ class LCA:
             system._LCA = self
         except AttributeError:
             pass
-
-
-    def _update_lifetime(self, lifetime=0., unit='yr'):
-        if not unit or unit == 'yr':
-            self._lifetime = int(lifetime)
-        else:
-            converted = auom(unit).convert(int(lifetime), 'yr')
-            self._lifetime = converted
-
+        
 
     def add_other_item(self, item, f_quantity, unit=''):
         '''Add other :class:`ImpactItem` in LCA.'''
         if isinstance(item, str):
             item = ImpactItem.get_item(item)
+            if item is None:
+                raise ValueError(f'No ImpactItem with the ID {item}.')
         fu = item.functional_unit
         if not callable(f_quantity):
             f = lambda: f_quantity
@@ -314,10 +307,10 @@ class LCA:
     def __repr__(self):
         return f'<LCA: {self.system}>'
 
-    def show(self, lifetime_unit='yr'):
+    def show(self):
         '''Show basic information of this :class:`LCA` object.'''
-        lifetime = auom('yr').convert(self.lifetime, lifetime_unit)
-        info = f'LCA: {self.system} (lifetime {f_num(lifetime)} {lifetime_unit})'
+        lifetime = self.lifetime
+        info = f'LCA: {self.system} (lifetime {f_num(lifetime)} yr)'
         info += '\nImpacts:'
         print(info)
         if len(self.indicators) == 0:
@@ -338,19 +331,24 @@ class LCA:
     _ipython_display_ = show
 
 
-    def get_construction_impacts(self, units=None, time=None, time_unit='hr'):
+    def get_construction_impacts(self, units=None, annual=False):
         '''
-        Return all construction-related impacts for the given unit,
-        normalized to a certain time frame.
+        Return all construction-related impacts for the given units.
+
+        Parameters
+        ----------
+        units : Iterable(obj)
+            Unit operations considered for impacts
+            (will default to all unit operations in the system).
+        annual : bool
+            If True, will return the annual impacts considering `uptime_ratio`
+            instead of across the system lifetime.
         '''
         units = self.construction_units if units is None else units
         annualize = self.annualize_construction
         if not isinstance(units, Iterable) or isinstance(units, str):
             units = (units,)
-        if time is None:
-            time = self.lifetime_hr
-        else:
-            time = auom(time_unit).convert(float(time), 'hr')
+        time = self.lifetime
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         for i in units:
             if not isinstance(i, SanUnit):
@@ -358,11 +356,11 @@ class LCA:
             for j in i.construction:
                 impact = j.impacts
                 if j.lifetime is not None: # this equipment has a lifetime
-                    constr_lifetime = auom('yr').convert(j.lifetime, 'hr')
+                    constr_lifetime = j.lifetime
                     ratio = ceil(time/constr_lifetime) if not annualize else time/constr_lifetime
                 else: # equipment doesn't have a lifetime
                     if i.lifetime and not isinstance(i.lifetime, dict): # unit has a uniform lifetime
-                        constr_lifetime = auom('yr').convert(i.lifetime, 'hr')
+                        constr_lifetime = i.lifetime
                         ratio = ceil(time/constr_lifetime) if not annualize else time/constr_lifetime
                     else: # no lifetime, assume just need one
                         ratio = 1.
@@ -370,20 +368,28 @@ class LCA:
                     if m not in impacts.keys():
                         continue
                     impacts[m] += n*ratio
+        if annual == True:
+            lifetime = self.lifetime
+            for i, j in impacts.items(): impacts[i] = j/lifetime
         return impacts
 
-    def get_transportation_impacts(self, units=None, time=None, time_unit='hr'):
+    def get_transportation_impacts(self, units=None, annual=False):
         '''
-        Return all transportation-related impacts for the given unit,
-        normalized to a certain time frame.
+        Return all transportation-related impacts for the given unit.
+        
+        Parameters
+        ----------
+        units : Iterable(obj)
+            Unit operations considered for impacts
+            (will default to all unit operations in the system).
+        annual : bool
+            If True, will return the annual impacts considering `uptime_ratio`
+            instead of across the system lifetime.
         '''
         units = self.transportation_units if units is None else units
         if not isinstance(units, Iterable):
             units = (units,)
-        if not time:
-            time = self.lifetime_hr
-        else:
-            time = auom(time_unit).convert(float(time), 'hr')
+        time = self.lifetime_hr
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         for i in units:
             if not isinstance(i, SanUnit):
@@ -394,27 +400,35 @@ class LCA:
                     if m not in impacts.keys():
                         continue
                     impacts[m] += n*time/j.interval
+        if annual == True:
+            lifetime = self.lifetime
+            for i, j in impacts.items(): impacts[i] = j/lifetime
         return impacts
 
 
-    def get_stream_impacts(self, stream_items=None, exclude=None,
-                           kind='all', time=None, time_unit='hr'):
+    def get_stream_impacts(self, stream_items=None, exclude_streams=None, kind='all', annual=False, **kwargs):
         '''
-        Return all stream-related impacts for the given streams,
-        normalized to a certain time frame.
+        Return all stream-related impacts for the given streams.
+        
+        Parameters
+        ----------
+        stream_items : Iterable(obj)
+            Streams considered for impacts
+            (will default to all streams in the system with `StreamImpactItem`).
+        annual : bool
+            If True, will return the annual impacts considering `uptime_ratio`
+            instead of across the system lifetime.
         '''
+        if 'exclude' in kwargs.keys() and exclude_streams is None: exclude_streams=kwargs['exclude']
         isa = isinstance
         if stream_items == None:
             stream_items = self.stream_inventory
         if not isa(stream_items, Iterable):
             stream_items = (stream_items,)
-        if not isa(exclude, Iterable):
-            exclude = (exclude,)
+        if not isa(exclude_streams, Iterable):
+            exclude_streams = (exclude_streams,)
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-        if not time:
-            time = self.lifetime_hr
-        else:
-            time = auom(time_unit).convert(float(time), 'hr')
+        time = self.lifetime_hr if annual is False else 365*24*self.uptime_ratio
         for j in stream_items:
             # In case that ws instead of the item is given
             if isa(j, Stream):
@@ -427,7 +441,7 @@ class LCA:
             else:
                 ws = j.linked_stream
 
-            if ws in exclude: continue
+            if ws in exclude_streams: continue
             
             F_mass = j.flow_getter(ws)
             for m, n in j.CFs.items():
@@ -445,50 +459,79 @@ class LCA:
                 impacts[m] += n*time*F_mass
         return impacts
 
-    def get_other_impacts(self, time=None, time_unit='hr'):
+    def get_other_impacts(self, annual=False):
         '''
-        Return all additional impacts from "other" :class:`ImpactItems` objects,
+        Return all additional impacts from "other" :class:`ImpactItems` objects
         based on defined quantity.
+        
+        Parameters
+        ----------
+        annual : bool
+            If True, will return the annual impacts considering `uptime_ratio`
+            instead of across the system lifetime.
         '''
         self.refresh_other_items()
         impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
         other_dct = self.other_items
-        if not time:
-            time = self.lifetime_hr
-        else:
-            time = auom(time_unit).convert(float(time), 'hr')
-        factor = time / self.lifetime_hr
         for i in other_dct.keys():
             item = ImpactItem.get_item(i)
             for m, n in item.CFs.items():
                 if m not in impacts.keys():
                     continue
-                impacts[m] += n*other_dct[i]['quantity']*factor
+                impacts[m] += n*other_dct[i]['quantity']
+        if annual == True:
+            lifetime = self.lifetime
+            for i, j in impacts.items(): impacts[i] = j/lifetime
         return impacts
 
-    def get_total_impacts(self, exclude=None, time=None, time_unit='hr'):
-        '''Return total impacts, normalized to a certain time frame.'''
-        impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-        constr = self.get_construction_impacts(self.construction_units, time=time, time_unit=time_unit)
-        trans = self.get_transportation_impacts(self.transportation_units, time=time, time_unit=time_unit)
+    def get_total_impacts(
+            self,
+            operation_only=False,
+            exclude_streams=None,
+            annual=False,
+            **kwargs
+            ):
+        '''
+        Return total impacts, normalized to a certain time frame.
+        
+        Parameters
+        ----------
+        operation_only : bool
+            If True, then no construction impacts will be included.
+        exclude_streams : Iterable(obj)
+            Streams to be excluded from the LCA.
+        annual : bool
+            If True, will return the annual impacts considering `uptime_ratio`
+            instead of across the system lifetime.
+        '''
+        if 'exclude' in kwargs.keys() and exclude_streams is None: exclude_streams=kwargs['exclude']
+        impacts = dict.fromkeys((i.ID for i in self.indicators), 0.) 
+        trans = self.get_transportation_impacts(self.transportation_units, annual=annual)
         ws_impacts = self.get_stream_impacts(stream_items=self.stream_inventory,
-                                             exclude=exclude, time=time, time_unit=time_unit)
-        other = self.get_other_impacts(time=time, time_unit=time_unit)
-
-        for i in (constr, trans, ws_impacts, other):
+                                             exclude_streams=exclude_streams,
+                                             annual=annual)
+        other = self.get_other_impacts(annual=annual)
+        if operation_only == False:
+            constr = self.get_construction_impacts(self.construction_units, annual=annual)
+            categories = (constr, trans, ws_impacts, other)
+        else: categories = (trans, ws_impacts, other)
+        
+        for i in categories:
             for m, n in i.items():
                 if m not in impacts.keys():
                     continue
                 impacts[m] += n
+                
         return impacts
 
-    def get_allocated_impacts(self, streams=(), allocate_by='mass'):
+    def get_allocated_impacts(self, streams=(), allocate_by='mass',
+                              operation_only=False, annual=False):
         '''
         Allocate total impacts to one or multiple streams.
 
         Note that original impacts assigned to the streams will be excluded,
         i.e., the total impact for allocation will be calculated using
-        `LCA.get_total_impacts(exclude=streams)`.
+        `LCA.get_total_impacts(exclude_streams=streams)`.
 
         Parameters
         ----------
@@ -502,6 +545,12 @@ class LCA:
             will allocate impacts according to the Iterable.
             If provided as a function,  will call the function to generate an
             Iterable to allocate the impacts accordingly.
+        operation_only : bool
+            If True, then no construction impacts will be included.
+        annual : bool
+            If True, will return the annual impacts considering `uptime_ratio`
+            instead of across the system lifetime.
+            
 
         .. note::
 
@@ -511,7 +560,7 @@ class LCA:
         '''
         if not isinstance(streams, Iterable):
             streams = (streams,)
-        impact_dct = self.get_total_impacts(exclude=streams)
+        impact_dct = self.get_total_impacts(operation_only=operation_only, exclude_streams=streams, annual=annual)
         impact_vals = np.array([i for i in impact_dct.values()])
         allocated = {}
         if len(streams) == 1:
@@ -544,23 +593,48 @@ class LCA:
         return allocated
 
 
-    def get_unit_impacts(self, units, time=None, time_unit='hr',
-                          exclude=None):
-        '''Return total impacts with certain units, normalized to a certain time frame. '''
+    def get_unit_impacts(
+            self, units,
+            exclude_streams=None,
+            operation_only=False,
+            annual=False,
+            **kwargs
+            ):
+        '''
+        Return total impacts with certain units.
+        
+        Parameters
+        ----------
+        units : Iterable(obj)
+            Unit operations to be included in the calculation.
+        operation_only : bool
+            If True, then no construction impacts will be included.
+        exclude_streams : Iterable(obj)
+            Streams to be excluded from the LCA.
+        annual : bool
+            If True, will return the annual impacts considering `uptime_ratio`
+            instead of across the system lifetime.
+        '''
+        if 'exclude' in kwargs.keys() and exclude_streams is None: exclude_streams=kwargs['exclude']
         if not isinstance(units, Iterable):
             units = (units,)
-        constr = self.get_construction_impacts(units, time, time_unit)
-        trans = self.get_transportation_impacts(units, time, time_unit)
+        
+        trans = self.get_transportation_impacts(units, annual=annual)
         stream_items = set(i for i in
                        sum((tuple(unit.ins+unit.outs) for unit in units), ())
                        if i.stream_impact_item)
 
-        s = self.get_stream_impacts(stream_items=stream_items, exclude=exclude,
-                                     time=time, time_unit=time_unit)
-        other = self.get_other_impacts()
-        tot = constr.copy()
+        s = self.get_stream_impacts(stream_items=stream_items,
+                                    exclude_streams=exclude_streams,
+                                    annual=annual)
+        other = self.get_other_impacts(annual=annual)
+        tot = s.copy()
         for m in tot.keys():
             tot[m] += trans[m] + s[m] + other[m]
+        if not operation_only:
+            constr = self.get_construction_impacts(units, annual=annual)
+            for m in tot.keys(): tot[m] += constr[m]          
+            
         return tot
 
     def _append_cat_sum(self, cat_table, cat, tot):
@@ -581,21 +655,23 @@ class LCA:
 
         return cat_table
 
-    def get_impact_table(self, category, time=None, time_unit='hr'):
+    def get_impact_table(self, category, annual=False):
         '''
-        Return a :class:`pandas.DataFrame` table for the given impact category,
-        normalized to a certain time frame.
+        Return a :class:`pandas.DataFrame` table for the given impact category.
+        
+        Parameters
+        ----------
+        category : str
+            Can be 'construction', 'transportation', 'stream', or 'other'.
+        annual : bool
+            If True, will return the annual impacts considering `uptime_ratio`
+            instead of across the system lifetime.
         '''
-        if not time:
-            time = self.lifetime_hr
-        else:
-            time = auom(time_unit).convert(float(time), 'hr')
-
+        time = self.lifetime_hr
         cat = category.lower()
         tot_f = getattr(self, f'get_{cat}_impacts')
-        kwargs = {'time': time, 'time_unit': time_unit} if cat != 'other' else {}
+        kwargs = {'annual': annual} if cat != 'other' else {}
         tot = tot_f(**kwargs)
-        time_ratio = time/self.lifetime_hr
 
         if cat in ('construction', 'transportation'):
             units = sorted(getattr(self, f'_{cat}_units'),
@@ -633,7 +709,7 @@ class LCA:
                 for i in self.indicators:
                     if i.ID in item.CFs:
                         dct[f'{i.ID} [{i.unit}]'] = impact = dct['Quantity']*item.CFs[i.ID]
-                        dct[f'Category {i.ID} Ratio'] = impact/(tot[i.ID]*time_ratio)
+                        dct[f'Category {i.ID} Ratio'] = impact/tot[i.ID]
                     else:
                         dct[f'{i.ID} [{i.unit}]'] = dct[f'Category {i.ID} Ratio'] = 0
                 df = pd.DataFrame.from_dict(dct)
@@ -664,7 +740,7 @@ class LCA:
                     if ind.ID in ws_item.CFs.keys():
                         impact = ws_item.CFs[ind.ID]*mass
                         item_dct[f'{ind.ID} [{ind.unit}]'].append(impact)
-                        item_dct[f'Category {ind.ID} Ratio'].append(impact/(tot[ind.ID]*time_ratio))
+                        item_dct[f'Category {ind.ID} Ratio'].append(impact/tot[ind.ID])
                     else:
                         item_dct[f'{ind.ID} [{ind.unit}]'].append(0)
                         item_dct[f'Category {ind.ID} Ratio'].append(0)
@@ -680,13 +756,13 @@ class LCA:
             for other_ID in self.other_items.keys():
                 other = self.other_items[other_ID]['item']
                 item_dct['Other'].append(f'{other_ID} [{other.functional_unit}]')
-                quantity = self.other_items[other_ID]['quantity'] * time_ratio
+                quantity = self.other_items[other_ID]['quantity']
                 item_dct['Quantity'].append(quantity)
                 for ind in self.indicators:
                     if ind.ID in other.CFs.keys():
                         impact = other.CFs[ind.ID]*quantity
                         item_dct[f'{ind.ID} [{ind.unit}]'].append(impact)
-                        item_dct[f'Category {ind.ID} Ratio'].append(impact/(tot[ind.ID]*time_ratio))
+                        item_dct[f'Category {ind.ID} Ratio'].append(impact/tot[ind.ID])
                     else:
                         item_dct[f'{ind.ID} [{ind.unit}]'].append(0)
                         item_dct[f'Category {ind.ID} Ratio'].append(0)
@@ -701,12 +777,22 @@ class LCA:
 
 
     def save_report(self, file=None, sheet_name='LCA',
-                    time=None, time_unit='hr',
-                    n_row=0, row_space=2):
-        '''Save all LCA tables as an Excel file.'''
+                    n_row=0, row_space=2, annual=False):
+        '''
+        Save all LCA tables as an Excel file.
+        
+        Parameters
+        ----------
+        file : str
+            Path and name of the excel file,
+            will use the ID of the system with an '_lca' suffix, if not provided.
+        annual : bool
+            If True, will return the annual impacts considering `uptime_ratio`
+            instead of across the system lifetime.
+        '''
         if not file:
             file = f'{self.system.ID}_lca.xlsx'
-        tables = [self.get_impact_table(cat, time, time_unit)
+        tables = [self.get_impact_table(cat, annual=annual)
                   for cat in ('Construction', 'Transportation',
                               'Stream', 'other')]
         with pd.ExcelWriter(file) as writer:
@@ -729,8 +815,8 @@ class LCA:
         '''[int] Lifetime of the system, [yr].'''
         return self._lifetime
     @lifetime.setter
-    def lifetime(self, lifetime, unit='yr'):
-        self._update_lifetime(lifetime, unit)
+    def lifetime(self, lifetime):
+        self._lifetime = int(lifetime)
 
     @property
     def lifetime_hr(self):
