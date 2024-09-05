@@ -108,10 +108,10 @@ class CatalyticHydrothermalGasification(Reactor):
                   WHSV=3.562,
                   catalyst_lifetime=7920, # 1 year [1]
                   gas_composition={'CH4':0.527,
-                                  'CO2':0.432,
-                                  'C2H6':0.011,
-                                  'C3H8':0.030,
-                                  'H2':0.0001}, # [1]
+                                   'CO2':0.432,
+                                   'C2H6':0.011,
+                                   'C3H8':0.030,
+                                   'H2':0.0001}, # [1]
                   gas_C_2_total_C=0.5981, # [1]
                   P=None, tau=20/60, void_fraction=0.5, # [2, 3]
                   length_to_diameter=2, diameter=None,

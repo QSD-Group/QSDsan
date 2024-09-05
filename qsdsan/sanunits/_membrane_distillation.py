@@ -21,6 +21,22 @@ from qsdsan import SanUnit, Construction
 
 __all__ = ('MembraneDistillation',)
 
+GDPCTPI = {2008: 87.977,
+           2009: 88.557,
+           2010: 89.619,
+           2011: 91.466,
+           2012: 93.176,
+           2013: 94.786,
+           2014: 96.436,
+           2015: 97.277,
+           2016: 98.208,
+           2017: 100.000,
+           2018: 102.290,
+           2019: 104.008,
+           2020: 105.407,
+           2021: 110.220,
+           2022: 117.995,
+           2023: 122.284}
 
 # =============================================================================
 # Membrane Distillation
@@ -62,6 +78,7 @@ class MembraneDistillation(SanUnit):
         Membrane treatment capacity (permeate flux), [kg/m2/h].
     membrane_price: float
         Membrane price, [$/kg] ([$/m2]).
+        from [6]: 90 $/m2 (likely 2008$).
         
     References
     ----------
@@ -107,7 +124,7 @@ class MembraneDistillation(SanUnit):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream',
-                 include_construction=True,
+                 include_construction=False,
                  lifetime={'Membrane': 7920},
                  influent_pH=8.16, # CHG effluent pH: 8.16 ± 0.25 [1]
                  target_pH=10,
@@ -123,12 +140,12 @@ class MembraneDistillation(SanUnit):
                  Henry=1.61*10**(-5), # atm*m3/mol
                  # https://webwiser.nlm.nih.gov/substance?substanceId=315&identifier=\
                  # Ammonia&identifierType=name&menuItemId=81&catId=120#:~:text=The%20\
-                 # Henry's%20Law%20constant%20for,m%2Fmole(2). (accessed 11-11-2022)
+                 # Henry's%20Law%20constant%20for,m%2Fmole(2). (accessed 2022-11-11)
                  Ka=1.75*10**(-5), # overall mass transfer coefficient 1.2~2.3*10^-5 m/s [5]
                  capacity=6.01, # kg/m2/h [6]
                  # permeate flux, similar values can be found in many other papers ([176], [222] ,[223] in [7])
                  # [177], [223] in [7] show high nitrogen recovery ratio (>85% under optimal conditions)
-                 membrane_price=93.29,  # $90/m2 2008 [6]
+                 membrane_price=90/GDPCTPI[2008]*GDPCTPI[2022], #[6]
                  ):
         
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with,
@@ -165,8 +182,9 @@ class MembraneDistillation(SanUnit):
             NaOH_mol = NaOH_conc*self.ins[0].F_mass
             base.imass['NaOH'] = NaOH_mol*39.997/1000
             
+            # 0.5 M H2SO4 solution, density: 1.03 g/mL (https://www.fishersci.se/shop/products/sulfuric-acid-0-5m-4/11943303, accessed 2024-08-03)
             acid.imass['H2SO4'] = self.CHG.CHGout_N/14.0067/self.N_S_ratio*98.079
-            acid.imass['H2O'] = acid.imass['H2SO4']*1000/98.079/0.5*1.05 -\
+            acid.imass['H2O'] = acid.imass['H2SO4']*1000/98.079/0.5*1.03 -\
                                 acid.imass['H2SO4']
             
             self.pKa = pKa = -log(exp(52.22/8.3145*1000*(1/298 - 1/self.ins[0].T))*10**(-9.252), 10)
@@ -183,7 +201,7 @@ class MembraneDistillation(SanUnit):
             # N2:O2 = 0.79:0.21 in the air, air density is 1.204 kg/m3
             # https://en.wikipedia.org/wiki/Density_of_air#:~:text=It%20also%20\
             # changes%20with%20variation,International%20Standard%20Atmosphere%2\
-            # 0(ISA). (accessed 11-14-2022)
+            # 0(ISA). (accessed 2022-11-14)
             
             imass = indexer.MassFlowIndexer(l=[('H2O', others),
                                                ('NH3', ammonia),
@@ -205,7 +223,7 @@ class MembraneDistillation(SanUnit):
             dimensionless_Henry = self.Henry/8.20575/(10**(-5))/influent.T # H' = H/RT
             # https://www.sciencedirect.com/topics/chemistry/henrys-law#:~:text=\
             # Values%20for%20Henry's%20law%20constants,gas%20constant%20(8.20575%\
-            # 20%C3%97%2010 (accessed 11-11-2022)
+            # 20%C3%97%2010 (accessed 2022-11-11)
             
             kf = 1/(1/self.Ka - 1/dimensionless_Henry/km*(1 + (10**-14/10**(-pKa))*10**\
                   (-self.target_pH)/(10**(-14))))
@@ -255,7 +273,6 @@ class MembraneDistillation(SanUnit):
         if self.include_construction: self.construction[0].quantity = Design['Area']
     
     def _cost(self):
-        self.ins[3].price = self.membrane_price
         Design = self.design_results
         purchase_costs = self.baseline_purchase_costs
         purchase_costs['Membrane'] = Design['Area']*self.membrane_price
