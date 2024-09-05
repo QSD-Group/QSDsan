@@ -21,7 +21,8 @@ from qsdsan import SanUnit, Construction
 
 __all__ = ('MembraneDistillation',)
 
-GDPCTPI = {2008: 87.977,
+GDPCTPI = {2007: 86.352,
+           2008: 87.977,
            2009: 88.557,
            2010: 89.619,
            2011: 91.466,
