@@ -602,6 +602,45 @@ def get_carbon_add_cost(organic_carbon, system, unit_cost_carbon_source = 0.41):
 
     return normalized_cost_carbon
 
+def get_methanol_cost(wastestream, methanol_add, system, stoichiometric_factor = 2.44, effluent_TN = 5, unit_cost_methanol = 0.57):
+    '''
+    
+
+    Parameters
+    ----------
+    wastestream : : iterable[:class:`WasteStream`], optional
+        Wastestream that needs additional organic carbon for nitrate removal. 
+    effluent_TN : integer
+        Effluent limit for total nitrogen. The default is 5 mg/L. 
+    methanol_add : integer
+        To see if any organic carbon is required or not. 
+    system : :class:`biosteam.System`
+        The system whose power will be calculated.
+    stoichiometric_factor : integer
+        Amount of methanol (mass) required to denitrify a given mass of nitrate. The default is 2.44 [kg-Me/kg-N-NO3].
+    unit_cost_methanol : integer.
+        Unit cost of carbon source (USD/kg). The default is 0.57 USD/kg for methanol [1].
+
+    Returns
+    -------
+    Daily normalized cost of carbon addition.
+    
+    [1] https://businessanalytiq.com/procurementanalytics/index/methanol-price-index/
+
+    '''
+    if methanol_add == None:
+        normalized_cost_carbon = 0
+    else:
+        Mass_nitrogen_oxidised = ((wastestream.TN - effluent_TN)/1000)*(wastestream.F_vol*24) # kg/m3 * m3/day = kg/day
+        if effluent_TN < wastestream.TKN:
+            raise ValueError(f'TKN level = {wastestream.TKN} higher than effluent TN = {wastestream.TN}')
+        
+        mass_methanol_required = stoichiometric_factor*Mass_nitrogen_oxidised # kg/day
+        Daily_cost_carbon = mass_methanol_required*unit_cost_methanol # USD/day
+        normalized_cost_carbon = Daily_cost_carbon/sum([s.F_vol*24 for s in system.feeds]) # USD/m3
+
+    return normalized_cost_carbon
+
 def get_total_operational_cost(q_air, # aeration (blower) power 
                                      sludge,  # sludge disposal costs 
                                      system, active_unit_IDs=None,  # sludge pumping power 
@@ -612,7 +651,9 @@ def get_total_operational_cost(q_air, # aeration (blower) power
                                      unit_electricity_cost = 0.161,
                                      
                                      organic_carbon = None, 
-                                     unit_cost_carbon_source = None): 
+                                     unit_cost_carbon_source = None,
+                                     
+                                     methanol_add = None, wastestream=None, stoichiometric_factor=None, effluent_TN=None, unit_cost_methanol=None ): 
     '''
     Parameters
     ----------
@@ -717,8 +758,17 @@ def get_total_operational_cost(q_air, # aeration (blower) power
     else:
         Mass_carbon = (organic_carbon.F_mass * 24)*organic_carbon.components.S_A.i_mass # kg/day
         Daily_cost_carbon = Mass_carbon*unit_cost_carbon_source # USD/day
+        
+    if methanol_add == None:
+        Daily_cost_methanol = 0
+    else:
+        Mass_nitrogen_oxidised = ((wastestream.TN - effluent_TN)/1000)*(wastestream.F_vol*24) # kg/m3 * m3/day = kg/day
+        if effluent_TN < wastestream.TKN:
+            raise ValueError(f'TKN level = {wastestream.TKN} higher than effluent TN = {wastestream.TN}')
+        mass_methanol_required = stoichiometric_factor*Mass_nitrogen_oxidised # kg/day
+        Daily_cost_methanol = mass_methanol_required*unit_cost_methanol # USD/day
     
-    operational_costs_WRRF = np.array([aeration_cost, pumping_cost, sludge_disposal_costs, Daily_cost_carbon, miscellaneous_cost]) 
+    operational_costs_WRRF = np.array([aeration_cost, pumping_cost, sludge_disposal_costs, Daily_cost_carbon, Daily_cost_methanol, miscellaneous_cost]) 
 
     operational_costs_WRRF = operational_costs_WRRF/sum([s.F_vol*24 for s in system.feeds])
 
