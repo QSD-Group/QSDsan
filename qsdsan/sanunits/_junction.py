@@ -2622,11 +2622,25 @@ class ADM1ptomASM2d(A1junction):
         P_su, P_aa, P_fa, P_va, P_bu, P_pro, P_ac, P_pr, P_li, P_ch = cmps_adm.i_P[_adm_ids]
 
         adm = self.adm1_model
+        asm = self.asm2d_model
         adm_p1_idx = cmps_adm.indices(('X_su', 'X_aa', 'X_fa', 'X_c4', 
                                        'X_pro', 'X_ac', 'X_h2', 
                                        'X_PAO', 'X_PP', 'X_PHA'))
         decay_idx = [i for i in adm.IDs if i.startswith(('decay', 'lysis'))]
         decay_stoichio = np.asarray(adm.stoichiometry.loc[decay_idx])
+        
+        _mmp_idx = cmps_asm.indices(('X_CaCO3', 'X_struv', 'X_newb', 'X_ACP', 'X_MgCO3', 'X_AlPO4', 'X_FePO4'))
+        mmp_ic = cmps_asm.i_C[_mmp_idx]
+        mmp_in = cmps_asm.i_N[_mmp_idx]
+        mmp_ip = cmps_asm.i_P[_mmp_idx]
+        ic_idx, in_idx, ip_idx = cmps_asm.indices(['S_IC', 'S_NH4', 'S_PO4'])
+        cac_sto = np.asarray(asm.stoichiometry.loc['CaCO3_precipitation_dissolution'])
+        struv_sto = np.asarray(asm.stoichiometry.loc['struvite_precipitation_dissolution'])
+        newb_sto = np.asarray(asm.stoichiometry.loc['newberyite_precipitation_dissolution'])
+        acp_sto = np.asarray(asm.stoichiometry.loc['ACP_precipitation_dissolution'])
+        mgc_sto = np.asarray(asm.stoichiometry.loc['MgCO3_precipitation_dissolution'])        
+        alp_sto = np.asarray(asm.stoichiometry.loc['AlPO4_precipitation_dissolution'])
+        fep_sto = np.asarray(asm.stoichiometry.loc['FePO4_precipitation_dissolution'])
         # f_corr = self.balance_cod_tkn
 
         # To convert components from ADM1p to ASM2d (A1)
@@ -2678,7 +2692,30 @@ class ADM1ptomASM2d(A1junction):
                 X_I, X_S, 
                 0,0,0,0,0, # X_H, X_PAO, X_PP, X_PHA, X_AUT,
                 S_Ca, X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3, # directly mapped
-                X_AlOH, X_AlPO4, X_FeOH, X_FePO4, S_Na, S_Cl, H2O])) 
+                X_AlOH, X_AlPO4, X_FeOH, X_FePO4, S_Na, S_Cl, H2O]))
+            
+            # Dissolve precipitated minerals if S_IC, S_IN or S_IP becomes negative
+            if S_IC < 0:
+                xc_mmp = sum(asm_vals[_mmp_idx] * mmp_ic)
+                if xc_mmp > 0:
+                    fraction_dissolve = max(0, min(1, - S_IC / xc_mmp))
+                    asm_vals -= fraction_dissolve * X_CaCO3 * cac_sto
+                    asm_vals -= fraction_dissolve * X_MgCO3 * mgc_sto
+            if S_IN < 0:
+                xn_mmp = sum(asm_vals[_mmp_idx] * mmp_in)
+                if xn_mmp > 0:
+                    fraction_dissolve = max(0, min(1, - S_IN / xn_mmp))
+                    asm_vals -= fraction_dissolve * X_struv * struv_sto
+                    X_struv = asm_vals[_mmp_idx[0]]
+            if S_IP < 0:
+                xp_mmp = sum(asm_vals[_mmp_idx] * mmp_ip)
+                if xp_mmp > 0:
+                    fraction_dissolve = max(0, min(1, - S_IP / xp_mmp))
+                    asm_vals -= fraction_dissolve * X_struv * struv_sto
+                    asm_vals -= fraction_dissolve * X_newb * newb_sto
+                    asm_vals -= fraction_dissolve * X_ACP * acp_sto
+                    asm_vals -= fraction_dissolve * X_AlPO4 * alp_sto
+                    asm_vals -= fraction_dissolve * X_FePO4 * fep_sto
                       
             # asm_vals = f_corr(adm_vals, asm_vals)
             return asm_vals
