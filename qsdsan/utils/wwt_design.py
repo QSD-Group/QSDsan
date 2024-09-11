@@ -47,6 +47,7 @@ __all__ = ('get_SRT',
            'get_CH4_emitted_during_pl',
            'get_CH4_emitted_after_pl',
            'get_CO2_eq_electricity',
+           'get_methanol_CO2_eq', 
            
            # Function for gates work (to be removed at a later date)
            
@@ -1492,25 +1493,32 @@ def get_carbon_add_CO2_eq(organic_carbon, system, EF_external_carbon = 1.64):
     
     return normalized_emissions_carbon
 
-def get_methanol_CO2_eq(wastestream,  system, effluent_TN=5, stoichiometric_factor=2.44, EF_methanol=0.655, methanol_add=None,):
+def get_methanol_CO2_eq(wastestream,  system, effluent_TN=5, stoichiometric_factor=2.44, EF_methanol=0.655, methanol_add=None):
     '''
-    Parameters
-    ----------
-    organic_carbon : TYPE
-        DESCRIPTION.
-    system : :class:`biosteam.System`
-        The system for which external cost of carbon addition will be calculated.
-    EF_external_carbon : float, optional
-        EF for carbon source (kg CO2-Eq/kg for acetic acid). The default is 1.64 kg CO2-Eq/kg for acetic acid  [1].
+      Parameters
+      ----------
+      
+      wastestream : : iterable[:class:`WasteStream`], optional
+          Wastestream that needs additional organic carbon for nitrate removal. 
+      effluent_TN : integer
+          Effluent limit for total nitrogen. The default is 5 mg/L. 
+      methanol_add : integer
+          To see if any organic carbon is required or not. 
+      system : :class:`biosteam.System`
+          The system.
+      stoichiometric_factor : integer
+          Amount of methanol (mass) required to denitrify a given mass of nitrate. The default is 2.44 [kg-Me/kg-N-NO3] [1].
+      EF_methanol : integer.
+          Emission factor for market of methanol. The default is 0.655 kg CO2 eq/kg methanol [2].
 
-    Returns
-    -------
-    GHG emissions due to carbon addition.
-    
-    [1] Various reports of ecoinvent. 
+      Returns
+      -------
+      Normalized emissions associated with methanol addition.
+      
+      [1] Perry L. McCarty, Biological Denitrifcation. 
+      [2] Ecoinvent. Global market for methanol. 
 
     '''
-    
     if methanol_add == None:
         normalized_emissions_methanol = 0
     else:
@@ -1535,7 +1543,9 @@ def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, efflu
                      
                      CO2_EF=0.675, DOC_f = 0.45, MCF = 0.8, k = 0.06, pl=30,
                      
-                     organic_carbon=None, EF_external_carbon= 1.64
+                     organic_carbon=None, EF_external_carbon= 1.64, 
+                     
+                     wastestream=None,  effluent_TN=5, stoichiometric_factor=2.44, EF_methanol=0.655, methanol_add=None
                      ):
     
     '''
@@ -1743,11 +1753,22 @@ def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, efflu
     else:
         Mass_carbon = (organic_carbon.F_mass * 24)*organic_carbon.components.S_A.i_mass # kg/day
         Daily_emissions_carbon_add = Mass_carbon*EF_external_carbon # kg/day*kg CO2-Eq/kg for acetic acid = kg CO2 eq/day
+        
+    if methanol_add == None:
+        Daily_emissions_methanol = 0
+    else:
+        Mass_nitrogen_oxidised = ((wastestream.TN - effluent_TN)/1000)*(wastestream.F_vol*24) # kg/m3 * m3/day = kg/day
+        if effluent_TN < wastestream.TKN:
+            raise ValueError(f'TKN level = {wastestream.TKN} higher than effluent TN = {wastestream.TN}')
+        
+        mass_methanol_required = stoichiometric_factor*Mass_nitrogen_oxidised # kg/day
+        Daily_emissions_methanol = mass_methanol_required*EF_methanol # kg/day*kg CO2-Eq/kg of methanol = kg CO2 eq/day
+        
     
     CO2_eq_WRRF = np.array([CH4_CO2_eq_treatment, N2O_CO2_eq_treatment, #1
                             CH4_CO2_eq_discharge, N2O_CO2_eq_discharge, #3
                             CH4_CO2_eq_sludge_disposal_pl,              #4
-                            CO2_eq_electricity, Daily_emissions_carbon_add])                        #5
+                            CO2_eq_electricity, Daily_emissions_carbon_add, Daily_emissions_methanol])                        #5
     
     normalized_total_CO2_eq_WRRF = np.sum(CO2_eq_WRRF)/sum([24*s.F_vol for s in system.feeds])
     
