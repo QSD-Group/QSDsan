@@ -39,6 +39,7 @@ __all__ = ('get_SRT',
            'get_pumping_cost',
            'get_sludge_disposal_costs',
            'get_carbon_add_cost',
+           'get_methanol_cost',
            'get_CH4_CO2_eq_treatment',
            'get_N2O_CO2_eq_treatment',
            'get_CH4_CO2_eq_discharge',
@@ -602,7 +603,7 @@ def get_carbon_add_cost(organic_carbon, system, unit_cost_carbon_source = 0.41):
 
     return normalized_cost_carbon
 
-def get_methanol_cost(wastestream, methanol_add, system, stoichiometric_factor = 2.44, effluent_TN = 5, unit_cost_methanol = 0.57):
+def get_methanol_cost(wastestream, methanol_add, system, stoichiometric_factor = 2.44, effluent_TN = 5, unit_cost_methanol = 0.40):
     '''
     
 
@@ -617,15 +618,16 @@ def get_methanol_cost(wastestream, methanol_add, system, stoichiometric_factor =
     system : :class:`biosteam.System`
         The system whose power will be calculated.
     stoichiometric_factor : integer
-        Amount of methanol (mass) required to denitrify a given mass of nitrate. The default is 2.44 [kg-Me/kg-N-NO3].
+        Amount of methanol (mass) required to denitrify a given mass of nitrate. The default is 2.44 [kg-Me/kg-N-NO3] [1].
     unit_cost_methanol : integer.
-        Unit cost of carbon source (USD/kg). The default is 0.57 USD/kg for methanol [1].
+        Unit cost of carbon source (USD/kg). The default is 0.40 USD/kg for methanol [2].
 
     Returns
     -------
     Daily normalized cost of carbon addition.
     
-    [1] https://businessanalytiq.com/procurementanalytics/index/methanol-price-index/
+    [1] Perry L. McCarty, Biological Denitrifcation. 
+    [2] https://businessanalytiq.com/procurementanalytics/index/methanol-price-index/
 
     '''
     if methanol_add == None:
@@ -653,7 +655,7 @@ def get_total_operational_cost(q_air, # aeration (blower) power
                                      organic_carbon = None, 
                                      unit_cost_carbon_source = None,
                                      
-                                     methanol_add = None, wastestream=None, stoichiometric_factor=None, effluent_TN=None, unit_cost_methanol=None ): 
+                                     methanol_add = None, wastestream=None, stoichiometric_factor=None, effluent_TN=None, unit_cost_methanol=None): 
     '''
     Parameters
     ----------
@@ -1489,6 +1491,38 @@ def get_carbon_add_CO2_eq(organic_carbon, system, EF_external_carbon = 1.64):
         normalized_emissions_carbon = Daily_emissions_carbon/sum([s.F_vol*24 for s in system.feeds]) # kg CO2 eq/m3
     
     return normalized_emissions_carbon
+
+def get_methanol_CO2_eq(wastestream,  system, effluent_TN=5, stoichiometric_factor=2.44, EF_methanol=0.655, methanol_add=None,):
+    '''
+    Parameters
+    ----------
+    organic_carbon : TYPE
+        DESCRIPTION.
+    system : :class:`biosteam.System`
+        The system for which external cost of carbon addition will be calculated.
+    EF_external_carbon : float, optional
+        EF for carbon source (kg CO2-Eq/kg for acetic acid). The default is 1.64 kg CO2-Eq/kg for acetic acid  [1].
+
+    Returns
+    -------
+    GHG emissions due to carbon addition.
+    
+    [1] Various reports of ecoinvent. 
+
+    '''
+    
+    if methanol_add == None:
+        normalized_emissions_methanol = 0
+    else:
+        Mass_nitrogen_oxidised = ((wastestream.TN - effluent_TN)/1000)*(wastestream.F_vol*24) # kg/m3 * m3/day = kg/day
+        if effluent_TN < wastestream.TKN:
+            raise ValueError(f'TKN level = {wastestream.TKN} higher than effluent TN = {wastestream.TN}')
+        
+        mass_methanol_required = stoichiometric_factor*Mass_nitrogen_oxidised # kg/day
+        Daily_emissions_carbon = mass_methanol_required*EF_methanol # kg/day*kg CO2-Eq/kg of methanol = kg CO2 eq/day
+        normalized_emissions_methanol = Daily_emissions_carbon/sum([s.F_vol*24 for s in system.feeds]) # kg CO2 eq/m3
+    
+    return normalized_emissions_methanol
 
 def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, effluent_sys =None, active_unit_IDs=None, sludge=None, 
                       p_atm=101.325, K=0.283, CH4_CO2eq=29.8, N2O_CO2eq=273, F=0.5, 
