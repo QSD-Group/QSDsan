@@ -870,7 +870,7 @@ class IdealClarifier(SanUnit):
     def sludge_MLSS(self, MLSS):
         if MLSS is not None:
             warn(f'sludge MLSS {MLSS} mg/L is only used to estimate '
-                 f'sludge flowrate or solids removal efficiency, when either'
+                 f'sludge flowrate or solids removal efficiency, when either '
                  f'one of them is unspecified.')
         self._MLSS = MLSS
 
