@@ -874,29 +874,6 @@ class IdealClarifier(SanUnit):
                  f'one of them is unspecified.')
         self._MLSS = MLSS
 
-    # def _calc_Qs(self, TSS_in=None, Q_in=None):
-    #     if Q_in is None: Q_in = self._mixed.get_total_flow('m3/d')
-    #     if TSS_in is None: TSS_in = self._mixed.get_TSS()
-    #     # return Q_in*TSS_in*self._e_rmv/(self._MLSS-TSS_in)
-    #     er = self._e_rmv
-    #     return er * TSS_in/(self._MLSS - (1-er)*TSS_in) * Q_in
-
-    # def _calc_ermv(self, TSS_in=None, Q_in=None):
-    #     if Q_in is None: Q_in = self._mixed.get_total_flow('m3/d')
-    #     if TSS_in is None: TSS_in = self._mixed.get_TSS()
-    #     # return self._Qs*(self._MLSS-TSS_in)/TSS_in/(Q_in-self._Qs)
-    #     Q_e = Q_in - self._Qs
-    #     TSS_e = (Q_in * TSS_in - self._Qs * self._MLSS) / Q_e
-    #     return 1 - TSS_e / TSS_in
-
-    # def _calc_SS(self, SS_in=None, Q_in=None):
-    #     if Q_in is None: Q_in = self._mixed.get_total_flow('m3/d')
-    #     if SS_in is None: SS_in = self._mixed.get_TSS()
-    #     SS_e = (1-self._e_rmv)*SS_in
-    #     Qs = self._Qs
-    #     Qe = Q_in - Qs
-    #     return SS_e, (Q_in*SS_in - Qe*SS_e)/Qs
-
     def _run(self):
         inf = self._mixed
         inf.mix_from(self.ins)
@@ -1352,12 +1329,14 @@ class PrimaryClarifier(IdealClarifier):
     
     def __init__(self, ID='', ins=None, outs=(), 
                  sludge_flow_rate=2000, solids_removal_efficiency=0.6,
-                 thermo=None, isdynamic=False, init_with='WasteStream', 
-                 surface_overflow_rate = 41, depth_clarifier=4.5,
+                 sludge_MLSS=None, thermo=None, isdynamic=False, 
+                 init_with='WasteStream', 
+                 surface_overflow_rate=41, depth_clarifier=4.5,
                  downward_flow_velocity=36, F_BM=default_F_BM, **kwargs):
         super().__init__(ID, ins, outs, thermo,
                          sludge_flow_rate=sludge_flow_rate, 
                          solids_removal_efficiency=solids_removal_efficiency,
+                         sludge_MLSS=sludge_MLSS,
                          isdynamic=isdynamic, 
                          init_with=init_with)
 
