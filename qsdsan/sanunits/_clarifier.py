@@ -1317,7 +1317,7 @@ class PrimaryClarifier(IdealClarifier):
     """
     
     _N_ins = 1
-    _N_outs = 2
+    _N_outs = 2  # [0] overflow effluent [1] underflow sludge
     _ins_size_is_fixed = False
     _outs_size_is_fixed = True
     
@@ -1327,8 +1327,6 @@ class PrimaryClarifier(IdealClarifier):
     # wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
     # slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
     # stainless_steel_unit_cost=1.8 # Alibaba. Brushed Stainless Steel Plate 304. https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
-    
-    # pumps = ('sludge',)
     
     def __init__(self, ID='', ins=None, outs=(), 
                  sludge_flow_rate=2000, solids_removal_efficiency=0.6,
@@ -1347,7 +1345,17 @@ class PrimaryClarifier(IdealClarifier):
         self.depth_clarifier = depth_clarifier
         self.downward_flow_velocity = downward_flow_velocity
         self.F_BM.update(F_BM)
-        self._sludge = WasteStream(f'{ID}_sludge')
+        self._sludge = uf = WasteStream(f'{ID}_sludge')
+        pump_id = f'{ID}_sludge_pump'
+        pump = WWTpump(
+            ID=pump_id, ins=uf, thermo=thermo, pump_type='sludge', 
+            prefix=f'{ID}_sludge',
+            include_pump_cost=True,
+            include_building_cost=False,
+            include_OM_cost=True, 
+            )
+        setattr(self, pump_id, pump)
+        self.auxiliary_unit_names = tuple({*self.auxiliary_unit_names, pump_id})
             
     # @property
     # def solids_loading_rate(self):
@@ -1361,48 +1369,13 @@ class PrimaryClarifier(IdealClarifier):
     #     else: 
     #         raise ValueError('solids_loading_rate of the clarifier expected from user')
             
-    # def _design_pump(self):
-    #     ID, pumps = self.ID, self.pumps
-    #     sludge = self._sludge
-    #     sludge.copy_like(self.outs[1])
-        
-    #     ins_dct = {
-    #         'sludge': sludge,
-    #         }
-        
-    #     type_dct = dict.fromkeys(pumps, 'sludge')
-    #     inputs_dct = dict.fromkeys(pumps, (1,))
-        
-    #     D = self.design_results
-    #     influent_Q = sludge.get_total_flow('m3/hr')/D['Number of clarifiers']
-    #     influent_Q_mgd = influent_Q*0.00634 # m3/hr to MGD
-       
-    #     for i in pumps:
-    #         if hasattr(self, f'{i}_pump'):
-    #             p = getattr(self, f'{i}_pump')
-    #             setattr(p, 'add_inputs', inputs_dct[i])
-    #         else:
-    #             ID = f'{ID}_{i}'
-    #             capacity_factor=1
-    #             pump = WWTpump(
-    #                 ID=ID, ins= ins_dct[i], thermo = self.thermo, pump_type=type_dct[i],
-    #                 Q_mgd=influent_Q_mgd, add_inputs=inputs_dct[i],
-    #                 capacity_factor=capacity_factor,
-    #                 include_pump_cost=True,
-    #                 include_building_cost=False,
-    #                 include_OM_cost=True, 
-    #                 )
-                    
-    #             setattr(self, f'{i}_pump', pump)
-
-    #     pipe_ss, pump_ss = 0., 0.
-    #     for i in pumps:
-    #         p = getattr(self, f'{i}_pump')
-    #         p.simulate()
-    #         p_design = p.design_results
-    #         pipe_ss += p_design['Pump pipe stainless steel']
-    #         pump_ss += p_design['Pump stainless steel']
-    #     return pipe_ss, pump_ss
+    def _design_pump(self):
+        D = self.design_results
+        field = f'{self.ID}_sludge_pump'
+        pump = getattr(self, field)
+        self._sludge.copy_like(self.outs[1])
+        pump.simulate()
+        D.update(pump.design_results)
     
     _units = {
         'Number of clarifiers': 'ea',
@@ -1424,11 +1397,13 @@ class PrimaryClarifier(IdealClarifier):
         'Volume of concrete wall': 'm3',
         'Volume of concrete slab': 'm3',
         'Stainless steel': 'kg',
-        'Pump pipe stainless steel' : 'kg',
-        'Pump stainless steel': 'kg',
+        # 'Pump pipe stainless steel' : 'kg',
+        # 'Pump stainless steel': 'kg',
         'Number of pumps': 'ea'
     }
     
+    density_ss = 7930 # kg/m3, 18/8 Chromium
+
     def _design(self):    
         mixed = self._mixed
         mixed.mix_from(self.ins)
@@ -1475,7 +1450,7 @@ class PrimaryClarifier(IdealClarifier):
         # The design here is for center feed of clarifier.
         
         # Depth of the center feed lies between 30-75% of sidewater depth. [3, 4]
-        D['Center feed depth'] = 0.5*h_cyl
+        h_cf = D['Center feed depth'] = 0.5*h_cyl
         # Typical conventional feed wells are designed for an average downflow velocity
         # of 10-13 mm/s and maximum velocity of 25-30 mm/s. [4]
         v_down = D['Downward flow velocity'] = self.downward_flow_velocity*self.peak_flow_safety_factor # in m/hr
@@ -1508,81 +1483,78 @@ class PrimaryClarifier(IdealClarifier):
         
         # Amount of metal required for center feed
         #!!! consider empirical estimation of steel volume for all equipment (besides center feed, e.g., scrapper, support column, EDI, skimmer, walkway etc.)
-        thickness_metal_wall = 0.3048 # equal to 1 feet, in m (!! NEED A RELIABLE SOURCE !!)
-        inner_diameter_center_feed = D['Center feed diameter']
-        outer_diameter_center_feed = inner_diameter_center_feed + 2*thickness_metal_wall
-        volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed**2)
-        density_ss = 7930 # kg/m3, 18/8 Chromium
-        D['Stainless steel'] = volume_center_feed*density_ss # in kg
+        d_wall_cf = 0.3048 # equal to 1 feet, in m (!! NEED A RELIABLE SOURCE !!)
+        OD_cf = dia_cf + 2*d_wall_cf
+        volume_center_feed = (pi*h_cf/4)*(OD_cf**2 - dia_cf**2)
+        D['Stainless steel'] = volume_center_feed*self.density_ss # in kg
        
         # Pumps
-        pipe, pumps = self._design_pump()
-        D['Pump pipe stainless steel'] = pipe
-        D['Pump stainless steel'] = pumps
+        self._design_pump()
+
 
         
-    def _cost(self):
-        D = self.design_results
-        C = self.baseline_purchase_costs
-        N = D['Number of clarifiers']
+    # def _cost(self):
+    #     D = self.design_results
+    #     C = self.baseline_purchase_costs
+    #     N = D['Number of clarifiers']
         
-        # Construction of concrete and stainless steel walls
-        C['Wall concrete'] = N*D['Volume of concrete wall']*self.wall_concrete_unit_cost
-        C['Slab concrete'] = N*D['Volume of concrete slab']*self.slab_concrete_unit_cost
-        C['Wall stainless steel'] = N*D['Stainless steel']*self.stainless_steel_unit_cost
+    #     # Construction of concrete and stainless steel walls
+    #     C['Wall concrete'] = N*D['Volume of concrete wall']*self.wall_concrete_unit_cost
+    #     C['Slab concrete'] = N*D['Volume of concrete slab']*self.slab_concrete_unit_cost
+    #     C['Wall stainless steel'] = N*D['Stainless steel']*self.stainless_steel_unit_cost
        
-        # Cost of equipment 
+    #     # Cost of equipment 
         
-        # Source of scaling exponents: Process Design and Economics for Biochemical Conversion of Lignocellulosic Biomass to Ethanol by NREL.
+    #     # Source of scaling exponents: Process Design and Economics for Biochemical Conversion of Lignocellulosic Biomass to Ethanol by NREL.
         
-        # Scraper 
-        # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
-        # base_cost_scraper = 2500
-        # base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
-        clarifier_flow = D['Volumetric flow']/24
+    #     # Scraper 
+    #     # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
+    #     # base_cost_scraper = 2500
+    #     # base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
+    #     clarifier_flow = D['Volumetric flow']/24
         
-        # C['Scraper'] =  D['Number of clarifiers']*base_cost_scraper*(clarifier_flow/base_flow_scraper)**0.6
+    #     # C['Scraper'] =  D['Number of clarifiers']*base_cost_scraper*(clarifier_flow/base_flow_scraper)**0.6
         
-        # base_power_scraper = 2.75 # in kW
-        # THE EQUATION BELOW IS NOT CORRECT TO SCALE SCRAPER POWER REQUIREMENTS 
-        # scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
+    #     # base_power_scraper = 2.75 # in kW
+    #     # THE EQUATION BELOW IS NOT CORRECT TO SCALE SCRAPER POWER REQUIREMENTS 
+    #     # scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
         
-        # v notch weir
-        # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
-        base_cost_v_notch_weir = 6888
-        base_flow_v_notch_weir = 10 # in m3/hr
-        C['v notch weir'] = D['Number of clarifiers']*base_cost_v_notch_weir*(clarifier_flow/base_flow_v_notch_weir)**0.6
+    #     # v notch weir
+    #     # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
+    #     base_cost_v_notch_weir = 6888
+    #     base_flow_v_notch_weir = 10 # in m3/hr
+    #     C['v notch weir'] = D['Number of clarifiers']*base_cost_v_notch_weir*(clarifier_flow/base_flow_v_notch_weir)**0.6
        
-        # Pump (construction and maintainance)
-        pumps = self.pumps
-        add_OPEX = self.add_OPEX
-        pump_cost = 0.
-        building_cost = 0.
-        opex_o = 0.
-        opex_m = 0.
+    #     # Pump (construction and maintainance)
+    #     pumps = self.pumps
+    #     add_OPEX = self.add_OPEX
+    #     pump_cost = 0.
+    #     building_cost = 0.
+    #     opex_o = 0.
+    #     opex_m = 0.
        
-        for i in pumps:
-            p = getattr(self, f'{i}_pump')
-            p_cost = p.baseline_purchase_costs
-            p_add_opex = p.add_OPEX
-            pump_cost += p_cost['Pump']
-            building_cost += p_cost['Pump building']
-            opex_o += p_add_opex['Pump operating']
-            opex_m += p_add_opex['Pump maintenance']
+    #     for i in pumps:
+    #         p = getattr(self, f'{i}_pump')
+    #         p_cost = p.baseline_purchase_costs
+    #         p_add_opex = p.add_OPEX
+    #         pump_cost += p_cost['Pump']
+    #         building_cost += p_cost['Pump building']
+    #         opex_o += p_add_opex['Pump operating']
+    #         opex_m += p_add_opex['Pump maintenance']
 
-        N = D['Number of clarifiers']
-        C['Pumps'] = pump_cost*N
-        C['Pump building'] = building_cost*N
-        add_OPEX['Pump operating'] = opex_o*N
-        add_OPEX['Pump maintenance'] = opex_m*N
+    #     N = D['Number of clarifiers']
+    #     C['Pumps'] = pump_cost*N
+    #     C['Pump building'] = building_cost*N
+    #     add_OPEX['Pump operating'] = opex_o*N
+    #     add_OPEX['Pump maintenance'] = opex_m*N
        
-        # Power
-        pumping = 0.
-        for ID in self.pumps:
-            p = getattr(self, f'{ID}_pump')
-            if p is None:
-                continue
-            pumping += p.power_utility.rate
+    #     # Power
+    #     pumping = 0.
+    #     for ID in self.pumps:
+    #         p = getattr(self, f'{ID}_pump')
+    #         if p is None:
+    #             continue
+    #         pumping += p.power_utility.rate
                 
-        self.power_utility.rate += pumping*N
-        # self.power_utility.rate += scraper_power
+    #     self.power_utility.rate += pumping*N
+    #     # self.power_utility.rate += scraper_power
