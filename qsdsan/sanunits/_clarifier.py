@@ -16,6 +16,7 @@ for license details.
 '''
 
 from numpy import maximum as npmax, minimum as npmin, exp as npexp
+from math import sqrt, pi
 from warnings import warn
 from numba import njit
 from .. import SanUnit, WasteStream
@@ -1230,7 +1231,7 @@ class PrimaryClarifier(IdealClarifier):
         Typically SOR lies between 30-50 (m3/day)/m2. 
         Here default value of 41 (m3/day)/m2 is used.
     depth_clarifier : float
-        Depth of clarifier. Typical depths range from 3 m to 4.9 m [1,2]. 
+        Depth of clarifier. Typical depths range from 3 m to 4.9 m [1], [2]. 
         Default value of 4.5 m would be used here. 
     downward_flow_velocity : float, optional
         Speed on the basis of which center feed diameter is designed [m/hr]. [3]
@@ -1320,6 +1321,8 @@ class PrimaryClarifier(IdealClarifier):
     _ins_size_is_fixed = False
     _outs_size_is_fixed = True
     
+    peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
+
     # # Costs
     # wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
     # slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
@@ -1344,7 +1347,7 @@ class PrimaryClarifier(IdealClarifier):
         self.depth_clarifier = depth_clarifier
         self.downward_flow_velocity = downward_flow_velocity
         self.F_BM.update(F_BM)
-        self._sludge = WasteStream(f'{ID}_sludge')       
+        self._sludge = WasteStream(f'{ID}_sludge')
             
     # @property
     # def solids_loading_rate(self):
@@ -1401,198 +1404,185 @@ class PrimaryClarifier(IdealClarifier):
     #         pump_ss += p_design['Pump stainless steel']
     #     return pipe_ss, pump_ss
     
-    # _units = {
-    #     'Number of clarifiers': 'ea',
-    #     'SOR': 'm3/day/m2',
-    #     'Volumetric flow': 'm3/day',
-    #     'Surface area': 'm2',
-    #     'Cylindrical diameter': 'm',
-    #     'Conical radius': 'm',
-    #     'Conical depth': 'm',
-    #     'Clarifier depth': 'm',
-    #     'Cylindrical depth': 'm',
-    #     'Cylindrical volume': 'm3',
-    #     'Conical volume': 'm3',
-    #     'Volume': 'm3',
-    #     'Hydraulic Retention Time': 'hr', 
-    #     'Center feed depth': 'm',
-    #     'Downward flow velocity': 'm/hr',
-    #     'Center feed diameter': 'm',
-    #     'Volume of concrete wall': 'm3',
-    #     'Volume of concrete slab': 'm3',
-    #     'Stainless steel': 'kg',
-    #     'Pump pipe stainless steel' : 'kg',
-    #     'Pump stainless steel': 'kg',
-    #     'Number of pumps': 'ea'
-    # }
+    _units = {
+        'Number of clarifiers': 'ea',
+        'SOR': 'm3/day/m2',
+        'Volumetric flow': 'm3/day',
+        'Surface area': 'm2',
+        'Cylindrical diameter': 'm',
+        'Conical radius': 'm',
+        'Conical depth': 'm',
+        'Clarifier depth': 'm',
+        'Cylindrical depth': 'm',
+        'Cylindrical volume': 'm3',
+        'Conical volume': 'm3',
+        'Volume': 'm3',
+        'Hydraulic Retention Time': 'hr', 
+        'Center feed depth': 'm',
+        'Downward flow velocity': 'm/hr',
+        'Center feed diameter': 'm',
+        'Volume of concrete wall': 'm3',
+        'Volume of concrete slab': 'm3',
+        'Stainless steel': 'kg',
+        'Pump pipe stainless steel' : 'kg',
+        'Pump stainless steel': 'kg',
+        'Number of pumps': 'ea'
+    }
     
-    # def _design(self):
+    def _design(self):    
+        mixed = self._mixed
+        mixed.mix_from(self.ins)
+        D = self.design_results
         
-    #     mixed = self._mixed
-    #     mixed.mix_from(self.ins)
-    #     D = self.design_results
+        # Number of clarifiers based on tentative suggestions by Jeremy 
+        # (would be verified through collaboration with industry)
+        Q_mgd = mixed.get_total_flow('MGD')
+        if Q_mgd <= 3: N = 2
+        elif Q_mgd <= 8: N = 3
+        elif Q_mgd <= 20: N = 4
+        else: N = 3 + int(Q_mgd / 20)
+        D['Number of clarifiers'] = D['Number of pumps'] = N
         
-    #     # Number of clarifiers based on tentative suggestions by Jeremy 
-    #     # (would be verified through collaboration with industry)
-    #     total_flow = (mixed.get_total_flow('m3/hr')*24)/3785 # in MGD
-    #     if total_flow <= 3:
-    #         D['Number of clarifiers'] = 2
-    #     elif total_flow > 3 and total_flow <= 8:
-    #         D['Number of clarifiers'] = 3
-    #     elif total_flow > 8 and total_flow <=20:
-    #         D['Number of clarifiers'] = 4
-    #     else:
-    #         D['Number of clarifiers'] = 4
-    #         total_flow -= 20
-    #         D['Number of clarifiers'] += np.ceil(total_flow/20)
-            
-    #     D['SOR'] = self.surface_overflow_rate # in (m3/day)/m2
-    #     D['Volumetric flow'] =  (mixed.get_total_flow('m3/hr')*24)/D['Number of clarifiers'] # m3/day
-    #     D['Surface area'] = D['Volumetric flow']/D['SOR'] # in m2
-    #     D['Cylindrical diameter'] = np.sqrt(4*D['Surface area']/np.pi) #in m
+        SOR = D['SOR'] = self.surface_overflow_rate # in (m3/day)/m2
+        Q = D['Volumetric flow'] = mixed.get_total_flow('m3/d')/N # m3/day
+        A = D['Surface area'] = Q/SOR # in m2
+        dia = D['Cylindrical diameter'] = sqrt(4*A/pi) #in m
         
-    #     #Check on cylindrical diameter [2, 3]
-    #     if D['Cylindrical diameter'] < 3 or D['Cylindrical diameter'] > 60:
-    #         Cylindrical_dia = D['Cylindrical diameter']
-    #         warn(f'Cylindrical diameter = {Cylindrical_dia} is not between 3 m and 60 m')
+        # Check on cylindrical diameter d [2, 3]
+        if dia < 3 or dia > 60:
+            warn(f'Cylindrical diameter = {dia:.2f} is not between 3 m and 60 m')
         
-    #     D['Conical radius'] = D['Cylindrical diameter']/2
-    #     # The slope of the bottom conical floor lies between 1:10 to 1:12 [3, 4]
-    #     D['Conical depth'] = D['Conical radius']/12 
-    #     D['Clarifier depth'] = self.depth_clarifier #in m 
-    #     D['Cylindrical depth'] = D['Clarifier depth'] -  D['Conical depth']
+        rad = D['Conical radius'] = dia/2
+        # The slope of the bottom conical floor lies between 1:10 to 1:12 [3, 4]
+        h_cone = D['Conical height'] = rad/12 
+        h = D['Clarifier depth'] = self.depth_clarifier # in m 
+        h_cyl = D['Cylindrical height'] = h - h_cone
         
-    #     # Check on cylindrical and conical depths 
-    #     if D['Cylindrical depth'] < D['Conical depth']:
-    #         Cylindrical_depth = D['Cylindrical depth']
-    #         Conical_depth = D['Conical depth']
-    #         warn(f'Cylindrical depth = {Cylindrical_depth} is lower than Conical depth = {Conical_depth}')
+        # Check on cylindrical and conical depths 
+        if h_cyl < h_cone:
+            warn(f'Cylindrical highet = {h_cyl} is lower than conical height = {h_cone}')
         
-    #     D['Cylindrical volume'] = np.pi*np.square(D['Cylindrical diameter']/2)*D['Cylindrical depth'] #in m3
-    #     D['Conical volume'] = (3.14/3)*(D['Conical radius']**2)*D['Conical depth'] #in m3
-    #     D['Volume'] = D['Cylindrical volume'] + D['Conical volume'] #in m3
+        V_cyl = D['Cylindrical volume'] = A * h_cyl     # in m3
+        V_cone = D['Conical volume'] = A * h_cone / 3   # in m3
+        V = D['Volume'] = V_cyl + V_cone                # in m3
         
-    #     D['Hydraulic Retention Time'] = D['Volume']/(D['Volumetric flow']/24) #in hrs
+        HRT = D['Hydraulic Retention Time'] = V/(Q/24)        # in hrs
         
-    #     # Check on cylinderical HRT [3]
-    #     if D['Hydraulic Retention Time'] < 1.5 or D['Hydraulic Retention Time'] > 2.5:
-    #         HRT = D['Hydraulic Retention Time']
-    #         warn(f'HRT = {HRT} is not between 1.5 and 2.5 hrs')
+        # Check on cylinderical HRT [3]
+        if HRT < 1.5 or HRT > 2.5:
+            warn(f'HRT = {HRT} is not between 1.5 and 2.5 hrs')
         
-    #     # The design here is for center feed of clarifier.
+        # The design here is for center feed of clarifier.
         
-    #     # Depth of the center feed lies between 30-75% of sidewater depth. [3, 4]
-    #     D['Center feed depth'] = 0.5*D['Cylindrical depth']
-    #     # Typical conventional feed wells are designed for an average downflow velocity
-    #     # of 10-13 mm/s and maximum velocity of 25-30 mm/s. [4]
-    #     peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
-    #     D['Downward flow velocity'] = self.downward_flow_velocity*peak_flow_safety_factor # in m/hr
+        # Depth of the center feed lies between 30-75% of sidewater depth. [3, 4]
+        D['Center feed depth'] = 0.5*h_cyl
+        # Typical conventional feed wells are designed for an average downflow velocity
+        # of 10-13 mm/s and maximum velocity of 25-30 mm/s. [4]
+        v_down = D['Downward flow velocity'] = self.downward_flow_velocity*self.peak_flow_safety_factor # in m/hr
         
-    #     Center_feed_area = (D['Volumetric flow']/24)/D['Downward flow velocity'] # in m2
+        A_cf = (Q/24)/v_down # in m2
         
-    #     D['Center feed diameter'] = np.sqrt(4*Center_feed_area/np.pi) 
+        dia_cf = D['Center feed diameter'] = sqrt(4*A_cf/pi)
 
-    #     #Sanity check: Diameter of the center feed lies between 15-25% of tank diameter [4]
-    #     #The lower limit of this check has been modified to 10% based on advised range of down flow velocity in [4]. 
-    #     if D['Center feed diameter'] < 0.10*D['Cylindrical diameter'] or D['Center feed diameter']  > 0.25*D['Cylindrical diameter']:
-    #         cf_dia = D['Center feed diameter'] 
-    #         tank_dia = D['Cylindrical diameter']
-    #         warn(f'Diameter of the center feed does not lie between 15-25% of tank diameter. It is {cf_dia*100/tank_dia}% of tank diameter')
+        #Sanity check: Diameter of the center feed lies between 15-25% of tank diameter [4]
+        #The lower limit of this check has been modified to 10% based on advised range of down flow velocity in [4]. 
+        if dia_cf < 0.10*dia or dia_cf  > 0.25*dia:
+            warn(f'Diameter of the center feed does not lie between 15-25% of tank diameter. It is {dia_cf*100/dia:.2f}% of tank diameter')
 
-    #     # Amount of concrete required
-    #     D_tank = D['Cylindrical depth']*39.37 # m to inches 
-    #     # Thickness of the wall concrete [m]. Default to be minimum of 1 feet with 1 inch added for every feet of depth over 12 feet.
-    #     thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
-    #     inner_diameter = D['Cylindrical diameter']
-    #     outer_diameter = inner_diameter + 2*thickness_concrete_wall
-    #     volume_cylindercal_wall = (np.pi*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
-    #     D['Volume of concrete wall'] = volume_cylindercal_wall # in m3
+        # Amount of concrete required
+        # D_tank = D['Cylindrical depth']*39.37 # m to inches
+        h_ft = h*3.2808398950131235         # m to feet
+        # Thickness of the wall concrete [m]. Default to be minimum of 1 feet with 1 inch added for every feet of depth over 12 feet.
+        # thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
+        d_wall = (1 + max(h_ft-12, 0)/12) * 0.3048  # feet to m
+        OD = dia + 2*d_wall
+        D['Volume of concrete wall'] = pi*h_cyl/4*(OD**2 - dia**2)  # m3
         
-    #     # Concrete slab thickness, [ft], default to be 2 in thicker than the wall thickness. (Brian's code)
-    #     thickness_concrete_slab = thickness_concrete_wall + (2/12)*0.3048 # from inch to m
-    #     outer_diameter_cone = inner_diameter + 2*(thickness_concrete_wall + thickness_concrete_slab)
-    #     volume_conical_wall = (np.pi/(3*4))*(((D['Conical depth'] + thickness_concrete_wall + thickness_concrete_slab)*(outer_diameter_cone**2)) - (D['Conical depth']*(inner_diameter)**2))
-    #     D['Volume of concrete slab'] = volume_conical_wall
+        # Concrete slab thickness, [ft], default to be 2 in thicker than the wall thickness. (Brian's code)
+        d_slab = d_wall + (2/12)*0.3048 # from inch to m
+        # outer_diameter_cone = inner_diameter + 2*(thickness_concrete_wall + thickness_concrete_slab)
+        OD_cone = dia + 2*d_slab
+        # volume_conical_wall = (np.pi/(3*4))*(((D['Conical depth'] + thickness_concrete_wall + thickness_concrete_slab)*(outer_diameter_cone**2)) - (D['Conical depth']*(inner_diameter)**2))
+        # D['Volume of concrete slab'] = volume_conical_wall
+        D['Volume of concrete slab'] = pi/3*((h_cone + d_slab)*(OD_cone/2)**2 - h_cone*(dia/2)**2)
         
-    #     # Amount of metal required for center feed
-    #     thickness_metal_wall = 0.3048 # equal to 1 feet, in m (!! NEED A RELIABLE SOURCE !!)
-    #     inner_diameter_center_feed = D['Center feed diameter']
-    #     outer_diameter_center_feed = inner_diameter_center_feed + 2*thickness_metal_wall
-    #     volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed**2)
-    #     density_ss = 7930 # kg/m3, 18/8 Chromium
-    #     D['Stainless steel'] = volume_center_feed*density_ss # in kg
+        # Amount of metal required for center feed
+        #!!! consider empirical estimation of steel volume for all equipment (besides center feed, e.g., scrapper, support column, EDI, skimmer, walkway etc.)
+        thickness_metal_wall = 0.3048 # equal to 1 feet, in m (!! NEED A RELIABLE SOURCE !!)
+        inner_diameter_center_feed = D['Center feed diameter']
+        outer_diameter_center_feed = inner_diameter_center_feed + 2*thickness_metal_wall
+        volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed**2)
+        density_ss = 7930 # kg/m3, 18/8 Chromium
+        D['Stainless steel'] = volume_center_feed*density_ss # in kg
        
-    #     # Pumps
-    #     pipe, pumps = self._design_pump()
-    #     D['Pump pipe stainless steel'] = pipe
-    #     D['Pump stainless steel'] = pumps
-        
-    #     #For primary clarifier 
-    #     D['Number of pumps'] = D['Number of clarifiers']
-        
-    # def _cost(self):
-    #     D = self.design_results
-    #     C = self.baseline_purchase_costs
-       
-    #     # Construction of concrete and stainless steel walls
-    #     C['Wall concrete'] = D['Number of clarifiers']*D['Volume of concrete wall']*self.wall_concrete_unit_cost
-        
-    #     C['Slab concrete'] = D['Number of clarifiers']*D['Volume of concrete slab']*self.slab_concrete_unit_cost
-        
-    #     C['Wall stainless steel'] = D['Number of clarifiers']*D['Stainless steel']*self.stainless_steel_unit_cost
-       
-    #     # Cost of equipment 
-        
-    #     # Source of scaling exponents: Process Design and Economics for Biochemical Conversion of Lignocellulosic Biomass to Ethanol by NREL.
-        
-    #     # Scraper 
-    #     # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
-    #     # base_cost_scraper = 2500
-    #     # base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
-    #     clarifier_flow = D['Volumetric flow']/24
-        
-    #     # C['Scraper'] =  D['Number of clarifiers']*base_cost_scraper*(clarifier_flow/base_flow_scraper)**0.6
-        
-    #     # base_power_scraper = 2.75 # in kW
-    #     # THE EQUATION BELOW IS NOT CORRECT TO SCALE SCRAPER POWER REQUIREMENTS 
-    #     # scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
-        
-    #     # v notch weir
-    #     # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
-    #     base_cost_v_notch_weir = 6888
-    #     base_flow_v_notch_weir = 10 # in m3/hr
-    #     C['v notch weir'] = D['Number of clarifiers']*base_cost_v_notch_weir*(clarifier_flow/base_flow_v_notch_weir)**0.6
-       
-    #     # Pump (construction and maintainance)
-    #     pumps = self.pumps
-    #     add_OPEX = self.add_OPEX
-    #     pump_cost = 0.
-    #     building_cost = 0.
-    #     opex_o = 0.
-    #     opex_m = 0.
-       
-    #     for i in pumps:
-    #         p = getattr(self, f'{i}_pump')
-    #         p_cost = p.baseline_purchase_costs
-    #         p_add_opex = p.add_OPEX
-    #         pump_cost += p_cost['Pump']
-    #         building_cost += p_cost['Pump building']
-    #         opex_o += p_add_opex['Pump operating']
-    #         opex_m += p_add_opex['Pump maintenance']
+        # Pumps
+        pipe, pumps = self._design_pump()
+        D['Pump pipe stainless steel'] = pipe
+        D['Pump stainless steel'] = pumps
 
-    #     N = D['Number of clarifiers']
-    #     C['Pumps'] = pump_cost*N
-    #     C['Pump building'] = building_cost*N
-    #     add_OPEX['Pump operating'] = opex_o*N
-    #     add_OPEX['Pump maintenance'] = opex_m*N
+        
+    def _cost(self):
+        D = self.design_results
+        C = self.baseline_purchase_costs
+        N = D['Number of clarifiers']
+        
+        # Construction of concrete and stainless steel walls
+        C['Wall concrete'] = N*D['Volume of concrete wall']*self.wall_concrete_unit_cost
+        C['Slab concrete'] = N*D['Volume of concrete slab']*self.slab_concrete_unit_cost
+        C['Wall stainless steel'] = N*D['Stainless steel']*self.stainless_steel_unit_cost
        
-    #     # Power
-    #     pumping = 0.
-    #     for ID in self.pumps:
-    #         p = getattr(self, f'{ID}_pump')
-    #         if p is None:
-    #             continue
-    #         pumping += p.power_utility.rate
+        # Cost of equipment 
+        
+        # Source of scaling exponents: Process Design and Economics for Biochemical Conversion of Lignocellulosic Biomass to Ethanol by NREL.
+        
+        # Scraper 
+        # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
+        # base_cost_scraper = 2500
+        # base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
+        clarifier_flow = D['Volumetric flow']/24
+        
+        # C['Scraper'] =  D['Number of clarifiers']*base_cost_scraper*(clarifier_flow/base_flow_scraper)**0.6
+        
+        # base_power_scraper = 2.75 # in kW
+        # THE EQUATION BELOW IS NOT CORRECT TO SCALE SCRAPER POWER REQUIREMENTS 
+        # scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
+        
+        # v notch weir
+        # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
+        base_cost_v_notch_weir = 6888
+        base_flow_v_notch_weir = 10 # in m3/hr
+        C['v notch weir'] = D['Number of clarifiers']*base_cost_v_notch_weir*(clarifier_flow/base_flow_v_notch_weir)**0.6
+       
+        # Pump (construction and maintainance)
+        pumps = self.pumps
+        add_OPEX = self.add_OPEX
+        pump_cost = 0.
+        building_cost = 0.
+        opex_o = 0.
+        opex_m = 0.
+       
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p_cost = p.baseline_purchase_costs
+            p_add_opex = p.add_OPEX
+            pump_cost += p_cost['Pump']
+            building_cost += p_cost['Pump building']
+            opex_o += p_add_opex['Pump operating']
+            opex_m += p_add_opex['Pump maintenance']
+
+        N = D['Number of clarifiers']
+        C['Pumps'] = pump_cost*N
+        C['Pump building'] = building_cost*N
+        add_OPEX['Pump operating'] = opex_o*N
+        add_OPEX['Pump maintenance'] = opex_m*N
+       
+        # Power
+        pumping = 0.
+        for ID in self.pumps:
+            p = getattr(self, f'{ID}_pump')
+            if p is None:
+                continue
+            pumping += p.power_utility.rate
                 
-    #     self.power_utility.rate += pumping*N
-    #     # self.power_utility.rate += scraper_power
+        self.power_utility.rate += pumping*N
+        # self.power_utility.rate += scraper_power
