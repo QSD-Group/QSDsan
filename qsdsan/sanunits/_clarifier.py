@@ -1323,10 +1323,10 @@ class PrimaryClarifier(IdealClarifier):
     
     peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
 
-    # # Costs
-    # wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
-    # slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
-    # stainless_steel_unit_cost=1.8 # Alibaba. Brushed Stainless Steel Plate 304. https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
+    # Costs
+    wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
+    slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
+    stainless_steel_unit_cost=1.8 # Alibaba. Brushed Stainless Steel Plate 304. https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
     
     def __init__(self, ID='', ins=None, outs=(), 
                  sludge_flow_rate=2000, solids_removal_efficiency=0.6,
@@ -1372,7 +1372,6 @@ class PrimaryClarifier(IdealClarifier):
     def _design_pump(self):
         D = self.design_results
         N = D['Number of pumps']
-        field = f'{self.ID}_sludge_pump'
         pump = self.sludge_pump
         self._sludge.copy_like(self.outs[1])
         self._sludge.scale(1/N)
