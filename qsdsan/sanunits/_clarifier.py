@@ -1347,15 +1347,15 @@ class PrimaryClarifier(IdealClarifier):
         self.F_BM.update(F_BM)
         self._sludge = uf = WasteStream(f'{ID}_sludge')
         pump_id = f'{ID}_sludge_pump'
-        pump = WWTpump(
+        self.sludge_pump = WWTpump(
             ID=pump_id, ins=uf, thermo=thermo, pump_type='sludge', 
-            prefix=f'{ID}_sludge',
+            prefix='Sludge',
             include_pump_cost=True,
             include_building_cost=False,
             include_OM_cost=True, 
             )
-        setattr(self, pump_id, pump)
-        self.auxiliary_unit_names = tuple({*self.auxiliary_unit_names, pump_id})
+         
+        # self.auxiliary_unit_names = tuple({*self.auxiliary_unit_names, pump_id})
             
     # @property
     # def solids_loading_rate(self):
@@ -1371,9 +1371,11 @@ class PrimaryClarifier(IdealClarifier):
             
     def _design_pump(self):
         D = self.design_results
+        N = D['Number of pumps']
         field = f'{self.ID}_sludge_pump'
         pump = getattr(self, field)
         self._sludge.copy_like(self.outs[1])
+        self._sludge.scale(1/N)
         pump.simulate()
         D.update(pump.design_results)
     
@@ -1490,71 +1492,43 @@ class PrimaryClarifier(IdealClarifier):
        
         # Pumps
         self._design_pump()
-
-
         
-    # def _cost(self):
-    #     D = self.design_results
-    #     C = self.baseline_purchase_costs
-    #     N = D['Number of clarifiers']
+    def _cost(self):
+        D = self.design_results
+        C = self.baseline_purchase_costs
+        N = D['Number of clarifiers']
         
-    #     # Construction of concrete and stainless steel walls
-    #     C['Wall concrete'] = N*D['Volume of concrete wall']*self.wall_concrete_unit_cost
-    #     C['Slab concrete'] = N*D['Volume of concrete slab']*self.slab_concrete_unit_cost
-    #     C['Wall stainless steel'] = N*D['Stainless steel']*self.stainless_steel_unit_cost
+        # Construction of concrete and stainless steel walls
+        C['Wall concrete'] = N*D['Volume of concrete wall']*self.wall_concrete_unit_cost
+        C['Slab concrete'] = N*D['Volume of concrete slab']*self.slab_concrete_unit_cost
+        C['Wall stainless steel'] = N*D['Stainless steel']*self.stainless_steel_unit_cost
        
-    #     # Cost of equipment 
+        # Cost of equipment 
         
-    #     # Source of scaling exponents: Process Design and Economics for Biochemical Conversion of Lignocellulosic Biomass to Ethanol by NREL.
+        # Source of scaling exponents: Process Design and Economics for Biochemical Conversion of Lignocellulosic Biomass to Ethanol by NREL.
         
-    #     # Scraper 
-    #     # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
-    #     # base_cost_scraper = 2500
-    #     # base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
-    #     clarifier_flow = D['Volumetric flow']/24
+        # Scraper 
+        # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
+        # base_cost_scraper = 2500
+        # base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
+        Q = D['Volumetric flow']/24
         
-    #     # C['Scraper'] =  D['Number of clarifiers']*base_cost_scraper*(clarifier_flow/base_flow_scraper)**0.6
+        # C['Scraper'] =  D['Number of clarifiers']*base_cost_scraper*(clarifier_flow/base_flow_scraper)**0.6
         
-    #     # base_power_scraper = 2.75 # in kW
-    #     # THE EQUATION BELOW IS NOT CORRECT TO SCALE SCRAPER POWER REQUIREMENTS 
-    #     # scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
+        # base_power_scraper = 2.75 # in kW
+        # THE EQUATION BELOW IS NOT CORRECT TO SCALE SCRAPER POWER REQUIREMENTS 
+        # scraper_power = D['Number of clarifiers']*base_power_scraper*(clarifier_flow/base_flow_scraper)**0.6
         
-    #     # v notch weir
-    #     # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
-    #     base_cost_v_notch_weir = 6888
-    #     base_flow_v_notch_weir = 10 # in m3/hr
-    #     C['v notch weir'] = D['Number of clarifiers']*base_cost_v_notch_weir*(clarifier_flow/base_flow_v_notch_weir)**0.6
+        # v notch weir
+        # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
+        base_cost_v_notch_weir = 6888
+        base_flow_v_notch_weir = 10 # in m3/hr
+        C['v notch weir'] = N*base_cost_v_notch_weir*(Q/base_flow_v_notch_weir)**0.6
        
-    #     # Pump (construction and maintainance)
-    #     pumps = self.pumps
-    #     add_OPEX = self.add_OPEX
-    #     pump_cost = 0.
-    #     building_cost = 0.
-    #     opex_o = 0.
-    #     opex_m = 0.
-       
-    #     for i in pumps:
-    #         p = getattr(self, f'{i}_pump')
-    #         p_cost = p.baseline_purchase_costs
-    #         p_add_opex = p.add_OPEX
-    #         pump_cost += p_cost['Pump']
-    #         building_cost += p_cost['Pump building']
-    #         opex_o += p_add_opex['Pump operating']
-    #         opex_m += p_add_opex['Pump maintenance']
-
-    #     N = D['Number of clarifiers']
-    #     C['Pumps'] = pump_cost*N
-    #     C['Pump building'] = building_cost*N
-    #     add_OPEX['Pump operating'] = opex_o*N
-    #     add_OPEX['Pump maintenance'] = opex_m*N
-       
-    #     # Power
-    #     pumping = 0.
-    #     for ID in self.pumps:
-    #         p = getattr(self, f'{ID}_pump')
-    #         if p is None:
-    #             continue
-    #         pumping += p.power_utility.rate
-                
-    #     self.power_utility.rate += pumping*N
-    #     # self.power_utility.rate += scraper_power
+        # Pump (construction and maintainance)
+        pump = self.sludge_pump
+        add_OPEX = self.add_OPEX
+        add_OPEX.update({k: v*N for k,v in pump.add_OPEX.items()})
+        C.update({k: v*N for k,v in pump.baseline_purchase_costs})
+        self.power_utility.rate += pump.power_utility.rate*N
+        # self.power_utility.rate += scraper_power
