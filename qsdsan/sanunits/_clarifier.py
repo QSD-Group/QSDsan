@@ -1373,7 +1373,7 @@ class PrimaryClarifier(IdealClarifier):
         D = self.design_results
         N = D['Number of pumps']
         field = f'{self.ID}_sludge_pump'
-        pump = getattr(self, field)
+        pump = self.sludge_pump
         self._sludge.copy_like(self.outs[1])
         self._sludge.scale(1/N)
         pump.simulate()
