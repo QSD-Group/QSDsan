@@ -12,7 +12,7 @@ faostat_file_path = 'FAOSTAT1.xlsx'
 vwc_file_path = 'vwc.xlsx'
 
 # FAOSTAT 데이터 불러오기 (CSV 파일)
-faostat_data = pd.read_csv(faostat_file_path)
+faostat_data = pd.read_excel(faostat_file_path)
 
 # VWC 데이터 불러오기 (Excel 파일)
 vwc_data = pd.read_excel(vwc_file_path)
