@@ -1,0 +1,607 @@
+Reporter Countries,Partner Countries,Item,Value
+Albania,Bosnia and Herzegovina,"Peas, green",0.29
+Albania,Czechia,"Peas, green",0.78
+Albania,Denmark,"Peas, green",4.37
+Algeria,Belgium,Wheat and meslin flour,0
+Algeria,Canada,"Peas, green",12.5
+Angola,Belgium,Soya bean oil,0.1
+Angola,Canada,Wheat,0
+Angola,Canada,Wheat and meslin flour,0
+Angola,Congo,Maize (corn),15.04
+Angola,Congo,Soya bean oil,2
+Angola,Congo,Wheat and meslin flour,13.9
+Angola,Cuba,Maize (corn),0.02
+Angola,Cuba,Rice,0.01
+Angola,Cuba,Soya bean oil,0.04
+Angola,Cuba,Wheat and meslin flour,0.09
+Angola,Democratic Republic of the Congo,Maize (corn),10.11
+Angola,Democratic Republic of the Congo,Rice,0.2
+Angola,Democratic Republic of the Congo,Sorghum,0.03
+Angola,Democratic Republic of the Congo,Soya bean oil,2.37
+Angola,Democratic Republic of the Congo,Wheat,0.18
+Angola,Democratic Republic of the Congo,Wheat and meslin flour,7601.59
+Argentina,Albania,Maize (corn),203.8
+Argentina,Algeria,Maize (corn),2769960
+Argentina,Algeria,Soya bean oil,65360
+Argentina,Algeria,Wheat,735006
+Argentina,Angola,Maize (corn),108422
+Argentina,Bahrain,Maize (corn),234
+Argentina,Bangladesh,Soya bean oil,355772
+Argentina,Belgium,Maize (corn),596.07
+Argentina,Benin,Maize (corn),3114.36
+Argentina,Bolivia (Plurinational State of),Maize (corn),2914
+Argentina,Bolivia (Plurinational State of),Sorghum,264.05
+Argentina,Bolivia (Plurinational State of),Wheat and meslin flour,143624
+Argentina,Bosnia and Herzegovina,Maize (corn),463
+Argentina,Brazil,Maize (corn),196794.59
+Argentina,Brazil,Sorghum,46.77
+Argentina,Brazil,Wheat,4358450
+Argentina,Brazil,Wheat and meslin flour,259340.3
+Argentina,Bulgaria,Maize (corn),2060.62
+Argentina,Cameroon,Maize (corn),10988.4
+Argentina,Cameroon,Wheat,167743
+Argentina,Canada,Maize (corn),70
+Argentina,Chile,Maize (corn),1633543.53
+Argentina,Chile,Soya bean oil,144756.64
+Argentina,Chile,Wheat,649515.09
+Argentina,Chile,Wheat and meslin flour,35684.9
+Argentina,"China, mainland",Sorghum,1688020
+Argentina,"China, mainland",Soya bean oil,130700
+Argentina,"China, Taiwan Province of",Maize (corn),1370400
+Argentina,Colombia,Maize (corn),960706
+Argentina,Colombia,Soya bean oil,34859
+Argentina,Colombia,Wheat,250665
+Argentina,Congo,Maize (corn),40375.8
+Argentina,Congo,Wheat,153345
+Argentina,Costa Rica,Maize (corn),403.19
+Argentina,Côte d'Ivoire,Maize (corn),52621.9
+Argentina,Côte d'Ivoire,Wheat,178791
+Argentina,Croatia,Maize (corn),598
+Argentina,Cuba,Maize (corn),291122
+Argentina,Cuba,Soya bean oil,5699.05
+Argentina,Cuba,Wheat and meslin flour,1329.37
+Argentina,Cyprus,Maize (corn),258.3
+Argentina,Democratic Republic of the Congo,Maize (corn),29125.6
+Argentina,Democratic Republic of the Congo,Wheat,42147.4
+Argentina,Denmark,Maize (corn),3417.58
+Argentina,Djibouti,Maize (corn),2588
+Argentina,Dominican Republic,Maize (corn),119040
+Argentina,Dominican Republic,Soya bean oil,137738.47
+Argentina,Dominican Republic,Wheat,56547
+Armenia,Belgium,Wheat and meslin flour,9.54
+Australia,Algeria,Wheat,52147.7
+Australia,Argentina,Rice,100
+Australia,Argentina,Sorghum,0.18
+Australia,Bahrain,Wheat,103944.2
+Australia,Bangladesh,Maize (corn),1.5
+Australia,Bangladesh,Sorghum,5
+Australia,Bangladesh,Wheat,307385.61
+Australia,Belgium,Wheat and meslin flour,35
+Australia,Brazil,Sorghum,2.61
+Australia,Brunei Darussalam,Maize (corn),1.3
+Australia,Brunei Darussalam,Wheat and meslin flour,0.13
+Australia,Burundi,Wheat,5900
+Australia,Cambodia,Sorghum,1
+Australia,Cambodia,Soya bean oil,0.17
+Australia,"China, Hong Kong SAR",Maize (corn),60.86
+Australia,"China, Hong Kong SAR","Peas, green",0.01
+Australia,"China, Hong Kong SAR",Rice,3.28
+Australia,"China, Hong Kong SAR",Wheat,2529.04
+Australia,"China, Hong Kong SAR",Wheat and meslin flour,437.11
+Australia,"China, mainland",Maize (corn),2.35
+Australia,"China, mainland",Rice,1.32
+Australia,"China, mainland",Sorghum,1889031.2
+Australia,"China, mainland",Soya bean oil,2.32
+Australia,"China, mainland",Wheat,6197156.74
+Australia,"China, mainland",Wheat and meslin flour,2440.78
+Australia,"China, Taiwan Province of",Maize (corn),1380.77
+Australia,"China, Taiwan Province of",Sorghum,36672.27
+Australia,"China, Taiwan Province of",Wheat,403097.71
+Australia,"China, Taiwan Province of",Wheat and meslin flour,109.41
+Australia,Cook Islands,Maize (corn),0.05
+Australia,Cook Islands,Wheat and meslin flour,0.9
+Austria,Albania,Wheat,23.01
+Austria,Albania,Wheat and meslin flour,5.1
+Austria,Algeria,Wheat,0
+Austria,Armenia,Wheat and meslin flour,0.14
+Austria,Australia,Soya bean oil,67.46
+Austria,Azerbaijan,Maize (corn),125.1
+Austria,Azerbaijan,Wheat,4.04
+Austria,Azerbaijan,Wheat and meslin flour,0.17
+Austria,Belarus,Maize (corn),319.51
+Austria,Belarus,Wheat,34.12
+Austria,Belgium,Maize (corn),452.64
+Austria,Belgium,Rice,1.21
+Austria,Belgium,Sorghum,0.01
+Austria,Belgium,Soya bean oil,23.94
+Austria,Belgium,Wheat,2499.46
+Austria,Belgium,Wheat and meslin flour,8.75
+Austria,Bosnia and Herzegovina,Wheat,1.02
+Austria,Bosnia and Herzegovina,Wheat and meslin flour,205.36
+Austria,Bulgaria,Maize (corn),488.28
+Austria,Bulgaria,"Peas, green",0
+Austria,Bulgaria,Soya bean oil,0.02
+Austria,Bulgaria,Wheat,15560.47
+Austria,Bulgaria,Wheat and meslin flour,187.05
+Austria,Canada,Maize (corn),10.51
+Austria,Canada,Soya bean oil,0.1
+Austria,Canada,Wheat,3.54
+Austria,Chile,Maize (corn),2.18
+Austria,"China, Hong Kong SAR",Wheat and meslin flour,7.66
+Austria,"China, mainland",Maize (corn),0.26
+Austria,"China, mainland",Wheat and meslin flour,0.19
+Austria,"China, Taiwan Province of",Wheat and meslin flour,0.31
+Austria,Croatia,Maize (corn),3306.14
+Austria,Croatia,Soya bean oil,0.01
+Austria,Croatia,Wheat,2376.3
+Austria,Croatia,Wheat and meslin flour,9395
+Austria,Cyprus,Wheat,0
+Austria,Cyprus,Wheat and meslin flour,5.51
+Austria,Czechia,Maize (corn),997.1
+Austria,Czechia,"Peas, green",0.09
+Austria,Czechia,Sorghum,2.73
+Austria,Czechia,Soya bean oil,356.58
+Austria,Czechia,Wheat,2466.11
+Austria,Czechia,Wheat and meslin flour,22649.7
+Austria,Democratic Republic of the Congo,Wheat and meslin flour,0
+Austria,Denmark,Maize (corn),200.76
+Austria,Denmark,Wheat,114.9
+Austria,Denmark,Wheat and meslin flour,0.05
+Bangladesh,Bahrain,"Peas, green",0.05
+Bangladesh,"China, Hong Kong SAR",Wheat and meslin flour,9.78
+Bangladesh,Cyprus,Wheat and meslin flour,4.97
+Barbados,Antigua and Barbuda,Soya bean oil,52.16
+Belarus,"China, mainland",Soya bean oil,2577.18
+Belgium,Algeria,Sorghum,1.55
+Belgium,Algeria,Soya bean oil,11484.61
+Belgium,Angola,Wheat and meslin flour,2625
+Belgium,Argentina,Maize (corn),0.04
+Belgium,Argentina,Wheat and meslin flour,23.7
+Belgium,Australia,Soya bean oil,109.46
+Belgium,Australia,Wheat and meslin flour,0.1
+Belgium,Austria,Maize (corn),3.24
+Belgium,Austria,"Peas, green",7.42
+Belgium,Austria,Rice,0.71
+Belgium,Austria,Sorghum,2.81
+Belgium,Austria,Soya bean oil,0
+Belgium,Austria,Wheat,376.77
+Belgium,Bahrain,Maize (corn),0.02
+Belgium,Bahrain,Wheat and meslin flour,13.56
+Belgium,Bangladesh,Soya bean oil,96.06
+Belgium,Benin,Wheat and meslin flour,0.98
+Belgium,Bosnia and Herzegovina,Soya bean oil,20.38
+Belgium,Brazil,Wheat,0
+Belgium,Brazil,Wheat and meslin flour,1474.05
+Belgium,Bulgaria,Maize (corn),0.34
+Belgium,Bulgaria,Soya bean oil,9.63
+Belgium,Bulgaria,Wheat,0.01
+Belgium,Bulgaria,Wheat and meslin flour,29.79
+Belgium,Burkina Faso,Maize (corn),0.23
+Belgium,Burkina Faso,Wheat and meslin flour,1.91
+Belgium,Burundi,Wheat and meslin flour,0.3
+Belgium,Cabo Verde,Soya bean oil,90.16
+Belgium,Cameroon,Soya bean oil,5.86
+Belgium,Cameroon,Wheat and meslin flour,6.2
+Belgium,Canada,Wheat,0.01
+Belgium,Chad,Wheat and meslin flour,3.52
+Belgium,Chile,Maize (corn),0.01
+Belgium,Chile,Wheat and meslin flour,0.25
+Belgium,"China, Hong Kong SAR",Wheat and meslin flour,0.1
+Belgium,"China, mainland",Wheat and meslin flour,1.1
+Belgium,"China, Taiwan Province of",Maize (corn),11.8
+Belgium,"China, Taiwan Province of",Soya bean oil,16.56
+Belgium,"China, Taiwan Province of",Wheat and meslin flour,2.49
+Belgium,Comoros,Soya bean oil,19.38
+Belgium,Congo,Maize (corn),0.64
+Belgium,Congo,Soya bean oil,16.7
+Belgium,Congo,Wheat and meslin flour,3.9
+Belgium,Côte d'Ivoire,Maize (corn),0.01
+Belgium,Côte d'Ivoire,"Peas, green",0.02
+Belgium,Côte d'Ivoire,Wheat and meslin flour,0.06
+Belgium,Croatia,Rice,0.08
+Belgium,Croatia,Soya bean oil,3.55
+Belgium,Croatia,Wheat and meslin flour,0.02
+Belgium,Cyprus,Maize (corn),0.02
+Belgium,Cyprus,Soya bean oil,1086.14
+Belgium,Cyprus,Wheat,0.04
+Belgium,Czechia,Maize (corn),0.36
+Belgium,Czechia,"Peas, green",0.03
+Belgium,Czechia,Rice,0.06
+Belgium,Czechia,Soya bean oil,0.2
+Belgium,Czechia,Wheat,254.64
+Belgium,Czechia,Wheat and meslin flour,55.44
+Belgium,Democratic Republic of the Congo,Maize (corn),5.21
+Belgium,Democratic Republic of the Congo,"Peas, green",0.08
+Belgium,Democratic Republic of the Congo,Soya bean oil,70.64
+Belgium,Democratic Republic of the Congo,Wheat,0.33
+Belgium,Democratic Republic of the Congo,Wheat and meslin flour,162.35
+Belgium,Denmark,Maize (corn),49.73
+Belgium,Denmark,"Peas, green",5.54
+Belgium,Denmark,Rice,0.85
+Belgium,Denmark,Sorghum,2.94
+Belgium,Denmark,Soya bean oil,481.06
+Belgium,Denmark,Wheat,25.08
+Belgium,Denmark,Wheat and meslin flour,143.51
+Belize,Costa Rica,Soya bean oil,114.77
+Benin,Belgium,Maize (corn),8.4
+Benin,Burkina Faso,Maize (corn),19.52
+Benin,Burkina Faso,Rice,4.2
+Benin,Congo,Maize (corn),7.02
+Bolivia (Plurinational State of),Angola,Maize (corn),89.71
+Bolivia (Plurinational State of),Angola,Sorghum,9.18
+Bolivia (Plurinational State of),Argentina,Maize (corn),339.47
+Bolivia (Plurinational State of),Argentina,Sorghum,174.04
+Bolivia (Plurinational State of),Argentina,Soya bean oil,151.43
+Bolivia (Plurinational State of),Bahamas,Soya bean oil,24.29
+Bolivia (Plurinational State of),Belize,Maize (corn),18.12
+Bolivia (Plurinational State of),Brazil,Sorghum,50.9
+Bolivia (Plurinational State of),Brazil,Soya bean oil,1736
+Bolivia (Plurinational State of),Cameroon,Soya bean oil,154
+Bolivia (Plurinational State of),Chile,Maize (corn),2022.77
+Bolivia (Plurinational State of),Chile,Sorghum,1620
+Bolivia (Plurinational State of),Chile,Soya bean oil,15852.47
+Bolivia (Plurinational State of),Colombia,Maize (corn),204.6
+Bolivia (Plurinational State of),Colombia,Soya bean oil,263967.83
+Bolivia (Plurinational State of),Dominican Republic,Sorghum,0.04
+Bosnia and Herzegovina,Albania,Wheat and meslin flour,24.5
+Bosnia and Herzegovina,Australia,Wheat and meslin flour,7.82
+Bosnia and Herzegovina,Austria,Soya bean oil,623.52
+Bosnia and Herzegovina,Austria,Wheat,2638.82
+Bosnia and Herzegovina,Bulgaria,Soya bean oil,24
+Bosnia and Herzegovina,Canada,Wheat and meslin flour,0.92
+Bosnia and Herzegovina,Croatia,Maize (corn),3125.5
+Bosnia and Herzegovina,Croatia,Soya bean oil,438.78
+Bosnia and Herzegovina,Croatia,Wheat,9002.03
+Bosnia and Herzegovina,Croatia,Wheat and meslin flour,50
+Botswana,Democratic Republic of the Congo,Maize (corn),0.02
+Brazil,Algeria,Maize (corn),796377.73
+Brazil,Algeria,Soya bean oil,106400.5
+Brazil,Angola,Maize (corn),417.82
+Brazil,Angola,Rice,431.47
+Brazil,Angola,Sorghum,3.63
+Brazil,Angola,Soya bean oil,14067.43
+Brazil,Angola,Wheat,92321.7
+Brazil,Angola,Wheat and meslin flour,18.72
+Brazil,Antigua and Barbuda,Maize (corn),0
+Brazil,Antigua and Barbuda,"Peas, green",0.01
+Brazil,Antigua and Barbuda,Rice,0.02
+Brazil,Antigua and Barbuda,Soya bean oil,119.09
+Brazil,Antigua and Barbuda,Wheat and meslin flour,1.31
+Brazil,Argentina,Maize (corn),1445.07
+Brazil,Argentina,"Peas, green",0.03
+Brazil,Argentina,Rice,1.4
+Brazil,Argentina,Sorghum,0.02
+Brazil,Argentina,Soya bean oil,0.36
+Brazil,Argentina,Wheat,0.02
+Brazil,Argentina,Wheat and meslin flour,2.8
+Brazil,Australia,Wheat and meslin flour,0.27
+Brazil,Austria,Wheat and meslin flour,0.2
+Brazil,Bahamas,Maize (corn),0.17
+Brazil,Bahamas,"Peas, green",0.33
+Brazil,Bahamas,Rice,1.92
+Brazil,Bahamas,Soya bean oil,5.67
+Brazil,Bahamas,Wheat,0.03
+Brazil,Bahamas,Wheat and meslin flour,13.75
+Brazil,Bahrain,Maize (corn),0.01
+Brazil,Bahrain,"Peas, green",0.02
+Brazil,Bahrain,Soya bean oil,1.5
+Brazil,Bahrain,Wheat and meslin flour,0.95
+Brazil,Bangladesh,Maize (corn),385314.85
+Brazil,Bangladesh,Rice,0.25
+Brazil,Bangladesh,Soya bean oil,259057.76
+Brazil,Bangladesh,Wheat,0.01
+Brazil,Bangladesh,Wheat and meslin flour,0.31
+Brazil,Barbados,Maize (corn),0.04
+Brazil,Barbados,"Peas, green",0.03
+Brazil,Barbados,Soya bean oil,2.57
+Brazil,Barbados,Wheat and meslin flour,3.48
+Brazil,Belgium,Maize (corn),1.02
+Brazil,Belgium,Rice,0.01
+Brazil,Belgium,Soya bean oil,0.48
+Brazil,Belgium,Wheat and meslin flour,0.46
+Brazil,Belize,Maize (corn),1.06
+Brazil,Belize,"Peas, green",0.09
+Brazil,Belize,Rice,0.05
+Brazil,Belize,Soya bean oil,0.62
+Brazil,Belize,Wheat and meslin flour,2.1
+Brazil,Bolivia (Plurinational State of),Maize (corn),163.95
+Brazil,Bolivia (Plurinational State of),Sorghum,802.06
+Brazil,Bolivia (Plurinational State of),Soya bean oil,1057.84
+Brazil,Botswana,Wheat and meslin flour,0
+Brazil,Bulgaria,Soya bean oil,0.1
+Brazil,Bulgaria,Wheat and meslin flour,0.05
+Brazil,Burkina Faso,Sorghum,4.4
+Brazil,Cabo Verde,Maize (corn),224.6
+Brazil,Cabo Verde,Soya bean oil,121.99
+Brazil,Cameroon,Soya bean oil,215.89
+Brazil,Cameroon,Wheat and meslin flour,0.12
+Brazil,Canada,Wheat and meslin flour,2.55
+Brazil,Central African Republic,Wheat,6999.99
+Brazil,Chile,Maize (corn),140.97
+Brazil,Chile,"Peas, green",0.01
+Brazil,Chile,Sorghum,0.01
+Brazil,Chile,Soya bean oil,583.4
+Brazil,Chile,Wheat and meslin flour,0.28
+Brazil,"China, Hong Kong SAR",Maize (corn),0.89
+Brazil,"China, Hong Kong SAR","Peas, green",0.8
+Brazil,"China, Hong Kong SAR",Rice,3.1
+Brazil,"China, Hong Kong SAR",Soya bean oil,100.51
+Brazil,"China, Hong Kong SAR",Wheat,0.01
+Brazil,"China, Hong Kong SAR",Wheat and meslin flour,18.43
+Brazil,"China, mainland",Maize (corn),1165175.51
+Brazil,"China, mainland","Peas, green",0.09
+Brazil,"China, mainland",Rice,0.52
+Brazil,"China, mainland",Soya bean oil,162751.82
+Brazil,"China, mainland",Wheat and meslin flour,4.15
+Brazil,"China, Taiwan Province of",Maize (corn),1618745.05
+Brazil,"China, Taiwan Province of",Soya bean oil,0.04
+Brazil,"China, Taiwan Province of",Wheat and meslin flour,0.1
+Brazil,Colombia,Maize (corn),2439627.7
+Brazil,Colombia,Rice,0.36
+Brazil,Colombia,Wheat and meslin flour,0.02
+Brazil,Comoros,Soya bean oil,0.02
+Brazil,Cook Islands,Rice,0.08
+Brazil,Cook Islands,Soya bean oil,0.06
+Brazil,Cook Islands,Wheat and meslin flour,0.13
+Brazil,Costa Rica,Maize (corn),339050.93
+Brazil,Costa Rica,Rice,155619.27
+Brazil,Croatia,Rice,0.15
+Brazil,Croatia,Soya bean oil,0.14
+Brazil,Croatia,Wheat and meslin flour,0.25
+Brazil,Cuba,Maize (corn),60047.4
+Brazil,Cuba,Soya bean oil,60353.65
+Brazil,Cyprus,Maize (corn),0.54
+Brazil,Cyprus,"Peas, green",0.16
+Brazil,Cyprus,Rice,2.13
+Brazil,Cyprus,Soya bean oil,4.96
+Brazil,Cyprus,Wheat,0
+Brazil,Cyprus,Wheat and meslin flour,12.48
+Brazil,Denmark,Maize (corn),0.09
+Brazil,Denmark,"Peas, green",0.05
+Brazil,Denmark,Soya bean oil,1.39
+Brazil,Denmark,Wheat and meslin flour,4.18
+Brazil,Dominican Republic,Maize (corn),757523.86
+Bulgaria,Albania,Soya bean oil,0.68
+Bulgaria,Albania,Wheat and meslin flour,304.15
+Bulgaria,Algeria,Wheat,1318706.05
+Bulgaria,Armenia,Wheat and meslin flour,22.56
+Bulgaria,Austria,Maize (corn),2864.5
+Bulgaria,Austria,Rice,0.18
+Bulgaria,Austria,Sorghum,48.7
+Bulgaria,Austria,Wheat,0.54
+Bulgaria,Austria,Wheat and meslin flour,5.75
+Bulgaria,Bahrain,Wheat and meslin flour,0.15
+Bulgaria,Bangladesh,Wheat,155559
+Bulgaria,Belgium,Maize (corn),0.22
+Bulgaria,Belgium,Soya bean oil,0.06
+Bulgaria,Belgium,Wheat,0.22
+Bulgaria,Belgium,Wheat and meslin flour,300.86
+Bulgaria,Bosnia and Herzegovina,Wheat and meslin flour,19.05
+Bulgaria,"China, mainland",Maize (corn),148257.5
+Bulgaria,Croatia,Maize (corn),7
+Bulgaria,Cuba,Wheat and meslin flour,42
+Bulgaria,Cyprus,Maize (corn),6452.73
+Bulgaria,Cyprus,Soya bean oil,3.52
+Bulgaria,Cyprus,Wheat,12423.91
+Bulgaria,Cyprus,Wheat and meslin flour,342.21
+Bulgaria,Czechia,Maize (corn),85.21
+Bulgaria,Czechia,Wheat,0
+Bulgaria,Czechia,Wheat and meslin flour,0.22
+Bulgaria,Denmark,Maize (corn),72.46
+Bulgaria,Denmark,Wheat,0.01
+Bulgaria,Denmark,Wheat and meslin flour,7.91
+Burundi,Belgium,Sorghum,0.45
+Burundi,Belgium,Wheat and meslin flour,0.58
+Burundi,Democratic Republic of the Congo,Maize (corn),0.6
+Burundi,Democratic Republic of the Congo,Sorghum,0.5
+Burundi,Democratic Republic of the Congo,Wheat and meslin flour,11989.45
+Cambodia,"China, mainland",Maize (corn),39.1
+Cambodia,"China, Taiwan Province of",Maize (corn),1084.17
+Cambodia,"China, Taiwan Province of",Sorghum,119.46
+Cameroon,Belgium,Wheat and meslin flour,0.02
+Cameroon,Canada,Maize (corn),1.09
+Cameroon,Central African Republic,Maize (corn),4
+Cameroon,Central African Republic,Rice,22.5
+Cameroon,Central African Republic,Soya bean oil,10.25
+Cameroon,Central African Republic,Wheat and meslin flour,13711.12
+Canada,Algeria,Wheat,571150
+Canada,Antigua and Barbuda,Maize (corn),20.86
+Canada,Antigua and Barbuda,Wheat and meslin flour,2.01
+Canada,Argentina,Maize (corn),497.79
+Canada,Bahamas,Wheat and meslin flour,3415.29
+Canada,Bangladesh,Wheat,995734
+Canada,Barbados,Maize (corn),0.08
+Canada,Barbados,Wheat and meslin flour,5.88
+Canada,Belgium,Wheat,9236
+Canada,Brazil,Wheat,38588
+Canada,Burundi,Wheat,2994
+Canada,Cameroon,Wheat,50825
+Canada,Chile,Wheat,320987
+Canada,"China, Hong Kong SAR",Maize (corn),67.44
+Canada,"China, Hong Kong SAR",Wheat and meslin flour,17.63
+Canada,"China, mainland",Maize (corn),0.53
+Canada,"China, mainland","Peas, green",2193.58
+Canada,"China, mainland",Sorghum,454
+Canada,"China, mainland",Soya bean oil,0.03
+Canada,"China, mainland",Wheat,2126472
+Canada,"China, mainland",Wheat and meslin flour,2001.32
+Canada,"China, Taiwan Province of","Peas, green",248.04
+Canada,"China, Taiwan Province of",Wheat,5745
+Canada,"China, Taiwan Province of",Wheat and meslin flour,21.23
+Canada,Colombia,"Peas, green",32.46
+Canada,Colombia,Wheat,1161725
+Canada,Costa Rica,Wheat,164792
+Canada,Costa Rica,Wheat and meslin flour,5.84
+Canada,Côte d'Ivoire,Wheat,11600
+Canada,Cuba,Wheat and meslin flour,1061.6
+Canada,Denmark,Wheat,250
+Canada,Dominica,Maize (corn),104.23
+Canada,Dominican Republic,Wheat,242525
+Chile,Argentina,Maize (corn),545.33
+Chile,Australia,Wheat and meslin flour,0.1
+Chile,Austria,Maize (corn),591.03
+Chile,Bolivia (Plurinational State of),Maize (corn),248.29
+Chile,Bolivia (Plurinational State of),Wheat,44.28
+Chile,Brazil,Maize (corn),95.12
+Chile,Canada,Maize (corn),0.26
+Chile,Canada,Wheat,0.76
+Chile,Canada,Wheat and meslin flour,0.13
+Chile,"China, mainland",Maize (corn),60.54
+Chile,"China, Taiwan Province of",Maize (corn),19.92
+Chile,Croatia,Maize (corn),0.23
+Chile,Cuba,Soya bean oil,189.41
+Chile,Cuba,Wheat and meslin flour,456.1
+Chile,Czechia,Maize (corn),0.5
+Chile,Dominican Republic,Wheat and meslin flour,1.07
+"China, Hong Kong SAR",Australia,Wheat and meslin flour,121.44
+"China, Hong Kong SAR",Canada,Wheat and meslin flour,202.56
+"China, Hong Kong SAR",Chile,Maize (corn),18.7
+"China, Hong Kong SAR","China, Macao SAR",Maize (corn),3.66
+"China, Hong Kong SAR","China, Macao SAR",Soya bean oil,4657.95
+"China, Hong Kong SAR","China, Macao SAR",Wheat,0.18
+"China, Hong Kong SAR","China, Macao SAR",Wheat and meslin flour,3472.33
+"China, Hong Kong SAR","China, mainland",Soya bean oil,128
+"China, Hong Kong SAR","China, mainland",Wheat and meslin flour,543.58
+"China, Hong Kong SAR","China, Taiwan Province of",Wheat and meslin flour,24.68
+"China, Macao SAR","China, Hong Kong SAR",Wheat and meslin flour,13.49
+"China, mainland",Afghanistan,Wheat,780
+"China, mainland",Afghanistan,Wheat and meslin flour,1105
+"China, mainland",Angola,Maize (corn),244
+"China, mainland",Angola,Rice,17
+"China, mainland",Australia,"Peas, green",314.19
+"China, mainland",Australia,Sorghum,3.42
+"China, mainland",Australia,Soya bean oil,259.84
+"China, mainland",Australia,Wheat and meslin flour,6.4
+"China, mainland",Bangladesh,Rice,604.45
+"China, mainland",Brazil,Maize (corn),0.01
+"China, mainland",Brazil,Sorghum,0.01
+"China, mainland",Brunei Darussalam,"Peas, green",11.45
+"China, mainland",Brunei Darussalam,Rice,0.91
+"China, mainland",Burundi,Rice,15
+"China, mainland",Cambodia,"Peas, green",8.97
+"China, mainland",Canada,"Peas, green",613.22
+"China, mainland",Canada,Sorghum,19.6
+"China, mainland",Canada,Soya bean oil,184.4
+"China, mainland",Canada,Wheat and meslin flour,62.5
+"China, mainland",Chile,Maize (corn),0.23
+"China, mainland",Chile,Sorghum,100
+"China, mainland","China, Hong Kong SAR","Peas, green",2.34
+"China, mainland","China, Hong Kong SAR",Sorghum,39.85
+"China, mainland","China, Hong Kong SAR",Soya bean oil,34175.16
+"China, mainland","China, Hong Kong SAR",Wheat and meslin flour,73066.36
+"China, mainland","China, Macao SAR","Peas, green",224.24
+"China, mainland","China, Macao SAR",Soya bean oil,1726.51
+"China, mainland","China, Macao SAR",Wheat and meslin flour,4814.61
+"China, mainland","China, Taiwan Province of",Maize (corn),0.3
+"China, mainland","China, Taiwan Province of",Sorghum,1305.12
+"China, mainland","China, Taiwan Province of",Soya bean oil,0
+"China, mainland",Democratic People's Republic of Korea,Soya bean oil,30805.99
+"China, mainland",Democratic People's Republic of Korea,Wheat and meslin flour,55507.1
+"China, mainland",Djibouti,Soya bean oil,112.8
+"China, Taiwan Province of",Australia,Maize (corn),0.07
+"China, Taiwan Province of",Australia,Soya bean oil,7.8
+"China, Taiwan Province of",Australia,Wheat and meslin flour,64.93
+"China, Taiwan Province of",Bangladesh,Soya bean oil,31.54
+"China, Taiwan Province of",Brunei Darussalam,Wheat and meslin flour,0.1
+"China, Taiwan Province of",Canada,Soya bean oil,0.03
+"China, Taiwan Province of",Canada,Wheat,0.23
+"China, Taiwan Province of",Canada,Wheat and meslin flour,75.67
+"China, Taiwan Province of","China, Hong Kong SAR",Maize (corn),4.75
+"China, Taiwan Province of","China, Hong Kong SAR","Peas, green",0.03
+"China, Taiwan Province of","China, Hong Kong SAR",Soya bean oil,6452.43
+"China, Taiwan Province of","China, Hong Kong SAR",Wheat,0.03
+"China, Taiwan Province of","China, Hong Kong SAR",Wheat and meslin flour,15452.38
+"China, Taiwan Province of","China, Macao SAR",Wheat and meslin flour,1156.62
+"China, Taiwan Province of","China, mainland",Soya bean oil,147.31
+"China, Taiwan Province of","China, mainland",Wheat and meslin flour,26.25
+"China, Taiwan Province of",Djibouti,Wheat and meslin flour,23.1
+Colombia,Australia,Maize (corn),1.25
+Colombia,Chile,Maize (corn),226.08
+Colombia,"China, mainland",Soya bean oil,26455.99
+Colombia,Costa Rica,Rice,0
+Colombia,Cuba,Soya bean oil,4.3
+Colombia,Cuba,Wheat and meslin flour,885.04
+Colombia,Dominican Republic,Maize (corn),0.04
+Colombia,Dominican Republic,Soya bean oil,792.88
+Congo,Angola,Maize (corn),1.6
+Congo,Angola,Wheat and meslin flour,3687.7
+Congo,Central African Republic,Wheat and meslin flour,67.5
+Costa Rica,Dominican Republic,Soya bean oil,15.24
+Côte d'Ivoire,Algeria,Maize (corn),20
+Côte d'Ivoire,Belgium,Maize (corn),0.58
+Côte d'Ivoire,Benin,Maize (corn),5
+Côte d'Ivoire,Burkina Faso,Maize (corn),27689.86
+Côte d'Ivoire,Burkina Faso,Rice,69.26
+Côte d'Ivoire,Burkina Faso,Wheat and meslin flour,3858.7
+Côte d'Ivoire,Canada,Maize (corn),0.93
+Côte d'Ivoire,Canada,Rice,0.01
+Côte d'Ivoire,Congo,Maize (corn),0.07
+Croatia,Albania,Maize (corn),71.1
+Croatia,Albania,Wheat,1710.1
+Croatia,Austria,Maize (corn),41040.47
+Croatia,Austria,Rice,0.42
+Croatia,Austria,Wheat,31051.34
+Croatia,Austria,Wheat and meslin flour,75.25
+Croatia,Belgium,Wheat and meslin flour,0.01
+Croatia,Bosnia and Herzegovina,Maize (corn),14225.21
+Croatia,Bosnia and Herzegovina,Sorghum,0.48
+Croatia,Bosnia and Herzegovina,Soya bean oil,1.36
+Croatia,Bosnia and Herzegovina,Wheat,61172.29
+Croatia,Bosnia and Herzegovina,Wheat and meslin flour,6213.5
+Croatia,Bulgaria,Maize (corn),1.21
+Croatia,Bulgaria,Wheat,14.8
+Croatia,Canada,Wheat and meslin flour,3.84
+Croatia,"China, mainland",Wheat and meslin flour,6.75
+Croatia,Czechia,Maize (corn),8.6
+Croatia,Czechia,Wheat,24
+Croatia,Czechia,Wheat and meslin flour,0.4
+Croatia,Denmark,Wheat and meslin flour,0.11
+Cyprus,Bangladesh,Wheat and meslin flour,64.5
+Czechia,Austria,Maize (corn),220381.43
+Czechia,Austria,"Peas, green",137.86
+Czechia,Austria,Wheat,331624.06
+Czechia,Austria,Wheat and meslin flour,810.47
+Czechia,Belarus,Wheat,126
+Czechia,Belgium,Maize (corn),50.06
+Czechia,Belgium,"Peas, green",78.18
+Czechia,Belgium,Wheat,39.01
+Czechia,Belgium,Wheat and meslin flour,14.63
+Czechia,Bulgaria,Maize (corn),18.74
+Czechia,Bulgaria,"Peas, green",398.64
+Czechia,Bulgaria,Soya bean oil,193.65
+Czechia,Bulgaria,Wheat,2
+Czechia,Bulgaria,Wheat and meslin flour,34.96
+Czechia,Chile,"Peas, green",0.03
+Czechia,Chile,Wheat and meslin flour,0.06
+Czechia,"China, Hong Kong SAR",Rice,0.01
+Czechia,"China, Hong Kong SAR",Wheat,0.01
+Czechia,Croatia,Maize (corn),5
+Czechia,Croatia,Wheat,51.51
+Czechia,Croatia,Wheat and meslin flour,17.31
+Czechia,Cyprus,Maize (corn),0
+Czechia,Denmark,Maize (corn),11.66
+Czechia,Denmark,Sorghum,304.06
+Czechia,Denmark,Wheat and meslin flour,5.21
+Democratic Republic of the Congo,Angola,Maize (corn),417.73
+Democratic Republic of the Congo,Angola,Soya bean oil,231.39
+Democratic Republic of the Congo,Angola,Wheat and meslin flour,15.5
+Democratic Republic of the Congo,Belgium,Wheat,0.18
+Denmark,Austria,Maize (corn),0.03
+Denmark,Austria,Wheat,84.57
+Denmark,Belgium,Maize (corn),0.03
+Denmark,Belgium,Wheat,3.14
+Denmark,Belgium,Wheat and meslin flour,36.8
+Denmark,Bulgaria,Wheat,0.27
+Denmark,Bulgaria,Wheat and meslin flour,0.25
+Denmark,Croatia,Maize (corn),0.01
+Denmark,Croatia,Wheat,2.49
+Denmark,Cyprus,"Peas, green",0.02
+Denmark,Cyprus,Wheat,0.19
+Denmark,Czechia,Wheat,4.91
+Denmark,Czechia,Wheat and meslin flour,2.78
+Dominica,Antigua and Barbuda,Wheat and meslin flour,29
+Dominican Republic,Antigua and Barbuda,Soya bean oil,0.81
+Dominican Republic,"China, Hong Kong SAR",Soya bean oil,44.21
+Dominican Republic,"China, mainland",Soya bean oil,18.13
+Dominican Republic,Cuba,Soya bean oil,1966.18
+Dominican Republic,Cuba,Wheat and meslin flour,151.52
