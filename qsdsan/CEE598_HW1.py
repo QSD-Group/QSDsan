@@ -10,7 +10,7 @@ faostat_file_6 = 'FAO6.xlsx'
 faostat_file_7 = 'FAO7.xlsx'
 faostat_file_8 = 'FAO8.xlsx'
 faostat_file_9 = 'FAO9.xlsx'
-vwc_file_path = '/VWC.xlsx'
+vwc_file_path = 'VWC.xlsx'
 
 # FAOSTAT 데이터 불러오기
 faostat_data_1 = pd.read_excel(faostat_file_1)
