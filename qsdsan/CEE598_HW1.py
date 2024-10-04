@@ -1,16 +1,16 @@
 import pandas as pd
 
 # 파일 경로 설정
-faostat_file_1 = '/mnt/data/FAO1.xlsx'
-faostat_file_2 = '/mnt/data/FAO2.xlsx'
-faostat_file_3 = '/mnt/data/FAO3.xlsx'
-faostat_file_4 = '/mnt/data/FAO4.xlsx'
-faostat_file_5 = '/mnt/data/FAO5.xlsx'
-faostat_file_6 = '/mnt/data/FAO6.xlsx'
-faostat_file_7 = '/mnt/data/FAO7.xlsx'
-faostat_file_8 = '/mnt/data/FAO8.xlsx'
-faostat_file_9 = '/mnt/data/FAO9.xlsx'
-vwc_file_path = '/mnt/data/VWC.xlsx'
+faostat_file_1 = 'FAO1.xlsx'
+faostat_file_2 = 'FAO2.xlsx'
+faostat_file_3 = 'FAO3.xlsx'
+faostat_file_4 = 'FAO4.xlsx'
+faostat_file_5 = 'FAO5.xlsx'
+faostat_file_6 = 'FAO6.xlsx'
+faostat_file_7 = 'FAO7.xlsx'
+faostat_file_8 = 'FAO8.xlsx'
+faostat_file_9 = 'FAO9.xlsx'
+vwc_file_path = '/VWC.xlsx'
 
 # FAOSTAT 데이터 불러오기
 faostat_data_1 = pd.read_excel(faostat_file_1)
