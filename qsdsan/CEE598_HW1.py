@@ -34,7 +34,7 @@ faostat_data_9 = pd.read_excel(faostat_file_9)
 vwc_data = pd.read_excel(vwc_file_path)
 
 # 필요한 열만 사용하여 VWC 데이터 정리
-vwc_data_cleaned = vwc_data.rename(columns={'Product description (HS)': 'Item', 'vwc': 'VWC'})
+vwc_data_cleaned = vwc_data.rename(columns={'Product description (HS)': 'Item', 'VWC': 'VWC'})
 
 # FAOSTAT 데이터를 모두 하나로 결합
 faostat_data_combined = pd.concat([faostat_data_1, faostat_data_2, faostat_data_3, 
