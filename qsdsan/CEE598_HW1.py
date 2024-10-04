@@ -35,11 +35,6 @@ vwc_data_cleaned = vwc_data.rename(columns={'Product description (HS)': 'Item', 
 # FAOSTAT와 VWC 데이터 매칭
 merged_data = pd.merge(faostat_data_combined, vwc_data_cleaned[['Item', 'VWC']], on='Item', how='inner')
 
-# 'Exporting Countries'와 'Importing Countries'가 있는지 확인하고, 없을 경우 열을 추가하거나 수정
-if 'Exporting Countries' not in merged_data.columns:
-    print("Warning: 'Exporting Countries' column is missing!")
-if 'Importing Countries' not in merged_data.columns:
-    print("Warning: 'Importing Countries' column is missing!")
 
 # 가상 물 무역(VWT) 계산 (수출/수입량 * VWC)
 merged_data['VWT'] = merged_data['Value'] * merged_data['VWC']
@@ -47,10 +42,7 @@ merged_data['VWT'] = merged_data['Value'] * merged_data['VWC']
 # 데이터 CSV 파일로 저장
 merged_data.to_csv('output_combined_vwt_data_corrected.csv', index=False)
 
-# 데이터 확인을 위해 첫 몇 행 출력
-print(merged_data.head())
-
-# 피벗 테이블 생성 및 저장
+# 피벗 테이블 생성 및 저장 (Exporting Countries와 Importing Countries 사용)
 export_import_matrix = pd.pivot_table(merged_data, values='VWT', 
                                       index='Exporting', 
                                       columns='Importing', 
