@@ -14,7 +14,9 @@ faostat_file_3 = 'FAO3.xlsx'
 faostat_file_4 = 'FAO4.xlsx'
 faostat_file_5 = 'FAO5.xlsx'
 faostat_file_6 = 'FAO6.xlsx'
-
+faostat_file_7 = 'FAO7.xlsx'
+faostat_file_8 = 'FAO8.xlsx'
+faostat_file_9 = 'FAO9.xlsx'
 vwc_file_path = 'VWC.xlsx'
 
 # FAOSTAT 데이터 불러오기
@@ -24,7 +26,9 @@ faostat_data_3 = pd.read_excel(faostat_file_3)
 faostat_data_4 = pd.read_excel(faostat_file_4)
 faostat_data_5 = pd.read_excel(faostat_file_5)
 faostat_data_6 = pd.read_excel(faostat_file_6)
-
+faostat_data_7 = pd.read_excel(faostat_file_4)
+faostat_data_8 = pd.read_excel(faostat_file_5)
+faostat_data_9 = pd.read_excel(faostat_file_6)
 # VWC 데이터 불러오기
 vwc_data = pd.read_excel(vwc_file_path)
 
@@ -48,8 +52,8 @@ merged_data.to_csv('output_combined_vwt_data.csv', index=False)
 #%%
 # 피벗 테이블 생성 및 저장
 export_import_matrix = pd.pivot_table(merged_data, values='VWT', 
-                                      index='Exporting Countries', 
-                                      columns='Importing Countries', 
+                                      index='Exporting', 
+                                      columns='Importing', 
                                       aggfunc='sum', fill_value=0)
 
 # 피벗 테이블 CSV 파일로 저장
