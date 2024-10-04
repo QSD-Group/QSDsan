@@ -49,3 +49,15 @@ merged_data.to_csv('output_combined_vwt_data_corrected.csv', index=False)
 
 # 데이터 확인을 위해 첫 몇 행 출력
 print(merged_data.head())
+
+# 피벗 테이블 생성 및 저장
+export_import_matrix = pd.pivot_table(merged_data, values='VWT', 
+                                      index='Exporting', 
+                                      columns='Importing', 
+                                      aggfunc='sum', fill_value=0)
+
+# 피벗 테이블 CSV 파일로 저장
+export_import_matrix.to_csv('export_import_matrix.csv')
+
+# 피벗 테이블의 첫 몇 행 출력
+print(export_import_matrix.head())
