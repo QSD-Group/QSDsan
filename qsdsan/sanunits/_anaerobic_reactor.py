@@ -523,7 +523,7 @@ class AnaerobicCSTR(CSTR):
     @property
     def ODE(self):
         if self._ODE is None:
-            self._compile_ODE(self.algebraic_h2)
+            self._compile_ODE()
         return self._ODE
     
     def _compile_ODE(self, algebraic_h2=True):
