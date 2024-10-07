@@ -348,10 +348,10 @@ def flex_rhos_adm1_vfa(state_arr, params, T_op=273.15+40, pH=False, gas_transfer
     if S_va > 0: rhos[9] *= 1/(1+S_bu/S_va) #rhos[9]=uptake_va
     if S_bu > 0: rhos[10] *= 1/(1+S_va/S_bu) #rhos[10]=uptake_bu
 
-    #h = brenth(acid_base_rxn, 1e-14, 1.0,
-    #        args=(weak_acids, Ka),
-    #        xtol=1e-12, maxiter=100)
-    #h = 10**(-7.46)
+    # h = brenth(acid_base_rxn, 1e-14, 1.0,
+    #         args=(weak_acids, Ka),
+    #         xtol=1e-12, maxiter=100)
+    # h = 10**(-7.46)
     if pH: 
         h = 10**(-pH)
         delta = acid_base_rxn(h, weak_acids, Kas)
