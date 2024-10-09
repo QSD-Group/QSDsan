@@ -598,7 +598,7 @@ def get_carbon_add_cost(organic_carbon, system, unit_cost_carbon_source = 0.41):
     if organic_carbon == None:
         normalized_cost_carbon = 0
     else:
-        Mass_carbon = (organic_carbon.F_mass * 24)*organic_carbon.components.S_A.i_mass # kg/day
+        Mass_carbon = (organic_carbon.imass['S_A'] * 24)*organic_carbon.components.S_A.i_mass # kg/day
         Daily_cost_carbon = Mass_carbon*unit_cost_carbon_source # USD/day
         normalized_cost_carbon = Daily_cost_carbon/sum([s.F_vol*24 for s in system.feeds])
 
@@ -634,11 +634,11 @@ def get_methanol_cost(wastestream, methanol_add, system, stoichiometric_factor =
     if methanol_add == None:
         normalized_cost_carbon = 0
     else:
-        Mass_nitrogen_oxidised = ((wastestream.TN - effluent_TN)/1000)*(wastestream.F_vol*24) # kg/m3 * m3/day = kg/day
+        Mass_nitrogen_removed = ((wastestream.TN - effluent_TN)/1000)*(wastestream.F_vol*24) # kg/m3 * m3/day = kg/day
         if effluent_TN < wastestream.TKN:
             raise ValueError(f'TKN level = {wastestream.TKN} higher than effluent TN = {wastestream.TN}')
         
-        mass_methanol_required = stoichiometric_factor*Mass_nitrogen_oxidised # kg/day
+        mass_methanol_required = stoichiometric_factor*Mass_nitrogen_removed # kg/day
         Daily_cost_carbon = mass_methanol_required*unit_cost_methanol # USD/day
         normalized_cost_carbon = Daily_cost_carbon/sum([s.F_vol*24 for s in system.feeds]) # USD/m3
 
