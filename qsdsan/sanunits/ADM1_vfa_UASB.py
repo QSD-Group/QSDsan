@@ -13,7 +13,6 @@ from qsdsan import processes as pc, WasteStream, System
 # from qsdsan.utils import time_printer
 
 from exposan.metab import UASB
-from qsdsan.sanunits import AnaerobicCSTR
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)        # to ignore Pandas future warning
@@ -90,18 +89,55 @@ default_inf_kwargs = {
     'units': ('m3/d', 'kg/m3'),                                 
     }                                                           # concentration of each state variable in influent
 '''
-# Medium (Glucose 100%)
+# # Medium (Glucose 100%)
+# default_inf_kwargs = {
+#     'concentrations': {
+#         'S_su':20.14,                                               # glucose 10 g/L = 10.7 kg COD/m3, 20 g/L = 20.14 kg COD/m3
+#         'S_aa':0.0,
+#         'S_fa':0.0,
+#         'S_la':0.0,
+#         'S_et':0.0,
+#         'S_va':0.0,
+#         'S_bu':0.0,
+#         'S_pro':0.0,
+#         'S_ac':0.0,
+#         'S_h2':1e-8,
+#         'S_ch4':0.0,
+#         'S_IC':0.0*C_mw,                                             
+#         'S_IN':5.553*1e-5*N_mw,                                     #!!! 0.04975 g COD/L, S_IN: 5.553*1e-5 kmole N / m3? * N_mw, why different? Fixed value
+#         'S_I':0.0,
+#         'X_c':0.0,
+#         'X_ch':0.0,
+#         'X_pr':0.0,
+#         'X_li':0.0,
+#         'X_aa':0.0,
+#         'X_fa':0.0,
+#         'X_la':0.0,
+#         'X_et':0.0,
+#         'X_c4':0.0,
+#         'X_pro':0.0,
+#         'X_ac':0.0,
+#         'X_h2':0.0,
+#         'X_I':0.0,
+#         'S_cat':0.0001,                                           # !!! kmole/m3, but in console, no unit.
+#         'S_an':0.02,                                            # !!! kmole/m3, but in console, no unit.
+#         },                                                      # 807.59 g COD/L
+#     'units': ('m3/d', 'kg/m3'),                                 # kg COD/m3 = g COD/L
+#     }          
+                                                 # concentration of each state variable in influent
+                                                 
+# Medium (Thin Stillage 100%) -> x10 dilution
 default_inf_kwargs = {
     'concentrations': {
-        'S_su':20.14,                                               # glucose 10 g/L = 10.7 kg COD/m3, 20 g/L = 20.14 kg COD/m3
+        'S_su':2.447,                                               # glucose 10 g/L = 10.7 kg COD/m3, 20 g/L = 20.14 kg COD/m3
         'S_aa':0.0,
         'S_fa':0.0,
-        'S_la':0.0,
-        'S_et':0.0,
+        'S_la':5.222,
+        'S_et':15.135,
         'S_va':0.0,
         'S_bu':0.0,
-        'S_pro':0.0,
-        'S_ac':0.0,
+        'S_pro':6.221,
+        'S_ac':26.729,
         'S_h2':1e-8,
         'S_ch4':0.0,
         'S_IC':0.0*C_mw,                                             
@@ -125,7 +161,7 @@ default_inf_kwargs = {
         },                                                      # 807.59 g COD/L
     'units': ('m3/d', 'kg/m3'),                                 # kg COD/m3 = g COD/L
     }          
-                                                 # concentration of each state variable in influent
+
 inf.set_flow_by_concentration(Q, **default_inf_kwargs)          # set influent concentration
 # inf
 S_su = default_inf_kwargs['concentrations']['S_su']
@@ -134,7 +170,7 @@ S_su = default_inf_kwargs['concentrations']['S_su']
 # SanUnit
 U1 = UASB('UASB', ins=inf, outs=(gas, eff), model=adm1,        # This model is based on CSTR, need to decide application of recirculated experiments
           V_liq=Q*HRT, V_gas=Q*HRT*0.1,                        # !!! Considering real experiments including either high recirculation rate or not
-          T=Temp, pH_ctrl=4,                               # pH adjustment X
+          T=Temp, pH_ctrl=None,                               # pH adjustment X
           fraction_retain=0.95,                            # needs to set this value properly
           )                                                    
 
@@ -226,7 +262,7 @@ sys                                                           # before running t
 
 #%%
 # Simulation settings
-t = 40                        # total time for simulation
+t = 20                        # total time for simulation
 t_step = 1                    # times at which to store the computed solution
 
 method = 'BDF'                  # integration method to use
@@ -287,7 +323,6 @@ plt.ylabel("Total VFA [mg/l]")
 
 #%%
 #!!! Plot for varying pH over time
-'''
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -329,46 +364,10 @@ df = pd.DataFrame({
     'pH': pH_values
 })
 df.to_excel('pH_levels_over_time.xlsx', index=False)
-'''
-#%%
-#!!! Plot for varying pH over time
-
-from scipy.optimize import brenth
-from qsdsan.processes._adm1_vfa import mass2mol_conversion, acid_base_rxn
-unit_conversion = mass2mol_conversion(cmps)
-Ka = adm1.rate_function._params['Ka']
-
-def calc_pH(state_arr):
-    cmps_in_M = state_arr[:31] * unit_conversion
-    weak_acids = cmps_in_M[[28, 29, 12, 11, 8, 7, 6, 5, 3]]
-    h = brenth(acid_base_rxn, 1e-14, 1.0,
-                args=(weak_acids, Ka),
-                xtol=1e-12, maxiter=100)
-    pH = -np.log10(h)
-    return pH
-
-pH_values = [calc_pH(arr) for arr in eff.scope.record]
-
-plt.figure(figsize=(10, 6))
-plt.plot(t_stamp, pH_values, marker='o', linestyle='-', color='blue')
-plt.title('pH levels Over Time')
-plt.xlabel('Time (days)')
-plt.ylabel('pH')
-plt.grid(True)
-plt.show()
-
-# Export pH values to an Excel file
-df = pd.DataFrame({
-    'Time (days)': t_stamp,
-    'pH': pH_values
-})
-df.to_excel('pH_levels_over_time.xlsx', index=False)
-
 #%%
 #!!! Partial Pressure of gas over days (S_ch4 vs Partial Pressure of CH4)
 # Simulation settings
-
-t = 40  # total simulation time in days
+t = 20  # total simulation time in days
 t_step = 1  # simulation time step in days
 time_stamps = np.arange(0, t + t_step, t_step)
 
