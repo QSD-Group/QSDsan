@@ -42,14 +42,17 @@ default_F_BM.update(default_WWTpump_F_BM)
 #%% Thickener
 
 def calc_f_thick(thickener_perc, TSS_in):
+    """Returns thickening factor, i.e., thickened sludge solid concentration to influent solids concentration"""
     if TSS_in > 0:
-        thickener_factor = thickener_perc*10000/TSS_in
+        thickener_factor = thickener_perc*10000/TSS_in   # underlying assumption is density of mixed liquor = 1 kg/L = 1e6 mg/L
         if thickener_factor < 1: thickener_factor = 1
         return thickener_factor
     else: 
         raise ValueError(f'Influent TSS is not valid: ({TSS_in:.2f} mg/L).')
         
 def calc_f_Qu_thin(TSS_removal_perc, thickener_factor):
+    """Returns Qu factor (i.e., underflow flowrate to influent flowrate) and 
+    thinning factor (i.e., overflow solids concentration to influent solids concentration)"""
     if thickener_factor <= 1:
         Qu_factor = 1
         thinning_factor=0
@@ -170,17 +173,10 @@ class Thickener(SanUnit):
     _N_outs = 2   # [0] thickened sludge, [1] reject water
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False
-    
-    # # Costs
-    # wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
-    # slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
-    # stainless_steel_unit_cost=1.8 # Alibaba. Brushed Stainless Steel Plate 304. https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
-    
-    # pumps = ('sludge',)
-    
+        
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=default_F_BM, thickener_perc=7, 
-                  TSS_removal_perc=98, solids_loading_rate =4, h_thickener=4, 
+                  TSS_removal_perc=98, solids_loading_rate=4, h_thickener=4, 
                   downward_flow_velocity= 36, F_BM=default_F_BM, **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with)
@@ -363,241 +359,11 @@ class Thickener(SanUnit):
             C_dot = (dQ_ins @ C_ins + Q_ins @ dC_ins - Q_dot * C)/Q
             _dstate[-1] = Q_dot
             _dstate[:-1] = C_dot
-    
             _update_parameters()
             _update_state()
             _update_dstate()
         self._AE = yt
          
-    # def _design_pump(self):
-    #     ID, pumps = self.ID, self.pumps
-    #     self._sludge.copy_like(self.outs[0])
-    #     sludge = self._sludge
-        
-    #     ins_dct = {
-    #         'sludge': sludge,
-    #         }
-        
-    #     type_dct = dict.fromkeys(pumps, 'sludge')
-    #     inputs_dct = dict.fromkeys(pumps, (1,))
-        
-    #     D = self.design_results
-    #     influent_Q = sludge.get_total_flow('m3/hr')/D['Number of thickeners']
-    #     influent_Q_mgd = influent_Q*0.00634 # m3/hr to MGD
-       
-    #     for i in pumps:
-    #         if hasattr(self, f'{i}_pump'):
-    #             p = getattr(self, f'{i}_pump')
-    #             setattr(p, 'add_inputs', inputs_dct[i])
-    #         else:
-    #             ID = f'{ID}_{i}'
-    #             capacity_factor=1
-    #             # No. of pumps = No. of influents
-    #             pump = WWTpump(
-    #                 ID=ID, ins= ins_dct[i], thermo = self.thermo, pump_type=type_dct[i],
-    #                 Q_mgd=influent_Q_mgd, add_inputs=inputs_dct[i],
-    #                 capacity_factor=capacity_factor,
-    #                 include_pump_cost=True,
-    #                 include_building_cost=False,
-    #                 include_OM_cost=True,
-    #                 )
-    #             setattr(self, f'{i}_pump', pump)
-
-    #     pipe_ss, pump_ss = 0., 0.
-    #     for i in pumps:
-    #         p = getattr(self, f'{i}_pump')
-    #         p.simulate()
-    #         p_design = p.design_results
-    #         pipe_ss += p_design['Pump pipe stainless steel']
-    #         pump_ss += p_design['Pump stainless steel']
-    #     return pipe_ss, pump_ss
-    
-    # _units = {
-    #     'Design solids loading rate': 'kg/m2/hr',
-    #     'Total mass of solids handled': 'kg',
-    #     'Surface area': 'm2',
-    #     'Thickener diameter': 'm',
-    #     'Number of thickeners' : 'Unitless',
-    #     'Thickener depth': 'm',
-    #     'Conical depth': 'm',
-    #     'Cylindrical depth': 'm',
-    #     'Cylindrical volume': 'm3',
-    #     'Conical volume': 'm3',
-    #     'Thickener volume': 'm3',
-        
-    #     'Center feed depth': 'm',
-    #     'Downward flow velocity': 'm/hr',
-    #     'Volumetric flow': 'm3/hr', 
-    #     'Center feed diameter': 'm',
-    #     'Thickener depth': 'm',
-    #     'Volume of concrete wall': 'm3',
-    #     'Volume of concrete slab': 'm3',
-    #     'Stainless steel': 'kg',
-    #     'Pump pipe stainless steel' : 'kg',
-    #     'Pump stainless steel': 'kg',
-    #     'Number of pumps': 'Unitless'
-    # }
-    
-    # def _design(self):
-        
-    #     self._mixed.mix_from(self.ins)
-    #     mixed = self._mixed
-    #     D = self.design_results
-        
-    #     # D['Number of thickeners'] = np.ceil(self._mixed.get_total_flow('m3/hr')/self.design_flow)
-    #     D['Design solids loading rate'] = self.solids_loading_rate # in (kg/hr)/m2
-    #     D['Total mass of solids handled'] = (mixed.get_TSS()/1000)*mixed.get_total_flow('m3/hr') # (mg/L)*[1/1000(kg*L)/(mg*m3)](m3/hr) = (kg/hr)
-        
-    #     # Common gravity thickener configurations have tanks with diameter between 21-24m (MOP 8)
-    #     diameter_thickener = 24
-    #     number_of_thickeners = 0
-    #     while diameter_thickener >= 22:
-    #         number_of_thickeners += 1
-    #         total_surface_area =  D['Total mass of solids handled']/D['Design solids loading rate'] #m2
-    #         surface_area_thickener = total_surface_area/number_of_thickeners
-    #         diameter_thickener = np.sqrt(4*surface_area_thickener/np.pi)
-            
-    #     D['Surface area'] = surface_area_thickener #in m2
-    #     D['Thickener diameter'] = diameter_thickener #in m
-    #     D['Number of thickeners'] = number_of_thickeners
-    
-    #     # Common gravity thickener configurations have sidewater depth between 3-4m (MOP 8)
-    #     D['Thickener depth'] = self.h_thickener #in m 
-    #     # The thickener tank floor generally has slope between 2:12 and 3:12 (MOP 8)
-    #     D['Conical depth'] = (2/12)*(D['Thickener diameter']/2)
-    #     D['Cylindrical depth'] = D['Thickener depth'] - D['Conical depth']
-        
-    #     # Checks on depth
-    #     if D['Cylindrical depth'] < 0:
-    #         cyl_depth = D['Cylindrical depth']
-    #         RuntimeError(f'Cylindrical depth (= {cyl_depth} ) is negative')
-            
-    #     if D['Cylindrical depth'] < D['Conical depth']:
-    #         cyl_depth = D['Cylindrical depth']
-    #         con_depth = D['Conical depth'] 
-    #         RuntimeError(f'Cylindrical depth (= {cyl_depth} ) is lower than Conical depth (= {con_depth})')
-             
-    #     D['Cylindrical volume'] = np.pi*np.square(D['Thickener diameter']/2)*D['Cylindrical depth'] #in m3
-    #     D['Conical volume'] = (np.pi/3)*(D['Thickener diameter']/2)**2*D['Conical depth']
-    #     D['Thickener volume'] = D['Cylindrical volume'] + D['Conical volume']
-        
-    #     #Check on SOR is pending
-        
-    #     # The design here is for center feed of thickener.
-    #     # Depth of the center feed lies between 30-75% of sidewater depth. [2]
-    #     D['Center feed depth'] = 0.5*D['Cylindrical depth']
-    #     # Typical conventional feed wells are designed for an average downflow velocity
-    #     # of 10-13 mm/s and maximum velocity of 25-30 mm/s. [4]
-    #     peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
-    #     D['Downward flow velocity'] = self.downward_flow_velocity*peak_flow_safety_factor # in m/hr
-        
-    #     D['Volumetric flow'] =  mixed.get_total_flow('m3/hr')/D['Number of thickeners'] # m3/hr
-    #     Center_feed_area = D['Volumetric flow']/D['Downward flow velocity'] # in m2
-    #     D['Center feed diameter'] = np.sqrt(4*Center_feed_area/np.pi) # in m
-
-    #     #Diameter of the center feed does not exceed 40% of tank diameter [2]
-    #     if D['Center feed diameter'] > 0.40*D['Thickener diameter']:
-    #         cf_dia = D['Center feed diameter'] 
-    #         tank_dia = D['Thickener diameter']
-    #         warn(f'Diameter of the center feed exceeds 40% of tank diameter. It is {cf_dia*100/tank_dia}% of tank diameter')
-
-    #     # Amount of concrete required
-    #     D_tank = D['Thickener depth']*39.37 # m to inches 
-    #     # Thickness of the wall concrete [m]. Default to be minimum of 1 feet with 1 inch added for every feet of depth over 12 feet.
-    #     thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
-    #     inner_diameter = D['Thickener diameter']
-    #     outer_diameter = inner_diameter + 2*thickness_concrete_wall
-    #     volume_cylindercal_wall = (np.pi*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
-    #     D['Volume of concrete wall'] = volume_cylindercal_wall # in m3
-        
-    #     # Concrete slab thickness, [ft], default to be 2 in thicker than the wall thickness. (Brian's code)
-    #     thickness_concrete_slab = thickness_concrete_wall + (2/12)*0.3048 # from inch to m
-    #     outer_diameter_cone = inner_diameter + 2*(thickness_concrete_wall + thickness_concrete_slab)
-    #     volume_conical_wall = (np.pi/(3*4))*(((D['Conical depth'] + thickness_concrete_wall + thickness_concrete_slab)*(outer_diameter_cone**2)) - (D['Conical depth']*(inner_diameter)**2))
-    #     D['Volume of concrete slab'] = volume_conical_wall
-        
-    #     # Amount of metal required for center feed
-    #     thickness_metal_wall = 0.3048 # equal to 1 feet, in m (!! NEED A RELIABLE SOURCE !!)
-    #     inner_diameter_center_feed = D['Center feed diameter']
-    #     outer_diameter_center_feed = inner_diameter_center_feed + 2*thickness_metal_wall
-    #     volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed**2)
-    #     density_ss = 7930 # kg/m3, 18/8 Chromium
-    #     D['Stainless steel'] = volume_center_feed*density_ss # in kg
-       
-    #     # Pumps
-    #     pipe, pumps = self._design_pump()
-    #     D['Pump pipe stainless steel'] = pipe
-    #     D['Pump stainless steel'] = pumps
-        
-    #     #For thickener 
-    #     D['Number of pumps'] = D['Number of thickeners']
-        
-    # def _cost(self):
-        
-    #     self._mixed.mix_from(self.ins)
-    #     mixed = self._mixed
-       
-    #     D = self.design_results
-    #     C = self.baseline_purchase_costs
-       
-    #     # Construction of concrete and stainless steel walls
-    #     C['Wall concrete'] = D['Number of thickeners']*D['Volume of concrete wall']*self.wall_concrete_unit_cost
-    #     C['Slab concrete'] = D['Number of thickeners']*D['Volume of concrete slab']*self.slab_concrete_unit_cost
-    #     C['Wall stainless steel'] = D['Number of thickeners']*D['Stainless steel']*self.stainless_steel_unit_cost
-       
-    #     # Cost of equipment 
-    #     # Source of scaling exponents: Process Design and Economics for Biochemical Conversion of Lignocellulosic Biomass to Ethanol by NREL.
-        
-    #     # Scraper 
-    #     # Source: https://www.alibaba.com/product-detail/Peripheral-driving-clarifier-mud-scraper-waste_1600891102019.html?spm=a2700.details.0.0.47ab45a4TP0DLb
-    #     # base_cost_scraper = 2500
-    #     # base_flow_scraper = 1 # in m3/hr (!!! Need to know whether this is for solids or influent !!!)
-    #     thickener_flow = mixed.get_total_flow('m3/hr')/D['Number of thickeners']
-    #     # C['Scraper'] = D['Number of thickeners']*base_cost_scraper*(thickener_flow/base_flow_scraper)**0.6
-    #     # base_power_scraper = 2.75 # in kW
-    #     # THE EQUATION BELOW IS NOT CORRECT TO SCALE SCRAPER POWER REQUIREMENTS 
-    #     # scraper_power = D['Number of thickeners']*base_power_scraper*(thickener_flow/base_flow_scraper)**0.6
-        
-    #     # v notch weir
-    #     # Source: https://www.alibaba.com/product-detail/50mm-Tube-Settler-Media-Modules-Inclined_1600835845218.html?spm=a2700.galleryofferlist.normal_offer.d_title.69135ff6o4kFPb
-    #     base_cost_v_notch_weir = 6888
-    #     base_flow_v_notch_weir = 10 # in m3/hr
-    #     C['v notch weir'] = D['Number of thickeners']*base_cost_v_notch_weir*(thickener_flow/base_flow_v_notch_weir)**0.6
-       
-    #     # Pump (construction and maintainance)
-    #     pumps = self.pumps
-    #     add_OPEX = self.add_OPEX
-    #     pump_cost = 0.
-    #     building_cost = 0.
-    #     opex_o = 0.
-    #     opex_m = 0.
-       
-    #     for i in pumps:
-    #         p = getattr(self, f'{i}_pump')
-    #         p_cost = p.baseline_purchase_costs
-    #         p_add_opex = p.add_OPEX
-    #         pump_cost += p_cost['Pump']
-    #         building_cost += p_cost['Pump building']
-    #         opex_o += p_add_opex['Pump operating']
-    #         opex_m += p_add_opex['Pump maintenance']
-
-    #     C['Pumps'] = pump_cost*D['Number of thickeners']
-    #     C['Pump building'] = building_cost*D['Number of thickeners']
-    #     add_OPEX['Pump operating'] = opex_o*D['Number of thickeners']
-    #     add_OPEX['Pump maintenance'] = opex_m*D['Number of thickeners']
-       
-    #     # Power
-    #     pumping = 0.
-    #     for ID in self.pumps:
-    #         p = getattr(self, f'{ID}_pump')
-    #         if p is None:
-    #             continue
-    #         pumping += p.power_utility.rate
-        
-    #     pumping = pumping*D['Number of thickeners']
-        
-    #     self.power_utility.rate += pumping
-    #     # self.power_utility.rate += scraper_power
 
 #%% Centrifuge
 
@@ -657,16 +423,10 @@ class Centrifuge(Thickener):
     _N_outs = 2
     _ins_size_is_fixed = False
     
-    pumps = ('sludge',)
-    
-    # # Costs
-    # stainless_steel_unit_cost=1.8 # $/Kg (Taken from Joy's METAB code) https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
-    # polymer_cost_by_weight = 2.2 # $/Kg (Source: https://www.alibaba.com/product-detail/dewatering-pool-chemicals-cationic-polyacrylamide-cas_1600194474507.html?spm=a2700.galleryofferlist.topad_classic.i5.5de8615c4zGAhg)
-    
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=default_F_BM, 
                   thickener_perc=28, TSS_removal_perc=98, 
-                  solids_feed_rate=70, g_factor=2500, rotational_speed = 2500, 
+                  solids_feed_rate=70, g_factor=2500, rotational_speed=2500, 
                   LtoD=4, F_BM=default_F_BM,
                   polymer_dosage=20, h_cylindrical=2, h_conical=1, **kwargs):
         
@@ -683,177 +443,13 @@ class Centrifuge(Thickener):
         self.h_cylindrical = h_cylindrical
         self.h_conical = h_conical
         
-    # _units = {
-    #     'Number of centrifuges': 'ea',
-    #     'Diameter of bowl': 'm',
-    #     'Total length of bowl': 'm',
-    #     'Length of cylindrical portion': 'm',
-    #     'Length of conical portion': 'm',
-    #     'Volume of bowl': 'm3',
-    #     'Stainless steel for bowl': 'kg',
-    #     'Polymer feed rate': 'kg/hr',
-    #     'Pump pipe stainless steel' : 'kg',
-    #     'Pump stainless steel': 'kg',
-    #     'Number of pumps': 'ea'
-    # }        
-    
-    # def _design_pump(self):
-    #     ID, pumps = self.ID, self.pumps
-    #     self._sludge.copy_like(self.outs[0])
-    #     sludge = self._sludge
-    #     ins_dct = {
-    #         'sludge': sludge,
-    #         }
-    #     type_dct = dict.fromkeys(pumps, 'sludge')
-    #     inputs_dct = dict.fromkeys(pumps, (1,))
-        
-    #     D = self.design_results
-    #     influent_Q = sludge.get_total_flow('m3/hr')/D['Number of centrifuges']
-    #     influent_Q_mgd = influent_Q*0.00634 # m3/hr to MGD
-       
-    #     for i in pumps:
-    #         if hasattr(self, f'{i}_pump'):
-    #             p = getattr(self, f'{i}_pump')
-    #             setattr(p, 'add_inputs', inputs_dct[i])
-    #         else:
-    #             ID = f'{ID}_{i}'
-    #             capacity_factor=1
-    #             # No. of pumps = No. of influents
-    #             pump = WWTpump(
-    #                 ID=ID, ins= ins_dct[i], thermo = self.thermo, pump_type=type_dct[i],
-    #                 Q_mgd=influent_Q_mgd, add_inputs=inputs_dct[i],
-    #                 capacity_factor=capacity_factor,
-    #                 include_pump_cost=True,
-    #                 include_building_cost=False,
-    #                 include_OM_cost=True,
-    #                 )
-    #             setattr(self, f'{i}_pump', pump)
-
-    #     pipe_ss, pump_ss = 0., 0.
-    #     for i in pumps:
-    #         p = getattr(self, f'{i}_pump')
-    #         p.simulate()
-    #         p_design = p.design_results
-    #         pipe_ss += p_design['Pump pipe stainless steel']
-    #         pump_ss += p_design['Pump stainless steel']
-    #     return pipe_ss, pump_ss
-    
-    # def _design(self):   
-    #     self._mixed.mix_from(self.ins)
-    #     mixed = self._mixed
-        
-    #     D = self.design_results 
-    #     TSS_rmv = self._TSS_rmv
-    #     solids_feed_rate = 44.66*self.solids_feed_rate # 44.66 is factor to convert tonne/day to kg/hr
-    #     # Cake's total solids and TSS are essentially the same (pg. 24-6 [3])
-    #     # If TSS_rmv = 98, then total_mass_dry_solids_removed  = (0.98)*(influent TSS mass)
-    #     total_mass_dry_solids_removed = (TSS_rmv/100)*((mixed.get_TSS()*self.ins[0].F_vol)/1000) # in kg/hr
-    #     D['Number of centrifuges'] = np.ceil(total_mass_dry_solids_removed/solids_feed_rate)
-        
-        
-    #     # HAVE COMMENTED ALL OF THIS SINCE CENTRIFUGE WOULD PROBABLY BE BROUGHT NOT CONSTRUCTED AT THE FACILITY
-        
-    #     # k = 0.00000056 # Based on emprical formula (pg. 24-23 of [3])
-    #     # g = 9.81 # m/s2
-    #     # # The inner diameterof the bowl is calculated based on an empirical formula. 1000 is used to convert mm to m.
-    #     # D['Diameter of bowl'] = (self.g_factor*g)/(k*np.square(self.rotational_speed)*1000) # in m
-    #     # D['Total length of bowl'] =  self.LtoD*D['Diameter of bowl'] 
-    #     # # Sanity check: L should be between 1-7 m, diameter should be around 0.25-0.8 m (Source: [4])
-        
-    #     # fraction_cylindrical_portion = 0.8
-    #     # fraction_conical_portion = 1 - fraction_cylindrical_portion
-    #     # D['Length of cylindrical portion'] = fraction_cylindrical_portion*D['Total length of bowl']
-    #     # D['Length of conical portion'] =  fraction_conical_portion*D['Total length of bowl']
-    #     # thickness_of_bowl_wall = 0.1 # in m (!!! NEED A RELIABLE SOURCE !!!)
-    #     # inner_diameter = D['Diameter of bowl']
-    #     # outer_diameter = inner_diameter + 2*thickness_of_bowl_wall
-        
-    #     # volume_cylindrical_wall = (np.pi*D['Length of cylindrical portion']/4)*(outer_diameter**2 - inner_diameter**2)
-    #     # volume_conical_wall = (np.pi/3)*(D['Length of conical portion']/4)*(outer_diameter**2 - inner_diameter**2)
-    #     # D['Volume of bowl'] = volume_cylindrical_wall + volume_conical_wall # in m3
-        
-    #     # density_ss = 7930 # kg/m3, 18/8 Chromium
-    #     # D['Stainless steel for bowl'] = D['Volume of bowl']*density_ss # in kg
-        
-    #     polymer_dosage_rate = 0.000453592*self.polymer_dosage # convert from (polymer (lbs)/solids (tonne)) to (polymer (kg)/solids (kg))
-    #     D['Polymer feed rate'] = (polymer_dosage_rate*solids_feed_rate) # in polymer (kg)/hr
-        
-    #     # Pumps
-    #     pipe, pumps = self._design_pump()
-    #     D['Pump pipe stainless steel'] = pipe
-    #     D['Pump stainless steel'] = pumps
-        
-    #     # For centrifuges 
-    #     D['Number of pumps'] = D['Number of centrifuges']
-        
-    # def _cost(self):
-       
-    #     D = self.design_results
-    #     C = self.baseline_purchase_costs
-        
-    #     self._mixed.mix_from(self.ins)
-    #     mixed = self._mixed
-       
-    #     # HAVE COMMENTED SINCE CENTRIFUGE WOULD PROBABLY BE BROUGHT NOT CONSTRUCTED AT THE FACILITY
-    #     # Construction of concrete and stainless steel walls
-    #     # C['Bowl stainless steel'] = D['Number of centrifuges']*D['Stainless steel for bowl']*self.stainless_steel_unit_cost
-        
-    #     # Conveyor 
-    #     # Source: https://www.alibaba.com/product-detail/Sludge-Dewatering-Centrifuge-Decanter-Centrifuge-For_60448094522.html?spm=a2700.galleryofferlist.p_offer.d_title.1c5c5229I5pQeP&s=p
-    #     base_cost_centrifuge = 16000
-    #     base_mass_flow_centrifuge = 80 # in tonne/hr
-    #     thickener_mass_flow = (mixed.get_total_flow('m3/hr')*mixed.get_TSS())/D['Number of centrifuges'] # IN gm/hr
-    #     gm_to_tonne = 0.000001
-    #     thickener_mass_flow = thickener_mass_flow*gm_to_tonne
-    #     C['Centrifuge'] = D['Number of centrifuges']*base_cost_centrifuge*(thickener_mass_flow/base_mass_flow_centrifuge)**0.6
-        
-    #     base_power_motor = 55 # in kW
-    #     # THIS IS NOT THE CORRECT EXPRESSION TO SCALE UP POWER OF CENTRIFUGE
-    #     motor_power = base_power_motor*(thickener_mass_flow/base_mass_flow_centrifuge)
-    #     total_motor_power = D['Number of centrifuges']*motor_power
-        
-    #     # Pump (construction and maintainance)
-    #     pumps = self.pumps
-    #     add_OPEX = self.add_OPEX
-    #     pump_cost = 0.
-    #     building_cost = 0.
-    #     opex_o = 0.
-    #     opex_m = 0.
-        
-    #     add_OPEX['Polymer'] = D['Number of centrifuges']*D['Polymer feed rate']*self.polymer_cost_by_weight 
-       
-    #     for i in pumps:
-    #         p = getattr(self, f'{i}_pump')
-    #         p_cost = p.baseline_purchase_costs
-    #         p_add_opex = p.add_OPEX
-    #         pump_cost += p_cost['Pump']
-    #         building_cost += p_cost['Pump building']
-    #         opex_o += p_add_opex['Pump operating']
-    #         opex_m += p_add_opex['Pump maintenance']
-
-    #     C['Pumps'] = pump_cost*D['Number of pumps']
-    #     C['Pump building'] = building_cost*D['Number of pumps']
-    #     add_OPEX['Pump operating'] = opex_o*D['Number of pumps']
-    #     add_OPEX['Pump maintenance'] = opex_m*D['Number of pumps']
-       
-    #     # Power
-    #     pumping = 0.
-    #     for ID in self.pumps:
-    #         p = getattr(self, f'{ID}_pump')
-    #         if p is None:
-    #             continue
-    #         pumping += p.power_utility.rate
-            
-    #     pumping = pumping*D['Number of pumps']
-    #     self.power_utility.rate += pumping
-    #     self.power_utility.rate += total_motor_power
         
 #%% Incinerator
 
 class Incinerator(SanUnit):
     
     """
-    Fluidized bed incinerator unit for metroWWTP.
+    Fluidized bed incinerator.
     
     Parameters
     ----------
@@ -951,9 +547,9 @@ class Incinerator(SanUnit):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=None, process_efficiency=0.90, 
-                  calorific_value_sludge= 12000, calorific_value_fuel=50000, 
-                  ash_component_ID = 'X_Ig_ISS', nitrogen_ID = 'S_N2', water_ID = 'H2O',
-                  carbon_di_oxide_ID = 'S_CO2', **kwargs):
+                  calorific_value_sludge=12000, calorific_value_fuel=50000, 
+                  ash_component_ID='X_Ig_ISS', nitrogen_ID='S_N2', water_ID='H2O',
+                  carbon_dioxide_ID='S_CO2', **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with, F_BM_default=F_BM_default)
         
@@ -963,7 +559,7 @@ class Incinerator(SanUnit):
         self.ash_component_ID = ash_component_ID
         self.nitrogen_ID = nitrogen_ID
         self.water_ID = water_ID
-        self.carbon_di_oxide_ID = carbon_di_oxide_ID
+        self.carbon_dioxide_ID = carbon_dioxide_ID
         self.Heat_air = None 
         self.Heat_fuel = None
         self.Heat_sludge = None
@@ -1017,7 +613,8 @@ class Incinerator(SanUnit):
         cmps = self.components
         nitrogen_ID = self.nitrogen_ID
         water_ID = self.water_ID
-        carbon_di_oxide_ID = self.carbon_di_oxide_ID
+        carbon_dioxide_ID = self.carbon_dioxide_ID
+        ash_cmp_ID = self.ash_component_ID
         
         if sludge.phase != 'l':
             raise ValueError(f'The phase of incoming sludge is expected to be liquid not {sludge.phase}')
@@ -1029,22 +626,23 @@ class Incinerator(SanUnit):
         inf = np.asarray(sludge.mass + air.mass + fuel.mass)
         idx_n2 = cmps.index(nitrogen_ID)
         idx_h2o = cmps.index(water_ID)
+        idx_co2 = cmps.index(carbon_dioxide_ID)
+        idx_ash = cmps.index(ash_cmp_ID)
+        i_mass = cmps.i_mass
+        i_iss = i_mass*(1-cmps.f_Vmass_Totmass)
         
         n2 = inf[idx_n2]
         h2o = inf[idx_h2o]
         
-        mass_ash = np.sum(inf*cmps.i_mass*(1-cmps.f_Vmass_Totmass)) \
-               - h2o*cmps.H2O.i_mass*(1-cmps.H2O.f_Vmass_Totmass) - n2*cmps.N2.i_mass*(1-cmps.N2.f_Vmass_Totmass)
+        mass_ash = np.sum(inf*i_iss) - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o]
 
         # Conservation of mass 
-        mass_flue_gas = np.sum(inf*cmps.i_mass) - mass_ash
-        mass_co2 = mass_flue_gas - n2*cmps.N2.i_mass - h2o*cmps.H2O.i_mass
+        mass_flue_gas = np.sum(inf*i_mass) - mass_ash
+        mass_co2 = mass_flue_gas - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o]
         
-        flue_gas.set_flow([n2, h2o, (mass_co2/cmps.S_CO2.i_mass)], 
-                          'kg/hr', (nitrogen_ID, water_ID, carbon_di_oxide_ID))
-        ash_cmp_ID = self.ash_component_ID
-        ash_idx = cmps.index(ash_cmp_ID)
-        ash.set_flow([mass_ash/cmps.i_mass[ash_idx]/(1-cmps.f_Vmass_Totmass[ash_idx])],'kg/hr', (ash_cmp_ID,))
+        flue_gas.set_flow([n2, h2o, (mass_co2/i_mass[idx_co2])], 
+                          'kg/hr', (nitrogen_ID, water_ID, carbon_dioxide_ID))
+        ash.set_flow(mass_ash/i_mass[idx_ash],'kg/hr', (ash_cmp_ID,))
         
         # Energy balance 
         # self.Heat_sludge = sludge.dry_mass*sludge.F_vol*self.calorific_value_sludge/1000 #in KJ/hr (mg/L)*(m3/hr)*(KJ/kg)=KJ/hr*(1/1000)
@@ -1056,97 +654,35 @@ class Incinerator(SanUnit):
         # self.Heat_loss = self.Heat_sludge + self.Heat_air + self.Heat_fuel - self.Heat_flue_gas
         
     def _init_state(self):
-        
-        sludge, air, fuel = self.ins
-        inf = np.asarray(sludge.mass + air.mass + fuel.mass)
-        self._state = (24*inf)/1000
+        self._state = np.zeros(4)
         self._dstate = self._state * 0.
         self._cached_state = self._state.copy()
         self._cached_t = 0
-        
-    # def _cost(self):
-        
-    #     C = self.baseline_purchase_costs
-    #     sludge, air, fuel = self.ins
-    #     solids_load_treated = sludge.get_total_flow('m3/hr')*sludge.get_TSS('mg/L')/1000 # in kg/hr
-        
-    #     # Based on regression equations obtained from CapdetWorks
-    #     C['Construction and equipment costs'] = 119629*(solids_load_treated)**0.9282 
-    #     C['Installed incinerator costs'] = 114834*(solids_load_treated)**0.9284
-    #     C['Slab concrete costs'] = 782.28*(solids_load_treated)**0.9111
-    #     C['Building costs'] = 4429.8*(solids_load_treated)**0.911
-        
-    #     # Based on regression equations obtained from CapdetWorks
-    #     add_OPEX = self.add_OPEX 
-    #     add_OPEX['Material and supply costs'] = 0.0614*(solids_load_treated)**0.9282
-    #     add_OPEX['Energy costs'] = 1.3079*(solids_load_treated)**0.9901
-        
+
     def _update_state(self):
         cmps = self.components
-        for ws in self.outs:
-            if ws.state is None:
-                ws.state = np.zeros(len(self._state)+1)
-        
-        nitrogen_ID = self.nitrogen_ID
-        water_ID = self.water_ID
-        carbon_di_oxide_ID = self.carbon_di_oxide_ID
-        
-        idx_h2o = cmps.index(water_ID)
-        idx_n2 = cmps.index(nitrogen_ID)
-        idx_co2 = cmps.index(carbon_di_oxide_ID)
-        ash_idx = cmps.index(self.ash_component_ID)
-        cmps_i_mass = cmps.i_mass
-        cmps_v2tmass = cmps.f_Vmass_Totmass    
-        
-        inf = self._state
-        mass_in_tot = np.sum(inf*cmps_i_mass)       
-        self._outs[0].state[idx_h2o] = h2o = inf[idx_h2o]
-        self._outs[0].state[idx_n2] = n2 = inf[idx_n2]
-        
-        mass_ash = np.sum(inf*cmps_i_mass*(1-cmps_v2tmass)) \
-                   - h2o*cmps.H2O.i_mass*(1-cmps_v2tmass[idx_h2o]) - n2*cmps.N2.i_mass*(1-cmps_v2tmass[idx_n2])
-        mass_flue_gas = mass_in_tot - mass_ash
-        mass_co2 = mass_flue_gas - n2 - h2o
-        
-        self._outs[0].state[idx_co2] = mass_co2/cmps_i_mass[idx_co2]
-        self._outs[1].state[ash_idx] = mass_ash/cmps_i_mass[ash_idx]/(1-cmps_v2tmass[ash_idx])
+        flue_gas, ash = self.outs
+        idx_ash = cmps.index(self.ash_component_ID)
+        idx_gases = cmps.indices([self.carbon_dioxide_ID, self.nitrogen_ID, self.water_ID])
 
-        self._outs[0].state[-1] = 1
-        self._outs[1].state[-1] = 1
+        if flue_gas.state is None: flue_gas.state = np.array([0]*len(cmps)+[1])
+        if ash.state is None: ash.state = np.array([0]*len(cmps)+[1])
+        
+        flue_gas.state[idx_gases] = self._state[1:]
+        ash.state[idx_ash] = self._state[0]
         
     def _update_dstate(self):
-        
         cmps = self.components
-        nitrogen_ID = self.nitrogen_ID
-        water_ID = self.water_ID
-        carbon_di_oxide_ID = self.carbon_di_oxide_ID
+        flue_gas, ash = self.outs
+        idx_ash = cmps.index(self.ash_component_ID)
+        idx_gases = cmps.indices([self.carbon_dioxide_ID, self.nitrogen_ID, self.water_ID])
+
+        if flue_gas.dstate is None: flue_gas.dstate = np.zeros(len(cmps)+1)
+        if ash.dstate is None: ash.dstate = np.zeros(len(cmps)+1)
         
-        idx_h2o = cmps.index(water_ID)
-        idx_n2 = cmps.index(nitrogen_ID)
-        idx_co2 = cmps.index(carbon_di_oxide_ID)
-        ash_idx = cmps.index(self.ash_component_ID)
-        d_state = self._dstate
-        cmps_i_mass = cmps.i_mass
-        cmps_v2tmass = cmps.f_Vmass_Totmass  
-        d_n2 = d_state[idx_n2]
-        d_h2o = d_state[idx_h2o]
-        
-        for ws in self.outs:
-            if ws.dstate is None:
-                ws.dstate = np.zeros(len(self._dstate)+1)
-    
-        self._outs[0].dstate[idx_n2] = d_n2
-        self._outs[0].dstate[idx_h2o] = d_h2o
-        
-        d_mass_in_tot = np.sum(d_state*cmps_i_mass)
-        
-        d_mass_ash = np.sum(d_state*cmps_i_mass*(1-cmps_v2tmass)) \
-            - d_h2o*cmps.H2O.i_mass*(1-cmps_v2tmass[idx_h2o]) - d_n2*cmps.N2.i_mass*(1-cmps_v2tmass[idx_n2])
-        d_mass_flue_gas = d_mass_in_tot - d_mass_ash
-        d_mass_co2 = d_mass_flue_gas - d_n2  - d_h2o
-        
-        self._outs[0].dstate[idx_co2] = d_mass_co2/cmps_i_mass[idx_co2]
-        self._outs[1].dstate[ash_idx] = d_mass_ash/cmps_i_mass[ash_idx]/(1-cmps_v2tmass[ash_idx])
+        flue_gas.dstate[idx_gases] = self._dstate[1:]
+        ash.dstate[idx_ash] = self._dstate[0]
+                
         
     @property
     def AE(self):
@@ -1160,17 +696,22 @@ class Incinerator(SanUnit):
         _update_state = self._update_state
         _update_dstate = self._update_dstate
         _cached_state = self._cached_state
-
+        cmps = self.components
+        idx_h2o = cmps.index(self.water_ID)
+        idx_n2 = cmps.index(self.nitrogen_ID)
+        idx_co2 = cmps.index(self.carbon_dioxide_ID)
+        idx_ash = cmps.index(self.ash_component_ID)
+        i_mass = cmps.i_mass
+        i_iss = i_mass*(1-cmps.f_Vmass_Totmass)
+        
         def yt(t, QC_ins, dQC_ins):            
-            # Mass_in is basically the mass flowrate array where each row 
-            # corresponds to the flowrates of individual components (in columns)
-            # This strcuture is achieved by multiplying the first (n-1) rows of 
-            # Q_ins (which corresponds to concentration) to the nth row (which 
-            # is the volumetric flowrate)
             Mass_ins = np.diag(QC_ins[:,-1]) @ QC_ins[:,:-1]
-            # the _state array is formed by adding each column of the Mass_in
-            # array, thus providing the total massflowrate of each component 
-            _state[:] = np.sum(Mass_ins, axis=0)
+            n2 = Mass_ins[idx_n2]
+            h2o = Mass_ins[idx_h2o]
+            ash = np.sum(Mass_ins*i_iss) - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o]
+            co2 = np.sum(Mass_ins*i_mass) - ash - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o]
+            
+            _state[:] = [ash/i_mass[idx_ash], co2/i_mass[idx_co2], n2, h2o]
             
             if t > self._cached_t:
                 _dstate[:] = (_state - _cached_state)/(t - self._cached_t)
