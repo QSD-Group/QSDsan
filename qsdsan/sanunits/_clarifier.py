@@ -1528,6 +1528,6 @@ class PrimaryClarifier(IdealClarifier):
         pump = self.sludge_pump
         add_OPEX = self.add_OPEX
         add_OPEX.update({k: v*N for k,v in pump.add_OPEX.items()})
-        C.update({k: v*N for k,v in pump.baseline_purchase_costs})
+        C.update({k: v*N for k,v in pump.baseline_purchase_costs.items()})
         self.power_utility.rate += pump.power_utility.rate*N
         # self.power_utility.rate += scraper_power
