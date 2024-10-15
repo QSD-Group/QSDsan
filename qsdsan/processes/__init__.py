@@ -37,8 +37,19 @@ def mass2mol_conversion(cmps):
 R = 8.3145e-2 # Universal gas constant, [bar/M/K]
 
 def T_correction_factor(T1, T2, delta_H):
-    """compute temperature correction factor for equilibrium constants based on
-    the Van't Holf equation."""
+    """
+    Returns temperature correction factor for equilibrium constants based on
+    the Van't Holf equation.
+
+    Parameters
+    ----------
+    T1 : float
+        Base temperature, in K.
+    T2 : float
+        Actual temperature, in K.
+    delta_H : float
+        Heat of reaction, in J/mol.
+    """
     if T1 == T2: return 1
     return exp(delta_H/(R*100) * (1/T1 - 1/T2))  # R converted to SI
 

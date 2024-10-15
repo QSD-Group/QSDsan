@@ -217,8 +217,8 @@ def solve_pH(state_arr, Ka, unit_conversion):
     cmps_in_M = state_arr[:27] * unit_conversion
     weak_acids = cmps_in_M[[24, 25, 10, 9, 6, 5, 4, 3]]
     h = brenth(acid_base_rxn, 1e-14, 1.0,
-            args=(weak_acids, Ka),
-            xtol=1e-12, maxiter=100)
+               args=(weak_acids, Ka),
+               xtol=1e-12, maxiter=100)
     return h
 rhos_adm1 = lambda state_arr, params: _rhos_adm1(state_arr, params, h=None)
 
