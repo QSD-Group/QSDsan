@@ -12,7 +12,7 @@ for license details.
 import numpy as np
 from thermosteam.utils import chemicals_user
 from thermosteam import settings
-from qsdsan import Component, Components, Process, Processes, CompiledProcesses
+from qsdsan import Component, Components, Processes, CompiledProcesses
 from ..utils import ospath, data_path, load_data
 from . import Monod, ion_speciation
 from scipy.optimize import brenth
@@ -686,7 +686,7 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
     if SI > 1: rhos[21] =  X_newb * (SI-1)**2
     
     SI = (S_Ca**3 * po4**2 / Ksp[3])**(1/5)
-    if SI > 1: rhos[22] = X_ACP * (SI-1)**5
+    if SI > 1: rhos[22] = X_ACP * (SI-1)**2
     
     SI = (S_Mg * co3 / Ksp[4])**(1/2)
     if SI > 1: rhos[23] = X_MgCO3 * (SI-1)**2
@@ -825,10 +825,12 @@ class mASM2d(CompiledProcesses):
                 K_NH4_H=0.05, K_NH4_PAO=0.05, K_NH4_AUT=1.0, 
                 K_P_H=0.01, K_P_PAO=0.01, K_P_AUT=0.01, K_P_S=0.2, 
                 K_PP=0.01, K_MAX=0.34, K_IPP=0.02, K_PHA=0.01,
-                k_mmp=(5.0, 300, 0.05, 150, 50, 1.0, 1.0),
-                pKsp=(6.45, 13.16, 5.8, 23, 7, 21, 26),
+                # k_mmp=(5.0, 300, 0.05, 150, 50, 1.0, 1.0),
+                # pKsp=(6.45, 13.16, 5.8, 23, 7, 21, 26),
                 # k_mmp=(0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),  # Flores-Alsina 2016
                 # pKsp=(8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76),  # Flores-Alsina 2016
+                k_mmp=(8.4, 240, 1.0, 72, 1.0, 1.0e-5, 1.0e-5),              # MATLAB
+                pKsp=(8.45, 13.5, 5.7, 29.1, 7.4, 18.2, 26.4),               # MINTEQ (except newberyite), 20 C    
                 K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
                 K_AlOH=0.001, K_FeOH=0.001, 
                 pKa=(14, 9.25, 6.37, 10.32, 2.12, 7.21, 12.32, 4.76),

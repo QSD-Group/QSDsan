@@ -775,7 +775,7 @@ def _rhos_adm1p(state_arr, params, h=None):
     
     if S_Ca > 0 and po4 > 0:
         SI = (S_Ca**3 * po4**2 / Ksp[3])**(1/5)
-        if SI > 1: rhos_p[28] = X_ACP * (SI-1)**5
+        if SI > 1: rhos_p[28] = X_ACP * (SI-1)**2
     
     if S_Mg > 0 and co3 > 0:
         SI = (S_Mg * co3 / Ksp[4])**(1/2)
@@ -921,8 +921,10 @@ class ADM1p(ADM1):
                 K_H_dH=[-4180, -14240, -19410],
                 # k_mmp=(5.0, 300, 0.05, 150, 50, 1.0, 1.0),
                 # pKsp=(6.45, 13.16, 5.8, 23, 7, 21, 26),
-                k_mmp=(0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),  # Flores-Alsina 2016
-                pKsp=(8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76),  # Flores-Alsina 2016
+                # k_mmp=(0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),  # Flores-Alsina 2016
+                # pKsp=(8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76),  # Flores-Alsina 2016
+                k_mmp=(8.4, 240, 1.0, 72, 1.0, 1.0, 1.0),                    # MATLAB
+                pKsp=(8.5, 13.7, 5.9, 28.6, 7.6, 18.2, 26.5),                # MINTEQ (except newberyite), 35 C   
                 K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
                 K_AlOH=1.0e-6, K_FeOH=1.0e-6,  # kg/m3
                 **kwargs):
