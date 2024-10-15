@@ -553,6 +553,7 @@ class FlatBottomCircularClarifier(SanUnit):
 
         self._ODE = dy_dt
     
+    #!!! should consolidate design & costing equations between primary & secondary clarifiers
     # _units = {
     #     'Number of clarifiers': 'ea',
     #     'Volumetric flow': 'm3/day',
