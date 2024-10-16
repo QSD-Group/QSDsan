@@ -11,12 +11,18 @@ List of Biological Kinetic Models
 | ADM1     | `adm`_           | `Batstone`_ et al., 2002    |
 |          |                  | `Rosen and Jeppsson`_, 2006 |
 +----------+------------------+-----------------------------+
+| ADM1p    | `bsm2`_          | `Alex`_ et al., 2008        |
++----------+------------------+-----------------------------+
+| mADM1    |                  |                             |
++----------+------------------+-----------------------------+
 | ASM1     | `asm`_ & `bsm1`_ | `Henze`_ et al., 2006       |
 +----------+------------------+-----------------------------+
 | ASM2d    | `asm`_ & `bsm1`_ | `Henze`_ et al., 2006       |
 +----------+------------------+-----------------------------+
-| PM2      | `pm2_ecorecover`_| N/A                         |
-|          | & `pm2_batch`_   |				    |
+| mASM2d   | `bsm2`_          | `Alex`_ et al., 2008        |
++----------+------------------+-----------------------------+
+| PM2      | `pm2_ecorecover`_|                             |
+|          | & `pm2_batch`_   |                             |
 +----------+------------------+-----------------------------+
 
 
@@ -41,10 +47,12 @@ List of Other Kinetic Modules
 .. _adm: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/adm
 .. _asm: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/asm
 .. _bsm1: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1
+.. _bsm2: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm2
 .. _bwaise: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise
 .. _pm2_batch: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/pm2_batch
 .. _pm2_ecorecover: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/pm2_ecorecover
 
+.. _Alex: http://iwa-mia.org/wp-content/uploads/2022/09/TR3_BSM_TG_Tech_Report_no_3_BSM2_General_Description.pdf
 .. _Batstone: https://iwaponline.com/ebooks/book/152/Anaerobic-Digestion-Model-No-1-ADM1
 .. _EPA design manual: https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=3000464S.TXT
 .. _Henze: https://iwaponline.com/ebooks/book/96/
@@ -59,9 +67,11 @@ Links to docs
    :maxdepth: 1
 
    ADM1
+   ADM1p
    Aeration
    ASM1
    ASM2d
    Decay
    KineticReaction
+   mADM1
    PM2
