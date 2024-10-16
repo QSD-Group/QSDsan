@@ -183,6 +183,8 @@ class DiffusedAeration(Process):
         self._Q_air = None
         self.KLa = None
 
+    kLa_20 = KLa_20    
+
     @property
     def Q_air(self):
         """[float] Airflow rate at field conditions, [m^3/d]."""
@@ -343,6 +345,8 @@ class DiffusedAeration(Process):
     def KLa(self, KLa):
         self._KLa = KLa or self._calc_KLa()
         self.set_parameters(KLa=self._KLa)
+
+    kLa = KLa   
 
     @property
     def DOsat(self):

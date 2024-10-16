@@ -158,9 +158,11 @@ def electron_acceptor_cod(atoms, charge=0):
     r'''
     .. math::
         
-        NO_2^- + 3e^- + 4H^+ -> \frac{1}{2}N_2 + 2H_2O
+        NO_2^- + 6e^- + 8H^+ -> NH_4^+ + 2H_2O
         
-        NO_3^- + 5e^- + 6H^+ -> \frac{1}{2}N_2 + 3H_2O
+        NO_3^- + 8e^- + 10H^+ -> NH_4^+ + 3H_2O
+        
+        N_2 + 6e^- + 8H^+ -> 2NH_4^+
         
         O_2 + 4e^- + 4H^+ -> 2H_2O
     
@@ -168,11 +170,11 @@ def electron_acceptor_cod(atoms, charge=0):
     if atoms == {'O':2}:
         return -1
     elif atoms == {'N':2}:
-        return 0
+        return -6/4
     elif atoms == {'N':1, 'O':2} and charge == -1:
-        return -3/4
+        return -6/4
     elif atoms == {'N':1, 'O':3} and charge == -1:
-        return -5/4
+        return -8/4
 
 
 

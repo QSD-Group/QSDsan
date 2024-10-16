@@ -15,18 +15,23 @@ for license details.
 
 from thermosteam.utils import chemicals_user
 from thermosteam import settings
-from chemicals.elements import molecular_weight as get_mw
+# from chemicals.elements import molecular_weight as get_mw
 from qsdsan import Component, Components, Process, Processes, CompiledProcesses
 import numpy as np
 from qsdsan.utils import ospath, data_path
 from scipy.optimize import brenth
 from warnings import warn
+from . import (
+    non_compet_inhibit, grad_non_compet_inhibit, 
+    substr_inhibit, grad_substr_inhibit,
+    mass2mol_conversion, 
+    T_correction_factor, R,
+    TempState
+    ) 
 
 __all__ = ('create_adm1_cmps', 'ADM1',
-           'non_compet_inhibit', 'substr_inhibit',
-           'T_correction_factor', 
            'pH_inhibit', 'Hill_inhibit', 
-           'rhos_adm1')
+           'rhos_adm1', )
 
 _path = ospath.join(data_path, 'process_data/_adm1.tsv')
 _load_components = settings.get_default_chemicals
@@ -36,8 +41,10 @@ _load_components = settings.get_default_chemicals
 # ADM1-specific components
 # =============================================================================
 
-C_mw = get_mw({'C':1})
-N_mw = get_mw({'N':1})
+# C_mw = get_mw({'C':1})
+# N_mw = get_mw({'N':1})
+C_mw = 12
+N_mw = 14
 
 def create_adm1_cmps(set_thermo=True):
     cmps_all = Components.load_default()
@@ -174,31 +181,6 @@ def create_adm1_cmps(set_thermo=True):
 # kinetic rate functions
 # =============================================================================
 
-R = 8.3145e-2 # Universal gas constant, [bar/M/K]
-
-def non_compet_inhibit(Si, Ki):
-    return Ki/(Ki+Si)
-
-def substr_inhibit(Si, Ki):
-    return Si/(Ki+Si)
-
-def mass2mol_conversion(cmps):
-    '''conversion factor from kg[measured_as]/m3 to mol[component]/L'''
-    return cmps.i_mass / cmps.chem_MW
-
-# def T_correction_factor(T1, T2, theta):
-#     return np.exp(theta * (T2-T1))
-
-def T_correction_factor(T1, T2, delta_H):
-    """compute temperature correction factor for equilibrium constants based on
-    the Van't Holf equation."""
-    if T1 == T2: return 1
-    return np.exp(delta_H/(R*100) * (1/T1 - 1/T2))  # R converted to SI
-
-# def calc_Kas(pKas, T_base, T_op, theta):
-#     pKas = np.asarray(pKas)
-#     return 10**(-pKas) * T_correction_factor(T_base, T_op, theta)
-
 def acid_base_rxn(h_ion, weak_acids_tot, Kas):
     # h, nh4, hco3, ac, pr, bu, va = mols
     # S_cat, S_an, S_IN, S_IC, S_ac, S_pro, S_bu, S_va = weak_acids_tot  # in M
@@ -218,8 +200,6 @@ def fprime_abr(h_ion, weak_acids_tot, Kas):
 
 def pH_inhibit(pH, ul, ll, lower_only=True):
     if lower_only:
-        # if pH >= ul: return 1
-        # else: return exp(-3 * ((pH-ul)/(ul-ll))**2)
         low_by = np.minimum(pH-ul, 0)
         return np.exp(-3 * (low_by/(ul-ll))**2)
     else:
@@ -233,11 +213,19 @@ def Hill_inhibit(H_ion, ul, ll):
 rhos = np.zeros(22) # 22 kinetic processes
 Cs = np.empty(19)
 
-def rhos_adm1(state_arr, params):
+def solve_pH(state_arr, Ka, unit_conversion):
+    cmps_in_M = state_arr[:27] * unit_conversion
+    weak_acids = cmps_in_M[[24, 25, 10, 9, 6, 5, 4, 3]]
+    h = brenth(acid_base_rxn, 1e-14, 1.0,
+               args=(weak_acids, Ka),
+               xtol=1e-12, maxiter=100)
+    return h
+rhos_adm1 = lambda state_arr, params: _rhos_adm1(state_arr, params, h=None)
+
+def _rhos_adm1(state_arr, params, h=None):
     ks = params['rate_constants']
     Ks = params['half_sat_coeffs']
     cmps = params['components']
-    # n = len(cmps)
     pH_ULs = params['pH_ULs']
     pH_LLs = params['pH_LLs']
     KS_IN = params['KS_IN']
@@ -250,26 +238,20 @@ def rhos_adm1(state_arr, params):
     kLa = params['kLa']
     T_base = params['T_base']
     root = params['root']
+    if 'unit_conv' in params:
+        unit_conversion = params['unit_conv']
+    else:
+        unit_conversion = params['unit_conv'] = mass2mol_conversion(cmps)
 
-    # Cs_ids = cmps.indices(['X_c', 'X_ch', 'X_pr', 'X_li', 'X_su', 'X_aa',
-    #                        'X_fa', 'X_c4', 'X_c4', 'X_pro', 'X_ac', 'X_h2',
-    #                        'X_su', 'X_aa', 'X_fa', 'X_c4', 'X_pro', 'X_ac', 'X_h2'])
-    # Cs = state_arr[Cs_ids]
     Cs[:8] = state_arr[12:20]
     Cs[8:12] = state_arr[19:23]
     Cs[12:] = state_arr[16:23]
-    # substrates_ids = cmps.indices(['S_su', 'S_aa', 'S_fa', 'S_va',
-    #                                'S_bu', 'S_pro', 'S_ac', 'S_h2'])
-    # substrates = state_arr[substrates_ids]
+
     substrates = state_arr[:8]
-    # S_va, S_bu, S_h2, S_IN = state_arr[cmps.indices(['S_va', 'S_bu', 'S_h2', 'S_IN'])]
-    # S_va, S_bu, S_h2, S_ch4, S_IC, S_IN = state_arr[[3,4,7,8,9,10]]
     S_va, S_bu, S_h2, S_IN = state_arr[[3,4,7,10]]
-    unit_conversion = mass2mol_conversion(cmps)
-    cmps_in_M = state_arr[:27] * unit_conversion
-    weak_acids = cmps_in_M[[24, 25, 10, 9, 6, 5, 4, 3]]
 
     T_op = state_arr[-1]
+    # Ka, KH = T_corrected_params(T_op, params)
     if T_op == T_base:
         Ka = Kab
         KH = KHb / unit_conversion[7:10]
@@ -286,8 +268,6 @@ def rhos_adm1(state_arr, params):
 
     biogas_S = state_arr[7:10].copy()
     biogas_p = R * T_op * state_arr[27:30]
-    # Kas = Kab * T_correction_factor(T_base, T_op, Ka_dH)
-    # KH = KHb * T_correction_factor(T_base, T_op, KH_dH) / unit_conversion[7:10]
 
     rhos[:-3] = ks * Cs
     Monod = substr_inhibit(substrates, Ks)
@@ -295,14 +275,10 @@ def rhos_adm1(state_arr, params):
     if S_va > 0: rhos[7] *= 1/(1+S_bu/S_va)
     if S_bu > 0: rhos[8] *= 1/(1+S_va/S_bu)
 
-    h = brenth(acid_base_rxn, 1e-14, 1.0,
-            args=(weak_acids, Ka),
-            xtol=1e-12, maxiter=100)
-    # h = 10**(-7.46)
-
-    nh3 = Ka[1] * weak_acids[2] / (Ka[1] + h)
-    co2 = weak_acids[3] - Ka[2] * weak_acids[3] / (Ka[2] + h)
-    biogas_S[-1] = co2 / unit_conversion[9]
+    if h is None: h = solve_pH(state_arr, Ka, unit_conversion)
+    nh3 = S_IN * unit_conversion[10] * Ka[1] / (Ka[1] + h)
+    co2 = state_arr[9] * h / (Ka[2] + h)
+    biogas_S[-1] = co2
     
     Iph = Hill_inhibit(h, pH_ULs, pH_LLs)
     Iin = substr_inhibit(S_IN, KS_IN)
@@ -310,8 +286,6 @@ def rhos_adm1(state_arr, params):
     Inh3 = non_compet_inhibit(nh3, KI_nh3)
     rhos[4:12] *= Iph * Iin
     rhos[6:10] *= Ih2
-    # rhos[4:12] *= Hill_inhibit(h, pH_ULs, pH_LLs) * substr_inhibit(S_IN, KS_IN)
-    # rhos[6:10] *= non_compet_inhibit(S_h2, KIs_h2)
     rhos[10] *= Inh3
     root.data = {
         'pH':-np.log10(h), 
@@ -323,19 +297,51 @@ def rhos_adm1(state_arr, params):
         'rhos':rhos[4:12].copy()
         }
     rhos[-3:] = kLa * (biogas_S - KH * biogas_p)
-    # print(rhos)
     return rhos
+
+def dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq, S_h2_in):
+    state_arr[7] = S_h2
+    Q = state_arr[30]
+    rxn = _rhos_adm1(state_arr, params, h=h)
+    stoichio = f_stoichio(state_arr)  # should return the stoichiometric coefficients of S_h2 for all processes
+    return Q/V_liq*(S_h2_in - S_h2) + np.dot(rxn, stoichio)
+
+grad_rhos = np.zeros(5)
+X_bio = np.zeros(5)
+def grad_dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq, S_h2_in):
+    state_arr[7] = S_h2
+    ks = params['rate_constants'][[6,7,8,9,11]]
+    Ks = params['half_sat_coeffs'][2:6]
+    K_h2 = params['half_sat_coeffs'][7]
+    pH_ULs = params['pH_ULs']
+    pH_LLs = params['pH_LLs']
+    KS_IN = params['KS_IN']
+    KIs_h2 = params['KIs_h2']
+    kLa = params['kLa']
+    
+    X_bio[:] = state_arr[[18,19,19,20,22]]
+    substrates = state_arr[2:6]
+    S_va, S_bu, S_IN = state_arr[[3,4,10]]
+    Iph = Hill_inhibit(h, pH_ULs, pH_LLs)[[2,3,4,5,7]]
+    Iin = substr_inhibit(S_IN, KS_IN)
+    grad_Ih2 = grad_non_compet_inhibit(S_h2, KIs_h2)
+
+    grad_rhos[:] = ks * X_bio * Iph * Iin
+    grad_rhos[:-1] *= substr_inhibit(substrates, Ks) * grad_Ih2
+    if S_va > 0: grad_rhos[1] *= 1/(1+S_bu/S_va)
+    if S_bu > 0: grad_rhos[2] *= 1/(1+S_va/S_bu)
+    
+    grad_rhos[-1] *= grad_substr_inhibit(S_h2, K_h2)
+    stoichio = f_stoichio(state_arr)
+
+    Q = state_arr[30]
+    return -Q/V_liq + np.dot(grad_rhos, stoichio[[6,7,8,9,11]]) + kLa*stoichio[-3]
+    
 
 #%%
 # =============================================================================
 # ADM1 class
 # =============================================================================
-class TempState:
-    def __init__(self):
-        self.data = {}
-    
-    # def append(self, value):
-    #     self.data += [value]
 
 @chemicals_user
 class ADM1(CompiledProcesses):
@@ -623,6 +629,10 @@ class ADM1(CompiledProcesses):
                                                K_H_base, K_H_dH, kLa,
                                                T_base, self._components, root]))
 
+        dct['flex_rhos'] = _rhos_adm1
+        dct['solve_pH'] = solve_pH
+        dct['dydt_Sh2_AD'] = dydt_Sh2_AD
+        dct['grad_dydt_Sh2_AD'] = grad_dydt_Sh2_AD
         return self
 
     def set_pKas(self, pKas):
