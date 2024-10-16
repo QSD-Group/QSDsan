@@ -220,6 +220,7 @@ class HXutility(SanUnit, HXU):
             inner_fluid_pressure_drop=None,
             outer_fluid_pressure_drop=None,
             neglect_pressure_drop=True,
+            furnace_pressure=None,  # [Pa] equivalent to 500 psig
             ):
             SanUnit.__init__(self, ID, ins, outs, thermo,
                              init_with=init_with, F_BM_default=F_BM_default,
@@ -263,6 +264,10 @@ class HXutility(SanUnit, HXU):
             #: If value is None, it defaults to the heat transfer efficiency of the 
             #: heat utility.
             self.heat_transfer_efficiency = heat_transfer_efficiency
+            
+            #: Optional[float] Internal pressure of combustion gas. Defaults
+            #: 500 psig (equivalent to 3548325.0 Pa)
+            self.furnace_pressure = 500 if furnace_pressure is None else furnace_pressure
 
     def _design(self, duty=None):
         HXU._design(self)
