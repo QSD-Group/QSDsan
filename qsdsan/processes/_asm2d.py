@@ -253,7 +253,7 @@ def rhos_asm2d(state_arr, params):
 @chemicals_user
 class ASM2d(CompiledProcesses):
     '''
-    Activated Sludge Model No. 2d in original notation. [1]_, [2]_
+    Activated Sludge Model No. 2d in original notation.
 
     Parameters
     ----------
@@ -441,14 +441,15 @@ class ASM2d(CompiledProcesses):
 
     References
     ----------
-    .. [1] Henze, M.; Gujer, W.; Mino, T.; Loosdrecht, M. van. Activated Sludge
-        Models: ASM1, ASM2, ASM2d and ASM3; IWA task group on mathematical modelling
-        for design and operation of biological wastewater treatment, Ed.; IWA
-        Publishing: London, 2000.
-    .. [2] Rieger, L.; Gillot, S.; Langergraber, G.; Ohtsuki, T.; Shaw, A.; Takács,
-        I.; Winkler, S. Guidelines for Using Activated Sludge Models; IWA Publishing:
-        London, New York, 2012; Vol. 11.
-        https://doi.org/10.2166/9781780401164.
+    [1] Henze, M.; Gujer, W.; Mino, T.; Loosdrecht, M. van. Activated Sludge
+    Models: ASM1, ASM2, ASM2d and ASM3; IWA task group on mathematical modelling
+    for design and operation of biological wastewater treatment, Ed.; IWA
+    Publishing: London, 2000.
+    
+    [2] Rieger, L.; Gillot, S.; Langergraber, G.; Ohtsuki, T.; Shaw, A.; Takács,
+    I.; Winkler, S. Guidelines for Using Activated Sludge Models; IWA Publishing:
+    London, New York, 2012; Vol. 11.
+    https://doi.org/10.2166/9781780401164.
     '''
     _params = ('f_SI', 'Y_H', 'f_XI_H', 'Y_PAO', 'Y_PO4', 'Y_PHA', 'f_XI_PAO', 'Y_A', 'f_XI_AUT',
                'K_h', 'eta_NO3', 'eta_fe', 'K_O2', 'K_NO3', 'K_X',
@@ -701,7 +702,7 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
 @chemicals_user
 class mASM2d(CompiledProcesses):
     '''
-    Modified ASM2d. [1]_, [2]_ Compatible with `ADM1p` for plant-wide simulations.
+    Modified ASM2d. Compatible with `ADM1p` for plant-wide simulations.
     Includes an algebraic pH solver and precipitation/dissolution of common minerals.
 
     Parameters
@@ -768,18 +769,18 @@ class mASM2d(CompiledProcesses):
 
     References
     ----------
-    .. [1] Henze, M., Gujer, W., Mino, T., & van Loosdrecht, M. (2000). 
-        Activated Sludge Models: ASM1, ASM2, ASM2d and ASM3. In IWA task group 
-        on mathematical modelling for design and operation of biological 
-        wastewater treatment (Ed.), Scientific and Technical Report No. 9. 
-        IWA Publishing.
-    .. [2] Solon, K., Flores-Alsina, X., Kazadi Mbamba, C., Ikumi, D., Volcke, 
-        E. I. P., Vaneeckhaute, C., Ekama, G., Vanrolleghem, P. A., Batstone, 
-        D. J., Gernaey, K. V., & Jeppsson, U. (2017). Plant-wide modelling 
-        of phosphorus transformations in wastewater treatment systems: 
-        Impacts of control and operational strategies. Water Research, 113, 
-        97–110. https://doi.org/10.1016/j.watres.2017.02.007
+    [1] Henze, M., Gujer, W., Mino, T., & van Loosdrecht, M. (2000). 
+    Activated Sludge Models: ASM1, ASM2, ASM2d and ASM3. In IWA task group 
+    on mathematical modelling for design and operation of biological 
+    wastewater treatment (Ed.), Scientific and Technical Report No. 9. 
+    IWA Publishing.
     
+    [2] Solon, K., Flores-Alsina, X., Kazadi Mbamba, C., Ikumi, D., Volcke, 
+    E. I. P., Vaneeckhaute, C., Ekama, G., Vanrolleghem, P. A., Batstone, 
+    D. J., Gernaey, K. V., & Jeppsson, U. (2017). Plant-wide modelling 
+    of phosphorus transformations in wastewater treatment systems: 
+    Impacts of control and operational strategies. Water Research, 113, 
+    97–110. https://doi.org/10.1016/j.watres.2017.02.007
     '''
     _stoichio_params = ('f_SI', 'Y_H', 'Y_PAO', 'Y_PO4', 'Y_PHA', 'Y_A', 
                         'f_XI_H', 'f_XI_PAO', 'f_XI_AUT', 'COD_deN', 'K_XPP', 'Mg_XPP')

@@ -71,7 +71,7 @@ def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp, n0):
 class FlatBottomCircularClarifier(SanUnit):
     """
     A flat-bottom circular clarifier with a simple 1-dimensional
-    N-layer settling model. [1]_
+    N-layer settling model.
 
     Parameters
     ----------
@@ -123,15 +123,19 @@ class FlatBottomCircularClarifier(SanUnit):
     
     References
     ----------
-    .. [1] Takács, I.; Patry, G. G.; Nolasco, D. A Dynamic Model of the Clarification
-        -Thickening Process. Water Res. 1991, 25 (10), 1263–1271.
-        https://doi.org/10.1016/0043-1354(91)90066-Y.
-    .. [2] Chapter-12: Suspended-growth Treatment Processes. WEF Manual of Practice No. 8. 
-        6th Edition. Virginia: McGraw-Hill, 2018. 
-    .. [3] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
+    [1] Takács, I.; Patry, G. G.; Nolasco, D. A Dynamic Model of the Clarification
+    -Thickening Process. Water Res. 1991, 25 (10), 1263–1271.
+    https://doi.org/10.1016/0043-1354(91)90066-Y.
+    
+    [2] Chapter-12: Suspended-growth Treatment Processes. WEF Manual of Practice No. 8. 
+    6th Edition. Virginia: McGraw-Hill, 2018. 
+    
+    [3] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
     engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
-    .. [4] Introduction to Wastewater Clarifier Design by Nikolay Voutchkov, PE, BCEE.
-    .. [5] RECOMMENDED STANDARDS for WASTEWATER FACILITIES. 10 state standards. 2014 edition. 
+    
+    [4] Introduction to Wastewater Clarifier Design by Nikolay Voutchkov, PE, BCEE.
+    
+    [5] RECOMMENDED STANDARDS for WASTEWATER FACILITIES. 10 state standards. 2014 edition. 
     """
 
     _N_ins = 1
@@ -1092,6 +1096,7 @@ class PrimaryClarifierBSM2(SanUnit):
     ----------
     [1] Otterpohl R. and Freund M. (1992). Dynamic Models for clarifiers of activated sludge 
     plants with dry and wet weather flows. Water Sci. Technol., 26(5-6), 1391-1400. 
+    
     [2] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
     Benchmarking of control strategies for wastewater treatment plants. IWA publishing, 2014.
     """
@@ -1312,8 +1317,10 @@ class PrimaryClarifier(IdealClarifier):
     ----------
     [1] Chapter-10: Primary Treatment. Design of water resource recovery facilities. 
     WEF Manual of Practice No. 8. 6th Edition. Virginia: McGraw-Hill, 2018. 
+    
     [2] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
     engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
+    
     [3] Introduction to Wastewater Clarifier Design by Nikolay Voutchkov, PE, BCEE.
     """
     

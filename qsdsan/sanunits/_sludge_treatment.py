@@ -64,7 +64,9 @@ def calc_f_Qu_thin(TSS_removal_perc, thickener_factor):
 class Thickener(SanUnit):
     
     """
-    Thickener based on BSM2 Layout. [1]
+    Thickener based on BSM2 Layout.
+    
+    Parameters
     ----------
     ID : str
         ID for the Thickener. The default is ''.
@@ -160,12 +162,15 @@ class Thickener(SanUnit):
 
     References
     ----------
-    .. [1] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
+    [1] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
     Benchmarking of control strategies for wastewater treatment plants. IWA publishing, 2014.
-    .. [2] Chapter-21: Solids Thicknening (Table 21.3). WEF Manual of Practice No. 8. 
+
+    [2] Chapter-21: Solids Thicknening (Table 21.3). WEF Manual of Practice No. 8. 
     6th Edition. Virginia: McGraw-Hill, 2018. 
-    .. [3] Introduction to Wastewater Clarifier Design by Nikolay Voutchkov, PE, BCEE.
-    .. [4] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
+    
+    [3] Introduction to Wastewater Clarifier Design by Nikolay Voutchkov, PE, BCEE.
+    
+    [4] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
     engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
     """
     
@@ -370,7 +375,7 @@ class Thickener(SanUnit):
 class Centrifuge(Thickener):
 
     """
-    Centrifuge based on BSM2 Layout. [1]
+    Centrifuge based on BSM2 Layout.
     
     Parameters
     ----------
@@ -409,12 +414,17 @@ class Centrifuge(Thickener):
     ----------
     [1] Gernaey, Krist V., Ulf Jeppsson, Peter A. Vanrolleghem, and John B. Copp.
     Benchmarking of control strategies for wastewater treatment plants. IWA publishing, 2014.
+
     [2] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
     engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
+    
     [3] Design of Municipal Wastewater Treatment Plants: WEF Manual of Practice 
     No. 8 ASCE Manuals and Reports on Engineering Practice No. 76, Fifth Edition. 
+    
     [4] https://www.alibaba.com/product-detail/Multifunctional-Sludge-Dewatering-Decanter-Centrifuge_1600285055254.html?spm=a2700.galleryofferlist.normal_offer.d_title.1cd75229sPf1UW&s=p
+    
     [5] United States Environmental Protection Agency (EPA) 'Biosolids Technology Fact Sheet Centrifuge Thickening and Dewatering'  
+    
     [6] San Diego (.gov) Chapter - 3 'Solids Treatment Facility' 
     (https://www.sandiego.gov/sites/default/files/legacy/mwwd/pdf/mbc/chapterthree.pdf)
     """
@@ -531,11 +541,12 @@ class Incinerator(SanUnit):
     flow (g/hr): X_Ig_ISS  2.37e+05
         WasteStream-specific properties: None for non-liquid waste streams
     
-    References: 
+    References
     ----------
-    .. [1] Khuriati, A., P. Purwanto, H. S. Huboyo, Suryono Sumariyah, S. Suryono, and A. B. Putranto. 
+    [1] Khuriati, A., P. Purwanto, H. S. Huboyo, Suryono Sumariyah, S. Suryono, and A. B. Putranto. 
     "Numerical calculation based on mass and energy balance of waste incineration in the fixed bed reactor." 
     In Journal of Physics: Conference Series, vol. 1524, no. 1, p. 012002. IOP Publishing, 2020.
+    
     [2] Omari, Arthur, Karoli N. Njau, Geoffrey R. John, Joseph H. Kihedu, and Peter L. Mtui. 
     "Mass And Energy Balance For Fixed Bed Incinerators A case of a locally designed incinerator in Tanzania."
     """

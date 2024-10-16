@@ -288,7 +288,7 @@ def grad_dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq, S_h2_in):
 @chemicals_user
 class ADM1_p_extension(ADM1):
     """
-    Anaerobic Digestion Model No.1 with P extension. [1]_, [2]_, [3]_.
+    Anaerobic Digestion Model No.1 with P extension.
     Compatible with the original `ASM2d`.
 
     Parameters
@@ -357,17 +357,19 @@ class ADM1_p_extension(ADM1):
     
     References
     ----------
-    .. [1] Batstone, D. J.; Keller, J.; Angelidaki, I.; Kalyuzhnyi, S. V; 
-        Pavlostathis, S. G.; Rozzi, A.; Sanders, W. T. M.; Siegrist, H.; 
-        Vavilin, V. A. The IWA Anaerobic Digestion Model No 1 (ADM1). 
-        Water Sci. Technol. 2002, 45 (10), 65–73.
-    .. [2] Rosen, C.; Jeppsson, U. Aspects on ADM1 Implementation within 
-        the BSM2 Framework; Lund, 2006.
-    .. [3] Flores-Alsina, X.; Solon, K.; Kazadi Mbamba, C.; Tait, S.; 
-        Gernaey, K. V.; Jeppsson, U.; Batstone, D. J. 
-        Modelling phosphorus (P), sulfur (S) and iron (FE) interactions for 
-        dynamic simulations of anaerobic digestion processes. Water Research. 2016,
-        95, 370–382.
+    [1] Batstone, D. J.; Keller, J.; Angelidaki, I.; Kalyuzhnyi, S. V; 
+    Pavlostathis, S. G.; Rozzi, A.; Sanders, W. T. M.; Siegrist, H.; 
+    Vavilin, V. A. The IWA Anaerobic Digestion Model No 1 (ADM1). 
+    Water Sci. Technol. 2002, 45 (10), 65–73.
+
+    [2] Rosen, C.; Jeppsson, U. Aspects on ADM1 Implementation within 
+    the BSM2 Framework; Lund, 2006.
+    
+    [3] Flores-Alsina, X.; Solon, K.; Kazadi Mbamba, C.; Tait, S.; 
+    Gernaey, K. V.; Jeppsson, U.; Batstone, D. J. 
+    Modelling phosphorus (P), sulfur (S) and iron (FE) interactions for 
+    dynamic simulations of anaerobic digestion processes. Water Research. 2016,
+    95, 370–382.
     """
 
     _stoichio_params = (*ADM1._stoichio_params[5:],
@@ -798,7 +800,7 @@ def _rhos_adm1p(state_arr, params, h=None):
 @chemicals_user
 class ADM1p(ADM1):
     """
-    Anaerobic Digestion Model No.1 with P extension. [1]_, [2]_.
+    Anaerobic Digestion Model No.1 with P extension. [1], [2].
     Compatible with `mASM2d`.
 
     Parameters
@@ -866,20 +868,20 @@ class ADM1p(ADM1):
     >>> adm.show()
     ADM1p([hydrolysis_carbs, hydrolysis_proteins, hydrolysis_lipids, uptake_sugars, uptake_amino_acids, uptake_LCFA, uptake_valerate, uptake_butyrate, uptake_propionate, uptake_acetate, uptake_h2, decay_Xsu, decay_Xaa, decay_Xfa, decay_Xc4, decay_Xpro, decay_Xac, decay_Xh2, storage_Sva_in_XPHA, storage_Sbu_in_XPHA, storage_Spro_in_XPHA, storage_Sac_in_XPHA, lysis_XPAO, lysis_XPP, lysis_XPHA, CaCO3_precipitation_dissolution, struvite_precipitation_dissolution, newberyite_precipitation_dissolution, ACP_precipitation_dissolution, MgCO3_precipitation_dissolution, AlPO4_precipitation_dissolution, FePO4_precipitation_dissolution, h2_transfer, ch4_transfer, IC_transfer])
     
-    
     References
     ----------
-    .. [1] Flores-Alsina, X., Solon, K., Kazadi Mbamba, C., Tait, S., 
-        Gernaey, K. V., Jeppsson, U., & Batstone, D. J. (2016).
-        Modelling phosphorus (P), sulfur (S) and iron (FE) interactions for 
-        dynamic simulations of anaerobic digestion processes. Water Research, 
-        95, 370–382.
-    .. [2] Solon, K., Flores-Alsina, X., Kazadi Mbamba, C., Ikumi, D., Volcke, 
-        E. I. P., Vaneeckhaute, C., Ekama, G., Vanrolleghem, P. A., Batstone, 
-        D. J., Gernaey, K. V., & Jeppsson, U. (2017). Plant-wide modelling 
-        of phosphorus transformations in wastewater treatment systems: 
-        Impacts of control and operational strategies. Water Research, 113, 
-        97–110.
+    [1] Flores-Alsina, X., Solon, K., Kazadi Mbamba, C., Tait, S., 
+    Gernaey, K. V., Jeppsson, U., & Batstone, D. J. (2016).
+    Modelling phosphorus (P), sulfur (S) and iron (FE) interactions for 
+    dynamic simulations of anaerobic digestion processes. Water Research, 
+    95, 370–382.
+
+    [2] Solon, K., Flores-Alsina, X., Kazadi Mbamba, C., Ikumi, D., Volcke, 
+    E. I. P., Vaneeckhaute, C., Ekama, G., Vanrolleghem, P. A., Batstone, 
+    D. J., Gernaey, K. V., & Jeppsson, U. (2017). Plant-wide modelling 
+    of phosphorus transformations in wastewater treatment systems: 
+    Impacts of control and operational strategies. Water Research, 113, 
+    97–110.
     """
 
     _stoichio_params = (*ADM1._stoichio_params[5:],

@@ -1643,7 +1643,6 @@ class mADM1toASM2d(mADMjunction):
     [1] Nopens, I.; Batstone, D. J.; Copp, J. B.; Jeppsson, U.; Volcke, E.; 
     Alex, J.; Vanrolleghem, P. A. An ASM/ADM Model Interface for Dynamic 
     Plant-Wide Simulation. Water Res. 2009, 43, 1913–1923.
-    
     [2] Flores-Alsina, X., Solon, K., Kazadi Mbamba, C., Tait, S., Gernaey, K. V., 
     Jeppsson, U., & Batstone, D. J. (2016). Modelling phosphorus (P), sulfur (S) 
     and iron (FE) interactions for dynamic simulations of anaerobic digestion processes. 
@@ -2479,7 +2478,7 @@ class A1junction(ADMjunction):
 class ADM1ptomASM2d(A1junction):
     '''
     Interface unit to convert ADM1 state variables
-    to ASM2d components, following the A1 algorithm in [1]_.
+    to ASM2d components, following the A1 algorithm in [1].
     
     Parameters
     ----------
@@ -2727,7 +2726,7 @@ class ADM1ptomASM2d(A1junction):
 class mASM2dtoADM1p(A1junction):
     '''
     Interface unit to convert ASM2d state variables
-    to ADM1 components, following the A1 scenario in [1]_.
+    to ADM1 components, following the A1 scenario in [1].
     
     Parameters
     ----------
