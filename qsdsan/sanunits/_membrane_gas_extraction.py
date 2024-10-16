@@ -18,7 +18,7 @@ for license details.
 from qsdsan import SanUnit
 import numpy as np
 
-__all__ = ('GasExtractionMembrane',)
+__all__ = ('GasExtractionMembrane', 'MembraneGasExtraction',)
 
 class GasExtractionMembrane(SanUnit):
     
@@ -564,3 +564,7 @@ class GasExtractionMembrane(SanUnit):
             dC[:] = np.hstack((dC_lumen, dC_shell)).flatten()
             _update_dstate()
         self._ODE = dy_dt
+
+
+# For naming consistency
+MembraneGasExtraction = GasExtractionMembrane
