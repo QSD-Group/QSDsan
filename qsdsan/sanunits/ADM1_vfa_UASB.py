@@ -129,19 +129,19 @@ default_inf_kwargs = {
 # Medium (Thin Stillage 100%) -> x10 dilution
 default_inf_kwargs = {
     'concentrations': {
-        'S_su':2.447,                                               # glucose 10 g/L = 10.7 kg COD/m3, 20 g/L = 20.14 kg COD/m3
+        'S_su':0.414,                                             # S_su = 2.3 mM -> 0.414 g COD/L
         'S_aa':0.0,
         'S_fa':0.0,
-        'S_la':5.222,
-        'S_et':15.135,
+        'S_la':0.44,                                              # S_la = 4.88 mM -> 0.44 g COD/L
+        'S_et':0.465,                                             # S_et = 10.09 mM -> 0.465 g COD/L
         'S_va':0.0,
-        'S_bu':0.0,
-        'S_pro':6.221,
-        'S_ac':26.729,
+        'S_bu':0.726,                                             # S_bu = 8.33 mM -> 0.726 g COD/L
+        'S_pro':0.301,                                            # S_pro = 4.12 mM -> 0.301 g COD/L
+        'S_ac':1.475,                                             # S_ac = 24.98 mM -> 1.475 g COD/L
         'S_h2':1e-8,
         'S_ch4':0.0,
         'S_IC':0.0*C_mw,                                             
-        'S_IN':5.553*1e-5*N_mw,                                     #!!! 0.04975 g COD/L, S_IN: 5.553*1e-5 kmole N / m3? * N_mw, why different? Fixed value
+        'S_IN':5.553*1e-5*N_mw,                                    #!!! 0.04975 g COD/L, S_IN: 5.553*1e-5 kmole N / m3? * N_mw, why different? Fixed value
         'S_I':0.0,
         'X_c':0.0,
         'X_ch':0.0,
@@ -170,7 +170,7 @@ S_su = default_inf_kwargs['concentrations']['S_su']
 # SanUnit
 U1 = UASB('UASB', ins=inf, outs=(gas, eff), model=adm1,        # This model is based on CSTR, need to decide application of recirculated experiments
           V_liq=Q*HRT, V_gas=Q*HRT*0.1,                        # !!! Considering real experiments including either high recirculation rate or not
-          T=Temp, pH_ctrl=None,                               # pH adjustment X
+          T=Temp, pH_ctrl=7,                               # pH adjustment X
           fraction_retain=0.95,                            # needs to set this value properly
           )                                                    
 
