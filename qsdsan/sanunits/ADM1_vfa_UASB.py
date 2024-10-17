@@ -170,7 +170,7 @@ S_su = default_inf_kwargs['concentrations']['S_su']
 # SanUnit
 U1 = UASB('UASB', ins=inf, outs=(gas, eff), model=adm1,        # This model is based on CSTR, need to decide application of recirculated experiments
           V_liq=Q*HRT, V_gas=Q*HRT*0.1,                        # !!! Considering real experiments including either high recirculation rate or not
-          T=Temp, pH_ctrl=7,                               # pH adjustment X
+          T=Temp, pH_ctrl=None,                               # pH adjustment X
           fraction_retain=0.95,                            # needs to set this value properly
           )                                                    
 
