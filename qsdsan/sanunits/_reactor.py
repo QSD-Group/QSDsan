@@ -130,12 +130,13 @@ class Reactor(SanUnit, PressureVessel, isabstract=True):
         # if auxiliary, in our system, only K/O drum whose N, and V are provided
         # do not need to deal with self.F_vol_in (auxiliary unit has trouble doing this)
             ins_F_vol = self.F_vol_in
+            cmps = self.components
+            gas_IDs = [i.ID for i in cmps if i.locked_state=='g']
+            sol_IDs = [i.ID for i in cmps if i.locked_state=='s']
             for i in range(len(self.ins)):
-                ins_F_vol -= (self.ins[i].ivol['H2'] +\
-                              self.ins[i].ivol['CHG_catalyst'] +\
-                              self.ins[i].ivol['HT_catalyst'] +\
-                              self.ins[i].ivol['HC_catalyst'])
-            # not include gas (e.g. H2)
+                ins_F_vol -= sum(self.ins[i].ivol[gas_IDs])
+                ins_F_vol -= sum(self.ins[i].ivol[sol_IDs])
+            # not include gas (e.g. H2) and solids (e.g., catalysts)
             V_total = ins_F_vol * self.tau / self.V_wf
         P = self.P * _Pa_to_psi # Pa to psi
         length_to_diameter = self.length_to_diameter
