@@ -634,7 +634,7 @@ class SanUnit(Unit, isabstract=True):
         results = super().results(with_units, include_utilities,
                                   include_total_cost, include_installed_cost,
                                   include_zeros, external_utilities, key_hook)
-        if not self.add_OPEX: self.add_OPEX = {'Additional OPEX': 0}
+        if not hasattr(self, 'add_OPEX'): self.add_OPEX = {'Additional OPEX': 0}
         for k, v in self.add_OPEX.items():
             if not with_units:
                 results.loc[(k, '')] = v
