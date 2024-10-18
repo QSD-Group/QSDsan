@@ -48,6 +48,8 @@ class Hydrocracking(Reactor):
         Weight Hourly Space velocity, [kg feed/hr/kg catalyst].
     catalyst_lifetime: float
         HC catalyst lifetime, [hr].
+    catalyst_ID : str
+        ID of the catalyst.
     hydrogen_P: float
         Hydrogen pressure, [Pa].
     hydrogen_rxned_to_inf_oil: float
@@ -86,8 +88,10 @@ class Hydrocracking(Reactor):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='Stream',
+                 include_construction=False,
                  WHSV=0.625, # wt./hr per wt. catalyst [1]
                  catalyst_lifetime=5*7920, # 5 years [1]
+                 catalyst_ID='HC_catalyst',
                  hydrogen_P=1039.7*6894.76,
                  hydrogen_rxned_to_inf_oil=0.01125,
                  hydrogen_excess=5.556,
@@ -114,9 +118,10 @@ class Hydrocracking(Reactor):
                  vessel_material='Stainless steel 316',
                  vessel_type='Vertical'):
         
-        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with, include_construction=include_construction)
         self.WHSV = WHSV
         self.catalyst_lifetime = catalyst_lifetime
+        self.catalyst_ID = catalyst_ID
         self.hydrogen_P = hydrogen_P
         self.hydrogen_rxned_to_inf_oil = hydrogen_rxned_to_inf_oil
         self.hydrogen_excess = hydrogen_excess
@@ -155,7 +160,7 @@ class Hydrocracking(Reactor):
         heavy_oil, hydrogen, catalyst_in = self.ins
         hc_out, catalyst_out = self.outs
         
-        catalyst_in.imass['HC_catalyst'] = heavy_oil.F_mass/self.WHSV/self.catalyst_lifetime
+        catalyst_in.imass[self.catalyst_ID] = heavy_oil.F_mass/self.WHSV/self.catalyst_lifetime
         catalyst_in.phase = 's'
         catalyst_out.copy_like(catalyst_in)
         # catalysts amount is quite low compared to the main stream, therefore do not consider
@@ -292,6 +297,8 @@ class Hydrotreating(Reactor):
         Weight Hourly Space velocity, [kg feed/hr/kg catalyst].
     catalyst_lifetime: float
         HT catalyst lifetime, [hr].
+    catalyst_ID : str
+        ID of the catalyst.
     hydrogen_P: float
         Hydrogen pressure, [Pa].
     hydrogen_rxned_to_inf_oil: float
@@ -339,6 +346,7 @@ class Hydrotreating(Reactor):
                  init_with='Stream',
                  WHSV=0.625, # wt./hr per wt. catalyst [1]
                  catalyst_lifetime=2*7920, # 2 years [1]
+                 catalyst_ID='HT_catalyst',
                  hydrogen_P=1530*6894.76,
                  hydrogen_rxned_to_inf_oil=0.046,
                  hydrogen_excess=3,
@@ -390,6 +398,7 @@ class Hydrotreating(Reactor):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
         self.WHSV = WHSV
         self.catalyst_lifetime = catalyst_lifetime
+        self.catalyst_ID = catalyst_ID
         self.hydrogen_P = hydrogen_P
         self.hydrogen_rxned_to_inf_oil = hydrogen_rxned_to_inf_oil
         self.hydrogen_excess = hydrogen_excess
@@ -439,7 +448,7 @@ class Hydrotreating(Reactor):
                 HT_composition[chemical] /= (1-remove)
             HT_composition['PIPERDIN'] = 0
         
-        catalyst_in.imass['HT_catalyst'] = biocrude.F_mass/self.WHSV/self.catalyst_lifetime
+        catalyst_in.imass[self.catalyst_ID] = biocrude.F_mass/self.WHSV/self.catalyst_lifetime
         catalyst_in.phase = 's'
         catalyst_out.copy_like(catalyst_in)
         # catalysts amount is quite low compared to the main stream, therefore do not consider
