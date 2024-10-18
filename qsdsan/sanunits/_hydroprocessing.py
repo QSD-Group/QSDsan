@@ -50,18 +50,21 @@ class Hydrocracking(Reactor):
         HC catalyst lifetime, [hr].
     hydrogen_P: float
         Hydrogen pressure, [Pa].
-    hydrogen_rxned_to_heavy_oil: float
-        Reacted H2 to heavy oil mass ratio.
+    hydrogen_rxned_to_inf_oil: float
+        Reacted H2 to influent oil mass ratio.
     hydrogen_excess: float
         Actual hydrogen amount = hydrogen_rxned_to_biocrude*hydrogen_excess
-    hydrocarbon_ratio: float
-        Mass ratio of produced hydrocarbon to the sum of heavy oil and reacted H2.
+    oil_yield: float
+        Mass ratio of cracked oil to the sum of heavy oil and reacted H2,
+        gas yield is calculated as 1-oil_yield (about 100% conversion as in [1]).
     HCin_T: float
         HC influent temperature, [K].
     HCrxn_T: float
         HC effluent (after reaction) temperature, [K].
-    HC_composition: dict
-        HC effluent composition.
+    gas_composition: dict
+        Composition of the gas products, will be normalized to 100% sum.
+    oil_composition: dict
+        Composition of the cracked oil, will be normalized to 100% sum.
         
     References
     ----------
@@ -86,23 +89,22 @@ class Hydrocracking(Reactor):
                  WHSV=0.625, # wt./hr per wt. catalyst [1]
                  catalyst_lifetime=5*7920, # 5 years [1]
                  hydrogen_P=1039.7*6894.76,
-                 hydrogen_rxned_to_heavy_oil=0.01125,
+                 hydrogen_rxned_to_inf_oil=0.01125,
                  hydrogen_excess=5.556,
-                 hydrocarbon_ratio=1, # 100 wt% of heavy oil and reacted H2
-                 # nearly all input heavy oils and H2 will be converted to
-                 # products [1]
-                 # spreadsheet HC calculation
+                 oil_yield=1-0.03880-0.00630, 
                  HCin_T=394+273.15,
                  HCrxn_T=451+273.15,
-                 HC_composition={'CO2':0.03880, 'CH4':0.00630,
-                                 'CYCHEX':0.03714, 'HEXANE':0.01111,
-                                 'HEPTANE':0.11474, 'OCTANE':0.08125,
-                                 'C9H20':0.09086, 'C10H22':0.11756,
-                                 'C11H24':0.16846, 'C12H26':0.13198,
-                                 'C13H28':0.09302, 'C14H30':0.04643,
-                                 'C15H32':0.03250, 'C16H34':0.01923,
-                                 'C17H36':0.00431, 'C18H38':0.00099,
-                                 'C19H40':0.00497, 'C20H42':0.00033},
+                 gas_composition={'CO2':0.03880, 'CH4':0.00630,},
+                 oil_composition={
+                    'CYCHEX':0.03714, 'HEXANE':0.01111,
+                    'HEPTANE':0.11474, 'OCTANE':0.08125,
+                    'C9H20':0.09086, 'C10H22':0.11756,
+                    'C11H24':0.16846, 'C12H26':0.13198,
+                    'C13H28':0.09302, 'C14H30':0.04643,
+                    'C15H32':0.03250, 'C16H34':0.01923,
+                    'C17H36':0.00431, 'C18H38':0.00099,
+                    'C19H40':0.00497, 'C20H42':0.00033,
+                    },
                  #combine C20H42 and PHYTANE as C20H42
                  # will not be a variable in uncertainty/sensitivity analysis
                  P=None, tau=5, void_fraciton=0.4, # Towler
@@ -116,12 +118,14 @@ class Hydrocracking(Reactor):
         self.WHSV = WHSV
         self.catalyst_lifetime = catalyst_lifetime
         self.hydrogen_P = hydrogen_P
-        self.hydrogen_rxned_to_heavy_oil = hydrogen_rxned_to_heavy_oil
+        self.hydrogen_rxned_to_inf_oil = hydrogen_rxned_to_inf_oil
         self.hydrogen_excess = hydrogen_excess
-        self.hydrocarbon_ratio = hydrocarbon_ratio
+        self.oil_yield = oil_yield
         self.HCin_T = HCin_T
+        self._mixed_in = Stream(f'{ID}_mixed_in')
         self.HCrxn_T = HCrxn_T
-        self.HC_composition = HC_composition
+        self.gas_composition = gas_composition
+        self.oil_composition = oil_composition
         IC_in = Stream(f'{ID}_IC_in')
         IC_out = Stream(f'{ID}_IC_out')
         self.compressor = IsothermalCompressor(ID=f'.{ID}_IC', ins=IC_in,
@@ -157,19 +161,20 @@ class Hydrocracking(Reactor):
         # catalysts amount is quite low compared to the main stream, therefore do not consider
         # heating/cooling of catalysts
         
-        hydrogen.imass['H2'] = heavy_oil.F_mass*self.hydrogen_rxned_to_heavy_oil*self.hydrogen_excess
+        hydrogen_rxned_to_inf_oil = self.hydrogen_rxned_to_inf_oil
+        hydrogen.imass['H2'] = heavy_oil.F_mass*hydrogen_rxned_to_inf_oil*self.hydrogen_excess
         hydrogen.phase = 'g'
 
-        hydrocarbon_mass = heavy_oil.F_mass*(1 +\
-                           self.hydrogen_rxned_to_heavy_oil)*\
-                           self.hydrocarbon_ratio
-
+        hydrocarbon_mass = heavy_oil.F_mass*(1 + hydrogen_rxned_to_inf_oil)
+        # 100 wt% of heavy oil and reacted H2
+        # nearly all input heavy oils and H2 will be converted to products [1]
+        # spreadsheet HC calculation
         hc_out.phase = 'g'
-
+        
         for name, ratio in self.HC_composition.items():
             hc_out.imass[name] = hydrocarbon_mass*ratio
         
-        hc_out.imass['H2'] = heavy_oil.F_mass*self.hydrogen_rxned_to_heavy_oil*(self.hydrogen_excess - 1)
+        hc_out.imass['H2'] = heavy_oil.F_mass*hydrogen_rxned_to_inf_oil*(self.hydrogen_excess - 1)
         
         hc_out.P = heavy_oil.P
         hc_out.T = self.HCrxn_T
@@ -189,6 +194,36 @@ class Hydrocracking(Reactor):
         # make sure that carbon mass balance is within +/- 5%. Otherwise, an
         # exception will be raised.
         
+    def _normalize_composition(self, dct):
+        total = sum(dct.values())
+        if total <=0: raise ValueError(f'Sum of total yields/composition should be positive, not {total}.')
+        return {k:v/total for k, v in dct.items()}
+    
+    @property
+    def gas_composition(self):
+        return self._gas_composition
+    @gas_composition.setter
+    def gas_composition(self, comp_dct):
+        self._gas_composition = self._normalize_composition(comp_dct)
+        
+    @property
+    def oil_composition(self):
+        return self._oil_composition
+    @oil_composition.setter
+    def oil_composition(self, comp_dct):
+        self._oil_composition = self._normalize_composition(comp_dct)
+        
+    @property
+    def HC_composition(self):
+        '''Composition of gas and oil products, normalized to 100%.'''
+        gas_composition = self.gas_composition
+        oil_composition = self.oil_composition       
+        oil_yield = self.oil_yield
+        gas_yield = 1 - oil_yield
+        HC_composition = {k:v*gas_yield for k, v in gas_composition.items()}
+        HC_composition.update({k:v*oil_yield for k, v in oil_composition.items()})
+        return self._normalize_composition(HC_composition)
+
     @property
     def hydrocarbon_C(self):   
         return sum(self.outs[0].imass[self.HC_composition]*
@@ -208,6 +243,8 @@ class Hydrocracking(Reactor):
         hx_H2_ins0.copy_like(self.ins[1])
         hx_H2_outs0.copy_like(hx_H2_ins0)
         hx_H2_ins0.phase = hx_H2_outs0.phase = 'g'
+        self._mixed_in.mix_from(self.ins)
+        if not self.HCin_T: self.HCin_T = self._mixed_in.T
         hx_H2_outs0.T = self.HCin_T
         hx_H2_ins0.P = hx_H2_outs0.P = IC_outs0.P
         hx_H2.simulate_as_auxiliary_exchanger(ins=hx_H2.ins, outs=hx_H2.outs)
@@ -257,8 +294,8 @@ class Hydrotreating(Reactor):
         HT catalyst lifetime, [hr].
     hydrogen_P: float
         Hydrogen pressure, [Pa].
-    hydrogen_rxned_to_biocrude: float
-        Reacted H2 to biocrude mass ratio.
+    hydrogen_rxned_to_inf_oil: float
+        Reacted H2 to influent oil mass ratio.
     hydrogen_excess: float
         Actual hydrogen amount = hydrogen_rxned_to_biocrude*hydrogen_excess
     hydrocarbon_ratio: float
@@ -303,7 +340,7 @@ class Hydrotreating(Reactor):
                  WHSV=0.625, # wt./hr per wt. catalyst [1]
                  catalyst_lifetime=2*7920, # 2 years [1]
                  hydrogen_P=1530*6894.76,
-                 hydrogen_rxned_to_biocrude=0.046,
+                 hydrogen_rxned_to_inf_oil=0.046,
                  hydrogen_excess=3,
                  hydrocarbon_ratio=0.875, # 87.5 wt% of biocrude and reacted H2 [1]
                  # spreadsheet HT calculation
@@ -354,7 +391,7 @@ class Hydrotreating(Reactor):
         self.WHSV = WHSV
         self.catalyst_lifetime = catalyst_lifetime
         self.hydrogen_P = hydrogen_P
-        self.hydrogen_rxned_to_biocrude = hydrogen_rxned_to_biocrude
+        self.hydrogen_rxned_to_inf_oil = hydrogen_rxned_to_inf_oil
         self.hydrogen_excess = hydrogen_excess
         self.hydrocarbon_ratio = hydrocarbon_ratio
         self.HTin_T = HTin_T
@@ -409,13 +446,13 @@ class Hydrotreating(Reactor):
         # heating/cooling of catalysts
         
         hydrogen_excess = self.hydrogen_excess
-        H2_rxned =  biocrude.imass['Biocrude']*self.hydrogen_rxned_to_biocrude
+        H2_rxned =  biocrude.imass['Biocrude']*self.hydrogen_rxned_to_inf_oil
         recovered_frac =  (hydrogen_excess - 1)*self.PSA_efficiency*float(self.include_PSA)
         hydrogen.imass['H2'] = H2_rxned*(hydrogen_excess - recovered_frac)
         hydrogen.phase = 'g'
 
         hydrocarbon_mass = biocrude.imass['Biocrude']*\
-                           (1 + self.hydrogen_rxned_to_biocrude)*\
+                           (1 + self.hydrogen_rxned_to_inf_oil)*\
                            self.hydrocarbon_ratio
                            
         ht_out.phase = 'g'
