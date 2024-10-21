@@ -57,7 +57,7 @@ class Reactor(SanUnit, PressureVessel, isabstract=True):
         Power usage of agitator
         (converted from 0.5 hp/1000 gal as in [1]).
         If mixing_intensity is provided, this will be calculated based on
-        the mixing_intensity and viscosity of the influent mixture as in [2]_
+        the mixing_intensity and viscosity of the influent mixture as in [2]
     wall_thickness_factor=1: float
         A safety factor to scale up the calculated minimum wall thickness.
     vessel_material : str, optional
@@ -67,10 +67,11 @@ class Reactor(SanUnit, PressureVessel, isabstract=True):
         
     References
     ----------
-    .. [1] Seider, W. D.; Lewin, D. R.; Seader, J. D.; Widagdo, S.; Gani, R.;
+    [1] Seider, W. D.; Lewin, D. R.; Seader, J. D.; Widagdo, S.; Gani, R.;
         Ng, M. K. Cost Accounting and Capital Cost Estimation. In Product
         and Process Design Principles; Wiley, 2017; pp 470.
-    .. [2] Shoener et al. Energy Positive Domestic Wastewater Treatment:
+    
+    [2] Shoener et al. Energy Positive Domestic Wastewater Treatment:
         The Roles of Anaerobic and Phototrophic Technologies.
         Environ. Sci.: Processes Impacts 2014, 16 (6), 1204–1222.
         https://doi.org/10.1039/C3EM00711A.
