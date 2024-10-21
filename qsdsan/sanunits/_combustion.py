@@ -21,6 +21,7 @@ for license details.
 
 # %%
 
+import biosteam as bst
 from warnings import warn
 from flexsolve import IQ_interpolation
 from biosteam import HeatUtility, Facility
@@ -302,7 +303,10 @@ class CombinedHeatPower(SanUnit, Facility):
         unit_CAPEX = self.unit_CAPEX
         unit_CAPEX /= 3600 # convert to $ per kJ/hr
         self.baseline_purchase_costs['CHP'] = unit_CAPEX * self.H_net_feeds
-
+        # Update biosteam utility costs
+        uprices = bst.stream_utility_prices
+        uprices['Fuel'] = uprices['Natural gas'] = self.ins[1].price
+        uprices['Ash disposal'] = self.outs[1].price
 
     def _refresh_sys(self):
         sys = self._system
@@ -311,9 +315,32 @@ class CombinedHeatPower(SanUnit, Facility):
             hu_dct = self._sys_heating_utilities = {}
             pu_dct = self._sys_power_utilities = {}
             for u in units:
-                hu_dct[u.ID] = tuple([i for i in u.heat_utilities if i.duty*i.flow>0])
+                hu_dct[u.ID] = tuple([i for i in u.heat_utilities if (
+                    i.duty*i.flow>0 and i.agent.F_mass==i.agent.imass['H2O'])]
+                    )
                 pu_dct[u.ID] = u.power_utility
 
+
+    @property
+    def fuel_price(self):
+        '''
+        [Float] Price of fuel (natural gas), set to be the same as the price of ins[1]
+        and `bst.stream_utility_prices['Natural gas']`.
+        '''
+        return self.ins[1].price
+
+    natural_gas_price = fuel_price
+    
+    @property
+    def ash_disposal_price(self):
+        '''
+        [Float] Price of ash disposal, set to be the same as the price of outs[1]
+        and `bst.stream_utility_prices['Ash disposal']`.
+        Negative means need to pay for ash disposal.
+        '''
+        
+        """[Float] Price of ash disposal, same as `bst.stream_utility_prices['Ash disposal']`."""
+        return self.outs[1].price
 
     @property
     def CHP_type(self):
