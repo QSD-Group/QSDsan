@@ -94,15 +94,6 @@ def acid_base_rxn(h_ion, weak_acids_tot, Kas):
     nh3, hpo4, hco3, ac, pro, bu, va = Kas[1:] * weak_acids_tot[4:] / (Kas[1:] + h_ion)
     return S_cat + S_K + 2*S_Mg + h_ion + (S_IN - nh3) - S_an - oh_ion - hco3 - ac - pro - bu - va - 2*hpo4 - (S_IP - hpo4)
 
-# The function 'fprime_abr' is not used in the code
-def fprime_abr(h_ion, weak_acids_tot, Kas):
-    # S_cat, S_K, S_Mg, S_an, S_IN, S_IP = weak_acids_tot[:6]
-    Kw = Kas[0]
-    doh_ion = - Kw / h_ion ** 2
-    dnh3, dhpo4, dhco3, dac, dpro, dbu, dva = - Kas[1:] * weak_acids_tot[4:] / (Kas[1:] + h_ion)**2
-    return 1 + (-dnh3) - doh_ion - dhco3 - dac - dpro - dbu - dva - dhpo4
-
-
 rhos = np.zeros(28) # 28 kinetic processes (25 as defined in modified ADM1 + 3 for gases)
 Cs = np.empty(25) # 25 processes as defined in modified ADM1
 
@@ -239,7 +230,6 @@ def _rhos_adm1_p_extension(state_arr, params, h=None):
     rhos[9] *= Inh3
     rhos[-3:] = kLa * (biogas_S - KH * biogas_p)
     
-    # print(rhos)
     return rhos
 
 def dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq, S_h2_in):
@@ -354,6 +344,42 @@ class ADM1_p_extension(ADM1):
     >>> adm1_p = pc.ADM1_p_extension()
     >>> adm1_p.show()
     ADM1_p_extension([hydrolysis_carbs, hydrolysis_proteins, hydrolysis_lipids, uptake_sugars, uptake_amino_acids, uptake_LCFA, uptake_valerate, uptake_butyrate, uptake_propionate, uptake_acetate, uptake_h2, decay_Xsu, decay_Xaa, decay_Xfa, decay_Xc4, decay_Xpro, decay_Xac, decay_Xh2, storage_Sva_in_XPHA, storage_Sbu_in_XPHA, storage_Spro_in_XPHA, storage_Sac_in_XPHA, lysis_XPAO, lysis_XPP, lysis_XPHA, h2_transfer, ch4_transfer, IC_transfer])
+    
+    >>> import numpy as np
+    >>> state_arr = np.ones(cmps.size + len(adm1_p._biogas_IDs) + 2)   # liquid-phase concentrations, gas-phase concentrations, liquid flowrate, and temperature
+    >>> state_arr[-1] = 273.15+35  # Temperature
+    >>> rhos = adm1_p.rate_function(state_arr)  # reaction rate for each process
+    >>> for i,j in zip(adm1_p.IDs, rhos):
+    ...     print(f'{i}{(40-len(i))*" "}{j:.3g}')
+    hydrolysis_carbs                        10
+    hydrolysis_proteins                     10
+    hydrolysis_lipids                       10
+    uptake_sugars                           20
+    uptake_amino_acids                      38.4
+    uptake_LCFA                             2.14e-05
+    uptake_valerate                         8.32e-05
+    uptake_butyrate                         8.32e-05
+    uptake_propionate                       4.13e-05
+    uptake_acetate                          1.93
+    uptake_h2                               34.9
+    decay_Xsu                               0.02
+    decay_Xaa                               0.02
+    decay_Xfa                               0.02
+    decay_Xc4                               0.02
+    decay_Xpro                              0.02
+    decay_Xac                               0.02
+    decay_Xh2                               0.02
+    storage_Sva_in_XPHA                     0.747
+    storage_Sbu_in_XPHA                     0.747
+    storage_Spro_in_XPHA                    0.747
+    storage_Sac_in_XPHA                     0.747
+    lysis_XPAO                              0.2
+    lysis_XPP                               0.2
+    lysis_XPHA                              0.2
+    h2_transfer                             139
+    ch4_transfer                            -181
+    IC_transfer                             -1.66e+03
+    
     
     References
     ----------

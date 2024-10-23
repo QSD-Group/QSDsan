@@ -73,8 +73,6 @@ def create_asm2d_cmps(set_thermo=True):
 
     return cmps_asm2d
 
-# create_asm2d_cmps()
-
 def create_masm2d_cmps(set_thermo=True):
     c2d = create_asm2d_cmps(False)
     ion_kwargs = dict(particle_size='Soluble',
@@ -433,7 +431,7 @@ class ASM2d(CompiledProcesses):
 
     Examples
     --------
-    >>> from qsdsan import processes as pc, set_thermo
+    >>> from qsdsan import processes as pc
     >>> cmps = pc.create_asm2d_cmps()
     >>> asm2d = pc.ASM2d()
     >>> asm2d.show()
@@ -714,6 +712,8 @@ class mASM2d(CompiledProcesses):
     electron_acceptor_dependent_decay : bool, optional
         Whether biomass decay kinetics is dependent on concentrations of 
         electron acceptors. The default is True.
+    pH_ctrl : float or None, optional
+        Whether to fix pH at a specific value or solve for pH (`None`). The default is 7.0.
     k_h : float, optional
         Hydrolysis rate constant, in [d^(-1)]. The default is 3.0.
     eta_NO3_Hl : float, optional
@@ -766,6 +766,46 @@ class mASM2d(CompiledProcesses):
     >>> asm.show()
     mASM2d([aero_hydrolysis, anox_hydrolysis, anae_hydrolysis, hetero_growth_S_F, hetero_growth_S_A, denitri_S_F, denitri_S_A, ferment, hetero_lysis, storage_PHA, aero_storage_PP, anox_storage_PP, PAO_aero_growth_PHA, PAO_anox_growth, PAO_lysis, PP_lysis, PHA_lysis, auto_aero_growth, auto_lysis, CaCO3_precipitation_dissolution, struvite_precipitation_dissolution, newberyite_precipitation_dissolution, ACP_precipitation_dissolution, MgCO3_precipitation_dissolution, AlPO4_precipitation_dissolution, FePO4_precipitation_dissolution])
 
+    >>> # Calculate process rate given state variable values and fixed pH.
+    >>> import numpy as np
+    >>> state_arr = np.ones(len(cmps))
+    >>> rhos = asm.rate_function(state_arr)  # reaction rate for each process
+    >>> for i,j in zip(asm.IDs, rhos): 
+    ...     print(f'{i}{(40-len(i))*" "}{j:.3g}')
+    aero_hydrolysis                         2.27
+    anox_hydrolysis                         0.182
+    anae_hydrolysis                         0.0606
+    hetero_growth_S_F                       0.471
+    hetero_growth_S_A                       0.471
+    denitri_S_F                             0.0503
+    denitri_S_A                             0.0503
+    ferment                                 0.0333
+    hetero_lysis                            0.356
+    storage_PHA                             0.594
+    aero_storage_PP                         1.06
+    anox_storage_PP                         0.0851
+    PAO_aero_growth_PHA                     0.778
+    PAO_anox_growth                         0.0622
+    PAO_lysis                               0.174
+    PP_lysis                                0.174
+    PHA_lysis                               0.174
+    auto_aero_growth                        0.33
+    auto_lysis                              0.111
+    CaCO3_precipitation_dissolution         0
+    struvite_precipitation_dissolution      0
+    newberyite_precipitation_dissolution    0
+    ACP_precipitation_dissolution           0
+    MgCO3_precipitation_dissolution         0
+    AlPO4_precipitation_dissolution         1.82e-11
+    FePO4_precipitation_dissolution         1.82e-11
+
+    >>> # Estimate pH given state variable values.
+    >>> Ka = asm.rate_function.params['Ka']
+    >>> unit_conversion = asm.rate_function.params['mass2mol']
+    >>> h_ion = asm.solve_pH(state_arr, Ka, unit_conversion)
+    >>> pH = -np.log10(h_ion)
+    >>> print(f'{pH:.2f}')
+    8.40
 
     References
     ----------
