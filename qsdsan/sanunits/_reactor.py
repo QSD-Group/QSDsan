@@ -218,7 +218,7 @@ class Reactor(SanUnit, PressureVessel, isabstract=True):
         exist_material = getattr(self, '_vessel_material', None)
         PressureVessel.vessel_material.fset(self, i)
         if i and exist_material == i: return # type doesn't change, no need to reload construction items
-        self._init_lca()
+        if self.include_construction: self._init_lca()
 
     @property
     def kW_per_m3(self):
@@ -230,7 +230,6 @@ class Reactor(SanUnit, PressureVessel, isabstract=True):
             mixture.mix_from(self.ins)
             kW_per_m3 = mixture.mu*(G**2)/1e3
             return kW_per_m3
-        
     @kW_per_m3.setter
     def kW_per_m3(self, i):
         if self.mixing_intensity and i is not None:
