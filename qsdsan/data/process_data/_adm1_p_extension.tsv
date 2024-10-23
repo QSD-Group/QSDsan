@@ -1,4 +1,4 @@
-	S_su	S_aa	S_fa	S_va	S_bu	S_pro	S_ac	S_h2	S_ch4	S_IC	S_IN	S_IP	S_I	X_ch	X_pr	X_li	X_su	X_aa	X_fa	X_c4	X_pro	X_ac	X_h2	X_I	X_PHA	X_PP	X_PAO	S_K	S_Mg	X_MeOH	X_MeP
+	S_su	S_aa	S_fa	S_va	S_bu	S_pro	S_ac	S_h2	S_ch4	S_IC	S_IN	S_IP	S_I	X_ch	X_pr	X_li	X_su	X_aa	X_fa	X_c4	X_pro	X_ac	X_h2	X_I	X_PHA	X_PP	X_PAO	S_K	S_Mg
 hydrolysis_carbs	1									?	?	?		-1																	
 hydrolysis_proteins		1								?	?	?			-1																
 hydrolysis_lipids	1-f_fa_li		f_fa_li							?	?	?				-1															
