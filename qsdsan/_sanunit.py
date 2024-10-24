@@ -631,6 +631,7 @@ class SanUnit(Unit, isabstract=True):
                 include_total_cost=True, include_installed_cost=False,
                 include_zeros=True, external_utilities=(), key_hook=None):
 
+        if super().results is None: return super().results
         results = super().results(with_units, include_utilities,
                                   include_total_cost, include_installed_cost,
                                   include_zeros, external_utilities, key_hook)
@@ -647,7 +648,7 @@ class SanUnit(Unit, isabstract=True):
                     results.insert(0, 'Units', '')
                     results.loc[(k, ''), :] = ('USD/hr', v)
                     results.columns.name = type(self).__name__
-        if with_units:
+        if with_units and results is not None:
             results.replace({'USD': f'{currency}', 'USD/hr': f'{currency}/hr'},
                             inplace=True)
         return results
