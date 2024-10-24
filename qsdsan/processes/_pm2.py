@@ -610,6 +610,39 @@ class PM2(CompiledProcesses):
          carbohydrate_maintenance_ace, lipid_maintenance_ace, endogenous_respiration_ace, 
          growth_glu, carbohydrate_storage_glu, lipid_storage_glu, carbohydrate_growth_glu, lipid_growth_glu, 
          carbohydrate_maintenance_glu, lipid_maintenance_glu, endogenous_respiration_glu])
+    
+    >>> # Evaluate the rate of reaction at initial condition
+    >>> import numpy as np
+    >>> init_cond = {
+    ...     'X_CHL':2.81,
+    ...     'X_ALG':561.57,
+    ...     'X_CH':13.74,
+    ...     'X_LI':62.22,
+    ...     'S_CO2':30.0,
+    ...     'S_A':5.0,
+    ...     'S_F':5.0,
+    ...     'S_O2':20.36,
+    ...     'S_NH':25,
+    ...     'S_NO':9.30,
+    ...     'S_P':0.383,
+    ...     'X_N_ALG':3.62,
+    ...     'X_P_ALG':12.60,
+    ...     }
+    >>> state_arr = np.append(cmps.kwarray(init_cond), [1000, 298, 112.6])   # flowrate, temperature, & irradiance
+    >>> pm2.rate_function(state_arr)
+    array([  4.437, 142.045,   0.562,   0.562,   0.562,   2.48 , 304.319,
+           193.505,   8.856,  24.737,  79.042,   2.093,   7.992,  67.419,
+           186.095, 110.903,   5.076,  15.127,  32.669,   2.455,   9.375,
+            45.795, 186.075, 110.903,   5.076,  15.126,  32.691,   2.456,
+             9.378,  45.822])
+    
+    >>> pm2.set_parameters(I_opt = 200) # Change optimal irradiance
+    >>> pm2.rate_function(state_arr)
+    array([  4.437, 142.045,   0.562,   0.562,   0.562,   2.48 , 299.409,
+           209.95 ,   9.609,  34.175, 109.197,   2.093,   7.992,  67.419,
+           171.898, 110.903,   5.076,  19.621,  42.373,   2.455,   9.375,
+            45.795, 171.874, 110.903,   5.076,  19.618,  42.4  ,   2.456,
+             9.378,  45.822])
     '''
 
     _shared_params = ('Y_CH_PHO', 'Y_LI_PHO', 'Y_X_ALG_PHO',
@@ -703,7 +736,7 @@ class PM2(CompiledProcesses):
             if parameters['Q_P_min'] < self.Th_Q_P_min: 
                 raise ValueError(f'Value for Q_P_min must not be less than the '
                                  f'theoretical minimum {self.Th_Q_P_min}')
-        self.rate_function.set_param(**parameters)
+        self.rate_function.set_params(**parameters)
 
     @property
     def Th_Q_N_min(self):
