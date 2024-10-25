@@ -94,15 +94,6 @@ def acid_base_rxn(h_ion, weak_acids_tot, Kas):
     nh3, hpo4, hco3, ac, pro, bu, va = Kas[1:] * weak_acids_tot[4:] / (Kas[1:] + h_ion)
     return S_cat + S_K + 2*S_Mg + h_ion + (S_IN - nh3) - S_an - oh_ion - hco3 - ac - pro - bu - va - 2*hpo4 - (S_IP - hpo4)
 
-# The function 'fprime_abr' is not used in the code
-def fprime_abr(h_ion, weak_acids_tot, Kas):
-    # S_cat, S_K, S_Mg, S_an, S_IN, S_IP = weak_acids_tot[:6]
-    Kw = Kas[0]
-    doh_ion = - Kw / h_ion ** 2
-    dnh3, dhpo4, dhco3, dac, dpro, dbu, dva = - Kas[1:] * weak_acids_tot[4:] / (Kas[1:] + h_ion)**2
-    return 1 + (-dnh3) - doh_ion - dhco3 - dac - dpro - dbu - dva - dhpo4
-
-
 rhos = np.zeros(28) # 28 kinetic processes (25 as defined in modified ADM1 + 3 for gases)
 Cs = np.empty(25) # 25 processes as defined in modified ADM1
 
