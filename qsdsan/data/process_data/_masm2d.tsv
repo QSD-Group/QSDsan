@@ -1,0 +1,20 @@
+	S_O2	S_F	S_A	S_I	S_NH4	S_N2	S_NO3	S_PO4	S_IC	S_K	S_Mg	X_I	X_S	X_H	X_PAO	X_PP	X_PHA	X_AUT
+aero_hydrolysis		1-f_SI		f_SI	?			?	?				-1					
+anox_hydrolysis		1-f_SI		f_SI	?			?	?				-1					
+anae_hydrolysis		1-f_SI		f_SI	?			?	?				-1					
+hetero_growth_S_F	1-1/Y_H	(-1)/Y_H			?			?	?					1				
+hetero_growth_S_A	1-1/Y_H		(-1)/Y_H		?			?	?					1				
+denitri_S_F		(-1)/Y_H			?	(1-Y_H)/(COD_deN*Y_H)	(Y_H-1)/(COD_deN*Y_H)	?	?					1				
+denitri_S_A			(-1)/Y_H		?	(1-Y_H)/(COD_deN*Y_H)	(Y_H-1)/(COD_deN*Y_H)	?	?					1				
+ferment		-1	1		?			?	?									
+hetero_lysis					?			?	?			f_XI_H	1-f_XI_H	-1				
+storage_PHA			-1		?			Y_PO4	?	Y_PO4*K_XPP	Y_PO4*Mg_XPP					(-Y_PO4)	1	
+aero_storage_PP	(-Y_PHA)							-1	?	(-K_XPP)	(-Mg_XPP)					1	(-Y_PHA)	
+anox_storage_PP						Y_PHA/COD_deN	(-Y_PHA)/COD_deN	-1	?	(-K_XPP)	(-Mg_XPP)					1	(-Y_PHA)	
+PAO_aero_growth_PHA	?				?			?	?						1		(-1)/Y_PAO	
+PAO_anox_growth					?	(1-Y_PAO)/(COD_deN*Y_PAO)	(Y_PAO-1)/(COD_deN*Y_PAO)	?	?						1		(-1)/Y_PAO	
+PAO_lysis					?			?	?			f_XI_PAO	1-f_XI_PAO		-1			
+PP_lysis					?			1	?	K_XPP	Mg_XPP					-1		
+PHA_lysis			1		?				?								-1	
+auto_aero_growth	?				?		1/Y_A	?	?									1
+auto_lysis					?			?	?			f_XI_AUT	1-f_XI_AUT					-1

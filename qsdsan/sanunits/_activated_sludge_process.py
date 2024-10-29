@@ -7,6 +7,8 @@ QSDsan: Quantitative Sustainable Design for sanitation and resource recovery sys
 This module is developed by:
 
     Yalin Li <mailto.yalin.li@gmail.com>
+    
+    Saumitra Rai <raisaumitra9@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -18,10 +20,13 @@ from math import ceil
 from biosteam import Stream
 from .. import SanUnit
 from ..sanunits import HXutility, WWTpump
+
 from ..equipments import Blower, GasPiping
 from ..utils import auom, calculate_excavation_volume
+
 __all__ = ('ActivatedSludgeProcess',)
 
+#%%
 _ft2_to_m2 = auom('ft2').conversion_factor('m2')
 F_BM_pump = 1.18*(1+0.007/100) # 0.007 is for miscellaneous costs
 default_F_BM = {
@@ -361,6 +366,7 @@ class ActivatedSludgeProcess(SanUnit):
         'Pump pipe stainless steel': 'kg',
         'Pump stainless steel': 'kg',
         }
+    
     def _design(self):
         D = self.design_results
         D['HRT'] = self.HRT
@@ -725,3 +731,4 @@ class ActivatedSludgeProcess(SanUnit):
     @constr_access.setter
     def constr_access(self, i):
         self._constr_access = i
+        

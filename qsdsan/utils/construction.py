@@ -5,11 +5,11 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    
+
     Yalin Li <mailto.yalin.li@gmail.com>
-    
+
     Saumitra Rai <raisaumitra9@gmail.com>
-    
+
     Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -474,10 +474,10 @@ def calculate_pipe_material(OD, t, ID, L, density=None):
 # Based on ANSI (American National Standards Institute) pipe chart
 # the original code has a bug (no data for 22) and has been fixed here
 IDs = np.array([
-    0.307, 0.410, 0.545, 0.674, 0.884, 1.097, 1.442, 1.682, 2.157, 
-    2.635, 3.260, 3.760, 4.260, 4.760, 5.295, 6.357, 7.357, 8.329, 
-    9.329, 10.420, 11.420, 12.390, 13.624, 15.602, 17.624, 19.564, 21.500, 
-    23.500, 25.500, 27.500, 29.376, 31.376, 33.376, 35.376, 41.376, 47.376 
+    0.307, 0.410, 0.545, 0.674, 0.884, 1.097, 1.442, 1.682, 2.157,
+    2.635, 3.260, 3.760, 4.260, 4.760, 5.295, 6.357, 7.357, 8.329,
+    9.329, 10.420, 11.420, 12.390, 13.624, 15.602, 17.624, 19.564, 21.500,
+    23.500, 25.500, 27.500, 29.376, 31.376, 33.376, 35.376, 41.376, 47.376
     ])
 
 size = IDs.shape[0]
@@ -544,11 +544,11 @@ def select_pipe(Q, v):
     A = Q / v # cross-section area
     ID = (4*A/np.pi) ** 0.5 # maximum inner diameter, [ft]
     ID *= 12 # maximum inner diameter, [in]
-    
+
     ids = IDs[IDs <= ID]
-    if ids.size == 0: 
+    if ids.size == 0:
         ID = IDs[0] # inch
-    else: 
+    else:
         ID = ids[-1]
     OD, t = pipe_dct[ID]
 
