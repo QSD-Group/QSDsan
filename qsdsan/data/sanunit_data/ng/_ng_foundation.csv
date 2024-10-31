@@ -1,0 +1,5 @@
+parameter,name (if diff),unit,expected,low,high,distribution,references
+foundation_concrete_unit_cost,,USD m-3,194,155.2,232.8,uniform,Trimmer et al. Navigating Multidimensional Social–Ecological System Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement (2020).
+foundation_concrete_thickness,,m,0.1143,0.1016,0.127,uniform,NEWgen 100 Durban EFT manuscript (updated Dec 22 2020)
+foundation_concrete_area,,m2,4.8,,,constant,NEWgen 100 Durban EFT manuscript (updated Dec 22 2020)
+foundation_largerncs_concrete_area,,m2,5.28,,,constant,Design team documents

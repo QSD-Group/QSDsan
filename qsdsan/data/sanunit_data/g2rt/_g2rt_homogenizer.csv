@@ -1,0 +1,12 @@
+﻿parameter,name (if diff),unit,expected,low,high,distribution
+moisture_content_out,,%,97.5,96,99,uniform
+macerator_cost,,USD,974.43,682.101,1266.759,uniform
+macerator_power_demand,,kW,0.37,0.259,0.481,uniform
+macerator_daily_operation,,h,3,2.1,3.9,uniform
+stainless_steel_weight,,kg,4,2.8,5.2,uniform
+polyethylene_weight,,kg,10,7,13,uniform
+solid_tank_cost,,USD,64.26,44.982,83.538,uniform
+homogenizer_maintenance,,h/yr,12,8.4,15.6,uniform
+wages,,USD/h,3.64,1.82,5.46,uniform
+material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
+miscellaneous_cost_ratio,,fraction,0.169,0.1183,0.2197,uniform

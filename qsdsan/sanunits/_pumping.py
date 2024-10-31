@@ -937,7 +937,7 @@ class WWTpump(SanUnit):
     def building_unit_cost(self, i):
         self._building_unit_cost = i
 
-
+#TODO: why do we set up a standalone class for SludgePump instead of lumping it into WWTpump
 class SludgePump(Pump):
     '''
     Pumps used in HTL system

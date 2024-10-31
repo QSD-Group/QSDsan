@@ -1,0 +1,13 @@
+parameter,name (if diff),unit,expected,low,high,distribution
+liquids_tank_polyethylene_weight,,kg,10,7,13,uniform
+liquids_tank_polycarbonate_weight,,kg,1,0.7,1.3,uniform
+liquids_tank_cost,,USD,172.3,120.61,223.99,uniform
+liquids_tank_feed_pump_cost,,USD,170,144.5,195.5,uniform
+liquids_tank_tubing,,USD,58.2,40.74,75.66,uniform
+pump_lifetime,,yr,6,,,constant
+pump_energy_per_cycle,,kWh,0.00136,0.00109,0.00163,uniform
+pump_batch_cycle_per_day,,# batches /d,3,2.1,3.9,uniform
+labor_pump_replacement,,hr/yr,0.17,0.14,0.19,uniform
+labor_tank_cleaning,,hr/yr,6,4.2,7.8,uniform
+wages,,USD/h,3.64,1.82,5.46,uniform
+miscellaneous_cost_ratio,,fraction,0.169,0.1183,0.2197,uniform

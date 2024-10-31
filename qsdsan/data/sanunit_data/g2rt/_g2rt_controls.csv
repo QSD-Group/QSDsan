@@ -1,0 +1,21 @@
+parameter,name (if diff),unit,expected,low,high,distribution
+programmable_logic_controller_cost,,USD,394.08,275.856,512.304,Uniform
+PLC_quantities,,pieces,4,3,5,constant
+IO_relay_module_cost,,USD,48.81,34.167,63.453,Uniform
+relay_module_quantity,,pieces,8,5.6,10.4,Uniform
+sensors_cost,,USD,400,280,520,Uniform
+cables,,USD,200,140,260,Uniform
+control_polycarbonate_weight,,kg,3,2.1,3.9,uniform
+control_cable_length,,m,50,35,65,uniform
+control_aluminum_weight,,kg,0.6,0.42,0.78,uniform
+control_electronics_passive_weight,,kg,1,0.7,1.3,uniform
+control_electronics_active_weight,,kg,0.25,0.175,0.325,uniform
+control_control_units_weight,,kg,1.52,1.064,1.976,uniform
+control_labor_replacement_misc_repairs,,hr/yr,3,2.1,3.9,uniform
+control_system_energy_percycle,,kW,0.01032,0.008256,0.012384,uniform
+control_background_runtime_energy_perday,,kWh,0.05,0.035,0.065,uniform
+control_batch_cycle_perday,,# batches day-1,3,2.1,3.9,uniform
+control_sensor_lifetime,,yr,3,,,constant
+control_system_PLC_lifetime,,yr,20,,,constant
+miscellaneous_cost_ratio,,fraction,0.169,0.1183,0.2197,uniform
+wages,,USD/h,3.64,1.82,5.46,uniform

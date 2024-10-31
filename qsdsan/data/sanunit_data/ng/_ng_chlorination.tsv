@@ -1,0 +1,32 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+chlorination_recycle_pump	chlorination_system_recycle_pump	USD	178.1	151.385	204.815	uniform	Bill of Materials NG-100 - For LCA Work
+chlorination_electochlorinator	chlorination_system_electrochlorinator	USD	800	680	920	uniform	Bill of Materials NG-100 - For LCA Work
+chlorination_powered_valve	chlorination_system_powered_valve	USD	356	302.6	409.4	uniform	Bill of Materials NG-100 - For LCA Work
+chlorination_fittings	chlorination_system_fittings	USD	88.89	75.5565	102.2235	uniform	Bill of Materials NG-100 - For LCA Work
+chlorination_tanks	chlorination_system_tanks	USD	429.29	364.8965	493.6835	uniform	Bill of Materials NG-100 - For LCA Work
+chlorination_solenoid_valve_lifetime	solenoid_valve_lifetime	y	3			constant	Orig 3. Key component replacement (v.4)
+chlorination_voltage_converter_lifetime	voltage_converter_lifetime	y	5			constant	Orig 5. Key component replacement (v.4)
+chlorination_other_pump_lifetime	pump_all_others_lifetime	y	6			constant	Orig 6. Key component replacement (v.4)
+chlorination_electrochlorinator_lifetime	electrochlorinator_lifetime	y	2			constant	Orig 2. Key component replacement (v.4)
+chlorination_COD_removal	chlorination_COD_original_removal	%	0.184113475	0	0.428288046	uniform	UIUC Request Data - Gary Shyu
+chlorination_TN_removal	chlorination_totalN_original_removal	%	0.222656144	0.021524933	0.423787356	uniform	UIUC Request Data - Gary Shyu
+chlorination_TP_removal	chlorination_totalP_original_removal	%	0.108499498	0.001368851	0.215630146	uniform	UIUC Request Data - Gary Shyu
+chlorination_chlorinator_energy_percycle	chlorination_chlorinator_energy_percycle	kWh	0.072	0.0576	0.0864	uniform	Energy Budget - NEWgen.100 (v.2)
+chlorination_pump_energy_percycle	chlorination_chlorinationpump_energy_percycle	kWh	0.00912	0.007296	0.010944	uniform	Energy Budget - NEWgen.100 (v.2)
+chlorination_ventilation_energy_percycle	chlorination_ventilation_energy_percycle	kWh	0.006	0.0048	0.0072	uniform	Energy Budget - NEWgen.100 (v.2)
+chlorination_valve_energy_percycle	chlorination_chlorination_valve_energy_percycle	kWh	0.000024	0.0000192	0.0000288	uniform	Energy Budget - NEWgen.100 (v.2)
+chlorination_product_water_pump_energy_percycle	product_delivery_exitpump_energypercycle	kWh	0.002256	0.0018048	0.0027072	uniform	Energy Budget - NEWgen.100 (v.2)
+chlorination_batch_cycle_per_day	batch_cycle_per_day	# batches day-1	33.06878307	26.45502646	39.68253968	uniform	Energy Budget - NEWgen.100 (v.2)
+chlorination_labor_maintenance_chlorinator_recharging	labor_maintenance_chlorinator_recharging	hr/y	12	9.6	14.4	uniform	Maintenance schedule_NEWgen100_2021_V.2
+chlorination_labor_replacement_chlorinator_replacement	labor_replacement_chlorinator_replacement	hr/y	1	0.8	1.2	uniform	Maintenance schedule_NEWgen100_2021_V.2
+chlorination_labor_replacement_other_pump	labor_replacement_allotherpumps	hr/y	0.17	0.136	0.204	uniform	Maintenance schedule_NEWgen100_2021_V.2
+chlorination_labor_replacement_misc_repairs	labor_replacement_misc_repairs	hr/y	2.4	1.92	2.88	uniform	Maintenance schedule_NEWgen100_2021_V.2
+chlorination_NaCl_dosage		mg/L	5.5	4.125	6.875	uniform	NEWgen 100 Durban EFT manuscript (updated Dec 22 2020)
+chlorination_throughput_flow		L/d	362	289.6	434.4	uniform	NEWgen 100 Durban EFT manuscript (updated Dec 22 2020)
+chlorination_PE_weight		kg	78.18181818	58.63636364	97.72727273	uniform	calculated
+chlorination_PVC_weight		kg	3.385272727	2.538954545	4.231590909	uniform	calculated
+chlorination_electronics_active_weight		kg	5	3.75	6.25	uniform	calculated
+chlorination_pump_amount		ea	1			constant	BOM
+chlorination_piping		USD	138.25	117.5125	158.9875	uniform	BOM
+chlorination_piping_PVC_weight		kg	9	7.65	10.35	uniform	BOM
+wages		USD/cap/h	3.64	1.82	5.46	uniform	Gates Scenario Specific Report 2022

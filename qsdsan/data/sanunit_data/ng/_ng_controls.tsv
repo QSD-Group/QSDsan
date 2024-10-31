@@ -1,0 +1,47 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+control_box_enclosure_panel		USD	122.13	103.8105	140.4495	uniform	Bill of Materials NG-100 - For LCA Work
+control_box_arduino_microcontroller		USD	45.95	39.0575	52.8425	uniform	Bill of Materials NG-100 - For LCA Work
+control_box_microcontroller_din_rails		USD	33	28.05	37.95	uniform	Bill of Materials NG-100 - For LCA Work
+control_box_wifi		USD	90.99	77.3415	104.6385	uniform	Bill of Materials NG-100 - For LCA Work
+control_box_solid_state_relays		USD	681	578.85	783.15	uniform	Bill of Materials NG-100 - For LCA Work
+control_box_other_relays		USD	64.64	54.944	74.336	uniform	Bill of Materials NG-100 - For LCA Work
+control_box_conductors		USD	643.54	547.009	740.071	uniform	Bill of Materials NG-100 - For LCA Work
+control_box_din_rails		USD	9.33	7.9305	10.7295	uniform	Bill of Materials NG-100 - For LCA Work
+control_sensors_enclosure_panel		USD	122.13	103.8105	140.4495	uniform	Bill of Materials NG-100 - For LCA Work
+control_sensors_signal_conditioners		USD	720	612	828	uniform	Bill of Materials NG-100 - For LCA Work
+control_sensors_din_rails		USD	146.83	124.8055	168.8545	uniform	Bill of Materials NG-100 - For LCA Work
+control_sensors_voltage_converter		USD	95	80.75	109.25	uniform	Bill of Materials NG-100 - For LCA Work
+control_orp_enclosure_panel		USD	55.63	47.2855	63.9745	uniform	Bill of Materials NG-100 - For LCA Work
+control_orp_voltage_converter		USD	69	58.65	79.35	uniform	Bill of Materials NG-100 - For LCA Work
+control_orp_controller		USD	225	191.25	258.75	uniform	Bill of Materials NG-100 - For LCA Work
+control_orp_probe		USD	54.95	46.7075	63.1925	uniform	Bill of Materials NG-100 - For LCA Work
+control_orp_cables		USD	8.88	7.548	10.212	uniform	Bill of Materials NG-100 - For LCA Work
+control_pump_enclosure_panel		USD	177.54	150.909	204.171	uniform	Bill of Materials NG-100 - For LCA Work
+control_pump_voltage_converter		USD	85.5	72.675	98.325	uniform	Bill of Materials NG-100 - For LCA Work
+control_pump_voltage_rectifier		USD	10.99	9.3415	12.6385	uniform	Bill of Materials NG-100 - For LCA Work
+control_pump_box_relay		USD	48	40.8	55.2	uniform	Bill of Materials NG-100 - For LCA Work
+control_sensors_level_sensor		USD	600	510	690	uniform	Bill of Materials NG-100 - For LCA Work
+control_sensors_level_switch		USD	6.495	5.52075	7.46925	uniform	Bill of Materials NG-100 - For LCA Work
+control_sensors_flow_switches		USD	76.47	64.9995	87.9405	uniform	Bill of Materials NG-100 - For LCA Work
+control_sensors_proximity_sensor		USD	63	53.55	72.45	uniform	Bill of Materials NG-100 - For LCA Work
+control_stranded_cables		USD	186.61	158.6185	214.6015	uniform	Bill of Materials NG-100 - For LCA Work
+control_sensor_cables		USD	282.39	240.0315	324.7485	uniform	Bill of Materials NG-100 - For LCA Work
+control_cable_glands		USD	85	72.25	97.75	uniform	Bill of Materials NG-100 - For LCA Work
+control_gauge_ferrules		USD	50	42.5	57.5	uniform	Bill of Materials NG-100 - For LCA Work
+control_zip_ties		USD	32	27.2	36.8	uniform	Bill of Materials NG-100 - For LCA Work
+control_terminal_block_jumper		USD	46	39.1	52.9	uniform	Bill of Materials NG-100 - For LCA Work
+control_system_PLC_lifetime		y	20			constant	Orig 20. Key component replacement (v.4)
+control_voltage_converter_lifetime		y	5			constant	Orig 5.Key component replacement (v.4)
+control_level_sensor_lifetime		y	3			constant	Orig 3. Key component replacement (v.4)
+control_system_energy_percycle		kW	0.01032	0.008256	0.012384	uniform	Energy Budget - NEWgen.100 (v.2)
+control_system_ORP_energy_percycle		kW	0.0012	0.00096	0.00144	uniform	Energy Budget - NEWgen.100 (v.2)
+control_background_runtime_energy_perday		kWh	0.27648	0.221184	0.331776	uniform	Energy Budget - NEWgen.100 (v.2)
+control_batch_cycle_perday		# batches day-1	33.06878307	26.45502646	39.68253968	uniform	Energy Budget - NEWgen.100 (v.2)
+control_labor_replacement_misc_repairs		hr/y	2.4	1.92	2.88	uniform	Maintenance schedule_NEWgen100_2021_V.2
+control_polycarbonate_weight		kg	11.46	8.595	14.325	uniform	Estimated from Bill of Materials NG-100 - For LCA Work
+control_aluminum_weight		kg	2.72	2.04	3.4	uniform	Estimated from Bill of Materials NG-100 - For LCA Work
+control_cable_length		m	269.89	202.4175	337.3625	uniform	Estimated from Bill of Materials NG-100 - For LCA Work
+control_electronics_passive_weight		kg	10	7.5	12.5	uniform	Estimated from Bill of Materials NG-100 - For LCA Work
+control_electronics_active_weight		kg	5	3.75	6.25	uniform	Estimated from Bill of Materials NG-100 - For LCA Work
+control_control_units_weight		kg	0.5	0.375	0.625	uniform	Estimated from Bill of Materials NG-100 - For LCA Work
+wages		USD/cap/h	3.64	1.82	5.46	uniform	Gates Scenario Specific Report 2022

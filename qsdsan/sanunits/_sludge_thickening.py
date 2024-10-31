@@ -92,7 +92,7 @@ class SludgeThickening(SanUnit, Splitter):
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream',
                  sludge_moisture=0.96, solids=(),
-                 disposal_cost=125/907.18474): # from $/U.S. ton
+                 disposal_cost=125/907.18474): # converting from $/U.S. ton
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with)
         self.sludge_moisture = sludge_moisture
         cmps = self.components

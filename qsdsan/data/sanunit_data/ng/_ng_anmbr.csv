@@ -1,0 +1,49 @@
+parameter,name (if diff),unit,expected,low,high,distribution,references
+anmbr_reactor_tank,,USD,2700,2295,3105,uniform,Bill of Materials NG-100 - For LCA Work
+anmbr_reactor_media,,USD,87.99,74.79,101.19,uniform,Bill of Materials NG-100 - For LCA Work
+anmbr_reactor_fittings,,USD,93.65,79.6,107.7,uniform,Bill of Materials NG-100 - For LCA Work
+anmbr_membrane_module,,USD,1700,1445,1955,uniform,Bill of Materials NG-100 - For LCA Work
+anmbr_permeate_pump,membrane_permeate_pump,USD,115.92,98.53,133.31,uniform,Bill of Materials NG-100 - For LCA Work
+anmbr_backwash_pump,membrane_backwash_pump,USD,89.05,75.69,102.41,uniform,Bill of Materials NG-100 - For LCA Work
+anmbr_water_pump,membrane_water_pump,USD,269.99,229.49,310.49,uniform,Bill of Materials NG-100 - For LCA Work
+anmbr_membrane_fittings,,USD,249.32,211.92,286.72,uniform,Bill of Materials NG-100 - For LCA Work
+anmbr_permeate_pump_lifetime,,y,2,,,constant,Orig 2.5. Key component replacement (v.4)
+anmbr_membrane_pump_lifetime,,y,4,,,constant,Orig 3.5. Key component replacement (v.4)
+anmbr_membrane_module_lifetime,,y,10,,,constant,Orig 10. Key component replacement (v.4)
+anmbr_biogas_gas_bag,,USD,229,194.65,263.35,uniform,Bill of Materials NG-100 - For LCA Work
+anmbr_biogas_fittings,,USD,32.94,28,37.88,uniform,Bill of Materials NG-100 - For LCA Work
+anmbr_biogas_ventilation,,USD,51.9,44.12,59.69,uniform,Bill of Materials NG-100 - For LCA Work
+anmbr_COD_removal,anmbr_COD_original_removal,ratio,0.82,0.7,0.94,uniform,UIUC Request Data - Gary Shyu
+anmbr_TN_removal,anmbr_totalN_original_removal,ratio,0.2,0.02,0.37,uniform,UIUC Request Data - Gary Shyu
+anmbr_TP_removal,anmbr_totalP_original_removal,ratio,0.19,0,0.39,uniform,UIUC Request Data - Gary Shyu
+anmbr_water_pump_energy_percycle,,kWh,0.016583,0.013266,0.0199,uniform,Energy Budget - NEWgen.100 (v.2)
+anmbr_permeate_pump_energy_percycle,,kWh,0.001951,0.001561,0.002341,uniform,Energy Budget - NEWgen.100 (v.2)
+anmbr_backwash_pump_energy_percycle,,kWh,0.00008,0.000064,0.000096,uniform,Energy Budget - NEWgen.100 (v.2)
+anmbr_batch_cycle_perday,,# batches day-1,33.06878307,26.455026,39.68254,uniform,Energy Budget - NEWgen.100 (v.2)
+anmbr_labor_maintenance_membrane_chem_cleaning,,hrs/yr,12,9.6,14.4,uniform,Maintenance schedule_NEWgen100_2021_V.2
+anmbr_labor_maintenance_sludge_removal,,hrs/yr,3,2.4,3.6,uniform,Maintenance schedule_NEWgen100_2021_V.2
+anmbr_labor_replacement_membrane_pump,,hrs/yr,0.86,0.69,1.03,uniform,Maintenance schedule_NEWgen100_2021_V.2
+anmbr_labor_replacement_permeate_pump,,hrs/yr,0.6,0.48,0.72,uniform,Maintenance schedule_NEWgen100_2021_V.2
+anmbr_labor_replacement_membrane_module,,hrs/yr,0.1,0.08,0.12,uniform,Maintenance schedule_NEWgen100_2021_V.2
+anmbr_labor_replacement_misc_repairs,,hr/y,2.4,1.92,2.88,uniform,Maintenance schedule_NEWgen100_2021_V.2
+anmbr_reactor_weight,anmbr_reactor_MDPE_weight,kg,57.6,43.2,72,uniform,https://www.usplastic.com/catalog/item.aspx?itemid=41531&amp;clickid=browse-history-slider
+anmbr_tau,anmbr_retention_time,d,6,1.2,12.4,uniform,NEWgen 100 Durban EFT manuscript (updated Dec 22 2020)
+anmbr_reactor_volume,,m3,1.36,,,constant,NEWgen 100 Durban EFT manuscript (updated Dec 22 2020)
+anmbr_reactor_SRT,,d,365,,,constant,NEWgen 100 Durban EFT manuscript (updated Dec 22 2020)
+anmbr_soluble_methane_fraction,,,0.3,0.24,0.36,uniform,"Kim et al. Anaerobic Fluidized Bed Membrane Bioreactor for Wastewater Treatment. Environ. Sci. Technol. 2011, 45, 2, 576–581"
+anmbr_VSS_TSS_ratio,,,0.9,0.75,0.92,uniform,From Design Team
+anmbr_membrane_weight,,kg,22.2,16.65,27.75,uniform,https://xflow.pentair.com/en/products/compact27 : ratio 15/27=x/40
+anmbr_PE_weight,,kg,102.27,76.7,127.84,uniform,Estimated from Bill of Materials NG-100 - For LCA Work
+anmbr_PVC_weight,,kg,34.1718,25.63,42.71,uniform,Estimated from Bill of Materials NG-100 - For LCA Work
+anmbr_plastic_weight,,kg,19.8664,14.9,24.83,uniform,Estimated from Bill of Materials NG-100 - For LCA Work
+anmbr_piping,,USD,138.25,117.5125,158.9875,uniform,BOM
+anmbr_piping_PVC_weight,,kg,9,7.65,10.35,uniform,BOM
+wages,,USD/cap/h,3.64,1.82,5.46,uniform,Gates Scenario Specific Report 2022
+anmbr_sludge_yield,,kg-VSS/kg-BOD removed,0.035,0.03,0.04,uniform,Metcalf and Eddy page 1086 (Example 10-2)
+anmbr_methane_yield,methane yield based on COD degraded at 25 degrees C,m3-CH4/kg COD removed,0.28,0.23,0.33,uniform,Salahaldin M.A. Abuabdou et al. 2020 Journal of Cleaner Production Volume 225 https://www.sciencedirect.com/science/article/pii/S0959652620302626#tbl1
+anmbr_moisture_content,,,0.93,0.9,0.96,uniform,Sharma et al. Chapter 7 - Wastewater treatment and sludge management strategies for environmental sustainability
+dissolved_methane_HFMC_removed,,,0.811,0.633,0.989,uniform,Cookney et al. 2016 - https://doi.org/10.1016/j.memsci.2015.12.037
+methane_density,,kg/m3,0.657,,,constant,https://en.wikipedia.org/wiki/Methane
+HFMC,,USD,2750,1700,3800,uniform,https://www.pwrfs.com/product/3m-liqui-cel-exf-series-2-5x8-gas-transfer-membrane-contactor/
+HFMC_lifetime,,yr,5,3,10,uniform,"https://www.pureflowinc.com/ultrafiltration/#:~:text=UF%20membranes%20have%20a%20service,large%20particles%20from%20entering%20it."
+HFMC_weight,,kg,0.5,0.375,0.625,uniform,https://multimedia.3m.com/mws/media/1412461O/3m-liqui-cel-exf-2-5x8-membrane-contactor-lc-1043-data-sheet.pdf

@@ -1,0 +1,34 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+pv_panel	photovolatic_system_solar_panels	USD	742.4	631.04	853.76	uniform	Bill of Materials NG-100 - For LCA Work
+pv_panel_shipping	photovolatic_system_solar_panels_shipping	USD	312	265.2	358.8	uniform	Bill of Materials NG-100 - For LCA Work
+pv_racking_system	photovolatic_system_solar_racking_system	USD	233.02	198.067	267.973	uniform	Bill of Materials NG-100 - For LCA Work
+pv_charge_controllers	photovolatic_system_charge_controllers	USD	201.93	171.6405	232.2195	uniform	Bill of Materials NG-100 - For LCA Work
+pv_connectors	photovolatic_system_connectors	USD	62.66	53.261	72.059	uniform	Bill of Materials NG-100 - For LCA Work
+pv_combiner_box	photovolatic_system_combiner_box	USD	99.95	84.9575	114.9425	uniform	Bill of Materials NG-100 - For LCA Work
+pv_circuit_breaker	photovolatic_system_circuit_breaker	USD	41.8	35.53	48.07	uniform	Bill of Materials NG-100 - For LCA Work
+pv_battery	photovoltaic_system_battery	USD	3402	2891.7	3912.3	uniform	Bill of Materials NG-100 - For LCA Work
+pv_battery_connectors	photovoltaic_system_battery_connectors	USD	284.79	242.0715	327.5085	uniform	Bill of Materials NG-100 - For LCA Work
+pv_battery_switch	photovoltaic_system_battery_kill_switch	USD	89.66	76.211	103.109	uniform	Bill of Materials NG-100 - For LCA Work
+pv_battery_terminal	photovoltaic_system_battery_terminal	USD	19.9	16.915	22.885	uniform	Bill of Materials NG-100 - For LCA Work
+pv_dc_enclosure_panel	photovoltaic_dc_distribution_box_enclosure_panel	USD	122.13	103.8105	140.4495	uniform	Bill of Materials NG-100 - For LCA Work
+pv_dc_din_rail	photovoltaic_dc_distribution_box_din_rail	USD	9.33	7.9305	10.7295	uniform	Bill of Materials NG-100 - For LCA Work
+pv_dc_din_circuit_breaker	photovoltaic_dc_distribution_box_din_circuit_breakers	USD	222	188.7	255.3	uniform	Bill of Materials NG-100 - For LCA Work
+pv_dc_distribution_block	photovoltaic_dc_distribution_box_distribution_block	USD	98.16	83.436	112.884	uniform	Bill of Materials NG-100 - For LCA Work
+pv_dc_voltage_converter	photovoltaic_dc_distribution_box_amp_converter	USD	12	10.2	13.8	uniform	Bill of Materials NG-100 - For LCA Work
+pv_misc		USD	57.84	49.164	66.516	uniform	Bill of Materials NG-100 - For LCA Work
+pv_battery_lifetime		y	11			constant	Orig 11. Key component replacement (v.4)
+pv_voltage_converter_lifetime		y	5			constant	Orig 5. Key component replacement (v.4)
+pv_labor_replacement_batteries		hr/y	0.4	0.32	0.48	uniform	Maintenance schedule_NEWgen100_2021_V.2
+pv_lithium_photovoltaic_battery_lifetime		y	20			constant	Per Robert Bair email
+pv_lithium_battery		USD	3000	2250	3750	uniform	Per Robert Bair email
+pv_labor_replacement_misc_repairs		hr/y	2.4	1.92	2.88	uniform	Maintenance schedule_NEWgen100_2021_V.2
+pv_photovoltaic_panel_area		m2	6.56	4.92	8.2	uniform	https://www.solarelectricsupply.com/hyundai-his-m290rgbk-290-watt-black-frame-solar-panel
+pv_battery_quant		ea	6			constant	Bill of Materials NG-100 - For LCA Work
+pv_aluminum_weight		kg	1.92	1.44	2.4	uniform	https://www.ecodirect.com/SnapNrack-UR-60-Rail-168-Inch-Ultra-Rail-8-Rails-p/snapnrack-015-10205.htm?gclid=CjwKCAjwhYOFBhBkEiwASF3KGYPwZwZ_TXPxjU_EWEAW518J1lz8XmfdPNxH2z293w8-IhoUZc9tsRoCyOgQAvD_BwE
+pv_control_units_weight		kg	2.78	2.085	3.475	uniform	Estimated from Bill of Materials NG-100 - For LCA Work
+pv_cable_length		m	10.838	8.1285	13.5475	uniform	Estimated from Bill of Materials NG-100 - For LCA Work
+pv_connectors_weight		kg	0.53	0.3975	0.6625	uniform	https://www.amazon.com/Renogy-Solar-MC4Y2-Branch-Connectors/dp/B08NV5PB9X?th=1
+pv_switch_weight		kg	0.82	0.615	1.025	uniform	Estimated from Bill of Materials NG-100 - For LCA Work
+pv_polycarbonate_weight		kg	3.62	2.715	4.525	uniform	https://cdn.shopify.com/s/files/1/2137/2301/files/ELITE_SERIES_HINGED_LOCKING_LATCH_POLYCARBONATE_ENCLOSURES.pdf?3777836473883032587
+pv_electronics_passive_weight		kg	0.28	0.21	0.35	uniform	Estimated from Bill of Materials NG-100 - For LCA Work
+wages		USD/cap/h	3.64	1.82	5.46	uniform	Gates Scenario Specific Report 2022

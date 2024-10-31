@@ -1,0 +1,11 @@
+parameter,name (if diff),unit,expected,low,high,distribution,references
+housing_framework,,USD,6538,5557.3,7518.7,uniform,Bill of Materials NG-100 - For LCA Work
+housing_framework_shipping,,USD,850,722.5,977.5,uniform,Bill of Materials NG-100 - For LCA Work
+housing_fittings,,USD,1370.636,1165.0406,1576.2314,uniform,Bill of Materials NG-100 - For LCA Work
+housing_steel_weight,housing_framework_steel_weight,kg,1270,1016,1524,uniform,https://www.seabox.com/cutsheets/SB822.0.pdf
+housing_zinc_coated_steel_weight,,kg,31.163,26.48855,35.83745,uniform,Bill of Materials NG-100 - For LCA Work
+housing_zinc_coat,,m2,1,0.65,1.35,uniform,Calculation
+housing_aluminum_weight,,kg,23.84,20.264,27.416,uniform,Bill of Materials NG-100 - For LCA Work
+housing_PE_weight,,kg,2.8,2.38,3.22,uniform,Bill of Materials NG-100 - For LCA Work
+housing_largerncs_framework,,USD,5230.4,4445.84,6014.96,uniform,Design team documents
+cheaper_housing_framework,,USD,1500,1125,1875,uniform,Bill of Materials NG-100 - For LCA Work

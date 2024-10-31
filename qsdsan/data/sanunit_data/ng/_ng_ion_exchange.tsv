@@ -1,0 +1,57 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+ion_eq2_tank	nutrient_capture_eq2_tank	USD	146.99	124.94	169.04	uniform	Bill of Materials NG-100 - For LCA Work
+ion_eq2_pump	nutrient_capture_eq2_pump	USD	89.05	75.69	102.41	uniform	Bill of Materials NG-100 - For LCA Work
+ion_eq2_powered_valve	nutrient_capture_eq2_powered_valve	USD	63.98	54.38	73.58	uniform	Bill of Materials NG-100 - For LCA Work
+ion_eq2_fittings	nutrient_capture_eq2_fittings	USD	16	13.6	18.4	uniform	Bill of Materials NG-100 - For LCA Work
+ion_zeolite_tanks	nutrient_capture_zeolite_tank	USD	1208.07	1026.86	1389.28	uniform	Bill of Materials NG-100 - For LCA Work
+ion_filtration_media	nutrient_capture_filtration_media	USD	251.64	213.89	289.39	uniform	Bill of Materials NG-100 - For LCA Work
+ion_gac	nutrient_capture_gac	USD	88	66	110	uniform	Bill of Materials NG-100 - For LCA Work
+ion_zeolite	nutrient_capture_zeolite	USD	81	68.85	93.15	uniform	Bill of Materials NG-100 - For LCA Work
+ion_zeolite_fittings	nutrient_capture_zeolite_fittings	USD	257.41	218.8	296.02	uniform	Bill of Materials NG-100 - For LCA Work
+ion_eq3_tank	nutrient_capture_eq3_tank	USD	160.19	136.16	184.22	uniform	Bill of Materials NG-100 - For LCA Work
+ion_eq3_pump	nutrient_capture_eq3_pump	USD	89.05	75.69	102.41	uniform	Bill of Materials NG-100 - For LCA Work
+ion_eq3_filter	nutrient_capture_eq3_filter	USD	81.33	69.13	93.53	uniform	Bill of Materials NG-100 - For LCA Work
+ion_eq3_fittings	nutrient_capture_eq3_fittings	USD	7.87	6.69	9.05	uniform	Bill of Materials NG-100 - For LCA Work
+ion_gac_lifetime	gac_lifetime	y	0.5			constant	Orig 0.5. Key component replacement (v.4)
+ion_zeolite_lifetime	zeolite_lifetime	y	5			constant	Orig 5. Key component replacement (v.4)
+ion_solenoid_valve_lifetime	solenoid_valve_lifetime	y	3			constant	Orig 3. Key component replacement (v.4)
+ion_other_pump_lifetime	pump_all_others_lifetime	y	6			constant	Orig 6. Key component replacement (v.4)
+ion_COD_removal	ncs_COD_original_removal		0.6281	0.3835	0.8726	uniform	UIUC Request Data - Gary Shyu
+ion_TN_removal	ncs_totalN_original_removal		0.787	0.5309	1	uniform	UIUC Request Data - Gary Shyu
+ion_TP_removal	ncs_totalP_original_removal		0.3614	0.1463	0.5765	uniform	UIUC Request Data - Gary Shyu
+ion_labor_maintenance_zeolite_regeneration	labor_maintenance_zeolite_regeneration	hr/y	60	48	72	uniform	Maintenance schedule_NEWgen100_2021_V.2
+ion_labor_maintenance_GAC_replacement	labor_maintenance_GAC_replacement	hr/y	6	4.8	7.2	uniform	Maintenance schedule_NEWgen100_2021_V.2
+ion_labor_replacement_zeolite	labor_replacement_zeolite	hr/y	2	1.6	2.4	uniform	Maintenance schedule_NEWgen100_2021_V.2
+ion_labor_replacement_misc_repairs	labor_replacement_misc_repairs	hr/y	2.4	1.92	2.88	uniform	Maintenance schedule_NEWgen100_2021_V.2
+ion_labor_replacement_other_pump		hrs/yr	0.17	0.14	0.2	uniform	Maintenance schedule_NEWgen100_2021_V.2
+ion_backwash_pump_energy_percycle		kWh	0.00008	0.000064	0.000096	uniform	Energy Budget - NEWgen.100 (v.2)
+ion_batch_cycle_perday		# batches day-1	33.068783	26.4550264	39.6825396	uniform	Energy Budget - NEWgen.100 (v.2)
+ion_gac_weight		kg	80			constant	https://www.grainger.com/product/SPECTRUM-Sodium-Chloride-6NNL3
+ion_gac_unit_cost		USD/kg	1.1	0.83	1.38	uniform	calculated
+ion_zeolite_weight		kg	350			constant	NEWgen 100 Durban EFT manuscript (updated Dec 22 2020)
+ion_zeolite_unit_cost		USD/kg	0.23	0.2	0.27	uniform	calculated
+ion_NaCl_weight		kg	40			constant	"Castro et al., 2021 https://doi.org/10.1016/j.scitotenv.2021.145938"
+ion_NaCl_unit_cost		USD/kg	0.22	0.17	0.28	uniform	calculated
+ion_NaOH_weight		kg	2			constant	"Castro et al., 2021 https://doi.org/10.1016/j.scitotenv.2021.145938"
+ion_NaOH_unit_cost		USD/kg	0.16	0.12	0.2	uniform	https://www.grainger.com/product/SPECTRUM-Sodium-Chloride-6NNL3
+ion_regen_freq_per_yr		events/yr	3	2.4	3.6	uniform	Maintenance schedule_NEWgen100_2021_V.2
+ion_sorption_capacity		g-NH4-N/kg zeolite	16.5			constant	https://www.grainger.com/product/LABCHEM-Sodium-Hydroxide-9JEA3
+ion_regen_efficiency			0.96	0.95	0.97	uniform	"Menkveld and Broeders, 2017; van Zelm et al., 2020"
+ion_desorption_recovery_efficiency			0.54			constant	"Castro et al., 2021 https://doi.org/10.1016/j.scitotenv.2021.145938"
+ion_polycarbonate_weight		kg	1.13	0.8475	1.4125	uniform	calculated
+ion_steel_weight		kg	0.455	0.340909091	0.568181818	uniform	SURT report average from an average across water
+ion_PE_weight		kg	89.09090909	66.81818182	111.3636364	uniform	calculated
+ion_PVC_weight		kg	15.88172727	11.91129545	19.85215909	uniform	calculated
+ion_plastic_weight		kg	32.12	24.09	40.15	uniform	calculated
+ion_pump_amount		ea	1			constant	BOM
+ion_piping_PVC_weight		kg	9	7.65	10.35	uniform	BOM
+wages		USD/cap/h	3.64	1.82	5.46	uniform	Gates Scenario Specific Analysis 2022
+ion_piping		USD	138.25	117.5125	158.9875	uniform	BOM
+ion_replacement_scenario_drums		USD	156	100	212	uniform	Design team documents
+ion_replacement_scenario_replacement		hr/y	30			constant	Design team documents
+ion_replacement_scenario_zeolite_massflow		kg/y	1050			constant	Design team documents
+ion_largerncs_scenario_zeolite_tanks		USD	2000	1700	2300	uniform	Design team documents
+ion_largerncs_scenario_replacement		hr/y	15			constant	Design team documents
+ion_largerncs_scenario_zeolite		USD	243	206.55	279.45	uniform	Design team documents
+ion_zeolite_fittings_largerncs		USD	357.41	285.93	428.89	uniform	calculated
+ion_largerncs_scenario_zeolite_replacement_mass		kg/y	1050			constant	Design team documents

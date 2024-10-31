@@ -1,0 +1,17 @@
+parameter,name (if diff),unit,expected,low,high,distribution
+belt_conveyor_cost,,USD,300,210,390,uniform
+belt_daily_operation,,hr/d,3,2.1,3.9,uniform
+belt_power_demand,,kW,0.06,0.042,0.078,uniform
+solid_inlet_chamber_cost,,USD,50,35,65,uniform
+liquid_inlet_chamber_cost,,USD,50,35,65,uniform
+housing_cost,,USD,300,210,390,uniform
+squeegee_cost,,USD,12.62,8.834,16.406,uniform
+splash_shield_cost,,USD,89.11,62.377,115.843,uniform
+stainless_steel_weight,,kg,6.8,4.76,8.84,uniform
+polyethylene_weight,,kg,5,3.5,6.5,uniform
+belt_separator_maintenance,,hr/yr,20,14,26,uniform
+material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
+miscellaneous_cost_ratio,,fraction,0.169,0.1183,0.2197,uniform
+wages,,USD/h,3.64,1.82,5.46,uniform
+moisture_content_out,,%,96.1,94.9,97.3,uniform
+belt_separator_TSS_removal,,%,75,52.5,97.5,uniform

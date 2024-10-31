@@ -1,0 +1,10 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+grid_power_ac_conversion		USD	400	340	460	uniform	Bill of Materials NG-100 - For LCA Work
+grid_power_dc_distribution		USD	463.62	394.077	533.163	uniform	Bill of Materials NG-100 - For LCA Work
+grid_power_misc		USD	57.84	37.596	78.084	uniform	Bill of Materials NG-100 - For LCA Work
+grid_labor_replacement_misc_repairs		hr/y	2.4	1.92	2.88	uniform	Maintenance schedule_NEWgen100_2021_V.2
+grid_polycarbonate_weight		kg	3.64	2.73	4.55	uniform	Estimated from Bill of Materials NG-100 - For LCA Work
+grid_aluminium_weight		kg	1.36	1.02	1.7	uniform	https://www.alliedmoulded.com/product/aluminum-back-panel-for-use-with-16x14-enclosures-pa164/
+grid_electronics_passive_weight		kg	4	3	5	uniform	Estimated from Bill of Materials NG-100 - For LCA Work
+grid_electronics_active_weight		kg	3.5	2.625	4.375	uniform	Estimated from Bill of Materials NG-100 - For LCA Work
+wages		USD/cap/h	3.64	1.82	5.46	uniform	Gates Scenario Specific Report 2022

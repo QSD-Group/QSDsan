@@ -1,0 +1,15 @@
+parameter,name (if diff),unit,expected,low,high,distribution
+filterpress_solids_in_moisture_content,,%,96.5,95,98,uniform
+moisture_content_out,,%,56,28,84,uniform
+filterpress_purchase_cost,,USD,1591,1113.7,2068.3,uniform
+filterpress_ss_weight,,kg,26,18.2,33.8,uniform
+filterpress_energy_persolids,,kwh/kg,0.03,0.025,0.035,uniform
+filterpress_batch_cycle_per_day,,# batches day-1,1,,,constant
+filterpress_maintenance,,h/yr,9,6.3,11.7,uniform
+settled_frac,,fraction,0.925,0.9,0.95,uniform
+wages,,USD/h,3.64,1.82,5.46,uniform
+urine_excretion,,g/cap/d,1400,800,2500,triangular
+feces_excretion,,g/cap/d,250,75,520,triangular
+material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
+miscellaneous_cost_ratio,,fraction,0.169,0.1183,0.2197,uniform
+TSS_removal,,%,90,85,95,uniform

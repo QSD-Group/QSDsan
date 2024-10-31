@@ -77,6 +77,10 @@ from ._biogenic_refinery import *
 from ._eco_san import *
 from ._reclaimer import *
 
+# System-specific unit (private)
+from ._new_generator import *
+from ._scg_zyclonic import *
+
 # From then on the order doesn't matter, listed alphabetically
 from . import (
         _abstract,
@@ -119,6 +123,10 @@ from . import (
         _biogenic_refinery,
         _eco_san,
         _reclaimer,
+
+        # System-specific units (private)
+        _new_generator,
+        _scg_zyclonic,
         )
 
 
@@ -163,4 +171,8 @@ __all__ = (
         *_biogenic_refinery.__all__,
         *_reclaimer.__all__,
         *_eco_san.__all__,
+
+        # System-specific units (private)
+        *_new_generator.__all__,
+        *_scg_zyclonic.__all__,
         )

@@ -1,0 +1,18 @@
+﻿parameter,name (if diff),unit,expected,low,high,distribution
+treatment_capacity,,L/day,6,4.2,7.8,uniform
+size,,L,0.1,0.07,0.13,uniform
+joule_heater_cost,,USD,119.9,83.93,155.87,uniform
+thermocouple_port_cost,,USD,71.33,49.931,92.729,uniform
+thermocouple_port_quantity,,piece,4,,,constant
+temperature_control,,USD,109.45,76.615,142.285,uniform
+valve_cost,,USD,177.75,124.425,231.075,uniform
+valve_quantity,,piece,4,,,constant
+tubing_cost,,USD,267.85,187.495,348.205,uniform
+pasteurizer_maintenance,,h/yr,40,28,52,uniform
+temp_pasteurization,,C,90,85,95,uniform
+solids_inlet_temp,,C,25.6,25.14,26.06,uniform
+heat_loss,,%,30,20,40,uniform
+stainless_steel_weight,,kg,4,2.8,5.2,uniform
+wages,,USD/h,3.64,1.82,5.46,uniform
+material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
+miscellaneous_cost_ratio,,fraction,0.169,0.1183,0.2197,uniform

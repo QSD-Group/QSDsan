@@ -1,0 +1,17 @@
+﻿parameter,name,unit,expected,low,high,distribution
+water_recovery,,fraction,0.6,0.33,0.75,uniform
+daily_flow_rate,,L/d,100,,,constant
+water_flux,,L/(m2*h),15,,,constant
+TDS_removal,,fraction,0.95,0.9,0.99,triangular
+reverse_osmosis_system_cost,,USD,2227,1558.9,2895.1,uniform
+piping_cost,,USD,93,65.1,120.9,uniform
+RO_system_power_demand,,kW,0.5,0.35,0.65,uniform
+membrane_cost,,USD,140,98,182,uniform
+membrane_life_time,,yr,2,,,constant
+reverse_osmosis_maintenance,,hr/yr,12,8.4,15.6,uniform
+reverse_osmosis_operation,,hr/d,2,1.4,2.6,uniform
+wages,,USD/h,3.64,1.82,5.46,uniform
+material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
+GFRPlastic_weight,,kg,15,10.5,19.5,uniform
+membrane_area,,m2,2,1.4,2.6,uniform
+Steel_weight,,kg,5,3.5,6.5,uniform

@@ -1,0 +1,15 @@
+parameter,name (if diff),unit,expected,low,high,distribution,references
+pretreatment_eq_tank,,USD,553,470.05,635.95,uniform,BOM
+pretreatment_tank_PE_weight,,kg,96,81.6,110.4,uniform,BOM
+pretreatment_piping,,USD,138.25,117.5125,158.9875,uniform,BOM
+pretreatment_piping_PVC_weight,,kg,9,7.65,10.35,uniform,BOM
+pretreatment_feed_pump,,USD,170,144.5,195.5,uniform,Bill of Materials NG-100 - For LCA Work
+pretreatment_other_pump_lifetime,,y,6,,,constant,Orig 6. Key component replacement (v.4)
+pretreatment_feed_pump_energy_percycle,,kWh,0.00136,0.00109,0.00163,uniform,Energy Budget - NEWgen.100 (v.2)
+pretreatment_batch_cycle_perday,,# batches day-1,33.07,26.46,39.68,uniform,Energy Budget - NEWgen.100 (v.2)
+pretreatment_labor_replacement_other_pump,,hrs/yr,0.17,0.14,0.19,uniform,Maintenance schedule_NEWgen100_2021_V.2
+pretreatment_labor_screen_pit_cleaning,,hrs/yr,13,11.05,14.95,uniform,Maintenance schedule_NEWgen100_2021_V.2
+pretreatment_barscreen_cost,pretreatment_barscreen_cost,USD,70.38,45.75,95.01,uniform,https://www.grainger.com/product/GRAINGER-APPROVED-Alloy-Steel-2HKE4
+pretreatment_barscreen_weight,barscreen_steel_weight,kg,4.76,3.09,6.43,uniform,https://www.grainger.com/product/GRAINGER-APPROVED-Alloy-Steel-2HKE4
+pretreatment_barscreen,,USD,70.38,45.747,95.013,uniform,https://www.grainger.com/search/raw-materials/alloy-steel/alloy-steel-blanks-flats-bars-plates-and-sheet-stock?attrs=Width%7C2+in&filters=attrs&searchQuery=steel+bar&sst=4
+wages,,USD/cap/h,3.64,1.82,5.46,uniform,Gates Scenario Specific Report 2022
