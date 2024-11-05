@@ -77,7 +77,7 @@ There are multiple possible reasons:
         Then when you open the Jupyter Notebook, select the ``<KERNEL NAME>`` kernel when you create a new notebook you can find more details in this post about `enabling multiple kernels in Jupyter Notebook <https://medium.com/@ace139/enable-multiple-kernels-in-jupyter-notebooks-6098c738fe72>`_.
 
 
-``Underlying object has vanished``
+``underlying object has vanished``
 **********************************
 This error is related to ``numba`` caching, we haven't figured out the exact mechanism, but clearing cache will help resolve it. One/both of the following approaches should work:
 
@@ -85,9 +85,7 @@ This error is related to ``numba`` caching, we haven't figured out the exact mec
 
    .. code::
 
-       get-childitem <DIR> -recurse -include *.pyc | remove-item
-       get-childitem <DIR> -recurse -include *.nbc | remove-item
-       get-childitem <DIR> -recurse -include *.nbi | remove-item
+       get-childitem . -recurse -include *.pyc, *.nbc, *.nbi | remove-item
 
 2. Uninstalling and reinstalling a different version of ``numba``. Suppose you now have 0.58.1 and the newest version is 0.60.0, you can do:
 
