@@ -4,6 +4,32 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
+`1.4.0`_
+--------
+- A lot of the updates have been focused on the dynamic simulation, now the open-loop Benchmark Simulation Model No. 2 (`BSM2 <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm2>`_) configuration has been implemented with new process models and unit operation including
+
+	- :class:`qsdsan.processes.ADM1p`
+	- :class:`qsdsan.processes.ADM1_p_extension`
+	- :class:`qsdsan.processes.ModifiedADM1`
+	- :class:`qsdsan.processes.mASM2d`
+	- :class:`qsdsan.sanunits.IdealClarifier`
+	- :class:`qsdsan.sanunits.PrimaryClarifier`
+	- :class:`qsdsan.sanunits.PrimaryClarifierBSM2`
+	- :class:`qsdsan.sanunits.GasExtractionMembrane`
+	- :class:`qsdsan.sanunits.Thickener`
+	- :class:`qsdsan.sanunits.Centrifuge`
+	- :class:`qsdsan.sanunits.Incinerator`
+	- :class:`qsdsan.sanunits.BatchExperiment`
+	- :class:`qsdsan.sanunits.PFR`
+	- :class:`qsdsan.sanunits.BeltThickener`
+	- :class:`qsdsan.sanunits.SludgeCentrifuge`
+	- :class:`qsdsan.sanunits.SludgeThickener`
+
+- New publications
+
+	- Feng et al., *Environmental Science & Technology*, on the sustainability of `hydrothermal liquefaction (HTL) <https://doi.org/10.1021/acs.est.3c07394>`_ for resource recovery from a range of wet organic wastes.
+
+
 `1.3.0`_
 --------
 - Enhance and use QSDsan's capacity for dynamic simulation for emerging technologies and benchmark configurations (see EXPOsan METAB and PM2 (on the algae branch, still under development) modules).
@@ -185,6 +211,7 @@ Official release of ``QSDsan`` v1.0.0!
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
+.. _1.4.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.4.0
 .. _1.3.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.3.0
 .. _1.2.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.2.0
 .. _1.1.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.1.0

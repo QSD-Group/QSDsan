@@ -452,15 +452,16 @@ class WasteStream(SanStream):
             _ws_info += int(bool(self.pH))*f'  pH         : {self.pH:.1f}\n'
             _ws_info += int(bool(self.SAlk))*f'  Alkalinity : {self.SAlk:.1f} mg/L\n'
             if details:
-                _ws_info += int(bool(self.COD))   *f'  COD        : {self.COD:.1f} mg/L\n'
-                _ws_info += int(bool(self.BOD))   *f'  BOD        : {self.BOD:.1f} mg/L\n'
-                _ws_info += int(bool(self.TC))    *f'  TC         : {self.TC:.1f} mg/L\n'
-                _ws_info += int(bool(self.TOC))   *f'  TOC        : {self.TOC:.1f} mg/L\n'
-                _ws_info += int(bool(self.TN))    *f'  TN         : {self.TN:.1f} mg/L\n'
+                _ws_info += int(bool(self.COD))       *f'  COD        : {self.COD:.1f} mg/L\n'
+                _ws_info += int(bool(self.BOD))       *f'  BOD        : {self.BOD:.1f} mg/L\n'
+                _ws_info += int(bool(self.TC))        *f'  TC         : {self.TC:.1f} mg/L\n'
+                _ws_info += int(bool(self.TOC))       *f'  TOC        : {self.TOC:.1f} mg/L\n'
+                _ws_info += int(bool(self.TN))        *f'  TN         : {self.TN:.1f} mg/L\n'
                 # `TKN` not included as the users need to define that to include in TKN calculation
                 # _ws_info += int(bool(self.TKN))   *f'  TKN        : {self.TKN:.1f} mg/L\n'
-                _ws_info += int(bool(self.TP))    *f'  TP         : {self.TP:.1f} mg/L\n'
-                _ws_info += int(bool(self.TK))    *f'  TK         : {self.TK:.1f} mg/L\n'
+                _ws_info += int(bool(self.TP))        *f'  TP         : {self.TP:.1f} mg/L\n'
+                _ws_info += int(bool(self.TK))        *f'  TK         : {self.TK:.1f} mg/L\n'
+                _ws_info += int(bool(self.get_TSS())) *f'  TSS        : {self.get_TSS():.1f} mg/L\n'
                 # _ws_info += int(bool(self.charge))*f'  charge     : {self.charge:.1f} mmol/L\n'
             else:
                 _ws_info += '  ...\n'
@@ -633,7 +634,7 @@ class WasteStream(SanStream):
         if specification:
             try:
                 specified_IDs = set(_get(all_cmps, specification))
-            except AttributeError: # no pre-defined groups
+            except AttributeError: # no predefined groups
                 try:
                     specified_IDs = _specific_groups[specification]
                 except KeyError: # specification not in the default ones
@@ -729,6 +730,10 @@ class WasteStream(SanStream):
     def pH(self):
         '''[float] pH, unitless.'''
         return self._liq_sol_properties('pH', 7.)
+    @pH.setter
+    def pH(self, ph):
+        if self.phase != 'g':
+            self._pH = ph
 
     @property
     def SAlk(self):
@@ -1073,7 +1078,7 @@ class WasteStream(SanStream):
         return VSS
 
     def get_ISS(self):
-        '''[float] Inorganic/involatile suspended solids, in mg/L.'''
+        '''[float] Inorganic/non-volatile suspended solids, in mg/L.'''
         return self.composite('solids', particle_size='x', volatile=False)
 
 
@@ -1219,7 +1224,11 @@ class WasteStream(SanStream):
         self._scope = s
 
     def _init_state(self):
-        self.state = np.append(self.conc.astype('float64'), self.get_total_flow('m3/d'))
+        if self.phase == 'l':
+            self.state = np.append(self.conc.astype('float64'), self.get_total_flow('m3/d'))
+        else:
+            Q = self.F_vol # m3/hr
+            self.state = np.append(self.mass.astype('float64')/Q*1e3, Q*24)
         self.dstate = np.zeros_like(self.state)
 
     def _state2flows(self):
@@ -1271,23 +1280,23 @@ class WasteStream(SanStream):
         >>> ws = WasteStream.codstates_inf_model('ws_codstates', flow_tot=100)
         >>> ws.show()
         WasteStream: ws_codstates
-         phase: 'l', T: 298.15 K, P: 101325 Pa
-         flow (g/hr): S_F        8.6
-                      S_U_Inf    2.15
-                      C_B_Subst  4
-                      X_B_Subst  22.7
-                      X_U_Inf    5.59
-                      X_Ig_ISS   5.23
-                      S_NH4      2.5
-                      S_PO4      0.8
-                      S_K        2.8
-                      S_Ca       14
-                      S_Mg       5
-                      S_CO3      12
-                      S_N2       1.8
-                      S_CAT      0.3
-                      S_AN       1.2
-                      ...
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): S_F        8.6
+                     S_U_Inf    2.15
+                     C_B_Subst  4
+                     X_B_Subst  22.7
+                     X_U_Inf    5.59
+                     X_Ig_ISS   5.23
+                     S_NH4      2.5
+                     S_PO4      0.8
+                     S_K        2.8
+                     S_Ca       14
+                     S_Mg       5
+                     S_CO3      12
+                     S_N2       1.8
+                     S_CAT      0.3
+                     S_AN       1.2
+                     ...        9.96e+04
          WasteStream-specific properties:
           pH         : 7.0
           Alkalinity : 10.0 mg/L
@@ -1298,6 +1307,7 @@ class WasteStream(SanStream):
           TN         : 40.0 mg/L
           TP         : 10.0 mg/L
           TK         : 28.0 mg/L
+          TSS        : 209.3 mg/L
          Component concentrations (mg/L):
           S_F          86.0
           S_U_Inf      21.5
@@ -1493,23 +1503,23 @@ class WasteStream(SanStream):
         >>> ws = WasteStream.codbased_inf_model('ws_codinf', flow_tot=100)
         >>> ws.show()
         WasteStream: ws_codinf
-         phase: 'l', T: 298.15 K, P: 101325 Pa
-         flow (g/hr): S_F        7.5
-                      S_U_Inf    3.25
-                      C_B_Subst  4
-                      X_B_Subst  22.7
-                      X_U_Inf    5.58
-                      X_Ig_ISS   5.23
-                      S_NH4      2.5
-                      S_PO4      0.8
-                      S_K        2.8
-                      S_Ca       14
-                      S_Mg       5
-                      S_CO3      12
-                      S_N2       1.8
-                      S_CAT      0.3
-                      S_AN       1.2
-                      ...
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): S_F        7.5
+                     S_U_Inf    3.25
+                     C_B_Subst  4
+                     X_B_Subst  22.7
+                     X_U_Inf    5.58
+                     X_Ig_ISS   5.23
+                     S_NH4      2.5
+                     S_PO4      0.8
+                     S_K        2.8
+                     S_Ca       14
+                     S_Mg       5
+                     S_CO3      12
+                     S_N2       1.8
+                     S_CAT      0.3
+                     S_AN       1.2
+                     ...        9.96e+04
          WasteStream-specific properties:
           pH         : 7.0
           Alkalinity : 10.0 mg/L
@@ -1520,6 +1530,7 @@ class WasteStream(SanStream):
           TN         : 40.0 mg/L
           TP         : 10.0 mg/L
           TK         : 28.0 mg/L
+          TSS        : 209.3 mg/L
          Component concentrations (mg/L):
           S_F          75.0
           S_U_Inf      32.5
@@ -1721,23 +1732,23 @@ class WasteStream(SanStream):
         >>> ws = WasteStream.bodbased_inf_model('ws_bodinf', flow_tot=100)
         >>> ws.show()
         WasteStream: ws_bodinf
-         phase: 'l', T: 298.15 K, P: 101325 Pa
-         flow (g/hr): S_F        8.72
-                      S_U_Inf    3.78
-                      C_B_Subst  4
-                      X_B_Subst  22.7
-                      X_U_Inf    3.94
-                      X_Ig_ISS   4.93
-                      S_NH4      2.5
-                      S_PO4      0.8
-                      S_K        2.8
-                      S_Ca       14
-                      S_Mg       5
-                      S_CO3      12
-                      S_N2       1.8
-                      S_CAT      0.3
-                      S_AN       1.2
-                      ...
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): S_F        8.72
+                     S_U_Inf    3.78
+                     C_B_Subst  4
+                     X_B_Subst  22.7
+                     X_U_Inf    3.94
+                     X_Ig_ISS   4.93
+                     S_NH4      2.5
+                     S_PO4      0.8
+                     S_K        2.8
+                     S_Ca       14
+                     S_Mg       5
+                     S_CO3      12
+                     S_N2       1.8
+                     S_CAT      0.3
+                     S_AN       1.2
+                     ...        9.96e+04
          WasteStream-specific properties:
           pH         : 7.0
           Alkalinity : 10.0 mg/L
@@ -1748,6 +1759,7 @@ class WasteStream(SanStream):
           TN         : 40.0 mg/L
           TP         : 10.0 mg/L
           TK         : 28.0 mg/L
+          TSS        : 197.1 mg/L
          Component concentrations (mg/L):
           S_F          87.2
           S_U_Inf      37.8
@@ -1952,23 +1964,23 @@ class WasteStream(SanStream):
         >>> ws = WasteStream.sludge_inf_model('ws_sludgeinf', flow_tot=100)
         >>> ws.show()
         WasteStream: ws_sludgeinf
-         phase: 'l', T: 298.15 K, P: 101325 Pa
-         flow (g/hr): S_F        1.08
-                      S_U_Inf    8.65
-                      C_B_Subst  1.08
-                      X_B_Subst  81.9
-                      X_OHO      192
-                      X_AOO      9.62
-                      X_NOO      9.62
-                      X_PAO      9.62
-                      X_U_Inf    468
-                      X_U_OHO_E  285
-                      X_U_PAO_E  14.3
-                      X_Ig_ISS   298
-                      S_NH4      10
-                      S_PO4      5
-                      S_K        2.8
-                      ...
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): S_F        1.08
+                     S_U_Inf    8.65
+                     C_B_Subst  1.08
+                     X_B_Subst  81.9
+                     X_OHO      192
+                     X_AOO      9.62
+                     X_NOO      9.62
+                     X_PAO      9.62
+                     X_U_Inf    468
+                     X_U_OHO_E  285
+                     X_U_PAO_E  14.3
+                     X_Ig_ISS   298
+                     S_NH4      10
+                     S_PO4      5
+                     S_K        2.8
+                     ...        9.88e+04
          WasteStream-specific properties:
           pH         : 7.0
           Alkalinity : 10.0 mg/L
@@ -1979,6 +1991,7 @@ class WasteStream(SanStream):
           TN         : 750.0 mg/L
           TP         : 250.0 mg/L
           TK         : 52.9 mg/L
+          TSS        : 10000.0 mg/L
          Component concentrations (mg/L):
           S_F          10.8
           S_U_Inf      86.5

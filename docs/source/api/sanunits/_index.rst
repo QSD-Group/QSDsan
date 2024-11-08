@@ -49,6 +49,7 @@ Individual Unit Operations
    Lagoon
    membrane_bioreactor
    MembraneDistillation
+   MembraneGasExtraction
    non_reactive
    PolishingFilter
    pumping
@@ -56,8 +57,9 @@ Individual Unit Operations
    Screening
    Sedimentation
    SepticTank
-   sludge_thickening
    SludgePasteurization
+   sludge_thickening
+   sludge_treatment   
    suspended_growth_bioreactor
    tank
    toilet

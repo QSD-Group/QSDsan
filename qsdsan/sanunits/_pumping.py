@@ -716,7 +716,7 @@ class WWTpump(SanUnit):
         val_dct = dict(
             L_s=50, # length of suction pipe, [ft]
             L_d=50, # length of discharge pipe, [ft]
-            H_ts=0., # H_ds_LIFT (D) - H_ss_LIFT (0)
+            H_ts=5., # H_ds_LIFT (D) - H_ss_LIFT (0)
             H_p=0. # no pressure
             )
         val_dct.update(kwargs)
