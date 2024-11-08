@@ -1,0 +1,11 @@
+prefix=C:/Program Files/Graphviz
+exec_prefix=C:/Program Files/Graphviz
+libdir=C:/Program Files/Graphviz/lib
+includedir=C:/Program Files/Graphviz/include
+
+Name: libgvpr
+Description: The GVPR library
+Version: 12.1.0
+Libs: -L${libdir} -lgvpr -lcgraph -lcdt
+Cflags: -I${includedir} -I${includedir}/graphviz
+

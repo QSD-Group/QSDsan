@@ -1,0 +1,10 @@
+prefix=C:/Program Files/Graphviz
+exec_prefix=C:/Program Files/Graphviz
+libdir=C:/Program Files/Graphviz/lib
+includedir=C:/Program Files/Graphviz/include
+
+Name: libcdt
+Description: Container DataType library
+Version: 12.1.0
+Libs: -L${libdir} -lcdt
+Cflags: -I${includedir} -I${includedir}/graphviz

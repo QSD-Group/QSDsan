@@ -29,7 +29,7 @@ from ..sanunits._pumping import (
 from ..equipments import Blower, GasPiping
 from ..utils import auom, calculate_excavation_volume
 
-from qsdsan.utils import ospath, time_printer, load_data, get_SRT, get_oxygen_heterotrophs, get_oxygen_autotrophs, get_airflow, get_P_blower
+from ..utils import ospath, time_printer, load_data, get_SRT, get_oxygen_heterotrophs, get_oxygen_autotrophs, get_airflow, get_P_blower
 
 
 __all__ = ('ActivatedSludgeProcess','TreatmentTrains',)
@@ -61,7 +61,7 @@ class ActivatedSludgeProcess(SanUnit):
     ins : Iterable
         Influent, air for aeration.
     outs : Iterable
-        Effluent, waste activated sludge sludge, gas emission.
+        Effluent, waste activated sludge, gas emission.
     N_train : int
         Number of treatment train, should be at least two in case one failing.
     T : float
@@ -71,7 +71,7 @@ class ActivatedSludgeProcess(SanUnit):
         will calculated based on `inert_biomass` of the current `CompiledComponents` if not provided.
     X_v : float
         Reactor volatile suspended solids (biomass concentration in the aeration tank),
-        referred to as mixed volatile liquor suspended solids
+        referred to as mixed liquor volatile suspended solids
         (MLVSS, assumed to be the same as MLSS in [2]_), [mg/L].
         X_v = X_i + X_a (inert + active)
     X_e : float
@@ -306,8 +306,16 @@ class ActivatedSludgeProcess(SanUnit):
         # Non-particulate components
         substrates = cmps.substrates
         S_conc = eff.iconc['substrates'] * S/S_0
+        print(f"eff.iconc['substrates'] = {eff.iconc['substrates']}")
         eff_dct = dict.fromkeys(cmps.IDs, 0)
         eff_dct.pop('H2O')
+        print(eff.iconc['substrates']) #check how we arrive at this
+        print("substrate", substrates) #added to check
+        print("s_conc", S_conc) #added to check
+        
+        
+        
+        
         if len(substrates) > 1:
             eff_dct.update({cmp.ID: conc for cmp, conc in zip(substrates, S_conc)})
         else: # Only one component in `substrates`
@@ -315,6 +323,9 @@ class ActivatedSludgeProcess(SanUnit):
         # Non-substrate and non-particulate (soluble, colloidal, dissolved gas) components
         # will be split in the same way as flow rate mass-wise
         was_dct = eff_dct.copy()
+        print(eff.iconc['substrates']) #check how we arrive at this
+        print("substrate", substrates) #added to check
+        print("s_conc", S_conc) #added to check
 
         # Particulate components
         try:
