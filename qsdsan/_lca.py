@@ -459,28 +459,32 @@ class LCA:
                 impacts[m] += n*time*F_mass
         return impacts
 
-    # def get_other_impacts(self, time=None, time_unit='hr'):
-    #     '''
-    #     Return all additional impacts from "other" :class:`ImpactItems` objects,
-    #     based on defined quantity.
-    #     '''
-    #     self.refresh_other_items()
-    #     impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-    #     other_dct = self.other_items
-    #     if not time:
-    #         time = self.lifetime_hr
-    #     else:
-    #         time = auom(time_unit).convert(float(time), 'hr')
-    #     factor = time / self.lifetime_hr
-    #     for i in other_dct.keys():
-    #         item = ImpactItem.get_item(i)
-    #         for m, n in item.CFs.items():
-    #             if m not in impacts.keys():
-    #                 continue
-    #             impacts[m] += n*other_dct[i]['quantity']*factor
-    #     return impacts
+    def get_other_impacts(self, annual=False):
+        '''
+        Return all additional impacts from "other" :class:`ImpactItems` objects
+        based on defined quantity.
+        
+        Parameters
+        ----------
+        annual : bool
+            If True, will return the annual impacts considering `uptime_ratio`
+            instead of across the system lifetime.
+        '''
+        self.refresh_other_items()
+        impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
+        other_dct = self.other_items
+        for i in other_dct.keys():
+            item = ImpactItem.get_item(i)
+            for m, n in item.CFs.items():
+                if m not in impacts.keys():
+                    continue
+                impacts[m] += n*other_dct[i]['quantity']
+        if annual == True:
+            lifetime = self.lifetime
+            for i, j in impacts.items(): impacts[i] = j/lifetime
+        return impacts
     
-    def get_other_impacts(self, units=None, time=None, time_unit='hr'):
+    def get_other_unit_impacts(self, units=None, time=None, time_unit='hr'):
         '''
         Return all additional impacts from "other" :class:`ImpactItems` objects
         for specified units, based on defined quantity.
