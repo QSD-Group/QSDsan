@@ -1,23 +1,24 @@
-﻿parameter,name (if diff),unit,expected,low,high,distribution
-moisture_content_out,,%,7,4,10,uniform
-drying_CO2_emissions,,% of total C,0.016,0,0.032,uniform
-drying_CH4_emissions,,% of total C,0.0003,0,0.0006,uniform
-drying_NH3_emissions,,% of total N,0.0026,0,0.0052,uniform
-NH3_to_N2O,,% of NH3,0.01,0,0.02,uniform
-carbon_COD_ratio,,g C*g COD-1,0.35,0.25,0.4,triangular
-housing_cost,,USD,150,105,195,uniform
-duct_cost,,USD,32,22.4,41.6,uniform
-ventilator_cost,,USD,240,168,312,uniform
-ventilator_daily_operation,,h,8,5.6,10.4,uniform
-ventilator_power_demand,,kW,0.02,0.014,0.026,uniform
-conveyor_cost,,USD,240,168,312,uniform
-conveyor_daily_operation,,h,2.5,2,3,uniform
-conveyor_power_demand,,kW,0.06,0.042,0.078,uniform
-evaporate_speed,,L/day,4,2.8,5.2,uniform
-miscellaneous_parts_cost,,USD,250,175,325,uniform
-stainless_steel_weight,,kg,16.6,11.62,21.58,uniform
-polyethylene_weight,,kg,15,10.5,19.5,uniform
-wages,,USD/h,3.64,1.82,5.46,uniform
-drying_tunnel_maintenance,,h/yr,12,8.4,15.6,uniform
-material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
-miscellaneous_cost_ratio,,fraction,0.169,0.1183,0.2197,uniform
+parameter,name (if diff),unit,expected,low,high,distribution,,
+moisture_content_out,,%,7,4,10,uniform,,
+drying_CO2_emissions,,% of total C,0.016,0,0.032,uniform,,
+drying_CH4_emissions,,% of total C,0.0003,0,0.0006,uniform,,
+drying_NH3_emissions,,% of total N,0.5,0.3,0.83,triangular,,
+NH3_to_N2O,,% of NH3,0.01,0,0.02,uniform,,
+carbon_COD_ratio,,g C*g COD-1,0.35,0.25,0.4,triangular,,
+housing_cost,,USD,150,105,195,uniform,,
+duct_cost,,USD,32,22.4,41.6,uniform,,
+ventilator_cost,,USD,240,168,312,uniform,,
+ventilator_daily_operation,,h,8,5.6,10.4,uniform,,
+ventilator_power_demand,,kW,0.02,0.014,0.026,uniform,,
+conveyor_cost,,USD,240,168,312,uniform,,
+conveyor_daily_operation,,h,2.5,2,3,uniform,,
+conveyor_power_demand,,kW,0.06,0.042,0.078,uniform,,
+evaporate_speed,,L/day,4,2.8,5.2,uniform,,
+miscellaneous_parts_cost,,USD,250,175,325,uniform,,
+stainless_steel_weight,,kg,16.6,11.62,21.58,uniform,,
+polyethylene_weight,,kg,15,10.5,19.5,uniform,,
+wages,,USD/h,3.64,1.82,5.46,uniform,,
+drying_tunnel_maintenance,,h/yr,12,8.4,15.6,uniform,,
+material_replacement_cost,,fraction,0.04,0.02,0.06,uniform,,
+miscellaneous_cost_ratio,,fraction,0.169,0.1183,0.2197,uniform,,
+energy_required_to_dry_sludge,,kWh/kg,0.66,0.462,0.858,uniform,,

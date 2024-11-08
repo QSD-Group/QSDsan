@@ -46,5 +46,7 @@ power_demand_1,power demand with 1 ultrafiltration units,W,750,675,825,triangula
 power_demand_2,power demand with 2 ultrafiltration units,W,540,405,675,triangular,
 power_demand_3,power demand with 3 ultrafiltration units,W,510,382.5,637.5,triangular,
 power_demand_4,power demand with 4 ultrafiltration units,W,480,360,600,triangular,
-ultrafiltration_operation_time,,hr/day,6,4.2,7.8,uniform,Assumption
-water_recovery_rate,,%,90,85,95,uniform,https://www.mssincorporated.com/ultrafiltration/
+ultrafiltration_operation_time,,hr/day,6,4.2,7.8,uniform,
+water_recovery_rate,,%,90,85,95,uniform,
+ultrafiltration_maintenance,,hr/yr,9,6.3,11.7,uniform,
+wages,,USD/h,3.64,1.82,5.46,uniform,

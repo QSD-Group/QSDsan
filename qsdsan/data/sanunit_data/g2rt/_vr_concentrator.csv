@@ -14,7 +14,7 @@ disc_distance,,m,0.01,0.007,0.013,uniform
 disc_weight,,kg,0.057,0.0399,0.0741,uniform
 heating_unit_purchase_cost,,USD,27.86,19.502,36.218,uniform
 heating_unit_power_demand,,kW,4,2.8,5.2,uniform
-heating_unit_daily_operation,,h/d,1.6,1.12,2.08,uniform
+energy_required_to_dry_sludge,,kWh/kg,0.66,0.462,0.858,uniform
 heating_unit_lifetime,,year,2,1.4,2.6,uniform
 axle_purchase_cost,,USD,123.04,86.128,159.952,uniform
 motor_purchase_cost,,USD,266,186.2,345.8,uniform
@@ -34,9 +34,8 @@ concentrator_condensed_effluent,,L/d,4,2.8,5.2,uniform
 wages,,USD/h,3.64,1.82,5.46,uniform
 drying_CO2_emissions,,% of total C,0.016,0,0.032,uniform
 drying_CH4_emissions,,% of total C,0.0003,0,0.0006,uniform
-drying_NH3_emissions,,% of total N,0.0026,0,0.0052,uniform
+drying_NH3_emissions,,fraction of total N,0.5,0.3,0.83,triangular
 NH3_to_N2O,,% of NH3,0.01,0,0.02,uniform
 carbon_COD_ratio,,g C*g COD-1,0.35,0.25,0.4,triangular
-energy_required_to_dry_sludge,,MJ/kg water,3.5,2.625,4.375,uniform
 material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
 miscellaneous_cost_ratio,,fraction,0.169,0.1183,0.2197,uniform
