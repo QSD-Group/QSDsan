@@ -120,7 +120,7 @@ class FlatBottomCircularClarifier(SanUnit):
     design_influent_flow : float, optional
         The design influent total volumetric flow [m3/day] going to the secondary clarifier. 
     design_surface_overflow_rate : float, optional
-        Influent capacity of the secondary clarifier per unit cross-sectional area  (m3/(m2*day)). 
+        Influent capacity of the secondary clarifier per unit cross-sectional area (m3/(m2*day)). Varies from 24-32 m3/(m2*day).
         The default is 28 m3/(m2*day) [3]
     
     References
@@ -150,8 +150,8 @@ class FlatBottomCircularClarifier(SanUnit):
     pumps = ('ras', 'was',)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 init_with='WasteStream', recycle_ratio=0.75, underflow=2000, wastage=385,
-                 surface_area=1500, height=4, 
+                 init_with='WasteStream', recycle_ratio=0.75, #underflow=2000, wastage=385,
+                 #surface_area=1500, height=4, 
                  N_layer=10, feed_layer=4,
                  X_threshold=3000, v_max=474, v_max_practical=250,
                  rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, F_BM_default=default_F_BM, isdynamic=True,
@@ -159,21 +159,29 @@ class FlatBottomCircularClarifier(SanUnit):
                  design_surface_overflow_rate = 28, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic, F_BM_default=1)
-        self._h = height
-        self._Qras = underflow
-        self._Qwas = wastage
+        
+        self._mixed.mix_from(self.ins)
+        mixed = self._mixed
+        if design_influent_flow: Q_in = design_influent_flow
+        else: Q_in = mixed.get_total_flow('m3/day')
+        self._Qras = Q_in * recycle_ratio 
+        self._Qwas = 0.01 * Q_in # Assuming 1% 
         self._sludge = WasteStream()
+        self._downward_flow_velocity = downward_flow_velocity # in m/hr (converted from 12 mm/sec)
+        self._design_tss = design_influent_TSS
+        #self._design_flow = design_influent_flow
+        self._sor = design_surface_overflow_rate
         
-        # if surface_area != None:
-        #     self._A = surface_area
-        # elif design_influent_TSS != None and design_influent_flow != None:
-        #     self._A = (design_influent_TSS*design_influent_flow)/(design_solids_loading_rate*1000) # 1000 in denominator for unit conversion
-        # else:
-        #     RuntimeError('Either surface_area, or design_influent_TSS and design_influent_flow expected from user')
-        
+        surface_area = Q_in/self._sor
         self._A = surface_area
+        diameter = np.sqrt(4 * self._A/np.pi)    
+        if diameter <= 21: height = 3.7
+        elif diameter > 21 and diameter <= 30: height =  4
+        elif diameter > 30 and diameter <= 43: height = 4.3
+        else: height = 4.6
         self._V = self._A * height
         self._hj = height/N_layer
+        self._h = height
         self._N_layer = N_layer
         self.feed_layer = feed_layer
         self._v_max = v_max
@@ -187,11 +195,6 @@ class FlatBottomCircularClarifier(SanUnit):
         self._X_comp = np.zeros(len(self.components))
         self._dX_comp = self._X_comp.copy()
         
-        self._downward_flow_velocity = downward_flow_velocity # in m/hr (converted from 12 mm/sec)
-        self._design_tss = design_influent_TSS
-        self._design_flow = design_influent_flow
-        self._sor = design_surface_overflow_rate
-        
         self._mixed = WasteStream(f'{ID}_mixed')
         header = self._state_header
         self._state_header = list(header) + [f'TSS{i+1} [mg/L]' for i in range(N_layer)]
@@ -200,24 +203,7 @@ class FlatBottomCircularClarifier(SanUnit):
         
         self._inf = self.ins[0].copy(f'{ID}_inf')
         self._ras = self.outs[1].copy(f'{ID}_ras')
-        self._was = self.outs[2].copy(f'{ID}_was')
-
-        self._mixed.mix_from(self.ins)
-        mixed = self._mixed
-        Q_in = mixed.get_total_flow('m3/day')
-        # self._Qras = Q_in * recycle_ratio 
-        # self._Qwas = Q_in - self._Qras
-        self._sludge = WasteStream()
-
-        # surface_area = Q_in/self._sor
-        # self._A = surface_area
-        # diameter = np.sqrt(4 * self._A/np.pi)    
-        # if diameter <= 21: height = 3.7
-        # elif diameter > 21 and diameter <= 30: height =  4
-        # elif diameter > 30 and diameter <= 43: height = 4.3
-        # else: height = 4.6
-        self._V = self._A * height
-        self._hj = height/N_layer
+        self._was = self.outs[2].copy(f'{ID}_was')   
         
     @property
     def height(self):
