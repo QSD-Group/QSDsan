@@ -170,12 +170,13 @@ class SanStream(Stream):
         --------
         :func:`copy` for the differences between ``copy``, ``copy_like``, and ``copy_flow``.
         '''
+        stream_impact_item = self.stream_impact_item
         Stream.copy_flow(self, other=other, IDs=IDs, remove=remove, exclude=exclude)
 
         if not isinstance(other, SanStream):
             return
 
-        self._stream_impact_item = None
+        self._stream_impact_item = stream_impact_item
 
 
     def flow_proxy(self, ID=None):
