@@ -755,7 +755,7 @@ class LCA:
                 item_dct[key] = []
             for other_ID in self.other_items.keys():
                 other = self.other_items[other_ID]['item']
-                item_dct['Other'].append(f'{other_ID} [{other.functional_unit}]')
+                item_dct['Other'].append(f'{other_ID}')
                 quantity = self.other_items[other_ID]['quantity']
                 item_dct['Quantity'].append(quantity)
                 for ind in self.indicators:
