@@ -1,4 +1,4 @@
-	X_CHL	X_ALG	X_CH	X_LI	S_CO2	S_A	S_F	S_O2	S_NH	S_NO	S_P	X_N_ALG	X_P_ALG
+	X_CHL	X_ALG	X_PG	X_TAG	S_CO2	S_A	S_G	S_O2	S_NH	S_NO	S_P	X_N_ALG	X_P_ALG
 photoadaptation	1												
 ammonium_uptake									-1			1	
 phosphorus_uptake											-1		1
