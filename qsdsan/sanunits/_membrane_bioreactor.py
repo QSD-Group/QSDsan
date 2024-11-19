@@ -1362,9 +1362,85 @@ def dydt_mbr(QC_ins, QC, V, Qp, f_rtn, xarr, _dstate):
     _dstate[:-1] = (Q_ins @ C_ins - (Q*(1-xarr) + (Qp+(Q-Qp)*(1-f_rtn))*xarr)*C)/V
 
 class CompletelyMixedMBR(CSTR):
+    '''
+    Completely mixed membrane bioreactor, equivalent to a CSTR with ideal 
+    membrane filtration at the outlet.
+
+    See Also
+    --------
+    :class:`qsdsan.processes.DiffusedAeration`
+    :class:`qsdsan.sanunits.CSTR`
+
+    Examples
+    --------
+    >>> from qsdsan import WasteStream, processes as pc, sanunits as su
+    >>> cmps = pc.create_asm1_cmps()
+    >>> ws = WasteStream('ws', H2O=100000, X_I=5, X_S=2, S_I=6)
+    >>> M1 = su.CompletelyMixedMBR('M1', ins=ws, pumped_flow=50, 
+    ...                            solids_capture_rate=0.999, 
+    ...                            V_max=1000, DO_ID='S_O')
+    >>> M1.simulate(t_span=(0,100), method='BDF')
+    >>> M1.show()
+    CompletelyMixedMBR: M1
+    ins...
+    [0] ws
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_I  6e+03
+                    X_I  5e+03
+                    X_S  2e+03
+                    H2O  1e+08
+        WasteStream-specific properties:
+         pH         : 7.0
+         Alkalinity : 2.5 mg/L
+         COD        : 129.6 mg/L
+         BOD        : 11.6 mg/L
+         TC         : 41.5 mg/L
+         TOC        : 41.5 mg/L
+         TN         : 3.0 mg/L
+         TP         : 1.3 mg/L
+         TSS        : 38.8 mg/L
+    outs...
+    [0] ws1
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_I  5.88e+03
+                    X_I  224
+                    X_S  89.6
+                    S_O  196
+                    H2O  9.79e+07
+        WasteStream-specific properties:
+         pH         : 7.0
+         COD        : 63.0 mg/L
+         BOD        : 0.5 mg/L
+         TC         : 20.2 mg/L
+         TOC        : 20.2 mg/L
+         TN         : 0.1 mg/L
+         TP         : 0.6 mg/L
+         TSS        : 1.8 mg/L
+    [1] ws2
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_I  125
+                    X_I  4.75e+03
+                    X_S  1.9e+03
+                    S_O  4.17
+                    H2O  2.07e+06
+        WasteStream-specific properties:
+         pH         : 7.0
+         COD        : 3253.1 mg/L
+         BOD        : 529.2 mg/L
+         TC         : 1041.0 mg/L
+         TOC        : 1041.0 mg/L
+         TN         : 136.9 mg/L
+         TP         : 32.5 mg/L
+         TSS        : 1774.0 mg/L
+    
+    >>> flt, rtn = M1.outs
+    >>> flt.get_TSS() / rtn.get_TSS()
+    0.001
+    
+    '''
     _N_ins = 1
     _N_outs = 2  # [0] filtrate, [1] pumped flow
-    _outs_size_is_fixed = False
+    _outs_size_is_fixed = True
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', isdynamic=True, 
@@ -1414,8 +1490,7 @@ class CompletelyMixedMBR(CSTR):
             raise TypeError('crossflow_air must be a `Process` object or None, '
                             f'not {type(cfa)}')
 
-    split = property(CSTR.split.fget)
-    split.fset = None
+    split = None
         
     def _run(self):
         '''Only to converge volumetric flows.'''
@@ -1496,6 +1571,10 @@ class CompletelyMixedMBR(CSTR):
         arr = self._state
         arr[arr < 1e-16] = 0.
         arr[-1] = sum(ws.state[-1] for ws in self.ins)
+        for ws in self.outs:
+            if ws.state is None: 
+                ws.state = np.zeros_like(arr)
+                ws.dstate = np.zeros_like(arr)
         flt, rtn = self.outs
         Qp = self.pumped_flow
         flt.state[:-1] = arr[:-1] * self._flt2in_conc_ratio
