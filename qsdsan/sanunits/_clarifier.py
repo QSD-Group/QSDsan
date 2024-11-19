@@ -697,8 +697,8 @@ class FlatBottomCircularClarifier(SanUnit):
         thickness_concrete_slab = thickness_concrete_wall + (2/12)*0.3048 # from inch to m
         D['Volume of concrete slab']  = (np.pi*thickness_concrete_slab/4)*outer_diameter**2
 
-        # Amount of reinforcing steel required, kg [6]
-        D['Reinforcing steel'] = 77.58 * (D['Volume of concrete slab'] + D['Volume of concrete wall'])
+        # Amount of reinforcing steel required [6]
+        D['Reinforcing steel'] = 77.58 * (D['Volume of concrete slab'] + D['Volume of concrete wall']) # in kg
         
         # Clarifiers can be center feed or peripheral feed. The design here is for the more commonly deployed center feed.
         # Depth of the center feed lies between 30-75% of sidewater depth. [2]
