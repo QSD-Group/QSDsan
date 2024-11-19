@@ -1375,67 +1375,104 @@ class CompletelyMixedMBR(CSTR):
     --------
     >>> from qsdsan import WasteStream, processes as pc, sanunits as su
     >>> cmps = pc.create_asm1_cmps()
-    >>> ws = WasteStream('ws', H2O=100000, X_I=5, X_S=2, S_I=6)
-    >>> M1 = su.CompletelyMixedMBR('M1', ins=ws, pumped_flow=50, 
-    ...                            solids_capture_rate=0.999, 
-    ...                            V_max=1000, DO_ID='S_O')
-    >>> M1.simulate(t_span=(0,100), method='BDF')
+    >>> ww = WasteStream('ww')
+    >>> ww.set_flow_by_concentration(
+    ...     flow_tot=2000, 
+    ...     concentrations=dict(S_I=21.6, S_S=86.4, X_I=32.4, X_S=129.6, 
+    ...                         S_NH=25, S_ND=2.78, X_ND=6.28, S_ALK=84), 
+    ...     units=('m3/d', 'mg/L'))
+    >>> asm = pc.ASM1()
+    >>> M1 = su.CompletelyMixedMBR('M1', ins=ww, outs=['filtrate', 'pumped'],                                   
+    ...                            V_max=400, pumped_flow=50, solids_capture_rate=0.999, 
+    ...                            aeration=2.0, DO_ID='S_O', 
+    ...                            suspended_growth_model=asm)
+    >>> M1.set_init_conc(X_I=1000, S_I=30, S_S=5.0, X_S=100, X_BH=500, 
+    ...                  X_BA=100, X_P=100, S_O=2, S_NH=2, S_ND=1, 
+    ...                  X_ND=1, S_NO=20, S_ALK=84)
+    >>> M1.simulate(t_span=(0,400), method='BDF')
     >>> M1.show()
     CompletelyMixedMBR: M1
     ins...
-    [0] ws
+    [0] ww
     phase: 'l', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): S_I  6e+03
-                    X_I  5e+03
-                    X_S  2e+03
-                    H2O  1e+08
+    flow (g/hr): S_I    1.8e+03
+                    S_S    7.2e+03
+                    X_I    2.7e+03
+                    X_S    1.08e+04
+                    S_NH   2.08e+03
+                    S_ND   232
+                    X_ND   523
+                    S_ALK  7e+03
+                    H2O    8.31e+07
         WasteStream-specific properties:
          pH         : 7.0
          Alkalinity : 2.5 mg/L
-         COD        : 129.6 mg/L
-         BOD        : 11.6 mg/L
-         TC         : 41.5 mg/L
-         TOC        : 41.5 mg/L
-         TN         : 3.0 mg/L
-         TP         : 1.3 mg/L
-         TSS        : 38.8 mg/L
+         COD        : 270.0 mg/L
+         BOD        : 137.1 mg/L
+         TC         : 170.4 mg/L
+         TOC        : 86.4 mg/L
+         TN         : 36.0 mg/L
+         TP         : 2.7 mg/L
+         TSS        : 121.5 mg/L
     outs...
-    [0] ws1
+    [0] filtrate
     phase: 'l', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): S_I  5.88e+03
-                    X_I  224
-                    X_S  89.6
-                    S_O  196
-                    H2O  9.79e+07
+    flow (g/hr): S_I    1.75e+03
+                    S_S    277
+                    X_I    101
+                    X_S    4.83
+                    X_BH   236
+                    X_BA   13.7
+                    X_P    44.1
+                    S_O    162
+                    S_NO   1.8e+03
+                    S_NH   61.7
+                    S_ND   60
+                    X_ND   0.323
+                    S_ALK  3.6e+03
+                    S_N2   254
+                    H2O    8.1e+07
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 63.0 mg/L
-         BOD        : 0.5 mg/L
-         TC         : 20.2 mg/L
-         TOC        : 20.2 mg/L
-         TN         : 0.1 mg/L
-         TP         : 0.6 mg/L
-         TSS        : 1.8 mg/L
-    [1] ws2
+         COD        : 29.9 mg/L
+         BOD        : 4.2 mg/L
+         TC         : 54.0 mg/L
+         TOC        : 9.7 mg/L
+         TN         : 24.0 mg/L
+         TP         : 0.3 mg/L
+         TK         : 0.0 mg/L
+         TSS        : 3.7 mg/L
+    [1] pumped
     phase: 'l', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): S_I  125
-                    X_I  4.75e+03
-                    X_S  1.9e+03
-                    S_O  4.17
-                    H2O  2.07e+06
+    flow (g/hr): S_I    45
+                    S_S    7.09
+                    X_I    2.6e+03
+                    X_S    124
+                    X_BH   6.06e+03
+                    X_BA   351
+                    X_P    1.13e+03
+                    S_O    4.17
+                    S_NO   46
+                    S_NH   1.58
+                    S_ND   1.54
+                    X_ND   8.29
+                    S_ALK  92.2
+                    S_N2   6.51
+                    H2O    2.07e+06
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 3253.1 mg/L
-         BOD        : 529.2 mg/L
-         TC         : 1041.0 mg/L
-         TOC        : 1041.0 mg/L
-         TN         : 136.9 mg/L
-         TP         : 32.5 mg/L
-         TSS        : 1774.0 mg/L
+         COD        : 4950.0 mg/L
+         BOD        : 1779.8 mg/L
+         TC         : 1795.1 mg/L
+         TOC        : 1750.8 mg/L
+         TN         : 381.0 mg/L
+         TP         : 77.2 mg/L
+         TK         : 17.3 mg/L
+         TSS        : 3693.8 mg/L
     
     >>> flt, rtn = M1.outs
-    >>> flt.get_TSS() / rtn.get_TSS()
-    0.001
+    >>> flt.get_TSS() / rtn.get_TSS() # doctest: +ELLIPSIS
+    0.001...
     
     '''
     _N_ins = 1
