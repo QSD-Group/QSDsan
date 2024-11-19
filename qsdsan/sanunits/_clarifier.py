@@ -15,8 +15,6 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-########## chn
-
 from numpy import maximum as npmax, minimum as npmin, exp as npexp
 from warnings import warn
 from numba import njit
@@ -86,12 +84,16 @@ class FlatBottomCircularClarifier(SanUnit):
     #     Designed recycling sludge flowrate (RAS), in [m^3/d]. The default is 2000.
     # wastage : float, optional
     #     Designed wasted sludge flowrate (WAS), in [m^3/d]. The default is 385.
-    recycle_ratio : float, optional
-        Return activated sludge (RAS) ratio. The default is 0.75. Varies between 0.5-0.75 [3]
     # surface_area : float, optional
     #     Surface area of the clarifier, in [m^2]. The default is 1500.
     # height : float, optional
     #     Height of the clarifier, in [m]. The default is 4.
+    recyle_ratio : float, optional
+        Designed return activated sludge (RAS) ratio, as a fraction of the influent flowrate.
+        Varies from 0.5-0.75. Default is 0.75. [3]
+    was_ratio : float, optional
+        Designed waste activated sludge (WAS) ratio, as a fraction of the influent flowrate. 
+        Varies from 0.01-0.02. Default is 0.01. [3]
     N_layer : int, optional
         The number of layers to model settling. The default is 10.
     feed_layer : int, optional
@@ -118,9 +120,9 @@ class FlatBottomCircularClarifier(SanUnit):
     design_influent_TSS : float, optional
         The design TSS concentration [mg/L] in the influent going to the secondary clarifier. 
     design_influent_flow : float, optional
-        The design influent total volumetric flow [m3/day] going to the secondary clarifier. 
+        The design influent total volumetric flow [m3/hr] going to the secondary clarifier. 
     design_surface_overflow_rate : float, optional
-        Influent capacity of the secondary clarifier per unit cross-sectional area (m3/(m2*day)). Varies from 24-32 m3/(m2*day).
+        Rate of influent entering the secondary clarifier (m3/(m2*day)). 
         The default is 28 m3/(m2*day) [3]
     
     References
@@ -137,7 +139,8 @@ class FlatBottomCircularClarifier(SanUnit):
     .. [6] Foley, J.; De Haas, D.; Hartley, K. & Lant, P. Comprehensive life cycle 
         inventories of alternative wastewater treatment systems. 
         Water Res. 2010, 44 (5), 1654–1666. https://doi.org/10.1016/j.watres.2009.11.031
-    """
+    .. [7] Circular mechanical clarifier center feed equipment specifications. Pollutions Control Systems, Inc.
+        """
 
     _N_ins = 1
     _N_outs = 3
@@ -150,8 +153,7 @@ class FlatBottomCircularClarifier(SanUnit):
     pumps = ('ras', 'was',)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 init_with='WasteStream', recycle_ratio=0.75, #underflow=2000, wastage=385,
-                 #surface_area=1500, height=4, 
+                 init_with='WasteStream', recycle_ratio=0.75, was_ratio=0.01,
                  N_layer=10, feed_layer=4,
                  X_threshold=3000, v_max=474, v_max_practical=250,
                  rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, F_BM_default=default_F_BM, isdynamic=True,
@@ -159,29 +161,33 @@ class FlatBottomCircularClarifier(SanUnit):
                  design_surface_overflow_rate = 28, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic, F_BM_default=1)
-        
-        self._mixed.mix_from(self.ins)
-        mixed = self._mixed
-        if design_influent_flow: Q_in = design_influent_flow
-        else: Q_in = mixed.get_total_flow('m3/day')
-        self._Qras = Q_in * recycle_ratio 
-        self._Qwas = 0.01 * Q_in # Assuming 1% 
+              
+        sor = design_surface_overflow_rate
+        self._sor = sor
+
+        if design_influent_flow != None: 
+            Q_in = design_influent_flow * 24 # m3/hr to m3/day
+        else: 
+            self._mixed = WasteStream(f'{ID}_mixed')
+            Q_in = self._mixed.get_total_flow('m3/hr') * 24
+
+        ras = Q_in * recycle_ratio
+        was = Q_in * was_ratio
+        self._Qras, self._Qwas = ras, was
         self._sludge = WasteStream()
-        self._downward_flow_velocity = downward_flow_velocity # in m/hr (converted from 12 mm/sec)
-        self._design_tss = design_influent_TSS
-        #self._design_flow = design_influent_flow
-        self._sor = design_surface_overflow_rate
-        
-        surface_area = Q_in/self._sor
+
+        surface_area = Q_in / self._sor
         self._A = surface_area
-        diameter = np.sqrt(4 * self._A/np.pi)    
+        diameter = np.sqrt(4 * surface_area / np.pi)
+
         if diameter <= 21: height = 3.7
-        elif diameter > 21 and diameter <= 30: height =  4
-        elif diameter > 30 and diameter <= 43: height = 4.3
-        else: height = 4.6
+        elif diameter > 21 and diameter <= 30: height = 4
+        elif diameter >30 and diameter <= 43: height = 4.3
+        elif diameter > 43: height = 4.6
+        self._h = height
+
         self._V = self._A * height
         self._hj = height/N_layer
-        self._h = height
         self._N_layer = N_layer
         self.feed_layer = feed_layer
         self._v_max = v_max
@@ -195,7 +201,12 @@ class FlatBottomCircularClarifier(SanUnit):
         self._X_comp = np.zeros(len(self.components))
         self._dX_comp = self._X_comp.copy()
         
-        self._mixed = WasteStream(f'{ID}_mixed')
+        self._downward_flow_velocity = downward_flow_velocity # in m/hr (converted from 12 mm/sec)
+        self._design_tss = design_influent_TSS
+        self._design_flow = design_influent_flow
+        self._sor = design_surface_overflow_rate
+        
+        # self._mixed = WasteStream(f'{ID}_mixed')
         header = self._state_header
         self._state_header = list(header) + [f'TSS{i+1} [mg/L]' for i in range(N_layer)]
         for attr, value in kwargs.items():
@@ -203,7 +214,7 @@ class FlatBottomCircularClarifier(SanUnit):
         
         self._inf = self.ins[0].copy(f'{ID}_inf')
         self._ras = self.outs[1].copy(f'{ID}_ras')
-        self._was = self.outs[2].copy(f'{ID}_was')   
+        self._was = self.outs[2].copy(f'{ID}_was')
         
     @property
     def height(self):
@@ -211,25 +222,25 @@ class FlatBottomCircularClarifier(SanUnit):
         return self._h
 
     @height.setter
-    def height(self, height):
-        self._h = height
+    def height(self, h):
+        self._h = h
 
     @property
-    def underflow(self):
+    def ras(self):
         '''[float] The designed recycling sludge flow rate in m3/d.'''
         return self._Qras
 
-    @underflow.setter
-    def underflow(self, ras):
+    @ras.setter
+    def ras(self, ras):
         self._Qras = ras
 
     @property
-    def wastage(self):
+    def was(self):
         '''[float] The designed wasted sludge flow rate in m3/d.'''
         return self._Qwas
 
-    @wastage.setter
-    def wastage(self, was):
+    @was.setter
+    def was(self, was):
         self._Qwas = was
 
     @property
@@ -340,13 +351,13 @@ class FlatBottomCircularClarifier(SanUnit):
         self._fns = fns
         
     @property
-    def surface_overflow_rate(self):
-        '''surface_overflow_rate is the capacity of the clarifier'''
+    def sor(self):
+        '''sor is the capacity of the clarifier'''
         return self._sor
         
-    @surface_overflow_rate.setter
-    def surface_overflow_rate(self, sor):
-        self._sor = sor
+    @sor.setter
+    def sor(self, sor):
+            self._sor = sor
             
     def set_init_solubles(self, **kwargs):
         '''set the initial concentrations [mg/L] of solubles in the clarifier.'''
@@ -457,7 +468,6 @@ class FlatBottomCircularClarifier(SanUnit):
         Q_was = self._Qwas
         s_e = 1 - (Q_ras+Q_was)/Q_in
         inf.split_to(eff, sludge, s_e)
-        print(Q_ras, Q_was)
         sludge.split_to(ras, was, Q_ras/(Q_ras+Q_was))
 
     def get_retained_mass(self, biomass_IDs):
@@ -556,15 +566,15 @@ class FlatBottomCircularClarifier(SanUnit):
         'Surface area': 'm2',
         'Clarifier diameter': 'm',
         'Clarifier volume': 'm3',
-        'Design solids loading rate': 'kg/m2/hr',
         'Design surface overflow rate': 'm3/day/m2',
+        'Solids loading rate': 'kg/m2/hr',
         'Hydraulic Retention Time': 'hr', 
         'Center feed depth': 'm',
         'Downward flow velocity': 'm/hr',
         'Center feed diameter': 'm',
         'Volume of concrete wall': 'm3',
         'Volume of concrete slab': 'm3',
-        'Reinforcing steel': 'kg',
+        'Reinforcement steel': 'kg',
         'Stainless steel': 'kg',
         'Pump pipe stainless steel' : 'kg',
         'Pump stainless steel': 'kg',
@@ -587,8 +597,8 @@ class FlatBottomCircularClarifier(SanUnit):
         ras_flow = self._ras.get_total_flow('m3/hr')
         was_flow = self._was.get_total_flow('m3/hr')
         
-        ras_flow_u = ras_flow/(D['Number of clarifiers']-1)*0.00634
-        was_flow_u = was_flow/(D['Number of clarifiers']-1)*0.00634
+        ras_flow_u = ras_flow/D['Number of clarifiers']*0.00634
+        was_flow_u = was_flow/D['Number of clarifiers']*0.00634
         
         Q_mgd = {
             'ras': ras_flow_u,
@@ -630,51 +640,65 @@ class FlatBottomCircularClarifier(SanUnit):
         mixed = self._mixed
         D = self.design_results
         
-        # Assuming 1 clarifier per aeration basin train. 2 trains: 1 in use, 1 redundant
-        D['Number of clarifiers'] = 2 # 1 in use, 1 redundant
+        D['Number of clarifiers'] = 2 # Same as the number of parallel trains. Assuming 1 in use and 1 redundant.
                 
-        D['Volumetric flow'] =  (mixed.get_total_flow('m3/day'))/(D['Number of clarifiers'] - 1) #m3/day
-        D['Surface overflow rate'] = self._sor # (m3/day)/m2
-        self._A = D['Volumetric flow']/D['Surface overflow rate'] 
-        D['Surface area'] = self._A # m2
-        diameter = np.sqrt(4*D['Surface area']/np.pi)
-        print(f'Clarifier diameter = {diameter} m. \n')
-        D['Clarifier diameter'] = diameter # m
-
-        # Estimating SWD according to clarifier depth [2]
-        if diameter <= 21: height = 3.7
-        elif diameter > 21 and diameter <= 30: height =  4
-        elif diameter > 30 and diameter <= 43: height = 4.3
-        else: height = 4.6
-        self._h = height  
-        D['Clarifier depth'] = self._h # m
-
-        D['Clarifier volume'] = D['Surface area']*D['Clarifier depth'] # in m3
+        D['Volumetric flow'] =  (mixed.get_total_flow('m3/hr')*24)/(D['Number of clarifiers'] - 1) #m3/day
         
-        # Checks on solids loading rate and HRT 
-        D['Design solids loading rate'] = 5 # kg/(m2*hr) [3]
-        total_solids = mixed.get_TSS()*mixed.get_total_flow('m3/hr')/1000 # in kg/hr (mg/l * m3/hr)
-        print(f'Total solids in the clarifier = {total_solids} kg/hr. \n')
-        solids_clarifier = total_solids/(D['Number of clarifiers'] - 1) # in kg/hr
-        simulated_slr = solids_clarifier/D['Surface area'] # in kg/(m2*hr)
+        # Area of clarifier 
+        D['Surface area'] = self._A/(D['Number of clarifiers'] - 1) # in m2
+        D['Clarifier diameter'] = np.sqrt(4*D['Surface area']/np.pi) # in m
+
+        # Sidewater depth of a cylindrical clarifier varies with clarifier diameter (MOP 8)
+        if D['Clarifier diameter'] <= 21: D['Clarifier depth'] = 3.7
+        elif D['Clarifier diameter'] > 21 and D['Clarifier diameter'] <= 30: D['Clarifier depth'] = 4
+        elif D['Clarifier diameter'] >30 and D['Clarifier diameter'] <= 43: D['Clarifier depth'] = 4.3
+        elif D['Clarifier diameter'] > 43: D['Clarifier depth'] = 4.6
+    
+        D['Clarifier volume'] = D['Surface area']*D['Clarifier depth'] # in m3 
+    
+        # Check on SOR [3, 4, 5]
+        D['Design surface overflow rate'] = self._sor # m3/(m2*day)
+        if D['Surface overflow rate'] > 32:
+            sor = D['Surface overflow rate']
+            warn(f'Surface overflow rate = {sor} is above recommended level of 32 m3/day/m2')
         
-        # Consult Joy on the margin or error
-        if simulated_slr < 0.8*D['Design solids loading rate'] or simulated_slr > 1.2*D['Design solids loading rate']:
-            design_slr = D['Design solids loading rate']
-            warn(f'Solids loading rate = {simulated_slr} is not within 20% of the recommended design level of {design_slr} kg/hr/m2')
+        # Calculating SLR
+        D['Solids loading rate'] = 5 # Default value for SLR, kg/(m2*hr) [3]
+        if self._design_tss != None and self._design_flow != None:
+            total_solids = self._design_tss*self._design_flow/1000 # in kg/hr (mg/l * m3/hr)
+        elif self._design_tss != None and self._design_flow == None:
+            total_solids = self._design_tss*mixed.get_total_flow('m3/hr')/1000 # in kg/hr (mg/l * m3/hr)
+        elif self._design_tss == None and self._design_flow != None:
+            total_solids = mixed.get_TSS()*self._design_flow/1000 # in kg/hr (mg/l * m3/hr)
+        elif self._design_tss == None and self._design_flow == None:
+            total_solids = mixed.get_TSS()*mixed.get_total_flow('m3/hr')/1000 # in kg/hr (mg/l * m3/hr)
+        simulated_slr = total_solids/D['Surface area'] # in kg/(m2*hr)
         
         # Check on SLR [3, 4, 5] 
+        if simulated_slr < 0.8*D['Solids loading rate'] or simulated_slr > 1.2*D['Solids loading rate']:
+            design_slr = D['Solids loading rate']
+            warn(f'Solids loading rate = {simulated_slr} is not within 20% of the recommended design level of {design_slr} kg/hr/m2')
+        
         if simulated_slr > 14:
             warn(f'Solids loading rate = {simulated_slr} is above recommended level of 14 kg/hr/m2')
         
-        # # Check on SOR [3, 4, 5]
-        # D['Surface overflow rate'] = D['Volumetric flow']/D['Surface area']  # in m3/m2/hr
-        # if D['Surface overflow rate'] > 49:
-        #     sor = D['Surface overflow rate']
-        #     warn(f'Surface overflow rate = {sor} is above recommended level of 49 m3/day/m2')
-        
-        # HRT
+        # Calculating HRT
         D['Hydraulic Retention Time'] = D['Clarifier volume']*24/D['Volumetric flow'] # in hr
+        
+        # Amount of concrete required
+        D_tank = D['Clarifier depth']*39.37 # m to inches 
+        fb = 0.5 # Freeboard, m
+        # Thickness of the wall concrete, [m]. Default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft. (Brian's code)
+        thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
+        inner_diameter = D['Clarifier diameter']
+        outer_diameter = inner_diameter + 2*thickness_concrete_wall
+        D['Volume of concrete wall']  = (np.pi*(D['Clarifier depth']+fb)/4)*(outer_diameter**2 - inner_diameter**2)
+        # Concrete slab thickness, [ft], default to be 2 in thicker than the wall thickness. (Brian's code)
+        thickness_concrete_slab = thickness_concrete_wall + (2/12)*0.3048 # from inch to m
+        D['Volume of concrete slab']  = (np.pi*thickness_concrete_slab/4)*outer_diameter**2
+
+        # Amount of reinforcing steel required, kg [6]
+        D['Reinforcing steel'] = 77.58 * (D['Volume of concrete slab'] + D['Volume of concrete wall'])
         
         # Clarifiers can be center feed or peripheral feed. The design here is for the more commonly deployed center feed.
         # Depth of the center feed lies between 30-75% of sidewater depth. [2]
@@ -684,30 +708,14 @@ class FlatBottomCircularClarifier(SanUnit):
         Center_feed_area = (D['Volumetric flow']/24)/D['Downward flow velocity'] # in m2
         D['Center feed diameter'] = np.sqrt(4*Center_feed_area/np.pi)
 
-        #Sanity check: Diameter of the center feed lies between 20-25% of tank diameter [2]
+        # Sanity check: Diameter of the center feed lies between 20-25% of tank diameter [2]
         if D['Center feed diameter'] < 0.20*D['Clarifier diameter'] or D['Center feed diameter']  > 0.25*D['Clarifier diameter']:
             cf_dia = D['Center feed diameter'] 
             tank_dia = D['Clarifier diameter']
             warn(f'Diameter of the center feed does not lie between 20-25% of tank diameter. It is {cf_dia*100/tank_dia} % of tank diameter')
-            
-        # Amount of concrete required
-        D_tank = D['Clarifier depth']*39.37 # m to inches 
-        # Thickness of the wall concrete, [m]. Default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft. (Brian's code)
-        thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
-        inner_diameter = D['Clarifier diameter']
-        outer_diameter = inner_diameter + 2*thickness_concrete_wall
-        D['Volume of concrete wall']  = D['Number of clarifiers'] * (np.pi*D['Clarifier depth']/4)*(outer_diameter**2 - inner_diameter**2)
-        
-        # Concrete slab thickness, [ft], default to be 2 in thicker than the wall thickness. (Brian's code)
-        thickness_concrete_slab = thickness_concrete_wall + (2/12)*0.3048 # from inch to m
-        # From Brian's code
-        D['Volume of concrete slab']  = D['Number of clarifiers'] * (np.pi*thickness_concrete_slab/4)*((D['Clarifier diameter']+2*thickness_concrete_wall)**2)
 
-        # Amount of reinforcing steel required for RCC: 77.58 kg steel per m3 of concrete [6]
-        D['Reinforcing steel'] = 77.58 * (D['Volume of concrete wall'] +  D['Volume of concrete slab'])
-        
         # Amount of metal required for center feed
-        thickness_metal_wall = 0.3048 # equal to 1 feet, in m (!! NEED A RELIABLE SOURCE !!)
+        thickness_metal_wall = 0.3048/4 # equal to 1/4th feet, in m [7]
         inner_diameter_center_feed = D['Center feed diameter']
         outer_diameter_center_feed = inner_diameter_center_feed + 2*thickness_metal_wall
         volume_center_feed = (np.pi*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed **2)
@@ -718,7 +726,7 @@ class FlatBottomCircularClarifier(SanUnit):
         pipe, pumps = self._design_pump()
         D['Pump pipe stainless steel'] = pipe
         D['Pump stainless steel'] = pumps
-        
+            
         # For secondary clarifier
         D['Number of pumps'] = 2*D['Number of clarifiers']
         
@@ -728,11 +736,9 @@ class FlatBottomCircularClarifier(SanUnit):
         C = self.baseline_purchase_costs
        
         # Construction of concrete and stainless steel walls
-        C['Wall concrete'] = D['Volume of concrete wall']*self.wall_concrete_unit_cost
+        C['Wall concrete'] = D['Number of clarifiers']*D['Volume of concrete wall']*self.wall_concrete_unit_cost
         
-        C['Slab concrete'] = D['Volume of concrete slab']*self.slab_concrete_unit_cost
-
-        #C['Reinforcing steel'] = D['Reinforcing steel']*self.reinforcing_steel_unit_cost
+        C['Slab concrete'] = D['Number of clarifiers']*D['Volume of concrete slab']*self.slab_concrete_unit_cost
         
         C['Wall stainless steel'] = D['Number of clarifiers']*D['Stainless steel']*self.stainless_steel_unit_cost
         
@@ -1244,13 +1250,14 @@ class PrimaryClarifier(IdealClarifier):
     Parameters
     ----------
     surface_overflow_rate : float
-        Surface overflow rate in the clarifier in [(m3/day)/m2]. [1,2]
-        Design SOR value for clarifier is 40 (m3/day)/m2 if it does not receive WAS. Typically lies between 30-50 (m3/day)/m2.
-        Design SOR value for clarifier is 28 (m3/day)/m2 if it receives WAS. Typically lies between 24-32 (m3/day)/m2.
-        Here default value of 40 (m3/day)/m2 is used.
-    # depth_clarifier : float
-    #     Depth of clarifier. Typical depths range from 3 m to 4.9 m [1,2]. 
-    #     Default value of 4.3 m would be used here. 
+        Surface overflow rate in the clarifier in [(m3/day)/m2]. [1]
+        Design SOR value for clarifier is 41 (m3/day)/m2 if it does not receive WAS.
+        Design SOR value for clarifier is 29 (m3/day)/m2 if it receives WAS.
+        Typically SOR lies between 30-50 (m3/day)/m2. 
+        Here default value of 41 (m3/day)/m2 is used.
+    depth_clarifier : float
+        Depth of clarifier. Typical depths range from 3 m to 4.9 m [1,2]. 
+        Default value of 4.5 m would be used here. 
     downward_flow_velocity : float, optional
         Speed on the basis of which center feed diameter is designed [m/hr]. [3]
         The default is 36 m/hr. (10 mm/sec)
@@ -1347,10 +1354,9 @@ class PrimaryClarifier(IdealClarifier):
     pumps = ('sludge',)
     
     def __init__(self, ID='', ins=None, outs=(), 
-                 sludge_flow_rate=2000, depth_clarifier=4.5,
-                 solids_removal_efficiency=0.6,
+                 sludge_flow_rate=2000, solids_removal_efficiency=0.6,
                  thermo=None, isdynamic=False, init_with='WasteStream', 
-                 surface_overflow_rate = 40, 
+                 surface_overflow_rate = 41, depth_clarifier=4.5,
                  downward_flow_velocity=36, F_BM=default_F_BM, **kwargs):
         super().__init__(ID, ins, outs, thermo,
                          sludge_flow_rate=sludge_flow_rate, 
@@ -1364,7 +1370,7 @@ class PrimaryClarifier(IdealClarifier):
         self.downward_flow_velocity = downward_flow_velocity
         self.F_BM.update(F_BM)
         self._sludge = WasteStream(f'{ID}_sludge')       
-    ############################################################################################   
+            
     # @property
     # def solids_loading_rate(self):
     #     '''solids_loading_rate is the loading in the clarifier'''
