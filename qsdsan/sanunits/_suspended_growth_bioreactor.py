@@ -24,6 +24,7 @@ __all__ = ('CSTR',
            'BatchExperiment',
            # 'SBR',
            'PFR',
+           'AerobicDigester',
            )
 
 # def _add_aeration_to_growth_model(aer, model):
@@ -332,19 +333,20 @@ class CSTR(SanUnit):
             self._compile_ODE()
         return self._ODE
 
-    def _compile_ODE(self):
-        isa = isinstance
-        cmps = self.components
-        m = cmps.size
-        aer = self._aeration
+    def _init_model(self):
         if self._model is None:
             warn(f'{self.ID} was initialized without a suspended growth model, '
                  f'and thus run as a non-reactive unit')
-            r = lambda state_arr: np.zeros(m)
-            
+            r = lambda state_arr: np.zeros(self.components.size)
         else:
             # processes = _add_aeration_to_growth_model(aer, self._model)
             r = self._model.production_rates_eval
+        return r
+
+    def _compile_ODE(self):
+        isa = isinstance
+        aer = self._aeration
+        r = self._init_model()
 
         _dstate = self._dstate
         _update_dstate = self._update_dstate
@@ -1287,3 +1289,54 @@ class PFR(SanUnit):
 
     def _design(self):
         pass
+
+#%%
+from ..processes import ASM_AeDigAddOn
+
+class AerobicDigester(CSTR):
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+                 init_with='WasteStream', V_max=1000, activated_sludge_model=None, 
+                 organic_particulate_inert_degradation_process=None, 
+                 aeration=1.0, DO_ID='S_O2', isdynamic=True, **kwargs):
+        super().__init__(ID, ins, outs, thermo=thermo, init_with=init_with,
+                         V_max=V_max, aeration=aeration, DO_ID=DO_ID, 
+                         suspended_growth_model=activated_sludge_model, 
+                         isdynamic=isdynamic, **kwargs)
+        self.organic_particulate_inert_degradation_process = organic_particulate_inert_degradation_process
+        
+    @property
+    def organic_particulate_inert_degradation_process(self):
+        '''[:class:`Process` or NoneType] Process object for degradation of 
+        particulate inert organic materials in the aerobic digester. If none
+        specified, will attempt to create a Process model according to components
+        by default.'''
+        return self._dig_addon
+    @organic_particulate_inert_degradation_process.setter
+    def organic_particulate_inert_degradation_process(self, proc):
+        if isinstance(proc, Process):
+            self._dig_addon = proc
+        elif proc is None:
+            if self._model is None: self._dig_addon = None
+            else: 
+                ID = self._model.ID + '_particulate_inert_degrade'
+                self._dig_addon = ASM_AeDigAddOn(
+                    ID=ID,
+                    components=self.thermo.chemicals
+                    )
+        else:
+            raise TypeError('organic_particulate_inert_degradation_process must be'
+                            f' a `Process` object if not None, not {type(proc)}')
+        
+    def _init_model(self):
+        if self._model is None:
+            warn(f'{self.ID} was initialized without an activated sludge  model, '
+                 f'and thus run as a non-reactive unit')
+            r = lambda state_arr: np.zeros(self.components.size)
+        else:
+            dig = self.organic_particulate_inert_degradation_process
+            dig_stoi = dig._stoichiometry
+            dig_frho = dig.rate_function
+            asm_frate = self._model.production_rates_eval
+            r = lambda state_arr: asm_frate(state_arr) + dig_stoi * dig_frho(state_arr)
+        return r

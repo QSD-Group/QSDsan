@@ -35,7 +35,8 @@ from ..utils import (
 
 __all__ = ('AnMBR', 
            'CompletelyMixedMBR',
-           'PlugFlowMBR',)
+           # 'PlugFlowMBR',
+           )
 
 #%%
 degassing = SanStream.degassing
