@@ -66,7 +66,6 @@ def _settling_flux(X, v_max, v_max_practical, X_min, rh, rp, n0):
 #     v = min(v_max_practical, v_max*(exp(-rh*X_star) - exp(-rp*X_star)))
 #     return X*max(v, 0)
 
-
 class FlatBottomCircularClarifier(SanUnit):
     """
     A flat-bottom circular clarifier with a simple 1-dimensional
@@ -168,7 +167,9 @@ class FlatBottomCircularClarifier(SanUnit):
         if design_influent_flow != None: 
             Q_in = design_influent_flow * 24 # m3/hr to m3/day
         else: 
-            self._mixed = WasteStream(f'{ID}_mixed')
+            ins, = self.ins
+            self._mixed = WasteStream()
+            self._mixed.mix_from(ins,)
             Q_in = self._mixed.get_total_flow('m3/hr') * 24
 
         ras = Q_in * recycle_ratio
@@ -206,7 +207,7 @@ class FlatBottomCircularClarifier(SanUnit):
         self._design_flow = design_influent_flow
         self._sor = design_surface_overflow_rate
         
-        # self._mixed = WasteStream(f'{ID}_mixed')
+        self._mixed = WasteStream(f'{ID}_mixed')
         header = self._state_header
         self._state_header = list(header) + [f'TSS{i+1} [mg/L]' for i in range(N_layer)]
         for attr, value in kwargs.items():
@@ -639,6 +640,7 @@ class FlatBottomCircularClarifier(SanUnit):
         self._mixed.mix_from(self.ins)
         mixed = self._mixed
         D = self.design_results
+        U = self._units
         
         D['Number of clarifiers'] = 2 # Same as the number of parallel trains. Assuming 1 in use and 1 redundant.
                 
@@ -653,17 +655,18 @@ class FlatBottomCircularClarifier(SanUnit):
         elif D['Clarifier diameter'] > 21 and D['Clarifier diameter'] <= 30: D['Clarifier depth'] = 4
         elif D['Clarifier diameter'] >30 and D['Clarifier diameter'] <= 43: D['Clarifier depth'] = 4.3
         elif D['Clarifier diameter'] > 43: D['Clarifier depth'] = 4.6
+
     
         D['Clarifier volume'] = D['Surface area']*D['Clarifier depth'] # in m3 
     
         # Check on SOR [3, 4, 5]
         D['Design surface overflow rate'] = self._sor # m3/(m2*day)
-        if D['Surface overflow rate'] > 32:
-            sor = D['Surface overflow rate']
+        if D['Design surface overflow rate'] > 32:
+            sor = D['Design surface overflow rate']
             warn(f'Surface overflow rate = {sor} is above recommended level of 32 m3/day/m2')
         
         # Calculating SLR
-        D['Solids loading rate'] = 5 # Default value for SLR, kg/(m2*hr) [3]
+        design_slr = 5 # Default value for SLR, kg/(m2*hr) [3]
         if self._design_tss != None and self._design_flow != None:
             total_solids = self._design_tss*self._design_flow/1000 # in kg/hr (mg/l * m3/hr)
         elif self._design_tss != None and self._design_flow == None:
@@ -675,13 +678,13 @@ class FlatBottomCircularClarifier(SanUnit):
         simulated_slr = total_solids/D['Surface area'] # in kg/(m2*hr)
         
         # Check on SLR [3, 4, 5] 
-        if simulated_slr < 0.8*D['Solids loading rate'] or simulated_slr > 1.2*D['Solids loading rate']:
-            design_slr = D['Solids loading rate']
+        if simulated_slr < 0.8*design_slr or simulated_slr > 1.2*design_slr:
             warn(f'Solids loading rate = {simulated_slr} is not within 20% of the recommended design level of {design_slr} kg/hr/m2')
         
         if simulated_slr > 14:
             warn(f'Solids loading rate = {simulated_slr} is above recommended level of 14 kg/hr/m2')
-        
+        D['Solids loading rate'] = simulated_slr
+
         # Calculating HRT
         D['Hydraulic Retention Time'] = D['Clarifier volume']*24/D['Volumetric flow'] # in hr
         
@@ -698,7 +701,7 @@ class FlatBottomCircularClarifier(SanUnit):
         D['Volume of concrete slab']  = (np.pi*thickness_concrete_slab/4)*outer_diameter**2
 
         # Amount of reinforcing steel required [6]
-        D['Reinforcing steel'] = 77.58 * (D['Volume of concrete slab'] + D['Volume of concrete wall']) # in kg
+        D['Reinforcement steel'] = 77.58 * (D['Volume of concrete slab'] + D['Volume of concrete wall']) # in kg
         
         # Clarifiers can be center feed or peripheral feed. The design here is for the more commonly deployed center feed.
         # Depth of the center feed lies between 30-75% of sidewater depth. [2]
@@ -729,6 +732,10 @@ class FlatBottomCircularClarifier(SanUnit):
             
         # For secondary clarifier
         D['Number of pumps'] = 2*D['Number of clarifiers']
+
+        print(f'Design results for Flat-bottom circular clarifier:')
+        for key in D:
+            print(f'{key}: {round(D[key],2)} {U[key]}')
         
     def _cost(self):
        
