@@ -65,7 +65,7 @@ effluent = qs.WasteStream('effluent', T=Temp)
 WAS = qs.WasteStream('WAS', T=Temp)
 RAS = qs.WasteStream('RAS', T=Temp)
 
-C1 = su.FlatBottomCircularClarifier('C1', dom_ww, [effluent, RAS, WAS],
+C1 = su.FlatBottomCircularClarifier('C1', ins=dom_ww, outs=[effluent, RAS, WAS],
                                     N_layer=10, 
                                     feed_layer=5, thermo = thermo_asm2d)
     
@@ -80,9 +80,9 @@ if __name__ == '__main__':
     t = 0.001
     method = 'RK23'
 
-msg = f'Method {method}'
-print(f'\n{msg}\n{"-"*len(msg)}') # long live OCD!
-print(f'Time span 0-{t}d \n')    
+# msg = f'Method {method}'
+# print(f'\n{msg}\n{"-"*len(msg)}') # long live OCD!
+# print(f'Time span 0-{t}d \n')    
 
 sys.simulate(
         state_reset_hook='reset_cache',
@@ -106,7 +106,7 @@ sys.simulate(
 # print("---------------------------RAS properties------------------------------")
 # RAS.show()
 
-sys.diagram()
+# sys.diagram()
 
 # #%%
 

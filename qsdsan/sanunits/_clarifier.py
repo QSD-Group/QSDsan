@@ -160,21 +160,21 @@ class FlatBottomCircularClarifier(SanUnit):
                  design_surface_overflow_rate = 28, **kwargs):
 
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic, F_BM_default=1)
-              
-        sor = design_surface_overflow_rate
-        self._sor = sor
 
+        ins, = self.ins
+        self._mixed = WasteStream()
+        self._mixed.mix_from(ins)   
+        
         if design_influent_flow != None: 
             Q_in = design_influent_flow * 24 # m3/hr to m3/day
-        else: 
-            ins, = self.ins
-            self._mixed = WasteStream()
-            self._mixed.mix_from(ins,)
-            Q_in = self._mixed.get_total_flow('m3/hr') * 24
+        else:  
+            Q_in = self._mixed.get_total_flow('m3/hr') * 24 
 
+        sor = design_surface_overflow_rate
+        self._sor = sor
         ras = Q_in * recycle_ratio
         was = Q_in * was_ratio
-        self._Qras, self._Qwas = ras, was
+        self._Qras, self._Qwas = ras, was 
         self._sludge = WasteStream()
 
         surface_area = Q_in / self._sor
@@ -188,9 +188,9 @@ class FlatBottomCircularClarifier(SanUnit):
         self._h = height
 
         self._V = self._A * height
-        self._hj = height/N_layer
         self._N_layer = N_layer
         self.feed_layer = feed_layer
+        self._hj = self._h/self._N_layer
         self._v_max = v_max
         self._v_max_p = v_max_practical
         self._X_t = X_threshold
@@ -216,33 +216,21 @@ class FlatBottomCircularClarifier(SanUnit):
         self._inf = self.ins[0].copy(f'{ID}_inf')
         self._ras = self.outs[1].copy(f'{ID}_ras')
         self._was = self.outs[2].copy(f'{ID}_was')
-        
+    
     @property
     def height(self):
         '''[float] Height of the clarifier in m.'''
         return self._h
-
-    @height.setter
-    def height(self, h):
-        self._h = h
 
     @property
     def ras(self):
         '''[float] The designed recycling sludge flow rate in m3/d.'''
         return self._Qras
 
-    @ras.setter
-    def ras(self, ras):
-        self._Qras = ras
-
     @property
     def was(self):
         '''[float] The designed wasted sludge flow rate in m3/d.'''
         return self._Qwas
-
-    @was.setter
-    def was(self, was):
-        self._Qwas = was
 
     @property
     def V_settle(self):
@@ -254,18 +242,10 @@ class FlatBottomCircularClarifier(SanUnit):
         '''[float] The surface area for settling in m^2, i.e., the area of the clarifier's flat bottom.'''
         return self._A
 
-    @A_settle.setter
-    def A_settle(self, A):
-        self._A = A
-
     @property
     def h_layer(self):
         '''[float] The height of each layer in the settling model, in m.'''
         return self._hj
-
-    @h_layer.setter
-    def h_layer(self, h):
-        self._hj = h
 
     @property
     def N_layer(self):
@@ -733,9 +713,9 @@ class FlatBottomCircularClarifier(SanUnit):
         # For secondary clarifier
         D['Number of pumps'] = 2*D['Number of clarifiers']
 
-        print(f'Design results for Flat-bottom circular clarifier:')
-        for key in D:
-            print(f'{key}: {round(D[key],2)} {U[key]}')
+        # print(f'Design results for Flat-bottom circular clarifier:')
+        # for key in D:
+        #     print(f'{key}: {round(D[key],2)} {U[key]}')
         
     def _cost(self):
        
