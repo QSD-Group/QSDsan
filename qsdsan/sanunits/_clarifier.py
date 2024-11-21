@@ -79,20 +79,10 @@ class FlatBottomCircularClarifier(SanUnit):
         Influent to the clarifier. Expected number of influent is 1.
     outs : :class:`WasteStream`
         Treated effluent and sludge.
-    # underflow : float, optional
-    #     Designed recycling sludge flowrate (RAS), in [m^3/d]. The default is 2000.
-    # wastage : float, optional
-    #     Designed wasted sludge flowrate (WAS), in [m^3/d]. The default is 385.
-    # surface_area : float, optional
-    #     Surface area of the clarifier, in [m^2]. The default is 1500.
-    # height : float, optional
-    #     Height of the clarifier, in [m]. The default is 4.
-    recyle_ratio : float, optional
-        Designed return activated sludge (RAS) ratio, as a fraction of the influent flowrate.
-        Varies from 0.5-0.75. Default is 0.75. [3]
-    was_ratio : float, optional
-        Designed waste activated sludge (WAS) ratio, as a fraction of the influent flowrate. 
-        Varies from 0.01-0.02. Default is 0.01. [3]
+    underflow : float, optional
+        Designed recycling sludge flowrate (RAS), in [m^3/d]. The default is 2000.
+    wastage : float, optional
+        Designed wasted sludge flowrate (WAS), in [m^3/d]. The default is 385.
     N_layer : int, optional
         The number of layers to model settling. The default is 10.
     feed_layer : int, optional
@@ -152,7 +142,7 @@ class FlatBottomCircularClarifier(SanUnit):
     pumps = ('ras', 'was',)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 init_with='WasteStream', recycle_ratio=0.75, was_ratio=0.01,
+                 init_with='WasteStream', underflow=2000, wastage=385,
                  N_layer=10, feed_layer=4,
                  X_threshold=3000, v_max=474, v_max_practical=250,
                  rh=5.76e-4, rp=2.86e-3, fns=2.28e-3, F_BM_default=default_F_BM, isdynamic=True,
@@ -162,7 +152,7 @@ class FlatBottomCircularClarifier(SanUnit):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic, F_BM_default=1)
 
         ins, = self.ins
-        self._mixed = WasteStream()
+        self._mixed = WasteStream(f'{ID}_mixed')
         self._mixed.mix_from(ins)   
         
         if design_influent_flow != None: 
@@ -172,9 +162,7 @@ class FlatBottomCircularClarifier(SanUnit):
 
         sor = design_surface_overflow_rate
         self._sor = sor
-        ras = Q_in * recycle_ratio
-        was = Q_in * was_ratio
-        self._Qras, self._Qwas = ras, was 
+        self._Qras, self._Qwas = underflow, wastage
         self._sludge = WasteStream()
 
         surface_area = Q_in / self._sor
@@ -207,7 +195,6 @@ class FlatBottomCircularClarifier(SanUnit):
         self._design_flow = design_influent_flow
         self._sor = design_surface_overflow_rate
         
-        self._mixed = WasteStream(f'{ID}_mixed')
         header = self._state_header
         self._state_header = list(header) + [f'TSS{i+1} [mg/L]' for i in range(N_layer)]
         for attr, value in kwargs.items():
@@ -223,14 +210,22 @@ class FlatBottomCircularClarifier(SanUnit):
         return self._h
 
     @property
-    def ras(self):
+    def underflow(self):
         '''[float] The designed recycling sludge flow rate in m3/d.'''
         return self._Qras
 
+    @underflow.setter
+    def underflow(self, ras):
+        self._Qras = ras
+
     @property
-    def was(self):
+    def wastage(self):
         '''[float] The designed wasted sludge flow rate in m3/d.'''
         return self._Qwas
+
+    @wastage.setter
+    def wastage(self, was):
+        self._Qwas = was
 
     @property
     def V_settle(self):
