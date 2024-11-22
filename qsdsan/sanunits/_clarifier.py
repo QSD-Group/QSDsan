@@ -1233,16 +1233,20 @@ class PrimaryClarifier(IdealClarifier):
     ----------
     surface_overflow_rate : float
         Surface overflow rate in the clarifier in [(m3/day)/m2]. [1]
-        Design SOR value for clarifier is 41 (m3/day)/m2 if it does not receive WAS.
-        Design SOR value for clarifier is 29 (m3/day)/m2 if it receives WAS.
+        Design SOR value for clarifier is 40 (m3/day)/m2 if it does not receive WAS.
+        Design SOR value for clarifier is 28 (m3/day)/m2 if it receives WAS.
         Typically SOR lies between 30-50 (m3/day)/m2. 
-        Here default value of 41 (m3/day)/m2 is used.
+        Here default value of 40 (m3/day)/m2 is used.
     depth_clarifier : float
         Depth of clarifier. Typical depths range from 3 m to 4.9 m [1,2]. 
         Default value of 4.5 m would be used here. 
     downward_flow_velocity : float, optional
         Speed on the basis of which center feed diameter is designed [m/hr]. [3]
         The default is 36 m/hr. (10 mm/sec)
+    Solids removal efficiency : float
+        Removal efficiency of total suspended solids (TSS). 
+        Typical removal efficiencies range from 50-70%. [2,3]
+        Default of 60% is used.
     F_BM : dict
         Equipment bare modules.
         
@@ -1321,6 +1325,9 @@ class PrimaryClarifier(IdealClarifier):
     [2] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
     engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
     [3] Introduction to Wastewater Clarifier Design by Nikolay Voutchkov, PE, BCEE.
+    [5] Foley, J., De Haas, D., Hartley, K., & Lant, P. (2010). Comprehensive life cycle inventories of alternative wastewater treatment systems. Water Research, 44(5), 1654–1666. https://doi.org/10.1016/j.watres.2009.11.031
+    [6] Circular mechanical clarifier center feed equipment specifications. Pollutions Control Systems, Inc.
+
     """
     
     _N_ins = 1
@@ -1338,7 +1345,7 @@ class PrimaryClarifier(IdealClarifier):
     def __init__(self, ID='', ins=None, outs=(), 
                  sludge_flow_rate=2000, solids_removal_efficiency=0.6,
                  thermo=None, isdynamic=False, init_with='WasteStream', 
-                 surface_overflow_rate = 41, depth_clarifier=4.5,
+                 surface_overflow_rate = 40, depth_clarifier=4.5,
                  downward_flow_velocity=36, F_BM=default_F_BM, **kwargs):
         super().__init__(ID, ins, outs, thermo,
                          sludge_flow_rate=sludge_flow_rate, 
@@ -1352,18 +1359,6 @@ class PrimaryClarifier(IdealClarifier):
         self.downward_flow_velocity = downward_flow_velocity
         self.F_BM.update(F_BM)
         self._sludge = WasteStream(f'{ID}_sludge')       
-            
-    # @property
-    # def solids_loading_rate(self):
-    #     '''solids_loading_rate is the loading in the clarifier'''
-    #     return self._slr
-
-    # @solids_loading_rate.setter
-    # def solids_loading_rate(self, slr):
-    #     if slr is not None:
-    #         self._slr = slr
-    #     else: 
-    #         raise ValueError('solids_loading_rate of the clarifier expected from user')
             
     def _design_pump(self):
         ID, pumps = self.ID, self.pumps
@@ -1414,19 +1409,19 @@ class PrimaryClarifier(IdealClarifier):
         'Volumetric flow': 'm3/day',
         'Surface area': 'm2',
         'Cylindrical diameter': 'm',
-        'Conical radius': 'm',
         'Conical depth': 'm',
         'Clarifier depth': 'm',
         'Cylindrical depth': 'm',
         'Cylindrical volume': 'm3',
         'Conical volume': 'm3',
-        'Volume': 'm3',
+        'Clarifier volume': 'm3',
         'Hydraulic Retention Time': 'hr', 
         'Center feed depth': 'm',
         'Downward flow velocity': 'm/hr',
         'Center feed diameter': 'm',
         'Volume of concrete wall': 'm3',
         'Volume of concrete slab': 'm3',
+        'Reinforcing steel': 'kg',
         'Stainless steel': 'kg',
         'Pump pipe stainless steel' : 'kg',
         'Pump stainless steel': 'kg',
@@ -1438,24 +1433,30 @@ class PrimaryClarifier(IdealClarifier):
         mixed = self._mixed
         mixed.mix_from(self.ins)
         D = self.design_results
+        U = self._units
         
-        # Number of clarifiers based on tentative suggestions by Jeremy 
-        # (would be verified through collaboration with industry)
-        total_flow = (mixed.get_total_flow('m3/hr')*24)/3785 # in MGD
-        if total_flow <= 3:
-            D['Number of clarifiers'] = 2
-        elif total_flow > 3 and total_flow <= 8:
-            D['Number of clarifiers'] = 3
-        elif total_flow > 8 and total_flow <=20:
-            D['Number of clarifiers'] = 4
-        else:
-            D['Number of clarifiers'] = 4
-            total_flow -= 20
-            D['Number of clarifiers'] += np.ceil(total_flow/20)
+        D['Number of clarifiers'] = 2 # 1 in use and 1 redundant.            
             
         D['SOR'] = self.surface_overflow_rate # in (m3/day)/m2
-        D['Volumetric flow'] =  (mixed.get_total_flow('m3/hr')*24)/D['Number of clarifiers'] # m3/day
-        D['Surface area'] = D['Volumetric flow']/D['SOR'] # in m2
+
+        # Calculating HRT based on solids removal efficiency, using empirical constants for TSS. [2]
+        D['Hydraulic Retention Time'] = (self.solids_removal_efficiency * 0.014)/((self.solids_removal_efficiency * 0.0075) - 1) 
+
+        D['Volumetric flow'] =  (mixed.get_total_flow('m3/hr')*24)/(D['Number of clarifiers']-1) # m3/day
+
+        D['Clarifier depth'] = self.depth_clarifier # in m
+        sludge_blanket_depth = 0.5 # Assuming a sludge blanket depth (SBD) of 0.5 m. Varies between 0.3-0.6 m. [2] 
+        D['Conical depth'] = D['Clarifier depth'] - sludge_blanket_depth
+        D['Cylindrical depth'] = D['Clarifier depth'] - D['Conical depth']
+
+        # Check on cylindrical and conical depths 
+        if D['Cylindrical depth'] < D['Conical depth']:
+            Cylindrical_depth = D['Cylindrical depth']
+            Conical_depth = D['Conical depth']
+            warn(f'Cylindrical depth = {Cylindrical_depth} is lower than Conical depth = {Conical_depth}')
+        
+        # Calculating surface area using SOR and HRT
+        D['Surface area'] = max(D['Volumetric flow']/D['SOR'], D['Hydraulic Retention Time']*D['Volumetric flow']/(24*D['Cylindrical depth'])) # in m2
         D['Cylindrical diameter'] = np.sqrt(4*D['Surface area']/np.pi) #in m
         
         #Check on cylindrical diameter [2, 3]
@@ -1463,23 +1464,9 @@ class PrimaryClarifier(IdealClarifier):
             Cylindrical_dia = D['Cylindrical diameter']
             warn(f'Cylindrical diameter = {Cylindrical_dia} is not between 3 m and 60 m')
         
-        D['Conical radius'] = D['Cylindrical diameter']/2
-        # The slope of the bottom conical floor lies between 1:10 to 1:12 [3, 4]
-        D['Conical depth'] = D['Conical radius']/12 
-        D['Clarifier depth'] = self.depth_clarifier #in m 
-        D['Cylindrical depth'] = D['Clarifier depth'] -  D['Conical depth']
-        
-        # Check on cylindrical and conical depths 
-        if D['Cylindrical depth'] < D['Conical depth']:
-            Cylindrical_depth = D['Cylindrical depth']
-            Conical_depth = D['Conical depth']
-            warn(f'Cylindrical depth = {Cylindrical_depth} is lower than Conical depth = {Conical_depth}')
-        
-        D['Cylindrical volume'] = np.pi*np.square(D['Cylindrical diameter']/2)*D['Cylindrical depth'] #in m3
-        D['Conical volume'] = (3.14/3)*(D['Conical radius']**2)*D['Conical depth'] #in m3
-        D['Volume'] = D['Cylindrical volume'] + D['Conical volume'] #in m3
-        
-        D['Hydraulic Retention Time'] = D['Volume']/(D['Volumetric flow']/24) #in hrs
+        D['Cylindrical volume'] = D['Surface area'] * D['Cylindrical depth'] #in m3
+        D['Conical volume'] = (np.pi/3) * np.square(D['Cylindrical diameter']/2) * D['Conical depth'] #in m3
+        D['Clarifier volume'] = D['Cylindrical volume'] + D['Conical volume'] #in m3
         
         # Check on cylinderical HRT [3]
         if D['Hydraulic Retention Time'] < 1.5 or D['Hydraulic Retention Time'] > 2.5:
@@ -1487,9 +1474,8 @@ class PrimaryClarifier(IdealClarifier):
             warn(f'HRT = {HRT} is not between 1.5 and 2.5 hrs')
         
         # The design here is for center feed of clarifier.
-        
         # Depth of the center feed lies between 30-75% of sidewater depth. [3, 4]
-        D['Center feed depth'] = 0.5*D['Cylindrical depth']
+        D['Center feed depth'] = 0.5 * D['Cylindrical depth']
         # Typical conventional feed wells are designed for an average downflow velocity
         # of 10-13 mm/s and maximum velocity of 25-30 mm/s. [4]
         peak_flow_safety_factor = 2.5 # assumed based on average and maximum velocities
@@ -1501,7 +1487,7 @@ class PrimaryClarifier(IdealClarifier):
 
         #Sanity check: Diameter of the center feed lies between 15-25% of tank diameter [4]
         #The lower limit of this check has been modified to 10% based on advised range of down flow velocity in [4]. 
-        if D['Center feed diameter'] < 0.10*D['Cylindrical diameter'] or D['Center feed diameter']  > 0.25*D['Cylindrical diameter']:
+        if D['Center feed diameter'] < 0.15*D['Cylindrical diameter'] or D['Center feed diameter']  > 0.25*D['Cylindrical diameter']:
             cf_dia = D['Center feed diameter'] 
             tank_dia = D['Cylindrical diameter']
             warn(f'Diameter of the center feed does not lie between 15-25% of tank diameter. It is {cf_dia*100/tank_dia}% of tank diameter')
@@ -1512,20 +1498,24 @@ class PrimaryClarifier(IdealClarifier):
         thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
         inner_diameter = D['Cylindrical diameter']
         outer_diameter = inner_diameter + 2*thickness_concrete_wall
-        volume_cylindercal_wall = (np.pi*D['Cylindrical depth']/4)*(outer_diameter**2 - inner_diameter**2)
-        D['Volume of concrete wall'] = volume_cylindercal_wall # in m3
+        fb = 0.5 # Freeboard, in m.
+        volume_wall = (np.pi/4) * (outer_diameter**2 - inner_diameter**2) * (D['Cylindrical depth'] + fb)
+        D['Volume of concrete wall'] = volume_wall # in m3
         
         # Concrete slab thickness, [ft], default to be 2 in thicker than the wall thickness. (Brian's code)
         thickness_concrete_slab = thickness_concrete_wall + (2/12)*0.3048 # from inch to m
-        outer_diameter_cone = inner_diameter + 2*(thickness_concrete_wall + thickness_concrete_slab)
-        volume_conical_wall = (np.pi/(3*4))*(((D['Conical depth'] + thickness_concrete_wall + thickness_concrete_slab)*(outer_diameter_cone**2)) - (D['Conical depth']*(inner_diameter)**2))
-        D['Volume of concrete slab'] = volume_conical_wall
+        outer_diameter_cone = inner_diameter + 2*thickness_concrete_slab
+        volume_slab = (np.pi/(3*4))*(outer_diameter_cone**2 - inner_diameter**2) * sludge_blanket_depth
+        D['Volume of concrete slab'] = volume_slab
+
+        # Amount of reinforcing steel required, in kg, 77.58 kg steel per m3 of concrete, adopted from [5]
+        D['Reinforcing steel'] = 77.58 * (D['Volume of concrete slab'] + D['Volume of concrete wall'])
         
         # Amount of metal required for center feed
-        thickness_metal_wall = 0.3048 # equal to 1 feet, in m (!! NEED A RELIABLE SOURCE !!)
+        thickness_metal_wall = 0.3048/4 # equal to 1/4th feet, in m [6]
         inner_diameter_center_feed = D['Center feed diameter']
         outer_diameter_center_feed = inner_diameter_center_feed + 2*thickness_metal_wall
-        volume_center_feed = (3.14*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed**2)
+        volume_center_feed = (np.pi*D['Center feed depth']/4)*(outer_diameter_center_feed**2 - inner_diameter_center_feed**2)
         density_ss = 7930 # kg/m3, 18/8 Chromium
         D['Stainless steel'] = volume_center_feed*density_ss # in kg
        
