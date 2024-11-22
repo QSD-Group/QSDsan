@@ -1,0 +1,27 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                    VWT   R-squared:                       0.886
+Model:                            OLS   Adj. R-squared:                  0.886
+Method:                 Least Squares   F-statistic:                 7.990e+04
+Date:                Sun, 27 Oct 2024   Prob (F-statistic):               0.00
+Time:                        03:48:28   Log-Likelihood:            -2.0853e+05
+No. Observations:               10278   AIC:                         4.171e+05
+Df Residuals:                   10276   BIC:                         4.171e+05
+Df Model:                           1                                         
+Covariance Type:            nonrobust                                         
+==============================================================================
+                 coef    std err          t      P>|t|      [0.025      0.975]
+------------------------------------------------------------------------------
+const       8.534e+06   1.56e+06      5.480      0.000    5.48e+06    1.16e+07
+Value       1237.2181      4.377    282.669      0.000    1228.639    1245.798
+==============================================================================
+Omnibus:                    25634.956   Durbin-Watson:                   1.926
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):        826570291.583
+Skew:                          26.705   Prob(JB):                         0.00
+Kurtosis:                    1391.258   Cond. No.                     3.58e+05
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+[2] The condition number is large, 3.58e+05. This might indicate that there are
+strong multicollinearity or other numerical problems.
