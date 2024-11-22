@@ -9,7 +9,7 @@ This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
-
+import numpy as np
 from qsdsan import Process
 from thermosteam import settings
 _load_components = settings.get_default_chemicals
@@ -95,6 +95,7 @@ class ASM_AeDigAddOn(Process):
                          conserved_for=consrv,
                          parameters=('k_dig',))
         self.k_dig=k_dig
+        self._stoichiometry = np.asarray(self._stoichiometry, dtype=float)
     
     @property
     def k_dig(self):
