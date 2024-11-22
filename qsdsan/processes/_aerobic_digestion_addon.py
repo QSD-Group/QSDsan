@@ -41,10 +41,10 @@ class ASM_AeDigAddOn(Process):
     >>> dig_asm1 = pc.ASM_AeDigAddOn('dig_asm1')
     >>> dig_asm1.show()
     Process: dig_asm1
-    [stoichiometry]      X_I: -1.00
-                         X_S: 1.00
-                         S_NH: 0.0600
-                         S_ALK: 0.0515
+    [stoichiometry]      X_I: -1
+                         X_S: 1
+                         S_NH: 0.06
+                         S_ALK: 0.0514
     [reference]          X_I
     [rate equation]      X_I*k_dig
     [parameters]         k_dig: 0.04
@@ -55,14 +55,14 @@ class ASM_AeDigAddOn(Process):
     >>> dig_masm2d.show()
     Process: dig_masm2d
     [stoichiometry]      S_NH4: 0.0265
-                         S_PO4: 0.000900
-                         S_IC: 0.0434
-                         X_I: -1.00
-                         X_S: 1.00
+                         S_PO4: 0.0009
+                         S_IC: 0.0433
+                         X_I: -1
+                         X_S: 1
     [reference]          X_I
     [rate equation]      X_I*k_dig
     [parameters]         k_dig: 0.04
-    [dynamic parameters] 
+    [dynamic parameters]
     
     '''
     
