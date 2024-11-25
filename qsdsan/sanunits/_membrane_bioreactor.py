@@ -1407,7 +1407,7 @@ class CompletelyMixedMBR(CSTR):
                     H2O    8.31e+07
         WasteStream-specific properties:
          pH         : 7.0
-         Alkalinity : 2.5 mg/L
+         Alkalinity : 2.5 mmol/L
          COD        : 270.0 mg/L
          BOD        : 137.1 mg/L
          TC         : 170.4 mg/L

@@ -891,7 +891,7 @@ class PFR(SanUnit):
                  H2O    1.53e+09
      WasteStream-specific properties:
       pH         : 7.0
-      Alkalinity : 2.5 mg/L
+      Alkalinity : 2.5 mmol/L
       COD        : 4389.1 mg/L
       BOD        : 1563.3 mg/L
       TC         : 1599.8 mg/L
@@ -1353,7 +1353,7 @@ class AerobicDigester(CSTR):
                     H2O    1.99e+06
         WasteStream-specific properties:
          pH         : 7.0
-         Alkalinity : 2.5 mg/L
+         Alkalinity : 2.5 mmol/L
          COD        : 64631.0 mg/L
          BOD        : 23300.3 mg/L
          TC         : 22923.3 mg/L
@@ -1381,7 +1381,7 @@ class AerobicDigester(CSTR):
                     H2O   2e+06
         WasteStream-specific properties:
          pH         : 7.0
-         Alkalinity : 2.5 mg/L
+         Alkalinity : 2.5 mmol/L
          COD        : 40987.6 mg/L
          BOD        : 15416.1 mg/L
          TC         : 13985.1 mg/L

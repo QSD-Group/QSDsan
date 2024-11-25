@@ -95,7 +95,7 @@ class ElectrochemicalCell(SanUnit):
                   O2         0.104
      WasteStream-specific properties:
       pH         : 7.0
-      Alkalinity : 2.5 mg/L
+      Alkalinity : 2.5 mmol/L
       TC         : 1860.0 mg/L
       TP         : 31.9 mg/L
       TK         : 1470.0 mg/L
