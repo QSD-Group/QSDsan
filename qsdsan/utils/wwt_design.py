@@ -779,7 +779,7 @@ def get_total_operational_cost(q_air, # aeration (blower) power
     
     return total_operational_cost 
 
-def get_eq_natural_gas_price(system, gas, mass_density = 0.68, natural_gas_price = 0.0041): 
+def get_eq_natural_gas_price(system, gas, mass_density = 0.68, natural_gas_price = 0.1617): 
     '''
     Parameters
     ----------
@@ -794,7 +794,7 @@ def get_eq_natural_gas_price(system, gas, mass_density = 0.68, natural_gas_price
         The default is None.
     natural_gas_price : float
         Price of Natural gas in USD/m3 (eia.gov). 
-        The default is 0.0041 USD/m3. 
+        The default is 0.1617 USD/m3. 
     mass_density : float
         Mass density of natural gas in kg/m3. 
         The default is 0.68 kg/m3. [1]
@@ -904,7 +904,7 @@ def get_GHG_emissions_discharge(effluent=None, CH4_EF=0.009, N2O_EF=0.005):
     
     CH4_emitted = CH4_EF*mass_effluent_COD
     
-    effluent_N = np.array([eff.TN for eff in effluent]) # in mg/L
+    effluent_N = np.array([eff.TKN for eff in effluent]) # in mg/L
     mass_effluent_N = np.sum(effluent_flow*effluent_N/1000) # in kg/day
     
     N2O_emitted = N2O_EF*mass_effluent_N
@@ -1243,7 +1243,7 @@ def get_N2O_CO2_eq_discharge(system, effluent_sys =None, N2O_CO2eq=273, F=0.5, N
     
     # source 3 (off-site)
     effluent_flow = np.array([eff.F_vol*24 for eff in effluent_sys]) # in m3/day
-    effluent_N = np.array([eff.TN for eff in effluent_sys]) # in mg/L
+    effluent_N = np.array([eff.TKN for eff in effluent_sys]) # in mg/L
     mass_effluent_N = np.sum(effluent_flow*effluent_N/1000) # in kg/day
     
     N2O_emitted_discharge = N2O_EF_discharge*mass_effluent_N
@@ -1677,7 +1677,7 @@ def get_total_CO2_eq(system, q_air, influent_sc =None, effluent_sc = None, efflu
     
     CH4_emitted_discharge = CH4_EF_discharge*mass_effluent_COD
     
-    effluent_N = np.array([eff.TN for eff in effluent_sys]) # in mg/L
+    effluent_N = np.array([eff.TKN for eff in effluent_sys]) # in mg/L
     mass_effluent_N = np.sum(effluent_flow*effluent_N/1000) # in kg/day
     
     N2O_emitted_discharge = N2O_EF_discharge*mass_effluent_N
