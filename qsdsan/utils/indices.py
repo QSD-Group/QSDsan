@@ -125,7 +125,7 @@ GDP = {
   2024: 1.354,
   }
 
-# https://data.bls.gov/cgi-bin/srgate; CEU3232500008; Chemicals
+# https://data.bls.gov/cgi-bin/srgate; CEU3232500008; Chemical manufacturing
 labor = {
     1990: 12.85,
     1991: 13.30,
@@ -168,7 +168,7 @@ PCEPI = {
     2000: 73.822,
     2001: 75.302,
     2002: 76.291,
-    2003: 77.894        ,
+    2003: 77.894,
     2004: 79.827,
     2005: 82.127,
     2006: 84.440,
