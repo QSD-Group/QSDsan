@@ -1440,7 +1440,7 @@ class PrimaryClarifier(IdealClarifier):
         D['SOR'] = self.surface_overflow_rate # in (m3/day)/m2
 
         # Calculating HRT based on solids removal efficiency, using empirical constants for TSS. [2]
-        D['Hydraulic Retention Time'] = (self.solids_removal_efficiency * 0.014)/((self.solids_removal_efficiency * 0.0075) - 1) 
+        D['Hydraulic Retention Time'] = (self.solids_removal_efficiency * 0.014)/(1 - (self.solids_removal_efficiency * 0.0075)) 
 
         D['Volumetric flow'] =  (mixed.get_total_flow('m3/hr')*24)/(D['Number of clarifiers']-1) # m3/day
 
@@ -1456,7 +1456,8 @@ class PrimaryClarifier(IdealClarifier):
             warn(f'Cylindrical depth = {Cylindrical_depth} is lower than Conical depth = {Conical_depth}')
         
         # Calculating surface area using SOR and HRT
-        D['Surface area'] = max(D['Volumetric flow']/D['SOR'], D['Hydraulic Retention Time']*D['Volumetric flow']/(24*D['Cylindrical depth'])) # in m2
+        D['Surface area'] = max(D['Volumetric flow']/D['SOR'],\
+                                 D['Hydraulic Retention Time']*D['Volumetric flow']/(24*D['Cylindrical depth'])) # in m2
         D['Cylindrical diameter'] = np.sqrt(4*D['Surface area']/np.pi) #in m
         
         #Check on cylindrical diameter [2, 3]
