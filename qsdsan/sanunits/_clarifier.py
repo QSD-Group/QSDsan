@@ -1442,11 +1442,11 @@ class PrimaryClarifier(IdealClarifier):
         # Calculating HRT based on solids removal efficiency, using empirical constants for TSS. [2]
         D['Hydraulic Retention Time'] = (self.solids_removal_efficiency * 0.014)/(1 - (self.solids_removal_efficiency * 0.0075)) 
 
-        D['Volumetric flow'] =  (mixed.get_total_flow('m3/hr')*24)/(D['Number of clarifiers']-1) # m3/day
+        D['Volumetric flow'] = (mixed.get_total_flow('m3/hr')*24)/(D['Number of clarifiers']-1) # m3/day
 
         D['Clarifier depth'] = self.depth_clarifier # in m
         sludge_blanket_depth = 0.5 # Assuming a sludge blanket depth (SBD) of 0.5 m. Varies between 0.3-0.6 m. [2] 
-        D['Conical depth'] = D['Clarifier depth'] - sludge_blanket_depth
+        D['Conical depth'] = sludge_blanket_depth
         D['Cylindrical depth'] = D['Clarifier depth'] - D['Conical depth']
 
         # Check on cylindrical and conical depths 
@@ -1455,9 +1455,8 @@ class PrimaryClarifier(IdealClarifier):
             Conical_depth = D['Conical depth']
             warn(f'Cylindrical depth = {Cylindrical_depth} is lower than Conical depth = {Conical_depth}')
         
-        # Calculating surface area using SOR and HRT
-        D['Surface area'] = max(D['Volumetric flow']/D['SOR'],\
-                                 D['Hydraulic Retention Time']*D['Volumetric flow']/(24*D['Cylindrical depth'])) # in m2
+        # Calculating surface area using SOR 
+        D['Surface area'] = D['Volumetric flow']/D['SOR'] # in m2
         D['Cylindrical diameter'] = np.sqrt(4*D['Surface area']/np.pi) #in m
         
         #Check on cylindrical diameter [2, 3]
@@ -1469,6 +1468,9 @@ class PrimaryClarifier(IdealClarifier):
         D['Conical volume'] = (np.pi/3) * np.square(D['Cylindrical diameter']/2) * D['Conical depth'] #in m3
         D['Clarifier volume'] = D['Cylindrical volume'] + D['Conical volume'] #in m3
         
+        # Calculating HRT 
+        D['Hydraulic Retention Time'] = D['Clarifier volume'] * 24 / D['Volumetric flow'] # in hours
+
         # Check on cylinderical HRT [3]
         if D['Hydraulic Retention Time'] < 1.5 or D['Hydraulic Retention Time'] > 2.5:
             HRT = D['Hydraulic Retention Time']
@@ -1530,7 +1532,7 @@ class PrimaryClarifier(IdealClarifier):
 
         print("--------------Design results for Primary Clarifier--------------")
         for item in D:
-            print(item, ' : ', D[item], U[item], '\n')
+            print(item, ' : ', D[item], U[item])
         
     def _cost(self):
         D = self.design_results
