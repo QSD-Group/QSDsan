@@ -666,7 +666,7 @@ class FlatBottomCircularClarifier(SanUnit):
         # Amount of concrete required
         D_tank = D['Clarifier depth']*39.37 # m to inches 
         fb = 0.5 # Freeboard, m
-        # Thickness of the wall concrete, [m]. Default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft. (Brian's code)
+        # Thickness of the wall concrete, [m]. Default to be minimum of 1 ft with 1 in added for every foot of depth over 12 ft. (Brian's code)
         thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
         inner_diameter = D['Clarifier diameter']
         outer_diameter = inner_diameter + 2*thickness_concrete_wall
@@ -1497,7 +1497,7 @@ class PrimaryClarifier(IdealClarifier):
 
         # Amount of concrete required
         D_tank = D['Cylindrical depth']*39.37 # m to inches 
-        # Thickness of the wall concrete [m]. Default to be minimum of 1 feet with 1 inch added for every feet of depth over 12 feet.
+        # Thickness of the wall concrete [m]. Default to be minimum of 1 feet with 1 inch added for every foot of depth over 12 feet.
         thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
         inner_diameter = D['Cylindrical diameter']
         outer_diameter = inner_diameter + 2*thickness_concrete_wall
@@ -1529,10 +1529,6 @@ class PrimaryClarifier(IdealClarifier):
         
         #For primary clarifier 
         D['Number of pumps'] = D['Number of clarifiers']
-
-        print("--------------Design results for Primary Clarifier--------------")
-        for item in D:
-            print(item, ' : ', D[item], U[item])
         
     def _cost(self):
         D = self.design_results

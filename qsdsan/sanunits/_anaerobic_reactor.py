@@ -226,14 +226,25 @@ class AnaerobicCSTR(CSTR):
         Influent to the reactor.
     outs : Iterable
         Biogas and treated effluent(s).
-    V_liq : float, optional
-        Liquid-phase volume [m^3]. The default is 3400.
-    V_gas : float, optional
-        Headspace volume [m^3]. The default is 300.
+    sludge_mass : float
+        The mass of sludge entering the digester [kg/day].
+    bCOD : float
+        The influent bCOD concentration [g/L].
+    design_influent_flowrate : float, optional
+        The design influent flowrate that enters the treatment facility [m3/day].
+    height : float, optional
+        Digester height [m]. The default is 7.5 m. [1]
+    solids_conversion_efficiency : float, optional
+        Efficiency of conversion of organic solids into biogas.
+        The default is 0.70. [1]
+    sludge_solids : float, optional
+        Solid content of sludge. The default is 0.05. [1]
+    org_loading : float, optional
+        Volate solids loadin rate [kg/m3/day]. The default is 2.57. [1,2]
     model : :class:`Processes`, optional
         The kinetic model, typically ADM1-like. The default is None.
     T : float, optional
-        Operation temperature [K]. The default is 308.15.
+        Operation temperature [K]. The default is 308.15. [1]
     headspace_P : float, optional
         Headspace pressure, if fixed [bar]. The default is 1.013.
     external_P : float, optional
@@ -250,12 +261,21 @@ class AnaerobicCSTR(CSTR):
     
     References
     ----------
-    .. [1] Batstone, D. J.; Keller, J.; Angelidaki, I.; Kalyuzhnyi, S. V; 
+    .. [1] Metcalf & Eddy Inc., Tchobanoglous, G., Burton, F. L., Tsuchihashi, R., 
+        & Stensel, H. D. (2013). Wastewater engineering: Treatment and 
+        resource recovery (5th ed.). McGraw-Hill Professional.
+    .. [2] U.S. Environmental Protection Agency. (2006). Biosolids Technology Fact 
+        Sheet Multi-Stage Anaerobic Digestion (EPA 832-F-06-031). 
+        https://www.epa.gov/sites/default/files/2018-11/documents/multistage-anaerobic-digestion-factsheet.pdf    
+    .. [3] Batstone, D. J.; Keller, J.; Angelidaki, I.; Kalyuzhnyi, S. V; 
         Pavlostathis, S. G.; Rozzi, A.; Sanders, W. T. M.; Siegrist, H.; 
         Vavilin, V. A. The IWA Anaerobic Digestion Model No 1 (ADM1). 
         Water Sci. Technol. 2002, 45 (10), 65–73.
-    .. [2] Rosen, C.; Jeppsson, U. Aspects on ADM1 Implementation within 
+    .. [4] Rosen, C.; Jeppsson, U. Aspects on ADM1 Implementation within 
         the BSM2 Framework; Lund, 2006.
+    .. [5] Foley, J., De Haas, D., Hartley, K., & Lant, P. (2010). Comprehensive life cycle inventories 
+        of alternative wastewater treatment systems. Water Research, 44(5), 1654–1666. 
+        https://doi.org/10.1016/j.watres.2009.11.031
     '''
     
     _N_ins = 1
@@ -264,9 +284,24 @@ class AnaerobicCSTR(CSTR):
     _outs_size_is_fixed = False
     _R = 8.3145e-2 # Universal gas constant, [bar/M/K]
     algebraic_h2 = False
+    _units = {
+        'Volumetric flow rate': 'm3/day',
+        'Sludge retention time': 'days',
+        'Digester volume': 'm3',
+        'Digester height': 'm',
+        'Digester diameter': 'm',
+        'Volume of wall concrete': 'm3',
+        'Volume of slab concrete': 'm3',
+        'Volume of cover concrete': 'm3',
+        'Reinforcement steel': 'kg'
+    }
     
-    def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 init_with='WasteStream', V_liq=3400, V_gas=300, model=None,  
+    def __init__(self, ID='', ins=None, outs=(), 
+                 design_influent_flowrate=None, sludge_mass=None,
+                 bCOD=None, height=7.5,
+                 solids_conversion_efficiency=0.7, sludge_solids=0.05,
+                 org_loading=2.57, thermo=None,
+                 init_with='WasteStream', model=None,  
                  T=308.15, headspace_P=1.013, external_P=1.013, 
                  pipe_resistance=5.0e4, fixed_headspace_P=False,
                  retain_cmps=(), fraction_retain=0.95,
@@ -274,11 +309,41 @@ class AnaerobicCSTR(CSTR):
         if len(exogenous_vars) == 0:
             exogenous_vars = (EDV('T', function=lambda t: T), )
         super().__init__(ID=ID, ins=ins, outs=outs, thermo=thermo,
-                         init_with=init_with, V_max=V_liq, aeration=None,
+                         init_with=init_with, aeration=None,
                          DO_ID=None, suspended_growth_model=None,
                          isdynamic=isdynamic, exogenous_vars=exogenous_vars, **kwargs)
-        self.V_gas = V_gas
+        
+        self._mixed = WasteStream()
+        self._Q = design_influent_flowrate
         self.T = T
+        self._h = height
+        if sludge_mass is None:
+            sludge_mass = self._mixed.get_flow('g/hr') * 24/1000 # in kg/day
+        if bCOD is None:
+            bCOD = self._mixed.get_concentration(['S_F', 'S_A', 'X_S', 'X_H', 'X_PP', 'X_PHA'], 'g/L')
+        print(f'sludge mass = {sludge_mass}')
+        print(f'bCOD = {bCOD}')
+        
+        sludge_volume = sludge_mass/(1.02 * 1000 * sludge_solids)
+        bCOD_eff = bCOD * (1 - solids_conversion_efficiency)
+        bCOD_sludge = 12 * bCOD * solids_conversion_efficiency
+
+        Y = 0.05
+        k = 6.67 if (self.T-273.15) == 35 else 6.67/np.power(1.035, (self.T-273.15) - 35)
+        Kc = 1.8 if (self.T-273.15) == 35 else 1.8/(1.112 * np.power(1.035, 35 - (self.T-273.15)))
+        b = 0.03 if (self.T-273.15) == 35 else 0.03 * np.power(1.035, (self.T-273.15) - 35)
+        SRT_lim = 1/(((Y * k * bCOD_sludge)/(Kc + bCOD_sludge)) - b)
+        SRT_des = 2.5 * SRT_lim
+        self._SRT = SRT_des
+
+        V_dig_sludge = max(sludge_volume * self._SRT, self._Q * bCOD/org_loading)
+        print(f'Calculated V_liq = {V_dig_sludge}')
+        self.V_max = V_dig_sludge
+        P_solids = Y * self._Q * (bCOD - bCOD_eff)/(1 + (b * self._SRT))
+        V_CH4 = 0.4 * [(self._Q * (bCOD - bCOD_eff)) - (1.42 * P_solids)]
+        V_gas = V_CH4/0.65
+        self._V = V_dig_sludge + V_gas
+        self.V_gas = V_gas
         # self._S_gas = None
         self._q_gas = 0
         self._n_gas = None
@@ -293,7 +358,7 @@ class AnaerobicCSTR(CSTR):
         self.fixed_headspace_P = fixed_headspace_P
         self._f_retain = np.array([fraction_retain if cmp.ID in retain_cmps \
                                    else 0 for cmp in self.components])
-        self._mixed = WasteStream()
+        
         self._tempstate = {}
     
     def ideal_gas_law(self, p=None, S=None):
@@ -309,7 +374,43 @@ class AnaerobicCSTR(CSTR):
         if convert_to_bar:
             return p*auom('Pa').conversion_factor('bar')
         else: return p
-        
+
+    @property
+    def Q(self):
+        '''[float] Design influent flowrate in m3/day.'''
+        return self._Q
+    @Q.setter
+    def Q(self, design_influent_flowrate):
+        if design_influent_flowrate is not None:
+            self._Q = design_influent_flowrate
+        else:
+            self._mixed.mix_from(self.ins)
+            self._Q = self._mixed.get_flow('m3/day')
+
+    @property
+    def SRT_des(self):
+        '''Design sludge retention time in the digester in days.'''
+        return self._SRT
+    @SRT_des.setter
+    def SRT_des(self, SRT):
+        self._SRT = SRT
+    
+    @property
+    def height(self):
+        '''Digester height in m.'''
+        return self._h
+    @height.setter
+    def height(self, h):
+        self._h = h
+
+    @property
+    def vol_dig(self):
+        '''Digester volume in m^3.'''
+        return self._V
+    @vol_dig.setter
+    def vol_dig(self, vol):
+        self._V = vol
+
     @property
     def DO_ID(self):
         '''Not applicable.'''
@@ -329,6 +430,7 @@ class AnaerobicCSTR(CSTR):
         pass
     
     V_liq = property(CSTR.V_max.fget)
+    #print(f'V_liq={V_liq}')
     @V_liq.setter
     def V_liq(self, V):
         '''[float] The liquid-phase volume, in m^3.'''
@@ -411,6 +513,14 @@ class AnaerobicCSTR(CSTR):
         if arr.shape != (n_state, ):
             raise ValueError(f'state must be a 1D array of length {n_state}')
         self._state = arr
+
+    @property 
+    def V_dig(self):
+        '''Digester volume in m^3.'''
+        return self._V
+    @V_dig.setter
+    def V_dig(self, vol):
+        self._V = vol
 
     def _run(self):
         '''Only to converge volumetric flows.'''
@@ -617,6 +727,8 @@ class AnaerobicCSTR(CSTR):
         return self._V_max * mass[cmps.indices(biomass_IDs)].sum()
 
     def _design(self):
+        D = self.design_results
+        U = self._units
         inf = self.ins[0]
         T_in = inf.T
         T_target = self.T
@@ -624,7 +736,40 @@ class AnaerobicCSTR(CSTR):
             unit_duty = inf.F_mass * inf.Cp * (T_target - T_in) #kJ/hr
             self.add_heat_utility(unit_duty, T_in, T_out=T_target, 
                                   heat_transfer_efficiency=0.8)
+        
+        D['Volumetric flow rate'] = self._Q # in m3/day
+        D['Sludge retention time'] = self._SRT # in days
+        D['Digester volume'] = self._V # in m3
+        D['Digester height'] = self._h # in m
+        surface_area = D['Digester volume']/D['Digester height'] # in m2
+        diameter = np.sqrt(4 * surface_area/np.pi)
+        D['Digester diameter'] = diameter # in m
 
+        # Calculating required volume of wall, slab concrete in m3
+        height = D['Digester height'] * 39.37 # from m to inches
+        # Thickness of the wall concrete [m]. Default to be minimum of 1 feet with 1 inch added for every foot of depth over 12 feet.
+        thickness_concrete_wall = (1 + max(height-12, 0)/12) * 0.3048 # from ft to m
+        inner_diameter = D['Digester diameter']
+        outer_diameter = inner_diameter + (2 * thickness_concrete_wall)
+        volume_wall = (np.pi * D['Digester height']/4) * (outer_diameter**2 - inner_diameter**2) 
+        D['Volume of wall concrete'] = volume_wall # in m3
+        #  Concrete slab thickness, default to be 2 inches thicker than the wall thickness.
+        thickness_concrete_slab = thickness_concrete_wall + (2/12)*0.3048 
+        volume_slab = (np.pi * thickness_concrete_slab/4) * outer_diameter**2
+        D['Volume of slab concrete'] = volume_slab # in m3
+
+        # Calculating concrete volume for the digester cover
+        volume_cover = (np.pi * thickness_concrete_wall/4) * inner_diameter**2
+        D['Volume of cover concrete'] = volume_cover # in m3
+
+        # Estimating amount of reinforcement steel required in kg [5]
+        total_concrete = D['Volume of wall concrete'] + D['Volume of slab concrete'] \
+                        + D['Volume of cover concrete']
+        D['Reinforcement steel'] = 77.58 * total_concrete # in kg
+
+        print("--------------------Design results--------------------")
+        for key in D:
+            print(f'{key}: {D[key]} {U[key]}')
 
 # %%
 
@@ -961,6 +1106,7 @@ class SludgeDigester(SanUnit):
         'Pump pipe stainless steel': 'kg',
         'Pump stainless steel': 'kg',
         }
+    
     def _design(self):
         design = self.design_results
         sludge, = self.ins
@@ -1017,7 +1163,6 @@ class SludgeDigester(SanUnit):
         sludge_pump = self.sludge_pump
         C.update(sludge_pump.baseline_purchase_costs)
         self.power_utility.rate = sludge_pump.power_utility.rate
-
 
     @property
     def T_air(self):
