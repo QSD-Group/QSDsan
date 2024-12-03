@@ -314,11 +314,12 @@ class AnaerobicCSTR(CSTR):
                          isdynamic=isdynamic, exogenous_vars=exogenous_vars, **kwargs)
         
         self._mixed = WasteStream()
+        self._mixed.mix_from(self.ins)
         self._Q = design_influent_flowrate
         self.T = T
         self._h = height
         if sludge_mass is None:
-            sludge_mass = self._mixed.get_flow('g/hr') * 24/1000 # in kg/day
+            sludge_mass = self._mixed.F_mass * 24 # from kg/hr kg/day
         if bCOD is None:
             bCOD = self._mixed.get_concentration(['S_F', 'S_A', 'X_S', 'X_H', 'X_PP', 'X_PHA'], 'g/L')
         print(f'sludge mass = {sludge_mass}')
