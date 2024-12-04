@@ -17,19 +17,19 @@ biomass_IDs = ('X_H', 'X_AUT', 'X_PAO')
 
 domestic_ww = {
    'S_I': 20,
-   'X_I': 40,
+   'X_I': 120,
    'S_F': 45,
    'S_A': 63,
-   'X_S': 160,
+   'X_S': 480,
    'S_NH4': 25,
    'S_PO4': 4.5,
-   'X_PP': 0,
-   'X_PHA': 10,
-   'X_H': 10,
-   'X_AUT': 10, 
-   'X_PAO': 5, 
-   'X_MeOH': 32, 
-   'S_ALK':7*12,
+   'X_PP': 100,
+   'X_PHA': 100,
+   'X_H': 100,
+   'X_AUT': 500, 
+   'X_PAO': 500, 
+   'X_MeOH': 320, 
+   'S_ALK': 7*12
     }
 
 default_asm2d_kwargs = dict(iN_SI=0.01, iN_SF=0.03, iN_XI=0.02, iN_XS=0.04, iN_BM=0.07,
@@ -46,7 +46,7 @@ default_asm2d_kwargs = dict(iN_SI=0.01, iN_SF=0.03, iN_XI=0.02, iN_XS=0.04, iN_B
             K_PS=0.2, K_P_PAO=0.01, K_ALK_PAO=0.1,
             K_PP=0.01, K_MAX=0.34, K_IPP=0.02, K_PHA=0.01,
             mu_AUT=1.0, b_AUT=0.15, K_O2_AUT=0.5, K_NH4_AUT=1.0, K_ALK_AUT=0.5, K_P_AUT=0.01,
-            k_PRE=1.0, k_RED=0.6, K_ALK_PRE=0.5, 
+            k_PRE=1.0, k_RED=0.6, K_ALK_PRE=0.5
             )
 
 cmps = pc.create_asm2d_cmps(False)
@@ -58,50 +58,65 @@ dom_ww = qs.WasteStream('domestic_wastewater', T=Temp)
 dom_ww.set_flow_by_concentration(Q_domestic, 
                                      concentrations=domestic_ww, 
                                      units=('m3/d', 'mg/L'))
+effluent = qs.WasteStream('effluent', T=Temp, units='m3/d')
+WAS = qs.WasteStream('WAS', T=Temp, units='m3/d')
+RAS = qs.WasteStream('RAS', T=Temp, units='m3/d')
 
-effluent = qs.WasteStream('effluent', T=Temp)
-sludge = qs.WasteStream('sludge', T=Temp)
+C = su.FlatBottomCircularClarifier('C', ins=dom_ww, outs=[effluent, RAS, WAS], 
+                            isdynamic=True, thermo=thermo_asm2d, 
+                            sludge_flow_rate=Q_was,
+                            solids_removal_efficiency=0.6)
 
-asm_kwargs = default_asm2d_kwargs
-asm2d = pc.ASM2d()
+# # For ADM1
+# cmps_adm1 = qs.processes.create_adm1_p_extension_cmps()
+# cmps_adm1.compile()
+# qs.set_thermo(cmps_adm1)
+# thermo_adm1 = qs.get_thermo()  # Create new thermo object instead of getting global
 
-PC = su.PrimaryClarifier('PC', ins=dom_ww,
-                              outs=('effluent', 'sludge'), isdynamic=True,
-                              init_with='WasteStream', thermo=thermo_asm2d,
-                              sludge_flow_rate=Q_was, 
-                              solids_removal_efficiency=0.6)
+# # Update properties
+# cmps_adm1.X_PAO.i_N = 0.07
+# cmps_adm1.X_PAO.i_P = 0.02
+# cmps_adm1.refresh_constants()
+# adm1 = qs.processes.ADM1_p_extension()
 
-cmps_adm1 = qs.processes.create_adm1_p_extension_cmps()
-cmps_adm1.X_PAO.i_N = 0.07
-cmps_adm1.X_PAO.i_P = 0.02
-cmps_adm1.refresh_constants()
-thermo_adm1 = qs.get_thermo()
-adm1 = qs.processes.ADM1_p_extension()
+# J = su.ASM2dtomADM1('J', 
+#     upstream=[PC-1],
+#     thermo=thermo_adm1,
+#     isdynamic=True,
+#     adm1_model=adm1, 
+#     asm2d_model=asm2d)
 
-J1 = su.ASM2dtomADM1('J1', upstream=[PC-1], thermo=thermo_adm1, isdynamic=True, 
-                         adm1_model=adm1, asm2d_model=asm2d)
+# gas = qs.WasteStream('biogas')
+# dg_sludge = qs.WasteStream('sludge_DG')
+# DG = su.AnaerobicCSTR(ID='DG', ins=J.outs[0], outs=[gas, dg_sludge],
+#                         model=adm1, thermo=thermo_adm1)
+# DG.algebraic_h2 = True
 
-DG = su.AnaerobicCSTR(ID='DG', ins = J1.outs[0], outs=['gas', 'sludge_DG'],
-                        model=adm1, thermo = thermo_adm1)
-DG.algebraic_h2 = True
-
-sys = qs.System('AD_trial', path=[PC, J1, DG])
+sys = qs.System('AD_trial', path=[C])
 sys.set_tolerance(rmol=1e-6)
 sys.maxiter = 500
-sys.simulate(t_span=(0, 0.001))
+sys.simulate(t_span=(0, 1))
 sys.diagram()
 
-# print("--------------------Influent wastewater properties---------------------")
-# dom_ww.show()
+print("--------------------Influent wastewater properties---------------------")
+dom_ww.show()
 
-# print("--------------------Effluent wastewater properties---------------------")
-# effluent.show()
+print("--------------------Effluent wastewater properties---------------------")
+effluent.show()
    
-# print("---------------------------Untreated Sludge properties------------------------------")
-# sludge.show()
+print("---------------------------WAS properties------------------------------")
+WAS.show()
+
+print("---------------------------RAS properties------------------------------")
+RAS.show()
+
+print(f"Influent flow: {dom_ww.F_vol*24}")
+print(f"WAS flow: {WAS.F_vol*24}")
+print(f"RAS flow: {RAS.F_vol*24}")
+print(f"Effluent flow: {effluent.F_vol*24}")
 
 # print("---------------------------Digested sludge properties------------------------------")
-# DG.outs[1].show()
+# dg_sludge.show()
 
 # print("---------------------------Biogas properties------------------------------")
-# DG.outs[0].show()
+# gas.show()

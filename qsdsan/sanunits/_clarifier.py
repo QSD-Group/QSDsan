@@ -169,9 +169,9 @@ class FlatBottomCircularClarifier(SanUnit):
         self._A = surface_area
         diameter = np.sqrt(4 * surface_area / np.pi)
 
-        if diameter <= 21: height = 3.7
-        elif diameter > 21 and diameter <= 30: height = 4
-        elif diameter >30 and diameter <= 43: height = 4.3
+        if diameter <= 21: height = 4.6
+        elif diameter > 21 and diameter <= 30: height = 4.6
+        elif diameter >30 and diameter <= 43: height = 4.6
         elif diameter > 43: height = 4.6
         self._h = height
 
