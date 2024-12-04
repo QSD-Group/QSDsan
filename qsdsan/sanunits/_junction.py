@@ -2659,7 +2659,7 @@ class ADM1ptomASM2d(A1junction):
                         X_newb, X_ACP, X_MgCO3, X_AlOH, X_AlPO4, X_FeOH, X_FePO4, \
                             S_Na, S_Cl, H2O = _adm_vals     
             
-            if S_h2 > 0 or S_ch4 > 0: warn('Ignored dissolved H2 or CH4.')
+            if S_h2 > 0 or S_ch4 > 0: warn('Ignored dissolved H2 or CH4 in ADM1p-to-mASM2d interface model.')
 
             S_NH4 = S_IN
             S_PO4 = S_IP

@@ -1037,13 +1037,14 @@ class ADM1p(ADM1):
                                                #!!! new parameter
                                                KS_IP*P_mw, np.array(k_mmp), Ksp_mass, 
                                                np.array(K_dis), K_AlOH, K_FeOH]))
-        
+
         def dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq, S_h2_in):
             state_arr[7] = S_h2
             Q = state_arr[45]
             rxn = _rhos_adm1p(state_arr, params, h=h)
             stoichio = f_stoichio(state_arr)  # should return the stoichiometric coefficients of S_h2 for all processes
             return Q/V_liq*(S_h2_in - S_h2) + np.dot(rxn, stoichio)
+
 
         grad_rhosp = np.zeros(5)
         X_biop = np.zeros(5)
@@ -1060,12 +1061,13 @@ class ADM1p(ADM1):
             
             X_biop[:] = state_arr[[18,19,19,20,22]]
             substrates = state_arr[2:6]
-            S_va, S_bu, S_IN = state_arr[[3,4,10]]
+            S_va, S_bu, S_IN, S_IP = state_arr[[3,4,10,11]]
             Iph = Hill_inhibit(h, pH_ULs, pH_LLs)[[2,3,4,5,7]]
             Iin = substr_inhibit(S_IN, KS_IN)
+            Iip = substr_inhibit(S_IP, KS_IP)
             grad_Ih2 = grad_non_compet_inhibit(S_h2, KIs_h2)
 
-            grad_rhosp[:] = ks * X_biop * Iph * Iin
+            grad_rhosp[:] = ks * X_biop * Iph * Iin * Iip
             grad_rhosp[:-1] *= substr_inhibit(substrates, Ks) * grad_Ih2
             if S_va > 0: grad_rhosp[1] *= 1/(1+S_bu/S_va)
             if S_bu > 0: grad_rhosp[2] *= 1/(1+S_va/S_bu)
