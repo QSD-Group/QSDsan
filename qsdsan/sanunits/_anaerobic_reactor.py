@@ -583,8 +583,9 @@ class AnaerobicCSTR(CSTR):
                 dydt_Sh2_AD = self.model.dydt_Sh2_AD
                 grad_dydt_Sh2_AD = self.model.grad_dydt_Sh2_AD
                 def solve_h2(QC, S_in, T, h=h):
-                    Ka = params['Ka_base'] * T_correction_factor(params['T_base'], T, params['Ka_dH'])
-                    if h == None: h = solve_pH(QC, Ka, unit_conversion)
+                    if h == None: 
+                        Ka = params['Ka_base'] * T_correction_factor(params['T_base'], T, params['Ka_dH'])
+                        h = solve_pH(QC, Ka, unit_conversion)
                     # S_h2_0 = QC[h2_idx]
                     S_h2_0 = 2.8309E-07
                     S_h2_in = S_in[h2_idx]
@@ -596,7 +597,7 @@ class AnaerobicCSTR(CSTR):
                 def update_h2_dstate(dstate):
                     dstate[h2_idx] = 0.
             else:
-                solve_h2 = lambda QC, S_ins, T: QC[h2_idx]
+                solve_h2 = lambda QC, S_in, T: QC[h2_idx]
                 def update_h2_dstate(dstate):
                     pass
             def dy_dt(t, QC_ins, QC, dQC_ins):

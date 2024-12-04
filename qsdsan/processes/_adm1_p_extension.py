@@ -1038,7 +1038,7 @@ class ADM1p(ADM1):
                                                KS_IP*P_mw, np.array(k_mmp), Ksp_mass, 
                                                np.array(K_dis), K_AlOH, K_FeOH]))
 
-        def dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq, S_h2_in):
+        def adm1p_dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq, S_h2_in):
             state_arr[7] = S_h2
             Q = state_arr[45]
             rxn = _rhos_adm1p(state_arr, params, h=h)
@@ -1048,7 +1048,7 @@ class ADM1p(ADM1):
 
         grad_rhosp = np.zeros(5)
         X_biop = np.zeros(5)
-        def grad_dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq, S_h2_in):
+        def adm1p_grad_dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq, S_h2_in):
             state_arr[7] = S_h2
             ks = params['rate_constants'][[5,6,7,8,10]]
             Ks = params['half_sat_coeffs'][2:6]
@@ -1056,6 +1056,7 @@ class ADM1p(ADM1):
             pH_ULs = params['pH_ULs']
             pH_LLs = params['pH_LLs']
             KS_IN = params['KS_IN']
+            KS_IP = params['KS_IP']
             KIs_h2 = params['KIs_h2']
             kLa = params['kLa']
             
@@ -1076,12 +1077,12 @@ class ADM1p(ADM1):
             stoichio = f_stoichio(state_arr)
 
             Q = state_arr[45]
-            return -Q/V_liq + np.dot(grad_rhos, stoichio[[5,6,7,8,10]]) + kLa*stoichio[-3]
+            return -Q/V_liq + np.dot(grad_rhosp, stoichio[[5,6,7,8,10]]) + kLa*stoichio[-3]
         
         dct['flex_rhos'] = _rhos_adm1p
         dct['solve_pH'] = adm1p_solve_pH
-        dct['dydt_Sh2_AD'] = dydt_Sh2_AD
-        dct['grad_dydt_Sh2_AD'] = grad_dydt_Sh2_AD
+        dct['dydt_Sh2_AD'] = adm1p_dydt_Sh2_AD
+        dct['grad_dydt_Sh2_AD'] = adm1p_grad_dydt_Sh2_AD
         return self
 
     def set_half_sat_K(self, K, process):
