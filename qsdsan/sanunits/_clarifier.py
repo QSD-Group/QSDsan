@@ -130,7 +130,6 @@ class FlatBottomCircularClarifier(SanUnit):
         Water Res. 2010, 44 (5), 1654–1666. https://doi.org/10.1016/j.watres.2009.11.031
     .. [7] Circular mechanical clarifier center feed equipment specifications. Pollutions Control Systems, Inc.
         """
-
     _N_ins = 1
     _N_outs = 3
     
@@ -153,15 +152,14 @@ class FlatBottomCircularClarifier(SanUnit):
 
         ins, = self.ins
         self._mixed = WasteStream(f'{ID}_mixed')
-        self._mixed.mix_from(ins)   
+        self._mixed.mix_from(self.ins)   
         
         if design_influent_flow != None: 
             Q_in = design_influent_flow * 24 # m3/hr to m3/day
         else:  
             Q_in = self._mixed.get_total_flow('m3/hr') * 24 
 
-        sor = design_surface_overflow_rate
-        self._sor = sor
+        self._sor = design_surface_overflow_rate
         self._Qras, self._Qwas = underflow, wastage
         self._sludge = WasteStream()
 
@@ -169,9 +167,9 @@ class FlatBottomCircularClarifier(SanUnit):
         self._A = surface_area
         diameter = np.sqrt(4 * surface_area / np.pi)
 
-        if diameter <= 21: height = 4.6
-        elif diameter > 21 and diameter <= 30: height = 4.6
-        elif diameter >30 and diameter <= 43: height = 4.6
+        if diameter <= 21: height = 3.7
+        elif diameter > 21 and diameter <= 30: height = 4
+        elif diameter >30 and diameter <= 43: height = 4.3
         elif diameter > 43: height = 4.6
         self._h = height
 
@@ -208,6 +206,10 @@ class FlatBottomCircularClarifier(SanUnit):
     def height(self):
         '''[float] Height of the clarifier in m.'''
         return self._h
+
+    @height.setter
+    def height(self, h):
+        self._h = h
 
     @property
     def underflow(self):
@@ -327,13 +329,13 @@ class FlatBottomCircularClarifier(SanUnit):
         self._fns = fns
         
     @property
-    def sor(self):
-        '''sor is the capacity of the clarifier'''
+    def design_surface_overflow_rate(self):
+        '''Surface overflow rate is the capacity of the clarifier in m3/day/m2.'''
         return self._sor
         
-    @sor.setter
+    @design_surface_overflow_rate.setter
     def sor(self, sor):
-            self._sor = sor
+        self._sor = sor
             
     def set_init_solubles(self, **kwargs):
         '''set the initial concentrations [mg/L] of solubles in the clarifier.'''
@@ -612,23 +614,22 @@ class FlatBottomCircularClarifier(SanUnit):
      
     def _design(self):
         
-        self._mixed.mix_from(self.ins)
         mixed = self._mixed
         D = self.design_results
         U = self._units
         
         D['Number of clarifiers'] = 2 # Same as the number of parallel trains. Assuming 1 in use and 1 redundant.
                 
-        D['Volumetric flow'] =  (mixed.get_total_flow('m3/hr')*24)/(D['Number of clarifiers'] - 1) #m3/day
+        D['Volumetric flow'] = (mixed.get_total_flow('m3/hr')*24)/(D['Number of clarifiers'] - 1) # m3/day
         
         # Area of clarifier 
         D['Surface area'] = self._A/(D['Number of clarifiers'] - 1) # in m2
         D['Clarifier diameter'] = np.sqrt(4*D['Surface area']/np.pi) # in m
 
         # Sidewater depth of a cylindrical clarifier varies with clarifier diameter (MOP 8)
-        if D['Clarifier diameter'] <= 21: D['Clarifier depth'] = 4.6
-        elif D['Clarifier diameter'] > 21 and D['Clarifier diameter'] <= 30: D['Clarifier depth'] = 4.6
-        elif D['Clarifier diameter'] >30 and D['Clarifier diameter'] <= 43: D['Clarifier depth'] = 4.6
+        if D['Clarifier diameter'] <= 21: D['Clarifier depth'] = 3.7
+        elif D['Clarifier diameter'] > 21 and D['Clarifier diameter'] <= 30: D['Clarifier depth'] = 4
+        elif D['Clarifier diameter'] >30 and D['Clarifier diameter'] <= 43: D['Clarifier depth'] = 4.3
         elif D['Clarifier diameter'] > 43: D['Clarifier depth'] = 4.6
 
     
@@ -707,10 +708,6 @@ class FlatBottomCircularClarifier(SanUnit):
             
         # For secondary clarifier
         D['Number of pumps'] = 2*D['Number of clarifiers']
-
-        # print(f'Design results for Flat-bottom circular clarifier:')
-        # for key in D:
-        #     print(f'{key}: {round(D[key],2)} {U[key]}')
         
     def _cost(self):
        
