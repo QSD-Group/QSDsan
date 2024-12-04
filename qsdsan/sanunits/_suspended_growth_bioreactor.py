@@ -1167,7 +1167,7 @@ class PFR(SanUnit):
     def _update_state(self):
         out, = self.outs
         ncol = self._ncol
-        self._state[self._state < 2.2e-16] = 0.
+        self._state[self._state < 1e-16] = 0.
         self._state[self._Qs_idx] = self._Qs
         if out.state is None: out.state = np.zeros(ncol)
         out.state[:-1] = self._state[-ncol:-1]
