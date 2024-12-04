@@ -626,9 +626,9 @@ class FlatBottomCircularClarifier(SanUnit):
         D['Clarifier diameter'] = np.sqrt(4*D['Surface area']/np.pi) # in m
 
         # Sidewater depth of a cylindrical clarifier varies with clarifier diameter (MOP 8)
-        if D['Clarifier diameter'] <= 21: D['Clarifier depth'] = 3.7
-        elif D['Clarifier diameter'] > 21 and D['Clarifier diameter'] <= 30: D['Clarifier depth'] = 4
-        elif D['Clarifier diameter'] >30 and D['Clarifier diameter'] <= 43: D['Clarifier depth'] = 4.3
+        if D['Clarifier diameter'] <= 21: D['Clarifier depth'] = 4.6
+        elif D['Clarifier diameter'] > 21 and D['Clarifier diameter'] <= 30: D['Clarifier depth'] = 4.6
+        elif D['Clarifier diameter'] >30 and D['Clarifier diameter'] <= 43: D['Clarifier depth'] = 4.6
         elif D['Clarifier diameter'] > 43: D['Clarifier depth'] = 4.6
 
     
