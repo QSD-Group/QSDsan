@@ -77,6 +77,26 @@ There are multiple possible reasons:
         Then when you open the Jupyter Notebook, select the ``<KERNEL NAME>`` kernel when you create a new notebook you can find more details in this post about `enabling multiple kernels in Jupyter Notebook <https://medium.com/@ace139/enable-multiple-kernels-in-jupyter-notebooks-6098c738fe72>`_.
 
 
+``underlying object has vanished``
+**********************************
+This error is related to ``numba`` caching, we haven't figured out the exact mechanism, but clearing cache will help resolve it. One/both of the following approaches should work:
+
+1. Clear cache. Remove all ``.pyc``, ``.nbc``, and ``.nbi`` files, you can do this in your CLI using (replace <DIR> with the directory to your ``thermosteam``, ``biosteam``, ``qsdsan``, and ``exposan`` directory):
+
+   .. code::
+
+       get-childitem . -recurse -include *.pyc, *.nbc, *.nbi | remove-item
+
+2. Uninstalling and reinstalling a different version of ``numba``. Suppose you now have 0.58.1 and the newest version is 0.60.0, you can do:
+
+   .. code::
+
+       pip uninstall numba
+       pip install --no-cache-dir numba==0.60.0
+
+The ``--no-cache-dir`` option is to do a fresh installation rather than using previously downloaded packages. Note that you need to exit out your editor/any other programs that are currently using numba. Otherwise the uninstallation is incomplete, you might be prompted to do a manual removal, or this won't work.
+
+
 ``UnicodeDecodeError``
 **********************
 When using non-English operating systems, you may run into errors similar to (cp949 is the case of Korean Windows):
