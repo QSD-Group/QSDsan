@@ -290,7 +290,7 @@ class SludgePasteurization(SanUnit):
 
         ratio = self.price_ratio
         for equipment, cost in C.items():
-           C[equipment] = cost * ratio * lumped_factor
+           C[equipment] = cost * ratio * lumped_factor #TODO: service factor counted twice for 'Stainless steel' and 'Steel'
 
         # O&M cost converted to annual basis, labor included,
         # USD/yr only accounts for time running

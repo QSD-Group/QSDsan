@@ -1,9 +1,9 @@
 parameter,name (if diff),unit,expected,low,high,distribution
-vacuum_pump_cost,,USD,230,161,299,uniform
+vacuum_pump_cost,,USD,379.4446154,74.99,855.99,triangular
 vacuum_pump_operation,,hr/d,1.5,1.05,1.95,uniform
 vacuum_pump_power_demand,,kW,0.11,0.077,0.143,uniform
 vacuum_tank_cost,,USD,300,210,390,uniform
-separating_filter_cost,,USD,122,85.4,158.6,uniform
+separating_filter_cost,,USD,31.89642857,3.995,122,triangular
 valve_cost,,USD,177.75,124.425,231.075,uniform
 valve_quantity,,piece,3,,,constant
 actuator_cost,,USD,126.89,88.823,164.957,uniform
@@ -19,4 +19,4 @@ solids_separator_TSS_removal,,%,65,45.5,84.5,uniform
 material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
 miscellaneous_cost_ratio,,fraction,0.169,0.1183,0.2197,uniform
 wages,,USD/h,3.64,1.82,5.46,uniform
-moisture_content_out,,%,97.5,,,constant
+moisture_content_out,,%,96.5,,,constant

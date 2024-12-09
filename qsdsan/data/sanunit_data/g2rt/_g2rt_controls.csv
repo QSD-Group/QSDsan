@@ -1,5 +1,5 @@
 parameter,name (if diff),unit,expected,low,high,distribution
-programmable_logic_controller_cost,,USD,394.08,275.856,512.304,Uniform
+programmable_logic_controller_cost,,USD,313.698,250.9584,376.4376,uniform
 PLC_quantities,,pieces,4,3,5,constant
 IO_relay_module_cost,,USD,48.81,34.167,63.453,Uniform
 relay_module_quantity,,pieces,8,5.6,10.4,Uniform
