@@ -154,7 +154,11 @@ class ConcentrationDict(DictionaryView):
     def output(self, index, value):
         '''Concentration flows, in mg/L (g/m3).'''
         f_mass = value * self.MW[index]
-        phase = self.phase or self.phase_container.phase
+        if self.phase:
+            phase = self.phase
+        else:
+            try: phase = self.phase_container._phase
+            except: phase = self.phase_container
         if phase != 'l':
             raise AttributeError('Concentration only valid for liquid phase.')
         V_sum = self.F_vol
@@ -186,7 +190,7 @@ def by_conc(self, TP):
         check_data=False,
         )
     return conc
-indexer.ChemicalMolarFlowIndexer.by_conc = by_conc
+ChemicalMolarFlowIndexer.by_conc = by_conc
 del by_conc
 
 
