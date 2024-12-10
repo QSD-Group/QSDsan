@@ -1,0 +1,12 @@
+	X_CHL	X_ALG	X_CH	X_LI	S_CO2	S_A	S_F	S_O2	S_NH	S_NO	S_P	X_N_ALG	X_P_ALG	S_N2	S_ALK	S_I	X_I	X_S	X_H	X_AUT
+aero_hydrolysis							1-f_SI		?		?				?	f_SI		-1		
+anox_hydrolysis							1-f_SI		?		?				?	f_SI		-1		
+anae_hydrolysis							1-f_SI		?		?				?	f_SI		-1		
+hetero_growth_S_F							(-1)/Y_H	1-1/Y_H	?		?				?				1	
+hetero_growth_S_A						(-1)/Y_H		1-1/Y_H	?		?				?				1	
+denitri_S_F							(-1)/Y_H		?	(Y_H-1)/(20/7*Y_H)	?			(1-Y_H)/(20/7*Y_H)	?				1	
+denitri_S_A						(-1)/Y_H			?	(Y_H-1)/(20/7*Y_H)	?			(1-Y_H)/(20/7*Y_H)	?				1	
+ferment						1	-1		?		?				?					
+hetero_lysis									?		?				?		f_XI_H	1-f_XI_H	-1	
+auto_aero_growth								(Y_A-32/7)/Y_A	?	1/Y_A	?				?					1
+auto_lysis									?		?				?		f_XI_AUT	1-f_XI_AUT		-1

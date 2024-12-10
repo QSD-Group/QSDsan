@@ -217,6 +217,7 @@ class SanUnit(Unit, isabstract=True):
             self._assert_compatible_property_package()
         
         self._utility_cost = None
+        self._recycle_system = None
 
         ##### qsdsan-specific #####
         for i in (*construction, *transportation, *equipment):
