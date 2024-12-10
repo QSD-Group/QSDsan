@@ -154,8 +154,10 @@ class Components(Chemicals):
     def compile(self, skip_checks=False):
         '''Cast as a :class:`CompiledComponents` object.'''
         components = tuple(self)
+        tmo._chemicals.prepare(components, skip_checks)
         setattr(self, '__class__', CompiledComponents)
-        try: self._compile(components, skip_checks)
+        
+        try: self._compile(components)
         except Exception as error:
             setattr(self, '__class__', Components)
             setattr(self, '__dict__', {i.ID: i for i in components})
@@ -614,11 +616,11 @@ class CompiledComponents(CompiledChemicals):
         pass
 
 
-    def _compile(self, components, skip_checks=False):
+    def _compile(self, components):
         dct = self.__dict__
         tuple_ = tuple # this speeds up the code
         components = tuple_(dct.values())
-        CompiledChemicals._compile(self, components, skip_checks)
+        CompiledChemicals._compile(self, components)
         for component in components:
             missing_properties = component.get_missing_properties(_key_component_properties)
             if not missing_properties: continue

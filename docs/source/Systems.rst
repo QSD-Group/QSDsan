@@ -63,7 +63,7 @@ A variety of other sanitation and resource recovery systems have been developed 
 
 #. Modular encapsulated two-stage anaerobic biological (METAB) system
     
-    * Manuscript: Zhang et al., Sustainable design of a modular anaerobic system for distributed energy recovery from industrial wastewaters, In Prep.
+    * Publication: `Zhang <https://doi.org/10.1021/acs.est.4c05389>`_ et al., 2024.
     * `metab EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/metab>`_
 
 #. EcoRecover system: microalgae-based tertiary P recovery process

@@ -80,6 +80,25 @@ class DiffusedAeration(Process):
     [parameters]         KLa: 240
                          DOsat: 8
     [dynamic parameters]
+
+    >>> aer2 = pc.DiffusedAeration('aer2', 'S_O', KLa_20=100, V=1000, d_submergence=3.7)
+    >>> aer2.show()
+    Process: aer2
+    [stoichiometry]      S_O: 1
+    [reference]          S_O
+    [rate equation]      KLa*(DOsat - S_O)
+    [parameters]         KLa: 60
+                         DOsat: 9.87
+    [dynamic parameters] 
+
+    >>> aer2.Q_air   # doctest: +ELLIPSIS
+    12470.65...
+    >>> round(aer2.SOTR / 1000)
+    1039
+    
+    >>> aer3 = pc.DiffusedAeration('aer3', 'S_O', Q_air=7600, V=1000, d_submergence=3.7)
+    >>> aer3.kLa     # doctest: +ELLIPSIS
+    36.56...
     """
 
 
@@ -182,6 +201,8 @@ class DiffusedAeration(Process):
         self._KLa_20 = i
         self._Q_air = None
         self.KLa = None
+
+    kLa_20 = KLa_20    
 
     @property
     def Q_air(self):
@@ -344,6 +365,8 @@ class DiffusedAeration(Process):
         self._KLa = KLa or self._calc_KLa()
         self.set_parameters(KLa=self._KLa)
 
+    kLa = KLa   
+
     @property
     def DOsat(self):
         """
@@ -353,5 +376,7 @@ class DiffusedAeration(Process):
         return self._DOsat
     @DOsat.setter
     def DOsat(self, DOsat):
+        if DOsat is not None: 
+            self._DOsat_s20 = DOsat / (self.tau * self._beta * self.Omega * self.delta)
         self._DOsat = DOsat or self._calc_DOsat()
         self.set_parameters(DOsat = self._DOsat)

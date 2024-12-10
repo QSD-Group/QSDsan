@@ -1,0 +1,8 @@
+	S_Mg	S_Ca	X_AlOH	X_FeOH	S_IC	S_NH4	S_PO4	X_CaCO3	X_struv	X_newb	X_ACP	X_MgCO3	X_AlPO4	X_FePO4
+CaCO3_precipitation_dissolution		-1			-1			1						
+struvite_precipitation_dissolution	-1					-1	-1		1					
+newberyite_precipitation_dissolution	-1						-1			1				
+ACP_precipitation_dissolution		-3					-2				1			
+MgCO3_precipitation_dissolution	-1				-1							1		
+AlPO4_precipitation_dissolution			-1				-1						1	
+FePO4_precipitation_dissolution				-1			-1							1

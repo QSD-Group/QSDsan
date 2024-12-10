@@ -45,7 +45,6 @@ Parameter = _bst.Parameter
 Flowsheet = _bst.Flowsheet
 main_flowsheet = _bst.main_flowsheet
 default_utilities = _bst.default_utilities
-CEPCI_by_year = _bst.units.design_tools.CEPCI_by_year
 
 # Global variables
 currency = 'USD'
@@ -54,6 +53,7 @@ CHECK_IMPACT_ITEM_CONSISTENCY = True
 
 
 from . import utils
+CEPCI_by_year = utils.indices.tea_indices['CEPCI']
 from ._component import *
 from ._components import *
 from ._sanstream import *

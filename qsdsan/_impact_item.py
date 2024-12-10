@@ -822,7 +822,7 @@ class StreamImpactItem(ImpactItem):
                          f'is replaced with {self.ID}.')
                 else:
                     warn(f'The original `StreamImpactItem` linked to stream {new_s.ID} '
-                         f'is replaced with upon the creation of a new stream.')
+                         f'is replaced upon the creation of a new stream.')
             new_s._stream_impact_item = self
         self._linked_stream = new_s
 

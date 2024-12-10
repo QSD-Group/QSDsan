@@ -17,7 +17,12 @@ for license details.
 
 import biosteam as bst, qsdsan as qs
 
-__all__ = ('BinaryDistillation',)
+__all__ = (
+    'BinaryDistillation',
+    'ShortcutColumn',
+    'MESHDistillation',
+    'AdiabaticMultiStageVLEColumn',
+    )
 
 _lb_to_kg = qs.utils.auom('lb').conversion_factor('kg')
 
@@ -43,3 +48,32 @@ class BinaryDistillation(bst.units.BinaryDistillation, qs.SanUnit):
                     qs.Construction('carbon_steel', linked_unit=self, item='Carbon_steel', 
                                     quantity=(D['Rectifier weight'] + D['Stripper weight'])*_lb_to_kg, quantity_unit='kg'),
                     ]
+                
+                
+                
+class ShortcutColumn(bst.units.ShortcutColumn, qs.SanUnit):
+    '''
+    biosteam.units.ShortcutColumn with QSDsan properties.
+    
+    See Also
+    --------
+    `biosteam.units.ShortcutColumn <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
+    '''
+
+class MESHDistillation(bst.units.MESHDistillation, qs.SanUnit):
+    '''
+    biosteam.units.MESHDistillation with QSDsan properties.
+    
+    See Also
+    --------
+    `biosteam.units.ShortcutColumn <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
+    '''
+
+class AdiabaticMultiStageVLEColumn(bst.units.AdiabaticMultiStageVLEColumn, qs.SanUnit):
+    '''
+    biosteam.units.AdiabaticMultiStageVLEColumn with QSDsan properties.
+    
+    See Also
+    --------
+    `biosteam.units.ShortcutColumn <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
+    '''
