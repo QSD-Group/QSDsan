@@ -1,0 +1,39 @@
+	X_CHL	X_ALG	X_CH	X_LI	S_CO2	S_A	S_F	S_O2	S_NH	S_NO	S_P	X_N_ALG	X_P_ALG	S_N2	S_ALK	S_I	X_I	X_S	X_H	X_AUT
+photoadaptation	1																			
+ammonium_uptake									-1			1								
+phosphorus_uptake											-1		1							
+growth_pho		1			?			1				?	?							
+carbohydrate_storage_pho			1		?			1												
+lipid_storage_pho				1	?			1												
+carbohydrate_growth_pho		1	(-Y_CH_PHO/Y_X_ALG_PHO)		?			?				?	?							
+lipid_growth_pho		1		(-Y_LI_PHO/Y_X_ALG_PHO)	?			?				?	?							
+carbohydrate_maintenance_pho			-1		?			-1												
+lipid_maintenance_pho				-1	?			-1												
+endogenous_respiration_pho		-1			?			-1				?	?							
+growth_ace		1			?	(-1)/Y_X_ALG_HET_ACE		?				?	?							
+carbohydrate_storage_ace			1		?	(-1)/Y_CH_ND_HET_ACE		?												
+lipid_storage_ace				1	?	(-1)/Y_LI_ND_HET_ACE		?												
+carbohydrate_growth_ace		1	(-Y_CH_NR_HET_ACE/Y_X_ALG_HET_ACE)		?			?				?	?							
+lipid_growth_ace		1		(-Y_LI_NR_HET_ACE/Y_X_ALG_HET_ACE)	?			?				?	?							
+carbohydrate_maintenance_ace			-1		?			-1												
+lipid_maintenance_ace				-1	?			-1												
+endogenous_respiration_ace		-1			?			-1				?	?							
+growth_glu		1			?		(-1)/Y_X_ALG_HET_GLU	?				?	?							
+carbohydrate_storage_glu			1		?		(-1)/Y_CH_ND_HET_GLU	?												
+lipid_storage_glu				1	?		(-1)/Y_LI_ND_HET_GLU	?												
+carbohydrate_growth_glu		1	(-Y_CH_NR_HET_GLU/Y_X_ALG_HET_GLU)		?			?				?	?							
+lipid_growth_glu		1		(-Y_LI_NR_HET_GLU/Y_X_ALG_HET_GLU)	?			?				?	?							
+carbohydrate_maintenance_glu			-1		?			-1												
+lipid_maintenance_glu				-1	?			-1												
+endogenous_respiration_glu		-1			?			-1				?	?							
+aero_hydrolysis							1-f_SI		?		?				?	f_SI		-1		
+anox_hydrolysis							1-f_SI		?		?				?	f_SI		-1		
+anae_hydrolysis							1-f_SI		?		?				?	f_SI		-1		
+hetero_growth_S_F							(-1)/Y_H	1-1/Y_H	?		?				?				1	
+hetero_growth_S_A						(-1)/Y_H		1-1/Y_H	?		?				?				1	
+denitri_S_F							(-1)/Y_H		?	(Y_H-1)/(20/7*Y_H)	?			(1-Y_H)/(20/7*Y_H)	?				1	
+denitri_S_A						(-1)/Y_H			?	(Y_H-1)/(20/7*Y_H)	?			(1-Y_H)/(20/7*Y_H)	?				1	
+ferment						1	-1		?		?				?					
+hetero_lysis									?		?				?		f_XI_H	1-f_XI_H	-1	
+auto_aero_growth								(Y_A-32/7)/Y_A	?	1/Y_A	?				?					1
+auto_lysis									?		?				?		f_XI_AUT	1-f_XI_AUT		-1
