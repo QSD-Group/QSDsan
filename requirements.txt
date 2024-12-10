@@ -6,10 +6,6 @@ SALib>=1.4.5
 seaborn
 sympy>=1.8
 matplotlib<=3.6.0
-<<<<<<< Updated upstream
-# numpy<2.0.0
-=======
->>>>>>> Stashed changes
 
 # Specifically for docs
 sphinx
