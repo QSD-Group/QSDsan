@@ -217,6 +217,7 @@ class SanUnit(Unit, isabstract=True):
             self._assert_compatible_property_package()
         
         self._utility_cost = None
+        self._recycle_system = None
 
         ##### qsdsan-specific #####
         for i in (*construction, *transportation, *equipment):
@@ -631,10 +632,11 @@ class SanUnit(Unit, isabstract=True):
                 include_total_cost=True, include_installed_cost=False,
                 include_zeros=True, external_utilities=(), key_hook=None):
 
+        if super().results is None: return super().results
         results = super().results(with_units, include_utilities,
                                   include_total_cost, include_installed_cost,
                                   include_zeros, external_utilities, key_hook)
-        if not self.add_OPEX: self.add_OPEX = {'Additional OPEX': 0}
+        if not hasattr(self, 'add_OPEX'): self.add_OPEX = {'Additional OPEX': 0}
         for k, v in self.add_OPEX.items():
             if not with_units:
                 results.loc[(k, '')] = v
@@ -647,7 +649,7 @@ class SanUnit(Unit, isabstract=True):
                     results.insert(0, 'Units', '')
                     results.loc[(k, ''), :] = ('USD/hr', v)
                     results.columns.name = type(self).__name__
-        if with_units:
+        if with_units and results is not None:
             results.replace({'USD': f'{currency}', 'USD/hr': f'{currency}/hr'},
                             inplace=True)
         return results

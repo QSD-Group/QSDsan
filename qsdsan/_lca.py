@@ -175,6 +175,9 @@ class LCA:
     >>> # Retrieve impacts associated with a specific indicator
     >>> lca.get_total_impacts()[GWP.ID] # doctest: +ELLIPSIS
     349737809...
+    >>> # Annual results
+    >>> lca.get_total_impacts(annual=True)[GWP.ID] # doctest: +ELLIPSIS
+    34973780...
     >>> # Or breakdowns of the different category
     >>> lca.get_impact_table('Construction') # doctest: +SKIP
     >>> # Below is for testing purpose, you do not need it
@@ -637,12 +640,13 @@ class LCA:
             
         return tot
 
-    def _append_cat_sum(self, cat_table, cat, tot):
+    def _append_cat_sum(self, cat_table, cat, tot, annual=False):
         num = len(cat_table)
         cat_table.loc[num] = '' # initiate a blank spot for value to be added later
-
+        suffix = '/yr' if annual else ''
+        
         for i in self.indicators:
-            cat_table[f'{i.ID} [{i.unit}]'][num] = tot[i.ID]
+            cat_table[f'{i.ID} [{i.unit}{suffix}]'][num] = tot[i.ID]
             cat_table[f'Category {i.ID} Ratio'][num] = 1
 
         if cat in ('construction', 'transportation'):
@@ -662,17 +666,21 @@ class LCA:
         Parameters
         ----------
         category : str
-            Can be 'construction', 'transportation', 'stream', or 'other'.
+            Can be 'Construction', 'Transportation', 'Stream', or 'Other'.
         annual : bool
             If True, will return the annual impacts considering `uptime_ratio`
             instead of across the system lifetime.
         '''
         time = self.lifetime_hr
+        sys_yr = self.lifetime
         cat = category.lower()
         tot_f = getattr(self, f'get_{cat}_impacts')
-        kwargs = {'annual': annual} if cat != 'other' else {}
+        # kwargs = {'annual': annual} if cat != 'other' else {}
+        kwargs = {'annual': annual}
         tot = tot_f(**kwargs)
-
+        suffix = '/yr' if annual else''
+        _append_cat_sum = self._append_cat_sum
+        
         if cat in ('construction', 'transportation'):
             units = sorted(getattr(self, f'_{cat}_units'),
                               key=(lambda su: su.ID))
@@ -684,31 +692,35 @@ class LCA:
             # Note that item_dct = dict.fromkeys([item.ID for item in items], []) won't work
             item_dct = dict.fromkeys([item.ID for item in items])
             for item_ID in item_dct.keys():
-                item_dct[item_ID] = dict(SanUnit=[], Quantity=[])
+                item_dct[item_ID] = {'SanUnit': [], f'Quantity{suffix}': []}
             for su in units:
                 if not isinstance(su, SanUnit):
                     continue
                 for i in getattr(su, cat):
                     item_dct[i.item.ID]['SanUnit'].append(su.ID)
                     if cat == 'transportation':
-                        item_dct[i.item.ID]['Quantity'].append(i.quantity*time/i.interval)
+                        quantity = i.quantity*time/i.interval
+                        quantity = quantity/sys_yr if annual else quantity
+                        item_dct[i.item.ID][f'Quantity{suffix}'].append(quantity)
                     else: # construction
                         lifetime = i.lifetime or su.lifetime or self.lifetime
                         if isinstance(lifetime, dict): # in the case the the equipment is not in the unit lifetime dict
                             lifetime = lifetime.get(i.item.ID) or self.lifetime
-                        constr_ratio = self.lifetime/lifetime if self.annualize_construction else ceil(self.lifetime/lifetime)
-                        item_dct[i.item.ID]['Quantity'].append(i.quantity*constr_ratio)
+                        constr_ratio = sys_yr/lifetime if self.annualize_construction else ceil(sys_yr/lifetime)
+                        quantity = i.quantity * constr_ratio
+                        quantity = quantity/sys_yr if annual else quantity
+                        item_dct[i.item.ID][f'Quantity{suffix}'].append(quantity)
 
             dfs = []
             for item in items:
                 dct = item_dct[item.ID]
                 dct['SanUnit'].append('Total')
-                dct['Quantity'] = np.append(dct['Quantity'], sum(dct['Quantity']))
-                if dct['Quantity'].sum() == 0.: dct['Item Ratio'] = 0
-                else: dct['Item Ratio'] = dct['Quantity']/dct['Quantity'].sum()*2
+                dct[f'Quantity{suffix}'] = np.append(dct[f'Quantity{suffix}'], sum(dct[f'Quantity{suffix}']))
+                if dct[f'Quantity{suffix}'].sum() == 0.: dct['Item Ratio'] = 0
+                else: dct['Item Ratio'] = dct[f'Quantity{suffix}']/dct[f'Quantity{suffix}'].sum()*2
                 for i in self.indicators:
                     if i.ID in item.CFs:
-                        dct[f'{i.ID} [{i.unit}]'] = impact = dct['Quantity']*item.CFs[i.ID]
+                        dct[f'{i.ID} [{i.unit}{suffix}]'] = impact = dct[f'Quantity{suffix}']*item.CFs[i.ID]
                         dct[f'Category {i.ID} Ratio'] = impact/tot[i.ID]
                     else:
                         dct[f'{i.ID} [{i.unit}]'] = dct[f'Category {i.ID} Ratio'] = 0
@@ -721,13 +733,13 @@ class LCA:
                 dfs.append(df)
 
             table = pd.concat(dfs)
-            return self._append_cat_sum(table, cat, tot)
+            return _append_cat_sum(table, cat, tot, annual=annual)
 
-        ind_head = sum(([f'{i.ID} [{i.unit}]',
+        ind_head = sum(([f'{i.ID} [{i.unit}{suffix}]',
                          f'Category {i.ID} Ratio'] for i in self.indicators), [])
 
         if cat in ('stream', 'streams'):
-            headings = ['Stream', 'Mass [kg]', *ind_head]
+            headings = ['Stream', f'Mass [kg]{suffix}', *ind_head]
             item_dct = dict.fromkeys(headings)
             for key in item_dct.keys():
                 item_dct[key] = []
@@ -735,41 +747,43 @@ class LCA:
                 ws = ws_item.linked_stream
                 item_dct['Stream'].append(ws.ID)
                 mass = ws_item.flow_getter(ws) * time
-                item_dct['Mass [kg]'].append(mass)
+                mass = mass/sys_yr if annual else mass
+                item_dct[f'Mass [kg]{suffix}'].append(mass)
                 for ind in self.indicators:
                     if ind.ID in ws_item.CFs.keys():
                         impact = ws_item.CFs[ind.ID]*mass
-                        item_dct[f'{ind.ID} [{ind.unit}]'].append(impact)
+                        item_dct[f'{ind.ID} [{ind.unit}{suffix}]'].append(impact)
                         item_dct[f'Category {ind.ID} Ratio'].append(impact/tot[ind.ID])
                     else:
-                        item_dct[f'{ind.ID} [{ind.unit}]'].append(0)
+                        item_dct[f'{ind.ID} [{ind.unit}{suffix}]'].append(0)
                         item_dct[f'Category {ind.ID} Ratio'].append(0)
             table = pd.DataFrame.from_dict(item_dct)
             table.set_index(['Stream'], inplace=True)
-            return self._append_cat_sum(table, cat, tot)
+            return _append_cat_sum(table, cat, tot, annual=annual)
 
         elif cat == 'other':
-            headings = ['Other', 'Quantity', *ind_head]
+            headings = ['Other', f'Quantity{suffix}', *ind_head]
             item_dct = dict.fromkeys(headings)
             for key in item_dct.keys():
                 item_dct[key] = []
             for other_ID in self.other_items.keys():
                 other = self.other_items[other_ID]['item']
-                item_dct['Other'].append(f'{other_ID} [{other.functional_unit}]')
+                item_dct['Other'].append(f'{other_ID}')
                 quantity = self.other_items[other_ID]['quantity']
-                item_dct['Quantity'].append(quantity)
+                quantity = quantity/sys_yr if annual else quantity
+                item_dct[f'Quantity{suffix}'].append(quantity)
                 for ind in self.indicators:
                     if ind.ID in other.CFs.keys():
                         impact = other.CFs[ind.ID]*quantity
-                        item_dct[f'{ind.ID} [{ind.unit}]'].append(impact)
+                        item_dct[f'{ind.ID} [{ind.unit}{suffix}]'].append(impact)
                         item_dct[f'Category {ind.ID} Ratio'].append(impact/tot[ind.ID])
                     else:
-                        item_dct[f'{ind.ID} [{ind.unit}]'].append(0)
+                        item_dct[f'{ind.ID} [{ind.unit}{suffix}]'].append(0)
                         item_dct[f'Category {ind.ID} Ratio'].append(0)
 
             table = pd.DataFrame.from_dict(item_dct)
             table.set_index(['Other'], inplace=True)
-            return self._append_cat_sum(table, cat, tot)
+            return _append_cat_sum(table, cat, tot, annual=annual)
 
         raise ValueError(
             'category can only be "Construction", "Transportation", "Stream", or "Other", ' \
