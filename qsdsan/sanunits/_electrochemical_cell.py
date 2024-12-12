@@ -5,6 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+    Zixuan Wang <wyatt4428@gmail.com>
     Smiti Mittal <smitimittal@gmail.com>
     Yalin Li <mailto.yalin.li@gmail.com>
     Anna Kogler <akogler@stanford.edu>
@@ -23,10 +24,15 @@ Reference for the default electrochemical cell modelled below:
 # %%
 
 from .._sanunit import SanUnit
+from ._abstract import Splitter
 from .._waste_stream import WasteStream
 from ..equipments import Column, Electrode, Machine, Membrane
 
-__all__ = ('ElectrochemicalCell', 'ElectrochemicalStrippingAdsorptionPrecipitation')
+
+__all__ = ('ElectrochemicalCell',
+           'ESAPRecovery',
+           'ESAPEffluent',
+           'ElectrochemicalStrippingAdsorptionPrecipitation',)
 
 
 class ElectrochemicalCell(SanUnit):
@@ -229,10 +235,133 @@ class ElectrochemicalCell(SanUnit):
         add_OPEX = sum(self.equip_costs)*self.OPEX_over_CAPEX
         recovered, removed = self.outs[0], self.outs[1]
 
-        self.power_utility.rate = recovered.imass['NH3']*0.67577
+        self.power_utility.rate = recovered.imass['S_IN']*0.67577
         # steady state value derived from 17.57 kWh used over 26 hrs
         self._add_OPEX = {'Additional OPEX': add_OPEX}
+
+#%%
+class ESAPRecovery(Splitter):
+    '''
+    Electrochemical stripping, adsorption, and precipitation for nutrient recovery. 
+    This unit is able to perform dynamic simulation.
+
+    This unit has the following equipment:
+        - :class:`~.equipments.Column`
+        - :class:`~.equipments.Machine`
+        - :class:`~.equipments.Electrode`
+        - :class:`~.equipments.Membrane`
+
+    Parameters
+    ----------
+    ins:
+        Inlet fluid to be split
+    outs:
+        * [0] recovery product
+        * [1] Remainder stream   
+    recovery : dict
+        Keys refer to chemical component IDs. Values refer to recovery fractions (with 1 being 100%) for the respective chemicals.
+    equipment : list(obj)
+        List of Equipment objects part of the Electrochemical Cell.
+    OPEX_over_CAPEX : float
+        Ratio with which operating costs are calculated as a fraction of capital costs
+    '''
+    _ins_size_is_fixed = False
     
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, *, 
+                 recovery={'S_IN':0.8,'Mg2+':0.7,'Phosphate':0.95}, order=None, 
+                 init_with ='WasteStream', F_BM_default=None, isdynamic=False, 
+                 OPEX_over_CAPEX=0.2):
+        Splitter.__init__(self=self, ID=ID, ins=ins, outs=outs,thermo = thermo, split = recovery,
+                          order = order, init_with = init_with, F_BM_default = F_BM_default,
+                          isdynamic = isdynamic
+                          )
+        self.recovery = recovery
+        self.OPEX_over_CAPEX = OPEX_over_CAPEX
+
+
+        self.equipment = [
+            Electrode('Main_Anode', linked_unit=self, N=1, electrode_type='anode',
+                      material='Titanium grid catalyst welded to current collector tab both coated in iridium tantalum mixed metal oxide', surface_area=1, unit_cost=288), #288/unit, 1 unit
+            Electrode('Main_Cathode', linked_unit=self, N=1, electrode_type='cathode',
+                      material='TIMESETL 3pcs Stainless Steel Woven Wire 20 Mesh - 12"x8"(30x21cm) Metal Mesh Sheet 1mm Hole Great for Air Ventilation - A4', surface_area=30.25, unit_cost=0.847), #in in^2
+            Electrode('Current_Collector_Cathode', linked_unit=self, N=1, electrode_type='cathode',
+                      material='Stainless Steel 26 gauge 5.5'' x 7''', surface_area=38.5, unit_cost=39.9245), #in unknown units (94/unit, 1 unit)
+            Electrode('Reference_Electrode', linked_unit=self, N=1, electrode_type='reference',
+                      material='RE-5B Ag/AgCl, 7.5 cm long, with ceramic (MF-2056)', surface_area=1, unit_cost=94), #in unknown units (94/unit, 1 unit)
+            Membrane('Cation_Exchange_Membrane', linked_unit=self, N=1,
+                     material='CMI-7000S, polystyrene 0.45mm thick [48'' x 20'']',
+                     unit_cost=5.5055, surface_area=30.25), # in in^2
+            Membrane('Gas_Permeable_Membrane', linked_unit=self, N=1,
+                     material='Aquastill 0.3-micron polyethylene membrane', unit_cost=0.968, surface_area=30.25), #in in^2
+            ]
+
+    def _design(self):
+        self.add_equipment_design()
+        D = self.design_results
+        D['H2SO4'] = self.outs[0].imol['S_IN'] * 98/0.96 #assume 1 mol NH3 requires 1 mol H2SO4, kg/hr 96% H2SO4
+        D['NaOH'] = self.outs[0].imol['S_Mg'] * 2* 40/0.9 #assume 1 mol Mg requires 2 mol NaOH, kg/hr 90% NaOH
+
+    def _cost(self):
+        self.add_equipment_cost()
+        self.baseline_purchase_costs['Exterior'] = 60.52
+        '''
+        TOTAL CELL_EXTERIOR_COST = 60.52 USD
+        Breakdown:
+        Exterior frame (7'' x 7'' x 11/16'')	$21.46
+        Interior half-cells (5.5'' x 5.5'' x 11/16'')	$19.87
+        Rubber Sheets	$9.196
+        Threaded Rods	$2.9696
+        Wingnuts	$2.5504
+        Flat Washers	$0.728
+        Nylon Cable Glands	$3.744
+        '''
+        self.equip_costs = self.baseline_purchase_costs.values()
+        add_OPEX = sum(self.equip_costs)*self.OPEX_over_CAPEX
+        recovered = self.outs[0]
+
+        self.power_utility.rate = recovered.imass['S_IN']*0.67577
+        # steady state value derived from 17.57 kWh used over 26 hrs
+        self._add_OPEX = {'Additional OPEX': add_OPEX}
+
+#%%
+class ESAPEffluent(Splitter):
+    '''
+    Splitting the ESAP effluent. This unit is able to perform dynamic simulation.
+
+    This unit has the following equipment:
+        - :class:`~.equipments.Column`
+        - :class:`~.equipments.Machine`
+        - :class:`~.equipments.Electrode`
+        - :class:`~.equipments.Membrane`
+
+    Parameters
+    ----------
+    ins:
+        Inlet fluid to be split
+    outs:
+        * [0] loss stream during the process
+        * [1] effluent stream   
+    loss : dict
+        Keys refer to chemical component IDs. Values refer to loss fractions (with 1 being 100%) 
+        for the respective chemicals. The fraction is respective to the influent of ESAP_effluent unit.
+    equipment : list(obj)
+        List of Equipment objects part of the Electrochemical Cell.
+    OPEX_over_CAPEX : float
+        Ratio with which operating costs are calculated as a fraction of capital costs
+    '''
+    _ins_size_is_fixed = False
+    
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, *, 
+                 loss={'NH3':0.5,'Mg2+':0.3,'Phosphate':0.8}, order=None, 
+                 init_with ='WasteStream', F_BM_default=None, isdynamic=False):
+        Splitter.__init__(self=self, ID=ID, ins=ins, outs=outs,thermo = thermo, split = loss,
+                          order = order, init_with = init_with, F_BM_default = F_BM_default,
+                          isdynamic = isdynamic
+                          )
+        self.loss = loss
+        
+#%%
+>>>>>>> Stashed changes
 class ElectrochemicalStrippingAdsorptionPrecipitation(SanUnit):
     '''
     Electrochemical stripping, adsorption, and precipitation for nutrient recovery.
@@ -254,6 +383,7 @@ class ElectrochemicalStrippingAdsorptionPrecipitation(SanUnit):
     OPEX_over_CAPEX : float
         Ratio with which operating costs are calculated as a fraction of capital costs
 
+<<<<<<< Updated upstream
     Example
     -------
     >>> # Set components
@@ -363,6 +493,8 @@ class ElectrochemicalStrippingAdsorptionPrecipitation(SanUnit):
     phase: 'l', T: 298.15 K, P: 101325 Pa
     flow (g/hr): H2O        29.5
     ...
+=======
+>>>>>>> Stashed changes
     '''
     _ins_size_is_fixed = False
     _N_outs = 3
@@ -407,8 +539,13 @@ class ElectrochemicalStrippingAdsorptionPrecipitation(SanUnit):
     def _design(self):
         self.add_equipment_design()
         D = self.design_results
+<<<<<<< Updated upstream
         D['H2SO4'] = self.outs[0].imol['NH3'] * 98/0.96 #assume 1 mol NH3 requires 1 mol H2SO4, kg/hr 96% H2SO4
         D['NaOH'] = self.outs[0].imol['Mg2+'] * 2* 40/0.9 #assume 1 mol Mg requires 2 mol NaOH, kg/hr 90% NaOH
+=======
+        D['H2SO4'] = self.outs[0].imol['S_IN'] * 98/0.96 #assume 1 mol NH3 requires 1 mol H2SO4, kg/hr 96% H2SO4
+        D['NaOH'] = self.outs[0].imol['S_Mg'] * 2* 40/0.9 #assume 1 mol Mg requires 2 mol NaOH, kg/hr 90% NaOH
+>>>>>>> Stashed changes
 
     def _cost(self):
         self.add_equipment_cost()
@@ -428,6 +565,12 @@ class ElectrochemicalStrippingAdsorptionPrecipitation(SanUnit):
         add_OPEX = sum(self.equip_costs)*self.OPEX_over_CAPEX
         recovered, removed = self.outs[0], self.outs[1]
 
+<<<<<<< Updated upstream
         self.power_utility.rate = recovered.imass['NH3']*0.67577
         # steady state value derived from 17.57 kWh used over 26 hrs
         self._add_OPEX = {'Additional OPEX': add_OPEX}
+=======
+        self.power_utility.rate = recovered.imass['S_IN']*0.67577
+        # steady state value derived from 17.57 kWh used over 26 hrs
+        self._add_OPEX = {'Additional OPEX': add_OPEX}
+>>>>>>> Stashed changes
