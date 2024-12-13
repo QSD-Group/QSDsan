@@ -247,9 +247,14 @@ class ESAP(SanUnit):
                  recovery={'NH3':0.7}, loss={'NH3':0.06}, order=None, 
                  init_with ='WasteStream', F_BM_default=None, isdynamic=False, 
                   OPEX_over_CAPEX=0.2, component_ID_NH3 = 'NH3', 
-                  component_ID_P ='Phosphate', component_ID_Mg = "Mg2+", **kwargs): #0.015 kg N/h, product 2 mol/L
+                  component_ID_P ='Phosphate', component_ID_Mg = "Mg2+", 
+                  **kwargs): #0.015 kg N/h, product 2 mol/L
         SanUnit.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, 
-                         init_with = init_with, **kwargs)
+                         init_with = init_with, isdynamic=isdynamic, 
+                         F_BM_default=F_BM_default, OPEX_over_CAPEX = OPEX_over_CAPEX, 
+                         component_ID_NH3 = component_ID_NH3, component_ID_P = component_ID_P,
+                         component_ID_Mg = component_ID_Mg,
+                         **kwargs)
         self.recovery = recovery
         self.loss = loss
     
@@ -260,25 +265,25 @@ class ESAP(SanUnit):
         
         # Initialize matrices
         components = influent.components
-        recovery_matrix = np.zeros_like(mass)
-        loss_matrix = np.zeros_like(mass)
-        remaining_matrix = np.ones_like(mass)
+        self.recovery_matrix = np.zeros_like(mass)
+        self.loss_matrix = np.zeros_like(mass)
+        self.remaining_matrix = np.ones_like(mass)
         
         # Fill matrices based on recovery and loss dictionaries
         for component, recovery_fraction in self.recovery.items():
             idx = components.index(component)
-            recovery_matrix[idx] = recovery_fraction
-            remaining_matrix[idx] -= recovery_fraction
+            self.recovery_matrix[idx] = recovery_fraction
+            self.remaining_matrix[idx] -= recovery_fraction
             
         for component, loss_fraction in self.loss.items():
             idx = components.index(component)
-            loss_matrix[idx] = loss_fraction
-            remaining_matrix[idx] -= loss_fraction
+            self.loss_matrix[idx] = loss_fraction
+            self.remaining_matrix[idx] -= loss_fraction
         
         # Calculate mass splits
-        recovery_product.mass = mass * recovery_matrix
-        loss.mass = mass * loss_matrix
-        effluent.mass = mass * remaining_matrix
+        recovery_product.mass = mass * self.recovery_matrix
+        loss.mass = mass * self.loss_matrix
+        effluent.mass = mass * self.remaining_matrix
         
     @property
     def state(self):
@@ -289,34 +294,20 @@ class ESAP(SanUnit):
         
     def _init_state(self):
         influent = self.ins[0]
-        components = self.ins[0].components
         self._state = influent.mass.copy()
         self._dstate = self._state * 0.
-        self._recovery_matrix = np.zeros_like(self._state)
-        self._loss_matrix = np.zeros_like(self._state)
-        self._remaining_matrix = np.zeros_like(self._state)
-        
-        for component, recovery_fraction in self.recovery.items():
-            idx = components.index(component)
-            self._recovery_matrix[idx] = recovery_fraction
-            self._remaining_matrix[idx] -= recovery_fraction
-            
-        for component, loss_fraction in self.loss.items():
-            idx = components.index(component)
-            self._loss_matrix[idx] = loss_fraction
-            self._remaining_matrix[idx] -= loss_fraction
         
     def _update_state(self):
         arr = self._state
-        self._outs[0].state = self._recovery_matrix * arr #TODO: why underscore here?
-        self._outs[1].state = self._loss_matrix * arr
-        self._outs[2].state = self._remaining_matrix * arr
+        self._outs[0].state = self.recovery_matrix * arr #TODO: why underscore here?
+        self._outs[1].state = self.loss_matrix * arr
+        self._outs[2].state = self.remaining_matrix * arr
     
     def _update_dstate(self):
         arr = self._dstate
-        self._outs[0].dstate = self._recovery_matrix * arr
-        self._outs[1].dstate = self._loss_matrix * arr
-        self._outs[2].dstate = self._remaining_matrix * arr
+        self._outs[0].dstate = self.recovery_matrix * arr
+        self._outs[1].dstate = self.loss_matrix * arr
+        self._outs[2].dstate = self.remaining_matrix * arr
     
     @property
     def AE(self):
