@@ -69,7 +69,6 @@ class Membrane(Equipment):
             }
         return design
 
-
     def _cost(self):
         return self.unit_cost*self.N*self.surface_area
 
