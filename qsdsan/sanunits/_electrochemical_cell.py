@@ -241,8 +241,9 @@ class ElectrochemicalCell(SanUnit):
 #%%
 class ESAP(SanUnit):
     _N_outs = 3
-    _ins_size_is_fixed = False
-    _outs_size_is_fixed = False
+    _N_ins = 1
+    _ins_size_is_fixed = True
+    _outs_size_is_fixed = True
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *, 
                  recovery={'NH3':0.7}, loss={'NH3':0.06}, order=None, 
                  init_with ='WasteStream', F_BM_default=None, isdynamic=False, 
@@ -257,7 +258,7 @@ class ESAP(SanUnit):
                          **kwargs)
         self.recovery = recovery
         self.loss = loss
-    
+        
     def _run(self):
         influent, = self.ins
         recovery_product, loss, effluent = self.outs
@@ -287,27 +288,42 @@ class ESAP(SanUnit):
         
     @property
     def state(self):
-        '''Component mass flow rate.'''
+        '''Component concentrations and total flow rate.'''
         if self._state is None: return None
         else:
-            return dict(zip(list(self.components.IDs), self._state))
+            return dict(zip(list(self.components.IDs)+['Q'], self._state))
         
     def _init_state(self):
         influent = self.ins[0]
-        self._state = influent.mass.copy()
+        # self._state = influent.mass.copy()
+        self._state = np.append(influent.mass.copy()*24*1e3, influent.F_vol*24) 
+        #convert kg/h to g/d; convert m3/hr to m3/day
         self._dstate = self._state * 0.
         
     def _update_state(self):
         arr = self._state
-        self._outs[0].state = self.recovery_matrix * arr #TODO: why underscore here?
-        self._outs[1].state = self.loss_matrix * arr
-        self._outs[2].state = self.remaining_matrix * arr
-    
+        for ws in self.outs:
+            if ws.state is None: ws.state = np.ones_like(arr)
+        self._outs[0].state = np.zeros_like(arr)
+        self._outs[0].state[:-1] = self.recovery_matrix * arr[:-1] # g/d
+        self._outs[0].state[-1] = 1
+        
+        self._outs[1].state[:-1] = self.loss_matrix * arr[:-1] # g/d
+        self._outs[1].state[-1] = 1
+
+        self._outs[2].state[:-1] = self.remaining_matrix * arr[:-1]/arr[-1] #mg/L
+        self._outs[2].state[-1] = arr[-1] #m3/day
+
     def _update_dstate(self):
-        arr = self._dstate
-        self._outs[0].dstate = self.recovery_matrix * arr
-        self._outs[1].dstate = self.loss_matrix * arr
-        self._outs[2].dstate = self.remaining_matrix * arr
+        arr = self._dstate       
+        for ws in self.outs:
+            if ws.dstate is None: ws.dstate = np.ones_like(arr)
+        self._outs[0].dstate[:-1] = self.recovery_matrix * arr[:-1]
+        self._outs[0].dstate[-1] = 0 ##constant derivative = 0
+        self._outs[1].dstate[:-1] = self.recovery_matrix * arr[:-1]
+        self._outs[1].dstate[-1] = 0 ##constant derivative = 0
+        self._outs[2].dstate[:-1] = self.remaining_matrix * arr[:-1]/self._outs[2].state[-1]
+        self._outs[2].dstate[-1] = arr[-1] 
     
     @property
     def AE(self):
@@ -320,9 +336,11 @@ class ESAP(SanUnit):
         _dstate = self._dstate
         _update_state = self._update_state
         _update_dstate = self._update_dstate
-        def yt(t, mass_ins, dmass_ins):
-            _state[:] = mass_ins[0]
-            _dstate[:] = dmass_ins[0]
+        def yt(t, QC_ins, dQC_ins):
+            _state[-1] = QC_ins[0][-1]
+            _state[:-1] = QC_ins[0][:-1]*QC_ins[0][-1]
+            _dstate[-1] = dQC_ins[0][-1]
+            _dstate[:-1] = dQC_ins[0][:-1]*QC_ins[0][-1] + QC_ins[0][:-1]*dQC_ins[0][-1]
             _update_state()
             _update_dstate()
         self._AE = yt
