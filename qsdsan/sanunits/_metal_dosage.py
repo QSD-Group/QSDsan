@@ -18,10 +18,11 @@ import numpy as np
 from warnings import warn
 from math import exp
 from .. import SanUnit
+from ..processes import mASM2d, ion_speciation
 import flexsolve as flx
 
 
-__all__ = ('MetalDosage')
+__all__ = ('MetalDosage',)
 
     
 def _coagulation_mass_balance(S_out, S_in, Pme, Fmax, Fmin, ka):
@@ -76,7 +77,30 @@ def _precipitation_mass_balance(SP, Me_in, SP_in, Ksp_mass, x, y, i, j, alpha):
     return  Me**x * (SP*alpha)**y - Ksp_mass    # solubility product
 
 class MetalDosage(SanUnit):
-    
+    '''
+    In-line metal dosage for chemical phosphorus removal and soluble organic
+    removal through coagulation.
+
+    Parameters
+    ----------
+    metal_dosage : float
+        Concentration-based metal dosage, in g (metal component) / m3.
+    metal_ID : str
+        Component ID for the dosed metal.
+    orthoP_ID : str
+        Component ID for ortho-phosphate.
+    metalP_ID : str, optional
+        Component ID for metal phosphate.
+    soluble_substrate_ID : str, optional
+        Component ID for soluble organic substate. The default is 'S_F'.
+    particulate_substrate_ID : str, optional
+        Component ID for particulate organic substrate. The default is 'X_S'.
+    soluble_inert_ID : str, optional
+        Component ID for soluble inert organic matter. The default is 'S_I'.
+    particulate_inert_ID : str, optional
+        Component ID for particulate inert organic matter. The default is 'X_I'.
+        
+    '''    
     _N_ins = 1
     _N_outs = 1
     _ins_size_is_fixed = False
@@ -87,36 +111,181 @@ class MetalDosage(SanUnit):
                  P_precipitation_stoichiometry=None, metal_dosage=0.,
                  metal_ID='', orthoP_ID='', metalP_ID='', 
                  metalP_pKsp=13.75, alpha=1.8e-6,
-                 soluble_substrate_ID='S_I', particulate_substrate_ID='X_I',
-                 soluble_inert_ID='S_F', particulate_inert_ID='X_S', 
+                 soluble_substrate_ID='S_F', particulate_substrate_ID='X_S',
+                 soluble_inert_ID='S_I', particulate_inert_ID='X_I', 
                  Fmin_substrate=4, Fmax_substrate=20, ka_substrate=0.5,
                  Fmin_inert=4, Fmax_inert=20, ka_inert=0.5,        
                  ):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with,
                          F_BM_default=F_BM_default, isdynamic=isdynamic)
         self.metal_dosage = metal_dosage
+        self._cmps_idx = self.chemicals.indices([metal_ID, orthoP_ID, metalP_ID])
+        self._org_idx = self.chemicals.indices([
+            soluble_substrate_ID, particulate_substrate_ID, 
+            soluble_inert_ID, particulate_inert_ID])
         self.metal_ID = metal_ID
         self.orthoP_ID = orthoP_ID
         self.metalP_ID = metalP_ID
-        self.P_precipitation_stoichiometry = P_precipitation_stoichiometry
-        self.metalP_pKsp = metalP_pKsp
-        self.alpha = alpha
         self.soluble_substrate_ID = soluble_substrate_ID
         self.particulate_substrate_ID = particulate_substrate_ID
         self._check_composition(soluble_substrate_ID, particulate_substrate_ID)
         self.soluble_inert_ID = soluble_inert_ID
         self.particulate_inert_ID = particulate_inert_ID
         self._check_composition(soluble_inert_ID, particulate_inert_ID)
+        self.P_precipitation_stoichiometry = P_precipitation_stoichiometry
+        self.metalP_pKsp = metalP_pKsp
+        self.alpha = alpha
         self.Fmin_substrate = Fmin_substrate
         self.Fmax_substrate = Fmax_substrate
         self.ka_substrate = ka_substrate
         self.Fmin_inert = Fmin_inert
         self.Fmax_inert = Fmax_inert
         self.ka_inert = ka_inert
-        self._cmps_idx = self.chemicals.indices([metal_ID, orthoP_ID, metalP_ID])
-        self._org_idx = self.chemicals.indices([
-            soluble_substrate_ID, particulate_substrate_ID, 
-            soluble_inert_ID, particulate_inert_ID])
+
+    @classmethod
+    def from_mASM2d(cls, ID, ins=None, outs=(), model=None, 
+                    metal_ID='X_FeOH', metal_dosage=0., pH=7, 
+                    Fmin_substrate=4, Fmax_substrate=20, ka_substrate=0.5,
+                    Fmin_inert=4, Fmax_inert=20, ka_inert=0.5, 
+                    thermo=None, init_with='WasteStream', 
+                    F_BM_default=None, isdynamic=True, **kwargs):
+        """
+        Creating a metal dosage unit using data from a `mASM2d` process model.
+
+        Parameters
+        ----------
+        model : :class:`mASM2d`
+            mASM2d process model.
+        pH : float, optional
+            Affects orpho-phosphate speciation. The default is 7.
+
+        Examples
+        --------
+        >>> from qsdsan import processes as pc, sanunits as su
+        >>> cmps = pc.create_masm2d_cmps()
+        >>> inf = pc.create_masm2d_inf('inf', 10)
+        >>> asm = pc.mASM2d()
+        >>> MD = su.MetalDosage.from_mASM2d('MD', inf, 'eff', metal_dosage=50, 
+        ...                                 model=asm, isdynamic=False)
+        >>> inf.show()
+        WasteStream: inf to <MetalDosage: MD>
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): S_N2   7.5
+                     S_NH4  10.4
+                     S_PO4  3.33
+                     S_F    35.8
+                     S_I    8.96
+                     S_IC   35
+                     S_K    11.7
+                     S_Mg   20.8
+                     X_I    23.3
+                     X_S    111
+                     S_Ca   58.3
+                     S_Na   36.2
+                     S_Cl   177
+                     H2O    4.15e+05
+         WasteStream-specific properties:
+          pH         : 7.0
+          Alkalinity : 7.0 mmol/L
+          COD        : 430.0 mg/L
+          BOD        : 216.3 mg/L
+          TC         : 224.3 mg/L
+          TOC        : 140.3 mg/L
+          TN         : 41.5 mg/L
+          TP         : 10.5 mg/L
+          TK         : 28.0 mg/L
+          TSS        : 241.9 mg/L
+         Component concentrations (mg/L):
+          S_N2     18.0
+          S_NH4    25.0
+          S_PO4    8.0
+          S_F      86.0
+          S_I      21.5
+          S_IC     84.0
+          S_K      28.0
+          S_Mg     50.0
+          X_I      55.9
+          X_S      266.6
+          S_Ca     140.0
+          S_Na     87.0
+          S_Cl     425.0
+          H2O      995790.2
+
+        >>> MD.simulate()
+        >>> eff, = MD.outs
+        >>> eff.show()
+        WasteStream: eff from <MetalDosage: MD>
+        phase: 'l', T: 298.15 K, P: 101325 Pa
+        flow (g/hr): S_N2     7.5
+                     S_NH4    10.4
+                     S_PO4    0.000407
+                     S_F      30.6
+                     S_I      3.79
+                     S_IC     35
+                     S_K      11.7
+                     S_Mg     20.8
+                     X_I      28.5
+                     X_S      116
+                     S_Ca     58.3
+                     X_FeOH   9.33
+                     X_FePO4  16.2
+                     S_Na     36.2
+                     S_Cl     177
+                     ...      4.15e+05
+         WasteStream-specific properties:
+          pH         : 7.0
+          Alkalinity : 7.0 mmol/L
+          COD        : 430.0 mg/L
+          BOD        : 214.6 mg/L
+          TC         : 224.3 mg/L
+          TOC        : 140.3 mg/L
+          TN         : 41.5 mg/L
+          TP         : 10.5 mg/L
+          TK         : 28.0 mg/L
+          TSS        : 321.9 mg/L
+         Component concentrations (mg/L):
+          S_N2     18.0
+          S_NH4    25.0
+          S_PO4    0.0
+          S_F      73.5
+          S_I      9.1
+          S_IC     84.0
+          S_K      28.0
+          S_Mg     50.0
+          X_I      68.3
+          X_S      279.1
+          S_Ca     140.0
+          X_FeOH   22.4
+          X_FePO4  38.9
+          S_Na     87.0
+          S_Cl     425.0
+          ...
+        """
+        if not isinstance(model, mASM2d):
+            raise TypeError(f'model must be an instance of `mASM2d` class, not {type(model)}')
+        if metal_ID == 'X_FeOH': 
+            metalP_ID = 'X_FePO4'
+            metalP_pKsp = kwargs.pop('metalP_pKsp', 26.4)
+        elif metal_ID == 'X_AlOH': 
+            metalP_ID = 'X_AlPO4'
+            metalP_pKsp = kwargs.pop('metalP_pKsp', 18.2)
+        else: 
+            metalP_ID = kwargs.pop('metalP_ID')
+            metalP_pKsp = kwargs.pop('metalP_pKsp', 13.75)
+        stoichio = model.mmp_stoichio[metalP_ID]
+        Kas = model.rate_function.params['Ka'][4:7]
+        alpha = kwargs.pop('alpha', ion_speciation(10**(-pH), *Kas)[-1])
+        self = cls(ID, ins, outs, thermo, init_with, F_BM_default, isdynamic,
+                   P_precipitation_stoichiometry=stoichio, 
+                   metal_dosage=metal_dosage,
+                   metal_ID=metal_ID, orthoP_ID='S_PO4', metalP_ID=metalP_ID, 
+                   metalP_pKsp=metalP_pKsp, alpha=alpha,
+                   soluble_substrate_ID='S_F', particulate_substrate_ID='X_S',
+                   soluble_inert_ID='S_I', particulate_inert_ID='X_I', 
+                   Fmin_substrate=Fmin_substrate, 
+                   Fmax_substrate=Fmax_substrate, ka_substrate=ka_substrate,
+                   Fmin_inert=Fmin_inert, Fmax_inert=Fmax_inert, ka_inert=ka_inert)
+        return self
 
     @property
     def metal_dosage(self):
@@ -132,9 +301,10 @@ class MetalDosage(SanUnit):
         return self._stoichio
     @P_precipitation_stoichiometry.setter
     def P_precipitation_stoichiometry(self, stoichio):
-        metalP = stoichio[self.metalP_ID]
+        metalP = stoichio.pop(self.metalP_ID, 1)
         if metalP != 1:
             stoichio = {k: v/metalP for k,v in stoichio.items()}
+        stoichio[self.metalP_ID] = metalP
         self._stoichio = stoichio
         self._Me_stoi = -stoichio[self.metal_ID]
         self._SP_stoi = -stoichio[self.orthoP_ID]
@@ -237,7 +407,7 @@ class MetalDosage(SanUnit):
         out.imass[self.metal_ID] += self._Pme * Q * 1e-3
         Me_in, SP_in, MeP_in = out.conc[self._cmps_idx] # mg/L
         i,j,k = self._mstoichio
-        SP = flx.IQ_interpolation(_precipitation_mass_balance, 0, SP_in, args=(
+        SP = flx.bisection(_precipitation_mass_balance, 0, SP_in, args=(
             Me_in, SP_in, self._Ksp_mass, self._Me_stoi, self._SP_stoi, i, j, self.alpha
             ))
         Me = Me_in + i/j*(SP-SP_in)
@@ -290,25 +460,22 @@ class MetalDosage(SanUnit):
         ka_si = self._ka_si
 
         def solve_sp(Me_in, SP_in):
-            sp = flx.IQ_interpolation(
+            return flx.bisection(
                 _precipitation_mass_balance, 0, SP_in, args=(
                 Me_in, SP_in, Ksp_mass, x, y, i, j, alpha
                 ))
-            return sp
         
         def solve_ss(SS_in):
-            ss = flx.IQ_interpolation(
+            return flx.IQ_interpolation(
                 _coagulation_mass_balance, 0, SS_in, args=(
                 SS_in, Pme, Fmax_ss, Fmin_ss, ka_ss
                 ))
-            return ss
         
         def solve_si(SI_in):
-            si = flx.IQ_interpolation(
+            return flx.IQ_interpolation(
                 _coagulation_mass_balance, 0, SI_in, args=(
                 SI_in, Pme, Fmax_si, Fmin_si, ka_si
                 ))
-            return si
             
         def yt(t, QC_ins, dQC_ins):
             Q_ins = QC_ins[:, -1]
