@@ -460,10 +460,17 @@ class MetalDosage(SanUnit):
         ka_si = self._ka_si
 
         def solve_sp(Me_in, SP_in):
-            return flx.bisection(
+            try: 
+                sp = flx.bisection(
                 _precipitation_mass_balance, 0, SP_in, args=(
                 Me_in, SP_in, Ksp_mass, x, y, i, j, alpha
                 ))
+            except:
+                sp = flx.aitken_secant(
+                _precipitation_mass_balance, SP_in, args=(
+                Me_in, SP_in, Ksp_mass, x, y, i, j, alpha
+                ))
+            return sp
         
         def solve_ss(SS_in):
             return flx.IQ_interpolation(
