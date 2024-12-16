@@ -462,27 +462,39 @@ class MetalDosage(SanUnit):
         def solve_sp(Me_in, SP_in):
             try: 
                 sp = flx.bisection(
-                _precipitation_mass_balance, 0, SP_in, args=(
-                Me_in, SP_in, Ksp_mass, x, y, i, j, alpha
-                ))
+                    _precipitation_mass_balance, 0, SP_in, args=(
+                    Me_in, SP_in, Ksp_mass, x, y, i, j, alpha
+                    ))
             except:
-                sp = flx.aitken_secant(
-                _precipitation_mass_balance, SP_in, args=(
-                Me_in, SP_in, Ksp_mass, x, y, i, j, alpha
-                ))
+                # sp = flx.aitken_secant(
+                #     _precipitation_mass_balance, SP_in, args=(
+                #     Me_in, SP_in, Ksp_mass, x, y, i, j, alpha
+                #     ))
+                # if sp < 0 or sp > SP_in:
+                #     warn(f'sp = {sp}; sp_in = {SP_in}')
+                #     sp = max(0, min(sp, SP_in))
+                sp = SP_in
             return sp
         
         def solve_ss(SS_in):
-            return flx.IQ_interpolation(
-                _coagulation_mass_balance, 0, SS_in, args=(
-                SS_in, Pme, Fmax_ss, Fmin_ss, ka_ss
-                ))
+            try:
+                ss = flx.IQ_interpolation(
+                    _coagulation_mass_balance, 0, SS_in, args=(
+                    SS_in, Pme, Fmax_ss, Fmin_ss, ka_ss
+                    ))
+            except:
+                ss = SS_in
+            return ss
         
         def solve_si(SI_in):
-            return flx.IQ_interpolation(
-                _coagulation_mass_balance, 0, SI_in, args=(
-                SI_in, Pme, Fmax_si, Fmin_si, ka_si
-                ))
+            try:
+                si = flx.IQ_interpolation(
+                    _coagulation_mass_balance, 0, SI_in, args=(
+                    SI_in, Pme, Fmax_si, Fmin_si, ka_si
+                    ))
+            except:
+                si = SI_in
+            return si
             
         def yt(t, QC_ins, dQC_ins):
             Q_ins = QC_ins[:, -1]
