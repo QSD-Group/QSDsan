@@ -1237,7 +1237,7 @@ class WasteStream(SanStream):
             Cs = dict(zip(self.components.IDs, self.state[:-1]))
             Cs.pop('H2O', None)
             self.set_flow_by_concentration(Q, Cs, units=('m3/d', 'mg/L'))
-        elif self.phase == 'g':
+        else:
             Ms = self.state[:-1] * Q # g/d
             self.set_flow(Ms, units='g/d')
     

@@ -26,7 +26,7 @@ Reference for the default electrochemical cell modelled below:
 from .._sanunit import SanUnit
 from ._abstract import Splitter
 from .._waste_stream import WasteStream
-from ..equipments import Column, Electrode, Machine, Membrane
+from ..equipments import Electrode, Machine, Membrane
 from math import ceil
 import numpy as np
 
@@ -35,7 +35,6 @@ __all__ = ('ElectrochemicalCell',
            'ESAPEffluent',
            'ESAP',
            'ElectrochemicalStrippingAdsorptionPrecipitation',)
-
 
 class ElectrochemicalCell(SanUnit):
     '''
@@ -256,7 +255,8 @@ class ESAP(SanUnit):
         Wastewater stream
     outs:
         * [0] recovery product
-        * [1] Remainder stream   
+        * [1] loss stream (removed by the unit but cannot be recovered)
+        * [2] effluent stream
     recovery : dict
         Keys refer to chemical component IDs. Values refer to recovery fractions (with 1 being 100%) for the respective chemicals.
     loss: dict
@@ -275,8 +275,8 @@ class ESAP(SanUnit):
         The ID for dissolved magnesium in the influent wastestream
     specific_energy_consumption: float
         kWh/kg N recovered
-
     '''
+    
     _N_outs = 3
     _N_ins = 1
     _ins_size_is_fixed = True
@@ -297,8 +297,9 @@ class ESAP(SanUnit):
                          # N_treatment_capacity = N_treatment_capacity,
                          # specific_energy_consumption = specific_energy_consumption,
                          **kwargs)
-        self._recovery = recovery
-        self._loss = loss
+        
+        self.recovery = recovery
+        self.loss = loss
         self._component_ID_NH3 = component_ID_NH3
         self._component_ID_P = component_ID_P
         self._component_ID_Mg = component_ID_Mg
@@ -343,6 +344,10 @@ class ESAP(SanUnit):
     @recovery.setter
     def recovery(self, r):
         self._recovery = r
+        influent, = self.ins
+        components = influent.components
+        self._recovery_matrix = components.kwarray(self.recovery)
+        self._remaining_matrix = None
         
     @property
     def loss(self):
@@ -353,6 +358,10 @@ class ESAP(SanUnit):
     @loss.setter
     def loss(self, l):
         self._loss = l
+        influent, = self.ins
+        components = influent.components
+        self._loss_matrix = components.kwarray(self.loss)
+        self._remaining_matrix = None
     
     @property
     def N_treatment_capacity(self):
@@ -375,48 +384,31 @@ class ESAP(SanUnit):
     @property
     def recovery_matrix(self):
         '''The mass split [0-1] matrix for components from influent into the recovery_product WasteStream'''
-        influent, = self.ins
-        mass = influent.mass.copy()
-        components = influent.components
-        self._recovery_matrix = np.zeros_like(mass)
-        for component, recovery_fraction in self.recovery.items():
-            idx = components.index(component)
-            self._recovery_matrix[idx] = recovery_fraction
         return self._recovery_matrix
     
     @property
     def loss_matrix(self):
         '''The mass split [0-1] matrix for components from influent into the loss WasteStream'''
-        influent, = self.ins
-        mass = influent.mass.copy()
-        components = influent.components
-        self._loss_matrix = np.zeros_like(mass)
-        for component, loss_fraction in self.loss.items():
-            idx = components.index(component)
-            self._loss_matrix[idx] = loss_fraction
         return self._loss_matrix
     
     @property
     def remaining_matrix(self):
         '''The mass split [0-1] matrix for components from influent into the effluent WasteStream'''
-        influent, = self.ins
-        mass = influent.mass.copy()
-        components = influent.components
-        self._remaining_matrix = np.ones_like(mass)
-        for component, recovery_fraction in self.recovery.items():
-            idx = components.index(component)
-            self._remaining_matrix[idx] -= recovery_fraction
-        
-        for component, loss_fraction in self.loss.items():
-            idx = components.index(component)
-            self._remaining_matrix[idx] -= loss_fraction
-        return self._remaining_matrix
+        if not hasattr(self,'_remaining_matrix'):
+            self._remaining_matrix = None
+        if self._remaining_matrix is None:
+            influent, = self.ins
+            mass = influent.mass.copy()
+            components = influent.components
+            self._remaining_matrix = np.ones_like(mass) \
+                - components.kwarray(self.recovery) - components.kwarray(self.loss)
+        return self._remaining_matrix        
     
     def _run(self):
         influent, = self.ins
         recovery_product, loss, effluent = self.outs
         mass = influent.mass.copy()
-        
+        recovery_product.phase = loss.phase = 's'
         # Calculate mass splits
         recovery_product.mass = mass * self.recovery_matrix
         loss.mass = mass * self.loss_matrix
@@ -439,7 +431,7 @@ class ESAP(SanUnit):
     def _update_state(self):
         arr = self._state
         for ws in self.outs:
-            if ws.state is None: ws.state = np.ones_like(arr)
+            if ws.state is None: ws.state = np.zeros_like(arr)
         self._outs[0].state = np.zeros_like(arr)
         self._outs[0].state[:-1] = self.recovery_matrix * arr[:-1] # g/d
         self._outs[0].state[-1] = 1
@@ -453,7 +445,7 @@ class ESAP(SanUnit):
     def _update_dstate(self):
         arr = self._dstate       
         for ws in self.outs:
-            if ws.dstate is None: ws.dstate = np.ones_like(arr)
+            if ws.dstate is None: ws.dstate = np.zeros_like(arr)
         self._outs[0].dstate[:-1] = self.recovery_matrix * arr[:-1]
         self._outs[0].dstate[-1] = 0 ##constant derivative = 0
         self._outs[1].dstate[:-1] = self.recovery_matrix * arr[:-1]
@@ -492,9 +484,9 @@ class ESAP(SanUnit):
         D['NaOH'] = self.outs[0].imol[self.component_ID_Mg] * 2* 40/0.9 *24 #kg/day, assume 1 mol Mg requires 2 mol NaOH, kg/hr 90% NaOH
         D['KOH'] = self.outs[2].imass['H2O'] * 0.03 * 0.04 *24 #kg/day
         self._units['H2SO4'] = self._units['NaOH'] = self._units['KOH'] = 'kg/day'
+        influent = self.ins[0]
         recovery_product, loss, effluent = self.outs
-        recovery_product.imass['H2O'] = 0
-        loss.imass['H2O'] = 0 #remove artificial water in recovered_product and loss
+        effluent.imass['H2O'] = influent.imass['H2O'] #assume no water tranport
 
     def _cost(self):
         self.add_equipment_cost()
