@@ -30,7 +30,7 @@ jobs:
         python -m pip install pytest nbval
         pip install --no-cache-dir git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git@qsdsan
         pip install --no-cache-dir git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@qsdsan
-        pip install --no-cache-dir git+https://github.com/QSD-Group/EXPOsan.git@bsm2
+        pip install --no-cache-dir git+https://github.com/QSD-Group/EXPOsan.git@werf
         pip install --no-cache-dir -r requirements.txt
     - name: Test with pytest
       run: |
