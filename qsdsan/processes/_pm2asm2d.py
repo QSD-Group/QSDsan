@@ -46,17 +46,17 @@ def create_pm2asm2d_cmps(set_thermo=True):
     X_ALG.f_BOD5_COD = X_ALG.f_uBOD_COD = None
     X_ALG.f_Vmass_Totmass = 0.89
 
-    # X_CH (g COD/m^3)
-    X_CH = cmps.X_GAO_Gly.copy('X_CH')
-    X_CH.description = 'Concentration of stored carbohydrates'
-    X_CH.formula = 'CH2O'
-    X_CH.f_BOD5_COD = X_CH.f_uBOD_COD = None
+    # X_PG (g COD/m^3)
+    X_PG = cmps.X_GAO_Gly.copy('X_PG')
+    X_PG.description = 'Concentration of stored carbohydrates'
+    X_PG.formula = 'CH2O'
+    X_PG.f_BOD5_COD = X_PG.f_uBOD_COD = None
 
-    # X_LI (g COD/m^3)
-    X_LI = cmps.X_GAO_Gly.copy('X_LI')
-    X_LI.description = 'Concentration of stored lipids'
-    X_LI.formula = 'CH1.92O0.118'
-    X_LI.f_BOD5_COD = X_LI.f_uBOD_COD = None
+    # X_TAG (g COD/m^3)
+    X_TAG = cmps.X_GAO_Gly.copy('X_TAG')
+    X_TAG.description = 'Concentration of stored lipids'
+    X_TAG.formula = 'CH1.92O0.118'
+    X_TAG.f_BOD5_COD = X_TAG.f_uBOD_COD = None
 
     # S_CO2 (g CO2/m^3)
     S_CO2 = Component.from_chemical(ID = 'S_CO2',
@@ -70,8 +70,8 @@ def create_pm2asm2d_cmps(set_thermo=True):
     S_A = cmps.S_Ac.copy('S_A')
     S_A.description = 'Concentration of extracellular dissolved organic carbon (acetate)'
 
-    # S_F (g COD/m^3)
-    S_F = Component.from_chemical(ID = 'S_F',
+    # S_G (g COD/m^3)
+    S_G = Component.from_chemical(ID = 'S_G',
                                   chemical = 'glucose',
                                   description = 'Concentration of extracellular dissolved organic carbon (glucose)',
                                   measured_as = 'COD',
@@ -97,14 +97,14 @@ def create_pm2asm2d_cmps(set_thermo=True):
 
     # X_N_ALG (g N/m^3)
     X_N_ALG = cmps.X_B_Subst.copy('X_N_ALG')
-    X_N_ALG.description = 'Concentration of algal cell-associated nitrogen'
+    X_N_ALG.description = 'Concentration of stored nitrogen in microalgal cell'
     X_N_ALG.measured_as = 'N'
     X_N_ALG.i_C = X_N_ALG.i_P = X_N_ALG.i_COD = X_N_ALG.f_BOD5_COD = X_N_ALG.f_uBOD_COD = X_N_ALG.f_Vmass_Totmass = 0
     X_N_ALG.i_mass = 1
 
     # X_P_ALG (g P/m^3)
     X_P_ALG = cmps.X_B_Subst.copy('X_P_ALG')
-    X_P_ALG.description = 'Concentration of algal cell-associated phosphorus'
+    X_P_ALG.description = 'Concentration of stored phosphorus in microalgal cell'
     X_P_ALG.measured_as = 'P'
     X_P_ALG.i_C = X_P_ALG.i_N = X_P_ALG.i_COD = X_P_ALG.f_BOD5_COD = X_P_ALG.f_uBOD_COD = X_P_ALG.f_Vmass_Totmass = 0
     X_P_ALG.i_mass = 1
@@ -139,13 +139,13 @@ def create_pm2asm2d_cmps(set_thermo=True):
     X_AUT.description = ('Concentration of nitrifying organisms')
 
     S_I.i_N = 0.01
-    # S_F.i_N = 0.03
+    # S_F.i_N = 0.03 # (S_F->S_G)
     X_I.i_N = 0.02
     X_S.i_N = 0.04
     X_H.i_N = X_AUT.i_N = 0.07
 
     S_I.i_P = 0.00
-    # S_F.i_P = 0.01
+    # S_F.i_P = 0.01 # (S_F->S_G)
     X_I.i_P = 0.01
     X_S.i_P = 0.01
     X_H.i_P = X_AUT.i_P = 0.02
@@ -154,7 +154,7 @@ def create_pm2asm2d_cmps(set_thermo=True):
     X_S.i_mass = 0.75
     X_H.i_mass = X_AUT.i_mass = 0.9
 
-    cmps_pm2asm2d = Components([X_CHL, X_ALG, X_CH, X_LI, S_CO2, S_A, S_F,
+    cmps_pm2asm2d = Components([X_CHL, X_ALG, X_PG, X_TAG, S_CO2, S_A, S_G,
                            S_O2, S_NH, S_NO, S_P, X_N_ALG, X_P_ALG,
                            S_N2, S_ALK, S_I, X_I, X_S, X_H, X_AUT, cmps.H2O])
 
@@ -195,7 +195,7 @@ def attenuation(light, X_TSS, a_c, b_reactor):
     '''
     :param light: I_0, calculated irradiance from 'calc_irrad' method (for sensitivity analysis) or
                        photosynthetically active radiation (PAR) imported from input excel file (for calibration & validation) [uE/m^2/s]
-    :param X_TSS: total biomass concentration (X_ALG + X_CH + X_LI) * i_mass [g TSS/m^3]
+    :param X_TSS: total biomass concentration (X_ALG + X_PG + X_TAG) * i_mass [g TSS/m^3]
     :param a_c: PAR absorption coefficient on a TSS (total suspended solids) basis [m^2/g TSS]
     :parma b_reactor: thickness of reactor along light path [m]
     :return: I, depth-averaged irradiance [uE/m^2/s]
@@ -211,7 +211,7 @@ def irrad_response(i_avg, X_CHL, X_carbon, I_n, I_opt):
     '''
     :param i_avg: I, depth-averaged irradiance (calculated from 'attenuation' method) [uE/m^2/s]
     :param X_CHL: chlorophyll content of cells [g Chl/m^3]
-    :param X_carbon: carbon content of cells (X_ALG + X_CH + X_LI) * i_C [g C/m^3]
+    :param X_carbon: carbon content of cells (X_ALG + X_PG + X_TAG) * i_C [g C/m^3]
     :param I_n: maximum incident PAR irradiance (“irradiance at noon”) [uE/m^2/s]
     :param I_opt: optimal irradiance [uE/m^2/s]
     :return: f_I, irradiance response function [unitless]
@@ -257,7 +257,7 @@ def photoadaptation(i_avg, X_CHL, X_carbon, I_n, k_gamma):
     '''
     :param i_avg: I, depth-averaged irradiance (calculated from 'attenuation' method) [uE/m^2/s]
     :param X_CHL: chlorophyll content of cells [g Chl/m^3]
-    :param X_carbon: carbon content of cells (X_ALG + X_CH + X_LI) * i_C [g C/m^3]
+    :param X_carbon: carbon content of cells (X_ALG + X_PG + X_TAG) * i_C [g C/m^3]
     :param I_n: maximum incident PAR irradiance (“irradiance at noon”) [uE/m^2/s]
     :param k_gamma: photoadaptation coefficient [unitless]
     :return: photoadaptation rate [g Chl/m^3/d]
@@ -298,8 +298,8 @@ def max_total_growth(X_ALG, mu_max, f_np, f_temp):
 def growth_split(f_I, f_CH, f_LI, rho, Y_CH, Y_LI, K_STO):
     '''
     :param f_I: irradiance response function (calculated from 'irrad_response' method) [unitless]
-    :param f_CH: ratio of stored carbohydrates to cells (X_CH / X_ALG) [g COD/g COD]
-    :param f_LI: ratio of stored lipids to cells (X_LI / X_ALG) [g COD/g COD]
+    :param f_CH: ratio of stored carbohydrates to cells (X_PG / X_ALG) [g COD/g COD]
+    :param f_LI: ratio of stored lipids to cells (X_TAG / X_ALG) [g COD/g COD]
     :param rho: carbohydrate relative preference factor (calibrated in Guest et al., 2013) [unitless]
     :param Y_CH: yield of storage carbohydrates (as polyglucose, PG), Y_CH_PHO, Y_CH_NR_HET_ACE, or Y_CH_NR_HET_GLU [g COD/g COD]
     :param Y_LI: yield of storage lipids (as triacylglycerol, TAG), Y_LI_PHO, Y_LI_NR_HET_ACE, or Y_LI_NR_HET_GLU [g COD/g COD]
@@ -333,8 +333,8 @@ def max_total_maintenance(X_ALG, m_ATP):
 # Split the total maintenance rate between three processes (_p12, _p13, _p14, _p20, _p21, _p22, _p28, _p29, _p30)
 def maintenance_split(f_CH, f_LI, rho, Y_CH, Y_LI, Y_X_ALG, Y_ATP, K_STO):
     '''
-    :param f_CH: ratio of stored carbohydrates to cells (X_CH / X_ALG) [g COD/g COD]
-    :param f_LI: ratio of stored lipids to cells (X_LI / X_ALG) [g COD/g COD]
+    :param f_CH: ratio of stored carbohydrates to cells (X_PG / X_ALG) [g COD/g COD]
+    :param f_LI: ratio of stored lipids to cells (X_TAG / X_ALG) [g COD/g COD]
     :param rho: carbohydrate relative preference factor (calibrated in Guest et al., 2013) [unitless]
     :param Y_CH: yield of storage carbohydrates (as polyglucose, PG), Y_CH_PHO, Y_CH_NR_HET_ACE, or Y_CH_NR_HET_GLU [g COD/g COD]
     :param Y_LI: yield of storage lipids (as triacylglycerol, TAG), Y_LI_PHO, Y_LI_NR_HET_ACE, or Y_LI_NR_HET_GLU [g COD/g COD]
@@ -353,7 +353,7 @@ def storage(X_ALG, f_np, response, saturation, storage_rate):
     '''
     :param X_ALG: algae biomass concentration (i.e., no storage products) [g COD/m^3]
     :param f_np: inhibition factor by nitrogen or phosphorus (between 0 and 1) [unitless]
-    :param response: f_I (irradiance response function, calculated from 'irrad_response' method), acetate_response (monod(S_A, K_A, 1)), or glucose_response (monod(S_F, K_F, 1)) [unitless]
+    :param response: f_I (irradiance response function, calculated from 'irrad_response' method), acetate_response (monod(S_A, K_A, 1)), or glucose_response (monod(S_G, K_G, 1)) [unitless]
     :param saturation: 1 - (f / f_max) ** beta (calculated from 'storage_saturation' method) [unitless]
     :param storage_rate: q_CH or q_LI [g COD/g COD/d]
     :return: storage rate [g COD/m^3/d]
@@ -398,7 +398,7 @@ def rhos_pm2asm2d(state_arr, params):
     # Q = state_arr[21]                             # Flow rate
     # t = state_arr[22]                             # time
 
-    X_CHL, X_ALG, X_CH, X_LI, S_CO2, S_A, S_F, S_O2, S_NH, S_NO, S_P, X_N_ALG, X_P_ALG, S_N2, S_ALK, S_I, X_I, X_S, X_H, X_AUT, H2O = c_arr
+    X_CHL, X_ALG, X_PG, X_TAG, S_CO2, S_A, S_G, S_O2, S_NH, S_NO, S_P, X_N_ALG, X_P_ALG, S_N2, S_ALK, S_I, X_I, X_S, X_H, X_AUT, H2O = c_arr
 
     # extract values of parameters
     cmps = params['cmps']
@@ -414,7 +414,7 @@ def rhos_pm2asm2d(state_arr, params):
     K_N = params['K_N']
     K_P = params['K_P']
     K_A = params['K_A']
-    K_F = params['K_F']
+    K_G = params['K_G']
     rho = params['rho']
     K_STO = params['K_STO']
     f_CH_max = params['f_CH_max']
@@ -477,8 +477,8 @@ def rhos_pm2asm2d(state_arr, params):
     K_P_AUT = params['K_P_AUT']
 
 # intermediate variables
-    f_CH = ratio(X_CH, X_ALG, 0, f_CH_max)
-    f_LI = ratio(X_LI, X_ALG, 0, f_LI_max)
+    f_CH = ratio(X_PG, X_ALG, 0, f_CH_max)
+    f_LI = ratio(X_TAG, X_ALG, 0, f_LI_max)
 
     # Q_N = ratio(X_N_ALG, X_ALG, Q_N_min, Q_N_max)
     # Q_P = ratio(X_P_ALG, X_ALG, Q_P_min, Q_P_max)
@@ -487,8 +487,8 @@ def rhos_pm2asm2d(state_arr, params):
     Q_N = ratio(X_N_ALG+X_ALG*alg_iN, X_ALG, Q_N_min, Q_N_max)
     Q_P = ratio(X_P_ALG+X_ALG*alg_iP, X_ALG, Q_P_min, Q_P_max)
 
-    idx = cmps.indices(['X_ALG', 'X_CH', 'X_LI'])
-    X_bio = np.array([X_ALG, X_CH, X_LI])
+    idx = cmps.indices(['X_ALG', 'X_PG', 'X_TAG'])
+    X_bio = np.array([X_ALG, X_PG, X_TAG])
     X_TSS = sum(X_bio * cmps.i_mass[idx])
     X_carbon = sum(X_bio * cmps.i_C[idx])
 
@@ -496,7 +496,7 @@ def rhos_pm2asm2d(state_arr, params):
     f_I = irrad_response(i_avg, X_CHL, X_carbon, I_n, I_opt)
     dark_response = max(f_I, n_dark)
     acetate_response = monod(S_A, K_A, 1)
-    glucose_response = monod(S_F, K_F, 1)
+    glucose_response = monod(S_G, K_G, 1)
 
     f_np = min(droop(Q_N, Q_N_min, exponent), droop(Q_P, Q_P_min, exponent))
     f_temp = temperature(temp, arr_a, arr_e)
@@ -551,11 +551,11 @@ def rhos_pm2asm2d(state_arr, params):
     rhos[31] = hydrolysis(X_S, X_H, K_h, K_X) * eta_NO3 * monod(K_O2, S_O2, 1) * monod(S_NO, K_NO3, 1)
     rhos[32] = hydrolysis(X_S, X_H, K_h, K_X) * eta_fe * monod(K_O2, S_O2, 1) * monod(K_NO3, S_NO, 1)
 
-    rhos[33] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * monod(S_O2, K_O2_H, 1) * monod(S_F, K_F_H, 1) * monod(S_F, S_A, 1)
-    rhos[34] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * monod(S_O2, K_O2_H, 1) * monod(S_A, K_A_H, 1) * monod(S_A, S_F, 1)
-    rhos[35] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * eta_NO3_H * monod(K_O2_H, S_O2, 1) * monod(S_NO, K_NO3_H, 1) * monod(S_F, K_F_H, 1) * monod(S_F, S_A, 1)
-    rhos[36] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * eta_NO3_H * monod(K_O2_H, S_O2, 1) * monod(S_NO, K_NO3_H, 1) * monod(S_A, K_A_H, 1) * monod(S_A, S_F, 1)
-    rhos[37] = q_fe * monod(K_O2_H, S_O2, 1) * monod(K_NO3_H, S_NO, 1) * monod(S_F, K_fe, 1) * monod(S_ALK, K_ALK_H, 1) * X_H
+    rhos[33] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * monod(S_O2, K_O2_H, 1) * monod(S_G, K_F_H, 1) * monod(S_G, S_A, 1)
+    rhos[34] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * monod(S_O2, K_O2_H, 1) * monod(S_A, K_A_H, 1) * monod(S_A, S_G, 1)
+    rhos[35] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * eta_NO3_H * monod(K_O2_H, S_O2, 1) * monod(S_NO, K_NO3_H, 1) * monod(S_G, K_F_H, 1) * monod(S_G, S_A, 1)
+    rhos[36] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * eta_NO3_H * monod(K_O2_H, S_O2, 1) * monod(S_NO, K_NO3_H, 1) * monod(S_A, K_A_H, 1) * monod(S_A, S_G, 1)
+    rhos[37] = q_fe * monod(K_O2_H, S_O2, 1) * monod(K_NO3_H, S_NO, 1) * monod(S_G, K_fe, 1) * monod(S_ALK, K_ALK_H, 1) * X_H
     rhos[38] = b_H * X_H
 
     rhos[39] = growth_asm2d(S_NH, S_P, S_ALK, mu_AUT, X_AUT, K_NH4_AUT, K_P_AUT, K_ALK_AUT) * monod(S_O2, K_O2_AUT, 1)
@@ -611,8 +611,8 @@ class PM2ASM2d(CompiledProcesses):
     K_A : float, optional
               Organic carbon half-saturation constant (acetate) (Wagner, 2016), in [g COD/m^3].
               The default is 6.3.
-    K_F : float, optional
-              Organic carbon half-saturation constant (glucose); assumes K_A = K_F, in [g COD/m^3].
+    K_G : float, optional
+              Organic carbon half-saturation constant (glucose); assumes K_A = K_G, in [g COD/m^3].
               The default is 6.3.
     rho : float, optional
               Carbohydrate relative preference factor (calibrated in Guest et al., 2013), in [unitless].
@@ -842,7 +842,7 @@ class PM2ASM2d(CompiledProcesses):
                         *_shared_params)
 
     _kinetic_params = ('a_c', 'I_n', 'arr_a', 'arr_e', 'beta_1', 'beta_2', 'b_reactor', 'I_opt', 'k_gamma',
-                       'K_N', 'K_P', 'K_A', 'K_F', 'rho', 'K_STO', 'f_CH_max', 'f_LI_max', 'm_ATP', 'mu_max',
+                       'K_N', 'K_P', 'K_A', 'K_G', 'rho', 'K_STO', 'f_CH_max', 'f_LI_max', 'm_ATP', 'mu_max',
                        'q_CH', 'q_LI', 'Q_N_max', 'Q_N_min', 'Q_P_max', 'Q_P_min', 'V_NH', 'V_NO', 'V_P', 'exponent',
                        'Y_ATP_PHO', 'Y_ATP_HET_ACE', 'Y_ATP_HET_GLU', *_shared_params, 'n_dark', 'cmps',
                        'K_h', 'eta_NO3', 'eta_fe', 'K_O2', 'K_NO3', 'K_X', 'mu_H', 'q_fe', 'eta_NO3_H', 
@@ -851,7 +851,7 @@ class PM2ASM2d(CompiledProcesses):
 
     def __new__(cls, components=None,
                 a_c=0.049, I_n=250, arr_a=1.8e10, arr_e=6842, beta_1=2.90, beta_2=3.50, b_reactor=0.03, I_opt=300, k_gamma=1e-5,
-                K_N=0.1, K_P=1.0, K_A=6.3, K_F=6.3, rho=1.186, K_STO=1.566,
+                K_N=0.1, K_P=1.0, K_A=6.3, K_G=6.3, rho=1.186, K_STO=1.566,
                 f_CH_max=0.819, f_LI_max=3.249, m_ATP=15.835, mu_max=1.969, q_CH=0.594, q_LI=0.910,
                 Q_N_max=0.417, Q_N_min=0.082, Q_P_max=0.092, Q_P_min=0.0163, V_NH=0.254, V_NO=0.254, V_P=0.016, exponent=4,
                 Y_ATP_PHO=55.073, Y_CH_PHO=0.754, Y_LI_PHO=0.901, Y_X_ALG_PHO=0.450,
@@ -895,7 +895,7 @@ class PM2ASM2d(CompiledProcesses):
                            conserved_for=('COD', 'C'))
 
             _p5 = Process('nitrate_uptake_glu',
-                           'S_NO + [?]S_F -> [?]S_CO2 + X_N_ALG',
+                           'S_NO + [?]S_G -> [?]S_CO2 + X_N_ALG',
                            components=components,
                            ref_component='X_N_ALG',
                            conserved_for=('COD', 'C'))
@@ -916,7 +916,7 @@ class PM2ASM2d(CompiledProcesses):
         Q_N_min = max(self.Th_Q_N_min, Q_N_min)
         Q_P_min = max(self.Th_Q_P_min, Q_P_min)
         kinetic_values = (a_c, I_n, arr_a, arr_e, beta_1, beta_2, b_reactor, I_opt, k_gamma,
-                          K_N, K_P, K_A, K_F, rho, K_STO, f_CH_max, f_LI_max, m_ATP, mu_max,
+                          K_N, K_P, K_A, K_G, rho, K_STO, f_CH_max, f_LI_max, m_ATP, mu_max,
                           q_CH, q_LI, Q_N_max, Q_N_min, Q_P_max, Q_P_min, V_NH, V_NO, V_P, exponent,
                           Y_ATP_PHO, Y_ATP_HET_ACE, Y_ATP_HET_GLU,
                           *shared_values, n_dark, self._components,
