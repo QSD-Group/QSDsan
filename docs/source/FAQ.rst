@@ -25,7 +25,7 @@ or
 or if you cannot get any diagram at all. It is likely that your ``graphviz`` is not configured correctly.
 
 .. note::
-    For the case where you don't have any diagram, the ``biosteam.RAISE_GRAPHVIZ_EXCEPTION`` is set to ``False``, you can see the error by changing that to ``True``.
+    For the case where you don't have any diagram, the ``biosteam.preferences.raise_exception`` is set to ``False``, you can see the error by changing that to ``True``.
 
 This `post <https://stackoverflow.com/questions/35064304/runtimeerror-make-sure-the-graphviz-executables-are-on-your-systems-path-aft>`_ provides a lot of useful information, and this normally can be solved by:
 
