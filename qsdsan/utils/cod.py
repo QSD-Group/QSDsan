@@ -122,8 +122,7 @@ def cod_test_stoichiometry(atoms, charge=0, MW=None, missing_handling='elemental
     nH2O = nO - 7*nCr2O7 - 2*nC - 4*nS - 4*nP
     n_proton = 8*nCr2O7 - nN + 2*nS + 3*nP - ne
 
-    if nCr2O7 != 0.0:
-        products['Cr2O7-2'] = nCr2O7
+    products['Cr2O7-2'] = nCr2O7
     if n_proton != 0.0:
         products['H+'] = n_proton
     if nCr != 0.0:
@@ -156,14 +155,27 @@ def cod_test_stoichiometry(atoms, charge=0, MW=None, missing_handling='elemental
 
 
 def electron_acceptor_cod(atoms, charge=0):
+    r'''
+    .. math::
+        
+        NO_2^- + 6e^- + 8H^+ -> NH_4^+ + 2H_2O
+        
+        NO_3^- + 8e^- + 10H^+ -> NH_4^+ + 3H_2O
+        
+        N_2 + 6e^- + 8H^+ -> 2NH_4^+
+        
+        O_2 + 4e^- + 4H^+ -> 2H_2O
+    
+    '''
     if atoms == {'O':2}:
         return -1
     elif atoms == {'N':2}:
-        return 0
+        return -6/4
     elif atoms == {'N':1, 'O':2} and charge == -1:
-        return -1.5
+        return -6/4
     elif atoms == {'N':1, 'O':3} and charge == -1:
-        return -2
+        return -8/4
+
 
 
 def get_cod_stoichiometry(component, aqueous=False, **replace):

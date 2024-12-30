@@ -106,16 +106,21 @@ class HXprocess(SanUnit, HXP):
     _N_ins = HXP._N_ins
     _N_outs = HXP._N_outs
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 init_with='Stream', F_BM_default=None,
-                 *, U=None, dT=5., T_lim0=None, T_lim1=None,
-                 material="Carbon steel/carbon steel",
-                 heat_exchanger_type="Floating head",
-                 N_shells=2, ft=None,
-                 phase0=None,
-                 phase1=None,
-                 H_lim0=None,
-                 H_lim1=None):
+    def __init__(
+            self, ID='', ins=None, outs=(), thermo=None,
+            init_with='Stream', F_BM_default=None, *,
+            U=None, dT=5., T_lim0=None, T_lim1=None,
+            material="Carbon steel/carbon steel",
+            heat_exchanger_type="Floating head",
+            N_shells=2, ft=None, 
+            phase0=None,
+            phase1=None,
+            H_lim0=None,
+            H_lim1=None,
+            inner_fluid_pressure_drop=None,
+            outer_fluid_pressure_drop=None,
+            neglect_pressure_drop=True,
+        ):
         SanUnit.__init__(self, ID, ins, outs, thermo,
                          init_with=init_with, F_BM_default=F_BM_default)
 
@@ -155,6 +160,15 @@ class HXprocess(SanUnit, HXP):
         self.material = material
         self.heat_exchanger_type = heat_exchanger_type
         self.reset_streams_at_setup = False
+        
+        #: Optional[float] Pressure drop along the inner fluid.
+        self.inner_fluid_pressure_drop = inner_fluid_pressure_drop
+        
+        #: Optional[float] Pressure drop along the outer fluid.
+        self.outer_fluid_pressure_drop = outer_fluid_pressure_drop
+        
+        #: [bool] Whether to assume a negligible pressure drop.
+        self.neglect_pressure_drop = neglect_pressure_drop
 
 
 class HXutility(SanUnit, HXU):
@@ -176,6 +190,7 @@ class HXutility(SanUnit, HXU):
     
     line = HXU.line
     _graphics = HXU._graphics
+    
     _units = {'Area': 'ft^2',
               'Total tube length': 'ft',
               'Inner pipe weight': 'kg',
@@ -190,14 +205,23 @@ class HXutility(SanUnit, HXU):
                'Horizontal vessel diameter': (3, 21),
                'Vertical vessel length': (12, 40)}
     
-    def __init__(self, ID='', ins=None, outs=(), thermo=None,
-                 init_with='Stream', F_BM_default=None,
-                 include_construction=True,
-                 *, T=None, V=None, rigorous=False, U=None, H=None,
-                 heat_exchanger_type="Floating head",
-                 material="Carbon steel/carbon steel",
-                 N_shells=2, ft=None, heat_only=None, cool_only=None,
-                 heat_transfer_efficiency=None):
+    def __init__(
+            self, ID='', ins=None, outs=(), thermo=None,
+            init_with='Stream', F_BM_default=None,
+            include_construction=True,
+            T=None, V=None, rigorous=False, U=None, H=None,
+            heat_exchanger_type="Floating head",
+            material="Carbon steel/carbon steel",
+            N_shells=2,
+            ft=None,
+            heat_only=None,
+            cool_only=None,
+            heat_transfer_efficiency=None,
+            inner_fluid_pressure_drop=None,
+            outer_fluid_pressure_drop=None,
+            neglect_pressure_drop=True,
+            furnace_pressure=None,  # [Pa] equivalent to 500 psig
+            ):
             SanUnit.__init__(self, ID, ins, outs, thermo,
                              init_with=init_with, F_BM_default=F_BM_default,
                              include_construction=include_construction,)
@@ -226,11 +250,24 @@ class HXutility(SanUnit, HXU):
             self.material = material
             self.heat_exchanger_type = heat_exchanger_type
 
+            #: Optional[float] Pressure drop along the inner fluid.
+            self.inner_fluid_pressure_drop = inner_fluid_pressure_drop
+            
+            #: Optional[float] Pressure drop along the outer fluid.
+            self.outer_fluid_pressure_drop = outer_fluid_pressure_drop
+            
+            #: [bool] Whether to assume a negligible pressure drop.
+            self.neglect_pressure_drop = neglect_pressure_drop
+
             #: [bool] User enforced heat transfer efficiency. A value less than 1
             #: means that a fraction of heat transferred is lost to the environment.
             #: If value is None, it defaults to the heat transfer efficiency of the 
             #: heat utility.
             self.heat_transfer_efficiency = heat_transfer_efficiency
+            
+            #: Optional[float] Internal pressure of combustion gas. Defaults
+            #: 500 psig (equivalent to 3548325.0 Pa)
+            self.furnace_pressure = 500 if furnace_pressure is None else furnace_pressure
 
     def _design(self, duty=None):
         HXU._design(self)

@@ -688,11 +688,13 @@ class Process:
         else: self._rate_equation = None
 
     def _rate_eq2func(self):
-        var = list(symbols(self._components.IDs+('Q',))) \
-            + [symbols(p) for p in self._parameters.keys()]
+        var_kw = self._components.IDs
+        var = list(symbols(var_kw)) + [symbols(p) for p in self._parameters.keys()]
         lamb = lambdify(var, self._rate_equation, 'numpy')
         def f(state_arr, params={}):
-            return lamb(*state_arr, **params)
+            states = dict(zip(var_kw, state_arr))
+            return lamb(**states, **params)
+
         self.kinetics(function=f, parameters=self.parameters)
 
     def _normalize_stoichiometry(self, new_ref):
@@ -974,13 +976,14 @@ class Processes:
     _default_data = None
 
     @classmethod
-    def load_from_file(cls, path='', components=None,
+    def load_from_file(cls, path='', components=None, data=None,
                        conserved_for=('COD', 'N', 'P', 'charge'), parameters=(),
                        use_default_data=False, store_data=False, compile=True,
                        **compile_kwargs):
         """
         Create :class:`CompiledProcesses` object from a table of process IDs, stoichiometric
-        coefficients, and rate equations stored in a .tsv, .csv, or Excel file.
+        coefficients, and rate equations stored in a .tsv, .csv, or Excel file, or as 
+        a `DataFrame`.
 
         Parameters
         ----------
@@ -989,6 +992,8 @@ class Processes:
         components : :class:`CompiledComponents`, optional
             Components corresponding to the columns in the stoichiometry matrix,
             to all components set in the system (i.e., through :func:`set_thermo`).
+        data : :class:`pandas.DataFrame`, optional
+            Data frame of the Petersen matrix.
         conserved_for : tuple[str], optional
             Materials subject to conservation rules, must have corresponding 'i\_'
             attributes for the components. Applied to all processes.
@@ -1021,21 +1026,23 @@ class Processes:
         """
         if use_default_data and cls._default_data is not None:
             data = cls._default_data
+        elif path:
+            data = load_data(path=path, index_col=0, na_values=0)
         else:
-            data = load_data(path=path, index_col=None, na_values=0)
-
+            if data is None: return None
+        
         cmps = _load_components(components)
 
         cmp_IDs = [i for i in data.columns if i in cmps.IDs]
         data.dropna(how='all', subset=cmp_IDs, inplace=True)
         new = cls(())
         for i, proc in data.iterrows():
-            ID = proc[0]
+            ID = i
             stoichio = proc[cmp_IDs]
             if data.columns[-1] in cmp_IDs: rate_eq = None
             else:
-                if pd.isna(proc[-1]): rate_eq = None
-                else: rate_eq = proc[-1]
+                if pd.isna(proc.iloc[-1]): rate_eq = None
+                else: rate_eq = proc.iloc[-1]
             stoichio = stoichio[-pd.isna(stoichio)].to_dict()
             ref = None
             for k,v in stoichio.items():
@@ -1190,8 +1197,12 @@ class CompiledProcesses(Processes):
         if isa(stoichio, list) and len(v_params) > 0:
             stoichio_vals = []
             for row in stoichio:
-                stoichio_vals.append([v.subs(v_params) if not isa(v, (float, int)) else v for v in row])
-            try: stoichio_vals = np.asarray(stoichio_vals, dtype=float)
+                # stoichio_vals.append([v.subs(v_params) if not isa(v, (float, int)) else v for v in row])
+                stoichio_vals.append([v.evalf(subs=v_params) if not isa(v, (float, int)) else v for v in row])
+            try: 
+                stoichio_vals = np.asarray(stoichio_vals, dtype=float)
+                #!!! round-off error
+                # stoichio_vals[np.abs(stoichio_vals) < 2.22044604925e-16] = 0.0
             except TypeError: pass
             return pd.DataFrame(stoichio_vals, index=self.IDs, columns=self._components.IDs)
         else: return pd.DataFrame(stoichio, index=self.IDs, columns=self._components.IDs)
@@ -1200,11 +1211,16 @@ class CompiledProcesses(Processes):
         dct = self._dyn_params
         dct_vals = self._parameters
         if dct:
-            sbs = [i.symbol for i in dct.values()]
-            lamb = lambdify(sbs, self._stoichiometry, 'numpy')
+            static_params = {k:v for k,v in dct_vals.items() if k not in dct}
+            stoichio = []
+            isa = isinstance
+            for row in self._stoichiometry:
+                stoichio.append([v.evalf(subs=static_params) if not isa(v, (float, int)) else v for v in row])
+            sbs = [symbols(i) for i in dct.keys()]
+            lamb = lambdify(sbs, stoichio, 'numpy')
             arr = np.empty((self.size, len(self._components)))
             def f():
-                v = [v for k,v in dct_vals.items() if k in dct.keys()]
+                v = [dct_vals[k] for k in dct.keys()]
                 arr[:,:] = lamb(*v)
                 return arr
             self.__dict__['_stoichio_lambdified'] = f
@@ -1213,7 +1229,7 @@ class CompiledProcesses(Processes):
                 stoichio_arr = self.stoichiometry.to_numpy(dtype=float)
             except TypeError:
                 isa = isinstance
-                undefined = [k for k, v in dct_vals if not isa(v, (float, int))]
+                undefined = [k for k, v in dct_vals.items() if not isa(v, (float, int))]
                 raise TypeError(f'Undefined static parameters: {undefined}')
             self.__dict__['_stoichio_lambdified'] = lambda : stoichio_arr
 

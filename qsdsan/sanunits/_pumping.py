@@ -266,6 +266,7 @@ class WWTpump(SanUnit):
     _H_df = 0. # discharge friction
     _v = 3 # fluid velocity, [ft/s]
     _C = 110 # Hazen-Williams coefficient for stainless steel (SS)
+    _headloss_multiplication_factor = 1
 
     # Pump SS (for pumps within 300-1000 gpm)
     # https://www.godwinpumps.com/images/uploads/ProductCatalog_Nov_2011_spread2.pdf
@@ -423,6 +424,7 @@ class WWTpump(SanUnit):
 
         # Suction friction head, [ft]
         self._H_sf = 3.02 * L_s * (v**1.85) * (C**(-1.85)) * ((ID_s/12)**(-1.17))
+        self._H_sf *= self.headloss_multiplication_factor
 
         ### Discharge side ###
         # Discharge pipe (permeate collector) dimensions
@@ -430,6 +432,7 @@ class WWTpump(SanUnit):
 
         # Discharge friction head, [ft]
         self._H_df = 3.02 * L_d * (v**1.85) * (C**(-1.85)) * ((ID_d/12)**(-1.17))
+        self._H_df *= self.headloss_multiplication_factor
 
         ### Material usage ###
         # Pipe SS, assume stainless steel, density = 0.29 lbs/in3
@@ -713,7 +716,7 @@ class WWTpump(SanUnit):
         val_dct = dict(
             L_s=50, # length of suction pipe, [ft]
             L_d=50, # length of discharge pipe, [ft]
-            H_ts=0., # H_ds_LIFT (D) - H_ss_LIFT (0)
+            H_ts=5., # H_ds_LIFT (D) - H_ss_LIFT (0)
             H_p=0. # no pressure
             )
         val_dct.update(kwargs)
@@ -860,6 +863,23 @@ class WWTpump(SanUnit):
     @C.setter
     def C(self, i):
         self._C = i
+        
+    @property
+    def headloss_multiplication_factor(self):
+        '''
+        [float]
+        Factor to consider additional friction headloss (e.g., for sludge),
+        default to be 1 and should be no less than 1.
+        
+        See also https://github.com/QSD-Group/QSDsan/issues/119.
+        '''
+        return self._headloss_multiplication_factor
+    @headloss_multiplication_factor.setter
+    def headloss_multiplication_factor(self, i):
+        if i < 1:
+            raise ValueError('`headloss_multiplication_factor` should be no less than 1, '
+                             f'the provided value of {i} is not valid.')
+        self._headloss_multiplication_factor = i
 
     @property
     def SS_per_pump(self):
@@ -952,7 +972,9 @@ class SludgePump(Pump):
     _SS_per_pump = 725 * 0.5
     _units = {'Pump pipe stainless steel': 'kg',
               'Pump stainless steel': 'kg'}
-
+    
+    include_construction = True
+    
     def _design(self):
         super()._design()
         pipe, pumps, hdpe = self.design_sludge()

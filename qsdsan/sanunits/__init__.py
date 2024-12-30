@@ -25,25 +25,37 @@ This module is developed by:
     Anna Kogler <akogler@stanford.edu>
 
     Jianan Feng <jiananf2@illinois.edu>
+    
+    Saumitra Rai <raisaumitra9@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
-
+# %%
+from numba import njit
+@njit(cache=True)
+def dydt_cstr(QC_ins, QC, V, _dstate):
+    Q_ins = QC_ins[:, -1]
+    C_ins = QC_ins[:, :-1]
+    _dstate[-1] = 0
+    _dstate[:-1] = (Q_ins @ C_ins - sum(Q_ins)*QC[:-1])/V
+    
+#%%
 # **NOTE** PLEASE ORDER THE MODULES ALPHABETICALLY #
 
 # Units that do not rely on other units
 from ._abstract import *
-from ._clarifier import *
 from ._combustion import *
 from ._compressor import *
 from ._crop_application import *
 from ._dynamic_influent import *
 from ._electrochemical_cell import *
 from ._excretion import *
+from ._facilities import *
 from ._heat_exchanging import *
 from ._junction import *
+from ._membrane_gas_extraction import *
 from ._non_reactive import *
 from ._pumping import *
 from ._reactor import *
@@ -57,6 +69,7 @@ from ._trucking import *
 # Units that rely on other units
 from ._activated_sludge_process import *
 from ._anaerobic_reactor import *
+from ._clarifier import *
 from ._distillation import *
 from ._flash import *
 from ._hydroprocessing import *
@@ -67,6 +80,7 @@ from ._membrane_bioreactor import *
 from ._membrane_distillation import *
 from ._polishing_filter import *
 from ._sedimentation import *
+from ._sludge_treatment import *
 from ._septic_tank import *
 from ._toilet import *
 from ._treatment_bed import *
@@ -89,6 +103,7 @@ from . import (
         _dynamic_influent,
         _electrochemical_cell,
         _excretion,
+        _facilities,
         _flash,
         _heat_exchanging,
         _hydroprocessing,
@@ -98,6 +113,7 @@ from . import (
         _lagoon,
         _membrane_bioreactor,
         _membrane_distillation,
+        _membrane_gas_extraction,
         _non_reactive,
         _polishing_filter,
         _pumping,
@@ -117,6 +133,7 @@ from . import (
         _biogenic_refinery,
         _eco_san,
         _reclaimer,
+        _sludge_treatment,
         )
 
 
@@ -132,6 +149,7 @@ __all__ = (
         *_dynamic_influent.__all__,
         *_electrochemical_cell.__all__,
         *_excretion.__all__,
+        *_facilities.__all__,
         *_flash.__all__,
         *_heat_exchanging.__all__,
         *_hydroprocessing.__all__,
@@ -160,4 +178,6 @@ __all__ = (
         *_biogenic_refinery.__all__,
         *_reclaimer.__all__,
         *_eco_san.__all__,
+        *_sludge_treatment.__all__,
+        *_membrane_gas_extraction.__all__,
         )
