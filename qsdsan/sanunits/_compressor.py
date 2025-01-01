@@ -45,7 +45,7 @@ class IsothermalCompressor(bst.units.IsothermalCompressor, qs.SanUnit):
             D['Number of 4 kW unit'] = ceil((power - D['Number of 300 kW unit']*300)/4)
         else:
             D['Number of 300 kW unit'] += 1
-        
+
         if self.include_construction:
             construction = getattr(self, 'construction', [])
             if construction:
@@ -54,5 +54,5 @@ class IsothermalCompressor(bst.units.IsothermalCompressor, qs.SanUnit):
             else:
                 self.construction = [
                     qs.Construction('compressor_4kW', linked_unit=self, item='Compressor_4kW', quantity_unit='ea', quantity=D['Number of 4 kW unit']),
-                    qs.Construction('compressor_300kW', linked_unit=self, item='Compressor_300kW', quantity_unit='ea', quantity=D['Number of 4 kW unit'])
+                    qs.Construction('compressor_300kW', linked_unit=self, item='Compressor_300kW', quantity_unit='ea', quantity=D['Number of 300 kW unit'])
                     ]

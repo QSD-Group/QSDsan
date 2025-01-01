@@ -1,24 +1,24 @@
 parameter,name,unit,expected,low,high,distribution
-N2O_emission_factor,,g N2O-N/g-N,0.021944444,0.004,0.06,triangular 
-CH4_emission_factor,,g-CH4/g-feces solids,0.0026,0,0.0931,triangular 
-NOx_emission_factor,,g NOx-N/g-N,0.147,0.062,0.194,triangular 
-NH3_emission_factor,,g NH3-N/g-N,0.045833333,0.009,0.109,triangular 
-SOx_emission_factor,,g SO2 -S/g-feces solids,0.000279429,0.000015,0.00062,triangular 
-HHV_feces_solid,,MJ/kg,24,,,
-feces_ash_content,,fraction,0.1456,0.12,0.25,triangular 
-CO2_to_CO_ratio,,molar_ratio,5.934,3.35,8.1,triangular 
+N2O_emission_factor,,g N2O-N/g-N,0.021944444,0.004,0.06,triangular
+CH4_emission_factor,,g-CH4/g-feces solids,0.0026,0,0.0931,triangular
+NOx_emission_factor,,g NOx-N/g-N,0.147,0.062,0.194,triangular
+NH3_emission_factor,,g NH3-N/g-N,0.045833333,0.009,0.109,triangular
+SOx_emission_factor,,g SO2 -S/g-feces solids,0.000279429,0.000015,0.00062,triangular
+HHV_feces_solid,,MJ/kg,24,,,constant
+feces_ash_content,,fraction,0.1456,0.12,0.25,triangular
+CO2_to_CO_ratio,,molar_ratio,5.934,3.35,8.1,triangular
 biofuel_to_solids,,g-biofuel/g-feces solids,1,0.5,2,uniform
 combustor_cost,,USD,499,349.3,648.7,uniform
 wood_pellets_cost,,USD/kg,0.759,0.342,1.934,uniform
 combustor_operation_maintenance,,hr/yr,100,70,130,uniform
 steel_weight,,kg,24.5,17.15,31.85,uniform
 combustion_temperature,,C,375,375,900,triangular
-wood_ash_content,,fraction,0.0062,0.0049,0.0074,triangular 
-wood_moisture_content,,fraction,0.059,0.054,0.0645,triangular 
-combustion_N_loss,,fraction,0.95,0.9,1,triangular 
-combustion_P_loss,,fraction,0.13,0.05,0.16,triangular 
-combustion_K_loss,,fraction,0.12,0.02,0.26,triangular 
-combustion_C_loss,,fraction,0.56,0.24,0.72,triangular 
+wood_ash_content,,fraction,0.0062,0.0049,0.0074,triangular
+wood_moisture_content,,fraction,0.059,0.054,0.0645,triangular
+combustion_N_loss,,fraction,0.95,0.9,1,triangular
+combustion_P_loss,,fraction,0.13,0.05,0.16,triangular
+combustion_K_loss,,fraction,0.12,0.02,0.26,triangular
+combustion_C_loss,,fraction,0.56,0.24,0.72,triangular
 carbon_COD_ratio,,g C*g COD-1,0.35,0.25,0.4,triangular
 material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
 turbine_ventilator_cost,,USD,256,179.2,332.8,uniform

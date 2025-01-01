@@ -1,0 +1,17 @@
+parameter,name,unit,expected,low,high,distribution
+V_IPV,volume of injection pressure vessel,L,0.50,0.35,0.65,uniform
+P,operating pressure,pa,15500000.00,15000000.00,16000000.00,uniform
+injection_valve_cost,,USD,271.20,189.84,352.56,uniform
+dosing_valve_cost,,USD,725.77,508.04,943.50,uniform
+dosing_valve_quantity,,ea,2.00,,,constant
+dosing_valve_power_demand,,kW,0.13,0.09,0.17,uniform
+dosing_valve_daily_operation,,hour/day,1.00,0.70,1.30,uniform
+vessel_cost,,USD,741.50,519.05,963.95,uniform
+valve_life_time,,yr,3.00,2.10,3.90,uniform
+gas_module_maintenance,,hr/yr,6.00,4.20,7.80,uniform
+wages,,USD/h,3.64,1.82,5.46,uniform
+material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
+miscellaneous_cost_ratio,,fraction,0.17,0.12,0.22,uniform
+stainless_steel_weight,,kg,8.00,5.60,10.40,uniform
+compressor_efficiency,,fraction,0.60,0.2,1,uniform
+compressor_cost,diving air compressors,USD,1595.28,1116.70,2073.86,uniform
