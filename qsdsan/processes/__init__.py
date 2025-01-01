@@ -71,6 +71,7 @@ from ._decay import *
 from ._kinetic_reaction import *
 from ._pm2 import *
 from ._pm2asm2d import *
+from ._pm2abaco2 import *
 
 from . import (
     _aeration,
@@ -84,6 +85,7 @@ from . import (
     _kinetic_reaction,
     _pm2,
     _pm2asm2d,
+    _pm2abaco2,
     )
 
 __all__ = (
@@ -98,4 +100,5 @@ __all__ = (
     *_kinetic_reaction.__all__,
     *_pm2.__all__,
     *_pm2asm2d.__all__,
+    *_pm2abaco2.__all__,
     )
