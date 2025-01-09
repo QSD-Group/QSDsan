@@ -48,6 +48,8 @@ def sum_system_utility(system, operating_hours=None, exclude_units=(),
     >>> from qsdsan.utils import create_example_system, sum_system_utility
     >>> sys = create_example_system()
     >>> sys.simulate()
+    >>> sum_system_utility(sys, utility='steam', result_unit='kJ/yr') # doctest: +ELLIPSIS
+    463479...
     >>> sum_system_utility(sys, utility='heating', result_unit='kJ/yr') # doctest: +ELLIPSIS
     463479...
     >>> sum_system_utility(sys, utility='cooling', result_unit='GJ/yr') # doctest: +NUMBER
@@ -70,6 +72,14 @@ def sum_system_utility(system, operating_hours=None, exclude_units=(),
         attr = 'consumption' if not calculate_net_utility else 'rate'
         tot = sum([get(i.power_utility, attr) for i in units if i.power_utility])*hrs
         return auom('kWh/yr').convert(tot, unit)
+    elif utility == 'steam':
+        unit = 'GJ/yr' if not result_unit else result_unit
+        hu = sum([i.heat_utilities for i in units], [])
+        if not calculate_net_utility:
+            tot = sum([i.duty for i in hu if 'steam' in i.ID])/1e6*hrs
+        else:
+            tot = sum([i.duty for i in hu if ('steam' in i.ID and i.duty>0)])/1e6*hrs
+        return auom('GJ/yr').convert(tot, unit)
     elif utility == 'heating':
         unit = 'GJ/yr' if not result_unit else result_unit
         hu = sum([i.heat_utilities for i in units], [])

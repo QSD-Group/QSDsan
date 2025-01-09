@@ -2659,7 +2659,7 @@ class ADM1ptomASM2d(A1junction):
                         X_newb, X_ACP, X_MgCO3, X_AlOH, X_AlPO4, X_FeOH, X_FePO4, \
                             S_Na, S_Cl, H2O = _adm_vals     
             
-            if S_h2 > 0 or S_ch4 > 0: warn('Ignored dissolved H2 or CH4.')
+            if S_h2 > 0 or S_ch4 > 0: warn('Ignored dissolved H2 or CH4 in ADM1p-to-mASM2d interface model.')
 
             S_NH4 = S_IN
             S_PO4 = S_IP
@@ -2700,6 +2700,8 @@ class ADM1ptomASM2d(A1junction):
                     fraction_dissolve = max(0, min(1, - S_IC / xc_mmp))
                     asm_vals -= fraction_dissolve * X_CaCO3 * cac_sto
                     asm_vals -= fraction_dissolve * X_MgCO3 * mgc_sto
+                if asm_vals[8] < 0:
+                    asm_vals[8] = 0
             if S_IN < 0:
                 xn_mmp = sum(asm_vals[_mmp_idx] * mmp_in)
                 if xn_mmp > 0:
@@ -3022,6 +3024,8 @@ class mASM2dtoADM1p(A1junction):
                     fraction_dissolve = max(0, min(1, - S_IC / xc_mmp))
                     adm_vals -= fraction_dissolve * X_CaCO3 * cac_sto
                     adm_vals -= fraction_dissolve * X_MgCO3 * mgc_sto
+                if adm_vals[9] < 0:
+                    adm_vals[9] = 0
             if S_IN < 0:
                 xn_mmp = sum(adm_vals[_mmp_idx] * mmp_in)
                 if xn_mmp > 0:

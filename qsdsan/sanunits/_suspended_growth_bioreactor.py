@@ -24,6 +24,7 @@ __all__ = ('CSTR',
            'BatchExperiment',
            # 'SBR',
            'PFR',
+           'AerobicDigester',
            )
 
 # def _add_aeration_to_growth_model(aer, model):
@@ -332,19 +333,20 @@ class CSTR(SanUnit):
             self._compile_ODE()
         return self._ODE
 
-    def _compile_ODE(self):
-        isa = isinstance
-        cmps = self.components
-        m = cmps.size
-        aer = self._aeration
+    def _init_model(self):
         if self._model is None:
             warn(f'{self.ID} was initialized without a suspended growth model, '
                  f'and thus run as a non-reactive unit')
-            r = lambda state_arr: np.zeros(m)
-            
+            r = lambda state_arr: np.zeros(self.components.size)
         else:
             # processes = _add_aeration_to_growth_model(aer, self._model)
             r = self._model.production_rates_eval
+        return r
+
+    def _compile_ODE(self):
+        isa = isinstance
+        aer = self._aeration
+        r = self._init_model()
 
         _dstate = self._dstate
         _update_dstate = self._update_dstate
@@ -889,7 +891,7 @@ class PFR(SanUnit):
                  H2O    1.53e+09
      WasteStream-specific properties:
       pH         : 7.0
-      Alkalinity : 2.5 mg/L
+      Alkalinity : 2.5 mmol/L
       COD        : 4389.1 mg/L
       BOD        : 1563.3 mg/L
       TC         : 1599.8 mg/L
@@ -1165,7 +1167,7 @@ class PFR(SanUnit):
     def _update_state(self):
         out, = self.outs
         ncol = self._ncol
-        self._state[self._state < 2.2e-16] = 0.
+        self._state[self._state < 1e-16] = 0.
         self._state[self._Qs_idx] = self._Qs
         if out.state is None: out.state = np.zeros(ncol)
         out.state[:-1] = self._state[-ncol:-1]
@@ -1287,3 +1289,151 @@ class PFR(SanUnit):
 
     def _design(self):
         pass
+
+#%%
+from ..processes import ASM_AeDigAddOn
+
+class AerobicDigester(CSTR):
+    """
+    Models an aerobic digester with activated sludge models, is a subclass of CSTR. 
+    An additional degradation process of particulate inert organic materials is 
+    considered in addition to typical activated sludge processes.
+
+    Parameters
+    ----------
+    activated_sludge_model : :class:`CompiledProcesses`, optional
+        The activated sludge model used for the biochemical reactions. The default is None.
+    organic_particulate_inert_degradation_process : :class:`Process`, optional
+        The degradation process of the particulate inert organic materials. The default is None.
+
+    See Also
+    --------
+    :class:`qsdsan.processes.ASM1`
+    :class:`qsdsan.processes.ASM2d`
+    :class:`qsdsan.processes.mASM2d`
+    :class:`qsdsan.processes.ASM_AeDigAddOn`
+    :class:`qsdsan.sanunites.CSTR`
+    
+    Examples
+    --------
+    >>> from qsdsan import WasteStream, processes as pc, sanunits as su
+    >>> cmps = pc.create_asm1_cmps()
+    >>> twas = WasteStream('thickened_WAS')
+    >>> twas.set_flow_by_concentration(
+    ...     flow_tot=50, 
+    ...     concentrations=dict(
+    ...         S_I=30, S_S=1, X_I=17000, X_S=800, X_BH=38000, X_BA=2300, 
+    ...         X_P=6500, S_O=0.5, S_NH=2, S_ND=1, X_ND=65, S_NO=10, 
+    ...         S_N2=25, S_ALK=84), 
+    ...     units=('m3/d', 'mg/L'))
+    >>> asm = pc.ASM1()
+    >>> AED = su.AerobicDigester('AED', ins=twas, outs=('digested_WAS',), 
+    ...                          V_max=3000, activated_sludge_model=asm, 
+    ...                          DO_ID='S_O', aeration=1.0)
+    >>> AED.simulate(t_span=(0, 400), method='BDF')
+    >>> AED.show()
+    AerobicDigester: AED
+    ins...
+    [0] thickened_WAS
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_I    62.5
+                    S_S    2.08
+                    X_I    3.54e+04
+                    X_S    1.67e+03
+                    X_BH   7.92e+04
+                    X_BA   4.79e+03
+                    X_P    1.35e+04
+                    S_O    1.04
+                    S_NO   20.8
+                    S_NH   4.17
+                    S_ND   2.08
+                    X_ND   135
+                    S_ALK  175
+                    S_N2   52.1
+                    H2O    1.99e+06
+        WasteStream-specific properties:
+         pH         : 7.0
+         Alkalinity : 2.5 mmol/L
+         COD        : 64631.0 mg/L
+         BOD        : 23300.3 mg/L
+         TC         : 22923.3 mg/L
+         TOC        : 22839.3 mg/L
+         TN         : 4712.0 mg/L
+         TP         : 1009.0 mg/L
+         TK         : 223.2 mg/L
+         TSS        : 48450.0 mg/L
+    outs...
+    [0] digested_WAS
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_I   62.5
+                    S_S   3.58e+04
+                    X_I   1.04e+04
+                    X_S   123
+                    X_BH  9.6e+03
+                    X_BA  1.59e+03
+                    X_P   2.77e+04
+                    S_O   2.08
+                    S_NO  4.17e+03
+                    S_NH  0.101
+                    S_ND  0.975
+                    X_ND  8.74
+                    S_N2  2.51e+03
+                    H2O   2e+06
+        WasteStream-specific properties:
+         pH         : 7.0
+         Alkalinity : 2.5 mmol/L
+         COD        : 40987.6 mg/L
+         BOD        : 15416.1 mg/L
+         TC         : 13985.1 mg/L
+         TOC        : 13985.1 mg/L
+         TN         : 3534.1 mg/L
+         TP         : 458.2 mg/L
+         TK         : 89.3 mg/L
+         TSS        : 17813.2 mg/L
+    
+    """
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+                 init_with='WasteStream', V_max=1000, activated_sludge_model=None, 
+                 organic_particulate_inert_degradation_process=None, 
+                 aeration=1.0, DO_ID='S_O2', isdynamic=True, **kwargs):
+        super().__init__(ID, ins, outs, thermo=thermo, init_with=init_with,
+                         V_max=V_max, aeration=aeration, DO_ID=DO_ID, 
+                         suspended_growth_model=activated_sludge_model, 
+                         isdynamic=isdynamic, **kwargs)
+        self.organic_particulate_inert_degradation_process = organic_particulate_inert_degradation_process
+        
+    @property
+    def organic_particulate_inert_degradation_process(self):
+        '''[:class:`Process` or NoneType] Process object for degradation of 
+        particulate inert organic materials in the aerobic digester. If none
+        specified, will attempt to create a Process model according to components
+        by default.'''
+        return self._dig_addon
+    @organic_particulate_inert_degradation_process.setter
+    def organic_particulate_inert_degradation_process(self, proc):
+        if isinstance(proc, Process):
+            self._dig_addon = proc
+        elif proc is None:
+            if self._model is None: self._dig_addon = None
+            else: 
+                ID = self._model.__class__.__name__ + '_particulate_inert_degrade'
+                self._dig_addon = ASM_AeDigAddOn(
+                    ID=ID,
+                    components=self.thermo.chemicals
+                    )
+        else:
+            raise TypeError('organic_particulate_inert_degradation_process must be'
+                            f' a `Process` object if not None, not {type(proc)}')
+        
+    def _init_model(self):
+        if self._model is None:
+            warn(f'{self.ID} was initialized without an activated sludge  model, '
+                 f'and thus run as a non-reactive unit')
+            r = lambda state_arr: np.zeros(self.components.size)
+        else:
+            dig = self.organic_particulate_inert_degradation_process
+            dig_stoi = dig._stoichiometry
+            dig_frho = dig.rate_function
+            asm_frate = self._model.production_rates_eval
+            r = lambda state_arr: asm_frate(state_arr) + dig_stoi * dig_frho(state_arr)
+        return r

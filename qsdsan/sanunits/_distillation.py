@@ -20,6 +20,8 @@ import biosteam as bst, qsdsan as qs
 __all__ = (
     'BinaryDistillation',
     'ShortcutColumn',
+    'MESHDistillation',
+    'AdiabaticMultiStageVLEColumn',
     )
 
 _lb_to_kg = qs.utils.auom('lb').conversion_factor('kg')
@@ -52,6 +54,24 @@ class BinaryDistillation(bst.units.BinaryDistillation, qs.SanUnit):
 class ShortcutColumn(bst.units.ShortcutColumn, qs.SanUnit):
     '''
     biosteam.units.ShortcutColumn with QSDsan properties.
+    
+    See Also
+    --------
+    `biosteam.units.ShortcutColumn <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
+    '''
+
+class MESHDistillation(bst.units.MESHDistillation, qs.SanUnit):
+    '''
+    biosteam.units.MESHDistillation with QSDsan properties.
+    
+    See Also
+    --------
+    `biosteam.units.ShortcutColumn <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
+    '''
+
+class AdiabaticMultiStageVLEColumn(bst.units.AdiabaticMultiStageVLEColumn, qs.SanUnit):
+    '''
+    biosteam.units.AdiabaticMultiStageVLEColumn with QSDsan properties.
     
     See Also
     --------

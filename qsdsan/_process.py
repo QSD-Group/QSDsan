@@ -1041,8 +1041,8 @@ class Processes:
             stoichio = proc[cmp_IDs]
             if data.columns[-1] in cmp_IDs: rate_eq = None
             else:
-                if pd.isna(proc[-1]): rate_eq = None
-                else: rate_eq = proc[-1]
+                if pd.isna(proc.iloc[-1]): rate_eq = None
+                else: rate_eq = proc.iloc[-1]
             stoichio = stoichio[-pd.isna(stoichio)].to_dict()
             ref = None
             for k,v in stoichio.items():

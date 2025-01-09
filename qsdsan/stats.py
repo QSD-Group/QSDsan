@@ -405,7 +405,7 @@ def morris_till_convergence(model, inputs, metrics=None,
                             nan_policy='propagate',
                             conf_level=0.95, print_to_console=False,
                             file='', **kwargs):
-    '''
+    r'''
     Run Morris analysis from N=2 to N=N_max until the results converge
     (i.e., mu_star_conf/mu_star_max < threshold for all parameters,
     where as mu_star_max is the maximum :math:`{\mu^*}` value for a certain metric,
@@ -1088,7 +1088,7 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
                         x_axis='mu_star', plot_lines=True,
                         k1=0.1, k2=0.5, k3=1, label_kind='number',
                         color='k', file='', close_fig=True, **kwargs):
-    '''
+    r'''
     Visualize the results from Morris One-at-A-Time analysis as either scatter
     or bar plots.
     In scatter plots, the x values are :math:`{\mu^*}` and the y values are :math:`{\sigma}`.
@@ -1213,7 +1213,7 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
 def plot_morris_convergence(result_dct, metric, parameters=(),
                             plot_rank=False, kind='line', ax=None, show_error=True,
                             palette='pastel', file='', close_fig=True):
-    '''
+    r'''
     Plot the evolution of :math:`{\mu^*}` or its rank with the number of trajectories.
 
     Parameters
@@ -1273,7 +1273,7 @@ def plot_morris_convergence(result_dct, metric, parameters=(),
         ylabel = f'Rank for {metric.name.lower()}'
         loc = 'lower left'
     else:
-        ylabel = f'$\mu^*$ for {metric.name.lower()}'
+        ylabel = rf'$\mu^*$ for {metric.name.lower()}'
         loc = 'best'
 
     palette = sns.color_palette('deep', n_colors=len(param_names))
@@ -1357,7 +1357,7 @@ def _plot_heatmap(hmap_df, ax=None, annot=False, diagonal='', sts1_df=None,
 
 def plot_fast_results(result_dct, metric, parameters=(),
                       ax=None, error_bar=True, file='', close_fig=True):
-    '''
+    r'''
     Visualize the results from FAST or RBD-FAST analysis as a bar plot.
 
     Parameters
@@ -1410,7 +1410,7 @@ def plot_sobol_results(result_dct, metric, ax=None,
                        parameters=(), kind='all',
                        annotate_heatmap=False, plot_in_diagonal='',
                        error_bar=True, file='', close_fig=True):
-    '''
+    r'''
     Visualize the results from Sobol analysis as a bar plot and/or heat map.
     Total (:math:`S_{Ti}`) and main (:math:`S_{1i}`) effects can be drawn in
     the bar plot or diagonal of the heat map;
