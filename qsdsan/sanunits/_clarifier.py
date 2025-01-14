@@ -1526,6 +1526,8 @@ class PrimaryClarifier(IdealClarifier):
         
         #For primary clarifier 
         D['Number of pumps'] = D['Number of clarifiers']
+
+        for key in D: print(f'{key}: {D[key]} {U[key]}')
         
     def _cost(self):
         D = self.design_results
