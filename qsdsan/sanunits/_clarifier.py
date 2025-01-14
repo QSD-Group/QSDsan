@@ -1229,7 +1229,7 @@ class PrimaryClarifier(IdealClarifier):
     Parameters
     ----------
     surface_overflow_rate : float
-        Surface overflow rate in the clarifier in [(m3/day)/m2]. [1]
+        Surface overflow rate in the clarifier in [(m3/day)/m2]. [1,2]
         Design SOR value for clarifier is 40 (m3/day)/m2 if it does not receive WAS.
         Design SOR value for clarifier is 28 (m3/day)/m2 if it receives WAS.
         Typically SOR lies between 30-50 (m3/day)/m2. 
@@ -1322,8 +1322,8 @@ class PrimaryClarifier(IdealClarifier):
     [2] Metcalf, Leonard, Harrison P. Eddy, and Georg Tchobanoglous. Wastewater 
     engineering: treatment, disposal, and reuse. Vol. 4. New York: McGraw-Hill, 1991.
     [3] Introduction to Wastewater Clarifier Design by Nikolay Voutchkov, PE, BCEE.
-    [5] Foley, J., De Haas, D., Hartley, K., & Lant, P. (2010). Comprehensive life cycle inventories of alternative wastewater treatment systems. Water Research, 44(5), 1654–1666. https://doi.org/10.1016/j.watres.2009.11.031
-    [6] Circular mechanical clarifier center feed equipment specifications. Pollutions Control Systems, Inc.
+    [4] Foley, J., De Haas, D., Hartley, K., & Lant, P. (2010). Comprehensive life cycle inventories of alternative wastewater treatment systems. Water Research, 44(5), 1654–1666. https://doi.org/10.1016/j.watres.2009.11.031
+    [5] Circular mechanical clarifier center feed equipment specifications. Pollutions Control Systems, Inc.
 
     """
     
@@ -1526,7 +1526,7 @@ class PrimaryClarifier(IdealClarifier):
         
         #For primary clarifier 
         D['Number of pumps'] = D['Number of clarifiers']
-
+        
         for key in D: print(f'{key}: {D[key]} {U[key]}')
         
     def _cost(self):
