@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Sep 24 11:14:48 2024
-
-@author: saumitrarai
+@author: nehaljain
+Adapted and modified from @sumitrarai's work
 """
 
 import qsdsan as qs
@@ -63,33 +62,8 @@ sludge = qs.WasteStream('sludge', T=Temp, units='m3/d')
 
 C = su.PrimaryClarifier('PC', ins=dom_ww, outs=[effluent, sludge], 
                             isdynamic=True, thermo=thermo_asm2d, 
-                            sludge_flow_rate=Q_was,
+                            sludge_flow_rate=0.3*Q_domestic,
                             solids_removal_efficiency=0.6)
-
-# # For ADM1
-# cmps_adm1 = qs.processes.create_adm1_p_extension_cmps()
-# cmps_adm1.compile()
-# qs.set_thermo(cmps_adm1)
-# thermo_adm1 = qs.get_thermo()  # Create new thermo object instead of getting global
-
-# # Update properties
-# cmps_adm1.X_PAO.i_N = 0.07
-# cmps_adm1.X_PAO.i_P = 0.02
-# cmps_adm1.refresh_constants()
-# adm1 = qs.processes.ADM1_p_extension()
-
-# J = su.ASM2dtomADM1('J', 
-#     upstream=[PC-1],
-#     thermo=thermo_adm1,
-#     isdynamic=True,
-#     adm1_model=adm1, 
-#     asm2d_model=asm2d)
-
-# gas = qs.WasteStream('biogas')
-# dg_sludge = qs.WasteStream('sludge_DG')
-# DG = su.AnaerobicCSTR(ID='DG', ins=J.outs[0], outs=[gas, dg_sludge],
-#                         model=adm1, thermo=thermo_adm1)
-# DG.algebraic_h2 = True
 
 sys = qs.System('PC_trial', path=[C])
 sys.set_tolerance(rmol=1e-6)
@@ -105,12 +79,3 @@ effluent.show()
    
 print("---------------------------Sludge properties------------------------------")
 sludge.show()
-
-# print("---------------------------RAS properties------------------------------")
-# RAS.show()
-
-# print(f"Influent flow: {dom_ww.F_vol*24}")
-# print(f"WAS flow: {WAS.F_vol*24}")
-# print(f"RAS flow: {RAS.F_vol*24}")
-# print(f"Effluent flow: {effluent.F_vol*24}")
-
