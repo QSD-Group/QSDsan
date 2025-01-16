@@ -12,7 +12,7 @@ for license details.
 import numpy as np
 from thermosteam.utils import chemicals_user
 from thermosteam import settings
-from qsdsan import Component, Components, Processes, CompiledProcesses
+from qsdsan import Component, Components, WasteStream, Processes, CompiledProcesses
 from ..utils import ospath, data_path, load_data
 from . import Monod, ion_speciation
 from scipy.optimize import brenth
@@ -20,7 +20,8 @@ from scipy.optimize import brenth
 
 
 __all__ = ('create_asm2d_cmps', 'ASM2d',
-           'create_masm2d_cmps', 'mASM2d')
+           'create_masm2d_cmps', 'mASM2d', 
+           'create_masm2d_inf')
 
 _path = ospath.join(data_path, 'process_data/_asm2d.tsv')
 _load_components = settings.get_default_chemicals
@@ -990,3 +991,113 @@ class mASM2d(CompiledProcesses):
                 K *= m2m**abs(v)
             Ksp_mass.append(K)
         self.rate_function._params['Ksp'] = np.array(Ksp_mass)
+
+#%%
+
+def create_masm2d_inf(
+        ID, Q, Q_unit='m3/d', T=298.15, 
+        COD=430, NH4_N=25.0, PO4_P=8.0, alkalinity=7.0, 
+        fr_SI=0.05, fr_SF=0.2, fr_SA=0.0, 
+        fr_XI=0.13, fr_XH=0.0, fr_XAUT=0.0, 
+        fr_XPAO=0.0, fr_XPHA=0.0, X_PP=0.0,
+        S_NO3=0.0, S_O2=0.0, S_N2=18, 
+        S_Ca=140, S_Mg=50, S_K=28, S_Na=87, S_Cl=425,
+        X_AlOH=0, X_AlPO4=0, X_FeOH=0, X_FePO4=0, 
+        X_CaCO3=0, X_ACP=0, X_MgCO3=0, X_newb=0, X_struv=0 
+        ):
+    '''
+    Convenient function to create an influent `WasteStream` object with `mASM2d`
+    state variables based on specified bulk properties.
+
+    Parameters
+    ----------
+    ID : str
+        Unique identification for the `WasteStream` object.
+    Q : float
+        Total volumetric flow rate.
+    Q_unit : str, optional
+        Unit of measurement for flow rate. The default is 'm3/d'.
+    T : float, optional
+        Temperature, in K. The default is 298.15.
+    COD : float, optional
+        Total chemical oxygen demand, not accounting for electron acceptors like 
+        dissvoled O2 or nitrate/nitrite, in mg-COD/L. The default is 430.
+    NH4_N : float, optional
+        Ammonium nitrogen, in mg-N/L. The default is 25.0.
+    PO4_P : float, optional
+        Ortho-phosphate, in mg-P/L. The default is 8.0.
+    alkalinity : float, optional
+        In mmol/L. The default is 7.0.
+    fr_SI : float, optional
+        Soluble inert fraction of total COD. The default is 0.05.
+    fr_SF : float, optional
+        Fermentable biodegradable fraction of total COD. The default is 0.2.
+    fr_SA : float, optional
+        VFA fraction of total COD. The default is 0.0.
+    fr_XI : float, optional
+        Particulate inert fraction of total COD. The default is 0.13.
+    fr_XH : float, optional
+        Heterotrophic biomass fraction of total COD. The default is 0.0.
+    fr_XAUT : float, optional
+        Autotrophic biomass fraction of total COD. The default is 0.0.
+    fr_XPAO : float, optional
+        Phosphorus accumulating biomass fraction of total COD. The default is 0.0.
+    fr_XPHA : float, optional
+        PHA fraction of total COD. The default is 0.0.
+    X_PP : float, optional
+        Poly-phosphate in mg-P/L. The default is 0.0.
+    S_NO3 : float, optional
+        Nitrate and nitrite in mg-N/L. The default is 0.0.
+    S_O2 : float, optional
+        Dissolved oxygen in mg-O2/L. The default is 0.0.
+    S_N2 : float, optional
+        Dissolved nitrogen gas in mg-N/L. The default is 18.
+    S_Ca : float, optional
+        Total soluble calcium in mg-Ca/L. The default is 140.
+    S_Mg : float, optional
+        Total soluble magnesium in mg-Mg/L. The default is 50.
+    S_K : float, optional
+        Total soluble potassium in mg-K/L. The default is 28.
+    S_Na : float, optional
+        Other cation, in mg-Na/L. The default is 87.
+    S_Cl : float, optional
+        Other anion, in mg-Cl/L. The default is 425.
+    X_AlOH : float, optional
+        Aluminum hydroxide [mg/L]. The default is 0.
+    X_AlPO4 : float, optional
+        Aluminum phosphate [mg/L]. The default is 0.
+    X_FeOH : float, optional
+        Iron hydroxide [mg/L]. The default is 0.
+    X_FePO4 : float, optional
+        Iron phosphate [mg/L]. The default is 0.
+    X_CaCO3 : float, optional
+        Calcium carbonate [mg/L]. The default is 0.
+    X_ACP : float, optional
+        Calcium phosphate [mg/L]. The default is 0.
+    X_MgCO3 : float, optional
+        Magnesium carbonate [mg/L]. The default is 0.
+    X_newb : float, optional
+        Newbryite [mg/L]. The default is 0.
+    X_struv : float, optional
+        Struvite [mg/L]. The default is 0.
+
+    '''
+    
+    fr_xs = 1.0-fr_SI-fr_SF-fr_SA-fr_XI-fr_XH-fr_XAUT-fr_XPAO-fr_XPHA
+    if fr_xs < 0:
+        raise ValueError('The sum of all COD fractions of organic materials must '
+                         'not exceed 1.')
+    
+    inf = WasteStream(ID, T=T, SAlk=alkalinity)
+    concs = dict(
+        S_NH4=NH4_N, S_PO4=PO4_P, S_IC=alkalinity*12,
+        S_I=COD*fr_SI, S_F=COD*fr_SF, S_A=COD*fr_SA, 
+        X_S=COD*fr_xs, X_I=COD*fr_XI, X_H=COD*fr_XH,
+        X_AUT=COD*fr_XAUT, X_PAO=COD*fr_XPAO, X_PHA=COD*fr_XPHA, 
+        X_PP=X_PP, S_NO3=S_NO3, S_O2=S_O2, S_N2=S_N2, 
+        S_Ca=S_Ca, S_Mg=S_Mg, S_K=S_K, S_Na=S_Na, S_Cl=S_Cl,
+        X_AlOH=X_AlOH, X_AlPO4=X_AlPO4, X_FeOH=X_FeOH, X_FePO4=X_FePO4, 
+        X_CaCO3=X_CaCO3, X_ACP=X_ACP, X_MgCO3=X_MgCO3, X_newb=X_newb, X_struv=X_struv
+        )
+    inf.set_flow_by_concentration(Q, concs, (Q_unit, 'mg/L'))
+    return inf

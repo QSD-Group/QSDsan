@@ -10,6 +10,8 @@ This module is developed by:
     
     Joy Zhang <joycheung1994@gmail.com>
 
+    Ga-Yeong Kim <gayeong1225@gmail.com>
+
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
@@ -59,6 +61,7 @@ class TempState:
 
 #%%
 from ._aeration import *
+from ._aerobic_digestion_addon import *
 from ._asm1 import *
 from ._asm2d import *
 from ._adm1 import *
@@ -67,9 +70,11 @@ from ._adm1_p_extension import *
 from ._decay import *
 from ._kinetic_reaction import *
 from ._pm2 import *
+from ._pm2asm2d import *
 
 from . import (
     _aeration,
+    _aerobic_digestion_addon,
     _asm1,
     _asm2d,
     _adm1,
@@ -77,11 +82,13 @@ from . import (
     # _madm1,
     _decay,
     _kinetic_reaction,
-    _pm2
+    _pm2,
+    _pm2asm2d,
     )
 
 __all__ = (
     *_aeration.__all__,
+    *_aerobic_digestion_addon.__all__,
     *_asm1.__all__,
     *_asm2d.__all__,
     *_adm1.__all__,
@@ -90,4 +97,5 @@ __all__ = (
     *_decay.__all__,
     *_kinetic_reaction.__all__,
     *_pm2.__all__,
+    *_pm2asm2d.__all__,
     )

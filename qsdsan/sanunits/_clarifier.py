@@ -1049,7 +1049,7 @@ class PrimaryClarifierBSM2(SanUnit):
                     H2O    1e+06
         WasteStream-specific properties:
          pH         : 7.0
-         Alkalinity : 2.5 mg/L
+         Alkalinity : 2.5 mmol/L
          COD        : 23873.0 mg/L
          BOD        : 14963.2 mg/L
          TC         : 8298.3 mg/L
@@ -1071,7 +1071,7 @@ class PrimaryClarifierBSM2(SanUnit):
          BOD        : 10190.8 mg/L
          TC         : 5208.2 mg/L
          TOC        : 5208.2 mg/L
-         TN         : 19890.2 mg/L
+         TN         : 19890.1 mg/L
          TP         : 206.9 mg/L
          TK         : 27.8 mg/L
          TSS        : 4531.6 mg/L
@@ -1083,14 +1083,14 @@ class PrimaryClarifierBSM2(SanUnit):
                     H2O    7e+03
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 693717.8 mg/L
-         BOD        : 393895.8 mg/L
-         TC         : 253653.5 mg/L
-         TOC        : 253653.5 mg/L
+         COD        : 693717.5 mg/L
+         BOD        : 393895.7 mg/L
+         TC         : 253653.4 mg/L
+         TOC        : 253653.4 mg/L
          TN         : 57923.7 mg/L
          TP         : 13132.3 mg/L
          TK         : 3282.0 mg/L
-         TSS        : 534594.2 mg/L
+         TSS        : 534594.0 mg/L
    
     References
     ----------
@@ -1270,7 +1270,7 @@ class PrimaryClarifier(IdealClarifier):
                     H2O    1e+06
         WasteStream-specific properties:
          pH         : 7.0
-         Alkalinity : 2.5 mg/L
+         Alkalinity : 2.5 mmol/L
          COD        : 23873.0 mg/L
          BOD        : 14963.2 mg/L
          TC         : 8298.3 mg/L
@@ -1304,11 +1304,11 @@ class PrimaryClarifier(IdealClarifier):
                     H2O    2.96e+05
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 43926.4 mg/L
+         COD        : 43926.3 mg/L
          BOD        : 26326.2 mg/L
          TC         : 15637.8 mg/L
          TOC        : 15637.8 mg/L
-         TN         : 21732.9 mg/L
+         TN         : 21732.8 mg/L
          TP         : 748.7 mg/L
          TK         : 163.9 mg/L
          TSS        : 26698.6 mg/L

@@ -154,7 +154,11 @@ class ConcentrationDict(DictionaryView):
     def output(self, index, value):
         '''Concentration flows, in mg/L (g/m3).'''
         f_mass = value * self.MW[index]
-        phase = self.phase or self.phase_container.phase
+        if self.phase:
+            phase = self.phase
+        else:
+            try: phase = self.phase_container._phase
+            except: phase = self.phase_container
         if phase != 'l':
             raise AttributeError('Concentration only valid for liquid phase.')
         V_sum = self.F_vol
@@ -186,7 +190,7 @@ def by_conc(self, TP):
         check_data=False,
         )
     return conc
-indexer.ChemicalMolarFlowIndexer.by_conc = by_conc
+ChemicalMolarFlowIndexer.by_conc = by_conc
 del by_conc
 
 
@@ -450,7 +454,7 @@ class WasteStream(SanStream):
             _ws_info += '\n'
             # Only non-zero properties are shown
             _ws_info += int(bool(self.pH))*f'  pH         : {self.pH:.1f}\n'
-            _ws_info += int(bool(self.SAlk))*f'  Alkalinity : {self.SAlk:.1f} mg/L\n'
+            _ws_info += int(bool(self.SAlk))*f'  Alkalinity : {self.SAlk:.1f} mmol/L\n'
             if details:
                 _ws_info += int(bool(self.COD))       *f'  COD        : {self.COD:.1f} mg/L\n'
                 _ws_info += int(bool(self.BOD))       *f'  BOD        : {self.BOD:.1f} mg/L\n'
@@ -1299,7 +1303,7 @@ class WasteStream(SanStream):
                      ...        9.96e+04
          WasteStream-specific properties:
           pH         : 7.0
-          Alkalinity : 10.0 mg/L
+          Alkalinity : 10.0 mmol/L
           COD        : 430.0 mg/L
           BOD        : 221.8 mg/L
           TC         : 265.0 mg/L
@@ -1522,7 +1526,7 @@ class WasteStream(SanStream):
                      ...        9.96e+04
          WasteStream-specific properties:
           pH         : 7.0
-          Alkalinity : 10.0 mg/L
+          Alkalinity : 10.0 mmol/L
           COD        : 430.0 mg/L
           BOD        : 249.4 mg/L
           TC         : 265.0 mg/L
@@ -1751,7 +1755,7 @@ class WasteStream(SanStream):
                      ...        9.96e+04
          WasteStream-specific properties:
           pH         : 7.0
-          Alkalinity : 10.0 mg/L
+          Alkalinity : 10.0 mmol/L
           COD        : 431.0 mg/L
           BOD        : 250.0 mg/L
           TC         : 264.9 mg/L
@@ -1983,7 +1987,7 @@ class WasteStream(SanStream):
                      ...        9.88e+04
          WasteStream-specific properties:
           pH         : 7.0
-          Alkalinity : 10.0 mg/L
+          Alkalinity : 10.0 mmol/L
           COD        : 10814.4 mg/L
           BOD        : 1744.3 mg/L
           TC         : 4246.5 mg/L

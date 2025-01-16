@@ -117,7 +117,7 @@ class Thickener(SanUnit):
                     H2O    1e+06
         WasteStream-specific properties:
          pH         : 7.0
-         Alkalinity : 2.5 mg/L
+         Alkalinity : 2.5 mmol/L
          COD        : 23873.0 mg/L
          BOD        : 14963.2 mg/L
          TC         : 8298.3 mg/L
@@ -510,7 +510,7 @@ class Incinerator(SanUnit):
                     H2O    1e+06
         WasteStream-specific properties:
          pH         : 7.0
-         Alkalinity : 2.5 mg/L
+         Alkalinity : 2.5 mmol/L
          COD        : 23873.0 mg/L
          BOD        : 14963.2 mg/L
          TC         : 8298.3 mg/L

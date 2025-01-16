@@ -21,6 +21,7 @@ for license details.
 
 # %%
 
+import biosteam as bst
 from warnings import warn
 from flexsolve import IQ_interpolation
 from biosteam import HeatUtility, Facility
@@ -184,6 +185,7 @@ class CombinedHeatPower(SanUnit, Facility):
         self.system = None
         self.supplement_power_utility = supplement_power_utility
         self._sys_heating_utilities = ()
+        self._sys_steam_utilities = ()
         self._sys_power_utilities = ()
         
     def _init_lca(self):
@@ -238,11 +240,11 @@ class CombinedHeatPower(SanUnit, Facility):
         # Calculate all energy needs in kJ/hr as in H_net_feeds
         kwds = dict(system=self.system, operating_hours=self.system.operating_hours, exclude_units=(self,))
         pu = self.power_utility
-        H_heating_needs = sum_system_utility(**kwds, utility='heating', result_unit='kJ/hr')/self.combustion_eff
+        H_steam_needs = sum_system_utility(**kwds, utility='steam', result_unit='kJ/hr')/self.combustion_eff
         H_power_needs = sum_system_utility(**kwds, utility='power', result_unit='kJ/hr')/self.combined_eff
         
         # Calculate the amount of energy needs to be provided
-        H_supp = H_heating_needs+H_power_needs if self.supplement_power_utility else H_heating_needs
+        H_supp = H_steam_needs+H_power_needs if self.supplement_power_utility else H_steam_needs
                       
         # Objective function to calculate the heat deficit at a given natural gas flow rate
         def H_deficit_at_natural_gas_flow(flow):
@@ -263,17 +265,19 @@ class CombinedHeatPower(SanUnit, Facility):
             H_net_feeds = react(0)
 
         # Update heating utilities
-        self.heat_utilities = HeatUtility.sum_by_agent(sum(self.sys_heating_utilities.values(), ()))
+        self.steam_utilities = HeatUtility.sum_by_agent(sum(self.sys_steam_utilities.values(), []))
+        ngu = self.natural_gas_utilities = HeatUtility.sum_by_agent(sum(self.sys_natural_gas_utilities.values(), []))
+        self.heat_utilities = HeatUtility.sum_by_agent(sum(self.sys_heating_utilities.values(), []))
+        natural_gas.imol['CH4'] += sum(i.flow for i in ngu) # natural gas is added on separately
         for hu in self.heat_utilities: hu.reverse()
-            
         
         # Power production if there is sufficient energy
-        if H_net_feeds <= H_heating_needs:
+        if H_net_feeds <= H_steam_needs:
             pu.production = 0
         else:
-            pu.production = (H_net_feeds-H_heating_needs)/3600*self.combined_eff
+            pu.production = (H_net_feeds-H_steam_needs)/3600*self.combined_eff
 
-        self.H_heating_needs = H_heating_needs
+        self.H_steam_needs = H_steam_needs
         self.H_power_needs = H_power_needs
         self.H_net_feeds = H_net_feeds
 
@@ -302,18 +306,52 @@ class CombinedHeatPower(SanUnit, Facility):
         unit_CAPEX = self.unit_CAPEX
         unit_CAPEX /= 3600 # convert to $ per kJ/hr
         self.baseline_purchase_costs['CHP'] = unit_CAPEX * self.H_net_feeds
-
+        # Update biosteam utility costs
+        uprices = bst.stream_utility_prices
+        uprices['Fuel'] = uprices['Natural gas'] = self.ins[1].price
+        uprices['Ash disposal'] = self.outs[1].price
 
     def _refresh_sys(self):
         sys = self._system
+        ng_dct = self._sys_natural_gas_utilities = {}
+        steam_dct = self._sys_steam_utilities = {}
+        pu_dct = self._sys_power_utilities = {}
         if sys:
             units = [u for u in sys.units if u is not self]
-            hu_dct = self._sys_heating_utilities = {}
-            pu_dct = self._sys_power_utilities = {}
             for u in units:
-                hu_dct[u.ID] = tuple([i for i in u.heat_utilities if i.duty*i.flow>0])
-                pu_dct[u.ID] = u.power_utility
+                pu = u.power_utility
+                if pu: pu_dct[u.ID] = pu
+                steam_utilities = []
+                for hu in u.heat_utilities:
+                    if hu.flow*hu.duty <= 0: continue # cooling utilities
+                    if hu.ID=='natural_gas': ng_dct[u.ID] = [hu]                    
+                    elif 'steam' in hu.ID: steam_utilities.append(hu)
+                    else: raise ValueError(f'The heating utility {hu.ID} is not recognized by the CHP.')
+                if steam_utilities: steam_dct[u.ID] = steam_utilities
+        sys_hus = {k:ng_dct.get(k,[])+steam_dct.get(k, [])
+                   for k in list(ng_dct.keys())+list(steam_dct.keys())}
+        self._sys_heating_utilities = sys_hus
 
+    @property
+    def fuel_price(self):
+        '''
+        [Float] Price of fuel (natural gas), set to be the same as the price of ins[1]
+        and `bst.stream_utility_prices['Natural gas']`.
+        '''
+        return self.ins[1].price
+
+    natural_gas_price = fuel_price
+    
+    @property
+    def ash_disposal_price(self):
+        '''
+        [Float] Price of ash disposal, set to be the same as the price of outs[1]
+        and `bst.stream_utility_prices['Ash disposal']`.
+        Negative means need to pay for ash disposal.
+        '''
+        
+        """[Float] Price of ash disposal, same as `bst.stream_utility_prices['Ash disposal']`."""
+        return self.outs[1].price
 
     @property
     def CHP_type(self):
@@ -400,8 +438,18 @@ class CombinedHeatPower(SanUnit, Facility):
 
     @property
     def sys_heating_utilities(self):
-        '''[dict] Heating utilities of the given system (excluding this CHP unit).'''
+        '''[dict] Heating utilities (steams and natural gas) of the given system (excluding this CHP unit).'''
         return self._sys_heating_utilities
+
+    @property
+    def sys_natural_gas_utilities(self):
+        '''[dict] Steam utilities of the given system (excluding this CHP unit).'''
+        return self._sys_natural_gas_utilities
+
+    @property
+    def sys_steam_utilities(self):
+        '''[dict] Steam utilities of the given system (excluding this CHP unit).'''
+        return self._sys_steam_utilities
 
     @property
     def sys_power_utilities(self):
