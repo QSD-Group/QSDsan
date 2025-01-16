@@ -1,0 +1,8 @@
+parameter,name (if diff),unit,expected,low,high,distribution,references,Criterion
+system_housing,,USD,1800,1260,2340,uniform,Assumption based on Watabe et al. 2023,3
+housing_steel_weight,,kg,250,175,325,uniform,Assumption based on Watabe et al. 2023,3
+housing_zinc_coat,,m2,0.34,0.238,0.442,uniform,Assumption based on Watabe et al. 2023,3
+housing_aluminum_weight,,kg,4.8,3.36,6.24,uniform,Assumption based on Watabe et al. 2023,3
+housing_PE_weight,,kg,0.6,0.42,0.78,uniform,Assumption based on Watabe et al. 2023,3
+miscellaneous_cost_ratio,,fraction,0.169,0.1183,0.2197,uniform,BOM from Sedron Firelight and NEWgenerator,4.3
+wages,,USD/h,3.64,1.82,5.46,uniform,"Gates Scenario Specific Analysis 2022, for country specific data:  https://ilostat.ilo.org/data/",1

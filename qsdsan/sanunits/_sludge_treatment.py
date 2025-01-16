@@ -615,7 +615,7 @@ class Incinerator(SanUnit):
         else: 
             raise ValueError('Calorific value of fuel expected from user')
         
-    def _run(self):
+    def _run(self): #TODO: potentially add NOx and SOx emission: yes!
         
         sludge, air, fuel = self.ins
         flue_gas, ash = self.outs
@@ -639,18 +639,17 @@ class Incinerator(SanUnit):
         idx_h2o = cmps.index(water_ID)
         idx_co2 = cmps.index(carbon_dioxide_ID)
         idx_ash = cmps.index(ash_cmp_ID)
-        i_mass = cmps.i_mass
-        i_iss = i_mass*(1-cmps.f_Vmass_Totmass)
+        i_mass = cmps.i_mass #TODO: g component / g measure unit (measured as COD)
+        i_iss = i_mass*(1-cmps.f_Vmass_Totmass) #TODO: calculate non-volatile component
         
         n2 = inf[idx_n2]
         h2o = inf[idx_h2o]
         
-        mass_ash = np.sum(inf*i_iss) - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o]
+        mass_ash = np.sum(inf*i_iss) - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o] #TODO:calculate ash mass weight
 
         # Conservation of mass 
         mass_flue_gas = np.sum(inf*i_mass) - mass_ash
-        mass_co2 = mass_flue_gas - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o]
-        
+        mass_co2 = mass_flue_gas - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o] 
         flue_gas.set_flow([n2, h2o, (mass_co2/i_mass[idx_co2])], 
                           'kg/hr', (nitrogen_ID, water_ID, carbon_dioxide_ID))
         ash.set_flow(mass_ash/i_mass[idx_ash],'kg/hr', (ash_cmp_ID,))
