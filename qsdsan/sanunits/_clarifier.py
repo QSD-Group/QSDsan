@@ -191,7 +191,6 @@ class FlatBottomCircularClarifier(SanUnit):
         self._downward_flow_velocity = downward_flow_velocity # in m/hr (converted from 12 mm/sec)
         self._design_tss = design_influent_TSS
         self._design_flow = design_influent_flow
-        self._sor = design_surface_overflow_rate
         
         header = self._state_header
         self._state_header = list(header) + [f'TSS{i+1} [mg/L]' for i in range(N_layer)]
