@@ -10,7 +10,8 @@ from qsdsan import processes as pc, sanunits as su
 
 Q_domestic = 38000 # m3/day
 Temp = 273.15+20 # temperature [K]
-Q_was = 378.54 # [m3/day]
+#Q_was = 378.54 # [m3/day]
+Q_sludge = 250 # m3/day
 
 biomass_IDs = ('X_H', 'X_AUT', 'X_PAO')
 
@@ -62,7 +63,7 @@ sludge = qs.WasteStream('sludge', T=Temp, units='m3/d')
 
 C = su.PrimaryClarifier('PC', ins=dom_ww, outs=[effluent, sludge], 
                             isdynamic=True, thermo=thermo_asm2d, 
-                            sludge_flow_rate=0.3*Q_domestic,
+                            sludge_flow_rate=Q_sludge,
                             solids_removal_efficiency=0.6)
 
 sys = qs.System('PC_trial', path=[C])

@@ -64,7 +64,7 @@ RAS = qs.WasteStream('RAS', T=Temp, units='m3/d')
 
 C = su.FlatBottomCircularClarifier('C', ins=dom_ww, outs=[effluent, RAS, WAS], 
                             isdynamic=True, thermo=thermo_asm2d, height = 4.3, 
-                            #sludge_flow_rate=Q_was,
+                            underflow=0.75*Q_domestic, wastage=0.02*Q_domestic,
                             solids_removal_efficiency=0.6)
 
 
