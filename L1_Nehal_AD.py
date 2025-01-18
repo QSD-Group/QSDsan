@@ -139,7 +139,7 @@ def batch_init(sys, path, sheet):
     df = load_data(path, sheet)
     dct = df.to_dict('index')
     u = sys.flowsheet.unit # unit registry
-    u.DG.set_init_conc(**steady_state_ad_init_conds)
+    # u.DG.set_init_conc(**steady_state_ad_init_conds)
 #%%
 
 def create_components():
@@ -179,7 +179,7 @@ def create_system(flowsheet=None, inf_kwargs={}, asm_kwargs={}, init_conds={},
                             isdynamic=True,
                             init_with='WasteStream', 
                             thermo=thermo_asm2d,
-                            sludge_flow_rate=280, 
+                            sludge_flow_rate=Q_was, 
                             solids_removal_efficiency=0.6)
     
     # Create ADM1 components and streams
@@ -196,24 +196,16 @@ def create_system(flowsheet=None, inf_kwargs={}, asm_kwargs={}, init_conds={},
     
     adm1 = qs.processes.ADM1_p_extension()
     
-    # Create junction and digester with ADM1 thermo
-    J1 = su.ASM2dtomADM1('J1', upstream=[sludge_PC], 
-                         thermo=thermo_adm1, 
-                         isdynamic=True, 
-                         adm1_model=adm1, 
-                         asm2d_model=asm2d)
+    J1 = su.ASM2dtomADM1('J1', upstream= [PC-1], thermo=thermo_adm1, isdynamic=True, 
+                         adm1_model=adm1, asm2d_model=asm2d)
     
-    DG = su.AnaerobicCSTR(ID='DG', 
-                          ins=J1.outs[0], 
-                          outs=[gas, sludge_DG], 
-                          model=adm1, 
-                          thermo=thermo_adm1, 
-                          V_liq=4542, 
-                          V_gas=454)
+    # Volume of AD based on WERF report (L1 configuration)
+    DG = su.AnaerobicCSTR(ID='DG', ins = J1.outs[0], outs= ['gas', 'sludge_DG'], 
+                          model=adm1, thermo = thermo_adm1, V_liq=4542, V_gas=454)
     DG.algebraic_h2 = True
     
     # Create system
-    sys = qs.System('L1_WERF', path=(PC, J1, DG))
+    sys = qs.System('AD_trial', path=(PC, J1, DG))
     sys.set_tolerance(rmol=1e-6)
     sys.maxiter = 500
 
@@ -237,27 +229,26 @@ def run(sys, t, method=None, **kwargs):
         # print_t=True,
         **kwargs)
     
-    # print('-------------------Influent-------------------')
-    # dom_ww.show()
+    print('-------------------Influent-------------------')
+    dom_ww.show()
 
-    # print('-------------------Effluent-------------------')
-    # effluent.show()
+    print('-------------------Effluent-------------------')
+    effluent.show()
 
-    # print('-------------------Clarifier Sludge-------------------')
-    # sludge_PC.show()
+    print('-------------------Clarifier Sludge-------------------')
+    sludge_PC.show()
 
     print('--------------------Intermediate--------------------')
     J1.outs[0].show()
-    J1.outs[1].show()
 
-    # print('-------------------Digester Sludge-------------------')
-    # sludge_DG.show()
+    print('-------------------Digester Sludge-------------------')
+    sludge_DG.show()
 
-    # print('-------------------Biogas-------------------')
-    # gas.show()
+    print('-------------------Biogas-------------------')
+    gas.show()
 
-    # sys.diagram()
-    # return sys
+    sys.diagram()
+    return sys
     
 if __name__ == '__main__':
     t = 0.001
