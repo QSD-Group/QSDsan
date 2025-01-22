@@ -59,13 +59,17 @@ class CSTR(SanUnit):
         The default is None.
     V_max : float
         Designed volume, in [m^3]. The default is 1000.
-        
-    # W_tank : float
-    #     The design width of the tank, in [m]. The default is 6.4 m (21 ft). [1, Yalin's adaptation of code]
-    # D_tank : float
-    #     The design depth of the tank in [m]. The default is 3.65 m (12 ft). [1, Yalin's adaptation of code]
-    # freeboard : float
-    #     Freeboard added to the depth of the reactor tank, [m]. The default is 0.61 m (2 ft). [1, Yalin's adaptation of code]
+
+          
+    D_tank : float
+        The design depth of the tank in [m]. Varies between 4.5-7.5 m. The default is 6 m. [2]
+    freeboard : float
+        Freeboard added to the depth of the reactor tank, [m]. The default is 0.5 m. [2]
+    W_to_D : float
+        The design width-to-depth ratio of the tank. The default is 1.5. [2]
+    L_to_W : float
+        The design length-to-width ratio of the tank. The default is 5. [2]
+    
         
     aeration : float or :class:`Process`, optional
         Aeration setting. Either specify a targeted dissolved oxygen concentration
@@ -88,6 +92,12 @@ class CSTR(SanUnit):
          of Dilute Organic Carbon Waste Streams.
          Energy Environ. Sci. 2016, 9 (3), 1102–1112.
          https://doi.org/10.1039/C5EE03715H.
+     [2] Metcalf & Eddy Inc., Tchobanoglous, G., Burton, F. L., Tsuchihashi, R., & Stensel, 
+         H. D. (2013). Wastewater engineering: Treatment and resource recovery (5th ed.). 
+         McGraw-Hill Professional.
+     [3] Foley, J., De Haas, D., Hartley, K., & Lant, P. (2010). 
+         Comprehensive life cycle inventories of alternative wastewater treatment systems. 
+         Water Research, 44(5), 1654–1666. https://doi.org/10.1016/j.watres.2009.11.031
     
     '''
     _N_ins = 3
@@ -96,8 +106,8 @@ class CSTR(SanUnit):
     _outs_size_is_fixed = False
 
     def __init__(self, ID='', ins=None, outs=(), split=None, thermo=None,
-                 init_with='WasteStream', V_max=1000, W_tank = 6.4, D_tank = 3.65,
-                 freeboard = 0.61, t_wall = None, t_slab = None, aeration=2.0, 
+                 init_with='WasteStream', V_max=1000, D_tank = 6, W_to_D = 1.5, L_to_W = 5,
+                 freeboard = 0.5, t_wall = None, t_slab = None, aeration=2.0, 
                  DO_ID='S_O2', suspended_growth_model=None, isdynamic=True, exogenous_vars=(), **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic,
                          exogenous_vars=exogenous_vars, **kwargs)
@@ -109,12 +119,13 @@ class CSTR(SanUnit):
         self._mixed = WasteStream()
         self.split = split
 
-        # # Design parameters 
-        # self._W_tank = W_tank
-        # self._D_tank = D_tank
-        # self._freeboard = freeboard
-        # self._t_wall = t_wall
-        # self._t_slab = t_slab
+        # Design parameters 
+        self._D_tank = D_tank
+        self._freeboard = freeboard
+        self._W_to_D = W_to_D
+        self._L_to_W = L_to_W
+        self._t_wall = t_wall
+        self._t_slab = t_slab
     
         # for attr, value in kwargs.items():
         #     setattr(self, attr, value)
@@ -127,58 +138,69 @@ class CSTR(SanUnit):
     @V_max.setter
     def V_max(self, Vm):
         self._V_max = Vm
-        
-    # @property
-    # def W_tank(self):
-    #     '''[float] The design width of the tank, in m.'''
-    #     return self._W_tank
 
-    # @W_tank.setter
-    # def W_tank(self, W_tank):
-    #     self._W_tank = W_tank
-        
-    # @property
-    # def D_tank(self):
-    #     '''[float] The design depth of the tank, in m.'''
-    #     return self._D_tank
+    @property
+    def D_tank(self):
+        '''[float] The design depth of the tank, in m.'''
+        return self._D_tank
 
-    # @D_tank.setter
-    # def D_tank(self, D_tank):
-    #     self._D_tank = D_tank
+    @D_tank.setter
+    def D_tank(self, D_tank):
+        self._D_tank = D_tank
         
-    # @property
-    # def freeboard(self):
-    #     '''[float] Freeboard added to the depth of the reactor tank, [m].'''
-    #     return self._freeboard
+    @property
+    def freeboard(self):
+        '''[float] Freeboard added to the depth of the reactor tank, [m].'''
+        return self._freeboard
     
-    # @freeboard.setter
-    # def freeboard(self, i):
-    #     self._freeboard = i
-        
-    # @property
-    # def t_wall(self):
-    #     '''
-    #     [float] Thickness of the wall concrete, [m].
-    #     default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
-    #     '''
-    #     D_tank = self.D_tank*39.37 # m to inches 
-    #     return self._t_wall or (1 + max(D_tank - 12, 0)/12)*0.3048 # from feet to m
-    
-    # @t_wall.setter
-    # def t_wall(self, i):
-    #     self._t_wall = i
+    @freeboard.setter
+    def freeboard(self, fb):
+        self._freeboard = fb
 
-    # @property
-    # def t_slab(self):
-    #     '''
-    #     [float] Concrete slab thickness, [m],
-    #     default to be 2 in thicker than the wall thickness.
-    #     '''
-    #     return self._t_slab or (self.t_wall + 2/12)*0.3048 # from feet to m
+    @property
+    def W_to_D(self):
+        '''[float] The design width-to-depth ratio of the tank.
+            Default is 1.5.'''
+        return self._W_to_D
+
+    @W_to_D.setter
+    def W_to_D(self, W_to_D):
+        self._W_to_D = W_to_D
+
+    @property
+    def L_to_W(self):
+        '''[float] The design length-to-width ratio of the tank.
+            Default is a minimum of 5.'''
+        return self._L_to_W
+
+    @L_to_W.setter
+    def L_to_W(self, L_to_W):
+        self._L_to_W = L_to_W
+        
+    @property
+    def t_wall(self):
+        '''
+        [float] Thickness of the wall concrete, [m].
+        Default to be minimum of 1 ft with 1 in added for every ft of depth over 12 ft.
+        '''
+        D_tank = self._D_tank * 39.37 # m to inches 
+        return self._t_wall or (1 + max(D_tank - 12, 0)/12) * 0.3048 # from feet to m
     
-    # @t_slab.setter
-    # def t_slab(self, i):
-    #     self._t_slab = i
+    @t_wall.setter
+    def t_wall(self, i):
+        self._t_wall = i
+
+    @property
+    def t_slab(self):
+        '''
+        [float] Concrete slab thickness, [m].
+        Default to be 2 in thicker than the wall thickness.
+        '''
+        return self._t_slab or (self.t_wall + 2/12) * 0.3048 # from feet to m
+    
+    @t_slab.setter
+    def t_slab(self, i):
+        self._t_slab = i
      
     @property
     def aeration(self):
@@ -341,38 +363,39 @@ class CSTR(SanUnit):
 
         self._ODE = dy_dt
         
-    # _units = {
-    #     'Tank volume': 'm3',
-    #     'Tank width': 'm',
-    #     'Tank depth': 'm',
-    #     'Tank length': 'm',
-    #     'Volume of concrete wall': 'm3',
-    #     'Volume of concrete slab': 'm3' 
-    #     }
+    _units = {
+        'Tank volume': 'm3',
+        'Tank width': 'm',
+        'Total tank depth': 'm',
+        'Tank length': 'm',
+        'Volume of concrete wall': 'm3',
+        'Volume of concrete slab': 'm3',
+        'Reinforcement steel': 'kg' 
+        }
 
     def _design(self):
-        pass
-        # self._mixed.mix_from(self.ins)
-        # # mixed = self._mixed
-        # D = self.design_results
+        self._mixed.mix_from(self.ins)
+        D = self.design_results
         
-        # D['Tank volume'] = V = self.V_max
-        # D['Tank width'] = W = self.W_tank
-        # D['Tank depth'] = depth = self.D_tank
-        # D['Tank length'] = L = V/(W*depth)
+        D['Tank volume'] = V = self._V_max
+        D['Total tank depth'] = self._D_tank + self._freeboard
+        D['Tank width'] = W = self._W_to_D * self._D_tank
+        area = D['Tank volume'] / self._D_tank
+        D['Tank length'] = L = max(area/W, self._L_to_W*W)
         
-        # t_wall, t_slab = self.t_wall, self.t_slab
-        # t = t_wall + t_slab
-        # D_tot = depth + self.freeboard 
+        t_wall, t_slab = self._t_wall, self._t_slab
         
-        # # get volume of wall concrete
-        # VWC = 2*((L + 2*t_wall)*t_wall*D_tot) + 2*(W*t_wall*D_tot)
-        
-        # # get volume of slab concrete
-        # VSC = (L + 2*t_wall)*(W + 2*t_wall)*t
-        
-        # D['Volume of concrete wall'] = VWC
-        # D['Volume of concrete slab'] = VSC
+        # Volume of concrete
+        VLW = 2 * (L + (2*t_wall)) * t_wall * D['Total tank depth']
+        VSW = 2 * W * t_wall * D['Total tank depth']
+        VWC = VLW + VSW
+        VSC = (L + (2*t_wall)) * (W + (2*t_wall)) * t_slab
+        D['Volume of concrete wall'] = VWC
+        D['Volume of concrete slab'] = VSC
+
+        # Amount of reinforcement steel [3]
+        TC = D['Volume of concrete wall'] + D['Volume of concrete slab']
+        D['Reinforcement steel'] = 77.58 * TC # in kg 
             
     def _cost(self):
         pass
