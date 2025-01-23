@@ -67,9 +67,7 @@ class CSTR(SanUnit):
         Freeboard added to the depth of the reactor tank, [m]. The default is 0.5 m. [2]
     W_to_D : float
         The design width-to-depth ratio of the tank. The default is 1.5. [2]
-    L_to_W : float
-        The design length-to-width ratio of the tank. The default is 5. [2]
-    
+
         
     aeration : float or :class:`Process`, optional
         Aeration setting. Either specify a targeted dissolved oxygen concentration
@@ -106,7 +104,7 @@ class CSTR(SanUnit):
     _outs_size_is_fixed = False
 
     def __init__(self, ID='', ins=None, outs=(), split=None, thermo=None,
-                 init_with='WasteStream', V_max=1000, D_tank = 6, W_to_D = 1.5, L_to_W = 5,
+                 init_with='WasteStream', V_max=1000, D_tank = 6, W_to_D = 1.5,
                  freeboard = 0.5, t_wall = None, t_slab = None, aeration=2.0, 
                  DO_ID='S_O2', suspended_growth_model=None, isdynamic=True, exogenous_vars=(), **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with, isdynamic=isdynamic,
@@ -123,7 +121,6 @@ class CSTR(SanUnit):
         self._D_tank = D_tank
         self._freeboard = freeboard
         self._W_to_D = W_to_D
-        self._L_to_W = L_to_W
         if t_wall == None:
             D_tank = self._D_tank * 39.37 # m to inches 
             t_wall = (1 + max(D_tank - 12, 0)/12) * 0.3048 # from feet to m 
@@ -172,16 +169,6 @@ class CSTR(SanUnit):
     def W_to_D(self, W_to_D):
         self._W_to_D = W_to_D
 
-    @property
-    def L_to_W(self):
-        '''[float] The design length-to-width ratio of the tank.
-            Default is a minimum of 5.'''
-        return self._L_to_W
-
-    @L_to_W.setter
-    def L_to_W(self, L_to_W):
-        self._L_to_W = L_to_W
-        
     @property
     def t_wall(self):
         '''
@@ -386,7 +373,7 @@ class CSTR(SanUnit):
         D['Total tank depth'] = self._D_tank + self._freeboard
         D['Tank width'] = W = self._W_to_D * self._D_tank
         area = D['Tank volume'] / self._D_tank
-        D['Tank length'] = L = max(area/W, self._L_to_W*W)
+        D['Tank length'] = L = area/W
         
         t_wall, t_slab = self._t_wall, self._t_slab
         
@@ -802,8 +789,6 @@ class PFR(SanUnit):
         Freeboard added to the depth of the reactor tank, [m]. The default is 0.5 m. [1]
     W_to_D : float
         The design width-to-depth ratio of the tank. The default is 1.5. [1]
-    L_to_W : float
-        The design length-to-width ratio of the tank. The default is 5. [1]
     
     References
     ----------
@@ -893,7 +878,7 @@ class PFR(SanUnit):
                  N_tanks_in_series=5, tanks_share_walls=True, V_tanks=[1500, 1500, 3000, 3000, 3000], 
                  influent_fractions=[[1.0, 0,0,0,0]], internal_recycles=[(4,0,35000),],
                  DO_setpoints=[], kLa=[0, 0, 120, 120, 60], DO_sat=8.0,
-                 D_tank = 6, W_to_D = 1.5, L_to_W = 5,
+                 D_tank = 6, W_to_D = 1.5,
                  freeboard = 0.5, t_wall = None, t_slab = None,
                  DO_ID='S_O2', suspended_growth_model=None, 
                  isdynamic=True, **kwargs):
@@ -919,7 +904,6 @@ class PFR(SanUnit):
         self._D_tank = D_tank
         self._freeboard = freeboard
         self._W_to_D = W_to_D
-        self._L_to_W = L_to_W
         D_tank = self._D_tank * 39.37 # m to inches 
         t_wall = (1 + max(D_tank - 12, 0)/12) * 0.3048 # from feet to m 
         self._t_wall = t_wall
@@ -1083,16 +1067,6 @@ class PFR(SanUnit):
     @W_to_D.setter
     def W_to_D(self, W_to_D):
         self._W_to_D = W_to_D
-
-    @property
-    def L_to_W(self):
-        '''[float] The design length-to-width ratio of the tank.
-            Default is a minimum of 5.'''
-        return self._L_to_W
-
-    @L_to_W.setter
-    def L_to_W(self, L_to_W):
-        self._L_to_W = L_to_W
         
     @property
     def t_wall(self):
@@ -1312,7 +1286,7 @@ class PFR(SanUnit):
             D[tank_id]['Tank volume'] = V = self._Vs[i-1] # Extracting the volume to that particular tank
             D[tank_id]['Total tank depth'] = H = self._D_tank
             D[tank_id]['Tank width'] = W = self._W_to_D * H
-            D[tank_id]['Tank length'] = L = max(V/(W*H), self._L_to_W*W)
+            D[tank_id]['Tank length'] = L = V/(W*H)
             
             # Estimating volume of long walls
             if self.share_walls:
