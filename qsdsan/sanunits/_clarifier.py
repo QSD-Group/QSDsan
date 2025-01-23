@@ -80,7 +80,7 @@ class FlatBottomCircularClarifier(SanUnit):
     outs : :class:`WasteStream`
         Treated effluent and sludge.
     underflow : float, optional
-        Designed sludge flow rate (sum of recycle and waste activated sludge flowrates [RAS+WAS]), in [m^3/d]. The default is 2000.
+        Designed recycled sludge flow rate in [m^3/d]. The default is 2000.
     wastage : float, optional
         Designed wasted sludge flowrate (WAS), in [m^3/d]. The default is 385.
     N_layer : int, optional
