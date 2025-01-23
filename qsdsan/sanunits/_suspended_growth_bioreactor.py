@@ -1276,7 +1276,7 @@ class PFR(SanUnit):
             D['Tank width'] = W = self._W_to_D * H
             VSW = ns * W * t_wall * (H + fb)
         print(f'VSW: {VSW} m3')
-        VLW , VS = 0, 0 
+        VLW, VS = 0, 0 
 
         for i in range(1, N+1):
             tank_id = 'T' + str(i)
