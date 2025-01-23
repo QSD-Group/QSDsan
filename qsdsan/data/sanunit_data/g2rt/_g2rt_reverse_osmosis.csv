@@ -7,8 +7,9 @@ reverse_osmosis_system_cost,,USD,401.55875,69.99,1600,triangular,https://crystal
 piping_cost,,USD,93,65.1,120.9,uniform,89895K769: https://www.mcmaster.com/products/pipe/tubing~/smooth-bore-seamless-stainless-steel-tubing/,3
 RO_system_power_demand,,kW,0.5,0.35,0.65,uniform,https://crystalquest.com/products/whole-house-reverse-osmosis-system?variant=40999693582429,3
 membrane_cost,,USD,140,98,182,uniform,https://www.reverseosmosis.com/products/axeon-hf1-2521-400-gpd-150-psi-ro-membrane-element-200375?srsltid=AfmBOooIPppk_wlfk_6KIXkdB_kmg-vPO2VxMAoeTEURBODU5NvnYipW,3
-membrane_life_time_short,influent COD > 500 mg/L,yr,1,0.7,1.3,constant,https://cdn.shopify.com/s/files/1/1286/9985/files/200-300GPD-RO-WHManual_17e60eea-12e5-45be-ba29-40838b87a535.pdf?v=1602075981,1
-membrane_life_time_medium,500 mg/L>influent COD > 50 mg/L,yr,2,1.4,2.6,constant,https://cdn.shopify.com/s/files/1/1286/9985/files/200-300GPD-RO-WHManual_17e60eea-12e5-45be-ba29-40838b87a535.pdf?v=1602075981,1
+membrane_life_time_severe_fouling,influent COD > 3000 mg/L,yr,0.1,0.07,0.13,constant,https://cdn.shopify.com/s/files/1/1286/9985/files/200-300GPD-RO-WHManual_17e60eea-12e5-45be-ba29-40838b87a535.pdf?v=1602075981,1
+membrane_life_time_short,3000 mg/L>influent COD > 500 mg/L,yr,0.5,0.35,0.65,constant,https://cdn.shopify.com/s/files/1/1286/9985/files/200-300GPD-RO-WHManual_17e60eea-12e5-45be-ba29-40838b87a535.pdf?v=1602075981,1
+membrane_life_time_medium,500 mg/L>influent COD > 50 mg/L,yr,1,0.7,1.3,constant,https://cdn.shopify.com/s/files/1/1286/9985/files/200-300GPD-RO-WHManual_17e60eea-12e5-45be-ba29-40838b87a535.pdf?v=1602075981,1
 membrane_life_time_long,influent COD < 50 mg/L,yr,5,3.5,6.5,constant,https://cdn.shopify.com/s/files/1/1286/9985/files/200-300GPD-RO-WHManual_17e60eea-12e5-45be-ba29-40838b87a535.pdf?v=1602075981,1
 reverse_osmosis_maintenance,,hr/yr,12,8.4,15.6,uniform,Assumption,3
 reverse_osmosis_operation,,hr/d,2,1.4,2.6,uniform,Assumption,3
