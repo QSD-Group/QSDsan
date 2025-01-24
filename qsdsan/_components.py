@@ -169,7 +169,8 @@ class Components(Chemicals):
 
 
     def default_compile(self, lock_state_at='l',
-                        soluble_ref='Urea', gas_ref='CO2', particulate_ref='Stearin'):
+                        soluble_ref='Urea', gas_ref='CO2', particulate_ref='Stearin', 
+                        ignore_inaccurate_molar_weight=False):
         '''
         Auto-fill of the missing properties of the components and compile,
         boiling point (Tb) and molar volume (V) will be copied from the reference component,
@@ -261,7 +262,7 @@ class Components(Chemicals):
             # Copy all remaining properties from water
             cmp.copy_models_from(water)
         for cmp in self: cmp.default()
-        self.compile()
+        self.compile(ignore_inaccurate_molar_weight=ignore_inaccurate_molar_weight)
 
 
     @classmethod
@@ -398,8 +399,8 @@ class Components(Chemicals):
         new.append(H2O)
 
         if default_compile:
-            new.default_compile(lock_state_at='', particulate_ref='NaCl')
-            new.compile()
+            new.default_compile(lock_state_at='', particulate_ref='NaCl', ignore_inaccurate_molar_weight=True)
+            new.compile(ignore_inaccurate_molar_weight=True)
             # Add aliases
             new.set_alias('H2O', 'Water')
             # Pre-define groups
@@ -486,9 +487,9 @@ class Components(Chemicals):
         add_V_from_rho(cmps.P4O10, rho=2.39, rho_unit='g/mL') # http://www.chemspider.com/Chemical-Structure.14128.html
         try:
             for cmp in cmps: cmp.default()
-            cmps.compile()
+            cmps.compile(ignore_inaccurate_molar_weight=True)
         except RuntimeError: # cannot compile due to missing properties
-            cmps.default_compile(**default_compile_kwargs)
+            cmps.default_compile(ignore_inaccurate_molar_weight=True, **default_compile_kwargs)
         for k, v in aliases.items():
             cmps.set_alias(k, v)
         return cmps
@@ -611,7 +612,7 @@ class CompiledComponents(CompiledChemicals):
         for i in _num_component_properties:
             dct[i] = component_data_array(components, i)
 
-    def compile(self, skip_checks=False):
+    def compile(self, skip_checks=False, ignore_inaccurate_molar_weight=False):
         '''Do nothing, :class:`CompiledComponents` have already been compiled.'''
         pass
 
@@ -655,7 +656,7 @@ class CompiledComponents(CompiledChemicals):
         '''Create a new subgroup of :class:`Component` objects.'''
         components = self[IDs]
         new = Components(components)
-        new.compile()
+        new.compile(ignore_inaccurate_molar_weight=True)
         for i in new.IDs:
             for j in self.get_aliases(i):
                 try: new.set_alias(i, j)
@@ -682,7 +683,7 @@ class CompiledComponents(CompiledChemicals):
     def copy(self):
         '''Return a copy.'''
         copy = Components(self)
-        copy.compile()
+        copy.compile(ignore_inaccurate_molar_weight=True)
         return copy
 
 
