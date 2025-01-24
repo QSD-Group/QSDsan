@@ -151,13 +151,13 @@ class Components(Chemicals):
             for component in components: self.append(component)
 
 
-    def compile(self, skip_checks=False):
+    def compile(self, skip_checks=False, ignore_inaccurate_molar_weight=False):
         '''Cast as a :class:`CompiledComponents` object.'''
         components = tuple(self)
         tmo._chemicals.prepare(components, skip_checks)
         setattr(self, '__class__', CompiledComponents)
         
-        try: self._compile(components)
+        try: self._compile(components, ignore_inaccurate_molar_weight)
         except Exception as error:
             setattr(self, '__class__', Components)
             setattr(self, '__dict__', {i.ID: i for i in components})
@@ -616,13 +616,15 @@ class CompiledComponents(CompiledChemicals):
         pass
 
 
-    def _compile(self, components):
+    def _compile(self, components, ignore_inaccurate_molar_weight):
         dct = self.__dict__
         tuple_ = tuple # this speeds up the code
         components = tuple_(dct.values())
         CompiledChemicals._compile(self, components)
         for component in components:
             missing_properties = component.get_missing_properties(_key_component_properties)
+            if (ignore_inaccurate_molar_weight == False) and (component.measured_as != None):
+                raise RuntimeError(f'{component} does not have a sensible molar weight. Set ignore_inaccurate_molar_weight=True to bypass this error.')
             if not missing_properties: continue
             missing = utils.repr_listed_values(missing_properties)
             raise RuntimeError(f'{component} is missing key component-related properties ({missing}).')
