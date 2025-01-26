@@ -77,7 +77,7 @@ def create_asm1_cmps(set_thermo=True):
     cmps_asm1 = Components([S_I, S_S, X_I, X_S, X_BH, X_BA, X_P,
                             S_O, S_NO, S_NH, S_ND, X_ND, S_ALK,
                             cmps.S_N2, cmps.H2O])
-    cmps_asm1.compile()
+    cmps_asm1.compile(ignore_inaccurate_molar_weight=True)
     if set_thermo: settings.set_thermo(cmps_asm1)
 
     return cmps_asm1

@@ -188,6 +188,10 @@ class Components(Chemicals):
             Reference component (or chemical ID) for those with `particle_size` == 'Dissolved gas'.
         particulate_ref : obj or str
             Reference component (or chemical ID) for those with `particle_size` == 'Particulate'.
+        ignore_inaccurate_molar_weight : bool
+            Default is False, need to be manually set to True if having components
+            with `measured_as` attributes. This is to alert the users that
+            calculations for attributes using molecular weight will be inacurate.
 
         Examples
         --------
@@ -199,7 +203,7 @@ class Components(Chemicals):
         >>> Substrate = Component('Substrate', phase='s', measured_as='COD', i_mass=18.3/300,
         ...                       organic=True, particle_size='Particulate', degradability='Readily')
         >>> cmps = Components([X, X_inert, Substrate])
-        >>> cmps.default_compile()
+        >>> cmps.default_compile(ignore_inaccurate_molar_weight=True)
         >>> cmps
         CompiledComponents([X, X_inert, Substrate])
         '''

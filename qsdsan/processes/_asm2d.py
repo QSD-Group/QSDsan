@@ -69,7 +69,7 @@ def create_asm2d_cmps(set_thermo=True):
                              S_F, S_A, S_I, S_ALK, X_I, X_S, X_H, X_PAO, X_PP,
                              X_PHA, X_AUT, X_MeOH, X_MeP, cmps.H2O])
 
-    cmps_asm2d.compile()
+    cmps_asm2d.compile(ignore_inaccurate_molar_weight=True)
     if set_thermo: settings.set_thermo(cmps_asm2d)
 
     return cmps_asm2d
@@ -153,7 +153,7 @@ def create_masm2d_cmps(set_thermo=True):
     cmps = Components([*solubles, S_IC, S_K, S_Mg, *particulates, 
                        S_Ca, X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3, 
                        X_AlOH, X_AlPO4, X_FeOH, X_FePO4, S_Na, S_Cl, H2O])
-    cmps.default_compile()
+    cmps.default_compile(ignore_inaccurate_molar_weight=True)
     if set_thermo: settings.set_thermo(cmps)
 
     return cmps
