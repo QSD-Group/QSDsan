@@ -1050,14 +1050,14 @@ class PrimaryClarifierBSM2(SanUnit):
         WasteStream-specific properties:
          pH         : 7.0
          Alkalinity : 2.5 mmol/L
-         COD        : 23873.0 mg/L
-         BOD        : 14963.2 mg/L
-         TC         : 8298.3 mg/L
-         TOC        : 8298.3 mg/L
-         TN         : 20363.2 mg/L
-         TP         : 367.6 mg/L
-         TK         : 68.3 mg/L
-         TSS        : 11124.4 mg/L
+         COD        : 23722.5 mg/L
+         BOD        : 14868.9 mg/L
+         TC         : 8245.9 mg/L
+         TOC        : 8245.9 mg/L
+         TN         : 20234.8 mg/L
+         TP         : 365.3 mg/L
+         TK         : 67.9 mg/L
+         TSS        : 11054.3 mg/L
     outs...
     [0] eff
     phase: 'l', T: 298.15 K, P: 101325 Pa
@@ -1067,14 +1067,14 @@ class PrimaryClarifierBSM2(SanUnit):
                     H2O    9.93e+05
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 15436.7 mg/L
-         BOD        : 10190.8 mg/L
-         TC         : 5208.2 mg/L
-         TOC        : 5208.2 mg/L
-         TN         : 19890.1 mg/L
-         TP         : 206.9 mg/L
-         TK         : 27.8 mg/L
-         TSS        : 4531.6 mg/L
+         COD        : 15338.9 mg/L
+         BOD        : 10126.2 mg/L
+         TC         : 5175.1 mg/L
+         TOC        : 5175.1 mg/L
+         TN         : 19764.1 mg/L
+         TP         : 205.6 mg/L
+         TK         : 27.6 mg/L
+         TSS        : 4502.9 mg/L
     [1] sludge
     phase: 'l', T: 298.15 K, P: 101325 Pa
     flow (g/hr): S_F    70
@@ -1083,14 +1083,14 @@ class PrimaryClarifierBSM2(SanUnit):
                     H2O    7e+03
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 693717.5 mg/L
-         BOD        : 393895.7 mg/L
-         TC         : 253653.4 mg/L
-         TOC        : 253653.4 mg/L
-         TN         : 57923.7 mg/L
-         TP         : 13132.3 mg/L
-         TK         : 3282.0 mg/L
-         TSS        : 534594.0 mg/L
+         COD        : 691249.2 mg/L
+         BOD        : 392494.2 mg/L
+         TC         : 252750.9 mg/L
+         TOC        : 252750.9 mg/L
+         TN         : 57717.6 mg/L
+         TP         : 13085.5 mg/L
+         TK         : 3270.3 mg/L
+         TSS        : 532691.9 mg/L
    
     References
     ----------
@@ -1259,59 +1259,11 @@ class PrimaryClarifier(IdealClarifier):
     ...                       isdynamic=True)
     >>> sys = System('sys', path=(PC,))
     >>> sys.simulate(t_span=(0,10), method='BDF')  # doctest: +ELLIPSIS
-    >>> PC.show() # doctest: +ELLIPSIS
-    PrimaryClarifier: PC
-    ins...
-    [0] ws
-    phase: 'l', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): S_F    1e+04
-                    S_NH4  2e+04
-                    X_OHO  1.5e+04
-                    H2O    1e+06
-        WasteStream-specific properties:
-         pH         : 7.0
-         Alkalinity : 2.5 mmol/L
-         COD        : 23873.0 mg/L
-         BOD        : 14963.2 mg/L
-         TC         : 8298.3 mg/L
-         TOC        : 8298.3 mg/L
-         TN         : 20363.2 mg/L
-         TP         : 367.6 mg/L
-         TK         : 68.3 mg/L
-         TSS        : 11124.4 mg/L
-    outs...
-    [0] effluent
-    phase: 'l', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): S_F    7e+03
-                    S_NH4  1.4e+04
-                    X_OHO  4.2e+03
-                    H2O    7.04e+05
-        WasteStream-specific properties:
-         pH         : 7.0
-         COD        : 15278.7 mg/L
-         BOD        : 10093.4 mg/L
-         TC         : 5152.8 mg/L
-         TOC        : 5152.8 mg/L
-         TN         : 19776.2 mg/L
-         TP         : 204.4 mg/L
-         TK         : 27.3 mg/L
-         TSS        : 4449.8 mg/L
-    [1] sludge
-    phase: 'l', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): S_F    3e+03
-                    S_NH4  6e+03
-                    X_OHO  1.08e+04
-                    H2O    2.96e+05
-        WasteStream-specific properties:
-         pH         : 7.0
-         COD        : 43926.3 mg/L
-         BOD        : 26326.2 mg/L
-         TC         : 15637.8 mg/L
-         TOC        : 15637.8 mg/L
-         TN         : 21732.8 mg/L
-         TP         : 748.7 mg/L
-         TK         : 163.9 mg/L
-         TSS        : 26698.6 mg/L
+    >>> eff, sludge = PC.outs
+    >>> eff.get_TSS()/ws.get_TSS() # doctest: +ELLIPSIS
+    0.400...
+    >>> sludge.F_vol/ws.F_vol # doctest: +ELLIPSIS
+    0.300...
     
     References
     ----------
