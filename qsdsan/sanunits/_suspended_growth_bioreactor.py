@@ -1275,7 +1275,6 @@ class PFR(SanUnit):
             D['Total tank depth'] = H = self._D_tank
             D['Tank width'] = W = self._W_to_D * H
             VSW = ns * W * t_wall * (H + fb)
-        print(f'VSW: {VSW} m3')
         VLW, VS = 0, 0 
 
         for i in range(1, N+1):
@@ -1299,17 +1298,14 @@ class PFR(SanUnit):
             else:
                 VLW += 2 * (L + 2*t_wall) * t_wall * (H + fb)
                 VS += (L + 2*t_wall) * (W + 2*t_wall) * t_slab
-        
-        print(f'VLW: {VLW} m3')
-        print(f'VS: {VS} m3')
 
         # Cumulative estimation of concrete volume and reinforcement steel
         D['Total volume of wall concrete'] = VSW + VLW
         D['Total volume of slab concrete'] = VS
         D['Total reinforcement steel'] = 77.58 * (VSW + VLW + VS) # [2]
         
-        for key in D:
-            if len(key) == 2:
-                print(f'Tank {key}:')
-                for item in D[key]: print(f'{item}: {D[key][item]} {U[item]}')
-            else: print(f'{key}: {D[key]} {U[key]}')
+        # for key in D:
+        #     if len(key) == 2:
+        #         print(f'Tank {key}:')
+        #         for item in D[key]: print(f'{item}: {D[key][item]} {U[item]}')
+        #     else: print(f'{key}: {D[key]} {U[key]}')

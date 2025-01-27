@@ -172,7 +172,7 @@ class FlatBottomCircularClarifier(SanUnit):
         elif diameter > 30 and diameter <= 43: height = 4.3
         elif diameter > 43: height = 4.6
         self._h = height
-
+        
         self._V = self._A * height
         self._N_layer = N_layer
         self.feed_layer = feed_layer
@@ -237,6 +237,10 @@ class FlatBottomCircularClarifier(SanUnit):
     def A_settle(self):
         '''[float] The surface area for settling in m^2, i.e., the area of the clarifier's flat bottom.'''
         return self._A
+    
+    @A_settle.setter
+    def A_settle(self, A):
+        self._A = A
 
     @property
     def h_layer(self):
@@ -508,7 +512,21 @@ class FlatBottomCircularClarifier(SanUnit):
         rp_arr = self._rp
         func_vx = lambda x_arr, xmin_arr : _settling_flux(x_arr, vmax_arr, vmaxp_arr, xmin_arr, rh_arr, rp_arr, nzeros)
         
+        self._mixed .mix_from(self.ins)
+        Q = self._mixed.F_vol * 24
+        self._A = Q/self._sor
+        diameter = np.sqrt(4 * self._A / np.pi)
+
+        if diameter <= 21: height = 3.7
+        elif diameter > 21 and diameter <= 30: height = 4
+        elif diameter > 30 and diameter <= 43: height = 4.3
+        elif diameter > 43: height = 4.6
+        self._h = height
+
+        self._V = self._A * self._h
+        self._hj = self._h/self._N_layer
         A, hj, V = self._A, self._hj, self._V
+
         # A_arr = np.full_like(nzeros, A)
         # hj_arr = np.full_like(nzeros, hj)
         J = np.zeros(n-1)
@@ -547,6 +565,7 @@ class FlatBottomCircularClarifier(SanUnit):
             settle_in[1:] = J
             dQC[-n:] = ((flow_in - flow_out)/A + settle_in - settle_out)/hj       # (n,)
             #*********solubles**********
+            print(f'V = {V} \n Z_in = {Z_in} \n Z = {Z}')
             dQC[:m] = Q_in/V*(Z_in - Z)
             # instrumental variables
             dX_comp[:] = (dC_in * X_in - dX_in * C_in) * x / X_in**2
@@ -640,14 +659,16 @@ class FlatBottomCircularClarifier(SanUnit):
         D['Volumetric flow'] = (mixed.get_total_flow('m3/hr')*24)/(D['Number of clarifiers'] - 1) # m3/day
         
         # Area of clarifier 
+        self._A = D['Volumetric flow']/self._sor
         D['Surface area'] = self._A/(D['Number of clarifiers'] - 1) # in m2
         D['Clarifier diameter'] = np.sqrt(4*D['Surface area']/np.pi) # in m
 
         # Sidewater depth of a cylindrical clarifier varies with clarifier diameter (MOP 8); in m
-        if D['Clarifier diameter'] <= 21: D['Clarifier depth'] = 3.7
-        elif D['Clarifier diameter'] > 21 and D['Clarifier diameter'] <= 30: D['Clarifier depth'] = 4
-        elif D['Clarifier diameter'] >30 and D['Clarifier diameter'] <= 43: D['Clarifier depth'] = 4.3
-        elif D['Clarifier diameter'] > 43: D['Clarifier depth'] = 4.6
+        if D['Clarifier diameter'] <= 21: self._h = 3.7
+        elif D['Clarifier diameter'] > 21 and D['Clarifier diameter'] <= 30: self._h = 4
+        elif D['Clarifier diameter'] >30 and D['Clarifier diameter'] <= 43: self._h = 4.3
+        elif D['Clarifier diameter'] > 43: self._h = 4.6
+        D['Clarifier depth'] = self._h
     
         D['Clarifier volume'] = D['Surface area'] * D['Clarifier depth'] # in m3 
     
@@ -1612,4 +1633,4 @@ class PrimaryClarifier(IdealClarifier):
             pumping += p.power_utility.rate
                 
         self.power_utility.rate += pumping*N
-        # self.power_utility.rate += scraper_power
+        # self.power_utility.rate += scraper_power        
