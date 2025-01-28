@@ -343,13 +343,11 @@ class Component(Chemical):
             else:
                 if self.measured_as in self.atoms:
                     i = 1/get_mass_frac(self.atoms)[self.measured_as]
-                    self._MW = self.chem_MW / i
                 elif self.measured_as == 'COD':
                     chem_charge = charge_from_formula(self.formula)
                     Cr2O7 = - cod_test_stoichiometry(self.atoms, chem_charge)['Cr2O7-2']
                     cod = Cr2O7 * 1.5 * molecular_weight({'O':2})
                     i = self.chem_MW/cod
-                    self._MW = cod
                 elif self.measured_as:
                     raise AttributeError(f'Must specify i_mass for component {self.ID} '
                                          f'measured as {self.measured_as}.')
@@ -439,23 +437,13 @@ class Component(Chemical):
         '''
         if measured_as:
             if not (measured_as in ('COD', *self.atoms) or 'i_'+measured_as in _num_component_properties):
-            # if measured_as == 'COD':
-            #     self._MW = molecular_weight({'O':2})
-            # elif measured_as in self.atoms or 'i_'+measured_as in _num_component_properties:
-            #     self._MW = molecular_weight({measured_as:1})
-            # else:
                 raise AttributeError(f"Component {self.ID} must be measured as "
                                      f"either COD or one of its constituent atoms, "
                                      f"if not as itself.")
-        # else:
-            # if self.atoms: self._MW = molecular_weight(self.atoms)
-            # else: self._MW = 1
-        self._MW = self.chem_MW
-
+        # self._MW = self.chem_MW
         if hasattr(self, '_measured_as'):
             if self._measured_as != measured_as:
                 self._convert_i_attr(measured_as)
-
         self._measured_as = measured_as
 
     formula = property(Chemical.formula.fget)

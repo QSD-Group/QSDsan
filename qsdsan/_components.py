@@ -151,13 +151,14 @@ class Components(Chemicals):
             for component in components: self.append(component)
 
 
-    def compile(self, skip_checks=False, ignore_inaccurate_molar_weight=False):
+    def compile(self, skip_checks=False, ignore_inaccurate_molar_weight=False, 
+                adjust_MW_to_measured_as=False):
         '''Cast as a :class:`CompiledComponents` object.'''
         components = tuple(self)
         tmo._chemicals.prepare(components, skip_checks)
         setattr(self, '__class__', CompiledComponents)
         
-        try: self._compile(components, ignore_inaccurate_molar_weight)
+        try: self._compile(components, ignore_inaccurate_molar_weight, adjust_MW_to_measured_as)
         except Exception as error:
             setattr(self, '__class__', Components)
             setattr(self, '__dict__', {i.ID: i for i in components})
@@ -170,7 +171,8 @@ class Components(Chemicals):
 
     def default_compile(self, lock_state_at='l',
                         soluble_ref='Urea', gas_ref='CO2', particulate_ref='Stearin', 
-                        ignore_inaccurate_molar_weight=False):
+                        ignore_inaccurate_molar_weight=False,
+                        adjust_MW_to_measured_as=False):
         '''
         Auto-fill of the missing properties of the components and compile,
         boiling point (Tb) and molar volume (V) will be copied from the reference component,
@@ -191,7 +193,16 @@ class Components(Chemicals):
         ignore_inaccurate_molar_weight : bool
             Default is False, need to be manually set to True if having components
             with `measured_as` attributes. This is to alert the users that
-            calculations for attributes using molecular weight will be inacurate.
+            calculations for attributes using molecular weight will be inacurate,
+            unless all components have sensible MWs and `adjust_MW_to_measured_as`
+            is set to True.
+        adjust_MW_to_measured_as : bool
+            Default is False. Manually set it to True to adjust the MW data of
+            components with `measured_as` attributes and chemical formulas. This 
+            is to enable correct calculations of component molar flows when possible.
+            For components without a sensible MW, their MWs will remain 1 by default.
+            This is pertinent for calculations of molar flows and any thermodynamic
+            property of a stream.
 
         Examples
         --------
@@ -266,7 +277,8 @@ class Components(Chemicals):
             # Copy all remaining properties from water
             cmp.copy_models_from(water)
         for cmp in self: cmp.default()
-        self.compile(ignore_inaccurate_molar_weight=ignore_inaccurate_molar_weight)
+        self.compile(ignore_inaccurate_molar_weight=ignore_inaccurate_molar_weight,
+                     adjust_MW_to_measured_as=adjust_MW_to_measured_as)
 
 
     @classmethod
@@ -621,15 +633,20 @@ class CompiledComponents(CompiledChemicals):
         pass
 
 
-    def _compile(self, components, ignore_inaccurate_molar_weight):
+    def _compile(self, components, ignore_inaccurate_molar_weight, adjust_MW_to_measured_as):
         dct = self.__dict__
         tuple_ = tuple # this speeds up the code
         components = tuple_(dct.values())
         CompiledChemicals._compile(self, components)
         for component in components:
             missing_properties = component.get_missing_properties(_key_component_properties)
-            if (ignore_inaccurate_molar_weight == False) and (component.measured_as != None):
-                raise RuntimeError(f'{component} does not have a sensible molar weight. Set ignore_inaccurate_molar_weight=True to bypass this error.')
+            if component.measured_as:
+                inaccurate = True
+                if component.formula and adjust_MW_to_measured_as:
+                    component._MW = component.chem_MW / component.i_mass
+                    inaccurate = False
+                if (not ignore_inaccurate_molar_weight) and inaccurate: 
+                    raise RuntimeError(f'{component} does not have a sensible molar weight. Set ignore_inaccurate_molar_weight=True to bypass this error.')
             if not missing_properties: continue
             missing = utils.repr_listed_values(missing_properties)
             raise RuntimeError(f'{component} is missing key component-related properties ({missing}).')
