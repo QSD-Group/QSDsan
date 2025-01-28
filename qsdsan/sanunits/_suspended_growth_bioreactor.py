@@ -883,7 +883,7 @@ class PFR(SanUnit):
                  X_P    6.95e+05
                  S_O    770
                  S_NO   1.6e+04
-                 S_NH   2.69e+03
+                 S_NH   2.68e+03
                  S_ND   1.06e+03
                  X_ND   5.42e+03
                  S_ALK  7.65e+04
@@ -892,22 +892,22 @@ class PFR(SanUnit):
      WasteStream-specific properties:
       pH         : 7.0
       Alkalinity : 2.5 mmol/L
-      COD        : 4387.5 mg/L
-      BOD        : 1562.7 mg/L
-      TC         : 1599.3 mg/L
-      TOC        : 1549.6 mg/L
-      TN         : 328.8 mg/L
+      COD        : 4389.1 mg/L
+      BOD        : 1563.3 mg/L
+      TC         : 1599.8 mg/L
+      TOC        : 1550.1 mg/L
+      TN         : 329.0 mg/L
       TP         : 68.2 mg/L
       TK         : 15.1 mg/L
-      TSS        : 3267.2 mg/L
+      TSS        : 3268.3 mg/L
      Component concentrations (mg/L):
       S_I    29.9
       S_S    1.5
-      X_I    1149.6
+      X_I    1150.0
       X_S    49.3
-      X_BH   2556.1
+      X_BH   2557.0
       X_BA   149.5
-      X_P    451.7
+      X_P    451.9
       S_O    0.5
       S_NO   10.4
       S_NH   1.7
@@ -915,7 +915,7 @@ class PFR(SanUnit):
       X_ND   3.5
       S_ALK  49.7
       S_N2   13.7
-      H2O    993864.4
+      H2O    994140.9
   
     See Also
     --------
