@@ -226,7 +226,7 @@ class Components(Chemicals):
         ...                       particle_size='Soluble', degradability='Readily', organic=True)
         >>> Acs = Components([Ac, Ac_as_COD])
         >>> Acs.default_compile(ignore_inaccurate_molar_weight=True, 
-                                adjust_MW_to_measured_as=False)
+        ...                     adjust_MW_to_measured_as=False)
         >>> set_thermo(Acs)
         >>> # Create a WasteStream object with 1 kmol/hr of each acetic acid component, 
         >>> # knowing 1 mol acetate is equivalent to 2 mol of O2 demand
@@ -240,7 +240,7 @@ class Components(Chemicals):
         >>> s1.mol
         sparse([1.   , 1.066])
         >>> s1.vol
-        sparse([0.062, 0.066]) # inaccurate calculation of volumetric flow
+        sparse([0.05 , 0.054])
         
         >>> # To fix the molar flow calculation, simply set `adjust_MW_to_measured_as` to True when compile.
         >>> Acs_MW_adjusted = Components([Ac, Ac_as_COD])
@@ -250,7 +250,7 @@ class Components(Chemicals):
         >>> s2.mol
         sparse([1., 1.])
         >>> s2.vol
-        sparse([0.062, 0.062])
+        sparse([0.05, 0.05])
         
         '''
         isa = isinstance
