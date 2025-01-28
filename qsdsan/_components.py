@@ -206,7 +206,7 @@ class Components(Chemicals):
 
         Examples
         --------
-        >>> from qsdsan import Component, Components
+        >>> from qsdsan import Component, Components, Stream, set_thermo
         >>> X = Component('X', phase='s', measured_as='COD', i_COD=0, description='Biomass',
         ...               organic=True, particle_size='Particulate', degradability='Readily')
         >>> X_inert = Component('X_inert', phase='s', description='Inert biomass', i_COD=0,
@@ -214,9 +214,44 @@ class Components(Chemicals):
         >>> Substrate = Component('Substrate', phase='s', measured_as='COD', i_mass=18.3/300,
         ...                       organic=True, particle_size='Particulate', degradability='Readily')
         >>> cmps = Components([X, X_inert, Substrate])
+        >>> # As none of the components above has a chemical formula, i.e., no sensible MW, 
+        >>> # simply set `ignore_inaccurate_molar_weight` to True to bypass error.
         >>> cmps.default_compile(ignore_inaccurate_molar_weight=True)
         >>> cmps
         CompiledComponents([X, X_inert, Substrate])
+        
+        >>> Ac = Component('Ac', search_ID='CH3COOH', particle_size='Soluble', 
+        ...                degradability='Readily', organic=True)
+        >>> Ac_as_COD = Component('Ac_as_COD', search_ID='CH3COOH', measured_as='COD', 
+        ...                       particle_size='Soluble', degradability='Readily', organic=True)
+        >>> Acs = Components([Ac, Ac_as_COD])
+        >>> Acs.default_compile(ignore_inaccurate_molar_weight=True, 
+                                adjust_MW_to_measured_as=False)
+        >>> set_thermo(Acs)
+        >>> # Create a WasteStream object with 1 kmol/hr of each acetic acid component, 
+        >>> # knowing 1 mol acetate is equivalent to 2 mol of O2 demand
+        >>> s1 = Stream('s1', Ac=60.052, Ac_as_COD=2 * 32, units='kg/hr')
+        >>> s1.mass
+        sparse([60.052, 64.])
+        
+        >>> # However, the calculated molar flow is inaccurate because the MW for Ac_as_COD
+        >>> # is inconsistent with its `measured_as`. This also affects the
+        >>> # calculation of other thermodynamic properties.
+        >>> s1.mol
+        sparse([1.   , 1.066])
+        >>> s1.vol
+        sparse([0.062, 0.066]) # inaccurate calculation of volumetric flow
+        
+        >>> # To fix the molar flow calculation, simply set `adjust_MW_to_measured_as` to True when compile.
+        >>> Acs_MW_adjusted = Components([Ac, Ac_as_COD])
+        >>> Acs_MW_adjusted.default_compile(adjust_MW_to_measured_as=True)
+        >>> set_thermo(Acs_MW_adjusted)
+        >>> s2 = Stream('s2', Ac=60.052, Ac_as_COD=2 * 32, units='kg/hr')
+        >>> s2.mol
+        sparse([1., 1.])
+        >>> s2.vol
+        sparse([0.062, 0.062])
+        
         '''
         isa = isinstance
         get = getattr
@@ -651,6 +686,9 @@ class CompiledComponents(CompiledChemicals):
             missing = utils.repr_listed_values(missing_properties)
             raise RuntimeError(f'{component} is missing key component-related properties ({missing}).')
 
+        if adjust_MW_to_measured_as:
+            dct['MW'] = component_data_array(components, 'MW')
+
         for i in _num_component_properties:
             dct[i] = component_data_array(components, i)
 
@@ -663,7 +701,7 @@ class CompiledComponents(CompiledChemicals):
         org = dct['org'] = np.asarray([int(cmp.organic) for cmp in components])
         inorg = dct['inorg'] = np.ones_like(org) - org
         ID_arr = dct['_ID_arr'] = np.asarray([i.ID for i in components])
-        dct['chem_MW'] = np.asarray([i.chem_MW for i in components])
+        dct['chem_MW'] = component_data_array(components, 'chem_MW')
 
         # Inorganic degradable non-gas, incorrect
         inorg_b = inorg * b * (s+c)
