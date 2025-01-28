@@ -565,7 +565,6 @@ class FlatBottomCircularClarifier(SanUnit):
             settle_in[1:] = J
             dQC[-n:] = ((flow_in - flow_out)/A + settle_in - settle_out)/hj       # (n,)
             #*********solubles**********
-            print(f'V = {V} \n Z_in = {Z_in} \n Z = {Z}')
             dQC[:m] = Q_in/V*(Z_in - Z)
             # instrumental variables
             dX_comp[:] = (dC_in * X_in - dX_in * C_in) * x / X_in**2
