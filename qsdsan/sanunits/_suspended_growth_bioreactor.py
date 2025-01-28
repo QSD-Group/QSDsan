@@ -1249,9 +1249,6 @@ class PFR(SanUnit):
         'Tank width': 'm',
         'Total tank depth': 'm',
         'Tank length': 'm',
-        # 'Volume of concrete wall': 'm3',
-        # 'Volume of concrete slab': 'm3',
-        # 'Reinforcement steel': 'kg', 
         'Total volume of wall concrete': 'm3',
         'Total volume of slab concrete': 'm3',
         'Total reinforcement steel': 'kg' 
@@ -1263,17 +1260,15 @@ class PFR(SanUnit):
         U = self._units
         fb = self._freeboard
         t_wall, t_slab = self._t_wall, self._t_slab
+        D['Total tank depth'] = H = self._D_tank
+        D['Tank width'] = W = self._W_to_D * H
 
         # If tanks share walls, estimating concrete required for short walls
         if self.share_walls:
             ns = N + 1
-            D['Total tank depth'] = H = self._D_tank
-            D['Tank width'] = W = self._W_to_D * H
             VSW = ns * W * t_wall * (H + fb)
         else:
             ns = 2 * N 
-            D['Total tank depth'] = H = self._D_tank
-            D['Tank width'] = W = self._W_to_D * H
             VSW = ns * W * t_wall * (H + fb)
         VLW, VS = 0, 0 
 
