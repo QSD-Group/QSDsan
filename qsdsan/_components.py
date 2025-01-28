@@ -232,7 +232,7 @@ class Components(Chemicals):
         >>> # knowing 1 mol acetate is equivalent to 2 mol of O2 demand
         >>> s1 = Stream('s1', Ac=60.052, Ac_as_COD=2 * 32, units='kg/hr')
         >>> s1.mass
-        sparse([60.052, 64.])
+        sparse([60.052, 64.   ])
         
         >>> # However, the calculated molar flow is inaccurate because the MW for Ac_as_COD
         >>> # is inconsistent with its `measured_as`. This also affects the
