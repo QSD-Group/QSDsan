@@ -1,20 +1,20 @@
-parameter,name,unit,expected,low,high,distribution,reference,Criterion
-water_recovery,,fraction,0.6,0.33,0.75,uniform,"Metcalf & Eddy, et al. Wastewater engineering: treatment and resource recovery. McGraw Hill Education, 2014. page 1196",1
-daily_flow_rate,,L/d,100,,,constant,Assumption based on 6 users per day,1
-water_flux,,L/(m2*h),15,,,constant,"Kucera, Jane. ""Reverse osmosis: design, process, and applications for engineers."" J. Kucera//Wiley-Scrivener 2010 (2015): 416.page 27",1
-TDS_removal,,fraction,0.95,0.9,0.99,triangular,page 12: https://www.dupont.com/content/dam/dupont/amer/us/en/water-solutions/public/documents/en/RO-NF-FilmTec-Manual-45-D01504-en.pdf,1
-reverse_osmosis_system_cost,,USD,401.55875,69.99,1600,triangular,https://crystalquest.com/products/reverse-osmosis-system-low-flow?variant=8110716518514,4.2
-piping_cost,,USD,93,65.1,120.9,uniform,89895K769: https://www.mcmaster.com/products/pipe/tubing~/smooth-bore-seamless-stainless-steel-tubing/,3
-RO_system_power_demand,,kW,0.5,0.35,0.65,uniform,https://crystalquest.com/products/whole-house-reverse-osmosis-system?variant=40999693582429,3
-membrane_cost,,USD,140,98,182,uniform,https://www.reverseosmosis.com/products/axeon-hf1-2521-400-gpd-150-psi-ro-membrane-element-200375?srsltid=AfmBOooIPppk_wlfk_6KIXkdB_kmg-vPO2VxMAoeTEURBODU5NvnYipW,3
-membrane_life_time_severe_fouling,influent COD > 3000 mg/L,yr,0.1,0.07,0.13,constant,https://cdn.shopify.com/s/files/1/1286/9985/files/200-300GPD-RO-WHManual_17e60eea-12e5-45be-ba29-40838b87a535.pdf?v=1602075981,1
-membrane_life_time_short,3000 mg/L>influent COD > 500 mg/L,yr,0.5,0.35,0.65,constant,https://cdn.shopify.com/s/files/1/1286/9985/files/200-300GPD-RO-WHManual_17e60eea-12e5-45be-ba29-40838b87a535.pdf?v=1602075981,1
-membrane_life_time_medium,500 mg/L>influent COD > 50 mg/L,yr,1,0.7,1.3,constant,https://cdn.shopify.com/s/files/1/1286/9985/files/200-300GPD-RO-WHManual_17e60eea-12e5-45be-ba29-40838b87a535.pdf?v=1602075981,1
-membrane_life_time_long,influent COD < 50 mg/L,yr,5,3.5,6.5,constant,https://cdn.shopify.com/s/files/1/1286/9985/files/200-300GPD-RO-WHManual_17e60eea-12e5-45be-ba29-40838b87a535.pdf?v=1602075981,1
-reverse_osmosis_maintenance,,hr/yr,12,8.4,15.6,uniform,Assumption,3
-reverse_osmosis_operation,,hr/d,2,1.4,2.6,uniform,Assumption,3
-wages,,USD/h,3.64,1.82,5.46,uniform,"Gates Scenario Specific Analysis 2022, for country specific data:  https://ilostat.ilo.org/data/",1
-material_replacement_cost,,fraction,0.04,0.02,0.06,uniform,GatesTechnology Portfolio Report 2022,1
-GFRPlastic_weight,,kg,15,10.5,19.5,uniform,https://crystalquest.com/products/whole-house-reverse-osmosis-system?variant=40999693582429,3
-membrane_area,,m2,2,1.4,2.6,uniform,Assumption,3
-Steel_weight,,kg,5,3.5,6.5,uniform,https://crystalquest.com/products/whole-house-reverse-osmosis-system?variant=40999693582429,3
+parameter,name,unit,expected,low,high,distribution
+water_recovery,,fraction,0.6,0.33,0.75,uniform
+daily_flow_rate,,L/d,100,,,constant
+water_flux,,L/(m2*h),15,,,constant
+TDS_removal,,fraction,0.95,0.9,0.99,triangular
+reverse_osmosis_system_cost,,USD,401.55875,69.99,1600,triangular
+piping_cost,,USD,93,65.1,120.9,uniform
+RO_system_power_demand,,kW,0.5,0.35,0.65,uniform
+membrane_cost,,USD,140,98,182,uniform
+membrane_life_time_severe_fouling,influent COD > 3000 mg/L,yr,0.1,0.07,0.13,constant
+membrane_life_time_short,3000 mg/L>influent COD > 500 mg/L,yr,0.5,0.35,0.65,constant
+membrane_life_time_medium,500 mg/L>influent COD > 50 mg/L,yr,1,0.7,1.3,constant
+membrane_life_time_long,influent COD < 50 mg/L,yr,5,3.5,6.5,constant
+reverse_osmosis_maintenance,,hr/yr,12,8.4,15.6,uniform
+reverse_osmosis_operation,,hr/d,2,1.4,2.6,uniform
+wages,,USD/h,3.64,1.82,5.46,uniform
+material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
+GFRPlastic_weight,,kg,15,10.5,19.5,uniform
+membrane_area,,m2,2,1.4,2.6,uniform
+Steel_weight,,kg,5,3.5,6.5,uniform

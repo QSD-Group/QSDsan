@@ -1,10 +1,10 @@
 parameter,name (if diff),unit,expected,low,high,distribution
 programmable_logic_controller_cost,,USD,313.698,250.9584,376.4376,uniform
 PLC_quantities,,pieces,4,3,5,constant
-IO_relay_module_cost,,USD,48.81,34.167,63.453,Uniform
-relay_module_quantity,,pieces,8,5.6,10.4,Uniform
-sensors_cost,,USD,400,280,520,Uniform
-cables,,USD,200,140,260,Uniform
+IO_relay_module_cost,,USD,48.81,34.167,63.453,uniform
+relay_module_quantity,,pieces,8,5.6,10.4,uniform
+sensors_cost,,USD,400,280,520,uniform
+cables,,USD,200,140,260,uniform
 control_polycarbonate_weight,,kg,3,2.1,3.9,uniform
 control_cable_length,,m,50,35,65,uniform
 control_aluminum_weight,,kg,0.6,0.42,0.78,uniform

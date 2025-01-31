@@ -488,51 +488,6 @@ class LCA:
         return impacts
     
     def get_other_unit_impacts(self, units=None, annual=False):
-        # '''
-        # Return all additional impacts from "other" :class:`ImpactItems` objects
-        # for specified units, based on defined quantity.
-        # '''
-        # # Set default units to construction_units if no specific units are provided
-        # units = self.construction_units if units is None else units
-    
-        # # Ensure units is iterable
-        # if not isinstance(units, Iterable) or isinstance(units, str):
-        #     units = (units,)
-    
-        # # Set the time frame (in hours) over which to calculate impacts
-        # if time is None:
-        #     time = self.lifetime_hr
-        # else:
-        #     time = auom(time_unit).convert(float(time), 'hr')
-    
-        # # Initialize a dictionary to accumulate impacts for each indicator
-        # impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-    
-        # # Get other items associated with the current instance
-        # other_dct = self.other_items
-    
-        # # Loop through each specified unit to calculate its additional impacts
-        # for unit in units:
-        #     if not isinstance(unit, SanUnit):
-        #         continue
-    
-        #     # Calculate the ratio based on the unit's lifetime or default to 1
-        #     if unit.lifetime and not isinstance(unit.lifetime, dict):
-        #         unit_lifetime = auom('yr').convert(unit.lifetime, 'hr')
-        #         ratio = ceil(time/unit_lifetime) if not self.annualize_construction else time/unit_lifetime
-        #     else:
-        #         ratio = 1.
-        #         # Use unit's power_utility rate to determine quantity
-        #     quantity = unit.power_utility.rate * self.lifetime_hr  # Example: daily rate based on power usage
-        #     # Accumulate impacts based on the calculated ratio for each impact item in other_dct
-        #     for item_id, details in other_dct.items():
-        #         item = ImpactItem.get_item(item_id)
-        #         for indicator, cf_value in item.CFs.items():
-        #             if indicator not in impacts:
-        #                 continue
-        #             impacts[indicator] += cf_value * quantity * (time / self.lifetime_hr) * ratio
-
-        # return impacts
         
         '''
         Return the total impacts of "other" ImpactItems objects for specified units,
