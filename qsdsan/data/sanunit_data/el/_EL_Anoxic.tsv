@@ -1,0 +1,17 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+tau		days	1			constant	CIDI
+COD_removal		fraction of COD removal	0.7	0.6	0.8	uniform	"Tchobanoglous et al,. 2014 (EAWAG: 80-85fraction of BOD removal)"
+MCF_decay		fraction of anaerobic conversion of degraded COD	1			constant	"IPCC, 2006"
+N_max_decay		fraction of N removal	0.8	0.7	0.9	triangular	"Orner and Mihelcic, 2017"
+N2O_EF_decay		fraction of of degraded N emitted as N2O	0.005	0.0005	0.006	triangular	"IPCC, 2006; Leeds"
+tank_steel_volume	estimated total voume of primary clarifier tank	m3	7.33			constant	BOM
+steel_density	density of steel	kg/m3	7850			constant	BOM
+anoxic_tank_cost		USD	9388	8449.2	10326.8	uniform	https://www.gwkent.com/stainless-steel-slope-bottom-storage-tank-3900-liters-1030-gallons.html?utm_source=google_shopping&srsltid=AfmBOoqk0fYAXHC4ofjtaIxQssJd9_-YUTmn4i2fw6-mDJ8_kT3P0N1ANpc&gQT=1
+weld_female_adapter_fittings		USD	6.87	6.183	7.557	uniform	https://thedrainagesource.com/4-pvc-sdr35-solvent-weld-female-adapter-s-x-fpt/?srsltid=AfmBOorc5xzjQmxhmGZ2dstlABtaDC0az8KOrbJaDaI1zrV2U6IJzc1r
+pipeline_connectors		USD	13.16	11.844	14.476	uniform	https://www.eco-filtration.co.uk/product/110mm-4-pond-threaded-tank-connector/?srsltid=AfmBOoqFzwEcDdzmztkcvuSYA_anY1hoj5U5rOQz0Q8s1FUBhTeQpdX2
+chemical glucose_dosage		%	5	4.5	5.5	uniform	BOM
+chemical_glucose_price		USD/kg	0.75	0.7	0.8	uniform	https://www.alibaba.com/product-detail/Bulk-Food-Grade-glucose-Powder-99_1600987002678.html?spm=a2700.galleryofferlist.p_offer.d_title.48b513a084WF5B&s=p
+anoxic_tank_lifetime		yr	8	7.2	8.8	uniform	assumption
+weld_female_adapter_fittings_lifetime		yr	5	4.5	5.5	uniform	assumption
+pipeline_connectors_lifetime		yr	5	4.5	5.5	uniform	assumption
+power_demand_AnoxicTank	energy consumption for anoxic tank	KWh/day	1.1	0.99	1.21	uniform	assumption

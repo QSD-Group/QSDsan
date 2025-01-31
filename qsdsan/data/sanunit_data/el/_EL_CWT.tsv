@@ -1,0 +1,13 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+tau		days	1			constant	CIDI
+tank_steel_volume	estimated total voume of primary clarifier tank	m3	14.67			constant	BOM
+steel_density	density of steel	kg/m3	7850			constant	BOM
+clear_water_tank_cost		USD	18788.88	16909.992	20667.768	uniform	https://www.gwkent.com/stainless-steel-slope-bottom-storage-tank-3900-liters-1030-gallons.html?utm_source=google_shopping&srsltid=AfmBOoqk0fYAXHC4ofjtaIxQssJd9_-YUTmn4i2fw6-mDJ8_kT3P0N1ANpc&gQT=1
+weld_female_adapter_fittings		USD	6.87	6.183	7.557	uniform	https://thedrainagesource.com/4-pvc-sdr35-solvent-weld-female-adapter-s-x-fpt/?srsltid=AfmBOorc5xzjQmxhmGZ2dstlABtaDC0az8KOrbJaDaI1zrV2U6IJzc1r
+pipeline_connectors		USD	13.16	11.844	14.476	uniform	https://www.eco-filtration.co.uk/product/110mm-4-pond-threaded-tank-connector/?srsltid=AfmBOoqFzwEcDdzmztkcvuSYA_anY1hoj5U5rOQz0Q8s1FUBhTeQpdX2
+O3_generation_machine_cost		USD	231	207.9	254.1	uniform	https://ruihuaele.en.made-in-china.com/product/KFkxpBQHXaWX/China-220VAC-Portable-10g-Hr-Ozone-Generator-for-Air-Purifier.html?pv_id=1ieeglmde4f&faw_id=1ieegmpq8ca6
+clear_water_tank_lifetime		yr	8	7.2	8.8	uniform	assumption
+weld_female_adapter_fittings_lifetime		yr	5	4.5	5.5	uniform	assumption
+pipeline_connectors_lifetime		yr	5	4.5	5.5	uniform	assumption
+O3_generation_machine_lifetime							
+power_demand_CWT	energy consumption for clear water tank	KWh/day	0.8	0.72	0.88	uniform	assumption

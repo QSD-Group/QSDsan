@@ -1,0 +1,41 @@
+parameter	name	unit	expected	low	high	distribution	reference
+PVC_weight		kg	120	108	132	uniform	assumption
+HDPE_weight		kg	80	72	88	uniform	assumption
+membrane_filters_M	PVDF material	USD	13.33	11.997	14.663	triangular	Duke Center for WaSH-AID design team bill of materials
+membrane_filters_size	1005 mm x 510 mm	USD	6.16	5.544	6.776	triangular	Duke Center for WaSH-AID design team bill of materials
+membrane_filters_pause_size	1 micron 	USD	3.09	2.781	3.399	triangular	Duke Center for WaSH-AID design team bill of materials
+membrane_filters_chassis_M	Stainless steel/	USD	0.72	0.648	0.792	triangular	Duke Center for WaSH-AID design team bill of materials
+membrane_filters_air_diffuser	20 mm class 12 pipe/ 20 mm 16 bar fittings /solvent weld 	USD	1.39	1.251	1.529	triangular	Duke Center for WaSH-AID design team bill of materials
+membrane_filters_air_diffuser_chassis	Stainless steel / grade 304	USD	16	14.4	17.6	triangular	Duke Center for WaSH-AID design team bill of materials
+overflow_membrane2collection	110 mm bulk tank connector / 110mm solvent weld female adaptor 	USD	4.8	4.32	5.28	triangular	Duke Center for WaSH-AID design team bill of materials
+overflow_clear_water2collection	110 mm bulk tank connector / 110mm solvent weld female adaptor 	USD	0.64	0.576	0.704	triangular	Duke Center for WaSH-AID design team bill of materials
+overflow_primary_clarifier2anoixc	110 mm bulk tank connector 	USD	1.28	1.152	1.408	triangular	Duke Center for WaSH-AID design team bill of materials
+overflow_anoxic2aerobic	110 mm bulk tank connector 	USD	1.92	1.728	2.112	triangular	Duke Center for WaSH-AID design team bill of materials
+overflow_aerobic2membrane	110 mm bulk tank connector 	USD	0.37	0.333	0.407	triangular	Duke Center for WaSH-AID design team bill of materials
+200m_ozone_pipeline	HDPE / 6 bar pressure	USD	7.84	7.056	8.624	triangular	Duke Center for WaSH-AID design team bill of materials
+32mm_pipeline_fittings	Solvent weld class 12 pipe / fittings rated @ 16 bar	USD	2.48	2.232	2.728	triangular	Duke Center for WaSH-AID design team bill of materials
+40mm_pipeline_fittings	Solvent weld class 12 pipe / fittings rated @ 16 bar	USD	0.49	0.441	0.539	triangular	Duke Center for WaSH-AID design team bill of materials
+60mm_pipeline_fittings	Solvent weld class 12 pipe / fittings rated @ 16 bar	USD	2.48	2.232	2.728	triangular	Duke Center for WaSH-AID design team bill of materials
+50mm_ball_valves	Female threaded ball valve / rated @ 16 bar	USD	4.92	4.428	5.412	triangular	Duke Center for WaSH-AID design team bill of materials
+aerobic_air_diffuser	Solvent weld class 12 pipe / fittings rated @ 16 bar/ 12 mm holes- outlet	USD	2.61	2.349	2.871	triangular	Duke Center for WaSH-AID design team bill of materials
+lifetime_membrane_filters_M	PVDF material	y	3	2.7	3.3	uniform	
+lifetime_membrane_filters_size	1005 mm x 510 mm	y	3	2.7	3.3	uniform	
+lifetime_membrane_filters_pause_size	1 micron 	y	3	2.7	3.3	uniform	
+lifetime_membrane_filters_chassis_M	Stainless steel/	y	3	2.7	3.3	uniform	
+lifetiime_membrane_filters_air_diffuser	20 mm class 12 pipe/ 20 mm 16 bar fittings /solvent weld 	y	3	2.7	3.3	uniform	
+lifetime_membrane_filters_air_diffuser_chassis	Stainless steel / grade 304	y	3	2.7	3.3	uniform	
+lifetime_overflow_membrane2collection	110 mm bulk tank connector / 110mm solvent weld female adaptor 	y	3	2.7	3.3	uniform	
+lifetime_overflow_clear_water2collection	110 mm bulk tank connector / 110mm solvent weld female adaptor 	y	3	2.7	3.3	uniform	
+lifetime_overflow_primary_clarifier2anoixc	110 mm bulk tank connector 	y	3	2.7	3.3	uniform	
+lifetiime_overflow_anoxic2aerobic	110 mm bulk tank connector 	y	3	2.7	3.3	uniform	
+lifetime_overflow_aerobic2membrane	110 mm bulk tank connector 	y	3	2.7	3.3	uniform	
+lifetime_200m_ozone_pipeline	HDPE / 6 bar pressure	y	3	2.7	3.3	uniform	
+lifetime_32mm_pipeline_fittings	Solvent weld class 12 pipe / fittings rated @ 16 bar	y	3	2.7	3.3	uniform	
+lifetime_40mm_pipeline_fittings	Solvent weld class 12 pipe / fittings rated @ 16 bar	y	3	2.7	3.3	uniform	
+lifeime_60mm_pipeline_fittings	Solvent weld class 12 pipe / fittings rated @ 16 bar	y	3	2.7	3.3	uniform	
+lifetime_50mm_ball_valves	Female threaded ball valve / rated @ 16 bar	y	3	2.7	3.3	uniform	
+lifetime_aerobic_air_diffuser	Solvent weld class 12 pipe / fittings rated @ 16 bar/ 12 mm holes- outlet	y	3	2.7	3.3	uniform	
+power_demand_system		kWh	40	36	44	triangular	Duke Center for WaSH-AID design team
+							
+							
+							

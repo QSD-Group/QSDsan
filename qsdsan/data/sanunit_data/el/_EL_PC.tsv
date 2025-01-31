@@ -1,0 +1,15 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+tau	HRT for Tank 1	days	1	0.5	2	triangular	BMGF Report
+COD_removal		fraction of COD removal	0.665	0.55	0.78	uniform	"Tchobanoglous et al,. 2014 (EAWAG: 80-85fraction of BOD removal)"
+MCF_decay		fraction of anaerobic conversion of degraded COD	1			constant	"IPCC, 2006"
+N_max_decay		fraction of N removal	0.23	0.1725	0.2875	constant	"Orner and Mihelcic, 2017"
+N2O_EF_decay		fraction of of degraded N emitted as N2O	0.005	0.0005	0.006	triangular	"IPCC, 2006; Leeds"
+PC_tank_cost	estimated cost of three tanks	USD	4277.77	3849.993	4705.547	triangular	https://www.gwkent.com/stainless-steel-slope-bottom-storage-tank-3900-liters-1030-gallons.html?utm_source=google_shopping&srsltid=AfmBOoqk0fYAXHC4ofjtaIxQssJd9_-YUTmn4i2fw6-mDJ8_kT3P0N1ANpc&gQT=1
+tank_steel_volume	estimated total voume of primary clarifier tank	m3	3.34			constant	BOM
+steel_density	density of steel	kg/m3	7850			constant	BOM
+weld_female_adapter_fittings		USD	6.87	6.183	7.557	uniform	https://thedrainagesource.com/4-pvc-sdr35-solvent-weld-female-adapter-s-x-fpt/?srsltid=AfmBOorc5xzjQmxhmGZ2dstlABtaDC0az8KOrbJaDaI1zrV2U6IJzc1r
+pipeline_connectors		USD	13.16	11.844	14.476	uniform	https://www.eco-filtration.co.uk/product/110mm-4-pond-threaded-tank-connector/?srsltid=AfmBOoqFzwEcDdzmztkcvuSYA_anY1hoj5U5rOQz0Q8s1FUBhTeQpdX2
+PC_tank_lifetime		yr	5	4.5	5.5	uniform	assumption
+weld_female_adapter_fittings_lifetime		yr	5	4.5	5.5	uniform	"assu,ption"
+pipeline_connectors_lifetime		yr	5	4.5	5.5	uniform	assumption
+power_demand_PC	energy consumption for primary clarifier tank	KWh/day	0.3	0.27	0.33	uniform	assumption
