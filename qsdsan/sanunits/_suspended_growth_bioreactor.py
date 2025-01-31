@@ -857,7 +857,7 @@ class PFR(SanUnit):
     --------
     >>> import qsdsan.sanunits as su, qsdsan.processes as pc
     >>> from qsdsan import WasteStream
-    >>> cmps = pc.create_asm1_cmps()
+    >>> cmps = pc.create_asm1_cmps(adjust_MW_to_measured_as=False)
     >>> asm1 = pc.ASM1()
     >>> inf = WasteStream('inf', H2O=1.53e6, S_I=46, S_S=54, X_I=1770, X_S=230, 
     ...                   X_BH=3870, X_BA=225, X_P=680, S_O=0.377, S_NO=7.98, 
@@ -892,7 +892,7 @@ class PFR(SanUnit):
      WasteStream-specific properties:
       pH         : 7.0
       Alkalinity : 2.5 mmol/L
-      COD        : 4389.1 mg/L
+      COD        : 4389.0 mg/L
       BOD        : 1563.3 mg/L
       TC         : 1599.8 mg/L
       TOC        : 1550.1 mg/L
@@ -915,7 +915,7 @@ class PFR(SanUnit):
       X_ND   3.5
       S_ALK  49.7
       S_N2   13.7
-      H2O    994140.9
+      H2O    994138.1
   
     See Also
     --------

@@ -489,7 +489,7 @@ class Incinerator(SanUnit):
     >>> cmps_test = qs.Components([cmps.S_F, cmps.S_NH4, cmps.X_OHO, cmps.H2O, 
     ...                            cmps.S_CH4, cmps.S_O2, cmps.S_N2, cmps.S_H2, 
     ...                            cmps.X_Ig_ISS, CO2])
-    >>> cmps_test.default_compile()
+    >>> cmps_test.default_compile(ignore_inaccurate_molar_weight=True)
     >>> qs.set_thermo(cmps_test)
     >>> ws = qs.WasteStream('ws', S_F=10, S_NH4=20, X_OHO=15, H2O=1000)
     >>> natural_gas = qs.WasteStream('nat_gas', phase='g', S_CH4=1000)

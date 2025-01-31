@@ -158,7 +158,7 @@ def create_pm2asm2d_cmps(set_thermo=True):
                            S_O2, S_NH, S_NO, S_P, X_N_ALG, X_P_ALG,
                            S_N2, S_ALK, S_I, X_I, X_S, X_H, X_AUT, cmps.H2O])
 
-    cmps_pm2asm2d.default_compile()
+    cmps_pm2asm2d.default_compile(ignore_inaccurate_molar_weight=True)
 
     if set_thermo: settings.set_thermo(cmps_pm2asm2d)
     return cmps_pm2asm2d
