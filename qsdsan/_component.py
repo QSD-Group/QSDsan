@@ -185,8 +185,8 @@ class Component(Chemical):
 
     .. note::
 
-        [1] Element ratios like `i_C`, `i_N`, `i_P`, `i_K`, `i_Mg`, and `i_Ca` will
-        be calculated based on `formula` and `measured_as` if given; and the ratio
+        [1] Element contents like `i_C`, `i_N`, `i_P`, `i_K`, `i_Mg`, and `i_Ca` will
+        be calculated based on `formula` and `measured_as` if given; and the content value
         will be 1 if the component is measured as this element.
 
         [2] For fractions including `f_BOD5_COD`, `f_uBOD_COD`, and `f_Vmass_Totmass`,
@@ -195,7 +195,13 @@ class Component(Chemical):
         [3] If no formula or MW is provided, then MW of this component is assumed to
         1 to avoid ZeroDivisionError exception in calculation.
 
-
+        [4] Molar flowrate of a component, if not given, will always be calculated 
+        using the mass flowrate data and the MW of this component. If `measured_as` 
+        is not `None`, i.e., the mass flowrate data is interpreted in the `measured_as` 
+        unit, the calculated molar flowrate would be inaccurate unless user adjusts
+        the MW value accordingly. However, this is irrelevant if the component itself
+        does not have a sensible MW anyway.
+        
     Examples
     --------
     `Component <https://qsdsan.readthedocs.io/en/latest/tutorials/2_Component.html>`_
@@ -237,7 +243,7 @@ class Component(Chemical):
         self._degradability = degradability
         self._organic = organic
         self.description = description
-        self._measured_as = measured_as
+        self.measured_as = measured_as
         self.i_mass = i_mass
         self.i_C = i_C
         self.i_N = i_N
@@ -337,12 +343,10 @@ class Component(Chemical):
                 if self.measured_as in self.atoms:
                     i = 1/get_mass_frac(self.atoms)[self.measured_as]
                 elif self.measured_as == 'COD':
-                    # chem_MW = molecular_weight(self.atoms)
                     chem_charge = charge_from_formula(self.formula)
                     Cr2O7 = - cod_test_stoichiometry(self.atoms, chem_charge)['Cr2O7-2']
                     cod = Cr2O7 * 1.5 * molecular_weight({'O':2})
-                    try: i = self.chem_MW/cod
-                    except: breakpoint()
+                    i = self.chem_MW/cod
                 elif self.measured_as:
                     raise AttributeError(f'Must specify i_mass for component {self.ID} '
                                          f'measured as {self.measured_as}.')
@@ -430,22 +434,14 @@ class Component(Chemical):
         be automatically updated.
         '''
         if measured_as:
-            if measured_as == 'COD':
-                self._MW = molecular_weight({'O':2})
-            elif measured_as in self.atoms or 'i_'+measured_as in _num_component_properties:
-                self._MW = molecular_weight({measured_as:1})
-            else:
+            if not (measured_as in ('COD', *self.atoms) or 'i_'+measured_as in _num_component_properties):
                 raise AttributeError(f"Component {self.ID} must be measured as "
                                      f"either COD or one of its constituent atoms, "
                                      f"if not as itself.")
-        else:
-            # if self.atoms: self._MW = molecular_weight(self.atoms)
-            # else: self._MW = 1
-            self._MW = self.chem_MW
-
-        if self._measured_as != measured_as:
-            self._convert_i_attr(measured_as)
-
+        # self._MW = self.chem_MW
+        if hasattr(self, '_measured_as'):
+            if self._measured_as != measured_as:
+                self._convert_i_attr(measured_as)
         self._measured_as = measured_as
 
     formula = property(Chemical.formula.fget)
@@ -532,7 +528,12 @@ class Component(Chemical):
         return self._i_COD or 0.
     @i_COD.setter
     def i_COD(self, i):
-        if i is not None: self._i_COD = check_return_property('i_COD', i)
+        if i is not None: 
+            i = check_return_property('i_COD', i)
+            if self._measured_as == 'COD' and i != 1: 
+                warn(f'{self.ID} is measured as COD but `i_COD` is not 1, '
+                     '`<WasteStream>.COD` will yield inaccurate result.')
+            self._i_COD = i
         else:
             if self.organic or self.formula in ('H2', 'O2', 'N2', 'NO2-', 'NO3-', 'H2S', 'S'):
                 if self.measured_as == 'COD': self._i_COD = 1.

@@ -37,11 +37,6 @@ def test_exposan():
     bsm1_sys.simulate(t_span=(0,10), method='BDF')
     print(get_SRT(bsm1_sys, biomass_IDs=biomass_IDs['asm1'])) # to test the `get_SRT` function
 
-    #!!! Will use bsm2 to test the junction models
-    # from exposan.interface import create_system as create_inter_system
-    # sys_inter = create_inter_system()
-    # sys_inter.simulate(method='BDF', t_span=(0, 3)) # the default 'RK45' method can't solve it
-
     from exposan.cas import create_system as create_cas_system
     cas_sys = create_cas_system()
     cas_sys.simulate()
