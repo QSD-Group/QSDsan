@@ -59,7 +59,7 @@ C_mw = get_mw({'C':1})
 N_mw = get_mw({'N':1})
 P_mw = get_mw({'P':1})
 
-def create_adm1_p_extension_cmps(set_thermo=True):
+def create_adm1_p_extension_cmps(set_thermo=True, adjust_MW_to_measured_as=True):
     c1 = create_adm1_cmps(False)
     c2d = create_masm2d_cmps(False)
     _c2 = create_asm2d_cmps(False)
@@ -75,7 +75,8 @@ def create_adm1_p_extension_cmps(set_thermo=True):
                             c2d.X_PHA, c2d.X_PP, c2d.X_PAO, 
                             c2d.S_K, c2d.S_Mg, _c2.X_MeOH, _c2.X_MeP,
                             *others])
-    cmps_adm1p.default_compile()
+    cmps_adm1p.default_compile(ignore_inaccurate_molar_weight=True,
+                               adjust_MW_to_measured_as=adjust_MW_to_measured_as)
     if set_thermo: settings.set_thermo(cmps_adm1p)
     return cmps_adm1p
 
@@ -546,7 +547,7 @@ class ADM1_p_extension(ADM1):
 # =============================================================================
 
 
-def create_adm1p_cmps(set_thermo=True):
+def create_adm1p_cmps(set_thermo=True, adjust_MW_to_measured_as=True):
     c1 = create_adm1_cmps(False)
     c2d = create_masm2d_cmps(False)
     
@@ -602,7 +603,8 @@ def create_adm1p_cmps(set_thermo=True):
                             c2d.X_struv, c2d.X_newb, c2d.X_ACP, c2d.X_MgCO3, 
                             c2d.X_AlOH, c2d.X_AlPO4, c2d.X_FeOH, c2d.X_FePO4, 
                             c2d.S_Na, c2d.S_Cl, c2d.H2O])
-    cmps_adm1p.default_compile()
+    cmps_adm1p.default_compile(ignore_inaccurate_molar_weight=True,
+                               adjust_MW_to_measured_as=adjust_MW_to_measured_as)
     if set_thermo: settings.set_thermo(cmps_adm1p)
     return cmps_adm1p
 
