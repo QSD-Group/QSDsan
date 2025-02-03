@@ -58,14 +58,13 @@ dom_ww.set_flow_by_concentration(Q_domestic,
                                      concentrations=domestic_ww, 
                                      units=('m3/d', 'mg/L'))
 effluent = qs.WasteStream('effluent', T=Temp, units='m3/d')
-sludge = qs.WasteStream('sludge', T=Temp, units='m3/d')
+grit = qs.WasteStream('grit', T=Temp, units='m3/d')
 
-C = su.PrimaryClarifier('PC', ins=dom_ww, outs=[effluent, sludge], 
+GC = su.AeratedGritChamber('AGC', ins=dom_ww, outs=[effluent, grit], 
                             isdynamic=True, thermo=thermo_asm2d, 
-                            sludge_flow_rate=Q_sludge,
-                            solids_removal_efficiency=0.6)
+                            sludge_flow_rate=0.02*Q_domestic)
 
-sys = qs.System('PC_trial', path=[C])
+sys = qs.System('AGC_trial', path=[GC])
 sys.set_tolerance(rmol=1e-6)
 sys.maxiter = 500
 sys.simulate(t_span=(0, 1))
@@ -77,5 +76,5 @@ dom_ww.show()
 print("--------------------Effluent wastewater properties---------------------")
 effluent.show()
    
-print("---------------------------Sludge properties------------------------------")
-sludge.show()
+print("---------------------------Grit properties------------------------------")
+grit.show()

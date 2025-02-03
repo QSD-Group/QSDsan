@@ -71,6 +71,7 @@ from ._anaerobic_reactor import *
 from ._clarifier import *
 from ._distillation import *
 from ._flash import *
+from ._grit_chamber import *
 from ._hydroprocessing import *
 from ._hydrothermal import *
 from ._internal_circulation_rx import *
@@ -103,6 +104,7 @@ from . import (
         _electrochemical_cell,
         _excretion,
         _flash,
+        _grit_chamber,
         _heat_exchanging,
         _hydroprocessing,
         _hydrothermal,
@@ -148,6 +150,7 @@ __all__ = (
         *_electrochemical_cell.__all__,
         *_excretion.__all__,
         *_flash.__all__,
+        *_grit_chamber.__all__,
         *_heat_exchanging.__all__,
         *_hydroprocessing.__all__,
         *_hydrothermal.__all__,
