@@ -13,5 +13,5 @@ wages,,USD/h,3.64,1.82,5.46,uniform
 material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
 miscellaneous_cost_ratio,,fraction,0.17,0.12,0.22,uniform
 stainless_steel_weight,,kg,8.00,5.60,10.40,uniform
-compressor_efficiency,,fraction,0.60,0.2,1,uniform
+compressor_efficiency,,fraction,0.30,0.2,0.7,uniform
 compressor_cost,diving air compressors,USD,1595.28,1116.70,2073.86,uniform

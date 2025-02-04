@@ -17,7 +17,7 @@ disc_distance,,m,0.01,0.007,0.013,uniform
 disc_weight,,kg,0.057,0.0399,0.0741,uniform
 heating_unit_purchase_cost,,USD,16.61571429,9.7,27.86,triangular
 heating_unit_power_demand,,kW,4,2.8,5.2,uniform
-energy_required_to_evaporize_water,,kWh/kg evaporized water,0.66,0.462,0.858,uniform
+energy_required_to_evaporize_water,,kWh/kg,0.15,0.105,0.195,uniform
 heating_unit_lifetime,,year,2,1.4,2.6,uniform
 axle_purchase_cost,,USD,123.04,86.128,159.952,uniform
 motor_purchase_cost,,USD,321.887,42.88,647.99,triangular

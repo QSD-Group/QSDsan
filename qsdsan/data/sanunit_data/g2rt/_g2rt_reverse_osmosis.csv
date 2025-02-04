@@ -5,7 +5,7 @@ water_flux,,L/(m2*h),15,,,constant
 TDS_removal,,fraction,0.95,0.9,0.99,triangular
 reverse_osmosis_system_cost,,USD,401.55875,69.99,1600,triangular
 piping_cost,,USD,93,65.1,120.9,uniform
-RO_system_power_demand,,kW,0.5,0.35,0.65,uniform
+RO_energy_consumption,,kWh/kg water,0.0475,0.029,0.066,uniform
 membrane_cost,,USD,140,98,182,uniform
 membrane_life_time_severe_fouling,influent COD > 3000 mg/L,yr,0.1,0.07,0.13,constant
 membrane_life_time_short,3000 mg/L>influent COD > 500 mg/L,yr,0.5,0.35,0.65,constant

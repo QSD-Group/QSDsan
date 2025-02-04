@@ -1,7 +1,7 @@
 parameter,name (if diff),unit,expected,low,high,distribution
 belt_conveyor_cost,,USD,229.6633333,183.7306667,275.596,uniform
 meshed_belt_cost,,USD,63.85193466,51.08154773,76.6223216,uniform
-belt_daily_operation,,hr/d,3,2.1,3.9,uniform
+belt_daily_operation,,hr/cap/d,0.5,0.35,0.65,uniform
 belt_power_demand,,kW,0.06,0.042,0.078,uniform
 solid_inlet_chamber_cost,,USD,50,35,65,uniform
 liquid_inlet_chamber_cost,,USD,50,35,65,uniform
