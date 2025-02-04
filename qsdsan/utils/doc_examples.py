@@ -87,7 +87,7 @@ def create_example_components(set_thermo=True):
     for cmp in cmps:
         cmp.default()
 
-    cmps.compile()
+    cmps.compile(ignore_inaccurate_molar_weight=True)
     cmps.set_synonym('H2O', 'Water')
     cmps.set_synonym('CH4', 'Methane')
     if set_thermo: qs_set_thermo(cmps)

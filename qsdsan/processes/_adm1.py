@@ -46,7 +46,7 @@ _load_components = settings.get_default_chemicals
 C_mw = 12
 N_mw = 14
 
-def create_adm1_cmps(set_thermo=True):
+def create_adm1_cmps(set_thermo=True, adjust_MW_to_measured_as=True):
     cmps_all = Components.load_default()
 
     # varies
@@ -169,7 +169,8 @@ def create_adm1_cmps(set_thermo=True):
                             S_ch4, S_IC, S_IN, S_I, X_c, X_ch, X_pr, X_li,
                             X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I,
                             S_cat, S_an, cmps_all.H2O])
-    cmps_adm1.default_compile()
+    cmps_adm1.default_compile(ignore_inaccurate_molar_weight=True,
+                              adjust_MW_to_measured_as=adjust_MW_to_measured_as)
     if set_thermo: settings.set_thermo(cmps_adm1)
     return cmps_adm1
 
