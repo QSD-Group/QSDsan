@@ -31,7 +31,7 @@ polyethylene_weight,,kg,10,7,13,uniform
 pump_purchase_cost,,USD,379.4446154,74.99,855.99,triangular
 pump_power_demand,,kW,0.215,0.16125,0.26875,uniform
 pump_daily_operation,,h/d,0.001666667,0.001166667,0.002166667,uniform
-moisture_content_out,,%,86,80,92,uniform
+moisture_content_out,,%,84,75,90,uniform
 concentrator_maintenance,,h/yr,36,25.2,46.8,uniform
 concentrator_condensed_effluent,,L/d,4,2.8,5.2,uniform
 wages,,USD/h,3.64,1.82,5.46,uniform
