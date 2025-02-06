@@ -1580,6 +1580,7 @@ class CompletelyMixedMBR(CSTR):
                 if hasexo: QC = np.append(QC, f_exovars(t))
                 _dstate[:-1] += r(QC)
                 if gstrip: _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
+                self._cache_OTR = - _dstate[i]
                 _dstate[i] = 0
                 _update_dstate()
         else:        
