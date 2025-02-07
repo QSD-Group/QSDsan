@@ -5,6 +5,7 @@
 Created by Yuyao Huang and Siqi Tang for Enviroloo (EL) Clear Toilet system
 '''
 # %%
+from math import ceil
 from qsdsan import WasteStream
 from qsdsan import SanUnit, Construction
 from qsdsan.equipments import Blower
@@ -113,7 +114,7 @@ class EL_CT(StorageTank):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = [Construction(item = 'Steel', linked_unit=self, quantity_unit='kg'),]
+        self.construction = [Construction(item = 'StainlessSteel', linked_unit=self, quantity_unit='kg'),]
       
         
     def _run(self):
@@ -143,7 +144,7 @@ class EL_CT(StorageTank):
     def _design(self):
         design = self.design_results
         constr = self.construction
-        design['Steel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl)
+        design['StainlessSteel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl)
         self.add_construction(add_cost=False)
     
     def _cost(self):
@@ -169,9 +170,6 @@ class EL_CT(StorageTank):
         CT_replacement_cost = CT_replacement_cost / (365 * 24); # convert to USD/hr
         return CT_replacement_cost
         
-
-
-
 # %%
 PrimaryClarifier_path = ospath.join(EL_su_data_path, '_EL_PC.tsv'); # need change
 
@@ -252,11 +250,11 @@ class EL_PC(IdealClarifier):
             setattr(self, para, value)
         del data
 
-        for attr, value in kwargs.items():
+        for attr, value in kwargs.items(): 
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = [Construction(item = 'Steel', linked_unit=self, quantity_unit='kg'),]
+        self.construction = [Construction(item = 'StainlessSteel', linked_unit=self, quantity_unit='kg'),]
     
     def _run(self):
         """
@@ -313,10 +311,10 @@ class EL_PC(IdealClarifier):
     def _design(self):
         design = self.design_results
         constr = self.construction
-        design['Steel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl)
+        design['StainlessSteel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl)
         self.add_construction(add_cost=False)
 
-    def _cost(self):
+    def _cost(self):  
         C = self.baseline_purchase_costs
         C['Tank'] = self.PC_tank_cost
         C['Pipes'] = self.pipeline_connectors
@@ -397,7 +395,7 @@ class EL_Anoxic(SanUnit, Decay):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
     def _init_lca(self):
-        self.construction = [Construction(item='Steel', linked_unit=self, quantity_unit='kg'),]      
+        self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]      
         
     def _run(self):
         # Input stream
@@ -443,7 +441,7 @@ class EL_Anoxic(SanUnit, Decay):
     def _design(self):
         design = self.design_results
         constr = self.construction
-        design['Steel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl)  # assume linear scale
+        design['StainlessSteel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl)  # assume linear scale
         self.add_construction(add_cost=False)
     
     def _cost(self):
@@ -527,7 +525,7 @@ class EL_Aerobic(SanUnit, Decay):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = [Construction(item='Steel', linked_unit=self, quantity_unit='kg'),]  
+        self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]  
     
     def _run(self):
 
@@ -561,7 +559,7 @@ class EL_Aerobic(SanUnit, Decay):
     def _design(self):
         design = self.design_results
         constr = self.construction
-        design['Steel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl)
+        design['StainlessSteel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl)
         self.add_construction(add_cost=False)
     
     def _cost(self):
@@ -646,8 +644,8 @@ class EL_MBR(SanUnit, Decay):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = [Construction(item='Steel', linked_unit=self, quantity_unit='kg'),
-                             Construction(item ='Membrane_Material', linked_unit=self, quantity_unit='kg'),]
+        self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),
+                             Construction(item ='PVDF_membrane', linked_unit=self, quantity_unit='kg'),]
     
     def _run(self):
         
@@ -696,8 +694,8 @@ class EL_MBR(SanUnit, Decay):
     def _design(self):
         design = self.design_results
         constr = self.construction
-        design['Steel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl)  # assume linear scaling
-        design['Membrane_Material'] = constr[1].quantity = self.membrane_material_weight
+        design['StainlessSteel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl)  # assume linear scaling
+        design['PVDF_membrane'] = constr[1].quantity = self.membrane_material_weight
         self.add_construction(add_cost=False)
 
     def _cost(self):
@@ -790,7 +788,7 @@ class EL_CWT(StorageTank):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = [Construction(item='Steel', linked_unit=self, quantity_unit='kg'),]
+        self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]
     
     def _run(self):
         
@@ -837,7 +835,7 @@ class EL_CWT(StorageTank):
     def _design(self):
         design = self.design_results;
         constr = self.construction;
-        design['Steel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl); # to be defined in .tsv file
+        design['StainlessSteel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl); # to be defined in .tsv file
         self.add_construction(add_cost=False)
 
     def _cost(self):
@@ -923,12 +921,12 @@ class EL_PT(StorageTank):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = [Construction(item='Steel', linked_unit=self, quantity_unit='kg'),]
+        self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]
     
     def _design(self):
         design = self.design_results
         constr = self.construction
-        design['Steel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl)  # to be defined in .tsv file
+        design['StainlessSteel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl)  # to be defined in .tsv file
         self.add_construction(add_cost=False)
 
     def _cost(self):
@@ -1028,12 +1026,12 @@ class EL_blower(Blower):
             setattr(self, attr, value)
 
     def _init_lca(self):
-        self.construction = [Construction(item='Steel', linked_unit=self, quantity_unit='kg'),]
+        self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]
     
     def _design(self):
         design = self.design_results
         constr = self.construction
-        design['Steel'] = constr[0].quantity = self.blower_steel_weight; # to be defined in .tsv file
+        design['StainlessSteel'] = constr[0].quantity = self.blower_steel_weight; # to be defined in .tsv file
         self.add_construction(add_cost=False)
 
     def _cost(self):
@@ -1088,13 +1086,13 @@ class EL_Housing(SanUnit):
 
     def _init_lca(self): # replace the actual materials used in the EL
         self.construction = [
-            Construction(item = 'Steel', linked_unit= self, quantity_unit= 'kg'),
+            Construction(item = 'StainlessSteel', linked_unit= self, quantity_unit= 'kg'),
             Construction(item = 'Plastic', linked_unit= self, quantity_unit= 'kg'),]
 
     def _design(self): # replace the actual materials used in the EL
         design = self.design_results
         constr = self.construction
-        design['Steel'] = constr[0].quantity = (self.steel_weight + self.steel_framework_weight + self.steel_fittings_weight) * (self.ppl / self.baseline_ppl)  # assume linear scaling
+        design['StainlessSteel'] = constr[0].quantity = (self.steel_weight + self.steel_framework_weight + self.steel_fittings_weight) * (self.ppl / self.baseline_ppl)  # assume linear scaling
         design['Plastic'] = constr[1].quantity = (self.LLDPE_weight) * (self.ppl / self.baseline_ppl)   # assume linear scaling
         self.add_construction(add_cost= False)
     
@@ -1146,13 +1144,13 @@ class EL_System(SanUnit):
 
     def _init_lca(self):
         self.construction = [
-            Construction(item = 'PVC', linked_unit= self, quantity_unit= 'm'),
+            Construction(item = 'PVC_generic', linked_unit= self, quantity_unit= 'm'),
             Construction(item = 'HDPE', linked_unit= self, quantity_unit= 'm'),
             ];
 
     def _design(self):
         design = self.design_results
-        design['PVC'] = self.construction[0].quantity = self.PVC_weight * (self.ppl / self.baseline_ppl)
+        design['PVC_generic'] = self.construction[0].quantity = self.PVC_weight * (self.ppl / self.baseline_ppl)
         design['HDPE'] = self.construction[1].quantity = self.HDPE_weight * (self.ppl / self.baseline_ppl)
         self.add_construction(add_cost= False)
     
