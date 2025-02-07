@@ -209,7 +209,7 @@ class MetalDosage(SanUnit):
           S_Ca     140.0
           S_Na     87.0
           S_Cl     425.0
-          H2O      995790.2
+          H2O      995387.5
 
         >>> MD.simulate()
         >>> eff, = MD.outs
