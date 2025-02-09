@@ -1163,7 +1163,14 @@ class PFR(SanUnit):
             y[:,:-1] = self._concs
         else: 
             y[:,:-1] = out.conc
-        y[:,-1] = out.F_vol*24
+        # y[:,-1] = self._Qs[:] = out.F_vol*24
+        f_in = self.influent_fractions
+        rcy = self.internal_recycles
+        Q_internal = np.zeros(self.N_tanks_in_series)
+        for i_from, i_to, qr in rcy:
+            Q_internal[i_to: i_from+1] += qr
+        self._Qs[:] = np.dot([ws.F_vol*24 for ws in self.ins], f_in).cumsum() + Q_internal
+        
         self._state = y.flatten()
         self._dstate = self._state * 0.
 
