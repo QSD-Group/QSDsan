@@ -72,13 +72,13 @@ class EL_CT(StorageTank):
     class:`biosteam.units.StorageTank`
     '''
     _N_ins = 4 
-    _N_outs = 1
+    _N_outs = 3
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
     exponent_scale = 0.6
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, ppl=None, baseline_ppl=None,
-                 vessel_type= 'Horizontal', tau=24, V_wf=None, vessel_material='Stainless steel', kW_per_m3=0.1,
+                 vessel_type= 'Field erected', tau=24, V_wf=None, vessel_material='Stainless steel', kW_per_m3=0.1,
                  init_with='WasteStream', F_BM_default=1,
                  include_construction=True, **kwargs):
         StorageTank.__init__(self, 
@@ -216,7 +216,7 @@ class EL_PC(IdealClarifier):
      """
     
     _N_ins = 2
-    _N_outs = 3
+    _N_outs = 5
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
     exponent_scale = 0.6
@@ -230,7 +230,7 @@ class EL_PC(IdealClarifier):
         - sludge_flow_rate: Default to  m3/d
         - solids_removal_efficiency: Default to 50% (0.5)
         """
-        IdealClarifier().__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, sludge_flow_rate=sludge_flow_rate,
+        IdealClarifier.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, sludge_flow_rate=sludge_flow_rate,
                                   solids_removal_efficiency=solids_removal_efficiency,
                                   isdynamic=isdynamic, init_with=init_with, F_BM_default=F_BM_default
                                   )
@@ -497,8 +497,8 @@ class EL_Aerobic(SanUnit, Decay):
      refer to the qsdsan.sanunits.PrimaryClarifier module
     '''
 
-    _N_ins = 3; # treated water, PAC, blower
-    _N_outs = 3; # treated water, CH4, N2O
+    _N_ins = 3  # treated water, PAC, blower
+    _N_outs = 3  # treated water, CH4, N2O
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
     exponent_scale = 0.6
@@ -506,7 +506,7 @@ class EL_Aerobic(SanUnit, Decay):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  degraded_components=('OtherSS',), ppl = None, baseline_ppl = None, F_BM_default=1,
                  if_capture_biogas=False, if_N2O_emission=True,**kwargs):
-        Decay.__init__(self, ID, ins, outs, thermo=thermo,
+        Decay.__init__(self, ID, ins=ins, outs=outs, thermo=thermo,
                        init_with=init_with, F_BM_default=F_BM_default,
                        degraded_components=degraded_components,
                        if_capture_biogas=if_capture_biogas,
@@ -625,7 +625,7 @@ class EL_MBR(SanUnit, Decay):
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  degraded_components=('OtherSS',), ppl = None, baseline_ppl = None, F_BM_default=1,
                  if_capture_biogas=False, if_N2O_emission=True, **kwargs):
-        Decay.__init__(self, ID, ins, outs, thermo=thermo,
+        Decay.__init__(self, ID, ins=ins, outs=outs, thermo=thermo,
                        init_with=init_with, F_BM_default=F_BM_default,
                        degraded_components=degraded_components,
                        if_capture_biogas=if_capture_biogas,
@@ -760,23 +760,28 @@ class EL_CWT(StorageTank):
      refer to the qsdsan.sanunits.storagetank module
 
     '''
-    _N_ins = 3; # number of ins
-    _N_outs = 5; # number of outs
+    _N_ins = 3  # number of ins
+    _N_outs = 5  # number of outs
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
 
     def __init__(self, ID = '', ins = None, outs = (), vessel_material=None, V_wf = None, include_construction = True, 
                  length_to_diameter = None, F_BM_default = 1, kw_per_m3 = None, vessel_type=None,
                  tau = None, max_overflow=None, ppl = None, baseline_ppl = None,
+                 price_ratio=0.9,
                  thermo = None, init_with = 'WasteStream', **kwargs):
-        StorageTank.__init__(self, ID, ins, outs, thermo = thermo, init_with = init_with, include_construction= include_construction,
-                             kw_per_m3= kw_per_m3, vessel_type= vessel_type, tau= tau,
+        StorageTank.__init__(self, ID=ID, ins=ins, outs=outs, thermo = thermo, init_with = init_with, 
+                             include_construction= include_construction,
+                             #kw_per_m3= kw_per_m3, 
+                             vessel_type= vessel_type, tau= tau,
                              vessel_material= vessel_material, V_wf= V_wf, F_BM_default= F_BM_default)
 
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
         self.length_to_diameter = length_to_diameter
         self.max_overflow = max_overflow
+        self.price_ratio = price_ratio
+        self.kw_per_m3 = kw_per_m3
 
         data = load_data(path = ClearWaterTank_path)
         for para in data.index:
@@ -893,23 +898,25 @@ class EL_PT(StorageTank):
      refer to the qsdsan.sanunits.storagetank module
 
     '''
-    _N_ins = 1; # number of ins
-    _N_outs = 1; # number of outs
-    _ins_size_is_fixed = True;
-    _outs_size_is_fixed = True;
+    _N_ins = 1  # number of ins
+    _N_outs = 1  # number of outs
+    _ins_size_is_fixed = True
+    _outs_size_is_fixed = True
 
 
     def __init__(self, ID = '', ins = None, outs = (), vessel_material = None, V_wf = None, include_construction = True,
                  length_to_diameter = None, F_BM_default = 1, kw_per_m3 = None, vessel_type = 'Steel', tau = None,
                  thermo = None, init_with = 'WasteStream', 
                  ppl = None, baseline_ppl = None, **kwargs):
-        StorageTank.__init__(self, ID, ins, outs, thermo = thermo, init_with = init_with, include_construction= include_construction,
-                             kw_per_m3= kw_per_m3, vessel_type= vessel_type, tau= tau,
+        StorageTank.__init__(self, ID=ID, ins=ins, outs=outs, thermo = thermo, init_with = init_with, include_construction= include_construction,
+                             #kw_per_m3= kw_per_m3, 
+                             vessel_type= vessel_type, tau= tau,
                              vessel_material= vessel_material, V_wf= V_wf, F_BM_default= F_BM_default)
 
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
         self.length_to_diameter = length_to_diameter
+        self.kw_per_m3 = kw_per_m3
 
         data = load_data(path = PressureTank_path)
         for para in data.index:
@@ -980,8 +987,8 @@ class EL_blower(Blower):
      refer to the qsdsan.equipments.Blower module
 
     '''
-    _N_ins = 1; # number of ins
-    _N_outs = 1; # number of outs
+    _N_ins = 1  # number of ins
+    _N_outs = 1  # number of outs
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
 
@@ -1006,7 +1013,7 @@ class EL_blower(Blower):
                  AFF=3.33, # air flow fraction
                  building_unit_cost=9, # unit cost of the building, in USD/ft2
                  thermo = None, ppl = None, baseline_ppl = None, **kwargs):
-        Blower.__init__(self, ID=ID, lifetime = lifetime, lifetime_unit = lifetime_unit, F_BM=F_BM,
+        super().__init__(ID=ID, lifetime = lifetime, lifetime_unit = lifetime_unit, F_BM=F_BM,
                         units=units, N_reactor=N_reactor, gas_demand_per_reactor=gas_demand_per_reactor,
                         TDH=TDH, eff_blower=eff_blower, eff_motor=eff_motor, AFF=AFF, building_unit_cost=building_unit_cost,)
 
@@ -1060,20 +1067,27 @@ class EL_blower(Blower):
 # %%
 housing_path = ospath.join(EL_su_data_path, '_EL_housing.tsv')
 
-@price_ratio()
+#@price_ratio()
 class EL_Housing(SanUnit):
     '''
      non_reactive unit for the Enviroloo Clear system
     '''
+    _N_ins = 1  # number of ins
+    _N_outs = 1  # number of outs
+    _ins_size_is_fixed = True
+    _outs_size_is_fixed = True
+    ppl_per_MURT = 3  # number of people per MURT
 
-    ppl_per_MURT = 3; # number of people per MURT
-
-    def __init__(self, ID = '', ins = None, outs = (), thermo = None, init_with = 'WasteStream', 
+    def __init__(self, ID = '', ins = None, outs = (), thermo = None, init_with = None,
+                 price_ratio=0.9,
                  ppl = 1, baseline_ppl = None, F_BM_default= 1, **kwargs):
-        SanUnit.__init__(self, ID, ins, outs, thermo = thermo, init_with = init_with, F_BM_default=F_BM_default)
+        init_with = init_with or {}
+        super().__init__(ID=ID, ins=ins, outs=outs, thermo = thermo, 
+                         init_with = init_with, F_BM_default=F_BM_default)
         
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
+        self.price_ratio = price_ratio
 
         data = load_data(path = housing_path)
         for para in data.index:
@@ -1127,7 +1141,7 @@ class EL_System(SanUnit):
 
     def __init__(self, ID='', ins=None, outs= (), thermo = None, init_with = 'WasteStream', 
                  if_gridtied = True, ppl = None, baseline_ppl = None, F_BM_default = 1, **kwargs):
-        SanUnit.__init__(ID, ins=ins, outs=outs, thermo = thermo, init_with = init_with,  F_BM_default = F_BM_default)
+        SanUnit.__init__(self, ID=ID, ins=ins, outs=outs, thermo = thermo, init_with = init_with,  F_BM_default = F_BM_default)
         
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
@@ -1144,8 +1158,8 @@ class EL_System(SanUnit):
 
     def _init_lca(self):
         self.construction = [
-            Construction(item = 'PVC_generic', linked_unit= self, quantity_unit= 'm'),
-            Construction(item = 'HDPE', linked_unit= self, quantity_unit= 'm'),
+            Construction(item = 'PVC_generic', linked_unit= self, quantity_unit= 'kg'),
+            Construction(item = 'HDPE', linked_unit= self, quantity_unit= 'kg'),
             ];
 
     def _design(self):
@@ -1168,11 +1182,11 @@ class EL_System(SanUnit):
             self.overflow_primary_clarifier2anoixc +
             self.overflow_anoxic2aerobic +
             self.overflow_aerobic2membrane +
-            self.200m_ozone_pipeline +
-            self.32mm_pipeline_fittings +
-            self.40mm_pipeline_fittings +
-            self.60mm_pipeline_fittings +
-            self.50mm_ball_valves +
+            self.ozone_pipeline_200m +
+            self.pipeline_fittings_32mm +
+            self.pipeline_fittings_40mm +
+            self.pipeline_fittings_60mm +
+            self.ball_valves_50mm +
             self.aerobic_air_diffuser)
 
         ratio = self.price_ratio; # ratio of the price of the new system to the baseline system
@@ -1201,11 +1215,11 @@ class EL_System(SanUnit):
             self.overflow_primary_clarifier2anoixc / self.lifetime_overflow_primary_clarifier2anoixc +
             self.overflow_anoxic2aerobic / self.lifetime_overflow_anoxic2aerobic +
             self.overflow_aerobic2membrane / self.lifetime_overflow_aerobic2membrane +
-            self.200m_ozone_pipeline / self.lifetime_200m_ozone_pipeline +
-            self.32mm_pipeline_fittings / self.lifetime_32mm_pipeline_fittings +
-            self.40mm_pipeline_fittings / self.lifetime_40mm_pipeline_fittings +
-            self.60mm_pipeline_fittings / self.lifetime_60mm_pipeline_fittings +
-            self.50mm_ball_valves / self.lifetime_50mm_ball_valves +
+            self.ozone_pipeline_200m / self.lifetime_200m_ozone_pipeline +
+            self.pipeline_fittings_32mm / self.lifetime_32mm_pipeline_fittings +
+            self.pipeline_fittings_40mm / self.lifetime_40mm_pipeline_fittings +
+            self.pipeline_fittings_60mm / self.lifetime_60mm_pipeline_fittings +
+            self.ball_valves_50mm / self.lifetime_50mm_ball_valves +
             self.aerobic_air_diffuser / self.lifetime_aerobic_air_diffuser) * scale
         system_replacement_cost = system_replacement_cost / (365 * 24);  # convert from USD/year to USD/hour
         return system_replacement_cost

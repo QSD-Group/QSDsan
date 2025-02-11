@@ -414,7 +414,7 @@ class MURT(Toilet):
     def _init_lca(self):
         self.construction = [
             Construction(item='Ceramic', linked_unit=self, quantity_unit='kg'),
-            Construction(item='Fan', linked_unit=self, quantity_unit='kg'),
+            Construction(item='Fan', linked_unit=self, quantity_unit='ea'),
         ]
 
 
