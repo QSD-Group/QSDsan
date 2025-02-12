@@ -617,7 +617,7 @@ class EL_CT(StorageTank):
         # Output stream
         TreatedWater = self.outs[0]
 
-        # Only keeo existing input streams
+        # Only keep existing input streams
         input_streams = [WasteWater, sludge_return, PC_spill_return, MT_spill_return]
         input_streams = [s for s in input_streams if s]  # Filter non-existing input streams
 
