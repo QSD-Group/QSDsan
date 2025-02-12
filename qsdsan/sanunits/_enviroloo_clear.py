@@ -689,8 +689,6 @@ class EL_PC(IdealClarifier):
     (1) effluent of treated wastewater
     (2) sludge return flow to collection tank
     (3) spill flow to collection tank
-    (4) fugitive CH4 emission
-    (5) fugitive N2O emission
 
     Attributes
     ----------
@@ -768,7 +766,7 @@ class EL_PC(IdealClarifier):
         # TreatedWater.F_mass[:] *= (1 - self.solids_removal_efficiency)
         
 
-        
+        '''
         # Step 3: Handle spill return based on overflow volume
         if self.max_overflow is not None:
             if TreatedWater.F_vol > self.max_overflow:
@@ -796,7 +794,8 @@ class EL_PC(IdealClarifier):
             spill_return.empty()
             self._f_spill = 0.0
             self._f_overflow = 1.0
-
+        '''
+        
     def _design(self):
         design = self.design_results
         constr = self.construction
