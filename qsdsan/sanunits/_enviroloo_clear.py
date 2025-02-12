@@ -798,61 +798,6 @@ class EL_PC(IdealClarifier):
             # max_overflow is none, no spill return
             PC_spill_return.empty()
 
-    
-    def _run(self):
-        """
-        Run the enhanced primary clarifier process with spill return handling.
-        """
-        # Input streams
-        WasteWater = self.ins[0]  # Incoming wastewater
-        MT_sludge_return = self.ins[1]  # Returned sludge from membrane tank
-        
-        # Outputs
-        TreatedWater = self.outs[0]  # Normal overflow to anoxic tank
-        spill_return = self.outs[1]  # Spill return to the collection tank
-        PC_sludg_return = self.outs[2]  # Settled sludge to upstream
-        
-        # Step 1: Mix influent and returned sludge
-        self._mixed.mix_from([WasteWater, MT_sludge_return])
-        
-        # Step 2: Calculate normal overflow and underflow
-        TreatedWater.copy_like(self._mixed)
-        #PC_sludg_return.copy_like(self._mixed)
-        
-        # Apply solids removal efficiency
-        # PC_sludg_return.F_mass[:] *= self.solids_removal_efficiency
-        # TreatedWater.F_mass[:] *= (1 - self.solids_removal_efficiency)
-        
-
-        
-        # Step 3: Handle spill return based on overflow volume
-        # if self.max_overflow is not None:
-        #     if TreatedWater.F_vol > self.max_overflow:
-        #         # Calculate excess volume
-        #         spill_vol = TreatedWater.F_vol - self.max_overflow
-        #         breakpoint()
-        #         # Calculate the fraction of spill
-        #         self._f_spill = spill_vol / TreatedWater.F_vol
-                
-        #         # Update the normal overflow fraction
-        #         self._f_overflow = 1 - self._f_spill
-                
-        #         # Assign spill fraction to spill return
-        #         spill_return.F_mass[:] = TreatedWater.F_mass[:] * self._f_spill
-                
-        #         # Adjust the normal overflow to within max capacity
-        #         TreatedWater.F_mass[:] *= self._f_overflow
-        #     else:
-        #         # No spill return if overflow is within capacity
-        #         spill_return.empty()
-        #         self._f_spill = 0.0
-        #         self._f_overflow = 1.0
-        # else:
-        #     # No max_overflow defined, no spill handling
-        #     spill_return.empty()
-        #     self._f_spill = 0.0
-        #     self._f_overflow = 1.0
-
     def _design(self):
         design = self.design_results
         constr = self.construction
