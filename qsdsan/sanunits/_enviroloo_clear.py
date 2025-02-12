@@ -656,7 +656,7 @@ class EL_CT(StorageTank):
             self.weld_female_adapter_fittings / self.weld_female_adapter_fittings_lifetime) * scale
         CT_replacement_cost = CT_replacement_cost / (365 * 24); # convert to USD/hr
         return CT_replacement_cost
-        
+# breakpoint()
 # %%
 PrimaryClarifier_path = ospath.join(EL_su_data_path, '_EL_PC.tsv'); # need change
 
@@ -761,7 +761,7 @@ class EL_PC(IdealClarifier):
         
         # Step 2: Calculate normal overflow and underflow
         TreatedWater.copy_like(self._mixed)
-        PC_sludg_return.copy_like(self._mixed)
+        #PC_sludg_return.copy_like(self._mixed)
         
         # Apply solids removal efficiency
         # PC_sludg_return.F_mass[:] *= self.solids_removal_efficiency
@@ -770,32 +770,32 @@ class EL_PC(IdealClarifier):
 
         
         # Step 3: Handle spill return based on overflow volume
-        if self.max_overflow is not None:
-            if TreatedWater.F_vol > self.max_overflow:
-                # Calculate excess volume
-                spill_vol = TreatedWater.F_vol - self.max_overflow
-                breakpoint()
-                # Calculate the fraction of spill
-                self._f_spill = spill_vol / TreatedWater.F_vol
+        # if self.max_overflow is not None:
+        #     if TreatedWater.F_vol > self.max_overflow:
+        #         # Calculate excess volume
+        #         spill_vol = TreatedWater.F_vol - self.max_overflow
+        #         breakpoint()
+        #         # Calculate the fraction of spill
+        #         self._f_spill = spill_vol / TreatedWater.F_vol
                 
-                # Update the normal overflow fraction
-                self._f_overflow = 1 - self._f_spill
+        #         # Update the normal overflow fraction
+        #         self._f_overflow = 1 - self._f_spill
                 
-                # Assign spill fraction to spill return
-                spill_return.F_mass[:] = TreatedWater.F_mass[:] * self._f_spill
+        #         # Assign spill fraction to spill return
+        #         spill_return.F_mass[:] = TreatedWater.F_mass[:] * self._f_spill
                 
-                # Adjust the normal overflow to within max capacity
-                TreatedWater.F_mass[:] *= self._f_overflow
-            else:
-                # No spill return if overflow is within capacity
-                spill_return.empty()
-                self._f_spill = 0.0
-                self._f_overflow = 1.0
-        else:
-            # No max_overflow defined, no spill handling
-            spill_return.empty()
-            self._f_spill = 0.0
-            self._f_overflow = 1.0
+        #         # Adjust the normal overflow to within max capacity
+        #         TreatedWater.F_mass[:] *= self._f_overflow
+        #     else:
+        #         # No spill return if overflow is within capacity
+        #         spill_return.empty()
+        #         self._f_spill = 0.0
+        #         self._f_overflow = 1.0
+        # else:
+        #     # No max_overflow defined, no spill handling
+        #     spill_return.empty()
+        #     self._f_spill = 0.0
+        #     self._f_overflow = 1.0
 
     def _design(self):
         design = self.design_results
