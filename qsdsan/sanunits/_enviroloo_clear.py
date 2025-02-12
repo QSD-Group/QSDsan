@@ -888,12 +888,13 @@ class EL_Anoxic(SanUnit, Decay):
         self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]      
         
     def _run(self):
+        
         # Input stream
         WasteWater = self.ins[0]
         sludge_return = self.ins[1]
         glucose = self.ins[2]
-        agitation = self.ins[3]
-        
+        agitation = self.ins[3]  # Agitation pump（no mass contribution）
+
         # Output stream
         TreatedWater = self.outs[0]
         CH4_emission = self.outs[1]
