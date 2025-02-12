@@ -793,7 +793,7 @@ class EL_PC(IdealClarifier):
                 if hasattr(self, '_f_spill'):
                     del self._f_spill  
                 if hasattr(self, '_f_overflow'):
-                del self._f_overflow  
+                    del self._f_overflow  
         else:
             # max_overflow is none, no spill return
             PC_spill_return.empty()
