@@ -900,13 +900,11 @@ class EL_Anoxic(SanUnit, Decay):
         CH4_emission = self.outs[1]
         N2O_emission = self.outs[2]
 
-        # Mix all inputs into a single stream
-        agitation.F_mass = 0  # Attend nothing
-        WasteWater.F_mass += sludge_return.F_mass + agitation.F_mass
-        for component in WasteWater.components:
-            WasteWater.imass[component] += sludge_return.imass[component]
+        # Combined sludge return and influent
+        WasteWater.F_mass += sludge_return.F_mass
+        WasteWater.imass += sludge_return.imass
 
-        # Add glucose to the waste water
+        # Glucose in
         WasteWater.imass['Glucose'] += glucose.imass['Glucose']
         WasteWater.F_mass += glucose.F_mass
 
@@ -916,7 +914,7 @@ class EL_Anoxic(SanUnit, Decay):
         WasteWater.F_mass -= consumed_glucose
 
         # Adjust N2O emission factor based on reduction ratio
-        original_N2O_EF = self.N2O_EF_decay 
+        original_N2O_EF = self.N2O_EF_decay
         self.N2O_EF_decay *= 0.25
 
         # Call Decay._first_order_run with the updated N2O_EF_decay
