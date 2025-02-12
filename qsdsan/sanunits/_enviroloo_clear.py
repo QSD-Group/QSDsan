@@ -612,7 +612,7 @@ class EL_CT(StorageTank):
         WasteWater = self.ins[0]
         sludge_return = self.ins[1]
         PC_spill_return = self.ins[2] if len(self.ins) > 2 else None
-        MT_spill_return = self.ins[3] if len(self.ins) > 3 else None
+        CWT_spill_return = self.ins[3] if len(self.ins) > 3 else None
 
         # Output stream
         TreatedWater = self.outs[0]
