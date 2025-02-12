@@ -724,8 +724,6 @@ class EL_PC(IdealClarifier):
         self.baseline_ppl = baseline_ppl
 
         self._mixed = WasteStream()  # Create a temporary mixed stream and its properties and actions are like 'WasteStream'
-        self._f_spill = None  # Spill return
-        self._f_overflow = None  # Overflow
         self.max_overflow = max_overflow
         # self.if_with_MBR = if_with_MBR
 
@@ -746,55 +744,55 @@ class EL_PC(IdealClarifier):
         Run the enhanced primary clarifier process with spill return handling.
         """
         # Input streams
-        WasteWater = self.ins[0]  # Incoming wastewater
-        MT_sludge_return = self.ins[1]  # Returned sludge from membrane tank
-        
-        # Outputs
-        TreatedWater = self.outs[0]  # Normal overflow to anoxic tank
-        spill_return = self.outs[1]  # Spill return to the collection tank
-        PC_sludg_return = self.outs[2]  # Settled sludge to upstream
-        
-        # Step 1: Mix influent and returned sludge
-        self._mixed.mix_from([WasteWater, MT_sludge_return])
-        
-        # Step 2: Calculate normal overflow and underflow
-        TreatedWater.copy_like(self._mixed)
-        PC_sludg_return.copy_like(self._mixed)
-        
-        # Apply solids removal efficiency
-        # PC_sludg_return.F_mass[:] *= self.solids_removal_efficiency
-        # TreatedWater.F_mass[:] *= (1 - self.solids_removal_efficiency)
-        
+        WasteWater = self.ins[0]  
+        MT_sludge_return = self.ins[1]  
+    
+        # Output streams
+        TreatedWater = self.outs[0]  
+        PC_spill_return = self.outs[1]  
+        PC_sludge_return = self.outs[2]  
 
-        '''
-        # Step 3: Handle spill return based on overflow volume
+        # Mix all inputs into a single stream
+        self._mixed.empty()  
+        self._mixed.mix_from([WasteWater, MT_sludge_return])  
+
+        # Calculation the amount of solids removed
+        PC_sludge_return.copy_like(self._mixed)  
+        PC_sludge_return.F_mass *= self.solids_removal_efficiency  
+
+        # Calculate treated Water
+        TreatedWater.copy_like(self._mixed)
+        TreatedWater.F_mass *= (1 - self.solids_removal_efficiency)  
+
+        # Spill return water existing requirement
+        if self.max_overflow is not None and TreatedWater.F_vol > self.max_overflow:
         if self.max_overflow is not None:
             if TreatedWater.F_vol > self.max_overflow:
-                # Calculate excess volume
-                spill_vol = TreatedWater.F_vol - self.max_overflow
-                breakpoint()
-                # Calculate the fraction of spill
-                self._f_spill = spill_vol / TreatedWater.F_vol
-                
-                # Update the normal overflow fraction
-                self._f_overflow = 1 - self._f_spill
-                
-                # Assign spill fraction to spill return
-                spill_return.F_mass[:] = TreatedWater.F_mass[:] * self._f_spill
-                
-                # Adjust the normal overflow to within max capacity
-                TreatedWater.F_mass[:] *= self._f_overflow
+                # Spill return exists
+                spill_vol = TreatedWater.F_vol - self.max_overflow  
+
+                if not hasattr(self, '_f_spill'):
+                    self._f_spill = None
+                if not hasattr(self, '_f_overflow'):
+                    self._f_overflow = None
+
+                self._f_spill = spill_vol / TreatedWater.F_vol  
+                self._f_overflow = 1 - self._f_spill  
+
+                PC_spill_return.copy_like(TreatedWater)  
+                PC_spill_return.F_mass *= self._f_spill  
+
+                TreatedWater.F_mass *= self._f_overflow  
             else:
-                # No spill return if overflow is within capacity
-                spill_return.empty()
-                self._f_spill = 0.0
-                self._f_overflow = 1.0
+                # max_overflow is not none，but TreatedWater.F_vol < max_overflow
+                PC_spill_return.empty()
+                if hasattr(self, '_f_spill'):
+                    del self._f_spill  
+                if hasattr(self, '_f_overflow'):
+                    del self._f_overflow  
         else:
-            # No max_overflow defined, no spill handling
-            spill_return.empty()
-            self._f_spill = 0.0
-            self._f_overflow = 1.0
-        '''
+            # max_overflow is none
+            PC_spill_return.empty()
         
     def _design(self):
         design = self.design_results
