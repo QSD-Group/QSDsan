@@ -12,3 +12,4 @@ collection_tank_lifetime		yr	8	7.2	8.8	uniform	assumption
 weld_female_adapter_fittings_lifetime		yr	5	4.5	5.5	uniform	assumption
 pipeline_connectors_lifetime		yr	5	4.5	5.5	uniform	assumption
 power_demand_CT	energy consumption for primary clarifier tank	KWh/day	1	0.9	1.1	uniform	assumption
+carbon_COD_ratio		g C*g COD-1	0.35	0.25	0.4	triangular	Tchobanoglous et al.
