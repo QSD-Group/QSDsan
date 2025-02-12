@@ -931,42 +931,55 @@ class EL_Anoxic(SanUnit, Decay):
     def _run(self):
         
         # Input stream
-        WasteWater = self.ins[0]
-        sludge_return = self.ins[1]
-        glucose = self.ins[2]
-        agitation = self.ins[3]  # Agitation pump（no mass contribution）****not showing in flow diagram
-
+        WasteWater, sludge_return, glucose = self.ins
+        
         # Output stream
-        TreatedWater = self.outs[0]
-        CH4_emission = self.outs[1]
-        N2O_emission = self.outs[2]
+        TreatedWater, CH4_emission, N2O_emission = self.outs
+        
+        for out_stream in self.outs:
+            out_stream.empty()
+            
+        TreatedWater.mix_from([WasteWater, sludge_return, glucose])
+    
+   
+    # def _run(self):
+        
+    #     # Input stream
+    #     WasteWater = self.ins[0]
+    #     sludge_return = self.ins[1]
+    #     glucose = self.ins[2]
 
-        # Combined sludge return and influent
-        WasteWater.F_mass += sludge_return.F_mass
-        WasteWater.imass += sludge_return.imass
+    #     # Output stream
+    #     TreatedWater = self.outs[0]
+    #     CH4_emission = self.outs[1]
+    #     N2O_emission = self.outs[2]
 
-        # Glucose in
-        WasteWater.imass['Glucose'] += glucose.imass['Glucose']
-        WasteWater.F_mass += glucose.F_mass
+    #     # Combined sludge return and influent
+    #     WasteWater.F_mass += sludge_return.F_mass
+    #     WasteWater.imass += sludge_return.imass
 
-        # Simulate complete glucose consumption
-        consumed_glucose = WasteWater.imass['Glucose']
-        WasteWater.imass['Glucose'] -= consumed_glucose
-        WasteWater.F_mass -= consumed_glucose
+    #     # Glucose in
+    #     WasteWater.imass['Glucose'] += glucose.imass['Glucose']
+    #     WasteWater.F_mass += glucose.F_mass
 
-        # Adjust N2O emission factor based on reduction ratio
-        original_N2O_EF = self.N2O_EF_decay
-        self.N2O_EF_decay *= 0.25
+    #     # Simulate complete glucose consumption
+    #     consumed_glucose = WasteWater.imass['Glucose']
+    #     WasteWater.imass['Glucose'] -= consumed_glucose
+    #     WasteWater.F_mass -= consumed_glucose
 
-        # Call Decay._first_order_run with the updated N2O_EF_decay
-        super()._first_order_run(waste=WasteWater,
-                                 treated=TreatedWater,
-                                 CH4=CH4_emission,
-                                 N2O=N2O_emission
-                                 )
+    #     # Adjust N2O emission factor based on reduction ratio
+    #     original_N2O_EF = self.N2O_EF_decay
+    #     self.N2O_EF_decay *= 0.25
 
-        # Restore the original N2O emission factor
-        self.N2O_EF_decay = original_N2O_EF
+    #     # Call Decay._first_order_run with the updated N2O_EF_decay
+    #     super()._first_order_run(waste=WasteWater,
+    #                              treated=TreatedWater,
+    #                              CH4=CH4_emission,
+    #                              N2O=N2O_emission
+    #                              )
+
+    #     # Restore the original N2O emission factor
+    #     self.N2O_EF_decay = original_N2O_EF
 
     def _design(self):
         design = self.design_results
