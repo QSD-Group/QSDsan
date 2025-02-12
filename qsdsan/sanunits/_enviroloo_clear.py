@@ -10,11 +10,14 @@ from qsdsan import WasteStream
 from qsdsan import SanUnit, Construction
 from qsdsan.equipments import Blower
 from qsdsan.sanunits import IdealClarifier
+from qsdsan.sanunits._toilet import Toilet
 from qsdsan.sanunits._tank import StorageTank
 from qsdsan.processes._decay import Decay
 from qsdsan.utils import ospath, load_data, data_path, price_ratio
 # %% This callable file will be reposited to qsdsan.SanUnit subbranch with the name of _enviroloo
 __all__ = (
+    'EL_Excretion', # excretion
+    'EL_MURT', # toilet
     'EL_CT', # Collection tank
     'EL_PC', # Primary clarifier
     'EL_Anoxic', # Anoxic tank
@@ -27,7 +30,487 @@ __all__ = (
     'EL_Housing', # Housing of EL_System, such as equipment's armor
     )
 
-EL_su_data_path = ospath.join(data_path, 'sanunit_data/el')  # need change
+EL_su_data_path = ospath.join(data_path, 'sanunit_data/el')
+
+# %%
+excretion_path = ospath.join(EL_su_data_path, '_excretion.tsv')
+
+class EL_Excretion(SanUnit):
+    '''
+    Estimation of N, P, K, and COD in urine and feces based on dietary intake
+    for one person based on `Trimmer et al. <https://doi.org/10.1021/acs.est.0c03296>`_
+
+    Parameters
+    ----------
+    waste_ratio : float
+        A ratio in [0, 1] to indicate the amount of intake calories and nutrients
+        (N, P, K) that is wasted.
+
+    Examples
+    --------
+    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+
+    References
+    ----------
+    [1] Trimmer et al., Navigating Multidimensional Social–Ecological System
+    Trade-Offs across Sanitation Alternatives in an Urban Informal Settlement.
+    Environ. Sci. Technol. 2020, 54 (19), 12641–12653.
+    https://doi.org/10.1021/acs.est.0c03296
+    '''
+
+    _N_ins = 0
+    _N_outs = 2
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 waste_ratio=0, **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        self.waste_ratio = waste_ratio
+
+        data = load_data(path=excretion_path)
+        for para in data.index:
+            value = float(data.loc[para]['expected'])
+            # value = float(data.loc[para]['low'])
+            # value = float(data.loc[para]['high'])
+            setattr(self, '_'+para, value)
+        del data
+
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+
+    def _run(self):
+        ur, fec = self.outs
+        ur.empty()
+        fec.empty()
+
+        not_wasted = 1 - self.waste_ratio
+        factor = 24 * 1e3 # from g per person per day to kg per hour
+
+        ur_N = (self.p_veg+self.p_anim)/factor*self.N_prot \
+           * self.N_exc*self.N_ur*not_wasted
+        ur.imass['NH3'] = ur_N * self.N_ur_NH3
+        ur.imass['NonNH3'] = ur_N - ur.imass['NH3']
+
+        ur.imass['P'] = (self.p_veg*self.P_prot_v+self.p_anim*self.P_prot_a)/factor \
+            * self.P_exc*self.P_ur*not_wasted
+
+        e_cal = self.e_cal / 24 * not_wasted
+        ur.imass['K'] = e_cal/1e3 * self.K_cal/1e3 * self.K_exc*self.K_ur
+        ur.imass['Mg'] = self.Mg_ur / factor
+        ur.imass['Ca'] = self.Ca_ur / factor
+
+        ur_exc = self.ur_exc / factor
+        ur.imass['H2O'] = self.ur_moi * ur_exc
+        ur.imass['OtherSS'] = ur_exc - ur.F_mass
+
+        fec_exc = self.fec_exc / factor
+        fec_N = (1-self.N_ur)/self.N_ur * ur_N
+        fec.imass['NH3'] = fec_N * self.N_fec_NH3
+        fec.imass['NonNH3'] = fec_N - fec.imass['NH3']
+        fec.imass['P'] = (1-self.P_ur)/self.P_ur * ur.imass['P']
+        fec.imass['K'] = (1-self.K_ur)/self.K_ur * ur.imass['K']
+        fec.imass['Mg'] = self.Mg_fec / factor
+        fec.imass['Ca'] = self.Ca_fec / factor
+        fec.imass['H2O'] = self.fec_moi * fec_exc
+        fec.imass['OtherSS'] = fec_exc - fec.F_mass
+
+        # 14 kJ/g COD, the average lower heating value of excreta
+        tot_COD = e_cal*self.e_exc*4.184/14/1e3 # in kg COD/hr
+        ur._COD = tot_COD*(1-self.e_fec) / (ur.F_vol/1e3) # in mg/L
+        fec._COD = tot_COD*self.e_fec / (fec.F_vol/1e3) # in mg/L
+
+    @property
+    def e_cal(self):
+        '''[float] Caloric intake, [kcal/cap/d].'''
+        return self._e_cal
+    @e_cal.setter
+    def e_cal(self, i):
+        self._e_cal = i
+
+    @property
+    def p_veg(self):
+        '''[float] Vegetal protein intake, [g/cap/d].'''
+        return self._p_veg
+    @p_veg.setter
+    def p_veg(self, i):
+        self._p_veg = i
+
+    @property
+    def p_anim(self):
+        '''[float] Animal protein intake, [g/cap/d].'''
+        return self._p_anim
+    @p_anim.setter
+    def p_anim(self, i):
+        self._p_anim = i
+
+    @property
+    def N_prot(self):
+        '''[float] Nitrogen content in protein, [wt%].'''
+        return self._N_prot
+    @N_prot.setter
+    def N_prot(self, i):
+        self._N_prot = i
+
+    @property
+    def P_prot_v(self):
+        '''[float] Phosphorus content in vegetal protein, [wt%].'''
+        return self._P_prot_v
+    @P_prot_v.setter
+    def P_prot_v(self, i):
+        self._P_prot_v = i
+
+    @property
+    def P_prot_a(self):
+        '''[float] Phosphorus content in animal protein, [wt%].'''
+        return self._P_prot_a
+    @P_prot_a.setter
+    def P_prot_a(self, i):
+        self._P_prot_a = i
+
+    @property
+    def K_cal(self):
+        '''[float] Potassium intake relative to caloric intake, [g K/1000 kcal].'''
+        return self._K_cal
+    @K_cal.setter
+    def K_cal(self, i):
+        self._K_cal = i
+
+    @property
+    def N_exc(self):
+        '''[float] Nitrogen excretion factor, [% of intake].'''
+        return self._N_exc
+    @N_exc.setter
+    def N_exc(self, i):
+        self._N_exc = i
+
+    @property
+    def P_exc(self):
+        '''[float] Phosphorus excretion factor, [% of intake].'''
+        return self._P_exc
+    @P_exc.setter
+    def P_exc(self, i):
+        self._P_exc = i
+
+    @property
+    def K_exc(self):
+        '''[float] Potassium excretion factor, [% of intake].'''
+        return self._K_exc
+    @K_exc.setter
+    def K_exc(self, i):
+        self._K_exc = i
+
+    @property
+    def e_exc(self):
+        '''[float] Energy excretion factor, [% of intake].'''
+        return self._e_exc
+    @e_exc.setter
+    def e_exc(self, i):
+        self._e_exc = i
+
+    @property
+    def N_ur(self):
+        '''[float] Nitrogen recovered in urine, [wt%].'''
+        return self._N_ur
+    @N_ur.setter
+    def N_ur(self, i):
+        self._N_ur = i
+
+    @property
+    def P_ur(self):
+        '''[float] Phosphorus recovered in urine, [wt%].'''
+        return self._P_ur
+    @P_ur.setter
+    def P_ur(self, i):
+        self._P_ur = i
+
+    @property
+    def K_ur(self):
+        '''[float] Potassium recovered in urine, [wt%].'''
+        return self._K_ur
+    @K_ur.setter
+    def K_ur(self, i):
+        self._K_ur = i
+
+    @property
+    def e_fec(self):
+        '''[float] Percent of excreted energy in feces, [%].'''
+        return self._e_fec
+    @e_fec.setter
+    def e_fec(self, i):
+        self._e_fec = i
+
+    @property
+    def N_ur_NH3(self):
+        '''[float] Reduced inorganic nitrogen in urine, modeled as NH3, [% of total urine N].'''
+        return self._N_ur_NH3
+    @N_ur_NH3.setter
+    def N_ur_NH3(self, i):
+        self._N_ur_NH3 = i
+
+    @property
+    def N_fec_NH3(self):
+        '''[float] Reduced inorganic nitrogen in feces, modeled as NH3, [% of total feces N].'''
+        return self._N_fec_NH3
+    @N_fec_NH3.setter
+    def N_fec_NH3(self, i):
+        self._N_fec_NH3 = i
+
+    @property
+    def ur_exc(self):
+        '''[float] Urine generated per day, [g/cap/d].'''
+        return self._ur_exc
+    @ur_exc.setter
+    def ur_exc(self, i):
+        self._ur_exc = i
+
+    @property
+    def fec_exc(self):
+        '''[float] Feces generated per day, [g/cap/d].'''
+        return self._fec_exc
+    @fec_exc.setter
+    def fec_exc(self, i):
+        self._fec_exc = i
+
+    @property
+    def ur_moi(self):
+        '''[float] Moisture (water) content of urine, [wt%].'''
+        return self._ur_moi
+    @ur_moi.setter
+    def ur_moi(self, i):
+        self._ur_moi = i
+
+    @property
+    def fec_moi(self):
+        '''[float] Moisture (water) content of feces, [wt%].'''
+        return self._fec_moi
+    @fec_moi.setter
+    def fec_moi(self, i):
+        self._fec_moi = i
+
+    @property
+    def Mg_ur(self):
+        '''[float] Magnesium excreted in urine, [g Mg/cap/d].'''
+        return self._Mg_ur
+    @Mg_ur.setter
+    def Mg_ur(self, i):
+        self._Mg_ur = i
+
+    @property
+    def Mg_fec(self):
+        '''[float] Magnesium excreted in feces, [g Mg/cap/d].'''
+        return self._Mg_fec
+    @Mg_fec.setter
+    def Mg_fec(self, i):
+        self._Mg_fec = i
+
+    @property
+    def Ca_ur(self):
+        '''[float] Calcium excreted in urine, [g Ca/cap/d].'''
+        return self._Ca_ur
+    @Ca_ur.setter
+    def Ca_ur(self, i):
+        self._Ca_ur = i
+
+    @property
+    def Ca_fec(self):
+        '''[float] Calcium excreted in feces, [g Ca/cap/d].'''
+        return self._Ca_fec
+    @Ca_fec.setter
+    def Ca_fec(self, i):
+        self._Ca_fec = i
+
+    @property
+    def waste_ratio(self):
+        '''
+        [float] The amount of intake calories and nutrients
+        (N, P, K) that is wasted.
+
+        .. note::
+            Not considered for Mg and Ca.
+        '''
+        return self._waste_ratio
+    @waste_ratio.setter
+    def waste_ratio(self, i):
+        self._waste_ratio = i
+
+# %%
+murt_path = ospath.join(EL_su_data_path, '_murt.tsv')
+
+@price_ratio()
+class EL_MURT(Toilet):
+    '''
+    Multi-unit reinvented toilet.
+
+    The following components should be included in system thermo object for simulation:
+    Tissue, WoodAsh, H2O, NH3, NonNH3, P, K, Mg, CH4, N2O.
+
+    The following impact items should be pre-constructed for life cycle assessment:
+    Ceramic, Fan.
+
+    Parameters
+    ----------
+    ins : Iterable(stream)
+        waste_in: mixed excreta.
+    Outs : Iterable(stream)
+        waste_out: degraded mixed excreta.
+        CH4: fugitive CH4.
+        N2O: fugitive N2O.
+    N_squatting_pan_per_toilet : int
+        The number of squatting pan per toilet.
+    N_urinal_per_toilet : int
+        The number of urinals per toilet.
+    if_include_front_end : bool
+        If False, will not consider the capital and operating costs of this unit.
+
+    See Also
+    --------
+    :ref:`qsdsan.sanunits.Toilet <sanunits_toilet>`
+    '''
+    _N_outs = 3
+    _units = {
+        'Collection period': 'd',
+        }
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 degraded_components=('OtherSS',), N_user=1, N_tot_user=1,
+                 N_toilet=None, if_toilet_paper=True, if_flushing=True, if_cleansing=False,
+                 if_desiccant=True, if_air_emission=True, if_ideal_emptying=True,
+                 CAPEX=0, OPEX_over_CAPEX=0, lifetime=10,
+                 N_squatting_pan_per_toilet=1, N_urinal_per_toilet=1,
+                 if_include_front_end=True, **kwargs):
+
+        Toilet.__init__(
+            self, ID, ins, outs, thermo=thermo, init_with=init_with,
+            degraded_components=degraded_components,
+            N_user=N_user, N_tot_user=N_tot_user, N_toilet=N_toilet,
+            if_toilet_paper=if_toilet_paper, if_flushing=if_flushing,
+            if_cleansing=if_cleansing, if_desiccant=if_desiccant,
+            if_air_emission=if_air_emission, if_ideal_emptying=if_ideal_emptying,
+            CAPEX=CAPEX, OPEX_over_CAPEX=OPEX_over_CAPEX
+            )
+        self.N_squatting_pan_per_toilet = N_squatting_pan_per_toilet
+        self.N_urinal_per_toilet = N_urinal_per_toilet
+        self.if_include_front_end = if_include_front_end
+        self._mixed_in = WasteStream(f'{self.ID}_mixed_in')
+
+        data = load_data(path=murt_path)
+        for para in data.index:
+            value = float(data.loc[para]['expected'])
+            setattr(self, para, value)
+        del data
+
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+
+    def _init_lca(self):
+        self.construction = [
+            Construction(item='Ceramic', linked_unit=self, quantity_unit='kg'),
+            Construction(item='Fan', linked_unit=self, quantity_unit='ea'),
+        ]
+
+    def _run(self):
+        Toilet._run(self)
+        mixed_out, CH4, N2O = self.outs
+        CH4.phase = N2O.phase = 'g'
+
+        mixed_in = self._mixed_in
+        mixed_in.mix_from(self.ins)
+        tot_COD_kg = sum(float(getattr(i, 'COD', 0)) * i.F_vol for i in self.ins) / 1e3
+        # breakpoint()
+        # Air emission
+        if self.if_air_emission:
+            # N loss due to ammonia volatilization
+            NH3_rmd, NonNH3_rmd = \
+                self.allocate_N_removal(mixed_in.TN/1e3*mixed_in.F_vol*self.N_volatilization,
+                                        mixed_in.imass['NH3'])
+            mixed_in.imass ['NH3'] -= NH3_rmd
+            mixed_in.imass['NonNH3'] -= NonNH3_rmd
+            
+            # Energy/N loss due to degradation
+            mixed_in._COD = tot_COD_kg * 1e3 / mixed_in.F_vol # accounting for COD loss in leachate
+            Decay._first_order_run(self, waste=mixed_in, treated=mixed_out, CH4=CH4, N2O=N2O)
+        else:
+            mixed_out.copy_like(mixed_in)
+            CH4.empty()
+            N2O.empty()
+            
+        # Aquatic emission when not ideally emptied
+        if not self.if_ideal_emptying:
+           self.get_emptying_emission(
+                waste=mixed_out, CH4=CH4, N2O=N2O,
+                empty_ratio=self.empty_ratio,
+                CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
+                N2O_factor=self.N2O_EF_decay*44/28)
+        self._scale_up_outs()
+
+    def _design(self):
+        design = self.design_results
+        constr = self.construction
+        if self.if_include_front_end:
+            design['Number of users per toilet'] = self.N_user
+            design['Parallel toilets'] = N = self.N_toilet
+            design['Collection period'] = self.collection_period
+            design['Ceramic'] = Ceramic_quant = (
+                self.squatting_pan_weight * self.N_squatting_pan_per_toilet+
+                self.urinal_weight * self.N_urinal_per_toilet
+                )
+            design['Fan'] = Fan_quant = 1  # assume fan quantity is 1
+            constr[0].quantity = Ceramic_quant * N
+            constr[1].quantity = Fan_quant * N
+            self.add_construction(add_cost=False)
+        else:
+            design.clear()
+            for i in constr: i.quantity = 0
+
+    def _cost(self):
+        C = self.baseline_purchase_costs
+        if self.if_include_front_end:
+            N_toilet = self.N_toilet
+            C['Ceramic Toilets'] = (
+                self.squatting_pan_cost * self.N_squatting_pan_per_toilet +
+                self.urinal_cost * self.N_urinal_per_toilet
+                ) * N_toilet
+            C['Fan'] = self.fan_cost * N_toilet
+            C['Misc. parts'] = (
+                self.led_cost +
+                self.anticor_floor_cost +
+                self.circuit_change_cost +
+                self.pipe_cost
+                ) * N_toilet
+
+            ratio = self.price_ratio
+            for equipment, cost in C.items():
+                C[equipment] = cost * ratio
+        else:
+            self.baseline_purchase_costs.clear()
+
+        sum_purchase_costs = sum(v for v in C.values())
+        self.add_OPEX = (
+            self._calc_replacement_cost() +
+            self._calc_maintenance_labor_cost() +
+            sum_purchase_costs * self.OPEX_over_CAPEX / (365 * 24)
+            )
+
+    def _calc_replacement_cost(self):
+        return 0
+
+    def _calc_maintenance_labor_cost(self):
+        return 0
+
+    @property
+    def collection_period(self):
+        '''[float] Time interval between storage tank collection, [d].'''
+        return self._collection_period
+    @collection_period.setter
+    def collection_period(self, i):
+        self._collection_period = float(i)
+        
+    @property
+    def tau(self):
+        '''[float] Retention time of the unit, same as `collection_period`.'''
+        return self.collection_period
+    @tau.setter
+    def tau(self, i):
+        self.collection_period = i
 
 # %%
 CollectionTank_path = ospath.join(EL_su_data_path, '_EL_CT.tsv')
@@ -136,7 +619,7 @@ class EL_CT(StorageTank):
             input_streams.append(MT_spill_return)
 
         # Mix all inputs into a single stream
-        self._mixed.mix_from([input_streams])
+        self._mixed.mix_from(input_streams)
 
         # Copy the mixed result to the outflow
         TreatedWater.copy_like(self._mixed)

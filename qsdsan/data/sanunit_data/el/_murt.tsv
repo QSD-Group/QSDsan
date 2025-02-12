@@ -1,0 +1,15 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+collection_period	CBS_collection_period	days	3.5	1	9	triangular	Schmit et al. (2017)
+sludge_accum_rate	sludge_accumulation_rate	L/cap/yr	270	100	900	triangular	"Strande et al., 2017; Chowdhry & Kone, 2012 (Gates Foundation report)"
+N_volatilization	N_pit_volatilization	fraction of N input	0.005	0	0.01	uniform	"Jacks et al., 1999; Orner and Mihelcic, 2017; Nyenje et al., 2013 minor due to neutral pH)"
+MCF_decay	MCF_vault	fraction of anaerobic conversion of degraded COD	0.1	0.05	0.15	triangular	"IPCC, 2019"
+N2O_EF_decay	N2O_EF_vault	fraction of N emitted as N2O	0	0	0.001	uniform	"IPCC, 2019"
+squatting_pan_cost		USD	151	113.25	188.75	triangular	Eco-San BOM
+urinal_cost		USD	115	86.25	143.75	triangular	Eco-San BOM
+led_cost		USD	15	11.25	18.75	triangular	Eco-San BOM
+anticor_floor_cost		USD	150	112.5	187.5	triangular	Eco-San BOM
+fan_cost		USD	15	11.25	18.75	triangular	Eco-San BOM
+circuit_change_cost		USD	2	1.5	2.5	triangular	Eco-San BOM
+pipe_cost		USD	57.5	43.125	71.875	triangular	Eco-San BOM
+squatting_pan_weight		kg	15	11.25	18.75	triangular	https://www.rakceramics.com/us/en/bathroom-kitchen/category/water-closets/squatting-pan-squatting-pan-wcistern-18cm/
+urinal_weight		kg	12	9	15	triangular	https://www.rakceramics.com/us/en/bathroom-kitchen/category/urinals-and-partitions/rak-phoenix--urinal-bowl-wtop-inlet-35cm/
