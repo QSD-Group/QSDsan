@@ -1073,31 +1073,16 @@ class EL_Aerobic(SanUnit, Decay):
     def _run(self):
 
         # Input streams
-        WasteWater = self.ins[0]
-        PAC = self.ins[1]
-        air = self.ins[2]
+        WasteWater,PAC = self.ins
 
-        # Output streams
-        TreatedWater = self.outs[0]
-        CH4_emission = self.outs[1]
-        N2O_emission = self.outs[2]
+        # Output stream
+        TreatedWater, CH4_emission, N2O_emission = self.outs
+        
+        for out_stream in self.outs:
+            out_stream.empty()
+            
+        TreatedWater.mix_from([WasteWater, PAC])
 
-        # Mix PAC into WasteWater (affects mass balance)
-        WasteWater.imass['PAC'] += PAC.F_mass  
-        WasteWater.F_mass += PAC.F_mass
-
-        # Air (used for aeration) does not affect mass balance
-        # Air is only used for operational purposes, no changes in WasteWater mass
-
-        # Copy updated WasteWater to TreatedWater
-        TreatedWater.copy_like(WasteWater)
-
-        # No biogas captured in aerobic tanks, calculate emissions
-        super()._first_order_run(waste=WasteWater,
-                                 treated=TreatedWater,
-                                 CH4=CH4_emission,
-                                 N2O=N2O_emission
-                                 )
 
     def _design(self):
         design = self.design_results
@@ -1191,48 +1176,61 @@ class EL_MBR(SanUnit, Decay):
                              Construction(item ='PVDF_membrane', linked_unit=self, quantity_unit='kg'),]
     
     def _run(self):
-        
+
         # Input streams
-        WasteWater = self.ins[0]
-        air = self.ins[1]
+        WasteWater = self.ins
 
-        # Output streams
-        TreatedWater = self.outs[0]
-        PC_sludge_return = self.outs[1]
-        AnoT_sludge_return = self.outs[2]
-        CH4_emission = self.outs[3]
-        N2O_emission = self.outs[4]
+        # Output stream
+        TreatedWater, PC_sludge_return, AnoT_sludge_return, CH4_emission, N2O_emission = self.outs
+        
+        for out_stream in self.outs:
+            out_stream.empty()
+            
+        TreatedWater.mix_from([WasteWater])
+    
+    # def _run(self):
+        
+    #     # Input streams
+    #     WasteWater = self.ins[0]
+    #     air = self.ins[1]
 
-        # Air does not affect mass balance
-        # Air is used for aeration, so we do not modify WasteWater mass
+    #     # Output streams
+    #     TreatedWater = self.outs[0]
+    #     PC_sludge_return = self.outs[1]
+    #     AnoT_sludge_return = self.outs[2]
+    #     CH4_emission = self.outs[3]
+    #     N2O_emission = self.outs[4]
 
-        # Step 1: Copy WasteWater to TreatedWater
-        TreatedWater.copy_like(WasteWater)
+    #     # Air does not affect mass balance
+    #     # Air is used for aeration, so we do not modify WasteWater mass
 
-        # Step 2: Split sludge for returns (1% to PC, 99% to AnoT)
-        total_f_sludge = 0.05  # Total sludge accounts for 5% of the wastewater mass
-        f_PC_sludge = 0.01     # Primary clarifier accounts for 1% of the total sludge
-        f_AnoT_sludge = 0.99   # Anoxic tank accounts for 99% of the total sludge
+    #     # Step 1: Copy WasteWater to TreatedWater
+    #     TreatedWater.copy_like(WasteWater)
 
-        # Sludge mass
-        total_sludge_mass = WasteWater.F_mass * total_f_sludge
-        PC_sludge_return.mass = total_sludge_mass * f_PC_sludge
-        AnoT_sludge_return.mass = total_sludge_mass * f_AnoT_sludge
+    #     # Step 2: Split sludge for returns (1% to PC, 99% to AnoT)
+    #     total_f_sludge = 0.05  # Total sludge accounts for 5% of the wastewater mass
+    #     f_PC_sludge = 0.01     # Primary clarifier accounts for 1% of the total sludge
+    #     f_AnoT_sludge = 0.99   # Anoxic tank accounts for 99% of the total sludge
 
-        # Update TreatedWater after sludge removal
-        TreatedWater.F_mass -= total_sludge_mass
-        for component in TreatedWater.components:
-            TreatedWater.imass[component] -= (
-                PC_sludge_return.imass[component] + AnoT_sludge_return.imass[component]
-            )
+    #     # Sludge mass
+    #     total_sludge_mass = WasteWater.F_mass * total_f_sludge
+    #     PC_sludge_return.mass = total_sludge_mass * f_PC_sludge
+    #     AnoT_sludge_return.mass = total_sludge_mass * f_AnoT_sludge
 
-        # Step 3: Calculate emissions using Decay._first_order_run
-        super()._first_order_run(waste=WasteWater,
-                                 treated=TreatedWater,
-                                 biogas=None,  # Assume no biogas is captured
-                                 CH4=CH4_emission,
-                                 N2O=N2O_emission
-                                 )
+    #     # Update TreatedWater after sludge removal
+    #     TreatedWater.F_mass -= total_sludge_mass
+    #     for component in TreatedWater.components:
+    #         TreatedWater.imass[component] -= (
+    #             PC_sludge_return.imass[component] + AnoT_sludge_return.imass[component]
+    #         )
+
+    #     # Step 3: Calculate emissions using Decay._first_order_run
+    #     super()._first_order_run(waste=WasteWater,
+    #                              treated=TreatedWater,
+    #                              biogas=None,  # Assume no biogas is captured
+    #                              CH4=CH4_emission,
+    #                              N2O=N2O_emission
+    #                              )
 
     def _design(self):
         design = self.design_results
@@ -1339,46 +1337,59 @@ class EL_CWT(StorageTank):
         self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]
     
     def _run(self):
-        
+
         # Input streams
-        WasteWater = self.ins[0]
-        ozone = self.ins[1]
-        air = self.ins[2]
+        WasteWater,ozone = self.ins
 
-        # Output streams
-        TreatedWater = self.outs[0]
-        CT_spill_return = self.outs[1]
-        PC_spill_return = self.outs[2]
+        # Output stream
+        TreatedWater, CT_spill_return,PC_spill_return = self.outs
+        
+        for out_stream in self.outs:
+            out_stream.empty()
+            
+        TreatedWater.mix_from([WasteWater, ozone])
+    
+    # def _run(self):
+        
+    #     # Input streams
+    #     WasteWater = self.ins[0]
+    #     ozone = self.ins[1]
+    #     air = self.ins[2]
+
+    #     # Output streams
+    #     TreatedWater = self.outs[0]
+    #     CT_spill_return = self.outs[1]
+    #     PC_spill_return = self.outs[2]
  
-        # Constants for overflow conditions
-        CT_spill_fraction = 0.6
-        PC_spill_fraction = 0.4
+    #     # Constants for overflow conditions
+    #     CT_spill_fraction = 0.6
+    #     PC_spill_fraction = 0.4
 
-        # Step 1: Process inputs
-        # Air and ozone are balanced, not affecting mass balance
-        TreatedWater.copy_like(WasteWater)
+    #     # Step 1: Process inputs
+    #     # Air and ozone are balanced, not affecting mass balance
+    #     TreatedWater.copy_like(WasteWater)
 
-        # Step 2: Handle overflow if necessary
-        if TreatedWater.F_vol > self.max_overflow:
-            # Calculate excess volume
-            spill_vol = TreatedWater.F_vol - self.max_overflow
+    #     # Step 2: Handle overflow if necessary
+    #     if TreatedWater.F_vol > self.max_overflow:
+    #         # Calculate excess volume
+    #         spill_vol = TreatedWater.F_vol - self.max_overflow
 
-            # Calculate spill fractions
-            self._f_spill = spill_vol / TreatedWater.F_vol
-            self._f_treated = 1 - self._f_spill
+    #         # Calculate spill fractions
+    #         self._f_spill = spill_vol / TreatedWater.F_vol
+    #         self._f_treated = 1 - self._f_spill
 
-            # Assign spill fractions to CT_spill_return and PC_spill_return
-            CT_spill_return.F_mass[:] = TreatedWater.F_mass[:] * self._f_spill * CT_spill_fraction
-            PC_spill_return.F_mass[:] = TreatedWater.F_mass[:] * self._f_spill * PC_spill_fraction
+    #         # Assign spill fractions to CT_spill_return and PC_spill_return
+    #         CT_spill_return.F_mass[:] = TreatedWater.F_mass[:] * self._f_spill * CT_spill_fraction
+    #         PC_spill_return.F_mass[:] = TreatedWater.F_mass[:] * self._f_spill * PC_spill_fraction
 
-            # Adjust the normal treated water to within max capacity
-            TreatedWater.F_mass[:] *= self._f_treated
-        else:
-            # No spill return if overflow is within capacity
-            CT_spill_return.empty()
-            PC_spill_return.empty()
-            self._f_spill = 0.0
-            self._f_treated = 1.0
+    #         # Adjust the normal treated water to within max capacity
+    #         TreatedWater.F_mass[:] *= self._f_treated
+    #     else:
+    #         # No spill return if overflow is within capacity
+    #         CT_spill_return.empty()
+    #         PC_spill_return.empty()
+    #         self._f_spill = 0.0
+    #         self._f_treated = 1.0
 
     def _design(self):
         design = self.design_results;
