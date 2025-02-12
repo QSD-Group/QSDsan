@@ -5,6 +5,7 @@
 Created by Yuyao Huang and Siqi Tang for Enviroloo (EL) Clear Toilet system
 '''
 # %%
+import numpy as np
 from math import ceil
 from qsdsan import WasteStream
 from qsdsan import SanUnit, Construction
@@ -555,7 +556,7 @@ class EL_CT(StorageTank):
     class:`biosteam.units.StorageTank`
     '''
     _N_ins = 4 
-    _N_outs = 3
+    _N_outs = 1
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
     exponent_scale = 0.6
@@ -699,7 +700,7 @@ class EL_PC(IdealClarifier):
      """
     
     _N_ins = 2
-    _N_outs = 5
+    _N_outs = 3
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
     exponent_scale = 0.6
@@ -760,15 +761,17 @@ class EL_PC(IdealClarifier):
         PC_sludg_return.copy_like(self._mixed)
         
         # Apply solids removal efficiency
-        PC_sludg_return.F_mass[:] *= self.solids_removal_efficiency
-        TreatedWater.F_mass[:] *= (1 - self.solids_removal_efficiency)
+        # PC_sludg_return.F_mass[:] *= self.solids_removal_efficiency
+        # TreatedWater.F_mass[:] *= (1 - self.solids_removal_efficiency)
+        
+
         
         # Step 3: Handle spill return based on overflow volume
         if self.max_overflow is not None:
             if TreatedWater.F_vol > self.max_overflow:
                 # Calculate excess volume
                 spill_vol = TreatedWater.F_vol - self.max_overflow
-                
+                breakpoint()
                 # Calculate the fraction of spill
                 self._f_spill = spill_vol / TreatedWater.F_vol
                 
@@ -1244,7 +1247,7 @@ class EL_CWT(StorageTank):
 
     '''
     _N_ins = 3  # number of ins
-    _N_outs = 5  # number of outs
+    _N_outs = 3  # number of outs
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
 
