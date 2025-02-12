@@ -600,26 +600,30 @@ class EL_CT(StorageTank):
     def _init_lca(self):
         self.construction = [Construction(item = 'StainlessSteel', linked_unit=self, quantity_unit='kg'),]
       
-        
     def _run(self):
-
+        '''
+        Ensures mass flow rate balance:
+        Q_in * X_in = Q_out * X_out (volumetric flowrate * concentration)
+    
+        - `WasteWater` and `sludge_return` are always present.
+        - `PC_spill_return` and `MT_spill_return` may or may not exist.
+        '''
         # Input stream
         WasteWater = self.ins[0]
         sludge_return = self.ins[1]
-        PC_spill_return = self.ins[2]
-        MT_spill_return = self.ins[3]
+        PC_spill_return = self.ins[2] if len(self.ins) > 2 else None
+        MT_spill_return = self.ins[3] if len(self.ins) > 3 else None
 
         # Output stream
         TreatedWater = self.outs[0]
+        assert TreatedWater, "Output stream is not defined."
 
-        # Ensure existing input streams
-        input_streams = [WasteWater, sludge_return]
-        if PC_spill_return:  # If there is PC_spill_return
-            input_streams.append(PC_spill_return)
-        if MT_spill_return:  # If there is MT_spill_return
-            input_streams.append(MT_spill_return)
+        # Only keeo existing input streams
+        input_streams = [WasteWater, sludge_return, PC_spill_return, MT_spill_return]
+        input_streams = [s for s in input_streams if s]  # 过滤掉 None
 
         # Mix all inputs into a single stream
+        self._mixed.empty()
         self._mixed.mix_from(input_streams)
 
         # Copy the mixed result to the outflow
