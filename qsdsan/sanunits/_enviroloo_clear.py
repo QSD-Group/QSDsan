@@ -1562,11 +1562,11 @@ class EL_Housing(SanUnit):
     _N_outs = 1  # number of outs
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
-    ppl_per_MURT = 3  # number of people per MURT
+    ppl_per_MURT = 30  # number of people per MURT
 
     def __init__(self, ID = '', ins = None, outs = (), thermo = None, init_with = None,
                  price_ratio=0.9,
-                 ppl = 1, baseline_ppl = None, F_BM_default= 1, **kwargs):
+                 ppl = 1000, baseline_ppl = 30, F_BM_default= 1, **kwargs):
         init_with = init_with or {}
         super().__init__(ID=ID, ins=ins, outs=outs, thermo = thermo, 
                          init_with = init_with, F_BM_default=F_BM_default)
