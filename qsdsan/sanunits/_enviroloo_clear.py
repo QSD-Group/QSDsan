@@ -613,43 +613,14 @@ class EL_CT(StorageTank):
         # Input stream
         WasteWater = self.ins[0]
         sludge_return = self.ins[1]
-        PC_spill_return = self.ins[2] if len(self.ins) > 2 and self.ins[2] else None
-        MT_spill_return = self.ins[3] if len(self.ins) > 3 and self.ins[3] else None
+        PC_spill_return = self.ins[2]
+        MT_spill_return = self.ins[3]
 
         # Output stream
         TreatedWater = self.outs[0]
-        assert TreatedWater, "Output stream is not defined."
-
-        # Only keep existing input stream
-        input_streams = [s if s is not None else None for s in self.ins]
-
-        # Remove None and mix all input streams
-        self._mixed.empty()
-        self._mixed.mix_from([s for s in input_streams if s])
-
-        # Copy the mixed result to the outflow
-        TreatedWater.copy_like(self._mixed)
-
-    def _run(self):
-        '''
-        Requirement: mass flow rate balance
-        Q_in * X_in = Q_out * X_out (volumetric flowrate * concentration)
-        For here, 5 different types input stream, 1 output stream
-        But we don't know the conentration of wastewater
-        '''
         
-        # Input stream
-        WasteWater = self.ins[0]
-        sludge_return = self.ins[1]
-        PC_spill_return = self.ins[2] if len(self.ins) > 2 else None
-        CWT_spill_return = self.ins[3] if len(self.ins) > 3 else None
-
-        # Output stream
-        TreatedWater = self.outs[0]
-
-        # Only keeo existing input streams
-        input_streams = [WasteWater, sludge_return, PC_spill_return, CWT_spill_return]
-        input_streams = [s for s in input_streams if s]  # Filter non-existing input streams
+        # Define input streams
+        input_streams = [WasteWater, sludge_return, PC_spill_return, MT_spill_return]
 
         # Mix all inputs into a single stream
         self._mixed.empty()
@@ -657,6 +628,35 @@ class EL_CT(StorageTank):
 
         # Copy the mixed result to the outflow
         TreatedWater.copy_like(self._mixed)
+    
+    
+    # def _run(self):
+    #     '''
+    #     Requirement: mass flow rate balance
+    #     Q_in * X_in = Q_out * X_out (volumetric flowrate * concentration)
+    #     For here, 5 different types input stream, 1 output stream
+    #     But we don't know the conentration of wastewater
+    #     '''
+        
+    #     # Input stream
+    #     WasteWater = self.ins[0]
+    #     sludge_return = self.ins[1]
+    #     PC_spill_return = self.ins[2] if len(self.ins) > 2 else None
+    #     CWT_spill_return = self.ins[3] if len(self.ins) > 3 else None
+
+    #     # Output stream
+    #     TreatedWater = self.outs[0]
+
+    #     # Only keep existing input streams
+    #     input_streams = [WasteWater, sludge_return, PC_spill_return, CWT_spill_return]
+    #     input_streams = [s for s in input_streams if s]  # Filter non-existing input streams
+
+    #     # Mix all inputs into a single stream
+    #     self._mixed.empty()
+    #     self._mixed.mix_from(input_streams)
+
+    #     # Copy the mixed result to the outflow
+    #     TreatedWater.copy_like(self._mixed)
 
     def _design(self):
         design = self.design_results
@@ -923,7 +923,7 @@ class EL_Anoxic(SanUnit, Decay):
         WasteWater = self.ins[0]
         sludge_return = self.ins[1]
         glucose = self.ins[2]
-        agitation = self.ins[3]  # Agitation pump（no mass contribution）
+        agitation = self.ins[3]  # Agitation pump（no mass contribution）****not showing in flow diagram
 
         # Output stream
         TreatedWater = self.outs[0]
