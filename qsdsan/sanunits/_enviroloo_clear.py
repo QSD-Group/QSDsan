@@ -515,7 +515,8 @@ class EL_MURT(Toilet):
 
 # %%
 CollectionTank_path = ospath.join(EL_su_data_path, '_EL_CT.tsv')
-@price_ratio()
+
+price_ratio()
 class EL_CT(StorageTank):
 
     '''
@@ -774,59 +775,69 @@ class EL_PC(IdealClarifier):
         self.construction = [Construction(item = 'StainlessSteel', linked_unit=self, quantity_unit='kg'),]
     
     def _run(self):
-        """
-        Run the enhanced primary clarifier process with spill return handling.
-        """
         # Input streams
-        WasteWater = self.ins[0]  
-        MT_sludge_return = self.ins[1]  
-    
+        WasteWater, MT_sludge_return = self.ins
+        
         # Output streams
-        TreatedWater = self.outs[0]  
-        PC_spill_return = self.outs[1]  
-        PC_sludge_return = self.outs[2]  
+        TreatedWater,PC_spill_return, PC_sludge_return = self.outs
+        
+        for out_stream in self.outs:
+            out_stream.empty()
+            
+        TreatedWater.mix_from([WasteWater, MT_sludge_return])
+        
+    # def _run(self):
 
-        # Mix all inputs into a single stream
-        self._mixed.empty()  
-        self._mixed.mix_from([WasteWater, MT_sludge_return])  
+    #     # Input streams
+    #     WasteWater = self.ins[0]  
+    #     MT_sludge_return = self.ins[1]  
+    
+    #     # Output streams
+    #     TreatedWater = self.outs[0]  
+    #     PC_spill_return = self.outs[1]  
+    #     PC_sludge_return = self.outs[2]  
 
-        # Calculate the amount of solids removed
-        PC_sludge_return.copy_like(self._mixed)  
-        PC_sludge_return.F_mass *= self.solids_removal_efficiency  
+    #     # Mix all inputs into a single stream
+    #     self._mixed.empty()  
+    #     self._mixed.mix_from([WasteWater, MT_sludge_return])  
 
-        # Calculate the amount of treated water
-        TreatedWater.copy_like(self._mixed)
-        TreatedWater.F_mass *= (1 - self.solids_removal_efficiency)  
+    #     # Calculate the amount of solids removed
+    #     PC_sludge_return.copy_like(self._mixed)  
+    #     PC_sludge_return.F_mass *= self.solids_removal_efficiency  
 
-        # Spill return exixting requirement
-        if self.max_overflow is not None:
-            if TreatedWater.F_vol > self.max_overflow:
+    #     # Calculate the amount of treated water
+    #     TreatedWater.copy_like(self._mixed)
+    #     TreatedWater.F_mass *= (1 - self.solids_removal_efficiency)  
+
+    #     # Spill return exixting requirement
+    #     if self.max_overflow is not None:
+    #         if TreatedWater.F_vol > self.max_overflow:
                 
-                # Spill return exists
-                spill_vol = TreatedWater.F_vol - self.max_overflow  
+    #             # Spill return exists
+    #             spill_vol = TreatedWater.F_vol - self.max_overflow  
 
-                if not hasattr(self, '_f_spill'):
-                    self._f_spill = None
-                if not hasattr(self, '_f_overflow'):
-                    self._f_overflow = None
+    #             if not hasattr(self, '_f_spill'):
+    #                 self._f_spill = None
+    #             if not hasattr(self, '_f_overflow'):
+    #                 self._f_overflow = None
 
-                self._f_spill = spill_vol / TreatedWater.F_vol  
-                self._f_overflow = 1 - self._f_spill  
+    #             self._f_spill = spill_vol / TreatedWater.F_vol  
+    #             self._f_overflow = 1 - self._f_spill  
 
-                PC_spill_return.copy_like(TreatedWater)  
-                PC_spill_return.F_mass *= self._f_spill  
+    #             PC_spill_return.copy_like(TreatedWater)  
+    #             PC_spill_return.F_mass *= self._f_spill  
 
-                TreatedWater.F_mass *= self._f_overflow  
-            else:
-                # max_overflow is not none, but TreatedWater < max_overflow
-                PC_spill_return.empty()
-                if hasattr(self, '_f_spill'):
-                    del self._f_spill  
-                if hasattr(self, '_f_overflow'):
-                    del self._f_overflow  
-        else:
-            # max_overflow is none, no spill return
-            PC_spill_return.empty()
+    #             TreatedWater.F_mass *= self._f_overflow  
+    #         else:
+    #             # max_overflow is not none, but TreatedWater < max_overflow
+    #             PC_spill_return.empty()
+    #             if hasattr(self, '_f_spill'):
+    #                 del self._f_spill  
+    #             if hasattr(self, '_f_overflow'):
+    #                 del self._f_overflow  
+    #     else:
+    #         # max_overflow is none, no spill return
+    #         PC_spill_return.empty()
 
     def _design(self):
         design = self.design_results
