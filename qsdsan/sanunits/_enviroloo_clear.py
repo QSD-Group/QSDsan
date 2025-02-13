@@ -1538,10 +1538,10 @@ class EL_PT(StorageTank):
     def _run(self):
 
         # Input streams
-        ClearWater = self.ins[0]
+        ClearWater = self.ins
 
         # Output streams
-        TreatedWater = self.outs[0]
+        TreatedWater = self.outs
         
         input_streams = [ClearWater]
             
