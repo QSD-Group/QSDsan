@@ -1460,7 +1460,7 @@ class EL_CWT(StorageTank):
 
         self.add_OPEX = self._calc_replacement_cost()
 
-        self.power_utility(self.power_demand * self.working_time)
+        self.power_utility(self.power_demand_CWT * self.working_time)
 
     def _calc_replacement_cost(self):
         scale = (self.ppl / self.baseline_ppl) ** self.exponent_scale
