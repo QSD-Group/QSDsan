@@ -1347,13 +1347,13 @@ class EL_CWT(StorageTank):
     exponent_scale = 0.6
 
     def __init__(self, ID = '', ins = None, outs = (), vessel_material=None, V_wf = None, include_construction = True, 
-                 length_to_diameter = None, F_BM_default = 1, kw_per_m3 = None, vessel_type=None,
+                 length_to_diameter = None, F_BM_default = 1, kW_per_m3 = 0.1, vessel_type=None,
                  tau = None, max_overflow=None, ppl = None, baseline_ppl = None,
                  price_ratio=0.9,
                  thermo = None, init_with = 'WasteStream', **kwargs):
         StorageTank.__init__(self, ID=ID, ins=ins, outs=outs, thermo = thermo, init_with = init_with, 
                              include_construction= include_construction,
-                             #kw_per_m3= kw_per_m3, 
+                             kW_per_m3= kW_per_m3, 
                              vessel_type= vessel_type, tau= tau,
                              vessel_material= vessel_material, V_wf= V_wf, F_BM_default= F_BM_default)
 
@@ -1362,7 +1362,6 @@ class EL_CWT(StorageTank):
         self.length_to_diameter = length_to_diameter
         self.max_overflow = max_overflow
         self.price_ratio = price_ratio
-        self.kw_per_m3 = kw_per_m3
         self._mixed = WasteStream()
 
         data = load_data(path = ClearWaterTank_path)
@@ -1509,18 +1508,17 @@ class EL_PT(StorageTank):
     exponent_scale = 0.6
 
     def __init__(self, ID = '', ins = None, outs = (), vessel_material = None, V_wf = None, include_construction = True,
-                 length_to_diameter = None, F_BM_default = 1, kw_per_m3 = None, vessel_type = 'Steel', tau = None,
+                 length_to_diameter = None, F_BM_default = 1, kW_per_m3 = 0.1, vessel_type = 'Steel', tau = None,
                  thermo = None, init_with = 'WasteStream', 
                  ppl = None, baseline_ppl = None, **kwargs):
         StorageTank.__init__(self, ID=ID, ins=ins, outs=outs, thermo = thermo, init_with = init_with, include_construction= include_construction,
-                             #kw_per_m3= kw_per_m3, 
+                             kW_per_m3= kW_per_m3, 
                              vessel_type= vessel_type, tau= tau,
                              vessel_material= vessel_material, V_wf= V_wf, F_BM_default= F_BM_default)
 
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
         self.length_to_diameter = length_to_diameter
-        self.kw_per_m3 = kw_per_m3
         self._mixed = WasteStream()
 
         data = load_data(path = PressureTank_path)
@@ -1551,7 +1549,7 @@ class EL_PT(StorageTank):
 
         # Copy the mixed result to the outflow
         TreatedWater.copy_like(self._mixed)
-    
+        
     def _design(self):
         design = self.design_results
         constr = self.construction
