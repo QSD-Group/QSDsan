@@ -10,7 +10,7 @@ Benchmark Simulation Models
 ---------------------------
 The Modelling and Integrated Assessment (MIA) Specialist Group of the International Water Association has established benchmark simulation models (BSMs) to provide a consistent environment for wastewater treatment plant (WWTP)/water resource recovery facility (WRRF) evaluation (see `BSM webpage <http://iwa-mia.org/benchmarking>`_ and `MATLAB implementation and report <https://github.com/wwtmodels/Benchmark-Simulation-Models>`_).
 
-When publishing the paper that introduces QSDsan (`Li and Zhang`_ et al., 2022), we validated the process modeling and dynamic simulation capacities of QSDsan through BSM1 (`bsm1 EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_, `bsm1 archived codes <https://pypi.org/project/exposan/1.1.4>`_). BSM2 is also implemented in ``EXPOsan <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm2>``_.
+When publishing the paper that introduces QSDsan (`Li and Zhang`_ et al., 2022), we validated the process modeling and dynamic simulation capacities of QSDsan through BSM1 (`bsm1 EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_, `bsm1 archived codes <https://pypi.org/project/exposan/1.1.4>`_). BSM2 is also implemented in `EXPOsan <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm2>`_.
 
 
 Water Resource Recovery Facilities
