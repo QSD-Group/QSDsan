@@ -912,6 +912,7 @@ class EL_Anoxic(SanUnit, Decay):
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
     baseline_ppl = 30
+    exponent_scale = 0.6
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  degraded_components=('OtherSS',),  F_BM_default=1, ppl = None, baseline_ppl = None,
