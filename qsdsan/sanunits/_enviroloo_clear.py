@@ -1344,6 +1344,7 @@ class EL_CWT(StorageTank):
     _N_outs = 3  # number of outs
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
+    exponent_scale = 0.6
 
     def __init__(self, ID = '', ins = None, outs = (), vessel_material=None, V_wf = None, include_construction = True, 
                  length_to_diameter = None, F_BM_default = 1, kw_per_m3 = None, vessel_type=None,
