@@ -1121,7 +1121,7 @@ class EL_Aerobic(SanUnit, Decay):
     
     def _cost(self):
         C = self.baseline_purchase_costs
-        C['Tank'] = self.arobic_tank_cost
+        C['Tank'] = self.aerobic_tank_cost
         C['Pipes'] = self.pipeline_connectors
         C['Fittings'] = self.weld_female_adapter_fittings
         C['Chemical_PAC'] = self.chemical_PAC_dosage * self.ins[0] * self.chemical_PAC_price
