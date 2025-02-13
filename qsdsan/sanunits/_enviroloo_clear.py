@@ -1189,6 +1189,7 @@ class EL_MBR(SanUnit, Decay):
 
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
+        self._mixed = WasteStream()
 
         data = load_data(path=MBR_path)
         for para in data.index:
@@ -1360,6 +1361,7 @@ class EL_CWT(StorageTank):
         self.max_overflow = max_overflow
         self.price_ratio = price_ratio
         self.kw_per_m3 = kw_per_m3
+        self._mixed = WasteStream()
 
         data = load_data(path = ClearWaterTank_path)
         for para in data.index:
@@ -1517,6 +1519,7 @@ class EL_PT(StorageTank):
         self.baseline_ppl = baseline_ppl
         self.length_to_diameter = length_to_diameter
         self.kw_per_m3 = kw_per_m3
+        self._mixed = WasteStream()
 
         data = load_data(path = PressureTank_path)
         for para in data.index:
