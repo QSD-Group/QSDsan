@@ -924,6 +924,8 @@ class EL_Anoxic(SanUnit, Decay):
         
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
+        self._mixed = WasteStream()
+        
 
         data = load_data(path=Anoxic_path)
         for para in data.index:
