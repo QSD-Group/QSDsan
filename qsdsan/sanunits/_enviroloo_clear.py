@@ -1379,8 +1379,8 @@ class EL_CWT(StorageTank):
 
         # Output streams
         TreatedWater = self.outs[0]
-        CT_spill_return = self.outs[1]
-        PC_spill_return = self.outs[2]
+        spill_return = self.outs[1]
+        CWT_cycle = self.outs[2]
         
         input_streams = [WasteWater, ozone, air]
             
@@ -1526,6 +1526,23 @@ class EL_PT(StorageTank):
 
     def _init_lca(self):
         self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]
+    
+    def _run(self):
+
+        # Input streams
+        ClearWater = self.ins[0]
+
+        # Output streams
+        TreatedWater = self.outs[0]
+        
+        input_streams = [ClearWater]
+            
+        # Mix all inputs into a single stream
+        self._mixed.empty()
+        self._mixed.mix_from(input_streams)
+
+        # Copy the mixed result to the outflow
+        TreatedWater.copy_like(self._mixed)
     
     def _design(self):
         design = self.design_results
