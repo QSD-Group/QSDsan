@@ -615,13 +615,13 @@ class EL_CT(StorageTank):
         WasteWater = self.ins[0]
         sludge_return = self.ins[1]
         PC_spill_return = self.ins[2]
-        MT_spill_return = self.ins[3]
+        CWT_spill_return = self.ins[3]
 
         # Output stream
         TreatedWater = self.outs[0]
         
         # Define input streams
-        input_streams = [WasteWater, sludge_return, PC_spill_return, MT_spill_return]
+        input_streams = [WasteWater, sludge_return, PC_spill_return, CWT_spill_return]
 
         # Mix all inputs into a single stream
         self._mixed.empty()
