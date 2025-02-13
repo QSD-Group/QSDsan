@@ -776,15 +776,23 @@ class EL_PC(IdealClarifier):
     
     def _run(self):
         # Input streams
-        WasteWater, MT_sludge_return = self.ins
+        WasteWater = self.ins[0]
+        MT_sludge_return = self.ins[1]  
         
         # Output streams
-        TreatedWater,PC_spill_return, PC_sludge_return = self.outs
+        TreatedWater = self.outs[0] 
+        PC_spill_return = self.outs[1] 
+        PC_sludge_return = self.outs[2]  
         
-        for out_stream in self.outs:
-            out_stream.empty()
-            
-        TreatedWater.mix_from([WasteWater, MT_sludge_return])
+        # Define input streams
+        input_streams = [WasteWater, MT_sludge_return]
+
+        # Mix all inputs into a single stream
+        self._mixed.empty()
+        self._mixed.mix_from(input_streams)
+
+        # Copy the mixed result to the outflow
+        TreatedWater.copy_like(self._mixed)
         
     # def _run(self):
 
@@ -931,15 +939,23 @@ class EL_Anoxic(SanUnit, Decay):
     def _run(self):
         
         # Input stream
-        WasteWater, sludge_return, glucose = self.ins
+        WasteWater = self.ins[0]
+        sludge_return = self.ins[1]
+        glucose = self.ins[2]
         
         # Output stream
-        TreatedWater, CH4_emission, N2O_emission = self.outs
+        TreatedWater = self.outs[0]
+        CH4_emission = self.outs[1]
+        N2O_emission = self.outs[2]
         
-        for out_stream in self.outs:
-            out_stream.empty()
+        input_streams = [WasteWater, sludge_return, glucose]
             
-        TreatedWater.mix_from([WasteWater, sludge_return, glucose])
+        # Mix all inputs into a single stream
+        self._mixed.empty()
+        self._mixed.mix_from(input_streams)
+
+        # Copy the mixed result to the outflow
+        TreatedWater.copy_like(self._mixed)
     
    
     # def _run(self):
@@ -1073,15 +1089,23 @@ class EL_Aerobic(SanUnit, Decay):
     def _run(self):
 
         # Input streams
-        WasteWater,PAC = self.ins
+        WasteWater = self.ins[0]
+        PAC = self.ins[1]
+        air = self.ins[2]
 
         # Output stream
-        TreatedWater, CH4_emission, N2O_emission = self.outs
+        TreatedWater = self.outs[0] 
+        CH4_emission = self.outs[1] 
+        N2O_emission = self.outs[2]
         
-        for out_stream in self.outs:
-            out_stream.empty()
+        input_streams = [WasteWater, PAC, air]
             
-        TreatedWater.mix_from([WasteWater, PAC])
+        # Mix all inputs into a single stream
+        self._mixed.empty()
+        self._mixed.mix_from(input_streams)
+
+        # Copy the mixed result to the outflow
+        TreatedWater.copy_like(self._mixed)
 
 
     def _design(self):
@@ -1178,15 +1202,24 @@ class EL_MBR(SanUnit, Decay):
     def _run(self):
 
         # Input streams
-        WasteWater = self.ins
+        WasteWater = self.ins[0]
+        air = self.ins[1]
 
         # Output stream
-        TreatedWater, PC_sludge_return, AnoT_sludge_return, CH4_emission, N2O_emission = self.outs
+        TreatedWater = self.outs[0] 
+        PC_sludge_return = self.outs[1]
+        AnoT_sludge_return = self.outs[2]
+        CH4_emission = self.outs[3] 
+        N2O_emission = self.outs[4]
         
-        for out_stream in self.outs:
-            out_stream.empty()
+        input_streams = [WasteWater, air]
             
-        TreatedWater.mix_from([WasteWater])
+        # Mix all inputs into a single stream
+        self._mixed.empty()
+        self._mixed.mix_from(input_streams)
+
+        # Copy the mixed result to the outflow
+        TreatedWater.copy_like(self._mixed)
     
     # def _run(self):
         
@@ -1339,15 +1372,24 @@ class EL_CWT(StorageTank):
     def _run(self):
 
         # Input streams
-        WasteWater,ozone = self.ins
+        WasteWater = self.ins[0]
+        ozone = self.ins[1]
+        air = self.ins[2]
 
-        # Output stream
-        TreatedWater, CT_spill_return,PC_spill_return = self.outs
+        # Output streams
+        TreatedWater = self.outs[0]
+        CT_spill_return = self.outs[1]
+        PC_spill_return = self.outs[2]
         
-        for out_stream in self.outs:
-            out_stream.empty()
+        input_streams = [WasteWater, ozone, air]
             
-        TreatedWater.mix_from([WasteWater, ozone])
+        # Mix all inputs into a single stream
+        self._mixed.empty()
+        self._mixed.mix_from(input_streams)
+
+        # Copy the mixed result to the outflow
+        TreatedWater.copy_like(self._mixed)
+    
     
     # def _run(self):
         
