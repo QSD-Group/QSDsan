@@ -1388,9 +1388,11 @@ class EL_CWT(StorageTank):
         # Mix all inputs into a single stream
         self._mixed.empty()
         self._mixed.mix_from(input_streams)
+        
 
         # Copy the mixed result to the outflow
         TreatedWater.copy_like(self._mixed)
+        
     
     
     # def _run(self):
@@ -1540,6 +1542,7 @@ class EL_PT(StorageTank):
         # Mix all inputs into a single stream
         self._mixed.empty()
         self._mixed.mix_from(input_streams)
+        
 
         # Copy the mixed result to the outflow
         TreatedWater.copy_like(self._mixed)
@@ -1654,6 +1657,7 @@ class EL_blower(Blower):
         constr = self.construction
         design['StainlessSteel'] = constr[0].quantity = self.blower_steel_weight; # to be defined in .tsv file
         self.add_construction(add_cost=False)
+    
 
     def _cost(self):
         C = self.baseline_purchase_costs # the below items need to be defined in .tsv file
