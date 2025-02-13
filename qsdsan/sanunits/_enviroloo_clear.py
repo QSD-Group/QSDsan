@@ -1076,6 +1076,7 @@ class EL_Aerobic(SanUnit, Decay):
 
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
+        self._mixed = WasteStream()
 
         data = load_data(path=Aerobic_path)
         for para in data.index:
