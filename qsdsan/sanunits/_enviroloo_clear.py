@@ -1502,18 +1502,17 @@ class EL_PT(StorageTank):
     _outs_size_is_fixed = True
     exponent_scale = 0.6
 
-    def __init__(self, ID = '', ins = None, outs = (), vessel_material = None, V_wf = None, include_construction = True,
-                 length_to_diameter = None, F_BM_default = 1, kW_per_m3 = 0.1, vessel_type = 'Steel', tau = None,
-                 thermo = None, init_with = 'WasteStream', 
-                 ppl = None, baseline_ppl = None, **kwargs):
-        StorageTank.__init__(self, ID=ID, ins=ins, outs=outs, thermo = thermo, init_with = init_with, include_construction= include_construction,
-                             kW_per_m3= kW_per_m3, 
-                             vessel_type= vessel_type, tau= tau,
-                             vessel_material= vessel_material, V_wf= V_wf, F_BM_default= F_BM_default)
+    def __init__(self, ID = '', ins = None, outs = (), thermo = None, ppl = None, baseline_ppl = None,
+                 vessel_type='Field erected',tau = 24, V_wf = None, vessel_material='Stainless steel', kW_per_m3 = 0.1,
+                 init_with = 'WasteStream', F_BM_default = 1, include_construction = True, **kwargs):
+        StorageTank.__init__(self, ID=ID, ins=ins, outs=outs, thermo = thermo, init_with = init_with, 
+                             F_BM_default = F_BM_default, include_construction = include_construction,
+                             kW_per_m3= kW_per_m3, vessel_type= vessel_type, tau= tau,
+                             vessel_material= vessel_material, V_wf= V_wf)
 
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
-        self.length_to_diameter = length_to_diameter
+
         self._mixed = WasteStream()
 
         data = load_data(path = PressureTank_path)
