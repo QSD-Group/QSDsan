@@ -1020,7 +1020,7 @@ class EL_Anoxic(SanUnit, Decay):
         
         self.add_OPEX = self._calc_replacement_cost()
 
-        self.power_utility(self.power_demand_PC)
+        self.power_utility(self.power_demand_AnoxicTank)
     
     def _calc_replacement_cost(self):
         scale = (self.ppl / self.baseline_ppl) ** self.exponent_scale
