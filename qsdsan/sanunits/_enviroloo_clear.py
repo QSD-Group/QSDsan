@@ -942,6 +942,7 @@ class EL_Anoxic(SanUnit, Decay):
         WasteWater = self.ins[0]
         sludge_return = self.ins[1]
         glucose = self.ins[2]
+        agiation = self.ins[3]
         
         # Output stream
         TreatedWater = self.outs[0]
