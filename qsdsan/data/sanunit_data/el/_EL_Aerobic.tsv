@@ -11,7 +11,7 @@ weld_female_adapter_fittings		USD	6.87	6.183	7.557	uniform	https://thedrainageso
 pipeline_connectors		USD	13.16	11.844	14.476	uniform	https://www.eco-filtration.co.uk/product/110mm-4-pond-threaded-tank-connector/?srsltid=AfmBOoqFzwEcDdzmztkcvuSYA_anY1hoj5U5rOQz0Q8s1FUBhTeQpdX2
 chemical_PAC_dosage		%	5	4.5	5.5	uniform	BOM
 chemical_PAC_price		USD/kg	0.55	0.495	0.605	uniform	https://www.alibaba.com/product-detail/Bulk-Food-Grade-glucose-Powder-99_1600987002678.html?spm=a2700.galleryofferlist.p_offer.d_title.48b513a084WF5B&s=p
-aerbic_tank_lifetime		yr	8	7.2	8.8	uniform	assumption
+aerobic_tank_lifetime		yr	8	7.2	8.8	uniform	assumption
 weld_female_adapter_fittings_lifetime		yr	5	4.5	5.5	uniform	assumption
 pipeline_connectors_lifetime		yr	5	4.5	5.5	uniform	assumption
 power_demand_AerobicTank	energy consumption for anoxic tank	KWh/day	0.8	0.72	0.88	uniform	assumption
