@@ -613,8 +613,13 @@ class EL_CT(StorageTank):
         # Output stream
         TreatedWater = self.outs[0]
         
+        # Initialize properties
+        TreatedWater.empty()
+        
         # Inherited properties of input stream
-        TreatedWater.copy_like(WasteWater, sludge_return, PC_spill_return, CWT_spill_return)
+        TreatedWater.copy_like(WasteWater)
+        TreatedWater.imass[]
+        
         
 
 
@@ -794,7 +799,7 @@ class EL_PC(IdealClarifier):
         
           # Input stream
           WasteWater = self.ins[0]
-          MT_sludge_return = self.ins[1]  
+          MT_sludge_return = self.ins[1]  # Sludge from membrane tank over return pump
         
           # Output stream
           TreatedWater = self.outs[0]
@@ -802,7 +807,7 @@ class EL_PC(IdealClarifier):
           PC_sludge_return = self.outs[2]  # Sludge to collection tank over return pump
           
           # Inherited input stream properties
-          TreatedWater.copy_like(WasteWater, MT_sludge_return)
+          TreatedWater.copy_like(WasteWater)
           
           # Sludge with water removal
           PC_sludge_return.empty()
@@ -1007,17 +1012,48 @@ class EL_Anoxic(SanUnit, Decay):
         self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]      
         
     def _run(self):
-        
+
           # Input stream
           WasteWater = self.ins[0]
-          sludge_return = self.ins[1]
-          glucose = self.ins[2]
-          agiation = self.ins[3]
+          sludge_return = self.ins[1]  # Sludge from membrane tank over return pump
+          glucose = self.ins[2]  # Extra carbon source
+          agiation = self.ins[3]  # Agitation pump works here, but it does not attend mass flow balance calculation
           
           # Output stream
           TreatedWater = self.outs[0]
           CH4_emission = self.outs[1]
           N2O_emission = self.outs[2]
+          
+          # Inherited input stream
+          TreatedWater.copy_like(WasteWater, sludge_return, glucose, agitation)
+          
+          # Initialize properties
+          biogas.phase = CH4.phase = N2O.phase = 'g'
+          
+          # Glucose consumption
+          glucose_consumed = glucose.imass['Glucose']
+          TreatedWater.imass['Glucose'] += glucose.imass['Glucose']
+          glucose.empty()  # 100% consumed
+          
+          # COD removal
+          COD_removal = self.EL_anoT_COD_removal
+          removed_COD = (WasteWater.COD + glucose.COD)/1e3 * WasteWater.F_vol * COD_removal  # kg/hr
+          
+          # Sludge produced
+          sludge_prcd = self.EL_anoT_sludge_yield * (removed_COD + glucose_consumed)  # produced biomass
+          
+          for component in ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'):
+              TreatedWater.imass[component] += sludge_return.imass[component]  # Return sludge
+              TreatedWater.imass[component] += sludge_prcd  # New sludge produced
+          
+          # CH4 produced
+          CH4_prcd = removed_COD * self.EL_anoT_methane_yield * self.methane_density  # kg CH4 produced/hr
+          CH4_soluable = self.EL_anoT_soluble_methane_fraction * CH4_prcd
+          CH4_emission.imass['Soluable CH4'] = CH4_prcd - CH4_soluable
+          TreatedWater.imass['SolubleCH4'] = CH4_soluble
+          
+          # N2O produced
+          N_removal = self.EL_anoT_TN_removal
           
           
           
