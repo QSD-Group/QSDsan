@@ -831,11 +831,11 @@ class EL_PC(IdealClarifier):
                   TreatedWater.F_mass *= self._f_overflow  
               else:
                   # max_overflow is not none, but TreatedWater < max_overflow
-                      PC_spill_return.empty()
-                       if hasattr(self, '_f_spill'):
-                           del self._f_spill  
-                       if hasattr(self, '_f_overflow'):
-                           del self._f_overflow  
+                  PC_spill_return.empty()
+                  if hasattr(self, '_f_spill'):
+                      del self._f_spill  
+                  if hasattr(self, '_f_overflow'):
+                      del self._f_overflow  
           else:
               # max_overflow is none, no spill return
               PC_spill_return.empty()
@@ -1008,25 +1008,41 @@ class EL_Anoxic(SanUnit, Decay):
         
     def _run(self):
         
-        # Input stream
-        WasteWater = self.ins[0]
-        sludge_return = self.ins[1]
-        glucose = self.ins[2]
-        agiation = self.ins[3]
+          # Input stream
+          WasteWater = self.ins[0]
+          sludge_return = self.ins[1]
+          glucose = self.ins[2]
+          agiation = self.ins[3]
+          
+          # Output stream
+          TreatedWater = self.outs[0]
+          CH4_emission = self.outs[1]
+          N2O_emission = self.outs[2]
+          
+          
+          
+          
+    # def _run(self):
         
-        # Output stream
-        TreatedWater = self.outs[0]
-        CH4_emission = self.outs[1]
-        N2O_emission = self.outs[2]
+    #     # Input stream
+    #     WasteWater = self.ins[0]
+    #     sludge_return = self.ins[1]
+    #     glucose = self.ins[2]
+    #     agiation = self.ins[3]
         
-        input_streams = [WasteWater, sludge_return, glucose]
+    #     # Output stream
+    #     TreatedWater = self.outs[0]
+    #     CH4_emission = self.outs[1]
+    #     N2O_emission = self.outs[2]
+        
+    #     input_streams = [WasteWater, sludge_return, glucose]
             
-        # Mix all inputs into a single stream
-        self._mixed.empty()
-        self._mixed.mix_from(input_streams)
+    #     # Mix all inputs into a single stream
+    #     self._mixed.empty()
+    #     self._mixed.mix_from(input_streams)
 
-        # Copy the mixed result to the outflow
-        TreatedWater.copy_like(self._mixed)
+    #     # Copy the mixed result to the outflow
+    #     TreatedWater.copy_like(self._mixed)
     
    
     # def _run(self):
