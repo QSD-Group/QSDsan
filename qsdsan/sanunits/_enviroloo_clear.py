@@ -586,8 +586,6 @@ class EL_CT(StorageTank):
         
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
-    
-        self._mixed = WasteStream()
         
         data = load_data(path=CollectionTank_path)
         for para in data.index:
@@ -603,32 +601,51 @@ class EL_CT(StorageTank):
       
     def _run(self):
         '''
-        Ensures mass flow rate balance:
-        Q_in * X_in = Q_out * X_out (volumetric flowrate * concentration)
-        Here's no concentration of wastewater
-    
-        - `WasteWater` and `sludge_return` are always present.
-        - `PC_spill_return` and `MT_spill_return` may or may not exist.
-        '''
-
+        There is no reaction inside this tank, just for collection and storage.
+        '''   
+        
         # Input stream
         WasteWater = self.ins[0]
-        sludge_return = self.ins[1]
-        PC_spill_return = self.ins[2]
-        CWT_spill_return = self.ins[3]
-
+        sludge_return = self.ins[1]  # Sludge from primary clarifier over return pump
+        PC_spill_return = self.ins[2]  # Spill water from primary clarifier
+        CWT_spill_return = self.ins[3]  # Spill water from clear water tank
+        
         # Output stream
         TreatedWater = self.outs[0]
         
-        # Define input streams
-        input_streams = [WasteWater, sludge_return, PC_spill_return, CWT_spill_return]
+        # Inherited properties of input stream
+        TreatedWater.copy_like(WasteWater, sludge_return, PC_spill_return, CWT_spill_return)
+        
 
-        # Mix all inputs into a single stream
-        self._mixed.empty()
-        self._mixed.mix_from(input_streams)
 
-        # Copy the mixed result to the outflow
-        TreatedWater.copy_like(self._mixed)
+    # def _run(self):
+    #     '''
+    #     Ensures mass flow rate balance:
+    #     Q_in * X_in = Q_out * X_out (volumetric flowrate * concentration)
+    #     Here's no concentration of wastewater
+    
+    #     - `WasteWater` and `sludge_return` are always present.
+    #     - `PC_spill_return` and `MT_spill_return` may or may not exist.
+    #     '''
+
+    #     # Input stream
+    #     WasteWater = self.ins[0]
+    #     sludge_return = self.ins[1]
+    #     PC_spill_return = self.ins[2]
+    #     CWT_spill_return = self.ins[3]
+
+    #     # Output stream
+    #     TreatedWater = self.outs[0]
+        
+    #     # Define input streams
+    #     input_streams = [WasteWater, sludge_return, PC_spill_return, CWT_spill_return]
+
+    #     # Mix all inputs into a single stream
+    #     self._mixed.empty()
+    #     self._mixed.mix_from(input_streams)
+
+    #     # Copy the mixed result to the outflow
+    #     TreatedWater.copy_like(self._mixed)
     
     
     # def _run(self):
@@ -739,9 +756,9 @@ class EL_PC(IdealClarifier):
     _outs_size_is_fixed = True
     exponent_scale = 0.6
     
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, max_overflow=None,
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, max_overflow=15,
                  ppl = None, baseline_ppl = None, sludge_flow_rate=None,
-                 solids_removal_efficiency=None, 
+                 solids_removal_efficiency=None, solids_moisture_content=None,
                  F_BM_default=1, init_with='WasteStream', **kwargs):
         """
         Initialize the primary clarifier with default parameters:
@@ -756,10 +773,9 @@ class EL_PC(IdealClarifier):
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
 
-        self._mixed = WasteStream()  # Create a temporary mixed stream and its properties and actions are like 'WasteStream'
         self._f_spill = None  # Spill return
         self._f_overflow = None  # Overflow
-        self.max_overflow = max_overflow
+        self.max_overflow = max_overflow  # m^3/hr
         # self.if_with_MBR = if_with_MBR
 
         data = load_data(path=PrimaryClarifier_path)
@@ -775,24 +791,76 @@ class EL_PC(IdealClarifier):
         self.construction = [Construction(item = 'StainlessSteel', linked_unit=self, quantity_unit='kg'),]
     
     def _run(self):
-        # Input streams
-        WasteWater = self.ins[0]
-        MT_sludge_return = self.ins[1]  
         
-        # Output streams
-        TreatedWater = self.outs[0] 
-        PC_spill_return = self.outs[1] 
-        PC_sludge_return = self.outs[2]  
+          # Input stream
+          WasteWater = self.ins[0]
+          MT_sludge_return = self.ins[1]  
         
-        # Define input streams
-        input_streams = [WasteWater, MT_sludge_return]
+          # Output stream
+          TreatedWater = self.outs[0]
+          PC_spill_return = self.outs[1]  # Spill water to collection tank
+          PC_sludge_return = self.outs[2]  # Sludge to collection tank over return pump
+          
+          # Inherited input stream properties
+          TreatedWater.copy_like(WasteWater, MT_sludge_return)
+          
+          # Sludge with water removal
+          PC_sludge_return.empty()
+          PC_sludge_return.copy_flow(TreatedWater, ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'), remove=True)
+          PC_sludge_return.imass['OtherSS'] = WasteWater.F_mass * self.solids_removal_efficiency
+          PC_sludge_return.imass['H2O'] = PC_return_sludge.imass['OtherSS']/(1-self.solids_moisture_content) - PC_sludge_return.imass['OtherSS']
+          
+          # Spill water return
+          if self.max_overflow is not None:
+              if TreatedWater.F_vol > self.max_overflow:
+                      
+                  # Spill return exists
+                  spill_vol = TreatedWater.F_vol - self.max_overflow  
 
-        # Mix all inputs into a single stream
-        self._mixed.empty()
-        self._mixed.mix_from(input_streams)
+                  if not hasattr(self, '_f_spill'):
+                           self._f_spill = None
+                  if not hasattr(self, '_f_overflow'):
+                           self._f_overflow = None
 
-        # Copy the mixed result to the outflow
-        TreatedWater.copy_like(self._mixed)
+                  self._f_spill = spill_vol / TreatedWater.F_vol  
+                  self._f_overflow = 1 - self._f_spill  
+
+                  PC_spill_return.copy_like(TreatedWater)  
+                  PC_spill_return.F_mass *= self._f_spill  
+
+                  TreatedWater.F_mass *= self._f_overflow  
+              else:
+                  # max_overflow is not none, but TreatedWater < max_overflow
+                      PC_spill_return.empty()
+                       if hasattr(self, '_f_spill'):
+                           del self._f_spill  
+                       if hasattr(self, '_f_overflow'):
+                           del self._f_overflow  
+          else:
+              # max_overflow is none, no spill return
+              PC_spill_return.empty()
+          
+          
+    
+    # def _run(self):
+    #     # Input streams
+    #     WasteWater = self.ins[0]
+    #     MT_sludge_return = self.ins[1]  
+        
+    #     # Output streams
+    #     TreatedWater = self.outs[0] 
+    #     PC_spill_return = self.outs[1] 
+    #     PC_sludge_return = self.outs[2]  
+        
+    #     # Define input streams
+    #     input_streams = [WasteWater, MT_sludge_return]
+
+    #     # Mix all inputs into a single stream
+    #     self._mixed.empty()
+    #     self._mixed.mix_from(input_streams)
+
+    #     # Copy the mixed result to the outflow
+    #     TreatedWater.copy_like(self._mixed)
         
     # def _run(self):
 
@@ -925,7 +993,6 @@ class EL_Anoxic(SanUnit, Decay):
         
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
-        self._mixed = WasteStream()
         
 
         data = load_data(path=Anoxic_path)
