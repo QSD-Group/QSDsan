@@ -48,6 +48,11 @@ power_demand_3,power demand with 3 ultrafiltration units,W,510,382.5,637.5,trian
 power_demand_4,power demand with 4 ultrafiltration units,W,480,360,600,triangular
 ultrafiltration_energy_consumption,,kWh/kg water,0.0475,0.029,0.066,uniform
 water_recovery_rate,,%,90,85,95,uniform
-ultrafiltration_maintenance,,hr/yr,9,6.3,11.7,uniform
+ultrafiltration_maintenance,,hr/yr,6,4.2,7.8,uniform
 wages,,USD/h,3.64,1.82,5.46,uniform
 sCOD_removal,,%,35,30,40,uniform
+back_flush_pump_cost,,USD,89.05,75.69,102.41,uniform
+backwash_pump_energy_percycle,,kWh,0.00008,0.000064,0.000096,uniform
+air_scrubbing_blower_cost,,USD,200.3933333,140.2753333,260.5113333,uniform
+air_scrubbing_energy_percycle,,kWh,0.004166667,0.002916667,0.005416667,uniform
+accumulated_TSS_triggering_cleaning,,kg TSS per cycle,0.02,0.0014,0.026,uniform

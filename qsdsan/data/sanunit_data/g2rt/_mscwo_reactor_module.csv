@@ -13,7 +13,7 @@ stainless_steel_weight,,kg,10,7,13,uniform
 reactor_life_time,,yr,3,2.1,3.9,uniform
 reactor_maintenance,,hr/yr,24,16.8,31.2,uniform
 wages,,USD/h,3.64,1.82,5.46,uniform
-material_replacement_cost,,fraction,0.16,0.08,0.24,uniform
+material_replacement_cost,,fraction,0.2,0.1,0.3,uniform
 miscellaneous_cost_ratio,,fraction,0.17,0.12,0.22,uniform
 max_pressure,,bar,350,,,constant
 operating_pressure,,bar,221,,,constant

@@ -1,6 +1,6 @@
 parameter,name,unit,expected,low,high,distribution,reference,Criterion
 N2O_emission_factor,,g N2O-N/g-N,0.021944444,0.004,0.06,triangular,Oshita et al. 2012,4.2
-CH4_emission_factor,,g-CH4/g-feces solids,0.0026,0,0.0931,triangular,Oshita et al. 2012,4.2
+fugitive_CH4_emission_factor,,g-CH4/g-C in feces solids,0.007123288,0,0.030684932,triangular,Oshita et al. 2012,4.2
 NOx_emission_factor,,g NOx-N/g-N,0.147,0.062,0.194,triangular,Winter et al. 1999,4.2
 NH3_emission_factor,,g NH3-N/g-N,0.045833333,0.009,0.109,triangular,Winter et al. 1999,4.2
 SOx_emission_factor,,g SO2 -S/g-feces solids,0.000279429,0.000015,0.00062,triangular,"Cao et al. 2008, Fernandez-Lopez et al. 2015, assuming N/S mass ratio 3:1 ",3
