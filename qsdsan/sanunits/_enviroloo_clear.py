@@ -1015,7 +1015,7 @@ class EL_Anoxic(SanUnit, Decay):
 
           # Input stream
           WasteWater = self.ins[0]
-          sludge_return = self.ins[1]  # Sludge from membrane tank over return pump
+          nitrate_return = self.ins[1]  # Nitrate from membrane tank over return pump
           glucose = self.ins[2]  # Extra carbon source
           agiation = self.ins[3]  # Agitation pump works here, but it does not attend mass flow balance calculation
           
@@ -1025,7 +1025,10 @@ class EL_Anoxic(SanUnit, Decay):
           N2O_emission = self.outs[2]
           
           # Inherited input stream
-          TreatedWater.copy_like(WasteWater, sludge_return, glucose, agitation)
+          TreatedWater.copy_like(WasteWater)
+          
+          # **Manually add return nitrate (NO3)**
+          TreatedWater.imass['NO3'] += nitrate_return.imass['NO3']
           
           # Initialize properties
           biogas.phase = CH4.phase = N2O.phase = 'g'
@@ -1037,7 +1040,7 @@ class EL_Anoxic(SanUnit, Decay):
           
           # COD removal
           COD_removal = self.EL_anoT_COD_removal
-          removed_COD = (WasteWater.COD + glucose.COD)/1e3 * WasteWater.F_vol * COD_removal  # kg/hr
+          removed_COD = (WasteWater.COD + glucose.COD) / 1e3 * WasteWater.F_vol * COD_removal  # kg/hr
           
           # Sludge produced
           sludge_prcd = self.EL_anoT_sludge_yield * (removed_COD + glucose_consumed)  # produced biomass
@@ -1048,15 +1051,68 @@ class EL_Anoxic(SanUnit, Decay):
           
           # CH4 produced
           CH4_prcd = removed_COD * self.EL_anoT_methane_yield * self.methane_density  # kg CH4 produced/hr
-          CH4_soluable = self.EL_anoT_soluble_methane_fraction * CH4_prcd
-          CH4_emission.imass['Soluable CH4'] = CH4_prcd - CH4_soluable
+          CH4_soluble = self.EL_anoT_soluble_methane_fraction * CH4_prcd
+          CH4_emitted = CH4_prcd - CH4_soluble
+          CH4_emission.imass['SoluableCH4'] = CH4_emitted
           TreatedWater.imass['SolubleCH4'] = CH4_soluble
           
           # N2O produced
           N_removal = self.EL_anoT_TN_removal
+          if self.if_N2O_emission:
+          # Assume the removal part covers both degradation loss
+          # and other unspecified removal as well
+              N_loss = self.first_order_decay(k = self.decay_k_N,
+                                    t = self.EL_anoT_tau / 365,
+                                    max_decay = self.N_max_decay)
+              if N_loss > N_removal:
+                  warn(f'Nitrogen degradation loss ({N_loss:.2f}) larger than the given removal ({N_removal:.2f})), '
+                        'the degradation loss is assumed to be the same as the removal.')
+                  N_loss = N_removal
+            
+              # N2O only from the degraded part
+              N_loss_tot = N_loss * WasteWater.TN / 1e3 * WasteWater.F_vol
+              N2O_emission.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44 / 28
+          else:
+              N2O_emitted = 0
+              
+          N2O_emission.imass['N2O'] = N2O_emitted  # All N2O is emitted
+              
+          # Assume all NO3 is consumed and does not appear in TreatedWater
+          total_NO3 = 0  
           
+          # NH3 & NonNH3, P, K calculation
+          total_solubles = np.array([
+              CH4_soluble,  # CH4: 需要计算溢散
+              WasteWater.imass['NH3'] * (1 - N_loss),  # In water or sludge
+              WasteWater.imass['NonNH3'] * (1 - N_loss),  # In water or sludge
+              0,  # NO3 tolly consumed
+              WasteWater.imass['P'],  # In water or sludge
+              WasteWater.imass['K'],  # In water or sludge
+              ])
           
+          # Removed solubles in the sludge, assume minimal used for growth
+          sludge_solubles = total_solubles * np.array([
+                            0,  # CH₄ will not go into sludge
+                            N_removal,  # Part of it in water and in sludge
+                            N_removal,  # Part of it in water and in sludge
+                            0,  # NO3 tolly consumed
+                            self.EL_anoT_TP_removal,  # Part of it in water and in sludge
+                            0,  # K will not go into sludge
+                            ])
           
+          # Calculate solutes entering TreatedWater
+          liquid_solubles = total_solubles - sludge_solubles
+          
+          # Assign to outputs (TreatedWater now includes sludge)
+          TreatedWater.imass['SolubleCH4', 'NH3', 'NonNH3', 'P', 'K'] = liquid_solubles
+          TreatedWater.imass['NH3', 'NonNH3', 'P', 'K'] += sludge_solubles  # Here is only one output stream (TreatedWater + sludge)
+          
+          # Assign to outputs
+          TreatedWater.imass['SolubleCH4', 'NH3', 'NonNH3', 'P', 'K'] = liquid_solubles
+          sludge_return.imass['NH3', 'NonNH3', 'P', 'K'] = sludge_solubles
+          
+          # Final COD
+          TreatedWater._COD = WasteWater.COD * (1 - self.EL_anoT_COD_removal)
           
     # def _run(self):
         
