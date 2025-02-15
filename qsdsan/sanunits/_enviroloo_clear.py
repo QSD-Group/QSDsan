@@ -618,10 +618,17 @@ class EL_CT(StorageTank):
         
         # Inherited properties of input stream
         TreatedWater.copy_like(WasteWater)
-        TreatedWater.imass[]
-        
-        
 
+        # Add NO3 from nitrate return
+        TreatedWater.imass['NO3'] += nitrate_return.imass['NO3']
+
+        # Only add H₂O from PC_spill_return and CWT_spill_return
+        TreatedWater.imass['H2O'] += PC_spill_return.imass['H2O'] + CWT_spill_return.imass['H2O']
+
+        # Ensure mass balance is correct
+        for component in ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh', 'NO3', 'H2O'):
+        TreatedWater.imass[component] = (WasteWater.imass[component] + nitrate_return.imass[component] + 
+                              PC_spill_return.imass[component] + CWT_spill_return.imass[component])
 
     # def _run(self):
     #     '''
