@@ -606,7 +606,7 @@ class EL_CT(StorageTank):
         
         # Input stream
         WasteWater = self.ins[0]
-        sludge_return = self.ins[1]  # Sludge from primary clarifier over return pump
+        nitrate_return = self.ins[1]  # Nitrate from primary clarifier over return pump
         PC_spill_return = self.ins[2]  # Spill water from primary clarifier
         CWT_spill_return = self.ins[3]  # Spill water from clear water tank
         
@@ -1046,7 +1046,6 @@ class EL_Anoxic(SanUnit, Decay):
           sludge_prcd = self.EL_anoT_sludge_yield * (removed_COD + glucose_consumed)  # produced biomass
           
           for component in ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'):
-              TreatedWater.imass[component] += sludge_return.imass[component]  # Return sludge
               TreatedWater.imass[component] += sludge_prcd  # New sludge produced
           
           # CH4 produced
