@@ -1036,7 +1036,7 @@ class EL_Anoxic(SanUnit, Decay):
           # Inherited input stream
           TreatedWater.copy_like(WasteWater)
           
-          # **Manually add return nitrate (NO3)**
+          # Manually add return nitrate (NO3)
           TreatedWater.imass['NO3'] += nitrate_return.imass['NO3']
           
           # Initialize properties
@@ -1047,7 +1047,6 @@ class EL_Anoxic(SanUnit, Decay):
           glucose.imass['Glucose'] = glucose_consumed
           TreatedWater.imass['Glucose'] += glucose.imass['Glucose']
 
-          
           # COD removal
           COD_removal = self.EL_anoT_COD_removal
           removed_COD = (WasteWater.COD + glucose.COD) / 1e3 * WasteWater.F_vol * COD_removal  # kg/hr
@@ -1281,20 +1280,66 @@ class EL_Aerobic(SanUnit, Decay):
         WasteWater = self.ins[0]
         PAC = self.ins[1]
         air = self.ins[2]
-
-        # Output stream
-        TreatedWater = self.outs[0] 
+        
+        # Output streams
+        TreatedWater = self.outs[0]
         CH4_emission = self.outs[1] 
         N2O_emission = self.outs[2]
         
-        input_streams = [WasteWater, PAC, air]
+        # Inherited input stream
+        TreatedWater.copy_like(WasteWater)
+        
+        # Initialize properties
+        biogas.phase = CH4.phase = N2O.phase = CO2.phase = 'g'
+        
+        # Manually add return nitrate (NO3)
+        TreatedWater.imass['PAC'] += PAC.imass['PAC']
+        
+        # COD removal
+        COD_removal = self.EL_aeroT_COD_removal
+        removed_COD = WasteWater.COD / 1e3 * WasteWater.F_vol * COD_removal  # kg/hr
+        
+        # Sludge produced
+        sludge_prcd = self.EL_aeroT_sludge_yield * removed_COD  # produced biomass
+          
+        for component in ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'):
+            TreatedWater.imass[component] += sludge_prcd  # New sludge produced
             
-        # Mix all inputs into a single stream
-        self._mixed.empty()
-        self._mixed.mix_from(input_streams)
+        # CH4 emission
+        CH4_emission.imass['CH4'] += TreatedWater.imass['SolubleCH4']  # Let all soluble CH4 transfer from solution phase to gas phase
+        TreatedWater.imass['SolubleCH4'] = 0  # Ensure that treated water will not include soluble CH4
+        
+        # N2O emission
+        NH4_mass = TreatedWater.imass['NH3']  # Inherite NH4 property from anoxic tank
+        NO3_mass_generated = NH4_mass * self.NO3_produced_ratio
+        TreatedWater.imass['NO3'] += NO3_mass_generated
+        TreatedWater.imass['NH3'] = 0
+        
+        # CO2 emission
+        
+        
+    
+    
+    # def _run(self):
 
-        # Copy the mixed result to the outflow
-        TreatedWater.copy_like(self._mixed)
+    #     # Input streams
+    #     WasteWater = self.ins[0]
+    #     PAC = self.ins[1]
+    #     air = self.ins[2]
+
+    #     # Output stream
+    #     TreatedWater = self.outs[0] 
+    #     CH4_emission = self.outs[1] 
+    #     N2O_emission = self.outs[2]
+        
+    #     input_streams = [WasteWater, PAC, air]
+            
+    #     # Mix all inputs into a single stream
+    #     self._mixed.empty()
+    #     self._mixed.mix_from(input_streams)
+
+    #     # Copy the mixed result to the outflow
+    #     TreatedWater.copy_like(self._mixed)
 
 
     def _design(self):
