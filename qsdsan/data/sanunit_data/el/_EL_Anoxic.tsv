@@ -1,5 +1,5 @@
 parameter	name (if diff)	unit	expected	low	high	distribution	references
-tau		days	1			constant	CIDI
+EL_anoT_tau		days	1			constant	CIDI
 COD_removal		fraction of COD removal	0.7	0.6	0.8	uniform	"Tchobanoglous et al,. 2014 (EAWAG: 80-85fraction of BOD removal)"
 MCF_decay		fraction of anaerobic conversion of degraded COD	1			constant	"IPCC, 2006"
 N_max_decay		fraction of N removal	0.8	0.7	0.9	triangular	"Orner and Mihelcic, 2017"
@@ -15,3 +15,6 @@ anoxic_tank_lifetime		yr	8	7.2	8.8	uniform	assumption
 weld_female_adapter_fittings_lifetime		yr	5	4.5	5.5	uniform	assumption
 pipeline_connectors_lifetime		yr	5	4.5	5.5	uniform	assumption
 power_demand_AnoxicTank	energy consumption for anoxic tank	KWh/day	1.1	0.99	1.21	uniform	assumption
+EL_anoT_sludge_yield		kg-VSS/kg-BOD removed	0.035	0.03	0.04	uniform	Metcalf and Eddy page 1086 (Example 10-2)
+EL_anoT_soluble_methane_fraction			0.3	0.24	0.36	uniform	Kim et al. Anaerobic Fluidized Bed Membrane Bioreactor for Wastewater Treatment. Environ. Sci. Technol. 2011, 45, 2, 576–581
+EL_anoT_TN_removal	anoix_tank_totalN_original_removal	ratio	0.2	0.02	0.37	uniform	"<br class=""Apple-interchange-newline"">UIUC Request Data - Gary Shyu"

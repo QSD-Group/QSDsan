@@ -987,7 +987,7 @@ class EL_Anoxic(SanUnit, Decay):
     baseline_ppl = 30
     exponent_scale = 0.6
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', methane_density=0.657
                  degraded_components=('OtherSS',),  F_BM_default=1, ppl = None, baseline_ppl = None,
                  if_capture_biogas=False, if_N2O_emission=True, **kwargs):
         Decay.__init__(self, ID, ins, outs, thermo=thermo,
@@ -1108,7 +1108,7 @@ class EL_Anoxic(SanUnit, Decay):
           
           # Assign to outputs
           TreatedWater.imass['SolubleCH4', 'NH3', 'NonNH3', 'P', 'K'] = liquid_solubles
-          sludge_return.imass['NH3', 'NonNH3', 'P', 'K'] = sludge_solubles
+          nitrate_return.imass['NH3', 'NonNH3', 'P', 'K'] = sludge_solubles
           
           # Final COD
           TreatedWater._COD = WasteWater.COD * (1 - self.EL_anoT_COD_removal)
