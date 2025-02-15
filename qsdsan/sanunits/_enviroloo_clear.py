@@ -1046,14 +1046,16 @@ class EL_Anoxic(SanUnit, Decay):
           glucose_consumed = WasteWater.F_vol * self.chemical_glucose_dosage * self.glucose_density
           glucose.imass['Glucose'] = glucose_consumed
           TreatedWater.imass['Glucose'] += glucose.imass['Glucose']
-          glucose.empty()  # 100% consumed
+
           
           # COD removal
           COD_removal = self.EL_anoT_COD_removal
           removed_COD = (WasteWater.COD + glucose.COD) / 1e3 * WasteWater.F_vol * COD_removal  # kg/hr
           
+          glucose.empty()  # 100% consumed
+          
           # Sludge produced
-          sludge_prcd = self.EL_anoT_sludge_yield * (removed_COD + glucose_consumed)  # produced biomass
+          sludge_prcd = self.EL_anoT_sludge_yield * removed_COD  # produced biomass
           
           for component in ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'):
               TreatedWater.imass[component] += sludge_prcd  # New sludge produced
