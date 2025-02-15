@@ -1052,7 +1052,9 @@ class EL_Anoxic(SanUnit, Decay):
           COD_removal = self.EL_anoT_COD_removal
           removed_COD = (WasteWater.COD + glucose.COD) / 1e3 * WasteWater.F_vol * COD_removal  # kg/hr
           
-          glucose.empty()  # 100% consumed
+          # Now we explicitly remove Glucose from TreatedWater
+          TreatedWater.imass['Glucose'] = 0  # All glucose is consumed in reaction
+          glucose.empty()
           
           # Sludge produced
           sludge_prcd = self.EL_anoT_sludge_yield * removed_COD  # produced biomass
@@ -1093,7 +1095,7 @@ class EL_Anoxic(SanUnit, Decay):
           
           # NH3 & NonNH3, P, K calculation
           total_solubles = np.array([
-              CH4_soluble,  # CH4: 需要计算溢散
+              CH4_soluble,
               WasteWater.imass['NH3'] * (1 - N_loss),  # In water or sludge
               WasteWater.imass['NonNH3'] * (1 - N_loss),  # In water or sludge
               0,  # NO3 tolly consumed
