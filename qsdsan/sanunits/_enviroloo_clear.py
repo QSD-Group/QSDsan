@@ -994,9 +994,9 @@ class EL_Anoxic(SanUnit, Decay):
     baseline_ppl = 30
     exponent_scale = 0.6
 
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', methane_density=0.657
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', methane_density=0.657,
                  degraded_components=('OtherSS',),  F_BM_default=1, ppl = None, baseline_ppl = None,
-                 if_capture_biogas=False, if_N2O_emission=True, **kwargs):
+                 glucose_density=1560, if_capture_biogas=False, if_N2O_emission=True, **kwargs):
         Decay.__init__(self, ID, ins, outs, thermo=thermo,
                        init_with=init_with, F_BM_default=F_BM_default,
                        degraded_components=degraded_components,
@@ -1005,6 +1005,8 @@ class EL_Anoxic(SanUnit, Decay):
         
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
+        self.methane_density = methane_density  # kg/m^3
+        self.glucose_density = glucose_density  # kg/m^3
         
 
         data = load_data(path=Anoxic_path)
@@ -1041,7 +1043,8 @@ class EL_Anoxic(SanUnit, Decay):
           biogas.phase = CH4.phase = N2O.phase = 'g'
           
           # Glucose consumption
-          glucose_consumed = glucose.imass['Glucose']
+          glucose_consumed = WasteWater.F_vol * self.chemical_glucose_dosage * self.glucose_density
+          glucose.imass['Glucose'] = glucose_consumed
           TreatedWater.imass['Glucose'] += glucose.imass['Glucose']
           glucose.empty()  # 100% consumed
           
