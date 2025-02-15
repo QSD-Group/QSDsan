@@ -1117,8 +1117,8 @@ class EL_Anoxic(SanUnit, Decay):
           liquid_solubles = total_solubles - sludge_solubles
           
           # Assign to outputs (TreatedWater now includes sludge)
-          TreatedWater.imass['SolubleCH4', 'NH3', 'NonNH3', 'P', 'K'] = liquid_solubles
-          TreatedWater.imass['NH3', 'NonNH3', 'P', 'K'] += sludge_solubles  # Here is only one output stream (TreatedWater + sludge)
+          TreatedWater.imass['SolubleCH4', 'NH3', 'NonNH3', 'NO3', 'P', 'K'] = liquid_solubles
+          TreatedWater.imass['SolubleCH4', 'NH3', 'NonNH3', 'NO3', 'P', 'K'] += sludge_solubles  # Here is only one output stream (TreatedWater + sludge)
 
           # Final COD
           TreatedWater._COD = WasteWater.COD * (1 - self.EL_anoT_COD_removal)
