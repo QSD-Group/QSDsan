@@ -627,7 +627,7 @@ class EL_CT(StorageTank):
 
         # Ensure mass balance is correct
         for component in ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh', 'NO3', 'H2O'):
-        TreatedWater.imass[component] = (WasteWater.imass[component] + nitrate_return.imass[component] + 
+            TreatedWater.imass[component] = (WasteWater.imass[component] + nitrate_return.imass[component] + 
                               PC_spill_return.imass[component] + CWT_spill_return.imass[component])
 
     # def _run(self):
