@@ -1731,9 +1731,9 @@ class EL_CWT(StorageTank):
                     del self._f_overflow  
         
         
-      else:
-          # max_overflow is none, no spill return
-          PC_spill_return.empty()
+        else:
+            # max_overflow is none, no spill return
+            PC_spill_return.empty()
         
 
         # # Input streams
