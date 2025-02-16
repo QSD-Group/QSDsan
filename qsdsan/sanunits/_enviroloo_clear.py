@@ -1290,7 +1290,7 @@ class EL_Aerobic(SanUnit, Decay):
         TreatedWater.copy_like(WasteWater)
         
         # Initialize properties
-        biogas.phase = CH4.phase = N2O.phase = CO2.phase = 'g'
+        biogas.phase = CH4.phase = N2O.phase = 'g'
         
         # Manually add return nitrate (NO3)
         TreatedWater.imass['PAC'] += PAC.imass['PAC']
@@ -1314,8 +1314,6 @@ class EL_Aerobic(SanUnit, Decay):
         NO3_mass_generated = NH4_mass * self.NO3_produced_ratio
         TreatedWater.imass['NO3'] += NO3_mass_generated
         TreatedWater.imass['NH3'] = 0
-        
-        # CO2 emission
         
         
     
