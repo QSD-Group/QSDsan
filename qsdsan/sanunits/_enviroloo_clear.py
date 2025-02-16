@@ -1081,9 +1081,9 @@ class EL_Anoxic(SanUnit, Decay):
               N_loss_tot = N_loss * WasteWater.TN / 1e3 * WasteWater.F_vol
               N2O_emission.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44 / 28
           else:
-              N2O_emitted = 0
+              N2O.empty()
               
-          N2O_emission.imass['N2O'] = N2O_emitted  # All N2O is emitted
+          N2O_emission.imass['N2O'] = 0  # All N2O is emitted
               
           # Assume all NO3 is consumed and does not appear in TreatedWater
           total_NO3 = 0  
