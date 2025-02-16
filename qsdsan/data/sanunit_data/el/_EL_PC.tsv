@@ -13,3 +13,4 @@ PC_tank_lifetime		yr	5	4.5	5.5	uniform	assumption
 weld_female_adapter_fittings_lifetime		yr	5	4.5	5.5	uniform	"assu,ption"
 pipeline_connectors_lifetime		yr	5	4.5	5.5	uniform	assumption
 power_demand_PC	energy consumption for primary clarifier tank	KWh/day	0.3	0.27	0.33	uniform	assumption
+solids_moisture_content		%	0.95	0.93	0.97	uniform	assumption

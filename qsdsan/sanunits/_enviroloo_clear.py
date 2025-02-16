@@ -769,7 +769,7 @@ class EL_PC(IdealClarifier):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, max_overflow=15,
                  ppl = None, baseline_ppl = None, sludge_flow_rate=None,
-                 solids_removal_efficiency=None, solids_moisture_content=None,
+                 solids_removal_efficiency=None,
                  F_BM_default=1, init_with='WasteStream', **kwargs):
         """
         Initialize the primary clarifier with default parameters:
@@ -819,7 +819,7 @@ class EL_PC(IdealClarifier):
           PC_sludge_return.empty()
           PC_sludge_return.copy_flow(TreatedWater, ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'), remove=True)
           PC_sludge_return.imass['OtherSS'] = WasteWater.F_mass * self.solids_removal_efficiency
-          PC_sludge_return.imass['H2O'] = PC_return_sludge.imass['OtherSS']/(1-self.solids_moisture_content) - PC_sludge_return.imass['OtherSS']
+          PC_sludge_return.imass['H2O'] = PC_sludge_return.imass['OtherSS']/(1-self.solids_moisture_content) - PC_sludge_return.imass['OtherSS']
           
           # Spill water return
           if self.max_overflow is not None:
