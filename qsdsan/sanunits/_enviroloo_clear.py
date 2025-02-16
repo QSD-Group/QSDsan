@@ -1309,14 +1309,35 @@ class EL_Aerobic(SanUnit, Decay):
         CH4_emission.imass['CH4'] += TreatedWater.imass['SolubleCH4']  # Let all soluble CH4 transfer from solution phase to gas phase
         TreatedWater.imass['SolubleCH4'] = 0  # Ensure that treated water will not include soluble CH4
         
-        # N2O emission
-        NH4_mass = TreatedWater.imass['NH3']  # Inherite NH4 property from anoxic tank
-        NO3_mass_generated = NH4_mass * self.NO3_produced_ratio
+        # N2O produced
+        N_removal = self.EL_aeroT_TN_removal
+        if self.if_N2O_emission:
+          # Assume the removal part covers both degradation loss
+          # and other unspecified removal as well
+              N_loss = self.first_order_decay(k = self.decay_k_N,
+                                    t = self.EL_aeroT_tau / 365,
+                                    max_decay = self.N_max_decay)
+              if N_loss > N_removal:
+                  warn(f'Nitrogen degradation loss ({N_loss:.2f}) larger than the given removal ({N_removal:.2f})), '
+                        'the degradation loss is assumed to be the same as the removal.')
+                  N_loss = N_removal
+            
+              # N2O only from the degraded part
+              N_loss_tot = N_loss * WasteWater.TN / 1e3 * WasteWater.F_vol
+              N2O_emission.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44 / 28
+          else:
+              N2O_emitted = 0
+        
+        # NO3 conversion
+        NH3_mass = TreatedWater.imass['NH3']  # Inherite NH4 property from anoxic tank
+        NO3_mass_generated = NH3_mass * self.NO3_produced_ratio
         TreatedWater.imass['NO3'] += NO3_mass_generated
         TreatedWater.imass['NH3'] = 0
         
-        
-    
+        # N2O emission
+        N2O_emission.imass['N2O'] = N2O_emitted  # All N2O is emitted
+        N2O_mass_generated = NH3_mass * (1 - self.NO3_produced_ratio)
+        N2O_emission.imass['N2O'] += N2O_mass_generated
     
     # def _run(self):
 
