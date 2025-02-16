@@ -830,9 +830,9 @@ class EL_PC(IdealClarifier):
                   spill_vol = TreatedWater.F_vol - self.max_overflow  
 
                   if not hasattr(self, '_f_spill'):
-                           self._f_spill = None
+                      self._f_spill = None
                   if not hasattr(self, '_f_overflow'):
-                           self._f_overflow = None
+                      self._f_overflow = None
 
                   self._f_spill = spill_vol / TreatedWater.F_vol  
                   self._f_overflow = 1 - self._f_spill  
@@ -1260,7 +1260,6 @@ class EL_Aerobic(SanUnit, Decay):
 
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
-        self._mixed = WasteStream()
 
         data = load_data(path=Aerobic_path)
         for para in data.index:
@@ -1438,7 +1437,6 @@ class EL_MBR(SanUnit, Decay):
 
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
-        self._mixed = WasteStream()
 
         data = load_data(path=MBR_path)
         for para in data.index:
@@ -1668,7 +1666,7 @@ class EL_CWT(StorageTank):
 
     def __init__(self, ID = '', ins = None, outs = (), thermo = None, ppl = None, baseline_ppl = None,
                  vessel_type='Field erected',tau = 24, V_wf = None, vessel_material='Stainless steel', kW_per_m3 = 0.1,
-                 init_with = 'WasteStream', F_BM_default = 1, include_construction = True, **kwargs):
+                 init_with = 'WasteStream', F_BM_default = 1, max_overflow=15, include_construction = True, **kwargs):
         StorageTank.__init__(self, ID=ID, ins=ins, outs=outs, thermo = thermo, init_with = init_with, 
                              F_BM_default = F_BM_default, include_construction = include_construction,
                              kW_per_m3= kW_per_m3, vessel_type= vessel_type, tau= tau,
@@ -1676,8 +1674,7 @@ class EL_CWT(StorageTank):
 
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
-
-        self._mixed = WasteStream()
+        self.max_overflow = max_overflow
 
         data = load_data(path = ClearWaterTank_path)
         for para in data.index:
@@ -1692,26 +1689,72 @@ class EL_CWT(StorageTank):
         self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]
     
     def _run(self):
-
+        
         # Input streams
         WasteWater = self.ins[0]
         ozone = self.ins[1]
         air = self.ins[2]
-
+        
         # Output streams
         TreatedWater = self.outs[0]
         spill_return = self.outs[1]
         CWT_cycle = self.outs[2]
         
-        input_streams = [WasteWater, ozone, air]
-            
-        # Mix all inputs into a single stream
-        self._mixed.empty()
-        self._mixed.mix_from(input_streams)
+        # Inherited input stream
+        TreatedWater.copy_like(WasteWater)
+        
+        # Spill water return
+        if self.max_overflow is not None:
+            if TreatedWater.F_vol > self.max_overflow:
+                      
+                # Spill return exists
+                spill_vol = TreatedWater.F_vol - self.max_overflow  
+
+                if not hasattr(self, '_f_spill'):
+                    self._f_spill = None
+                if not hasattr(self, '_f_overflow'):
+                    self._f_overflow = None
+
+                self._f_spill = spill_vol / TreatedWater.F_vol  
+                self._f_overflow = 1 - self._f_spill  
+
+                PC_spill_return.copy_like(TreatedWater)  
+                PC_spill_return.F_mass *= self._f_spill  
+
+                TreatedWater.F_mass *= self._f_overflow  
+            else:
+                # max_overflow is not none, but TreatedWater < max_overflow
+                PC_spill_return.empty()
+                if hasattr(self, '_f_spill'):
+                    del self._f_spill  
+                if hasattr(self, '_f_overflow'):
+                    del self._f_overflow  
+        
+        
+      else:
+          # max_overflow is none, no spill return
+          PC_spill_return.empty()
         
 
-        # Copy the mixed result to the outflow
-        TreatedWater.copy_like(self._mixed)
+        # # Input streams
+        # WasteWater = self.ins[0]
+        # ozone = self.ins[1]
+        # air = self.ins[2]
+
+        # # Output streams
+        # TreatedWater = self.outs[0]
+        # spill_return = self.outs[1]
+        # CWT_cycle = self.outs[2]
+        
+        # input_streams = [WasteWater, ozone, air]
+            
+        # # Mix all inputs into a single stream
+        # self._mixed.empty()
+        # self._mixed.mix_from(input_streams)
+        
+
+        # # Copy the mixed result to the outflow
+        # TreatedWater.copy_like(self._mixed)
         
     
     
