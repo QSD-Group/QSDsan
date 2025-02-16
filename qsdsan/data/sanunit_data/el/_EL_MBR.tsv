@@ -1,5 +1,5 @@
 parameter	name (if diff)	unit	expected	low	high	distribution	references
-tau		days	1	0.75	1.25	uniform	assumption based on original design
+EL_mbrT_tau		days	1	0.75	1.25	uniform	assumption based on original design
 COD_removal		fraction of total COD	0.37	0.2775	0.4625	uniform	Eco-san data slides
 N_max_decay		fraction of N removed	0.09	0.0675	0.1125	uniform	"EAWAG, 2014"
 P_removal		fraction of P removed	0.15	0.1125	0.1875	uniform	"IPCC, 2006"
@@ -17,3 +17,6 @@ weld_female_adapter_fittings_lifetime		yr	5	4.5	5.5	uniform	assumption
 pipeline_connectors_lifetime		yr	5	4.5	5.5	uniform	assumption
 membrane_material_lifetime		yr	2	1.8	2.2	uniform	assumption
 power_demand_MBR	energy consumption for membrane tank	KWh/day	1.2	1.08	1.32	uniform	assumption
+EL_mbrT_sludge_yield		kg-VSS/kg-BOD removed	0.035	0.03	0.04	uniform	Metcalf and Eddy page 1086 (Example 10-2)
+EL_mbrT_TN_removal	anoix_tank_totalN_original_removal	ratio	0.2	0.02	0.37	uniform	"<br class=""Apple-interchange-newline"">UIUC Request Data - Gary Shyu"
+NO3_produced_ratio		ratio	0.01	0.009	0.011		

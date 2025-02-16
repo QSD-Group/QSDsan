@@ -1454,26 +1454,98 @@ class EL_MBR(SanUnit, Decay):
                              Construction(item ='PVDF_membrane', linked_unit=self, quantity_unit='kg'),]
     
     def _run(self):
-
-        # Input streams
+        
+        # Input stream
         WasteWater = self.ins[0]
         air = self.ins[1]
-
+        
         # Output stream
-        TreatedWater = self.outs[0] 
-        PC_sludge_return = self.outs[1]
-        AnoT_sludge_return = self.outs[2]
-        CH4_emission = self.outs[3] 
+        TreatedWater = self.outs[0]
+        PC_nitrate_return = self.outs[1]
+        AnoT_nitrate_return = self.outs[2]
+        CH4_emission = self.outs[3]
         N2O_emission = self.outs[4]
         
-        input_streams = [WasteWater, air]
+        # Inherited input stream
+        TreatedWater.copy_like(WasteWater)
+        
+        # Initialize properties
+        biogas.phase = CH4.phase = N2O.phase = 'g'
+        
+        # COD removal
+        COD_removal = self.EL_mbrT_COD_removal
+        removed_COD = WasteWater.COD / 1e3 * WasteWater.F_vol * COD_removal  # kg/hr
+        
+        # Sludge produced
+        sludge_prcd = self.EL_mbrT_sludge_yield * removed_COD  # produced biomass
+          
+        for component in ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'):
+            TreatedWater.imass[component] += sludge_prcd  # New sludge produced
             
-        # Mix all inputs into a single stream
-        self._mixed.empty()
-        self._mixed.mix_from(input_streams)
+        # CH4 emission
+        CH4_emission.imass['CH4'] += TreatedWater.imass['SolubleCH4']  # Let all soluble CH4 transfer from solution phase to gas phase
+        TreatedWater.imass['SolubleCH4'] = 0  # Ensure that treated water will not include soluble CH4
+        
+        # N2O produced
+        N_removal = self.EL_mbrT_TN_removal
+        if self.if_N2O_emission:
+          # Assume the removal part covers both degradation loss
+          # and other unspecified removal as well
+              N_loss = self.first_order_decay(k = self.decay_k_N,
+                                    t = self.EL_mbrT_tau / 365,
+                                    max_decay = self.N_max_decay)
+              if N_loss > N_removal:
+                  warn(f'Nitrogen degradation loss ({N_loss:.2f}) larger than the given removal ({N_removal:.2f})), '
+                        'the degradation loss is assumed to be the same as the removal.')
+                  N_loss = N_removal
+            
+              # N2O only from the degraded part
+              N_loss_tot = N_loss * WasteWater.TN / 1e3 * WasteWater.F_vol
+              N2O_emission.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44 / 28
+        else:
+              N2O_emitted = 0
+        
+        # NO3 conversion
+        NH3_mass = TreatedWater.imass['NH3']  # Inherite NH4 property from anoxic tank
+        NO3_mass_generated = NH3_mass * self.NO3_produced_ratio
+        TreatedWater.imass['NO3'] += NO3_mass_generated
+        TreatedWater.imass['NH3'] = 0
+        
+        # N2O emission
+        N2O_emission.imass['N2O'] = N2O_emitted  # All N2O is emitted
+        N2O_mass_generated = NH3_mass * (1 - self.NO3_produced_ratio)
+        N2O_emission.imass['N2O'] += N2O_mass_generated
+        
+        # Split NO3 into PC_nitrate_return and AnoT_nitrate_return
+        NO3_return_ratio = self.NO3_split_ratio  # Ratio of NO3 going to PC vs. AnoT
+        PC_nitrate_return.imass['NO3'] = TreatedWater.imass['NO3'] * NO3_return_ratio
+        AnoT_nitrate_return.imass['NO3'] = TreatedWater.imass['NO3'] * (1 - NO3_return_ratio)
 
-        # Copy the mixed result to the outflow
-        TreatedWater.copy_like(self._mixed)
+        # Remove NO3 from TreatedWater since it is returned to the previous tanks
+        TreatedWater.imass['NO3'] -= (PC_nitrate_return.imass['NO3'] + AnoT_nitrate_return.imass['NO3'])
+        
+    
+    # def _run(self):
+
+    #     # Input streams
+    #     WasteWater = self.ins[0]
+    #     air = self.ins[1]
+
+    #     # Output stream
+    #     TreatedWater = self.outs[0] 
+    #     PC_sludge_return = self.outs[1]
+    #     AnoT_sludge_return = self.outs[2]
+    #     CH4_emission = self.outs[3] 
+    #     N2O_emission = self.outs[4]
+        
+    #     input_streams = [WasteWater, air]
+            
+    #     # Mix all inputs into a single stream
+    #     self._mixed.empty()
+    #     self._mixed.mix_from(input_streams)
+
+    #     # Copy the mixed result to the outflow
+    #     TreatedWater.copy_like(self._mixed)
     
     # def _run(self):
         
