@@ -9,7 +9,6 @@ import numpy as np
 from math import ceil
 from qsdsan import WasteStream
 from qsdsan import SanUnit, Construction
-from qsdsan.equipments import Blower
 from qsdsan.sanunits import IdealClarifier
 from qsdsan.sanunits._toilet import Toilet
 from qsdsan.sanunits._tank import StorageTank
@@ -1937,7 +1936,7 @@ class EL_PT(StorageTank):
 blower_path = ospath.join(EL_su_data_path, '_EL_blower.tsv')
 
 @price_ratio()
-class EL_blower(Blower):
+class EL_blower(SanUnit):
     '''
     Introduction
     ------------
