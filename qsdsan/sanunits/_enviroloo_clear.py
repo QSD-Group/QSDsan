@@ -1992,8 +1992,6 @@ class EL_blower(SanUnit):
 
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
-        self.ins = ins
-        self.outs = outs
         self.thermo = thermo
 
         data = load_data(path = blower_path)
