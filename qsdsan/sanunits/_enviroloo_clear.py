@@ -1038,9 +1038,6 @@ class EL_Anoxic(SanUnit, Decay):
           # Manually add return nitrate (NO3)
           TreatedWater.imass['NO3'] += nitrate_return.imass['NO3']
           
-          # Initialize properties
-          biogas.phase = CH4.phase = N2O.phase = 'g'
-          
           # Glucose consumption
           glucose_consumed = WasteWater.F_vol * self.chemical_glucose_dosage * self.glucose_density
           glucose.imass['Glucose'] = glucose_consumed
@@ -1287,9 +1284,6 @@ class EL_Aerobic(SanUnit, Decay):
         # Inherited input stream
         TreatedWater.copy_like(WasteWater)
         
-        # Initialize properties
-        biogas.phase = CH4.phase = N2O.phase = 'g'
-        
         # Manually add return nitrate (NO3)
         TreatedWater.imass['PAC'] += PAC.imass['PAC']
         
@@ -1465,9 +1459,6 @@ class EL_MBR(SanUnit, Decay):
         
         # Inherited input stream
         TreatedWater.copy_like(WasteWater)
-        
-        # Initialize properties
-        biogas.phase = CH4.phase = N2O.phase = 'g'
         
         # COD removal
         COD_removal = self.EL_mbrT_COD_removal

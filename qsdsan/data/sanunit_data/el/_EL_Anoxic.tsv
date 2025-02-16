@@ -1,6 +1,6 @@
 parameter	name (if diff)	unit	expected	low	high	distribution	references
 EL_anoT_tau		days	1			constant	CIDI
-COD_removal		fraction of COD removal	0.7	0.6	0.8	uniform	"Tchobanoglous et al,. 2014 (EAWAG: 80-85fraction of BOD removal)"
+EL_anoT_COD_removal		fraction of COD removal	0.7	0.6	0.8	uniform	"Tchobanoglous et al,. 2014 (EAWAG: 80-85fraction of BOD removal)"
 MCF_decay		fraction of anaerobic conversion of degraded COD	1			constant	"IPCC, 2006"
 N_max_decay		fraction of N removal	0.8	0.7	0.9	triangular	"Orner and Mihelcic, 2017"
 N2O_EF_decay		fraction of of degraded N emitted as N2O	0.005	0.0005	0.006	triangular	"IPCC, 2006; Leeds"
