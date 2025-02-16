@@ -1714,13 +1714,13 @@ class EL_CWT(StorageTank):
                 self._f_spill = spill_vol / TreatedWater.F_vol  
                 self._f_overflow = 1 - self._f_spill  
 
-                PC_spill_return.copy_like(TreatedWater)  
-                PC_spill_return.F_mass *= self._f_spill  
+                spill_return.copy_like(TreatedWater)  
+                spill_return.F_mass *= self._f_spill  
 
                 TreatedWater.F_mass *= self._f_overflow  
             else:
                 # max_overflow is not none, but TreatedWater < max_overflow
-                PC_spill_return.empty()
+                spill_return.empty()
                 if hasattr(self, '_f_spill'):
                     del self._f_spill  
                 if hasattr(self, '_f_overflow'):
@@ -1729,7 +1729,7 @@ class EL_CWT(StorageTank):
         
         else:
             # max_overflow is none, no spill return
-            PC_spill_return.empty()
+            spill_return.empty()
         
 
         # # Input streams

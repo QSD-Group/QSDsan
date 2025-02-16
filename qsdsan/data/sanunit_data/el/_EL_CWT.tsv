@@ -11,4 +11,3 @@ weld_female_adapter_fittings_lifetime		yr	5	4.5	5.5	uniform	assumption
 pipeline_connectors_lifetime		yr	5	4.5	5.5	uniform	assumption
 O3_generation_machine_lifetime		yr	10	8	12	uniform	assumption
 power_demand_CWT	energy consumption for clear water tank	KWh/day	0.8	0.72	0.88	uniform	assumption
-PC_spill_return		ratio	0.2	0	0.4	uniform	assumption
