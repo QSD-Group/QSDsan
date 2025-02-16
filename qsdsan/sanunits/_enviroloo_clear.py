@@ -1081,9 +1081,8 @@ class EL_Anoxic(SanUnit, Decay):
               N_loss_tot = N_loss * WasteWater.TN / 1e3 * WasteWater.F_vol
               N2O_emission.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44 / 28
           else:
-              N2O.empty()
-              
-          N2O_emission.imass['N2O'] = 0  # All N2O is emitted
+              N2O_emission.empty()
+              N2O_emission.imass['N2O'] = 0  # All N2O is emitted
               
           # Assume all NO3 is consumed and does not appear in TreatedWater
           total_NO3 = 0  
@@ -1301,9 +1300,6 @@ class EL_Aerobic(SanUnit, Decay):
         CH4_emission.imass['CH4'] += TreatedWater.imass['SolubleCH4']  # Let all soluble CH4 transfer from solution phase to gas phase
         TreatedWater.imass['SolubleCH4'] = 0  # Ensure that treated water will not include soluble CH4
         
-        # Pre-define N2O_emitted variable
-        N2O_emitted = 0
-        
         # N2O produced
         N_removal = self.EL_aeroT_TN_removal
         if self.if_N2O_emission:
@@ -1321,7 +1317,8 @@ class EL_Aerobic(SanUnit, Decay):
               N_loss_tot = N_loss * WasteWater.TN / 1e3 * WasteWater.F_vol
               N2O_emission.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44 / 28
         else:
-              N2O_emitted = 0
+              N2O_emission.empty()
+              N2O_emission.imass['N2O'] = 0  # All N2O is emitted
         
         # NO3 conversion
         NH3_mass = TreatedWater.imass['NH3']  # Inherite NH4 property from anoxic tank
@@ -1330,7 +1327,6 @@ class EL_Aerobic(SanUnit, Decay):
         TreatedWater.imass['NH3'] = 0
         
         # N2O emission
-        N2O_emission.imass['N2O'] = N2O_emitted  # All N2O is emitted
         N2O_mass_generated = NH3_mass * (1 - self.NO3_produced_ratio)
         N2O_emission.imass['N2O'] += N2O_mass_generated
     
@@ -1497,7 +1493,8 @@ class EL_MBR(SanUnit, Decay):
               N_loss_tot = N_loss * WasteWater.TN / 1e3 * WasteWater.F_vol
               N2O_emission.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44 / 28
         else:
-              N2O_emitted = 0
+              N2O_emission.empty()
+              N2O_emission.imass['N2O'] = 0  # All N2O is emitted
         
         # NO3 conversion
         NH3_mass = TreatedWater.imass['NH3']  # Inherite NH4 property from anoxic tank
@@ -1506,7 +1503,6 @@ class EL_MBR(SanUnit, Decay):
         TreatedWater.imass['NH3'] = 0
         
         # N2O emission
-        N2O_emission.imass['N2O'] = N2O_emitted  # All N2O is emitted
         N2O_mass_generated = NH3_mass * (1 - self.NO3_produced_ratio)
         N2O_emission.imass['N2O'] += N2O_mass_generated
         
