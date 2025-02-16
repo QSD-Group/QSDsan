@@ -1,5 +1,5 @@
 parameter	name (if diff)	unit	expected	low	high	distribution	references
-tau		days	1			constant	CIDI
+EL_aeroT_tau		days	1			constant	CIDI
 EL_aeroT_COD_removal		fraction of COD removal	0.44	0.33	0.55	uniform	"Tchobanoglous et al,. 2014 (EAWAG: 80-85fraction of BOD removal)"
 N_max_decay		fraction of N removal	0.13	0.0975	0.1625	triangular	"Orner and Mihelcic, 2017"
 N2O_EF_decay		fraction of of degraded N emitted as N2O	0.005	0.0005	0.006	triangular	"IPCC, 2006; Leeds"
@@ -15,3 +15,5 @@ aerobic_tank_lifetime		yr	8	7.2	8.8	uniform	assumption
 weld_female_adapter_fittings_lifetime		yr	5	4.5	5.5	uniform	assumption
 pipeline_connectors_lifetime		yr	5	4.5	5.5	uniform	assumption
 power_demand_AerobicTank	energy consumption for anoxic tank	KWh/day	0.8	0.72	0.88	uniform	assumption
+EL_anoT_sludge_yield		kg-VSS/kg-BOD removed	0.035	0.03	0.04	uniform	Metcalf and Eddy page 1086 (Example 10-2)
+EL_anoT_TN_removal	anoix_tank_totalN_original_removal	ratio	0.2	0.02	0.37	uniform	"<br class=""Apple-interchange-newline"">UIUC Request Data - Gary Shyu"						
