@@ -1895,20 +1895,14 @@ class EL_PT(StorageTank):
     def _run(self):
 
         # Input streams
-        ClearWater = self.ins
+        ClearWater = self.ins[0]
 
         # Output streams
-        TreatedWater = self.outs
+        TreatedWater = self.outs[0]
         
-        input_streams = [ClearWater]
-            
-        # Mix all inputs into a single stream
-        self._mixed.empty()
-        self._mixed.mix_from(input_streams)
+        # Inherited input stream
+        TreatedWater.copy_like(ClearWater)
         
-
-        # Copy the mixed result to the outflow
-        TreatedWater.copy_like(self._mixed)
         
     def _design(self):
         design = self.design_results
