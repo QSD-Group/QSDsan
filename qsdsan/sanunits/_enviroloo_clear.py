@@ -1964,11 +1964,12 @@ class EL_blower(SanUnit):
     exponent_scale = 0.6
 
     def __init__(self, ID = '', ins = None, outs = (), 
-                 F_BM={
-                     'Blowers': 2.22,
-                     'Blower piping': 1,
-                     'Blower building': 1.11,
-                     },
+                 # F_BM={
+                 #     'Blowers': 2.22,
+                 #     'Blower piping': 1,
+                 #     'Blower building': 1.11,
+                 #     },
+                 F_BM = 2.22,
                  lifetime=15, lifetime_unit='yr',
                  # units={
                  #     'Total gas flow': 'CFM',
@@ -2033,7 +2034,7 @@ class EL_blower(SanUnit):
         scale = (self.ppl / self.baseline_ppl) ** self.exponent_scale
         Blower_replacement_cost = (
             self.blower_cost * self.blower_lifetime +
-            self.pipeline_connectors / self.pipeline_lifetime +
+            self.pipeline_connectors / self.pipeline_connectors_lifetime +
             self.weld_female_adapter_fittings / self.fittings_lifetime) * scale
         Blower_replacement_cost = Blower_replacement_cost / (365 * 24) # convert to USD/hr
         return Blower_replacement_cost
