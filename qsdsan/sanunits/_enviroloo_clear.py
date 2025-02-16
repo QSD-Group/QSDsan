@@ -1473,9 +1473,6 @@ class EL_MBR(SanUnit, Decay):
         CH4_emission.imass['CH4'] += TreatedWater.imass['SolubleCH4']  # Let all soluble CH4 transfer from solution phase to gas phase
         TreatedWater.imass['SolubleCH4'] = 0  # Ensure that treated water will not include soluble CH4
         
-        # Pre-define N2O_emitted variable
-        N2O_emitted = 0
-        
         # N2O produced
         N_removal = self.EL_mbrT_TN_removal
         if self.if_N2O_emission:
