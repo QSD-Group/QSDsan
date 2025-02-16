@@ -1061,7 +1061,7 @@ class EL_Anoxic(SanUnit, Decay):
           CH4_prcd = removed_COD * self.EL_anoT_methane_yield * self.methane_density  # kg CH4 produced/hr
           CH4_soluble = self.EL_anoT_soluble_methane_fraction * CH4_prcd
           CH4_emitted = CH4_prcd - CH4_soluble
-          CH4_emission.imass['SoluableCH4'] = CH4_emitted
+          CH4_emission.imass['SolubleCH4'] = CH4_emitted
           TreatedWater.imass['SolubleCH4'] = CH4_soluble
           
           # N2O produced
