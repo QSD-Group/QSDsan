@@ -19,4 +19,5 @@ membrane_material_lifetime		yr	2	1.8	2.2	uniform	assumption
 power_demand_MBR	energy consumption for membrane tank	KWh/day	1.2	1.08	1.32	uniform	assumption
 EL_mbrT_sludge_yield		kg-VSS/kg-BOD removed	0.035	0.03	0.04	uniform	Metcalf and Eddy page 1086 (Example 10-2)
 EL_mbrT_TN_removal	anoix_tank_totalN_original_removal	ratio	0.2	0.02	0.37	uniform	"<br class=""Apple-interchange-newline"">UIUC Request Data - Gary Shyu"
-NO3_produced_ratio		ratio	0.01	0.009	0.011		
+NO3_produced_ratio		ratio	0.01	0.009	0.011	uniform	
+NO3_spilt_ratio		ratio	0.5	0.45	0.55	uniform	
