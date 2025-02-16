@@ -1325,7 +1325,7 @@ class EL_Aerobic(SanUnit, Decay):
               # N2O only from the degraded part
               N_loss_tot = N_loss * WasteWater.TN / 1e3 * WasteWater.F_vol
               N2O_emission.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44 / 28
-          else:
+        else:
               N2O_emitted = 0
         
         # NO3 conversion
