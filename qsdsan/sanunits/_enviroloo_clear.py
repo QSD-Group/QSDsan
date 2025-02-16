@@ -1964,6 +1964,7 @@ class EL_blower(SanUnit):
     _N_outs = 1  # number of outs
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
+    exponent_scale = 0.6
 
     def __init__(self, ID = '', ins = None, outs = (), 
                  F_BM={
@@ -1972,29 +1973,31 @@ class EL_blower(SanUnit):
                      'Blower building': 1.11,
                      },
                  lifetime=15, lifetime_unit='yr',
-                 units={
-                     'Total gas flow': 'CFM',
-                     'Blower capacity': 'CFM',
-                     'Number of blowers': '',
-                     'Total blower power': 'kW',
-                     },
-                 N_reactor=2, # the number of the reactors where the gas sparging modules will be installed
-                 gas_demand_per_reactor=1, # gas demand per reactor
-                 TDH=6, # total dynamic head for rhe blower, in psi
-                 eff_blower=0.7, # efficiency of the blower in fraction
-                 eff_motor=0.7, # efficiency of the motor in fraction
-                 AFF=3.33, # air flow fraction
-                 building_unit_cost=9, # unit cost of the building, in USD/ft2
+                 # units={
+                 #     'Total gas flow': 'CFM',
+                 #     'Blower capacity': 'CFM',
+                 #     'Number of blowers': '',
+                 #     'Total blower power': 'kW',
+                 #     },
+                 # N_reactor=2, # the number of the reactors where the gas sparging modules will be installed
+                 # gas_demand_per_reactor=1, # gas demand per reactor
+                 # TDH=6, # total dynamic head for rhe blower, in psi
+                 # eff_blower=0.7, # efficiency of the blower in fraction
+                 # eff_motor=0.7, # efficiency of the motor in fraction
+                 # AFF=3.33, # air flow fraction
+                 # building_unit_cost=9, # unit cost of the building, in USD/ft2
                  thermo = None, ppl = None, baseline_ppl = None, **kwargs):
-        super().__init__(ID=ID, lifetime = lifetime, lifetime_unit = lifetime_unit, F_BM=F_BM,
-                        units=units, N_reactor=N_reactor, gas_demand_per_reactor=gas_demand_per_reactor,
-                        TDH=TDH, eff_blower=eff_blower, eff_motor=eff_motor, AFF=AFF, building_unit_cost=building_unit_cost,)
+        # super().__init__(ID=ID, lifetime = lifetime, lifetime_unit = lifetime_unit, F_BM=F_BM,
+        #                 units=units, N_reactor=N_reactor, gas_demand_per_reactor=gas_demand_per_reactor,
+        #                 TDH=TDH, eff_blower=eff_blower, eff_motor=eff_motor, AFF=AFF, building_unit_cost=building_unit_cost,)
+        super().__init__(ID=ID, ins=ins, outs=outs, thermo=thermo, 
+                         init_with='Stream',# or WasteStream
+                         include_construction=True, uptime_ratio=1., lifetime=lifetime, F_BM_default=F_BM, 
+                         isdynamic=False)
 
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
-        self.ins = ins
-        self.outs = outs
-        self.thermo = thermo
+        self.lifetime_unit = lifetime_unit
 
         data = load_data(path = blower_path)
         for para in data.index:
