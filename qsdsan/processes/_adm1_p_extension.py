@@ -370,10 +370,10 @@ class ADM1_p_extension(ADM1):
     decay_Xpro                              0.02
     decay_Xac                               0.02
     decay_Xh2                               0.02
-    storage_Sva_in_XPHA                     0.747
-    storage_Sbu_in_XPHA                     0.747
-    storage_Spro_in_XPHA                    0.747
-    storage_Sac_in_XPHA                     0.747
+    storage_Sva_in_XPHA                     0.74
+    storage_Sbu_in_XPHA                     0.74
+    storage_Spro_in_XPHA                    0.74
+    storage_Sac_in_XPHA                     0.74
     lysis_XPAO                              0.2
     lysis_XPP                               0.2
     lysis_XPHA                              0.2
