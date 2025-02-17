@@ -78,6 +78,7 @@ class EL_Excretion(SanUnit):
             setattr(self, attr, value)
 
     def _run(self):
+        print(type(self.outs[0]), type(self.outs[1]))  # Debug 输出
         ur, fec = self.outs
         ur.empty()
         fec.empty()
