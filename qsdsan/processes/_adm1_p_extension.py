@@ -312,8 +312,8 @@ class ADM1_p_extension(ADM1):
     K_A : float, optional
         VFAs half saturation coefficient for PHA storage [kg COD/m3]. The default is 0.004.
     K_PP : float, optional
-        Half saturation coefficient for polyphosphate [kmol PP/kg PAO COD].
-        The default is 0.00032.
+        Half saturation coefficient for polyphosphate [kg P/kg PAO COD].
+        The default is 0.01.
     q_PHA : float, optional
         Rate constant for storage of PHA [d^(-1)]. The default is 3.
     b_PAO : float, optional
@@ -422,7 +422,7 @@ class ADM1_p_extension(ADM1):
                 q_dis=0.5, q_ch_hyd=10, q_pr_hyd=10, q_li_hyd=10,
                 k_su=30, k_aa=50, k_fa=6, k_c4=20, k_pro=13, k_ac=8, k_h2=35,
                 K_su=0.5, K_aa=0.3, K_fa=0.4, K_c4=0.2, K_pro=0.1, K_ac=0.15, K_h2=7e-6, 
-                K_A=4e-3, K_PP=32e-5,
+                K_A=4e-3, K_PP=0.01,
                 b_su=0.02, b_aa=0.02, b_fa=0.02, b_c4=0.02, b_pro=0.02, b_ac=0.02, b_h2=0.02,
                 q_PHA=3, b_PAO=0.2, b_PP=0.2, b_PHA=0.2, 
                 KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_nh3=1.8e-3, KS_IN=1e-4, KS_IP=2e-5, 
@@ -861,8 +861,8 @@ class ADM1p(ADM1):
     K_A : float, optional
         VFAs half saturation coefficient for PHA storage [kg COD/m3]. The default is 0.004.
     K_PP : float, optional
-        Half saturation coefficient for polyphosphate [kmol PP/kg PAO COD].
-        The default is 0.00032.
+        Half saturation coefficient for polyphosphate [kg P/kg PAO COD].
+        The default is 0.01.
     q_PHA : float, optional
         Rate constant for storage of PHA [d^(-1)]. The default is 3.
     b_PAO : float, optional
@@ -940,7 +940,7 @@ class ADM1p(ADM1):
                 q_dis=0.5, q_ch_hyd=10, q_pr_hyd=10, q_li_hyd=10,
                 k_su=30, k_aa=50, k_fa=6, k_c4=20, k_pro=13, k_ac=8, k_h2=35,
                 K_su=0.5, K_aa=0.3, K_fa=0.4, K_c4=0.2, K_pro=0.1, K_ac=0.15, K_h2=7e-6, 
-                K_A=4e-3, K_PP=32e-5,
+                K_A=4e-3, K_PP=0.01,
                 b_su=0.02, b_aa=0.02, b_fa=0.02, b_c4=0.02, b_pro=0.02, b_ac=0.02, b_h2=0.02,
                 q_PHA=3, b_PAO=0.2, b_PP=0.2, b_PHA=0.2, 
                 KI_h2_fa=5e-6, KI_h2_c4=1e-5, KI_h2_pro=3.5e-6, KI_nh3=1.8e-3, KS_IN=1e-4, KS_IP=2e-5, 
