@@ -2107,7 +2107,7 @@ class EL_PT(StorageTank):
 
     '''
     _N_ins = 1  # number of ins
-    _N_outs = 1  # number of outs
+    _N_outs = 2  # number of outs
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
     exponent_scale = 0.6
@@ -2144,9 +2144,11 @@ class EL_PT(StorageTank):
 
         # Output streams
         TreatedWater = self.outs[0]
+        nullConnection = self.outs[1]
         
         # Inherited input stream
         TreatedWater.copy_like(ClearWater)
+        nullConnection.empty()
         
         
     def _design(self):
@@ -2363,7 +2365,9 @@ class EL_System(SanUnit):
     '''
     exponent_scale = 0.6
 
-    def __init__(self, ID='', ins=None, outs= (), thermo = None, init_with = 'WasteStream', 
+    def __init__(self, ID='', ins=None, outs= (), thermo = None, 
+                 init_with = 'WasteStream',
+                 # init_with=None,
                  if_gridtied = True, ppl = None, baseline_ppl = None, F_BM_default = 1, **kwargs):
         SanUnit.__init__(self, ID=ID, ins=ins, outs=outs, thermo = thermo, init_with = init_with,  F_BM_default = F_BM_default)
         
@@ -2432,8 +2436,8 @@ class EL_System(SanUnit):
             self.membrane_filters_M / self.lifetime_membrane_filters_M +
             self.membrane_filters_size / self.lifetime_membrane_filters_size +
             self.aerobic_basin / self.lifetime_aerobic_basin +
-            self.aerobic_air_diffuser / self.lifetime_aerobic_air_diffuser +
-            self.aerobic_air_diffuser_chassis / self.lifetime_aerobic_air_diffuser_chassis +
+            self.membrane_filters_air_diffuser / self.lifetime_membrane_filters_air_diffuser +
+            self.membrane_filters_air_diffuser_chassis / self.lifetime_membrane_filters_air_diffuser_chassis +
             self.overflow_membrane2collection / self.lifetime_overflow_membrane2collection +
             self.overflow_clear_water2collection / self.lifetime_overflow_clear_water2collection +
             self.overflow_primary_clarifier2anoixc / self.lifetime_overflow_primary_clarifier2anoixc +
@@ -2443,8 +2447,7 @@ class EL_System(SanUnit):
             self.pipeline_fittings_32mm / self.lifetime_32mm_pipeline_fittings +
             self.pipeline_fittings_40mm / self.lifetime_40mm_pipeline_fittings +
             self.pipeline_fittings_60mm / self.lifetime_60mm_pipeline_fittings +
-            self.ball_valves_50mm / self.lifetime_50mm_ball_valves +
-            self.aerobic_air_diffuser / self.lifetime_aerobic_air_diffuser) * scale
+            self.ball_valves_50mm / self.lifetime_50mm_ball_valves) * scale
         system_replacement_cost = system_replacement_cost / (365 * 24)   # convert from USD/year to USD/hour
         return system_replacement_cost
     @property

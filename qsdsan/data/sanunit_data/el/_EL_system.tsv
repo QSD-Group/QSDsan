@@ -22,17 +22,19 @@ lifetime_membrane_filters_M	PVDF material	y	3	2.7	3.3	uniform
 lifetime_membrane_filters_size	1005 mm x 510 mm	y	3	2.7	3.3	uniform	
 lifetime_membrane_filters_pause_size	1 micron 	y	3	2.7	3.3	uniform	
 lifetime_membrane_filters_chassis_M	Stainless steel/	y	3	2.7	3.3	uniform	
-lifetiime_membrane_filters_air_diffuser	20 mm class 12 pipe/ 20 mm 16 bar fittings /solvent weld 	y	3	2.7	3.3	uniform	
+lifetime_membrane_filters_air_diffuser	20 mm class 12 pipe/ 20 mm 16 bar fittings /solvent weld 	y	3	2.7	3.3	uniform	
 lifetime_membrane_filters_air_diffuser_chassis	Stainless steel / grade 304	y	3	2.7	3.3	uniform	
 lifetime_overflow_membrane2collection	110 mm bulk tank connector / 110mm solvent weld female adaptor 	y	3	2.7	3.3	uniform	
 lifetime_overflow_clear_water2collection	110 mm bulk tank connector / 110mm solvent weld female adaptor 	y	3	2.7	3.3	uniform	
 lifetime_overflow_primary_clarifier2anoixc	110 mm bulk tank connector 	y	3	2.7	3.3	uniform	
-lifetiime_overflow_anoxic2aerobic	110 mm bulk tank connector 	y	3	2.7	3.3	uniform	
+lifetime_overflow_anoxic2aerobic	110 mm bulk tank connector 	y	3	2.7	3.3	uniform	
 lifetime_overflow_aerobic2membrane	110 mm bulk tank connector 	y	3	2.7	3.3	uniform	
 lifetime_200m_ozone_pipeline	HDPE / 6 bar pressure	y	3	2.7	3.3	uniform	
 lifetime_32mm_pipeline_fittings	Solvent weld class 12 pipe / fittings rated @ 16 bar	y	3	2.7	3.3	uniform	
 lifetime_40mm_pipeline_fittings	Solvent weld class 12 pipe / fittings rated @ 16 bar	y	3	2.7	3.3	uniform	
-lifeime_60mm_pipeline_fittings	Solvent weld class 12 pipe / fittings rated @ 16 bar	y	3	2.7	3.3	uniform	
+lifetime_60mm_pipeline_fittings	Solvent weld class 12 pipe / fittings rated @ 16 bar	y	3	2.7	3.3	uniform	
 lifetime_50mm_ball_valves	Female threaded ball valve / rated @ 16 bar	y	3	2.7	3.3	uniform	
 lifetime_aerobic_air_diffuser	Solvent weld class 12 pipe / fittings rated @ 16 bar/ 12 mm holes- outlet	y	3	2.7	3.3	uniform	
 power_demand_system		kWh	40	36	44	triangular	Duke Center for WaSH-AID design team
+aerobic_basin		USD	50	45	55	triangular	
+lifetime_aerobic_basin		y	3	2.7	3.3	uniform	
