@@ -897,6 +897,7 @@ class EL_CT(StorageTank):
         
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
+        self._mixed_in = WasteStream(f'{self.ID}_mixed_in')
         
         data = load_data(path=CollectionTank_path)
         for para in data.index:
@@ -915,33 +916,33 @@ class EL_CT(StorageTank):
         There is no reaction inside this tank, just for collection and storage.
         '''   
         
-        # Input stream
-        WasteWater = self.ins[0]
-        sludge_return = self.ins[1]  # Sludge from primary clarifier over return pump
-        PC_spill_return = self.ins[2]  # Spill water from primary clarifier
-        CWT_spill_return = self.ins[3]  # Spill water from clear water tank
+        # # Input stream
+        # WasteWater = self.ins[0]
+        # sludge_return = self.ins[1]  # Sludge from primary clarifier over return pump
+        # PC_spill_return = self.ins[2]  # Spill water from primary clarifier
+        # CWT_spill_return = self.ins[3]  # Spill water from clear water tank
         
-        # Output stream
-        TreatedWater = self.outs[0]
+        # # Output stream
+        # TreatedWater = self.outs[0]
         
-        # Initialize properties
-        TreatedWater.empty()
+        # # Initialize properties
+        # TreatedWater.empty()
         
-        # Inherited properties of input stream
-        TreatedWater.copy_like(WasteWater)
+        # # Inherited properties of input stream
+        # TreatedWater.copy_like(WasteWater)
 
-        # Add NO3 from nitrate return
-        #TreatedWater.imass['NO3'] += sludge_return.imass['NO3']
+        # # Add NO3 from nitrate return
+        # #TreatedWater.imass['NO3'] += sludge_return.imass['NO3']
 
-        # Only add H₂O from PC_spill_return and CWT_spill_return
-        TreatedWater.imass['H2O'] += PC_spill_return.imass['H2O'] + CWT_spill_return.imass['H2O']
+        # # Only add H₂O from PC_spill_return and CWT_spill_return
+        # TreatedWater.imass['H2O'] += PC_spill_return.imass['H2O'] + CWT_spill_return.imass['H2O']
 
-        # Ensure mass balance is correct
-        for component in ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh', 
-                          #'NO3', 
-                          'H2O'):
-            TreatedWater.imass[component] = (WasteWater.imass[component] + sludge_return.imass[component] + 
-                              PC_spill_return.imass[component] + CWT_spill_return.imass[component])
+        # # Ensure mass balance is correct
+        # for component in ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh', 
+        #                   #'NO3', 
+        #                   'H2O'):
+        #     TreatedWater.imass[component] = (WasteWater.imass[component] + sludge_return.imass[component] + 
+        #                       PC_spill_return.imass[component] + CWT_spill_return.imass[component])
 
     # def _run(self):
     #     '''
@@ -953,24 +954,24 @@ class EL_CT(StorageTank):
     #     - `PC_spill_return` and `MT_spill_return` may or may not exist.
     #     '''
 
-    #     # Input stream
-    #     WasteWater = self.ins[0]
-    #     sludge_return = self.ins[1]
-    #     PC_spill_return = self.ins[2]
-    #     CWT_spill_return = self.ins[3]
+        # Input stream
+        WasteWater = self.ins[0]
+        sludge_return = self.ins[1]
+        PC_spill_return = self.ins[2]
+        CWT_spill_return = self.ins[3]
 
-    #     # Output stream
-    #     TreatedWater = self.outs[0]
-        
-    #     # Define input streams
-    #     input_streams = [WasteWater, sludge_return, PC_spill_return, CWT_spill_return]
+        mixed_in = self._mixed_in
+        # Define input streams
+        input_streams = [WasteWater, sludge_return, PC_spill_return, CWT_spill_return]
+        mixed_in.mix_from(input_streams)
+        # # Mix all inputs into a single stream
+        # self._mixed.empty()
+        # self._mixed.mix_from(input_streams)
 
-    #     # Mix all inputs into a single stream
-    #     self._mixed.empty()
-    #     self._mixed.mix_from(input_streams)
-
-    #     # Copy the mixed result to the outflow
-    #     TreatedWater.copy_like(self._mixed)
+        # Output stream
+        TreatedWater = self.outs[0]
+        # Copy the mixed result to the outflow
+        TreatedWater.copy_like(mixed_in)
     
     
     # def _run(self):
@@ -1118,7 +1119,7 @@ class EL_PC(IdealClarifier):
         
           # Input stream
           WasteWater, MT_nitrate_return = self.ins
-          MT_nitrate_return.F_mass = WasteWater.F_mass * 0.1
+          MT_nitrate_return.mass = WasteWater.mass * 0.1
           #MT_nitrate_return = self.ins[1]  # Nitrate from membrane tank over return pump
         
           # Output stream
@@ -1134,6 +1135,7 @@ class EL_PC(IdealClarifier):
 
           # Sludge with water removal
           PC_sludge_return.empty()
+          PC_sludge_return.mass = TreatedWater.mass * 0.1
           PC_sludge_return.copy_flow(TreatedWater, ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'), remove=True)
           PC_sludge_return.imass['OtherSS'] = WasteWater.F_mass * self.solids_removal_efficiency
           PC_sludge_return.imass['H2O'] = PC_sludge_return.imass['OtherSS']/(1-self.solids_moisture_content) - PC_sludge_return.imass['OtherSS']
@@ -1285,6 +1287,8 @@ class EL_Anoxic(SanUnit, Decay):
           glucose_consumed = WasteWater.F_vol * self.chemical_glucose_dosage * self.glucose_density
           glucose.imass['Glucose'] = glucose_consumed
           TreatedWater.imass['Glucose'] += glucose.imass['Glucose']
+          
+          glucose.mass = glucose_consumed
 
           # COD removal
           COD_removal = self.EL_anoT_COD_removal
