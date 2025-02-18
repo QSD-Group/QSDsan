@@ -2,7 +2,12 @@
 # -*- coding: utf-8 -*-
 
 '''
-Created by Yuyao Huang and Siqi Tang for Enviroloo (EL) Clear Toilet system
+
+This module is developed by:
+    Yuyao Huang <yuyaoh2@illinois.edu>
+    Siqi Tang <siqit@outlook.com>
+for Enviroloo (EL) Clear Toilet system
+
 '''
 # %%
 import numpy as np
