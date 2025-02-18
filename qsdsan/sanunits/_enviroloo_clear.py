@@ -4,7 +4,7 @@
 '''
 
 This module is developed by:
-    Yuyao Huang <yuyaoh2@illinois.edu>
+    Yuyao Huang <yuyaoh20@gmail.com>
     Siqi Tang <siqit@outlook.com>
 for Enviroloo (EL) Clear Toilet system
 
