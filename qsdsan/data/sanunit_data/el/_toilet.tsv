@@ -1,0 +1,11 @@
+parameter	name (if diff)	unit	expected	low	high	distribution	references
+toilet_paper	"toilet_paper_addition,
+toilet_paper_TS_content"	kg/cap/hr	0.000281583	0.000249113	0.000341983	uniform	"Friedler et al., 1996; Almeida et al., 1999"
+flushing_water	flushing_water_use	kg/cap/hr	0.416666667	0.166666667	1.041666667	triangular	"Fry et al., 2008; Strande et al., 2018; assume nutrient and COD content of water is negligible"
+cleansing_water	cleansing_water_use	kg/cap/hr	0.041666667	0.014583333	0.125	uniform	"Rose et al., 2015; assume nutrient and COD content of water is negligible"
+desiccant_V	desiccant_volume	m3/cap/hr	8.33E-06	8.33E-06	2.08E-05	triangular	"Mihelcic et al., 2009"
+desiccant_rho	desiccant_density	kg/m3	7.60E+02	6.63E+02	9.77E+02	triangular	"Grau et al., 2015; Abdullahi, 2006"
+COD_max_decay	OD_max_removal_storage	fraction of oxygen demand removal	0.7	0.6	0.8	triangular	"Leeds; Orner and Mihelcic, 2017"
+N_max_decay	N_max_denitrification_storage	fraction of N removal after N leaching	0.8	0.7	0.9	triangular	"Orner and Mihelcic, 2017"
+MCF_aq	MCF_aquatic_discharge	fraction of anaerobic conversion of degraded COD	0.11	0.004	0.27	triangular	"IPCC, 2019"
+N2O_EF_aq	N2O_EF_aquatic_discharge	fraction of N emitted as N2O	0.005	0.0005	0.075	triangular	"IPCC, 2019"
