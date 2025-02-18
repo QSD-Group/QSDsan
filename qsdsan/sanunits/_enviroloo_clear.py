@@ -1140,7 +1140,7 @@ class EL_PC(IdealClarifier):
 
           # Sludge with water removal
           PC_sludge_return.empty()
-          PC_sludge_return.mass = TreatedWater.mass * 0.1
+          PC_sludge_return.mass = TreatedWater.mass * 0.1  # sludge return ratio, temeporary assumption
           PC_sludge_return.copy_flow(TreatedWater, ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'), remove=True)
           PC_sludge_return.imass['OtherSS'] = WasteWater.F_mass * self.solids_removal_efficiency
           PC_sludge_return.imass['H2O'] = PC_sludge_return.imass['OtherSS']/(1-self.solids_moisture_content) - PC_sludge_return.imass['OtherSS']
