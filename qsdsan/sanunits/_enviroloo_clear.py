@@ -35,7 +35,7 @@ __all__ = (
 EL_su_data_path = ospath.join(data_path, 'sanunit_data/el')
 
 # %%
-excretion_path = ospath.join(EL_su_data_path, '_excretion.tsv')
+excretion_path = ospath.join(EL_su_data_path, '_EL_excretion.tsv')
 
 class EL_Excretion(SanUnit):
     '''
@@ -80,7 +80,6 @@ class EL_Excretion(SanUnit):
             setattr(self, attr, value)
 
     def _run(self):
-        # print(type(self.outs[0]), type(self.outs[1]))  # Debug 输出
         ur, fec = self.outs
         ur.empty()
         fec.empty()
@@ -336,7 +335,7 @@ class EL_Excretion(SanUnit):
         self._waste_ratio = i
 
 # %%
-toilet_path = ospath.join(EL_su_data_path, '_toilet.tsv')
+toilet_path = ospath.join(EL_su_data_path, '_EL_toilet.tsv')
 
 class EL_Toilet(SanUnit, Decay, isabstract=True):
     '''
@@ -645,7 +644,7 @@ class EL_Toilet(SanUnit, Decay, isabstract=True):
                          'please set `if_air_emission` instead.')
 
 # %%
-murt_path = ospath.join(EL_su_data_path, '_murt.tsv')
+murt_path = ospath.join(EL_su_data_path, '_EL_murt.tsv')
 
 @price_ratio()
 class EL_MURT(EL_Toilet):
