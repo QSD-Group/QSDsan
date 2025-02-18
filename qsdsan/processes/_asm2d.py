@@ -863,13 +863,13 @@ class mASM2d(CompiledProcesses):
     _precipitates = ('X_CaCO3', 'X_struv', 'X_newb', 'X_ACP', 'X_MgCO3', 'X_AlPO4', 'X_FePO4')
     
     _k_mmp = {
-        'Mbamba': (8.4, 240, 1.0, 72, 1.0, 1.0, 1.0),           # MATLAB, Mbamba
+        'Mbamba': (8.4, 240, 1.0, 72, 1.0, 1.0e-5, 1.0e-5),     # MATLAB, Mbamba
         'Musvoto': (5.0, 300, 0.05, 150, 50, 1.0, 1.0),         # GPS-X, Musvoto 2000
         # 'Flores-Alsina': (0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),  # Flores-Alsina 2016
         }
     
     _pKsp = {
-        'Mbamba': (8.5, 13.7, 5.9, 28.6, 7.6, 18.2, 26.5),      # MINTEQ (except newberyite), 35 C   
+        'Mbamba': (8.45, 13.5, 5.7, 29.1, 7.4, 18.2, 26.4),     # MINTEQ (except newberyite), 20 C   
         'Musvoto': (6.45, 13.16, 5.8, 23, 7, 21, 26),           # GPS-X, Musvoto 2000
         # 'Flores-Alsina': (8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76), # Flores-Alsina 2016
         }
