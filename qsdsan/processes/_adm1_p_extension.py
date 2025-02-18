@@ -33,7 +33,9 @@ from qsdsan.processes import (
     mass2mol_conversion,
     Hill_inhibit,
     ADM1,
-    TempState
+    TempState,
+    Mbamba_rhos,
+    Musvoto_rhos,
     )
 from qsdsan.utils import ospath, data_path, load_data
 from scipy.optimize import brenth
@@ -765,14 +767,39 @@ def _rhos_adm1p(state_arr, params, h=None):
     rhos_p[9] *= Inh3
 
     ########## precipitation-dissolution #############
+    mmp_kinetics = params['mmp_kinetics']
     k_mmp = params['k_mmp']
     Ksp = params['Ksp']
-    # K_dis = params['K_dis']
     K_AlOH = params['K_AlOH']
     K_FeOH = params['K_FeOH']
-    S_Mg, S_Ca, X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3 = state_arr[28:35]
     X_AlOH, X_FeOH = state_arr[[35,37]]
-    # f_dis = Monod(state_arr[30:35], K_dis[:5])
+        
+    # rhos_p[25:32] = 0
+    if po4 > 0:
+        if X_AlOH > 0:
+            rhos_p[30] = k_mmp[5] * X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
+        if X_FeOH > 0:
+            rhos_p[31] = k_mmp[6] * X_FeOH * po4 * Monod(X_FeOH, K_FeOH)    
+        
+    if mmp_kinetics == 'Mbamba':
+        S_Mg, S_Ca, X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3 = state_arr[28:35]
+        rhos_p[25:30] = Mbamba_rhos(
+            S_Ca, S_Mg, co3, nh4, po4, hpo4, 
+            X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3, 
+            k_mmp[:5], Ksp
+            )
+    
+    elif mmp_kinetics == 'Musvoto':
+        Mg, Ca = state_arr[28:30] * unit_conversion[28:30]    # mol/L
+        co3 *= unit_conversion[9]
+        nh4 *= unit_conversion[10]
+        po4 *= unit_conversion[11]
+        hpo4 *= unit_conversion[11]
+        
+        rhos_p[25:30] = Musvoto_rhos(
+            Ca, Mg, co3, nh4, po4, hpo4, k_mmp[:5], Ksp
+            ) / unit_conversion[30:35]     # convert from mol/L/d to kg/m3/d
+
     # if X_CaCO3 > 0: rhos_p[25] = (S_Ca * co3 - Ksp[0]) * f_dis[0]
     # else: rhos_p[25] = S_Ca * co3
     # if X_struv > 0: rhos_p[26] = (S_Mg * nh4 * po4 - Ksp[1]) * f_dis[1]
@@ -783,35 +810,6 @@ def _rhos_adm1p(state_arr, params, h=None):
     # else: rhos_p[28] = S_Ca**3 * po4**2
     # if X_MgCO3 > 0: rhos_p[29] = (S_Mg * co3 - Ksp[4]) * f_dis[4]
     # else: rhos_p[29] = S_Mg * co3
-        
-    rhos_p[25:32] = 0
-    if po4 > 0:
-        if X_AlOH > 0:
-            rhos_p[30] = X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
-        if X_FeOH > 0:
-            rhos_p[31] = X_FeOH * po4 * Monod(X_FeOH, K_FeOH)    
-    
-    if S_Ca > 0 and co3 > 0:
-        SI = (S_Ca * co3 / Ksp[0])**(1/2)
-        if SI > 1: rhos_p[25] = X_CaCO3 * (SI-1)**2
-
-    if S_Mg > 0 and nh4 > 0 and po4 > 0:
-        SI = (S_Mg * nh4 * po4 / Ksp[1])**(1/3)
-        if SI > 1: rhos_p[26] = X_struv * (SI-1)**3
-
-    if S_Mg > 0 and hpo4 > 0:
-        SI = (S_Mg * hpo4 / Ksp[2])**(1/2)
-        if SI > 1: rhos_p[27] =  X_newb * (SI-1)**2
-    
-    if S_Ca > 0 and po4 > 0:
-        SI = (S_Ca**3 * po4**2 / Ksp[3])**(1/5)
-        if SI > 1: rhos_p[28] = X_ACP * (SI-1)**2
-    
-    if S_Mg > 0 and co3 > 0:
-        SI = (S_Mg * co3 / Ksp[4])**(1/2)
-        if SI > 1: rhos_p[29] = X_MgCO3 * (SI-1)**2
-
-    rhos_p[25:32] *= k_mmp
 
     biogas_S = state_arr[7:10].copy()
     biogas_p = R * T_op * state_arr[42:45]
@@ -929,7 +927,20 @@ class ADM1p(ADM1):
     _precipitates = ('X_CaCO3', 'X_struv', 'X_newb', 'X_ACP', 'X_MgCO3', 'X_AlPO4', 'X_FePO4')
 
     _biomass_IDs = (*ADM1._biomass_IDs, 'X_PAO')
+    
 
+    _k_mmp = {
+        'Mbamba': (8.4, 240, 1.0, 72, 1.0, 1.0, 1.0),           # MATLAB, Mbamba
+        'Musvoto': (5.0, 300, 0.05, 150, 50, 1.0, 1.0),         # GPS-X, Musvoto 2000
+        # 'Flores-Alsina': (0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),  # Flores-Alsina 2016
+        }
+    
+    _pKsp = {
+        'Mbamba': (8.5, 13.7, 5.9, 28.6, 7.6, 18.2, 26.5),      # MINTEQ (except newberyite), 35 C   
+        'Musvoto': (6.45, 13.16, 5.8, 23, 7, 21, 26),           # GPS-X, Musvoto 2000
+        # 'Flores-Alsina': (8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76), # Flores-Alsina 2016
+        }
+    
     def __new__(cls, components=None, path=None, 
                 f_sI_xb=0, f_ch_xb=0.275, f_pr_xb=0.275, f_li_xb=0.350,
                 f_fa_li=0.95, f_bu_su=0.13, f_pro_su=0.27, f_ac_su=0.41,
@@ -949,12 +960,7 @@ class ADM1p(ADM1):
                 Ka_dH=[55900, 51965, 17400, 14600, -7500, 3000, 15000, 0, 0, 0, 0],
                 kLa=200, K_H_base=[7.8e-4, 1.4e-3, 3.5e-2],
                 K_H_dH=[-4180, -14240, -19410],
-                # k_mmp=(5.0, 300, 0.05, 150, 50, 1.0, 1.0),
-                # pKsp=(6.45, 13.16, 5.8, 23, 7, 21, 26),
-                # k_mmp=(0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),  # Flores-Alsina 2016
-                # pKsp=(8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76),  # Flores-Alsina 2016
-                k_mmp=(8.4, 240, 1.0, 72, 1.0, 1.0, 1.0),                    # MATLAB
-                pKsp=(8.5, 13.7, 5.9, 28.6, 7.6, 18.2, 26.5),                # MINTEQ (except newberyite), 35 C   
+                mmp_kinetics='Mbamba', k_mmp=None, pKsp=None,
                 K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
                 K_AlOH=1.0e-6, K_FeOH=1.0e-6,  # kg/m3
                 **kwargs):
@@ -973,6 +979,8 @@ class ADM1p(ADM1):
         df.rename(columns={'S_NH4':'S_IN', 'S_PO4':'S_IP'}, inplace=True)
         mmp = Processes.load_from_file(data=df, components=cmps, 
                                        conserved_for=(), compile=False)
+        if k_mmp is None: k_mmp = cls._k_mmp[mmp_kinetics]
+        if pKsp is None: pKsp = cls._pKsp[mmp_kinetics]
         for i, j in df.iterrows():
             j.dropna(inplace=True)
             key = j.index[j == 1][0]
@@ -980,12 +988,13 @@ class ADM1p(ADM1):
             j.pop(key)
             mmp_stoichio[key] = j
         mol_to_mass = cmps.chem_MW / cmps.i_mass
-        Ksp_mass = np.array([10**(-p) for p in pKsp])     # mass in kg/m3
+        Ksp = np.array([10**(-p) for p in pKsp])
         i = 0
         for pd, xid in zip(mmp, cls._precipitates):
-            for k,v in mmp_stoichio[xid].items():
-                m2m = mol_to_mass[cmps.index(k)]
-                Ksp_mass[i] *= m2m**abs(v)
+            if mmp_kinetics == 'Mbamba': 
+                for k,v in mmp_stoichio[xid].items():
+                    m2m = mol_to_mass[cmps.index(k)]
+                    Ksp[i] *= m2m**abs(v)   # mass in kg/m3
             i += 1
             pd._stoichiometry *= mol_to_mass
             pd.ref_component = xid           
@@ -1037,8 +1046,9 @@ class ADM1p(ADM1):
                                                K_H_base, K_H_dH, kLa,
                                                T_base, self._components, root, 
                                                #!!! new parameter
-                                               KS_IP*P_mw, np.array(k_mmp), Ksp_mass, 
+                                               KS_IP*P_mw, np.array(k_mmp), Ksp, 
                                                np.array(K_dis), K_AlOH, K_FeOH]))
+        dct['mmp_kinetics'] = self.rate_function._params['mmp_kinetics'] = mmp_kinetics
 
         def adm1p_dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq, S_h2_in):
             state_arr[7] = S_h2
@@ -1124,14 +1134,15 @@ class ADM1p(ADM1):
         mol_to_mass = cmps.chem_MW / cmps.i_mass
         idxer = cmps.index
         stoichio = self.mmp_stoichio
-        Ksp_mass = []    # mass in kg/m3
+        Ksp = []    
         for xid, p in zip(self._precipitates, ps):
             K = 10**(-p)
-            for cmp, v in stoichio[xid]:
-                m2m = mol_to_mass[idxer(cmp)]
-                K *= m2m**abs(v)
-            Ksp_mass.append(K)
-        self.rate_function._params['Ksp'] = np.array(Ksp_mass)
+            if self.mmp_kinectis == 'Mbamba': 
+                for cmp, v in stoichio[xid]:
+                    m2m = mol_to_mass[idxer(cmp)]
+                    K *= m2m**abs(v)    # mass in kg/m3
+            Ksp.append(K)
+        self.rate_function._params['Ksp'] = np.array(Ksp)
         
     def check_stoichiometric_parameters(self):
         '''Check whether product COD fractions sum up to 1 for each process.'''

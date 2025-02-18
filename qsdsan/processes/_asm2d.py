@@ -14,7 +14,7 @@ from thermosteam.utils import chemicals_user
 from thermosteam import settings
 from qsdsan import Component, Components, WasteStream, Processes, CompiledProcesses
 from ..utils import ospath, data_path, load_data
-from . import Monod, ion_speciation
+from . import Monod, ion_speciation, Mbamba_rhos, Musvoto_rhos
 from scipy.optimize import brenth
 # from math import log10
 
@@ -542,7 +542,7 @@ def acid_base_rxn(h_ion, ionic_states, Ka):
     return K + 2*Mg + 2*Ca + Na + h_ion + nh4 - Cl - NOx - oh_ion - ac - hco3 - 2*co3 - h2po4 - 2*hpo4 - 3*po4
 
 def solve_pH(state_arr, Ka, unit_conversion):
-    cmps_in_M = state_arr[:31] * unit_conversion *1e-3
+    cmps_in_M = state_arr[:31] * unit_conversion
     # S_K, S_Mg, S_Ca, S_Na, S_Cl, S_NO3, S_NH4, S_IC, S_PO4, S_A
     ions = cmps_in_M[[9, 10, 18, 28, 29, 3, 2, 8, 4, 6]]
     h = brenth(acid_base_rxn, 1e-14, 1.0,
@@ -568,7 +568,7 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
             = list(params.values())[:45]
         
         cmps = params['cmps']
-        params['mass2mol'] = cmps.i_mass / cmps.chem_MW
+        params['mass2mol'] = cmps.i_mass / cmps.chem_MW * 1e-3    # mg/L to mol/L
         
         params['ks'] = ks = np.zeros(19)
         # rate constants
@@ -660,43 +660,57 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
     h3po4, h2po4, hpo4, po4 = state_arr[4] * ion_speciation(h, Kp1, Kp2, Kp3)
     
     ########## precipitation-dissolution #############
+    mmp_kinetics = params['mmp_kinetics']
     k_mmp = params['k_mmp']
     Ksp = params['Ksp']
-    # K_dis = params['K_dis']
     K_AlOH = params['K_AlOH']
     K_FeOH = params['K_FeOH']
-    # f_dis = Monod(state_arr[19:24], K_dis[:5])
-    # if X_CaCO3 > 0: rhos[19] = (S_Ca * co3 - Ksp[0]) * f_dis[0]
-    # else: rhos[19] = S_Ca * co3
-    # if X_struv > 0: rhos[20] = (S_Mg * nh4 * po4 - Ksp[1]) * f_dis[1]
-    # else: rhos[20] = S_Mg * nh4 * po4
-    # if X_newb > 0: rhos[21] = (S_Mg * hpo4 - Ksp[2]) * f_dis[2]
-    # else: rhos[21] = S_Mg * hpo4
-    # if X_ACP > 0: rhos[22] = (S_Ca**3 * po4**2 - Ksp[3]) * f_dis[3]
-    # else: rhos[22] = S_Ca**3 * po4**2
-    # if X_MgCO3 > 0: rhos[23] = (S_Mg * co3 - Ksp[4]) * f_dis[4]
-    # else: rhos[23] = S_Mg * co3
 
-    rhos[19:26] = 0.
-    SI = (S_Ca * co3 / Ksp[0])**(1/2)
-    if SI > 1: rhos[19] = X_CaCO3 * (SI-1)**2
+    # rhos[19:26] = 0.
+    # rhos[24] = X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
+    # rhos[25] = X_FeOH * po4 * Monod(X_FeOH, K_FeOH)
 
-    SI = (S_Mg * nh4 * po4 / Ksp[1])**(1/3)
-    if SI > 1: rhos[20] = X_struv * (SI-1)**3
+    # SI = (S_Ca * co3 / Ksp[0])**(1/2)
+    # if SI > 1: rhos[19] = X_CaCO3 * (SI-1)**2
 
-    SI = (S_Mg * hpo4 / Ksp[2])**(1/2)
-    if SI > 1: rhos[21] =  X_newb * (SI-1)**2
+    # SI = (S_Mg * nh4 * po4 / Ksp[1])**(1/3)
+    # if SI > 1: rhos[20] = X_struv * (SI-1)**3
+
+    # SI = (S_Mg * hpo4 / Ksp[2])**(1/2)
+    # if SI > 1: rhos[21] =  X_newb * (SI-1)**2
     
-    SI = (S_Ca**3 * po4**2 / Ksp[3])**(1/5)
-    if SI > 1: rhos[22] = X_ACP * (SI-1)**2
+    # SI = (S_Ca**3 * po4**2 / Ksp[3])**(1/5)
+    # if SI > 1: rhos[22] = X_ACP * (SI-1)**2
     
-    SI = (S_Mg * co3 / Ksp[4])**(1/2)
-    if SI > 1: rhos[23] = X_MgCO3 * (SI-1)**2
+    # SI = (S_Mg * co3 / Ksp[4])**(1/2)
+    # if SI > 1: rhos[23] = X_MgCO3 * (SI-1)**2
     
-    rhos[24] = X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
-    rhos[25] = X_FeOH * po4 * Monod(X_FeOH, K_FeOH)
-    rhos[19:26] *= k_mmp
+    # rhos[19:26] *= k_mmp
     
+    if po4 > 0:
+        if X_AlOH > 0:
+            rhos[24] = k_mmp[5] * X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
+        if X_FeOH > 0:
+            rhos[25] = k_mmp[6] * X_FeOH * po4 * Monod(X_FeOH, K_FeOH)    
+        
+    if mmp_kinetics == 'Mbamba':
+        rhos[19:24] = Mbamba_rhos(
+            S_Ca, S_Mg, co3, nh4, po4, hpo4, # mass concentrations
+            X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3, 
+            k_mmp[:5], Ksp
+            )
+    
+    elif mmp_kinetics == 'Musvoto':
+        Mg, Ca = state_arr[[10,18]] * mass2mol[[10,18]]    # mol/L
+        co3 *= mass2mol[8]
+        nh4 *= mass2mol[2]
+        po4 *= mass2mol[4]
+        hpo4 *= mass2mol[4]
+        
+        rhos[19:24] = Musvoto_rhos(
+            Ca, Mg, co3, nh4, po4, hpo4, k_mmp[:5], Ksp
+            ) / mass2mol[19:24]     # convert from mol/L/d to mg/L/d
+        
     return rhos
 
 #%%
@@ -848,6 +862,18 @@ class mASM2d(CompiledProcesses):
                         ('HAc', 'Ac-'),)
     _precipitates = ('X_CaCO3', 'X_struv', 'X_newb', 'X_ACP', 'X_MgCO3', 'X_AlPO4', 'X_FePO4')
     
+    _k_mmp = {
+        'Mbamba': (8.4, 240, 1.0, 72, 1.0, 1.0, 1.0),           # MATLAB, Mbamba
+        'Musvoto': (5.0, 300, 0.05, 150, 50, 1.0, 1.0),         # GPS-X, Musvoto 2000
+        # 'Flores-Alsina': (0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),  # Flores-Alsina 2016
+        }
+    
+    _pKsp = {
+        'Mbamba': (8.5, 13.7, 5.9, 28.6, 7.6, 18.2, 26.5),      # MINTEQ (except newberyite), 35 C   
+        'Musvoto': (6.45, 13.16, 5.8, 23, 7, 21, 26),           # GPS-X, Musvoto 2000
+        # 'Flores-Alsina': (8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76), # Flores-Alsina 2016
+        }
+    
     gas_IDs = ['S_N2', 'S_IC']
     kLa_min = [3.0, 3.0]
     K_Henry = [6.5e-4, 3.5e-2]  # 20 degree C
@@ -869,12 +895,7 @@ class mASM2d(CompiledProcesses):
                 K_NH4_H=0.05, K_NH4_PAO=0.05, K_NH4_AUT=1.0, 
                 K_P_H=0.01, K_P_PAO=0.01, K_P_AUT=0.01, K_P_S=0.2, 
                 K_PP=0.01, K_MAX=0.34, K_IPP=0.02, K_PHA=0.01,
-                # k_mmp=(5.0, 300, 0.05, 150, 50, 1.0, 1.0),
-                # pKsp=(6.45, 13.16, 5.8, 23, 7, 21, 26),
-                # k_mmp=(0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),  # Flores-Alsina 2016
-                # pKsp=(8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76),  # Flores-Alsina 2016
-                k_mmp=(8.4, 240, 1.0, 72, 1.0, 1.0e-5, 1.0e-5),              # MATLAB
-                pKsp=(8.45, 13.5, 5.7, 29.1, 7.4, 18.2, 26.4),               # MINTEQ (except newberyite), 20 C    
+                mmp_kinetics='Mbamba', k_mmp=None, pKsp=None,
                 K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
                 K_AlOH=0.001, K_FeOH=0.001, 
                 pKa=(14, 9.25, 6.37, 10.32, 2.12, 7.21, 12.32, 4.76),
@@ -895,6 +916,8 @@ class mASM2d(CompiledProcesses):
                                        conserved_for=(), compile=False)
         mmp_stoichio = {}
         df = load_data(_mmp)
+        if k_mmp is None: k_mmp = cls._k_mmp[mmp_kinetics]
+        if pKsp is None: pKsp = cls._pKsp[mmp_kinetics]
         for i, j in df.iterrows():
             j.dropna(inplace=True)
             key = j.index[j == 1][0]
@@ -902,12 +925,13 @@ class mASM2d(CompiledProcesses):
             j.pop(key)
             mmp_stoichio[key] = j
         mol_to_mass = cmps.chem_MW / cmps.i_mass
-        Ksp_mass = np.array([10**(-p) for p in pKsp])     # mass in mg/L or g/m3
+        Ksp = np.array([10**(-p) for p in pKsp])     
         i = 0
         for pd, xid in zip(mmp, cls._precipitates):
-            for k,v in mmp_stoichio[xid].items():
-                m2m = mol_to_mass[cmps.index(k)] * 1e3
-                Ksp_mass[i] *= m2m**abs(v)
+            if mmp_kinetics == 'Mbamba':
+                for k,v in mmp_stoichio[xid].items():
+                    m2m = mol_to_mass[cmps.index(k)] * 1e3
+                    Ksp[i] *= m2m**abs(v)   # mass in mg/L or g/m3
             i += 1
             pd._stoichiometry *= mol_to_mass
             pd.ref_component = xid
@@ -949,13 +973,14 @@ class mASM2d(CompiledProcesses):
                         K_NH4_H, K_NH4_PAO, K_NH4_AUT, 
                         K_P_H, K_P_PAO, K_P_AUT, K_P_S, 
                         K_PP, K_MAX, K_IPP, K_PHA,
-                        np.array(k_mmp), Ksp_mass, 
+                        np.array(k_mmp), Ksp, 
                         np.array(K_dis), K_AlOH, K_FeOH, 
                         # kLa_min, f_kLa, K_Henry, 
                         Ka, cmps,
                         )
         self.rate_function._params = dict(zip(cls._kinetic_params, kinetic_vals))
         dct['solve_pH'] = solve_pH
+        dct['mmp_kinetics'] = self.rate_function._params['mmp_kinetics'] = mmp_kinetics
         return self
     
     @property
@@ -985,14 +1010,15 @@ class mASM2d(CompiledProcesses):
         mol_to_mass = cmps.chem_MW / cmps.i_mass
         idxer = cmps.index
         stoichio = self.mmp_stoichio
-        Ksp_mass = []    # mass in mg/L or g/m3
+        Ksp = []    
         for xid, p in zip(self._precipitates, ps):
             K = 10**(-p)
-            for cmp, v in stoichio[xid]:
-                m2m = mol_to_mass[idxer(cmp)] * 1e3
-                K *= m2m**abs(v)
-            Ksp_mass.append(K)
-        self.rate_function._params['Ksp'] = np.array(Ksp_mass)
+            if self.mmp_kinetics == 'Mbamba':
+                for cmp, v in stoichio[xid]:
+                    m2m = mol_to_mass[idxer(cmp)] * 1e3
+                    K *= m2m**abs(v)    # mass in mg/L or g/m3
+            Ksp.append(K)
+        self.rate_function._params['Ksp'] = np.array(Ksp)
 
 #%%
 
