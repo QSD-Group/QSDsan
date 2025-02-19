@@ -1,25 +1,25 @@
 parameter	name (if diff)	unit	expected	low	high	distribution	references
-EL_mbrT_tau		days	1	0.75	1.25	uniform	assumption based on original design
+EL_mbrT_tau		days	1.00	0.75	1.25	uniform	assumption based on original design
 COD_removal		fraction of total COD	0.37	0.2775	0.4625	uniform	Eco-san data slides
 N_max_decay		fraction of N removed	0.09	0.0675	0.1125	uniform	"EAWAG, 2014"
 P_removal		fraction of P removed	0.15	0.1125	0.1875	uniform	"IPCC, 2006"
 N2O_EF_decay		fraction of of degraded N emitted as N2O	0.005	0.0005	0.006	triangular	"IPCC, 2006; Leeds"
 tank_steel_volume	estimated total voume of primary clarifier tank	m3	3.34			constant	BOM
-steel_density	density of steel	kg/m3	7850			constant	BOM
-membrane_material_weight		kg	300	270	330	uniform	BOM
+steel_density	density of steel	kg/m3	7850.0			constant	BOM
+membrane_material_weight		kg	300.0	270.0	330.0	uniform	BOM
 MBR_tank_cost		USD	4277.77	3849.993	4705.547	uniform	https://www.gwkent.com/stainless-steel-slope-bottom-storage-tank-3900-liters-1030-gallons.html?utm_source=google_shopping&srsltid=AfmBOoqk0fYAXHC4ofjtaIxQssJd9_-YUTmn4i2fw6-mDJ8_kT3P0N1ANpc&gQT=1
 weld_female_adapter_fittings		USD	6.87	6.183	7.557	uniform	https://thedrainagesource.com/4-pvc-sdr35-solvent-weld-female-adapter-s-x-fpt/?srsltid=AfmBOorc5xzjQmxhmGZ2dstlABtaDC0az8KOrbJaDaI1zrV2U6IJzc1r
 pipeline_connectors		USD	13.16	11.844	14.476	uniform	https://www.eco-filtration.co.uk/product/110mm-4-pond-threaded-tank-connector/?srsltid=AfmBOoqFzwEcDdzmztkcvuSYA_anY1hoj5U5rOQz0Q8s1FUBhTeQpdX2
-membrane_material_price		USD/kg	20	18	22	uniform	assumption
-membrane_cleaning_fee		USD	100	90	110	uniform	assumption
-MBR_tank_lifetime		yr	8	7.2	8.8	uniform	assumption
-weld_female_adapter_fittings_lifetime		yr	5	4.5	5.5	uniform	assumption
-pipeline_connectors_lifetime		yr	5	4.5	5.5	uniform	assumption
-membrane_material_lifetime		yr	2	1.8	2.2	uniform	assumption
+membrane_material_price		USD/kg	20.0	18.0	22.0	uniform	assumption
+membrane_cleaning_fee		USD	100.0	90.0	110.0	uniform	assumption
+MBR_tank_lifetime		yr	8.0	7.2	8.8	uniform	assumption
+weld_female_adapter_fittings_lifetime		yr	5.0	4.5	5.5	uniform	assumption
+pipeline_connectors_lifetime		yr	5.0	4.5	5.5	uniform	assumption
+membrane_material_lifetime		yr	2.0	1.8	2.2	uniform	assumption
 power_demand_MBR	energy consumption for membrane tank	KWh/day	1.2	1.08	1.32	uniform	assumption
 EL_mbrT_sludge_yield		kg-VSS/kg-BOD removed	0.035	0.03	0.04	uniform	Metcalf and Eddy page 1086 (Example 10-2)
 EL_mbrT_TN_removal	anoix_tank_totalN_original_removal	ratio	0.2	0.02	0.37	uniform	"<br class=""Apple-interchange-newline"">UIUC Request Data - Gary Shyu"
 NO3_produced_ratio		ratio	0.01	0.009	0.011	uniform	
-NO3_split_ratio		ratio	0.5	0.45	0.55	uniform	
+NO3_split_ratio		ratio	0.50	0.45	0.55	uniform	
 EL_mbrT_COD_removal	COD removal in membrane tank	ratio	0.85	0.6	0.9	uniform	assumption
 decay_k_N		ratio	0.01			constant	assumption

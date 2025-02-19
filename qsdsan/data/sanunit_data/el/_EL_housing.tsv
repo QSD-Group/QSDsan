@@ -9,4 +9,4 @@ powder_coating	Powder coating	USD	33.33	29.997	36.663	triangular	Duke Center for
 steel_weight		kg	1.125	1.0125	1.2375	uniform	"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
 LLDPE_weight		kg	1.91	1.4427	1.7633	uniform	"Trotochaud et al., 2020 Supporting Information <https://doi.org/10.1021/acs.est.0c02755>"
 steel_framework_weight	Housing framework steel weight	kg	1.5	1.35	1.65	uniform	assumption
-steel_fittings_weight	Housing fittings steel weight	kg	1	0.8	1.2	uniform	assumption
+steel_fittings_weight	Housing fittings steel weight	kg	1.0	0.8	1.2	uniform	assumption
