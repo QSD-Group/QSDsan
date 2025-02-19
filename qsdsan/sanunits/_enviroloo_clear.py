@@ -41,7 +41,6 @@ EL_su_data_path = ospath.join(data_path, 'sanunit_data/el')
 
 # %%
 excretion_path = ospath.join(EL_su_data_path, '_EL_excretion.tsv')
-# excretion_path = ospath.join(EL_su_data_path, '_EL_excretion.csv')
 
 class EL_Excretion(SanUnit):
     '''
@@ -342,7 +341,6 @@ class EL_Excretion(SanUnit):
 
 # %%
 toilet_path = ospath.join(EL_su_data_path, '_EL_toilet.tsv')
-# toilet_path = ospath.join(EL_su_data_path, '_EL_toilet.csv')
 
 class EL_Toilet(SanUnit, Decay, isabstract=True):
     '''
@@ -652,7 +650,6 @@ class EL_Toilet(SanUnit, Decay, isabstract=True):
 
 # %%
 murt_path = ospath.join(EL_su_data_path, '_EL_murt.tsv')
-# murt_path = ospath.join(EL_su_data_path, '_EL_murt.csv')
 
 @price_ratio()
 class EL_MURT(EL_Toilet):
@@ -834,7 +831,6 @@ class EL_MURT(EL_Toilet):
 
 # %%
 CollectionTank_path = ospath.join(EL_su_data_path, '_EL_CT.tsv')
-# CollectionTank_path = ospath.join(EL_su_data_path, '_EL_CT.csv')
 
 @price_ratio()
 class EL_CT(StorageTank):
@@ -1043,7 +1039,6 @@ class EL_CT(StorageTank):
 
 # %%
 PrimaryClarifier_path = ospath.join(EL_su_data_path, '_EL_PC.tsv')
-# PrimaryClarifier_path = ospath.join(EL_su_data_path, '_EL_PC.csv')
 
 @price_ratio()
 class EL_PC(IdealClarifier):
@@ -1212,7 +1207,6 @@ class EL_PC(IdealClarifier):
 
 # %%
 Anoxic_path = ospath.join(EL_su_data_path, '_EL_Anoxic.tsv')
-# Anoxic_path = ospath.join(EL_su_data_path, '_EL_Anoxic.csv')
 
 @price_ratio()
 class EL_Anoxic(SanUnit, Decay):
@@ -1469,7 +1463,6 @@ class EL_Anoxic(SanUnit, Decay):
 
 # %%
 Aerobic_path = ospath.join(EL_su_data_path, '_EL_Aerobic.tsv')
-# Aerobic_path = ospath.join(EL_su_data_path, '_EL_Aerobic.csv')
 
 @price_ratio()
 class EL_Aerobic(SanUnit, Decay):
@@ -1644,7 +1637,6 @@ class EL_Aerobic(SanUnit, Decay):
 
 # %%
 MBR_path = ospath.join(EL_su_data_path, '_EL_MBR.tsv')
-# MBR_path = ospath.join(EL_su_data_path, '_EL_MBR.csv')
 
 @price_ratio()
 class EL_MBR(SanUnit, Decay):
@@ -1876,7 +1868,6 @@ class EL_MBR(SanUnit, Decay):
 
 # %%
 ClearWaterTank_path = ospath.join(EL_su_data_path, '_EL_CWT.tsv')
-# ClearWaterTank_path = ospath.join(EL_su_data_path, '_EL_CWT.csv')
 
 @price_ratio()
 class EL_CWT(StorageTank):
@@ -2086,7 +2077,6 @@ class EL_CWT(StorageTank):
 
 # %%
 PressureTank_path = ospath.join(EL_su_data_path, '_EL_PT.tsv')
-# PressureTank_path = ospath.join(EL_su_data_path, '_EL_PT.csv')
 
 @price_ratio()
 class EL_PT(StorageTank):
@@ -2191,7 +2181,6 @@ class EL_PT(StorageTank):
 
 # %%
 blower_path = ospath.join(EL_su_data_path, '_EL_blower.tsv')
-# blower_path = ospath.join(EL_su_data_path, '_EL_blower.csv')
 
 @price_ratio()
 class EL_blower(SanUnit):
@@ -2301,7 +2290,6 @@ class EL_blower(SanUnit):
 
 # %%
 housing_path = ospath.join(EL_su_data_path, '_EL_housing.tsv')
-# housing_path = ospath.join(EL_su_data_path, '_EL_housing.csv')
 
 #@price_ratio()
 class EL_Housing(SanUnit):
@@ -2367,7 +2355,6 @@ class EL_Housing(SanUnit):
 
 # %%
 system_path = ospath.join(EL_su_data_path, '_EL_system.tsv')
-# system_path = ospath.join(EL_su_data_path, '_EL_system.csv')
 
 @price_ratio()
 class EL_System(SanUnit, isabstract=True):
