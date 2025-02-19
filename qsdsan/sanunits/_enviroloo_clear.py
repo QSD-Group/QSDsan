@@ -2359,13 +2359,15 @@ class EL_Housing(SanUnit):
 system_path = ospath.join(EL_su_data_path, '_EL_system.tsv')
 
 @price_ratio()
-class EL_System(SanUnit):
+class EL_System(SanUnit, isabstract=True):
     '''
     Relate to connection components in the EL system
     '''
+    _N_ins = 1
+    _N_outs = 0
     exponent_scale = 0.6
 
-    def __init__(self, ID='', ins=None, outs= (), thermo = None, 
+    def __init__(self, ID='', ins=(), outs=None, thermo = None, 
                  init_with = 'WasteStream',
                  # init_with=None,
                  if_gridtied = True, ppl = None, baseline_ppl = None, F_BM_default = 1, **kwargs):
