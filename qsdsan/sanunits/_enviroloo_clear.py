@@ -1439,10 +1439,11 @@ class EL_Anoxic(SanUnit, Decay):
     
     def _cost(self):
         C = self.baseline_purchase_costs
+        massflow_anoxic = self.ins[0].mass
         C['Tank'] = self.anoxic_tank_cost
         C['Pipes'] = self.pipeline_connectors
         C['Fittings'] = self.weld_female_adapter_fittings
-        C['Chemcial_glucose'] = self.chemical_glucose_dosage * self.ins[0] * self.chemical_glucose_price  # make sense the unit of treated water flow
+        C['Chemcial_glucose'] = self.chemical_glucose_dosage * massflow_anoxic * self.chemical_glucose_price  # make sense the unit of treated water flow
 
         ratio = self.price_ratio
         for equipment, cost in C.items():
@@ -1613,10 +1614,11 @@ class EL_Aerobic(SanUnit, Decay):
     
     def _cost(self):
         C = self.baseline_purchase_costs
+        massflow_aerobic = self.ins[0].mass
         C['Tank'] = self.aerobic_tank_cost
         C['Pipes'] = self.pipeline_connectors
         C['Fittings'] = self.weld_female_adapter_fittings
-        C['Chemical_PAC'] = self.chemical_PAC_dosage * self.ins[0] * self.chemical_PAC_price
+        C['Chemical_PAC'] = self.chemical_PAC_dosage * massflow_aerobic * self.chemical_PAC_price
 
         ratio = self.price_ratio
         for equipment, cost in C.items():
