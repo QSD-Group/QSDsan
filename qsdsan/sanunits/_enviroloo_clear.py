@@ -919,7 +919,7 @@ class EL_CT(StorageTank):
     def _run(self):
         '''
         There is no reaction inside this tank, just for collection and storage.
-        '''   
+        '''
         
         # # Input stream
         # WasteWater = self.ins[0]
@@ -1256,7 +1256,7 @@ class EL_Anoxic(SanUnit, Decay):
         self.baseline_ppl = baseline_ppl
         self.methane_density = methane_density  # kg/m^3
         self.glucose_density = glucose_density  # kg/m^3
-        
+        self._mixed_in = WasteStream(f'{self.ID}_mixed_in')
 
         data = load_data(path=Anoxic_path)
         for para in data.index:
@@ -1274,26 +1274,41 @@ class EL_Anoxic(SanUnit, Decay):
           # Input stream
           WasteWater = self.ins[0]
           nitrate_return = self.ins[1]  # Nitrate from membrane tank over return pump
+          
           glucose = self.ins[2]  # Extra carbon source
-          agiation = self.ins[3]  # Agitation pump works here, but it does not attend mass flow balance calculation
+          glucose_consumed = WasteWater.F_vol * self.chemical_glucose_dosage * self.glucose_density
+          glucose.imass['Glucose'] = glucose_consumed
+          # glucose.mass = glucose_consumed
+          
+          agitation = self.ins[3]  # Agitation pump works here, but it does not attend mass flow balance calculation
+          agitation.empty()
+          
+          mixed_in = self._mixed_in
+          # Define input streams
+          input_streams = [WasteWater, nitrate_return, glucose, agitation]
+          mixed_in.mix_from(input_streams)
           
           # Output stream
           TreatedWater = self.outs[0]
           CH4_emission = self.outs[1]
           N2O_emission = self.outs[2]
-          
+
+          # Output stream
+          # TreatedWater = self.outs[0]
+          # Copy the mixed result to the outflow
+          TreatedWater.copy_like(mixed_in)
           # Inherited input stream
-          TreatedWater.copy_like(WasteWater)
+          # TreatedWater.copy_like(WasteWater)
           
           # Manually add return nitrate (NO3)
           TreatedWater.imass['NO3'] += nitrate_return.imass['NO3']
           
           # Glucose consumption
-          glucose_consumed = WasteWater.F_vol * self.chemical_glucose_dosage * self.glucose_density
-          glucose.imass['Glucose'] = glucose_consumed
+          # glucose_consumed = WasteWater.F_vol * self.chemical_glucose_dosage * self.glucose_density
+          # glucose.imass['Glucose'] = glucose_consumed
           TreatedWater.imass['Glucose'] += glucose.imass['Glucose']
           
-          glucose.mass = glucose_consumed
+          # glucose.mass = glucose_consumed
 
           # COD removal
           COD_removal = self.EL_anoT_COD_removal
@@ -2148,6 +2163,7 @@ class EL_PT(StorageTank):
         
         # Inherited input stream
         TreatedWater.copy_like(ClearWater)
+        TreatedWater.empty()
         nullConnection.empty()
         
         
