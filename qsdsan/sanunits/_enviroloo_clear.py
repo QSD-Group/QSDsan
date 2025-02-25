@@ -441,7 +441,8 @@ class EL_Toilet(SanUnit, Decay, isabstract=True):
                 setattr(self, '_'+para, value)
         del data
 
-        self._empty_ratio = 0.59
+        # self._empty_ratio = 0.59 default
+        self._empty_ratio = 0
 
 
     def _run(self):
@@ -757,6 +758,7 @@ class EL_MURT(EL_Toilet):
                 empty_ratio=self.empty_ratio,
                 CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
                 N2O_factor=self.N2O_EF_decay*44/28)
+        
         self._scale_up_outs()
 
     def _design(self):
