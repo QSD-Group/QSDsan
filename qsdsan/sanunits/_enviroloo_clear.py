@@ -1852,6 +1852,7 @@ class EL_MBR(SanUnit, Decay):
         
         for component in ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh',):
             sludge.imass[component] += sludge_prcd  # New sludge produced
+        sludge.copy_like(TreatedWater)
             
         # CH4 emission
         CH4_emission.imass['CH4'] += TreatedWater.imass['SolubleCH4']  # Let all soluble CH4 transfer from solution phase to gas phase
