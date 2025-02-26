@@ -835,6 +835,8 @@ class EL_MURT(EL_Toilet):
 CollectionTank_path = ospath.join(EL_su_data_path, '_EL_CT.tsv')
 
 @price_ratio()
+# class EL_CT(Mixer):
+
 class EL_CT(StorageTank):
 
     '''
