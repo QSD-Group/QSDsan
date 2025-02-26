@@ -1035,7 +1035,7 @@ class EL_PC(SanUnit):
         # Inputs
         wastewater, nitrate_return = self.ins
         # Outputs
-        treated_water, spill_return, sludge_return = self.outs
+        treated_water, sludge_return, spill_return = self.outs
 
         # Mix input streams
         mixed = wastewater.copy()  # Temporary stream for mixing
