@@ -878,7 +878,7 @@ class EL_CT(StorageTank):
     _N_outs = 1
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
-    exponent_scale = 0.6
+    exponent_scale = 0.1
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, ppl=None, baseline_ppl=None,
                  vessel_type= 'Field erected', tau=24, V_wf=None, vessel_material='Stainless steel', kW_per_m3=0.1,
@@ -1003,7 +1003,7 @@ class EL_PC(SanUnit):
     _N_outs = 3
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
-    exponent_scale = 0.6
+    exponent_scale = 0.1
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  sludge_flow_rate=None, solids_removal_efficiency=0.5, max_overflow=15,
@@ -1328,7 +1328,7 @@ class EL_Anoxic(SanUnit, Decay):
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
     baseline_ppl = 30
-    exponent_scale = 0.6
+    exponent_scale = 0.1
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream', methane_density=0.657,
                  degraded_components=('OtherSS',),  F_BM_default=1, ppl = None, baseline_ppl = None,
@@ -1598,7 +1598,7 @@ class EL_Aerobic(SanUnit, Decay):
     _N_outs = 3  # treated water, CH4, N2O
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
-    exponent_scale = 0.6
+    exponent_scale = 0.1
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  degraded_components=('OtherSS',), ppl = None, baseline_ppl = None, F_BM_default=1,
@@ -1773,7 +1773,7 @@ class EL_MBR(SanUnit, Decay):
     _N_outs = 5  # treated water, CH4, N2O, Nitrate return to Primary Clarifier, Nitrate return to Anoxic Tank
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
-    exponent_scale = 0.6
+    exponent_scale = 0.1
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  degraded_components=('OtherSS',), ppl = None, baseline_ppl = None, F_BM_default=1,
@@ -2008,7 +2008,7 @@ class EL_CWT(StorageTank):
     _N_outs = 3  # number of outs
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
-    exponent_scale = 0.6
+    exponent_scale = 0.1
 
     def __init__(self, ID = '', ins = None, outs = (), thermo = None, ppl = None, baseline_ppl = None,
                  vessel_type='Field erected',tau = 24, V_wf = None, vessel_material='Stainless steel', kW_per_m3 = 0.1,
@@ -2212,7 +2212,7 @@ class EL_PT(StorageTank):
     _N_outs = 2  # number of outs
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
-    exponent_scale = 0.6
+    exponent_scale = 0.1
 
     def __init__(self, ID = '', ins = None, outs = (), thermo = None, ppl = None, baseline_ppl = None,
                  vessel_type='Field erected',tau = 24, V_wf = None, vessel_material='Stainless steel', kW_per_m3 = 0.1,
@@ -2316,7 +2316,7 @@ class EL_blower(SanUnit):
     _N_outs = 1  # number of outs
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
-    exponent_scale = 0.6
+    exponent_scale = 0.1
 
     def __init__(self, ID = '', ins = None, outs = (), init_with = 'WasteStream',
                  # F_BM={
@@ -2468,7 +2468,7 @@ class EL_System(SanUnit, isabstract=True):
     '''
     _N_ins = 1
     _N_outs = 0
-    exponent_scale = 0.6
+    exponent_scale = 0.1
 
     def __init__(self, ID='', ins=(), outs=None, thermo = None, 
                  init_with = 'WasteStream',
