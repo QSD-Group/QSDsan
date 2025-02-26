@@ -1040,7 +1040,7 @@ class EL_PC(SanUnit):
 
         # Get total inflow (m³/d) and TSS (mg/L)
         Q_in = mixed.F_vol * 24  # Convert m³/h to m³/d
-        TSS_in = sludge_return.imass['otherSS']
+        TSS_in = sludge_return.F_mass
         TSS_in = mixed.get_TSS()  # Total suspended solids in mg/L
 
         # Handle case with no solids
