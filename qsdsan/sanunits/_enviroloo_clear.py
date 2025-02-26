@@ -1008,8 +1008,10 @@ class EL_PC(SanUnit):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  sludge_flow_rate=None, solids_removal_efficiency=0.5, max_overflow=15,
+                 F_BM=1, transportation=[],
                  ppl=None, baseline_ppl=None, **kwargs):
-        SanUnit.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, init_with=init_with)
+        SanUnit.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, init_with=init_with, 
+                         F_BM_default=F_BM, transportation=transportation)
         self.sludge_flow_rate = sludge_flow_rate  # m³/d
         self.solids_removal_efficiency = solids_removal_efficiency  # 0 to 1
         self.max_overflow = max_overflow  # m³/h
@@ -1040,7 +1042,8 @@ class EL_PC(SanUnit):
 
         # Get total inflow (m³/d) and TSS (mg/L)
         Q_in = mixed.F_vol * 24  # Convert m³/h to m³/d
-        TSS_in = sludge_return.F_mass
+        TSS_in = sludge_return.F_mass # assume all return flow only including 
+                                      # sewage sludge that was treated as TSS
         TSS_in = mixed.get_TSS()  # Total suspended solids in mg/L
 
         # Handle case with no solids
