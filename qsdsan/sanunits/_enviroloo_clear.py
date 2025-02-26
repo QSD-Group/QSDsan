@@ -16,7 +16,6 @@ from warnings import warn
 from qsdsan import WasteStream
 from qsdsan import SanUnit, Construction
 from qsdsan.sanunits import IdealClarifier
-from qsdsan.sanunits._abstract import Mixer
 from qsdsan.sanunits._tank import StorageTank
 from qsdsan.processes._decay import Decay
 from qsdsan.utils import ospath, load_data, data_path, price_ratio
@@ -835,7 +834,7 @@ class EL_MURT(EL_Toilet):
 CollectionTank_path = ospath.join(EL_su_data_path, '_EL_CT.tsv')
 
 @price_ratio()
-class EL_CT(Mixer):
+class EL_CT(Storage):
     
     '''
     Name
