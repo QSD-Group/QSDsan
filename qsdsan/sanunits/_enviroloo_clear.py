@@ -969,169 +969,324 @@ class EL_CT(StorageTank):
 PrimaryClarifier_path = ospath.join(EL_su_data_path, '_EL_PC.tsv')
 
 @price_ratio()
-class EL_PC(IdealClarifier):
-    
+
+class EL_PC(SanUnit):
     """
-    Name
-    ----
-    Primary clarifier in the Enviroloo (EL) Clear Toilet system.
-
-    Introduction
-    ------------
-    The primary treatment of the EL system uses anaerobic digestion
-    to treat wastes (similar to a septic tank).
-
-    It can be used in conjunction with a membrane bioreactor (MBR)
-    to recovery N and P as struvite.
-
-    The following impact items should be pre-constructed for life cycle assessment:
-    FRP.
+    Primary clarifier in the Enviroloo (EL) Clear Toilet system for COD and suspended solids removal.
 
     Parameters
     ----------
-    Ins:
-    (1) influent of treated wastetwater from lift pump
-    (2) nitrate return flow from membrane tank
+    ID : str
+        Unique identifier for the unit.
+    ins : tuple
+        Input streams: (0) Wastewater from lift pump, (1) Nitrate return from membrane tank.
+    outs : tuple
+        Output streams: (0) Treated water, (1) Spill return, (2) Sludge return.
+    sludge_flow_rate : float
+        Sludge flow rate (m³/d). Required for sludge return calculation.
+    solids_removal_efficiency : float
+        Fraction of suspended solids removed (0 to 1). Default is 0.5.
+    max_overflow : float
+        Maximum allowable overflow rate (m³/h). Default is 15.
+    ppl : float
+        Current population served.
+    baseline_ppl : float
+        Baseline population for scaling design and cost.
 
-    Outs:
-    (1) effluent of treated wastewater
-    (2) sludge return flow to collection tank
-    (3) spill flow to collection tank
-    (4) fugitive CH4 emission
-    (5) fugitive N2O emission
+    Notes
+    -----
+    - COD and suspended solids are tracked via the `components` object.
+    - Spill return occurs if treated water flow exceeds `max_overflow`.
+    - Inherits from `SanUnit`, not `IdealClarifier`, for flexibility.
+    """
 
-    Attributes
-    ----------
-
-    
-    References
-    ----------
-     refer to the qsdsan.sanunits.PrimaryClarifier module
-
-     """
-    
     _N_ins = 2
     _N_outs = 3
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
     exponent_scale = 0.6
-    
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, max_overflow=15,
-                 ppl = None, baseline_ppl = None, sludge_flow_rate=None,
-                 solids_removal_efficiency=None,
-                 F_BM_default=1, init_with='WasteStream', **kwargs):
-        """
-        Initialize the primary clarifier with default parameters:
-        - sludge_flow_rate: Default to  m3/d
-        - solids_removal_efficiency: Default to 50% (0.5)
-        """
-        IdealClarifier.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, sludge_flow_rate=sludge_flow_rate,
-                                  solids_removal_efficiency=solids_removal_efficiency,
-                                  isdynamic=isdynamic, init_with=init_with, F_BM_default=F_BM_default
-                                  )
-        
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 sludge_flow_rate=None, solids_removal_efficiency=0.5, max_overflow=15,
+                 ppl=None, baseline_ppl=None, **kwargs):
+        SanUnit.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, init_with=init_with)
+        self.sludge_flow_rate = sludge_flow_rate  # m³/d
+        self.solids_removal_efficiency = solids_removal_efficiency  # 0 to 1
+        self.max_overflow = max_overflow  # m³/h
         self.ppl = ppl
         self.baseline_ppl = baseline_ppl
 
-        self.max_overflow = max_overflow  # m^3/hr
-        # self.if_with_MBR = if_with_MBR
-
+        # Load default parameters from data file
         data = load_data(path=PrimaryClarifier_path)
         for para in data.index:
             value = float(data.loc[para]['expected'])
             setattr(self, para, value)
         del data
 
-        for attr, value in kwargs.items(): 
+        # Apply additional keyword arguments
+        for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    def _init_lca(self):
-        self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]
-    
     def _run(self):
-        
-          # Input stream
-          WasteWater, MT_nitrate_return = self.ins
-          MT_nitrate_return.mass = WasteWater.mass * 0.1
-          #MT_nitrate_return = self.ins[1]  # Nitrate from membrane tank over return pump
-        
-          # Output stream
-          TreatedWater = self.outs[0]
-          PC_spill_return = self.outs[1]  # Spill water to collection tank
-          PC_sludge_return = self.outs[2]  # Sludge to collection tank over return pump
-          
-          # Inherited input stream properties
-          #TreatedWater.copy_like(WasteWater)
-          self._mixed.mix_from([WasteWater, MT_nitrate_return])
-          TreatedWater.copy_like(self._mixed)
-          #PC_sludge_return.F_mass = TreatedWater.F_mass * 0.1
+        """Simulate the primary clarifier operation."""
+        # Inputs
+        wastewater, nitrate_return = self.ins
+        # Outputs
+        treated_water, spill_return, sludge_return = self.outs
 
-          # Sludge with water removal
-          PC_sludge_return.empty()
-          PC_sludge_return.mass = TreatedWater.mass * 0.1  # sludge return ratio, temeporary assumption
-          PC_sludge_return.copy_flow(TreatedWater, ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'), remove=True)
-          PC_sludge_return.imass['OtherSS'] = WasteWater.F_mass * self.solids_removal_efficiency
-          PC_sludge_return.imass['H2O'] = PC_sludge_return.imass['OtherSS']/(1-self.solids_moisture_content) - PC_sludge_return.imass['OtherSS']
-          
-          # Spill water return
-          if self.max_overflow is not None:
-              if TreatedWater.F_vol > self.max_overflow:
-                      
-                  # Spill return exists
-                  spill_vol = TreatedWater.F_vol - self.max_overflow  
+        # Mix input streams
+        mixed = wastewater.copy()  # Temporary stream for mixing
+        mixed.mix_from([wastewater, nitrate_return])
 
-                  if not hasattr(self, '_f_spill'):
-                      self._f_spill = None
-                  if not hasattr(self, '_f_overflow'):
-                      self._f_overflow = None
+        # Get total inflow (m³/d) and TSS (mg/L)
+        Q_in = mixed.F_vol * 24  # Convert m³/h to m³/d
+        TSS_in = sludge_return.imass['otherSS']
+        TSS_in = mixed.get_TSS()  # Total suspended solids in mg/L
 
-                  self._f_spill = spill_vol / TreatedWater.F_vol  
-                  self._f_overflow = 1 - self._f_spill  
+        # Handle case with no solids
+        if TSS_in <= 0:
+            treated_water.copy_like(mixed)
+            sludge_return.empty()
+            spill_return.empty()
+            return
 
-                  PC_spill_return.copy_like(TreatedWater)  
-                  PC_spill_return.F_mass *= self._f_spill  
+        # Validate parameters
+        if not self.sludge_flow_rate or not self.solids_removal_efficiency:
+            raise ValueError("Must specify 'sludge_flow_rate' and 'solids_removal_efficiency'.")
 
-                  TreatedWater.F_mass *= self._f_overflow  
-              else:
-                  # max_overflow is not none, but TreatedWater < max_overflow
-                  PC_spill_return.empty()
-                  if hasattr(self, '_f_spill'):
-                      del self._f_spill  
-                  if hasattr(self, '_f_overflow'):
-                      del self._f_overflow  
-          else:
-              # max_overflow is none, no spill return
-              PC_spill_return.empty()
-          
+        # Calculate sludge split
+        Qs = self.sludge_flow_rate  # m³/d
+        e_rmv = self.solids_removal_efficiency
+        f_Qu = Qs / Q_in  # Fraction of flow to sludge
+        f_Xu = e_rmv + (1 - e_rmv) * f_Qu  # Fraction of solids to sludge
+
+        # Component-wise split (simplified for COD and SS)
+        cmps = self.components
+        split_to_sludge = np.zeros(len(cmps))
+        for i, cmp in enumerate(cmps):
+            if cmp.ID == 'OtherSS':  # Suspended solids
+                split_to_sludge[i] = f_Xu
+            elif cmp.ID == 'S_COD':  # Soluble COD, assume some removal with solids
+                split_to_sludge[i] = f_Qu * 0.1  # Arbitrary small fraction
+            else:
+                split_to_sludge[i] = f_Qu  # Other components follow flow split
+        split_to_sludge = np.clip(split_to_sludge, 0, 1)
+
+        # Split mixed stream
+        mixed.split_to(sludge_return, treated_water, split_to_sludge)
+
+        # Handle spill return
+        max_overflow_m3d = self.max_overflow * 24  # Convert m³/h to m³/d
+        Q_treated = treated_water.F_vol * 24  # m³/d
+        if Q_treated > max_overflow_m3d:
+            spill_vol = Q_treated - max_overflow_m3d
+            f_spill = spill_vol / Q_treated
+            spill_return.copy_like(treated_water)
+            spill_return.F_mass *= f_spill
+            treated_water.F_mass *= (1 - f_spill)
+        else:
+            spill_return.empty()
+
     def _design(self):
-        design = self.design_results
-        constr = self.construction
-        design['StainlessSteel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl)
+        """Calculate design parameters."""
+        self.design_results['StainlessSteel'] = (
+            self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl)
+        )
+        self.construction = [
+            Construction(item='StainlessSteel', quantity=self.design_results['StainlessSteel'], quantity_unit='kg')
+        ]
         self.add_construction(add_cost=False)
 
-    def _cost(self):  
+    def _cost(self):
+        """Calculate capital and operating costs."""
         C = self.baseline_purchase_costs
         C['Tank'] = self.PC_tank_cost
         C['Pipes'] = self.pipeline_connectors
         C['Fittings'] = self.weld_female_adapter_fittings
-    
-        ratio = self.price_ratio 
-        for equipment, cost in C.items():
-            C[equipment] = cost * ratio
-        
+
+        ratio = getattr(self, 'price_ratio', 1)  # Assume price_ratio decorator sets this
+        for equip, cost in C.items():
+            C[equip] *= ratio
+
         self.add_OPEX = self._calc_replacement_cost()
-        
-        power_demand = self.power_demand_PC
+        power_demand = getattr(self, 'power_demand_PC', 0)  # Default to 0 if not set
         self.power_utility(power_demand)
-    
+
     def _calc_replacement_cost(self):
-        scale  = (self.ppl / self.baseline_ppl) ** self.exponent_scale
-        PC_replacement_cost = (
-            self.PC_tank_cost / self.PC_tank_lifetime +               
+        """Calculate replacement cost in USD/hr."""
+        scale = (self.ppl / self.baseline_ppl) ** self.exponent_scale
+        replacement_cost = (
+            self.PC_tank_cost / self.PC_tank_lifetime +
             self.pipeline_connectors / self.pipeline_connectors_lifetime +
-            self.weld_female_adapter_fittings / self.weld_female_adapter_fittings_lifetime) * scale
-        PC_replacement_cost = PC_replacement_cost / (365 * 24)  # convert to USD/hr
-        return PC_replacement_cost
+            self.weld_female_adapter_fittings / self.weld_female_adapter_fittings_lifetime
+        ) * scale
+        return replacement_cost / (365 * 24)  # Convert to USD/hr
+
+
+
+# class EL_PC(IdealClarifier):
+    
+#     """
+#     Name
+#     ----
+#     Primary clarifier in the Enviroloo (EL) Clear Toilet system.
+
+#     Introduction
+#     ------------
+#     The primary treatment of the EL system uses anaerobic digestion
+#     to treat wastes (similar to a septic tank).
+
+#     It can be used in conjunction with a membrane bioreactor (MBR)
+#     to recovery N and P as struvite.
+
+#     The following impact items should be pre-constructed for life cycle assessment:
+#     FRP.
+
+#     Parameters
+#     ----------
+#     Ins:
+#     (1) influent of treated wastetwater from lift pump
+#     (2) nitrate return flow from membrane tank
+
+#     Outs:
+#     (1) effluent of treated wastewater
+#     (2) sludge return flow to collection tank
+#     (3) spill flow to collection tank
+#     (4) fugitive CH4 emission
+#     (5) fugitive N2O emission
+
+#     Attributes
+#     ----------
+
+    
+#     References
+#     ----------
+#      refer to the qsdsan.sanunits.PrimaryClarifier module
+
+#      """
+    
+#     _N_ins = 2
+#     _N_outs = 3
+#     _ins_size_is_fixed = True
+#     _outs_size_is_fixed = True
+#     exponent_scale = 0.6
+    
+#     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, max_overflow=15,
+#                  ppl = None, baseline_ppl = None, sludge_flow_rate=None,
+#                  solids_removal_efficiency=None,
+#                  F_BM_default=1, init_with='WasteStream', **kwargs):
+#         """
+#         Initialize the primary clarifier with default parameters:
+#         - sludge_flow_rate: Default to  m3/d
+#         - solids_removal_efficiency: Default to 50% (0.5)
+#         """
+#         IdealClarifier.__init__(self, ID=ID, ins=ins, outs=outs, thermo=thermo, sludge_flow_rate=sludge_flow_rate,
+#                                   solids_removal_efficiency=solids_removal_efficiency,
+#                                   isdynamic=isdynamic, init_with=init_with, F_BM_default=F_BM_default
+#                                   )
+        
+#         self.ppl = ppl
+#         self.baseline_ppl = baseline_ppl
+
+#         self.max_overflow = max_overflow  # m^3/hr
+#         # self.if_with_MBR = if_with_MBR
+
+#         data = load_data(path=PrimaryClarifier_path)
+#         for para in data.index:
+#             value = float(data.loc[para]['expected'])
+#             setattr(self, para, value)
+#         del data
+
+#         for attr, value in kwargs.items(): 
+#             setattr(self, attr, value)
+
+#     def _init_lca(self):
+#         self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]
+    
+#     def _run(self):
+        
+#           # Input stream
+#           WasteWater, MT_nitrate_return = self.ins
+#           MT_nitrate_return.mass = WasteWater.mass * 0.1
+#           #MT_nitrate_return = self.ins[1]  # Nitrate from membrane tank over return pump
+        
+#           # Output stream
+#           TreatedWater = self.outs[0]
+#           PC_spill_return = self.outs[1]  # Spill water to collection tank
+#           PC_sludge_return = self.outs[2]  # Sludge to collection tank over return pump
+          
+#           # Inherited input stream properties
+#           #TreatedWater.copy_like(WasteWater)
+#           self._mixed.mix_from([WasteWater, MT_nitrate_return])
+#           TreatedWater.copy_like(self._mixed)
+#           #PC_sludge_return.F_mass = TreatedWater.F_mass * 0.1
+
+#           # Sludge with water removal
+#           PC_sludge_return.empty()
+#           PC_sludge_return.mass = TreatedWater.mass * 0.1  # sludge return ratio, temeporary assumption
+#           PC_sludge_return.copy_flow(TreatedWater, ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'), remove=True)
+#           PC_sludge_return.imass['OtherSS'] = WasteWater.F_mass * self.solids_removal_efficiency
+#           PC_sludge_return.imass['H2O'] = PC_sludge_return.imass['OtherSS']/(1-self.solids_moisture_content) - PC_sludge_return.imass['OtherSS']
+          
+#           # Spill water return
+#           if self.max_overflow is not None:
+#               if TreatedWater.F_vol > self.max_overflow:
+                      
+#                   # Spill return exists
+#                   spill_vol = TreatedWater.F_vol - self.max_overflow  
+
+#                   if not hasattr(self, '_f_spill'):
+#                       self._f_spill = None
+#                   if not hasattr(self, '_f_overflow'):
+#                       self._f_overflow = None
+
+#                   self._f_spill = spill_vol / TreatedWater.F_vol  
+#                   self._f_overflow = 1 - self._f_spill  
+
+#                   PC_spill_return.copy_like(TreatedWater)  
+#                   PC_spill_return.F_mass *= self._f_spill  
+
+#                   TreatedWater.F_mass *= self._f_overflow  
+#               else:
+#                   # max_overflow is not none, but TreatedWater < max_overflow
+#                   PC_spill_return.empty()
+#                   if hasattr(self, '_f_spill'):
+#                       del self._f_spill  
+#                   if hasattr(self, '_f_overflow'):
+#                       del self._f_overflow  
+#           else:
+#               # max_overflow is none, no spill return
+#               PC_spill_return.empty()
+          
+#     def _design(self):
+#         design = self.design_results
+#         constr = self.construction
+#         design['StainlessSteel'] = constr[0].quantity = self.tank_steel_volume * self.steel_density * (self.ppl / self.baseline_ppl)
+#         self.add_construction(add_cost=False)
+
+#     def _cost(self):  
+#         C = self.baseline_purchase_costs
+#         C['Tank'] = self.PC_tank_cost
+#         C['Pipes'] = self.pipeline_connectors
+#         C['Fittings'] = self.weld_female_adapter_fittings
+    
+#         ratio = self.price_ratio 
+#         for equipment, cost in C.items():
+#             C[equipment] = cost * ratio
+        
+#         self.add_OPEX = self._calc_replacement_cost()
+        
+#         power_demand = self.power_demand_PC
+#         self.power_utility(power_demand)
+    
+#     def _calc_replacement_cost(self):
+#         scale  = (self.ppl / self.baseline_ppl) ** self.exponent_scale
+#         PC_replacement_cost = (
+#             self.PC_tank_cost / self.PC_tank_lifetime +               
+#             self.pipeline_connectors / self.pipeline_connectors_lifetime +
+#             self.weld_female_adapter_fittings / self.weld_female_adapter_fittings_lifetime) * scale
+#         PC_replacement_cost = PC_replacement_cost / (365 * 24)  # convert to USD/hr
+#         return PC_replacement_cost
 
 # %%
 Anoxic_path = ospath.join(EL_su_data_path, '_EL_Anoxic.tsv')
