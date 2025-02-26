@@ -1796,7 +1796,7 @@ class EL_MBR(SanUnit, Decay):
      refer to the exposan.eco-san.MBR module
     '''
     _N_ins = 2  # treated water, Blower
-    _N_outs = 5  # treated water, CH4, N2O, Nitrate return to Primary Clarifier, Nitrate return to Anoxic Tank
+    _N_outs = 6  # treated water, CH4, N2O, Nitrate return to Primary Clarifier, Nitrate return to Anoxic Tank
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
     exponent_scale = 0.1
