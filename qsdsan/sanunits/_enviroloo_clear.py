@@ -969,7 +969,6 @@ class EL_CT(StorageTank):
 PrimaryClarifier_path = ospath.join(EL_su_data_path, '_EL_PC.tsv')
 
 @price_ratio()
-
 class EL_PC(SanUnit):
     """
     Primary clarifier in the Enviroloo (EL) Clear Toilet system for COD and suspended solids removal.
@@ -1025,9 +1024,11 @@ class EL_PC(SanUnit):
             setattr(self, para, value)
         del data
 
-        # Apply additional keyword arguments
-        for attr, value in kwargs.items():
+        for attr, value in kwargs.items(): 
             setattr(self, attr, value)
+
+    def _init_lca(self):
+        self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]
 
     def _run(self):
         """Simulate the primary clarifier operation."""
@@ -1107,12 +1108,12 @@ class EL_PC(SanUnit):
         C['Pipes'] = self.pipeline_connectors
         C['Fittings'] = self.weld_female_adapter_fittings
 
-        ratio = getattr(self, 'price_ratio', 1)  # Assume price_ratio decorator sets this
+        ratio = self.price_ratio  # Assume price_ratio decorator sets this
         for equip, cost in C.items():
-            C[equip] *= ratio
+            C[equipment] = cost * ratio
 
         self.add_OPEX = self._calc_replacement_cost()
-        power_demand = getattr(self, 'power_demand_PC', 0)  # Default to 0 if not set
+        power_demand = self.power_demand_PC  # Default to 0 if not set
         self.power_utility(power_demand)
 
     def _calc_replacement_cost(self):
