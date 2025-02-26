@@ -901,6 +901,21 @@ class EL_CT(StorageTank):
                       vessel_material=vessel_material, # The material of the tank
                       kW_per_m3=kW_per_m3, # The power consumption per unit volume of the tank
                       )
+        self.ppl = ppl
+        self.baseline_ppl = baseline_ppl
+        self._mixed_in = WasteStream(f'{self.ID}_mixed_in')
+
+        data = load_data(path=CollectionTank_path)
+        for para in data.index:
+            value = float(data.loc[para]['expected'])
+            setattr(self, para, value)
+        del data
+
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+
+    def _init_lca(self):
+        self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]
 
     def _run(self):
         # Input stream
