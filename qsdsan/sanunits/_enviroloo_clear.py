@@ -1838,6 +1838,7 @@ class EL_MBR(SanUnit, Decay):
         AnoT_nitrate_return = self.outs[2]
         CH4_emission = self.outs[3]
         N2O_emission = self.outs[4]
+        sludge = self.outs[5]
         
         # Inherited input stream
         TreatedWater.copy_like(WasteWater)
