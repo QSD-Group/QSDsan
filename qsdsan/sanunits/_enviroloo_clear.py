@@ -1109,7 +1109,7 @@ class EL_PC(SanUnit):
         C['Fittings'] = self.weld_female_adapter_fittings
 
         ratio = self.price_ratio  # Assume price_ratio decorator sets this
-        for equip, cost in C.items():
+        for equipment, cost in C.items():
             C[equipment] = cost * ratio
 
         self.add_OPEX = self._calc_replacement_cost()
