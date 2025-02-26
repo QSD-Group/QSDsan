@@ -16,7 +16,7 @@ from warnings import warn
 from qsdsan import WasteStream
 from qsdsan import SanUnit, Construction
 from qsdsan.sanunits import IdealClarifier
-#from qsdsan.sanunits._toilet import Toilet
+from qsdsan.sanunits._abstract import Mixer
 from qsdsan.sanunits._tank import StorageTank
 from qsdsan.processes._decay import Decay
 from qsdsan.utils import ospath, load_data, data_path, price_ratio
@@ -835,10 +835,8 @@ class EL_MURT(EL_Toilet):
 CollectionTank_path = ospath.join(EL_su_data_path, '_EL_CT.tsv')
 
 @price_ratio()
-# class EL_CT(Mixer):
-
-class EL_CT(StorageTank):
-
+class EL_CT(Mixer):
+    
     '''
     Name
     ----
@@ -876,6 +874,7 @@ class EL_CT(StorageTank):
     ----------
     class:`biosteam.units.StorageTank`
     '''
+    
     _N_ins = 4 
     _N_outs = 1
     _ins_size_is_fixed = True
@@ -903,66 +902,8 @@ class EL_CT(StorageTank):
                       vessel_material=vessel_material, # The material of the tank
                       kW_per_m3=kW_per_m3, # The power consumption per unit volume of the tank
                       )
-        
-        self.ppl = ppl
-        self.baseline_ppl = baseline_ppl
-        self._mixed_in = WasteStream(f'{self.ID}_mixed_in')
-        
-        data = load_data(path=CollectionTank_path)
-        for para in data.index:
-            value = float(data.loc[para]['expected'])
-            setattr(self, para, value)
-        del data
 
-        for attr, value in kwargs.items():
-            setattr(self, attr, value)
-
-    def _init_lca(self):
-        self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]
-      
     def _run(self):
-        '''
-        There is no reaction inside this tank, just for collection and storage.
-        '''
-        
-        # # Input stream
-        # WasteWater = self.ins[0]
-        # sludge_return = self.ins[1]  # Sludge from primary clarifier over return pump
-        # PC_spill_return = self.ins[2]  # Spill water from primary clarifier
-        # CWT_spill_return = self.ins[3]  # Spill water from clear water tank
-        
-        # # Output stream
-        # TreatedWater = self.outs[0]
-        
-        # # Initialize properties
-        # TreatedWater.empty()
-        
-        # # Inherited properties of input stream
-        # TreatedWater.copy_like(WasteWater)
-
-        # # Add NO3 from nitrate return
-        # #TreatedWater.imass['NO3'] += sludge_return.imass['NO3']
-
-        # # Only add H₂O from PC_spill_return and CWT_spill_return
-        # TreatedWater.imass['H2O'] += PC_spill_return.imass['H2O'] + CWT_spill_return.imass['H2O']
-
-        # # Ensure mass balance is correct
-        # for component in ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh', 
-        #                   #'NO3', 
-        #                   'H2O'):
-        #     TreatedWater.imass[component] = (WasteWater.imass[component] + sludge_return.imass[component] + 
-        #                       PC_spill_return.imass[component] + CWT_spill_return.imass[component])
-
-    # def _run(self):
-    #     '''
-    #     Ensures mass flow rate balance:
-    #     Q_in * X_in = Q_out * X_out (volumetric flowrate * concentration)
-    #     Here's no concentration of wastewater
-    
-    #     - `WasteWater` and `sludge_return` are always present.
-    #     - `PC_spill_return` and `MT_spill_return` may or may not exist.
-    #     '''
-
         # Input stream
         WasteWater = self.ins[0]
         sludge_return = self.ins[1]
@@ -981,35 +922,6 @@ class EL_CT(StorageTank):
         TreatedWater = self.outs[0]
         # Copy the mixed result to the outflow
         TreatedWater.copy_like(mixed_in)
-    
-    
-    # def _run(self):
-    #     '''
-    #     Requirement: mass flow rate balance
-    #     Q_in * X_in = Q_out * X_out (volumetric flowrate * concentration)
-    #     For here, 5 different types input stream, 1 output stream
-    #     But we don't know the conentration of wastewater
-    #     '''
-        
-    #     # Input stream
-    #     WasteWater = self.ins[0]
-    #     sludge_return = self.ins[1]
-    #     PC_spill_return = self.ins[2] if len(self.ins) > 2 else None
-    #     CWT_spill_return = self.ins[3] if len(self.ins) > 3 else None
-
-    #     # Output stream
-    #     TreatedWater = self.outs[0]
-
-    #     # Only keep existing input streams
-    #     input_streams = [WasteWater, sludge_return, PC_spill_return, CWT_spill_return]
-    #     input_streams = [s for s in input_streams if s]  # Filter non-existing input streams
-
-    #     # Mix all inputs into a single stream
-    #     self._mixed.empty()
-    #     self._mixed.mix_from(input_streams)
-
-    #     # Copy the mixed result to the outflow
-    #     TreatedWater.copy_like(self._mixed)
 
     def _design(self):
         design = self.design_results
@@ -1040,6 +952,144 @@ class EL_CT(StorageTank):
             self.weld_female_adapter_fittings / self.weld_female_adapter_fittings_lifetime) * scale
         CT_replacement_cost = CT_replacement_cost / (365 * 24)  # convert to USD/hr
         return CT_replacement_cost
+
+# class EL_CT(StorageTank):
+
+
+    # _N_ins = 4 
+    # _N_outs = 1
+    # _ins_size_is_fixed = True
+    # _outs_size_is_fixed = True
+    # exponent_scale = 0.6
+    
+    # def __init__(self, ID='', ins=None, outs=(), thermo=None, ppl=None, baseline_ppl=None,
+    #              vessel_type= 'Field erected', tau=24, V_wf=None, vessel_material='Stainless steel', kW_per_m3=0.1,
+    #              init_with='WasteStream', F_BM_default=1,
+    #              include_construction=True, **kwargs):
+    #     StorageTank.__init__(self, 
+    #                   # Basic parameters
+    #                   ID=ID, # The unique identifier of the tank
+    #                   ins=ins, # The input stream to the tank
+    #                   outs=outs, # The output streams from the tank
+    #                   thermo=thermo, # The thermodynamic property package for simulating physical or chemical processes
+    #                   # Other control parameters
+    #                   init_with=init_with, # The method to initialize the tank contents.
+    #                   F_BM_default=F_BM_default, # The default bare module factor for the tank cost estimation
+    #                   include_construction=include_construction, # A Boolean value indicating whether the tank's construction material is considered in the cost analysis or life cycle assessment.
+    #                   # Design parameters
+    #                   vessel_type=vessel_type, # The type of the tank
+    #                   tau=tau, # The retention time of the tank contents, the important parameters involved in mixing, reaction or separation processes.
+    #                   V_wf=V_wf, # The volume working fraction of the tank, the ratio of the volume of the tank contents to the total volume of the tank.
+    #                   vessel_material=vessel_material, # The material of the tank
+    #                   kW_per_m3=kW_per_m3, # The power consumption per unit volume of the tank
+    #                   )
+        
+    #     self.ppl = ppl
+    #     self.baseline_ppl = baseline_ppl
+    #     self._mixed_in = WasteStream(f'{self.ID}_mixed_in')
+        
+    #     data = load_data(path=CollectionTank_path)
+    #     for para in data.index:
+    #         value = float(data.loc[para]['expected'])
+    #         setattr(self, para, value)
+    #     del data
+
+    #     for attr, value in kwargs.items():
+    #         setattr(self, attr, value)
+
+    # def _init_lca(self):
+    #     self.construction = [Construction(item='StainlessSteel', linked_unit=self, quantity_unit='kg'),]
+      
+    # def _run(self):
+    #     '''
+    #     There is no reaction inside this tank, just for collection and storage.
+    #     '''
+        
+    #     # # Input stream
+    #     # WasteWater = self.ins[0]
+    #     # sludge_return = self.ins[1]  # Sludge from primary clarifier over return pump
+    #     # PC_spill_return = self.ins[2]  # Spill water from primary clarifier
+    #     # CWT_spill_return = self.ins[3]  # Spill water from clear water tank
+        
+    #     # # Output stream
+    #     # TreatedWater = self.outs[0]
+        
+    #     # # Initialize properties
+    #     # TreatedWater.empty()
+        
+    #     # # Inherited properties of input stream
+    #     # TreatedWater.copy_like(WasteWater)
+
+    #     # # Add NO3 from nitrate return
+    #     # #TreatedWater.imass['NO3'] += sludge_return.imass['NO3']
+
+    #     # # Only add H₂O from PC_spill_return and CWT_spill_return
+    #     # TreatedWater.imass['H2O'] += PC_spill_return.imass['H2O'] + CWT_spill_return.imass['H2O']
+
+    #     # # Ensure mass balance is correct
+    #     # for component in ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh', 
+    #     #                   #'NO3', 
+    #     #                   'H2O'):
+    #     #     TreatedWater.imass[component] = (WasteWater.imass[component] + sludge_return.imass[component] + 
+    #     #                       PC_spill_return.imass[component] + CWT_spill_return.imass[component])
+
+    # # def _run(self):
+    # #     '''
+    # #     Ensures mass flow rate balance:
+    # #     Q_in * X_in = Q_out * X_out (volumetric flowrate * concentration)
+    # #     Here's no concentration of wastewater
+    
+    # #     - `WasteWater` and `sludge_return` are always present.
+    # #     - `PC_spill_return` and `MT_spill_return` may or may not exist.
+    # #     '''
+
+    #     # Input stream
+    #     WasteWater = self.ins[0]
+    #     sludge_return = self.ins[1]
+    #     PC_spill_return = self.ins[2]
+    #     CWT_spill_return = self.ins[3]
+
+    #     mixed_in = self._mixed_in
+    #     # Define input streams
+    #     input_streams = [WasteWater, sludge_return, PC_spill_return, CWT_spill_return]
+    #     mixed_in.mix_from(input_streams)
+    #     # # Mix all inputs into a single stream
+    #     # self._mixed.empty()
+    #     # self._mixed.mix_from(input_streams)
+
+    #     # Output stream
+    #     TreatedWater = self.outs[0]
+    #     # Copy the mixed result to the outflow
+    #     TreatedWater.copy_like(mixed_in)
+    
+    
+    # def _run(self):
+    #     '''
+    #     Requirement: mass flow rate balance
+    #     Q_in * X_in = Q_out * X_out (volumetric flowrate * concentration)
+    #     For here, 5 different types input stream, 1 output stream
+    #     But we don't know the conentration of wastewater
+    #     '''
+        
+    #     # Input stream
+    #     WasteWater = self.ins[0]
+    #     sludge_return = self.ins[1]
+    #     PC_spill_return = self.ins[2] if len(self.ins) > 2 else None
+    #     CWT_spill_return = self.ins[3] if len(self.ins) > 3 else None
+
+    #     # Output stream
+    #     TreatedWater = self.outs[0]
+
+    #     # Only keep existing input streams
+    #     input_streams = [WasteWater, sludge_return, PC_spill_return, CWT_spill_return]
+    #     input_streams = [s for s in input_streams if s]  # Filter non-existing input streams
+
+    #     # Mix all inputs into a single stream
+    #     self._mixed.empty()
+    #     self._mixed.mix_from(input_streams)
+
+    #     # Copy the mixed result to the outflow
+    #     TreatedWater.copy_like(self._mixed)
 
 # %%
 PrimaryClarifier_path = ospath.join(EL_su_data_path, '_EL_PC.tsv')
