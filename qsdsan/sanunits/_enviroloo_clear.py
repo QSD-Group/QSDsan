@@ -1080,6 +1080,32 @@ class EL_PC(SanUnit):
         mixed.split_to(sludge_return, treated_water, split_to_sludge)
 
         # Handle spill return
+        # if self.max_overflow is not None:
+        #     if treated_water.F_vol > self.max_overflow:
+        #         # Spill return exists
+        #         spill_vol = treated_water.F_vol - self.max_overflow  
+        #         if not hasattr(self, '_f_spill'):
+        #             self._f_spill = None
+        #         if not hasattr(self, '_f_overflow'):
+        #             self._f_overflow = None
+        #             self._f_spill = spill_vol / treated_water.F_vol  
+        #             self._f_overflow = 1 - self._f_spill  
+
+        #             spill_return.copy_like(treated_water)  
+        #             spill_return.F_mass *= self._f_spill  
+
+        #             TreatedWater.F_mass *= self._f_overflow  
+        #     else:
+        #         # max_overflow is not none, but TreatedWater < max_overflow
+        #         spill_return.empty()
+        #         if hasattr(self, '_f_spill'):
+        #             del self._f_spill  
+        #         if hasattr(self, '_f_overflow'):
+        #             del self._f_overflow  
+        # else:
+        #     # max_overflow is none, no spill return
+        #     spill_return.empty()
+        
         max_overflow_m3d = self.max_overflow * 24  # Convert m³/h to m³/d
         Q_treated = treated_water.F_vol * 24  # m³/d
         if Q_treated > max_overflow_m3d:
