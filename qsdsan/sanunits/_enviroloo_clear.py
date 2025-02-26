@@ -2017,9 +2017,7 @@ class EL_CWT(StorageTank):
     Outs:
     (1) effluent of treated wastewater (clear water)
     (2) spill flow to collection tank
-    (3) influent to air-dssolved pump
-    (4) fugitive CH4 emission
-    (5) fugitive N2O emission
+
 
     Attributes
     ----------
@@ -2031,7 +2029,7 @@ class EL_CWT(StorageTank):
 
     '''
     _N_ins = 3  # number of ins
-    _N_outs = 3  # number of outs
+    _N_outs = 2  # number of outs
     _ins_size_is_fixed = True
     _outs_size_is_fixed = True
     exponent_scale = 0.1
@@ -2070,7 +2068,7 @@ class EL_CWT(StorageTank):
         # Output streams
         TreatedWater = self.outs[0]
         spill_return = self.outs[1]
-        CWT_cycle = self.outs[2]
+        # CWT_cycle = self.outs[2]
         
         # Inherited input stream
         TreatedWater.copy_like(WasteWater)
