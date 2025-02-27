@@ -1842,17 +1842,19 @@ class EL_MBR(SanUnit, Decay):
         
         # Inherited input stream
         TreatedWater.copy_like(WasteWater)
+    
+        # Transfer 99% of components to sludge
+        sludge.empty()  # 清空 sludge，确保从零开始
+        for component in TreatedWater.components:
+            mass_in_treated = TreatedWater.imass[component]  # Obtain every components' property
+            mass_to_sludge = 0.99 * mass_in_treated          # Transfer 99% components content to sludge
+            sludge.imass[component] = mass_to_sludge
+            TreatedWater.imass[component] -= mass_to_sludge  # The last components content to treated water
+        
         
         # COD removal
         COD_removal = self.EL_mbrT_COD_removal
         removed_COD = WasteWater.COD / 1e3 * WasteWater.F_vol * COD_removal  # kg/hr
-        
-        # Sludge produced
-        sludge_prcd = self.EL_mbrT_sludge_yield * removed_COD  # produced biomass
-        
-        for component in ('Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh',):
-            sludge.imass[component] += sludge_prcd  # New sludge produced
-        sludge.copy_like(TreatedWater)
             
         # CH4 emission
         CH4_emission.imass['CH4'] += TreatedWater.imass['SolubleCH4']  # Let all soluble CH4 transfer from solution phase to gas phase
