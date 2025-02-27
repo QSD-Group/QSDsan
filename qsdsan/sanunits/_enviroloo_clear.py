@@ -1844,8 +1844,8 @@ class EL_MBR(SanUnit, Decay):
         TreatedWater.copy_like(WasteWater)
     
         # Transfer 99% of components to sludge
-        sludge.empty()  # 清空 sludge，确保从零开始
-        for component in TreatedWater.components:
+        sludge.empty()
+        for component in ('P','K',('NH3','NonNH3'),'Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'):
             mass_in_treated = TreatedWater.imass[component]  # Obtain every components' property
             mass_to_sludge = 0.99 * mass_in_treated          # Transfer 99% components content to sludge
             sludge.imass[component] = mass_to_sludge
