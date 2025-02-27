@@ -23,4 +23,3 @@ NO3_produced_ratio		ratio	0.01	0.009	0.011	uniform
 NO3_split_ratio		ratio	0.50	0.45	0.55	uniform	
 EL_mbrT_COD_removal	COD removal in membrane tank	ratio	0.85	0.6	0.9	uniform	assumption
 decay_k_N		ratio	0.01			constant	assumption
-sludge_removal_efficiency		ratio	0.8	0.72	0.88	uniform	assumption
