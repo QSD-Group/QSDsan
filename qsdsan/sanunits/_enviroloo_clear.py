@@ -2078,33 +2078,14 @@ class EL_CWT(StorageTank):
         TreatedWater.copy_like(WasteWater)
         
         # Spill water return
-        if self.max_overflow is not None:
-            if TreatedWater.F_vol > self.max_overflow:
-                      
-                # Spill return exists
-                spill_vol = TreatedWater.F_vol - self.max_overflow  
-
-                if not hasattr(self, '_f_spill'):
-                    self._f_spill = None
-                if not hasattr(self, '_f_overflow'):
-                    self._f_overflow = None
-
-                self._f_spill = spill_vol / TreatedWater.F_vol  
-                self._f_overflow = 1 - self._f_spill  
-
-                spill_return.copy_like(TreatedWater)  
-                spill_return.F_mass *= self._f_spill  
-
-                TreatedWater.F_mass *= self._f_overflow  
-            else:
-                # max_overflow is not none, but TreatedWater < max_overflow
-                spill_return.empty()
-                if hasattr(self, '_f_spill'):
-                    del self._f_spill  
-                if hasattr(self, '_f_overflow'):
-                    del self._f_overflow  
-        
-        
+        max_overflow_m3d = self.max_overflow * 24  # Convert m³/h to m³/d
+        Q_treated = TreatedWater.F_vol * 24  # m³/d
+        if Q_treated > max_overflow_m3d:
+            spill_vol = Q_treated - max_overflow_m3d
+            f_spill = spill_vol / Q_treated
+            spill_return.copy_like(TreatedWater)
+            spill_return.F_mass *= f_spill
+            TreatedWater.F_mass *= (1 - f_spill)
         else:
             # max_overflow is none, no spill return
             spill_return.empty()
@@ -2278,7 +2259,7 @@ class EL_PT(StorageTank):
         
         # Inherited input stream
         TreatedWater.copy_like(ClearWater)
-        TreatedWater.empty()
+        # TreatedWater.empty()
         nullConnection.empty()
         
         
