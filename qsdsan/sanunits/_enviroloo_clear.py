@@ -1847,7 +1847,7 @@ class EL_MBR(SanUnit, Decay):
         sludge.empty()
         for component in ('P','K',('NH3','NonNH3'),'Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'):
             mass_in_treated = TreatedWater.imass[component]  # Obtain every components' property
-            mass_to_sludge = self.sludge_removal_efficiency * mass_in_treated          # Transfer 99% components content to sludge
+            mass_to_sludge = 0.99 * mass_in_treated          # Transfer 99% components content to sludge
             sludge.imass[component] = mass_to_sludge
             TreatedWater.imass[component] -= mass_to_sludge  # The last components content to treated water
         
