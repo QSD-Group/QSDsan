@@ -1843,9 +1843,9 @@ class EL_MBR(SanUnit, Decay):
         # Inherited input stream
         TreatedWater.copy_like(WasteWater)
     
-        # Transfer 99% of components to sludge
+        # # Transfer 99% of components to sludge
         sludge.empty()
-        for component in ('P','K',('NH3','NonNH3'),'Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'):
+        for component in ('P','K','NH3','NonNH3','Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'):
             mass_in_treated = TreatedWater.imass[component]  # Obtain every components' property
             mass_to_sludge = 0.99 * mass_in_treated          # Transfer 99% components content to sludge
             sludge.imass[component] = mass_to_sludge
@@ -1855,9 +1855,23 @@ class EL_MBR(SanUnit, Decay):
         # COD removal
         COD_removal = self.EL_mbrT_COD_removal
         removed_COD = WasteWater.COD / 1e3 * WasteWater.F_vol * COD_removal  # kg/hr
+        
+        # Sludge produced
+        sludge_prcd = removed_COD * self.EL_mbrT_sludge_yield  # Typical yield: 0.5 kg VSS/kg COD
             
+        # Sludge handling
+        # sludge.copy_flow(TreatedWater, ('P', 'K', ('NH3','NonNH3'), 'Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'), remove=True)
+        # sludge.imass['OtherSS'] += sludge_prcd
+        # sludge.imass['H2O'] = sludge.imass['OtherSS']/(1-self.sludge_moisture_content) - sludge.imass['OtherSS']
+        
+        # Water balance
+        TreatedWater.imass['H2O'] -= sludge.imass['H2O']
+        if TreatedWater.imass['H2O'] <= 0:
+            sludge.imass['H2O'] = WasteWater.imass['H2O']
+            TreatedWater.imass['H2O'] = 0
+        
         # CH4 emission
-        CH4_emission.imass['CH4'] += TreatedWater.imass['SolubleCH4']  # Let all soluble CH4 transfer from solution phase to gas phase
+        CH4_emission.imass['CH4'] = WasteWater.imass['SolubleCH4']  # Let all soluble CH4 transfer from solution phase to gas phase
         TreatedWater.imass['SolubleCH4'] = 0  # Ensure that treated water will not include soluble CH4
         
         # N2O produced
@@ -1878,7 +1892,6 @@ class EL_MBR(SanUnit, Decay):
               N2O_emission.imass['N2O'] = N_loss_tot * self.N2O_EF_decay * 44 / 28
         else:
               N2O_emission.empty()
-              N2O_emission.imass['N2O'] = 0  # All N2O is emitted
         
         # NO3 conversion
         NH3_mass = TreatedWater.imass['NH3']  # Inherite NH4 property from anoxic tank
@@ -1898,6 +1911,9 @@ class EL_MBR(SanUnit, Decay):
         # Remove NO3 from TreatedWater since it is returned to the previous tanks
         TreatedWater.imass['NO3'] -= (PC_nitrate_return.imass['NO3'] + AnoT_nitrate_return.imass['NO3'])
         
+        # Update COD
+        TreatedWater._COD = WasteWater.COD * (1 - self.EL_mbrT_COD_removal)
+        sludge._COD = WasteWater.COD * self.EL_mbrT_COD_removal
     
     # def _run(self):
 
