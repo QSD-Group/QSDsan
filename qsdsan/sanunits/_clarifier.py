@@ -610,8 +610,8 @@ class FlatBottomCircularClarifier(SanUnit):
         ras_flow = self._ras.get_total_flow('m3/hr')
         was_flow = self._was.get_total_flow('m3/hr')
         
-        ras_flow_u = ras_flow/D['Number of clarifiers']*0.00634
-        was_flow_u = was_flow/D['Number of clarifiers']*0.00634
+        ras_flow_u = ras_flow/((D['Number of clarifiers']-1)*0.00634)
+        was_flow_u = was_flow/((D['Number of clarifiers']-1)*0.00634)
         
         Q_mgd = {
             'ras': ras_flow_u,
