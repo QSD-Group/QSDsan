@@ -1845,12 +1845,26 @@ class EL_MBR(SanUnit, Decay):
     
         # # Transfer 99% of components to sludge
         sludge.empty()
-        for component in ('P','K','NH3','NonNH3','Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'):
-            mass_in_treated = TreatedWater.imass[component]  # Obtain every components' property
-            mass_to_sludge = 0.99 * mass_in_treated          # Transfer 99% components content to sludge
+        # for component in ('P','K','NH3','NonNH3','Mg', 'Ca', 'OtherSS', 'Tissue', 'WoodAsh'):
+        #     mass_in_treated = TreatedWater.imass[component]  # Obtain every components' property
+        #     mass_to_sludge = 0.99 * mass_in_treated          # Transfer 99% components content to sludge
+        #     sludge.imass[component] = mass_to_sludge
+        #     TreatedWater.imass[component] -= mass_to_sludge  # The last components content to treated water
+        TSS_components = ('Mg', 'Ca', 'P', 'K', 'OtherSS', 'Tissue', 'WoodAsh')
+        for component in TSS_components:
+            mass_in_treated = TreatedWater.imass[component]
+            # mass_to_sludge = self.sludge_removal_efficiency * mass_in_treated  # 使用污泥去除效率(默认99%)
+            mass_to_sludge = 0.99 * mass_in_treated 
             sludge.imass[component] = mass_to_sludge
-            TreatedWater.imass[component] -= mass_to_sludge  # The last components content to treated water
-        
+            TreatedWater.imass[component] -= mass_to_sludge
+
+        # soluble_components = ('NH3', 'NonNH3')
+        # for component in soluble_components:
+        #     mass_in_treated = TreatedWater.imass[component]
+        #     # mass_to_sludge = self.sludge_removal_efficiency * mass_in_treated
+        #     mass_to_sludge = 0.99 * mass_in_treated
+        #     sludge.imass[component] = mass_to_sludge
+        #     TreatedWater.imass[component] -= mass_to_sludge
         
         # COD removal
         COD_removal = self.EL_mbrT_COD_removal
@@ -1998,7 +2012,7 @@ class EL_MBR(SanUnit, Decay):
 
         ratio = self.price_ratio
         for equipment, cost in C.items():
-            C[equipment] = cost * ratio
+            C[equipment] = cost * ratio 
         
         self.add_OPEX = self._calc_replacement_cost()
         
