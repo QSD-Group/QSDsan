@@ -7,10 +7,10 @@ reactor_volume,,L,0.15,,,constant
 carbon_conversion_efficiency,,fraction,0.945,0.9,0.99,uniform
 ammonium_nitrogen_fraction,,fraction,0.8385,0.741,0.936,uniform
 N2O_nitrogen_fraction,fraction of total nitrogen,fraction,0.09,0.03,0.15,uniform
-reactor_system_cost,,USD,2599,1819.3,3378.7,uniform
+reactor_system_cost,,USD,3483,2438.1,4527.9,uniform
 injector_cost,,USD,997.25,698.075,1296.425,uniform
 stainless_steel_weight,,kg,10,7,13,uniform
-reactor_life_time,,yr,3,2.1,3.9,uniform
+reactor_life_time,,yr,4,2.8,5.2,uniform
 reactor_maintenance,,hr/yr,24,16.8,31.2,uniform
 wages,,USD/h,3.64,1.82,5.46,uniform
 material_replacement_cost,,fraction,0.2,0.1,0.3,uniform
