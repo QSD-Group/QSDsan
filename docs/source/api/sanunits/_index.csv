@@ -38,12 +38,15 @@ Lagoon,No,No,Completed
 LiquidTreatmentBed,No,No,Completed
 LumpedCost,No,No,Completed
 MembraneDistillation,No,No,Completed
+MembraneGasExtraction,No,No,Completed
 MixTank,No,No,Completed
 Mixer,Yes,Yes,Completed
 MURT (multi-unit reinvented toilet),No,No,Completed
+PFR (plug flow reactor),Yes,No,Under development
 PhaseChanger,No,Yes,Completed
 PitLatrine,No,No,Completed
 PolishingFilter,No,No,Completed
+PrimaryClarifier,Yes,No,Completed
 Pump,Yes,No,Completed
 Reactor,No,No,Completed
 ReversedSplitter,No,Yes,Completed

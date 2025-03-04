@@ -1,12 +1,12 @@
 # This workflow will install Python dependencies, run tests with a variety of Python versions, and report coverage
 
-name: build-only
+name: build-dev
 
 on:
   push:
-    branches: [beta, dev, trial]
+    branches: [dev]
   pull_request:
-    branches: [beta, dev, trial]
+    branches: [dev]
 
 jobs:
   build:
@@ -30,7 +30,7 @@ jobs:
         python -m pip install pytest nbval
         pip install --no-cache-dir git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git@qsdsan
         pip install --no-cache-dir git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@qsdsan
-        pip install --no-cache-dir git+https://github.com/QSD-Group/EXPOsan.git@main
+        pip install --no-cache-dir git+https://github.com/QSD-Group/EXPOsan.git@bsm2
         pip install --no-cache-dir -r requirements.txt
     - name: Test with pytest
       run: |

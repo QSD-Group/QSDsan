@@ -270,7 +270,8 @@ class AnaerobicCSTR(CSTR):
                  T=308.15, headspace_P=1.013, external_P=1.013, 
                  pipe_resistance=5.0e4, fixed_headspace_P=False,
                  retain_cmps=(), fraction_retain=0.95,
-                 isdynamic=True, exogenous_vars=(), **kwargs):
+                 isdynamic=True, exogenous_vars=(), 
+                 pH_ctrl=None, **kwargs):
         if len(exogenous_vars) == 0:
             exogenous_vars = (EDV('T', function=lambda t: T), )
         super().__init__(ID=ID, ins=ins, outs=outs, thermo=thermo,
@@ -293,6 +294,7 @@ class AnaerobicCSTR(CSTR):
         self.fixed_headspace_P = fixed_headspace_P
         self._f_retain = np.array([fraction_retain if cmp.ID in retain_cmps \
                                    else 0 for cmp in self.components])
+        self.pH_ctrl = pH_ctrl
         self._mixed = WasteStream()
         self._tempstate = {}
     
@@ -442,18 +444,23 @@ class AnaerobicCSTR(CSTR):
         #!!! how to make unit conversion generalizable to all models?
         if self._concs is not None: Cs = self._concs * 1e-3 # mg/L to kg/m3
         else: Cs = mixed.conc * 1e-3 # mg/L to kg/m3
-        self._state = np.append(Cs, [0]*self._n_gas + [Q]).astype('float64')
+        Gs = [0]*self._n_gas  # initial gas phase concentrations [M]
+        Gs[0] = 0.041*0.01
+        Gs[1] = 0.041*0.57
+        Gs[2] = 0.041*0.4
+        self._state = np.append(Cs, Gs + [Q]).astype('float64')
         self._dstate = self._state * 0.
 
     def _update_state(self):
         y = self._state
         y[-1] = sum(ws.state[-1] for ws in self.ins)
+        y[y<1e-16] = 0.
         f_rtn = self._f_retain
         i_mass = self.components.i_mass
         chem_MW = self.components.chem_MW
         n_cmps = len(self.components)
         Cs = y[:n_cmps]*(1-f_rtn)*1e3 # kg/m3 to mg/L
-        pH = self._tempstate.pop('pH', 7)
+        pH = self.pH_ctrl or self._tempstate.pop('pH', 7)
         if self.split is None:
             gas, liquid = self._outs
             if liquid.state is None:
@@ -522,10 +529,10 @@ class AnaerobicCSTR(CSTR):
     @property
     def ODE(self):
         if self._ODE is None:
-            self._compile_ODE(self.algebraic_h2)
+            self._compile_ODE(self.algebraic_h2, self.pH_ctrl)
         return self._ODE
     
-    def _compile_ODE(self, algebraic_h2=True):
+    def _compile_ODE(self, algebraic_h2=True, pH_ctrl=None):
         if self._model is None:
             CSTR._compile_ODE(self)
         else:
@@ -534,7 +541,13 @@ class AnaerobicCSTR(CSTR):
             _state = self._state
             _dstate = self._dstate
             _update_dstate = self._update_dstate
-            _f_rhos = self.model.rate_function
+            h = None
+            if pH_ctrl:
+                _params = self.model.rate_function.params
+                h = 10**(-pH_ctrl)
+                _f_rhos = lambda state_arr: self.model.flex_rhos(state_arr, _params, h=h)
+            else:
+                _f_rhos = self.model.rate_function
             _f_param = self.model.params_eval
             _M_stoichio = self.model.stoichio_eval
             n_cmps = len(cmps)
@@ -569,23 +582,26 @@ class AnaerobicCSTR(CSTR):
                 solve_pH = self.model.solve_pH
                 dydt_Sh2_AD = self.model.dydt_Sh2_AD
                 grad_dydt_Sh2_AD = self.model.grad_dydt_Sh2_AD
-                def solve_h2(QC, S_in, T):
-                    Ka = params['Ka_base'] * T_correction_factor(params['T_base'], T, params['Ka_dH'])
-                    h, nh3, co2 = solve_pH(QC, Ka, unit_conversion)
-                    S_h2_0 = QC[h2_idx]
+                def solve_h2(QC, S_in, T, h=h):
+                    if h == None: 
+                        Ka = params['Ka_base'] * T_correction_factor(params['T_base'], T, params['Ka_dH'])
+                        h = solve_pH(QC, Ka, unit_conversion)
+                    # S_h2_0 = QC[h2_idx]
+                    S_h2_0 = 2.8309E-07
                     S_h2_in = S_in[h2_idx]
-                    S_h2 = newton(dydt_Sh2_AD, S_h2_0, grad_dydt_Sh2_AD,
-                                  args=(QC, h, params, h2_stoichio, V_liq, S_h2_in), 
+                    S_h2 = newton(
+                        dydt_Sh2_AD, S_h2_0, grad_dydt_Sh2_AD,
+                        args=(QC, h, params, h2_stoichio, V_liq, S_h2_in), 
                                   )
                     return S_h2
                 def update_h2_dstate(dstate):
                     dstate[h2_idx] = 0.
             else:
-                solve_h2 = lambda QC, S_ins, T: QC[h2_idx]
+                solve_h2 = lambda QC, S_in, T: QC[h2_idx]
                 def update_h2_dstate(dstate):
                     pass
             def dy_dt(t, QC_ins, QC, dQC_ins):
-                QC[QC < 2.2e-16] = 0.
+                # QC[QC < 0] = 0.
                 Q_ins = QC_ins[:, -1]
                 S_ins = QC_ins[:, :-1] * 1e-3  # mg/L to kg/m3
                 Q = sum(Q_ins)

@@ -5,7 +5,11 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
+
+    Joy Zhang <joycheung1994@gmail.com>
+
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -16,7 +20,10 @@ from math import ceil, floor
 from biosteam import Stream
 from biosteam.exceptions import DesignError
 from . import HXutility, WWTpump, InternalCirculationRx
-from .. import SanStream, SanUnit
+from .. import SanStream, WasteStream, SanUnit, Process, CompiledProcesses
+from ..sanunits import CSTR, PFR, dydt_cstr
+from warnings import warn
+import numpy as np, pandas as pd
 from ..equipments import Blower
 from ..utils import (
     auom,
@@ -26,8 +33,12 @@ from ..utils import (
     calculate_excavation_volume,
     )
 
-__all__ = ('AnMBR',)
+__all__ = ('AnMBR', 
+           'CompletelyMixedMBR',
+           # 'PlugFlowMBR',
+           )
 
+#%%
 degassing = SanStream.degassing
 
 _ft_to_m = auom('ft').conversion_factor('m')
@@ -1339,3 +1350,287 @@ class AnMBR(SanUnit):
         Si = compute_stream_COD(self._inf, 'kg/m3')
         Se = compute_stream_COD(self.outs[1], 'kg/m3')
         return 1 - Qe*Se/(Qi*Si)
+    
+#%%
+from numba import njit
+@njit(cache=True)
+def dydt_mbr(QC_ins, QC, V, Qp, f_rtn, xarr, _dstate):
+    Q_ins = QC_ins[:, -1]
+    C_ins = QC_ins[:, :-1]
+    Q = sum(Q_ins)
+    C = QC[:-1]
+    _dstate[-1] = 0
+    _dstate[:-1] = (Q_ins @ C_ins - (Q*(1-xarr) + (Qp+(Q-Qp)*(1-f_rtn))*xarr)*C)/V
+
+class CompletelyMixedMBR(CSTR):
+    '''
+    Completely mixed membrane bioreactor, equivalent to a CSTR with ideal 
+    membrane filtration at the outlet.
+
+    See Also
+    --------
+    :class:`qsdsan.processes.DiffusedAeration`
+    :class:`qsdsan.sanunits.CSTR`
+
+    Examples
+    --------
+    >>> from qsdsan import WasteStream, processes as pc, sanunits as su
+    >>> cmps = pc.create_asm1_cmps()
+    >>> ww = WasteStream('ww')
+    >>> ww.set_flow_by_concentration(
+    ...     flow_tot=2000, 
+    ...     concentrations=dict(S_I=21.6, S_S=86.4, X_I=32.4, X_S=129.6, 
+    ...                         S_NH=25, S_ND=2.78, X_ND=6.28, S_ALK=84), 
+    ...     units=('m3/d', 'mg/L'))
+    >>> asm = pc.ASM1()
+    >>> M1 = su.CompletelyMixedMBR('M1', ins=ww, outs=['filtrate', 'pumped'],                                   
+    ...                            V_max=400, pumped_flow=50, solids_capture_rate=0.999, 
+    ...                            aeration=2.0, DO_ID='S_O', 
+    ...                            suspended_growth_model=asm)
+    >>> M1.set_init_conc(X_I=1000, S_I=30, S_S=5.0, X_S=100, X_BH=500, 
+    ...                  X_BA=100, X_P=100, S_O=2, S_NH=2, S_ND=1, 
+    ...                  X_ND=1, S_NO=20, S_ALK=84)
+    >>> M1.simulate(t_span=(0,400), method='BDF')
+    >>> M1.show()
+    CompletelyMixedMBR: M1
+    ins...
+    [0] ww
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_I    1.8e+03
+                    S_S    7.2e+03
+                    X_I    2.7e+03
+                    X_S    1.08e+04
+                    S_NH   2.08e+03
+                    S_ND   232
+                    X_ND   523
+                    S_ALK  7e+03
+                    H2O    8.31e+07
+        WasteStream-specific properties:
+         pH         : 7.0
+         Alkalinity : 2.5 mmol/L
+         COD        : 270.0 mg/L
+         BOD        : 137.1 mg/L
+         TC         : 170.4 mg/L
+         TOC        : 86.4 mg/L
+         TN         : 36.0 mg/L
+         TP         : 2.7 mg/L
+         TSS        : 121.5 mg/L
+    outs...
+    [0] filtrate
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_I    1.75e+03
+                    S_S    277
+                    X_I    101
+                    X_S    4.83
+                    X_BH   236
+                    X_BA   13.7
+                    X_P    44.1
+                    S_O    162
+                    S_NO   1.8e+03
+                    S_NH   61.7
+                    S_ND   60
+                    X_ND   0.323
+                    S_ALK  3.6e+03
+                    S_N2   254
+                    H2O    8.1e+07
+        WasteStream-specific properties:
+         pH         : 7.0
+         COD        : 29.9 mg/L
+         BOD        : 4.2 mg/L
+         TC         : 54.0 mg/L
+         TOC        : 9.7 mg/L
+         TN         : 24.0 mg/L
+         TP         : 0.3 mg/L
+         TK         : 0.0 mg/L
+         TSS        : 3.7 mg/L
+    [1] pumped
+    phase: 'l', T: 298.15 K, P: 101325 Pa
+    flow (g/hr): S_I    45
+                    S_S    7.09
+                    X_I    2.6e+03
+                    X_S    124
+                    X_BH   6.06e+03
+                    X_BA   351
+                    X_P    1.13e+03
+                    S_O    4.17
+                    S_NO   46
+                    S_NH   1.58
+                    S_ND   1.54
+                    X_ND   8.29
+                    S_ALK  92.2
+                    S_N2   6.51
+                    H2O    2.07e+06
+        WasteStream-specific properties:
+         pH         : 7.0
+         COD        : 4950.0 mg/L
+         BOD        : 1779.8 mg/L
+         TC         : 1795.1 mg/L
+         TOC        : 1750.8 mg/L
+         TN         : 381.0 mg/L
+         TP         : 77.2 mg/L
+         TK         : 17.3 mg/L
+         TSS        : 3693.8 mg/L
+    
+    >>> flt, rtn = M1.outs
+    >>> flt.get_TSS() / rtn.get_TSS() # doctest: +ELLIPSIS
+    0.001...
+    
+    '''
+    _N_ins = 1
+    _N_outs = 2  # [0] filtrate, [1] pumped flow
+    _outs_size_is_fixed = True
+    
+    def __init__(self, ID='', ins=None, outs=(), thermo=None,
+                 init_with='WasteStream', isdynamic=True, 
+                 pumped_flow=50, solids_capture_rate=0.999, 
+                 V_max=1000, crossflow_air=None,
+                 **kwargs):
+        super().__init__(ID, ins, outs, split=None, thermo=thermo,
+                         init_with=init_with, V_max=V_max, isdynamic=isdynamic, 
+                         **kwargs)
+        self.pumped_flow = pumped_flow
+        self.solids_capture_rate = solids_capture_rate
+        self.crossflow_air = crossflow_air
+    
+    @property
+    def pumped_flow(self):
+        '''[float] Pumped flow rate, in m3/d'''
+        return self._Q_pump
+    @pumped_flow.setter
+    def pumped_flow(self, Q):
+        self._Q_pump = Q
+    
+    @property
+    def solids_capture_rate(self):
+        '''[float] Membrane solid capture rate, i.e., 
+        filtrate-to-internal solids concentration ratio, unitless.'''
+        return self._f_rtn
+    @solids_capture_rate.setter
+    def solids_capture_rate(self, f):
+        if f < 0 or f > 1:
+            raise ValueError(f'membrane solids capture rate must be within [0,1], not {f}')
+        self._f_rtn = f
+        cmps = self._mixed.components
+        self._flt2in_conc_ratio = (1-cmps.x) + cmps.x * (1-f)
+    
+    @property
+    def crossflow_air(self):
+        '''[:class:`qsdsan.Process` or NoneType]
+        Membrane cross flow air specified for process modeling, such as `qsdsan.processes.DiffusedAeration`. 
+        Ignored if DO setpoint is specified by the `aeration` attribute.
+        '''
+        return self._cfa
+    @crossflow_air.setter
+    def crossflow_air(self, cfa):
+        if cfa is None or isinstance(cfa, Process):
+            self._cfa = cfa
+        else:
+            raise TypeError('crossflow_air must be a `Process` object or None, '
+                            f'not {type(cfa)}')
+
+    split = None
+        
+    def _run(self):
+        '''Only to converge volumetric flows.'''
+        mixed = self._mixed
+        mixed.mix_from(self.ins)
+        cmps = mixed.components
+        Q = mixed.F_vol*24 # m3/d
+        Qp = self._Q_pump
+        f_rtn = self._f_rtn
+        xsplit = Qp / ((1-f_rtn)*(Q-Qp) + Qp) # mass split of solids to pumped flow
+        qsplit = Qp / Q
+        flt, rtn = self.outs
+        mixed.split_to(rtn, flt, xsplit*cmps.x + qsplit*(1-cmps.x))
+    
+    def _compile_ODE(self):
+        aer = self._aeration
+        cfa = self._cfa
+        isa = isinstance
+        cmps = self.components
+        if self._model is None:
+            warn(f'{self.ID} was initialized without a suspended growth model, '
+                 f'and thus run as a non-reactive unit')
+            r = lambda state_arr: np.zeros(cmps.size)
+        else:
+            r = self._model.production_rates_eval
+
+        _dstate = self._dstate
+        _update_dstate = self._update_dstate
+        V = self._V_max
+        Qp = self.pumped_flow
+        f_rtn = self.solids_capture_rate
+        xarr = cmps.x
+        gstrip = self.gas_stripping
+        if gstrip:
+            gas_idx = self.components.indices(self.gas_IDs)
+            if isa(aer, Process): kLa = aer.kLa
+            else: kLa = 0.
+            if cfa: kLa += cfa.kLa
+            S_gas_air = np.asarray(self.K_Henry)*np.asarray(self.p_gas_atm)
+            kLa_stripping = np.maximum(kLa*self.D_gas/self._D_O2, self.stripping_kLa_min)
+        hasexo = bool(len(self._exovars))
+        f_exovars = self.eval_exo_dynamic_vars
+         
+        if isa(aer, (float, int)):
+            i = cmps.index(self._DO_ID)
+            def dy_dt(t, QC_ins, QC, dQC_ins):
+                QC[i] = aer
+                dydt_mbr(QC_ins, QC, V, Qp, f_rtn, xarr, _dstate)
+                if hasexo: QC = np.append(QC, f_exovars(t))
+                _dstate[:-1] += r(QC)
+                if gstrip: _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
+                _dstate[i] = 0
+                _update_dstate()
+        else:        
+            if cfa:
+                cfa_stoi = cfa._stoichiometry
+                cfa_frho = cfa.rate_function
+                dy_cfa = lambda QC: cfa_stoi * cfa_frho(QC)
+            else:
+                dy_cfa = lambda QC: 0.
+            
+            if isa(aer, Process):
+                aer_stoi = aer._stoichiometry
+                aer_frho = aer.rate_function
+                dy_aer = lambda QC: aer_stoi * aer_frho(QC)
+            else:
+                dy_aer = lambda QC: 0.
+                
+            def dy_dt(t, QC_ins, QC, dQC_ins):
+                dydt_mbr(QC_ins, QC, V, Qp, f_rtn, xarr, _dstate)
+                if hasexo: QC = np.append(QC, f_exovars(t))
+                _dstate[:-1] += r(QC) + dy_aer(QC) + dy_cfa(QC)
+                if gstrip: _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
+                _update_dstate()
+        self._ODE = dy_dt
+    
+    def _update_state(self):
+        arr = self._state
+        arr[arr < 1e-16] = 0.
+        arr[-1] = sum(ws.state[-1] for ws in self.ins)
+        for ws in self.outs:
+            if ws.state is None: 
+                ws.state = np.zeros_like(arr)
+                ws.dstate = np.zeros_like(arr)
+        flt, rtn = self.outs
+        Qp = self.pumped_flow
+        flt.state[:-1] = arr[:-1] * self._flt2in_conc_ratio
+        flt.state[-1] = arr[-1] - Qp
+        rtn.state[:-1] = arr[:-1]
+        rtn.state[-1] = Qp
+        
+    def _update_dstate(self):
+        arr = self._dstate
+        arr[-1] = sum(ws.dstate[-1] for ws in self.ins)
+        flt, rtn = self.outs
+        flt.dstate[:-1] = arr[:-1] * self._flt2in_conc_ratio
+        flt.dstate[-1] = arr[-1]
+        rtn.dstate[:-1] = arr[:-1]
+        rtn.dstate[-1] = 0
+
+
+#%%
+
+class PlugFlowMBR(PFR):
+    pass

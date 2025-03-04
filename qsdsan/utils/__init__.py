@@ -47,6 +47,7 @@ from . import (
     formatting,
     loading,
     dynamics,
+    indices,
     misc,
     model_eval,
     parsing,
@@ -62,6 +63,7 @@ from .construction import *
 from .formatting import *
 from .loading import *
 from .dynamics import *
+from .indices import *
 from .misc import *
 from .model_eval import *
 from .parsing import *
@@ -79,6 +81,7 @@ __all__ = (
     *formatting.__all__,
     *loading.__all__,
     *dynamics.__all__,
+    *indices.__all__,
     *model_eval.__all__,
     *misc.__all__,
     *parsing.__all__,
