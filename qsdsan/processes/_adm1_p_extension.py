@@ -781,7 +781,7 @@ def _rhos_adm1p(state_arr, params, h=None):
         if X_FeOH > 0:
             rhos_p[31] = k_mmp[6] * X_FeOH * po4 * Monod(X_FeOH, K_FeOH)    
         
-    if mmp_kinetics == 'Mbamba':
+    if mmp_kinetics in ('KM', 'Flores-Alsina'):
         S_Mg, S_Ca, X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3 = state_arr[28:35]
         rhos_p[25:30] = Mbamba_rhos(
             S_Ca, S_Mg, co3, nh4, po4, hpo4, 
@@ -930,15 +930,15 @@ class ADM1p(ADM1):
     
 
     _k_mmp = {
-        'Mbamba': (8.4, 240, 1.0, 72, 1.0, 1.0, 1.0),           # MATLAB, Mbamba
+        'KM': (8.4, 240, 1.0, 72, 1.0, 1.0, 1.0),           # MATLAB, Kazadi Mbamba 2015
         'Musvoto': (5.0, 300, 0.05, 150, 50, 1.0, 1.0),         # GPS-X, Musvoto 2000
-        # 'Flores-Alsina': (0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),  # Flores-Alsina 2016
+        'Flores-Alsina': (0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),  # Flores-Alsina 2016
         }
     
     _pKsp = {
-        'Mbamba': (8.5, 13.7, 5.9, 28.6, 7.6, 18.2, 26.5),      # MINTEQ (except newberyite), 35 C   
+        'KM': (8.5, 13.7, 5.9, 28.6, 7.6, 18.2, 26.5),      # MINTEQ (except newberyite), 35 C   
         'Musvoto': (6.45, 13.16, 5.8, 23, 7, 21, 26),           # GPS-X, Musvoto 2000
-        # 'Flores-Alsina': (8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76), # Flores-Alsina 2016
+        'Flores-Alsina': (8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76), # Flores-Alsina 2016
         }
     
     def __new__(cls, components=None, path=None, 
@@ -948,7 +948,8 @@ class ADM1p(ADM1):
                 f_ac_fa=0.7, f_pro_va=0.54, f_ac_va=0.31, f_ac_bu=0.8, f_ac_pro=0.57,
                 f_ac_PHA=0.4, f_bu_PHA=0.1, f_pro_PHA=0.4,
                 Y_su=0.1, Y_aa=0.08, Y_fa=0.06, Y_c4=0.06, Y_pro=0.04, Y_ac=0.05, Y_h2=0.06, Y_PO4=0.013,
-                q_dis=0.5, q_ch_hyd=10, q_pr_hyd=10, q_li_hyd=10,
+                # q_dis=0.5, q_ch_hyd=10, q_pr_hyd=10, q_li_hyd=10,
+                q_ch_hyd=0.3, q_pr_hyd=0.3, q_li_hyd=0.3,
                 k_su=30, k_aa=50, k_fa=6, k_c4=20, k_pro=13, k_ac=8, k_h2=35,
                 K_su=0.5, K_aa=0.3, K_fa=0.4, K_c4=0.2, K_pro=0.1, K_ac=0.15, K_h2=7e-6, 
                 K_A=4e-3, K_PP=0.01,
@@ -960,7 +961,7 @@ class ADM1p(ADM1):
                 Ka_dH=[55900, 51965, 17400, 14600, -7500, 3000, 15000, 0, 0, 0, 0],
                 kLa=200, K_H_base=[7.8e-4, 1.4e-3, 3.5e-2],
                 K_H_dH=[-4180, -14240, -19410],
-                mmp_kinetics='Mbamba', k_mmp=None, pKsp=None,
+                mmp_kinetics='KM', k_mmp=None, pKsp=None,
                 K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
                 K_AlOH=1.0e-6, K_FeOH=1.0e-6,  # kg/m3
                 **kwargs):
@@ -991,7 +992,7 @@ class ADM1p(ADM1):
         Ksp = np.array([10**(-p) for p in pKsp])
         i = 0
         for pd, xid in zip(mmp, cls._precipitates):
-            if mmp_kinetics == 'Mbamba': 
+            if mmp_kinetics in ('KM', 'Flores-Alsina'): 
                 for k,v in mmp_stoichio[xid].items():
                     m2m = mol_to_mass[cmps.index(k)]
                     Ksp[i] *= m2m**abs(v)   # mass in kg/m3
@@ -1137,7 +1138,7 @@ class ADM1p(ADM1):
         Ksp = []    
         for xid, p in zip(self._precipitates, ps):
             K = 10**(-p)
-            if self.mmp_kinectis == 'Mbamba': 
+            if self.mmp_kinectis in ('KM', 'Flores-Alsina'): 
                 for cmp, v in stoichio[xid]:
                     m2m = mol_to_mass[idxer(cmp)]
                     K *= m2m**abs(v)    # mass in kg/m3

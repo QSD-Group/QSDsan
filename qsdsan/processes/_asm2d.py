@@ -693,7 +693,7 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
         if X_FeOH > 0:
             rhos[25] = k_mmp[6] * X_FeOH * po4 * Monod(X_FeOH, K_FeOH)    
         
-    if mmp_kinetics == 'Mbamba':
+    if mmp_kinetics in ('KM', 'Flores-Alsina'):
         rhos[19:24] = Mbamba_rhos(
             S_Ca, S_Mg, co3, nh4, po4, hpo4, # mass concentrations
             X_CaCO3, X_struv, X_newb, X_ACP, X_MgCO3, 
@@ -710,7 +710,10 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
         rhos[19:24] = Musvoto_rhos(
             Ca, Mg, co3, nh4, po4, hpo4, k_mmp[:5], Ksp
             ) / mass2mol[19:24]     # convert from mol/L/d to mg/L/d
-        
+    
+    else:
+        rhos[19:24] = 0.
+    
     return rhos
 
 #%%
@@ -863,15 +866,15 @@ class mASM2d(CompiledProcesses):
     _precipitates = ('X_CaCO3', 'X_struv', 'X_newb', 'X_ACP', 'X_MgCO3', 'X_AlPO4', 'X_FePO4')
     
     _k_mmp = {
-        'Mbamba': (8.4, 240, 1.0, 72, 1.0, 1.0e-5, 1.0e-5),     # MATLAB, Mbamba
+        'KM': (8.4, 240, 1.0, 72, 1.0, 1.0e-5, 1.0e-5),     # MATLAB, Kazadi Mbamba 2015
         'Musvoto': (5.0, 300, 0.05, 150, 50, 1.0, 1.0),         # GPS-X, Musvoto 2000
-        # 'Flores-Alsina': (0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),  # Flores-Alsina 2016
+        'Flores-Alsina': (0.024, 120, 0.024, 72, 0.024, 0.024, 0.024),  # Flores-Alsina 2016
         }
     
     _pKsp = {
-        'Mbamba': (8.45, 13.5, 5.7, 29.1, 7.4, 18.2, 26.4),     # MINTEQ (except newberyite), 20 C   
+        'KM': (8.45, 13.5, 5.7, 29.1, 7.4, 18.2, 26.4),     # MINTEQ (except newberyite), 20 C   
         'Musvoto': (6.45, 13.16, 5.8, 23, 7, 21, 26),           # GPS-X, Musvoto 2000
-        # 'Flores-Alsina': (8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76), # Flores-Alsina 2016
+        'Flores-Alsina': (8.3, 13.6, 18.175, 28.92, 7.46, 18.2, 37.76), # Flores-Alsina 2016
         }
     
     gas_IDs = ['S_N2', 'S_IC']
@@ -895,7 +898,7 @@ class mASM2d(CompiledProcesses):
                 K_NH4_H=0.05, K_NH4_PAO=0.05, K_NH4_AUT=1.0, 
                 K_P_H=0.01, K_P_PAO=0.01, K_P_AUT=0.01, K_P_S=0.2, 
                 K_PP=0.01, K_MAX=0.34, K_IPP=0.02, K_PHA=0.01,
-                mmp_kinetics='Mbamba', k_mmp=None, pKsp=None,
+                mmp_kinetics=None, k_mmp=None, pKsp=None,
                 K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
                 K_AlOH=0.001, K_FeOH=0.001, 
                 pKa=(14, 9.25, 6.37, 10.32, 2.12, 7.21, 12.32, 4.76),
@@ -916,8 +919,12 @@ class mASM2d(CompiledProcesses):
                                        conserved_for=(), compile=False)
         mmp_stoichio = {}
         df = load_data(_mmp)
-        if k_mmp is None: k_mmp = cls._k_mmp[mmp_kinetics]
-        if pKsp is None: pKsp = cls._pKsp[mmp_kinetics]
+        if mmp_kinetics:
+            if k_mmp is None: k_mmp = cls._k_mmp[mmp_kinetics]
+            if pKsp is None: pKsp = cls._pKsp[mmp_kinetics]
+        else:
+            if k_mmp is None: k_mmp = cls._k_mmp['Musvoto']
+            if pKsp is None: pKsp = cls._pKsp['Musvoto']
         for i, j in df.iterrows():
             j.dropna(inplace=True)
             key = j.index[j == 1][0]
@@ -928,7 +935,7 @@ class mASM2d(CompiledProcesses):
         Ksp = np.array([10**(-p) for p in pKsp])     
         i = 0
         for pd, xid in zip(mmp, cls._precipitates):
-            if mmp_kinetics == 'Mbamba':
+            if mmp_kinetics in ('KM', 'Flores-Alsina'):
                 for k,v in mmp_stoichio[xid].items():
                     m2m = mol_to_mass[cmps.index(k)] * 1e3
                     Ksp[i] *= m2m**abs(v)   # mass in mg/L or g/m3
@@ -1013,7 +1020,7 @@ class mASM2d(CompiledProcesses):
         Ksp = []    
         for xid, p in zip(self._precipitates, ps):
             K = 10**(-p)
-            if self.mmp_kinetics == 'Mbamba':
+            if self.mmp_kinetics in ('KM', 'Flores-Alsina'):
                 for cmp, v in stoichio[xid]:
                     m2m = mol_to_mass[idxer(cmp)] * 1e3
                     K *= m2m**abs(v)    # mass in mg/L or g/m3
