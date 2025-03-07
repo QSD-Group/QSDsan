@@ -2565,7 +2565,7 @@ class EL_System(SanUnit, isabstract=True):
         system_replacement_cost = (
             self.membrane_filters_M / self.lifetime_membrane_filters_M +
             self.membrane_filters_size / self.lifetime_membrane_filters_size +
-            self.aerobic_basin / self.lifetime_aerobic_basin +
+            # self.aerobic_basin / self.lifetime_aerobic_basin +
             self.membrane_filters_air_diffuser / self.lifetime_membrane_filters_air_diffuser +
             self.membrane_filters_air_diffuser_chassis / self.lifetime_membrane_filters_air_diffuser_chassis +
             self.overflow_membrane2collection / self.lifetime_overflow_membrane2collection +
