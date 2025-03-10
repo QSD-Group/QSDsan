@@ -1153,6 +1153,13 @@ class CompiledProcesses(Processes):
             dct['_production_rates'] = None
         dct['_rate_function'] = None
 
+    def refresh_stoichiometry(self):
+        '''Refresh stoichiometric coefficients, for when `i_{}` properties of 
+        the CompiledComponents have been modified.'''
+        for proc, stch in zip(self.tuple, self._stoichiometry):
+            proc.reaction = proc.reaction     # refreshes stoichiometry for individual reaction 
+            stch[:] = proc._stoichiometry
+
     @property
     def parameters(self):
         '''[dict] All symbolic stoichiometric and kinetic parameters.'''
