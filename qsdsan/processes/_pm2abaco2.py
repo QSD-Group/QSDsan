@@ -16,19 +16,19 @@ from qsdsan import Component, Components, Process, Processes, CompiledProcesses
 from qsdsan.utils import ospath, data_path
 import numpy as np
 
-__all__ = ('create_pm2asm2d_cmps', 'PM2ASM2d')
+__all__ = ('create_pm2abaco2_cmps', 'PM2ABACO2')
 
-_path = ospath.join(data_path, 'process_data/_pm2asm2d_1.tsv')
-_path_2 = ospath.join(data_path, 'process_data/_pm2asm2d_2.tsv')
+_path = ospath.join(data_path, 'process_data/_pm2abaco2_1.tsv')
+_path_2 = ospath.join(data_path, 'process_data/_pm2abaco2_2.tsv')
 
 # _load_components = settings.get_default_chemicals
 
 #%%
 # =============================================================================
-# PM2ASM2d-specific components
+# PM2ABACO2-specific components
 # =============================================================================
 
-def create_pm2asm2d_cmps(set_thermo=True):
+def create_pm2abaco2_cmps(set_thermo=True):
     cmps = Components.load_default()
 
     # X_CHL (g Chl/m^3)
@@ -109,61 +109,31 @@ def create_pm2asm2d_cmps(set_thermo=True):
     X_P_ALG.i_C = X_P_ALG.i_N = X_P_ALG.i_COD = X_P_ALG.f_BOD5_COD = X_P_ALG.f_uBOD_COD = X_P_ALG.f_Vmass_Totmass = 0
     X_P_ALG.i_mass = 1
 
-    '''added from asm2d'''
-    # S_N2 (g N/m^3)
-    S_N2 = cmps.S_N2.copy('S_N2')
-    S_N2.description = ('Concentration of dinitrogen')
+    '''added from abaco2'''
+    # S_BSMO (g COD/m^3) - 'Concentration of biodegradable soluble organic matter' (integrated as S_G)
 
-    # S_ALK (g C/m^3)
-    S_ALK = cmps.S_CO3.copy('S_ALK')                      # measured as g C, not as mole HCO3-
-    S_ALK.description = ('Concentration of alkalinity')
+    # X_NIT (g COD/m^3) - copied from ASM2d X_AUT (C,N,P)
+    X_NIT = cmps.X_AOO.copy('X_NIT')
+    X_NIT.description = ('Concentration of nitrifying bacteria biomass')
+    
+    # X_HET (g COD/m^3) - copied from ASM2d X_H (C,N,P)
+    X_HET = cmps.X_OHO.copy('X_HET')
+    X_HET.description = ('Concentration of heterotrophic bacteria biomass')
 
-    # S_I (g COD/m^3)
-    S_I = cmps.S_U_E.copy('S_I')
-    S_I.description = ('Concentration of inert soluble organic material')
+    X_HET.i_N = X_NIT.i_N = 0.07
+    X_HET.i_P = X_NIT.i_P = 0.02
+    X_HET.i_mass = X_NIT.i_mass = 0.9
 
-    # X_I (g COD/m^3)
-    X_I = cmps.X_U_OHO_E.copy('X_I')
-    X_I.description = ('Concentration of inert particulate organic material')
-
-    # X_S (g COD/m^3)
-    X_S = cmps.X_B_Subst.copy('X_S')
-    X_S.description = ('Concentration of slowly biodegradable substrates')
-
-    # X_H (g COD/m^3)
-    X_H = cmps.X_OHO.copy('X_H')
-    X_H.description = ('Concentration of heterotrophic organisms (including denitrifer)')
-
-    # X_AUT (g COD/m^3)
-    X_AUT = cmps.X_AOO.copy('X_AUT')
-    X_AUT.description = ('Concentration of nitrifying organisms')
-
-    S_I.i_N = 0.01
-    # S_F.i_N = 0.03 # (S_F->S_G)
-    X_I.i_N = 0.02
-    X_S.i_N = 0.04
-    X_H.i_N = X_AUT.i_N = 0.07
-
-    S_I.i_P = 0.00
-    # S_F.i_P = 0.01 # (S_F->S_G)
-    X_I.i_P = 0.01
-    X_S.i_P = 0.01
-    X_H.i_P = X_AUT.i_P = 0.02
-
-    X_I.i_mass = 0.75
-    X_S.i_mass = 0.75
-    X_H.i_mass = X_AUT.i_mass = 0.9
-
-    cmps_pm2asm2d = Components([X_CHL, X_ALG, X_PG, X_TAG, S_CO2, S_A, S_G,
+    cmps_pm2abaco2 = Components([X_CHL, X_ALG, X_PG, X_TAG, S_CO2, S_A, S_G,
                            S_O2, S_NH, S_NO, S_P, X_N_ALG, X_P_ALG,
-                           S_N2, S_ALK, S_I, X_I, X_S, X_H, X_AUT, cmps.H2O])
+                           X_NIT, X_HET, cmps.H2O])
 
-    cmps_pm2asm2d.default_compile(ignore_inaccurate_molar_weight=True)
+    cmps_pm2abaco2.default_compile()
 
-    if set_thermo: settings.set_thermo(cmps_pm2asm2d)
-    return cmps_pm2asm2d
+    if set_thermo: settings.set_thermo(cmps_pm2abaco2)
+    return cmps_pm2abaco2
 
-# create_pm2asm2d_cmps()
+# create_pm2abaco2_cmps()
 
 #%%
 # =============================================================================
@@ -360,45 +330,49 @@ def storage(X_ALG, f_np, response, saturation, storage_rate):
     '''
     return storage_rate * saturation * (1 - f_np) * response * X_ALG
 
-'''added from asm2d'''
+'''added from abaco2'''
 
-# Hydrolysis (_p31, _p32, _p33)
-def hydrolysis(X_S, X_H, K_h, K_X):
+# Temperature model of ABACO-2
+def temperature_abaco(temp, temp_max, temp_min, temp_opt):
     '''
-    :param X_S: concentration of slowly biodegradable substrates
-    :param X_H: concentration of heterotrophic organisms (including denitrifer)
-    :param K_h: hydrolysis rate constant
-    :param K_X: slowly biodegradable substrate half saturation coefficient for hydrolysis
-    :return: shared parts of hydrolysis equations
+    :param temp: temperature (will be imported from input excel file) [K]
+    :param temp_max: maximum temperature [K]
+    :param temp_min: minimum temperature [K]
+    :param temp_opt: optimum temperature [K]
+    :return: temperature component of overall growth equation [unitless]
     '''
-    return K_h * (X_S/X_H) / (K_X + X_S/X_H) * X_H
+    return ((temp - temp_max) * (temp - temp_min)**2)/((temp_opt - temp_min)*((temp_opt - temp_min) * (temp - temp_opt) - (temp_opt - temp_max) * (temp_opt + temp_min - 2 * temp)))
 
-# Growth in ASM2d (_p34, _p35, _p36, _p37, _p40)
-def growth_asm2d(S_NH, S_P, S_ALK, mu, X, K_NH4, K_P, K_ALK):
+# pH model of ABACO-2
+def ph_abaco(ph, ph_max, ph_min, ph_opt):
     '''
-    :param S_NH: concentration of dissolved ammonium
-    :param S_P: concentration of dissolved phosphorus
-    :param S_ALK: concentration of alkalinity
-    :param mu: maximum specific growth rate (mu_H or mu_AUT)
-    :param X: concentration of biomass (X_H or X_AUT)
-    :param K_NH4: ammonium (nutrient) half saturation coefficient (K_NH4_H or K_NH4_AUT)
-    :param K_P: phosphorus (nutrient) half saturation coefficient (K_P_H or K_P_AUT)
-    :param K_ALK: alkalinity half saturation coefficient  (K_ALK_H or K_ALK_AUT)
-    :return: shared parts of growth-related equations
+    :param ph: pH [unitless]
+    :param ph_max: maximum pH [unitless]
+    :param ph_min: minimum pH [unitless]
+    :param ph_opt: optimum pH [unitless]
+    :return: pH component of overall growth equation [unitless]
     '''
-    return mu * S_NH/(K_NH4+S_NH) * S_P/(K_P+S_P) * S_ALK/(K_ALK + S_ALK) * X
+    return ((ph - ph_min) * (ph - ph_max)**2)/((ph_opt - ph_min)*((ph_opt - ph_min) * (ph - ph_opt) - (ph_opt - ph_max) * (ph_opt + ph_min - 2 * ph)))
 
-def rhos_pm2asm2d(state_arr, params):
+# Monod inhibition model of ABACO-2
+def oxygen_ihibition_abaco(substrate, half_sat_const, half_sat_const_inhibit):
+    '''
+    :param substrate: S_O2 [g O2/m^3]
+    :param half_sat_const: K_S_O2_NIT [g O2/m^3]
+    :param half_sat_const_inhibit: K_I_O2_NIT [g O2/m^3]
+    :return: rate [unitless]
+    '''    
+    return (substrate / (half_sat_const + substrate) * (1 + substrate / half_sat_const_inhibit)) 
+
+def rhos_pm2abaco2(state_arr, params):
 
     # extract values of state variables
-    c_arr = state_arr[:21]
-    temp = state_arr[22]
-    light = state_arr[23]     # imported from input file assumed
+    c_arr = state_arr[:16]
+    temp = state_arr[17]
+    light = state_arr[18]     # imported from input file assumed
+    ph = state_arr[19]
 
-    # Q = state_arr[21]                             # Flow rate
-    # t = state_arr[22]                             # time
-
-    X_CHL, X_ALG, X_PG, X_TAG, S_CO2, S_A, S_G, S_O2, S_NH, S_NO, S_P, X_N_ALG, X_P_ALG, S_N2, S_ALK, S_I, X_I, X_S, X_H, X_AUT, H2O = c_arr
+    X_CHL, X_ALG, X_PG, X_TAG, S_CO2, S_A, S_G, S_O2, S_NH, S_NO, S_P, X_N_ALG, X_P_ALG, X_NIT, X_HET, H2O = c_arr
 
     # extract values of parameters
     cmps = params['cmps']
@@ -445,36 +419,36 @@ def rhos_pm2asm2d(state_arr, params):
     Y_X_ALG_HET_GLU = params['Y_X_ALG_HET_GLU']
     n_dark = params['n_dark']
 
-    '''added from asm2d'''
-    # f_SI = params['f_SI']
-    # Y_H = params['Y_H']
-    # f_XI_H = params['f_XI_H']
-    # Y_A = params['Y_A']
-    # f_XI_AUT = params['f_XI_AUT']
-    K_h = params['K_h']
-    eta_NO3 = params['eta_NO3']
-    eta_fe = params['eta_fe']
-    K_O2 = params['K_O2']
-    K_NO3 = params['K_NO3']
-    K_X = params['K_X']
-    mu_H = params['mu_H']
-    q_fe = params['q_fe']
-    eta_NO3_H = params['eta_NO3_H']
-    b_H = params['b_H']
-    K_O2_H = params['K_O2_H']
-    K_F_H = params['K_F_H']                 # K_F overlaps with PM2 -> change into K_F_H
-    K_fe = params['K_fe']
-    K_A_H = params['K_A_H']
-    K_NO3_H = params['K_NO3_H']
-    K_NH4_H = params['K_NH4_H']
-    K_P_H = params['K_P_H']
-    K_ALK_H = params['K_ALK_H']
-    mu_AUT = params['mu_AUT']
-    b_AUT = params['b_AUT']
-    K_O2_AUT = params['K_O2_AUT']
-    K_NH4_AUT = params['K_NH4_AUT']
-    K_ALK_AUT = params['K_ALK_AUT']
-    K_P_AUT = params['K_P_AUT']
+    '''added from abaco2'''
+    # Y_NH_NIT = params['Y_NH_NIT']
+    # Y_NO_NIT = params['Y_NO_NIT']
+    # Y_NH_HET = params['Y_NH_HET']
+    # Y_G = params['Y_G']
+    # Y_O2_NIT = params['Y_O2_NIT']
+    # Y_O2_HET = params['Y_O2_HET']
+    # f_BAC = params['f_BAC']   
+    mu_max_NIT = params['mu_max_NIT']
+    mu_max_HET = params['mu_max_HET'] 
+    temp_min_NIT = params['temp_min_NIT']
+    temp_max_NIT = params['temp_max_NIT']
+    temp_opt_NIT = params['temp_opt_NIT']
+    temp_min_HET = params['temp_min_HET']
+    temp_max_HET = params['temp_max_HET']
+    temp_opt_HET = params['temp_opt_HET']   
+    ph_min_NIT = params['ph_min_NIT']
+    ph_max_NIT = params['ph_max_NIT']
+    ph_opt_NIT = params['ph_opt_NIT']
+    ph_min_HET = params['ph_min_HET']
+    ph_max_HET = params['ph_max_HET']
+    ph_opt_HET = params['ph_opt_HET']    
+    K_S_O2_NIT = params['K_S_O2_NIT']
+    K_I_O2_NIT = params['K_I_O2_NIT']
+    K_S_O2_HET = params['K_S_O2_HET']
+    K_S_NH_NIT = params['K_S_NH_NIT']
+    K_S_NH_HET = params['K_S_NH_HET']
+    K_S_G_HET = params['K_S_G_HET']    
+    theta_NIT = params['theta_NIT']
+    theta_HET = params['theta_HET']
 
 # intermediate variables
     f_CH = ratio(X_PG, X_ALG, 0, f_CH_max)
@@ -509,7 +483,7 @@ def rhos_pm2asm2d(state_arr, params):
     # light = calc_irrad(t)
 
     # calculate kinetic rate values
-    rhos = np.empty(41)
+    rhos = np.empty(34)
 
     rhos[0] = photoadaptation(i_avg, X_CHL, X_carbon, I_n, k_gamma)
 
@@ -547,28 +521,26 @@ def rhos_pm2asm2d(state_arr, params):
     rhos[23] = storage(X_ALG, f_np, glucose_response, f_sat_CH, q_CH)
     rhos[24] = storage(X_ALG, f_np, glucose_response, f_sat_LI, q_LI) * (f_CH / f_CH_max)
 
-    rhos[30] = hydrolysis(X_S, X_H, K_h, K_X) * monod(S_O2, K_O2, 1)
-    rhos[31] = hydrolysis(X_S, X_H, K_h, K_X) * eta_NO3 * monod(K_O2, S_O2, 1) * monod(S_NO, K_NO3, 1)
-    rhos[32] = hydrolysis(X_S, X_H, K_h, K_X) * eta_fe * monod(K_O2, S_O2, 1) * monod(K_NO3, S_NO, 1)
+    '''added from abaco2'''
 
-    rhos[33] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * monod(S_O2, K_O2_H, 1) * monod(S_G, K_F_H, 1) * monod(S_G, S_A, 1)
-    rhos[34] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * monod(S_O2, K_O2_H, 1) * monod(S_A, K_A_H, 1) * monod(S_A, S_G, 1)
-    rhos[35] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * eta_NO3_H * monod(K_O2_H, S_O2, 1) * monod(S_NO, K_NO3_H, 1) * monod(S_G, K_F_H, 1) * monod(S_G, S_A, 1)
-    rhos[36] = growth_asm2d(S_NH, S_P, S_ALK, mu_H, X_H, K_NH4_H, K_P_H, K_ALK_H) * eta_NO3_H * monod(K_O2_H, S_O2, 1) * monod(S_NO, K_NO3_H, 1) * monod(S_A, K_A_H, 1) * monod(S_A, S_G, 1)
-    rhos[37] = q_fe * monod(K_O2_H, S_O2, 1) * monod(K_NO3_H, S_NO, 1) * monod(S_G, K_fe, 1) * monod(S_ALK, K_ALK_H, 1) * X_H
-    rhos[38] = b_H * X_H
+    rhos[30] = mu_max_NIT * temperature_abaco(temp, temp_max_NIT, temp_min_NIT, temp_opt_NIT) \
+        * ph_abaco(ph, ph_max_NIT, ph_min_NIT, ph_opt_NIT) * oxygen_ihibition_abaco(S_O2, K_S_O2_NIT, K_I_O2_NIT) \
+        * monod(S_NH, K_S_NH_NIT, 1) * X_NIT
+    rhos[31] = theta_NIT * 0.05 * mu_max_NIT * X_NIT
 
-    rhos[39] = growth_asm2d(S_NH, S_P, S_ALK, mu_AUT, X_AUT, K_NH4_AUT, K_P_AUT, K_ALK_AUT) * monod(S_O2, K_O2_AUT, 1)
-    rhos[40] = b_AUT * X_AUT
+    rhos[32] = mu_max_HET * temperature_abaco(temp, temp_max_HET, temp_min_HET, temp_opt_HET) \
+        * ph_abaco(ph, ph_max_HET, ph_min_HET, ph_opt_HET) * monod(S_O2, K_S_O2_HET, 1) \
+        * monod(S_NH, K_S_NH_HET, 1) * monod(S_G, K_S_G_HET, 1) * X_HET    
+    rhos[33] = theta_HET * 0.2 * mu_max_HET * X_HET
 
     return rhos
 
 #%%
 # =============================================================================
-# PM2ASM2d class
+# PM2ABACO2 class
 # =============================================================================
 
-class PM2ASM2d(CompiledProcesses):
+class PM2ABACO2(CompiledProcesses):
     '''
     Parameters
     ----------
@@ -712,94 +684,95 @@ class PM2ASM2d(CompiledProcesses):
               The default is 0.317.
     n_dark: float, optional
               Dark growth reduction factor, in [unitless]
-              The default is 0.7.              
-    f_SI : float, optional
-              Production of soluble inerts in hydrolysis, in [g COD/g COD]. 
-              The default is 0.0.
-    Y_H : float, optional
-              Heterotrophic yield coefficient, in[g COD/g COD]. 
-              The default is 0.625.
-    f_XI_H : float, optional
-              Fraction of inert COD generated in heterotrophic biomass lysis, in [g COD/g COD]. 
-              The default is 0.1.
-    Y_A : float, optional
-              Autotrophic yield, in [g COD/g N]. 
-              The default is 0.24.
-    f_XI_AUT : float, optional
-              Fraction of inert COD generated in autotrophic biomass lysis, in [g COD/g COD]. 
-              The default is 0.1.    
-    K_h : float, optional
-              Hydrolysis rate constant, in [d^(-1)]. 
-              The default is 3.0.
-    eta_NO3 : float, optional
-              Reduction factor for anoxic hydrolysis, dimensionless. 
-              The default is 0.6.
-    eta_fe : float, optional
-              Anaerobic hydrolysis reduction factor, dimensionless. 
-              The default is 0.4.
-    K_O2 : float, optional
-              O2 half saturation coefficient for hydrolysis, in [g O2/m^3]. 
-              The default is 0.2.
-    K_NO3 : float, optional
-              Nitrate half saturation coefficient for hydrolysis, in [g N/m^3].
-              The default is 0.5.
-    K_X : float, optional
-              Slowly biodegradable substrate half saturation coefficient for hydrolysis, in [g COD/g COD]. 
-              The default is 0.1.
-    mu_H : float, optional
-              Heterotrophic maximum specific growth rate, in [d^(-1)]. 
-              The default is 6.0.
-    q_fe : float, optional
-              Fermentation maximum rate, in [d^(-1)]. 
-              The default is 3.0.
-    eta_NO3_H : float, optional
-              Reduction factor for anoxic heterotrophic growth, dimensionless.
-              The default is 0.8.
-    b_H : float, optional
-              Lysis and decay rate constant, in [d^(-1)]. 
-              The default is 0.4.
-    K_O2_H : float, optional
-              O2 half saturation coefficient for heterotrophs, in [g O2/m^3].
-              The default is 0.2.
-    K_F_H : float, optional    
-              Fermentable substrate half saturation coefficient for heterotrophic growth (K_F in ASM2d), in [g COD/m^3]. 
-              The default is 4.0.
-    K_fe : float, optional
-              Fermentable substrate half saturation coefficient for fermentation, in [g COD/m^3]. 
-              The default is 4.0.
-    K_A_H : float, optional
-              VFA half saturation coefficient for heterotrophs, in [g COD/m^3].
-              The default is 4.0.
-    K_NO3_H : float, optional
-              Nitrate half saturation coefficient for heterotrophs, in [g N/m^3].
-              The default is 0.5.
-    K_NH4_H : float, optional
-              Ammonium (nutrient) half saturation coefficient for heterotrophs, in [g N/m^3].
-              The default is 0.05.
-    K_P_H : float, optional
-              Phosphorus (nutrient) half saturation coefficient for heterotrophs, in [g P/m^3]. 
-              The default is 0.01.
-    K_ALK_H : float, optional
-              Alkalinity half saturation coefficient for heterotrophs, in [mol(HCO3-)/m^3]. (user input unit, converted as C)
-              The default is 0.1.          
-    mu_AUT : float, optional
-              Autotrophic maximum specific growth rate, in [d^(-1)]. 
-              The default is 1.0.
-    b_AUT : float, optional
-              Autotrophic decay rate, in [d^(-1)]. 
-              The default is 0.15.
-    K_O2_AUT : float, optional
-              O2 half saturation coefficient for autotrophs, in [g O2/m^3].
-              The default is 0.5.
-    K_NH4_AUT : float, optional
-              Ammonium (nutrient) half saturation coefficient for autotrophs, in [g N/m^3].
-              The default is 1.0.
-    K_ALK_AUT : float, optional
-              Alkalinity half saturation coefficient for autotrophs, in [mol(HCO3-)/m^3]. (user input unit, converted as C)
-              The default is 0.5.
-    K_P_AUT : float, optional
-              Phosphorus (nutrient) half saturation coefficient for autotrophs, in [g P/m^3].
-              The default is 0.01.
+              The default is 0.7.       
+    
+    Y_NH_NIT: float, optional
+              Nitrifying bacteria yield coefficient (ammonium consumption), in [g COD/g N]
+              The default is 0.18.       
+    Y_NO_NIT: float, optional
+              Nitrifying bacteria yield coefficient (nitrate generation), in [g COD/g N]
+              The default is 0.19.       
+    Y_NH_HET: float, optional
+              Heterotrophic bacteria yield coefficient (ammonium consumption), in [g COD/g N]
+              The default is 9.09.       
+    Y_G: float, optional
+              Heterotrophic bacteria yield coefficient (organic consumption), in [g COD/g COD]
+              The default is 0.45.       
+    Y_O2_NIT: float, optional
+              Nitrifying bacteria yield coefficient (oxygen consumption), in [g COD/g O2]
+              The default is 0.09.       
+    Y_O2_HET: float, optional
+              Heterotrophic bacteria yield coefficient (oxygen consumption), in [g COD/g O2]
+              The default is 2.78.        
+    f_BAC: float, optional
+              Fraction of inert COD generated in bacterial biomass lysis, in [g COD/g COD]. 
+              The default is 0.1.       
+    mu_max_NIT: float, optional
+              Maximum nitrifying bacteria growth rate, in [d^(-1)]
+              The default is 0.75.       
+    mu_max_HET: float, optional
+              Maximum heterotrophic bacteria growth rate, in [d^(-1)]
+              The default is 3.4.       
+    temp_min_NIT: float, optional
+              Minimum temperature for nitrifying bacteria, in [K]
+              The default is 265.           
+    temp_max_NIT: float, optional
+              Maximum temperature for nitrifying bacteria, in [K]
+              The default is 311.       
+    temp_opt_NIT: float, optional
+              Optimum temperature for nitrifying bacteria, in [K]
+              The default is 293.           
+    temp_min_HET: float, optional
+              Minimum temperature for heterotrophic bacteria, in [K]
+              The default is 270.       
+    temp_max_HET: float, optional
+              Maximum temperature for heterotrophic bacteria, in [K]
+              The default is 315.       
+    temp_opt_HET: float, optional
+              Optimum temperature for heterotrophic bacteria, in [K]
+              The default is 298.       
+    ph_min_NIT: float, optional
+              Minimum pH for nitrifying bacteria, in [unitless]
+              The default is 2.       
+    ph_max_NIT: float, optional
+              Maximum pH for nitrifying bacteria, in [unitless]
+              The default is 13.4.       
+    ph_opt_NIT: float, optional
+              Optimum pH for nitrifying bacteria, in [unitless]
+              The default is 9.       
+    ph_min_HET: float, optional
+              Minimum pH for heterotrophic bacteria, in [unitless]
+              The default is 6.       
+    ph_max_HET: float, optional
+              Maximum pH for heterotrophic bacteria, in [unitless]
+              The default is 12.       
+    ph_opt_HET: float, optional
+              Optimum pH for heterotrophic bacteria, in [unitless]
+              The default is 9.       
+    K_S_O2_NIT: float, optional
+              Oxygen half-saturation constant for nitrifying bacteria, in [g O2/m^3]
+              The default is 1.08.       
+    K_I_O2_NIT: float, optional
+              Oxygen inhibition constant for nitrifying bacteria, in [g O2/m^3]
+              The default is 104.9.       
+    K_S_O2_HET: float, optional
+              Oxygen half-saturation constant for heterotrophic bacteria, in [g O2/m^3]
+              The default is 1.98.       
+    K_S_NH_NIT: float, optional
+              Ammonium half-saturation constant for nitrifying bacteria, in [g N/m^3]
+              The default is 1.0.       
+    K_S_NH_HET: float, optional
+              Ammonium half-saturation constant for heterotrophic bacteria, in [g N/m^3]
+              The default is 0.5.       
+    K_S_G_HET: float, optional
+              Biodegradable soluble organic matter (BSMO) half-saturation constant for heterotrophic bacteria, in [g COD/m^3]
+              The default is 0.32.       
+    theta_NIT: float, optional
+              Coefficient dependent on the temperature for nitrifying bacteria, in [K]
+              The default is 274.1.       
+    theta_HET: float, optional
+              Coefficient dependent on the temperature for heterotrophic bacteria, in [K]
+              The default is 274.07.       
     path : str, optional
               Alternative file path for the Petersen matrix.
               The default is None.
@@ -807,30 +780,69 @@ class PM2ASM2d(CompiledProcesses):
     Examples
     --------
     >>> from qsdsan import processes as pc
-    >>> cmps = pc.create_pm2asm2d_cmps()
-    >>> pm2asm2d = pc.PM2ASM2d()
-    >>> pm2asm2d.show()
-    PM2ASM2d([photoadaptation, ammonium_uptake, nitrate_uptake_pho, nitrate_uptake_ace, nitrate_uptake_glu, phosphorus_uptake,
+    >>> cmps = pc.create_pm2abaco2_cmps()
+    >>> pm2abaco2 = pc.PM2ABACO2()
+    >>> pm2abaco2.show()
+    PM2ABACO2([photoadaptation, ammonium_uptake, nitrate_uptake_pho, nitrate_uptake_ace, nitrate_uptake_glu, phosphorus_uptake,
          growth_pho, carbohydrate_storage_pho, lipid_storage_pho, carbohydrate_growth_pho, lipid_growth_pho,
          carbohydrate_maintenance_pho, lipid_maintenance_pho, endogenous_respiration_pho,
          growth_ace, carbohydrate_storage_ace, lipid_storage_ace, carbohydrate_growth_ace, lipid_growth_ace,
          carbohydrate_maintenance_ace, lipid_maintenance_ace, endogenous_respiration_ace,
          growth_glu, carbohydrate_storage_glu, lipid_storage_glu, carbohydrate_growth_glu, lipid_growth_glu,
          carbohydrate_maintenance_glu, lipid_maintenance_glu, endogenous_respiration_glu,
-         aero_hydrolysis, anox_hydrolysis, anae_hydrolysis,
-         hetero_growth_S_F, hetero_growth_S_A, denitri_S_F, denitri_S_A, ferment, hetero_lysis,
-         auto_aero_growth, auto_lysis])
+         nitri_growth, nitri_decay, hetero_growth, hetero_decay])
     
     References
     ----------
-    .. [1] Henze, M.; Gujer, W.; Mino, T.; Loosdrecht, M. van. Activated Sludge
-        Models: ASM1, ASM2, ASM2d and ASM3; IWA task group on mathematical modelling
-        for design and operation of biological wastewater treatment, Ed.; IWA
-        Publishing: London, 2000.
-    .. [2] Rieger, L.; Gillot, S.; Langergraber, G.; Ohtsuki, T.; Shaw, A.; Takács,
-        I.; Winkler, S. Guidelines for Using Activated Sludge Models; IWA Publishing:
-        London, New York, 2012; Vol. 11.
-        https://doi.org/10.2166/9781780401164.    
+    .. [1] Nordio, R.; Rodriguez-Miranda, E.; Casagli, F.; Sanchez-Zurano, A.; Guzman, J. L.; Acien, G.
+        ABACO-2: a comprehensive model for microalgae-bacteria consortia validated outdoor at pilot-scale, 
+        Water Research 248 (2024) 120837.
+        https://doi.org/10.1016/j.watres.2023.120837
+    .. [2] Sanchez-Zurano, A.; Rodriguez-Miranda, E.; Guzman, J. L.; Acien-Fernandez, F. G.; 
+        Fernandez-Sevilla, J. M.; Grima, E. M. 
+        ABACO: a new model of microalgae-bacteria consortia for biological treatment of wastewaters, 
+        Applied Sciences 11 (2021) 998.
+        https://doi.org/10.3390/app11030998
+        
+    >>> # Evaluate the rate of reaction at initial condition
+    >>> import numpy as np
+    >>> init_cond = {
+    ...     'X_CHL':2.81,
+    ...     'X_ALG':561.57,
+    ...     'X_PG':13.74,
+    ...     'X_TAG':62.22,
+    ...     'S_CO2':30.0,
+    ...     'S_A':5.0,
+    ...     'S_G':5.0,
+    ...     'S_O2':20.36,
+    ...     'S_NH':25,
+    ...     'S_NO':9.30,
+    ...     'S_P':0.383,
+    ...     'X_N_ALG':3.62,
+    ...     'X_P_ALG':12.60,
+    ...     'X_NIT':20.0,
+    ...     'X_HET':30.0,
+    ...     }
+    
+    >>> state_arr = np.append(cmps.kwarray(init_cond), [1000, 298, 112.6, 7])   # flowrate, temperature,irradiance, & pH
+    >>> pm2abaco2.rate_function(state_arr)
+    array([ 4.437e+00,  1.420e+02,  5.621e-01,  5.621e-01,  5.621e-01,
+            2.480e+00,  3.043e+02,  1.935e+02,  8.856e+00,  2.474e+01,
+            7.904e+01,  2.093e+00,  7.992e+00,  6.742e+01,  1.861e+02,
+            1.109e+02,  5.076e+00,  1.513e+01,  3.267e+01,  2.455e+00,
+            9.375e+00,  4.579e+01,  1.861e+02,  1.109e+02,  5.076e+00,
+            1.513e+01,  3.269e+01,  2.456e+00,  9.378e+00,  4.582e+01,
+           -1.635e+01,  2.056e+02, -2.379e+02,  5.591e+03])
+
+    >>> pm2abaco2.set_parameters(I_opt = 200) # Change optimal irradiance
+    >>> pm2abaco2.rate_function(state_arr)
+    array([ 4.437e+00,  1.420e+02,  5.621e-01,  5.621e-01,  5.621e-01,
+            2.480e+00,  2.994e+02,  2.100e+02,  9.609e+00,  3.417e+01,
+            1.092e+02,  2.093e+00,  7.992e+00,  6.742e+01,  1.719e+02,
+            1.109e+02,  5.076e+00,  1.962e+01,  4.237e+01,  2.455e+00,
+            9.375e+00,  4.579e+01,  1.719e+02,  1.109e+02,  5.076e+00,
+            1.962e+01,  4.240e+01,  2.456e+00,  9.378e+00,  4.582e+01,
+           -1.635e+01,  2.056e+02, -2.379e+02,  5.591e+03])
     '''
 
     _shared_params = ('Y_CH_PHO', 'Y_LI_PHO', 'Y_X_ALG_PHO',
@@ -838,17 +850,18 @@ class PM2ASM2d(CompiledProcesses):
                'Y_CH_NR_HET_GLU', 'Y_LI_NR_HET_GLU', 'Y_X_ALG_HET_GLU')
 
     _stoichio_params = ('Y_CH_ND_HET_ACE', 'Y_LI_ND_HET_ACE', 'Y_CH_ND_HET_GLU', 'Y_LI_ND_HET_GLU',
-                        'f_SI', 'Y_H', 'f_XI_H', 'Y_A', 'f_XI_AUT',
+                        'Y_NH_NIT', 'Y_NO_NIT', 'Y_NH_HET', 'Y_G', 'Y_O2_NIT', 'Y_O2_HET', 'f_BAC',
                         *_shared_params)
 
     _kinetic_params = ('a_c', 'I_n', 'arr_a', 'arr_e', 'beta_1', 'beta_2', 'b_reactor', 'I_opt', 'k_gamma',
                        'K_N', 'K_P', 'K_A', 'K_G', 'rho', 'K_STO', 'f_CH_max', 'f_LI_max', 'm_ATP', 'mu_max',
                        'q_CH', 'q_LI', 'Q_N_max', 'Q_N_min', 'Q_P_max', 'Q_P_min', 'V_NH', 'V_NO', 'V_P', 'exponent',
                        'Y_ATP_PHO', 'Y_ATP_HET_ACE', 'Y_ATP_HET_GLU', *_shared_params, 'n_dark', 'cmps',
-                       'K_h', 'eta_NO3', 'eta_fe', 'K_O2', 'K_NO3', 'K_X', 'mu_H', 'q_fe', 'eta_NO3_H', 
-                       'b_H', 'K_O2_H', 'K_F_H', 'K_fe', 'K_A_H', 'K_NO3_H', 'K_NH4_H', 'K_P_H', 
-                       'K_ALK_H', 'mu_AUT', 'b_AUT', 'K_O2_AUT', 'K_NH4_AUT', 'K_ALK_AUT', 'K_P_AUT')
-
+                       'mu_max_NIT', 'mu_max_HET', 'temp_min_NIT', 'temp_max_NIT', 'temp_opt_NIT',
+                       'temp_min_HET', 'temp_max_HET', 'temp_opt_HET', 'ph_min_NIT', 'ph_max_NIT', 'ph_opt_NIT',
+                       'ph_min_HET', 'ph_max_HET', 'ph_opt_HET', 'K_S_O2_NIT', 'K_I_O2_NIT', 'K_S_O2_HET',
+                       'K_S_NH_NIT', 'K_S_NH_HET', 'K_S_G_HET', 'theta_NIT', 'theta_HET')
+                
     def __new__(cls, components=None,
                 a_c=0.049, I_n=250, arr_a=1.8e10, arr_e=6842, beta_1=2.90, beta_2=3.50, b_reactor=0.03, I_opt=300, k_gamma=1e-5,
                 K_N=0.1, K_P=1.0, K_A=6.3, K_G=6.3, rho=1.186, K_STO=1.566,
@@ -859,11 +872,11 @@ class PM2ASM2d(CompiledProcesses):
                 Y_LI_NR_HET_ACE=1.105, Y_LI_ND_HET_ACE=0.713, Y_X_ALG_HET_ACE=0.216,
                 Y_ATP_HET_GLU=58.114, Y_CH_NR_HET_GLU=0.917, Y_CH_ND_HET_GLU=0.880,
                 Y_LI_NR_HET_GLU=1.620, Y_LI_ND_HET_GLU=1.046, Y_X_ALG_HET_GLU=0.317, n_dark=0.7,
-                f_SI=0.0, Y_H=0.625, f_XI_H=0.1, Y_A=0.24, f_XI_AUT=0.1,
-                K_h=3.0, eta_NO3=0.6, eta_fe=0.4, K_O2=0.2, K_NO3=0.5, K_X=0.1,
-                mu_H=6.0, q_fe=3.0, eta_NO3_H=0.8, b_H=0.4, K_O2_H=0.2, K_F_H=4.0,
-                K_fe=4.0, K_A_H=4.0, K_NO3_H=0.5, K_NH4_H=0.05, K_P_H=0.01, K_ALK_H=0.1,
-                mu_AUT=1.0, b_AUT=0.15, K_O2_AUT=0.5, K_NH4_AUT=1.0, K_ALK_AUT=0.5, K_P_AUT=0.01,
+                Y_NH_NIT=0.18, Y_NO_NIT=0.19, Y_NH_HET=9.09, Y_G=0.45, Y_O2_NIT=0.09, Y_O2_HET=2.78, f_BAC=0.1,
+                mu_max_NIT=0.75, mu_max_HET=3.4, temp_min_NIT=265, temp_max_NIT=311, temp_opt_NIT=293,
+                temp_min_HET=270, temp_max_HET=315, temp_opt_HET=298, ph_min_NIT=2, ph_max_NIT=13.4, ph_opt_NIT=9,
+                ph_min_HET=6, ph_max_HET=12, ph_opt_HET=9, K_S_O2_NIT=1.08, K_I_O2_NIT=104.9, K_S_O2_HET=1.98,
+                K_S_NH_NIT=1.0, K_S_NH_HET=0.5, K_S_G_HET=0.32, theta_NIT=274.1, theta_HET=274.07,
                 path=None, **kwargs):
 
         if not path: path = _path
@@ -874,12 +887,12 @@ class PM2ASM2d(CompiledProcesses):
                                         parameters=cls._stoichio_params,
                                         compile=False)
         
-        asm2d_processes = Processes.load_from_file(_path_2,
+        abaco2_processes = Processes.load_from_file(_path_2,
                                         components=components,
-                                        conserved_for=('COD', 'N', 'P', 'charge'),
+                                        conserved_for=('COD', 'N', 'P'),
                                         parameters=cls._stoichio_params,
                                         compile=False)
-        self.extend(asm2d_processes)
+        self.extend(abaco2_processes)
 
         if path == _path:
             _p3 = Process('nitrate_uptake_pho',
@@ -906,12 +919,12 @@ class PM2ASM2d(CompiledProcesses):
 
         self.compile(to_class=cls)
 
-        self.set_rate_function(rhos_pm2asm2d)
+        self.set_rate_function(rhos_pm2abaco2)
         shared_values = (Y_CH_PHO, Y_LI_PHO, Y_X_ALG_PHO,
                          Y_CH_NR_HET_ACE, Y_LI_NR_HET_ACE, Y_X_ALG_HET_ACE,
                          Y_CH_NR_HET_GLU, Y_LI_NR_HET_GLU, Y_X_ALG_HET_GLU)
         stoichio_values = (Y_CH_ND_HET_ACE, Y_LI_ND_HET_ACE, Y_CH_ND_HET_GLU, Y_LI_ND_HET_GLU,
-                           f_SI, Y_H, f_XI_H, Y_A, f_XI_AUT,
+                           Y_NH_NIT, Y_NO_NIT, Y_NH_HET, Y_G, Y_O2_NIT, Y_O2_HET, f_BAC,
                            *shared_values)       
         Q_N_min = max(self.Th_Q_N_min, Q_N_min)
         Q_P_min = max(self.Th_Q_P_min, Q_P_min)
@@ -920,11 +933,11 @@ class PM2ASM2d(CompiledProcesses):
                           q_CH, q_LI, Q_N_max, Q_N_min, Q_P_max, Q_P_min, V_NH, V_NO, V_P, exponent,
                           Y_ATP_PHO, Y_ATP_HET_ACE, Y_ATP_HET_GLU,
                           *shared_values, n_dark, self._components,
-                          K_h, eta_NO3, eta_fe, K_O2, K_NO3, K_X, mu_H, q_fe, eta_NO3_H, 
-                          b_H, K_O2_H, K_F_H, K_fe, K_A_H, K_NO3_H, K_NH4_H, K_P_H, 
-                          K_ALK_H*12, mu_AUT, b_AUT, K_O2_AUT, K_NH4_AUT, K_ALK_AUT*12, K_P_AUT,
+                          mu_max_NIT, mu_max_HET, temp_min_NIT, temp_max_NIT, temp_opt_NIT,
+                          temp_min_HET, temp_max_HET, temp_opt_HET, ph_min_NIT, ph_max_NIT, ph_opt_NIT,
+                          ph_min_HET, ph_max_HET, ph_opt_HET, K_S_O2_NIT, K_I_O2_NIT, K_S_O2_HET,
+                          K_S_NH_NIT, K_S_NH_HET, K_S_G_HET, theta_NIT, theta_HET,
                           )
-
         dct = self.__dict__
         dct.update(kwargs)
         dct['_parameters'] = dict(zip(cls._stoichio_params, stoichio_values))
@@ -946,7 +959,7 @@ class PM2ASM2d(CompiledProcesses):
             if parameters['Q_P_min'] < self.Th_Q_P_min:
                 raise ValueError(f'Value for Q_P_min must not be less than the '
                                  f'theoretical minimum {self.Th_Q_P_min}')
-        self.rate_function.set_param(**parameters)
+        self.rate_function.set_params(**parameters)
 
     @property
     def Th_Q_N_min(self):
