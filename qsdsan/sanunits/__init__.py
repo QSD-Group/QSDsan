@@ -154,7 +154,7 @@ __all__ = (
         *_crop_application.__all__,
         *_distillation.__all__,
         *_dynamic_influent.__all__,
-        *_electrochemical_cell.__all__,
+        # *_electrochemical_cell.__all__,
         *_excretion.__all__,
         *_facilities.__all__,
         *_flash.__all__,
