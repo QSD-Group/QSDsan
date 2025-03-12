@@ -1,0 +1,18 @@
+parameter,name (if diff),unit,expected,low,high,distribution,uncertainty_assumption,references
+lifetime_solar_panel,lifetime of solar panel,year,2,1,3,uniform,+/- 1 year,Duke Reclaimer BOM
+lifetime_battery,lifetime of battery,year,10,9,11,uniform,+/- 1 year,Duke Reclaimer BOM
+qty_solar_panel,quantity of solar panels (1 panel produces 325-360 W),pc,1,,,constant,-,Duke Reclaimer BOM
+qty_solar_module,quantity of solar module bracket system base,pc,1,,,constant,-,Duke Reclaimer BOM
+qty_battery,quantity of batteries (6 kWh / 20.7 kWh * 24 = 7 batteries),pc,7,6,8,uniform,+/- 1 battery,Duke Reclaimer BOM and energy ratio calculation
+qty_battery_holder,quantities of battery holders,pc,1,,,constant,-,Duke Reclaimer BOM
+qty_inverter,quantity of inverters,pc,1,,,constant,-,Duke Reclaimer BOM
+area_solar_panel,surface of a single (992mm x 1956mm) solar panel,m2,1.9,1.425,2.375,uniform,25%,https://www.gclsi.com/uploads/5c1ae522/AU%20CEC-M6-72%20325-360%2035%205BB.pdf
+mass_battery,mass of a single battery,kg,63,47.25,78.75,uniform,25%,https://cdn.enfsolar.com/z/pp/jiu60e28377f32e6/250.pdf
+price_solar_panel,price of solar panels based on power demand in W,USD/W,0.5,0.375,0.625,uniform,25%,Duke Reclaimer BOM
+price_solar_module,price of solar module,USD/pc,438,328.5,547.5,uniform,25%,Duke Reclaimer BOM
+price_battery,price of a single battery,USD/pc,265,198.75,331.25,uniform,25%,Duke Reclaimer BOM
+price_battery_holder,price of battery holder,USD/pc,538,403.5,672.5,uniform,25%,Duke Reclaimer BOM
+price_inverter,price of inverter control integrated machine,USD/pc,2909,2181.75,3636.25,uniform,25%,Duke Reclaimer BOM
+labor_hours_pannel_cleaning,labor hours to clean the solar panels,hrs/yr,10,5,15,uniform,+/- 5 hours,Duke Reclaimer
+labor_wage,general labor wage,USD/hr,3.64,1.82,5.46,triangular,-,ILO Stat
+power_demand_W,Daily power demand in W (5-6 kWh --> 208-250),W,229,208,250,uniform,given,SCG Design Team
