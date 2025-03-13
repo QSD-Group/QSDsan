@@ -651,7 +651,7 @@ class FlatBottomCircularClarifier(SanUnit):
         
         mixed = self._mixed
         D = self.design_results
-        # U = self._units
+        U = self._units
         
         D['Number of clarifiers'] = 2 # Same as the number of parallel trains. Assuming 1 in use and 1 redundant.
                 
@@ -745,7 +745,7 @@ class FlatBottomCircularClarifier(SanUnit):
         # For secondary clarifier
         D['Number of pumps'] = 2*D['Number of clarifiers']
 
-        # for key in D: print(f'{key}: {D[key]} {U[key]}')  
+        for key in D: print(f'{key}: {D[key]} {U[key]}')  
 
     def _cost(self):
        
@@ -1468,7 +1468,7 @@ class PrimaryClarifier(IdealClarifier):
         mixed = self._mixed
         mixed.mix_from(self.ins)
         D = self.design_results
-        # U = self._units
+        U = self._units
         
         D['Number of clarifiers'] = 2 # 1 in use and 1 redundant.            
             
@@ -1565,7 +1565,7 @@ class PrimaryClarifier(IdealClarifier):
         #For primary clarifier 
         D['Number of pumps'] = D['Number of clarifiers']
    
-        # for key in D: print(f'{key}: {D[key]} {U[key]}')
+        for key in D: print(f'{key}: {D[key]} {U[key]}')
         
     def _cost(self):
         D = self.design_results

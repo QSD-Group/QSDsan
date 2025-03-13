@@ -389,7 +389,7 @@ class CSTR(SanUnit):
         TC = D['Volume of concrete wall'] + D['Volume of concrete slab']
         D['Reinforcement steel'] = 77.58 * TC # in kg 
 
-        # for key in D: print(f'{key}: {D[key]} {U[key]}')
+        for key in D: print(f'{key}: {D[key]} {U[key]}')
             
     def _cost(self):
         pass
