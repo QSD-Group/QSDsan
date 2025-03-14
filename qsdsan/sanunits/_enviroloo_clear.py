@@ -2005,7 +2005,7 @@ class EL_MBR(SanUnit, Decay):
         
         self.add_OPEX = self._calc_replacement_cost()
         
-        power_demand = self.power_demand_MBR #TODO: power_demand unit should be kW
+        power_demand = self.power_demand_MBR #TODO: power_demand unit should be kW, but the tsv file is in kWh/day
         self.power_utility(power_demand)
 
     def _calc_replacement_cost(self):
