@@ -15,19 +15,23 @@ for license details.
 
 from thermosteam.utils import chemicals_user
 from thermosteam import settings
-from chemicals.elements import molecular_weight as get_mw
+# from chemicals.elements import molecular_weight as get_mw
 from qsdsan import Component, Components, Process, Processes, CompiledProcesses
 import numpy as np
 from qsdsan.utils import ospath, data_path
 from scipy.optimize import brenth
 from warnings import warn
+from . import (
+    non_compet_inhibit, grad_non_compet_inhibit, 
+    substr_inhibit, grad_substr_inhibit,
+    mass2mol_conversion, 
+    T_correction_factor, R,
+    TempState
+    ) 
 
 __all__ = ('create_adm1_cmps', 'ADM1',
-           'non_compet_inhibit', 'grad_non_compet_inhibit',
-           'substr_inhibit', 'grad_substr_inhibit',
-           'mass2mol_conversion', 'T_correction_factor', 
            'pH_inhibit', 'Hill_inhibit', 
-           'rhos_adm1', 'TempState',)
+           'rhos_adm1', )
 
 _path = ospath.join(data_path, 'process_data/_adm1.tsv')
 _load_components = settings.get_default_chemicals
@@ -42,7 +46,7 @@ _load_components = settings.get_default_chemicals
 C_mw = 12
 N_mw = 14
 
-def create_adm1_cmps(set_thermo=True):
+def create_adm1_cmps(set_thermo=True, adjust_MW_to_measured_as=True):
     cmps_all = Components.load_default()
 
     # varies
@@ -165,7 +169,8 @@ def create_adm1_cmps(set_thermo=True):
                             S_ch4, S_IC, S_IN, S_I, X_c, X_ch, X_pr, X_li,
                             X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I,
                             S_cat, S_an, cmps_all.H2O])
-    cmps_adm1.default_compile()
+    cmps_adm1.default_compile(ignore_inaccurate_molar_weight=True,
+                              adjust_MW_to_measured_as=adjust_MW_to_measured_as)
     if set_thermo: settings.set_thermo(cmps_adm1)
     return cmps_adm1
 
@@ -176,31 +181,6 @@ def create_adm1_cmps(set_thermo=True):
 # =============================================================================
 # kinetic rate functions
 # =============================================================================
-
-R = 8.3145e-2 # Universal gas constant, [bar/M/K]
-
-def non_compet_inhibit(Si, Ki):
-    return Ki/(Ki+Si)
-
-def grad_non_compet_inhibit(Si, Ki):
-    return -Ki/(Ki+Si)**2
-
-def substr_inhibit(Si, Ki):
-    return Si/(Ki+Si)
-
-def grad_substr_inhibit(Si, Ki):
-    return Ki/(Ki+Si)**2
-
-def mass2mol_conversion(cmps):
-    '''conversion factor from kg[measured_as]/m3 to mol[component]/L'''
-    return cmps.i_mass / cmps.chem_MW
-
-def T_correction_factor(T1, T2, delta_H):
-    """compute temperature correction factor for equilibrium constants based on
-    the Van't Holf equation."""
-    if T1 == T2: return 1
-    return np.exp(delta_H/(R*100) * (1/T1 - 1/T2))  # R converted to SI
-
 
 def acid_base_rxn(h_ion, weak_acids_tot, Kas):
     # h, nh4, hco3, ac, pr, bu, va = mols
@@ -238,12 +218,9 @@ def solve_pH(state_arr, Ka, unit_conversion):
     cmps_in_M = state_arr[:27] * unit_conversion
     weak_acids = cmps_in_M[[24, 25, 10, 9, 6, 5, 4, 3]]
     h = brenth(acid_base_rxn, 1e-14, 1.0,
-            args=(weak_acids, Ka),
-            xtol=1e-12, maxiter=100)
-    nh3 = Ka[1] * weak_acids[2] / (Ka[1] + h)
-    co2 = weak_acids[3] - Ka[2] * weak_acids[3] / (Ka[2] + h)
-    return h, nh3, co2
-
+               args=(weak_acids, Ka),
+               xtol=1e-12, maxiter=100)
+    return h
 rhos_adm1 = lambda state_arr, params: _rhos_adm1(state_arr, params, h=None)
 
 def _rhos_adm1(state_arr, params, h=None):
@@ -299,13 +276,10 @@ def _rhos_adm1(state_arr, params, h=None):
     if S_va > 0: rhos[7] *= 1/(1+S_bu/S_va)
     if S_bu > 0: rhos[8] *= 1/(1+S_va/S_bu)
 
-    if h is None:
-        h, nh3, co2 = solve_pH(state_arr, Ka, unit_conversion)
-    else:
-        nh3 = Ka[1] * S_IN * unit_conversion[10] / (Ka[1] + h)
-        S_IC = state_arr[9] * unit_conversion[9]
-        co2 = S_IC - Ka[2] * S_IC / (Ka[2] + h)
-    biogas_S[-1] = co2 / unit_conversion[9]
+    if h is None: h = solve_pH(state_arr, Ka, unit_conversion)
+    nh3 = S_IN * unit_conversion[10] * Ka[1] / (Ka[1] + h)
+    co2 = state_arr[9] * h / (Ka[2] + h)
+    biogas_S[-1] = co2
     
     Iph = Hill_inhibit(h, pH_ULs, pH_LLs)
     Iin = substr_inhibit(S_IN, KS_IN)
@@ -369,12 +343,6 @@ def grad_dydt_Sh2_AD(S_h2, state_arr, h, params, f_stoichio, V_liq, S_h2_in):
 # =============================================================================
 # ADM1 class
 # =============================================================================
-class TempState:
-    def __init__(self):
-        self.data = {}
-    
-    # def append(self, value):
-    #     self.data += [value]
 
 @chemicals_user
 class ADM1(CompiledProcesses):
@@ -662,6 +630,7 @@ class ADM1(CompiledProcesses):
                                                K_H_base, K_H_dH, kLa,
                                                T_base, self._components, root]))
 
+        dct['flex_rhos'] = _rhos_adm1
         dct['solve_pH'] = solve_pH
         dct['dydt_Sh2_AD'] = dydt_Sh2_AD
         dct['grad_dydt_Sh2_AD'] = grad_dydt_Sh2_AD

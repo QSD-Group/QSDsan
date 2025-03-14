@@ -702,6 +702,11 @@ class Process:
         new_ref = str(new_ref)
         stoich = self._stoichiometry
         factor = abs(stoich[self._components.index(new_ref)])
+
+        if factor == 0:
+            print(f"Warning: Stoichiometry for {new_ref} is zero, skipping normalization.")
+            return  # Exit the function without modifying stoichiometry
+
         if isa(self._stoichiometry, np.ndarray):
             stoich /= factor
         elif isa(stoich, list):

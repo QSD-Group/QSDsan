@@ -104,7 +104,8 @@ def create_g1_system(flowsheet=None, default_init_conds=True):
         'FC', O6-1, ['SE', 1-A1, 'WAS'], 
         # 'FC', ASR-0, ['SE', 1-AS, 'WAS'],
         underflow=0.4*10*MGD2cmd, wastage=0.135*MGD2cmd,
-        surface_area=1579.352, height=3.6576, N_layer=10, feed_layer=5,
+        #surface_area=1579.352, height=3.6576, 
+        N_layer=10, feed_layer=5,
         X_threshold=3000, v_max=410, v_max_practical=274,
         rh=4e-4, rp=0.1, fns=0.01, 
         maximum_nonsettleable_solids=8.0
@@ -119,7 +120,7 @@ def create_g1_system(flowsheet=None, default_init_conds=True):
         
     pc.create_adm1p_cmps()
     thermo_adm = qs.get_thermo()
-    adm = pc.ADM1p(kLa=10.0)
+    adm = pc.ADM1p(path="C:/Users/Aravi/OneDrive/Desktop/workspace/QSDsan/qsdsan/data/process_data/_mmp.tsv", kLa=10.0)
     
     J1 = su.mASM2dtoADM1p('J1', upstream=M1-0, thermo=thermo_adm, isdynamic=True, 
                           adm1_model=adm, asm2d_model=asm)
@@ -130,7 +131,7 @@ def create_g1_system(flowsheet=None, default_init_conds=True):
         T=T_ad, model=adm,
         pH_ctrl=7.0,
         )
-    AD.algebraic_h2 = False
+    AD.algebraic_h2 = False 
     J2 = su.ADM1ptomASM2d('J2', upstream=AD-1, thermo=thermo_asm, isdynamic=True, 
                           adm1_model=adm, asm2d_model=asm)
     qs.set_thermo(thermo_asm)
