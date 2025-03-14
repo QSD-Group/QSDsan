@@ -1389,8 +1389,9 @@ class EL_Anoxic(SanUnit, Decay):
           nitrate_return = self.ins[1]  # Nitrate from membrane tank over return pump
           
           glucose = self.ins[2]  # Extra carbon source
-          glucose_consumed = WasteWater.F_vol * self.chemical_glucose_dosage * self.glucose_density
-          glucose.imass['Glucose'] = glucose_consumed
+          glucose_consumed = WasteWater.F_mass * self.chemical_glucose_dosage 
+          #TODO: this dosage is the same as PAC. Check data source
+          glucose.imass['Glucose'] = glucose_consumed #kg/h
           # glucose.mass = glucose_consumed
           
           agitation = self.ins[3]  # Agitation pump works here, but it does not attend mass flow balance calculation
@@ -1567,12 +1568,12 @@ class EL_Anoxic(SanUnit, Decay):
     
     def _cost(self):
         C = self.baseline_purchase_costs
-        massflow_anoxic = self.ins[0].mass
+        # massflow_anoxic = self.ins[0].mass
         C['Tank'] = self.anoxic_tank_cost
         C['Pipes'] = self.pipeline_connectors
         C['Fittings'] = self.weld_female_adapter_fittings
-        C['Chemcial_glucose'] = self.chemical_glucose_dosage * massflow_anoxic * self.chemical_glucose_price  # make sense the unit of treated water flow
-
+        # C['Chemcial_glucose'] = self.chemical_glucose_dosage * massflow_anoxic * self.chemical_glucose_price  # make sense the unit of treated water flow
+        # Glucose cost is already accounted for in the WasteStream
         ratio = self.price_ratio
         for equipment, cost in C.items():
             C[equipment] = cost * ratio
@@ -1666,7 +1667,8 @@ class EL_Aerobic(SanUnit, Decay):
         TreatedWater.copy_like(WasteWater)
         
         # Manually add return nitrate (NO3)
-        TreatedWater.imass['PAC'] += PAC.imass['PAC']
+        # TreatedWater.imass['PAC'] += PAC.imass['PAC']
+        PAC.imass['PAC'] = WasteWater.imass['H2O'] * self.chemical_PAC_dosage/100
         
         # COD removal
         COD_removal = self.EL_aeroT_COD_removal
@@ -1742,11 +1744,12 @@ class EL_Aerobic(SanUnit, Decay):
     
     def _cost(self):
         C = self.baseline_purchase_costs
-        massflow_aerobic = self.ins[0].mass
+        # massflow_aerobic = self.ins[0].mass #kg/h
         C['Tank'] = self.aerobic_tank_cost
         C['Pipes'] = self.pipeline_connectors
         C['Fittings'] = self.weld_female_adapter_fittings
-        C['Chemical_PAC'] = self.chemical_PAC_dosage * massflow_aerobic * self.chemical_PAC_price
+        # C['Chemical_PAC'] = self.chemical_PAC_dosage * massflow_aerobic * self.chemical_PAC_price
+        #PAC cost is already accounted in WasteStream
 
         ratio = self.price_ratio
         for equipment, cost in C.items():
@@ -2002,7 +2005,7 @@ class EL_MBR(SanUnit, Decay):
         
         self.add_OPEX = self._calc_replacement_cost()
         
-        power_demand = self.power_demand_MBR
+        power_demand = self.power_demand_MBR #TODO: power_demand unit should be kW
         self.power_utility(power_demand)
 
     def _calc_replacement_cost(self):
