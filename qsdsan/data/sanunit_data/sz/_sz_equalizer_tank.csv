@@ -1,3 +1,0 @@
-parameter,name,unit,expected,low,high,distribution,uncertainty_assumption,reference
-mass_tank,,kg/pc,29.5,26.55,32.45,uniform,10%,https://www.ntotank.com/330gallon-duracast-black-vertical-water-tank-x9332435
-price_tank,"330 gal (1200 L) water storage tank, rotationally molded polyethylene resin",USD/pc,500,375,625,uniform,25%,https://www.ntotank.com/330gallon-duracast-black-vertical-water-tank-x9332435

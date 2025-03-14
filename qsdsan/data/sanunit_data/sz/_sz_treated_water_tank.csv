@@ -1,3 +1,0 @@
-parameter,name,unit,expected,low,high,distribution,uncertainty_assumption,reference
-mass_tank,,kg/pc,94,84.6,103.4,uniform,10%,https://www.ntotank.com/800gallon-duracast-black-vertical-water-tank-x1939407
-price_tank,"800 gal (3000 L) water storage tank, rotationally molded polyethylene resin",USD/pc,900,675,1125,uniform,25%,https://www.ntotank.com/800gallon-duracast-black-vertical-water-tank-x1939407

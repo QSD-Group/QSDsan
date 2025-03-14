@@ -30,6 +30,7 @@ for license details.
 from .. import SanUnit, Construction
 from ..utils import ospath, load_data, data_path, price_ratio
 
+
 __all__ = (
     'SCGZyclonicAquonic1000',
     'SCGZyclonicControls',
@@ -39,7 +40,8 @@ __all__ = (
     'SCGZyclonicTreatedWaterTank',
     )
 
-sz_data_path = ospath.join(data_path, 'sanunit_data/sz')
+# sz_data_path = ospath.join(data_path, 'sanunit_data/sz')
+sz_data_path = '/Users/saumitrarai/Desktop/Research/EXPOsan-private/exposan/scg_aquonic/data/'
 
 
 # %%
