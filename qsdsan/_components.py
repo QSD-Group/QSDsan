@@ -155,7 +155,7 @@ class Components(Chemicals):
         '''Cast as a :class:`CompiledComponents` object.'''
         components = tuple(self)
         setattr(self, '__class__', CompiledComponents)
-        try: self._compile(components, skip_checks)
+        try: self._compile(components)#, skip_checks)
         except Exception as error:
             setattr(self, '__class__', Components)
             setattr(self, '__dict__', {i.ID: i for i in components})
@@ -614,11 +614,11 @@ class CompiledComponents(CompiledChemicals):
         pass
 
 
-    def _compile(self, components, skip_checks=False):
+    def _compile(self, components):#, skip_checks=False):
         dct = self.__dict__
         tuple_ = tuple # this speeds up the code
         components = tuple_(dct.values())
-        CompiledChemicals._compile(self, components, skip_checks)
+        CompiledChemicals._compile(self, components)#, skip_checks)
         for component in components:
             missing_properties = component.get_missing_properties(_key_component_properties)
             if not missing_properties: continue
