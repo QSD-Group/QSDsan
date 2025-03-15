@@ -117,7 +117,9 @@ class SCGZyclonicAquonic1000(SanUnit):
             
             Construction(item='Pump', linked_unit=self, quantity_unit='ea'),
             Construction(item='Concrete', linked_unit=self, quantity_unit='m3'),
-            Construction(item='ElectricCables', linked_unit=self, quantity_unit='m'),
+            
+            # Construction(item='ElectricCables', linked_unit=self, quantity_unit='m'),
+            
             Construction(item='Silicone', linked_unit=self, quantity_unit='kg'),
             Construction(item='InjectionMolding', linked_unit=self, quantity_unit='kg'),
             ]
@@ -141,9 +143,11 @@ class SCGZyclonicAquonic1000(SanUnit):
         
         design['Pump'] = constr[5].quantity = self.qty_aerator + self.qty_pump
         design['Concrete'] = constr[6].quantity = self.qty_concrete
-        design['ElectricCables'] = constr[7].quantity = self.qty_electrical_cable
-        design['Silicone'] = constr[8].quantity = self.qty_air_hose * self.mass_air_hose  # air hose tubing material
-        design['InjectionMolding'] = constr[9].quantity = self.qty_PE_housing * self.mass_PE_housing
+        
+        #design['ElectricCables'] = constr[7].quantity = self.qty_electrical_cable
+        
+        design['Silicone'] = constr[7].quantity = self.qty_air_hose * self.mass_air_hose  # air hose tubing material
+        design['InjectionMolding'] = constr[8].quantity = self.qty_PE_housing * self.mass_PE_housing
         self.add_construction(add_cost=False)
 
     def _cost(self):
@@ -157,8 +161,8 @@ class SCGZyclonicAquonic1000(SanUnit):
             )
         C['AerationAndPumps'] = (
             self.qty_aerator * self.price_aerator + \
-            self.qty_air_hose * self.price_air_hose + self.qty_pump * self.price_pump +
-            self.qty_electrical_cable * self.price_electrical_cable
+            self.qty_air_hose * self.price_air_hose + self.qty_pump * self.price_pump 
+            # + self.qty_electrical_cable * self.price_electrical_cable
             )
         C['Housing'] = (
             self.qty_PE_housing * self.mass_PE_housing * self.price_PE_housing +
