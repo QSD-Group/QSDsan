@@ -111,7 +111,10 @@ class SCGZyclonicAquonic1000(SanUnit):
             Construction(item='Polyethylene', linked_unit=self, quantity_unit='kg'),
             Construction(item='Polypropylene', linked_unit=self, quantity_unit='kg'),
             Construction(item='SoilMedia', linked_unit=self, quantity_unit='kg'),
-            Construction(item='Titanium', linked_unit=self, quantity_unit='kg'),
+            
+            # Construction(item='Titanium', linked_unit=self, quantity_unit='kg'),
+            Construction(item='ChlorineTablets', linked_unit=self, quantity_unit='kg'),
+            
             Construction(item='Pump', linked_unit=self, quantity_unit='ea'),
             Construction(item='Concrete', linked_unit=self, quantity_unit='m3'),
             Construction(item='ElectricCables', linked_unit=self, quantity_unit='m'),
@@ -132,7 +135,10 @@ class SCGZyclonicAquonic1000(SanUnit):
         design['Polyethylene'] = constr[1].quantity = self.qty_PE_housing * self.mass_PE_housing
         design['Polypropylene'] = constr[2].quantity = self.qty_plastic_media
         design['SoilMedia'] = constr[3].quantity = self.qty_soil_media
-        design['Titanium'] = constr[4].quantity = self.qty_electrode_plates * self.mass_electrode_plates
+        
+        # design['Titanium'] = constr[4].quantity = self.qty_electrode_plates * self.mass_electrode_plates
+        design['ChlorineTablets'] = constr[4].quantity = self.qty_Cl_tablets * self.mass_Cl_tablets
+        
         design['Pump'] = constr[5].quantity = self.qty_aerator + self.qty_pump
         design['Concrete'] = constr[6].quantity = self.qty_concrete
         design['ElectricCables'] = constr[7].quantity = self.qty_electrical_cable
@@ -162,8 +168,9 @@ class SCGZyclonicAquonic1000(SanUnit):
             self.qty_plastic_media * self.price_plastic_media +
             self.qty_soil_media * self.price_soil_media
             )
-        C['ECPlates'] = self.qty_electrode_plates * self.price_electrode_plates
-
+        
+        # C['ECPlates'] = self.qty_electrode_plates * self.price_electrode_plates
+        C['ChlorineTablets'] = self.qty_Cl_tablets * self.mass_Cl_tablets * self.price_Cl_tablets # (m3 * kg/m3 * USD/kg)
 
         self.add_OPEX = self._calc_replacement_cost() + self._calc_maintenance_labor_cost()
 
@@ -177,13 +184,20 @@ class SCGZyclonicAquonic1000(SanUnit):
     def _calc_replacement_cost(self):  # O&M material costs (USD/hour)
         pump_replacement_cost = self.qty_pump * self.price_pump / self.lifetime_pump  # (USD/year)
         soil_media_replacement_cost = self.qty_soil_media * self.price_soil_media / self.lifetime_soil_media  # (USD/year)
-        ec_plate_replacement_cost = self.qty_electrode_plates * self.price_electrode_plates  # (USD/year)
-        aquonic1000_replacement_cost = pump_replacement_cost + soil_media_replacement_cost + ec_plate_replacement_cost  # (USD/year)
+        
+        # ec_plate_replacement_cost = self.qty_electrode_plates * self.price_electrode_plates  # (USD/year)
+        Cl_plate_replacement_cost = self.qty_Cl_tablets * self.mass_Cl_tablets * self.price_Cl_tablets / self.lifetime_Cl_tablets
+        
+        # aquonic1000_replacement_cost = pump_replacement_cost + soil_media_replacement_cost + ec_plate_replacement_cost  # (USD/year)
+        aquonic1000_replacement_cost = pump_replacement_cost + soil_media_replacement_cost + Cl_plate_replacement_cost
+        
         aquonic1000_replacement_cost = aquonic1000_replacement_cost / (365 * 24)  # convert from USD/year to USD/hour
         return aquonic1000_replacement_cost
 
     def _calc_maintenance_labor_cost(self):  # O&M labor costs (USD/hour)
-        maintenance_labor_cost = (self.labor_hours_backwash+self.labor_hours_ec_plates) * self.labor_wage # (USD/year)
+        # maintenance_labor_cost = (self.labor_hours_backwash+self.labor_hours_ec_plates) * self.labor_wage # (USD/year)
+        maintenance_labor_cost = (self.labor_hours_backwash+self.labor_hours_Cl_tablets) * self.labor_wage # (USD/year)
+        
         maintenance_labor_cost = maintenance_labor_cost / (365 * 24)  # convert from USD/year to USD/hour
         return maintenance_labor_cost
 
