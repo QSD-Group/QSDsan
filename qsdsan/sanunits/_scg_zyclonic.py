@@ -112,13 +112,13 @@ class SCGZyclonicAquonic1000(SanUnit):
             Construction(item='Polypropylene', linked_unit=self, quantity_unit='kg'),
             Construction(item='SoilMedia', linked_unit=self, quantity_unit='kg'),
             
-            # Construction(item='Titanium', linked_unit=self, quantity_unit='kg'),
-            Construction(item='ChlorineTablets', linked_unit=self, quantity_unit='kg'),
+            Construction(item='Titanium', linked_unit=self, quantity_unit='kg'),
+            # Construction(item='ChlorineTablets', linked_unit=self, quantity_unit='kg'),
             
             Construction(item='Pump', linked_unit=self, quantity_unit='ea'),
             Construction(item='Concrete', linked_unit=self, quantity_unit='m3'),
             
-            # Construction(item='ElectricCables', linked_unit=self, quantity_unit='m'),
+            Construction(item='ElectricCables', linked_unit=self, quantity_unit='m'),
             
             Construction(item='Silicone', linked_unit=self, quantity_unit='kg'),
             Construction(item='InjectionMolding', linked_unit=self, quantity_unit='kg'),
@@ -138,13 +138,13 @@ class SCGZyclonicAquonic1000(SanUnit):
         design['Polypropylene'] = constr[2].quantity = self.qty_plastic_media
         design['SoilMedia'] = constr[3].quantity = self.qty_soil_media
         
-        # design['Titanium'] = constr[4].quantity = self.qty_electrode_plates * self.mass_electrode_plates
-        design['ChlorineTablets'] = constr[4].quantity = self.qty_Cl_tablets * self.mass_Cl_tablets
+        design['Titanium'] = constr[4].quantity = self.qty_electrode_plates * self.mass_electrode_plates
+        # design['ChlorineTablets'] = constr[4].quantity = self.qty_Cl_tablets * self.mass_Cl_tablets # m3 * (kg/m3)
         
         design['Pump'] = constr[5].quantity = self.qty_aerator + self.qty_pump
         design['Concrete'] = constr[6].quantity = self.qty_concrete
         
-        #design['ElectricCables'] = constr[7].quantity = self.qty_electrical_cable
+        design['ElectricCables'] = constr[7].quantity = self.qty_electrical_cable
         
         design['Silicone'] = constr[7].quantity = self.qty_air_hose * self.mass_air_hose  # air hose tubing material
         design['InjectionMolding'] = constr[8].quantity = self.qty_PE_housing * self.mass_PE_housing
@@ -161,8 +161,8 @@ class SCGZyclonicAquonic1000(SanUnit):
             )
         C['AerationAndPumps'] = (
             self.qty_aerator * self.price_aerator + \
-            self.qty_air_hose * self.price_air_hose + self.qty_pump * self.price_pump 
-            # + self.qty_electrical_cable * self.price_electrical_cable
+            self.qty_air_hose * self.price_air_hose + self.qty_pump * self.price_pump \
+            + self.qty_electrical_cable * self.price_electrical_cable
             )
         C['Housing'] = (
             self.qty_PE_housing * self.mass_PE_housing * self.price_PE_housing +
@@ -173,8 +173,8 @@ class SCGZyclonicAquonic1000(SanUnit):
             self.qty_soil_media * self.price_soil_media
             )
         
-        # C['ECPlates'] = self.qty_electrode_plates * self.price_electrode_plates
-        C['ChlorineTablets'] = self.qty_Cl_tablets * self.mass_Cl_tablets * self.price_Cl_tablets # (m3 * kg/m3 * USD/kg)
+        C['ECPlates'] = self.qty_electrode_plates * self.price_electrode_plates
+        # C['ChlorineTablets'] = self.qty_Cl_tablets * self.mass_Cl_tablets * self.price_Cl_tablets # (m3 * kg/m3 * USD/kg)
 
         self.add_OPEX = self._calc_replacement_cost() + self._calc_maintenance_labor_cost()
 
@@ -189,18 +189,18 @@ class SCGZyclonicAquonic1000(SanUnit):
         pump_replacement_cost = self.qty_pump * self.price_pump / self.lifetime_pump  # (USD/year)
         soil_media_replacement_cost = self.qty_soil_media * self.price_soil_media / self.lifetime_soil_media  # (USD/year)
         
-        # ec_plate_replacement_cost = self.qty_electrode_plates * self.price_electrode_plates  # (USD/year)
-        Cl_plate_replacement_cost = self.qty_Cl_tablets * self.mass_Cl_tablets * self.price_Cl_tablets / self.lifetime_Cl_tablets
+        ec_plate_replacement_cost = self.qty_electrode_plates * self.price_electrode_plates  # (USD/year)
+        # Cl_plate_replacement_cost = self.qty_Cl_tablets * self.mass_Cl_tablets * self.price_Cl_tablets / self.lifetime_Cl_tablets
         
-        # aquonic1000_replacement_cost = pump_replacement_cost + soil_media_replacement_cost + ec_plate_replacement_cost  # (USD/year)
-        aquonic1000_replacement_cost = pump_replacement_cost + soil_media_replacement_cost + Cl_plate_replacement_cost
+        aquonic1000_replacement_cost = pump_replacement_cost + soil_media_replacement_cost + ec_plate_replacement_cost  # (USD/year)
+        # aquonic1000_replacement_cost = pump_replacement_cost + soil_media_replacement_cost + Cl_plate_replacement_cost
         
         aquonic1000_replacement_cost = aquonic1000_replacement_cost / (365 * 24)  # convert from USD/year to USD/hour
         return aquonic1000_replacement_cost
 
     def _calc_maintenance_labor_cost(self):  # O&M labor costs (USD/hour)
-        # maintenance_labor_cost = (self.labor_hours_backwash+self.labor_hours_ec_plates) * self.labor_wage # (USD/year)
-        maintenance_labor_cost = (self.labor_hours_backwash+self.labor_hours_Cl_tablets) * self.labor_wage # (USD/year)
+        maintenance_labor_cost = (self.labor_hours_backwash+self.labor_hours_ec_plates) * self.labor_wage # (USD/year)
+        # maintenance_labor_cost = (self.labor_hours_backwash+self.labor_hours_Cl_tablets) * self.labor_wage # (USD/year)
         
         maintenance_labor_cost = maintenance_labor_cost / (365 * 24)  # convert from USD/year to USD/hour
         return maintenance_labor_cost
