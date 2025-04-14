@@ -18,6 +18,7 @@ from warnings import warn
 # from math import floor, ceil
 import numpy as np
 import pandas as pd
+from scipy.integrate import solve_ivp
 # from numba import njit
 
 __all__ = ('CSTR',
@@ -490,6 +491,15 @@ class BatchExperiment(SanUnit):
     model = property(CSTR.suspended_growth_model.fget, CSTR.suspended_growth_model.fset)
     
     @property
+    def V_max(self):
+        '''[float] The designed maximum liquid volume, not accounting for increased volume due to aeration, in m^3.'''
+        return self._V_max
+
+    @V_max.setter
+    def V_max(self, Vm):
+        self._V_max = Vm
+    
+    @property
     def state(self):
         '''The state of the BatchExperiment, i.e., component concentrations.'''
         if self._state is None: return None
@@ -558,6 +568,52 @@ class BatchExperiment(SanUnit):
 
 class SBR(SanUnit):
     
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 V_max=1000, aeration=2.0, DO_ID='S_O2', suspended_growth_model=None,
+                 gas_stripping=False, gas_IDs=None, stripping_kLa_min=None,
+                 K_Henry=None, D_gas=None, p_gas_atm=None, reaction_time=0.5,
+                 isdynamic=True, exogenous_vars=(), **kwargs):
+        
+        super().__init__(ID, ins, outs, thermo, init_with, isdynamic=isdynamic,
+                         exogenous_vars=exogenous_vars, **kwargs)
+        
+        # self._V_max = V_max
+        self.reaction_time = reaction_time
+        self._aeration = aeration
+        self._DO_ID = DO_ID
+        self._model = suspended_growth_model
+
+        self.gas_stripping = gas_stripping
+        self.gas_IDs = gas_IDs
+        self.stripping_kLa_min = stripping_kLa_min
+        self.K_Henry = K_Henry
+        self.D_gas = D_gas
+        self.p_gas_atm = p_gas_atm
+
+        self._concs = None
+        self._mixed = WasteStream()
+
+    # @property
+    # def V_max(self):
+    #     '''[float] The designed maximum liquid volume, not accounting for increased volume due to aeration, in m^3.'''
+    #     return self._V_max
+
+    # @V_max.setter
+    # def V_max(self, Vm):
+    #     self._V_max = Vm
+    
+    # reaction time would be in days because rate constants in ASM is typically in days. 
+    @property
+    def reaction_time(self):
+        '''[float] Duration of the reaction phase in days.'''
+        return self._reaction_time
+
+    @reaction_time.setter
+    def reaction_time(self, value):
+        if value <= 0:
+            raise ValueError('reaction_time must be a positive number.')
+        self._reaction_time = float(value)
+
     @property
     def aeration(self):
         '''[:class:`Process` or float or NoneType] Aeration model.'''
@@ -576,7 +632,19 @@ class SBR(SanUnit):
         else:
             raise TypeError(f'aeration must be one of the following types: float, '
                             f'int, Process, NoneType. Not {type(ae)}')
-            
+           
+    @property
+    def DO_ID(self):
+        '''[str] The `Component` ID for dissolved oxygen used in the suspended growth model and the aeration model.'''
+        return self._DO_ID
+
+    @DO_ID.setter
+    def DO_ID(self, doid):
+        if doid not in self.components.IDs:
+            raise ValueError(f'DO_ID must be in the set of `CompiledComponents` used to set thermo, '
+                              f'i.e., one of {self.components.IDs}.')
+        self._DO_ID = doid        
+
     @property
     def suspended_growth_model(self):
         '''[:class:`CompiledProcesses` or NoneType] Suspended growth model.'''
@@ -587,19 +655,94 @@ class SBR(SanUnit):
         if isinstance(model, CompiledProcesses) or model is None: self._model = model
         else: raise TypeError(f'suspended_growth_model must be one of the following '
                               f'types: CompiledProesses, NoneType. Not {type(model)}')
+    
+    @property
+    def gas_stripping(self):
+        return self._gstrip
+    
+    @gas_stripping.setter
+    def gas_stripping(self, strip):
+        self._gstrip = strip = bool(strip)
+        if strip:
+            if self.gas_IDs:
+                cmps = self.components.IDs
+                for i in self.gas_IDs:
+                    if i not in cmps:
+                        raise RuntimeError((f'gas ID {i} not in component set: {cmps}.'))
+            else:
+                mdl = self._model
+                self.gas_IDs = mdl.gas_IDs
+                self.stripping_kLa_min = np.array(mdl.kLa_min)
+                self.D_gas = np.array(mdl.D_gas)
+                self.K_Henry = np.array(mdl.K_Henry)
+                self.p_gas_atm = np.array(mdl.p_gas_atm)
+
+    @property
+    def state(self):
+        '''The state of the SBR, including component concentrations [mg/L] and flow rate [m^3/d].'''
+        if self._state is None: return None
+        else:
+            return dict(zip(list(self.components.IDs) + ['Q'], self._state))
+
+    @state.setter
+    def state(self, QCs):
+        QCs = np.asarray(QCs)
+        if QCs.shape != (len(self.components)+1, ):
+            raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
+                              'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
+        self._state = QCs
+
+    def set_init_conc(self, **kwargs):
+        '''set the initial concentrations [mg/L] of the SBR.'''
+        self._concs = self.components.kwarray(kwargs)
+        
+    def _init_state(self):
+        mixed = self._mixed
+        Q = mixed.get_total_flow('m3/d')
+        if self._concs is not None: Cs = self._concs
+        else: Cs = mixed.conc
+        self._state = np.append(Cs, Q).astype('float64')
+        self._dstate = self._state * 0.
+
+    def _update_state(self):
+        arr = self._state
+        arr[arr < 1e-16] = 0.
+        arr[-1] = sum(ws.state[-1] for ws in self.ins)
+        self._outs[0].state = arr
+        
+    def _update_dstate(self):
+        arr = self._dstate
+        self._outs[0].dstate = arr
+                
+    def _run(self):
+        # 1. Determine initial condition based on mixed influent
+        out, = self.outs
+        out.mix_from(self.ins)
+        C0 = out.conc.copy()  # n_components
+        Q0 = out.F_vol # m3/hr
+    
+        # 2. perform integration over reaction period, check documentation for `scipy.integrate.solve_ivp`
+        f = self.ODE
+        tau = self.reaction_time  # in days (user-defined)
+        
+        sol = solve_ivp(fun=f,
+                        t_span=(0, tau),
+                        y0=C0,
+                        method='BDF',
+                        vectorized=False)
+    
+        # 3. define effluent based on concentration at the end of the reaction period
+        final_state = sol.y[:, -1]  # Last time point
+        out.set_concentration(final_state)
+        out.set_total_flow(Q0, 'm3/hr')
+    
+        # To save if needed
+        # self.solution = sol
         
     @property
-    def DO_ID(self):
-        '''[str] The `Component` ID for dissolved oxygen used in the suspended growth model and the aeration model.'''
-        return self._DO_ID
-
-    @DO_ID.setter
-    def DO_ID(self, doid):
-        if doid not in self.components.IDs:
-            raise ValueError(f'DO_ID must be in the set of `CompiledComponents` used to set thermo, '
-                             f'i.e., one of {self.components.IDs}.')
-        self._DO_ID = doid
-    
+    def ODE(self):
+        if self._ODE is None: self._compile_ODE()
+        return self._ODE
     
     def _init_model(self):
         if self._model is None:
@@ -618,7 +761,7 @@ class SBR(SanUnit):
     
         _dstate = self._dstate
         _update_dstate = self._update_dstate
-        V = self._V_max  # Volume is fixed for one stage
+        V = self._V_max  # Volume is not really needed though
         gstrip = self.gas_stripping
     
         if gstrip:
@@ -676,26 +819,6 @@ class SBR(SanUnit):
                 _update_dstate()
     
         self._ODE = dy_dt
-    
-    @property
-    def ODE(self):
-        if self._ODE is None: self._compile_ODE()
-        return self._ODE
-    
-    def _run(self):
-        
-        # 1. determine initial condition based on influent
-        out, = self.outs
-        out.mix_from(self.ins)
-        C0 = out.conc
-        
-        # 2. perform integration over reaction period, check documentation for `scipy.integrate.solve_ivp`
-        f = self.ODE
-        tau = self.reaction_time    # in days
-        C = solve_ivp(f, C0, t_span=(0, tau), method='BDF')
-
-        # 3. define effluent based on concentration at the end of the reaction period
-        out.conc = C
 
 #%% NOT READY
 # class SBR(SanUnit):
