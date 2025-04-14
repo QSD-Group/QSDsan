@@ -554,6 +554,149 @@ class BatchExperiment(SanUnit):
         
     #TODO: add functions for convenient model calibration
     
+#%%
+
+class SBR(SanUnit):
+    
+    @property
+    def aeration(self):
+        '''[:class:`Process` or float or NoneType] Aeration model.'''
+        return self._aeration
+    
+    @aeration.setter
+    def aeration(self, ae):
+        if ae is None or isinstance(ae, Process): self._aeration = ae
+        elif isinstance(ae, (float, int)):
+            if ae < 0:
+                raise ValueError('targeted dissolved oxygen concentration for aeration must be non-negative.')
+            else:
+                if ae > 14:
+                    warn(f'targeted dissolved oxygen concentration for {self.ID} might exceed the saturated level.')
+                self._aeration = ae
+        else:
+            raise TypeError(f'aeration must be one of the following types: float, '
+                            f'int, Process, NoneType. Not {type(ae)}')
+            
+    @property
+    def suspended_growth_model(self):
+        '''[:class:`CompiledProcesses` or NoneType] Suspended growth model.'''
+        return self._model
+    
+    @suspended_growth_model.setter
+    def suspended_growth_model(self, model):
+        if isinstance(model, CompiledProcesses) or model is None: self._model = model
+        else: raise TypeError(f'suspended_growth_model must be one of the following '
+                              f'types: CompiledProesses, NoneType. Not {type(model)}')
+        
+    @property
+    def DO_ID(self):
+        '''[str] The `Component` ID for dissolved oxygen used in the suspended growth model and the aeration model.'''
+        return self._DO_ID
+
+    @DO_ID.setter
+    def DO_ID(self, doid):
+        if doid not in self.components.IDs:
+            raise ValueError(f'DO_ID must be in the set of `CompiledComponents` used to set thermo, '
+                             f'i.e., one of {self.components.IDs}.')
+        self._DO_ID = doid
+    
+    
+    def _init_model(self):
+        if self._model is None:
+            warn(f'{self.ID} was initialized without a suspended growth model, '
+                 f'and thus run as a non-reactive unit')
+            r = lambda state_arr: np.zeros(self.components.size)
+        else:
+            # processes = _add_aeration_to_growth_model(aer, self._model)
+            r = self._model.production_rates_eval
+        return r
+    
+    def _compile_ODE(self):
+        isa = isinstance
+        aer = self._aeration
+        r = self._init_model()  # Reaction function from the model
+    
+        _dstate = self._dstate
+        _update_dstate = self._update_dstate
+        V = self._V_max  # Volume is fixed for one stage
+        gstrip = self.gas_stripping
+    
+        if gstrip:
+            gas_idx = self.components.indices(self.gas_IDs)
+            if isa(aer, Process): kLa = aer.kLa
+            else: kLa = 0.
+            S_gas_air = np.asarray(self.K_Henry) * np.asarray(self.p_gas_atm)
+            kLa_stripping = np.maximum(kLa * self.D_gas / self._D_O2, self.stripping_kLa_min)
+    
+        hasexo = bool(len(self._exovars))
+        f_exovars = self.eval_exo_dynamic_vars
+    
+        if isa(aer, (float, int)):
+            i = self.components.index(self._DO_ID)
+            fixed_DO = self._aeration
+    
+            def dy_dt(t, QC, dQC=None):
+                QC[i] = fixed_DO  # Fix oxygen level if specified
+                if hasexo:
+                    QC_ext = np.append(QC, f_exovars(t))
+                else:
+                    QC_ext = QC
+                _dstate[:-1] = r(QC_ext)  # Only reaction term, no flow
+                if gstrip:
+                    _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
+                _dstate[i] = 0  # Fix DO
+                _dstate[-1] = 0  # No flow rate change in batch
+                _update_dstate()
+    
+        elif isa(aer, Process):
+            aer_stoi = aer._stoichiometry
+            aer_frho = aer.rate_function
+    
+            def dy_dt(t, QC, dQC=None):
+                if hasexo:
+                    QC_ext = np.append(QC, f_exovars(t))
+                else:
+                    QC_ext = QC
+                _dstate[:-1] = r(QC_ext) + aer_stoi * aer_frho(QC_ext)
+                if gstrip:
+                    _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
+                _dstate[-1] = 0 # No flow rate change in batch
+                _update_dstate()
+    
+        else:
+            def dy_dt(t, QC, dQC=None):
+                if hasexo:
+                    QC_ext = np.append(QC, f_exovars(t))
+                else:
+                    QC_ext = QC
+                _dstate[:-1] = r(QC_ext)
+                if gstrip:
+                    _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
+                _dstate[-1] = 0 # No flow rate change in batch
+                _update_dstate()
+    
+        self._ODE = dy_dt
+    
+    @property
+    def ODE(self):
+        if self._ODE is None: self._compile_ODE()
+        return self._ODE
+    
+    def _run(self):
+        
+        # 1. determine initial condition based on influent
+        out, = self.outs
+        out.mix_from(self.ins)
+        C0 = out.conc
+        
+        # 2. perform integration over reaction period, check documentation for `scipy.integrate.solve_ivp`
+        f = self.ODE
+        tau = self.reaction_time    # in days
+        C = solve_ivp(f, C0, t_span=(0, tau), method='BDF')
+
+        # 3. define effluent based on concentration at the end of the reaction period
+        out.conc = C
+
 #%% NOT READY
 # class SBR(SanUnit):
 #     '''
@@ -627,14 +770,14 @@ class BatchExperiment(SanUnit):
 #     _N_outs = 2
 
 #     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-#                  surface_area=1500, height=4,
-#                  operation_cycle=(0.5, 1.5, 2.0, 0, 1.0, 0.5, 0.1),
-#                  aeration=(None, None, None, 2.0), DO_ID='S_O2',
-#                  suspended_growth_model=None, N_layer=10,
-#                  pumped_flow=None, underflow=None,
-#                  X_threshold=3000, v_max=474, v_max_practical=250,
-#                  rh=5.76e-4, rp=2.86e-3, fns=2.28e-3,
-#                  cache_state=True, **kwargs):
+#                   surface_area=1500, height=4,
+#                   operation_cycle=(0.5, 1.5, 2.0, 0, 1.0, 0.5, 0.1),
+#                   aeration=(None, None, None, 2.0), DO_ID='S_O2',
+#                   suspended_growth_model=None, N_layer=10,
+#                   pumped_flow=None, underflow=None,
+#                   X_threshold=3000, v_max=474, v_max_practical=250,
+#                   rh=5.76e-4, rp=2.86e-3, fns=2.28e-3,
+#                   cache_state=True, **kwargs):
 #         SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
 
 #         self._V = surface_area * height
@@ -783,29 +926,29 @@ class BatchExperiment(SanUnit):
 #     def _design(self):
 #         pass
 
-    # def _compile_dC_dt(self, V0, Qin, Cin, C, fill, aer):
-    #     isa = isinstance
-    #     processes = _add_aeration_to_growth_model(aer, self._model)
-    #     if fill:
-    #         t = symbols('t')
-    #         mass_balance_terms = list(zip(Cin, C, processes.production_rates.rate_of_production))
-    #         C_dot_eqs = [(cin-c)/(t+V0/Qin) + r for cin, c, r in mass_balance_terms]
-    #         if isa(aer, (float, int)): C_dot_eqs[self.components.index(self._DO_ID)] = 0
-    #         def dC_dt(t, y):
-    #             C_dot = lambdify([t]+C, C_dot_eqs)
-    #             return C_dot(t, *y)
-    #         J = Matrix(dC_dt(t, C)).jacobian(C)
-    #     else:
-    #         C_dot_eqs = processes.production_rates.rate_of_production
-    #         if isa(aer, (float, int)): C_dot_eqs[self.components.index(self._DO_ID)] = 0
-    #         def dC_dt(t, y):
-    #             C_dot = lambdify(C, C_dot_eqs)
-    #             return C_dot(*y)
-    #         J = Matrix(dC_dt(None, C)).jacobian(C)
-    #     def J_func(t, y):
-    #         J_func = lambdify(C, J)
-    #         return J_func(*y)
-    #     return (dC_dt, J_func)
+#     def _compile_dC_dt(self, V0, Qin, Cin, C, fill, aer):
+#         isa = isinstance
+#         processes = _add_aeration_to_growth_model(aer, self._model)
+#         if fill:
+#             t = symbols('t')
+#             mass_balance_terms = list(zip(Cin, C, processes.production_rates.rate_of_production))
+#             C_dot_eqs = [(cin-c)/(t+V0/Qin) + r for cin, c, r in mass_balance_terms]
+#             if isa(aer, (float, int)): C_dot_eqs[self.components.index(self._DO_ID)] = 0
+#             def dC_dt(t, y):
+#                 C_dot = lambdify([t]+C, C_dot_eqs)
+#                 return C_dot(t, *y)
+#             J = Matrix(dC_dt(t, C)).jacobian(C)
+#         else:
+#             C_dot_eqs = processes.production_rates.rate_of_production
+#             if isa(aer, (float, int)): C_dot_eqs[self.components.index(self._DO_ID)] = 0
+#             def dC_dt(t, y):
+#                 C_dot = lambdify(C, C_dot_eqs)
+#                 return C_dot(*y)
+#             J = Matrix(dC_dt(None, C)).jacobian(C)
+#         def J_func(t, y):
+#             J_func = lambdify(C, J)
+#             return J_func(*y)
+#         return (dC_dt, J_func)
 
 #%%
 class PFR(SanUnit):
