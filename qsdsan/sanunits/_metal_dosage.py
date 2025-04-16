@@ -20,6 +20,7 @@ from math import exp
 from .. import SanUnit
 from ..processes import mASM2d, ion_speciation
 import flexsolve as flx
+from chemicals.elements import molecular_weight as mw
 
 
 __all__ = ('MetalDosage',)
@@ -99,17 +100,30 @@ class MetalDosage(SanUnit):
         Component ID for soluble inert organic matter. The default is 'S_I'.
     particulate_inert_ID : str, optional
         Component ID for particulate inert organic matter. The default is 'X_I'.
-        
+    metal_price : float, optional
+        Price of the dosed metal, in USD/kg metal component.    
     '''    
     _N_ins = 1
     _N_outs = 1
     _ins_size_is_fixed = False
     _outs_size_is_fixed = True
+    
+    _units = {
+        'Coagulant': 'kg/hr',
+              }
+    
+    _default_flocculant_prices = {
+        'aluminum sulfate': (16, 0.32, 0.081),  # Al2(SO4)3·18H2O, purity in %, price in USD/kg, Al content -> 24.69 USD/kg Al
+        'PAC': (28, 0.5, 0.26),                 # Al2(OH)nCl(6-n) or "polyaluminum chloride", 0.2174-0.3093 gAl/g depending on n -> 5.77~8.21 USD/kg Al
+        'sodium aluminate': (48, 1.2, 0.329),   # NaAlO2 -> 7.60 USD/kg Al
+        'ferric chloride': (21, 0.4, 0.3443),   # FeCl3 -> 5.53 USD/kg Fe
+        'ferric sulfate': (20, 0.5, 0.1987),    # Fe2(SO4)3·9H2O -> 12.58 USD/kg Fe
+        }
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', F_BM_default=None, isdynamic=False,
                  P_precipitation_stoichiometry=None, metal_dosage=0.,
-                 metal_ID='', orthoP_ID='', metalP_ID='', 
+                 metal_ID='', orthoP_ID='', metalP_ID='', metal_price=None,
                  metalP_pKsp=13.75, alpha=1.8e-6,
                  soluble_substrate_ID='S_F', particulate_substrate_ID='X_S',
                  soluble_inert_ID='S_I', particulate_inert_ID='X_I', 
@@ -141,6 +155,7 @@ class MetalDosage(SanUnit):
         self.Fmin_inert = Fmin_inert
         self.Fmax_inert = Fmax_inert
         self.ka_inert = ka_inert
+        self.metal_price = metal_price
 
     @classmethod
     def from_mASM2d(cls, ID, ins=None, outs=(), model=None, 
@@ -389,6 +404,28 @@ class MetalDosage(SanUnit):
     @ka_inert.setter
     def ka_inert(self, ka):
         self._ka_si = ka
+    
+    @property
+    def metal_price(self):
+        '''[float] Price of the dosed metal, in USD/kg metal component.'''
+        return self._price
+    @metal_price.setter
+    def metal_price(self, p):
+        if p is None:
+            cmps = self.chemicals
+            mtid = self.metal_ID
+            mt = cmps[mtid]
+            if 'Al' in mtid:
+                i_metal = mw(dict(Al=mt.atoms['Al'])) / mt.chem_MW * mt.i_mass
+                purity, price, content = self._default_flocculant_prices['PAC']
+            elif 'Fe' in mtid:
+                i_metal = mw(dict(Fe=mt.atoms['Fe']))/mt.chem_MW * mt.i_mass
+                purity, price, content = self._default_flocculant_prices['ferric chloride']
+            else:
+                raise ValueError(f'unrecognized metal element in {mtid},'
+                                 'must provide metal price.')
+            p = price / (purity/100) / content * i_metal
+        self._price = p
         
     def _check_composition(self, soluble, particulate):
         get = getattr
@@ -517,3 +554,13 @@ class MetalDosage(SanUnit):
             _update_state()
 
         self._AE = yt
+        
+    def _design(self):
+        D = self.design_results
+        out, = self.outs
+        D['Coagulant'] = self.metal_dosage / 1000 * out.F_vol # kg/m3 * m3/hr
+        
+    def _cost(self):
+        D = self.design_results
+        opex = self.add_OPEX = {}
+        opex['Coagulant'] = D['Coagulant'] * self.metal_price # kg/hr * USD/kg
