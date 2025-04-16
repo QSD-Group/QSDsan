@@ -23,7 +23,7 @@ from scipy.integrate import solve_ivp
 
 __all__ = ('CSTR',
            'BatchExperiment',
-           # 'SBR',
+            'SBR',
            'PFR',
            'AerobicDigester',
            )
@@ -569,7 +569,7 @@ class BatchExperiment(SanUnit):
 class SBR(SanUnit):
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 V_max=1000, aeration=2.0, DO_ID='S_O2', suspended_growth_model=None,
+                 aeration=2.0, DO_ID='S_O2', suspended_growth_model=None,
                  gas_stripping=False, gas_IDs=None, stripping_kLa_min=None,
                  K_Henry=None, D_gas=None, p_gas_atm=None, reaction_time=0.5,
                  isdynamic=True, exogenous_vars=(), **kwargs):
@@ -592,15 +592,6 @@ class SBR(SanUnit):
 
         self._concs = None
         self._mixed = WasteStream()
-
-    # @property
-    # def V_max(self):
-    #     '''[float] The designed maximum liquid volume, not accounting for increased volume due to aeration, in m^3.'''
-    #     return self._V_max
-
-    # @V_max.setter
-    # def V_max(self, Vm):
-    #     self._V_max = Vm
     
     # reaction time would be in days because rate constants in ASM is typically in days. 
     @property
@@ -626,7 +617,7 @@ class SBR(SanUnit):
             if ae < 0:
                 raise ValueError('targeted dissolved oxygen concentration for aeration must be non-negative.')
             else:
-                if ae > 14:
+                if ae > 8:
                     warn(f'targeted dissolved oxygen concentration for {self.ID} might exceed the saturated level.')
                 self._aeration = ae
         else:
@@ -704,17 +695,23 @@ class SBR(SanUnit):
         self._state = np.append(Cs, Q).astype('float64')
         self._dstate = self._state * 0.
 
+    # to update effluent streams’ state arrays based on current state
     def _update_state(self):
         arr = self._state
         arr[arr < 1e-16] = 0.
         arr[-1] = sum(ws.state[-1] for ws in self.ins)
         self._outs[0].state = arr
-        
+    
+    # to update effluent streams’ dstate arrays based on current _state and _dstate
     def _update_dstate(self):
         arr = self._dstate
         self._outs[0].dstate = arr
                 
     def _run(self):
+        
+        # I needed to add this line to initialize _d_state, otherwise I was running into an error. s
+        self._init_state()
+        
         # 1. Determine initial condition based on mixed influent
         out, = self.outs
         out.mix_from(self.ins)
@@ -750,7 +747,6 @@ class SBR(SanUnit):
                  f'and thus run as a non-reactive unit')
             r = lambda state_arr: np.zeros(self.components.size)
         else:
-            # processes = _add_aeration_to_growth_model(aer, self._model)
             r = self._model.production_rates_eval
         return r
     
@@ -761,7 +757,7 @@ class SBR(SanUnit):
     
         _dstate = self._dstate
         _update_dstate = self._update_dstate
-        V = self._V_max  # Volume is not really needed though
+        # V = self._V_max  # Volume is not really needed though
         gstrip = self.gas_stripping
     
         if gstrip:
@@ -779,17 +775,21 @@ class SBR(SanUnit):
             fixed_DO = self._aeration
     
             def dy_dt(t, QC, dQC=None):
-                QC[i] = fixed_DO  # Fix oxygen level if specified
+                QC[i] = fixed_DO  # Fix oxygen level 
                 if hasexo:
                     QC_ext = np.append(QC, f_exovars(t))
                 else:
                     QC_ext = QC
+                print(f'Qc = {QC_ext}')
+                print(f'r = {r}')
                 _dstate[:-1] = r(QC_ext)  # Only reaction term, no flow
                 if gstrip:
                     _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
                 _dstate[i] = 0  # Fix DO
                 _dstate[-1] = 0  # No flow rate change in batch
                 _update_dstate()
+                
+                return _dstate
     
         elif isa(aer, Process):
             aer_stoi = aer._stoichiometry
@@ -819,7 +819,7 @@ class SBR(SanUnit):
                 _update_dstate()
     
         self._ODE = dy_dt
-
+        
 #%% NOT READY
 # class SBR(SanUnit):
 #     '''
