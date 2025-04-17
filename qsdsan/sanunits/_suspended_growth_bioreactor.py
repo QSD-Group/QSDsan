@@ -714,7 +714,7 @@ class SBR(SanUnit):
     def _run(self):
         
         # I needed to add this line to initialize _d_state, otherwise I was running into an error. 
-        self._init_state()
+        # self._init_state()
         
         # 1. Determine initial condition based on mixed influent
         out, = self.outs
@@ -729,8 +729,6 @@ class SBR(SanUnit):
         
         # f = function(t, y); output = dy/dt !! This is in documentation of solve ivp!!
         
-        # Fix the issue with array size (include Q)
-        
         sol = solve_ivp(fun=f,
                         t_span=(0, tau),
                         y0=C0,
@@ -739,8 +737,14 @@ class SBR(SanUnit):
     
         # 3. define effluent based on concentration at the end of the reaction period
         final_state = sol.y[:, -1]  # Last time point
-        out.set_concentration(final_state)
-        out.set_total_flow(Q0, 'm3/hr')
+        
+        concs_dict = dict(zip(self.components.IDs, final_state))
+        
+        print(f'concs_dict = {concs_dict}')
+
+        out.set_flow_by_concentration(flow_tot=Q0,
+                                  concentrations=concs_dict,
+                                  units=('m3/hr', 'mg/L'))
     
         # To save if needed
         # self.solution = sol
@@ -766,7 +770,7 @@ class SBR(SanUnit):
     
         # _dstate = self._dstate
         
-        _dstate = np.zeros(len(self.chemicals) + 1)
+        _dstate = np.zeros(len(self.chemicals))
         
         # _update_dstate = self._update_dstate
         # V = self._V_max  # Volume is not really needed though
@@ -794,11 +798,11 @@ class SBR(SanUnit):
                     QC_ext = QC
                 print(f'Qc = {QC_ext}')
                 print(f'r = {r}')
-                _dstate[:-1] = r(QC_ext)  # Only reaction term, no flow
+                _dstate[:] = r(QC_ext)  # Only reaction term, no flow
                 if gstrip:
                     _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
                 _dstate[i] = 0  # Fix DO
-                _dstate[-1] = 0  # No flow rate change in batch
+                # No flow rate change in batch
                 # _update_dstate()
                 
                 return _dstate
