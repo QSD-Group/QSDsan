@@ -568,6 +568,10 @@ class BatchExperiment(SanUnit):
 
 class SBR(SanUnit):
     
+    # Ideally all the phases can be together. 
+    
+    # Look at Ideal Clarfier's update_state
+    
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  aeration=2.0, DO_ID='S_O2', suspended_growth_model=None,
                  gas_stripping=False, gas_IDs=None, stripping_kLa_min=None,
@@ -696,20 +700,20 @@ class SBR(SanUnit):
         self._dstate = self._state * 0.
 
     # to update effluent streams’ state arrays based on current state
-    def _update_state(self):
-        arr = self._state
-        arr[arr < 1e-16] = 0.
-        arr[-1] = sum(ws.state[-1] for ws in self.ins)
-        self._outs[0].state = arr
+    # def _update_state(self):
+    #     arr = self._state
+    #     arr[arr < 1e-16] = 0.
+    #     arr[-1] = sum(ws.state[-1] for ws in self.ins)
+    #     self._outs[0].state = arr
     
     # to update effluent streams’ dstate arrays based on current _state and _dstate
-    def _update_dstate(self):
-        arr = self._dstate
-        self._outs[0].dstate = arr
+    # def _update_dstate(self):
+    #     arr = self._dstate
+    #     self._outs[0].dstate = arr
                 
     def _run(self):
         
-        # I needed to add this line to initialize _d_state, otherwise I was running into an error. s
+        # I needed to add this line to initialize _d_state, otherwise I was running into an error. 
         self._init_state()
         
         # 1. Determine initial condition based on mixed influent
@@ -721,6 +725,11 @@ class SBR(SanUnit):
         # 2. perform integration over reaction period, check documentation for `scipy.integrate.solve_ivp`
         f = self.ODE
         tau = self.reaction_time  # in days (user-defined)
+        
+        
+        # f = function(t, y); output = dy/dt !! This is in documentation of solve ivp!!
+        
+        # Fix the issue with array size (include Q)
         
         sol = solve_ivp(fun=f,
                         t_span=(0, tau),
@@ -755,8 +764,11 @@ class SBR(SanUnit):
         aer = self._aeration
         r = self._init_model()  # Reaction function from the model
     
-        _dstate = self._dstate
-        _update_dstate = self._update_dstate
+        # _dstate = self._dstate
+        
+        _dstate = np.zeros(len(self.chemicals) + 1)
+        
+        # _update_dstate = self._update_dstate
         # V = self._V_max  # Volume is not really needed though
         gstrip = self.gas_stripping
     
@@ -787,7 +799,7 @@ class SBR(SanUnit):
                     _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
                 _dstate[i] = 0  # Fix DO
                 _dstate[-1] = 0  # No flow rate change in batch
-                _update_dstate()
+                # _update_dstate()
                 
                 return _dstate
     
@@ -804,7 +816,9 @@ class SBR(SanUnit):
                 if gstrip:
                     _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
                 _dstate[-1] = 0 # No flow rate change in batch
-                _update_dstate()
+                # _update_dstate()
+                
+                return _dstate
     
         else:
             def dy_dt(t, QC, dQC=None):
@@ -816,7 +830,9 @@ class SBR(SanUnit):
                 if gstrip:
                     _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
                 _dstate[-1] = 0 # No flow rate change in batch
-                _update_dstate()
+                # _update_dstate()
+                
+                return _dstate
     
         self._ODE = dy_dt
         
