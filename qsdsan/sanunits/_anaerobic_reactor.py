@@ -730,8 +730,8 @@ class AnaerobicCSTR(CSTR):
                         + D['Volume of cover concrete']
         D['Reinforcement steel'] = 77.58 * total_concrete # in kg
 
-        print("--------------------Design results--------------------")
-        for key in D: print(f'{key}: {D[key]} {U[key]}')
+        # print("--------------------Design results--------------------")
+        # for key in D: print(f'{key}: {D[key]} {U[key]}')
 
 # %%
 
