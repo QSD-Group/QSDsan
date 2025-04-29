@@ -819,8 +819,8 @@ class mASM2d(CompiledProcesses):
     newberyite_precipitation_dissolution    0
     ACP_precipitation_dissolution           0
     MgCO3_precipitation_dissolution         0
-    AlPO4_precipitation_dissolution         1.3
-    FePO4_precipitation_dissolution         0.929
+    AlPO4_precipitation_dissolution         5.11
+    FePO4_precipitation_dissolution         4.52
 
     >>> # Estimate pH given state variable values.
     >>> Ka = asm.rate_function.params['Ka']
