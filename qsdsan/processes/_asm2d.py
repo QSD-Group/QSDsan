@@ -663,8 +663,8 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
     mmp_kinetics = params['mmp_kinetics']
     k_mmp = params['k_mmp']
     Ksp = params['Ksp']
-    K_AlOH = params['K_AlOH']
-    K_FeOH = params['K_FeOH']
+    # K_AlOH = params['K_AlOH']
+    # K_FeOH = params['K_FeOH']
 
     # rhos[19:26] = 0.
     # rhos[24] = X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
@@ -687,12 +687,18 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
     
     # rhos[19:26] *= k_mmp
     
-    if po4 > 0:
-        if X_AlOH > 0:
-            rhos[24] = k_mmp[5] * X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
-        if X_FeOH > 0:
-            rhos[25] = k_mmp[6] * X_FeOH * po4 * Monod(X_FeOH, K_FeOH)    
-        
+    # if po4 > 0:
+    #     if X_AlOH > 0:
+    #         rhos[24] = k_mmp[5] * X_AlOH * po4 * Monod(X_AlOH, K_AlOH)
+    #     if X_FeOH > 0:
+    #         rhos[25] = k_mmp[6] * X_FeOH * po4 * Monod(X_FeOH, K_FeOH)
+    k_PRE = params['k_PRE']
+    k_RED = params['k_RED']
+    K_ALK_PRE = params['K_ALK_PRE']
+    I_alk = Monod(co3*2 + hco3, K_ALK_PRE)
+    rhos[24] = (k_PRE*106.9/78*S_PO4*X_AlOH - k_RED*X_AlPO4*I_alk)/0.254    # bc original ASM2d assumes ferric hydroxide
+    rhos[25] = (k_PRE*S_PO4*X_FeOH - k_RED*X_FePO4*I_alk)/0.2054        # bc ref cmp is MeP rather than PO4 now
+    
     if mmp_kinetics in ('KM', 'Flores-Alsina'):
         rhos[19:24] = Mbamba_rhos(
             S_Ca, S_Mg, co3, nh4, po4, hpo4, # mass concentrations
@@ -721,7 +727,9 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
 class mASM2d(CompiledProcesses):
     '''
     Modified ASM2d. Compatible with `ADM1p` for plant-wide simulations.
-    Includes an algebraic pH solver and precipitation/dissolution of common minerals.
+    Includes an algebraic pH solver and option to include 
+    precipitation/dissolution processes of common minerals 
+    (CaCO3, struvite, newberyite, ACP, and MgCO3). 
 
     Parameters
     ----------
@@ -751,22 +759,17 @@ class mASM2d(CompiledProcesses):
         Half saturation coefficient of NOx- for autotrophs [mg-N/L]. The default is 0.5.
     K_P_S : float, optional
         Half saturation coefficient of ortho-P for PP storage [mg-P/L]. The default is 0.2.
+    mmp_kinetics : str, optional
+        Preciptation kinectics for the Ca-Mg-P-C system. Can choose from 
+        ('KM', 'Musvoto', 'Flores-Alsina') or None. [3]_, [4]_, [5]_.
     k_mmp : iterable[float], optional
         Rate constants for multi-mineral precipitation/dissolution 
         [mg-precipitate/L/(unit of solubility product)/d]. Follows the exact order
-        of `mASM2d._precipitates`. The default is (5.0, 300, 0.05, 150, 50, 1.0, 1.0).
+        of CaCO3, struvite, newberyite, ACP, and MgCO3. 
+        The default is based on `mmp_kinetics` if not given.
     pKsp : iterable[float], optional
-        Solubility of minerals, in order of `mASM2d._precipitates`. 
-        The default is (6.45, 13.16, 5.8, 23, 7, 21, 26).
-    K_dis : iterable[float], optional
-        Saturation coefficient for the switching function of mineral dissolution
-        [mg-precipitate/L]. The default is (1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0).
-    K_AlOH : float, optional
-        Half saturation coefficient of aluminum hydroxide for AlPO4 precipitation
-        [mg-Al(OH)3/L]. The default is 0.001.
-    K_FeOH : float, optional
-        Half saturation coefficient of ferric hydroxide for FePO4 precipitation
-        [mg-Fe(OH)3/L]. The default is 0.001.
+        Solubility of minerals, in order of CaCO3, struvite, newberyite, ACP, and MgCO3. 
+        The default is based on `mmp_kinetics` if not given.
     pKa : iterable[float], optional
         Equilibrium coefficient values of acid-base pairs, unitless, 
         following the order of `mASM2d._acid_base_pairs`. 
@@ -816,8 +819,8 @@ class mASM2d(CompiledProcesses):
     newberyite_precipitation_dissolution    0
     ACP_precipitation_dissolution           0
     MgCO3_precipitation_dissolution         0
-    AlPO4_precipitation_dissolution         1.82e-6
-    FePO4_precipitation_dissolution         1.82e-6
+    AlPO4_precipitation_dissolution         1.3
+    FePO4_precipitation_dissolution         0.929
 
     >>> # Estimate pH given state variable values.
     >>> Ka = asm.rate_function.params['Ka']
@@ -841,6 +844,23 @@ class mASM2d(CompiledProcesses):
     of phosphorus transformations in wastewater treatment systems: 
     Impacts of control and operational strategies. Water Research, 113, 
     97–110. https://doi.org/10.1016/j.watres.2017.02.007
+    
+    [3] Kazadi Mbamba, C.; Tait, S.; Flores-Alsina, X.; Batstone, D. J. 
+    A Systematic Study of Multiple Minerals Precipitation Modelling in 
+    Wastewater Treatment. Water Research 2015, 85, 359–370. 
+    https://doi.org/10.1016/j.watres.2015.08.041.
+    
+    [4] Musvoto, E. V.; Wentzel, M. C.; Ekama, G. A. Integrated Chemical–Physical 
+    Processes Modelling—II. Simulating Aeration Treatment of Anaerobic Digester 
+    Supernatants. Water Research 2000, 34 (6), 1868–1880. 
+    https://doi.org/10.1016/S0043-1354(99)00335-8.
+
+    [5] Flores-Alsina, X.; Solon, K.; Kazadi Mbamba, C.; Tait, S.; Gernaey, K. V.; 
+    Jeppsson, U.; Batstone, D. J. Modelling Phosphorus (P), Sulfur (S) and 
+    Iron (Fe) Interactions for Dynamic Simulations of Anaerobic Digestion 
+    Processes. Water Research 2016, 95, 370–382. 
+    https://doi.org/10.1016/j.watres.2016.03.012.
+
     '''
     _stoichio_params = ('f_SI', 'Y_H', 'Y_PAO', 'Y_PO4', 'Y_PHA', 'Y_A', 
                         'f_XI_H', 'f_XI_PAO', 'f_XI_AUT', 'COD_deN', 'K_XPP', 'Mg_XPP')
@@ -855,8 +875,10 @@ class mASM2d(CompiledProcesses):
                        'K_NH4_H', 'K_NH4_PAO', 'K_NH4_AUT', 
                        'K_P_H', 'K_P_PAO', 'K_P_AUT', 'K_P_S', 
                        'K_PP', 'K_MAX', 'K_IPP', 'K_PHA',
-                       'k_mmp', 'Ksp', 'K_dis', 'K_AlOH', 'K_FeOH', 
+                       'k_mmp', 'Ksp', 
+                       # 'K_dis', 'K_AlOH', 'K_FeOH', 
                        # 'kLa_min', 'f_kLa', 'K_Henry', 
+                       'k_PRE', 'k_RED', 'K_ALK_PRE',
                        'Ka', 'cmps')
     
     _acid_base_pairs = (('H+', 'OH-'), ('NH4+', 'NH3'), 
@@ -899,8 +921,9 @@ class mASM2d(CompiledProcesses):
                 K_P_H=0.01, K_P_PAO=0.01, K_P_AUT=0.01, K_P_S=0.2, 
                 K_PP=0.01, K_MAX=0.34, K_IPP=0.02, K_PHA=0.01,
                 mmp_kinetics=None, k_mmp=None, pKsp=None,
-                K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
-                K_AlOH=0.001, K_FeOH=0.001, 
+                # K_dis=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
+                # K_AlOH=0.001, K_FeOH=0.001, 
+                k_PRE=1.0, k_RED=0.6, K_ALK_PRE=0.5,
                 pKa=(14, 9.25, 6.37, 10.32, 2.12, 7.21, 12.32, 4.76),
                 **kwargs):       
         
@@ -981,7 +1004,8 @@ class mASM2d(CompiledProcesses):
                         K_P_H, K_P_PAO, K_P_AUT, K_P_S, 
                         K_PP, K_MAX, K_IPP, K_PHA,
                         np.array(k_mmp), Ksp, 
-                        np.array(K_dis), K_AlOH, K_FeOH, 
+                        # np.array(K_dis), K_AlOH, K_FeOH, 
+                        k_PRE, k_RED, K_ALK_PRE*12,
                         # kLa_min, f_kLa, K_Henry, 
                         Ka, cmps,
                         )
