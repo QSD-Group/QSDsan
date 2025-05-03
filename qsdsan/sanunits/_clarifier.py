@@ -581,7 +581,7 @@ class FlatBottomCircularClarifier(SanUnit):
         'Clarifier volume': 'm3',
         'Design surface overflow rate': 'm3/day/m2',
         'Solids loading rate': 'kg/m2/hr',
-        'Hydraulic Retention Time': 'hr', 
+        'Hydraulic retention time': 'hr', 
         'Center feed depth': 'm',
         'Downward flow velocity': 'm/hr',
         'Center feed diameter': 'm',
@@ -641,6 +641,9 @@ class FlatBottomCircularClarifier(SanUnit):
         pipe_ss, pump_ss = 0., 0.
         for i in pumps:
             p = getattr(self, f'{i}_pump')
+            # ensure every pump has a _recycle_system flag
+            if not hasattr(p, '_recycle_system'):
+                p._recycle_system = False
             p.simulate()
             p_design = p.design_results
             pipe_ss += p_design['Pump pipe stainless steel']
@@ -698,10 +701,10 @@ class FlatBottomCircularClarifier(SanUnit):
         D['Solids loading rate'] = simulated_slr
 
         # Calculating HRT
-        D['Hydraulic Retention Time'] = D['Clarifier volume']*24/D['Volumetric flow'] # in hr
+        D['Hydraulic retention time'] = D['Clarifier volume']*24/D['Volumetric flow'] # in hr
         
         # Amount of concrete required
-        D_tank = D['Clarifier depth']*39.37 # m to inches 
+        D_tank = D['Clarifier depth']*3.2808 # m to ft
         fb = 0.5 # Freeboard, m
         # Thickness of the wall concrete, [m]. Default to be minimum of 1 ft with 1 in added for every foot of depth over 12 ft. (Brian's code)
         thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
@@ -710,7 +713,7 @@ class FlatBottomCircularClarifier(SanUnit):
         D['Volume of concrete wall']  = (np.pi*(D['Clarifier depth']+fb)/4)*(outer_diameter**2 - inner_diameter**2)
         # Concrete slab thickness, [ft], default to be 2 in thicker than the wall thickness. (Brian's code)
         thickness_concrete_slab = thickness_concrete_wall + (2/12)*0.3048 # from inch to m
-        D['Volume of concrete slab']  = (np.pi*thickness_concrete_slab/4)*outer_diameter**2
+        D['Volume of concrete slab']  = (np.pi*thickness_concrete_slab/4)*(outer_diameter**2)
 
         # Amount of reinforcing steel required [6]
         D['Reinforcement steel'] = 77.58 * (D['Volume of concrete slab'] + D['Volume of concrete wall']) # in kg
@@ -744,8 +747,6 @@ class FlatBottomCircularClarifier(SanUnit):
             
         # For secondary clarifier
         D['Number of pumps'] = 2*D['Number of clarifiers']
-
-        for key in D: print(f'{key}: {D[key]} {U[key]}')  
 
     def _cost(self):
        
@@ -1432,6 +1433,9 @@ class PrimaryClarifier(IdealClarifier):
         pipe_ss, pump_ss = 0., 0.
         for i in pumps:
             p = getattr(self, f'{i}_pump')
+            # ensure every pump has a _recycle_system flag
+            if not hasattr(p, '_recycle_system'):
+                p._recycle_system = False
             p.simulate()
             p_design = p.design_results
             pipe_ss += p_design['Pump pipe stainless steel']
@@ -1450,7 +1454,7 @@ class PrimaryClarifier(IdealClarifier):
         'Cylindrical volume': 'm3',
         'Conical volume': 'm3',
         'Clarifier volume': 'm3',
-        'Hydraulic Retention Time': 'hr', 
+        'Hydraulic retention time': 'hr', 
         'Center feed depth': 'm',
         'Downward flow velocity': 'm/hr',
         'Center feed diameter': 'm',
@@ -1472,10 +1476,7 @@ class PrimaryClarifier(IdealClarifier):
         
         D['Number of clarifiers'] = 2 # 1 in use and 1 redundant.            
             
-        D['SOR'] = self.surface_overflow_rate # in (m3/day)/m2
-
-        # Calculating HRT based on solids removal efficiency, using empirical constants for TSS. [2]
-        D['Hydraulic Retention Time'] = (self.solids_removal_efficiency * 0.014)/(1 - (self.solids_removal_efficiency * 0.0075)) 
+        D['SOR'] = self.surface_overflow_rate # in (m3/day)/m2 
 
         D['Volumetric flow'] = (mixed.get_total_flow('m3/hr')*24)/(D['Number of clarifiers']-1) # m3/day
 
@@ -1504,11 +1505,11 @@ class PrimaryClarifier(IdealClarifier):
         D['Clarifier volume'] = D['Cylindrical volume'] + D['Conical volume'] #in m3
         
         # Calculating HRT 
-        D['Hydraulic Retention Time'] = D['Clarifier volume'] * 24 / D['Volumetric flow'] # in hours
+        D['Hydraulic retention time'] = D['Clarifier volume'] * 24 / D['Volumetric flow'] # in hours
 
         # Check on cylinderical HRT [3]
-        if D['Hydraulic Retention Time'] < 1.5 or D['Hydraulic Retention Time'] > 2.5:
-            HRT = D['Hydraulic Retention Time']
+        if D['Hydraulic retention time'] < 1.5 or D['Hydraulic retention time'] > 2.5:
+            HRT = D['Hydraulic retention time']
             warn(f'HRT = {HRT} is not between 1.5 and 2.5 hrs')
         
         # The design here is for center feed of clarifier.
@@ -1531,7 +1532,7 @@ class PrimaryClarifier(IdealClarifier):
             warn(f'Diameter of the center feed does not lie between 15-25% of tank diameter. It is {cf_dia*100/tank_dia}% of tank diameter')
 
         # Amount of concrete required
-        D_tank = D['Cylindrical depth']*39.37 # m to inches 
+        D_tank = D['Cylindrical depth']*3.2808 # m to ft 
         # Thickness of the wall concrete [m]. Default to be minimum of 1 feet with 1 inch added for every foot of depth over 12 feet.
         thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
         inner_diameter = D['Cylindrical diameter']
@@ -1564,8 +1565,7 @@ class PrimaryClarifier(IdealClarifier):
         
         #For primary clarifier 
         D['Number of pumps'] = D['Number of clarifiers']
-   
-        for key in D: print(f'{key}: {D[key]} {U[key]}')
+
         
     def _cost(self):
         D = self.design_results
