@@ -178,6 +178,9 @@ class AeratedGritChamber(IdealClarifier):
         pipe_ss, pump_ss = 0., 0.
         for i in pumps:
             p = getattr(self, f'{i}_pump')
+            # ensure every pump has a _recycle_system flag
+            if not hasattr(p, '_recycle_system'):
+                p._recycle_system = False
             p.simulate()
             p_design = p.design_results
             pipe_ss += p_design['Pump pipe stainless steel']
@@ -192,7 +195,7 @@ class AeratedGritChamber(IdealClarifier):
         'Grit chamber depth': 'm',
         'Grit chamber width': 'm',
         'Grit chamber length': 'm',
-        'Hydraulic Retention Time': 'hr', 
+        'Hydraulic retention time': 'hr', 
         'Air supply': 'm3/hr',
         'Grit production': 'm3/day',
         'Volume of wall concrete': 'm3',
@@ -218,14 +221,14 @@ class AeratedGritChamber(IdealClarifier):
         D['Grit chamber depth'] = self._d
 
         # Calculating required volume and surface area of grit chamber    
-        V_chamber = Q_in * self._t/24
+        V_chamber = D['Volumetric flow'] * D['Hydraulic retention time'] /24
         D['Volume of grit chamber'] = V_chamber
         area = V_chamber/self._d
         D['Surface area'] = area
 
         # Calculating dimensions of grit chamber
         width = self._d * self.W_to_D
-        D['Grit chammber width'] = width
+        D['Grit chamber width'] = width
         length = area/width
         D['Grit chamber length'] = length
 
@@ -234,15 +237,16 @@ class AeratedGritChamber(IdealClarifier):
         D['Air supply'] = Q_air
 
         # Estimating daily grit production
-        Q_grit = self.p_grit * Q_in # in m3/day
+        Q_grit = self.p_grit * Q_in / 1000 # in m3/day
         D['Grit production'] = Q_grit
 
         # Estimating concrete and reinforcement steel
-        thickness_concrete_wall = (1 + max(self._d/12, 0)) * 0.3048 # from ft to m
+        D_tank = self._d * 3.2808 # m to ft
+        thickness_concrete_wall = (1 + max(D_tank-12, 0)/12)*0.3048 # from feet to m
         thickness_concrete_slab = thickness_concrete_wall + (2/12)*0.3048 # from inch to m
         VSW = 2 * width * thickness_concrete_wall * (self._d + self.freeboard) # short walls
-        VLW = 2 * (length + 2*thickness_concrete_wall) * thickness_concrete_wall * (self._d + self.freeboard) # long walls
-        VS = (length + 2*thickness_concrete_wall) * (width + 2*thickness_concrete_wall) * thickness_concrete_slab # slab
+        VLW = 2 * (length + (2*thickness_concrete_wall)) * thickness_concrete_wall * (self._d + self.freeboard) # long walls
+        VS = (length + (2*thickness_concrete_wall)) * (width + (2*thickness_concrete_wall)) * thickness_concrete_slab # slab
         D['Volume of wall concrete'] = VSW + VLW
         D['Volume of slab concrete'] = VS
         D['Reinforcement steel'] = 77.58 * (VSW + VLW + VS) # [4]
