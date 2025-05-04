@@ -260,7 +260,7 @@ class AnaerobicCSTR(CSTR):
     sludge_solids : float, optional
         Solid content of sludge. The default is 0.05. [3]
     organic_loading : float, optional
-        Volate solids loadin rate [kg/m3/day]. The default is 2.57. [3,4]
+        Volatile solids loading rate [kg/m3/day]. The default is 2.57. [3,4]
     
     References
     ----------
@@ -604,7 +604,7 @@ class AnaerobicCSTR(CSTR):
                 grad_dydt_Sh2_AD = self.model.grad_dydt_Sh2_AD
                 def solve_h2(QC, S_in, T):
                     Ka = params['Ka_base'] * T_correction_factor(params['T_base'], T, params['Ka_dH'])
-                    h, nh3, co2 = solve_pH(QC, Ka, unit_conversion)
+                    h = solve_pH(QC, Ka, unit_conversion)
                     S_h2_0 = QC[h2_idx]
                     S_h2_in = S_in[h2_idx]
                     S_h2 = newton(dydt_Sh2_AD, S_h2_0, grad_dydt_Sh2_AD,
@@ -686,10 +686,11 @@ class AnaerobicCSTR(CSTR):
         bCOD_eff = bCOD * (1 - self.solids_conversion_efficiency)
         bCOD_sludge = 12 * bCOD * self.solids_conversion_efficiency
 
-        Y = 0.05
+        Y = 0.04
         k = 6.67 if (self.T-273.15) == 35 else 6.67/np.power(1.035, (self.T-273.15) - 35)
         Kc = 1.8 if (self.T-273.15) == 35 else 1.8/(1.112 * np.power(1.035, 35 - (self.T-273.15)))
         b = 0.03 if (self.T-273.15) == 35 else 0.03 * np.power(1.035, (self.T-273.15) - 35)
+
         SRT_lim = 1/(((Y * k * bCOD_sludge)/(Kc + bCOD_sludge)) - b)
         SRT_des = 2.5 * SRT_lim
         self.SRT = SRT_des
@@ -709,7 +710,7 @@ class AnaerobicCSTR(CSTR):
         D['Digester diameter'] = diameter # in m
 
         # Calculating required volume of wall, slab concrete in m3
-        height = D['Digester height'] * 39.37 # from m to inches
+        height = D['Digester height'] * 3.2808 # from m to ft
         # Thickness of the wall concrete [m]. Default to be minimum of 1 feet with 1 inch added for every foot of depth over 12 feet.
         thickness_concrete_wall = (1 + max(height-12, 0)/12) * 0.3048 # from ft to m
         inner_diameter = D['Digester diameter']
@@ -729,9 +730,6 @@ class AnaerobicCSTR(CSTR):
         total_concrete = D['Volume of wall concrete'] + D['Volume of slab concrete'] \
                         + D['Volume of cover concrete']
         D['Reinforcement steel'] = 77.58 * total_concrete # in kg
-
-        # print("--------------------Design results--------------------")
-        # for key in D: print(f'{key}: {D[key]} {U[key]}')
 
 # %%
 
