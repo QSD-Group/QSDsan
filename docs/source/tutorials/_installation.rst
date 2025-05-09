@@ -7,17 +7,17 @@ Note that this is just ONE way to set up your environment and cloning the latest
 
 #. Download and install `Anaconda <https://www.anaconda.com/products/distribution>`_
 
-   - You will see the Python version that comes with the Anaconda when you download it (Python 3.9 as of 9/21/2022).``QSDsan`` is mainly developed on Python 3.9 at the time that this tutorial was written.
+   - You will see the Python version that comes with the Anaconda when you download it.``QSDsan`` is mainly developed on Python 3.12 at the time that this tutorial was written.
 
-#. Make a new conda environment with the same version of Python as the base environment in the Anaconda you just installed, e.g., for Python 3.9, in your command line interface (CLI, Anaconda Prompt for Windows and terminal for Mac):
+#. Make a new conda environment with the same version of Python as the base environment in the Anaconda you just installed, e.g., for Python 3.12, in your command line interface (CLI, Anaconda Prompt for Windows and terminal for Mac):
 
    .. code::
 
-      conda create --name py39 python=3.9
+      conda create --name qsdsan python=3.12
       
-      conda activate py39
+      conda activate qsdsan
 
-   - The py39 is simply the name for the environment, you can change it to other ones that make more sense (e.g., qsdsan, dev), all of the following CLI codes should be executed on this environment
+   - The qsdsan is simply the name for the environment, you can change it to other ones that make more sense (e.g., dev), all of the following CLI codes should be executed on this environment
 
 #. Install `Spyder <https://www.spyder-ide.org/>`_, in your CLI
 
