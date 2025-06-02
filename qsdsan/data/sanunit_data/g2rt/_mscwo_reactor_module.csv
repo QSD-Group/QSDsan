@@ -21,3 +21,5 @@ treatment_time,,seconds,175,150,200,uniform
 operating_temperature,,K,681.575,640,723.15,uniform
 feces_ash_content,,fraction,0.1456,0.12,0.25,triangular
 carbon_COD_ratio,,g C*g COD-1,0.35,0.25,0.4,triangular
+P_loss,,fraction,0.042,0.01,0.1,uniform
+K_loss,,fraction,0.042,0.01,0.1,uniform

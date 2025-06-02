@@ -1,30 +1,24 @@
-parameter,name,unit,expected,low,high,distribution,reference,Criterion
-water_recovery,,fraction,0.6,0.33,0.75,uniform,"Metcalf & Eddy, et al. Wastewater engineering: treatment and resource recovery. McGraw Hill Education, 2014. page 1196",1
-daily_flow_rate,,L/d,100,,,constant,Assumption based on 6 users per day,1
-water_flux,,L/(m2*h),15,,,constant,"Kucera, Jane. ""Reverse osmosis: design, process, and applications for engineers."" J. Kucera//Wiley-Scrivener 2010 (2015): 416.page 27",1
-TDS_removal,,fraction,0.95,0.9,0.99,triangular,page 12: https://www.dupont.com/content/dam/dupont/amer/us/en/water-solutions/public/documents/en/RO-NF-FilmTec-Manual-45-D01504-en.pdf,1
-reverse_osmosis_system_cost,,USD,401.55875,69.99,1600,triangular,https://crystalquest.com/products/reverse-osmosis-system-low-flow?variant=8110716518514,4.2
-piping_cost,,USD,93,65.1,120.9,uniform,89895K769: https://www.mcmaster.com/products/pipe/tubing~/smooth-bore-seamless-stainless-steel-tubing/,3
-RO_energy_consumption,,kWh/kg water,0.0475,0.029,0.066,uniform,Duke Center for WaSH-AID design team data,4.2
-membrane_cost,,USD,140,98,182,uniform,https://www.reverseosmosis.com/products/axeon-hf1-2521-400-gpd-150-psi-ro-membrane-element-200375?srsltid=AfmBOooIPppk_wlfk_6KIXkdB_kmg-vPO2VxMAoeTEURBODU5NvnYipW,3
-membrane_life_time,,yr,2,1.4,2.6,constant,https://espwaterproducts.com/products/axeon-hf1-2514-2-5-x-14-225-gpd-ro-membrane-150psi-200374?srsltid=AfmBOoo9SUEkfEZQGlBQ_GxJo8A7TFYkpTBasSEoOLkyYAr8gJ1QDYeQ,1
-reverse_osmosis_maintenance,,hr/yr,6,4.2,7.8,uniform,Assumption,3
-reverse_osmosis_operation,,hr/d,2,1.4,2.6,uniform,Assumption,3
-wages,,USD/h,3.64,1.82,5.46,uniform,"Gates Scenario Specific Analysis 2022, for country specific data:  https://ilostat.ilo.org/data/",1
-material_replacement_cost,,fraction,0.04,0.02,0.06,uniform,GatesTechnology Portfolio Report 2022,1
-GFRPlastic_weight,,kg,15,10.5,19.5,uniform,https://crystalquest.com/products/whole-house-reverse-osmosis-system?variant=40999693582429,3
-membrane_area,,m2,2,1.4,2.6,uniform,Assumption,3
-Steel_weight,,kg,5,3.5,6.5,uniform,https://crystalquest.com/products/whole-house-reverse-osmosis-system?variant=40999693582429,3
-back_flush_pump_cost,,USD,89.05,75.69,102.41,uniform,Assumption based on Watabe et al. 2023,1
-backwash_pump_energy_percycle,,kWh,0.00008,0.000064,0.000096,uniform,Assumption based on Watabe et al. 2023,1
-air_scrubbing_blower_cost,,USD,200.3933333,140.2753333,260.5113333,uniform,"https://www.grainger.com/product/4Z749?gucid=N:N:PS:Paid:GGL:CSM-2295:K2UWC0:20500801:APZ_1&gad_source=1&gclid=CjwKCAiA2JG9BhAuEiwAH_zf3u9hf3LOFB_YnFyaioEskUvM-Q08k6-jOsgIgu7bXUAt7pGEc9H_bxoCY-8QAvD_BwE&gclsrc=aw.ds
-https://www.aliexpress.us/item/3256808169932820.html?src=google&pdp_npi=4%40dis%21USD%21167.91%21167.91%21%21%21%21%21%40%2112000044706757274%21ppc%21%21%21&gQT=1&gatewayAdapt=glo2usa
-https://www.alibaba.com/pla/YASHIBA-vacuum-blower-motor-03kw380v-small_62077961529.html?mark=google_shopping&biz=pla&searchText=blowers&product_id=62077961529&pcy=US&material=Hdf91300e2465440c8e350a7e7b8e73ceu.jpg&gQT=1",4.3
-air_scrubbing_energy_percycle,,kWh,0.004166667,0.002916667,0.005416667,uniform,"Estimated based on Air flow rate: 0.6 m_/h = 0.000167 m_/s
-Typical pressure for membrane aeration: 50 kPa to 100 kPa (assumed 75 kPa = 0.075 MPa)
-Typical blower efficiency: 50% (0.5)
-Air density: 1.2 kg/m_ (at ambient conditions)
-Compressor isentropic efficiency (_): 0.85 (assumed)",1
-accumulated_COD_triggering_cleaning,,kg COD per cycle,0.02,0.0014,0.026,uniform,Assumption based on Duke Center for WaSH-AID design team bill of materials,3
-NH3_removal,,fraction,0.74,0.69,0.91,triangular,"https://doi.org/10.2166/wrd.2022.084
-https://pubs.rsc.org/en/content/articlehtml/2024/ew/d4ew00200h",1
+parameter,name,unit,expected,low,high,distribution
+water_recovery,,fraction,0.6,0.33,0.75,uniform
+daily_flow_rate,,L/d,100,,,constant
+water_flux,,L/(m2*h),15,,,constant
+TDS_removal,,fraction,0.95,0.9,0.99,triangular
+TSS_removal,,fraction,0.999,0.99,1,uniform
+reverse_osmosis_system_cost,,USD,401.55875,69.99,1600,triangular
+piping_cost,,USD,93,65.1,120.9,uniform
+RO_energy_consumption,,kWh/kg water,0.0475,0.029,0.066,uniform
+membrane_cost,,USD,140,98,182,uniform
+membrane_life_time,,yr,2,1.4,2.6,constant
+reverse_osmosis_maintenance,,hr/yr,6,4.2,7.8,uniform
+reverse_osmosis_operation,,hr/d,2,1.4,2.6,uniform
+wages,,USD/h,3.64,1.82,5.46,uniform
+material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
+GFRPlastic_weight,,kg,15,10.5,19.5,uniform
+membrane_area,,m2,2,1.4,2.6,uniform
+Steel_weight,,kg,5,3.5,6.5,uniform
+back_flush_pump_cost,,USD,89.05,75.69,102.41,uniform
+backwash_pump_energy_percycle,,kWh,0.00008,0.000064,0.000096,uniform
+air_scrubbing_blower_cost,,USD,200.3933333,140.2753333,260.5113333,uniform
+air_scrubbing_energy_percycle,,kWh,0.004166667,0.002916667,0.005416667,uniform
+accumulated_COD_triggering_cleaning,,kg COD/m2 per cycle,0.01,0.007,0.013,uniform
+NH3_removal,,fraction,0.74,0.69,0.91,triangular

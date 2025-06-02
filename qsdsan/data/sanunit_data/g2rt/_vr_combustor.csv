@@ -18,7 +18,8 @@ wood_moisture_content,,fraction,0.059,0.054,0.0645,triangular
 combustion_N_loss,,fraction,0.95,0.9,1,triangular
 combustion_P_loss,,fraction,0.13,0.05,0.16,triangular
 combustion_K_loss,,fraction,0.12,0.02,0.26,triangular
-combustion_C_loss,,fraction,0.56,0.24,0.72,triangular
+combustion_OtherSS_loss,,fraction,0.85,0.595,0.99,uniform
+combustion_C_loss,,fraction,0.846,0.77,0.89,triangular
 carbon_COD_ratio,,g C*g COD-1,0.35,0.25,0.4,triangular
 material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
 turbine_ventilator_cost,,USD,256,179.2,332.8,uniform

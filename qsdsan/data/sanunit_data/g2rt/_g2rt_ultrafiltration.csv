@@ -55,4 +55,4 @@ back_flush_pump_cost,,USD,89.05,75.69,102.41,uniform
 backwash_pump_energy_percycle,,kWh,0.00008,0.000064,0.000096,uniform
 air_scrubbing_blower_cost,,USD,200.3933333,140.2753333,260.5113333,uniform
 air_scrubbing_energy_percycle,,kWh,0.004166667,0.002916667,0.005416667,uniform
-accumulated_TSS_triggering_cleaning,,kg TSS per cycle,0.02,0.0014,0.026,uniform
+accumulated_TSS_triggering_cleaning,,kg TSS per cycle,0.02,0.014,0.026,uniform
