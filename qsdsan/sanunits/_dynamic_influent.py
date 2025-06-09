@@ -131,7 +131,11 @@ class DynamicInfluent(SanUnit):
             
     def _init_from_file(self, file_path=None, **kwargs):
         path = file_path or dynamic_inf_path
-        self._data = df = load_data(path, index_col=None, **kwargs)
+        df = load_data(path, index_col=None, **kwargs)
+        self._init_from_table(df)
+    
+    def _init_from_table(self, df):
+        self._data = df
         df.sort_values('t', inplace=True)
         df_y = df.loc[:, df.columns!='t']
         if any(df_y.iloc[-1,:] != df_y.iloc[0,:]):
