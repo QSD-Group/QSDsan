@@ -1,0 +1,11 @@
+parameter,name (if diff),unit,expected,low,high,distribution,references
+greywater_generation,,g/cap/d,125000,87500,162500,uniform,https://www.leesu.fr/IMG/pdf/arceau-brochure-separation-a-la-source-2021-12-09.pdf
+N_greywater,,g/cap/d,1,0.7,1.3,uniform,https://www.leesu.fr/IMG/pdf/arceau-brochure-separation-a-la-source-2021-12-09.pdf
+N_greywater_NH3,,fraction,0.252083335,0.00416667,0.5,uniform,https://doi.org/10.1016/S1462-0758(01)00064-4
+P_greywater,,g/cap/d,0.5,0.35,0.65,uniform,https://www.leesu.fr/IMG/pdf/arceau-brochure-separation-a-la-source-2021-12-09.pdf
+COD_greywater,,g/cap/d,51,35.7,66.3,uniform,https://www.leesu.fr/IMG/pdf/arceau-brochure-separation-a-la-source-2021-12-09.pdf
+K_greywater,,g/cap/d,0.825,0.5775,1.0725,uniform,https://doi.org/10.1016/S1462-0758(01)00064-4
+Ca_greywater,,g/cap/d,2.625,1.8375,3.4125,uniform,https://doi.org/10.1016/S1462-0758(01)00064-4
+Mg_greywater,,g/cap/d,1.5,0.625,2.375,uniform,https://doi.org/10.1016/S1462-0758(01)00064-4
+OtherSS_greywater,,g/cap/d,16.1875,3.625,28.75,uniform,https://doi.org/10.1016/S1462-0758(01)00064-4
+Suspended_solids_greywater,use WoodAsh as surrogate for suspended solids,g/cap/d,18.75,2.125,35.375,uniform,https://doi.org/10.1007/s11270-018-3909-8

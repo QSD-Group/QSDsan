@@ -9,6 +9,8 @@ This module is developed by:
     Yalin Li <mailto.yalin.li@gmail.com>
     
     Joy Zhang <joycheung1994@gmail.com>
+    
+    Zixuan Wang <wyatt4428@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -23,9 +25,10 @@ from warnings import warn
 # from scipy.linalg import solve as la_solve
 import numpy as np
 
-__all__ = ('Excretion', 'ExcretionmASM2d')
+__all__ = ('Excretion', 'ExcretionmASM2d','Greywater')
 
 excretion_path = ospath.join(data_path, 'sanunit_data/_excretion.tsv')
+greywater_path = ospath.join(data_path, 'sanunit_data/_greywater.csv')
 
 
 # %%
@@ -458,3 +461,150 @@ class ExcretionmASM2d(Excretion):
 
     def _update_dstate(self):
         pass
+
+#%%
+class Greywater(SanUnit):
+    '''
+    Estimation of N, P, K, Mg, Ca, OtherSS and COD in greywater based on reported greywater characteristics
+    <https://doi.org/10.1016/S1462-0758(01)00064-4>_
+    <https://doi.org/10.1007/s11270-018-3909-8>
+
+    Parameters
+    ----------
+    waste_ratio : float
+        A ratio in [0, 1] to indicate the amount of greywater that is wasted (not collected).
+
+    References
+    ----------
+    [1] Eriksson et al., Characteristics of grey wastewater.
+    Urban Water. 2002, 4, 85-104.
+    https://doi.org/10.1016/S1462-0758(01)00064-4
+    
+    [2] Oteng-Peprah et al. Greywater Characteristics, Treatment Systems, Reuse Strategies and User Perception—a Review
+    Water, Air, & Soil Pollution. 2018. 229.
+    https://doi.org/10.1007/s11270-018-3909-8
+    '''
+
+    _N_ins = 0
+    _N_outs = 1
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 waste_ratio=0, **kwargs):
+        SanUnit.__init__(self, ID, ins, outs, thermo, init_with)
+        self.waste_ratio = waste_ratio
+
+        data = load_data(path=greywater_path)
+        for para in data.index:
+            value = float(data.loc[para]['expected'])
+            setattr(self, '_'+para, value)
+        del data
+
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+            
+    def _run(self):
+        grey = self.outs[0]
+        grey.empty()
+
+        not_wasted = 1 - self.waste_ratio
+        factor = 24 * 1e3 # from g per person per day to kg per hour
+        grey.imass['H2O'] = self.greywater_generation/factor * not_wasted #kg/hr
+        grey_N = self.N_greywater/factor * not_wasted #kg/hr
+
+        grey.imass['NH3'] = grey_N * self.N_greywater_NH3
+        grey.imass['NonNH3'] = grey_N - grey.imass['NH3']
+        grey.imass['P'] = self.P_greywater/factor * not_wasted
+        grey.imass['K'] = self.K_greywater/factor * not_wasted
+        grey.imass['Ca'] = self.Ca_greywater/factor * not_wasted
+        grey.imass['Mg'] = self.Mg_greywater/factor * not_wasted
+        grey.imass['OtherSS'] = self.OtherSS_greywater/factor * not_wasted
+        grey.imass['WoodAsh'] = self.Suspended_solids_greywater/factor * not_wasted
+        grey._COD = self.COD_greywater /factor * not_wasted / (grey.F_vol/1e3) # in mg/L
+    @property
+    def greywater_generation(self):
+        '''[float] greywater generated, [g/cap/d].'''
+        return self._greywater_generation
+    @greywater_generation.setter
+    def greywater_generation(self, i):
+        self._greywater_generation = i
+    
+    @property
+    def N_greywater(self):
+        '''[float] total nitrogen generated generated from greywater, [g/cap/d].'''
+        return self._N_greywater
+    @N_greywater.setter
+    def N_greywater(self, i):
+        self._N_greywater = i
+        
+    @property
+    def N_greywater_NH3(self):
+        '''[float] fraction of total nitrogen that is NH3 generated from typical greywater, [fraction].'''
+        return self._N_greywater_NH3
+    @N_greywater_NH3.setter
+    def N_greywater_NH3(self, i):
+        self._N_greywater_NH3 = i
+            
+    @property
+    def P_greywater(self):
+        '''[float] total phosphorus generated from greywater, [g/cap/d].'''
+        return self._P_greywater
+    @P_greywater.setter
+    def P_greywater(self, i):
+        self._P_greywater = i
+    
+    @property
+    def K_greywater(self):
+        '''[float] total potassium generated from greywater, [g/cap/d].'''
+        return self._K_greywater
+    @K_greywater.setter
+    def K_greywater(self, i):
+        self._K_greywater = i
+    
+    @property
+    def Ca_greywater(self):
+        '''[float] total calcium generated generated from greywater, [g/cap/d].'''
+        return self._Ca_greywater
+    @Ca_greywater.setter
+    def Ca_greywater(self, i):
+        self._Ca_greywater = i
+    
+    @property
+    def Mg_greywater(self):
+        '''[float] total magnesium generated generated from greywater, [g/cap/d].'''
+        return self._Mg_greywater
+    @Mg_greywater.setter
+    def Mg_greywater(self, i):
+        self._Mg_greywater = i
+    
+    @property
+    def OtherSS_greywater(self):
+        '''[float] total other soluble solids generated from greywater, [g/cap/d].'''
+        return self._OtherSS_greywater
+    @OtherSS_greywater.setter
+    def OtherSS_greywater(self, i):
+        self._OtherSS_greywater = i
+    
+    @property
+    def Suspended_solids_greywater(self):
+        '''[float] total suspended solids generated from greywater, [g/cap/d].'''
+        return self._Suspended_solids_greywater
+    @Suspended_solids_greywater.setter
+    def Suspended_solids_greywater(self, i):
+        self._Suspended_solids_greywater = i
+    @property
+    def COD_greywater(self):
+        '''[float] total COD generated from greywater, [g/cap/d].'''
+        return self._COD_greywater
+    @COD_greywater.setter
+    def COD_greywater(self, i):
+        self._COD_greywater = i
+
+    @property
+    def waste_ratio(self):
+        '''
+        [float] The amount of greywater that is wasted (not collected).
+        '''
+        return self._waste_ratio
+    @waste_ratio.setter
+    def waste_ratio(self, i):
+        self._waste_ratio = i

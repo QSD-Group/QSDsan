@@ -91,7 +91,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
     :ref:`qsdsan.processes.Decay <processes_Decay>`
 
     '''
-    _N_ins = 6
+    _N_ins = 7
     _outs_size_is_fixed = False
     density_dct = {
         'Sand': 1442,
@@ -137,7 +137,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
 
 
     def _run(self):
-        ur, fec, tp, fw, cw, des = self.ins
+        ur, fec, tp, fw, cw, des, gw = self.ins
         tp.imass['Tissue'] = int(self.if_toilet_paper)*self.toilet_paper
         fw.imass['H2O'] = int(self.if_flushing)*self.flushing_water
         cw.imass['H2O'] = int(self.if_cleansing)*self.cleansing_water
