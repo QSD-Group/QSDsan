@@ -189,10 +189,10 @@ class DiffusedAeration(Process):
         [float] Oxygen mass transfer coefficient at standard condition
         (20 degree C, clean water, new diffuser), [1/d].
         """
-        if self._KLa_20: return self._KLa_20
-        elif self._Q_air and self._V:
+        if self._KLa_20 is not None: return self._KLa_20
+        elif self._Q_air is not None and self._V:
             return self._calc_KLa_20()
-        elif self._KLa:
+        elif self._KLa is not None:
             return self._KLa / (self._alpha * self._F * self._theta**(self._T_water-293.15))
         else: return None
 
@@ -362,10 +362,11 @@ class DiffusedAeration(Process):
 
     @KLa.setter
     def KLa(self, KLa):
-        self._KLa = KLa or self._calc_KLa()
+        if KLa is None: KLa = self._calc_KLa()
+        self._KLa = KLa 
         self.set_parameters(KLa=self._KLa)
 
-    kLa = KLa   
+    kLa = KLa
 
     @property
     def DOsat(self):
