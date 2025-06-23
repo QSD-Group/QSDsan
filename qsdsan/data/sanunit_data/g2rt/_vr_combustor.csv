@@ -25,3 +25,4 @@ material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
 turbine_ventilator_cost,,USD,256,179.2,332.8,uniform
 aluminum_weight,,kg,3.4,2.38,4.42,uniform
 wages,,USD/h,3.64,1.82,5.46,uniform
+extreme_N2O_emission_factor,,g N2O-N/g-N,0.004,0.0028,0.0052,uniform

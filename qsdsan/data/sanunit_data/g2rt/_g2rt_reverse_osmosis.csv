@@ -20,5 +20,7 @@ back_flush_pump_cost,,USD,89.05,75.69,102.41,uniform
 backwash_pump_energy_percycle,,kWh,0.00008,0.000064,0.000096,uniform
 air_scrubbing_blower_cost,,USD,200.3933333,140.2753333,260.5113333,uniform
 air_scrubbing_energy_percycle,,kWh,0.004166667,0.002916667,0.005416667,uniform
-accumulated_COD_triggering_cleaning,,kg COD/m2 per cycle,0.01,0.007,0.013,uniform
+accumulated_COD_triggering_cleaning,,kg COD/m2 per cycle,0.01,0.0007,0.013,uniform
 NH3_removal,,fraction,0.74,0.69,0.91,triangular
+extreme_RO_energy_consumption,,kWh/kg water,0.0006,0.000042,0.00078,uniform
+extreme_water_recovery,,fraction,0.8,0.56,1,uniform

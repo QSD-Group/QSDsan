@@ -16,3 +16,4 @@ miscellaneous_cost_ratio,,fraction,0.169,0.1183,0.2197,uniform
 wages,,USD/h,3.64,1.82,5.46,uniform
 moisture_content_out,,%,84,75,90,uniform
 belt_separator_TSS_removal,,%,75,52.5,97.5,uniform
+extreme_moisture_content_out,,%,70,65,75,uniform

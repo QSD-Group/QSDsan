@@ -3,8 +3,8 @@ filterpress_solids_in_moisture_content,,%,96.5,95,98,uniform
 moisture_content_out,,%,56,28,84,uniform
 filterpress_purchase_cost,,USD,1693.4,1354.72,2032.08,uniform
 filterpress_ss_weight,,kg,26,18.2,33.8,uniform
-filterpress_energy_persolids,,kwh/kg,0.03,0.025,0.035,uniform
-filterpress_energy_efficiency,,fraction,0.1,0.07,0.13,uniform
+filterpress_energy_per_water,,kwh/kg,0.0027,0.00189,0.00351,uniform
+filterpress_energy_efficiency,,fraction,0.3,0.21,0.39,uniform
 filterpress_batch_cycle_per_day,,# batches day-1,1,,,constant
 filterpress_maintenance,,h/yr,9,6.3,11.7,uniform
 settled_frac,,fraction,0.925,0.9,0.95,uniform
@@ -14,3 +14,5 @@ feces_excretion,,g/cap/d,250,75,520,triangular
 material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
 miscellaneous_cost_ratio,,fraction,0.169,0.1183,0.2197,uniform
 TSS_removal,,%,90,85,95,uniform
+extreme_filterpress_energy_per_water,,kwh/kg,0.0000076,0.0000041,0.0000111,uniform
+extreme_filterpress_energy_efficiency,,fraction,1,0.7,1,uniform
