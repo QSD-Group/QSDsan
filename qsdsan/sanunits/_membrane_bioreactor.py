@@ -1571,25 +1571,35 @@ class CompletelyMixedMBR(CSTR):
             kLa_stripping = np.maximum(kLa*self.D_gas/self._D_O2, self.stripping_kLa_min)
         hasexo = bool(len(self._exovars))
         f_exovars = self.eval_exo_dynamic_vars
+        
+        if cfa:
+            cfa_stoi = cfa._stoichiometry
+            cfa_frho = cfa.rate_function
+            dy_cfa = lambda QC: cfa_stoi * cfa_frho(QC)
+        else:
+            dy_cfa = lambda QC: 0.
          
         if isa(aer, (float, int)):
             i = cmps.index(self._DO_ID)
             def dy_dt(t, QC_ins, QC, dQC_ins):
-                QC[i] = aer
+                # QC[i] = aer
+                if QC[i] < aer: QC[i] = aer
                 dydt_mbr(QC_ins, QC, V, Qp, f_rtn, xarr, _dstate)
                 if hasexo: QC = np.append(QC, f_exovars(t))
                 _dstate[:-1] += r(QC)
                 if gstrip: _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
                 self._cache_OTR = - _dstate[i]
-                _dstate[i] = 0
+                # _dstate[i] = 0
+                _dstate[:-1] += dy_cfa(QC)
+                if _dstate[i] < 0: _dstate[i] = 0
                 _update_dstate()
         else:        
-            if cfa:
-                cfa_stoi = cfa._stoichiometry
-                cfa_frho = cfa.rate_function
-                dy_cfa = lambda QC: cfa_stoi * cfa_frho(QC)
-            else:
-                dy_cfa = lambda QC: 0.
+            # if cfa:
+            #     cfa_stoi = cfa._stoichiometry
+            #     cfa_frho = cfa.rate_function
+            #     dy_cfa = lambda QC: cfa_stoi * cfa_frho(QC)
+            # else:
+            #     dy_cfa = lambda QC: 0.
             
             if isa(aer, Process):
                 aer_stoi = aer._stoichiometry
