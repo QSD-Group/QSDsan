@@ -141,12 +141,12 @@ class FlatBottomCircularClarifier(SanUnit):
     _N_ins = 1
     _N_outs = 3
     
-    # # Costs
+    # Costs
     # wall_concrete_unit_cost = 1081.73 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
     # slab_concrete_unit_cost = 582.48 # $/m3 (Hydromantis. CapdetWorks 4.0. https://www.hydromantis.com/CapdetWorks.html)
     # stainless_steel_unit_cost=1.8 # Alibaba. Brushed Stainless Steel Plate 304. https://www.alibaba.com/product-detail/brushed-stainless-steel-plate-304l-stainless_1600391656401.html?spm=a2700.details.0.0.230e67e6IKwwFd
     
-    # pumps = ('ras', 'was',)
+    pumps = ('ras', 'was',)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', underflow=2000, wastage=385,
@@ -557,7 +557,7 @@ class FlatBottomCircularClarifier(SanUnit):
 
         self._ODE = dy_dt
     
-    #!!! should consolidate design & costing equations between primary & secondary clarifiers
+    # !!! should consolidate design & costing equations between primary & secondary clarifiers
     # _units = {
     #     'Number of clarifiers': 'ea',
     #     'Volumetric flow': 'm3/day',
@@ -578,64 +578,67 @@ class FlatBottomCircularClarifier(SanUnit):
     #     'Number of pumps': 'ea'
     # }
      
-    # def _design_pump(self):
-    #     ID, pumps = self.ID, self.pumps
+    def _design_pump(self):
+        ID, pumps = self.ID, self.pumps
     
-    #     self._ras.copy_like(self.outs[1])
-    #     self._was.copy_like(self.outs[2])
+        self._ras.copy_like(self.outs[1])
+        self._was.copy_like(self.outs[2])
         
-    #     ins_dct = {
-    #         'ras': self._ras,
-    #         'was': self._was,
-    #         }
+        ins_dct = {
+            'ras': self._ras,
+            'was': self._was,
+            }
         
-    #     D = self.design_results
+        D = self.design_results
         
-    #     ras_flow = self._ras.get_total_flow('m3/hr')
-    #     was_flow = self._was.get_total_flow('m3/hr')
+        ras_flow = self._ras.get_total_flow('m3/hr')
+        was_flow = self._was.get_total_flow('m3/hr')
         
-    #     ras_flow_u = ras_flow/D['Number of clarifiers']*0.00634
-    #     was_flow_u = was_flow/D['Number of clarifiers']*0.00634
+        # ras_flow_u = ras_flow/D['Number of clarifiers']*0.00634
+        # was_flow_u = was_flow/D['Number of clarifiers']*0.00634
         
-    #     Q_mgd = {
-    #         'ras': ras_flow_u,
-    #         'was': was_flow_u,
-    #         }
+        ras_flow_u = ras_flow*0.00634
+        was_flow_u = was_flow*0.00634
         
-    #     type_dct = dict.fromkeys(pumps, 'sludge')
-    #     inputs_dct = dict.fromkeys(pumps, (1,))
+        Q_mgd = {
+            'ras': ras_flow_u,
+            'was': was_flow_u,
+            }
+        
+        type_dct = dict.fromkeys(pumps, 'sludge')
+        inputs_dct = dict.fromkeys(pumps, (1,))
        
-    #     for i in pumps:
-    #         if hasattr(self, f'{i}_pump'):
-    #             p = getattr(self, f'{i}_pump')
-    #             setattr(p, 'add_inputs', inputs_dct[i])
-    #         else:
-    #             ID = f'{ID}_{i}'
-    #             capacity_factor=1
-    #             pump = WWTpump(
-    #                 ID=ID, ins=ins_dct[i], thermo = self.thermo, pump_type=type_dct[i],
-    #                 Q_mgd=Q_mgd[i], add_inputs=inputs_dct[i],
-    #                 capacity_factor=capacity_factor,
-    #                 include_pump_cost=True,
-    #                 include_building_cost=False,
-    #                 include_OM_cost=True,
-    #                 )
-    #             setattr(self, f'{i}_pump', pump)
+        for i in pumps:
+            if hasattr(self, f'{i}_pump'):
+                p = getattr(self, f'{i}_pump')
+                setattr(p, 'add_inputs', inputs_dct[i])
+            else:
+                ID = f'{ID}_{i}'
+                capacity_factor=1
+                pump = WWTpump(
+                    ID=ID, ins=ins_dct[i], thermo = self.thermo, pump_type=type_dct[i],
+                    Q_mgd=Q_mgd[i], add_inputs=inputs_dct[i],
+                    capacity_factor=capacity_factor,
+                    include_pump_cost=True,
+                    include_building_cost=False,
+                    include_OM_cost=True,
+                    )
+                setattr(self, f'{i}_pump', pump)
 
-    #     pipe_ss, pump_ss = 0., 0.
-    #     for i in pumps:
-    #         p = getattr(self, f'{i}_pump')
-    #         p.simulate()
-    #         p_design = p.design_results
-    #         pipe_ss += p_design['Pump pipe stainless steel']
-    #         pump_ss += p_design['Pump stainless steel']
-    #     return pipe_ss, pump_ss
+        pipe_ss, pump_ss = 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p.simulate()
+            p_design = p.design_results
+            pipe_ss += p_design['Pump pipe stainless steel']
+            pump_ss += p_design['Pump stainless steel']
+        return pipe_ss, pump_ss
      
-    # def _design(self):
+    def _design(self):
         
-    #     self._mixed.mix_from(self.ins)
-    #     mixed = self._mixed
-    #     D = self.design_results
+        self._mixed.mix_from(self.ins)
+        mixed = self._mixed
+        D = self.design_results
         
     #     # Number of clarifiers based on tentative suggestions by Jeremy 
     #     # (would be verified through collaboration with industry)
@@ -723,17 +726,17 @@ class FlatBottomCircularClarifier(SanUnit):
     #     density_ss = 7930 # kg/m3, 18/8 Chromium
     #     D['Stainless steel'] = volume_center_feed*density_ss # in kg
        
-    #     # Pumps
-    #     pipe, pumps = self._design_pump()
-    #     D['Pump pipe stainless steel'] = pipe
-    #     D['Pump stainless steel'] = pumps
+        # Pumps
+        pipe, pumps = self._design_pump()
+        D['Pump pipe stainless steel'] = pipe
+        D['Pump stainless steel'] = pumps
         
     #     # For secondary clarifier
     #     D['Number of pumps'] = 2*D['Number of clarifiers']
         
-    # def _cost(self):
+    def _cost(self):
        
-    #     D = self.design_results
+        D = self.design_results
     #     C = self.baseline_purchase_costs
        
     #     # Construction of concrete and stainless steel walls
@@ -787,18 +790,18 @@ class FlatBottomCircularClarifier(SanUnit):
     #     add_OPEX['Pump operating'] = opex_o*D['Number of clarifiers']
     #     add_OPEX['Pump maintenance'] = opex_m*D['Number of clarifiers']
        
-    #     # Power
-    #     pumping = 0.
-    #     for ID in self.pumps:
-    #         p = getattr(self, f'{ID}_pump')
-    #         if p is None:
-    #             continue
-    #         pumping += p.power_utility.rate
+        # Power
+        pumping = 0.
+        for ID in self.pumps:
+            p = getattr(self, f'{ID}_pump')
+            if p is None:
+                continue
+            pumping += p.power_utility.rate
         
-    #     pumping = pumping*D['Number of clarifiers']
+        # pumping = pumping*D['Number of clarifiers']
         
-    #     self.power_utility.rate += pumping
-    #     # self.power_utility.consumption += scraper_power
+        self.power_utility.rate += pumping
+        # self.power_utility.consumption += scraper_power
         
 # %% 
    
