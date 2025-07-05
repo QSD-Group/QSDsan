@@ -26,6 +26,7 @@ __all__ = ('CSTR',
             'SBR',
            'PFR',
            'AerobicDigester',
+           'SeBaRe',
            )
 
 # def _add_aeration_to_growth_model(aer, model):
@@ -576,7 +577,7 @@ class SBR(SanUnit):
                  aeration=2.0, DO_ID='S_O2', suspended_growth_model=None,
                  gas_stripping=False, gas_IDs=None, stripping_kLa_min=None,
                  K_Henry=None, D_gas=None, p_gas_atm=None, reaction_time=0.5,
-                 isdynamic=True, exogenous_vars=(), **kwargs):
+                 isdynamic=False, exogenous_vars=(), **kwargs):
         
         super().__init__(ID, ins, outs, thermo, init_with, isdynamic=isdynamic,
                          exogenous_vars=exogenous_vars, **kwargs)
@@ -596,6 +597,8 @@ class SBR(SanUnit):
 
         self._concs = None
         self._mixed = WasteStream()
+        
+        self._ODE = None
     
     # reaction time would be in days because rate constants in ASM is typically in days. 
     @property
@@ -692,6 +695,7 @@ class SBR(SanUnit):
         self._concs = self.components.kwarray(kwargs)
         
     def _init_state(self):
+        print('_init_state is running')
         mixed = self._mixed
         Q = mixed.get_total_flow('m3/d')
         if self._concs is not None: Cs = self._concs
@@ -710,17 +714,24 @@ class SBR(SanUnit):
     # def _update_dstate(self):
     #     arr = self._dstate
     #     self._outs[0].dstate = arr
+    
+    # def _update_state(self):
+    #     """Required by dynamic system interface; no action needed here."""
+    #     pass
+    
+    # def _update_dstate(self):
+    #     """Required by dynamic system interface; no action needed here."""
+    #     pass
                 
     def _run(self):
-        
-        # I needed to add this line to initialize _d_state, otherwise I was running into an error. 
-        # self._init_state()
-        
+        print('run is running')
         # 1. Determine initial condition based on mixed influent
         out, = self.outs
         out.mix_from(self.ins)
         C0 = out.conc.copy()  # n_components
         Q0 = out.F_vol # m3/hr
+        
+        S0 = np.append(C0, Q0)
     
         # 2. perform integration over reaction period, check documentation for `scipy.integrate.solve_ivp`
         f = self.ODE
@@ -731,16 +742,17 @@ class SBR(SanUnit):
         
         sol = solve_ivp(fun=f,
                         t_span=(0, tau),
-                        y0=C0,
+                        y0=S0,
                         method='BDF',
                         vectorized=False)
     
+        
+    
         # 3. define effluent based on concentration at the end of the reaction period
-        final_state = sol.y[:, -1]  # Last time point
+        final_state = sol.y[:-1, -1]  # Last time point
         
+        print('ab aaya na maza')
         concs_dict = dict(zip(self.components.IDs, final_state))
-        
-        print(f'concs_dict = {concs_dict}')
 
         out.set_flow_by_concentration(flow_tot=Q0,
                                   concentrations=concs_dict,
@@ -748,6 +760,347 @@ class SBR(SanUnit):
     
         # To save if needed
         # self.solution = sol
+        
+    @property
+    def ODE(self):
+        print('ODE is running')
+        if self._ODE is None: self._compile_ODE()
+        return self._ODE
+    
+    def _init_model(self):
+        if self._model is None:
+            warn(f'{self.ID} was initialized without a suspended growth model, '
+                 f'and thus run as a non-reactive unit')
+            r = lambda state_arr: np.zeros(self.components.size)
+        else:
+            r = self._model.production_rates_eval
+        return r
+    
+    def _compile_ODE(self):
+        print('compile ODE 1 is running')
+        isa = isinstance
+        aer = self._aeration
+        r = self._init_model()  # Reaction function from the model
+    
+        _dstate = np.zeros(len(self.chemicals) + 1)
+        gstrip = self.gas_stripping
+    
+        if gstrip:
+            gas_idx = self.components.indices(self.gas_IDs)
+            if isa(aer, Process): kLa = aer.kLa
+            else: kLa = 0.
+            S_gas_air = np.asarray(self.K_Henry) * np.asarray(self.p_gas_atm)
+            kLa_stripping = np.maximum(kLa * self.D_gas / self._D_O2, self.stripping_kLa_min)
+    
+        hasexo = bool(len(self._exovars))
+        f_exovars = self.eval_exo_dynamic_vars
+    
+        call_count = [0]  # For tracking dy_dt calls
+    
+        if isa(aer, (float, int)):
+            i = self.components.index(self._DO_ID)
+            fixed_DO = self._aeration
+    
+            def dy_dt(t, QC, dQC=None):
+                call_count[0] += 1
+                if call_count[0] % 10 == 1:
+                    print('Bhai ODE is running')
+                QC[i] = fixed_DO  # Fix oxygen level 
+                if hasexo:
+                    QC_ext = np.append(QC, f_exovars(t))
+                else:
+                    QC_ext = QC
+                _dstate[:-1] = r(QC_ext)  # Only reaction term, no flow
+                if gstrip:
+                    _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
+                _dstate[i] = 0  # Fix DO
+                _dstate[-1] = 0
+                return _dstate
+    
+        elif isa(aer, Process):
+            aer_stoi = aer._stoichiometry
+            aer_frho = aer.rate_function
+    
+            def dy_dt(t, QC, dQC=None):
+                call_count[0] += 1
+                if call_count[0] % 10 == 1:
+                    print('Bhai ODE is running')
+                if hasexo:
+                    QC_ext = np.append(QC, f_exovars(t))
+                else:
+                    QC_ext = QC
+                _dstate[:-1] = r(QC_ext) + aer_stoi * aer_frho(QC_ext)
+                if gstrip:
+                    _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
+                _dstate[-1] = 0
+                return _dstate
+    
+        else:
+            def dy_dt(t, QC, dQC=None):
+                call_count[0] += 1
+                if call_count[0] % 10 == 1:
+                    print('Bhai ODE is running')
+                if hasexo:
+                    QC_ext = np.append(QC, f_exovars(t))
+                else:
+                    QC_ext = QC
+                _dstate[:-1] = r(QC_ext)
+                if gstrip:
+                    _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
+                _dstate[-1] = 0
+                return _dstate
+    
+        self._ODE = dy_dt
+        
+class SeBaRe(SanUnit):
+    
+    # Ideally all the phases can be together. 
+    
+    # Look at Ideal Clarfier's update_state
+    
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 aeration=2.0, DO_ID='S_O2', suspended_growth_model=None,
+                 gas_stripping=False, gas_IDs=None, stripping_kLa_min=None,
+                 K_Henry=None, D_gas=None, p_gas_atm=None, reaction_time=0.5,
+                 
+                 sludge_flow_rate=2000, solids_removal_efficiency=0.995, sludge_MLSS=None,
+                 isdynamic=True, exogenous_vars=(), **kwargs):
+        
+        super().__init__(ID, None, (), thermo, init_with, isdynamic=isdynamic,
+                         exogenous_vars=exogenous_vars, **kwargs)
+        
+        # self._V_max = V_max
+        self.reaction_time = reaction_time
+        self._aeration = aeration
+        self._DO_ID = DO_ID
+        self._model = suspended_growth_model
+
+        self.gas_stripping = gas_stripping
+        self.gas_IDs = gas_IDs
+        self.stripping_kLa_min = stripping_kLa_min
+        self.K_Henry = K_Henry
+        self.D_gas = D_gas
+        self.p_gas_atm = p_gas_atm
+
+        self._concs = None
+        self._mixed = WasteStream()
+        self._mixed_inf = WasteStream()
+        
+        self.sludge_flow_rate = sludge_flow_rate
+        self.solids_removal_efficiency = solids_removal_efficiency
+        self.sludge_MLSS = sludge_MLSS
+        self._f_uf = None
+        self._f_of = None
+        
+    # reaction time would be in days because rate constants in ASM is typically in days. 
+    @property
+    def reaction_time(self):
+        '''[float] Duration of the reaction phase in days.'''
+        return self._reaction_time
+
+    @reaction_time.setter
+    def reaction_time(self, value):
+        if value <= 0:
+            raise ValueError('reaction_time must be a positive number.')
+        self._reaction_time = float(value)
+
+    @property
+    def aeration(self):
+        '''[:class:`Process` or float or NoneType] Aeration model.'''
+        return self._aeration
+    
+    @aeration.setter
+    def aeration(self, ae):
+        if ae is None or isinstance(ae, Process): self._aeration = ae
+        elif isinstance(ae, (float, int)):
+            if ae < 0:
+                raise ValueError('targeted dissolved oxygen concentration for aeration must be non-negative.')
+            else:
+                if ae > 8:
+                    warn(f'targeted dissolved oxygen concentration for {self.ID} might exceed the saturated level.')
+                self._aeration = ae
+        else:
+            raise TypeError(f'aeration must be one of the following types: float, '
+                            f'int, Process, NoneType. Not {type(ae)}')
+           
+    @property
+    def DO_ID(self):
+        '''[str] The `Component` ID for dissolved oxygen used in the suspended growth model and the aeration model.'''
+        return self._DO_ID
+
+    @DO_ID.setter
+    def DO_ID(self, doid):
+        if doid not in self.components.IDs:
+            raise ValueError(f'DO_ID must be in the set of `CompiledComponents` used to set thermo, '
+                              f'i.e., one of {self.components.IDs}.')
+        self._DO_ID = doid        
+
+    @property
+    def suspended_growth_model(self):
+        '''[:class:`CompiledProcesses` or NoneType] Suspended growth model.'''
+        return self._model
+    
+    @suspended_growth_model.setter
+    def suspended_growth_model(self, model):
+        if isinstance(model, CompiledProcesses) or model is None: self._model = model
+        else: raise TypeError(f'suspended_growth_model must be one of the following '
+                              f'types: CompiledProesses, NoneType. Not {type(model)}')
+    
+    @property
+    def gas_stripping(self):
+        return self._gstrip
+    
+    @gas_stripping.setter
+    def gas_stripping(self, strip):
+        self._gstrip = strip = bool(strip)
+        if strip:
+            if self.gas_IDs:
+                cmps = self.components.IDs
+                for i in self.gas_IDs:
+                    if i not in cmps:
+                        raise RuntimeError((f'gas ID {i} not in component set: {cmps}.'))
+            else:
+                mdl = self._model
+                self.gas_IDs = mdl.gas_IDs
+                self.stripping_kLa_min = np.array(mdl.kLa_min)
+                self.D_gas = np.array(mdl.D_gas)
+                self.K_Henry = np.array(mdl.K_Henry)
+                self.p_gas_atm = np.array(mdl.p_gas_atm)
+
+    @property
+    def state(self):
+        '''The state of the SBR, including component concentrations [mg/L] and flow rate [m^3/d].'''
+        if self._state is None: return None
+        else:
+            return dict(zip(list(self.components.IDs) + ['Q'], self._state))
+
+    @state.setter
+    def state(self, QCs):
+        QCs = np.asarray(QCs)
+        if QCs.shape != (len(self.components)+1, ):
+            raise ValueError(f'state must be a 1D array of length {len(self.components) + 1},'
+                              'indicating component concentrations [mg/L] and total flow rate [m^3/d]')
+        self._state = QCs
+
+    @property
+    def sludge_flow_rate(self):
+        '''[float] The designed sludge flow rate (wasted + recycled) in m3/d.'''
+        return self._Qs
+
+    @sludge_flow_rate.setter
+    def sludge_flow_rate(self, Qs):
+        self._Qs = Qs
+
+    @property
+    def solids_removal_efficiency(self):
+        return self._e_rmv
+
+    @solids_removal_efficiency.setter
+    def solids_removal_efficiency(self, f):
+        if f is not None and (f > 1 or f < 0):
+            raise ValueError(f'solids removal efficiency must be within [0, 1], not {f}')
+        self._e_rmv = f
+
+    @property
+    def sludge_MLSS(self):
+        return self._MLSS
+
+    @sludge_MLSS.setter
+    def sludge_MLSS(self, MLSS):
+        if MLSS is not None:
+            warn(f'sludge MLSS {MLSS} mg/L is only used to estimate '
+                 f'sludge flowrate or solids removal efficiency, when either '
+                 f'one of them is unspecified.')
+        self._MLSS = MLSS
+
+    def set_init_conc(self, **kwargs):
+        '''set the initial concentrations [mg/L] of the SBR.'''
+        self._concs = self.components.kwarray(kwargs)
+        
+    def _init_state(self):
+        mixed = self._mixed
+        Q = mixed.get_total_flow('m3/d')
+        if self._concs is not None: Cs = self._concs
+        else: Cs = mixed.conc
+        self._state = np.append(Cs, Q).astype('float64')
+        self._dstate = self._state * 0.
+                
+    def _run(self):
+        # 1. Determine initial condition based on mixed influent
+        # of, uf = self.outs
+        
+        mixed = self._mixed_inf
+        mixed.mix_from(self.ins)
+        
+        C0 = mixed.conc.copy()  # n_components
+        Q0 = mixed.F_vol # m3/hr
+        
+        S0 = np.append(C0, Q0)
+    
+        # 2. perform integration over reaction period, check documentation for `scipy.integrate.solve_ivp`
+        f = self.ODE
+        tau = self.reaction_time  # in days (user-defined)
+        
+        print('Ram Ram hare hare')
+        # f = function(t, y); output = dy/dt !! This is in documentation of solve ivp!!
+        
+        sol = solve_ivp(fun=f,
+                        t_span=(0, tau),
+                        y0=S0,
+                        method='BDF',
+                        vectorized=False)
+    
+        # 3. define effluent based on concentration at the end of the reaction period
+        final_state = sol.y[:-1, -1]  # Last time point
+        
+        # concs_dict = dict(zip(self.components.IDs, final_state))
+        
+        # print(f'concs_dict = {concs_dict}')
+
+        # out.set_flow_by_concentration(flow_tot=Q0,
+        #                           concentrations=concs_dict,
+        #                           units=('m3/hr', 'mg/L'))
+    
+        Cs = final_state
+        Qi = Q0
+        Qs, e_rmv, mlss = self._Qs, self._e_rmv, self._MLSS
+        x = self.components.x
+        i_tss = x * self.components.i_mass
+        
+        of, uf = self.outs
+
+        if uf.state is None: uf.state = np.zeros(len(x)+1)
+        if of.state is None: of.state = np.zeros(len(x)+1)
+
+        if Qs:
+            Qe = Qi - Qs
+            if e_rmv:
+                fuf = e_rmv * Qi/Qs + (1-e_rmv)
+                fof = 1-e_rmv
+            elif mlss:
+                tss_in = sum(Cs * i_tss)
+                tss_e = (Qi * tss_in - Qs * mlss)/Qe
+                fuf = mlss/tss_in
+                fof = tss_e/tss_in
+        elif e_rmv and mlss:
+            tss_in = sum(Cs * i_tss)
+            Qs = Qi * e_rmv / (mlss/tss_in - (1-e_rmv))
+            Qe = Qi - Qs
+            fuf = mlss/tss_in
+            fof = 1-e_rmv
+        else:
+            raise RuntimeError('missing parameter')
+            
+        if Qs >= Qi: 
+            uf.state[:] = sol.y[:, -1]
+            of.state[:] = 0.
+        else:
+            self._f_uf = fuf
+            self._f_of = fof
+            uf.state[:-1] = Cs * ((1-x) + x*fuf)
+            uf.state[-1] = Qs
+            of.state[:-1] = Cs * ((1-x) + x*fof)
+            of.state[-1] = Qe
         
     @property
     def ODE(self):
@@ -770,7 +1123,7 @@ class SBR(SanUnit):
     
         # _dstate = self._dstate
         
-        _dstate = np.zeros(len(self.chemicals))
+        _dstate = np.zeros(len(self.chemicals) + 1)
         
         # _update_dstate = self._update_dstate
         # V = self._V_max  # Volume is not really needed though
@@ -798,10 +1151,13 @@ class SBR(SanUnit):
                     QC_ext = QC
                 print(f'Qc = {QC_ext}')
                 print(f'r = {r}')
-                _dstate[:] = r(QC_ext)  # Only reaction term, no flow
+                _dstate[:-1] = r(QC_ext)  # Only reaction term, no flow
                 if gstrip:
                     _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
                 _dstate[i] = 0  # Fix DO
+                _dstate[-1] = 0
+                
+                
                 # No flow rate change in batch
                 # _update_dstate()
                 
@@ -819,8 +1175,8 @@ class SBR(SanUnit):
                 _dstate[:-1] = r(QC_ext) + aer_stoi * aer_frho(QC_ext)
                 if gstrip:
                     _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
-                _dstate[-1] = 0 # No flow rate change in batch
                 # _update_dstate()
+                _dstate[-1] = 0 # No flow rate change in batch
                 
                 return _dstate
     
