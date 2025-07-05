@@ -263,10 +263,6 @@ class Splitter(SanUnit, BSTSplitter):
         self._dstate = self._state * 0.
         s = self.split
         s_flow = s[self.components.index('H2O')]
-        
-        print(f's = {s}')
-        print(f's_flow = {s_flow}')
-        
         self._split_out0_state = np.append(s/s_flow, s_flow)
         self._split_out1_state = np.append((1-s)/(1-s_flow), 1-s_flow)
 
