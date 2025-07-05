@@ -425,7 +425,7 @@ def get_daily_operational_cost(system, aeration_power, pumping_power, miscellane
 
     Returns
     -------
-    Normalized operational cost associated with WRRF (USD/day). [numpy array]
+    Normalized operational cost associated with WRRF (USD/m3). [numpy array]
     
     [1] https://www.bls.gov/regions/midwest/data/averageenergyprices_selectedareas_table.htm
     
@@ -774,6 +774,8 @@ def get_total_operational_cost(q_air, # aeration (blower) power
     operational_costs_WRRF = np.array([aeration_cost, pumping_cost, sludge_disposal_costs, Daily_cost_carbon, Daily_cost_methanol, miscellaneous_cost]) 
 
     operational_costs_WRRF = operational_costs_WRRF/sum([s.F_vol*24 for s in system.feeds])
+    
+    print(f'operational_costs_WRRF = {operational_costs_WRRF}')
 
     total_operational_cost = np.sum(operational_costs_WRRF)             #5
     
@@ -1801,6 +1803,48 @@ def get_eq_natural_gas_emission(system, gas, mass_density = 0.68, emission_facto
     References
     -------
     [1] Ecoinvent 
+    
+    '''
+    
+    # Use mass based calculation 
+    
+    # 100% methane is assumed
+    
+    mass_CH4_produced = gas.imass['S_ch4']*24*gas.components.S_ch4.i_mass # kg/day
+    eq_nat_gas_produced = mass_CH4_produced/mass_density # m3/day
+    emission_nat_gas = eq_nat_gas_produced*emission_factor # kg CO2 eq/day
+        
+    emission_WRRF = emission_nat_gas/sum([s.F_vol*24 for s in system.feeds]) # kg CO2 eq/m3 
+    
+    return emission_WRRF
+
+def get_eq_natural_gas_combustion(system, gas, mass_density = 0.68, emission_factor = 1.9): 
+    '''
+    Parameters
+    ----------
+    
+    system : :class:`biosteam.System`
+        The system whose power will be calculated.
+        
+    ------------------------------------------------------------------------------ 
+    
+    gas : : iterable[:class:`WasteStream`], optional
+        Effluent gas from anaerobic digestor. 
+        The default is None.
+    mass_density : float
+        Mass density of natural gas in kg/m3. 
+        The default is 0.68 kg/m3. [1]
+    emission factor : float
+        The emission factor used to calculate emission in combustion of natural gas.
+        The default is 1.9 kg CO2 eq/ m3 of natural gas. [1]
+
+    Returns
+    -------
+    Normalized natural gas equivalent cost (kg CO2 eq//m3 of treated wastewater). [int]
+    
+    References
+    -------
+    [1] GHG emissions factor hub 2025
     
     '''
     
