@@ -1480,6 +1480,8 @@ class CompletelyMixedMBR(CSTR):
     _N_outs = 2  # [0] filtrate, [1] pumped flow
     _outs_size_is_fixed = True
     
+    pumps = ('ras',)
+    
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream', isdynamic=True, 
                  pumped_flow=50, solids_capture_rate=0.999, 
@@ -1491,6 +1493,7 @@ class CompletelyMixedMBR(CSTR):
         self.pumped_flow = pumped_flow
         self.solids_capture_rate = solids_capture_rate
         self.crossflow_air = crossflow_air
+        self._ras = self.outs[1].copy(f'{ID}_ras')
     
     @property
     def pumped_flow(self):
@@ -1542,6 +1545,75 @@ class CompletelyMixedMBR(CSTR):
         qsplit = Qp / Q
         flt, rtn = self.outs
         mixed.split_to(rtn, flt, xsplit*cmps.x + qsplit*(1-cmps.x))
+        
+    def _design_pump(self):
+        ID, pumps = self.ID, self.pumps
+    
+        self._ras.copy_like(self.outs[1])
+        
+        ins_dct = {
+            'ras': self._ras,
+            }
+        
+        D = self.design_results
+        ras_flow = self._ras.get_total_flow('m3/hr')
+        
+        ras_flow_u = ras_flow*0.00634
+        
+        Q_mgd = {
+            'ras': ras_flow_u,
+            }
+        
+        type_dct = dict.fromkeys(pumps, 'sludge')
+        inputs_dct = dict.fromkeys(pumps, (1,))
+       
+        for i in pumps:
+            if hasattr(self, f'{i}_pump'):
+                p = getattr(self, f'{i}_pump')
+                setattr(p, 'add_inputs', inputs_dct[i])
+            else:
+                ID = f'{ID}_{i}'
+                capacity_factor=1
+                pump = WWTpump(
+                    ID=ID, ins=ins_dct[i], thermo = self.thermo, pump_type=type_dct[i],
+                    Q_mgd=Q_mgd[i], add_inputs=inputs_dct[i],
+                    capacity_factor=capacity_factor,
+                    include_pump_cost=True,
+                    include_building_cost=False,
+                    include_OM_cost=True,
+                    )
+                setattr(self, f'{i}_pump', pump)
+
+        pipe_ss, pump_ss = 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p.simulate()
+            p_design = p.design_results
+            pipe_ss += p_design['Pump pipe stainless steel']
+            pump_ss += p_design['Pump stainless steel']
+        return pipe_ss, pump_ss
+    
+    def _design(self):
+        
+        self._mixed.mix_from(self.ins)
+        mixed = self._mixed
+        D = self.design_results
+       
+        # Pumps
+        pipe, pumps = self._design_pump()
+        D['Pump pipe stainless steel'] = pipe
+        D['Pump stainless steel'] = pumps
+        
+    def _cost(self):
+        # Power
+        pumping = 0.
+        for ID in self.pumps:
+            p = getattr(self, f'{ID}_pump')
+            if p is None:
+                continue
+            pumping += p.power_utility.rate
+    
+        self.power_utility.rate += pumping
     
     def _compile_ODE(self):
         aer = self._aeration
