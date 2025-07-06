@@ -178,6 +178,8 @@ class Thickener(SanUnit):
     _N_outs = 2   # [0] thickened sludge, [1] reject water
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False
+    
+    pumps = ('waste',)
         
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=default_F_BM, thickener_perc=7, 
@@ -196,6 +198,7 @@ class Thickener(SanUnit):
         self._thickener_factor = None
         self._thinning_factor = None
         self._Qu_factor = None
+        self._waste = self.outs[0].copy(f'{ID}_waste')
         
     @property
     def thickener_perc(self):
@@ -278,6 +281,73 @@ class Thickener(SanUnit):
         if f_thick > 1: split_to_uf = (1-x)*f_Qu + x*TSS_rmv/100
         else: split_to_uf = 1
         mixed.split_to(uf, of, split_to_uf)
+        
+    def _design_pump(self):
+        ID, pumps = self.ID, self.pumps
+    
+        self._waste.copy_like(self.outs[0])
+        
+        ins_dct = {
+            'waste': self._waste,
+            }
+        
+        D = self.design_results
+        waste_flow = self._waste.get_total_flow('m3/hr')
+        waste_flow_u = waste_flow*0.00634
+        Q_mgd = {
+            'waste': waste_flow_u,
+            }
+        
+        type_dct = dict.fromkeys(pumps, 'sludge')
+        inputs_dct = dict.fromkeys(pumps, (1,))
+       
+        for i in pumps:
+            if hasattr(self, f'{i}_pump'):
+                p = getattr(self, f'{i}_pump')
+                setattr(p, 'add_inputs', inputs_dct[i])
+            else:
+                ID = f'{ID}_{i}'
+                capacity_factor=1
+                pump = WWTpump(
+                    ID=ID, ins=ins_dct[i], thermo = self.thermo, pump_type=type_dct[i],
+                    Q_mgd=Q_mgd[i], add_inputs=inputs_dct[i],
+                    capacity_factor=capacity_factor,
+                    include_pump_cost=True,
+                    include_building_cost=False,
+                    include_OM_cost=True,
+                    )
+                setattr(self, f'{i}_pump', pump)
+
+        pipe_ss, pump_ss = 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p.simulate()
+            p_design = p.design_results
+            pipe_ss += p_design['Pump pipe stainless steel']
+            pump_ss += p_design['Pump stainless steel']
+        return pipe_ss, pump_ss
+     
+    def _design(self):
+        self._mixed.mix_from(self.ins)
+        mixed = self._mixed
+        D = self.design_results
+       
+        # Pumps
+        pipe, pumps = self._design_pump()
+        D['Pump pipe stainless steel'] = pipe
+        D['Pump stainless steel'] = pumps
+        
+    def _cost(self):
+        D = self.design_results
+        # Power
+        pumping = 0.
+        for ID in self.pumps:
+            p = getattr(self, f'{ID}_pump')
+            if p is None:
+                continue
+            pumping += p.power_utility.rate
+        
+        self.power_utility.rate += pumping
        
     def _init_state(self):
         Qs = self._ins_QC[:,-1]
