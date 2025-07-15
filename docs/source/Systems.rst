@@ -10,12 +10,12 @@ Benchmark Simulation Models
 ---------------------------
 The Modelling and Integrated Assessment (MIA) Specialist Group of the International Water Association has established benchmark simulation models (BSMs) to provide a consistent environment for wastewater treatment plant (WWTP)/water resource recovery facility (WRRF) evaluation (see `BSM webpage <http://iwa-mia.org/benchmarking>`_ and `MATLAB implementation and report <https://github.com/wwtmodels/Benchmark-Simulation-Models>`_).
 
-When publishing the paper that introduces QSDsan (`Li and Zhang`_ et al., 2022), we validated the process modeling and dynamic simulation capacities of QSDsan through BSM1 (`bsm1 EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_, `bsm1 archived codes <https://pypi.org/project/exposan/1.1.4>`_). Work is currently underway to implement BSM2 in ``QSDsan``.
+When publishing the paper that introduces QSDsan (`Li and Zhang`_ et al., 2022), we validated the process modeling and dynamic simulation capacities of QSDsan through BSM1 (`bsm1 EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_, `bsm1 archived codes <https://pypi.org/project/exposan/1.1.4>`_). A plant-wide model, BSM2 (`bsm2 EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm2>`_, is also implemented in ``QSDsan``.
 
 
 Water Resource Recovery Facilities
 ----------------------------------
-Work is underway to model the 25 distinct Water Resource Recovery Facility (WRRF) configurations identified as “typical” across North America (`Tarallo <https://doi.org/10.2166/9781780407685>`_ et al., 2015; Zhang et al., *In Prep*, 2024).
+Work is underway to model the 25 distinct Water Resource Recovery Facility (WRRF) configurations identified as “typical” across North America (`Tarallo <https://doi.org/10.2166/9781780407685>`_ et al., 2015; Zhang et al., *In Prep*, 2025).
 
 .. figure:: images/wrrf_configs.png
 
