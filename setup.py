@@ -31,8 +31,8 @@ setup(
         'Repository': 'https://github.com/QSD-Group/QSDsan',
     },
     install_requires=[
-        'biosteam>=2.51.11',
-        'thermosteam>=0.51.13',
+        'biosteam>=2.51.19',
+        'thermosteam>=0.51.17',
         'matplotlib>=3.3.2',
         'pandas>=1.3.2',
         'SALib>=1.4.5',
