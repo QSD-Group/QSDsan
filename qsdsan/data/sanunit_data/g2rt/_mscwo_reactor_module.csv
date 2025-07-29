@@ -10,7 +10,7 @@ N2O_nitrogen_fraction,fraction of total nitrogen,fraction,0.09,0.03,0.15,uniform
 reactor_system_cost,,USD,3483,2438.1,4527.9,uniform
 injector_cost,,USD,997.25,698.075,1296.425,uniform
 stainless_steel_weight,,kg,10,7,13,uniform
-reactor_life_time,,yr,4,2.8,5.2,uniform
+reactor_life_time,,yr,5,3.5,6.5,uniform
 reactor_maintenance,,hr/yr,24,16.8,31.2,uniform
 wages,,USD/h,3.64,1.82,5.46,uniform
 material_replacement_cost,,fraction,0.2,0.1,0.3,uniform
@@ -21,3 +21,7 @@ treatment_time,,seconds,175,150,200,uniform
 operating_temperature,,K,681.575,640,723.15,uniform
 feces_ash_content,,fraction,0.1456,0.12,0.25,triangular
 carbon_COD_ratio,,g C*g COD-1,0.35,0.25,0.4,triangular
+P_loss,,fraction,0.042,0.01,0.1,uniform
+K_loss,,fraction,0.042,0.01,0.1,uniform
+extreme_energy_recovery_efficiency,energy recovery from feces,fraction,1,0.7,1,uniform
+extreme_heating_energy_efficiency,,fraction,1,0.7,1,uniform

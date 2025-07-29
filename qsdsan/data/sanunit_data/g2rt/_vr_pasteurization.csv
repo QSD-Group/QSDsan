@@ -16,3 +16,4 @@ stainless_steel_weight,,kg,4,2.8,5.2,uniform
 wages,,USD/h,3.64,1.82,5.46,uniform
 material_replacement_cost,,fraction,0.04,0.02,0.06,uniform
 miscellaneous_cost_ratio,,fraction,0.169,0.1183,0.2197,uniform
+extreme_heat_loss,,%,0,0,5,uniform
