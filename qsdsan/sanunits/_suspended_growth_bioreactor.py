@@ -17,6 +17,7 @@ from ..sanunits import dydt_cstr
 from warnings import warn
 # from math import floor, ceil
 import numpy as np
+from ..sanunits import WWTpump
 import pandas as pd
 from scipy.integrate import solve_ivp
 # from numba import njit
@@ -1572,11 +1573,13 @@ class PFR(SanUnit):
     
     _D_O2 = 2.10e-9   # m2/s
     
+    pumps = ('recirculation',)
+    
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  N_tanks_in_series=5, V_tanks=[1500, 1500, 3000, 3000, 3000], 
                  influent_fractions=[[1.0, 0,0,0,0]], internal_recycles=[(4,0,35000),],
                  DO_setpoints=[], kLa=[0, 0, 120, 120, 60], DO_sat=8.0,
-                 DO_ID='S_O2', suspended_growth_model=None, 
+                 DO_ID='S_O2', Q_ir = 35000, suspended_growth_model=None, 
                  gas_stripping=False, gas_IDs=None, stripping_kLa_min=None, 
                  K_Henry=None, D_gas=None, p_gas_atm=None,
                  isdynamic=True, **kwargs):
@@ -1594,6 +1597,7 @@ class PFR(SanUnit):
         self.kLa = kLa
         self.DO_sat = DO_sat
         self.DO_ID = DO_ID
+        self.Q_ir = Q_ir
         self.suspended_growth_model = suspended_growth_model
         self.gas_IDs = gas_IDs
         self.stripping_kLa_min = stripping_kLa_min
@@ -1603,6 +1607,7 @@ class PFR(SanUnit):
         self.gas_stripping = gas_stripping
         self._concs = None
         self._Qs = self.V_tanks * 0
+        self._mixed = WasteStream(f'{ID}_mixed')
 
     @property
     def V_tanks(self):
@@ -1931,6 +1936,84 @@ class PFR(SanUnit):
 
     def _design(self):
         pass
+    
+    def _design_pump(self):
+        ID, pumps = self.ID, self.pumps
+    
+        # self._ras.copy_like(self.outs[1])
+        # self._was.copy_like(self.outs[2])
+        
+        # ins_dct = {
+        #     'ras': self._ras,
+        #     'was': self._was,
+        #     }
+        
+        D = self.design_results
+        
+        r_flow = self.Q_ir/24
+        r_flow_u = r_flow*0.00634
+        
+        print(f'r_flow = {r_flow}')
+        
+        Q_mgd = {
+            'recirculation': r_flow_u,
+            }
+        
+        type_dct = dict.fromkeys(pumps, 'recirculation_CSTR')
+        inputs_dct = dict.fromkeys(pumps, (1,))
+       
+        for i in pumps:
+            if hasattr(self, f'{i}_pump'):
+                p = getattr(self, f'{i}_pump')
+                setattr(p, 'add_inputs', inputs_dct[i])
+            else:
+                ID = f'{ID}_{i}'
+                capacity_factor=1
+                pump = WWTpump(
+                    ID=ID, ins=None, thermo = self.thermo, pump_type=type_dct[i],
+                    Q_mgd=Q_mgd[i], add_inputs=inputs_dct[i],
+                    capacity_factor=capacity_factor,
+                    include_pump_cost=True,
+                    include_building_cost=False,
+                    include_OM_cost=True,
+                    )
+                setattr(self, f'{i}_pump', pump)
+
+        pipe_ss, pump_ss = 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p.simulate()
+            p_design = p.design_results
+            pipe_ss += p_design['Pump pipe stainless steel']
+            pump_ss += p_design['Pump stainless steel']
+        return pipe_ss, pump_ss
+    
+    def _design(self):
+        
+        self._mixed.mix_from(self.ins)
+        mixed = self._mixed
+        D = self.design_results
+        
+        # Pumps
+        pipe, pumps = self._design_pump()
+        D['Pump pipe stainless steel'] = pipe
+        D['Pump stainless steel'] = pumps
+        
+    def _cost(self):
+       
+        D = self.design_results
+        
+        # Power
+        pumping = 0.
+        for ID in self.pumps:
+            p = getattr(self, f'{ID}_pump')
+            if p is None:
+                continue
+            pumping += p.power_utility.rate
+        
+        # pumping = pumping*D['Number of clarifiers']
+        
+        self.power_utility.rate += pumping
 
 #%%
 from ..processes import ASM_AeDigAddOn

@@ -23,13 +23,14 @@ for license details.
 import numpy as np, thermosteam as tmo
 from warnings import warn
 from collections.abc import Iterable
+from .. import SanUnit, WasteStream
 from biosteam.units import (
     Mixer as BSTMixer,
     Splitter as BSTSplitter,
     FakeSplitter as BSTFakeSplitter,
     ReversedSplitter as BSTReversedSplitter,
     )
-from .. import SanUnit
+
 
 __all__ = (
     'Mixer',
@@ -243,14 +244,19 @@ class Splitter(SanUnit, BSTSplitter):
     `biosteam.units.Splitter <https://biosteam.readthedocs.io/en/latest/units/splitting.html>`_
     '''
     _graphics = BSTSplitter._graphics
+    
+    pumps = ('s1', 's2',)
+    
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *, split, order=None,
                   init_with='WasteStream', F_BM_default=None, isdynamic=False):
         SanUnit.__init__(self, ID, ins, outs, thermo,
                          init_with=init_with, F_BM_default=F_BM_default,
                          isdynamic=isdynamic)
         self._isplit = self.thermo.chemicals.isplit(split, order)
-
-
+        self._mixed = WasteStream(f'{ID}_mixed')
+        self._s1 = self.outs[0].copy(f'{ID}_s1')
+        self._s2 = self.outs[1].copy(f'{ID}_s2')
+        
     @property
     def state(self):
         '''Component concentrations and total flow rate.'''
@@ -295,7 +301,86 @@ class Splitter(SanUnit, BSTSplitter):
             _update_state()
             _update_dstate()
         self._AE = yt
+        
+    def _design_pump(self):
+        # Then inside `_design_pump(self)` method, add:
+        from ..sanunits import WWTpump
 
+        ID, pumps = self.ID, self.pumps
+    
+        self._s1.copy_like(self.outs[0])
+        self._s2.copy_like(self.outs[1])
+        
+        ins_dct = {
+            's1': self._s1,
+            's2': self._s2,
+            }
+        
+        D = self.design_results
+        
+        s1_flow = self._s1.get_total_flow('m3/hr')
+        s2_flow = self._s2.get_total_flow('m3/hr')
+        
+        s1_flow_u = s1_flow*0.00634
+        s2_flow_u = s2_flow*0.00634
+        
+        Q_mgd = {
+            's1': s1_flow_u,
+            's2': s2_flow_u,
+            }
+        
+        type_dct = dict.fromkeys(pumps, 'sludge')
+        inputs_dct = dict.fromkeys(pumps, (1,))
+       
+        for i in pumps:
+            if hasattr(self, f'{i}_pump'):
+                p = getattr(self, f'{i}_pump')
+                setattr(p, 'add_inputs', inputs_dct[i])
+            else:
+                ID = f'{ID}_{i}'
+                capacity_factor=1
+                pump = WWTpump(
+                    ID=ID, ins=ins_dct[i], thermo = self.thermo, pump_type=type_dct[i],
+                    Q_mgd=Q_mgd[i], add_inputs=inputs_dct[i],
+                    capacity_factor=capacity_factor,
+                    include_pump_cost=True,
+                    include_building_cost=False,
+                    include_OM_cost=True,
+                    )
+                setattr(self, f'{i}_pump', pump)
+
+        pipe_ss, pump_ss = 0., 0.
+        for i in pumps:
+            p = getattr(self, f'{i}_pump')
+            p.simulate()
+            p_design = p.design_results
+            pipe_ss += p_design['Pump pipe stainless steel']
+            pump_ss += p_design['Pump stainless steel']
+        return pipe_ss, pump_ss
+     
+    def _design(self):
+        
+        self._mixed.mix_from(self.ins)
+        mixed = self._mixed
+        D = self.design_results
+
+        # Pumps
+        pipe, pumps = self._design_pump()
+        D['Pump pipe stainless steel'] = pipe
+        D['Pump stainless steel'] = pumps
+        
+    def _cost(self):
+       
+        D = self.design_results
+        # Power
+        pumping = 0.
+        for ID in self.pumps:
+            p = getattr(self, f'{ID}_pump')
+            if p is None:
+                continue
+            pumping += p.power_utility.rate
+        
+        self.power_utility.rate += pumping
 
 class ComponentSplitter(SanUnit):
     '''

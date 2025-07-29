@@ -772,11 +772,8 @@ def get_total_operational_cost(q_air, # aeration (blower) power
         Daily_cost_methanol = mass_methanol_required*unit_cost_methanol # USD/day
     
     operational_costs_WRRF = np.array([aeration_cost, pumping_cost, sludge_disposal_costs, Daily_cost_carbon, Daily_cost_methanol, miscellaneous_cost]) 
-
-    operational_costs_WRRF = operational_costs_WRRF/sum([s.F_vol*24 for s in system.feeds])
     
-    print(f'operational_costs_WRRF = {operational_costs_WRRF}')
-
+    operational_costs_WRRF = operational_costs_WRRF/sum([s.F_vol*24 for s in system.feeds])
     total_operational_cost = np.sum(operational_costs_WRRF)             #5
     
     return total_operational_cost 
@@ -1434,21 +1431,21 @@ def get_CO2_eq_electricity(system, q_air, active_unit_IDs=None, p_atm=101.325, K
 
     '''    
     # source 5 (off-site)
-    T += 273.15
-    air_molar_vol = 22.4e-3 * (T/273.15)/(p_atm/101.325)   # m3/mol
-    R = 8.31446261815324 # J/mol/K, universal gas constant
+    # T += 273.15
+    # air_molar_vol = 22.4e-3 * (T/273.15)/(p_atm/101.325)   # m3/mol
+    # R = 8.31446261815324 # J/mol/K, universal gas constant
     
-    p_in = p_atm - P_inlet_loss
-    p_out = p_atm + 9.81*h_submergance + P_diffuser_loss
+    # p_in = p_atm - P_inlet_loss
+    # p_out = p_atm + 9.81*h_submergance + P_diffuser_loss
     
-    # Q_air = q_air*(24*60) # m3/min to m3/day
-    # P_blower = 1.4161e-5*(T + 273.15)*Q_air*((p_out/p_in)**0.283 - 1)/efficiency
-    # return P_blower
+    # # Q_air = q_air*(24*60) # m3/min to m3/day
+    # # P_blower = 1.4161e-5*(T + 273.15)*Q_air*((p_out/p_in)**0.283 - 1)/efficiency
+    # # return P_blower
     
-    Q_air = q_air/60 # m3/min to m3/s
-    WP = (Q_air / air_molar_vol) * R * T / K * ((p_out/p_in)**K - 1) / efficiency  # in W
+    # Q_air = q_air/60 # m3/min to m3/s
+    # WP = (Q_air / air_molar_vol) * R * T / K * ((p_out/p_in)**K - 1) / efficiency  # in W
     
-    blower_power = WP/1000
+    # blower_power = WP/1000
     
     pumping_power = 0
         
@@ -1456,7 +1453,8 @@ def get_CO2_eq_electricity(system, q_air, active_unit_IDs=None, p_atm=101.325, K
         if y.ID in active_unit_IDs:
             pumping_power += y.power_utility.power # in kW
         
-    total_energy_consumed = (blower_power + pumping_power)*24 # in kWh/day
+    # total_energy_consumed = (blower_power + pumping_power)*24 # in kWh/day
+    total_energy_consumed = pumping_power*24
     
     GHG_electricity = total_energy_consumed*CO2_EF # in kg-CO2-Eq/day
     
