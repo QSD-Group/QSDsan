@@ -12,7 +12,8 @@ for license details.
 '''
 
 from datetime import timedelta
-from biosteam.utils import TicToc
+# from biosteam.utils import TicToc 
+#comment out for now as this import is casuing error. July 25, 2025
 
 __all__ = (
     'clear_lca_registries',
