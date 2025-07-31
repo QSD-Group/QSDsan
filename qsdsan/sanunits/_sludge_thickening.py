@@ -120,7 +120,7 @@ class SludgeThickening(SanUnit, Splitter):
         else:
             mixed_mc = mixed.imass['Water']/mixed_F_mass
             if mixed_mc < mc: # not enough water in the feeds
-                warn(f'The set `sludge_moisture` {mc} is smaller than the '
+                warn(f'The set `sludge_moisture` {mc} is larger than the '
                      f'moisture content in the influent ({mixed_mc:.3f}) and is ignored.')
                 sludge.copy_like(mixed)
                 eff.empty()
@@ -212,6 +212,8 @@ class BeltThickener(SludgeThickening):
         Maximum hydraulic loading per belt thickener, [m3/h].
     power_demand : float
         Total power demand of each belt thickener, [kW].
+    disposal_cost : float
+        Disposal cost of the dewatered solids. [$/kg].
 
     References
     ----------
@@ -227,10 +229,11 @@ class BeltThickener(SludgeThickening):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  sludge_moisture=0.96, solids=(),
-                 max_capacity=100, power_demand=4.1):
+                 max_capacity=100, power_demand=4.1,
+                 disposal_cost=125/907.18474): # from $/U.S. ton
         SludgeThickening.__init__(self, ID, ins, outs, thermo, init_with,
                                 sludge_moisture=sludge_moisture,
-                                solids=solids)
+                                solids=solids, disposal_cost=disposal_cost)
         self.max_capacity = max_capacity
         self.power_demand = power_demand
 
@@ -270,6 +273,8 @@ class SludgeCentrifuge(SludgeThickening, bst.units.SolidsCentrifuge):
     solids : Iterable(str)
         IDs of the solid components.
         If not provided, will be set to the default `solids` attribute of the components.
+    disposal_cost : float
+        Disposal cost of the dewatered solids. [$/kg].
     
     References
     ----------
@@ -283,10 +288,11 @@ class SludgeCentrifuge(SludgeThickening, bst.units.SolidsCentrifuge):
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  include_construction=True, sludge_moisture=0.8, solids=(),
-                 centrifuge_type='scroll_solid_bowl'):
+                 centrifuge_type='scroll_solid_bowl',
+                 disposal_cost=125/907.18474): # from $/U.S. ton
         SludgeThickening.__init__(self, ID, ins, outs, thermo, init_with,
                                   sludge_moisture=sludge_moisture,
-                                  solids=solids)
+                                  solids=solids, disposal_cost=disposal_cost)
         self.include_construction = include_construction
         self.centrifuge_type = centrifuge_type
         ID = self.ID

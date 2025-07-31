@@ -379,6 +379,8 @@ class HydrothermalLiquefaction(Reactor):
         HTL TOC/TC.
     hydrochar_C_slope: float
         Hydrochar carbon content slope.
+    hydrochar_H_slope: float
+        Hydrochar hydrogen content slope.
     biocrude_moisture_content: float
         Biocrude moisture content.
     hydrochar_P_recovery_ratio: float
@@ -457,6 +459,7 @@ class HydrothermalLiquefaction(Reactor):
                  HTLaqueous_C_slope=478, # [2]
                  TOC_TC=0.764, # [3]
                  hydrochar_C_slope=1.75, # [2]
+                 hydrochar_H_slope=0.141, # [2]
                  biocrude_moisture_content=0.063, # [4]
                  hydrochar_P_recovery_ratio=0.86, # [5]
                  gas_composition={'CH4':0.050, 'C2H6':0.032,
@@ -474,6 +477,7 @@ class HydrothermalLiquefaction(Reactor):
                  vessel_material='Stainless steel 316',
                  vessel_type='Horizontal',
                  CAPEX_factor=1,
+                 # this is equivalent to F_M = 2.1*2.7, which is a reasonable value for high-temperature, high-pressure, sludge-fed HTL reactors
                  HTL_steel_cost_factor=2.7, # so the cost matches [6]
                  mositure_adjustment_exist_in_the_system=False):
         
@@ -491,6 +495,7 @@ class HydrothermalLiquefaction(Reactor):
         self.HTLaqueous_C_slope = HTLaqueous_C_slope
         self.TOC_TC = TOC_TC
         self.hydrochar_C_slope = hydrochar_C_slope
+        self.hydrochar_H_slope = hydrochar_H_slope
         self.biocrude_moisture_content = biocrude_moisture_content
         self.hydrochar_P_recovery_ratio = hydrochar_P_recovery_ratio
         self.gas_composition = gas_composition
@@ -625,6 +630,7 @@ class HydrothermalLiquefaction(Reactor):
     def biocrude_N(self):
         return min(self.outs[2].F_mass*self.biocrude_N_ratio, self.WWTP.sludge_N)
     
+    # MJ/kg
     @property
     def biocrude_HHV(self):
         return 30.74 - 8.52*self.WWTP.AOSc +\
@@ -654,6 +660,24 @@ class HydrothermalLiquefaction(Reactor):
     @property
     def hydrochar_P(self):
         return min(self.WWTP.sludge_P*self.hydrochar_P_recovery_ratio, self.outs[0].F_mass)
+    
+    @property
+    def hydrochar_P_ratio(self):
+        return min(self.WWTP.sludge_P*self.hydrochar_P_recovery_ratio, self.outs[0].F_mass)/self.outs[0].F_mass
+    
+    @property
+    def hydrochar_H_ratio(self):
+        return self.hydrochar_H_slope*self.WWTP.sludge_dw_carbo
+    
+    @property
+    def hydrochar_O_ratio(self):
+        return 1 - self.hydrochar_C_ratio - self.hydrochar_P_ratio - self.hydrochar_H_ratio
+    
+    # assume no N and no ash in hydrochar
+    # MJ/kg
+    @property
+    def hydrochar_HHV(self):
+        return (0.338*self.hydrochar_C_ratio + 1.428*(self.hydrochar_H_ratio - self.hydrochar_O_ratio/8))*100
     
     @property
     def HTLaqueous_N(self):

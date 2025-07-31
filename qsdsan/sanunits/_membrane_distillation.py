@@ -126,6 +126,10 @@ class MembraneDistillation(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream',
                  include_construction=False,
+                 # TODO: lifetime should be in year, not h/year,
+                 # but if there is the mem_out parameter,
+                 # the lifetime here should be equal to or larger than the system's lifetime so there is no replacement,
+                 # 7920 happens to be higher than the system's lifetime (30 years)
                  lifetime={'Membrane': 7920},
                  influent_pH=8.16, # CHG effluent pH: 8.16 ± 0.25 [1]
                  target_pH=10,
