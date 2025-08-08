@@ -215,19 +215,19 @@ class Component(Chemical):
     __slots__ = _component_slots
 
     # ID must be provided
-    def __new__(cls, ID, search_ID=None, formula=None, phase=None, measured_as=None,
+    def __new__(cls, ID, cache=False, search_ID=None, formula=None, phase=None, measured_as=None,
                 i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
                 i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
                 f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
                 description=None, particle_size=None,
                 degradability=None, organic=None, **chemical_properties):
         if search_ID:
-            self = super().__new__(cls, ID=ID, search_ID=search_ID,
+            self = super().__new__(cls, ID=ID, cache=cache, search_ID=search_ID,
                                    search_db=True, **chemical_properties)
         else: # still try to search nonetheless
-            try: self = super().__new__(cls, ID=ID, **chemical_properties)
+            try: self = super().__new__(cls, ID=ID, cache=cache, **chemical_properties)
             except LookupError:
-                self = super().__new__(cls, ID=ID, search_db=False, **chemical_properties)
+                self = super().__new__(cls, ID=ID, cache=cache, search_db=False, **chemical_properties)
 
         self._ID = ID
         self._chem_MW = 1

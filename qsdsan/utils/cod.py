@@ -388,7 +388,8 @@ def get_digestion_rxns(components, X_biogas, X_growth, biomass_ID, biodegradabil
     >>> Biomass = Component('Biomass', phase='s', formula='CH1.8O0.5N0.2',
     ...                     organic=True, particle_size='Particulate',
     ...                     degradability='Slowly')
-    >>> Ash = Component('Ash', phase='s', MW=1,
+    >>> # Ash is a default chemical in thermosteam, thus have to use alternative names
+    >>> Ash = Component('Ashcmp', phase='s', MW=1,
     ...                 organic=False, particle_size='Particulate',
     ...                 degradability='Undegradable')
     >>> for i in (P4O10, Biomass, Ash):
@@ -397,9 +398,10 @@ def get_digestion_rxns(components, X_biogas, X_growth, biomass_ID, biodegradabil
     {...
     >>> cmps = Components([*example_cmps, NH3, H2S, P4O10, Biomass, Ash])
     >>> cmps.compile()
+    >>> cmps.set_alias('Ashcmp', 'Ash')
     >>> set_thermo(cmps)
     >>> cmps
-    CompiledComponents([H2O, CO2, N2O, NaCl, H2SO4, CH4, Methanol, Ethanol, NH3, H2S, P4O10, Biomass, Ash])
+    CompiledComponents([H2O, CO2, N2O, NaCl, H2SO4, CH4, Methanol, Ethanol, NH3, H2S, P4O10, Biomass, Ashcmp])
     >>> rxns = get_digestion_rxns(cmps, X_biogas=0.9, X_growth=0.07,
     ...                           biomass_ID='Biomass', biodegradability=0.87)
     >>> rxns # doctest: +SKIP

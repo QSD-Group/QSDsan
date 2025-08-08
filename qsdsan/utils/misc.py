@@ -12,8 +12,8 @@ for license details.
 '''
 
 from datetime import timedelta
-# from biosteam.utils import TicToc 
-#comment out for now as this import is casuing error. July 25, 2025
+try: from biosteam.utils import Timer
+except: from biosteam.utils import TicToc as Timer
 
 __all__ = (
     'clear_lca_registries',
@@ -186,8 +186,8 @@ def time_printer(func):
     def inner(*args, **kwargs):
         print_time = kwargs.get('print_time')
         if print_time is not False:
-            timer = TicToc()
-            timer.tic()
+            timer = Timer()
+            timer.start()
         output = func(*args, **kwargs)
         if print_time is not False:
             time = str(timedelta(seconds=round(timer.elapsed_time)))

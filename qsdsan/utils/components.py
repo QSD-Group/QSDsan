@@ -46,8 +46,8 @@ def add_V_from_rho(component, rho, rho_unit='kg/m3', add_model_to=None):
     >>> P4O10 = Component('P4O10', phase='s', organic=False,
     ...                   particle_size='Particulate', degradability='Undegradable')
     >>> add_V_from_rho(P4O10, 2.39, rho_unit='g/mL') # http://www.chemspider.com/Chemical-Structure.14128.html
-    >>> P4O10.V
-    VolumeSolid(CASRN="16752-60-6", MW=283.889048, extrapolation="linear", method="USER_METHOD")
+    >>> P4O10.V # doctest: +ELLIPSIS
+    VolumeSolid(CASRN="16752-60-6", MW=283.889048, extrapolation="linear", method="USER_METHOD"...
     >>> P4O10.V(330) # doctest: +ELLIPSIS
     0.0001187...
     '''
