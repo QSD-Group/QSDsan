@@ -306,17 +306,23 @@ class ESAP(SanUnit):
         self._N_treatment_capacity = N_treatment_capacity
         self._specific_energy_consumption = specific_energy_consumption
         self.equipment = [
-            Electrode('Anode', linked_unit=self, N=1, electrode_type='anode',
+            Electrode('Anode', N=1, electrode_type='anode', 
                       material='Ti MMO mesh',surface_area=0.359, unit_cost=2576.19),
-            Electrode('Cathode', linked_unit=self, N=1, electrode_type='cathode',
+            Electrode('Cathode', N=1, electrode_type='cathode',
                       material='SS mesh', surface_area=0.359, unit_cost=46.67),
-            Membrane('Cation_Exchange_Membrane', linked_unit=self, N=1,
-                     material='Selemion CMVN', unit_cost=334.82, lifetime = 744, surface_area= 0.479), #$1016.67/m2
-            Membrane('Gas_Permeable_Membrane', linked_unit=self, N=1,
+            Membrane('Cation_Exchange_Membrane', N=1,
+                     material='Selemion CMVN', unit_cost=334.82, lifetime = 8760, surface_area= 0.479), #$1016.67/m2
+            Membrane('Gas_Permeable_Membrane', N=1,
                      material='Omniphobic', unit_cost=279.45, lifetime = 4464, surface_area=0.2394),
-            Machine('Pumps',linked_unit=self, N=3, lifetime= 43800, unit_cost =652.36), #pump lifetime 5 years
+            Machine('Pumps', N=3, lifetime= 43800, unit_cost =652.36), #pump lifetime 5 years
             ]
-    
+        self.lifetime = {
+            'Anode': self.equipment[0].lifetime,
+            'Cathode': self.equipment[1].lifetime,
+            'Cation_Exchange_Membrane': self.equipment[2].lifetime,
+            'Gas_Permeable_Membrane': self.equipment[3].lifetime,
+            'Pumps': self.equipment[4].lifetime
+            }
     @property
     def component_ID_NH3(self):
         '''string 

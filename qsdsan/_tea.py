@@ -526,7 +526,7 @@ class TEA(BSTTEA):
         units = units or self.units
         try: iter(units)
         except: units = (units,)
-        cost = 0
+        costs = 0
         get_A = self._get_annuity_factor
 
         for unit in units:
@@ -534,7 +534,7 @@ class TEA(BSTTEA):
             # no unit equipment lifetime or unit equipment lifetime given as a number
             # (i.e., no individual equipment lifetime)
             if not isinstance(lifetime, dict):
-                cost += unit.installed_cost/get_A(lifetime)
+                costs += unit.installed_cost/get_A(lifetime)
             else:
                 lifetime_dct = dict.fromkeys(unit.purchase_costs.keys())
                 lifetime_dct.update(lifetime)
@@ -544,8 +544,8 @@ class TEA(BSTTEA):
                     # for equipment that does not have individual lifetime
                     # use the unit lifetime or TEA lifetime
                     equip_lifetime = lifetime_dct[equip] or self.lifetime
-                    cost += factor*cost/get_A(equip_lifetime)
-        return cost
+                    costs += factor*cost/get_A(equip_lifetime)
+        return costs
 
 
     @property
