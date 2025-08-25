@@ -125,7 +125,8 @@ class MetalDosage(SanUnit):
                  P_precipitation_stoichiometry=None, metal_dosage=0.,
                  metal_ID='', orthoP_ID='', metalP_ID='', metal_price=None,
                  metalP_pKsp=13.75, alpha=1.8e-6,
-                 soluble_substrate_ID='S_F', particulate_substrate_ID='X_S',
+                 soluble_substrate_ID='S_F', particulate_substrate_ID='X_S', 
+                 colloidal_fraction=0.05,
                  soluble_inert_ID='S_I', particulate_inert_ID='X_I', 
                  Fmin_substrate=4, Fmax_substrate=20, ka_substrate=0.5,
                  Fmin_inert=4, Fmax_inert=20, ka_inert=0.5,        
@@ -143,6 +144,7 @@ class MetalDosage(SanUnit):
         self.soluble_substrate_ID = soluble_substrate_ID
         self.particulate_substrate_ID = particulate_substrate_ID
         self._check_composition(soluble_substrate_ID, particulate_substrate_ID)
+        self.colloidal_fraction = colloidal_fraction
         self.soluble_inert_ID = soluble_inert_ID
         self.particulate_inert_ID = particulate_inert_ID
         self._check_composition(soluble_inert_ID, particulate_inert_ID)
@@ -233,45 +235,45 @@ class MetalDosage(SanUnit):
         phase: 'l', T: 298.15 K, P: 101325 Pa
         flow (g/hr): S_N2     7.5
                      S_NH4    10.4
-                     S_PO4    0.000407
-                     S_F      30.6
+                     S_PO4    0.505
+                     S_F      34.1
                      S_I      3.79
                      S_IC     35
                      S_K      11.7
                      S_Mg     20.8
                      X_I      28.5
-                     X_S      116
+                     X_S      113
                      S_Ca     58.3
-                     X_FeOH   9.33
-                     X_FePO4  16.2
+                     X_FeOH   11.1
+                     X_FePO4  13.8
                      S_Na     36.2
                      S_Cl     177
-                     ...      4.15e+05
+             4.15e+05
          WasteStream-specific properties:
           pH         : 7.0
           Alkalinity : 7.0 mmol/L
           COD        : 430.0 mg/L
-          BOD        : 214.6 mg/L
+          BOD        : 215.7 mg/L
           TC         : 224.3 mg/L
           TOC        : 140.3 mg/L
           TN         : 41.5 mg/L
           TP         : 10.5 mg/L
           TK         : 28.0 mg/L
-          TSS        : 321.9 mg/L
+          TSS        : 313.9 mg/L
          Component concentrations (mg/L):
           S_N2     18.0
           S_NH4    25.0
-          S_PO4    0.0
-          S_F      73.5
+          S_PO4    1.2
+          S_F      81.8
           S_I      9.1
           S_IC     84.0
           S_K      28.0
           S_Mg     50.0
           X_I      68.3
-          X_S      279.1
+          X_S      270.8
           S_Ca     140.0
-          X_FeOH   22.4
-          X_FePO4  38.9
+          X_FeOH   26.6
+          X_FePO4  33.0
           S_Na     87.0
           S_Cl     425.0
           ...
@@ -349,6 +351,17 @@ class MetalDosage(SanUnit):
     def alpha(self, a):
         self._alpha = a
 
+    @property
+    def colloidal_fraction(self):
+        '''[float] Fraction of the soluable substrate removable through coaugulation/flocculation, 
+        in g colloidal COD / g soluble substrate component. '''
+        return self._fcol
+    @colloidal_fraction.setter
+    def colloidal_fraction(self, f):
+        if f < 0 or f > 1:
+            raise ValueError(f'colloidal fraction must be within [0, 1], not {f}')
+        self._fcol = f
+    
     @property
     def Fmin_substrate(self):
         '''[float] Minimum (i.e., at high soluble substrate concentration) 
@@ -450,10 +463,13 @@ class MetalDosage(SanUnit):
         Me = Me_in + i/j*(SP-SP_in)
         MeP = MeP_in + k/j*(SP-SP_in)
         SS_in, XS_in, SI_in, XI_in = out.conc[self._org_idx]
-        SS = flx.IQ_interpolation(_coagulation_mass_balance, 0, SS_in, args=(
-            SS_in, self._Pme, self._Fmax_ss, self._Fmin_ss, self._ka_ss
+        fcol = self.colloidal_fraction
+        Scol_in = SS_in * fcol
+        Scol = flx.IQ_interpolation(_coagulation_mass_balance, 0, Scol_in, args=(
+            Scol_in, self._Pme, self._Fmax_ss, self._Fmin_ss, self._ka_ss
             ))
-        XS = XS_in + (SS_in - SS)
+        XS = XS_in + (Scol_in - Scol)
+        SS = SS_in - (Scol_in - Scol)
         SI = flx.IQ_interpolation(_coagulation_mass_balance, 0, SI_in, args=(
             SI_in, self._Pme, self._Fmax_si, self._Fmin_si, self._ka_si            
             ))
@@ -489,6 +505,7 @@ class MetalDosage(SanUnit):
         i,j,k = self._mstoichio
         alpha = self.alpha
         Pme = self._Pme
+        fcol = self._fcol
         Fmax_ss = self._Fmax_ss
         Fmin_ss = self._Fmin_ss
         ka_ss = self._ka_ss
@@ -546,8 +563,10 @@ class MetalDosage(SanUnit):
             Me = Me_in + i/j*(SP-SP_in)
             MeP = MeP_in + k/j*(SP-SP_in)
             SS_in, XS_in, SI_in, XI_in = C[org_idx]
-            SS = solve_ss(SS_in)
-            XS = XS_in + (SS_in - SS)
+            Scol_in = SS_in * fcol
+            Scol = solve_ss(Scol_in)
+            XS = XS_in + (Scol_in - Scol)
+            SS = SS_in - (Scol_in - Scol)
             SI = solve_si(SI_in)
             XI = XI_in + (SI_in - SI)
             _state[[*chem_idx, *org_idx]] = [Me, SP, MeP, SS, XS, SI, XI]
