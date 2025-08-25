@@ -465,14 +465,18 @@ class MetalDosage(SanUnit):
         SS_in, XS_in, SI_in, XI_in = out.conc[self._org_idx]
         fcol = self.colloidal_fraction
         Scol_in = SS_in * fcol
-        Scol = flx.IQ_interpolation(_coagulation_mass_balance, 0, Scol_in, args=(
-            Scol_in, self._Pme, self._Fmax_ss, self._Fmin_ss, self._ka_ss
-            ))
+        if Scol_in > 0:
+            Scol = flx.IQ_interpolation(_coagulation_mass_balance, 0, Scol_in, args=(
+                Scol_in, self._Pme, self._Fmax_ss, self._Fmin_ss, self._ka_ss
+                ))
+        else: Scol = 0
         XS = XS_in + (Scol_in - Scol)
         SS = SS_in - (Scol_in - Scol)
-        SI = flx.IQ_interpolation(_coagulation_mass_balance, 0, SI_in, args=(
-            SI_in, self._Pme, self._Fmax_si, self._Fmin_si, self._ka_si            
-            ))
+        if SI_in > 0:
+            SI = flx.IQ_interpolation(_coagulation_mass_balance, 0, SI_in, args=(
+                SI_in, self._Pme, self._Fmax_si, self._Fmin_si, self._ka_si            
+                ))
+        else: SI = 0
         XI = XI_in + (SI_in - SI)
         out.mass[[*self._cmps_idx, *self._org_idx]] = \
             [c*Q*1e-3 for c in [Me, SP, MeP, SS, XS, SI, XI]]
