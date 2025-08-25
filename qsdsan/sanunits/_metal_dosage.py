@@ -280,10 +280,10 @@ class MetalDosage(SanUnit):
             raise TypeError(f'model must be an instance of `mASM2d` class, not {type(model)}')
         if metal_ID == 'X_FeOH': 
             metalP_ID = 'X_FePO4'
-            metalP_pKsp = kwargs.pop('metalP_pKsp', 26.4)
+            metalP_pKsp = kwargs.pop('metalP_pKsp', 13.75)
         elif metal_ID == 'X_AlOH': 
             metalP_ID = 'X_AlPO4'
-            metalP_pKsp = kwargs.pop('metalP_pKsp', 18.2)
+            metalP_pKsp = kwargs.pop('metalP_pKsp', 13.6)
         else: 
             metalP_ID = kwargs.pop('metalP_ID')
             metalP_pKsp = kwargs.pop('metalP_pKsp', 13.75)
