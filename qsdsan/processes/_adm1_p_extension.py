@@ -1098,6 +1098,15 @@ class ADM1p(ADM1):
         dct['grad_dydt_Sh2_AD'] = adm1p_grad_dydt_Sh2_AD
         return self
 
+    def refresh_stoichiometry(self):
+        '''Refresh stoichiometric coefficients, for when `i_{}` properties of 
+        the CompiledComponents have been modified.'''
+        breakpoint()
+        n_skip = len(self.mmp_stoichio) + len(self._biogas_IDs)
+        for proc, stch in zip(self.tuple[:-n_skip], self._stoichiometry[:-n_skip]):
+            proc.reaction = proc.reaction     # refreshes stoichiometry for individual reaction 
+            stch[:] = proc._stoichiometry
+                
     def set_half_sat_K(self, K, process):
         '''Set the substrate half saturation coefficient [kg/m3] for a process given its ID.'''
         i = self._find_index(process)

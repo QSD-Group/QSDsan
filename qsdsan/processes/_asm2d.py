@@ -1014,6 +1014,14 @@ class mASM2d(CompiledProcesses):
         dct['mmp_kinetics'] = self.rate_function._params['mmp_kinetics'] = mmp_kinetics
         return self
     
+    def refresh_stoichiometry(self):
+        '''Refresh stoichiometric coefficients, for when `i_{}` properties of 
+        the CompiledComponents have been modified.'''
+        n_mmp = len(self.mmp_stoichio)
+        for proc, stch in zip(self.tuple[:-n_mmp], self._stoichiometry[:-n_mmp]):
+            proc.reaction = proc.reaction     # refreshes stoichiometry for individual reaction 
+            stch[:] = proc._stoichiometry
+    
     @property
     def electron_acceptor_dependent_decay(self):
         '''[bool] Whether the decay rate is dependent on electron acceptor (O2, NO3-) concentrations'''
