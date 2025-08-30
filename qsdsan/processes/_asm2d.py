@@ -1064,7 +1064,7 @@ class mASM2d(CompiledProcesses):
 def create_masm2d_inf(
         ID, Q, Q_unit='m3/d', T=298.15, 
         COD=430, NH4_N=25.0, PO4_P=8.0, alkalinity=7.0, 
-        fr_SI=0.05, fr_SF=0.2, fr_SA=0.0, 
+        fr_SI=0.05, fr_SF=0.35, fr_SA=0.0, 
         fr_XI=0.13, fr_XH=0.0, fr_XAUT=0.0, 
         fr_XPAO=0.0, fr_XPHA=0.0, X_PP=0.0,
         S_NO3=0.0, S_O2=0.0, S_N2=18, 
@@ -1098,7 +1098,7 @@ def create_masm2d_inf(
     fr_SI : float, optional
         Soluble inert fraction of total COD. The default is 0.05.
     fr_SF : float, optional
-        Fermentable biodegradable fraction of total COD. The default is 0.2.
+        Fermentable biodegradable fraction of total COD. The default is 0.35.
     fr_SA : float, optional
         VFA fraction of total COD. The default is 0.0.
     fr_XI : float, optional

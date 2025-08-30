@@ -126,7 +126,7 @@ class MetalDosage(SanUnit):
                  metal_ID='', orthoP_ID='', metalP_ID='', metal_price=None,
                  metalP_pKsp=13.75, alpha=1.8e-6,
                  soluble_substrate_ID='S_F', particulate_substrate_ID='X_S', 
-                 colloidal_fraction=0.05,
+                 colloidal_fraction=0.48,
                  soluble_inert_ID='S_I', particulate_inert_ID='X_I', 
                  Fmin_substrate=4, Fmax_substrate=20, ka_substrate=0.5,
                  Fmin_inert=4, Fmax_inert=20, ka_inert=0.5,        
