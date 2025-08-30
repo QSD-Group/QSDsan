@@ -181,102 +181,17 @@ class MetalDosage(SanUnit):
         >>> from qsdsan import processes as pc, sanunits as su
         >>> cmps = pc.create_masm2d_cmps()
         >>> inf = pc.create_masm2d_inf('inf', 10)
+        >>> inf.iconc['S_F', 'X_S', 'S_I', 'X_I', 'X_FeOH', 'X_FePO4']
+        array([150.5, 202.1,  21.5,  55.9,   0. ,   0. ])
+        
         >>> asm = pc.mASM2d()
         >>> MD = su.MetalDosage.from_mASM2d('MD', inf, 'eff', metal_dosage=50, 
         ...                                 model=asm, isdynamic=False)
-        >>> inf.show()
-        WasteStream: inf to <MetalDosage: MD>
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): S_N2   7.5
-                     S_NH4  10.4
-                     S_PO4  3.33
-                     S_F    35.8
-                     S_I    8.96
-                     S_IC   35
-                     S_K    11.7
-                     S_Mg   20.8
-                     X_I    23.3
-                     X_S    111
-                     S_Ca   58.3
-                     S_Na   36.2
-                     S_Cl   177
-                     H2O    4.15e+05
-         WasteStream-specific properties:
-          pH         : 7.0
-          Alkalinity : 7.0 mmol/L
-          COD        : 430.0 mg/L
-          BOD        : 216.3 mg/L
-          TC         : 224.3 mg/L
-          TOC        : 140.3 mg/L
-          TN         : 41.5 mg/L
-          TP         : 10.5 mg/L
-          TK         : 28.0 mg/L
-          TSS        : 241.9 mg/L
-         Component concentrations (mg/L):
-          S_N2     18.0
-          S_NH4    25.0
-          S_PO4    8.0
-          S_F      86.0
-          S_I      21.5
-          S_IC     84.0
-          S_K      28.0
-          S_Mg     50.0
-          X_I      55.9
-          X_S      266.6
-          S_Ca     140.0
-          S_Na     87.0
-          S_Cl     425.0
-          H2O      995387.5
-
         >>> MD.simulate()
         >>> eff, = MD.outs
-        >>> eff.show()
-        WasteStream: eff from <MetalDosage: MD>
-        phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (g/hr): S_N2     7.5
-                     S_NH4    10.4
-                     S_PO4    0.505
-                     S_F      34.1
-                     S_I      3.79
-                     S_IC     35
-                     S_K      11.7
-                     S_Mg     20.8
-                     X_I      28.5
-                     X_S      113
-                     S_Ca     58.3
-                     X_FeOH   11.1
-                     X_FePO4  13.8
-                     S_Na     36.2
-                     S_Cl     177
-             4.15e+05
-         WasteStream-specific properties:
-          pH         : 7.0
-          Alkalinity : 7.0 mmol/L
-          COD        : 430.0 mg/L
-          BOD        : 215.7 mg/L
-          TC         : 224.3 mg/L
-          TOC        : 140.3 mg/L
-          TN         : 41.5 mg/L
-          TP         : 10.5 mg/L
-          TK         : 28.0 mg/L
-          TSS        : 313.9 mg/L
-         Component concentrations (mg/L):
-          S_N2     18.0
-          S_NH4    25.0
-          S_PO4    1.2
-          S_F      81.8
-          S_I      9.1
-          S_IC     84.0
-          S_K      28.0
-          S_Mg     50.0
-          X_I      68.3
-          X_S      270.8
-          S_Ca     140.0
-          X_FeOH   26.6
-          X_FePO4  33.0
-          S_Na     87.0
-          S_Cl     425.0
-          ...
+        >>> eff.iconc['S_F', 'X_S', 'S_I', 'X_I', 'X_FeOH', 'X_FePO4']
+        array([137.998, 214.598,   9.105,  68.295,  26.583,  33.047])
+        
         """
         if not isinstance(model, mASM2d):
             raise TypeError(f'model must be an instance of `mASM2d` class, not {type(model)}')
