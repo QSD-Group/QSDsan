@@ -12,8 +12,8 @@ for license details.
 '''
 
 from datetime import timedelta
-from biosteam.utils import TicToc
-
+try: from biosteam.utils import Timer
+except: from biosteam.utils import TicToc as Timer
 __all__ = (
     'clear_lca_registries',
     'copy_attr',
