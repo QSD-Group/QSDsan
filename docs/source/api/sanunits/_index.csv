@@ -2,6 +2,7 @@
 ADMtoASM,Yes,Yes,Completed
 ﻿AnMBR (anaerobic membrane bioreactor),No,No,Completed
 ActivatedSludgeProcess,No,No,Completed
+AerobicDigester,Yes,No,Completed
 AnaerobicBaffledReactor,No,No,Completed
 AnaerobicCSTR,Yes,No,Completed
 AnaerobicDigestion,No,No,Completed
@@ -13,6 +14,7 @@ BiogasCombustion,No,Yes,Completed
 CatalyticHydrothermalGasification,No,No,Completed
 CombinedHeatPower,No,No,Completed
 CSTR (continuously stirred tank reactor),Yes,No,Completed
+CompletelyMixedMBR,Yes,No,Completed
 ComponentSplitter,No,Yes,Completed
 Copier,No,Yes,Completed
 CropApplication,No,Yes,Completed

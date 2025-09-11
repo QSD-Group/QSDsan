@@ -2451,11 +2451,11 @@ class A1junction(ADMjunction):
             casm = get(cmps_asm, name)
             cadm = get(cmps_adm, name)
             for attr in ('measured_as', 'i_C', 'i_N', 'i_P'):
-                vadm = get(cadm, attr)
-                if get(casm, attr) != vadm:
-                    setv(casm, attr, vadm)
-                    warn(f"ASM component {name}'s {attr} is changed to match "
-                         "the corresponding ADM component")        
+                vasm = get(casm, attr)
+                if get(cadm, attr) != vasm:
+                    setv(cadm, attr, vasm)
+                    warn(f"ADM component {name}'s {attr} is changed to match "
+                         "the corresponding ASM component")
         
         for attr in ('i_N', 'i_P'):
             vadm = get(cmps_adm.S_ac, attr)

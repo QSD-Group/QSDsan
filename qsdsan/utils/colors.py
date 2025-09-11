@@ -74,6 +74,14 @@ Guest.yellow = Color('yellow', (243, 195, 84))
 Guest.orange = Color('orange', (249, 143, 96))
 Guest.red = Color('red', (237, 88, 111))
 Guest.gray = Color('gray', (144, 145, 142))
+# dark colors
+Guest.dpurple = Color('dpurple', (76, 56, 90))
+Guest.dblue = Color('dblue', (53, 118, 127))
+Guest.dgreen = Color('dgreen', (77, 126, 83))
+Guest.dyellow = Color('dyellow', (171, 137, 55))
+Guest.dorange = Color('dorange', (167, 95, 62))
+Guest.dred = Color('dred', (156, 75, 80))
+Guest.dgray = Color('dgray', (78, 78, 78))
 
 RGBn['Guest'] = [
     Guest.red.RGBn,
@@ -87,7 +95,6 @@ palettes['Guest'] = Guest
 colormaps['Guest'] = LSC.from_list('Guest', RGBn['Guest'])
 # # If want to anchor color at a specific point
 # colormaps['Guest'] = LSC.from_list('Guest', list(zip([0, 0.2, 0.4, 0.6, 1], RGBn['Guest'])))
-
 
 # CABBI colors
 CABBI = Palette()

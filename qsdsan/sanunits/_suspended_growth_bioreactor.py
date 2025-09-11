@@ -117,6 +117,7 @@ class CSTR(SanUnit):
         self._concs = None
         self._mixed = WasteStream()
         self.split = split
+        self._cache_OTR = None
 
         # # Design parameters 
         # self._W_tank = W_tank
@@ -370,6 +371,7 @@ class CSTR(SanUnit):
                 if hasexo: QC = np.append(QC, f_exovars(t))
                 _dstate[:-1] += r(QC)
                 if gstrip: _dstate[gas_idx] -= kLa_stripping * (QC[gas_idx] - S_gas_air)
+                self._cache_OTR = - _dstate[i]
                 _dstate[i] = 0
                 _update_dstate()
         elif isa(aer, Process):
@@ -961,6 +963,7 @@ class PFR(SanUnit):
         self.gas_stripping = gas_stripping
         self._concs = None
         self._Qs = self.V_tanks * 0
+        self._cache_OTR = None
 
     @property
     def V_tanks(self):
@@ -1160,7 +1163,14 @@ class PFR(SanUnit):
             y[:,:-1] = self._concs
         else: 
             y[:,:-1] = out.conc
-        y[:,-1] = out.F_vol*24
+        # y[:,-1] = self._Qs[:] = out.F_vol*24
+        f_in = self.influent_fractions
+        rcy = self.internal_recycles
+        Q_internal = np.zeros(self.N_tanks_in_series)
+        for i_from, i_to, qr in rcy:
+            Q_internal[i_to: i_from+1] += qr
+        self._Qs[:] = np.dot([ws.F_vol*24 for ws in self.ins], f_in).cumsum() + Q_internal
+        
         self._state = y.flatten()
         self._dstate = self._state * 0.
 
@@ -1227,6 +1237,7 @@ class PFR(SanUnit):
                 return rxn
         
         if any(DO):
+            _cache_OTR = self._cache_OTR = np.zeros_like(DO)
             aerated_zones = (DO > 0)
             aerated_DO = DO[aerated_zones]
             # @njit
@@ -1246,6 +1257,7 @@ class PFR(SanUnit):
                 rxn = Rs(Cs)
                 dy = np.zeros_like(y)
                 dy[:,:-1] = _1_ov_V @ (M_ins - M_outs) + rxn
+                _cache_OTR[aerated_zones] = - dy[aerated_zones, DO_idx]
                 dy[aerated_zones, DO_idx] = 0.
                 if gstrip:
                     S_liq = Cs[:, gas_idx]
