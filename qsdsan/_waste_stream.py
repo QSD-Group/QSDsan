@@ -273,7 +273,7 @@ class WasteStream(SanStream):
     _default_ratios = _default_ratios
     ticket_name = 'ws'
 
-    def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
+    def __init__(self, ID='', flow=None, phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None,
                  pH=7., SAlk=2.5, COD=None, BOD=None, uBOD=None,
                  ThOD=None, cnBOD=None,
