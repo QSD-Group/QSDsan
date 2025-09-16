@@ -109,7 +109,7 @@ def create_pm2_cmps(set_thermo=True):
     cmps_pm2 = Components([X_CHL, X_ALG, X_PG, X_TAG, S_CO2, S_A, S_G,
                            S_O2, S_NH, S_NO, S_P, X_N_ALG, X_P_ALG, cmps.H2O])
 
-    cmps_pm2.default_compile()
+    cmps_pm2.default_compile(ignore_inaccurate_molar_weight=True)
 
     if set_thermo: settings.set_thermo(cmps_pm2)
     return cmps_pm2

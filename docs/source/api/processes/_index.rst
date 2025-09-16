@@ -73,5 +73,6 @@ Links to docs
    ASM2d
    Decay
    KineticReaction
-   mADM1
    PM2
+
+.. mADM1

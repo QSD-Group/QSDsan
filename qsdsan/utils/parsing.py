@@ -83,11 +83,12 @@ def str2dct(reaction) -> dict:
     return dct
 
 def dct2arr(dct, components):
-    arr = np.zeros(components.size)
-    cmp_index = components._index
-    for ID, coefficient in dct.items():
-        arr[cmp_index[ID]] = coefficient
-    return arr
+    # arr = np.zeros(components.size)
+    # cmp_index = components._index
+    # for ID, coefficient in dct.items():
+    #     arr[cmp_index[ID]] = coefficient
+    # return arr
+    return components.kwarray(dct)
 
 def dct2list(dct, components):
     lst = [0] * components.size

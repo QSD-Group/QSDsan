@@ -56,6 +56,7 @@ from ._facilities import *
 from ._heat_exchanging import *
 from ._junction import *
 from ._membrane_gas_extraction import *
+from ._metal_dosage import *
 from ._non_reactive import *
 from ._pumping import *
 from ._reactor import *
@@ -114,6 +115,7 @@ from . import (
         _membrane_bioreactor,
         _membrane_distillation,
         _membrane_gas_extraction,
+        _metal_dosage,
         _non_reactive,
         _polishing_filter,
         _pumping,
@@ -159,6 +161,7 @@ __all__ = (
         *_lagoon.__all__,
         *_membrane_bioreactor.__all__,
         *_membrane_distillation.__all__,
+        *_metal_dosage.__all__,
         *_non_reactive.__all__,
         *_polishing_filter.__all__,
         *_pumping.__all__,

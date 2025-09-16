@@ -117,9 +117,9 @@ class HXprocess(SanUnit, HXP):
             phase1=None,
             H_lim0=None,
             H_lim1=None,
-            inner_fluid_pressure_drop=None,
-            outer_fluid_pressure_drop=None,
-            neglect_pressure_drop=True,
+            dP0=None, # Defaults to 0
+            dP1=None, # Defaults to 0
+            estimate_pressure_drop=False,
         ):
         SanUnit.__init__(self, ID, ins, outs, thermo,
                          init_with=init_with, F_BM_default=F_BM_default)
@@ -161,14 +161,19 @@ class HXprocess(SanUnit, HXP):
         self.heat_exchanger_type = heat_exchanger_type
         self.reset_streams_at_setup = False
         
-        #: Optional[float] Pressure drop along the inner fluid.
-        self.inner_fluid_pressure_drop = inner_fluid_pressure_drop
+        #: Optional[float] Pressure drop along the fluid [0].
+        self.dP0 = 0 if dP0 is None else dP0
+
+        #: Optional[float] Pressure drop along fluid [1].
+        self.dP1 = 0 if dP1 is None else dP1
         
-        #: Optional[float] Pressure drop along the outer fluid.
-        self.outer_fluid_pressure_drop = outer_fluid_pressure_drop
-        
-        #: [bool] Whether to assume a negligible pressure drop.
-        self.neglect_pressure_drop = neglect_pressure_drop
+        #: [bool] Whether to estimate pressure drop if none given.
+        self.estimate_pressure_drop = estimate_pressure_drop
+        if estimate_pressure_drop:
+            raise NotImplementedError(
+                'estimating pressure drops in HXprocess units not implemented '
+                'in BioSTEAM (yet)'
+            )
 
 
 class HXutility(SanUnit, HXU):
@@ -191,15 +196,17 @@ class HXutility(SanUnit, HXU):
     line = HXU.line
     _graphics = HXU._graphics
     
-    _units = {'Area': 'ft^2',
-              'Total tube length': 'ft',
-              'Inner pipe weight': 'kg',
-              'Outer pipe weight': 'kg',
-              'Total steel weight': 'kg',
-              'Shell length': 'ft',
-              'Shell diameter': 'ft',
-              'Shell steel weight': 'kg',
-              'Tube weight': 'kg'}
+    _units = HXU._units.update({
+        'Total tube length': 'ft',
+        'Inner pipe weight': 'kg',
+        'Outer pipe weight': 'kg',
+        'Total steel weight': 'kg',
+        'Shell length': 'ft',
+        'Shell diameter': 'ft',
+        'Shell steel weight': 'kg',
+        'Tube weight': 'kg'
+        })
+
     _bounds = {'Vertical vessel weight': (4200, 1e6),
                'Horizontal vessel weight': (1e3, 9.2e5),
                'Horizontal vessel diameter': (3, 21),
@@ -217,9 +224,8 @@ class HXutility(SanUnit, HXU):
             heat_only=None,
             cool_only=None,
             heat_transfer_efficiency=None,
-            inner_fluid_pressure_drop=None,
-            outer_fluid_pressure_drop=None,
-            neglect_pressure_drop=True,
+            dP=None,
+            estimate_pressure_drop=False,
             furnace_pressure=None,  # [Pa] equivalent to 500 psig
             ):
             SanUnit.__init__(self, ID, ins, outs, thermo,
@@ -249,22 +255,19 @@ class HXutility(SanUnit, HXU):
 
             self.material = material
             self.heat_exchanger_type = heat_exchanger_type
-
-            #: Optional[float] Pressure drop along the inner fluid.
-            self.inner_fluid_pressure_drop = inner_fluid_pressure_drop
             
-            #: Optional[float] Pressure drop along the outer fluid.
-            self.outer_fluid_pressure_drop = outer_fluid_pressure_drop
-            
-            #: [bool] Whether to assume a negligible pressure drop.
-            self.neglect_pressure_drop = neglect_pressure_drop
-
+            #: Optional[float] Pressure drop along the process fluid.
+            self.dP = dP
+    
+            #: [bool] Whether to estimate pressure drop if none given.
+            self.estimate_pressure_drop = estimate_pressure_drop
+    
             #: [bool] User enforced heat transfer efficiency. A value less than 1
-            #: means that a fraction of heat transferred is lost to the environment.
-            #: If value is None, it defaults to the heat transfer efficiency of the 
+            #: means that a fraction of heat transfered is lost to the environment.
+            #: If value is None, it defaults to the heat transfer efficiency of the
             #: heat utility.
             self.heat_transfer_efficiency = heat_transfer_efficiency
-            
+    
             #: Optional[float] Internal pressure of combustion gas. Defaults
             #: 500 psig (equivalent to 3548325.0 Pa)
             self.furnace_pressure = 500 if furnace_pressure is None else furnace_pressure

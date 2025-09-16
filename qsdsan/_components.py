@@ -151,13 +151,14 @@ class Components(Chemicals):
             for component in components: self.append(component)
 
 
-    def compile(self, skip_checks=False):
+    def compile(self, skip_checks=False, ignore_inaccurate_molar_weight=False, 
+                adjust_MW_to_measured_as=False):
         '''Cast as a :class:`CompiledComponents` object.'''
         components = tuple(self)
         tmo._chemicals.prepare(components, skip_checks)
         setattr(self, '__class__', CompiledComponents)
         
-        try: self._compile(components)
+        try: self._compile(components, ignore_inaccurate_molar_weight, adjust_MW_to_measured_as)
         except Exception as error:
             setattr(self, '__class__', Components)
             setattr(self, '__dict__', {i.ID: i for i in components})
@@ -169,7 +170,9 @@ class Components(Chemicals):
 
 
     def default_compile(self, lock_state_at='l',
-                        soluble_ref='Urea', gas_ref='CO2', particulate_ref='Stearin'):
+                        soluble_ref='Urea', gas_ref='CO2', particulate_ref='Stearin', 
+                        ignore_inaccurate_molar_weight=False,
+                        adjust_MW_to_measured_as=False):
         '''
         Auto-fill of the missing properties of the components and compile,
         boiling point (Tb) and molar volume (V) will be copied from the reference component,
@@ -187,10 +190,23 @@ class Components(Chemicals):
             Reference component (or chemical ID) for those with `particle_size` == 'Dissolved gas'.
         particulate_ref : obj or str
             Reference component (or chemical ID) for those with `particle_size` == 'Particulate'.
+        ignore_inaccurate_molar_weight : bool
+            Default is False, need to be manually set to True if having components
+            with `measured_as` attributes. This is to alert the users that
+            calculations for attributes using molecular weight will be inacurate,
+            unless all components have sensible MWs and `adjust_MW_to_measured_as`
+            is set to True.
+        adjust_MW_to_measured_as : bool
+            Default is False. Manually set it to True to adjust the MW data of
+            components with `measured_as` attributes and chemical formulas. This 
+            is to enable correct calculations of component molar flows when possible.
+            For components without a sensible MW, their MWs will remain 1 by default.
+            This is pertinent for calculations of molar flows and any thermodynamic
+            property of a stream.
 
         Examples
         --------
-        >>> from qsdsan import Component, Components
+        >>> from qsdsan import Component, Components, Stream, set_thermo
         >>> X = Component('X', phase='s', measured_as='COD', i_COD=0, description='Biomass',
         ...               organic=True, particle_size='Particulate', degradability='Readily')
         >>> X_inert = Component('X_inert', phase='s', description='Inert biomass', i_COD=0,
@@ -198,9 +214,44 @@ class Components(Chemicals):
         >>> Substrate = Component('Substrate', phase='s', measured_as='COD', i_mass=18.3/300,
         ...                       organic=True, particle_size='Particulate', degradability='Readily')
         >>> cmps = Components([X, X_inert, Substrate])
-        >>> cmps.default_compile()
+        >>> # As none of the components above has a chemical formula, i.e., no sensible MW, 
+        >>> # simply set `ignore_inaccurate_molar_weight` to True to bypass error.
+        >>> cmps.default_compile(ignore_inaccurate_molar_weight=True)
         >>> cmps
         CompiledComponents([X, X_inert, Substrate])
+        
+        >>> Ac = Component('Ac', search_ID='CH3COOH', particle_size='Soluble', 
+        ...                degradability='Readily', organic=True)
+        >>> Ac_as_COD = Component('Ac_as_COD', search_ID='CH3COOH', measured_as='COD', 
+        ...                       particle_size='Soluble', degradability='Readily', organic=True)
+        >>> Acs = Components([Ac, Ac_as_COD])
+        >>> Acs.default_compile(ignore_inaccurate_molar_weight=True, 
+        ...                     adjust_MW_to_measured_as=False)
+        >>> set_thermo(Acs)
+        >>> # Create a WasteStream object with 1 kmol/hr of each acetic acid component, 
+        >>> # knowing 1 mol acetate is equivalent to 2 mol of O2 demand
+        >>> s1 = Stream('s1', Ac=60.052, Ac_as_COD=2 * 32, units='kg/hr')
+        >>> s1.mass
+        sparse([60.052, 64.   ])
+        
+        >>> # However, the calculated molar flow is inaccurate because the MW for Ac_as_COD
+        >>> # is inconsistent with its `measured_as`. This also affects the
+        >>> # calculation of other thermodynamic properties.
+        >>> s1.mol
+        sparse([1.   , 1.066])
+        >>> s1.vol
+        sparse([0.05 , 0.054])
+        
+        >>> # To fix the molar flow calculation, simply set `adjust_MW_to_measured_as` to True when compile.
+        >>> Acs_MW_adjusted = Components([Ac, Ac_as_COD])
+        >>> Acs_MW_adjusted.default_compile(adjust_MW_to_measured_as=True)
+        >>> set_thermo(Acs_MW_adjusted)
+        >>> s2 = Stream('s2', Ac=60.052, Ac_as_COD=2 * 32, units='kg/hr')
+        >>> s2.mol
+        sparse([1., 1.])
+        >>> s2.vol
+        sparse([0.05, 0.05])
+        
         '''
         isa = isinstance
         get = getattr
@@ -261,7 +312,8 @@ class Components(Chemicals):
             # Copy all remaining properties from water
             cmp.copy_models_from(water)
         for cmp in self: cmp.default()
-        self.compile()
+        self.compile(ignore_inaccurate_molar_weight=ignore_inaccurate_molar_weight,
+                     adjust_MW_to_measured_as=adjust_MW_to_measured_as)
 
 
     @classmethod
@@ -398,8 +450,8 @@ class Components(Chemicals):
         new.append(H2O)
 
         if default_compile:
-            new.default_compile(lock_state_at='', particulate_ref='NaCl')
-            new.compile()
+            new.default_compile(lock_state_at='', particulate_ref='NaCl', ignore_inaccurate_molar_weight=True)
+            new.compile(ignore_inaccurate_molar_weight=True)
             # Add aliases
             new.set_alias('H2O', 'Water')
             # Pre-define groups
@@ -486,9 +538,9 @@ class Components(Chemicals):
         add_V_from_rho(cmps.P4O10, rho=2.39, rho_unit='g/mL') # http://www.chemspider.com/Chemical-Structure.14128.html
         try:
             for cmp in cmps: cmp.default()
-            cmps.compile()
+            cmps.compile(ignore_inaccurate_molar_weight=True)
         except RuntimeError: # cannot compile due to missing properties
-            cmps.default_compile(**default_compile_kwargs)
+            cmps.default_compile(ignore_inaccurate_molar_weight=True, **default_compile_kwargs)
         for k, v in aliases.items():
             cmps.set_alias(k, v)
         return cmps
@@ -611,21 +663,31 @@ class CompiledComponents(CompiledChemicals):
         for i in _num_component_properties:
             dct[i] = component_data_array(components, i)
 
-    def compile(self, skip_checks=False):
+    def compile(self, skip_checks=False, ignore_inaccurate_molar_weight=False):
         '''Do nothing, :class:`CompiledComponents` have already been compiled.'''
         pass
 
 
-    def _compile(self, components):
+    def _compile(self, components, ignore_inaccurate_molar_weight, adjust_MW_to_measured_as):
         dct = self.__dict__
         tuple_ = tuple # this speeds up the code
         components = tuple_(dct.values())
         CompiledChemicals._compile(self, components)
         for component in components:
             missing_properties = component.get_missing_properties(_key_component_properties)
+            if component.measured_as:
+                inaccurate = True
+                if component.formula and adjust_MW_to_measured_as:
+                    component._MW = component.chem_MW / component.i_mass
+                    inaccurate = False
+                if (not ignore_inaccurate_molar_weight) and inaccurate: 
+                    raise RuntimeError(f'{component} does not have a sensible molar weight. Set ignore_inaccurate_molar_weight=True to bypass this error.')
             if not missing_properties: continue
             missing = utils.repr_listed_values(missing_properties)
             raise RuntimeError(f'{component} is missing key component-related properties ({missing}).')
+
+        if adjust_MW_to_measured_as:
+            dct['MW'] = component_data_array(components, 'MW')
 
         for i in _num_component_properties:
             dct[i] = component_data_array(components, i)
@@ -639,7 +701,7 @@ class CompiledComponents(CompiledChemicals):
         org = dct['org'] = np.asarray([int(cmp.organic) for cmp in components])
         inorg = dct['inorg'] = np.ones_like(org) - org
         ID_arr = dct['_ID_arr'] = np.asarray([i.ID for i in components])
-        dct['chem_MW'] = np.asarray([i.chem_MW for i in components])
+        dct['chem_MW'] = component_data_array(components, 'chem_MW')
 
         # Inorganic degradable non-gas, incorrect
         inorg_b = inorg * b * (s+c)
@@ -653,7 +715,7 @@ class CompiledComponents(CompiledChemicals):
         '''Create a new subgroup of :class:`Component` objects.'''
         components = self[IDs]
         new = Components(components)
-        new.compile()
+        new.compile(ignore_inaccurate_molar_weight=True)
         for i in new.IDs:
             for j in self.get_aliases(i):
                 try: new.set_alias(i, j)
@@ -680,7 +742,7 @@ class CompiledComponents(CompiledChemicals):
     def copy(self):
         '''Return a copy.'''
         copy = Components(self)
-        copy.compile()
+        copy.compile(ignore_inaccurate_molar_weight=True)
         return copy
 
 

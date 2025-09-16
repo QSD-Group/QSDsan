@@ -57,7 +57,7 @@ def test_process():
     cmps_asm2d = Components([S_O2, S_F, S_A, S_NH4, S_NO3, S_PO4, S_I, S_ALK, S_N2,
                              X_I, X_S, X_H, X_PAO, X_PP, X_PHA, X_AUT, X_MeOH, X_MeP])
 
-    cmps_asm2d.compile()
+    cmps_asm2d.compile(ignore_inaccurate_molar_weight=True)
     set_thermo(cmps_asm2d)
 
     p1 = Process('aero_hydrolysis',
