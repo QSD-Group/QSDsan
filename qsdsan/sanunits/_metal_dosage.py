@@ -372,9 +372,12 @@ class MetalDosage(SanUnit):
         out.imass[self.metal_ID] += self._Pme * Q * 1e-3
         Me_in, SP_in, MeP_in = out.conc[self._cmps_idx] # mg/L
         i,j,k = self._mstoichio
-        SP = flx.bisection(_precipitation_mass_balance, 0, SP_in, args=(
-            Me_in, SP_in, self._Ksp_mass, self._Me_stoi, self._SP_stoi, i, j, self.alpha
-            ))
+        try:
+            SP = flx.bisection(_precipitation_mass_balance, 0, SP_in, args=(
+                Me_in, SP_in, self._Ksp_mass, self._Me_stoi, self._SP_stoi, i, j, self.alpha
+                ))
+        except: 
+            SP = SP_in
         Me = Me_in + i/j*(SP-SP_in)
         MeP = MeP_in + k/j*(SP-SP_in)
         SS_in, XS_in, SI_in, XI_in = out.conc[self._org_idx]
