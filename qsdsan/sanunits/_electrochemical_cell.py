@@ -448,7 +448,7 @@ class ESAP(SanUnit):
             if ws.dstate is None: ws.dstate = np.zeros_like(arr)
         self._outs[0].dstate[:-1] = self.recovery_matrix * arr[:-1]
         self._outs[0].dstate[-1] = 0 ##constant derivative = 0
-        self._outs[1].dstate[:-1] = self.recovery_matrix * arr[:-1]
+        self._outs[1].dstate[:-1] = self.loss_matrix * arr[:-1]
         self._outs[1].dstate[-1] = 0 ##constant derivative = 0
         self._outs[2].dstate[:-1] = (self.remaining_matrix * 
                                      ((arr[:-1]*self._outs[2].state[-1]-arr[-1]*self._outs[2].state[:-1])/self._outs[2].state[-1]**2))
