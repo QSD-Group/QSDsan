@@ -1,0 +1,2 @@
+﻿indicator,alias,unit,method,category,description
+GlobalWarming,GWP,kg CO2-eq,TRACI,environmental impact,Potential global warming based on chemical's radiative forcing and lifetime

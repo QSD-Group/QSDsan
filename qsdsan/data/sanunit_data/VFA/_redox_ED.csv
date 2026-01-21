@@ -1,0 +1,11 @@
+﻿parameter,name (if diff),unit,expected,low,high,distribution
+compartment_length,,m,0.4,,,
+compartment_width,,m,0.2,,,
+compartment_thickness,,m,0.0029,0.0028,0.003,uniform
+flowrate,,L/hr,0.03,,,
+c3_slope,,,0.149374138,,,
+c4_slope,,,0.267336207,,,
+c6_slope,,,0.236910345,,,
+c3_const,,,0.307055862,,,
+c4_const,,,0.155695793,,,
+c6_const,,,0.088617655,,,
