@@ -50,7 +50,7 @@ from ._combustion import *
 from ._compressor import *
 from ._crop_application import *
 from ._dynamic_influent import *
-from ._electrochemical_cell import *
+# from ._electrochemical_cell import *
 from ._excretion import *
 from ._facilities import *
 from ._heat_exchanging import *
@@ -102,7 +102,7 @@ from . import (
         _crop_application,
         _distillation,
         _dynamic_influent,
-        _electrochemical_cell,
+        # _electrochemical_cell,
         _excretion,
         _facilities,
         _flash,
@@ -149,7 +149,7 @@ __all__ = (
         *_crop_application.__all__,
         *_distillation.__all__,
         *_dynamic_influent.__all__,
-        *_electrochemical_cell.__all__,
+        # *_electrochemical_cell.__all__,
         *_excretion.__all__,
         *_facilities.__all__,
         *_flash.__all__,
