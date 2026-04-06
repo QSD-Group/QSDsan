@@ -15,13 +15,12 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import pkg_resources
+import importlib.metadata as impmeta
 try:
-    __version__ = pkg_resources.get_distribution('qsdsan').version
-except pkg_resources.DistributionNotFound:  # pragma: no cover
+    __version__ = impmeta.version('qsdsan')
+except impmeta.PackageNotFoundError:
     __version__ = None
-del pkg_resources
-
+del impmeta
 
 # BioSTEAM/Thermosteam APIs
 import biosteam as _bst
