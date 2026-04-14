@@ -2879,13 +2879,13 @@ class mASM2dtoADM1p(A1junction):
 
         asm = self.asm2d_model
         adm = self.adm1_model
-        p1a_stoichio = np.array(asm.stoichiometry.loc['hetero_growth_S_A'])
+        p1a_stoichio = np.asarray(asm.stoichiometry.loc['hetero_growth_S_A'])
         p1a_stoichio /= abs(p1a_stoichio[S_O2_idx])
-        p1f_stoichio = np.array(asm.stoichiometry.loc['hetero_growth_S_F'])
+        p1f_stoichio = np.asarray(asm.stoichiometry.loc['hetero_growth_S_F'])
         p1f_stoichio /= abs(p1f_stoichio[S_O2_idx])
-        p2a_stoichio = np.array(asm.stoichiometry.loc['denitri_S_A'])
+        p2a_stoichio = np.asarray(asm.stoichiometry.loc['denitri_S_A'])
         p2a_stoichio /= abs(p2a_stoichio[S_NO3_idx])
-        p2f_stoichio = np.array(asm.stoichiometry.loc['denitri_S_F'])
+        p2f_stoichio = np.asarray(asm.stoichiometry.loc['denitri_S_F'])
         p2f_stoichio /= abs(p2f_stoichio[S_NO3_idx])
         p3_stoichio = np.array([adm.parameters[f'f_{k}_xb'] for k in ('sI', 'ch', 'pr', 'li', 'xI')])
         
