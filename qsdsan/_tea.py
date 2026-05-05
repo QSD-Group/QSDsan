@@ -234,6 +234,37 @@ class TEA(BSTTEA):
 
     _ipython_display_ = show
 
+    def _add_first_replacement_costs(self, nontaxable_cashflow):
+        system = self.system
+        units = system.unit_capital_costs.values() if isinstance(system, bst.AgileSystem) else system.cost_units
+        lang_factor = self.lang_factor
+        start = self._start
+        end = start + self._years
+        for unit in units:
+            lifetime = unit.lifetime
+            if not lifetime:
+                continue
+            if lang_factor:
+                installed_costs = {i: j*lang_factor for i, j in unit.purchase_costs.items()}
+            else:
+                installed_costs = unit.installed_costs
+            if isinstance(lifetime, int):
+                replacement_index = start + lifetime
+                if replacement_index < end:
+                    nontaxable_cashflow[replacement_index] -= sum(installed_costs.values())
+            elif isinstance(lifetime, dict):
+                for name, installed_cost in installed_costs.items():
+                    equipment_lifetime = lifetime.get(name)
+                    if equipment_lifetime:
+                        replacement_index = start + equipment_lifetime
+                        if replacement_index < end:
+                            nontaxable_cashflow[replacement_index] -= installed_cost
+
+    def _taxable_nontaxable_depreciation_cashflows(self):
+        taxable_cashflow, nontaxable_cashflow, depreciation = super()._taxable_nontaxable_depreciation_cashflows()
+        self._add_first_replacement_costs(nontaxable_cashflow)
+        return taxable_cashflow, nontaxable_cashflow, depreciation
+
 
     def _DPI(self, installed_equipment_cost):
         return installed_equipment_cost
