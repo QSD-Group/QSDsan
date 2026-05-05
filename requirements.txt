@@ -1,5 +1,6 @@
 # Needed by qsdsan
 biosteam==2.53.10
+git+https://github.com/QSD-Group/QSDsan.git
 git+https://github.com/QSD-Group/EXPOsan.git
 SALib>=1.4.5
 seaborn
