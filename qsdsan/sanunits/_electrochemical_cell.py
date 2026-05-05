@@ -120,21 +120,21 @@ class ElectrochemicalCell(SanUnit):
     >>> U1 = qs.sanunits.ElectrochemicalCell('unit_1', ins=(influent, catalysts), outs=('recovered', 'removed', 'residual'))
     >>> # Simulate and look at the results
     >>> U1.simulate()
-    >>> U1.results()
+    >>> U1.results() # doctest: +ELLIPSIS
     Electrochemical cell                                      Units                              unit_1
     Electricity         Power                                    kW                            5.42e-05
                         Cost                                 USD/hr                            4.24e-06
-    Design              Electrode unit_1_Main_Anode - Nu...    None                                   1
-                        Electrode unit_1_Main_Anode - Ma...    None  titanium grid catalyst welded t...
+    Design              Electrode unit_1_Main_Anode - Nu...    ...                                   1
+                        Electrode unit_1_Main_Anode - Ma...    ...  titanium grid catalyst welded t...
                         Electrode unit_1_Main_Anode - Su...      m2                                   1
-                        Electrode unit_1_Main_Cathode - ...    None                                   1
-                        Electrode unit_1_Main_Cathode - ...    None  timesetl 3pcs stainless steel w...
+                        Electrode unit_1_Main_Cathode - ...    ...                                   1
+                        Electrode unit_1_Main_Cathode - ...    ...  timesetl 3pcs stainless steel w...
                         Electrode unit_1_Main_Cathode - ...      m2                                30.2
-                        Electrode unit_1_Current_Collect...    None                                   1
-                        Electrode unit_1_Current_Collect...    None    stainless steel 26 gauge 5.5 x 7
+                        Electrode unit_1_Current_Collect...    ...                                   1
+                        Electrode unit_1_Current_Collect...    ...    stainless steel 26 gauge 5.5 x 7
                         Electrode unit_1_Current_Collect...      m2                                38.5
-                        Electrode unit_1_Reference_Elect...    None                                   1
-                        Electrode unit_1_Reference_Elect...    None  re-5b ag/agcl, 7.5 cm long, wit...
+                        Electrode unit_1_Reference_Elect...    ...                                   1
+                        Electrode unit_1_Reference_Elect...    ...  re-5b ag/agcl, 7.5 cm long, wit...
                         Electrode unit_1_Reference_Elect...      m2                                   1
                         Membrane unit_1_Cation_Exchange_...                                           1
                         Membrane unit_1_Cation_Exchange_...          CMI-7000S, polystyrene 0.45mm t...

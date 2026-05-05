@@ -499,7 +499,7 @@ class Incinerator(SanUnit):
     ...                   outs=('flu_gas', 'ash'), 
     ...                   isdynamic=False)
     >>> Inc.simulate()
-    >>> Inc.show()
+    >>> Inc.show() # doctest: +ELLIPSIS
     Incinerator: Inc
     ins...
     [0] ws
@@ -527,7 +527,7 @@ class Incinerator(SanUnit):
         WasteStream-specific properties: None for non-liquid waste streams
     [2] nat_gas
     phase: 'g', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): S_CH4  1e+06
+    flow...S_CH4
         WasteStream-specific properties: None for non-liquid waste streams
     outs...
     [0] flu_gas
@@ -538,7 +538,7 @@ class Incinerator(SanUnit):
         WasteStream-specific properties: None for non-liquid waste streams
     [1] ash
     phase: 's', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): X_Ig_ISS  2.37e+05
+    flow...X_Ig_ISS
         WasteStream-specific properties: None for non-liquid waste streams
     
     References

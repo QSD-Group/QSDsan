@@ -51,8 +51,11 @@ def create_example_components(set_thermo=True):
     --------
     >>> from qsdsan.utils import create_example_components
     >>> cmps = create_example_components()
-    >>> cmps.show()
-    CompiledComponents([H2O, CO2, N2O, NaCl, H2SO4, CH4, Methanol, Ethanol])
+    >>> cmps.show() # doctest: +ELLIPSIS
+    CompiledComponents([
+        H2O,   CO2, N2O,      NaCl,...
+        H2SO4, CH4, Methanol, Ethanol,
+    ])
     '''
 
     H2O = Component('H2O', search_ID='H2O', particle_size='Soluble',
