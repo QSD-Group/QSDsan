@@ -58,7 +58,7 @@ class SanStream(Stream):
         )
     ticket_name = 'ss'
 
-    def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
+    def __init__(self, ID='', flow=None, phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None, stream_impact_item=None,
                  **component_flows):
         if 'impact_item' in component_flows.keys():
