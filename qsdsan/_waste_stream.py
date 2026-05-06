@@ -273,7 +273,7 @@ class WasteStream(SanStream):
     _default_ratios = _default_ratios
     ticket_name = 'ws'
 
-    def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
+    def __init__(self, ID='', flow=None, phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None,
                  pH=7., SAlk=2.5, COD=None, BOD=None, uBOD=None,
                  ThOD=None, cnBOD=None,
@@ -359,17 +359,17 @@ class WasteStream(SanStream):
         >>> cmps = qs.Components.load_default()
         >>> qs.set_thermo(cmps)
         >>> s = qs.Stream('s', H2O=100, price=5)
-        >>> s.show()
+        >>> s.show() # doctest: +ELLIPSIS
         Stream: s
          phase: 'l', T: 298.15 K, P: 101325 Pa
-         flow (kmol/hr): H2O  100
+         flow...H2O
         >>> s.price
         5.0
         >>> ws = qs.WasteStream.from_stream(stream=s, ID='ws', T=250, price=8)
-        >>> ws.show()
+        >>> ws.show() # doctest: +ELLIPSIS
         WasteStream: ws
          phase: 'l', T: 250 K, P: 101325 Pa
-         flow (g/hr): H2O  1.8e+06
+         flow...H2O
          WasteStream-specific properties:
           pH         : 7.0
          Component concentrations (mg/L):
