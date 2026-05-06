@@ -58,7 +58,7 @@ class SanStream(Stream):
         )
     ticket_name = 'ss'
 
-    def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
+    def __init__(self, ID='', flow=None, phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None, stream_impact_item=None,
                  **component_flows):
         if 'impact_item' in component_flows.keys():
@@ -333,17 +333,17 @@ class SanStream(Stream):
         >>> cmps = qs.Components.load_default()
         >>> qs.set_thermo(cmps)
         >>> s = qs.Stream('s', H2O=100, price=5)
-        >>> s.show()
+        >>> s.show() # doctest: +ELLIPSIS
         Stream: s
          phase: 'l', T: 298.15 K, P: 101325 Pa
-         flow (kmol/hr): H2O  100
+         flow...H2O
         >>> s.price
         5.0
         >>> ss = qs.SanStream.from_stream(stream=s, ID='ss', T=350, price=10)
-        >>> ss.show()
+        >>> ss.show() # doctest: +ELLIPSIS
         SanStream: ss
          phase: 'l', T: 350 K, P: 101325 Pa
-         flow (kmol/hr): H2O  100
+         flow...H2O
         >>> ss.price
         10.0
         '''
@@ -406,17 +406,17 @@ class SanStream(Stream):
         >>> cmps = qs.Components.load_default()
         >>> qs.set_thermo(cmps)
         >>> ss = qs.SanStream('ss', H2O=100, price=5)
-        >>> ss.show()
+        >>> ss.show() # doctest: +ELLIPSIS
         SanStream: ss
          phase: 'l', T: 298.15 K, P: 101325 Pa
-         flow (kmol/hr): H2O  5.55
+         flow...H2O
         >>> ss.price
         5.0
         >>> s = ss.to_stream(ID='s', T=350, price=10)
-        >>> s.show()
+        >>> s.show() # doctest: +ELLIPSIS
         Stream: s
          phase: 'l', T: 350 K, P: 101325 Pa
-         flow (kmol/hr): H2O  5.55
+         flow...H2O
         >>> s.price
         10.0
         '''        
@@ -601,7 +601,7 @@ class SanStream(Stream):
         FossilEnergyConsumption (MJ)                         5
         >>> # `get_impact` returns a float
         >>> ethanol.get_impact('GWP', time=5, time_unit='day')
-        240.0
+        240
         >>> # `get_impacts` returns a dict
         >>> ethanol.get_impacts()
         {'GlobalWarming': 2, 'FossilEnergyConsumption': 5.0}

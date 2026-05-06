@@ -1,6 +1,6 @@
 # Needed by qsdsan
-git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git@qsdsan
-git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@qsdsan
+biosteam==2.53.10
+git+https://github.com/QSD-Group/QSDsan.git
 git+https://github.com/QSD-Group/EXPOsan.git
 SALib>=1.4.5
 seaborn

@@ -467,11 +467,11 @@ def morris_till_convergence(model, inputs, metrics=None,
     kwargs = {i:kwargs[i] for i in kwargs.keys() if i!='num_levels'}
     samples = generate_samples(inputs=inputs, kind='Morris', N=N_max,
                                seed=seed, num_levels=num_levels)
-    model.load_samples(samples)
+    model.load_samples(samples, sort=False)
 
     param_num = len(model.get_parameters())
     cum_model = model.copy()
-    cum_model.load_samples(samples[0: 2*(param_num+1)])
+    cum_model.load_samples(samples[0: 2*(param_num+1)], sort=False)
     cum_model.evaluate()
     cum_dct = dict(mu_star={}, mu_star_conf={})
     metrics = _update_input(metrics, model.metrics)
@@ -488,7 +488,7 @@ def morris_till_convergence(model, inputs, metrics=None,
 
     for n in range(2, N_max):
         temp_model = model.copy()
-        temp_model.load_samples(samples[n*(param_num+1): (n+1)*(param_num+1)])
+        temp_model.load_samples(samples[n*(param_num+1): (n+1)*(param_num+1)], sort=False)
         temp_model.evaluate()
         cum_model.table = pd.concat((cum_model.table, temp_model.table))
 
@@ -846,14 +846,14 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box', adjust_hue=False
     if not y_axis: # no data provided or only x, 1D, horizontal
         x_axis = _update_input(x_axis, model.metrics)
         x_df = df[[i.name for i in x_axis]]
-        temp_df = x_df.stack(dropna=False).reset_index(name='x_data')
+        temp_df = x_df.stack().reset_index(name='x_data')
         sns_df['x_data'] = temp_df['x_data']
         sns_df['x_group'] = temp_df['level_1']
 
     elif not x_axis: # only y, 1D, vertical
         y_axis = (y_axis,) if not isinstance(y_axis, Iterable) else y_axis
         y_df = df[[i.name for i in y_axis]]
-        temp_df = y_df.stack(dropna=False).reset_index(name='y_data')
+        temp_df = y_df.stack().reset_index(name='y_data')
         sns_df['y_data'] = temp_df['y_data']
         sns_df['y_group'] = temp_df['level_1']
 
@@ -1069,7 +1069,7 @@ def plot_correlations(result_df, parameters=(), metrics=(), top=None,
         return _save_fig_return(fig, ax, file, close_fig)
 
     else: # multiple metrics, bubble plot
-        corr_df = df.stack(dropna=False).reset_index()
+        corr_df = df.stack().reset_index()
         corr_df.rename(columns={'level_0': 'parameter', 'level_1': 'metric',
                                 0: 'correlation'}, inplace=True)
         corr_df['size'] = corr_df['correlation'].abs()
@@ -1333,12 +1333,13 @@ def _plot_heatmap(hmap_df, ax=None, annot=False, diagonal='', sts1_df=None,
     ax_cbar = ax.figure.add_axes([0.03, 0.3, 0.02, 0.4]) if not default_cbar else None
 
     if diagonal:
-        np.fill_diagonal(hmap_df.values, getattr(sts1_df, diagonal))
-        hmap_df = hmap_df.astype('float64')
+        hmap_arr = hmap_df.to_numpy(dtype=float, copy=True)
+        np.fill_diagonal(hmap_arr, getattr(sts1_df, diagonal))
+        hmap_df = pd.DataFrame(hmap_arr, index=hmap_df.index, columns=hmap_df.columns)
         k = -1
         title = 'Total/Interaction Effects' if diagonal=='ST' else 'Main/Interaction Effects'
     else:
-        hmap_df = hmap_df.fillna(0)
+        hmap_df = hmap_df.fillna(0).astype('float64')
         k = 0
         title = 'Interaction Effects'
 

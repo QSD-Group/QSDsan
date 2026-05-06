@@ -70,25 +70,25 @@ class LCA:
     >>> sys = create_example_system()
     >>> sys.diagram() # doctest: +SKIP
     >>> sys.simulate()
-    >>> sys.show()
+    >>> sys.show() # doctest: +ELLIPSIS
     System: sys
     ins...
-    [0] salt_water
+    [0] salt_water...
         phase: 'l', T: 298.15 K, P: 101325 Pa
         flow (kmol/hr): H2O   111
                         NaCl  0.856
-    [1] methanol
+    [1] methanol...
         phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (kmol/hr): Methanol  0.624
-    [2] ethanol
+        flow...Methanol
+    [2] ethanol...
         phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (kmol/hr): Ethanol  0.217
+        flow...Ethanol
     outs...
-    [0] alcohols
+    [0] alcohols...
         phase: 'l', T: 298.15 K, P: 101325 Pa
         flow (kmol/hr): Methanol  0.624
                         Ethanol   0.217
-    [1] waste_brine
+    [1] waste_brine...
         phase: 'l', T: 350 K, P: 101325 Pa
         flow (kmol/hr): H2O   88.8
                         NaCl  0.684

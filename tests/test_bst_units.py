@@ -69,6 +69,12 @@ def create_streams(num):
     return bst_s, qs_ws
 
 
+def test_waste_stream_accepts_component_flows_with_default_flow():
+    qs.set_thermo(cmps)
+    ws = qs.WasteStream(Water=80, Methanol=100, Glycerol=25, units='kmol/hr')
+    assert_allclose(ws.imol['Water', 'Methanol', 'Glycerol'], [80, 100, 25])
+
+
 def check_results(biosteam_unit, qsdsan_unit):
     global bst_unit, qs_unit
     bst_unit, qs_unit = biosteam_unit, qsdsan_unit
