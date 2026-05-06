@@ -6,8 +6,55 @@ FAQ
 Common Errors
 -------------
 
-``graphviz``
-************
+``Graphviz`` Installation
+*************************
+Install `Graphviz <https://graphviz.org/download/>`_ if you want to use QSDsan's ``diagram`` methods.
+
+Graphviz installation has two parts:
+
+1. The Graphviz software, which provides the ``dot`` executable used to render diagrams.
+2. The Python ``graphviz`` package, which lets Python call Graphviz.
+
+If you use ``conda``, install both through ``conda-forge``:
+
+.. code::
+
+   conda install -c conda-forge python-graphviz
+
+If you do not use ``conda``, install the Graphviz software first:
+
+- Windows: install from the official Graphviz download page, or use:
+
+  .. code::
+
+     winget install graphviz
+
+- macOS with Homebrew:
+
+  .. code::
+
+     brew install graphviz
+
+- Ubuntu/Debian Linux:
+
+  .. code::
+
+     sudo apt install graphviz
+
+Then install the Python interface in your active Python environment:
+
+.. code::
+
+   pip install graphviz
+
+To check that Graphviz is installed correctly, run:
+
+.. code::
+
+   dot -V
+
+If ``dot`` is not found, restart your terminal/editor and try again. If it still fails, add the Graphviz ``bin`` folder to your system ``PATH``.
+
 When using :func:`diagram`, if you run into a ``graphviz`` error similar to:
 
    .. code:: bash
