@@ -1,0 +1,92 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qsdsan"
+version = "1.4.4"
+description = "Quantitative Sustainable Design for sanitation and resource recovery systems"
+readme = {file = "README.rst", content-type = "text/x-rst"}
+requires-python = ">=3.12"
+license = "NCSA"
+license-files = ["LICENSE.txt"]
+authors = [
+    {name = "Quantitative Sustainable Design Group", email = "quantitative.sustainable.design@gmail.com"},
+]
+keywords = [
+    "quantitative sustainable design",
+    "sanitation",
+    "resource recovery",
+    "techno-economic analysis",
+    "life cycle assessment",
+]
+classifiers = [
+    "Environment :: Console",
+    "Topic :: Education",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Manufacturing",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "biosteam==2.53.10",
+    "SALib>=1.4.5",
+    "seaborn",
+    "sympy>=1.8",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+    "nbval",
+    "exposan @ git+https://github.com/QSD-Group/EXPOsan.git",
+]
+docs = [
+    "sphinx",
+    "sphinx-copybutton",
+    "sphinx-design",
+    "furo",
+    "nbsphinx",
+    "pandoc",
+]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "nbval",
+    "exposan @ git+https://github.com/QSD-Group/EXPOsan.git",
+    "sphinx",
+    "sphinx-copybutton",
+    "sphinx-design",
+    "furo",
+    "nbsphinx",
+    "pandoc",
+]
+
+[project.urls]
+Homepage = "https://qsdsan.com"
+Documentation = "https://qsdsan.readthedocs.io"
+Repository = "https://github.com/QSD-Group/QSDsan"
+
+[tool.setuptools]
+packages = ["qsdsan"]
+
+[tool.setuptools.package-data]
+qsdsan = [
+    "data/*",
+    "data/process_data/*",
+    "data/sanunit_data/*",
+    "data/sanunit_data/br/*",
+    "data/sanunit_data/es/*",
+    "data/sanunit_data/re/*",
+    "equipments/*",
+    "processes/*",
+    "sanunits/*",
+    "utils/*",
+]
