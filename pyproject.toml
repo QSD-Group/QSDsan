@@ -46,6 +46,8 @@ test = [
     "pytest",
     "pytest-cov",
     "nbval",
+]
+integration = [
     "exposan @ git+https://github.com/QSD-Group/EXPOsan.git",
 ]
 docs = [
@@ -65,7 +67,6 @@ dev = [
     "pytest",
     "pytest-cov",
     "nbval",
-    "exposan @ git+https://github.com/QSD-Group/EXPOsan.git",
     "sphinx>=7,<9",
     "sphinx-copybutton",
     "sphinx-design",

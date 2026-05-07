@@ -29,8 +29,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install --no-cache-dir git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git@master
         pip install --no-cache-dir git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@master
-        pip install --no-cache-dir git+https://github.com/QSD-Group/EXPOsan.git@main
-        pip install --no-cache-dir -e ".[ci]"
+        pip install --no-cache-dir -e ".[ci,integration]"
     - name: Test and generate coverage report
       run: |
         pytest --cov=./ --cov-report=xml
