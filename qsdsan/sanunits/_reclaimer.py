@@ -14,10 +14,13 @@ This module is developed by:
 
     Lewis Rowles <stetsonsc@gmail.com>
 
-This module contains unit operations used in the Reclaimer system
-developed by Duke University as described in
-https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
-and `Trotochaud et al. <https://doi.org/10.1021/acs.est.0c02755>`_
+    This module contains unit operations used in the Reclaimer system
+
+    developed by Duke University as described in
+
+    https://washaid.pratt.duke.edu/work/water-sanitation/reinvent-toilet-challenge
+
+    and `Trotochaud et al. <https://doi.org/10.1021/acs.est.0c02755>`_
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt

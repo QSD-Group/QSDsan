@@ -12,11 +12,15 @@ This module is developed by:
 
     Hannah Lohman <hlohman94@gmail.com>
 
-This module contains unit operations used in the Eco-San system as described in
-Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
-Note that the report is not publicly available, but information about the Eco-San system can be found at:
-https://sanitation.ansi.org/EcoSanToilet
-http://www.eco-san.cn/e_main.html
+    This module contains unit operations used in the Eco-San system as described in
+
+    Li, M.; Xiaokang, Z. Technical Report of Eco-san Water Recycling System. Version 20190504-V3. 2019.
+
+    Note that the report is not publicly available, but information about the Eco-San system can be found at:
+
+    https://sanitation.ansi.org/EcoSanToilet
+
+    http://www.eco-san.cn/e_main.html
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
