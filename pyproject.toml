@@ -49,22 +49,27 @@ test = [
     "exposan @ git+https://github.com/QSD-Group/EXPOsan.git",
 ]
 docs = [
-    "sphinx",
+    "sphinx>=7,<9",
     "sphinx-copybutton",
     "sphinx-design",
-    "furo",
+    "furo>=2024.1",
     "nbsphinx",
     "pandoc",
+]
+ci = [
+    "pytest",
+    "pytest-cov",
+    "nbval",
 ]
 dev = [
     "pytest",
     "pytest-cov",
     "nbval",
     "exposan @ git+https://github.com/QSD-Group/EXPOsan.git",
-    "sphinx",
+    "sphinx>=7,<9",
     "sphinx-copybutton",
     "sphinx-design",
-    "furo",
+    "furo>=2024.1",
     "nbsphinx",
     "pandoc",
 ]
@@ -74,8 +79,10 @@ Homepage = "https://qsdsan.com"
 Documentation = "https://qsdsan.readthedocs.io"
 Repository = "https://github.com/QSD-Group/QSDsan"
 
-[tool.setuptools]
-packages = ["qsdsan"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["qsdsan*"]
+namespaces = false
 
 [tool.setuptools.package-data]
 qsdsan = [

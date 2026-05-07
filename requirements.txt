@@ -1,9 +1,0 @@
-# Legacy compatibility file.
-#
-# Prefer installing dependency groups from pyproject.toml:
-#   uv pip install -e .
-#   uv pip install -e .[test]
-#   uv pip install -e .[docs]
-#   uv pip install -e .[dev]
-
--e .[dev]

@@ -14,6 +14,7 @@
 .coverage
 .coveralls.yml
 .pypirc
+pytest-cache-files-*
 _build
 build
 dist

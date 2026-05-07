@@ -134,7 +134,7 @@ Via command-line interface
 
 	.. code:: bash
 
-	    pip install –r requirements.txt
+	    pip install -e ".[dev]"
 
 
 #. Add the root ``QSDsan`` as the upstream:
