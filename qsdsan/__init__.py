@@ -51,7 +51,7 @@ CHECK_IMPACT_INDICATOR_CONSISTENCY = True
 CHECK_IMPACT_ITEM_CONSISTENCY = True
 
 
-from . import utils
+from . import units_of_measure, utils
 CEPCI_by_year = utils.indices.tea_indices['CEPCI']
 from ._component import *
 from ._components import *
@@ -103,6 +103,7 @@ def default():
 
 
 __all__ = (
+    'units_of_measure',
     *_component.__all__,
     *_components.__all__,
     *_construction.__all__,

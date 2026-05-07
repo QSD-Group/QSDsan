@@ -25,7 +25,8 @@ from chemicals.elements import (
     charge_from_formula
     )
 from . import Chemical
-from .utils import auom, copy_attr, cod_test_stoichiometry, electron_acceptor_cod
+from .utils import copy_attr, cod_test_stoichiometry, electron_acceptor_cod
+from .units_of_measure import component_units_of_measure
 from warnings import warn
 
 __all__ = ('Component',)
@@ -80,20 +81,6 @@ _component_slots = (*Chemical.__slots__,
                     *tuple('_'+i for i in _component_properties))
 
 _checked_properties = (*_checked_properties, *_key_component_properties)
-
-component_units_of_measure = {
-    'i_C': auom('g'),
-    'i_N': auom('g'),
-    'i_P': auom('g'),
-    'i_K': auom('g'),
-    'i_Mg': auom('g'),
-    'i_Ca': auom('g'),
-    'i_mass': auom('g'),
-    'i_charge': auom('mol'),
-    'i_COD': auom('g'),
-    'i_NOD': auom('g'),
-    }
-
 
 # %%
 

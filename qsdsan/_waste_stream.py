@@ -28,6 +28,7 @@ from thermosteam.base import DictionaryView, SparseVector
 from biosteam.utils import MissingStream
 from . import SanStream, MissingSanStream
 from .utils import auom, copy_attr, WasteStreamScope
+from .units_of_measure import waste_stream_units_of_measure
 from biosteam.utils import Scope
 from warnings import warn
 
@@ -78,8 +79,8 @@ _default_ratios = {'iHi_XPAOPP': 0,
                    'iSUInf_SU': 1.,
                    'iXUOHOE_XUE': None,}
 
-vol_unit = auom('L/hr')
-conc_unit = auom('mg/L')
+vol_unit = waste_stream_units_of_measure['volumetric_flow']
+conc_unit = waste_stream_units_of_measure['concentration']
 
 
 # %%

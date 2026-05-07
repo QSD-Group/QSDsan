@@ -15,7 +15,7 @@ for license details.
 import numpy as np
 from sympy import symbols, sympify, simplify, Matrix, solve
 from sympy.parsing.sympy_parser import parse_expr
-from . import auom
+from ..units_of_measure import parse_lca_unit
 
 __all__ = (
     'dct_from_str',
@@ -172,22 +172,4 @@ def get_stoichiometric_coeff(reaction, ref_component, components, conserved_for,
 
 def parse_unit(value):
     '''Parse user' input units to those that can be recognized by `pint`.'''
-    str_list = value.split(' ') # for something like 'kg CO2-eq'
-    if len(str_list) > 1:
-        unit = str_list[0]
-        others = ' '.join(str_list.pop(0))
-        try: return auom(unit), others
-        except: pass
-    str_list = value.split('-') # for something like 'MJ-eq'
-    if len(str_list) > 1:
-        unit = str_list[0]
-        others = '-'.join(str_list.pop(0))
-        try: return auom(unit), others
-        except: pass
-
-    # For something like 'MJ' or 'tonne*km',
-    # not doing this earlier as something like 'kg N' will be misinterpreted
-    try: return auom(value), ''
-    except: pass
-
-    return None, value
+    return parse_lca_unit(value)
