@@ -231,6 +231,24 @@ Submitting Pull Request
 
 #. One of the Quantitative Sustainable Design Group members will review your changes and accept or discuss with you if edits are needed.
 
+Maintainer PR Audit Guide
+^^^^^^^^^^^^^^^^^^^^^^^^^
+``QSDsan`` includes a tool-agnostic PR audit checklist at ``docs/maintainer/pr_audit_checklist.md`` for maintainers reviewing changes that touch ``BioSTEAM``/``Thermosteam`` imports, stream/unit APIs, unit registries, or the ``Stream``/``SanStream``/``WasteStream`` taxonomy.
+
+Maintainers using Codex can install or update the repo-tracked Codex adapter locally from the repository root with:
+
+.. code:: powershell
+
+	Copy-Item -Recurse -Force .codex\skills\qsdsan-pr-audit $env:USERPROFILE\.codex\skills\
+
+Maintainers using Claude Code can install or update the repo-tracked Claude adapter locally from the repository root with:
+
+.. code:: powershell
+
+	Copy-Item -Recurse -Force .claude\skills\qsdsan-pr-audit $env:USERPROFILE\.claude\skills\
+
+Then ask Codex or Claude to ``use qsdsan-pr-audit`` when reviewing relevant pull requests. The checklist is guidance for human/agent review; automated rules should still be enforced with tests where practical.
+
 
 Documentation
 ^^^^^^^^^^^^^
