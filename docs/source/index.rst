@@ -47,36 +47,39 @@ What is ``QSDsan``?
 
 Installation
 ------------
-If you are new to Python, we are developing `beginner tutorials <https://uofi.box.com/s/49wf5usk5hz3gdjmcswo3voiokmbzekb>`_ with step-to-step guidance starting from setting up your Python environment.
-
-The easiest way is through ``pip``, in command-line interface (Anaconda prompt, terminal):
+``QSDsan`` requires Python 3.12 or newer. The easiest way to install ``QSDsan`` is through ``pip`` in a command-line interface (e.g., Anaconda Prompt, terminal):
 
 .. code::
 
     pip install qsdsan
 
-If you need to update:
+To upgrade an existing installation:
 
 .. code::
 
     pip install -U qsdsan
 
-Or for a specific version (replace X.X.X with the version number):
+To install a specific version, replace ``X.X.X`` with the version number:
 
 .. code::
 
     pip install qsdsan==X.X.X
 
-If you want to install the latest GitHub version at the `main branch <https://github.com/qsd-group/qsdsan>`_:
+To install the latest GitHub version from the `main branch <https://github.com/QSD-Group/QSDsan>`_:
 
 .. code::
 
     pip install git+https://github.com/QSD-Group/QSDsan.git
 
+To install from another fork and/or branch, replace ``<USERNAME_OF_THE_FORK>`` and ``<BRANCH_NAME>``:
+
+.. code::
+
+    pip install git+https://github.com/<USERNAME_OF_THE_FORK>/QSDsan.git@<BRANCH_NAME>
 
 You can also download the package from `PyPI <https://pypi.org/project/qsdsan/>`_.
 
-Note that development of this package is currently under initial stage with limited backward compatibility, please feel free to `submit an issue <https://github.com/QSD-Group/QSDsan/issues>`_ for any questions regarding package upgrading.
+For diagram generation, ``QSDsan`` uses Graphviz. If diagrams fail to render, install Graphviz following the `official Graphviz download instructions <https://graphviz.org/download/>`_ and see :ref:`graphviz-installation` for a quick check.
 
 
 Join the Community

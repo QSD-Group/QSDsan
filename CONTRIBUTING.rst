@@ -47,7 +47,7 @@ Systems constructed using ``QSDsan`` are stored in the `EXPOsan <https://github.
 
 Contributing Guidelines
 -----------------------
-Below are some brief instructions on how to contribute to ``QSDsan``. If you find yourself struggle with the installation of QSDsan/setting up the environment, this extended version of `installation instructions <tutorials/_installation.html>`_ might be helpful to you. If you have any questions regarding the process, feel free to `submit an issue on GitHub <https://github.com/QSD-Group/QSDsan/issues>`_. Thank you in advance for your contribution!
+Below are some brief instructions on how to contribute to ``QSDsan``. If you have any questions regarding the process, feel free to `submit an issue on GitHub <https://github.com/QSD-Group/QSDsan/issues>`_. Thank you in advance for your contribution!
 
 
 Authorship
@@ -130,11 +130,13 @@ Via command-line interface
 
 	    cd QSDsan
 
-#. Install required packages:
+#. Install ``QSDsan`` in editable mode with the development dependencies:
 
 	.. code:: bash
 
 	    pip install -e ".[dev]"
+
+	This command installs ``QSDsan`` from your local clone and installs the packages needed for testing and building the documentation.
 
 
 #. Add the root ``QSDsan`` as the upstream:
@@ -199,7 +201,6 @@ Note
 #. We use fork as the default way for collaboration (i.e., for all first-time contributors). If you are a constant contributor and have independently made at least one successful and meaningful contribution through forking, you will be given the write access to ``QSDsan`` and you can use branch for easier code syncing. We will also invite you to join the ``QSDsan`` team.
 #. GitHub has really detailed documentation on `forking <https://docs.github.com/en/github/getting-started-with-github/fork-a-repo>`_ (and almost everything else).
 #. As QSDsan is public, all created forks would be public as well. We would appreciate if you make your work public and contribute back, but we understand it if you would like to create a private fork of QSDsan. To do so, please check our tip on creating the `private fork <FAQ.html#private-fork>`_.
-#. As we are constantly developing ``QSDsan`` with its core dependencies ``BioSTEAM`` and ``Thermosteam``, it'll be good to clone those two repositories and use the ``qsdsan`` branch of both.
 
 
 Developing Modules
@@ -304,31 +305,13 @@ Testing
 #. The branch has no conflicts with the root repository.
 #. All tests have been passed.
 
-To run pytest, first make sure you have all the packages needed for testing. If you've already have QSDsan running locally, you just need `pytest-cov <https://pytest-cov.readthedocs.io>`_ and `nbval <https://nbval.readthedocs.io>`_. You'll also need `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ (the cloned repository would be better) if you do not have it.
-
-Then you'll need to let your CLI know where to find your clone packages. The easiest way to do it is to add a ``.pth`` file in the path of your python package libraries (e.g., the `site-packages` folder of your conda environment), you can usually `find the path by <https://stackoverflow.com/questions/31003994/where-is-site-packages-located-in-a-conda-environment>`_
+To run pytest, first make sure you installed the development dependencies from the cloned repository:
 
 	.. code:: bash
 
-		python # to launch Python
-	   	from distutils.sysconfig import get_python_lib
-	   	print(get_python_lib())
+	    pip install -e ".[dev]"
 
-The name of the .pth file does not matter just make sure you'll remember what it's used for (e.g., cloned_pkgs.pth), and it just needs to include the path for your cloned packages, for example, a working one could be:
-
-
-	C:\Users\<YOUR_USERNAME>\Documents\Coding\thermosteam
-
-	C:\Users\<YOUR_USERNAME>\Documents\Coding\biosteam
-
-	C:\Users\<YOUR_USERNAME>\Documents\Coding\QSDsan
-
-	C:\Users\<YOUR_USERNAME>\Documents\Coding\EXPOsan
-
-
-Note that the ``<YOUR_USERNAME>`` is just a placeholder for the actual user name of your computer, and the format of the path would be different depending on your OS (the example is Windows, note that only one backward slash ``\`` is needed).
-
-If you want to verify if Python can now find the cloned packages successfully, you can try to import ``QSDsan`` in your Python shell:
+If you want to verify that Python is using your local clone, run:
 
 	.. code:: bash
 
@@ -338,7 +321,7 @@ If you want to verify if Python can now find the cloned packages successfully, y
 	   	['C:\\Users\\<YOUR_USERNAME>\\Documents\\Coding\\QSDsan\\qsdsan']
 
 
-After configuring the path, in your CLI, navigate to the cloned QSDsan package directory, then you can simply run the test locally using `pytest <https://docs.pytest.org>`_:
+Then, from the cloned ``QSDsan`` package directory, run the tests locally using `pytest <https://docs.pytest.org>`_:
 
 	.. code:: bash
 

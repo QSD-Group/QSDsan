@@ -74,50 +74,41 @@ Additionally, another package, `DMsan <https://github.com/QSD-Group/DMsan>`_ (de
 
 Installation
 ------------
-The easiest way is through ``pip``, in command-line interface (e.g., Anaconda prompt, terminal):
+``QSDsan`` requires Python 3.12 or newer. The easiest way to install ``QSDsan`` is through ``pip`` in a command-line interface (e.g., terminal, PowerShell, etc.):
 
 .. code::
 
     pip install qsdsan
 
-If you need to upgrade:
+To upgrade an existing installation:
 
 .. code::
 
     pip install -U qsdsan
 
-or for a specific version (replace X.X.X with the version number):
+To install a specific version, replace ``X.X.X`` with the version number:
 
 .. code::
 
     pip install qsdsan==X.X.X
 
-If you want to install the latest GitHub version at the `main branch <https://github.com/qsd-group/qsdsan>`_ (note that you can still use the ``-U`` flag for upgrading):
+To install the latest GitHub version from the `main branch <https://github.com/QSD-Group/QSDsan>`_:
 
 .. code::
 
     pip install git+https://github.com/QSD-Group/QSDsan.git
 
-
-.. note::
-
-   If this doesn't give you the newest ``qsdsan``, try ``pip uninstall qsdsan`` first.
-
-   Also, you may need to update some ``qsdsan``'s dependency package (e.g., ' ``biosteam`` and ``thermosteam``) versions in order for the new ``qsdsan`` to run.
-
-
-or other fork and/or branch (replace ``<USERNAME_OF_THE_FORK>`` and ``<BRANCH_NAME>`` with the desired fork and branch names)
+To install from another fork and/or branch, replace ``<USERNAME_OF_THE_FORK>`` and ``<BRANCH_NAME>``:
 
 .. code::
 
     pip install git+https://github.com/<USERNAME_OF_THE_FORK>/QSDsan.git@<BRANCH_NAME>
 
-
 You can also download the package from `PyPI <https://pypi.org/project/qsdsan/>`_.
 
-Note that development of this package is currently under initial stage with limited backward compatibility, please feel free to `submit an issue <https://github.com/QSD-Group/QSDsan/issues>`_ for any questions regarding package upgrading.
+For diagram generation, ``QSDsan`` uses Graphviz. If diagrams fail to render, install Graphviz following the `official Graphviz download instructions <https://graphviz.org/download/>`_ and see the `FAQ <docs/source/FAQ.rst#graphviz-installation>`_ for a quick check.
 
-If you want to contribute to ``QSDsan``, please follow the steps in the `Contributing Guidelines <CONTRIBUTING.rst#contributing-guidelines>`_ section of the documentation to clone the repository. If you find yourself struggle with the installation of QSDsan/setting up the environment, this extended version of `installation instructions <docs/source/tutorials/_installation.rst>`_ might be helpful to you.
+If you want to contribute to ``QSDsan``, please follow the steps in the `Contributing Guidelines <CONTRIBUTING.rst#contributing-guidelines>`_ to clone the repository and install it in editable mode.
 
 
 Documentation
