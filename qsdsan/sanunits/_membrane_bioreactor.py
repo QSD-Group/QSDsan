@@ -16,10 +16,9 @@ for license details.
 '''
 
 from math import ceil, floor
-from biosteam import Stream
 from biosteam.exceptions import DesignError
 from . import HXutility, WWTpump, InternalCirculationRx
-from .. import SanStream, WasteStream, SanUnit, Process, CompiledProcesses
+from .. import SanStream, WasteStream, SanUnit, Stream, Process, CompiledProcesses
 from ..sanunits import CSTR, PFR, dydt_cstr
 from warnings import warn
 import numpy as np, pandas as pd

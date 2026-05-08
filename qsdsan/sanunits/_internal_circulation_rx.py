@@ -24,7 +24,6 @@ TODO:
 
 import sympy as sp
 from math import pi
-from biosteam import Stream
 from biosteam.exceptions import DesignError
 from biosteam.utils import ExponentialFunctor
 from biosteam.units.design_tools.tank_design import (
@@ -32,7 +31,7 @@ from biosteam.units.design_tools.tank_design import (
     TankPurchaseCostAlgorithm
     )
 from . import HXutility, MixTank, Pump
-from .. import SanStream, SanUnit
+from .. import SanStream, SanUnit, Stream
 from ..utils import (
     compute_stream_COD,
     get_digestion_rxns,

@@ -17,8 +17,7 @@ for license details.
 
 import numpy as np
 from math import ceil, pi
-from biosteam import Stream
-from .. import SanUnit, Construction, WasteStream
+from .. import SanUnit, Construction, Stream, WasteStream
 from ..processes import Decay, T_correction_factor
 from ..sanunits import HXutility, WWTpump, CSTR
 from ..utils import ospath, load_data, data_path, auom, \

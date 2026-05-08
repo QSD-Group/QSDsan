@@ -17,8 +17,7 @@ for license details.
 
 from warnings import warn
 from math import ceil
-from biosteam import Stream
-from .. import SanUnit
+from .. import SanUnit, Stream
 from ..sanunits import HXutility, WWTpump
 
 from ..equipments import Blower, GasPiping

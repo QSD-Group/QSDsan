@@ -15,11 +15,10 @@ for license details.
 
 from warnings import warn
 from math import pi, ceil
-from biosteam import Stream
 from thermosteam.reaction import ParallelReaction as PRxn
 from . import HXutility
 from ._pumping import WWTpump
-from .. import SanStream, SanUnit
+from .. import SanStream, SanUnit, Stream
 from ..utils import (
     auom,
     compute_stream_COD,
