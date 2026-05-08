@@ -61,7 +61,11 @@ __all__ = (
 
 
 def _unit_is_defined(name):
-    return name in ureg._units
+    try:
+        ureg.parse_units(name)
+    except Exception:
+        return False
+    return True
 
 
 def _define_unit(definition):

@@ -41,3 +41,33 @@ def test_units_of_measure():
     assert remaining == ''
 
     assert parse_unit('kg CO2-eq') == uom.parse_lca_unit('kg CO2-eq')
+
+
+def test_unit_definition_check_uses_public_registry_api(monkeypatch):
+    import qsdsan.units_of_measure as uom
+
+    class Registry:
+        def __init__(self):
+            self.defined = []
+            self.known_units = {'kg', 'kilogram', 'alias'}
+
+        def parse_units(self, name):
+            if name in self.known_units:
+                return name
+            raise ValueError(name)
+
+        def define(self, definition):
+            self.defined.append(definition)
+            self.known_units.add(definition.split('=')[0].strip())
+
+    registry = Registry()
+    monkeypatch.setattr(uom, 'ureg', registry)
+
+    assert uom._unit_is_defined('kg')
+    assert not uom._unit_is_defined('new_unit')
+
+    uom._define_unit('alias = kg')
+    assert registry.defined == []
+
+    uom._define_unit('new_unit = kg')
+    assert registry.defined == ['new_unit = kg']
