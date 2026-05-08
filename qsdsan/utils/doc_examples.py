@@ -19,7 +19,6 @@ from .. import (
     get_thermo,
     Model,
     SanStream,
-    sanunits as su,
     set_thermo as qs_set_thermo,
     SimpleTEA,
     System,
@@ -134,6 +133,8 @@ def create_example_system(components=None):
      <Splitter: S2>)
     >>> sys.diagram() # doctest: +SKIP
     '''
+    from .. import sanunits as su
+
     if components: qs_set_thermo(components)
     else:
         try:

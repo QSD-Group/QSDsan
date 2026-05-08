@@ -15,6 +15,7 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+import importlib as _importlib
 import importlib.metadata as impmeta
 try:
     __version__ = impmeta.version('qsdsan')
@@ -82,10 +83,6 @@ from . import (
     _tea,
     _transportation,
     _waste_stream,
-    equipments,
-    processes,
-    sanunits,
-    stats,
     )
 
 utils._secondary_importing()
@@ -93,9 +90,24 @@ for _slot in utils.doc_examples.__all__:
     setattr(utils, _slot, getattr(utils.doc_examples, _slot))
 
 # Add the `pump` decorator to the util module
-from .sanunits import wwtpump
+def wwtpump(*args, **kwargs):
+    from .sanunits import wwtpump as _wwtpump
+    return _wwtpump(*args, **kwargs)
+
 utils.__all__ = (*utils.__all__, 'wwtpump')
 setattr(utils, 'wwtpump', wwtpump)
+
+_lazy_modules = frozenset(('equipments', 'processes', 'sanunits', 'stats'))
+
+def __getattr__(name):
+    if name in _lazy_modules:
+        module = _importlib.import_module(f'{__name__}.{name}')
+        globals()[name] = module
+        return module
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+def __dir__():
+    return sorted((*globals(), *_lazy_modules))
 
 def default():
     _bst.default()
