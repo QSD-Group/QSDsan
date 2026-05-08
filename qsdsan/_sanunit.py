@@ -25,7 +25,6 @@ import numpy as np, biosteam as bst
 from collections import defaultdict
 from collections.abc import Iterable
 from warnings import warn
-from biosteam._unit import ProcessSpecification
 from biosteam.utils import (
     AbstractMethod,
     Inlets,
@@ -46,6 +45,7 @@ from . import (
     Unit,
     WasteStream,
     )
+from ._compat import ProcessSpecification
 from .utils import SanUnitScope, ExogenousDynamicVariable as EDV
 
 __all__ = ('SanUnit',)
