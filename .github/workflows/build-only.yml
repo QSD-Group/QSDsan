@@ -32,4 +32,4 @@ jobs:
         pip install --no-cache-dir -e ".[ci,integration]"
     - name: Test with pytest
       run: |
-        pytest
+        pytest tests

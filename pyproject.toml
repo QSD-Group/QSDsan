@@ -61,11 +61,13 @@ docs = [
 ci = [
     "pytest",
     "pytest-cov",
+    "pytest-xdist",
     "nbval",
 ]
 dev = [
     "pytest",
     "pytest-cov",
+    "pytest-xdist",
     "nbval",
     "sphinx>=7,<9",
     "sphinx-copybutton",

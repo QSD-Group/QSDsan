@@ -26,6 +26,11 @@ Reference:
 '''
 #%%
 
+import pytest
+
+pytestmark = pytest.mark.slow
+
+@pytest.mark.integration
 def test_adm1_junctions():
     
     import qsdsan as qs, numpy as np
@@ -209,6 +214,7 @@ def test_adm1_junctions():
     sys.flowsheet.clear()
 
 #%%
+@pytest.mark.integration
 def test_adm1p_junctions():
     import numpy as  np
     from numpy.testing import assert_allclose as ac
