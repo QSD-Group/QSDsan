@@ -3,46 +3,11 @@ Contributors and Guidelines
 
 Contributors
 ------------
-While main developers of ``QSDsan`` are listed below, we thank all `contributors <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ who have supported the development and maintenance of this platform. If you would like to join the effort, please review our guidelines and instructions below.
+``QSDsan`` is developed and maintained by the Quantitative Sustainable Design Group and the broader community. Rather than maintaining a static list of individual names, please refer to the `GitHub contributors <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ and `commit history <https://github.com/QSD-Group/QSDsan/commits/main/>`_ for the latest record of contributions.
 
+Systems constructed using ``QSDsan`` are stored in the `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ repository; please refer to its `contributors <https://github.com/QSD-Group/EXPOsan/graphs/contributors>`_ and `commit history <https://github.com/QSD-Group/EXPOsan/commits/main/>`_ for contribution records related to system modules.
 
-Lead Developers
-^^^^^^^^^^^^^^^
-   - `Yalin Li`_ (current maintainer)
-   - `Xinyi (Joy) Zhang`_ (process models & benchmarking)
-
-
-Tutorials and Videos
-^^^^^^^^^^^^^^^^^^^^
-   - `Yalin Li`_
-   - `Xinyi (Joy) Zhang`_
-   - `Hannah Lohman`_
-   - `Victoria (Tori) Morgan`_
-   - `Ga-Yeong Kim`_
-
-
-System Modules
-^^^^^^^^^^^^^^
-Systems constructed using ``QSDsan`` are stored in the `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ repository.
-
-   - `Jianan Feng <https://www.linkedin.com/in/jianan-f-120899193/>`_
-   - `Ga-Yeong Kim`_
-   - `Yalin Li`_
-   - `Hannah Lohman`_
-   - `Victoria (Tori) Morgan`_
-   - `Saumitra Rai <https://www.linkedin.com/in/raisaumitra/>`_
-   - `L. Stetson Rowles <https://www.linkedin.com/in/lewis-stetson-rowles-40b24245/>`_
-   - `Shion Watabe <https://www.linkedin.com/in/shion-watabe-93a978183/>`_
-   - `Xinyi (Joy) Zhang`_
-
-
-.. Links
-.. _Ga-Yeong Kim: https://www.linkedin.com/in/ga-yeong-kim-8a2b4a141/
-.. _Yalin Li: https://yalinli.group
-.. _Hannah Lohman: https://www.linkedin.com/in/hannahlohman/
-.. _Victoria (Tori) Morgan: https://www.linkedin.com/in/victoria-morgan-ph-d-a8493271/
-.. _Xinyi (Joy) Zhang: https://www.linkedin.com/in/xinyi-joy-zhang/
-
+If you would like to join the effort, please review our guidelines and instructions below.
 
 
 Contributing Guidelines
