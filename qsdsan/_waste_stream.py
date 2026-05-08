@@ -203,8 +203,15 @@ del by_conc
 
 class WasteStream(SanStream):
     '''
-    A subclass of :class:`~.SanStream` with additional attributes and methods
-    for wastewater.
+    A :class:`~.SanStream` with wastewater-specific aggregate properties
+    and influent characterization models.
+
+    :class:`WasteStream` includes the life cycle impact functionality of
+    :class:`~.SanStream`. Use it when you need wastewater-modeling
+    quantities such as COD, BOD, TKN, TP, solids, pH, biodegradability
+    fractions, or influent characterization methods. Despite the name,
+    the stream does not need to be literal waste; the name reflects the
+    wastewater modeling capabilities added by this class.
 
     .. note::
 

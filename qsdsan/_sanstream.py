@@ -29,8 +29,14 @@ excluded_slots = ('characterization_factors',)
 
 class SanStream(Stream):
     '''
-    A subclass of :class:`thermosteam.Stream` with additional attributes
-    for environmental impacts.
+    A :class:`thermosteam.Stream` with QSDsan stream-level life cycle
+    impact functionality.
+
+    Use :class:`SanStream` when you need the material, thermodynamic,
+    pricing, and flow behavior of :class:`thermosteam.Stream`, plus the
+    ability to link the stream to environmental impact accounting. Use
+    :class:`WasteStream` instead when wastewater-specific aggregate
+    properties or influent characterization models are needed.
 
     .. note::
 
