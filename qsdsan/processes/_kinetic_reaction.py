@@ -14,7 +14,6 @@ for license details.
 '''
 
 from math import e, log
-from sympy import Function, lambdify, Symbol, plot
 from thermosteam import Reaction as Rxn
 
 __all__ = ('KineticReaction',)
@@ -130,11 +129,27 @@ class KineticReaction(Rxn):
     --------
     `thermosteam.Reaction <https://biosteam.readthedocs.io/en/latest/API/thermosteam/reaction/Reaction.html>`_
     '''
-    _t_sym = Symbol('t')
-    _C_sym = Function('C')(_t_sym)
     components = Rxn.chemicals
     reaction_components = Rxn.reaction_chemicals
     reset_chemicals = Rxn.reset_chemicals
+
+    @property
+    def _t_sym(self):
+        try:
+            return self._t_sym_cache
+        except AttributeError:
+            from sympy import Symbol
+            self._t_sym_cache = t = Symbol('t')
+            return t
+
+    @property
+    def _C_sym(self):
+        try:
+            return self._C_sym_cache
+        except AttributeError:
+            from sympy import Function
+            self._C_sym_cache = C = Function('C')(self._t_sym)
+            return C
     
     def __init__(self, rate_reactant, n, k, t, reaction, reactant=None,
                  C0=None, components=None, **kwargs):
@@ -161,6 +176,7 @@ class KineticReaction(Rxn):
         
     def _calculate_X(self):
         '''Calculate the conversion of the rate reactant.'''
+        from sympy import lambdify
         f = lambdify(self._t_sym, self._X_t, 'math')
         return f(self.t)
     
@@ -183,6 +199,7 @@ class KineticReaction(Rxn):
         Plot concentrations of the reactants and products of this kinetic reaction.
         All keyword arguments will be passed to :func:`sympy.plot`.
         '''
+        from sympy import plot
         ylabel = kwargs.pop('ylabel', 'Conversion')
         fig = plot(self._X_t, (self._t_sym, 0, self.t), ylabel=ylabel, **kwargs)
         return fig

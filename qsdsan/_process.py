@@ -19,8 +19,6 @@ from . import Component, Components
 from .utils import load_data, get_stoichiometric_coeff
 from thermosteam.utils import chemicals_user, read_only
 from thermosteam import settings
-from sympy import symbols, Matrix, simplify, lambdify
-from sympy.parsing.sympy_parser import parse_expr
 import numpy as np
 import pandas as pd
 
@@ -28,6 +26,26 @@ __all__ = ('DynamicParameter', 'Kinetics', 'MultiKinetics',
            'Process', 'Processes', 'CompiledProcesses', )
 
 _load_components = settings.get_default_chemicals
+
+def _symbols(*args, **kwargs):
+    from sympy import symbols
+    return symbols(*args, **kwargs)
+
+def _Matrix(*args, **kwargs):
+    from sympy import Matrix
+    return Matrix(*args, **kwargs)
+
+def _simplify(*args, **kwargs):
+    from sympy import simplify
+    return simplify(*args, **kwargs)
+
+def _lambdify(*args, **kwargs):
+    from sympy import lambdify
+    return lambdify(*args, **kwargs)
+
+def _parse_expr(*args, **kwargs):
+    from sympy.parsing.sympy_parser import parse_expr
+    return parse_expr(*args, **kwargs)
 
 class UndefinedProcess(AttributeError):
     '''AttributeError regarding undefined Component objects.'''
@@ -69,7 +87,7 @@ class DynamicParameter:
         return self._symbol
     @symbol.setter
     def symbol(self, s):
-        self._symbol = symbols(s)
+        self._symbol = _symbols(s)
 
     @property
     def function(self):
@@ -429,7 +447,7 @@ class Process:
         self.components = self._load_chemicals(components)
         self._ref_component = ref_component
         self.conserved_for = conserved_for
-        self._parameters = {p: symbols(p) for p in parameters}
+        self._parameters = {p: _symbols(p) for p in parameters}
         self._stoichiometry = get_stoichiometric_coeff(
             reaction, self._ref_component, self._components, self._conserved_for,
             self.parameters)
@@ -447,7 +465,7 @@ class Process:
             cmps = self._components
             getfield = getattr
             arr = np.array([getfield(cmps, f'i_{x}') for x in conserved_for])
-            if as_matrix: return Matrix(arr.tolist())
+            if as_matrix: return _Matrix(arr.tolist())
             return arr
         else: return None
 
@@ -493,7 +511,7 @@ class Process:
             if ic is None:
                 warn('No available `conserved_for` attributes, cannot check conservation.')
                 return
-            ic_dot_v = list(simplify(ic * Matrix(v)))
+            ic_dot_v = list(_simplify(ic * _Matrix(v)))
             materials = self._conserved_for
             unconserved = [(materials[i], prod) for i, prod in enumerate(ic_dot_v) if prod != 0]
             if len(unconserved) > 0:
@@ -600,7 +618,7 @@ class Process:
     def append_parameters(self, *new_pars):
         '''Append new symbolic parameters'''
         for p in new_pars:
-            self._parameters[p] = symbols(p)
+            self._parameters[p] = _symbols(p)
 
     def set_parameters(self, **parameters):
         '''
@@ -683,15 +701,15 @@ class Process:
 
     def _parse_rate_eq(self, eq):
         if eq is not None:
-            state_symbols = {c: symbols(c) for c in self._components.IDs}
+            state_symbols = {c: _symbols(c) for c in self._components.IDs}
             params = self._parameters
-            self._rate_equation = parse_expr(str(eq), {**state_symbols, **params})
+            self._rate_equation = _parse_expr(str(eq), {**state_symbols, **params})
         else: self._rate_equation = None
 
     def _rate_eq2func(self):
         var_kw = self._components.IDs
-        var = list(symbols(var_kw)) + [symbols(p) for p in self._parameters.keys()]
-        lamb = lambdify(var, self._rate_equation, 'numpy')
+        var = list(_symbols(var_kw)) + [_symbols(p) for p in self._parameters.keys()]
+        lamb = _lambdify(var, self._rate_equation, 'numpy')
         def f(state_arr, params={}):
             states = dict(zip(var_kw, state_arr))
             return lamb(**states, **params)
@@ -1149,7 +1167,7 @@ class CompiledProcesses(Processes):
         dct['_stoichio_lambdified'] = None
         dct['_rate_equations'] = rate_eqs
         if all(rate_eqs):
-            dct['_production_rates'] = list(Matrix(M_stch).T * Matrix(rate_eqs))
+            dct['_production_rates'] = list(_Matrix(M_stch).T * _Matrix(rate_eqs))
         else:
             dct['_production_rates'] = None
         dct['_rate_function'] = None
@@ -1169,7 +1187,7 @@ class CompiledProcesses(Processes):
     def append_parameters(self, *new_pars):
         '''Append new symbolic parameters'''
         for p in new_pars:
-            self._parameters[p] = symbols(p)
+            self._parameters[p] = _symbols(p)
 
     def set_parameters(self, **parameters):
         '''Set values to stoichiometric and/or kinetic parameters.'''
@@ -1224,8 +1242,8 @@ class CompiledProcesses(Processes):
             isa = isinstance
             for row in self._stoichiometry:
                 stoichio.append([v.evalf(subs=static_params) if not isa(v, (float, int)) else v for v in row])
-            sbs = [symbols(i) for i in dct.keys()]
-            lamb = lambdify(sbs, stoichio, 'numpy')
+            sbs = [_symbols(i) for i in dct.keys()]
+            lamb = _lambdify(sbs, stoichio, 'numpy')
             arr = np.empty((self.size, len(self._components)))
             def f():
                 v = [dct_vals[k] for k in dct.keys()]

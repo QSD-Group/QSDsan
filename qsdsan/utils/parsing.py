@@ -15,8 +15,6 @@ for license details.
 '''
 
 import numpy as np
-from sympy import symbols, sympify, simplify, Matrix, solve
-from sympy.parsing.sympy_parser import parse_expr
 from ..units_of_measure import parse_lca_unit
 
 __all__ = (
@@ -27,6 +25,12 @@ __all__ = (
 
 
 # %%
+
+def _load_sympy():
+    from sympy import symbols, sympify, simplify, Matrix, solve
+    from sympy.parsing.sympy_parser import parse_expr
+    return symbols, sympify, simplify, Matrix, solve, parse_expr
+
 
 def dct_from_str(dct_str, sep=',', dtype='float'):
     '''
@@ -104,6 +108,7 @@ def get_ic(cmps, conservation_for):
     Return conversion factors as a sympy matrix to solve for unknown stoichiometric coefficients.
     '''
     if conservation_for:
+        from sympy import Matrix
         arr = getattr(cmps, 'i_'+conservation_for[0])
         for c in conservation_for[1:]:
             arr = np.vstack((arr, getattr(cmps, 'i_'+c)))
@@ -111,6 +116,7 @@ def get_ic(cmps, conservation_for):
     else: return None
 
 def symbolize(coeff_dct, components, conserved_for, parameters):
+    symbols, sympify, simplify, Matrix, solve, parse_expr = _load_sympy()
     n = sum([v in ('?', '-(?)') for v in coeff_dct.values()])
     if n > 0:
         unknowns = symbols('unknown0:%s' % n)

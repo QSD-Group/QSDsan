@@ -22,7 +22,6 @@ TODO:
     - Check with Brian's AnMBR paper and see the COD<1300 mg/L not preferable thing
 '''
 
-import sympy as sp
 from math import pi
 from biosteam.exceptions import DesignError
 from biosteam.utils import ExponentialFunctor
@@ -260,6 +259,7 @@ class InternalCirculationRx(MixTank):
 
 
     def _run_separate(self, run_inputs):
+        import sympy as sp
         Qi, Si, Xi, Qe, Se, Vliq, Y, mu_max, b, Fxb, Fxt = run_inputs
         Qw = Qi - Qe
         Xb, Xe, Sb, Vb = sp.symbols('Xb, Xe, Sb, Vb', real=True)
