@@ -24,7 +24,6 @@ from .. import (
     SimpleTEA,
     System,
     )
-from chaospy import distributions as shape
 
 __all__ = (
     'create_example_components',
@@ -213,6 +212,8 @@ def create_example_model(evaluate=False, N=100, rule='L', seed=554, **sample_kwa
      <Metric: [Simple TEA] Total capital expenditure (USD)>,
      <Metric: [Simple TEA] Net present value (USD)>)
     '''
+    from chaospy import distributions as shape
+
     sys = create_example_system()
     M1, P1, H1, S1, M2, S2 = sys.path
     sys.simulate()
