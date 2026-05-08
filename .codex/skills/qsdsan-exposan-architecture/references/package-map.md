@@ -89,6 +89,30 @@ EXPOsan should consume QSDsan through public APIs. During the namespace migratio
 - Keep EXPOsan systems focused on system assembly and project-specific analyses.
 - If a project-specific unit becomes broadly reusable, promote it to QSDsan with QSDsan tests before migrating EXPOsan.
 
+## EXPOsan Module Template
+
+Each EXPOsan system or system family should live in one top-level module. Use `system.py` when the module exposes one system, and `systems.py` when it exposes multiple systems or configurations. Keep existing modules stable unless there is a focused reason to refactor.
+
+Preferred shape for new modules:
+
+```text
+exposan/<module>/
+  __init__.py
+  system.py or systems.py
+  model.py or models.py
+  _components.py           optional
+  _units.py                optional, for project-specific units
+  _process_settings.py     optional
+  _tea.py or _lca.py       optional
+  data/                    input data only
+  results/                 created only when writing results
+  figures/                 created only when writing figures
+```
+
+Keep `__init__.py` thin: paths, light public imports, `load()`, and lazy access errors. Build systems in `system.py` or `systems.py`; build uncertainty/sensitivity models in `model.py` or `models.py`; keep large constants in data files or focused settings modules.
+
+Use `None` rather than mutable default dictionaries in public functions. For multi-system dispatch, prefer an explicit registry such as `SYSTEM_CREATORS = {'A': create_systemA}` over `globals()` lookup.
+
 ## Testing Guidance
 
 For QSDsan changes:
