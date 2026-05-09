@@ -1,6 +1,10 @@
 QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Systems
 ====================================================================================
 
+.. attention::
+
+   **Package Restructuring In Progress** — We are currently reorganizing ``QSDsan`` to enhance the user experience and expand functionality. Some APIs and module layouts may change as we work through these updates. We appreciate your patience and will keep this notice up to date. Thank you for being part of the community!
+
 What is ``QSDsan``?
 -------------------
 ``QSDsan`` is an open-source, community-led platform for the quantitative sustainable design (QSD) [1]_ of sanitation and resource recovery systems [2]_. Built in Python, it integrates process modeling, system simulation, techno-economic analysis (TEA), and life cycle assessment (LCA) to support transparent, reproducible, and comprehensive evaluation of emerging technologies. The platform provides modular and extensible tools to compare treatment configurations, evaluate resource recovery opportunities, and assess energy, cost, and sustainability tradeoffs. The platform has a range of built-in :ref:`unit operations <unit_operations>` and :ref:`systems <systems>`, including commonly used treatment processes and biokinetic models. These capabilities support the research, development, and deployment (RD&D) of early-stage technologies for advancing sustainable water management and circular resource recovery.
