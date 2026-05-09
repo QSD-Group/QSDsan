@@ -103,6 +103,9 @@ html_css_files = [
  	'css/copybutton.css',
 # 	'css/theme_overrides.css',
  	]
+html_js_files = [
+    'js/unit-operation-filters.js',
+]
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.

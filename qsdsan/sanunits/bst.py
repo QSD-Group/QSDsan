@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""BioSTEAM-compatible unit operations for QSDsan."""
+"""BioSTEAM-inherited unit operations for QSDsan."""
 
 from ._abstract import Mixer, Splitter, FakeSplitter, ReversedSplitter
 from ._compressor import IsothermalCompressor

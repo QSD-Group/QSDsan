@@ -1,72 +1,71 @@
-﻿Unit,Dynamic,Abstract,Status
-ADMtoASM,Yes,Yes,Completed
-﻿AnMBR (anaerobic membrane bioreactor),No,No,Completed
-ActivatedSludgeProcess,No,No,Completed
-AerobicDigester,Yes,No,Completed
-AnaerobicBaffledReactor,No,No,Completed
-AnaerobicCSTR,Yes,No,Completed
-AnaerobicDigestion,No,No,Completed
-ASMtoADM,Yes,Yes,Completed
-BatchExperiment,Yes,Yes,Completed
-BeltThickener,No,No,Completed
-BinaryDistillation,No,No,Completed
-BiogasCombustion,No,Yes,Completed
-CatalyticHydrothermalGasification,No,No,Completed
-CombinedHeatPower,No,No,Completed
-CSTR (continuously stirred tank reactor),Yes,No,Completed
-CompletelyMixedMBR,Yes,No,Completed
-ComponentSplitter,No,Yes,Completed
-Copier,No,Yes,Completed
-CropApplication,No,Yes,Completed
-DryingBed,No,No,Completed
-DynamicInfluent,Yes,Yes,Completed
-ElectrochemicalCell,No,No,Completed
-Excretion,No,No,Completed
-FakeSplitter,No,Yes,Completed
-Flash,No,No,Completed
-FlatBottomCircularClarifier,Yes,No,Completed
-HeatExchangerNetwork,No,No,Completed
-HXprocess,No,No,Completed
-HXutility,No,No,Completed
-HydraulicDelay,Yes,Yes,Completed
-Hydrocracking,No,No,Completed
-HydrothermalLiquefaction,No,No,Completed
-Hydrotreating,No,No,Completed
-IdealClarifier,No,No,Completed
-IsothermalCompressor,No,No,Completed
-Junction,Yes,Yes,Completed
-InternalCirculationRx,No,No,Completed
-Lagoon,No,No,Completed
-LiquidTreatmentBed,No,No,Completed
-LumpedCost,No,No,Completed
-MembraneDistillation,No,No,Completed
-MembraneGasExtraction,No,No,Completed
-MixTank,No,No,Completed
-Mixer,Yes,Yes,Completed
-MURT (multi-unit reinvented toilet),No,No,Completed
-PFR (plug flow reactor),Yes,No,Under development
-PhaseChanger,No,Yes,Completed
-PitLatrine,No,No,Completed
-PolishingFilter,No,No,Completed
-PrimaryClarifier,Yes,No,Completed
-Pump,Yes,No,Completed
-Reactor,No,No,Completed
-ReversedSplitter,No,Yes,Completed
-Sampler,Yes,No,Completed
-SBR (sequential batch reactor),Yes,No,Under development
-Screening,No,No,Completed
-Sedimentation,No,No,Completed
-SepticTank,No,No,Completed
-SludgeCentrifuge,No,No,Completed
-﻿SludgeDigester,No,Yes,Completed
-SludgePasteurization,No,No,Completed
-SludgePump,No,No,Completed
-SludgeThickening,No,Yes,Completed
-SludgeSeparator,No,Yes,Completed
-Splitter,Yes,Yes,Completed
-StorageTank,No,No,Completed
-Tank,No,Yes,Completed
-Toilet,No,Yes,Completed
-Trucking,No,No,Completed
-UDDT (urine diverting dry toilet),No,No,Completed
-WWTpump (wastewater treatment pump),No,No,Completed
+Unit,Category,Abstract,API page
+ADMtoASM,QSDsan dynamic,Yes,:class:`junction/ADMtoASM <qsdsan.sanunits._junction.ADMtoASM>`
+AnMBR (anaerobic membrane bioreactor),QSDsan static,No,:class:`membrane_bioreactor/AnMBR <qsdsan.sanunits._membrane_bioreactor.AnMBR>`
+ActivatedSludgeProcess,QSDsan static,No,:class:`ActivatedSludgeProcess <qsdsan.sanunits._activated_sludge_process.ActivatedSludgeProcess>`
+AerobicDigester,QSDsan dynamic,No,:class:`suspended_growth_bioreactor/AerobicDigester <qsdsan.sanunits._suspended_growth_bioreactor.AerobicDigester>`
+AnaerobicBaffledReactor,QSDsan static,No,:class:`anaerobic_reactor/AnaerobicBaffledReactor <qsdsan.sanunits._anaerobic_reactor.AnaerobicBaffledReactor>`
+AnaerobicCSTR,QSDsan dynamic,No,:class:`anaerobic_reactor/AnaerobicCSTR <qsdsan.sanunits._anaerobic_reactor.AnaerobicCSTR>`
+AnaerobicDigestion,QSDsan static,No,:class:`anaerobic_reactor/AnaerobicDigestion <qsdsan.sanunits._anaerobic_reactor.AnaerobicDigestion>`
+ASMtoADM,QSDsan dynamic,Yes,:class:`junction/ASMtoADM <qsdsan.sanunits._junction.ASMtoADM>`
+BatchExperiment,QSDsan dynamic,Yes,:class:`suspended_growth_bioreactor/BatchExperiment <qsdsan.sanunits._suspended_growth_bioreactor.BatchExperiment>`
+BeltThickener,QSDsan static,No,:class:`sludge_thickening/BeltThickener <qsdsan.sanunits._sludge_thickening.BeltThickener>`
+BinaryDistillation,BST,No,:class:`bst/distillation/BinaryDistillation <qsdsan.sanunits._distillation.BinaryDistillation>`
+BiogasCombustion,QSDsan static,Yes,:class:`combustion/BiogasCombustion <qsdsan.sanunits._combustion.BiogasCombustion>`
+CatalyticHydrothermalGasification,QSDsan static,No,:class:`hydrothermal/CatalyticHydrothermalGasification <qsdsan.sanunits._hydrothermal.CatalyticHydrothermalGasification>`
+CombinedHeatPower,QSDsan static,No,:class:`combustion/CombinedHeatPower <qsdsan.sanunits._combustion.CombinedHeatPower>`
+CSTR (continuously stirred tank reactor),QSDsan dynamic,No,:class:`dynamic/suspended_growth_bioreactor/CSTR <qsdsan.sanunits._suspended_growth_bioreactor.CSTR>`
+CompletelyMixedMBR,QSDsan dynamic,No,:class:`membrane_bioreactor/CompletelyMixedMBR <qsdsan.sanunits._membrane_bioreactor.CompletelyMixedMBR>`
+ComponentSplitter,QSDsan static,Yes,:class:`abstract/ComponentSplitter <qsdsan.sanunits._abstract.ComponentSplitter>`
+Copier,QSDsan static,Yes,:class:`non_reactive/Copier <qsdsan.sanunits._non_reactive.Copier>`
+CropApplication,QSDsan static,Yes,:class:`CropApplication <qsdsan.sanunits._crop_application.CropApplication>`
+DryingBed,QSDsan static,No,:class:`treatment_bed/DryingBed <qsdsan.sanunits._treatment_bed.DryingBed>`
+DynamicInfluent,QSDsan dynamic,Yes,:class:`dynamic/DynamicInfluent <qsdsan.sanunits._dynamic_influent.DynamicInfluent>`
+ElectrochemicalCell,QSDsan static,No,:class:`ElectrochemicalCell <qsdsan.sanunits._electrochemical_cell.ElectrochemicalCell>`
+Excretion,QSDsan static,No,:class:`static/Excretion <qsdsan.sanunits._excretion.Excretion>`
+FakeSplitter,BST,Yes,:class:`bst/abstract/FakeSplitter <qsdsan.sanunits._abstract.FakeSplitter>`
+Flash,BST,No,:class:`bst/Flash <qsdsan.sanunits._flash.Flash>`
+FlatBottomCircularClarifier,QSDsan dynamic,No,:class:`clarifier/FlatBottomCircularClarifier <qsdsan.sanunits._clarifier.FlatBottomCircularClarifier>`
+HeatExchangerNetwork,BST,No,:class:`bst/heat_exchanging/HeatExchangerNetwork <qsdsan.sanunits._heat_exchanging.HeatExchangerNetwork>`
+HXprocess,BST,No,:class:`bst/heat_exchanging/HXprocess <qsdsan.sanunits._heat_exchanging.HXprocess>`
+HXutility,BST,No,:class:`bst/heat_exchanging/HXutility <qsdsan.sanunits._heat_exchanging.HXutility>`
+HydraulicDelay,QSDsan dynamic,Yes,:class:`dynamic/pumping/HydraulicDelay <qsdsan.sanunits._pumping.HydraulicDelay>`
+Hydrocracking,QSDsan static,No,:class:`hydroprocessing/Hydrocracking <qsdsan.sanunits._hydroprocessing.Hydrocracking>`
+HydrothermalLiquefaction,QSDsan static,No,:class:`hydrothermal/HydrothermalLiquefaction <qsdsan.sanunits._hydrothermal.HydrothermalLiquefaction>`
+Hydrotreating,QSDsan static,No,:class:`hydroprocessing/Hydrotreating <qsdsan.sanunits._hydroprocessing.Hydrotreating>`
+IdealClarifier,QSDsan static,No,:class:`clarifier/IdealClarifier <qsdsan.sanunits._clarifier.IdealClarifier>`
+IsothermalCompressor,BST,No,:class:`bst/compressor/IsothermalCompressor <qsdsan.sanunits._compressor.IsothermalCompressor>`
+Junction,QSDsan dynamic,Yes,:class:`junction/Junction <qsdsan.sanunits._junction.Junction>`
+InternalCirculationRx,QSDsan static,No,:class:`InternalCirculationRx <qsdsan.sanunits._internal_circulation_rx.InternalCirculationRx>`
+Lagoon,QSDsan static,No,:class:`Lagoon <qsdsan.sanunits._lagoon.Lagoon>`
+LiquidTreatmentBed,QSDsan static,No,:class:`treatment_bed/LiquidTreatmentBed <qsdsan.sanunits._treatment_bed.LiquidTreatmentBed>`
+LumpedCost,QSDsan static,No,:class:`non_reactive/LumpedCost <qsdsan.sanunits._non_reactive.LumpedCost>`
+MembraneDistillation,QSDsan static,No,:class:`MembraneDistillation <qsdsan.sanunits._membrane_distillation.MembraneDistillation>`
+MembraneGasExtraction,QSDsan static,No,:class:`MembraneGasExtraction <qsdsan.sanunits._membrane_gas_extraction.MembraneGasExtraction>`
+MixTank,BST,No,:class:`bst/tank/MixTank <qsdsan.sanunits._tank.MixTank>`
+Mixer,BST,Yes,:class:`bst/abstract/Mixer <qsdsan.sanunits._abstract.Mixer>`
+MURT (multi-unit reinvented toilet),QSDsan static,No,:class:`toilet/MURT <qsdsan.sanunits._toilet.MURT>`
+PFR (plug flow reactor),QSDsan dynamic,No,:class:`dynamic/suspended_growth_bioreactor/PFR <qsdsan.sanunits._suspended_growth_bioreactor.PFR>`
+PhaseChanger,QSDsan static,Yes,:class:`abstract/PhaseChanger <qsdsan.sanunits._abstract.PhaseChanger>`
+PitLatrine,QSDsan static,No,:class:`toilet/PitLatrine <qsdsan.sanunits._toilet.PitLatrine>`
+PolishingFilter,QSDsan static,No,:class:`PolishingFilter <qsdsan.sanunits._polishing_filter.PolishingFilter>`
+PrimaryClarifier,QSDsan dynamic,No,:class:`clarifier/PrimaryClarifier <qsdsan.sanunits._clarifier.PrimaryClarifier>`
+Pump,BST,No,:class:`bst/pumping/Pump <qsdsan.sanunits._pumping.Pump>`
+Reactor,QSDsan static,No,:class:`Reactor <qsdsan.sanunits._reactor.Reactor>`
+ReversedSplitter,BST,Yes,:class:`bst/abstract/ReversedSplitter <qsdsan.sanunits._abstract.ReversedSplitter>`
+Sampler,QSDsan dynamic,No,:class:`abstract/Sampler <qsdsan.sanunits._abstract.Sampler>`
+Screening,QSDsan static,No,:class:`static/Screening <qsdsan.sanunits._screening.Screening>`
+Sedimentation,QSDsan static,No,:class:`static/Sedimentation <qsdsan.sanunits._sedimentation.Sedimentation>`
+SepticTank,QSDsan static,No,:class:`static/SepticTank <qsdsan.sanunits._septic_tank.SepticTank>`
+SludgeCentrifuge,QSDsan static,No,:class:`sludge_thickening/SludgeCentrifuge <qsdsan.sanunits._sludge_thickening.SludgeCentrifuge>`
+SludgeDigester,QSDsan static,Yes,:class:`anaerobic_reactor/SludgeDigester <qsdsan.sanunits._anaerobic_reactor.SludgeDigester>`
+SludgePasteurization,QSDsan static,No,:class:`static/SludgePasteurization <qsdsan.sanunits._sludge_pasteurization.SludgePasteurization>`
+SludgePump,QSDsan static,No,:class:`pumping/SludgePump <qsdsan.sanunits._pumping.SludgePump>`
+SludgeThickening,QSDsan static,Yes,:class:`sludge_thickening/SludgeThickening <qsdsan.sanunits._sludge_thickening.SludgeThickening>`
+SludgeSeparator,QSDsan static,Yes,:class:`sludge_thickening/SludgeSeparator <qsdsan.sanunits._sludge_thickening.SludgeSeparator>`
+Splitter,BST,Yes,:class:`bst/abstract/Splitter <qsdsan.sanunits._abstract.Splitter>`
+StorageTank,BST,No,:class:`bst/tank/StorageTank <qsdsan.sanunits._tank.StorageTank>`
+Tank,BST,Yes,:class:`bst/tank/Tank <qsdsan.sanunits._tank.Tank>`
+Toilet,QSDsan static,Yes,:class:`toilet/Toilet <qsdsan.sanunits._toilet.Toilet>`
+Trucking,QSDsan static,No,:class:`Trucking <qsdsan.sanunits._trucking.Trucking>`
+UDDT (urine diverting dry toilet),QSDsan static,No,:class:`toilet/UDDT <qsdsan.sanunits._toilet.UDDT>`
+WWTpump (wastewater treatment pump),QSDsan static,No,:class:`pumping/WWTpump <qsdsan.sanunits._pumping.WWTpump>`

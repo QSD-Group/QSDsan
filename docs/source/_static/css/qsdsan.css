@@ -20,4 +20,23 @@ code.literal{
 	background: #343131;
   	color: #00A3C5 !important;
 }
+.unit-operation-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0.75rem 0 1rem;
+}
 
+.unit-operation-filters label {
+  font-weight: 600;
+}
+
+.unit-operation-filters select {
+  max-width: 14rem;
+}
+
+.unit-operation-filter-count {
+  color: var(--color-foreground-muted);
+  font-size: 0.9rem;
+}
