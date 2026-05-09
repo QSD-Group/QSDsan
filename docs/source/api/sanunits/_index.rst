@@ -1,7 +1,15 @@
-sanunits
-========
+.. _unit_operations:
 
-This module contains the existing unit operations within ``QSDsan``, the following table provides some details of these units for selecting.  
+Unit Operations
+===============
+
+This page lists the unit operation models available in ``QSDsan``. Use the behavior-based namespaces for the clearest public import paths, and use the detailed API pages below when you need implementation-level documentation for a specific class or module.
+
+The catalog keeps existing documentation paths stable:
+
+- Uppercase page names usually document one major class, such as ``Excretion`` or ``Flash``.
+- Lowercase page names usually document a module containing multiple related classes or helper functions, such as ``tank`` or ``heat_exchanging``.
+- System-level collection pages group units commonly used together in a specific sanitation system design.
 
 List of Units
 -------------
@@ -13,8 +21,8 @@ List of Units
 #. Abstract units do not have design and cost algorithms, they are for simulation purpose only.
 
 
-Namespace Groups
-----------------
+Behavior-Based Namespaces
+-------------------------
 .. toctree::
    :maxdepth: 1
 
@@ -23,8 +31,8 @@ Namespace Groups
    dynamic
 
 
-Unit Operations for a System
-----------------------------
+System-Level Unit Collections
+-----------------------------
 .. toctree::
    :maxdepth: 1
 
@@ -33,45 +41,52 @@ Unit Operations for a System
    reclaimer
 
 
-Individual Unit Operations
---------------------------
+Single-Class Pages
+------------------
 .. toctree::
    :maxdepth: 1
 
-   abstract
    ActivatedSludgeProcess
-   anaerobic_reactor
-   clarifier
-   combustion
-   compressor
    CropApplication
-   distillation
    DynamicInfluent
    ElectrochemicalCell
    Excretion
-   facilities
    Flash
-   heat_exchanging
-   hydroprocessing
-   hydrothermal
    InternalCirculationRx
-   junction
    Lagoon
-   membrane_bioreactor
    MembraneDistillation
    MembraneGasExtraction
-   non_reactive
    PolishingFilter
-   pumping
    Reactor
    Screening
    Sedimentation
    SepticTank
    SludgePasteurization
+   Trucking
+
+
+Module Pages
+------------
+.. toctree::
+   :maxdepth: 1
+
+   abstract
+   anaerobic_reactor
+   clarifier
+   combustion
+   compressor
+   distillation
+   facilities
+   heat_exchanging
+   hydroprocessing
+   hydrothermal
+   junction
+   membrane_bioreactor
+   non_reactive
+   pumping
    sludge_thickening
-   sludge_treatment   
+   sludge_treatment
    suspended_growth_bioreactor
    tank
    toilet
    treatment_bed
-   Trucking
