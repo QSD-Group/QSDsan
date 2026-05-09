@@ -38,7 +38,7 @@ jobs:
         mkdir -p tmps
         pytest tests -n 2 --dist loadfile --basetemp=tmps/pytest-${{ github.run_id }}-${{ github.run_attempt }} --cov=./ --cov-report=xml
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v6
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
