@@ -727,7 +727,7 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
 @chemicals_user
 class mASM2d(CompiledProcesses):
     '''
-    Modified ASM2d. Compatible with `ADM1p` for plant-wide simulations.
+    Modified ASM2d [1]_. Compatible with `ADM1p` for plant-wide simulations [2]_.
     Includes an algebraic pH solver and option to include 
     precipitation/dissolution processes of common minerals 
     (CaCO3, struvite, newberyite, ACP, and MgCO3). 
@@ -833,34 +833,34 @@ class mASM2d(CompiledProcesses):
 
     References
     ----------
-    [1] Henze, M., Gujer, W., Mino, T., & van Loosdrecht, M. (2000). 
-    Activated Sludge Models: ASM1, ASM2, ASM2d and ASM3. In IWA task group 
-    on mathematical modelling for design and operation of biological 
-    wastewater treatment (Ed.), Scientific and Technical Report No. 9. 
-    IWA Publishing.
+    .. [1] Henze, M., Gujer, W., Mino, T., & van Loosdrecht, M. (2000). 
+       Activated Sludge Models: ASM1, ASM2, ASM2d and ASM3. In IWA task group 
+       on mathematical modelling for design and operation of biological 
+       wastewater treatment (Ed.), Scientific and Technical Report No. 9. 
+       IWA Publishing.
     
-    [2] Solon, K., Flores-Alsina, X., Kazadi Mbamba, C., Ikumi, D., Volcke, 
-    E. I. P., Vaneeckhaute, C., Ekama, G., Vanrolleghem, P. A., Batstone, 
-    D. J., Gernaey, K. V., & Jeppsson, U. (2017). Plant-wide modelling 
-    of phosphorus transformations in wastewater treatment systems: 
-    Impacts of control and operational strategies. Water Research, 113, 
-    97–110. https://doi.org/10.1016/j.watres.2017.02.007
+    .. [2] Solon, K., Flores-Alsina, X., Kazadi Mbamba, C., Ikumi, D., Volcke, 
+       E. I. P., Vaneeckhaute, C., Ekama, G., Vanrolleghem, P. A., Batstone, 
+       D. J., Gernaey, K. V., & Jeppsson, U. (2017). Plant-wide modelling 
+       of phosphorus transformations in wastewater treatment systems: 
+       Impacts of control and operational strategies. Water Research, 113, 
+       97–110. https://doi.org/10.1016/j.watres.2017.02.007
     
-    [3] Kazadi Mbamba, C.; Tait, S.; Flores-Alsina, X.; Batstone, D. J. 
-    A Systematic Study of Multiple Minerals Precipitation Modelling in 
-    Wastewater Treatment. Water Research 2015, 85, 359–370. 
-    https://doi.org/10.1016/j.watres.2015.08.041.
+    .. [3] Kazadi Mbamba, C.; Tait, S.; Flores-Alsina, X.; Batstone, D. J. 
+       A Systematic Study of Multiple Minerals Precipitation Modelling in 
+       Wastewater Treatment. Water Research 2015, 85, 359–370. 
+       https://doi.org/10.1016/j.watres.2015.08.041.
     
-    [4] Musvoto, E. V.; Wentzel, M. C.; Ekama, G. A. Integrated Chemical–Physical 
-    Processes Modelling—II. Simulating Aeration Treatment of Anaerobic Digester 
-    Supernatants. Water Research 2000, 34 (6), 1868–1880. 
-    https://doi.org/10.1016/S0043-1354(99)00335-8.
+    .. [4] Musvoto, E. V.; Wentzel, M. C.; Ekama, G. A. Integrated Chemical–Physical 
+       Processes Modelling—II. Simulating Aeration Treatment of Anaerobic Digester 
+       Supernatants. Water Research 2000, 34 (6), 1868–1880. 
+       https://doi.org/10.1016/S0043-1354(99)00335-8.
 
-    [5] Flores-Alsina, X.; Solon, K.; Kazadi Mbamba, C.; Tait, S.; Gernaey, K. V.; 
-    Jeppsson, U.; Batstone, D. J. Modelling Phosphorus (P), Sulfur (S) and 
-    Iron (Fe) Interactions for Dynamic Simulations of Anaerobic Digestion 
-    Processes. Water Research 2016, 95, 370–382. 
-    https://doi.org/10.1016/j.watres.2016.03.012.
+    .. [5] Flores-Alsina, X.; Solon, K.; Kazadi Mbamba, C.; Tait, S.; Gernaey, K. V.; 
+       Jeppsson, U.; Batstone, D. J. Modelling Phosphorus (P), Sulfur (S) and 
+       Iron (Fe) Interactions for Dynamic Simulations of Anaerobic Digestion 
+       Processes. Water Research 2016, 95, 370–382. 
+       https://doi.org/10.1016/j.watres.2016.03.012.
 
     '''
     _stoichio_params = ('f_SI', 'Y_H', 'Y_PAO', 'Y_PO4', 'Y_PHA', 'Y_A', 

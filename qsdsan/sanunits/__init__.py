@@ -91,6 +91,8 @@ from ._biogenic_refinery import *
 from ._eco_san import *
 from ._reclaimer import *
 
+from . import bst, static, dynamic
+
 # From then on the order doesn't matter, listed alphabetically
 from . import (
         _abstract,
@@ -183,4 +185,7 @@ __all__ = (
         *_eco_san.__all__,
         *_sludge_treatment.__all__,
         *_membrane_gas_extraction.__all__,
+        'bst',
+        'static',
+        'dynamic',
         )

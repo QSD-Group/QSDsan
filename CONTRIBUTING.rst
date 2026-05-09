@@ -5,7 +5,7 @@ Contributors
 ------------
 ``QSDsan`` is developed and maintained by the Quantitative Sustainable Design Group and the broader community. Rather than maintaining a static list of individual names, please refer to the `GitHub contributors <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ and `commit history <https://github.com/QSD-Group/QSDsan/commits/main/>`_ for the latest record of contributions.
 
-Systems constructed using ``QSDsan`` are stored in the `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ repository; please refer to its `contributors <https://github.com/QSD-Group/EXPOsan/graphs/contributors>`_ and `commit history <https://github.com/QSD-Group/EXPOsan/commits/main/>`_ for contribution records related to system modules.
+Systems constructed using ``QSDsan`` are stored in the `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ repository; please refer to its `contributors <https://github.com/QSD-Group/EXPOsan/graphs/contributors>`_ and `commit history <https://github.com/QSD-Group/EXPOsan/commits/main/>`__ for contribution records related to system modules.
 
 If you would like to join the effort, please review our guidelines and instructions below.
 

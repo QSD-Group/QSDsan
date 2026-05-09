@@ -13,6 +13,16 @@ List of Units
 #. Abstract units do not have design and cost algorithms, they are for simulation purpose only.
 
 
+Namespace Groups
+----------------
+.. toctree::
+   :maxdepth: 1
+
+   bst
+   static
+   dynamic
+
+
 Unit Operations for a System
 ----------------------------
 .. toctree::
