@@ -16,6 +16,10 @@ for license details.
 # Just making sure the systems can run is sufficient
 __all__ = ('test_exposan',)
 
+import pytest
+
+pytestmark = [pytest.mark.integration, pytest.mark.slow]
+
 def test_exposan():
     ##### Systems without costs/impacts #####
     from qsdsan import default

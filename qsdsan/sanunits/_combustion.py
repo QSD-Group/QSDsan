@@ -5,9 +5,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    
+
     Yalin Li <mailto.yalin.li@gmail.com>
-    
+
     Jianan Feng <jiananf2@illinois.edu>
 
 Part of this module is based on the BioSTEAM package:

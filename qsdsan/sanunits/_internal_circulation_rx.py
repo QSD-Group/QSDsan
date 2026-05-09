@@ -5,6 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -21,9 +22,7 @@ TODO:
     - Check with Brian's AnMBR paper and see the COD<1300 mg/L not preferable thing
 '''
 
-import sympy as sp
 from math import pi
-from biosteam import Stream
 from biosteam.exceptions import DesignError
 from biosteam.utils import ExponentialFunctor
 from biosteam.units.design_tools.tank_design import (
@@ -31,7 +30,7 @@ from biosteam.units.design_tools.tank_design import (
     TankPurchaseCostAlgorithm
     )
 from . import HXutility, MixTank, Pump
-from .. import SanStream, SanUnit
+from .. import SanStream, SanUnit, Stream
 from ..utils import (
     compute_stream_COD,
     get_digestion_rxns,
@@ -260,6 +259,7 @@ class InternalCirculationRx(MixTank):
 
 
     def _run_separate(self, run_inputs):
+        import sympy as sp
         Qi, Si, Xi, Qe, Se, Vliq, Y, mu_max, b, Fxb, Fxt = run_inputs
         Qw = Qi - Qe
         Xb, Xe, Sb, Vb = sp.symbols('Xb, Xe, Sb, Vb', real=True)

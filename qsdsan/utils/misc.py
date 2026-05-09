@@ -4,6 +4,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -12,8 +13,7 @@ for license details.
 '''
 
 from datetime import timedelta
-try: from biosteam.utils import Timer
-except: from biosteam.utils import TicToc as Timer
+from .._compat import Timer
 
 __all__ = (
     'clear_lca_registries',

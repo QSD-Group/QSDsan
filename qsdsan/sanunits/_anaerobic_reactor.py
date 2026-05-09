@@ -5,8 +5,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
-    
+
     Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -16,8 +17,7 @@ for license details.
 
 import numpy as np
 from math import ceil, pi
-from biosteam import Stream
-from .. import SanUnit, Construction, WasteStream
+from .. import SanUnit, Construction, Stream, WasteStream
 from ..processes import Decay, T_correction_factor
 from ..sanunits import HXutility, WWTpump, CSTR
 from ..utils import ospath, load_data, data_path, auom, \

@@ -31,7 +31,7 @@ copyright = f'2020-{time.gmtime().tm_year}, Quantitative Sustainable Design Grou
 # built documents.
 #
 # The short X.Y version.
-version = '1.4.3'
+version = qsdsan.__version__
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -103,6 +103,9 @@ html_css_files = [
  	'css/copybutton.css',
 # 	'css/theme_overrides.css',
  	]
+html_js_files = [
+    'js/unit-operation-filters.js',
+]
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.

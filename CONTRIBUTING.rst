@@ -3,51 +3,16 @@ Contributors and Guidelines
 
 Contributors
 ------------
-While main developers of ``QSDsan`` are listed below, we thank all `contributors <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ who have supported the development and maintenance of this platform. If you would like to join the effort, please review our guidelines and instructions below.
+``QSDsan`` is developed and maintained by the Quantitative Sustainable Design Group and the broader community. Rather than maintaining a static list of individual names, please refer to the `GitHub contributors <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ and `commit history <https://github.com/QSD-Group/QSDsan/commits/main/>`_ for the latest record of contributions.
 
+Systems constructed using ``QSDsan`` are stored in the `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ repository; please refer to its `contributors <https://github.com/QSD-Group/EXPOsan/graphs/contributors>`_ and `commit history <https://github.com/QSD-Group/EXPOsan/commits/main/>`__ for contribution records related to system modules.
 
-Lead Developers
-^^^^^^^^^^^^^^^
-   - `Yalin Li`_ (current maintainer)
-   - `Xinyi (Joy) Zhang`_ (process models & benchmarking)
-
-
-Tutorials and Videos
-^^^^^^^^^^^^^^^^^^^^
-   - `Yalin Li`_
-   - `Xinyi (Joy) Zhang`_
-   - `Hannah Lohman`_
-   - `Victoria (Tori) Morgan`_
-   - `Ga-Yeong Kim`_
-
-
-System Modules
-^^^^^^^^^^^^^^
-Systems constructed using ``QSDsan`` are stored in the `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ repository.
-
-   - `Jianan Feng <https://www.linkedin.com/in/jianan-f-120899193/>`_
-   - `Ga-Yeong Kim`_
-   - `Yalin Li`_
-   - `Hannah Lohman`_
-   - `Victoria (Tori) Morgan`_
-   - `Saumitra Rai <https://www.linkedin.com/in/raisaumitra/>`_
-   - `L. Stetson Rowles <https://www.linkedin.com/in/lewis-stetson-rowles-40b24245/>`_
-   - `Shion Watabe <https://www.linkedin.com/in/shion-watabe-93a978183/>`_
-   - `Xinyi (Joy) Zhang`_
-
-
-.. Links
-.. _Ga-Yeong Kim: https://www.linkedin.com/in/ga-yeong-kim-8a2b4a141/
-.. _Yalin Li: https://yalinli.group
-.. _Hannah Lohman: https://www.linkedin.com/in/hannahlohman/
-.. _Victoria (Tori) Morgan: https://www.linkedin.com/in/victoria-morgan-ph-d-a8493271/
-.. _Xinyi (Joy) Zhang: https://www.linkedin.com/in/xinyi-joy-zhang/
-
+If you would like to join the effort, please review our guidelines and instructions below.
 
 
 Contributing Guidelines
 -----------------------
-Below are some brief instructions on how to contribute to ``QSDsan``. If you find yourself struggle with the installation of QSDsan/setting up the environment, this extended version of `installation instructions <tutorials/_installation.html>`_ might be helpful to you. If you have any questions regarding the process, feel free to `submit an issue on GitHub <https://github.com/QSD-Group/QSDsan/issues>`_. Thank you in advance for your contribution!
+Below are some brief instructions on how to contribute to ``QSDsan``. If you have any questions regarding the process, feel free to `submit an issue on GitHub <https://github.com/QSD-Group/QSDsan/issues>`_. Thank you in advance for your contribution!
 
 
 Authorship
@@ -130,11 +95,13 @@ Via command-line interface
 
 	    cd QSDsan
 
-#. Install required packages:
+#. Install ``QSDsan`` in editable mode with the development dependencies:
 
 	.. code:: bash
 
-	    pip install –r requirements.txt
+	    pip install -e ".[dev]"
+
+	This command installs ``QSDsan`` from your local clone and installs the packages needed for testing and building the documentation.
 
 
 #. Add the root ``QSDsan`` as the upstream:
@@ -199,7 +166,6 @@ Note
 #. We use fork as the default way for collaboration (i.e., for all first-time contributors). If you are a constant contributor and have independently made at least one successful and meaningful contribution through forking, you will be given the write access to ``QSDsan`` and you can use branch for easier code syncing. We will also invite you to join the ``QSDsan`` team.
 #. GitHub has really detailed documentation on `forking <https://docs.github.com/en/github/getting-started-with-github/fork-a-repo>`_ (and almost everything else).
 #. As QSDsan is public, all created forks would be public as well. We would appreciate if you make your work public and contribute back, but we understand it if you would like to create a private fork of QSDsan. To do so, please check our tip on creating the `private fork <FAQ.html#private-fork>`_.
-#. As we are constantly developing ``QSDsan`` with its core dependencies ``BioSTEAM`` and ``Thermosteam``, it'll be good to clone those two repositories and use the ``qsdsan`` branch of both.
 
 
 Developing Modules
@@ -230,6 +196,24 @@ Submitting Pull Request
 	- You can confirm that you have pulled all updates from the root repository if there's a message showing that your branch is X commits ahead of QSD-Group:main (not X commits ahead, Y commits behind).
 
 #. One of the Quantitative Sustainable Design Group members will review your changes and accept or discuss with you if edits are needed.
+
+Maintainer PR Audit Guide
+^^^^^^^^^^^^^^^^^^^^^^^^^
+``QSDsan`` includes a tool-agnostic PR audit checklist at ``docs/maintainer/pr_audit_checklist.md`` for maintainers reviewing changes that touch ``BioSTEAM``/``Thermosteam`` imports, stream/unit APIs, unit registries, or the ``Stream``/``SanStream``/``WasteStream`` taxonomy.
+
+Maintainers using Codex can install or update the repo-tracked Codex adapter locally from the repository root with:
+
+.. code:: powershell
+
+	Copy-Item -Recurse -Force .codex\skills\qsdsan-pr-audit $env:USERPROFILE\.codex\skills\
+
+Maintainers using Claude Code can install or update the repo-tracked Claude adapter locally from the repository root with:
+
+.. code:: powershell
+
+	Copy-Item -Recurse -Force .claude\skills\qsdsan-pr-audit $env:USERPROFILE\.claude\skills\
+
+Then ask Codex or Claude to ``use qsdsan-pr-audit`` when reviewing relevant pull requests. The checklist is guidance for human/agent review; automated rules should still be enforced with tests where practical.
 
 
 Documentation
@@ -275,7 +259,7 @@ Most of the documentations will be automatically generated through `Sphinx's aut
 We recommend generating the documentation locally prior to push to GitHub/send in the pull request to make sure links, formatting, etc. are working properly. This `YouTube video <https://www.youtube.com/watch?v=oJsUvBQyHBs>`_ provides a good walk-through example/demonstration.
 
 
-Tutorials are prepared in `Jupyter Notebook <https://jupyter.org/>`_ and potential contributors are encouraged to use the `templates <https://github.com/QSD-Group/QSDsan/tree/main/docs/source/for_developers>`_ which includes proper license and contribution information.
+Tutorials are prepared in `Jupyter Notebook <https://jupyter.org/>`_. When adding or updating tutorials, follow the structure of the maintained notebooks in ``docs/source/tutorials`` and build the documentation locally to check links and formatting.
 
 
 Testing
@@ -286,31 +270,13 @@ Testing
 #. The branch has no conflicts with the root repository.
 #. All tests have been passed.
 
-To run pytest, first make sure you have all the packages needed for testing. If you've already have QSDsan running locally, you just need `pytest-cov <https://pytest-cov.readthedocs.io>`_ and `nbval <https://nbval.readthedocs.io>`_. You'll also need `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ (the cloned repository would be better) if you do not have it.
-
-Then you'll need to let your CLI know where to find your clone packages. The easiest way to do it is to add a ``.pth`` file in the path of your python package libraries (e.g., the `site-packages` folder of your conda environment), you can usually `find the path by <https://stackoverflow.com/questions/31003994/where-is-site-packages-located-in-a-conda-environment>`_
+To run pytest, first make sure you installed the development dependencies from the cloned repository:
 
 	.. code:: bash
 
-		python # to launch Python
-	   	from distutils.sysconfig import get_python_lib
-	   	print(get_python_lib())
+	    pip install -e ".[dev]"
 
-The name of the .pth file does not matter just make sure you'll remember what it's used for (e.g., cloned_pkgs.pth), and it just needs to include the path for your cloned packages, for example, a working one could be:
-
-
-	C:\Users\<YOUR_USERNAME>\Documents\Coding\thermosteam
-
-	C:\Users\<YOUR_USERNAME>\Documents\Coding\biosteam
-
-	C:\Users\<YOUR_USERNAME>\Documents\Coding\QSDsan
-
-	C:\Users\<YOUR_USERNAME>\Documents\Coding\EXPOsan
-
-
-Note that the ``<YOUR_USERNAME>`` is just a placeholder for the actual user name of your computer, and the format of the path would be different depending on your OS (the example is Windows, note that only one backward slash ``\`` is needed).
-
-If you want to verify if Python can now find the cloned packages successfully, you can try to import ``QSDsan`` in your Python shell:
+If you want to verify that Python is using your local clone, run:
 
 	.. code:: bash
 
@@ -320,7 +286,7 @@ If you want to verify if Python can now find the cloned packages successfully, y
 	   	['C:\\Users\\<YOUR_USERNAME>\\Documents\\Coding\\QSDsan\\qsdsan']
 
 
-After configuring the path, in your CLI, navigate to the cloned QSDsan package directory, then you can simply run the test locally using `pytest <https://docs.pytest.org>`_:
+Then, from the cloned ``QSDsan`` package directory, run the tests locally using `pytest <https://docs.pytest.org>`_:
 
 	.. code:: bash
 

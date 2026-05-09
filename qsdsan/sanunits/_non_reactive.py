@@ -17,8 +17,8 @@ for license details.
 # %%
 
 from collections.abc import Iterable
-from biosteam._graphics import UnitGraphics
 from .. import SanUnit
+from .._compat import UnitGraphics
 
 __all__ = (
     'Copier',

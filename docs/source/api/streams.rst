@@ -3,7 +3,13 @@ streams
 
 Which stream class to use?
 --------------------------
-``QSDsan`` can work with three main stream classes: :class:`thermosteam.Stream`, :class:`~.SanStream`, and :class:`WasteStream`. Follow this flowchart to decide which class you want to use.
+``QSDsan`` can work with three main stream classes: :class:`thermosteam.Stream`, :class:`~.SanStream`, and :class:`~.WasteStream`. They form a capability hierarchy:
+
+* :class:`thermosteam.Stream` is the general material stream class from ``thermosteam``/``BioSTEAM``.
+* :class:`~.SanStream` adds stream-level life cycle impact functionality.
+* :class:`~.WasteStream` adds wastewater-modeling functionality on top of :class:`~.SanStream`.
+
+Follow this flowchart to decide which class you want to use.
 
 .. figure:: https://lucid.app/publicSegments/view/5aae11af-e8cf-434a-939d-9abe07cb1b82/image.png
    :width: 500
@@ -19,6 +25,15 @@ Which stream class to use?
 +-------------------------------------+-----------------------------+----------------------+----------------------+
 | Has wastewater-specific properties? | No                          | No                   | Yes                  |
 +-------------------------------------+-----------------------------+----------------------+----------------------+
+
+
+If you are unsure:
+
+* Use :class:`thermosteam.Stream` when you only need flow, composition, thermodynamic, and price information.
+* Use :class:`~.SanStream` when you also need stream-level environmental impact accounting.
+* Use :class:`~.WasteStream` when you need wastewater-specific quantities such as COD, BOD, TKN, TP, solids, pH, biodegradability fractions, or influent characterization models.
+
+Despite the name, :class:`~.WasteStream` does not require the material to be discarded as waste. It is ``QSDsan``'s wastewater-modeling stream class: use it when the stream is represented using wastewater treatment model states or when you need aggregate wastewater properties and influent characterization methods.
 
 
 .. note::

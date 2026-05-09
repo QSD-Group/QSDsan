@@ -5,9 +5,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    
+
     Joy Zhang <joycheung1994@gmail.com>
-    
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 Part of this module is based on the Thermosteam package:
@@ -28,6 +28,7 @@ from thermosteam.base import DictionaryView, SparseVector
 from biosteam.utils import MissingStream
 from . import SanStream, MissingSanStream
 from .utils import auom, copy_attr, WasteStreamScope
+from .units_of_measure import waste_stream_units_of_measure
 from biosteam.utils import Scope
 from warnings import warn
 
@@ -78,8 +79,8 @@ _default_ratios = {'iHi_XPAOPP': 0,
                    'iSUInf_SU': 1.,
                    'iXUOHOE_XUE': None,}
 
-vol_unit = auom('L/hr')
-conc_unit = auom('mg/L')
+vol_unit = waste_stream_units_of_measure['volumetric_flow']
+conc_unit = waste_stream_units_of_measure['concentration']
 
 
 # %%
@@ -202,8 +203,15 @@ del by_conc
 
 class WasteStream(SanStream):
     '''
-    A subclass of :class:`~.SanStream` with additional attributes and methods
-    for wastewater.
+    A :class:`~.SanStream` with wastewater-specific aggregate properties
+    and influent characterization models.
+
+    :class:`WasteStream` includes the life cycle impact functionality of
+    :class:`~.SanStream`. Use it when you need wastewater-modeling
+    quantities such as COD, BOD, TKN, TP, solids, pH, biodegradability
+    fractions, or influent characterization methods. Despite the name,
+    the stream does not need to be literal waste; the name reflects the
+    wastewater modeling capabilities added by this class.
 
     .. note::
 

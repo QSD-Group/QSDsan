@@ -34,26 +34,13 @@ QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Sys
 .. image:: ./docs/source/images/custom_binder_logo.svg
    :target: https://mybinder.org/v2/gh/QSD-Group/QSDsan-env/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FQSD-group%252FQSDsan%26urlpath%3Dtree%252FQSDsan%252Fdocs%252Fsource%252Ftutorials%26branch%3Dmain
 
-.. Email subscription form
-.. image:: https://img.shields.io/badge/news-subscribe-F3A93C?style=flat&logo=rss
-   :target: https://groups.webservices.illinois.edu/subscribe/154591
-
-.. Event calendar
-.. image:: https://img.shields.io/badge/events-calendar-F3A93C?style=flat&logo=google%20calendar
-   :target: https://qsdsan.readthedocs.io/en/latest/Events.html
+.. .. Email subscription form
+.. .. image:: https://img.shields.io/badge/news-subscribe-F3A93C?style=flat&logo=rss
+..    :target: https://groups.webservices.illinois.edu/subscribe/154591
 
 .. YouTube video
 .. image:: https://img.shields.io/endpoint?color=%23ff0000&label=YouTube%20 @qsd-group&url=https%3A%2F%2Fyoutube-channel-badge-blond.vercel.app%2Fapi%2Fvideos
    :target: https://www.youtube.com/@qsd-group
-
-.. Code of Conduct
-.. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
-   :target: https://qsdsan.readthedocs.io/en/latest/CODE_OF_CONDUCT.html
-
-.. AppVeyor test of the stable branch, not in active use
-..
-   .. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/main?label=build-stable&logo=appveyor
-   :target: https://github.com/QSD-Group/QSDsan/tree/stable
 
 |
 
@@ -74,50 +61,41 @@ Additionally, another package, `DMsan <https://github.com/QSD-Group/DMsan>`_ (de
 
 Installation
 ------------
-The easiest way is through ``pip``, in command-line interface (e.g., Anaconda prompt, terminal):
+``QSDsan`` requires Python 3.12 or newer. The easiest way to install ``QSDsan`` is through ``pip`` in a command-line interface (e.g., terminal, PowerShell, etc.):
 
 .. code::
 
     pip install qsdsan
 
-If you need to upgrade:
+To upgrade an existing installation:
 
 .. code::
 
     pip install -U qsdsan
 
-or for a specific version (replace X.X.X with the version number):
+To install a specific version, replace ``X.X.X`` with the version number:
 
 .. code::
 
     pip install qsdsan==X.X.X
 
-If you want to install the latest GitHub version at the `main branch <https://github.com/qsd-group/qsdsan>`_ (note that you can still use the ``-U`` flag for upgrading):
+To install the latest GitHub version from the `main branch <https://github.com/QSD-Group/QSDsan>`_:
 
 .. code::
 
     pip install git+https://github.com/QSD-Group/QSDsan.git
 
-
-.. note::
-
-   If this doesn't give you the newest ``qsdsan``, try ``pip uninstall qsdsan`` first.
-
-   Also, you may need to update some ``qsdsan``'s dependency package (e.g., ' ``biosteam`` and ``thermosteam``) versions in order for the new ``qsdsan`` to run.
-
-
-or other fork and/or branch (replace ``<USERNAME_OF_THE_FORK>`` and ``<BRANCH_NAME>`` with the desired fork and branch names)
+To install from another fork and/or branch, replace ``<USERNAME_OF_THE_FORK>`` and ``<BRANCH_NAME>``:
 
 .. code::
 
     pip install git+https://github.com/<USERNAME_OF_THE_FORK>/QSDsan.git@<BRANCH_NAME>
 
-
 You can also download the package from `PyPI <https://pypi.org/project/qsdsan/>`_.
 
-Note that development of this package is currently under initial stage with limited backward compatibility, please feel free to `submit an issue <https://github.com/QSD-Group/QSDsan/issues>`_ for any questions regarding package upgrading.
+For diagram generation, ``QSDsan`` uses Graphviz. If diagrams fail to render, install Graphviz following the `official Graphviz download instructions <https://graphviz.org/download/>`_ and see the `FAQ <docs/source/FAQ.rst#graphviz-installation>`_ for a quick check.
 
-If you want to contribute to ``QSDsan``, please follow the steps in the `Contributing Guidelines <CONTRIBUTING.rst#contributing-guidelines>`_ section of the documentation to clone the repository. If you find yourself struggle with the installation of QSDsan/setting up the environment, this extended version of `installation instructions <docs/source/tutorials/_installation.rst>`_ might be helpful to you.
+If you want to contribute to ``QSDsan``, please follow the steps in the `Contributing Guidelines <CONTRIBUTING.rst#contributing-guidelines>`_ to clone the repository and install it in editable mode.
 
 
 Documentation

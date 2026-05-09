@@ -14,8 +14,9 @@ This module is developed by:
 
     Lane To <lane20@illinois.edu>
 
-This module contains unit operations used in the Biogenic Refinery system
-as described in `Rowles et al. <https://doi.org/10.1021/acsenvironau.2c00022>`_
+    This module contains unit operations used in the Biogenic Refinery system
+
+    as described in `Rowles et al. <https://doi.org/10.1021/acsenvironau.2c00022>`_
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt

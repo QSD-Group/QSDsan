@@ -5,10 +5,13 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
-With contributions from:
+    With contributions from:
+
     Joy Zhang <joycheung1994@gmail.com>
+
     Yoel Cortés-Peña <yoelcortes@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -28,19 +31,9 @@ __all__ = ('get_correlations', 'define_inputs', 'generate_samples',
 
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import biosteam as bst
 from collections.abc import Iterable
 from warnings import warn
-from matplotlib import pyplot as plt
-from SALib.sample import (
-    morris as morris_sampler,
-    fast_sampler,
-    latin as rbd_sampler,
-    saltelli as sobol_sampler)
-from SALib.analyze import morris, fast, rbd_fast, sobol
-from SALib.plotting import morris as sa_plt_morris
-from biosteam.plots import plot_spearman
 
 var_indices = bst.evaluation._model.var_indices
 indices_to_multiindex = bst.evaluation._model.indices_to_multiindex
@@ -101,6 +94,7 @@ def _save_fig_return(fig, ax, file, close_fig):
         fig.savefig(file, dpi=300)
 
     if close_fig:
+        from matplotlib import pyplot as plt
         plt.close()
 
     return fig, ax
@@ -294,14 +288,18 @@ def generate_samples(inputs, kind, N, seed=None, **kwargs):
 
     lower = kind.lower()
     if lower == 'morris':
+        from SALib.sample import morris as morris_sampler
         return morris_sampler.sample(inputs, N=N, seed=seed, **kwargs)
     elif lower in ('fast', 'efast'):
+        from SALib.sample import fast_sampler
         return fast_sampler.sample(inputs, N=N, seed=seed, **kwargs)
     elif lower == 'rbd':
+        from SALib.sample import latin as rbd_sampler
         return rbd_sampler.sample(inputs, N=N, seed=seed, **kwargs)
     elif lower == 'sobol':
         if seed:
             raise ValueError('Cannot set seed for Sobol analysis.')
+        from SALib.sample import saltelli as sobol_sampler
         return sobol_sampler.sample(inputs, N=N, **kwargs)
     else:
         raise ValueError('kind can only be "FAST", "RBD", "Morris", or "Sobol", ' \
@@ -381,6 +379,7 @@ def morris_analysis(model, inputs, metrics=None, nan_policy='propagate',
     param_val = table.iloc[:, :len(model.get_parameters())]
     metric_val = pd.concat([table[metric.index] for metric in metrics], axis=1)
 
+    from SALib.analyze import morris
     for metric in metrics:
         results = metric_val[metric.index]
         si = morris.analyze(inputs, param_val.to_numpy(), results.to_numpy(),
@@ -608,6 +607,7 @@ def fast_analysis(model, inputs, kind, metrics=None, nan_policy='propagate',
     metric_val = pd.concat([table[metric.index] for metric in metrics], axis=1)
 
     if kind.lower() in ('fast', 'efast'):
+        from SALib.analyze import fast
         for metric in metrics:
             results = metric_val[metric.index]
             si = fast.analyze(inputs, results.to_numpy(), conf_level=conf_level,
@@ -615,6 +615,7 @@ def fast_analysis(model, inputs, kind, metrics=None, nan_policy='propagate',
             fast_dct[metric.name] = si.to_df()
 
     elif kind.lower() == 'rbd':
+        from SALib.analyze import rbd_fast
         for metric in metrics:
             results = metric_val[metric.index]
             si = rbd_fast.analyze(inputs, param_val.to_numpy(), results.to_numpy(),
@@ -720,6 +721,7 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
     if isinstance(results, str):
         results = df
 
+    from SALib.analyze import sobol
     for metric in metrics:
         result = results[metric.index]
         si = sobol.analyze(inputs, result.to_numpy(),
@@ -834,6 +836,8 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box', adjust_hue=False
 
     :func:`seaborn.jointplot` `docs <https://seaborn.pydata.org/generated/seaborn.jointplot.html>`_
     '''
+
+    import seaborn as sns
 
     kind_lower = kind.lower()
     table = model.table.astype('float64')
@@ -955,6 +959,8 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box', adjust_hue=False
 # =============================================================================
 
 def _plot_corr_tornado(corr_df, top, **kwargs):
+    from biosteam.plots import plot_spearman
+
     fig, ax = plot_spearman(corr_df.iloc[:,0], top=top, **kwargs)
 
     ax.set_xlabel(corr_df.columns[0])
@@ -968,6 +974,8 @@ def _plot_corr_tornado(corr_df, top, **kwargs):
 
 
 def _plot_corr_bubble(corr_df, ratio, **kwargs):
+    import seaborn as sns
+
     sns.set_theme(style="whitegrid")
 
     margin_x = kwargs['margin_x'] if 'margin_x' in kwargs.keys() else 0.1/ratio
@@ -1144,6 +1152,8 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
     `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
     '''
 
+    import seaborn as sns
+
     df = morris_dct[metric.name]
     x_data = getattr(df, x_axis)
     x_error = df.mu_star_conf if x_axis=='mu_star' else None
@@ -1155,6 +1165,7 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
     else:
         labels = []
 
+    from matplotlib import pyplot as plt
     ax = ax if ax is not None else plt.subplot()
     sns.set_theme(style='ticks')
 
@@ -1201,6 +1212,7 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
             raise ValueError('Bar plot can only be made for mu_star, not mu.')
         df = morris_dct[metric.name]
         df['names'] = df.index
+        from SALib.plotting import morris as sa_plt_morris
         fig = sa_plt_morris.horizontal_bar_plot(ax, df, opts=kwargs)
 
     for key in ax.spines.keys():
@@ -1260,6 +1272,9 @@ def plot_morris_convergence(result_dct, metric, parameters=(),
     `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
     '''
 
+    import seaborn as sns
+    from matplotlib import pyplot as plt
+
     ax = ax if ax is not None else plt.subplot()
     df = result_dct['mu_star'][metric.name].copy().astype('float64')
     conf_df = result_dct['mu_star_conf'][metric.name].copy().astype('float64')
@@ -1304,6 +1319,9 @@ def plot_morris_convergence(result_dct, metric, parameters=(),
 # =============================================================================
 
 def _plot_bar(kind, df, error, ax=None):
+    import seaborn as sns
+    from matplotlib import pyplot as plt
+
     ax = ax if ax else plt.subplot()
 
     sns.set_theme(style='white')
@@ -1329,6 +1347,9 @@ def _plot_bar(kind, df, error, ax=None):
 
 def _plot_heatmap(hmap_df, ax=None, annot=False, diagonal='', sts1_df=None,
                   default_cbar=True):
+    import seaborn as sns
+    from matplotlib import pyplot as plt
+
     ax = ax if ax else plt.subplot()
     ax_cbar = ax.figure.add_axes([0.03, 0.3, 0.02, 0.4]) if not default_cbar else None
 
@@ -1531,6 +1552,7 @@ def plot_sobol_results(result_dct, metric, ax=None,
                 raise ValueError('plot_in_diagonal must be "ST", "S1", or "", '\
                                  f'not "{plot_in_diagonal}".')
 
+            from matplotlib import pyplot as plt
             fig, (ax_s2, ax_sts1) = plt.subplots(1, 2, figsize=(8, 5))
             bar = not_s2.replace(plot_in_diagonal, '') # 'ST', 'S1', or 'STS1'
 
