@@ -85,7 +85,7 @@ Join the Community
 ------------------
 We would like to build an open and welcoming community, you can always post issues on our `GitHub homepage <https://github.com/QSD-Group/QSDsan/issues>`_ or contact any of the Quantitative Sustainable Design Group members. We are always excited to have new members in our team.
 
-If you would like to contribute, please follow our `Contributing Guidelines`_ and the `Code of Conduct <CODE_OF_CONDUCT.html>`_, thank you for making ``QSDsan`` better!
+If you would like to contribute, please follow our `Contributing Guidelines`_ and the `Contributor Covenant <https://www.contributor-covenant.org/>`_, thank you for making ``QSDsan`` better!
 
 
 ``QSDsan`` is and will stay open source under University of Illinois/NCSA Open Source License. Any third-party packages copied from ``QSDsan`` must be strictly open-source (not copy-left nor open-access). Please refer to the `license <https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt>`_ page for details.
@@ -125,13 +125,6 @@ If you would like to contribute, please follow our `Contributing Guidelines`_ an
    :hidden:
 
    CONTRIBUTING
-
-
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-
-   CODE_OF_CONDUCT
 
 
 References

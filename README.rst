@@ -34,26 +34,13 @@ QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Sys
 .. image:: ./docs/source/images/custom_binder_logo.svg
    :target: https://mybinder.org/v2/gh/QSD-Group/QSDsan-env/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FQSD-group%252FQSDsan%26urlpath%3Dtree%252FQSDsan%252Fdocs%252Fsource%252Ftutorials%26branch%3Dmain
 
-.. Email subscription form
-.. image:: https://img.shields.io/badge/news-subscribe-F3A93C?style=flat&logo=rss
-   :target: https://groups.webservices.illinois.edu/subscribe/154591
-
-.. Event calendar
-.. image:: https://img.shields.io/badge/events-calendar-F3A93C?style=flat&logo=google%20calendar
-   :target: https://qsdsan.readthedocs.io/en/latest/Events.html
+.. .. Email subscription form
+.. .. image:: https://img.shields.io/badge/news-subscribe-F3A93C?style=flat&logo=rss
+..    :target: https://groups.webservices.illinois.edu/subscribe/154591
 
 .. YouTube video
 .. image:: https://img.shields.io/endpoint?color=%23ff0000&label=YouTube%20 @qsd-group&url=https%3A%2F%2Fyoutube-channel-badge-blond.vercel.app%2Fapi%2Fvideos
    :target: https://www.youtube.com/@qsd-group
-
-.. Code of Conduct
-.. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
-   :target: https://qsdsan.readthedocs.io/en/latest/CODE_OF_CONDUCT.html
-
-.. AppVeyor test of the stable branch, not in active use
-..
-   .. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/main?label=build-stable&logo=appveyor
-   :target: https://github.com/QSD-Group/QSDsan/tree/stable
 
 |
 
