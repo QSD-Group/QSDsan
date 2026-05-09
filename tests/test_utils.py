@@ -15,6 +15,9 @@ __all__ = (
     'test_copy_attr_respects_skip_and_same_options',
     'test_register_with_prefix_handles_explicit_and_ticket_ids',
     'test_sum_system_utility_handles_power_heat_and_invalid_utility',
+    'test_create_example_components',
+    'test_create_example_system',
+    'test_create_example_model',
     )
 
 from pathlib import Path
@@ -166,3 +169,37 @@ def test_sum_system_utility_handles_power_heat_and_invalid_utility():
 
     with pytest.raises(ValueError, match='utility'):
         sum_system_utility(system, utility='water')
+
+
+def test_create_example_components():
+    from qsdsan.utils import create_example_components
+    cmps = create_example_components()
+    assert 'H2O' in cmps.IDs
+    assert 'CH4' in cmps.IDs
+    assert 'Ethanol' in cmps.IDs
+    assert len(cmps) == 8
+    assert cmps.H2O.particle_size == 'Soluble'
+
+    cmps2 = create_example_components(set_thermo=False)
+    assert len(cmps2) == 8
+
+
+def test_create_example_system():
+    from qsdsan.utils import create_example_system
+    sys = create_example_system()
+    unit_ids = [u.ID for u in sys.path]
+    assert len(unit_ids) == 6
+    assert 'M1' in unit_ids
+    assert 'P1' in unit_ids
+    assert 'H1' in unit_ids
+
+
+def test_create_example_model():
+    from qsdsan.utils import create_example_model
+    model = create_example_model(evaluate=False)
+    assert len(model.parameters) == 6
+    assert len(model.metrics) == 4
+
+    model_eval = create_example_model(evaluate=True, N=20, seed=554)
+    assert model_eval.table is not None
+    assert len(model_eval.table) == 20

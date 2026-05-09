@@ -13,7 +13,7 @@ for license details.
 
 
 
-__all__ = ('test_process',)
+__all__ = ('test_process', 'test_kinetic_reaction')
 
 def test_process():
     import pytest, os, qsdsan.processes as pc
@@ -120,5 +120,82 @@ def test_process():
     pc.create_asm2d_cmps()
         
 
+def test_kinetic_reaction():
+    import pytest
+    import qsdsan as qs
+    from math import log, isclose
+    from qsdsan.processes import KineticReaction as KRxn
+
+    gas_kwargs = dict(phase='g', particle_size='Dissolved gas',
+                      degradability='Undegradable', organic=False)
+    SO2Cl2 = qs.Component('SO2Cl2', **gas_kwargs)
+    SO2    = qs.Component('SO2',    **gas_kwargs)
+    Cl2    = qs.Component('Cl2',    **gas_kwargs)
+    qs.set_thermo(qs.Components((SO2Cl2, SO2, Cl2)))
+
+    # --- first-order reaction ---
+    rxn1 = KRxn('SO2Cl2', n=1, k=2.2e-5, t=1e5, reaction='SO2Cl2 -> SO2 + Cl2')
+    assert rxn1.n == 1
+    assert rxn1.k == 2.2e-5
+    assert rxn1.t == 1e5
+    assert rxn1.C0 is None  # not yet set
+
+    s1 = qs.Stream('s1_kr', SO2Cl2=100, SO2=10, Cl2=5)
+    rxn1(s1)
+    assert isclose(rxn1.X, 1 - pow(2.71828, -2.2e-5 * 1e5), rel_tol=1e-3)
+
+    hl = rxn1.half_life
+    assert isclose(hl, log(2) / 2.2e-5, rel_tol=1e-6)
+
+    assert rxn1.rate_equation is not None
+    assert rxn1.integrated_rate_equation is not None
+
+    # --- property setters re-calculate X when C0 is already set ---
+    rxn1.k = 3.0e-5   # triggers k.setter recalc branch
+    rxn1.t = 2e5      # triggers t.setter recalc branch
+    rxn1.n = 1        # same value; exercises n.setter without changing
+
+    # --- second-order reaction: C0 must be positive at construction for n!=1 ---
+    rxn2 = KRxn('SO2Cl2', n=2, k=1e-3, t=100,
+                reaction='SO2Cl2 -> SO2 + Cl2', C0=1.0)
+    s2 = qs.Stream('s2_kr', SO2Cl2=50, SO2=5, Cl2=5)
+    rxn2(s2)   # __call__ updates C0 from stream concentration
+    assert 0 < rxn2.X < 1
+    assert rxn2.half_life > 0
+    assert rxn2.integrated_rate_equation is not None
+
+    # C0 <= 0 raises ValueError (exercises C0.setter error branch)
+    with pytest.raises(ValueError, match='C0'):
+        rxn2.C0 = -1
+
+    # --- zeroth-order reaction: test properties without stream call ---
+    # (stream call requires k*t < C0(stream) to stay under 100% conversion;
+    #  we just need to cover the n=0 branch of integrated_rate_equation)
+    rxn0 = KRxn('SO2Cl2', n=0, k=5e-4, t=500,
+                reaction='SO2Cl2 -> SO2 + Cl2', C0=1.0)
+    assert rxn0.integrated_rate_equation is not None  # covers n=0 branch: C0 - k*t
+    assert rxn0.half_life > 0
+
+    # half_life guard: n!=1 with falsy C0
+    rxn_hl = KRxn('SO2Cl2', n=2, k=1e-3, t=100,
+                  reaction='SO2Cl2 -> SO2 + Cl2', C0=2.0)
+    rxn_hl._C0 = None  # bypass setter to put C0 in falsy state
+    with pytest.raises(ValueError, match='C0'):
+        _ = rxn_hl.half_life
+
+    # --- constructor error cases ---
+    with pytest.raises(ValueError, match='basis'):
+        KRxn('SO2Cl2', n=1, k=1e-3, t=100,
+             reaction='SO2Cl2 -> SO2 + Cl2', basis='mass')
+
+    with pytest.raises(ValueError, match='single-phase'):
+        KRxn('SO2Cl2', n=1, k=1e-3, t=100,
+             reaction='SO2Cl2 -> SO2 + Cl2', phases=('g', 'l'))
+
+    with pytest.raises(ValueError, match='non-negative integer'):
+        KRxn('SO2Cl2', n=1.5, k=1e-3, t=100, reaction='SO2Cl2 -> SO2 + Cl2')
+
+
 if __name__ == '__main__':
     test_process()
+    test_kinetic_reaction()
