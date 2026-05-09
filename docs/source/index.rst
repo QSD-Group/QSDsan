@@ -90,20 +90,6 @@ If you would like to contribute, please follow our `Contributing Guidelines`_ an
 
 ``QSDsan`` is and will stay open source under University of Illinois/NCSA Open Source License. Any third-party packages copied from ``QSDsan`` must be strictly open-source (not copy-left nor open-access). Please refer to the `license <https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt>`_ page for details.
 
-.. If you would like to receive news related to the QSDsan platform, you can subscribe to email updates using `this form <https://groups.webservices.illinois.edu/subscribe/154591>`_ (don't worry, you will be able to unsubscribe :)). Thank you in advance for your interest!
-
-
-.. QSDsan Events
-.. -------------
-
-.. We will keep the calendar up-to-date as we organize more events (office hours, workshops, etc.), click on the events in the calendar to see the details (including meeting links).
-
-.. .. raw:: html
-..
-..     <embed>
-..         <iframe src="https://calendar.google.com/calendar/embed?src=ep1au561lj8knfumpcd2a7ml08%40group.calendar.google.com&ctz=America%2FChicago" style="border: 0" width="100%" height="600" scrolling="no"></iframe>
-..     </embed>
-
 
 .. Hidden TOCs for navigation bar
 .. toctree::
@@ -146,13 +132,6 @@ If you would like to contribute, please follow our `Contributing Guidelines`_ an
    :hidden:
 
    CODE_OF_CONDUCT
-
-
-.. .. toctree::
-..    :maxdepth: 1
-..    :hidden:
-..
-..    calendar
 
 
 .. toctree::
