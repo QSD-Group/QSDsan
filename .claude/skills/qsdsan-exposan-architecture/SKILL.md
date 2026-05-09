@@ -24,11 +24,17 @@ Read `references/package-map.md` before making cross-repository changes, depende
 
 Classify `qsdsan.sanunits` by behavior, not by file location:
 
-- `bst`: BioSTEAM-compatible wrappers with minimal QSDsan integration.
+- `bst`: BioSTEAM-inherited unit operations with QSDsan-added behavior.
 - `static`: steady-state sanitation/resource-recovery units with QSDsan design, costing, construction, TEA, LCA, or WasteStream assumptions.
 - `dynamic`: units with explicit dynamic state contracts such as `isdynamic`, `state`, `dstate`, `_init_state`, `_compile_AE`, or `_compile_ODE`.
 
 Preserve legacy imports like `qsdsan.sanunits.Pump` while adding clearer namespaces. Prefer re-export modules first; move implementation files only after exports and tests are stable.
+
+## QSDsan Tutorial Docs
+
+Do not rely on `docs/source/templates`; the old tutorial template was removed because it drifted from the maintained notebooks. When adding or revising tutorials, use the current notebooks in `docs/source/tutorials` as the source of truth.
+
+Keep the common tutorial conventions unless there is a focused reason to differ: a top anchor, a short contents list with valid anchors when useful, and the maintained notebook style for contributor attribution. When adding a version check, use `qsdsan.__version__`. After tutorial edits, build the docs and check for `toc.not_included` and undefined-label warnings.
 
 ## Change Checklist
 

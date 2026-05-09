@@ -59,11 +59,17 @@ The migration goal is clarity without breaking existing code:
 
 ## Classification Heuristics
 
-Use `bst` for units whose primary role is BioSTEAM compatibility:
+Use `bst` for BioSTEAM-inherited unit operations with QSDsan-added behavior:
 
 - mixers, splitters, pumps, flash/distillation wrappers, heat exchangers, storage tanks, process-water helpers
 - units that mainly adapt stream initialization or QSDsan naming
 - no sanitation-specific design assumptions beyond integration glue
+
+## QSDsan Tutorial Guidance
+
+For new or revised tutorials, follow the notebooks in `docs/source/tutorials`.
+
+Common tutorial conventions are a top anchor, a short contents list with valid anchors when useful, and the maintained notebook style for contributor attribution. When adding a version check, use `qsdsan.__version__`. Always rebuild docs after notebook edits and review `toc.not_included` and undefined-label warnings.
 
 Use `static` for steady-state QSDsan units:
 

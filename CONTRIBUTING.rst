@@ -259,7 +259,7 @@ Most of the documentations will be automatically generated through `Sphinx's aut
 We recommend generating the documentation locally prior to push to GitHub/send in the pull request to make sure links, formatting, etc. are working properly. This `YouTube video <https://www.youtube.com/watch?v=oJsUvBQyHBs>`_ provides a good walk-through example/demonstration.
 
 
-Tutorials are prepared in `Jupyter Notebook <https://jupyter.org/>`_ and potential contributors are encouraged to use the `templates <https://github.com/QSD-Group/QSDsan/tree/main/docs/source/for_developers>`_ which includes proper license and contribution information.
+Tutorials are prepared in `Jupyter Notebook <https://jupyter.org/>`_. When adding or updating tutorials, follow the structure of the maintained notebooks in ``docs/source/tutorials`` and build the documentation locally to check links and formatting.
 
 
 Testing
