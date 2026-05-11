@@ -51,9 +51,9 @@ List of Unit Operations
    :maxdepth: 1
    :hidden:
 
-   bst
-   static
-   dynamic
+   bst/index
+   static/index
+   dynamic/index
 
 
 System-Level Unit Collections
@@ -61,57 +61,69 @@ System-Level Unit Collections
 .. toctree::
    :maxdepth: 1
 
-   biogenic_refinery
-   eco_san
-   reclaimer
+   static/biogenic_refinery
+   static/eco_san
+   static/reclaimer
 
 
-Single-Class Pages
-------------------
+BST Units
+---------
 .. toctree::
    :maxdepth: 1
 
-   ActivatedSludgeProcess
-   CropApplication
-   DynamicInfluent
-   ElectrochemicalCell
-   Excretion
-   Flash
-   InternalCirculationRx
-   Lagoon
-   MembraneDistillation
-   MembraneGasExtraction
-   PolishingFilter
-   Reactor
-   Screening
-   Sedimentation
-   SepticTank
-   SludgePasteurization
-   Trucking
+   bst/Flash
+   bst/abstract
+   bst/compressor
+   bst/distillation
+   bst/facilities
+   bst/heat_exchanging
+   bst/pumping
+   bst/tank
 
 
-Module Pages
+Static Units
 ------------
 .. toctree::
    :maxdepth: 1
 
-   abstract
-   anaerobic_reactor
-   clarifier
-   combustion
-   compressor
-   distillation
-   facilities
-   heat_exchanging
-   hydroprocessing
-   hydrothermal
-   junction
-   membrane_bioreactor
-   non_reactive
-   pumping
-   sludge_thickening
-   sludge_treatment
-   suspended_growth_bioreactor
-   tank
-   toilet
-   treatment_bed
+   static/ActivatedSludgeProcess
+   static/abstract
+   static/anaerobic_reactor
+   static/clarifier
+   static/combustion
+   static/CropApplication
+   static/ElectrochemicalCell
+   static/Excretion
+   static/hydroprocessing
+   static/hydrothermal
+   static/InternalCirculationRx
+   static/Lagoon
+   static/MembraneDistillation
+   static/MembraneGasExtraction
+   static/non_reactive
+   static/PolishingFilter
+   static/pumping
+   static/Reactor
+   static/Screening
+   static/Sedimentation
+   static/SepticTank
+   static/sludge_thickening
+   static/sludge_treatment
+   static/SludgePasteurization
+   static/toilet
+   static/treatment_bed
+   static/Trucking
+
+
+Dynamic Units
+-------------
+.. toctree::
+   :maxdepth: 1
+
+   dynamic/abstract
+   dynamic/anaerobic_reactor
+   dynamic/DynamicInfluent
+   dynamic/junction
+   dynamic/membrane_bioreactor
+   dynamic/pumping
+   dynamic/suspended_growth_bioreactor
