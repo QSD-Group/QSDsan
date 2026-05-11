@@ -1,4 +1,4 @@
 Screening
 =========
-.. automodule:: qsdsan.sanunits._screening
+.. automodule:: qsdsan.sanunits._static_screening
     :members:

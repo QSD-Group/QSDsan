@@ -1,4 +1,4 @@
 Activated Sludge Process
 ========================
-.. automodule:: qsdsan.sanunits._activated_sludge_process
+.. automodule:: qsdsan.sanunits._static_activated_sludge_process
     :members:

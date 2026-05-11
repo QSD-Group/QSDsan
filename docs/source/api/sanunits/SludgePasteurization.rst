@@ -1,4 +1,4 @@
 Sludge Pasteurization
 =====================
-.. automodule:: qsdsan.sanunits._sludge_pasteurization
+.. automodule:: qsdsan.sanunits._static_sludge_pasteurization
     :members:

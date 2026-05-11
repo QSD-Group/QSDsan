@@ -1,4 +1,4 @@
 Membrane Distillation
 =====================
-.. automodule:: qsdsan.sanunits._membrane_distillation
+.. automodule:: qsdsan.sanunits._static_membrane_distillation
     :members:

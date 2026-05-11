@@ -1,4 +1,4 @@
 Trucking
 ========
-.. automodule:: qsdsan.sanunits._trucking
+.. automodule:: qsdsan.sanunits._static_trucking
     :members:

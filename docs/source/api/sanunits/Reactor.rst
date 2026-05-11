@@ -1,4 +1,4 @@
 Reactor
 =======
-.. automodule:: qsdsan.sanunits._reactor
+.. automodule:: qsdsan.sanunits._static_reactor
     :members:

@@ -1,4 +1,4 @@
 Crop Application
 ================
-.. automodule:: qsdsan.sanunits._crop_application
+.. automodule:: qsdsan.sanunits._static_crop_application
     :members:

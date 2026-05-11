@@ -1,4 +1,4 @@
 Flash
 =====
-.. automodule:: qsdsan.sanunits._flash
+.. automodule:: qsdsan.sanunits._bst_flash
     :members:

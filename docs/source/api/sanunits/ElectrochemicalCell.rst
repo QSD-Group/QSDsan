@@ -1,4 +1,4 @@
 Electrochemical Cell
 ====================
-.. automodule:: qsdsan.sanunits._electrochemical_cell
+.. automodule:: qsdsan.sanunits._static_electrochemical_cell
     :members:
