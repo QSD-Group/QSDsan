@@ -97,7 +97,7 @@ def wwtpump(*args, **kwargs):
 utils.__all__ = (*utils.__all__, 'wwtpump')
 setattr(utils, 'wwtpump', wwtpump)
 
-_lazy_modules = frozenset(('equipments', 'processes', 'sanunits', 'stats'))
+_lazy_modules = frozenset(('equipments', 'process_models', 'unit_operations', 'stats'))
 
 def __getattr__(name):
     if name in _lazy_modules:

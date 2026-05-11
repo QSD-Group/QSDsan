@@ -115,7 +115,7 @@ def test_BinaryDistillation():
     
     qs.set_thermo(cmps)
     qs_s = qs.WasteStream(T=T, **stream_kwargs)
-    qs_unit = qs.sanunits.BinaryDistillation(ins=qs_s, **unit_kwargs)
+    qs_unit = qs.unit_operations.BinaryDistillation(ins=qs_s, **unit_kwargs)
     qs_unit.simulate()
     
     check_results(bst_unit, qs_unit)
@@ -131,7 +131,7 @@ def test_Flash():
     
     qs.set_thermo(cmps)
     qs_s = qs.Stream(T=T, **stream_kwargs)
-    qs_unit = qs.sanunits.Flash(ins=qs_s, **unit_kwargs)
+    qs_unit = qs.unit_operations.Flash(ins=qs_s, **unit_kwargs)
     
     check_results(bst_unit, qs_unit)
 
@@ -144,7 +144,7 @@ def test_HXprocess():
     bst_unit = bst.units.HXprocess(ins=bst_s, phase0='l', phase1='l')
 
     qs.set_thermo(cmps)
-    qs_unit = qs.sanunits.HXprocess(ins=qs_ws, phase0='l', phase1='l')
+    qs_unit = qs.unit_operations.HXprocess(ins=qs_ws, phase0='l', phase1='l')
 
     check_results(bst_unit, qs_unit)
 
@@ -155,7 +155,7 @@ def test_HXutility():
     bst_unit = bst.units.HXutility(ins=bst_s, T=400, rigorous=True)
 
     qs.set_thermo(cmps)
-    qs_unit = qs.sanunits.HXutility(ins=qs_ws, T=400, rigorous=True)
+    qs_unit = qs.unit_operations.HXutility(ins=qs_ws, T=400, rigorous=True)
 
     check_results(bst_unit, qs_unit)
 
@@ -169,7 +169,7 @@ def test_IsothermalCompressor():
     
     qs.set_thermo(cmps)
     qs_s = qs.WasteStream(**stream_kwargs)
-    qs_unit = qs.sanunits.IsothermalCompressor(ins=qs_s, **unit_kwargs)
+    qs_unit = qs.unit_operations.IsothermalCompressor(ins=qs_s, **unit_kwargs)
     
     check_results(bst_unit, qs_unit)
 
@@ -180,7 +180,7 @@ def test_MixTank():
     bst_unit = bst.units.MixTank(ins=bst_s)
 
     qs.set_thermo(cmps)
-    qs_unit = qs.sanunits.MixTank(ins=qs_ws)
+    qs_unit = qs.unit_operations.MixTank(ins=qs_ws)
 
     check_results(bst_unit, qs_unit)
 
@@ -191,7 +191,7 @@ def test_Pump():
     bst_unit = bst.units.Pump(ins=bst_s)
 
     qs.set_thermo(cmps)
-    qs_unit = qs.sanunits.Pump(ins=qs_ws)
+    qs_unit = qs.unit_operations.Pump(ins=qs_ws)
 
     check_results(bst_unit, qs_unit)
 
@@ -202,7 +202,7 @@ def test_Splitter():
     bst_unit = bst.units.Splitter(ins=bst_s, split=0.1)
 
     qs.set_thermo(cmps)
-    qs_unit = qs.sanunits.Splitter(ins=qs_ws, split=0.1)
+    qs_unit = qs.unit_operations.Splitter(ins=qs_ws, split=0.1)
 
     check_results(bst_unit, qs_unit)
 
@@ -213,7 +213,7 @@ def test_StorageTank():
     bst_unit = bst.units.StorageTank(ins=bst_s)
 
     qs.set_thermo(cmps)
-    qs_unit = qs.sanunits.StorageTank(ins=qs_ws)
+    qs_unit = qs.unit_operations.StorageTank(ins=qs_ws)
 
     check_results(bst_unit, qs_unit)
 
