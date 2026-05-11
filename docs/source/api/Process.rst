@@ -4,6 +4,16 @@ Process
 .. autoclass:: qsdsan.Process
    :members:
 
+Process Models
+--------------
+
+See :doc:`processes/_index` for the full catalog of available kinetic process models.
+
+.. toctree::
+   :hidden:
+
+   processes/_index
+
 
 Processes
 ---------

@@ -28,8 +28,10 @@ Module Links
    streams
    TEA
    Transportation
-   equipments/_index
-   processes/_index
-   sanunits/_index
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
    stats
    utils/_index
