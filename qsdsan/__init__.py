@@ -98,16 +98,19 @@ utils.__all__ = (*utils.__all__, 'wwtpump')
 setattr(utils, 'wwtpump', wwtpump)
 
 _lazy_modules = frozenset(('equipments', 'process_models', 'unit_operations', 'stats'))
+_legacy_aliases = {'sanunits': 'unit_operations', 'processes': 'process_models'}
 
 def __getattr__(name):
-    if name in _lazy_modules:
-        module = _importlib.import_module(f'{__name__}.{name}')
+    target = _legacy_aliases.get(name, name)
+    if target in _lazy_modules:
+        module = _importlib.import_module(f'{__name__}.{target}')
+        globals()[target] = module
         globals()[name] = module
         return module
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 def __dir__():
-    return sorted((*globals(), *_lazy_modules))
+    return sorted((*globals(), *_lazy_modules, *_legacy_aliases))
 
 def default():
     _bst.default()
