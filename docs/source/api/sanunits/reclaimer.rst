@@ -1,4 +1,4 @@
 Reclaimer
 =========
-.. automodule:: qsdsan.sanunits._reclaimer
+.. automodule:: qsdsan.sanunits._static_reclaimer
     :members:

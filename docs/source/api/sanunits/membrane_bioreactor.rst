@@ -1,4 +1,4 @@
 Membrane Bioreactor
 ===================
-.. automodule:: qsdsan.sanunits._membrane_bioreactor
+.. automodule:: qsdsan.sanunits._dynamic_membrane_bioreactor
     :members:

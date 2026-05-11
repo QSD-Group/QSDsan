@@ -2,5 +2,5 @@
 
 Toilet
 ======
-.. automodule:: qsdsan.sanunits._toilet
+.. automodule:: qsdsan.sanunits._static_toilet
     :members:

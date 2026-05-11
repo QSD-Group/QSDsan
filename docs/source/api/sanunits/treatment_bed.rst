@@ -1,4 +1,4 @@
 Treatment Bed
 =============
-.. automodule:: qsdsan.sanunits._treatment_bed
+.. automodule:: qsdsan.sanunits._static_treatment_bed
     :members:

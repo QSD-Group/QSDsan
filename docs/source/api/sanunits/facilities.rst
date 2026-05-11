@@ -1,4 +1,4 @@
 Distillation
 ============
-.. automodule:: qsdsan.sanunits._facilities
+.. automodule:: qsdsan.sanunits._bst_facilities
     :members:

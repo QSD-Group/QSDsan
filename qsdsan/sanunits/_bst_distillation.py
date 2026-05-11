@@ -29,14 +29,14 @@ _lb_to_kg = qs.utils.auom('lb').conversion_factor('kg')
 class BinaryDistillation(bst.units.BinaryDistillation, qs.SanUnit):
     '''
     Similar to biosteam.units.BinaryDistillation, but can include construction impact calculation.
-    
+
     See Also
     --------
     `biosteam.units.BinaryDistillation <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
     '''
 
     include_construction = True
-    
+
     def _design(self):
         super()._design()
         D = self.design_results
@@ -45,16 +45,17 @@ class BinaryDistillation(bst.units.BinaryDistillation, qs.SanUnit):
             if construction: construction[0].quantity = (D['Rectifier weight'] + D['Stripper weight'])*_lb_to_kg
             else:
                 self.construction = [
-                    qs.Construction('carbon_steel', linked_unit=self, item='Carbon_steel', 
+                    qs.Construction('carbon_steel', linked_unit=self, item='Carbon_steel',
                                     quantity=(D['Rectifier weight'] + D['Stripper weight'])*_lb_to_kg, quantity_unit='kg'),
                     ]
-                
-                
-                
+
+
+
+
 class ShortcutColumn(bst.units.ShortcutColumn, qs.SanUnit):
     '''
     biosteam.units.ShortcutColumn with QSDsan properties.
-    
+
     See Also
     --------
     `biosteam.units.ShortcutColumn <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
@@ -63,7 +64,7 @@ class ShortcutColumn(bst.units.ShortcutColumn, qs.SanUnit):
 class MESHDistillation(bst.units.MESHDistillation, qs.SanUnit):
     '''
     biosteam.units.MESHDistillation with QSDsan properties.
-    
+
     See Also
     --------
     `biosteam.units.ShortcutColumn <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
@@ -72,7 +73,7 @@ class MESHDistillation(bst.units.MESHDistillation, qs.SanUnit):
 class AdiabaticMultiStageVLEColumn(bst.units.AdiabaticMultiStageVLEColumn, qs.SanUnit):
     '''
     biosteam.units.AdiabaticMultiStageVLEColumn with QSDsan properties.
-    
+
     See Also
     --------
     `biosteam.units.ShortcutColumn <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_

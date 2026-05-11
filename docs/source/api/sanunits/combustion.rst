@@ -1,4 +1,4 @@
 Combustion
 ==========
-.. automodule:: qsdsan.sanunits._combustion
+.. automodule:: qsdsan.sanunits._static_combustion
     :members:

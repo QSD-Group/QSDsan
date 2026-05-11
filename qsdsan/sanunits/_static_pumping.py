@@ -20,149 +20,17 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-import numpy as np, qsdsan as qs
+import qsdsan as qs
 from math import pi, ceil
-from biosteam.units import Pump as BSTPump
 from biosteam.units.design_tools.mechanical import (
     brake_efficiency as brake_eff,
     motor_efficiency as motor_eff
     )
 from .. import SanUnit, Construction
 from ..utils import auom, select_pipe, format_str
+from ._bst_pumping import Pump
 
-__all__ = ('Pump', 'HydraulicDelay', 'WWTpump', 'SludgePump', 'wwtpump',)
-
-
-class Pump(SanUnit, BSTPump):
-    '''
-    Similar to the :class:`biosteam.units.Pump`,
-    but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`,
-    and allows dynamic simulation.
-
-    See Also
-    --------
-    `biosteam.units.Pump <https://biosteam.readthedocs.io/en/latest/units/Pump.html>`_
-    '''
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
-                  P=None, pump_type='Default', material='Cast iron',
-                  dP_design=101325, ignore_NPSH=True,
-                  init_with='Stream', F_BM_default=None, isdynamic=False):
-        SanUnit.__init__(self, ID, ins, outs, thermo,
-                         init_with=init_with, F_BM_default=F_BM_default,
-                         isdynamic=isdynamic)
-        self.P = P
-        self.pump_type = pump_type
-        self.material = material
-        self.dP_design = dP_design
-        self.ignore_NPSH = ignore_NPSH
-
-    @property
-    def state(self):
-        '''The state of the Pump, including component concentrations [mg/L] and flow rate [m^3/d].'''
-        if self._state is None: return None
-        else:
-            return dict(zip(list(self.components.IDs) + ['Q'], self._state))
-
-    def _init_state(self):
-        self._state = self._ins_QC[0]
-        self._dstate = self._state * 0.
-
-    def _update_state(self):
-        '''updates conditions of output stream based on conditions of the Pump'''
-        self._outs[0].state = self._state
-
-    def _update_dstate(self):
-        '''updates rates of change of output stream from rates of change of the Pump'''
-        self._outs[0].dstate = self._dstate
-
-    @property
-    def AE(self):
-        if self._AE is None:
-            self._compile_AE()
-        return self._AE
-
-    def _compile_AE(self):
-        _state = self._state
-        _dstate = self._dstate
-        _update_state = self._update_state
-        _update_dstate = self._update_dstate
-        def yt(t, QC_ins, dQC_ins):
-            _state[:] = QC_ins[0]
-            _dstate[:] = dQC_ins[0]
-            _update_state()
-            _update_dstate()
-        self._AE = yt
-
-
-# %%
-
-class HydraulicDelay(Pump):
-    '''
-    A fake unit for implementing hydraulic delay by a first-order reaction
-    (i.e., a low-pass filter) with a specified time constant [d].
-
-    See Also
-    --------
-    `Benchmark Simulation Model No.1 implemented in MATLAB & Simulink <https://www.cs.mcgill.ca/~hv/articles/WWTP/sim_manual.pdf>`
-    '''
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, t_delay=1e-4, *,
-                 init_with='WasteStream', F_BM_default=None, isdynamic=True):
-        SanUnit.__init__(self, ID, ins, outs, thermo,
-                         init_with=init_with, F_BM_default=F_BM_default,
-                         isdynamic=isdynamic)
-        self.t_delay = t_delay
-        self._concs = None
-
-    def set_init_conc(self, **kwargs):
-        '''set the initial concentrations [mg/L].'''
-        Cs = np.zeros(len(self.components))
-        cmpx = self.components.index
-        for k, v in kwargs.items(): Cs[cmpx(k)] = v
-        self._concs = Cs
-
-    def _init_state(self):
-        '''initialize state by specifying or calculating component concentrations
-        based on influents. Total flow rate is always initialized as the sum of
-        influent wastestream flows.'''
-        self._state = self._ins_QC[0]
-        self._dstate = self._state * 0
-        if self._concs is not None:
-            self._state[:-1] = self._concs
-
-    def _run(self):
-        s_in, = self.ins
-        s_out, = self.outs
-        s_out.copy_like(s_in)
-
-    @property
-    def ODE(self):
-        if self._ODE is None:
-            self._compile_ODE()
-        return self._ODE
-
-    def _compile_ODE(self):
-        T = self.t_delay
-        _dstate = self._dstate
-        _update_dstate = self._update_dstate
-        def dy_dt(t, QC_ins, QC, dQC_ins):
-            Q_in = QC_ins[0,-1]
-            Q = QC[-1]
-            C_in = QC_ins[0,:-1]
-            C = QC[:-1]
-            if dQC_ins[0,-1] == 0:
-                _dstate[-1] = 0
-                _dstate[:-1] = (Q_in*C_in - Q*C)/(Q*T)
-            else:
-                _dstate[-1] = (Q_in - Q)/T
-                _dstate[:-1] = Q_in/Q*(C_in - C)/T
-            _update_dstate()
-        self._ODE = dy_dt
-
-    def _design(self):
-        pass
-
-    def _cost(self):
-        pass
+__all__ = ('WWTpump', 'SludgePump', 'wwtpump',)
 
 
 # %%
@@ -863,14 +731,14 @@ class WWTpump(SanUnit):
     @C.setter
     def C(self, i):
         self._C = i
-        
+
     @property
     def headloss_multiplication_factor(self):
         '''
         [float]
         Factor to consider additional friction headloss (e.g., for sludge),
         default to be 1 and should be no less than 1.
-        
+
         See also https://github.com/QSD-Group/QSDsan/issues/119.
         '''
         return self._headloss_multiplication_factor
@@ -944,26 +812,26 @@ class SludgePump(Pump):
     See qsdsan.sanunits.WWTpump for pipe and pump weight calculation
     See bst.units.Pump for other functions
     All pumps are assumed to be made of stainless steel and specific for sludge.
-    
+
     Parameters
     ----------
     P : float
         pump pressure
-        
+
     References
     ----------
     [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
         Valorization of Dilute Organic Carbon Waste Streams.
         Energy Environ. Sci. 2016, 9 (3), 1102–1112.
         https://doi.org/10.1039/C5EE03715H.
-        
+
     See Also
     --------
     :class:`qsdsan.sanunits.WWTpump`
-    
+
     :class:`biosteam.units.Pump`
     '''
-    
+
     _N_pump = 1
     _H_ts = 0. # total static head
     _H_p = 0. # total pressure head
@@ -972,9 +840,9 @@ class SludgePump(Pump):
     _SS_per_pump = 725 * 0.5
     _units = {'Pump pipe stainless steel': 'kg',
               'Pump stainless steel': 'kg'}
-    
+
     include_construction = True
-    
+
     def _design(self):
         super()._design()
         pipe, pumps, hdpe = self.design_sludge()
@@ -982,13 +850,13 @@ class SludgePump(Pump):
         D = self.design_results
         D['Pump pipe stainless steel'] = pipe
         D['Pump stainless steel'] = pumps
-        
+
         if self.include_construction:
             construction = getattr(self, 'construction', []) # would work for both biosteam/qsdsan units
             if construction: construction[0].quantity = pipe + pumps
             else:
                 self.construction = [
-                    Construction('stainless_steel', linked_unit=self, item='Stainless_steel', 
+                    Construction('stainless_steel', linked_unit=self, item='Stainless_steel',
                                  quantity=pipe + pumps, quantity_unit='kg'),
                     ]
 
@@ -1021,7 +889,7 @@ class SludgePump(Pump):
             Q_mgd=Q_mgd, N_pump=N_pump, **val_dct)
 
         return M_SS_IR_pipe, M_SS_IR_pump, 0
-    
+
     def _design_generic(self, Q_mgd, N_pump=None, L_s=0., L_d=0., H_ts=0., H_p=0.):
         self.Q_mgd = Q_mgd
         self._H_ts = H_ts or self.H_ts
@@ -1056,7 +924,7 @@ class SludgePump(Pump):
         M_SS_pipe = 0.29 * (V_s+V_d) * _lb_to_kg
         M_SS_pump = N_pump * self.SS_per_pump
         return M_SS_pipe, M_SS_pump
-    
+
     @property
     def Q_mgd(self):
         '''
@@ -1067,22 +935,22 @@ class SludgePump(Pump):
     @Q_mgd.setter
     def Q_mgd(self, i):
         self._Q_mgd = i
-        
+
     @property
     def Q_cfs(self):
         '''[float] Volumetric flow rate in cubic feet per second, [cfs].'''
         return self.Q_mgd*1e6/24/60/60/_ft3_to_gal
-        
+
     @property
     def H_ts(self):
         '''[float] Total static head, [ft].'''
         return self._H_ts
-    
+
     @property
     def H_p(self):
         '''[float] Pressure head, [ft].'''
         return self._H_p
-    
+
     @property
     def v(self):
         '''[float] Fluid velocity, [ft/s].'''
@@ -1090,7 +958,7 @@ class SludgePump(Pump):
     @v.setter
     def v(self, i):
         self._v = i
-        
+
     @property
     def C(self):
         '''[float] Hazen-Williams coefficient to calculate fluid friction.'''
@@ -1098,7 +966,7 @@ class SludgePump(Pump):
     @C.setter
     def C(self, i):
         self._C = i
-        
+
     @property
     def SS_per_pump(self):
         '''[float] Quantity of stainless steel per pump, [kg/ea].'''
@@ -1145,7 +1013,7 @@ def wwtpump(ID, ins=(), prefix='', pump_type='', Q_mgd=None, add_inputs=(),
 def add_pump(cls, ID, ins, prefix, pump_type, Q_mgd, add_inputs,
              capacity_factor, include_pump_cost, include_building_cost,
              include_OM_cost, F_BM, lifetime, **kwargs):
-    if getattr(cls, 'system', None):                    
+    if getattr(cls, 'system', None):
         if not qs.main_flowsheet is cls.system.flowsheet:
             qs.main_flowsheet.set_flowsheet(cls.system.flowsheet)
     pump = WWTpump(

@@ -28,7 +28,7 @@ for license details.
 '''
 
 from qsdsan import SanUnit, Construction
-from ._septic_tank import SepticTank
+from ._static_septic_tank import SepticTank
 from ..processes._decay import Decay
 from ..utils import ospath, load_data, data_path, price_ratio
 

@@ -1,4 +1,4 @@
 Tank
 ====
-.. automodule:: qsdsan.sanunits._tank
+.. automodule:: qsdsan.sanunits._bst_tank
     :members:

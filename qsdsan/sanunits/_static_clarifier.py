@@ -22,7 +22,7 @@ from numba import njit
 from .. import SanUnit, WasteStream
 import numpy as np
 from ..sanunits import WWTpump
-from ..sanunits._pumping import default_F_BM as default_WWTpump_F_BM
+from ..sanunits._static_pumping import default_F_BM as default_WWTpump_F_BM
 from ..sanunits import dydt_cstr
 
 __all__ = ('FlatBottomCircularClarifier',

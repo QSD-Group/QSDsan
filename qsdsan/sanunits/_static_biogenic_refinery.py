@@ -26,7 +26,7 @@ for license details.
 from warnings import warn
 from math import ceil
 from .. import SanUnit, Construction
-from ._sludge_thickening import SludgeSeparator
+from ._static_sludge_thickening import SludgeSeparator
 from ..utils import ospath, load_data, data_path, price_ratio
 
 __all__ = (

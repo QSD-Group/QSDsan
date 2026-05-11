@@ -1,4 +1,4 @@
 Heat Exchanging
 ===============
-.. automodule:: qsdsan.sanunits._heat_exchanging
+.. automodule:: qsdsan.sanunits._bst_heat_exchanging
     :members:

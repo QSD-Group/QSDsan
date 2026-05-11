@@ -29,9 +29,9 @@ class IsothermalCompressor(bst.units.IsothermalCompressor, qs.SanUnit):
     --------
     `biosteam.units.IsothermalCompressor <https://biosteam.readthedocs.io/en/latest/API/units/compressor.html>`_
     '''
-    
+
     include_construction = False
-    
+
     def _design(self):
         super()._design()
         D = self.design_results
@@ -45,7 +45,7 @@ class IsothermalCompressor(bst.units.IsothermalCompressor, qs.SanUnit):
             D['Number of 4 kW unit'] = ceil((power - D['Number of 300 kW unit']*300)/4)
         else:
             D['Number of 300 kW unit'] += 1
-        
+
         if self.include_construction:
             construction = getattr(self, 'construction', [])
             if construction:

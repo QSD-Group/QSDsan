@@ -17,7 +17,7 @@ from warnings import warn
 from math import pi, ceil
 from thermosteam.reaction import ParallelReaction as PRxn
 from . import HXutility
-from ._pumping import WWTpump
+from ._static_pumping import WWTpump
 from .. import SanStream, SanUnit, Stream
 from ..utils import (
     auom,

@@ -1,4 +1,4 @@
 Eco-San
 =======
-.. automodule:: qsdsan.sanunits._eco_san
+.. automodule:: qsdsan.sanunits._static_eco_san
     :members:

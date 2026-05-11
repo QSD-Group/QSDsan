@@ -17,7 +17,7 @@ from .. import SanUnit, WasteStream
 import numpy as np
 from ..sanunits import WWTpump
 from warnings import warn
-from ..sanunits._pumping import (
+from ..sanunits._static_pumping import (
     default_F_BM as default_WWTpump_F_BM,
     default_equipment_lifetime as default_WWTpump_equipment_lifetime,
     )

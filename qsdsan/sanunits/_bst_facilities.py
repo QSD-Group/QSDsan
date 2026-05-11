@@ -22,7 +22,7 @@ __all__ = (
 class ProcessWaterCenter(bst.facilities.ProcessWaterCenter, qs.SanUnit):
     '''
     biosteam.facilities.ProcessWaterCenter with QSDsan properties.
-    
+
     See Also
     --------
     `biosteam.facilities.ProcessWaterCenter <https://biosteam.readthedocs.io/en/latest/API/facilities/ProcessWaterCenter.html>`_

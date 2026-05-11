@@ -1,4 +1,4 @@
 Hydroprocessing
 ===============
-.. automodule:: qsdsan.sanunits._hydroprocessing
+.. automodule:: qsdsan.sanunits._static_hydroprocessing
     :members:

@@ -1,4 +1,4 @@
 Non-Reactive Unit
 =================
-.. automodule:: qsdsan.sanunits._non_reactive
+.. automodule:: qsdsan.sanunits._static_non_reactive
     :members:

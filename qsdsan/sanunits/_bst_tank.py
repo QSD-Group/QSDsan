@@ -83,7 +83,7 @@ class StorageTank(Tank, BSTStorageTank):
     --------
     :class:`biosteam.units.StorageTank`
     '''
-    
+
     _units = {'Diameter': 'ft',
               'Length': 'ft',
               'Wall thickness': 'in',
@@ -93,7 +93,7 @@ class StorageTank(Tank, BSTStorageTank):
                'Horizontal vessel diameter': (3, 21),
                'Vertical vessel length': (12, 40)}
     _vessel_material = 'Stainless steel'
-    
+
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  vessel_type=None, tau=None, V_wf=None,
                  vessel_material=None, kW_per_m3=0.,
@@ -105,18 +105,18 @@ class StorageTank(Tank, BSTStorageTank):
                       vessel_type=vessel_type, tau=tau, V_wf=V_wf,
                       vessel_material=vessel_material, kW_per_m3=kW_per_m3,)
         self.length_to_diameter = length_to_diameter
-        
+
     def _init_lca(self):
         item_name = self.vessel_material.replace(' ', '_')
         self.construction = [
             Construction(item_name.lower(), linked_unit=self, item=item_name, quantity_unit='kg'),
             ]
-        
-    
+
+
     def _design(self):
         BSTStorageTank._design(self)
         D = self.design_results
-        
+
         Diameter = (4*D['Total volume']/pi/self.length_to_diameter)**(1/3)
         Diameter *= _m_to_ft # convert from m to ft
         L = Diameter * self.length_to_diameter # ft

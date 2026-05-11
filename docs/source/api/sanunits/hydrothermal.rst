@@ -1,4 +1,4 @@
 Hydrothermal
 ============
-.. automodule:: qsdsan.sanunits._hydrothermal
+.. automodule:: qsdsan.sanunits._static_hydrothermal
     :members:

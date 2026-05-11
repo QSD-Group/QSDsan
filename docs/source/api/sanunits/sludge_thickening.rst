@@ -1,4 +1,4 @@
 Sludge Thickening
 =================
-.. automodule:: qsdsan.sanunits._sludge_thickening
+.. automodule:: qsdsan.sanunits._static_sludge_thickening
     :members:

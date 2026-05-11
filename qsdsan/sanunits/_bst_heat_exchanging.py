@@ -35,7 +35,7 @@ _in_to_ft = auom('in').conversion_factor('ft')
 _lb_to_kg = auom('lb').conversion_factor('kg')
 _Pa_to_psi = auom('Pa').conversion_factor('psi')
 
-        
+
 class HeatExchangerNetwork(SanUnit, HXN):
     '''
     Similar to the :class:`biosteam.units.facilities.HeatExchangerNetwork`,
@@ -112,7 +112,7 @@ class HXprocess(SanUnit, HXP):
             U=None, dT=5., T_lim0=None, T_lim1=None,
             material="Carbon steel/carbon steel",
             heat_exchanger_type="Floating head",
-            N_shells=2, ft=None, 
+            N_shells=2, ft=None,
             phase0=None,
             phase1=None,
             H_lim0=None,
@@ -160,13 +160,13 @@ class HXprocess(SanUnit, HXP):
         self.material = material
         self.heat_exchanger_type = heat_exchanger_type
         self.reset_streams_at_setup = False
-        
+
         #: Optional[float] Pressure drop along the fluid [0].
         self.dP0 = 0 if dP0 is None else dP0
 
         #: Optional[float] Pressure drop along fluid [1].
         self.dP1 = 0 if dP1 is None else dP1
-        
+
         #: [bool] Whether to estimate pressure drop if none given.
         self.estimate_pressure_drop = estimate_pressure_drop
         if estimate_pressure_drop:
@@ -181,7 +181,7 @@ class HXutility(SanUnit, HXU):
     Similar to :class:`biosteam.units.HXutility`,
     but can be initialized with :class:`qsdsan.SanStream` and :class:`qsdsan.WasteStream`
     and calculate material usage based on [1]_.
-    
+
     References
     ----------
     .. [1] Seider, W. D., Lewin, D. R., Seader, J. D., Widagdo, S., Gani, R., &
@@ -192,10 +192,10 @@ class HXutility(SanUnit, HXU):
     --------
     `biosteam.units.HXutility <https://biosteam.readthedocs.io/en/latest/API/units/heat_exchange.html>`_
     '''
-    
+
     line = HXU.line
     _graphics = HXU._graphics
-    
+
     _units = HXU._units.update({
         'Total tube length': 'ft',
         'Inner pipe weight': 'kg',
@@ -211,7 +211,7 @@ class HXutility(SanUnit, HXU):
                'Horizontal vessel weight': (1e3, 9.2e5),
                'Horizontal vessel diameter': (3, 21),
                'Vertical vessel length': (12, 40)}
-    
+
     def __init__(
             self, ID='', ins=None, outs=(), thermo=None,
             init_with='Stream', F_BM_default=None,
@@ -255,26 +255,26 @@ class HXutility(SanUnit, HXU):
 
             self.material = material
             self.heat_exchanger_type = heat_exchanger_type
-            
+
             #: Optional[float] Pressure drop along the process fluid.
             self.dP = dP
-    
+
             #: [bool] Whether to estimate pressure drop if none given.
             self.estimate_pressure_drop = estimate_pressure_drop
-    
+
             #: [bool] User enforced heat transfer efficiency. A value less than 1
             #: means that a fraction of heat transfered is lost to the environment.
             #: If value is None, it defaults to the heat transfer efficiency of the
             #: heat utility.
             self.heat_transfer_efficiency = heat_transfer_efficiency
-    
+
             #: Optional[float] Internal pressure of combustion gas. Defaults
             #: 500 psig (equivalent to 3548325.0 Pa)
             self.furnace_pressure = 500 if furnace_pressure is None else furnace_pressure
 
     def _design(self, duty=None):
         HXU._design(self)
-        
+
         D = self.design_results
         if not D.get('Area', 0): total_steel = 0. # no HX needs
         elif D['Area'] < 150: # double pipe
@@ -307,14 +307,14 @@ class HXutility(SanUnit, HXU):
 
             Shell_design = self._horizontal_vessel_design(self.ins[0].P*_Pa_to_psi, D['Shell diameter'], D['Shell length'])
             D['Shell steel weight'] = Shell_design['Weight']*self.N_shells*_lb_to_kg
-            
+
             single_tube_area = pi*(3/4)*_in_to_ft*D['Shell length']
-            
+
             D['Total tube length'] = D['Shell length']*single_shell_area/single_tube_area*self.N_shells
-            
+
             # according to [1] page 367, Table 12.4, 3/4 in O.D., 16 BWG tube: 0.520 lb/ft
             D['Tube weight'] = D['Total tube length']*0.520*_lb_to_kg
-            
+
             total_steel = D['Total steel weight'] = D['Shell steel weight'] + D['Tube weight']
 
         if self.include_construction:
@@ -322,10 +322,10 @@ class HXutility(SanUnit, HXU):
             if construction: construction[0].quantity = total_steel
             else:
                 self.construction = [
-                    Construction('stainless_steel', linked_unit=self, item='Stainless_steel', 
+                    Construction('stainless_steel', linked_unit=self, item='Stainless_steel',
                                  quantity=total_steel, quantity_unit='kg'),
                     ]
-            
+
     def _horizontal_vessel_design(self, pressure, diameter, length) -> dict:
         pressure = pressure
         diameter = diameter

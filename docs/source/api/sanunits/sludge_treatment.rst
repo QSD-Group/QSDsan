@@ -1,4 +1,4 @@
 Sludge Treatment
 ================
-.. automodule:: qsdsan.sanunits._sludge_treatment
+.. automodule:: qsdsan.sanunits._static_sludge_treatment
     :members:

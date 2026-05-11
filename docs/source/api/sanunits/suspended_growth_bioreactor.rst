@@ -1,6 +1,6 @@
 Suspended Growth Bioreactor
 ===========================
-.. automodule:: qsdsan.sanunits._suspended_growth_bioreactor
+.. automodule:: qsdsan.sanunits._dynamic_bioreactor
     :members:
 
 
