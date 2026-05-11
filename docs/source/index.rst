@@ -38,9 +38,9 @@ What is ``QSDsan``?
          :height: 100
          :align: center
 
-   .. grid-item-card::  Unit Operations
+   .. grid-item-card::  FAQ
       :text-align: center
-      :link: unit_operations
+      :link: faq
       :link-type: ref
 
       .. figure:: images/faq_icon.svg
@@ -115,13 +115,6 @@ If you would like to contribute, please follow our `Contributing Guidelines`_ an
    :hidden:
 
    Systems
-
-
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-
-   api/sanunits/_index
 
 
 .. toctree::

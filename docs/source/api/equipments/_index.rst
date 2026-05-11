@@ -1,4 +1,4 @@
-equipments
+Equipments
 ==========
 
 .. toctree::

@@ -91,7 +91,7 @@ for _slot in utils.doc_examples.__all__:
 
 # Add the `pump` decorator to the util module
 def wwtpump(*args, **kwargs):
-    from .sanunits import wwtpump as _wwtpump
+    from .unit_operations import wwtpump as _wwtpump
     return _wwtpump(*args, **kwargs)
 
 utils.__all__ = (*utils.__all__, 'wwtpump')

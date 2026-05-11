@@ -11,27 +11,12 @@ The UML below shows the structure and core Python classes implemented in ``QSDsa
    Simplified unified modeling language (UML) diagram of ``QSDsan``
 
 
-Module Links
-------------
-
 .. toctree::
    :maxdepth: 1
 
-   Component
-   Construction
-   Equipment
-   ImpactIndicator
-   ImpactItem
-   LCA
-   Process
-   SanUnit
-   streams
-   TEA
-   Transportation
-
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-
-   stats
-   utils/_index
+   major_classes/_index
+   process_models/_index
+   equipments/_index
+   unit_operations/_index
+   statistics
+   utility_functions/_index
