@@ -131,6 +131,13 @@ If you would like to contribute, please follow our `Contributing Guidelines`_ an
    CONTRIBUTING
 
 
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   CHANGELOG
+
+
 References
 ----------
 .. [1] Li, Y.; Trimmer, J.T.; Hand, S.; Zhang, X.; Chambers, K.G.; Lohman, H.A.C.; Shi, R.; Byrne, D.M.; Cook, S.M.; Guest, J.S. Quantitative Sustainable Design (QSD): A Methodology for the Prioritization of Research, Development, and Deployment of Technologies. (Tutorial Review) Environ. Sci.: Water Res. Technol. 2022, 8 (11), 2439–2465. https://doi.org/10.1039/D2EW00431C.

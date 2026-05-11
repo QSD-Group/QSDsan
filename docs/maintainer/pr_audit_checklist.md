@@ -78,6 +78,12 @@ Run focused tests based on the touched area:
 
 For docs-only stream taxonomy changes, at minimum run stream-related tests and, if practical, a Sphinx build. If the full docs build fails because of pre-existing warnings/errors, report that clearly and identify whether failures are unrelated.
 
+## CHANGELOG
+
+`CHANGELOG.rst` lives at the repo root and is included into the docs via `docs/source/CHANGELOG.rst`. It is updated **at release time only** — not per-PR.
+
+When reviewing a PR, add a nudge if the PR introduces a new unit, process model, or other user-visible feature and the contributor has not noted it anywhere. A one-line mention in the PR description is enough to capture it at release time; a full CHANGELOG entry is not required during review.
+
 ## Review Output
 
 When reviewing a PR, lead with concrete findings:
