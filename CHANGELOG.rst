@@ -4,6 +4,22 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
+`1.5.0`_
+--------
+- Reorganized unit operations and process models into clearer namespaces.
+
+  - ``qsdsan.sanunits`` is renamed to :mod:`qsdsan.unit_operations` and reorganized into three behavior-based sub-namespaces:
+
+    - :mod:`qsdsan.unit_operations.bst` — BioSTEAM-inherited unit operations (mixers, splitters, pumps, heat exchangers, distillation columns, tanks, etc.)
+    - :mod:`qsdsan.unit_operations.static` — steady-state QSDsan unit operations (sanitation fixtures, treatment beds, clarifiers, sludge handling, hydrothermal/hydroprocessing units, etc.)
+    - :mod:`qsdsan.unit_operations.dynamic` — unit operations with explicit dynamic-state behavior (bioreactors, dynamic influent, junctions, membrane bioreactors, etc.)
+
+  - ``qsdsan.processes`` is renamed to :mod:`qsdsan.process_models`.
+  - All existing imports via ``qsdsan.sanunits`` and ``qsdsan.processes`` remain valid for backward compatibility.
+
+- Restructured API documentation to mirror the new package layout, with dedicated pages for each sub-namespace.
+
+
 `1.4.0`_
 --------
 - A lot of the updates have been focused on the dynamic simulation, now the open-loop Benchmark Simulation Model No. 2 (`BSM2 <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm2>`_) configuration has been implemented with new process models and unit operation including
@@ -211,6 +227,7 @@ Official release of ``QSDsan`` v1.0.0!
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
+.. _1.5.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.0
 .. _1.4.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.4.0
 .. _1.3.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.3.0
 .. _1.2.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.2.0
