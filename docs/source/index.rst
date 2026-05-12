@@ -100,14 +100,14 @@ If you would like to contribute, please follow our `Contributing Guidelines`_ an
    :maxdepth: 1
    :hidden:
 
-   tutorials/_index
+   tutorials/index
 
 
 .. toctree::
    :maxdepth: 1
    :hidden:
 
-   api/_index
+   api/index
 
 
 .. toctree::

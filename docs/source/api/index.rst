@@ -14,9 +14,9 @@ The UML below shows the structure and core Python classes implemented in ``QSDsa
 .. toctree::
    :maxdepth: 1
 
-   major_classes/_index
-   process_models/_index
-   equipments/_index
-   unit_operations/_index
+   major_classes/index
+   process_models/index
+   equipments/index
+   unit_operations/index
    statistics
-   utility_functions/_index
+   utility_functions/index

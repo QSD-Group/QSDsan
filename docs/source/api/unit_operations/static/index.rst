@@ -3,7 +3,7 @@ Static QSDsan Units
 
 Steady-state QSDsan unit operations — QSDsan-native units without dynamic state equations. They may include sanitation-specific design, costing, construction, TEA, LCA, or ``WasteStream`` behavior.
 
-All classes are also importable directly from :mod:`qsdsan.sanunits`.
+All classes are also importable directly from :mod:`qsdsan.unit_operations`.
 
 Abstract
 --------
