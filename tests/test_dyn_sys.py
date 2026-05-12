@@ -20,7 +20,7 @@ for license details.
 __all__ = ('test_dyn_sys',)
 
 def test_dyn_sys():
-    from qsdsan import processes as pc, sanunits as su, set_thermo, System
+    from qsdsan import process_models as pc, unit_operations as su, set_thermo, System
     import numpy as np
     from numpy.testing import assert_allclose
 

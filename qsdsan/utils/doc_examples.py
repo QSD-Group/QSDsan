@@ -133,7 +133,7 @@ def create_example_system(components=None):
      <Splitter: S2>)
     >>> sys.diagram() # doctest: +SKIP
     '''
-    from .. import sanunits as su
+    from .. import unit_operations as su
 
     if components: qs_set_thermo(components)
     else:

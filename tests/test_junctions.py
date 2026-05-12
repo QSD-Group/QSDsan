@@ -36,8 +36,8 @@ def test_adm1_junctions():
     import qsdsan as qs, numpy as np
     from numpy.testing import assert_allclose as ac
     from qsdsan import (
-        processes as pc,
-        sanunits as su,
+        process_models as pc,
+        unit_operations as su,
         WasteStream,
         )
     from qsdsan.utils import ospath, load_data
@@ -219,7 +219,7 @@ def test_adm1p_junctions():
     import numpy as  np
     from numpy.testing import assert_allclose as ac
     from chemicals.elements import molecular_weight as get_mw
-    from qsdsan import sanunits as su, processes as pc, WasteStream, System, get_thermo
+    from qsdsan import unit_operations as su, process_models as pc, WasteStream, System, get_thermo
     # from qsdsan.utils import load_data, ospath, time_printer
     # from exposan.bsm2 import data_path
     

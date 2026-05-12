@@ -37,7 +37,7 @@ What is ``QSDsan``?
       .. figure:: images/systems_icon.svg
          :height: 100
          :align: center
-      
+
    .. grid-item-card::  FAQ
       :text-align: center
       :link: faq
@@ -100,14 +100,14 @@ If you would like to contribute, please follow our `Contributing Guidelines`_ an
    :maxdepth: 1
    :hidden:
 
-   tutorials/_index
+   tutorials/index
 
 
 .. toctree::
    :maxdepth: 1
    :hidden:
 
-   api/_index
+   api/index
 
 
 .. toctree::
@@ -129,6 +129,13 @@ If you would like to contribute, please follow our `Contributing Guidelines`_ an
    :hidden:
 
    CONTRIBUTING
+
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   CHANGELOG
 
 
 References

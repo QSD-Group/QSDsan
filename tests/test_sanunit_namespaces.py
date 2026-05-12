@@ -5,40 +5,40 @@ import qsdsan as qs
 
 
 def test_sanunit_namespaces_are_public():
-    from qsdsan.sanunits import bst, static, dynamic
+    from qsdsan.unit_operations import bst, static, dynamic
 
-    assert qs.sanunits.bst is bst
-    assert qs.sanunits.static is static
-    assert qs.sanunits.dynamic is dynamic
+    assert qs.unit_operations.bst is bst
+    assert qs.unit_operations.static is static
+    assert qs.unit_operations.dynamic is dynamic
 
 
 def test_bst_namespace_reexports_compatible_wrappers():
-    from qsdsan.sanunits import bst
+    from qsdsan.unit_operations import bst
 
-    assert bst.Mixer is qs.sanunits.Mixer
-    assert bst.Splitter is qs.sanunits.Splitter
-    assert bst.Pump is qs.sanunits.Pump
-    assert bst.Flash is qs.sanunits.Flash
-    assert bst.BinaryDistillation is qs.sanunits.BinaryDistillation
-    assert bst.HXutility is qs.sanunits.HXutility
-    assert bst.StorageTank is qs.sanunits.StorageTank
-    assert bst.IsothermalCompressor is qs.sanunits.IsothermalCompressor
+    assert bst.Mixer is qs.unit_operations.Mixer
+    assert bst.Splitter is qs.unit_operations.Splitter
+    assert bst.Pump is qs.unit_operations.Pump
+    assert bst.Flash is qs.unit_operations.Flash
+    assert bst.BinaryDistillation is qs.unit_operations.BinaryDistillation
+    assert bst.HXutility is qs.unit_operations.HXutility
+    assert bst.StorageTank is qs.unit_operations.StorageTank
+    assert bst.IsothermalCompressor is qs.unit_operations.IsothermalCompressor
 
 
 def test_static_namespace_reexports_qsdsan_static_units():
-    from qsdsan.sanunits import static
+    from qsdsan.unit_operations import static
 
-    assert static.Excretion is qs.sanunits.Excretion
-    assert static.SepticTank is qs.sanunits.SepticTank
-    assert static.Sedimentation is qs.sanunits.Sedimentation
-    assert static.Screening is qs.sanunits.Screening
-    assert static.SludgePasteurization is qs.sanunits.SludgePasteurization
+    assert static.Excretion is qs.unit_operations.Excretion
+    assert static.SepticTank is qs.unit_operations.SepticTank
+    assert static.Sedimentation is qs.unit_operations.Sedimentation
+    assert static.Screening is qs.unit_operations.Screening
+    assert static.SludgePasteurization is qs.unit_operations.SludgePasteurization
 
 
 def test_dynamic_namespace_reexports_dynamic_units():
-    from qsdsan.sanunits import dynamic
+    from qsdsan.unit_operations import dynamic
 
-    assert dynamic.DynamicInfluent is qs.sanunits.DynamicInfluent
-    assert dynamic.HydraulicDelay is qs.sanunits.HydraulicDelay
-    assert dynamic.CSTR is qs.sanunits.CSTR
-    assert dynamic.PFR is qs.sanunits.PFR
+    assert dynamic.DynamicInfluent is qs.unit_operations.DynamicInfluent
+    assert dynamic.HydraulicDelay is qs.unit_operations.HydraulicDelay
+    assert dynamic.CSTR is qs.unit_operations.CSTR
+    assert dynamic.PFR is qs.unit_operations.PFR

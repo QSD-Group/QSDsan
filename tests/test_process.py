@@ -16,7 +16,7 @@ for license details.
 __all__ = ('test_process', 'test_kinetic_reaction')
 
 def test_process():
-    import pytest, os, qsdsan.processes as pc
+    import pytest, os, qsdsan.process_models as pc
     from sympy import symbols, Eq
     from sympy.parsing.sympy_parser import parse_expr
     from math import isclose
@@ -124,7 +124,7 @@ def test_kinetic_reaction():
     import pytest
     import qsdsan as qs
     from math import log, isclose
-    from qsdsan.processes import KineticReaction as KRxn
+    from qsdsan.process_models import KineticReaction as KRxn
 
     gas_kwargs = dict(phase='g', particle_size='Dissolved gas',
                       degradability='Undegradable', organic=False)
