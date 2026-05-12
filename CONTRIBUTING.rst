@@ -286,6 +286,20 @@ If you want to verify that Python is using your local clone, run:
 	   	['C:\\Users\\<YOUR_USERNAME>\\Documents\\Coding\\QSDsan\\qsdsan']
 
 
+.. note::
+
+	**Windows only — import hang with Numba**
+
+	If ``import qsdsan`` appears to hang indefinitely on Windows, the cause is likely
+	Numba's compiled-function cache trying to write to the system temp directory.
+	Set a local cache directory before running tests or any import:
+
+	.. code:: powershell
+
+	    $env:NUMBA_CACHE_DIR=(Resolve-Path .).Path + '\.numba_cache'
+
+	This is a one-time workaround per terminal session and does not affect test results.
+
 Then, from the cloned ``QSDsan`` package directory, run the tests locally using `pytest <https://docs.pytest.org>`_:
 
 	.. code:: bash
