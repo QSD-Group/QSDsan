@@ -1,5 +1,5 @@
-SanUnit Base Class
-==================
+SanUnit
+=======
 
 .. autoclass:: qsdsan.SanUnit
    :members:

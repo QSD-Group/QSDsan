@@ -3,7 +3,18 @@ Dynamic QSDsan Units
 
 Dynamic QSDsan unit operations include explicit dynamic-state behavior such as ``state``, ``dstate``, ODE compilation, or algebraic-equation compilation. Use this page when building systems for dynamic simulation.
 
-All classes are also importable directly from :mod:`qsdsan.sanunits`.
+All classes are also importable directly from :mod:`qsdsan.unit_operations`.
+
+.. toctree::
+   :maxdepth: 1
+
+   abstract
+   anaerobic_reactor
+   DynamicInfluent
+   junction
+   membrane_bioreactor
+   pumping
+   suspended_growth_bioreactor
 
 Abstract
 --------

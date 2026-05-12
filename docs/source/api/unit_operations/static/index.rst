@@ -5,6 +5,40 @@ Steady-state QSDsan unit operations — QSDsan-native units without dynamic stat
 
 All classes are also importable directly from :mod:`qsdsan.unit_operations`.
 
+.. toctree::
+   :maxdepth: 1
+
+   abstract
+   ActivatedSludgeProcess
+   anaerobic_reactor
+   biogenic_refinery
+   clarifier
+   combustion
+   CropApplication
+   eco_san
+   ElectrochemicalCell
+   Excretion
+   hydroprocessing
+   hydrothermal
+   InternalCirculationRx
+   Lagoon
+   MembraneDistillation
+   MembraneGasExtraction
+   non_reactive
+   PolishingFilter
+   pumping
+   Reactor
+   reclaimer
+   Screening
+   Sedimentation
+   SepticTank
+   sludge_thickening
+   sludge_treatment
+   SludgePasteurization
+   toilet
+   treatment_bed
+   Trucking
+
 Abstract
 --------
 :class:`~qsdsan.unit_operations.PhaseChanger`,

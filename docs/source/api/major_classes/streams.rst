@@ -1,4 +1,4 @@
-streams
+Streams
 =======
 
 Which stream class to use?
