@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Dynamic QSDsan unit operations."""
 
-from ._abstract import Sampler
+from ._abstract import Sampler, HydraulicDelay
 from ._bioreactor import CSTR, BatchExperiment, PFR, AerobicDigester
 from ._anaerobic_reactor import AnaerobicCSTR
 from ._influent import DynamicInfluent
@@ -14,7 +14,6 @@ from ._junction import (
     ADM1ptomASM2d, mASM2dtoADM1p,
 )
 from ._membrane_bioreactor import AnMBR, CompletelyMixedMBR
-from ._pumping import HydraulicDelay
 
 __all__ = (
     'Sampler',
