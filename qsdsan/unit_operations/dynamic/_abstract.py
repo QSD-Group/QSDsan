@@ -131,6 +131,12 @@ class HydraulicDelay(SanUnit):
         s_out, = self.outs
         s_out.copy_like(s_in)
 
+    def _update_state(self):
+        self._outs[0].state = self._state
+
+    def _update_dstate(self):
+        self._outs[0].dstate = self._dstate
+
     @property
     def ODE(self):
         if self._ODE is None:
