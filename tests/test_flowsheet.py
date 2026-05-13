@@ -8,13 +8,12 @@ def test_flowsheet():
     import qsdsan as qs
     from qsdsan._sanflowsheet import SanFlowsheet, SanMainFlowsheet
 
-    # ── 1. SanFlowsheet has the three LCA registries ──────────────────────────
+    # ── 1. SanFlowsheet has all four LCA registries ───────────────────────────
     fs = qs.Flowsheet('_test_lca_1')
+    assert hasattr(fs, 'indicator'),      "flowsheet missing 'indicator' registry"
     assert hasattr(fs, 'item'),           "flowsheet missing 'item' registry"
     assert hasattr(fs, 'construction'),   "flowsheet missing 'construction' registry"
     assert hasattr(fs, 'transportation'), "flowsheet missing 'transportation' registry"
-    # ImpactIndicator is global — no 'indicator' registry on flowsheet
-    assert not hasattr(fs, 'indicator'),  "flowsheet should NOT have 'indicator' registry"
 
     # ── 2. qs.Flowsheet IS SanFlowsheet ──────────────────────────────────────
     assert qs.Flowsheet is SanFlowsheet, "qs.Flowsheet should be SanFlowsheet"
@@ -24,9 +23,8 @@ def test_flowsheet():
         "qs.main_flowsheet should be a SanMainFlowsheet instance"
 
     # ── 4. Item registry is isolated per flowsheet ───────────────────────────
-    GWP = qs.ImpactIndicator('GlobalWarming_t', unit='kg CO2-eq')  # global
-
     with qs.Flowsheet('_test_sys_a') as fs_a:
+        GWP_a = qs.ImpactIndicator('GlobalWarming_t', unit='kg CO2-eq')
         steel_a = qs.ImpactItem('Steel_t', 'kg', GlobalWarming_t=2.55)
         assert qs.ImpactItem.get_item('Steel_t') is steel_a
 
@@ -37,22 +35,24 @@ def test_flowsheet():
     with qs.Flowsheet('_test_sys_b') as fs_b:
         assert qs.ImpactItem.get_item('Steel_t') is None, \
             "Steel_t from sys_a should not leak into sys_b"
+        GWP_b = qs.ImpactIndicator('GlobalWarming_t', unit='kg CO2-eq')
         steel_b = qs.ImpactItem('Steel_t', 'kg', GlobalWarming_t=3.0)
         assert qs.ImpactItem.get_item('Steel_t') is steel_b
 
-    # ── 5. ImpactIndicators are shared across all flowsheets ─────────────────
+    # ── 5. ImpactIndicators are isolated per flowsheet ───────────────────────
     with qs.Flowsheet('_test_sys_c') as fs_c:
-        assert qs.ImpactIndicator.get_indicator('GlobalWarming_t') is GWP, \
-            "ImpactIndicator should be visible in any flowsheet"
+        assert qs.ImpactIndicator.get_indicator('GlobalWarming_t') is None, \
+            "ImpactIndicator from another flowsheet should not be visible"
 
-    assert qs.ImpactIndicator.get_indicator('GlobalWarming_t') is GWP, \
-        "ImpactIndicator should persist after leaving flowsheet"
+    assert qs.ImpactIndicator.get_indicator('GlobalWarming_t') is None, \
+        "ImpactIndicator should not persist after leaving its flowsheet"
 
     # ── 6. clear() detaches StreamImpactItem from its stream ─────────────────
     components = qs.Components.load_default()
     qs.set_thermo(components)
 
     with qs.Flowsheet('_test_sys_d') as fs_d:
+        GWP_d = qs.ImpactIndicator('GlobalWarming_t', unit='kg CO2-eq')
         s = qs.SanStream('_test_stream_d', H2O=100, units='kg/hr')
         item_d = qs.StreamImpactItem(linked_stream=s, GlobalWarming_t=1.5)
         assert s.stream_impact_item is item_d
@@ -64,6 +64,7 @@ def test_flowsheet():
 
     # ── 7. clear() detaches Construction from its unit ───────────────────────
     with qs.Flowsheet('_test_sys_e') as fs_e:
+        GWP_e = qs.ImpactIndicator('GlobalWarming_t', unit='kg CO2-eq')
         concrete = qs.ImpactItem('Concrete_t', 'kg', GlobalWarming_t=0.1)
         M = qs.unit_operations.MixTank(
             '_test_M_e', ins=qs.WasteStream(H2O=100, units='kg/hr')
@@ -76,9 +77,6 @@ def test_flowsheet():
         assert M.construction == [], \
             "clear() should empty unit.construction"
         assert qs.ImpactItem.get_item('Concrete_t') is None
-
-    # Cleanup global indicator used in this test
-    GWP.deregister()
 
 
 def test_construction_specs():
@@ -161,9 +159,6 @@ def test_construction_specs():
     assert qs.SanUnit._construction_specs == (), \
         "SanUnit._construction_specs should default to empty tuple"
 
-    # Cleanup
-    qs.ImpactIndicator.get_indicator('GWP_spec').deregister()
-
 
 def test_two_system_switch():
     """Verify that switching between two LCA-enabled systems produces no
@@ -174,10 +169,10 @@ def test_two_system_switch():
     components = qs.Components.load_default()
     qs.set_thermo(components)
 
-    GWP = qs.ImpactIndicator('GWP_switch', unit='kg CO2-eq')
-
     # ── System A ──────────────────────────────────────────────────────────────
     with qs.Flowsheet('_switch_sys_a') as fs_a:
+        GWP = qs.ImpactIndicator('GWP_switch', unit='kg CO2-eq')
+
         feed_a = qs.WasteStream('_sw_feed_a', H2O=1000, units='kg/hr')
         M_a    = qs.unit_operations.MixTank('_sw_M_a', ins=feed_a)
         sys_a  = qs.System('_sw_sys_a', path=(M_a,))
@@ -200,6 +195,8 @@ def test_two_system_switch():
 
     # ── System B (same item name, different CF) ───────────────────────────────
     with qs.Flowsheet('_switch_sys_b') as fs_b:
+        GWP = qs.ImpactIndicator('GWP_switch', unit='kg CO2-eq')
+
         assert qs.ImpactItem.get_item('SwitchSteel') is None, \
             "SwitchSteel should not leak from sys_a into sys_b"
 
@@ -226,9 +223,6 @@ def test_two_system_switch():
             lca_a.get_construction_impacts()['GWP_switch'], 20., rtol=1e-6,
             err_msg="sys_a LCA impacts should be unchanged after sys_b was created"
         )
-
-    # Cleanup
-    GWP.deregister()
 
 
 if __name__ == '__main__':
