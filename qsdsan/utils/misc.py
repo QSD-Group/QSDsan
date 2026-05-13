@@ -19,7 +19,6 @@ from .._compat import Timer
 __all__ = (
     'clear_lca_registries',
     'copy_attr',
-    'ords',
     'price_ratio',
     'register_with_prefix',
     'time_printer',
@@ -53,9 +52,10 @@ def clear_lca_registries(print_msg=False):
     All transportation activities have been removed from the registry.
     '''
     warn(
-        "clear_lca_registries() is deprecated. Use `with qs.Flowsheet('name'):` "
-        "for per-flowsheet isolation, or `qs.main_flowsheet.clear()` to reset "
-        "the current flowsheet. This function will be removed in a future release.",
+        "clear_lca_registries() is deprecated. Use `qs.main_flowsheet.clear()` "
+        "to reset the current flowsheet, or switch flowsheets with "
+        "`qs.main_flowsheet.set_flowsheet('name')` for isolation. "
+        "This function will be removed in a future release.",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -105,21 +105,6 @@ def copy_attr(new, original, skip=(), same=(), slots=None):
                     new_value = value
             setattr(new, slot, new_value)
     return new
-
-
-def ords(string):
-    '''
-    Return the sum of Unicode of a string, more for fun.
-
-    Examples
-    --------
-    >>> from qsdsan.utils import ords
-    >>> ords('QSDsan')
-    554
-    '''
-    string = str(string)
-    added = sum(ord(i) for i in string)
-    return added
 
 
 def price_ratio(default_price_ratio=1):
