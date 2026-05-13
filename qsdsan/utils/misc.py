@@ -13,6 +13,7 @@ for license details.
 '''
 
 from datetime import timedelta
+from warnings import warn
 from .._compat import Timer
 
 __all__ = (
@@ -31,6 +32,12 @@ def clear_lca_registries(print_msg=False):
     :class:`~.ImpactIndicator`, :class:`~.ImpactItem`, :class:`~.Construction`,
     and :class:`~.Transportation`
 
+    .. deprecated::
+        Use ``qs.main_flowsheet.clear()`` or switch flowsheets with
+        ``with qs.Flowsheet('name'):`` instead.  This function clears only the
+        currently-active per-flowsheet registries and the global
+        ImpactIndicator registry; it will be removed in a future release.
+
     Parameters
     ----------
     print_msg : bool
@@ -45,6 +52,13 @@ def clear_lca_registries(print_msg=False):
     All construction activities have been removed from the registry.
     All transportation activities have been removed from the registry.
     '''
+    warn(
+        "clear_lca_registries() is deprecated. Use `with qs.Flowsheet('name'):` "
+        "for per-flowsheet isolation, or `qs.main_flowsheet.clear()` to reset "
+        "the current flowsheet. This function will be removed in a future release.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     # Only import when this function is called to avoid circular import during package initialization
     from qsdsan import ImpactIndicator, ImpactItem, Construction, Transportation
     for lca_cls in (ImpactIndicator, ImpactItem, Construction, Transportation):
