@@ -32,10 +32,9 @@ def clear_lca_registries(print_msg=False):
     and :class:`~.Transportation`
 
     .. deprecated::
-        Use ``qs.main_flowsheet.clear()`` or switch flowsheets with
-        ``with qs.Flowsheet('name'):`` instead.  This function clears only the
-        currently-active per-flowsheet registries and the global
-        ImpactIndicator registry; it will be removed in a future release.
+        Use ``qs.main_flowsheet.clear()`` to reset the current flowsheet,
+        or ``qs.main_flowsheet.set_flowsheet('name')`` to switch to an
+        isolated flowsheet. This function will be removed in a future release.
 
     Parameters
     ----------
