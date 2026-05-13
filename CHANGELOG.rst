@@ -6,6 +6,10 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 `1.5.0`_
 --------
+- All LCA registry types (:class:`~.ImpactIndicator`, :class:`~.ImpactItem`, :class:`~.Construction`, :class:`~.Transportation`) are now isolated per flowsheet. Switching between systems via :meth:`~.SanMainFlowsheet.set_flowsheet` atomically swaps all four registries, so no manual :func:`~.utils.clear_lca_registries` calls are needed between systems. :func:`~.utils.clear_lca_registries` is deprecated.
+
+- Added :attr:`SanUnit._construction_specs <.SanUnit._construction_specs>` — a class-level tuple of dicts for declaring default construction materials. Specs are resolved lazily by :class:`~.LCA` at creation time, so :class:`~.ImpactItem` objects do not need to exist when the unit is instantiated.
+
 - Reorganized unit operations and process models into clearer namespaces.
 
   - ``qsdsan.sanunits`` is renamed to :mod:`qsdsan.unit_operations` and reorganized into three behavior-based sub-namespaces:
