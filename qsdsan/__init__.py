@@ -42,9 +42,11 @@ Scope = _bst.utils.Scope
 Model = _bst.Model
 Metric = _bst.Metric
 Parameter = _bst.Parameter
-Flowsheet = _bst.Flowsheet
-main_flowsheet = _bst.main_flowsheet
 default_utilities = _bst.default_utilities
+# Temporary placeholder — will be upgraded to SanMainFlowsheet at module bottom
+main_flowsheet = _bst.main_flowsheet
+
+from ._sanflowsheet import SanFlowsheet, SanMainFlowsheet
 
 # Global variables
 currency = 'USD'
@@ -114,11 +116,36 @@ def __dir__():
 
 def default():
     _bst.default()
-    utils.clear_lca_registries()
+    main_flowsheet.set_flowsheet('default', new=True)
+
+# ── Upgrade main_flowsheet to SanMainFlowsheet in-place ──────────────────────
+# _construction.py / _transportation.py imported main_flowsheet by reference
+# above; upgrading the object in-place keeps all those references valid.
+from biosteam._unit import AbstractUnit as _AbstractUnit
+from thermosteam import AbstractStream as _AbstractStream
+from biosteam._flowsheet import MainFlowsheet as _BstMainFlowsheet
+
+_qs_default_fs = SanFlowsheet.from_registries(
+    'default',
+    _AbstractStream.registry,
+    _AbstractUnit.registry,
+    _bst.System.registry,
+)
+# Upgrade the existing _bst.main_flowsheet instance to SanMainFlowsheet
+main_flowsheet.__class__ = SanMainFlowsheet
+# set_flowsheet swaps __dict__ and LCA registries
+main_flowsheet.set_flowsheet(_qs_default_fs)
+
+Flowsheet = SanFlowsheet
+F = main_flowsheet
+
+del _qs_default_fs, _AbstractUnit, _AbstractStream, _BstMainFlowsheet
 
 
 __all__ = (
     'units_of_measure',
+    'SanFlowsheet',
+    'SanMainFlowsheet',
     *_component.__all__,
     *_components.__all__,
     *_construction.__all__,

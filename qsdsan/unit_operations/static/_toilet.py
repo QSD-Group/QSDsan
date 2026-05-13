@@ -88,7 +88,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
 
     See Also
     --------
-    :ref:`qsdsan.process_models.Decay <process_models_Decay>`
+    :class:`qsdsan.process_models.Decay`
 
     '''
     _N_ins = 6
@@ -373,7 +373,7 @@ class MURT(Toilet):
 
     See Also
     --------
-    :ref:`qsdsan.unit_operations.Toilet <sanunits_toilet>`
+    :class:`qsdsan.unit_operations.Toilet`
     '''
     _N_outs = 3
     _units = {
@@ -570,7 +570,7 @@ class PitLatrine(Toilet):
 
     See Also
     --------
-    :ref:`qsdsan.unit_operations.Toilet <sanunits_toilet>`
+    :class:`qsdsan.unit_operations.Toilet`
     '''
     _N_outs = 4
     _units = {
@@ -883,7 +883,7 @@ class UDDT(Toilet):
 
     See Also
     --------
-    :ref:`qsdsan.unit_operations.Toilet <sanunits_toilet>`
+    :class:`qsdsan.unit_operations.Toilet`
     '''
     _N_outs = 6
     _units = {

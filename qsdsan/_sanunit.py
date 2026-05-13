@@ -171,6 +171,7 @@ class SanUnit(Unit, isabstract=True):
     `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
     '''
     _init_lca = AbstractMethod
+    _construction_specs = ()
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  include_construction=True, construction=[],
