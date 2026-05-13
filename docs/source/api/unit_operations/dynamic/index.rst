@@ -13,12 +13,12 @@ All classes are also importable directly from :mod:`qsdsan.unit_operations`.
    DynamicInfluent
    junction
    membrane_bioreactor
-   pumping
    suspended_growth_bioreactor
 
 Abstract
 --------
-:class:`~qsdsan.unit_operations.Sampler`
+:class:`~qsdsan.unit_operations.Sampler`,
+:class:`~qsdsan.unit_operations.HydraulicDelay`
 
 Anaerobic Reactors
 ------------------
@@ -55,6 +55,3 @@ Membrane Bioreactors
 :class:`~qsdsan.unit_operations.AnMBR`,
 :class:`~qsdsan.unit_operations.CompletelyMixedMBR`
 
-Pumping
--------
-:class:`~qsdsan.unit_operations.HydraulicDelay`

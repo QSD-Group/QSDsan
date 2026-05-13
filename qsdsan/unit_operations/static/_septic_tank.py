@@ -69,7 +69,7 @@ class SepticTank(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.process_models.Decay <process_models_Decay>`
+    :class:`qsdsan.process_models.Decay`
     '''
     _N_ins = 2
     _N_outs = 5
