@@ -6,7 +6,7 @@ __all__ = ('test_flowsheet',)
 
 def test_flowsheet():
     import qsdsan as qs
-    from qsdsan._flowsheet import SanFlowsheet, SanMainFlowsheet
+    from qsdsan._sanflowsheet import SanFlowsheet, SanMainFlowsheet
 
     # ── 1. SanFlowsheet has the three LCA registries ──────────────────────────
     fs = qs.Flowsheet('_test_lca_1')

@@ -46,7 +46,7 @@ default_utilities = _bst.default_utilities
 # Temporary placeholder — will be upgraded to SanMainFlowsheet at module bottom
 main_flowsheet = _bst.main_flowsheet
 
-from ._flowsheet import SanFlowsheet, SanMainFlowsheet
+from ._sanflowsheet import SanFlowsheet, SanMainFlowsheet
 
 # Global variables
 currency = 'USD'
