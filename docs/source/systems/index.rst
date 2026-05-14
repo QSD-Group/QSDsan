@@ -14,46 +14,58 @@ When publishing the paper that introduces QSDsan [1]_, we validated the process 
 
 
 Water Resource Recovery Facilities
-----------------------------------
-In [2]_, we developed 18 benchmark combinations of liquid and solid treatment trains, which cover over 70% of the total treatment capacity of publicly owned treatment works (POTWs) in the Contiguous United States. These simulation models have been implemented in the `werf EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/werf>`_.
+-----------------------------------
+In Zhang et al., 2026 [2]_, we developed 18 benchmark combinations of liquid and solid treatment trains, which cover over 70% of the total treatment capacity of publicly owned treatment works (POTWs) in the Contiguous United States. These configurations were based on the Water Environment Research Foundation (WERF, now a part of the Water Research Foundation, WRF), report on net-zero energy solutions for WRRFs [3]_.
 
-.. figure:: images/wrrf_configs_light.png
+These simulation models have been implemented in the `werf EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/werf>`_. More details can be found in :ref:`the interactive page <wrrf_interactive>`.
+
+.. figure:: ../images/wrrf_configs_light.png
    :class: only-light
 
-.. figure:: images/wrrf_configs_dark.png
+.. figure:: ../images/wrrf_configs_dark.png
    :class: only-dark
 
-   Distinguishing features of benchmark WRRF configurations and their distribution in the Contiguous United States. A WRRF configuration is referred to as a unique combination of a liquid code (a) and a solid code (b) as defined in [3]_.
+   Distinguishing features of benchmark WRRF configurations. A WRRF configuration is referred to as a unique combination of a liquid code (a) and a solid code (b) as defined in [2]_. Configurations followed by a star (\*) are implemented in ``EXPOsan``.
+
+
+Non-sewered sanitation systems (NSSSs)
+--------------------------------------
+
+Biogenic Refinery
+*****************
+    - Publication: Rowles et al., 2022 [4]_
+    - `biogenic_refinery EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/biogenic_refinery>`_
+    - `biogenic_refinery archived codes <https://github.com/QSD-Group/EXPOsan/releases/tag/archive%2FBR_OmniProcessor>`_
+
+Bwaise
+******
+    - Publication: Trimmer et al., 2020 [5]_
+    - `bwaise EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise>`_
+    - `bwaise Trimmer et al archived codes <https://github.com/QSD-Group/Bwaise-sanitation-alternatives>`_; `bwaise Li and Zhang et al archived codes <https://pypi.org/project/exposan/1.1.4>`_
+
+Eco-San
+*******
+    - `eco_san EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/eco_san>`_
+
+NEWgenerator
+************
+    - Publication: Watabe et al., 2023 [6]_
+    - `new_generator EXPOsan module <https://github.com/QSD-Group/EXPOsan-private/tree/main/exposan/new_generator>`_
+    - `new_generator archived codes <https://github.com/QSD-Group/EXPOsan-private/tree/newgen/exposan/newgen>`_
+
+Reclaimer
+*********
+    - `reclaimer EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/reclaimer>`_
+
+SCG Zyclonic
+************
+
+    * `scg_zyclonic EXPOsan module <https://github.com/QSD-Group/EXPOsan-private/tree/main/exposan/scg_zyclonic>`_
+
 
 Other Systems
 -------------
 A variety of other sanitation and resource recovery systems have been developed using QSDsan, including:
-
-#. Non-sewered sanitation systems (NSSSs) including:
-
-    * Biogenic Refinery
-
-        - Publication: Rowles et al., 2022 [4]_
-        - `biogenic_refinery EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/biogenic_refinery>`_
-        - `biogenic_refinery archived codes <https://github.com/QSD-Group/EXPOsan/releases/tag/archive%2FBR_OmniProcessor>`_
-
-    * Bwaise
-
-        - Publication: Trimmer et al., 2020 [5]_
-        - `bwaise EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bwaise>`_
-        - `bwaise Trimmer et al archived codes <https://github.com/QSD-Group/Bwaise-sanitation-alternatives>`_; `bwaise Li and Zhang et al archived codes <https://pypi.org/project/exposan/1.1.4>`_
-
-    * Eco-San: `eco_san EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/eco_san>`_
-
-    * NEWgenerator (under NDA)
-
-        - Publication: Watabe et al., 2023 [6]_
-        - `new_generator EXPOsan module <https://github.com/QSD-Group/EXPOsan-private/tree/main/exposan/new_generator>`_
-        - `new_generator archived codes <https://github.com/QSD-Group/EXPOsan-private/tree/newgen/exposan/newgen>`_
-
-    * Reclaimer: `reclaimer EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/reclaimer>`_
-
-    * SCG Zyclonic (under NDA): `scg_zyclonic EXPOsan module <https://github.com/QSD-Group/EXPOsan-private/tree/main/exposan/scg_zyclonic>`_
 
 #. Conventional activated sludge process
 
@@ -77,11 +89,6 @@ A variety of other sanitation and resource recovery systems have been developed 
     * `pm2_ecorecover EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/pm2_ecorecover>`_
 
 
-**Notes:**
-    - "Under NDA" indicates that the system is under non-disclosure agreement with the technology design team and unfortunately we are not able to share the codes in full at this stage. The source link code will lead to a private repository that only individuals who have signed the NDA can access.
-    - "Archived codes" are the codes used when the linked literature is published.
-
-
 .. References
 .. [1] Li, Y.; Zhang, X.; Morgan, V. L.; Lohman, H. A. C.; Rowles, L. S.; Mittal, S.; Kogler, A.; Cusick, R. D.; Tarpeh, W. A.; Guest, J. S. QSDsan: An Integrated Platform for Quantitative Sustainable Design of Sanitation and Resource Recovery Systems. Environ. Sci.: Water Res. Technol. 2022, 8 (10), 2289–2303. https://doi.org/10.1039/D2EW00455K.
 
@@ -102,3 +109,9 @@ A variety of other sanitation and resource recovery systems have been developed 
 .. [9] Zhang, X.; Arnold, W. A.; Wright, N.; Novak, P. J.; Guest, J. S. Prioritization of Early-Stage Research and Development of a Hydrogel-Encapsulated Anaerobic Technology for Distributed Treatment of High Strength Organic Wastewater. Environ. Sci. Technol. 2024, 58 (44), 19651–19665. https://doi.org/10.1021/acs.est.4c05389.
 
 .. [10] Kim, G.-Y.; Molitor, H. R.; Zhang, X.; Li, Y.; Shoener, B. D.; Schramm, S. M.; Morgenroth, E.; Snowling, S. D.; Hartnett, E.; Bradley, I. M.; Pinto, A. J.; Guest, J. S. Development of an Open-Source Process Simulator for Microalgae-Based Tertiary Phosphorus Recovery. npj Clean Water 2025, 9 (1), 13. https://doi.org/10.1038/s41545-025-00545-4.
+
+
+.. toctree::
+   :hidden:
+
+   wrrf_interactive
