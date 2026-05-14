@@ -114,7 +114,7 @@ If you would like to contribute, please follow our `Contributing Guidelines`_ an
    :maxdepth: 1
    :hidden:
 
-   Systems
+   systems/index
 
 
 .. toctree::
