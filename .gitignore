@@ -12,8 +12,11 @@
 *.Rhistory
 *.sh
 .coverage
+.numba_cache/
 .coveralls.yml
 .pypirc
+.pytest_cache/
+pytest-cache-files-*
 _build
 build
 dist

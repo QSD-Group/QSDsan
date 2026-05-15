@@ -6,8 +6,37 @@ FAQ
 Common Errors
 -------------
 
-``graphviz``
-************
+.. _graphviz-installation:
+
+``Graphviz`` Installation
+*************************
+Install `Graphviz <https://graphviz.org/download/>`_ if you want to use QSDsan's ``diagram`` methods.
+
+Graphviz installation has two parts:
+
+1. The Graphviz software, which provides the ``dot`` executable used to render diagrams.
+2. The Python ``graphviz`` package, which lets Python call Graphviz.
+
+For the Graphviz software, follow the `official Graphviz download instructions <https://graphviz.org/download/>`_ for your operating system. If you use ``conda``, the ``conda-forge`` package can install both the software and Python interface:
+
+.. code::
+
+   conda install -c conda-forge python-graphviz
+
+If you do not use ``conda``, install the Graphviz software first, then install the Python interface in your active Python environment:
+
+.. code::
+
+   pip install graphviz
+
+To check that Graphviz is installed correctly, run:
+
+.. code::
+
+   dot -V
+
+If ``dot`` is not found, restart your terminal/editor and try again. If it still fails, follow the Graphviz instructions for adding the Graphviz ``bin`` folder to your system ``PATH``.
+
 When using :func:`diagram`, if you run into a ``graphviz`` error similar to:
 
    .. code:: bash
@@ -27,23 +56,7 @@ or if you cannot get any diagram at all. It is likely that your ``graphviz`` is 
 .. note::
     For the case where you don't have any diagram, the ``biosteam.preferences.raise_exception`` is set to ``False``, you can see the error by changing that to ``True``.
 
-This `post <https://stackoverflow.com/questions/35064304/runtimeerror-make-sure-the-graphviz-executables-are-on-your-systems-path-aft>`_ provides a lot of useful information, and this normally can be solved by:
-
-    .. code::
-
-       conda install graphviz # if you are using conda
-
-
-or
-
-    .. code::
-
-       brew install graphviz # if you are using brew
-
-
-.. note::
-
-    If you have already installed graphviz (both the actual software and the Python interface) but still getting the same error, your probably need to add the path of the graphviz software to your system path. To do that, you need to firstly locate where the graphviz software is, add the graphviz path to your system path (for Windows, the post above has instruction on how to add to your path; for macOS, you add ``export PATH="<REPLACE_WITH_GRAPHVIZ_PATH>:$PATH"`` to your shell profile).
+In most cases, this means either the Graphviz software is not installed or the ``dot`` executable is not available on your system ``PATH``.
 
 
 ``ModuleNotFoundError``
@@ -57,12 +70,12 @@ Sometimes (even though you have downloaded/cloned/installed ``qsdsan``), you sti
 
 There are multiple possible reasons:
 
-- If you have multiple conda environments, make sure you firstly do ``conda activate <ENV NAME>`` (replace ``<ENV NAME>`` with the actual name of your environment) to activate the environment.
-- If you are using the downloaded/cloned version of qsdsan, make sure you have added the path to the cloned version to your system path (more details on the tutorial `Helpful Basics <https://qsdsan.readthedocs.io/en/latest/tutorials/1_Helpful_Basics.html>`_).
+- If you have multiple conda environments, make sure you first do ``conda activate <ENV NAME>`` (replace ``<ENV NAME>`` with the actual name of your environment) to activate the environment.
+- If you are using a cloned version of ``QSDsan`` for development, install it from the cloned repository with ``pip install -e ".[dev]"``.
 - If you are using Jupyter Notebook
     
-    - If you are using the downloaded/cloned version of ``qsdsan``, note that Jupyter Notebook does not know about the path you configured in other editors (e.g., Spyder), so you may need to change directory (with ``os.chdir``) or set ``sys.path``.
-    - If you are using pip-installed ``qsdsan``, try to do this in your command-line interface (CLI, e.g., Anaconda prompt, terminal; firstly do ``conda activate <ENV NAME>`` if you are using an virtual environment, and replace ``<KERNEL NAME>`` with the name you like):
+    - Make sure Jupyter is using the same environment where ``QSDsan`` is installed.
+    - To add your active environment as a Jupyter kernel, run this in your command-line interface (CLI, e.g., Anaconda Prompt, terminal; first do ``conda activate <ENV NAME>`` if you are using a virtual environment, and replace ``<KERNEL NAME>`` with the name you like):
 
         .. code::
 
@@ -81,7 +94,7 @@ There are multiple possible reasons:
 **********************************
 This error is related to ``numba`` caching, we haven't figured out the exact mechanism, but clearing cache will help resolve it. One/both of the following approaches should work:
 
-1. Clear cache. Remove all ``.pyc``, ``.nbc``, and ``.nbi`` files, you can do this in your CLI using (replace <DIR> with the directory to your ``thermosteam``, ``biosteam``, ``qsdsan``, and ``exposan`` directory):
+1. Clear cache. Remove all ``.pyc``, ``.nbc``, and ``.nbi`` files from the relevant package or project directory:
 
    .. code::
 
@@ -127,7 +140,7 @@ Then you'll see the new tag appears on GitHub and you can safely remove the arch
 
 Pickle Protocol
 ***************
-``QSDsan`` saves some of the default components and processes as `pickle <https://docs.python.org/3/library/pickle.html>`_ files to reduce the loading time, Python pickle has different protocols, and Protocol 5 is used in ``QSDsan``. The default ``pickle`` module in Python 3.5-3.7 uses Protocol 4 thus not compatible. For Python 3.5-3.7 users, ``QSDsan`` will prompt a warning to install the `package <https://pypi.org/project/pickle5/>`_ ``pickle5`` for compatibility. For Python 3.4 and below, longer loading time is expected as no pre-saved data files are used.
+``QSDsan`` saves some of the default components and processes as `pickle <https://docs.python.org/3/library/pickle.html>`_ files to reduce loading time. If loading cached data fails after upgrading ``QSDsan`` or Python, reinstall ``QSDsan`` in a fresh environment or clear the relevant cached files and try again.
 
 
 Private Fork
@@ -198,14 +211,14 @@ However, GitHub does not allow you to directly create a private fork (or more ac
 
 #. If you have never used ``git`` in your CLI, GitHub would ask for authentication and requires you create to a personal access token (instead of using your username and password), follow the instructions from `GitHub <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>`_ to create the token.
 #. For Mac users, you'll probably run into an error related to ``/Library/Developer/CommandLineTools`` if you don't have Xcode Command Line (i.e., ``xcode-select``), follow these `instructions <https://www.freecodecamp.org/news/install-xcode-command-line-tools/>`_ to install it. Note that as you can see in the linked post, even the ``xcode-select``, which is much smaller than the full Xcode app, requires 1GB+ space.
-#. After you cloned ``QSDsan``, you'll need to configure your system path to make sure that you are importing the cloned ``QSDsan``, which means you might need to uninstalled any ``pip``-installed version and add the cloned path to your IDE (e.g., Spyder).
+#. After you clone ``QSDsan``, install it from the cloned repository with ``pip install -e ".[dev]"`` so Python imports your local copy.
 
 
 Upgrade Python
 **************
-``QSDsan`` is currently compatible with and tested for Python 3.7 and 3.8. However, with ``BioSTEAM`` moving to Python 3.8 (see this `issue <https://github.com/BioSTEAMDevelopmentGroup/biosteam/issues/56>`_), qsdsan may be only compatible with Python 3.8 and higher in the future. 
+``QSDsan`` currently requires Python 3.12 or newer.
 
-If you need to upgrade Python but having a lot of existing packages, creating a virtual environment may be the best way to avoid conflicts. If you are using ``conda``, its has related documentations on `Python upgrading <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-python.html>`_.
+If you need to upgrade Python but have a lot of existing packages, creating a virtual environment may be the best way to avoid conflicts. If you are using ``conda``, it has related documentation on `Python upgrading <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-python.html>`_.
 
 
 Styling

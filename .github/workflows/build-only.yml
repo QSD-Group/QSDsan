@@ -19,19 +19,51 @@ jobs:
         python-version: ["3.12"]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
+        cache: "pip"
+        cache-dependency-path: |
+          pyproject.toml
+          .github/requirements-release.txt
+          .github/workflows/build-only.yml
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install pytest nbval
-        pip install --no-cache-dir git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git@qsdsan
-        pip install --no-cache-dir git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@qsdsan
-        pip install --no-cache-dir git+https://github.com/QSD-Group/EXPOsan.git@main
-        pip install --no-cache-dir -r requirements.txt
+        pip install -c .github/requirements-release.txt -e ".[ci,integration]"
     - name: Test with pytest
       run: |
-        pytest
+        pytest tests
+
+  retry-with-upstream-master:
+    needs: build
+    if: ${{ failure() }}
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+    - uses: actions/checkout@v6
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: "pip"
+        cache-dependency-path: |
+          pyproject.toml
+          .github/requirements-release.txt
+          .github/workflows/build-only.yml
+    - name: Install dependencies with upstream BioSTEAM stack
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[ci,integration]"
+        pip install --no-deps --force-reinstall git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git@master
+        pip install --no-deps --force-reinstall git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@master
+    - name: Test with pytest
+      run: |
+        pytest tests

@@ -5,7 +5,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Joy Zhang <joycheung1994@gmail.com>
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 Part of this module is based on the Thermosteam package:
@@ -25,17 +27,20 @@ from chemicals.elements import (
     charge_from_formula
     )
 from . import Chemical
-from .utils import auom, copy_attr, cod_test_stoichiometry, electron_acceptor_cod
+from ._compat import (
+    chemical_fields as _chemical_fields,
+    checked_properties as _checked_properties,
+    lock_phase,
+    display_asfunctor,
+    get_chemical_data as get_component_data,
+    )
+from .utils import copy_attr, cod_test_stoichiometry, electron_acceptor_cod
+from .units_of_measure import component_units_of_measure
 from warnings import warn
 
 __all__ = ('Component',)
 
-_chemical_fields = tmo._chemical._chemical_fields
-_checked_properties = tmo._chemical._checked_properties
-lock_phase = tmo._chemical.lock_phase
-display_asfunctor = tmo._chemical.display_asfunctor
 copy_maybe = tmo.utils.copy_maybe
-get_component_data = tmo._chemical.get_chemical_data
 
 
 # %%
@@ -80,20 +85,6 @@ _component_slots = (*Chemical.__slots__,
                     *tuple('_'+i for i in _component_properties))
 
 _checked_properties = (*_checked_properties, *_key_component_properties)
-
-component_units_of_measure = {
-    'i_C': auom('g'),
-    'i_N': auom('g'),
-    'i_P': auom('g'),
-    'i_K': auom('g'),
-    'i_Mg': auom('g'),
-    'i_Ca': auom('g'),
-    'i_mass': auom('g'),
-    'i_charge': auom('mol'),
-    'i_COD': auom('g'),
-    'i_NOD': auom('g'),
-    }
-
 
 # %%
 

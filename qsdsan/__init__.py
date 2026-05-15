@@ -15,6 +15,7 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+import importlib as _importlib
 import importlib.metadata as impmeta
 try:
     __version__ = impmeta.version('qsdsan')
@@ -51,7 +52,7 @@ CHECK_IMPACT_INDICATOR_CONSISTENCY = True
 CHECK_IMPACT_ITEM_CONSISTENCY = True
 
 
-from . import utils
+from . import units_of_measure, utils
 CEPCI_by_year = utils.indices.tea_indices['CEPCI']
 from ._component import *
 from ._components import *
@@ -82,10 +83,6 @@ from . import (
     _tea,
     _transportation,
     _waste_stream,
-    equipments,
-    processes,
-    sanunits,
-    stats,
     )
 
 utils._secondary_importing()
@@ -93,9 +90,27 @@ for _slot in utils.doc_examples.__all__:
     setattr(utils, _slot, getattr(utils.doc_examples, _slot))
 
 # Add the `pump` decorator to the util module
-from .sanunits import wwtpump
+def wwtpump(*args, **kwargs):
+    from .unit_operations import wwtpump as _wwtpump
+    return _wwtpump(*args, **kwargs)
+
 utils.__all__ = (*utils.__all__, 'wwtpump')
 setattr(utils, 'wwtpump', wwtpump)
+
+_lazy_modules = frozenset(('equipments', 'process_models', 'unit_operations', 'stats'))
+_legacy_aliases = {'sanunits': 'unit_operations', 'processes': 'process_models'}
+
+def __getattr__(name):
+    target = _legacy_aliases.get(name, name)
+    if target in _lazy_modules:
+        module = _importlib.import_module(f'{__name__}.{target}')
+        globals()[target] = module
+        globals()[name] = module
+        return module
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+def __dir__():
+    return sorted((*globals(), *_lazy_modules, *_legacy_aliases))
 
 def default():
     _bst.default()
@@ -103,6 +118,7 @@ def default():
 
 
 __all__ = (
+    'units_of_measure',
     *_component.__all__,
     *_components.__all__,
     *_construction.__all__,

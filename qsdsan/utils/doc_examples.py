@@ -5,6 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -18,12 +19,10 @@ from .. import (
     get_thermo,
     Model,
     SanStream,
-    sanunits as su,
     set_thermo as qs_set_thermo,
     SimpleTEA,
     System,
     )
-from chaospy import distributions as shape
 
 __all__ = (
     'create_example_components',
@@ -134,6 +133,8 @@ def create_example_system(components=None):
      <Splitter: S2>)
     >>> sys.diagram() # doctest: +SKIP
     '''
+    from .. import unit_operations as su
+
     if components: qs_set_thermo(components)
     else:
         try:
@@ -212,6 +213,8 @@ def create_example_model(evaluate=False, N=100, rule='L', seed=554, **sample_kwa
      <Metric: [Simple TEA] Total capital expenditure (USD)>,
      <Metric: [Simple TEA] Net present value (USD)>)
     '''
+    from chaospy import distributions as shape
+
     sys = create_example_system()
     M1, P1, H1, S1, M2, S2 = sys.path
     sys.simulate()

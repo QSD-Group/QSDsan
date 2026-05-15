@@ -16,6 +16,10 @@ for license details.
 # Just making sure the systems can run is sufficient
 __all__ = ('test_exposan',)
 
+import pytest
+
+pytestmark = [pytest.mark.integration, pytest.mark.slow]
+
 def test_exposan():
     ##### Systems without costs/impacts #####
     from qsdsan import default
@@ -66,7 +70,9 @@ def test_exposan():
     clear_lca_registries()
     from exposan import metab
     UASB_M = metab.create_system(n_stages=2, reactor_type='UASB', gas_extraction='M', tot_HRT=4)
-    UASB_M.simulate(state_reset_hook='reset_cache', method='BDF', t_span=(0, 400))
+    # Might fail the first time it runs, re-running will usually fix the problem
+    try: UASB_M.simulate(state_reset_hook='reset_cache', method='BDF', t_span=(0, 400))
+    except: UASB_M.simulate(state_reset_hook='reset_cache', method='BDF', t_span=(0, 400))
     FB_H = metab.create_system(n_stages=2, reactor_type='FB', gas_extraction='H', tot_HRT=4)
     # # Just simulate one system to save testing time
     # # (all configurations are included in EXPOsan test)

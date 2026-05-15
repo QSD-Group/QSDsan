@@ -34,26 +34,13 @@ QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Sys
 .. image:: ./docs/source/images/custom_binder_logo.svg
    :target: https://mybinder.org/v2/gh/QSD-Group/QSDsan-env/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FQSD-group%252FQSDsan%26urlpath%3Dtree%252FQSDsan%252Fdocs%252Fsource%252Ftutorials%26branch%3Dmain
 
-.. Email subscription form
-.. image:: https://img.shields.io/badge/news-subscribe-F3A93C?style=flat&logo=rss
-   :target: https://groups.webservices.illinois.edu/subscribe/154591
-
-.. Event calendar
-.. image:: https://img.shields.io/badge/events-calendar-F3A93C?style=flat&logo=google%20calendar
-   :target: https://qsdsan.readthedocs.io/en/latest/Events.html
+.. .. Email subscription form
+.. .. image:: https://img.shields.io/badge/news-subscribe-F3A93C?style=flat&logo=rss
+..    :target: https://groups.webservices.illinois.edu/subscribe/154591
 
 .. YouTube video
 .. image:: https://img.shields.io/endpoint?color=%23ff0000&label=YouTube%20 @qsd-group&url=https%3A%2F%2Fyoutube-channel-badge-blond.vercel.app%2Fapi%2Fvideos
    :target: https://www.youtube.com/@qsd-group
-
-.. Code of Conduct
-.. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
-   :target: https://qsdsan.readthedocs.io/en/latest/CODE_OF_CONDUCT.html
-
-.. AppVeyor test of the stable branch, not in active use
-..
-   .. image:: https://img.shields.io/appveyor/build/yalinli2/QSDsan/main?label=build-stable&logo=appveyor
-   :target: https://github.com/QSD-Group/QSDsan/tree/stable
 
 |
 
@@ -63,61 +50,48 @@ QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Sys
 
 What is ``QSDsan``?
 -------------------
-``QSDsan`` is an open-source, community-led platform for the quantitative sustainable design (QSD) of sanitation and resource recovery systems [1]_. It is one of a series of platforms that are being developed for the execution of QSD - a methodology for the research, design, and deployment of technologies and inform decision-making [2]_. It leverages the structure and modules developed in the `BioSTEAM <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_ platform [3]_ with additional functions tailored to sanitation processes.
-
-As an open-source and impact-driven platform, QSDsan aims to identify configuration combinations, systematically probe interdependencies across technologies, and identify key sensitivities to contextual assumptions through the use of quantitative sustainable design methods (techno-economic analysis and life cycle assessment and under uncertainty). 
+``QSDsan`` is an open-source, community-led platform for the quantitative sustainable design (QSD) [1]_ of sanitation and resource recovery systems [2]_. Built in Python, it integrates process modeling, system simulation, techno-economic analysis (TEA), and life cycle assessment (LCA) to support transparent, reproducible, and comprehensive evaluation of emerging technologies. Leveraging BioSTEAM [3]_, the platform provides modular and extensible tools to compare treatment configurations, evaluate resource recovery opportunities, and assess energy, cost, and sustainability tradeoffs. These capabilities support the research, development, and deployment (RD&D) of early-stage technologies for advancing sustainable water management and circular resource recovery.
 
 All systems developed with ``QSDsan`` are included in the package `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ - exposition of sanitation and resource recovery systems.
-
-Additionally, another package, `DMsan <https://github.com/QSD-Group/DMsan>`_ (decision-making for sanitation and resource recovery systems), is being developed for decision-making among multiple dimensions of sustainability with consideration of location-specific contextual parameters.
 
 
 Installation
 ------------
-The easiest way is through ``pip``, in command-line interface (e.g., Anaconda prompt, terminal):
+``QSDsan`` requires Python 3.12 or newer. The easiest way to install ``QSDsan`` is through ``pip`` in a command-line interface (e.g., terminal, PowerShell, etc.):
 
 .. code::
 
     pip install qsdsan
 
-If you need to upgrade:
+To upgrade an existing installation:
 
 .. code::
 
     pip install -U qsdsan
 
-or for a specific version (replace X.X.X with the version number):
+To install a specific version, replace ``X.X.X`` with the version number:
 
 .. code::
 
     pip install qsdsan==X.X.X
 
-If you want to install the latest GitHub version at the `main branch <https://github.com/qsd-group/qsdsan>`_ (note that you can still use the ``-U`` flag for upgrading):
+To install the latest GitHub version from the `main branch <https://github.com/QSD-Group/QSDsan>`_:
 
 .. code::
 
     pip install git+https://github.com/QSD-Group/QSDsan.git
 
-
-.. note::
-
-   If this doesn't give you the newest ``qsdsan``, try ``pip uninstall qsdsan`` first.
-
-   Also, you may need to update some ``qsdsan``'s dependency package (e.g., ' ``biosteam`` and ``thermosteam``) versions in order for the new ``qsdsan`` to run.
-
-
-or other fork and/or branch (replace ``<USERNAME_OF_THE_FORK>`` and ``<BRANCH_NAME>`` with the desired fork and branch names)
+To install from another fork and/or branch, replace ``<USERNAME_OF_THE_FORK>`` and ``<BRANCH_NAME>``:
 
 .. code::
 
     pip install git+https://github.com/<USERNAME_OF_THE_FORK>/QSDsan.git@<BRANCH_NAME>
 
-
 You can also download the package from `PyPI <https://pypi.org/project/qsdsan/>`_.
 
-Note that development of this package is currently under initial stage with limited backward compatibility, please feel free to `submit an issue <https://github.com/QSD-Group/QSDsan/issues>`_ for any questions regarding package upgrading.
+For diagram generation, ``QSDsan`` uses Graphviz. If diagrams fail to render, install Graphviz following the `official Graphviz download instructions <https://graphviz.org/download/>`_ and see the `FAQ <docs/source/FAQ.rst#graphviz-installation>`_ for a quick check.
 
-If you want to contribute to ``QSDsan``, please follow the steps in the `Contributing Guidelines <CONTRIBUTING.rst#contributing-guidelines>`_ section of the documentation to clone the repository. If you find yourself struggle with the installation of QSDsan/setting up the environment, this extended version of `installation instructions <docs/source/tutorials/_installation.rst>`_ might be helpful to you.
+If you want to contribute to ``QSDsan``, please follow the steps in the `Contributing Guidelines <CONTRIBUTING.rst#contributing-guidelines>`_ to clone the repository and install it in editable mode.
 
 
 Documentation
@@ -133,22 +107,12 @@ For each of these tutorials, we are also recording videos where one of the QSD g
 
 About the Authors
 -----------------
-Please refer to `Contributors <CONTRIBUTING.rst#contributors>`_ section for a list of contributors.
+``QSDsan`` is developed and maintained by the Quantitative Sustainable Design Group and the broader community. Please refer to the `GitHub contributors <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ for the latest record of contributions.
 
 
 Contributing
 ------------
 Please refer to the `Contributing Guidelines <CONTRIBUTING.rst#contributing-guidelines>`_ section of the documentation for instructions and guidelines.
-
-
-Stay Connected
---------------
-If you would like to receive news related to the QSDsan platform, you can subscribe to email updates using `this form <https://groups.webservices.illinois.edu/subscribe/154591>`_ (don't worry, you will be able to unsubscribe :)). Thank you in advance for your interest!
-
-
-QSDsan Events
--------------
-We will keep this `calendar <https://calendar.google.com/calendar/embed?src=ep1au561lj8knfumpcd2a7ml08%40group.calendar.google.com&ctz=America%2FChicago>`_ up-to-date as we organize more events (office hours, workshops, etc.), click on the events in the calendar to see the details (including meeting links).
 
 
 License Information

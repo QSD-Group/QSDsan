@@ -5,7 +5,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
+
     Joy Zhang <joycheung1994@gmail.com>
 
 Part of this module is based on the Thermosteam package:
@@ -20,6 +22,7 @@ import numpy as np
 import pandas as pd
 import thermosteam as tmo
 from . import _component, Chemical, Chemicals, CompiledChemicals, Component
+from ._compat import chemical_data_array, prepare_chemicals
 from .utils import add_V_from_rho, load_data
 
 __all__ = ('Components', 'CompiledComponents')
@@ -155,7 +158,7 @@ class Components(Chemicals):
                 adjust_MW_to_measured_as=False):
         '''Cast as a :class:`CompiledComponents` object.'''
         components = tuple(self)
-        tmo._chemicals.prepare(components, skip_checks)
+        prepare_chemicals(components, skip_checks)
         setattr(self, '__class__', CompiledComponents)
         
         try: self._compile(components, ignore_inaccurate_molar_weight, adjust_MW_to_measured_as)
@@ -595,8 +598,6 @@ class Components(Chemicals):
 # =============================================================================
 # Define the CompiledComponents class
 # =============================================================================
-
-chemical_data_array = tmo._chemicals.chemical_data_array
 
 def component_data_array(components, attr):
     data = chemical_data_array(components, attr)

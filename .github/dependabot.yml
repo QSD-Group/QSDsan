@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "pip"
+    directory: "/.github"
+    schedule:
+      interval: "weekly"
+    groups:
+      biosteam-stack:
+        patterns:
+          - "thermosteam"
+          - "biosteam"
+    allow:
+      - dependency-name: "thermosteam"
+      - dependency-name: "biosteam"

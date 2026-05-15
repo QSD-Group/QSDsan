@@ -4,7 +4,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
     Ali Ahmad <aa3056@scarletmail.rutgers.edu>

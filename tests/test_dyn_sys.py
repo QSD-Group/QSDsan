@@ -5,8 +5,11 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Joy Zhang <joycheung1994@gmail.com>
+
     Yalin Li <mailto.yalin.li@gmail.com>
+
     Yoel Cortes-Pena <yoelcortes@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -17,7 +20,7 @@ for license details.
 __all__ = ('test_dyn_sys',)
 
 def test_dyn_sys():
-    from qsdsan import processes as pc, sanunits as su, set_thermo, System
+    from qsdsan import process_models as pc, unit_operations as su, set_thermo, System
     import numpy as np
     from numpy.testing import assert_allclose
 
