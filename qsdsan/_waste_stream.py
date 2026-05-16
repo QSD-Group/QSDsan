@@ -257,9 +257,13 @@ class WasteStream(SanStream):
     dry_mass : float
         Total solids, dry mass of dissolved and suspended solids, in mg/L.
     charge : float
-        TO BE IMPLEMENTED
-    ratios : float
-        TO BE IMPLEMENTED
+        Total charge, in mmol/L. Calculated from component ``i_charge`` values.
+        Note that this only accounts for fully dissociated (strong) electrolytes;
+        pH-dependent speciation of weak acids is not yet supported.
+    ratios : dict
+        Ratios used to partition composite influent parameters (e.g., COD, TKN)
+        into individual component concentrations when constructing a
+        :class:`WasteStream` via the ``*_inf_model`` classmethods.
     stream_impact_item : :class:`StreamImpactItem`
         The :class:`StreamImpactItem` this stream is linked to.
     additional_properties : dict
@@ -841,7 +845,6 @@ class WasteStream(SanStream):
     # @property
     # def charge(self):
     #     return self._liq_sol_properties('charge', self.composite('charge'))
-
 
     @property
     def iconc(self):
