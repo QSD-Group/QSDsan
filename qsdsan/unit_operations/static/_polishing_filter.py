@@ -70,6 +70,10 @@ class PolishingFilter(SanUnit):
         Biogas (when anaerobic), effluent, waste sludge, air (optional & when aerobic).
     filter_type : str
         Can either be "anaerobic" or "aerobic".
+    biomass_ID : str
+        ID of the component that represents the biomass (e.g., ``'X_OHO'``).
+        Must be specified explicitly — there is no default because component IDs
+        vary by model.
     OLR : float
         Organic loading rate of influent, [kg COD/m3/hr].
     HLR : float
@@ -84,8 +88,8 @@ class PolishingFilter(SanUnit):
         If not provided, will be set to the default `solids` attribute of the components.
     split : dict
         Component-wise split to the treated water.
-        E.g., {'NaCl':1, 'WWTsludge':0} indicates all of the NaCl goes to
-        the treated water and all of the WWTsludge goes to the wasted sludge.
+        E.g., ``{'NaCl': 1, 'X_OHO': 0}`` indicates all of the NaCl goes to
+        the treated water and all of the X_OHO goes to the wasted sludge.
         Default splits (based on the membrane bioreactor in [2]_) will be used
         if not provided.
         Note that the split for `Water` will be ignored as it will be adjusted
@@ -104,7 +108,19 @@ class PolishingFilter(SanUnit):
         (generated through the digestion reaction) recovery.
         No degassing membrane will be added if `filter_type` is "aerobic".
     kwargs : dict
-        Other keyword arguments (e.g., t_wall, t_slab).
+        Other keyword arguments (e.g., ``t_wall``, ``t_slab`` for aerobic
+        concrete dimensions; ``_t_wall_an``, ``_t_slab_an`` for anaerobic).
+
+    Attributes
+    ----------
+    recir_ratio : float
+        Internal recirculation ratio — ratio of recirculated flow to raw
+        influent flow. For anaerobic filters, this is a design output: the
+        minimum ratio required to keep filter depth ≤ 6 m, computed during
+        ``_design``. A value of ``R`` means the total hydraulic throughput
+        is ``Q * (1 + R)``, which widens the cross-sectional area and
+        reduces depth for a given packing volume. Also used to size the
+        recirculation pump.
 
     References
     ----------
@@ -123,11 +139,16 @@ class PolishingFilter(SanUnit):
 
     _N_filter_min = 2
     _d_max = 12
+    _freeboard = 3  # [ft]
     _L_B = 50
     _W_B = 30
     _D_B = 10
-    _t_wall = 8/12
-    _t_slab = 1
+    # Aerobic filter concrete dimensions (ref [2])
+    _t_wall = 8/12   # [ft]
+    _t_slab = 1      # [ft]
+    # Anaerobic filter concrete dimensions differ from aerobic (ref [1])
+    _t_wall_an = 6/12   # [ft]
+    _t_slab_an = 8/12   # [ft]
     _excav_slope = 1.5
     _constr_access = 3
 
@@ -165,6 +186,7 @@ class PolishingFilter(SanUnit):
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
                  init_with='WasteStream',
                  filter_type='aerobic',
+                 biomass_ID=None,
                  OLR=(0.5+4)/2/24, # from the 0.5-4 kg/m3/d uniform range in ref [1]
                  HLR=(0.11+0.44)/2, # from the 0.11-0.44  uniform range in ref [1]
                  X_decomp=0.74, X_growth=0.22, # X_decomp & X_growth from ref [2]
@@ -175,6 +197,12 @@ class PolishingFilter(SanUnit):
                  **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, init_with=init_with, F_BM_default=1)
         self.filter_type = filter_type
+        if biomass_ID is None:
+            raise ValueError(
+                "biomass_ID must be specified (e.g., biomass_ID='X_OHO'); "
+                "there is no universal default because component IDs vary by model."
+            )
+        self._xcmp = getattr(self.components, biomass_ID)
         self.OLR = OLR
         self.HLR = HLR
         self.X_decomp = X_decomp
@@ -182,7 +210,7 @@ class PolishingFilter(SanUnit):
         self.biodegradability = biodegradability
         cmps = self.components
         self.split = split if split else default_component_dict(
-            cmps=cmps, gas=0.15, solubles=0.125, solids=0) # ref[2]
+            cmps=cmps, gases=0.15, solubles=0.125, solids=0) # ref[2]
         self.solids = solids or cmps.solids
         self.solids_conc = solids_conc
         self.T = T
@@ -209,10 +237,9 @@ class PolishingFilter(SanUnit):
         xcmp_ID = self._xcmp.ID
 
         self._growth_rxns = growth_rxns = \
-            get_digestion_rxns(self.ins[0], 1., 0., X_growth, xcmp_ID)
+            get_digestion_rxns(self.components, 0., X_growth, xcmp_ID)
         if self.filter_type == 'anaerobic':
-            self._decomp_rxns = get_digestion_rxns(self.ins[0], 1.,
-                                                   X_decomp, 0., xcmp_ID)
+            self._decomp_rxns = get_digestion_rxns(self.components, X_decomp, 0., xcmp_ID)
         else: # aerobic
             decomp_rxns = []
             get = getattr
@@ -239,6 +266,14 @@ class PolishingFilter(SanUnit):
 
         self.growth_rxns(inf.mol)
         self.decomp_rxns.force_reaction(inf.mol)
+        biogas.phase = air_in.phase = air_out.phase = 'g'
+        if self.filter_type == 'aerobic' and inf.imol['O2'] < 0:
+            O2 = -inf.imol['O2']
+            air_in.imol['O2'] = O2
+            air_in.imol['N2'] = 0.79/0.21 * O2
+            inf.imol['O2'] = 0
+        else:
+            air_in.empty()
         inf.split_to(eff, waste, self._isplit.data)
         # tmo.separations.split(inf, eff, waste, self._isplit.data)
 
@@ -248,15 +283,6 @@ class PolishingFilter(SanUnit):
             diff = waste.ivol['Water'] - m_solids/solids_conc
             waste.ivol['Water'] = m_solids/solids_conc
             eff.ivol['Water'] += diff
-
-        biogas.phase = air_in.phase = air_out.phase = 'g'
-
-        if inf.imol['O2'] < 0:
-            air_in.imol['O2'] = - inf.imol['O2']
-            air_in.imol['N2'] = - 0.79/0.21 * inf.imol['O2']
-            inf.imol['O2'] = 0
-        else:
-            air_in.empty()
 
         if self.filter_type == 'anaerobic':
             degassing(eff, biogas)
@@ -332,9 +358,10 @@ class PolishingFilter(SanUnit):
         self._N_filter, self._d, self._D = N, d, D_ft
 
         # Volume of wall/slab concrete, [ft3]
-        VWC = self.t_wall * pi * d_ft * (D_ft+self.freeboard)
+        # Slab: 1 ft floor slab + t_slab top slab, both circular cross-section
+        VWC = self.t_wall * pi * d_ft * (D_ft + self.freeboard)
         VWC *= N
-        VSC = 2 * self.t_slab * _d_to_A(d_ft)
+        VSC = (1 + self.t_slab) * _d_to_A(d_ft)
         VSC *= N
 
         ### Excavation ###
@@ -344,56 +371,66 @@ class PolishingFilter(SanUnit):
         return V_ft3, VWC, VSC, VEX
 
 
-    # def _design_anaerobic_filter(
-    #         self, Q_mgd,
-    #         Ss, # readily biodegradable (soluble) substrate concentration, [kg COD/m3]
-    #         Sp, # slowly biodegradable (particulate) substrate concentration, [kg COD/m3]
-    #         OLR_AF, # organic loading rate, [kg-COD/m3/day]
-    #         HL_AF, # hydraulic loading rate, [m3/m2/hr]
-    #         R_AF # recirculation ratio
-    #         ):
+    def _design_anaerobic(self):
+        inf = self._inf_raw
+        Q = inf.F_vol  # m3/hr
+        COD = compute_stream_COD(inf, 'kg/m3')
 
-    #     ### Filter material ###
-    #     N_AF = 2
-    #     Q_cmd = self.Q_cmd
-    #     # Volume of the filter packing media in each filter, [m3]
-    #     V_m_AF = (Q_cmd/N_AF) * (Ss+Sp) / OLR_AF
-    #     # Diameter (d) / depth (D) of each filter, [m]
-    #     d_AF, D_AF = _get_d_AF(Q_cmd, R_AF, N_AF, HL_AF, V_m_AF)
+        N = self._N_filter_min
+        # Start with no forced recirculation; increase R until depth constraint met.
+        # D = COD*HLR / (OLR*(1+R)) is independent of N — only R controls depth.
+        R = 0.
 
-    #     while D_AF > 6: # assumed maximum depth assumption, [m]
-    #         R_AF = R_AF + 0.1;
-    #         d_AF, D_AF = _get_d_AF(Q_cmd, R_AF, N_AF, HL_AF, V_m_AF)
+        max_D_m = 6.  # maximum filter depth, [m]
 
-    #         while d_AF > 12: # assumed maximum diameter, [m]
-    #             N_AF = N_AF + 1;
-    #             d_AF, D_AF = _get_d_AF(Q_cmd, R_AF, N_AF, HL_AF)
+        # Per-filter packing volume [m3] — shrinks as N grows
+        get_V = lambda N: (Q / N) * COD / self.OLR
+        # Per-filter cross-sectional area accounting for recirculation [m2]
+        get_A = lambda N, R: Q * (1 + R) / (N * self.HLR)
 
-    #     # Unit conversion
-    #     d_AF /= _ft_to_m # [ft]
-    #     D_AF /= _ft_to_m # [ft]
-    #     V_m_AF /= _ft3_to_m3 # [ft3]
+        V = get_V(N)
+        A = get_A(N, R)
+        d = _A_to_d(A)
+        D = V / A  # depth [m]
 
-    #     ### Concrete material ###
-    #     # External wall concrete, [ft3]
-    #     # 6/12 is wall thickness and 3 is freeboard
-    #     VWC_AF = N_AF * 6/12 * math.pi * d_AF * (D_AF+self.freeboard)
-    #     VWC_AF *= N_AF
-    #     # Floor slab concrete, [ft3]
-    #     # 8/12 is slab thickness
-    #     VSC_AF = _d_to_A(d_AF)+ 8/12 * _d_to_A(d_AF)
-    #     VSC_AF *= N_AF
+        # Step 1: increase recirculation until depth ≤ 6 m
+        while D > max_D_m:
+            R += 0.1
+            A = get_A(N, R)
+            d = _A_to_d(A)
+            D = V / A
 
-    #     ### Excavation ###
-    #     SL = 1.5 # slope = horizontal/vertical
-    #     CA = 3 # construction Access, [ft]
-    #     #  Excavation of pump building
-    #     PBL, PBW, PBD = 50, 30, 10 # pump building length, width, depth, [ft]
-    #     Area_B_P = (PBL+2*CA) * (PBW+2*CA) # bottom area of frustum, [ft2]
-    #     Area_T_P = (PBL+2*CA+PBW*SL) * (PBW+2*CA+PBD*SL) # top area of frustum, [ft2]
-    #     VEX_PB = 0.5 * (Area_B_P+Area_T_P) * PBD # total volume of excavation, [ft3]
+        # Step 2: increase number of filters until diameter ≤ d_max
+        # (Adding filters reduces Q/filter and d; D = COD*HLR/(OLR*(1+R)) is unchanged.)
+        while d > self.d_max:
+            N += 1
+            V = get_V(N)
+            A = get_A(N, R)
+            d = _A_to_d(A)
+            D = V / A
 
-    #     return N_AF, d_AF, D_AF, V_m_AF, VWC_AF, VWC_AF, VEX_PB
+        self._recir_ratio = R
+
+        V_ft3 = V / _ft3_to_m3 * N
+        d_ft = d / _ft_to_m
+        D_ft = D / _ft_to_m
+        self._N_filter, self._d, self._D = N, d, D_ft
+
+        ### Concrete ###
+        # Anaerobic filter uses thinner wall and slab than aerobic (ref [1])
+        t_wall = self._t_wall_an
+        t_slab = self._t_slab_an
+        # Slab: 1 ft floor slab + t_slab top slab, both circular cross-section
+        VWC = t_wall * pi * d_ft * (D_ft + self.freeboard)
+        VWC *= N
+        VSC = (1 + t_slab) * _d_to_A(d_ft)
+        VSC *= N
+
+        ### Excavation ###
+        VEX = calculate_excavation_volume(
+            self.L_B, self.W_B, self.D_B, self.excav_slope, self.constr_access)
+
+        return V_ft3, VWC, VSC, VEX
 
     def _design_pump(self):
         ID, ins, outs = self.ID, self.ins, self.outs
@@ -522,6 +559,14 @@ class PolishingFilter(SanUnit):
         else:
             raise ValueError('`filter_type` can only be "anaerobic" or "aerobic", '
                              f'not "{i}".')
+
+    @property
+    def biomass_ID(self):
+        '''[str] ID of the Component that represents the biomass.'''
+        return self._xcmp.ID
+    @biomass_ID.setter
+    def biomass_ID(self, i):
+        self._xcmp = getattr(self.components, i)
 
     @property
     def OLR(self):
@@ -663,7 +708,12 @@ class PolishingFilter(SanUnit):
 
     @property
     def recir_ratio(self):
-        '''[float] Internal recirculation ratio.'''
+        '''
+        [float] Internal recirculation ratio (recirculated flow / raw influent flow).
+        For anaerobic filters this is set by ``_design`` to the minimum value that
+        keeps filter depth ≤ 6 m. Falls back to the ratio of actual inlet flows
+        if not yet set by design.
+        '''
         return self._recir_ratio or self.ins[1].F_vol/self.ins[0].F_vol
     @recir_ratio.setter
     def recir_ratio(self, i):
@@ -752,9 +802,7 @@ class PolishingFilter(SanUnit):
 
     @property
     def growth_rxns(self):
-        '''
-        [:class:`tmo.ParallelReaction`] Biomass (WWTsludge) growth reactions.
-        '''
+        '''[:class:`tmo.ParallelReaction`] Biomass growth reactions.'''
         return self._growth_rxns
 
     @property

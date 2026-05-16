@@ -44,3 +44,5 @@ Keep the common tutorial conventions unless there is a focused reason to differ:
 4. Keep import migrations mechanical and public: prefer `from qsdsan import sanunits as su` or `from qsdsan.sanunits import static, dynamic, bst`.
 5. Do not copy BioSTEAM/ThermoSTEAM implementations into QSDsan unless QSDsan adds meaningful behavior.
 6. Record unresolved classification or migration decisions in the relevant design/spec doc.
+7. When adding LCA objects to a new unit class, use `_construction_specs` instead of creating `ImpactItem`/`Construction` objects in `__init__`. This avoids requiring items to be pre-loaded at unit creation time.
+8. **Always update documentation alongside code changes.** For every changed parameter, behavior, or default: update the class/function docstring `Parameters` section, any inline examples that reference old values, and property docstrings. Stale docs (e.g., old default values, removed IDs) are treated as bugs.

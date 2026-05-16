@@ -452,7 +452,7 @@ def get_digestion_rxns(components, X_biogas, X_growth, biomass_ID, biodegradabil
                              check_atomic_balance=False)
             growth_rxns.append(growth_rxn)
 
-    if len(biogas_rxns)+len(growth_rxns)>1:
+    if biogas_rxns or growth_rxns:
         return PRxn(biogas_rxns+growth_rxns)
 
     return []
