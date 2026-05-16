@@ -804,7 +804,7 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box', adjust_hue=False
         if neither x nor y is provided.
     y_axis : :class:`biosteam.Parameter`, :class:`biosteam.Metric` or Iterable
         What to plot on the y-axis, can be parameters or metrics of the model,
-        default to None.
+        default to an empty tuple.
     kind : str
         What kind of plot to be returned, refer to the summary table for valid inputs.
     adjust_hue : bool

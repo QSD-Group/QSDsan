@@ -417,7 +417,7 @@ class WasteStream(SanStream):
         P : float, optional
             The unit for pressure. The default is 'Pa'.
         flow : str, optional
-            The unit for the flow. The default is 'kg/hr'.
+            The unit for the flow. The default is 'g/hr'.
         composition : bool, optional
             Whether to show flow information of different :class:`Component` objects in
             this waste stream as a percentage. The default is False.
