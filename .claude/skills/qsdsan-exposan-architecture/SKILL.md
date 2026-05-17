@@ -42,14 +42,14 @@ Keep the common tutorial conventions unless there is a focused reason to differ:
 
 | Class | Registry scope | Swapped on `set_flowsheet`? |
 |---|---|---|
-| `ImpactIndicator` | Global (class-level) | No |
+| `ImpactIndicator` | Per-flowsheet (`flowsheet.indicator`) | Yes |
 | `ImpactItem` | Per-flowsheet (`flowsheet.item`) | Yes |
 | `Construction` | Per-flowsheet (`flowsheet.construction`) | Yes |
 | `Transportation` | Per-flowsheet (`flowsheet.transportation`) | Yes |
 
-`qs.Flowsheet` is `SanFlowsheet` (a subclass of BioSTEAM's `Flowsheet`). It adds three extra `Registry` attributes (`item`, `construction`, `transportation`) alongside the existing `stream`, `unit`, `system` ones.
+`qs.Flowsheet` is `SanFlowsheet` (a subclass of BioSTEAM's `Flowsheet`). It adds four extra `Registry` attributes (`indicator`, `item`, `construction`, `transportation`) alongside the existing `stream`, `unit`, `system` ones.
 
-`qs.main_flowsheet` is a `SanMainFlowsheet` instance. Its `set_flowsheet()` override swaps all six registries (BioSTEAM's three plus the three LCA ones) atomically.
+`qs.main_flowsheet` is a `SanMainFlowsheet` instance. Its `set_flowsheet()` override swaps all seven registries (BioSTEAM's three plus the four LCA ones) atomically.
 
 ### Flowsheet context manager — the correct isolation pattern
 
@@ -66,8 +66,6 @@ with qs.Flowsheet('sysB') as fs_b:
     steel_b = qs.ImpactItem('Steel', 'kg', GWP=5.0)
     ...
 ```
-
-`ImpactIndicator` objects created outside any `with` block are global and visible everywhere.
 
 ### `_construction_specs` — declarative default materials
 
@@ -113,6 +111,12 @@ def create_system(system_ID='A', flowsheet=None):
 ```
 
 Remove any `clear_lca_registries()` calls that preceded the `flowsheet.clear()` call — they are now redundant because `SanFlowsheet.clear()` already detaches `StreamImpactItem` objects from their streams and clears `item`, `construction`, and `transportation` registries.
+
+## Release Conventions
+
+- Always bump QSDsan and EXPOsan versions together — they are released as a paired set.
+- Update `CHANGELOG.rst` in both repos before tagging. The tag triggers the release workflow; there is no post-tag opportunity to amend the changelog.
+- Tag format: `v*.*.*` (e.g. `v1.4.5`). The workflow verifies the tag matches `pyproject.toml` version and will fail if they differ.
 
 ## Change Checklist
 
