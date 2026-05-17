@@ -42,14 +42,14 @@ Keep the common tutorial conventions unless there is a focused reason to differ:
 
 | Class | Registry scope | Swapped on `set_flowsheet`? |
 |---|---|---|
-| `ImpactIndicator` | Global (class-level) | No |
+| `ImpactIndicator` | Per-flowsheet (`flowsheet.indicator`) | Yes |
 | `ImpactItem` | Per-flowsheet (`flowsheet.item`) | Yes |
 | `Construction` | Per-flowsheet (`flowsheet.construction`) | Yes |
 | `Transportation` | Per-flowsheet (`flowsheet.transportation`) | Yes |
 
-`qs.Flowsheet` is `SanFlowsheet` (a subclass of BioSTEAM's `Flowsheet`). It adds three extra `Registry` attributes (`item`, `construction`, `transportation`) alongside the existing `stream`, `unit`, `system` ones.
+`qs.Flowsheet` is `SanFlowsheet` (a subclass of BioSTEAM's `Flowsheet`). It adds four extra `Registry` attributes (`indicator`, `item`, `construction`, `transportation`) alongside the existing `stream`, `unit`, `system` ones.
 
-`qs.main_flowsheet` is a `SanMainFlowsheet` instance. Its `set_flowsheet()` override swaps all six registries (BioSTEAM's three plus the three LCA ones) atomically.
+`qs.main_flowsheet` is a `SanMainFlowsheet` instance. Its `set_flowsheet()` override swaps all seven registries (BioSTEAM's three plus the four LCA ones) atomically.
 
 ### Flowsheet context manager — the correct isolation pattern
 
@@ -66,8 +66,6 @@ with qs.Flowsheet('sysB') as fs_b:
     steel_b = qs.ImpactItem('Steel', 'kg', GWP=5.0)
     ...
 ```
-
-`ImpactIndicator` objects created outside any `with` block are global and visible everywhere.
 
 ### `_construction_specs` — declarative default materials
 
@@ -114,6 +112,12 @@ def create_system(system_ID='A', flowsheet=None):
 
 Remove any `clear_lca_registries()` calls that preceded the `flowsheet.clear()` call — they are now redundant because `SanFlowsheet.clear()` already detaches `StreamImpactItem` objects from their streams and clears `item`, `construction`, and `transportation` registries.
 
+## Release Conventions
+
+- Always bump QSDsan and EXPOsan versions together — they are released as a paired set.
+- Update `CHANGELOG.rst` in both repos before tagging. The tag triggers the release workflow; there is no post-tag opportunity to amend the changelog.
+- Tag format: `v*.*.*` (e.g. `v1.4.5`). The workflow verifies the tag matches `pyproject.toml` version and will fail if they differ.
+
 ## Change Checklist
 
 1. Check both repos for consumers before changing public names.
@@ -123,3 +127,4 @@ Remove any `clear_lca_registries()` calls that preceded the `flowsheet.clear()` 
 5. Do not copy BioSTEAM/ThermoSTEAM implementations into QSDsan unless QSDsan adds meaningful behavior.
 6. Record unresolved classification or migration decisions in the relevant design/spec doc.
 7. When adding LCA objects to a new unit class, use `_construction_specs` instead of creating `ImpactItem`/`Construction` objects in `__init__`. This avoids requiring items to be pre-loaded at unit creation time.
+8. **Always update documentation alongside code changes.** For every changed parameter, behavior, or default: update the class/function docstring `Parameters` section, any inline examples that reference old values, and property docstrings. Stale docs (e.g., old default values, removed IDs) are treated as bugs.

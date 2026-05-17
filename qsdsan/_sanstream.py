@@ -269,7 +269,8 @@ class SanStream(Stream):
             to the component properties if not provided.
         '''
         if not gas_IDs:
-            gas_IDs = original_stream.gases if isinstance(original_stream, SanStream) \
+            gas_IDs = [c.ID for c in original_stream.chemicals.gases] \
+                if isinstance(original_stream, SanStream) \
                 else [i.ID for i in original_stream.components if i.locked_state=='g']
         if receiving_stream:
             receiving_stream.imass[gas_IDs] += original_stream.imass[gas_IDs]
