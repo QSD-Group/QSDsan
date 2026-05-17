@@ -38,103 +38,105 @@ default_kwargs = dict(
 
 class TEA(BSTTEA):
     '''
-    Calculate an annualized cost for simple economic analysis that does not
-    include loan payment (i.e., 100% equity).
+    Techno-economic analysis (TEA) with a simplified
+    capital cost structure, unit-level operating cost components, and
+    annualized cost metrics. Discounted cash flow is also included for 
+    net present value (NPV) and internal rate of return (IRR) calculations.
+
+    Key design choices:
+
+    - Uses ``start_year`` + ``lifetime`` to indicate project duration.
+    - Uses ``uptime_ratio`` (fraction in [0, 1]) to indicate operating time.
+    - Collapses the capital cost hierarchy so DPI (direct permanent investment) 
+      = TDC (total depreciable capital) = FCI (fixed capital investment) = installed equipment
+      cost by default (no indirect cost adders applied unless ``_DPI``/``_TDC``/``_FCI``
+      are overridden in a subclass).
+    - Exposes ``CAPEX`` as a direct override for installed equipment cost, and
+      ``lang_factor`` as an alternative to bare-module factors.
+    - Decomposes fixed operating cost (FOC) into ``annual_maintenance`` (fraction of FCI),
+      ``annual_labor``, and additional operating expenditures from individual units
+      (``unit_add_OPEX``) and at the system level (``system_add_OPEX``).
+    - Adds annualized cost properties: ``annualized_NPV``, ``annualized_CAPEX``,
+      ``annualized_equipment_cost``, and ``EAC`` (equivalent annual cost).
+    - Defaults to 100% equity financing, though loan financing is still available
+      via ``finance_interest``, ``finance_years``, and ``finance_fraction``.
 
     Parameters
     ----------
-    system : :class:`biosteam.System`
+    system : obj
         The system this TEA is conducted for.
     discount_rate : float
-        Interest rate used in discounted cash flow analysis.
+        Discount rate used in the discounted cash flow analysis.
 
         .. note::
 
-            Herein `discount_rate` equals to `IRR` (internal rate of return).
-            Although theoretically, IRR is the discount rate only when the
-            net present value (NPV) is 0.
+            Herein ``discount_rate`` equals ``IRR`` (internal rate of return).
+            Technically, IRR equals the discount rate only when NPV is 0.
 
     income_tax : float
-        Combined tax (e.g., sum of national, state, local levels) for net earnings.
+        Combined tax rate (e.g., sum of national, state, and local levels)
+        applied to net earnings.
     start_year : int
-        Start year of the system.
+        Calendar year in which the system begins operation.
     lifetime : int
-        Total lifetime of the system, [yr]. Currently `biosteam` only supports int.
+        Total operating lifetime of the system, [yr].
 
         .. note::
 
-            As :class:`TEA` is a subclass of :class:`biosteam.TEA`,
-            and :class:`biosteam.TEA` currently only supports certain
-            depreciation schedules, lifetime must be larger than or equal to 6.
-
+            Only certain depreciation schedule lengths are currently supported,
+            so ``lifetime`` must be >= 6.
 
     uptime_ratio : float
-        Fraction of time that the system is operating, should be in [0,1]
-        (i.e., a system that is always operating has an uptime_ratio of 1).
+        Fraction of time the system is operating, in [0, 1].
+        A continuously operating system has ``uptime_ratio = 1``.
 
         .. note::
 
-            If a unit has an `uptime_ratio` that is different from the `uptime_ratio`
-            of the system, the `uptime_ratio` of the unit will be used in calculating
-            the additional operation expenses (provided in `unit.add_OPEX`).
+            If a unit has a different ``uptime_ratio`` than the system, the unit's
+            value is used only when scaling its ``add_OPEX``. Utility and material
+            costs are always scaled to the system's operating hours. Flows that
+            do not match the system ``uptime_ratio`` should be normalized before
+            being assigned to the unit (e.g., a pump that runs 50% of the time at
+            50 kW should have ``power_utility`` set to 25 kW).
 
-            However, `uptime_ratio` of the unit will not affect the utility
-            (heating, cooling, power) and material costs/environmental impacts.
-
-            For example, if the `uptime_ratio` of the system and the unit are
-            1 and 0.5, respectively, then in calculating operating expenses
-            associated with the unit:
-
-                - Utility and material costs/environmental impacts will be calculated for 1*24*365 hours per year.
-                - Additional operating expenses will be calculated for 0.5*24*365 hours per year.
-
-            If utility and material flows are not used at the same `uptime_ratio`
-            as the system, they should be normalized to be the same.
-            For example, if the system operates 100% of time but a pump only works
-            50% of the pump at 50 kW. Set the pump `power_utility` to be 50*50%=25 kW.
-
-    
     CEPCI : float
-        Chemical Engineering Plant Cost Index, default to that of year 2017 (567.5).
-        Values for alternative years can be checked by `qsdsan.CEPCI_by_year`.
+        Chemical Engineering Plant Cost Index used for equipment cost scaling.
+        Defaults to 567.5 (year 2017). Alternative values can be looked up via
+        ``qsdsan.CEPCI_by_year``.
     CAPEX : float
-        Capital expenditure, if not provided, is set to be the same as `installed_equipment_cost`.
+        Total capital expenditure. When provided, overrides ``installed_equipment_cost``.
     lang_factor : float or None
-        A factor to estimate the total installation cost based on equipment purchase cost,
-        leave as `None` if providing `CAPEX`.
-        If neither ``CAPEX`` nor ``lang_factor`` is provided,
-        ``installed_equipment_cost`` will be calculated as the sum of purchase costs
-        of all units within the system.
+        Multiplier applied to total equipment purchase cost to estimate installed
+        cost. Mutually exclusive with ``CAPEX``; leave as ``None`` when ``CAPEX``
+        is provided. If neither is given, installed cost is summed from each unit's
+        bare-module factors.
     annual_maintenance : float
-        Annual maintenance cost as a fraction of fixed capital investment.
+        Annual maintenance cost as a fraction of fixed capital investment (FCI).
     annual_labor : float
-        Annual labor cost.
+        Annual labor cost [USD/yr].
     system_add_OPEX : float or dict
-        Annual additional system-wise operating expenditure (on top of the `add_OPEX` of each unit).
-        Float input will be automatically converted to a dict with the key being
-        "System additional OPEX".
+        Additional annual operating expenditure at the system level, on top of
+        the ``add_OPEX`` of individual units. A float is automatically converted
+        to a dict keyed ``"System additional OPEX"``.
     construction_schedule : tuple
-        Construction progress prior to the start of the system
-        (fraction of the construction that can be finished each year),
-        must sum up to 1. Leave as the default (0,1) if no special construction progress is expected.
-    accumulate_interest_during_construction  : bool
-        Whether loan interest during the construction period will be accumulated
-        onto the loan principal.
-        If False (default), interest accumulated during the construction stage
-        will be paid using equity/cash (i.e., not added to the loan);
-        if True, the loan principal will include the interest accumulated during construction.
-        See BioSTEAM issue #180 for details:
-        https://github.com/BioSTEAMDevelopmentGroup/biosteam/issues/180
+        Fraction of total capital invested in each year prior to start-up; must
+        sum to 1. Use the default ``(0, 1)`` if no staged construction is needed.
+    accumulate_interest_during_construction : bool
+        If ``False`` (default), loan interest accrued during construction is paid
+        from equity and not rolled into the loan principal.
+        If ``True``, accrued interest is capitalized onto the loan principal.
+        See https://github.com/BioSTEAMDevelopmentGroup/biosteam/issues/180
+        for details.
     simulate_system : bool
-        Whether to simulate the system before creating the LCA object.
+        Whether to simulate the system before creating the TEA object.
     simulate_kwargs : dict
-        Keyword arguments for system simulation (used when `simulate_system` is True).
+        Keyword arguments passed to ``system.simulate()`` when ``simulate_system``
+        is ``True``.
     tea_kwargs
-        Additional values that will be passed to :class:`biosteam.TEA`,
-        including (default values in parentheses)
-        `startup_months` (0), `startup_FOCfrac` (1), `startup_VOCfrac` (1),
-        `startup_salesfrac` (1), `WC_over_FCI` (0), `finance_interest` (0),
-        `finance_years` (0), and `finance_fraction` (0).
+        Additional keyword arguments for the underlying cash flow model.
+        Defaults (in parentheses): ``startup_months`` (0), ``startup_FOCfrac`` (1),
+        ``startup_VOCfrac`` (1), ``startup_salesfrac`` (1), ``WC_over_FCI`` (0),
+        ``finance_interest`` (0), ``finance_years`` (0), ``finance_fraction`` (0).
 
     Examples
     --------
@@ -601,5 +603,18 @@ class TEA(BSTTEA):
         return self.annualized_CAPEX+self.AOC
     
 
-# For backward compatibility    
-SimpleTEA = TEA
+class SimpleTEA(TEA):
+    '''
+    .. deprecated::
+        Use :class:`TEA` instead. ``SimpleTEA`` is an alias kept for backward
+        compatibility and will be removed in a future version.
+    '''
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn(
+            'SimpleTEA is deprecated and will be removed in a future version; '
+            'use TEA instead.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)

@@ -287,7 +287,7 @@ class AnMBR(SanUnit):
         self.Y_biomass = Y_biomass
         cmps = self.components
         self.split = split if split else default_component_dict(
-            cmps=cmps, gas=0.15, solubles=0.125, solids=0) # ref[2]
+            cmps=cmps, gases=0.15, solubles=0.125, solids=0) # ref[2]
         self.solids = solids or cmps.solids
         self._xcmp = getattr(self.components, biomass_ID)
         self.solids_conc = solids_conc
