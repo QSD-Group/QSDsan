@@ -351,8 +351,10 @@ class Hydrotreating(Reactor):
                  hydrogen_P=1530*6894.76,
                  hydrogen_rxned_to_inf_oil=0.046,
                  hydrogen_excess=3,
-                 hydrocarbon_ratio=0.875, # 87.5 wt% of biocrude and reacted H2 [1]
                  # spreadsheet HT calculation
+                 hydrocarbon_ratio=0.875, # 87.5 wt% of biocrude and reacted H2 [1]
+                 # Tin = 174 C (345 F) based on Jones PNNL report
+                 # however, the reaction releases heat and increase the temperature of effluent to 402 C (755.5 F)
                  HTin_T=174+273.15,
                  HTrxn_T=402+273.15, # [1]
                  HT_composition={'CH4':0.02280, 'C2H6':0.02923,

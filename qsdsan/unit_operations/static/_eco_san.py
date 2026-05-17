@@ -73,7 +73,7 @@ class EcoSanAerobic(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.process_models.Decay <process_models_Decay>`
+    :class:`qsdsan.process_models.Decay`
 
     :class:`qsdsan.unit_operations.EcoSanBioCost`
     '''
@@ -128,7 +128,7 @@ class EcoSanAnaerobic(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.process_models.Decay <process_models_Decay>`
+    :class:`qsdsan.process_models.Decay`
 
     :class:`qsdsan.unit_operations.EcoSanBioCost`
     '''
@@ -183,7 +183,7 @@ class EcoSanAnoxic(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.process_models.Decay <process_models_Decay>`
+    :class:`qsdsan.process_models.Decay`
 
     :class:`qsdsan.unit_operations.EcoSanBioCost`
     '''
@@ -306,7 +306,7 @@ class EcoSanECR(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.process_models.Decay <process_models_Decay>`
+    :class:`qsdsan.process_models.Decay`
     '''
     _N_ins = 3
     _N_outs = 3
@@ -439,7 +439,7 @@ class EcoSanMBR(SanUnit, Decay):
 
     See Also
     --------
-    :ref:`qsdsan.process_models.Decay <process_models_Decay>`
+    :class:`qsdsan.process_models.Decay`
     '''
     _N_ins = 1
     _N_outs = 3
@@ -525,7 +525,7 @@ class EcoSanPrimary(SepticTank):
 
     See Also
     --------
-    :ref:`qsdsan.process_models.Decay <process_models_Decay>`
+    :class:`qsdsan.process_models.Decay`
 
     :class:`qsdsan.unit_operations.SepticTank`
     '''

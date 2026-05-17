@@ -1,0 +1,73 @@
+# Creates a GitHub Release when a version tag is pushed.
+
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Check tag matches pyproject.toml version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          VERSION=$(python -c "import tomllib; f=open('pyproject.toml','rb'); print(tomllib.load(f)['project']['version'])")
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "ERROR: tag $GITHUB_REF_NAME does not match pyproject.toml version $VERSION"
+            exit 1
+          fi
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Build distributions
+        run: python -m build
+
+      - name: Check distribution size
+        run: |
+          python - <<'EOF'
+          import os, sys, zipfile
+
+          MAX_MB = 90
+          fail = False
+          for fname in sorted(os.listdir('dist')):
+              path = os.path.join('dist', fname)
+              size_mb = os.path.getsize(path) / 1024 / 1024
+              print(f"{fname}: {size_mb:.1f} MB")
+              if size_mb > MAX_MB:
+                  print(f"\nERROR: {fname} exceeds {MAX_MB} MB (PyPI limit is 100 MB).")
+                  if fname.endswith('.whl'):
+                      print("Largest files in wheel:")
+                      with zipfile.ZipFile(path) as zf:
+                          entries = sorted(zf.infolist(), key=lambda x: x.file_size, reverse=True)[:10]
+                          for e in entries:
+                              print(f"  {e.filename}: {e.file_size / 1024 / 1024:.1f} MB")
+                  fail = True
+          if fail:
+              sys.exit(1)
+          EOF
+
+      - name: Validate package metadata
+        run: twine check dist/*
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

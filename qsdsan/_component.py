@@ -667,14 +667,6 @@ class Component(Chemical):
     __copy__ = copy
 
 
-    # # This won't work if a customized chemical is used
-    # @classmethod
-    # def from_chemical(cls, ID, chemical=None, **data):
-    #     '''Return a new :class:`Component` from a :class:`thermosteam.Chemical` object.'''
-    #     chemical_ID = chemical if isinstance(chemical, str) else chemical.ID
-    #     new = Component(ID=ID, search_ID=chemical_ID, **data)
-    #     return new
-
     @classmethod
     def from_chemical(cls, ID, chemical=None, formula=None, phase=None, measured_as=None,
                       i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,

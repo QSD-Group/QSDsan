@@ -15,6 +15,7 @@ The core Python classes in ``QSDsan`` are listed below. Click any class to view 
    ImpactItem
    LCA
    Process
+   SanFlowsheet
    SanUnit
    streams
    TEA

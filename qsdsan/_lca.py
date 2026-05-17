@@ -25,7 +25,6 @@ from warnings import warn
 from . import ImpactIndicator, ImpactItem, Stream, SanStream, SanUnit
 from .utils import (
     auom,
-    clear_lca_registries,
     format_number as f_num
     )
 
@@ -230,6 +229,7 @@ class LCA:
         self._construction_units = set()
         self._transportation_units = set()
         self._lca_streams = set()
+        self._resolve_construction_specs(system)
         self._update_system(system)
         self.lifetime = lifetime
         self.indicators = indicators
@@ -249,7 +249,36 @@ class LCA:
                     raise e
             self.add_other_item(item, f_quantity, unit)
 
-    clear_lca_registries = clear_lca_registries
+    def _resolve_construction_specs(self, system):
+        from . import Construction, ImpactItem
+        for u in system.units:
+            if not isinstance(u, SanUnit): continue
+            specs = getattr(type(u), '_construction_specs', ())
+            if not specs: continue
+            if not u.include_construction: continue
+
+            covered_ids = {c.item.ID for c in u._construction if c.item is not None}
+
+            for spec in specs:
+                item_id = spec['item']
+                if item_id in covered_ids: continue
+
+                item = ImpactItem.get_item(item_id)
+                if item is None:
+                    raise RuntimeError(
+                        f"ImpactItem '{item_id}' required by "
+                        f"{type(u).__name__}._construction_specs is not loaded "
+                        "in the current flowsheet. Load the item before creating LCA."
+                    )
+                c = Construction(
+                    linked_unit=u,
+                    item=item,
+                    quantity=spec['quantity'],
+                    quantity_unit=spec.get('quantity_unit', ''),
+                    lifetime=spec.get('lifetime'),
+                    lifetime_unit=spec.get('lifetime_unit', 'yr'),
+                )
+                u._construction.append(c)
 
     def _update_system(self, system):
         for u in system.units:
