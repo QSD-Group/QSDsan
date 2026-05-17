@@ -295,7 +295,8 @@ class PolishingFilter(SanUnit):
             degassing(eff, air_out)
             degassing(waste, air_out)
             air_out.imol['N2'] += air_in.imol['N2']
-            air_out.imol['O2'] += air_in.imol['O2']
+            # N2 is inert and passes through; O2 was fully consumed by combustion
+            # reactions so must NOT be added here (would double-count it).
             self._recir_ratio = None
 
         if self.T is not None:

@@ -15,6 +15,7 @@ for license details.
 
 __all__ = (
     'test_aerobic_polishing_filter_no_negative_O2_in_outlets',
+    'test_aerobic_polishing_filter_no_O2_double_count_in_air_out',
     'test_anaerobic_polishing_filter_no_air_injection',
     )
 
@@ -93,6 +94,36 @@ def test_aerobic_polishing_filter_no_negative_O2_in_outlets():
     assert pf.outs[2].imol['O2'] >= -1e-12, (
         f"Waste sludge O2 is negative ({pf.outs[2].imol['O2']:.4e}): "
         "O2 deficit was not corrected before split_to"
+    )
+
+
+def test_aerobic_polishing_filter_no_O2_double_count_in_air_out():
+    import qsdsan as qs
+    qs.main_flowsheet.clear()
+    _make_polishing_filter_cmps()
+
+    influent = qs.WasteStream('pf2_influent', AceticAcid=1, H2O=100, units='kg/hr')
+    recycle = qs.WasteStream('pf2_recycle')
+    air = qs.WasteStream('pf2_air', phase='g')
+    pf = qs.sanunits.PolishingFilter(
+        'PF_aerobic2',
+        ins=(influent, recycle, air),
+        outs=('pf2_biogas', 'pf2_eff', 'pf2_waste', 'pf2_air_out'),
+        filter_type='aerobic',
+        biomass_ID='Biomass',
+        split=_SPLIT,
+        solids=('Biomass',),
+    )
+    pf.run()
+
+    # O2 injected via air_in was fully consumed by combustion reactions.
+    # air_out should contain only N2 (inert pass-through) plus any dissolved
+    # gases degassed from eff/waste — O2 must not be double-counted.
+    air_in_O2 = pf.ins[2].imol['O2']
+    air_out_O2 = pf.outs[3].imol['O2']
+    assert air_out_O2 <= air_in_O2 + 1e-12, (
+        f"air_out O2 ({air_out_O2:.4e}) exceeds air_in O2 ({air_in_O2:.4e}): "
+        "consumed O2 is being double-counted in air_out"
     )
 
 
