@@ -23,6 +23,11 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - Restructured API documentation to mirror the new package layout, with dedicated pages for each sub-namespace.
 
+- Bug fixes in :func:`~.process_models.rhos_asm2d`:
+
+  - Added ``if X_MeOH > 0`` and ``if X_MeP > 0`` guards to the precipitation and redissolution reactions, consistent with the existing guards for ``X_H``, ``X_PAO``, and ``X_AUT``. Without these guards, the BDF solver's polynomial extrapolation could produce tiny positive floating-point values for ``X_MeOH``, causing spurious ``X_MeP`` accumulation over long simulations.
+  - Added a ``S_F + S_A > 0`` guard to the heterotrophic growth substrate-partitioning terms. When the BDF Newton iterations drive both fermentable substrate (``S_F``) and acetate (``S_A``) to zero simultaneously, the partition fractions ``S_F/(S_F+S_A)`` and ``S_A/(S_F+S_A)`` produce ``0/0`` and raise a ``FloatingPointError``; zero substrate correctly implies zero growth.
+
 
 `1.4.0`_
 --------
