@@ -247,8 +247,10 @@ def rhos_asm2d(state_arr, params):
     k_PRE = params['k_PRE']
     k_RED = params['k_RED']
     K_ALK_PRE = params['K_ALK_PRE']
-    _rhos[19] = k_PRE*S_PO4*X_MeOH
-    _rhos[20] = k_RED*X_MeP*S_ALK/(K_ALK_PRE+S_ALK)
+    if X_MeOH > 0:
+        _rhos[19] = k_PRE*S_PO4*X_MeOH
+    if X_MeP > 0:
+        _rhos[20] = k_RED*X_MeP*S_ALK/(K_ALK_PRE+S_ALK)
     
     return _rhos
 
