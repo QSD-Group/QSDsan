@@ -191,8 +191,12 @@ def rhos_asm2d(state_arr, params):
         K_NO3_H = params['K_NO3_H']
         eta_NO3_H = params['eta_NO3_H']                
         _rhos[3:7] = mu_H*S_NH4/(K_NH4_H+S_NH4)*S_PO4/(K_P_H+S_PO4)*S_ALK/(K_ALK_H+S_ALK)*X_H
-        _rhos[[3,5]] *= S_F/(K_F+S_F)*S_F/(S_F+S_A)
-        _rhos[[4,6]] *= S_A/(K_A_H+S_A)*S_A/(S_F+S_A)
+        SA_tot = S_F + S_A
+        if SA_tot > 0:
+            _rhos[[3,5]] *= S_F/(K_F+S_F)*(S_F/SA_tot)
+            _rhos[[4,6]] *= S_A/(K_A_H+S_A)*(S_A/SA_tot)
+        else:
+            _rhos[3:7] = 0.
         _rhos[3:5] *= S_O2/(K_O2_H+S_O2)
         _rhos[5:7] *= eta_NO3_H*K_O2_H/(K_O2_H+S_O2)*S_NO3/(K_NO3_H+S_NO3)
     
