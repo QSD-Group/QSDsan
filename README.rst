@@ -14,8 +14,12 @@ QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Sys
 .. image:: https://img.shields.io/pypi/v/qsdsan?style=flat&color=blue
    :target: https://pypi.org/project/qsdsan
 
-.. DOI
-.. image:: https://img.shields.io/badge/DOI-10.1039%2Fd2ew00455k-blue?style=flat
+.. Zenodo release DOI
+.. image:: https://zenodo.org/badge/299665841.svg
+   :target: https://zenodo.org/badge/latestdoi/299665841
+
+.. Paper DOI
+.. image:: https://img.shields.io/badge/Publication-10.1039%2Fd2ew00455k-blue?style=flat
    :target: https://doi.org/10.1039/d2ew00455k
 
 .. Documentation build
