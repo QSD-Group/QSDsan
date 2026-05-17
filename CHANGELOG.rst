@@ -23,6 +23,32 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - Restructured API documentation to mirror the new package layout, with dedicated pages for each sub-namespace.
 
+- Bug fixes in :func:`~.process_models.rhos_asm2d`:
+
+  - Added ``if X_MeOH > 0`` and ``if X_MeP > 0`` guards to the precipitation and redissolution reactions, consistent with the existing guards for ``X_H``, ``X_PAO``, and ``X_AUT``. Without these guards, the BDF solver's polynomial extrapolation could produce tiny positive floating-point values for ``X_MeOH``, causing spurious ``X_MeP`` accumulation over long simulations.
+  - Added a ``S_F + S_A > 0`` guard to the heterotrophic growth substrate-partitioning terms. When the BDF Newton iterations drive both fermentable substrate (``S_F``) and acetate (``S_A``) to zero simultaneously, the partition fractions ``S_F/(S_F+S_A)`` and ``S_A/(S_F+S_A)`` produce ``0/0`` and raise a ``FloatingPointError``; zero substrate correctly implies zero growth.
+
+- Multiple bug fixes and improvements to :class:`~.unit_operations.PolishingFilter`:
+
+  - Moved O2 deficit calculation before the effluent split so dissolved oxygen is correctly accounted for in all outlet streams.
+  - Added an aerobic-only guard for air injection: air is now only added when ``self.has_pump`` is ``False`` and the unit operates in aerobic mode.
+  - Fixed a missing ``_freeboard`` attribute that caused ``AttributeError`` on initialization.
+  - Restored the ``_design_anaerobic`` method that had been inadvertently removed.
+  - Corrected the slab concrete volume formula.
+  - Added a ``biomass_ID`` parameter to allow users to specify which component tracks active biomass.
+  - Renamed internal attributes ``gas``/``soluble``/``solid`` to ``gases``/``solubles``/``solids`` for consistency with the rest of the codebase.
+  - Fixed the condition in ``get_digestion_rxns`` and corrected the argument order in ``_refresh_rxns``.
+  - Fixed a ``SanStream.degassing`` ``AttributeError`` that occurred when the polishing filter effluent was a plain ``SanStream``.
+  - Fixed an O2 double-counting error in ``air_out`` that produced a ~0.6% mass-balance error.
+
+- Fixed :class:`~.unit_operations.HydraulicDelay`: added missing ``_update_state`` and ``_update_dstate`` methods so the unit correctly propagates state during dynamic simulation.
+
+- Added a deprecation warning to :class:`~.SimpleTEA` to guide users toward the updated TEA interface.
+
+- Lazy-imported optional heavy dependencies (``SALib``, ``seaborn``, ``chaospy``, ``sympy``) so that ``import qsdsan`` no longer pays the startup cost of those libraries unless they are actually used.
+
+- Added a GitHub Actions release workflow that automatically publishes to PyPI and creates a GitHub release when a ``v*.*.*`` tag is pushed.
+
 
 `1.4.0`_
 --------
