@@ -93,9 +93,29 @@ To install from another fork and/or branch, replace ``<USERNAME_OF_THE_FORK>`` a
 
 You can also download the package from `PyPI <https://pypi.org/project/qsdsan/>`_.
 
-For diagram generation, ``QSDsan`` uses Graphviz. If diagrams fail to render, install Graphviz following the `official Graphviz download instructions <https://graphviz.org/download/>`_ and see the `FAQ <docs/source/FAQ.rst#graphviz-installation>`_ for a quick check.
+To get the git version (use the ``depth`` flag to choose how many commit histories you want to clone):
 
-If you want to contribute to ``QSDsan``, please follow the steps in the `Contributing Guidelines <CONTRIBUTING.rst#contributing-guidelines>`_ to clone the repository and install it in editable mode.
+.. code:: bash
+
+    git clone https://github.com/QSD-Group/QSDsan.git --depth=1
+
+Then navigate into the repository (``cd QSDsan``) and install in editable mode with development dependencies:
+
+.. code:: bash
+
+    pip install -e ".[dev]"
+
+
+.. note::
+
+   Using the ``depth`` flag will only clone the main branch by default. If you need other branches, add the ``--no-single-branch`` flag:
+
+   .. code:: bash
+
+       git clone https://github.com/<YOUR_USERNAME>/QSDsan.git --depth=1 --no-single-branch
+
+
+For diagram generation, ``QSDsan`` uses Graphviz. If diagrams fail to render, install Graphviz following the `official Graphviz download instructions <https://graphviz.org/download/>`_ and see the `FAQ <docs/source/FAQ.rst#graphviz-installation>`_ for a quick check.
 
 
 Documentation
@@ -109,14 +129,11 @@ All tutorials are written using Jupyter Notebook, you can run your own Jupyter e
 For each of these tutorials, we are also recording videos where one of the QSD group members will go through the tutorial step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
 
 
-About the Authors
------------------
-``QSDsan`` is developed and maintained by the Quantitative Sustainable Design Group and the broader community. Please refer to the `GitHub contributors <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ for the latest record of contributions.
+Authors and Contributing
+------------------------
+``QSDsan`` and its related packages are developed by the Quantitative Sustainable Design Group and the broader community. `Yalin Li <https://github.com/yalinli2>`_ is the currently maintainer.  See `commit history <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ for contributors who have contributed to the repository. 
 
-
-Contributing
-------------
-Please refer to the `Contributing Guidelines <CONTRIBUTING.rst#contributing-guidelines>`_ section of the documentation for instructions and guidelines.
+If you want to contribute to ``QSDsan``, please refer to the `Contributing Guidelines <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ section of the documentation for instructions and guidelines.
 
 
 License Information
