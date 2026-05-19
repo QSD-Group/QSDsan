@@ -111,17 +111,6 @@ class PolishingFilter(SanUnit):
         Other keyword arguments (e.g., ``t_wall``, ``t_slab`` for aerobic
         concrete dimensions; ``_t_wall_an``, ``_t_slab_an`` for anaerobic).
 
-    Attributes
-    ----------
-    recir_ratio : float
-        Internal recirculation ratio — ratio of recirculated flow to raw
-        influent flow. For anaerobic filters, this is a design output: the
-        minimum ratio required to keep filter depth ≤ 6 m, computed during
-        ``_design``. A value of ``R`` means the total hydraulic throughput
-        is ``Q * (1 + R)``, which widens the cross-sectional area and
-        reduces depth for a given packing volume. Also used to size the
-        recirculation pump.
-
     References
     ----------
     .. [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
@@ -710,10 +699,13 @@ class PolishingFilter(SanUnit):
     @property
     def recir_ratio(self):
         '''
-        [float] Internal recirculation ratio (recirculated flow / raw influent flow).
-        For anaerobic filters this is set by ``_design`` to the minimum value that
-        keeps filter depth ≤ 6 m. Falls back to the ratio of actual inlet flows
-        if not yet set by design.
+        [float] Internal recirculation ratio — recirculated flow / raw influent flow.
+        For anaerobic filters this is a design output: ``_design`` sets it to the
+        minimum value that keeps filter depth ≤ 6 m. A value of ``R`` means the total
+        hydraulic throughput is ``Q * (1 + R)``, which widens the cross-sectional
+        area and reduces depth for a given packing volume; it also sizes the
+        recirculation pump. Falls back to the ratio of actual inlet flows if not yet
+        set by design.
         '''
         return self._recir_ratio or self.ins[1].F_vol/self.ins[0].F_vol
     @recir_ratio.setter
