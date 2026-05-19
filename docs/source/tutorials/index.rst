@@ -29,6 +29,7 @@ Topical Tutorials
    11_Dynamic_Simulation
    12_Anaerobic_Digestion_Model_No_1
    13_Process_Modeling_101
+   14_AI_Assisted_Development
 
 
 Additional Resources
