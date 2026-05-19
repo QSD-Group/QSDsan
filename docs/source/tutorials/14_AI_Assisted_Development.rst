@@ -3,14 +3,14 @@
 AI-Assisted Development
 =======================
 
-This guide covers using AI coding assistants —
-`Claude Code <https://claude.com/claude-code>`_ and
-`Codex <https://developers.openai.com/codex>`_ — to navigate and contribute to
+This guide covers using AI coding assistants
+(`Claude Code <https://claude.com/claude-code>`_ and
+`Codex <https://developers.openai.com/codex>`_) to navigate and contribute to
 the QSDsan/EXPOsan codebase.
 
 .. note::
    Sections that differ by tool use a **Claude Code / Codex** tab. The tabs are
-   synced — switching one switches them all. Everything else applies to both.
+   synced, so switching one switches them all. Everything else applies to both.
 
    This guide was authored and verified on Windows. The macOS/Linux equivalents
    shown (keyboard shortcuts, activation commands) follow standard conventions;
@@ -23,14 +23,14 @@ Why AI Tools for Contributors?
 
 Codebases like QSDsan combine domain-specific logic, mathematical modeling, and
 software architecture across hundreds of files. AI tools help you navigate this
-quickly — tracing sanunit inheritance, understanding BioSTEAM integration,
-reading unfamiliar code — so you can focus your time on actual contributions
+quickly (tracing sanunit inheritance, understanding BioSTEAM integration,
+reading unfamiliar code) so you can focus your time on actual contributions
 rather than orientation.
 
 .. warning::
-   **AI makes mistakes — your review is essential.** AI tools can produce
+   **AI makes mistakes. Your review is essential.** AI tools can produce
    confident, fluent output that is wrong: a misremembered API, an outdated
-   pattern, a subtle logic error. Treat everything the AI generates as a draft —
+   pattern, a subtle logic error. Treat everything the AI generates as a draft:
    read it, test it, and verify it against the actual code before you commit or
    open a pull request. You remain responsible for every line you contribute.
 
@@ -45,20 +45,20 @@ Setup
 
       .. admonition:: Before you begin
 
-         Using Claude Code is **not free** — it requires a paid Claude plan
+         Using Claude Code is **not free**: it requires a paid Claude plan
          (Pro or Max) or Anthropic API billing. A free account on its own will
          not work. Set this up at `claude.ai <https://claude.ai>`_ before your
          first session; account creation also requires email verification.
 
       #. Install VS Code from `code.visualstudio.com <https://code.visualstudio.com>`_.
-         Accept all defaults — on Windows, leave all checkboxes checked.
+         Accept all defaults; on Windows, leave all checkboxes checked.
       #. Open Extensions (``Ctrl+Shift+X`` on Windows/Linux, ``Cmd+Shift+X`` on
          Mac), search **Claude Code**, click **Install**. The button changes to
          **Disable** when done.
       #. Press ``Ctrl+L`` (Windows/Linux) or ``Cmd+L`` (Mac) to open the Claude
          Code panel and sign in.
       #. Open your workspace folder: **File → Open Folder**. See *Development
-         environment* below for the recommended layout — open the folder that
+         environment* below for the recommended layout; open the folder that
          holds both repositories.
 
       .. note::
@@ -77,11 +77,11 @@ Setup
          before your first session.
 
       #. Install VS Code from `code.visualstudio.com <https://code.visualstudio.com>`_.
-         Accept all defaults — on Windows, leave all checkboxes checked.
+         Accept all defaults; on Windows, leave all checkboxes checked.
       #. Open Extensions (``Ctrl+Shift+X`` on Windows/Linux, ``Cmd+Shift+X`` on
          Mac), search **Codex**, and install the official OpenAI Codex extension.
       #. Open your workspace folder: **File → Open Folder**. See *Development
-         environment* below for the recommended layout — open the folder that
+         environment* below for the recommended layout; open the folder that
          holds both repositories.
       #. Open Codex from the VS Code sidebar. The first time, follow the prompt
          to sign in with your ChatGPT account or an API key.
@@ -96,69 +96,45 @@ Development environment
 -----------------------
 
 The AI tools above help you read and change code, but you still need a working
-QSDsan environment to run and test it. This is a one-time setup.
+QSDsan environment to run and test it. Follow the
+:doc:`QSDsan contributing guide </CONTRIBUTING>` to fork, clone, and install
+QSDsan in editable mode with its development dependencies. This is a one-time
+setup.
 
-Recommended layout
-~~~~~~~~~~~~~~~~~~~
+Also contributing to EXPOsan?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Keep QSDsan and EXPOsan side by side in one workspace folder, sharing a single
-virtual environment:
+If you also plan to contribute to **EXPOsan** (for example, by adding your own
+system to it), set both repositories up side by side in one workspace folder,
+sharing a single virtual environment:
 
 .. code-block:: text
 
-   qsdsan-dev/          workspace folder — open this one in VS Code
+   qsdsan-dev/          workspace folder (open this one in VS Code)
    ├── QSDsan/          git clone of QSDsan
    ├── EXPOsan/         git clone of EXPOsan
    └── .venv/           shared virtual environment
 
-Installing both packages in *editable* mode into one environment means a change
-you make in QSDsan is immediately visible to EXPOsan — essential for cross-repo
-work.
+Clone EXPOsan next to QSDsan and install it into the same environment in
+editable mode, the same way you installed QSDsan. With both packages editable in
+one environment, a change you make in QSDsan is immediately visible to EXPOsan,
+which is essential for cross-repo work.
 
 .. note::
-   Keep this folder out of cloud-synced locations (OneDrive, Dropbox, iCloud).
-   A virtual environment is tens of thousands of files; syncing them is slow and
-   can corrupt the environment's tooling.
+   Keep this workspace out of cloud-synced locations (OneDrive, Dropbox,
+   iCloud). A virtual environment is tens of thousands of files; syncing them is
+   slow and can corrupt the environment's tooling.
 
-Steps
-~~~~~
+.. tip:: Keep the environment relocatable
 
-These steps use `uv <https://docs.astral.sh/uv/>`_, a fast Python package and
-environment manager. If you don't have it, install it with ``pip install uv`` or
-follow the `uv installation guide
-<https://docs.astral.sh/uv/getting-started/installation/>`_.
-
-.. code-block:: bash
-
-   # Create the workspace folder and clone both repositories
-   mkdir qsdsan-dev
-   cd qsdsan-dev
-   git clone https://github.com/QSD-Group/QSDsan.git
-   git clone https://github.com/QSD-Group/EXPOsan.git
-
-   # Create the virtual environment (QSDsan needs Python 3.12+)
-   uv venv --python 3.12 --relocatable
-
-Activate it — ``.venv\Scripts\activate`` on Windows, or
-``source .venv/bin/activate`` on macOS/Linux — then install both packages in
-editable mode with their development dependencies:
-
-.. code-block:: bash
-
-   uv pip install -e "./QSDsan[dev]" -e "./EXPOsan[dev]"
-
-Finally, open the ``qsdsan-dev`` folder in VS Code so your AI assistant sees both
-repositories and the shared environment.
-
-.. admonition:: Why a relocatable environment?
-
-   A normal ``uv`` environment hard-codes the absolute path of its Python
-   interpreter into every console-script launcher (``pytest``, ``sphinx-build``,
-   and so on). Rename or move the workspace folder afterwards and those launchers
-   break with errors like *"failed to canonicalize script path"*. Creating the
-   environment with ``uv venv --relocatable`` makes the launchers use relative
-   paths, so the folder can be safely renamed or moved. If you hit this with an
-   environment that already exists, the fix is to recreate it.
+   If you create the environment with `uv <https://docs.astral.sh/uv/>`_, add
+   the ``--relocatable`` flag (``uv venv --relocatable``). A normal environment
+   hard-codes the absolute path of its Python interpreter into every
+   console-script launcher (``pytest``, ``sphinx-build``, and so on); rename or
+   move the workspace folder afterwards and those launchers break with errors
+   like *"failed to canonicalize script path"*. ``--relocatable`` makes them use
+   relative paths, so the folder can be safely moved. If you hit this with an
+   environment that already exists, recreate it.
 
 
 Key Concepts for Contributors
@@ -167,7 +143,7 @@ Key Concepts for Contributors
 The AI tools, companies, and models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A quick map of the names you'll come across — the companies, their AI
+A quick map of the names you'll come across: the companies, their AI
 assistants, the coding tools, and the models that power them.
 
 .. list-table::
@@ -180,7 +156,7 @@ assistants, the coding tools, and the models that power them.
      - The two AI companies whose tools this guide covers. **Anthropic** builds
        Claude; **OpenAI** builds ChatGPT. Each also makes a coding tool (below).
    * - **Claude & ChatGPT**
-     - The companies' general-purpose AI assistants — the chat products you may
+     - The companies' general-purpose AI assistants, the chat products you may
        already have used in a web browser. **Claude** is Anthropic's;
        **ChatGPT** is OpenAI's.
    * - **Claude Code & Codex**
@@ -194,15 +170,16 @@ assistants, the coding tools, and the models that power them.
        speed against capability: Anthropic's Claude has **Haiku** (fastest,
        lightest), **Sonnet** (balanced), and **Opus** (most capable); OpenAI
        offers a similar range. Heavier models handle hard problems better but
-       cost more and respond slower — both tools let you choose which to use.
+       cost more and respond slower; both tools let you choose which to use.
    * - **Context window**
-     - How much text the AI can hold in mind at once — the files it has read,
+     - How much text the AI can hold in mind at once: the files it has read,
        the conversation so far, and its instructions. It is large but limited;
        on a big codebase, point the AI at the relevant files rather than
        expecting it to absorb everything, and start a fresh conversation for
        each new task.
    * - **Tokens (input & output)**
-     - The unit AI text is measured in — roughly three-quarters of a word.
+     - The unit AI text is measured in. One token is roughly three-quarters of
+       a word.
        **Input tokens** are what you send the AI (your prompt, files, and the
        conversation so far); **output tokens** are what it writes back. With API
        billing they are charged separately, output usually costing more. A long
@@ -210,35 +187,35 @@ assistants, the coding tools, and the models that power them.
        each turn.
    * - **Knowledge cutoff**
      - Each model is trained on data up to a fixed date and knows nothing after
-       it. It may be unaware of a recent library release or API change — a
+       it. It may be unaware of a recent library release or API change, a
        common source of confident but outdated answers. When in doubt, check
        against current documentation or point the AI at the actual code.
    * - **Agent / agentic**
-     - An **agentic** tool does more than answer questions — it takes actions on
+     - An **agentic** tool does more than answer questions; it takes actions on
        your behalf across several steps: reading and editing files, running
        commands and tests, searching the project. Claude Code and Codex are both
        agentic, which is why they can carry out a task rather than only describe
        it.
    * - **Skill**
      - A pre-loaded instruction set that tells the AI how to approach a specific
-       type of task — for example, a ``brainstorming`` skill walks it through a
+       type of task. For example, a ``brainstorming`` skill walks it through a
        structured design process before any code is written. Both tools support
-       skills — see :ref:`Skills in practice <skills-superpowers>` below.
+       skills; see :ref:`Skills in practice <skills-superpowers>` below.
    * - **MCP**
      - **MCP** (Model Context Protocol) is an open standard that lets AI coding
-       tools connect to outside systems — databases, documentation, issue
-       trackers, web APIs. An MCP *server* exposes one such source, extending
-       what the AI can see and do beyond your project files — see
+       tools connect to outside systems such as databases, documentation,
+       issue trackers, and web APIs. An MCP *server* exposes one such source,
+       extending what the AI can see and do beyond your project files; see
        :ref:`MCP in practice <mcp-notebooklm>` below.
    * - **Hallucination**
-     - When an AI states something false with full confidence — a function that
+     - When an AI states something false with full confidence: a function that
        does not exist, a misremembered API, an invented citation. Hallucinations
        look just like correct answers, which is why you must verify the AI's
        output rather than trust it.
    * - **Subscription vs. API access**
      - Two ways to pay for the same models. A **subscription** (Claude Pro/Max,
        ChatGPT Plus/Pro/Business/Edu/Enterprise) is a flat monthly fee with a
-       capped usage allowance — predictable, and simplest for individuals.
+       capped usage allowance, predictable and simplest for individuals.
        **API access** is pay-as-you-go billing through the company's developer
        platform: charged per token, with no flat fee and no hard cap. Access
        rules and free trials change over time, so check the current pricing page.
@@ -252,7 +229,7 @@ AGENTS.md and CLAUDE.md
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Text files in the repository root that give the AI project-specific
-instructions — coding conventions, architecture notes, things to avoid. The
+instructions: coding conventions, architecture notes, things to avoid. The
 tool reads them automatically and adjusts its behavior; you don't need to do
 anything, but be aware that the AI's responses are shaped by these files.
 
@@ -284,7 +261,7 @@ Skills in practice: Superpowers
 -------------------------------
 
 **Superpowers** is a good example of skills in action: a plugin that bundles a
-curated set of skills — brainstorming, planning, test-driven development,
+curated set of skills: brainstorming, planning, test-driven development,
 debugging, code review, and more. Installing it gives you a consistent,
 structured AI workflow out of the box, and it works with both Claude Code and
 Codex.
@@ -314,7 +291,7 @@ Installing Superpowers
    .. tab-item:: Codex
       :sync: codex
 
-      The Codex VS Code extension cannot install plugins itself — plugin
+      The Codex VS Code extension cannot install plugins itself; plugin
       installation is done from the **Codex CLI** or the **Codex App**. Because
       the extension shares its configuration with the CLI, this is a one-time
       step, and the plugin then works in the extension too.
@@ -332,10 +309,10 @@ Installing Superpowers
       the extension picks up the new plugin.
 
       **Verify:** in the Codex panel in VS Code, start a new session and type
-      ``$`` — the superpowers skills should appear in the list (look for
+      ``$``; the superpowers skills should appear in the list (look for
       ``brainstorming``, ``writing-plans``, ``test-driven-development``).
 
-Using a skill — invoke it the way your tool expects, then describe the task:
+Using a skill: invoke it the way your tool expects, then describe the task:
 
 .. tab-set::
 
@@ -362,15 +339,15 @@ MCP in practice: NotebookLM
 `Google NotebookLM <https://notebooklm.google.com>`_ is a research tool where
 you upload documents, papers, and notes and ask questions about them. Connecting
 it through **MCP** lets Claude Code or Codex draw on your NotebookLM notebooks
-while it works — for example, checking a modeling decision against the papers
-behind a QSDsan unit. It is a good first MCP server to try.
+while it works (for example, checking a modeling decision against the papers
+behind a QSDsan unit). It is a good first MCP server to try.
 
 .. admonition:: What you'll need
 
    Python 3.7+ (you almost certainly have it already for QSDsan development), a
    Google account with `NotebookLM <https://notebooklm.google.com>`_ access, and
    a web browser. The connection is made by a community tool,
-   `notebooklm-mcp-cli <https://github.com/jacob-bd/notebooklm-mcp-cli>`_ —
+   `notebooklm-mcp-cli <https://github.com/jacob-bd/notebooklm-mcp-cli>`_;
    review what it does before granting it access to your Google account.
 
 1. Install the NotebookLM MCP tool
@@ -443,7 +420,7 @@ You can now ask your assistant things like:
    Summarize the key findings from the sources in my "QSDsan literature" notebook.
 
 .. note::
-   Setup commands can change between versions — these follow
+   Setup commands can change between versions; these follow
    `notebooklm-mcp-cli v0.6.9 <https://github.com/jacob-bd/notebooklm-mcp-cli/tree/v0.6.9>`_.
    If something doesn't work, check that project's current README.
 
@@ -459,7 +436,7 @@ Orientation
 
 .. code-block:: text
 
-   Give me a high-level overview of how QSDsan is organized — what are the main modules and what does each one do?
+   Give me a high-level overview of how QSDsan is organized. What are the main modules and what does each one do?
 
 .. code-block:: text
 
@@ -546,7 +523,7 @@ Going Deeper
 
 - **QSDsan-specific skills:** The repo includes a ``qsdsan-exposan-architecture``
   skill that teaches the AI the full package structure and import conventions.
-  The tool loads it when you're working on architecture-related tasks — mention
+  The tool loads it when you're working on architecture-related tasks; mention
   it explicitly if you need it (``/qsdsan-exposan-architecture`` in Claude Code,
   ``$qsdsan-exposan-architecture`` in Codex).
 - **Where skills live:** QSDsan currently keeps mirrored skills in
@@ -555,12 +532,12 @@ Going Deeper
   so if you want automatic Codex discovery in a fresh setup, add or symlink the
   QSDsan skills there and keep the copies synchronized.
 - **Writing your own skills:** A skill is a Markdown file with structured
-  instructions — no code required. See the existing skills in the directories
+  instructions; no code required. See the existing skills in the directories
   above for examples.
 - **Customizing AGENTS.md:** Add notes to ``AGENTS.md`` (in a fork) to tune AI
   behavior for your workflow. Changes take effect immediately on the next session.
 
 ----
 
-*This guide was itself created with AI-assisted coding — drafted using Claude
+*This guide was itself created with AI-assisted coding, drafted using Claude
 Code, then reviewed and edited by its authors.*
