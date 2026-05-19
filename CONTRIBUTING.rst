@@ -7,310 +7,202 @@ Contributors
 
 Systems constructed using ``QSDsan`` are stored in the `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ repository; please refer to its `contributors <https://github.com/QSD-Group/EXPOsan/graphs/contributors>`_ and `commit history <https://github.com/QSD-Group/EXPOsan/commits/main/>`__ for contribution records related to system modules.
 
-If you would like to join the effort, please review our guidelines and instructions below.
+If you would like to join the effort, please review the guidelines below. If you have any questions about the process, feel free to `submit an issue on GitHub <https://github.com/QSD-Group/QSDsan/issues>`_. Thank you in advance for your contribution!
 
 
-Contributing Guidelines
------------------------
-Below are some brief instructions on how to contribute to ``QSDsan``. If you have any questions regarding the process, feel free to `submit an issue on GitHub <https://github.com/QSD-Group/QSDsan/issues>`_. Thank you in advance for your contribution!
+Authorship and Licensing
+------------------------
+The following guideline is adapted from `BioSTEAM <https://biosteam.readthedocs.io/en/latest/CONTRIBUTING.html#authorship>`_; we welcome inputs from the community for enhancement. If you feel that your contributions are not adequately acknowledged, please contact us.
+
+#. Contributions should be acknowledged at the module level with a short description for:
+
+   - Code development. The primary author is encouraged (but not required) to include contact info in the module.
+   - Module development (i.e., math algorithms, code in other languages).
+   - Instrumental comments and suggestions through discussion.
+
+#. If any code or implementation was copied from a third party, note it in the module-level documentation.
+
+#. Any third-party package copied into ``QSDsan`` must be strictly open-source (not copy-left nor open-access). If the license of the third-party package differs from ``QSDsan``, add the third-party license as an option (i.e., dual licensing).
 
 
-Authorship
-^^^^^^^^^^
-The following guideline is adapted from `BioSTEAM <https://biosteam.readthedocs.io/en/latest/CONTRIBUTING.html#authorship>`_, we welcome inputs from the community for enhancement. If you feel that your contributions are not acknowledged or adequately acknowledged, please do contact us.
+Setting Up
+----------
+You can set up using the command line or `GitHub Desktop <https://desktop.github.com/>`_, a graphical alternative that is friendlier if you are new to the command line. ``QSDsan`` requires **Python 3.12 or newer**.
 
-#. Contributions must be acknowledged at the module-level with a short description for:
+Via the command line
+^^^^^^^^^^^^^^^^^^^^^
 
-	- Code development. The primary author is encouraged (but not required) to include contact info in the module.
-	- Module development (i.e., math algorithms, codes in other languages).
-	- Instrumental comments and suggestions through discussion.
+#. Fork ``QSDsan`` by going to its `GitHub homepage <https://github.com/QSD-Group/QSDsan>`_ and clicking the "Fork" button at the top right.
 
-#. If any code or implementation was copied from a third party, it should be noted in the module-level documentation.
+#. On your fork's page, click the green "Code" button and copy the HTTPS address; it looks like ``https://github.com/<YOUR_USERNAME>/QSDsan.git``.
 
-#. Any third-party packages copied from ``QSDsan`` must be strictly open-source (not copy-left nor open-access). If license of the third-part package is different from ``QSDsan``, the module should add the third-party license as an option (i.e., dual licensing).
+#. In a terminal, navigate to where you keep your projects and clone your fork:
 
+   .. code:: bash
 
-Forking and Cloning
-^^^^^^^^^^^^^^^^^^^
+       git clone --depth=1 --no-single-branch https://github.com/<YOUR_USERNAME>/QSDsan.git
+       cd QSDsan
 
-Via command-line interface
-**************************
-#. Fork ``QSDsan`` by going to its `GitHub homepage <https://github.com/QSD-Group/QSDsan>`_ and click the "Fork" button at the top right corner.
+   If you don't have ``git``, see the `installation instructions <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_. The ``--depth=1`` flag makes a faster, smaller clone by fetching only recent history; ``--no-single-branch`` keeps all branches available. If you later need full history (for example, for ``git blame`` or ``git bisect``), run ``git fetch --unshallow``.
 
-#. GitHub will open a new page showing your fork, click the green "Code" button on the top and copy the HTTPS address (there's a handy copy button next to the address), it should be something like:
+#. Create and activate a virtual environment so ``QSDsan`` and its dependencies stay isolated from your other projects:
 
-	.. code:: bash
+   .. code:: bash
 
-	    https://github.com/<YOUR_USERNAME>/QSDsan.git
+       python -m venv .venv
+       # then activate it:
+       #   Windows:        .venv\Scripts\activate
+       #   macOS / Linux:  source .venv/bin/activate
 
+#. Install ``QSDsan`` in editable mode with the development dependencies. This installs ``QSDsan`` from your local clone along with the packages needed for testing and building the documentation:
 
-#. In your command-line interface (e.g., Anaconda prompt, terminal), navigate to your preferred location by using ``cd``, e.g.,
+   .. code:: bash
 
-	.. code:: bash
+       pip install -e ".[dev]"
 
-	    cd research/coding
+   .. tip::
 
+      Prefer `uv <https://docs.astral.sh/uv/>`_? It is a faster, drop-in alternative. Create the environment with ``uv venv`` instead of ``python -m venv``, and prefix the install with ``uv`` (``uv pip install -e ".[dev]"``). Every other command in this guide is unchanged.
 
-#. Clone ``QSDsan`` to your local by (use your own link copied from step 2):
+#. Add the root ``QSDsan`` repository as the ``upstream`` remote, then check your remotes:
 
-	.. code:: bash
+   .. code:: bash
 
-	    git clone https://github.com/<YOUR_USERNAME>/QSDsan.git --depth=1
+       git remote add upstream https://github.com/QSD-Group/QSDsan.git
+       git remote -v
 
-	- If you don't have ``git``, follow the `instructions <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_ to install it.
-	- The ``--depth-1`` flag is to tell ``git`` just clone the latest commit, you can change the depth number or just remove this flag completely, but then ``git`` will download more historical commits, which takes longer time to clone and needs more space.
+   ``origin`` should point to your fork and ``upstream`` to ``QSD-Group/QSDsan``.
 
-	.. note::
-	 	
-	 	This will only clone the main branch, if you want other branches, then use the ``no-single-branch`` flag, i.e.
+#. Pull the latest changes from upstream:
 
-		.. code:: bash
+   .. code:: bash
 
-		    git clone https://github.com/<YOUR_USERNAME>/QSDsan.git --depth=1 --no-single-branch
+       git pull upstream main
 
-		Without the ``no-single-branch`` flag, the reference of the remote branch (when you do ``git fetch``) is set to the main branch only (instead of all of the existing and future new branches), i.e., when you do
+#. Create a branch for your work (branch names are case-sensitive):
 
-		.. code:: bash
+   .. code:: bash
 
-		    git config --get remote.origin.fetch
-
-		you will see
-
-		.. code:: bash
-
-		    +refs/heads/main:refs/remotes/origin/main
-
-		Because it only tracks the main branch, so if didn't include the ``no-single-branch`` flag when cloning but later wanted to pull/push other branches, you will need to update the fetch reference to all branches using:
-
-
-		.. code:: bash
-
-		    git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-
-		and you can double-check again to confirm the fetch reference has been updated.
-
-#. Navigate into the cloned QSDsan:
-
-	.. code:: bash
-
-	    cd QSDsan
-
-#. Install ``QSDsan`` in editable mode with the development dependencies:
-
-	.. code:: bash
-
-	    pip install -e ".[dev]"
-
-	This command installs ``QSDsan`` from your local clone and installs the packages needed for testing and building the documentation.
-
-
-#. Add the root ``QSDsan`` as the upstream:
-
-	.. code:: bash
-
-	    git remote add upstream https://github.com/QSD-Group/QSDsan.git
-
-#. Check your remote settings:
-
-	.. code:: bash
-
-	    git remote -v
-
-	This should show something like (origin is your fork and upstream is the root repository):
-
-	.. code:: bash
-
-		origin	https://github.com/<YOUR_USERNAME>/QSDsan.git (fetch)
-		origin	https://github.com/<YOUR_USERNAME>/QSDsan.git (push)
-		upstream	https://github.com/QSD-Group/QSDsan.git (fetch)
-		upstream	https://github.com/QSD-Group/QSDsan.git (push)
-
-#. Pull in upstream changes:
-
-	.. code:: bash
-
-	    git pull upstream main
-
-#. If you are working on a new feature (rather than some quick work like fixing a small bug), then it is recommended to checkout a new branch (note that branch names are case-sensitive):
-
-	.. code:: bash
-
-	    git checkout -b <REPLACE-ME-WITH-FEATURE-NAME>
-
+       git checkout -b <your-feature-name>
 
 Via GitHub Desktop
-******************
-If you are new to command-line interface, `GitHub Desktop <https://desktop.github.com/>`_ can be a good way to get started as it has a graphic interface, though less powerful.
+^^^^^^^^^^^^^^^^^^
 
-To see screenshots of the different interface, visit GitHub's documentations on `Cloning a repository from GitHub to GitHub Desktop <https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/adding-and-cloning-repositories/cloning-a-repository-from-github-to-github-desktop>`_
+If you are new to the command line, `GitHub Desktop <https://desktop.github.com/>`_ offers a graphical interface. GitHub's guide on `cloning a repository to GitHub Desktop <https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/adding-and-cloning-repositories/cloning-a-repository-from-github-to-github-desktop>`_ includes screenshots.
 
 #. Download and install GitHub Desktop.
 
-#. Fork ``QSDsan`` by going to its `GitHub homepage <https://github.com/QSD-Group/QSDsan>`_ and click the "Fork" button at the top right corner.
+#. Fork ``QSDsan`` from its `GitHub homepage <https://github.com/QSD-Group/QSDsan>`_.
 
-#. GitHub will open a new page showing your fork, click the green "Code" button on the top and select "Open with GitHub Desktop".
+#. On your fork's page, click the green "Code" button, choose "Open with GitHub Desktop", and pick where to clone it. When prompted whether you are contributing to the parent repository or working on your own, select "To contribute to the parent repository" (see GitHub's note on `fork behavior <https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/adding-and-cloning-repositories/cloning-and-forking-repositories-from-github-desktop#managing-fork-behavior>`_).
 
-#. GitHub Desktop will automatically open, and it will ask you where you want to clone it, select a place that you like.
+#. You can now `make commits <https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/making-changes-in-a-branch/committing-and-reviewing-changes-to-your-project>`_ and `push <https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/making-changes-in-a-branch/pushing-changes-to-github>`_ to your fork. To pull in later updates from ``QSDsan``, use the "Current Branch" menu to merge the corresponding ``upstream`` branch; you may occasionally need to `resolve conflicts <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/resolving-a-merge-conflict-on-github>`_.
 
-#. Next, you will be prompted to select whether you want to contribute to the parent repository or for you own purpose, we would appreciate your contributing back to QSDsan, so please select "To contribute to the parent repository" :). You can read more about this, including how to change this setting, in this post about `fork behavior <https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/adding-and-cloning-repositories/cloning-and-forking-repositories-from-github-desktop#managing-fork-behavior>`_.
+#. Open a terminal in the cloned folder and complete steps 4–5 of the command-line instructions above (create a virtual environment and install in editable mode).
 
-#. In the opened dialogue, click on the "Fetch origin" button on the top, then if you click the "Current Branch" button (next to the "Fetch origin" button), you should see a list of the branches on your fork (start with "origin", e.g., "origin/main") and those from the root repo managed by us (start with "upstream", e.g., "upstream/main"). All branches on your fork are copied from the corresponding branch from the root repo (i.e., "origin/main" copied from "upstream/main") at this moment. You can choose which one you would like to work on, if unsure, just select main (i.e., "origin/main").
+Notes
+^^^^^
 
-#. You can work on your changes locally, `make commits <https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/making-changes-in-a-branch/committing-and-reviewing-changes-to-your-project>`_, then `push <https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/making-changes-in-a-branch/pushing-changes-to-github>`_ to your fork remote (i.e., on GitHub's website). Pushing them online would allow you to save/back up the history of your changes, and makes it super easy for us to help you debug.
-
-#. In the future, whenever you want to merge changes from QSDsan (e.g., we just release a new feature), click on the "Current Branch" button, then click the "Choose a branch to merge into main" ("main" would be the name of the branch that you are working on) on the bottom of the drop-down, then select the branch from the root repo (starting with "upstream", e.g., "upstream/main") that you want to pull changes from, and click the "Create a merge commit" button on the bottom. Note that you can control whether Git does the pull ("merge", "rebase", etc.), check Git/GitHub's documentation if you want to know more. Also note that sometimes you need to `resolve conflicts <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/resolving-a-merge-conflict-on-github>`_ prior to merging.
-
-
-Note
-****
-#. We use fork as the default way for collaboration (i.e., for all first-time contributors). If you are a constant contributor and have independently made at least one successful and meaningful contribution through forking, you will be given the write access to ``QSDsan`` and you can use branch for easier code syncing. We will also invite you to join the ``QSDsan`` team.
-#. GitHub has really detailed documentation on `forking <https://docs.github.com/en/github/getting-started-with-github/fork-a-repo>`_ (and almost everything else).
-#. As QSDsan is public, all created forks would be public as well. We would appreciate if you make your work public and contribute back, but we understand it if you would like to create a private fork of QSDsan. To do so, please check our tip on creating the `private fork <FAQ.html#private-fork>`_.
+#. Forking is the default workflow for all first-time contributors. Constant contributors who have made at least one successful and meaningful contribution through a fork may be given write access and invited to join the ``QSDsan`` team, after which branches can be used directly for easier syncing.
+#. As ``QSDsan`` is public, all forks are public as well. If you would prefer a private fork, see the tip on creating a `private fork <FAQ.html#private-fork>`_.
+#. GitHub has detailed documentation on `forking <https://docs.github.com/en/github/getting-started-with-github/fork-a-repo>`_ and related workflows.
 
 
-Developing Modules
-^^^^^^^^^^^^^^^^^^
-#. Adding/modifying modules locally.
+Development Workflow
+--------------------
+Develop your contribution on the branch you created, documenting and testing as you go, then push to your fork and open a pull request.
 
-#. `Commit <https://git-scm.com/docs/git-commit>`_ your changes and concisely summarize your changes in the commit message.
+Developing modules
+^^^^^^^^^^^^^^^^^^^
 
-	- You can have multiple `branches <https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging>`_ for different features.
+Add or modify modules on your feature branch. Keep `commits <https://git-scm.com/docs/git-commit>`_ focused and write concise commit messages; you can use multiple `branches <https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging>`_ for different features. As you work, periodically merge in upstream changes and resolve any conflicts:
 
-#. Push your local changes to your remote fork:
+.. code:: bash
 
-	.. code:: bash
-
-	    git push origin main # or the name of the new branch
-
-	- As your develop your contributions, the root repository may update, you should merge these changes and resolve any conflicts before your final push.
-
-	.. code:: bash
-
-	    git pull upstream main
-
-
-Submitting Pull Request
-^^^^^^^^^^^^^^^^^^^^^^^
-#. Once you are satisfied with your changes and push all commits to your fork, go to you GitHub fork of ``QSDsan``, and submit a `pull request <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request>`_.
-
-	- You can confirm that you have pulled all updates from the root repository if there's a message showing that your branch is X commits ahead of QSD-Group:main (not X commits ahead, Y commits behind).
-
-#. One of the Quantitative Sustainable Design Group members will review your changes and accept or discuss with you if edits are needed.
-
-Maintainer PR Audit Guide
-^^^^^^^^^^^^^^^^^^^^^^^^^
-``QSDsan`` includes a tool-agnostic PR audit checklist at ``docs/maintainer/pr_audit_checklist.md`` for maintainers reviewing changes that touch ``BioSTEAM``/``Thermosteam`` imports, stream/unit APIs, unit registries, or the ``Stream``/``SanStream``/``WasteStream`` taxonomy.
-
-Maintainers using Codex can install or update the repo-tracked Codex adapter locally from the repository root with:
-
-.. code:: powershell
-
-	Copy-Item -Recurse -Force .codex\skills\qsdsan-pr-audit $env:USERPROFILE\.codex\skills\
-
-Maintainers using Claude Code can install or update the repo-tracked Claude adapter locally from the repository root with:
-
-.. code:: powershell
-
-	Copy-Item -Recurse -Force .claude\skills\qsdsan-pr-audit $env:USERPROFILE\.claude\skills\
-
-Then ask Codex or Claude to ``use qsdsan-pr-audit`` when reviewing relevant pull requests. The checklist is guidance for human/agent review; automated rules should still be enforced with tests where practical.
-
+    git pull upstream main
 
 Documentation
 ^^^^^^^^^^^^^
-Whenever new modules or functions are added, concise and thorough documents should be added with examples for `doctest`_. Please also include yourself (contact method is optional) to the list of contributors on the top of the module.
 
-``QSDsan`` uses `numpydoc docstring style <https://numpydoc.readthedocs.io/en/latest/format.html>`_ with some modifications for better rendering. Some important notes:
+Whenever new modules or functions are added, include concise, thorough docstrings with examples for `doctest`_. Please also add yourself (contact method optional) to the list of contributors at the top of the module.
 
-- Both quotes ('') and double quotes ("") are good.
-- If you want some notes in your docstring, use `directives <https://docutils.sourceforge.io/docs/ref/rst/directives.html>`_ so that it can be rendered by `Sphinx <https://www.sphinx-doc.org/en/master/>`_.
-	
-	.. code::
+``QSDsan`` uses the `numpydoc docstring style <https://numpydoc.readthedocs.io/en/latest/format.html>`_ with some modifications for better rendering:
 
-		# This can be rendered by Sphinx and as docstring
-		.. note::
+- Both single quotes ('') and double quotes ("") are fine.
+- For notes in a docstring, use `directives <https://docutils.sourceforge.io/docs/ref/rst/directives.html>`_ so they render with `Sphinx <https://www.sphinx-doc.org/en/master/>`_:
 
-			Something to notes.
+  .. code::
 
-			[1] If you need to have a numbered list, be careful about line-wrapping and indentation.
-			The start of the second line should align with the number, not the first character after the number. 
+      # Rendered by Sphinx and recognized as a docstring note
+      .. note::
 
-			[2] Second point.
+          Something to note.
 
-		# This won't be rendered by Sphinx
-		Notes
-		-----
+      # NOT rendered by Sphinx
+      Notes
+      -----
 
-		# This can be rendered by Sphinx but won't be recognized as docstring
-		Note
-		----
+      # Rendered by Sphinx but not recognized as a docstring note
+      Note
+      ----
 
-- Use directives like ``:class:`package.class``` and ``:func:`class.function``` to indicate classes and functions, this will automatically add links to the corresponding documents.
+- Use directives like ``:class:`package.class``` and ``:func:`class.function``` for classes and functions; these add links to the corresponding documents. Use single back ticks in error messages and warnings, since directives are not rendered there.
+- To refer to other internal modules or external packages, include them in a "See Also" section (see :class:`qsdsan.unit_operations.AnaerobicDigestion` and :class:`qsdsan.Component` for examples).
+- This `memo on reStructuredText and Sphinx <https://rest-sphinx-memo.readthedocs.io/en/latest/>`_ is a helpful reference.
 
-	- Use single back ticks (``) in error messages and warnings since directives won't be rendered.
+Most documentation is generated automatically through `Sphinx's autodoc extension <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_. If your contribution adds new classes or modules, add a new ``.rst`` file under ``docs/source/`` and reference it from the appropriate section of ``index.rst`` (refer to existing files for examples). Tutorials are written as `Jupyter notebooks <https://jupyter.org/>`_; when adding or updating them, follow the structure of the existing notebooks in ``docs/source/tutorials``.
 
-- If you want to refer to documents of other internal modules or external packages, please include it in the "See Also" section (refer to :class:`qsdsan.sanunits.AnaerobicDigestion` and :class:`qsdsan.Component` as examples).
-- Here is a great `memo on reStructuredText and Sphinx <https://rest-sphinx-memo.readthedocs.io/en/latest/>`_.
-
-
-Most of the documentations will be automatically generated through `Sphinx's autodoc extension <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_. If your contribution involves new classes or modules, please add a new .rst file in docs/source/. and add it to the appropriate section in the ``index.rst`` file. You can refer to any of the existing files for examples.
-
-
-We recommend generating the documentation locally prior to push to GitHub/send in the pull request to make sure links, formatting, etc. are working properly. This `YouTube video <https://www.youtube.com/watch?v=oJsUvBQyHBs>`_ provides a good walk-through example/demonstration.
-
-
-Tutorials are prepared in `Jupyter Notebook <https://jupyter.org/>`_. When adding or updating tutorials, follow the structure of the maintained notebooks in ``docs/source/tutorials`` and build the documentation locally to check links and formatting.
-
+Build the documentation locally before submitting a pull request to confirm links and formatting are correct. This `YouTube walk-through <https://www.youtube.com/watch?v=oJsUvBQyHBs>`_ demonstrates the process.
 
 Testing
 ^^^^^^^
-``QSDsan`` uses `GitHub Action <https://github.com/QSD-Group/QSDsan/actions>`_ to test all pushes and pull requests. A pull request will only be accepted when:
+
+``QSDsan`` uses `GitHub Actions <https://github.com/QSD-Group/QSDsan/actions>`_ to test every push and pull request. A pull request is accepted only when:
 
 #. Meaningful contributions have been made.
 #. The branch has no conflicts with the root repository.
-#. All tests have been passed.
+#. All tests pass.
 
-To run pytest, first make sure you installed the development dependencies from the cloned repository:
+Run the tests locally before submitting. From your activated environment, in the cloned ``QSDsan`` directory:
 
-	.. code:: bash
+.. code:: bash
 
-	    pip install -e ".[dev]"
+    pytest    # if this doesn't work, try `python -m pytest`
 
-If you want to verify that Python is using your local clone, run:
+This runs everything under ``tests/`` as well as the documentation examples via `doctest`_. A dot is a passing test and an ``F`` is a failure; tracebacks for any failures are printed to help you debug.
 
-	.. code:: bash
+To confirm Python is using your local clone rather than another installed copy:
 
-		python
-	   	import qsdsan
-	   	print(qsdsan.__path__)
-	   	['C:\\Users\\<YOUR_USERNAME>\\Documents\\Coding\\QSDsan\\qsdsan']
+.. code:: bash
 
+    python -c "import qsdsan; print(qsdsan.__path__)"
 
-.. note::
-
-	**Windows only — import hang with Numba**
-
-	If ``import qsdsan`` appears to hang indefinitely on Windows, the cause is likely
-	Numba's compiled-function cache trying to write to the system temp directory.
-	Set a local cache directory before running tests or any import:
-
-	.. code:: powershell
-
-	    $env:NUMBA_CACHE_DIR=(Resolve-Path .).Path + '\.numba_cache'
-
-	This is a one-time workaround per terminal session and does not affect test results.
-
-Then, from the cloned ``QSDsan`` package directory, run the tests locally using `pytest <https://docs.pytest.org>`_:
-
-	.. code:: bash
-
-	    pytest # if this doesn't work, try `python -m pytest` or `python3 -m pytest`
-
-This runs all tests under the QSDsan/tests directory as well as all examples in the documentation through `doctest`_. Test results will be similar to the screenshot below, where a green dot indicates the test has been successfully passed and a red F indicates a failure. The number of dots and Fs indicate how many test functions or doctests are run for each moduel. Detailed error traceback on each failed test will be listed to help you fix the bug.
+The printed path should point inside your cloned ``QSDsan`` folder.
 
 .. figure:: ../../docs/source/images/pytest.png
    :width: 600
    :align: center
+
+Committing and pushing
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Push your branch to your fork. Pushing your work online backs up your history and makes it easier for maintainers to help you debug:
+
+.. code:: bash
+
+    git push origin <your-feature-name>
+
+
+Submitting a Pull Request
+-------------------------
+#. Once you are satisfied with your changes and have pushed all commits to your fork, go to your GitHub fork of ``QSDsan`` and submit a `pull request <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request>`_. Before submitting, pull the latest changes from the upstream repository (``git pull upstream main``) and resolve any conflicts, so your branch is ahead of the upstream ``main`` and not behind it.
+
+#. A member of the Quantitative Sustainable Design Group will review your changes and accept them or discuss any needed edits with you.
+
+
+For Maintainers
+---------------
+Maintainers reviewing pull requests that touch ``BioSTEAM``/``Thermosteam`` imports, stream/unit APIs, unit registries, or the ``Stream``/``SanStream``/``WasteStream`` taxonomy should follow the PR audit checklist at ``docs/maintainer/pr_audit_checklist.md``, which also explains how to install it as a Codex or Claude Code skill.
 
 
 .. Links
