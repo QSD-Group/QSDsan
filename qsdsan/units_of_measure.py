@@ -13,6 +13,8 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
+import os, pint
+
 from thermosteam.units_of_measure import (
     ureg,
     AbsoluteUnitsOfMeasure as auom,
@@ -60,44 +62,57 @@ __all__ = (
     )
 
 
-def _unit_is_defined(name):
-    try:
-        ureg.parse_units(name)
-    except Exception:
-        return False
-    return True
+def _names_in_definition_file(path):
+    '''Yield every name added to the registry by a pint definition file.
+
+    Parses ``name = value [= alias ...]`` and ``@alias canonical = alias ...``
+    lines, ignoring comments, blank lines, and other ``@`` directives. Used
+    to derive the post-load validation list from the file itself so the two
+    stay in sync automatically as definitions are added or removed.
+    '''
+    with open(path) as f:
+        for raw_line in f:
+            line = raw_line.split('#', 1)[0].strip()
+            if not line:
+                continue
+            if line.startswith('@alias'):
+                # '@alias canonical = alias1 [= alias2 ...]' — the canonical
+                # name is already registered; only the aliases are new.
+                tokens = [p.strip().split()[0]
+                          for p in line[len('@alias'):].split('=')]
+                yield from tokens[1:]
+            elif line.startswith('@'):
+                # Other pint directives (@import, @system, @context) don't
+                # add named units.
+                continue
+            else:
+                # 'name = value [= alias1 [= alias2 ...]]'
+                tokens = [p.strip().split()[0] for p in line.split('=')]
+                yield tokens[0]
+                yield from tokens[2:]   # skip the value expression
 
 
-def _define_unit(definition):
-    names = tuple(i.strip().split()[0] for i in definition.split('='))
-    if all(_unit_is_defined(i) for i in names):
-        return
-    ureg.define(definition)
+# Load QSDsan's additions to the shared pint registry from an external
+# definition file, mirroring the pattern in thermosteam/units_of_measure.py.
+# The reload guard prevents re-parsing the file (and a stream of pint
+# 'Redefining' warnings) if qsdsan is reloaded in the same Python session.
+if not getattr(pint, 'QSDsan_units_loaded', False):
+    _txt_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                             'units_of_measure.txt')
+    ureg.load_definitions(_txt_path)
+    pint.QSDsan_units_loaded = True
 
+    # Fail loudly at import time if any name QSDsan just registered does
+    # not resolve to a usable unit. pint defers RHS resolution until first
+    # use, so a typo or keyword collision (e.g. the historic 'cu_in = in3'
+    # bug, where 'in' is a Python keyword) would otherwise silently produce
+    # a broken unit. The list is derived from the .txt file itself so it
+    # stays in sync as definitions are added or removed.
+    for _name in _names_in_definition_file(_txt_path):
+        auom(_name)
+    del _name, _txt_path
 
-for _definition in (
-        'sq_m = m2',
-        'cu_m = m3',
-        'sq_cm = cm2',
-        'cu_cm = cm3',
-        'sq_ft = ft2',
-        'cu_ft = ft3',
-        'cu_in = in3',
-        'yd3 = yard**3 = cu_yd',
-        'cfm = cf/minute = CFM',
-        'cfs = cf/second = CFS',
-        'yr = year = y',
-        'hr = hour = h',
-        'd = day',
-        'each = count = ea',
-        'unit = count',
-        'point = count = points',
-        'MGD = 1e6 * gallon / day',
-        'mgd = MGD',
-        'mmscfd = 1e6 * ft3 / day = MMSCfd = MMSCFD',
-        ):
-    _define_unit(_definition)
-del _definition
+del os, pint
 
 
 component_units_of_measure = {
