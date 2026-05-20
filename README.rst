@@ -36,7 +36,7 @@ QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Sys
 
 .. Binder launch of tutorials
 .. image:: ./docs/source/images/custom_binder_logo.svg
-   :target: https://mybinder.org/v2/gh/QSD-Group/QSDsan-env/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FQSD-group%252FQSDsan%26urlpath%3Dtree%252FQSDsan%252Fdocs%252Fsource%252Ftutorials%26branch%3Dmain
+   :target: https://mybinder.org/v2/gh/QSD-Group/QSDsan-env/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FQSD-group%252FQSDsan%26urlpath%3Dlab%252Ftree%252FQSDsan%252Fdocs%252Fsource%252Ftutorials%26branch%3Dmain
 
 .. .. Email subscription form
 .. .. image:: https://img.shields.io/badge/news-subscribe-F3A93C?style=flat&logo=rss
