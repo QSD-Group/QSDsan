@@ -13,6 +13,41 @@ environment, or open them in your browser by clicking the badge below:
    :target: https://mybinder.org/v2/gh/QSD-Group/QSDsan-env/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FQSD-group%252FQSDsan%26urlpath%3Dlab%252Ftree%252FQSDsan%252Fdocs%252Fsource%252Ftutorials%26branch%3Dmain
    :alt: Launch Binder
 
+
+.. _run-in-colab:
+
+Running tutorials in Google Colab
+---------------------------------
+
+You can also run any tutorial in `Google Colab <https://colab.research.google.com>`_
+without installing anything locally. Colab does not include ``QSDsan`` in its
+default environment, so a short one-time setup is needed for each session:
+
+#. Open the notebook in Colab: go to **File → Open notebook → GitHub**, search for
+   ``QSD-Group/QSDsan``, and pick the tutorial you want (under
+   ``docs/source/tutorials``).
+#. Add a new cell at the very top (or use the tutorial's first cell) and install
+   ``QSDsan`` and ``EXPOsan``:
+
+   .. code-block:: text
+
+      !pip install qsdsan exposan
+
+#. Run that cell. Colab will warn that some pre-installed packages (such as
+   ``numpy`` and ``matplotlib``) were already imported and that you must restart
+   the runtime. This is expected, not an error: installing ``QSDsan`` uses different
+   versions of those packages, but the versions already loaded into the running session
+   cannot be swapped until you restart.
+#. Restart the session via **Runtime → Restart session**.
+#. Continue running the notebook from the cell *after* the install cell. Do not
+   re-run the install cell.
+
+.. note::
+   The restart is needed only once per session. Do not import any packages
+   before installing, restart once after installing, 
+   and then skip the install cell, the warning will not reappear.
+
+
 .. note::
    **About the YouTube walkthroughs.** Some tutorials have companion videos on
    our `YouTube channel
