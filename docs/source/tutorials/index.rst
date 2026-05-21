@@ -3,20 +3,86 @@
 Tutorials
 =========
 
-To help you familiarize with ``QSDsan``, we include two types of tutorials - topical tutorials that cover on one or multiple classes of ``QSDsan``, or design tutorials that show you how to translate a practical design problem into coding in QSDsan. Follow them to get started!
+These tutorials teach you how to use ``QSDsan``: defining components, building waste streams,
+assembling units into systems, and running techno-economic analysis (TEA), life cycle assessment (LCA), and uncertainty/sensitivity analyses.
 
-All tutorials are written using Jupyter Notebook, you can run your own Jupyter environment, or you can visit `this page <https://mybinder.org/v2/gh/QSD-Group/QSDsan/main?filepath=%2Fdocs%2Fsource%2Ftutorials>`_ to run the Jupyter environment in your browser.
+All tutorials are Jupyter notebooks. Run them locally in your own Jupyter
+environment, or open them in your browser via `Binder
+<https://mybinder.org/v2/gh/QSD-Group/QSDsan-env/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FQSD-group%252FQSDsan%26urlpath%3Dlab%252Ftree%252FQSDsan%252Fdocs%252Fsource%252Ftutorials%26branch%3Dmain>`_.
 
-For each of these tutorials and examples, we are also recording videos where one of the QSD group members will go through the material step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
+.. note::
+   **About the YouTube walkthroughs.** Some tutorials have companion videos on
+   our `YouTube channel
+   <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_. The videos were
+   recorded against earlier versions of ``QSDsan`` and remain useful for the
+   concepts and the big picture, but the notebooks here are the authoritative
+   reference for syntax and API. Each video description lists the ``QSDsan``
+   version it was filmed against.
+
+
+New to Python or Jupyter?
+-------------------------
+
+These tutorials assume you can read Python code, run a Jupyter notebook, and
+have ``QSDsan`` installed. If you are new to Python or scientific computing,
+work through one of the resources below first;
+they cover the fundamentals far better than we could here.
+
+General Python:
+
+- `The official Python tutorial <https://docs.python.org/3/tutorial/>`_, the
+  canonical free introduction to the language.
+- `Python for Everybody <https://www.py4e.com/>`_ by Charles Severance, a
+  textbook and video course aimed at absolute beginners.
+- `Real Python <https://realpython.com/>`_, searchable tutorials on individual
+  topics once you have the basics.
+
+Python for researchers and engineers:
+
+- `Software Carpentry: Plotting and Programming in Python
+  <https://swcarpentry.github.io/python-novice-gapminder/>`_, a short hands-on
+  lesson series designed for scientists.
+- `Scientific Python Lectures <https://lectures.scientific-python.org/>`_, a
+  free course covering NumPy, SciPy, matplotlib, and pandas.
+
+Jupyter:
+
+- `Project Jupyter documentation <https://docs.jupyter.org/>`_ and
+  `Try Jupyter <https://jupyter.org/try>`_, the official docs and an
+  in-browser environment to experiment in.
+
+For installing ``QSDsan`` itself, see the installation section on the
+:doc:`main documentation page </index>`.
+
+
+Suggested Learning Paths
+------------------------
+
+A quick overview of the tutorials, depending on your needs:
+
+- **Tour the package (~15 minutes):** :doc:`0_Quick_Overview`.
+- **Build steady-state models:** :doc:`0_Quick_Overview` →
+  :doc:`2_Component` → :doc:`3_WasteStream` → :doc:`4_SanUnit_basic` →
+  :doc:`6_System`.
+- **Write your own unit:** the steady-state path above, then
+  :doc:`5_SanUnit_advanced`.
+- **Economic and environmental analysis:** add :doc:`7_TEA` and :doc:`8_LCA`
+  on top of the steady-state path.
+- **Uncertainty and sensitivity analysis:** add
+  :doc:`9_Uncertainty_and_Sensitivity_Analyses` after TEA/LCA.
+- **Dynamic process modeling:** :doc:`13_Process_Modeling_101` (concepts) →
+  :doc:`10_Process` (the ``Process`` class) →
+  :doc:`11_Dynamic_Simulation` → :doc:`12_Anaerobic_Digestion_Model_No_1`
+  (worked case study).
 
 
 Topical Tutorials
 -----------------
+
 .. toctree::
    :maxdepth: 1
 
    0_Quick_Overview
-   1_Helpful_Basics
    2_Component
    3_WasteStream
    4_SanUnit_basic
@@ -29,13 +95,26 @@ Topical Tutorials
    11_Dynamic_Simulation
    12_Anaerobic_Digestion_Model_No_1
    13_Process_Modeling_101
+
+
+For Contributors
+----------------
+
+.. toctree::
+   :maxdepth: 1
+
    14_AI_Assisted_Development
+
+
+.. 1_Helpful_Basics is kept as an orphan deprecation stub so its URL still
+   resolves for anyone with a bookmark; it is excluded from this index and
+   from the global navigation via its own ``nbsphinx.orphan`` metadata.
 
 
 Additional Resources
 --------------------
 
-To get the full value of ``QSDsan``, we highly recommend reading through the documents of these packages:
-
-- `biosteam docs <https://biosteam.readthedocs.io/en/latest/index.html>`_
-- `chemicals docs <https://chemicals.readthedocs.io/en/latest/>`_ (the thermodynamic property package for thermosteam)
+``QSDsan`` is built on `BioSTEAM <https://biosteam.readthedocs.io/en/latest/index.html>`_,
+an open-source platform for process modeling and techno-economic analysis focusing on biorefineries.
+Some of QSDsan's core classes and methods are inherited from BioSTEAM. 
+You may want to refer to BioSTEAM's documentation for the parent classes and methods.
