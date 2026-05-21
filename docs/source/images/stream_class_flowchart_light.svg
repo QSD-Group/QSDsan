@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="440" viewBox="0 0 860 440"
+     role="img" aria-label="Decision flowchart for selecting a QSDsan stream class">
+  <title>Stream class selection</title>
+  <desc>Decide between Stream (BioSTEAM), SanStream (QSDsan), and WasteStream (QSDsan)
+        based on whether you need wastewater-specific properties and/or LCA.</desc>
+
+  <style>
+    .box           { fill: #dce9f7; stroke: #5a7fa6; }
+    .diamond-blue  { fill: #dce9f7; stroke: #5a7fa6; }
+    .diamond-green { fill: #dcebc3; stroke: #7a9a3a; }
+    .edge          { stroke: #555; fill: none; }
+    .triangle      { fill: #ffffff; stroke: #555; }
+    .label         { fill: #000; font-family: Arial, Helvetica, sans-serif; font-weight: bold; font-size: 18px; }
+    .title-text    { fill: #000; font-family: Arial, Helvetica, sans-serif; font-weight: bold; font-size: 19px; }
+    .sub-text      { fill: #444; font-family: Arial, Helvetica, sans-serif; font-size: 15px; }
+  </style>
+
+  <defs>
+    <!-- Arrow head for decision edges; uses currentColor so it tracks the .edge stroke -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse"
+            markerUnits="userSpaceOnUse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke"
+            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <!-- Decision diamond: Wastewater properties? -->
+  <polygon class="diamond-blue" stroke-width="1.5"
+           points="130,180 220,250 130,320 40,250"/>
+  <text class="label" x="130" y="244" text-anchor="middle">Wastewater</text>
+  <text class="label" x="130" y="262" text-anchor="middle">properties?</text>
+
+  <!-- Decision diamond: LCA? -->
+  <polygon class="diamond-green" stroke-width="1.5"
+           points="380,190 455,250 380,310 305,250"/>
+  <text class="label" x="380" y="254" text-anchor="middle">LCA?</text>
+
+  <!-- Class box: Stream -->
+  <rect class="box" stroke-width="1.5" x="600" y="60" width="190" height="64" rx="8"/>
+  <text class="title-text" x="695" y="88"  text-anchor="middle">Stream</text>
+  <text class="sub-text"   x="695" y="108" text-anchor="middle">(BioSTEAM)</text>
+
+  <!-- Class box: SanStream -->
+  <rect class="box" stroke-width="1.5" x="600" y="218" width="190" height="64" rx="8"/>
+  <text class="title-text" x="695" y="246" text-anchor="middle">SanStream</text>
+  <text class="sub-text"   x="695" y="266" text-anchor="middle">(QSDsan)</text>
+
+  <!-- Class box: WasteStream -->
+  <rect class="box" stroke-width="1.5" x="600" y="350" width="190" height="64" rx="8"/>
+  <text class="title-text" x="695" y="378" text-anchor="middle">WasteStream</text>
+  <text class="sub-text"   x="695" y="398" text-anchor="middle">(QSDsan)</text>
+
+  <!-- "No" from Wastewater -> LCA -->
+  <line class="edge" stroke-width="1.5"
+        x1="224" y1="250" x2="300" y2="250" marker-end="url(#arrow)"/>
+  <text class="label" x="262" y="240" text-anchor="middle">No</text>
+
+  <!-- "Yes" from LCA -> SanStream -->
+  <line class="edge" stroke-width="1.5"
+        x1="459" y1="250" x2="595" y2="250" marker-end="url(#arrow)"/>
+  <text class="label" x="527" y="240" text-anchor="middle">Yes</text>
+
+  <!-- "No" from LCA -> Stream (goes up and right) -->
+  <path class="edge" stroke-width="1.5"
+        d="M380 190 L380 92 L595 92" marker-end="url(#arrow)"/>
+  <text class="label" x="396" y="170">No</text>
+
+  <!-- "Yes" from Wastewater -> WasteStream (goes down and right) -->
+  <path class="edge" stroke-width="1.5"
+        d="M130 320 L130 382 L595 382" marker-end="url(#arrow)"/>
+  <text class="label" x="170" y="372">Yes</text>
+
+  <!-- Inheritance arrows (UML-style, child -> parent, hollow triangle head) -->
+  <!-- SanStream inherits from Stream -->
+  <line class="edge" stroke-width="1.5" x1="695" y1="218" x2="695" y2="140"/>
+  <polygon class="triangle" stroke-width="1.5" points="695,124 685,142 705,142"/>
+
+  <!-- WasteStream inherits from SanStream -->
+  <line class="edge" stroke-width="1.5" x1="695" y1="350" x2="695" y2="298"/>
+  <polygon class="triangle" stroke-width="1.5" points="695,282 685,300 705,300"/>
+</svg>

@@ -13,20 +13,28 @@ Follow this flowchart to decide which class you want to use. Note that many of B
 are imported from its thermodynamic engine, ``thermosteam``, so you may see these two packages used interchangeably in the documentation. We tried to use ``BioSTEAM`` as the main pointer in most cases
 to simplify the documentation, but if you see ``thermosteam`` in the documentation, it is likely referring to a class that is imported from ``thermosteam`` and re-exported in ``BioSTEAM``. In that case, you can use either ``BioSTEAM`` or ``thermosteam`` to access the class, but we recommend using ``BioSTEAM`` for consistency.
 
-.. figure:: https://lucid.app/publicSegments/view/5aae11af-e8cf-434a-939d-9abe07cb1b82/image.png
-   :width: 500
+.. image:: ../../images/stream_class_flowchart_light.svg
+   :class: only-light
+   :alt: Decision flowchart for selecting Stream, SanStream, or WasteStream
    :align: center
+   :width: 600
+
+.. image:: ../../images/stream_class_flowchart_dark.svg
+   :class: only-dark
+   :alt: Decision flowchart for selecting Stream, SanStream, or WasteStream
+   :align: center
+   :width: 600
 
 
 **Essentially,**
 
-+-------------------------------------+-----------------------------+----------------------+----------------------+
-|                                     | :class:`BioSTEAM.Stream` | :class:`SanStream`   | :class:`WasteStream` |
-+=====================================+=============================+======================+======================+
-| Capable of doing LCA?               | No                          | Yes                  | Yes                  |
-+-------------------------------------+-----------------------------+----------------------+----------------------+
-| Has wastewater-specific properties? | No                          | No                   | Yes                  |
-+-------------------------------------+-----------------------------+----------------------+----------------------+
++-------------------------------------+--------------------------+---------------------+---------------------+
+|                                     | :class:`biosteam.Stream` | :class:`SanStream`  | :class:`WasteStream`|
++=====================================+==========================+=====================+=====================+
+| Capable of doing LCA?               | No                       | Yes                 | Yes                 |
++-------------------------------------+--------------------------+---------------------+---------------------+
+| Has wastewater-specific properties? | No                       | No                  | Yes                 |
++-------------------------------------+--------------------------+---------------------+---------------------+
 
 
 If you are unsure:
@@ -40,7 +48,7 @@ Despite the name, :class:`~.WasteStream` does not require the material to be dis
 
 .. note::
 	
-	Regardless of which stream class you choose, you always use :class:`~.Component` and :class:`~.Components` instead of :class:`biosteam.Chemical` and :class:`biosteam.Chemicals` to indicate which components to include in your system, this is true even if you choose to use :class:`biosteam.Stream` and all of the components are pure chemicals. Although in that case, it might be more straightforward to use ``BioSTEAM`` instead of ``QSDsan`` unless you want to include environmental impacts in your analyses.
+	Regardless of which stream class you choose, you always use :class:`~.Component` and :class:`~.Components` instead of :class:`~.Chemical` and :class:`~.Chemicals` to indicate which components to include in your system, this is true even if you choose to use :class:`~.Stream` and all of the components are pure chemicals. Although in that case, it might be more straightforward to use ``BioSTEAM`` instead of ``QSDsan`` unless you want to include environmental impacts in your analyses.
 
 
 SanStream
