@@ -7,8 +7,11 @@ These tutorials teach you how to use ``QSDsan``: defining components, building w
 assembling units into systems, and running techno-economic analysis (TEA), life cycle assessment (LCA), and uncertainty/sensitivity analyses.
 
 All tutorials are Jupyter notebooks. Run them locally in your own Jupyter
-environment, or open them in your browser via `Binder
-<https://mybinder.org/v2/gh/QSD-Group/QSDsan-env/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FQSD-group%252FQSDsan%26urlpath%3Dlab%252Ftree%252FQSDsan%252Fdocs%252Fsource%252Ftutorials%26branch%3Dmain>`_.
+environment, or open them in your browser by clicking the badge below:
+
+.. image:: ../images/custom_binder_logo.svg
+   :target: https://mybinder.org/v2/gh/QSD-Group/QSDsan-env/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FQSD-group%252FQSDsan%26urlpath%3Dlab%252Ftree%252FQSDsan%252Fdocs%252Fsource%252Ftutorials%26branch%3Dmain
+   :alt: Launch Binder
 
 .. note::
    **About the YouTube walkthroughs.** Some tutorials have companion videos on
@@ -79,10 +82,20 @@ A quick overview of the tutorials, depending on your needs:
 Topical Tutorials
 -----------------
 
+The topical tutorials are organized in three parts.
+
+**Part I.** A class-agnostic tour of ``QSDsan``.
+
 .. toctree::
    :maxdepth: 1
 
    0_Quick_Overview
+
+**Part II.** QSDsan's core classes. Each tutorial focuses on one or a few core classes.
+
+.. toctree::
+   :maxdepth: 1
+
    2_Component
    3_WasteStream
    4_SanUnit_basic
@@ -92,6 +105,12 @@ Topical Tutorials
    8_LCA
    9_Uncertainty_and_Sensitivity_Analyses
    10_Process
+
+**Part III.** Integrating process models. Building dynamic, multi-component models in ``QSDsan``.
+
+.. toctree::
+   :maxdepth: 1
+
    11_Dynamic_Simulation
    12_Anaerobic_Digestion_Model_No_1
    13_Process_Modeling_101

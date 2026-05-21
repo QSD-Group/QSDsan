@@ -126,7 +126,7 @@ You can find tutorials and documents at:
 
 All tutorials are written using Jupyter Notebook, you can run your own Jupyter environment, or you can click the ``launch binder`` badge on the top to launch the environment in your browser.
 
-For each of these tutorials, we are also recording videos where one of the QSD group members will go through the tutorial step-by-step. We are gradually releasing these videos on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_ so subscribe to receive updates!
+Many tutorials have companion video walkthroughs on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_. The videos were recorded against earlier versions of ``QSDsan`` and remain useful for the concepts and the big picture, but some APIs may be outdated. Refer to the notebooks for the authoritative reference for syntax and API.
 
 
 Authors and Contributing
