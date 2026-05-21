@@ -58,27 +58,6 @@ For installing ``QSDsan`` itself, see the installation section on the
 :doc:`main documentation page </index>`.
 
 
-Suggested Learning Paths
-------------------------
-
-A quick overview of the tutorials, depending on your needs:
-
-- **Tour the package (~15 minutes):** :doc:`0_Quick_Overview`.
-- **Build steady-state models:** :doc:`0_Quick_Overview` →
-  :doc:`2_Component` → :doc:`3_WasteStream` → :doc:`4_SanUnit_basic` →
-  :doc:`6_System`.
-- **Write your own unit:** the steady-state path above, then
-  :doc:`5_SanUnit_advanced`.
-- **Economic and environmental analysis:** add :doc:`7_TEA` and :doc:`8_LCA`
-  on top of the steady-state path.
-- **Uncertainty and sensitivity analysis:** add
-  :doc:`9_Uncertainty_and_Sensitivity_Analyses` after TEA/LCA.
-- **Dynamic process modeling:** :doc:`13_Process_Modeling_101` (concepts) →
-  :doc:`10_Process` (the ``Process`` class) →
-  :doc:`11_Dynamic_Simulation` → :doc:`12_Anaerobic_Digestion_Model_No_1`
-  (worked case study).
-
-
 Topical Tutorials
 -----------------
 
@@ -106,7 +85,7 @@ The topical tutorials are organized in three parts.
    9_Uncertainty_and_Sensitivity_Analyses
    10_Process
 
-**Part III.** Integrating process models. Building dynamic, multi-component models in ``QSDsan``.
+**Part III.** Process modeling and dynamic simulation.
 
 .. toctree::
    :maxdepth: 1
