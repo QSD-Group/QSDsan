@@ -50,7 +50,7 @@ Python for researchers and engineers:
 
 Jupyter:
 
-- `Project Jupyter documentation <https://docs.jupyter.org/>`_ and
+- `Project Jupyter documentation <https://docs.jupyter.org/en/latest/>`_ and
   `Try Jupyter <https://jupyter.org/try>`_, the official docs and an
   in-browser environment to experiment in.
 

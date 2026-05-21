@@ -3,13 +3,15 @@ Streams
 
 Which stream class to use?
 --------------------------
-``QSDsan`` can work with three main stream classes: :class:`biosteam.Stream`, :class:`~.SanStream`, and :class:`~.WasteStream`. They form a capability hierarchy:
+``QSDsan`` can work with three main stream classes: :class:`~.Stream`, :class:`~.SanStream`, and :class:`~.WasteStream`. They form a capability hierarchy:
 
-* :class:`biosteam.Stream` is the general material stream class from ``BioSTEAM``.
+* :class:`~.Stream` is the general material stream class, inherited from ``BioSTEAM``/``Thermosteam``.
 * :class:`~.SanStream` adds stream-level life cycle impact functionality.
 * :class:`~.WasteStream` adds wastewater-modeling functionality on top of :class:`~.SanStream`.
 
-Follow this flowchart to decide which class you want to use.
+Follow this flowchart to decide which class you want to use. Note that many of BioSTEAM's classes
+are imported from its thermodynamic engine, ``thermosteam``, so you may see these two packages used interchangeably in the documentation. We tried to use ``BioSTEAM`` as the main pointer in most cases
+to simplify the documentation, but if you see ``thermosteam`` in the documentation, it is likely referring to a class that is imported from ``thermosteam`` and re-exported in ``BioSTEAM``. In that case, you can use either ``BioSTEAM`` or ``thermosteam`` to access the class, but we recommend using ``BioSTEAM`` for consistency.
 
 .. figure:: https://lucid.app/publicSegments/view/5aae11af-e8cf-434a-939d-9abe07cb1b82/image.png
    :width: 500
@@ -19,7 +21,7 @@ Follow this flowchart to decide which class you want to use.
 **Essentially,**
 
 +-------------------------------------+-----------------------------+----------------------+----------------------+
-|                                     | :class:`thermosteam.Stream` | :class:`SanStream`   | :class:`WasteStream` |
+|                                     | :class:`BioSTEAM.Stream` | :class:`SanStream`   | :class:`WasteStream` |
 +=====================================+=============================+======================+======================+
 | Capable of doing LCA?               | No                          | Yes                  | Yes                  |
 +-------------------------------------+-----------------------------+----------------------+----------------------+
