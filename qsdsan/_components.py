@@ -156,7 +156,29 @@ class Components(Chemicals):
 
     def compile(self, skip_checks=False, ignore_inaccurate_molar_weight=False, 
                 adjust_MW_to_measured_as=False):
-        '''Cast as a :class:`CompiledComponents` object.'''
+        '''
+        Cast as a :class:`CompiledComponents` object.
+
+        Parameters
+        ----------
+        skip_checks : bool
+            Whether to skip checks for missing component properties.
+        ignore_inaccurate_molar_weight : bool
+            Components defined with a ``measured_as`` basis (e.g. as COD or an
+            element) do not have a molecular weight consistent with that basis,
+            so molar and volumetric calculations with them are inaccurate.
+            Compilation raises an error in that case unless this is set to True.
+            Set to True when you only need mass-based quantities.
+        adjust_MW_to_measured_as : bool
+            For ``measured_as`` components that have a chemical formula, set to
+            True to adjust their MW (to ``chem_MW / i_mass``) so molar and
+            volumetric calculations are correct. Components without a formula
+            keep MW = 1 and still require ``ignore_inaccurate_molar_weight=True``.
+
+        See Also
+        --------
+        :func:`Components.default_compile` for a fuller explanation and examples.
+        '''
         components = tuple(self)
         prepare_chemicals(components, skip_checks)
         setattr(self, '__class__', CompiledComponents)
