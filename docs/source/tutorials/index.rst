@@ -89,9 +89,14 @@ Jupyter:
   `Try Jupyter <https://jupyter.org/try>`_, the official docs and an
   in-browser environment to experiment in.
 
+Throughout the topical tutorials you will also find collapsible **Python Aside**
+callouts. These explain a Python concept or idiom that comes up in the surrounding
+code, so you can pick it up in context. Expand one if you want the explanation, or
+skip it if you already know the concept.
+
 Already comfortable with Python but new to these notebooks? The
 :doc:`Jupyter tips <jupyter_tips>` page covers the few Jupyter features that you might
-find handy when working withthese tutorials.
+find handy when working with these tutorials.
 
 .. toctree::
    :hidden:
