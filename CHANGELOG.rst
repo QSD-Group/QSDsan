@@ -14,6 +14,8 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - Fixed :class:`~.sanunits.HXutility`: its ``_units`` dictionary was inadvertently set to ``None`` (it was assigned the return value of ``dict.update``, which is always ``None``), which broke :meth:`results` with an ``AttributeError`` and mutated BioSTEAM's shared ``_units``. The unit-of-measure entries are now built with a dict merge.
 
+- Re-exported the Thermosteam reaction classes (``Reaction``, ``ReactionItem``, ``ReactionSet``, ``ParallelReaction``, ``SeriesReaction``, ``ReactionSystem``, and the ``Rxn``/``RxnI``/``RxnS``/``PRxn``/``SRxn``/``RxnSys`` aliases) from the top-level ``qsdsan`` namespace, so they can be imported with ``from qsdsan import Reaction`` instead of reaching into BioSTEAM/Thermosteam.
+
 - Tutorial updates ongoing.
 
 

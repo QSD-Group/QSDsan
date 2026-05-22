@@ -43,6 +43,22 @@ Model = _bst.Model
 Metric = _bst.Metric
 Parameter = _bst.Parameter
 default_utilities = _bst.default_utilities
+
+# Reaction APIs (defined in Thermosteam, re-exported through BioSTEAM) so users can
+# do ``from qsdsan import Reaction`` instead of reaching into BioSTEAM/Thermosteam.
+Reaction = _bst.Reaction
+ReactionItem = _bst.ReactionItem
+ReactionSet = _bst.ReactionSet
+ParallelReaction = _bst.ParallelReaction
+SeriesReaction = _bst.SeriesReaction
+ReactionSystem = _bst.ReactionSystem
+Rxn = _bst.Rxn
+RxnI = _bst.RxnI
+RxnS = _bst.RxnS
+PRxn = _bst.PRxn
+SRxn = _bst.SRxn
+RxnSys = _bst.RxnSys
+
 # Temporary placeholder — will be upgraded to SanMainFlowsheet at module bottom
 main_flowsheet = _bst.main_flowsheet
 
