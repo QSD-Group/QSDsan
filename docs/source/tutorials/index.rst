@@ -89,6 +89,15 @@ Jupyter:
   `Try Jupyter <https://jupyter.org/try>`_, the official docs and an
   in-browser environment to experiment in.
 
+Already comfortable with Python but new to these notebooks? The
+:doc:`Jupyter tips <jupyter_tips>` page covers the few Jupyter features that you might
+find handy when working withthese tutorials.
+
+.. toctree::
+   :hidden:
+
+   jupyter_tips
+
 For installing ``QSDsan`` itself, see the installation section on the
 :doc:`main documentation page </index>`.
 
