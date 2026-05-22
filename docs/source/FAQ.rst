@@ -35,7 +35,7 @@ To check that Graphviz is installed correctly, run:
 
    dot -V
 
-If ``dot`` is not found, restart your terminal/editor and try again. If it still fails, follow the Graphviz instructions for adding the Graphviz ``bin`` folder to your system ``PATH``.
+If ``dot`` is not found, restart your terminal/editor and try again. If it still fails, follow the Graphviz instructions for adding the Graphviz ``bin`` directory to your system ``PATH``.
 
 When using :func:`diagram`, if you run into a ``graphviz`` error similar to:
 
@@ -189,7 +189,7 @@ However, GitHub does not allow you to directly create a private fork (or more ac
 
     .. note::
 
-        Don't forget to firstly navigate to the ``QSDsan`` folder by ``cd QSDsan``
+        Don't forget to firstly navigate to the ``QSDsan`` directory by ``cd QSDsan``
 
 #. To double-check things have been set up correctly, you can check the remote url using ``git remove -v``, and you should see something like:
 
