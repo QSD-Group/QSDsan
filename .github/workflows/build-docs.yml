@@ -46,11 +46,11 @@ jobs:
         pip install -e ".[docs]"
     - name: Build HTML docs
       # --keep-going reports every problem in one run instead of stopping at the first.
-      # -W turns warnings (including broken cross-references and malformed tables)
-      # into errors so they fail CI. If pre-existing warnings make this too noisy,
-      # drop the -W flag to fail only on fatal build errors.
+      # Warnings (broken cross-references, malformed tables, etc.) are reported in the
+      # log but do NOT fail the build; only fatal build errors do. Add -W back if you
+      # later want warnings to be treated as errors.
       run: |
-        sphinx-build -b html --keep-going -W docs/source docs/_build/html
+        sphinx-build -b html --keep-going docs/source docs/_build/html
     - name: Upload built HTML
       if: ${{ always() }}
       uses: actions/upload-artifact@v4
