@@ -4,6 +4,19 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
+`1.5.1`_
+--------
+- :class:`~.Component` now validates the ``particle_size``, ``degradability``, and ``organic`` arguments at creation, for both the constructor and :meth:`~.Component.from_chemical`. Invalid values (e.g., a misspelled ``particle_size``) that were previously accepted silently now raise a ``ValueError``.
+
+- The ``f_BOD5_COD``, ``f_uBOD_COD``, and ``f_Vmass_Totmass`` fractions are now range-checked to ``[0, 1]`` (this check was previously unreachable).
+
+- The :class:`~.Component` constructor now accepts a ``chemical`` keyword to build a component directly from an existing ``thermosteam.Chemical``. :meth:`~.Component.from_chemical` is now a thin wrapper around it, with unchanged behavior.
+
+- Documented the ``ignore_inaccurate_molar_weight`` and ``adjust_MW_to_measured_as`` options of :meth:`~.Components.compile`, and substantially revised the topical tutorials.
+
+- Tutorial updates ongoing.
+
+
 `1.5.0`_
 --------
 - All LCA registry types (:class:`~.ImpactIndicator`, :class:`~.ImpactItem`, :class:`~.Construction`, :class:`~.Transportation`) are now isolated per flowsheet. Switching between systems via :meth:`~.SanMainFlowsheet.set_flowsheet` atomically swaps all four registries, so no manual :func:`~.utils.clear_lca_registries` calls are needed between systems. :func:`~.utils.clear_lca_registries` is deprecated.
@@ -257,6 +270,7 @@ Official release of ``QSDsan`` v1.0.0!
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
+.. _1.5.1: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.1
 .. _1.5.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.0
 .. _1.4.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.4.0
 .. _1.3.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.3.0
