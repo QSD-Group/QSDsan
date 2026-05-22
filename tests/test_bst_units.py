@@ -18,10 +18,12 @@ from numpy.testing import assert_allclose
 
 __all__ = (
     'test_default',
+    'test_units_attribute_is_dict',
     'test_BinaryDistillation',
     'test_Flash',
     'test_HXprocess',
     'test_HXutility',
+    'test_HXutility_results',
     'test_IsothermalCompressor',
     'test_MixTank',
     'test_Pump',
@@ -104,6 +106,29 @@ def test_default():
     qs.default() # default everything
 
 
+def test_units_attribute_is_dict():
+    '''
+    Every ``SanUnit`` subclass must have a ``dict`` ``_units`` attribute; BioSTEAM's
+    ``results()`` does ``self._units.get(...)``, so a non-dict (e.g., ``None``) breaks it.
+
+    This guards against a class of bug where a subclass sets
+    ``_units = SomeParent._units.update({...})`` -- ``dict.update`` mutates in place and
+    returns ``None``, leaving ``_units`` as ``None``.
+    '''
+    modules = [m for m in (getattr(qs, 'unit_operations', None),
+                           getattr(qs, 'sanunits', None)) if m is not None]
+    seen = {}
+    for module in modules:
+        for name in dir(module):
+            obj = getattr(module, name)
+            if isinstance(obj, type) and issubclass(obj, qs.SanUnit):
+                seen[obj] = obj.__name__
+    assert seen, 'no SanUnit subclasses found to check'
+    bad = sorted(n for cls, n in seen.items()
+                 if not isinstance(getattr(cls, '_units', {}), dict))
+    assert not bad, f'these unit classes have a non-dict `_units`: {bad}'
+
+
 def test_BinaryDistillation():
     bst.settings.set_thermo(chems)
     stream_kwargs = dict(Water=80, Methanol=100, Glycerol=25, units='kmol/hr')
@@ -158,6 +183,21 @@ def test_HXutility():
     qs_unit = qs.unit_operations.HXutility(ins=qs_ws, T=400, rigorous=True)
 
     check_results(bst_unit, qs_unit)
+
+
+def test_HXutility_results():
+    '''
+    Regression test: ``HXutility.results()`` must work. Its ``_units`` was once set to
+    ``None`` (assigned the return value of ``dict.update``), which raised
+    ``AttributeError`` inside BioSTEAM's ``results()``. ``check_results`` only calls
+    ``simulate()``, so this exercises the reporting path explicitly.
+    '''
+    _, qs_ws = create_streams(1)
+    qs.set_thermo(cmps)
+    qs_unit = qs.unit_operations.HXutility('H_results', ins=qs_ws, T=350)
+    qs_unit.simulate()
+    df = qs_unit.results()
+    assert df is not None and len(df) > 0
 
 
 def test_IsothermalCompressor():
@@ -220,10 +260,12 @@ def test_StorageTank():
 
 if __name__ == '__main__':
     test_default()
+    test_units_attribute_is_dict()
     test_BinaryDistillation()
     test_Flash()
     test_HXprocess()
     test_HXutility()
+    test_HXutility_results()
     test_IsothermalCompressor()
     test_MixTank()
     test_Pump()
