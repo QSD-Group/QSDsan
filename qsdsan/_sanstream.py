@@ -109,6 +109,24 @@ class SanStream(Stream):
             If True and the original stream has an :class:`~.StreamImpactItem`,
             then a new :class:`~.StreamImpactItem` will be created for the new stream
             and the new impact item will be linked to the original impact item.
+
+        Examples
+        --------
+        >>> from qsdsan import set_thermo, SanStream
+        >>> from qsdsan.utils import create_example_components
+        >>> cmps = create_example_components()
+        >>> set_thermo(cmps)
+        >>> ss1 = SanStream('ss1', Water=100, NaCl=1, T=320, price=3.18)
+        >>> ss2 = ss1.copy('ss2')
+        >>> ss2.mol is ss1.mol  # data is copied, not shared
+        False
+        >>> ss2.T  # temperature, pressure, and flows are copied
+        320.0
+        >>> ss2.price  # but price is not copied unless requested
+        0.0
+        >>> ss3 = ss1.copy('ss3', copy_price=True)
+        >>> ss3.price
+        3.18
         '''
 
         new = super().copy(ID=new_ID)
@@ -141,6 +159,27 @@ class SanStream(Stream):
             then a new :class:`~.StreamImpactItem` will be created for the new stream
             and the new impact item will be linked to the original impact item.
 
+        Examples
+        --------
+        >>> from qsdsan import set_thermo, SanStream
+        >>> from qsdsan.utils import create_example_components
+        >>> cmps = create_example_components()
+        >>> set_thermo(cmps)
+        >>> ss1 = SanStream('ss1', Water=100, NaCl=1, T=320, price=3.18)
+        >>> ss2 = SanStream('ss2')
+        >>> ss2.copy_like(ss1)
+        >>> ss2.imass['Water']  # flows, temperature, and pressure are copied
+        100.0
+        >>> ss2.T
+        320.0
+        >>> ss2.price  # price is not copied unless requested
+        0.0
+        >>> ss2.copy_like(ss1, copy_price=True)
+        >>> ss2.price  # now copied from the source stream
+        3.18
+        >>> ss1.price  # the source stream is left unchanged
+        3.18
+
         See Also
         --------
         :func:`copy` for the differences between ``copy``, ``copy_like``, and ``copy_flow``.
@@ -150,11 +189,11 @@ class SanStream(Stream):
         if not isinstance(other, SanStream):
             return
         if copy_price:
-            other.price = self.price
+            self.price = other.price
         if copy_impact_item:
             if hasattr(other, '_stream_impact_item'):
                 if other.stream_impact_item is not None:
-                    self.stream_impact_item.copy(stream=self)
+                    other.stream_impact_item.copy(stream=self)
 
 
     def copy_flow(self, other, IDs=..., *, remove=False, exclude=False):
@@ -172,6 +211,19 @@ class SanStream(Stream):
         exclude=False: bool, optional
             If True, exclude designated components when copying.
 
+        Examples
+        --------
+        >>> from qsdsan import set_thermo, SanStream
+        >>> from qsdsan.utils import create_example_components
+        >>> cmps = create_example_components()
+        >>> set_thermo(cmps)
+        >>> ss1 = SanStream('ss1', Water=100, NaCl=1, T=320)
+        >>> ss2 = SanStream('ss2', T=300)
+        >>> ss2.copy_flow(ss1)
+        >>> ss2.imass['Water']  # only the mass flows are copied
+        100.0
+        >>> ss2.T  # temperature (and pressure) are left unchanged
+        300.0
 
         See Also
         --------

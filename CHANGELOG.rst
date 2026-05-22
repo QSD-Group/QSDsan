@@ -4,6 +4,17 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
+`1.5.2`_
+--------
+- Fixed :meth:`~.SanStream.copy_like`: when called with ``copy_price=True`` or ``copy_impact_item=True``, the price/impact item were copied in the wrong direction (overwriting the source stream and leaving the target unchanged). They are now correctly copied from the source into the target.
+
+- Added doctest examples to :meth:`~.SanStream.copy`, :meth:`~.SanStream.copy_like`, and :meth:`~.SanStream.copy_flow` documenting what each method copies (flows, temperature/pressure, price, and impact item).
+
+- Added ``.. warning::`` notes to :attr:`~.WasteStream.pH` and :attr:`~.WasteStream.SAlk` clarifying that these are not calculated from stream composition (no acid-base model yet) and should be treated as user-provided inputs.
+
+- Tutorial updates ongoing.
+
+
 `1.5.1`_
 --------
 - :class:`~.Component` now validates the ``particle_size``, ``degradability``, and ``organic`` arguments at creation, for both the constructor and :meth:`~.Component.from_chemical`. Invalid values (e.g., a misspelled ``particle_size``) that were previously accepted silently now raise a ``ValueError``.
@@ -13,8 +24,6 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 - The :class:`~.Component` constructor now accepts a ``chemical`` keyword to build a component directly from an existing ``thermosteam.Chemical``. :meth:`~.Component.from_chemical` is now a thin wrapper around it, with unchanged behavior.
 
 - Documented the ``ignore_inaccurate_molar_weight`` and ``adjust_MW_to_measured_as`` options of :meth:`~.Components.compile`, and substantially revised the topical tutorials.
-
-- Tutorial updates ongoing.
 
 
 `1.5.0`_
@@ -270,6 +279,7 @@ Official release of ``QSDsan`` v1.0.0!
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
+.. _1.5.2: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.2
 .. _1.5.1: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.1
 .. _1.5.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.0
 .. _1.4.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.4.0
