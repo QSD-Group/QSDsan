@@ -18,6 +18,10 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - Added ``qsdsan.CEPCI``, a settable view of the global Chemical Engineering Plant Cost Index (which BioSTEAM abbreviates as ``CE``), so the costing index can be read and set (e.g., ``qsdsan.CEPCI = qsdsan.CEPCI_by_year[2023]``) without importing biosteam.
 
+- Fixed :class:`~.TEA`: its ``CEPCI`` argument defaulted to ``bst.CE``, which Python binds once at import time (freezing it at 567.5). Every ``TEA`` created without an explicit ``CEPCI`` therefore reset the global cost index, silently overriding a deliberately set ``qsdsan.CEPCI``/``bst.CE``. ``CEPCI`` now defaults to ``None`` (the current index is left untouched), and a provided ``CEPCI`` is applied *before* simulation so it actually affects costing.
+
+- :attr:`~.TEA.CEPCI_by_year` now returns ``qsdsan.CEPCI_by_year`` (was BioSTEAM's table) for consistency, and ``qsdsan.CEPCI_by_year`` now merges in BioSTEAM's ``design_tools.CEPCI_by_year`` years not already present (e.g., pre-1990), with qsdsan's more precise values taking precedence on overlapping years.
+
 - Tutorial updates ongoing.
 
 

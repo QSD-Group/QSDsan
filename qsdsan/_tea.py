@@ -99,10 +99,10 @@ class TEA(BSTTEA):
             being assigned to the unit (e.g., a pump that runs 50% of the time at
             50 kW should have ``power_utility`` set to 25 kW).
 
-    CEPCI : float
+    CEPCI : float, optional
         Chemical Engineering Plant Cost Index used for equipment cost scaling.
-        Defaults to 567.5 (year 2017). Alternative values can be looked up via
-        ``qsdsan.CEPCI_by_year``.
+        If None (default), the current ``qsdsan.CEPCI`` (i.e., ``biosteam.CE``) is
+        left unchanged; pass a value (e.g., ``qsdsan.CEPCI_by_year[2023]``) to set it.
     CAPEX : float
         Total capital expenditure. When provided, overrides ``installed_equipment_cost``.
     lang_factor : float or None
@@ -191,7 +191,7 @@ class TEA(BSTTEA):
                  '_annual_maintenance', '_annual_labor', '_system_add_OPEX')
 
     def __init__(self, system, discount_rate=0.05, income_tax=0.,
-                 CEPCI=bst.CE, start_year=date.today().year,
+                 CEPCI=None, start_year=date.today().year,
                  lifetime=10, uptime_ratio=1.,
                  CAPEX=0., lang_factor=None,
                  annual_maintenance=0., annual_labor=0., system_add_OPEX={},
@@ -199,6 +199,10 @@ class TEA(BSTTEA):
                  construction_schedule=(0, 1), accumulate_interest_during_construction=False,
                  simulate_system=True, simulate_kwargs={},
                  **tea_kwargs):
+        # Set the cost index (CEPCI) before simulation so it applies to costing; if not
+        # provided, leave the current `qsdsan.CEPCI` (i.e., `biosteam.CE`) untouched
+        # rather than resetting it (previously the default froze `bst.CE` at import time).
+        if CEPCI is not None: self.CEPCI = CEPCI
         if simulate_system: system.simulate(**simulate_kwargs)
         self.system = system
         system._TEA = self
@@ -208,7 +212,6 @@ class TEA(BSTTEA):
         self.income_tax = income_tax
         self._sales = 0 # guess cost for solve_price method
         self._depreciation = None # initialize this attribute
-        self.CEPCI = CEPCI
         self.start_year = start_year
         self.lifetime = lifetime
         self.uptime_ratio = 1.
@@ -332,9 +335,9 @@ class TEA(BSTTEA):
     def CEPCI_by_year(self):
         '''
         [dict] Chemical Engineering Plant Cost Index with key being the year
-        and values being the index.
+        and values being the index. Same as ``qsdsan.CEPCI_by_year``.
         '''
-        return bst.units.design_tools.CEPCI_by_year
+        return qs.CEPCI_by_year
 
     @property
     def start_year(self):

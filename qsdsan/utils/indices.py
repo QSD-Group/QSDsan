@@ -192,6 +192,11 @@ PCEPI = {
     2024: 121.966,
     }
 
+# Include BioSTEAM's CEPCI years that are not in the table above (e.g., pre-1990);
+# the more precise qsdsan values take precedence on overlapping years.
+from biosteam.units.design_tools import CEPCI_by_year as _bst_CEPCI_by_year
+CEPCI = {**_bst_CEPCI_by_year, **CEPCI}
+
 tea_indices = {
     'CEPCI': CEPCI,
     'ChemPPI': ChemPPI,

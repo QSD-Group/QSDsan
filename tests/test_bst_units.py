@@ -20,6 +20,7 @@ __all__ = (
     'test_default',
     'test_units_attribute_is_dict',
     'test_CEPCI_proxy',
+    'test_TEA_CEPCI',
     'test_BinaryDistillation',
     'test_Flash',
     'test_HXprocess',
@@ -145,6 +146,28 @@ def test_CEPCI_proxy():
         assert qs.CEPCI == 555.0           # remains a live view
         qs.CEPCI = qs.CEPCI_by_year[2023]
         assert bst.CE == qs.CEPCI_by_year[2023]
+    finally:
+        bst.CE = old
+
+
+def test_TEA_CEPCI():
+    '''
+    Creating a `TEA` without an explicit `CEPCI` must NOT reset the global cost index
+    (regression for an early-binding ``CEPCI=bst.CE`` default that froze it at 567.5).
+    A provided ``CEPCI`` is applied, and ``TEA.CEPCI_by_year`` mirrors ``qs.CEPCI_by_year``.
+    '''
+    old = bst.CE
+    try:
+        _, qs_ws = create_streams(1)
+        qs.set_thermo(cmps)
+        M = qs.unit_operations.MixTank('M_cepci', ins=qs_ws)
+        sys = qs.System('sys_cepci', path=(M,))
+        bst.CE = qs.CEPCI_by_year[2023]
+        tea = qs.TEA(system=sys, discount_rate=0.05, lifetime=10)
+        assert bst.CE == qs.CEPCI_by_year[2023]      # not reset by TEA creation
+        assert tea.CEPCI_by_year is qs.CEPCI_by_year  # consistent table
+        qs.TEA(system=sys, CEPCI=qs.CEPCI_by_year[2010], discount_rate=0.05, lifetime=10)
+        assert bst.CE == qs.CEPCI_by_year[2010]      # explicit CEPCI is applied
     finally:
         bst.CE = old
 
@@ -282,6 +305,7 @@ if __name__ == '__main__':
     test_default()
     test_units_attribute_is_dict()
     test_CEPCI_proxy()
+    test_TEA_CEPCI()
     test_BinaryDistillation()
     test_Flash()
     test_HXprocess()
