@@ -1,13 +1,13 @@
 # QSDsan/EXPOsan Package Map
 
-Use this reference when an agent needs the package boundary, dependency policy, or unit namespace migration context.
+Use this reference when an agent needs the package boundary, dependency policy, or unit/process namespace layout.
 
 ## Package Roles
 
 QSDsan is the main package. It provides the reusable engine for building sanitation and resource recovery systems:
 
 - `Component`, `Components`, `SanStream`, `WasteStream`
-- `SanUnit` and `qsdsan.sanunits`
+- `SanUnit` and the `unit_operations` package (`bst`/`static`/`dynamic`)
 - process models and dynamic simulation interfaces
 - `System`, TEA, LCA, construction, equipment, utilities
 - public APIs intended for downstream projects
@@ -38,24 +38,21 @@ pip install --no-cache-dir -e ".[ci,integration]"
 
 Do not add EXPOsan as a normal QSDsan runtime dependency. QSDsan may have an integration extra for testing against EXPOsan. EXPOsan depends on QSDsan because EXPOsan systems are built from QSDsan primitives.
 
-## Current Structural Direction
+## Unit & Process Namespaces
 
-QSDsan is moving toward behavior-based unit namespaces:
+Built-in units are organized by behavior under `qsdsan.unit_operations`:
 
 ```text
-qsdsan.sanunits
+qsdsan.unit_operations
 |-- bst
 |-- static
 `-- dynamic
 ```
 
-The migration goal is clarity without breaking existing code:
+Process models live in `qsdsan.process_models`. `qsdsan.sanunits` and `qsdsan.processes` remain as back-compat aliases (resolving to `unit_operations` and `process_models`); use the canonical names in new code. When adding a unit:
 
-- Add namespace modules as re-export layers first.
-- Keep `qsdsan.sanunits.<ClassName>` compatibility aliases.
-- Write tests that verify each namespace exports the intended classes.
-- Update docs and EXPOsan imports after the public QSDsan API is stable.
-- Move implementation files only after the import surface is tested and users have a deprecation path.
+- Classify it by behavior into `bst`/`static`/`dynamic` (see the heuristics below), not by file location.
+- Keep `qsdsan.unit_operations.<ClassName>` importable and add a test that the namespace exports it.
 
 ## Classification Heuristics
 
@@ -64,12 +61,6 @@ Use `bst` for BioSTEAM-inherited unit operations with QSDsan-added behavior:
 - mixers, splitters, pumps, flash/distillation wrappers, heat exchangers, storage tanks, process-water helpers
 - units that mainly adapt stream initialization or QSDsan naming
 - no sanitation-specific design assumptions beyond integration glue
-
-## QSDsan Tutorial Guidance
-
-For new or revised tutorials, follow the notebooks in `docs/source/tutorials`.
-
-Common tutorial conventions are a top anchor, a short contents list with valid anchors when useful, and the maintained notebook style for contributor attribution. When adding a version check, use `qsdsan.__version__`. Always rebuild docs after notebook edits and review `toc.not_included` and undefined-label warnings.
 
 Use `static` for steady-state QSDsan units:
 
@@ -85,15 +76,15 @@ Use `dynamic` for explicit dynamic-model units:
 
 If a class supports both steady-state and dynamic operation, classify by its defining contract. If dynamic state behavior is central to the class, prefer `dynamic` and document static use as a mode.
 
-## EXPOsan Migration Guidance
+## EXPOsan Import Conventions
 
-EXPOsan should consume QSDsan through public APIs. During the namespace migration:
+EXPOsan should consume QSDsan through public APIs:
 
-- Prefer stable public imports such as `from qsdsan import sanunits as su`.
-- Use `from qsdsan.sanunits import bst, static, dynamic` when code benefits from explicit grouping.
-- Avoid imports from private QSDsan implementation modules such as `_pumping.py` unless the migration requires a temporary bridge.
+- Prefer public imports such as `from qsdsan import unit_operations as su` (and `process_models as pc`).
+- Use `from qsdsan.unit_operations import bst, static, dynamic` when code benefits from explicit grouping.
+- Avoid imports from private QSDsan implementation modules such as `_pumping.py`.
 - Keep EXPOsan systems focused on system assembly and project-specific analyses.
-- If a project-specific unit becomes broadly reusable, promote it to QSDsan with QSDsan tests before migrating EXPOsan.
+- If a project-specific unit becomes broadly reusable, promote it to QSDsan (with QSDsan tests) before consuming it from EXPOsan.
 
 ## EXPOsan Module Template
 

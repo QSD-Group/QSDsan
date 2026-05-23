@@ -2,7 +2,7 @@
 
 QSDsan is the reusable modeling engine for sanitation and resource-recovery systems. Put generic components, streams, units, processes, system behavior, TEA/LCA utilities, and public APIs here.
 
-For cross-repo structure, dependency, import, or `sanunits` namespace work, use the architecture skill for the agent runtime in use:
+For cross-repo structure, dependency, import, unit/process namespace, or tutorial/docs authoring work, use the architecture skill for the agent runtime in use:
 
 ```text
 .codex/skills/qsdsan-exposan-architecture/SKILL.md
