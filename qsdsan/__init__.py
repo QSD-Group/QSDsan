@@ -71,7 +71,7 @@ CHECK_IMPACT_ITEM_CONSISTENCY = True
 
 
 from . import units_of_measure, utils
-CEPCI_by_year = utils.indices.tea_indices['CEPCI']
+CEPCI_by_year = utils.indices.tea_indices['CEPCI_by_year']
 from ._component import *
 from ._components import *
 from ._sanstream import *
@@ -168,10 +168,15 @@ import sys as _sys
 class _SanModule(_sys.modules[__name__].__class__):
     @property
     def CEPCI(self):
-        '''[float] Chemical Engineering Plant Cost Index (CEPCI) used to scale equipment
-        costs; a live view of BioSTEAM's cost index (which abbreviates it as ``CE``).
-        Set it (e.g., ``qsdsan.CEPCI = qsdsan.CEPCI_by_year[2023]``) to report costs in
-        a given year's dollars.'''
+        '''
+        [float] Chemical Engineering Plant Cost Index (CEPCI) used to scale equipment costs.
+
+        Look up the index for a given year with ``qsdsan.CEPCI_by_year`` (e.g.,
+        ``qsdsan.CEPCI = qsdsan.CEPCI_by_year[2023]`` to report costs in 2023 dollars).
+
+        Setting ``qsdsan.CEPCI`` is the same as setting ``biosteam.CE`` (BioSTEAM
+        abbreviates the index as ``CE``); this is a live view of that value.
+        '''
         return _bst.CE
     @CEPCI.setter
     def CEPCI(self, value):

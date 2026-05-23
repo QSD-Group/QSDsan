@@ -20,7 +20,11 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - Fixed :class:`~.TEA`: its ``CEPCI`` argument defaulted to ``bst.CE``, which Python binds once at import time (freezing it at 567.5). Every ``TEA`` created without an explicit ``CEPCI`` therefore reset the global cost index, silently overriding a deliberately set ``qsdsan.CEPCI``/``bst.CE``. ``CEPCI`` now defaults to ``None`` (the current index is left untouched), and a provided ``CEPCI`` is applied *before* simulation so it actually affects costing.
 
-- :attr:`~.TEA.CEPCI_by_year` now returns ``qsdsan.CEPCI_by_year`` (was BioSTEAM's table) for consistency, and ``qsdsan.CEPCI_by_year`` now merges in BioSTEAM's ``design_tools.CEPCI_by_year`` years not already present (e.g., pre-1990), with qsdsan's more precise values taking precedence on overlapping years.
+- :attr:`~.TEA.CEPCI_by_year` now returns ``qsdsan.CEPCI_by_year`` (was BioSTEAM's table) for consistency, and ``qsdsan.CEPCI_by_year`` now merges in BioSTEAM's ``design_tools.CEPCI_by_year`` years not already present (e.g., pre-1990), with qsdsan's more precise values taking precedence on overlapping years. QSDsan's built-in hydroprocessing/hydrothermal units now source their ``@cost`` reference indices from ``qsdsan.CEPCI_by_year`` as well (a sub-0.1% cost change from the more precise values).
+
+- In EXPOsan, systems that set the global cost index (``htl`` and ``saf``) now do so via ``qsdsan.CEPCI = ...`` instead of ``bst.CE = ...``, for consistency with the new ``qsdsan.CEPCI`` handle (functionally identical, since ``qsdsan.CEPCI`` is a live view of ``bst.CE``).
+
+- Renamed the cost-index dicts in ``qsdsan.utils.indices`` and the keys of ``qsdsan.utils.tea_indices`` to the ``*_by_year`` convention (``'CEPCI_by_year'``, ``'ChemPPI_by_year'``, ``'labor_by_year'``, ``'PCEPI_by_year'``). Update any code that used the old short keys, e.g., ``tea_indices['CEPCI']`` becomes ``tea_indices['CEPCI_by_year']``.
 
 - Tutorial updates ongoing.
 
