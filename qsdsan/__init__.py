@@ -128,7 +128,7 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 def __dir__():
-    return sorted((*globals(), *_lazy_modules, *_legacy_aliases))
+    return sorted((*globals(), *_lazy_modules, *_legacy_aliases, 'CEPCI'))
 
 def default():
     _bst.default()
@@ -156,6 +156,28 @@ Flowsheet = SanFlowsheet
 F = main_flowsheet
 
 del _qs_default_fs, _AbstractUnit, _AbstractStream, _BstMainFlowsheet
+
+
+# ── Expose BioSTEAM's global cost index as a settable ``qsdsan.CEPCI`` ────────
+# Lets users read/set the CEPCI without importing biosteam, and pairs consistently
+# with ``qsdsan.CEPCI_by_year``. Plain module-level attributes cannot intercept
+# assignment, so ``CEPCI`` is a property on a ModuleType subclass; the module-level
+# ``__getattr__``/``__dir__`` above still work.
+import sys as _sys
+
+class _SanModule(_sys.modules[__name__].__class__):
+    @property
+    def CEPCI(self):
+        '''[float] Chemical Engineering Plant Cost Index (CEPCI) used to scale equipment
+        costs; a live view of BioSTEAM's cost index (which abbreviates it as ``CE``).
+        Set it (e.g., ``qsdsan.CEPCI = qsdsan.CEPCI_by_year[2023]``) to report costs in
+        a given year's dollars.'''
+        return _bst.CE
+    @CEPCI.setter
+    def CEPCI(self, value):
+        _bst.CE = value
+
+_sys.modules[__name__].__class__ = _SanModule
 
 
 __all__ = (

@@ -16,6 +16,8 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - Re-exported the Thermosteam reaction classes (``Reaction``, ``ReactionItem``, ``ReactionSet``, ``ParallelReaction``, ``SeriesReaction``, ``ReactionSystem``, and the ``Rxn``/``RxnI``/``RxnS``/``PRxn``/``SRxn``/``RxnSys`` aliases) from the top-level ``qsdsan`` namespace, so they can be imported with ``from qsdsan import Reaction`` instead of reaching into BioSTEAM/Thermosteam.
 
+- Added ``qsdsan.CEPCI``, a settable view of the global Chemical Engineering Plant Cost Index (which BioSTEAM abbreviates as ``CE``), so the costing index can be read and set (e.g., ``qsdsan.CEPCI = qsdsan.CEPCI_by_year[2023]``) without importing biosteam.
+
 - Tutorial updates ongoing.
 
 

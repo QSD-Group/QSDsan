@@ -19,6 +19,7 @@ from numpy.testing import assert_allclose
 __all__ = (
     'test_default',
     'test_units_attribute_is_dict',
+    'test_CEPCI_proxy',
     'test_BinaryDistillation',
     'test_Flash',
     'test_HXprocess',
@@ -127,6 +128,25 @@ def test_units_attribute_is_dict():
     bad = sorted(n for cls, n in seen.items()
                  if not isinstance(getattr(cls, '_units', {}), dict))
     assert not bad, f'these unit classes have a non-dict `_units`: {bad}'
+
+
+def test_CEPCI_proxy():
+    '''
+    ``qs.CEPCI`` reads and writes BioSTEAM's global cost index (which BioSTEAM
+    abbreviates as ``CE``) so users do not have to import biosteam. Implemented as a
+    property on a module subclass.
+    '''
+    old = bst.CE
+    try:
+        assert qs.CEPCI == bst.CE           # live read
+        qs.CEPCI = 600.0
+        assert bst.CE == 600.0             # assignment proxies to bst.CE
+        bst.CE = 555.0
+        assert qs.CEPCI == 555.0           # remains a live view
+        qs.CEPCI = qs.CEPCI_by_year[2023]
+        assert bst.CE == qs.CEPCI_by_year[2023]
+    finally:
+        bst.CE = old
 
 
 def test_BinaryDistillation():
@@ -261,6 +281,7 @@ def test_StorageTank():
 if __name__ == '__main__':
     test_default()
     test_units_attribute_is_dict()
+    test_CEPCI_proxy()
     test_BinaryDistillation()
     test_Flash()
     test_HXprocess()
