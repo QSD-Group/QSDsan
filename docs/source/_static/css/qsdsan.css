@@ -93,3 +93,13 @@ table.dataframe tbody tr:hover td,
 table.dataframe tbody tr:hover th {
   background-color: var(--color-background-hover);
 }
+
+/* nbsphinx renders stderr output (warnings, deprecation notices) with a
+   hardcoded light-pink background (#fdd), which is unreadable in furo's dark
+   mode (light text on light pink). Replace it with a semi-transparent red tint
+   that reads as a subtle warning on both light and dark backgrounds, and let the
+   text use the theme's foreground color. */
+div.nboutput.container div.output_area.stderr {
+  background: rgba(229, 83, 75, 0.13);
+  color: var(--color-foreground-primary);
+}
