@@ -4,6 +4,13 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
+`1.5.3`_
+--------
+- Documentation: expanded the tutorials with new sections on defining component groups (``Components.define_group``), unit specifications (``add_specification``), and inferring a :class:`~.System` from a list of units (``System.from_units``), plus notes on flowsheet retrieval, recycle convergence, and exporting results.
+
+- Documentation: fixed dark-mode rendering of DataFrame tables and ``stderr`` (warning) output, standardized ``.diagram`` usage with a cross-reference between the System and Dynamic Simulation tutorials, and repaired a broken hyperlink.
+
+
 `1.5.2`_
 --------
 - Fixed packaging: ``qsdsan/units_of_measure.txt`` (the pint unit-definition file loaded at import) was not declared in ``package-data``, so non-editable installs (wheels) omitted it and ``import qsdsan`` raised ``FileNotFoundError``. It is now included in the distributed package.
@@ -295,6 +302,7 @@ Official release of ``QSDsan`` v1.0.0!
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
+.. _1.5.3: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.3
 .. _1.5.2: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.2
 .. _1.5.1: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.1
 .. _1.5.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.0
