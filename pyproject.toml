@@ -88,6 +88,7 @@ namespaces = false
 
 [tool.setuptools.package-data]
 qsdsan = [
+    "units_of_measure.txt",
     "data/*",
     "data/process_data/*",
     "data/sanunit_data/*",

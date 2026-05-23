@@ -6,6 +6,8 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 `1.5.2`_
 --------
+- Fixed packaging: ``qsdsan/units_of_measure.txt`` (the pint unit-definition file loaded at import) was not declared in ``package-data``, so non-editable installs (wheels) omitted it and ``import qsdsan`` raised ``FileNotFoundError``. It is now included in the distributed package.
+
 - Fixed :meth:`~.SanStream.copy_like`: when called with ``copy_price=True`` or ``copy_impact_item=True``, the price/impact item were copied in the wrong direction (overwriting the source stream and leaving the target unchanged). They are now correctly copied from the source into the target.
 
 - Added doctest examples to :meth:`~.SanStream.copy`, :meth:`~.SanStream.copy_like`, and :meth:`~.SanStream.copy_flow` documenting what each method copies (flows, temperature/pressure, price, and impact item).
