@@ -20,7 +20,7 @@ from .. import (
     Model,
     SanStream,
     set_thermo as qs_set_thermo,
-    SimpleTEA,
+    TEA,
     System,
     )
 
@@ -210,15 +210,15 @@ def create_example_model(evaluate=False, N=100, rule='L', seed=554, **sample_kwa
     >>> model.metrics # doctest: +SKIP
     (<Metric: [System] Total heating duty (kJ/yr)>,
      <Metric: [System] Total electricity consumption (kWh/yr)>,
-     <Metric: [Simple TEA] Total capital expenditure (USD)>,
-     <Metric: [Simple TEA] Net present value (USD)>)
+     <Metric: [TEA] Total capital expenditure (USD)>,
+     <Metric: [TEA] Net present value (USD)>)
     '''
     from chaospy import distributions as shape
 
     sys = create_example_system()
     M1, P1, H1, S1, M2, S2 = sys.path
     sys.simulate()
-    tea = SimpleTEA(sys)
+    tea = TEA(sys)
     model = Model(sys)
 
     # Add parameters
