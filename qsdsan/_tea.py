@@ -83,8 +83,12 @@ class TEA(BSTTEA):
 
         .. note::
 
-            Only certain depreciation schedule lengths are currently supported,
-            so ``lifetime`` must be >= 6.
+            The depreciation schedule must fit within the lifetime (its length
+            must be <= ``lifetime``). The default ``'SL'`` (straight line) spans the
+            whole lifetime and always fits, so there is no minimum. MACRS schedules
+            run one year longer than their name (IRS half-year convention), e.g.
+            ``'MACRS5'`` is a 6-year schedule (needs ``lifetime >= 6``) and
+            ``'MACRS7'`` needs ``lifetime >= 8``. See ``depreciation``.
 
     uptime_ratio : float
         Fraction of time the system is operating, in [0, 1].
@@ -118,6 +122,13 @@ class TEA(BSTTEA):
         Additional annual operating expenditure at the system level, on top of
         the ``add_OPEX`` of individual units. A float is automatically converted
         to a dict keyed ``"System additional OPEX"``.
+    depreciation : str
+        Depreciation schedule: ``'SL'`` (straight line, default), ``'DDB'``
+        (double-declining balance), ``'SYD'`` (sum-of-years-digits), or a MACRS
+        schedule (``'MACRS3'``, ``'MACRS5'``, ``'MACRS7'``, ``'MACRS10'``, ...).
+        The schedule length must be <= ``lifetime``. Depreciation only affects
+        results when there is taxable income to shield (i.e. ``income_tax`` > 0
+        and positive net earnings).
     construction_schedule : tuple
         Fraction of total capital invested in each year prior to start-up; must
         sum to 1. Use the default ``(0, 1)`` if no staged construction is needed.
