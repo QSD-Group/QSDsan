@@ -38,11 +38,34 @@ HeatUtility = _bst.HeatUtility
 PowerUtility = _bst.PowerUtility
 Unit = _bst.Unit
 System = _bst.System
+AgileSystem = _bst.AgileSystem
+Facility = _bst.Facility
 Scope = _bst.utils.Scope
 Model = _bst.Model
 Metric = _bst.Metric
 Parameter = _bst.Parameter
 default_utilities = _bst.default_utilities
+get_OSBL = _bst.get_OSBL
+
+# Thermo/utility configuration objects, re-exported so users can configure QSDsan
+# without ``import biosteam``. ``settings`` and ``stream_utility_prices`` are
+# mutated in place (e.g. ``qs.settings.thermo.ideal()``), never rebound, so a
+# plain re-export of the shared object is correct; ``test_public_api`` asserts the
+# identity so a future BioSTEAM rebind would fail loudly. The settable scalar
+# global ``bst.CE`` is exposed separately as the ``CEPCI`` property below.
+settings = _bst.settings
+# ``preferences`` controls display/diagram defaults (dark mode, stream labels,
+# graphviz format, etc.); re-exported so users can tweak them via ``qs.preferences``
+# and as the home for any future QSDsan-specific display preferences.
+preferences = _bst.preferences
+stream_utility_prices = _bst.stream_utility_prices
+Thermo = _bst.Thermo
+UtilityAgent = _bst.UtilityAgent
+MissingStream = _bst.utils.MissingStream
+
+# ``biosteam.report`` is imported eagerly by ``import biosteam`` above, so a plain
+# re-export (no lazy machinery) is enough for ``qs.report.voc_table`` etc.
+report = _bst.report
 
 # Reaction APIs (defined in Thermosteam, re-exported through BioSTEAM) so users can
 # do ``from qsdsan import Reaction`` instead of reaching into BioSTEAM/Thermosteam.
@@ -185,10 +208,28 @@ class _SanModule(_sys.modules[__name__].__class__):
 _sys.modules[__name__].__class__ = _SanModule
 
 
+# BioSTEAM/Thermosteam objects re-exported for a self-contained ``qsdsan`` surface
+_bst_reexports = (
+    'Chemical', 'Chemicals', 'CompiledChemicals',
+    'Stream', 'MultiStream', 'MissingStream',
+    'set_thermo', 'get_components', 'get_thermo', 'settings', 'preferences',
+    'HeatUtility', 'PowerUtility', 'stream_utility_prices',
+    'Unit', 'System', 'AgileSystem', 'Facility',
+    'Scope', 'Model', 'Metric', 'Parameter',
+    'default_utilities', 'get_OSBL',
+    'Thermo', 'UtilityAgent', 'report',
+    'Reaction', 'ReactionItem', 'ReactionSet',
+    'ParallelReaction', 'SeriesReaction', 'ReactionSystem',
+    'Rxn', 'RxnI', 'RxnS', 'PRxn', 'SRxn', 'RxnSys',
+    'CEPCI', 'CEPCI_by_year',
+    'Flowsheet', 'main_flowsheet', 'F',
+    )
+
 __all__ = (
     'units_of_measure',
     'SanFlowsheet',
     'SanMainFlowsheet',
+    *_bst_reexports,
     *_component.__all__,
     *_components.__all__,
     *_construction.__all__,

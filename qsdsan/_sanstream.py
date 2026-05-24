@@ -382,8 +382,8 @@ class SanStream(Stream):
         For missing streams, but it's almost always for unit initialization,
         you don't really need to interact with this class
         
-        >>> import biosteam as bst, qsdsan as qs
-        >>> ms = bst.utils.MissingStream(source=None, sink=None)
+        >>> import qsdsan as qs
+        >>> ms = qs.MissingStream(source=None, sink=None)
         >>> mss = qs.SanStream.from_stream(ms)
         >>> mss
         <MissingSanStream>

@@ -360,8 +360,8 @@ class WasteStream(SanStream):
         For missing streams, but it's almost always for unit initialization,
         you don't really need to interact with this class
         
-        >>> import biosteam as bst, qsdsan as qs
-        >>> ms = bst.utils.MissingStream(source=None, sink=None)
+        >>> import qsdsan as qs
+        >>> ms = qs.MissingStream(source=None, sink=None)
         >>> mws = qs.WasteStream.from_stream(ms)
         >>> mws
         <MissingWasteStream>

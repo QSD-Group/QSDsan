@@ -48,9 +48,21 @@ from .utilities import *
 from .wwt_design import *
 from .scope import *
 
+# BioSTEAM/Thermosteam helpers re-exported so users can build and evaluate units
+# through ``qsdsan.utils`` without ``import biosteam``/``import thermosteam``:
+#   - rho_to_V/V_to_rho: density <-> molar-volume conversion (component models)
+#   - cost: the ``@cost`` decorator for adding cost/design to custom units
+#   - var_columns/var_indices: extract Model parameter/metric labels from results
+# These are plain re-exports; ``test_public_api`` asserts identity so a
+# BioSTEAM/Thermosteam rename surfaces as a failing test rather than a user error.
+from thermosteam.functional import rho_to_V, V_to_rho
+from biosteam.units.decorators import cost
+from biosteam.evaluation._utils import var_columns, var_indices
+
 __all__ = (
     'ureg', 'auom', 'ruom',
     'NotImplementedMethod',
+    'rho_to_V', 'V_to_rho', 'cost', 'var_columns', 'var_indices',
     *cod.__all__,
     *colors.__all__,
     *components.__all__,

@@ -6,6 +6,8 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 `1.5.3`_
 --------
+- Made ``qsdsan`` a more self-contained namespace so users typically don't  need to ``import biosteam``/``import thermosteam`` directly. Newly re-exported at the top level: ``settings``, ``preferences``, ``stream_utility_prices``, ``Thermo``, ``UtilityAgent``, ``Facility``, ``AgileSystem``, ``get_OSBL``, ``MissingStream``, and the ``report`` submodule. ``qsdsan.unit_operations.bst`` now also surfaces the BioSTEAM units QSDsan does not customize (``IsenthalpicValve``, ``Stripper``, ``MolecularSieve``, ``BatchBioreactor``, ``VacuumSystem``, ``Boiler``, ``BoilerTurbogenerator``, ``ChilledWaterPackage``, ``CoolingTower``, ``SolidsCentrifuge``), and ``qsdsan.utils`` now re-exports ``rho_to_V``, ``V_to_rho``, the ``@cost`` decorator, and ``var_columns``/``var_indices``. A new :ref:`Public API <public_api>` documentation page lists the full surface, and ``tests/test_public_api.py`` asserts each re-export still matches its BioSTEAM/Thermosteam source (so an upstream rename fails loudly in CI rather than reaching a user).
+
 - Documentation: expanded the tutorials with new sections on defining component groups (``Components.define_group``), unit specifications (``add_specification``), and inferring a :class:`~.System` from a list of units (``System.from_units``), plus notes on flowsheet retrieval, recycle convergence, and exporting results.
 
 - Documentation: fixed dark-mode rendering of DataFrame tables and ``stderr`` (warning) output, standardized ``.diagram`` usage with a cross-reference between the System and Dynamic Simulation tutorials, and repaired a broken hyperlink.
