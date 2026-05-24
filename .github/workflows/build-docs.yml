@@ -1,0 +1,60 @@
+# Build the Sphinx documentation to catch broken docs before they reach Read the Docs.
+# This mirrors the Read the Docs environment (installs only the ``docs`` extra,
+# no EXPOsan) so a green run here predicts a green Read the Docs build.
+
+name: build-docs
+
+on:
+  push:
+    branches: [main, beta]
+    paths:
+      - 'docs/**'
+      - 'qsdsan/**'          # docstrings feed autodoc
+      - 'pyproject.toml'
+      - '.github/workflows/build-docs.yml'
+  pull_request:
+    branches: [main, beta]
+    paths:
+      - 'docs/**'
+      - 'qsdsan/**'
+      - 'pyproject.toml'
+      - '.github/workflows/build-docs.yml'
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+    - uses: actions/checkout@v6
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: "pip"
+        cache-dependency-path: |
+          pyproject.toml
+          .github/workflows/build-docs.yml
+    - name: Install pandoc
+      run: sudo apt-get update && sudo apt-get install -y pandoc
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[docs]"
+    - name: Build HTML docs
+      # --keep-going reports every problem in one run instead of stopping at the first.
+      # Warnings (broken cross-references, malformed tables, etc.) are reported in the
+      # log but do NOT fail the build; only fatal build errors do. Add -W back if you
+      # later want warnings to be treated as errors.
+      run: |
+        sphinx-build -b html --keep-going docs/source docs/_build/html
+    - name: Upload built HTML
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: html-docs
+        path: docs/_build/html
+        retention-days: 7

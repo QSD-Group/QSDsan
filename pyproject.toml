@@ -4,14 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qsdsan"
-version = "1.5.0"
+version = "1.5.2"
 description = "Quantitative Sustainable Design for sanitation and resource recovery systems"
 readme = {file = "README.rst", content-type = "text/x-rst"}
 requires-python = ">=3.12"
 license = "NCSA"
 license-files = ["LICENSE.txt"]
 authors = [
-    {name = "Quantitative Sustainable Design Group", email = "quantitative.sustainable.design@gmail.com"},
+    {name = "Quantitative Sustainable Design Group"},
+    {email = "quantitative.sustainable.design@gmail.com"},
 ]
 keywords = [
     "quantitative sustainable design",
@@ -47,9 +48,6 @@ test = [
     "pytest",
     "pytest-cov",
     "nbval",
-]
-integration = [
-    "exposan @ git+https://github.com/QSD-Group/EXPOsan.git",
 ]
 docs = [
     "sphinx>=7,<9",
@@ -90,6 +88,7 @@ namespaces = false
 
 [tool.setuptools.package-data]
 qsdsan = [
+    "units_of_measure.txt",
     "data/*",
     "data/process_data/*",
     "data/sanunit_data/*",

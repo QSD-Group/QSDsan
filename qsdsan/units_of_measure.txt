@@ -1,0 +1,26 @@
+# QSDsan unit-registry additions. Loaded by units_of_measure.py via
+# ureg.load_definitions() so this file is editable without touching code,
+# following the pattern of thermosteam/units_of_measure.txt.
+
+# --- Units missing from pint and thermosteam ---
+# Use explicit '**' exponents to avoid the keyword-collision bug class:
+# 'in3' is invalid because 'in' is a Python keyword, so e.g. 'cu_in = in3'
+# silently produces an unresolvable unit.
+sq_m   = m**2
+cu_m   = m**3
+sq_cm  = cm**2
+cu_cm  = cm**3
+yd3    = yard**3
+cfs    = ft**3 / second
+MGD    = 1e6 * gallon / day
+mmscfd = 1e6 * ft**3 / day
+each   = count
+
+# --- Additional names for units that already exist ---
+# '@alias' adds a name without re-registering, so it never triggers
+# pint's 'Redefining' warning.
+@alias cfm    = CFM
+@alias cfs    = CFS
+@alias MGD    = mgd
+@alias mmscfd = MMSCfd = MMSCFD
+@alias each   = ea

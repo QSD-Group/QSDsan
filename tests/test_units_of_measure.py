@@ -28,6 +28,17 @@ def test_units_of_measure():
     assert uom.auom('mmscfd').convert(1, 'm3/d') > 20000
     assert uom.auom('point').convert(1, 'points') == 1
 
+    # 'cu_in' must resolve to a usable cubic-inch unit (pint's default), and
+    # 'CFM'/'CFS' aliases must stay registered for QSDsan design units.
+    assert abs(uom.auom('cu_in').convert(1, 'm3') - 1.6387064e-5) < 1e-10
+    assert uom.auom('CFM').convert(1, 'm3/s') == uom.auom('cfm').convert(1, 'm3/s')
+    assert uom.auom('CFS').convert(1, 'm3/s') == uom.auom('cfs').convert(1, 'm3/s')
+
+    # 'each'/'ea' are QSDsan-added dimensionless count units used as the
+    # quantity_unit for many Construction items in QSDsan and EXPOsan.
+    assert uom.auom('each').convert(1, 'ea') == 1
+    assert str(uom.auom('each').dimensionality) == 'dimensionless'
+
     unit, remaining = uom.parse_lca_unit('kg CO2-eq')
     assert str(unit) == 'kg'
     assert remaining == 'CO2-eq'
@@ -43,31 +54,38 @@ def test_units_of_measure():
     assert parse_unit('kg CO2-eq') == uom.parse_lca_unit('kg CO2-eq')
 
 
-def test_unit_definition_check_uses_public_registry_api(monkeypatch):
+def test_units_definition_file_no_redefining_warnings(caplog):
+    '''Loading QSDsan's units_of_measure.txt on top of pint + thermosteam
+    must not emit any 'Redefining' warnings. Guards against contributors
+    adding a definition whose canonical name overlaps a pint or thermosteam
+    built-in (which is the bug class this module was restructured to
+    eliminate, e.g. the historic 'yr = year = y' triggering pint's
+    'Redefining: yr' warning).
+    '''
+    import logging
+    import os
+
+    import pint
+    import thermosteam  # noqa: F401  (imported so its definitions are findable)
     import qsdsan.units_of_measure as uom
 
-    class Registry:
-        def __init__(self):
-            self.defined = []
-            self.known_units = {'kg', 'kilogram', 'alias'}
+    qsdsan_dir = os.path.dirname(os.path.realpath(uom.__file__))
+    qsdsan_txt = os.path.join(qsdsan_dir, 'units_of_measure.txt')
+    thermosteam_txt = os.path.join(
+        os.path.dirname(os.path.realpath(thermosteam.__file__)),
+        'units_of_measure.txt',
+    )
 
-        def parse_units(self, name):
-            if name in self.known_units:
-                return name
-            raise ValueError(name)
+    # Build a clean registry equivalent to what QSDsan loads into at import:
+    # pint defaults + thermosteam additions. Then capture warnings only
+    # during the QSDsan load, so the assertion is specific to this file.
+    fresh = pint.UnitRegistry()
+    fresh._on_redefinition = 'warn'
+    fresh.load_definitions(thermosteam_txt)
 
-        def define(self, definition):
-            self.defined.append(definition)
-            self.known_units.add(definition.split('=')[0].strip())
+    with caplog.at_level(logging.WARNING, logger='pint.util'):
+        fresh.load_definitions(qsdsan_txt)
 
-    registry = Registry()
-    monkeypatch.setattr(uom, 'ureg', registry)
-
-    assert uom._unit_is_defined('kg')
-    assert not uom._unit_is_defined('new_unit')
-
-    uom._define_unit('alias = kg')
-    assert registry.defined == []
-
-    uom._define_unit('new_unit = kg')
-    assert registry.defined == ['new_unit = kg']
+    redefs = [r.getMessage() for r in caplog.records
+              if 'Redefining' in r.getMessage()]
+    assert not redefs, f'unexpected pint Redefining warnings: {redefs}'

@@ -196,7 +196,8 @@ class HXutility(SanUnit, HXU):
     line = HXU.line
     _graphics = HXU._graphics
 
-    _units = HXU._units.update({
+    _units = {
+        **HXU._units,
         'Total tube length': 'ft',
         'Inner pipe weight': 'kg',
         'Outer pipe weight': 'kg',
@@ -204,8 +205,8 @@ class HXutility(SanUnit, HXU):
         'Shell length': 'ft',
         'Shell diameter': 'ft',
         'Shell steel weight': 'kg',
-        'Tube weight': 'kg'
-        })
+        'Tube weight': 'kg',
+        }
 
     _bounds = {'Vertical vessel weight': (4200, 1e6),
                'Horizontal vessel weight': (1e3, 9.2e5),

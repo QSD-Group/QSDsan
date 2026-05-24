@@ -8,7 +8,7 @@ This page documents the systems that have been/is being developed using ``QSDsan
 
 Benchmark Simulation Models
 ---------------------------
-The Modelling and Integrated Assessment (MIA) Specialist Group of the International Water Association has established benchmark simulation models (BSMs) to provide a consistent environment for wastewater treatment plant (WWTP)/water resource recovery facility (WRRF) evaluation (see `BSM webpage <http://iwa-mia.org/benchmarking>`_ and `MATLAB implementation and report <https://github.com/wwtmodels/Benchmark-Simulation-Models>`_).
+The Modelling and Integrated Assessment (MIA) Specialist Group of the International Water Association has established benchmark simulation models (BSMs) to provide a consistent environment for wastewater treatment plant (WWTP)/water resource recovery facility (WRRF) evaluation (see `BSM webpage <https://iwa-mia.org/benchmarking>`_ and `MATLAB implementation and report <https://github.com/wwtmodels/Benchmark-Simulation-Models>`_).
 
 When publishing the paper that introduces QSDsan [1]_, we validated the process modeling and dynamic simulation capacities of QSDsan through BSM1 (`bsm1 EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_, `bsm1 archived codes <https://pypi.org/project/exposan/1.1.4>`_). BSM2 is also implemented in `EXPOsan <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm2>`_.
 
@@ -50,7 +50,7 @@ Eco-San
 NEWgenerator
 ************
     - Publication: Watabe et al., 2023 [6]_
-    - `new_generator EXPOsan module <https://github.com/QSD-Group/EXPOsan-private/tree/main/exposan/new_generator>`_
+    - `new_generator EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/new_generator>`_
     - `new_generator archived codes <https://github.com/QSD-Group/EXPOsan-private/tree/newgen/exposan/newgen>`_
 
 Reclaimer

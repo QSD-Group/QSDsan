@@ -18,10 +18,14 @@ from numpy.testing import assert_allclose
 
 __all__ = (
     'test_default',
+    'test_units_attribute_is_dict',
+    'test_CEPCI_proxy',
+    'test_TEA_CEPCI',
     'test_BinaryDistillation',
     'test_Flash',
     'test_HXprocess',
     'test_HXutility',
+    'test_HXutility_results',
     'test_IsothermalCompressor',
     'test_MixTank',
     'test_Pump',
@@ -104,6 +108,70 @@ def test_default():
     qs.default() # default everything
 
 
+def test_units_attribute_is_dict():
+    '''
+    Every ``SanUnit`` subclass must have a ``dict`` ``_units`` attribute; BioSTEAM's
+    ``results()`` does ``self._units.get(...)``, so a non-dict (e.g., ``None``) breaks it.
+
+    This guards against a class of bug where a subclass sets
+    ``_units = SomeParent._units.update({...})`` -- ``dict.update`` mutates in place and
+    returns ``None``, leaving ``_units`` as ``None``.
+    '''
+    modules = [m for m in (getattr(qs, 'unit_operations', None),
+                           getattr(qs, 'sanunits', None)) if m is not None]
+    seen = {}
+    for module in modules:
+        for name in dir(module):
+            obj = getattr(module, name)
+            if isinstance(obj, type) and issubclass(obj, qs.SanUnit):
+                seen[obj] = obj.__name__
+    assert seen, 'no SanUnit subclasses found to check'
+    bad = sorted(n for cls, n in seen.items()
+                 if not isinstance(getattr(cls, '_units', {}), dict))
+    assert not bad, f'these unit classes have a non-dict `_units`: {bad}'
+
+
+def test_CEPCI_proxy():
+    '''
+    ``qs.CEPCI`` reads and writes BioSTEAM's global cost index (which BioSTEAM
+    abbreviates as ``CE``) so users do not have to import biosteam. Implemented as a
+    property on a module subclass.
+    '''
+    old = bst.CE
+    try:
+        assert qs.CEPCI == bst.CE           # live read
+        qs.CEPCI = 600.0
+        assert bst.CE == 600.0             # assignment proxies to bst.CE
+        bst.CE = 555.0
+        assert qs.CEPCI == 555.0           # remains a live view
+        qs.CEPCI = qs.CEPCI_by_year[2023]
+        assert bst.CE == qs.CEPCI_by_year[2023]
+    finally:
+        bst.CE = old
+
+
+def test_TEA_CEPCI():
+    '''
+    Creating a `TEA` without an explicit `CEPCI` must NOT reset the global cost index
+    (regression for an early-binding ``CEPCI=bst.CE`` default that froze it at 567.5).
+    A provided ``CEPCI`` is applied, and ``TEA.CEPCI_by_year`` mirrors ``qs.CEPCI_by_year``.
+    '''
+    old = bst.CE
+    try:
+        _, qs_ws = create_streams(1)
+        qs.set_thermo(cmps)
+        M = qs.unit_operations.MixTank('M_cepci', ins=qs_ws)
+        sys = qs.System('sys_cepci', path=(M,))
+        bst.CE = qs.CEPCI_by_year[2023]
+        tea = qs.TEA(system=sys, discount_rate=0.05, lifetime=10)
+        assert bst.CE == qs.CEPCI_by_year[2023]      # not reset by TEA creation
+        assert tea.CEPCI_by_year is qs.CEPCI_by_year  # consistent table
+        qs.TEA(system=sys, CEPCI=qs.CEPCI_by_year[2010], discount_rate=0.05, lifetime=10)
+        assert bst.CE == qs.CEPCI_by_year[2010]      # explicit CEPCI is applied
+    finally:
+        bst.CE = old
+
+
 def test_BinaryDistillation():
     bst.settings.set_thermo(chems)
     stream_kwargs = dict(Water=80, Methanol=100, Glycerol=25, units='kmol/hr')
@@ -158,6 +226,21 @@ def test_HXutility():
     qs_unit = qs.unit_operations.HXutility(ins=qs_ws, T=400, rigorous=True)
 
     check_results(bst_unit, qs_unit)
+
+
+def test_HXutility_results():
+    '''
+    Regression test: ``HXutility.results()`` must work. Its ``_units`` was once set to
+    ``None`` (assigned the return value of ``dict.update``), which raised
+    ``AttributeError`` inside BioSTEAM's ``results()``. ``check_results`` only calls
+    ``simulate()``, so this exercises the reporting path explicitly.
+    '''
+    _, qs_ws = create_streams(1)
+    qs.set_thermo(cmps)
+    qs_unit = qs.unit_operations.HXutility('H_results', ins=qs_ws, T=350)
+    qs_unit.simulate()
+    df = qs_unit.results()
+    assert df is not None and len(df) > 0
 
 
 def test_IsothermalCompressor():
@@ -220,10 +303,14 @@ def test_StorageTank():
 
 if __name__ == '__main__':
     test_default()
+    test_units_attribute_is_dict()
+    test_CEPCI_proxy()
+    test_TEA_CEPCI()
     test_BinaryDistillation()
     test_Flash()
     test_HXprocess()
     test_HXutility()
+    test_HXutility_results()
     test_IsothermalCompressor()
     test_MixTank()
     test_Pump()

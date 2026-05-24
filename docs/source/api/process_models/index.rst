@@ -52,12 +52,12 @@ List of Other Kinetic Modules
 .. _pm2_batch: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/pm2_batch
 .. _pm2_ecorecover: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/pm2_ecorecover
 
-.. _Alex: http://iwa-mia.org/wp-content/uploads/2022/09/TR3_BSM_TG_Tech_Report_no_3_BSM2_General_Description.pdf
+.. _Alex: https://iwa-mia.org/wp-content/uploads/2022/09/TR3_BSM_TG_Tech_Report_no_3_BSM2_General_Description.pdf
 .. _Batstone: https://iwaponline.com/ebooks/book/152/Anaerobic-Digestion-Model-No-1-ADM1
 .. _EPA design manual: https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=3000464S.TXT
 .. _Henze: https://iwaponline.com/ebooks/book/96/
 .. _Mueller: https://www.taylorfrancis.com/chapters/mono/10.1201/9781420010343-5/diffused-aeration-james-mueller-william-boyle-ing-johannes-popel?context=ubx&refId=aa2e0148-4fb1-404b-a213-b46f92fc5c99
-.. _Rosen and Jeppsson: http://iwa-mia.org/wp-content/uploads/2019/04/bmadm1_report061127.pdf
+.. _Rosen and Jeppsson: https://iwa-mia.org/wp-content/uploads/2019/04/bmadm1_report061127.pdf
 .. _Trimmer: https://doi.org/10.1021/acs.est.0c03296
 
 

@@ -94,3 +94,23 @@ When reviewing a PR, lead with concrete findings:
 - Minimal suggested fix
 
 If no issues are found, say that directly and mention the focused tests or scans that were run.
+
+## Installing this checklist as an agent skill
+
+The repository ships `qsdsan-pr-audit` skill adapters for Codex and Claude Code. To install or update them locally, run the following from the repository root, then ask Codex or Claude to `use qsdsan-pr-audit` when reviewing relevant pull requests.
+
+**Windows (PowerShell):**
+
+```powershell
+Copy-Item -Recurse -Force .codex\skills\qsdsan-pr-audit $env:USERPROFILE\.codex\skills\
+Copy-Item -Recurse -Force .claude\skills\qsdsan-pr-audit $env:USERPROFILE\.claude\skills\
+```
+
+**macOS / Linux:**
+
+```bash
+cp -r .codex/skills/qsdsan-pr-audit ~/.codex/skills/
+cp -r .claude/skills/qsdsan-pr-audit ~/.claude/skills/
+```
+
+This checklist is guidance for human or agent review; automated rules should still be enforced with tests where practical.

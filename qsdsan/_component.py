@@ -96,13 +96,16 @@ allowed_values = {
 
 def check_return_property(name, value):
     if name.startswith(('i_', 'f_')):
-        try: return float(value)
+        try: value = float(value)
         except:
             if not value: return None
             raise TypeError(f'{name} must be a number, not a {type(value).__name__}.')
         if name.startswith('f_') and (value>1 or value<0):
             raise ValueError(f'{name} must be within [0,1].')
+        return value
     elif name in allowed_values.keys():
+        if value is None:  # not specified yet (e.g., set later when loading from file)
+            return None
         if value not in allowed_values[name]:
             raise ValueError(f'{name} must be in {allowed_values[name]}.')
         return value
@@ -206,33 +209,58 @@ class Component(Chemical):
     __slots__ = _component_slots
 
     # ID must be provided
-    def __new__(cls, ID, cache=False, search_ID=None, formula=None, phase=None, measured_as=None,
+    def __new__(cls, ID, cache=False, search_ID=None, chemical=None, formula=None, phase=None, measured_as=None,
                 i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
                 i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
                 f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
                 description=None, particle_size=None,
                 degradability=None, organic=None, **chemical_properties):
-        if search_ID:
-            self = super().__new__(cls, ID=ID, cache=cache, search_ID=search_ID,
-                                   search_db=True, **chemical_properties)
-        else: # still try to search nonetheless
-            try: self = super().__new__(cls, ID=ID, cache=cache, **chemical_properties)
-            except LookupError:
-                self = super().__new__(cls, ID=ID, cache=cache, search_db=False, **chemical_properties)
-
-        self._ID = ID
-        self._chem_MW = 1
-        if formula:
-            self._formula = None
-            self.formula = formula
-        else:
-            if self.formula:
+        if chemical is not None:
+            # Build from an existing `thermosteam.Chemical` (or a chemical name/CAS to
+            # look up); `Component.from_chemical` delegates here.
+            self = super().__new__(cls, ID=ID, cache=cache, search_db=False)
+            if isinstance(chemical, str):
+                chemical = Chemical(chemical, **chemical_properties)
+            for field in chemical.__slots__:
+                setattr(self, field, copy_maybe(getattr(chemical, field, None)))
+            self._ID = ID
+            if formula and formula != chemical.formula:
+                self._formula = formula
+                if self._Hf is None:
+                    self._chem_MW = molecular_weight(self.atoms)
+                else:
+                    self.reset_combustion_data()
+            else:
                 self._chem_MW = molecular_weight(self.atoms)
-        if phase: lock_phase(self, phase)
+            if phase: self.at_state(phase)
+            TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = False
+            self._init_energies(self.Cn, self.Hvap, self.Psat, self.Hfus, self.Sfus,
+                                self.Tm, self.Tb, self.eos, self.phase_ref, self.S0)
+            TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = True
+        else:
+            if search_ID:
+                self = super().__new__(cls, ID=ID, cache=cache, search_ID=search_ID,
+                                       search_db=True, **chemical_properties)
+            else: # still try to search nonetheless
+                try: self = super().__new__(cls, ID=ID, cache=cache, **chemical_properties)
+                except LookupError:
+                    self = super().__new__(cls, ID=ID, cache=cache, search_db=False, **chemical_properties)
 
-        self._particle_size = particle_size
-        self._degradability = degradability
-        self._organic = organic
+            self._ID = ID
+            self._chem_MW = 1
+            if formula:
+                self._formula = None
+                self.formula = formula
+            else:
+                if self.formula:
+                    self._chem_MW = molecular_weight(self.atoms)
+            if phase: lock_phase(self, phase)
+
+        # Assign through the property setters so invalid values are caught at
+        # creation (setters validate via `check_return_property`)
+        self.particle_size = particle_size
+        self.degradability = degradability
+        self.organic = organic
         self.description = description
         self.measured_as = measured_as
         self.i_mass = i_mass
@@ -677,6 +705,12 @@ class Component(Chemical):
         '''
         Return a new :class:`Component` from a :class:`thermosteam.Chemical` object.
 
+        This is a thin wrapper around the :class:`Component` constructor, which accepts
+        the same ``chemical`` keyword directly. That is,
+        ``Component.from_chemical(ID, chemical, ...)`` is equivalent to
+        ``Component(ID, chemical=chemical, ...)``; both validate the
+        ``particle_size``/``degradability``/``organic`` inputs at creation.
+
         .. note::
 
             If you don't have a pre-constructed chemical, you are recommend to use
@@ -753,50 +787,12 @@ class Component(Chemical):
                  f_Vmass_Totmass: 0
                  chem_MW: 245.41
         '''
-        new = cls.__new__(cls, ID=ID, phase=phase)
-
+        # Thin wrapper around the constructor's `chemical=` path (see `__new__`).
+        # `from_chemical`'s historical default is to use `ID` as the chemical.
         if chemical is None: chemical = ID
-
-        if isinstance(chemical, str):
-            chemical = Chemical(chemical, **data)
-
-        for field in chemical.__slots__:
-            value = getattr(chemical, field, None)
-            setattr(new, field, copy_maybe(value))
-
-        new._ID = ID
-        if formula and formula != chemical.formula:
-            new._formula = formula
-            if new._Hf is None:
-                new._chem_MW = molecular_weight(new.atoms)
-            else:
-                new.reset_combustion_data()
-        else:
-            new._chem_MW = molecular_weight(new.atoms)
-        if phase: new.at_state(phase)
-
-        TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = False
-        new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus,
-                           new.Tm, new.Tb, new.eos, new.phase_ref, new.S0)
-        TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = True
-
-        new.description = description
-        new._particle_size = particle_size
-        new._degradability = degradability
-        new._organic = organic
-        new._measured_as = measured_as
-        new.i_mass = i_mass
-        new.i_C = i_C
-        new.i_N = i_N
-        new.i_P = i_P
-        new.i_K = i_K
-        new.i_Mg = i_Mg
-        new.i_Ca = i_Ca
-        new.i_charge = i_charge
-        new.f_BOD5_COD = f_BOD5_COD
-        new.f_uBOD_COD = f_uBOD_COD
-        new.f_Vmass_Totmass = f_Vmass_Totmass
-
-        new.i_COD = i_COD
-        new.i_NOD = i_NOD
-        return new
+        return cls(ID, chemical=chemical, formula=formula, phase=phase, measured_as=measured_as,
+                   i_C=i_C, i_N=i_N, i_P=i_P, i_K=i_K, i_Mg=i_Mg, i_Ca=i_Ca,
+                   i_mass=i_mass, i_charge=i_charge, i_COD=i_COD, i_NOD=i_NOD,
+                   f_BOD5_COD=f_BOD5_COD, f_uBOD_COD=f_uBOD_COD, f_Vmass_Totmass=f_Vmass_Totmass,
+                   description=description, particle_size=particle_size,
+                   degradability=degradability, organic=organic, **data)

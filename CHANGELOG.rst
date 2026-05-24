@@ -4,6 +4,44 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
+`1.5.2`_
+--------
+- Fixed packaging: ``qsdsan/units_of_measure.txt`` (the pint unit-definition file loaded at import) was not declared in ``package-data``, so non-editable installs (wheels) omitted it and ``import qsdsan`` raised ``FileNotFoundError``. It is now included in the distributed package.
+
+- Fixed :meth:`~.SanStream.copy_like`: when called with ``copy_price=True`` or ``copy_impact_item=True``, the price/impact item were copied in the wrong direction (overwriting the source stream and leaving the target unchanged). They are now correctly copied from the source into the target.
+
+- Added doctest examples to :meth:`~.SanStream.copy`, :meth:`~.SanStream.copy_like`, and :meth:`~.SanStream.copy_flow` documenting what each method copies (flows, temperature/pressure, price, and impact item).
+
+- Added ``.. warning::`` notes to :attr:`~.WasteStream.pH` and :attr:`~.WasteStream.SAlk` clarifying that these are not calculated from stream composition (no acid-base model yet) and should be treated as user-provided inputs.
+
+- Fixed :class:`~.sanunits.HXutility`: its ``_units`` dictionary was inadvertently set to ``None`` (it was assigned the return value of ``dict.update``, which is always ``None``), which broke :meth:`results` with an ``AttributeError`` and mutated BioSTEAM's shared ``_units``. The unit-of-measure entries are now built with a dict merge.
+
+- Re-exported the Thermosteam reaction classes (``Reaction``, ``ReactionItem``, ``ReactionSet``, ``ParallelReaction``, ``SeriesReaction``, ``ReactionSystem``, and the ``Rxn``/``RxnI``/``RxnS``/``PRxn``/``SRxn``/``RxnSys`` aliases) from the top-level ``qsdsan`` namespace, so they can be imported with ``from qsdsan import Reaction`` instead of reaching into BioSTEAM/Thermosteam.
+
+- Added ``qsdsan.CEPCI``, a settable view of the global Chemical Engineering Plant Cost Index (which BioSTEAM abbreviates as ``CE``), so the costing index can be read and set (e.g., ``qsdsan.CEPCI = qsdsan.CEPCI_by_year[2023]``) without importing biosteam.
+
+- Fixed :class:`~.TEA`: its ``CEPCI`` argument defaulted to ``bst.CE``, which Python binds once at import time (freezing it at 567.5). Every ``TEA`` created without an explicit ``CEPCI`` therefore reset the global cost index, silently overriding a deliberately set ``qsdsan.CEPCI``/``bst.CE``. ``CEPCI`` now defaults to ``None`` (the current index is left untouched), and a provided ``CEPCI`` is applied *before* simulation so it actually affects costing.
+
+- :attr:`~.TEA.CEPCI_by_year` now returns ``qsdsan.CEPCI_by_year`` (was BioSTEAM's table) for consistency, and ``qsdsan.CEPCI_by_year`` now merges in BioSTEAM's ``design_tools.CEPCI_by_year`` years not already present (e.g., pre-1990), with qsdsan's more precise values taking precedence on overlapping years. QSDsan's built-in hydroprocessing/hydrothermal units now source their ``@cost`` reference indices from ``qsdsan.CEPCI_by_year`` as well (a sub-0.1% cost change from the more precise values).
+
+- In EXPOsan, systems that set the global cost index (``htl`` and ``saf``) now do so via ``qsdsan.CEPCI = ...`` instead of ``bst.CE = ...``, for consistency with the new ``qsdsan.CEPCI`` handle (functionally identical, since ``qsdsan.CEPCI`` is a live view of ``bst.CE``).
+
+- Renamed the cost-index dicts in ``qsdsan.utils.indices`` and the keys of ``qsdsan.utils.tea_indices`` to the ``*_by_year`` convention (``'CEPCI_by_year'``, ``'ChemPPI_by_year'``, ``'labor_by_year'``, ``'PCEPI_by_year'``). Update any code that used the old short keys, e.g., ``tea_indices['CEPCI']`` becomes ``tea_indices['CEPCI_by_year']``.
+
+- Tutorial updates ongoing.
+
+
+`1.5.1`_
+--------
+- :class:`~.Component` now validates the ``particle_size``, ``degradability``, and ``organic`` arguments at creation, for both the constructor and :meth:`~.Component.from_chemical`. Invalid values (e.g., a misspelled ``particle_size``) that were previously accepted silently now raise a ``ValueError``.
+
+- The ``f_BOD5_COD``, ``f_uBOD_COD``, and ``f_Vmass_Totmass`` fractions are now range-checked to ``[0, 1]`` (this check was previously unreachable).
+
+- The :class:`~.Component` constructor now accepts a ``chemical`` keyword to build a component directly from an existing ``thermosteam.Chemical``. :meth:`~.Component.from_chemical` is now a thin wrapper around it, with unchanged behavior.
+
+- Documented the ``ignore_inaccurate_molar_weight`` and ``adjust_MW_to_measured_as`` options of :meth:`~.Components.compile`, and substantially revised the topical tutorials.
+
+
 `1.5.0`_
 --------
 - All LCA registry types (:class:`~.ImpactIndicator`, :class:`~.ImpactItem`, :class:`~.Construction`, :class:`~.Transportation`) are now isolated per flowsheet. Switching between systems via :meth:`~.SanMainFlowsheet.set_flowsheet` atomically swaps all four registries, so no manual :func:`~.utils.clear_lca_registries` calls are needed between systems. :func:`~.utils.clear_lca_registries` is deprecated.
@@ -257,6 +295,8 @@ Official release of ``QSDsan`` v1.0.0!
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
+.. _1.5.2: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.2
+.. _1.5.1: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.1
 .. _1.5.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.0
 .. _1.4.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.4.0
 .. _1.3.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.3.0

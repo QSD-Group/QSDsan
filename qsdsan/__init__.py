@@ -43,6 +43,22 @@ Model = _bst.Model
 Metric = _bst.Metric
 Parameter = _bst.Parameter
 default_utilities = _bst.default_utilities
+
+# Reaction APIs (defined in Thermosteam, re-exported through BioSTEAM) so users can
+# do ``from qsdsan import Reaction`` instead of reaching into BioSTEAM/Thermosteam.
+Reaction = _bst.Reaction
+ReactionItem = _bst.ReactionItem
+ReactionSet = _bst.ReactionSet
+ParallelReaction = _bst.ParallelReaction
+SeriesReaction = _bst.SeriesReaction
+ReactionSystem = _bst.ReactionSystem
+Rxn = _bst.Rxn
+RxnI = _bst.RxnI
+RxnS = _bst.RxnS
+PRxn = _bst.PRxn
+SRxn = _bst.SRxn
+RxnSys = _bst.RxnSys
+
 # Temporary placeholder — will be upgraded to SanMainFlowsheet at module bottom
 main_flowsheet = _bst.main_flowsheet
 
@@ -55,7 +71,7 @@ CHECK_IMPACT_ITEM_CONSISTENCY = True
 
 
 from . import units_of_measure, utils
-CEPCI_by_year = utils.indices.tea_indices['CEPCI']
+CEPCI_by_year = utils.indices.tea_indices['CEPCI_by_year']
 from ._component import *
 from ._components import *
 from ._sanstream import *
@@ -112,7 +128,7 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 def __dir__():
-    return sorted((*globals(), *_lazy_modules, *_legacy_aliases))
+    return sorted((*globals(), *_lazy_modules, *_legacy_aliases, 'CEPCI'))
 
 def default():
     _bst.default()
@@ -140,6 +156,33 @@ Flowsheet = SanFlowsheet
 F = main_flowsheet
 
 del _qs_default_fs, _AbstractUnit, _AbstractStream, _BstMainFlowsheet
+
+
+# ── Expose BioSTEAM's global cost index as a settable ``qsdsan.CEPCI`` ────────
+# Lets users read/set the CEPCI without importing biosteam, and pairs consistently
+# with ``qsdsan.CEPCI_by_year``. Plain module-level attributes cannot intercept
+# assignment, so ``CEPCI`` is a property on a ModuleType subclass; the module-level
+# ``__getattr__``/``__dir__`` above still work.
+import sys as _sys
+
+class _SanModule(_sys.modules[__name__].__class__):
+    @property
+    def CEPCI(self):
+        '''
+        [float] Chemical Engineering Plant Cost Index (CEPCI) used to scale equipment costs.
+
+        Look up the index for a given year with ``qsdsan.CEPCI_by_year`` (e.g.,
+        ``qsdsan.CEPCI = qsdsan.CEPCI_by_year[2023]`` to report costs in 2023 dollars).
+
+        Setting ``qsdsan.CEPCI`` is the same as setting ``biosteam.CE`` (BioSTEAM
+        abbreviates the index as ``CE``); this is a live view of that value.
+        '''
+        return _bst.CE
+    @CEPCI.setter
+    def CEPCI(self, value):
+        _bst.CE = value
+
+_sys.modules[__name__].__class__ = _SanModule
 
 
 __all__ = (

@@ -14,8 +14,6 @@
 import os, sys
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../..'))
-# sys.path.insert(0, os.path.abspath('../../../thermosteam'))
-# sys.path.insert(0, os.path.abspath('../../../biosteam'))
 del os, sys
 
 # -- Project information -----------------------------------------------------

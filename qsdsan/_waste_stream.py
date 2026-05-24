@@ -744,7 +744,17 @@ class WasteStream(SanStream):
 
     @property
     def pH(self):
-        '''[float] pH, unitless.'''
+        '''
+        [float] pH, unitless.
+
+        .. warning::
+
+            ``QSDsan`` does not yet calculate pH from stream composition. This
+            returns the value you assigned (at construction or via
+            ``ws.pH = ...``), or 7 by default, so it is not a reliable estimate
+            of the actual pH. Treat it as an input and set it from a measured or
+            assumed value.
+        '''
         return self._liq_sol_properties('pH', 7.)
     @pH.setter
     def pH(self, ph):
@@ -753,7 +763,16 @@ class WasteStream(SanStream):
 
     @property
     def SAlk(self):
-        '''[float] Alkalinity, in meq/L (or mmol HCO3-/L). Assumed to be mainly bicarbonate.'''
+        '''
+        [float] Alkalinity, in meq/L (or mmol HCO3-/L). Assumed to be mainly bicarbonate.
+
+        .. warning::
+
+            ``QSDsan`` does not yet calculate alkalinity from stream
+            composition. This returns the value you provided at construction
+            (``SAlk=``), or 2.5 by default, so it is not a reliable estimate.
+            Treat it as an input and set it from a measured or assumed value.
+        '''
         return self._liq_sol_properties('SAlk', 0.)
 
     @property
