@@ -18,6 +18,10 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - Fixed :meth:`~.LCA.add_other_item`: when given a string ID with no matching :class:`~.ImpactItem`, the raised ``ValueError`` reported ``None`` (the failed-lookup result) instead of the requested ID. It now names the missing ID.
 
+- Testing: added a ``conftest.py`` autouse fixture that resets the LCA registries and auto-ID ticket counters before each doctest, so the LCA doctests no longer leak state into one another (e.g., an indicator alias or auto-generated ID carrying over) when the modules run together.
+
+- In EXPOsan, replaced the per-test ``clear_lca_registries()`` calls (deprecated) with an autouse ``conftest.py`` fixture that resets the LCA registries before each test.
+
 - Documentation: expanded the tutorials with new sections on defining component groups (``Components.define_group``), unit specifications (``add_specification``), and inferring a :class:`~.System` from a list of units (``System.from_units``), plus notes on flowsheet retrieval, recycle convergence, and exporting results.
 
 - Documentation: fixed dark-mode rendering of DataFrame tables and ``stderr`` (warning) output, standardized ``.diagram`` usage with a cross-reference between the System and Dynamic Simulation tutorials, and repaired a broken hyperlink.
