@@ -168,10 +168,10 @@ class TEA(BSTTEA):
                         NaCl  0.856
     [1] methanol...
         phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow...Methanol
+        flow (kmol/hr): Methanol...
     [2] ethanol...
         phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow...Ethanol
+        flow (kmol/hr): Ethanol...
     outs...
     [0] alcohols...
         phase: 'l', T: 298.15 K, P: 101325 Pa
@@ -583,15 +583,13 @@ class TEA(BSTTEA):
             if not isinstance(lifetime, dict):
                 cost += unit.installed_cost/get_A(lifetime)
             else:
-                lifetime_dct = dict.fromkeys(unit.purchase_costs.keys())
+                # individual equipment lifetimes; annualize each equipment's installed
+                # cost over its own lifetime (falling back to the unit/TEA lifetime)
+                lifetime_dct = dict.fromkeys(unit.installed_costs)
                 lifetime_dct.update(lifetime)
-                for equip, cost in unit.purchase_costs.items():
-                    factor = unit.F_BM[equip]*\
-                        unit.F_D.get(equip, 1.)*unit.F_P.get(equip, 1.)*unit.F_M.get(equip, 1.)
-                    # for equipment that does not have individual lifetime
-                    # use the unit lifetime or TEA lifetime
+                for equip, installed in unit.installed_costs.items():
                     equip_lifetime = lifetime_dct[equip] or self.lifetime
-                    cost += factor*cost/get_A(equip_lifetime)
+                    cost += installed/get_A(equip_lifetime)
         return cost
 
 
