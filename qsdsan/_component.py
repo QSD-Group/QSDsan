@@ -33,6 +33,7 @@ from ._compat import (
     lock_phase,
     display_asfunctor,
     get_chemical_data as get_component_data,
+    set_chemical_MW,
     )
 from .utils import copy_attr, cod_test_stoichiometry, electron_acceptor_cod
 from .units_of_measure import component_units_of_measure
@@ -275,7 +276,7 @@ class Component(Chemical):
         self.f_uBOD_COD = f_uBOD_COD
         self.f_Vmass_Totmass = f_Vmass_Totmass
 
-        if not self.MW and not self.formula: self.MW = 1.
+        if not self.MW and not self.formula: set_chemical_MW(self, 1.)
         self.i_COD = i_COD
         self.i_NOD = i_NOD
         return self

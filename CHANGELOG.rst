@@ -14,6 +14,8 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - ``qsdsan.utils`` now thinly wraps BioSTEAM's ``@cost`` decorator so it also accepts ``CEPCI`` as an alias for the reference cost-index argument ``CE`` (e.g., ``@cost(..., CEPCI=522)``), for consistency with ``qsdsan.CEPCI``/``qsdsan.CEPCI_by_year``. BioSTEAM's ``CE`` keyword continues to work unchanged.
 
+- Fixed compatibility with newer Thermosteam releases that make ``Chemical.MW`` a read-only property: :class:`~.Component` creation assigned ``self.MW = 1.`` as a placeholder for components without a formula or molecular weight, which raised ``AttributeError: cannot set molecular weight``. The placeholder is now set via ``qsdsan._compat.set_chemical_MW``, which uses the public ``MW`` setter when it is writable and falls back to Thermosteam's internal constant-reset helper when it is read-only (so it works on both old and new Thermosteam, ``>=0.53.4``). This unblocked ``Components.load_default`` and therefore nearly every system build.
+
 - Fixed :meth:`~.LCA.get_impact_table`: the per-category ``Sum`` row was written via pandas chained assignment, which silently no-ops under Copy-on-Write (pandas ≥ 2.x), so the total row came out blank and ``ChainedAssignmentError`` warnings were emitted. The row totals are now assigned with ``.loc``.
 
 - Fixed :meth:`~.LCA.add_other_item`: when given a string ID with no matching :class:`~.ImpactItem`, the raised ``ValueError`` reported ``None`` (the failed-lookup result) instead of the requested ID. It now names the missing ID.
