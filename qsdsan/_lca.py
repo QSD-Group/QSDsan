@@ -308,9 +308,10 @@ class LCA:
     def add_other_item(self, item, f_quantity, unit=''):
         '''Add other :class:`ImpactItem` in LCA.'''
         if isinstance(item, str):
-            item = ImpactItem.get_item(item)
+            item_ID = item
+            item = ImpactItem.get_item(item_ID)
             if item is None:
-                raise ValueError(f'No ImpactItem with the ID {item}.')
+                raise ValueError(f'No ImpactItem with the ID {item_ID}.')
         fu = item.functional_unit
         if not callable(f_quantity):
             f = lambda: f_quantity
@@ -676,8 +677,8 @@ class LCA:
         suffix = '/yr' if annual else ''
         
         for i in self.indicators:
-            cat_table[f'{i.ID} [{i.unit}{suffix}]'][num] = tot[i.ID]
-            cat_table[f'Category {i.ID} Ratio'][num] = 1
+            cat_table.loc[num, f'{i.ID} [{i.unit}{suffix}]'] = tot[i.ID]
+            cat_table.loc[num, f'Category {i.ID} Ratio'] = 1
 
         if cat in ('construction', 'transportation'):
             cat_table.rename(index={num: ('Sum', 'All')}, inplace=True)

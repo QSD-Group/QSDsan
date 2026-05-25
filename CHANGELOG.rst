@@ -14,6 +14,10 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - ``qsdsan.utils`` now thinly wraps BioSTEAM's ``@cost`` decorator so it also accepts ``CEPCI`` as an alias for the reference cost-index argument ``CE`` (e.g., ``@cost(..., CEPCI=522)``), for consistency with ``qsdsan.CEPCI``/``qsdsan.CEPCI_by_year``. BioSTEAM's ``CE`` keyword continues to work unchanged.
 
+- Fixed :meth:`~.LCA.get_impact_table`: the per-category ``Sum`` row was written via pandas chained assignment, which silently no-ops under Copy-on-Write (pandas ≥ 2.x), so the total row came out blank and ``ChainedAssignmentError`` warnings were emitted. The row totals are now assigned with ``.loc``.
+
+- Fixed :meth:`~.LCA.add_other_item`: when given a string ID with no matching :class:`~.ImpactItem`, the raised ``ValueError`` reported ``None`` (the failed-lookup result) instead of the requested ID. It now names the missing ID.
+
 - Documentation: expanded the tutorials with new sections on defining component groups (``Components.define_group``), unit specifications (``add_specification``), and inferring a :class:`~.System` from a list of units (``System.from_units``), plus notes on flowsheet retrieval, recycle convergence, and exporting results.
 
 - Documentation: fixed dark-mode rendering of DataFrame tables and ``stderr`` (warning) output, standardized ``.diagram`` usage with a cross-reference between the System and Dynamic Simulation tutorials, and repaired a broken hyperlink.
