@@ -52,6 +52,7 @@ The notebooks in `docs/source/tutorials` are the source of truth — match their
 - Address the reader as **"users"**, not "students".
 - **Minimize em-dashes**; prefer parentheses or colons.
 - Use `<div class="alert alert-info">` admonitions for **Note**/**Tip**/**Heads up** callouts, and collapsible `<details><summary><i>Python Aside: ... (click to expand)</i></summary>` blocks for Python-language tangents (the tutorials index advertises these).
+- Keep inline code (`` `code` ``) **out of italics and out of link text**: nbsphinx (markdown -> RST) renders the backticks literally inside a `*...*` emphasis span, and emits broken raw RST (`` `text <url>`__ ``) for `` [`code` text](url) ``. So use the alert div rather than an italic note, and write links with plain text plus a separate code span, e.g. `the [Excretion documentation](url)` (not `` [`Excretion` docs](url) ``). This has recurred, so scan for it.
 - Don't paste a class's full signature/parameter docstring into markdown — it silently drifts. Describe the few relevant parameters and point readers to `?ClassName` or the API docs.
 - Give every stream/unit an explicit ID matching its variable name (`ww1 = qs.WasteStream('ww1', ...)`); reusing an ID across cells triggers "replaced in registry" warnings, and an auto-assigned ID (e.g. `ws1`) won't match the variable a reader sees.
 - When first showing `.diagram()`, use the default format and mention that `format='html'` gives an interactive diagram with hover-able stream/unit info.
