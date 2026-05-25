@@ -51,13 +51,35 @@ from .scope import *
 # BioSTEAM/Thermosteam helpers re-exported so users can build and evaluate units
 # through ``qsdsan.utils`` without ``import biosteam``/``import thermosteam``:
 #   - rho_to_V/V_to_rho: density <-> molar-volume conversion (component models)
-#   - cost: the ``@cost`` decorator for adding cost/design to custom units
+#   - cost: the ``@cost`` decorator for adding cost/design to custom units, thinly
+#     wrapped (below) so ``CEPCI=`` is accepted as an alias for BioSTEAM's ``CE=``
 #   - var_columns/var_indices: extract Model parameter/metric labels from results
-# These are plain re-exports; ``test_public_api`` asserts identity so a
+# rho_to_V/V_to_rho and var_columns/var_indices are plain re-exports; ``test_public_api``
+# asserts identity (and that ``cost`` still wraps the BioSTEAM original) so a
 # BioSTEAM/Thermosteam rename surfaces as a failing test rather than a user error.
 from thermosteam.functional import rho_to_V, V_to_rho
-from biosteam.units.decorators import cost
+from biosteam.units.decorators import cost as _bst_cost
 from biosteam.evaluation._utils import var_columns, var_indices
+
+
+def cost(basis, ID=None, *, CE=None, CEPCI=None, **kwargs):
+    '''
+    `qsdsan`'s thin wrapper of BioSTEAM's ``@cost`` decorator that additionally
+    accepts ``CEPCI`` as an alias for the reference cost index ``CE`` (both name the
+    Chemical Engineering Plant Cost Index), for consistency with ``qsdsan.CEPCI`` and
+    ``qsdsan.CEPCI_by_year``. BioSTEAM's ``CE`` keyword keeps working unchanged, and
+    all other arguments are forwarded as-is; see :func:`biosteam.units.decorators.cost`.
+    '''
+    if CEPCI is not None:
+        if CE is not None:
+            raise ValueError('pass only one of `CE` or `CEPCI`; '
+                             'they are the same cost index')
+        CE = CEPCI
+    if CE is None:
+        raise TypeError("cost() missing required keyword argument: 'CEPCI' (or 'CE')")
+    return _bst_cost(basis, ID, CE=CE, **kwargs)
+
+cost.__wrapped__ = _bst_cost  # so test_public_api can confirm it still wraps BioSTEAM's
 
 __all__ = (
     'ureg', 'auom', 'ruom',

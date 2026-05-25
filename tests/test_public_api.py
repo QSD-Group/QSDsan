@@ -130,8 +130,11 @@ def test_utils_functional_helpers_match_thermosteam():
 
 
 def test_utils_cost_decorator_matches_biosteam():
+    # qsdsan thinly wraps BioSTEAM's @cost to also accept ``CEPCI`` as an alias for
+    # ``CE``; ``__wrapped__`` still points at the BioSTEAM original, so an upstream
+    # rename surfaces here (and at import time).
     from biosteam.units.decorators import cost as bst_cost
-    assert qs.utils.cost is bst_cost
+    assert qs.utils.cost.__wrapped__ is bst_cost
 
 
 def test_utils_var_helpers_match_biosteam():

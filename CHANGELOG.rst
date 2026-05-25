@@ -12,6 +12,8 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - Fixed ``qsdsan.utils.indices.ChemPPI_by_year``: the 2021 and 2022 entries had been mistakenly populated with CEPCI values (708.8, 816.0). They have been removed, so the chemical-PPI series now ends at 2020 until authentic values are added.
 
+- ``qsdsan.utils`` now thinly wraps BioSTEAM's ``@cost`` decorator so it also accepts ``CEPCI`` as an alias for the reference cost-index argument ``CE`` (e.g., ``@cost(..., CEPCI=522)``), for consistency with ``qsdsan.CEPCI``/``qsdsan.CEPCI_by_year``. BioSTEAM's ``CE`` keyword continues to work unchanged.
+
 - Documentation: expanded the tutorials with new sections on defining component groups (``Components.define_group``), unit specifications (``add_specification``), and inferring a :class:`~.System` from a list of units (``System.from_units``), plus notes on flowsheet retrieval, recycle convergence, and exporting results.
 
 - Documentation: fixed dark-mode rendering of DataFrame tables and ``stderr`` (warning) output, standardized ``.diagram`` usage with a cross-reference between the System and Dynamic Simulation tutorials, and repaired a broken hyperlink.

@@ -18,6 +18,7 @@ __all__ = (
     'test_create_example_components',
     'test_create_example_system',
     'test_create_example_model',
+    'test_cost_decorator_accepts_CEPCI_alias',
     )
 
 from pathlib import Path
@@ -203,3 +204,27 @@ def test_create_example_model():
     model_eval = create_example_model(evaluate=True, N=20, seed=554)
     assert model_eval.table is not None
     assert len(model_eval.table) == 20
+
+
+def test_cost_decorator_accepts_CEPCI_alias():
+    '''qsdsan's @cost accepts CEPCI as an alias for BioSTEAM's CE (same index).'''
+    from qsdsan import SanUnit
+    from qsdsan.utils import cost
+
+    @cost('Flow rate', 'Pump', CE=567.5, cost=1000, S=1, units='kg/hr')
+    class _UnitCE(SanUnit): pass
+
+    @cost('Flow rate', 'Pump', CEPCI=567.5, cost=1000, S=1, units='kg/hr')
+    class _UnitCEPCI(SanUnit): pass
+
+    # the alias is stored as the same reference index on the cost item
+    assert _UnitCE.cost_items['Pump'].CE == _UnitCEPCI.cost_items['Pump'].CE == 567.5
+
+    # passing both is ambiguous; passing neither is an error (CE is required)
+    with pytest.raises(ValueError):
+        @cost('Flow rate', 'Pump', CE=500, CEPCI=600, cost=1000, S=1, units='kg/hr')
+        class _UnitBoth(SanUnit): pass
+
+    with pytest.raises(TypeError):
+        @cost('Flow rate', 'Pump', cost=1000, S=1, units='kg/hr')
+        class _UnitNeither(SanUnit): pass
