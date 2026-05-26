@@ -16,9 +16,12 @@ for license details.
 
 # %%
 
+import os
 import sys
+import functools
 import numpy as np
 import pandas as pd
+import biosteam as _bst
 from math import ceil
 from collections.abc import Iterable
 from warnings import warn
@@ -601,23 +604,7 @@ class LCA:
             if not isinstance(streams[0], SanStream):
                 return None
             return impact_dct
-        if allocate_by == 'mass':
-            ratios = np.array([i.F_mass for i in streams])
-        elif allocate_by == 'energy':
-            ratios = np.array([i.HHV for i in streams])
-        elif allocate_by == 'value':
-            ratios = np.array([i.F_mass*i.price for i in streams])
-        elif iter(allocate_by):
-            ratios = allocate_by
-        elif callable(allocate_by):
-            ratios = allocate_by()
-        else:
-            raise ValueError('allocate_by can only be "mass", "energy", "value", '
-                             'an Iterable (with the same length as `streams`), '
-                             'or a function to generate an Iterable.')
-        if ratios.sum() == 0:
-            raise ValueError('Calculated allocation ratios are all zero, cannot allocate.')
-        ratios = ratios/ratios.sum()
+        ratios = self._get_allocation_ratios(streams, allocate_by)
         for n, s in enumerate(streams):
             if not isinstance(s, SanStream):
                 continue
@@ -625,6 +612,57 @@ class LCA:
                 raise ValueError(f'`WasteStream` {s} not in the system.')
             allocated[s.ID] = dict(zip(impact_dct.keys(), ratios[n]*impact_vals))
         return allocated
+
+    def _get_allocation_ratios(self, streams, allocate_by):
+        '''Return normalized allocation ratios for ``streams``;
+        see :meth:`get_allocated_impacts` for the ``allocate_by`` options.'''
+        if allocate_by == 'mass':
+            ratios = np.array([i.F_mass for i in streams])
+        elif allocate_by == 'energy':
+            ratios = np.array([i.HHV for i in streams])
+        elif allocate_by == 'value':
+            ratios = np.array([i.F_mass*i.price for i in streams])
+        elif iter(allocate_by):
+            ratios = np.asarray(allocate_by, dtype=float)
+        elif callable(allocate_by):
+            ratios = np.asarray(allocate_by(), dtype=float)
+        else:
+            raise ValueError('allocate_by can only be "mass", "energy", "value", '
+                             'an Iterable (with the same length as `streams`), '
+                             'or a function to generate an Iterable.')
+        if ratios.sum() == 0:
+            raise ValueError('Calculated allocation ratios are all zero, cannot allocate.')
+        return ratios/ratios.sum()
+
+    def get_allocated_impact_table(self, streams=(), allocate_by='mass',
+                                   operation_only=False, annual=False):
+        '''
+        Return a :class:`pandas.DataFrame` of total impacts allocated to
+        ``streams`` (rows are streams, columns are indicators), with an
+        ``'Allocation factor'`` column. Requires two or more streams.
+
+        This is the tabular counterpart of :meth:`get_allocated_impacts`; see it
+        for the meaning of ``streams``, ``allocate_by``, ``operation_only``, and
+        ``annual``.
+        '''
+        if not isinstance(streams, Iterable):
+            streams = (streams,)
+        allocated = self.get_allocated_impacts(
+            streams=streams, allocate_by=allocate_by,
+            operation_only=operation_only, annual=annual)
+        if allocated is None or len(streams) < 2:
+            return 'No allocable impacts (provide two or more streams).'
+        suffix = '/yr' if annual else ''
+        df = pd.DataFrame.from_dict(allocated, orient='index')
+        df.index.name = 'Stream'
+        ind_by_id = {i.ID: i for i in self.indicators}
+        df.rename(columns={c: f'{c} [{ind_by_id[c].unit}{suffix}]'
+                           for c in df.columns if c in ind_by_id}, inplace=True)
+        ratios = self._get_allocation_ratios(streams, allocate_by)
+        factor_map = {s.ID: r for s, r in zip(streams, ratios)
+                      if isinstance(s, SanStream)}
+        df['Allocation factor'] = [factor_map.get(idx) for idx in df.index]
+        return df
 
 
     def get_unit_impacts(
@@ -770,6 +808,8 @@ class LCA:
                          f'Category {i.ID} Ratio'] for i in self.indicators), [])
 
         if cat in ('stream', 'streams'):
+            if not self.stream_inventory:
+                return 'No stream-related impacts.'
             headings = ['Stream', f'Mass [kg]{suffix}', *ind_head]
             item_dct = dict.fromkeys(headings)
             for key in item_dct.keys():
@@ -793,6 +833,8 @@ class LCA:
             return _append_cat_sum(table, cat, tot, annual=annual)
 
         elif cat == 'other':
+            if not self.other_items:
+                return 'No other-related impacts.'
             headings = ['Other', f'Quantity{suffix}', *ind_head]
             item_dct = dict.fromkeys(headings)
             for key in item_dct.keys():
@@ -821,30 +863,38 @@ class LCA:
             f'not "{category}".')
 
 
-    def save_report(self, file=None, sheet_name='LCA',
-                    n_row=0, row_space=2, annual=False):
+    def save_report(self, file=None, sheet_name='LCA', annual=False, **kwargs):
         '''
-        Save all LCA tables as an Excel file.
-        
+        Save the full system report (process, TEA, and LCA results) as an Excel file.
+
+        This delegates to ``self.system.save_report`` so that a `System`, `TEA`,
+        or `LCA` all produce the same unified workbook (the LCA tables are added
+        on a sheet named by ``sheet_name``). For LCA tables only, use
+        :meth:`get_impact_table`.
+
         Parameters
         ----------
         file : str
-            Path and name of the excel file,
-            will use the ID of the system with an '_lca' suffix, if not provided.
+            Path and name of the Excel file,
+            will use the ID of the system with a '_report' suffix, if not provided.
+        sheet_name : str
+            Name of the sheet to write the LCA tables to.
         annual : bool
-            If True, will return the annual impacts considering `uptime_ratio`
+            If True, will write the annual impacts considering `uptime_ratio`
             instead of across the system lifetime.
+        **kwargs
+            Additional keyword arguments passed to ``System.save_report``
+            (e.g., ``dpi``, ``sheets``, ``stage``, or stream properties).
+
+        See Also
+        --------
+        :meth:`get_impact_table`
+        :meth:`get_allocated_impact_table`
         '''
         if not file:
-            file = f'{self.system.ID}_lca.xlsx'
-        tables = [self.get_impact_table(cat, annual=annual)
-                  for cat in ('Construction', 'Transportation',
-                              'Stream', 'other')]
-        with pd.ExcelWriter(file) as writer:
-            for table in tables:
-                if isinstance(table, str): continue
-                table.to_excel(writer, sheet_name=sheet_name, startrow=n_row)
-                n_row += table.shape[0] + row_space + len(table.columns.names) # extra lines for the heading
+            file = f'{self.system.ID}_report.xlsx'
+        return self.system.save_report(
+            file, lca_sheet_name=sheet_name, annual=annual, **kwargs)
 
 
     @property
@@ -990,3 +1040,76 @@ class LCA:
     def total_impacts(self):
         '''[dict] Total impacts of the entire system (construction, transportation, and wastestream).'''
         return self.get_total_impacts()
+
+
+# %%
+
+# =============================================================================
+# Unify report generation across System/TEA/LCA
+# =============================================================================
+
+# `qs.System` is BioSTEAM's `System` (re-exported unchanged) and `qs.TEA.save_report`
+# is a property returning `system.save_report`, so patching `System.save_report`
+# here makes a System, TEA, or LCA all produce the same unified workbook. A System
+# finds its LCA through the `System.LCA` property (backed by `system._LCA`, set in
+# `LCA._update_system`); pure-BioSTEAM systems (no LCA) are unaffected.
+
+def _write_lca_sheet(lca, writer, sheet_name='LCA', n_row=0, row_space=2, annual=False):
+    '''
+    Write QSDsan LCA tables (Construction/Transportation/Stream/Other), stacked
+    on a single sheet, to an already-open :class:`pandas.ExcelWriter`.
+    '''
+    tables = [lca.get_impact_table(cat, annual=annual)
+              for cat in ('Construction', 'Transportation', 'Stream', 'other')]
+    for table in tables:
+        if isinstance(table, str): continue # skip 'No <cat>-related impacts.' returns
+        table.to_excel(writer, sheet_name=sheet_name, startrow=n_row)
+        n_row += table.shape[0] + row_space + len(table.columns.names) # extra lines for the heading
+    return n_row
+
+
+def _make_unified_save_report(original):
+    '''Wrap BioSTEAM's ``System.save_report`` to also append QSDsan LCA tables.'''
+    @functools.wraps(original)
+    def save_report(self, *args, annual=False, lca_sheet_name='LCA',
+                    lca_allocate_streams=None, lca_allocate_by='mass', **kwargs):
+        # `file` may be passed positionally or by keyword (BioSTEAM default 'report.xlsx')
+        file = kwargs.get('file', args[0] if args else 'report.xlsx')
+        original(self, *args, **kwargs) # process + TEA sheets (and flowsheet)
+        lca = self.LCA
+        if lca is None:
+            return
+
+        def _write(writer):
+            _write_lca_sheet(lca, writer, sheet_name=lca_sheet_name, annual=annual)
+            if lca_allocate_streams is not None:
+                table = lca.get_allocated_impact_table(
+                    streams=lca_allocate_streams, allocate_by=lca_allocate_by,
+                    annual=annual)
+                if not isinstance(table, str):
+                    table.to_excel(writer, sheet_name='LCA allocation')
+
+        try:
+            with pd.ExcelWriter(file, mode='a', engine='openpyxl',
+                                if_sheet_exists='replace') as writer:
+                _write(writer)
+        except Exception as e:
+            warn(f'Could not append LCA sheet(s) to {file!r} ({e}); '
+                 f'writing LCA tables to a separate file instead.', RuntimeWarning)
+            base, _ = os.path.splitext(file)
+            with pd.ExcelWriter(f'{base}_lca.xlsx', engine='openpyxl') as writer:
+                _write(writer)
+    save_report.__doc__ = (original.__doc__ or '') + (
+        '\n\n        QSDsan addition: when ``system.LCA`` is set, the LCA tables are '
+        'appended on a sheet (``lca_sheet_name``, default ``\'LCA\'``). Pass '
+        '``annual=True`` for annualized LCA values. Pass ``lca_allocate_streams`` '
+        '(two or more streams) to also write an ``\'LCA allocation\'`` sheet of '
+        'impacts allocated by ``lca_allocate_by`` (default ``\'mass\'``). These '
+        'keyword-only arguments are consumed here and not forwarded to BioSTEAM.')
+    save_report._qsdsan_unified = True
+    return save_report
+
+
+# Patch once; the sentinel guards against double-wrapping on module reload.
+if not getattr(_bst.System.save_report, '_qsdsan_unified', False):
+    _bst.System.save_report = _make_unified_save_report(_bst.System.save_report)
