@@ -521,16 +521,48 @@ class LCA:
             for i, j in impacts.items(): impacts[i] = j/lifetime
         return impacts
 
+    def _time_basis(self, annual=False, time_frame=None):
+        '''
+        Return ``(factor, suffix)`` for normalizing a lifetime total to a time
+        frame: the lifetime total divided by ``factor`` gives the per-``time_frame``
+        value, and ``suffix`` (e.g., ``'/yr'``) labels the unit.
+
+        ``time_frame`` takes precedence over ``annual``; when it is None, ``annual``
+        is used (``True`` -> ``'yr'``, ``False`` -> ``'lifetime'``) for backward
+        compatibility. Frames are per calendar unit, consistent with ``annual``
+        (which divides the lifetime total by the lifetime in years).
+        '''
+        if time_frame is None:
+            time_frame = 'yr' if annual else 'lifetime'
+        L = self.lifetime
+        table = {
+            'lifetime': (1., ''), 'all': (1., ''), 'total': (1., ''), '': (1., ''),
+            'yr': (L, '/yr'), 'year': (L, '/yr'), 'years': (L, '/yr'),
+            'annual': (L, '/yr'), 'y': (L, '/yr'),
+            'mo': (L*12, '/mo'), 'month': (L*12, '/mo'), 'months': (L*12, '/mo'),
+            'wk': (L*365/7, '/wk'), 'week': (L*365/7, '/wk'), 'weeks': (L*365/7, '/wk'),
+            'd': (L*365, '/d'), 'day': (L*365, '/d'), 'days': (L*365, '/d'),
+            'hr': (L*365*24, '/hr'), 'h': (L*365*24, '/hr'),
+            'hour': (L*365*24, '/hr'), 'hours': (L*365*24, '/hr'),
+            }
+        tf = str(time_frame).lower()
+        if tf not in table:
+            raise ValueError(
+                "time_frame must be one of 'lifetime'/'all', 'yr', 'month', "
+                f"'week', 'day', or 'hr'; not {time_frame!r}.")
+        return table[tf]
+
     def get_total_impacts(
             self,
             operation_only=False,
             exclude_streams=None,
             annual=False,
+            time_frame=None,
             **kwargs
             ):
         '''
         Return total impacts, normalized to a certain time frame.
-        
+
         Parameters
         ----------
         operation_only : bool
@@ -540,29 +572,35 @@ class LCA:
         annual : bool
             If True, will return the annual impacts considering `uptime_ratio`
             instead of across the system lifetime.
+        time_frame : str
+            Time frame to normalize the impacts to: 'lifetime' (or 'all', the
+            default), 'yr' (same as ``annual=True``), 'month', 'week', 'day', or
+            'hr'. Takes precedence over `annual`.
         '''
         if 'exclude' in kwargs.keys() and exclude_streams is None: exclude_streams=kwargs['exclude']
-        impacts = dict.fromkeys((i.ID for i in self.indicators), 0.) 
-        trans = self.get_transportation_impacts(self.transportation_units, annual=annual)
+        impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
+        trans = self.get_transportation_impacts(self.transportation_units)
         ws_impacts = self.get_stream_impacts(stream_items=self.stream_inventory,
-                                             exclude_streams=exclude_streams,
-                                             annual=annual)
-        other = self.get_other_impacts(annual=annual)
+                                             exclude_streams=exclude_streams)
+        other = self.get_other_impacts()
         if operation_only == False:
-            constr = self.get_construction_impacts(self.construction_units, annual=annual)
+            constr = self.get_construction_impacts(self.construction_units)
             categories = (constr, trans, ws_impacts, other)
         else: categories = (trans, ws_impacts, other)
-        
+
         for i in categories:
             for m, n in i.items():
                 if m not in impacts.keys():
                     continue
                 impacts[m] += n
-                
+
+        factor = self._time_basis(annual, time_frame)[0]
+        if factor != 1.:
+            impacts = {m: n/factor for m, n in impacts.items()}
         return impacts
 
     def get_allocated_impacts(self, streams=(), allocate_by='mass',
-                              operation_only=False, annual=False):
+                              operation_only=False, annual=False, time_frame=None):
         '''
         Allocate total impacts to one or multiple streams.
 
@@ -587,7 +625,10 @@ class LCA:
         annual : bool
             If True, will return the annual impacts considering `uptime_ratio`
             instead of across the system lifetime.
-            
+        time_frame : str
+            Time frame to normalize the impacts to (see :meth:`get_total_impacts`);
+            takes precedence over `annual`.
+
 
         .. note::
 
@@ -597,7 +638,9 @@ class LCA:
         '''
         if not isinstance(streams, Iterable):
             streams = (streams,)
-        impact_dct = self.get_total_impacts(operation_only=operation_only, exclude_streams=streams, annual=annual)
+        impact_dct = self.get_total_impacts(operation_only=operation_only,
+                                            exclude_streams=streams,
+                                            annual=annual, time_frame=time_frame)
         impact_vals = np.array([i for i in impact_dct.values()])
         allocated = {}
         if len(streams) == 1:
@@ -639,24 +682,25 @@ class LCA:
         return ratios/ratios.sum()
 
     def get_allocated_impact_table(self, streams=(), allocate_by='mass',
-                                   operation_only=False, annual=False):
+                                   operation_only=False, annual=False,
+                                   time_frame=None):
         '''
         Return a :class:`pandas.DataFrame` of total impacts allocated to
         ``streams`` (rows are streams, columns are indicators), with an
         ``'Allocation factor'`` column. Requires two or more streams.
 
         This is the tabular counterpart of :meth:`get_allocated_impacts`; see it
-        for the meaning of ``streams``, ``allocate_by``, ``operation_only``, and
-        ``annual``.
+        for the meaning of ``streams``, ``allocate_by``, ``operation_only``,
+        ``annual``, and ``time_frame``.
         '''
         if not isinstance(streams, Iterable):
             streams = (streams,)
         allocated = self.get_allocated_impacts(
             streams=streams, allocate_by=allocate_by,
-            operation_only=operation_only, annual=annual)
+            operation_only=operation_only, annual=annual, time_frame=time_frame)
         if allocated is None or len(streams) < 2:
             return 'No allocable impacts (provide two or more streams).'
-        suffix = '/yr' if annual else ''
+        suffix = self._time_basis(annual, time_frame)[1]
         df = pd.DataFrame.from_dict(allocated, orient='index')
         df.index.name = 'Stream'
         ind_by_id = {i.ID: i for i in self.indicators}
@@ -668,17 +712,83 @@ class LCA:
         df['Allocation factor'] = [factor_map.get(idx) for idx in df.index]
         return df
 
+    def get_normalized_impacts(self, streams, normalize_by='mass', allocate_by=None,
+                               operation_only=False, annual=False, time_frame=None):
+        '''
+        Return impacts normalized per unit throughput of the reference stream(s),
+        i.e., the footprint per functional unit (e.g., per kg, or per m3 of
+        wastewater treated). This is the LCA counterpart to ``TEA.solve_price``
+        (which expresses a stream's cost per unit).
+
+        By default the *total* system impacts are divided by the combined
+        throughput of ``streams``. If ``allocate_by`` is given, the impacts
+        *allocated* to ``streams`` are normalized instead (see
+        :meth:`get_allocated_impacts`, which excludes those streams' own assigned
+        impacts).
+
+        Parameters
+        ----------
+        streams : obj or Iterable(obj)
+            Reference stream(s) whose combined throughput defines the functional unit.
+        normalize_by : str
+            'mass' (per kg, ``F_mass``), 'volume' (per m3, ``F_vol``), or 'energy'
+            (per MJ, ``HHV``).
+        allocate_by : str, Iterable, function, or None
+            If None (default), normalize the total impacts; otherwise normalize
+            the impacts allocated to ``streams`` by this basis (see
+            :meth:`get_allocated_impacts`).
+        operation_only : bool
+            If True, then no construction impacts will be included.
+        annual : bool
+            Kept for API consistency; the per-unit intensity is time-independent
+            (the time frame cancels between the impacts and the throughput).
+        time_frame : str
+            Same as `annual`; has no effect on the per-unit value.
+
+        .. note::
+
+            The throughput is the stream flow over the chosen time frame
+            (e.g., ``F_mass * lifetime_hr``), so it accounts for `uptime_ratio`.
+        '''
+        if not isinstance(streams, Iterable):
+            streams = (streams,)
+        streams = tuple(streams)
+        if allocate_by is None:
+            impacts = self.get_total_impacts(operation_only=operation_only,
+                                             annual=annual, time_frame=time_frame)
+        else:
+            allocated = self.get_allocated_impacts(
+                streams=streams, allocate_by=allocate_by,
+                operation_only=operation_only, annual=annual, time_frame=time_frame)
+            impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
+            if isinstance(allocated, dict):
+                for s in streams:
+                    d = allocated.get(getattr(s, 'ID', None))
+                    if isinstance(d, dict):
+                        for k, v in d.items(): impacts[k] += v
+        attr = {'mass': 'F_mass', 'volume': 'F_vol', 'energy': 'HHV'}.get(normalize_by)
+        if attr is None:
+            raise ValueError("normalize_by can only be 'mass', 'volume', or "
+                             f"'energy', not {normalize_by!r}.")
+        factor = self._time_basis(annual, time_frame)[0]
+        throughput = sum(getattr(s, attr) for s in streams) * self.lifetime_hr / factor
+        if throughput == 0:
+            raise ValueError(f'The combined {normalize_by} throughput of the given '
+                             'stream(s) is zero, cannot normalize.')
+        return {k: v/throughput for k, v in impacts.items()}
+
 
     def get_unit_impacts(
             self, units,
             exclude_streams=None,
             operation_only=False,
             annual=False,
+            time_frame=None,
             **kwargs
             ):
         '''
         Return total impacts with certain units.
-        
+
         Parameters
         ----------
         units : Iterable(obj)
@@ -690,34 +800,35 @@ class LCA:
         annual : bool
             If True, will return the annual impacts considering `uptime_ratio`
             instead of across the system lifetime.
+        time_frame : str
+            Time frame to normalize the impacts to (see :meth:`get_total_impacts`);
+            takes precedence over `annual`.
         '''
         if 'exclude' in kwargs.keys() and exclude_streams is None: exclude_streams=kwargs['exclude']
         if not isinstance(units, Iterable):
             units = (units,)
-        
-        trans = self.get_transportation_impacts(units, annual=annual)
+
+        trans = self.get_transportation_impacts(units)
         stream_items = set(i for i in
                        sum((tuple(unit.ins+unit.outs) for unit in units), ())
                        if i.stream_impact_item)
-
         s = self.get_stream_impacts(stream_items=stream_items,
-                                    exclude_streams=exclude_streams,
-                                    annual=annual)
-        other = self.get_other_impacts(annual=annual)
-        tot = s.copy()
-        for m in tot.keys():
-            tot[m] += trans[m] + s[m] + other[m]
+                                    exclude_streams=exclude_streams)
+        other = self.get_other_impacts()
+        tot = {m: trans[m] + s[m] + other[m] for m in trans.keys()}
         if not operation_only:
-            constr = self.get_construction_impacts(units, annual=annual)
-            for m in tot.keys(): tot[m] += constr[m]          
-            
+            constr = self.get_construction_impacts(units)
+            for m in tot.keys(): tot[m] += constr[m]
+
+        factor = self._time_basis(annual, time_frame)[0]
+        if factor != 1.:
+            tot = {m: n/factor for m, n in tot.items()}
         return tot
 
-    def _append_cat_sum(self, cat_table, cat, tot, annual=False):
+    def _append_cat_sum(self, cat_table, cat, tot, suffix=''):
         num = len(cat_table)
         cat_table.loc[num] = '' # initiate a blank spot for value to be added later
-        suffix = '/yr' if annual else ''
-        
+
         for i in self.indicators:
             cat_table.loc[num, f'{i.ID} [{i.unit}{suffix}]'] = tot[i.ID]
             cat_table.loc[num, f'Category {i.ID} Ratio'] = 1
@@ -732,10 +843,10 @@ class LCA:
 
         return cat_table
 
-    def get_impact_table(self, category, annual=False):
+    def get_impact_table(self, category, annual=False, time_frame=None):
         '''
         Return a :class:`pandas.DataFrame` table for the given impact category.
-        
+
         Parameters
         ----------
         category : str
@@ -743,15 +854,17 @@ class LCA:
         annual : bool
             If True, will return the annual impacts considering `uptime_ratio`
             instead of across the system lifetime.
+        time_frame : str
+            Time frame to normalize the impacts to (see :meth:`get_total_impacts`);
+            takes precedence over `annual`.
         '''
         time = self.lifetime_hr
-        sys_yr = self.lifetime
         cat = category.lower()
         tot_f = getattr(self, f'get_{cat}_impacts')
-        # kwargs = {'annual': annual} if cat != 'other' else {}
-        kwargs = {'annual': annual}
-        tot = tot_f(**kwargs)
-        suffix = '/yr' if annual else''
+        factor, suffix = self._time_basis(annual, time_frame)
+        tot = tot_f()  # lifetime totals; normalized by `factor` below
+        if factor != 1.:
+            tot = {m: n/factor for m, n in tot.items()}
         _append_cat_sum = self._append_cat_sum
         
         if cat in ('construction', 'transportation'):
@@ -773,15 +886,15 @@ class LCA:
                     item_dct[i.item.ID]['SanUnit'].append(su.ID)
                     if cat == 'transportation':
                         quantity = i.quantity*time/i.interval
-                        quantity = quantity/sys_yr if annual else quantity
+                        quantity = quantity/factor
                         item_dct[i.item.ID][f'Quantity{suffix}'].append(quantity)
                     else: # construction
                         lifetime = i.lifetime or su.lifetime or self.lifetime
                         if isinstance(lifetime, dict): # in the case the the equipment is not in the unit lifetime dict
                             lifetime = lifetime.get(i.item.ID) or self.lifetime
-                        constr_ratio = sys_yr/lifetime if self.annualize_construction else ceil(sys_yr/lifetime)
+                        constr_ratio = self.lifetime/lifetime if self.annualize_construction else ceil(self.lifetime/lifetime)
                         quantity = i.quantity * constr_ratio
-                        quantity = quantity/sys_yr if annual else quantity
+                        quantity = quantity/factor
                         item_dct[i.item.ID][f'Quantity{suffix}'].append(quantity)
 
             dfs = []
@@ -806,7 +919,7 @@ class LCA:
                 dfs.append(df)
 
             table = pd.concat(dfs)
-            return _append_cat_sum(table, cat, tot, annual=annual)
+            return _append_cat_sum(table, cat, tot, suffix=suffix)
 
         ind_head = sum(([f'{i.ID} [{i.unit}{suffix}]',
                          f'Category {i.ID} Ratio'] for i in self.indicators), [])
@@ -822,7 +935,7 @@ class LCA:
                 ws = ws_item.linked_stream
                 item_dct['Stream'].append(ws.ID)
                 mass = ws_item.flow_getter(ws) * time
-                mass = mass/sys_yr if annual else mass
+                mass = mass/factor
                 item_dct[f'Mass [kg]{suffix}'].append(mass)
                 for ind in self.indicators:
                     if ind.ID in ws_item.CFs.keys():
@@ -834,7 +947,7 @@ class LCA:
                         item_dct[f'Category {ind.ID} Ratio'].append(0)
             table = pd.DataFrame.from_dict(item_dct)
             table.set_index(['Stream'], inplace=True)
-            return _append_cat_sum(table, cat, tot, annual=annual)
+            return _append_cat_sum(table, cat, tot, suffix=suffix)
 
         elif cat == 'other':
             if not self.other_items:
@@ -847,7 +960,7 @@ class LCA:
                 other = self.other_items[other_ID]['item']
                 item_dct['Other'].append(f'{other_ID}')
                 quantity = self.other_items[other_ID]['quantity']
-                quantity = quantity/sys_yr if annual else quantity
+                quantity = quantity/factor
                 item_dct[f'Quantity{suffix}'].append(quantity)
                 for ind in self.indicators:
                     if ind.ID in other.CFs.keys():
@@ -860,14 +973,15 @@ class LCA:
 
             table = pd.DataFrame.from_dict(item_dct)
             table.set_index(['Other'], inplace=True)
-            return _append_cat_sum(table, cat, tot, annual=annual)
+            return _append_cat_sum(table, cat, tot, suffix=suffix)
 
         raise ValueError(
             'category can only be "Construction", "Transportation", "Stream", or "Other", ' \
             f'not "{category}".')
 
 
-    def save_report(self, file=None, sheet_name='LCA', annual=False, **kwargs):
+    def save_report(self, file=None, sheet_name='LCA', annual=False,
+                    time_frame=None, **kwargs):
         '''
         Save the full system report (process, TEA, and LCA results) as an Excel file.
 
@@ -886,6 +1000,9 @@ class LCA:
         annual : bool
             If True, will write the annual impacts considering `uptime_ratio`
             instead of across the system lifetime.
+        time_frame : str
+            Time frame to normalize the LCA tables to (see :meth:`get_total_impacts`);
+            takes precedence over `annual`.
         **kwargs
             Additional keyword arguments passed to ``System.save_report``
             (e.g., ``dpi``, ``sheets``, ``stage``, or stream properties).
@@ -898,7 +1015,8 @@ class LCA:
         if not file:
             file = f'{self.system.ID}_report.xlsx'
         return self.system.save_report(
-            file, lca_sheet_name=sheet_name, annual=annual, **kwargs)
+            file, lca_sheet_name=sheet_name, annual=annual,
+            lca_time_frame=time_frame, **kwargs)
 
 
     @property
@@ -1058,12 +1176,13 @@ class LCA:
 # finds its LCA through the `System.LCA` property (backed by `system._LCA`, set in
 # `LCA._update_system`); pure-BioSTEAM systems (no LCA) are unaffected.
 
-def _write_lca_sheet(lca, writer, sheet_name='LCA', n_row=0, row_space=2, annual=False):
+def _write_lca_sheet(lca, writer, sheet_name='LCA', n_row=0, row_space=2,
+                     annual=False, time_frame=None):
     '''
     Write QSDsan LCA tables (Construction/Transportation/Stream/Other), stacked
     on a single sheet, to an already-open :class:`pandas.ExcelWriter`.
     '''
-    tables = [lca.get_impact_table(cat, annual=annual)
+    tables = [lca.get_impact_table(cat, annual=annual, time_frame=time_frame)
               for cat in ('Construction', 'Transportation', 'Stream', 'other')]
     for table in tables:
         if isinstance(table, str): continue # skip 'No <cat>-related impacts.' returns
@@ -1076,7 +1195,8 @@ def _make_unified_save_report(original):
     '''Wrap BioSTEAM's ``System.save_report`` to also append QSDsan LCA tables.'''
     @functools.wraps(original)
     def save_report(self, *args, annual=False, lca_sheet_name='LCA',
-                    lca_allocate_streams=None, lca_allocate_by='mass', **kwargs):
+                    lca_time_frame=None, lca_allocate_streams=None,
+                    lca_allocate_by='mass', **kwargs):
         # `file` may be passed positionally or by keyword (BioSTEAM default 'report.xlsx')
         file = kwargs.get('file', args[0] if args else 'report.xlsx')
         original(self, *args, **kwargs) # process + TEA sheets (and flowsheet)
@@ -1085,11 +1205,12 @@ def _make_unified_save_report(original):
             return
 
         def _write(writer):
-            _write_lca_sheet(lca, writer, sheet_name=lca_sheet_name, annual=annual)
+            _write_lca_sheet(lca, writer, sheet_name=lca_sheet_name,
+                             annual=annual, time_frame=lca_time_frame)
             if lca_allocate_streams is not None:
                 table = lca.get_allocated_impact_table(
                     streams=lca_allocate_streams, allocate_by=lca_allocate_by,
-                    annual=annual)
+                    annual=annual, time_frame=lca_time_frame)
                 if not isinstance(table, str):
                     table.to_excel(writer, sheet_name='LCA allocation')
 
@@ -1106,10 +1227,11 @@ def _make_unified_save_report(original):
     save_report.__doc__ = (original.__doc__ or '') + (
         '\n\n        QSDsan addition: when ``system.LCA`` is set, the LCA tables are '
         'appended on a sheet (``lca_sheet_name``, default ``\'LCA\'``). Pass '
-        '``annual=True`` for annualized LCA values. Pass ``lca_allocate_streams`` '
-        '(two or more streams) to also write an ``\'LCA allocation\'`` sheet of '
-        'impacts allocated by ``lca_allocate_by`` (default ``\'mass\'``). These '
-        'keyword-only arguments are consumed here and not forwarded to BioSTEAM.')
+        '``annual=True`` (or ``lca_time_frame=\'yr\'``/``\'day\'``/...) to normalize '
+        'the LCA values to a time frame. Pass ``lca_allocate_streams`` (two or more '
+        'streams) to also write an ``\'LCA allocation\'`` sheet of impacts allocated '
+        'by ``lca_allocate_by`` (default ``\'mass\'``). These keyword-only arguments '
+        'are consumed here and not forwarded to BioSTEAM.')
     save_report._qsdsan_unified = True
     return save_report
 

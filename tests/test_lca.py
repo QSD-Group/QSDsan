@@ -16,6 +16,9 @@ __all__ = (
     'test_system_save_report_patched_once',
     'test_get_allocated_impact_table',
     'test_allocate_by_options',
+    'test_time_frame_normalization',
+    'test_get_normalized_impacts',
+    'test_get_unit_impacts_no_double_count',
     'test_save_report_is_unified',
     'test_save_report_allocation_sheet_opt_in',
     )
@@ -171,6 +174,55 @@ def test_allocate_by_options():
 
     with pytest.raises(ValueError):
         lca.get_allocated_impacts(streams, allocate_by='not-a-basis')
+
+
+def test_time_frame_normalization():
+    '''time_frame generalizes annual; annual stays as a back-compat alias.'''
+    sys, tea, lca = _build('test_lca_timeframe')
+    ind = lca.indicators[0].ID
+    tot = lca.get_total_impacts()[ind]
+    L = lca.lifetime
+    # back-compat: annual maps onto time_frame
+    assert lca.get_total_impacts(annual=True)[ind] == pytest.approx(
+        lca.get_total_impacts(time_frame='yr')[ind])
+    assert tot == pytest.approx(lca.get_total_impacts(time_frame='lifetime')[ind])
+    # values: per year = total/lifetime; per day = per year/365
+    assert lca.get_total_impacts(time_frame='yr')[ind] == pytest.approx(tot/L)
+    assert lca.get_total_impacts(time_frame='day')[ind] == pytest.approx(tot/L/365)
+    # time_frame takes precedence over annual
+    assert lca.get_total_impacts(annual=True, time_frame='lifetime')[ind] == pytest.approx(tot)
+    # the impact-table unit suffix reflects the frame
+    table = lca.get_impact_table('Construction', time_frame='day')
+    assert any('/d]' in str(c) for c in table.columns)
+    with pytest.raises(ValueError):
+        lca.get_total_impacts(time_frame='fortnight')
+
+
+def test_get_normalized_impacts():
+    '''Per-functional-unit normalization (per m3/kg), with and without allocation.'''
+    sys, tea, lca = _build('test_lca_normalize')
+    ind = lca.indicators[0].ID
+    influent = sys.feeds[0]
+    per_unit = lca.get_normalized_impacts(influent, normalize_by='volume')[ind]
+    expected = lca.get_total_impacts()[ind] / (influent.F_vol*lca.lifetime_hr)
+    assert per_unit == pytest.approx(expected)
+    # the intensity is time-frame independent (time cancels)
+    assert lca.get_normalized_impacts(influent, normalize_by='volume',
+                                      time_frame='yr')[ind] == pytest.approx(per_unit)
+    # allocation option returns a dict keyed by indicator
+    d = lca.get_normalized_impacts(list(sys.streams), normalize_by='mass', allocate_by='mass')
+    assert ind in d
+    with pytest.raises(ValueError):
+        lca.get_normalized_impacts(influent, normalize_by='bogus')
+
+
+def test_get_unit_impacts_no_double_count():
+    '''Regression: get_unit_impacts double-counted stream impacts. For a single-unit
+    system the unit's impacts must equal the system total.'''
+    sys, tea, lca = _build('test_lca_unitimpacts')
+    unit = sys.units[0]
+    ind = lca.indicators[0].ID
+    assert lca.get_unit_impacts((unit,))[ind] == pytest.approx(lca.get_total_impacts()[ind])
 
 
 @pytest.mark.parametrize('entry', ['system', 'tea', 'lca'])

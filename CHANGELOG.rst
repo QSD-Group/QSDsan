@@ -20,6 +20,12 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - Added ``qsdsan.utils.create_example_treatment_systems``, which builds the aerobic and anaerobic wastewater treatment systems shared by the TEA and LCA tutorials (a compact, realistic substrate for techno-economic and life cycle analyses). The LCA tutorial now uses it instead of the ``bwaise`` EXPOsan system.
 
+- Added a ``time_frame`` argument to the :class:`~.LCA` results methods (:meth:`~.LCA.get_total_impacts`, :meth:`~.LCA.get_unit_impacts`, :meth:`~.LCA.get_impact_table`, :meth:`~.LCA.get_allocated_impacts`/:meth:`~.LCA.get_allocated_impact_table`, and ``save_report``). It normalizes the results to a chosen time frame: ``'lifetime'`` (or ``'all'``, the default), ``'yr'`` (equivalent to ``annual=True``), ``'month'``, ``'week'``, ``'day'``, or ``'hr'``. The existing ``annual`` flag is kept as a backward-compatible alias (``annual=True`` ≡ ``time_frame='yr'``); ``time_frame`` takes precedence when both are given.
+
+- Added :meth:`~.LCA.get_normalized_impacts`, which expresses impacts per functional unit (per kg, per m³, or per MJ) of one or more reference streams, the LCA counterpart to ``TEA.solve_price``. By default the total impacts are divided by the streams' combined throughput; pass ``allocate_by`` to normalize the impacts allocated to those streams instead.
+
+- Fixed :meth:`~.LCA.get_unit_impacts`: stream impacts were added twice (the accumulator was initialized to the stream-impact dict and then the stream impacts were added again), overstating the result. Each category is now counted once.
+
 - Fixed :meth:`~.LCA.get_allocated_impacts` (and the new :meth:`~.LCA.get_allocated_impact_table`): passing a function for ``allocate_by`` (a documented option) raised ``TypeError`` because ``callable`` was tested *after* ``iter(allocate_by)``, which fails on a non-iterable function. ``callable`` is now checked first, so a function returning the allocation ratios works; an invalid ``allocate_by`` now raises a clear ``ValueError``.
 
 - Added :meth:`~.LCA.get_allocated_impact_table`, the tabular counterpart of :meth:`~.LCA.get_allocated_impacts` (impacts allocated to two or more streams, one row per stream, indicator columns, plus an ``'Allocation factor'`` column). The unified report can include it as an opt-in ``'LCA allocation'`` sheet by passing ``lca_allocate_streams`` (and optionally ``lca_allocate_by``) to ``save_report``. The shared allocation-ratio logic was factored into a private helper used by both methods.
