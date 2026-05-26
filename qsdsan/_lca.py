@@ -616,20 +616,24 @@ class LCA:
     def _get_allocation_ratios(self, streams, allocate_by):
         '''Return normalized allocation ratios for ``streams``;
         see :meth:`get_allocated_impacts` for the ``allocate_by`` options.'''
+        err = ValueError('allocate_by can only be "mass", "energy", "value", '
+                         'an Iterable (with the same length as `streams`), '
+                         'or a function to generate an Iterable.')
         if allocate_by == 'mass':
             ratios = np.array([i.F_mass for i in streams])
         elif allocate_by == 'energy':
             ratios = np.array([i.HHV for i in streams])
         elif allocate_by == 'value':
             ratios = np.array([i.F_mass*i.price for i in streams])
-        elif iter(allocate_by):
-            ratios = np.asarray(allocate_by, dtype=float)
+        # check `callable` before iterating: a function is not iterable, so the
+        # previous `iter(allocate_by)` order made the function branch unreachable
         elif callable(allocate_by):
             ratios = np.asarray(allocate_by(), dtype=float)
         else:
-            raise ValueError('allocate_by can only be "mass", "energy", "value", '
-                             'an Iterable (with the same length as `streams`), '
-                             'or a function to generate an Iterable.')
+            try:
+                ratios = np.asarray(allocate_by, dtype=float)
+            except (TypeError, ValueError):
+                raise err
         if ratios.sum() == 0:
             raise ValueError('Calculated allocation ratios are all zero, cannot allocate.')
         return ratios/ratios.sum()
