@@ -17,6 +17,7 @@ __all__ = (
     'test_sum_system_utility_handles_power_heat_and_invalid_utility',
     'test_create_example_components',
     'test_create_example_system',
+    'test_create_example_treatment_systems',
     'test_create_example_model',
     'test_cost_decorator_accepts_CEPCI_alias',
     )
@@ -193,6 +194,23 @@ def test_create_example_system():
     assert 'M1' in unit_ids
     assert 'P1' in unit_ids
     assert 'H1' in unit_ids
+
+
+def test_create_example_treatment_systems():
+    import qsdsan as qs
+    from qsdsan.utils import create_example_treatment_systems
+    # exported on the qsdsan.utils namespace
+    assert hasattr(qs.utils, 'create_example_treatment_systems')
+
+    aer_sys, ana_sys = create_example_treatment_systems()
+    aer_sys.simulate(); ana_sys.simulate()
+    assert [u.ID for u in aer_sys.units] == ['aer']
+    assert [u.ID for u in ana_sys.units] == ['ana']
+    # the aerobic plant draws aeration power; the anaerobic plant needs heating
+    assert aer_sys.units[0].power_utility.rate > 0
+    assert sum(hu.duty for hu in ana_sys.units[0].heat_utilities) > 0
+    # the anaerobic plant earns a biogas credit (positive price on the biogas outlet)
+    assert ana_sys.units[0].outs[2].price > 0
 
 
 def test_create_example_model():

@@ -27,6 +27,7 @@ from .. import (
 __all__ = (
     'create_example_components',
     'create_example_system',
+    'create_example_treatment_systems',
     'create_example_model',
     )
 
@@ -156,6 +157,169 @@ def create_example_system(components=None):
     sys = System('sys', path=(M1, P1, H1, S1, M2, S2))
 
     return sys
+
+
+# %%
+
+# =============================================================================
+# Example wastewater treatment systems (shared by the TEA and LCA tutorials)
+# =============================================================================
+
+def create_example_treatment_systems(components=None, set_thermo=True):
+    '''
+    Build the aerobic and anaerobic wastewater treatment systems used in the
+    TEA and LCA tutorials, for documentation purpose.
+
+    Two single-unit systems treat the same municipal wastewater
+    (4,000 m3/d, COD ~430 mg/L):
+
+    - ``aer_sys``: an aerobic activated-sludge plant (spends electricity on
+      aeration, produces waste sludge); and
+    - ``ana_sys``: an anaerobic plant (recovers biogas, but needs heating and a
+      little alkalinity).
+
+    Both plants share an installed capital and a sludge-disposal cost (declared
+    on a common abstract base class), so they are a compact but realistic
+    substrate for techno-economic and life cycle analyses. The sizing, energy,
+    and cost figures follow Metcalf & Eddy, *Wastewater Engineering* (5th ed.);
+    they are order-of-magnitude teaching values, not a design basis.
+
+    Parameters
+    ----------
+    components : obj
+        If given, will call :func:`qsdsan.set_thermo(components)`; otherwise a
+        small set of components is created. Must include "H2O", "O2", "CO2",
+        "NH3", "CH4", "NaHCO3", "Substrate", and "Biomass".
+    set_thermo : bool
+        Whether to set the thermo property package to the components used here
+        (ignored when `components` is None, in which case it is always set).
+
+    Returns
+    -------
+    aer_sys : :class:`qsdsan.System`
+        The aerobic treatment system (unit ``aer``).
+    ana_sys : :class:`qsdsan.System`
+        The anaerobic treatment system (unit ``ana``).
+
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_treatment_systems
+    >>> aer_sys, ana_sys = create_example_treatment_systems()
+    >>> aer_sys.simulate()
+    >>> ana_sys.simulate()
+    >>> ([u.ID for u in aer_sys.units], [u.ID for u in ana_sys.units])
+    (['aer'], ['ana'])
+    >>> aer_sys.diagram() # doctest: +SKIP
+    '''
+    from .. import SanUnit, WasteStream, Component, Components, PowerUtility
+    from . import get_digestion_rxns
+
+    if components is not None:
+        if set_thermo: qs_set_thermo(components)
+        cmps = components
+    else:
+        def make_cmp(ID, formula=None, search_ID=None, phase='l', size='Soluble',
+                     deg='Undegradable', org=False):
+            return Component(ID, formula=formula, search_ID=search_ID, phase=phase,
+                             particle_size=size, degradability=deg, organic=org)
+        H2O = make_cmp('H2O', search_ID='H2O')
+        O2  = make_cmp('O2',  search_ID='O2',  phase='g', size='Dissolved gas')
+        CO2 = make_cmp('CO2', search_ID='CO2', phase='g', size='Dissolved gas')
+        NH3 = make_cmp('NH3', search_ID='NH3', phase='g', size='Dissolved gas')
+        CH4 = make_cmp('CH4', search_ID='CH4', phase='g', size='Dissolved gas',
+                       deg='Readily', org=True)
+        NaHCO3 = make_cmp('NaHCO3', search_ID='NaHCO3')
+        Substrate = make_cmp('Substrate', formula='C10H19O3N', deg='Readily', org=True)
+        Biomass = make_cmp('Biomass', formula='C5H7O2N', phase='s', size='Particulate',
+                           deg='Slowly', org=True)
+        cmps = Components([H2O, O2, CO2, NH3, CH4, NaHCO3, Substrate, Biomass])
+        for c in (NaHCO3, Substrate, Biomass):
+            c.copy_models_from(H2O, ('V', 'sigma', 'epsilon', 'kappa', 'Cn', 'mu'))
+        cmps.compile(ignore_inaccurate_molar_weight=True)
+        qs_set_thermo(cmps)
+
+    Substrate = cmps.Substrate
+
+    class TreatmentPlant(SanUnit, isabstract=True):
+        '''Base plant: carries the installed and sludge-disposal costs.'''
+        plant_capital = 5e6          # USD installed (M&E Ch. 4)
+        sludge_disposal_cost = 0.10  # USD/kg dry solids (M&E Ch. 4)
+        _F_BM_default = {'Plant': 1.}
+        def _cost(self):
+            self.baseline_purchase_costs['Plant'] = self.plant_capital
+
+    class AerobicPlant(TreatmentPlant):
+        '''Activated sludge: grows biomass and oxidizes the rest (aeration O2 = COD oxidized).'''
+        _N_ins = 1; _N_outs = 2
+        X_growth = 0.40; X_oxid = 0.95; O2_per_kWh = 1.2
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.growth_rxns = get_digestion_rxns(self.components, 0., self.X_growth, 'Biomass', 1.)
+            self._mixed = WasteStream(f'{self.ID}_mixed')
+        def _run(self):
+            eff, sludge = self.outs
+            m = self._mixed; m.copy_like(self.ins[0])
+            self.growth_rxns(m.mol)
+            oxidized = m.imass['Substrate']*self.X_oxid
+            self._O2_demand = oxidized*self.components.Substrate.i_COD*24
+            m.imass['Substrate'] -= oxidized
+            sludge.empty(); sludge.phase = 's'; sludge.imass['Biomass'] = m.imass['Biomass']
+            m.imass['Biomass'] = 0
+            eff.copy_like(m)
+        def _cost(self):
+            super()._cost()
+            self.power_utility(self._O2_demand/self.O2_per_kWh/24)
+            self.add_OPEX = {'Sludge disposal': self.outs[1].F_mass*self.sludge_disposal_cost}
+
+    class AnaerobicPlant(TreatmentPlant):
+        '''Anaerobic digestion: recovers biogas, but needs heating and alkalinity.'''
+        _N_ins = 2; _N_outs = 3
+        X_biogas = 0.86; X_growth = 0.05
+        CH4_LHV = 50000.; energy_price = 5/1e6
+        T_op = 273.15 + 35; HX_eff = 0.80; NaHCO3_dose = 0.10
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.rxns = get_digestion_rxns(self.components, self.X_biogas, self.X_growth, 'Biomass', 1.)
+            self._mixed = WasteStream(f'{self.ID}_mixed')
+        def _run(self):
+            ww, chem = self.ins
+            eff, sludge, biogas = self.outs
+            chem.empty(); chem.imass['NaHCO3'] = self.NaHCO3_dose*ww.F_vol
+            m = self._mixed; m.copy_like(ww)
+            self.rxns(m.mol)
+            biogas.empty(); biogas.phase = 'g'
+            biogas.imass['CH4'] = m.imass['CH4']; biogas.imass['CO2'] = m.imass['CO2']
+            biogas.price = (biogas.imass['CH4']*self.CH4_LHV*self.energy_price)/biogas.F_mass \
+                           if biogas.F_mass else 0.
+            sludge.empty(); sludge.phase = 's'; sludge.imass['Biomass'] = m.imass['Biomass']
+            m.imass['CH4'] = m.imass['CO2'] = m.imass['Biomass'] = m.imass['NH3'] = 0
+            eff.copy_like(m)
+        def _design(self):
+            inf = self.ins[0]
+            duty = inf.F_mass * inf.Cp * (self.T_op - inf.T)
+            if duty > 0:
+                self.add_heat_utility(duty, inf.T, T_out=self.T_op,
+                                      heat_transfer_efficiency=self.HX_eff)
+        def _cost(self):
+            super()._cost()
+            self.add_OPEX = {'Sludge disposal': self.outs[1].F_mass*self.sludge_disposal_cost}
+
+    def make_influent(ID, COD=430.):
+        ww = WasteStream(ID, T=273.15+20); ww.ivol['H2O'] = 4000/24   # 4,000 m3/d at 20 C
+        ww.imass['Substrate'] = (COD/1000 * 4000/24)/Substrate.i_COD  # set the COD
+        return ww
+
+    aer = AerobicPlant('aer', ins=make_influent('ww_aer'),
+                       outs=('aer_effluent', 'aer_sludge'))
+    aer_sys = System('aer_sys', path=(aer,))
+
+    NaHCO3_feed = WasteStream('NaHCO3_feed', price=0.90)   # USD/kg (M&E Ch. 10)
+    ana = AnaerobicPlant('ana', ins=(make_influent('ww_ana'), NaHCO3_feed),
+                         outs=('ana_effluent', 'ana_sludge', 'biogas'))
+    ana_sys = System('ana_sys', path=(ana,))
+
+    PowerUtility.price = 0.08   # USD/kWh electricity (M&E Ch. 4)
+    return aer_sys, ana_sys
 
 
 # %%

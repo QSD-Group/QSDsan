@@ -15,6 +15,7 @@ __all__ = (
     'test_lca_save_report_delegates_to_system',
     'test_system_save_report_patched_once',
     'test_get_allocated_impact_table',
+    'test_allocate_by_options',
     'test_save_report_is_unified',
     'test_save_report_allocation_sheet_opt_in',
     )
@@ -150,6 +151,26 @@ def test_get_allocated_impact_table():
     assert df['Allocation factor'].sum() == pytest.approx(1.0)
     assert df.shape[0] == len(streams)
     assert isinstance(lca.get_allocated_impact_table(streams=streams[:1]), str)
+
+
+def test_allocate_by_options():
+    '''allocate_by accepts 'mass', an iterable, and a function (regression: the
+    function branch was previously unreachable); bad input raises ValueError.'''
+    sys, tea, lca = _build('test_lca_allocate_by')
+    streams = list(sys.streams)
+    ind = lca.indicators[0].ID
+
+    by_mass = lca.get_allocated_impacts(streams, allocate_by='mass')
+    by_iter = lca.get_allocated_impacts(streams, allocate_by=(0.6, 0.4))
+    by_func = lca.get_allocated_impacts(streams, allocate_by=lambda: (0.6, 0.4))
+    # a function returning the same ratios matches the explicit iterable
+    for s in streams:
+        assert by_func[s.ID][ind] == pytest.approx(by_iter[s.ID][ind])
+    # the iterable split differs from the mass split (sanity check)
+    assert by_iter[streams[0].ID][ind] != pytest.approx(by_mass[streams[0].ID][ind])
+
+    with pytest.raises(ValueError):
+        lca.get_allocated_impacts(streams, allocate_by='not-a-basis')
 
 
 @pytest.mark.parametrize('entry', ['system', 'tea', 'lca'])
