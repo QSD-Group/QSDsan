@@ -332,7 +332,7 @@ class Process:
         Components corresponding to each entry in the stoichiometry array,
         defaults to all components set in the system (i.e., through :func:`set_thermo`).
     conserved_for : tuple[str], optional
-        Materials subject to conservation rules, must be an 'i\_' attribute of
+        Materials subject to conservation rules, must be an 'i\\_' attribute of
         the components. The default is ("COD", "N", "P", "charge").
     parameters : Iterable[str], optional
         Symbolic parameters in stoichiometry coefficients (both constant and dynamic)
@@ -457,7 +457,7 @@ class Process:
 
     def get_conversion_factors(self, as_matrix=False):
         '''
-        Return conversion factors (i.e., the 'i\_' attributes of the components)
+        Return conversion factors (i.e., the 'i\\_' attributes of the components)
         as a numpy.ndarray or a SymPy Matrix.
         '''
         conserved_for = self._conserved_for
@@ -598,7 +598,7 @@ class Process:
     def conserved_for(self):
         '''
         [tuple] Materials subject to conservation rules, must have corresponding
-        'i\_' attributes for the components.
+        'i\\_' attributes for the components.
         '''
         return self._conserved_for
     @conserved_for.setter
@@ -614,6 +614,13 @@ class Process:
         '''[dict] Symbolic parameters in stoichiometric coefficients (both
         constant and dynamic) and/or rate equation.'''
         return self._parameters
+
+    @property
+    def dynamic_parameters(self):
+        '''[dict] :class:`DynamicParameter` objects attached to this process,
+        keyed by symbol. Empty if all of the process's parameters are static.
+        Use :meth:`dynamic_parameter` to add one.'''
+        return self._dyn_params
 
     def append_parameters(self, *new_pars):
         '''Append new symbolic parameters'''
@@ -1014,7 +1021,7 @@ class Processes:
         data : :class:`pandas.DataFrame`, optional
             Data frame of the Petersen matrix.
         conserved_for : tuple[str], optional
-            Materials subject to conservation rules, must have corresponding 'i\_'
+            Materials subject to conservation rules, must have corresponding 'i\\_'
             attributes for the components. Applied to all processes.
             The default is ('COD', 'N', 'P', 'charge').
         parameters : Iterable[str], optional
@@ -1183,6 +1190,13 @@ class CompiledProcesses(Processes):
     def parameters(self):
         '''[dict] All symbolic stoichiometric and kinetic parameters.'''
         return self._parameters
+
+    @property
+    def dynamic_parameters(self):
+        '''[dict] :class:`DynamicParameter` objects across all processes in
+        this collection, keyed by symbol. Shared with each constituent
+        process. Empty if no process has a dynamic parameter attached.'''
+        return self._dyn_params
 
     def append_parameters(self, *new_pars):
         '''Append new symbolic parameters'''

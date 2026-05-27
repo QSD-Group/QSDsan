@@ -115,6 +115,19 @@ def test_process():
     assert p12 in asm2d
     assert set(asm2d.parameters.keys()) == set(params)
 
+    # `dynamic_parameters` is a public accessor for `_dyn_params`; empty when
+    # all parameters are static, and shared between a process and the
+    # CompiledProcesses it belongs to.
+    assert p1.dynamic_parameters == {}
+    assert asm2d.dynamic_parameters == {}
+    assert p12.dynamic_parameters is asm2d.dynamic_parameters
+
+    @p1.dynamic_parameter(symbol='f_SI', params={})
+    def _f_SI_eval(state_arr, params):
+        return 0.0
+    assert 'f_SI' in p1.dynamic_parameters
+    assert p1.dynamic_parameters['f_SI'] is p1._dyn_params['f_SI']
+
     pc.create_adm1_cmps()
     pc.create_asm1_cmps()
     pc.create_asm2d_cmps()
