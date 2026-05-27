@@ -256,10 +256,14 @@ class AnaerobicCSTR(CSTR):
         #!!! how to make unit conversion generalizable to all models?
         if self._concs is not None: Cs = self._concs * 1e-3 # mg/L to kg/m3
         else: Cs = mixed.conc * 1e-3 # mg/L to kg/m3
+        # initial biogas concentrations consistent with headspace pressure
+        # (using a fixed 1-atm constant breaks low-pressure fixed_headspace_P units)
+        p_dry = max(0.0, self._P_gas - self.p_vapor(convert_to_bar=True))
+        total_M = p_dry / (self._R * self.T)
         Gs = [0]*self._n_gas  # initial gas phase concentrations [M]
-        Gs[0] = 0.041*0.01
-        Gs[1] = 0.041*0.57
-        Gs[2] = 0.041*0.4
+        Gs[0] = total_M*0.01
+        Gs[1] = total_M*0.57
+        Gs[2] = total_M*0.4
         self._state = np.append(Cs, Gs + [Q]).astype('float64')
         self._dstate = self._state * 0.
 
