@@ -526,21 +526,22 @@ def test_AdiabaticMultiStageVLEColumn():
 
 def test_HeatExchangerNetwork():
     '''
-    ``HeatExchangerNetwork`` is a facility that operates over an enclosing
-    system's heat exchangers. It internally switches stream phases to
-    ``MultiStream``, which the ``WasteStream`` layout disallows, so this
-    smoke setup uses plain ``qs.Stream`` (= ``thermosteam.Stream``). EXPOsan
-    systems that use HEN pair it with ``Stream``-typed streams for the same
-    reason. Add-on attributes are verified on the facility instance and a
-    sentinel ``add_OPEX`` is checked after the system simulate.
+    ``HeatExchangerNetwork`` internally switches stream phases to
+    ``MultiStream``, which ``WasteStream``'s class layout disallows. The
+    standard bridge is :class:`~.PhaseChanger` with ``init_with='Stream'``,
+    which converts an upstream ``WasteStream`` into a plain ``qs.Stream``
+    (= ``thermosteam.Stream``) that HEN can consume.
     '''
     qs.set_thermo(cmps)
-    s = qs.Stream('hen_feed', Water=100, Methanol=50, units='kmol/hr')
+    ws = qs.WasteStream('hen_feed_ws', Water=100, Methanol=50, units='kmol/hr')
+    pc = qs.unit_operations.PhaseChanger(
+        'PC_hen', ins=ws, init_with='Stream', phase='l',
+    )
     hx = qs.unit_operations.HXutility(
-        'H_hen', ins=s, T=400, rigorous=True, init_with='Stream',
+        'H_hen', ins=pc-0, T=400, rigorous=True, init_with='Stream',
     )
     hen = qs.unit_operations.HeatExchangerNetwork('HEN_addons')
-    sys = qs.System('sys_hen_addons', path=(hx,), facilities=(hen,))
+    sys = qs.System('sys_hen_addons', path=(pc, hx), facilities=(hen,))
     setup_addons(hen)
     sys.simulate()
     assert_addons_persisted(hen)
