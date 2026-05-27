@@ -19,6 +19,12 @@ __all__ = (
     'ProcessWaterCenter',
     )
 
+_SANUNIT_ADDON_KEYS = (
+    'include_construction', 'construction', 'transportation', 'equipment',
+    'add_OPEX', 'lifetime', 'F_BM_default', 'isdynamic', 'exogenous_vars',
+)
+
+
 class ProcessWaterCenter(bst.facilities.ProcessWaterCenter, qs.SanUnit):
     '''
     biosteam.facilities.ProcessWaterCenter with QSDsan properties.
@@ -27,3 +33,8 @@ class ProcessWaterCenter(bst.facilities.ProcessWaterCenter, qs.SanUnit):
     --------
     `biosteam.facilities.ProcessWaterCenter <https://biosteam.readthedocs.io/en/latest/API/facilities/ProcessWaterCenter.html>`_
     '''
+
+    def __init__(self, *args, **kwargs):
+        addons = {k: kwargs.pop(k) for k in tuple(_SANUNIT_ADDON_KEYS) if k in kwargs}
+        super().__init__(*args, **kwargs)
+        self._init_sanunit_addons(**addons)

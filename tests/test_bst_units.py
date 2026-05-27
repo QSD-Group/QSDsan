@@ -31,6 +31,20 @@ __all__ = (
     'test_Pump',
     'test_Splitter',
     'test_StorageTank',
+    # bst-namespace units without a long-standing parity counterpart in this
+    # file. Each test layers (smoke + parity-where-feasible + add-on) so a
+    # BioSTEAM upstream change to ``__init__``/``_setup``/``_run`` would fail
+    # at the QSDsan wrapping layer rather than silently propagating. Numeric
+    # behavior remains the job of EXPOsan integration tests.
+    'test_Mixer',
+    'test_Tank',
+    'test_FakeSplitter',
+    'test_ReversedSplitter',
+    'test_ShortcutColumn',
+    'test_MESHDistillation',
+    'test_AdiabaticMultiStageVLEColumn',
+    'test_HeatExchangerNetwork',
+    'test_ProcessWaterCenter',
     )
 
 
@@ -92,9 +106,61 @@ def check_results(biosteam_unit, qsdsan_unit):
 
     assert_allclose(bst_unit.installed_cost, qs_unit.installed_cost, atol=1e-6)
     bst_unit_ucost = 0 if bst_unit.utility_cost is None else bst_unit.utility_cost
-    qs_unit_ucost = 0 if qs_unit.utility_cost is None else qs_unit.utility_cost   
+    qs_unit_ucost = 0 if qs_unit.utility_cost is None else qs_unit.utility_cost
     assert_allclose(bst_unit_ucost, qs_unit_ucost, atol=1e-6)
     assert_allclose(bst_unit.power_utility.rate, qs_unit.power_utility.rate, atol=1e-6)
+
+
+# =============================================================================
+# Add-on coverage: verifies SanUnit mixin attributes (``add_OPEX``,
+# ``lifetime``, ``construction``, etc.) exist on each bst-inherited class and
+# that sentinel values survive a full ``simulate()`` pass. Catches BioSTEAM
+# upstream changes that would silently drop SanUnit mixin state on the bst-
+# inherited class. EXPOsan integration tests cover numeric drift; this just
+# pins the *plumbing* class-by-class.
+# =============================================================================
+
+_ADDON_OPEX_SENTINEL = '_addon_smoke_opex_sentinel_'
+_ADDON_OPEX_VALUE = 42.0
+_ADDON_LIFETIME = 13
+_ADDON_UPTIME_RATIO = 0.85
+_REQUIRED_SANUNIT_ATTRS = (
+    'construction', 'transportation', 'equipment', 'add_OPEX',
+    'uptime_ratio', 'lifetime', 'include_construction', 'F_BM',
+)
+
+
+def check_addon_attrs(qs_unit):
+    '''Assert the SanUnit mixin attributes are present on this bst class.'''
+    missing = [a for a in _REQUIRED_SANUNIT_ATTRS if not hasattr(qs_unit, a)]
+    assert not missing, (
+        f'{type(qs_unit).__name__} missing SanUnit attrs: {missing}'
+    )
+
+
+def setup_addons(qs_unit):
+    '''
+    Stamp sentinel values onto the SanUnit add-on attributes before simulating.
+    Pair with ``assert_addons_persisted`` after the simulate call to verify
+    they were not clobbered by the BioSTEAM-side state machinery.
+    '''
+    check_addon_attrs(qs_unit)
+    qs_unit.add_OPEX = {_ADDON_OPEX_SENTINEL: _ADDON_OPEX_VALUE}
+    qs_unit.lifetime = _ADDON_LIFETIME
+    qs_unit.uptime_ratio = _ADDON_UPTIME_RATIO
+
+
+def assert_addons_persisted(qs_unit):
+    '''Verify the sentinel add-on values stamped by ``setup_addons`` survived.'''
+    assert qs_unit.add_OPEX.get(_ADDON_OPEX_SENTINEL) == _ADDON_OPEX_VALUE, (
+        f'{type(qs_unit).__name__}: add_OPEX clobbered during simulate()'
+    )
+    assert qs_unit.lifetime == _ADDON_LIFETIME, (
+        f'{type(qs_unit).__name__}: lifetime clobbered during simulate()'
+    )
+    assert qs_unit.uptime_ratio == _ADDON_UPTIME_RATIO, (
+        f'{type(qs_unit).__name__}: uptime_ratio clobbered during simulate()'
+    )
 
 
 
@@ -185,8 +251,10 @@ def test_BinaryDistillation():
     qs_s = qs.WasteStream(T=T, **stream_kwargs)
     qs_unit = qs.unit_operations.BinaryDistillation(ins=qs_s, **unit_kwargs)
     qs_unit.simulate()
-    
+
+    setup_addons(qs_unit)
     check_results(bst_unit, qs_unit)
+    assert_addons_persisted(qs_unit)
 
 
 def test_Flash():
@@ -200,8 +268,10 @@ def test_Flash():
     qs.set_thermo(cmps)
     qs_s = qs.Stream(T=T, **stream_kwargs)
     qs_unit = qs.unit_operations.Flash(ins=qs_s, **unit_kwargs)
-    
+
+    setup_addons(qs_unit)
     check_results(bst_unit, qs_unit)
+    assert_addons_persisted(qs_unit)
 
 
 def test_HXprocess():
@@ -214,7 +284,9 @@ def test_HXprocess():
     qs.set_thermo(cmps)
     qs_unit = qs.unit_operations.HXprocess(ins=qs_ws, phase0='l', phase1='l')
 
+    setup_addons(qs_unit)
     check_results(bst_unit, qs_unit)
+    assert_addons_persisted(qs_unit)
 
 
 def test_HXutility():
@@ -225,7 +297,9 @@ def test_HXutility():
     qs.set_thermo(cmps)
     qs_unit = qs.unit_operations.HXutility(ins=qs_ws, T=400, rigorous=True)
 
+    setup_addons(qs_unit)
     check_results(bst_unit, qs_unit)
+    assert_addons_persisted(qs_unit)
 
 
 def test_HXutility_results():
@@ -253,8 +327,10 @@ def test_IsothermalCompressor():
     qs.set_thermo(cmps)
     qs_s = qs.WasteStream(**stream_kwargs)
     qs_unit = qs.unit_operations.IsothermalCompressor(ins=qs_s, **unit_kwargs)
-    
+
+    setup_addons(qs_unit)
     check_results(bst_unit, qs_unit)
+    assert_addons_persisted(qs_unit)
 
 
 def test_MixTank():
@@ -265,7 +341,9 @@ def test_MixTank():
     qs.set_thermo(cmps)
     qs_unit = qs.unit_operations.MixTank(ins=qs_ws)
 
+    setup_addons(qs_unit)
     check_results(bst_unit, qs_unit)
+    assert_addons_persisted(qs_unit)
 
 
 def test_Pump():
@@ -276,7 +354,9 @@ def test_Pump():
     qs.set_thermo(cmps)
     qs_unit = qs.unit_operations.Pump(ins=qs_ws)
 
+    setup_addons(qs_unit)
     check_results(bst_unit, qs_unit)
+    assert_addons_persisted(qs_unit)
 
 
 def test_Splitter():
@@ -287,7 +367,9 @@ def test_Splitter():
     qs.set_thermo(cmps)
     qs_unit = qs.unit_operations.Splitter(ins=qs_ws, split=0.1)
 
+    setup_addons(qs_unit)
     check_results(bst_unit, qs_unit)
+    assert_addons_persisted(qs_unit)
 
 
 def test_StorageTank():
@@ -298,7 +380,186 @@ def test_StorageTank():
     qs.set_thermo(cmps)
     qs_unit = qs.unit_operations.StorageTank(ins=qs_ws)
 
+    setup_addons(qs_unit)
     check_results(bst_unit, qs_unit)
+    assert_addons_persisted(qs_unit)
+
+
+# =============================================================================
+# bst-namespace units without a long-standing parity counterpart in this file.
+#
+# These verify only that the QSDsan-exposed class instantiates and simulates
+# without error -- they do NOT pin numeric behavior. The bst units are in
+# QSDsan because EXPOsan systems use them, and EXPOsan integration tests pin
+# the numbers at the system level. A smoke test here is enough to catch
+# import/instantiation regressions in the QSDsan wrapping layer.
+# =============================================================================
+
+def test_Mixer():
+    bst_s, qs_ws = create_streams(2)
+    bst.settings.set_thermo(chems)
+    bst_unit = bst.units.Mixer(ins=bst_s)
+
+    qs.set_thermo(cmps)
+    qs_unit = qs.unit_operations.Mixer(ins=qs_ws)
+
+    setup_addons(qs_unit)
+    check_results(bst_unit, qs_unit)
+    assert_addons_persisted(qs_unit)
+
+
+def test_Tank():
+    '''
+    ``Tank`` is an abstract base class -- it has no ``purchase_cost_algorithms``,
+    which concrete subclasses (``MixTank``, ``StorageTank``) provide, so it
+    cannot be simulated standalone and has no parity counterpart. Verify only
+    that the class still mixes in ``SanUnit`` and exposes the add-on attribute
+    surface. The concrete tanks above carry full smoke + parity + add-on.
+    '''
+    cls = qs.unit_operations.Tank
+    assert isinstance(cls, type) and issubclass(cls, qs.SanUnit)
+    # Instance-level attribute presence: bypass __init__ (which would raise on
+    # missing ``purchase_cost_algorithms``) and assert the mixin still installs
+    # the SanUnit attribute surface on a bare instance.
+    qs.set_thermo(cmps)
+    inst = cls.__new__(cls)
+    qs.SanUnit.__init__(inst, 'T_addons')
+    check_addon_attrs(inst)
+
+
+def test_FakeSplitter():
+    '''
+    ``FakeSplitter`` requires the user to assign ``outs`` manually before
+    simulating (no automatic split), so a parity comparison against BioSTEAM's
+    ``MockSplitter`` adds little signal. Cover smoke + add-ons only.
+    '''
+    _, qs_ws = create_streams(1)
+    qs.set_thermo(cmps)
+    u = qs.unit_operations.FakeSplitter('FS_addons', ins=qs_ws, outs=('o1', 'o2'))
+    u.outs[0].copy_like(qs_ws[0])
+    u.outs[0].imass['Methanol'] *= 0.4
+    u.outs[1].copy_like(qs_ws[0])
+    u.outs[1].imass['Methanol'] *= 0.6
+    setup_addons(u)
+    u.simulate()
+    assert_addons_persisted(u)
+
+
+def test_ReversedSplitter():
+    '''
+    ``ReversedSplitter`` has outs-driven semantics (user pre-sets outs, the
+    inlet is computed) and its BioSTEAM signature is `**kwargs`-only -- so a
+    structured parity comparison against the BST class adds little signal.
+    Cover smoke + add-ons here; parity is implicit in the qs-side simulate.
+    '''
+    qs.set_thermo(cmps)
+    src = qs.WasteStream('rsrc', Methanol=100, Ethanol=100, units='kg/hr')
+    qs_unit = qs.unit_operations.ReversedSplitter(
+        'RS_addons', ins=src, outs=('ro1', 'ro2'), split=(0.3, 0.7),
+    )
+
+    setup_addons(qs_unit)
+    qs_unit.simulate()
+    assert_addons_persisted(qs_unit)
+
+
+def test_ShortcutColumn():
+    bst.settings.set_thermo(chems)
+    stream_kwargs = dict(Water=80, Methanol=100, Glycerol=25, units='kmol/hr')
+    bst_s = bst.Stream(**stream_kwargs)
+    bst_s.T = T = bst_s.bubble_point_at_P().T
+    unit_kwargs = dict(
+        LHK=('Methanol', 'Water'), y_top=0.99, x_bot=0.01, k=2, is_divided=True,
+    )
+    bst_unit = bst.units.ShortcutColumn(ins=bst_s, **unit_kwargs)
+
+    qs.set_thermo(cmps)
+    qs_s = qs.WasteStream(T=T, **stream_kwargs)
+    qs_unit = qs.unit_operations.ShortcutColumn(ins=qs_s, **unit_kwargs)
+
+    setup_addons(qs_unit)
+    check_results(bst_unit, qs_unit)
+    assert_addons_persisted(qs_unit)
+
+
+def test_MESHDistillation():
+    bst.settings.set_thermo(chems)
+    stream_kwargs = dict(Water=80, Methanol=100, units='kmol/hr')
+    bst_s = bst.Stream(**stream_kwargs)
+    bst_s.T = T = bst_s.bubble_point_at_P().T
+    unit_kwargs = dict(
+        LHK=('Methanol', 'Water'), N_stages=10, feed_stages=(5,),
+        reflux=2.0, boilup=2.5,
+    )
+    bst_unit = bst.units.MESHDistillation(
+        ins=bst_s, outs=('bvap', 'bliq'), **unit_kwargs,
+    )
+
+    qs.set_thermo(cmps)
+    qs_s = qs.WasteStream(T=T, **stream_kwargs)
+    qs_unit = qs.unit_operations.MESHDistillation(
+        ins=qs_s, outs=('qvap', 'qliq'), **unit_kwargs,
+    )
+
+    setup_addons(qs_unit)
+    check_results(bst_unit, qs_unit)
+    assert_addons_persisted(qs_unit)
+
+
+def test_AdiabaticMultiStageVLEColumn():
+    '''
+    ``AdiabaticMultiStageVLEColumn`` is an absorption-style column needing a
+    paired vapor + liquid feed to establish a VLE profile; standalone configs
+    diverge in BioSTEAM's stage solver. Cover instantiate + add-on attribute
+    surface here -- numeric drift is the job of EXPOsan systems that actually
+    use it.
+    '''
+    qs.set_thermo(cmps)
+    vap = qs.WasteStream('ac_vap', H2=1, phase='g', units='kmol/hr')
+    liq = qs.WasteStream('ac_liq', Water=10, units='kmol/hr')
+    u = qs.unit_operations.AdiabaticMultiStageVLEColumn(
+        'AC_addons', ins=(vap, liq), outs=('top', 'bot'),
+        N_stages=3, solute='H2', feed_stages=(0, 2),
+    )
+    check_addon_attrs(u)
+
+
+def test_HeatExchangerNetwork():
+    '''
+    ``HeatExchangerNetwork`` is a facility that operates over an enclosing
+    system's heat exchangers. It internally switches stream phases to
+    ``MultiStream``, which the ``WasteStream`` layout disallows, so this
+    smoke setup uses plain ``qs.Stream`` (= ``thermosteam.Stream``). EXPOsan
+    systems that use HEN pair it with ``Stream``-typed streams for the same
+    reason. Add-on attributes are verified on the facility instance and a
+    sentinel ``add_OPEX`` is checked after the system simulate.
+    '''
+    qs.set_thermo(cmps)
+    s = qs.Stream('hen_feed', Water=100, Methanol=50, units='kmol/hr')
+    hx = qs.unit_operations.HXutility(
+        'H_hen', ins=s, T=400, rigorous=True, init_with='Stream',
+    )
+    hen = qs.unit_operations.HeatExchangerNetwork('HEN_addons')
+    sys = qs.System('sys_hen_addons', path=(hx,), facilities=(hen,))
+    setup_addons(hen)
+    sys.simulate()
+    assert_addons_persisted(hen)
+
+
+def test_ProcessWaterCenter():
+    '''
+    ``ProcessWaterCenter`` is a facility; smoke-test it by attaching to a
+    minimal system. Add-on attributes are verified on the facility instance.
+    '''
+    qs.set_thermo(cmps)
+    pw = qs.WasteStream('process_water_in', Water=1000, units='kg/hr')
+    pwc = qs.unit_operations.ProcessWaterCenter(
+        'PWC_addons', ins=pw, process_water_streams=(pw,),
+    )
+    sys = qs.System('sys_pwc_addons', path=(), facilities=(pwc,))
+    setup_addons(pwc)
+    sys.simulate()
+    assert_addons_persisted(pwc)
 
 
 if __name__ == '__main__':
@@ -316,3 +577,12 @@ if __name__ == '__main__':
     test_Pump()
     test_Splitter()
     test_StorageTank()
+    test_Mixer()
+    test_Tank()
+    test_FakeSplitter()
+    test_ReversedSplitter()
+    test_ShortcutColumn()
+    test_MESHDistillation()
+    test_AdiabaticMultiStageVLEColumn()
+    test_HeatExchangerNetwork()
+    test_ProcessWaterCenter()
