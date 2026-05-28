@@ -53,7 +53,7 @@ jobs:
         sphinx-build -b html --keep-going docs/source docs/_build/html
     - name: Upload built HTML
       if: ${{ always() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: html-docs
         path: docs/_build/html
