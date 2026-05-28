@@ -15,6 +15,7 @@ from ... import SanUnit
 from ...utils import ospath, load_data, data_path
 from scipy.interpolate import InterpolatedUnivariateSpline, CubicSpline, interp1d
 import numpy as np
+import pandas as pd
 
 __all__ = ('DynamicInfluent',)
 dynamic_inf_path = ospath.join(data_path, 'sanunit_data/_inf_dry_2006.tsv')
@@ -138,7 +139,10 @@ class DynamicInfluent(SanUnit):
         if any(df_y.iloc[-1,:] != df_y.iloc[0,:]):
             y_end = df_y.iloc[0,:].to_dict()
             y_end['t'] = 2*df.t.iloc[-1] - df.t.iloc[-2]
-            df.append(y_end, ignore_index=True)
+            # `DataFrame.append` was removed in pandas 2.0 and never modified in
+            # place to begin with, so the original line was a silent no-op.
+            df = pd.concat([df, pd.DataFrame([y_end])], ignore_index=True)
+            self._data = df
         self._t_end = df.t.iloc[-1]
         intpl = self._intpl
         ikwargs = self._intpl_kwargs
