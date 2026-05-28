@@ -36,16 +36,55 @@ __all__ = (
 
 class PhaseChanger(SanUnit):
     '''
-    Change the effluent phase to the desired one, also allow the switch between stream types.
+    Change the effluent phase to the desired one; can also bridge between
+    stream types (e.g., :class:`~.WasteStream` to plain
+    :class:`thermosteam.Stream`) via the ``init_with`` argument.
+
+    The outlet stream class is selected by ``init_with``. The inlet is
+    copied into the outlet (creating the type conversion if those classes
+    differ), then the outlet's ``phase`` is set to the requested value.
 
     Parameters
     ----------
     ins : Iterable(stream)
-        influent
+        Influent.
     outs : Iterable(stream)
-        effluent
+        Effluent.
+    init_with : str
+        Stream class for the outlet: ``'WasteStream'`` (default),
+        ``'SanStream'``, or ``'Stream'``. Use ``'Stream'`` to bridge from a
+        ``WasteStream`` feed to a plain ``thermosteam.Stream`` outlet -- for
+        example, as the inlet of a :class:`~.HeatExchangerNetwork` branch,
+        which cannot consume ``WasteStream``.
     phase : str
-        Desired phase, can only be one of ("g", "l", or "s").
+        Desired outlet phase; one of ``'g'``, ``'l'``, or ``'s'``.
+
+    Examples
+    --------
+    Setting the outlet phase only (outlet remains a ``WasteStream``):
+
+    >>> import qsdsan as qs
+    >>> from qsdsan.utils import create_example_components
+    >>> qs.set_thermo(create_example_components())
+    >>> ws = qs.WasteStream('pc_feed', Water=1000, Methanol=10, units='kg/hr')
+    >>> pc = qs.unit_operations.PhaseChanger('PC1', ins=ws, phase='g')
+    >>> pc.simulate()
+    >>> pc.outs[0].phase
+    'g'
+    >>> type(pc.outs[0]).__name__
+    'WasteStream'
+
+    Bridging from ``WasteStream`` to plain ``Stream`` (e.g., to feed a
+    :class:`~.HeatExchangerNetwork` branch that cannot accept
+    ``WasteStream``):
+
+    >>> ws2 = qs.WasteStream('pc_feed2', Water=1000, units='kg/hr')
+    >>> pc2 = qs.unit_operations.PhaseChanger(
+    ...     'PC2', ins=ws2, init_with='Stream', phase='l',
+    ... )
+    >>> pc2.simulate()
+    >>> type(pc2.outs[0]).__name__
+    'Stream'
     '''
     _N_ins = 1
     _N_outs = 1

@@ -21,6 +21,12 @@ __all__ = ('Flash',)
 
 _lb_to_kg = qs.utils.auom('lb').conversion_factor('kg')
 
+_SANUNIT_ADDON_KEYS = (
+    'include_construction', 'construction', 'transportation', 'equipment',
+    'add_OPEX', 'lifetime', 'F_BM_default', 'isdynamic', 'exogenous_vars',
+)
+
+
 class Flash(bst.units.Flash, qs.SanUnit):
     '''
     Similar to biosteam.units.Flash, but can include construction impact calculation.
@@ -31,6 +37,11 @@ class Flash(bst.units.Flash, qs.SanUnit):
     '''
 
     include_construction = True
+
+    def __init__(self, *args, **kwargs):
+        addons = {k: kwargs.pop(k) for k in tuple(_SANUNIT_ADDON_KEYS) if k in kwargs}
+        super().__init__(*args, **kwargs)
+        self._init_sanunit_addons(**addons)
 
     def _design(self):
         super()._design()

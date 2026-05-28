@@ -572,6 +572,9 @@ def rhos_pm2asm2d(state_arr, params):
 
 class PM2ASM2d(CompiledProcesses):
     '''
+    Phototrophic-Mixotrophic Process Model (PM2) coupled with Activated Sludge
+    Model No. 2d (ASM2d) for joint microalgae-bacteria treatment [1]_, [2]_.
+
     Parameters
     ----------
     components: class:`CompiledComponents`, optional

@@ -27,6 +27,7 @@ __all__ = (
     'test_plot_morris_results',
     'test_plot_fast_results',
     'test_plot_sobol_results',
+    'test_plot_api_harmonization',
 )
 
 
@@ -257,6 +258,111 @@ def test_plot_sobol_results(sobol_analyzed, evaluated_model):
     s.plot_sobol_results(dct, metric=m[-1], kind='STS2',
                          plot_in_diagonal='ST', close_fig=True)
     s.plot_sobol_results(dct, metric=m[0], kind='all', close_fig=True)
+
+
+# =============================================================================
+# Plot API harmonization — ax= is honored where applicable, **plot_kws reaches
+# the underlying call. Smoke tests; numeric output is not asserted.
+# =============================================================================
+
+def _to_rgba(color):
+    from matplotlib.colors import to_rgba
+    return to_rgba(color)
+
+
+def test_plot_api_harmonization(evaluated_model, morris_analyzed,
+                                morris_convergence, fast_analyzed, sobol_analyzed):
+    """All six plot_* helpers accept ax= and **plot_kws uniformly."""
+    import matplotlib.pyplot as plt
+
+    m = evaluated_model.metrics
+    red = _to_rgba('red')
+
+    # plot_uncertainties: 1D honors ax= and plot_kws reaches sns.histplot
+    fig, host_ax = plt.subplots()
+    fig_u, ax_u = s.plot_uncertainties(
+        evaluated_model, x_axis=m[0], kind='hist', ax=host_ax,
+        color='red', close_fig=False,
+    )
+    assert ax_u is host_ax
+    # seaborn applies alpha to bar facecolor; compare only the RGB triple.
+    red_rgb = red[:3]
+    assert any(_to_rgba(p.get_facecolor())[:3] == red_rgb for p in ax_u.patches)
+    plt.close(fig_u)
+
+    # plot_uncertainties: 2D ignores ax= (jointplot builds its own grid) but
+    # accepts plot_kws and merges it into center_kws.
+    _, throwaway = plt.subplots()
+    fig2, _ = s.plot_uncertainties(
+        evaluated_model, x_axis=m[0], y_axis=m[1], kind='kde-kde',
+        ax=throwaway, color='red', close_fig=False,
+    )
+    assert fig2 is not throwaway.figure  # built its own figure
+    plt.close(fig2)
+    plt.close(throwaway.figure)
+
+    # plot_correlations: ax= is accepted (currently ignored) and **plot_kws
+    # is forwarded. Smoke check: tornado path runs with a forwarded kwarg.
+    r_df, _ = s.get_correlations(evaluated_model, kind='Spearman')
+    fig_c, _ = s.plot_correlations(r_df, metrics=m[-2], ax=None, close_fig=False)
+    assert fig_c is not None
+    plt.close(fig_c)
+
+    # plot_morris_results: ax= honored, plot_kws reaches ax.scatter
+    # Use x_axis='mu' to exercise the pure scatter path (mu_star uses errorbar
+    # which accepts a different kwarg set).
+    _, morris_dct = morris_analyzed
+    fig, host_ax = plt.subplots()
+    fig_m, ax_m = s.plot_morris_results(
+        morris_dct, metric=m[0], ax=host_ax, kind='scatter', x_axis='mu',
+        s=80, close_fig=False,
+    )
+    assert ax_m is host_ax
+    sizes = ax_m.collections[0].get_sizes()
+    assert len(sizes) > 0 and sizes[0] == 80
+    plt.close(fig_m)
+
+    # plot_morris_results: bar branch — plot_kws goes via opts= to SALib;
+    # smoke test that it does not raise with an empty plot_kws dict.
+    fig, host_ax = plt.subplots()
+    s.plot_morris_results(
+        morris_dct, metric=m[0], ax=host_ax, kind='bar', close_fig=False,
+    )
+    plt.close(host_ax.figure)
+
+    # plot_morris_convergence: ax= honored, plot_kws reaches ax.plot
+    fig, host_ax = plt.subplots()
+    fig_mc, ax_mc = s.plot_morris_convergence(
+        morris_convergence, metric=m[-2], ax=host_ax,
+        linestyle=':', close_fig=False,
+    )
+    assert ax_mc is host_ax
+    assert any(line.get_linestyle() == ':' for line in ax_mc.get_lines())
+    plt.close(fig_mc)
+
+    # plot_fast_results: ax= honored, plot_kws reaches sns.barplot
+    _, fast_dct = fast_analyzed
+    fig, host_ax = plt.subplots()
+    fig_f, ax_f = s.plot_fast_results(
+        fast_dct, metric=m[-3], ax=host_ax, alpha=0.4, close_fig=False,
+    )
+    assert ax_f is host_ax
+    assert any(abs(p.get_alpha() - 0.4) < 1e-9
+               for p in ax_f.patches if p.get_alpha() is not None)
+    plt.close(fig_f)
+
+    # plot_sobol_results: ax= honored for bar-only kinds, plot_kws reaches
+    # sns.barplot.
+    _, sobol_dct = sobol_analyzed
+    fig, host_ax = plt.subplots()
+    fig_s, ax_s = s.plot_sobol_results(
+        sobol_dct, metric=m[-1], kind='STS1', ax=host_ax,
+        alpha=0.3, close_fig=False,
+    )
+    assert ax_s is host_ax
+    assert any(abs(p.get_alpha() - 0.3) < 1e-9
+               for p in ax_s.patches if p.get_alpha() is not None)
+    plt.close(fig_s)
 
 
 if __name__ == '__main__':

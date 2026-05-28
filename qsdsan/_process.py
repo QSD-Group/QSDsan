@@ -332,7 +332,7 @@ class Process:
         Components corresponding to each entry in the stoichiometry array,
         defaults to all components set in the system (i.e., through :func:`set_thermo`).
     conserved_for : tuple[str], optional
-        Materials subject to conservation rules, must be an 'i\_' attribute of
+        Materials subject to conservation rules, must be an 'i\\_' attribute of
         the components. The default is ("COD", "N", "P", "charge").
     parameters : Iterable[str], optional
         Symbolic parameters in stoichiometry coefficients (both constant and dynamic)
@@ -457,7 +457,7 @@ class Process:
 
     def get_conversion_factors(self, as_matrix=False):
         '''
-        Return conversion factors (i.e., the 'i\_' attributes of the components)
+        Return conversion factors (i.e., the 'i\\_' attributes of the components)
         as a numpy.ndarray or a SymPy Matrix.
         '''
         conserved_for = self._conserved_for
@@ -598,7 +598,7 @@ class Process:
     def conserved_for(self):
         '''
         [tuple] Materials subject to conservation rules, must have corresponding
-        'i\_' attributes for the components.
+        'i\\_' attributes for the components.
         '''
         return self._conserved_for
     @conserved_for.setter
@@ -614,6 +614,13 @@ class Process:
         '''[dict] Symbolic parameters in stoichiometric coefficients (both
         constant and dynamic) and/or rate equation.'''
         return self._parameters
+
+    @property
+    def dynamic_parameters(self):
+        '''[dict] :class:`DynamicParameter` objects attached to this process,
+        keyed by symbol. Empty if all of the process's parameters are static.
+        Use :meth:`dynamic_parameter` to add one.'''
+        return self._dyn_params
 
     def append_parameters(self, *new_pars):
         '''Append new symbolic parameters'''
@@ -996,12 +1003,12 @@ class Processes:
 
     @classmethod
     def load_from_file(cls, path='', components=None, data=None,
-                       conserved_for=('COD', 'N', 'P', 'charge'), parameters=(),
+                       *, conserved_for, parameters=(),
                        use_default_data=False, store_data=False, compile=True,
                        **compile_kwargs):
         """
         Create :class:`CompiledProcesses` object from a table of process IDs, stoichiometric
-        coefficients, and rate equations stored in a .tsv, .csv, or Excel file, or as 
+        coefficients, and rate equations stored in a .tsv, .csv, or Excel file, or as
         a `DataFrame`.
 
         Parameters
@@ -1013,10 +1020,16 @@ class Processes:
             to all components set in the system (i.e., through :func:`set_thermo`).
         data : :class:`pandas.DataFrame`, optional
             Data frame of the Petersen matrix.
-        conserved_for : tuple[str], optional
-            Materials subject to conservation rules, must have corresponding 'i\_'
-            attributes for the components. Applied to all processes.
-            The default is ('COD', 'N', 'P', 'charge').
+        conserved_for : tuple[str], dict[str, tuple[str]], or None (required)
+            Materials subject to conservation rules. Each entry must have a
+            corresponding 'i\\_' attribute on the components. Three forms are
+            accepted: a **tuple** applies the same rules to every process; a
+            **dict** keyed by process ID sets per-process rules; **None**
+            defers to the file's ``conserved_for`` column when present (and
+            otherwise uses ``('COD', 'N', 'P', 'charge')`` as the per-process
+            fallback). Precedence, highest first: dict entries for listed
+            IDs → tuple (uniform) → file column → default tuple. This argument
+            is required and keyword-only.
         parameters : Iterable[str], optional
             Symbolic parameters in stoichiometry coefficients and/or rate equation.
         use_default_data : bool, optional
@@ -1042,6 +1055,36 @@ class Processes:
             of -1 or 1 is considered the reference component. If none of the components
             has -1 or 1 stoichiometric coefficient, the first component with non-zero
             coefficient is considered the reference.
+
+            [5] An optional column named ``conserved_for`` may carry per-process
+            conservation rules as comma-separated material names (e.g.,
+            ``COD,C``); empty cells are treated as no conservation. This column
+            is consumed during parsing and does not appear in the stoichiometry
+            matrix. See the ``conserved_for`` parameter for how it composes
+            with the kwarg.
+
+        Examples
+        --------
+        Uniform rules applied to every process:
+
+        >>> Processes.load_from_file('model.csv',
+        ...                          conserved_for=('COD', 'N', 'P', 'charge'),
+        ...                          parameters=('mu_H', 'K_S'))                  # doctest: +SKIP
+
+        Per-process rules via a dict (unlisted IDs fall back to the default tuple):
+
+        >>> Processes.load_from_file('model.csv',
+        ...                          conserved_for={'growth': ('COD', 'C'),
+        ...                                         'decay': ('COD',)},
+        ...                          parameters=('mu_H', 'K_S'))                  # doctest: +SKIP
+
+        Per-process rules embedded in the file (add a ``conserved_for`` column
+        with comma-separated material names); pass ``conserved_for=None`` to
+        defer to the file:
+
+        >>> Processes.load_from_file('model_with_conserved.csv',
+        ...                          conserved_for=None,
+        ...                          parameters=('mu_H', 'K_S'))                  # doctest: +SKIP
         """
         if use_default_data and cls._default_data is not None:
             data = cls._default_data
@@ -1049,8 +1092,37 @@ class Processes:
             data = load_data(path=path, index_col=0, na_values=0)
         else:
             if data is None: return None
-        
+
         cmps = _load_components(components)
+        cf_default = ('COD', 'N', 'P', 'charge')
+
+        # Per-process rules from the optional `conserved_for` file column.
+        file_rules = {}
+        if 'conserved_for' in data.columns:
+            for proc_id, value in data['conserved_for'].items():
+                if pd.isna(value) or not str(value).strip():
+                    file_rules[proc_id] = ()
+                else:
+                    file_rules[proc_id] = tuple(
+                        s.strip() for s in str(value).split(',') if s.strip()
+                    )
+            data = data.drop(columns=['conserved_for'])
+
+        # Resolution order: kwarg-dict entry → kwarg-tuple → file column → default.
+        if isinstance(conserved_for, dict):
+            def _conserved_for(proc_id):
+                if proc_id in conserved_for:
+                    return conserved_for[proc_id]
+                if proc_id in file_rules:
+                    return file_rules[proc_id]
+                return cf_default
+        elif conserved_for is None:
+            def _conserved_for(proc_id):
+                return file_rules.get(proc_id, cf_default)
+        else:
+            # Tuple (or any non-dict iterable) — uniform override
+            def _conserved_for(proc_id):
+                return conserved_for
 
         cmp_IDs = [i for i in data.columns if i in cmps.IDs]
         data.dropna(how='all', subset=cmp_IDs, inplace=True)
@@ -1074,7 +1146,7 @@ class Processes:
                               ref_component=ref,
                               rate_equation=rate_eq,
                               components=cmps,
-                              conserved_for=conserved_for,
+                              conserved_for=_conserved_for(ID),
                               parameters=parameters)
             new.append(process)
 
@@ -1183,6 +1255,13 @@ class CompiledProcesses(Processes):
     def parameters(self):
         '''[dict] All symbolic stoichiometric and kinetic parameters.'''
         return self._parameters
+
+    @property
+    def dynamic_parameters(self):
+        '''[dict] :class:`DynamicParameter` objects across all processes in
+        this collection, keyed by symbol. Shared with each constituent
+        process. Empty if no process has a dynamic parameter attached.'''
+        return self._dyn_params
 
     def append_parameters(self, *new_pars):
         '''Append new symbolic parameters'''

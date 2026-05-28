@@ -115,6 +115,77 @@ def test_process():
     assert p12 in asm2d
     assert set(asm2d.parameters.keys()) == set(params)
 
+    # `load_from_file` accepts `conserved_for` as a dict for per-process rules.
+    # Listed process IDs get their dict value; unlisted IDs fall back to the
+    # function's default tuple ('COD', 'N', 'P', 'charge').
+    partial_rules = {'aero_hydrolysis': ('COD', 'N')}
+    asm2d_partial = Processes.load_from_file(
+        path,
+        conserved_for=partial_rules,
+        parameters=params,
+        compile=False,
+    )
+    partial_by_id = {p.ID: p for p in asm2d_partial}
+    assert partial_by_id['aero_hydrolysis'].conserved_for == ('COD', 'N')
+    other_ids = [pid for pid in partial_by_id if pid != 'aero_hydrolysis']
+    assert other_ids, 'expected more than one process in the file'
+    assert all(partial_by_id[pid].conserved_for == ('COD', 'N', 'P', 'charge')
+               for pid in other_ids)
+
+    # `load_from_file` also reads a `conserved_for` column from the data file.
+    # Build a minimal table in-memory so the test doesn't depend on a fixture.
+    import pandas as pd
+    rxn_df = pd.DataFrame(
+        {
+            'S_F':           {'p_only_cod':  1.0, 'p_cod_n':     1.0, 'p_no_col':    1.0},
+            'X_S':           {'p_only_cod': -1.0, 'p_cod_n':    -1.0, 'p_no_col':   -1.0},
+            'conserved_for': {'p_only_cod': 'COD', 'p_cod_n': 'COD,N', 'p_no_col':    ''},
+            'rate':          {'p_only_cod': 'k1*X_S', 'p_cod_n': 'k2*X_S', 'p_no_col': 'k3*X_S'},
+        }
+    )
+    file_loaded = Processes.load_from_file(
+        data=rxn_df,
+        conserved_for=None,
+        parameters=('k1', 'k2', 'k3'),
+        compile=False,
+    )
+    by_id = {p.ID: p for p in file_loaded}
+    assert by_id['p_only_cod'].conserved_for == ('COD',)
+    assert by_id['p_cod_n'].conserved_for == ('COD', 'N')
+    # Empty cell parses as no enforcement.
+    assert by_id['p_no_col'].conserved_for == ()
+    # The `conserved_for` column is consumed and does not appear as a stoichiometry component.
+    assert 'conserved_for' not in by_id['p_cod_n'].stoichiometry
+
+    # Kwarg-dict overrides the file column for the listed process.
+    file_with_override = Processes.load_from_file(
+        data=rxn_df,
+        conserved_for={'p_only_cod': ('COD', 'N')},
+        parameters=('k1', 'k2', 'k3'),
+        compile=False,
+    )
+    by_id2 = {p.ID: p for p in file_with_override}
+    assert by_id2['p_only_cod'].conserved_for == ('COD', 'N')  # kwarg wins
+    assert by_id2['p_cod_n'].conserved_for == ('COD', 'N')     # file column kept
+
+    # `conserved_for` is required (keyword-only, no default).
+    with pytest.raises(TypeError, match='conserved_for'):
+        Processes.load_from_file(data=rxn_df, parameters=('k1', 'k2', 'k3'),
+                                 compile=False)
+
+    # `dynamic_parameters` is a public accessor for `_dyn_params`; empty when
+    # all parameters are static, and shared between a process and the
+    # CompiledProcesses it belongs to.
+    assert p1.dynamic_parameters == {}
+    assert asm2d.dynamic_parameters == {}
+    assert p12.dynamic_parameters is asm2d.dynamic_parameters
+
+    @p1.dynamic_parameter(symbol='f_SI', params={})
+    def _f_SI_eval(state_arr, params):
+        return 0.0
+    assert 'f_SI' in p1.dynamic_parameters
+    assert p1.dynamic_parameters['f_SI'] is p1._dyn_params['f_SI']
+
     pc.create_adm1_cmps()
     pc.create_asm1_cmps()
     pc.create_asm2d_cmps()

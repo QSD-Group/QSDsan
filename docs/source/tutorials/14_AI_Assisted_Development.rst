@@ -101,40 +101,11 @@ QSDsan environment to run and test it. Follow the
 QSDsan in editable mode with its development dependencies. This is a one-time
 setup.
 
-Also contributing to EXPOsan?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you also plan to contribute to **EXPOsan** (for example, by adding your own
-system to it), set both repositories up side by side in one workspace folder,
-sharing a single virtual environment:
-
-.. code-block:: text
-
-   qsdsan-dev/          workspace folder (open this one in VS Code)
-   ├── QSDsan/          git clone of QSDsan
-   ├── EXPOsan/         git clone of EXPOsan
-   └── .venv/           shared virtual environment
-
-Clone EXPOsan next to QSDsan and install it into the same environment in
-editable mode, the same way you installed QSDsan. With both packages editable in
-one environment, a change you make in QSDsan is immediately visible to EXPOsan,
-which is essential for cross-repo work.
-
-.. note::
-   Keep this workspace out of cloud-synced locations (OneDrive, Dropbox,
-   iCloud). A virtual environment is tens of thousands of files; syncing them is
-   slow and can corrupt the environment's tooling.
-
-.. tip:: Keep the environment relocatable
-
-   If you create the environment with `uv <https://docs.astral.sh/uv/>`_, add
-   the ``--relocatable`` flag (``uv venv --relocatable``). A normal environment
-   hard-codes the absolute path of its Python interpreter into every
-   console-script launcher (``pytest``, ``sphinx-build``, and so on); rename or
-   move the workspace folder afterwards and those launchers break with errors
-   like *"failed to canonicalize script path"*. ``--relocatable`` makes them use
-   relative paths, so the folder can be safely moved. If you hit this with an
-   environment that already exists, recreate it.
+If you also plan to contribute to ``EXPOsan``, follow the
+:ref:`side-by-side workspace layout <also-contributing-to-exposan>` in the
+contributing guide instead; with both packages installed editable in one shared
+environment, AI tools can navigate and refactor across the two repos in a
+single session, and changes in ``QSDsan`` are immediately visible to ``EXPOsan``.
 
 
 Key Concepts for Contributors

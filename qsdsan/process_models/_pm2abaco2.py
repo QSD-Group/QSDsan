@@ -544,6 +544,9 @@ def rhos_pm2abaco2(state_arr, params):
 
 class PM2ABACO2(CompiledProcesses):
     '''
+    Phototrophic-Mixotrophic Process Model (PM2) coupled with the ABACO-2
+    microalgae-bacteria consortium model [1]_, [2]_.
+
     Parameters
     ----------
     components: class:`CompiledComponents`, optional

@@ -223,23 +223,42 @@ class SanUnit(Unit, isabstract=True):
         self._recycle_system = None
 
         ##### qsdsan-specific #####
+        self._init_sanunit_addons(
+            include_construction=include_construction,
+            construction=construction, transportation=transportation,
+            equipment=equipment, add_OPEX=add_OPEX, lifetime=lifetime,
+            F_BM_default=F_BM_default, isdynamic=isdynamic,
+            exogenous_vars=exogenous_vars, **kwargs,
+        )
+
+
+    def _init_sanunit_addons(self, include_construction=True, construction=[],
+                             transportation=[], equipment=[],
+                             add_OPEX={}, lifetime=None, F_BM_default=None,
+                             isdynamic=False, exogenous_vars=(), **kwargs):
+        '''
+        Install ``SanUnit``'s add-on attribute surface (LCA flow, ``add_OPEX``,
+        ``lifetime``, ``uptime_ratio``, dynamic-simulation flag, ...).
+
+        Called from ``SanUnit.__init__``; ``bst``-namespace wrappers whose
+        MRO puts the BioSTEAM parent before ``SanUnit`` call this from their
+        own ``__init__`` after the BioSTEAM init completes, so the add-on
+        surface is installed regardless of MRO order.
+        '''
         for i in (*construction, *transportation, *equipment):
             i._linked_unit = self
-        # Make fresh ones for each unit
         self.include_construction = include_construction
         self.construction = [] if not construction else construction
         self.transportation = [] if not transportation else transportation
         self._init_lca()
         self.equipment = [] if not equipment else equipment
-        self.add_OPEX = add_OPEX.copy()
+        self.add_OPEX = add_OPEX.copy() if isinstance(add_OPEX, dict) else add_OPEX
         self.uptime_ratio = 1.
         self.lifetime = lifetime
         if F_BM_default:
             F_BM = self.F_BM
             self.F_BM = defaultdict(lambda: F_BM_default)
             self.F_BM.update(F_BM)
-
-        # For units with different state headers, should update it in the unit's ``__init__``
         self.isdynamic = isdynamic
         self._exovars = exogenous_vars
         for attr, val in kwargs.items():
