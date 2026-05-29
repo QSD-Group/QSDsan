@@ -6,6 +6,10 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 `1.5.3`_
 --------
+- Added ``tutorials/14_Modeling_Notes_and_Pitfalls.ipynb`` covering common modeling surprises across streams/components, unit design, TEA/LCA, and behavior inherited from BioSTEAM. Extended tutorial 5 §1.1 with ``simulate()`` / ``_summary`` call-graph mechanics.
+
+- Restructured the FAQ into a four-page ``faq/`` subdirectory (``errors``, ``tips``, ``styling``, ``ai_assisted_coding``), absorbing the previously standalone AI-assisted coding page from the tutorials section. The old ``FAQ.html`` bookmark redirects to the new index.
+
 - Fixed :class:`~.unit_operations.DynamicInfluent` for non-cyclic input data: when the first and last rows of the data file differed, the constructor entered a branch that called ``df.append(y_end, ignore_index=True)`` to pad the time series with a phantom final point. The line was always a silent no-op (``DataFrame.append`` returned a new frame rather than modifying in place; the result was discarded), and starting with pandas 2.0 ``append`` was removed entirely, so the same call now raises ``AttributeError: 'DataFrame' object has no attribute 'append'`` and the constructor fails outright. The branch now uses ``pd.concat`` and reassigns ``self._data`` so the phantom point is actually appended; ``self._t_end`` and the interpolants pick it up. Default-file behavior is unchanged because the shipped ``_inf_dry_2006.tsv`` is cyclic (first row equals last row) and the branch is skipped.
 
 - In EXPOsan, restored the documented ``exposan.bsm1.cmps`` / ``components`` / ``asm`` module attributes (the canonical handles used by the dynamic-simulation tutorial). ``bsm1.load()`` declared the three names ``global`` but the matching assignment was commented out, so after a fresh ``load()`` they stayed ``None`` and ``qs.set_thermo(bsm1.cmps)`` raised ``TypeError: 'NoneType' object is not iterable``. The assignments (``cmps = components = O1.components``, ``asm = O1.suspended_growth_model``) are now active.

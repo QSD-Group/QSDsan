@@ -144,13 +144,13 @@ The topical tutorials are organized in three parts.
    13_Process_Modeling_101
 
 
-For Contributors
-----------------
+Reference
+---------
 
 .. toctree::
    :maxdepth: 1
 
-   14_AI_Assisted_Development
+   14_Modeling_Notes_and_Pitfalls
 
 
 .. 1_Helpful_Basics is kept as an orphan deprecation stub so its URL still
