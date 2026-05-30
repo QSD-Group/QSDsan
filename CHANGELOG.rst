@@ -44,6 +44,8 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - Added ``qsdsan.utils.create_example_treatment_systems``, which builds the aerobic and anaerobic wastewater treatment systems shared by the TEA and LCA tutorials (a compact, realistic substrate for techno-economic and life cycle analyses). The LCA tutorial now uses it instead of the ``bwaise`` EXPOsan system.
 
+- Added section 5.6 (Cost and environmental trade-off) to ``tutorials/8_LCA.ipynb``: a single table lining up the break-even treatment fee (cost per m³, from tutorial 7) against the GWP per m³ for the two example plants, so the cost-versus-carbon trade-off is visible in one place, with a note on comparing systems on the same functional unit and system boundary.
+
 - Added a ``time_frame`` argument to the :class:`~.LCA` results methods (:meth:`~.LCA.get_total_impacts`, :meth:`~.LCA.get_unit_impacts`, :meth:`~.LCA.get_impact_table`, :meth:`~.LCA.get_allocated_impacts`/:meth:`~.LCA.get_allocated_impact_table`, and ``save_report``). It normalizes the results to a chosen time frame: ``'lifetime'`` (or ``'all'``, the default), ``'yr'`` (equivalent to ``annual=True``), ``'month'``, ``'week'``, ``'day'``, or ``'hr'``. The existing ``annual`` flag is kept as a backward-compatible alias (``annual=True`` ≡ ``time_frame='yr'``); ``time_frame`` takes precedence when both are given.
 
 - Added :meth:`~.LCA.get_normalized_impacts`, which expresses impacts per functional unit (per kg, per m³, or per MJ) of one or more reference streams, the LCA counterpart to ``TEA.solve_price``. By default the total impacts are divided by the streams' combined throughput; pass ``allocate_by`` to normalize the impacts allocated to those streams instead.
