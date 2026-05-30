@@ -69,27 +69,42 @@ _HEADING_TAGS = ("h1", "h2", "h3", "h4")
 
 
 def split_html_by_heading(html: str) -> list[dict]:
-    """Split built HTML into [{title, text, anchor}] by <section> heading.
+    """Split built HTML into [{title, text, anchor}] by section heading.
 
-    Anchor is the nearest enclosing element id (Sphinx/Furo put the section id on
-    the wrapping <section>/<div>), falling back to a slug of the title.
+    Furo/Sphinx wraps each section in <section id="..."> with the heading as the
+    first child and nested subsections as later siblings. For each heading the
+    chunk text is the heading's following siblings up to (but excluding) the next
+    nested <section>, so a parent heading does not absorb its child subsections.
+    The headerlink pilcrow ("¶") is stripped from titles and bodies.
     """
     soup = BeautifulSoup(html, "html.parser")
     chunks: list[dict] = []
     for heading in soup.find_all(_HEADING_TAGS):
+        # Drop the Furo headerlink (the "¶" pilcrow) before reading the title.
+        for link in heading.select("a.headerlink"):
+            link.decompose()
         title = heading.get_text(strip=True)
         if not title:
             continue
-        # Find the id on the heading or the nearest ancestor section/div.
+        # Anchor: id on the heading, else nearest ancestor section/div with an id.
         anchor = heading.get("id")
         if not anchor:
             container = heading.find_parent(
                 lambda tag: tag.name in ("section", "div") and tag.get("id")
             )
             anchor = container.get("id") if container else slugify(title)
-        # Body text = the section's text minus the heading itself.
-        container = heading.find_parent("section") or heading.parent
-        text = container.get_text(" ", strip=True)
-        text = text.replace(title, "", 1).strip()
-        chunks.append({"title": title, "text": text, "anchor": anchor})
+        # Body = siblings after the heading, stopping at the first nested section.
+        parts = []
+        for sib in heading.find_next_siblings():
+            name = getattr(sib, "name", None)
+            if name == "section":
+                break
+            if name in _HEADING_TAGS:
+                break
+            text = sib.get_text(" ", strip=True) if name else str(sib).strip()
+            if text:
+                parts.append(text)
+        chunks.append(
+            {"title": title, "text": " ".join(parts).strip(), "anchor": anchor}
+        )
     return chunks
