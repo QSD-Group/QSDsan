@@ -56,6 +56,9 @@ def answer_question(
     )
     answer = prompts.append_code_disclaimers(answer)
 
+    if not answer.strip():
+        return {"answer": prompts.refusal_message(), "citations": []}
+
     used = _used_citation_numbers(answer, len(retrieved))
     if not used:  # answer cited nothing explicitly: surface all retrieved sources
         used = list(range(1, len(retrieved) + 1))

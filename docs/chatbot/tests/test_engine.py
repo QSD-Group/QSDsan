@@ -117,3 +117,34 @@ def test_answer_without_explicit_citation_falls_back_to_all_retrieved():
     )
     # No [n] markers in the answer -> surface all retrieved as citations.
     assert len(out["citations"]) == 2
+
+
+def test_citations_are_bounded_and_subset_only():
+    claude = FakeClaude("Only the second excerpt is relevant; see [2]. Ignore [5].")
+    out = engine.answer_question(
+        "How do I load and run BSM1?",
+        records=RECORDS,
+        embed_fn=embed_query_high,
+        claude_client=claude,
+        top_k=2,
+        threshold=0.5,
+        gen_model="claude-haiku-4-5-20251001",
+    )
+    # Only the cited, in-range excerpt [2] is surfaced; [5] (out of range) is dropped.
+    assert [c["n"] for c in out["citations"]] == [2]
+    assert out["citations"][0]["url"] == RECORDS[1]["url"]
+
+
+def test_empty_model_answer_refuses():
+    claude = FakeClaude("")  # model returned no usable text
+    out = engine.answer_question(
+        "How do I make a WasteStream?",
+        records=RECORDS,
+        embed_fn=embed_query_high,
+        claude_client=claude,
+        top_k=2,
+        threshold=0.5,
+        gen_model="claude-haiku-4-5-20251001",
+    )
+    assert "couldn't find this" in out["answer"]
+    assert out["citations"] == []
