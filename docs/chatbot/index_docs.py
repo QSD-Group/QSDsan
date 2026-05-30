@@ -119,6 +119,10 @@ def build_index(html_dir, systems=None, fetch=_http_get, embed_fn=None) -> list[
     records = build_qsdsan_chunks(html_dir) + build_exposan_chunks(systems, fetch=fetch)
     if records:
         vectors = embed_fn([r["text"] for r in records], input_type="document")
+        if len(vectors) != len(records):
+            raise ValueError(
+                f"embed_fn returned {len(vectors)} vectors for {len(records)} records"
+            )
         for r, vec in zip(records, vectors):
             r["embedding"] = list(vec)
     return records
@@ -140,7 +144,9 @@ def main(html_dir=None, systems=None, out_path=None) -> None:
             f"Indexer produced no chunks (html_dir={html_dir!r}); aborting so a "
             "broken build does not publish an empty index."
         )
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    out_dir = os.path.dirname(out_path)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as fh:
         json.dump(records, fh)
     print(f"Wrote {len(records)} chunks to {out_path}")

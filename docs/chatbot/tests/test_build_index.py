@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 import index_docs
 
 HTML_DIR = Path(__file__).parent / "fixtures" / "html"
@@ -43,3 +45,25 @@ def test_main_writes_index_json(tmp_path, monkeypatch):
     assert isinstance(data, list) and data
     assert {r["source"] for r in data} == {"qsdsan", "exposan"}
     assert all("embedding" in r for r in data)
+
+
+def test_build_index_raises_on_embedding_count_mismatch():
+    def bad_embed(texts, input_type, client=None):
+        return [[0.0, 1.0]]  # one vector regardless of how many texts
+
+    with pytest.raises(ValueError):
+        index_docs.build_index(
+            html_dir=str(HTML_DIR),
+            systems=["bsm1"],
+            fetch=fake_fetch,
+            embed_fn=bad_embed,
+        )
+
+
+def test_main_writes_bare_filename(tmp_path, monkeypatch):
+    # out_path with no directory component must not crash.
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(index_docs, "_http_get", fake_fetch)
+    monkeypatch.setattr(index_docs, "embed_documents", fake_embed)
+    index_docs.main(html_dir=str(HTML_DIR), systems=["bsm1"], out_path="index.json")
+    assert (tmp_path / "index.json").exists()
