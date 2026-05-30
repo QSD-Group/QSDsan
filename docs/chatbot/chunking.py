@@ -30,6 +30,7 @@ def split_rst_by_heading(text: str) -> list[dict]:
         nxt = lines[i + 1] if i + 1 < n else ""
         is_underline = (
             line.strip()
+            and line == line.lstrip()  # title must be at column 0 (not indented)
             and nxt.strip()
             and len(set(nxt.strip())) == 1
             and nxt.strip()[0] in _ADORNMENT
