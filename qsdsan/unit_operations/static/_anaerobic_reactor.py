@@ -492,7 +492,7 @@ class SludgeDigester(SanUnit):
         self.slab_concrete_unit_cost = slab_concrete_unit_cost
         self.excavation_unit_cost = excavation_unit_cost
         self.F_BM.update(F_BM)
-        self._default_equipment_lifetime.update(lifetime)
+        self.equipment_lifetime.update(lifetime)
         self.sludge_pump = WWTpump(
             ID=f'{ID}_sludge', ins=self.ins[0].proxy(), pump_type='',
             Q_mgd=None, add_inputs=(1,), capacity_factor=1.,

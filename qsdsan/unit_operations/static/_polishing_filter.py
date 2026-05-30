@@ -205,7 +205,7 @@ class PolishingFilter(SanUnit):
         self.T = T
         self.include_degassing_membrane = include_degassing_membrane
         self.F_BM.update(F_BM)
-        self._default_equipment_lifetime.update(lifetime)
+        self.equipment_lifetime.update(lifetime)
 
         # Initialize the attributes
         ID = self.ID

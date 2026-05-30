@@ -293,7 +293,7 @@ class AnMBR(SanUnit):
         self.solids_conc = solids_conc
         self.T = T
         self.F_BM.update(F_BM)
-        self._default_equipment_lifetime.update(lifetime)
+        self.equipment_lifetime.update(lifetime)
 
         # Initialize the attributes
         self.AF = self.AeF = None

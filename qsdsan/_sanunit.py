@@ -148,6 +148,8 @@ class SanUnit(Unit, isabstract=True):
         It will be used to adjust cost and emission calculation in TEA and LCA.
         Equipment without provided lifetime will be assumed to have the same
         lifetime as the TEA/LCA.
+        This is the recommended name for a unit's equipment lifetime; it is an
+        alias for the BioSTEAM-native ``equipment_lifetime`` attribute.
     F_BM_default : float
         If not None, all bare module factors will be default to the set value.
 
@@ -254,7 +256,12 @@ class SanUnit(Unit, isabstract=True):
         self.equipment = [] if not equipment else equipment
         self.add_OPEX = add_OPEX.copy() if isinstance(add_OPEX, dict) else add_OPEX
         self.uptime_ratio = 1.
-        self.lifetime = lifetime
+        # BioSTEAM's ``Unit.__init__`` already copied the class-level
+        # ``_default_equipment_lifetime`` into ``equipment_lifetime``; only
+        # override it when the user passes an explicit ``lifetime`` so that
+        # class-declared and equipment-supplied lifetimes are not discarded.
+        if lifetime is not None:
+            self.lifetime = lifetime
         if F_BM_default:
             F_BM = self.F_BM
             self.F_BM = defaultdict(lambda: F_BM_default)
@@ -448,8 +455,10 @@ class SanUnit(Unit, isabstract=True):
     def add_equipment_design(self):
         unit_design = self.design_results
         unit_units = self._units
-        F_BM, F_D, F_P, F_M, lifetime = \
-            self.F_BM, self.F_D, self.F_P, self.F_M, self._default_equipment_lifetime
+        F_BM, F_D, F_P, F_M = self.F_BM, self.F_D, self.F_P, self.F_M
+        # Equipment lifetimes go into ``equipment_lifetime`` (the attribute TEA and
+        # LCA read). A whole-unit integer override is respected by leaving it alone.
+        lifetime = self.equipment_lifetime if isinstance(self.equipment_lifetime, dict) else None
         isa = isinstance
         get = getattr
         def update_unit_attr(unit_attr, equip_ID, equip_attr):
@@ -467,10 +476,13 @@ class SanUnit(Unit, isabstract=True):
             equip_units = {} if not equip.units else equip.units
             unit_units.update(add_prefix(equip_units, prefix))
             for unit_attr, equip_attr in zip(
-                    (F_BM, F_D, F_P, F_M, lifetime),
-                    ('F_BM', 'F_D', 'F_P', 'F_M', 'lifetime'),
+                    (F_BM, F_D, F_P, F_M),
+                    ('F_BM', 'F_D', 'F_P', 'F_M'),
                     ):
                 update_unit_attr(unit_attr, equip_ID, get(equip, equip_attr))
+            equip_lifetime = get(equip, 'lifetime')
+            if lifetime is not None and equip_lifetime is not None:
+                update_unit_attr(lifetime, equip_ID, equip_lifetime)
 
     def add_equipment_cost(self):
         unit_cost = self.baseline_purchase_costs
@@ -492,8 +504,8 @@ class SanUnit(Unit, isabstract=True):
                 self.design_results[i.item.ID] = i.quantity
             if add_cost:
                 self.baseline_purchase_costs[i.item.ID] = i.cost
-            if add_lifetime and i.lifetime:
-                self._default_equipment_lifetime[i.item.ID] = i.lifetime
+            if add_lifetime and i.lifetime and isinstance(self.equipment_lifetime, dict):
+                self.equipment_lifetime[i.item.ID] = i.lifetime
 
 
     @property
@@ -697,6 +709,11 @@ class SanUnit(Unit, isabstract=True):
         It will be used to adjust cost and emission calculation in TEA and LCA.
         Equipment without provided lifetime will be assumed to have the same
         lifetime as the TEA/LCA.
+
+        This is the recommended way to read or set a unit's equipment lifetime;
+        it is an alias for the BioSTEAM-native ``equipment_lifetime`` attribute
+        (the two are equivalent for a :class:`SanUnit`). Do not confuse it with
+        the project ``lifetime`` passed to :class:`~.TEA`/:class:`~.LCA`.
         '''
         return self.equipment_lifetime
     @lifetime.setter

@@ -252,12 +252,18 @@ class TEA(BSTTEA):
 
     def _add_first_replacement_costs(self, nontaxable_cashflow):
         system = self.system
-        units = system.unit_capital_costs.values() if isinstance(system, bst.AgileSystem) else system.cost_units
+        is_agile = isinstance(system, bst.AgileSystem)
+        units = system.unit_capital_costs.values() if is_agile else system.cost_units
         lang_factor = self.lang_factor
         start = self._start
         end = start + self._years
         for unit in units:
-            lifetime = unit.lifetime
+            # ``equipment_lifetime`` is the underlying BioSTEAM attribute that
+            # ``SanUnit.lifetime`` aliases. Read it directly so one expression
+            # serves both iterables: ``cost_units`` (real units) and an
+            # ``AgileSystem``'s ``UnitDesignAndCapital`` capital records, which
+            # expose ``equipment_lifetime`` but not the ``lifetime`` alias.
+            lifetime = unit.equipment_lifetime
             if not lifetime:
                 continue
             if lang_factor:

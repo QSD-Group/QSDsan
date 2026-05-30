@@ -215,7 +215,7 @@ class ActivatedSludgeProcess(SanUnit):
         self.air_piping = air_piping = GasPiping('air_piping', linked_unit=self, N_reactor=N_train)
         self.equipments = (blower, air_piping)
         self.F_BM.update(F_BM)
-        self._default_equipment_lifetime.update(lifetime)
+        self.equipment_lifetime.update(lifetime)
 
         for attr, value in kwargs.items(): setattr(self, attr, value)
 

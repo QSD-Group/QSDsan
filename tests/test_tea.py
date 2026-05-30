@@ -23,6 +23,7 @@ __all__ = (
     'test_depreciation_schedule_must_fit_lifetime',
     'test_CEPCI_accessors',
     'test_simpletea_is_deprecated_alias',
+    'test_agile_system_npv_charges_equipment_replacement',
     )
 
 import pytest
@@ -65,6 +66,24 @@ def _two_equipment_system(flowsheet_ID):
     sys = qs.System('sys', path=(u,))
     sys.simulate()
     return sys, u
+
+
+def _example_agile_system(flowsheet_ID, equipment_lifetime=0):
+    '''The two-equipment system wrapped in an AgileSystem of two operation modes.'''
+    import qsdsan as qs
+    sys, u = _two_equipment_system(flowsheet_ID)
+    u.equipment_lifetime = equipment_lifetime
+    sys.simulate()
+    ag = qs.AgileSystem()
+
+    @ag.operation_parameter
+    def set_flow(flow):
+        u.ins[0].imass['Water'] = flow
+
+    ag.operation_mode(sys, operating_hours=4000., flow=1000.)
+    ag.operation_mode(sys, operating_hours=4760., flow=500.)
+    ag.simulate()
+    return ag
 
 
 # %%
@@ -255,6 +274,25 @@ def test_simpletea_is_deprecated_alias():
     with pytest.warns(DeprecationWarning):
         tea = qs.SimpleTEA(sys, discount_rate=0.05, lifetime=10, simulate_system=False)
     assert isinstance(tea, qs.TEA)
+
+
+def test_agile_system_npv_charges_equipment_replacement():
+    '''Regression: ``qs.TEA`` on an ``AgileSystem`` reads the equipment lifetime
+    from the per-unit ``UnitDesignAndCapital`` objects (attribute
+    ``equipment_lifetime``), not a ``lifetime`` attribute. Computing ``NPV``
+    previously raised ``AttributeError`` whenever a replacement had to be charged.
+    '''
+    import qsdsan as qs
+    # equipment that lasts the whole project: no replacement charged
+    ag_norepl = _example_agile_system('test_tea_agile_norepl', equipment_lifetime=0)
+    npv_norepl = qs.TEA(ag_norepl, discount_rate=0.05, lifetime=20,
+                        simulate_system=False).NPV
+    # an 8-year equipment lifetime forces a mid-project replacement
+    ag_repl = _example_agile_system('test_tea_agile_repl', equipment_lifetime=8)
+    npv_repl = qs.TEA(ag_repl, discount_rate=0.05, lifetime=20,
+                      simulate_system=False).NPV
+    # both are pure-cost systems (negative NPV); the replacement makes it more negative
+    assert npv_repl < npv_norepl < 0
 
 
 if __name__ == '__main__':
