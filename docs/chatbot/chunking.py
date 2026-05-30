@@ -4,6 +4,8 @@ Both indexer adapters reuse these so chunk boundaries stay consistent.
 """
 import re
 
+from bs4 import BeautifulSoup
+
 # RST section adornment characters per the docutils convention.
 _ADORNMENT = set("=-~^\"'`#*+.:_")
 
@@ -61,3 +63,33 @@ def split_rst_by_heading(text: str) -> list[dict]:
     for s in sections:
         s["text"] = s["text"].strip()
     return sections
+
+
+_HEADING_TAGS = ("h1", "h2", "h3", "h4")
+
+
+def split_html_by_heading(html: str) -> list[dict]:
+    """Split built HTML into [{title, text, anchor}] by <section> heading.
+
+    Anchor is the nearest enclosing element id (Sphinx/Furo put the section id on
+    the wrapping <section>/<div>), falling back to a slug of the title.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    chunks: list[dict] = []
+    for heading in soup.find_all(_HEADING_TAGS):
+        title = heading.get_text(strip=True)
+        if not title:
+            continue
+        # Find the id on the heading or the nearest ancestor section/div.
+        anchor = heading.get("id")
+        if not anchor:
+            container = heading.find_parent(
+                lambda tag: tag.name in ("section", "div") and tag.get("id")
+            )
+            anchor = container.get("id") if container else slugify(title)
+        # Body text = the section's text minus the heading itself.
+        container = heading.find_parent("section") or heading.parent
+        text = container.get_text(" ", strip=True)
+        text = text.replace(title, "", 1).strip()
+        chunks.append({"title": title, "text": text, "anchor": anchor})
+    return chunks
