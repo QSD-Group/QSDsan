@@ -1,0 +1,15 @@
+# Regression guard for the docs chatbot. Each item is run against a live /ask
+# endpoint by run_eval.py. `expect` is one of:
+#   cite_substring: the answer's citation URLs must include this substring
+#   refuse: the answer must be the out-of-scope refusal (no citations)
+- question: "create a WasteStream with flow and COD"
+  expect: cite_substring
+  value: "tutorials/3_WasteStream"
+- question: "dynamic simulation pitfalls"
+  expect: cite_substring
+  value: "tutorials/14_Modeling_Notes_and_Pitfalls"
+- question: "how do I load and run the BSM1 system?"
+  expect: cite_substring
+  value: "exposan/bsm1/README.rst"
+- question: "how do I set up SCADA/Modbus integration?"
+  expect: refuse
