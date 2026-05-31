@@ -14,7 +14,6 @@ services:
         sync: false   # set in the Render dashboard; never committed
       - key: VOYAGE_API_KEY
         sync: false
-      # Preview points at the docs-chatbot RTD version. Switch to /en/latest/
-      # before merging to production.
+      # Targets the beta RTD version. Switch to /en/latest/ when promoted to main.
       - key: CHATBOT_INDEX_URL
-        value: https://qsdsan.readthedocs.io/en/docs-chatbot/_static/chatbot/index.json
+        value: https://qsdsan.readthedocs.io/en/beta/_static/chatbot/index.json

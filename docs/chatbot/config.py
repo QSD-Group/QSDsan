@@ -15,7 +15,7 @@ SIMILARITY_THRESHOLD = float(os.getenv("CHATBOT_SIMILARITY_THRESHOLD", "0.4"))
 
 # --- Source locations ---
 QSDSAN_DOCS_BASE = os.getenv(
-    "CHATBOT_QSDSAN_DOCS_BASE", "https://qsdsan.readthedocs.io/en/latest/"
+    "CHATBOT_QSDSAN_DOCS_BASE", "https://qsdsan.readthedocs.io/en/beta/"
 )
 EXPOSAN_RAW_BASE = os.getenv(
     "CHATBOT_EXPOSAN_RAW_BASE",
@@ -29,14 +29,14 @@ EXPOSAN_BLOB_BASE = os.getenv(
 # Where the published index lives; the server loads this on startup.
 INDEX_URL = os.getenv(
     "CHATBOT_INDEX_URL",
-    "https://qsdsan.readthedocs.io/en/latest/_static/chatbot/index.json",
+    "https://qsdsan.readthedocs.io/en/beta/_static/chatbot/index.json",
 )
 
 # Pointers used when a question is about EXPOsan / the catalog of example systems.
-# (Currently the docs-chatbot preview version; switch to /en/latest/ for production.)
+# (Targets the beta docs version; switch to /en/latest/ when promoted to main.)
 SYSTEMS_DOC_URL = os.getenv(
     "CHATBOT_SYSTEMS_DOC_URL",
-    "https://qsdsan.readthedocs.io/en/docs-chatbot/systems/index.html",
+    "https://qsdsan.readthedocs.io/en/beta/systems/index.html",
 )
 EXPOSAN_REPO_URL = os.getenv(
     "CHATBOT_EXPOSAN_REPO_URL",

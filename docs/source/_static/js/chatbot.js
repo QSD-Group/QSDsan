@@ -2,7 +2,8 @@
   // Point this at the deployed Render endpoint. Overridable via a global set in conf.
   const ENDPOINT = window.QSDSAN_CHATBOT_ENDPOINT || "https://qsdsan-chatbot.onrender.com/ask";
   // Pointers shown in the greeting (kept in sync with the server-side config).
-  const SYSTEMS_URL = "https://qsdsan.readthedocs.io/en/docs-chatbot/systems/index.html";
+  // Targets the beta docs version; switch to /en/latest/ when promoted to main.
+  const SYSTEMS_URL = "https://qsdsan.readthedocs.io/en/beta/systems/index.html";
   const EXPOSAN_URL = "https://github.com/QSD-Group/EXPOsan";
 
   const BOT_SVG =

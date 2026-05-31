@@ -23,6 +23,6 @@ def test_qsdsan_url_is_readthedocs_page_plus_anchor():
     chunks = index_docs.build_qsdsan_chunks(str(HTML_DIR))
     ws = next(c for c in chunks if c["title"] == "Create a WasteStream")
     assert ws["url"] == (
-        "https://qsdsan.readthedocs.io/en/latest/"
+        "https://qsdsan.readthedocs.io/en/beta/"
         "tutorials/3_WasteStream.html#create-a-wastestream"
     )
