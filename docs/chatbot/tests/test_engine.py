@@ -122,7 +122,7 @@ def test_answer_without_explicit_citation_falls_back_to_all_retrieved():
 def test_citations_are_bounded_and_subset_only():
     claude = FakeClaude("Only the second excerpt is relevant; see [2]. Ignore [5].")
     out = engine.answer_question(
-        "How do I load and run BSM1?",
+        "How do I set properties on a WasteStream?",
         records=RECORDS,
         embed_fn=embed_query_high,
         claude_client=claude,
@@ -133,6 +133,23 @@ def test_citations_are_bounded_and_subset_only():
     # Only the cited, in-range excerpt [2] is surfaced; [5] (out of range) is dropped.
     assert [c["n"] for c in out["citations"]] == [2]
     assert out["citations"][0]["url"] == RECORDS[1]["url"]
+
+
+def test_exposan_question_returns_pointer_without_calling_claude():
+    claude = FakeClaude("SHOULD NOT BE CALLED")
+    out = engine.answer_question(
+        "How do I load and run BSM1?",
+        records=RECORDS,
+        embed_fn=embed_query_high,
+        claude_client=claude,
+        top_k=2,
+        threshold=0.5,
+        gen_model="claude-haiku-4-5-20251001",
+    )
+    assert claude.received is None  # Claude never invoked
+    assert "github.com/QSD-Group/EXPOsan" in out["answer"]
+    assert "systems/index.html" in out["answer"]
+    assert out["citations"] == []
 
 
 def test_empty_model_answer_refuses():

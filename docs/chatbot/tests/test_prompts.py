@@ -42,3 +42,21 @@ def test_refusal_message_points_to_nav_search():
     msg = prompts.refusal_message()
     assert "couldn't find this in the QSDsan/EXPOsan docs" in msg
     assert "search function at the top of the navigation bar" in msg
+
+
+def test_is_exposan_question_detects_systems_and_exposan():
+    assert prompts.is_exposan_question("How do I run BSM1?")
+    assert prompts.is_exposan_question("Tell me about EXPOsan")
+    assert prompts.is_exposan_question("what systems does QSDsan include?")
+    assert prompts.is_exposan_question("what have you built?")
+
+
+def test_is_exposan_question_ignores_plain_qsdsan_questions():
+    assert not prompts.is_exposan_question("How do I create a WasteStream?")
+    assert not prompts.is_exposan_question("How do I run a dynamic simulation?")
+
+
+def test_exposan_pointer_message_has_both_links():
+    msg = prompts.exposan_pointer_message()
+    assert "systems/index.html" in msg
+    assert "github.com/QSD-Group/EXPOsan" in msg

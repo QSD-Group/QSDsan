@@ -1,6 +1,8 @@
 """System/user prompts and guardrail text. Behavior of the bot lives here."""
 import re
 
+import config
+
 SYSTEM_PROMPT = (
     "You are the QSDsan and EXPOsan documentation assistant. "
     "Answer ONLY using the numbered excerpts provided in the user message. "
@@ -46,8 +48,56 @@ def refusal_message() -> str:
     """
     return (
         "I'm the QSDsan and EXPOsan documentation assistant. I answer questions "
-        "grounded in the QSDsan API and tutorials and the EXPOsan example systems, "
-        "such as how to create a WasteStream, run the BSM1 system, or set up a "
-        "dynamic simulation. I couldn't find this in the QSDsan/EXPOsan docs, so "
-        "try rephrasing or use the search function at the top of the navigation bar."
+        "grounded in the QSDsan API and tutorials, such as how to create a "
+        "WasteStream, set up a dynamic simulation, or build a custom unit operation. "
+        "I couldn't find this in the QSDsan/EXPOsan docs, so try rephrasing or use "
+        "the search function at the top of the navigation bar."
+    )
+
+
+# Strong, low-ambiguity signals that a question is about EXPOsan or the catalog of
+# example systems. Generic model names that also exist inside QSDsan (adm, asm,
+# cas, hap, pm2) are deliberately excluded to avoid hijacking QSDsan questions.
+_EXPOSAN_KEYWORDS = (
+    "exposan",
+    "bsm1",
+    "bsm2",
+    "bwaise",
+    "biobinder",
+    "biogenic refinery",
+    "new generator",
+    "reclaimer",
+    "eco_san",
+    "eco-san",
+    "eco san",
+    "pou disinfection",
+    "what system",
+    "which system",
+    "list of system",
+    "available system",
+    "example system",
+    "what have you built",
+    "what did you build",
+    "what can you simulate",
+    "what models are available",
+)
+
+
+def is_exposan_question(question: str) -> bool:
+    """True when a question is about EXPOsan or the catalog of example systems.
+
+    These are routed to a pointer response (the Systems page + EXPOsan repo)
+    rather than answered from the QSDsan docs index.
+    """
+    q = question.lower()
+    return any(keyword in q for keyword in _EXPOSAN_KEYWORDS)
+
+
+def exposan_pointer_message() -> str:
+    """Markdown pointer to the Systems page and the EXPOsan repository."""
+    return (
+        "For EXPOsan and the example systems that QSDsan has been used to build, "
+        "these are the best places to look:\n\n"
+        f"- QSDsan Systems page: [browse the systems]({config.SYSTEMS_DOC_URL})\n"
+        f"- EXPOsan on GitHub: [QSD-Group/EXPOsan]({config.EXPOSAN_REPO_URL})"
     )

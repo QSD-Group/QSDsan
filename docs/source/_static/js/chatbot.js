@@ -164,7 +164,7 @@
       '<div class="qsd-chat-header"><span class="qsd-head-title">' +
       BOT_SVG +
       " QSDsan / EXPOsan assistant</span>" +
-      '<button class="qsd-close" aria-label="Close">&times;</button></div>' +
+      '<button class="qsd-close" aria-label="Minimize">&minus;</button></div>' +
       '<div class="qsd-chat-log"></div>' +
       '<form class="qsd-chat-form">' +
       '<input class="qsd-chat-input" type="text" placeholder="Ask about QSDsan or EXPOsan..." autocomplete="off"/>' +

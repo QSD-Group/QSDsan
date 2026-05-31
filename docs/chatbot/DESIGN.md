@@ -5,6 +5,13 @@ about both QSDsan (the package: API + tutorials) and EXPOsan (the runnable
 example systems). Self-hosted lightweight RAG: Claude API for generation, a
 Furo-injected widget for the UI.
 
+> **Update (2026-05-31):** The EXPOsan README adapter was removed after internal
+> testing showed the README chunks produced low-quality answers. EXPOsan is no
+> longer indexed. Instead, the query engine detects EXPOsan / "what systems"
+> questions and returns a pointer to the QSDsan Systems page and the EXPOsan
+> repository (`prompts.is_exposan_question` / `exposan_pointer_message`). The
+> indexer now covers QSDsan built HTML only. The rest of this spec is unchanged.
+
 ## Status and scope
 
 - **Internal-first.** Released to the team and close contributors to validate

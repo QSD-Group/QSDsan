@@ -1,17 +1,19 @@
 # QSDsan + EXPOsan docs chatbot
 
 A self-hosted RAG assistant embedded on the QSDsan readthedocs site. It answers
-questions about QSDsan (API + tutorials) and EXPOsan (example systems) strictly
-from indexed docs, with citations and out-of-scope refusal. See `DESIGN.md` for
-the full spec and `../superpowers/plans/2026-05-30-docs-chatbot.md` for the build plan.
+questions about QSDsan (API + tutorials) strictly from indexed docs, with citations
+and out-of-scope refusal. EXPOsan and "what systems" questions are routed to a
+pointer (the Systems page + the EXPOsan repo) rather than answered from the index.
+See `DESIGN.md` for the original spec and `../superpowers/plans/2026-05-30-docs-chatbot.md`
+for the build plan.
 
 ## Components
 
-- `index_docs.py` - builds `index.json` from QSDsan built HTML + EXPOsan READMEs.
+- `index_docs.py` - builds `index.json` from the QSDsan built HTML (tutorials + API).
 - `embeddings.py` - Voyage embedding wrapper (documents at index time, queries at ask time).
 - `retrieval.py` - flat numpy cosine top-k over the index.
-- `prompts.py` - system/user prompts and guardrail text.
-- `engine.py` - the answer pipeline (embed, retrieve, refuse-below-threshold, Claude, cite).
+- `prompts.py` - system/user prompts, guardrail text, and the EXPOsan pointer.
+- `engine.py` - the answer pipeline (EXPOsan pointer, embed, retrieve, refuse-below-threshold, Claude, cite).
 - `server.py` - FastAPI `/ask` endpoint (deployed on Render).
 - `../source/_static/js/chatbot.js` + `css/chatbot.css` - the Furo widget.
 - `.readthedocs.yml` post_build - reindexes on every docs build.

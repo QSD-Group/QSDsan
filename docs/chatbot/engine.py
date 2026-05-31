@@ -30,6 +30,11 @@ def answer_question(
     gen_model,
 ):
     """Return {"answer": str, "citations": list[dict]}."""
+    # EXPOsan / "what systems" questions are pointed to the Systems page and the
+    # EXPOsan repo rather than answered from the index (EXPOsan is not indexed).
+    if prompts.is_exposan_question(question):
+        return {"answer": prompts.exposan_pointer_message(), "citations": []}
+
     query_vec = embed_fn([question], input_type="query")[0]
     hits = retrieval.cosine_top_k(query_vec, records, k=top_k)
 

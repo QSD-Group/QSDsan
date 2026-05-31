@@ -1,7 +1,8 @@
-"""Indexer: build chunk records from QSDsan built HTML and EXPOsan READMEs.
+"""Indexer: build chunk records from the QSDsan built HTML.
 
-Source-pluggable. Both adapters emit the same chunk schema; build_index adds
-embeddings and writes index.json.
+Walks the built Sphinx HTML (tutorials + API), splits by heading into chunks,
+attaches embeddings, and writes index.json. EXPOsan is intentionally not indexed;
+EXPOsan questions are routed to a pointer response by the query engine instead.
 """
 from __future__ import annotations
 
@@ -11,45 +12,6 @@ import os
 import config
 import chunking
 import embeddings
-
-
-def _http_get(url: str) -> str | None:
-    """Default fetcher: return text on 200, None on 404. Network only at runtime."""
-    import requests
-
-    resp = requests.get(url, timeout=30)
-    if resp.status_code == 404:
-        return None
-    resp.raise_for_status()
-    return resp.text
-
-
-def build_exposan_chunks(systems: list[str], fetch=_http_get) -> list[dict]:
-    """Fetch each system's README.rst from GitHub raw and chunk by heading.
-
-    Systems whose README is missing (fetch returns None) are skipped, so the
-    list can be a superset of what actually exists.
-    """
-    chunks: list[dict] = []
-    for sys_name in systems:
-        raw_url = f"{config.EXPOSAN_RAW_BASE}{sys_name}/README.rst"
-        text = fetch(raw_url)
-        if not text:
-            continue
-        blob_url = f"{config.EXPOSAN_BLOB_BASE}{sys_name}/README.rst"
-        for section in chunking.split_rst_by_heading(text):
-            if not section["text"]:
-                continue
-            chunks.append(
-                {
-                    "text": section["text"],
-                    "title": section["title"],
-                    "url": f"{blob_url}#{section['anchor']}",
-                    "source": "exposan",
-                    "type": "readme",
-                }
-            )
-    return chunks
 
 
 def _page_type(rel_path: str) -> str:
@@ -98,25 +60,15 @@ def build_qsdsan_chunks(html_dir: str, base_url: str | None = None) -> list[dict
     return chunks
 
 
-# Candidate EXPOsan systems. The adapter skips any without a README, so this can
-# safely be a superset; it is refreshed by simply editing this list.
-EXPOSAN_SYSTEMS = [
-    "adm", "asm", "biobinder", "biogenic_refinery", "bsm1", "bsm2", "bwaise",
-    "cas", "eco_san", "hap", "htl", "metab", "metro", "new_generator",
-    "pm2_batch", "pm2_ecorecover", "pou_disinfection", "reclaimer", "saf", "werf",
-]
-
-
 def embed_documents(texts, input_type, client=None):
     """Indirection point so tests can monkeypatch embedding without network."""
     return embeddings.embed_texts(texts, input_type=input_type, client=client)
 
 
-def build_index(html_dir, systems=None, fetch=_http_get, embed_fn=None) -> list[dict]:
-    """Build merged chunk records from both adapters and attach embeddings."""
-    systems = systems if systems is not None else EXPOSAN_SYSTEMS
+def build_index(html_dir, embed_fn=None) -> list[dict]:
+    """Build QSDsan chunk records and attach embeddings."""
     embed_fn = embed_fn or embed_documents
-    records = build_qsdsan_chunks(html_dir) + build_exposan_chunks(systems, fetch=fetch)
+    records = build_qsdsan_chunks(html_dir)
     if records:
         vectors = embed_fn([r["text"] for r in records], input_type="document")
         if len(vectors) != len(records):
@@ -128,7 +80,7 @@ def build_index(html_dir, systems=None, fetch=_http_get, embed_fn=None) -> list[
     return records
 
 
-def main(html_dir=None, systems=None, out_path=None) -> None:
+def main(html_dir=None, out_path=None) -> None:
     """CLI entry: build the index and write it as JSON.
 
     On readthedocs the index is written into the build OUTPUT static dir
@@ -144,7 +96,7 @@ def main(html_dir=None, systems=None, out_path=None) -> None:
             )
         else:
             out_path = "docs/source/_static/chatbot/index.json"
-    records = build_index(html_dir, systems=systems, fetch=_http_get, embed_fn=embed_documents)
+    records = build_index(html_dir, embed_fn=embed_documents)
     if not records:
         raise SystemExit(
             f"Indexer produced no chunks (html_dir={html_dir!r}); aborting so a "

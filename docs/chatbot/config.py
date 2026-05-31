@@ -31,3 +31,14 @@ INDEX_URL = os.getenv(
     "CHATBOT_INDEX_URL",
     "https://qsdsan.readthedocs.io/en/latest/_static/chatbot/index.json",
 )
+
+# Pointers used when a question is about EXPOsan / the catalog of example systems.
+# (Currently the docs-chatbot preview version; switch to /en/latest/ for production.)
+SYSTEMS_DOC_URL = os.getenv(
+    "CHATBOT_SYSTEMS_DOC_URL",
+    "https://qsdsan.readthedocs.io/en/docs-chatbot/systems/index.html",
+)
+EXPOSAN_REPO_URL = os.getenv(
+    "CHATBOT_EXPOSAN_REPO_URL",
+    "https://github.com/QSD-Group/EXPOsan",
+)

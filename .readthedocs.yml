@@ -16,12 +16,12 @@ build:
     # golang: "1.17"
   jobs:
     post_build:
-      # Rebuild the chatbot search index from the just-built HTML + EXPOsan READMEs.
+      # Rebuild the chatbot search index from the just-built QSDsan HTML.
       # Skips gracefully when VOYAGE_API_KEY is not set so docs builds and PR
       # previews never fail just because the embedding key is absent.
       - |
         if [ -n "$VOYAGE_API_KEY" ]; then
-          pip install voyageai requests numpy beautifulsoup4 &&
+          pip install voyageai beautifulsoup4 &&
           python docs/chatbot/index_docs.py
         else
           echo "VOYAGE_API_KEY not set; skipping chatbot reindex."
