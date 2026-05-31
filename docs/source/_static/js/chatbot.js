@@ -163,11 +163,11 @@
     panel.innerHTML =
       '<div class="qsd-chat-header"><span class="qsd-head-title">' +
       BOT_SVG +
-      " QSDsan / EXPOsan assistant</span>" +
+      " QSDsan docs assistant</span>" +
       '<button class="qsd-close" aria-label="Minimize">&minus;</button></div>' +
       '<div class="qsd-chat-log"></div>' +
       '<form class="qsd-chat-form">' +
-      '<input class="qsd-chat-input" type="text" placeholder="Ask about QSDsan or EXPOsan..." autocomplete="off"/>' +
+      '<input class="qsd-chat-input" type="text" placeholder="Ask about QSDsan..." autocomplete="off"/>' +
       '<button type="submit" aria-label="Send">' +
       SEND_SVG +
       "</button></form>";
@@ -210,9 +210,9 @@
       if (greeted) return;
       greeted = true;
       const intro =
-        "Hi! I answer questions about **QSDsan** (API + tutorials) and **EXPOsan** " +
-        "(example systems like BSM1, ADM, and HTL) from the documentation, with sources " +
-        "for each answer.\n\n" +
+        "Hi! I answer questions about **QSDsan** (the API and tutorials) from the " +
+        "documentation, with sources for each answer. For EXPOsan and the example " +
+        "systems, I'll point you to the Systems page and the EXPOsan repository.\n\n" +
         "Heads up: the first reply after a quiet spell can take 30 to 60 seconds while the " +
         "assistant wakes up. After that, answers come back quickly.";
       addMessage("qsd-bot qsd-intro", renderMarkdown(intro));

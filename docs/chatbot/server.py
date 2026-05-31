@@ -10,7 +10,7 @@ import embeddings
 import engine
 import retrieval
 
-app = FastAPI(title="QSDsan/EXPOsan docs chatbot")
+app = FastAPI(title="QSDsan docs chatbot")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # internal-first; tighten before any public launch

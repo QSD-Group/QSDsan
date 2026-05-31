@@ -4,7 +4,7 @@ import re
 import config
 
 SYSTEM_PROMPT = (
-    "You are the QSDsan and EXPOsan documentation assistant. "
+    "You are the QSDsan documentation assistant. "
     "Answer ONLY using the numbered excerpts provided in the user message. "
     "Cite every claim with its excerpt number and URL, like [1]. "
     "If the excerpts do not contain the answer, say you could not find it in the "
@@ -47,7 +47,7 @@ def refusal_message() -> str:
     me with?") get a useful answer, while still signalling the strict grounding.
     """
     return (
-        "I'm the QSDsan and EXPOsan documentation assistant. I answer questions "
+        "I'm the QSDsan documentation assistant. I answer questions "
         "grounded in the QSDsan API and tutorials, such as how to create a "
         "WasteStream, set up a dynamic simulation, or build a custom unit operation. "
         "I couldn't find this in the QSDsan/EXPOsan docs, so try rephrasing or use "
