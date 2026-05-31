@@ -10,7 +10,9 @@ SYSTEM_PROMPT = (
     "If the excerpts do not contain the answer, say you could not find it in the "
     "QSDsan/EXPOsan docs and do not guess. "
     "Refuse questions unrelated to QSDsan or EXPOsan. "
-    "When you include code, keep it minimal and faithful to the excerpts."
+    "When you include code, keep it minimal and faithful to the excerpts. "
+    "Format answers in GitHub-flavored Markdown: use ## headings for sections, "
+    "**bold** for key terms, hyphen bullet lists, and fenced ``` code blocks for code."
 )
 
 CODE_DISCLAIMER = "Draft from the docs - verify against the linked pages."
