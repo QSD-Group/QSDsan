@@ -31,9 +31,3 @@ INDEX_URL = os.getenv(
     "CHATBOT_INDEX_URL",
     "https://qsdsan.readthedocs.io/en/latest/_static/chatbot/index.json",
 )
-
-# Docs search fallback used in the refusal message.
-DOCS_SEARCH_URL = os.getenv(
-    "CHATBOT_DOCS_SEARCH_URL",
-    "https://qsdsan.readthedocs.io/en/latest/search.html?q=",
-)

@@ -1,8 +1,6 @@
 """System/user prompts and guardrail text. Behavior of the bot lives here."""
 import re
 
-import config
-
 SYSTEM_PROMPT = (
     "You are the QSDsan and EXPOsan documentation assistant. "
     "Answer ONLY using the numbered excerpts provided in the user message. "
@@ -51,5 +49,5 @@ def refusal_message() -> str:
         "grounded in the QSDsan API and tutorials and the EXPOsan example systems, "
         "such as how to create a WasteStream, run the BSM1 system, or set up a "
         "dynamic simulation. I couldn't find this in the QSDsan/EXPOsan docs, so "
-        f"try rephrasing or search the docs: {config.DOCS_SEARCH_URL}"
+        "try rephrasing or use the search function at the top of the navigation bar."
     )

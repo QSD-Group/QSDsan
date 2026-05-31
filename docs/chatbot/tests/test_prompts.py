@@ -38,7 +38,7 @@ def test_append_code_disclaimers_noop_without_code():
     assert prompts.append_code_disclaimers(md) == md
 
 
-def test_refusal_message_links_docs_search():
+def test_refusal_message_points_to_nav_search():
     msg = prompts.refusal_message()
     assert "couldn't find this in the QSDsan/EXPOsan docs" in msg
-    assert "search.html" in msg
+    assert "search function at the top of the navigation bar" in msg
