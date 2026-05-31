@@ -1,6 +1,9 @@
 (function () {
   // Point this at the deployed Render endpoint. Overridable via a global set in conf.
   const ENDPOINT = window.QSDSAN_CHATBOT_ENDPOINT || "https://qsdsan-chatbot.onrender.com/ask";
+  // Pointers shown in the greeting (kept in sync with the server-side config).
+  const SYSTEMS_URL = "https://qsdsan.readthedocs.io/en/docs-chatbot/systems/index.html";
+  const EXPOSAN_URL = "https://github.com/QSD-Group/EXPOsan";
 
   const BOT_SVG =
     '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" ' +
@@ -210,9 +213,10 @@
       if (greeted) return;
       greeted = true;
       const intro =
-        "Hi! I answer questions about **QSDsan** (the API and tutorials) from the " +
-        "documentation, with sources for each answer. For EXPOsan and the example " +
-        "systems, I'll point you to the Systems page and the EXPOsan repository.\n\n" +
+        "Hi! I answer questions about QSDsan (the API and tutorials) from the " +
+        "documentation, with sources for each answer. For systems constructed using " +
+        "QSDsan, please check the [Systems page](" + SYSTEMS_URL + ") and the " +
+        "[EXPOsan repository](" + EXPOSAN_URL + ").\n\n" +
         "Heads up: the first reply after a quiet spell can take 30 to 60 seconds while the " +
         "assistant wakes up. After that, answers come back quickly.";
       addMessage("qsd-bot qsd-intro", renderMarkdown(intro));
