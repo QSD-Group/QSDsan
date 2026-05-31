@@ -7,9 +7,14 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
     envVars:
+      # Pin Python: Render defaults to 3.14, but voyageai 0.3.x requires <3.14.
+      - key: PYTHON_VERSION
+        value: "3.12.7"
       - key: ANTHROPIC_API_KEY
         sync: false   # set in the Render dashboard; never committed
       - key: VOYAGE_API_KEY
         sync: false
+      # Preview points at the docs-chatbot RTD version. Switch to /en/latest/
+      # before merging to production.
       - key: CHATBOT_INDEX_URL
-        value: https://qsdsan.readthedocs.io/en/latest/_static/chatbot/index.json
+        value: https://qsdsan.readthedocs.io/en/docs-chatbot/_static/chatbot/index.json
