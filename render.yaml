@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: qsdsan-chatbot
+    runtime: python
+    rootDir: docs/chatbot
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false   # set in the Render dashboard; never committed
+      - key: VOYAGE_API_KEY
+        sync: false
+      - key: CHATBOT_INDEX_URL
+        value: https://qsdsan.readthedocs.io/en/latest/_static/chatbot/index.json
