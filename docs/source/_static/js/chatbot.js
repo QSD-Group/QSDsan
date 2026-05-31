@@ -21,10 +21,21 @@
     return html;
   }
 
+  function escAttr(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
   function citationsHtml(citations) {
     if (!citations || !citations.length) return "";
     const items = citations
-      .map((c) => `<li>[${c.n}] <a href="${c.url}" target="_blank" rel="noopener">${c.title}</a> <span class="qsd-src">(${c.source})</span></li>`)
+      .map(
+        (c) =>
+          `<li>[${escAttr(c.n)}] <a href="${escAttr(c.url)}" target="_blank" rel="noopener">${escAttr(c.title)}</a> <span class="qsd-src">(${escAttr(c.source)})</span></li>`
+      )
       .join("");
     return `<ul class="qsd-citations">${items}</ul>`;
   }
@@ -71,6 +82,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question }),
         });
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
         const data = await resp.json();
         pending.innerHTML = renderMarkdown(data.answer || "") + citationsHtml(data.citations);
       } catch (err) {
