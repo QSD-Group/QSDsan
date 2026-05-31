@@ -39,8 +39,15 @@ def append_code_disclaimers(answer_md: str) -> str:
 
 
 def refusal_message() -> str:
-    """Out-of-scope / low-similarity refusal with a docs-search link."""
+    """Out-of-scope / low-similarity refusal that also explains what the bot does.
+
+    Leading with the capability summary means meta questions ("what can you help
+    me with?") get a useful answer, while still signalling the strict grounding.
+    """
     return (
-        "I couldn't find this in the QSDsan/EXPOsan docs. "
-        f"Try the docs search: {config.DOCS_SEARCH_URL}"
+        "I'm the QSDsan and EXPOsan documentation assistant. I answer questions "
+        "grounded in the QSDsan API and tutorials and the EXPOsan example systems, "
+        "such as how to create a WasteStream, run the BSM1 system, or set up a "
+        "dynamic simulation. I couldn't find this in the QSDsan/EXPOsan docs, so "
+        f"try rephrasing or search the docs: {config.DOCS_SEARCH_URL}"
     )

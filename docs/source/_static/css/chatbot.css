@@ -2,7 +2,8 @@
 .qsd-chat-button {
   position: fixed;
   right: 1.25rem;
-  bottom: 1.25rem;
+  /* Raised to clear the readthedocs version flyout tab at the bottom-right. */
+  bottom: 4rem;
   z-index: 1000;
   padding: 0.6rem 1rem;
   border: none;
@@ -15,7 +16,8 @@
 .qsd-chat-panel {
   position: fixed;
   right: 1.25rem;
-  bottom: 4.5rem;
+  /* Sits just above the raised button. */
+  bottom: 7.25rem;
   z-index: 1000;
   width: min(380px, 90vw);
   height: min(520px, 70vh);
