@@ -131,13 +131,19 @@ def build_index(html_dir, systems=None, fetch=_http_get, embed_fn=None) -> list[
 def main(html_dir=None, systems=None, out_path=None) -> None:
     """CLI entry: build the index and write it as JSON.
 
-    Defaults resolve build-time locations: $READTHEDOCS_OUTPUT/html for the built
-    docs, and the in-tree _static path for the output.
+    On readthedocs the index is written into the build OUTPUT static dir
+    ($READTHEDOCS_OUTPUT/html/_static/chatbot/index.json) so it is published;
+    locally it defaults to the in-tree source _static path.
     """
-    html_dir = html_dir or os.path.join(
-        os.environ.get("READTHEDOCS_OUTPUT", "docs/build"), "html"
-    )
-    out_path = out_path or "docs/source/_static/chatbot/index.json"
+    rtd_output = os.environ.get("READTHEDOCS_OUTPUT")
+    html_dir = html_dir or os.path.join(rtd_output or "docs/build", "html")
+    if out_path is None:
+        if rtd_output:
+            out_path = os.path.join(
+                rtd_output, "html", "_static", "chatbot", "index.json"
+            )
+        else:
+            out_path = "docs/source/_static/chatbot/index.json"
     records = build_index(html_dir, systems=systems, fetch=_http_get, embed_fn=embed_documents)
     if not records:
         raise SystemExit(
