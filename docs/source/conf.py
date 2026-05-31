@@ -99,10 +99,12 @@ html_static_path = ['_static']
 html_css_files = [
 	'css/qsdsan.css',
  	'css/copybutton.css',
+ 	'css/chatbot.css',
 # 	'css/theme_overrides.css',
  	]
 html_js_files = [
     'js/unit-operation-filters.js',
+    'js/chatbot.js',
 ]
 
 # The name of an image file (relative to this directory) to place at the top

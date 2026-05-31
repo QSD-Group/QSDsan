@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: qsdsan-chatbot
+    runtime: python
+    rootDir: docs/chatbot
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      # Pin Python: Render defaults to 3.14, but voyageai 0.3.x requires <3.14.
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: ANTHROPIC_API_KEY
+        sync: false   # set in the Render dashboard; never committed
+      - key: VOYAGE_API_KEY
+        sync: false
+      # Targets the beta RTD version. Switch to /en/latest/ when promoted to main.
+      - key: CHATBOT_INDEX_URL
+        value: https://qsdsan.readthedocs.io/en/beta/_static/chatbot/index.json

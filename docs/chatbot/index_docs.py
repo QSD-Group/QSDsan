@@ -1,0 +1,114 @@
+"""Indexer: build chunk records from the QSDsan built HTML.
+
+Walks the built Sphinx HTML (tutorials + API), splits by heading into chunks,
+attaches embeddings, and writes index.json. EXPOsan is intentionally not indexed;
+EXPOsan questions are routed to a pointer response by the query engine instead.
+"""
+from __future__ import annotations
+
+import json
+import os
+
+import config
+import chunking
+import embeddings
+
+
+def _page_type(rel_path: str) -> str:
+    """Tag a built page by its location under the docs tree."""
+    head = rel_path.replace(os.sep, "/").split("/", 1)[0]
+    if head == "tutorials":
+        return "tutorial"
+    if head == "api":
+        return "api"
+    return "tutorial"
+
+
+def build_qsdsan_chunks(html_dir: str, base_url: str | None = None) -> list[dict]:
+    """Walk a built Sphinx HTML tree and chunk each page by heading.
+
+    Citation URL = readthedocs base + page path relative to html_dir + #anchor.
+    Only files under tutorials/ and api/ are indexed.
+    """
+    base_url = base_url or config.QSDSAN_DOCS_BASE
+    chunks: list[dict] = []
+    for root, _dirs, files in os.walk(html_dir):
+        for fname in files:
+            if not fname.endswith(".html"):
+                continue
+            abs_path = os.path.join(root, fname)
+            rel_path = os.path.relpath(abs_path, html_dir).replace(os.sep, "/")
+            head = rel_path.split("/", 1)[0]
+            if head not in ("tutorials", "api"):
+                continue
+            ptype = _page_type(rel_path)
+            with open(abs_path, encoding="utf-8") as fh:
+                html = fh.read()
+            page_url = f"{base_url.rstrip('/')}/{rel_path}"
+            for section in chunking.split_html_by_heading(html):
+                if not section["text"]:
+                    continue
+                chunks.append(
+                    {
+                        "text": section["text"],
+                        "title": section["title"],
+                        "url": f"{page_url}#{section['anchor']}",
+                        "source": "qsdsan",
+                        "type": ptype,
+                    }
+                )
+    return chunks
+
+
+def embed_documents(texts, input_type, client=None):
+    """Indirection point so tests can monkeypatch embedding without network."""
+    return embeddings.embed_texts(texts, input_type=input_type, client=client)
+
+
+def build_index(html_dir, embed_fn=None) -> list[dict]:
+    """Build QSDsan chunk records and attach embeddings."""
+    embed_fn = embed_fn or embed_documents
+    records = build_qsdsan_chunks(html_dir)
+    if records:
+        vectors = embed_fn([r["text"] for r in records], input_type="document")
+        if len(vectors) != len(records):
+            raise ValueError(
+                f"embed_fn returned {len(vectors)} vectors for {len(records)} records"
+            )
+        for r, vec in zip(records, vectors):
+            r["embedding"] = list(vec)
+    return records
+
+
+def main(html_dir=None, out_path=None) -> None:
+    """CLI entry: build the index and write it as JSON.
+
+    On readthedocs the index is written into the build OUTPUT static dir
+    ($READTHEDOCS_OUTPUT/html/_static/chatbot/index.json) so it is published;
+    locally it defaults to the in-tree source _static path.
+    """
+    rtd_output = os.environ.get("READTHEDOCS_OUTPUT")
+    html_dir = html_dir or os.path.join(rtd_output or "docs/build", "html")
+    if out_path is None:
+        if rtd_output:
+            out_path = os.path.join(
+                rtd_output, "html", "_static", "chatbot", "index.json"
+            )
+        else:
+            out_path = "docs/source/_static/chatbot/index.json"
+    records = build_index(html_dir, embed_fn=embed_documents)
+    if not records:
+        raise SystemExit(
+            f"Indexer produced no chunks (html_dir={html_dir!r}); aborting so a "
+            "broken build does not publish an empty index."
+        )
+    out_dir = os.path.dirname(out_path)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as fh:
+        json.dump(records, fh)
+    print(f"Wrote {len(records)} chunks to {out_path}")
+
+
+if __name__ == "__main__":
+    main()
