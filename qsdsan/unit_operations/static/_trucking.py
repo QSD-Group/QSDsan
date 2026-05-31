@@ -58,7 +58,25 @@ class Trucking(SanUnit):
 
     Examples
     --------
-    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import ImpactItem, WasteStream
+    >>> from qsdsan.unit_operations import Trucking
+    >>> # The 'Trucking' impact item must exist for the design (LCA) step
+    >>> _ = ImpactItem('Trucking', functional_unit='tonne*km')
+    >>> ws = WasteStream('ws', H2O=1000, OtherSS=50, units='kg/hr')
+    >>> T1 = Trucking('T1', ins=ws, outs=('transported', 'loss'),
+    ...               load=1, load_unit='tonne',
+    ...               distance=5, distance_unit='km',
+    ...               interval=1, interval_unit='day')
+    >>> T1.simulate()
+    >>> round(T1.outs[1].F_mass, 1)  # material lost in transit, kg/hr
+    21.0
+    >>> round(T1.design_results['Parallel trucks'], 1)
+    25.2
+
+    See `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    for use in a complete sanitation system.
 
     References
     ----------

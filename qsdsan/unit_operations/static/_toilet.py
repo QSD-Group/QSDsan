@@ -559,7 +559,26 @@ class PitLatrine(Toilet):
 
     Examples
     --------
-    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import System
+    >>> from qsdsan.unit_operations import Excretion, PitLatrine
+    >>> U1 = Excretion('U1')
+    >>> # The decay rate constants and max CH4 emission are not loaded by
+    >>> # default; set them so the storage/degradation calculation can run.
+    >>> U2 = PitLatrine('U2', ins=(U1-0, U1-1),
+    ...                 outs=('mixed', 'leachate', 'CH4', 'N2O'),
+    ...                 N_user=5, N_tot_user=500,
+    ...                 decay_k_COD=3, decay_k_N=3, max_CH4_emission=0.25)
+    >>> sys = System('sys', path=(U1, U2))
+    >>> sys.simulate()
+    >>> U2.N_toilet  # ceil(N_tot_user/N_user)
+    1
+    >>> round(U2.design_results['Single pit volume'], 2)  # m3
+    3.66
+
+    See `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    for use in a complete sanitation system.
 
     References
     ----------

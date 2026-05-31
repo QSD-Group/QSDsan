@@ -26,6 +26,7 @@ from .. import (
 
 __all__ = (
     'create_example_components',
+    'create_example_sanitation_components',
     'create_example_system',
     'create_example_treatment_systems',
     'create_example_model',
@@ -93,6 +94,84 @@ def create_example_components(set_thermo=True):
     cmps.compile(ignore_inaccurate_molar_weight=True)
     cmps.set_synonym('H2O', 'Water')
     cmps.set_synonym('CH4', 'Methane')
+    if set_thermo: qs_set_thermo(cmps)
+    return cmps
+
+
+def create_example_sanitation_components(set_thermo=True):
+    '''
+    Load a set of pre-constructed components for sanitation-unit documentation.
+
+    These are the excreta/nutrient components used by the sanitation
+    :class:`~qsdsan.SanUnit` examples (e.g.,
+    :class:`~qsdsan.unit_operations.Excretion`,
+    :class:`~qsdsan.unit_operations.PitLatrine`,
+    :class:`~qsdsan.unit_operations.Trucking`); they are not part of the default
+    set returned by :func:`qsdsan.Components.load_default`.
+
+    Parameters
+    ----------
+    set_thermo : bool
+        Whether to set the returned components as the thermodynamic property
+        package (i.e., call :func:`qsdsan.set_thermo`).
+
+    Returns
+    -------
+    A :class:`qsdsan.CompiledComponents` object with the components
+    NH3 (measured as N), NonNH3, P, K, Mg, Ca, H2O, OtherSS, N2O, CH4,
+    Tissue, and WoodAsh.
+
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> cmps.IDs
+    ('NH3', 'NonNH3', 'P', 'K', 'Mg', 'Ca', 'H2O', 'OtherSS', 'N2O', 'CH4', 'Tissue', 'WoodAsh')
+
+    See Also
+    --------
+    :func:`create_example_components`
+    '''
+    from .components import add_V_from_rho
+
+    def mk(ID, **kwargs):
+        kwargs.setdefault('phase', 'l')
+        kwargs.setdefault('particle_size', 'Soluble')
+        kwargs.setdefault('degradability', 'Undegradable')
+        kwargs.setdefault('organic', False)
+        return Component(ID, **kwargs)
+
+    NH3 = mk('NH3', measured_as='N')
+    NonNH3 = mk('NonNH3', formula='N', measured_as='N', description='Non-NH3 nitrogen')
+    P = mk('P')
+    K = mk('K')
+    Mg = mk('Mg')
+    Ca = mk('Ca')
+    H2O = mk('H2O')
+    OtherSS = mk('OtherSS', description='Unspecified soluble solids')
+    N2O = mk('N2O', phase='g', particle_size='Dissolved gas')
+    CH4 = mk('CH4', phase='g', particle_size='Dissolved gas',
+             degradability='Slowly', organic=True)
+    Tissue = mk('Tissue', MW=1, phase='s', particle_size='Particulate',
+                description='Toilet paper')
+    WoodAsh = mk('WoodAsh', MW=1, phase='s', particle_size='Particulate',
+                 description='Wood ash desiccant')
+
+    cmps = Components((NH3, NonNH3, P, K, Mg, Ca, H2O, OtherSS,
+                       N2O, CH4, Tissue, WoodAsh))
+    for cmp in cmps:
+        cmp.default()
+        cmp.copy_models_from(H2O, ('sigma', 'epsilon', 'kappa', 'Cn', 'mu'))
+    # Particulate solids need a volume model before the set can be compiled
+    add_V_from_rho(Tissue, 375)
+    add_V_from_rho(WoodAsh, 760)
+
+    cmps.compile(ignore_inaccurate_molar_weight=True)
+    for cmp in cmps:
+        for attr in ('HHV', 'LHV', 'Hf'):
+            if getattr(cmp, attr) is None:
+                setattr(cmp, attr, 0)
+
     if set_thermo: qs_set_thermo(cmps)
     return cmps
 
