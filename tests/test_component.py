@@ -180,5 +180,49 @@ def test_component_copy_roundtrips():
     assert abs(cp.MW - base.MW) < 1e-9
 
 
+# --- formula override gate (formula_override) ---
+_pkw = dict(particle_size='Particulate', degradability='Undegradable', organic=False)
+
+def test_formula_mismatch_raises_without_override():
+    # hexahydrate formula vs the anhydrous database chemical -> atoms differ -> raise
+    with pytest.raises(ValueError):
+        Component('Struvite', search_ID='MagnesiumAmmoniumPhosphate',
+                  formula='NH4MgPO4·H12O6', phase='s', **_pkw)
+
+def test_formula_override_allows_mismatch_and_recomputes_MW():
+    c = Component('Struvite', search_ID='MagnesiumAmmoniumPhosphate',
+                  formula='NH4MgPO4·H12O6', phase='s',
+                  formula_override=True, **_pkw)
+    assert c.formula == 'NH4MgPO4·H12O6'
+    # MW must reflect the override formula (hexahydrate ~245), not the DB value (~137)
+    assert c.MW > 240 and c.chem_MW > 240
+
+def test_formula_respelling_needs_no_override():
+    # same atoms, different string -> not a mismatch -> no exception
+    c = Component('Propane', search_ID='Propane', formula='CH3CH2CH3', phase='g', **_pkw)
+    assert get_atoms_equal(c.atoms, 'C3H8')
+
+def test_from_chemical_mismatch_raises_without_override():
+    with pytest.raises(ValueError):
+        Component.from_chemical('Struvite', chemical='MagnesiumAmmoniumPhosphate',
+                                formula='NH4MgPO4·H12O6', phase='s', **_pkw)
+
+def test_from_chemical_override_works():
+    c = Component.from_chemical('Struvite', chemical='MagnesiumAmmoniumPhosphate',
+                                formula='NH4MgPO4·H12O6', phase='s',
+                                formula_override=True, **_pkw)
+    assert c.MW > 240
+
+def test_blank_component_formula_not_gated():
+    # no database chemical -> no source formula to conflict with -> no override needed
+    c = Component('S_F', formula='C5H7O2N', particle_size='Particulate',
+                  degradability='Slowly', organic=True)
+    assert c.formula == 'C5H7O2N'
+
+def get_atoms_equal(atoms_dict, formula):
+    from chemicals.elements import get_atoms
+    return dict(atoms_dict) == get_atoms(formula)
+
+
 if __name__ == '__main__':
     test_component()
