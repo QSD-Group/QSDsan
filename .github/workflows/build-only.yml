@@ -36,7 +36,7 @@ jobs:
         pip install git+https://github.com/QSD-Group/EXPOsan.git
     - name: Test with pytest
       run: |
-        pytest tests
+        pytest
 
   retry-with-upstream-master:
     needs: build
@@ -68,4 +68,4 @@ jobs:
         pip install --no-deps --force-reinstall git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@master
     - name: Test with pytest
       run: |
-        pytest tests
+        pytest
